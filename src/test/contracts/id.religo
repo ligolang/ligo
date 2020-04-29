@@ -72,11 +72,9 @@ let buy = ((parameter, storage): (buy, storage)) : (list(operation), storage) =>
   };
   let updated_identities: big_map (id, id_details) =
     Big_map.update(new_id, Some(new_id_details), identities);
-  (([]: list(operation)), {
+  (([]: list(operation)), { ...storage,
                            identities : updated_identities,
                            next_id : new_id + 1,
-                           name_price : storage.name_price,
-                           skip_price : storage.skip_price,
                         });
   };
 
@@ -94,21 +92,16 @@ let update_owner = ((parameter, storage): (update_owner, storage)) : (list(opera
       | Some(id_details) => id_details
       | None => (failwith("This ID does not exist."): id_details)
     };
-  let is_allowed: bool =
-    if (sender == current_id_details.owner) { true; }
-    else { (failwith("You are not the owner of this ID."): bool); };
+  let u: unit =
+    if (sender == current_id_details.owner) { (); }
+    else { failwith("You are not the owner of this ID."); };
   let updated_id_details: id_details = {
     owner : new_owner,
     controller : current_id_details.controller,
     profile : current_id_details.profile,
   };
   let updated_identities = Big_map.update(id, (Some updated_id_details), identities);
-  (([]: list(operation)), {
-                           identities : updated_identities,
-                           next_id : storage.next_id,
-                           name_price : storage.name_price,
-                           skip_price : storage.skip_price,
-                        });
+  (([]: list(operation)), { ...storage, identities : updated_identities });
   };
 
 let update_details = ((parameter, storage): (update_details, storage)) :
@@ -127,12 +120,12 @@ let update_details = ((parameter, storage): (update_details, storage)) :
       | Some(id_details) => id_details
       | None => (failwith("This ID does not exist."): id_details)
     };
-  let is_allowed: bool =
+  let u: unit =
     if ((sender != current_id_details.controller) &&
         (sender != current_id_details.owner)) {
-      (failwith ("You are not the owner or controller of this ID."): bool)
+      failwith ("You are not the owner or controller of this ID.")
     }
-    else { true; };
+    else { (); };
   let owner: address = current_id_details.owner;
   let profile: bytes =
     switch (new_profile) {
@@ -151,12 +144,7 @@ let update_details = ((parameter, storage): (update_details, storage)) :
   };
   let updated_identities: big_map (id, id_details) =
     Big_map.update(id, (Some updated_id_details), identities);
-  (([]: list(operation)), {
-                            identities : updated_identities,
-                            next_id : storage.next_id,
-                            name_price : storage.name_price,
-                            skip_price : storage.skip_price,
-                          });
+  (([]: list(operation)), { ...storage, identities : updated_identities });
   };
 
 /* Let someone skip the next identity so nobody has to take one that's undesirable */
@@ -166,12 +154,7 @@ let skip = ((p,storage): (unit, storage)) => {
       failwith("Incorrect amount paid.");
     }
     else { (); };
-  (([]: list(operation)), {
-                            identities : storage.identities,
-                            next_id : storage.next_id + 1,
-                            name_price : storage.name_price,
-                            skip_price : storage.skip_price,
-                          });
+  (([]: list(operation)), { ...storage, next_id : storage.next_id + 1 });
   };
 
 let main = ((action, storage): (action, storage)) : (list(operation), storage) => {

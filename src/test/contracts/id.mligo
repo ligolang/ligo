@@ -78,10 +78,8 @@ let buy (parameter, storage: buy * storage) =
   let updated_identities : (id, id_details) big_map =
     Big_map.update new_id (Some new_id_details) identities
   in
-  ([]: operation list), {identities = updated_identities;
+  ([]: operation list), {storage with identities = updated_identities;
                          next_id = new_id + 1; 
-                         name_price = storage.name_price;
-                         skip_price = storage.skip_price;
                         }
 
 let update_owner (parameter, storage: update_owner * storage) =
@@ -96,10 +94,10 @@ let update_owner (parameter, storage: update_owner * storage) =
     | Some id_details -> id_details
     | None -> (failwith "This ID does not exist.": id_details)
   in
-  let is_allowed: bool =
+  let u : unit =
     if sender = current_id_details.owner
-    then true
-    else (failwith "You are not the owner of this ID.": bool)
+    then ()
+    else failwith "You are not the owner of this ID."
   in
   let updated_id_details: id_details = {
     owner = new_owner;
@@ -108,11 +106,7 @@ let update_owner (parameter, storage: update_owner * storage) =
   }
   in
   let updated_identities = Big_map.update id (Some updated_id_details) identities in
-  ([]: operation list), {identities = updated_identities; 
-                         next_id = storage.next_id;
-                         name_price = storage.name_price;
-                         skip_price = storage.skip_price;
-                        }
+  ([]: operation list), {storage with identities = updated_identities}
 
 let update_details (parameter, storage: update_details * storage) =
   if (amount <> 0mutez)
@@ -127,10 +121,10 @@ let update_details (parameter, storage: update_details * storage) =
     | Some id_details -> id_details
     | None -> (failwith "This ID does not exist.": id_details)
   in
-  let is_allowed: bool =
+  let u : unit =
     if (sender = current_id_details.controller) || (sender = current_id_details.owner)
-    then true
-    else (failwith ("You are not the owner or controller of this ID."): bool)
+    then ()
+    else failwith ("You are not the owner or controller of this ID.")
   in
   let owner: address = current_id_details.owner in
   let profile: bytes =
@@ -151,24 +145,16 @@ let update_details (parameter, storage: update_details * storage) =
   in
   let updated_identities: (id, id_details) big_map  =
     Big_map.update id (Some updated_id_details) identities in
-  ([]: operation list), {identities = updated_identities;
-                         next_id = storage.next_id;
-                         name_price = storage.name_price;
-                         skip_price = storage.skip_price;
-                        }
+  ([]: operation list), {storage with identities = updated_identities}
 
 (* Let someone skip the next identity so nobody has to take one that's undesirable *)
 let skip (p,storage: unit * storage) =
   let void: unit =
     if amount = storage.skip_price
     then ()
-    else (failwith "Incorrect amount paid.": unit)
+    else failwith "Incorrect amount paid."
   in
-  ([]: operation list), {identities = storage.identities;
-                         next_id = storage.next_id + 1;
-                         name_price = storage.name_price;
-                         skip_price = storage.skip_price;
-                        }
+  ([]: operation list), {storage with next_id = storage.next_id + 1}
 
 let main (action, storage : action * storage) : return =
   match action with

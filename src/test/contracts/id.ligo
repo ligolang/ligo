@@ -78,11 +78,9 @@ function buy (const parameter : buy; const storage : storage) : list(operation) 
               profile = profile ;
       ];
     identities[new_id] := new_id_details;
-  end with ((nil : list(operation)), record [
+  end with ((nil : list(operation)), storage with record [
                               identities = identities;
                               next_id = new_id + 1;
-                              name_price = storage.name_price;
-                              skip_price = storage.skip_price;
                               ])
 
 function update_owner (const parameter : update_owner; const storage : storage) :
@@ -102,18 +100,12 @@ function update_owner (const parameter : update_owner; const storage : storage) 
         Some(id_details) -> id_details
       | None -> (failwith("This ID does not exist."): id_details)
       end;
-    var is_allowed : bool := False;
     if sender = id_details.owner
-    then is_allowed := True
+    then skip;
     else failwith("You are not the owner of this ID.");
     id_details.owner := new_owner;
     identities[id] := id_details;
-  end with ((nil: list(operation)), record [
-                                     identities = identities;
-                                     next_id = storage.next_id;
-                                     name_price = storage.name_price;
-                                     skip_price = storage.skip_price;
-                                   ])
+  end with ((nil: list(operation)), storage with record [ identities = identities; ])
 
 function update_details (const parameter : update_details; const storage : storage ) :
          list(operation) * storage is
@@ -130,9 +122,8 @@ function update_details (const parameter : update_details; const storage : stora
         Some(id_details) -> id_details
       | None -> (failwith("This ID does not exist."): id_details)
       end;
-    var is_allowed : bool := False;
     if (sender = id_details.controller) or (sender = id_details.owner)
-    then is_allowed := True
+    then skip;
     else failwith("You are not the owner or controller of this ID.");
     const owner: address = id_details.owner;
     const profile: bytes =
@@ -149,12 +140,7 @@ function update_details (const parameter : update_details; const storage : stora
     id_details.controller := controller;
     id_details.profile := profile;
     identities[id] := id_details;
-  end with ((nil: list(operation)), record [
-                                     identities = identities;
-                                     next_id = storage.next_id;
-                                     name_price = storage.name_price;
-                                     skip_price = storage.skip_price;
-                                    ])
+  end with ((nil: list(operation)), storage with record [ identities = identities; ])
 
 (* Let someone skip the next identity so nobody has to take one that's undesirable *)
 function skip_ (const p: unit; const storage: storage) : list(operation) * storage is
@@ -162,12 +148,7 @@ function skip_ (const p: unit; const storage: storage) : list(operation) * stora
     if amount = storage.skip_price
     then skip
     else failwith("Incorrect amount paid.");
-  end with ((nil: list(operation)), record [
-                                     identities = storage.identities;
-                                     next_id = storage.next_id + 1;
-                                     name_price = storage.name_price;
-                                     skip_price = storage.skip_price;
-                                   ])
+  end with ((nil: list(operation)), storage with record [ next_id = storage.next_id + 1; ])
 
 function main (const action : action; const storage : storage) : list(operation) * storage is
   case action of
