@@ -342,7 +342,8 @@ and eval : Ast_typed.expression -> env -> value result
         let {hd;tl;body;tv=_} = cases.match_cons in
         let env' = Env.extend (Env.extend env (hd,head)) (tl, V_List tail) in
         eval body env'
-      | Match_variant {cases=[{constructor=Constructor "true";body=match_true};{constructor=Constructor "false"; body=match_false}];_}, V_Ct (C_bool b) ->
+      | Match_variant {cases=[{constructor=Constructor t;body=match_true};{constructor=Constructor f; body=match_false}];_}, V_Ct (C_bool b)
+        when String.equal t "true" && String.equal f "false" ->
         if b then eval match_true env
         else eval match_false env
       | Match_variant {cases ; tv=_} , V_Construct (matched_c , proj) ->
