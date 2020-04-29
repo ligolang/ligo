@@ -18,7 +18,6 @@ type constant_tag =
   | C_list      (* * -> * *)
   | C_set       (* * -> * *)
   | C_unit      (* * *)
-  | C_bool      (* * *)
   | C_string    (* * *)
   | C_nat       (* * *)
   | C_mutez     (* * *)
@@ -87,7 +86,6 @@ let type_expression'_of_simple_c_constant = function
   | C_nat       , [] -> ok @@ Ast_typed.T_constant(TC_nat)
   | C_int       , [] -> ok @@ Ast_typed.T_constant(TC_int)
   | C_mutez     , [] -> ok @@ Ast_typed.T_constant(TC_mutez)
-  | C_bool      , [] -> ok @@ Ast_typed.T_constant(TC_bool)
   | C_operation , [] -> ok @@ Ast_typed.T_constant(TC_operation)
   | C_address   , [] -> ok @@ Ast_typed.T_constant(TC_address)
   | C_key       , [] -> ok @@ Ast_typed.T_constant(TC_key)
@@ -95,5 +93,5 @@ let type_expression'_of_simple_c_constant = function
   | C_chain_id  , [] -> ok @@ Ast_typed.T_constant(TC_chain_id)
   | C_signature , [] -> ok @@ Ast_typed.T_constant(TC_signature)
   | C_timestamp , [] -> ok @@ Ast_typed.T_constant(TC_timestamp)
-  | (C_unit | C_string | C_bytes | C_nat | C_int | C_mutez | C_bool | C_operation | C_address | C_key | C_key_hash | C_chain_id | C_signature | C_timestamp), _::_ ->
+  | (C_unit | C_string | C_bytes | C_nat | C_int | C_mutez | C_operation | C_address | C_key | C_key_hash | C_chain_id | C_signature | C_timestamp), _::_ ->
      failwith "internal error: wrong number of arguments for type constant"

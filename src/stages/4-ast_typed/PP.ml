@@ -180,7 +180,6 @@ let literal ppf (l : literal) =
   match l with
   | Literal_unit -> fprintf ppf "unit"
   | Literal_void -> fprintf ppf "void"
-  | Literal_bool b -> fprintf ppf "%b" b
   | Literal_int z -> fprintf ppf "%a" Z.pp_print z
   | Literal_nat z -> fprintf ppf "+%a" Z.pp_print z
   | Literal_timestamp z -> fprintf ppf "+%a" Z.pp_print z
@@ -205,7 +204,6 @@ let s =
     | TC_nat -> "nat"
     | TC_int -> "int"
     | TC_mutez -> "mutez"
-    | TC_bool -> "bool"
     | TC_operation -> "operation"
     | TC_address -> "address"
     | TC_key -> "key"

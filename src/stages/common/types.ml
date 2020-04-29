@@ -20,7 +20,6 @@ type 'a constructor_map = 'a CMap.t
     | TC_nat
     | TC_int
     | TC_mutez
-    | TC_bool
     | TC_operation
     | TC_address
     | TC_key
@@ -112,7 +111,6 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
     | "TC_nat"       , [] -> ok @@ T_constant(TC_nat)
     | "TC_int"       , [] -> ok @@ T_constant(TC_int)
     | "TC_mutez"     , [] -> ok @@ T_constant(TC_mutez)
-    | "TC_bool"      , [] -> ok @@ T_constant(TC_bool)
     | "TC_operation" , [] -> ok @@ T_constant(TC_operation)
     | "TC_address"   , [] -> ok @@ T_constant(TC_address)
     | "TC_key"       , [] -> ok @@ T_constant(TC_key)
@@ -142,7 +140,6 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
     | TC_nat       -> "TC_nat", []
     | TC_int       -> "TC_int", []
     | TC_mutez     -> "TC_mutez", []
-    | TC_bool      -> "TC_bool", []
     | TC_operation -> "TC_operation", []
     | TC_address   -> "TC_address", []
     | TC_key       -> "TC_key", []
@@ -162,7 +159,6 @@ end
 
 type literal =
   | Literal_unit
-  | Literal_bool of bool
   | Literal_int of Z.t
   | Literal_nat of Z.t
   | Literal_timestamp of Z.t

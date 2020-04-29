@@ -34,7 +34,6 @@ let make_n_t type_name type_value = { type_name ; type_value }
 
 let t_signature ?loc ?s ()  : type_expression = make_t ?loc (T_constant TC_signature) s
 let t_chain_id ?loc ?s ()   : type_expression = make_t ?loc (T_constant TC_chain_id) s
-let t_bool ?loc ?s ()       : type_expression = make_t ?loc (T_constant TC_bool) s
 let t_string ?loc ?s ()     : type_expression = make_t ?loc (T_constant TC_string) s
 let t_bytes ?loc ?s ()      : type_expression = make_t ?loc (T_constant TC_bytes) s
 let t_key ?loc ?s ()        : type_expression = make_t ?loc (T_constant TC_key) s
@@ -67,10 +66,13 @@ let t_big_map ?loc k v ?s () = make_t ?loc (T_operator (TC_big_map { k ; v })) s
 let t_map_or_big_map ?loc k v ?s () = make_t ?loc (T_operator (TC_map_or_big_map { k ; v })) s
 
 let t_sum m ?loc ?s () : type_expression = make_t ?loc (T_sum m) s
-let make_t_ez_sum ?loc (lst:(constructor' * ctor_content) list) : type_expression =
+let make_t_ez_sum ?loc ?s (lst:(constructor' * ctor_content) list) : type_expression =
   let aux prev (k, v) = CMap.add k v prev in
   let map = List.fold_left aux CMap.empty lst in
-  make_t ?loc (T_sum map) None
+  make_t ?loc (T_sum map) s
+
+let t_bool ?loc ?s ()       : type_expression = make_t_ez_sum ?loc ?s
+  [(Constructor "true", {ctor_type=t_unit ();michelson_annotation=None});(Constructor "false", {ctor_type=t_unit ();michelson_annotation=None})]
 
 let t_function param result ?loc ?s () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result}) s
 let t_shallow_closure param result ?loc ?s () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result}) s
@@ -90,7 +92,8 @@ let get_lambda_with_type e =
   | _ -> simple_fail "not a lambda with functional type"
 
 let get_t_bool (t:type_expression) : unit result = match t.type_content with
-  | T_constant (TC_bool) -> ok ()
+  | T_variable v when Var.equal v Stage_common.Constant.t_bool -> ok ()
+  | t when (compare t (t_bool ()).type_content) = 0-> ok ()
   | _ -> fail @@ Errors.not_a_x_type "bool" t ()
 
 let get_t_int (t:type_expression) : unit result = match t.type_content with
@@ -286,7 +289,6 @@ let e_unit () : expression_content =     E_literal (Literal_unit)
 let e_int n : expression_content = E_literal (Literal_int n)
 let e_nat n : expression_content = E_literal (Literal_nat n)
 let e_mutez n : expression_content = E_literal (Literal_mutez n)
-let e_bool b : expression_content = E_literal (Literal_bool b)
 let e_string s : expression_content = E_literal (Literal_string s)
 let e_bytes s : expression_content = E_literal (Literal_bytes s)
 let e_timestamp s : expression_content = E_literal (Literal_timestamp s)
@@ -302,11 +304,15 @@ let e_application lamb args : expression_content = E_application {lamb;args}
 let e_variable v : expression_content = E_variable v
 let e_let_in let_binder inline rhs let_result = E_let_in { let_binder ; rhs ; let_result; inline }
 
+let e_constructor constructor element: expression_content = E_constructor {constructor;element}
+
+let e_bool b env : expression_content = e_constructor (Constructor (string_of_bool b)) (make_e (e_unit ())(t_unit()) env)
+
 let e_a_unit = make_e (e_unit ()) (t_unit ())
 let e_a_int n = make_e (e_int n) (t_int ())
 let e_a_nat n = make_e (e_nat n) (t_nat ())
 let e_a_mutez n = make_e (e_mutez n) (t_mutez ())
-let e_a_bool b = make_e (e_bool b) (t_bool ())
+let e_a_bool b = fun env -> make_e (e_bool b env) (t_bool ()) env
 let e_a_string s = make_e (e_string s) (t_string ())
 let e_a_address s = make_e (e_address s) (t_address ())
 let e_a_pair a b = make_e (e_pair a b)
@@ -326,6 +332,7 @@ let ez_e_a_record r = make_e (ez_e_record r) (ez_t_record (List.map (fun (x, y) 
 let e_a_let_in binder expr body attributes = make_e (e_let_in binder expr body attributes) (get_type_expression body)
 
 
+
 let get_a_int (t:expression) =
   match t.expression_content with
   | E_literal (Literal_int n) -> ok n
@@ -338,7 +345,7 @@ let get_a_unit (t:expression) =
 
 let get_a_bool (t:expression) =
   match t.expression_content with
-  | E_literal (Literal_bool b) -> ok b
+  | E_constructor {constructor=Constructor name;element} when (String.equal name "true" || String.equal name "false") && element.expression_content = e_unit () -> ok (bool_of_string name)
   | _ -> simple_fail "not a bool"
 
 

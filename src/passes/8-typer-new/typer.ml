@@ -2,6 +2,7 @@ open Trace
 module I = Ast_core
 module O = Ast_typed
 open O.Combinators
+module DEnv = Environment
 module Environment = O.Environment
 module Solver = Solver
 type environment = Environment.t
@@ -233,9 +234,6 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -
       return expr' state constraints expr_type
     )
 
-  | E_literal (Literal_bool b) -> (
-      return_wrapped (e_bool b) state @@ Wrap.literal (t_bool ())
-    )
   | E_literal (Literal_string s) -> (
       return_wrapped (e_string s) state @@ Wrap.literal (t_string ())
     )
@@ -481,7 +479,7 @@ let type_and_subst_xyz (env_state_node : environment * Solver.state * 'a) (apply
   ok (program, state)
 
 let type_program (p : I.program) : (O.program * Solver.state) result =
-  let empty_env = Ast_typed.Environment.full_empty in
+  let empty_env = DEnv.default in
   let empty_state = Solver.initial_state in
   type_and_subst_xyz (empty_env , empty_state , p) Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_state
 

@@ -255,7 +255,6 @@ C_STEPS_TO_QUOTA
 (*interpreter*)
 and eval_literal : Ast_typed.literal -> value result = function
   | Literal_unit        -> ok @@ V_Ct (C_unit)
-  | Literal_bool b      -> ok @@ V_Ct (C_bool b)
   | Literal_int i       -> ok @@ V_Ct (C_int i)
   | Literal_nat n       -> ok @@ V_Ct (C_nat n)
   | Literal_timestamp i -> ok @@ V_Ct (C_timestamp i)
@@ -329,6 +328,8 @@ and eval : Ast_typed.expression -> env -> value result
         arguments in
       apply_operator cons_name operands'
     )
+    | E_constructor { constructor = Constructor c ; element } when (String.equal c "true" || String.equal c "false")
+     && element.expression_content = Ast_typed.e_unit () -> ok @@ V_Ct (C_bool (bool_of_string c))
     | E_constructor { constructor = Constructor c ; element } ->
       let%bind v' = eval element env in
       ok @@ V_Construct (c,v')

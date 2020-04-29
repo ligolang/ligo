@@ -43,7 +43,6 @@ module Concrete_to_imperative = struct
     | "nat"       -> Some TC_nat
     | "int"       -> Some TC_int
     | "tez"       -> Some TC_mutez
-    | "bool"      -> Some TC_bool
     | "operation" -> Some TC_operation
     | "address"   -> Some TC_address
     | "key"       -> Some TC_key

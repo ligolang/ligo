@@ -9,7 +9,6 @@ type type_constant =
     | TC_nat
     | TC_int
     | TC_mutez
-    | TC_bool
     | TC_operation
     | TC_address
     | TC_key
@@ -77,7 +76,6 @@ and type_expression = {
 
 type literal =
   | Literal_unit
-  | Literal_bool of bool
   | Literal_int of z
   | Literal_nat of z
   | Literal_timestamp of z

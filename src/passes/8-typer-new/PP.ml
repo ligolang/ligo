@@ -14,7 +14,6 @@ let type_constraint : _ -> type_constraint_simpl -> unit = fun ppf ->
       | Solver.Core.C_list         -> "list"
       | Solver.Core.C_set          -> "set"
       | Solver.Core.C_unit         -> "unit"
-      | Solver.Core.C_bool         -> "bool"
       | Solver.Core.C_string       -> "string"
       | Solver.Core.C_nat          -> "nat"
       | Solver.Core.C_mutez        -> "mutez"

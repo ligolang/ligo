@@ -117,7 +117,7 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
   (* hack to avoid reimplementing subst_binder for 2-ary binder in E_if_cons:
      intuitively, we substitute in \hd tl. expr' as if it were \hd. \tl. expr *)
   let subst_binder2 y z expr' =
-    let dummy = T_base TC_unit in
+    let dummy = T_base TB_unit in
     let hack = { content = E_closure { binder = z ; body = expr' } ;
                  type_value = dummy } in
     match subst_binder y hack with
@@ -199,7 +199,7 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
   )
 
 let%expect_test _ =
-  let dummy_type = T_base TC_unit in
+  let dummy_type = T_base TB_unit in
   let wrap e = { content = e ; type_value = dummy_type } in
 
   let show_subst ~body ~x ~expr =

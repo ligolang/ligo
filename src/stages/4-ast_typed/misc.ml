@@ -407,9 +407,6 @@ let type_expression_eq ab = Trace.to_bool @@ assert_type_expression_eq ab
 
 let assert_literal_eq (a, b : literal * literal) : unit result =
   match (a, b) with
-  | Literal_bool a, Literal_bool b when a = b -> ok ()
-  | Literal_bool _, Literal_bool _ -> fail @@ different_literals "booleans" a b
-  | Literal_bool _, _ -> fail @@ different_literals_because_different_types "bool vs non-bool" a b
   | Literal_int a, Literal_int b when a = b -> ok ()
   | Literal_int _, Literal_int _ -> fail @@ different_literals "different ints" a b
   | Literal_int _, _ -> fail @@ different_literals_because_different_types "int vs non-int" a b

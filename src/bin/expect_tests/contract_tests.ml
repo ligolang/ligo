@@ -1425,7 +1425,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "redundant_constructors.mligo" ; "main" ] ;
   [%expect {|
-    ligo: redundant constructor:  {"constructor":"Add","environment":"- E[]\tT[union_a -> sum[Add -> int , Remove -> int]] ]"}
+    ligo: redundant constructor:  {"constructor":"Add","environment":"- E[]\tT[union_a -> sum[Add -> int , Remove -> int]]\n- E[]\tT[bool -> sum[false -> unit , true -> unit]]]"}
 
 
      If you're not sure how to fix this error, you can
@@ -1465,7 +1465,7 @@ ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, char
 
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_no_inline.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "create_contract_no_inline.mligo", line 3, characters 40-46. unbound type variable:  {"variable":"return","location":"in file \"create_contract_no_inline.mligo\", line 3, characters 40-46","in":"- E[foo -> int]\tT[] ]","did_you_mean":"no suggestion"}
+    ligo: in file "create_contract_no_inline.mligo", line 3, characters 40-46. unbound type variable:  {"variable":"return","location":"in file \"create_contract_no_inline.mligo\", line 3, characters 40-46","in":"- E[foo -> int]\tT[] - E[]\tT[bool -> sum[false -> unit , true -> unit]]]","did_you_mean":"no suggestion"}
 
 
      If you're not sure how to fix this error, you can

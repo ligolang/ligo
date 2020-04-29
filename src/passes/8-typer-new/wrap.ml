@@ -47,7 +47,6 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
   | T_constant (type_name) ->
      let csttag = Core.(match type_name with
                         | TC_unit      -> C_unit
-                        | TC_bool      -> C_bool
                         | TC_string    -> C_string
                         | TC_nat       -> C_nat
                         | TC_mutez     -> C_mutez
@@ -94,7 +93,6 @@ let rec type_expression_to_type_value_copypasted : I.type_expression -> O.type_v
   | T_constant (type_name) ->
      let csttag = Core.(match type_name with
                         | TC_unit   -> C_unit
-                        | TC_bool   -> C_bool
                         | TC_string -> C_string
                         | _        -> failwith "unknown type constructor")
      in
@@ -278,7 +276,7 @@ let loop : T.type_expression -> T.type_expression -> (constraints * T.type_varia
   let body' = type_expression_to_type_value body in
   let whole_expr = Core.fresh_type_variable () in
   O.[
-      C_equation (expr'                 , P_constant (C_bool , [])) ;
+      C_equation (expr'                 , P_variable (Stage_common.Constant.t_bool)) ;
       C_equation (body'                 , P_constant (C_unit , [])) ;
       C_equation (P_variable whole_expr , P_constant (C_unit , []))
   ] , whole_expr
