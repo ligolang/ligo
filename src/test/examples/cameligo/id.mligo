@@ -4,17 +4,10 @@
   compile:
     entrypoint: main
   dryRun:
-    entrypoint: main
-    parameters: Increment 1
-    storage: 0
   deploy:
-    entrypoint: main
-    storage: 0
   evaluateValue:
     entrypoint: ""
   evaluateFunction:
-    entrypoint: add
-    parameters: 5, 6
 *_*)
 
 type id = int
