@@ -93,7 +93,7 @@ let get_lambda_with_type e =
 
 let get_t_bool (t:type_expression) : unit result = match t.type_content with
   | T_variable v when Var.equal v Stage_common.Constant.t_bool -> ok ()
-  | T_sum m when m = CMap.of_list [(Constructor "true", {ctor_type=t_unit();michelson_annotation=None});(Constructor "false",{ctor_type=t_unit();michelson_annotation=None})] -> ok ()
+  | t when (compare t (t_bool ()).type_content) = 0-> ok ()
   | _ -> fail @@ Errors.not_a_x_type "bool" t ()
 
 let get_t_int (t:type_expression) : unit result = match t.type_content with
@@ -345,7 +345,7 @@ let get_a_unit (t:expression) =
 
 let get_a_bool (t:expression) =
   match t.expression_content with
-  | E_constructor {constructor=Constructor name;element} when (name = "true" || name = "false") && element.expression_content = e_unit () -> ok (bool_of_string name)
+  | E_constructor {constructor=Constructor name;element} when (String.equal name "true" || String.equal name "false") && element.expression_content = e_unit () -> ok (bool_of_string name)
   | _ -> simple_fail "not a bool"
 
 

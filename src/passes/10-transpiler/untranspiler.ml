@@ -50,7 +50,7 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
           get_bool v in
         return (e_bool b Environment.full_empty)
       )
-  | T_sum m when m = CMap.of_list [(Constructor "true",{ctor_type=t_unit ();michelson_annotation=None});(Constructor "false",{ctor_type=t_unit ();michelson_annotation=None})] -> (
+  | t when (compare t (t_bool ()).type_content) = 0-> (
         let%bind b =
           trace_strong (wrong_mini_c_value "bool" v) @@
           get_bool v in

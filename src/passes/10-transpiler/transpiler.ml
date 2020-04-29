@@ -232,7 +232,7 @@ let transpile_constant' : AST.constant' -> constant' = function
 let rec transpile_type (t:AST.type_expression) : type_value result =
   match t.type_content with
   | T_variable (name) when Var.equal name Stage_common.Constant.t_bool -> ok (T_base TB_bool)
-  | T_sum (m) when m = (AST.CMap.of_list [(Constructor "true", AST.{ctor_type=t_unit();michelson_annotation=None});(Constructor "false", AST.{ctor_type=t_unit ();michelson_annotation=None})])-> ok (T_base TB_bool)
+  | t when (compare t (t_bool ()).type_content) = 0-> ok (T_base TB_bool)
   | T_variable (name) -> fail @@ no_type_variable @@ name
   | T_constant (TC_int)       -> ok (T_base TB_int)
   | T_constant (TC_nat)       -> ok (T_base TB_nat)
@@ -411,7 +411,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       let%bind a = transpile_annotated_expression lamb in
       let%bind b = transpile_annotated_expression args in
       return @@ E_application (a, b)
-  | E_constructor {constructor=Constructor name;element} when (name="true"||name="false") && element.expression_content = AST.e_unit () ->
+  | E_constructor {constructor=Constructor name;element} when (String.equal name "true"|| String.equal name "false") && element.expression_content = AST.e_unit () ->
     return @@ E_literal (D_bool (bool_of_string name))
   | E_constructor {constructor;element} -> (
       let%bind param' = transpile_annotated_expression element in

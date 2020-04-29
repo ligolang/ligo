@@ -328,7 +328,7 @@ and eval : Ast_typed.expression -> env -> value result
         arguments in
       apply_operator cons_name operands'
     )
-    | E_constructor { constructor = Constructor c ; element } when (c = "true" || c = "false")
+    | E_constructor { constructor = Constructor c ; element } when (String.equal c "true" || String.equal c "false")
      && element.expression_content = Ast_typed.e_unit () -> ok @@ V_Ct (C_bool (bool_of_string c))
     | E_constructor { constructor = Constructor c ; element } ->
       let%bind v' = eval element env in
