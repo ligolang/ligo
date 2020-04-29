@@ -159,7 +159,7 @@ let normalizer_grouped_by_variable : (type_constraint_simpl , type_constraint_si
       UnionFindWrapper.add_constraints_related_to tvar constraints dbs
     in List.fold_left aux dbs tvars
   in
-  let dbs = match new_constraint with
+  let dbs = match new_constraint.c_simpl with
       SC_Constructor ({tv ; c_tag = _ ; tv_list} as c) -> store_constraint (tv :: tv_list) {constructor = [c] ; poly = []  ; tc = []}
     | SC_Typeclass   ({tc = _ ; args}            as c) -> store_constraint args            {constructor = []  ; poly = []  ; tc = [c]}
     | SC_Poly        ({tv; forall = _}           as c) -> store_constraint [tv]            {constructor = []  ; poly = [c] ; tc = []}
@@ -173,7 +173,7 @@ let normalizer_grouped_by_variable : (type_constraint_simpl , type_constraint_si
     TOOD: are we checking somewhere that 'b … = 'b2 … ? *)
 let normalizer_assignments : (type_constraint_simpl , type_constraint_simpl) normalizer =
   fun dbs new_constraint ->
-    match new_constraint with
+    match new_constraint.c_simpl with
     | SC_Constructor ({tv ; c_tag = _ ; tv_list = _} as c) ->
       let assignments = Map.update tv (function None -> Some c | e -> e) dbs.assignments in
       let dbs = {dbs with assignments} in
@@ -210,28 +210,28 @@ let rec normalizer_simpl : (type_constraint , type_constraint_simpl) normalizer 
   fun dbs new_constraint ->
   let insert_fresh a b =
     let fresh = Core.fresh_type_variable () in
-    let (dbs , cs1) = normalizer_simpl dbs (c_equation (P_variable fresh) a) in
-    let (dbs , cs2) = normalizer_simpl dbs (c_equation (P_variable fresh) b) in
+    let (dbs , cs1) = normalizer_simpl dbs (c_equation (P_variable fresh) a "normalizer: simpl") in
+    let (dbs , cs2) = normalizer_simpl dbs (c_equation (P_variable fresh) b "normalizer: simpl") in
     (dbs , cs1 @ cs2) in
   let split_constant a c_tag args =
     let fresh_vars = List.map (fun _ -> Core.fresh_type_variable ()) args in
-    let fresh_eqns = List.map (fun (v,t) -> c_equation (P_variable v) t) (List.combine fresh_vars args) in
+    let fresh_eqns = List.map (fun (v,t) -> c_equation (P_variable v) t "normalizer: split_constant") (List.combine fresh_vars args) in
     let (dbs , recur) = List.fold_map_acc normalizer_simpl dbs fresh_eqns in
-    (dbs , [SC_Constructor {tv=a;c_tag;tv_list=fresh_vars}] @ List.flatten recur) in
-  let gather_forall a forall = (dbs , [SC_Poly { tv=a; forall }]) in
-  let gather_alias a b = (dbs , [SC_Alias { a ; b }]) in
+    (dbs , [{c_simpl=SC_Constructor {tv=a;c_tag;tv_list=fresh_vars};reason_simpl="normalizer: split constant"}] @ List.flatten recur) in
+  let gather_forall a forall = (dbs , [{c_simpl=SC_Poly { tv=a; forall };reason_simpl="normalizer: gather_forall"}]) in
+  let gather_alias a b = (dbs , [{c_simpl=SC_Alias { a ; b };reason_simpl="normalizer: gather_alias"}]) in
   let reduce_type_app a b =
     let (reduced, new_constraints) = check_applied @@ type_level_eval b in
     let (dbs , recur) = List.fold_map_acc normalizer_simpl dbs new_constraints in
-    let (dbs , resimpl) = normalizer_simpl dbs (c_equation a reduced) in (* Note: this calls recursively but cant't fall in the same case. *)
+    let (dbs , resimpl) = normalizer_simpl dbs (c_equation a reduced "normalizer: reduce_type_app") in (* Note: this calls recursively but cant't fall in the same case. *)
     (dbs , resimpl @ List.flatten recur) in
   let split_typeclass args tc =
     let fresh_vars = List.map (fun _ -> Core.fresh_type_variable ()) args in
-    let fresh_eqns = List.map (fun (v,t) -> c_equation (P_variable v) t) (List.combine fresh_vars args) in
+    let fresh_eqns = List.map (fun (v,t) -> c_equation (P_variable v) t "normalizer: split_typeclass") (List.combine fresh_vars args) in
     let (dbs , recur) = List.fold_map_acc normalizer_simpl dbs fresh_eqns in
-    (dbs, [SC_Typeclass { tc ; args = fresh_vars }] @ List.flatten recur) in
+    (dbs, [{c_simpl=SC_Typeclass { tc ; args = fresh_vars };reason_simpl="normalizer: split_typeclass"}] @ List.flatten recur) in
 
-  match new_constraint with
+  match new_constraint.c with
   (* break down (forall 'b, body = forall 'c, body') into ('a = forall 'b, body and 'a = forall 'c, body')) *)
   | C_equation {aval=(P_forall _ as a); bval=(P_forall _ as b)}     -> insert_fresh a b
   (* break down (forall 'b, body = c(args)) into ('a = forall 'b, body and 'a = c(args)) *)
@@ -325,7 +325,7 @@ type 'selector_output propagator = 'selector_output -> structured_dbs -> new_con
 let selector_break_ctor :  (type_constraint_simpl, output_break_ctor) selector =
   (* find two rules with the shape a = k(var …) and a = k'(var' …) *)
   fun type_constraint_simpl dbs ->
-  match type_constraint_simpl with
+  match type_constraint_simpl.c_simpl with
     SC_Constructor c ->
     (* finding other constraints related to the same type variable and
        with the same sort of constraint (constructor vs. constructor)
@@ -473,7 +473,7 @@ let propagator_break_ctor : output_break_ctor propagator =
   (* produce constraints: *)
 
   (* a.tv = b.tv *)
-  let eq1 = c_equation (P_variable a.tv) (P_variable b.tv) in
+  let eq1 = c_equation (P_variable a.tv) (P_variable b.tv) "propagator: break_ctor" in
   (* a.c_tag = b.c_tag *)
   if (compare_simple_c_constant a.c_tag b.c_tag) <> 0 then
     failwith (Format.asprintf "type error: incompatible types, not same ctor %a vs. %a (compare returns %d)" debug_pp_c_constructor_simpl a debug_pp_c_constructor_simpl b (compare_simple_c_constant a.c_tag b.c_tag))
@@ -482,7 +482,7 @@ let propagator_break_ctor : output_break_ctor propagator =
   if List.length a.tv_list <> List.length b.tv_list then
     failwith "type error: incompatible types, not same length"
   else
-    let eqs3 = List.map2 (fun aa bb -> c_equation (P_variable aa) (P_variable bb)) a.tv_list b.tv_list in
+    let eqs3 = List.map2 (fun aa bb -> c_equation (P_variable aa) (P_variable bb) "propagator: break_ctor") a.tv_list b.tv_list in
     let eqs = eq1 :: eqs3 in
     (eqs , []) (* no new assignments *)
 
@@ -531,7 +531,12 @@ and compare_type_expression = function
       | P_variable _ -> 1
       | P_constant _ -> 1
       | P_apply { tf=b1; targ=b2 } -> compare_type_expression a1 b1 <? fun () -> compare_type_expression a2 b2)
-and compare_type_constraint = function
+and compare_type_constraint = fun { c = ca ; reason = ra } { c = cb ; reason = rb } ->
+  let c = compare_type_constraint_ ca cb in
+  if c < 0 then -1
+  else if c = 0 then String.compare ra rb
+  else 1
+and compare_type_constraint_ = function
   | C_equation { aval=a1; bval=a2 } -> (function
       | C_equation { aval=b1; bval=b2 } -> compare_type_expression a1 b1 <? fun () -> compare_type_expression a2 b2
       | C_typeclass _ -> -1
@@ -569,7 +574,7 @@ let selector_specialize1 : (type_constraint_simpl, output_specialize1) selector 
   (* TODO: do the same for two rules with the shape (a = forall b, d) and tc(a…) *)
   (* TODO: do the appropriate thing for two rules with the shape (a = forall b, d) and (a = forall b', d') *)
   fun type_constraint_simpl dbs ->
-  match type_constraint_simpl with
+  match type_constraint_simpl.c_simpl with
     SC_Constructor c                ->
     (* vice versa *)
     let other_cs = (UnionFindWrapper.get_constraints_related_to c.tv dbs).poly in
@@ -599,7 +604,7 @@ let propagator_specialize1 : output_specialize1 propagator =
      The substitution is obtained by immediately applying the forall. *)
   let apply = (P_apply {tf = (P_forall a.forall); targ = P_variable fresh_existential}) in
   let (reduced, new_constraints) = check_applied @@ type_level_eval apply in
-  let eq1 = c_equation (P_variable b.tv) reduced in
+  let eq1 = c_equation (P_variable b.tv) reduced "propagator: specialize1" in
   let eqs = eq1 :: new_constraints in
   (eqs, []) (* no new assignments *)
 

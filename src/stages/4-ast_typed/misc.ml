@@ -536,4 +536,4 @@ let p_constant (p_ctor_tag : constant_tag) (p_ctor_args : p_ctor_args) =
       p_ctor_args : p_ctor_args ;
     }
 
-let c_equation aval bval = C_equation { aval ; bval }
+let c_equation aval bval reason = { c = C_equation { aval ; bval }; reason }

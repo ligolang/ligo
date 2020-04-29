@@ -509,8 +509,11 @@ and c_access_label = {
     c_access_label_tvar : type_variable ;
   }
 
-(*What i was saying just before *)
-and type_constraint =
+and type_constraint = {
+  reason : string ;
+  c : type_constraint_ ;
+}
+and type_constraint_ =
   (* | C_assignment of (type_variable * type_pattern) *)
   | C_equation of c_equation (* TVA = TVB *)
   | C_typeclass of c_typeclass (* TVL ∈ TVLs, for now in extension, later add intensional (rule-based system for inclusion in the typeclass) *)
@@ -569,7 +572,11 @@ and c_poly_simpl = {
   tv     : type_variable ;
   forall : p_forall      ;
 }
-and type_constraint_simpl =
+and type_constraint_simpl = {
+    reason_simpl : string ;
+    c_simpl : type_constraint_simpl_ ;
+  }
+and type_constraint_simpl_ =
   | SC_Constructor of c_constructor_simpl             (* α = ctor(β, …) *)
   | SC_Alias       of c_alias                         (* α = β *)
   | SC_Poly        of c_poly_simpl                    (* α = forall β, δ where δ can be a more complex type *)
