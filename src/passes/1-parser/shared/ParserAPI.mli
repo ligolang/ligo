@@ -56,7 +56,7 @@ module type PARSER =
 
 module Make (IO: IO)
             (Lexer: Lexer.S)
-            (Parser: PARSER with type token = Lexer.Token.token)
+            (Parser: PARSER with type token = Lexer.token)
             (ParErr: sig val message : int -> string end) :
   sig
     (* WARNING: The following parsers may all raise [Lexer.Error] *)
@@ -78,8 +78,8 @@ module Make (IO: IO)
 
     exception Point of error
 
-    val incr_contract : Lexer.instance -> Parser.ast
-    val incr_expr     : Lexer.instance -> Parser.expr
+    val incr_contract : Lexer.token LexerLib.instance -> Parser.ast
+    val incr_expr     : Lexer.token LexerLib.instance -> Parser.expr
 
     val format_error :
       ?offsets:bool -> [`Point | `Byte] -> error -> string Region.reg

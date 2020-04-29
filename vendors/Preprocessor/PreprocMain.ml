@@ -4,9 +4,12 @@ module Region  = Simple_utils.Region
 module Preproc = Preprocessor.Preproc
 module EvalOpt = Preprocessor.EvalOpt
 
-let highlight msg = Printf.eprintf "\027[31m%s\027[0m\n%!" msg
+let highlight msg = Printf.eprintf "\027[31m%s\027[0m%!" msg
 
-let options = EvalOpt.(read ~lang:`PascaLIGO ~ext:".ligo")
+let options =
+  let open EvalOpt in
+  let block = mk_block ~opening:"(*" ~closing:"*)"
+  in read ~block ~line:"//" ".ligo"
 
 let preproc cin =
   let buffer = Lexing.from_channel cin in

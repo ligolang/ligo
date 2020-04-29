@@ -2,25 +2,28 @@
 
 (* The type [options] gathers the command-line options. *)
 
-type language = [`PascaLIGO | `CameLIGO | `ReasonLIGO]
-
-val lang_to_string : language -> string
-
 module SSet : Set.S with type elt = string and type t = Set.Make(String).t
+
+type line_comment = string (* Opening of a line comment *)
+type block_comment = <opening : string; closing : string>
+
+val mk_block : opening:string -> closing:string -> block_comment
 
 type options = <
   input   : string option;
   libs    : string list;
   verbose : SSet.t;
   offsets : bool;
-  lang    : language;
-  ext     : string   (* ".ligo", ".mligo", ".religo" *)
+  block   : block_comment option;
+  line    : line_comment option;
+  ext     : string
 >
 
 val make :
   input:string option ->
   libs:string list ->
-  lang:language ->
+  ?block:block_comment ->
+  ?line:line_comment ->
   offsets:bool ->
   verbose:SSet.t ->
   ext:string ->
@@ -30,4 +33,7 @@ val make :
    the name of the concrete syntax. This is needed to correctly handle
    comments. *)
 
-val read : lang:language -> ext:string -> options
+type extension = string
+
+val read :
+  ?block:block_comment -> ?line:line_comment -> extension -> options

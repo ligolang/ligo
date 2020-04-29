@@ -2,6 +2,8 @@ $HOME/git/OCaml-build/Makefile
 
 ../shared/Lexer.mli
 ../shared/Lexer.mll
+../shared/LexerLib.mli
+../shared/LexerLib.ml
 ../shared/EvalOpt.ml
 ../shared/EvalOpt.mli
 ../shared/FQueue.ml
@@ -18,5 +20,6 @@ $HOME/git/OCaml-build/Makefile
 ../shared/LexerUnit.ml
 ../shared/ParserUnit.mli
 ../shared/ParserUnit.ml
+../shared/LexerLib.ml
 
 $HOME/git/ligo/_build/default/src/passes/1-parser/pascaligo/ParErr.ml

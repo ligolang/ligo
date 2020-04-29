@@ -5,24 +5,14 @@
 
 (* Shorthands *)
 
-type lexeme = string
-
-let sprintf = Printf.sprintf
-
 module Region = Simple_utils.Region
 module Pos    = Simple_utils.Pos
 module SMap   = Map.Make (String)
 module SSet   = Set.Make (String)
 
-(* Hack to roll back one lexeme in the current semantic action *)
-(*
-let rollback buffer =
-  let open Lexing in
-  let len = String.length (lexeme buffer) in
-  let pos_cnum = buffer.lex_curr_p.pos_cnum - len in
-  buffer.lex_curr_pos <- buffer.lex_curr_pos - len;
-  buffer.lex_curr_p <- {buffer.lex_curr_p with pos_cnum}
-*)
+type lexeme = string
+
+let sprintf = Printf.sprintf
 
 (* TOKENS *)
 
@@ -123,6 +113,8 @@ type t =
 | EOF of Region.t
 
 
+(* Projections *)
+
 type token = t
 
 let proj_token = function
@@ -130,31 +122,19 @@ let proj_token = function
 
   String Region.{region; value} ->
     region, sprintf "String %s" value
-
 | Bytes Region.{region; value = s,b} ->
     region,
-    sprintf "Bytes (\"%s\", \"0x%s\")"
-      s (Hex.show b)
-
+    sprintf "Bytes (\"%s\", \"0x%s\")" s (Hex.show b)
 | Int Region.{region; value = s,n} ->
     region, sprintf "Int (\"%s\", %s)" s (Z.to_string n)
-
 | Nat Region.{region; value = s,n} ->
     region, sprintf "Nat (\"%s\", %s)" s (Z.to_string n)
-
 | Mutez Region.{region; value = s,n} ->
     region, sprintf "Mutez (\"%s\", %s)" s (Z.to_string n)
-
 | Ident Region.{region; value} ->
     region, sprintf "Ident \"%s\"" value
-
 | Constr Region.{region; value} ->
     region, sprintf "Constr \"%s\"" value
-
-(*
-| Attr {header; string={region; value}} ->
-    region, sprintf "Attr (\"%s\",\"%s\")" header value
- *)
 
   (* Symbols *)
 
@@ -244,7 +224,7 @@ let to_lexeme = function
 | Bytes b   -> fst b.Region.value
 | Int i
 | Nat i
-| Mutez i     -> fst i.Region.value
+| Mutez i   -> fst i.Region.value
 | Ident id
 | Constr id -> id.Region.value
 
@@ -382,9 +362,7 @@ let keywords = [
   (fun reg -> With       reg)
 ]
 
-let reserved =
-  let open SSet in
-  empty |> add "arguments"
+let reserved = SSet.empty
 
 let constructors = [
   (fun reg -> False  reg);
@@ -483,24 +461,21 @@ type nat_err =
 | Non_canonical_zero_nat
 
 let mk_nat lexeme region =
-  match (String.index_opt lexeme 'n') with
-  | None -> Error Invalid_natural
-  | Some _ -> (
-    let z =
-      Str.(global_replace (regexp "_") "" lexeme) |>
-      Str.(global_replace (regexp "n") "") |>
-      Z.of_string in
-    if Z.equal z Z.zero && lexeme <> "0n"
-    then Error Non_canonical_zero_nat
-    else Ok (Nat Region.{region; value = lexeme,z})
-  )
+  match String.index_opt lexeme 'n' with
+      None -> Error Invalid_natural
+  | Some _ -> let z =
+                Str.(global_replace (regexp "_") "" lexeme) |>
+                  Str.(global_replace (regexp "n") "") |>
+                  Z.of_string in
+             if   Z.equal z Z.zero && lexeme <> "0n"
+             then Error Non_canonical_zero_nat
+             else Ok (Nat Region.{region; value = lexeme,z})
 
 let mk_mutez lexeme region =
-  let z =
-    Str.(global_replace (regexp "_") "" lexeme) |>
-    Str.(global_replace (regexp "mutez") "") |>
-    Z.of_string in
-  if Z.equal z Z.zero && lexeme <> "0mutez"
+  let z = Str.(global_replace (regexp "_") "" lexeme) |>
+            Str.(global_replace (regexp "mutez") "") |>
+            Z.of_string in
+  if   Z.equal z Z.zero && lexeme <> "0mutez"
   then Error Non_canonical_zero
   else Ok (Mutez Region.{region; value = lexeme, z})
 
@@ -558,104 +533,76 @@ let mk_constr lexeme region =
 
 type attr_err = Invalid_attribute
 
-let mk_attr _header _string _region =
-  Error Invalid_attribute
+let mk_attr _ _ _ = Error Invalid_attribute
 
 (* Predicates *)
 
-let is_string = function
-  String _ -> true
-|        _ -> false
+let is_string = function String _ -> true | _ -> false
+let is_bytes  = function Bytes _  -> true | _ -> false
+let is_int    = function Int _    -> true | _ -> false
+let is_ident  = function Ident _  -> true | _ -> false
+let is_eof    = function EOF _    -> true | _ -> false
+let is_minus  = function MINUS _  -> true | _ -> false
 
-let is_bytes = function
-  Bytes _ -> true
-|       _ -> false
+(* Errors *)
 
-let is_int = function
-  Int _ -> true
-|     _ -> false
+type error =
+  Odd_lengthed_bytes
+| Missing_break
+| Negative_byte_sequence
 
-let is_ident = function
-  Ident _ -> true
-|       _ -> false
+let error_to_string = function
+  Odd_lengthed_bytes ->
+    "The length of the byte sequence is an odd number.\n\
+     Hint: Add or remove a digit."
+| Missing_break ->
+    "Missing break.\n\
+     Hint: Insert some space."
+| Negative_byte_sequence ->
+   "Negative byte sequence.\n\
+    Hint: Remove the leading minus sign."
 
-let is_kwd = function
-  And        _
-| Attributes _
-| Begin      _
-| BigMap     _
-| Block      _
-| Case       _
-| Const      _
-| Contains   _
-| Else       _
-| End        _
-| False      _
-| For        _
-| From       _
-| Function   _
-| If         _
-| In         _
-| Is         _
-| List       _
-| Map        _
-| Mod        _
-| Nil        _
-| Not        _
-| Of         _
-| Or         _
-| Patch      _
-| Record     _
-| Remove     _
-| Set        _
-| Skip       _
-| Step       _
-| Then       _
-| To         _
-| True       _
-| Type       _
-| Unit       _
-| Var        _
-| While      _
-| With       _ -> true
-|            _ -> false
+exception Error of error Region.reg
 
-let is_constr = function
-  Constr  _
-| C_None  _
-| C_Some  _ -> true
-|         _ -> false
+let format_error ?(offsets=true) mode Region.{region; value} ~file =
+  let msg = error_to_string value
+  and reg = region#to_string ~file ~offsets mode in
+  let value = sprintf "Lexical error %s:\n%s\n" reg msg
+  in Region.{value; region}
 
-let is_sym = function
-  SEMI     _
-| COMMA    _
-| LPAR     _
-| RPAR     _
-| LBRACE   _
-| RBRACE   _
-| LBRACKET _
-| RBRACKET _
-| CONS     _
-| VBAR     _
-| ARROW    _
-| ASS      _
-| EQ       _
-| COLON    _
-| LT       _
-| LE       _
-| GT       _
-| GE       _
-| NE       _
-| PLUS     _
-| MINUS    _
-| SLASH    _
-| TIMES    _
-| DOT      _
-| WILD     _
-| CAT      _ -> true
-|          _ -> false
+let fail region value = raise (Error Region.{region; value})
 
-let is_eof = function EOF _ -> true | _ -> false
+let check_right_context token next_token buffer : unit =
+  let pos    = (to_region token)#stop in
+  let region = Region.make ~start:pos ~stop:pos in
+  match next_token buffer with
+    None -> ()
+  | Some (markup, next) ->
+      if   is_minus token && is_bytes next
+      then let region =
+             Region.cover (to_region token) (to_region next)
+           in fail region Negative_byte_sequence
+      else
+        match markup with
+          [] ->
+            if   is_int token
+            then if   is_string next || is_ident next
+                 then fail region Missing_break
+                 else ()
+            else
+              if   is_string token
+              then if   is_int next || is_bytes next || is_ident next
+                   then fail region Missing_break
+                   else ()
+              else
+                if   is_bytes token
+                then if is_string next || is_ident next
+                     then fail region Missing_break
+                     else if   is_int next
+                          then fail region Odd_lengthed_bytes
+                          else ()
+                else ()
+        | _::_ -> ()
 
 (* END TRAILER *)
 }

@@ -8,15 +8,14 @@ module SSet     = Set.Make (String)
 
 (* Mock IOs TODO: Fill them with CLI options *)
 
-type language = [`PascaLIGO | `CameLIGO | `ReasonLIGO]
-
 module SubIO =
   struct
     type options = <
       libs    : string list;
       verbose : SSet.t;
       offsets : bool;
-      lang    : language;
+      block   : EvalOpt.block_comment option;
+      line    : EvalOpt.line_comment option;
       ext     : string;   (* ".mligo" *)
       mode    : [`Byte | `Point];
       cmd     : EvalOpt.command;
@@ -24,22 +23,25 @@ module SubIO =
     >
 
     let options : options =
-      object
-        method libs    = []
-        method verbose = SSet.empty
-        method offsets = true
-        method lang    = `CameLIGO
-        method ext     = ".mligo"
-        method mode    = `Point
-        method cmd     = EvalOpt.Quiet
-        method mono    = false
-      end
+      let block = EvalOpt.mk_block ~opening:"(*" ~closing:"*)"
+      in object
+           method libs    = []
+           method verbose = SSet.empty
+           method offsets = true
+           method block   = Some block
+           method line    = Some "//"
+           method ext     = ".mligo"
+           method mode    = `Point
+           method cmd     = EvalOpt.Quiet
+           method mono    = false
+         end
 
     let make =
       EvalOpt.make ~libs:options#libs
                    ~verbose:options#verbose
                    ~offsets:options#offsets
-                   ~lang:options#lang
+                   ?block:options#block
+                   ?line:options#line
                    ~ext:options#ext
                    ~mode:options#mode
                    ~cmd:options#cmd

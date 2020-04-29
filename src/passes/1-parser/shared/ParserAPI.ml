@@ -57,7 +57,7 @@ module type PARSER =
 
 module Make (IO: IO)
             (Lexer: Lexer.S)
-            (Parser: PARSER with type token = Lexer.Token.token)
+            (Parser: PARSER with type token = Lexer.token)
             (ParErr: sig val message : int -> string end) =
   struct
     module I = Parser.MenhirInterpreter
@@ -122,10 +122,10 @@ module Make (IO: IO)
         message
       in
       match get_win () with
-        Lexer.Nil -> assert false
-      | Lexer.One invalid ->
+        LexerLib.Nil -> assert false
+      | LexerLib.One invalid ->
           raise (Point (message, None, invalid))
-      | Lexer.Two (invalid, valid) ->
+      | LexerLib.Two (invalid, valid) ->
           raise (Point (message, Some valid, invalid))
 
     (* The monolithic API of Menhir *)
@@ -143,14 +143,14 @@ module Make (IO: IO)
                    ~offsets:IO.options#offsets
                    IO.options#mode IO.options#cmd stdout
 
-    let incr_contract Lexer.{read; buffer; get_win; close; _} =
+    let incr_contract LexerLib.{read; buffer; get_win; close; _} =
       let supplier  = I.lexer_lexbuf_to_supplier (read ~log) buffer
       and failure   = failure get_win in
       let parser    = Incr.contract buffer.Lexing.lex_curr_p in
       let ast       = I.loop_handle success failure supplier parser
       in flush_all (); close (); ast
 
-    let incr_expr Lexer.{read; buffer; get_win; close; _} =
+    let incr_expr LexerLib.{read; buffer; get_win; close; _} =
       let supplier   = I.lexer_lexbuf_to_supplier (read ~log) buffer
       and failure    = failure get_win in
       let parser     = Incr.interactive_expr buffer.Lexing.lex_curr_p in

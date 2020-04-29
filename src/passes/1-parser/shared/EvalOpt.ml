@@ -5,37 +5,42 @@
 
 type command = Quiet | Copy | Units | Tokens
 
-type language = [`PascaLIGO | `CameLIGO | `ReasonLIGO]
-
-let lang_to_string = function
-  `PascaLIGO -> "PascaLIGO"
-| `CameLIGO -> "CameLIGO"
-| `ReasonLIGO -> "ReasonLIGO"
-
 (* The type [options] gathers the command-line options. *)
 
 module SSet = Set.Make (String)
+
+type line_comment = string (* Opening of a line comment *)
+type block_comment = <opening : string; closing : string>
+
+let mk_block ~opening ~closing : block_comment =
+  object
+    method opening = opening
+    method closing = closing
+  end
 
 type options = <
   input   : string option;
   libs    : string list;
   verbose : SSet.t;
   offsets : bool;
-  lang    : language;
-  ext     : string;           (* ".ligo", ".mligo", ".religo" *)
+  block   : block_comment option;
+  line    : line_comment option;
+  ext     : string;
   mode    : [`Byte | `Point];
   cmd     : command;
   mono    : bool;
   expr    : bool
 >
 
-let make ~input ~libs ~verbose ~offsets ~lang ~ext ~mode ~cmd ~mono ~expr : options =
+let make ~input ~libs ~verbose ~offsets ?block
+         ?line ~ext ~mode ~cmd ~mono ~expr : options =
   object
     method input   = input
     method libs    = libs
     method verbose = verbose
     method offsets = offsets
-    method lang    = lang
+    method block   = block
+    method line    = line
     method ext     = ext
     method mode    = mode
     method cmd     = cmd
@@ -58,10 +63,10 @@ let abort msg =
 
 (* Help *)
 
-let help language extension () =
+let help extension () =
   let file = Filename.basename Sys.argv.(0) in
   printf "Usage: %s [<option> ...] [<input>%s | \"-\"]\n" file extension;
-  printf "where <input>%s is the %s source file (default: stdin),\n" extension language;
+  printf "where <input>%s is the LIGO source file (default: stdin),\n" extension;
   print "and each <option> (if any) is one of the following:";
   print "  -I <paths>             Library paths (colon-separated)";
   print "  -t, --tokens           Print tokens";
@@ -105,8 +110,7 @@ let add_verbose d =
                             !verbose
                             (split_at_colon d)
 
-let specs language extension =
-  let language = lang_to_string language in
+let specs extension =
   let open! Getopt in [
     'I',     nolong,    None, Some add_path;
     'c',     "copy",    set copy true, None;
@@ -118,7 +122,7 @@ let specs language extension =
     noshort, "mono",    set mono true, None;
     noshort, "expr",    set expr true, None;
     noshort, "verbose", None, Some add_verbose;
-    'h',     "help",    Some (help language extension), None;
+    'h',     "help",    Some (help extension), None;
     noshort, "version", Some version, None
   ]
 ;;
@@ -156,7 +160,7 @@ let print_opt () =
   printf "input    = %s\n" (string_of quote !input);
   printf "libs     = %s\n" (string_of_path !libs)
 
-let check lang ext =
+let check ?block ?line ~ext =
   let () =
     if SSet.mem "cli" !verbose then print_opt () in
 
@@ -209,16 +213,19 @@ let check lang ext =
     | false, false, false,  true -> Tokens
     | _ -> abort "Choose one of -q, -c, -u, -t."
 
-  in make ~input ~libs ~verbose ~offsets ~mode ~cmd ~mono ~expr ~lang ~ext
+  in make ~input ~libs ~verbose ~offsets ~mode
+          ~cmd ~mono ~expr ?block ?line ~ext
 
 (* Parsing the command-line options *)
 
-let read ~lang ~ext =
+type extension = string
+
+let read ?block ?line (ext: extension) =
   try
-    Getopt.parse_cmdline (specs lang ext) anonymous;
+    Getopt.parse_cmdline (specs ext) anonymous;
     (verb_str :=
        let apply e a =
          if a = "" then e else Printf.sprintf "%s, %s" e a
        in SSet.fold apply !verbose "");
-    check lang ext
+    check ?block ?line ~ext
   with Getopt.Error msg -> abort msg

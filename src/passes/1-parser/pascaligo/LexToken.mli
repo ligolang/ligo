@@ -1,4 +1,4 @@
-(** This signature defines the lexical tokens for LIGO
+(* This signature defines the lexical tokens for LIGO
 
    _Tokens_ are the abstract units which are used by the parser to
    build the abstract syntax tree (AST), in other words, the stream of
@@ -163,11 +163,22 @@ val eof       : Region.t -> token
 
 (* Predicates *)
 
-val is_string : token -> bool
-val is_bytes  : token -> bool
-val is_int    : token -> bool
-val is_ident  : token -> bool
-val is_kwd    : token -> bool
-val is_constr : token -> bool
-val is_sym    : token -> bool
 val is_eof    : token -> bool
+
+(* Style *)
+
+type error
+
+val error_to_string : error -> string
+
+exception Error of error Region.reg
+
+val format_error :
+  ?offsets:bool -> [`Byte | `Point] ->
+  error Region.reg -> file:bool -> string Region.reg
+
+val check_right_context :
+  token ->
+  (Lexing.lexbuf -> (Markup.t list * token) option) ->
+  Lexing.lexbuf ->
+  unit

@@ -44,19 +44,6 @@ type mode = Copy | Skip
 type cond  = If of mode | Elif of mode | Else | Region
 type trace = cond list
 
-(* Line offsets
-
-   The value [Inline] of type [offset] means that the current location
-   cannot be reached from the start of the line with only white
-   space. The same holds for the special value [Prefix 0]. Values of
-   the form [Prefix n] mean that the current location can be reached
-   from the start of the line with [n] white spaces (padding). These
-   distinctions are needed because preprocessor directives cannot
-   occur inside lines.
-*)
-
-type offset = Prefix of int | Inline
-
 (* Environments *)
 
 module Env = Set.Make (String)
@@ -78,8 +65,6 @@ in function
      * the field [env] records the symbols defined;
      * the field [mode] informs whether the preprocessor is in copying or
        skipping mode;
-     * the field [offset] tells whether the current location can be
-       reached from the start of the line with only white space;
      * the field [trace] is a stack of previous, still active conditional
        directives;
      * the field [out] keeps the output buffer;
@@ -92,7 +77,6 @@ in function
 type state = {
   env     : Env.t;
   mode    : mode;
-  offset  : offset;
   trace   : trace;
   out     : Buffer.t;
   incl    : in_channel list;
@@ -117,7 +101,7 @@ type error =
 | No_line_indicator
 | End_line_indicator
 | Newline_in_string
-| Open_string
+| Unterminated_string
 | Dangling_endif
 | Open_region_in_conditional
 | Dangling_endregion
@@ -131,10 +115,10 @@ type error =
 | Multiply_defined_symbol of string
 | Error_directive of string
 | Parse_error
-| No_line_comment_or_blank
 | Invalid_symbol
 | File_not_found of string
 | Invalid_character of char
+| Unterminated_comment of string
 
 let error_to_string = function
   Directive_inside_line ->
@@ -151,7 +135,7 @@ let error_to_string = function
              Hint: Try a string, end of line, or a line comment."
 | Newline_in_string ->
     sprintf "Invalid newline character in string."
-| Open_string ->
+| Unterminated_string ->
     sprintf "Unterminated string.\n\
              Hint: Close with double quotes."
 | Dangling_endif ->
@@ -187,14 +171,15 @@ let error_to_string = function
     msg
 | Parse_error ->
     "Parse error in expression."
-| No_line_comment_or_blank ->
-    "Line comment or whitespace expected."
 | Invalid_symbol ->
     "Expected a symbol (identifier)."
 | File_not_found name ->
     sprintf "File \"%s\" to include not found." name
 | Invalid_character c ->
     E_Lexer.error_to_string (E_Lexer.Invalid_character c)
+| Unterminated_comment ending ->
+   sprintf "Unterminated comment.\n\
+            Hint: Close with \"%s\"." ending
 
 let format ?(offsets=true) Region.{region; value} ~file =
   let msg   = error_to_string value
@@ -224,7 +209,7 @@ let fail error state buffer = stop error state (mk_reg buffer)
 let reduce_cond state region =
   let rec reduce = function
                 [] -> stop Dangling_endif state region
-  | If mode::trace -> {state with mode; trace; offset = Prefix 0}
+  | If mode::trace -> {state with mode; trace}
   |      Region::_ -> stop Open_region_in_conditional state region
   |       _::trace -> reduce trace
   in reduce state.trace
@@ -235,7 +220,7 @@ let reduce_cond state region =
 let reduce_region state region =
   match state.trace with
                [] -> stop Dangling_endregion state region
-  | Region::trace -> {state with trace; offset = Prefix 0}
+  | Region::trace -> {state with trace}
   |             _ -> stop Conditional_in_region state region
 
 (* The function [extend] is called when encountering conditional
@@ -286,20 +271,13 @@ let find dir file libs =
 
 let copy state buffer = Buffer.add_string state.out (Lexing.lexeme buffer)
 
-(* End of lines *)
+(* End of lines are always copied *)
 
 let proc_nl state buffer = Lexing.new_line buffer; copy state buffer
 
 (* Copying a string *)
 
 let print state string = Buffer.add_string state.out string
-
-(* Expanding the offset into whitespace *)
-
-let expand_offset state =
-  match state.offset with
-    Prefix 0 | Inline -> ()
-  | Prefix n -> print state (String.make n ' ')
 
 (* Evaluating a preprocessor expression
 
@@ -346,6 +324,35 @@ let letter    = small | capital
 let ident     = letter (letter | '_' | digit)*
 let directive = '#' (blank* as space) (small+ as id)
 
+(* Comments *)
+
+let pascaligo_block_comment_opening = "(*"
+let pascaligo_block_comment_closing = "*)"
+let pascaligo_line_comment          = "//"
+
+let cameligo_block_comment_opening = "(*"
+let cameligo_block_comment_closing = "*)"
+let cameligo_line_comment          = "//"
+
+let reasonligo_block_comment_opening = "/*"
+let reasonligo_block_comment_closing = "*/"
+let reasonligo_line_comment          = "//"
+
+let block_comment_openings =
+  pascaligo_block_comment_opening
+| cameligo_block_comment_opening
+| reasonligo_block_comment_opening
+
+let block_comment_closings =
+  pascaligo_block_comment_closing
+| cameligo_block_comment_closing
+| reasonligo_block_comment_closing
+
+let line_comments =
+  pascaligo_line_comment
+| cameligo_line_comment
+| reasonligo_line_comment
+
 (* Rules *)
 
 (* The rule [scan] scans the input buffer for directives, strings,
@@ -354,19 +361,17 @@ let directive = '#' (blank* as space) (small+ as id)
    depending on the compilation directives. If not copied, new line
    characters are output.
 
-   Scanning is triggered by the function call [scan env mode offset
-   trace lexbuf], where [env] is the set of defined symbols
-   (introduced by `#define'), [mode] specifies whether we are copying
-   or skipping the input, [offset] informs about the location in the
-   line (either there is a prefix of blanks, or at least a non-blank
-   character has been read), and [trace] is the stack of conditional
-   directives read so far.
+   Scanning is triggered by the function call [scan env mode trace
+   lexbuf], where [env] is the set of defined symbols (introduced by
+   `#define'), [mode] specifies whether we are copying or skipping the
+   input, and [trace] is the stack of conditional directives read so
+   far.
 
-   The first call is [scan {env=Env.empty; mode=Copy; offset = Prefix
-   0; trace=[]; incl=[]; opt}], meaning that we start with an empty
-   environment, that copying the input is enabled by default, and that
-   we are at the start of a line and no previous conditional
-   directives have been read yet. The field [opt] is the CLI options.
+   The first call is [scan {env=Env.empty; mode=Copy; trace=[];
+   incl=[]; opt}], meaning that we start with an empty environment,
+   that copying the input is enabled by default, and that we are at
+   the start of a line and no previous conditional directives have
+   been read yet. The field [opt] is the CLI options.
 
    When an "#if" is matched, the trace is extended by the call [extend
    lexbuf (If mode) trace], during the evaluation of which the
@@ -386,12 +391,11 @@ let directive = '#' (blank* as space) (small+ as id)
    value of the conditional expression must be ignored (but not its
    syntax), and we continue skipping the input.
 
-   When an "#else" is matched, the trace is extended with [Else],
-   then, if the directive is not at a wrong offset, the rest of the
-   line is scanned with [skip_line]. If we were in copy mode, the new
-   mode toggles to skipping mode; otherwise, the trace is searched for
-   the last encountered "#if" of "#elif" and the associated mode is
-   restored.
+   When an "#else" is matched, the trace is extended with [Else], then
+   the rest of the line is scanned with [skip_line]. If we were in
+   copy mode, the new mode toggles to skipping mode; otherwise, the
+   trace is searched for the last encountered "#if" of "#elif" and the
+   associated mode is restored.
 
    The case "#elif" is the result of the fusion (in the technical
    sense) of the code for dealing with an "#else" followed by an
@@ -465,28 +469,23 @@ let directive = '#' (blank* as space) (small+ as id)
    Important note: Comments and strings are recognised as such only in
    copy mode, which is a different behaviour from the preprocessor of
    GNU GCC, which always does.
-*)
+ *)
 
 rule scan state = parse
-  nl    { expand_offset state; proc_nl state lexbuf;
-          scan {state with offset = Prefix 0} lexbuf }
-| blank { match state.offset with
-            Prefix n ->
-              scan {state with offset = Prefix (n+1)} lexbuf
-          | Inline ->
-              if state.mode = Copy then copy state lexbuf;
-              scan state lexbuf }
+  nl    { proc_nl state lexbuf; scan state lexbuf }
+| blank { if state.mode = Copy then copy state lexbuf;
+          scan state lexbuf }
 | directive {
+    let  region = mk_reg lexbuf in
     if   not (List.mem id directives)
     then begin
            if state.mode = Copy then copy state lexbuf;
            scan state lexbuf
          end
     else
-    if   state.offset = Inline
+    if   region#start#offset `Byte > 0
     then fail Directive_inside_line state lexbuf
     else
-    let region = mk_reg lexbuf in
     match id with
       "include" ->
         let line = Lexing.(lexbuf.lex_curr_p.pos_lnum)
@@ -517,15 +516,15 @@ rule scan state = parse
         let mode  = expr state lexbuf in
         let mode  = if state.mode = Copy then mode else Skip in
         let trace = extend (If state.mode) state region in
-        let state = {state with mode; offset = Prefix 0; trace}
+        let state = {state with mode; trace}
         in scan state lexbuf
     | "else" ->
-        let () = skip_line state lexbuf in
-        let mode = match state.mode with
-                     Copy -> Skip
-                   | Skip -> last_mode state.trace in
+        let ()    = skip_line state lexbuf in
+        let mode  = match state.mode with
+                      Copy -> Skip
+                    | Skip -> last_mode state.trace in
         let trace = extend Else state region
-        in scan {state with mode; offset = Prefix 0; trace} lexbuf
+        in scan {state with mode; trace} lexbuf
     | "elif" ->
         let mode = expr state lexbuf in
         let trace, mode =
@@ -534,7 +533,7 @@ rule scan state = parse
           | Skip -> let old_mode = last_mode state.trace
                     in extend (Elif old_mode) state region,
                        if old_mode = Copy then mode else Skip
-        in scan {state with mode; offset = Prefix 0; trace} lexbuf
+        in scan {state with mode; trace} lexbuf
     | "endif" ->
         skip_line state lexbuf;
         scan (reduce_cond state region) lexbuf
@@ -544,89 +543,81 @@ rule scan state = parse
         then stop (Reserved_symbol id) state region;
         if Env.mem id state.env
         then stop (Multiply_defined_symbol id) state region;
-        let state = {state with env = Env.add id state.env;
-                                offset = Prefix 0}
+        let state = {state with env = Env.add id state.env}
         in scan state lexbuf
     | "undef" ->
         let id, _ = variable state lexbuf in
-        let state = {state with env = Env.remove id state.env;
-                                offset = Prefix 0}
+        let state = {state with env = Env.remove id state.env}
         in scan state lexbuf
     | "error" ->
         stop (Error_directive (message [] lexbuf)) state region
     | "region" ->
         let msg = message [] lexbuf
-        in expand_offset state;
-           print state ("#" ^ space ^ "region" ^ msg ^ "\n");
-           let state =
-             {state with offset = Prefix 0; trace=Region::state.trace}
+        in print state ("#" ^ space ^ "region" ^ msg ^ "\n");
+           let state = {state with trace=Region::state.trace}
            in scan state lexbuf
     | "endregion" ->
         let msg = message [] lexbuf
-        in expand_offset state;
-           print state ("#" ^ space ^ "endregion" ^ msg ^ "\n");
+        in print state ("#" ^ space ^ "endregion" ^ msg ^ "\n");
            scan (reduce_region state region) lexbuf
-(*
-    | "line" ->
-        expand_offset state;
-        print state ("#" ^ space ^ "line");
-        line_ind state lexbuf;
-        scan {state with offset = Prefix 0} lexbuf
-
-    | "warning" ->
-        let start_p, end_p = region in
-        let msg = message [] lexbuf in
-        let open Lexing
-        in prerr_endline
-             ("Warning at line " ^ string_of_int start_p.pos_lnum
-             ^ ", char "
-             ^ string_of_int (start_p.pos_cnum - start_p.pos_bol)
-             ^ "--" ^ string_of_int (end_p.pos_cnum - end_p.pos_bol)
-             ^ ":\n" ^ msg);
-           scan env mode (Prefix 0) trace lexbuf
- *)
     | _ -> assert false
   }
-| eof   { match state.trace with
-            [] -> expand_offset state; state
-          |  _ -> fail Missing_endif state lexbuf }
+
+| eof   { if state.trace = [] then state
+          else fail Missing_endif state lexbuf }
+
 | '"'   { if state.mode = Copy then
             begin
-              expand_offset state;
               copy state lexbuf;
-              in_string (mk_reg lexbuf) state lexbuf
-            end;
-          scan {state with offset=Inline} lexbuf }
-| "//"  { if state.mode = Copy then
-            begin
-              expand_offset state;
-              copy state lexbuf;
-              in_line_com state lexbuf
-            end;
-          scan {state with offset=Inline} lexbuf }
-| "/*"  { if state.mode = Copy then
-            begin
-              expand_offset state;
-              copy state lexbuf;
-              if state.opt#lang = `ReasonLIGO then
-                reasonLIGO_com (mk_reg lexbuf) state lexbuf
-            end;
-          scan {state with offset=Inline} lexbuf }
-| "(*"  { if state.mode = Copy then
-            begin
-              expand_offset state;
-              copy state lexbuf;
-              if state.opt#lang = `CameLIGO
-               || state.opt#lang = `PascaLIGO then
-                cameLIGO_com (mk_reg lexbuf) state lexbuf
-            end;
-          scan {state with offset=Inline} lexbuf }
-| _     { if state.mode = Copy then
-            begin
-              expand_offset state;
-              copy state lexbuf
-            end;
-          scan {state with offset=Inline} lexbuf }
+              scan (in_string (mk_reg lexbuf) state lexbuf) lexbuf
+            end
+          else scan state lexbuf }
+
+| block_comment_openings {
+    let lexeme = Lexing.lexeme lexbuf in
+    match state.opt#block with
+      Some block when block#opening = lexeme ->
+        if state.mode = Copy then
+          begin
+            copy state lexbuf;
+            let state = in_block block (mk_reg lexbuf) state lexbuf
+            in scan state lexbuf
+          end
+        else scan state lexbuf
+    | Some _ | None ->
+        let n = String.length lexeme in
+          begin
+            rollback lexbuf;
+            assert (n > 0);
+            scan (scan_n_char n state lexbuf) lexbuf
+          end }
+
+| line_comments {
+    let lexeme = Lexing.lexeme lexbuf in
+    match state.opt#line with
+      Some line when line = lexeme ->
+        if state.mode = Copy then
+          begin
+            copy state lexbuf;
+            scan (in_line_com state lexbuf) lexbuf
+          end
+        else scan state lexbuf
+    | Some _ | None ->
+        let n = String.length lexeme in
+          begin
+            rollback lexbuf;
+            assert (n > 0);
+            scan (scan_n_char n state lexbuf) lexbuf
+          end }
+
+| _ { if state.mode = Copy then copy state lexbuf;
+      scan state lexbuf }
+
+(* Scanning a series of characters *)
+
+and scan_n_char n state = parse
+  _  { if state.mode = Copy then copy state lexbuf;
+       if n = 1 then state else scan_n_char (n-1) state lexbuf }
 
 (* Support for #define and #undef *)
 
@@ -638,47 +629,12 @@ and symbol state = parse
   ident as id { id, mk_reg lexbuf                }
 | _           { fail Invalid_symbol state lexbuf }
 
-(*
-(* Line indicator (#line) *)
-
-and line_ind state = parse
-  blank* { copy state lexbuf; line_indicator state lexbuf }
-
-and line_indicator state = parse
-  natural  { copy state lexbuf; end_indicator state lexbuf }
-| ident as id {
-    match id with
-      "default" | "hidden" ->
-        print state (id ^ message [] lexbuf)
-    | _ -> fail (Invalid_line_indicator id) state lexbuf   }
-| _ { fail No_line_indicator state lexbuf                  }
-
-and end_indicator state = parse
-  blank+ { copy state lexbuf; end_indicator state lexbuf }
-| nl     { proc_nl state lexbuf                          }
-| eof    { copy state lexbuf                             }
-| "//"   { copy state lexbuf;
-           print state (message [] lexbuf ^ "\n")        }
-| '"'    { copy state lexbuf;
-           in_string (mk_reg lexbuf) state lexbuf;
-           opt_line_com state lexbuf                     }
-| _      { fail End_line_indicator state lexbuf          }
-
-and opt_line_com state = parse
-  nl     { proc_nl state lexbuf                         }
-| eof    { copy state lexbuf                            }
-| blank+ { copy state lexbuf; opt_line_com state lexbuf }
-| "//"   { print state ("//" ^ message [] lexbuf)       }
- *)
-
 (* New lines and verbatim sequence of characters *)
 
 and skip_line state = parse
-  nl     { proc_nl state lexbuf                       }
-| blank+ { skip_line state lexbuf                     }
-| "//"   { in_line_com {state with mode=Skip} lexbuf  }
-| _      { fail No_line_comment_or_blank state lexbuf }
-| eof    { ()                                         }
+  nl     { proc_nl state lexbuf   }
+| blank+ { skip_line state lexbuf }
+| _      { ()                     }
 
 and message acc = parse
   nl     { Lexing.new_line lexbuf;
@@ -689,22 +645,41 @@ and message acc = parse
 (* Comments *)
 
 and in_line_com state = parse
-  nl  { proc_nl state lexbuf                         }
-| eof { ()                                           }
+  nl  { proc_nl state lexbuf; state                  }
+| eof { state                                        }
 | _   { if state.mode = Copy then copy state lexbuf;
         in_line_com state lexbuf                     }
 
-and reasonLIGO_com opening state = parse
-  nl   { proc_nl state lexbuf; reasonLIGO_com opening state lexbuf }
-| "*/" { copy state lexbuf                                         }
-| eof  { ()                                                        }
-| _    { copy state lexbuf; reasonLIGO_com opening state lexbuf    }
+and in_block block opening state = parse
+  '"' | block_comment_openings {
+    let lexeme = Lexing.lexeme lexbuf in
+    if   block#opening = lexeme || lexeme = "\""
+    then let ()       = copy state lexbuf in
+         let opening' = mk_reg lexbuf in
+         let next     = if lexeme = "\"" then in_string
+                        else in_block block in
+         let state    = next opening' state lexbuf
+         in in_block block opening state lexbuf
+    else let ()    = rollback lexbuf in
+         let n     = String.length lexeme in
+         let ()    = assert (n > 0) in
+         let state = scan_n_char n state lexbuf
+         in in_block block opening state lexbuf }
 
-and cameLIGO_com opening state = parse
-  nl   { proc_nl state lexbuf; cameLIGO_com opening state lexbuf }
-| "*)" { copy state lexbuf                                       }
-| eof  { ()                                                      }
-| _    { copy state lexbuf; cameLIGO_com opening state lexbuf    }
+| block_comment_closings {
+    let lexeme = Lexing.lexeme lexbuf in
+    if   block#closing = lexeme
+    then (copy state lexbuf; state)
+    else let ()    = rollback lexbuf in
+         let n     = String.length lexeme in
+         let ()    = assert (n > 0) in
+         let state = scan_n_char n state lexbuf
+         in in_block block opening state lexbuf }
+
+| nl   { proc_nl state lexbuf; in_block block opening state lexbuf }
+| eof  { let err = Unterminated_comment (block#closing)
+         in stop err state opening                                 }
+| _    { copy state lexbuf; in_block block opening state lexbuf    }
 
 (* Included filename *)
 
@@ -717,15 +692,15 @@ and in_inclusion opening acc len state = parse
            in Region.cover opening closing,
               mk_str len acc                                  }
 | nl     { fail Newline_in_string state lexbuf                }
-| eof    { stop Open_string state opening                     }
+| eof    { stop Unterminated_string state opening             }
 | _ as c { in_inclusion opening (c::acc) (len+1) state lexbuf }
 
 (* Strings *)
 
 and in_string opening state = parse
   "\\\"" { copy state lexbuf; in_string opening state lexbuf }
-| '"'    { copy state lexbuf                                 }
-| eof    { ()                                                }
+| '"'    { copy state lexbuf; state                          }
+| eof    { state                                             }
 | _      { copy state lexbuf; in_string opening state lexbuf }
 
 and preproc state = parse
@@ -750,7 +725,6 @@ let lex opt buffer =
   let state = {
     env    = Env.empty;
     mode   = Copy;
-    offset = Prefix 0;
     trace  = [];
     out    = Buffer.create 80;
     incl   = [];

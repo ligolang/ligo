@@ -2,9 +2,9 @@
 
 module Region = Simple_utils.Region
 
-type language = [`PascaLIGO | `CameLIGO | `ReasonLIGO]
-
 module SSet : Set.S with type elt = string and type t = Set.Make(String).t
+
+(* A subtype of [EvalOpt.options] *)
 
 module type SubIO =
   sig
@@ -12,8 +12,9 @@ module type SubIO =
       libs    : string list;
       verbose : SSet.t;
       offsets : bool;
-      lang    : language;
-      ext     : string;   (* ".ligo", ".mligo", ".religo" *)
+      block   : EvalOpt.block_comment option;
+      line    : EvalOpt.line_comment option;
+      ext     : string;
       mode    : [`Byte | `Point];
       cmd     : EvalOpt.command;
       mono    : bool
@@ -23,7 +24,9 @@ module type SubIO =
     val make : input:string option -> expr:bool -> EvalOpt.options
   end
 
-module type Pretty =
+(* Signature for the printers *)
+
+module type Printer =
   sig
     type state
     type ast
@@ -38,6 +41,8 @@ module type Pretty =
     val print_expr   : state -> expr -> unit
   end
 
+(* Main functor to make the parser *)
+
 module Make (Lexer : Lexer.S)
             (AST : sig type t type expr end)
             (Parser : ParserAPI.PARSER
@@ -45,7 +50,7 @@ module Make (Lexer : Lexer.S)
                        and type expr  = AST.expr
                        and type token = Lexer.token)
             (ParErr : sig val message : int -> string end)
-            (ParserLog : Pretty with type ast  = AST.t
+            (ParserLog : Printer with type ast  = AST.t
                                  and type expr = AST.expr)
             (SubIO: SubIO) :
   sig
@@ -82,4 +87,4 @@ module Make (Lexer : Lexer.S)
 
     val preprocess :
       string -> (Buffer.t, message Region.reg) Stdlib.result
-end
+  end
