@@ -152,10 +152,10 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression) resul
   (* TODO: or should we use t.core if present? *)
   let%bind t = match t.type_content with
   | O.T_sum x ->
-    let aux k ({ctor_type ; michelson_annotation} : O.ctor_content) acc =
+    let aux k ({ctor_type ; michelson_annotation ; ctor_decl_pos} : O.ctor_content) acc =
       let%bind acc = acc in
       let%bind ctor_type = untype_type_expression ctor_type in
-      let v' : I.ctor_content = {ctor_type ; michelson_annotation} in 
+      let v' : I.ctor_content = {ctor_type ; michelson_annotation ; ctor_decl_pos} in 
       ok @@ I.CMap.add (unconvert_constructor' k) v' acc in
     let%bind x' = O.CMap.fold aux x (ok I.CMap.empty) in
     ok @@ I.T_sum x'

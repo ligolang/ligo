@@ -238,19 +238,19 @@ let rec compile_type_expression (t:Raw.type_expr) : type_expression result =
       ok @@ make_t ~loc @@ T_record m
   | TSum s ->
       let (s,loc) = r_split s in
-      let aux (v:Raw.variant Raw.reg) =
+      let aux i (v:Raw.variant Raw.reg) =
         let args =
           match v.value.arg with
             None -> []
           | Some (_, TProd product) -> npseq_to_list product.value
           | Some (_, t_expr) -> [t_expr] in
         let%bind te = compile_list_type_expression @@ args in
-        ok (v.value.constr.value, te)
+        ok ((v.value.constr.value,i), te)
       in
       let%bind lst = bind_list
-        @@ List.map aux
+        @@ List.mapi aux
         @@ npseq_to_list s in
-      let m = List.fold_left (fun m (x, y) -> CMap.add (Constructor x) y m) CMap.empty lst in
+      let m = List.fold_left (fun m ((x,i), y) -> CMap.add (Constructor x) {ctor_type=y;ctor_decl_pos=i} m) CMap.empty lst in
       ok @@ make_t ~loc @@ T_sum m
   | TStringLiteral _s -> simple_fail "we don't support singleton string type"
 

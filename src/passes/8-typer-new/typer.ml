@@ -133,9 +133,9 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
   | T_sum m ->
     let aux k v prev =
       let%bind prev' = prev in
-      let {ctor_type ; michelson_annotation} : I.ctor_content = v in
+      let {ctor_type ; michelson_annotation ; ctor_decl_pos} : I.ctor_content = v in
       let%bind ctor_type = evaluate_type e ctor_type in
-      ok @@ O.CMap.add (convert_constructor' k) ({ctor_type ; michelson_annotation}:O.ctor_content) prev'
+      ok @@ O.CMap.add (convert_constructor' k) ({ctor_type ; michelson_annotation ; ctor_decl_pos}:O.ctor_content) prev'
     in
     let%bind m = I.CMap.fold aux m (ok O.CMap.empty) in
     return (T_sum m)

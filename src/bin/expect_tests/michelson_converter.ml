@@ -8,7 +8,7 @@ let bad_contract basename =
 let%expect_test _ =
   run_ligo_bad [ "interpret" ; "--init-file="^(bad_contract "michelson_converter_no_annotation.mligo") ; "l4"] ;
   [%expect {|
-    ligo: in file "michelson_converter_no_annotation.mligo", line 4, characters 9-39. can't retrieve declaration order in the converted record, you need to annotate it
+    ligo: in file "michelson_converter_no_annotation.mligo", line 4, characters 9-39. can't retrieve type declaration order in the converted record, you need to annotate it
 
      If you're not sure how to fix this error, you can
      do one of the following:
@@ -31,24 +31,36 @@ let%expect_test _ =
     * Check the changelog by running 'ligo changelog' |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(contract "michelson_converter.mligo") ; "r3"] ;
+  run_ligo_good [ "interpret" ; "--init-file="^(contract "michelson_converter_pair.mligo") ; "r3"] ;
   [%expect {|
     ( 2 , ( +3 , "q" ) ) |}] ;
-  run_ligo_good [ "interpret" ; "--init-file="^(contract "michelson_converter.mligo") ; "r4"] ;
+  run_ligo_good [ "interpret" ; "--init-file="^(contract "michelson_converter_pair.mligo") ; "r4"] ;
   [%expect {|
     ( 2 , ( +3 , ( "q" , true ) ) ) |}] ;
-  run_ligo_good [ "interpret" ; "--init-file="^(contract "michelson_converter.mligo") ; "l3"] ;
+  run_ligo_good [ "interpret" ; "--init-file="^(contract "michelson_converter_pair.mligo") ; "l3"] ;
   [%expect {|
     ( ( 2 , +3 ) , "q" ) |}] ;
-  run_ligo_good [ "interpret" ; "--init-file="^(contract "michelson_converter.mligo") ; "l4"] ;
+  run_ligo_good [ "interpret" ; "--init-file="^(contract "michelson_converter_pair.mligo") ; "l4"] ;
   [%expect {|
-    ( ( ( 2 , +3 ) , "q" ) , true ) |}]
+    ( ( ( 2 , +3 ) , "q" ) , true ) |}];
+  run_ligo_good [ "interpret" ; "--init-file="^(contract "michelson_converter_or.mligo") ; "str3"] ;
+  [%expect {|
+    M_right(M_left(+3)) |}] ;
+  run_ligo_good [ "interpret" ; "--init-file="^(contract "michelson_converter_or.mligo") ; "str4"] ;
+  [%expect {|
+    M_right(M_right(M_left("eq"))) |}] ;
+  run_ligo_good [ "interpret" ; "--init-file="^(contract "michelson_converter_or.mligo") ; "stl3"] ;
+  [%expect {|
+    M_left(M_right(+3)) |}] ;
+  run_ligo_good [ "interpret" ; "--init-file="^(contract "michelson_converter_or.mligo") ; "stl4"] ;
+  [%expect {|
+    M_left(M_right("eq")) |}]
 
 let%expect_test _ =
-  run_ligo_good [ "dry-run" ; (contract "michelson_converter.mligo") ; "main_r" ; "test_input_pair_r" ; "s"] ;
+  run_ligo_good [ "dry-run" ; (contract "michelson_converter_pair.mligo") ; "main_r" ; "test_input_pair_r" ; "s"] ;
   [%expect {|
     ( LIST_EMPTY() , "eqeq" ) |}] ;
-  run_ligo_good [ "compile-contract" ; (contract "michelson_converter.mligo") ; "main_r" ] ;
+  run_ligo_good [ "compile-contract" ; (contract "michelson_converter_pair.mligo") ; "main_r" ] ;
   [%expect {|
     { parameter (pair (int %one) (pair (nat %two) (pair (string %three) (bool %four)))) ;
       storage string ;
@@ -68,10 +80,10 @@ let%expect_test _ =
              NIL operation ;
              PAIR ;
              DIP { DROP 2 } } } |}];
-  run_ligo_good [ "dry-run" ; (contract "michelson_converter.mligo") ; "main_l" ; "test_input_pair_l" ; "s"] ;
+  run_ligo_good [ "dry-run" ; (contract "michelson_converter_pair.mligo") ; "main_l" ; "test_input_pair_l" ; "s"] ;
   [%expect {|
     ( LIST_EMPTY() , "eqeq" ) |}] ;
-  run_ligo_good [ "compile-contract" ; (contract "michelson_converter.mligo") ; "main_l" ] ;
+  run_ligo_good [ "compile-contract" ; (contract "michelson_converter_pair.mligo") ; "main_l" ] ;
   [%expect {|
     { parameter (pair (pair (pair (int %one) (nat %two)) (string %three)) (bool %four)) ;
       storage string ;

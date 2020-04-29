@@ -605,7 +605,7 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
       let%bind type2 = evaluate_type e type2 in
       return (T_arrow {type1;type2})
   | T_sum m ->
-      let aux k ({ctor_type;michelson_annotation} : I.ctor_content) prev =
+      let aux k ({ctor_type;michelson_annotation;ctor_decl_pos} : I.ctor_content) prev =
         let%bind prev' = prev in
         let%bind ctor_type = evaluate_type e ctor_type in
         let%bind () = match Environment.get_constructor k e with
@@ -614,7 +614,7 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
               ok ()
             else fail (redundant_constructor e k)
           | None -> ok () in
-        let v' : O.ctor_content = {ctor_type;michelson_annotation} in
+        let v' : O.ctor_content = {ctor_type;michelson_annotation;ctor_decl_pos} in
         ok @@ O.CMap.add (convert_constructor' k) v' prev'
       in
       let%bind m = I.CMap.fold aux m (ok O.CMap.empty) in
@@ -665,14 +665,14 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
         let%bind lmap = match c'.type_content with
           | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap)) -> ok lmap
           | _ -> fail (michelson_comb_no_record t.location) in
-        let record = Operators.Typer.Converter.convert_type_to_right_comb (Ast_typed.LMap.to_kv_list lmap) in
+        let record = Operators.Typer.Converter.convert_pair_to_right_comb (Ast_typed.LMap.to_kv_list lmap) in
         return @@ record
     | TC_michelson_pair_left_comb c ->
         let%bind c' = evaluate_type e c in
         let%bind lmap = match c'.type_content with
           | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap)) -> ok lmap
           | _ -> fail (michelson_comb_no_record t.location) in
-        let record = Operators.Typer.Converter.convert_type_to_left_comb (Ast_typed.LMap.to_kv_list lmap) in
+        let record = Operators.Typer.Converter.convert_pair_to_left_comb (Ast_typed.LMap.to_kv_list lmap) in
         return @@ record
   )
 

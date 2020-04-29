@@ -135,9 +135,9 @@ let rec compile_type_expression : I.type_expression -> O.type_expression result 
     | I.T_sum sum -> 
       let sum = I.CMap.to_kv_list sum in
       let%bind sum = 
-        bind_map_list (fun (k,v) ->
+        bind_map_list (fun (k,({ctor_type = v; ctor_decl_pos ; _}:I.ctor_content)) ->
           let%bind v = compile_type_expression v in
-          let content : O.ctor_content = {ctor_type = v ; michelson_annotation = None} in
+          let content : O.ctor_content = {ctor_type = v ; michelson_annotation = None ; ctor_decl_pos } in
           ok @@ (k,content)
         ) sum
       in
@@ -164,8 +164,8 @@ let rec compile_type_expression : I.type_expression -> O.type_expression result 
     | I.T_operator (TC_michelson_or (l,l_ann,r,r_ann)) ->
       let%bind (l,r) = bind_map_pair compile_type_expression (l,r) in
       let sum : (O.constructor' * O.ctor_content) list = [
-        (O.Constructor "M_left" , {ctor_type = l ; michelson_annotation = Some l_ann}); 
-        (O.Constructor "M_right", {ctor_type = r ; michelson_annotation = Some r_ann}); ]
+        (O.Constructor "M_left" , {ctor_type = l ; michelson_annotation = Some l_ann ; ctor_decl_pos = 0}); 
+        (O.Constructor "M_right", {ctor_type = r ; michelson_annotation = Some r_ann ; ctor_decl_pos = 1}); ]
       in
       return @@ O.T_sum (O.CMap.of_list sum)
     | I.T_operator (TC_michelson_pair (l,l_ann,r,r_ann)) ->
@@ -596,9 +596,9 @@ let rec uncompile_type_expression : O.type_expression -> I.type_expression resul
       let sum = I.CMap.to_kv_list sum in
       let%bind sum = 
         bind_map_list (fun (k,v) ->
-          let {ctor_type;_} : O.ctor_content = v in
+          let {ctor_type;ctor_decl_pos;_} : O.ctor_content = v in
           let%bind v = uncompile_type_expression ctor_type in
-          ok @@ (k,v)
+          ok @@ (k,({ctor_type=v; ctor_decl_pos}: I.ctor_content))
         ) sum
       in
       return @@ I.T_sum (O.CMap.of_list sum)

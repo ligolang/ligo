@@ -143,21 +143,41 @@ module Typer = struct
         (List.length kvl >=2) in
       let all_undefined = List.for_all (fun (_,{field_decl_pos;_}) -> field_decl_pos = 0) kvl in
       let%bind () = Assert.assert_true_err
-        (simple_error "can't retrieve declaration order in the converted record, you need to annotate it")
+        (simple_error "can't retrieve type declaration order in the converted record, you need to annotate it")
         (not all_undefined) in
       ok ()
 
+    let variant_checks kvl =
+      let%bind () = Assert.assert_true_err
+        (simple_error "converted variant must have at least two elements")
+        (List.length kvl >=2) in
+      let all_undefined = List.for_all (fun (_,{ctor_decl_pos;_}) -> ctor_decl_pos = 0) kvl in
+      let%bind () = Assert.assert_true_err
+        (simple_error "can't retrieve type declaration order in the converted variant, you need to annotate it")
+        (not all_undefined) in
+      ok ()
+    
     let annotate_field (field:field_content) (ann:string) : field_content =
       {field with michelson_annotation=Some ann}
 
-    let comb (t:type_content) : field_content =
+    let annotate_ctor (ctor:ctor_content) (ann:string) : ctor_content =
+      {ctor with michelson_annotation=Some ann}
+
+    let comb_pair (t:type_content) : field_content =
       let field_type = {
         type_content = t ;
         type_meta = None ;
         location = Location.generated ; } in
       {field_type ; michelson_annotation = Some "" ; field_decl_pos = 0}
 
-    let rec to_right_comb_t l new_map =
+    let comb_ctor (t:type_content) : ctor_content =
+      let ctor_type = {
+        type_content = t ;
+        type_meta = None ;
+        location = Location.generated ; } in
+      {ctor_type ; michelson_annotation = Some "" ; ctor_decl_pos = 0}
+
+    let rec to_right_comb_pair l new_map =
       match l with
       | [] -> new_map
       | [ (Label ann_l, field_content_l) ; (Label ann_r, field_content_r) ] ->
@@ -166,64 +186,98 @@ module Typer = struct
           (Label "1" , annotate_field field_content_r ann_r) ] new_map
       | (Label ann, field)::tl ->
         let new_map' = LMap.add (Label "0") (annotate_field field ann) new_map in
-        LMap.add (Label "1") (comb (T_record (to_right_comb_t tl new_map'))) new_map'
+        LMap.add (Label "1") (comb_pair (T_record (to_right_comb_pair tl new_map'))) new_map'
 
-    let rec to_left_comb_t' first l new_map =
+    let rec to_right_comb_variant l new_map =
+      match l with
+      | [] -> new_map
+      | [ (Constructor ann_l, field_content_l) ; (Constructor ann_r, field_content_r) ] ->
+        CMap.add_bindings [
+          (Constructor "M_left" , annotate_ctor field_content_l ann_l) ;
+          (Constructor "M_right" , annotate_ctor field_content_r ann_r) ] new_map
+      | (Constructor ann, field)::tl ->
+        let new_map' = CMap.add (Constructor "M_left") (annotate_ctor field ann) new_map in
+        CMap.add (Constructor "M_right") (comb_ctor (T_sum (to_right_comb_variant tl new_map'))) new_map'
+
+    let rec to_left_comb_pair' first l new_map =
       match l with
       | [] -> new_map
       | (Label ann_l, field_content_l) :: (Label ann_r, field_content_r) ::tl when first ->
         let new_map' = LMap.add_bindings [
           (Label "0" , annotate_field field_content_l ann_l) ;
           (Label "1" , annotate_field field_content_r ann_r) ] LMap.empty in
-        to_left_comb_t' false tl new_map'
+        to_left_comb_pair' false tl new_map'
       | (Label ann, field)::tl ->
         let new_map' = LMap.add_bindings [
-          (Label "0" , comb (T_record new_map)) ;
+          (Label "0" , comb_pair (T_record new_map)) ;
           (Label "1" , annotate_field field ann ) ;] LMap.empty in
-        to_left_comb_t' first tl new_map'
-    let to_left_comb_t = to_left_comb_t' true
+        to_left_comb_pair' first tl new_map'
+    let to_left_comb_pair = to_left_comb_pair' true
 
-    let convert_type_to_right_comb l =
-      let l' = List.sort (fun (_,{field_decl_pos=a;_}) (_,{field_decl_pos=b;_}) -> Int.compare a b) l in
-      T_record (to_right_comb_t l' LMap.empty)
+    let rec to_left_comb_variant' first l new_map =
+      match l with
+      | [] -> new_map
+      | (Constructor ann_l, ctor_content_l) :: (Constructor ann_r, ctor_content_r) ::tl when first ->
+        let new_map' = CMap.add_bindings [
+          (Constructor "M_left" , annotate_ctor ctor_content_l ann_l) ;
+          (Constructor "M_right" , annotate_ctor ctor_content_r ann_r) ] CMap.empty in
+        to_left_comb_variant' false tl new_map'
+      | (Constructor ann, ctor)::tl ->
+        let new_map' = CMap.add_bindings [
+          (Constructor "M_left" , comb_ctor (T_sum new_map)) ;
+          (Constructor "M_right" , annotate_ctor ctor ann ) ;] CMap.empty in
+        to_left_comb_variant' first tl new_map'
+    let to_left_comb_variant = to_left_comb_variant' true
 
-    let convert_type_to_left_comb l =
-      let l' = List.sort (fun (_,{field_decl_pos=a;_}) (_,{field_decl_pos=b;_}) -> Int.compare a b) l in
-      T_record (to_left_comb_t l' LMap.empty)
-
-    let rec from_right_comb (l:field_content label_map) (size:int) : (field_content list) result =
+    let rec from_right_comb_pair (l:field_content label_map) (size:int) : (field_content list) result =
       let l' = List.rev @@ LMap.to_kv_list l in
       match l' , size with
       | [ (_,l) ; (_,r) ] , 2 -> ok [ l ; r ]
       | [ (_,l) ; (_,{field_type=tr;_}) ], _ ->
         let%bind comb_lmap = get_t_record tr in
-        let%bind next = from_right_comb comb_lmap (size-1) in
+        let%bind next = from_right_comb_pair comb_lmap (size-1) in
         ok (l :: next)
       | _ -> simple_fail "Could not convert michelson_pair_right_comb pair to a record"
 
-    let rec from_left_comb (l:field_content label_map) (size:int) : (field_content list) result =
+    let rec from_left_comb_pair (l:field_content label_map) (size:int) : (field_content list) result =
       let l' = List.rev @@ LMap.to_kv_list l in
       match l' , size with
       | [ (_,l) ; (_,r) ] , 2 -> ok [ l ; r ]
       | [ (_,{field_type=tl;_}) ; (_,r) ], _ ->
         let%bind comb_lmap = get_t_record tl in
-        let%bind next = from_left_comb comb_lmap (size-1) in
+        let%bind next = from_left_comb_pair comb_lmap (size-1) in
         ok (List.append next [r])
       | _ -> simple_fail "Could not convert michelson_pair_left_comb pair to a record"
+
+    let convert_pair_to_right_comb l =
+      let l' = List.sort (fun (_,{field_decl_pos=a;_}) (_,{field_decl_pos=b;_}) -> Int.compare a b) l in
+      T_record (to_right_comb_pair l' LMap.empty)
+
+    let convert_pair_to_left_comb l =
+      let l' = List.sort (fun (_,{field_decl_pos=a;_}) (_,{field_decl_pos=b;_}) -> Int.compare a b) l in
+      T_record (to_left_comb_pair l' LMap.empty)
     
-    let convert_from_right_comb (src: field_content label_map) (dst: field_content label_map) : type_content result =
-      let%bind fields = from_right_comb src (LMap.cardinal dst) in
+    let convert_pair_from_right_comb (src: field_content label_map) (dst: field_content label_map) : type_content result =
+      let%bind fields = from_right_comb_pair src (LMap.cardinal dst) in
       let labels = List.map (fun (l,_) -> l) @@
         List.sort (fun (_,{field_decl_pos=a;_}) (_,{field_decl_pos=b;_}) -> Int.compare a b ) @@
         LMap.to_kv_list dst in
       ok @@ (T_record (LMap.of_list @@ List.combine labels fields))
 
-    let convert_from_left_comb (src: field_content label_map) (dst: field_content label_map) : type_content result =
-      let%bind fields = from_left_comb src (LMap.cardinal dst) in
+    let convert_pair_from_left_comb (src: field_content label_map) (dst: field_content label_map) : type_content result =
+      let%bind fields = from_left_comb_pair src (LMap.cardinal dst) in
       let labels = List.map (fun (l,_) -> l) @@
         List.sort (fun (_,{field_decl_pos=a;_}) (_,{field_decl_pos=b;_}) -> Int.compare a b ) @@
         LMap.to_kv_list dst in
       ok @@ (T_record (LMap.of_list @@ List.combine labels fields))
+
+    let convert_variant_to_right_comb l =
+      let l' = List.sort (fun (_,{ctor_decl_pos=a;_}) (_,{ctor_decl_pos=b;_}) -> Int.compare a b) l in
+      T_sum (to_right_comb_variant l' CMap.empty)
+
+    let convert_variant_to_left_comb l =
+      let l' = List.sort (fun (_,{ctor_decl_pos=a;_}) (_,{ctor_decl_pos=b;_}) -> Int.compare a b) l in
+      T_sum (to_left_comb_variant l' CMap.empty)
 
   end
 

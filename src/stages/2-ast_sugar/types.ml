@@ -19,7 +19,7 @@ type type_content =
 
 and arrow = {type1: type_expression; type2: type_expression}
 
-and ctor_content = {ctor_type : type_expression ; michelson_annotation : string option}
+and ctor_content = {ctor_type : type_expression ; michelson_annotation : string option ; ctor_decl_pos : int}
 
 and field_content = {field_type : type_expression ; michelson_annotation : string option ; field_decl_pos : int}
 

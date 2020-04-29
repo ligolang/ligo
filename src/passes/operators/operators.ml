@@ -1168,32 +1168,46 @@ module Typer = struct
     let%bind () = assert_eq_1 hd elt in
     ok tl
 
-  let convert_to_right_comb = typer_1 "CONVERT_TO_RIGHT_COMB" @@ fun record ->
-    let%bind lmap = get_t_record record in
-    let kvl =  LMap.to_kv_list lmap in
-    let%bind () = Converter.record_checks kvl in
-    let pair = Converter.convert_type_to_right_comb kvl in
-    ok {record with type_content = pair}
+  let convert_to_right_comb = typer_1 "CONVERT_TO_RIGHT_COMB" @@ fun t ->
+    match t.type_content with
+      | T_record lmap ->
+        let kvl = LMap.to_kv_list lmap in
+        let%bind () = Converter.record_checks kvl in
+        let pair = Converter.convert_pair_to_right_comb kvl in
+        ok {t with type_content = pair}
+      | T_sum cmap ->
+        let kvl = CMap.to_kv_list cmap in
+        let%bind () = Converter.variant_checks kvl in
+        let michelson_or = Converter.convert_variant_to_right_comb kvl in
+        ok {t with type_content = michelson_or}
+      | _ -> simple_fail "converter can only be used on record or variants"
 
-  let convert_to_left_comb = typer_1 "CONVERT_TO_LEFT_COMB" @@ fun record ->
-    let%bind lmap = get_t_record record in
-    let kvl =  LMap.to_kv_list lmap in
-    let%bind () = Converter.record_checks kvl in
-    let pair = Converter.convert_type_to_left_comb kvl in
-    ok {record with type_content = pair}
+  let convert_to_left_comb = typer_1 "CONVERT_TO_LEFT_COMB" @@ fun t ->
+    match t.type_content with
+      | T_record lmap ->
+        let kvl =  LMap.to_kv_list lmap in
+        let%bind () = Converter.record_checks kvl in
+        let pair = Converter.convert_pair_to_left_comb kvl in
+        ok {t with type_content = pair}
+      | T_sum cmap ->
+        let kvl = CMap.to_kv_list cmap in
+        let%bind () = Converter.variant_checks kvl in
+        let michelson_or = Converter.convert_variant_to_left_comb kvl in
+        ok {t with type_content = michelson_or}
+      | _ -> simple_fail "converter can only be used on record or variants"
 
   let convert_from_right_comb = typer_1_opt "CONVERT_FROM_RIGHT_COMB" @@ fun pair opt ->
     let%bind dst_t = trace_option (simple_error "convert_from_right_comb must be annotated") opt in
     let%bind dst_lmap = get_t_record dst_t in
     let%bind src_lmap = get_t_record pair in
-    let%bind record = Converter.convert_from_right_comb src_lmap dst_lmap in
+    let%bind record = Converter.convert_pair_from_right_comb src_lmap dst_lmap in
     ok {pair with type_content = record}
 
   let convert_from_left_comb = typer_1_opt "CONVERT_FROM_LEFT_COMB" @@ fun pair opt ->
     let%bind dst_t = trace_option (simple_error "convert_from_left_comb must be annotated") opt in
     let%bind dst_lmap = get_t_record dst_t in
     let%bind src_lmap = get_t_record pair in
-    let%bind record = Converter.convert_from_left_comb src_lmap dst_lmap in
+    let%bind record = Converter.convert_pair_from_left_comb src_lmap dst_lmap in
     ok {pair with type_content = record}
   
   let constant_typers c : typer result = match c with

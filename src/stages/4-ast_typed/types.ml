@@ -40,6 +40,7 @@ and annot_option = string option
 and ctor_content = {
     ctor_type : type_expression;
     michelson_annotation : annot_option;
+    ctor_decl_pos : int;
 }
 
 and field_content = {

@@ -58,10 +58,15 @@ module Typer : sig
     open Ast_typed
 
     val record_checks : (label * field_content) list -> unit result
-    val convert_type_to_right_comb : (label * field_content) list -> type_content
-    val convert_type_to_left_comb : (label * field_content) list -> type_content
-    val convert_from_right_comb : field_content label_map -> field_content label_map -> type_content result
-    val convert_from_left_comb : field_content label_map -> field_content label_map -> type_content result
+    val variant_checks : (constructor' * ctor_content) list -> unit result
+
+    val convert_pair_to_right_comb : (label * field_content) list -> type_content
+    val convert_pair_to_left_comb : (label * field_content) list -> type_content
+    val convert_pair_from_right_comb : field_content label_map -> field_content label_map -> type_content result
+    val convert_pair_from_left_comb : field_content label_map -> field_content label_map -> type_content result
+
+    val convert_variant_to_right_comb : (constructor' * ctor_content) list -> type_content
+    val convert_variant_to_left_comb : (constructor' * ctor_content) list -> type_content
 
   end
 end

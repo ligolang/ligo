@@ -10,9 +10,9 @@ let rec idle_type_expression : I.type_expression -> O.type_expression result =
       let sum = I.CMap.to_kv_list sum in
       let%bind sum = 
         bind_map_list (fun (k,v) ->
-          let {ctor_type ; michelson_annotation} : I.ctor_content = v in
+          let {ctor_type ; michelson_annotation ; ctor_decl_pos} : I.ctor_content = v in
           let%bind ctor_type = idle_type_expression ctor_type in
-          let v' : O.ctor_content = {ctor_type ; michelson_annotation} in
+          let v' : O.ctor_content = {ctor_type ; michelson_annotation ; ctor_decl_pos} in
           ok @@ (k,v')
         ) sum
       in
@@ -244,9 +244,9 @@ let rec uncompile_type_expression : O.type_expression -> I.type_expression resul
       let sum = I.CMap.to_kv_list sum in
       let%bind sum = 
         bind_map_list (fun (k,v) ->
-          let {ctor_type;michelson_annotation} : O.ctor_content = v in
+          let {ctor_type;michelson_annotation;ctor_decl_pos} : O.ctor_content = v in
           let%bind ctor_type = uncompile_type_expression ctor_type in
-          let v' : I.ctor_content = {ctor_type;michelson_annotation} in
+          let v' : I.ctor_content = {ctor_type;michelson_annotation;ctor_decl_pos} in
           ok @@ (k,v')
         ) sum
       in

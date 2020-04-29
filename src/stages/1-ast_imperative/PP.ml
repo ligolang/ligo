@@ -8,7 +8,7 @@ include Stage_common.PP
 let cmap_sep value sep ppf m =
   let lst = CMap.to_kv_list m in
   let lst = List.sort (fun (Constructor a,_) (Constructor b,_) -> String.compare a b) lst in
-  let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" constructor k value v in
+  let new_pp ppf (k, ({ctor_type=v;_}:ctor_content)) = fprintf ppf "@[<h>%a -> %a@]" constructor k value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
 let cmap_sep_d x = cmap_sep x (tag " ,@ ")
@@ -16,7 +16,7 @@ let cmap_sep_d x = cmap_sep x (tag " ,@ ")
 let record_sep_t value sep ppf (m : 'a label_map) =
   let lst = LMap.to_kv_list m in
   let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
-  let new_pp ppf (k, {field_type=v;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value v in
+  let new_pp ppf (k, ({field_type=v;_}:field_content)) = fprintf ppf "@[<h>%a -> %a@]" label k value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
 let record_sep value sep ppf (m : 'a label_map) =
