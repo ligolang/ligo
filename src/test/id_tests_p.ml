@@ -4,7 +4,7 @@ open Ast_imperative
 
 
 let type_file f =
-  let%bind typed,state = Ligo.Compile.Utils.type_file f "pascaligo" Env in
+  let%bind typed,state = Ligo.Compile.Utils.type_file f "pascaligo" (Contract "main") in
   ok (typed,state)
 
 let get_program =
@@ -50,10 +50,9 @@ let buy_id () =
       ~sender:first_contract
       ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.one) ()
   in
-  let new_website = e_bytes_string "ligolang.org" in
   let id_details_2 = e_record_ez [("owner", e_address new_addr) ;
                                   ("controller", e_address new_addr) ;
-                                  ("profile", new_website)]
+                                  ("profile", owner_website)]
   in
   let param = e_record_ez [("profile", owner_website) ;
                            ("initial_controller", (e_some (e_address new_addr))) ;
@@ -88,10 +87,9 @@ let buy_id_sender_addr () =
       ~sender:first_contract
       ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.one) ()
   in
-  let new_website = e_bytes_string "ligolang.org" in
   let id_details_2 = e_record_ez [("owner", e_address new_addr) ;
                                   ("controller", e_address new_addr) ;
-                                  ("profile", new_website)]
+                                  ("profile", owner_website)]
   in
   let param = e_record_ez [("profile", owner_website) ;
                            ("initial_controller", (e_typed_none (t_address ())))] in
@@ -147,14 +145,13 @@ let update_details_owner () =
       ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.zero)
       ()
   in
-  let new_website = e_bytes_string "ligolang.org" in
   let id_details_2 = e_record_ez [("owner", e_address new_addr) ;
                                   ("controller", e_address owner_addr) ;
-                                  ("profile", new_website)]
+                                  ("profile", owner_website)]
   in
   let id_details_2_diff = e_record_ez [("owner", e_address new_addr) ;
                                        ("controller", e_address new_addr) ;
-                                       ("profile", new_website)] in
+                                       ("profile", owner_website)] in
   let storage = e_record_ez [("identities", (e_big_map
                                                    [(e_int 0, id_details_1) ;
                                                     (e_int 1, id_details_2)])) ;
@@ -169,7 +166,7 @@ let update_details_owner () =
                                  ("name_price", e_mutez 1000000) ;
                                  ("skip_price", e_mutez 1000000) ; ]
   in
-  let details = e_bytes_string "ligolang.org" in
+  let details = owner_website in
   let param = e_record_ez [("id", e_int 1) ;
                        ("new_profile", e_some details) ;
                        ("new_controller", e_some (e_address new_addr))] in
@@ -192,7 +189,7 @@ let update_details_controller () =
       ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.zero)
       ()
   in
-  let new_website = e_bytes_string "ligolang.org" in
+  let new_website = owner_website in
   let id_details_2 = e_record_ez [("owner", e_address owner_addr) ;
                                   ("controller", e_address new_addr) ;
                                   ("profile", new_website)]
