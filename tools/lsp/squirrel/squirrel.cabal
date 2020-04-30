@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f4f92cb29b0c7d516e57ceee58c9d82900fc41d82cf21f7aa033094288165072
+-- hash: 9aa7bb8abf29ee513a2033ae2b0ef8310107294ad348fa7510ec615a1b11c4ea
 
 name:           squirrel
 version:        0.0.0
@@ -14,6 +14,7 @@ library
   exposed-modules:
       AST
       AST.Parser
+      AST.Pretty
       AST.Types
       Parser
       ParseTree

@@ -15,6 +15,7 @@ import Data.ByteString (ByteString)
 
 import ParseTree
 import Range
+import PrettyPrint
 
 import Debug.Trace
 
@@ -25,6 +26,10 @@ data Error
     , eRange :: Range
     }
   deriving stock (Show)
+
+instance Pretty Error where
+  pp (Expected msg found r) = "<" <> pp msg <> pp r <> ": " <> pp found <> ">"
+
 
 newtype Parser a = Parser
   { unParser

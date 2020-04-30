@@ -60,9 +60,13 @@ binding = do
       stubbed "type" do
         field "type" type_
     consume "is"
-    expr <- stubbed "body" do
-      field "locals" anything
-    return (Function info (recur == Just "recursive") name params ty expr)
+    exp <- stubbed "body" do
+      field "expr" expr
+    return (Function info (recur == Just "recursive") name params ty exp)
+
+expr :: Parser (Expr Range)
+expr = do
+  fallback "expr"
 
 paramDecl :: Parser (VarDecl Range)
 paramDecl = do

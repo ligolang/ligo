@@ -32,7 +32,7 @@ instance Stubbed (Declaration info) where stub = WrongDecl
 
 data Binding info
   = Irrefutable  info (Pattern info) (Expr info)
-  | Function     info Bool (Name info) [VarDecl info] (Type info) TODO
+  | Function     info Bool (Name info) [VarDecl info] (Type info) (Expr info)
   | WrongBinding      Error
   deriving stock (Show)
 
@@ -67,7 +67,7 @@ instance Stubbed (Type info) where stub = WrongType
 
 data Expr info
   = Let       info [Declaration info] (Expr info)
-  | Apply     info (Expr info) (Expr info)
+  | Apply     info (Expr info) [Expr info]
   | Constant  info (Constant info)
   | Ident     info (QualifiedName info)
   | WrongExpr      Error
@@ -94,10 +94,12 @@ data Pattern info
 
 instance Stubbed (Pattern info) where stub = WrongPattern
 
-data QualifiedName info = QualifiedName
-  { source :: Name info
-  , path   :: [Name info]
-  }
+data QualifiedName info
+  = QualifiedName
+    { qnInfo   :: info
+    , qnSource :: Name info
+    , qnPath   :: [Name info]
+    }
   | WrongQualifiedName Error
   deriving stock (Show)
 
