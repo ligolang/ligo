@@ -331,6 +331,9 @@ let selector_break_ctor :  (type_constraint_simpl, output_break_ctor) selector =
        with the same sort of constraint (constructor vs. constructor)
        is symmetric *)
     let other_cs = (UnionFindWrapper.get_constraints_related_to c.tv dbs).constructor in
+    let other_cs = List.filter (fun (o : c_constructor_simpl) -> Var.equal c.tv o.tv) other_cs in
+    (* TODO double-check the conditions in the propagator, we had a
+       bug here because the selector was too permissive. *)
     let cs_pairs = List.map (fun x -> { a_k_var = c ; a_k'_var' = x }) other_cs in
     WasSelected cs_pairs
   | SC_Alias       _                -> WasNotSelected (* TODO: ??? (beware: symmetry) *)
