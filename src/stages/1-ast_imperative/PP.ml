@@ -63,6 +63,8 @@ and type_operator :
     | TC_michelson_pair (l,_, r,_) -> Format.asprintf "Michelson_pair (%a,%a)" f l f r
     | TC_michelson_pair_right_comb e -> Format.asprintf "michelson_pair_right_comb (%a)" f e
     | TC_michelson_pair_left_comb e -> Format.asprintf "michelson_pair_left_comb (%a)" f e
+    | TC_michelson_or_right_comb e -> Format.asprintf "michelson_or_right_comb (%a)" f e
+    | TC_michelson_or_left_comb e -> Format.asprintf "michelson_or_left_comb (%a)" f e
     | TC_contract te  -> Format.asprintf "Contract (%a)" f te
   in
   fprintf ppf "(TO_%s)" s

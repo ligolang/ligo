@@ -61,6 +61,8 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
     | TC_map_or_big_map of type_expression * type_expression
     | TC_michelson_pair_right_comb of type_expression
     | TC_michelson_pair_left_comb of type_expression
+    | TC_michelson_or_right_comb of type_expression
+    | TC_michelson_or_left_comb of type_expression
 
 
   and type_expression = {type_content: type_content; location: Location.t; type_meta: type_meta}
@@ -76,6 +78,8 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
     | TC_map_or_big_map (x , y)-> TC_map_or_big_map (f x , f y)
     | TC_michelson_pair_right_comb c -> TC_michelson_pair_right_comb (f c)
     | TC_michelson_pair_left_comb c -> TC_michelson_pair_left_comb (f c)
+    | TC_michelson_or_right_comb c -> TC_michelson_or_right_comb (f c)
+    | TC_michelson_or_left_comb c -> TC_michelson_or_left_comb (f c)
 
   let bind_map_type_operator f = function
       TC_contract x -> let%bind x = f x in ok @@ TC_contract x
@@ -87,6 +91,8 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
     | TC_map_or_big_map (x , y)-> let%bind x = f x in let%bind y = f y in ok @@ TC_map_or_big_map (x , y)
     | TC_michelson_pair_right_comb c -> let%bind c = f c in ok @@ TC_michelson_pair_right_comb c
     | TC_michelson_pair_left_comb c -> let%bind c = f c in ok @@ TC_michelson_pair_left_comb c
+    | TC_michelson_or_right_comb c -> let%bind c = f c in ok @@ TC_michelson_or_right_comb c
+    | TC_michelson_or_left_comb c -> let%bind c = f c in ok @@ TC_michelson_or_left_comb c
 
   let type_operator_name = function
         TC_contract _ -> "TC_contract"
@@ -98,6 +104,8 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
       | TC_map_or_big_map _ -> "TC_map_or_big_map"
       | TC_michelson_pair_right_comb _ -> "TC_michelson_pair_right_comb" 
       | TC_michelson_pair_left_comb _ -> "TC_michelson_pair_left_comb" 
+      | TC_michelson_or_right_comb _ -> "TC_michelson_or_right_comb" 
+      | TC_michelson_or_left_comb _ -> "TC_michelson_or_left_comb" 
 
   let type_expression'_of_string = function
     | "TC_contract" , [x]     -> ok @@ T_operator(TC_contract x)
@@ -137,6 +145,8 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
     | TC_map_or_big_map (x , y) -> "TC_map_or_big_map"  , [x ; y]
     | TC_michelson_pair_right_comb c -> "TC_michelson_pair_right_comb" , [c]
     | TC_michelson_pair_left_comb c -> "TC_michelson_pair_left_comb" , [c]
+    | TC_michelson_or_right_comb c -> "TC_michelson_or_right_comb" , [c]
+    | TC_michelson_or_left_comb c -> "TC_michelson_or_left_comb" , [c]
 
   let string_of_type_constant = function
     | TC_unit      -> "TC_unit", []

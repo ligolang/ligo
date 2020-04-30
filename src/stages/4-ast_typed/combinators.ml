@@ -76,7 +76,7 @@ let make_t_ez_sum ?loc ?s (lst:(constructor' * ctor_content) list) : type_expres
   make_t ?loc (T_sum map) s
 
 let t_bool ?loc ?s ()       : type_expression = make_t_ez_sum ?loc ?s
-  [(Constructor "true", {ctor_type=t_unit ();michelson_annotation=None});(Constructor "false", {ctor_type=t_unit ();michelson_annotation=None})]
+  [(Constructor "true", {ctor_type=t_unit ();michelson_annotation=None;ctor_decl_pos=0});(Constructor "false", {ctor_type=t_unit ();michelson_annotation=None;ctor_decl_pos=1})]
 
 let t_function param result ?loc ?s () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result}) s
 let t_shallow_closure param result ?loc ?s () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result}) s

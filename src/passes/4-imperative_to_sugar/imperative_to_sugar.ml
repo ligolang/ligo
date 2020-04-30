@@ -207,6 +207,12 @@ and compile_type_operator : I.type_operator -> O.type_operator result =
     | TC_michelson_pair_left_comb c ->
       let%bind c = compile_type_expression c in
       ok @@ O.TC_michelson_pair_left_comb c
+    | TC_michelson_or_right_comb c ->
+      let%bind c = compile_type_expression c in
+      ok @@ O.TC_michelson_or_right_comb c
+    | TC_michelson_or_left_comb c ->
+      let%bind c = compile_type_expression c in
+      ok @@ O.TC_michelson_or_left_comb c
 
 let rec compile_expression : I.expression -> O.expression result =
   fun e ->
@@ -652,6 +658,12 @@ and uncompile_type_operator : O.type_operator -> I.type_operator result =
     | TC_michelson_pair_left_comb c ->
       let%bind c = uncompile_type_expression c in
       ok @@ I.TC_michelson_pair_left_comb c
+    | TC_michelson_or_right_comb c ->
+      let%bind c = uncompile_type_expression c in
+      ok @@ I.TC_michelson_or_right_comb c
+    | TC_michelson_or_left_comb c ->
+      let%bind c = uncompile_type_expression c in
+      ok @@ I.TC_michelson_or_left_comb c
 
 let rec uncompile_expression' : O.expression -> I.expression result =
   fun e ->

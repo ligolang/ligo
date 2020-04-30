@@ -256,6 +256,8 @@ module Ast_PP_type (PARAMETER : AST_PARAMETER_TYPE) = struct
       | TC_contract te  -> Format.asprintf "Contract (%a)" f te
       | TC_michelson_pair_right_comb c -> Format.asprintf "michelson_pair_right_comb (%a)" f c
       | TC_michelson_pair_left_comb c -> Format.asprintf "michelson_pair_left_comb (%a)" f c
+      | TC_michelson_or_right_comb c -> Format.asprintf "michelson_or_right_comb (%a)" f c
+      | TC_michelson_or_left_comb c -> Format.asprintf "michelson_or_left_comb (%a)" f c
     in
     fprintf ppf "(type_operator: %s)" s
 end

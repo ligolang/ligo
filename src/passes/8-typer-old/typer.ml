@@ -20,6 +20,14 @@ module Errors = struct
     ] in
     error ~data title message ()
 
+  let michelson_comb_no_variant (loc:Location.t) () =
+    let title = (thunk "bad michelson_or_right_comb type parameter") in
+    let message () = "michelson_or_right_comb type operator must be used on a variant type" in
+    let data = [
+      ("location" , fun () -> Format.asprintf "%a" Location.pp loc) ;
+    ] in
+    error ~data title message ()
+
   let unbound_type_variable (e:environment) (tv:I.type_variable) (loc:Location.t) () =
     let name = Var.to_name tv in
     let suggestion = match name with
@@ -674,6 +682,20 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
           | _ -> fail (michelson_comb_no_record t.location) in
         let record = Operators.Typer.Converter.convert_pair_to_left_comb (Ast_typed.LMap.to_kv_list lmap) in
         return @@ record
+    | TC_michelson_or_right_comb c ->
+        let%bind c' = evaluate_type e c in
+        let%bind cmap = match c'.type_content with
+          | T_sum cmap -> ok cmap
+          | _ -> fail (michelson_comb_no_variant t.location) in
+        let pair = Operators.Typer.Converter.convert_variant_to_right_comb (Ast_typed.CMap.to_kv_list cmap) in
+        return @@ pair
+    | TC_michelson_or_left_comb c ->
+        let%bind c' = evaluate_type e c in
+        let%bind cmap = match c'.type_content with
+          | T_sum cmap -> ok cmap
+          | _ -> fail (michelson_comb_no_variant t.location) in
+        let pair = Operators.Typer.Converter.convert_variant_to_left_comb(Ast_typed.CMap.to_kv_list cmap) in
+        return @@ pair
   )
 
 and type_expression : environment -> O.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * O.typer_state) result

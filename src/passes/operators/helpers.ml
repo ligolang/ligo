@@ -249,6 +249,26 @@ module Typer = struct
         ok (List.append next [r])
       | _ -> simple_fail "Could not convert michelson_pair_left_comb pair to a record"
 
+    let rec from_right_comb_variant (l:ctor_content constructor_map) (size:int) : (ctor_content list) result =
+      let l' = List.rev @@ CMap.to_kv_list l in
+      match l' , size with
+      | [ (_,l) ; (_,r) ] , 2 -> ok [ l ; r ]
+      | [ (_,l) ; (_,{ctor_type=tr;_}) ], _ ->
+        let%bind comb_cmap = get_t_sum tr in
+        let%bind next = from_right_comb_variant comb_cmap (size-1) in
+        ok (l :: next)
+      | _ -> simple_fail "Could not convert michelson_or right comb to a variant"
+
+    let rec from_left_comb_variant (l:ctor_content constructor_map) (size:int) : (ctor_content list) result =
+      let l' = List.rev @@ CMap.to_kv_list l in
+      match l' , size with
+      | [ (_,l) ; (_,r) ] , 2 -> ok [ l ; r ]
+      | [ (_,{ctor_type=tl;_}) ; (_,r) ], _ ->
+        let%bind comb_cmap = get_t_sum tl in
+        let%bind next = from_left_comb_variant comb_cmap (size-1) in
+        ok (List.append next [r])
+      | _ -> simple_fail "Could not convert michelson_or left comb to a record"
+
     let convert_pair_to_right_comb l =
       let l' = List.sort (fun (_,{field_decl_pos=a;_}) (_,{field_decl_pos=b;_}) -> Int.compare a b) l in
       T_record (to_right_comb_pair l' LMap.empty)
@@ -278,6 +298,20 @@ module Typer = struct
     let convert_variant_to_left_comb l =
       let l' = List.sort (fun (_,{ctor_decl_pos=a;_}) (_,{ctor_decl_pos=b;_}) -> Int.compare a b) l in
       T_sum (to_left_comb_variant l' CMap.empty)
+
+    let convert_variant_from_right_comb (src: ctor_content constructor_map) (dst: ctor_content constructor_map) : type_content result =
+      let%bind ctors = from_right_comb_variant src (CMap.cardinal dst) in
+      let ctors_name = List.map (fun (l,_) -> l) @@
+        List.sort (fun (_,{ctor_decl_pos=a;_}) (_,{ctor_decl_pos=b;_}) -> Int.compare a b ) @@
+        CMap.to_kv_list dst in
+      ok @@ (T_sum (CMap.of_list @@ List.combine ctors_name ctors))
+
+    let convert_variant_from_left_comb (src: ctor_content constructor_map) (dst: ctor_content constructor_map) : type_content result =
+      let%bind ctors = from_left_comb_variant src (CMap.cardinal dst) in
+      let ctors_name = List.map (fun (l,_) -> l) @@
+        List.sort (fun (_,{ctor_decl_pos=a;_}) (_,{ctor_decl_pos=b;_}) -> Int.compare a b ) @@
+        CMap.to_kv_list dst in
+      ok @@ (T_sum (CMap.of_list @@ List.combine ctors_name ctors))
 
   end
 

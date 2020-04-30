@@ -61,6 +61,8 @@ module Concrete_to_imperative = struct
     | "contract"     -> Some (TC_contract unit_expr)
     | "michelson_pair_right_comb" -> Some (TC_michelson_pair_right_comb unit_expr)
     | "michelson_pair_left_comb" -> Some (TC_michelson_pair_left_comb unit_expr)
+    | "michelson_or_right_comb" -> Some (TC_michelson_or_right_comb unit_expr)
+    | "michelson_or_left_comb" -> Some (TC_michelson_or_left_comb unit_expr)
     | _              -> None
 
   let pseudo_modules = function
@@ -1196,12 +1198,19 @@ module Typer = struct
         ok {t with type_content = michelson_or}
       | _ -> simple_fail "converter can only be used on record or variants"
 
-  let convert_from_right_comb = typer_1_opt "CONVERT_FROM_RIGHT_COMB" @@ fun pair opt ->
-    let%bind dst_t = trace_option (simple_error "convert_from_right_comb must be annotated") opt in
-    let%bind dst_lmap = get_t_record dst_t in
-    let%bind src_lmap = get_t_record pair in
-    let%bind record = Converter.convert_pair_from_right_comb src_lmap dst_lmap in
-    ok {pair with type_content = record}
+  let convert_from_right_comb = typer_1_opt "CONVERT_FROM_RIGHT_COMB" @@ fun t opt ->
+    match t.type_content with
+      | T_record src_lmap ->
+        let%bind dst_t = trace_option (simple_error "convert_from_right_comb must be annotated") opt in
+        let%bind dst_lmap = get_t_record dst_t in
+        let%bind record = Converter.convert_pair_from_right_comb src_lmap dst_lmap in
+        ok {t with type_content = record}
+      | T_sum src_cmap ->
+        let%bind dst_t = trace_option (simple_error "convert_from_right_comb must be annotated") opt in
+        let%bind dst_cmap = get_t_sum dst_t in
+        let%bind variant = Converter.convert_variant_from_right_comb src_cmap dst_cmap in
+        ok {t with type_content = variant}
+      | _ -> simple_fail "converter can only be used on record or variants"
 
   let convert_from_left_comb = typer_1_opt "CONVERT_FROM_LEFT_COMB" @@ fun pair opt ->
     let%bind dst_t = trace_option (simple_error "convert_from_left_comb must be annotated") opt in

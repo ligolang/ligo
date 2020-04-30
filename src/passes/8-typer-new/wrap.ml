@@ -108,6 +108,8 @@ let rec type_expression_to_type_value_copypasted : I.type_expression -> O.type_v
                                 | TC_contract c          -> (C_contract, [c])
                                 | TC_michelson_pair_right_comb c -> (C_record, [c])
                                 | TC_michelson_pair_left_comb c -> (C_record, [c])
+                                | TC_michelson_or_right_comb c -> (C_record, [c])
+                                | TC_michelson_or_left_comb c -> (C_record, [c])
                           )
      in
      p_constant csttag (List.map type_expression_to_type_value_copypasted args)

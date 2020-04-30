@@ -30,6 +30,8 @@ and type_operator =
   | TC_big_map of type_expression * type_expression
   | TC_michelson_or of type_expression * michelson_prct_annotation * type_expression * michelson_prct_annotation
   | TC_michelson_pair of type_expression * michelson_prct_annotation * type_expression * michelson_prct_annotation
+  | TC_michelson_or_right_comb of type_expression
+  | TC_michelson_or_left_comb of type_expression
   | TC_michelson_pair_right_comb of type_expression
   | TC_michelson_pair_left_comb of type_expression
 

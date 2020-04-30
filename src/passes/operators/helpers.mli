@@ -67,6 +67,8 @@ module Typer : sig
 
     val convert_variant_to_right_comb : (constructor' * ctor_content) list -> type_content
     val convert_variant_to_left_comb : (constructor' * ctor_content) list -> type_content
+    val convert_variant_from_right_comb : ctor_content constructor_map -> ctor_content constructor_map -> type_content result
+    val convert_variant_from_left_comb : ctor_content constructor_map -> ctor_content constructor_map -> type_content result
 
   end
 end
