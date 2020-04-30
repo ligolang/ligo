@@ -1,0 +1,41 @@
+
+name: squirrel
+
+dependencies:
+- base
+- bytestring
+- mtl
+- text
+- tree-sitter
+- pretty
+
+default-extensions:
+- LambdaCase
+- BlockArguments
+- OverloadedStrings
+- GeneralisedNewtypeDeriving
+- DerivingStrategies
+- NamedFieldPuns
+- BangPatterns
+
+ghc-options: -freverse-errors -Wall
+
+library:
+  source-dirs:
+  - src/
+
+  include-dirs:
+  - vendor
+
+  c-sources:
+  - vendor/parser.c
+
+executables:
+  squirrel:
+    main: Main.hs
+
+    source-dirs:
+    - app/
+
+    dependencies:
+    - squirrel

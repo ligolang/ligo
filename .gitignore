@@ -15,3 +15,17 @@ Version.ml
 *.coverage
 /_coverage/
 /_coverage_*/
+*.gyp
+tools/lsp/pascaligo/package.json
+tools/lsp/pascaligo/node_modules
+tools/lsp/pascaligo/log.html
+tools/lsp/pascaligo/src/
+tools/lsp/pascaligo/index.js
+tools/lsp/pascaligo/node_modules
+.stack-work
+tools/lsp/camligo/package.json
+tools/lsp/camligo/node_modules
+tools/lsp/camligo/log.html
+tools/lsp/camligo/src/
+tools/lsp/camligo/index.js
+tools/lsp/camligo/node_modules

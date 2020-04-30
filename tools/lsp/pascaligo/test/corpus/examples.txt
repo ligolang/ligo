@@ -1,0 +1,29 @@
+=========
+Includes
+=========
+
+#include "foo.bar"
+#include "qux.ligo"
+
+---
+
+(source_file
+  (include
+    (string))
+  (include
+    (string)))
+
+=========
+Functions
+=========
+
+function add (const a : int ; const b : int) : int is
+  block { skip } with 1
+
+---
+
+(source_file
+  (include
+    (string))
+  (include
+    (string)))
