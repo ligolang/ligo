@@ -36,13 +36,13 @@ let%expect_test _ =
     ( 2 , ( +3 , "q" ) ) |}] ;
   run_ligo_good [ "interpret" ; "--init-file="^(contract "michelson_converter_pair.mligo") ; "r4"] ;
   [%expect {|
-    ( 2 , ( +3 , ( "q" , true ) ) ) |}] ;
+    ( 2 , ( +3 , ( "q" , true(unit) ) ) ) |}] ;
   run_ligo_good [ "interpret" ; "--init-file="^(contract "michelson_converter_pair.mligo") ; "l3"] ;
   [%expect {|
     ( ( 2 , +3 ) , "q" ) |}] ;
   run_ligo_good [ "interpret" ; "--init-file="^(contract "michelson_converter_pair.mligo") ; "l4"] ;
   [%expect {|
-    ( ( ( 2 , +3 ) , "q" ) , true ) |}];
+    ( ( ( 2 , +3 ) , "q" ) , true(unit) ) |}];
   run_ligo_good [ "interpret" ; "--init-file="^(contract "michelson_converter_or.mligo") ; "str3"] ;
   [%expect {|
     M_right(M_left(+3)) |}] ;
@@ -100,7 +100,74 @@ let%expect_test _ =
              CONCAT ;
              NIL operation ;
              PAIR ;
-             DIP { DROP 2 } } } |}]
+             DIP { DROP 2 } } } |}];
+  run_ligo_good [ "dry-run" ; contract "michelson_converter_or.mligo" ; "main_r" ; "vr" ; "Foo4 2"] ;
+  [%expect {|
+    ( LIST_EMPTY() , Baz4("eq") ) |}] ;
+  run_ligo_good [ "compile-contract" ; contract "michelson_converter_or.mligo" ; "main_r" ] ;
+  [%expect {|
+    { parameter (or (int %Foo4) (or (nat %Bar4) (or (string %Baz4) (bool %Boz4)))) ;
+      storage (or (or (nat %bar4) (string %baz4)) (or (bool %boz4) (int %foo4))) ;
+      code { PUSH string "eq" ;
+             LEFT bool ;
+             RIGHT nat ;
+             RIGHT int ;
+             PUSH string "eq" ;
+             RIGHT (or (int %foo4) (nat %bar4)) ;
+             LEFT bool ;
+             DIG 2 ;
+             DUP ;
+             DUG 3 ;
+             CAR ;
+             IF_LEFT
+               { DUP ; RIGHT bool ; RIGHT (or nat string) ; DIP { DROP } }
+               { DUP ;
+                 IF_LEFT
+                   { DUP ; LEFT string ; LEFT (or bool int) ; DIP { DROP } }
+                   { DUP ;
+                     IF_LEFT
+                       { DUP ; RIGHT nat ; LEFT (or bool int) ; DIP { DROP } }
+                       { DUP ; LEFT int ; RIGHT (or nat string) ; DIP { DROP } } ;
+                     DIP { DROP } } ;
+                 DIP { DROP } } ;
+             DUP ;
+             NIL operation ;
+             PAIR ;
+             DIP { DROP 4 } } } |}] ;
+  run_ligo_good [ "dry-run" ; contract "michelson_converter_or.mligo" ; "main_l" ; "vl" ; "Foo4 2"] ;
+  [%expect {|
+    ( LIST_EMPTY() , Baz4("eq") ) |}] ;
+  run_ligo_good [ "compile-contract" ; contract "michelson_converter_or.mligo" ; "main_l" ] ;
+  [%expect {|
+    { parameter (or (or (or (int %Foo4) (nat %Bar4)) (string %Baz4)) (bool %Boz4)) ;
+      storage (or (or (nat %bar4) (string %baz4)) (or (bool %boz4) (int %foo4))) ;
+      code { PUSH string "eq" ;
+             LEFT bool ;
+             RIGHT nat ;
+             RIGHT int ;
+             PUSH string "eq" ;
+             RIGHT (or (int %foo4) (nat %bar4)) ;
+             LEFT bool ;
+             DIG 2 ;
+             DUP ;
+             DUG 3 ;
+             CAR ;
+             IF_LEFT
+               { DUP ;
+                 IF_LEFT
+                   { DUP ;
+                     IF_LEFT
+                       { DUP ; RIGHT bool ; RIGHT (or nat string) ; DIP { DROP } }
+                       { DUP ; LEFT string ; LEFT (or bool int) ; DIP { DROP } } ;
+                     DIP { DROP } }
+                   { DUP ; RIGHT nat ; LEFT (or bool int) ; DIP { DROP } } ;
+                 DIP { DROP } }
+               { DUP ; LEFT int ; RIGHT (or nat string) ; DIP { DROP } } ;
+             DUP ;
+             NIL operation ;
+             PAIR ;
+             DIP { DROP 4 } } } |}]
+
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "michelson_comb_type_operators.mligo" ; "main_r"] ;

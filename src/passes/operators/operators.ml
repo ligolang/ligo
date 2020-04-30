@@ -1212,12 +1212,19 @@ module Typer = struct
         ok {t with type_content = variant}
       | _ -> simple_fail "converter can only be used on record or variants"
 
-  let convert_from_left_comb = typer_1_opt "CONVERT_FROM_LEFT_COMB" @@ fun pair opt ->
-    let%bind dst_t = trace_option (simple_error "convert_from_left_comb must be annotated") opt in
-    let%bind dst_lmap = get_t_record dst_t in
-    let%bind src_lmap = get_t_record pair in
-    let%bind record = Converter.convert_pair_from_left_comb src_lmap dst_lmap in
-    ok {pair with type_content = record}
+  let convert_from_left_comb = typer_1_opt "CONVERT_FROM_LEFT_COMB" @@ fun t opt ->
+    match t.type_content with
+      | T_record src_lmap ->
+        let%bind dst_t = trace_option (simple_error "convert_from_left_comb must be annotated") opt in
+        let%bind dst_lmap = get_t_record dst_t in
+        let%bind record = Converter.convert_pair_from_left_comb src_lmap dst_lmap in
+        ok {t with type_content = record}
+      | T_sum src_cmap ->
+        let%bind dst_t = trace_option (simple_error "convert_from_left_comb must be annotated") opt in
+        let%bind dst_cmap = get_t_sum dst_t in
+        let%bind variant = Converter.convert_variant_from_left_comb src_cmap dst_cmap in
+        ok {t with type_content = variant}
+      | _ -> simple_fail "converter can only be used on record or variants"
   
   let constant_typers c : typer result = match c with
     | C_INT                 -> ok @@ int ;

@@ -519,7 +519,7 @@ and type_declaration env (_placeholder_for_state_of_new_typer : O.typer_state) :
     )
 
 and type_match : (environment -> I.expression -> O.expression result) -> environment -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> O.matching_expr result =
-  fun f e t i ae loc -> match i with
+  fun f e t i _ae loc -> match i with
   | Match_option {match_none ; match_some} ->
       let%bind tv =
         trace_strong (match_error ~expected:i ~actual:t loc)
@@ -667,7 +667,7 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
         let%bind cmap = match c'.type_content with
           | T_sum cmap -> ok cmap
           | _ -> fail (michelson_comb_no_variant t.location) in
-        let pair = Operators.Typer.Converter.convert_variant_to_left_comb(Ast_typed.CMap.to_kv_list cmap) in
+        let pair = Operators.Typer.Converter.convert_variant_to_left_comb (Ast_typed.CMap.to_kv_list cmap) in
         return @@ pair
   )
 

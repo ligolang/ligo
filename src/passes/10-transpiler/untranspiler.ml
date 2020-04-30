@@ -236,8 +236,6 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
         | Empty -> fail @@ corner_case ~loc:__LOC__ "empty record"
         | Full t -> ok t in
       let%bind lst =
-        (* let () = Format.printf "\n%a\n" Ast_typed.PP.type_expression t in
-        let () = Format.printf "\n%a\n" Mini_c.PP.value v in *)
         trace_strong (corner_case ~loc:__LOC__ "record extract") @@
         extract_record v node in
       let%bind lst = bind_list

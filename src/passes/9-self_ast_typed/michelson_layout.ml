@@ -21,11 +21,25 @@ let constructor (constructor:constructor') (element:expression) (t:type_expressi
     type_expression = t ;
     environment = element.environment }
 
-let match_var env (t:type_expression) =
+let match_var (t:type_expression) =
   { expression_content = E_variable (Var.of_name "x") ;
     location = Location.generated ;
     type_expression = t ;
-    environment = env }
+    environment = Environment.add_ez_binder (Var.of_name "x") t Environment.full_empty}
+
+let matching (e:expression) matchee cases =
+  { expression_content = E_matching {matchee ; cases};
+    location = Location.generated ;
+    type_expression = e.type_expression ;
+    environment = e.environment }
+
+let rec descend_types s lmap i =
+  if i > 0 then
+    let {ctor_type;_} = CMap.find (Constructor s) lmap in
+    match ctor_type.type_content with
+      | T_sum a -> ctor_type::(descend_types s a (i-1)) 
+      | _ -> []
+  else []
 
 let rec to_left_comb_record' first prev l conv_map =
   match l with
@@ -43,20 +57,12 @@ let rec to_left_comb_record' first prev l conv_map =
     to_left_comb_record' first prev tl conv_map'
 let to_left_comb_record = to_left_comb_record' true
 
-let rec to_right_comb_variant' (i:int) (e:expression) (dst_lmap:ctor_content constructor_map) (src_kvl:(constructor' * ctor_content) list) : expression list =
-  let rec descend_types lmap i =
-    if i > 0 then
-      let {ctor_type;_} = CMap.find (Constructor "M_right") lmap in
-      match ctor_type.type_content with
-        | T_sum a -> ctor_type::(descend_types a (i-1)) 
-        | _ -> []
-    else [] in
-  let intermediary_types i =  if i = 0 then [] else e.type_expression::(descend_types dst_lmap i) in
+let rec right_comb_variant_combination' (i:int) (e:expression) (dst_lmap:ctor_content constructor_map) (src_kvl:(constructor' * ctor_content) list) : expression list =
+  let intermediary_types i =  if i = 0 then [] else e.type_expression::(descend_types "M_right" dst_lmap i) in
   let rec comb (ctor_type,outer) l =
-    let env' = Environment.add_ez_binder (Var.of_name "x") ctor_type e.environment in
     match l with
-    | [] -> constructor outer (match_var env' ctor_type) e.type_expression
-    | [t] -> constructor outer (match_var env' ctor_type) t
+    | [] -> constructor outer (match_var ctor_type) e.type_expression
+    | [t] -> constructor outer (match_var ctor_type) t
     | t::tl -> constructor (Constructor "M_right") (comb (ctor_type,outer) tl) t in
   ( match src_kvl with
     | [] -> []
@@ -65,23 +71,15 @@ let rec to_right_comb_variant' (i:int) (e:expression) (dst_lmap:ctor_content con
       [comb (ctor_type,Constructor "M_right") combs_t]
     | (_,{ctor_type;_})::tl ->
       let combs_t = intermediary_types i in
-      (comb (ctor_type,Constructor "M_left") combs_t) :: to_right_comb_variant' (i+1) e dst_lmap tl )
-let to_right_comb_variant = to_right_comb_variant' 0
+      (comb (ctor_type,Constructor "M_left") combs_t) :: right_comb_variant_combination' (i+1) e dst_lmap tl )
+let right_comb_variant_combination = right_comb_variant_combination' 0
 
-let rec to_left_comb_variant' (i:int) (e:expression) (dst_lmap:ctor_content constructor_map) (src_kvl:(constructor' * ctor_content) list) : expression list =
-  let rec descend_types lmap i =
-    if i > 0 then
-      let {ctor_type;_} = CMap.find (Constructor "M_left") lmap in
-      match ctor_type.type_content with
-        | T_sum a -> ctor_type::(descend_types a (i-1)) 
-        | _ -> []
-    else [] in
-  let intermediary_types i =  if i = 0 then [] else e.type_expression::(descend_types dst_lmap i) in
+let rec left_comb_variant_combination' (i:int) (e:expression) (dst_lmap:ctor_content constructor_map) (src_kvl:(constructor' * ctor_content) list) : expression list =
+  let intermediary_types i =  if i = 0 then [] else e.type_expression::(descend_types "M_left" dst_lmap i) in
   let rec comb (ctor_type,outer) l =
-    let env' = Environment.add_ez_binder (Var.of_name "x") ctor_type e.environment in
     match l with
-    | [] -> constructor outer (match_var env' ctor_type) e.type_expression
-    | [t] -> constructor outer (match_var env' ctor_type) t
+    | [] -> constructor outer (match_var ctor_type) e.type_expression
+    | [t] -> constructor outer (match_var ctor_type) t
     | t::tl -> constructor (Constructor "M_left") (comb (ctor_type,outer) tl) t in
   ( match src_kvl with
     | [] -> []
@@ -90,8 +88,8 @@ let rec to_left_comb_variant' (i:int) (e:expression) (dst_lmap:ctor_content cons
       [comb (ctor_type,Constructor "M_left") combs_t]
     | (_,{ctor_type;_})::tl ->
       let combs_t = intermediary_types i in
-      (comb (ctor_type,Constructor "M_right") combs_t) :: to_left_comb_variant' (i+1) e dst_lmap tl )
-let to_left_comb_variant a b c = List.rev @@ to_left_comb_variant' 0 a b (List.rev c)
+      (comb (ctor_type,Constructor "M_right") combs_t) :: left_comb_variant_combination' (i+1) e dst_lmap tl )
+let left_comb_variant_combination a b c = List.rev @@ left_comb_variant_combination' 0 a b (List.rev c)
 
 let rec to_right_comb_record
     (prev:expression)
@@ -111,7 +109,7 @@ let rec to_right_comb_record
     let conv_map' = LMap.add (Label "0") exp conv_map in
     LMap.add (Label "1") ({exp with expression_content = E_record (to_right_comb_record prev tl conv_map')}) conv_map'
 
-let rec from_right_comb
+let rec from_right_comb_record
     (prev:expression) 
     (src_lmap: field_content label_map)
     (dst_kvl:(label * field_content) list)
@@ -124,11 +122,11 @@ let rec from_right_comb
       | _ -> src_lmap in
     let conv_map' = LMap.add label (accessor prev (Label "0") field_type) conv_map in
     let next = accessor prev (Label "1") intermediary_type.field_type in
-    from_right_comb next src_lmap' tl conv_map'
+    from_right_comb_record next src_lmap' tl conv_map'
   | [(label,_)] -> LMap.add label prev conv_map
   | [] -> conv_map
 
-let rec from_left_comb'
+let rec from_left_comb_record
     (prev:expression) 
     (src_lmap: field_content label_map)
     (dst_kvl:(label * field_content) list)
@@ -141,15 +139,62 @@ let rec from_left_comb'
       | _ -> src_lmap in
     let conv_map' = LMap.add label (accessor prev (Label "1") field_type) conv_map in
     let next = accessor prev (Label "0") intermediary_type.field_type in
-    from_left_comb' next src_lmap' tl conv_map'
+    from_left_comb_record next src_lmap' tl conv_map'
   | [(label,_)] -> LMap.add label prev conv_map
   | [] -> conv_map
 let from_left_comb prev src_lmap dst_kvl conv_map =
-  from_left_comb' prev src_lmap (List.rev dst_kvl) conv_map
+  from_left_comb_record prev src_lmap (List.rev dst_kvl) conv_map
+
+let rec from_right_comb_or (to_convert:expression) (e:expression) (matchee_t,bodies) : expression result =
+  match matchee_t , bodies with
+  | [m] , bl::br::[] ->
+    let cases = [
+      { constructor = Constructor "M_left" ;
+        pattern = Var.of_name "x";
+        body = bl } ;
+      { constructor = Constructor "M_right" ;
+        pattern = Var.of_name "x";
+        body = br } ] in
+    ok @@ matching e m (Match_variant { cases ; tv = to_convert.type_expression })
+  | m::mtl , b::btl ->
+    let%bind body = from_right_comb_or to_convert e (mtl,btl) in
+    let cases = [
+      { constructor = Constructor "M_left" ;
+        pattern = Var.of_name "x";
+        body = b } ;
+      { constructor = Constructor "M_right" ;
+        pattern = Var.of_name "x";
+        body } ] in
+    ok @@ matching e m (Match_variant { cases ; tv = to_convert.type_expression })
+  | _ -> simple_fail "corner case"
+
+let rec from_left_comb_or (to_convert:expression) (e:expression) (matchee_t,bodies) : expression result =
+  match matchee_t , bodies with
+  | [m] , bl::br::[] ->
+    let cases = [
+      { constructor = Constructor "M_right" ;
+        pattern = Var.of_name "x";
+        body = bl } ;
+      { constructor = Constructor "M_left" ;
+        pattern = Var.of_name "x";
+        body = br } ] in
+    ok @@ matching e m (Match_variant { cases ; tv = to_convert.type_expression })
+  | m::mtl , b::btl ->
+    let%bind body = from_left_comb_or to_convert e (mtl,btl) in
+    let cases = [
+      { constructor = Constructor "M_right" ;
+        pattern = Var.of_name "x";
+        body = b } ;
+      { constructor = Constructor "M_left" ;
+        pattern = Var.of_name "x";
+        body } ] in
+    ok @@ matching e m (Match_variant { cases ; tv = to_convert.type_expression })
+  | _ -> simple_fail "corner case"
 
 (**
   converts pair/record of a given layout to record/pair to another
   - foo = (a,(b,(c,d))) -> foo_converted = { a=foo.0 ; b=foo.1.0 ; c=foo.1.1.0 ; d=foo.1.1.1 }
+  - foo = M_left(a) -> foo_converted = match foo with M_left x -> Foo x | M_right x -> Bar x
 **)
 let peephole_expression : expression -> expression result = fun e ->
   let return expression_content = ok { e with expression_content } in
@@ -162,7 +207,7 @@ let peephole_expression : expression -> expression result = fun e ->
       | T_sum src_cmap ->
         let%bind dst_cmap = get_t_sum e.type_expression in
         let src_kvl = to_sorted_kv_list_c src_cmap in
-        let bodies = to_left_comb_variant e dst_cmap src_kvl in
+        let bodies = left_comb_variant_combination e dst_cmap src_kvl in
         let to_cases ((constructor,{ctor_type=_;_}),body) =
           let pattern = (Var.of_name "x") in
           {constructor ; pattern ; body }
@@ -182,7 +227,7 @@ let peephole_expression : expression -> expression result = fun e ->
       | T_sum src_cmap ->
         let%bind dst_cmap = get_t_sum e.type_expression in
         let src_kvl = to_sorted_kv_list_c src_cmap in
-        let bodies = to_right_comb_variant e dst_cmap src_kvl in
+        let bodies = right_comb_variant_combination e dst_cmap src_kvl in
         let to_cases ((constructor,{ctor_type=_;_}),body) =
           let pattern = (Var.of_name "x") in
           {constructor ; pattern ; body }
@@ -194,16 +239,40 @@ let peephole_expression : expression -> expression result = fun e ->
         return @@ E_matching {matchee = to_convert ; cases}
       | _ -> return e.expression_content
   )
-  | E_constant {cons_name= (C_CONVERT_FROM_RIGHT_COMB);
-                arguments= [ to_convert ] } ->
-    let%bind dst_lmap = get_t_record e.type_expression in
-    let%bind src_lmap = get_t_record to_convert.type_expression in
-    let dst_kvl = to_sorted_kv_list_l dst_lmap in
-    return @@ E_record (from_right_comb to_convert src_lmap dst_kvl LMap.empty)
-  | E_constant {cons_name= (C_CONVERT_FROM_LEFT_COMB);
-                arguments= [ to_convert ] } ->
-    let%bind dst_lmap = get_t_record e.type_expression in
-    let%bind src_lmap = get_t_record to_convert.type_expression in
-    let dst_kvl = to_sorted_kv_list_l dst_lmap in
-    return @@ E_record (from_left_comb to_convert src_lmap dst_kvl LMap.empty)
+  | E_constant {cons_name= (C_CONVERT_FROM_RIGHT_COMB); arguments= [ to_convert ] } -> (
+    match to_convert.type_expression.type_content with
+      | T_record src_lmap ->
+        let%bind dst_lmap = get_t_record e.type_expression in
+        let dst_kvl = to_sorted_kv_list_l dst_lmap in
+        return @@ E_record (from_right_comb_record to_convert src_lmap dst_kvl LMap.empty)
+      | T_sum src_cmap ->
+        let%bind dst_lmap = get_t_sum e.type_expression in
+        let dst_kvl = to_sorted_kv_list_c dst_lmap in
+        let intermediary_types i = descend_types "M_right" src_cmap i in
+        let matchee = to_convert :: (List.map (fun t -> match_var t) @@ intermediary_types ((List.length dst_kvl)-2)) in
+        let bodies = List.map
+          (fun (ctor , {ctor_type;_}) -> constructor ctor (match_var ctor_type) e.type_expression)
+          dst_kvl in
+        let%bind match_expr = from_right_comb_or to_convert e (matchee,bodies) in
+        return match_expr.expression_content
+      | _ -> return e.expression_content
+  )
+  | E_constant {cons_name= (C_CONVERT_FROM_LEFT_COMB); arguments= [ to_convert ] } -> (
+    match to_convert.type_expression.type_content with
+      | T_record src_lmap ->
+        let%bind dst_lmap = get_t_record e.type_expression in
+        let dst_kvl = to_sorted_kv_list_l dst_lmap in
+        return @@ E_record (from_left_comb to_convert src_lmap dst_kvl LMap.empty)
+      | T_sum src_cmap ->
+        let%bind dst_lmap = get_t_sum e.type_expression in
+        let dst_kvl = to_sorted_kv_list_c dst_lmap in
+        let intermediary_types i = descend_types "M_left" src_cmap i in
+        let matchee = to_convert :: (List.map (fun t -> match_var t) @@ intermediary_types ((List.length dst_kvl)-2)) in
+        let bodies = List.map
+          (fun (ctor , {ctor_type;_}) -> constructor ctor (match_var ctor_type) e.type_expression)
+          (List.rev dst_kvl) in
+        let%bind match_expr = from_left_comb_or to_convert e (matchee,bodies) in
+        return match_expr.expression_content
+      | _ -> return e.expression_content
+  )
   | _ as e -> return e

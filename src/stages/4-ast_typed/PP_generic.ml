@@ -12,6 +12,7 @@ let needs_parens              = {
     );
     type_variable             = (fun _ _ _ -> true) ;
     bool                      = (fun _ _ _ -> false) ;
+    int                       = (fun _ _ _ -> false) ;
     z                         = (fun _ _ _ -> false) ;
     string                    = (fun _ _ _ -> false) ;
     bytes                     = (fun _ _ _ -> false) ;
@@ -49,6 +50,7 @@ let op ppf = {
       | PolyInstance { poly=_; arguments=_; poly_continue } ->
          (poly_continue ())
     );
+    int                       = (fun _visitor () i               -> fprintf ppf "%i" i );
     type_variable             = (fun _visitor () type_variable   -> fprintf ppf "Var %a" Var.pp type_variable) ;
     bool                      = (fun _visitor () b               -> fprintf ppf "%s" (if b then "true" else "false")) ;
     z                         = (fun _visitor () i               -> fprintf ppf "%a" Z.pp_print i) ;
