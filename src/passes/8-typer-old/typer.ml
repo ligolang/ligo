@@ -208,7 +208,7 @@ module Errors = struct
     ] in
     error ~data title message ()
 
-  let type_error ?(msg="") ~(expected: O.type_expression) ~(actual: O.type_expression) ~(expression : I.expression) (loc:Location.t) () =
+  let _type_error ?(msg="") ~(expected: O.type_expression) ~(actual: O.type_expression) ~(expression : I.expression) (loc:Location.t) () =
     let title = (thunk "type error") in
     let message () = msg in
     let data = [
@@ -551,59 +551,32 @@ and type_match : (environment -> I.expression -> O.expression result) -> environ
       let%bind body = f e' b in
       ok (O.Match_tuple { vars ; body ; tvs})
   | Match_variant (lst,_) ->
-      let%bind variant_opt =
-        let aux acc ((constructor_name , _) , _) =
-          let%bind (_ , variant) =
-            trace_option (unbound_constructor e constructor_name loc) @@
-            Environment.get_constructor constructor_name e in
-          let%bind acc = match acc with
-            | None -> ok (Some variant)
-            | Some variant' -> (
-                trace (type_error
-                         ~msg:"in match variant"
-                         ~expected:variant
-                         ~actual:variant'
-                         ~expression:ae
-                         loc
-                      ) @@
-                Ast_typed.assert_type_expression_eq (variant , variant') >>? fun () ->
-                ok (Some variant)
-              ) in
-          ok acc in
-        trace (simple_info "in match variant") @@
-        bind_fold_list aux None lst in
-      let%bind tv =
-        trace_option (match_empty_variant i loc) @@
-        variant_opt in
-      let%bind () =
-        let%bind variant_cases' =
-          trace (match_error ~expected:i ~actual:t loc)
-          @@ Ast_typed.Combinators.get_t_sum tv in
-        let variant_cases = List.map fst @@ O.CMap.to_kv_list variant_cases' in
-        let match_cases = List.map (fun x -> convert_constructor' @@ fst @@ fst x) lst in
-        let test_case = fun c ->
-          Assert.assert_true (List.mem c match_cases)
-        in
-        let%bind () =
-          trace_strong (match_missing_case i loc) @@
-          bind_iter_list test_case variant_cases in
-        let%bind () =
-          trace_strong (match_redundant_case i loc) @@
-          Assert.assert_true List.(length variant_cases = length match_cases) in
-        ok ()
+      let%bind variant_cases' =
+        trace (match_error ~expected:i ~actual:t loc)
+        @@ Ast_typed.Combinators.get_t_sum t in
+      let variant_cases = List.map fst @@ O.CMap.to_kv_list variant_cases' in
+      let match_cases = List.map (fun x -> convert_constructor' @@ fst @@ fst x) lst in
+      let test_case = fun c ->
+        Assert.assert_true (List.mem c match_cases)
       in
+      let%bind () =
+        trace_strong (match_missing_case i loc) @@
+        bind_iter_list test_case variant_cases in
+      let%bind () =
+        trace_strong (match_redundant_case i loc) @@
+        Assert.assert_true List.(length variant_cases = length match_cases) in
       let%bind cases =
         let aux ((constructor_name , pattern) , b) =
-          let%bind (constructor , _) =
+          let%bind {ctor_type=constructor;_} =
             trace_option (unbound_constructor e constructor_name loc) @@
-            Environment.get_constructor constructor_name e in
+            O.CMap.find_opt (convert_constructor' constructor_name) variant_cases' in
           let e' = Environment.add_ez_binder pattern constructor e in
           let%bind body = f e' b in
           let constructor = convert_constructor' constructor_name in
           ok ({constructor ; pattern ; body} : O.matching_content_case)
         in
         bind_map_list aux lst in
-      ok (O.Match_variant { cases ; tv })
+      ok (O.Match_variant { cases ; tv=t })
 
 and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression result =
   let return tv' = ok (make_t ~loc:t.location tv' (Some t)) in
