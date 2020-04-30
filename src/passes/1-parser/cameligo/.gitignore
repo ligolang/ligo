@@ -11,3 +11,6 @@ _build/*
 /Lexer.ml
 /LexToken.ml
 /Tests
+error.messages
+error.messages.new
+ParErr.ml
