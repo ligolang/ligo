@@ -179,26 +179,23 @@ module.exports = grammar({
         field("body", $._expr),
       ),
 
-    _open_fun_decl: $ =>
-      seq(
-        field("recursive", optional($.recursive)),
-        'function',
-        field("name", $.Name),
-        field("parameters", $.parameters),
-        ':',
-        field("type", $._type_expr),
-        'is',
-        optional(seq(
-          field("locals", $.block),
-          'with',
-        )),
-        field("body", $._expr),
-      ),
-
     fun_decl: $ =>
-      seq(
-        field("_open_fun_decl", $._open_fun_decl),
-        optional(';'),
+      prec.right(0,
+        seq(
+          field("recursive", optional($.recursive)),
+          'function',
+          field("name", $.Name),
+          field("parameters", $.parameters),
+          ':',
+          field("type", $._type_expr),
+          'is',
+          optional(seq(
+            field("locals", $.block),
+            'with',
+          )),
+          field("body", $._expr),
+          optional(';'),
+        ),
       ),
 
     parameters: $ => par(sepBy(';', field("parameter", $.param_decl))),
@@ -226,7 +223,7 @@ module.exports = grammar({
       choice(
         $.open_const_decl,
         $.open_var_decl,
-        $._open_fun_decl,
+        $.fun_decl,
       ),
 
     open_const_decl: $ =>

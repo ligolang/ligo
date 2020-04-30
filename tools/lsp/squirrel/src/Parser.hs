@@ -8,7 +8,6 @@ import Control.Monad.Except
 import Control.Monad.Identity
 
 import Data.Text.Encoding
--- import Data.Traversable (for)
 import Data.Text (Text, pack, unpack)
 
 import qualified Data.ByteString as ByteString
@@ -16,7 +15,7 @@ import Data.ByteString (ByteString)
 
 import ParseTree
 
--- import Debug.Trace
+import Debug.Trace
 
 data Error
   = Expected Text Range
@@ -54,7 +53,7 @@ takeNext msg = do
         }
       return t
 
-field :: Stubbed a => Text -> Parser a -> Parser a
+field :: Text -> Parser a -> Parser a
 field name parser = do
   grove <- gets pfGrove
   case grove of
@@ -77,7 +76,7 @@ field name parser = do
         , pfRange = ptRange
         }
 
-      stubbed name parser <* put st
+      parser <* put st
         { pfGrove = grove'
         , pfRange = if firstOne then diffRange rng ptRange else rng
         }
@@ -116,13 +115,25 @@ many :: Text -> Parser a -> Parser [a]
 many msg p = many'
   where
     many' = some' <|> pure []
-    some' = (:) <$> (productive msg p) <*> many'
+    some' = do
+      (x, consumed) <- productive p
+      if consumed then do
+        xs <- many'
+        return (x : xs)
+      else do
+        return [x]
 
 some :: Text -> Parser a -> Parser [a]
 some msg p = some'
   where
     many' = some' <|> pure []
-    some' = (:) <$> (productive msg p) <*> many'
+    some' = do
+      (x, consumed) <- productive p
+      if consumed then do
+        xs <- many'
+        return (x : xs)
+      else do
+        return [x]
 
 getTreeID :: Parser (Maybe Int)
 getTreeID = Parser do
@@ -130,14 +141,12 @@ getTreeID = Parser do
     [] -> Nothing
     (_, tree) : _ -> Just (ptID tree)
 
-productive :: Text -> Parser a -> Parser a
-productive msg p = do
+productive :: Parser a -> Parser (a, Bool)
+productive p = do
   was <- getTreeID
   res <- p
   now <- getTreeID
-  unless (was /= now) do
-    error ("unproductive: " ++ unpack msg)
-  return res
+  return (res, was /= now)
 
 data ParserEnv = ParserEnv
   { peRange  :: Range
@@ -182,6 +191,12 @@ consume node = do
   when (ptName /= node) do
     tell [Expected node ptRange]
 
+consumeOrDie :: Text -> Parser ()
+consumeOrDie node = do
+  ParseTree {ptName, ptRange} <- takeNext node
+  when (ptName /= node) do
+    throwError $ Expected node ptRange
+
 cutOut :: ByteString -> ParseTree -> Text
 cutOut bs (ParseTree _ _ s f _ _) =
   decodeUtf8 $ ByteString.take (f - s) (ByteString.drop s bs)
@@ -207,11 +222,19 @@ delete k ((k', v) : rest) =
   then rest
   else (k', v) : delete k rest
 
+notFollowedBy :: Parser a -> Parser ()
+notFollowedBy parser = do
+  good <- do
+      parser
+      return False
+    <|> do
+      return True
+
+  unless good do
+    die "notFollowedBy"
+
 class Stubbed a where
   stub :: Error -> a
 
-instance Stubbed [a] where
-  stub _ = []
-
 instance Stubbed Text where
-  stub e = pack ("<" <> show e <> ">")
+  stub = pack . show

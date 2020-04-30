@@ -123,14 +123,16 @@ name = do
 
 contract :: Parser (Contract Range)
 contract = subtree "contract" do
-  (decls, info) <- range $ many "declaration" declaration
+  (decls, info) <- range do
+    many "declaration" declaration
   return (Contract info decls)
 
 declaration :: Parser (Declaration Range)
 declaration =
-  field "declaration" do
-    (b, info) <- range binding
-    return (ValueDecl info b)
+  stubbed "declaration" do
+    field "declaration" do
+      (b, info) <- range binding
+      return (ValueDecl info b)
 
 par x = do
   consume "("
@@ -146,32 +148,51 @@ binding = do
       field "recursive" do
         token "recursive"
     consume "function"
-    name <- field "name" do
-      name
-    params <- field "parameters" $ par (many "param" paramDecl)
+    name <- stubbed "name" do
+      field "name" do
+        name
+    params <-
+      field "parameters" do
+        subtree "parameters" do
+          par do
+            many "param" do
+              notFollowedBy do
+                consumeOrDie ")"
+
+              stubbed "parameters" do
+                paramDecl
     consume ":"
-    ty     <- field "type" type_
+    ty <-
+      stubbed "type" do
+        field "type" type_
     consume "is"
-    get >>= traceShowM
-    expr   <- field "locals" anything
+    expr <- stubbed "body" do
+      field "locals" anything
     return (Function info (recur == Just "recursive") name params ty expr)
 
 paramDecl :: Parser (VarDecl Range)
 paramDecl = do
   info <- getRange
   "parameter" `field` do
-    info' <- getRange
-    mutable <- do
-      "access" `subtree` select
-        [ do consume "var"
-             return $ Mutable info'
-        , do consume "const"
-             return $ Immutable info'
-        ]
-    name <- field "name" name
-    consume ":"
-    ty <- field "type" type_
-    return (Decl info mutable name ty)
+    subtree "param_decl" do
+      info' <- getRange
+      mutable <- do
+        traceM "paramDecl"
+        stubbed "access" do
+          "access" `subtree` do
+            traceM "paramDecl"
+            select
+              [ consume "var"   >> return (Mutable info')
+              , consume "const" >> return (Immutable info')
+              ]
+      name <-
+        stubbed "name" do
+          field "name" name
+      consume ":"
+      ty <-
+        stubbed "type" do
+          field "type" type_
+      return (Decl info mutable name ty)
 
 newtype_ = do
   type_
@@ -182,18 +203,25 @@ type_ =
   where
     fun_type :: Parser (Type Range)
     fun_type = do
-      info <- getRange
-      domain <- field "domain" cartesian
-      codomain <- optional do
-        consume "->"
-        fun_type
-      return case codomain of
-        Just co -> TArrow info domain co
-        Nothing -> domain
+      stubbed "type" do
+        subtree "fun_type" do
+          info <- getRange
+          domain <- stubbed "domain" do
+            field "domain" cartesian
+          codomain <- optional do
+            consume "->"
+            fun_type
+          return case codomain of
+            Just co -> TArrow info domain co
+            Nothing -> domain
 
     cartesian = do
-      info <- getRange
-      Product info <$> some "corety" core_type
+      stubbed "cartesian" do
+        subtree "cartesian" do
+          info <- getRange
+          Product info <$> some "corety" do
+            field "element" do
+              core_type
 
     core_type = do
       info <- getRange
@@ -206,4 +234,4 @@ type_ =
 tuple :: Text -> Parser a -> Parser [a]
 tuple msg = par . some msg
 
-example = "../../ligo/src/test/contracts/address.ligo"
+example = "../../../src/test/contracts/address.ligo"
