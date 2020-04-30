@@ -14,6 +14,7 @@ import qualified Data.ByteString as ByteString
 import Data.ByteString (ByteString)
 
 import ParseTree
+import Range
 
 import Debug.Trace
 

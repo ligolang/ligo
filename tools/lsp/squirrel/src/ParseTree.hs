@@ -29,6 +29,9 @@ import Text.PrettyPrint hiding ((<>))
 
 import Paths_squirrel
 
+import Range
+import PrettyPrint
+
 -- import Debug.Trace
 
 foreign import ccall unsafe tree_sitter_PascaLigo :: Ptr Language
@@ -52,38 +55,33 @@ data ParseForest = Forest
   }
 
 instance Show ParseTree where
-  show = show . ppTree
+  show = show . pp
 
 instance Show ParseForest where
-  show = show . vcat . map ppPair . pfGrove
+  show = show . pp
 
-data Range = Range
-  { rStart  :: (Int, Int)
-  , rFinish :: (Int, Int)
-  }
-  deriving stock (Show)
-
-diffRange :: Range -> Range -> Range
-diffRange (Range ws wf) (Range ps _) = Range (max ws ps) wf
-
-ppTree :: ParseTree -> Doc
-ppTree (ParseTree _ n _ _ (Range (sr, sc) (fr, fc)) (Forest _ cs _)) =
-  parens
-    ( hang
-      (   quotes (text (Text.unpack n))
-      <+> brackets
-        ( int sr <> ":" <> int sc
-        <> " - "
-        <> int fr <> ":" <> int fc
+instance Pretty ParseTree where
+  pp (ParseTree _ n _ _ (Range (sr, sc) (fr, fc)) forest) =
+    parens
+      ( hang
+        (   quotes (text (Text.unpack n))
+        <+> brackets
+          ( int sr <> ":" <> int sc
+          <> " - "
+          <> int fr <> ":" <> int fc
+          )
         )
+        2
+        (pp forest)
       )
-      2
-      (vcat (map ppPair cs)))
 
-ppPair (field, tree) =
-  if field == Text.empty
-  then nest 2 $ ppTree tree
-  else hang (text (Text.unpack field) <> ": ") 2 (ppTree tree)
+instance Pretty ParseForest where
+  pp = vcat . map ppPair . pfGrove
+    where
+      ppPair (field, tree) =
+        if field == Text.empty
+        then nest 2 $ pp tree
+        else hang (text (Text.unpack field) <> ": ") 2 (pp tree)
 
 toParseTree :: FilePath -> IO ParseForest
 toParseTree fin = do
