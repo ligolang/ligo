@@ -88,10 +88,6 @@ type literal =
   | Literal_void
   | Literal_operation of packed_internal_operation
 
-type matching_content_bool = {
-    match_true : expression ;
-    match_false : expression ;
-  }
 
 and matching_content_cons = {
     hd : expression_variable;
@@ -139,7 +135,6 @@ and matching_content_variant = {
   }
 
 and matching_expr =
-  | Match_bool    of matching_content_bool
   | Match_list    of matching_content_list
   | Match_option  of matching_content_option
   | Match_tuple   of matching_content_tuple

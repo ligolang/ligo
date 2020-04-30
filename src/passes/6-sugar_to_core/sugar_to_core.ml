@@ -159,7 +159,7 @@ let rec compile_expression : I.expression -> O.expression result =
       let%bind matchee = compile_expression condition in
       let%bind match_true = compile_expression then_clause in
       let%bind match_false = compile_expression else_clause in
-      return @@ O.E_matching {matchee; cases=Match_bool{match_true;match_false}}
+      return @@ O.E_matching {matchee; cases=Match_variant ([((Constructor "true", Var.of_name "_"),match_true);((Constructor "false", Var.of_name "_"), match_false)],())}
     | I.E_sequence {expr1; expr2} ->
       let%bind expr1 = compile_expression expr1 in
       let%bind expr2 = compile_expression expr2 in
@@ -191,10 +191,6 @@ and compile_lambda : I.lambda -> O.lambda result =
 and compile_matching : I.matching_expr -> O.matching_expr result =
   fun m -> 
   match m with 
-    | I.Match_bool {match_true;match_false} ->
-      let%bind match_true = compile_expression match_true in
-      let%bind match_false = compile_expression match_false in
-      ok @@ O.Match_bool {match_true;match_false}
     | I.Match_list {match_nil;match_cons} ->
       let%bind match_nil = compile_expression match_nil in
       let (hd,tl,expr,tv) = match_cons in
@@ -360,10 +356,6 @@ and uncompile_lambda : O.lambda -> I.lambda result =
 and uncompile_matching : O.matching_expr -> I.matching_expr result =
   fun m -> 
   match m with 
-    | O.Match_bool {match_true;match_false} ->
-      let%bind match_true = uncompile_expression match_true in
-      let%bind match_false = uncompile_expression match_false in
-      ok @@ I.Match_bool {match_true;match_false}
     | O.Match_list {match_nil;match_cons} ->
       let%bind match_nil = uncompile_expression match_nil in
       let (hd,tl,expr,tv) = match_cons in

@@ -169,10 +169,6 @@ type literal =
   | Literal_operation of
       Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation
 and ('a,'tv) matching_content =
-  | Match_bool of {
-      match_true : 'a ;
-      match_false : 'a ;
-    }
   | Match_list of {
       match_nil : 'a ;
       match_cons : expression_variable * expression_variable * 'a * 'tv;

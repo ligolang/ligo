@@ -234,7 +234,6 @@ module Free_variables = struct
 
   and matching : (bindings -> expression -> bindings) -> bindings -> matching_expr -> bindings = fun f b m ->
     match m with
-    | Match_bool { match_true = t ; match_false = fa } -> union (f b t) (f b fa)
     | Match_list { match_nil = n ; match_cons = {hd; tl; body; tv=_} } -> union (f b n) (f (union (of_list [hd ; tl]) b) body)
     | Match_option { match_none = n ; match_some = {opt; body; tv=_} } -> union (f b n) (f (union (singleton opt) b) body)
     | Match_tuple { vars ; body ; tvs=_ } ->

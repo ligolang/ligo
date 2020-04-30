@@ -496,13 +496,6 @@ and type_declaration env (_placeholder_for_state_of_new_typer : O.typer_state) :
 
 and type_match : (environment -> I.expression -> O.expression result) -> environment -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> O.matching_expr result =
   fun f e t i ae loc -> match i with
-    | Match_bool {match_true ; match_false} ->
-      let%bind _ =
-        trace_strong (match_error ~expected:i ~actual:t loc)
-        @@ get_t_bool t in
-      let%bind match_true = f e match_true in
-      let%bind match_false = f e match_false in
-      ok (O.Match_bool {match_true ; match_false})
   | Match_option {match_none ; match_some} ->
       let%bind tv =
         trace_strong (match_error ~expected:i ~actual:t loc)
@@ -911,7 +904,6 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let tvs =
         let aux (cur:O.matching_expr) =
           match cur with
-          | Match_bool { match_true ; match_false } -> [ match_true ; match_false ]
           | Match_list { match_nil ; match_cons = {hd=_ ; tl=_ ; body ; tv=_} } -> [ match_nil ; body ]
           | Match_option { match_none ; match_some = {opt=_ ; body ; tv=_ } } -> [ match_none ; body ]
           | Match_tuple {vars=_;body;tvs=_} -> [ body ]
@@ -1081,10 +1073,6 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
 and untype_matching : (O.expression -> I.expression result) -> O.matching_expr -> I.matching_expr result = fun f m ->
   let open I in
   match m with
-  | Match_bool {match_true ; match_false} ->
-      let%bind match_true = f match_true in
-      let%bind match_false = f match_false in
-      ok @@ Match_bool {match_true ; match_false}
   | Match_tuple {vars; body;tvs=_} ->
       let%bind b = f body in
       ok @@ I.Match_tuple ((vars, b),[])

@@ -183,8 +183,6 @@ and matching : type a . (formatter -> a -> unit) -> formatter -> (a,unit) matchi
         fprintf ppf "let (%a) = %a" (list_sep_d expression_variable) lst f b
     | Match_variant (lst, _) ->
         fprintf ppf "%a" (list_sep (matching_variant_case f) (tag "@.")) lst
-    | Match_bool {match_true ; match_false} ->
-        fprintf ppf "| True -> %a @.| False -> %a" f match_true f match_false
     | Match_list {match_nil ; match_cons = (hd, tl, match_cons, _)} ->
         fprintf ppf "| Nil -> %a @.| %a :: %a -> %a" f match_nil expression_variable hd expression_variable tl f match_cons
     | Match_option {match_none ; match_some = (some, match_some, _)} ->
@@ -196,8 +194,6 @@ and matching_type ppf m = match m with
       fprintf ppf "tuple"
   | Match_variant (lst, _) ->
       fprintf ppf "variant %a" (list_sep matching_variant_case_type (tag "@.")) lst
-  | Match_bool _ ->
-      fprintf ppf "boolean"
   | Match_list _ ->
       fprintf ppf "list"
   | Match_option _ ->
