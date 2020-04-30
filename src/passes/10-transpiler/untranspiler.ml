@@ -203,12 +203,6 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
         let%bind init  = return @@ E_constant {cons_name=C_LIST_EMPTY;arguments=[]} in
         bind_fold_right_list aux init lst'
       )
-    | TC_arrow _ -> (
-        let%bind n =
-          trace_strong (wrong_mini_c_value "lambda as string" v) @@
-          get_string v in
-        return (E_literal (Literal_string n))
-      )
     | TC_set ty -> (
         let%bind lst =
           trace_strong (wrong_mini_c_value "set" v) @@

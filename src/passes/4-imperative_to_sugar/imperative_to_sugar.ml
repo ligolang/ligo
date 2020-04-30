@@ -200,9 +200,6 @@ and compile_type_operator : I.type_operator -> O.type_operator result =
     | TC_big_map (k,v) ->
       let%bind (k,v) = bind_map_pair compile_type_expression (k,v) in
       ok @@ O.TC_big_map (k,v)
-    | TC_arrow (i,o) ->
-      let%bind (i,o) = bind_map_pair compile_type_expression (i,o) in
-      ok @@ O.TC_arrow (i,o)
     | TC_michelson_or _ | TC_michelson_pair _ -> fail @@ Errors.corner_case __LOC__
 
 let rec compile_expression : I.expression -> O.expression result =
@@ -663,9 +660,6 @@ and uncompile_type_operator : O.type_operator -> I.type_operator result =
     | TC_big_map (k,v) ->
       let%bind (k,v) = bind_map_pair uncompile_type_expression (k,v) in
       ok @@ I.TC_big_map (k,v)
-    | TC_arrow (i,o) ->
-      let%bind (i,o) = bind_map_pair uncompile_type_expression (i,o) in
-      ok @@ I.TC_arrow (i,o)
 
 let rec uncompile_expression' : O.expression -> I.expression result =
   fun e ->

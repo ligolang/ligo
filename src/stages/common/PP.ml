@@ -249,7 +249,6 @@ module Ast_PP_type (PARAMETER : AST_PARAMETER_TYPE) = struct
       | TC_map (k, v) -> Format.asprintf "Map (%a,%a)" f k f v
       | TC_big_map (k, v) -> Format.asprintf "Big Map (%a,%a)" f k f v
       | TC_map_or_big_map (k, v) -> Format.asprintf "Map Or Big Map (%a,%a)" f k f v
-      | TC_arrow (k, v) -> Format.asprintf "arrow (%a,%a)" f k f v
       | TC_contract te  -> Format.asprintf "Contract (%a)" f te
     in
     fprintf ppf "(type_operator: %s)" s

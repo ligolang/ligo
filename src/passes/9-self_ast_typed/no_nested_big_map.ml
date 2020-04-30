@@ -35,10 +35,6 @@ let rec check_no_nested_bigmap is_in_bigmap e =
     let%bind _ = check_no_nested_bigmap is_in_bigmap k in
     let%bind _ = check_no_nested_bigmap is_in_bigmap v in
     ok ()
-  | T_operator (TC_arrow { type1 ; type2 }) -> 
-    let%bind _ = check_no_nested_bigmap false type1 in
-    let%bind _ = check_no_nested_bigmap false type2 in
-    ok ()
   | T_sum s -> 
     let es = List.map (fun {ctor_type;_} -> ctor_type) (CMap.to_list s) in
     let%bind _ = bind_map_list (fun l -> check_no_nested_bigmap is_in_bigmap l) es in

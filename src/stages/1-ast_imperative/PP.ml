@@ -55,7 +55,6 @@ and type_operator :
     | TC_big_map (k, v) -> Format.asprintf "Big Map (%a,%a)" f k f v
     | TC_michelson_or (l,_, r,_) -> Format.asprintf "Michelson_or (%a,%a)" f l f r
     | TC_michelson_pair (l,_, r,_) -> Format.asprintf "Michelson_pair (%a,%a)" f l f r
-    | TC_arrow (k, v) -> Format.asprintf "arrow (%a,%a)" f k f v
     | TC_contract te  -> Format.asprintf "Contract (%a)" f te
   in
   fprintf ppf "(TO_%s)" s

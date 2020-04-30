@@ -71,7 +71,6 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
                                 | TC_map { k ; v }           -> (C_map, [k;v])
                                 | TC_big_map { k ; v }       -> (C_big_map, [k;v])
                                 | TC_map_or_big_map { k ; v } -> (C_map, [k;v])
-                                | TC_arrow { type1 ; type2 } -> (C_arrow, [ type1 ; type2 ])
                                 | TC_list l                  -> (C_list, [l])
                                 | TC_contract c              -> (C_contract, [c])
                           )
@@ -107,7 +106,6 @@ let rec type_expression_to_type_value_copypasted : I.type_expression -> O.type_v
                                 | TC_big_map  ( k , v )  -> (C_big_map, [k;v])
                                 | TC_map_or_big_map ( k , v) -> (C_map, [k;v])
                                 | TC_contract c          -> (C_contract, [c])
-                                | TC_arrow ( arg , ret ) -> (C_arrow, [ arg ; ret ])
                           )
      in
      p_constant csttag (List.map type_expression_to_type_value_copypasted args)

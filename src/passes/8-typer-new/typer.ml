@@ -188,10 +188,6 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
         | TC_contract c ->
             let%bind c = evaluate_type e c in
             ok @@ O.TC_contract c
-        | TC_arrow ( arg , ret ) ->
-           let%bind arg' = evaluate_type e arg in
-           let%bind ret' = evaluate_type e ret in
-           ok @@ O.TC_arrow { type1=arg' ; type2=ret' }
         in
       return (T_operator (opt))
 

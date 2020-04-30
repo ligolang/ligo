@@ -85,9 +85,10 @@ module Substitution = struct
         | T.T_operator type_name_and_args ->
           let%bind type_name_and_args = T.Helpers.bind_map_type_operator (s_type_expression ~substs) type_name_and_args in
           ok @@ T.T_operator type_name_and_args
-        | T.T_arrow _ ->
-          let _TODO = substs in
-          failwith "TODO: T_function"
+        | T.T_arrow { type1; type2 } ->
+           let%bind type1 = s_type_expression ~substs type1 in
+           let%bind type2 = s_type_expression ~substs type2 in
+           ok @@ T.T_arrow { type1; type2 }
 
     and s_abstr_type_content : Ast_core.type_content w = fun ~substs -> function
       | Ast_core.T_sum _ -> failwith "TODO: subst: unimplemented case s_type_expression sum"

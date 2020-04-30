@@ -39,7 +39,7 @@ let type_expression'_of_simple_c_constant : constant_tag * type_expression list 
   | C_set       , [x]     -> ok @@ Ast_typed.T_operator(TC_set x)
   | C_map       , [k ; v] -> ok @@ Ast_typed.T_operator(TC_map {k ; v})
   | C_big_map   , [k ; v] -> ok @@ Ast_typed.T_operator(TC_big_map {k ; v})
-  | C_arrow     , [x ; y] -> ok @@ Ast_typed.T_operator(TC_arrow {type1=x ; type2=y})
+  | C_arrow     , [x ; y] -> ok @@ Ast_typed.T_arrow {type1=x ; type2=y} (* For now, the arrow type constructor is special *)
   | C_record    , _lst    -> ok @@ failwith "records are not supported yet: T_record lst"
   | C_variant   , _lst    -> ok @@ failwith "sums are not supported yet: T_sum lst"
   | (C_contract | C_option | C_list | C_set | C_map | C_big_map | C_arrow ), _ ->
