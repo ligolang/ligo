@@ -42,8 +42,6 @@ getNodeTypesPath = getDataFileName "../pascaligo/src/node-types.json"
 data ParseTree = ParseTree
   { ptID       :: Int
   , ptName     :: Text.Text
-  , ptStart    :: Int
-  , ptFinish   :: Int
   , ptRange    :: Range
   , ptChildren :: ParseForest
   }
@@ -61,16 +59,10 @@ instance Show ParseForest where
   show = show . pp
 
 instance Pretty ParseTree where
-  pp (ParseTree _ n _ _ (Range (sr, sc) (fr, fc)) forest) =
+  pp (ParseTree _ n r forest) =
     parens
       ( hang
-        (   quotes (text (Text.unpack n))
-        <+> brackets
-          ( int sr <> ":" <> int sc
-          <> " - "
-          <> int fr <> ":" <> int fc
-          )
-        )
+        (quotes (text (Text.unpack n)) <+> pp r)
         2
         (pp forest)
       )
@@ -123,8 +115,6 @@ toParseTree fin = do
 
           ty <- peekCString $ nodeType node
 
-          TSNode start _ _ _ _ <- peek tsNodePtr
-
           let
             start2D  = nodeStartPoint node
             finish2D = nodeEndPoint   node
@@ -138,19 +128,19 @@ toParseTree fin = do
               { rStart  =
                   ( i $ pointRow    start2D + 1
                   , i $ pointColumn start2D + 1
+                  , i $ nodeStartByte node
                   )
 
               , rFinish =
                   ( i $ pointRow    finish2D + 1
                   , i $ pointColumn finish2D + 1
+                  , i $ nodeEndByte node
                   )
               }
 
           return $ ParseTree
             { ptID       = treeID
             , ptName     = Text.pack ty
-            , ptStart    = fromIntegral start
-            , ptFinish   = fromIntegral $ nodeEndByte node
             , ptRange    = range
             , ptChildren = Forest fID trees range
             }

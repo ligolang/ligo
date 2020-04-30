@@ -1,5 +1,5 @@
 
-{- annotate tree with ranges, add offsets to ranges, store verbatim in Wrong* -}
+{- TODO(kirill.andreev): add offsets to ranges, store verbatim in Wrong* -}
 
 module AST.Types where
 

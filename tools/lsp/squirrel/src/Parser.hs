@@ -19,8 +19,11 @@ import Range
 import Debug.Trace
 
 data Error
-  = Expected Text Range
-  | Unexpected Range
+  = Expected
+    { eMsg   :: Text
+    , eWhole :: Text
+    , eRange :: Range
+    }
   deriving stock (Show)
 
 newtype Parser a = Parser
@@ -41,6 +44,21 @@ newtype Parser a = Parser
     , MonadReader  ParserEnv
     , MonadError   Error
     )
+
+makeError :: Text -> Parser Error
+makeError msg = do
+  rng <- getRange
+  makeError' msg rng
+
+makeError' :: Text -> Range -> Parser Error
+makeError' msg rng = do
+  rng <- getRange
+  src <- cutOut rng
+  return Expected
+    { eMsg   = msg
+    , eWhole = src
+    , eRange = rng
+    }
 
 takeNext :: Text -> Parser ParseTree
 takeNext msg = do
@@ -82,11 +100,16 @@ field name parser = do
         , pfRange = if firstOne then diffRange rng ptRange else rng
         }
 
-fallback :: Stubbed a => Text -> Parser a
-fallback msg = (stub . Expected msg) <$> getRange
-
-die :: Text -> Parser a
-die msg = throwError . Expected msg =<< getRange
+fallback  :: Stubbed a => Text          -> Parser a
+fallback' :: Stubbed a => Text -> Range -> Parser a
+die       ::              Text          -> Parser a
+die'      ::              Text -> Range -> Parser a
+complain  ::              Text -> Range -> Parser ()
+fallback  msg     = pure . stub =<< makeError  msg
+fallback' msg rng = pure . stub =<< makeError' msg rng
+die       msg     = throwError  =<< makeError  msg
+die'      msg rng = throwError  =<< makeError' msg rng
+complain  msg rng = tell . pure =<< makeError' msg rng
 
 stubbed :: Stubbed a => Text -> Parser a -> Parser a
 stubbed msg parser = do
@@ -174,33 +197,32 @@ token node = do
   tree@ParseTree {ptName, ptRange} <- takeNext node
   if ptName == node
   then do
-    source <- asks peSource
-    return (cutOut source tree)
+    cutOut ptRange
 
   else do
-    throwError $ Expected node ptRange
+    die' node ptRange
 
 anything :: Parser Text
 anything = do
   tree <- takeNext "anything"
-  source <- asks peSource
-  return (cutOut source tree)
+  cutOut $ ptRange tree
 
 consume :: Text -> Parser ()
 consume node = do
   ParseTree {ptName, ptRange} <- takeNext node
   when (ptName /= node) do
-    tell [Expected node ptRange]
+    complain node ptRange
 
 consumeOrDie :: Text -> Parser ()
 consumeOrDie node = do
   ParseTree {ptName, ptRange} <- takeNext node
   when (ptName /= node) do
-    throwError $ Expected node ptRange
+    die' node ptRange
 
-cutOut :: ByteString -> ParseTree -> Text
-cutOut bs (ParseTree _ _ s f _ _) =
-  decodeUtf8 $ ByteString.take (f - s) (ByteString.drop s bs)
+cutOut :: Range -> Parser Text
+cutOut (Range (_, _, s) (_, _, f)) = do
+  bs <- asks peSource
+  return $ decodeUtf8 $ ByteString.take (f - s) (ByteString.drop s bs)
 
 range :: Parser a -> Parser (a, Range)
 range parser =
