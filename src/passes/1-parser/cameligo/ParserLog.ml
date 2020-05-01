@@ -130,11 +130,10 @@ let rec print_tokens state {decl;eof} =
   print_token state eof "EOF"
 
 and print_attributes state attributes =
-  List.iter (
-    fun ({value = attribute; region}) ->
-      let attribute_formatted = sprintf "[@@%s]" attribute in
-      print_token state region attribute_formatted
-   ) attributes
+  let apply {value = attribute; region} =
+    let attribute_formatted = sprintf "[@@%s]" attribute in
+    print_token state region attribute_formatted
+  in List.iter apply attributes
 
 and print_statement state = function
   Let {value=kwd_let, kwd_rec, let_binding, attributes; _} ->
@@ -156,7 +155,7 @@ and print_type_expr state = function
 | TPar par        -> print_type_par state par
 | TVar var        -> print_var state var
 | TFun t          -> print_fun_type state t
-| TStringLiteral s -> print_string state s
+| TString s       -> print_string state s
 
 and print_fun_type state {value; _} =
   let domain, arrow, range = value in
@@ -1119,14 +1118,14 @@ and pp_type_expr state = function
       pp_type_expr (state#pad len rank) in
     let domain, _, range = value in
     List.iteri (apply 2) [domain; range]
- | TPar {value={inside;_}; region} ->
+| TPar {value={inside;_}; region} ->
     pp_loc_node  state "TPar" region;
     pp_type_expr (state#pad 1 0) inside
- | TVar v ->
+| TVar v ->
     pp_node  state "TVar";
     pp_ident (state#pad 1 0) v
- | TStringLiteral s ->
-    pp_node   state "String";
+| TString s ->
+    pp_node   state "TString";
     pp_string (state#pad 1 0) s
 
 and pp_type_tuple state {value; _} =

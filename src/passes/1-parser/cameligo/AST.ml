@@ -137,10 +137,13 @@ and ast = t
 and attributes = attribute list
 
 and declaration =
-  Let      of (kwd_let * kwd_rec option * let_binding * attributes) reg
+  Let      of let_decl
 | TypeDecl of type_decl reg
 
 (* Non-recursive values *)
+
+and let_decl =
+  (kwd_let * kwd_rec option * let_binding * attributes) reg
 
 and let_binding = {
   binders  : pattern nseq;
@@ -166,7 +169,7 @@ and type_expr =
 | TFun    of (type_expr * arrow * type_expr) reg
 | TPar    of type_expr par reg
 | TVar    of variable
-| TStringLiteral of Lexer.lexeme reg
+| TString of Lexer.lexeme reg
 
 and cartesian = (type_expr, times) nsepseq reg
 
@@ -408,7 +411,7 @@ let type_expr_to_region = function
 | TApp {region; _}
 | TFun {region; _}
 | TPar {region; _}
-| TStringLiteral {region; _}
+| TString {region; _}
 | TVar {region; _} -> region
 
 let list_pattern_to_region = function

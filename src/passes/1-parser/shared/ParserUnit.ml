@@ -15,7 +15,8 @@ module type SubIO =
       ext     : string;
       mode    : [`Byte | `Point];
       cmd     : EvalOpt.command;
-      mono    : bool
+      mono    : bool;
+      pretty  : bool
     >
 
     val options : options

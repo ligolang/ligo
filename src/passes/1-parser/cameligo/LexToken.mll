@@ -111,7 +111,7 @@ let proj_token = function
   (* Literals *)
 
   String Region.{region; value} ->
-    region, sprintf "Str %s" value
+    region, sprintf "String %s" value
 | Bytes Region.{region; value = s,b} ->
     region,
     sprintf "Bytes (\"%s\", \"0x%s\")" s (Hex.show b)
@@ -424,21 +424,20 @@ type nat_err =
 | Non_canonical_zero_nat
 
 let mk_nat lexeme region =
-  match (String.index_opt lexeme 'n') with
+  match String.index_opt lexeme 'n' with
       None -> Error Invalid_natural
   | Some _ -> let z =
-               Str.(global_replace (regexp "_") "" lexeme) |>
-                 Str.(global_replace (regexp "n") "") |>
-                 Z.of_string in
+                Str.(global_replace (regexp "_") "" lexeme) |>
+                  Str.(global_replace (regexp "n") "") |>
+                  Z.of_string in
              if   Z.equal z Z.zero && lexeme <> "0n"
              then Error Non_canonical_zero_nat
              else Ok (Nat Region.{region; value = lexeme,z})
 
 let mk_mutez lexeme region =
-  let z =
-    Str.(global_replace (regexp "_") "" lexeme) |>
-    Str.(global_replace (regexp "mutez") "") |>
-    Z.of_string in
+  let z = Str.(global_replace (regexp "_") "" lexeme) |>
+            Str.(global_replace (regexp "mutez") "") |>
+            Z.of_string in
   if   Z.equal z Z.zero && lexeme <> "0mutez"
   then Error Non_canonical_zero
   else Ok (Mutez Region.{region; value = lexeme, z})
