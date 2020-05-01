@@ -180,7 +180,6 @@ let literal ppf (l : literal) =
   match l with
   | Literal_unit -> fprintf ppf "unit"
   | Literal_void -> fprintf ppf "void"
-  | Literal_bool b -> fprintf ppf "%b" b
   | Literal_int z -> fprintf ppf "%a" Z.pp_print z
   | Literal_nat z -> fprintf ppf "+%a" Z.pp_print z
   | Literal_timestamp z -> fprintf ppf "+%a" Z.pp_print z
@@ -205,7 +204,6 @@ let s =
     | TC_nat -> "nat"
     | TC_int -> "int"
     | TC_mutez -> "mutez"
-    | TC_bool -> "bool"
     | TC_operation -> "operation"
     | TC_address -> "address"
     | TC_key -> "key"
@@ -250,7 +248,6 @@ and type_operator :
     | TC_map {k; v} -> Format.asprintf "Map (%a,%a)" f k f v
     | TC_big_map {k; v} -> Format.asprintf "Big Map (%a,%a)" f k f v
     | TC_map_or_big_map {k; v} -> Format.asprintf "Map Or Big Map (%a,%a)" f k f v
-    | TC_arrow {type1; type2} -> Format.asprintf "arrow (%a,%a)" f type1 f type2
     | TC_contract te  -> Format.asprintf "Contract (%a)" f te
   in
   fprintf ppf "(type_operator: %s)" s
@@ -318,8 +315,6 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit =
       fprintf ppf "let (%a) = %a" (list_sep_d expression_variable) vars f body
   | Match_variant {cases ; tv=_} ->
       fprintf ppf "%a" (list_sep (matching_variant_case f) (tag "@.")) cases
-  | Match_bool {match_true ; match_false} ->
-      fprintf ppf "| True -> %a @.| False -> %a" f match_true f match_false
   | Match_list {match_nil ; match_cons = {hd; tl; body; tv=_}} -> 
       fprintf ppf "| Nil -> %a @.| %a :: %a -> %a" f match_nil expression_variable hd expression_variable tl f body
   | Match_option {match_none ; match_some = {opt; body; tv=_}} ->

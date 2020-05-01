@@ -29,23 +29,23 @@ and environment_element ppf ((n, tv) : environment_element) =
 and environment ppf (x:environment) =
   fprintf ppf "Env[%a]" (list_sep_d environment_element) x
 
-and type_constant ppf (tc:type_constant) : unit =
-  let s = match tc with 
-    | TC_unit      -> "unit"
-    | TC_string    -> "string"
-    | TC_bytes     -> "bytes"
-    | TC_nat       -> "nat"
-    | TC_int       -> "int"
-    | TC_mutez     -> "mutez"
-    | TC_bool      -> "bool"
-    | TC_operation -> "operation"
-    | TC_address   -> "address"
-    | TC_key       -> "key"
-    | TC_key_hash  -> "key_hash"
-    | TC_signature -> "signature"
-    | TC_timestamp -> "timestamp"
-    | TC_chain_id  -> "chain_id"
-    | TC_void      -> "void"
+and type_constant ppf (tb:type_base) : unit =
+  let s = match tb with 
+    | TB_unit      -> "unit"
+    | TB_string    -> "string"
+    | TB_bytes     -> "bytes"
+    | TB_nat       -> "nat"
+    | TB_int       -> "int"
+    | TB_mutez     -> "mutez"
+    | TB_bool      -> "bool"
+    | TB_operation -> "operation"
+    | TB_address   -> "address"
+    | TB_key       -> "key"
+    | TB_key_hash  -> "key_hash"
+    | TB_signature -> "signature"
+    | TB_timestamp -> "timestamp"
+    | TB_chain_id  -> "chain_id"
+    | TB_void      -> "void"
     in
   fprintf ppf "(TC %s)" s
 
@@ -255,7 +255,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   let pp = expression' Format.std_formatter in
-  let dummy_type = T_base TC_unit in
+  let dummy_type = T_base TB_unit in
   let wrap e = { content = e ; type_value = dummy_type } in
   pp @@ E_closure { binder = Var.of_name "y" ; body = wrap (E_variable (Var.of_name "y")) } ;
   [%expect{|

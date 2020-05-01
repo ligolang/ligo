@@ -77,3 +77,48 @@ let fold_map__option : type a state new_a . (state -> a -> (state * new_a) resul
   match o with
   | None -> ok (state, None)
   | Some v -> let%bind state, v = f state v in ok (state, Some v)
+
+
+
+
+
+(* Solver types *)
+
+type 'a poly_unionfind = 'a UnionFind.Poly2.t
+
+(* typevariable: to_string = (fun s -> Format.asprintf "%a" Var.pp s) *)
+(* representant for an equivalence class of type variables *)
+type 'v typeVariableMap = (type_variable, 'v) RedBlackTrees.PolyMap.t
+
+type 'a poly_set = 'a RedBlackTrees.PolySet.t
+
+let fold_map__poly_unionfind : type a state new_a . (state -> a -> (state * new_a) result) -> state -> a poly_unionfind -> (state * new_a poly_unionfind) Simple_utils.Trace.result =
+  fun f state l ->
+  ignore (f, state, l) ; failwith "TODO
+  let aux acc element =
+    let%bind state , l = acc in
+    let%bind (state , new_element) = f state element in ok (state , new_element :: l) in
+  let%bind (state , l) = List.fold_left aux (ok (state , [])) l in
+  ok (state , l)"
+
+let fold_map__PolyMap : type k v state new_v . (state -> v -> (state * new_v) result) -> state -> (k, v) PolyMap.t -> (state * (k, new_v) PolyMap.t) result =
+  fun f state m ->
+  let aux k v ~acc =
+    let%bind (state , m) = acc in
+    let%bind (state , new_v) = f state v in
+    ok (state , PolyMap.add k new_v m) in
+  let%bind (state , m) = PolyMap.fold_inc aux m ~init:(ok (state, PolyMap.empty m)) in
+  ok (state , m)
+
+let fold_map__typeVariableMap : type a state new_a . (state -> a -> (state * new_a) result) -> state -> a typeVariableMap -> (state * new_a typeVariableMap) result =
+  fold_map__PolyMap
+
+let fold_map__poly_set : type a state new_a . (state -> a -> (state * new_a) result) -> state -> a poly_set -> (state * new_a poly_set) result =
+  fun f state s ->
+  let new_compare : (new_a -> new_a -> int) = failwith "TODO: thread enough information about the target AST so that we may compare things here." in
+  let aux elt ~acc =
+    let%bind (state , s) = acc in
+    let%bind (state , new_elt) = f state elt in
+    ok (state , PolySet.add new_elt s) in
+  let%bind (state , m) = PolySet.fold_inc aux s ~init:(ok (state, PolySet.create ~cmp:new_compare)) in
+  ok (state , m)

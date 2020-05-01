@@ -200,9 +200,6 @@ and compile_type_operator : I.type_operator -> O.type_operator result =
     | TC_big_map (k,v) ->
       let%bind (k,v) = bind_map_pair compile_type_expression (k,v) in
       ok @@ O.TC_big_map (k,v)
-    | TC_arrow (i,o) ->
-      let%bind (i,o) = bind_map_pair compile_type_expression (i,o) in
-      ok @@ O.TC_arrow (i,o)
     | TC_michelson_or _ | TC_michelson_pair _ -> fail @@ Errors.corner_case __LOC__
 
 let rec compile_expression : I.expression -> O.expression result =
@@ -384,26 +381,6 @@ and compile_matching : I.matching -> (O.expression option -> O.expression) resul
   in
   let%bind matchee = compile_expression matchee in
   match cases with 
-    | I.Match_bool {match_true;match_false} ->
-      let%bind match_true' = compile_expression match_true in
-      let%bind match_false' = compile_expression match_false in
-      let env = Var.fresh () in
-      let%bind ((_,free_vars_true), match_true) = repair_mutable_variable_in_matching match_true' [] env in
-      let%bind ((_,free_vars_false), match_false) = repair_mutable_variable_in_matching match_false' [] env in
-      let match_true  = add_to_end match_true (O.e_variable env) in
-      let match_false = add_to_end match_false (O.e_variable env) in
-
-      let free_vars = List.sort_uniq Var.compare @@ free_vars_true @ free_vars_false in
-      if (List.length free_vars != 0) then 
-        let match_expr  = O.e_matching matchee (O.Match_bool {match_true; match_false}) in
-        let return_expr = fun expr ->
-          O.e_let_in (env,None) false false (store_mutable_variable free_vars) @@
-          O.e_let_in (env,None) false false match_expr @@
-          expr 
-        in
-        ok @@ restore_mutable_variable return_expr free_vars env
-      else
-        return @@ O.e_matching matchee @@ O.Match_bool {match_true=match_true';match_false=match_false'}
     | I.Match_option {match_none;match_some} ->
       let%bind match_none' = compile_expression match_none in
       let (n,expr,tv) = match_some in
@@ -663,9 +640,6 @@ and uncompile_type_operator : O.type_operator -> I.type_operator result =
     | TC_big_map (k,v) ->
       let%bind (k,v) = bind_map_pair uncompile_type_expression (k,v) in
       ok @@ I.TC_big_map (k,v)
-    | TC_arrow (i,o) ->
-      let%bind (i,o) = bind_map_pair uncompile_type_expression (i,o) in
-      ok @@ I.TC_arrow (i,o)
 
 let rec uncompile_expression' : O.expression -> I.expression result =
   fun e ->
@@ -771,10 +745,6 @@ and uncompile_lambda : O.lambda -> I.lambda result =
 and uncompile_matching : O.matching_expr -> I.matching_expr result =
   fun m -> 
   match m with 
-    | O.Match_bool {match_true;match_false} ->
-      let%bind match_true = uncompile_expression' match_true in
-      let%bind match_false = uncompile_expression' match_false in
-      ok @@ I.Match_bool {match_true;match_false}
     | O.Match_list {match_nil;match_cons} ->
       let%bind match_nil = uncompile_expression' match_nil in
       let (hd,tl,expr,tv) = match_cons in

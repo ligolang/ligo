@@ -21,7 +21,7 @@ open Errors
 
 let make_t ?(loc = Location.generated) type_content = {type_content; location=loc}
 
-let t_bool ?loc ()        : type_expression = make_t ?loc @@ T_constant (TC_bool)
+let t_bool ?loc ()        : type_expression = make_t ?loc @@ T_variable (Stage_common.Constant.t_bool)
 let t_string ?loc ()      : type_expression = make_t ?loc @@ T_constant (TC_string)
 let t_bytes ?loc ()       : type_expression = make_t ?loc @@ T_constant (TC_bytes)
 let t_int ?loc ()         : type_expression = make_t ?loc @@ T_constant (TC_int)
@@ -88,7 +88,6 @@ let e_nat_z ?loc n : expression = make_e ?loc @@ E_literal (Literal_nat n)
 let e_nat ?loc n : expression = e_nat_z ?loc @@ Z.of_int n
 let e_timestamp_z ?loc n : expression = make_e ?loc @@ E_literal (Literal_timestamp n)
 let e_timestamp ?loc n : expression = e_timestamp_z ?loc @@ Z.of_int n
-let e_bool ?loc   b : expression = make_e ?loc @@ E_literal (Literal_bool b)
 let e_string ?loc s : expression = make_e ?loc @@ E_literal (Literal_string s)
 let e_address ?loc s : expression = make_e ?loc @@ E_literal (Literal_address s)
 let e_mutez_z ?loc s : expression = make_e ?loc @@ E_literal (Literal_mutez s)
@@ -147,6 +146,8 @@ let e_look_up ?loc x y = make_e ?loc @@ E_look_up (x , y)
 let e_while ?loc condition body = make_e ?loc @@ E_while {condition; body}
 let e_for ?loc binder start final increment body = make_e ?loc @@ E_for {binder;start;final;increment;body}
 let e_for_each ?loc binder collection collection_type body = make_e ?loc @@ E_for_each {binder;collection;collection_type;body}
+
+let e_bool ?loc   b : expression = e_constructor ?loc (string_of_bool b) (e_unit ())
 
 let ez_match_variant (lst : ((string * string) * 'a) list) =
   let lst = List.map (fun ((c,n),a) -> ((Constructor c, Var.of_name n), a) ) lst in

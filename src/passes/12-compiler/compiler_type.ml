@@ -59,24 +59,24 @@ module Ty = struct
   let not_comparable name () = error (thunk "not a comparable type") (fun () -> name) ()
   let not_compilable_type name () = error (thunk "not a compilable type") (fun () -> name) ()
 
-  let comparable_type_base : type_constant -> ex_comparable_ty result = fun tb ->
+  let comparable_type_base : type_base -> ex_comparable_ty result = fun tb ->
     let return x = ok @@ Ex_comparable_ty x in
     match tb with
-    | TC_unit -> fail (not_comparable "unit")
-    | TC_void -> fail (not_comparable "void")
-    | TC_bool -> return bool_k
-    | TC_nat -> return nat_k
-    | TC_mutez -> return tez_k
-    | TC_int -> return int_k
-    | TC_string -> return string_k
-    | TC_address -> return address_k
-    | TC_timestamp -> return timestamp_k
-    | TC_bytes -> return bytes_k
-    | TC_operation -> fail (not_comparable "operation")
-    | TC_signature -> fail (not_comparable "signature")
-    | TC_key -> fail (not_comparable "key")
-    | TC_key_hash -> return key_hash_k
-    | TC_chain_id -> fail (not_comparable "chain_id")
+    | TB_unit -> fail (not_comparable "unit")
+    | TB_void -> fail (not_comparable "void")
+    | TB_bool -> return bool_k
+    | TB_nat -> return nat_k
+    | TB_mutez -> return tez_k
+    | TB_int -> return int_k
+    | TB_string -> return string_k
+    | TB_address -> return address_k
+    | TB_timestamp -> return timestamp_k
+    | TB_bytes -> return bytes_k
+    | TB_operation -> fail (not_comparable "operation")
+    | TB_signature -> fail (not_comparable "signature")
+    | TB_key -> fail (not_comparable "key")
+    | TB_key_hash -> return key_hash_k
+    | TB_chain_id -> fail (not_comparable "chain_id")
 
   let comparable_leaf : type a. (a, _) comparable_struct -> (a , leaf) comparable_struct result =
       fun a ->
@@ -109,24 +109,24 @@ module Ty = struct
     | T_option _ -> fail (not_comparable "option")
     | T_contract _ -> fail (not_comparable "contract")
 
-  let base_type : type_constant -> ex_ty result = fun b ->
+  let base_type : type_base -> ex_ty result = fun b ->
     let return x = ok @@ Ex_ty x in
    match b with
-    | TC_unit -> return unit
-    | TC_void -> fail (not_compilable_type "void")
-    | TC_bool -> return bool
-    | TC_int -> return int
-    | TC_nat -> return nat
-    | TC_mutez -> return tez
-    | TC_string -> return string
-    | TC_address -> return address
-    | TC_timestamp -> return timestamp
-    | TC_bytes -> return bytes
-    | TC_operation -> return operation
-    | TC_signature -> return signature
-    | TC_key -> return key
-    | TC_key_hash -> return key_hash
-    | TC_chain_id -> return chain_id
+    | TB_unit -> return unit
+    | TB_void -> fail (not_compilable_type "void")
+    | TB_bool -> return bool
+    | TB_int -> return int
+    | TB_nat -> return nat
+    | TB_mutez -> return tez
+    | TB_string -> return string
+    | TB_address -> return address
+    | TB_timestamp -> return timestamp
+    | TB_bytes -> return bytes
+    | TB_operation -> return operation
+    | TB_signature -> return signature
+    | TB_key -> return key
+    | TB_key_hash -> return key_hash
+    | TB_chain_id -> return chain_id
 
   let rec type_ : type_value -> ex_ty result =
     function
@@ -195,23 +195,23 @@ module Ty = struct
 end
 
 
-let base_type : type_constant -> O.michelson result =
+let base_type : type_base -> O.michelson result =
   function
-  | TC_unit -> ok @@ O.prim T_unit
-  | TC_void -> fail (Ty.not_compilable_type "void")
-  | TC_bool -> ok @@ O.prim T_bool
-  | TC_int -> ok @@ O.prim T_int
-  | TC_nat -> ok @@ O.prim T_nat
-  | TC_mutez -> ok @@ O.prim T_mutez
-  | TC_string -> ok @@ O.prim T_string
-  | TC_address -> ok @@ O.prim T_address
-  | TC_timestamp -> ok @@ O.prim T_timestamp
-  | TC_bytes -> ok @@ O.prim T_bytes
-  | TC_operation -> ok @@ O.prim T_operation
-  | TC_signature -> ok @@ O.prim T_signature
-  | TC_key -> ok @@ O.prim T_key
-  | TC_key_hash -> ok @@ O.prim T_key_hash
-  | TC_chain_id -> ok @@ O.prim T_chain_id
+  | TB_unit -> ok @@ O.prim T_unit
+  | TB_void -> fail (Ty.not_compilable_type "void")
+  | TB_bool -> ok @@ O.prim T_bool
+  | TB_int -> ok @@ O.prim T_int
+  | TB_nat -> ok @@ O.prim T_nat
+  | TB_mutez -> ok @@ O.prim T_mutez
+  | TB_string -> ok @@ O.prim T_string
+  | TB_address -> ok @@ O.prim T_address
+  | TB_timestamp -> ok @@ O.prim T_timestamp
+  | TB_bytes -> ok @@ O.prim T_bytes
+  | TB_operation -> ok @@ O.prim T_operation
+  | TB_signature -> ok @@ O.prim T_signature
+  | TB_key -> ok @@ O.prim T_key
+  | TB_key_hash -> ok @@ O.prim T_key_hash
+  | TB_chain_id -> ok @@ O.prim T_chain_id
 
 let rec type_ : type_value -> O.michelson result =
   function

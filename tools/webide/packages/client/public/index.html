@@ -34,7 +34,10 @@
 
       gtag("config", "UA-153751765-1");
     </script>
-    <script src="https://www.tezbridge.com/plugin.js"></script>
+    <script
+      src="https://www.tezbridge.com/plugin.js"
+      onerror="console.warn('Failed to load tezbridge; assuming this is a test and we dont need it.'); window.tezbridge = {}"
+    ></script>
     <title>LIGO Playground</title>
   </head>
   <body>

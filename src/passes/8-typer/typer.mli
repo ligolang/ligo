@@ -11,6 +11,6 @@ module Solver = Typer_new.Solver
 
 type environment = Environment.t
 
-val type_program : I.program -> (O.program * Solver.state) result
-val type_expression_subst : environment -> Solver.state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * Solver.state) result
+val type_program : I.program -> (O.program * O.typer_state) result
+val type_expression_subst : environment -> O.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * O.typer_state) result
 val untype_expression : O.expression -> I.expression result

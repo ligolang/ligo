@@ -76,7 +76,7 @@ them. please report this to the developers." in
     error ~data title content
 
   let wrong_mini_c_value expected_type actual =
-    let title () = "illed typed intermediary value" in
+    let title () = "transpiler: illed typed intermediary value" in
     let content () = "type of intermediary value doesn't match what was expected" in
     let data = [
       ("expected_type" , fun () -> expected_type) ;
@@ -231,22 +231,23 @@ let transpile_constant' : AST.constant' -> constant' = function
 
 let rec transpile_type (t:AST.type_expression) : type_value result =
   match t.type_content with
+  | T_variable (name) when Var.equal name Stage_common.Constant.t_bool -> ok (T_base TB_bool)
+  | t when (compare t (t_bool ()).type_content) = 0-> ok (T_base TB_bool)
   | T_variable (name) -> fail @@ no_type_variable @@ name
-  | T_constant (TC_bool) -> ok (T_base TC_bool)
-  | T_constant (TC_int) -> ok (T_base TC_int)
-  | T_constant (TC_nat) -> ok (T_base TC_nat)
-  | T_constant (TC_mutez) -> ok (T_base TC_mutez)
-  | T_constant (TC_string) -> ok (T_base TC_string)
-  | T_constant (TC_bytes) -> ok (T_base TC_bytes)
-  | T_constant (TC_address) -> ok (T_base TC_address)
-  | T_constant (TC_timestamp) -> ok (T_base TC_timestamp)
-  | T_constant (TC_unit) -> ok (T_base TC_unit)
-  | T_constant (TC_operation) -> ok (T_base TC_operation)
-  | T_constant (TC_signature) -> ok (T_base TC_signature)
-  | T_constant (TC_key) -> ok (T_base TC_key)
-  | T_constant (TC_key_hash) -> ok (T_base TC_key_hash)
-  | T_constant (TC_chain_id) -> ok (T_base TC_chain_id)
-  | T_constant (TC_void)     -> ok (T_base TC_void)
+  | T_constant (TC_int)       -> ok (T_base TB_int)
+  | T_constant (TC_nat)       -> ok (T_base TB_nat)
+  | T_constant (TC_mutez)     -> ok (T_base TB_mutez)
+  | T_constant (TC_string)    -> ok (T_base TB_string)
+  | T_constant (TC_bytes)     -> ok (T_base TB_bytes)
+  | T_constant (TC_address)   -> ok (T_base TB_address)
+  | T_constant (TC_timestamp) -> ok (T_base TB_timestamp)
+  | T_constant (TC_unit)      -> ok (T_base TB_unit)
+  | T_constant (TC_operation) -> ok (T_base TB_operation)
+  | T_constant (TC_signature) -> ok (T_base TB_signature)
+  | T_constant (TC_key)       -> ok (T_base TB_key)
+  | T_constant (TC_key_hash)  -> ok (T_base TB_key_hash)
+  | T_constant (TC_chain_id)  -> ok (T_base TB_chain_id)
+  | T_constant (TC_void)      -> ok (T_base TB_void)
   | T_operator (TC_contract x) ->
       let%bind x' = transpile_type x in
       ok (T_contract x')
@@ -267,11 +268,6 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
   | T_operator (TC_option o) ->
       let%bind o' = transpile_type o in
       ok (T_option o')
-  | T_operator (TC_arrow {type1=param ; type2=result}) -> (
-      let%bind param' = transpile_type param in
-      let%bind result' = transpile_type result in
-      ok (T_function (param', result'))
-    )
   | T_sum m when Ast_typed.Helpers.is_michelson_or m ->
       let node = Append_tree.of_list @@ kv_list_of_cmap m in
       let aux a b : type_value annotated result =
@@ -362,7 +358,6 @@ let record_access_to_lr : type_value -> type_value AST.label_map -> AST.label ->
   ok lst
 
 let rec transpile_literal : AST.literal -> value = fun l -> match l with
-  | Literal_bool b -> D_bool b
   | Literal_int n -> D_int n
   | Literal_nat n -> D_nat n
   | Literal_timestamp n -> D_timestamp n
@@ -411,6 +406,8 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       let%bind a = transpile_annotated_expression lamb in
       let%bind b = transpile_annotated_expression args in
       return @@ E_application (a, b)
+  | E_constructor {constructor=Constructor name;element} when (String.equal name "true"|| String.equal name "false") && element.expression_content = AST.e_unit () ->
+    return @@ E_literal (D_bool (bool_of_string name))
   | E_constructor {constructor;element} -> (
       let%bind param' = transpile_annotated_expression element in
       let (param'_expr , param'_tv) = Combinators.Expression.(get_content param' , get_type param') in
@@ -563,9 +560,6 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
   | E_matching {matchee=expr; cases=m} -> (
       let%bind expr' = transpile_annotated_expression expr in
       match m with
-      | Match_bool {match_true ; match_false} ->
-          let%bind (t , f) = bind_map_pair (transpile_annotated_expression) (match_true, match_false) in
-          return @@ E_if_bool (expr', t, f)
       | Match_option { match_none; match_some = {opt; body; tv} } ->
           let%bind n = transpile_annotated_expression match_none in
           let%bind (tv' , s') =
@@ -586,6 +580,10 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
           in
           return @@ E_if_cons (expr' , nil , cons)
         )
+      | Match_variant {cases=[{constructor=Constructor t;body=match_true};{constructor=Constructor f;body=match_false}];_}
+        when String.equal t "true" && String.equal f "false" ->
+          let%bind (t , f) = bind_map_pair (transpile_annotated_expression) (match_true, match_false) in
+          return @@ E_if_bool (expr', t, f)
       | Match_variant {cases ; tv} -> (
           let%bind tree =
             trace_strong (corner_case ~loc:__LOC__ "getting lr tree") @@
@@ -686,9 +684,6 @@ and transpile_recursive {fun_name; fun_type; lambda} =
     let return ret = ok @@ Expression.make ret @@ ty in
     let%bind expr = transpile_annotated_expression m.matchee in
     match m.cases with
-      Match_bool {match_true; match_false} -> 
-          let%bind (t , f) = bind_map_pair (replace_callback fun_name loop_type shadowed) (match_true, match_false) in
-          return @@ E_if_bool (expr, t, f)
       | Match_option { match_none; match_some = {opt; body; tv} } ->
           let%bind n = replace_callback fun_name loop_type shadowed match_none in
           let%bind (tv' , s') =
@@ -709,6 +704,10 @@ and transpile_recursive {fun_name; fun_type; lambda} =
           in
           return @@ E_if_cons (expr , nil , cons)
         )
+      | Match_variant {cases=[{constructor=Constructor t;body=match_true};{constructor=Constructor f;body=match_false}];_}
+        when String.equal t "true" && String.equal f "false" ->
+          let%bind (t , f) = bind_map_pair (replace_callback fun_name loop_type shadowed) (match_true, match_false) in
+          return @@ E_if_bool (expr, t, f)
       | Match_variant {cases;tv} -> (
           let%bind tree =
             trace_strong (corner_case ~loc:__LOC__ "getting lr tree") @@

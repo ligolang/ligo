@@ -91,10 +91,6 @@ module Captured_variables = struct
 
   and matching : (bindings -> expression -> bindings result) -> bindings -> matching_expr -> bindings result = fun f b m ->
     match m with
-    | Match_bool { match_true = t ; match_false = fa } ->
-      let%bind t' = f b t in
-      let%bind fa' = f b fa in
-      ok @@ union t' fa'
     | Match_list { match_nil = n ; match_cons = {hd; tl; body; tv=_} } ->
       let%bind n' = f b n in
       let%bind c' = f (union (of_list [hd ; tl]) b) body in

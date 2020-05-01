@@ -1,36 +1,36 @@
-open Solver
+open Ast_typed
 open Format
+module UF = UnionFind.Poly2
 
 let type_constraint : _ -> type_constraint_simpl -> unit = fun ppf ->
   function
   |SC_Constructor { tv; c_tag; tv_list=_ } ->
     let ct = match c_tag with
-      | Solver.Core.C_arrow        -> "arrow"
-      | Solver.Core.C_option       -> "option"
-      | Solver.Core.C_record       -> failwith "record"
-      | Solver.Core.C_variant      -> failwith "variant"
-      | Solver.Core.C_map          -> "map"
-      | Solver.Core.C_big_map      -> "big_map"
-      | Solver.Core.C_list         -> "list"
-      | Solver.Core.C_set          -> "set"
-      | Solver.Core.C_unit         -> "unit"
-      | Solver.Core.C_bool         -> "bool"
-      | Solver.Core.C_string       -> "string"
-      | Solver.Core.C_nat          -> "nat"
-      | Solver.Core.C_mutez        -> "mutez"
-      | Solver.Core.C_timestamp    -> "timestamp"
-      | Solver.Core.C_int          -> "int"
-      | Solver.Core.C_address      -> "address"
-      | Solver.Core.C_bytes        -> "bytes"
-      | Solver.Core.C_key_hash     -> "key_hash"
-      | Solver.Core.C_key          -> "key"
-      | Solver.Core.C_signature    -> "signature"
-      | Solver.Core.C_operation    -> "operation"
-      | Solver.Core.C_contract     -> "contract"
-      | Solver.Core.C_chain_id     -> "chain_id"
+      | C_arrow        -> "arrow"
+      | C_option       -> "option"
+      | C_record       -> failwith "record"
+      | C_variant      -> failwith "variant"
+      | C_map          -> "map"
+      | C_big_map      -> "big_map"
+      | C_list         -> "list"
+      | C_set          -> "set"
+      | C_unit         -> "unit"
+      | C_string       -> "string"
+      | C_nat          -> "nat"
+      | C_mutez        -> "mutez"
+      | C_timestamp    -> "timestamp"
+      | C_int          -> "int"
+      | C_address      -> "address"
+      | C_bytes        -> "bytes"
+      | C_key_hash     -> "key_hash"
+      | C_key          -> "key"
+      | C_signature    -> "signature"
+      | C_operation    -> "operation"
+      | C_contract     -> "contract"
+      | C_chain_id     -> "chain_id"
     in
     fprintf ppf "CTOR %a %s()" Var.pp tv ct
-  |SC_Alias       (a, b) -> fprintf ppf "Alias %a %a" Var.pp a Var.pp b
+  |SC_Alias       { a; b } -> fprintf ppf "Alias %a %a" Var.pp a Var.pp b
   |SC_Poly        _ -> fprintf ppf "Poly"
   |SC_Typeclass   _ -> fprintf ppf "TC"
 
@@ -48,6 +48,6 @@ let already_selected : _ -> already_selected -> unit = fun ppf already_selected 
   let _ = already_selected in
   fprintf ppf "ALREADY_SELECTED"
 
-let state : _ -> state -> unit = fun ppf state ->
+let state : _ -> typer_state -> unit = fun ppf state ->
   let { structured_dbs=a ; already_selected=b } = state in
   fprintf ppf "STATE %a %a" structured_dbs a already_selected b

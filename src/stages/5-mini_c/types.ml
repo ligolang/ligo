@@ -1,4 +1,3 @@
-
 include Stage_common.Types
 
 type 'a annotated = string option * 'a
@@ -7,13 +6,30 @@ type type_value =
   | T_pair of (type_value annotated * type_value annotated)
   | T_or of (type_value annotated * type_value annotated)
   | T_function of (type_value * type_value)
-  | T_base of type_constant
+  | T_base of type_base
   | T_map of (type_value * type_value)
   | T_big_map of (type_value * type_value)
   | T_list of type_value
   | T_set of type_value
   | T_contract of type_value
   | T_option of type_value
+
+and type_base =
+  | TB_unit
+  | TB_bool
+  | TB_string
+  | TB_bytes
+  | TB_nat
+  | TB_int
+  | TB_mutez
+  | TB_operation
+  | TB_address
+  | TB_key
+  | TB_key_hash
+  | TB_chain_id
+  | TB_signature
+  | TB_timestamp
+  | TB_void
 
 and environment_element = expression_variable * type_value
 

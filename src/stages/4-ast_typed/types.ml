@@ -9,7 +9,6 @@ type type_constant =
     | TC_nat
     | TC_int
     | TC_mutez
-    | TC_bool
     | TC_operation
     | TC_address
     | TC_key
@@ -66,8 +65,6 @@ and type_operator =
   | TC_map of type_map_args
   | TC_big_map of type_map_args
   | TC_map_or_big_map of type_map_args
-  | TC_arrow of arrow
-
 
 and type_expression = {
     type_content: type_content;
@@ -77,7 +74,6 @@ and type_expression = {
 
 type literal =
   | Literal_unit
-  | Literal_bool of bool
   | Literal_int of z
   | Literal_nat of z
   | Literal_timestamp of z
@@ -92,10 +88,6 @@ type literal =
   | Literal_void
   | Literal_operation of packed_internal_operation
 
-type matching_content_bool = {
-    match_true : expression ;
-    match_false : expression ;
-  }
 
 and matching_content_cons = {
     hd : expression_variable;
@@ -143,7 +135,6 @@ and matching_content_variant = {
   }
 
 and matching_expr =
-  | Match_bool    of matching_content_bool
   | Match_list    of matching_content_list
   | Match_option  of matching_content_option
   | Match_tuple   of matching_content_tuple
@@ -425,3 +416,190 @@ and named_type_content = {
     type_name : type_variable;
     type_value : type_expression;
   }
+
+
+
+
+
+(* Solver types *)
+
+(* typevariable: to_string = (fun s -> Format.asprintf "%a" Var.pp s) *)
+type unionfind = type_variable poly_unionfind
+
+(* core *)
+
+(* add information on the type or the kind for operator *)
+type constant_tag =
+  | C_arrow     (* * -> * -> *    isn't this wrong? *)
+  | C_option    (* * -> * *)
+  | C_record    (* ( label , * ) … -> * *)
+  | C_variant   (* ( label , * ) … -> * *)
+  | C_map       (* * -> * -> * *)
+  | C_big_map   (* * -> * -> * *)
+  | C_list      (* * -> * *)
+  | C_set       (* * -> * *)
+  | C_unit      (* * *)
+  | C_string    (* * *)
+  | C_nat       (* * *)
+  | C_mutez     (* * *)
+  | C_timestamp (* * *)
+  | C_int       (* * *)
+  | C_address   (* * *)
+  | C_bytes     (* * *)
+  | C_key_hash  (* * *)
+  | C_key       (* * *)
+  | C_signature (* * *)
+  | C_operation (* * *)
+  | C_contract  (* * -> * *)
+  | C_chain_id  (* * *)
+
+(* TODO: rename to type_expression or something similar (it includes variables, and unevaluated functions + applications *)
+type type_value =
+  | P_forall       of p_forall
+  | P_variable     of type_variable
+  | P_constant     of p_constant
+  | P_apply        of p_apply
+
+and p_apply = {
+    tf : type_value ;
+    targ : type_value ;
+}
+and p_ctor_args = type_value list
+and p_constant = {
+    p_ctor_tag : constant_tag ;
+    p_ctor_args : p_ctor_args ;
+  }
+and p_constraints = type_constraint list
+and p_forall = {
+  binder      : type_variable ;
+  constraints : p_constraints ;
+  body        : type_value ;
+}
+
+(* Different type of constraint *)
+and ctor_args = type_variable list (* non-empty list *)
+and simple_c_constructor = {
+    ctor_tag : constant_tag ;
+    ctor_args : ctor_args ;
+  }
+and simple_c_constant = {
+    constant_tag: constant_tag ; (* for type constructors that do not take arguments *)
+  }
+and c_const = {
+    c_const_tvar : type_variable ;
+    c_const_tval : type_value ;
+  }
+and c_equation = {
+  aval : type_value ;
+  bval : type_value ;
+}
+and tc_args = type_value list
+and c_typeclass = {
+  tc_args : tc_args ;
+  typeclass : typeclass ;
+}
+and c_access_label = {
+    c_access_label_tval : type_value ;
+    accessor : label ;
+    c_access_label_tvar : type_variable ;
+  }
+
+(*What i was saying just before *)
+and type_constraint =
+  (* | C_assignment of (type_variable * type_pattern) *)
+  | C_equation of c_equation (* TVA = TVB *)
+  | C_typeclass of c_typeclass (* TVL ∈ TVLs, for now in extension, later add intensional (rule-based system for inclusion in the typeclass) *)
+  | C_access_label of c_access_label (* poor man's type-level computation to ensure that TV.label is type_variable *)
+(* | … *)
+
+(* is the first list in case on of the type of the type class as a kind *->*->* ? *)
+and tc_allowed = type_value list
+and typeclass = tc_allowed list
+
+(* end core *)
+
+type c_constructor_simpl_typeVariableMap = c_constructor_simpl typeVariableMap
+and constraints_typeVariableMap = constraints typeVariableMap
+and type_constraint_simpl_list = type_constraint_simpl list
+and structured_dbs = {
+  all_constraints          : type_constraint_simpl_list ;
+  aliases                  : unionfind ;
+  (* assignments (passive data structure). *)
+  (*   Now                 : just a map from unification vars to types (pb: what about partial types?) *)
+  (*   maybe just local assignments (allow only vars as children of pair(α,β)) *)
+  (* TODO                  : the rhs of the map should not repeat the variable name. *)
+  assignments              : c_constructor_simpl_typeVariableMap ;
+  grouped_by_variable      : constraints_typeVariableMap ; (* map from (unionfind) variables to constraints containing them *)
+  cycle_detection_toposort : unit ;                        (* example of structured db that we'll add later *)
+}
+
+and c_constructor_simpl_list = c_constructor_simpl list
+and c_poly_simpl_list        = c_poly_simpl        list
+and c_typeclass_simpl_list   = c_typeclass_simpl   list
+and constraints = {
+  (* If implemented in a language with decent sets, these should be sets not lists. *)
+  constructor : c_constructor_simpl_list ; (* List of ('a = constructor(args…)) constraints *)
+  poly        : c_poly_simpl_list        ; (* List of ('a = forall 'b, some_type) constraints *)
+  tc          : c_typeclass_simpl_list   ; (* List of (typeclass(args…)) constraints *)
+}
+and type_variable_list = type_variable list
+and c_constructor_simpl = {
+  tv : type_variable;
+  c_tag : constant_tag;
+  tv_list : type_variable_list;
+}
+and c_const_e = {
+    c_const_e_tv : type_variable ;
+    c_const_e_te : type_expression ;
+  }
+and c_equation_e = {
+    aex : type_expression ;
+    bex : type_expression ;
+  }
+and c_typeclass_simpl = {
+  tc   : typeclass          ;
+  args : type_variable_list ;
+}
+and c_poly_simpl = {
+  tv     : type_variable ;
+  forall : p_forall      ;
+}
+and type_constraint_simpl =
+  | SC_Constructor of c_constructor_simpl             (* α = ctor(β, …) *)
+  | SC_Alias       of c_alias                         (* α = β *)
+  | SC_Poly        of c_poly_simpl                    (* α = forall β, δ where δ can be a more complex type *)
+  | SC_Typeclass   of c_typeclass_simpl               (* TC(α, …) *)
+
+and c_alias = {
+    a : type_variable ;
+    b : type_variable ;
+  }
+
+
+(* sub-sub component: lazy selector (don't re-try all selectors every time) *)
+(* For now: just re-try everytime *)
+
+(* selector / propagation rule for breaking down composite types *)
+(* For now: break pair(a, b) = pair(c, d) into a = c, b = d *)
+type output_break_ctor = {
+    a_k_var : c_constructor_simpl ;
+    a_k'_var' : c_constructor_simpl ;
+  }
+
+type output_specialize1 = {
+    poly : c_poly_simpl ;
+    a_k_var : c_constructor_simpl ;
+  }
+
+type m_break_ctor__already_selected = output_break_ctor poly_set
+type m_specialize1__already_selected = output_specialize1 poly_set
+
+type already_selected = {
+  break_ctor  : m_break_ctor__already_selected  ;
+  specialize1 : m_specialize1__already_selected ;
+}
+
+type typer_state = {
+  structured_dbs   : structured_dbs   ;
+  already_selected : already_selected ;
+}

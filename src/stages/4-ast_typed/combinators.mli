@@ -33,7 +33,7 @@ val t_map : ?loc:Location.t -> type_expression -> type_expression -> ?s:S.type_e
 val t_big_map : ?loc:Location.t -> type_expression -> type_expression -> ?s:S.type_expression -> unit -> type_expression
 val t_map_or_big_map : ?loc:Location.t -> type_expression -> type_expression ->  ?s:S.type_expression -> unit -> type_expression
 val t_sum : Types.te_cmap -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
-val make_t_ez_sum : ?loc:Location.t -> ( constructor' * ctor_content ) list -> type_expression
+val make_t_ez_sum : ?loc:Location.t -> ?s:S.type_expression -> ( constructor' * ctor_content ) list -> type_expression
 val t_function : type_expression -> type_expression -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
 val t_shallow_closure : type_expression -> type_expression -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
 val get_type_expression : expression -> type_expression
@@ -114,7 +114,7 @@ val e_unit : unit -> expression_content
 val e_int : Z.t -> expression_content
 val e_nat : Z.t -> expression_content
 val e_mutez : Z.t -> expression_content
-val e_bool : bool -> expression_content
+val e_bool : bool -> full_environment -> expression_content
 val e_string : string -> expression_content
 val e_bytes : bytes -> expression_content
 val e_timestamp : Z.t -> expression_content

@@ -20,7 +20,6 @@ type 'a constructor_map = 'a CMap.t
     | TC_nat
     | TC_int
     | TC_mutez
-    | TC_bool
     | TC_operation
     | TC_address
     | TC_key
@@ -60,7 +59,6 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
     | TC_map of type_expression * type_expression
     | TC_big_map of type_expression * type_expression
     | TC_map_or_big_map of type_expression * type_expression
-    | TC_arrow of type_expression * type_expression
 
 
   and type_expression = {type_content: type_content; location: Location.t; type_meta: type_meta}
@@ -74,7 +72,6 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
     | TC_map (x , y) -> TC_map (f x , f y)
     | TC_big_map (x , y)-> TC_big_map (f x , f y)
     | TC_map_or_big_map (x , y)-> TC_map_or_big_map (f x , f y)
-    | TC_arrow (x, y) -> TC_arrow (f x, f y)
 
   let bind_map_type_operator f = function
       TC_contract x -> let%bind x = f x in ok @@ TC_contract x
@@ -84,7 +81,6 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
     | TC_map (x , y) -> let%bind x = f x in let%bind y = f y in ok @@ TC_map (x , y)
     | TC_big_map (x , y)-> let%bind x = f x in let%bind y = f y in ok @@ TC_big_map (x , y)
     | TC_map_or_big_map (x , y)-> let%bind x = f x in let%bind y = f y in ok @@ TC_map_or_big_map (x , y)
-    | TC_arrow (x , y)-> let%bind x = f x in let%bind y = f y in ok @@ TC_arrow (x , y)
 
   let type_operator_name = function
         TC_contract _ -> "TC_contract"
@@ -94,7 +90,6 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
       | TC_map      _ -> "TC_map"
       | TC_big_map  _ -> "TC_big_map"
       | TC_map_or_big_map _ -> "TC_map_or_big_map"
-      | TC_arrow    _ -> "TC_arrow"
 
   let type_expression'_of_string = function
     | "TC_contract" , [x]     -> ok @@ T_operator(TC_contract x)
@@ -112,7 +107,6 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
     | "TC_nat"       , [] -> ok @@ T_constant(TC_nat)
     | "TC_int"       , [] -> ok @@ T_constant(TC_int)
     | "TC_mutez"     , [] -> ok @@ T_constant(TC_mutez)
-    | "TC_bool"      , [] -> ok @@ T_constant(TC_bool)
     | "TC_operation" , [] -> ok @@ T_constant(TC_operation)
     | "TC_address"   , [] -> ok @@ T_constant(TC_address)
     | "TC_key"       , [] -> ok @@ T_constant(TC_key)
@@ -133,7 +127,6 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
     | TC_map            (x , y) -> "TC_map"          , [x ; y]
     | TC_big_map        (x , y) -> "TC_big_map"      , [x ; y]
     | TC_map_or_big_map (x , y) -> "TC_map_or_big_map"  , [x ; y]
-    | TC_arrow          (x , y) -> "TC_arrow"        , [x ; y]
 
   let string_of_type_constant = function
     | TC_unit      -> "TC_unit", []
@@ -142,7 +135,6 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
     | TC_nat       -> "TC_nat", []
     | TC_int       -> "TC_int", []
     | TC_mutez     -> "TC_mutez", []
-    | TC_bool      -> "TC_bool", []
     | TC_operation -> "TC_operation", []
     | TC_address   -> "TC_address", []
     | TC_key       -> "TC_key", []
@@ -162,7 +154,6 @@ end
 
 type literal =
   | Literal_unit
-  | Literal_bool of bool
   | Literal_int of Z.t
   | Literal_nat of Z.t
   | Literal_timestamp of Z.t
@@ -178,10 +169,6 @@ type literal =
   | Literal_operation of
       Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation
 and ('a,'tv) matching_content =
-  | Match_bool of {
-      match_true : 'a ;
-      match_false : 'a ;
-    }
   | Match_list of {
       match_nil : 'a ;
       match_cons : expression_variable * expression_variable * 'a * 'tv;

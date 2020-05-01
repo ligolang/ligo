@@ -8,7 +8,7 @@ authors      : "Christian Rinderknecht"
 license      : "MIT"
 homepage     : "https://gitlab.com/ligolang/Preprocessor"
 bug-reports  : "https://gitlab.com/ligolang/ligo-utils/issues"
-depends      : ["dune" "base" "ocaml" "simple-utils"]
+depends      : ["dune" "base" "ocaml" "simple-utils" "bisect_ppx" "menhir" "getopt"]
 build        : [
                 [ "sh" "-c" "printf 'let version = \"%s\"' \"$(git describe --always --dirty --abbrev=0)\" > Version.ml" ]
                 [ "dune" "build" "-p" name "-j" jobs ]

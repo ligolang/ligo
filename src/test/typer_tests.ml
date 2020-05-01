@@ -20,7 +20,7 @@ let int () : unit result =
   ok ()
 
 module TestExpressions = struct
-  let test_expression ?(env = Typer.Environment.full_empty)
+  let test_expression ?(env = Environment.default)
                       ?(state = Typer.Solver.initial_state)
                       (expr : expression)
                       (test_expected_ty : Typed.type_expression) =

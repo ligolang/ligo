@@ -768,11 +768,11 @@ and compile_logic_expression ?te_annot (t:Raw.logic_expr) : expr result =
   match t with
   | BoolExpr (False reg) -> (
       let loc = Location.lift reg in
-      return @@ e_literal ~loc (Literal_bool false)
+      return @@ e_bool ~loc false
     )
   | BoolExpr (True reg) -> (
       let loc = Location.lift reg in
-      return @@ e_literal ~loc (Literal_bool true)
+      return @@ e_bool ~loc true
     )
   | BoolExpr (Or b) ->
       compile_binop "OR" b
@@ -1026,7 +1026,7 @@ and compile_cases : type a . (Raw.pattern * a) list -> (a, unit) matching_conten
   match patterns with
   | [(PFalse _, f) ; (PTrue _, t)]
   | [(PTrue _, t) ; (PFalse _, f)] ->
-      ok @@ Match_bool {match_true = t ; match_false = f}
+      ok @@ Match_variant ([((Constructor "true", Var.of_name "_"), t); ((Constructor "false", Var.of_name "_"), f)], ())
   | [(PList (PCons c), cons); (PList (PListComp sugar_nil), nil)]
   | [(PList (PListComp sugar_nil), nil); (PList (PCons c), cons)] ->
       let%bind () =

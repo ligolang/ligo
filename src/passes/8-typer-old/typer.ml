@@ -4,6 +4,7 @@ module I = Ast_core
 module O = Ast_typed
 open O.Combinators
 
+module DEnv = Environment
 module Environment = O.Environment
 
 module Solver = Typer_new.Solver
@@ -226,7 +227,6 @@ let convert_type_constant : I.type_constant -> O.type_constant = function
     | TC_nat -> TC_nat
     | TC_int -> TC_int
     | TC_mutez -> TC_mutez
-    | TC_bool -> TC_bool
     | TC_operation -> TC_operation
     | TC_address -> TC_address
     | TC_key -> TC_key
@@ -466,7 +466,7 @@ let unconvert_constant' : O.constant' -> I.constant' = function
   | C_SET_DELEGATE -> C_SET_DELEGATE
   | C_CREATE_CONTRACT -> C_CREATE_CONTRACT
 
-let rec type_program (p:I.program) : (O.program * Solver.state) result =
+let rec type_program (p:I.program) : (O.program * O.typer_state) result =
   let aux (e, acc:(environment * O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
     let%bind ed' = (bind_map_location (type_declaration e (Solver.placeholder_for_state_of_new_typer ()))) d in
     let loc : 'a . 'a Location.wrap -> _ -> _ = fun x v -> Location.wrap ~loc:x.location v in
@@ -477,10 +477,10 @@ let rec type_program (p:I.program) : (O.program * Solver.state) result =
   in
   let%bind (_, lst) =
     trace (fun () -> program_error p ()) @@
-    bind_fold_list aux (Environment.full_empty, []) p in
+    bind_fold_list aux (DEnv.default, []) p in
   ok @@ (List.rev lst , (Solver.placeholder_for_state_of_new_typer ()))
 
-and type_declaration env (_placeholder_for_state_of_new_typer : Solver.state) : I.declaration -> (environment * Solver.state * O.declaration option) result = function
+and type_declaration env (_placeholder_for_state_of_new_typer : O.typer_state) : I.declaration -> (environment * O.typer_state * O.declaration option) result = function
   | Declaration_type (type_name , type_expression) ->
       let%bind tv = evaluate_type env type_expression in
       let env' = Environment.add_type (type_name) tv env in
@@ -496,13 +496,6 @@ and type_declaration env (_placeholder_for_state_of_new_typer : Solver.state) : 
 
 and type_match : (environment -> I.expression -> O.expression result) -> environment -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> O.matching_expr result =
   fun f e t i ae loc -> match i with
-    | Match_bool {match_true ; match_false} ->
-      let%bind _ =
-        trace_strong (match_error ~expected:i ~actual:t loc)
-        @@ get_t_bool t in
-      let%bind match_true = f e match_true in
-      let%bind match_false = f e match_false in
-      ok (O.Match_bool {match_true ; match_false})
   | Match_option {match_none ; match_some} ->
       let%bind tv =
         trace_strong (match_error ~expected:i ~actual:t loc)
@@ -649,17 +642,13 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
             let%bind k = evaluate_type e k in 
             let%bind v = evaluate_type e v in 
             ok @@ O.TC_map_or_big_map {k;v}
-        | TC_arrow ( arg , ret ) ->
-            let%bind arg' = evaluate_type e arg in
-            let%bind ret' = evaluate_type e ret in
-            ok @@ O.TC_arrow { type1=arg' ; type2=ret' }
         | TC_contract c ->
             let%bind c = evaluate_type e c in
             ok @@ O.TC_contract c
         in
       return (T_operator (opt))
 
-and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * Solver.state) result
+and type_expression : environment -> O.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * O.typer_state) result
   = fun e _placeholder_for_state_of_new_typer ?tv_opt ae ->
     let%bind res = type_expression' e ?tv_opt ae in
     ok (res, (Solver.placeholder_for_state_of_new_typer ()))
@@ -689,8 +678,6 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
         trace_option (unbound_variable e name ae.location)
         @@ Environment.get_opt name e in
       return (E_variable name) tv'.type_value
-  | E_literal (Literal_bool b) ->
-      return (E_literal (Literal_bool b)) (t_bool ())
   | E_literal Literal_unit ->
       return (E_literal (Literal_unit)) (t_unit ())
   | E_literal Literal_void -> return (E_literal (Literal_void)) (t_unit ()) (* TODO : IS this really a t_unit ?*)
@@ -917,7 +904,6 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let tvs =
         let aux (cur:O.matching_expr) =
           match cur with
-          | Match_bool { match_true ; match_false } -> [ match_true ; match_false ]
           | Match_list { match_nil ; match_cons = {hd=_ ; tl=_ ; body ; tv=_} } -> [ match_nil ; body ]
           | Match_option { match_none ; match_some = {opt=_ ; body ; tv=_ } } -> [ match_none ; body ]
           | Match_tuple {vars=_;body;tvs=_} -> [ body ]
@@ -1015,7 +1001,6 @@ let untype_literal (l:O.literal) : I.literal result =
   match l with
   | Literal_unit -> ok Literal_unit
   | Literal_void -> ok Literal_void
-  | Literal_bool b -> ok (Literal_bool b)
   | Literal_nat n -> ok (Literal_nat n)
   | Literal_timestamp n -> ok (Literal_timestamp n)
   | Literal_mutez n -> ok (Literal_mutez n)
@@ -1088,10 +1073,6 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
 and untype_matching : (O.expression -> I.expression result) -> O.matching_expr -> I.matching_expr result = fun f m ->
   let open I in
   match m with
-  | Match_bool {match_true ; match_false} ->
-      let%bind match_true = f match_true in
-      let%bind match_false = f match_false in
-      ok @@ Match_bool {match_true ; match_false}
   | Match_tuple {vars; body;tvs=_} ->
       let%bind b = f body in
       ok @@ I.Match_tuple ((vars, b),[])

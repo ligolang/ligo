@@ -85,9 +85,10 @@ module Substitution = struct
         | T.T_operator type_name_and_args ->
           let%bind type_name_and_args = T.Helpers.bind_map_type_operator (s_type_expression ~substs) type_name_and_args in
           ok @@ T.T_operator type_name_and_args
-        | T.T_arrow _ ->
-          let _TODO = substs in
-          failwith "TODO: T_function"
+        | T.T_arrow { type1; type2 } ->
+           let%bind type1 = s_type_expression ~substs type1 in
+           let%bind type2 = s_type_expression ~substs type2 in
+           ok @@ T.T_arrow { type1; type2 }
 
     and s_abstr_type_content : Ast_core.type_content w = fun ~substs -> function
       | Ast_core.T_sum _ -> failwith "TODO: subst: unimplemented case s_type_expression sum"
@@ -119,7 +120,6 @@ module Substitution = struct
       | T.Literal_void ->
         let () = ignore @@ substs in
         ok @@ T.Literal_void
-      | (T.Literal_bool _ as x)
       | (T.Literal_int _ as x)
       | (T.Literal_nat _ as x)
       | (T.Literal_timestamp _ as x)
@@ -224,16 +224,15 @@ module Substitution = struct
     and type_value ~tv ~substs =
       let self tv = type_value ~tv ~substs in
       let (v, expr) = substs in
-      match tv with
+      match (tv : type_value) with
       | P_variable v' when Var.equal v' v -> expr
       | P_variable _ -> tv
-      | P_constant (x , lst) -> (
+      | P_constant {p_ctor_tag=x ; p_ctor_args=lst} -> (
           let lst' = List.map self lst in
-          P_constant (x , lst')
+          P_constant {p_ctor_tag=x ; p_ctor_args=lst'}
         )
-      | P_apply ab -> (
-          let ab' = pair_map self ab in
-          P_apply ab'
+      | P_apply { tf; targ } -> (
+          P_apply { tf = self tf ; targ = self targ }
         )
       | P_forall p -> (
           let aux c = constraint_ ~c ~substs in
@@ -248,18 +247,18 @@ module Substitution = struct
 
     and constraint_ ~c ~substs =
       match c with
-      | C_equation ab -> (
-          let ab' = pair_map (fun tv -> type_value ~tv ~substs) ab in
-          C_equation ab'
+      | C_equation { aval; bval } -> (
+        let aux tv = type_value ~tv ~substs in
+          C_equation { aval = aux aval ; bval = aux bval }
         )
-      | C_typeclass (tvs , tc) -> (
-          let tvs' = List.map (fun tv -> type_value ~tv ~substs) tvs in
-          let tc' = typeclass ~tc ~substs in
-          C_typeclass (tvs' , tc')
+      | C_typeclass { tc_args; typeclass=tc } -> (
+          let tc_args = List.map (fun tv -> type_value ~tv ~substs) tc_args in
+          let tc = typeclass ~tc ~substs in
+          C_typeclass {tc_args ; typeclass=tc}
         )
-      | C_access_label (tv , l , v') -> (
-          let tv' = type_value ~tv ~substs in
-          C_access_label (tv' , l , v')
+      | C_access_label { c_access_label_tval; accessor; c_access_label_tvar } -> (
+          let c_access_label_tval = type_value ~tv:c_access_label_tval ~substs in
+          C_access_label {c_access_label_tval ; accessor ; c_access_label_tvar}
         )
 
     and typeclass ~tc ~substs =
@@ -270,9 +269,9 @@ module Substitution = struct
     (* Performs beta-reduction at the root of the type *)
     let eval_beta_root ~(tv : type_value) =
       match tv with
-        P_apply (P_forall { binder; constraints; body }, arg) ->
-        let constraints = List.map (fun c -> constraint_ ~c ~substs:(mk_substs ~v:binder ~expr:arg)) constraints in
-        (type_value ~tv:body ~substs:(mk_substs ~v:binder ~expr:arg) , constraints)
+        P_apply {tf = P_forall { binder; constraints; body }; targ} ->
+        let constraints = List.map (fun c -> constraint_ ~c ~substs:(mk_substs ~v:binder ~expr:targ)) constraints in
+        (type_value ~tv:body ~substs:(mk_substs ~v:binder ~expr:targ) , constraints)
       | _ -> (tv , [])
   end
 

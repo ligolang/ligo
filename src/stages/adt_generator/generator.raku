@@ -3,6 +3,11 @@ use v6.c;
 use strict;
 use worries;
 
+# TODO: find a way to do mutual recursion between the produced file and some #include-y-thingy
+# TODO: make an .mli
+# TODO: shorthand for `foo list` etc. in field and constructor types
+# TODO: error when reserved names are used ("state", … please list them here)
+
 my $moduleName = @*ARGS[0].subst(/\.ml$/, '').samecase("A_");
 my $variant = "_ _variant";
 my $record = "_ _ record";
@@ -143,15 +148,13 @@ say "";
 for $statements -> $statement {
   say "$statement"
 }
-say "type 'a monad = 'a Simple_utils.Trace.result;;";
-say "let (>>?) v f = Simple_utils.Trace.bind f v;;";
-say "let return v = Simple_utils.Trace.ok v;;";
+say "open Adt_generator.Common;;";
 say "open $moduleName;;";
 
 say "";
 say "(* must be provided by one of the open or include statements: *)";
 for $adts.grep({$_<kind> ne $record && $_<kind> ne $variant}).map({$_<kind>}).unique -> $poly
-{ say "let fold_map__$poly : type a new_a state . (state -> a -> (state * new_a) Simple_utils.Trace.result) -> state -> a $poly -> (state * new_a $poly) Simple_utils.Trace.result = fold_map__$poly;;"; }
+{ say "let fold_map__$poly : type a new_a state . (state -> a -> (state * new_a, _) monad) -> state -> a $poly -> (state * new_a $poly , _) monad = fold_map__$poly;;"; }
 
 say "";
 for $adts.kv -> $index, $t {
@@ -182,47 +185,37 @@ say ";;";
 
 say "";
 for $adts.list -> $t {
-    say "type 'state continue_fold_map__$t<name> = \{";
-        say "    node__$t<name> : 'state -> $t<name> -> ('state * $t<newName>) monad ;";
+    say "type ('state, 'err) _continue_fold_map__$t<name> = \{";
+        say "    node__$t<name> : 'state -> $t<name> -> ('state * $t<newName> , 'err) monad ;";
     for $t<ctorsOrFields>.list -> $c
-    { say "    $t<name>__$c<name> : 'state -> {$c<type> || 'unit'} -> ('state * {$c<newType> || 'unit'}) monad ;" }
+    { say "    $t<name>__$c<name> : 'state -> {$c<type> || 'unit'} -> ('state * {$c<newType> || 'unit'} , 'err) monad ;" }
     say '  };;';
 }
 
-say "type 'state continue_fold_map = \{";
+say "type ('state , 'err) _continue_fold_map__$moduleName = \{";
 for $adts.list -> $t {
-    say "    $t<name> : 'state continue_fold_map__$t<name> ;";
+    say "    $t<name> : ('state , 'err) _continue_fold_map__$t<name> ;";
 }
 say '  };;';
 
 say "";
 for $adts.list -> $t
-{ say "type 'state fold_map_config__$t<name> = \{";
-  say "    node__$t<name> : 'state -> $t<name> -> 'state continue_fold_map -> ('state * $t<newName>) monad ;"; # (*Adt_info.node_instance_info ->*)
-  say "    node__$t<name>__pre_state : 'state -> $t<name> -> 'state monad ;"; # (*Adt_info.node_instance_info ->*)
-  say "    node__$t<name>__post_state : 'state -> $t<name> -> $t<newName> -> 'state monad ;"; # (*Adt_info.node_instance_info ->*)
+{ say "type ('state, 'err) fold_map_config__$t<name> = \{";
+  say "    node__$t<name> : 'state -> $t<name> -> ('state, 'err) _continue_fold_map__$moduleName -> ('state * $t<newName> , 'err) monad ;"; # (*Adt_info.node_instance_info ->*)
+  say "    node__$t<name>__pre_state : 'state -> $t<name> -> ('state, 'err) monad ;"; # (*Adt_info.node_instance_info ->*)
+  say "    node__$t<name>__post_state : 'state -> $t<name> -> $t<newName> -> ('state, 'err) monad ;"; # (*Adt_info.node_instance_info ->*)
   for $t<ctorsOrFields>.list -> $c
-  { say "    $t<name>__$c<name> : 'state -> {$c<type> || 'unit'} -> 'state continue_fold_map -> ('state * {$c<newType> || 'unit'}) monad ;"; # (*Adt_info.ctor_or_field_instance_info ->*)
+  { say "    $t<name>__$c<name> : 'state -> {$c<type> || 'unit'} -> ('state, 'err) _continue_fold_map__$moduleName -> ('state * {$c<newType> || 'unit'} , 'err) monad ;"; # (*Adt_info.ctor_or_field_instance_info ->*)
   }
   say '};;' }
 
-say "type 'state fold_map_config =";
+say "type ('state, 'err) fold_map_config__$moduleName =";
 say '  {';
 for $adts.list -> $t
-{ say "    $t<name> : 'state fold_map_config__$t<name>;" }
+{ say "    $t<name> : ('state, 'err) fold_map_config__$t<name>;" }
 say '  };;';
 
-say "";
-say "module StringMap = Map.Make(String);;";
-say "(* generic folds for nodes *)";
-say "type 'state generic_continue_fold_node = \{";
-say "  continue                 : 'state -> 'state ;";
-say "  (* generic folds for each field *)";
-say "  continue_ctors_or_fields : ('state -> 'state) StringMap.t ;";
-say '};;';
-say "(* map from node names to their generic folds *)";
-say "type 'state generic_continue_fold = ('state generic_continue_fold_node) StringMap.t;;";
-say "";
+say "include Adt_generator.Generic.BlahBluh";
 say "type ('state , 'adt_info_node_instance_info) _fold_config =";
 say '  {';
 say "    generic : 'state -> 'adt_info_node_instance_info -> 'state;";
@@ -371,31 +364,31 @@ for $adts.list -> $t
 
 
 say "";
-say "type 'state mk_continue_fold_map = \{";
-say "  fn : 'state mk_continue_fold_map -> 'state fold_map_config -> 'state continue_fold_map";
+say "type ('state, 'err) mk_continue_fold_map = \{";
+say "  fn : ('state, 'err) mk_continue_fold_map -> ('state, 'err) fold_map_config__$moduleName -> ('state, 'err) _continue_fold_map__$moduleName";
 say '};;';
 
 
 # fold_map functions
 say "";
 for $adts.list -> $t
-{ say "let _fold_map__$t<name> : type qstate . qstate mk_continue_fold_map -> qstate fold_map_config -> qstate -> $t<name> -> (qstate * $t<newName>) monad = fun mk_continue_fold_map visitor state x ->";
-  say "  let continue_fold_map : qstate continue_fold_map = mk_continue_fold_map.fn mk_continue_fold_map visitor in";
+{ say "let _fold_map__$t<name> : type qstate err . (qstate,err) mk_continue_fold_map -> (qstate,err) fold_map_config__$moduleName -> qstate -> $t<name> -> (qstate * $t<newName>, err) monad = fun mk_continue_fold_map visitor state x ->";
+  say "  let continue_fold_map : (qstate,err) _continue_fold_map__$moduleName = mk_continue_fold_map.fn mk_continue_fold_map visitor in";
   say "  visitor.$t<name>.node__$t<name>__pre_state state x >>? fun state ->"; # (*(fun () -> whole_adt_info, info__$t<name>)*)
   say "  visitor.$t<name>.node__$t<name> state x continue_fold_map >>? fun (state, new_x) ->"; # (*(fun () -> whole_adt_info, info__$t<name>)*)
   say "  visitor.$t<name>.node__$t<name>__post_state state x new_x >>? fun state ->"; # (*(fun () -> whole_adt_info, info__$t<name>)*)
   say "  return (state, new_x);;";
   say "";
   for $t<ctorsOrFields>.list -> $c
-  { say "let _fold_map__$t<name>__$c<name> : type qstate . qstate mk_continue_fold_map -> qstate fold_map_config -> qstate -> { $c<type> || 'unit' } -> (qstate * { $c<newType> || 'unit' }) monad = fun mk_continue_fold_map visitor state x ->";
-    say "  let continue_fold_map : qstate continue_fold_map = mk_continue_fold_map.fn mk_continue_fold_map visitor in";
+  { say "let _fold_map__$t<name>__$c<name> : type qstate err . (qstate,err) mk_continue_fold_map -> (qstate,err) fold_map_config__$moduleName -> qstate -> { $c<type> || 'unit' } -> (qstate * { $c<newType> || 'unit' }, err) monad = fun mk_continue_fold_map visitor state x ->";
+    say "  let continue_fold_map : (qstate,err) _continue_fold_map__$moduleName = mk_continue_fold_map.fn mk_continue_fold_map visitor in";
     say "  visitor.$t<name>.$t<name>__$c<name> state x continue_fold_map;;"; # (*(fun () -> whole_adt_info, info__$t<name>, info__$t<name>__$c<name>)*)
     say ""; } }
 
 # make the "continue" object
 say "";
 say '(* Curries the "visitor" argument to the folds (non-customizable traversal functions). *)';
-say "let mk_continue_fold_map : 'state . 'state mk_continue_fold_map = \{ fn = fun self visitor ->";
+say "let mk_continue_fold_map : 'state 'err . ('state,'err) mk_continue_fold_map = \{ fn = fun self visitor ->";
 say '  {';
 for $adts.list -> $t
 { say "    $t<name> = \{";
@@ -410,16 +403,16 @@ say "";
 # fold_map functions : tying the knot
 say "";
 for $adts.list -> $t
-{ say "let fold_map__$t<name> : type qstate . qstate fold_map_config -> qstate -> $t<name> -> (qstate * $t<newName>) monad =";
+{ say "let fold_map__$t<name> : type qstate err . (qstate,err) fold_map_config__$moduleName -> qstate -> $t<name> -> (qstate * $t<newName>,err) monad =";
   say "  fun visitor state x -> _fold_map__$t<name> mk_continue_fold_map visitor state x;;";
   for $t<ctorsOrFields>.list -> $c
-  { say "let fold_map__$t<name>__$c<name> : type qstate . qstate fold_map_config -> qstate -> { $c<type> || 'unit' } -> (qstate * { $c<newType> || 'unit' }) monad =";
+  { say "let fold_map__$t<name>__$c<name> : type qstate err . (qstate,err) fold_map_config__$moduleName -> qstate -> { $c<type> || 'unit' } -> (qstate * { $c<newType> || 'unit' },err) monad =";
     say "  fun visitor state x -> _fold_map__$t<name>__$c<name> mk_continue_fold_map visitor state x;;"; } }
 
 
 for $adts.list -> $t
 {
-   say "let no_op_node__$t<name> : type state . state -> $t<name> -> state continue_fold_map -> (state * $t<newName>) monad =";
+   say "let no_op_node__$t<name> : type state . state -> $t<name> -> (state,_) _continue_fold_map__$moduleName -> (state * $t<newName>,_) monad =";
   say "  fun state v continue ->"; # (*_info*)
   say "    match v with";
   if ($t<kind> eq $variant) {
@@ -446,7 +439,7 @@ for $adts.list -> $t
 }
 
 for $adts.list -> $t
-{ say "let no_op__$t<name> : type state . state fold_map_config__$t<name> = \{";
+{ say "let no_op__$t<name> : type state . (state,_) fold_map_config__$t<name> = \{";
   say "  node__$t<name> = no_op_node__$t<name>;";
   say "  node__$t<name>__pre_state = (fun state v -> ignore v; return state) ;"; # (*_info*)
   say "  node__$t<name>__post_state = (fun state v new_v -> ignore (v, new_v); return state) ;"; # (*_info*)
@@ -460,15 +453,21 @@ for $adts.list -> $t
     say ") ;"; }
   say '  }' }
 
-say "let no_op : type state . state fold_map_config = \{";
+say "let no_op : type state . (state,_) fold_map_config__$moduleName = \{";
 for $adts.list -> $t
 { say "  $t<name> = no_op__$t<name>;" }
 say '};;';
 
 say "";
 for $adts.list -> $t
-{ say "let with__$t<name> : _ -> _ fold_map_config -> _ fold_map_config = (fun node__$t<name> op -> \{ op with $t<name> = \{ op.$t<name> with node__$t<name> \} \});;";
-  say "let with__$t<name>__pre_state : _ -> _ fold_map_config -> _ fold_map_config = (fun node__$t<name>__pre_state op -> \{ op with $t<name> = \{ op.$t<name> with node__$t<name>__pre_state \} \});;";
-  say "let with__$t<name>__post_state : _ -> _ fold_map_config -> _ fold_map_config = (fun node__$t<name>__post_state op -> \{ op with $t<name> = \{ op.$t<name> with node__$t<name>__post_state \} \});;";
+{ say "let with__$t<name> : _ -> _ fold_map_config__$moduleName -> _ fold_map_config__$moduleName = (fun node__$t<name> op -> \{ op with $t<name> = \{ op.$t<name> with node__$t<name> \} \});;";
+  say "let with__$t<name>__pre_state : _ -> _ fold_map_config__$moduleName -> _ fold_map_config__$moduleName = (fun node__$t<name>__pre_state op -> \{ op with $t<name> = \{ op.$t<name> with node__$t<name>__pre_state \} \});;";
+  say "let with__$t<name>__post_state : _ -> _ fold_map_config__$moduleName -> _ fold_map_config__$moduleName = (fun node__$t<name>__post_state op -> \{ op with $t<name> = \{ op.$t<name> with node__$t<name>__post_state \} \});;";
   for $t<ctorsOrFields>.list -> $c
-  { say "let with__$t<name>__$c<name> : _ -> _ fold_map_config -> _ fold_map_config = (fun $t<name>__$c<name> op -> \{ op with $t<name> = \{ op.$t<name> with $t<name>__$c<name> \} \});;"; } }
+  { say "let with__$t<name>__$c<name> : _ -> _ fold_map_config__$moduleName -> _ fold_map_config__$moduleName = (fun $t<name>__$c<name> op -> \{ op with $t<name> = \{ op.$t<name> with $t<name>__$c<name> \} \});;"; } }
+
+say "";
+say "module Folds (M : sig type state type 'a t val f : (state fold_config -> state -> 'a -> state) -> 'a t  end) = struct";
+for $adts.list -> $t
+{ say "let $t<name> = M.f fold__$t<name>;;"; }
+say "end";

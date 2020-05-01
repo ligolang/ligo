@@ -2,18 +2,20 @@ open Trace
 module I = Ast_core
 module O = Ast_typed
 open O.Combinators
+module DEnv = Environment
 module Environment = O.Environment
 module Solver = Solver
 type environment = Environment.t
 module Errors = Errors
 open Errors
+module Map = RedBlackTrees.PolyMap
 
 open Todo_use_fold_generator
 
 (*
   Extract pairs of (name,type) in the declaration and add it to the environment
 *)
-let rec type_declaration env state : I.declaration -> (environment * Solver.state * O.declaration option) result = function
+let rec type_declaration env state : I.declaration -> (environment * O.typer_state * O.declaration option) result = function
   | Declaration_type (type_name , type_expression) ->
     let%bind tv = evaluate_type env type_expression in
     let env' = Environment.add_type (type_name) tv env in
@@ -30,15 +32,8 @@ let rec type_declaration env state : I.declaration -> (environment * Solver.stat
       ok (post_env, state' , Some (O.Declaration_constant { binder ; expr ; inline ; post_env} ))
     )
 
-and type_match : environment -> Solver.state -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> (O.matching_expr * Solver.state) result =
+and type_match : environment -> O.typer_state -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> (O.matching_expr * O.typer_state) result =
   fun e state t i ae loc -> match i with
-    | Match_bool {match_true ; match_false} ->
-      let%bind _ =
-        trace_strong (match_error ~expected:i ~actual:t loc)
-        @@ get_t_bool t in
-      let%bind (match_true , state') = type_expression e state match_true in
-      let%bind (match_false , state'') = type_expression e state' match_false in
-      ok (O.Match_bool {match_true ; match_false} , state'')
     | Match_option {match_none ; match_some} ->
       let%bind tv =
         trace_strong (match_error ~expected:i ~actual:t loc)
@@ -186,18 +181,14 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
         | TC_contract c ->
             let%bind c = evaluate_type e c in
             ok @@ O.TC_contract c
-        | TC_arrow ( arg , ret ) ->
-           let%bind arg' = evaluate_type e arg in
-           let%bind ret' = evaluate_type e ret in
-           ok @@ O.TC_arrow { type1=arg' ; type2=ret' }
         in
       return (T_operator (opt))
 
-and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * Solver.state) result = fun e state ?tv_opt ae ->
+and type_expression : environment -> O.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * O.typer_state) result = fun e state ?tv_opt ae ->
   let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
   let open Solver in
   let module L = Logger.Stateful() in
-  let return : _ -> Solver.state -> _ -> _ (* return of type_expression *) = fun expr state constraints type_name ->
+  let return : _ -> O.typer_state -> _ -> _ (* return of type_expression *) = fun expr state constraints type_name ->
     let%bind new_state = aggregate_constraints state constraints in
     let tv = t_variable type_name () in
     let location = ae.location in
@@ -233,9 +224,6 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -
       return expr' state constraints expr_type
     )
 
-  | E_literal (Literal_bool b) -> (
-      return_wrapped (e_bool b) state @@ Wrap.literal (t_bool ())
-    )
   | E_literal (Literal_string s) -> (
       return_wrapped (e_string s) state @@ Wrap.literal (t_string ())
     )
@@ -366,7 +354,6 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -
       let tvs =
         let aux (cur : O.matching_expr) =
           match cur with
-          | Match_bool { match_true ; match_false } -> [ match_true ; match_false ]
           | Match_list { match_nil ; match_cons = { hd=_ ; tl=_ ; body ; tv=_} } -> [ match_nil ; body ]
           | Match_option { match_none ; match_some = {opt=_; body; tv=_} } -> [ match_none ; body ]
           | Match_tuple { vars=_ ; body ; tvs=_ } -> [ body ]
@@ -440,8 +427,8 @@ and type_constant (name:I.constant') (lst:O.type_expression list) (tv_opt:O.type
   ok(name, tv)
 
 (* Apply type_declaration on every node of the AST_core from the root p *)
-let type_program_returns_state ((env, state, p) : environment * Solver.state * I.program) : (environment * Solver.state * O.program) result =
-  let aux ((e : environment), (s : Solver.state) , (ds : O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
+let type_program_returns_state ((env, state, p) : environment * O.typer_state * I.program) : (environment * O.typer_state * O.program) result =
+  let aux ((e : environment), (s : O.typer_state) , (ds : O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
     let%bind (e' , s' , d'_opt) = type_declaration e s (Location.unwrap d) in
     let ds' = match d'_opt with
       | None -> ds
@@ -455,8 +442,8 @@ let type_program_returns_state ((env, state, p) : environment * Solver.state * I
   let declarations = List.rev declarations in (* Common hack to have O(1) append: prepend and then reverse *)
   ok (env', state', declarations)
 
-let type_and_subst_xyz (env_state_node : environment * Solver.state * 'a) (apply_substs : 'b Typesystem.Misc.Substitution.Pattern.w) (type_xyz_returns_state : (environment * Solver.state * 'a) -> (environment * Solver.state * 'b) Trace.result) : ('b * Solver.state) result =
-  let%bind (env, state, program) = type_xyz_returns_state env_state_node in
+let type_and_subst_xyz (env_state_node : environment * O.typer_state * 'a) (apply_substs : 'b Typesystem.Misc.Substitution.Pattern.w) (type_xyz_returns_state : (environment * O.typer_state * 'a) -> (environment * O.typer_state * 'b) Trace.result) : ('b * O.typer_state) result =
+  let%bind (env, state, node) = type_xyz_returns_state env_state_node in
   let subst_all =
     let aliases = state.structured_dbs.aliases in
     let assignments = state.structured_dbs.assignments in
@@ -468,29 +455,29 @@ let type_and_subst_xyz (env_state_node : environment * Solver.state * 'a) (apply
           try Some (Solver.UF.repr variable aliases) with Not_found -> None in
       let%bind assignment =
         trace_option (simple_error (Format.asprintf "can't find assignment for root %a" Var.pp root)) @@
-          (Solver.TypeVariableMap.find_opt root assignments) in
-      let Solver.{ tv ; c_tag ; tv_list } = assignment in
+          (Map.find_opt root assignments) in
+      let O.{ tv ; c_tag ; tv_list } = assignment in
       let () = ignore tv (* I think there is an issue where the tv is stored twice (as a key and in the element itself) *) in
       let%bind (expr : O.type_content) = Typesystem.Core.type_expression'_of_simple_c_constant (c_tag , (List.map (fun s -> O.t_variable s ()) tv_list)) in
       ok @@ expr
     in
-    let p = apply_substs ~substs program in
+    let p = apply_substs ~substs node in
     p in
-  let%bind program = subst_all in
+  let%bind node = subst_all in
   let () = ignore env in        (* TODO: shouldn't we use the `env` somewhere? *)
-  ok (program, state)
+  ok (node, state)
 
-let type_program (p : I.program) : (O.program * Solver.state) result =
-  let empty_env = Ast_typed.Environment.full_empty in
+let type_program (p : I.program) : (O.program * O.typer_state) result =
+  let empty_env = DEnv.default in
   let empty_state = Solver.initial_state in
   type_and_subst_xyz (empty_env , empty_state , p) Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_state
 
-let type_expression_returns_state : (environment * Solver.state * I.expression) -> (environment * Solver.state * O.expression) Trace.result =
+let type_expression_returns_state : (environment * O.typer_state * I.expression) -> (environment * O.typer_state * O.expression) Trace.result =
   fun (env, state, e) ->
   let%bind (e , state) = type_expression env state e in
   ok (env, state, e)
 
-let type_expression_subst (env : environment) (state : Solver.state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.expression * Solver.state) result =
+let type_expression_subst (env : environment) (state : O.typer_state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.expression * O.typer_state) result =
   let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
   type_and_subst_xyz (env , state , e) Typesystem.Misc.Substitution.Pattern.s_expression type_expression_returns_state
 
@@ -498,14 +485,14 @@ let untype_type_expression  = Untyper.untype_type_expression
 let untype_expression       = Untyper.untype_expression
 
 (* These aliases are just here for quick navigation during debug, and can safely be removed later *)
-let [@warning "-32"] (*rec*) type_declaration _env _state : I.declaration -> (environment * Solver.state * O.declaration option) result = type_declaration _env _state
-and [@warning "-32"] type_match : environment -> Solver.state -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> (O.matching_expr * Solver.state) result = type_match
+let [@warning "-32"] (*rec*) type_declaration _env _state : I.declaration -> (environment * O.typer_state * O.declaration option) result = type_declaration _env _state
+and [@warning "-32"] type_match : environment -> O.typer_state -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> (O.matching_expr * O.typer_state) result = type_match
 and [@warning "-32"] evaluate_type (e:environment) (t:I.type_expression) : O.type_expression result = evaluate_type e t
-and [@warning "-32"] type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * Solver.state) result = type_expression
+and [@warning "-32"] type_expression : environment -> O.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * O.typer_state) result = type_expression
 and [@warning "-32"] type_lambda e state lam = type_lambda e state lam
 and [@warning "-32"] type_constant (name:I.constant') (lst:O.type_expression list) (tv_opt:O.type_expression option) : (O.constant' * O.type_expression) result = type_constant name lst tv_opt
-let [@warning "-32"] type_program_returns_state ((env, state, p) : environment * Solver.state * I.program) : (environment * Solver.state * O.program) result = type_program_returns_state (env, state, p)
-let [@warning "-32"] type_and_subst_xyz (env_state_node : environment * Solver.state * 'a) (apply_substs : 'b Typesystem.Misc.Substitution.Pattern.w) (type_xyz_returns_state : (environment * Solver.state * 'a) -> (environment * Solver.state * 'b) Trace.result) : ('b * Solver.state) result = type_and_subst_xyz env_state_node apply_substs type_xyz_returns_state
-let [@warning "-32"] type_program (p : I.program) : (O.program * Solver.state) result = type_program p
-let [@warning "-32"] type_expression_returns_state : (environment * Solver.state * I.expression) -> (environment * Solver.state * O.expression) Trace.result = type_expression_returns_state
-let [@warning "-32"] type_expression_subst (env : environment) (state : Solver.state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.expression * Solver.state) result = type_expression_subst env state ?tv_opt e
+let [@warning "-32"] type_program_returns_state ((env, state, p) : environment * O.typer_state * I.program) : (environment * O.typer_state * O.program) result = type_program_returns_state (env, state, p)
+let [@warning "-32"] type_and_subst_xyz (env_state_node : environment * O.typer_state * 'a) (apply_substs : 'b Typesystem.Misc.Substitution.Pattern.w) (type_xyz_returns_state : (environment * O.typer_state * 'a) -> (environment * O.typer_state * 'b) Trace.result) : ('b * O.typer_state) result = type_and_subst_xyz env_state_node apply_substs type_xyz_returns_state
+let [@warning "-32"] type_program (p : I.program) : (O.program * O.typer_state) result = type_program p
+let [@warning "-32"] type_expression_returns_state : (environment * O.typer_state * I.expression) -> (environment * O.typer_state * O.expression) Trace.result = type_expression_returns_state
+let [@warning "-32"] type_expression_subst (env : environment) (state : O.typer_state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.expression * O.typer_state) result = type_expression_subst env state ?tv_opt e

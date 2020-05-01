@@ -13,7 +13,6 @@ let unconvert_type_constant : O.type_constant -> I.type_constant = function
     | TC_nat -> TC_nat
     | TC_int -> TC_int
     | TC_mutez -> TC_mutez
-    | TC_bool -> TC_bool
     | TC_operation -> TC_operation
     | TC_address -> TC_address
     | TC_key -> TC_key
@@ -194,10 +193,6 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression) resul
          let%bind k = untype_type_expression k in
          let%bind v = untype_type_expression v in
          ok @@ I.TC_map_or_big_map (k,v)
-      | O.TC_arrow { type1=arg ; type2=ret } ->
-         let%bind arg' = untype_type_expression arg in
-         let%bind ret' = untype_type_expression ret in
-         ok @@ I.TC_arrow ( arg' , ret' )
       | O.TC_contract c->
          let%bind c = untype_type_expression c in
          ok @@ I.TC_contract c
@@ -219,7 +214,6 @@ let untype_literal (l:O.literal) : I.literal result =
   match l with
   | Literal_unit -> ok Literal_unit
   | Literal_void -> ok Literal_void
-  | Literal_bool b -> ok (Literal_bool b)
   | Literal_nat n -> ok (Literal_nat n)
   | Literal_timestamp n -> ok (Literal_timestamp n)
   | Literal_mutez n -> ok (Literal_mutez n)
@@ -301,10 +295,6 @@ and untype_lambda ty {binder; result} : I.lambda result =
 and untype_matching : (O.expression -> I.expression result) -> O.matching_expr -> I.matching_expr result = fun f m ->
   let open I in
   match m with
-  | Match_bool {match_true ; match_false} ->
-      let%bind match_true = f match_true in
-      let%bind match_false = f match_false in
-      ok @@ Match_bool {match_true ; match_false}
   | Match_tuple { vars ; body ; tvs=_ } ->
       let%bind b = f body in
       ok @@ I.Match_tuple ((vars, b),[])

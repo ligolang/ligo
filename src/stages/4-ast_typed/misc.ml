@@ -234,7 +234,6 @@ module Free_variables = struct
 
   and matching : (bindings -> expression -> bindings) -> bindings -> matching_expr -> bindings = fun f b m ->
     match m with
-    | Match_bool { match_true = t ; match_false = fa } -> union (f b t) (f b fa)
     | Match_list { match_nil = n ; match_cons = {hd; tl; body; tv=_} } -> union (f b n) (f (union (of_list [hd ; tl]) b) body)
     | Match_option { match_none = n ; match_some = {opt; body; tv=_} } -> union (f b n) (f (union (singleton opt) b) body)
     | Match_tuple { vars ; body ; tvs=_ } ->
@@ -342,8 +341,8 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
       | (TC_map {k=ka;v=va} | TC_map_or_big_map {k=ka;v=va}), (TC_map {k=kb;v=vb} | TC_map_or_big_map {k=kb;v=vb})
       | (TC_big_map {k=ka;v=va} | TC_map_or_big_map {k=ka;v=va}), (TC_big_map {k=kb;v=vb} | TC_map_or_big_map {k=kb;v=vb})
         -> ok @@ ([ka;va] ,[kb;vb]) 
-      | (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_map_or_big_map _ | TC_arrow _ ),
-        (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_map_or_big_map _ | TC_arrow _ )
+      | (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_map_or_big_map _ ),
+        (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_map_or_big_map _ )
         -> fail @@ different_operators opa opb
       in
       if List.length lsta <> List.length lstb then
@@ -407,9 +406,6 @@ let type_expression_eq ab = Trace.to_bool @@ assert_type_expression_eq ab
 
 let assert_literal_eq (a, b : literal * literal) : unit result =
   match (a, b) with
-  | Literal_bool a, Literal_bool b when a = b -> ok ()
-  | Literal_bool _, Literal_bool _ -> fail @@ different_literals "booleans" a b
-  | Literal_bool _, _ -> fail @@ different_literals_because_different_types "bool vs non-bool" a b
   | Literal_int a, Literal_int b when a = b -> ok ()
   | Literal_int _, Literal_int _ -> fail @@ different_literals "different ints" a b
   | Literal_int _, _ -> fail @@ different_literals_because_different_types "int vs non-int" a b
@@ -529,6 +525,14 @@ let program_environment (program : program) : full_environment =
   | Declaration_constant { binder=_ ; expr=_ ; inline=_ ; post_env } -> post_env
 
 let equal_variables a b : bool =
-  match a.expression_content, b.expression_content with 
+  match a.expression_content, b.expression_content with
   | E_variable a, E_variable b -> Var.equal a b
   |  _, _ -> false
+
+let p_constant (p_ctor_tag : constant_tag) (p_ctor_args : p_ctor_args) =
+  P_constant {
+      p_ctor_tag : constant_tag ;
+      p_ctor_args : p_ctor_args ;
+    }
+
+let c_equation aval bval = C_equation { aval ; bval }

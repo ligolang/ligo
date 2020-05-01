@@ -1,0 +1,87 @@
+{
+    "gitignore.nix": {
+        "branch": "master",
+        "description": "Nix function for filtering local git sources",
+        "homepage": "",
+        "owner": "hercules-ci",
+        "repo": "gitignore.nix",
+        "rev": "2ced4519f865341adcb143c5d668f955a2cb997f",
+        "sha256": "0fc5bgv9syfcblp23y05kkfnpgh3gssz6vn24frs8dzw39algk2z",
+        "type": "tarball",
+        "url": "https://github.com/hercules-ci/gitignore.nix/archive/2ced4519f865341adcb143c5d668f955a2cb997f.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "nix-npm-buildpackage": {
+        "branch": "balsoft/local-deps",
+        "description": "Build nix packages that use npm/yarn",
+        "homepage": "",
+        "owner": "serokell",
+        "repo": "nix-npm-buildpackage",
+        "rev": "14d03b37cd421b281835ae245b6cbf5b84c26e80",
+        "sha256": "13lz138rcy2vfd13sa4l2r4y5nx7v5pslxfy1vdq2phpmnn9j9yb",
+        "type": "tarball",
+        "url": "https://github.com/serokell/nix-npm-buildpackage/archive/14d03b37cd421b281835ae245b6cbf5b84c26e80.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "nixpkgs": {
+        "branch": "nixos-unstable",
+        "description": "Pinned Nixpkgs tree (master follows nixos-unstable-small, only tags have stable history)",
+        "homepage": "",
+        "owner": "nixos",
+        "repo": "nixpkgs-channels",
+        "rev": "3320a06049fc259e87a2bd98f4cd42f15f746b96",
+        "sha256": "1g5l186d5xh187vdcpfsz1ff8s749949c1pclvzfkylpar09ldkl",
+        "type": "tarball",
+        "url": "https://github.com/nixos/nixpkgs-channels/archive/3320a06049fc259e87a2bd98f4cd42f15f746b96.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "node-sass-bin": {
+        "sha256": "0dl91l414na44h090cgghd06q0j2whlj9h98im2qb9823glq7xff",
+        "type": "file",
+        "url": "https://github.com/sass/node-sass/releases/download/v4.12.0/linux-x64-64_binding.node",
+        "url_template": "https://github.com/sass/node-sass/releases/download/v<version>/linux-x64-64_binding.node",
+        "version": "4.12.0"
+    },
+    "opam-nix": {
+        "branch": "master",
+        "description": "A handy nix library to package OCaml software from OPAM repositories",
+        "homepage": null,
+        "owner": "balsoft",
+        "repo": "opam-nix",
+        "rev": "75ad75c18b8d80d82c13dc30c3b8d70960b1b441",
+        "sha256": "0mcr32f5i71diysvpblbvgdnx2pdymwjb9nxz5gbcsib3vdg2p83",
+        "type": "tarball",
+        "url": "https://github.com/balsoft/opam-nix/archive/75ad75c18b8d80d82c13dc30c3b8d70960b1b441.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "opam-repository": {
+        "branch": "master",
+        "description": "Main public package repository for OPAM, the source package manager of OCaml.",
+        "homepage": "https://opam.ocaml.org",
+        "owner": "ocaml",
+        "repo": "opam-repository",
+        "rev": "d67e70b40203a6a1c77ccb2edbe136c1509a73a3",
+        "sha256": "1yphw9xcss284p51qnml5jvfs4mhjcjgdka3wk25q0437zdzqj4n",
+        "type": "tarball",
+        "url": "https://github.com/ocaml/opam-repository/archive/d67e70b40203a6a1c77ccb2edbe136c1509a73a3.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "tezos-opam-repository": {
+        "ref": "master",
+        "repo": "https://gitlab.com/ligolang/tezos-opam-repository",
+        "rev": "dfc46bd895b070bd89028a7ad98741d05ec684df",
+        "type": "git"
+    },
+    "xmldiff": {
+        "branch": "master",
+        "description": "Diffs on XML trees",
+        "homepage": "http://zoggy.github.io/xmldiff",
+        "owner": "zoggy",
+        "repo": "xmldiff",
+        "rev": "5873df80c1ba8c79287dc42e5008fac14cefffed",
+        "sha256": "0b92j9j2xdd2gyi9bgp39w0w1lkp0vc2rxq6wx6xdfvvklpprgb4",
+        "type": "tarball",
+        "url": "https://github.com/zoggy/xmldiff/archive/5873df80c1ba8c79287dc42e5008fac14cefffed.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    }
+}
