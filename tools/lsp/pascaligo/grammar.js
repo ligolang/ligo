@@ -181,11 +181,11 @@ module.exports = grammar({
           ':',
           field("type", $._type_expr),
           'is',
-          field("body", $._let_expr),
+          field("body", $.let_expr),
         ),
       ),
 
-    _let_expr: $ =>
+    let_expr: $ =>
       choice(
         seq(
           field("locals", $.block),

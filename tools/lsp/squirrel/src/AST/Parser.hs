@@ -27,8 +27,8 @@ declaration :: Parser (Declaration Range)
 declaration =
   stubbed "declaration" do
     field "declaration" do
-      (b, info) <- range binding
-      return (ValueDecl info b)
+        (b, info) <- range binding
+        return (ValueDecl info b)
 
 par x = do
   consume "("
@@ -63,12 +63,38 @@ binding = do
         field "type" type_
     consume "is"
     exp <- stubbed "body" do
-      field "expr" expr
+      field "body" letExpr
     return (Function info (recur == Just "recursive") name params ty exp)
 
 expr :: Parser (Expr Range)
-expr = do
-  fallback "expr"
+expr = select
+  [ Ident <$> getRange <*> name
+  -- , ident
+  -- , constant
+  ]
+  where
+  -- $.case_expr,
+  -- $.cond_expr,
+  -- $.disj_expr,
+  -- $.fun_expr,
+
+letExpr = do
+  subtree "let_expr" do
+    r <- getRange
+    decls <- optional do
+      field "locals" do
+        subtree "block" do
+          many "decl" do
+            field "statement" do
+              declaration
+    body <- field "body" do
+      -- gets pfGrove >>= traceShowM
+      stubbed "expr" do
+        expr
+
+    return case decls of
+      Just them -> Let r them body
+      Nothing   -> body
 
 paramDecl :: Parser (VarDecl Range)
 paramDecl = do

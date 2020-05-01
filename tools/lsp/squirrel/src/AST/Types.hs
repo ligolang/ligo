@@ -34,6 +34,8 @@ instance Stubbed (Declaration info) where stub = WrongDecl
 data Binding info
   = Irrefutable  info (Pattern info) (Expr info)
   | Function     info Bool (Name info) [VarDecl info] (Type info) (Expr info)
+  | Var          info (Name info) (Type info) (Expr info)
+  | Const        info (Name info) (Type info) (Expr info)
   | WrongBinding      Error
   deriving (Show) via PP (Binding info)
 
@@ -71,7 +73,7 @@ data Expr info
   = Let       info [Declaration info] (Expr info)
   | Apply     info (Expr info) [Expr info]
   | Constant  info (Constant info)
-  | Ident     info (QualifiedName info)
+  | Ident     info (Name info)
   | WrongExpr      Error
   deriving (Show) via PP (Expr info)
 
@@ -151,6 +153,16 @@ instance Pretty (Binding i) where
         )
         2
         (pp body)
+    Var   _ name ty value ->
+      hang
+        ("var" <+> pp name <+> ":" <+> pp ty <+> ":=")
+        2
+        (pp value)
+    Const _ name ty body ->
+      hang
+        ("var" <+> pp name <+> ":" <+> pp ty <+> "=")
+        2
+        (pp body)
     WrongBinding err ->
       pp err
 
@@ -187,8 +199,8 @@ instance Pretty (Type i) where
 
 instance Pretty (Expr i) where
   pp = \case
-    Let       _ decls body -> hang "let" 2 (vcat $ map pp decls)
-                           <> hang "in"  2 (pp body)
+    Let       _ decls body -> hang "block {" 2 (vcat $ map pp decls)
+                           $$ hang "} with"  2 (pp body)
     Apply     _ f xs       -> pp f <> tuple xs
     Constant  _ constant   -> pp constant
     Ident     _ qname      -> pp qname
