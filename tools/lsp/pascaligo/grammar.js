@@ -56,9 +56,7 @@ module.exports = grammar({
   extras: $ => [$.ocaml_comment, $.comment, /\s/],
 
   rules: {
-    // debug: $ => $.block,
-
-    contract: $ => repeat(field("declaration", $._declaration)),
+    contract: $ => sepBy(optional(';'), field("declaration", $._declaration)),
 
     _declaration: $ =>
       choice(
@@ -70,14 +68,9 @@ module.exports = grammar({
       ),
 
     attr_decl: $ =>
-      seq(
-        $._open_attr_decl,
-        optional(';'),
-      ),
-
-    _open_attr_decl: $ =>
       injection("attributes",
-        field("attribute", $.String)),
+        field("attribute", $.String)
+      ),
 
     type_decl: $ =>
       seq(
@@ -85,7 +78,6 @@ module.exports = grammar({
         field("typeName", $.Name),
         "is",
         field("typeValue", $._type_expr),
-        optional(';'),
       ),
 
     type_expr : $ => $._type_expr,
@@ -189,13 +181,18 @@ module.exports = grammar({
           ':',
           field("type", $._type_expr),
           'is',
-          optional(seq(
-            field("locals", $.block),
-            'with',
-          )),
-          field("body", $._expr),
-          optional(';'),
+          field("body", $._let_expr),
         ),
+      ),
+
+    _let_expr: $ =>
+      choice(
+        seq(
+          field("locals", $.block),
+          'with',
+          field("body", $._expr),
+        ),
+        field("body", $._expr),
       ),
 
     parameters: $ => par(sepBy(';', field("parameter", $.param_decl))),
@@ -216,7 +213,7 @@ module.exports = grammar({
       choice(
         $._instruction,
         $._open_data_decl,
-        $._open_attr_decl,
+        $.attr_decl,
       ),
 
     _open_data_decl: $ =>
@@ -249,7 +246,6 @@ module.exports = grammar({
     const_decl: $ =>
       seq(
         $.open_const_decl,
-        optional(';'),
       ),
 
     _instruction: $ =>
