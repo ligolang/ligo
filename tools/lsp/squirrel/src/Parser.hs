@@ -1,5 +1,5 @@
 
-module Parser where
+module Parser (module Parser, gets, pfGrove) where
 
 import Control.Monad.State
 import Control.Monad.Writer
@@ -7,6 +7,7 @@ import Control.Monad.Reader
 import Control.Monad.Except
 import Control.Monad.Identity
 
+import Data.Foldable
 import Data.Text.Encoding
 import Data.Text (Text, pack, unpack)
 
@@ -15,7 +16,7 @@ import Data.ByteString (ByteString)
 
 import ParseTree
 import Range
-import PrettyPrint
+import Pretty
 
 import Debug.Trace
 
@@ -28,8 +29,7 @@ data Error
   deriving stock (Show)
 
 instance Pretty Error where
-  pp (Expected msg found r) = "<" <> pp msg <> pp r <> ": " <> pp found <> ">"
-
+  pp (Expected msg found r) = "<<<" <> pp msg <> pp r <> ": " <> pp found <> ">>>"
 
 newtype Parser a = Parser
   { unParser
@@ -37,7 +37,7 @@ newtype Parser a = Parser
       (  ReaderT ParserEnv
       (  StateT  ParseForest
       (  ExceptT Error
-      (  Identity ))))
+      (  IO ))))
          a
   }
   deriving newtype
@@ -48,6 +48,7 @@ newtype Parser a = Parser
     , MonadWriter [Error]
     , MonadReader  ParserEnv
     , MonadError   Error
+    , MonadIO
     )
 
 makeError :: Text -> Parser Error
@@ -145,6 +146,7 @@ many msg p = many'
   where
     many' = some' <|> pure []
     some' = do
+      hasPossibleInput
       (x, consumed) <- productive p
       if consumed then do
         xs <- many'
@@ -157,6 +159,7 @@ some msg p = some'
   where
     many' = some' <|> pure []
     some' = do
+      hasPossibleInput
       (x, consumed) <- productive p
       if consumed then do
         xs <- many'
@@ -177,25 +180,40 @@ productive p = do
   now <- getTreeID
   return (res, was /= now)
 
+hasPossibleInput :: Parser ()
+hasPossibleInput = do
+  yes <- gets (not . null . pfGrove)
+  unless yes do
+    die "something"
+
 data ParserEnv = ParserEnv
-  { peRange  :: Range
-  , peSource :: ByteString
+  { peSource :: ByteString
   }
+
+puts :: MonadIO m => Show a => a -> m ()
+puts = liftIO . print
 
 runParser :: Parser a -> FilePath -> IO (a, [Error])
 runParser (Parser parser) fin = do
   pforest <- toParseTree fin
   text    <- ByteString.readFile fin
-  let
-    res
-      =      runIdentity
-      $      runExceptT
+  res <-
+             runExceptT
       $ flip runStateT pforest
-      $ flip runReaderT (ParserEnv (pfRange pforest) text)
+      $ flip runReaderT (ParserEnv text)
       $      runWriterT
       $ parser
 
   either (error . show) (return . fst) res
+
+debugParser :: Parser a -> FilePath -> IO a
+debugParser parser fin = do
+  (res, errs) <- runParser parser fin
+  putStrLn "Errors:"
+  for_ errs (print . nest 2 . pp)
+  putStrLn ""
+  putStrLn "Result:"
+  return res
 
 token :: Text -> Parser Text
 token node = do

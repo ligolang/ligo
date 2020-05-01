@@ -4,7 +4,7 @@ import Data.Foldable (for_)
 import ParseTree
 import Parser
 import AST
-import PrettyPrint
+import Pretty
 
 import System.Environment
 

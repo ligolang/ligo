@@ -1,13 +1,13 @@
 
 module Range where
 
-import PrettyPrint
+import Pretty
 
 data Range = Range
   { rStart  :: (Int, Int, Int)
   , rFinish :: (Int, Int, Int)
   }
-  deriving stock (Show)
+  deriving (Show) via PP Range
 
 diffRange :: Range -> Range -> Range
 diffRange (Range ws wf) (Range ps _) = Range (max ws ps) wf

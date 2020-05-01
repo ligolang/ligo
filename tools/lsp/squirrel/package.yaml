@@ -15,6 +15,7 @@ default-extensions:
 - OverloadedStrings
 - GeneralisedNewtypeDeriving
 - DerivingStrategies
+- DerivingVia
 - NamedFieldPuns
 - BangPatterns
 

@@ -1,5 +1,5 @@
 
-module AST.Parser where
+module AST.Parser (example, contract) where
 
 import Data.Text (Text)
 
@@ -18,7 +18,9 @@ name = do
 contract :: Parser (Contract Range)
 contract = subtree "contract" do
   (decls, info) <- range do
-    many "declaration" declaration
+    gets (length . pfGrove) >>= traceShowM
+    many "declaration" declaration <* (gets (length . pfGrove) >>= traceShowM)
+
   return (Contract info decls)
 
 declaration :: Parser (Declaration Range)

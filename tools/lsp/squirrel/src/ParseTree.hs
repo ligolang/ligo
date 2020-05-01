@@ -30,7 +30,7 @@ import Text.PrettyPrint hiding ((<>))
 import Paths_squirrel
 
 import Range
-import PrettyPrint
+import Pretty
 
 -- import Debug.Trace
 

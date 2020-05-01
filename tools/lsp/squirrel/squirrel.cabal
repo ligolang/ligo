@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 9aa7bb8abf29ee513a2033ae2b0ef8310107294ad348fa7510ec615a1b11c4ea
+-- hash: 265647f1e4ee30432d151c4651a52d5777306a54afa992c70c83d840f87d5365
 
 name:           squirrel
 version:        0.0.0
@@ -14,17 +14,16 @@ library
   exposed-modules:
       AST
       AST.Parser
-      AST.Pretty
       AST.Types
       Parser
       ParseTree
-      PrettyPrint
+      Pretty
       Range
   other-modules:
       Paths_squirrel
   hs-source-dirs:
       src/
-  default-extensions: LambdaCase BlockArguments OverloadedStrings GeneralisedNewtypeDeriving DerivingStrategies NamedFieldPuns BangPatterns
+  default-extensions: LambdaCase BlockArguments OverloadedStrings GeneralisedNewtypeDeriving DerivingStrategies DerivingVia NamedFieldPuns BangPatterns
   ghc-options: -freverse-errors -Wall
   include-dirs:
       vendor
@@ -45,7 +44,7 @@ executable squirrel
       Paths_squirrel
   hs-source-dirs:
       app/
-  default-extensions: LambdaCase BlockArguments OverloadedStrings GeneralisedNewtypeDeriving DerivingStrategies NamedFieldPuns BangPatterns
+  default-extensions: LambdaCase BlockArguments OverloadedStrings GeneralisedNewtypeDeriving DerivingStrategies DerivingVia NamedFieldPuns BangPatterns
   ghc-options: -freverse-errors -Wall
   build-depends:
       base
