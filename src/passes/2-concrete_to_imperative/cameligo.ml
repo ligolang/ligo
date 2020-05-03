@@ -169,7 +169,7 @@ open Operators.Concrete_to_imperative.Cameligo
 let r_split = Location.r_split
 
 let get_t_string_singleton_opt = function
-  | Raw.TStringLiteral s -> Some (String.(sub s.value 1 ((length s.value)-2)))
+  | Raw.TString s -> Some (String.(sub s.value 1 (length s.value - 2)))
   | _ -> None
 
 let rec pattern_to_var : Raw.pattern -> _ = fun p ->
@@ -249,7 +249,7 @@ and compile_type_expression : Raw.type_expr -> type_expression result = fun te -
       let (x,loc) = r_split x in
       let (name, tuple) = x in
       ( match name.value with
-        | "michelson_or" -> 
+        | "michelson_or" ->
           let lst = npseq_to_list tuple.value.inside in
           (match lst with
           | [a ; b ; c ; d ] -> (
@@ -318,7 +318,7 @@ and compile_type_expression : Raw.type_expr -> type_expression result = fun te -
         @@ npseq_to_list s in
       let m = List.fold_left (fun m (x, y) -> CMap.add (Constructor x) y m) CMap.empty lst in
       ok @@ make_t ~loc @@ T_sum m
-  | TStringLiteral _s -> simple_fail "we don't support singleton string type"
+  | TString _s -> simple_fail "we don't support singleton string type"
 
 and compile_list_type_expression (lst:Raw.type_expr list) : type_expression result =
   match lst with

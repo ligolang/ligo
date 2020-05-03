@@ -19,7 +19,8 @@ module SubIO =
       ext     : string;   (* ".mligo" *)
       mode    : [`Byte | `Point];
       cmd     : EvalOpt.command;
-      mono    : bool
+      mono    : bool;
+      pretty  : bool
     >
 
     let options : options =
@@ -34,6 +35,7 @@ module SubIO =
            method mode    = `Point
            method cmd     = EvalOpt.Quiet
            method mono    = false
+           method pretty  = false
          end
 
     let make =
@@ -46,6 +48,7 @@ module SubIO =
                    ~mode:options#mode
                    ~cmd:options#cmd
                    ~mono:options#mono
+                   ~pretty:options#mono
   end
 
 module Parser =

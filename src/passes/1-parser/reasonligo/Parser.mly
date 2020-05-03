@@ -205,9 +205,9 @@ type_args:
 | fun_type        { $1, [] }
 
 core_type:
-  type_name      { TVar $1 }
-| "<string>"     { TStringLiteral $1 }
-| par(fun_type)  { TPar $1 }
+  type_name      { TVar    $1 }
+| "<string>"     { TString $1 }
+| par(fun_type)  { TPar    $1 }
 | module_name "." type_name {
     let module_name = $1.value in
     let type_name   = $3.value in
@@ -938,10 +938,10 @@ sequence_or_record_in:
     field_name = $1;
     assignment = ghost;
     field_expr = EVar $1 }
-  in 
+  in
   let field_name = {$1 with value} in
   let (comma, elts) = $2 in
-  let r_elts = Utils.nsepseq_cons field_name comma elts in 
+  let r_elts = Utils.nsepseq_cons field_name comma elts in
   PaRecord {r_elts; r_terminator = None}
 }
 

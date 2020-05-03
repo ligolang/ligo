@@ -153,7 +153,7 @@ and print_type_expr state = function
 | TFun    type_fun    -> print_type_fun    state type_fun
 | TPar    par_type    -> print_par_type    state par_type
 | TVar    type_var    -> print_var         state type_var
-| TStringLiteral s -> print_string state s
+| TString str         -> print_string      state str
 
 and print_cartesian state {value; _} =
   print_nsepseq state "*" print_type_expr value
@@ -398,9 +398,9 @@ and print_for_int state ({value; _} : for_int reg) =
   print_var_assign state assign;
   print_token      state kwd_to "to";
   print_expr       state bound;
-  match kwd_step with 
+  match kwd_step with
   | None -> ();
-  | Some kwd_step -> 
+  | Some kwd_step ->
   print_token      state kwd_step "step";
   match step with
   | None -> ();
@@ -941,8 +941,8 @@ and pp_type_expr state = function
                     field_decl.value in
     let fields = Utils.nsepseq_to_list value.ne_elements in
     List.iteri (List.length fields |> apply) fields
-| TStringLiteral s ->
-  pp_node   state "String";
+| TString s ->
+  pp_node   state "TString";
   pp_string (state#pad 1 0) s
 
 and pp_cartesian state {value; _} =

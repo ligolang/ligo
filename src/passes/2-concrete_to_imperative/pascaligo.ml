@@ -152,7 +152,7 @@ let return_statement expr = ok @@ fun expr'_opt ->
   | Some expr' -> ok @@ e_sequence expr expr'
 
 let get_t_string_singleton_opt = function
-  | Raw.TStringLiteral s -> Some (String.(sub s.value 1 ((length s.value)-2)))
+  | Raw.TString s -> Some (String.(sub s.value 1 (length s.value -2)))
   | _ -> None
 
 
@@ -176,7 +176,7 @@ let rec compile_type_expression (t:Raw.type_expr) : type_expression result =
       let (x, loc) = r_split x in
       let (name, tuple) = x in
       (match name.value with
-        | "michelson_or" -> 
+        | "michelson_or" ->
           let lst = npseq_to_list tuple.value.inside in
           (match lst with
           | [a ; b ; c ; d ] -> (
@@ -248,7 +248,7 @@ let rec compile_type_expression (t:Raw.type_expr) : type_expression result =
         @@ npseq_to_list s in
       let m = List.fold_left (fun m (x, y) -> CMap.add (Constructor x) y m) CMap.empty lst in
       ok @@ make_t ~loc @@ T_sum m
-  | TStringLiteral _s -> simple_fail "we don't support singleton string type"
+  | TString _s -> simple_fail "we don't support singleton string type"
 
 and compile_list_type_expression (lst:Raw.type_expr list) : type_expression result =
   match lst with
@@ -461,7 +461,7 @@ and compile_update = fun (u:Raw.update Region.reg) ->
   let (name, path) = compile_path u.record in
   let record = match path with
   | [] -> e_variable (Var.of_name name)
-  | _ -> e_accessor_list (e_variable (Var.of_name name)) path in 
+  | _ -> e_accessor_list (e_variable (Var.of_name name)) path in
   let updates = u.updates.value.ne_elements in
   let%bind updates' =
     let aux (f:Raw.field_path_assign Raw.reg) =
@@ -471,13 +471,13 @@ and compile_update = fun (u:Raw.update Region.reg) ->
     in
     bind_map_list aux @@ npseq_to_list updates
   in
-  let aux ur (path, expr) = 
+  let aux ur (path, expr) =
     let rec aux record = function
       | [] -> failwith "error in parsing"
       | hd :: [] -> ok @@ e_record_update ~loc record hd expr
-      | hd :: tl -> 
+      | hd :: tl ->
         let%bind expr = (aux (e_record_accessor ~loc record hd) tl) in
-        ok @@ e_record_update ~loc record hd expr 
+        ok @@ e_record_update ~loc record hd expr
     in
     aux ur path in
   bind_fold_list aux record updates'
@@ -645,11 +645,11 @@ and compile_fun_decl :
       let binder = Var.of_name binder in
       let fun_name = Var.of_name fun_name.value in
       let fun_type = t_function input_type output_type in
-      let expression : expression = 
+      let expression : expression =
         e_lambda ~loc binder (Some input_type)(Some output_type) result in
       let%bind expression = match kwd_recursive with
         None -> ok @@ expression |
-        Some _ -> ok @@ e_recursive ~loc fun_name fun_type 
+        Some _ -> ok @@ e_recursive ~loc fun_name fun_type
         @@ {binder;input_type=Some input_type; output_type= Some output_type; result}
       in
        ok ((fun_name, Some fun_type), expression)
@@ -680,11 +680,11 @@ and compile_fun_decl :
          bind_fold_right_list aux result body in
       let fun_name = Var.of_name fun_name.value in
       let fun_type = t_function input_type output_type in
-      let expression : expression = 
+      let expression : expression =
         e_lambda ~loc binder (Some input_type)(Some output_type) result in
       let%bind expression = match kwd_recursive with
         None -> ok @@ expression |
-        Some _ -> ok @@ e_recursive ~loc fun_name fun_type 
+        Some _ -> ok @@ e_recursive ~loc fun_name fun_type
         @@ {binder;input_type=Some input_type; output_type= Some output_type; result}
       in
        ok ((fun_name, Some fun_type), expression)
@@ -713,7 +713,7 @@ and compile_fun_expression :
         let fun_type = t_function input_type output_type in
         let expression = match kwd_recursive with
           | None -> e_lambda ~loc binder (Some input_type)(Some output_type) result
-          | Some _ -> e_recursive ~loc binder fun_type 
+          | Some _ -> e_recursive ~loc binder fun_type
           @@ {binder;input_type=Some input_type; output_type= Some output_type; result}
         in
         ok (Some fun_type , expression)
@@ -744,7 +744,7 @@ and compile_fun_expression :
       let fun_type = t_function input_type output_type in
       let expression = match kwd_recursive with
         | None -> e_lambda ~loc binder (Some input_type)(Some output_type) result
-        | Some _ -> e_recursive ~loc binder fun_type 
+        | Some _ -> e_recursive ~loc binder fun_type
         @@ {binder;input_type=Some input_type; output_type= Some output_type; result}
       in
       ok (Some fun_type , expression)
@@ -857,7 +857,7 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
                 compile_block value
             | ShortBlock {value; _} ->
                 compile_statements @@ fst value.inside in
-      
+
       let%bind match_true = match_true None in
       let%bind match_false = match_false None in
       return_statement @@ e_cond ~loc expr match_true match_false
@@ -943,7 +943,7 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
             (fun (key, value) map ->  (e_map_add key value map))
             inj
             (e_accessor_list ~loc (e_variable (Var.of_name name)) access_path)
-        in 
+        in
        return_statement @@ e_ez_assign ~loc name access_path assigns
     )
   | SetPatch patch -> (
