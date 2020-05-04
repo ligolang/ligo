@@ -133,18 +133,18 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
   | T_sum m ->
     let aux k v prev =
       let%bind prev' = prev in
-      let {ctor_type ; michelson_annotation} : I.ctor_content = v in
+      let {ctor_type ; michelson_annotation ; ctor_decl_pos} : I.ctor_content = v in
       let%bind ctor_type = evaluate_type e ctor_type in
-      ok @@ O.CMap.add (convert_constructor' k) ({ctor_type ; michelson_annotation}:O.ctor_content) prev'
+      ok @@ O.CMap.add (convert_constructor' k) ({ctor_type ; michelson_annotation ; ctor_decl_pos}:O.ctor_content) prev'
     in
     let%bind m = I.CMap.fold aux m (ok O.CMap.empty) in
     return (T_sum m)
   | T_record m ->
     let aux k v prev =
       let%bind prev' = prev in
-      let {field_type ; field_annotation} : I.field_content = v in
+      let {field_type ; field_annotation ; field_decl_pos} : I.field_content = v in
       let%bind field_type = evaluate_type e field_type in
-      ok @@ O.LMap.add (convert_label k) ({field_type ; michelson_annotation=field_annotation}:O.field_content) prev'
+      ok @@ O.LMap.add (convert_label k) ({field_type ; michelson_annotation=field_annotation ; field_decl_pos}:O.field_content) prev'
     in
     let%bind m = I.LMap.fold aux m (ok O.LMap.empty) in
     return (T_record m)
@@ -181,6 +181,10 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
         | TC_contract c ->
             let%bind c = evaluate_type e c in
             ok @@ O.TC_contract c
+        | TC_michelson_pair_right_comb _c | TC_michelson_pair_left_comb _c 
+        | TC_michelson_or_right_comb _c | TC_michelson_or_left_comb _c ->
+          (* not really sure what to do in the new typer, should be converted to a pair using functions defined in Helpers.Typer.Converter *)
+          simple_fail "to be implemented"
         in
       return (T_operator (opt))
 
@@ -300,7 +304,7 @@ and type_expression : environment -> O.typer_state -> ?tv_opt:O.type_expression 
       ok (O.LMap.add (convert_label k) expr' acc , state')
     in
     let%bind (m' , state') = Stage_common.Helpers.bind_fold_lmap aux (ok (O.LMap.empty , state)) m in
-    let wrapped = Wrap.record (O.LMap.map (fun e -> ({field_type = get_type_expression e ; michelson_annotation = None}: O.field_content)) m') in
+    let wrapped = Wrap.record (O.LMap.map (fun e -> ({field_type = get_type_expression e ; michelson_annotation = None ; field_decl_pos = 0}: O.field_content)) m') in
     return_wrapped (E_record m') state' wrapped
   | E_record_update {record; path; update} ->
     let%bind (record, state) = type_expression e state record in

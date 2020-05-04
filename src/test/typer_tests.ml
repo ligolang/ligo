@@ -56,8 +56,8 @@ module TestExpressions = struct
 
   let constructor () : unit result =
     let variant_foo_bar : (Typed.constructor' * Typed.ctor_content) list = [
-        (Typed.Constructor "foo", {ctor_type = Typed.t_int () ; michelson_annotation = None});
-        (Typed.Constructor "bar", {ctor_type = Typed.t_string () ; michelson_annotation = None}) ]
+        (Typed.Constructor "foo", {ctor_type = Typed.t_int () ; michelson_annotation = None ; ctor_decl_pos = 0});
+        (Typed.Constructor "bar", {ctor_type = Typed.t_string () ; michelson_annotation = None ; ctor_decl_pos = 1}) ]
     in test_expression
       ~env:(E.env_sum_type variant_foo_bar)
       I.(e_constructor "foo" (e_int (Z.of_int 32)))

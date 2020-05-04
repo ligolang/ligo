@@ -10,9 +10,9 @@ let rec idle_type_expression : I.type_expression -> O.type_expression result =
       let sum = I.CMap.to_kv_list sum in
       let%bind sum = 
         bind_map_list (fun (k,v) ->
-          let {ctor_type ; michelson_annotation} : I.ctor_content = v in
+          let {ctor_type ; michelson_annotation ; ctor_decl_pos} : I.ctor_content = v in
           let%bind ctor_type = idle_type_expression ctor_type in
-          let v' : O.ctor_content = {ctor_type ; michelson_annotation} in
+          let v' : O.ctor_content = {ctor_type ; michelson_annotation ; ctor_decl_pos} in
           ok @@ (k,v')
         ) sum
       in
@@ -21,9 +21,9 @@ let rec idle_type_expression : I.type_expression -> O.type_expression result =
       let record = I.LMap.to_kv_list record in
       let%bind record = 
         bind_map_list (fun (k,v) ->
-          let {field_type ; michelson_annotation} : I.field_content = v in
+          let {field_type ; michelson_annotation ; field_decl_pos} : I.field_content = v in
           let%bind field_type = idle_type_expression field_type in
-          let v' : O.field_content = {field_type ; field_annotation=michelson_annotation} in
+          let v' : O.field_content = {field_type ; field_annotation=michelson_annotation ; field_decl_pos} in
           ok @@ (k,v')
         ) record
       in
@@ -31,7 +31,7 @@ let rec idle_type_expression : I.type_expression -> O.type_expression result =
     | I.T_tuple tuple ->
       let aux (i,acc) el = 
         let%bind el = idle_type_expression el in
-        ok @@ (i+1,(O.Label (string_of_int i), ({field_type=el;field_annotation=None}:O.field_content))::acc) in
+        ok @@ (i+1,(O.Label (string_of_int i), ({field_type=el;field_annotation=None;field_decl_pos=0}:O.field_content))::acc) in
       let%bind (_, lst ) = bind_fold_list aux (0,[]) tuple in
       let record = O.LMap.of_list lst in
       return @@ O.T_record record
@@ -66,6 +66,18 @@ and idle_type_operator : I.type_operator -> O.type_operator result =
     | TC_big_map (k,v) ->
       let%bind (k,v) = bind_map_pair idle_type_expression (k,v) in
       ok @@ O.TC_big_map (k,v)
+    | TC_michelson_pair_right_comb c ->
+      let%bind c = idle_type_expression c in
+      ok @@ O.TC_michelson_pair_right_comb c
+    | TC_michelson_pair_left_comb c ->
+      let%bind c = idle_type_expression c in
+      ok @@ O.TC_michelson_pair_left_comb c
+    | TC_michelson_or_right_comb c ->
+      let%bind c = idle_type_expression c in
+      ok @@ O.TC_michelson_or_right_comb c
+    | TC_michelson_or_left_comb c ->
+      let%bind c = idle_type_expression c in
+      ok @@ O.TC_michelson_or_left_comb c
 
 let rec compile_expression : I.expression -> O.expression result =
   fun e ->
@@ -238,9 +250,9 @@ let rec uncompile_type_expression : O.type_expression -> I.type_expression resul
       let sum = I.CMap.to_kv_list sum in
       let%bind sum = 
         bind_map_list (fun (k,v) ->
-          let {ctor_type;michelson_annotation} : O.ctor_content = v in
+          let {ctor_type;michelson_annotation;ctor_decl_pos} : O.ctor_content = v in
           let%bind ctor_type = uncompile_type_expression ctor_type in
-          let v' : I.ctor_content = {ctor_type;michelson_annotation} in
+          let v' : I.ctor_content = {ctor_type;michelson_annotation;ctor_decl_pos} in
           ok @@ (k,v')
         ) sum
       in
@@ -249,9 +261,9 @@ let rec uncompile_type_expression : O.type_expression -> I.type_expression resul
       let record = I.LMap.to_kv_list record in
       let%bind record = 
         bind_map_list (fun (k,v) ->
-          let {field_type;field_annotation} : O.field_content = v in
+          let {field_type;field_annotation;field_decl_pos} : O.field_content = v in
           let%bind field_type = uncompile_type_expression field_type in
-          let v' : I.field_content = {field_type;michelson_annotation=field_annotation} in
+          let v' : I.field_content = {field_type ; michelson_annotation=field_annotation ; field_decl_pos} in
           ok @@ (k,v')
         ) record
       in
@@ -288,6 +300,18 @@ and uncompile_type_operator : O.type_operator -> I.type_operator result =
       let%bind (k,v) = bind_map_pair uncompile_type_expression (k,v) in
       ok @@ I.TC_big_map (k,v)
     | TC_map_or_big_map _ -> failwith "TC_map_or_big_map shouldn't be uncompiled"
+    | TC_michelson_pair_right_comb c ->
+      let%bind c = uncompile_type_expression c in
+      ok @@ I.TC_michelson_pair_right_comb c
+    | TC_michelson_pair_left_comb c ->
+      let%bind c = uncompile_type_expression c in
+      ok @@ I.TC_michelson_pair_left_comb c
+    | TC_michelson_or_right_comb c ->
+      let%bind c = uncompile_type_expression c in
+      ok @@ I.TC_michelson_or_right_comb c
+    | TC_michelson_or_left_comb c ->
+      let%bind c = uncompile_type_expression c in
+      ok @@ I.TC_michelson_or_left_comb c
 
 let rec uncompile_expression : O.expression -> I.expression result =
   fun e ->

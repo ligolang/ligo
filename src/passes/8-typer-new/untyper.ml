@@ -135,6 +135,10 @@ let unconvert_constant' : O.constant' -> I.constant' = function
   | C_IMPLICIT_ACCOUNT -> C_IMPLICIT_ACCOUNT
   | C_SET_DELEGATE -> C_SET_DELEGATE
   | C_CREATE_CONTRACT -> C_CREATE_CONTRACT
+  | C_CONVERT_TO_LEFT_COMB -> C_CONVERT_TO_LEFT_COMB
+  | C_CONVERT_TO_RIGHT_COMB -> C_CONVERT_TO_RIGHT_COMB
+  | C_CONVERT_FROM_LEFT_COMB -> C_CONVERT_FROM_LEFT_COMB
+  | C_CONVERT_FROM_RIGHT_COMB -> C_CONVERT_FROM_RIGHT_COMB
 
 let untype_type_value (t:O.type_expression) : (I.type_expression) result =
   match t.type_meta with
@@ -148,18 +152,18 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression) resul
   (* TODO: or should we use t.core if present? *)
   let%bind t = match t.type_content with
   | O.T_sum x ->
-    let aux k ({ctor_type ; michelson_annotation} : O.ctor_content) acc =
+    let aux k ({ctor_type ; michelson_annotation ; ctor_decl_pos} : O.ctor_content) acc =
       let%bind acc = acc in
       let%bind ctor_type = untype_type_expression ctor_type in
-      let v' : I.ctor_content = {ctor_type ; michelson_annotation} in 
+      let v' : I.ctor_content = {ctor_type ; michelson_annotation ; ctor_decl_pos} in 
       ok @@ I.CMap.add (unconvert_constructor' k) v' acc in
     let%bind x' = O.CMap.fold aux x (ok I.CMap.empty) in
     ok @@ I.T_sum x'
   | O.T_record x ->
-    let aux k ({field_type ; michelson_annotation} : O.field_content) acc =
+    let aux k ({field_type ; michelson_annotation ; field_decl_pos} : O.field_content) acc =
       let%bind acc = acc in
       let%bind field_type = untype_type_expression field_type in
-      let v' = ({field_type ; field_annotation=michelson_annotation} : I.field_content) in
+      let v' = ({field_type ; field_annotation=michelson_annotation ; field_decl_pos} : I.field_content) in
       ok @@ I.LMap.add (unconvert_label k) v' acc in
     let%bind x' = O.LMap.fold aux x (ok I.LMap.empty) in
     ok @@ I.T_record x'

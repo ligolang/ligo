@@ -8,10 +8,16 @@ include Stage_common.PP
 let cmap_sep value sep ppf m =
   let lst = CMap.to_kv_list m in
   let lst = List.sort (fun (Constructor a,_) (Constructor b,_) -> String.compare a b) lst in
-  let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" constructor k value v in
+  let new_pp ppf (k, ({ctor_type=v;_}:ctor_content)) = fprintf ppf "@[<h>%a -> %a@]" constructor k value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
 let cmap_sep_d x = cmap_sep x (tag " ,@ ")
+
+let record_sep_t value sep ppf (m : 'a label_map) =
+  let lst = LMap.to_kv_list m in
+  let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
+  let new_pp ppf (k, ({field_type=v;_}:field_content)) = fprintf ppf "@[<h>%a -> %a@]" label k value v in
+  fprintf ppf "%a" (list_sep new_pp sep) lst
 
 let record_sep value sep ppf (m : 'a label_map) =
   let lst = LMap.to_kv_list m in
@@ -30,7 +36,7 @@ let rec type_expression' :
   fun f ppf te ->
   match te.type_content with
   | T_sum m -> fprintf ppf "sum[%a]" (cmap_sep_d f) m
-  | T_record m -> fprintf ppf "{%a}" (record_sep f (const ";")) m
+  | T_record m -> fprintf ppf "{%a}" (record_sep_t f (const ";")) m
   | T_tuple t -> fprintf ppf "(%a)" (list_sep_d f) t
   | T_arrow a -> fprintf ppf "%a -> %a" f a.type1 f a.type2
   | T_variable tv -> type_variable ppf tv
@@ -55,6 +61,10 @@ and type_operator :
     | TC_big_map (k, v) -> Format.asprintf "Big Map (%a,%a)" f k f v
     | TC_michelson_or (l,_, r,_) -> Format.asprintf "Michelson_or (%a,%a)" f l f r
     | TC_michelson_pair (l,_, r,_) -> Format.asprintf "Michelson_pair (%a,%a)" f l f r
+    | TC_michelson_pair_right_comb e -> Format.asprintf "michelson_pair_right_comb (%a)" f e
+    | TC_michelson_pair_left_comb e -> Format.asprintf "michelson_pair_left_comb (%a)" f e
+    | TC_michelson_or_right_comb e -> Format.asprintf "michelson_or_right_comb (%a)" f e
+    | TC_michelson_or_left_comb e -> Format.asprintf "michelson_or_left_comb (%a)" f e
     | TC_contract te  -> Format.asprintf "Contract (%a)" f te
   in
   fprintf ppf "(TO_%s)" s

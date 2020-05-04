@@ -175,6 +175,10 @@ let constant ppf : constant' -> unit = function
   | C_IMPLICIT_ACCOUNT      -> fprintf ppf "IMPLICIT_ACCOUNT"
   | C_SET_DELEGATE          -> fprintf ppf "SET_DELEGATE"
   | C_CREATE_CONTRACT       -> fprintf ppf "CREATE_CONTRACT"
+  | C_CONVERT_TO_RIGHT_COMB -> fprintf ppf "CONVERT_TO_RIGHT_COMB"
+  | C_CONVERT_TO_LEFT_COMB  -> fprintf ppf "CONVERT_TO_LEFT_COMB"
+  | C_CONVERT_FROM_RIGHT_COMB -> fprintf ppf "CONVERT_FROM_RIGHT_COMB"
+  | C_CONVERT_FROM_LEFT_COMB  -> fprintf ppf "CONVERT_FROM_LEFT_COMB"
 
 let literal ppf (l : literal) =
   match l with

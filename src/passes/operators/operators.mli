@@ -171,6 +171,17 @@ module Typer : sig
   val cons : typer
   val constant_typers : constant' -> typer result
 
+  module Converter : sig
+
+    open Ast_typed
+
+    val record_checks : (label * field_content) list -> unit result
+    val convert_pair_to_right_comb : (label * field_content) list -> type_content
+    val convert_pair_to_left_comb : (label * field_content) list -> type_content
+    val convert_variant_to_right_comb : (constructor' * ctor_content) list -> type_content
+    val convert_variant_to_left_comb : (constructor'  * ctor_content) list -> type_content
+
+  end
 end
 
 module Compiler : sig

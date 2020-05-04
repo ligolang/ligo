@@ -752,6 +752,10 @@ module Assert = struct
      true -> ok ()
   | false -> simple_fail msg
 
+  let assert_true_err err = function
+    | true -> ok ()
+    | false -> fail err
+
   let assert_equal ?msg expected actual =
     assert_true ?msg (expected = actual)
 

@@ -40,11 +40,13 @@ and annot_option = string option
 and ctor_content = {
     ctor_type : type_expression;
     michelson_annotation : annot_option;
+    ctor_decl_pos : int;
 }
 
 and field_content = {
     field_type : type_expression;
     michelson_annotation : annot_option;
+    field_decl_pos : int;
 }
 
 and type_map_args = {
@@ -254,6 +256,10 @@ and constant' =
   | C_IMPLICIT_ACCOUNT
   | C_SET_DELEGATE
   | C_CREATE_CONTRACT
+  | C_CONVERT_TO_LEFT_COMB
+  | C_CONVERT_TO_RIGHT_COMB
+  | C_CONVERT_FROM_LEFT_COMB
+  | C_CONVERT_FROM_RIGHT_COMB
 
 and declaration_loc = declaration location_wrap
 
