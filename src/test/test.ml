@@ -18,5 +18,6 @@ let () =
     Hash_lock_tests.main ;
     Time_lock_repeat_tests.main ;
     Pledge_tests.main ;
+    Tzip12_tests.main ;
   ] ;
   ()
