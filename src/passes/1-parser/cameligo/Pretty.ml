@@ -119,18 +119,55 @@ and pp_type_decl decl =
   string "type" ^/^ string name.value
   ^/^ string "=" ^/^ pp_type_expr type_expr
 
-and pp_expr expr =
-  string "TODO:pp_expr"
+and pp_expr = function
+  ECase   e -> pp_case_expr e
+| ECond   e -> pp_cond_expr e
+| EAnnot  e -> pp_annot_expr e
+| ELogic  e -> pp_logic_expr e
+| EArith  e -> pp_arith_expr e
+| EString e -> pp_string_expr e
+| EList   e -> pp_list_expr e
+| EConstr e -> pp_constr_expr e
+| ERecord e -> pp_record_expr e
+| EProj   e -> pp_projection e
+| EUpdate e -> pp_update e
+| EVar    v -> pp_string v
+| ECall   e -> pp_call_expr e
+| EBytes  e -> pp_bytes e
+| EUnit   _ -> string "()"
+| ETuple  e -> pp_tuple_expr e
+| EPar    e -> pp_par_expr e
+| ELetIn  e -> pp_let_in e
+| EFun    e -> pp_fun e
+| ESeq    e -> pp_seq e
+
+and pp_case_expr _ = string "TODO:pp_case_expr"
+and pp_cond_expr _ = string "TODO:pp_cond_expr"
+and pp_annot_expr _ = string "TODO:pp_annot_expr"
+and pp_logic_expr _ = string "TODO:pp_logic_expr"
+and pp_arith_expr _ = string "TODO:pp_arith_expr"
+and pp_string_expr _ = string "TODO:pp_string_expr"
+and pp_list_expr _ = string "TODO:pp_list_expr"
+and pp_constr_expr _ = string "TODO:pp_constr_expr"
+and pp_record_expr _ = string "TODO:pp_record_expr"
+and pp_projection _ = string "TODO:pp_projection"
+and pp_update _ = string "TODO:pp_update"
+and pp_call_expr _ = string "TODO:pp_call_expr"
+and pp_tuple_expr _ = string "TODO:pp_tuple_expr"
+and pp_par_expr _ = string "TODO:pp_par_expr"
+and pp_let_in _ = string "TODO:pp_let_in"
+and pp_fun _ = string "TODO:pp_fun_expr"
+and pp_seq _ = string "TODO:pp_seq"
 
 and pp_type_expr = function
-  TProd cartesian -> pp_cartesian cartesian
-| TSum sum        -> pp_variants sum
-| TRecord fields  -> pp_fields fields
-| TApp t_app      -> pp_type_app t_app
-| TFun fun_type   -> pp_fun_type fun_type
-| TPar par        -> pp_type_par par
-| TVar var        -> pp_string var
-| TString s       -> pp_string s
+  TProd t   -> pp_cartesian t
+| TSum t    -> pp_variants t
+| TRecord t -> pp_fields t
+| TApp t    -> pp_type_app t
+| TFun t    -> pp_fun_type t
+| TPar t    -> pp_type_par t
+| TVar t    -> pp_string t
+| TString s -> pp_string s
 
 and pp_cartesian Region.{value; _} =
   let cmp = Utils.nsepseq_to_list value in
