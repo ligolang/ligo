@@ -2,7 +2,7 @@
   (target generated_fold.ml)
   (deps ../../../src/stages/adt_generator/generator.raku amodule.ml)
   (action (with-stdout-to generated_fold.ml (run perl6 ../../../src/stages/adt_generator/generator.raku amodule.ml)))
-;  (mode (promote (until-clean)))
+  (mode (promote (until-clean) (only *)))
 )
 
 (executable
