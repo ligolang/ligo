@@ -3,7 +3,7 @@ open Core
 open Ast_typed.Misc
 
 let tc type_vars allowed_list : type_constraint =
-  C_typeclass {tc_args = type_vars ; typeclass = allowed_list}
+  { c = C_typeclass {tc_args = type_vars ; typeclass = allowed_list} ; reason = "shorthands: typeclass" }
 
 let forall binder f =
   let () = ignore binder in

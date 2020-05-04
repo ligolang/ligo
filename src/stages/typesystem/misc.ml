@@ -245,7 +245,10 @@ module Substitution = struct
           )
         )
 
-    and constraint_ ~c ~substs =
+    and constraint_ ~c:{c;reason} ~substs =
+      {c = constraint__ ~c ~substs;reason}
+
+    and constraint__ ~c ~substs =
       match c with
       | C_equation { aval; bval } -> (
         let aux tv = type_value ~tv ~substs in
