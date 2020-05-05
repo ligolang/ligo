@@ -3,7 +3,7 @@ id: cli-commands
 title: CLI Commands
 ---
 
-Contracts written in Ligo can be compiled using the `ligo` executable.
+Contracts written in LIGO can be compiled using the `ligo` executable.
 
 
 ## Compiling a contract

@@ -41,7 +41,7 @@ const App: React.FC = () => {
         <FloatButtonComponent
           tooltip="Report an issue"
           text="!"
-          href="https://gitlab.com/ligolang/ligo-web-ide/issues"
+          href="https://gitlab.com/ligolang/ligo/issues"
         ></FloatButtonComponent>
         <FloatButtonComponent
           tooltip="Ask a question"
