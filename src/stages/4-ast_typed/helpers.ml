@@ -163,7 +163,8 @@ let kv_list_of_record_or_tuple (m: _ LMap.t) =
 let remove_empty_annotation (ann : string option) : string option =
   match ann with
   | Some "" -> None
-  | _ -> ann
+  | Some ann -> Some (String.uncapitalize_ascii ann)
+  | None -> None
 
 let is_michelson_or (t: _ constructor_map) =
   CMap.cardinal t = 2 && 

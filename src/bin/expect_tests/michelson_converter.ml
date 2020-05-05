@@ -106,7 +106,7 @@ let%expect_test _ =
     ( LIST_EMPTY() , Baz4("eq") ) |}] ;
   run_ligo_good [ "compile-contract" ; contract "michelson_converter_or.mligo" ; "main_r" ] ;
   [%expect {|
-    { parameter (or (int %Foo4) (or (nat %Bar4) (or (string %Baz4) (bool %Boz4)))) ;
+    { parameter (or (int %foo4) (or (nat %bar4) (or (string %baz4) (bool %boz4)))) ;
       storage (or (or (nat %bar4) (string %baz4)) (or (bool %boz4) (int %foo4))) ;
       code { PUSH string "eq" ;
              LEFT bool ;
@@ -139,7 +139,7 @@ let%expect_test _ =
     ( LIST_EMPTY() , Baz4("eq") ) |}] ;
   run_ligo_good [ "compile-contract" ; contract "michelson_converter_or.mligo" ; "main_l" ] ;
   [%expect {|
-    { parameter (or (or (or (int %Foo4) (nat %Bar4)) (string %Baz4)) (bool %Boz4)) ;
+    { parameter (or (or (or (int %foo4) (nat %bar4)) (string %baz4)) (bool %boz4)) ;
       storage (or (or (nat %bar4) (string %baz4)) (or (bool %boz4) (int %foo4))) ;
       code { PUSH string "eq" ;
              LEFT bool ;
