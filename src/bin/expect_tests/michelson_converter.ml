@@ -181,3 +181,25 @@ let%expect_test _ =
     { parameter (pair (pair (int %foo) (nat %bar)) (string %baz)) ;
       storage unit ;
       code { UNIT ; NIL operation ; PAIR ; DIP { DROP } } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; (contract "michelson_converter_mixed_pair_or.mligo") ; "main2" ] ;
+  [%expect {|
+    { parameter
+        (or (pair %option1 (string %bar) (nat %baz)) (pair %option2 (string %bar) (nat %baz))) ;
+      storage nat ;
+      code { DUP ;
+             CAR ;
+             IF_LEFT
+               { DUP ; LEFT (pair (string %bar) (nat %baz)) ; DIP { DROP } }
+               { DUP ; RIGHT (pair (string %bar) (nat %baz)) ; DIP { DROP } } ;
+             DUP ;
+             IF_LEFT
+               { DUP ; LEFT (pair (string %bar) (nat %baz)) ; DIP { DROP } }
+               { DUP ; RIGHT (pair (string %bar) (nat %baz)) ; DIP { DROP } } ;
+             DIP { DROP } ;
+             DUP ;
+             IF_LEFT
+               { DUP ; CDR ; NIL operation ; PAIR ; DIP { DROP } }
+               { DUP ; CDR ; NIL operation ; PAIR ; DIP { DROP } } ;
+             DIP { DROP 2 } } } |}]

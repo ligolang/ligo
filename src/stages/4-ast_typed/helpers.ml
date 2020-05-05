@@ -179,4 +179,5 @@ let is_michelson_pair (t: _ label_map) =
       | Some _ -> true
       | None -> prev)
     false 
-    l
+    l &&
+  List.for_all (fun i -> LMap.mem i t) @@ (label_range 0 (LMap.cardinal t))
