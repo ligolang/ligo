@@ -29,3 +29,4 @@ tools/lsp/camligo/log.html
 tools/lsp/camligo/src/
 tools/lsp/camligo/index.js
 tools/lsp/camligo/node_modules
+nix/result

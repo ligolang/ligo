@@ -10,13 +10,13 @@ import Range
 
 import Debug.Trace
 
-name :: Parser (Name Range)
+name :: Parser (Name ASTInfo)
 name = ctor Name <*> token "Name"
 
-capitalName :: Parser (Name Range)
+capitalName :: Parser (Name ASTInfo)
 capitalName = ctor Name <*> token "Name_Capital"
 
-contract :: Parser (Contract Range)
+contract :: Parser (Contract ASTInfo)
 contract =
   ctor Contract
   <*> subtree "contract" do
@@ -24,21 +24,21 @@ contract =
           inside "declaration:" do
             declaration
 
-declaration :: Parser (Declaration Range)
+declaration :: Parser (Declaration ASTInfo)
 declaration
   =   do ctor ValueDecl <*> binding
   <|> do ctor ValueDecl <*> vardecl
   <|> do ctor ValueDecl <*> constdecl
   <|> typedecl
 
-typedecl :: Parser (Declaration Range)
+typedecl :: Parser (Declaration ASTInfo)
 typedecl = do
   subtree "type_decl" do
     ctor TypeDecl
       <*> inside "typeName:"  name
       <*> inside "typeValue:" newtype_
 
-vardecl :: Parser (Binding Range)
+vardecl :: Parser (Binding ASTInfo)
 vardecl = do
   subtree "var_decl" do
     ctor Var
@@ -46,7 +46,7 @@ vardecl = do
       <*> inside "type:"  type_
       <*> inside "value:" expr
 
-constdecl :: Parser (Binding Range)
+constdecl :: Parser (Binding ASTInfo)
 constdecl = do
   subtree "const_decl" do
     ctor Const
@@ -54,7 +54,7 @@ constdecl = do
       <*> inside "type" type_
       <*> inside "value" expr
 
-binding :: Parser (Binding Range)
+binding :: Parser (Binding ASTInfo)
 binding = do
   inside ":fun_decl" do
     ctor Function
@@ -76,10 +76,10 @@ recursive = do
 
   return $ maybe False (== "recursive") mr
 
-expr :: Parser (Expr Range)
+expr :: Parser (Expr ASTInfo)
 expr = stubbed "expr" do
   select
-    [ Ident <$> getRange <*> do
+    [ ctor Ident <*> do
         ctor QualifiedName
           <*> name
           <*> pure []
@@ -98,39 +98,39 @@ expr = stubbed "expr" do
   -- $.disj_expr,
   -- $.fun_expr,
 
-method_call :: Parser (Expr Range)
+method_call :: Parser (Expr ASTInfo)
 method_call = do
   subtree "projection_call" do
     ctor Apply
       <*> do ctor Ident <*> field "f" projection
       <*> inside "arguments" arguments
 
-projection :: Parser (QualifiedName Range)
+projection :: Parser (QualifiedName ASTInfo)
 projection = do
   subtree "data_projection" do
     ctor QualifiedName
       <*> inside "struct" name
       <*> many "selection" selection
 
-selection :: Parser (Path Range)
+selection :: Parser (Path ASTInfo)
 selection = do
   inside "index:selection"
     $   do ctor At <*> name
     <|> do ctor Ix <*> token "Int"
 
-par_call :: Parser (Expr Range)
+par_call :: Parser (Expr ASTInfo)
 par_call = do
   subtree "par_call" do
     ctor Apply
       <*> inside "f" expr
       <*> inside "arguments" arguments
 
-int_literal :: Parser (Expr Range)
+int_literal :: Parser (Expr ASTInfo)
 int_literal = do
   ctor Constant
     <*> do ctor Int <*> token "Int"
 
-record_expr :: Parser (Expr Range)
+record_expr :: Parser (Expr ASTInfo)
 record_expr = do
   subtree "record_expr" do
     ctor Record <*> do
@@ -140,7 +140,7 @@ record_expr = do
             <*> inside "name" name
             <*> inside "_rhs" expr
 
-fun_call :: Parser (Expr Range)
+fun_call :: Parser (Expr ASTInfo)
 fun_call = do
   subtree "fun_call" do
     ctor Apply
@@ -152,7 +152,7 @@ arguments =
     many "argument" do
       inside "argument" expr
 
-function_id :: Parser (QualifiedName Range)
+function_id :: Parser (QualifiedName ASTInfo)
 function_id = select
   [ ctor QualifiedName
       <*> name
@@ -164,7 +164,7 @@ function_id = select
           <*> do pure <$> do ctor At <*> inside "method" name
   ]
 
-opCall :: Parser (Expr Range)
+opCall :: Parser (Expr ASTInfo)
 opCall = do
   subtree "op_expr"
     $   do inside "the" expr
@@ -188,10 +188,10 @@ letExpr = do
       Just them -> Let r them body
       Nothing   -> body
 
-statement :: Parser (Declaration Range)
+statement :: Parser (Declaration ASTInfo)
 statement = ctor Action <*> expr
 
-paramDecl :: Parser (VarDecl Range)
+paramDecl :: Parser (VarDecl ASTInfo)
 paramDecl = do
   info <- getRange
   inside "parameter:param_decl" do
@@ -223,11 +223,11 @@ field_decl = do
       <*> inside "fieldName" name
       <*> inside "fieldType" type_
 
-type_ :: Parser (Type Range)
+type_ :: Parser (Type ASTInfo)
 type_ =
     fun_type
   where
-    fun_type :: Parser (Type Range)
+    fun_type :: Parser (Type ASTInfo)
     fun_type = do
       inside ":fun_type" do
         ctor tarrow
@@ -255,15 +255,15 @@ type_ =
               <*> inside "arguments"  typeTuple
         ]
 
-typeTuple :: Parser [Type Range]
+typeTuple :: Parser [Type ASTInfo]
 typeTuple = do
   subtree "type_tuple" do
     many "type tuple element" do
       inside "element" type_
 
-example = "../../../src/test/contracts/application.ligo"
+-- example = "../../../src/test/contracts/application.ligo"
 -- example = "../../../src/test/contracts/address.ligo"
--- example = "../../../src/test/contracts/amount.ligo"
+example = "../../../src/test/contracts/amount.ligo"
 -- example = "../../../src/test/contracts/application.ligo"
 -- example = "../../../src/test/contracts/application.ligo"
 -- example = "../../../src/test/contracts/application.ligo"

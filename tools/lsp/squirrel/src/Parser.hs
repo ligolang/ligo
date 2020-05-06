@@ -308,5 +308,10 @@ inside sig parser = do
           subtree st do
             parser
 
-ctor :: (Range -> a) -> Parser a
-ctor = (<$> getRange)
+data ASTInfo = ASTInfo
+  { aiRange    :: Range
+  , aiComments :: [Text]
+  }
+
+ctor :: (ASTInfo -> a) -> Parser a
+ctor = (<$> (ASTInfo <$> getRange <*> pure []))
