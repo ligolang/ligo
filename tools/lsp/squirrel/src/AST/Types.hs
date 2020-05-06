@@ -84,11 +84,13 @@ data Expr info
   | Constant  info (Constant info)
   | Ident     info (QualifiedName info)
   | BinOp     info (Expr info) Text (Expr info)
+  | UnOp      info Text (Expr info)
   | Record    info [Assignment info]
   | If        info (Expr info) (Expr info) (Expr info)
   | Assign    info (QualifiedName info) (Expr info)
   | List      info [Expr info]
   | Annot     info (Expr info) (Type info)
+  | Attrs     info [Text]
   | WrongExpr      Error
   deriving (Show) via PP (Expr info)
 
@@ -238,11 +240,13 @@ instance Pretty (Expr i) where
     Constant  _ constant   -> pp constant
     Ident     _ qname      -> pp qname
     BinOp     _ l o r      -> parens (pp l <+> pp o <+> pp r)
+    UnOp      _   o r      -> parens (pp o <+> pp r)
     Record    _ az         -> "record [" <> (fsep $ punctuate ";" $ map pp az) <> "]"
     If        _ b t e      -> fsep ["if" <+> pp b, nest 2 $ "then" <+> pp t, nest 2 $ "else" <+> pp e]
     Assign    _ l r        -> hang (pp l <+> ":=") 2 (pp r)
     List      _ l          -> "[" <> fsep (punctuate ";" $ map pp l) <> "]"
     Annot     _ n t        -> ("(" <> pp n) <+> ":" <+> (pp t <> ")")
+    Attrs     _ ts         -> "attributes [" <> fsep (punctuate ";" $ map pp ts) <> "]"
     WrongExpr   err        -> pp err
 
 instance Pretty (Assignment i) where

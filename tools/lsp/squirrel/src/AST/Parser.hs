@@ -30,6 +30,7 @@ declaration
   <|> do ctor ValueDecl <*> vardecl
   <|> do ctor ValueDecl <*> constdecl
   <|> typedecl
+  <|> do ctor Action <*> attributes
 
 typedecl :: Parser (Declaration ASTInfo)
 typedecl = do
@@ -95,6 +96,7 @@ expr = stubbed "expr" do
     , list_expr
     , has_type
     , string_literal
+    , attributes
     -- , constant
     ]
   where
@@ -102,6 +104,14 @@ expr = stubbed "expr" do
   -- $.cond_expr,
   -- $.disj_expr,
   -- $.fun_expr,
+
+attributes :: Parser (Expr ASTInfo)
+attributes = do
+  subtree "attr_decl" do
+    ctor Attrs <*> do
+      many "attribute" do
+        inside "attribute" do
+          token "String"
 
 string_literal :: Parser (Expr ASTInfo)
 string_literal = do
@@ -134,7 +144,7 @@ assign = do
   subtree "assignment" do
     ctor Assign
       <*> inside "LHS" do
-            inside ":path" qname
+              inside ":path" qname
           <|> projection
       <*> inside "RHS" expr
 
@@ -223,6 +233,9 @@ opCall = do
              <*> inside "arg1" expr
              <*> inside "op"   anything
              <*> inside "arg2" expr
+    <|> do ctor UnOp
+             <*> inside "negate" anything
+             <*> inside "arg"    expr
 
 letExpr = do
   subtree "let_expr" do
@@ -323,8 +336,8 @@ typeTuple = do
 -- example = "../../../src/test/contracts/application.ligo"
 -- example = "../../../src/test/contracts/address.ligo"
 -- example = "../../../src/test/contracts/amount.ligo"
-example = "../../../src/test/contracts/annotation.ligo"
--- example = "../../../src/test/contracts/application.ligo"
--- example = "../../../src/test/contracts/application.ligo"
--- example = "../../../src/test/contracts/application.ligo"
+-- example = "../../../src/test/contracts/annotation.ligo"
+-- example = "../../../src/test/contracts/arithmetic.ligo"
+-- example = "../../../src/test/contracts/assign.ligo"
+example = "../../../src/test/contracts/attributes.ligo"
 -- example = "../../../src/test/contracts/application.ligo"
