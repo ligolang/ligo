@@ -10,6 +10,7 @@ import Control.Monad.Identity
 import Data.Foldable
 import Data.Text.Encoding
 import Data.Text (Text, pack, unpack)
+import qualified Data.Text as Text
 
 import qualified Data.ByteString as ByteString
 import Data.ByteString (ByteString)
@@ -266,7 +267,7 @@ delete _ [] = []
 delete k ((k', v) : rest) =
   if k == k'
   then rest
-  else (k', v) : delete k rest
+  else delete k rest
 
 notFollowedBy :: Parser a -> Parser ()
 notFollowedBy parser = do
@@ -284,3 +285,30 @@ class Stubbed a where
 
 instance Stubbed Text where
   stub = pack . show
+
+instance Stubbed [a] where
+  stub _ = []
+
+inside :: Stubbed a => Text -> Parser a -> Parser a
+inside sig parser = do
+  let (f, st') = Text.breakOn ":" sig
+  let st       = Text.drop 1 st'
+  if Text.null f
+  then do
+    traceShowM ("subtree", st)
+    subtree st do
+      traceShowM ("stubbed", st)
+      stubbed f do
+        parser
+  else do
+    traceShowM ("field", f)
+    field f do
+      traceShowM ("stubbed", f)
+      stubbed f do
+        if Text.null st
+        then do
+          parser
+        else do
+          traceShowM ("subtree", st)
+          subtree st do
+            parser

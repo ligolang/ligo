@@ -26,6 +26,8 @@ instance Stubbed (Contract info) where stub = WrongContract
 
 data Declaration info
   = ValueDecl info (Binding info)
+  | TypeDecl  info (Name info) (Type info)
+  | Action    info (Expr info)
   | WrongDecl      Error
   deriving (Show) via PP (Declaration info)
 
@@ -59,30 +61,46 @@ instance Stubbed (Mutable info) where stub = WrongMutable
 
 data Type info
   = TArrow    info  (Type info) (Type info)
-  | Record    info [(Name info, Type info)]
+  | TRecord   info [TField info]
   | TVar      info  (Name info)
-  | Sum       info [(Name info, [Type info])]
-  | Product   info  [Type info]
+  | TSum      info [(Name info, [Type info])]
+  | TProduct  info  [Type info]
   | TApply    info  (Name info) [Type info]
   | WrongType      Error
   deriving (Show) via PP (Type info)
 
 instance Stubbed (Type info) where stub = WrongType
 
+data TField info
+  = TField info (Name info) (Type info)
+  | WrongTField Error
+  deriving (Show) via PP (TField info)
+
+instance Stubbed (TField info) where stub = WrongTField
+
 data Expr info
   = Let       info [Declaration info] (Expr info)
   | Apply     info (Expr info) [Expr info]
   | Constant  info (Constant info)
-  | Ident     info (Name info)
+  | Ident     info (QualifiedName info)
+  | BinOp     info (Expr info) Text (Expr info)
+  | Record    info [Assignment info]
   | WrongExpr      Error
   deriving (Show) via PP (Expr info)
 
 instance Stubbed (Expr info) where stub = WrongExpr
 
+data Assignment info
+  = Assignment info (Name info) (Expr info)
+  | WrongAssignment Error
+  deriving (Show) via PP (Assignment info)
+
+instance Stubbed (Assignment info) where stub = WrongAssignment
+
 data Constant info
-  = Int     info Int
+  = Int     info Text
   | String  info Text
-  | Float   info Double
+  | Float   info Text
   | Bytes   info Text
   | WrongConstant Error
   deriving (Show) via PP (Constant info)
@@ -102,12 +120,20 @@ data QualifiedName info
   = QualifiedName
     { qnInfo   :: info
     , qnSource :: Name info
-    , qnPath   :: [Name info]
+    , qnPath   :: [Path info]
     }
   | WrongQualifiedName Error
   deriving (Show) via PP (QualifiedName info)
 
 instance Stubbed (QualifiedName info) where stub = WrongQualifiedName
+
+data Path info
+  = At info (Name info)
+  | Ix info Text
+  | WrongPath Error
+  deriving (Show) via PP (Path info)
+
+instance Stubbed (Path info) where stub = WrongPath
 
 data Name info = Name
   { info    :: info
@@ -134,6 +160,8 @@ instance Pretty (Contract i) where
 instance Pretty (Declaration i) where
   pp = \case
     ValueDecl _ binding -> pp binding
+    TypeDecl  _ n ty    -> hang ("type" <+> pp n <+> "=") 2 (pp ty)
+    Action    _ e       -> pp e
     WrongDecl err       -> pp err
 
 instance Pretty (Binding i) where
@@ -160,7 +188,7 @@ instance Pretty (Binding i) where
         (pp value)
     Const _ name ty body ->
       hang
-        ("var" <+> pp name <+> ":" <+> pp ty <+> "=")
+        ("const" <+> pp name <+> ":" <+> pp ty <+> "=")
         2
         (pp body)
     WrongBinding err ->
@@ -186,10 +214,10 @@ instance Pretty (Mutable i) where
 instance Pretty (Type i) where
   pp = \case
     TArrow    _ dom codom -> parens (pp dom <+> "->" <+> pp codom)
-    Record    _ fields    -> wrap ["record [", "]"] $ vcat $ map ppField fields
+    TRecord   _ fields    -> "record [" <> (vcat $ map pp fields) <> "]"
     TVar      _ name      -> pp name
-    Sum       _ variants  -> vcat $ map ppCtor variants
-    Product   _ elements  -> fsep $ punctuate " *" $ map pp elements
+    TSum      _ variants  -> vcat $ map ppCtor variants
+    TProduct  _ elements  -> fsep $ punctuate " *" $ map pp elements
     TApply    _ f xs      -> pp f <> parens (fsep $ punctuate "," $ map pp xs)
     WrongType   err       -> pp err
     where
@@ -204,14 +232,20 @@ instance Pretty (Expr i) where
     Apply     _ f xs       -> pp f <> tuple xs
     Constant  _ constant   -> pp constant
     Ident     _ qname      -> pp qname
+    BinOp     _ l o r      -> parens (pp l <+> pp o <+> pp r)
+    Record    _ az         -> "record [" <> (fsep $ punctuate ";" $ map pp az) <> "]"
     WrongExpr   err        -> pp err
 
+instance Pretty (Assignment i) where
+  pp = \case
+    Assignment      _ n e -> pp n <+> "=" <+> pp e
+    WrongAssignment   err -> pp err
 
 instance Pretty (Constant i) where
   pp = \case
-    Int           _ c   -> int c
+    Int           _ c   -> pp c
     String        _ c   -> doubleQuotes (pp c)
-    Float         _ c   -> double c
+    Float         _ c   -> pp c
     Bytes         _ c   -> pp c
     WrongConstant   err -> pp err
 
@@ -232,6 +266,17 @@ instance Pretty (Name i) where
   pp = \case
     Name      _ raw -> pp raw
     WrongName err   -> pp err
+
+instance Pretty (Path i) where
+  pp = \case
+    At _ n -> pp n
+    Ix _ i -> pp i
+    WrongPath err -> pp err
+
+instance Pretty (TField i) where
+  pp = \case
+    TField _ n t -> hang (pp n <> ":") 2 (pp t)
+    WrongTField err -> pp err
 
 tuple :: Pretty p => [p] -> Doc
 tuple xs = parens (fsep $ punctuate "," $ map pp xs)

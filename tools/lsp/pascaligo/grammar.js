@@ -218,12 +218,12 @@ module.exports = grammar({
 
     _open_data_decl: $ =>
       choice(
-        $.open_const_decl,
-        $.open_var_decl,
+        $.const_decl,
+        $.var_decl,
         $.fun_decl,
       ),
 
-    open_const_decl: $ =>
+    const_decl: $ =>
       seq(
         'const',
         field("name", $.Name),
@@ -233,7 +233,7 @@ module.exports = grammar({
         field("value", $._expr),
       ),
 
-    open_var_decl: $ =>
+    var_decl: $ =>
       seq(
         'var',
         field("name", $.Name),
@@ -241,11 +241,6 @@ module.exports = grammar({
         field("type", $._type_expr),
         ':=',
         field("value", $._expr),
-      ),
-
-    const_decl: $ =>
-      seq(
-        $.open_const_decl,
       ),
 
     _instruction: $ =>
@@ -476,14 +471,14 @@ module.exports = grammar({
     op_expr: $ =>
       choice(
         field("the", $._core_expr),
-        prec.left (0, seq(field("arg1", $.op_expr),    'or',         field("arg2", $.op_expr))),
-        prec.left (1, seq(field("arg1", $.op_expr),    'and',        field("arg2", $.op_expr))),
-        prec.right(2, seq(field("arg1", $._core_expr), 'contains',   field("arg2", $.op_expr))),
-        prec.left (3, seq(field("arg1", $.op_expr),    $.comparison, field("arg2", $.op_expr))),
-        prec.right(4, seq(field("arg1", $.op_expr),    '^',          field("arg2", $.op_expr))),
-        prec.right(5, seq(field("arg1", $.op_expr),    '#',          field("arg2", $.op_expr))),
-        prec.left (6, seq(field("arg1", $.op_expr),    $.adder,      field("arg2", $.op_expr))),
-        prec.left (7, seq(field("arg1", $.op_expr),    $.multiplier, field("arg2", $.op_expr))),
+        prec.left (0, seq(field("arg1", $.op_expr),    field("op", 'or'),         field("arg2", $.op_expr))),
+        prec.left (1, seq(field("arg1", $.op_expr),    field("op", 'and'),        field("arg2", $.op_expr))),
+        prec.right(2, seq(field("arg1", $._core_expr), field("op", 'contains'),   field("arg2", $.op_expr))),
+        prec.left (3, seq(field("arg1", $.op_expr),    field("op", $.comparison), field("arg2", $.op_expr))),
+        prec.right(4, seq(field("arg1", $.op_expr),    field("op", '^'),          field("arg2", $.op_expr))),
+        prec.right(5, seq(field("arg1", $.op_expr),    field("op", '#'),          field("arg2", $.op_expr))),
+        prec.left (6, seq(field("arg1", $.op_expr),    field("op", $.adder),      field("arg2", $.op_expr))),
+        prec.left (7, seq(field("arg1", $.op_expr),    field("op", $.multiplier), field("arg2", $.op_expr))),
         prec.right(8, seq(field("negate", $.negate), field("arg", $._core_expr))),
       ),
 
