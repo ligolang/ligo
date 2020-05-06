@@ -560,8 +560,8 @@ module.exports = grammar({
         $.big_map_injection,
       ),
 
-    map_injection: $ => injection('map', $.binding),
-    big_map_injection: $ => injection('big_map', $.binding),
+    map_injection: $ => injection('map', field("binding", $.binding)),
+    big_map_injection: $ => injection('big_map', field("binding", $.binding)),
 
     map_lookup: $ =>
       seq(

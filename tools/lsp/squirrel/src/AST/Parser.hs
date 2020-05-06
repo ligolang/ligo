@@ -97,6 +97,11 @@ expr = stubbed "expr" do
     , has_type
     , string_literal
     , attributes
+    , tuple_expr
+    , moduleQualified
+    , big_map_expr
+    , map_expr
+    , map_remove
     -- , constant
     ]
   where
@@ -104,6 +109,53 @@ expr = stubbed "expr" do
   -- $.cond_expr,
   -- $.disj_expr,
   -- $.fun_expr,
+
+map_remove :: Parser (Expr ASTInfo)
+map_remove = do
+  subtree "map_remove" do
+    ctor MapRemove
+      <*> inside "key" expr
+      <*> inside "container" do
+        inside ":path" do
+          qname
+
+big_map_expr :: Parser (Expr ASTInfo)
+big_map_expr = do
+  subtree "big_map_injection" do
+    ctor BigMap <*> do
+      many "binding" do
+        inside "binding" do
+          map_binding
+
+map_expr :: Parser (Expr ASTInfo)
+map_expr = do
+  subtree "map_injection" do
+    ctor Map <*> do
+      many "binding" do
+        inside "binding" do
+          map_binding
+
+map_binding :: Parser (MapBinding ASTInfo)
+map_binding = do
+  subtree "binding" do
+    ctor MapBinding
+      <*> inside "key"   expr
+      <*> inside "value" expr
+
+moduleQualified :: Parser (Expr ASTInfo)
+moduleQualified = do
+  subtree "module_field" do
+    ctor Ident <*> do
+      ctor QualifiedName
+        <*> inside "module" capitalName
+        <*> do pure <$> do ctor At <*> inside "method" name
+
+tuple_expr :: Parser (Expr ASTInfo)
+tuple_expr = do
+  subtree "tuple_expr" do
+    ctor Tuple <*> do
+      many "tuple element" do
+        inside "element" expr
 
 attributes :: Parser (Expr ASTInfo)
 attributes = do
@@ -143,10 +195,28 @@ assign :: Parser (Expr ASTInfo)
 assign = do
   subtree "assignment" do
     ctor Assign
-      <*> inside "LHS" do
-              inside ":path" qname
-          <|> projection
+      <*> inside "LHS" lhs
       <*> inside "RHS" expr
+
+lhs :: Parser (LHS ASTInfo)
+lhs =
+  do ctor LHS
+       <*> inside "container:path" do
+             qname <|> projection
+       <*> pure Nothing
+  <|>
+  do ctor LHS
+       <*> subtree "path" do
+             qname <|> projection
+       <*> pure Nothing
+  <|>
+  do subtree "map_lookup" do
+       ctor LHS
+         <*> inside "container:path" do
+               qname <|> projection
+         <*> inside "index" do
+               Just <$> expr
+
 
 tez_literal :: Parser (Expr ASTInfo)
 tez_literal = do
@@ -170,6 +240,7 @@ method_call = do
 
 projection :: Parser (QualifiedName ASTInfo)
 projection = do
+  gets pfGrove >>= traceShowM
   subtree "data_projection" do
     ctor QualifiedName
       <*> inside "struct" name
@@ -177,9 +248,12 @@ projection = do
 
 selection :: Parser (Path ASTInfo)
 selection = do
-  inside "index:selection"
-    $   do ctor At <*> name
-    <|> do ctor Ix <*> token "Int"
+    inside "index:selection"
+      $   do ctor At <*> name
+      <|> do ctor Ix <*> token "Int"
+  <|>
+    inside "index" do
+      do ctor Ix <*> token "Int"
 
 par_call :: Parser (Expr ASTInfo)
 par_call = do
@@ -315,7 +389,7 @@ type_ =
         [ ctor TVar <*> name
         , subtree "invokeBinary" do
             ctor TApply
-              <*> inside "typeConstr" name
+              <*> inside "typeConstr" name'
               <*> inside "arguments"  typeTuple
         , subtree "invokeUnary" do
             ctor TApply
@@ -339,5 +413,20 @@ typeTuple = do
 -- example = "../../../src/test/contracts/annotation.ligo"
 -- example = "../../../src/test/contracts/arithmetic.ligo"
 -- example = "../../../src/test/contracts/assign.ligo"
-example = "../../../src/test/contracts/attributes.ligo"
+-- example = "../../../src/test/contracts/attributes.ligo"
+-- example = "../../../src/test/contracts/bad_timestamp.ligo"
+-- example = "../../../src/test/contracts/bad_type_operator.ligo"
+-- example = "../../../src/test/contracts/balance_constant.ligo"
+example = "../../../src/test/contracts/big_map.ligo"
+-- example = "../../../src/test/contracts/application.ligo"
+-- example = "../../../src/test/contracts/application.ligo"
+-- example = "../../../src/test/contracts/application.ligo"
+-- example = "../../../src/test/contracts/application.ligo"
+-- example = "../../../src/test/contracts/application.ligo"
+-- example = "../../../src/test/contracts/application.ligo"
+-- example = "../../../src/test/contracts/application.ligo"
+-- example = "../../../src/test/contracts/application.ligo"
+-- example = "../../../src/test/contracts/application.ligo"
+-- example = "../../../src/test/contracts/application.ligo"
+-- example = "../../../src/test/contracts/application.ligo"
 -- example = "../../../src/test/contracts/application.ligo"

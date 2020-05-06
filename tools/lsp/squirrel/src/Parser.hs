@@ -289,6 +289,9 @@ instance Stubbed Text where
 instance Stubbed [a] where
   stub _ = []
 
+instance Stubbed a => Stubbed (Maybe a) where
+  stub = Just . stub
+
 inside :: Stubbed a => Text -> Parser a -> Parser a
 inside sig parser = do
   let (f, st') = Text.breakOn ":" sig

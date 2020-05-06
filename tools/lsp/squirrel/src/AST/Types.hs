@@ -87,14 +87,33 @@ data Expr info
   | UnOp      info Text (Expr info)
   | Record    info [Assignment info]
   | If        info (Expr info) (Expr info) (Expr info)
-  | Assign    info (QualifiedName info) (Expr info)
+  | Assign    info (LHS info) (Expr info)
   | List      info [Expr info]
+  | Tuple     info [Expr info]
   | Annot     info (Expr info) (Type info)
   | Attrs     info [Text]
+  | BigMap    info [MapBinding info]
+  | Map       info [MapBinding info]
+  | MapRemove info (Expr info) (QualifiedName info)
+  | SetRemove info (Expr info) (QualifiedName info)
   | WrongExpr      Error
   deriving (Show) via PP (Expr info)
 
 instance Stubbed (Expr info) where stub = WrongExpr
+
+data LHS info
+  = LHS info (QualifiedName info) (Maybe (Expr info))
+  | WrongLHS Error
+  deriving (Show) via PP (LHS info)
+
+instance Stubbed (LHS info) where stub = WrongLHS
+
+data MapBinding info
+  = MapBinding info (Expr info) (Expr info)
+  | WrongMapBinding Error
+  deriving (Show) via PP (MapBinding info)
+
+instance Stubbed (MapBinding info) where stub = WrongMapBinding
 
 data Assignment info
   = Assignment info (Name info) (Expr info)
@@ -159,7 +178,7 @@ instance Pretty (Contract i) where
   pp = \case
     Contract _ decls ->
       hang "(* contract *)" 2 do
-        vcat $ map (($$ empty) . pp) decls
+        vcat $ punctuate "\n" $ map (($$ empty) . pp) decls
 
     WrongContract err ->
       pp err
@@ -234,8 +253,7 @@ instance Pretty (Type i) where
 
 instance Pretty (Expr i) where
   pp = \case
-    Let       _ decls body -> hang "block {" 2 (vcat $ map pp decls)
-                           $$ hang "} with"  2 (pp body)
+    Let       _ decls body -> "block {" $$ (nest 2 $ vcat $ punctuate "\n" $ map pp decls) $$ "}" $$ "with" $$ nest 2 (pp body)
     Apply     _ f xs       -> pp f <> tuple xs
     Constant  _ constant   -> pp constant
     Ident     _ qname      -> pp qname
@@ -245,9 +263,19 @@ instance Pretty (Expr i) where
     If        _ b t e      -> fsep ["if" <+> pp b, nest 2 $ "then" <+> pp t, nest 2 $ "else" <+> pp e]
     Assign    _ l r        -> hang (pp l <+> ":=") 2 (pp r)
     List      _ l          -> "[" <> fsep (punctuate ";" $ map pp l) <> "]"
+    Tuple     _ l          -> "(" <> fsep (punctuate "," $ map pp l) <> ")"
     Annot     _ n t        -> ("(" <> pp n) <+> ":" <+> (pp t <> ")")
     Attrs     _ ts         -> "attributes [" <> fsep (punctuate ";" $ map pp ts) <> "]"
+    BigMap    _ bs         -> "big_map [" <> fsep (punctuate ";" $ map pp bs) <> "]"
+    Map       _ bs         ->     "map [" <> fsep (punctuate ";" $ map pp bs) <> "]"
+    MapRemove _ k m        -> hang ("remove" <+> pp k) 0 ("from" <+> "map" <+> pp m)
+    SetRemove _ k s        -> hang ("remove" <+> pp k) 0 ("from" <+> "set" <+> pp s)
     WrongExpr   err        -> pp err
+
+instance Pretty (MapBinding i) where
+  pp = \case
+    MapBinding _ k v -> hang (pp k <+> "->") 2 (pp v)
+    WrongMapBinding err -> pp err
 
 instance Pretty (Assignment i) where
   pp = \case
@@ -291,6 +319,11 @@ instance Pretty (TField i) where
   pp = \case
     TField _ n t -> hang (pp n <> ":") 2 (pp t)
     WrongTField err -> pp err
+
+instance Pretty (LHS i) where
+  pp = \case
+    LHS _ qn mi -> pp qn <> foldMap (brackets . pp) mi
+    WrongLHS err -> pp err
 
 tuple :: Pretty p => [p] -> Doc
 tuple xs = parens (fsep $ punctuate "," $ map pp xs)
