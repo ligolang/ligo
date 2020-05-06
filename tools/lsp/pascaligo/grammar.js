@@ -430,7 +430,7 @@ module.exports = grammar({
       choice(
         $.case_expr,
         $.cond_expr,
-        $.disj_expr,
+        $.op_expr,
         $.fun_expr,
       ),
 
@@ -473,98 +473,24 @@ module.exports = grammar({
         field("else", $._expr),
       ),
 
-    disj_expr: $ =>
+    op_expr: $ =>
       choice(
-        field("the", $.conj_expr),
-        seq(field("arg1", $.disj_expr), 'or', field("arg2", $.conj_expr)),
-      ),
-
-    conj_expr: $ =>
-      choice(
-        field("the", $.set_membership),
-        seq(
-          field("arg1", $.conj_expr),
-          'and',
-          field("arg2", $.set_membership)
-        ),
-      ),
-
-    set_membership: $ =>
-      choice(
-        field("the", $.comp_expr),
-        seq(
-          field("arg1", $._core_expr),
-          'contains',
-          field("arg2", $.set_membership)
-        ),
-      ),
-
-    comp_expr: $ =>
-      choice(
-        field("the", $.cat_expr),
-        seq(
-          field("arg1", $.comp_expr),
-          field("compare", $.comparison),
-          field("arg2", $.cat_expr),
-        ),
+        field("the", $._core_expr),
+        prec.left (0, seq(field("arg1", $.op_expr),    'or',         field("arg2", $.op_expr))),
+        prec.left (1, seq(field("arg1", $.op_expr),    'and',        field("arg2", $.op_expr))),
+        prec.right(2, seq(field("arg1", $._core_expr), 'contains',   field("arg2", $.op_expr))),
+        prec.left (3, seq(field("arg1", $.op_expr),    $.comparison, field("arg2", $.op_expr))),
+        prec.right(4, seq(field("arg1", $.op_expr),    '^',          field("arg2", $.op_expr))),
+        prec.right(5, seq(field("arg1", $.op_expr),    '#',          field("arg2", $.op_expr))),
+        prec.left (6, seq(field("arg1", $.op_expr),    $.adder,      field("arg2", $.op_expr))),
+        prec.left (7, seq(field("arg1", $.op_expr),    $.multiplier, field("arg2", $.op_expr))),
+        prec.right(8, seq(field("negate", $.negate), field("arg", $._core_expr))),
       ),
 
     comparison: $ => choice('<', '<=', '>', '>=', '=', '=/='),
-
-    cat_expr: $ =>
-      choice(
-        field("the", $.cons_expr),
-        seq(
-          field("arg1", $.cons_expr),
-          '^',
-          field("arg2", $.cat_expr),
-        ),
-      ),
-
-    cons_expr: $ =>
-      choice(
-        field("the", $.add_expr),
-        seq(
-          field("arg1", $.add_expr),
-          '#',
-          field("arg2", $.cons_expr)
-        ),
-      ),
-
-    add_expr: $ =>
-      choice(
-        field("the", $.mult_expr),
-        seq(
-          field("arg1", $.add_expr),
-          field("add", $.adder),
-          field("arg2", $.mult_expr),
-        ),
-      ),
-
-    adder: $ => choice('-', '+'),
-
-    mult_expr: $ =>
-      choice(
-        field("the", $.unary_expr),
-        seq(
-          field("arg1", $.mult_expr),
-          field("multiply", $.multiplier),
-          field("arg2", $.unary_expr),
-        ),
-      ),
-
+    adder:      $ => choice('-', '+'),
     multiplier: $ => choice('/', '*', 'mod'),
-
-    unary_expr: $ =>
-      choice(
-        field("the", $._core_expr),
-        seq(
-          field("negate", $.negate),
-          field("arg", $._core_expr),
-        ),
-      ),
-
-    negate: $ => choice('-', 'not'),
+    negate:     $ => choice('-', 'not'),
 
     _core_expr: $ =>
       choice(
@@ -625,7 +551,7 @@ module.exports = grammar({
 
     annot_expr: $ =>
       par(seq(
-        field("subject", $.disj_expr),
+        field("subject", $.op_expr),
         ':',
         field("type", $._type_expr)
       )),
