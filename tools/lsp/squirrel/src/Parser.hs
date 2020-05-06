@@ -295,20 +295,18 @@ inside sig parser = do
   let st       = Text.drop 1 st'
   if Text.null f
   then do
-    traceShowM ("subtree", st)
     subtree st do
-      traceShowM ("stubbed", st)
       stubbed f do
         parser
   else do
-    traceShowM ("field", f)
     field f do
-      traceShowM ("stubbed", f)
       stubbed f do
         if Text.null st
         then do
           parser
         else do
-          traceShowM ("subtree", st)
           subtree st do
             parser
+
+ctor :: (Range -> a) -> Parser a
+ctor = (<$> getRange)
