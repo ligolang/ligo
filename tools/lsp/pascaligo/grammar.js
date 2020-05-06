@@ -119,7 +119,7 @@ module.exports = grammar({
     invokeUnary: $ =>
       seq(
         field("typeConstr", choice('list', 'set')),
-        field("arguments", par($._type_expr)),
+        par(field("arguments", $._type_expr)),
       ),
 
     map:     $ => 'map',
@@ -659,9 +659,9 @@ module.exports = grammar({
     tuple_expr: $ => par(sepBy1(',', field("element",  $._expr))),
     arguments:  $ => par(sepBy(',',  field("argument", $._expr))),
 
-    list_expr: $ => choice($.list_injection, 'nil'),
+    list_expr: $ => choice($._list_injection, 'nil'),
 
-    list_injection: $ => injection('list', field("element", $._expr)),
+    _list_injection: $ => injection('list', field("element", $._expr)),
 
     pattern: $ => sepBy1('#', field("arg", $._core_pattern)),
 

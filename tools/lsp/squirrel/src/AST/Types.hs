@@ -85,6 +85,10 @@ data Expr info
   | Ident     info (QualifiedName info)
   | BinOp     info (Expr info) Text (Expr info)
   | Record    info [Assignment info]
+  | If        info (Expr info) (Expr info) (Expr info)
+  | Assign    info (QualifiedName info) (Expr info)
+  | List      info [Expr info]
+  | Annot     info (Expr info) (Type info)
   | WrongExpr      Error
   deriving (Show) via PP (Expr info)
 
@@ -102,6 +106,7 @@ data Constant info
   | String  info Text
   | Float   info Text
   | Bytes   info Text
+  | Tez     info Text
   | WrongConstant Error
   deriving (Show) via PP (Constant info)
 
@@ -234,6 +239,10 @@ instance Pretty (Expr i) where
     Ident     _ qname      -> pp qname
     BinOp     _ l o r      -> parens (pp l <+> pp o <+> pp r)
     Record    _ az         -> "record [" <> (fsep $ punctuate ";" $ map pp az) <> "]"
+    If        _ b t e      -> fsep ["if" <+> pp b, nest 2 $ "then" <+> pp t, nest 2 $ "else" <+> pp e]
+    Assign    _ l r        -> hang (pp l <+> ":=") 2 (pp r)
+    List      _ l          -> "[" <> fsep (punctuate ";" $ map pp l) <> "]"
+    Annot     _ n t        -> ("(" <> pp n) <+> ":" <+> (pp t <> ")")
     WrongExpr   err        -> pp err
 
 instance Pretty (Assignment i) where
@@ -244,9 +253,10 @@ instance Pretty (Assignment i) where
 instance Pretty (Constant i) where
   pp = \case
     Int           _ c   -> pp c
-    String        _ c   -> doubleQuotes (pp c)
+    String        _ c   -> pp c
     Float         _ c   -> pp c
     Bytes         _ c   -> pp c
+    Tez           _ c   -> pp c
     WrongConstant   err -> pp err
 
 instance Pretty (QualifiedName i) where

@@ -87,9 +87,14 @@ expr = stubbed "expr" do
     , fun_call
     , record_expr
     , int_literal
+    , tez_literal
     , par_call
     , method_call
-    -- , if_expr
+    , if_expr
+    , assign
+    , list_expr
+    , has_type
+    , string_literal
     -- , constant
     ]
   where
@@ -97,6 +102,54 @@ expr = stubbed "expr" do
   -- $.cond_expr,
   -- $.disj_expr,
   -- $.fun_expr,
+
+string_literal :: Parser (Expr ASTInfo)
+string_literal = do
+  ctor Constant <*> do
+    ctor String <*>
+      token "String"
+
+has_type :: Parser (Expr ASTInfo)
+has_type = do
+  subtree "annot_expr" do
+    ctor Annot
+      <*> inside "subject" expr
+      <*> inside "type"    type_
+
+list_expr :: Parser (Expr ASTInfo)
+list_expr = do
+  subtree "list_expr" do
+    ctor List <*> do
+      many "list elem" do
+        inside "element" expr
+
+qname :: Parser (QualifiedName ASTInfo)
+qname = do
+  ctor QualifiedName
+    <*> name
+    <*> pure []
+
+assign :: Parser (Expr ASTInfo)
+assign = do
+  subtree "assignment" do
+    ctor Assign
+      <*> inside "LHS" do
+            inside ":path" qname
+          <|> projection
+      <*> inside "RHS" expr
+
+tez_literal :: Parser (Expr ASTInfo)
+tez_literal = do
+  ctor Constant <*> do
+    ctor Tez <*> token "Tez"
+
+if_expr :: Parser (Expr ASTInfo)
+if_expr = do
+  subtree "conditional" do
+    ctor If
+      <*> inside "selector"       expr
+      <*> inside "then:if_clause" expr
+      <*> inside "else:if_clause" expr
 
 method_call :: Parser (Expr ASTInfo)
 method_call = do
@@ -154,9 +207,7 @@ arguments =
 
 function_id :: Parser (QualifiedName ASTInfo)
 function_id = select
-  [ ctor QualifiedName
-      <*> name
-      <*> pure []
+  [ qname
   , do
       subtree "module_field" do
         ctor QualifiedName
@@ -253,7 +304,15 @@ type_ =
             ctor TApply
               <*> inside "typeConstr" name
               <*> inside "arguments"  typeTuple
+        , subtree "invokeUnary" do
+            ctor TApply
+              <*> inside "typeConstr" name'
+              <*> do pure <$> inside "arguments" type_
         ]
+
+name' :: Parser (Name ASTInfo)
+name' = do
+  ctor Name <*> anything
 
 typeTuple :: Parser [Type ASTInfo]
 typeTuple = do
@@ -263,8 +322,8 @@ typeTuple = do
 
 -- example = "../../../src/test/contracts/application.ligo"
 -- example = "../../../src/test/contracts/address.ligo"
-example = "../../../src/test/contracts/amount.ligo"
--- example = "../../../src/test/contracts/application.ligo"
+-- example = "../../../src/test/contracts/amount.ligo"
+example = "../../../src/test/contracts/annotation.ligo"
 -- example = "../../../src/test/contracts/application.ligo"
 -- example = "../../../src/test/contracts/application.ligo"
 -- example = "../../../src/test/contracts/application.ligo"
