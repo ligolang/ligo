@@ -29,8 +29,14 @@ declaration
   =   do ctor ValueDecl <*> binding
   <|> do ctor ValueDecl <*> vardecl
   <|> do ctor ValueDecl <*> constdecl
-  <|> typedecl
+  <|> do typedecl
   <|> do ctor Action <*> attributes
+  <|> do include
+
+include = do
+  subtree "include" do
+    ctor Include
+      <*> inside "filename" do token "String"
 
 typedecl :: Parser (Declaration ASTInfo)
 typedecl = do
@@ -42,10 +48,11 @@ typedecl = do
 vardecl :: Parser (Binding ASTInfo)
 vardecl = do
   subtree "var_decl" do
+    dump
     ctor Var
-      <*> inside "name:"  name
-      <*> inside "type:"  type_
-      <*> inside "value:" expr
+      <*> inside "name"  name
+      <*> inside "type"  type_
+      <*> inside "value" expr
 
 constdecl :: Parser (Binding ASTInfo)
 constdecl = do
@@ -63,17 +70,14 @@ binding = do
       <*> inside "name:"  name
       <*> inside "parameters:parameters" do
             many "param" do
-              notFollowedBy do
-                consumeOrDie ")"
-
-              stubbed "parameters" paramDecl
+              inside "parameter" paramDecl
       <*> inside "type:" type_
       <*> inside "body:" letExpr
 
 recursive = do
   mr <- optional do
     inside "recursive" do
-      token "recursie"
+      token "recursive"
 
   return $ maybe False (== "recursive") mr
 
@@ -102,13 +106,291 @@ expr = stubbed "expr" do
     , big_map_expr
     , map_expr
     , map_remove
-    -- , constant
+    , indexing
+    , constr_call
+    , nat_literal
+    , nullary_ctor
+    , bytes_literal
+    , case_expr
+    , skip
+    , case_action
+    , clause_block
+    , loop
+    , seq_expr
+    , lambda_expr
+    , set_expr
+    , map_patch
+    , record_update
+    , set_patch
+    , set_remove
     ]
+
+set_remove :: Parser (Expr ASTInfo)
+set_remove = do
+  subtree "set_remove" do
+    ctor SetRemove
+      <*> inside "key" expr
+      <*> inside "container" do
+        inside ":path" do
+          qname <|> projection
+
+set_patch = do
+  subtree "set_patch" do
+    ctor SetPatch
+      <*> inside "container:path" (qname <|> projection)
+      <*> many "key" do
+            inside "key" expr
+
+record_update = do
+  subtree "update_record" do
+    ctor RecordUpd
+      <*> inside "record:path" do qname <|> projection
+      <*> many "field" do
+            inside "assignment" field_path_assignment
+
+field_path_assignment = do
+  subtree "field_path_assignment" do
+    ctor FieldAssignment
+      <*> inside "lhs:path" do qname <|> projection
+      <*> inside "_rhs" expr
+
+map_patch = do
+  subtree "map_patch" do
+    ctor MapPatch
+      <*> inside "container:path" (qname <|> projection)
+      <*> many "binding" do
+            inside "binding" map_binding
+
+set_expr :: Parser (Expr ASTInfo)
+set_expr = do
+  subtree "set_expr" do
+    ctor List <*> do
+      many "list elem" do
+        inside "element" expr
+
+lambda_expr = do
+  subtree "fun_expr" do
+    ctor Lambda
+      <*> inside "parameters:parameters" do
+            many "param" do
+              inside "parameter" paramDecl
+      <*> inside "type" newtype_
+      <*> inside "body" expr
+
+seq_expr = do
+  subtree "block" do
+    dump
+    ctor Seq <*> do
+      many "statement" do
+        inside "statement" do
+          declaration <|> statement
+
+loop = do
+  subtree "loop" do
+    for_loop <|> while_loop <|> for_container
+
+for_container = do
+  subtree "for_loop" do
+    ctor ForBox
+      <*> inside "key" name
+      <*> optional do inside "value" name
+      <*> inside "kind" anything
+      <*> inside "collection" expr
+      <*> inside "body" (expr <|> seq_expr)
+
+while_loop = do
+  subtree "while_loop" do
+    ctor WhileLoop
+      <*> inside "breaker" expr
+      <*> inside "body"    expr
+
+for_loop = do
+  subtree "for_loop" do
+    ctor ForLoop
+      <*> inside "name"  name
+      <*> inside "begin" expr
+      <*> inside "end"   expr
+      <*> inside "body"  expr
+
+clause_block = do
+    subtree "clause_block" do
+      inside "block:block" do
+        ctor Seq <*> many "statement" do
+          inside "statement" (declaration <|> statement)
+  <|> do
+    subtree "clause_block" do
+      ctor Seq <*> many "statement" do
+        inside "statement" (declaration <|> statement)
+
+skip :: Parser (Expr ASTInfo)
+skip = do
+  ctor Skip <* token "skip"
+
+case_action :: Parser (Expr ASTInfo)
+case_action = do
+  subtree "case_instr" do
+    dump
+    ctor Case
+      <*> inside "subject" expr
+      <*> many "case" do
+            inside "case" alt_action
+
+alt_action :: Parser (Alt ASTInfo)
+alt_action = do
+  subtree "case_clause_instr" do
+    ctor Alt
+      <*> inside "pattern"        pattern
+      <*> inside "body:if_clause" expr
+
+case_expr :: Parser (Expr ASTInfo)
+case_expr = do
+  subtree "case_expr" do
+    ctor Case
+      <*> inside "subject" expr
+      <*> many "case" do
+            inside "case" alt
+
+alt :: Parser (Alt ASTInfo)
+alt = do
+  subtree "case_clause_expr" do
+    ctor Alt
+      <*> inside "pattern" pattern
+      <*> inside "body"    expr
+
+pattern :: Parser (Pattern ASTInfo)
+pattern = do
+  subtree "pattern" $ do
+      inside "the" core_pattern
+    <|>
+      do ctor IsCons
+           <*> inside "head" core_pattern
+           <*> inside "tail" pattern
+
+core_pattern :: Parser (Pattern ASTInfo)
+core_pattern
+  =  -- int_pattern
+  -- <|> nat_pattern
+  -- <|> var_pattern
+  -- <|> list_pattern
+  -- <|> tuple_pattern
+  -- <|>
+      constr_pattern
+  <|> string_pattern
+  <|> int_pattern
+  <|> nat_pattern
+  <|> tuple_pattern
+  <|> list_pattern
+  <|> some_pattern
+  <|> var_pattern
+
+var_pattern :: Parser (Pattern ASTInfo)
+var_pattern =
+  ctor IsVar <*> name
+
+some_pattern :: Parser (Pattern ASTInfo)
+some_pattern = do
+  subtree "Some_pattern" do
+    ctor IsConstr
+      <*> do inside "constr" do ctor Name <*> token "Some"
+      <*> do Just <$> inside "arg" pattern
+
+string_pattern :: Parser (Pattern ASTInfo)
+string_pattern =
+  ctor IsConstant <*> do
+    ctor String <*> token "String"
+
+nat_pattern :: Parser (Pattern ASTInfo)
+nat_pattern =
+  ctor IsConstant <*> do
+    ctor Nat <*> token "Nat"
+
+int_pattern :: Parser (Pattern ASTInfo)
+int_pattern =
+  ctor IsConstant <*> do
+    ctor Int <*> token "Int"
+
+constr_pattern :: Parser (Pattern ASTInfo)
+constr_pattern =
+    do
+      subtree "user_constr_pattern" do
+        ctor IsConstr
+          <*> inside "constr:constr" capitalName
+          <*> optional do
+                inside "arguments" tuple_pattern
+  <|>
+    do
+      ctor IsConstr
+         <*> do ctor Name <*> do token "True" <|> token "False" <|> token "None" <|> token "Unit"
+         <*> pure Nothing
+
+tuple_pattern :: Parser (Pattern ASTInfo)
+tuple_pattern = do
+  subtree "tuple_pattern" do
+    ctor IsTuple <*> do
+      many "element" do
+        inside "element" pattern
+
+list_pattern :: Parser (Pattern ASTInfo)
+list_pattern = do
+  subtree "list_pattern" do
+    ctor IsList <*> do
+      many "element" do
+        inside "element" pattern
+
+nullary_ctor :: Parser (Expr ASTInfo)
+nullary_ctor = do
+  ctor Ident <*> do
+    ctor QualifiedName
+      <*> do ctor Name <*> do
+               true <|> false <|> none <|> unit
+      <*> pure []
   where
-  -- $.case_expr,
-  -- $.cond_expr,
-  -- $.disj_expr,
-  -- $.fun_expr,
+    true  = token "True"
+    false = token "False"
+    none  = token "None"
+    unit  = token "Unit"
+
+nat_literal :: Parser (Expr ASTInfo)
+nat_literal = do
+  ctor Constant <*> do
+    ctor Nat <*> token "Nat"
+
+bytes_literal :: Parser (Expr ASTInfo)
+bytes_literal = do
+  ctor Constant <*> do
+    ctor Bytes <*> token "Bytes"
+
+constr_call :: Parser (Expr ASTInfo)
+constr_call = do
+  some_call <|> user_constr_call
+  where
+    some_call = do
+      subtree "Some_call" do
+        ctor Apply
+          <*> do ctor Ident <*> inside "constr" qname'
+          <*> inside "arguments:arguments" do
+            many "argument" do
+              inside "argument" expr
+
+    user_constr_call = do
+      subtree "constr_call" do
+        ctor Apply
+          <*> inside "constr:constr" do
+                ctor Ident <*> do
+                   ctor QualifiedName
+                     <*> capitalName
+                     <*> pure []
+          <*> inside "arguments:arguments" do
+            many "argument" do
+              inside "argument" expr
+
+indexing :: Parser (Expr ASTInfo)
+indexing = do
+  subtree "map_lookup" do
+    ctor Indexing
+      <*> inside "container:path" do
+            qname <|> projection
+      <*> inside "index" expr
 
 map_remove :: Parser (Expr ASTInfo)
 map_remove = do
@@ -117,7 +399,7 @@ map_remove = do
       <*> inside "key" expr
       <*> inside "container" do
         inside ":path" do
-          qname
+          qname <|> projection
 
 big_map_expr :: Parser (Expr ASTInfo)
 big_map_expr = do
@@ -148,7 +430,7 @@ moduleQualified = do
     ctor Ident <*> do
       ctor QualifiedName
         <*> inside "module" capitalName
-        <*> do pure <$> do ctor At <*> inside "method" name
+        <*> do pure <$> do ctor At <*> inside "method" do name <|> name'
 
 tuple_expr :: Parser (Expr ASTInfo)
 tuple_expr = do
@@ -191,6 +473,12 @@ qname = do
     <*> name
     <*> pure []
 
+qname' :: Parser (QualifiedName ASTInfo)
+qname' = do
+  ctor QualifiedName
+    <*> name'
+    <*> pure []
+
 assign :: Parser (Expr ASTInfo)
 assign = do
   subtree "assignment" do
@@ -225,22 +513,30 @@ tez_literal = do
 
 if_expr :: Parser (Expr ASTInfo)
 if_expr = do
-  subtree "conditional" do
-    ctor If
-      <*> inside "selector"       expr
-      <*> inside "then:if_clause" expr
-      <*> inside "else:if_clause" expr
+    subtree "conditional" do
+      ctor If
+        <*> inside "selector"       expr
+        <*> inside "then:if_clause" expr
+        <*> inside "else:if_clause" expr
+  <|> do
+    subtree "cond_expr" do
+      ctor If
+        <*> inside "selector"       expr
+        <*> inside "then" expr
+        <*> inside "else" expr
 
 method_call :: Parser (Expr ASTInfo)
 method_call = do
   subtree "projection_call" do
-    ctor Apply
-      <*> do ctor Ident <*> field "f" projection
-      <*> inside "arguments" arguments
+    ctor apply'
+      <*> field "f" projection
+      <*> optional do inside "arguments" arguments
+  where
+    apply' r f (Just xs) = Apply r (Ident r f) xs
+    apply' r f _         = Ident r f
 
 projection :: Parser (QualifiedName ASTInfo)
 projection = do
-  gets pfGrove >>= traceShowM
   subtree "data_projection" do
     ctor QualifiedName
       <*> inside "struct" name
@@ -258,9 +554,12 @@ selection = do
 par_call :: Parser (Expr ASTInfo)
 par_call = do
   subtree "par_call" do
-    ctor Apply
+    ctor apply'
       <*> inside "f" expr
-      <*> inside "arguments" arguments
+      <*> optional do inside "arguments" arguments
+  where
+    apply' r f (Just xs) = Apply r f xs
+    apply' _ f  _        = f
 
 int_literal :: Parser (Expr ASTInfo)
 int_literal = do
@@ -296,7 +595,7 @@ function_id = select
       subtree "module_field" do
         ctor QualifiedName
           <*> inside "module" capitalName
-          <*> do pure <$> do ctor At <*> inside "method" name
+          <*> do pure <$> do ctor At <*> inside "method" do name <|> name'
   ]
 
 opCall :: Parser (Expr ASTInfo)
@@ -331,8 +630,7 @@ statement = ctor Action <*> expr
 
 paramDecl :: Parser (VarDecl ASTInfo)
 paramDecl = do
-  info <- getRange
-  inside "parameter:param_decl" do
+  subtree "param_decl" do
     ctor Decl
       <*> do inside ":access" do
               select
@@ -345,8 +643,20 @@ paramDecl = do
 newtype_ = select
   [ record_type
   , type_
-  -- , sum_type
+  , sum_type
   ]
+
+sum_type = do
+  subtree "sum_type" do
+    ctor TSum <*> do
+      many "variant" do
+        inside "variant" variant
+
+variant = do
+  subtree "variant" do
+    ctor Variant
+      <*> inside "constructor:constr" capitalName
+      <*> optional do inside "arguments" type_
 
 record_type = do
   subtree "record_type" do
@@ -359,7 +669,7 @@ field_decl = do
   subtree "field_decl" do
     ctor TField
       <*> inside "fieldName" name
-      <*> inside "fieldType" type_
+      <*> inside "fieldType" newtype_
 
 type_ :: Parser (Type ASTInfo)
 type_ =
@@ -395,6 +705,8 @@ type_ =
             ctor TApply
               <*> inside "typeConstr" name'
               <*> do pure <$> inside "arguments" type_
+
+        , subtree "type_expr" newtype_
         ]
 
 name' :: Parser (Name ASTInfo)
@@ -417,12 +729,15 @@ typeTuple = do
 -- example = "../../../src/test/contracts/bad_timestamp.ligo"
 -- example = "../../../src/test/contracts/bad_type_operator.ligo"
 -- example = "../../../src/test/contracts/balance_constant.ligo"
-example = "../../../src/test/contracts/big_map.ligo"
--- example = "../../../src/test/contracts/application.ligo"
--- example = "../../../src/test/contracts/application.ligo"
--- example = "../../../src/test/contracts/application.ligo"
--- example = "../../../src/test/contracts/application.ligo"
--- example = "../../../src/test/contracts/application.ligo"
+-- example = "../../../src/test/contracts/big_map.ligo"
+-- example = "../../../src/test/contracts/bitwise_arithmetic.ligo"
+-- example = "../../../src/test/contracts/blockless.ligo"
+-- example = "../../../src/test/contracts/boolean_operators.ligo"
+-- example = "../../../src/test/contracts/bytes_arithmetic.ligo"
+-- example = "../../../src/test/contracts/bytes_unpack.ligo"
+-- example = "../../../src/test/contracts/chain_id.ligo"
+-- example = "../../../src/test/contracts/coase.ligo"
+example = "../../../src/test/contracts/failwith.ligo"
 -- example = "../../../src/test/contracts/application.ligo"
 -- example = "../../../src/test/contracts/application.ligo"
 -- example = "../../../src/test/contracts/application.ligo"

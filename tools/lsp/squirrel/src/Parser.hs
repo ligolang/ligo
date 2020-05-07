@@ -30,7 +30,7 @@ data Error
   deriving stock (Show)
 
 instance Pretty Error where
-  pp (Expected msg found r) = "<<<" <> pp msg <> pp r <> ": " <> pp found <> ">>>"
+  pp (Expected msg found r) = "░" <> pp msg <> pp r <> "▒" <> pp found <> "▓"
 
 newtype Parser a = Parser
   { unParser
@@ -318,3 +318,6 @@ data ASTInfo = ASTInfo
 
 ctor :: (ASTInfo -> a) -> Parser a
 ctor = (<$> (ASTInfo <$> getRange <*> pure []))
+
+dump :: Parser ()
+dump = gets pfGrove >>= traceShowM

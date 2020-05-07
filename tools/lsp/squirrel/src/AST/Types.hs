@@ -28,6 +28,7 @@ data Declaration info
   = ValueDecl info (Binding info)
   | TypeDecl  info (Name info) (Type info)
   | Action    info (Expr info)
+  | Include   info Text
   | WrongDecl      Error
   deriving (Show) via PP (Declaration info)
 
@@ -63,13 +64,20 @@ data Type info
   = TArrow    info  (Type info) (Type info)
   | TRecord   info [TField info]
   | TVar      info  (Name info)
-  | TSum      info [(Name info, [Type info])]
+  | TSum      info [Variant info]
   | TProduct  info  [Type info]
   | TApply    info  (Name info) [Type info]
   | WrongType      Error
   deriving (Show) via PP (Type info)
 
 instance Stubbed (Type info) where stub = WrongType
+
+data Variant info
+  = Variant info (Name info) (Maybe (Type info))
+  | WrongVariant Error
+  deriving (Show) via PP (Variant info)
+
+instance Stubbed (Variant info) where stub = WrongVariant
 
 data TField info
   = TField info (Name info) (Type info)
@@ -89,6 +97,7 @@ data Expr info
   | If        info (Expr info) (Expr info) (Expr info)
   | Assign    info (LHS info) (Expr info)
   | List      info [Expr info]
+  | Set       info [Expr info]
   | Tuple     info [Expr info]
   | Annot     info (Expr info) (Type info)
   | Attrs     info [Text]
@@ -96,10 +105,28 @@ data Expr info
   | Map       info [MapBinding info]
   | MapRemove info (Expr info) (QualifiedName info)
   | SetRemove info (Expr info) (QualifiedName info)
+  | Indexing  info (QualifiedName info) (Expr info)
+  | Case      info (Expr info) [Alt info]
+  | Skip      info
+  | ForLoop   info (Name info) (Expr info) (Expr info) (Expr info)
+  | WhileLoop info (Expr info) (Expr info)
+  | Seq       info [Declaration info]
+  | Lambda    info [VarDecl info] (Type info) (Expr info)
+  | ForBox    info (Name info) (Maybe (Name info)) Text (Expr info) (Expr info)
+  | MapPatch  info (QualifiedName info) [MapBinding info]
+  | SetPatch  info (QualifiedName info) [Expr info]
+  | RecordUpd info (QualifiedName info) [FieldAssignment info]
   | WrongExpr      Error
   deriving (Show) via PP (Expr info)
 
 instance Stubbed (Expr info) where stub = WrongExpr
+
+data Alt info
+  = Alt info (Pattern info) (Expr info)
+  | WrongAlt Error
+  deriving (Show) via PP (Alt info)
+
+instance Stubbed (Alt info) where stub = WrongAlt
 
 data LHS info
   = LHS info (QualifiedName info) (Maybe (Expr info))
@@ -122,8 +149,16 @@ data Assignment info
 
 instance Stubbed (Assignment info) where stub = WrongAssignment
 
+data FieldAssignment info
+  = FieldAssignment info (QualifiedName info) (Expr info)
+  | WrongFieldAssignment Error
+  deriving (Show) via PP (FieldAssignment info)
+
+instance Stubbed (FieldAssignment info) where stub = WrongFieldAssignment
+
 data Constant info
   = Int     info Text
+  | Nat     info Text
   | String  info Text
   | Float   info Text
   | Bytes   info Text
@@ -134,9 +169,13 @@ data Constant info
 instance Stubbed (Constant info) where stub = WrongConstant
 
 data Pattern info
-  = IsConstr     info (Name info) [Pattern info]
+  = IsConstr     info (Name info) (Maybe (Pattern info))
   | IsConstant   info (Constant info)
   | IsVar        info (Name info)
+  | IsCons       info (Pattern info) (Pattern info)
+  | IsWildcard   info
+  | IsList       info [Pattern info]
+  | IsTuple      info [Pattern info]
   | WrongPattern      Error
   deriving (Show) via PP (Pattern info)
 
@@ -188,6 +227,7 @@ instance Pretty (Declaration i) where
     ValueDecl _ binding -> pp binding
     TypeDecl  _ n ty    -> hang ("type" <+> pp n <+> "=") 2 (pp ty)
     Action    _ e       -> pp e
+    Include   _ f       -> "#include" <+> pp f
     WrongDecl err       -> pp err
 
 instance Pretty (Binding i) where
@@ -242,27 +282,32 @@ instance Pretty (Type i) where
     TArrow    _ dom codom -> parens (pp dom <+> "->" <+> pp codom)
     TRecord   _ fields    -> "record [" <> (vcat $ map pp fields) <> "]"
     TVar      _ name      -> pp name
-    TSum      _ variants  -> vcat $ map ppCtor variants
+    TSum      _ variants  -> vcat $ map pp variants
     TProduct  _ elements  -> fsep $ punctuate " *" $ map pp elements
     TApply    _ f xs      -> pp f <> parens (fsep $ punctuate "," $ map pp xs)
     WrongType   err       -> pp err
     where
       ppField (name, ty) = pp name <> ": " <> pp ty <> ";"
-      ppCtor  (ctor, fields) =
-        "|" <+> pp ctor <+> parens (fsep $ punctuate "," $ map pp fields)
+
+instance Pretty (Variant i) where
+  pp = \case
+    Variant _ ctor (Just ty) -> hang ("|" <+> pp ctor <+> "of") 2 (pp ty)
+    Variant _ ctor  _        -> "|" <+> pp ctor
+    WrongVariant err -> pp err
 
 instance Pretty (Expr i) where
   pp = \case
     Let       _ decls body -> "block {" $$ (nest 2 $ vcat $ punctuate "\n" $ map pp decls) $$ "}" $$ "with" $$ nest 2 (pp body)
-    Apply     _ f xs       -> pp f <> tuple xs
+    Apply     _ f xs       -> pp f <+> tuple xs
     Constant  _ constant   -> pp constant
     Ident     _ qname      -> pp qname
     BinOp     _ l o r      -> parens (pp l <+> pp o <+> pp r)
     UnOp      _   o r      -> parens (pp o <+> pp r)
     Record    _ az         -> "record [" <> (fsep $ punctuate ";" $ map pp az) <> "]"
-    If        _ b t e      -> fsep ["if" <+> pp b, nest 2 $ "then" <+> pp t, nest 2 $ "else" <+> pp e]
+    If        _ b t e      -> fsep ["if" <+> pp b, hang "then" 2 $ pp t, hang "else" 2 $ pp e]
     Assign    _ l r        -> hang (pp l <+> ":=") 2 (pp r)
-    List      _ l          -> "[" <> fsep (punctuate ";" $ map pp l) <> "]"
+    List      _ l          -> "list [" <> fsep (punctuate ";" $ map pp l) <> "]"
+    Set       _ l          -> "set [" <> fsep (punctuate ";" $ map pp l) <> "]"
     Tuple     _ l          -> "(" <> fsep (punctuate "," $ map pp l) <> ")"
     Annot     _ n t        -> ("(" <> pp n) <+> ":" <+> (pp t <> ")")
     Attrs     _ ts         -> "attributes [" <> fsep (punctuate ";" $ map pp ts) <> "]"
@@ -270,7 +315,23 @@ instance Pretty (Expr i) where
     Map       _ bs         ->     "map [" <> fsep (punctuate ";" $ map pp bs) <> "]"
     MapRemove _ k m        -> hang ("remove" <+> pp k) 0 ("from" <+> "map" <+> pp m)
     SetRemove _ k s        -> hang ("remove" <+> pp k) 0 ("from" <+> "set" <+> pp s)
+    Indexing  _ a i        -> pp a <> brackets (pp i)
+    Case      _ s az       -> hang ("case" <+> pp s <+> "of") 2 (vcat $ map pp az)
+    Skip      _            -> "skip"
+    ForLoop   _ i s f b    -> hang ("for" <+> pp i <+> ":=" <+> pp s <+> "to" <+> pp f) 2 (pp b)
+    ForBox    _ k mv t c b -> hang ("for" <+> (pp k <> maybe empty ((" ->" <+>) . pp) mv) <+> "in" <+> pp t <+> pp c) 2 (pp b)
+    WhileLoop _ f b        -> hang ("while" <+> pp f) 2 (pp b)
+    Seq       _ es         -> hang (hang "block {" 2 (vcat $ map pp es)) 0 "}"
+    Lambda    _ ps ty b    -> parens (hang ("function" <+> ("(" <> fsep (punctuate "," $ map pp ps) <> ") :") <+> pp ty) 2 (pp b))
+    MapPatch  _ c bs       -> hang (hang "patch" 2 (pp c)) 0 (hang ("with" <+> "map") 2 ("[" <> fsep (punctuate ";" $ map pp bs) <> "]"))
+    SetPatch  _ c bs       -> hang (hang "patch" 2 (pp c)) 0 (hang ("with" <+> "set") 2 ("[" <> fsep (punctuate ";" $ map pp bs) <> "]"))
+    RecordUpd _ r up       -> hang (pp r) 2 (hang ("with" <+> "record") 2 ("[" <> fsep (punctuate ";" $ map pp up) <> "]"))
     WrongExpr   err        -> pp err
+
+instance Pretty (Alt info) where
+  pp = \case
+    Alt _ p b -> hang ("|" <+> pp p <+> "->") 2 (pp b)
+    WrongAlt err -> pp err
 
 instance Pretty (MapBinding i) where
   pp = \case
@@ -282,9 +343,15 @@ instance Pretty (Assignment i) where
     Assignment      _ n e -> pp n <+> "=" <+> pp e
     WrongAssignment   err -> pp err
 
+instance Pretty (FieldAssignment i) where
+  pp = \case
+    FieldAssignment      _ n e -> pp n <+> "=" <+> pp e
+    WrongFieldAssignment   err -> pp err
+
 instance Pretty (Constant i) where
   pp = \case
     Int           _ c   -> pp c
+    Nat           _ c   -> pp c
     String        _ c   -> pp c
     Float         _ c   -> pp c
     Bytes         _ c   -> pp c
@@ -298,9 +365,13 @@ instance Pretty (QualifiedName i) where
 
 instance Pretty (Pattern info) where
   pp = \case
-    IsConstr     _ ctor args -> pp ctor <> tuple args
+    IsConstr     _ ctor arg  -> pp ctor <> maybe empty pp arg
     IsConstant   _ c         -> pp c
     IsVar        _ name      -> pp name
+    IsCons       _ h t       -> pp h <+> "#" <+> pp t
+    IsWildcard   _           -> "_"
+    IsList       _ l         -> "[" <> fsep (punctuate ";" $ map pp l) <> "]"
+    IsTuple      _ t         -> "(" <> fsep (punctuate "," $ map pp t) <> ")"
     WrongPattern   err       -> pp err
 
 

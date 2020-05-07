@@ -100,12 +100,16 @@ module.exports = grammar({
       ),
 
     cartesian: $ =>
-      sepBy1('*', field("element", $._core_type)),
+      sepBy1('*',
+        choice(
+          field("element", $._core_type),
+          par(field("element", $.type_expr)),
+        ),
+      ),
 
     _core_type: $ =>
       choice(
         $.Name,
-        par($.type_expr),
         $.invokeBinary,
         $.invokeUnary,
       ),
@@ -551,7 +555,7 @@ module.exports = grammar({
         field("type", $._type_expr)
       )),
 
-    set_expr: $ => injection('set', $._expr),
+    set_expr: $ => injection('set', field("element", $._expr)),
 
     _map_expr: $ =>
       choice(
@@ -645,7 +649,7 @@ module.exports = grammar({
 
     field_path_assignment: $ =>
       seq(
-        sepBy1('.', field("index", $.Name)),
+        field("lhs", $.path),
         '=',
         field("_rhs", $._expr),
       ),
@@ -663,7 +667,11 @@ module.exports = grammar({
 
     _list_injection: $ => injection('list', field("element", $._expr)),
 
-    pattern: $ => sepBy1('#', field("arg", $._core_pattern)),
+    pattern: $ =>
+      choice(
+        $._cons_pattern,
+        field("the", $._core_pattern),
+      ),
 
     _core_pattern: $ =>
       choice(
@@ -679,12 +687,11 @@ module.exports = grammar({
 
     list_pattern: $ =>
       choice(
-        injection("list", field("element", $._core_pattern)),
+        injection("list", field("element", $.pattern)),
         'nil',
-        par($.cons_pattern),
       ),
 
-    cons_pattern: $ =>
+    _cons_pattern: $ =>
       seq(
         field("head", $._core_pattern),
         '#',
@@ -692,7 +699,7 @@ module.exports = grammar({
       ),
 
     tuple_pattern: $ =>
-      par(sepBy1(',', field("element", $._core_pattern))),
+      par(sepBy1(',', field("element", $.pattern))),
 
     _constr_pattern: $ => choice(
       $.Unit,
@@ -706,7 +713,7 @@ module.exports = grammar({
     Some_pattern: $ =>
       seq(
         field("constr", 'Some'),
-        par(field("arg", $._core_pattern)),
+        par(field("arg", $.pattern)),
       ),
 
     user_constr_pattern: $ =>
@@ -733,7 +740,7 @@ module.exports = grammar({
         '*)'
       ),
 
-    include: $ => seq('#include', $.String),
+    include: $ => seq('#include', field("filename", $.String)),
 
     String:       $ => /\"(\\.|[^"])*\"/,
     Int:          $ => /-?([1-9][0-9_]*|0)/,
