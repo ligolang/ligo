@@ -10,7 +10,7 @@ let int () : unit result =
   let open Combinators in
   let pre = e_int (Z.of_int 32) in
   let open Typer in
-  let e = Environment.full_empty in
+  let e = Environment.empty in
   let state = Typer.Solver.initial_state in
   let%bind (post , new_state) = type_expression_subst e state pre in
   let () = Typer.Solver.discard_state new_state in

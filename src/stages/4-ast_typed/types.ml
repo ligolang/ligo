@@ -269,7 +269,7 @@ and declaration_constant = {
     binder : expression_variable ;
     expr : expression ;
     inline : bool ;
-    post_env : full_environment ;
+    post_env : environment ;
   }
 
 and declaration =
@@ -281,7 +281,7 @@ and declaration =
   | Declaration_constant of declaration_constant
   (*
   | Declaration_type of (type_variable * type_expression)
-  | Declaration_constant of (named_expression * (full_environment * full_environment))
+  | Declaration_constant of (named_expression * (environment * environment))
   *)
 (* | Macro_declaration of macro_declaration *)
 
@@ -289,7 +289,7 @@ and expression = {
     expression_content: expression_content ;
     location: location ;
     type_expression: type_expression ;
-    environment: full_environment ;
+    environment: environment ;
   }
 
 and map_kv = {
@@ -392,11 +392,11 @@ and free_variables = expression_variable list
 
 and environment_element = {
     type_value: type_expression ;
-    source_environment: full_environment ;
+    source_environment: environment ;
     definition: environment_element_definition ;
   }
 
-and environment = environment_binding list
+and expression_environment = environment_binding list
 
 and environment_binding = {
     expr_var: expression_variable ;
@@ -410,13 +410,10 @@ and type_environment_binding = {
     type_: type_expression ;
 }
 
-(* SUBST ??? *)
-and small_environment = {
-  expression_environment: environment ;
+and environment = {
+  expression_environment: expression_environment ;
   type_environment: type_environment ;
 }
-
-and full_environment = small_environment list_ne
 
 and named_type_content = {
     type_name : type_variable;

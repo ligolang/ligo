@@ -25,7 +25,7 @@ let match_var (t:type_expression) =
   { expression_content = E_variable (Var.of_name "x") ;
     location = Location.generated ;
     type_expression = t ;
-    environment = Environment.add_ez_binder (Var.of_name "x") t Environment.full_empty}
+    environment = Environment.add_ez_binder (Var.of_name "x") t Environment.empty}
 
 let matching (e:expression) matchee cases =
   { expression_content = E_matching {matchee ; cases};

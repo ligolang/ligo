@@ -92,17 +92,15 @@ and free_variables = expression_variable list
 
 and environment_element =
   { type_value: type_expression
-  ; source_environment: full_environment
+  ; source_environment: environment
   ; definition: environment_element_definition }
 
-and environment = (expression_variable * environment_element) list
+and expr_environment = (expression_variable * environment_element) list
 
 and type_environment = (type_variable * type_expression) list
 
 (* SUBST ??? *)
-and small_environment = environment * type_environment
-
-and full_environment = small_environment List.Ne.t
+and environment = expr_environment * type_environment
 
 and expr = expression
 

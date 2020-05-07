@@ -13,7 +13,7 @@ let compile (cform: form) (program : Ast_core.program) : (Ast_typed.program * As
     | Env -> ok applied in
   ok @@ (applied', state)
 
-let compile_expression ?(env = Ast_typed.Environment.full_empty) ~(state : Ast_typed.typer_state) (e : Ast_core.expression)
+let compile_expression ?(env = Ast_typed.Environment.empty) ~(state : Ast_typed.typer_state) (e : Ast_core.expression)
     : (Ast_typed.expression * Ast_typed.typer_state) result =
   let%bind (ae_typed,state) = Typer.type_expression_subst env state e in
   let () = Typer.Solver.discard_state state in

@@ -28,7 +28,7 @@ let rec type_declaration env state : I.declaration -> (environment * O.typer_sta
       let%bind (expr , state') =
         trace (constant_declaration_error binder expression tv'_opt) @@
         type_expression env state expression in
-      let post_env = Environment.add_ez_ae binder expr env in
+      let post_env = Environment.add_ez_declaration binder expr env in
       ok (post_env, state' , Some (O.Declaration_constant { binder ; expr ; inline ; post_env} ))
     )
 
@@ -286,7 +286,7 @@ and type_expression : environment -> O.typer_state -> ?tv_opt:O.type_expression 
         let content () =
           Format.asprintf "%a in:\n%a\n"
             Stage_common.PP.constructor constructor
-            O.Environment.PP.full_environment e
+            O.Environment.PP.environment e
         in
         error title content in
       trace_option error @@

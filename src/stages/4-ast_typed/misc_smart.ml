@@ -24,7 +24,7 @@ let program_to_main : program -> string -> lambda result = fun p s ->
     let aux = fun _ d ->
       match d with
       | Declaration_constant {binder=_ ; expr= _ ; inline=_ ; post_env } -> post_env in
-    List.fold_left aux Environment.full_empty (List.map Location.unwrap p) in
+    List.fold_left aux Environment.empty (List.map Location.unwrap p) in
   let binder = Var.of_name "@contract_input" in
   let result =
     let input_expr = e_a_variable binder input_type env in
@@ -47,7 +47,7 @@ module Captured_variables = struct
 
   let rec expression : bindings -> expression -> bindings result = fun b e ->
     expression_content b e.environment e.expression_content
-  and expression_content : bindings -> full_environment -> expression_content -> bindings result = fun b env ec ->
+  and expression_content : bindings -> environment -> expression_content -> bindings result = fun b env ec ->
     let self = expression b in
     match ec with
     | E_lambda l -> ok @@ Free_variables.lambda empty l

@@ -27,7 +27,6 @@ let needs_parens              = {
     label_map                 = (fun _ _ _ _ -> false) ;
     list                      = (fun _ _ _ _ -> false) ;
     location_wrap             = (fun _ _ _ _ -> false) ;
-    list_ne                   = (fun _ _ _ _ -> false) ;
     option                    = (fun _visitor _continue _state o ->
       match o with None -> false | Some _ -> true) ;
     poly_unionfind            = (fun _ _ _ _ -> false) ;
@@ -80,10 +79,10 @@ let op ppf = {
     location_wrap             = (fun _visitor continue () lwrap  ->
       let ({ wrap_content; location } : _ Location.wrap) = lwrap in
       fprintf ppf "{ wrap_content = %a ; location = %a }" (fun _ppf -> continue ()) wrap_content Location.pp location);
-    list_ne = (fun _visitor continue () (first, lst) ->
+    (* list_ne = (fun _visitor continue () (first, lst) ->
       let aux ppf elt =
         fprintf ppf "%a" (fun _ppf -> continue ()) elt in
-      fprintf ppf "[@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) (first::lst));
+      fprintf ppf "[@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) (first::lst)); *)
     option = (fun _visitor continue () o ->
       match o with
       | None -> fprintf ppf "None"

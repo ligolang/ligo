@@ -10,7 +10,7 @@ let unbound_type_variable (e:environment) (tv:I.type_variable) (loc:Location.t) 
   let data = [
       ("variable" , fun () -> Format.asprintf "%a" I.PP.type_variable tv) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc) ;
-      ("in" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e)
+      ("in" , fun () -> Format.asprintf "%a" Environment.PP.environment e)
     ] in
   error ~data title message ()
 
@@ -20,7 +20,7 @@ let unbound_variable (e:environment) (n:I.expression_variable) (loc:Location.t) 
   let message () = "" in
   let data = [
       ("variable" , name) ;
-      ("environment" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e) ;
+      ("environment" , fun () -> Format.asprintf "%a" Environment.PP.environment e) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
   error ~data title message ()
@@ -60,7 +60,7 @@ let unbound_constructor (e:environment) (c:I.constructor') (loc:Location.t) () =
   let message () = "" in
   let data = [
       ("constructor" , fun () -> Format.asprintf "%a" I.PP.constructor c) ;
-      ("environment" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e) ;
+      ("environment" , fun () -> Format.asprintf "%a" Environment.PP.environment e) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
   error ~data title message ()
