@@ -29,7 +29,6 @@
   },
   "dependencies": {
     "@docusaurus/plugin-sitemap": "^2.0.0-alpha.37",
-    "@ligo/syntax": "file:src/@ligo/syntax",
-    "@ligolang/compact-ligo-ide": "^3.0.3"
+    "@ligo/syntax": "file:src/@ligo/syntax"
   }
 }
