@@ -61,15 +61,15 @@ and pp_pattern = function
 
 and pp_pconstr = function
   PNone      _ -> string "None"
-| PSomeApp   p -> pp_some p
-| PConstrApp a -> pp_c_app a
+| PSomeApp   p -> pp_patt_some p
+| PConstrApp a -> pp_patt_c_app a
 
-and pp_c_app Region.{value; _} =
+and pp_patt_c_app Region.{value; _} =
   match value with
     constr, None -> pp_string constr
-  | constr, Some pat -> pp_string constr ^/^ pp_pattern pat
+  | constr, Some pat -> pp_string constr ^^ pp_pattern pat
 
-and pp_some Region.{value; _} =
+and pp_patt_some Region.{value; _} =
   string "Some" ^/^ pp_pattern (snd value)
 
 and pp_int Region.{value; _} =
@@ -220,12 +220,16 @@ and pp_list_expr = function
 | EListComp e -> pp_injection pp_expr e
 
 and pp_injection printer Region.{value; _} =
-  let {compound; elements; _} = value in
+  let {compound; elements; terminator} = value in
   let elements = pp_sepseq ";" elements in
-  match pp_compound compound with
-    None -> elements
-  | Some (opening, closing) ->
-      string opening ^^ elements ^^ string closing
+  let doc =
+    match pp_compound compound with
+      None -> elements
+    | Some (opening, closing) ->
+       string opening ^^ elements ^^ string closing
+  in match terminator with
+         None -> doc
+     | Some _ -> doc ^^ string ";"
 
 and pp_compound = function
   BeginEnd (start, _) ->
@@ -239,9 +243,42 @@ and pp_sepseq sep elements =
   and sep   = string ";" ^/^ break 1
   in separate_map sep pp_expr exprs
 
+and pp_constr_expr = function
+  ENone      _ -> string "None"
+| ESomeApp   a -> pp_some a
+| EConstrApp a -> pp_constr_app a
 
-and pp_constr_expr _ = string "TODO:pp_constr_expr"
-and pp_record_expr _ = string "TODO:pp_record_expr"
+and pp_some Region.{value=_, e; _} = string "Some" ^^ pp_expr e
+
+and pp_constr_app Region.{value; _} =
+  let constr, arg = value in
+  let constr = string constr.value in
+  match arg with
+      None -> constr
+  | Some e -> constr ^^ pp_expr e
+
+and pp_record_expr ne_inj = pp_ne_injection pp_field_assign ne_inj
+
+and pp_field_assign e =
+  string "TODO:pp_field_assign"
+
+and pp_ne_injection printer Region.{value; _} =
+  let {compound; ne_elements; terminator} = value in
+  let elements = pp_nsepseq printer ";" ne_elements in
+  let doc =
+    match pp_compound compound with
+      None -> elements
+    | Some (opening, closing) ->
+       string opening ^^ elements ^^ string closing
+  in match terminator with
+         None -> doc
+     | Some _ -> doc ^^ string ";"
+
+and pp_nsepseq printer sep elements =
+  let elems = Utils.nsepseq_to_list elements
+  and sep   = string ";" ^/^ break 1
+  in separate_map sep printer elems
+
 and pp_projection _ = string "TODO:pp_projection"
 and pp_update _ = string "TODO:pp_update"
 and pp_call_expr _ = string "TODO:pp_call_expr"
