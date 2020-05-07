@@ -72,9 +72,14 @@ and pp_c_app Region.{value; _} =
 and pp_some Region.{value; _} =
   string "Some" ^/^ pp_pattern (snd value)
 
-and pp_int Region.{value; _} = string (fst value)
-and pp_nat Region.{value; _} = string (fst value)
-and pp_bytes Region.{value; _} = string (fst value)
+and pp_int Region.{value; _} =
+  string (Z.to_string (snd value))
+
+and pp_nat Region.{value; _} =
+  string (Z.to_string (snd value) ^ "n")
+
+and pp_bytes Region.{value; _} =
+  string ("0x" ^ Hex.show (snd value))
 
 and pp_ppar Region.{value; _} =
   let {lpar; inside; rpar} = value in
@@ -141,13 +146,100 @@ and pp_expr = function
 | EFun    e -> pp_fun e
 | ESeq    e -> pp_seq e
 
-and pp_case_expr _ = string "TODO:pp_case_expr"
-and pp_cond_expr _ = string "TODO:pp_cond_expr"
-and pp_annot_expr _ = string "TODO:pp_annot_expr"
-and pp_logic_expr _ = string "TODO:pp_logic_expr"
-and pp_arith_expr _ = string "TODO:pp_arith_expr"
-and pp_string_expr _ = string "TODO:pp_string_expr"
-and pp_list_expr _ = string "TODO:pp_list_expr"
+and pp_case_expr Region.{value; _} =
+  let {expr; cases; _} = value in
+  string "match " ^^ pp_expr expr ^/^ string "with" ^/^ pp_cases cases
+
+and pp_cases Region.{value; _} =
+  let cases = Utils.nsepseq_to_list value
+  and sep   = break 1 ^^ string "| "
+  in separate_map sep pp_clause cases
+
+and pp_clause Region.{value; _} =
+  let {pattern; rhs; _} = value in
+  pp_pattern pattern ^^ string " ->" ^/^ pp_expr rhs
+
+and pp_cond_expr Region.{value; _} =
+  let {test; ifso; kwd_else; ifnot; _} = value in
+  let if_then = string "if " ^^ pp_expr test
+                ^/^ string "then " ^^ pp_expr ifso in
+  if kwd_else#is_ghost then if_then
+  else if_then ^/^ string "else " ^^ pp_expr ifnot
+
+and pp_annot_expr Region.{value; _} =
+  let expr, _, type_expr = value.inside in
+  string "(" ^^ pp_expr expr ^^ string " :"
+  ^/^ pp_type_expr type_expr ^^ string ")"
+
+and pp_logic_expr = function
+  BoolExpr e -> pp_bool_expr e
+| CompExpr e -> pp_comp_expr e
+
+and pp_bool_expr = function
+  Or   e  -> pp_bin_op "||" e
+| And  e  -> pp_bin_op "&&" e
+| Not  e  -> pp_un_op "not" e
+| True  _ -> string "true"
+| False _ -> string "false"
+
+and pp_bin_op op Region.{value; _} =
+  let {arg1; arg2; _} = value
+  in pp_expr arg1 ^/^ string (op ^ " ") ^^ pp_expr arg2
+
+and pp_un_op op Region.{value; _} =
+  string (op ^ " ") ^^ pp_expr value.arg
+
+and pp_comp_expr = function
+  Lt    e -> pp_bin_op "<"  e
+| Leq   e -> pp_bin_op "<=" e
+| Gt    e -> pp_bin_op ">"  e
+| Geq   e -> pp_bin_op ">=" e
+| Equal e -> pp_bin_op "="  e
+| Neq   e -> pp_bin_op "<>" e
+
+and pp_arith_expr = function
+  Add   e -> pp_bin_op "+" e
+| Sub   e -> pp_bin_op "-" e
+| Mult  e -> pp_bin_op "*" e
+| Div   e -> pp_bin_op "/" e
+| Mod   e -> pp_bin_op "mod" e
+| Neg   e -> pp_un_op "-" e
+| Int   e -> pp_int e
+| Nat   e -> pp_nat e
+| Mutez e -> pp_mutez e
+
+and pp_mutez Region.{value; _} =
+  string (Z.to_string (snd value) ^ "mutez")
+
+and pp_string_expr = function
+     Cat e -> pp_bin_op "^" e
+| String e -> pp_string e
+
+and pp_list_expr = function
+      ECons e -> pp_bin_op "::" e
+| EListComp e -> pp_injection pp_expr e
+
+and pp_injection printer Region.{value; _} =
+  let {compound; elements; _} = value in
+  let elements = pp_sepseq ";" elements in
+  match pp_compound compound with
+    None -> elements
+  | Some (opening, closing) ->
+      string opening ^^ elements ^^ string closing
+
+and pp_compound = function
+  BeginEnd (start, _) ->
+    if start#is_ghost then None
+    else Some ("begin", "end")
+| Braces _ -> Some ("{","}")
+| Brackets _ -> Some ("[","]")
+
+and pp_sepseq sep elements =
+  let exprs = Utils.sepseq_to_list elements
+  and sep   = string ";" ^/^ break 1
+  in separate_map sep pp_expr exprs
+
+
 and pp_constr_expr _ = string "TODO:pp_constr_expr"
 and pp_record_expr _ = string "TODO:pp_record_expr"
 and pp_projection _ = string "TODO:pp_projection"
@@ -176,7 +268,7 @@ and pp_cartesian Region.{value; _} =
 
 and pp_variants Region.{value; _} =
   let variants = Utils.nsepseq_to_list value
-  and sep      = string " |" ^^ break 1 in
+  and sep      = break 1 ^^ string "| " in
   separate_map sep pp_variant variants
 
 and pp_variant Region.{value; _} =
@@ -184,7 +276,7 @@ and pp_variant Region.{value; _} =
   match arg with
     None -> pp_string constr
   | Some (_, t_expr) ->
-     pp_string constr ^^ string " of" ^/^ pp_type_expr t_expr
+      pp_string constr ^^ string " of" ^/^ pp_type_expr t_expr
 
 and pp_fields Region.{value; _} =
   let fields = value.ne_elements in
