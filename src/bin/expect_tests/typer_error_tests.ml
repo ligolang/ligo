@@ -119,7 +119,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_5.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "error_typer_5.mligo", line 1, characters 10-17. unbound type variable:  {"variable":"boolean","location":"in file \"error_typer_5.mligo\", line 1, characters 10-17","in":"- E[]\tT[] - E[]\tT[bool -> sum[false -> unit , true -> unit]]]","did_you_mean":"bool"}
+    ligo: in file "error_typer_5.mligo", line 1, characters 10-17. unbound type variable:  {"variable":"boolean","location":"in file \"error_typer_5.mligo\", line 1, characters 10-17","in":"- E[]\tT[bool -> sum[false -> unit , true -> unit]]","did_you_mean":"bool"}
 
 
      If you're not sure how to fix this error, you can

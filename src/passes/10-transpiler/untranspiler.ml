@@ -48,13 +48,13 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
         let%bind b =
           trace_strong (wrong_mini_c_value "bool" v) @@
           get_bool v in
-        return (e_bool b Environment.full_empty)
+        return (e_bool b Environment.empty)
       )
   | t when (compare t (t_bool ()).type_content) = 0-> (
         let%bind b =
           trace_strong (wrong_mini_c_value "bool" v) @@
           get_bool v in
-        return (e_bool b Environment.full_empty)
+        return (e_bool b Environment.empty)
       )
   | T_constant type_constant -> (
     match type_constant with

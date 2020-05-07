@@ -255,7 +255,7 @@ end
  *   let empty : bindings = []
  *   let of_list : string list -> bindings = fun x -> x
  * 
- *   let rec expression : bindings -> full_environment -> expression -> bindings = fun b _env e ->
+ *   let rec expression : bindings -> environment -> expression -> bindings = fun b _env e ->
  *     let self = annotated_expression b in
  *     match e with
  *     | E_lambda l ->
@@ -519,7 +519,7 @@ let get_entry (lst : program) (name : string) : expression result =
   in
   List.find_map aux lst
 
-let program_environment (program : program) : full_environment =
+let program_environment (program : program) : environment =
   let last_declaration = Location.unwrap List.(hd @@ rev program) in
   match last_declaration with
   | Declaration_constant { binder=_ ; expr=_ ; inline=_ ; post_env } -> post_env
