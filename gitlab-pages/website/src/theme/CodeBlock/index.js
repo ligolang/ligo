@@ -8,7 +8,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import classnames from 'classnames';
 import Highlight, { defaultProps } from 'prism-react-renderer';
-import { CompactLigoIde } from '@ligolang/compact-ligo-ide';
 
 const { Prism } = require("prism-react-renderer");
 
@@ -139,21 +138,6 @@ export default ({ children, className: languageClassName, metastring }) => {
       }
     };
   }, [button.current, target.current]);
-
-  // Compact Ligo IDE support - begin
-  if (languageClassName === 'language-compactLigoIde') {
-    const theme = isDarkTheme ? 'dark' : 'light';
-    const webIdeUrlRegex = /webIdeUrl=(.*)/;
-
-    if (metastring && webIdeUrlRegex.test(metastring)) {
-      const webIdeUrl = metastring.match(webIdeUrlRegex)[1];
-
-      return <CompactLigoIde webIdeUrl={webIdeUrl} theme={theme}>{children}</CompactLigoIde>
-    }
-
-    return <CompactLigoIde theme={theme}>{children}</CompactLigoIde>
-  }
-  // Compact Ligo IDE support -- end
 
   let language =
     languageClassName && languageClassName.replace(/language-/, '');
