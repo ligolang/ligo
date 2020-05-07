@@ -48,7 +48,6 @@ typedecl = do
 vardecl :: Parser (Binding ASTInfo)
 vardecl = do
   subtree "var_decl" do
-    dump
     ctor Var
       <*> inside "name"  name
       <*> inside "type"  type_
@@ -179,7 +178,6 @@ lambda_expr = do
 
 seq_expr = do
   subtree "block" do
-    dump
     ctor Seq <*> do
       many "statement" do
         inside "statement" do
@@ -229,7 +227,6 @@ skip = do
 case_action :: Parser (Expr ASTInfo)
 case_action = do
   subtree "case_instr" do
-    dump
     ctor Case
       <*> inside "subject" expr
       <*> many "case" do

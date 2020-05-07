@@ -39,24 +39,22 @@ foreign import ccall unsafe tree_sitter_PascaLigo :: Ptr Language
 getNodeTypesPath :: IO FilePath
 getNodeTypesPath = getDataFileName "../pascaligo/src/node-types.json"
 
+-- | The tree tree-sitter produces.
 data ParseTree = ParseTree
-  { ptID       :: Int
-  , ptName     :: Text.Text
-  , ptRange    :: Range
-  , ptChildren :: ParseForest
+  { ptID       :: Int          -- ^ Unique number, for fast comparison.
+  , ptName     :: Text.Text    -- ^ Name of the node.
+  , ptRange    :: Range        -- ^ Range of the node.
+  , ptChildren :: ParseForest  -- ^ Subtrees.
   }
+  deriving (Show) via PP ParseTree
 
+-- ^ The forest we work with.
 data ParseForest = Forest
-  { pfID    :: Int
-  , pfGrove :: [(Text.Text, ParseTree)]
-  , pfRange :: Range
+  { pfID    :: Int                       -- ^ Unique number for comparison.
+  , pfGrove :: [(Text.Text, ParseTree)]  -- ^ Subtrees.
+  , pfRange :: Range                     -- ^ Full range of the forest.
   }
-
-instance Show ParseTree where
-  show = show . pp
-
-instance Show ParseForest where
-  show = show . pp
+  deriving (Show) via PP ParseForest
 
 instance Pretty ParseTree where
   pp (ParseTree _ n r forest) =
@@ -75,6 +73,7 @@ instance Pretty ParseForest where
         then nest 2 $ pp tree
         else hang (text (Text.unpack field) <> ": ") 2 (pp tree)
 
+-- | Feed file contents into PascaLIGO grammar recogniser.
 toParseTree :: FilePath -> IO ParseForest
 toParseTree fin = do
   parser <- ts_parser_new
