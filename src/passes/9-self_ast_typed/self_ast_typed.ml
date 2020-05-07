@@ -1,7 +1,8 @@
 open Trace
 
 let all_passes = [
-  Tail_recursion.peephole_expression
+  Tail_recursion.peephole_expression ;
+  Michelson_layout.peephole_expression ;
 ]
 
 let contract_passes = [

@@ -292,7 +292,7 @@ let interpret =
         let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
         let      env             = Ast_typed.program_environment typed_prg in
         ok (mini_c_prg,state,env)
-      | None -> ok ([],Typer.Solver.initial_state,Ast_typed.Environment.full_empty) in
+      | None -> ok ([],Typer.Solver.initial_state,Environment.default) in
 
     let%bind (typed_exp,_)  = Compile.Utils.type_expression init_file syntax expression env state in
     let%bind mini_c_exp     = Compile.Of_typed.compile_expression typed_exp in
@@ -436,7 +436,7 @@ let evaluate_value =
 let compile_expression =
   let f expression syntax display_format michelson_format =
     toplevel ~display_format @@
-    let      env      = Ast_typed.Environment.full_empty in
+    let      env      = Environment.default in
     let      state    = Typer.Solver.initial_state in
     let%bind compiled_exp  = Compile.Utils.compile_expression None syntax expression env state in
     let%bind value         = Run.evaluate_expression compiled_exp.expr compiled_exp.expr_ty in

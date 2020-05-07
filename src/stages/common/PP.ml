@@ -125,6 +125,10 @@ let constant ppf : constant' -> unit = function
   | C_IMPLICIT_ACCOUNT      -> fprintf ppf "IMPLICIT_ACCOUNT"
   | C_SET_DELEGATE          -> fprintf ppf "SET_DELEGATE"
   | C_CREATE_CONTRACT       -> fprintf ppf "CREATE_CONTRACT"
+  | C_CONVERT_TO_RIGHT_COMB -> fprintf ppf "CONVERT_TO_RIGHT_COMB"
+  | C_CONVERT_TO_LEFT_COMB  -> fprintf ppf "CONVERT_TO_LEFT_COMB"
+  | C_CONVERT_FROM_RIGHT_COMB -> fprintf ppf "CONVERT_FROM_RIGHT_COMB"
+  | C_CONVERT_FROM_LEFT_COMB  -> fprintf ppf "CONVERT_FROM_LEFT_COMB"
 
 let literal ppf (l : literal) =
   match l with
@@ -250,6 +254,10 @@ module Ast_PP_type (PARAMETER : AST_PARAMETER_TYPE) = struct
       | TC_big_map (k, v) -> Format.asprintf "Big Map (%a,%a)" f k f v
       | TC_map_or_big_map (k, v) -> Format.asprintf "Map Or Big Map (%a,%a)" f k f v
       | TC_contract te  -> Format.asprintf "Contract (%a)" f te
+      | TC_michelson_pair_right_comb c -> Format.asprintf "michelson_pair_right_comb (%a)" f c
+      | TC_michelson_pair_left_comb c -> Format.asprintf "michelson_pair_left_comb (%a)" f c
+      | TC_michelson_or_right_comb c -> Format.asprintf "michelson_or_right_comb (%a)" f c
+      | TC_michelson_or_left_comb c -> Format.asprintf "michelson_or_left_comb (%a)" f c
     in
     fprintf ppf "(type_operator: %s)" s
 end

@@ -12,6 +12,22 @@ module Solver = Typer_new.Solver
 type environment = Environment.t
 
 module Errors = struct
+  let michelson_comb_no_record (loc:Location.t) () =
+    let title = (thunk "bad michelson_pair_right_comb type parameter") in
+    let message () = "michelson_pair_right_comb type operator must be used on a record type" in
+    let data = [
+      ("location" , fun () -> Format.asprintf "%a" Location.pp loc) ;
+    ] in
+    error ~data title message ()
+
+  let michelson_comb_no_variant (loc:Location.t) () =
+    let title = (thunk "bad michelson_or_right_comb type parameter") in
+    let message () = "michelson_or_right_comb type operator must be used on a variant type" in
+    let data = [
+      ("location" , fun () -> Format.asprintf "%a" Location.pp loc) ;
+    ] in
+    error ~data title message ()
+
   let unbound_type_variable (e:environment) (tv:I.type_variable) (loc:Location.t) () =
     let name = Var.to_name tv in
     let suggestion = match name with
@@ -192,7 +208,7 @@ module Errors = struct
     ] in
     error ~data title message ()
 
-  let type_error ?(msg="") ~(expected: O.type_expression) ~(actual: O.type_expression) ~(expression : I.expression) (loc:Location.t) () =
+  let _type_error ?(msg="") ~(expected: O.type_expression) ~(actual: O.type_expression) ~(expression : I.expression) (loc:Location.t) () =
     let title = (thunk "type error") in
     let message () = msg in
     let data = [
@@ -350,6 +366,10 @@ let convert_constant' : I.constant' -> O.constant' = function
   | C_IMPLICIT_ACCOUNT -> C_IMPLICIT_ACCOUNT
   | C_SET_DELEGATE -> C_SET_DELEGATE
   | C_CREATE_CONTRACT -> C_CREATE_CONTRACT
+  | C_CONVERT_TO_LEFT_COMB -> C_CONVERT_TO_LEFT_COMB
+  | C_CONVERT_TO_RIGHT_COMB -> C_CONVERT_TO_RIGHT_COMB
+  | C_CONVERT_FROM_LEFT_COMB -> C_CONVERT_FROM_LEFT_COMB
+  | C_CONVERT_FROM_RIGHT_COMB -> C_CONVERT_FROM_RIGHT_COMB
 
 let unconvert_constant' : O.constant' -> I.constant' = function
   | C_INT -> C_INT
@@ -465,6 +485,10 @@ let unconvert_constant' : O.constant' -> I.constant' = function
   | C_IMPLICIT_ACCOUNT -> C_IMPLICIT_ACCOUNT
   | C_SET_DELEGATE -> C_SET_DELEGATE
   | C_CREATE_CONTRACT -> C_CREATE_CONTRACT
+  | C_CONVERT_TO_LEFT_COMB -> C_CONVERT_TO_LEFT_COMB
+  | C_CONVERT_TO_RIGHT_COMB -> C_CONVERT_TO_RIGHT_COMB
+  | C_CONVERT_FROM_LEFT_COMB -> C_CONVERT_FROM_LEFT_COMB
+  | C_CONVERT_FROM_RIGHT_COMB -> C_CONVERT_FROM_RIGHT_COMB
 
 let rec type_program (p:I.program) : (O.program * O.typer_state) result =
   let aux (e, acc:(environment * O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
@@ -495,7 +519,7 @@ and type_declaration env (_placeholder_for_state_of_new_typer : O.typer_state) :
     )
 
 and type_match : (environment -> I.expression -> O.expression result) -> environment -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> O.matching_expr result =
-  fun f e t i ae loc -> match i with
+  fun f e t i _ae loc -> match i with
   | Match_option {match_none ; match_some} ->
       let%bind tv =
         trace_strong (match_error ~expected:i ~actual:t loc)
@@ -527,59 +551,32 @@ and type_match : (environment -> I.expression -> O.expression result) -> environ
       let%bind body = f e' b in
       ok (O.Match_tuple { vars ; body ; tvs})
   | Match_variant (lst,_) ->
-      let%bind variant_opt =
-        let aux acc ((constructor_name , _) , _) =
-          let%bind (_ , variant) =
-            trace_option (unbound_constructor e constructor_name loc) @@
-            Environment.get_constructor constructor_name e in
-          let%bind acc = match acc with
-            | None -> ok (Some variant)
-            | Some variant' -> (
-                trace (type_error
-                         ~msg:"in match variant"
-                         ~expected:variant
-                         ~actual:variant'
-                         ~expression:ae
-                         loc
-                      ) @@
-                Ast_typed.assert_type_expression_eq (variant , variant') >>? fun () ->
-                ok (Some variant)
-              ) in
-          ok acc in
-        trace (simple_info "in match variant") @@
-        bind_fold_list aux None lst in
-      let%bind tv =
-        trace_option (match_empty_variant i loc) @@
-        variant_opt in
-      let%bind () =
-        let%bind variant_cases' =
-          trace (match_error ~expected:i ~actual:t loc)
-          @@ Ast_typed.Combinators.get_t_sum tv in
-        let variant_cases = List.map fst @@ O.CMap.to_kv_list variant_cases' in
-        let match_cases = List.map (fun x -> convert_constructor' @@ fst @@ fst x) lst in
-        let test_case = fun c ->
-          Assert.assert_true (List.mem c match_cases)
-        in
-        let%bind () =
-          trace_strong (match_missing_case i loc) @@
-          bind_iter_list test_case variant_cases in
-        let%bind () =
-          trace_strong (match_redundant_case i loc) @@
-          Assert.assert_true List.(length variant_cases = length match_cases) in
-        ok ()
+      let%bind variant_cases' =
+        trace (match_error ~expected:i ~actual:t loc)
+        @@ Ast_typed.Combinators.get_t_sum t in
+      let variant_cases = List.map fst @@ O.CMap.to_kv_list variant_cases' in
+      let match_cases = List.map (fun x -> convert_constructor' @@ fst @@ fst x) lst in
+      let test_case = fun c ->
+        Assert.assert_true (List.mem c match_cases)
       in
+      let%bind () =
+        trace_strong (match_missing_case i loc) @@
+        bind_iter_list test_case variant_cases in
+      let%bind () =
+        trace_strong (match_redundant_case i loc) @@
+        Assert.assert_true List.(length variant_cases = length match_cases) in
       let%bind cases =
         let aux ((constructor_name , pattern) , b) =
-          let%bind (constructor , _) =
+          let%bind {ctor_type=constructor;_} =
             trace_option (unbound_constructor e constructor_name loc) @@
-            Environment.get_constructor constructor_name e in
+            O.CMap.find_opt (convert_constructor' constructor_name) variant_cases' in
           let e' = Environment.add_ez_binder pattern constructor e in
           let%bind body = f e' b in
           let constructor = convert_constructor' constructor_name in
           ok ({constructor ; pattern ; body} : O.matching_content_case)
         in
         bind_map_list aux lst in
-      ok (O.Match_variant { cases ; tv })
+      ok (O.Match_variant { cases ; tv=t })
 
 and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression result =
   let return tv' = ok (make_t ~loc:t.location tv' (Some t)) in
@@ -589,7 +586,7 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
       let%bind type2 = evaluate_type e type2 in
       return (T_arrow {type1;type2})
   | T_sum m ->
-      let aux k ({ctor_type;michelson_annotation} : I.ctor_content) prev =
+      let aux k ({ctor_type;michelson_annotation;ctor_decl_pos} : I.ctor_content) prev =
         let%bind prev' = prev in
         let%bind ctor_type = evaluate_type e ctor_type in
         let%bind () = match Environment.get_constructor k e with
@@ -598,16 +595,16 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
               ok ()
             else fail (redundant_constructor e k)
           | None -> ok () in
-        let v' : O.ctor_content = {ctor_type;michelson_annotation} in
+        let v' : O.ctor_content = {ctor_type;michelson_annotation;ctor_decl_pos} in
         ok @@ O.CMap.add (convert_constructor' k) v' prev'
       in
       let%bind m = I.CMap.fold aux m (ok O.CMap.empty) in
       return (T_sum m)
   | T_record m ->
-      let aux k ({field_type;field_annotation}: I.field_content) prev =
+      let aux k ({field_type;field_annotation;field_decl_pos}: I.field_content) prev =
         let%bind prev' = prev in
         let%bind field_type = evaluate_type e field_type in
-        let v' = ({field_type;michelson_annotation=field_annotation} : O.field_content) in
+        let v' = ({field_type;michelson_annotation=field_annotation;field_decl_pos} : O.field_content) in
         ok @@ O.LMap.add (convert_label k) v' prev'
       in
       let%bind m = I.LMap.fold aux m (ok O.LMap.empty) in
@@ -619,34 +616,60 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
       ok tv
   | T_constant cst ->
       return (T_constant (convert_type_constant cst))
-  | T_operator opt ->
-      let%bind opt = match opt with
-        | TC_set s -> 
-            let%bind s = evaluate_type e s in 
-            ok @@ O.TC_set (s) 
-        | TC_option o -> 
-            let%bind o = evaluate_type e o in 
-            ok @@ O.TC_option (o) 
-        | TC_list l -> 
-            let%bind l = evaluate_type e l in 
-            ok @@ O.TC_list (l) 
-        | TC_map (k,v) ->
-            let%bind k = evaluate_type e k in 
-            let%bind v = evaluate_type e v in 
-            ok @@ O.TC_map {k;v}
-        | TC_big_map (k,v) ->
-            let%bind k = evaluate_type e k in 
-            let%bind v = evaluate_type e v in 
-            ok @@ O.TC_big_map {k;v}
-        | TC_map_or_big_map (k,v) ->
-            let%bind k = evaluate_type e k in 
-            let%bind v = evaluate_type e v in 
-            ok @@ O.TC_map_or_big_map {k;v}
-        | TC_contract c ->
-            let%bind c = evaluate_type e c in
-            ok @@ O.TC_contract c
-        in
-      return (T_operator (opt))
+  | T_operator opt -> ( match opt with
+    | TC_set s -> 
+        let%bind s = evaluate_type e s in 
+        return @@ T_operator (O.TC_set (s))
+    | TC_option o -> 
+        let%bind o = evaluate_type e o in 
+        return @@ T_operator (O.TC_option (o))
+    | TC_list l -> 
+        let%bind l = evaluate_type e l in 
+        return @@ T_operator (O.TC_list (l))
+    | TC_map (k,v) ->
+        let%bind k = evaluate_type e k in 
+        let%bind v = evaluate_type e v in 
+        return @@ T_operator (O.TC_map {k;v})
+    | TC_big_map (k,v) ->
+        let%bind k = evaluate_type e k in 
+        let%bind v = evaluate_type e v in 
+        return @@ T_operator (O.TC_big_map {k;v})
+    | TC_map_or_big_map (k,v) ->
+        let%bind k = evaluate_type e k in 
+        let%bind v = evaluate_type e v in 
+        return @@ T_operator (O.TC_map_or_big_map {k;v})
+    | TC_contract c ->
+        let%bind c = evaluate_type e c in
+        return @@ T_operator (O.TC_contract c)
+    | TC_michelson_pair_right_comb c ->
+        let%bind c' = evaluate_type e c in
+        let%bind lmap = match c'.type_content with
+          | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap)) -> ok lmap
+          | _ -> fail (michelson_comb_no_record t.location) in
+        let record = Operators.Typer.Converter.convert_pair_to_right_comb (Ast_typed.LMap.to_kv_list lmap) in
+        return @@ record
+    | TC_michelson_pair_left_comb c ->
+        let%bind c' = evaluate_type e c in
+        let%bind lmap = match c'.type_content with
+          | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap)) -> ok lmap
+          | _ -> fail (michelson_comb_no_record t.location) in
+        let record = Operators.Typer.Converter.convert_pair_to_left_comb (Ast_typed.LMap.to_kv_list lmap) in
+        return @@ record
+    | TC_michelson_or_right_comb c ->
+        let%bind c' = evaluate_type e c in
+        let%bind cmap = match c'.type_content with
+          | T_sum cmap -> ok cmap
+          | _ -> fail (michelson_comb_no_variant t.location) in
+        let pair = Operators.Typer.Converter.convert_variant_to_right_comb (Ast_typed.CMap.to_kv_list cmap) in
+        return @@ pair
+    | TC_michelson_or_left_comb c ->
+        let%bind c' = evaluate_type e c in
+        let%bind cmap = match c'.type_content with
+          | T_sum cmap -> ok cmap
+          | _ -> fail (michelson_comb_no_variant t.location) in
+        let pair = Operators.Typer.Converter.convert_variant_to_left_comb (Ast_typed.CMap.to_kv_list cmap) in
+        return @@ pair
+  )
 
 and type_expression : environment -> O.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * O.typer_state) result
   = fun e _placeholder_for_state_of_new_typer ?tv_opt ae ->
@@ -759,7 +782,10 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
         ok (O.LMap.add (convert_label k) expr' prev)
       in
       let%bind m' = Stage_common.Helpers.bind_fold_lmap aux (ok O.LMap.empty) m in
-      let lmap = O.LMap.map (fun e -> ({field_type = get_type_expression e; michelson_annotation = None}:O.field_content)) m' in
+      (* let () = match tv_opt with
+        Some _ -> Format.printf "YES"
+       | None -> Format.printf "NO" in *)
+      let lmap = O.LMap.map (fun e -> ({field_type = get_type_expression e; michelson_annotation = None; field_decl_pos=0}:O.field_content)) m' in
       return (E_record m') (t_record lmap ())
   | E_record_update {record; path; update} ->
     let path = convert_label path in

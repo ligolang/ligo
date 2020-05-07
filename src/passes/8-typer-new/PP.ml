@@ -2,7 +2,7 @@ open Ast_typed
 open Format
 module UF = UnionFind.Poly2
 
-let type_constraint : _ -> type_constraint_simpl -> unit = fun ppf ->
+let type_constraint_ : _ -> type_constraint_simpl_ -> unit = fun ppf ->
   function
   |SC_Constructor { tv; c_tag; tv_list=_ } ->
     let ct = match c_tag with
@@ -33,6 +33,9 @@ let type_constraint : _ -> type_constraint_simpl -> unit = fun ppf ->
   |SC_Alias       { a; b } -> fprintf ppf "Alias %a %a" Var.pp a Var.pp b
   |SC_Poly        _ -> fprintf ppf "Poly"
   |SC_Typeclass   _ -> fprintf ppf "TC"
+
+let type_constraint : _ -> type_constraint_simpl -> unit = fun ppf { reason_simpl ; c_simpl } ->
+  fprintf ppf "%a (reason: %s)" type_constraint_ c_simpl reason_simpl
 
 let all_constraints ppf ac =
   fprintf ppf "[%a]" (pp_print_list ~pp_sep:(fun ppf () -> fprintf ppf ";\n") type_constraint) ac

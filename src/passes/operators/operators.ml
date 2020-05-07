@@ -58,8 +58,11 @@ module Concrete_to_imperative = struct
     | "set"          -> Some (TC_set unit_expr)
     | "map"          -> Some (TC_map (unit_expr,unit_expr))
     | "big_map"      -> Some (TC_big_map (unit_expr,unit_expr))
-    | "michelson_or" -> Some (TC_michelson_or (unit_expr,"",unit_expr,""))
     | "contract"     -> Some (TC_contract unit_expr)
+    | "michelson_pair_right_comb" -> Some (TC_michelson_pair_right_comb unit_expr)
+    | "michelson_pair_left_comb" -> Some (TC_michelson_pair_left_comb unit_expr)
+    | "michelson_or_right_comb" -> Some (TC_michelson_or_right_comb unit_expr)
+    | "michelson_or_left_comb" -> Some (TC_michelson_or_left_comb unit_expr)
     | _              -> None
 
   let pseudo_modules = function
@@ -155,6 +158,13 @@ module Concrete_to_imperative = struct
     | "String.slice"    -> Some C_SLICE (* Deprecated *)
     | "String.sub"      -> Some C_SLICE
     | "String.concat"   -> Some C_CONCAT
+
+    (* michelson pair/or type converter module *)
+
+    | "Layout.convert_to_right_comb" -> Some C_CONVERT_TO_RIGHT_COMB
+    | "Layout.convert_to_left_comb" -> Some C_CONVERT_TO_LEFT_COMB
+    | "Layout.convert_from_right_comb" -> Some C_CONVERT_FROM_RIGHT_COMB
+    | "Layout.convert_from_left_comb" -> Some C_CONVERT_FROM_LEFT_COMB
 
     | _ -> None
 
@@ -271,6 +281,9 @@ module Concrete_to_imperative = struct
 
     | "assert"          -> Some C_ASSERTION
     | "size"            -> Some C_SIZE (* Deprecated *)
+    
+    | "Layout.convert_to_right_comb" -> Some C_CONVERT_TO_RIGHT_COMB
+    | "Layout.convert_to_left_comb" -> Some C_CONVERT_TO_LEFT_COMB
 
     | _ as c            -> pseudo_modules c
 
@@ -415,6 +428,8 @@ module Typer = struct
 
   open Helpers.Typer
   open Ast_typed
+
+  module Converter = Converter
 
   module Operators_types = struct
     open Typesystem.Shorthands
@@ -591,7 +606,7 @@ module Typer = struct
       | C_SELF_ADDRESS        -> ok @@ t_self_address;
       | C_IMPLICIT_ACCOUNT    -> ok @@ t_implicit_account;
       | C_SET_DELEGATE        -> ok @@ t_set_delegate ;
-      | c                     -> simple_fail @@ Format.asprintf "Typer not implemented for consant %a" Ast_typed.PP.constant c
+      | c                     -> simple_fail @@ Format.asprintf "Typer not implemented for constant %a" Ast_typed.PP.constant c
   end
 
   let none = typer_0 "NONE" @@ fun tv_opt ->
@@ -1155,6 +1170,62 @@ module Typer = struct
     let%bind () = assert_eq_1 hd elt in
     ok tl
 
+  let convert_to_right_comb = typer_1 "CONVERT_TO_RIGHT_COMB" @@ fun t ->
+    match t.type_content with
+      | T_record lmap ->
+        let kvl = LMap.to_kv_list lmap in
+        let%bind () = Converter.record_checks kvl in
+        let pair = Converter.convert_pair_to_right_comb kvl in
+        ok {t with type_content = pair}
+      | T_sum cmap ->
+        let kvl = CMap.to_kv_list cmap in
+        let%bind () = Converter.variant_checks kvl in
+        let michelson_or = Converter.convert_variant_to_right_comb kvl in
+        ok {t with type_content = michelson_or}
+      | _ -> simple_fail "converter can only be used on record or variants"
+
+  let convert_to_left_comb = typer_1 "CONVERT_TO_LEFT_COMB" @@ fun t ->
+    match t.type_content with
+      | T_record lmap ->
+        let kvl =  LMap.to_kv_list lmap in
+        let%bind () = Converter.record_checks kvl in
+        let pair = Converter.convert_pair_to_left_comb kvl in
+        ok {t with type_content = pair}
+      | T_sum cmap ->
+        let kvl = CMap.to_kv_list cmap in
+        let%bind () = Converter.variant_checks kvl in
+        let michelson_or = Converter.convert_variant_to_left_comb kvl in
+        ok {t with type_content = michelson_or}
+      | _ -> simple_fail "converter can only be used on record or variants"
+
+  let convert_from_right_comb = typer_1_opt "CONVERT_FROM_RIGHT_COMB" @@ fun t opt ->
+    match t.type_content with
+      | T_record src_lmap ->
+        let%bind dst_t = trace_option (simple_error "convert_from_right_comb must be annotated") opt in
+        let%bind dst_lmap = get_t_record dst_t in
+        let%bind record = Converter.convert_pair_from_right_comb src_lmap dst_lmap in
+        ok {t with type_content = record}
+      | T_sum src_cmap ->
+        let%bind dst_t = trace_option (simple_error "convert_from_right_comb must be annotated") opt in
+        let%bind dst_cmap = get_t_sum dst_t in
+        let%bind variant = Converter.convert_variant_from_right_comb src_cmap dst_cmap in
+        ok {t with type_content = variant}
+      | _ -> simple_fail "converter can only be used on record or variants"
+
+  let convert_from_left_comb = typer_1_opt "CONVERT_FROM_LEFT_COMB" @@ fun t opt ->
+    match t.type_content with
+      | T_record src_lmap ->
+        let%bind dst_t = trace_option (simple_error "convert_from_left_comb must be annotated") opt in
+        let%bind dst_lmap = get_t_record dst_t in
+        let%bind record = Converter.convert_pair_from_left_comb src_lmap dst_lmap in
+        ok {t with type_content = record}
+      | T_sum src_cmap ->
+        let%bind dst_t = trace_option (simple_error "convert_from_left_comb must be annotated") opt in
+        let%bind dst_cmap = get_t_sum dst_t in
+        let%bind variant = Converter.convert_variant_from_left_comb src_cmap dst_cmap in
+        ok {t with type_content = variant}
+      | _ -> simple_fail "converter can only be used on record or variants"
+  
   let constant_typers c : typer result = match c with
     | C_INT                 -> ok @@ int ;
     | C_UNIT                -> ok @@ unit ;
@@ -1247,7 +1318,11 @@ module Typer = struct
     | C_IMPLICIT_ACCOUNT    -> ok @@ implicit_account;
     | C_SET_DELEGATE        -> ok @@ set_delegate ;
     | C_CREATE_CONTRACT     -> ok @@ create_contract ;
-    | _                     -> simple_fail @@ Format.asprintf "Typer not implemented for consant %a" PP.constant c
+    | C_CONVERT_TO_RIGHT_COMB -> ok @@ convert_to_right_comb ;
+    | C_CONVERT_TO_LEFT_COMB  -> ok @@ convert_to_left_comb ;
+    | C_CONVERT_FROM_RIGHT_COMB -> ok @@ convert_from_right_comb ;
+    | C_CONVERT_FROM_LEFT_COMB  -> ok @@ convert_from_left_comb ;
+    | _                     -> simple_fail @@ Format.asprintf "Typer not implemented for constant %a" PP.constant c
 
 
 

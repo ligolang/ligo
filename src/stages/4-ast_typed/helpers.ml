@@ -163,7 +163,8 @@ let kv_list_of_record_or_tuple (m: _ LMap.t) =
 let remove_empty_annotation (ann : string option) : string option =
   match ann with
   | Some "" -> None
-  | _ -> ann
+  | Some ann -> Some (String.uncapitalize_ascii ann)
+  | None -> None
 
 let is_michelson_or (t: _ constructor_map) =
   CMap.cardinal t = 2 && 
@@ -174,8 +175,9 @@ let is_michelson_pair (t: _ label_map) =
   LMap.cardinal t = 2 && 
   let l = LMap.to_list t in
   List.fold_left
-    (fun prev {field_type=_;michelson_annotation} -> match michelson_annotation with
+    (fun prev {michelson_annotation;_} -> match michelson_annotation with
       | Some _ -> true
       | None -> prev)
     false 
-    l
+    l &&
+  List.for_all (fun i -> LMap.mem i t) @@ (label_range 0 (LMap.cardinal t))

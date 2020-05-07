@@ -5,8 +5,8 @@ module Location = Simple_utils.Location
 include Stage_common.Types
 
 type type_content =
-  | T_sum of type_expression constructor_map
-  | T_record of type_expression label_map
+  | T_sum of ctor_content constructor_map
+  | T_record of field_content label_map
   | T_tuple  of type_expression list
   | T_arrow of arrow
   | T_variable of type_variable
@@ -14,6 +14,10 @@ type type_content =
   | T_operator of type_operator
 
 and arrow = {type1: type_expression; type2: type_expression}
+
+and field_content = {field_type : type_expression ; field_decl_pos : int} 
+
+and ctor_content = {ctor_type : type_expression ; ctor_decl_pos : int} 
 
 and michelson_prct_annotation = string
 
@@ -26,6 +30,10 @@ and type_operator =
   | TC_big_map of type_expression * type_expression
   | TC_michelson_or of type_expression * michelson_prct_annotation * type_expression * michelson_prct_annotation
   | TC_michelson_pair of type_expression * michelson_prct_annotation * type_expression * michelson_prct_annotation
+  | TC_michelson_or_right_comb of type_expression
+  | TC_michelson_or_left_comb of type_expression
+  | TC_michelson_pair_right_comb of type_expression
+  | TC_michelson_pair_left_comb of type_expression
 
 and type_expression = {type_content: type_content; location: Location.t}
 

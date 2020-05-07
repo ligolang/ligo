@@ -38,9 +38,9 @@ let t_option ?loc o       : type_expression = make_t ?loc @@ T_operator (TC_opti
 let t_list ?loc t         : type_expression = make_t ?loc @@ T_operator (TC_list t)
 let t_variable ?loc n     : type_expression = make_t ?loc @@ T_variable (Var.of_name n)
 let t_record_ez ?loc lst =
-  let lst = List.map (fun (k, v) -> (Label k, v)) lst in
+  let lst = List.mapi (fun i (k, v) -> (Label k, {field_type=v;field_decl_pos=i})) lst in
   let m = LMap.of_list lst in
-  make_t ?loc @@ T_record m
+  make_t ?loc @@ T_record (m:field_content label_map)
 let t_record ?loc m  : type_expression =
   let lst = Map.String.to_kv_list m in
   t_record_ez ?loc lst
@@ -49,9 +49,9 @@ let t_tuple ?loc lst    : type_expression = make_t ?loc @@ T_tuple lst
 let t_pair ?loc (a , b) : type_expression = t_tuple ?loc [a; b]
 
 let ez_t_sum ?loc (lst:(string * type_expression) list) : type_expression =
-  let aux prev (k, v) = CMap.add (Constructor k) v prev in
-  let map = List.fold_left aux CMap.empty lst in
-  make_t ?loc @@ T_sum map
+  let aux (prev,i) (k, v) = (CMap.add (Constructor k) {ctor_type=v;ctor_decl_pos=i} prev, i+1) in
+  let (map,_) = List.fold_left aux (CMap.empty,0) lst in
+  make_t ?loc @@ T_sum (map: ctor_content constructor_map)
 let t_sum ?loc m : type_expression =
   let lst = Map.String.to_kv_list m in
   ez_t_sum ?loc lst
@@ -63,6 +63,10 @@ let t_set ?loc key               : type_expression = make_t ?loc @@ T_operator (
 let t_contract ?loc contract     : type_expression = make_t ?loc @@ T_operator (TC_contract contract)
 let t_michelson_or ?loc l l_ann r r_ann : type_expression = make_t ?loc @@ T_operator (TC_michelson_or (l, l_ann, r, r_ann))
 let t_michelson_pair ?loc l l_ann r r_ann : type_expression = make_t ?loc @@ T_operator (TC_michelson_pair (l, l_ann, r, r_ann))
+let t_michelson_pair_right_comb ?loc c : type_expression = make_t ?loc @@ T_operator (TC_michelson_pair_right_comb c) 
+let t_michelson_pair_left_comb ?loc c : type_expression = make_t ?loc @@ T_operator (TC_michelson_pair_left_comb c) 
+let t_michelson_or_right_comb ?loc c : type_expression = make_t ?loc @@ T_operator (TC_michelson_or_right_comb c) 
+let t_michelson_or_left_comb ?loc c : type_expression = make_t ?loc @@ T_operator (TC_michelson_or_left_comb c) 
 
 (* TODO find a better way than using list*)
 let t_operator ?loc op lst: type_expression result =
@@ -74,6 +78,10 @@ let t_operator ?loc op lst: type_expression result =
   | TC_big_map (_,_) , [kt;vt] -> ok @@ t_big_map ?loc kt vt
   | TC_michelson_or (_,l_ann,_,r_ann) , [l;r] -> ok @@ t_michelson_or ?loc l l_ann r r_ann
   | TC_contract _    , [t] -> ok @@ t_contract t
+  | TC_michelson_pair_right_comb _ , [c] -> ok @@ t_michelson_pair_right_comb c
+  | TC_michelson_pair_left_comb _ , [c] -> ok @@ t_michelson_pair_left_comb c
+  | TC_michelson_or_right_comb _ , [c] -> ok @@ t_michelson_or_right_comb c
+  | TC_michelson_or_left_comb _ , [c] -> ok @@ t_michelson_or_left_comb c
   | _ , _ -> fail @@ bad_type_operator op
 
 let make_e ?(loc = Location.generated) expression_content =
