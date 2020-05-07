@@ -1,5 +1,10 @@
 
-{- TODO(kirill.andreev): add offsets to ranges, store verbatim in Wrong* -}
+{-
+  The AST and auxillary types along with their pretty-printers.
+
+  TODO: Untangle pretty-printing mess into combinators.
+  TODO: Store offending text verbatim in Wrong*.
+-}
 
 module AST.Types where
 
@@ -14,8 +19,6 @@ import ParseTree
 import Pretty
 
 import Debug.Trace
-
-type TODO = Text
 
 data Contract info
   = Contract      info [Declaration info]
@@ -86,6 +89,7 @@ data TField info
 
 instance Stubbed (TField info) where stub = WrongTField
 
+-- | TODO: break onto smaller types? Literals -> Constannt; mapOps; mmove Annots to Decls.
 data Expr info
   = Let       info [Declaration info] (Expr info)
   | Apply     info (Expr info) [Expr info]
@@ -295,6 +299,7 @@ instance Pretty (Variant i) where
     Variant _ ctor  _        -> "|" <+> pp ctor
     WrongVariant err -> pp err
 
+-- My eyes.
 instance Pretty (Expr i) where
   pp = \case
     Let       _ decls body -> "block {" $$ (nest 2 $ vcat $ punctuate "\n" $ map pp decls) $$ "}" $$ "with" $$ nest 2 (pp body)
@@ -396,5 +401,6 @@ instance Pretty (LHS i) where
     LHS _ qn mi -> pp qn <> foldMap (brackets . pp) mi
     WrongLHS err -> pp err
 
+-- TODO: Use it, make more alike.
 tuple :: Pretty p => [p] -> Doc
 tuple xs = parens (fsep $ punctuate "," $ map pp xs)

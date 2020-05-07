@@ -1,4 +1,42 @@
 
+{-
+  The thing that can untangle the mess that tree-sitter produced.
+
+  If there be errors, it /will/ be a mess.
+
+  The AST you are building must:
+  1) Have first field with type `ASTInfo` in each non-error constructor at each
+     type.
+  2) Have `Error`-only constructor to represent failure and implement `Stubbed`.
+
+  I recommend parametrising your `AST` with some `info` typevar to be
+  `ASTInfo` in the moment of parsing.
+
+  I also recomment, in your tree-sitter grammar, to add `field("foo", ...)`
+  to each sub-rule, that has `$.` in front of it -  in a rule, that doesn't
+  start with `_` in its name.
+
+  As a general rule of thumb, make each significant part a separate rule,
+  even if it is a keyword. Then, apply previous advice.
+
+  Only make rule start with `_` if it is a pure choice.
+
+  ('block'
+    ...
+    a: <a>
+    ...
+    b: <b>
+    ...)
+
+  ->
+
+  block = do
+    subtree "block" do
+      ctor Block
+        <*> inside "a" a
+        <*> inside "b" b
+-}
+
 module Parser (module Parser, gets, pfGrove) where
 
 import Control.Monad.State

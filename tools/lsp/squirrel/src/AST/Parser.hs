@@ -1,4 +1,12 @@
 
+{-
+  Parser for a contract. The `example` is exported to run on current debug target.
+
+  TODO: prune some "path" and alike stuff from grammar, refactor common things.
+
+  TODO: break <*>/do ladders onto separate named parsers.
+-}
+
 module AST.Parser (example, contract) where
 
 import Data.Text (Text)
@@ -10,12 +18,6 @@ import Range
 
 import Debug.Trace
 
-name :: Parser (Name ASTInfo)
-name = ctor Name <*> token "Name"
-
-capitalName :: Parser (Name ASTInfo)
-capitalName = ctor Name <*> token "Name_Capital"
-
 contract :: Parser (Contract ASTInfo)
 contract =
   ctor Contract
@@ -23,6 +25,12 @@ contract =
         many "declaration" do
           inside "declaration:" do
             declaration
+
+name :: Parser (Name ASTInfo)
+name = ctor Name <*> token "Name"
+
+capitalName :: Parser (Name ASTInfo)
+capitalName = ctor Name <*> token "Name_Capital"
 
 declaration :: Parser (Declaration ASTInfo)
 declaration
@@ -83,7 +91,8 @@ recursive = do
 expr :: Parser (Expr ASTInfo)
 expr = stubbed "expr" do
   select
-    [ ctor Ident <*> do
+    [ -- Wait, isn't it `qname`? TODO: replace.
+      ctor Ident <*> do
         ctor QualifiedName
           <*> name
           <*> pure []
@@ -265,13 +274,7 @@ pattern = do
 
 core_pattern :: Parser (Pattern ASTInfo)
 core_pattern
-  =  -- int_pattern
-  -- <|> nat_pattern
-  -- <|> var_pattern
-  -- <|> list_pattern
-  -- <|> tuple_pattern
-  -- <|>
-      constr_pattern
+  =   constr_pattern
   <|> string_pattern
   <|> int_pattern
   <|> nat_pattern
