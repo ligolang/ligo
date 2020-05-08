@@ -46,7 +46,7 @@ import Control.Monad.Except
 import Control.Monad.Identity
 
 import Data.Foldable
-import Data.Text.Encoding
+import Data.Functor
 import Data.Text (Text, pack, unpack)
 import qualified Data.Text as Text
 
@@ -75,10 +75,9 @@ instance Pretty Error where
 newtype Parser a = Parser
   { unParser
       :: WriterT [Error]      -- Early I though to report errors that way.
-      (  ReaderT ParserEnv    -- Range/Something.
       (  StateT  ParseForest  -- Current forest to recognise.
       (  ExceptT Error        -- Backtracking. Change `Error` to `()`?
-      (  Identity ))))        -- I forgot why. `#include`? Debug via `print`?
+      (  Identity )))         -- I forgot why. `#include`? Debug via `print`?
          a
   }
   deriving newtype
@@ -87,7 +86,6 @@ newtype Parser a = Parser
     , Monad
     , MonadState   ParseForest
     , MonadWriter [Error]
-    , MonadReader  ParserEnv
     , MonadError   Error
     )
 
@@ -101,7 +99,9 @@ makeError msg = do
 makeError' :: Text -> Range -> Parser Error
 makeError' msg rng = do
   rng <- getRange
-  src <- cutOut rng
+  src <- gets pfGrove <&> \case
+    []                     -> ""
+    (,) _ ParseTree { ptSource } : _ -> ptSource
   return Expected
     { eMsg   = msg
     , eWhole = src
@@ -148,10 +148,14 @@ field name parser = do
         , pfRange = ptRange
         }
 
-      parser <* put st
+      res <- parser
+
+      put st
         { pfGrove = grove'
         , pfRange = if firstOne then diffRange rng ptRange else rng
         }
+
+      return res
 
 -- | Variuos error reports.
 fallback  :: Stubbed a => Text          -> Parser a
@@ -215,19 +219,6 @@ some p = some'
       xs <- many'
       return (x : xs)
 
--- | The source of file being parsed. BS, because tree-sitter has offsets
---   in /bytes/.
-data ParserEnv = ParserEnv
-  { peSource :: ByteString
-  }
-
--- | Debug print via IO. Obsolete.
---
---   TODO: remove. Also, remove IO from Parser tf stack.
---
-puts :: MonadIO m => Show a => a -> m ()
-puts = liftIO . print
-
 -- | Run parser on given file.
 --
 --   TODO: invent /proper/ 'ERROR'-node collector.
@@ -235,13 +226,11 @@ puts = liftIO . print
 runParser :: Parser a -> FilePath -> IO (a, [Error])
 runParser (Parser parser) fin = do
   pforest <- toParseTree fin
-  text    <- ByteString.readFile fin
   let
     res =
              runIdentity
       $      runExceptT
       $ flip runStateT pforest
-      $ flip runReaderT (ParserEnv text)
       $      runWriterT
       $ parser
 
@@ -260,39 +249,16 @@ debugParser parser fin = do
 -- | Consume next tree if it has give name. Or die.
 token :: Text -> Parser Text
 token node = do
-  tree@ParseTree {ptName, ptRange} <- takeNext node
+  tree@ParseTree {ptName, ptRange, ptSource} <- takeNext node
   if ptName == node
-  then do
-    cutOut ptRange
-
-  else do
-    die' node ptRange
+  then return ptSource
+  else die' node ptRange
 
 -- | Consume next tree, return its textual representation.
 anything :: Parser Text
 anything = do
   tree <- takeNext "anything"
-  cutOut $ ptRange tree
-
--- | TODO: remove, b/c obsolete.
-consume :: Text -> Parser ()
-consume node = do
-  ParseTree {ptName, ptRange} <- takeNext node
-  when (ptName /= node) do
-    complain node ptRange
-
--- | TODO: remove, its literally is `void . token`.
-consumeOrDie :: Text -> Parser ()
-consumeOrDie node = do
-  ParseTree {ptName, ptRange} <- takeNext node
-  when (ptName /= node) do
-    die' node ptRange
-
--- | Extract textual representation of given range.
-cutOut :: Range -> Parser Text
-cutOut (Range (_, _, s) (_, _, f)) = do
-  bs <- asks peSource
-  return $ decodeUtf8 $ ByteString.take (f - s) (ByteString.drop s bs)
+  return $ ptSource tree
 
 -- | Get range of current tree or forest before the parser was run.
 range :: Parser a -> Parser (a, Range)

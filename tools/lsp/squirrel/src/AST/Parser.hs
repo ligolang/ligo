@@ -614,13 +614,13 @@ paramDecl :: Parser (VarDecl ASTInfo)
 paramDecl = do
   subtree "param_decl" do
     ctor Decl
-      <*> do inside ":access" do
-              select
-                [ ctor Mutable   <* consumeOrDie "var"
-                , ctor Immutable <* consumeOrDie "const"
-                ]
-     <*> inside "name" name
-     <*> inside "type" type_
+      <*> inside "access" do
+            ctor access' <*> anything
+      <*> inside "name" name
+      <*> inside "type" type_
+  where
+    access' r "var"   = Mutable   r
+    access' r "const" = Immutable r
 
 newtype_ = select
   [ record_type
@@ -716,8 +716,8 @@ typeTuple = do
 -- example = "../../../src/test/contracts/bytes_unpack.ligo"
 -- example = "../../../src/test/contracts/chain_id.ligo"
 -- example = "../../../src/test/contracts/coase.ligo"
-example = "../../../src/test/contracts/failwith.ligo"
--- example = "../../../src/test/contracts/application.ligo"
+-- example = "../../../src/test/contracts/failwith.ligo"
+example = "../../../src/test/contracts/loop.ligo"
 -- example = "../../../src/test/contracts/application.ligo"
 -- example = "../../../src/test/contracts/application.ligo"
 -- example = "../../../src/test/contracts/application.ligo"

@@ -1,13 +1,16 @@
 
-{-# language Strict #-}
+{-# language StrictData #-}
 
 module ParseTree where
 
 import Data.IORef
 import qualified Data.Text as Text
+import Data.Text (Text)
 import Data.Traversable (for)
+import Data.Text.Encoding
 import Data.Text.Foreign (withCStringLen)
-import Data.Text.IO as IO
+import qualified Data.ByteString as BS
+import Data.ByteString (ByteString)
 
 import           TreeSitter.Parser
 import           TreeSitter.Tree
@@ -42,22 +45,23 @@ getNodeTypesPath = getDataFileName "../pascaligo/src/node-types.json"
 -- | The tree tree-sitter produces.
 data ParseTree = ParseTree
   { ptID       :: Int          -- ^ Unique number, for fast comparison.
-  , ptName     :: Text.Text    -- ^ Name of the node.
+  , ptName     :: Text         -- ^ Name of the node.
   , ptRange    :: Range        -- ^ Range of the node.
+  , ptSource   :: ~Text        -- ^ Range of the node.
   , ptChildren :: ParseForest  -- ^ Subtrees.
   }
   deriving (Show) via PP ParseTree
 
 -- ^ The forest we work with.
 data ParseForest = Forest
-  { pfID    :: Int                       -- ^ Unique number for comparison.
-  , pfGrove :: [(Text.Text, ParseTree)]  -- ^ Subtrees.
-  , pfRange :: Range                     -- ^ Full range of the forest.
+  { pfID    :: Int                  -- ^ Unique number for comparison.
+  , pfGrove :: [(Text, ParseTree)]  -- ^ Subtrees.
+  , pfRange :: Range                -- ^ Full range of the forest.
   }
   deriving (Show) via PP ParseForest
 
 instance Pretty ParseTree where
-  pp (ParseTree _ n r forest) =
+  pp (ParseTree _ n r forest _) =
     parens
       ( hang
         (quotes (text (Text.unpack n)) <+> pp r)
@@ -73,19 +77,27 @@ instance Pretty ParseForest where
         then nest 2 $ pp tree
         else hang (text (Text.unpack field) <> ": ") 2 (pp tree)
 
+-- | Extract textual representation of given range.
+cutOut :: Range -> ByteString -> Text
+cutOut (Range (_, _, s) (_, _, f)) bs =
+  decodeUtf8
+    $ BS.take (f - s)
+    $ BS.drop  s
+      bs
+
 -- | Feed file contents into PascaLIGO grammar recogniser.
 toParseTree :: FilePath -> IO ParseForest
 toParseTree fin = do
   parser <- ts_parser_new
   True   <- ts_parser_set_language parser tree_sitter_PascaLigo
 
-  src <- IO.readFile fin
+  src <- BS.readFile fin
 
   idCounter <- newIORef 0
 
-  withCStringLen src \(str, len) -> do
+  BS.useAsCStringLen src \(str, len) -> do
     tree <- ts_parser_parse_string parser nullPtr str len
-    finalTree <- withRootNode tree (peek >=> go idCounter)
+    finalTree <- withRootNode tree (peek >=> go src idCounter)
     return $ Forest 0 [("", finalTree)] (ptRange finalTree)
 
   where
@@ -94,8 +106,8 @@ toParseTree fin = do
       modifyIORef' ref (+ 1)
       readIORef ref
 
-    go :: IORef Int -> Node -> IO ParseTree
-    go idCounter node = do
+    go :: ByteString -> IORef Int -> Node -> IO ParseTree
+    go src idCounter node = do
       let count = fromIntegral $ nodeChildCount node
       allocaArray count \children -> do
         alloca \tsNodePtr -> do
@@ -105,7 +117,7 @@ toParseTree fin = do
             peekElemOff children i
 
           trees <- for nodes \node' -> do
-            tree <- go idCounter node'
+            tree <- go src idCounter node'
             field <-
               if nodeFieldName node' == nullPtr
               then return ""
@@ -142,4 +154,5 @@ toParseTree fin = do
             , ptName     = Text.pack ty
             , ptRange    = range
             , ptChildren = Forest fID trees range
+            , ptSource   = cutOut range src
             }
