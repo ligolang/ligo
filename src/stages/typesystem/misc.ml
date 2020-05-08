@@ -29,7 +29,6 @@ module Substitution = struct
           ok @@ T.{expr_var=variable ; env_elt={ type_value; source_environment; definition }}) env
     and s_type_environment : T.type_environment w = fun ~substs tenv ->
       bind_map_list (fun T.{type_variable ; type_} ->
-        let%bind type_variable = s_type_variable ~substs type_variable in
         let%bind type_ = s_type_expression ~substs type_ in
         ok @@ T.{type_variable ; type_}) tenv
     and s_environment : T.environment w = fun ~substs T.{expression_environment ; type_environment} ->
@@ -45,14 +44,6 @@ module Substitution = struct
       let () = ignore @@ substs in
       ok var
 
-    and s_type_variable : T.type_variable w = fun ~substs tvar ->
-      let _TODO = ignore @@ substs in
-      Printf.printf "TODO: subst: unimplemented case s_type_variable";
-      ok @@ tvar
-      (* if String.equal tvar v then
-       *   expr
-       * else
-       *   ok tvar *)
     and s_label : T.label w = fun ~substs l ->
       let () = ignore @@ substs in
       ok l
@@ -71,7 +62,12 @@ module Substitution = struct
       ok @@ type_name
 
     and s_type_content : T.type_content w = fun ~substs -> function
-        | T.T_sum _ -> failwith "TODO: T_sum"
+        | T.T_sum s ->
+           let aux T.{ ctor_type; michelson_annotation ; ctor_decl_pos } =
+             let%bind ctor_type = s_type_expression ~substs ctor_type in
+             ok @@ T.{ ctor_type; michelson_annotation; ctor_decl_pos } in
+           let%bind s = Ast_typed.Helpers.bind_map_cmap aux s in
+           ok @@ T.T_sum s
         | T.T_record _ -> failwith "TODO: T_record"
         | T.T_constant type_name ->
           let%bind type_name = s_type_name_constant ~substs type_name in

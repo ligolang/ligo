@@ -622,18 +622,13 @@ let propagator_specialize1 : output_specialize1 propagator =
   (eqs, []) (* no new assignments *)
 
 let select_and_propagate : ('old_input, 'selector_output) selector -> _ propagator -> _ -> 'a -> structured_dbs -> _ * new_constraints * new_assignments =
-  let mem elt set = match RedBlackTrees.PolySet.find_opt elt set with None -> false | Some _ -> true in
   fun selector propagator ->
   fun already_selected old_type_constraint dbs ->
   (* TODO: thread some state to know which selector outputs were already seen *)
   match selector old_type_constraint dbs with
     WasSelected selected_outputs ->
-     (* TODO: fold instead. *)
-     let (already_selected , selected_outputs) =
-       List.fold_left (fun (already_selected, selected_outputs) elt ->
-           if mem elt already_selected
-           then (RedBlackTrees.PolySet.add elt already_selected , elt :: selected_outputs)
-           else (already_selected , selected_outputs)) (already_selected , selected_outputs) selected_outputs in
+     let open RedBlackTrees.PolySet in
+     let { set = already_selected ; duplicates = _ ; added = selected_outputs } = add_list selected_outputs already_selected in
      (* Call the propagation rule *)
      let new_contraints_and_assignments = List.map (fun s -> propagator s dbs) selected_outputs in
      let (new_constraints , new_assignments) = List.split new_contraints_and_assignments in
