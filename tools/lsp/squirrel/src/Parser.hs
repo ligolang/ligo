@@ -141,7 +141,7 @@ field name parser = do
   where
     sandbox firstOne tree@ParseTree {ptID, ptRange} = do
       st@Forest {pfGrove = grove, pfRange = rng} <- get
-      let grove' = delete name grove
+      let (errs, grove') = delete name grove
       put Forest
         { pfID    = ptID
         , pfGrove = [(name, tree)]
@@ -154,6 +154,8 @@ field name parser = do
         { pfGrove = grove'
         , pfRange = if firstOne then diffRange rng ptRange else rng
         }
+
+      for_ errs (tell . pure . unexpected)
 
       return res
 
@@ -169,6 +171,10 @@ die       msg     = throwError  =<< makeError  msg
 die'      msg rng = throwError  =<< makeError' msg rng
 complain  msg rng = tell . pure =<< makeError' msg rng
 
+unexpected :: ParseTree -> Error
+unexpected ParseTree { ptSource, ptRange } =
+  Expected "unexpected" ptSource ptRange
+
 -- | If a parser fails, return stub with error originating here.
 stubbed :: Stubbed a => Text -> Parser a -> Parser a
 stubbed msg parser = do
@@ -183,6 +189,8 @@ subtree msg parser = do
   then do
     save <- get
     put ptChildren
+    rest <- gets pfGrove
+    collectErrors rest
     parser <* put save
   else do
     die msg
@@ -237,14 +245,15 @@ runParser (Parser parser) fin = do
   either (error . show) (return . fst) res
 
 -- | Run parser on given file and pretty-print stuff.
-debugParser :: Parser a -> FilePath -> IO a
+debugParser :: Show a => Parser a -> FilePath -> IO ()
 debugParser parser fin = do
   (res, errs) <- runParser parser fin
-  putStrLn "Errors:"
-  for_ errs (print . nest 2 . pp)
-  putStrLn ""
   putStrLn "Result:"
-  return res
+  print res
+  unless (null errs) do
+    putStrLn ""
+    putStrLn "Errors:"
+    for_ errs (print . nest 2 . pp)
 
 -- | Consume next tree if it has give name. Or die.
 token :: Text -> Parser Text
@@ -280,12 +289,25 @@ getRange = snd <$> range (return ())
 --
 --   Notice: this works differently from `Prelude.remove`!
 --
-delete :: Eq k => k -> [(k, v)] -> [(k, v)]
-delete _ [] = []
+delete :: Text -> [(Text, ParseTree)] -> ([ParseTree], [(Text, ParseTree)])
+delete _ [] = ([], [])
 delete k ((k', v) : rest) =
   if k == k'
-  then rest
-  else delete k rest
+  then (addIfError v [], rest)
+  else (addIfError v vs, remains)
+  where
+    (vs, remains) = delete k rest
+
+addIfError v =
+  if ptName v == "ERROR"
+  then (:) v
+  else id
+
+collectErrors :: [(Text, ParseTree)] -> Parser ()
+collectErrors vs =
+  for_ vs \(_, v) -> do
+    when (ptName v == "ERROR") do
+      tell [unexpected v]
 
 -- | Parser negation.
 notFollowedBy :: Parser a -> Parser ()
