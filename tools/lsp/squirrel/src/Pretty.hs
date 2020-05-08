@@ -8,7 +8,8 @@ module Pretty
   )
   where
 
-import Data.Text
+import qualified Data.Text as Text
+import Data.Text (Text)
 
 import Text.PrettyPrint hiding ((<>))
 
@@ -24,7 +25,30 @@ class Pretty p where
 
 -- | Common instance.
 instance Pretty Text where
-  pp = text . unpack
+  pp = text . Text.unpack
 
--- | TODO: tuple, not list; actually /use/ it.
-wrap [l, r] a = hang (hang l 2 r) 0 r
+tuple :: Pretty p => [p] -> Doc
+tuple = parens . train ","
+
+list :: Pretty p => [p] -> Doc
+list = brackets . train ";"
+
+infixr 2 `indent`
+indent a b = hang a 2 b
+
+infixr 1 `above`
+above a b = hang a 0 b
+
+train sep = fsep . punctuate sep . map pp
+
+block :: Pretty p => [p] -> Doc
+block = vcat . map pp
+
+sepByDot :: Pretty p => [p] -> Doc
+sepByDot = cat . map (("." <>) . pp)
+
+mb :: Pretty a => (Doc -> Doc) -> Maybe a -> Doc
+mb f = maybe empty (f . pp)
+
+sparseBlock :: Pretty a => [a] -> Doc
+sparseBlock = vcat . punctuate "\n" . map (($$ empty) . pp)

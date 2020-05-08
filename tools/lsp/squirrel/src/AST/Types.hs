@@ -209,6 +209,7 @@ data Name info = Name
   , raw     :: Text
   }
   | WrongName Error
+  deriving (Show) via PP (Name info)
 
 instance Stubbed (Name info) where stub = WrongName
 
@@ -216,17 +217,12 @@ c :: HasComments i => i -> Doc -> Doc
 c i d =
   case getComments i of
     [] -> d
-    cc -> vcat (map pp cc) $$ d
-
-instance Show (Name i) where
-  show = \case
-    Name i raw  -> Text.unpack raw
-    WrongName r -> "(Name? " ++ show r ++ ")"
+    cc -> block (map Text.init cc) $$ d
 
 instance HasComments i => Pretty (Contract i) where
   pp = \case
     Contract i decls -> c i $
-      vcat $ punctuate "\n" $ map (($$ empty) . pp) decls
+      sparseBlock decls
 
     WrongContract err ->
       pp err
@@ -234,7 +230,7 @@ instance HasComments i => Pretty (Contract i) where
 instance HasComments i => Pretty (Declaration i) where
   pp = \case
     ValueDecl i binding -> c i $ pp binding
-    TypeDecl  i n ty    -> c i $ hang ("type" <+> pp n <+> "=") 2 (pp ty)
+    TypeDecl  i n ty    -> c i $ "type" <+> pp n <+> "=" `indent` pp ty
     Action    i e       -> c i $ pp e
     Include   i f       -> c i $ "#include" <+> pp f
     WrongDecl err       ->       pp err
@@ -243,40 +239,27 @@ instance HasComments i => Pretty (Binding i) where
   pp = \case
     Irrefutable  i pat expr -> error "irrefs in pascaligo?"
     Function     i isRec name params ty body ->
-      c i $ hang
-        ( fsep
-          [ if isRec then "recursive" else empty
-          , "function"
-          , pp name
-          , tuple params
-          , ":"
-          , pp ty
-          , "is"
-          ]
+      c i $
+        (
+          (
+            (   (if isRec then "recursive" else empty)
+            <+> "function"
+            <+> pp name
+            )
+            `indent` tuple params
+          )
+         `indent` (":" <+> pp ty <+> "is")
         )
-        2
-        (pp body)
-    Var   i name ty value ->
-      c i $ hang
-        ("var" <+> pp name <+> ":" <+> pp ty <+> ":=")
-        2
-        (pp value)
-    Const i name ty body ->
-      c i $ hang
-        ("const" <+> pp name <+> ":" <+> pp ty <+> "=")
-        2
-        (pp body)
+        `indent` pp body
+    Var   i name ty value -> c i $ "var"   <+> pp name <+> ":" <+> pp ty <+> ":=" `indent` pp value
+    Const i name ty body  -> c i $ "const" <+> pp name <+> ":" <+> pp ty <+>  "=" `indent` pp body
     WrongBinding err ->
       pp err
 
 instance HasComments i => Pretty (VarDecl i) where
   pp = \case
-    Decl i mutability name ty -> c i $ fsep
-      [ pp mutability
-      , pp name
-      , ":"
-      , pp ty
-      ]
+    Decl i mutability name ty -> c i $
+      pp mutability <+> pp name <+> ":" `indent` pp ty
     WrongVarDecl err ->
       pp err
 
@@ -288,74 +271,74 @@ instance HasComments i => Pretty (Mutable i) where
 
 instance HasComments i => Pretty (Type i) where
   pp = \case
-    TArrow    i dom codom -> c i $ parens (pp dom <+> "->" <+> pp codom)
-    TRecord   i fields    -> c i $ "record [" <> (vcat $ map pp fields) <> "]"
+    TArrow    i dom codom -> c i $ parens (pp dom `indent` "->" <+> pp codom)
+    TRecord   i fields    -> c i $ "record" <+> list fields
     TVar      i name      -> c i $ pp name
-    TSum      i variants  -> c i $ vcat $ map pp variants
-    TProduct  i elements  -> c i $ fsep $ punctuate " *" $ map pp elements
-    TApply    i f xs      -> c i $ pp f <> parens (fsep $ punctuate "," $ map pp xs)
+    TSum      i variants  -> c i $ block variants
+    TProduct  i elements  -> c i $ train " *" elements
+    TApply    i f xs      -> c i $ pp f <> tuple xs
     WrongType   err       ->       pp err
     where
       ppField (name, ty) = pp name <> ": " <> pp ty <> ";"
 
 instance HasComments i => Pretty (Variant i) where
   pp = \case
-    Variant i ctor (Just ty) -> c i $ hang ("|" <+> pp ctor <+> "of") 2 (pp ty)
+    Variant i ctor (Just ty) -> c i $ "|" <+> pp ctor <+> "of" `indent` pp ty
     Variant i ctor  _        -> c i $ "|" <+> pp ctor
     WrongVariant err -> pp err
 
 -- My eyes.
 instance HasComments i => Pretty (Expr i) where
   pp = \case
-    Let       i decls body -> c i $ "block {" $$ (nest 2 $ vcat $ punctuate "\n" $ map pp decls) $$ "}" $$ "with" $$ nest 2 (pp body)
+    Let       i decls body -> c i $ "block {" `indent` sparseBlock decls `above` "}" <+> "with" `indent` pp body
     Apply     i f xs       -> c i $ pp f <+> tuple xs
     Constant  i constant   -> c i $ pp constant
     Ident     i qname      -> c i $ pp qname
     BinOp     i l o r      -> c i $ parens (pp l <+> pp o <+> pp r)
     UnOp      i   o r      -> c i $ parens (pp o <+> pp r)
-    Record    i az         -> c i $ "record [" <> (fsep $ punctuate ";" $ map pp az) <> "]"
-    If        i b t e      -> c i $ fsep ["if" <+> pp b, hang "then" 2 $ pp t, hang "else" 2 $ pp e]
-    Assign    i l r        -> c i $ hang (pp l <+> ":=") 2 (pp r)
-    List      i l          -> c i $ "list [" <> fsep (punctuate ";" $ map pp l) <> "]"
-    Set       i l          -> c i $ "set [" <> fsep (punctuate ";" $ map pp l) <> "]"
-    Tuple     i l          -> c i $ "(" <> fsep (punctuate "," $ map pp l) <> ")"
-    Annot     i n t        -> c i $ ("(" <> pp n) <+> ":" <+> (pp t <> ")")
-    Attrs     i ts         -> c i $ "attributes [" <> fsep (punctuate ";" $ map pp ts) <> "]"
-    BigMap    i bs         -> c i $ "big_map [" <> fsep (punctuate ";" $ map pp bs) <> "]"
-    Map       i bs         -> c i $     "map [" <> fsep (punctuate ";" $ map pp bs) <> "]"
-    MapRemove i k m        -> c i $ hang ("remove" <+> pp k) 0 ("from" <+> "map" <+> pp m)
-    SetRemove i k s        -> c i $ hang ("remove" <+> pp k) 0 ("from" <+> "set" <+> pp s)
-    Indexing  i a j        -> c i $ pp a <> brackets (pp j)
-    Case      i s az       -> c i $ hang ("case" <+> pp s <+> "of") 2 (vcat $ map pp az)
+    Record    i az         -> c i $ "record" <+> list az
+    If        i b t e      -> c i $ fsep ["if" `indent` pp b, "then" `indent` pp t, "else" `indent` pp e]
+    Assign    i l r        -> c i $ pp l <+> ":=" `indent` pp r
+    List      i l          -> c i $ "list" <+> list l
+    Set       i l          -> c i $ "set"  <+> list l
+    Tuple     i l          -> c i $ tuple l
+    Annot     i n t        -> c i $ parens (pp n <+> ":" `indent` pp t)
+    Attrs     i ts         -> c i $ "attributes" <+> list ts
+    BigMap    i bs         -> c i $ "big_map"    <+> list bs
+    Map       i bs         -> c i $  "map"       <+> list bs
+    MapRemove i k m        -> c i $ "remove" `indent` pp k `above` "from" <+> "map" `indent` pp m
+    SetRemove i k s        -> c i $ "remove" `indent` pp k `above` "from" <+> "set" `indent` pp s
+    Indexing  i a j        -> c i $ pp a <> list [j]
+    Case      i s az       -> c i $ "case" <+> pp s <+> "of" `indent` block az
     Skip      i            -> c i $ "skip"
-    ForLoop   i j s f b    -> c i $ hang ("for" <+> pp j <+> ":=" <+> pp s <+> "to" <+> pp f) 2 (pp b)
-    ForBox    i k mv t z b -> c i $ hang ("for" <+> (pp k <> maybe empty ((" ->" <+>) . pp) mv) <+> "in" <+> pp t <+> pp z) 2 (pp b)
-    WhileLoop i f b        -> c i $ hang ("while" <+> pp f) 2 (pp b)
-    Seq       i es         -> c i $ hang (hang "block {" 2 (vcat $ map pp es)) 0 "}"
-    Lambda    i ps ty b    -> c i $ parens (hang ("function" <+> ("(" <> fsep (punctuate "," $ map pp ps) <> ") :") <+> pp ty) 2 (pp b))
-    MapPatch  i z bs       -> c i $ hang (hang "patch" 2 (pp z)) 0 (hang ("with" <+> "map") 2 ("[" <> fsep (punctuate ";" $ map pp bs) <> "]"))
-    SetPatch  i z bs       -> c i $ hang (hang "patch" 2 (pp z)) 0 (hang ("with" <+> "set") 2 ("[" <> fsep (punctuate ";" $ map pp bs) <> "]"))
-    RecordUpd i r up       -> c i $ hang (pp r) 2 (hang ("with" <+> "record") 2 ("[" <> fsep (punctuate ";" $ map pp up) <> "]"))
+    ForLoop   i j s f b    -> c i $ "for" <+> pp j <+> ":=" <+> pp s <+> "to" <+> pp f `indent` pp b
+    ForBox    i k mv t z b -> c i $ "for" <+> pp k <+> mb ("->" <+>) mv <+> "in" <+> pp t <+> pp z `indent` pp b
+    WhileLoop i f b        -> c i $ "while" <+> pp f `indent` pp b
+    Seq       i es         -> c i $ "block {" `indent` sparseBlock es `above` "}"
+    Lambda    i ps ty b    -> c i $ (("function" `indent` tuple ps) `indent` (":" <+> pp ty)) `indent` pp b
+    MapPatch  i z bs       -> c i $ "patch" `indent` pp z `above` "with" <+> "map" `indent` list bs
+    SetPatch  i z bs       -> c i $ "patch" `indent` pp z `above` "with" <+> "set" `indent` list bs
+    RecordUpd i r up       -> c i $ pp r `indent` "with" <+> "record" `indent` list up
     WrongExpr   err        -> pp err
 
 instance HasComments i => Pretty (Alt i) where
   pp = \case
-    Alt i p b -> c i $ hang ("|" <+> pp p <+> "->") 2 (pp b)
+    Alt i p b -> c i $ "|" <+> pp p <+> "->" `indent` pp b
     WrongAlt err -> pp err
 
 instance HasComments i => Pretty (MapBinding i) where
   pp = \case
-    MapBinding i k v -> c i $ hang (pp k <+> "->") 2 (pp v)
+    MapBinding i k v -> c i $ pp k <+> "->" `indent` pp v
     WrongMapBinding err -> pp err
 
 instance HasComments i => Pretty (Assignment i) where
   pp = \case
-    Assignment      i n e -> c i $ pp n <+> "=" <+> pp e
+    Assignment      i n e -> c i $ pp n <+> "=" `indent` pp e
     WrongAssignment   err -> pp err
 
 instance HasComments i => Pretty (FieldAssignment i) where
   pp = \case
-    FieldAssignment      i n e -> c i $ pp n <+> "=" <+> pp e
+    FieldAssignment      i n e -> c i $ pp n <+> "=" `indent` pp e
     WrongFieldAssignment   err -> pp err
 
 instance HasComments i => Pretty (Constant i) where
@@ -370,7 +353,7 @@ instance HasComments i => Pretty (Constant i) where
 
 instance HasComments i => Pretty (QualifiedName i) where
   pp = \case
-    QualifiedName i src path -> c i $ pp src <> cat (map (("." <>) . pp) path)
+    QualifiedName i src path -> c i $ pp src <> sepByDot path
     WrongQualifiedName err   -> pp err
 
 instance HasComments i => Pretty (Pattern i) where
@@ -378,10 +361,10 @@ instance HasComments i => Pretty (Pattern i) where
     IsConstr     i ctor arg  -> c i $ pp ctor <> maybe empty pp arg
     IsConstant   i z         -> c i $ pp z
     IsVar        i name      -> c i $ pp name
-    IsCons       i h t       -> c i $ pp h <+> "#" <+> pp t
+    IsCons       i h t       -> c i $ pp h <+> ("#" <+> pp t)
     IsWildcard   i           -> c i $ "_"
-    IsList       i l         -> c i $ "[" <> fsep (punctuate ";" $ map pp l) <> "]"
-    IsTuple      i t         -> c i $ "(" <> fsep (punctuate "," $ map pp t) <> ")"
+    IsList       i l         -> c i $ list l
+    IsTuple      i t         -> c i $ tuple t
     WrongPattern   err       -> pp err
 
 
@@ -398,14 +381,10 @@ instance HasComments i => Pretty (Path i) where
 
 instance HasComments i => Pretty (TField i) where
   pp = \case
-    TField i n t -> c i $ hang (pp n <> ":") 2 (pp t)
+    TField i n t -> c i $ pp n <> ":" `indent` pp t
     WrongTField err -> pp err
 
 instance HasComments i => Pretty (LHS i) where
   pp = \case
     LHS i qn mi -> c i $ pp qn <> foldMap (brackets . pp) mi
     WrongLHS err -> pp err
-
--- TODO: Use it, make more alike.
-tuple :: Pretty p => [p] -> Doc
-tuple xs = parens (fsep $ punctuate "," $ map pp xs)

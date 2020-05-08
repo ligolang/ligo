@@ -72,6 +72,9 @@ instance Pretty Error where
   pp (Expected msg found r) = "░" <> pp msg <> pp r <> "▒" <> pp found <> "▓"
 
 -- | Parser of tree-sitter-made tree.
+--
+--   TODO: separate state. Polysemy?
+--
 newtype Parser a = Parser
   { unParser
       :: WriterT [Error]                -- Early I though to report errors that way.
