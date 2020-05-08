@@ -40,7 +40,7 @@ module Errors = struct
     let data = [
       ("variable" , fun () -> Format.asprintf "%a" I.PP.type_variable tv) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc) ;
-      ("in" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e) ;
+      ("in" , fun () -> Format.asprintf "%a" Environment.PP.environment e) ;
       ("did_you_mean" , fun () -> suggestion)
     ] in
     error ~data title message ()
@@ -51,7 +51,7 @@ module Errors = struct
     let message () = "" in
     let data = [
       ("variable" , name) ;
-      ("environment" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e) ;
+      ("environment" , fun () -> Format.asprintf "%a" Environment.PP.environment e) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
     error ~data title message ()
@@ -91,7 +91,7 @@ module Errors = struct
     let message () = "" in
     let data = [
       ("constructor" , fun () -> Format.asprintf "%a" I.PP.constructor c);
-      ("environment" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e) ;
+      ("environment" , fun () -> Format.asprintf "%a" Environment.PP.environment e) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
     error ~data title message ()
@@ -101,7 +101,7 @@ module Errors = struct
     let message () = "" in
     let data = [
       ("constructor" , fun () -> Format.asprintf "%a" I.PP.constructor c);
-      ("environment" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e) ;
+      ("environment" , fun () -> Format.asprintf "%a" Environment.PP.environment e) ;
     ] in
     error ~data title message ()
   
@@ -514,7 +514,7 @@ and type_declaration env (_placeholder_for_state_of_new_typer : O.typer_state) :
       let%bind expr =
         trace (constant_declaration_error binder expression tv'_opt) @@
         type_expression' ?tv_opt:tv'_opt env expression in
-      let post_env = Environment.add_ez_ae binder expr env in
+      let post_env = Environment.add_ez_declaration binder expr env in
       ok (post_env, (Solver.placeholder_for_state_of_new_typer ()) , Some (O.Declaration_constant { binder ; expr ; inline ; post_env}))
     )
 
@@ -766,7 +766,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
           let content () =
             Format.asprintf "%a in:\n%a\n"
               Stage_common.PP.constructor constructor 
-              O.Environment.PP.full_environment e
+              O.Environment.PP.environment e
           in
           error title content in
         trace_option error @@

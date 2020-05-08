@@ -70,7 +70,7 @@ val assert_literal_eq : ( literal * literal ) -> unit result
 *)
 
 val get_entry : program -> string -> expression result
-val program_environment : program -> full_environment
+val program_environment : program -> environment
 
 val p_constant : constant_tag -> p_ctor_args -> type_value
 val c_equation : type_value -> type_value -> string -> type_constraint
