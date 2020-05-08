@@ -29,6 +29,7 @@ dont-merge-to-master:
 .build_binary: &build_binary
   stage: test # To run in sequence and save CPU usage, use stage: build_and_package_binaries
   script:
+    - export COMMIT_DATE="$(git show --no-patch --format=%ci)"
     - $build_binary_script "$target_os_family" "$target_os" "$target_os_version"
     - $package_binary_script "$target_os_family" "$target_os" "$target_os_version"
   artifacts:
