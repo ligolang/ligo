@@ -47,8 +47,8 @@ data ParseTree = ParseTree
   { ptID       :: Int          -- ^ Unique number, for fast comparison.
   , ptName     :: Text         -- ^ Name of the node.
   , ptRange    :: Range        -- ^ Range of the node.
-  , ptSource   :: ~Text        -- ^ Range of the node.
   , ptChildren :: ParseForest  -- ^ Subtrees.
+  , ptSource   :: ~Text        -- ^ Range of the node.
   }
   deriving (Show) via PP ParseTree
 

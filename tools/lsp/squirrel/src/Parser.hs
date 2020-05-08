@@ -74,17 +74,17 @@ instance Pretty Error where
 -- | Parser of tree-sitter-made tree.
 newtype Parser a = Parser
   { unParser
-      :: WriterT [Error]      -- Early I though to report errors that way.
-      (  StateT  ParseForest  -- Current forest to recognise.
-      (  ExceptT Error        -- Backtracking. Change `Error` to `()`?
-      (  Identity )))         -- I forgot why. `#include`? Debug via `print`?
+      :: WriterT [Error]                -- Early I though to report errors that way.
+      (  StateT  (ParseForest, [Text])  -- Current forest to recognise + comments.
+      (  ExceptT Error                  -- Backtracking. Change `Error` to `()`?
+      (  Identity )))                   -- I forgot why. `#include`? Debug via `print`?
          a
   }
   deriving newtype
     ( Functor
     , Applicative
     , Monad
-    , MonadState   ParseForest
+    , MonadState   (ParseForest, [Text])
     , MonadWriter [Error]
     , MonadError   Error
     )
@@ -99,7 +99,7 @@ makeError msg = do
 makeError' :: Text -> Range -> Parser Error
 makeError' msg rng = do
   rng <- getRange
-  src <- gets pfGrove <&> \case
+  src <- gets (pfGrove . fst) <&> \case
     []                     -> ""
     (,) _ ParseTree { ptSource } : _ -> ptSource
   return Expected
@@ -111,15 +111,24 @@ makeError' msg rng = do
 -- | Pick next tree in a forest or die with msg.
 takeNext :: Text -> Parser ParseTree
 takeNext msg = do
-  st@Forest {pfGrove, pfRange} <- get
+  (st@Forest {pfGrove, pfRange}, comms) <- get
   case pfGrove of
     [] -> die msg
     (_, t) : f -> do
-      put st
-        { pfRange = diffRange pfRange (ptRange t)
-        , pfGrove = f
-        }
-      return t
+      if "comment" `Text.isSuffixOf` ptName t
+      then do
+        (st, comms) <- get
+        put (st, ptSource t : comms)
+        takeNext msg
+      else do
+        put
+          ( st
+            { pfRange = diffRange pfRange (ptRange t)
+            , pfGrove = f
+            }
+          , comms
+          )
+        return t
 
 -- | Pick a tree with that /field name/ or die with name as msg.
 --
@@ -127,7 +136,7 @@ takeNext msg = do
 --
 field :: Text -> Parser a -> Parser a
 field name parser = do
-  grove <- gets pfGrove
+  grove <- gets (pfGrove . fst)
   case grove of
     (name', t) : _
       | name == name' -> do
@@ -140,20 +149,26 @@ field name parser = do
 
   where
     sandbox firstOne tree@ParseTree {ptID, ptRange} = do
-      st@Forest {pfGrove = grove, pfRange = rng} <- get
-      let (errs, grove') = delete name grove
-      put Forest
-        { pfID    = ptID
-        , pfGrove = [(name, tree)]
-        , pfRange = ptRange
-        }
+      (st@Forest {pfGrove = grove, pfRange = rng}, comments) <- get
+      let (errs, new_comments, grove') = delete name grove
+      put
+        ( Forest
+          { pfID    = ptID
+          , pfGrove = [(name, tree)]
+          , pfRange = ptRange
+          }
+        , comments ++ new_comments
+        )
 
       res <- parser
 
-      put st
-        { pfGrove = grove'
-        , pfRange = if firstOne then diffRange rng ptRange else rng
-        }
+      put
+        ( st
+          { pfGrove = grove'
+          , pfRange = if firstOne then diffRange rng ptRange else rng
+          }
+        , []
+        )
 
       for_ errs (tell . pure . unexpected)
 
@@ -187,11 +202,12 @@ subtree msg parser = do
   ParseTree {ptChildren, ptName} <- takeNext msg
   if ptName == msg
   then do
-    save <- get
-    put ptChildren
-    rest <- gets pfGrove
+    (save, comms) <- get
+    put (ptChildren, comms)
+    rest <- gets (pfGrove . fst)
     collectErrors rest
-    parser <* put save
+    (_, comms') <- get
+    parser <* put (save, comms')
   else do
     die msg
 
@@ -229,8 +245,6 @@ some p = some'
 
 -- | Run parser on given file.
 --
---   TODO: invent /proper/ 'ERROR'-node collector.
---
 runParser :: Parser a -> FilePath -> IO (a, [Error])
 runParser (Parser parser) fin = do
   pforest <- toParseTree fin
@@ -238,13 +252,14 @@ runParser (Parser parser) fin = do
     res =
              runIdentity
       $      runExceptT
-      $ flip runStateT pforest
+      $ flip runStateT (pforest, [])
       $      runWriterT
       $ parser
 
   either (error . show) (return . fst) res
 
 -- | Run parser on given file and pretty-print stuff.
+--
 debugParser :: Show a => Parser a -> FilePath -> IO ()
 debugParser parser fin = do
   (res, errs) <- runParser parser fin
@@ -273,11 +288,11 @@ anything = do
 range :: Parser a -> Parser (a, Range)
 range parser =
   get >>= \case
-    Forest {pfGrove = (,) _ ParseTree {ptRange} : _} -> do
+    (,) Forest {pfGrove = (,) _ ParseTree {ptRange} : _} _ -> do
       a <- parser
       return (a, ptRange)
 
-    Forest {pfRange} -> do
+    (,) Forest {pfRange} _ -> do
       a <- parser
       return (a, pfRange)
 
@@ -287,22 +302,31 @@ getRange = snd <$> range (return ())
 
 -- | Remove all keys until given key is found; remove the latter as well.
 --
+--   Also returns all ERROR-nodes.
+--
+--   TODO: rename.
+--
 --   Notice: this works differently from `Prelude.remove`!
 --
-delete :: Text -> [(Text, ParseTree)] -> ([ParseTree], [(Text, ParseTree)])
-delete _ [] = ([], [])
+delete :: Text -> [(Text, ParseTree)] -> ([ParseTree], [Text], [(Text, ParseTree)])
+delete _ [] = ([], [], [])
 delete k ((k', v) : rest) =
   if k == k'
-  then (addIfError v [], rest)
-  else (addIfError v vs, remains)
+  then (addIfError v [], addIfComment v [], rest)
+  else (addIfError v vs, addIfComment v cs, remains)
   where
-    (vs, remains) = delete k rest
+    (vs, cs, remains) = delete k rest
+    addIfError v =
+      if ptName v == "ERROR"
+      then (:) v
+      else id
 
-addIfError v =
-  if ptName v == "ERROR"
-  then (:) v
-  else id
+    addIfComment v =
+      if "comment" `Text.isSuffixOf` ptName v
+      then (ptSource v :)
+      else id
 
+-- | Report all ERRORs from the list.
 collectErrors :: [(Text, ParseTree)] -> Parser ()
 collectErrors vs =
   for_ vs \(_, v) -> do
@@ -330,7 +354,8 @@ instance Stubbed Text where
 
 -- | This is bad, but I had to.
 --
---   TODO: find a way to remove this instance.
+--   TODO: Find a way to remove this instance.
+--         I probably need a wrapper around '[]'.
 --
 instance Stubbed [a] where
   stub _ = []
@@ -373,10 +398,22 @@ data ASTInfo = ASTInfo
   , aiComments :: [Text]
   }
 
+class HasComments c where
+  getComments :: c -> [Text]
+
+instance HasComments ASTInfo where
+  getComments = aiComments
+
 -- | Equip given constructor with info.
 ctor :: (ASTInfo -> a) -> Parser a
-ctor = (<$> (ASTInfo <$> getRange <*> pure []))
+ctor = (<$> (ASTInfo <$> getRange <*> grabComments))
+
+grabComments :: Parser [Text]
+grabComments = do
+  (st, comms) <- get
+  put (st, [])
+  return comms
 
 -- | /Actual/ debug pring.
 dump :: Parser ()
-dump = gets pfGrove >>= traceShowM
+dump = gets (pfGrove . fst) >>= traceShowM

@@ -212,33 +212,38 @@ data Name info = Name
 
 instance Stubbed (Name info) where stub = WrongName
 
-instance Show (Name info) where
+c :: HasComments i => i -> Doc -> Doc
+c i d =
+  case getComments i of
+    [] -> d
+    cc -> vcat (map pp cc) $$ d
+
+instance Show (Name i) where
   show = \case
-    Name _ raw  -> Text.unpack raw
+    Name i raw  -> Text.unpack raw
     WrongName r -> "(Name? " ++ show r ++ ")"
 
-instance Pretty (Contract i) where
+instance HasComments i => Pretty (Contract i) where
   pp = \case
-    Contract _ decls ->
-      hang "(* contract *)" 2 do
-        vcat $ punctuate "\n" $ map (($$ empty) . pp) decls
+    Contract i decls -> c i $
+      vcat $ punctuate "\n" $ map (($$ empty) . pp) decls
 
     WrongContract err ->
       pp err
 
-instance Pretty (Declaration i) where
+instance HasComments i => Pretty (Declaration i) where
   pp = \case
-    ValueDecl _ binding -> pp binding
-    TypeDecl  _ n ty    -> hang ("type" <+> pp n <+> "=") 2 (pp ty)
-    Action    _ e       -> pp e
-    Include   _ f       -> "#include" <+> pp f
-    WrongDecl err       -> pp err
+    ValueDecl i binding -> c i $ pp binding
+    TypeDecl  i n ty    -> c i $ hang ("type" <+> pp n <+> "=") 2 (pp ty)
+    Action    i e       -> c i $ pp e
+    Include   i f       -> c i $ "#include" <+> pp f
+    WrongDecl err       ->       pp err
 
-instance Pretty (Binding i) where
+instance HasComments i => Pretty (Binding i) where
   pp = \case
-    Irrefutable  _ pat expr -> error "irrefs in pascaligo?"
-    Function     _ isRec name params ty body ->
-      hang
+    Irrefutable  i pat expr -> error "irrefs in pascaligo?"
+    Function     i isRec name params ty body ->
+      c i $ hang
         ( fsep
           [ if isRec then "recursive" else empty
           , "function"
@@ -251,22 +256,22 @@ instance Pretty (Binding i) where
         )
         2
         (pp body)
-    Var   _ name ty value ->
-      hang
+    Var   i name ty value ->
+      c i $ hang
         ("var" <+> pp name <+> ":" <+> pp ty <+> ":=")
         2
         (pp value)
-    Const _ name ty body ->
-      hang
+    Const i name ty body ->
+      c i $ hang
         ("const" <+> pp name <+> ":" <+> pp ty <+> "=")
         2
         (pp body)
     WrongBinding err ->
       pp err
 
-instance Pretty (VarDecl i) where
+instance HasComments i => Pretty (VarDecl i) where
   pp = \case
-    Decl _ mutability name ty -> fsep
+    Decl i mutability name ty -> c i $ fsep
       [ pp mutability
       , pp name
       , ":"
@@ -275,130 +280,130 @@ instance Pretty (VarDecl i) where
     WrongVarDecl err ->
       pp err
 
-instance Pretty (Mutable i) where
+instance HasComments i => Pretty (Mutable i) where
   pp = \case
-    Mutable      _   -> "var"
-    Immutable    _   -> "const"
+    Mutable      i   -> c i $ "var"
+    Immutable    i   -> c i $ "const"
     WrongMutable err -> pp err
 
-instance Pretty (Type i) where
+instance HasComments i => Pretty (Type i) where
   pp = \case
-    TArrow    _ dom codom -> parens (pp dom <+> "->" <+> pp codom)
-    TRecord   _ fields    -> "record [" <> (vcat $ map pp fields) <> "]"
-    TVar      _ name      -> pp name
-    TSum      _ variants  -> vcat $ map pp variants
-    TProduct  _ elements  -> fsep $ punctuate " *" $ map pp elements
-    TApply    _ f xs      -> pp f <> parens (fsep $ punctuate "," $ map pp xs)
-    WrongType   err       -> pp err
+    TArrow    i dom codom -> c i $ parens (pp dom <+> "->" <+> pp codom)
+    TRecord   i fields    -> c i $ "record [" <> (vcat $ map pp fields) <> "]"
+    TVar      i name      -> c i $ pp name
+    TSum      i variants  -> c i $ vcat $ map pp variants
+    TProduct  i elements  -> c i $ fsep $ punctuate " *" $ map pp elements
+    TApply    i f xs      -> c i $ pp f <> parens (fsep $ punctuate "," $ map pp xs)
+    WrongType   err       ->       pp err
     where
       ppField (name, ty) = pp name <> ": " <> pp ty <> ";"
 
-instance Pretty (Variant i) where
+instance HasComments i => Pretty (Variant i) where
   pp = \case
-    Variant _ ctor (Just ty) -> hang ("|" <+> pp ctor <+> "of") 2 (pp ty)
-    Variant _ ctor  _        -> "|" <+> pp ctor
+    Variant i ctor (Just ty) -> c i $ hang ("|" <+> pp ctor <+> "of") 2 (pp ty)
+    Variant i ctor  _        -> c i $ "|" <+> pp ctor
     WrongVariant err -> pp err
 
 -- My eyes.
-instance Pretty (Expr i) where
+instance HasComments i => Pretty (Expr i) where
   pp = \case
-    Let       _ decls body -> "block {" $$ (nest 2 $ vcat $ punctuate "\n" $ map pp decls) $$ "}" $$ "with" $$ nest 2 (pp body)
-    Apply     _ f xs       -> pp f <+> tuple xs
-    Constant  _ constant   -> pp constant
-    Ident     _ qname      -> pp qname
-    BinOp     _ l o r      -> parens (pp l <+> pp o <+> pp r)
-    UnOp      _   o r      -> parens (pp o <+> pp r)
-    Record    _ az         -> "record [" <> (fsep $ punctuate ";" $ map pp az) <> "]"
-    If        _ b t e      -> fsep ["if" <+> pp b, hang "then" 2 $ pp t, hang "else" 2 $ pp e]
-    Assign    _ l r        -> hang (pp l <+> ":=") 2 (pp r)
-    List      _ l          -> "list [" <> fsep (punctuate ";" $ map pp l) <> "]"
-    Set       _ l          -> "set [" <> fsep (punctuate ";" $ map pp l) <> "]"
-    Tuple     _ l          -> "(" <> fsep (punctuate "," $ map pp l) <> ")"
-    Annot     _ n t        -> ("(" <> pp n) <+> ":" <+> (pp t <> ")")
-    Attrs     _ ts         -> "attributes [" <> fsep (punctuate ";" $ map pp ts) <> "]"
-    BigMap    _ bs         -> "big_map [" <> fsep (punctuate ";" $ map pp bs) <> "]"
-    Map       _ bs         ->     "map [" <> fsep (punctuate ";" $ map pp bs) <> "]"
-    MapRemove _ k m        -> hang ("remove" <+> pp k) 0 ("from" <+> "map" <+> pp m)
-    SetRemove _ k s        -> hang ("remove" <+> pp k) 0 ("from" <+> "set" <+> pp s)
-    Indexing  _ a i        -> pp a <> brackets (pp i)
-    Case      _ s az       -> hang ("case" <+> pp s <+> "of") 2 (vcat $ map pp az)
-    Skip      _            -> "skip"
-    ForLoop   _ i s f b    -> hang ("for" <+> pp i <+> ":=" <+> pp s <+> "to" <+> pp f) 2 (pp b)
-    ForBox    _ k mv t c b -> hang ("for" <+> (pp k <> maybe empty ((" ->" <+>) . pp) mv) <+> "in" <+> pp t <+> pp c) 2 (pp b)
-    WhileLoop _ f b        -> hang ("while" <+> pp f) 2 (pp b)
-    Seq       _ es         -> hang (hang "block {" 2 (vcat $ map pp es)) 0 "}"
-    Lambda    _ ps ty b    -> parens (hang ("function" <+> ("(" <> fsep (punctuate "," $ map pp ps) <> ") :") <+> pp ty) 2 (pp b))
-    MapPatch  _ c bs       -> hang (hang "patch" 2 (pp c)) 0 (hang ("with" <+> "map") 2 ("[" <> fsep (punctuate ";" $ map pp bs) <> "]"))
-    SetPatch  _ c bs       -> hang (hang "patch" 2 (pp c)) 0 (hang ("with" <+> "set") 2 ("[" <> fsep (punctuate ";" $ map pp bs) <> "]"))
-    RecordUpd _ r up       -> hang (pp r) 2 (hang ("with" <+> "record") 2 ("[" <> fsep (punctuate ";" $ map pp up) <> "]"))
+    Let       i decls body -> c i $ "block {" $$ (nest 2 $ vcat $ punctuate "\n" $ map pp decls) $$ "}" $$ "with" $$ nest 2 (pp body)
+    Apply     i f xs       -> c i $ pp f <+> tuple xs
+    Constant  i constant   -> c i $ pp constant
+    Ident     i qname      -> c i $ pp qname
+    BinOp     i l o r      -> c i $ parens (pp l <+> pp o <+> pp r)
+    UnOp      i   o r      -> c i $ parens (pp o <+> pp r)
+    Record    i az         -> c i $ "record [" <> (fsep $ punctuate ";" $ map pp az) <> "]"
+    If        i b t e      -> c i $ fsep ["if" <+> pp b, hang "then" 2 $ pp t, hang "else" 2 $ pp e]
+    Assign    i l r        -> c i $ hang (pp l <+> ":=") 2 (pp r)
+    List      i l          -> c i $ "list [" <> fsep (punctuate ";" $ map pp l) <> "]"
+    Set       i l          -> c i $ "set [" <> fsep (punctuate ";" $ map pp l) <> "]"
+    Tuple     i l          -> c i $ "(" <> fsep (punctuate "," $ map pp l) <> ")"
+    Annot     i n t        -> c i $ ("(" <> pp n) <+> ":" <+> (pp t <> ")")
+    Attrs     i ts         -> c i $ "attributes [" <> fsep (punctuate ";" $ map pp ts) <> "]"
+    BigMap    i bs         -> c i $ "big_map [" <> fsep (punctuate ";" $ map pp bs) <> "]"
+    Map       i bs         -> c i $     "map [" <> fsep (punctuate ";" $ map pp bs) <> "]"
+    MapRemove i k m        -> c i $ hang ("remove" <+> pp k) 0 ("from" <+> "map" <+> pp m)
+    SetRemove i k s        -> c i $ hang ("remove" <+> pp k) 0 ("from" <+> "set" <+> pp s)
+    Indexing  i a j        -> c i $ pp a <> brackets (pp j)
+    Case      i s az       -> c i $ hang ("case" <+> pp s <+> "of") 2 (vcat $ map pp az)
+    Skip      i            -> c i $ "skip"
+    ForLoop   i j s f b    -> c i $ hang ("for" <+> pp j <+> ":=" <+> pp s <+> "to" <+> pp f) 2 (pp b)
+    ForBox    i k mv t z b -> c i $ hang ("for" <+> (pp k <> maybe empty ((" ->" <+>) . pp) mv) <+> "in" <+> pp t <+> pp z) 2 (pp b)
+    WhileLoop i f b        -> c i $ hang ("while" <+> pp f) 2 (pp b)
+    Seq       i es         -> c i $ hang (hang "block {" 2 (vcat $ map pp es)) 0 "}"
+    Lambda    i ps ty b    -> c i $ parens (hang ("function" <+> ("(" <> fsep (punctuate "," $ map pp ps) <> ") :") <+> pp ty) 2 (pp b))
+    MapPatch  i z bs       -> c i $ hang (hang "patch" 2 (pp z)) 0 (hang ("with" <+> "map") 2 ("[" <> fsep (punctuate ";" $ map pp bs) <> "]"))
+    SetPatch  i z bs       -> c i $ hang (hang "patch" 2 (pp z)) 0 (hang ("with" <+> "set") 2 ("[" <> fsep (punctuate ";" $ map pp bs) <> "]"))
+    RecordUpd i r up       -> c i $ hang (pp r) 2 (hang ("with" <+> "record") 2 ("[" <> fsep (punctuate ";" $ map pp up) <> "]"))
     WrongExpr   err        -> pp err
 
-instance Pretty (Alt info) where
+instance HasComments i => Pretty (Alt i) where
   pp = \case
-    Alt _ p b -> hang ("|" <+> pp p <+> "->") 2 (pp b)
+    Alt i p b -> c i $ hang ("|" <+> pp p <+> "->") 2 (pp b)
     WrongAlt err -> pp err
 
-instance Pretty (MapBinding i) where
+instance HasComments i => Pretty (MapBinding i) where
   pp = \case
-    MapBinding _ k v -> hang (pp k <+> "->") 2 (pp v)
+    MapBinding i k v -> c i $ hang (pp k <+> "->") 2 (pp v)
     WrongMapBinding err -> pp err
 
-instance Pretty (Assignment i) where
+instance HasComments i => Pretty (Assignment i) where
   pp = \case
-    Assignment      _ n e -> pp n <+> "=" <+> pp e
+    Assignment      i n e -> c i $ pp n <+> "=" <+> pp e
     WrongAssignment   err -> pp err
 
-instance Pretty (FieldAssignment i) where
+instance HasComments i => Pretty (FieldAssignment i) where
   pp = \case
-    FieldAssignment      _ n e -> pp n <+> "=" <+> pp e
+    FieldAssignment      i n e -> c i $ pp n <+> "=" <+> pp e
     WrongFieldAssignment   err -> pp err
 
-instance Pretty (Constant i) where
+instance HasComments i => Pretty (Constant i) where
   pp = \case
-    Int           _ c   -> pp c
-    Nat           _ c   -> pp c
-    String        _ c   -> pp c
-    Float         _ c   -> pp c
-    Bytes         _ c   -> pp c
-    Tez           _ c   -> pp c
+    Int           i z   -> c i $ pp z
+    Nat           i z   -> c i $ pp z
+    String        i z   -> c i $ pp z
+    Float         i z   -> c i $ pp z
+    Bytes         i z   -> c i $ pp z
+    Tez           i z   -> c i $ pp z
     WrongConstant   err -> pp err
 
-instance Pretty (QualifiedName i) where
+instance HasComments i => Pretty (QualifiedName i) where
   pp = \case
-    QualifiedName _ src path -> pp src <> cat (map (("." <>) . pp) path)
+    QualifiedName i src path -> c i $ pp src <> cat (map (("." <>) . pp) path)
     WrongQualifiedName err   -> pp err
 
-instance Pretty (Pattern info) where
+instance HasComments i => Pretty (Pattern i) where
   pp = \case
-    IsConstr     _ ctor arg  -> pp ctor <> maybe empty pp arg
-    IsConstant   _ c         -> pp c
-    IsVar        _ name      -> pp name
-    IsCons       _ h t       -> pp h <+> "#" <+> pp t
-    IsWildcard   _           -> "_"
-    IsList       _ l         -> "[" <> fsep (punctuate ";" $ map pp l) <> "]"
-    IsTuple      _ t         -> "(" <> fsep (punctuate "," $ map pp t) <> ")"
+    IsConstr     i ctor arg  -> c i $ pp ctor <> maybe empty pp arg
+    IsConstant   i z         -> c i $ pp z
+    IsVar        i name      -> c i $ pp name
+    IsCons       i h t       -> c i $ pp h <+> "#" <+> pp t
+    IsWildcard   i           -> c i $ "_"
+    IsList       i l         -> c i $ "[" <> fsep (punctuate ";" $ map pp l) <> "]"
+    IsTuple      i t         -> c i $ "(" <> fsep (punctuate "," $ map pp t) <> ")"
     WrongPattern   err       -> pp err
 
 
-instance Pretty (Name i) where
+instance HasComments i => Pretty (Name i) where
   pp = \case
-    Name      _ raw -> pp raw
+    Name      i raw -> c i $ pp raw
     WrongName err   -> pp err
 
-instance Pretty (Path i) where
+instance HasComments i => Pretty (Path i) where
   pp = \case
-    At _ n -> pp n
-    Ix _ i -> pp i
+    At i n -> c i $ pp n
+    Ix i j -> c i $ pp j
     WrongPath err -> pp err
 
-instance Pretty (TField i) where
+instance HasComments i => Pretty (TField i) where
   pp = \case
-    TField _ n t -> hang (pp n <> ":") 2 (pp t)
+    TField i n t -> c i $ hang (pp n <> ":") 2 (pp t)
     WrongTField err -> pp err
 
-instance Pretty (LHS i) where
+instance HasComments i => Pretty (LHS i) where
   pp = \case
-    LHS _ qn mi -> pp qn <> foldMap (brackets . pp) mi
+    LHS i qn mi -> c i $ pp qn <> foldMap (brackets . pp) mi
     WrongLHS err -> pp err
 
 -- TODO: Use it, make more alike.
