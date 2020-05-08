@@ -513,7 +513,7 @@ method_call :: Parser (Expr ASTInfo)
 method_call = do
   subtree "projection_call" do
     ctor apply'
-      <*> field "f" projection
+      <*> inside "f" projection
       <*> optional do inside "arguments" arguments
   where
     apply' r f (Just xs) = Apply r (Ident r f) xs

@@ -37,7 +37,27 @@
         <*> inside "b" b
 -}
 
-module Parser (module Parser, gets, pfGrove) where
+module Parser
+  ( Parser
+  , runParser
+  , debugParser
+  , subtree
+  , anything
+  , token
+  , ASTInfo
+  , ctor
+  , inside
+  , many
+  , some
+  , (<|>)
+  , optional
+  , select
+  , dump
+  , stubbed
+  , Stubbed (stub)
+  , Error
+  , HasComments (getComments)
+  ) where
 
 import Control.Monad.State
 import Control.Monad.Writer
