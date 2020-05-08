@@ -17,19 +17,22 @@ and pp_declaration = function
 
 and pp_let_decl Region.{value; _} =
   let _, rec_opt, binding, attr = value in
-  let rec_str =
+  let rec_doc =
     match rec_opt with
-      None -> ""
-    | Some _ -> " rec" in
-  string "let" ^^ string rec_str
-  ^/^ pp_let_binding binding ^/^ pp_attributes attr
+      None -> empty
+    | Some _ -> string " rec" in
+  let binding = pp_let_binding binding
+  and attr    = pp_attributes attr
+  in string "let" ^^ rec_doc ^/^ binding ^/^ attr
 
 and pp_attributes attr =
-  let sep   = string ";" ^^ break 1 in
+  let sep    = string ";" ^^ break 1 in
   let make s = string "[@@" ^^ string s.value ^^ string "]"
   in separate_map sep make attr
 
-and pp_string Region.{value; _} = string value
+and pp_ident Region.{value; _} = string value
+
+and pp_string s = pp_ident s
 
 and pp_let_binding (binding : let_binding) =
   let {binders; lhs_type; let_rhs; _} = binding in
@@ -37,7 +40,7 @@ and pp_let_binding (binding : let_binding) =
   let patterns = flow (break 1) (List.map pp_pattern patterns) in
   let lhs_type =
     match lhs_type with
-      None -> string ""
+      None -> empty
     | Some (_, t_expr) -> string " :" ^/^ pp_type_expr t_expr in
   let let_rhs = pp_expr let_rhs in
   patterns ^^ lhs_type ^^ string " =" ^/^ let_rhs
@@ -47,7 +50,7 @@ and pp_pattern = function
 | PUnit   _ -> string "()"
 | PFalse  _ -> string "false"
 | PTrue   _ -> string "true"
-| PVar    v -> pp_string v
+| PVar    v -> pp_ident v
 | PInt    i -> pp_int i
 | PNat    n -> pp_nat n
 | PBytes  b -> pp_bytes b
@@ -66,8 +69,8 @@ and pp_pconstr = function
 
 and pp_patt_c_app Region.{value; _} =
   match value with
-    constr, None -> pp_string constr
-  | constr, Some pat -> pp_string constr ^^ pp_pattern pat
+    constr, None -> pp_ident constr
+  | constr, Some pat -> pp_ident constr ^^ pp_pattern pat
 
 and pp_patt_some Region.{value; _} =
   string "Some" ^/^ pp_pattern (snd value)
@@ -82,18 +85,22 @@ and pp_bytes Region.{value; _} =
   string ("0x" ^ Hex.show (snd value))
 
 and pp_ppar Region.{value; _} =
-  let {lpar; inside; rpar} = value in
+  let {inside; _} = value in
   string "(" ^^ pp_pattern inside ^^ string ")"
 
 and pp_plist = function
   PListComp cmp -> pp_list_comp cmp
 | PCons cons -> pp_cons cons
 
-and pp_list_comp Region.{value; _} =
+and pp_list_comp e =
+  string "[" ^^ pp_injection pp_pattern e ^^ string "]"
+
+(*
   let items = Utils.sepseq_to_list value.elements in
   let sep = string ";" ^^ break 1 in
   let items = separate_map sep pp_pattern items
   in string "[" ^^ items ^^ string "]"
+ *)
 
 and pp_cons Region.{value; _} =
   let patt1, _, patt2 = value in
@@ -113,7 +120,7 @@ and pp_precord Region.{value; _} =
 
 and pp_field_pattern Region.{value; _} =
   let {field_name; pattern; _} = value in
-  pp_string field_name ^^ string " =" ^/^ pp_pattern pattern
+  pp_ident field_name ^^ string " =" ^/^ pp_pattern pattern
 
 and pp_ptyped Region.{value; _} =
   let {pattern; type_expr; _} = value in
@@ -136,7 +143,7 @@ and pp_expr = function
 | ERecord e -> pp_record_expr e
 | EProj   e -> pp_projection e
 | EUpdate e -> pp_update e
-| EVar    v -> pp_string v
+| EVar    v -> pp_ident v
 | ECall   e -> pp_call_expr e
 | EBytes  e -> pp_bytes e
 | EUnit   _ -> string "()"
@@ -203,13 +210,13 @@ and pp_arith_expr = function
 | Mult  e -> pp_bin_op "*" e
 | Div   e -> pp_bin_op "/" e
 | Mod   e -> pp_bin_op "mod" e
-| Neg   e -> pp_un_op "-" e
+| Neg   e -> string "-" ^^ pp_expr e.value.arg
 | Int   e -> pp_int e
 | Nat   e -> pp_nat e
 | Mutez e -> pp_mutez e
 
 and pp_mutez Region.{value; _} =
-  string (Z.to_string (snd value) ^ "mutez")
+  Z.to_string (snd value) ^ "mutez" |> string
 
 and pp_string_expr = function
      Cat e -> pp_bin_op "^" e
@@ -219,74 +226,136 @@ and pp_list_expr = function
       ECons e -> pp_bin_op "::" e
 | EListComp e -> pp_injection pp_expr e
 
-and pp_injection printer Region.{value; _} =
-  let {compound; elements; terminator} = value in
-  let elements = pp_sepseq ";" elements in
-  let doc =
-    match pp_compound compound with
-      None -> elements
-    | Some (opening, closing) ->
-       string opening ^^ elements ^^ string closing
-  in match terminator with
-         None -> doc
-     | Some _ -> doc ^^ string ";"
+and pp_injection :
+  'a.('a -> document) -> 'a injection Region.reg -> document =
+  fun printer Region.{value; _} ->
+    let {compound; elements; terminator} = value in
+    let sep = ";" in
+    let sep_doc = string sep ^^ break 1 in
+    let elements = Utils.sepseq_to_list elements in
+    let elements = separate_map sep_doc printer elements in
+    let doc =
+      match pp_compound compound with
+        None -> elements
+      | Some (opening, closing) ->
+         string opening ^^ elements ^^ string closing
+    in match terminator with
+           None -> doc
+       | Some _ -> doc ^^ string sep
 
 and pp_compound = function
   BeginEnd (start, _) ->
-    if start#is_ghost then None
-    else Some ("begin", "end")
-| Braces _ -> Some ("{","}")
-| Brackets _ -> Some ("[","]")
-
-and pp_sepseq sep elements =
-  let exprs = Utils.sepseq_to_list elements
-  and sep   = string ";" ^/^ break 1
-  in separate_map sep pp_expr exprs
+    if start#is_ghost then None else Some ("begin","end")
+| Braces (start, _) ->
+    if start#is_ghost then None else Some ("{","}")
+| Brackets (start, _) ->
+    if start#is_ghost then None else Some ("[","]")
 
 and pp_constr_expr = function
   ENone      _ -> string "None"
 | ESomeApp   a -> pp_some a
 | EConstrApp a -> pp_constr_app a
 
-and pp_some Region.{value=_, e; _} = string "Some" ^^ pp_expr e
+and pp_some Region.{value=_, e; _} = string "Some" ^/^ pp_expr e
 
 and pp_constr_app Region.{value; _} =
   let constr, arg = value in
   let constr = string constr.value in
   match arg with
       None -> constr
-  | Some e -> constr ^^ pp_expr e
+  | Some e -> constr ^/^ pp_expr e
 
 and pp_record_expr ne_inj = pp_ne_injection pp_field_assign ne_inj
 
-and pp_field_assign e =
-  string "TODO:pp_field_assign"
+and pp_field_assign Region.{value; _} =
+  let {field_name; field_expr; _} = value in
+  pp_ident field_name ^^ string " =" ^/^ pp_expr field_expr
 
-and pp_ne_injection printer Region.{value; _} =
-  let {compound; ne_elements; terminator} = value in
-  let elements = pp_nsepseq printer ";" ne_elements in
-  let doc =
-    match pp_compound compound with
-      None -> elements
-    | Some (opening, closing) ->
-       string opening ^^ elements ^^ string closing
-  in match terminator with
-         None -> doc
-     | Some _ -> doc ^^ string ";"
+and pp_ne_injection :
+  'a.('a -> document) -> 'a ne_injection Region.reg -> document =
+  fun printer Region.{value; _} ->
+    let {compound; ne_elements; terminator} = value in
+    let elements = pp_nsepseq ";" printer ne_elements in
+    let doc =
+      match pp_compound compound with
+        None -> elements
+      | Some (opening, closing) ->
+          string opening ^^ elements ^^ string closing
+    in match terminator with
+           None -> doc
+       | Some _ -> doc ^^ string ";"
 
-and pp_nsepseq printer sep elements =
-  let elems = Utils.nsepseq_to_list elements
-  and sep   = string ";" ^/^ break 1
-  in separate_map sep printer elems
+and pp_nsepseq :
+  'a.string ->
+  ('a -> document) ->
+  ('a, Region.t) Utils.nsepseq ->
+  document =
+  fun sep printer elements ->
+    let elems = Utils.nsepseq_to_list elements
+    and sep   = string sep ^^ break 1
+    in separate_map sep printer elems
 
-and pp_projection _ = string "TODO:pp_projection"
-and pp_update _ = string "TODO:pp_update"
-and pp_call_expr _ = string "TODO:pp_call_expr"
-and pp_tuple_expr _ = string "TODO:pp_tuple_expr"
-and pp_par_expr _ = string "TODO:pp_par_expr"
-and pp_let_in _ = string "TODO:pp_let_in"
-and pp_fun _ = string "TODO:pp_fun_expr"
-and pp_seq _ = string "TODO:pp_seq"
+and pp_nseq : 'a.('a -> document) -> 'a Utils.nseq -> document =
+  fun printer (head, tail) ->
+    separate_map (break 1) printer (head::tail)
+
+and pp_projection Region.{value; _} =
+  let {struct_name; field_path; _} = value in
+  let fields = Utils.nsepseq_to_list field_path
+  and sep    = string "." ^^ break 0 in
+  let fields = separate_map sep pp_selection fields in
+  pp_ident struct_name ^^ string "." ^^ break 0 ^^ fields
+
+and pp_selection = function
+  FieldName v   -> string v.value
+| Component cmp -> cmp.value |> snd |> Z.to_string |> string
+
+and pp_update Region.{value; _} =
+  let {record; updates; _} = value in
+  let updates = pp_ne_injection pp_field_path_assign updates
+  and record  = pp_path record in
+  string "{" ^^ record ^/^ string "with" ^/^ updates ^^ string "}"
+
+and pp_field_path_assign Region.{value; _} =
+  let {field_path; field_expr; _} = value in
+  let path = pp_nsepseq "." pp_ident field_path
+  in path ^^ string " =" ^/^ pp_expr field_expr
+
+and pp_path = function
+  Name v -> pp_ident v
+| Path p -> pp_projection p
+
+and pp_call_expr Region.{value; _} =
+  let lambda, arguments = value in
+  pp_expr lambda ^/^ pp_nseq pp_expr arguments
+
+and pp_tuple_expr Region.{value; _} =
+  pp_nsepseq "," pp_expr value
+
+and pp_par_expr Region.{value; _} =
+  string "(" ^^ pp_expr value.inside ^^ string ")"
+
+and pp_let_in Region.{value; _} =
+  let {binding; kwd_rec; body; attributes; _} = value in
+  let binding = pp_let_binding binding
+  and body    = pp_expr body
+  and attr    = pp_attributes attributes in
+  let rec_doc = match kwd_rec with
+                    None -> empty
+                | Some _ -> string " rec"
+  in string "let" ^^ rec_doc ^/^ binding
+     ^/^ string "in" ^/^ body ^/^ attr
+
+and pp_fun Region.{value; _} =
+  let {binders; lhs_type; body; _} = value in
+  let binders = pp_nseq pp_pattern binders
+  and annot   = match lhs_type with
+                  None -> empty
+                | Some (_,e) -> string ": " ^/^ pp_type_expr e
+  and body = pp_expr body in
+  string "fun " ^^ binders ^^ annot ^^ string " ->" ^/^ body
+
+and pp_seq e = pp_injection pp_expr e
 
 and pp_type_expr = function
   TProd t   -> pp_cartesian t
@@ -295,36 +364,31 @@ and pp_type_expr = function
 | TApp t    -> pp_type_app t
 | TFun t    -> pp_fun_type t
 | TPar t    -> pp_type_par t
-| TVar t    -> pp_string t
+| TVar t    -> pp_ident t
 | TString s -> pp_string s
 
 and pp_cartesian Region.{value; _} =
-  let cmp = Utils.nsepseq_to_list value in
-  let sep = string " *" ^^ break 1 in
-  separate_map sep pp_type_expr cmp
+  pp_nsepseq " *" pp_type_expr value
 
 and pp_variants Region.{value; _} =
   let variants = Utils.nsepseq_to_list value
-  and sep      = break 1 ^^ string "| " in
-  separate_map sep pp_variant variants
+  and sep     = break 1 ^^ string "| "
+  in separate_map sep pp_variant variants
 
 and pp_variant Region.{value; _} =
   let {constr; arg} = value in
   match arg with
-    None -> pp_string constr
+    None -> pp_ident constr
   | Some (_, t_expr) ->
-      pp_string constr ^^ string " of" ^/^ pp_type_expr t_expr
+      pp_ident constr ^^ string " of" ^/^ pp_type_expr t_expr
 
-and pp_fields Region.{value; _} =
-  let fields = value.ne_elements in
-  let fields = Utils.nsepseq_to_list fields in
-  let sep    = string ";" ^^ break 1 in
-  let fields = separate_map sep pp_field_decl fields
+and pp_fields fields =
+  let fields = pp_ne_injection pp_field_decl fields
   in string "{" ^^ fields ^^ string "}"
 
 and pp_field_decl Region.{value; _} =
   let {field_name; field_type; _} = value in
-  let name = pp_string field_name in
+  let name = pp_ident field_name in
   let t_expr = pp_type_expr field_type
   in name ^^ string " :" ^/^ t_expr
 
@@ -333,7 +397,7 @@ and pp_type_app Region.{value; _} =
   in pp_type_tuple tuple ^/^ pp_type_constr ctor
 
 and pp_type_tuple Region.{value; _} =
-  let {lpar; inside; rpar} = value in
+  let {inside; _} = value in
   match inside with
     t_expr, [] -> pp_type_expr t_expr
   |        seq -> let sep = string "," ^^ break 1 in
@@ -349,5 +413,4 @@ and pp_fun_type Region.{value; _} =
   pp_type_expr lhs ^^ string " ->" ^/^ pp_type_expr rhs
 
 and pp_type_par Region.{value; _} =
-  let {lpar; inside; rpar} = value in
-  string "(" ^^ pp_type_expr inside ^^ string ")"
+  string "(" ^^ pp_type_expr value.inside ^^ string ")"

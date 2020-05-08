@@ -974,11 +974,11 @@ and pp_constr_app_expr state (constr, expr_opt) =
 
 and pp_list_expr state = function
   ECons {value; region} ->
-    pp_loc_node state "Cons" region;
+    pp_loc_node state "ECons" region;
     pp_expr (state#pad 2 0) value.arg1;
     pp_expr (state#pad 2 1) value.arg2
 | EListComp {value; region} ->
-    pp_loc_node state "List" region;
+    pp_loc_node state "EListComp" region;
     if   value.elements = None
     then pp_node (state#pad 1 0) "<nil>"
     else pp_injection pp_expr state value
