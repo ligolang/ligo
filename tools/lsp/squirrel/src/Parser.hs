@@ -195,68 +195,25 @@ optional p = fmap Just p <|> return Nothing
 
 -- | Custom `Alternative.many`.
 --
---   TODO: remove msg.
---
 many :: Parser a -> Parser [a]
 many p = many'
   where
     many' = some' <|> pure []
     some' = do
-      hasPossibleInput
-      (x, consumed) <- productive p
-      if consumed then do
-        xs <- many'
-        return (x : xs)
-      else do
-        return [x]
+      x <- p
+      xs <- many'
+      return (x : xs)
 
 -- | Custom `Alternative.some`.
---
---   TODO: remove msg.
 --
 some :: Parser a -> Parser [a]
 some p = some'
   where
     many' = some' <|> pure []
     some' = do
-      hasPossibleInput
-      (x, consumed) <- productive p
-      if consumed then do
-        xs <- many'
-        return (x : xs)
-      else do
-        return [x]
-
--- | Get UID of current tree. Obsolete.
---
---   TODO: remove.
---
-getTreeID :: Parser (Maybe Int)
-getTreeID = Parser do
-  pfGrove <$> get >>= return . \case
-    [] -> Nothing
-    (_, tree) : _ -> Just (ptID tree)
-
--- | Assert the parser consumes input. Obsolete.
---
---   TODO: remove.
---
-productive :: Parser a -> Parser (a, Bool)
-productive p = do
-  was <- getTreeID
-  res <- p
-  now <- getTreeID
-  return (res, was /= now)
-
--- | The `not <$> eos`. Obsolete.
---
---   TODO: remove.
---
-hasPossibleInput :: Parser ()
-hasPossibleInput = do
-  yes <- gets (not . null . pfGrove)
-  unless yes do
-    die "something"
+      x <- p
+      xs <- many'
+      return (x : xs)
 
 -- | The source of file being parsed. BS, because tree-sitter has offsets
 --   in /bytes/.
