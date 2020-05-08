@@ -74,11 +74,11 @@ instance Pretty Error where
 -- | Parser of tree-sitter-made tree.
 newtype Parser a = Parser
   { unParser
-      :: WriterT [Error]      -- Early I though to report errors that way. Obs.
+      :: WriterT [Error]      -- Early I though to report errors that way.
       (  ReaderT ParserEnv    -- Range/Something.
       (  StateT  ParseForest  -- Current forest to recognise.
       (  ExceptT Error        -- Backtracking. Change `Error` to `()`?
-      (  IO ))))              -- I forgot why. `#include`? Debug via `print`?
+      (  Identity ))))        -- I forgot why. `#include`? Debug via `print`?
          a
   }
   deriving newtype
@@ -89,7 +89,6 @@ newtype Parser a = Parser
     , MonadWriter [Error]
     , MonadReader  ParserEnv
     , MonadError   Error
-    , MonadIO
     )
 
 -- | Generate error originating at current location.
@@ -198,8 +197,8 @@ optional p = fmap Just p <|> return Nothing
 --
 --   TODO: remove msg.
 --
-many :: Text -> Parser a -> Parser [a]
-many msg p = many'
+many :: Parser a -> Parser [a]
+many p = many'
   where
     many' = some' <|> pure []
     some' = do
@@ -215,8 +214,8 @@ many msg p = many'
 --
 --   TODO: remove msg.
 --
-some :: Text -> Parser a -> Parser [a]
-some msg p = some'
+some :: Parser a -> Parser [a]
+some p = some'
   where
     many' = some' <|> pure []
     some' = do
@@ -280,8 +279,10 @@ runParser :: Parser a -> FilePath -> IO (a, [Error])
 runParser (Parser parser) fin = do
   pforest <- toParseTree fin
   text    <- ByteString.readFile fin
-  res <-
-             runExceptT
+  let
+    res =
+             runIdentity
+      $      runExceptT
       $ flip runStateT pforest
       $ flip runReaderT (ParserEnv text)
       $      runWriterT

@@ -22,7 +22,7 @@ contract :: Parser (Contract ASTInfo)
 contract =
   ctor Contract
   <*> subtree "contract" do
-        many "declaration" do
+        many do
           inside "declaration:" do
             declaration
 
@@ -76,7 +76,7 @@ binding = do
       <*> recursive
       <*> inside "name:"  name
       <*> inside "parameters:parameters" do
-            many "param" do
+            many do
               inside "parameter" paramDecl
       <*> inside "type:" type_
       <*> inside "body:" letExpr
@@ -146,15 +146,13 @@ set_patch = do
   subtree "set_patch" do
     ctor SetPatch
       <*> inside "container:path" (qname <|> projection)
-      <*> many "key" do
-            inside "key" expr
+      <*> many do inside "key" expr
 
 record_update = do
   subtree "update_record" do
     ctor RecordUpd
       <*> inside "record:path" do qname <|> projection
-      <*> many "field" do
-            inside "assignment" field_path_assignment
+      <*> many do inside "assignment" field_path_assignment
 
 field_path_assignment = do
   subtree "field_path_assignment" do
@@ -166,31 +164,27 @@ map_patch = do
   subtree "map_patch" do
     ctor MapPatch
       <*> inside "container:path" (qname <|> projection)
-      <*> many "binding" do
-            inside "binding" map_binding
+      <*> many do inside "binding" map_binding
 
 set_expr :: Parser (Expr ASTInfo)
 set_expr = do
   subtree "set_expr" do
-    ctor List <*> do
-      many "list elem" do
-        inside "element" expr
+    ctor List <*> many do
+      inside "element" expr
 
 lambda_expr = do
   subtree "fun_expr" do
     ctor Lambda
       <*> inside "parameters:parameters" do
-            many "param" do
-              inside "parameter" paramDecl
+            many do inside "parameter" paramDecl
       <*> inside "type" newtype_
       <*> inside "body" expr
 
 seq_expr = do
   subtree "block" do
-    ctor Seq <*> do
-      many "statement" do
-        inside "statement" do
-          declaration <|> statement
+    ctor Seq <*> many do
+      inside "statement" do
+        declaration <|> statement
 
 loop = do
   subtree "loop" do
@@ -222,11 +216,11 @@ for_loop = do
 clause_block = do
     subtree "clause_block" do
       inside "block:block" do
-        ctor Seq <*> many "statement" do
+        ctor Seq <*> many do
           inside "statement" (declaration <|> statement)
   <|> do
     subtree "clause_block" do
-      ctor Seq <*> many "statement" do
+      ctor Seq <*> many do
         inside "statement" (declaration <|> statement)
 
 skip :: Parser (Expr ASTInfo)
@@ -238,7 +232,7 @@ case_action = do
   subtree "case_instr" do
     ctor Case
       <*> inside "subject" expr
-      <*> many "case" do
+      <*> many do
             inside "case" alt_action
 
 alt_action :: Parser (Alt ASTInfo)
@@ -253,7 +247,7 @@ case_expr = do
   subtree "case_expr" do
     ctor Case
       <*> inside "subject" expr
-      <*> many "case" do
+      <*> many do
             inside "case" alt
 
 alt :: Parser (Alt ASTInfo)
@@ -320,35 +314,32 @@ constr_pattern =
   <|>
     do
       ctor IsConstr
-         <*> do ctor Name <*> do token "True" <|> token "False" <|> token "None" <|> token "Unit"
+         <*> do ctor Name <*> do true <|> false <|> none <|> unit
          <*> pure Nothing
 
 tuple_pattern :: Parser (Pattern ASTInfo)
 tuple_pattern = do
   subtree "tuple_pattern" do
-    ctor IsTuple <*> do
-      many "element" do
-        inside "element" pattern
+    ctor IsTuple <*> many do
+      inside "element" pattern
 
 list_pattern :: Parser (Pattern ASTInfo)
 list_pattern = do
   subtree "list_pattern" do
-    ctor IsList <*> do
-      many "element" do
-        inside "element" pattern
+    ctor IsList <*> many do
+      inside "element" pattern
 
 nullary_ctor :: Parser (Expr ASTInfo)
 nullary_ctor = do
   ctor Ident <*> do
     ctor QualifiedName
-      <*> do ctor Name <*> do
-               true <|> false <|> none <|> unit
+      <*> do ctor Name <*> do true <|> false <|> none <|> unit
       <*> pure []
-  where
-    true  = token "True"
-    false = token "False"
-    none  = token "None"
-    unit  = token "Unit"
+
+true  = token "True"
+false = token "False"
+none  = token "None"
+unit  = token "Unit"
 
 nat_literal :: Parser (Expr ASTInfo)
 nat_literal = do
@@ -369,8 +360,7 @@ constr_call = do
         ctor Apply
           <*> do ctor Ident <*> inside "constr" qname'
           <*> inside "arguments:arguments" do
-            many "argument" do
-              inside "argument" expr
+            many do inside "argument" expr
 
     user_constr_call = do
       subtree "constr_call" do
@@ -381,8 +371,7 @@ constr_call = do
                      <*> capitalName
                      <*> pure []
           <*> inside "arguments:arguments" do
-            many "argument" do
-              inside "argument" expr
+            many do inside "argument" expr
 
 indexing :: Parser (Expr ASTInfo)
 indexing = do
@@ -404,18 +393,16 @@ map_remove = do
 big_map_expr :: Parser (Expr ASTInfo)
 big_map_expr = do
   subtree "big_map_injection" do
-    ctor BigMap <*> do
-      many "binding" do
-        inside "binding" do
-          map_binding
+    ctor BigMap <*> many do
+      inside "binding" do
+        map_binding
 
 map_expr :: Parser (Expr ASTInfo)
 map_expr = do
   subtree "map_injection" do
-    ctor Map <*> do
-      many "binding" do
-        inside "binding" do
-          map_binding
+    ctor Map <*> many do
+      inside "binding" do
+        map_binding
 
 map_binding :: Parser (MapBinding ASTInfo)
 map_binding = do
@@ -435,17 +422,15 @@ moduleQualified = do
 tuple_expr :: Parser (Expr ASTInfo)
 tuple_expr = do
   subtree "tuple_expr" do
-    ctor Tuple <*> do
-      many "tuple element" do
-        inside "element" expr
+    ctor Tuple <*> many do
+      inside "element" expr
 
 attributes :: Parser (Expr ASTInfo)
 attributes = do
   subtree "attr_decl" do
-    ctor Attrs <*> do
-      many "attribute" do
-        inside "attribute" do
-          token "String"
+    ctor Attrs <*> many do
+      inside "attribute" do
+        token "String"
 
 string_literal :: Parser (Expr ASTInfo)
 string_literal = do
@@ -463,8 +448,7 @@ has_type = do
 list_expr :: Parser (Expr ASTInfo)
 list_expr = do
   subtree "list_expr" do
-    ctor List <*> do
-      many "list elem" do
+    ctor List <*> many do
         inside "element" expr
 
 qname :: Parser (QualifiedName ASTInfo)
@@ -540,7 +524,7 @@ projection = do
   subtree "data_projection" do
     ctor QualifiedName
       <*> inside "struct" name
-      <*> many "selection" selection
+      <*> many selection
 
 selection :: Parser (Path ASTInfo)
 selection = do
@@ -549,7 +533,7 @@ selection = do
       <|> do ctor Ix <*> token "Int"
   <|>
     inside "index" do
-      do ctor Ix <*> token "Int"
+      ctor Ix <*> token "Int"
 
 par_call :: Parser (Expr ASTInfo)
 par_call = do
@@ -569,12 +553,11 @@ int_literal = do
 record_expr :: Parser (Expr ASTInfo)
 record_expr = do
   subtree "record_expr" do
-    ctor Record <*> do
-      many "assignment" do
-        inside "assignment:field_assignment" do
-          ctor Assignment
-            <*> inside "name" name
-            <*> inside "_rhs" expr
+    ctor Record <*> many do
+      inside "assignment:field_assignment" do
+        ctor Assignment
+          <*> inside "name" name
+          <*> inside "_rhs" expr
 
 fun_call :: Parser (Expr ASTInfo)
 fun_call = do
@@ -585,8 +568,7 @@ fun_call = do
 
 arguments =
   subtree "arguments" do
-    many "argument" do
-      inside "argument" expr
+    many do inside "argument" expr
 
 function_id :: Parser (QualifiedName ASTInfo)
 function_id = select
@@ -615,7 +597,7 @@ letExpr = do
     ctor let'
       <*> optional do
         inside "locals:block" do
-          many "decl" do
+          many do
             inside "statement" do
               declaration <|> statement
       <*> inside "body"expr
@@ -648,9 +630,8 @@ newtype_ = select
 
 sum_type = do
   subtree "sum_type" do
-    ctor TSum <*> do
-      many "variant" do
-        inside "variant" variant
+    ctor TSum <*> many do
+      inside "variant" variant
 
 variant = do
   subtree "variant" do
@@ -660,10 +641,9 @@ variant = do
 
 record_type = do
   subtree "record_type" do
-    ctor TRecord
-      <*> many "field" do
-        inside "field" do
-          field_decl
+    ctor TRecord <*> many do
+      inside "field" do
+        field_decl
 
 field_decl = do
   subtree "field_decl" do
@@ -690,7 +670,7 @@ type_ =
 
     cartesian = do
       inside ":cartesian" do
-        ctor TProduct <*> some "corety" do
+        ctor TProduct <*> some do
           inside "element" do
             core_type
 
@@ -716,8 +696,7 @@ name' = do
 typeTuple :: Parser [Type ASTInfo]
 typeTuple = do
   subtree "type_tuple" do
-    many "type tuple element" do
-      inside "element" type_
+    many do inside "element" type_
 
 -- example = "../../../src/test/contracts/application.ligo"
 -- example = "../../../src/test/contracts/address.ligo"
