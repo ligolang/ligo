@@ -13,12 +13,6 @@ open Ast_typed
   environments to `Ast_typed` with embedded environments.
 *)
 
-(*
-  BAD!
-  This representation a quadratic amount of space. As environments are
-  linear in the size of the program, and there is a linear number of them.
-*)
-
 let rec expression : environment -> expression -> expression = fun env expr ->
   (* Standard helper functions to help with the fold *)
   let return ?(env' = env) content = {
