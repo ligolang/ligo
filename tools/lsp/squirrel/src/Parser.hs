@@ -246,6 +246,8 @@ optional p = fmap Just p <|> return Nothing
 
 -- | Custom `Alternative.many`.
 --
+--   TODO: remove, replace with `fields` combinator.
+--
 many :: Parser a -> Parser [a]
 many p = many'
   where
