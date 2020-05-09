@@ -217,7 +217,12 @@ c :: HasComments i => i -> Doc -> Doc
 c i d =
   case getComments i of
     [] -> d
-    cc -> block (map Text.init cc) $$ d
+    cc -> block (map removeSlashN cc) $$ d
+  where
+    removeSlashN txt =
+      if "\n" `Text.isSuffixOf` txt
+      then Text.init txt
+      else txt
 
 instance HasComments i => Pretty (Contract i) where
   pp = \case
@@ -272,7 +277,7 @@ instance HasComments i => Pretty (Mutable i) where
 instance HasComments i => Pretty (Type i) where
   pp = \case
     TArrow    i dom codom -> c i $ parens (pp dom `indent` "->" <+> pp codom)
-    TRecord   i fields    -> c i $ "record" <+> list fields
+    TRecord   i fields    -> c i $ "record [" `indent` block fields `above` "]"
     TVar      i name      -> c i $ pp name
     TSum      i variants  -> c i $ block variants
     TProduct  i elements  -> c i $ train " *" elements
@@ -358,7 +363,7 @@ instance HasComments i => Pretty (QualifiedName i) where
 
 instance HasComments i => Pretty (Pattern i) where
   pp = \case
-    IsConstr     i ctor arg  -> c i $ pp ctor <> maybe empty pp arg
+    IsConstr     i ctor arg  -> c i $ pp ctor <+> maybe empty pp arg
     IsConstant   i z         -> c i $ pp z
     IsVar        i name      -> c i $ pp name
     IsCons       i h t       -> c i $ pp h <+> ("#" <+> pp t)
