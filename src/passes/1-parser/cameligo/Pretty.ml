@@ -9,7 +9,7 @@ let paragraph (s : string) = flow (break 1) (words s)
 
 let rec make ast =
   let app decl = group (pp_declaration decl) in
-  separate_map hardline app (Utils.nseq_to_list ast.decl)
+  separate_map (hardline ^^ hardline) app (Utils.nseq_to_list ast.decl)
 
 and pp_declaration = function
   Let decl -> pp_let_decl decl
@@ -95,13 +95,6 @@ and pp_plist = function
 and pp_list_comp e =
   string "[" ^^ pp_injection pp_pattern e ^^ string "]"
 
-(*
-  let items = Utils.sepseq_to_list value.elements in
-  let sep = string ";" ^^ break 1 in
-  let items = separate_map sep pp_pattern items
-  in string "[" ^^ items ^^ string "]"
- *)
-
 and pp_cons Region.{value; _} =
   let patt1, _, patt2 = value in
   pp_pattern patt1 ^^ string " ::" ^/^ pp_pattern patt2
@@ -128,8 +121,8 @@ and pp_ptyped Region.{value; _} =
 
 and pp_type_decl decl =
   let {name; type_expr; _} = decl.value in
-  string "type" ^/^ string name.value
-  ^/^ string "=" ^/^ pp_type_expr type_expr
+  string "type " ^^ string name.value ^^ string " ="
+  ^^ group (nest 2 (break 1 ^^ pp_type_expr type_expr))
 
 and pp_expr = function
   ECase   e -> pp_case_expr e
@@ -368,19 +361,25 @@ and pp_type_expr = function
 | TString s -> pp_string s
 
 and pp_cartesian Region.{value; _} =
-  pp_nsepseq " *" pp_type_expr value
+  let head, tail = value in
+  let rec app = function
+    []  -> empty
+  | [e] -> group (break 1 ^^ pp_type_expr e)
+  | e::items ->
+      group (break 1 ^^ pp_type_expr e ^^ string " *") ^^ app items
+  in pp_type_expr head ^^ string " *" ^^ app (List.map snd tail)
 
 and pp_variants Region.{value; _} =
   let variants = Utils.nsepseq_to_list value
-  and sep     = break 1 ^^ string "| "
-  in separate_map sep pp_variant variants
+  in separate_map (break 1) pp_variant variants
 
 and pp_variant Region.{value; _} =
   let {constr; arg} = value in
+  string "| " ^^
   match arg with
     None -> pp_ident constr
   | Some (_, t_expr) ->
-      pp_ident constr ^^ string " of" ^/^ pp_type_expr t_expr
+      prefix 4 1 (pp_ident constr ^^ string " of") (pp_type_expr t_expr)
 
 and pp_fields fields =
   let fields = pp_ne_injection pp_field_decl fields
@@ -393,14 +392,14 @@ and pp_field_decl Region.{value; _} =
   in name ^^ string " :" ^/^ t_expr
 
 and pp_type_app Region.{value; _} =
-  let ctor, tuple = value
-  in pp_type_tuple tuple ^/^ pp_type_constr ctor
+  let ctor, tuple = value in
+  pp_type_tuple tuple ^^ string " " ^^ pp_type_constr ctor
 
 and pp_type_tuple Region.{value; _} =
   let {inside; _} = value in
   match inside with
     t_expr, [] -> pp_type_expr t_expr
-  |        seq -> let sep = string "," ^^ break 1 in
+  |        seq -> let sep = group (string "," ^^ break 1) in
                  let lst = Utils.nsepseq_to_list seq in
                  let cmp = separate_map sep pp_type_expr lst
                  in string "(" ^^ cmp ^^ string ")"
@@ -410,7 +409,7 @@ and pp_type_constr ctor =
 
 and pp_fun_type Region.{value; _} =
   let lhs, _, rhs = value in
-  pp_type_expr lhs ^^ string " ->" ^/^ pp_type_expr rhs
+  group (pp_type_expr lhs ^^ string " ->") ^/^ pp_type_expr rhs
 
 and pp_type_par Region.{value; _} =
-  string "(" ^^ pp_type_expr value.inside ^^ string ")"
+  string "(" ^^ nest 1 (pp_type_expr value.inside ^^ string ")")
