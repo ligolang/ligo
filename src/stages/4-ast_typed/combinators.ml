@@ -174,9 +174,17 @@ let get_t_pair (t:type_expression) : (type_expression * type_expression) result 
       ok List.(nth lst 0 , nth lst 1)
   | _ -> fail @@ Errors.not_a_x_type "pair (tuple with two elements)" t ()
 
-let get_t_function (t:type_expression) : (type_expression * type_expression) result = match t.type_content with
-  | T_arrow {type1;type2} -> ok (type1,type2)
-  | _ -> simple_fail "not a function"
+let get_t_function_opt (t:type_expression) : (type_expression * type_expression) option = match t.type_content with
+  | T_arrow {type1;type2} -> Some (type1,type2)
+  | _ -> None
+
+let get_t_function t =
+  trace_option (Errors.not_a_x_type "function" t ()) @@
+    get_t_function_opt t
+
+let get_t_function_exn t = match get_t_function_opt t with
+  | Some x -> x
+  | None -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
 
 let get_t_function_full (t:type_expression) : (type_expression * type_expression) result =
   let%bind _ = get_t_function t in
@@ -190,9 +198,17 @@ let get_t_function_full (t:type_expression) : (type_expression * type_expression
   let input = List.map (fun (l,t) -> (l,{field_type = t ; michelson_annotation = None ; field_decl_pos = 0})) input in
   ok @@ (t_record (LMap.of_list input) (),output) 
 
-let get_t_sum (t:type_expression) : ctor_content constructor_map result = match t.type_content with
-  | T_sum m -> ok m
-  | _ -> fail @@ Errors.not_a_x_type "sum" t ()
+let get_t_sum_opt (t:type_expression) : ctor_content constructor_map option = match t.type_content with
+  | T_sum m -> Some m
+  | _ -> None
+
+let get_t_sum t = match get_t_sum_opt t with
+  | Some m -> ok m
+  | None -> fail @@ Errors.not_a_x_type "sum" t ()
+
+let get_t_sum_exn t = match get_t_sum_opt t with
+  | Some m -> m
+  | None -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
 
 let get_t_record (t:type_expression) : field_content label_map result = match t.type_content with
   | T_record m -> ok m

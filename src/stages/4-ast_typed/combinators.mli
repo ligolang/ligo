@@ -63,8 +63,12 @@ val get_t_key_hash : type_expression -> unit result
 val get_t_tuple : type_expression -> type_expression list result
 val get_t_pair : type_expression -> ( type_expression * type_expression ) result
 val get_t_function : type_expression -> ( type_expression * type_expression ) result
+val get_t_function_opt : type_expression -> ( type_expression * type_expression ) option
+val get_t_function_exn : type_expression -> ( type_expression * type_expression )
 val get_t_function_full : type_expression -> ( type_expression * type_expression ) result
 val get_t_sum : type_expression -> ctor_content constructor_map result
+val get_t_sum_opt : type_expression -> ctor_content constructor_map option
+val get_t_sum_exn : type_expression -> ctor_content constructor_map
 val get_t_record : type_expression -> field_content label_map result
 val get_t_map : type_expression -> ( type_expression * type_expression ) result
 val get_t_big_map : type_expression -> ( type_expression * type_expression ) result

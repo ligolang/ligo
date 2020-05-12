@@ -10,9 +10,11 @@ let contract_passes = [
   No_nested_big_map.self_typing ;
 ]
 
-let all_program =
+let all_program program =
   let all_p = List.map Helpers.map_program all_passes in
-  bind_chain all_p
+  let%bind program' = bind_chain all_p program in
+  let program'' = Recompute_environment.program Environment.default program' in
+  ok program''
 
 let all_expression =
   let all_p = List.map Helpers.map_expression all_passes in

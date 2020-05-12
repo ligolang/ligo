@@ -19,7 +19,7 @@ module Environment : sig
   val to_list : t -> element list
   val get_names : t -> expression_variable list
   val remove : int -> t -> t
-  val select : ?rev:bool -> ?keep:bool -> expression_variable list -> t -> t
+  (* val select : ?rev:bool -> ?keep:bool -> expression_variable list -> t -> t *)
   (*
   val fold : ('a -> element -> 'a ) -> 'a -> t -> 'a
   val filter : ( element -> bool ) -> t -> t
