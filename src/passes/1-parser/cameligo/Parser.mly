@@ -640,7 +640,7 @@ update_record:
       lbrace   = $1;
       record   = $2;
       kwd_with = $3;
-      updates  = {value = {compound = Braces($1,$5);
+      updates  = {value = {compound = Braces (ghost, ghost);
                            ne_elements;
                            terminator};
                   region = cover $3 $5};
