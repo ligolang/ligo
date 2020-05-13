@@ -21,12 +21,12 @@ module Environment (* : ENVIRONMENT *) = struct
   let empty : t = []
   let add : element -> t -> t  = List.cons
   let concat : t list -> t  = List.concat
-  let get_opt : expression_variable -> t -> type_value option  = List.assoc_opt ~compare:Var.compare
+  let get_opt : expression_variable -> t -> type_expression option  = List.assoc_opt ~compare:Var.compare
   let has : expression_variable -> t -> bool = fun s t ->
     match get_opt s t with
     | None -> false
     | Some _ -> true
-  let get_i : expression_variable -> t -> (type_value * int) = List.assoc_i ~compare:Var.compare
+  let get_i : expression_variable -> t -> (type_expression * int) = List.assoc_i ~compare:Var.compare
   let of_list : element list -> t = fun x -> x
   let to_list : t -> element list = fun x -> x
   let get_names : t -> expression_variable list = List.map fst

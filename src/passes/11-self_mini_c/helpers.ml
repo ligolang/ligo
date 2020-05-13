@@ -1,10 +1,10 @@
 open Mini_c
 open Trace
 
-let rec fold_type_value : ('a -> type_value -> 'a result) -> 'a -> type_value -> 'a result = fun f init t ->
+let rec fold_type_value : ('a -> type_expression -> 'a result) -> 'a -> type_expression -> 'a result = fun f init t ->
   let self = fold_type_value f in
   let%bind init' = f init t in
-  match t with
+  match t.type_content with
   | T_pair ((_, a), (_, b))
   | T_or ((_, a), (_, b))
   | T_function (a, b)
