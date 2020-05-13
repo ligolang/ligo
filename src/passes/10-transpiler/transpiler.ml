@@ -233,51 +233,53 @@ let transpile_constant' : AST.constant' -> constant' = function
   | C_CONVERT_FROM_LEFT_COMB -> C_CONVERT_FROM_LEFT_COMB
   | C_CONVERT_FROM_RIGHT_COMB -> C_CONVERT_FROM_RIGHT_COMB
 
-let rec transpile_type (t:AST.type_expression) : type_value result =
+let rec transpile_type (t:AST.type_expression) : type_expression result =
+  let return tc = ok @@ Expression.make_t @@ tc in
   match t.type_content with
-  | T_variable (name) when Var.equal name Stage_common.Constant.t_bool -> ok (T_base TB_bool)
-  | t when (compare t (t_bool ()).type_content) = 0-> ok (T_base TB_bool)
+  | T_variable (name) when Var.equal name Stage_common.Constant.t_bool -> return (T_base TB_bool)
+  | t when (compare t (t_bool ()).type_content) = 0-> return (T_base TB_bool)
   | T_variable (name) -> fail @@ no_type_variable @@ name
-  | T_constant (TC_int)       -> ok (T_base TB_int)
-  | T_constant (TC_nat)       -> ok (T_base TB_nat)
-  | T_constant (TC_mutez)     -> ok (T_base TB_mutez)
-  | T_constant (TC_string)    -> ok (T_base TB_string)
-  | T_constant (TC_bytes)     -> ok (T_base TB_bytes)
-  | T_constant (TC_address)   -> ok (T_base TB_address)
-  | T_constant (TC_timestamp) -> ok (T_base TB_timestamp)
-  | T_constant (TC_unit)      -> ok (T_base TB_unit)
-  | T_constant (TC_operation) -> ok (T_base TB_operation)
-  | T_constant (TC_signature) -> ok (T_base TB_signature)
-  | T_constant (TC_key)       -> ok (T_base TB_key)
-  | T_constant (TC_key_hash)  -> ok (T_base TB_key_hash)
-  | T_constant (TC_chain_id)  -> ok (T_base TB_chain_id)
-  | T_constant (TC_void)      -> ok (T_base TB_void)
+  | T_constant (TC_int)       -> return (T_base TB_int)
+  | T_constant (TC_nat)       -> return (T_base TB_nat)
+  | T_constant (TC_mutez)     -> return (T_base TB_mutez)
+  | T_constant (TC_string)    -> return (T_base TB_string)
+  | T_constant (TC_bytes)     -> return (T_base TB_bytes)
+  | T_constant (TC_address)   -> return (T_base TB_address)
+  | T_constant (TC_timestamp) -> return (T_base TB_timestamp)
+  | T_constant (TC_unit)      -> return (T_base TB_unit)
+  | T_constant (TC_operation) -> return (T_base TB_operation)
+  | T_constant (TC_signature) -> return (T_base TB_signature)
+  | T_constant (TC_key)       -> return (T_base TB_key)
+  | T_constant (TC_key_hash)  -> return (T_base TB_key_hash)
+  | T_constant (TC_chain_id)  -> return (T_base TB_chain_id)
+  | T_constant (TC_void)      -> return (T_base TB_void)
   | T_operator (TC_contract x) ->
       let%bind x' = transpile_type x in
-      ok (T_contract x')
+      return (T_contract x')
   | T_operator (TC_map {k;v}) ->
       let%bind kv' = bind_map_pair transpile_type (k, v) in
-      ok (T_map kv')
+      return (T_map kv')
   | T_operator (TC_big_map {k;v}) ->
       let%bind kv' = bind_map_pair transpile_type (k, v) in
-      ok (T_big_map kv')
+      return (T_big_map kv')
   | T_operator (TC_map_or_big_map _) ->
       fail @@ corner_case ~loc:"transpiler" "TC_map_or_big_map should have been resolved before transpilation"
   | T_operator (TC_list t) ->
       let%bind t' = transpile_type t in
-      ok (T_list t')
+      return (T_list t')
   | T_operator (TC_set t) ->
       let%bind t' = transpile_type t in
-      ok (T_set t')
+      return (T_set t')
   | T_operator (TC_option o) ->
       let%bind o' = transpile_type o in
-      ok (T_option o')
+      return (T_option o')
   | T_sum m when Ast_typed.Helpers.is_michelson_or m ->
       let node = Append_tree.of_list @@ kv_list_of_cmap m in
-      let aux a b : type_value annotated result =
+      let aux a b : type_expression annotated result =
         let%bind a = a in
         let%bind b = b in
-        ok (None, T_or (a, b))
+        let%bind t = return @@ T_or (a,b) in
+        ok (None, t)
       in
       let%bind m' = Append_tree.fold_ne
                       (fun (_, ({ctor_type ; michelson_annotation}: AST.ctor_content)) ->
@@ -287,10 +289,11 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
       ok @@ snd m'
   | T_sum m ->
       let node = Append_tree.of_list @@ kv_list_of_cmap m in
-      let aux a b : type_value annotated result =
+      let aux a b : type_expression annotated result =
         let%bind a = a in
         let%bind b = b in
-        ok (None, T_or (a, b))
+        let%bind t = return @@ T_or (a,b) in
+        ok (None, t)
       in
       let%bind m' = Append_tree.fold_ne
                       (fun (Ast_typed.Types.Constructor ann, ({ctor_type ; _}: AST.ctor_content)) ->
@@ -300,10 +303,11 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
       ok @@ snd m'
   | T_record m when Ast_typed.Helpers.is_michelson_pair m ->
       let node = Append_tree.of_list @@ Ast_typed.Helpers.tuple_of_record m in
-      let aux a b : type_value annotated result =
+      let aux a b : type_expression annotated result =
         let%bind a = a in
         let%bind b = b in
-        ok (None, T_pair (a, b))
+        let%bind t = return @@ T_pair (a, b) in
+        ok (None, t)
       in
       let%bind m' = Append_tree.fold_ne
                       (fun (_, ({field_type ; michelson_annotation} : AST.field_content)) ->
@@ -320,10 +324,11 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
           List.rev @@ Ast_typed.Types.LMap.to_kv_list m
         )
       in
-      let aux a b : type_value annotated result =
+      let aux a b : type_expression annotated result =
         let%bind a = a in
         let%bind b = b in
-        ok (None, T_pair (a, b))
+        let%bind t = return @@ T_pair (a, b) in
+        ok (None, t)
       in
       let%bind m' = Append_tree.fold_ne
                       (fun (Ast_typed.Types.Label ann, ({field_type;_}: AST.field_content)) ->
@@ -339,10 +344,10 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
   | T_arrow {type1;type2} -> (
       let%bind param' = transpile_type type1 in
       let%bind result' = transpile_type type2 in
-      ok (T_function (param',result'))
+      return @@ (T_function (param',result'))
     )
 
-let record_access_to_lr : type_value -> type_value AST.label_map -> AST.label -> (type_value * [`Left | `Right]) list result = fun ty tym ind ->
+let record_access_to_lr : type_expression -> type_expression AST.label_map -> AST.label -> (type_expression * [`Left | `Right]) list result = fun ty tym ind ->
   let tys = Ast_typed.Helpers.kv_list_of_record_or_tuple tym in
   let node_tv = Append_tree.of_list tys in
   let%bind path =
@@ -377,7 +382,7 @@ let rec transpile_literal : AST.literal -> value = fun l -> match l with
   | Literal_unit -> D_unit
   | Literal_void -> D_none
 
-and transpile_environment_element_type : AST.environment_element -> type_value result = fun ele ->
+and transpile_environment_element_type : AST.environment_element -> type_expression result = fun ele ->
   transpile_type ele.type_value
 
 and tree_of_sum : AST.type_expression -> (AST.constructor' * AST.type_expression) Append_tree.t result = fun t ->
@@ -397,7 +402,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
   | E_let_in {let_binder; rhs; let_result; inline} ->
     let%bind rhs' = transpile_annotated_expression rhs in
     let%bind result' = transpile_annotated_expression let_result in
-    return (E_let_in ((let_binder, rhs'.type_value), inline, rhs', result'))
+    return (E_let_in ((let_binder, rhs'.type_expression), inline, rhs', result'))
   | E_literal l -> return @@ E_literal (transpile_literal l)
   | E_variable name -> (
       let%bind ele =
@@ -418,7 +423,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       let%bind node_tv =
         trace_strong (corner_case ~loc:__LOC__ "getting lr tree") @@
         tree_of_sum ae.type_expression in
-      let leaf (k, tv) : (expression' option * type_value) result =
+      let leaf (k, tv) : (expression_content option * type_expression) result =
         if k = constructor then (
           let%bind _ =
             trace_strong (corner_case ~loc:__LOC__ "wrong type for constructor parameter")
@@ -428,14 +433,14 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
           let%bind tv = transpile_type tv in
           ok (None, tv)
         ) in
-      let node a b : (expression' option * type_value) result =
+      let node a b : (expression_content option * type_expression) result =
         let%bind a = a in
         let%bind b = b in
         match (a, b) with
-        | (None, a), (None, b) -> ok (None, T_or ((None, a), (None, b)))
+        | (None, a), (None, b) -> ok (None, Expression.make_t @@ T_or ((None, a), (None, b)))
         | (Some _, _), (Some _, _) -> fail @@ corner_case ~loc:__LOC__ "multiple identical constructors in the same variant"
-        | (Some v, a), (None, b) -> ok (Some (E_constant {cons_name=C_LEFT ;arguments= [Combinators.Expression.make_tpl (v, a)]}), T_or ((None, a), (None, b)))
-        | (None, a), (Some v, b) -> ok (Some (E_constant {cons_name=C_RIGHT;arguments= [Combinators.Expression.make_tpl (v, b)]}), T_or ((None, a), (None, b)))
+        | (Some v, a), (None, b) -> ok (Some (E_constant {cons_name=C_LEFT ;arguments= [Combinators.Expression.make_tpl (v, a)]}), Expression.make_t @@ T_or ((None, a), (None, b)))
+        | (None, a), (Some v, b) -> ok (Some (E_constant {cons_name=C_RIGHT;arguments= [Combinators.Expression.make_tpl (v, b)]}), Expression.make_t @@ T_or ((None, a), (None, b)))
       in
       let%bind (ae_opt, tv) = Append_tree.fold_ne leaf node node_tv in
       let%bind ae =
@@ -451,7 +456,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
         let%bind b = b in
         let a_ty = Combinators.Expression.get_type a in
         let b_ty = Combinators.Expression.get_type b in
-        let tv = T_pair ((None, a_ty) , (None, b_ty)) in
+        let tv   = Combinators.Expression.make_t @@ T_pair ((None, a_ty) , (None, b_ty)) in
         return ~tv @@ E_constant {cons_name=C_PAIR;arguments=[a; b]}
       in
       trace_strong (corner_case ~loc:__LOC__ "record build") @@
@@ -652,7 +657,7 @@ and transpile_lambda l (input_type , output_type) =
   ok @@ Combinators.Expression.make_tpl (closure , tv)
 
 and transpile_recursive {fun_name; fun_type; lambda} =
-  let rec map_lambda : AST.expression_variable -> type_value -> AST.expression -> (expression * expression_variable list) result = fun fun_name loop_type e ->
+  let rec map_lambda : AST.expression_variable -> type_expression -> AST.expression -> (expression * expression_variable list) result = fun fun_name loop_type e ->
     match e.expression_content with 
       E_lambda {binder;result} -> 
         let%bind (body,l) = map_lambda fun_name loop_type result in
@@ -661,7 +666,7 @@ and transpile_recursive {fun_name; fun_type; lambda} =
         let%bind res = replace_callback fun_name loop_type false e in
         ok @@ (res, [])
 
-  and replace_callback : AST.expression_variable -> type_value -> bool -> AST.expression -> expression result = fun fun_name loop_type shadowed e ->
+  and replace_callback : AST.expression_variable -> type_expression -> bool -> AST.expression -> expression result = fun fun_name loop_type shadowed e ->
     match e.expression_content with
       E_let_in li -> 
         let shadowed = shadowed || Var.equal li.let_binder fun_name in 
@@ -684,7 +689,8 @@ and transpile_recursive {fun_name; fun_type; lambda} =
       _ -> 
         let%bind expr = transpile_annotated_expression e in
         ok @@ Expression.make (E_constant {cons_name=C_LOOP_STOP;arguments=[expr]}) loop_type
-  and matching : AST.expression_variable -> type_value -> bool -> AST.matching -> type_value -> expression result = fun fun_name loop_type shadowed m ty ->
+
+  and matching : AST.expression_variable -> type_expression -> bool -> AST.matching -> type_expression -> expression result = fun fun_name loop_type shadowed m ty ->
     let return ret = ok @@ Expression.make ret @@ ty in
     let%bind expr = transpile_annotated_expression m.matchee in
     match m.cases with
@@ -793,8 +799,8 @@ let transpile_program (lst : AST.program) : program result =
 (* check whether the storage contains a big_map, if yes, check that
   it appears on the left hand side of a pair *)
 let check_storage f ty loc : (anon_function * _) result =
-  let rec aux (t:type_value) on_big_map =
-    match t with
+  let rec aux (t:type_expression) on_big_map =
+    match t.type_content with
       | T_big_map _ -> on_big_map
       | T_pair (a , b) -> (aux (snd a) true) && (aux (snd b) false)
       | T_or (a,b) -> (aux (snd a) false) && (aux (snd b) false)
@@ -806,7 +812,7 @@ let check_storage f ty loc : (anon_function * _) result =
       | T_option a -> (aux a false)
       | _ -> true
   in
-  match f.body.type_value with
+  match f.body.type_expression.type_content with
     | T_pair (_, storage) ->
       if aux (snd storage) false then ok (f, ty) else fail @@ bad_big_map loc
     | _ -> ok (f, ty)

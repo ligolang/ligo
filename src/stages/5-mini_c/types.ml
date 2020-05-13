@@ -2,17 +2,21 @@ include Stage_common.Types
 
 type 'a annotated = string option * 'a
 
-type type_value =
-  | T_pair of (type_value annotated * type_value annotated)
-  | T_or of (type_value annotated * type_value annotated)
-  | T_function of (type_value * type_value)
+type type_content =
+  | T_pair of (type_expression annotated * type_expression annotated)
+  | T_or of (type_expression annotated * type_expression annotated)
+  | T_function of (type_expression * type_expression)
   | T_base of type_base
-  | T_map of (type_value * type_value)
-  | T_big_map of (type_value * type_value)
-  | T_list of type_value
-  | T_set of type_value
-  | T_contract of type_value
-  | T_option of type_value
+  | T_map of (type_expression * type_expression)
+  | T_big_map of (type_expression * type_expression)
+  | T_list of type_expression
+  | T_set of type_expression
+  | T_contract of type_expression
+  | T_option of type_expression
+
+and type_expression = {
+  type_content : type_content;
+}
 
 and type_base =
   | TB_unit
@@ -31,7 +35,7 @@ and type_base =
   | TB_timestamp
   | TB_void
 
-and environment_element = expression_variable * type_value
+and environment_element = expression_variable * type_expression
 
 and environment = environment_element list
 
@@ -68,28 +72,28 @@ type value =
 
 and selector = var_name list
 
-and expression' =
+and expression_content =
   | E_literal of value
   | E_closure of anon_function
   | E_skip
   | E_constant of constant
   | E_application of (expression * expression)
   | E_variable of var_name
-  | E_make_none of type_value
-  | E_iterator of constant' * ((var_name * type_value) * expression) * expression
-  | E_fold of (((var_name * type_value) * expression) * expression * expression)
+  | E_make_none of type_expression
+  | E_iterator of constant' * ((var_name * type_expression) * expression) * expression
+  | E_fold of (((var_name * type_expression) * expression) * expression * expression)
   | E_if_bool of (expression * expression * expression)
-  | E_if_none of expression * expression * ((var_name * type_value) * expression)
-  | E_if_cons of (expression * expression * (((var_name * type_value) * (var_name * type_value)) * expression))
-  | E_if_left of expression * ((var_name * type_value) * expression) * ((var_name * type_value) * expression)
-  | E_let_in of ((var_name * type_value) * inline * expression * expression)
+  | E_if_none of expression * expression * ((var_name * type_expression) * expression)
+  | E_if_cons of (expression * expression * (((var_name * type_expression) * (var_name * type_expression)) * expression))
+  | E_if_left of expression * ((var_name * type_expression) * expression) * ((var_name * type_expression) * expression)
+  | E_let_in of ((var_name * type_expression) * inline * expression * expression)
   | E_sequence of (expression * expression)
   | E_record_update of (expression * [`Left | `Right] list * expression)
   | E_while of (expression * expression)
 
 and expression = {
-  content : expression' ;
-  type_value : type_value ;
+  content : expression_content ;
+  type_expression : type_expression ;
 }
 
 and constant = {

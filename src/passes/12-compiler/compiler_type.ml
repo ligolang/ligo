@@ -92,8 +92,8 @@ module Ty = struct
     | Timestamp_key annot -> ok (Timestamp_key annot)
     | Address_key annot -> ok (Address_key annot)
 
-  let rec comparable_type : type_value -> ex_comparable_ty result = fun tv ->
-    match tv with
+  let rec comparable_type : type_expression -> ex_comparable_ty result = fun tv ->
+    match tv.type_content with
     | T_base b -> comparable_type_base b
     | T_function _ -> fail (not_comparable "function")
     | T_or _ -> fail (not_comparable "or")
@@ -128,8 +128,8 @@ module Ty = struct
     | TB_key_hash -> return key_hash
     | TB_chain_id -> return chain_id
 
-  let rec type_ : type_value -> ex_ty result =
-    function
+  let rec type_ : type_expression -> ex_ty result =
+    fun te -> match te.type_content with
     | T_base b -> base_type b
     | T_pair (t, t') -> (
         annotated t >>? fun (ann, Ex_ty t) ->
@@ -167,7 +167,7 @@ module Ty = struct
         let%bind (Ex_ty t') = type_ t in
         ok @@ Ex_ty (contract t')
 
-  and annotated : type_value annotated -> ex_ty annotated result =
+  and annotated : type_expression annotated -> ex_ty annotated result =
     fun (ann, a) -> let%bind a = type_ a in
                     ok @@ (ann, a)
 
@@ -213,8 +213,8 @@ let base_type : type_base -> O.michelson result =
   | TB_key_hash -> ok @@ O.prim T_key_hash
   | TB_chain_id -> ok @@ O.prim T_chain_id
 
-let rec type_ : type_value -> O.michelson result =
-  function
+let rec type_ : type_expression -> O.michelson result =
+  fun te -> match te.type_content with
   | T_base b -> base_type b
   | T_pair (t, t') -> (
       annotated t >>? fun t ->
@@ -249,7 +249,7 @@ let rec type_ : type_value -> O.michelson result =
       let%bind ret = type_ ret in
       ok @@ O.prim ~children:[arg;ret] T_lambda
 
-and annotated : type_value annotated -> O.michelson result =
+and annotated : type_expression annotated -> O.michelson result =
   function
   | (Some ann, o) ->
      let%bind o' = type_ o in
