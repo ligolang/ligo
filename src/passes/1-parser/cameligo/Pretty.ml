@@ -23,12 +23,13 @@ and pp_let_decl Region.{value; _} =
     | Some _ -> string "rec " in
   let binding = pp_let_binding binding
   and attr    = pp_attributes attr
-  in string "let " ^^ rec_doc ^^ binding
-     ^^ group (nest 2 (break 1 ^^ attr))
+  in string "let " ^^ rec_doc ^^ binding ^^ attr
 
-and pp_attributes attr =
-  let make s = string "[@@" ^^ string s.value ^^ string "]"
-  in separate_map (break 0) make attr
+and pp_attributes = function
+    [] -> empty
+| attr ->
+   let make s = string "[@@" ^^ string s.value ^^ string "]" in
+   group (nest 2 (break 1 ^^ separate_map (break 0) make attr))
 
 and pp_ident Region.{value; _} = string value
 
@@ -42,8 +43,10 @@ and pp_let_binding (binding : let_binding) =
   let lhs_type =
     match lhs_type with
             None -> empty
-    | Some (_,e) -> prefix 2 1 (string " :") (pp_type_expr e)
-  in patterns ^^ lhs_type ^^ string " ="
+    | Some (_,e) -> group (nest 2 (break 1 ^^ string ": " ^^ pp_type_expr e))
+  in patterns
+     ^^ lhs_type
+     ^^ string " ="
      ^^ group (nest 2 (break 1 ^^ group (pp_expr let_rhs)))
 
 and pp_pattern = function
@@ -71,7 +74,8 @@ and pp_pconstr = function
 and pp_patt_c_app Region.{value; _} =
   match value with
     constr, None -> pp_ident constr
-  | constr, Some pat -> pp_ident constr ^^ pp_pattern pat
+  | constr, Some pat ->
+      prefix 4 1 (pp_ident constr) (pp_pattern pat)
 
 and pp_patt_some Region.{value; _} =
   prefix 4 1 (string "Some") (pp_pattern (snd value))
@@ -101,7 +105,7 @@ and pp_cons Region.{value; _} =
 and pp_ptuple Region.{value; _} =
   let cmp = Utils.nsepseq_to_list value in
   let sep = string "," ^^ break 1 in
-  separate_map sep pp_pattern cmp
+  group (separate_map sep pp_pattern cmp)
 
 and pp_precord fields = pp_ne_injection pp_field_pattern fields
 
@@ -125,7 +129,7 @@ and pp_expr = function
 | ELogic  e -> pp_logic_expr e
 | EArith  e -> group (pp_arith_expr e)
 | EString e -> pp_string_expr e
-| EList   e -> pp_list_expr e
+| EList   e -> group (pp_list_expr e)
 | EConstr e -> pp_constr_expr e
 | ERecord e -> pp_record_expr e
 | EProj   e -> pp_projection e
@@ -143,15 +147,16 @@ and pp_expr = function
 and pp_case_expr Region.{value; _} =
   let {expr; cases; _} = value in
   group (string "match " ^^ pp_expr expr ^/^ string "with")
-  ^^ group (nest 2 (break 1 ^^ pp_cases cases))
+  ^^ hardline ^^ nest 2 (pp_cases cases)
 
 and pp_cases Region.{value; _} =
   let head, tail = value in
   let head = pp_clause head in
+  let head = if tail = [] then head
+             else string "    " ^^ head in
   let rest = List.map snd tail in
   let app clause = break 1 ^^ string "| " ^^ pp_clause clause
-  in ifflat head (string "  " ^^ head)
-     ^^ concat_map app rest
+  in  head ^^ concat_map app rest
 
 and pp_clause Region.{value; _} =
   let {pattern; rhs; _} = value in
@@ -160,18 +165,18 @@ and pp_clause Region.{value; _} =
 and pp_cond_expr Region.{value; _} =
   let {test; ifso; kwd_else; ifnot; _} = value in
   let if_then =
-    string "if " ^^ pp_expr test
-    ^/^ string "then" ^^ group (nest 2 (break 1 ^^ pp_expr ifso)) in
-  if kwd_else#is_ghost then if_then
-  else let else_ =
-         string "else" ^^ group (nest 2 (break 1 ^^ pp_expr ifnot))
-       in if_then ^/^ else_
+    string "if " ^^ group (nest 2 (pp_expr test)) ^/^ string "then"
+    ^^ group (nest 2 (break 1 ^^ pp_expr ifso)) in
+  if kwd_else#is_ghost then
+    if_then
+  else
+    if_then
+    ^/^ string "else" ^^ group (nest 2 (break 1 ^^ pp_expr ifnot))
 
 and pp_annot_expr Region.{value; _} =
   let expr, _, type_expr = value.inside in
-  string "(" ^^
-    nest 1 (pp_expr expr ^^ string " :"
-            ^/^ pp_type_expr type_expr ^^ string ")")
+    string "(" ^^ pp_expr expr ^^ string " :"
+    ^^ group (nest 1 (break 1 ^^ pp_type_expr type_expr ^^ string ")"))
 
 and pp_logic_expr = function
   BoolExpr e -> pp_bool_expr e
@@ -253,7 +258,7 @@ and pp_constr_app Region.{value; _} =
   let constr = string constr.value in
   match arg with
       None -> constr
-  | Some e -> constr ^/^ pp_expr e
+  | Some e -> prefix 2 1 constr (pp_expr e)
 
 and pp_record_expr ne_inj = pp_ne_injection pp_field_assign ne_inj
 
@@ -337,10 +342,8 @@ and pp_let_in Region.{value; _} =
   let rec_doc = match kwd_rec with
                     None -> empty
                 | Some _ -> string "rec "
-  in group (string "let " ^^ rec_doc ^^ binding
-     ^^ group (nest 2 (break 1 ^^ attr))
-     ^/^ string "in"
-     ^^ group (nest 2 (break 1 ^^ pp_expr body)))
+  in group (string "let " ^^ rec_doc ^^ binding) ^^ attr
+     ^/^ group (string "in " ^^ nest 3 (pp_expr body))
 
 and pp_fun Region.{value; _} =
   let {binders; lhs_type; body; _} = value in
@@ -348,8 +351,8 @@ and pp_fun Region.{value; _} =
   and annot   = match lhs_type with
                   None -> empty
                 | Some (_,e) -> string ": " ^/^ pp_type_expr e
-  in string "fun " ^^ nest 4 binders ^^ annot
-     ^^ string " ->" ^^ nest 2 (break 1 ^^ pp_expr body)
+  in group (string "fun " ^^ nest 4 binders ^^ annot
+     ^^ string " ->" ^^ nest 2 (break 1 ^^ pp_expr body))
 
 and pp_seq e = pp_injection pp_expr e
 
@@ -375,17 +378,18 @@ and pp_cartesian Region.{value; _} =
 and pp_variants Region.{value; _} =
   let head, tail = value in
   let head = pp_variant head in
+  let head = if tail = [] then head
+             else ifflat head (string "  " ^^ head) in
   let rest = List.map snd tail in
   let app variant = break 1 ^^ string "| " ^^ pp_variant variant
-  in ifflat head (string "  " ^^ head)
-     ^^ concat_map app rest
+  in head ^^ concat_map app rest
 
 and pp_variant Region.{value; _} =
   let {constr; arg} = value in
   match arg with
     None -> pp_ident constr
-  | Some (_, t_expr) ->
-      prefix 4 1 (pp_ident constr ^^ string " of") (pp_type_expr t_expr)
+  | Some (_, e) ->
+      prefix 4 1 (pp_ident constr ^^ string " of") (pp_type_expr e)
 
 and pp_fields fields = pp_ne_injection pp_field_decl fields
 
@@ -397,7 +401,7 @@ and pp_field_decl Region.{value; _} =
 
 and pp_type_app Region.{value; _} =
   let ctor, tuple = value in
-  pp_type_tuple tuple ^^ string " " ^^ pp_type_constr ctor
+  prefix 2 1 (pp_type_tuple tuple) (pp_type_constr ctor)
 
 and pp_type_tuple Region.{value; _} =
   let {inside; _} = value in
