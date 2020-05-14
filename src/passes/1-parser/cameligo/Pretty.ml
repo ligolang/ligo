@@ -19,16 +19,16 @@ and pp_let_decl Region.{value; _} =
   let _, rec_opt, binding, attr = value in
   let rec_doc =
     match rec_opt with
-      None -> empty
+        None -> empty
     | Some _ -> string "rec " in
   let binding = pp_let_binding binding
   and attr    = pp_attributes attr
-  in string "let " ^^ rec_doc ^^ binding ^/^ attr
+  in string "let " ^^ rec_doc ^^ binding
+     ^^ group (nest 2 (break 1 ^^ attr))
 
 and pp_attributes attr =
-  let sep    = string ";" ^^ break 1 in
   let make s = string "[@@" ^^ string s.value ^^ string "]"
-  in separate_map sep make attr
+  in separate_map (break 0) make attr
 
 and pp_ident Region.{value; _} = string value
 
@@ -37,13 +37,14 @@ and pp_string s = pp_ident s
 and pp_let_binding (binding : let_binding) =
   let {binders; lhs_type; let_rhs; _} = binding in
   let patterns = Utils.nseq_to_list binders in
-  let patterns = nest 2 (separate_map (break 1) pp_pattern patterns) in
+  let patterns =
+    group (nest 2 (separate_map (break 1) pp_pattern patterns)) in
   let lhs_type =
     match lhs_type with
             None -> empty
     | Some (_,e) -> prefix 2 1 (string " :") (pp_type_expr e)
   in patterns ^^ lhs_type ^^ string " ="
-     ^^ group (nest 2 (break 1 ^^ pp_expr let_rhs))
+     ^^ group (nest 2 (break 1 ^^ group (pp_expr let_rhs)))
 
 and pp_pattern = function
   PConstr p -> pp_pconstr p
@@ -73,7 +74,7 @@ and pp_patt_c_app Region.{value; _} =
   | constr, Some pat -> pp_ident constr ^^ pp_pattern pat
 
 and pp_patt_some Region.{value; _} =
-  string "Some" ^/^ pp_pattern (snd value)
+  prefix 4 1 (string "Some") (pp_pattern (snd value))
 
 and pp_int Region.{value; _} =
   string (Z.to_string (snd value))
@@ -91,12 +92,11 @@ and pp_plist = function
   PListComp cmp -> pp_list_comp cmp
 | PCons cons -> pp_cons cons
 
-and pp_list_comp e =
-  string "[" ^^ pp_injection pp_pattern e ^^ string "]"
+and pp_list_comp e = pp_injection pp_pattern e
 
 and pp_cons Region.{value; _} =
   let patt1, _, patt2 = value in
-  pp_pattern patt1 ^^ string " ::" ^/^ pp_pattern patt2
+  prefix 2 1 (pp_pattern patt1 ^^ string " ::") (pp_pattern patt2)
 
 and pp_ptuple Region.{value; _} =
   let cmp = Utils.nsepseq_to_list value in
@@ -115,16 +115,15 @@ and pp_ptyped Region.{value; _} =
 
 and pp_type_decl decl =
   let {name; type_expr; _} = decl.value in
-  (*  let padding = match type_expr with TSum _ -> 0 | _ -> 1 in*)
   string "type " ^^ string name.value ^^ string " ="
   ^^ group (nest 2 (break 1 ^^ pp_type_expr type_expr))
 
 and pp_expr = function
   ECase   e -> pp_case_expr e
-| ECond   e -> pp_cond_expr e
+| ECond   e -> group (pp_cond_expr e)
 | EAnnot  e -> pp_annot_expr e
 | ELogic  e -> pp_logic_expr e
-| EArith  e -> pp_arith_expr e
+| EArith  e -> group (pp_arith_expr e)
 | EString e -> pp_string_expr e
 | EList   e -> pp_list_expr e
 | EConstr e -> pp_constr_expr e
@@ -143,28 +142,36 @@ and pp_expr = function
 
 and pp_case_expr Region.{value; _} =
   let {expr; cases; _} = value in
-  string "match " ^^ pp_expr expr ^/^ string "with" ^/^ pp_cases cases
+  group (string "match " ^^ pp_expr expr ^/^ string "with")
+  ^^ group (nest 2 (break 1 ^^ pp_cases cases))
 
 and pp_cases Region.{value; _} =
-  let cases = Utils.nsepseq_to_list value
-  and sep   = break 1 ^^ string "| "
-  in separate_map sep pp_clause cases
+  let head, tail = value in
+  let head = pp_clause head in
+  let rest = List.map snd tail in
+  let app clause = break 1 ^^ string "| " ^^ pp_clause clause
+  in ifflat head (string "  " ^^ head)
+     ^^ concat_map app rest
 
 and pp_clause Region.{value; _} =
   let {pattern; rhs; _} = value in
-  pp_pattern pattern ^^ string " ->" ^/^ pp_expr rhs
+  prefix 4 1 (pp_pattern pattern ^^ string " ->") (pp_expr rhs)
 
 and pp_cond_expr Region.{value; _} =
   let {test; ifso; kwd_else; ifnot; _} = value in
-  let if_then = string "if " ^^ pp_expr test
-                ^/^ string "then " ^^ pp_expr ifso in
+  let if_then =
+    string "if " ^^ pp_expr test
+    ^/^ string "then" ^^ group (nest 2 (break 1 ^^ pp_expr ifso)) in
   if kwd_else#is_ghost then if_then
-  else if_then ^/^ string "else " ^^ pp_expr ifnot
+  else let else_ =
+         string "else" ^^ group (nest 2 (break 1 ^^ pp_expr ifnot))
+       in if_then ^/^ else_
 
 and pp_annot_expr Region.{value; _} =
   let expr, _, type_expr = value.inside in
-  string "(" ^^ pp_expr expr ^^ string " :"
-  ^/^ pp_type_expr type_expr ^^ string ")"
+  string "(" ^^
+    nest 1 (pp_expr expr ^^ string " :"
+            ^/^ pp_type_expr type_expr ^^ string ")")
 
 and pp_logic_expr = function
   BoolExpr e -> pp_bool_expr e
@@ -217,19 +224,14 @@ and pp_list_expr = function
 and pp_injection :
   'a.('a -> document) -> 'a injection Region.reg -> document =
   fun printer Region.{value; _} ->
-    let {compound; elements; terminator} = value in
-    let sep = ";" in
-    let sep_doc = string sep ^^ break 1 in
+    let {compound; elements; _} = value in
+    let sep = string ";" ^^ break 1 in
     let elements = Utils.sepseq_to_list elements in
-    let elements = separate_map sep_doc printer elements in
-    let doc =
-      match pp_compound compound with
-        None -> elements
-      | Some (opening, closing) ->
-         string opening ^^ elements ^^ string closing
-    in match terminator with
-           None -> doc
-       | Some _ -> doc ^^ string sep
+    let elements = separate_map sep printer elements in
+    match pp_compound compound with
+      None -> elements
+    | Some (opening, closing) ->
+        string opening ^^ nest 1 elements ^^ string closing
 
 and pp_compound = function
   BeginEnd (start, _) ->
@@ -312,24 +314,33 @@ and pp_path = function
 
 and pp_call_expr Region.{value; _} =
   let lambda, arguments = value in
-  pp_expr lambda ^/^ pp_nseq pp_expr arguments
+  group (pp_expr lambda ^^ nest 2 (break 1 ^^ pp_nseq pp_expr arguments))
 
 and pp_tuple_expr Region.{value; _} =
-  pp_nsepseq "," pp_expr value
+  let head, tail = value in
+  if tail = [] then pp_expr head
+  else
+    let rec app = function
+      []  -> empty
+    | [e] -> group (break 1 ^^ pp_expr e)
+    | e::items ->
+       group (break 1 ^^ pp_expr e ^^ string ",") ^^ app items
+    in pp_expr head ^^ string "," ^^ app (List.map snd tail)
 
 and pp_par_expr Region.{value; _} =
-  string "(" ^^ pp_expr value.inside ^^ string ")"
+  string "(" ^^ nest 1 (pp_expr value.inside) ^^ string ")"
 
 and pp_let_in Region.{value; _} =
   let {binding; kwd_rec; body; attributes; _} = value in
   let binding = pp_let_binding binding
-  and body    = pp_expr body
   and attr    = pp_attributes attributes in
   let rec_doc = match kwd_rec with
                     None -> empty
-                | Some _ -> string " rec"
-  in string "let" ^^ rec_doc ^/^ binding
-     ^/^ string "in" ^/^ body ^/^ attr
+                | Some _ -> string "rec "
+  in group (string "let " ^^ rec_doc ^^ binding
+     ^^ group (nest 2 (break 1 ^^ attr))
+     ^/^ string "in"
+     ^^ group (nest 2 (break 1 ^^ pp_expr body)))
 
 and pp_fun Region.{value; _} =
   let {binders; lhs_type; body; _} = value in
@@ -337,8 +348,8 @@ and pp_fun Region.{value; _} =
   and annot   = match lhs_type with
                   None -> empty
                 | Some (_,e) -> string ": " ^/^ pp_type_expr e
-  and body = pp_expr body in
-  string "fun " ^^ binders ^^ annot ^^ string " ->" ^/^ body
+  in string "fun " ^^ nest 4 binders ^^ annot
+     ^^ string " ->" ^^ nest 2 (break 1 ^^ pp_expr body)
 
 and pp_seq e = pp_injection pp_expr e
 
