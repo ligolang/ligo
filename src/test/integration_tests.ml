@@ -433,6 +433,30 @@ let bytes_arithmetic () : unit result =
   let%bind () = Assert.assert_fail @@ Ast_core.Misc.assert_value_eq (b3 , b1) in
   ok ()
 
+let comparable_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/comparable.mligo" in
+  let%bind () = expect_eq program "int_" (e_int 1) (e_bool false) in
+  let%bind () = expect_eq program "nat_" (e_nat 1) (e_bool false) in
+  let%bind () = expect_eq program "bool_" (e_bool true) (e_bool false) in
+  let%bind () = expect_eq program "mutez_" (e_mutez 1) (e_bool false) in
+  let%bind () = expect_eq program "string_" (e_string "foo") (e_bool false) in
+  let%bind () = expect_eq program "bytes_" (e_bytes_string "deadbeaf") (e_bool false) in
+  let%bind () = expect_eq program "address_" (e_address "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx") (e_bool false) in
+  let%bind () = expect_eq program "timestamp_" (e_timestamp 101112) (e_bool false) in
+  let open Tezos_crypto in
+  let pkh, _, _ = Signature.generate_key () in
+  let key_hash = Signature.Public_key_hash.to_b58check @@ pkh in
+  let%bind () = expect_eq program "key_hash_" (e_key_hash key_hash) (e_bool false) in
+  let pair = e_pair (e_int 1) (e_int 2) in
+  let%bind () = expect_eq program "comp_pair" pair (e_bool false) in
+  (* let tuple = e_tuple [e_int 1; e_int 2; e_int 3] in
+  let%bind () = expect_string_failwith program "uncomp_pair_1" tuple "" in
+  let pair = e_pair pair (e_int 3) in
+  let%bind () = expect_string_failwith program "uncomp_pair_2" pair "" in *)
+  let comb = e_pair (e_int 3) (e_pair (e_int 1) (e_nat 2)) in 
+  let%bind () = expect_eq program "comb_record" comb (e_bool false) in
+  ok ()
+
 let crypto () : unit result =
   let%bind program = type_file "./contracts/crypto.ligo" in
   let%bind foo = e_bytes_hex "0f00" in
@@ -2417,6 +2441,7 @@ let main = test_suite "Integration (End to End)" [
     test "bytes_arithmetic" bytes_arithmetic ;
     test "bytes_arithmetic (mligo)" bytes_arithmetic_mligo ;
     test "bytes_arithmetic (religo)" bytes_arithmetic_religo ;
+    test "comparable (mligo)" comparable_mligo;
     test "crypto" crypto ;
     test "crypto (mligo)" crypto_mligo ;
     test "crypto (religo)" crypto_religo ;
