@@ -17,6 +17,7 @@ stages:
   - ide-deploy
   - nix
   - nix-push
+  - versioning
 
 # TODO provide sensible CI for master
 dont-merge-to-master:
@@ -99,6 +100,13 @@ dont-merge-to-master:
     - eval $(opam config env)
     - scripts/setup_repos.sh
 
+version_scheduled_job:
+  stage: versioning
+  script:
+    - scripts/versioning.sh
+  only:
+    - schedules
+
 local-dune-job:
   <<: *before_script
   stage: test
@@ -113,6 +121,8 @@ local-dune-job:
   only:
     - merge_requests
     - dev
+    - tags
+    - triggers
     - /^.*-run-dev$/
 
 # Run a docker build without publishing to the registry
@@ -158,6 +168,7 @@ build-and-package-debian-9:
   <<: *build_binary
   only:
     - dev
+    - tags
     - /^.*-run-dev$/
 
 build-and-package-debian-10:
@@ -175,6 +186,7 @@ build-and-package-debian-10:
   only:
     - merge_requests
     - dev
+    - tags
     - /^.*-run-dev$/
 
 build-and-package-ubuntu-18-04:
@@ -188,6 +200,7 @@ build-and-package-ubuntu-18-04:
   <<: *build_binary
   only:
     - dev
+    - tags
     - /^.*-run-dev$/
 
 build-and-package-ubuntu-19-10:
@@ -201,6 +214,7 @@ build-and-package-ubuntu-19-10:
   <<: *build_binary
   only:
     - dev
+    - tags
     - /^.*-run-dev$/
 
 # Pages are deployed from dev, be careful not to override 'next'
@@ -232,7 +246,8 @@ run-webide-unit-tests:
     - npm ci
     - export LIGO_CMD=/bin/ligo && npm run test
   rules:
-    - changes:
+    - if: '$TAG_JOB != "true"'
+      changes:
         - tools/webide/**
       when: always
 
@@ -256,10 +271,11 @@ build-publish-ide-image:
       .
     - docker push "${WEBIDE_IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
   rules:
-    - changes:
+    - if: '$TAG_JOB != "true"'
+      changes:
         - tools/webide/**
       when: always
-    - if: '$CI_COMMIT_REF_NAME == "dev"'
+      if: '$CI_COMMIT_REF_NAME == "dev"'
       when: always
 
 run-webide-e2e-tests:
@@ -271,10 +287,11 @@ run-webide-e2e-tests:
     - export WEBIDE_IMAGE="${WEBIDE_IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
     - docker-compose run e2e
   rules:
-    - changes:
+    - if: '$TAG_JOB != "true"'
+      changes:
         - tools/webide/**
       when: always
-    - if: '$CI_COMMIT_REF_NAME == "dev"'
+      if: '$CI_COMMIT_REF_NAME == "dev"'
       when: always
 
 deploy-handoff:
