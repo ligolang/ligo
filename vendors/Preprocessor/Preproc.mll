@@ -119,6 +119,7 @@ type error =
 | File_not_found of string
 | Invalid_character of char
 | Unterminated_comment of string
+| Unterminated_inclusion
 
 let error_to_string = function
   Directive_inside_line ->
@@ -178,8 +179,11 @@ let error_to_string = function
 | Invalid_character c ->
     E_Lexer.error_to_string (E_Lexer.Invalid_character c)
 | Unterminated_comment ending ->
-   sprintf "Unterminated comment.\n\
-            Hint: Close with \"%s\"." ending
+    sprintf "Unterminated comment.\n\
+             Hint: Close with \"%s\"." ending
+| Unterminated_inclusion ->
+    sprintf "Unterminated #include directive.\n\
+             Hint: Add as a string the name of the file to be included."
 
 let format ?(offsets=true) Region.{region; value} ~file =
   let msg   = error_to_string value
@@ -539,16 +543,22 @@ rule scan state = parse
         scan (reduce_cond state region) lexbuf
     | "define" ->
         let id, region = variable state lexbuf in
-        if id="true" || id="false"
-        then stop (Reserved_symbol id) state region;
-        if Env.mem id state.env
-        then stop (Multiply_defined_symbol id) state region;
-        let state = {state with env = Env.add id state.env}
-        in scan state lexbuf
+        if state.mode = Copy then
+          if id="true" || id="false"
+          then stop (Reserved_symbol id) state region
+          else
+            if Env.mem id state.env
+            then stop (Multiply_defined_symbol id) state region
+            else
+              let state = {state with env = Env.add id state.env}
+              in scan state lexbuf
+        else scan state lexbuf
     | "undef" ->
         let id, _ = variable state lexbuf in
-        let state = {state with env = Env.remove id state.env}
-        in scan state lexbuf
+        if state.mode = Copy then
+          let state = {state with env = Env.remove id state.env}
+          in scan state lexbuf
+        else scan state lexbuf
     | "error" ->
         stop (Error_directive (message [] lexbuf)) state region
     | "region" ->
@@ -563,15 +573,15 @@ rule scan state = parse
     | _ -> assert false
   }
 
-| eof   { if state.trace = [] then state
-          else fail Missing_endif state lexbuf }
+| eof { if state.trace = [] then state
+        else fail Missing_endif state lexbuf }
 
-| '"'   { if state.mode = Copy then
-            begin
-              copy state lexbuf;
-              scan (in_string (mk_reg lexbuf) state lexbuf) lexbuf
-            end
-          else scan state lexbuf }
+| '"' { if state.mode = Copy then
+          begin
+            copy state lexbuf;
+            scan (in_string (mk_reg lexbuf) state lexbuf) lexbuf
+          end
+        else scan state lexbuf }
 
 | block_comment_openings {
     let lexeme = Lexing.lexeme lexbuf in
@@ -633,20 +643,22 @@ and symbol state = parse
 
 and skip_line state = parse
   nl     { proc_nl state lexbuf   }
-| blank+ { skip_line state lexbuf }
-| _      { ()                     }
+| eof    { rollback lexbuf        }
+| blank+
+| _      { skip_line state lexbuf }
 
 and message acc = parse
   nl     { Lexing.new_line lexbuf;
            mk_str (List.length acc) acc }
-| eof    { mk_str (List.length acc) acc }
+| eof    { rollback lexbuf;
+           mk_str (List.length acc) acc }
 | _ as c { message (c::acc) lexbuf      }
 
 (* Comments *)
 
 and in_line_com state = parse
   nl  { proc_nl state lexbuf; state                  }
-| eof { state                                        }
+| eof { rollback lexbuf; state                       }
 | _   { if state.mode = Copy then copy state lexbuf;
         in_line_com state lexbuf                     }
 
@@ -684,13 +696,13 @@ and in_block block opening state = parse
 (* Included filename *)
 
 and scan_inclusion state = parse
-  blank+ { scan_inclusion state lexbuf                    }
-| '"'    { in_inclusion (mk_reg lexbuf) [] 0 state lexbuf }
+  blank+   { scan_inclusion state lexbuf                    }
+| '"'      { in_inclusion (mk_reg lexbuf) [] 0 state lexbuf }
+| nl | eof { fail Unterminated_inclusion state lexbuf       }
 
 and in_inclusion opening acc len state = parse
   '"'    { let closing = mk_reg lexbuf
-           in Region.cover opening closing,
-              mk_str len acc                                  }
+           in Region.cover opening closing, mk_str len acc    }
 | nl     { fail Newline_in_string state lexbuf                }
 | eof    { stop Unterminated_string state opening             }
 | _ as c { in_inclusion opening (c::acc) (len+1) state lexbuf }
@@ -700,7 +712,7 @@ and in_inclusion opening acc len state = parse
 and in_string opening state = parse
   "\\\"" { copy state lexbuf; in_string opening state lexbuf }
 | '"'    { copy state lexbuf; state                          }
-| eof    { state                                             }
+| eof    { rollback lexbuf; state                            }
 | _      { copy state lexbuf; in_string opening state lexbuf }
 
 and preproc state = parse

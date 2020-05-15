@@ -33,6 +33,7 @@ type error =
 | File_not_found of string
 | Invalid_character of char
 | Unterminated_comment of string
+| Unterminated_inclusion
 
 val format :
   ?offsets:bool -> error Region.reg -> file:bool -> string Region.reg
