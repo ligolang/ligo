@@ -17,10 +17,10 @@
         "homepage": "",
         "owner": "serokell",
         "repo": "nix-npm-buildpackage",
-        "rev": "14d03b37cd421b281835ae245b6cbf5b84c26e80",
-        "sha256": "13lz138rcy2vfd13sa4l2r4y5nx7v5pslxfy1vdq2phpmnn9j9yb",
+        "rev": "0450c7d88dc3d0a26461b05cfa36f45d551f4d63",
+        "sha256": "1w0k4jxw141win67rk66nvg323j5i3s4m1w3icf1g1f0p2zyf531",
         "type": "tarball",
-        "url": "https://github.com/serokell/nix-npm-buildpackage/archive/14d03b37cd421b281835ae245b6cbf5b84c26e80.tar.gz",
+        "url": "https://github.com/serokell/nix-npm-buildpackage/archive/0450c7d88dc3d0a26461b05cfa36f45d551f4d63.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "nixpkgs": {
