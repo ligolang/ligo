@@ -492,26 +492,28 @@ rule scan state = parse
         and file = Lexing.(lexbuf.lex_curr_p.pos_fname) in
         let base = Filename.basename file
         and reg, incl_file = scan_inclusion state lexbuf in
-        let incl_dir = Filename.dirname incl_file in
-        let path = mk_path state in
-        let incl_path, incl_chan =
-          match find path incl_file state.opt#libs with
-            Some p -> p
-          | None -> stop (File_not_found incl_file) state reg in
-        let () = print state (sprintf "\n# 1 \"%s\" 1\n" incl_path) in
-        let incl_buf = Lexing.from_channel incl_chan in
-        let () =
-          let open Lexing in
-          incl_buf.lex_curr_p <-
-            {incl_buf.lex_curr_p with pos_fname = incl_file} in
-        let state  = {state with incl = incl_chan::state.incl} in
-        let state' = {state with mode=Copy; trace=[]} in
-        let state' = scan (push_dir incl_dir state') incl_buf in
-        let state  = {state with env=state'.env; incl=state'.incl} in
-        let path   = if path = "" then base
-                     else path ^ Filename.dir_sep ^ base in
-        print state (sprintf "\n# %i \"%s\" 2" (line+1) path);
-        scan state lexbuf
+        if state.mode = Copy then
+          let incl_dir = Filename.dirname incl_file in
+          let path = mk_path state in
+          let incl_path, incl_chan =
+            match find path incl_file state.opt#libs with
+              Some p -> p
+            | None -> stop (File_not_found incl_file) state reg in
+          let () = print state (sprintf "\n# 1 \"%s\" 1\n" incl_path) in
+          let incl_buf = Lexing.from_channel incl_chan in
+          let () =
+            let open Lexing in
+            incl_buf.lex_curr_p <-
+              {incl_buf.lex_curr_p with pos_fname = incl_file} in
+          let state  = {state with incl = incl_chan::state.incl} in
+          let state' = {state with mode=Copy; trace=[]} in
+          let state' = scan (push_dir incl_dir state') incl_buf in
+          let state  = {state with env=state'.env; incl=state'.incl} in
+          let path   = if path = "" then base
+                       else path ^ Filename.dir_sep ^ base in
+          let ()     = print state (sprintf "\n# %i \"%s\" 2" (line+1) path)
+          in scan state lexbuf
+        else scan state lexbuf
     | "if" ->
         let mode  = expr state lexbuf in
         let mode  = if state.mode = Copy then mode else Skip in
