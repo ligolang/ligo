@@ -3,7 +3,7 @@ open Cli_expect
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_function_annotation_1.mligo"; "main"];
   [%expect {|
-    ligo: in file "", line 0, characters 0-0. different type constructors: Expected these two constant type constructors to be the same, but they're different {"a":"unit","b":"int"}
+    ligo: in file "error_function_annotation_1.mligo", line 1, characters 0-3. different type constructors: Expected these two constant type constructors to be the same, but they're different {"a":"unit","b":"int"}
 
 
      If you're not sure how to fix this error, you can
@@ -29,7 +29,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_function_annotation_3.mligo"; "f"];
   [%expect {|
-    ligo: in file "", line 0, characters 0-0. different kinds:  {"a":"( (type_operator: list(operation)) * sum[Add -> int , Sub -> int] )","b":"sum[Add -> int , Sub -> int]"}
+    ligo: in file "error_function_annotation_3.mligo", line 6, characters 0-3. different kinds:  {"a":"( (type_operator: list(operation)) * sum[Add -> int , Sub -> int] )","b":"sum[Add -> int , Sub -> int]"}
 
 
      If you're not sure how to fix this error, you can
