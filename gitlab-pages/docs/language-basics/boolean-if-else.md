@@ -549,7 +549,7 @@ You can run the `compare` function defined above using the LIGO compiler
 like this:
 ```shell
 ligo run-function
-gitlab-pages/docs/language-basics/boolean-if-else/cond.ligo compare 21n'
+gitlab-pages/docs/language-basics/src/boolean-if-else/cond.ligo compare '21n'
 # Outputs: Large(Unit)
 ```
 
@@ -590,7 +590,7 @@ You can run the `compare` function defined above using the LIGO compiler
 like this:
 ```shell
 ligo run-function
-gitlab-pages/docs/language-basics/boolean-if-else/cond.mligo compare 21n'
+gitlab-pages/docs/language-basics/src/boolean-if-else/cond.mligo compare '21n'
 # Outputs: Large
 ```
 
@@ -613,7 +613,7 @@ You can run the `compare` function defined above using the LIGO compiler
 like this:
 ```shell
 ligo run-function
-gitlab-pages/docs/language-basics/boolean-if-else/cond.religo compare 21n'
+gitlab-pages/docs/language-basics/src/boolean-if-else/cond.religo compare '21n'
 # Outputs: Large
 ```
 
