@@ -97,7 +97,13 @@ let print_uident state {region; value} =
 
 let print_string state {region; value} =
   let line =
-    sprintf "%s: String %s\n"
+    sprintf "%s: String %S\n"
+            (compact state region) value
+  in Buffer.add_string state#buffer line
+
+let print_verbatim state {region; value} =
+  let line =
+    sprintf "%s: Verbatim {|%s|}\n"
             (compact state region) value
   in Buffer.add_string state#buffer line
 
@@ -280,6 +286,7 @@ and print_pattern state = function
 | PNat i -> print_nat state i
 | PBytes b -> print_bytes state b
 | PString s -> print_string state s
+| PVerbatim v -> print_verbatim state v
 | PWild wild -> print_token state wild "_"
 | PPar {value={lpar;inside=p;rpar}; _} ->
     print_token   state lpar "(";
@@ -459,6 +466,8 @@ and print_string_expr state = function
     print_expr  state arg2
 | String s ->
     print_string state s
+| Verbatim v ->
+    print_verbatim state v
 
 and print_logic_expr state = function
   BoolExpr e -> print_bool_expr state e
@@ -693,6 +702,9 @@ and pp_pattern state = function
 | PString s ->
     pp_node   state "PString";
     pp_string (state#pad 1 0) s
+| PVerbatim v ->
+    pp_node   state "PVerbatim";
+    pp_string (state#pad 1 0) v
 | PUnit {region; _} ->
     pp_loc_node state "PUnit" region
 | PFalse region ->
@@ -992,6 +1004,9 @@ and pp_string_expr state = function
 | String s ->
     pp_node   state "String";
     pp_string (state#pad 1 0) s
+| Verbatim v ->
+    pp_node   state "Verbatim";
+    pp_string (state#pad 1 0) v
 
 and pp_arith_expr state = function
   Add {value; region} ->

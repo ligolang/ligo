@@ -11,6 +11,7 @@ type expression_variable = Stage_common.Types.expression_variable
 type type_ = Stage_common.Types.type_
 type type_variable = Stage_common.Types.type_variable
 type z = Z.t
+type ligo_string = Stage_common.Types.ligo_string
 
 type constructor' =
 | Constructor of string

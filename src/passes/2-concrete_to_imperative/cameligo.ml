@@ -169,7 +169,7 @@ open Operators.Concrete_to_imperative.Cameligo
 let r_split = Location.r_split
 
 let get_t_string_singleton_opt = function
-  | Raw.TStringLiteral s -> Some (String.(sub s.value 1 ((length s.value)-2)))
+  | Raw.TStringLiteral s -> Some s.value
   | _ -> None
 
 let rec pattern_to_var : Raw.pattern -> _ = fun p ->
@@ -583,11 +583,11 @@ let rec compile_expression :
   | EArith (Neg e) -> compile_unop "NEG" e
   | EString (String s) -> (
       let (s , loc) = r_split s in
-      let s' =
-        let s = s in
-        String.(sub s 1 ((length s) - 2))
-      in
-      return @@ e_literal ~loc (Literal_string s')
+      return @@ e_literal ~loc (Literal_string (Standard s))
+    )
+  | EString (Verbatim v) -> (
+      let (v , loc) = r_split v in
+      return @@ e_literal ~loc (Literal_string (Verbatim v))
     )
   | EString (Cat c) ->
     let (c, loc) = r_split c in

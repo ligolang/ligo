@@ -292,6 +292,7 @@ core_pattern:
 | "<nat>"                                      {              PNat $1 }
 | "<bytes>"                                    {            PBytes $1 }
 | "<string>"                                   {           PString $1 }
+| "<verbatim>"                                 {         PVerbatim $1 }
 | unit                                         {             PUnit $1 }
 | "false"                                      {            PFalse $1 }
 | "true"                                       {             PTrue $1 }
@@ -585,6 +586,7 @@ core_expr:
 | "<ident>" | module_field            {                       EVar $1 }
 | projection                          {                      EProj $1 }
 | "<string>"                          {           EString (String $1) }
+| "<verbatim>"                        {         EString (Verbatim $1) }
 | unit                                {                      EUnit $1 }
 | "false"                             {  ELogic (BoolExpr (False $1)) }
 | "true"                              {  ELogic (BoolExpr (True  $1)) }

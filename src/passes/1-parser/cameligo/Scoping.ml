@@ -77,7 +77,8 @@ let rec vars_of_pattern env = function
   PConstr p -> vars_of_pconstr env p
 | PUnit _ | PFalse _ | PTrue _
 | PInt _ | PNat _ | PBytes _
-| PString _ | PWild _ -> env
+| PString _ | PVerbatim _
+| PWild _ -> env
 | PVar var ->
     if VarSet.mem var env then
       raise (Error (Non_linear_pattern var))

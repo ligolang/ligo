@@ -372,7 +372,7 @@ let rec transpile_literal : AST.literal -> value = fun l -> match l with
   | Literal_timestamp n -> D_timestamp n
   | Literal_mutez n -> D_mutez n
   | Literal_bytes s -> D_bytes s
-  | Literal_string s -> D_string s
+  | Literal_string s -> D_string (Ligo_string.extract s)
   | Literal_address s -> D_string s
   | Literal_signature s -> D_string s
   | Literal_key s -> D_string s

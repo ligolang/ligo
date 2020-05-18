@@ -59,7 +59,7 @@ let self_typing : contract_pass_data -> expression -> (bool * contract_pass_data
   match e.expression_content , e.type_expression with
   | E_constant {cons_name=C_SELF ; arguments=[entrypoint_exp]}, {type_content = T_operator (TC_contract t) ; type_meta=_} ->
     let%bind entrypoint = match entrypoint_exp.expression_content with
-      | E_literal (Literal_string ep) -> check_entrypoint_annotation_format ep entrypoint_exp
+      | E_literal (Literal_string ep) -> check_entrypoint_annotation_format (Ligo_string.extract ep) entrypoint_exp
       | _ -> fail @@ Errors.entrypoint_annotation_not_literal entrypoint_exp.location in
     let%bind entrypoint_t = match dat.contract_type.parameter.type_content with
       | T_sum cmap ->

@@ -188,7 +188,7 @@ let literal ppf (l : literal) =
   | Literal_nat z -> fprintf ppf "+%a" Z.pp_print z
   | Literal_timestamp z -> fprintf ppf "+%a" Z.pp_print z
   | Literal_mutez z -> fprintf ppf "%amutez" Z.pp_print z
-  | Literal_string s -> fprintf ppf "%S" s
+  | Literal_string s -> fprintf ppf "%a" Ligo_string.pp s
   | Literal_bytes b -> fprintf ppf "0x%a" Hex.pp (Hex.of_bytes b)
   | Literal_address s -> fprintf ppf "@%S" s
   | Literal_operation _ -> fprintf ppf "Operation(...bytes)"

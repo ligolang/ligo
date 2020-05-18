@@ -555,8 +555,9 @@ and arith_expr =
 | Mutez  of (Lexer.lexeme * Z.t) reg
 
 and string_expr =
-  Cat    of cat bin_op reg
-| String of Lexer.lexeme reg
+  Cat      of cat bin_op reg
+| String   of Lexer.lexeme reg
+| Verbatim of Lexer.lexeme reg
 
 and list_expr =
   ECons     of cons bin_op reg
@@ -726,8 +727,9 @@ and arith_expr_to_region = function
 | Mutez  {region; _} -> region
 
 and string_expr_to_region = function
-  Cat    {region; _}
-| String {region; _} -> region
+  Cat      {region; _}
+| String   {region; _}
+| Verbatim {region; _} -> region
 
 and annot_expr_to_region {region; _} = region
 

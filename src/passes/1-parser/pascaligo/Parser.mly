@@ -849,6 +849,7 @@ core_expr:
 | "<mutez>"                     { EArith (Mutez $1)            }
 | "<ident>" | module_field      { EVar $1                      }
 | "<string>"                    { EString (String $1)          }
+| "<verbatim>"                  { EString (Verbatim $1)        }
 | "<bytes>"                     { EBytes $1                    }
 | "False"                       { ELogic (BoolExpr (False $1)) }
 | "True"                        { ELogic (BoolExpr (True  $1)) }
