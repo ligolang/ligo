@@ -4,7 +4,7 @@ module Region  = Simple_utils.Region
 module Preproc = Preprocessor.Preproc
 module EvalOpt = Preprocessor.EvalOpt
 
-let highlight msg = Printf.eprintf "\027[31m%s\027[0m%!" msg
+let highlight msg = Printf.eprintf "\027[31m%s\027[0m\n%!" msg
 
 let options =
   let open EvalOpt in
