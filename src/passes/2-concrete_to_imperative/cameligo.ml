@@ -37,13 +37,13 @@ module Errors = struct
                 Raw.pattern_to_region actual)]
     in error ~data title message
 
-  let unsupported_let_in_function (patterns : Raw.pattern list) =
+  let unsupported_let_in_function (region : Region.t) (patterns : Raw.pattern list) =
     let title () = "" in
     let message () = "\nDefining functions with \"let ... in\" \
                       is not supported yet.\n" in
     let patterns_loc =
       List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p))
-        Region.ghost patterns in
+        region patterns in
     let data = [
       ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ patterns_loc)]
@@ -398,19 +398,21 @@ let rec compile_expression :
   match t with
     Raw.ELetIn e ->
       let Raw.{kwd_rec; binding; body; attributes; _} = e.value in
+      let region = e.region in
+      let loc = Location.lift region in
       let inline = List.exists (fun (a: Raw.attribute) -> a.value = "inline") attributes in
       let Raw.{binders; lhs_type; let_rhs; _} = binding in
       begin match binders with
       | (p, []) ->
       let%bind variables = tuple_pattern_to_typed_vars p in
       let%bind ty_opt =
-        bind_map_option (fun (_,te) -> compile_type_expression te) lhs_type in
+        bind_map_option (fun (re,te) -> let%bind te = compile_type_expression te in ok(Location.lift re,te)) lhs_type in
       let%bind rhs = compile_expression let_rhs in
       let rhs_b = Var.fresh ~name: "rhs" () in
       let rhs',rhs_b_expr =
         match ty_opt with
-          None -> rhs, e_variable rhs_b
-        | Some ty -> (e_annotation rhs ty), e_annotation (e_variable rhs_b) ty in
+          None -> rhs, e_variable ~loc rhs_b
+        | Some (lt,ty) -> (e_annotation ~loc:lt rhs ty), e_annotation ~loc:lt (e_variable ~loc rhs_b) ty in
       let%bind body = compile_expression body in
       let prepare_variable (ty_var: Raw.variable * Raw.type_expr option) =
         let variable, ty_opt = ty_var in
@@ -435,12 +437,12 @@ let rec compile_expression :
         match variables with
         | hd :: [] ->
           if (List.length prep_vars = 1)
-          then e_let_in hd inline rhs_b_expr body
-          else e_let_in hd inline (e_record_accessor rhs_b_expr (string_of_int ((List.length prep_vars) - 1))) body
+          then e_let_in ~loc hd inline rhs_b_expr body
+          else e_let_in ~loc hd inline (e_record_accessor ~loc rhs_b_expr (string_of_int ((List.length prep_vars) - 1))) body
         | hd :: tl ->
-          e_let_in hd
+          e_let_in ~loc hd
           inline
-          (e_record_accessor rhs_b_expr (string_of_int ((List.length prep_vars) - (List.length tl) - 1)))
+          (e_record_accessor ~loc rhs_b_expr (string_of_int ((List.length prep_vars) - (List.length tl) - 1)))
           (chain_let_in tl body)
         | [] -> body (* Precluded by corner case assertion above *)
       in
@@ -454,7 +456,7 @@ let rec compile_expression :
           ok @@ (List.fold_right' aux lhs_type' ty)
         | _ -> ok None
         )
-      | Some t -> ok @@ Some t
+      | Some (_,t) -> ok @@ Some t
       in
       let%bind ret_expr = if List.length prep_vars = 1
         then ok (chain_let_in prep_vars body)
@@ -491,7 +493,7 @@ let rec compile_expression :
 
       (* let f p1 ps... = rhs in body *)
       | (f, p1 :: ps) ->
-        fail @@ unsupported_let_in_function (f :: p1 :: ps)
+        fail @@ unsupported_let_in_function e.region (f :: p1 :: ps)
       end
   | Raw.EAnnot a ->
       let Raw.{inside=expr, _, type_expr; _}, loc = r_split a in
@@ -680,12 +682,12 @@ and compile_fun lamb' : expr result =
           let pt_pattern = unpar_pattern pt.value.pattern in
           match pt_pattern with
           | Raw.PVar _ -> params
-          | Raw.PTuple _ ->
+          | Raw.PTuple t ->
             [Raw.PTyped
-               {region=Region.ghost;
+               {region=t.region;
                 value=
                   { pt.value with pattern=
-                                    Raw.PVar {region=Region.ghost;
+                                    Raw.PVar {region=pt.region;
                                               value="#P"}}}]
           | _ -> params
         end
@@ -727,7 +729,7 @@ and compile_fun lamb' : expr result =
               {binders = (PTuple vars, []) ;
                lhs_type=None;
                eq=Region.ghost;
-               let_rhs=(Raw.EVar {region=Region.ghost; value="#P"});
+               let_rhs=(Raw.EVar {region=pt.region; value="#P"});
               }
             in
             let let_in: Raw.let_in =
@@ -741,7 +743,7 @@ and compile_fun lamb' : expr result =
             in
             ok (Raw.ELetIn
                   {
-                    region=Region.ghost;
+                    region=pt.region;
                     value=let_in
                   })
           | Raw.PVar _ -> ok lamb.body
@@ -842,7 +844,7 @@ and compile_declaration : Raw.declaration -> declaration Location.wrap list resu
       let%bind type_expression = compile_type_expression type_expr in
       ok @@ [loc x @@ Declaration_type (Var.of_name name.value , type_expression)]
   | Let x -> (
-      let (_, recursive, let_binding, attributes), _ = r_split x in
+      let (region, recursive, let_binding, attributes), _ = r_split x in
       let inline = List.exists (fun (a: Raw.attribute) -> a.value = "inline") attributes in
       let binding = let_binding in
       let {binders; lhs_type; let_rhs} = binding in
@@ -876,7 +878,7 @@ and compile_declaration : Raw.declaration -> declaration Location.wrap list resu
                           field_path =
                             (
                               (Component
-                                 {region = Region.ghost;
+                                 {region = v.region;
                                   value = name, Z.of_int i;} : Raw.selection)
                               , []);
                         }
@@ -927,7 +929,7 @@ and compile_declaration : Raw.declaration -> declaration Location.wrap list resu
           let f_args = nseq_to_list (param1,others) in
           let%bind ty = bind_map_list typed_pattern_to_typed_vars f_args in
           let aux acc ty = Option.map (t_function (snd ty)) acc in
-          ok (Raw.EFun {region=Region.ghost ; value=fun_},List.fold_right' aux lhs_type' ty)
+          ok (Raw.EFun {region; value=fun_},List.fold_right' aux lhs_type' ty)
       in
       let%bind rhs' = compile_expression let_rhs in
       let%bind lhs_type = match lhs_type with
@@ -982,10 +984,10 @@ and compile_cases : type a . (Raw.pattern * a) list -> (a, unit) matching_conten
     | PConstr v ->
        let const, pat_opt =
          match v with
-           PConstrApp {value; _} ->
+           PConstrApp {value; region} ->
            (match value with
            | constr, None ->
-              constr, Some (PVar {value = "unit"; region = Region.ghost})
+              constr, Some (PVar {value = "unit"; region})
            | _ -> value)
          | PSomeApp {value=region,pat; _} ->
             {value="Some"; region}, Some pat

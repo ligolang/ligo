@@ -1549,7 +1549,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "", line 0, characters 0-0. badly typed contract: unexpected entrypoint type {"location":"in file \"\", line 0, characters 0-0","entrypoint":"main","entrypoint_type":"( nat * int ) -> int"}
+    ligo: in file "bad_contract.mligo", line 4, characters 0-3. badly typed contract: unexpected entrypoint type {"location":"in file \"bad_contract.mligo\", line 4, characters 0-3","entrypoint":"main","entrypoint_type":"( nat * int ) -> int"}
 
 
      If you're not sure how to fix this error, you can
@@ -1562,7 +1562,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract2.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "", line 0, characters 0-0. bad return type: expected (type_operator: list(operation)), got string {"location":"in file \"\", line 0, characters 0-0","entrypoint":"main"}
+    ligo: in file "bad_contract2.mligo", line 5, characters 0-3. bad return type: expected (type_operator: list(operation)), got string {"location":"in file \"bad_contract2.mligo\", line 5, characters 0-3","entrypoint":"main"}
 
 
      If you're not sure how to fix this error, you can
@@ -1575,7 +1575,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract3.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "", line 0, characters 0-0. badly typed contract: expected {int} and {string} to be the same in the entrypoint type {"location":"in file \"\", line 0, characters 0-0","entrypoint":"main","entrypoint_type":"( nat * int ) -> ( (type_operator: list(operation)) * string )"}
+    ligo: in file "bad_contract3.mligo", line 5, characters 0-3. badly typed contract: expected {int} and {string} to be the same in the entrypoint type {"location":"in file \"bad_contract3.mligo\", line 5, characters 0-3","entrypoint":"main","entrypoint_type":"( nat * int ) -> ( (type_operator: list(operation)) * string )"}
 
 
      If you're not sure how to fix this error, you can
