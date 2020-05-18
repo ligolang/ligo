@@ -18,7 +18,25 @@ module Typer = struct
         ("b" , fun () -> Format.asprintf "%a" PP.type_expression b )
       ] in
       error ~data title message ()
+
+    let error_comparator_composed a () =
+      let title () = "We only allow composed types of not more than two element to be compared" in
+      let message () = "" in
+      let data = [
+        ("received" , fun () -> Format.asprintf "%a" PP.type_expression a);
+      ] in
+      error ~data title message ()
+
+    let error_first_field_comp_pair a () =
+      let title () = "this field is not allowed at the left of a comparable pair" in
+      let message () = "" in
+      let data = [
+        ("received" , fun () -> Format.asprintf "%a" PP.type_expression a);
+      ] in
+      error ~data title message ()
+
   end
+  
   open Errors
 
   type type_result = type_expression
@@ -105,7 +123,7 @@ module Typer = struct
 
   let assert_eq_1 ?msg a b = Assert.assert_true ?msg (eq_1 a b)
 
-  let comparator : string -> typer = fun s -> typer_2 s @@ fun a b ->
+  let simple_comparator : string -> typer = fun s -> typer_2 s @@ fun a b ->
     let%bind () =
       trace_strong (error_uncomparable_types a b) @@
       Assert.assert_true @@
@@ -121,6 +139,24 @@ module Typer = struct
         t_key_hash () ;
       ] in
     ok @@ t_bool ()
+
+  let rec pair_comparator : string -> typer = fun s -> typer_2 s @@ fun a b ->
+    let%bind () =
+      trace_strong (error_uncomparable_types a b) @@
+      Assert.assert_true @@ eq_1 a b
+    in
+    let%bind (a_k, a_v) = 
+      trace_strong (error_comparator_composed a) @@
+      get_t_pair a in
+    let%bind (b_k, b_v) = get_t_pair b in
+    let%bind _ = 
+      trace_strong (error_first_field_comp_pair a) @@
+      simple_comparator s [a_k;b_k] None
+    in
+    comparator s [a_v;b_v] None
+      
+  and comparator : string -> typer = fun s -> typer_2 s @@ fun a b ->
+    bind_or (simple_comparator s [a;b] None, pair_comparator s [a;b] None)
 
   let boolean_operator_2 : string -> typer = fun s -> typer_2 s @@ fun a b ->
     let%bind () =
