@@ -218,7 +218,8 @@ let rec typed_pattern_to_typed_vars : Raw.pattern -> _ = fun pattern ->
      let (p,t) = pt.value.pattern,pt.value.type_expr in
      let%bind p = tuple_pattern_to_vars p in
      let%bind t = compile_type_expression t in
-     ok @@ (p,t)
+     let l = Location.lift pt.region in
+     ok @@ (p,t,l)
   | other -> (fail @@ wrong_pattern "parenthetical or type annotation" other)
 
 and unpar_pattern : Raw.pattern -> Raw.pattern = function
@@ -452,7 +453,7 @@ let rec compile_expression :
           let f_args = nseq_to_list (binders) in
           let%bind lhs_type' = bind_map_option (fun x -> compile_type_expression (snd x)) lhs_type in
           let%bind ty = bind_map_list typed_pattern_to_typed_vars f_args in
-          let aux acc ty = Option.map (t_function (snd ty)) acc in
+          let aux acc (_,ty,loc) = Option.map (t_function ~loc ty) acc in
           ok @@ (List.fold_right' aux lhs_type' ty)
         | _ -> ok None
         )
@@ -928,7 +929,7 @@ and compile_declaration : Raw.declaration -> declaration Location.wrap list resu
           } in
           let f_args = nseq_to_list (param1,others) in
           let%bind ty = bind_map_list typed_pattern_to_typed_vars f_args in
-          let aux acc ty = Option.map (t_function (snd ty)) acc in
+          let aux acc (_,ty,loc) = Option.map (t_function ~loc ty) acc in
           ok (Raw.EFun {region; value=fun_},List.fold_right' aux lhs_type' ty)
       in
       let%bind rhs' = compile_expression let_rhs in
@@ -938,7 +939,7 @@ and compile_declaration : Raw.declaration -> declaration Location.wrap list resu
           let f_args = nseq_to_list (binders) in
           let%bind lhs_type' = bind_map_option (fun x -> compile_type_expression (snd x)) lhs_type in
           let%bind ty = bind_map_list typed_pattern_to_typed_vars f_args in
-          let aux acc ty = Option.map (t_function (snd ty)) acc in
+          let aux acc (_,ty,loc) = Option.map (t_function ~loc ty) acc in
           ok @@ (List.fold_right' aux lhs_type' ty)
         | _ -> ok None
         )
