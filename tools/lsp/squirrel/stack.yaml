@@ -17,7 +17,7 @@
 #
 # resolver: ./custom-snapshot.yaml
 # resolver: https://example.com/snapshots/2018-01-01.yaml
-resolver: lts-15.7
+resolver: lts-15.10
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -29,16 +29,16 @@ resolver: lts-15.7
 #   - auto-update
 #   - wai
 packages:
-- .
+  - .
 # Dependency packages to be pulled from upstream that are not in the resolver.
 # These entries can reference officially published versions as well as
 # forks / in-progress versions pinned to a git hash. For example:
 #
 extra-deps:
-- tree-sitter-0.9.0.0@sha256:4fd054b0a9651df9335c5fa0ffed723924dc4dcf7f2521c031323088ca719b05,3411
-- semantic-source-0.0.2.0@sha256:eac962ed1150d8647e703bc78369ecc4c1912db018e111f4ead8a62ae1a85542,2368
-- lingo-0.3.2.0@sha256:80b9ded65f2ddc0272a2872d9c3fc43c37934accae076d3e547dfc6c6b6e16d3,1899
-- semilattices-0.0.0.4@sha256:333707e460923711d1edbdd02ebe1c3957d4e0808eab9886747b52ee3e443639,1909
+  - tree-sitter-0.9.0.0@sha256:4fd054b0a9651df9335c5fa0ffed723924dc4dcf7f2521c031323088ca719b05,3411
+  - semantic-source-0.0.2.0@sha256:eac962ed1150d8647e703bc78369ecc4c1912db018e111f4ead8a62ae1a85542,2368
+  - lingo-0.3.2.0@sha256:80b9ded65f2ddc0272a2872d9c3fc43c37934accae076d3e547dfc6c6b6e16d3,1899
+  - semilattices-0.0.0.4@sha256:333707e460923711d1edbdd02ebe1c3957d4e0808eab9886747b52ee3e443639,1909
 # - acme-missiles-0.3
 # - git: https://github.com/commercialhaskell/stack.git
 #   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a
@@ -68,3 +68,5 @@ extra-deps:
 #
 # Allow a newer minor version of GHC than the snapshot specifies
 # compiler-check: newer-minor
+nix:
+  packages: [zlib]

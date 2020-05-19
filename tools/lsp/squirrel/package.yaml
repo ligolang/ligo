@@ -1,42 +1,53 @@
-
 name: squirrel
 
 dependencies:
-- base
-- bytestring
-- mtl
-- text
-- tree-sitter
-- pretty
+  - base
+  - bytestring
+  - data-default
+  - lens
+  - mtl
+  - template-haskell
+  - text
+  - tree-sitter
+  - pretty
 
 default-extensions:
-- LambdaCase
-- BlockArguments
-- OverloadedStrings
-- GeneralisedNewtypeDeriving
-- DerivingStrategies
-- DerivingVia
-- NamedFieldPuns
-- BangPatterns
+  - LambdaCase
+  - BlockArguments
+  - OverloadedStrings
+  - GeneralisedNewtypeDeriving
+  - DerivingStrategies
+  - DerivingVia
+  - FlexibleInstances
+  - NamedFieldPuns
+  - BangPatterns
+  - ScopedTypeVariables
+  - QuasiQuotes
+  - TemplateHaskell
 
-ghc-options: -freverse-errors -Wall
+ghc-options: -freverse-errors -Wall -threaded
 
 library:
   source-dirs:
-  - src/
+    - src/
 
   include-dirs:
-  - vendor
+    - vendor
 
   c-sources:
-  - vendor/parser.c
+    - vendor/parser.c
 
 executables:
   squirrel:
+    dependencies:
+      - base
+      - stm
+      - haskell-lsp
+      - squirrel
+      - hslogger
+      - interpolate
+
     main: Main.hs
 
     source-dirs:
-    - app/
-
-    dependencies:
-    - squirrel
+      - app/

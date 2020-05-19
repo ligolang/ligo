@@ -9,6 +9,7 @@
 module AST.Types where
 
 import Control.Monad.State
+import Control.Lens hiding (Const, List)
 
 import qualified Data.Text as Text
 import Data.Text (Text)
@@ -18,14 +19,14 @@ import Parser
 import ParseTree
 import Pretty
 
+import TH
+
 import Debug.Trace
 
 data Contract info
   = Contract      info [Declaration info]
   | WrongContract      Error
   deriving (Show) via PP (Contract info)
-
-instance Stubbed (Contract info) where stub = WrongContract
 
 data Declaration info
   = ValueDecl info (Binding info)
@@ -35,7 +36,6 @@ data Declaration info
   | WrongDecl      Error
   deriving (Show) via PP (Declaration info)
 
-instance Stubbed (Declaration info) where stub = WrongDecl
 
 data Binding info
   = Irrefutable  info (Pattern info) (Expr info)
@@ -45,14 +45,12 @@ data Binding info
   | WrongBinding      Error
   deriving (Show) via PP (Binding info)
 
-instance Stubbed (Binding info) where stub = WrongBinding
 
 data VarDecl info
   = Decl         info (Mutable info) (Name info) (Type info)
   | WrongVarDecl      Error
   deriving (Show) via PP (VarDecl info)
 
-instance Stubbed (VarDecl info) where stub = WrongVarDecl
 
 data Mutable info
   = Mutable      info
@@ -61,7 +59,6 @@ data Mutable info
   deriving (Show) via PP (Mutable info)
 
 
-instance Stubbed (Mutable info) where stub = WrongMutable
 
 data Type info
   = TArrow    info  (Type info) (Type info)
@@ -73,21 +70,18 @@ data Type info
   | WrongType      Error
   deriving (Show) via PP (Type info)
 
-instance Stubbed (Type info) where stub = WrongType
 
 data Variant info
   = Variant info (Name info) (Maybe (Type info))
   | WrongVariant Error
   deriving (Show) via PP (Variant info)
 
-instance Stubbed (Variant info) where stub = WrongVariant
 
 data TField info
   = TField info (Name info) (Type info)
   | WrongTField Error
   deriving (Show) via PP (TField info)
 
-instance Stubbed (TField info) where stub = WrongTField
 
 -- | TODO: break onto smaller types? Literals -> Constannt; mapOps; mmove Annots to Decls.
 data Expr info
@@ -123,42 +117,36 @@ data Expr info
   | WrongExpr      Error
   deriving (Show) via PP (Expr info)
 
-instance Stubbed (Expr info) where stub = WrongExpr
 
 data Alt info
   = Alt info (Pattern info) (Expr info)
   | WrongAlt Error
   deriving (Show) via PP (Alt info)
 
-instance Stubbed (Alt info) where stub = WrongAlt
 
 data LHS info
   = LHS info (QualifiedName info) (Maybe (Expr info))
   | WrongLHS Error
   deriving (Show) via PP (LHS info)
 
-instance Stubbed (LHS info) where stub = WrongLHS
 
 data MapBinding info
   = MapBinding info (Expr info) (Expr info)
   | WrongMapBinding Error
   deriving (Show) via PP (MapBinding info)
 
-instance Stubbed (MapBinding info) where stub = WrongMapBinding
 
 data Assignment info
   = Assignment info (Name info) (Expr info)
   | WrongAssignment Error
   deriving (Show) via PP (Assignment info)
 
-instance Stubbed (Assignment info) where stub = WrongAssignment
 
 data FieldAssignment info
   = FieldAssignment info (QualifiedName info) (Expr info)
   | WrongFieldAssignment Error
   deriving (Show) via PP (FieldAssignment info)
 
-instance Stubbed (FieldAssignment info) where stub = WrongFieldAssignment
 
 data Constant info
   = Int     info Text
@@ -170,7 +158,6 @@ data Constant info
   | WrongConstant Error
   deriving (Show) via PP (Constant info)
 
-instance Stubbed (Constant info) where stub = WrongConstant
 
 data Pattern info
   = IsConstr     info (Name info) (Maybe (Pattern info))
@@ -183,7 +170,6 @@ data Pattern info
   | WrongPattern      Error
   deriving (Show) via PP (Pattern info)
 
-instance Stubbed (Pattern info) where stub = WrongPattern
 
 data QualifiedName info
   = QualifiedName
@@ -194,7 +180,6 @@ data QualifiedName info
   | WrongQualifiedName Error
   deriving (Show) via PP (QualifiedName info)
 
-instance Stubbed (QualifiedName info) where stub = WrongQualifiedName
 
 data Path info
   = At info (Name info)
@@ -202,7 +187,6 @@ data Path info
   | WrongPath Error
   deriving (Show) via PP (Path info)
 
-instance Stubbed (Path info) where stub = WrongPath
 
 data Name info = Name
   { info    :: info
@@ -210,8 +194,6 @@ data Name info = Name
   }
   | WrongName Error
   deriving (Show) via PP (Name info)
-
-instance Stubbed (Name info) where stub = WrongName
 
 c :: HasComments i => i -> Doc -> Doc
 c i d =
@@ -393,3 +375,45 @@ instance HasComments i => Pretty (LHS i) where
   pp = \case
     LHS i qn mi -> c i $ pp qn <> foldMap (brackets . pp) mi
     WrongLHS err -> pp err
+
+foldMap makePrisms
+  [ ''Name
+  , ''Path
+  , ''QualifiedName
+  , ''Pattern
+  , ''Constant
+  , ''FieldAssignment
+  , ''Assignment
+  , ''MapBinding
+  , ''LHS
+  , ''Alt
+  , ''Expr
+  , ''TField
+  , ''Variant
+  , ''Type
+  , ''Mutable
+  , ''VarDecl
+  , ''Binding
+  , ''Declaration
+  , ''Contract
+  ]
+
+instance Stubbed (Name info) where stubbing = _WrongName
+instance Stubbed (Path info) where stubbing = _WrongPath
+instance Stubbed (QualifiedName info) where stubbing = _WrongQualifiedName
+instance Stubbed (Pattern info) where stubbing = _WrongPattern
+instance Stubbed (Constant info) where stubbing = _WrongConstant
+instance Stubbed (FieldAssignment info) where stubbing = _WrongFieldAssignment
+instance Stubbed (Assignment info) where stubbing = _WrongAssignment
+instance Stubbed (MapBinding info) where stubbing = _WrongMapBinding
+instance Stubbed (LHS info) where stubbing = _WrongLHS
+instance Stubbed (Alt info) where stubbing = _WrongAlt
+instance Stubbed (Expr info) where stubbing = _WrongExpr
+instance Stubbed (TField info) where stubbing = _WrongTField
+instance Stubbed (Variant info) where stubbing = _WrongVariant
+instance Stubbed (Type info) where stubbing = _WrongType
+instance Stubbed (Mutable info) where stubbing = _WrongMutable
+instance Stubbed (VarDecl info) where stubbing = _WrongVarDecl
+instance Stubbed (Binding info) where stubbing = _WrongBinding
+instance Stubbed (Declaration info) where stubbing = _WrongDecl
+instance Stubbed (Contract info) where stubbing = _WrongContract

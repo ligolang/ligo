@@ -54,11 +54,12 @@ module Parser
   , select
   , dump
   , stubbed
-  , Stubbed (stub)
-  , Error
+  , Stubbed (..)
+  , Error (..)
   , HasComments (getComments)
   ) where
 
+import Control.Lens hiding (inside)
 import Control.Monad.State
 import Control.Monad.Writer
 import Control.Monad.Reader
@@ -66,6 +67,7 @@ import Control.Monad.Except
 import Control.Monad.Identity
 
 import Data.Foldable
+import Data.Traversable
 import Data.Functor
 import Data.Text (Text, pack, unpack)
 import qualified Data.Text as Text
@@ -153,6 +155,25 @@ takeNext msg = do
           )
         return t
 
+--fields :: Text -> Parser a -> Parser [a]
+--fields name parser = do
+--  (fs, rest) <- gets $ splitForest name . fst
+--  res <- for fs \f -> do
+--    put f
+--    parser
+--
+--  put rest
+--  return res
+--
+--splitForest :: Text -> ParseForest -> [ParseForest]
+--splitForest name = go . pfGrove
+--  where
+--    go []             acc fs = (fs, acc)
+--    go ((tName, tree) : other) acc fs =
+--      if tName == name
+--      then go other [] (reverse (tree : acc) : fs)
+--      else go other (tree : acc) fs
+
 -- | Pick a tree with that /field name/ or die with name as msg.
 --
 --   Will erase all subtrees with different names on the path!
@@ -211,7 +232,7 @@ complain  msg rng = tell . pure =<< makeError' msg rng
 
 unexpected :: ParseTree -> Error
 unexpected ParseTree { ptSource, ptRange } =
-  Expected "unexpected" ptSource ptRange
+  Expected "not that" ptSource ptRange
 
 -- | If a parser fails, return stub with error originating here.
 stubbed :: Stubbed a => Text -> Parser a -> Parser a
@@ -370,12 +391,15 @@ notFollowedBy parser = do
   unless good do
     die "notFollowedBy"
 
+stub :: Stubbed a => Error -> a
+stub = (stubbing #)
+
 -- | For types that have a default replacer with an `Error`.
 class Stubbed a where
-  stub :: Error -> a
+  stubbing :: Prism' a Error
 
 instance Stubbed Text where
-  stub = pack . show
+  stubbing = prism (pack . show) Left
 
 -- | This is bad, but I had to.
 --
@@ -383,11 +407,11 @@ instance Stubbed Text where
 --         I probably need a wrapper around '[]'.
 --
 instance Stubbed [a] where
-  stub _ = []
+  stubbing = prism (const []) Left
 
 -- | `Nothing` would be bad default replacer.
 instance Stubbed a => Stubbed (Maybe a) where
-  stub = Just . stub
+  stubbing = _Just . stubbing
 
 -- | Universal accessor.
 --

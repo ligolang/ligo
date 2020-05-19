@@ -30,3 +30,6 @@ tools/lsp/camligo/src/
 tools/lsp/camligo/index.js
 tools/lsp/camligo/node_modules
 nix/result
+.idea
+*.iml
+stale_outputs_checked

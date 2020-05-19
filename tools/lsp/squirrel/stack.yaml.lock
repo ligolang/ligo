@@ -34,7 +34,7 @@ packages:
     hackage: semilattices-0.0.0.4@sha256:333707e460923711d1edbdd02ebe1c3957d4e0808eab9886747b52ee3e443639,1909
 snapshots:
 - completed:
-    size: 491389
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/15/7.yaml
-    sha256: 92ab6303fe20ec928461c82ce0980b4d17c06f4e66205a2967e476474f686c17
-  original: lts-15.7
+    size: 493124
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/15/10.yaml
+    sha256: 48bc6d1d59224a5166265ef6cdda6a512f29ecc8ef7331826312b82377e89507
+  original: lts-15.10
