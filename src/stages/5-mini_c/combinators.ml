@@ -8,18 +8,21 @@ module Expression = struct
   let get_content : t -> t' = fun e -> e.content
   let get_type : t -> type_expression = fun e -> e.type_expression
 
-  let make_t = fun tc -> {
+  let make_t ?(loc=Location.generated) = fun tc -> {
     type_content = tc;
+    location = loc;
   }
 
-  let make = fun e' t -> {
+  let make ?(loc=Location.generated) = fun e' t -> {
     content = e' ;
     type_expression = t ;
+    location = loc;
   }
 
-  let make_tpl = fun (e' , t) -> {
+  let make_tpl ?(loc=Location.generated) = fun (e' , t) -> {
     content = e' ;
     type_expression = t ;
+    location = loc;
   }
 
   let pair : t -> t -> t' = fun a b -> E_constant { cons_name = C_PAIR; arguments = [ a ; b ]}
@@ -164,24 +167,24 @@ let get_operation (v:value) = match v with
   | _ -> simple_fail "not an operation"
 
 
-let t_int  () : type_expression = Expression.make_t @@ T_base TB_int
-let t_unit () : type_expression = Expression.make_t @@ T_base TB_unit
-let t_nat  () : type_expression = Expression.make_t @@ T_base TB_nat
+let t_int  ?loc () : type_expression = Expression.make_t ?loc @@ T_base TB_int
+let t_unit ?loc () : type_expression = Expression.make_t ?loc @@ T_base TB_unit
+let t_nat  ?loc () : type_expression = Expression.make_t ?loc @@ T_base TB_nat
 
-let t_function x y : type_expression = Expression.make_t @@ T_function ( x , y )
-let t_pair     x y : type_expression = Expression.make_t @@ T_pair ( x , y )
-let t_union    x y : type_expression = Expression.make_t @@ T_or ( x , y )
+let t_function ?loc x y : type_expression = Expression.make_t ?loc @@ T_function ( x , y )
+let t_pair     ?loc x y : type_expression = Expression.make_t ?loc @@ T_pair ( x , y )
+let t_union    ?loc x y : type_expression = Expression.make_t ?loc @@ T_or ( x , y )
 
-let e_int expr : expression = Expression.make_tpl (expr, t_int ())
-let e_unit : expression = Expression.make_tpl (E_literal D_unit, t_unit ())
-let e_skip : expression = Expression.make_tpl (E_skip, t_unit ())
-let e_var_int name : expression = e_int (E_variable name)
-let e_let_in v tv inline expr body : expression = Expression.(make_tpl (
+let e_int  ?loc expr    : expression = Expression.make_tpl ?loc (expr, t_int ())
+let e_unit ?loc ()      : expression = Expression.make_tpl ?loc (E_literal D_unit, t_unit ())
+let e_skip ?loc ()      : expression = Expression.make_tpl ?loc (E_skip, t_unit ())
+let e_var_int ?loc name : expression = e_int ?loc (E_variable name)
+let e_let_in ?loc v tv inline expr body : expression = Expression.(make_tpl ?loc(
     E_let_in ((v , tv) , inline, expr , body) ,
     get_type body
   ))
 
-let ez_e_sequence a b : expression = Expression.(make_tpl (E_sequence (make_tpl (a , t_unit ()) , b) , get_type b))
+let ez_e_sequence ?loc a b : expression = Expression.(make_tpl (E_sequence (make_tpl ?loc (a , t_unit ()) , b) , get_type b))
 
 let d_unit : value = D_unit
 
