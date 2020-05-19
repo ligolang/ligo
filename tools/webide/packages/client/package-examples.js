@@ -4,12 +4,6 @@ const join = require('path').join;
 const fs = require('fs');
 const YAML = require('yamljs');
 
-const CURATED_EXAMPLES = [
-  'cameligo/arithmetic-contract.ligo',
-  'pascaligo/arithmetic-contract.ligo',
-  'reasonligo/arithmetic-contract.ligo'
-];
-
 function urlFriendlyHash(content) {
   const hash = createHash('md5');
   hash.update(content);
