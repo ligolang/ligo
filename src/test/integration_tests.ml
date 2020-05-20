@@ -1595,18 +1595,37 @@ let counter_religo () : unit result =
 
 let let_in_mligo () : unit result =
   let%bind program = mtype_file "./contracts/letin.mligo" in
-  let make_input n = e_pair (e_int n) (e_pair (e_int 3) (e_int 5)) in
-  let make_expected n =
-    e_pair (e_typed_list [] (t_operation ())) (e_pair (e_int (7+n)) (e_int (3+5)))
-  in expect_eq_n program "main" make_input make_expected
+  let%bind () = 
+    let make_input n = e_pair (e_int n) (e_pair (e_int 3) (e_int 5)) in
+    let make_expected n =
+      e_pair (e_typed_list [] (t_operation ())) (e_pair (e_int (7+n)) (e_int (3+5)))
+    in 
+    expect_eq_n program "main" make_input make_expected
+  in 
+  let%bind () = 
+    expect_eq program "letin_nesting" (e_unit ()) (e_string "test")
+  in 
+  let%bind () = 
+    expect_eq program "letin_nesting2" (e_int 4) (e_int 9)
+  in 
+  ok ()
 
 let let_in_religo () : unit result =
   let%bind program = retype_file "./contracts/letin.religo" in
-  let make_input n = e_pair (e_int n) (e_pair (e_int 3) (e_int 5)) in
-  let make_expected n =
-    e_pair (e_typed_list [] (t_operation ())) (e_pair (e_int (7+n)) (e_int (3+5)))
-  in expect_eq_n program "main" make_input make_expected
-
+  let%bind () = 
+    let make_input n = e_pair (e_int n) (e_pair (e_int 3) (e_int 5)) in
+    let make_expected n =
+      e_pair (e_typed_list [] (t_operation ())) (e_pair (e_int (7+n)) (e_int (3+5)))
+    in 
+    expect_eq_n program "main" make_input make_expected
+  in 
+  let%bind () = 
+    expect_eq program "letin_nesting" (e_unit ()) (e_string "test")
+  in 
+  let%bind () = 
+    expect_eq program "letin_nesting2" (e_int 4) (e_int 9)
+  in
+  ok ()
 
 let match_variant () : unit result =
   let%bind program = mtype_file "./contracts/match.mligo" in
