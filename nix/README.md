@@ -4,7 +4,7 @@ Nix is a declarative package manager. Get it here: https://nixos.org/nix
 
 These expressions are used on CI to reproducibly build the LIGO compiler, as well as WebIDE and https://ligolang.org .
 
-If you wish to build it yourself with `nix build -f. $thing`, where `$thing` is
+If you wish to build it yourself, do `nix build -f. $thing`, where `$thing` is
 
 - `ligo`: executables, libraries, documentation, coverage reports
 - `ligo-bin`: a dynamically linked binary (Linux, Mac)
@@ -15,6 +15,8 @@ If you wish to build it yourself with `nix build -f. $thing`, where `$thing` is
 - `ligo-docker`: a docker image with LIGO binaries
 - `ligo-editor-docker`: a docker image with webide
 - `ligo-deb`: debian package with static binaries
+
+The output of `nix build` can be found in `result` directory.
 
 ## Quick maintenance guide
 
