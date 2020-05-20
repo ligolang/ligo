@@ -22,7 +22,7 @@ type parameter =
 
 type return = (list(operation), storage)
 
-(* We use hash-commit so that a baker can not steal *)
+/* We use hash-commit so that a baker can not steal */
 
 let commit = ((p, s) : (bytes, storage)) : return => {
   let commit : commit = {date: Tezos.now + 86_400, salted_hash: p};
