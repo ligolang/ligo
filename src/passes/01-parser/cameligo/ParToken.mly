@@ -14,14 +14,14 @@
 %token                    <string Region.reg> Ident    "<ident>"
 %token                    <string Region.reg> Constr   "<constr>"
 %token                    <string Region.reg> Attr     "<attr>"
-%token                    <string Region.reg> Insert   "<insert>"
 
   (* Symbols *)
 
-%token <Region.t> MINUS "-"
-%token <Region.t> PLUS  "+"
-%token <Region.t> SLASH "/"
-%token <Region.t> TIMES "*"
+%token <Region.t> MINUS   "-"
+%token <Region.t> PLUS    "+"
+%token <Region.t> SLASH   "/"
+%token <Region.t> TIMES   "*"
+%token <Region.t> PERCENT "%"
 
 %token <Region.t> LPAR     "("
 %token <Region.t> RPAR     ")"

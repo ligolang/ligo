@@ -26,6 +26,7 @@ type t =
 | PLUS    of Region.t    (* "+" *)
 | SLASH   of Region.t    (* "/" *)
 | TIMES   of Region.t    (* "*" *)
+| PERCENT of Region.t    (* "%" *)
 
   (* Compounds *)
 
@@ -71,7 +72,6 @@ type t =
 | Verbatim of string Region.reg
 | Bytes    of (string * Hex.t) Region.reg
 | Attr     of string Region.reg
-| Insert   of string Region.reg
 
   (* Keywords *)
 
@@ -131,8 +131,6 @@ let proj_token = function
     region, sprintf "Constr %s" value
 | Attr Region.{region; value} ->
    region, sprintf "Attr \"%s\"" value
-| Insert Region.{region; value} ->
-   region, sprintf "Insert \"%s\"" value
 
   (* Symbols *)
 
@@ -143,6 +141,7 @@ let proj_token = function
 | PLUS     region -> region, "PLUS"
 | SLASH    region -> region, "SLASH"
 | TIMES    region -> region, "TIMES"
+| PERCENT  region -> region, "PERCENT"
 | LPAR     region -> region, "LPAR"
 | RPAR     region -> region, "RPAR"
 | LBRACKET region -> region, "LBRACKET"
@@ -207,7 +206,6 @@ let to_lexeme = function
 | Ident id   -> id.Region.value
 | Constr id  -> id.Region.value
 | Attr a     -> a.Region.value
-| Insert i   -> i.Region.value
 
   (* Symbols *)
 
@@ -218,6 +216,7 @@ let to_lexeme = function
 | PLUS     _ -> "+"
 | SLASH    _ -> "/"
 | TIMES    _ -> "*"
+| PERCENT  _ -> "%"
 | LPAR     _ -> "("
 | RPAR     _ -> ")"
 | LBRACKET _ -> "["
@@ -479,6 +478,7 @@ let mk_sym lexeme region =
   | "-"   -> Ok (MINUS    region)
   | "*"   -> Ok (TIMES    region)
   | "/"   -> Ok (SLASH    region)
+  | "%"   -> Ok (PERCENT  region)
   | "<"   -> Ok (LT       region)
   | "<="  -> Ok (LE       region)
   | ">"   -> Ok (GT       region)
@@ -511,9 +511,6 @@ type attr_err = Invalid_attribute
 let mk_attr header lexeme region =
   if header = "[@" then Error Invalid_attribute
   else Ok (Attr Region.{value=lexeme; region})
-
-let mk_insert lexeme region =
-  Insert Region.{value=lexeme;region}
 
 (* Predicates *)
 

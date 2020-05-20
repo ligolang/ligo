@@ -32,6 +32,7 @@ interactive_expr: BigMap LBRACKET With
 ##
 ## Ends in an error in state: 140.
 ##
+## code_insert_expr -> LBRACKET . PERCENT Constr expr RBRACKET [ TIMES SLASH PLUS Or NE Mod MINUS LT LE GT GE EQ Contains CONS CAT And ARROW ]
 ## injection(BigMap,binding) -> BigMap LBRACKET . sep_or_term_list(binding,SEMI) RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ## injection(BigMap,binding) -> BigMap LBRACKET . RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
@@ -876,7 +877,7 @@ interactive_expr: Function LPAR With
 
 interactive_expr: Function With
 ##
-## Ends in an error in state: 111.
+## Ends in an error in state: 120.
 ##
 ## fun_expr -> Function . parameters COLON type_expr Is expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
@@ -1228,7 +1229,7 @@ interactive_expr: Ident With Record Ident While
 
 interactive_expr: Ident With Record Ident With
 ##
-## Ends in an error in state: 166.
+## Ends in an error in state: 169.
 ##
 ## field_path_assignment -> path . EQ expr [ SEMI RBRACKET End ]
 ##
@@ -1576,6 +1577,7 @@ interactive_expr: List LBRACKET With
 ##
 ## Ends in an error in state: 359.
 ##
+## code_insert_expr -> LBRACKET . PERCENT Constr expr RBRACKET [ TIMES SLASH SEMI PLUS Or NE Mod MINUS LT LE GT GE End EQ Contains CONS CAT And ]
 ## injection(List,expr) -> List LBRACKET . sep_or_term_list(expr,SEMI) RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ## injection(List,expr) -> List LBRACKET . RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
@@ -1675,6 +1677,7 @@ interactive_expr: Map LBRACKET With
 ##
 ## Ends in an error in state: 376.
 ##
+## code_insert_expr -> LBRACKET . PERCENT Constr expr RBRACKET [ TIMES SLASH PLUS Or NE Mod MINUS LT LE GT GE EQ Contains CONS CAT And ARROW ]
 ## injection(Map,binding) -> Map LBRACKET . sep_or_term_list(binding,SEMI) RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ## injection(Map,binding) -> Map LBRACKET . RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
@@ -2109,6 +2112,7 @@ interactive_expr: Set LBRACKET With
 ##
 ## Ends in an error in state: 398.
 ##
+## code_insert_expr -> LBRACKET . PERCENT Constr expr RBRACKET [ TIMES SLASH SEMI PLUS Or NE Mod MINUS LT LE GT GE End EQ Contains CONS CAT And ]
 ## injection(Set,expr) -> Set LBRACKET . sep_or_term_list(expr,SEMI) RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ## injection(Set,expr) -> Set LBRACKET . RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
@@ -3487,6 +3491,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON String Is Begin
 ##
 ## Ends in an error in state: 441.
 ##
+## code_insert_expr -> LBRACKET . PERCENT Constr expr RBRACKET [ TIMES SLASH PLUS Or NE Mod MINUS LT LE GT GE EQ Contains CONS CAT And ARROW ]
 ## ne_injection(Map,binding) -> Map LBRACKET . sep_or_term_list(binding,SEMI) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
@@ -3656,6 +3661,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON String Is Begin
 ##
 ## Ends in an error in state: 429.
 ##
+## code_insert_expr -> LBRACKET . PERCENT Constr expr RBRACKET [ TIMES SLASH SEMI PLUS Or NE Mod MINUS LT LE GT GE End EQ Contains CONS CAT And ]
 ## ne_injection(Set,expr) -> Set LBRACKET . sep_or_term_list(expr,SEMI) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
@@ -4767,4 +4773,3 @@ contract: With
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
-

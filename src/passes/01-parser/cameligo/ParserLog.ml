@@ -520,7 +520,9 @@ and print_record_expr state e =
   print_ne_injection state print_field_assign e
 
 and print_code_insert state {value; _} =
-  let {language;code;rbracket} : code_insert = value in
+  let {lbracket;percent;language;code;rbracket} : code_insert = value in
+  print_token     state lbracket "[";
+  print_token     state percent  "%";
   print_string    state language;
   print_expr      state code;
   print_token     state rbracket "]"

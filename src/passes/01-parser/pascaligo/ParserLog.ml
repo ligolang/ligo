@@ -231,7 +231,9 @@ and print_fun_expr state {value; _} =
   print_expr       state return
 
 and print_code_insert state {value; _} =
-  let {language;code;rbracket} : code_insert = value in
+  let {lbracket;percent;language;code;rbracket} : code_insert = value in
+  print_token     state lbracket "[";
+  print_token     state percent  "%";
   print_string    state language;
   print_expr      state code;
   print_token     state rbracket "]"

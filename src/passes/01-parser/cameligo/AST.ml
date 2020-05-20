@@ -401,6 +401,8 @@ and cond_expr = {
 }
 
 and code_insert = {
+  lbracket  : lbracket;
+  percent   : percent;
   language  : string reg;
   code      : expr;
   rbracket  : rbracket;

@@ -42,6 +42,7 @@ type t =
 | PLUS    of Region.t    (* "+" *)
 | SLASH   of Region.t    (* "/" *)
 | TIMES   of Region.t    (* "*" *)
+| PERCENT of Region.t    (* "%" *)
 
   (* Compounds *)
 
@@ -87,7 +88,6 @@ type t =
 | Verbatim of string Region.reg
 | Bytes    of (string * Hex.t) Region.reg
 | Attr     of string Region.reg
-| Insert   of string Region.reg
 
   (* Keywords *)
 
@@ -155,7 +155,6 @@ val mk_verbatim : lexeme -> Region.t -> token
 val mk_bytes    : lexeme -> Region.t -> token
 val mk_constr   : lexeme -> Region.t -> token
 val mk_attr     : string -> lexeme -> Region.t -> (token,  attr_err) result
-val mk_insert : lexeme -> Region.t -> token
 val eof         : Region.t -> token
 
 (* Predicates *)

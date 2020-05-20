@@ -438,6 +438,8 @@ and for_collect = {
 }
 
 and code_insert = {
+  lbracket  : lbracket;
+  percent   : percent;
   language  : string reg;
   code      : expr;
   rbracket  : rbracket;

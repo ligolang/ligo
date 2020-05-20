@@ -709,10 +709,12 @@ seq_expr:
   disj_expr_level | if_then_else (seq_expr) { $1 }
 
 code_insert:
-  Insert expr "]" {
-    let region = cover $1.region $3 in
+  "[" "%" Constr expr "]" {
+    let region = cover $1 $5 in
     let value = {
-                  language =$1;
-                  code     =$2;
-                  rbracket =$3}
+                  lbracket =$1;
+                  percent  =$2;
+                  language =$3;
+                  code     =$4;
+                  rbracket =$5}
     in {region; value} }

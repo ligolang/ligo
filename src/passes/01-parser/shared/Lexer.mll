@@ -43,7 +43,6 @@ module type TOKEN =
     val mk_bytes    : lexeme -> Region.t -> token
     val mk_constr   : lexeme -> Region.t -> token
     val mk_attr     : string -> lexeme -> Region.t -> (token, attr_err) result
-    val mk_insert   : lexeme -> Region.t -> token
     val eof         : Region.t -> token
 
     (* Predicates *)
@@ -269,11 +268,6 @@ module Make (Token : TOKEN) : (S with module Token = Token) =
       | Error Token.Invalid_attribute ->
           fail region Invalid_attribute
 
-    let mk_insert insert state buffer =
-      let region, _, state = state#sync buffer in
-      let token = Token.mk_insert insert region
-      in state#enqueue token
-
     let mk_constr state buffer =
       let region, lexeme, state = state#sync buffer in
       let token = Token.mk_constr lexeme region
@@ -359,7 +353,6 @@ let line_comments =
 (* #include files *)
 
 let string = [^'"' '\\' '\n']*  (* For strings of #include *)
-let insert = attr
 
 (* RULES *)
 
@@ -395,7 +388,6 @@ and scan state = parse
 | eof                    { mk_eof          state lexbuf }
 | "[@"  (attr as a) "]"  { mk_attr "[@"  a state lexbuf }
 | "[@@" (attr as a) "]"  { mk_attr "[@@" a state lexbuf }
-| "[%" (insert as i)     { mk_insert     i state lexbuf }
 
   (* Management of #include preprocessing directives
 
