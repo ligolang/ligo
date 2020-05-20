@@ -18,11 +18,11 @@ If you wish to build it yourself with `nix build -f. $thing`, where `$thing` is
 
 ## Quick maintenance guide
 
-- `opam-repository` and `tezos-opam-repository` are pinned. To update them when required, run `niv update` (you can get niv with `nix shell nixpkgs#niv`)
+- `opam-repository` and `tezos-opam-repository` are pinned. To update them when required, run `niv update` (you can get niv with `nix shell 'nixpkgs#niv'`)
 - `ocaml` version is pinned in `ocaml-overlay.nix`. If you want to update it, go there and change the version.
 - If something fails, `nix repl pkgs.nix` can be very useful to investigate it.
 
 ## Known caveats
 
-- This is not a nix flake. This will never be a flake if we want to keep this low-maintenance, because of the way `opam` sources are defined. Sometimes, the checksum is omitted there, so we have to use `fetchTarball` without the checksum, which won't work in restricted mode (which is required for flakes). The only solution would be to generate nix expressions for opam-repository separately, but it means a manual step in the process (and it's also impossible to make this work as a flake).
+- This is not a [nix flake](https://gist.github.com/edolstra/40da6e3a4d4ee8fd019395365e0772e7). This will never be a flake if we want to keep this low-maintenance, because of the way `opam` sources are defined. Sometimes, the checksum is omitted there, so we have to use `fetchTarball` without the checksum, which won't work in restricted mode (which is required for flakes). The only solution would be to generate nix expressions for opam-repository separately, but it means a manual step in the process (and it's also impossible to make this work as a flake).
 - For the same reason as above, evaluation can take a while because we need to download all the sources every `tarball-ttl` seconds. This can be mitigated by setting `tarball-ttl` to a high value.
