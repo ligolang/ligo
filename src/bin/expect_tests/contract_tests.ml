@@ -1692,4 +1692,56 @@ let%expect_test _ =
     * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}]
+    * Check the changelog by running 'ligo changelog' |}];
+      
+  run_ligo_good ["print-ast"; contract "letin.mligo"];
+  [%expect {|
+    type storage = (int ,
+    int)
+    const main : (int ,
+    storage) -> ((TO_list(operation)) ,
+    storage) = lambda (n:Some((int ,
+    storage))) : None return let x = let x = 7 : int in (ADD(x ,
+    n.0) ,
+    ADD(n.1.0 ,
+    n.1.1)) : (int ,
+    int) in (list[] : (TO_list(operation)) ,
+    x)
+    const f0 = lambda (a:Some(string)) : None return true(unit)
+    const f1 = lambda (a:Some(string)) : None return true(unit)
+    const f2 = lambda (a:Some(string)) : None return true(unit)
+    const letin_nesting = lambda (_:Some(unit)) : None return let s = "test" in let p0 = (f0)@(s) in { ASSERTION(p0);
+     let p1 = (f1)@(s) in { ASSERTION(p1);
+     let p2 = (f2)@(s) in { ASSERTION(p2);
+     s}}}
+    const letin_nesting2 = lambda (x:Some(int)) : None return let y = 2 in let z = 3 in ADD(ADD(x ,
+    y) ,
+    z)
+    |}];
+
+  run_ligo_good ["print-ast"; contract "letin.religo"];
+  [%expect {|
+    type storage = (int ,
+    int)
+    const main : (int ,
+    storage) -> ((TO_list(operation)) ,
+    storage) = lambda (n:Some((int ,
+    storage))) : None return let x = let x = 7 : int in (ADD(x ,
+    n.0) ,
+    ADD(n.1.0 ,
+    n.1.1)) : (int ,
+    int) in (list[] : (TO_list(operation)) ,
+    x)
+    const f0 = lambda (a:Some(string)) : None return true(unit)
+    const f1 = lambda (a:Some(string)) : None return true(unit)
+    const f2 = lambda (a:Some(string)) : None return true(unit)
+    const letin_nesting = lambda (_:Some(unit)) : None return let s = "test" in let p0 = (f0)@(s) in { ASSERTION(p0);
+     let p1 = (f1)@(s) in { ASSERTION(p1);
+     let p2 = (f2)@(s) in { ASSERTION(p2);
+     s}}}
+    const letin_nesting2 = lambda (x:Some(int)) : None return let y = 2 in let z = 3 in ADD(ADD(x ,
+    y) ,
+    z)
+    |}];
+
+

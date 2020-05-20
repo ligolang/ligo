@@ -147,9 +147,9 @@ cartesian:
     in TProd {region; value} }
 
 core_type:
-  type_name      { TVar $1 }
-| par(type_expr) { TPar $1 }
-| "<string>"     { TStringLiteral $1 }
+  type_name      {    TVar $1 }
+| par(type_expr) {    TPar $1 }
+| "<string>"     { TString $1 }
 | module_name "." type_name {
     let module_name = $1.value in
     let type_name   = $3.value in
@@ -457,15 +457,14 @@ case_clause(right_expr):
 
 let_expr(right_expr):
   "let" ioption("rec") let_binding seq(Attr) "in" right_expr  {
-    let kwd_let    = $1
-    and kwd_rec    = $2
-    and binding    = $3
-    and attributes = $4
-    and kwd_in     = $5
-    and body       = $6 in
-    let stop       = expr_to_region body in
-    let region     = cover kwd_let stop
-    and value      = {kwd_let; kwd_rec; binding; kwd_in; body; attributes}
+    let stop   = expr_to_region $6 in
+    let region = cover $1 stop
+    and value  = {kwd_let    = $1;
+                  kwd_rec    = $2;
+                  binding    = $3;
+                  attributes = $4;
+                  kwd_in     = $5;
+                  body       = $6}
     in ELetIn {region; value} }
 
 fun_expr(right_expr):
@@ -476,8 +475,7 @@ fun_expr(right_expr):
                   binders    = $2;
                   lhs_type   = None;
                   arrow      = $3;
-                  body       = $4
-                 }
+                  body       = $4}
     in EFun {region; value} }
 
 disj_expr_level:
@@ -653,7 +651,8 @@ update_record:
 
 field_path_assignment :
   nsepseq(field_name,".") "=" expr {
-    let region = cover (nsepseq_to_region (fun x -> x.region) $1) (expr_to_region $3) in
+    let start  = nsepseq_to_region (fun x -> x.region) $1 in
+    let region = cover start (expr_to_region $3) in
     let value  = {field_path = $1;
                   assignment = $2;
                   field_expr = $3}
@@ -669,18 +668,52 @@ field_assignment:
                   field_expr = $3}
     in {region; value} }
 
+path :
+ "<ident>"   { Name $1 }
+| projection { Path $1 }
+
 sequence:
-  "begin" sep_or_term_list(expr,";")? "end" {
+  "begin" series? "end" {
     let region   = cover $1 $3
     and compound = BeginEnd ($1,$3) in
     let elements, terminator =
       match $2 with
         None -> None, None
       | Some (ne_elements, terminator) ->
-         Some ne_elements, terminator in
+          Some ne_elements, terminator in
     let value = {compound; elements; terminator}
     in {region; value} }
 
-path :
- "<ident>"   { Name $1 }
-| projection { Path $1 }
+series:
+  last_expr {
+    let expr, term = $1 in (expr, []), term
+  }
+| seq_expr ";" series {
+    let rest, term = $3 in
+    let seq = Utils.nsepseq_cons $1 $2 rest
+    in seq, term }
+
+last_expr:
+  seq_expr ";"?
+| fun_expr(seq_expr) ";"?
+| match_expr(seq_expr) ";"? {
+    $1,$2
+  }
+| "let" ioption("rec") let_binding seq(Attr) "in" series  {
+    let seq, term = $6 in
+    let stop      = nsepseq_to_region expr_to_region seq in
+    let region    = cover $1 stop in
+    let compound  = BeginEnd (Region.ghost, Region.ghost) in
+    let elements  = Some seq in
+    let value     = {compound; elements; terminator=term} in
+    let body      = ESeq {region; value} in
+    let value     = {kwd_let    = $1;
+                     kwd_rec    = $2;
+                     binding    = $3;
+                     attributes = $4;
+                     kwd_in     = $5;
+                     body}
+    in ELetIn {region; value}, term }
+
+seq_expr:
+  disj_expr_level | if_then_else (seq_expr) { $1 }
