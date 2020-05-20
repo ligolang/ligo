@@ -2,10 +2,12 @@
 , writeShellScriptBin, makeFontsConf, buildEnv, rsync, sources
 , chromium ? null }:
 let
+  # Use a common yarn.lock for everything
   yarnLock = ../tools/webide/yarn.lock;
 
   installPhase = "mkdir $out; cp -Lr node_modules $out/node_modules";
 
+  # node_modules of the server
   server = mkYarnPackage {
     name = "webide-server";
     src = ../tools/webide/packages/server;
@@ -19,6 +21,8 @@ let
     distPhase = "true";
     inherit yarnLock installPhase;
   };
+
+  # node_modules of the client
   client = mkYarnPackage rec {
     name = "webide-client";
     src = ../tools/webide/packages/client;
@@ -42,6 +46,7 @@ let
     */
   };
 
+  # Perform the e2e tests; output is empty on purpose
   e2e = mkYarnPackage rec {
     name = "webide-e2e";
     src = ../tools/webide/packages/e2e;
@@ -61,6 +66,7 @@ let
     inherit yarnLock;
   };
 
+  # Run the WebIDE server with all the needed env variables
   ligo-editor = writeShellScriptBin "ligo-editor" ''
     set -e
     LIGO_CMD=${ligo-bin}/bin/ligo \
