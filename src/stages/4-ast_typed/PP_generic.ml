@@ -1,3 +1,4 @@
+open Types
 open Fold
 open Format
 open PP_helpers

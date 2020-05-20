@@ -2,6 +2,8 @@ open Amodule
 open Fold
 open Simple_utils.Trace
 
+module O = Fold.O
+
 let (|>) v f = f v
 
 module Errors = struct
@@ -22,9 +24,9 @@ let () =
   let op =
     no_op |>
       with__a (fun state the_a (*_info*) continue_fold ->
-          let%bind state, a1__' = continue_fold.ta1.node__ta1 state the_a.a1 in
-          let%bind state, a2__' = continue_fold.ta2.node__ta2 state the_a.a2 in
-          ok (state + 1, { a1__' ; a2__' }))
+          let%bind state, a1 = continue_fold.ta1.node__ta1 state the_a.a1 in
+          let%bind state, a2 = continue_fold.ta2.node__ta2 state the_a.a2 in
+          ok (state + 1, (O.make__a ~a1 ~a2 : O.a)))
   in
   let state = 0 in
   let%bind (state , _) = fold_map__root op state some_root in

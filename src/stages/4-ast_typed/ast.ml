@@ -1,6 +1,12 @@
 [@@@warning "-30"]
 
-include Types_utils
+open Types_utils
+
+(* pseudo-typeclasses: interfaces that must be provided for arguments
+   of the givent polymmorphic types. For now, only one typeclass can
+   be specified for a given polymorphic type. *)
+(*@ typeclass poly_unionfind comparable *)
+(*@ typeclass poly_set       comparable *)
 
 type type_constant =
     | TC_unit

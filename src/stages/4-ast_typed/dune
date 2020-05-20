@@ -1,7 +1,7 @@
 (rule
-  (target generated_fold.ml)
-  (deps ../adt_generator/generator.raku types.ml)
-  (action (with-stdout-to generated_fold.ml (run perl6 ../adt_generator/generator.raku types.ml)))
+  (targets generated_fold.ml generated_map.ml generated_o.ml)
+  (deps ../adt_generator/generator.raku ast.ml)
+  (action (run perl6 ../adt_generator/generator.raku ast.ml Generated_o generated_o.ml generated_fold.ml generated_map.ml))
   (mode (promote (until-clean) (only *)))
 )
 
@@ -19,5 +19,6 @@
   (preprocess
     (pps ppx_let bisect_ppx --conditional)
   )
+;;  (modules_without_implementation generated_fold_x)
   (flags (:standard -open Simple_utils))
 )
