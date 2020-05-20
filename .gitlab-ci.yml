@@ -9,7 +9,8 @@ stages:
   - push
   - versioning
 
-.docker-image: &docker-image
+.docker-image:
+  stage: push
   image: docker:19.03.5
   services:
     - docker:19.03.5-dind
@@ -21,7 +22,8 @@ version_scheduled_job:
   only:
     - schedules
 
-.prepare_nix: &prepare_nix
+.nix:
+  stage: build
   tags:
     - nix
   before_script:
@@ -30,8 +32,7 @@ version_scheduled_job:
 
 # The binary produced is useless by itself
 binary:
-  stage: build
-  <<: *prepare_nix
+  extends: .nix
   only:
     - merge_requests
     - dev
@@ -40,8 +41,7 @@ binary:
     - nix-build nix -A ligo-bin
 
 doc:
-  stage: build
-  <<: *prepare_nix
+  extends: .nix
   only:
     - merge_requests
     - dev
@@ -54,8 +54,7 @@ doc:
       - doc
 
 test:
-  stage: build
-  <<: *prepare_nix
+  extends: .nix
   only:
     - merge_requests
     - dev
@@ -69,8 +68,7 @@ test:
 
 # FIXME For some reason, e2e tests can't build on CI.
 .webide-e2e:
-  stage: build
-  <<: *prepare_nix
+  extends: .nix
   rules:
     - changes:
         - tools/webide/**
@@ -81,12 +79,11 @@ test:
     - nix-build nix -A ligo-editor.e2e
 
 docker:
-  stage: build
+  extends: .nix
   only:
     - merge_requests
     - dev
     - /^.*-run-dev$/
-  <<: *prepare_nix
   script:
     - nix-build nix -A ligo-docker
     - cp -L result ligo.tar.gz
@@ -95,8 +92,7 @@ docker:
       - ligo.tar.gz
 
 docker-push:
-  stage: push
-  <<: *docker-image
+  extends: .docker-image
   dependencies:
     - docker
   needs:
@@ -113,12 +109,11 @@ docker-push:
     - docker push "${LIGO_REGISTRY_FULL_NAME}"
 
 webide-docker:
-  stage: build
+  extends: .nix
   only:
     - merge_requests
     - dev
     - /^.*-run-dev$/
-  <<: *prepare_nix
   script:
     - nix-build nix -A ligo-editor-docker
     - cp -L result webide.tar.gz
@@ -128,8 +123,7 @@ webide-docker:
 
 
 webide-push:
-  stage: push
-  <<: *docker-image
+  extends: .docker-image
   dependencies:
     - webide-docker
   needs:
@@ -145,8 +139,7 @@ webide-push:
     - docker push "${WEBIDE_IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
 
 static-binary:
-  stage: build
-  <<: *prepare_nix
+  extends: .nix
   only:
     - merge_requests
     - dev
@@ -161,9 +154,8 @@ static-binary:
     paths:
       - ligo
 
-.website: &website
-  stage: build
-  <<: *prepare_nix
+.website:
+  extends: .nix
   script:
     - nix-build nix -A ligo-website
     - cp -Lr --no-preserve=mode,ownership,timestamps result/ public
@@ -172,15 +164,13 @@ static-binary:
       - public
 
 pages:
-  stage: build
-  <<: *website
+  extends: .website
   rules:
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
 
 pages-attempt:
-  stage: build
-  <<: *website
+  extends: .website
   only:
     - merge_requests
     - /^.*-run-dev$/
