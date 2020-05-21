@@ -55,7 +55,7 @@ export const OutputTab = (props: {
       return <CompileOutputPane></CompileOutputPane>;
     } else if (command === Command.Deploy) {
       return <DeployOutputPane></DeployOutputPane>;
-    } else if (command === Command.GenerateCommand) {
+    } else if (command === Command.GenerateDeployScript) {
       return <GenerateDeployScriptOutputPane></GenerateDeployScriptOutputPane>;
     }
 

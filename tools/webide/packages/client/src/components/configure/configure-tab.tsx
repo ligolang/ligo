@@ -76,7 +76,7 @@ function createAction(command: Command) {
       return new EvaluateValueAction();
     case Command.EvaluateFunction:
       return new EvaluateFunctionAction();
-    case Command.GenerateCommand:
+    case Command.GenerateDeployScript:
       return new GenerateDeployScript();
     default:
       throw new Error('Unsupported command');
@@ -113,7 +113,7 @@ export const ConfigureTabComponent = (props: {
           <Option value={Command.DryRun}>Dry Run</Option>
           <Option value={Command.EvaluateFunction}>Evaluate Function</Option>
           <Option value={Command.EvaluateValue}>Evaluate Value</Option>
-          <Option value={Command.GenerateCommand}>Generate Command</Option>
+          <Option value={Command.GenerateDeployScript}>Generate Deploy Script</Option>
         </SelectCommand>
         <RunButton
           id="run"
@@ -147,7 +147,7 @@ export const ConfigureTabComponent = (props: {
         (command === Command.EvaluateValue && (
           <EvaluateValuePaneComponent></EvaluateValuePaneComponent>
         )) ||
-        (command === Command.GenerateCommand && (
+        (command === Command.GenerateDeployScript && (
           <GenerateDeployScriptPane></GenerateDeployScriptPane>
         ))}
     </Container>

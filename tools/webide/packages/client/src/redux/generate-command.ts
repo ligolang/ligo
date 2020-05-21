@@ -1,13 +1,13 @@
 import { Tool, ToolCommand } from './types';
 
 export enum ActionType {
-  ChangeTool = 'generate-command-change-tool',
-  ChangeCommand = 'generate-command-change-command',
-  ChangeEntrypoint = 'generate-command-change-entrypoint',
-  ChangeStorage = 'generate-command-change-storage'
+  ChangeTool = 'generate-deploy-script-change-tool',
+  ChangeCommand = 'generate-deploy-script-change-command',
+  ChangeEntrypoint = 'generate-deploy-script-change-entrypoint',
+  ChangeStorage = 'generate-deploy-script-change-storage'
 }
 
-export interface GenerateCommandState {
+export interface GenerateDeployScriptState {
   tool: Tool;
   command: ToolCommand;
   entrypoint: string;
@@ -18,22 +18,22 @@ export interface GenerateCommandState {
 
 export class ChangeToolAction {
   public readonly type = ActionType.ChangeTool;
-  constructor(public payload: GenerateCommandState['tool']) {}
+  constructor(public payload: GenerateDeployScriptState['tool']) {}
 }
 
 export class ChangeCommandAction {
   public readonly type = ActionType.ChangeCommand;
-  constructor(public payload: GenerateCommandState['command']) {}
+  constructor(public payload: GenerateDeployScriptState['command']) {}
 }
 
 export class ChangeEntrypointAction {
   public readonly type = ActionType.ChangeEntrypoint;
-  constructor(public payload: GenerateCommandState['entrypoint']) {}
+  constructor(public payload: GenerateDeployScriptState['entrypoint']) {}
 }
 
 export class ChangeStorageAction {
   public readonly type = ActionType.ChangeStorage;
-  constructor(public payload: GenerateCommandState['storage']) {}
+  constructor(public payload: GenerateDeployScriptState['storage']) {}
 }
 
 type Action =
@@ -42,7 +42,7 @@ type Action =
   | ChangeEntrypointAction
   | ChangeStorageAction;
 
-const DEFAULT_STATE: GenerateCommandState = {
+const DEFAULT_STATE: GenerateDeployScriptState = {
   tool: Tool.TezosClient,
   command: ToolCommand.Originate,
   entrypoint: '',
@@ -54,7 +54,7 @@ const DEFAULT_STATE: GenerateCommandState = {
 export default (
   state = DEFAULT_STATE,
   action: Action
-): GenerateCommandState => {
+): GenerateDeployScriptState => {
   switch (action.type) {
     case ActionType.ChangeTool:
       return {
