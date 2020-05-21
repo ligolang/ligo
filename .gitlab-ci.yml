@@ -70,6 +70,10 @@ test:
 
 webide-e2e:
   extends: .nix
+  only:
+    - merge_requests
+    - dev
+    - /^.*-run-dev$/
   script:
     - nix-build nix -A ligo-editor.e2e
 
