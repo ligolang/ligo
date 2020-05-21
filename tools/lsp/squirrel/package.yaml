@@ -24,6 +24,9 @@ default-extensions:
   - ScopedTypeVariables
   - QuasiQuotes
   - TemplateHaskell
+  - DeriveFunctor
+  - DeriveFoldable
+  - DeriveTraversable
 
 ghc-options: -freverse-errors -Wall -threaded
 

@@ -27,6 +27,7 @@ data Contract info
   = Contract      info [Declaration info]
   | WrongContract      Error
   deriving (Show) via PP (Contract info)
+  deriving stock (Functor, Foldable, Traversable)
 
 data Declaration info
   = ValueDecl info (Binding info)
@@ -35,7 +36,7 @@ data Declaration info
   | Include   info Text
   | WrongDecl      Error
   deriving (Show) via PP (Declaration info)
-
+  deriving stock (Functor, Foldable, Traversable)
 
 data Binding info
   = Irrefutable  info (Pattern info) (Expr info)
@@ -44,20 +45,20 @@ data Binding info
   | Const        info (Name info) (Type info) (Expr info)
   | WrongBinding      Error
   deriving (Show) via PP (Binding info)
-
+  deriving stock (Functor, Foldable, Traversable)
 
 data VarDecl info
   = Decl         info (Mutable info) (Name info) (Type info)
   | WrongVarDecl      Error
   deriving (Show) via PP (VarDecl info)
-
+  deriving stock (Functor, Foldable, Traversable)
 
 data Mutable info
   = Mutable      info
   | Immutable    info
   | WrongMutable      Error
   deriving (Show) via PP (Mutable info)
-
+  deriving stock (Functor, Foldable, Traversable)
 
 
 data Type info
@@ -69,19 +70,19 @@ data Type info
   | TApply    info  (Name info) [Type info]
   | WrongType      Error
   deriving (Show) via PP (Type info)
-
+  deriving stock (Functor, Foldable, Traversable)
 
 data Variant info
   = Variant info (Name info) (Maybe (Type info))
   | WrongVariant Error
   deriving (Show) via PP (Variant info)
-
+  deriving stock (Functor, Foldable, Traversable)
 
 data TField info
   = TField info (Name info) (Type info)
   | WrongTField Error
   deriving (Show) via PP (TField info)
-
+  deriving stock (Functor, Foldable, Traversable)
 
 -- | TODO: break onto smaller types? Literals -> Constannt; mapOps; mmove Annots to Decls.
 data Expr info
@@ -116,37 +117,37 @@ data Expr info
   | RecordUpd info (QualifiedName info) [FieldAssignment info]
   | WrongExpr      Error
   deriving (Show) via PP (Expr info)
-
+  deriving stock (Functor, Foldable, Traversable)
 
 data Alt info
   = Alt info (Pattern info) (Expr info)
   | WrongAlt Error
   deriving (Show) via PP (Alt info)
-
+  deriving stock (Functor, Foldable, Traversable)
 
 data LHS info
   = LHS info (QualifiedName info) (Maybe (Expr info))
   | WrongLHS Error
   deriving (Show) via PP (LHS info)
-
+  deriving stock (Functor, Foldable, Traversable)
 
 data MapBinding info
   = MapBinding info (Expr info) (Expr info)
   | WrongMapBinding Error
   deriving (Show) via PP (MapBinding info)
-
+  deriving stock (Functor, Foldable, Traversable)
 
 data Assignment info
   = Assignment info (Name info) (Expr info)
   | WrongAssignment Error
   deriving (Show) via PP (Assignment info)
-
+  deriving stock (Functor, Foldable, Traversable)
 
 data FieldAssignment info
   = FieldAssignment info (QualifiedName info) (Expr info)
   | WrongFieldAssignment Error
   deriving (Show) via PP (FieldAssignment info)
-
+  deriving stock (Functor, Foldable, Traversable)
 
 data Constant info
   = Int     info Text
@@ -157,7 +158,7 @@ data Constant info
   | Tez     info Text
   | WrongConstant Error
   deriving (Show) via PP (Constant info)
-
+  deriving stock (Functor, Foldable, Traversable)
 
 data Pattern info
   = IsConstr     info (Name info) (Maybe (Pattern info))
@@ -169,7 +170,7 @@ data Pattern info
   | IsTuple      info [Pattern info]
   | WrongPattern      Error
   deriving (Show) via PP (Pattern info)
-
+  deriving stock (Functor, Foldable, Traversable)
 
 data QualifiedName info
   = QualifiedName
@@ -179,21 +180,22 @@ data QualifiedName info
     }
   | WrongQualifiedName Error
   deriving (Show) via PP (QualifiedName info)
-
+  deriving stock (Functor, Foldable, Traversable)
 
 data Path info
   = At info (Name info)
   | Ix info Text
   | WrongPath Error
   deriving (Show) via PP (Path info)
-
+  deriving stock (Functor, Foldable, Traversable)
 
 data Name info = Name
-  { info    :: info
-  , raw     :: Text
+  { _info    :: info
+  , _raw     :: Text
   }
   | WrongName Error
   deriving (Show) via PP (Name info)
+  deriving stock (Functor, Foldable, Traversable)
 
 c :: HasComments i => i -> Doc -> Doc
 c i d =
@@ -396,6 +398,10 @@ foldMap makePrisms
   , ''Binding
   , ''Declaration
   , ''Contract
+  ]
+
+foldMap makeLenses
+  [ ''Name
   ]
 
 instance Stubbed (Name info) where stubbing = _WrongName

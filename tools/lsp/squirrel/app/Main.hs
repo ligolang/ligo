@@ -92,10 +92,28 @@ eventLoop funs chan = do
              .J.textDocument
              .J.uri
 
+          ver = notif
+            ^.J.params
+             .J.textDocument
+             .J.version
+
+        collectErrors funs
+          (J.toNormalizedUri doc)
+          (J.uriToFilePath doc)
+          (Just ver)
+
+      NotDidChangeTextDocument notif -> do
+        let
+          doc = notif
+            ^.J.params
+             .J.textDocument
+             .J.uri
+
         collectErrors funs
           (J.toNormalizedUri doc)
           (J.uriToFilePath doc)
           (Just 0)
+
 
 collectErrors
   :: Core.LspFuncs ()

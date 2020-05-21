@@ -1,6 +1,8 @@
 
 module Range where
 
+import Control.Lens
+
 import Pretty
 
 -- | A continuous location in text.
@@ -18,3 +20,6 @@ instance Pretty Range where
   pp (Range (ll, lc, _) (rl, rc, _)) =
     brackets do
       int ll <> ":" <> int lc <> "-" <> int rl <> ":" <> int rc
+
+class HasRange a where
+  location :: Lens' a Range

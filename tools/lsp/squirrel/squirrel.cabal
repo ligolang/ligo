@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 538d4e2f89a920b2395b5b445d883e29cf753fa91e443e1308a48a689018f4eb
+-- hash: e30e95968ee812129049606c1bdd5ab3a97ce79d1da5f70f38adaf4bc91f4a4a
 
 name:           squirrel
 version:        0.0.0
@@ -15,6 +15,7 @@ library
       AST
       AST.Errors
       AST.Parser
+      AST.Scope
       AST.Types
       Parser
       ParseTree
@@ -25,7 +26,7 @@ library
       Paths_squirrel
   hs-source-dirs:
       src/
-  default-extensions: LambdaCase BlockArguments OverloadedStrings GeneralisedNewtypeDeriving DerivingStrategies DerivingVia FlexibleInstances NamedFieldPuns BangPatterns ScopedTypeVariables QuasiQuotes TemplateHaskell
+  default-extensions: LambdaCase BlockArguments OverloadedStrings GeneralisedNewtypeDeriving DerivingStrategies DerivingVia FlexibleInstances NamedFieldPuns BangPatterns ScopedTypeVariables QuasiQuotes TemplateHaskell DeriveFunctor DeriveFoldable DeriveTraversable
   ghc-options: -freverse-errors -Wall -threaded
   include-dirs:
       vendor
@@ -49,7 +50,7 @@ executable squirrel
       Paths_squirrel
   hs-source-dirs:
       app/
-  default-extensions: LambdaCase BlockArguments OverloadedStrings GeneralisedNewtypeDeriving DerivingStrategies DerivingVia FlexibleInstances NamedFieldPuns BangPatterns ScopedTypeVariables QuasiQuotes TemplateHaskell
+  default-extensions: LambdaCase BlockArguments OverloadedStrings GeneralisedNewtypeDeriving DerivingStrategies DerivingVia FlexibleInstances NamedFieldPuns BangPatterns ScopedTypeVariables QuasiQuotes TemplateHaskell DeriveFunctor DeriveFoldable DeriveTraversable
   ghc-options: -freverse-errors -Wall -threaded
   build-depends:
       base
