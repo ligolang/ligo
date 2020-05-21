@@ -1,3 +1,4 @@
+# Create a debian package from static executable
 { stdenv, lib, writeTextFile, ligo-static, dpkg }:
 let
   project = "ligo";

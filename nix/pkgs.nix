@@ -1,20 +1,25 @@
+# nixpkgs extended with all the overlays for LIGO
 { sources ? import ./sources.nix }:
 let
   ocaml-overlay = import ./ocaml-overlay.nix { inherit sources; };
   static-overlay = import ./static-overlay.nix pkgs;
   mac-overlay = import ./mac-overlay.nix;
   nodejs-overlay = import ./nodejs-overlay.nix;
+  nix-npm-buildpackage = pkgs.callPackage sources.nix-npm-buildpackage { };
+
   pkgs = import sources.nixpkgs {
     overlays = [ ocaml-overlay nodejs-overlay ]
+    # This is done here to prevent the need for bootstrap nixpkgs
       ++ (if builtins.currentSystem == "x86_64-darwin"
           then [ mac-overlay ]
           else [ ]);
   };
+
+  # Takes $pkg/ligo and creates a new package with $pkg/bin/ligo
   separateBinary = pkg:
     pkgs.runCommandNoCC "${pkg.name}-bin" { }
     "mkdir -p $out/bin; cp -Lr ${pkg}/ligo $out/bin";
 
-  nix-npm-buildpackage = pkgs.callPackage sources.nix-npm-buildpackage { };
 in pkgs.extend (self: super: {
   inherit (self.ocamlPackages) ligo ligo-out ligo-tests ligo-doc ligo-coverage;
   ligo-bin = separateBinary self.ligo-out.bin;
