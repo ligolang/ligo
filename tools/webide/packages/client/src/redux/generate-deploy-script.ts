@@ -1,3 +1,4 @@
+import { ActionType as ExamplesActionType, ChangeSelectedAction as ChangeSelectedExampleAction } from './examples';
 import { Tool, ToolCommand } from './types';
 
 export enum ActionType {
@@ -40,7 +41,8 @@ type Action =
   | ChangeToolAction
   | ChangeCommandAction
   | ChangeEntrypointAction
-  | ChangeStorageAction;
+  | ChangeStorageAction
+  | ChangeSelectedExampleAction;
 
 const DEFAULT_STATE: GenerateDeployScriptState = {
   tool: Tool.TezosClient,
@@ -56,6 +58,11 @@ export default (
   action: Action
 ): GenerateDeployScriptState => {
   switch (action.type) {
+    case ExamplesActionType.ChangeSelected:
+      return {
+        ...state,
+        ...(!action.payload ? DEFAULT_STATE : action.payload.generateDeployScript)
+      };
     case ActionType.ChangeTool:
       return {
         ...state,

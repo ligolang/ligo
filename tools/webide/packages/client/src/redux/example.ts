@@ -4,6 +4,8 @@ import { DryRunState } from './dry-run';
 import { EditorState } from './editor';
 import { EvaluateFunctionState } from './evaluate-function';
 import { EvaluateValueState } from './evaluate-value';
+import { GenerateDeployScriptState } from './generate-deploy-script';
+
 
 export interface ExampleState {
   id: string;
@@ -14,4 +16,5 @@ export interface ExampleState {
   deploy: DeployState;
   evaluateFunction: EvaluateFunctionState;
   evaluateValue: EvaluateValueState;
+  generateDeployScript: GenerateDeployScriptState;
 }
