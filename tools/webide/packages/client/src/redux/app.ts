@@ -8,7 +8,7 @@ import editor, { EditorState } from './editor';
 import evaluateFunction, { EvaluateFunctionState } from './evaluate-function';
 import evaluateValue, { EvaluateValueState } from './evaluate-value';
 import examples, { ExamplesState } from './examples';
-import generateDeployScript, { GenerateDeployScriptState } from './generate-command';
+import generateDeployScript, { GenerateDeployScriptState } from './generate-deploy-script';
 import loading, { LoadingState } from './loading';
 import result, { ResultState } from './result';
 import share, { ShareState } from './share';

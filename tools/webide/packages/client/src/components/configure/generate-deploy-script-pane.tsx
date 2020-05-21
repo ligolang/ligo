@@ -9,7 +9,7 @@ import {
   ChangeStorageAction,
   ChangeToolAction,
   GenerateDeployScriptState,
-} from '../../redux/generate-command';
+} from '../../redux/generate-deploy-script';
 import { Tool, ToolCommand } from '../../redux/types';
 import { AccessFunctionLabel, Group, Input, Label, Textarea } from '../form/inputs';
 import { Option, Select } from '../form/select';
