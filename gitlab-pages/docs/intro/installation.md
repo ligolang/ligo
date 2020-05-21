@@ -40,20 +40,31 @@ curl https://gitlab.com/ligolang/ligo/raw/master/scripts/installer.sh | bash -s 
 ligo --help
 ```
 
+## Static Linux binary
+
+We have built ligo executable statically. It should run on most modern Linux distributions.
+
+To use it, get it [here](/bin/linux/ligo), make it executable, you're done!
+
+```zsh
+wget https://ligolang.org/bin/linux/ligo
+chmod +x ./ligo
+```
+
+Optionally, you can put it somewhere in your `PATH` for easy access:
+
+```zsh
+sudo cp ./ligo /usr/local/bin
+```
 
 ## Debian Linux package installation
 
-We have produced .deb packages for a few Debian Linux versions. They will install a global `ligo` executable. 
-First download one of the packages below, and then install using:
+We have produced .deb package with the static executable of ligo.
+First download [the package](/deb/ligo.deb), and then install using: 
 
+```zsh
+sudo apt install ./ligo.deb
 ```
-sudo apt install ./<package_name_here>.deb
-```
-
-- [Ubuntu 18.04](/deb/ligo_ubuntu-18.04.deb)
-- [Ubuntu 19.10](/deb/ligo_ubuntu-19.10.deb)
-- [Debian 9](/deb/ligo_debian-9.deb)
-- [Debian 10](/deb/ligo_debian-10.deb)
 
 ## Release schedule
 
