@@ -18,7 +18,7 @@ const Container = styled.div`
   overflow: auto;
 `;
 
-export const GenerateCommandPaneComponent = () => {
+export const GenerateDeployScriptPane = () => {
   const dispatch = useDispatch();
 
   const tool = useSelector<AppState, GenerateCommandState['tool']>(

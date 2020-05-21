@@ -22,7 +22,7 @@ export async function fetchRandomPrivateKey(): Promise<string> {
   return response.text();
 }
 
-export class GenerateCommandAction extends CancellableAction {
+export class GenerateDeployScript extends CancellableAction {
   getAction() {
     return async (dispatch: Dispatch, getState: () => AppState) => {
       dispatch({ ...new UpdateLoadingAction('Compiling contract...') });

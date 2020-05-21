@@ -24,7 +24,7 @@ const Pre = styled.pre`
   margin: 0;
 `;
 
-export const GenerateCommandOutputPane = () => {
+export const GenerateDeployScriptOutputPane = () => {
   const output = useSelector<AppState, ResultState['output']>(
     state => state.result.output
   );

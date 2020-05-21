@@ -7,7 +7,7 @@ import { DeployAction } from '../../redux/actions/deploy';
 import { DryRunAction } from '../../redux/actions/dry-run';
 import { EvaluateFunctionAction } from '../../redux/actions/evaluate-function';
 import { EvaluateValueAction } from '../../redux/actions/evaluate-value';
-import { GenerateCommandAction } from '../../redux/actions/generate-command';
+import { GenerateDeployScript } from '../../redux/actions/generate-deploy-script';
 import { AppState } from '../../redux/app';
 import { ChangeDispatchedAction, ChangeSelectedAction, CommandState } from '../../redux/command';
 import { Command } from '../../redux/types';
@@ -17,7 +17,7 @@ import { DeployPaneComponent } from './deploy-pane';
 import { DryRunPaneComponent } from './dry-run-pane';
 import { EvaluateFunctionPaneComponent } from './evaluate-function-pane';
 import { EvaluateValuePaneComponent } from './evaluate-value-pane';
-import { GenerateCommandPaneComponent } from './generate-command-pane';
+import { GenerateDeployScriptPane } from './generate-deploy-script-pane';
 
 const Container = styled.div<{ visible?: boolean }>`
   position: absolute;
@@ -77,7 +77,7 @@ function createAction(command: Command) {
     case Command.EvaluateFunction:
       return new EvaluateFunctionAction();
     case Command.GenerateCommand:
-      return new GenerateCommandAction();
+      return new GenerateDeployScript();
     default:
       throw new Error('Unsupported command');
   }
@@ -148,7 +148,7 @@ export const ConfigureTabComponent = (props: {
           <EvaluateValuePaneComponent></EvaluateValuePaneComponent>
         )) ||
         (command === Command.GenerateCommand && (
-          <GenerateCommandPaneComponent></GenerateCommandPaneComponent>
+          <GenerateDeployScriptPane></GenerateDeployScriptPane>
         ))}
     </Container>
   );
