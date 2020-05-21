@@ -28,19 +28,19 @@ export class GenerateDeployScript extends CancellableAction {
       dispatch({ ...new UpdateLoadingAction('Compiling contract...') });
 
       try {
-        const { editor, generateCommand } = getState();
+        const { editor, generateDeployScript } = getState();
 
         const michelsonCodeJson = await compileContract(
           editor.language,
           editor.code,
-          generateCommand.entrypoint,
+          generateDeployScript.entrypoint,
           MichelsonFormat.Json
         );
 
         const michelsonCode = await compileContract(
           editor.language,
           editor.code,
-          generateCommand.entrypoint
+          generateDeployScript.entrypoint
         );
 
         if (this.isCancelled()) {
@@ -51,16 +51,16 @@ export class GenerateDeployScript extends CancellableAction {
         const michelsonStorageJson = await compileStorage(
           editor.language,
           editor.code,
-          generateCommand.entrypoint,
-          generateCommand.storage,
+          generateDeployScript.entrypoint,
+          generateDeployScript.storage,
           MichelsonFormat.Json
         );
 
         const michelsonStorage = await compileStorage(
           editor.language,
           editor.code,
-          generateCommand.entrypoint,
-          generateCommand.storage
+          generateDeployScript.entrypoint,
+          generateDeployScript.storage
         );
 
         if (this.isCancelled()) {
@@ -82,7 +82,7 @@ export class GenerateDeployScript extends CancellableAction {
 
         const title = slugify(editor.title).toLowerCase() || 'untitled';
         const output = `tezos-client \\
-  ${generateCommand.command} \\
+  ${generateDeployScript.command} \\
   contract \\
   ${title} \\
   transferring 0 \\
@@ -92,7 +92,7 @@ export class GenerateDeployScript extends CancellableAction {
   --burn-cap ${estimate.burnFeeMutez / 1000000}`;
 
         dispatch({
-          ...new ChangeOutputAction(output, Command.GenerateCommand)
+          ...new ChangeOutputAction(output, Command.GenerateDeployScript)
         });
       } catch (ex) {
         if (this.isCancelled()) {
@@ -101,7 +101,7 @@ export class GenerateDeployScript extends CancellableAction {
         dispatch({
           ...new ChangeOutputAction(
             `Error: ${getErrorMessage(ex)}`,
-            Command.GenerateCommand
+            Command.GenerateDeployScript
           )
         });
       }
