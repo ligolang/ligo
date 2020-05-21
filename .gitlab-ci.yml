@@ -67,15 +67,8 @@ test:
     paths:
       - coverage
 
-# FIXME For some reason, e2e tests can't build on CI.
-.webide-e2e:
+webide-e2e:
   extends: .nix
-  rules:
-    - changes:
-        - tools/webide/**
-      when: always
-    - if: '$CI_COMMIT_REF_NAME =~ /^(dev|.*-run-dev)$/ && $CI_PROJECT_PATH == "ligolang/ligo"'
-      when: always
   script:
     - nix-build nix -A ligo-editor.e2e
 
