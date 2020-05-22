@@ -7,7 +7,7 @@ import { DeployAction } from '../../redux/actions/deploy';
 import { DryRunAction } from '../../redux/actions/dry-run';
 import { EvaluateFunctionAction } from '../../redux/actions/evaluate-function';
 import { EvaluateValueAction } from '../../redux/actions/evaluate-value';
-import { GenerateDeployScript } from '../../redux/actions/generate-deploy-script';
+import { GenerateDeployScriptAction } from '../../redux/actions/generate-deploy-script';
 import { AppState } from '../../redux/app';
 import { ChangeDispatchedAction, ChangeSelectedAction, CommandState } from '../../redux/command';
 import { Command } from '../../redux/types';
@@ -77,7 +77,7 @@ function createAction(command: Command) {
     case Command.EvaluateFunction:
       return new EvaluateFunctionAction();
     case Command.GenerateDeployScript:
-      return new GenerateDeployScript();
+      return new GenerateDeployScriptAction();
     default:
       throw new Error('Unsupported command');
   }
