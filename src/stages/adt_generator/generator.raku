@@ -232,6 +232,10 @@ $*OUT = open $folder_filename, :w;
         # say "";
       }
     }
+    # look for builtins, filtering out the "implicit unit-like fake argument of emtpy constructors" (represented by '')
+    for $adts.map({ $_<ctorsOrFields> })[*;*].grep({$_<isBuiltin> && $_<type> ne ''}).map({$_<type>}).unique -> $builtin
+      { say "  let fold__$builtin : type qstate . the_folds -> qstate fold_config -> qstate -> $builtin -> qstate = fun the_folds visitor state x ->";
+        say "    ignore the_folds; visitor.$builtin visitor state x;;"; } # (*visitor.generic_ctor_or_field ctor_or_field_instance_info*)
 
     say "";
     say '  let the_folds : the_folds = {';
@@ -247,11 +251,17 @@ $*OUT = open $folder_filename, :w;
     { say "  let fold__$t<name> : type qstate . qstate fold_config -> qstate -> $t<name> -> qstate = fun visitor state x -> fold__$t<name> the_folds visitor state x;;";
       for $t<ctorsOrFields>.list -> $c
       { say "  let fold__$t<name>__$c<name> : type qstate . qstate fold_config -> qstate -> { $c<type> || 'unit' } -> qstate = fun visitor state x -> fold__$t<name>__$c<name> the_folds visitor state x;;" } }
+    # look for builtins, filtering out the "implicit unit-like fake argument of emtpy constructors" (represented by '')
+    for $adts.map({ $_<ctorsOrFields> })[*;*].grep({$_<isBuiltin> && $_<type> ne ''}).map({$_<type>}).unique -> $builtin
+    { say "  let fold__$builtin : type qstate . qstate fold_config -> qstate -> $builtin -> qstate = fun visitor state x -> fold__$builtin the_folds visitor state x;;"; }
 
     say "";
     say "  module Folds (M : sig type state type 'a t val f : (state fold_config -> state -> 'a -> state) -> 'a t  end) = struct";
     for $adts.list -> $t
     { say "  let $t<name> = M.f fold__$t<name>;;"; }
+    # look for builtins, filtering out the "implicit unit-like fake argument of emtpy constructors" (represented by '')
+    for $adts.map({ $_<ctorsOrFields> })[*;*].grep({$_<isBuiltin> && $_<type> ne ''}).map({$_<type>}).unique -> $builtin
+    { say "  let $builtin = M.f fold__$builtin"; }
     say "  end";
 }
 
@@ -291,8 +301,8 @@ $*OUT = open $mapper_filename, :w;
     say "";
     for $adts.grep({$_<kind> ne $record && $_<kind> ne $variant && $typeclasses{$_<kind>}}).unique(:as({$_<ctorsOrFields>, $_<kind>})) -> $t
     { my $ty = $t<ctorsOrFields>[0]<type>;
-      my $tc = $typeclasses{$t<kind>};
-      say "  val extra_info__{$ty}__$tc : $ty extra_info__$tc;;"; }
+      my $typeclass = $typeclasses{$t<kind>};
+      say "  val extra_info__{$ty}__$typeclass : $ty extra_info__$typeclass;;"; }
     say "end";
 
     say "";
@@ -491,8 +501,9 @@ $*OUT = open $combinators_filename, :w;
     say "";
     for $adts.grep({$_<kind> ne $record && $_<kind> ne $variant && $typeclasses{$_<kind>}}).unique(:as({$_<ctorsOrFields>, $_<kind>})) -> $t
     { my $ty = $t<ctorsOrFields>[0]<type>;
-      my $tc = $typeclasses{$t<kind>};
-      say "let extra_info__{$ty}__$tc : $ty extra_info__$tc = \{ compare = (fun a b -> let () = failwith \"TODO\" in Pervasives.compare a b) \};;"; }
+      my $typeclass = $typeclasses{$t<kind>};
+      say "let extra_info__{$ty}__$typeclass : $ty extra_info__$typeclass = {tc $typeclass}.$ty;;";
+    }
     # Check that we won't have a cyclic module dependency when using the Folder to auto-generate the compare:
     say "(* Check that we won't have a cyclic module dependency when using the Folder to auto-generate the compare: *)";
     say "module DummyTest_ = Generated_fold;;";

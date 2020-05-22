@@ -4,7 +4,8 @@ open Types_utils
 
 (* pseudo-typeclasses: interfaces that must be provided for arguments
    of the givent polymmorphic types. For now, only one typeclass can
-   be specified for a given polymorphic type. *)
+   be specified for a given polymorphic type. The implementation is
+   provided by the Comparable module *)
 (*@ typeclass poly_unionfind comparable *)
 (*@ typeclass poly_set       comparable *)
 

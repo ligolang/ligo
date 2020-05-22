@@ -1,7 +1,8 @@
 open Types
-open Fold
+open Generated_fold
 
 module M = struct
+  let compare = ()              (* Hide Pervasives.compare to avoid calling it without explicit qualification. *)
   type 'a lz = unit -> 'a       (* Lazy values *)
   type t =
     | NoState
@@ -164,10 +165,23 @@ module M = struct
 
   let mk_compare : (t fold_config -> t -> 'a -> t) -> 'a -> 'a -> int = fun fold a b ->
     compare_t (serialize fold a) (serialize fold b)
+
+  let mk_comparable : (t fold_config -> t -> 'a -> t) -> 'a extra_info__comparable = fun fold ->
+    { compare = mk_compare fold }
 end
 
-include Fold.Folds(struct
+(* Generate a comparison function for each type, named like the type itself. *)
+include Folds(struct
   type state = M.t ;;
   type 'a t = 'a -> 'a -> int ;;
   let f = M.mk_compare ;;
 end)
+
+module Comparable = struct
+  (* Generate a comparator typeclass-like object for each type, named like the type itself. *)
+  include Folds(struct
+    type state = M.t ;;
+    type 'a t = 'a extra_info__comparable ;;
+    let f = M.mk_comparable ;;
+  end)
+end
