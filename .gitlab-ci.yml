@@ -7,6 +7,7 @@ variables:
 stages:
   - build
   - push
+  - ide-deploy
   - versioning
 
 .docker-image:
@@ -29,6 +30,7 @@ version_scheduled_job:
   before_script:
     - find "$CI_PROJECT_DIR" -path "$CI_PROJECT_DIR/.git" -prune -o "(" -type d -a -not -perm -u=w ")" -exec chmod --verbose u+w {} ";"
     - nix-env -f channel:nixos-unstable -iA gnutar gitMinimal
+    - export COMMIT_DATE="$(git show --no-patch --format=%ci)"
 
 # The binary produced is useless by itself
 binary:
@@ -66,15 +68,12 @@ test:
     paths:
       - coverage
 
-# FIXME For some reason, e2e tests can't build on CI.
-.webide-e2e:
+webide-e2e:
   extends: .nix
-  rules:
-    - changes:
-        - tools/webide/**
-      when: always
-    - if: '$CI_COMMIT_REF_NAME =~ /^(dev|.*-run-dev)$/ && $CI_PROJECT_PATH == "ligolang/ligo"'
-      when: always
+  only:
+    - merge_requests
+    - dev
+    - /^.*-run-dev$/
   script:
     - nix-build nix -A ligo-editor.e2e
 
@@ -121,7 +120,6 @@ webide-docker:
     paths:
       - webide.tar.gz
 
-
 webide-push:
   extends: .docker-image
   dependencies:
@@ -137,6 +135,17 @@ webide-push:
     - docker load -i=./webide.tar.gz
     - docker tag ligo-editor "${WEBIDE_IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
     - docker push "${WEBIDE_IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
+
+deploy-handoff:
+  # Handoff deployment duties to private repo
+  stage: ide-deploy
+  variables:
+    IDE_DOCKER_IMAGE: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide"
+    LIGO_COMMIT_REF_NAME: "${CI_COMMIT_SHORT_SHA}"
+  trigger: ligolang/ligo-webide-deploy
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "dev"'
+      when: always
 
 static-binary:
   extends: .nix
