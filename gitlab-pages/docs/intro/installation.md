@@ -42,7 +42,7 @@ ligo --help
 
 ## Static Linux binary
 
-We have built ligo executable statically. It should run on most modern Linux distributions.
+The ligo executable is statically linked. It should run on most modern Linux distributions.
 
 To use it, get it [here](/bin/linux/ligo), make it executable, you're done!
 
@@ -59,7 +59,7 @@ sudo cp ./ligo /usr/local/bin
 
 ## Debian Linux package installation
 
-We have produced .deb package with the static executable of ligo.
+There is also a .deb package containing the static `ligo` executable.
 First download [the package](/deb/ligo.deb), and then install using: 
 
 ```zsh
