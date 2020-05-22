@@ -96,29 +96,30 @@ $*OUT = open $folder_filename, :w;
 
     say "";
     say "  include Adt_generator.Generic.BlahBluh";
-    say "  type ('state , 'adt_info_node_instance_info) _fold_config = \{";
-    say "      generic : 'state -> 'adt_info_node_instance_info -> 'state;";
+    say "  type ('in_state, 'out_state , 'adt_info_node_instance_info) _fold_config = \{";
+    say "      generic : 'in_state -> 'adt_info_node_instance_info -> 'out_state;";
+    say "      generic_empty_ctor : 'in_state -> 'out_state;";
     # look for builtins, filtering out the "implicit unit-like fake argument of emtpy constructors" (represented by '')
     for $adts.map({ $_<ctorsOrFields> })[*;*].grep({$_<isBuiltin> && $_<type> ne ''}).map({$_<type>}).unique -> $builtin
-    { say "      $builtin : ('state , 'adt_info_node_instance_info) _fold_config -> 'state -> $builtin -> 'state;"; }
+    { say "      $builtin : ('in_state , 'out_state , 'adt_info_node_instance_info) _fold_config -> 'in_state -> $builtin -> 'out_state;"; }
     # look for built-in polymorphic types
     for $adts.grep({$_<kind> ne $record && $_<kind> ne $variant}).map({$_<kind>}).unique -> $poly
-    { say "      $poly : 'a . ('state , 'adt_info_node_instance_info) _fold_config -> ('state -> 'a -> 'state) -> 'state -> 'a $poly -> 'state;"; }
+    { say "      $poly : 'a . ('in_state , 'out_state , 'adt_info_node_instance_info) _fold_config -> ('in_state -> 'a -> 'out_state) -> 'in_state -> 'a $poly -> 'out_state;"; }
     say '    };;';
 
     say "";
     say "  module Adt_info = Adt_generator.Generic.Adt_info (struct";
-    say "    type nonrec ('state , 'adt_info_node_instance_info) fold_config = ('state , 'adt_info_node_instance_info) _fold_config;;";
+    say "    type nonrec ('in_state , 'out_state , 'adt_info_node_instance_info) fold_config = ('in_state , 'out_state , 'adt_info_node_instance_info) _fold_config;;";
     say "  end);;";
     say "  include Adt_info;;";
-    say "  type 'state fold_config = ('state , 'state Adt_info.node_instance_info) _fold_config;;";
+    say "  type ('in_state, 'out_state) fold_config = ('in_state , 'out_state , ('in_state , 'out_state) Adt_info.node_instance_info) _fold_config;;";
 
     say "";
     say '  type the_folds = {';
     for $adts.list -> $t
-    { say "      fold__$t<name> : 'state . the_folds -> 'state fold_config -> 'state -> $t<name> -> 'state;";
+    { say "      fold__$t<name> : 'in_state 'out_state . the_folds -> ('in_state , 'out_state) fold_config -> 'in_state -> $t<name> -> 'out_state;";
       for $t<ctorsOrFields>.list -> $c
-      { say "      fold__$t<name>__$c<name> : 'state . the_folds -> 'state fold_config -> 'state -> { $c<type> || 'unit' } -> 'state;"; } }
+      { say "      fold__$t<name>__$c<name> : 'in_state 'out_state . the_folds -> ('in_state , 'out_state) fold_config -> 'in_state -> { $c<type> || 'unit' } -> 'out_state;"; } }
     say '    };;';
 
     # generic programming info about the nodes and fields
@@ -132,7 +133,7 @@ $*OUT = open $folder_filename, :w;
         say "      type_ = \"$c<type>\";";
         say '    };;';
         # say "";
-        say "  let continue_info__$t<name>__$c<name> : type qstate . the_folds -> qstate fold_config -> {$c<type> || 'unit'} -> qstate Adt_info.ctor_or_field_instance = fun the_folds visitor x -> \{";
+        say "  let continue_info__$t<name>__$c<name> : type in_qstate out_qstate . the_folds -> (in_qstate , out_qstate) fold_config -> {$c<type> || 'unit'} -> (in_qstate, out_qstate) Adt_info.ctor_or_field_instance = fun the_folds visitor x -> \{";
         say "        cf = info__$t<name>__$c<name>;";
         say "        cf_continue = (fun state -> the_folds.fold__$t<name>__$c<name> the_folds visitor state x);";
         say "        cf_new_fold = (fun visitor state -> the_folds.fold__$t<name>__$c<name> the_folds visitor state x);";
@@ -154,7 +155,7 @@ $*OUT = open $folder_filename, :w;
       say '    };;';
       # say "";
       # TODO: factor out some of the common bits here.
-      say "  let continue_info__$t<name> : type qstate . the_folds -> qstate fold_config -> $t<name> -> qstate Adt_info.instance = fun the_folds visitor x ->";
+      say "  let continue_info__$t<name> : type in_qstate out_qstate . the_folds -> (in_qstate , out_qstate) fold_config -> $t<name> -> (in_qstate , out_qstate) Adt_info.instance = fun the_folds visitor x ->";
       say '    {';
       say "      instance_declaration_name = \"$t<name>\";";
       do given $t<kind> {
@@ -208,9 +209,9 @@ $*OUT = open $folder_filename, :w;
     # fold functions
     say "";
     for $adts.list -> $t
-    { say "  let fold__$t<name> : type qstate . the_folds -> qstate fold_config -> qstate -> $t<name> -> qstate = fun the_folds visitor state x ->";
+    { say "  let fold__$t<name> : type in_qstate out_qstate . the_folds -> (in_qstate , out_qstate) fold_config -> in_qstate -> $t<name> -> out_qstate = fun the_folds visitor state x ->";
       # TODO: add a non-generic continue_fold.
-      say '    let node_instance_info : qstate Adt_info.node_instance_info = {';
+      say '    let node_instance_info : (in_qstate , out_qstate) Adt_info.node_instance_info = {';
       say "        adt = whole_adt_info () ;";
       say "        node_instance = continue_info__$t<name> the_folds visitor x";
       say '      } in';
@@ -218,11 +219,11 @@ $*OUT = open $folder_filename, :w;
       say "    visitor.generic state node_instance_info;;";
       # say "";
       for $t<ctorsOrFields>.list -> $c
-      { say "  let fold__$t<name>__$c<name> : type qstate . the_folds -> qstate fold_config -> qstate -> { $c<type> || 'unit' } -> qstate = fun the_folds { $c<type> ?? 'visitor' !! '_visitor' } state { $c<type> ?? 'x' !! '()' } ->";
-        # say "  let ctor_or_field_instance_info : qstate Adt_info.ctor_or_field_instance_info = whole_adt_info (), info__$t<name>, continue_info__$t<name>__$c<name> visitor x in";
+      { say "  let fold__$t<name>__$c<name> : type in_qstate out_qstate . the_folds -> (in_qstate , out_qstate) fold_config -> in_qstate -> { $c<type> || 'unit' } -> out_qstate = fun the_folds visitor state { $c<type> ?? 'x' !! '()' } ->";
+        # say "  let ctor_or_field_instance_info : (in_qstate , out_qstate) Adt_info.ctor_or_field_instance_info = whole_adt_info (), info__$t<name>, continue_info__$t<name>__$c<name> visitor x in";
         if ($c<type> eq '') {
             # nothing to do, this constructor has no arguments.
-            say "    ignore the_folds; state;;";
+            say "    ignore the_folds; visitor.generic_empty_ctor state;;";
         } elsif ($c<isBuiltin>) {
             say "    ignore the_folds; visitor.$c<type> visitor state x;;"; # (*visitor.generic_ctor_or_field ctor_or_field_instance_info*)
         } else {
@@ -234,7 +235,7 @@ $*OUT = open $folder_filename, :w;
     }
     # look for builtins, filtering out the "implicit unit-like fake argument of emtpy constructors" (represented by '')
     for $adts.map({ $_<ctorsOrFields> })[*;*].grep({$_<isBuiltin> && $_<type> ne ''}).map({$_<type>}).unique -> $builtin
-      { say "  let fold__$builtin : type qstate . the_folds -> qstate fold_config -> qstate -> $builtin -> qstate = fun the_folds visitor state x ->";
+      { say "  let fold__$builtin : type in_qstate out_qstate . the_folds -> (in_qstate , out_qstate) fold_config -> in_qstate -> $builtin -> out_qstate = fun the_folds visitor state x ->";
         say "    ignore the_folds; visitor.$builtin visitor state x;;"; } # (*visitor.generic_ctor_or_field ctor_or_field_instance_info*)
 
     say "";
@@ -248,15 +249,15 @@ $*OUT = open $folder_filename, :w;
     # Tying the knot
     say "";
     for $adts.list -> $t
-    { say "  let fold__$t<name> : type qstate . qstate fold_config -> qstate -> $t<name> -> qstate = fun visitor state x -> fold__$t<name> the_folds visitor state x;;";
+    { say "  let fold__$t<name> : type in_qstate out_qstate . (in_qstate , out_qstate) fold_config -> in_qstate -> $t<name> -> out_qstate = fun visitor state x -> fold__$t<name> the_folds visitor state x;;";
       for $t<ctorsOrFields>.list -> $c
-      { say "  let fold__$t<name>__$c<name> : type qstate . qstate fold_config -> qstate -> { $c<type> || 'unit' } -> qstate = fun visitor state x -> fold__$t<name>__$c<name> the_folds visitor state x;;" } }
+      { say "  let fold__$t<name>__$c<name> : type in_qstate out_qstate . (in_qstate , out_qstate) fold_config -> in_qstate -> { $c<type> || 'unit' } -> out_qstate = fun visitor state x -> fold__$t<name>__$c<name> the_folds visitor state x;;" } }
     # look for builtins, filtering out the "implicit unit-like fake argument of emtpy constructors" (represented by '')
     for $adts.map({ $_<ctorsOrFields> })[*;*].grep({$_<isBuiltin> && $_<type> ne ''}).map({$_<type>}).unique -> $builtin
-    { say "  let fold__$builtin : type qstate . qstate fold_config -> qstate -> $builtin -> qstate = fun visitor state x -> fold__$builtin the_folds visitor state x;;"; }
+    { say "  let fold__$builtin : type in_qstate out_qstate . (in_qstate , out_qstate) fold_config -> in_qstate -> $builtin -> out_qstate = fun visitor state x -> fold__$builtin the_folds visitor state x;;"; }
 
     say "";
-    say "  module Folds (M : sig type state type 'a t val f : (state fold_config -> state -> 'a -> state) -> 'a t  end) = struct";
+    say "  module Folds (M : sig type in_state type out_state type 'a t val f : ((in_state , out_state) fold_config -> in_state -> 'a -> out_state) -> 'a t end) = struct";
     for $adts.list -> $t
     { say "  let $t<name> = M.f fold__$t<name>;;"; }
     # look for builtins, filtering out the "implicit unit-like fake argument of emtpy constructors" (represented by '')

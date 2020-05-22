@@ -5,7 +5,7 @@ module M = struct
   let compare = ()              (* Hide Pervasives.compare to avoid calling it without explicit qualification. *)
   type 'a lz = unit -> 'a       (* Lazy values *)
   type t =
-    | NoState
+    | EmptyCtor
     | Record of string * (string * t lz) list
     | VariantConstructor of string * string * t lz
     | Bool of inline
@@ -30,12 +30,14 @@ module M = struct
     | Set of t lz list
     | TypeVariableMap of (type_variable * t lz) list
 
+  type no_state = NoState
+
   (* TODO: make these functions return a lazy stucture *)
-  let op : t fold_config = {
-      generic = (fun _state info ->
+  let op : (no_state, t) fold_config = {
+      generic = (fun NoState info ->
         match info.node_instance.instance_kind with
         | RecordInstance { fields } ->
-           let aux (fld : 'x Adt_info.ctor_or_field_instance) =
+           let aux (fld : ('xi, 'xo) Adt_info.ctor_or_field_instance) =
              ( fld.cf.name , fun () -> fld.cf_continue NoState ) in
            Record ("name_of_the_record", List.map aux fields)
         | VariantInstance { constructor ; _ } ->
@@ -43,6 +45,7 @@ module M = struct
         | PolyInstance { poly=_; arguments=_; poly_continue } ->
            poly_continue NoState
       );
+      generic_empty_ctor = (fun NoState -> EmptyCtor) ;
       int                       = (fun _visitor _state i               -> Int i );
       type_variable             = (fun _visitor _state type_variable   -> Var type_variable) ;
       bool                      = (fun _visitor _state b               -> Bool b) ;
@@ -72,7 +75,7 @@ module M = struct
         (Location_wrap { wrap_content = (fun () -> continue NoState wrap_content) ; location}));
       option = (fun _visitor continue _state o ->
         match o with
-        | None -> VariantConstructor ("built-in:option", "None", fun () -> NoState)
+        | None -> VariantConstructor ("built-in:option", "None", fun () -> EmptyCtor)
         | Some v -> VariantConstructor ("built-in:option", "Some", fun () -> continue NoState v));
       poly_unionfind            = (fun _visitor continue _state p   ->
         (* UnionFind.Poly2.partitions returns the partitions in a
@@ -89,13 +92,17 @@ module M = struct
         TypeVariableMap (List.map (fun (k, v) -> (k, fun () -> continue NoState v)) lst));
     }
 
-  let serialize : (t fold_config -> t -> 'a -> t) -> 'a -> t = fun fold v ->
+  let serialize : ((no_state, t) fold_config -> no_state -> 'a -> t) -> 'a -> t = fun fold v ->
     fold op NoState v
+
+  (* What follows should be roughly the same for all ASTs, so it
+     should be easy to share a single copy of that and of the t type
+     definition above. *)
 
   (* Generate a unique tag for each case handled below. We can then
    compare data by their tag and contents. *)
   let tag = function
-    | NoState               ->  0
+    | EmptyCtor               ->  0
     | Record              _ ->  1
     | VariantConstructor  _ ->  2
     | Bool                _ ->  3
@@ -129,7 +136,7 @@ module M = struct
   and compare_lz_t a b = compare_t (a ()) (b ())
   and compare_t (a : t) (b : t) =
     match (a, b) with
-    | (NoState, NoState)                             -> failwith "Should not happen (unless for ctors with no args?)"
+    | (EmptyCtor, EmptyCtor)                         -> failwith "Should not happen (unless for ctors with no args?)"
     | (Record (a, fa), Record (b, fb))               -> cmp2 String.compare a b (List.compare ~compare:compare_field) fa fb
     | (VariantConstructor (va, ca, xa), VariantConstructor (vb, cb, xb)) ->
        cmp3
@@ -158,21 +165,22 @@ module M = struct
     | (Set a, Set b)                                 -> List.compare ~compare:compare_lz_t a b
     | (TypeVariableMap a, TypeVariableMap b)         -> List.compare ~compare:compare_tvmap_entry a b
 
-    | ((NoState | Record _ | VariantConstructor _ | Bool _ | Bytes _ | Constructor' _ | Expression_variable _ | Int _ | Label' _ | Ligo_string _ | Location _ | Operation _ | Str _ | Type_expression _ | Unit _ | Var _ | Z _ | List _ | Location_wrap _ | CMap _ | LMap _ | UnionFind _ | Set _ | TypeVariableMap _) as a),
-      ((NoState | Record _ | VariantConstructor _ | Bool _ | Bytes _ | Constructor' _ | Expression_variable _ | Int _ | Label' _ | Ligo_string _ | Location _ | Operation _ | Str _ | Type_expression _ | Unit _ | Var _ | Z _ | List _ | Location_wrap _ | CMap _ | LMap _ | UnionFind _ | Set _ | TypeVariableMap _) as b) ->
+    | ((EmptyCtor | Record _ | VariantConstructor _ | Bool _ | Bytes _ | Constructor' _ | Expression_variable _ | Int _ | Label' _ | Ligo_string _ | Location _ | Operation _ | Str _ | Type_expression _ | Unit _ | Var _ | Z _ | List _ | Location_wrap _ | CMap _ | LMap _ | UnionFind _ | Set _ | TypeVariableMap _) as a),
+      ((EmptyCtor | Record _ | VariantConstructor _ | Bool _ | Bytes _ | Constructor' _ | Expression_variable _ | Int _ | Label' _ | Ligo_string _ | Location _ | Operation _ | Str _ | Type_expression _ | Unit _ | Var _ | Z _ | List _ | Location_wrap _ | CMap _ | LMap _ | UnionFind _ | Set _ | TypeVariableMap _) as b) ->
        Int.compare (tag a) (tag b)
 
 
-  let mk_compare : (t fold_config -> t -> 'a -> t) -> 'a -> 'a -> int = fun fold a b ->
+  let mk_compare : ((no_state , t) fold_config -> no_state -> 'a -> t) -> 'a -> 'a -> int = fun fold a b ->
     compare_t (serialize fold a) (serialize fold b)
 
-  let mk_comparable : (t fold_config -> t -> 'a -> t) -> 'a extra_info__comparable = fun fold ->
+  let mk_comparable : ((no_state , t) fold_config -> no_state -> 'a -> t) -> 'a extra_info__comparable = fun fold ->
     { compare = mk_compare fold }
 end
 
 (* Generate a comparison function for each type, named like the type itself. *)
 include Folds(struct
-  type state = M.t ;;
+  type in_state = M.no_state ;;
+  type out_state = M.t ;;
   type 'a t = 'a -> 'a -> int ;;
   let f = M.mk_compare ;;
 end)
@@ -180,7 +188,8 @@ end)
 module Comparable = struct
   (* Generate a comparator typeclass-like object for each type, named like the type itself. *)
   include Folds(struct
-    type state = M.t ;;
+    type in_state = M.no_state ;;
+    type out_state = M.t ;;
     type 'a t = 'a extra_info__comparable ;;
     let f = M.mk_comparable ;;
   end)
