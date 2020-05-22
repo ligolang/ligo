@@ -59,7 +59,7 @@ sudo cp ./ligo /usr/local/bin
 
 ## Debian Linux package installation
 
-There is also a .deb package containing the static `ligo` executable.
+A .deb package containing the static `ligo` executable is also available.
 First download [the package](/deb/ligo.deb), and then install using: 
 
 ```zsh
