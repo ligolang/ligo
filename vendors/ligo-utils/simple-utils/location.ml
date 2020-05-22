@@ -17,6 +17,12 @@ let pp = fun ppf t ->
   | Virtual s -> Format.fprintf ppf "%s" s
   | File f -> Format.fprintf ppf "%s" (f#to_string `Point)
 
+let compare a b = match a,b with
+  | (File a, File b) -> Region.compare a b
+  | (File _, Virtual _) -> -1
+  | (Virtual _, File _) -> 1
+  | (Virtual a, Virtual b) -> String.compare a b
+
 
 let make (start_pos:Lexing.position) (end_pos:Lexing.position) : t =
   (* TODO: give correct unicode offsets (the random number is here so
@@ -34,6 +40,11 @@ type 'a wrap = {
   wrap_content : 'a ;
   location : t ;
 }
+
+let compare_wrap ~compare:compare_content { wrap_content = wca ; location = la } { wrap_content = wcb ; location = lb } =
+  match compare_content wca wcb with
+  | 0 -> compare la lb
+  | c -> c
 
 let wrap ?(loc = generated) wrap_content = { wrap_content ; location = loc }
 let get_location x = x.location
