@@ -32,7 +32,7 @@ module type Printer =
     val mk_state :
       offsets:bool -> mode:[`Point|`Byte] -> buffer:Buffer.t -> state
 
-    val pp_ast       : state -> ast -> unit
+    val pp_cst       : state -> ast -> unit
     val pp_expr      : state -> expr -> unit
     val print_tokens : state -> ast -> unit
     val print_expr   : state -> expr -> unit
@@ -146,7 +146,7 @@ module Make (Lexer: Lexer.S)
         if SSet.mem "ast" SubIO.options#verbose then
           begin
             Buffer.clear output;
-            ParserLog.pp_ast state ast;
+            ParserLog.pp_cst state ast;
             Buffer.output_buffer stdout output
           end
       in flush_all (); close (); Ok ast

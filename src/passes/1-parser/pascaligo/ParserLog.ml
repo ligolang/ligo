@@ -855,7 +855,7 @@ let pp_verbatim state {value=name; region} =
 let pp_loc_node state name region =
   pp_ident state {value=name; region}
 
-let rec pp_ast state {decl; _} =
+let rec pp_cst state {decl; _} =
   let apply len rank =
     pp_declaration (state#pad len rank) in
   let decls = Utils.nseq_to_list decl in

@@ -27,5 +27,5 @@ val expr_to_string :
 
 (** {1 Pretty-printing of AST nodes} *)
 
-val pp_ast  : state -> AST.t -> unit
+val pp_cst  : state -> AST.t -> unit
 val pp_expr : state -> AST.expr -> unit
