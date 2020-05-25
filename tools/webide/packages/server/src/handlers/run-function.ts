@@ -11,7 +11,7 @@ interface RunFunctionBody {
   parameters: string;
 }
 
-const validateRequest = (body: any): { value: RunFunctionBody; error: any } => {
+const validateRequest = (body: any): { value: RunFunctionBody; error?: any } => {
   return joi
     .object({
       syntax: joi.string().required(),
