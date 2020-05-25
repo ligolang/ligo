@@ -12,7 +12,7 @@ interface CompileBody {
   format?: string;
 }
 
-const validateRequest = (body: any): { value: CompileBody; error: any } => {
+const validateRequest = (body: any): { value: CompileBody; error?: any } => {
   return joi
     .object({
       syntax: joi.string().required(),
