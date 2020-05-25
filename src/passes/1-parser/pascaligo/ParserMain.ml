@@ -22,7 +22,8 @@ module SubIO =
       ext     : string;
       mode    : [`Byte | `Point];
       cmd     : EvalOpt.command;
-      mono    : bool
+      mono    : bool;
+      pretty  : bool
     >
 
     let options : options =
@@ -36,6 +37,7 @@ module SubIO =
         method mode    = IO.options#mode
         method cmd     = IO.options#cmd
         method mono    = IO.options#mono
+        method pretty  = IO.options#pretty
       end
 
     let make =
@@ -48,6 +50,7 @@ module SubIO =
                    ~mode:options#mode
                    ~cmd:options#cmd
                    ~mono:options#mono
+                   ~pretty:options#pretty
   end
 
 module Parser =
