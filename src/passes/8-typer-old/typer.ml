@@ -45,14 +45,13 @@ module Errors = struct
     ] in
     error ~data title message ()
 
-  let unbound_variable (e:environment) (n:I.expression_variable) (loc:Location.t) () =
+  let unbound_variable (e:environment) (n:I.expression_variable) () =
     let name () = Format.asprintf "%a" I.PP.expression_variable n in
     let title = (thunk ("unbound variable "^(name ()))) in
     let message () = "" in
     let data = [
       ("variable" , name) ;
       ("environment" , fun () -> Format.asprintf "%a" Environment.PP.environment e) ;
-      ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
     error ~data title message ()
 
@@ -698,7 +697,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
   (* Basic *)
   | E_variable name ->
       let%bind tv' =
-        trace_option (unbound_variable e name ae.location)
+        trace_option (unbound_variable e name)
         @@ Environment.get_opt name e in
       return (E_variable name) tv'.type_value
   | E_literal Literal_unit ->

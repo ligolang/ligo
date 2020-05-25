@@ -338,7 +338,7 @@ let rec compile_expression :
     let (p , loc) = r_split p in
     let var =
       let name = Var.of_name p.struct_name.value in
-      e_variable name in
+      e_variable ~loc name in
     let path = p.field_path in
     let path' =
       let aux (s:Raw.selection) =
@@ -532,7 +532,7 @@ let rec compile_expression :
   | EBytes x ->
       let (x , loc) = r_split x in
       return @@ e_literal ~loc (Literal_bytes (Hex.to_bytes @@ snd x))
-  | ETuple tpl -> compile_tuple_expression @@ (npseq_to_list tpl.value)
+  | ETuple tpl -> compile_tuple_expression ~loc:(Location.lift tpl.region) @@ (npseq_to_list tpl.value)
   | ERecord r ->
       let (r , loc) = r_split r in
       let%bind fields = bind_list
