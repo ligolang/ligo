@@ -19,3 +19,6 @@ val parse_expression : string -> AST.expr Trace.result
 
 (** Preprocess a given ReasonLIGO file and preprocess it. *)
 val preprocess : string -> Buffer.t Trace.result
+
+(** Pretty-print a given CameLIGO file (after parsing it). *)
+val pretty_print : string -> Buffer.t Trace.result

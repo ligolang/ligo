@@ -5,6 +5,7 @@ module Scoping  = Parser_cameligo.Scoping
 module Region   = Simple_utils.Region
 module ParErr   = Parser_cameligo.ParErr
 module SSet     = Set.Make (String)
+module Pretty   = Parser_cameligo.Pretty
 
 (* Mock IOs TODO: Fill them with CLI options *)
 
@@ -149,3 +150,18 @@ let parse_expression source = apply (fun () -> Unit.expr_in_string source)
 (* Preprocessing a contract in a file *)
 
 let preprocess source = apply (fun () -> Unit.preprocess source)
+
+(* Pretty-print a file (after parsing it). *)
+
+let pretty_print source =
+  match parse_file source with
+    Stdlib.Error _ as e -> e
+  | Ok ast ->
+      let doc    = Pretty.make (fst ast) in
+      let buffer = Buffer.create 131 in
+      let width  =
+        match Terminal_size.get_columns () with
+          None -> 60
+        | Some c -> c in
+      let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
+      in Trace.ok buffer

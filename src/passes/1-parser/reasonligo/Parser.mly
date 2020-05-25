@@ -139,7 +139,7 @@ nsepseq(item,sep):
 (* Non-empty comma-separated values (at least two values) *)
 
 tuple(item):
-  item "," nsepseq(item,",") { let h,t = $3 in $1,($2,h)::t }
+  item "," nsepseq(item,",") { let h,t = $3 in $1, ($2,h)::t }
 
 (* Possibly empty semicolon-separated values between brackets *)
 
@@ -295,10 +295,7 @@ let_binding:
 | tuple(sub_irrefutable) type_annotation? "=" expr {
     wild_error $4;
     Utils.nsepseq_iter Scoping.check_pattern $1;
-    let hd, tl  = $1 in
-    let start   = pattern_to_region hd in
-    let stop    = last fst tl in
-    let region  = cover start stop in
+    let region  = nsepseq_to_region pattern_to_region $1 in
     let binders = PTuple {value=$1; region}, [] in
     {binders; lhs_type=$2; eq=$3; let_rhs=$4} }
 
@@ -669,8 +666,9 @@ disj_expr_level:
   disj_expr
 | conj_expr_level { $1 }
 | par(tuple(disj_expr_level)) type_annotation_simple? {
-    let region = $1.region in
+    let region = nsepseq_to_region expr_to_region $1.value.inside in
     let tuple  = ETuple {value=$1.value.inside; region} in
+    let tuple  = EPar {$1 with value = {$1.value with inside=tuple}} in
     let region =
       match $2 with
         Some (_,s) -> cover $1.region (type_expr_to_region s)

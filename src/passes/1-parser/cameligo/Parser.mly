@@ -86,7 +86,7 @@ nsepseq(item,sep):
 (* Non-empty comma-separated values (at least two values) *)
 
 tuple(item):
-  item "," nsepseq(item,",") { let h,t = $3 in $1,($2,h)::t }
+  item "," nsepseq(item,",") { let h,t = $3 in $1, ($2,h)::t }
 
 (* Possibly empty semicolon-separated values between brackets *)
 
@@ -236,10 +236,7 @@ type_annotation:
 irrefutable:
   sub_irrefutable { $1 }
 | tuple(sub_irrefutable) {
-    let hd, tl = $1 in
-    let start  = pattern_to_region hd in
-    let stop   = last fst tl in
-    let region = cover start stop
+    let region = nsepseq_to_region pattern_to_region $1
     in PTuple {region; value=$1} }
 
 sub_irrefutable:
@@ -276,9 +273,7 @@ pattern:
     PList (PCons {region; value=$1,$2,$3})
   }
 | tuple(sub_pattern) {
-    let start  = pattern_to_region (fst $1) in
-    let stop   = last fst (snd $1) in
-    let region = cover start stop
+    let region = nsepseq_to_region pattern_to_region $1
     in PTuple {region; value=$1} }
 
 sub_pattern:
@@ -332,10 +327,7 @@ constr_pattern:
 
 ptuple:
   tuple(tail) {
-    let hd, tl = $1 in
-    let start  = pattern_to_region hd in
-    let stop   = last fst tl in
-    let region = cover start stop
+    let region = nsepseq_to_region pattern_to_region $1
     in PTuple {region; value=$1} }
 
 unit:
@@ -371,9 +363,7 @@ base_expr(right_expr):
 
 tuple_expr:
   tuple(disj_expr_level) {
-    let start  = expr_to_region (fst $1) in
-    let stop   = last fst (snd $1) in
-    let region = cover start stop
+    let region = nsepseq_to_region expr_to_region $1
     in ETuple {region; value=$1} }
 
 conditional(right_expr):
