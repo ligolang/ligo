@@ -34,9 +34,9 @@ let rec expression : environment -> expression -> expression = fun env expr ->
     return @@ E_lambda { c with result }
   )
   | E_let_in c -> (
-    let env' = Environment.add_ez_declaration c.let_binder c.rhs env in
-    let let_result = self ~env' c.let_result in
     let rhs = self c.rhs in
+    let env' = Environment.add_ez_declaration c.let_binder rhs env in
+    let let_result = self ~env' c.let_result in
     return @@ E_let_in { c with rhs ; let_result }
   )
   (* rec fun_name binder -> result *)
@@ -152,7 +152,7 @@ let program : environment -> program -> program = fun init_env prog ->
   let aux (pre_env , rev_decls) decl_wrapped =
     let (Declaration_constant c) = Location.unwrap decl_wrapped in
     let expr = expression pre_env c.expr in
-    let post_env = Environment.add_ez_declaration c.binder c.expr pre_env in
+    let post_env = Environment.add_ez_declaration c.binder expr pre_env in
     let post_env' = merge c.post_env post_env in
     let wrap_content = Declaration_constant { c with expr ; post_env = post_env' } in
     let decl_wrapped' = { decl_wrapped with wrap_content } in
