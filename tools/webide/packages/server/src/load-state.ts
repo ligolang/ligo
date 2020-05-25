@@ -28,6 +28,7 @@ export async function loadDefaultState(appBundleDirectory: string) {
     deploy: {},
     evaluateValue: {},
     evaluateFunction: {},
+    generateDeployScript: {},
     editor: {
       title: ''
     },
@@ -62,6 +63,10 @@ export async function loadDefaultState(appBundleDirectory: string) {
     defaultState.evaluateFunction = {
       ...defaultState.evaluateFunction,
       ...defaultExample.evaluateFunction
+    };
+    defaultState.generateDeployScript = {
+      ...defaultState.generateDeployScript,
+      ...defaultExample.generateDeployScript
     };
     defaultState.editor = {
       ...defaultState.editor,

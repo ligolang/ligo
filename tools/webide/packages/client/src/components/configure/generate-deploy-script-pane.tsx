@@ -8,8 +8,8 @@ import {
   ChangeEntrypointAction,
   ChangeStorageAction,
   ChangeToolAction,
-  GenerateCommandState,
-} from '../../redux/generate-command';
+  GenerateDeployScriptState,
+} from '../../redux/generate-deploy-script';
 import { Tool, ToolCommand } from '../../redux/types';
 import { AccessFunctionLabel, Group, Input, Label, Textarea } from '../form/inputs';
 import { Option, Select } from '../form/select';
@@ -18,23 +18,23 @@ const Container = styled.div`
   overflow: auto;
 `;
 
-export const GenerateCommandPaneComponent = () => {
+export const GenerateDeployScriptPane = () => {
   const dispatch = useDispatch();
 
-  const tool = useSelector<AppState, GenerateCommandState['tool']>(
-    state => state.generateCommand.tool
+  const tool = useSelector<AppState, GenerateDeployScriptState['tool']>(
+    state => state.generateDeployScript.tool
   );
 
-  const command = useSelector<AppState, GenerateCommandState['command']>(
-    state => state.generateCommand.command
+  const command = useSelector<AppState, GenerateDeployScriptState['command']>(
+    state => state.generateDeployScript.command
   );
 
-  const entrypoint = useSelector<AppState, GenerateCommandState['entrypoint']>(
-    state => state.generateCommand.entrypoint
+  const entrypoint = useSelector<AppState, GenerateDeployScriptState['entrypoint']>(
+    state => state.generateDeployScript.entrypoint
   );
 
-  const storage = useSelector<AppState, GenerateCommandState['storage']>(
-    state => state.generateCommand.storage
+  const storage = useSelector<AppState, GenerateDeployScriptState['storage']>(
+    state => state.generateDeployScript.storage
   );
 
   return (
