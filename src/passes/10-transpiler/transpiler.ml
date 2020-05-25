@@ -42,14 +42,6 @@ them. please report this to the developers." in
       ] in
     error ~data title content
 
-  let unsupported_iterator location =
-    let title () = "unsupported iterator" in
-    let content () = "only lambda are supported as iterators" in
-    let data = [
-        row_loc location ;
-      ] in
-    error ~data title content
-
   let not_functional_main location =
     let title () = "not functional main" in
     let content () = "main should be a function" in
@@ -511,28 +503,14 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       return @@ E_record_update (record, path, update)
   | E_constant {cons_name=name; arguments=lst} -> (
       let iterator_generator iterator_name =
-        let lambda_to_iterator_body (f : AST.expression) (l : AST.lambda) =
-          let%bind body' = transpile_annotated_expression l.result in
-          let%bind (input , _) = AST.get_t_function f.type_expression in
-          let%bind input' = transpile_type input in
-          ok ((l.binder , input') , body')
-        in
         let expression_to_iterator_body (f : AST.expression) =
-          match f.expression_content with
-          | E_lambda l -> lambda_to_iterator_body f l
-          | E_variable v -> (
-              let%bind elt =
-                trace_option (corner_case ~loc:__LOC__ "missing var") @@
-                AST.Environment.get_opt v f.environment in
-              match elt.definition with
-              | ED_declaration { expr = f ; free_variables = _ } -> (
-                  match f.expression_content with
-                  | E_lambda l -> lambda_to_iterator_body f l
-                  | _ -> fail @@ unsupported_iterator f.location
-                )
-              | _ -> fail @@ unsupported_iterator f.location
-            )
-          | _ -> fail @@ unsupported_iterator f.location
+          let%bind (input , output) = AST.get_t_function f.type_expression in
+          let%bind f' = transpile_annotated_expression f in
+          let%bind input' = transpile_type input in
+          let%bind output' = transpile_type output in
+          let binder = Var.fresh ~name:"iterated" () in
+          let application = Mini_c.Combinators.e_application f' output' (Mini_c.Combinators.e_var binder input') in
+          ok ((binder , input'), application)
         in
         fun (lst : AST.expression list) -> match (lst , iterator_name) with
           | [f ; i] , C_ITER | [f ; i] , C_MAP -> (
