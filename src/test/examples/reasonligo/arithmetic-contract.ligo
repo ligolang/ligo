@@ -15,6 +15,9 @@
   evaluateFunction:
     entrypoint: add
     parameters: (5, 6)
+  generateDeployScript:
+    entrypoint: main
+    storage: 0
 *_*)
 type storage = int;
 

@@ -7,7 +7,7 @@ import { DeployAction } from '../../redux/actions/deploy';
 import { DryRunAction } from '../../redux/actions/dry-run';
 import { EvaluateFunctionAction } from '../../redux/actions/evaluate-function';
 import { EvaluateValueAction } from '../../redux/actions/evaluate-value';
-import { GenerateCommandAction } from '../../redux/actions/generate-command';
+import { GenerateDeployScriptAction } from '../../redux/actions/generate-deploy-script';
 import { AppState } from '../../redux/app';
 import { ChangeDispatchedAction, ChangeSelectedAction, CommandState } from '../../redux/command';
 import { Command } from '../../redux/types';
@@ -17,7 +17,7 @@ import { DeployPaneComponent } from './deploy-pane';
 import { DryRunPaneComponent } from './dry-run-pane';
 import { EvaluateFunctionPaneComponent } from './evaluate-function-pane';
 import { EvaluateValuePaneComponent } from './evaluate-value-pane';
-import { GenerateCommandPaneComponent } from './generate-command-pane';
+import { GenerateDeployScriptPane } from './generate-deploy-script-pane';
 
 const Container = styled.div<{ visible?: boolean }>`
   position: absolute;
@@ -76,8 +76,8 @@ function createAction(command: Command) {
       return new EvaluateValueAction();
     case Command.EvaluateFunction:
       return new EvaluateFunctionAction();
-    case Command.GenerateCommand:
-      return new GenerateCommandAction();
+    case Command.GenerateDeployScript:
+      return new GenerateDeployScriptAction();
     default:
       throw new Error('Unsupported command');
   }
@@ -113,7 +113,7 @@ export const ConfigureTabComponent = (props: {
           <Option value={Command.DryRun}>Dry Run</Option>
           <Option value={Command.EvaluateFunction}>Evaluate Function</Option>
           <Option value={Command.EvaluateValue}>Evaluate Value</Option>
-          <Option value={Command.GenerateCommand}>Generate Command</Option>
+          <Option value={Command.GenerateDeployScript}>Generate Deploy Script</Option>
         </SelectCommand>
         <RunButton
           id="run"
@@ -147,8 +147,8 @@ export const ConfigureTabComponent = (props: {
         (command === Command.EvaluateValue && (
           <EvaluateValuePaneComponent></EvaluateValuePaneComponent>
         )) ||
-        (command === Command.GenerateCommand && (
-          <GenerateCommandPaneComponent></GenerateCommandPaneComponent>
+        (command === Command.GenerateDeployScript && (
+          <GenerateDeployScriptPane></GenerateDeployScriptPane>
         ))}
     </Container>
   );

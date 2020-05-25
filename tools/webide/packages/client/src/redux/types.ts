@@ -10,7 +10,7 @@ export enum Command {
   EvaluateValue = 'evaluate-value',
   EvaluateFunction = 'evaluate-function',
   Deploy = 'deploy',
-  GenerateCommand = 'generate-command'
+  GenerateDeployScript = 'generate-deploy-script'
 }
 
 export enum Tool {

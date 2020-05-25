@@ -15,7 +15,7 @@ interface DeployBody {
 
 Tezos.setProvider({ rpc: 'https://api.tez.ie/rpc/carthagenet' });
 
-const validateRequest = (body: any): { value: DeployBody; error: any } => {
+const validateRequest = (body: any): { value: DeployBody; error?: any } => {
   return joi
     .object({
       syntax: joi.string().required(),
