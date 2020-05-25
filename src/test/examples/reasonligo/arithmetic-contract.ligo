@@ -16,6 +16,8 @@
     entrypoint: add
     parameters: (5, 6)
   generateDeployScript:
+    tool: tezos-client
+    command: originate
     entrypoint: main
     storage: 0
 *_*)
