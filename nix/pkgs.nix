@@ -20,6 +20,9 @@ let
     pkgs.runCommandNoCC "${pkg.name}-bin" { }
     "mkdir -p $out/bin; cp -Lr ${pkg}/ligo $out/bin";
 
+
+  tmp = pkgs.runCommandNoCC "tmpdir" { } "mkdir -p $out/tmp";
+
 in pkgs.extend (self: super: {
   inherit (self.ocamlPackages) ligo ligo-out ligo-tests ligo-doc ligo-coverage;
   ligo-bin = separateBinary self.ligo-out.bin;
@@ -29,6 +32,7 @@ in pkgs.extend (self: super: {
   ligo-editor-docker = self.callPackage ./docker.nix {
     ligo = self.ligo-editor;
     name = "ligo-editor";
+    extraContents = [ tmp ];
   };
   ligo-website = self.callPackage ./ligo-website.nix {
     inherit (nix-npm-buildpackage) buildNpmPackage;
