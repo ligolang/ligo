@@ -1,7 +1,7 @@
 (rule
-  (target generated_fold.ml)
+  (targets generated_fold.ml generated_map.ml generated_o.ml)
   (deps ../../../src/stages/adt_generator/generator.raku amodule.ml)
-  (action (with-stdout-to generated_fold.ml (run perl6 ../../../src/stages/adt_generator/generator.raku amodule.ml)))
+  (action (run perl6 ../../../src/stages/adt_generator/generator.raku amodule.ml Generated_o generated_o.ml generated_fold.ml generated_map.ml))
   (mode (promote (until-clean) (only *)))
 )
 

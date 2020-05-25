@@ -1,1 +1,3 @@
 include Generated_fold
+include Generated_map
+include Generated_o

@@ -2,6 +2,8 @@ open Amodule
 open Fold
 open Simple_utils.Trace
 
+module O = Fold.O
+
 let (|>) v f = f v
 
 module Errors = struct
@@ -22,9 +24,9 @@ let () =
   let op =
     no_op |>
       with__a (fun state the_a (*_info*) continue_fold ->
-          let%bind state, a1__' = continue_fold.ta1.node__ta1 state the_a.a1 in
-          let%bind state, a2__' = continue_fold.ta2.node__ta2 state the_a.a2 in
-          ok (state + 1, { a1__' ; a2__' }))
+          let%bind state, a1 = continue_fold.ta1.node__ta1 state the_a.a1 in
+          let%bind state, a2 = continue_fold.ta2.node__ta2 state the_a.a2 in
+          ok (state + 1, (O.make__a ~a1 ~a2 : O.a)))
   in
   let state = 0 in
   let%bind (state , _) = fold_map__root op state some_root in
@@ -61,35 +63,33 @@ let () =
 let _noi : (int, [> error]) fold_map_config__Amodule = no_op (* (fun _ -> ()) *)
 let _nob : (bool, [> error]) fold_map_config__Amodule = no_op (* (fun _ -> ()) *)
 
+type no_state = NoState
 let () =
   let some_root : root = A [ { a1 = X (A [ { a1 = X (B [ 1 ; 2 ; 3 ]) ; a2 = W () } ]) ; a2 = Z (W ()) } ] in
-  let assert_nostate (needs_parens, state) = assert (not needs_parens && String.equal state "") in
-  let nostate = false, "" in
-  let op = {
-      generic = (fun state info ->
-        assert_nostate state;
+  let op : ('i, 'o) Generated_fold.fold_config = {
+      generic = (fun NoState info ->
         match info.node_instance.instance_kind with
         | RecordInstance { fields } ->
-           false, "{ " ^ String.concat " ; " (List.map (fun (fld : 'x Adt_info.ctor_or_field_instance) -> fld.cf.name ^ " = " ^ snd (fld.cf_continue nostate)) fields) ^ " }"
+           false, "{ " ^ String.concat " ; " (List.map (fun (fld : ('xi , 'xo) Adt_info.ctor_or_field_instance) -> fld.cf.name ^ " = " ^ snd (fld.cf_continue NoState)) fields) ^ " }"
         | VariantInstance { constructor={ cf = { name; is_builtin=_; type_=_ }; cf_continue; cf_new_fold=_ }; variant=_ } ->
-           (match cf_continue nostate with
+           (match cf_continue NoState with
             | true,  arg -> true, name ^ " (" ^ arg ^ ")"
             | false, arg -> true, name ^ " "  ^ arg)
         | PolyInstance { poly=_; arguments=_; poly_continue } ->
-           (poly_continue nostate)
+           (poly_continue NoState)
       ) ;
-      string = (fun _visitor state str -> assert_nostate state; false , "\"" ^ str ^ "\"") ;
-      unit = (fun _visitor state () -> assert_nostate state; false , "()") ;
-      int = (fun _visitor state i -> assert_nostate state; false , string_of_int i) ;
-      list = (fun _visitor continue state lst ->
-        assert_nostate state;
-        false , "[ " ^ String.concat " ; " (List.map snd @@ List.map (continue nostate) lst) ^ " ]") ;
+      generic_empty_ctor = (fun NoState -> false, "") ;
+      string = (fun _visitor NoState str -> false , "\"" ^ str ^ "\"") ;
+      unit = (fun _visitor NoState () -> false , "()") ;
+      int = (fun _visitor NoState i -> false , string_of_int i) ;
+      list = (fun _visitor continue NoState lst ->
+        false , "[ " ^ String.concat " ; " (List.map snd @@ List.map (continue NoState) lst) ^ " ]") ;
       (* generic_ctor_or_field = (fun _info state ->
        *   match _info () with
        *     (_, _, { name=_; isBuiltin=_; type_=_; continue }) -> state ^ "ctor_or_field [" ^ (continue "") ^ "]"
        * ); *)
     } in
-  let (_ , state) = fold__root op nostate some_root in
+  let (_ , state) = Generated_fold.fold__root op NoState some_root in
   let expected = "A [ { a1 = X (A [ { a1 = X (B [ 1 ; 2 ; 3 ]) ; a2 = W () } ]) ; a2 = Z (W ()) } ]" in
   if String.equal state expected; then
     ()
