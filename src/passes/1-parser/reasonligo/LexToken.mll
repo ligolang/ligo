@@ -67,14 +67,15 @@ type t =
 
   (* Identifiers, labels, numbers and strings *)
 
-| Ident  of string Region.reg
-| Constr of string Region.reg
-| Int    of (string * Z.t) Region.reg
-| Nat    of (string * Z.t) Region.reg
-| Mutez  of (string * Z.t) Region.reg
-| String of string Region.reg
-| Bytes  of (string * Hex.t) Region.reg
-| Attr   of string Region.reg
+| Ident    of string Region.reg
+| Constr   of string Region.reg
+| Int      of (string * Z.t) Region.reg
+| Nat      of (string * Z.t) Region.reg
+| Mutez    of (string * Z.t) Region.reg
+| String   of string Region.reg
+| Verbatim of string Region.reg
+| Bytes    of (string * Hex.t) Region.reg
+| Attr     of string Region.reg
 
   (* Keywords *)
 
@@ -108,6 +109,8 @@ let proj_token = function
 
   String Region.{region; value} ->
     region, sprintf "String %s" value
+| Verbatim Region.{region; value} ->
+    region, sprintf "Verbatim {|%s|}" value
 | Bytes Region.{region; value = s,b} ->
     region,
     sprintf "Bytes (\"%s\", \"0x%s\")" s (Hex.show b)
@@ -172,6 +175,7 @@ let to_lexeme = function
   (* Literals *)
 
   String s   -> s.Region.value
+| Verbatim v -> String.escaped v.Region.value
 | Bytes b    -> fst b.Region.value
 | Int i
 | Nat i
@@ -384,6 +388,8 @@ let line_comment_start lexeme = lexeme = "//"
 (* Smart constructors (injections) *)
 
 let mk_string lexeme region = String Region.{region; value=lexeme}
+
+let mk_verbatim lexeme region = Verbatim Region.{region; value=lexeme}
 
 let mk_bytes lexeme region =
   let norm = Str.(global_replace (regexp "_") "" lexeme) in

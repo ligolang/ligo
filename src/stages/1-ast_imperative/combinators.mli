@@ -49,6 +49,7 @@ val t_michelson_pair : ?loc:Location.t -> type_expression -> michelson_prct_anno
 
 val t_operator : ?loc:Location.t -> type_operator -> type_expression list -> type_expression result
 val t_set      : ?loc:Location.t -> type_expression -> type_expression
+val t_contract : ?loc:Location.t -> type_expression -> type_expression
 
 val make_e : ?loc:Location.t -> expression_content -> expression
 
@@ -62,6 +63,7 @@ val e_nat : ?loc:Location.t -> int -> expression
 val e_timestamp : ?loc:Location.t -> int -> expression
 val e_bool : ?loc:Location.t -> bool -> expression
 val e_string : ?loc:Location.t -> string -> expression
+val e_verbatim : ?loc:Location.t -> string -> expression
 val e_address : ?loc:Location.t -> string -> expression 
 val e_signature : ?loc:Location.t -> string -> expression 
 val e_key : ?loc:Location.t -> string -> expression 

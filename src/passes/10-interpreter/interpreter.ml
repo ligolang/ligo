@@ -258,7 +258,7 @@ and eval_literal : Ast_typed.literal -> value result = function
   | Literal_int i       -> ok @@ V_Ct (C_int i)
   | Literal_nat n       -> ok @@ V_Ct (C_nat n)
   | Literal_timestamp i -> ok @@ V_Ct (C_timestamp i)
-  | Literal_string s    -> ok @@ V_Ct (C_string s)
+  | Literal_string s    -> ok @@ V_Ct (C_string (Ligo_string.extract s))
   | Literal_bytes s     -> ok @@ V_Ct (C_bytes s)
   | Literal_mutez t     -> ok @@ V_Ct (C_mutez t)
   | Literal_address s   -> ok @@ V_Ct (C_address s)

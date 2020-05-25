@@ -592,6 +592,8 @@ and print_string_expr state = function
     print_expr  state arg2
 | String s ->
     print_string state s
+| Verbatim v ->
+    print_string state v
 
 and print_list_expr state = function
   ECons {value = {arg1; op; arg2}; _} ->
@@ -840,7 +842,15 @@ let pp_node state name =
   let node = sprintf "%s%s\n" state#pad_path name
   in Buffer.add_string state#buffer node
 
-let pp_string state = pp_ident state
+let pp_string state {value=name; region} =
+  let reg  = compact state region in
+  let node = sprintf "%s%S (%s)\n" state#pad_path name reg
+  in Buffer.add_string state#buffer node
+
+let pp_verbatim state {value=name; region} =
+  let reg  = compact state region in
+  let node = sprintf "%s{|%s|} (%s)\n" state#pad_path name reg
+  in Buffer.add_string state#buffer node
 
 let pp_loc_node state name region =
   pp_ident state {value=name; region}
@@ -1572,6 +1582,9 @@ and pp_string_expr state = function
 | String s ->
     pp_node   state "String";
     pp_string (state#pad 1 0) s
+| Verbatim v ->
+    pp_node   state "Verbatim";
+    pp_verbatim (state#pad 1 0) v
 
 and pp_annotated state (expr, t_expr) =
   pp_expr      (state#pad 2 0) expr;

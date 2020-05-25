@@ -1,5 +1,6 @@
 diff --git a/src/bin/dune b/src/bin/dune
 index 162963b4b..29dfa5191 100644
+With this patch, a static executable is produced
 --- a/src/bin/dune
 +++ b/src/bin/dune
 @@ -34,5 +34,6 @@

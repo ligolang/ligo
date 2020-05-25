@@ -8,6 +8,7 @@ module Region      = Simple_utils.Region
 module ParErr      = Parser_reasonligo.ParErr
 module SyntaxError = Parser_reasonligo.SyntaxError
 module SSet        = Set.Make (String)
+module Pretty      = Parser_cameligo.Pretty
 
 (* Mock IOs TODO: Fill them with CLI options *)
 

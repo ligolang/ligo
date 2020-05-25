@@ -1549,7 +1549,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "", line 0, characters 0-0. badly typed contract: unexpected entrypoint type {"location":"in file \"\", line 0, characters 0-0","entrypoint":"main","entrypoint_type":"( nat * int ) -> int"}
+    ligo: in file "bad_contract.mligo", line 4, characters 0-3. badly typed contract: unexpected entrypoint type {"location":"in file \"bad_contract.mligo\", line 4, characters 0-3","entrypoint":"main","entrypoint_type":"( nat * int ) -> int"}
 
 
      If you're not sure how to fix this error, you can
@@ -1562,7 +1562,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract2.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "", line 0, characters 0-0. bad return type: expected (type_operator: list(operation)), got string {"location":"in file \"\", line 0, characters 0-0","entrypoint":"main"}
+    ligo: in file "bad_contract2.mligo", line 5, characters 0-3. bad return type: expected (type_operator: list(operation)), got string {"location":"in file \"bad_contract2.mligo\", line 5, characters 0-3","entrypoint":"main"}
 
 
      If you're not sure how to fix this error, you can
@@ -1575,7 +1575,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract3.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "", line 0, characters 0-0. badly typed contract: expected {int} and {string} to be the same in the entrypoint type {"location":"in file \"\", line 0, characters 0-0","entrypoint":"main","entrypoint_type":"( nat * int ) -> ( (type_operator: list(operation)) * string )"}
+    ligo: in file "bad_contract3.mligo", line 5, characters 0-3. badly typed contract: expected {int} and {string} to be the same in the entrypoint type {"location":"in file \"bad_contract3.mligo\", line 5, characters 0-3","entrypoint":"main","entrypoint_type":"( nat * int ) -> ( (type_operator: list(operation)) * string )"}
 
 
      If you're not sure how to fix this error, you can
@@ -1692,4 +1692,56 @@ let%expect_test _ =
     * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}]
+    * Check the changelog by running 'ligo changelog' |}];
+      
+  run_ligo_good ["print-ast"; contract "letin.mligo"];
+  [%expect {|
+    type storage = (int ,
+    int)
+    const main : (int ,
+    storage) -> ((TO_list(operation)) ,
+    storage) = lambda (n:Some((int ,
+    storage))) : None return let x = let x = 7 : int in (ADD(x ,
+    n.0) ,
+    ADD(n.1.0 ,
+    n.1.1)) : (int ,
+    int) in (list[] : (TO_list(operation)) ,
+    x)
+    const f0 = lambda (a:Some(string)) : None return true(unit)
+    const f1 = lambda (a:Some(string)) : None return true(unit)
+    const f2 = lambda (a:Some(string)) : None return true(unit)
+    const letin_nesting = lambda (_:Some(unit)) : None return let s = "test" in let p0 = (f0)@(s) in { ASSERTION(p0);
+     let p1 = (f1)@(s) in { ASSERTION(p1);
+     let p2 = (f2)@(s) in { ASSERTION(p2);
+     s}}}
+    const letin_nesting2 = lambda (x:Some(int)) : None return let y = 2 in let z = 3 in ADD(ADD(x ,
+    y) ,
+    z)
+    |}];
+
+  run_ligo_good ["print-ast"; contract "letin.religo"];
+  [%expect {|
+    type storage = (int ,
+    int)
+    const main : (int ,
+    storage) -> ((TO_list(operation)) ,
+    storage) = lambda (n:Some((int ,
+    storage))) : None return let x = let x = 7 : int in (ADD(x ,
+    n.0) ,
+    ADD(n.1.0 ,
+    n.1.1)) : (int ,
+    int) in (list[] : (TO_list(operation)) ,
+    x)
+    const f0 = lambda (a:Some(string)) : None return true(unit)
+    const f1 = lambda (a:Some(string)) : None return true(unit)
+    const f2 = lambda (a:Some(string)) : None return true(unit)
+    const letin_nesting = lambda (_:Some(unit)) : None return let s = "test" in let p0 = (f0)@(s) in { ASSERTION(p0);
+     let p1 = (f1)@(s) in { ASSERTION(p1);
+     let p2 = (f2)@(s) in { ASSERTION(p2);
+     s}}}
+    const letin_nesting2 = lambda (x:Some(int)) : None return let y = 2 in let z = 3 in ADD(ADD(x ,
+    y) ,
+    z)
+    |}];
+
+

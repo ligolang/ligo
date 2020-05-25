@@ -36,7 +36,7 @@ export const HeaderComponent = () => {
     <Container>
       <Group>
         <a href="https://ligolang.org">
-          <Logo src="logo.svg" />
+          <Logo src="/logo.svg" />
         </a>
       </Group>
       <Group>

@@ -265,13 +265,19 @@ and environment = fun env ->
   @@ List.map snd env
 
 and lambda_closure = fun (c , arg , ret) ->
+  let%bind (lambda , _arg' , _ret') =
+    lambda_closure_with_ty (c , arg , ret) in
+  ok lambda
+
+and lambda_closure_with_ty = fun (c , arg , ret) ->
   let%bind arg = type_ arg in
   let%bind ret = type_ ret in
   match c with
-  | [] -> ok @@ O.t_lambda arg ret
+  | [] -> ok @@ (O.t_lambda arg ret , arg , ret)
   | _ :: _ ->
     let%bind capture = environment_closure c in
-    ok @@ O.t_lambda (O.t_pair capture arg) ret
+    let arg' = O.t_pair capture arg in
+    ok @@ (O.t_lambda arg' ret , arg' , ret)
 
 and environment_closure =
   function

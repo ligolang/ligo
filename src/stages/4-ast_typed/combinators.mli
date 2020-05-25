@@ -120,7 +120,7 @@ val e_int : Z.t -> expression_content
 val e_nat : Z.t -> expression_content
 val e_mutez : Z.t -> expression_content
 val e_bool : bool -> environment -> expression_content
-val e_string : string -> expression_content
+val e_string : ligo_string -> expression_content
 val e_bytes : bytes -> expression_content
 val e_timestamp : Z.t -> expression_content
 val e_address : string -> expression_content
@@ -140,7 +140,7 @@ val e_a_int : Z.t -> environment -> expression
 val e_a_nat : Z.t -> environment -> expression
 val e_a_mutez : Z.t -> environment -> expression
 val e_a_bool : bool -> environment -> expression
-val e_a_string : string -> environment -> expression
+val e_a_string : ligo_string -> environment -> expression
 val e_a_address : string -> environment -> expression
 val e_a_pair : expression -> expression -> environment -> expression
 val e_a_some : expression -> environment -> expression

@@ -7,7 +7,7 @@ val e_a_empty_int : Z.t -> expression
 val e_a_empty_nat : Z.t -> expression
 val e_a_empty_mutez : Z.t -> expression
 val e_a_empty_bool : bool -> expression
-val e_a_empty_string : string -> expression
+val e_a_empty_string : ligo_string -> expression
 val e_a_empty_address : string -> expression
 val e_a_empty_pair : expression -> expression -> expression
 val e_a_empty_some : expression -> expression

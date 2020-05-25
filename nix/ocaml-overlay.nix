@@ -1,3 +1,5 @@
+# An overlay that adds ligo to ocamlPackages
+
 { sources ? import ./sources.nix
 , CI_COMMIT_SHA ? builtins.getEnv "CI_COMMIT_SHA"
 , COMMIT_DATE ? builtins.getEnv "COMMIT_DATE" }:
@@ -6,6 +8,7 @@ let
   opam-nix = import sources.opam-nix (import sources.nixpkgs { });
   inherit (import sources."gitignore.nix" { inherit (self) lib; })
     gitignoreSource;
+  # Remove list of directories or files from source (to stop unneeded rebuilds)
   filterOut = xs:
     self.lib.cleanSourceWith {
       filter = p: type: !(builtins.elem (builtins.baseNameOf p) xs);
@@ -14,6 +17,7 @@ let
 in {
   ocamlPackages = self.ocaml-ng.ocamlPackages_4_07.overrideScope'
     (builtins.foldl' self.lib.composeExtensions (_: _: { }) [
+      # Both opam-repository and tezos-opam-repository are updated manually with `niv update`
       (opam-nix.traverseOPAMRepo' sources.opam-repository)
       (opam-nix.traverseOPAMRepo sources.tezos-opam-repository)
       (opam-nix.callOPAMPackage (filterOut [
@@ -26,19 +30,23 @@ in {
         "gitlab-pages"
       ]))
       (oself: osuper: {
+        # Strange naming in nixpkgs
         ocamlfind = oself.findlib;
         lablgtk = null;
         lwt = oself.lwt4;
 
+        # Native dependencies
         conf-gmp = self.gmp;
         conf-libev = self.libev;
         conf-hidapi = self.hidapi;
         conf-pkg-config = self.pkg-config;
 
+        # Strange problems
         bigstring = osuper.bigstring.overrideAttrs (_: { doCheck = false; });
         xmldiff = osuper.xmldiff.overrideAttrs (_: { src = sources.xmldiff; });
         getopt = osuper.getopt.overrideAttrs (_: { configurePhase = "true"; });
 
+        # Force certain versions
         ipaddr = osuper.ipaddr.versions."4.0.0";
         conduit = osuper.conduit.versions."2.1.0";
         conduit-lwt-unix = osuper.conduit-lwt-unix.versions."2.0.2";
@@ -64,6 +72,7 @@ in {
             propagatedBuildInputs = buildInputs;
           });
 
+        # A combination of executables, libraries, documentation and test coverage
         ligo = self.buildEnv {
           name = "ligo";
           paths = with oself; [
@@ -74,6 +83,7 @@ in {
           ];
         };
 
+        # LIGO executable and public libraries
         ligo-out = osuper.ligo.overrideAttrs (oa: {
           name = "ligo-out";
           inherit CI_COMMIT_SHA COMMIT_DATE;
@@ -82,6 +92,8 @@ in {
           nativeBuildInputs = oa.nativeBuildInputs
             ++ [ self.buildPackages.rakudo ];
         });
+
+        # LIGO test suite; output empty on purpose
         ligo-tests = osuper.ligo.overrideAttrs (oa: {
           name = "ligo-tests";
           src = filterOut [
@@ -98,6 +110,7 @@ in {
             ++ [ self.buildPackages.rakudo ];
           installPhase = "mkdir $out";
         });
+        # LIGO odoc documentation
         ligo-doc = osuper.ligo.overrideAttrs (oa: {
           name = "ligo-doc";
           buildInputs = oa.buildInputs
@@ -109,6 +122,7 @@ in {
           installPhase =
             "mkdir $out; cp -r _build/default/_doc/_html/ $out/doc";
         });
+        # LIGO test coverage reports
         ligo-coverage = oself.ligo-tests.overrideAttrs (oa: {
           name = "ligo-coverage";
           nativeBuildInputs = oa.nativeBuildInputs

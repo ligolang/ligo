@@ -234,7 +234,7 @@ let transpile_constant' : AST.constant' -> constant' = function
   | C_CONVERT_FROM_RIGHT_COMB -> C_CONVERT_FROM_RIGHT_COMB
 
 let rec transpile_type (t:AST.type_expression) : type_expression result =
-  let return tc = ok @@ Expression.make_t @@ tc in
+  let return tc = ok @@ Expression.make_t ~loc:t.location @@ tc in
   match t.type_content with
   | T_variable (name) when Var.equal name Stage_common.Constant.t_bool -> return (T_base TB_bool)
   | t when (compare t (t_bool ()).type_content) = 0-> return (T_base TB_bool)
@@ -372,7 +372,7 @@ let rec transpile_literal : AST.literal -> value = fun l -> match l with
   | Literal_timestamp n -> D_timestamp n
   | Literal_mutez n -> D_mutez n
   | Literal_bytes s -> D_bytes s
-  | Literal_string s -> D_string s
+  | Literal_string s -> D_string (Ligo_string.extract s)
   | Literal_address s -> D_string s
   | Literal_signature s -> D_string s
   | Literal_key s -> D_string s
@@ -392,7 +392,7 @@ and tree_of_sum : AST.type_expression -> (AST.constructor' * AST.type_expression
 
 and transpile_annotated_expression (ae:AST.expression) : expression result =
   let%bind tv = transpile_type ae.type_expression in
-  let return ?(tv = tv) expr = ok @@ Combinators.Expression.make_tpl (expr, tv) in
+  let return ?(tv = tv) expr = ok @@ Combinators.Expression.make_tpl ~loc:ae.location (expr, tv) in
   let info =
     let title () = "translating expression" in
     let content () = Format.asprintf "%a" Location.pp ae.location in
@@ -474,10 +474,12 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       let aux = fun pred (ty, lr) ->
         let c = match lr with
           | `Left  -> C_CAR
-          | `Right -> C_CDR in
-        Combinators.Expression.make_tpl (E_constant {cons_name=c;arguments=[pred]} , ty) in
+          | `Right -> C_CDR 
+        in
+        return ~tv:ty @@ E_constant {cons_name=c;arguments=[pred]} 
+      in
       let%bind record' = transpile_annotated_expression record in
-      let expr = List.fold_left aux record' path in
+      let%bind expr = bind_fold_list aux record' path in
       ok expr
   | E_record_update {record; path; update} -> 
       let rec aux res (r,p,up) =
@@ -654,14 +656,14 @@ and transpile_lambda l (input_type , output_type) =
   let tv = Combinators.t_function input output in
   let binder = binder in 
   let closure = E_closure { binder; body = result'} in
-  ok @@ Combinators.Expression.make_tpl (closure , tv)
+  ok @@ Combinators.Expression.make_tpl ~loc:result.location (closure , tv)
 
 and transpile_recursive {fun_name; fun_type; lambda} =
   let rec map_lambda : AST.expression_variable -> type_expression -> AST.expression -> (expression * expression_variable list) result = fun fun_name loop_type e ->
     match e.expression_content with 
       E_lambda {binder;result} -> 
         let%bind (body,l) = map_lambda fun_name loop_type result in
-        ok @@ (Expression.make (E_closure {binder;body}) loop_type, binder::l)
+        ok @@ (Expression.make ~loc:e.location (E_closure {binder;body}) loop_type, binder::l)
       | _  -> 
         let%bind res = replace_callback fun_name loop_type false e in
         ok @@ (res, [])

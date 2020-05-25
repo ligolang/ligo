@@ -1,3 +1,6 @@
+# An overlay that adds flags needed to build LIGO statically;
+# Supposed to be applied to pkgsMusl
+# Takes `native` as a package set that doesn't cause mass rebuilds (so that we don't have to build perl with musl)
 native: self: super:
 let dds = x: x.overrideAttrs (o: { dontDisableStatic = true; });
 in {

@@ -187,21 +187,22 @@ and field_decl = {
 and type_tuple = (type_expr, comma) nsepseq par reg
 
 and pattern =
-  PConstr of constr_pattern
-| PUnit   of the_unit reg
-| PFalse  of kwd_false
-| PTrue   of kwd_true
-| PVar    of variable
-| PInt    of (Lexer.lexeme * Z.t) reg
-| PNat    of (Lexer.lexeme * Z.t) reg
-| PBytes  of (Lexer.lexeme * Hex.t) reg
-| PString of string reg
-| PWild   of wild
-| PList   of list_pattern
-| PTuple  of (pattern, comma) nsepseq reg
-| PPar    of pattern par reg
-| PRecord of field_pattern reg ne_injection reg
-| PTyped  of typed_pattern reg
+  PConstr   of constr_pattern
+| PUnit     of the_unit reg
+| PFalse    of kwd_false
+| PTrue     of kwd_true
+| PVar      of variable
+| PInt      of (Lexer.lexeme * Z.t) reg
+| PNat      of (Lexer.lexeme * Z.t) reg
+| PBytes    of (Lexer.lexeme * Hex.t) reg
+| PString   of string reg
+| PVerbatim of string reg
+| PWild     of wild
+| PList     of list_pattern
+| PTuple    of (pattern, comma) nsepseq reg
+| PPar      of pattern par reg
+| PRecord   of field_pattern reg ne_injection reg
+| PTyped    of typed_pattern reg
 
 and constr_pattern =
   PNone      of c_None
@@ -269,8 +270,9 @@ and list_expr =
   (*| Append of (expr * append * expr) reg*)
 
 and string_expr =
-  Cat    of cat bin_op reg
-| String of string reg
+  Cat      of cat bin_op reg
+| String   of string reg
+| Verbatim of string reg
 
 and constr_expr =
   ENone      of c_None
@@ -429,8 +431,8 @@ let pattern_to_region = function
 | PTrue region | PFalse region
 | PTuple {region;_} | PVar {region;_}
 | PInt {region;_}
-| PString {region;_} | PWild region
-| PPar {region;_}
+| PString {region;_} | PVerbatim {region;_}
+| PWild region | PPar {region;_}
 | PRecord {region; _} | PTyped {region; _}
 | PNat {region; _} | PBytes {region; _}
   -> region
@@ -456,7 +458,7 @@ let arith_expr_to_region = function
 | Nat {region; _} -> region
 
 let string_expr_to_region = function
-  String {region;_} | Cat {region;_} -> region
+  Verbatim {region;_} | String {region;_} | Cat {region;_} -> region
 
 let list_expr_to_region = function
   ECons {region; _} | EListComp {region; _}

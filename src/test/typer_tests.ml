@@ -39,7 +39,7 @@ module TestExpressions = struct
   let unit   () : unit result = test_expression I.(e_unit ())    O.(t_unit ())
   let int    () : unit result = test_expression I.(e_int (Z.of_int 32))     O.(t_int ())
   let bool   () : unit result = test_expression I.(e_bool true)  O.(t_bool ())
-  let string () : unit result = test_expression I.(e_string "s") O.(t_string ())
+  let string () : unit result = test_expression I.(e_string (Standard "s")) O.(t_string ())
   let bytes  () : unit result =
     let%bind b = I.e_bytes_hex "0b" in
     test_expression b  O.(t_bytes ())
@@ -51,7 +51,7 @@ module TestExpressions = struct
 
   let tuple () : unit result =
     test_expression
-      I.(e_record @@ LMap.of_list [(Label "0",e_int (Z.of_int 32)); (Label "1",e_string "foo")])
+      I.(e_record @@ LMap.of_list [(Label "0",e_int (Z.of_int 32)); (Label "1", e_string (Standard "foo"))])
       O.(make_t_ez_record [("0",t_int ()); ("1",t_string ())])
 
   let constructor () : unit result =
@@ -65,7 +65,7 @@ module TestExpressions = struct
 
   let record () : unit result =
     test_expression
-      I.(e_record @@ LMap.of_list [(Label "foo", e_int (Z.of_int 32)); (Label "bar", e_string "foo")])
+      I.(e_record @@ LMap.of_list [(Label "foo", e_int (Z.of_int 32)); (Label "bar", e_string (Standard "foo"))])
       O.(make_t_ez_record [("foo", t_int ()); ("bar", t_string ())])
 
 

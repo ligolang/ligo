@@ -33,7 +33,9 @@ and pp_attributes = function
 
 and pp_ident {value; _} = string value
 
-and pp_string s = pp_ident s
+and pp_string s = string "\"" ^^ pp_ident s ^^ string "\""
+
+and pp_verbatim s = string "{|" ^^ pp_ident s ^^ string "|}"
 
 and pp_let_binding (binding : let_binding) =
   let {binders; lhs_type; let_rhs; _} = binding in
@@ -57,6 +59,7 @@ and pp_pattern = function
 | PNat    n -> pp_nat n
 | PBytes  b -> pp_bytes b
 | PString s -> pp_string s
+| PVerbatim s -> pp_verbatim s
 | PWild   _ -> string "_"
 | PList   l -> pp_plist l
 | PTuple  t -> pp_ptuple t
@@ -226,6 +229,7 @@ and pp_mutez {value; _} =
 and pp_string_expr = function
      Cat e -> pp_bin_op "^" e
 | String e -> pp_string e
+| Verbatim e -> pp_verbatim e
 
 and pp_list_expr = function
       ECons e -> pp_bin_op "::" e

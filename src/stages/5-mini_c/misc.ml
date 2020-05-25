@@ -155,6 +155,7 @@ let aggregate_entry (lst : program) (form : form_t) : expression result =
         let e' = {
           content = E_closure l' ;
           type_expression = entry_expression.type_expression ;
+          location = entry_expression.location;
         } in
         ok e'
       )

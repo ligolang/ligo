@@ -152,7 +152,7 @@ let return_statement expr = ok @@ fun expr'_opt ->
   | Some expr' -> ok @@ e_sequence expr expr'
 
 let get_t_string_singleton_opt = function
-  | Raw.TString s -> Some (String.(sub s.value 1 (length s.value -2)))
+  | Raw.TString s -> Some s.value
   | _ -> None
 
 
@@ -384,11 +384,10 @@ let rec compile_expression (t:Raw.expr) : expr result =
   | EArith (Neg e) -> compile_unop "NEG" e
   | EString (String s) ->
     let (s , loc) = r_split s in
-      let s' =
-        (* S contains quotes *)
-        String.(sub s 1 (length s - 2))
-      in
-      return @@ e_literal ~loc (Literal_string s')
+      return @@ e_literal ~loc (Literal_string (Standard s))
+  | EString (Verbatim v) ->
+    let (v , loc) = r_split v in
+      return @@ e_literal ~loc (Literal_string (Verbatim v))
   | EString (Cat bo) ->
     let (bo , loc) = r_split bo in
     let%bind sl = compile_expression bo.arg1 in

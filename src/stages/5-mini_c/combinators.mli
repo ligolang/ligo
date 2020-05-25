@@ -10,9 +10,9 @@ module Expression : sig
   (*
   val is_toplevel : t -> bool 
 *)
-  val make_t   : type_content -> type_expression
-  val make     : t' -> type_expression -> t
-  val make_tpl : t' * type_expression -> t
+  val make_t   : ?loc:Location.t -> type_content -> type_expression
+  val make     : ?loc:Location.t -> t' -> type_expression -> t
+  val make_tpl : ?loc:Location.t -> t' * type_expression -> t
 
   val pair : t -> t -> t'
 end
@@ -53,24 +53,24 @@ val get_t_contract  : type_expression -> type_expression result
 val get_t_operation : type_expression -> type_expression result
 val get_operation : value -> Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation result
 
-val t_int      : unit -> type_expression 
-val t_unit     : unit -> type_expression 
-val t_nat      : unit -> type_expression 
-val t_function : type_expression -> type_expression -> type_expression
-val t_pair     : type_expression annotated -> type_expression annotated -> type_expression
-val t_union    : type_expression annotated -> type_expression annotated -> type_expression
+val t_int      : ?loc:Location.t -> unit -> type_expression 
+val t_unit     : ?loc:Location.t -> unit -> type_expression 
+val t_nat      : ?loc:Location.t -> unit -> type_expression 
+val t_function : ?loc:Location.t -> type_expression -> type_expression -> type_expression
+val t_pair     : ?loc:Location.t -> type_expression annotated -> type_expression annotated -> type_expression
+val t_union    : ?loc:Location.t -> type_expression annotated -> type_expression annotated -> type_expression
 (*
 val quote : string -> type_value -> type_value -> Expression.t -> anon_function
 
 
 val e_int : Expression.t' -> Expression.t
 *)
-val e_unit : Expression.t
-val e_skip : Expression.t
-val e_var_int : expression_variable -> Expression.t
-val e_let_in  : expression_variable -> type_expression -> inline -> Expression.t -> Expression.t -> Expression.t
+val e_unit    : ?loc:Location.t -> unit -> Expression.t
+val e_skip    : ?loc:Location.t -> unit -> Expression.t
+val e_var_int : ?loc:Location.t -> expression_variable -> Expression.t
+val e_let_in  : ?loc:Location.t -> expression_variable -> type_expression -> inline -> Expression.t -> Expression.t -> Expression.t
 
-val ez_e_sequence : Expression.t' -> Expression.t -> expression
+val ez_e_sequence : ?loc:Location.t -> Expression.t' -> Expression.t -> expression
 (*
 val ez_e_return : Expression.t -> Expression.t
 *)

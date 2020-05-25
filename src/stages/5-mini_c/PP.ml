@@ -259,8 +259,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   let pp = expression_content Format.std_formatter in
-  let dummy_type = {type_content=T_base TB_unit} in
-  let wrap e = { content = e ; type_expression = dummy_type} in
+  let dummy_type = {type_content=T_base TB_unit;location=Location.generated} in
+  let wrap e = { content = e ; type_expression = dummy_type ; location = Location.generated} in
   pp @@ E_closure { binder = Var.of_name "y" ; body = wrap (E_variable (Var.of_name "y")) } ;
   [%expect{|
     fun y -> (y)

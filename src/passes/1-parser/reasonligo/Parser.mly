@@ -8,20 +8,6 @@ open Region
 module AST = Parser_cameligo.AST
 open! AST
 
-type 'a sequence_elements = {
-  s_elts       : ('a, semi) Utils.nsepseq;
-  s_terminator : semi option
-}
-
-type 'a record_elements = {
-  r_elts       : (field_assign reg, semi) Utils.nsepseq;
-  r_terminator : semi option
-}
-
-type 'a sequence_or_record =
-  PaSequence   of 'a sequence_elements
-| PaRecord     of 'a record_elements
-
 let (<@) f g x = f (g x)
 
 (*
@@ -58,7 +44,7 @@ let wild_error e =
 %type <AST.t> contract
 %type <AST.expr> interactive_expr
 
-(* Solves a shift/reduce problem that happens with record and
+(* Solves a shift/reduce problem that happens with records and
    sequences. To elaborate: [sequence_or_record_in]
    can be reduced to [expr -> Ident], but also to
    [field_assignment -> Ident].
@@ -205,9 +191,9 @@ type_args:
 | fun_type        { $1, [] }
 
 core_type:
-  type_name      { TVar    $1 }
+  type_name      {    TVar $1 }
 | "<string>"     { TString $1 }
-| par(fun_type)  { TPar    $1 }
+| par(fun_type)  {    TPar $1 }
 | module_name "." type_name {
     let module_name = $1.value in
     let type_name   = $3.value in
@@ -264,8 +250,11 @@ let_declaration:
     let kwd_rec    = $3 in
     let binding    = $4 in
     let value      = kwd_let, kwd_rec, binding, attributes in
-    let stop       = expr_to_region binding.let_rhs in
-    let region     = cover $2 stop
+    let start      = match $1 with
+                       [] -> $2
+                     | l  -> last (fun x -> x.region) l
+    and stop       = expr_to_region binding.let_rhs in
+    let region     = cover start stop
     in {region; value} }
 
 let_binding:
@@ -354,19 +343,20 @@ sub_pattern:
 | core_pattern                                           {         $1 }
 
 core_pattern:
-  "<ident>"                                              {    PVar $1 }
-| "_"                                                    {   PWild $1 }
-| unit                                                   {   PUnit $1 }
-| "<int>"                                                {    PInt $1 }
-| "<nat>"                                                {    PNat $1 }
-| "<bytes>"                                              {  PBytes $1 }
-| "true"                                                 {   PTrue $1 }
-| "false"                                                {  PFalse $1 }
-| "<string>"                                             { PString $1 }
-| par(ptuple)                                            {    PPar $1 }
+  "<ident>"                                            {      PVar $1 }
+| "_"                                                  {     PWild $1 }
+| unit                                                 {     PUnit $1 }
+| "<int>"                                              {      PInt $1 }
+| "<nat>"                                              {      PNat $1 }
+| "<bytes>"                                            {    PBytes $1 }
+| "true"                                               {     PTrue $1 }
+| "false"                                              {    PFalse $1 }
+| "<string>"                                           {   PString $1 }
+| "<verbatim>"                                         { PVerbatim $1 }
+| par(ptuple)                                          {      PPar $1 }
 | list__(sub_pattern)                          { PList (PListComp $1) }
-| constr_pattern                                         { PConstr $1 }
-| record_pattern                                         { PRecord $1 }
+| constr_pattern                                       {   PConstr $1 }
+| record_pattern                                       {   PRecord $1 }
 
 record_pattern:
   "{" sep_or_term_list(field_pattern,",") "}" {
@@ -416,15 +406,12 @@ interactive_expr:
   expr_with_let_expr EOF { $1 }
 
 expr:
-  base_cond__open(expr) | switch_expr(base_cond) { $1 }
-
-base_cond__open(x):
-  base_expr(x) | conditional(expr_with_let_expr) {
-    wild_error $1;
-    $1 }
+  base_cond | switch_expr(base_cond) { $1 }
 
 base_cond:
-  base_cond__open(base_cond) { $1 }
+  base_expr | conditional(expr_with_let_expr) {
+    wild_error $1;
+    $1 }
 
 type_expr_simple_args:
   par(nsepseq(type_expr_simple, ",")) { $1 }
@@ -448,8 +435,8 @@ type_expr_simple:
 type_annotation_simple:
   ":" type_expr_simple { $1,$2 }
 
-fun_expr:
-  disj_expr_level "=>" expr {
+fun_expr(right_expr):
+  disj_expr_level "=>" right_expr {
     let arrow, body = $2, $3
     and kwd_fun     = ghost in
     let start       = expr_to_region $1
@@ -570,8 +557,8 @@ fun_expr:
             }
     in EFun {region; value=f} }
 
-base_expr(right_expr):
-  disj_expr_level | fun_expr { $1 }
+base_expr:
+  disj_expr_level | fun_expr(expr) { $1 }
 
 conditional(right_expr):
   if_then_else(right_expr) | if_then(right_expr) { $1 }
@@ -605,7 +592,7 @@ if_then_else(right_expr):
     in ECond {region; value} }
 
 base_if_then_else__open(x):
-  base_expr(x) | if_then_else(x) { $1 }
+  base_expr | if_then_else(x) { $1 }
 
 base_if_then_else:
   base_if_then_else__open(base_if_then_else) { $1 }
@@ -800,6 +787,7 @@ common_expr:
 | "_"                                 {   EVar {value = "_"; region = $1} }
 | update_record                       {                    EUpdate $1 }
 | "<string>"                          {           EString (String $1) }
+| "<verbatim>"                        {         EString (Verbatim $1) }
 | unit                                {                      EUnit $1 }
 | "false"                             {  ELogic (BoolExpr (False $1)) }
 | "true"                              {   ELogic (BoolExpr (True $1)) }
@@ -836,9 +824,10 @@ list_or_spread:
 
 core_expr:
   common_expr
-| list_or_spread
-| sequence_or_record  {      $1 }
-| par(expr)           { EPar $1 }
+| list_or_spread      {         $1 }
+| sequence            {    ESeq $1 }
+| record              { ERecord $1 }
+| par(expr)           {    EPar $1 }
 
 module_field:
   module_name "." module_fun {
@@ -897,67 +886,104 @@ update_record:
     let region = cover $1 $6 in
     let ne_elements, terminator = $5 in
     let value = {
-      lbrace = $1;
-      record = $3;
+      lbrace   = $1;
+      record   = $3;
       kwd_with = $4;
-      updates  = { value = {compound = Braces($1,$6);
+      updates  = {value = {compound = Braces($1,$6);
                   ne_elements;
                   terminator};
                   region = cover $4 $6};
-      rbrace = $6}
+      rbrace   = $6}
     in {region; value} }
 
 expr_with_let_expr:
-  expr { $1 }
+  expr
 | let_expr(expr_with_let_expr) { $1 }
+
+exprs:
+  expr_with_let_expr ";"? {
+    (($1, []), $2)
+  }
+| expr_with_let_expr ";" exprs {
+  let rec fix_let_in a b c =
+    match a with
+    | ELetIn {value = {body; _} as v; _} -> (
+      let end_ = (nsepseq_to_region expr_to_region (fst c)) in
+      let sequence_region =
+        cover (expr_to_region body) end_
+      in
+      let val_ =
+        match body with
+        | ELetIn _ -> fst (fix_let_in body b c)
+        | e -> Utils.nsepseq_cons e b (fst c)
+      in
+      let sequence = ESeq {
+        value = {
+          compound = BeginEnd(Region.ghost, Region.ghost);
+          elements = Some val_;
+          terminator = (snd c)
+        };
+        region = sequence_region
+      }
+      in
+      let region =
+        cover (expr_to_region a) end_
+      in
+      let let_in =
+        ELetIn {
+          value = {
+            v with
+            body = sequence
+          };
+          region
+        }
+      in
+      ((let_in, []), snd c)
+    )
+    | e -> Utils.nsepseq_cons e b (fst c), None
+  in
+  fix_let_in $1 $2 $3
+}
 
 more_field_assignments:
   "," sep_or_term_list(field_assignment_punning,",") {
+    let elts, _region = $2
+    in $1, elts }
+
+sequence:
+  "{" exprs "}" {
     let elts, _region = $2 in
-    $1, elts
-  }
+    let compound = Braces ($1, $3) in
+    let value    = {compound;
+                    elements = Some elts;
+                    terminator = None} in
+    let region   = cover $1 $3
+    in {region; value} }
 
+record:
+  "{" field_assignment more_field_assignments? "}" {
+    let compound = Braces ($1,$4) in
+    let region   = cover $1 $4 in
 
-sequence_or_record_in:
-  sep_or_term_list(expr_with_let_expr,";") {
-    let elts, _region = $1 in
-    PaSequence {s_elts = elts; s_terminator=None}
-  }
-| field_assignment more_field_assignments? {
-    match $2 with
+    match $3 with
     | Some (comma, elts) ->
-      let r_elts = Utils.nsepseq_cons $1 comma elts in
-      PaRecord {r_elts; r_terminator = None}
+        let ne_elements = Utils.nsepseq_cons $2 comma elts in
+        { value = {compound; ne_elements; terminator = None}; region }
     | None ->
-      PaRecord {r_elts = ($1, []); r_terminator = None}
+        let ne_elements = ($2,[]) in
+        { value = {compound; ne_elements; terminator = None}; region }
   }
-| field_name more_field_assignments {
-  let value = {
-    field_name = $1;
-    assignment = ghost;
-    field_expr = EVar $1 }
-  in
-  let field_name = {$1 with value} in
-  let (comma, elts) = $2 in
-  let r_elts = Utils.nsepseq_cons field_name comma elts in
-  PaRecord {r_elts; r_terminator = None}
-}
-
-sequence_or_record:
-  "{" sequence_or_record_in "}" {
-    let compound = Braces ($1,$3) in
-    let region   = cover $1 $3 in
-    match $2 with
-      PaSequence s ->
-        let value = {compound;
-                     elements = Some s.s_elts;
-                     terminator = s.s_terminator}
-        in ESeq {region; value}
-    | PaRecord r ->
-        let value = {compound;
-                     ne_elements = r.r_elts;
-                     terminator = r.r_terminator}
-        in ERecord {region; value}}
+| "{" field_name more_field_assignments "}" {
+    let value = {
+      field_name = $2;
+      assignment = ghost;
+      field_expr = EVar $2 } in
+    let field_name = {$2 with value} in
+    let comma, elts = $3 in
+    let ne_elements = Utils.nsepseq_cons field_name comma elts in
+    let compound = Braces ($1,$4) in
+    let region   = cover $1 $4 in
+    {value = {compound; ne_elements; terminator = None}; region} }
 
 field_assignment_punning:
   (* This can only happen with multiple fields -
@@ -967,12 +993,9 @@ field_assignment_punning:
       field_name = $1;
       assignment = ghost;
       field_expr = EVar $1 }
-    in
-    {$1 with value}
+    in {$1 with value}
   }
-| field_assignment {
-    $1
-}
+| field_assignment { $1 }
 
 field_assignment:
   field_name ":" expr {
