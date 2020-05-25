@@ -203,3 +203,25 @@ let%expect_test _ =
                { DUP ; CDR ; NIL operation ; PAIR ; DIP { DROP } }
                { DUP ; CDR ; NIL operation ; PAIR ; DIP { DROP } } ;
              DIP { DROP 2 } } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; (contract "double_fold_converter.religo") ; "main" ] ;
+  [%expect {|
+    { parameter
+        (or (pair %option1 (string %bar) (nat %baz)) (pair %option2 (string %bar) (nat %baz))) ;
+      storage nat ;
+      code { DUP ;
+             CAR ;
+             IF_LEFT
+               { DUP ; LEFT (pair (string %bar) (nat %baz)) ; DIP { DROP } }
+               { DUP ; RIGHT (pair (string %bar) (nat %baz)) ; DIP { DROP } } ;
+             DUP ;
+             IF_LEFT
+               { DUP ; LEFT (pair (string %bar) (nat %baz)) ; DIP { DROP } }
+               { DUP ; RIGHT (pair (string %bar) (nat %baz)) ; DIP { DROP } } ;
+             DIP { DROP } ;
+             DUP ;
+             IF_LEFT
+               { DUP ; CDR ; NIL operation ; PAIR ; DIP { DROP } }
+               { DUP ; CDR ; NIL operation ; PAIR ; DIP { DROP } } ;
+             DIP { DROP 2 } } } |}]
