@@ -420,8 +420,7 @@ and type_lambda e state {
       let e' = Environment.add_ez_binder (binder) fresh e in
 
       let%bind (result , state') = type_expression e' state result in
-      let () = Printf.printf "this does not make use of the typed body, this code sounds buggy." in
-      let wrapped = Solver.Wrap.lambda fresh input_type' output_type' in
+      let wrapped = Solver.Wrap.lambda fresh input_type' output_type' result.type_expression in
       ok (({binder;result}:O.lambda),state',wrapped)
 
 and type_constant (name:I.constant') (lst:O.type_expression list) (tv_opt:O.type_expression option) : (O.constant' * O.type_expression) result =

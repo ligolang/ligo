@@ -339,23 +339,26 @@ let lambda
     : T.type_expression ->
       T.type_expression option ->
       T.type_expression option ->
+      T.type_expression ->
       (constraints * T.type_variable) =
-  fun fresh arg body ->
+  fun fresh arg output result ->
   let whole_expr = Core.fresh_type_variable () in
   let unification_arg = T.{ tsrc = "wrap: lambda: arg" ; t = P_variable (Core.fresh_type_variable ()) } in
-  let unification_body = T.{ tsrc = "wrap: lambda: whole" ; t = P_variable (Core.fresh_type_variable ()) } in
+  let unification_output = T.{ tsrc = "wrap: lambda: whole" ; t = P_variable (Core.fresh_type_variable ()) } in
+  let result' = type_expression_to_type_value result in
   let arg'  = match arg with
       None -> []
     | Some arg -> [c_equation unification_arg (type_expression_to_type_value arg) "wrap: lambda: arg annot"] in
-  let body'  = match body with
+  let output'  = match output with
       None -> []
-    | Some body -> [c_equation unification_body (type_expression_to_type_value body) "wrap: lambda: body annot"]
+    | Some output -> [c_equation unification_output (type_expression_to_type_value output) "wrap: lambda: output annot"]
   in [
+      c_equation unification_output result' "wrap: lambda: result" ;
       c_equation (type_expression_to_type_value fresh) unification_arg "wrap: lambda: arg" ;
       c_equation ({ tsrc = "wrap: lambda: whole" ; t = P_variable whole_expr })
-                 (p_constant C_arrow ([unification_arg ; unification_body]))
+                 (p_constant C_arrow ([unification_arg ; unification_output]))
                  "wrap: lambda: arrow (whole)"
-     ] @ arg' @ body' , whole_expr
+     ] @ arg' @ output' , whole_expr
 
 (* This is pretty much a wrapper for an n-ary function. *)
 let constant : O.type_value -> T.type_expression list -> (constraints * T.type_variable) =
