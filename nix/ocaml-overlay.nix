@@ -133,19 +133,16 @@ in {
             echo "Coverage:"
             BISECT_ENABLE=yes dune runtest --force
             bisect-ppx-report html -o $out/share/coverage/all --title="LIGO overall test coverage"
-            bisect-ppx-report summary --per-file
+            bisect-ppx-report summary --per-file > $out/share/coverage-all
             echo "Test coverage:"
             BISECT_ENABLE=yes dune runtest src/test --force
             bisect-ppx-report html -o $out/share/coverage/ligo --title="LIGO test coverage"
-            bisect-ppx-report summary --per-file
             echo "Doc coverage:"
             BISECT_ENABLE=yes dune build @doc-test --force
             bisect-ppx-report html -o $out/share/coverage/docs --title="LIGO doc coverage"
-            bisect-ppx-report summary --per-file
             echo "CLI test coverage:"
             BISECT_ENABLE=yes dune runtest src/bin/expect_tests
             bisect-ppx-report html -o $out/share/coverage/cli --title="CLI test coverage"
-            bisect-ppx-report summary --per-file
           '';
           installPhase = "true";
         });
