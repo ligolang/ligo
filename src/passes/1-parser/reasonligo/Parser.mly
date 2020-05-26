@@ -501,7 +501,13 @@ fun_expr(right_expr):
          (arg_to_pattern fun_arg, [])
       | EPar {value = {inside = EFun {
           value = {
-              binders = PTyped { value = { pattern; colon; type_expr }; region = fun_region }, [];
+              binders = PPar {
+                value = {
+                  inside = PTyped { value = { pattern; colon; type_expr }; region = fun_region };
+                  _
+                };
+                _
+              }, [];
               arrow;
               body;
               _
@@ -535,7 +541,7 @@ fun_expr(right_expr):
           };
           region;
         }, []
-      | EPar {value = {inside =  fun_arg; _ }; _} ->
+      | EPar {value = {inside = fun_arg; _ }; _} ->
           arg_to_pattern fun_arg, []
       | EAnnot _ as e ->
           arg_to_pattern e, []
