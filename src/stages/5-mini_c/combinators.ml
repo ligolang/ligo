@@ -183,6 +183,15 @@ let e_let_in ?loc v tv inline expr body : expression = Expression.(make_tpl ?loc
     E_let_in ((v , tv) , inline, expr , body) ,
     get_type body
   ))
+let e_application ?loc f t arg: expression = Expression.(make_tpl ?loc(
+    E_application (f,arg) ,
+    t
+  ))
+let e_var ?loc vname t: expression = Expression.(make_tpl ?loc(
+    E_variable vname ,
+    t
+  ))
+
 
 let ez_e_sequence ?loc a b : expression = Expression.(make_tpl (E_sequence (make_tpl ?loc (a , t_unit ()) , b) , get_type b))
 
