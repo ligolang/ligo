@@ -135,6 +135,11 @@ val equal : t -> t -> bool
     [r2]. (See {! Pos.lt}.) *)
 val lt : t -> t -> bool
 
+(** The call [compare r1 r2] has the value 0 if [equal r1 r2] returns
+   [true]. Otherwise it returns -1 if [lt r1 r2] returns [true], and 1
+   if [lt r1 r2] returns [false]. *)
+val compare : t -> t -> int
+
 (** Given two regions [r1] and [r2], we may want the region [cover r1
     r2] that covers [r1] and [r2]. We have the property [equal (cover
     r1 r2) (cover r2 r1)]. (In a sense, it is the maximum region, but

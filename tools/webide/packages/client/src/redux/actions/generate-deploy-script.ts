@@ -82,7 +82,11 @@ export class GenerateDeployScriptAction extends CancellableAction {
 
         const title = slugify(editor.title).toLowerCase() || 'untitled';
         const output = `tezos-client \\
+<<<<<<< HEAD:tools/webide/packages/client/src/redux/actions/generate-deploy-script.ts
   originate \\
+=======
+  ${generateDeployScript.command} \\
+>>>>>>> bc2d95d6f6dd4959097e5b6cdb19bce0cc6b3c01:tools/webide/packages/client/src/redux/actions/generate-command.ts
   contract \\
   ${title} \\
   transferring 0 \\

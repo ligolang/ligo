@@ -16,7 +16,10 @@
     entrypoint: add
     parameters: (5, 6)
   generateDeployScript:
+<<<<<<< HEAD
     tool: tezos-client
+=======
+>>>>>>> bc2d95d6f6dd4959097e5b6cdb19bce0cc6b3c01
     entrypoint: main
     storage: 0
 *_*)

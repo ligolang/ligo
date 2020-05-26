@@ -23,7 +23,7 @@ module Ord =
   struct
     type t = AST.variable
     let compare v1 v2 =
-      compare v1.value v2.value
+      String.compare v1.value v2.value
   end
 
 module VarSet = Set.Make (Ord)
