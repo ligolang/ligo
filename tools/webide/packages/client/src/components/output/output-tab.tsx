@@ -8,7 +8,7 @@ import { ResultState } from '../../redux/result';
 import { Command } from '../../redux/types';
 import { CompileOutputPane } from './compile-output-pane';
 import { DeployOutputPane } from './deploy-output-pane';
-import { GenerateCommandOutputPane } from './generate-command-output-pane';
+import { GenerateDeployScriptOutputPane } from './generate-deploy-script-output-pane';
 import { Loading } from './loading';
 import { OutputPane } from './output-pane';
 
@@ -55,8 +55,8 @@ export const OutputTab = (props: {
       return <CompileOutputPane></CompileOutputPane>;
     } else if (command === Command.Deploy) {
       return <DeployOutputPane></DeployOutputPane>;
-    } else if (command === Command.GenerateCommand) {
-      return <GenerateCommandOutputPane></GenerateCommandOutputPane>;
+    } else if (command === Command.GenerateDeployScript) {
+      return <GenerateDeployScriptOutputPane></GenerateDeployScriptOutputPane>;
     }
 
     return <OutputPane></OutputPane>;

@@ -12,7 +12,7 @@ interface DryRunBody {
   storage: string;
 }
 
-const validateRequest = (body: any): { value: DryRunBody; error: any } => {
+const validateRequest = (body: any): { value: DryRunBody; error?: any } => {
   return joi
     .object({
       syntax: joi.string().required(),

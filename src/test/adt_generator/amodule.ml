@@ -1,3 +1,4 @@
+[@@@warning "-33"]
 (* open Amodule_utils *)
 
 type root =

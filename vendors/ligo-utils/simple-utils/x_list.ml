@@ -178,6 +178,17 @@ let rec assoc_opt ?compare:cmp x =
     [] -> None
   | (a,b)::l -> if compare a x = 0 then Some b else assoc_opt ~compare x l
 
+let rec compare ?compare:cmp a b =
+  let cmp = unopt ~default:Pervasives.compare cmp in
+  match a,b with
+    [], [] -> 0
+  | [], _::_ -> -1
+  | _::_, [] -> 1
+  | ha::ta, hb::tb ->
+     (match cmp ha hb with
+        0 -> compare ta tb
+      | c -> c)
+
 
 module Ne = struct
 
