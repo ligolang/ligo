@@ -323,7 +323,7 @@ type 'selector_output propagator = 'selector_output -> structured_dbs -> new_con
  * For now: break pair(a, b) = pair(c, d) into a = c, b = d *)
 
 let selector_break_ctor :  (type_constraint_simpl, output_break_ctor) selector =
-  (* find two rules with the shape a = k(var …) and a = k'(var' …) *)
+  (* find two rules with the shape x = k(var …) and x = k'(var' …) *)
   fun type_constraint_simpl dbs ->
   match type_constraint_simpl with
     SC_Constructor c ->
@@ -470,6 +470,10 @@ let propagator_break_ctor : output_break_ctor propagator =
   let () = ignore (dbs) in (* this propagator doesn't need to use the dbs *)
   let a = selected.a_k_var in
   let b = selected.a_k'_var' in
+
+  (* The selector is expected to provice two constraints with the shape x = k(var …) and x = k'(var' …) *)
+  assert (Var.equal (a : c_constructor_simpl).tv (b : c_constructor_simpl).tv);
+
   (* produce constraints: *)
 
   (* a.tv = b.tv *)
@@ -577,7 +581,7 @@ let compare_output_break_ctor { a_k_var=a1; a_k'_var'=a2 } { a_k_var=b1; a_k'_va
   compare_c_constructor_simpl a1 b1 <? fun () -> compare_c_constructor_simpl a2 b2
 
 let selector_specialize1 : (type_constraint_simpl, output_specialize1) selector =
-  (* find two rules with the shape (a = forall b, d) and a = k'(var' …) or vice versa *)
+  (* find two rules with the shape (x = forall b, d) and x = k'(var' …) or vice versa *)
   (* TODO: do the same for two rules with the shape (a = forall b, d) and tc(a…) *)
   (* TODO: do the appropriate thing for two rules with the shape (a = forall b, d) and (a = forall b', d') *)
   fun type_constraint_simpl dbs ->
