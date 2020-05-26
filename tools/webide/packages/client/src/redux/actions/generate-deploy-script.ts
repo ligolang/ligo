@@ -81,7 +81,7 @@ export class GenerateDeployScriptAction extends CancellableAction {
         }
 
         const title = slugify(editor.title).toLowerCase() || 'untitled';
-        const output = `tezos-client \\
+        const output = `${generateDeployScript.tool} \\
   originate \\
   contract \\
   ${title} \\
