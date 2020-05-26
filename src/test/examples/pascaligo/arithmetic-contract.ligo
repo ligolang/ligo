@@ -11,7 +11,6 @@
     entrypoint: main
     storage: 0
   evaluateValue:
-    command: originate
     entrypoint: ""
   evaluateFunction:
     entrypoint: add
