@@ -9,11 +9,7 @@ import {
   ChangeToolAction,
   GenerateDeployScriptState,
 } from '../../redux/generate-deploy-script';
-<<<<<<< HEAD:tools/webide/packages/client/src/components/configure/generate-deploy-script-pane.tsx
 import { Tool } from '../../redux/types';
-=======
-import { Tool, ToolCommand } from '../../redux/types';
->>>>>>> bc2d95d6f6dd4959097e5b6cdb19bce0cc6b3c01:tools/webide/packages/client/src/components/configure/generate-command-pane.tsx
 import { AccessFunctionLabel, Group, Input, Label, Textarea } from '../form/inputs';
 import { Option, Select } from '../form/select';
 
@@ -28,21 +24,10 @@ export const GenerateDeployScriptPane = () => {
     state => state.generateDeployScript.tool
   );
 
-<<<<<<< HEAD:tools/webide/packages/client/src/components/configure/generate-deploy-script-pane.tsx
   const entrypoint = useSelector<AppState, GenerateDeployScriptState['entrypoint']>(
     state => state.generateDeployScript.entrypoint
   );
 
-=======
-  const command = useSelector<AppState, GenerateDeployScriptState['command']>(
-    state => state.generateDeployScript.command
-  );
-
-  const entrypoint = useSelector<AppState, GenerateDeployScriptState['entrypoint']>(
-    state => state.generateDeployScript.entrypoint
-  );
-
->>>>>>> bc2d95d6f6dd4959097e5b6cdb19bce0cc6b3c01:tools/webide/packages/client/src/components/configure/generate-command-pane.tsx
   const storage = useSelector<AppState, GenerateDeployScriptState['storage']>(
     state => state.generateDeployScript.storage
   );
