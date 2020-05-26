@@ -527,10 +527,19 @@ let equal_variables a b : bool =
   | E_variable a, E_variable b -> Var.equal a b
   |  _, _ -> false
 
-let p_constant (p_ctor_tag : constant_tag) (p_ctor_args : p_ctor_args) =
-  P_constant {
+let p_constant (p_ctor_tag : constant_tag) (p_ctor_args : p_ctor_args) = {
+  tsrc = "misc.ml/p_constant" ;
+  t = P_constant {
       p_ctor_tag : constant_tag ;
       p_ctor_args : p_ctor_args ;
     }
+}
 
 let c_equation aval bval reason = { c = C_equation { aval ; bval }; reason }
+
+let reason_simpl : type_constraint_simpl -> string = function
+  | SC_Constructor { reason_constr_simpl=reason; _ }
+  | SC_Alias { reason_alias_simpl=reason; _ }
+  | SC_Poly { reason_poly_simpl=reason; _ }
+  | SC_Typeclass { reason_typeclass_simpl=reason; _ }
+  -> reason

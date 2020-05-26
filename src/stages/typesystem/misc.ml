@@ -223,24 +223,24 @@ module Substitution = struct
     and type_value ~tv ~substs =
       let self tv = type_value ~tv ~substs in
       let (v, expr) = substs in
-      match (tv : type_value) with
+      match (tv : type_value).t with
       | P_variable v' when Var.equal v' v -> expr
       | P_variable _ -> tv
       | P_constant {p_ctor_tag=x ; p_ctor_args=lst} -> (
           let lst' = List.map self lst in
-          P_constant {p_ctor_tag=x ; p_ctor_args=lst'}
+          { tsrc = "?TODO1?" ; t = P_constant {p_ctor_tag=x ; p_ctor_args=lst'} }
         )
       | P_apply { tf; targ } -> (
-          P_apply { tf = self tf ; targ = self targ }
+          { tsrc = "?TODO2?" ; t = P_apply { tf = self tf ; targ = self targ } }
         )
       | P_forall p -> (
           let aux c = constraint_ ~c ~substs in
           let constraints = List.map aux p.constraints in
           if (p.binder = v) then (
-            P_forall { p with constraints }
+            { tsrc = "?TODO3?" ; t = P_forall { p with constraints } }
           ) else (
             let body = self p.body in
-            P_forall { p with constraints ; body }
+            { tsrc = "?TODO4?" ; t = P_forall { p with constraints ; body } }
           )
         )
 
@@ -270,9 +270,10 @@ module Substitution = struct
 
     (* Performs beta-reduction at the root of the type *)
     let eval_beta_root ~(tv : type_value) =
-      match tv with
-        P_apply {tf = P_forall { binder; constraints; body }; targ} ->
+      match tv.t with
+        P_apply {tf = { tsrc = _ ; t = P_forall { binder; constraints; body } }; targ} ->
         let constraints = List.map (fun c -> constraint_ ~c ~substs:(mk_substs ~v:binder ~expr:targ)) constraints in
+        (* TODO: indicate in the result's tsrc that it was obtained via beta-reduction of the original type *)
         (type_value ~tv:body ~substs:(mk_substs ~v:binder ~expr:targ) , constraints)
       | _ -> (tv , [])
   end
