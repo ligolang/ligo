@@ -589,13 +589,13 @@ let selector_specialize1 : (type_constraint_simpl, output_specialize1) selector 
     SC_Constructor c                ->
     (* vice versa *)
     let other_cs = (UnionFindWrapper.get_constraints_related_to c.tv dbs).poly in
-    let other_cs = List.filter (fun (x : c_poly_simpl) -> c.tv = x.tv) other_cs in (* TODO: does equality work in OCaml? *)
+    let other_cs = List.filter (fun (x : c_poly_simpl) -> Var.equal c.tv x.tv) other_cs in
     let cs_pairs = List.map (fun x -> { poly = x ; a_k_var = c }) other_cs in
     WasSelected cs_pairs
   | SC_Alias       _                -> WasNotSelected (* TODO: ??? *)
   | SC_Poly        p                ->
     let other_cs = (UnionFindWrapper.get_constraints_related_to p.tv dbs).constructor in
-    let other_cs = List.filter (fun (x : c_constructor_simpl) -> x.tv = p.tv) other_cs in (* TODO: does equality work in OCaml? *)
+    let other_cs = List.filter (fun (x : c_constructor_simpl) -> Var.equal x.tv p.tv) other_cs in
     let cs_pairs = List.map (fun x -> { poly = p ; a_k_var = x }) other_cs in
     WasSelected cs_pairs
   | SC_Typeclass   _                -> WasNotSelected
