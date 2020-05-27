@@ -38,7 +38,7 @@ open Ast_imperative
 
 let pack_payload (program:Ast_typed.program) (payload:expression) : bytes result =
   let%bind code =
-    let env = Ast_typed.program_environment program in
+    let env = Ast_typed.program_environment Environment.default program in
 
     let%bind sugar     = Compile.Of_imperative.compile_expression payload in
     let%bind core      = Compile.Of_sugar.compile_expression sugar in
@@ -89,7 +89,7 @@ let typed_program_with_imperative_input_to_michelson
     (program: Ast_typed.program) (entry_point: string)
     (input: Ast_imperative.expression) : Compiler.compiled_expression result =
   Printexc.record_backtrace true;
-  let env = Ast_typed.program_environment program in
+  let env = Ast_typed.program_environment Environment.default program in
   let state = Typer.Solver.initial_state in
   let%bind sugar            = Compile.Of_imperative.compile_expression input in
   let%bind core             = Compile.Of_sugar.compile_expression sugar in

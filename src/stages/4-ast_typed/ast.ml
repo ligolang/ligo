@@ -272,31 +272,30 @@ and declaration_loc = declaration location_wrap
 
 and program = declaration_loc list
 
+(* A Declaration_constant is described by
+ *   a name + a type-annotated expression
+ *   a boolean indicating whether it should be inlined
+ *   the environment before the declaration (the original environment)
+ *   the environment after the declaration (i.e. with that new declaration added to the original environment). *)
 and declaration_constant = {
     binder : expression_variable ;
     expr : expression ;
     inline : bool ;
-    post_env : environment ;
+  }
+
+and declaration_type = {
+    type_binder : type_variable ;
+    type_expr : type_expression ;
   }
 
 and declaration =
-  (* A Declaration_constant is described by
-   *   a name + a type-annotated expression
-   *   a boolean indicating whether it should be inlined
-   *   the environment before the declaration (the original environment)
-   *   the environment after the declaration (i.e. with that new declaration added to the original environment). *)
   | Declaration_constant of declaration_constant
-  (*
-  | Declaration_type of (type_variable * type_expression)
-  | Declaration_constant of (named_expression * (environment * environment))
-  *)
-(* | Macro_declaration of macro_declaration *)
+  | Declaration_type of declaration_type
 
 and expression = {
     expression_content: expression_content ;
     location: location ;
     type_expression: type_expression ;
-    environment: environment ;
   }
 
 and map_kv = {

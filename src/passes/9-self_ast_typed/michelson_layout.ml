@@ -13,25 +13,25 @@ let accessor (record:expression) (path:label) (t:type_expression) =
   { expression_content = E_record_accessor {record; path} ;
     location = Location.generated ;
     type_expression = t ;
-    environment = record.environment }
+  }
 
 let constructor (constructor:constructor') (element:expression) (t:type_expression) =
   { expression_content = E_constructor { constructor ; element } ;
     location = Location.generated ;
     type_expression = t ;
-    environment = element.environment }
+  }
 
 let match_var (t:type_expression) =
   { expression_content = E_variable (Var.of_name "x") ;
     location = Location.generated ;
     type_expression = t ;
-    environment = Environment.add_ez_binder (Var.of_name "x") t Environment.empty}
+  }
 
 let matching (e:expression) matchee cases =
   { expression_content = E_matching {matchee ; cases};
     location = Location.generated ;
     type_expression = e.type_expression ;
-    environment = e.environment }
+  }
 
 let rec descend_types s lmap i =
   if i > 0 then
@@ -105,7 +105,7 @@ let rec to_right_comb_record
     let exp = { expression_content = E_record_accessor {record = prev ; path = label } ;
                 location = Location.generated ;
                 type_expression = field_type ;
-                environment = prev.environment } in
+              } in
     let conv_map' = LMap.add (Label "0") exp conv_map in
     LMap.add (Label "1") ({exp with expression_content = E_record (to_right_comb_record prev tl conv_map')}) conv_map'
 

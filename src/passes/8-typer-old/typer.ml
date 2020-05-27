@@ -504,17 +504,17 @@ let rec type_program (p:I.program) : (O.program * O.typer_state) result =
   ok @@ (List.rev lst , (Solver.placeholder_for_state_of_new_typer ()))
 
 and type_declaration env (_placeholder_for_state_of_new_typer : O.typer_state) : I.declaration -> (environment * O.typer_state * O.declaration option) result = function
-  | Declaration_type (type_name , type_expression) ->
-      let%bind tv = evaluate_type env type_expression in
-      let env' = Environment.add_type (type_name) tv env in
-      ok (env', (Solver.placeholder_for_state_of_new_typer ()) , None)
+  | Declaration_type (type_binder , type_expr) ->
+      let%bind tv = evaluate_type env type_expr in
+      let env' = Environment.add_type (type_binder) tv env in
+      ok (env', (Solver.placeholder_for_state_of_new_typer ()) , Some (O.Declaration_type { type_binder ; type_expr = tv } ))
   | Declaration_constant (binder , tv_opt , inline, expression) -> (
       let%bind tv'_opt = bind_map_option (evaluate_type env) tv_opt in
       let%bind expr =
         trace (constant_declaration_error binder expression tv'_opt) @@
         type_expression' ?tv_opt:tv'_opt env expression in
       let post_env = Environment.add_ez_declaration binder expr env in
-      ok (post_env, (Solver.placeholder_for_state_of_new_typer ()) , Some (O.Declaration_constant { binder ; expr ; inline ; post_env}))
+      ok (post_env, (Solver.placeholder_for_state_of_new_typer ()) , Some (O.Declaration_constant { binder ; expr ; inline}))
     )
 
 and type_match : (environment -> I.expression -> O.expression result) -> environment -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> O.matching_expr result =
@@ -674,6 +674,7 @@ and type_expression : environment -> O.typer_state -> ?tv_opt:O.type_expression 
   = fun e _placeholder_for_state_of_new_typer ?tv_opt ae ->
     let%bind res = type_expression' e ?tv_opt ae in
     ok (res, (Solver.placeholder_for_state_of_new_typer ()))
+
 and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression -> O.expression result = fun e ?tv_opt ae ->
   let module L = Logger.Stateful() in
   let return expr tv =
@@ -682,7 +683,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       | None -> ok ()
       | Some tv' -> O.assert_type_expression_eq (tv' , tv) in
     let location = ae.location in
-    ok @@ make_e ~location expr tv e in
+    ok @@ make_e ~location expr tv in
   let main_error =
     let title () = "typing expression" in
     let content () = "" in
@@ -736,7 +737,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
               generic_try (bad_record_access property ae prev.type_expression ae.location)
               @@ (fun () -> let ({field_type;_} : O.field_content) = O.LMap.find (convert_label property) r_tv in field_type) in
             let location = ae.location in
-            ok @@ make_e ~location (E_record_accessor {record=prev; path=convert_label property}) tv e
+            ok @@ make_e ~location (E_record_accessor {record=prev; path=convert_label property}) tv
       in
       let%bind ae =
       trace (simple_info "accessing") @@ aux e' path in
@@ -832,7 +833,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let e' = Environment.add_ez_binder lname input_type e in
       let%bind body = type_expression' ?tv_opt:(Some tv_out) e' result in
       let output_type = body.type_expression in
-      let lambda' = make_e (E_lambda {binder = lname ; result=body}) (t_function input_type output_type ()) e' in
+      let lambda' = make_e (E_lambda {binder = lname ; result=body}) (t_function input_type output_type ()) in
       let lst' = [lambda'; v_col; v_initr] in
       let tv_lst = List.map get_type_expression lst' in
       let%bind (opname', tv) =
@@ -853,7 +854,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let e' = Environment.add_ez_binder lname input_type e in
       let%bind body = type_expression' e' result in
       let output_type = body.type_expression in
-      let lambda' = make_e (E_lambda {binder = lname ; result=body}) (t_function input_type output_type ()) e' in
+      let lambda' = make_e (E_lambda {binder = lname ; result=body}) (t_function input_type output_type ()) in
       let lst' = [lambda';v_initr] in
       let tv_lst = List.map get_type_expression lst' in
       let%bind (opname',tv) = type_constant opname tv_lst tv_opt in

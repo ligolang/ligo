@@ -8,8 +8,9 @@ let program_to_main : program -> string -> lambda result = fun p s ->
   let%bind (main , input_type , _) =
     let pred = fun d ->
       match d with
-      | Declaration_constant { binder; expr; inline=_ ; post_env=_ } when binder = Var.of_name s -> Some expr
+      | Declaration_constant { binder; expr; inline=_ } when binder = Var.of_name s -> Some expr
       | Declaration_constant _ -> None
+      | Declaration_type _ -> None
     in
     let%bind main =
       trace_option (simple_error "no main with given name") @@
@@ -20,16 +21,11 @@ let program_to_main : program -> string -> lambda result = fun p s ->
       | _ -> simple_fail "program main isn't a function" in
     ok (main , input_ty , output_ty)
   in
-  let env =
-    let aux = fun _ d ->
-      match d with
-      | Declaration_constant {binder=_ ; expr= _ ; inline=_ ; post_env } -> post_env in
-    List.fold_left aux Environment.empty (List.map Location.unwrap p) in
   let binder = Var.of_name "@contract_input" in
   let result =
-    let input_expr = e_a_variable binder input_type env in
-    let main_expr = e_a_variable (Var.of_name s) (get_type_expression main) env in
-    e_a_application main_expr input_expr env in
+    let input_expr = e_a_variable binder input_type in
+    let main_expr = e_a_variable (Var.of_name s) (get_type_expression main) in
+    e_a_application main_expr input_expr in
   ok {
     binder ;
     result ;
@@ -46,8 +42,8 @@ module Captured_variables = struct
   let of_list : expression_variable list -> bindings = fun x -> x
 
   let rec expression : bindings -> expression -> bindings result = fun b e ->
-    expression_content b e.environment e.expression_content
-  and expression_content : bindings -> environment -> expression_content -> bindings result = fun b env ec ->
+    expression_content b e.expression_content
+  and expression_content : bindings -> expression_content -> bindings result = fun b ec ->
     let self = expression b in
     match ec with
     | E_lambda l -> ok @@ Free_variables.lambda empty l
@@ -56,12 +52,7 @@ module Captured_variables = struct
       let%bind lst' = bind_map_list self arguments in
       ok @@ unions lst'
     | E_variable name -> (
-        let%bind env_element =
-          trace_option (simple_error "missing var in env") @@
-          Environment.get_opt name env in
-        match env_element.definition with
-        | ED_binder -> ok empty
-        | ED_declaration {expr=_ ; free_variables=_} -> simple_fail "todo"
+      if mem name b then ok empty else ok (singleton name)
       )
     | E_application {lamb;args} ->
       let%bind lst' = bind_map_list self [ lamb ; args ] in
@@ -84,7 +75,7 @@ module Captured_variables = struct
       expression b' li.let_result
     | E_recursive r -> 
       let b' = union (singleton r.fun_name) b in
-      expression_content b' env @@ E_lambda r.lambda
+      expression_content b' @@ E_lambda r.lambda
 
   and matching_variant_case : (bindings -> expression -> bindings result) -> bindings -> matching_content_case -> bindings result  = fun f b { constructor=_ ; pattern ; body } ->
     f (union (singleton pattern) b) body

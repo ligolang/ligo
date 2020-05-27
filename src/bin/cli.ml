@@ -263,7 +263,7 @@ let compile_parameter =
     let%bind typed_prg,state = Compile.Utils.type_file source_file syntax (Contract entry_point) in
     let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
     let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
-    let      env             = Ast_typed.program_environment typed_prg in
+    let      env             = Ast_typed.program_environment Environment.default typed_prg in
     let%bind (_contract: Tezos_utils.Michelson.michelson) =
       (* fails if the given entry point is not a valid contract *)
       Compile.Of_michelson.build_contract michelson_prg in
@@ -290,7 +290,7 @@ let interpret =
       | Some init_file ->
         let%bind typed_prg,state = Compile.Utils.type_file init_file syntax Env in
         let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
-        let      env             = Ast_typed.program_environment typed_prg in
+        let      env             = Ast_typed.program_environment Environment.default typed_prg in
         ok (mini_c_prg,state,env)
       | None -> ok ([],Typer.Solver.initial_state,Environment.default) in
 
@@ -332,7 +332,7 @@ let compile_storage =
     let%bind typed_prg,state = Compile.Utils.type_file source_file syntax (Contract entry_point) in
     let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
     let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
-    let      env             = Ast_typed.program_environment typed_prg in
+    let      env             = Ast_typed.program_environment Environment.default typed_prg in
     let%bind (_contract: Tezos_utils.Michelson.michelson) =
       (* fails if the given entry point is not a valid contract *)
       Compile.Of_michelson.build_contract michelson_prg in
@@ -356,7 +356,7 @@ let dry_run =
   let f source_file entry_point storage input amount balance sender source predecessor_timestamp syntax display_format =
     toplevel ~display_format @@
     let%bind typed_prg,state = Compile.Utils.type_file source_file syntax (Contract entry_point) in
-    let      env             = Ast_typed.program_environment typed_prg in
+    let      env             = Ast_typed.program_environment Environment.default typed_prg in
     let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
     let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
     let%bind (_contract: Tezos_utils.Michelson.michelson) =
@@ -386,7 +386,7 @@ let run_function =
   let f source_file entry_point parameter amount balance sender source predecessor_timestamp syntax display_format =
     toplevel ~display_format @@
     let%bind typed_prg,state = Compile.Utils.type_file source_file syntax Env in
-    let      env             = Ast_typed.program_environment typed_prg in
+    let      env             = Ast_typed.program_environment Environment.default typed_prg in
     let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
 
 

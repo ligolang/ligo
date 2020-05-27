@@ -15,3 +15,5 @@ module Helpers = Helpers
 include Types
 include Misc
 include Combinators
+
+let program_environment env program = fst (Compute_environment.program env program)
