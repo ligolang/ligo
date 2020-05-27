@@ -92,13 +92,12 @@ them. please report this to the developers." in
     ] in
     error ~data title content
 
-  let language_backend_mismatch language backend location =
+  let language_backend_mismatch language backend =
     let title () = "Language insert - Backend Mismatch" in
     let content () = "only provide code insertion in the language you are compiling to" in
     let data = [
       ("Code Insertion Language", fun () -> language);
       ("Target backend", fun () -> backend);
-      ("Location", fun() -> Format.asprintf "%a" Location.pp location);
     ] in
     error ~data title content
 
@@ -618,13 +617,14 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
   )
   | E_raw_code { language; code} -> 
     let backend = "Michelson" in
-    let%bind () = trace_strong (language_backend_mismatch language backend ae.location) @@
-    Assert.assert_true (String.equal language backend)
+    let%bind () =
+      trace_strong (language_backend_mismatch language backend) @@
+      Assert.assert_true (String.equal language backend)
     in
     let type_anno  = get_type_expression code in
     let%bind type_anno' = transpile_type type_anno in
-    let%bind code = get_a_verbatim code in
-    return @@ E_raw_michelson (code, type_anno')
+    let%bind code = get_a_string code in
+    return ~tv:type_anno' @@ E_raw_michelson code
 
 and transpile_lambda l (input_type , output_type) =
   let { binder ; result } : AST.lambda = l in

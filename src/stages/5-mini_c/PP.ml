@@ -79,7 +79,7 @@ and type_expression ppf : type_expression -> unit = fun te -> match te.type_cont
   | T_function (a, b) -> fprintf ppf "lambda (%a) %a" type_expression a type_expression b
   | T_base tc -> fprintf ppf "%a" type_constant tc
   | T_map (k,v) -> fprintf ppf "Map (%a,%a)" type_expression k type_expression v
-  | T_big_map (k,v) -> fprintf ppf "BigMap (%a,%a)" type_expression k type_expression v
+  | T_big_map (k,v) -> fprintf ppf "Big_map (%a,%a)" type_expression k type_expression v
   | T_list e -> fprintf ppf "List (%a)" type_expression e
   | T_set e -> fprintf ppf "Set (%a)" type_expression e
   | T_contract c -> fprintf ppf "Contract (%a)" type_expression c
@@ -125,7 +125,7 @@ and expression_content ppf (e:expression_content) = match e with
       fprintf ppf "@[{ %a@;<1 2>with@;<1 2>{ %a = %a } }@]" expression r (list_sep lr (const ".")) path expression update
   | E_while (e , b) ->
       fprintf ppf "@[while %a do %a@]" expression e expression b
-  | E_raw_michelson (code, _) -> 
+  | E_raw_michelson code ->
       fprintf ppf "%s" code 
 
 and expression_with_type : _ -> expression -> _  = fun ppf e ->

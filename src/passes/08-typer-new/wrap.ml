@@ -312,7 +312,7 @@ let raw_code : T.type_expression -> (constraints * T.type_variable) =
   let type_anno = type_expression_to_type_value type_anno in
   let whole_expr = Core.fresh_type_variable () in
   [
-      c_equation type_anno  (P_variable whole_expr) "wrap: raw_code: type_anno (whole)";
+      c_equation type_anno  ({ tsrc = "wrap: raw_code: whole"; t = P_variable whole_expr }) "wrap: raw_code: type_anno (whole)" ;
   ], whole_expr
 
 let assign : T.type_expression -> T.type_expression -> (constraints * T.type_variable) =

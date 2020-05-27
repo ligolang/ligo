@@ -493,12 +493,14 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
         i_push_unit ;
       ]
     )
-  | E_raw_michelson (code, type_anno) -> 
-      let code = Format.asprintf "{%s}" code in 
-      let%bind code = Proto_alpha_utils.Trace.trace_tzresult (raw_michelson_parsing_error code) @@
-      Tezos_micheline.Micheline_parser.no_parsing_error @@ Michelson_parser.V1.parse_expression ~check:false code in
+  | E_raw_michelson code -> 
+      let%bind code = 
+        Proto_alpha_utils.Trace.trace_tzresult (raw_michelson_parsing_error code) @@
+        Tezos_micheline.Micheline_parser.no_parsing_error @@ 
+        Michelson_parser.V1.parse_expression ~check:false code
+      in
       let code = Tezos_micheline.Micheline.root code.expanded in
-      let%bind ty = Compiler_type.type_ type_anno in
+      let%bind ty = Compiler_type.type_ ty in
       return @@ i_push ty code
 
 and translate_function_body ({body ; binder} : anon_function) lst input : michelson result =

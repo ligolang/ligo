@@ -947,19 +947,6 @@ interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON Bytes COMMA Ident COLO
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COMMA Ident COMMA WILD
-##
-## Ends in an error in state: 277.
-##
-## nsepseq(field_path_assignment,COMMA) -> field_path_assignment COMMA . nsepseq(field_path_assignment,COMMA) [ RBRACE ]
-## seq(__anonymous_0(field_path_assignment,COMMA)) -> field_path_assignment COMMA . seq(__anonymous_0(field_path_assignment,COMMA)) [ RBRACE ]
-##
-## The known suffix of the stack is as follows:
-## field_path_assignment COMMA
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
 interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON Bytes COMMA WILD
 ##
 ## Ends in an error in state: 273.
@@ -1044,26 +1031,6 @@ interactive_expr: LBRACE ELLIPSIS Ident COMMA WILD
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACE ELLIPSIS path COMMA
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-interactive_expr: LBRACE ELLIPSIS Ident DOT Ident VBAR
-##
-## Ends in an error in state: 259.
-##
-## update_record -> LBRACE ELLIPSIS path . COMMA sep_or_term_list(field_path_assignment,COMMA) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-##
-## The known suffix of the stack is as follows:
-## LBRACE ELLIPSIS path
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 107, spurious reduction of production selection -> DOT Ident 
-## In state 110, spurious reduction of production projection -> Ident selection 
-## In state 258, spurious reduction of production path -> projection 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
