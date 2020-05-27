@@ -69,7 +69,8 @@ test:
     paths:
       - coverage
 
-webide-e2e:
+# Strange race conditions, disable for now
+.webide-e2e:
   extends: .nix
   only:
     - merge_requests
