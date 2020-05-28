@@ -7,26 +7,36 @@
     entrypoint: main
     parameters: |
       Buy (
-        { 
-          profile: 0x0501000000026869, initial_controller: Some(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address))
+        {
+          profile: 0x0501000000026869,
+          initial_controller: Some(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address))
         }
       )
     storage: |
       {
-        identities:Big_map.literal([(1, {owner:("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address), 
-        controller:("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address), profile:0x0501000000026869})]), 
-        next_id:2, 
-        name_price:0tez, 
+        identities:Big_map.literal([
+          (1,
+           {owner:("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address),
+           controller:("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address), profile:0x0501000000026869}
+          )
+        ]),
+        next_id:2,
+        name_price:0tez,
         skip_price:333mutez
       }
   deploy:
     entrypoint: main
     storage: |
       {
-        identities:Big_map.literal([(1, {owner:("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address), controller:("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address), profile:0x0501000000026869})]), 
-        next_id:2, 
-        name_price:10tez, 
-        skip_price:333mutez}
+        identities:Big_map.literal([
+          (1,
+           {owner:("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address), controller:("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address), profile:0x0501000000026869}
+          )
+        ]),
+        next_id:2,
+        name_price:10tez,
+        skip_price:333mutez
+      }
   evaluateValue:
     entrypoint: ""
   evaluateFunction:
@@ -34,15 +44,19 @@
     parameters: |
       (
         {
-          profile: 0x0501000000026869, 
+          profile: 0x0501000000026869,
           initial_controller: Some(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address))
         },
         {
-          identities:Big_map.literal([(1, {owner:("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address), 
-          controller:("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address), 
-          profile:0x0501000000026869})]), 
-          next_id:2, 
-          name_price:0tez, 
+          identities:Big_map.literal([
+            (1,
+             {owner:("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address),
+              controller:("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address),
+              profile:0x0501000000026869}
+            )
+          ]),
+          next_id:2,
+          name_price:0tez,
           skip_price:333mutez
         }
       )
@@ -163,7 +177,7 @@ let update_owner = ((parameter, storage): (update_owner, storage)) : (list(opera
 
 let update_details = ((parameter, storage): (update_details, storage)) :
                    (list(operation), storage) => {
-  let void : unit = 
+  let void : unit =
     if (amount != 0mutez) {
       failwith("Updating details doesn't cost anything.");
     }

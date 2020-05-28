@@ -14,8 +14,12 @@
       )
     storage: |
       record [
-        identities=big_map[1->record [owner=("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address);
-        controller=("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address); profile=0x0501000000026869]];
+        identities=big_map[
+          1->record 
+          [owner=("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address);
+           controller=("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address);
+           profile=0x0501000000026869]
+        ];
         next_id=2;
         name_price=0tez;
         skip_price=50mutez;
@@ -24,8 +28,12 @@
     entrypoint: main
     storage: |
       record [
-        identities=big_map[1->record [owner=("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address);
-        controller=("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address); profile=0x0501000000026869]];
+        identities=big_map[
+          1->record
+          [owner=("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address);
+           controller=("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address);
+           profile=0x0501000000026869]
+        ];
         next_id=2; 
         name_price=0tez;
         skip_price=50mutez;
@@ -41,9 +49,12 @@
           initial_controller=Some(("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address))
         ],
 
-        record [  identities=big_map[1->record [owner=("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address);
-          controller=("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address);
-          profile=0x0501000000026869]];
+        record [  identities=big_map[
+          1->record
+          [owner=("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address);
+           controller=("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address);
+           profile=0x0501000000026869]
+          ];
           next_id=2;
           name_price=0tez;
           skip_price=333mutez;

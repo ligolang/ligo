@@ -14,7 +14,13 @@
       )
     storage: |
       {
-        identities=Big_map.literal[(1, {owner=("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address); controller=("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address); profile=0x0501000000026869});]; 
+        identities=Big_map.literal[
+          (1, 
+          {owner=("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address);
+          controller=("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address);
+          profile=0x0501000000026869}
+          );
+        ]; 
         next_id=2; 
         name_price=0tez; 
         skip_price=333mutez 
@@ -23,10 +29,17 @@
     entrypoint: main
     storage: |
       {
-        identities=Big_map.literal[(1, {owner=("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address); controller=("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address); profile=0x0501000000026869});]; 
+        identities=Big_map.literal[
+          (1,
+          {owner=("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address);
+           controller=("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address);
+           profile=0x0501000000026869}
+          );
+         ]; 
         next_id=2; 
         name_price=10tez; 
-        skip_price=333mutez}
+        skip_price=333mutez
+      }
   evaluateValue:
     entrypoint: ""
   evaluateFunction:
@@ -38,9 +51,13 @@
       }, 
   
       { 
-        identities=Big_map.literal[(1, {owner=("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address); 
-        controller=("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address); 
-        profile=0x0501000000026869});]; 
+        identities=Big_map.literal[
+          (1,
+           {owner=("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address); 
+            controller=("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address); 
+            profile=0x0501000000026869}
+          );
+        ]; 
         next_id=2; 
         name_price=0tez; 
         skip_price=333mutez
@@ -88,13 +105,14 @@ type storage = {
 
 (** Preliminary thoughts on ids:
 
-I very much like the simplicity of http://gurno.com/adam/mne/.
-5 three letter words means you have a 15 character identity, not actually more
+I very much like the simplicity of http://gurno.com/adam/mne/
+
+Five three letter words means you have a 15 character identity, not actually more
 annoying than an IP address and a lot more memorable than the raw digits. This
 can be stored as a single integer which is then translated into the corresponding
 series of 5 words.
 
-I in general like the idea of having a 'skip' mechanism, but it does need to cost
+I, in general like the idea of having a 'skip' mechanism, but it does need to cost
 something so people don't eat up the address space. 256 ^ 5 means you have a lot
 of address space, but if people troll by skipping a lot that could be eaten up.
 Should probably do some napkin calculations for how expensive skipping needs to
