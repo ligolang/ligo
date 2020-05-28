@@ -195,20 +195,19 @@ module Substitution = struct
         let%bind cases = s_matching_expr ~substs cases in
         ok @@ T.E_matching {matchee;cases}
 
-    and s_expression : T.expression w = fun ~(substs:substs) { expression_content; type_expression; environment; location } ->
+    and s_expression : T.expression w = fun ~(substs:substs) { expression_content; type_expression; location } ->
       let%bind expression_content = s_expression_content ~substs expression_content in
       let%bind type_expr = s_type_expression ~substs type_expression in
-      let%bind environment = s_environment ~substs environment in
       let location = location in
-      ok T.{ expression_content;type_expression=type_expr; environment; location }
+      ok T.{ expression_content;type_expression=type_expr; location }
 
     and s_declaration : T.declaration w = fun ~substs ->
       function
-        Ast_typed.Declaration_constant {binder ; expr ; inline ; post_env} ->
-        let%bind binder = s_variable ~substs binder in
-        let%bind expr = s_expression ~substs expr in
-        let%bind post_env = s_environment ~substs post_env in
-        ok @@ Ast_typed.Declaration_constant {binder; expr; inline; post_env}
+      | Ast_typed.Declaration_constant {binder ; expr ; inline} ->
+         let%bind binder = s_variable ~substs binder in
+         let%bind expr = s_expression ~substs expr in
+         ok @@ Ast_typed.Declaration_constant {binder; expr; inline}
+      | Declaration_type t -> ok (Ast_typed.Declaration_type t)
 
     and s_declaration_wrap :T.declaration Location.wrap w = fun ~substs d ->
       Trace.bind_map_location (s_declaration ~substs) d    

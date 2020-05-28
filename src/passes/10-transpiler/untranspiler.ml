@@ -42,19 +42,19 @@ open Errors
 
 let rec untranspile (v : value) (t : AST.type_expression) : AST.expression result =
   let open! AST in
-  let return e = ok (make_a_e_empty e t) in
+  let return e = ok (make_e e t) in
   match t.type_content with
   | T_variable (name) when Var.equal name Stage_common.Constant.t_bool -> (
         let%bind b =
           trace_strong (wrong_mini_c_value "bool" v) @@
           get_bool v in
-        return (e_bool b Environment.empty)
+        return (e_bool b)
       )
   | t when (compare t (t_bool ()).type_content) = 0-> (
         let%bind b =
           trace_strong (wrong_mini_c_value "bool" v) @@
           get_bool v in
-        return (e_bool b Environment.empty)
+        return (e_bool b)
       )
   | T_constant type_constant -> (
     match type_constant with
@@ -152,10 +152,10 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
           trace_strong (wrong_mini_c_value "option" v) @@
           get_option v in
         match opt with
-        | None -> ok (e_a_empty_none o)
+        | None -> ok (e_a_none o)
         | Some s ->
             let%bind s' = untranspile s o in
-            ok (e_a_empty_some s')
+            ok (e_a_some s')
       )
     | TC_map {k=k_ty;v=v_ty}-> (
         let%bind map =

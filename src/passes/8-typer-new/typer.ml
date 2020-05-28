@@ -29,7 +29,7 @@ let rec type_declaration env state : I.declaration -> (environment * O.typer_sta
         trace (constant_declaration_error binder expression tv'_opt) @@
         type_expression env state expression in
       let post_env = Environment.add_ez_declaration binder expr env in
-      ok (post_env, state' , Some (O.Declaration_constant { binder ; expr ; inline ; post_env} ))
+      ok (post_env, state' , Some (O.Declaration_constant { binder ; expr ; inline} ))
     )
 
 and type_match : environment -> O.typer_state -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> (O.matching_expr * O.typer_state) result =
@@ -196,7 +196,7 @@ and type_expression : environment -> O.typer_state -> ?tv_opt:O.type_expression 
     let%bind new_state = aggregate_constraints state constraints in
     let tv = t_variable type_name () in
     let location = ae.location in
-    let expr' = make_e ~location expr tv e in
+    let expr' = make_e ~location expr tv in
     ok @@ (expr' , new_state) in
   let return_wrapped expr state (constraints , expr_type) = return expr state constraints expr_type in
   let main_error =

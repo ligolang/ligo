@@ -39,7 +39,7 @@ module Errors : sig
 end
 
 val type_program : I.program -> (O.program * O.typer_state) result
-val type_declaration : environment -> O.typer_state -> I.declaration -> (environment * O.typer_state * O.declaration option) result
+val type_declaration : environment -> O.typer_state -> I.declaration -> (environment * O.typer_state * O.declaration) result
 (* val type_match : (environment -> 'i -> 'o result) -> environment -> O.type_value -> 'i I.matching -> I.expression -> Location.t -> 'o O.matching result *)
 val evaluate_type : environment -> I.type_expression -> O.type_expression result
 val type_expression : environment -> O.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * O.typer_state) result
