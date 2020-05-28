@@ -374,9 +374,6 @@ let rec transpile_literal : AST.literal -> value = fun l -> match l with
   | Literal_unit -> D_unit
   | Literal_void -> D_none
 
-(* and transpile_environment_element_type : AST.environment_element -> type_expression result = fun ele ->
- *   transpile_type ele.type_value *)
-
 and tree_of_sum : AST.type_expression -> (AST.constructor' * AST.type_expression) Append_tree.t result = fun t ->
   let%bind map_tv = get_t_sum t in
   let kt_list = List.map (fun (k,({ctor_type;_}:AST.ctor_content)) -> (k,ctor_type)) (kv_list_of_cmap map_tv) in
@@ -397,10 +394,6 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
     return (E_let_in ((let_binder, rhs'.type_expression), inline, rhs', result'))
   | E_literal l -> return @@ E_literal (transpile_literal l)
   | E_variable name -> (
-      (* let%bind ele =
-       *   trace_option (corner_case ~loc:__LOC__ "name not in environment") @@
-       *   AST.Environment.get_opt name ae.environment in
-       * let%bind tv = transpile_environment_element_type tv in *)
       return @@ E_variable (name)
     )
   | E_application {lamb; args} ->
@@ -441,7 +434,6 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       return ~tv ae
     )
   | E_record m -> (
-    (*list_of_lmap to record_to_list*)
       let node = Append_tree.of_list @@ Ast_typed.Helpers.list_of_record_or_tuple m in
       let aux a b : expression result =
         let%bind a = a in
@@ -779,7 +771,9 @@ let transpile_program (lst : AST.program) : program result =
   ok statements
 
 (* check whether the storage contains a big_map, if yes, check that
-  it appears on the left hand side of a pair *)
+  it appears on the left hand side of a pair 
+  TODO : checking should appears in check_pass.  
+*)
 let check_storage f ty loc : (anon_function * _) result =
   let rec aux (t:type_expression) on_big_map =
     match t.type_content with

@@ -494,27 +494,25 @@ let rec type_program (p:I.program) : (O.program * O.typer_state) result =
     let%bind ed' = (bind_map_location (type_declaration e (Solver.placeholder_for_state_of_new_typer ()))) d in
     let loc : 'a . 'a Location.wrap -> _ -> _ = fun x v -> Location.wrap ~loc:x.location v in
     let (e', _placeholder_for_state_of_new_typer , d') = Location.unwrap ed' in
-    match d' with
-    | None -> ok (e', acc)
-    | Some d' -> ok (e', loc ed' d' :: acc)
+    ok (e', loc ed' d' :: acc)
   in
   let%bind (_, lst) =
     trace (fun () -> program_error p ()) @@
     bind_fold_list aux (DEnv.default, []) p in
   ok @@ (List.rev lst , (Solver.placeholder_for_state_of_new_typer ()))
 
-and type_declaration env (_placeholder_for_state_of_new_typer : O.typer_state) : I.declaration -> (environment * O.typer_state * O.declaration option) result = function
+and type_declaration env (_placeholder_for_state_of_new_typer : O.typer_state) : I.declaration -> (environment * O.typer_state * O.declaration) result = function
   | Declaration_type (type_binder , type_expr) ->
       let%bind tv = evaluate_type env type_expr in
       let env' = Environment.add_type (type_binder) tv env in
-      ok (env', (Solver.placeholder_for_state_of_new_typer ()) , Some (O.Declaration_type { type_binder ; type_expr = tv } ))
+      ok (env', (Solver.placeholder_for_state_of_new_typer ()) , (O.Declaration_type { type_binder ; type_expr = tv } ))
   | Declaration_constant (binder , tv_opt , inline, expression) -> (
       let%bind tv'_opt = bind_map_option (evaluate_type env) tv_opt in
       let%bind expr =
         trace (constant_declaration_error binder expression tv'_opt) @@
         type_expression' ?tv_opt:tv'_opt env expression in
       let post_env = Environment.add_ez_declaration binder expr env in
-      ok (post_env, (Solver.placeholder_for_state_of_new_typer ()) , Some (O.Declaration_constant { binder ; expr ; inline}))
+      ok (post_env, (Solver.placeholder_for_state_of_new_typer ()) , (O.Declaration_constant { binder ; expr ; inline}))
     )
 
 and type_match : (environment -> I.expression -> O.expression result) -> environment -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> O.matching_expr result =

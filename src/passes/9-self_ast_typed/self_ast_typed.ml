@@ -13,7 +13,6 @@ let contract_passes = [
 let all_program program =
   let all_p = List.map Helpers.map_program all_passes in
   let%bind program' = bind_chain all_p program in
-  (* let program'' = Recompute_environment.program Environment.default program' in *)
   ok program'
 
 let all_expression =

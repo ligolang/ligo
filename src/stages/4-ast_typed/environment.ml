@@ -38,6 +38,9 @@ let add_ez_binder : expression_variable -> type_expression -> t -> t = fun k v e
 let add_ez_declaration : expression_variable -> expression -> t -> t = fun k ae e ->
   add_expr k (make_element_declaration e ae) e
 
+let add_ez_sum_type ?(env = empty) ?(type_name = Var.of_name "a_sum_type") (lst : (constructor' * ctor_content) list) =
+  add_type type_name (make_t_ez_sum lst) env
+
 let convert_constructor' (S.Constructor c) = Constructor c
 
 let get_constructor : Ast_core.constructor' -> t -> (type_expression * type_expression) option = fun k x -> (* Left is the constructor, right is the sum type *)

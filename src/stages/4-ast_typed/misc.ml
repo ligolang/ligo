@@ -522,11 +522,6 @@ let get_entry (lst : program) (name : string) : expression result =
   in
   List.find_map aux lst
 
-(* let program_environment (program : program) : environment =
- *   let last_declaration = Location.unwrap List.(hd @@ rev program) in
- *   match last_declaration with
- *   | Declaration_constant { binder=_ ; expr=_ ; inline=_ ; post_env } -> post_env *)
-
 let equal_variables a b : bool =
   match a.expression_content, b.expression_content with
   | E_variable a, E_variable b -> Var.equal a b
