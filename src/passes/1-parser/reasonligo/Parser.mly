@@ -453,8 +453,15 @@ fun_expr(right_expr):
         )
     | EAnnot {region; value = {inside = EVar v, colon, typ; _}} ->
         Scoping.check_reserved_name v;
-        let value = {pattern = PVar v; colon; type_expr = typ}
-        in PTyped {region; value}
+        let value = {pattern = PVar v; colon; type_expr = typ} in
+        PPar {
+          value = {
+            lpar = Region.ghost;
+            rpar = Region.ghost;
+            inside = PTyped {region; value}
+          };
+          region
+        }
     | EPar p ->
         let value =
           {p.value with inside = arg_to_pattern p.value.inside}
@@ -494,7 +501,13 @@ fun_expr(right_expr):
          (arg_to_pattern fun_arg, [])
       | EPar {value = {inside = EFun {
           value = {
-              binders = PTyped { value = { pattern; colon; type_expr }; region = fun_region }, [];
+              binders = PPar {
+                value = {
+                  inside = PTyped { value = { pattern; colon; type_expr }; region = fun_region };
+                  _
+                };
+                _
+              }, [];
               arrow;
               body;
               _
@@ -528,7 +541,7 @@ fun_expr(right_expr):
           };
           region;
         }, []
-      | EPar {value = {inside =  fun_arg; _ }; _} ->
+      | EPar {value = {inside = fun_arg; _ }; _} ->
           arg_to_pattern fun_arg, []
       | EAnnot _ as e ->
           arg_to_pattern e, []
@@ -655,7 +668,6 @@ disj_expr_level:
 | par(tuple(disj_expr_level)) type_annotation_simple? {
     let region = nsepseq_to_region expr_to_region $1.value.inside in
     let tuple  = ETuple {value=$1.value.inside; region} in
-    let tuple  = EPar {$1 with value = {$1.value with inside=tuple}} in
     let region =
       match $2 with
         Some (_,s) -> cover $1.region (type_expr_to_region s)
