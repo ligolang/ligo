@@ -1,23 +1,9 @@
-open Ast_typed
-
-(*
-  During the modifications of the passes on `Ast_typed`, the binding
-  environments are not kept in sync. To palliate this, this module
-  recomputes them from scratch.
-*)
-
-(*
-  This module is very coupled to `typer.ml`. Given environments are
-  not used until the next pass, it makes sense to split this into
-  its own separate pass. This pass would go from `Ast_typed` without
-  environments to `Ast_typed` with embedded environments.
-*)
+open Types
 
 let rec expression : environment -> expression -> expression = fun env expr ->
   (* Standard helper functions to help with the fold *)
-  let return ?(env' = env) content = {
+  let return content = {
       expr with
-      environment = env' ;
       expression_content = content ;
     } in
   let return_id = return expr.expression_content in
@@ -34,9 +20,9 @@ let rec expression : environment -> expression -> expression = fun env expr ->
     return @@ E_lambda { c with result }
   )
   | E_let_in c -> (
-    let env' = Environment.add_ez_declaration c.let_binder c.rhs env in
-    let let_result = self ~env' c.let_result in
     let rhs = self c.rhs in
+    let env' = Environment.add_ez_declaration c.let_binder rhs env in
+    let let_result = self ~env' c.let_result in
     return @@ E_let_in { c with rhs ; let_result }
   )
   (* rec fun_name binder -> result *)
@@ -90,7 +76,7 @@ and cases : environment -> matching_expr -> matching_expr = fun env cs ->
     let match_cons =
       let mc = c.match_cons in
       let env_hd = Environment.add_ez_binder mc.hd mc.tv env in
-      let env_tl = Environment.add_ez_binder mc.tl (t_list mc.tv ()) env_hd in
+      let env_tl = Environment.add_ez_binder mc.tl (Combinators.t_list mc.tv ()) env_hd in
       let body = self ~env':env_tl mc.body in
       { mc with body }
     in
@@ -139,24 +125,27 @@ and cases : environment -> matching_expr -> matching_expr = fun env cs ->
     return @@ Match_variant { c with cases }
   )
 
-let program : environment -> program -> program = fun init_env prog ->
+let program : environment -> program -> environment * program = fun init_env prog ->
   (*
       BAD
       We take the old type environment and add it to the current value environment
       because type declarations are removed in the typer. They should be added back.
    *)
-  let merge old_env re_env = {
-      expression_environment = re_env.expression_environment ;
-      type_environment = old_env.type_environment ;
-    } in
   let aux (pre_env , rev_decls) decl_wrapped =
-    let (Declaration_constant c) = Location.unwrap decl_wrapped in
-    let expr = expression pre_env c.expr in
-    let post_env = Environment.add_ez_declaration c.binder c.expr pre_env in
-    let post_env' = merge c.post_env post_env in
-    let wrap_content = Declaration_constant { c with expr ; post_env = post_env' } in
-    let decl_wrapped' = { decl_wrapped with wrap_content } in
-    (post_env , decl_wrapped' :: rev_decls)
+    match Location.unwrap decl_wrapped with
+    | Declaration_constant c -> (
+      let expr = expression pre_env c.expr in
+      let post_env = Environment.add_ez_declaration c.binder expr pre_env in
+      let wrap_content = Declaration_constant { c with expr } in
+      let decl_wrapped' = { decl_wrapped with wrap_content } in
+      (post_env , decl_wrapped' :: rev_decls)
+    )
+    | Declaration_type t -> (
+      let post_env = Environment.add_type t.type_binder t.type_expr pre_env in      
+      let wrap_content = Declaration_type t in
+      let decl_wrapped' = { decl_wrapped with wrap_content } in
+      (post_env , decl_wrapped' :: rev_decls)
+    )
   in
-  let (_last_env , rev_decls) = List.fold_left aux (init_env , []) prog in
-  List.rev rev_decls
+  let (last_env , rev_decls) = List.fold_left aux (init_env , []) prog in
+  (last_env , List.rev rev_decls)

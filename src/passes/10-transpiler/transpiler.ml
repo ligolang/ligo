@@ -42,14 +42,6 @@ them. please report this to the developers." in
       ] in
     error ~data title content
 
-  let unsupported_iterator location =
-    let title () = "unsupported iterator" in
-    let content () = "only lambda are supported as iterators" in
-    let data = [
-        row_loc location ;
-      ] in
-    error ~data title content
-
   let not_functional_main location =
     let title () = "not functional main" in
     let content () = "main should be a function" in
@@ -382,9 +374,6 @@ let rec transpile_literal : AST.literal -> value = fun l -> match l with
   | Literal_unit -> D_unit
   | Literal_void -> D_none
 
-and transpile_environment_element_type : AST.environment_element -> type_expression result = fun ele ->
-  transpile_type ele.type_value
-
 and tree_of_sum : AST.type_expression -> (AST.constructor' * AST.type_expression) Append_tree.t result = fun t ->
   let%bind map_tv = get_t_sum t in
   let kt_list = List.map (fun (k,({ctor_type;_}:AST.ctor_content)) -> (k,ctor_type)) (kv_list_of_cmap map_tv) in
@@ -405,11 +394,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
     return (E_let_in ((let_binder, rhs'.type_expression), inline, rhs', result'))
   | E_literal l -> return @@ E_literal (transpile_literal l)
   | E_variable name -> (
-      let%bind ele =
-        trace_option (corner_case ~loc:__LOC__ "name not in environment") @@
-        AST.Environment.get_opt name ae.environment in
-      let%bind tv = transpile_environment_element_type ele in
-      return ~tv @@ E_variable (name)
+      return @@ E_variable (name)
     )
   | E_application {lamb; args} ->
       let%bind a = transpile_annotated_expression lamb in
@@ -449,7 +434,6 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       return ~tv ae
     )
   | E_record m -> (
-    (*list_of_lmap to record_to_list*)
       let node = Append_tree.of_list @@ Ast_typed.Helpers.list_of_record_or_tuple m in
       let aux a b : expression result =
         let%bind a = a in
@@ -511,28 +495,14 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       return @@ E_record_update (record, path, update)
   | E_constant {cons_name=name; arguments=lst} -> (
       let iterator_generator iterator_name =
-        let lambda_to_iterator_body (f : AST.expression) (l : AST.lambda) =
-          let%bind body' = transpile_annotated_expression l.result in
-          let%bind (input , _) = AST.get_t_function f.type_expression in
-          let%bind input' = transpile_type input in
-          ok ((l.binder , input') , body')
-        in
         let expression_to_iterator_body (f : AST.expression) =
-          match f.expression_content with
-          | E_lambda l -> lambda_to_iterator_body f l
-          | E_variable v -> (
-              let%bind elt =
-                trace_option (corner_case ~loc:__LOC__ "missing var") @@
-                AST.Environment.get_opt v f.environment in
-              match elt.definition with
-              | ED_declaration { expr = f ; free_variables = _ } -> (
-                  match f.expression_content with
-                  | E_lambda l -> lambda_to_iterator_body f l
-                  | _ -> fail @@ unsupported_iterator f.location
-                )
-              | _ -> fail @@ unsupported_iterator f.location
-            )
-          | _ -> fail @@ unsupported_iterator f.location
+          let%bind (input , output) = AST.get_t_function f.type_expression in
+          let%bind f' = transpile_annotated_expression f in
+          let%bind input' = transpile_type input in
+          let%bind output' = transpile_type output in
+          let binder = Var.fresh ~name:"iterated" () in
+          let application = Mini_c.Combinators.e_application f' output' (Mini_c.Combinators.e_var binder input') in
+          ok ((binder , input'), application)
         in
         fun (lst : AST.expression list) -> match (lst , iterator_name) with
           | [f ; i] , C_ITER | [f ; i] , C_MAP -> (
@@ -781,25 +751,29 @@ and transpile_recursive {fun_name; fun_type; lambda} =
   let body = Expression.make (E_iterator (C_LOOP_LEFT, ((lambda.binder, loop_type),body), expr)) output_type in
   ok @@ Expression.make (E_closure {binder;body}) fun_type
 
-let transpile_declaration env (d:AST.declaration) : toplevel_statement result =
+let transpile_declaration env (d:AST.declaration) : toplevel_statement option result =
   match d with
-  | Declaration_constant { binder ; expr ; inline ; post_env=_ } ->
+  | Declaration_constant { binder ; expr ; inline } ->
       let%bind expression = transpile_annotated_expression expr in
       let tv = Combinators.Expression.get_type expression in
       let env' = Environment.add (binder, tv) env in
-      ok @@ ((binder, inline, expression), environment_wrap env env')
+      ok @@ Some ((binder, inline, expression), environment_wrap env env')
+  | _ -> ok None
 
 let transpile_program (lst : AST.program) : program result =
   let aux (prev:(toplevel_statement list * Environment.t) result) cur =
     let%bind (hds, env) = prev in
-    let%bind ((_, env') as cur') = transpile_declaration env cur in
-    ok (hds @ [ cur' ], env'.post_environment)
+    match%bind transpile_declaration env cur with
+    | Some ((_ , env')  as cur') -> ok (hds @ [ cur' ] , env'.post_environment)
+    | None -> ok (hds , env)
   in
   let%bind (statements, _) = List.fold_left aux (ok ([], Environment.empty)) (temp_unwrap_loc_list lst) in
   ok statements
 
 (* check whether the storage contains a big_map, if yes, check that
-  it appears on the left hand side of a pair *)
+  it appears on the left hand side of a pair 
+  TODO : checking should appears in check_pass.  
+*)
 let check_storage f ty loc : (anon_function * _) result =
   let rec aux (t:type_expression) on_big_map =
     match t.type_content with

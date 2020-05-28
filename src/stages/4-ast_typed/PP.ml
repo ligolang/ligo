@@ -326,8 +326,10 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit =
 
 let declaration ppf (d : declaration) =
   match d with
-  | Declaration_constant {binder; expr; inline; post_env=_} ->
+  | Declaration_constant {binder; expr; inline} ->
       fprintf ppf "const %a = %a%a" expression_variable binder expression expr option_inline inline
+  | Declaration_type {type_binder; type_expr} ->
+      fprintf ppf "type %a = %a" type_variable type_binder type_expression type_expr
 
 let program ppf (p : program) =
   fprintf ppf "@[<v>%a@]"

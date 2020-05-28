@@ -156,10 +156,11 @@ and map_cases : mapper -> matching_expr -> matching_expr result = fun f m ->
 and map_program : mapper -> program -> program result = fun m p ->
   let aux = fun (x : declaration) ->
     match x with
-    | Declaration_constant {binder; expr ; inline ; post_env} -> (
+    | Declaration_constant {binder; expr ; inline} -> (
         let%bind expr = map_expression m expr in
-        ok (Declaration_constant {binder; expr ; inline ; post_env})
-      )
+        ok (Declaration_constant {binder; expr ; inline})
+    )
+    | Declaration_type t -> ok (Declaration_type t)
   in
   bind_map_list (bind_map_location aux) p
 
@@ -246,10 +247,14 @@ and fold_map_cases : 'a . 'a fold_mapper -> 'a -> matching_expr -> ('a * matchin
 and fold_map_program : 'a . 'a fold_mapper -> 'a -> program -> ('a * program) result = fun m init p ->
   let aux = fun (acc,acc_prg) (x : declaration Location.wrap) ->
     match Location.unwrap x with
-    | Declaration_constant {binder ; expr ; inline ; post_env} -> (
+    | Declaration_constant {binder ; expr ; inline} -> (
         let%bind (acc', expr) = fold_map_expression m acc expr in
-        let wrap_content = Declaration_constant {binder ; expr ; inline ; post_env} in
+        let wrap_content = Declaration_constant {binder ; expr ; inline} in
         ok (acc', List.append acc_prg [{x with wrap_content}])
+      )
+    | Declaration_type t -> (
+        let wrap_content = Declaration_type t in
+        ok (acc, List.append acc_prg [{x with wrap_content}])
       )
   in
   bind_fold_list aux (init,[]) p
@@ -298,30 +303,31 @@ type contract_type = {
 }
 
 let fetch_contract_type : string -> program -> contract_type result = fun main_fname program ->
-  let main_decl = List.rev @@ List.filter
-    (fun declt ->
-      let (Declaration_constant { binder ; expr=_ ; inline=_ ; post_env=_ }) = Location.unwrap declt in
-      String.equal (Var.to_name binder) main_fname
-    )
-    program
+  let aux declt = match Location.unwrap declt with
+    | Declaration_constant ({ binder ; expr=_ ; inline=_ } as p) ->
+       if String.equal (Var.to_name binder) main_fname
+       then Some p
+       else None
+    | Declaration_type _ -> None
   in
-  match main_decl with
-  | (hd::_) -> (
-    let (Declaration_constant { binder=_ ; expr ; inline=_ ; post_env=_ }) = Location.unwrap hd in
-    match expr.type_expression.type_content with
-    | T_arrow {type1 ; type2} -> (
-      match type1.type_content , type2.type_content with
-      | T_record tin , T_record tout when (is_tuple_lmap tin) && (is_tuple_lmap tout) ->
-        let%bind (parameter,storage) = Ast_typed.Helpers.get_pair tin in
-        let%bind (listop,storage') = Ast_typed.Helpers.get_pair tout in
-        let%bind () = trace_strong (Errors.expected_list_operation main_fname listop expr) @@
-          Ast_typed.assert_t_list_operation listop in
-        let%bind () = trace_strong (Errors.expected_same main_fname storage storage' expr) @@
-          Ast_typed.assert_type_expression_eq (storage,storage') in
-        (* TODO: on storage/parameter : assert_storable, assert_passable ? *)
-        ok { parameter ; storage }
-      |  _ -> fail @@ Errors.bad_contract_io main_fname expr
-      )
-    | _ -> fail @@ Errors.bad_contract_io main_fname expr
+  let main_decl_opt = List.find_map aux @@ List.rev  program in
+  let%bind main_decl =
+    trace_option (simple_error ("Entrypoint '"^main_fname^"' does not exist")) @@
+      main_decl_opt
+    in
+  let { binder=_ ; expr ; inline=_ } = main_decl in
+  match expr.type_expression.type_content with
+  | T_arrow {type1 ; type2} -> (
+    match type1.type_content , type2.type_content with
+    | T_record tin , T_record tout when (is_tuple_lmap tin) && (is_tuple_lmap tout) ->
+       let%bind (parameter,storage) = Ast_typed.Helpers.get_pair tin in
+       let%bind (listop,storage') = Ast_typed.Helpers.get_pair tout in
+       let%bind () = trace_strong (Errors.expected_list_operation main_fname listop expr) @@
+                       Ast_typed.assert_t_list_operation listop in
+       let%bind () = trace_strong (Errors.expected_same main_fname storage storage' expr) @@
+                       Ast_typed.assert_type_expression_eq (storage,storage') in
+       (* TODO: on storage/parameter : assert_storable, assert_passable ? *)
+       ok { parameter ; storage }
+    |  _ -> fail @@ Errors.bad_contract_io main_fname expr
   )
-  | [] -> simple_fail ("Entrypoint '"^main_fname^"' does not exist")
+  | _ -> fail @@ Errors.bad_contract_io main_fname expr

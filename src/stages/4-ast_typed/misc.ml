@@ -511,18 +511,16 @@ let merge_annotation (a:type_expression option) (b:type_expression option) err :
 
 let get_entry (lst : program) (name : string) : expression result =
   trace_option (Errors.missing_entry_point name) @@
-  let aux x =
-    let (Declaration_constant { binder ; expr ; inline=_ ; _ }) = Location.unwrap x in
-    if Var.equal binder (Var.of_name name)
-    then Some expr
-    else None
+    let aux x =
+      match Location.unwrap x with
+      | Declaration_constant { binder ; expr ; inline=_ } -> (
+        if Var.equal binder (Var.of_name name)
+        then Some expr
+        else None
+      )
+      | Declaration_type _ -> None
   in
   List.find_map aux lst
-
-let program_environment (program : program) : environment =
-  let last_declaration = Location.unwrap List.(hd @@ rev program) in
-  match last_declaration with
-  | Declaration_constant { binder=_ ; expr=_ ; inline=_ ; post_env } -> post_env
 
 let equal_variables a b : bool =
   match a.expression_content, b.expression_content with
