@@ -416,11 +416,11 @@ and type_lambda e state {
       let%bind input_type' = bind_map_option (evaluate_type e) input_type in
       let%bind output_type' = bind_map_option (evaluate_type e) output_type in
 
-      let fresh : O.type_expression = t_variable (Solver.Wrap.fresh_binder ()) () in
+      let fresh : O.type_expression = t_variable (Wrap.fresh_binder ()) () in
       let e' = Environment.add_ez_binder (binder) fresh e in
 
       let%bind (result , state') = type_expression e' state result in
-      let wrapped = Solver.Wrap.lambda fresh input_type' output_type' result.type_expression in
+      let wrapped = Wrap.lambda fresh input_type' output_type' result.type_expression in
       ok (({binder;result}:O.lambda),state',wrapped)
 
 and type_constant (name:I.constant') (lst:O.type_expression list) (tv_opt:O.type_expression option) : (O.constant' * O.type_expression) result =
