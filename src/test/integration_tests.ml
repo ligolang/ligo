@@ -4,17 +4,11 @@ open Test_helpers
 open Ast_imperative.Combinators
 
 let retype_file f =
-  let%bind typed,state = Ligo.Compile.Utils.type_file f "reasonligo" Env in
-  let () = Typer.Solver.discard_state state in
-  ok typed
+  Ligo.Compile.Utils.type_file f "reasonligo" Env
 let mtype_file f =
-  let%bind typed,state = Ligo.Compile.Utils.type_file f "cameligo" Env in
-  let () = Typer.Solver.discard_state state in
-  ok typed
+  Ligo.Compile.Utils.type_file f "cameligo" Env
 let type_file f =
-  let%bind typed,state = Ligo.Compile.Utils.type_file f "pascaligo" Env in
-  let () = Typer.Solver.discard_state state in
-  ok typed
+  Ligo.Compile.Utils.type_file f "pascaligo" Env
 
 let type_alias () : unit result =
   let%bind program = type_file "./contracts/type-alias.ligo" in

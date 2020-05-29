@@ -2,8 +2,7 @@ open Trace
 open Test_helpers
 
 let type_file f =
-  let%bind typed,state = Ligo.Compile.Utils.type_file f "cameligo" (Contract "main") in
-  ok @@ (typed,state)
+  Ligo.Compile.Utils.type_file f "cameligo" (Contract "main")
 
 let get_program =
   let s = ref None in
@@ -36,10 +35,10 @@ let reset title start_time finish_time =
 let yea = e_constructor "Vote" (e_constructor "Yea" (e_unit ()))
 
 let init_vote () =
-  let%bind (program , _) = get_program () in
+  let%bind (program , state) = get_program () in
   let%bind result =
     Test_helpers.run_typed_program_with_imperative_input
-      program "main" (e_pair yea (init_storage "basic")) in
+      (program, state) "main" (e_pair yea (init_storage "basic")) in
   let%bind (_, storage) = Ast_core.extract_pair result in
   let%bind storage' = Ast_core.extract_record storage in
 (*  let votes = List.assoc (Label "voters") storage' in
