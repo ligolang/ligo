@@ -1,0 +1,74 @@
+{
+    "company-mode": {
+        "branch": "master",
+        "description": "Modular in-buffer completion framework for Emacs",
+        "homepage": "http://company-mode.github.io/",
+        "owner": "company-mode",
+        "repo": "company-mode",
+        "rev": "36e650acd681a3a15a96e3c074471e86bdeeb4d8",
+        "sha256": "09xas0nh9zxp0das8cv9qzj1fz6g5dyyh187dkqnm9lj0pa5yqy1",
+        "type": "tarball",
+        "url": "https://github.com/company-mode/company-mode/archive/36e650acd681a3a15a96e3c074471e86bdeeb4d8.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "niv": {
+        "branch": "master",
+        "description": "Easy dependency management for Nix projects",
+        "homepage": "https://github.com/nmattia/niv",
+        "owner": "nmattia",
+        "repo": "niv",
+        "rev": "f73bf8d584148677b01859677a63191c31911eae",
+        "sha256": "0jlmrx633jvqrqlyhlzpvdrnim128gc81q5psz2lpp2af8p8q9qs",
+        "type": "tarball",
+        "url": "https://github.com/nmattia/niv/archive/f73bf8d584148677b01859677a63191c31911eae.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "nix-mode": {
+        "branch": "master",
+        "description": "An Emacs major mode for editing Nix expressions.",
+        "homepage": "",
+        "owner": "nixos",
+        "repo": "nix-mode",
+        "rev": "71fda1db41160e03b181ea00086a869ae93546e1",
+        "sha256": "0l2vdacppwavmz8myqw9ak9fzgddbsshnkg6j2gmkjmqdqpf14rr",
+        "type": "tarball",
+        "url": "https://github.com/nixos/nix-mode/archive/71fda1db41160e03b181ea00086a869ae93546e1.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "nixpkgs": {
+        "branch": "nixos-19.09",
+        "description": "A read-only mirror of NixOS/nixpkgs tracking the released channels. Send issues and PRs to",
+        "homepage": "https://github.com/NixOS/nixpkgs",
+        "owner": "NixOS",
+        "repo": "nixpkgs-channels",
+        "rev": "35eda4aede5c9c90c6dfc5c4f83cdac7cae59028",
+        "sha256": "047gkqd304vc07r8kgf13443waaxmhy4skkgj3i2x19cjw7qvl78",
+        "type": "tarball",
+        "url": "https://github.com/NixOS/nixpkgs-channels/archive/35eda4aede5c9c90c6dfc5c4f83cdac7cae59028.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "tuareg": {
+        "branch": "master",
+        "description": "Emacs OCaml mode",
+        "homepage": null,
+        "owner": "ocaml",
+        "repo": "tuareg",
+        "rev": "ccde45bbc292123ec20617f1af7f7e19f7481545",
+        "sha256": "1yxv4bnqarilnpg5j7wywall8170hwvm0q4xx06yqjgcn8pq1lac",
+        "type": "tarball",
+        "url": "https://github.com/ocaml/tuareg/archive/ccde45bbc292123ec20617f1af7f7e19f7481545.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "use-package": {
+        "branch": "master",
+        "description": "A use-package declaration for simplifying your .emacs",
+        "homepage": "https://jwiegley.github.io/use-package",
+        "owner": "jwiegley",
+        "repo": "use-package",
+        "rev": "d2640fec376a8458a669e7526e63e5870d875118",
+        "sha256": "0k556mzwa72670d61539hgq056q194q9da5hhj8bm3drx41cmwa1",
+        "type": "tarball",
+        "url": "https://github.com/jwiegley/use-package/archive/d2640fec376a8458a669e7526e63e5870d875118.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    }
+}
