@@ -203,7 +203,7 @@ let pretty_print_cameligo source =
 
 let pretty_print_reasonligo source =
   let%bind ast = Parser.Reasonligo.parse_file source in
-  let doc    = Parser_cameligo.Pretty.make ast in (* TODO *)
+  let doc    = Parser_reasonligo.Pretty.make ast in
   let buffer = Buffer.create 131 in
   let width  =
     match Terminal_size.get_columns () with

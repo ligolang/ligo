@@ -15,7 +15,7 @@
  (name parser_reasonligo)
  (public_name ligo.parser.reasonligo)
  (modules
-    SyntaxError reasonligo LexToken ParErr Parser)
+    SyntaxError reasonligo LexToken ParErr Parser Pretty)
  (libraries
     menhirLib
     parser_shared
