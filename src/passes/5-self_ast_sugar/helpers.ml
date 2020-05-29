@@ -230,10 +230,10 @@ let rec map_expression : exp_mapper -> expression -> expression result = fun f e
      let%bind tuple = self tuple in
      return @@ E_tuple_accessor {tuple;path}
     )
-  | E_tuple_destruct {tuple;fields;next} -> (
+  | E_tuple_destruct {tuple;fields;field_types;next} -> (
      let%bind tuple = self tuple in
      let%bind next  = self next in
-     return @@ E_tuple_destruct {tuple;fields;next}
+     return @@ E_tuple_destruct {tuple;fields;field_types;next}
     )
   | E_literal _ | E_variable _ | E_skip as e' -> return e'
 
@@ -363,10 +363,10 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expres
      let%bind (res, tuple) = self init' tuple in
      ok (res, return @@ E_tuple_accessor {tuple; path})
     )
-  | E_tuple_destruct {tuple;fields;next} -> (
+  | E_tuple_destruct {tuple;fields;field_types;next} -> (
      let%bind (res,tuple) = self init' tuple in
      let%bind (res,next)  = self res next in
-     ok (res, return @@ E_tuple_destruct {tuple;fields;next})
+     ok (res, return @@ E_tuple_destruct {tuple;fields;field_types;next})
      )
   | E_constructor c -> (
       let%bind (res,e') = self init' c.element in

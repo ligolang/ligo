@@ -337,10 +337,11 @@ and compile_expression' : I.expression -> (O.expression option -> O.expression) 
       let%bind tuple = compile_expression tuple in
       let%bind update = compile_expression update in
       return @@ O.e_tuple_update ~loc tuple path update
-    | I.E_tuple_destruct {tuple; fields; next} ->
+    | I.E_tuple_destruct {tuple; fields; field_types; next} ->
       let%bind tuple = compile_expression tuple in
       let%bind next  = compile_expression next in
-      return @@ O.e_tuple_destruct ~loc tuple fields next
+      let%bind field_types = bind_map_option (bind_map_list compile_type_expression) field_types in
+      return @@ O.e_tuple_destruct ~loc tuple fields field_types next
     | I.E_assign {variable; access_path; expression} ->
       let accessor ?loc s a =
         match a with 
@@ -730,10 +731,11 @@ let rec uncompile_expression' : O.expression -> I.expression result =
     let%bind tuple  = uncompile_expression' tuple in
     let%bind update = uncompile_expression' update in
     return @@ I.E_tuple_update {tuple;path;update}
-  | O.E_tuple_destruct {tuple; fields; next} ->
+  | O.E_tuple_destruct {tuple; fields; field_types; next} ->
     let%bind tuple = uncompile_expression' tuple in
     let%bind next  = uncompile_expression' next in
-    return @@ I.E_tuple_destruct {tuple; fields; next}
+    let%bind field_types = bind_map_option (bind_map_list uncompile_type_expression) field_types in
+    return @@ I.E_tuple_destruct {tuple; fields; field_types; next}
   | O.E_map map ->
     let%bind map = bind_map_list (
       bind_map_pair uncompile_expression'

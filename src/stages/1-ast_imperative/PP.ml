@@ -136,7 +136,7 @@ and expression_content ppf (ec : expression_content) =
       fprintf ppf "%a.%d" expression ta.tuple ta.path
   | E_tuple_update {tuple; path; update} ->
       fprintf ppf "{ %a with %d = %a }" expression tuple path expression update
-  | E_tuple_destruct {tuple; fields; next} ->
+  | E_tuple_destruct {tuple; fields; next; _} ->
       fprintf ppf "{ let (%a) = %a in %a"
         (list_sep_d expression_variable) fields
         expression tuple

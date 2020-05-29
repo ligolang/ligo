@@ -105,7 +105,7 @@ val e_annotation : ?loc:Location.t -> expression -> type_expression -> expressio
 val e_tuple : ?loc:Location.t -> expression list -> expression
 val e_tuple_accessor : ?loc:Location.t -> expression -> int -> expression
 val e_tuple_update : ?loc:Location.t -> expression -> int -> expression -> expression
-val e_tuple_destruct : ?loc:Location.t -> expression -> expression_variable list -> expression -> expression
+val e_tuple_destruct : ?loc:Location.t -> expression -> expression_variable list -> type_expression list option -> expression -> expression
 val e_pair : ?loc:Location.t -> expression -> expression -> expression
 
 val e_cond: ?loc:Location.t -> expression -> expression -> expression -> expression

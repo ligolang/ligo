@@ -145,7 +145,7 @@ and sequence = {
 
 and tuple_accessor = {tuple: expression; path: int}
 and tuple_update   = {tuple: expression; path: int ; update: expression}
-and tuple_destruct = {tuple: expression; fields : expression_variable list; next : expression}
+and tuple_destruct = {tuple: expression; fields : expression_variable list; field_types : type_expression list option; next : expression}
 
 and assign = {
   variable : expression_variable;
