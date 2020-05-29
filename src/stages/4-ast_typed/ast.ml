@@ -463,11 +463,15 @@ type constant_tag =
   | C_chain_id  (* * *)
 
 (* TODO: rename to type_expression or something similar (it includes variables, and unevaluated functions + applications *)
-type type_value =
+type type_value_ =
   | P_forall       of p_forall
   | P_variable     of type_variable
   | P_constant     of p_constant
   | P_apply        of p_apply
+and type_value = {
+  tsrc : string;
+  t : type_value_ ;
+}
 
 and p_apply = {
     tf : type_value ;
@@ -556,6 +560,7 @@ and constraints = {
 }
 and type_variable_list = type_variable list
 and c_constructor_simpl = {
+  reason_constr_simpl : string ;
   tv : type_variable;
   c_tag : constant_tag;
   tv_list : type_variable_list;
@@ -569,24 +574,23 @@ and c_equation_e = {
     bex : type_expression ;
   }
 and c_typeclass_simpl = {
+  reason_typeclass_simpl : string ;
   tc   : typeclass          ;
   args : type_variable_list ;
 }
 and c_poly_simpl = {
+  reason_poly_simpl : string ;
   tv     : type_variable ;
   forall : p_forall      ;
 }
-and type_constraint_simpl = {
-    reason_simpl : string ;
-    c_simpl : type_constraint_simpl_ ;
-  }
-and type_constraint_simpl_ =
+and type_constraint_simpl =
   | SC_Constructor of c_constructor_simpl             (* α = ctor(β, …) *)
   | SC_Alias       of c_alias                         (* α = β *)
   | SC_Poly        of c_poly_simpl                    (* α = forall β, δ where δ can be a more complex type *)
   | SC_Typeclass   of c_typeclass_simpl               (* TC(α, …) *)
 
 and c_alias = {
+    reason_alias_simpl : string ;
     a : type_variable ;
     b : type_variable ;
   }
