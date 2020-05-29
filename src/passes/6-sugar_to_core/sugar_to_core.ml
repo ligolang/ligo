@@ -193,6 +193,15 @@ let rec compile_expression : I.expression -> O.expression result =
       let path        = O.Label (string_of_int path) in
       let%bind update = compile_expression update in
       return @@ O.E_record_update {record;path;update}
+    | I.E_tuple_destruct {tuple; fields; next} ->
+      let%bind record = compile_expression tuple in
+      let%bind next   = compile_expression next in
+      let aux ((index,e) : int * _ ) (field: I.expression_variable) =
+        let f = fun expr -> O.e_let_in (field, None) false (O.e_record_accessor record (string_of_int index)) expr in
+        (index+1, fun expr -> e (f expr))
+      in
+      let (_,header) = List.fold_left aux (0, fun e -> e) fields in
+      ok @@ header next
 
 and compile_lambda : I.lambda -> O.lambda result =
   fun {binder;input_type;output_type;result}->
