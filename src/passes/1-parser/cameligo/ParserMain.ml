@@ -78,7 +78,7 @@ let wrap = function
   Stdlib.Ok ast ->
     if IO.options#pretty then
       begin
-        let doc = Pretty.make ast in
+        let doc = Pretty.print ast in
         let width =
           match Terminal_size.get_columns () with
             None -> 60

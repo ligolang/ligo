@@ -75,9 +75,23 @@ module Unit =
 (* Main *)
 
 let wrap = function
-  Stdlib.Ok _ -> flush_all ()
+  Stdlib.Ok ast ->
+    if IO.options#pretty then
+      begin
+        let doc = Pretty.print ast in
+        let width =
+          match Terminal_size.get_columns () with
+            None -> 60
+          | Some c -> c in
+        PPrint.ToChannel.pretty 1.0 width stdout doc;
+        print_newline ()
+      end;
+    flush_all ()
 | Error msg ->
-    (flush_all (); Printf.eprintf "\027[31m%s\027[0m%!" msg.Region.value)
+    begin
+      flush_all ();
+      Printf.eprintf "\027[31m%s\027[0m%!" msg.Region.value
+    end
 
 let () =
   match IO.options#input with

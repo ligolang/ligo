@@ -157,7 +157,7 @@ let pretty_print source =
   match parse_file source with
     Stdlib.Error _ as e -> e
   | Ok ast ->
-      let doc    = Pretty.make (fst ast) in
+      let doc    = Pretty.print (fst ast) in
       let buffer = Buffer.create 131 in
       let width  =
         match Terminal_size.get_columns () with

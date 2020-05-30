@@ -122,7 +122,8 @@ attr_decl:
   open_attr_decl ";"? { $1 }
 
 open_attr_decl:
-  ne_injection("attributes","<string>") { $1 }
+  ne_injection("attributes","<string>") {
+    $1 (fun region -> NEInjAttr region) }
 
 (* Type declarations *)
 
@@ -214,19 +215,19 @@ record_type:
     let () = Utils.nsepseq_to_list ne_elements
              |> Scoping.check_fields in
     let region = cover $1 $3
-    and value  = {opening = Kwd $1;
+    and value  = {kind      = NEInjRecord $1;
+                  enclosing = End $3;
                   ne_elements;
-                  terminator;
-                  closing = End $3}
+                  terminator}
     in TRecord {region; value}
   }
 | "record" "[" sep_or_term_list(field_decl,";") "]" {
    let ne_elements, terminator = $3 in
    let region = cover $1 $4
-   and value  = {opening = KwdBracket ($1,$2);
+   and value  = {kind      = NEInjRecord $1;
+                 enclosing = Brackets ($2,$4);
                  ne_elements;
-                 terminator;
-                 closing = RBracket $4}
+                 terminator}
    in TRecord {region; value} }
 
 field_decl:
@@ -238,7 +239,7 @@ field_decl:
 
 
 fun_expr:
-  | ioption ("recursive") "function" parameters ":" type_expr "is" expr {
+  ioption ("recursive") "function" parameters ":" type_expr "is" expr {
     let stop   = expr_to_region $7 in
     let region = cover $2 stop
     and value  = {kwd_recursive= $1;
@@ -271,7 +272,8 @@ open_fun_decl:
                   attributes   = None}
     in {region; value}
   }
-| ioption ("recursive") "function" fun_name parameters ":" type_expr "is" expr {
+| ioption ("recursive") "function" fun_name parameters ":" type_expr "is"
+  expr {
     Scoping.check_reserved_name $3;
     let stop   = expr_to_region $8 in
     let region = cover $2 stop
@@ -326,19 +328,17 @@ block:
   "begin" sep_or_term_list(statement,";") "end" {
      let statements, terminator = $2 in
      let region = cover $1 $3
-     and value  = {opening = Begin $1;
+     and value  = {enclosing = BeginEnd ($1,$3);
                    statements;
-                   terminator;
-                   closing = End $3}
+                   terminator}
      in {region; value}
   }
 | "block" "{" sep_or_term_list(statement,";") "}" {
      let statements, terminator = $3 in
      let region = cover $1 $4
-     and value  = {opening = Block ($1,$2);
+     and value  = {enclosing = Block ($1,$2,$4);
                    statements;
-                   terminator;
-                   closing = Block $4}
+                   terminator}
      in {region; value} }
 
 statement:
@@ -404,124 +404,122 @@ instruction:
 set_remove:
   "remove" expr "from" "set" path {
     let region = cover $1 (path_to_region $5) in
-    let value  = {
-      kwd_remove = $1;
-      element    = $2;
-      kwd_from   = $3;
-      kwd_set    = $4;
-      set        = $5}
+    let value  = {kwd_remove = $1;
+                  element    = $2;
+                  kwd_from   = $3;
+                  kwd_set    = $4;
+                  set        = $5}
     in {region; value} }
 
 map_remove:
   "remove" expr "from" "map" path {
     let region = cover $1 (path_to_region $5) in
-    let value  = {
-      kwd_remove = $1;
-      key        = $2;
-      kwd_from   = $3;
-      kwd_map    = $4;
-      map        = $5}
+    let value  = {kwd_remove = $1;
+                  key        = $2;
+                  kwd_from   = $3;
+                  kwd_map    = $4;
+                  map        = $5}
     in {region; value} }
 
 set_patch:
   "patch" path "with" ne_injection("set",expr) {
-    let region = cover $1 $4.region in
-    let value  = {
-      kwd_patch = $1;
-      path      = $2;
-      kwd_with  = $3;
-      set_inj   = $4}
+    let set_inj = $4 (fun region -> NEInjSet region) in
+    let region = cover $1 set_inj.region in
+    let value  = {kwd_patch = $1;
+                  path      = $2;
+                  kwd_with  = $3;
+                  set_inj}
     in {region; value} }
 
 map_patch:
   "patch" path "with" ne_injection("map",binding) {
-    let region = cover $1 $4.region in
-    let value  = {
-      kwd_patch = $1;
-      path      = $2;
-      kwd_with  = $3;
-      map_inj   = $4}
+    let map_inj = $4 (fun region -> NEInjMap region) in
+    let region  = cover $1 map_inj.region in
+    let value   = {kwd_patch = $1;
+                   path      = $2;
+                   kwd_with  = $3;
+                   map_inj}
     in {region; value} }
 
 injection(Kind,element):
   Kind sep_or_term_list(element,";") "end" {
-    let elements, terminator = $2 in
-    let region = cover $1 $3
-    and value = {
-      opening  = Kwd $1;
-      elements = Some elements;
-      terminator;
-      closing = End $3}
-    in {region; value}
+    fun mk_kwd ->
+      let elements, terminator = $2 in
+      let region = cover $1 $3
+      and value  = {
+        kind      = mk_kwd $1;
+        enclosing = End $3;
+        elements  = Some elements;
+        terminator}
+      in {region; value}
   }
 | Kind "end" {
-    let region = cover $1 $2
-    and value = {
-      opening    = Kwd $1;
-      elements   = None;
-      terminator = None;
-      closing    = End $2}
-    in {region; value}
+    fun mk_kwd ->
+      let region = cover $1 $2
+      and value  = {kind       = mk_kwd $1;
+                    enclosing  = End $2;
+                    elements   = None;
+                    terminator = None}
+      in {region; value}
   }
 | Kind "[" sep_or_term_list(element,";") "]" {
-    let elements, terminator = $3 in
-    let region = cover $1 $4
-    and value = {
-      opening  = KwdBracket ($1,$2);
-      elements = Some elements;
-      terminator;
-      closing = RBracket $4}
-    in {region; value}
+    fun mk_kwd ->
+      let elements, terminator = $3 in
+      let region = cover $1 $4
+      and value  = {kind      = mk_kwd $1;
+                    enclosing = Brackets ($2,$4);
+                    elements  = Some elements;
+                    terminator}
+      in {region; value}
   }
 | Kind "[" "]" {
-    let region = cover $1 $3
-    and value = {
-      opening    = KwdBracket ($1,$2);
-      elements   = None;
-      terminator = None;
-      closing    = RBracket $3}
-    in {region; value} }
+    fun mk_kwd ->
+      let region = cover $1 $3
+      and value  = {kind       = mk_kwd $1;
+                    enclosing  = Brackets ($2,$3);
+                    elements   = None;
+                    terminator = None}
+      in {region; value} }
 
 ne_injection(Kind,element):
   Kind sep_or_term_list(element,";") "end" {
-    let ne_elements, terminator = $2 in
-    let region = cover $1 $3
-    and value = {
-      opening  = Kwd $1;
-      ne_elements;
-      terminator;
-      closing = End $3}
-    in {region; value}
+    fun mk_kwd ->
+      let ne_elements, terminator = $2 in
+      let region = cover $1 $3
+      and value  = {kind      = mk_kwd $1;
+                    enclosing = End $3;
+                    ne_elements;
+                    terminator}
+      in {region; value}
   }
 | Kind "[" sep_or_term_list(element,";") "]" {
-    let ne_elements, terminator = $3 in
-    let region = cover $1 $4
-    and value = {
-      opening  = KwdBracket ($1,$2);
-      ne_elements;
-      terminator;
-      closing = RBracket $4}
-    in {region; value} }
+    fun mk_kwd ->
+      let ne_elements, terminator = $3 in
+      let region = cover $1 $4
+      and value = {kind      = mk_kwd $1;
+                   enclosing = Brackets ($2,$4);
+                   ne_elements;
+                   terminator}
+      in {region; value} }
 
 binding:
   expr "->" expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
-    and value  = {
-      source = $1;
-      arrow  = $2;
-      image  = $3}
+    and value  = {source = $1;
+                  arrow  = $2;
+                  image  = $3}
     in {region; value} }
 
 record_patch:
   "patch" path "with" ne_injection("record",field_assignment) {
-    let region = cover $1 $4.region in
-    let value  = {
-      kwd_patch  = $1;
-      path       = $2;
-      kwd_with   = $3;
-      record_inj = $4}
+    let record_inj = $4 (fun region -> NEInjRecord region) in
+    let region = cover $1 record_inj.region in
+    let value  = {kwd_patch = $1;
+                  path      = $2;
+                  kwd_with  = $3;
+                  record_inj}
     in {region; value} }
 
 proc_call:
@@ -547,12 +545,9 @@ if_clause:
 clause_block:
   block { LongBlock $1 }
 | "{" sep_or_term_list(statement,";") "}" {
-    let statements, terminator = $2 in
     let region = cover $1 $3 in
-    let value  = {lbrace = $1;
-                  inside = statements, terminator;
-                  rbrace = $3} in
-    ShortBlock {value; region} }
+    let value  = {lbrace=$1; inside=$2; rbrace=$3}
+    in ShortBlock {value; region} }
 
 case_instr:
   case(if_clause) { $1 if_clause_to_region }
@@ -563,10 +558,10 @@ case(rhs):
       let region = cover $1 $6 in
       let value  = {kwd_case  = $1;
                     expr      = $2;
-                    opening   = Kwd $3;
+                    kwd_of    = $3;
+                    enclosing = End $6;
                     lead_vbar = $4;
-                    cases     = $5 rhs_to_region;
-                    closing   = End $6}
+                    cases     = $5 rhs_to_region}
       in {region; value}
   }
 | "case" expr "of" "[" "|"? cases(rhs) "]" {
@@ -574,10 +569,10 @@ case(rhs):
       let region = cover $1 $7 in
       let value  = {kwd_case  = $1;
                     expr      = $2;
-                    opening   = KwdBracket ($3,$4);
+                    kwd_of    = $3;
+                    enclosing = Brackets ($4,$7);
                     lead_vbar = $5;
-                    cases     = $6 rhs_to_region;
-                    closing   = RBracket $7}
+                    cases     = $6 rhs_to_region}
       in {region; value} }
 
 cases(rhs):
@@ -904,12 +899,17 @@ annot_expr:
     in {region; value} }
 
 set_expr:
-  injection("set",expr) { SetInj $1 }
+  injection("set",expr) { SetInj ($1 (fun region -> InjSet region)) }
 
 map_expr:
-  map_lookup                   { MapLookUp $1 }
-| injection("map",binding)     {    MapInj $1 }
-| injection("big_map",binding) { BigMapInj $1 }
+  map_lookup {
+    MapLookUp $1
+  }
+| injection("map",binding) {
+    MapInj ($1 (fun region -> InjMap region))
+  }
+| injection("big_map",binding) {
+    BigMapInj ($1 (fun region -> InjBigMap region)) }
 
 map_lookup:
   path brackets(expr) {
@@ -958,26 +958,27 @@ record_expr:
     let ne_elements, terminator = $2 in
     let region = cover $1 $3
     and value : field_assign AST.reg ne_injection = {
-      opening = Kwd $1;
+      kind      = NEInjRecord $1;
+      enclosing = End $3;
       ne_elements;
-      terminator;
-      closing = End $3}
+      terminator}
     in {region; value}
   }
 | "record" "[" sep_or_term_list(field_assignment,";") "]" {
-   let ne_elements, terminator = $3 in
-   let region = cover $1 $4
-   and value : field_assign AST.reg ne_injection = {
-     opening = KwdBracket ($1,$2);
-     ne_elements;
-     terminator;
-     closing = RBracket $4}
-   in {region; value} }
+    let ne_elements, terminator = $3 in
+    let region = cover $1 $4
+    and value : field_assign AST.reg ne_injection = {
+      kind      = NEInjRecord $1;
+      enclosing = Brackets ($2,$4);
+      ne_elements;
+      terminator}
+    in {region; value} }
 
 update_record:
-  path "with" ne_injection("record",field_path_assignment){
-    let region = cover (path_to_region $1) $3.region in
-    let value  = {record=$1; kwd_with=$2; updates=$3}
+  path "with" ne_injection("record",field_path_assignment) {
+    let updates = $3 (fun region -> NEInjRecord region) in
+    let region = cover (path_to_region $1) updates.region in
+    let value  = {record=$1; kwd_with=$2; updates}
     in {region; value} }
 
 field_assignment:
@@ -1010,8 +1011,8 @@ arguments:
   par(nsepseq(expr,",")) { $1 }
 
 list_expr:
-  injection("list",expr) { EListComp $1 }
-| "nil"                  {      ENil $1 }
+  injection("list",expr) { EListComp ($1 (fun region -> InjList region)) }
+| "nil"                  { ENil $1                                     }
 
 (* Patterns *)
 
@@ -1034,9 +1035,10 @@ core_pattern:
 | constr_pattern           { PConstr $1 }
 
 list_pattern:
-  injection("list",core_pattern) { PListComp $1 }
-| "nil"                          {      PNil $1 }
+  "nil"                          {      PNil $1 }
 | par(cons_pattern)              {  PParCons $1 }
+| injection("list",core_pattern) {
+    PListComp ($1 (fun region -> InjList region)) }
 
 cons_pattern:
   core_pattern "#" pattern { $1,$2,$3 }

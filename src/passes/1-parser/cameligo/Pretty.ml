@@ -5,11 +5,13 @@ module Region = Simple_utils.Region
 open! Region
 open! PPrint
 
-(*let paragraph (s : string) = flow (break 1) (words s)*)
+let pp_par printer {value; _} =
+  string "(" ^^ nest 1 (printer value.inside ^^ string ")")
 
-let rec make ast =
+let rec print ast =
   let app decl = group (pp_declaration decl) in
-  separate_map (hardline ^^ hardline) app (Utils.nseq_to_list ast.decl)
+  let decl = Utils.nseq_to_list ast.decl in
+  separate_map (hardline ^^ hardline) app decl
 
 and pp_declaration = function
   Let decl -> pp_let_decl decl
@@ -90,8 +92,7 @@ and pp_nat {value; _} =
 and pp_bytes {value; _} =
   string ("0x" ^ Hex.show (snd value))
 
-and pp_ppar {value; _} =
-  string "(" ^^ nest 1 (pp_pattern value.inside ^^ string ")")
+and pp_ppar p = pp_par pp_pattern p
 
 and pp_plist = function
   PListComp cmp -> pp_list_comp cmp
@@ -345,8 +346,7 @@ and pp_tuple_expr {value; _} =
      then pp_expr head
      else pp_expr head ^^ string "," ^^ app (List.map snd tail)
 
-and pp_par_expr {value; _} =
-  string "(" ^^ nest 1 (pp_expr value.inside ^^ string ")")
+and pp_par_expr e = pp_par pp_expr e
 
 and pp_let_in {value; _} =
   let {binding; kwd_rec; body; attributes; _} = value in
@@ -425,8 +425,7 @@ and pp_field_decl {value; _} =
   let t_expr = pp_type_expr field_type
   in prefix 2 1 (name ^^ string " :") t_expr
 
-and pp_type_app {value; _} =
-  let ctor, tuple = value in
+and pp_type_app {value = ctor, tuple; _} =
   prefix 2 1 (pp_type_tuple tuple) (pp_type_constr ctor)
 
 and pp_type_tuple {value; _} =
@@ -449,5 +448,4 @@ and pp_fun_type {value; _} =
   let lhs, _, rhs = value in
   group (pp_type_expr lhs ^^ string " ->" ^/^ pp_type_expr rhs)
 
-and pp_type_par {value; _} =
-  string "(" ^^ nest 1 (pp_type_expr value.inside ^^ string ")")
+and pp_type_par t = pp_par pp_type_expr t

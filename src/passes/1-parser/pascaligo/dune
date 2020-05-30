@@ -15,7 +15,7 @@
   (name parser_pascaligo)
   (public_name ligo.parser.pascaligo)
   (modules
-     Scoping AST pascaligo Parser ParserLog LexToken ParErr)
+     Scoping AST pascaligo Parser ParserLog LexToken ParErr Pretty)
   (libraries
      menhirLib
      parser_shared
