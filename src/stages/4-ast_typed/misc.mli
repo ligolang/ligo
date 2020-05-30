@@ -73,3 +73,5 @@ val get_entry : program -> string -> expression result
 
 val p_constant : constant_tag -> p_ctor_args -> type_value
 val c_equation : type_value -> type_value -> string -> type_constraint
+
+val reason_simpl : type_constraint_simpl -> string

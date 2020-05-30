@@ -45,36 +45,36 @@ let empty_message = e_lambda (Var.of_name "arguments")
 
 
 let pledge () =
-  let%bind program, _ = get_program () in
+  let%bind (program , state) = get_program () in
   let storage = e_address oracle_addr in
   let parameter = e_unit () in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
                   ~sender:oracle_contract
                   ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.one) ()
   in
-  expect_eq ~options program "donate"
+  expect_eq ~options (program, state) "donate"
     (e_pair parameter storage)
     (e_pair (e_list []) storage)
 
 let distribute () =
-  let%bind program, _ = get_program () in
+  let%bind (program , state) = get_program () in
   let storage = e_address oracle_addr in
   let parameter =  empty_message in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
                   ~sender:oracle_contract ()
   in
-  expect_eq ~options program "distribute"
+  expect_eq ~options (program, state) "distribute"
     (e_pair parameter storage)
     (e_pair (e_list []) storage)
 
 let distribute_unauthorized () =
-  let%bind program, _ = get_program () in
+  let%bind (program , state) = get_program () in
   let storage = e_address oracle_addr in
   let parameter =  empty_message in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
                   ~sender:stranger_contract ()
   in
-  expect_string_failwith ~options program "distribute"
+  expect_string_failwith ~options (program, state) "distribute"
     (e_pair parameter storage)
     "You're not the oracle for this distribution."
 

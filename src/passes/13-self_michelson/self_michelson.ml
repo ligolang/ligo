@@ -422,6 +422,56 @@ let rec opt_combine_drops (x : michelson) : michelson =
     Prim (l, p, List.map opt_combine_drops args, annot)
   | x -> x
 
+(* number of type arguments for (some) prims, where we will strip
+   annots *)
+let prim_type_args : prim -> int option = function
+  | I_NONE -> Some 1
+  | I_NIL -> Some 1
+  | I_EMPTY_SET -> Some 1
+  | I_EMPTY_MAP -> Some 2
+  | I_EMPTY_BIG_MAP -> Some 2
+  | I_LAMBDA -> Some 2
+  (* _not_ I_CONTRACT! annot is important there *)
+  (* but could include I_SELF, maybe? *)
+  | _ -> None
+
+(* returns (List.firstn n xs, List.skipn n xs) as in Coq (OCaml stdlib
+   does not have those...) *)
+let split_at (n : int) (xs : 'a list) : 'a list * 'a list =
+  let rec aux n acc =
+    if n <= 0
+    then acc
+    else
+      let (bef, aft) = acc in
+      match aft with
+      | [] -> acc
+      | x :: aft ->
+        aux (n - 1) (x :: bef, aft) in
+  let (bef, aft) = aux n ([], xs) in
+  (List.rev bef, aft)
+
+(* strip annots from type arguments in some instructions *)
+let rec opt_strip_annots (x : michelson) : michelson =
+  match x with
+  | Seq (l, args) ->
+    let args = List.map opt_strip_annots args in
+    Seq (l, args)
+  | Prim (l, p, args, annot) ->
+    begin
+      match prim_type_args p with
+      | Some n ->
+        let (type_args, args) = split_at n args in
+        (* strip annots from type args *)
+        let type_args = List.map strip_annots type_args in
+        (* recur into remaining args *)
+        let args = List.map opt_strip_annots args in
+        Prim (l, p, type_args @ args, annot)
+      | None ->
+        let args = List.map opt_strip_annots args in
+        Prim (l, p, args, annot)
+    end
+  | x -> x
+
 let optimize : michelson -> michelson =
   fun x ->
   let x = use_lambda_instr x in
@@ -436,4 +486,5 @@ let optimize : michelson -> michelson =
                    ] in
   let x = iterate_optimizer (sequence_optimizers optimizers) x in
   let x = opt_combine_drops x in
+  let x = opt_strip_annots x in
   x

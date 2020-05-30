@@ -13,15 +13,15 @@ let get_program =
     | Some s -> ok s
     | None -> (
         let%bind (program , state) = type_file "./contracts/coase.ligo" in
-        let () = Typer.Solver.discard_state state in
-        s := Some program ;
-        ok program
+        s := Some (program , state) ;
+        ok (program , state)
       )
 
 let compile_main () = 
-  let%bind typed_prg      = get_program () in
-  let%bind mini_c_prg     = Ligo.Compile.Of_typed.compile typed_prg in
-  let%bind michelson_prg  = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
+  let%bind (typed_prg, state) = get_program () in
+  let () = Typer.Solver.discard_state state in
+  let%bind mini_c_prg         = Ligo.Compile.Of_typed.compile typed_prg in
+  let%bind michelson_prg      = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
   let%bind (_contract: Tezos_utils.Michelson.michelson) =
     (* fails if the given entry point is not a valid contract *)
     Ligo.Compile.Of_michelson.build_contract michelson_prg in
