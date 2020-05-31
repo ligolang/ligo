@@ -82,6 +82,11 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
      let%bind res = self init' tuple in
      ok res
     )
+  | E_tuple_destruct {tuple; next} -> (
+    let%bind res = self init' tuple in
+    let%bind res = self res next in
+    ok res
+  )
   | E_let_in { let_binder = _ ; rhs ; let_result } -> (
       let%bind res = self init' rhs in
       let%bind res = self res let_result in
@@ -204,6 +209,11 @@ let rec map_expression : exp_mapper -> expression -> expression result = fun f e
   | E_tuple_accessor {tuple;path} -> (
      let%bind tuple = self tuple in
      return @@ E_tuple_accessor {tuple;path}
+    )
+  | E_tuple_destruct {tuple;fields;field_types;next} -> (
+     let%bind tuple = self tuple in
+     let%bind next  = self next in
+     return @@ E_tuple_destruct {tuple;fields;field_types;next}
     )
   | E_constructor c -> (
       let%bind e' = self c.element in
@@ -384,6 +394,11 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expres
      let%bind (res, tuple) = self init' tuple in
      ok (res, return @@ E_tuple_accessor {tuple; path})
     )
+  | E_tuple_destruct {tuple;fields;field_types;next} -> (
+     let%bind (res,tuple) = self init' tuple in
+     let%bind (res,next)  = self res next in
+     ok (res, return @@ E_tuple_destruct {tuple;fields;field_types;next})
+     )
   | E_constructor c -> (
       let%bind (res,e') = self init' c.element in
       ok (res, return @@ E_constructor {c with element = e'})

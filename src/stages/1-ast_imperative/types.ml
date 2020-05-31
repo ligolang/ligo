@@ -77,6 +77,7 @@ and expression_content =
   | E_tuple of expression list
   | E_tuple_accessor of tuple_accessor
   | E_tuple_update   of tuple_update
+  | E_tuple_destruct of tuple_destruct
   (* Data Structures *)
   | E_map of (expression * expression) list 
   | E_big_map of (expression * expression) list
@@ -144,6 +145,7 @@ and sequence = {
 
 and tuple_accessor = {tuple: expression; path: int}
 and tuple_update   = {tuple: expression; path: int ; update: expression}
+and tuple_destruct = {tuple: expression; fields : expression_variable list; field_types : type_expression list option; next : expression}
 
 and assign = {
   variable : expression_variable;
