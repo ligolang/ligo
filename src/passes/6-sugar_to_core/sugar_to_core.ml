@@ -193,23 +193,6 @@ let rec compile_expression : I.expression -> O.expression result =
       let path        = O.Label (string_of_int path) in
       let%bind update = compile_expression update in
       return @@ O.E_record_update {record;path;update}
-    | I.E_tuple_destruct {tuple; fields; field_types; next} ->
-      let combine fields field_types =
-        match field_types with
-          Some ft -> List.combine fields @@ List.map (fun x -> Some x) ft
-        | None    -> List.map (fun x -> (x, None)) fields
-      in
-      let%bind record = compile_expression tuple in
-      let%bind next   = compile_expression next in
-      let%bind field_types = bind_map_option (bind_map_list idle_type_expression) field_types in
-      let aux ((index,e) : int * _ ) (field: O.expression_variable * O.type_expression option) =
-        let f = fun expr -> O.e_let_in field false (O.e_record_accessor record (string_of_int index)) expr in
-        (index+1, fun expr -> e (f expr))
-      in
-      let (_,header) = List.fold_left aux (0, fun e -> e) @@
-        combine fields field_types
-      in
-      ok @@ header next
 
 and compile_lambda : I.lambda -> O.lambda result =
   fun {binder;input_type;output_type;result}->
