@@ -140,7 +140,6 @@ let e_annotation ?loc anno_expr ty = make_e ?loc @@ E_ascription {anno_expr; typ
 let e_tuple ?loc lst : expression = make_e ?loc @@ E_tuple lst
 let e_tuple_accessor ?loc tuple path : expression = make_e ?loc @@ E_tuple_accessor {tuple; path}
 let e_tuple_update ?loc tuple path update : expression = make_e ?loc @@ E_tuple_update {tuple; path; update}
-let e_tuple_destruct ?loc tuple fields field_types next = make_e ?loc @@ E_tuple_destruct {tuple; fields; field_types; next}
 
 let e_pair ?loc a b  : expression = e_tuple ?loc [a;b]
 let e_cond ?loc condition then_clause else_clause = make_e ?loc @@ E_cond {condition;then_clause;else_clause}
