@@ -136,7 +136,7 @@ errorToDiag (Expected what instead (Range (sl, sc, _) (el, ec, _))) =
     (Just J.DsError)
     Nothing
     (Just "ligo-lsp")
-    (Text.pack [i|Expected ${what}|])
+    (Text.pack [i|Expected #{what}|])
     (Just $ J.List[])
   where
     begin = J.Position (sl - 1) (sc - 1)
