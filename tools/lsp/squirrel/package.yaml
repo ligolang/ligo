@@ -4,29 +4,38 @@ dependencies:
   - base
   - bytestring
   - data-default
+  - data-fix
   - lens
   - mtl
+  - pretty
   - template-haskell
   - text
   - tree-sitter
-  - pretty
 
 default-extensions:
-  - LambdaCase
+  - BangPatterns
   - BlockArguments
-  - OverloadedStrings
-  - GeneralisedNewtypeDeriving
+  - DataKinds
+  - DeriveFoldable
+  - DeriveFunctor
+  - DeriveTraversable
   - DerivingStrategies
   - DerivingVia
+  - FlexibleContexts
   - FlexibleInstances
+  - GADTs
+  - GeneralisedNewtypeDeriving
+  - LambdaCase
+  - MultiParamTypeClasses
   - NamedFieldPuns
-  - BangPatterns
-  - ScopedTypeVariables
+  - OverloadedStrings
   - QuasiQuotes
+  - ScopedTypeVariables
+  - StandaloneDeriving
   - TemplateHaskell
-  - DeriveFunctor
-  - DeriveFoldable
-  - DeriveTraversable
+  - TypeFamilies
+  - TypeOperators
+  - UndecidableInstances
 
 ghc-options: -freverse-errors -Wall -threaded
 

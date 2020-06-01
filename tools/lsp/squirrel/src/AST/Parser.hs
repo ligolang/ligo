@@ -15,71 +15,91 @@ import AST.Types hiding (tuple)
 
 import Parser
 import Range
+import Tree
+import Union
 
 import Debug.Trace
 
-contract :: Parser (Contract ASTInfo)
+ranged
+  :: ( Functor f
+     , Member f fs
+     )
+  => Parser (f (Tree fs ASTInfo))
+  -> Parser (Tree fs ASTInfo)
+ranged p = do
+  r <- getInfo
+  a <- p
+  return $ mk r a
+
+contract :: Parser (Pascal ASTInfo)
 contract =
-  ctor Contract
-  <*> subtree "contract" do
-        many do
-          inside "declaration:" do
-            declaration
+  ranged do
+    pure Contract
+      <*> subtree "contract" do
+            many do
+              inside "declaration:" do
+                declaration
 
-name :: Parser (Name ASTInfo)
-name = ctor Name <*> token "Name"
+name :: Parser (Pascal ASTInfo)
+name = ranged do pure Name <*> token "Name"
 
-capitalName :: Parser (Name ASTInfo)
-capitalName = ctor Name <*> token "Name_Capital"
+capitalName :: Parser (Pascal ASTInfo)
+capitalName = ranged do pure Name <*> token "Name_Capital"
 
-declaration :: Parser (Declaration ASTInfo)
+declaration :: Parser (Pascal ASTInfo)
 declaration
-  =   do ctor ValueDecl <*> binding
-  <|> do ctor ValueDecl <*> vardecl
-  <|> do ctor ValueDecl <*> constdecl
+  =   do ranged do pure ValueDecl <*> binding
+  <|> do ranged do pure ValueDecl <*> vardecl
+  <|> do ranged do pure ValueDecl <*> constdecl
   <|> do typedecl
-  <|> do ctor Action <*> attributes
+  <|> do ranged do pure Action <*> attributes
   <|> do include
 
 include = do
   subtree "include" do
-    ctor Include
-      <*> inside "filename" do token "String"
+    ranged do
+      pure Include
+        <*> inside "filename" do
+              token "String"
 
-typedecl :: Parser (Declaration ASTInfo)
+typedecl :: Parser (Pascal ASTInfo)
 typedecl = do
   subtree "type_decl" do
-    ctor TypeDecl
-      <*> inside "typeName:"  name
-      <*> inside "typeValue:" newtype_
+    ranged do
+      pure TypeDecl
+        <*> inside "typeName:"  name
+        <*> inside "typeValue:" newtype_
 
-vardecl :: Parser (Binding ASTInfo)
+vardecl :: Parser (Pascal ASTInfo)
 vardecl = do
   subtree "var_decl" do
-    ctor Var
-      <*> inside "name"  name
-      <*> inside "type"  type_
-      <*> inside "value" expr
+    ranged do
+      pure Var
+        <*> inside "name"  name
+        <*> inside "type"  type_
+        <*> inside "value" expr
 
-constdecl :: Parser (Binding ASTInfo)
+constdecl :: Parser (Pascal ASTInfo)
 constdecl = do
   subtree "const_decl" do
-    ctor Const
-      <*> inside "name" name
-      <*> inside "type" type_
-      <*> inside "value" expr
+    ranged do
+      pure Const
+        <*> inside "name" name
+        <*> inside "type" type_
+        <*> inside "value" expr
 
-binding :: Parser (Binding ASTInfo)
+binding :: Parser (Pascal ASTInfo)
 binding = do
   inside ":fun_decl" do
-    ctor Function
-      <*> recursive
-      <*> inside "name:"  name
-      <*> inside "parameters:parameters" do
-            many do
-              inside "parameter" paramDecl
-      <*> inside "type:" type_
-      <*> inside "body:" letExpr
+    ranged do
+      pure Function
+        <*> recursive
+        <*> inside "name:"  name
+        <*> inside "parameters:parameters" do
+              many do
+                inside "parameter" paramDecl
+        <*> inside "type:" type_
+        <*> inside "body:" letExpr
 
 recursive = do
   mr <- optional do
@@ -88,14 +108,16 @@ recursive = do
 
   return $ maybe False (== "recursive") mr
 
-expr :: Parser (Expr ASTInfo)
+expr :: Parser (Pascal ASTInfo)
 expr = stubbed "expr" do
   select
     [ -- Wait, isn't it `qname`? TODO: replace.
-      ctor Ident <*> do
-        ctor QualifiedName
-          <*> name
-          <*> pure []
+      ranged do
+        pure Ident <*> do
+          ranged do
+            pure QualifiedName
+              <*> name
+              <*> pure []
     , opCall
     , fun_call
     , record_expr
@@ -133,58 +155,67 @@ expr = stubbed "expr" do
     , set_remove
     ]
 
-set_remove :: Parser (Expr ASTInfo)
+set_remove :: Parser (Pascal ASTInfo)
 set_remove = do
   subtree "set_remove" do
-    ctor SetRemove
-      <*> inside "key" expr
-      <*> inside "container" do
-        inside ":path" do
-          qname <|> projection
+    ranged do
+      pure SetRemove
+        <*> inside "key" expr
+        <*> inside "container" do
+          inside ":path" do
+            qname <|> projection
 
+set_patch :: Parser (Pascal ASTInfo)
 set_patch = do
   subtree "set_patch" do
-    ctor SetPatch
-      <*> inside "container:path" (qname <|> projection)
-      <*> many do inside "key" expr
+    ranged do
+      pure SetPatch
+        <*> inside "container:path" (qname <|> projection)
+        <*> many do inside "key" expr
 
 record_update = do
   subtree "update_record" do
-    ctor RecordUpd
-      <*> inside "record:path" do qname <|> projection
-      <*> many do inside "assignment" field_path_assignment
+    ranged do
+      pure RecordUpd
+        <*> inside "record:path" do qname <|> projection
+        <*> many do inside "assignment" field_path_assignment
 
 field_path_assignment = do
   subtree "field_path_assignment" do
-    ctor FieldAssignment
-      <*> inside "lhs:path" do qname <|> projection
-      <*> inside "_rhs" expr
+    ranged do
+      pure FieldAssignment
+        <*> inside "lhs:path" do qname <|> projection
+        <*> inside "_rhs" expr
 
 map_patch = do
   subtree "map_patch" do
-    ctor MapPatch
-      <*> inside "container:path" (qname <|> projection)
-      <*> many do inside "binding" map_binding
+    ranged do
+      pure MapPatch
+        <*> inside "container:path" (qname <|> projection)
+        <*> many do inside "binding" map_binding
 
-set_expr :: Parser (Expr ASTInfo)
+set_expr :: Parser (Pascal ASTInfo)
 set_expr = do
   subtree "set_expr" do
-    ctor List <*> many do
-      inside "element" expr
+    ranged do
+      pure List <*> many do
+        inside "element" expr
 
 lambda_expr = do
   subtree "fun_expr" do
-    ctor Lambda
-      <*> inside "parameters:parameters" do
-            many do inside "parameter" paramDecl
-      <*> inside "type" newtype_
-      <*> inside "body" expr
+    ranged do
+      pure Lambda
+        <*> inside "parameters:parameters" do
+              many do inside "parameter" paramDecl
+        <*> inside "type" newtype_
+        <*> inside "body" expr
 
 seq_expr = do
   subtree "block" do
-    ctor Seq <*> many do
-      inside "statement" do
-        declaration <|> statement
+    ranged do
+      pure Seq <*> many do
+        inside "statement" do
+          declaration <|> statement
 
 loop = do
   subtree "loop" do
@@ -192,81 +223,93 @@ loop = do
 
 for_container = do
   subtree "for_loop" do
-    ctor ForBox
-      <*> inside "key" name
-      <*> optional do inside "value" name
-      <*> inside "kind" anything
-      <*> inside "collection" expr
-      <*> inside "body" (expr <|> seq_expr)
+    ranged do
+      pure ForBox
+        <*> inside "key" name
+        <*> optional do inside "value" name
+        <*> inside "kind" anything
+        <*> inside "collection" expr
+        <*> inside "body" (expr <|> seq_expr)
 
 while_loop = do
   subtree "while_loop" do
-    ctor WhileLoop
-      <*> inside "breaker" expr
-      <*> inside "body"    expr
+    ranged do
+      pure WhileLoop
+        <*> inside "breaker" expr
+        <*> inside "body"    expr
 
 for_loop = do
   subtree "for_loop" do
-    ctor ForLoop
-      <*> inside "name"  name
-      <*> inside "begin" expr
-      <*> inside "end"   expr
-      <*> inside "body"  expr
+    ranged do
+      pure ForLoop
+        <*> inside "name"  name
+        <*> inside "begin" expr
+        <*> inside "end"   expr
+        <*> inside "body"  expr
 
 clause_block = do
     subtree "clause_block" do
       inside "block:block" do
-        ctor Seq <*> many do
-          inside "statement" (declaration <|> statement)
+        ranged do
+          pure Seq <*> many do
+            inside "statement" (declaration <|> statement)
   <|> do
     subtree "clause_block" do
-      ctor Seq <*> many do
-        inside "statement" (declaration <|> statement)
+      ranged do
+        pure Seq <*> many do
+          inside "statement" (declaration <|> statement)
 
-skip :: Parser (Expr ASTInfo)
+skip :: Parser (Pascal ASTInfo)
 skip = do
-  ctor Skip <* token "skip"
+  ranged do
+    pure Skip
+      <* token "skip"
 
-case_action :: Parser (Expr ASTInfo)
+case_action :: Parser (Pascal ASTInfo)
 case_action = do
   subtree "case_instr" do
-    ctor Case
-      <*> inside "subject" expr
-      <*> many do
-            inside "case" alt_action
+    ranged do
+      pure Case
+        <*> inside "subject" expr
+        <*> many do
+              inside "case" alt_action
 
-alt_action :: Parser (Alt ASTInfo)
+alt_action :: Parser (Pascal ASTInfo)
 alt_action = do
   subtree "case_clause_instr" do
-    ctor Alt
-      <*> inside "pattern"        pattern
-      <*> inside "body:if_clause" expr
+    ranged do
+      pure Alt
+        <*> inside "pattern"        pattern
+        <*> inside "body:if_clause" expr
 
-case_expr :: Parser (Expr ASTInfo)
+case_expr :: Parser (Pascal ASTInfo)
 case_expr = do
   subtree "case_expr" do
-    ctor Case
-      <*> inside "subject" expr
-      <*> many do
-            inside "case" alt
+    ranged do
+      pure Case
+        <*> inside "subject" expr
+        <*> many do
+              inside "case" alt
 
-alt :: Parser (Alt ASTInfo)
+alt :: Parser (Pascal ASTInfo)
 alt = do
   subtree "case_clause_expr" do
-    ctor Alt
-      <*> inside "pattern" pattern
-      <*> inside "body"    expr
+    ranged do
+      pure Alt
+        <*> inside "pattern" pattern
+        <*> inside "body"    expr
 
-pattern :: Parser (Pattern ASTInfo)
+pattern :: Parser (Pascal ASTInfo)
 pattern = do
   subtree "pattern" $ do
       inside "the" core_pattern
     <|>
-      do ctor IsCons
-           <*> inside "head" core_pattern
-           <*> inside "tail" pattern
+      do ranged do
+           pure IsCons
+             <*> inside "head" core_pattern
+             <*> inside "tail" pattern
 
-core_pattern :: Parser (Pattern ASTInfo)
+core_pattern :: Parser (Pascal ASTInfo)
 core_pattern
   =   constr_pattern
   <|> string_pattern
@@ -277,350 +320,425 @@ core_pattern
   <|> some_pattern
   <|> var_pattern
 
-var_pattern :: Parser (Pattern ASTInfo)
+var_pattern :: Parser (Pascal ASTInfo)
 var_pattern =
-  ctor IsVar <*> name
+  ranged do
+    pure IsVar <*> name
 
-some_pattern :: Parser (Pattern ASTInfo)
+some_pattern :: Parser (Pascal ASTInfo)
 some_pattern = do
   subtree "Some_pattern" do
-    ctor IsConstr
-      <*> do inside "constr" do ctor Name <*> token "Some"
-      <*> do Just <$> inside "arg" pattern
+    ranged do
+      pure IsConstr
+        <*> inside "constr" do
+              ranged do
+                pure Name <*> token "Some"
 
-string_pattern :: Parser (Pattern ASTInfo)
+        <*> do Just <$> inside "arg" pattern
+
+string_pattern :: Parser (Pascal ASTInfo)
 string_pattern =
-  ctor IsConstant <*> do
-    ctor String <*> token "String"
+  ranged do
+    pure IsConstant <*> do
+      ranged do
+        pure String <*> token "String"
 
-nat_pattern :: Parser (Pattern ASTInfo)
+nat_pattern :: Parser (Pascal ASTInfo)
 nat_pattern =
-  ctor IsConstant <*> do
-    ctor Nat <*> token "Nat"
+  ranged do
+      pure IsConstant <*> do
+        ranged do
+          pure Nat <*> token "Nat"
 
-int_pattern :: Parser (Pattern ASTInfo)
+int_pattern :: Parser (Pascal ASTInfo)
 int_pattern =
-  ctor IsConstant <*> do
-    ctor Int <*> token "Int"
+  ranged do
+    pure IsConstant <*> do
+      ranged do
+        pure Int <*> token "Int"
 
-constr_pattern :: Parser (Pattern ASTInfo)
+constr_pattern :: Parser (Pascal ASTInfo)
 constr_pattern =
     do
       subtree "user_constr_pattern" do
-        ctor IsConstr
-          <*> inside "constr:constr" capitalName
-          <*> optional do
-                inside "arguments" tuple_pattern
+        ranged do
+          pure IsConstr
+            <*> inside "constr:constr" capitalName
+            <*> optional do
+                  inside "arguments" tuple_pattern
   <|>
     do
-      ctor IsConstr
-         <*> do ctor Name <*> do true <|> false <|> none <|> unit
-         <*> pure Nothing
+      ranged do
+        pure IsConstr
+          <*> ranged do
+                pure Name <*> do
+                  true <|> false <|> none <|> unit
+          <*> pure Nothing
 
-tuple_pattern :: Parser (Pattern ASTInfo)
+tuple_pattern :: Parser (Pascal ASTInfo)
 tuple_pattern = do
   subtree "tuple_pattern" do
-    ctor IsTuple <*> many do
-      inside "element" pattern
+    ranged do
+      pure IsTuple <*> many do
+        inside "element" pattern
 
-list_pattern :: Parser (Pattern ASTInfo)
+list_pattern :: Parser (Pascal ASTInfo)
 list_pattern = do
   subtree "list_pattern" do
-    ctor IsList <*> many do
-      inside "element" pattern
+    ranged do
+      pure IsList <*> many do
+        inside "element" pattern
 
-nullary_ctor :: Parser (Expr ASTInfo)
+nullary_ctor :: Parser (Pascal ASTInfo)
 nullary_ctor = do
-  ctor Ident <*> do
-    ctor QualifiedName
-      <*> do ctor Name <*> do true <|> false <|> none <|> unit
-      <*> pure []
+  ranged do
+    pure Ident <*> do
+      ranged do
+        pure QualifiedName
+          <*> ranged do
+                pure Name <*> do
+                   true <|> false <|> none <|> unit
+          <*> pure []
 
 true  = token "True"
 false = token "False"
 none  = token "None"
 unit  = token "Unit"
 
-nat_literal :: Parser (Expr ASTInfo)
+nat_literal :: Parser (Pascal ASTInfo)
 nat_literal = do
-  ctor Constant <*> do
-    ctor Nat <*> token "Nat"
+  ranged do
+    pure Constant <*> do
+      ranged do
+        pure Nat <*> token "Nat"
 
-bytes_literal :: Parser (Expr ASTInfo)
+bytes_literal :: Parser (Pascal ASTInfo)
 bytes_literal = do
-  ctor Constant <*> do
-    ctor Bytes <*> token "Bytes"
+  ranged do
+    pure Constant <*> do
+      ranged do
+        pure Bytes <*> token "Bytes"
 
-constr_call :: Parser (Expr ASTInfo)
+constr_call :: Parser (Pascal ASTInfo)
 constr_call = do
   some_call <|> user_constr_call
   where
     some_call = do
       subtree "Some_call" do
-        ctor Apply
-          <*> do ctor Ident <*> inside "constr" qname'
-          <*> inside "arguments:arguments" do
-            many do inside "argument" expr
+        ranged do
+          pure Apply
+            <*> ranged do
+                  pure Ident <*> inside "constr" qname'
+            <*> inside "arguments:arguments" do
+              many do inside "argument" expr
 
     user_constr_call = do
       subtree "constr_call" do
-        ctor Apply
-          <*> inside "constr:constr" do
-                ctor Ident <*> do
-                   ctor QualifiedName
-                     <*> capitalName
-                     <*> pure []
-          <*> inside "arguments:arguments" do
-            many do inside "argument" expr
+        ranged do
+          pure Apply
+            <*> inside "constr:constr" do
+                  ranged do
+                    pure Ident <*> do
+                      ranged do
+                        pure QualifiedName
+                          <*> capitalName
+                          <*> pure []
+            <*> inside "arguments:arguments" do
+                  many do
+                    inside "argument" expr
 
-indexing :: Parser (Expr ASTInfo)
+indexing :: Parser (Pascal ASTInfo)
 indexing = do
   subtree "map_lookup" do
-    ctor Indexing
-      <*> inside "container:path" do
-            qname <|> projection
-      <*> inside "index" expr
+    ranged do
+      pure Indexing
+        <*> inside "container:path" do
+              qname <|> projection
+        <*> inside "index" expr
 
-map_remove :: Parser (Expr ASTInfo)
+map_remove :: Parser (Pascal ASTInfo)
 map_remove = do
   subtree "map_remove" do
-    ctor MapRemove
-      <*> inside "key" expr
-      <*> inside "container" do
-        inside ":path" do
-          qname <|> projection
+    ranged do
+      pure MapRemove
+        <*> inside "key" expr
+        <*> inside "container" do
+          inside ":path" do
+            qname <|> projection
 
-big_map_expr :: Parser (Expr ASTInfo)
+big_map_expr :: Parser (Pascal ASTInfo)
 big_map_expr = do
   subtree "big_map_injection" do
-    ctor BigMap <*> many do
-      inside "binding" do
-        map_binding
+    ranged do
+      pure BigMap <*> many do
+        inside "binding" do
+          map_binding
 
-map_expr :: Parser (Expr ASTInfo)
+map_expr :: Parser (Pascal ASTInfo)
 map_expr = do
   subtree "map_injection" do
-    ctor Map <*> many do
-      inside "binding" do
-        map_binding
+    ranged do
+      pure Map <*> many do
+        inside "binding" do
+          map_binding
 
-map_binding :: Parser (MapBinding ASTInfo)
+map_binding :: Parser (Pascal ASTInfo)
 map_binding = do
   subtree "binding" do
-    ctor MapBinding
-      <*> inside "key"   expr
-      <*> inside "value" expr
+    ranged do
+      pure MapBinding
+        <*> inside "key"   expr
+        <*> inside "value" expr
 
-moduleQualified :: Parser (Expr ASTInfo)
+moduleQualified :: Parser (Pascal ASTInfo)
 moduleQualified = do
   subtree "module_field" do
-    ctor Ident <*> do
-      ctor QualifiedName
-        <*> inside "module" capitalName
-        <*> do pure <$> do ctor At <*> inside "method" do name <|> name'
+    ranged do
+      pure Ident <*> do
+        ranged do
+          pure QualifiedName
+            <*> inside "module" capitalName
+            <*> do pure <$> ranged do
+                    pure At <*> inside "method" do name <|> name'
 
-tuple_expr :: Parser (Expr ASTInfo)
+tuple_expr :: Parser (Pascal ASTInfo)
 tuple_expr = do
   subtree "tuple_expr" do
-    ctor Tuple <*> many do
-      inside "element" expr
-
-attributes :: Parser (Expr ASTInfo)
-attributes = do
-  subtree "attr_decl" do
-    ctor Attrs <*> many do
-      inside "attribute" do
-        token "String"
-
-string_literal :: Parser (Expr ASTInfo)
-string_literal = do
-  ctor Constant <*> do
-    ctor String <*>
-      token "String"
-
-has_type :: Parser (Expr ASTInfo)
-has_type = do
-  subtree "annot_expr" do
-    ctor Annot
-      <*> inside "subject" expr
-      <*> inside "type"    type_
-
-list_expr :: Parser (Expr ASTInfo)
-list_expr = do
-  subtree "list_expr" do
-    ctor List <*> many do
+    ranged do
+      pure Tuple <*> many do
         inside "element" expr
 
-qname :: Parser (QualifiedName ASTInfo)
+attributes :: Parser (Pascal ASTInfo)
+attributes = do
+  subtree "attr_decl" do
+    ranged do
+      pure Attrs <*> many do
+        inside "attribute" do
+          token "String"
+
+string_literal :: Parser (Pascal ASTInfo)
+string_literal = do
+  ranged do
+    pure Constant <*> do
+      ranged do
+        pure String <*> do
+          token "String"
+
+has_type :: Parser (Pascal ASTInfo)
+has_type = do
+  subtree "annot_expr" do
+    ranged do
+      pure Annot
+        <*> inside "subject" expr
+        <*> inside "type"    type_
+
+list_expr :: Parser (Pascal ASTInfo)
+list_expr = do
+  subtree "list_expr" do
+    ranged do
+      pure List <*> many do
+        inside "element" expr
+
+qname :: Parser (Pascal ASTInfo)
 qname = do
-  ctor QualifiedName
-    <*> name
-    <*> pure []
+  ranged do
+    pure QualifiedName
+      <*> name
+      <*> pure []
 
-qname' :: Parser (QualifiedName ASTInfo)
+qname' :: Parser (Pascal ASTInfo)
 qname' = do
-  ctor QualifiedName
-    <*> name'
-    <*> pure []
+  ranged do
+    pure QualifiedName
+      <*> name'
+      <*> pure []
 
-assign :: Parser (Expr ASTInfo)
+assign :: Parser (Pascal ASTInfo)
 assign = do
   subtree "assignment" do
-    ctor Assign
-      <*> inside "LHS" lhs
-      <*> inside "RHS" expr
+    ranged do
+      pure Assign
+        <*> inside "LHS" lhs
+        <*> inside "RHS" expr
 
-lhs :: Parser (LHS ASTInfo)
+lhs :: Parser (Pascal ASTInfo)
 lhs =
-  do ctor LHS
-       <*> inside "container:path" do
-             qname <|> projection
-       <*> pure Nothing
+  ranged do
+    pure LHS
+      <*> inside "container:path" do
+            qname <|> projection
+      <*> pure Nothing
   <|>
-  do ctor LHS
-       <*> subtree "path" do
-             qname <|> projection
-       <*> pure Nothing
+  ranged do
+    pure LHS
+      <*> subtree "path" do
+            qname <|> projection
+      <*> pure Nothing
   <|>
-  do subtree "map_lookup" do
-       ctor LHS
-         <*> inside "container:path" do
-               qname <|> projection
-         <*> inside "index" do
-               Just <$> expr
+  subtree "map_lookup" do
+    ranged do
+      pure LHS
+        <*> inside "container:path" do
+              qname <|> projection
+        <*> inside "index" do
+              Just <$> expr
 
 
-tez_literal :: Parser (Expr ASTInfo)
+tez_literal :: Parser (Pascal ASTInfo)
 tez_literal = do
-  ctor Constant <*> do
-    ctor Tez <*> token "Tez"
+  ranged do
+    pure Constant <*> do
+      ranged do
+        pure Tez <*> token "Tez"
 
-if_expr :: Parser (Expr ASTInfo)
+if_expr :: Parser (Pascal ASTInfo)
 if_expr = do
     subtree "conditional" do
-      ctor If
-        <*> inside "selector"       expr
-        <*> inside "then:if_clause" expr
-        <*> inside "else:if_clause" expr
+      ranged do
+        pure If
+          <*> inside "selector"       expr
+          <*> inside "then:if_clause" expr
+          <*> inside "else:if_clause" expr
   <|> do
     subtree "cond_expr" do
-      ctor If
-        <*> inside "selector"       expr
-        <*> inside "then" expr
-        <*> inside "else" expr
+      ranged do
+        pure If
+          <*> inside "selector"       expr
+          <*> inside "then" expr
+          <*> inside "else" expr
 
-method_call :: Parser (Expr ASTInfo)
+method_call :: Parser (Pascal ASTInfo)
 method_call = do
   subtree "projection_call" do
-    ctor apply'
-      <*> inside "f" projection
-      <*> optional do inside "arguments" arguments
+    ranged do
+      pure apply'
+        <*> getInfo
+        <*> inside "f" projection
+        <*> optional do inside "arguments" arguments
   where
-    apply' r f (Just xs) = Apply r (Ident r f) xs
-    apply' r f _         = Ident r f
+    apply' i f (Just xs) = Apply (mk i $ Ident f) xs
+    apply' i f _         = Ident f
 
-projection :: Parser (QualifiedName ASTInfo)
+projection :: Parser (Pascal ASTInfo)
 projection = do
   subtree "data_projection" do
-    ctor QualifiedName
-      <*> inside "struct" name
-      <*> many selection
+    ranged do
+      pure QualifiedName
+        <*> inside "struct" name
+        <*> many selection
 
-selection :: Parser (Path ASTInfo)
+selection :: Parser (Pascal ASTInfo)
 selection = do
     inside "index:selection"
-      $   do ctor At <*> name
-      <|> do ctor Ix <*> token "Int"
+      $   ranged do pure At <*> name
+      <|> ranged do pure Ix <*> token "Int"
   <|>
     inside "index" do
-      ctor Ix <*> token "Int"
+      ranged do pure Ix <*> token "Int"
 
-par_call :: Parser (Expr ASTInfo)
+par_call :: Parser (Pascal ASTInfo)
 par_call = do
   subtree "par_call" do
-    ctor apply'
+    pure apply'
+      <*> getInfo
       <*> inside "f" expr
       <*> optional do inside "arguments" arguments
   where
-    apply' r f (Just xs) = Apply r f xs
-    apply' _ f  _        = f
+    apply'
+      :: ASTInfo
+      -> Pascal ASTInfo
+      -> Maybe [Pascal ASTInfo]
+      -> Pascal ASTInfo
+    apply' i f (Just xs) = mk i $ Apply f xs
+    apply' i f  _        = f
 
-int_literal :: Parser (Expr ASTInfo)
+int_literal :: Parser (Pascal ASTInfo)
 int_literal = do
-  ctor Constant
-    <*> do ctor Int <*> token "Int"
+  ranged do
+    pure Constant
+      <*> ranged do
+        pure Int <*> token "Int"
 
-record_expr :: Parser (Expr ASTInfo)
+record_expr :: Parser (Pascal ASTInfo)
 record_expr = do
   subtree "record_expr" do
-    ctor Record <*> many do
-      inside "assignment:field_assignment" do
-        ctor Assignment
-          <*> inside "name" name
-          <*> inside "_rhs" expr
+    ranged do
+      pure Record <*> many do
+        inside "assignment:field_assignment" do
+          ranged do
+            pure Assignment
+              <*> inside "name" name
+              <*> inside "_rhs" expr
 
-fun_call :: Parser (Expr ASTInfo)
+fun_call :: Parser (Pascal ASTInfo)
 fun_call = do
   subtree "fun_call" do
-    ctor Apply
-      <*> do ctor Ident <*> inside "f" function_id
-      <*> inside "arguments" arguments
+    ranged do
+      pure Apply
+        <*> ranged do pure Ident <*> inside "f" function_id
+        <*> inside "arguments" arguments
 
 arguments =
   subtree "arguments" do
     many do inside "argument" expr
 
-function_id :: Parser (QualifiedName ASTInfo)
+function_id :: Parser (Pascal ASTInfo)
 function_id = select
   [ qname
   , do
       subtree "module_field" do
-        ctor QualifiedName
-          <*> inside "module" capitalName
-          <*> do pure <$> do ctor At <*> inside "method" do name <|> name'
+        ranged do
+          pure QualifiedName
+            <*> inside "module" capitalName
+            <*> do pure <$> ranged do
+                    pure At <*> inside "method" do name <|> name'
   ]
 
-opCall :: Parser (Expr ASTInfo)
+opCall :: Parser (Pascal ASTInfo)
 opCall = do
   subtree "op_expr"
     $   do inside "the" expr
-    <|> do ctor BinOp
-             <*> inside "arg1" expr
-             <*> inside "op"   anything
-             <*> inside "arg2" expr
-    <|> do ctor UnOp
-             <*> inside "negate" anything
-             <*> inside "arg"    expr
+    <|> ranged do
+          pure BinOp
+            <*> inside "arg1" expr
+            <*> inside "op"   anything
+            <*> inside "arg2" expr
+    <|> ranged do
+          pure UnOp
+            <*> inside "negate" anything
+            <*> inside "arg"    expr
 
 letExpr = do
   subtree "let_expr" do
-    ctor let'
+    pure let'
+      <*> getInfo
       <*> optional do
         inside "locals:block" do
           many do
             inside "statement" do
               declaration <|> statement
       <*> inside "body"expr
-
   where
     let' r decls body = case decls of
-      Just them -> Let r them body
+      Just them -> mk r $ Let them body
       Nothing   -> body
 
-statement :: Parser (Declaration ASTInfo)
-statement = ctor Action <*> expr
+statement :: Parser (Pascal ASTInfo)
+statement = ranged do pure Action <*> expr
 
-paramDecl :: Parser (VarDecl ASTInfo)
+paramDecl :: Parser (Pascal ASTInfo)
 paramDecl = do
   subtree "param_decl" do
-    ctor Decl
-      <*> inside "access" do
-            ctor access' <*> anything
-      <*> inside "name" name
-      <*> inside "type" type_
+    ranged do
+      pure Decl
+        <*> inside "access" do
+              ranged do
+                pure access' <*> anything
+        <*> inside "name" name
+        <*> inside "type" type_
   where
-    access' r "var"   = Mutable   r
-    access' r "const" = Immutable r
+    access' "var"   = Mutable
+    access' "const" = Immutable
 
 newtype_ = select
   [ record_type
@@ -630,70 +748,78 @@ newtype_ = select
 
 sum_type = do
   subtree "sum_type" do
-    ctor TSum <*> many do
-      inside "variant" variant
+    ranged do
+      pure TSum <*> many do
+        inside "variant" variant
 
 variant = do
   subtree "variant" do
-    ctor Variant
-      <*> inside "constructor:constr" capitalName
-      <*> optional do inside "arguments" type_
+    ranged do
+      pure Variant
+        <*> inside "constructor:constr" capitalName
+        <*> optional do inside "arguments" type_
 
 record_type = do
   subtree "record_type" do
-    ctor TRecord <*> many do
-      inside "field" do
-        field_decl
+    ranged do
+      pure TRecord <*> many do
+        inside "field" do
+          field_decl
 
 field_decl = do
   subtree "field_decl" do
-    ctor TField
-      <*> inside "fieldName" name
-      <*> inside "fieldType" newtype_
+    ranged do
+      pure TField
+        <*> inside "fieldName" name
+        <*> inside "fieldType" newtype_
 
-type_ :: Parser (Type ASTInfo)
+type_ :: Parser (Pascal ASTInfo)
 type_ =
     fun_type
   where
-    fun_type :: Parser (Type ASTInfo)
+    fun_type :: Parser (Pascal ASTInfo)
     fun_type = do
       inside ":fun_type" do
-        ctor tarrow
+        pure tarrow
+          <*> getInfo
           <*>             inside "domain"  cartesian
           <*> optional do inside "codomain" fun_type
 
       where
-        tarrow info domain codomain =
+        tarrow i domain codomain =
           case codomain of
-            Just co -> TArrow info domain co
+            Just co -> mk i $ TArrow domain co
             Nothing -> domain
 
     cartesian = do
       inside ":cartesian" do
-        ctor TProduct <*> some do
-          inside "element" do
-            core_type
+        ranged do
+          pure TProduct <*> some do
+            inside "element" do
+              core_type
 
     core_type = do
       select
-        [ ctor TVar <*> name
+        [ ranged do pure TVar <*> name
         , subtree "invokeBinary" do
-            ctor TApply
-              <*> inside "typeConstr" name'
-              <*> inside "arguments"  typeTuple
+            ranged do
+              pure TApply
+                <*> inside "typeConstr" name'
+                <*> inside "arguments"  typeTuple
         , subtree "invokeUnary" do
-            ctor TApply
-              <*> inside "typeConstr" name'
-              <*> do pure <$> inside "arguments" type_
+            ranged do
+              pure TApply
+                <*> inside "typeConstr" name'
+                <*> do pure <$> inside "arguments" type_
 
         , subtree "type_expr" newtype_
         ]
 
-name' :: Parser (Name ASTInfo)
+name' :: Parser (Pascal ASTInfo)
 name' = do
-  ctor Name <*> anything
+  ranged do pure Name <*> anything
 
-typeTuple :: Parser [Type ASTInfo]
+typeTuple :: Parser [Pascal ASTInfo]
 typeTuple = do
   subtree "type_tuple" do
     many do inside "element" type_

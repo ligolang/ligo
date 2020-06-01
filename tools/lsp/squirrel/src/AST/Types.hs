@@ -18,408 +18,311 @@ import Data.Void
 import Parser
 import ParseTree
 import Pretty
+import Tree
 
 import TH
 
 import Debug.Trace
 
-data Contract info
-  = Contract      info [Declaration info]
-  | WrongContract      Error
-  deriving (Show) via PP (Contract info)
+data Contract it
+  = Contract      [it]
+  deriving (Show) via PP (Contract it)
   deriving stock (Functor, Foldable, Traversable)
 
-data Declaration info
-  = ValueDecl info (Binding info)
-  | TypeDecl  info (Name info) (Type info)
-  | Action    info (Expr info)
-  | Include   info Text
-  | WrongDecl      Error
-  deriving (Show) via PP (Declaration info)
+data Declaration it
+  = ValueDecl it     -- Binding
+  | TypeDecl  it it  -- Name Type
+  | Action    it     -- Expr
+  | Include   Text
+  deriving (Show) via PP (Declaration it)
   deriving stock (Functor, Foldable, Traversable)
 
-data Binding info
-  = Irrefutable  info (Pattern info) (Expr info)
-  | Function     info Bool (Name info) [VarDecl info] (Type info) (Expr info)
-  | Var          info (Name info) (Type info) (Expr info)
-  | Const        info (Name info) (Type info) (Expr info)
-  | WrongBinding      Error
-  deriving (Show) via PP (Binding info)
+data Binding it
+  = Irrefutable  it it -- (Pattern) (Expr)
+  | Function     Bool it [it] it it -- (Name) [VarDecl] (Type) (Expr)
+  | Var          it it it -- (Name) (Type) (Expr)
+  | Const        it it it -- (Name) (Type) (Expr)
+  deriving (Show) via PP (Binding it)
   deriving stock (Functor, Foldable, Traversable)
 
-data VarDecl info
-  = Decl         info (Mutable info) (Name info) (Type info)
-  | WrongVarDecl      Error
-  deriving (Show) via PP (VarDecl info)
+data VarDecl it
+  = Decl         it it it -- (Mutable) (Name) (Type)
+  deriving (Show) via PP (VarDecl it)
   deriving stock (Functor, Foldable, Traversable)
 
-data Mutable info
-  = Mutable      info
-  | Immutable    info
-  | WrongMutable      Error
-  deriving (Show) via PP (Mutable info)
+data Mutable it
+  = Mutable
+  | Immutable
+  deriving (Show) via PP (Mutable it)
   deriving stock (Functor, Foldable, Traversable)
 
 
-data Type info
-  = TArrow    info  (Type info) (Type info)
-  | TRecord   info [TField info]
-  | TVar      info  (Name info)
-  | TSum      info [Variant info]
-  | TProduct  info  [Type info]
-  | TApply    info  (Name info) [Type info]
-  | WrongType      Error
-  deriving (Show) via PP (Type info)
+data Type it
+  = TArrow    it it -- (Type) (Type)
+  | TRecord   [it] -- [TField]
+  | TVar      it -- (Name)
+  | TSum      [it] -- [Variant]
+  | TProduct  [it] -- [Type]
+  | TApply    it [it] -- (Name) [Type]
+  deriving (Show) via PP (Type it)
   deriving stock (Functor, Foldable, Traversable)
 
-data Variant info
-  = Variant info (Name info) (Maybe (Type info))
-  | WrongVariant Error
-  deriving (Show) via PP (Variant info)
+data Variant it
+  = Variant it (Maybe it) -- (Name) (Maybe (Type))
+  deriving (Show) via PP (Variant it)
   deriving stock (Functor, Foldable, Traversable)
 
-data TField info
-  = TField info (Name info) (Type info)
-  | WrongTField Error
-  deriving (Show) via PP (TField info)
+data TField it
+  = TField it it -- (Name) (Type)
+  deriving (Show) via PP (TField it)
   deriving stock (Functor, Foldable, Traversable)
 
 -- | TODO: break onto smaller types? Literals -> Constannt; mapOps; mmove Annots to Decls.
-data Expr info
-  = Let       info [Declaration info] (Expr info)
-  | Apply     info (Expr info) [Expr info]
-  | Constant  info (Constant info)
-  | Ident     info (QualifiedName info)
-  | BinOp     info (Expr info) Text (Expr info)
-  | UnOp      info Text (Expr info)
-  | Record    info [Assignment info]
-  | If        info (Expr info) (Expr info) (Expr info)
-  | Assign    info (LHS info) (Expr info)
-  | List      info [Expr info]
-  | Set       info [Expr info]
-  | Tuple     info [Expr info]
-  | Annot     info (Expr info) (Type info)
-  | Attrs     info [Text]
-  | BigMap    info [MapBinding info]
-  | Map       info [MapBinding info]
-  | MapRemove info (Expr info) (QualifiedName info)
-  | SetRemove info (Expr info) (QualifiedName info)
-  | Indexing  info (QualifiedName info) (Expr info)
-  | Case      info (Expr info) [Alt info]
-  | Skip      info
-  | ForLoop   info (Name info) (Expr info) (Expr info) (Expr info)
-  | WhileLoop info (Expr info) (Expr info)
-  | Seq       info [Declaration info]
-  | Lambda    info [VarDecl info] (Type info) (Expr info)
-  | ForBox    info (Name info) (Maybe (Name info)) Text (Expr info) (Expr info)
-  | MapPatch  info (QualifiedName info) [MapBinding info]
-  | SetPatch  info (QualifiedName info) [Expr info]
-  | RecordUpd info (QualifiedName info) [FieldAssignment info]
-  | WrongExpr      Error
-  deriving (Show) via PP (Expr info)
+data Expr it
+  = Let       [it] it -- [Declaration] (Expr)
+  | Apply     it [it] -- (Expr) [Expr]
+  | Constant  it -- (Constant)
+  | Ident     it -- (QualifiedName)
+  | BinOp     it Text it -- (Expr) Text (Expr)
+  | UnOp      Text it -- (Expr)
+  | Record    [it] -- [Assignment]
+  | If        it it it -- (Expr) (Expr) (Expr)
+  | Assign    it it -- (LHS) (Expr)
+  | List      [it] -- [Expr]
+  | Set       [it] -- [Expr]
+  | Tuple     [it] -- [Expr]
+  | Annot     it it -- (Expr) (Type)
+  | Attrs     [Text]
+  | BigMap    [it] -- [MapBinding]
+  | Map       [it] -- [MapBinding]
+  | MapRemove it it -- (Expr) (QualifiedName)
+  | SetRemove it it -- (Expr) (QualifiedName)
+  | Indexing  it it -- (QualifiedName) (Expr)
+  | Case      it [it] -- (Expr) [Alt]
+  | Skip
+  | ForLoop   it it it it -- (Name) (Expr) (Expr) (Expr)
+  | WhileLoop it it -- (Expr) (Expr)
+  | Seq       [it] -- [Declaration]
+  | Lambda    [it] it it -- [VarDecl] (Type) (Expr)
+  | ForBox    it (Maybe it) Text it it -- (Name) (Maybe (Name)) Text (Expr) (Expr)
+  | MapPatch  it [it] -- (QualifiedName) [MapBinding]
+  | SetPatch  it [it] -- (QualifiedName) [Expr]
+  | RecordUpd it [it] -- (QualifiedName) [FieldAssignment]
+  deriving (Show) via PP (Expr it)
   deriving stock (Functor, Foldable, Traversable)
 
-data Alt info
-  = Alt info (Pattern info) (Expr info)
-  | WrongAlt Error
-  deriving (Show) via PP (Alt info)
+data Alt it
+  = Alt it it -- (Pattern) (Expr)
+  deriving (Show) via PP (Alt it)
   deriving stock (Functor, Foldable, Traversable)
 
-data LHS info
-  = LHS info (QualifiedName info) (Maybe (Expr info))
-  | WrongLHS Error
-  deriving (Show) via PP (LHS info)
+data LHS it
+  = LHS it (Maybe it) -- (QualifiedName) (Maybe (Expr))
+  deriving (Show) via PP (LHS it)
   deriving stock (Functor, Foldable, Traversable)
 
-data MapBinding info
-  = MapBinding info (Expr info) (Expr info)
-  | WrongMapBinding Error
-  deriving (Show) via PP (MapBinding info)
+data MapBinding it
+  = MapBinding it it -- (Expr) (Expr)
+  deriving (Show) via PP (MapBinding it)
   deriving stock (Functor, Foldable, Traversable)
 
-data Assignment info
-  = Assignment info (Name info) (Expr info)
-  | WrongAssignment Error
-  deriving (Show) via PP (Assignment info)
+data Assignment it
+  = Assignment it it -- (Name) (Expr)
+  deriving (Show) via PP (Assignment it)
   deriving stock (Functor, Foldable, Traversable)
 
-data FieldAssignment info
-  = FieldAssignment info (QualifiedName info) (Expr info)
-  | WrongFieldAssignment Error
-  deriving (Show) via PP (FieldAssignment info)
+data FieldAssignment it
+  = FieldAssignment it it -- (QualifiedName) (Expr)
+  deriving (Show) via PP (FieldAssignment it)
   deriving stock (Functor, Foldable, Traversable)
 
-data Constant info
-  = Int     info Text
-  | Nat     info Text
-  | String  info Text
-  | Float   info Text
-  | Bytes   info Text
-  | Tez     info Text
-  | WrongConstant Error
-  deriving (Show) via PP (Constant info)
+data Constant it
+  = Int     Text
+  | Nat     Text
+  | String  Text
+  | Float   Text
+  | Bytes   Text
+  | Tez     Text
+  deriving (Show) via PP (Constant it)
   deriving stock (Functor, Foldable, Traversable)
 
-data Pattern info
-  = IsConstr     info (Name info) (Maybe (Pattern info))
-  | IsConstant   info (Constant info)
-  | IsVar        info (Name info)
-  | IsCons       info (Pattern info) (Pattern info)
-  | IsWildcard   info
-  | IsList       info [Pattern info]
-  | IsTuple      info [Pattern info]
-  | WrongPattern      Error
-  deriving (Show) via PP (Pattern info)
+data Pattern it
+  = IsConstr     it (Maybe it) -- (Name) (Maybe (Pattern))
+  | IsConstant   it -- (Constant)
+  | IsVar        it -- (Name)
+  | IsCons       it it -- (Pattern) (Pattern)
+  | IsWildcard
+  | IsList       [it] -- [Pattern]
+  | IsTuple      [it] -- [Pattern]
+  deriving (Show) via PP (Pattern it)
   deriving stock (Functor, Foldable, Traversable)
 
-data QualifiedName info
+data QualifiedName it
   = QualifiedName
-    { qnInfo   :: info
-    , qnSource :: Name info
-    , qnPath   :: [Path info]
+    { qnSource :: it -- Name
+    , qnPath   :: [it] -- [Path]
     }
-  | WrongQualifiedName Error
-  deriving (Show) via PP (QualifiedName info)
+  deriving (Show) via PP (QualifiedName it)
   deriving stock (Functor, Foldable, Traversable)
 
-data Path info
-  = At info (Name info)
-  | Ix info Text
-  | WrongPath Error
-  deriving (Show) via PP (Path info)
+data Path it
+  = At it -- (Name)
+  | Ix Text
+  deriving (Show) via PP (Path it)
   deriving stock (Functor, Foldable, Traversable)
 
-data Name info = Name
-  { _info    :: info
-  , _raw     :: Text
+data Name it = Name
+  { _raw     :: Text
   }
-  | WrongName Error
-  deriving (Show) via PP (Name info)
+  deriving (Show) via PP (Name it)
   deriving stock (Functor, Foldable, Traversable)
 
-c :: HasComments i => i -> Doc -> Doc
-c i d =
-  case getComments i of
-    [] -> d
-    cc -> block (map removeSlashN cc) $$ d
-  where
-    removeSlashN txt =
-      if "\n" `Text.isSuffixOf` txt
-      then Text.init txt
-      else txt
-
-instance HasComments i => Pretty (Contract i) where
-  pp = \case
-    Contract i decls -> c i $
+instance Pretty1 Contract where
+  pp1 = \case
+    Contract decls ->
       sparseBlock decls
 
-    WrongContract err ->
-      pp err
+instance Pretty1 Declaration where
+  pp1 = \case
+    ValueDecl binding -> binding
+    TypeDecl  n ty    -> "type" <+> n <+> "=" `indent` ty
+    Action    e       -> e
+    Include   f       -> "#include" <+> pp f
 
-instance HasComments i => Pretty (Declaration i) where
-  pp = \case
-    ValueDecl i binding -> c i $ pp binding
-    TypeDecl  i n ty    -> c i $ "type" <+> pp n <+> "=" `indent` pp ty
-    Action    i e       -> c i $ pp e
-    Include   i f       -> c i $ "#include" <+> pp f
-    WrongDecl err       ->       pp err
-
-instance HasComments i => Pretty (Binding i) where
-  pp = \case
-    Irrefutable  i pat expr -> error "irrefs in pascaligo?"
-    Function     i isRec name params ty body ->
-      c i $
+instance Pretty1 Binding where
+  pp1 = \case
+    Irrefutable  pat expr -> error "irrefs in pascaligo?"
+    Function     isRec name params ty body ->
+      (
         (
-          (
-            (   (if isRec then "recursive" else empty)
-            <+> "function"
-            <+> pp name
-            )
-            `indent` tuple params
+          (   (if isRec then "recursive" else empty)
+          <+> "function"
+          <+> name
           )
-         `indent` (":" <+> pp ty <+> "is")
+          `indent` tuple params
         )
-        `indent` pp body
-    Var   i name ty value -> c i $ "var"   <+> pp name <+> ":" <+> pp ty <+> ":=" `indent` pp value
-    Const i name ty body  -> c i $ "const" <+> pp name <+> ":" <+> pp ty <+>  "=" `indent` pp body
-    WrongBinding err ->
-      pp err
+        `indent` (":" <+> ty <+> "is")
+      )
+      `indent` body
+    Var   name ty value -> "var"   <+> name <+> ":" <+> ty <+> ":=" `indent` value
+    Const name ty body  -> "const" <+> name <+> ":" <+> ty <+>  "=" `indent` body
 
-instance HasComments i => Pretty (VarDecl i) where
-  pp = \case
-    Decl i mutability name ty -> c i $
-      pp mutability <+> pp name <+> ":" `indent` pp ty
-    WrongVarDecl err ->
-      pp err
+instance Pretty1 VarDecl where
+  pp1 = \case
+    Decl mutability name ty -> mutability <+> name <+> ":" `indent` ty
 
-instance HasComments i => Pretty (Mutable i) where
-  pp = \case
-    Mutable      i   -> c i $ "var"
-    Immutable    i   -> c i $ "const"
-    WrongMutable err -> pp err
+instance Pretty1 Mutable where
+  pp1 = \case
+    Mutable          -> "var"
+    Immutable        -> "const"
 
-instance HasComments i => Pretty (Type i) where
-  pp = \case
-    TArrow    i dom codom -> c i $ parens (pp dom `indent` "->" <+> pp codom)
-    TRecord   i fields    -> c i $ "record [" `indent` block fields `above` "]"
-    TVar      i name      -> c i $ pp name
-    TSum      i variants  -> c i $ block variants
-    TProduct  i elements  -> c i $ train " *" elements
-    TApply    i f xs      -> c i $ pp f <> tuple xs
-    WrongType   err       ->       pp err
+instance Pretty1 Type where
+  pp1 = \case
+    TArrow    dom codom -> parens (dom `indent` "->" <+> codom)
+    TRecord   fields    -> "record [" `indent` block fields `above` "]"
+    TVar      name      -> name
+    TSum      variants  -> block variants
+    TProduct  elements  -> train " *" elements
+    TApply    f xs      -> f <> tuple xs
     where
-      ppField (name, ty) = pp name <> ": " <> pp ty <> ";"
+      ppField (name, ty) = name <> ": " <> ty <> ";"
 
-instance HasComments i => Pretty (Variant i) where
-  pp = \case
-    Variant i ctor (Just ty) -> c i $ "|" <+> pp ctor <+> "of" `indent` pp ty
-    Variant i ctor  _        -> c i $ "|" <+> pp ctor
-    WrongVariant err -> pp err
+instance Pretty1 Variant where
+  pp1 = \case
+    Variant ctor (Just ty) -> "|" <+> ctor <+> "of" `indent` ty
+    Variant ctor  _        -> "|" <+> ctor
 
--- My eyes.
-instance HasComments i => Pretty (Expr i) where
-  pp = \case
-    Let       i decls body -> c i $ "block {" `indent` sparseBlock decls `above` "}" <+> "with" `indent` pp body
-    Apply     i f xs       -> c i $ pp f <+> tuple xs
-    Constant  i constant   -> c i $ pp constant
-    Ident     i qname      -> c i $ pp qname
-    BinOp     i l o r      -> c i $ parens (pp l <+> pp o <+> pp r)
-    UnOp      i   o r      -> c i $ parens (pp o <+> pp r)
-    Record    i az         -> c i $ "record" <+> list az
-    If        i b t e      -> c i $ fsep ["if" `indent` pp b, "then" `indent` pp t, "else" `indent` pp e]
-    Assign    i l r        -> c i $ pp l <+> ":=" `indent` pp r
-    List      i l          -> c i $ "list" <+> list l
-    Set       i l          -> c i $ "set"  <+> list l
-    Tuple     i l          -> c i $ tuple l
-    Annot     i n t        -> c i $ parens (pp n <+> ":" `indent` pp t)
-    Attrs     i ts         -> c i $ "attributes" <+> list ts
-    BigMap    i bs         -> c i $ "big_map"    <+> list bs
-    Map       i bs         -> c i $  "map"       <+> list bs
-    MapRemove i k m        -> c i $ "remove" `indent` pp k `above` "from" <+> "map" `indent` pp m
-    SetRemove i k s        -> c i $ "remove" `indent` pp k `above` "from" <+> "set" `indent` pp s
-    Indexing  i a j        -> c i $ pp a <> list [j]
-    Case      i s az       -> c i $ "case" <+> pp s <+> "of" `indent` block az
-    Skip      i            -> c i $ "skip"
-    ForLoop   i j s f b    -> c i $ "for" <+> pp j <+> ":=" <+> pp s <+> "to" <+> pp f `indent` pp b
-    ForBox    i k mv t z b -> c i $ "for" <+> pp k <+> mb ("->" <+>) mv <+> "in" <+> pp t <+> pp z `indent` pp b
-    WhileLoop i f b        -> c i $ "while" <+> pp f `indent` pp b
-    Seq       i es         -> c i $ "block {" `indent` sparseBlock es `above` "}"
-    Lambda    i ps ty b    -> c i $ (("function" `indent` tuple ps) `indent` (":" <+> pp ty)) `indent` pp b
-    MapPatch  i z bs       -> c i $ "patch" `indent` pp z `above` "with" <+> "map" `indent` list bs
-    SetPatch  i z bs       -> c i $ "patch" `indent` pp z `above` "with" <+> "set" `indent` list bs
-    RecordUpd i r up       -> c i $ pp r `indent` "with" <+> "record" `indent` list up
-    WrongExpr   err        -> pp err
+instance Pretty1 Expr where
+  pp1 = \case
+    Let       decls body -> "block {" `indent` sparseBlock decls `above` "}" <+> "with" `indent` body
+    Apply     f xs       -> f <+> tuple xs
+    Constant  constant   -> constant
+    Ident     qname      -> qname
+    BinOp     l o r      -> parens (l <+> pp o <+> r)
+    UnOp        o r      -> parens (pp o <+> r)
+    Record    az         -> "record" <+> list az
+    If        b t e      -> fsep ["if" `indent` b, "then" `indent` t, "else" `indent` e]
+    Assign    l r        -> l <+> ":=" `indent` r
+    List      l          -> "list" <+> list l
+    Set       l          -> "set"  <+> list l
+    Tuple     l          -> tuple l
+    Annot     n t        -> parens (n <+> ":" `indent` t)
+    Attrs     ts         -> "attributes" <+> list ts
+    BigMap    bs         -> "big_map"    <+> list bs
+    Map       bs         ->  "map"       <+> list bs
+    MapRemove k m        -> "remove" `indent` k `above` "from" <+> "map" `indent` m
+    SetRemove k s        -> "remove" `indent` k `above` "from" <+> "set" `indent` s
+    Indexing  a j        -> a <> list [j]
+    Case      s az       -> "case" <+> s <+> "of" `indent` block az
+    Skip                 -> "skip"
+    ForLoop   j s f b    -> "for" <+> j <+> ":=" <+> s <+> "to" <+> f `indent` b
+    ForBox    k mv t z b -> "for" <+> k <+> mb ("->" <+>) mv <+> "in" <+> pp t <+> z `indent` b
+    WhileLoop f b        -> "while" <+> f `indent` b
+    Seq       es         -> "block {" `indent` sparseBlock es `above` "}"
+    Lambda    ps ty b    -> (("function" `indent` tuple ps) `indent` (":" <+> ty)) `indent` b
+    MapPatch  z bs       -> "patch" `indent` z `above` "with" <+> "map" `indent` list bs
+    SetPatch  z bs       -> "patch" `indent` z `above` "with" <+> "set" `indent` list bs
+    RecordUpd r up       -> r `indent` "with" <+> "record" `indent` list up
 
-instance HasComments i => Pretty (Alt i) where
-  pp = \case
-    Alt i p b -> c i $ "|" <+> pp p <+> "->" `indent` pp b
-    WrongAlt err -> pp err
+instance Pretty1 Alt where
+  pp1 = \case
+    Alt p b -> "|" <+> p <+> "->" `indent` b
 
-instance HasComments i => Pretty (MapBinding i) where
-  pp = \case
-    MapBinding i k v -> c i $ pp k <+> "->" `indent` pp v
-    WrongMapBinding err -> pp err
+instance Pretty1 MapBinding where
+  pp1 = \case
+    MapBinding k v -> k <+> "->" `indent` v
 
-instance HasComments i => Pretty (Assignment i) where
-  pp = \case
-    Assignment      i n e -> c i $ pp n <+> "=" `indent` pp e
-    WrongAssignment   err -> pp err
+instance Pretty1 Assignment where
+  pp1 = \case
+    Assignment      n e -> n <+> "=" `indent` e
 
-instance HasComments i => Pretty (FieldAssignment i) where
-  pp = \case
-    FieldAssignment      i n e -> c i $ pp n <+> "=" `indent` pp e
-    WrongFieldAssignment   err -> pp err
+instance Pretty1 FieldAssignment where
+  pp1 = \case
+    FieldAssignment      n e -> n <+> "=" `indent` e
 
-instance HasComments i => Pretty (Constant i) where
-  pp = \case
-    Int           i z   -> c i $ pp z
-    Nat           i z   -> c i $ pp z
-    String        i z   -> c i $ pp z
-    Float         i z   -> c i $ pp z
-    Bytes         i z   -> c i $ pp z
-    Tez           i z   -> c i $ pp z
-    WrongConstant   err -> pp err
+instance Pretty1 Constant where
+  pp1 = \case
+    Int           z   -> pp z
+    Nat           z   -> pp z
+    String        z   -> pp z
+    Float         z   -> pp z
+    Bytes         z   -> pp z
+    Tez           z   -> pp z
 
-instance HasComments i => Pretty (QualifiedName i) where
-  pp = \case
-    QualifiedName i src path -> c i $ pp src <> sepByDot path
-    WrongQualifiedName err   -> pp err
+instance Pretty1 QualifiedName where
+  pp1 = \case
+    QualifiedName src path -> src <> sepByDot path
 
-instance HasComments i => Pretty (Pattern i) where
-  pp = \case
-    IsConstr     i ctor arg  -> c i $ pp ctor <+> maybe empty pp arg
-    IsConstant   i z         -> c i $ pp z
-    IsVar        i name      -> c i $ pp name
-    IsCons       i h t       -> c i $ pp h <+> ("#" <+> pp t)
-    IsWildcard   i           -> c i $ "_"
-    IsList       i l         -> c i $ list l
-    IsTuple      i t         -> c i $ tuple t
-    WrongPattern   err       -> pp err
+instance Pretty1 Pattern where
+  pp1 = \case
+    IsConstr     ctor arg  -> ctor <+> maybe empty id arg
+    IsConstant   z         -> z
+    IsVar        name      -> name
+    IsCons       h t       -> h <+> ("#" <+> t)
+    IsWildcard             -> "_"
+    IsList       l         -> list l
+    IsTuple      t         -> tuple t
 
 
-instance HasComments i => Pretty (Name i) where
-  pp = \case
-    Name      i raw -> c i $ pp raw
-    WrongName err   -> pp err
+instance Pretty1 Name where
+  pp1 = \case
+    Name      raw -> pp raw
 
-instance HasComments i => Pretty (Path i) where
-  pp = \case
-    At i n -> c i $ pp n
-    Ix i j -> c i $ pp j
-    WrongPath err -> pp err
+instance Pretty1 Path where
+  pp1 = \case
+    At n -> n
+    Ix j -> pp j
 
-instance HasComments i => Pretty (TField i) where
-  pp = \case
-    TField i n t -> c i $ pp n <> ":" `indent` pp t
-    WrongTField err -> pp err
+instance Pretty1 TField where
+  pp1 = \case
+    TField      n t -> n <> ":" `indent` t
 
-instance HasComments i => Pretty (LHS i) where
-  pp = \case
-    LHS i qn mi -> c i $ pp qn <> foldMap (brackets . pp) mi
-    WrongLHS err -> pp err
+instance Pretty1 LHS where
+  pp1 = \case
+    LHS    qn mi -> qn <> foldMap brackets mi
 
-foldMap makePrisms
-  [ ''Name
-  , ''Path
-  , ''QualifiedName
-  , ''Pattern
-  , ''Constant
-  , ''FieldAssignment
-  , ''Assignment
-  , ''MapBinding
-  , ''LHS
-  , ''Alt
-  , ''Expr
-  , ''TField
-  , ''Variant
-  , ''Type
-  , ''Mutable
-  , ''VarDecl
-  , ''Binding
-  , ''Declaration
-  , ''Contract
+type Pascal = Tree
+  [ Name, Path, QualifiedName, Pattern, Constant, FieldAssignment, Assignment
+  , MapBinding, LHS, Alt, Expr, TField, Variant, Type, Mutable, VarDecl, Binding
+  , Declaration, Contract
   ]
-
-foldMap makeLenses
-  [ ''Name
-  ]
-
-instance Stubbed (Name info) where stubbing = _WrongName
-instance Stubbed (Path info) where stubbing = _WrongPath
-instance Stubbed (QualifiedName info) where stubbing = _WrongQualifiedName
-instance Stubbed (Pattern info) where stubbing = _WrongPattern
-instance Stubbed (Constant info) where stubbing = _WrongConstant
-instance Stubbed (FieldAssignment info) where stubbing = _WrongFieldAssignment
-instance Stubbed (Assignment info) where stubbing = _WrongAssignment
-instance Stubbed (MapBinding info) where stubbing = _WrongMapBinding
-instance Stubbed (LHS info) where stubbing = _WrongLHS
-instance Stubbed (Alt info) where stubbing = _WrongAlt
-instance Stubbed (Expr info) where stubbing = _WrongExpr
-instance Stubbed (TField info) where stubbing = _WrongTField
-instance Stubbed (Variant info) where stubbing = _WrongVariant
-instance Stubbed (Type info) where stubbing = _WrongType
-instance Stubbed (Mutable info) where stubbing = _WrongMutable
-instance Stubbed (VarDecl info) where stubbing = _WrongVarDecl
-instance Stubbed (Binding info) where stubbing = _WrongBinding
-instance Stubbed (Declaration info) where stubbing = _WrongDecl
-instance Stubbed (Contract info) where stubbing = _WrongContract

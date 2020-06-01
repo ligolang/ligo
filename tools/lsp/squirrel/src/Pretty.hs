@@ -9,9 +9,12 @@ module Pretty
   where
 
 import qualified Data.Text as Text
-import Data.Text (Text)
+import Data.Text (Text, pack)
 
 import Text.PrettyPrint hiding ((<>))
+
+ppToText :: Pretty a => a -> Text
+ppToText = pack . show . pp
 
 -- | With this, one can `data X = ...; derive Show via PP X`
 newtype PP a = PP { unPP :: a }
@@ -23,9 +26,19 @@ instance Pretty a => Show (PP a) where
 class Pretty p where
   pp :: p -> Doc
 
+class Pretty1 p where
+  pp1 :: p Doc -> Doc
+
+instance (Pretty1 p, Functor p, Pretty a) => Pretty (p a) where
+  pp = pp1 . fmap pp
+
 -- | Common instance.
 instance Pretty Text where
   pp = text . Text.unpack
+
+-- | Common instance.
+instance Pretty Doc where
+  pp = id
 
 tuple :: Pretty p => [p] -> Doc
 tuple = parens . train ","

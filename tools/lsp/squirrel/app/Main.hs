@@ -27,6 +27,7 @@ import           ParseTree
 import           Parser
 import           Range
 import           AST
+import           HasErrors
 import           Pretty
 
 main :: IO ()

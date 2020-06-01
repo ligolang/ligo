@@ -44,8 +44,8 @@ module Parser
   , subtree
   , anything
   , token
-  , ASTInfo
-  , ctor
+  , ASTInfo(..)
+  , getInfo
   , inside
   , many
   , some
@@ -56,7 +56,6 @@ module Parser
   , stubbed
   , Stubbed (..)
   , Error (..)
-  , HasComments (getComments)
   ) where
 
 import Control.Lens hiding (inside)
@@ -78,20 +77,11 @@ import Data.ByteString (ByteString)
 import ParseTree
 import Range
 import Pretty
+import HasComments
+import Error
+import Stubbed
 
 import Debug.Trace
-
--- | Parse error.
-data Error
-  = Expected
-    { eMsg   :: Text   -- ^ Description of what was expected.
-    , eWhole :: Text   -- ^ Offending text.
-    , eRange :: Range  -- ^ Location of the error.
-    }
-  deriving (Show) via PP Error
-
-instance Pretty Error where
-  pp (Expected msg found r) = "░" <> pp msg <> pp r <> "▒" <> pp found <> "▓"
 
 -- | Parser of tree-sitter-made tree.
 --
@@ -117,13 +107,13 @@ newtype Parser a = Parser
 -- | Generate error originating at current location.
 makeError :: Text -> Parser Error
 makeError msg = do
-  rng <- getRange
+  rng <- currentRange
   makeError' msg rng
 
 -- | Generate error originating at given location.
 makeError' :: Text -> Range -> Parser Error
 makeError' msg rng = do
-  rng <- getRange
+  rng <- currentRange
   src <- gets (pfGrove . fst) <&> \case
     []                     -> ""
     (,) _ ParseTree { ptSource } : _ -> ptSource
@@ -343,8 +333,8 @@ range parser =
       return (a, pfRange)
 
 -- | Get current range.
-getRange :: Parser Range
-getRange = snd <$> range (return ())
+currentRange :: Parser Range
+currentRange = snd <$> range (return ())
 
 -- | Remove all keys until given key is found; remove the latter as well.
 --
@@ -392,26 +382,7 @@ notFollowedBy parser = do
     die "notFollowedBy"
 
 stub :: Stubbed a => Error -> a
-stub = (stubbing #)
-
--- | For types that have a default replacer with an `Error`.
-class Stubbed a where
-  stubbing :: Prism' a Error
-
-instance Stubbed Text where
-  stubbing = prism (pack . show) Left
-
--- | This is bad, but I had to.
---
---   TODO: Find a way to remove this instance.
---         I probably need a wrapper around '[]'.
---
-instance Stubbed [a] where
-  stubbing = prism (const []) Left
-
--- | `Nothing` would be bad default replacer.
-instance Stubbed a => Stubbed (Maybe a) where
-  stubbing = _Just . stubbing
+stub = stubbing
 
 -- | Universal accessor.
 --
@@ -447,15 +418,15 @@ data ASTInfo = ASTInfo
   , aiComments :: [Text]
   }
 
-class HasComments c where
-  getComments :: c -> [Text]
-
 instance HasComments ASTInfo where
   getComments = aiComments
 
+instance HasRange ASTInfo where
+  getRange = aiRange
+
 -- | Equip given constructor with info.
-ctor :: (ASTInfo -> a) -> Parser a
-ctor = (<$> (ASTInfo <$> getRange <*> grabComments))
+getInfo :: Parser ASTInfo
+getInfo = ASTInfo <$> currentRange <*> grabComments
 
 grabComments :: Parser [Text]
 grabComments = do

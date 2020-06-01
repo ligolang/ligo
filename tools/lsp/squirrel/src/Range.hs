@@ -22,4 +22,4 @@ instance Pretty Range where
       int ll <> ":" <> int lc <> "-" <> int rl <> ":" <> int rc
 
 class HasRange a where
-  location :: Lens' a Range
+  getRange :: a -> Range

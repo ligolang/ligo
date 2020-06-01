@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.2.
+-- This file has been generated from package.yaml by hpack version 0.33.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e30e95968ee812129049606c1bdd5ab3a97ce79d1da5f70f38adaf4bc91f4a4a
+-- hash: fc91e2bbafd609769dba91a90992c659e68f017fa28f156cd261cd553083a47d
 
 name:           squirrel
 version:        0.0.0
@@ -17,16 +17,20 @@ library
       AST.Parser
       AST.Scope
       AST.Types
+      Lattice
       Parser
       ParseTree
       Pretty
       Range
       TH
+      Tree
+      Union
+      Update
   other-modules:
       Paths_squirrel
   hs-source-dirs:
       src/
-  default-extensions: LambdaCase BlockArguments OverloadedStrings GeneralisedNewtypeDeriving DerivingStrategies DerivingVia FlexibleInstances NamedFieldPuns BangPatterns ScopedTypeVariables QuasiQuotes TemplateHaskell DeriveFunctor DeriveFoldable DeriveTraversable
+  default-extensions: BangPatterns BlockArguments DataKinds DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia FlexibleContexts FlexibleInstances GADTs GeneralisedNewtypeDeriving LambdaCase MultiParamTypeClasses NamedFieldPuns OverloadedStrings QuasiQuotes ScopedTypeVariables StandaloneDeriving TemplateHaskell TypeFamilies TypeOperators UndecidableInstances
   ghc-options: -freverse-errors -Wall -threaded
   include-dirs:
       vendor
@@ -36,6 +40,7 @@ library
       base
     , bytestring
     , data-default
+    , data-fix
     , lens
     , mtl
     , pretty
@@ -50,12 +55,13 @@ executable squirrel
       Paths_squirrel
   hs-source-dirs:
       app/
-  default-extensions: LambdaCase BlockArguments OverloadedStrings GeneralisedNewtypeDeriving DerivingStrategies DerivingVia FlexibleInstances NamedFieldPuns BangPatterns ScopedTypeVariables QuasiQuotes TemplateHaskell DeriveFunctor DeriveFoldable DeriveTraversable
+  default-extensions: BangPatterns BlockArguments DataKinds DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia FlexibleContexts FlexibleInstances GADTs GeneralisedNewtypeDeriving LambdaCase MultiParamTypeClasses NamedFieldPuns OverloadedStrings QuasiQuotes ScopedTypeVariables StandaloneDeriving TemplateHaskell TypeFamilies TypeOperators UndecidableInstances
   ghc-options: -freverse-errors -Wall -threaded
   build-depends:
       base
     , bytestring
     , data-default
+    , data-fix
     , haskell-lsp
     , hslogger
     , interpolate
