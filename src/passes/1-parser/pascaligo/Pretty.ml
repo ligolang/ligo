@@ -356,7 +356,18 @@ and pp_selection = function
   FieldName _   -> string "TODO:pp_selection:FieldName"
 | Component cmp -> cmp.value |> snd |> Z.to_string |> string
 
-and pp_tuple_expr tuple = pp_par (pp_nsepseq "," pp_expr) tuple
+and pp_tuple_expr {value; _} =
+  let head, tail = value.inside in
+  let rec app = function
+    []  -> empty
+  | [e] -> group (break 1 ^^ pp_expr e)
+  | e::items ->
+      group (break 1 ^^ pp_expr e ^^ string ",") ^^ app items in
+  let components =
+    if tail = []
+    then pp_expr head
+    else pp_expr head ^^ string "," ^^ app (List.map snd tail)
+  in string "(" ^^ nest 1 (components ^^ string ")")
 
 and pp_fun_call {value; _} =
   let lambda, arguments = value in
