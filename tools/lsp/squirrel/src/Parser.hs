@@ -1,18 +1,12 @@
 
-{-
+{- |
   The thing that can untangle the mess that tree-sitter produced.
 
-  If there be errors, it /will/ be a mess.
+  In presence of serious errors, it /will/ be a mess, anyway.
 
-  The AST you are building must:
-  1) Have first field with type `ASTInfo` in each non-error constructor at each
-     type.
-  2) Have `Error`-only constructor to represent failure and implement `Stubbed`.
+  The AST you are building must be the @Tree@ in each point.
 
-  I recommend parametrising your `AST` with some `info` typevar to be
-  `ASTInfo` in the moment of parsing.
-
-  I also recomment, in your tree-sitter grammar, to add `field("foo", ...)`
+  I recommend, in your tree-sitter grammar, to add `field("foo", ...)`
   to each sub-rule, that has `$.` in front of it -  in a rule, that doesn't
   start with `_` in its name.
 
@@ -21,20 +15,21 @@
 
   Only make rule start with `_` if it is a pure choice.
 
-  ('block'
-    ...
-    a: <a>
-    ...
-    b: <b>
-    ...)
+  > ('block'
+  >   ...
+  >   a: <a>
+  >   ...
+  >   b: <b>
+  >   ...)
 
   ->
 
-  block = do
-    subtree "block" do
-      ctor Block
-        <*> inside "a" a
-        <*> inside "b" b
+  > block = do
+  >   subtree "block" do
+  >     ranged do
+  >       pure Block
+  >         <*> inside "a" a
+  >         <*> inside "b" b
 -}
 
 module Parser
@@ -220,6 +215,7 @@ die       msg     = throwError  =<< makeError  msg
 die'      msg rng = throwError  =<< makeError' msg rng
 complain  msg rng = tell . pure =<< makeError' msg rng
 
+-- | When tree-sitter found something it was unable to process.
 unexpected :: ParseTree -> Error
 unexpected ParseTree { ptSource, ptRange } =
   Expected "not that" ptSource ptRange
@@ -249,9 +245,11 @@ subtree msg parser = do
 (<|>) :: Parser a -> Parser a -> Parser a
 Parser l <|> Parser r = Parser (l `catchError` const r)
 
+-- | Custom @foldl1 (<|>)@.
 select :: [Parser a] -> Parser a
 select = foldl1 (<|>)
 
+-- | Custom @optionMaybe@.
 optional :: Parser a -> Parser (Maybe a)
 optional p = fmap Just p <|> return Nothing
 
@@ -306,7 +304,7 @@ debugParser parser fin = do
     putStrLn "Errors:"
     for_ errs (print . nest 2 . pp)
 
--- | Consume next tree if it has give name. Or die.
+-- | Consume next tree if it has the given name. Or die.
 token :: Text -> Parser Text
 token node = do
   tree@ParseTree {ptName, ptRange, ptSource} <- takeNext node
@@ -320,7 +318,7 @@ anything = do
   tree <- takeNext "anything"
   return $ ptSource tree
 
--- | Get range of current tree or forest before the parser was run.
+-- | Get range of the current tree (or forest) before the parser was run.
 range :: Parser a -> Parser (a, Range)
 range parser =
   get >>= \case
@@ -381,9 +379,6 @@ notFollowedBy parser = do
   unless good do
     die "notFollowedBy"
 
-stub :: Stubbed a => Error -> a
-stub = stubbing
-
 -- | Universal accessor.
 --
 --   Usage:
@@ -428,6 +423,7 @@ instance HasRange ASTInfo where
 getInfo :: Parser ASTInfo
 getInfo = ASTInfo <$> currentRange <*> grabComments
 
+-- | Take the accumulated comments, clean the accumulator.
 grabComments :: Parser [Text]
 grabComments = do
   (st, comms) <- get

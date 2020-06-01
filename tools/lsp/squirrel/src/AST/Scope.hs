@@ -318,8 +318,8 @@ data Scope = Scope { unScope :: Text }
 instance HasComments Scope where
   getComments = pure . ("(* " <>) . (<> " *)") . unScope
 
-runScopeM :: ScopeM a -> a
-runScopeM action = evalState action [Env []]
+evalScopeM :: ScopeM a -> a
+evalScopeM action = evalState action [Env []]
 
 testUpdate :: Pascal ASTInfo -> ScopeM (Pascal Scope)
 testUpdate = updateTree \_ -> do

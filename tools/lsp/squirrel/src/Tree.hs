@@ -1,5 +1,12 @@
 
-module Tree where
+module Tree
+  ( Tree
+  , spineTo
+  , updateTree
+  , mk
+  , infoOf
+  )
+  where
 
 import Data.Fix
 import Data.Functor.Compose
@@ -13,7 +20,12 @@ import Pretty
 import Error
 import Stubbed
 
--- | Tree is a fixpoint of `Union` @layers@, each equipped with an @info@.
+-- | A tree, where each layer is one of @layers@ `Functor`s.
+--
+--   Is equipped with @info@.
+--
+--   Can contain `Error` instead of all the above.
+--
 newtype Tree layers info = Tree
   { unTree :: Fix (Either Error `Compose` (,) info `Compose` Union layers)
   }
@@ -48,7 +60,7 @@ instance {-# OVERLAPS #-}
         aux (Compose (Left err)) = pp err
         aux (Compose (Right (Compose (info, fTree)))) = c info $ pp fTree
 
--- Return all subtrees that cover the range, ascending in side.
+-- | Return all subtrees that cover the range, ascending in size.
 spineTo
   :: ( Lattice   info
      , Foldable (Union fs)
@@ -66,7 +78,10 @@ spineTo info = reverse . go . unTree
 
     go _ = []
 
--- | Update the tree in the monad that exports its methods.
+-- | Update the tree over some monad that exports its methods.
+--
+--   For each tree piece, will call `before` and `after` callbacks.
+--
 updateTree
   :: ( UpdateOver m (Union fs) (Tree fs a)
      , Traversable  (Union fs)
@@ -89,6 +104,7 @@ updateTree act = fmap Tree . go . unTree
 mk :: (Functor f, Member f fs) => info -> f (Tree fs info) -> Tree fs info
 mk i fx = Tree $ Fix $ Compose $ Right $ Compose (i, inj $ fmap unTree fx)
 
+-- | Get info from the tree.
 infoOf :: Tree fs info -> Maybe info
 infoOf (Tree (Fix (Compose it))) =
   either
@@ -96,7 +112,7 @@ infoOf (Tree (Fix (Compose it))) =
     (Just . fst . getCompose) it
 
 instance Stubbed (Tree fs info) where
-  stubbing = Tree . Fix . Compose . Left
+  stub = Tree . Fix . Compose . Left
 
 instance Foldable (Union fs) => HasErrors (Tree fs info) where
   errors = go . unTree

@@ -1,6 +1,10 @@
 
-module Lattice where
+module Lattice
+  ( Lattice(..)
+  )
+  where
 
+-- | A range should have this property to be used for navigation.
 class Lattice l where
   (?>) :: l -> l -> Bool
   (<?) :: l -> l -> Bool

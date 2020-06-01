@@ -1,9 +1,6 @@
 
-{-
+{- |
   The AST and auxillary types along with their pretty-printers.
-
-  TODO: Untangle pretty-printing mess into combinators.
-  TODO: Store offending text verbatim in Wrong*.
 -}
 
 module AST.Types where
@@ -24,29 +21,39 @@ import TH
 
 import Debug.Trace
 
+-- | The AST for Pascali... wait. It is, em, universal one.
+--
+--   TODO: Rename; add stuff if CamlLIGO/ReasonLIGO needs something.
+--
+type Pascal = Tree
+  [ Name, Path, QualifiedName, Pattern, Constant, FieldAssignment, Assignment
+  , MapBinding, LHS, Alt, Expr, TField, Variant, Type, Mutable, VarDecl, Binding
+  , Declaration, Contract
+  ]
+
 data Contract it
   = Contract      [it]
   deriving (Show) via PP (Contract it)
   deriving stock (Functor, Foldable, Traversable)
 
 data Declaration it
-  = ValueDecl it     -- Binding
-  | TypeDecl  it it  -- Name Type
-  | Action    it     -- Expr
+  = ValueDecl it     -- ^ Binding
+  | TypeDecl  it it  -- ^ Name Type
+  | Action    it     -- ^ Expr
   | Include   Text
   deriving (Show) via PP (Declaration it)
   deriving stock (Functor, Foldable, Traversable)
 
 data Binding it
-  = Irrefutable  it it -- (Pattern) (Expr)
-  | Function     Bool it [it] it it -- (Name) [VarDecl] (Type) (Expr)
-  | Var          it it it -- (Name) (Type) (Expr)
-  | Const        it it it -- (Name) (Type) (Expr)
+  = Irrefutable  it it -- ^ (Pattern) (Expr)
+  | Function     Bool it [it] it it -- ^ (Name) [VarDecl] (Type) (Expr)
+  | Var          it it it -- ^ (Name) (Type) (Expr)
+  | Const        it it it -- ^ (Name) (Type) (Expr)
   deriving (Show) via PP (Binding it)
   deriving stock (Functor, Foldable, Traversable)
 
 data VarDecl it
-  = Decl         it it it -- (Mutable) (Name) (Type)
+  = Decl         it it it -- ^ (Mutable) (Name) (Type)
   deriving (Show) via PP (VarDecl it)
   deriving stock (Functor, Foldable, Traversable)
 
@@ -58,11 +65,11 @@ data Mutable it
 
 
 data Type it
-  = TArrow    it it -- (Type) (Type)
-  | TRecord   [it] -- [TField]
-  | TVar      it -- (Name)
-  | TSum      [it] -- [Variant]
-  | TProduct  [it] -- [Type]
+  = TArrow    it it -- ^ (Type) (Type)
+  | TRecord   [it] -- ^ [TField]
+  | TVar      it -- ^ (Name)
+  | TSum      [it] -- ^ [Variant]
+  | TProduct  [it] -- ^ [Type]
   | TApply    it [it] -- (Name) [Type]
   deriving (Show) via PP (Type it)
   deriving stock (Functor, Foldable, Traversable)
@@ -320,9 +327,3 @@ instance Pretty1 TField where
 instance Pretty1 LHS where
   pp1 = \case
     LHS    qn mi -> qn <> foldMap brackets mi
-
-type Pascal = Tree
-  [ Name, Path, QualifiedName, Pattern, Constant, FieldAssignment, Assignment
-  , MapBinding, LHS, Alt, Expr, TField, Variant, Type, Mutable, VarDecl, Binding
-  , Declaration, Contract
-  ]

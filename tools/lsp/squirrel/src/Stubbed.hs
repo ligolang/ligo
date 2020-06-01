@@ -1,5 +1,8 @@
 
-module Stubbed where
+module Stubbed
+  ( Stubbed (..)
+  )
+  where
 
 import Control.Lens
 
@@ -9,20 +12,22 @@ import Error
 
 -- | For types that have a default replacer with an `Error`.
 class Stubbed a where
-  stubbing :: Error -> a
+  stub :: Error -> a
 
 instance Stubbed Text where
-  stubbing = pack . show
+  stub = pack . show
 
 -- | This is bad, but I had to.
 --
 --   TODO: Find a way to remove this instance.
 --         I probably need a wrapper around '[]'.
 --
+--         Or I need a @fields@ parser combinator.
+--
 instance Stubbed [a] where
-  stubbing = const []
+  stub = const []
 
--- | `Nothing` would be bad default replacer.
+-- | Is `Just` `.` @stubbing@.
 instance Stubbed a => Stubbed (Maybe a) where
-  stubbing = Just . stubbing
+  stub = Just . stub
 

@@ -1,11 +1,16 @@
 
-module Range where
+module Range
+  ( Range(..)
+  , HasRange(..)
+  , diffRange
+  )
+  where
 
 import Control.Lens
 
 import Pretty
 
--- | A continuous location in text.
+-- | A continious location in text.
 data Range = Range
   { rStart  :: (Int, Int, Int)  -- ^ [Start: line, col, byte-offset...
   , rFinish :: (Int, Int, Int)  -- ^ ... End: line, col, byte-offset).
@@ -21,5 +26,6 @@ instance Pretty Range where
     brackets do
       int ll <> ":" <> int lc <> "-" <> int rl <> ":" <> int rc
 
+-- | Ability to get range out of something.
 class HasRange a where
   getRange :: a -> Range

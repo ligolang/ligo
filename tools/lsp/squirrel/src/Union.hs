@@ -8,17 +8,15 @@ module Union
 import Update
 import Pretty
 
-{-
-  The "one of" datatype.
-  Each `Union fs a` is a `f a`, where `f` is one of `fs`.
--}
+-- | The "one of" datatype.
+--
+--   Each @Union fs a@ is a @f a@, where @f@ is one of @fs@`.
 data Union fs x where
   Here  ::       f  x -> Union (f : fs) x
   There :: Union fs x -> Union (f : fs) x
 
 instance Eq          (Union '[] a) where (==)     = error "Union.empty"
 instance Show        (Union '[] a) where show     = error "Union.empty"
-
 instance Functor     (Union '[])   where fmap     = error "Union.empty"
 instance Foldable    (Union '[])   where foldMap  = error "Union.empty"
 instance Traversable (Union '[])   where traverse = error "Union.empty"
@@ -36,9 +34,7 @@ deriving stock instance (Functor     f, Functor     (Union fs)) => Functor     (
 deriving stock instance (Foldable    f, Foldable    (Union fs)) => Foldable    (Union (f : fs))
 deriving stock instance (Traversable f, Traversable (Union fs)) => Traversable (Union (f : fs))
 
-{-
-  A case over `Union`.
--}
+-- | A case over `Union`.
 eliminate
   :: (f x -> a)
   -> (Union fs x -> a)
@@ -47,12 +43,10 @@ eliminate here there = \case
   Here  fx   -> here fx
   There rest -> there rest
 
-{-
-  The `f` functior is in the `fs` list.
--}
+-- | The `f` functior is in the `fs` list.
 class Member f fs where
-  inj  :: f x -> Union fs x          -- embed f into some Union
-  proj :: Union fs x -> Maybe (f x)  -- check if a Union is actually f
+  inj  :: f x -> Union fs x          -- ^ embed @f@ into some `Union`
+  proj :: Union fs x -> Maybe (f x)  -- ^ check if a `Union` is actually @f@
 
 instance {-# OVERLAPS #-} Member f (f : fs) where
   inj  = Here

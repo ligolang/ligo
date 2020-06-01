@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.31.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: fc91e2bbafd609769dba91a90992c659e68f017fa28f156cd261cd553083a47d
+-- hash: 1c4275313cf3b683e190f5dc3ea95cd8cde978c09aa4f2269958de6128c73df3
 
 name:           squirrel
 version:        0.0.0
@@ -13,15 +13,18 @@ build-type:     Simple
 library
   exposed-modules:
       AST
-      AST.Errors
       AST.Parser
       AST.Scope
       AST.Types
+      Error
+      HasComments
+      HasErrors
       Lattice
       Parser
       ParseTree
       Pretty
       Range
+      Stubbed
       TH
       Tree
       Union

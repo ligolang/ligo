@@ -1,5 +1,8 @@
 
-module Error where
+module Error
+  ( Error(..)
+  )
+  where
 
 import Data.Text (Text)
 

@@ -1,7 +1,13 @@
 
 {-# language StrictData #-}
 
-module ParseTree where
+module ParseTree
+  ( ParseTree(..)
+  , ParseForest(..)
+  , toParseTree
+  , cutOut
+  )
+  where
 
 import Data.IORef
 import qualified Data.Text as Text
@@ -35,12 +41,7 @@ import Paths_squirrel
 import Range
 import Pretty
 
--- import Debug.Trace
-
 foreign import ccall unsafe tree_sitter_PascaLigo :: Ptr Language
-
-getNodeTypesPath :: IO FilePath
-getNodeTypesPath = getDataFileName "../pascaligo/src/node-types.json"
 
 -- | The tree tree-sitter produces.
 data ParseTree = ParseTree
