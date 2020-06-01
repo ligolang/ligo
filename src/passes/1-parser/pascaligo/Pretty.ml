@@ -104,15 +104,28 @@ and pp_fun_expr {value; _} = string "TODO:pp_fun_expr"
 
 and pp_fun_decl {value; _} =
   let {kwd_recursive; fun_name; param;
-       ret_type; block_with; return; attributes} = value in
+       ret_type; block_with; return; attributes; _} = value in
   let start =
     match kwd_recursive with
       None   -> string "function"
     | Some _ -> string "recursive" ^/^ string "function" in
   let parameters = pp_par pp_parameters param in
   let return_t = pp_type_expr ret_type in
-
-  string "TODO:pp_fun_decl"
+  let blk_opening, blk_in, blk_closing =
+    match block_with with
+      None -> empty, empty, empty
+    | Some (b,_) ->
+        hardline ^^ string "block [", pp_block b, string "] with " in
+  let expr = pp_expr return in
+  let attr = match attributes with
+               None -> empty
+             | Some a -> hardline ^^ pp_attr_decl a
+  in group (start ^^ nest 2 (break 1 ^^ parameters))
+     ^/^ string ": " ^^ nest 2 return_t
+     ^^ string " is" ^^ blk_opening
+     ^^ nest 2 (break 0 ^^ blk_in)
+     ^/^ blk_closing ^^ nest 4 (break 1 ^^ expr)
+     ^^ attr
 
 and pp_parameters p = pp_nsepseq ";" pp_param_decl p
 
@@ -120,9 +133,15 @@ and pp_param_decl = function
   ParamConst c -> pp_param_const c
 | ParamVar   v -> pp_param_var v
 
-and pp_param_const {value; _} = string "PP:pp_param_const"
+and pp_param_const {value; _} =
+  let {var; param_type; _} : param_const = value in
+  group (string ("const " ^ var.value)
+         ^/^ string ": " ^^ nest 2 (pp_type_expr param_type))
 
-and pp_param_var {value; _} = string "TODO:pp_param_var"
+and pp_param_var {value; _} =
+  let {var; param_type; _} : param_var = value in
+  group (string ("var " ^ var.value)
+         ^/^ string ": " ^^ nest 2 (pp_type_expr param_type))
 
 and pp_block {value; _} = string "TODO:pp_block"
 
@@ -337,9 +356,12 @@ and pp_selection = function
   FieldName _   -> string "TODO:pp_selection:FieldName"
 | Component cmp -> cmp.value |> snd |> Z.to_string |> string
 
-and pp_tuple_expr {value; _} = string "TODO:pp_tuple_expr"
+and pp_tuple_expr tuple = pp_par (pp_nsepseq "," pp_expr) tuple
 
-and pp_fun_call {value; _} = string "TODO:pp_fun_call"
+and pp_fun_call {value; _} =
+  let lambda, arguments = value in
+  let arguments = pp_tuple_expr arguments in
+  group (pp_expr lambda ^^ nest 2 (break 1 ^^ arguments))
 
 and pp_arguments v = pp_tuple_expr v
 

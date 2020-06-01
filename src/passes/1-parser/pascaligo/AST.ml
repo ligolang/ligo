@@ -216,17 +216,17 @@ and fun_expr = {
 }
 
 and fun_decl = {
-  kwd_recursive: kwd_recursive option;
-  kwd_function : kwd_function;
-  fun_name     : variable;
-  param        : parameters;
-  colon        : colon;
-  ret_type     : type_expr;
-  kwd_is       : kwd_is;
-  block_with   : (block reg * kwd_with) option;
-  return       : expr;
-  terminator   : semi option;
-  attributes   : attr_decl option
+  kwd_recursive : kwd_recursive option;
+  kwd_function  : kwd_function;
+  fun_name      : variable;
+  param         : parameters;
+  colon         : colon;
+  ret_type      : type_expr;
+  kwd_is        : kwd_is;
+  block_with    : (block reg * kwd_with) option;
+  return        : expr;
+  terminator    : semi option;
+  attributes    : attr_decl option
 }
 
 and parameters = (param_decl, semi) nsepseq par reg
