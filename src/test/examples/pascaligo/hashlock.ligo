@@ -1,5 +1,5 @@
 (*_*
-  name: PascaLIGO Hashlock Contract
+  name: Hashlock Contract (PascaLIGO)
   language: pascaligo
   compile:
     entrypoint: main
