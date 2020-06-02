@@ -6,9 +6,21 @@ type id_details = {
   profile: bytes
 }
 
-type buy = bytes * address option
-type update_owner = id * address
-type update_details = id * bytes option * address option
+type buy = {
+  profile: bytes;
+  initial_controller: address option;
+}
+
+type update_owner = {
+  id: id;
+  new_owner: address;
+}
+
+type update_details = {
+  id: id;
+  new_profile: bytes option;
+  new_controller: address option;
+}
 
 type action =
 | Buy of buy
@@ -19,7 +31,14 @@ type action =
 (* The prices kept in storage can be changed by bakers, though they
    should only be adjusted down over time, not up. *)
 
-type storage = (id, id_details) big_map * int * (tez * tez)
+(* The prices kept in storage can be changed by bakers, though they should only be
+   adjusted down over time, not up. *)
+type storage = {
+  identities: (id, id_details) big_map;
+  next_id: int;
+  name_price: tez;
+  skip_price: tez;
+}
 
 type return = operation list * storage
 
@@ -38,13 +57,17 @@ a lot that could be eaten up.  Should probably do some napkin
 calculations for how expensive skipping needs to be to deter people
 from doing it just to chew up address space.  *)
 
-let buy (parameter, storage: (bytes * address option) * storage) =
-  let void : unit =
-    if Tezos.amount <> storage.2.0
-    then (failwith "Incorrect amount paid.": unit) in
-  let profile, initial_controller = parameter in
-  let identities, new_id, prices = storage in
-  let controller : address =
+let buy (parameter, storage: buy * storage) =
+  let void: unit = 
+    if amount = storage.name_price 
+    then () 
+    else (failwith "Incorrect amount paid.": unit)
+  in
+  let profile = parameter.profile in
+  let initial_controller = parameter.initial_controller in
+  let identities = storage.identities in
+  let new_id = storage.next_id in
+  let controller: address =
     match initial_controller with
     | Some addr -> addr
     | None -> sender in
@@ -54,74 +77,84 @@ let buy (parameter, storage: (bytes * address option) * storage) =
     profile = profile} in
   let updated_identities : (id, id_details) big_map =
     Big_map.update new_id (Some new_id_details) identities
-  in ([]: operation list), (updated_identities, new_id + 1, prices)
+  in
+  ([]: operation list), {storage with identities = updated_identities;
+                         next_id = new_id + 1; 
+                        }
 
-let update_owner (parameter, storage : (id * address) * storage) =
-  if amount <> 0tez
-  then (failwith "Updating owner doesn't cost anything.": return)
+let update_owner (parameter, storage: update_owner * storage) =
+  if (amount <> 0mutez)
+  then (failwith "Updating owner doesn't cost anything.": (operation list) * storage)
   else
-    let id, new_owner = parameter in
-    let identities, last_id, prices = storage in
-    let current_id_details : id_details =
-      match Big_map.find_opt id identities with
-      | Some id_details -> id_details
-      | None -> (failwith "This ID does not exist." : id_details) in
-    let is_allowed : bool =
-      if Tezos.sender = current_id_details.owner
-      then true
-      else (failwith "You are not the owner of this ID." : bool) in
-  let updated_id_details : id_details = {
+  let id = parameter.id in
+  let new_owner = parameter.new_owner in
+  let identities = storage.identities in
+  let current_id_details: id_details =
+    match Big_map.find_opt id identities with
+    | Some id_details -> id_details
+    | None -> (failwith "This ID does not exist.": id_details)
+  in
+  let u : unit =
+    if sender = current_id_details.owner
+    then ()
+    else failwith "You are not the owner of this ID."
+  in
+  let updated_id_details: id_details = {
     owner = new_owner;
     controller = current_id_details.controller;
-    profile = current_id_details.profile} in
-  let updated_identities =
-    Big_map.update id (Some updated_id_details) identities
-  in ([]: operation list), (updated_identities, last_id, prices)
+    profile = current_id_details.profile;
+  }
+  in
+  let updated_identities = Big_map.update id (Some updated_id_details) identities in
+  ([]: operation list), {storage with identities = updated_identities}
 
-let update_details (parameter, storage: (id * bytes option * address option) * storage) =
-  if Tezos.amount <> 0tez
-  then
-    (failwith "Updating details doesn't cost anything." : return)
+let update_details (parameter, storage: update_details * storage) =
+  if (amount <> 0mutez)
+  then (failwith "Updating details doesn't cost anything.": (operation list) * storage)
   else
-    let id, new_profile, new_controller = parameter in
-    let identities, last_id, prices = storage in
-    let current_id_details: id_details =
-      match Big_map.find_opt id identities with
-      | Some id_details -> id_details
-      | None -> (failwith "This ID does not exist.": id_details) in
-    let is_allowed : bool =
-      if Tezos.sender = current_id_details.controller
-         || Tezos.sender = current_id_details.owner
-      then true
-      else
-        (failwith ("You are not the owner or controller of this ID.")
-         : bool) in
-    let owner : address = current_id_details.owner in
-    let profile : bytes =
-      match new_profile with
-      | None -> (* Default *) current_id_details.profile
-      | Some new_profile -> new_profile in
-    let controller : address =
-      match new_controller with
-      | None -> (* Default *) current_id_details.controller
-      | Some new_controller -> new_controller in
-    let updated_id_details: id_details = {
-        owner = owner;
-        controller = controller;
-        profile = profile} in
+  let id = parameter.id in
+  let new_profile = parameter.new_profile in
+  let new_controller = parameter.new_controller in
+  let identities = storage.identities in
+  let current_id_details: id_details =
+    match Big_map.find_opt id identities with
+    | Some id_details -> id_details
+    | None -> (failwith "This ID does not exist.": id_details)
+  in
+  let u : unit =
+    if (sender = current_id_details.controller) || (sender = current_id_details.owner)
+    then ()
+    else failwith ("You are not the owner or controller of this ID.")
+  in
+  let owner: address = current_id_details.owner in
+  let profile: bytes =
+    match new_profile with
+    | None -> (* Default *) current_id_details.profile
+    | Some new_profile -> new_profile
+  in
+  let controller: address =
+    match new_controller with
+    | None -> (* Default *) current_id_details.controller
+    | Some new_controller -> new_controller
+  in
+  let updated_id_details: id_details = {
+    owner = owner;
+    controller = controller;
+    profile = profile;
+  }
+  in
   let updated_identities: (id, id_details) big_map  =
-    Big_map.update id (Some updated_id_details) identities
-  in ([]: operation list), (updated_identities, last_id, prices)
+    Big_map.update id (Some updated_id_details) identities in
+  ([]: operation list), {storage with identities = updated_identities}
 
-(* Let someone skip the next identity so nobody has to take one that's
-undesirable *)
-
-let skip (p, storage: unit * storage) =
-  let void : unit =
-    if Tezos.amount <> storage.2.1
-    then (failwith "Incorrect amount paid." : unit) in
-  let identities, last_id, prices = storage in
-  ([]: operation list), (identities, last_id + 1, prices)
+(* Let someone skip the next identity so nobody has to take one that's undesirable *)
+let skip (p,storage: unit * storage) =
+  let void: unit =
+    if amount = storage.skip_price
+    then ()
+    else failwith "Incorrect amount paid."
+  in
+  ([]: operation list), {storage with next_id = storage.next_id + 1}
 
 let main (action, storage : action * storage) : return =
   match action with
