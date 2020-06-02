@@ -97,19 +97,21 @@ let rec type_expression_to_type_value_copypasted : I.type_expression -> O.type_v
                         | _        -> failwith "unknown type constructor")
      in
      p_constant csttag []
-  | T_operator (type_name) ->
-     let (csttag, args) = T.(match type_name with
-                                | TC_option o            -> (C_option , [o])
-                                | TC_list l              -> (C_list   , [l])
-                                | TC_set  s              -> (C_set    , [s])
-                                | TC_map  ( k , v )      -> (C_map    , [k;v])
-                                | TC_big_map  ( k , v )  -> (C_big_map, [k;v])
-                                | TC_map_or_big_map ( k , v) -> (C_map, [k;v])
-                                | TC_contract c          -> (C_contract, [c])
-                                | TC_michelson_pair_right_comb c -> (C_record, [c])
-                                | TC_michelson_pair_left_comb c -> (C_record, [c])
-                                | TC_michelson_or_right_comb c -> (C_record, [c])
-                                | TC_michelson_or_left_comb c -> (C_record, [c])
+  | T_operator (type_name, args) ->
+     let csttag = T.(match type_name with
+                                | TC_option                    -> C_option 
+                                | TC_list                      -> C_list   
+                                | TC_set                       -> C_set    
+                                | TC_map                       -> C_map    
+                                | TC_big_map                   -> C_big_map
+                                | TC_map_or_big_map            -> C_map
+                                | TC_contract                  -> C_contract
+                                | TC_michelson_pair
+                                | TC_michelson_or
+                                | TC_michelson_pair_right_comb -> C_record
+                                | TC_michelson_pair_left_comb  -> C_record
+                                | TC_michelson_or_right_comb   -> C_record
+                                | TC_michelson_or_left_comb    -> C_record
                           )
      in
      p_constant csttag (List.map type_expression_to_type_value_copypasted args)

@@ -41,43 +41,9 @@ let rec idle_type_expression : I.type_expression -> O.type_expression result =
       return @@ T_arrow {type1;type2}
     | I.T_variable type_variable -> return @@ T_variable type_variable 
     | I.T_constant type_constant -> return @@ T_constant type_constant
-    | I.T_operator type_operator ->
-      let%bind type_operator = idle_type_operator type_operator in
-      return @@ T_operator type_operator
-
-and idle_type_operator : I.type_operator -> O.type_operator result =
-  fun t_o ->
-  match t_o with
-    | TC_contract c -> 
-      let%bind c = idle_type_expression c in
-      ok @@ O.TC_contract c
-    | TC_option o ->
-      let%bind o = idle_type_expression o in
-      ok @@ O.TC_option o
-    | TC_list l ->
-      let%bind l = idle_type_expression l in
-      ok @@ O.TC_list l
-    | TC_set s ->
-      let%bind s = idle_type_expression s in
-      ok @@ O.TC_set s
-    | TC_map (k,v) ->
-      let%bind (k,v) = bind_map_pair idle_type_expression (k,v) in
-      ok @@ O.TC_map (k,v)
-    | TC_big_map (k,v) ->
-      let%bind (k,v) = bind_map_pair idle_type_expression (k,v) in
-      ok @@ O.TC_big_map (k,v)
-    | TC_michelson_pair_right_comb c ->
-      let%bind c = idle_type_expression c in
-      ok @@ O.TC_michelson_pair_right_comb c
-    | TC_michelson_pair_left_comb c ->
-      let%bind c = idle_type_expression c in
-      ok @@ O.TC_michelson_pair_left_comb c
-    | TC_michelson_or_right_comb c ->
-      let%bind c = idle_type_expression c in
-      ok @@ O.TC_michelson_or_right_comb c
-    | TC_michelson_or_left_comb c ->
-      let%bind c = idle_type_expression c in
-      ok @@ O.TC_michelson_or_left_comb c
+    | I.T_operator (type_operator, lst) ->
+      let%bind lst = bind_map_list idle_type_expression lst in
+      return @@ T_operator (type_operator, lst)
 
 let rec compile_expression : I.expression -> O.expression result =
   fun e ->
@@ -274,44 +240,9 @@ let rec uncompile_type_expression : O.type_expression -> I.type_expression resul
       return @@ T_arrow {type1;type2}
     | O.T_variable type_variable -> return @@ T_variable type_variable 
     | O.T_constant type_constant -> return @@ T_constant type_constant
-    | O.T_operator type_operator ->
-      let%bind type_operator = uncompile_type_operator type_operator in
-      return @@ T_operator type_operator
-
-and uncompile_type_operator : O.type_operator -> I.type_operator result =
-  fun t_o ->
-  match t_o with
-    | TC_contract c -> 
-      let%bind c = uncompile_type_expression c in
-      ok @@ I.TC_contract c
-    | TC_option o ->
-      let%bind o = uncompile_type_expression o in
-      ok @@ I.TC_option o
-    | TC_list l ->
-      let%bind l = uncompile_type_expression l in
-      ok @@ I.TC_list l
-    | TC_set s ->
-      let%bind s = uncompile_type_expression s in
-      ok @@ I.TC_set s
-    | TC_map (k,v) ->
-      let%bind (k,v) = bind_map_pair uncompile_type_expression (k,v) in
-      ok @@ I.TC_map (k,v)
-    | TC_big_map (k,v) ->
-      let%bind (k,v) = bind_map_pair uncompile_type_expression (k,v) in
-      ok @@ I.TC_big_map (k,v)
-    | TC_map_or_big_map _ -> failwith "TC_map_or_big_map shouldn't be uncompiled"
-    | TC_michelson_pair_right_comb c ->
-      let%bind c = uncompile_type_expression c in
-      ok @@ I.TC_michelson_pair_right_comb c
-    | TC_michelson_pair_left_comb c ->
-      let%bind c = uncompile_type_expression c in
-      ok @@ I.TC_michelson_pair_left_comb c
-    | TC_michelson_or_right_comb c ->
-      let%bind c = uncompile_type_expression c in
-      ok @@ I.TC_michelson_or_right_comb c
-    | TC_michelson_or_left_comb c ->
-      let%bind c = uncompile_type_expression c in
-      ok @@ I.TC_michelson_or_left_comb c
+    | O.T_operator (type_operator, lst) ->
+      let%bind lst = bind_map_list uncompile_type_expression lst in
+      return @@ T_operator (type_operator, lst)
 
 let rec uncompile_expression : O.expression -> I.expression result =
   fun e ->

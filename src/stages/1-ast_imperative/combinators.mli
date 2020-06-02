@@ -46,10 +46,17 @@ val t_michelson_or : ?loc:Location.t -> type_expression -> michelson_prct_annota
   type_expression -> michelson_prct_annotation -> type_expression
 val t_michelson_pair : ?loc:Location.t -> type_expression -> michelson_prct_annotation ->
   type_expression -> michelson_prct_annotation -> type_expression
+val t_michelson_pair_right_comb : ?loc:Location.t -> type_expression -> type_expression
+val t_michelson_pair_left_comb  : ?loc:Location.t -> type_expression -> type_expression
+val t_michelson_or_right_comb   : ?loc:Location.t -> type_expression -> type_expression
+val t_michelson_or_left_comb    : ?loc:Location.t -> type_expression -> type_expression
 
-val t_operator : ?loc:Location.t -> type_operator -> type_expression list -> type_expression result
+val t_operator : ?loc:Location.t -> type_operator -> type_expression list -> type_expression
 val t_set      : ?loc:Location.t -> type_expression -> type_expression
 val t_contract : ?loc:Location.t -> type_expression -> type_expression
+
+val t_annoted : ?loc:Location.t -> type_expression -> string -> type_expression
+val get_t_annoted : type_expression -> (type_expression* string) result
 
 val make_e : ?loc:Location.t -> expression_content -> expression
 
