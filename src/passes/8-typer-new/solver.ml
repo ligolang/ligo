@@ -12,7 +12,7 @@ open Typesystem.Solver_types
 (* TODO : with our selectors, the selection depends on the order in which the constraints are added :-( :-( :-( :-(
    We need to return a lazy stream of constraints. *)
 
-let select_and_propagate : ('old_input, 'selector_output) selector -> _ propagator -> _ -> 'a -> structured_dbs -> _ * new_constraints * new_assignments =
+let select_and_propagate : ('old_input, 'selector_output) selector -> 'selector_output propagator -> 'selector_output poly_set -> 'old_input -> structured_dbs -> 'selector_output poly_set * new_constraints * new_assignments =
   fun selector propagator ->
   fun already_selected old_type_constraint dbs ->
   (* TODO: thread some state to know which selector outputs were already seen *)
@@ -27,40 +27,35 @@ let select_and_propagate : ('old_input, 'selector_output) selector -> _ propagat
   | WasNotSelected ->
      (already_selected, [] , [])
 
-(* TODO: put the heuristics with their state in a list. *)
-let select_and_propagate_break_ctor = select_and_propagate Heuristic_break_ctor.selector Heuristic_break_ctor.propagator
-let select_and_propagate_specialize1 = select_and_propagate Heuristic_specialize1.selector Heuristic_specialize1.propagator
+let aux sel_propag new_constraint (already_selected , new_constraints , dbs) =
+  let (already_selected , new_constraints', new_assignments) = sel_propag already_selected new_constraint dbs in
+  let assignments = List.fold_left (fun acc ({tv;c_tag=_;tv_list=_} as ele) -> Map.update tv (function None -> Some ele | x -> x) acc) dbs.assignments new_assignments in
+  let dbs = { dbs with assignments } in
+  (already_selected , new_constraints' @ new_constraints , dbs)
+
+let step = fun (Propagator_heuristic { selector; propagator; empty_already_selected }) dbs new_constraint new_constraints ->
+  let (already_selected , new_constraints , dbs) = aux (select_and_propagate selector propagator) new_constraint (empty_already_selected , new_constraints , dbs) in
+  Propagator_heuristic { selector; propagator; empty_already_selected=already_selected }, new_constraints, dbs
 
 (* Takes a constraint, applies all selector+propagator pairs to it.
    Keeps track of which constraints have already been selected. *)
-let select_and_propagate_all' : _ -> type_constraint_simpl selector_input -> structured_dbs -> _ * new_constraints * structured_dbs =
-  let aux sel_propag new_constraint (already_selected , new_constraints , dbs) =
-    let (already_selected , new_constraints', new_assignments) = sel_propag already_selected new_constraint dbs in
-    let assignments = List.fold_left (fun acc ({tv;c_tag=_;tv_list=_} as ele) -> Map.update tv (function None -> Some ele | x -> x) acc) dbs.assignments new_assignments in
-    let dbs = { dbs with assignments } in
-    (already_selected , new_constraints' @ new_constraints , dbs)
-  in
-  fun already_selected new_constraint dbs ->
+let select_and_propagate_all' : ex_propagator_heuristic list -> type_constraint_simpl selector_input -> structured_dbs -> ex_propagator_heuristic list * new_constraints * structured_dbs =
+  fun already_selected_and_propagators new_constraint dbs ->
     (* The order in which the propagators are applied to constraints
        is entirely accidental (dfs/bfs/something in-between). *)
-    let (already_selected , new_constraints , dbs) = (already_selected , [] , dbs) in
-
-    (* We must have a different already_selected for each selector,
-       so this is more verbose than a few uses of `aux'. *)
-    let (already_selected' , new_constraints , dbs) = aux select_and_propagate_break_ctor new_constraint (already_selected.break_ctor , new_constraints , dbs) in
-    let (already_selected , new_constraints , dbs) = ({already_selected with break_ctor = already_selected'}, new_constraints , dbs) in
-
-    let (already_selected' , new_constraints , dbs) = aux select_and_propagate_specialize1 new_constraint (already_selected.specialize1 , new_constraints , dbs) in
-    let (already_selected , new_constraints , dbs) = ({already_selected with specialize1 = already_selected'}, new_constraints , dbs) in
-
-    (already_selected , new_constraints , dbs)
+    List.fold_left
+      (fun (hs , new_constraints , dbs) sp ->
+        let (h , a , b) = step sp dbs new_constraint new_constraints in
+        (h :: hs , a , b))
+      ([], [] , dbs)
+      already_selected_and_propagators
 
 (* Takes a list of constraints, applies all selector+propagator pairs
    to each in turn. *)
-let rec select_and_propagate_all : _ -> type_constraint selector_input list -> structured_dbs -> _ * structured_dbs =
-  fun already_selected new_constraints dbs ->
+let rec select_and_propagate_all : ex_propagator_heuristic list -> type_constraint selector_input list -> structured_dbs -> ex_propagator_heuristic list * structured_dbs =
+  fun already_selected_and_propagators new_constraints dbs ->
     match new_constraints with
-    | [] -> (already_selected, dbs)
+    | [] -> (already_selected_and_propagators, dbs)
     | new_constraint :: tl ->
       let { state = dbs ; list = modified_constraints } = Normalizer.normalizers new_constraint dbs in
       let (already_selected , new_constraints' , dbs) =
@@ -68,7 +63,7 @@ let rec select_and_propagate_all : _ -> type_constraint selector_input list -> s
           (fun (already_selected , nc , dbs) c ->
              let (already_selected , new_constraints' , dbs) = select_and_propagate_all' already_selected c dbs in
              (already_selected , new_constraints' @ nc , dbs))
-          (already_selected , [] , dbs)
+          (already_selected_and_propagators , [] , dbs)
           modified_constraints in
       let new_constraints = new_constraints' @ tl in
       select_and_propagate_all already_selected new_constraints dbs
@@ -88,10 +83,10 @@ let initial_state : typer_state = {
         grouped_by_variable      = (Map.create ~cmp:Var.compare : (type_variable,         constraints) Map.t);
         cycle_detection_toposort = ();
       } ;
-    already_selected = {
-        break_ctor = Set.create ~cmp:Solver_should_be_generated.compare_output_break_ctor;
-        specialize1 = Set.create ~cmp:Solver_should_be_generated.compare_output_specialize1 ;
-      }
+    already_selected_and_propagators = [
+        Heuristic_break_ctor.heuristic ;
+        Heuristic_specialize1.heuristic ;
+      ]
   }
 
 (* This function is called when a program is fully compiled, and the
@@ -107,8 +102,8 @@ let discard_state (_ : typer_state) = ()
 let aggregate_constraints : typer_state -> type_constraint list -> typer_state result = fun state newc ->
   (* TODO: Iterate over constraints *)
   let _todo = ignore (state, newc) in
-  let (a, b) = select_and_propagate_all state.already_selected newc state.structured_dbs in
-  ok { already_selected = a ; structured_dbs = b }
+  let (a, b) = select_and_propagate_all state.already_selected_and_propagators newc state.structured_dbs in
+  ok { already_selected_and_propagators = a ; structured_dbs = b }
 (*let { constraints ; eqv } = state in
   ok { constraints = constraints @ newc ; eqv }*)
 

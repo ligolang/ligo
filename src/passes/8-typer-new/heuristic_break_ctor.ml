@@ -50,3 +50,5 @@ let propagator : output_break_ctor propagator =
     let eqs3 = List.map2 (fun aa bb -> c_equation { tsrc = "solver: propagator: break_ctor aa" ; t = P_variable aa} { tsrc = "solver: propagator: break_ctor bb" ; t = P_variable bb} "propagator: break_ctor") a.tv_list b.tv_list in
     let eqs = eq1 :: eqs3 in
     (eqs , []) (* no new assignments *)
+
+let heuristic = Propagator_heuristic { selector ; propagator ; empty_already_selected = Set.create ~cmp:Solver_should_be_generated.compare_output_break_ctor }

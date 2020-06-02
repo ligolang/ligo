@@ -618,8 +618,3 @@ type already_selected = {
   break_ctor  : m_break_ctor__already_selected  ;
   specialize1 : m_specialize1__already_selected ;
 }
-
-type typer_state = {
-  structured_dbs   : structured_dbs   ;
-  already_selected : already_selected ;
-}

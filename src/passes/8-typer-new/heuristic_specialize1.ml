@@ -51,3 +51,5 @@ let propagator : output_specialize1 propagator =
   let eq1 = c_equation { tsrc = "solver: propagator: specialize1 eq1" ; t = P_variable b.tv } reduced "propagator: specialize1" in
   let eqs = eq1 :: new_constraints in
   (eqs, []) (* no new assignments *)
+
+let heuristic = Propagator_heuristic { selector ; propagator ; empty_already_selected = Set.create ~cmp:Solver_should_be_generated.compare_output_specialize1 }

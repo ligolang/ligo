@@ -2,6 +2,7 @@ let use_new_typer = false
 
 module I = Ast_core
 module O = Ast_typed
+module O' = Typesystem.Solver_types
 
 module Environment = O.Environment
 
