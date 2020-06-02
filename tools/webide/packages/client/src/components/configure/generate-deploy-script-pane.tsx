@@ -4,13 +4,12 @@ import styled from 'styled-components';
 
 import { AppState } from '../../redux/app';
 import {
-  ChangeCommandAction,
   ChangeEntrypointAction,
   ChangeStorageAction,
   ChangeToolAction,
   GenerateDeployScriptState,
 } from '../../redux/generate-deploy-script';
-import { Tool, ToolCommand } from '../../redux/types';
+import { Tool } from '../../redux/types';
 import { AccessFunctionLabel, Group, Input, Label, Textarea } from '../form/inputs';
 import { Option, Select } from '../form/select';
 
@@ -23,10 +22,6 @@ export const GenerateDeployScriptPane = () => {
 
   const tool = useSelector<AppState, GenerateDeployScriptState['tool']>(
     state => state.generateDeployScript.tool
-  );
-
-  const command = useSelector<AppState, GenerateDeployScriptState['command']>(
-    state => state.generateDeployScript.command
   );
 
   const entrypoint = useSelector<AppState, GenerateDeployScriptState['entrypoint']>(
@@ -47,16 +42,6 @@ export const GenerateDeployScriptPane = () => {
           onChange={value => dispatch({ ...new ChangeToolAction(value) })}
         >
           <Option value={Tool.TezosClient}>Tezos Client</Option>
-        </Select>
-      </Group>
-      <Group>
-        <Label>Command</Label>
-        <Select
-          id="tool-command"
-          value={command}
-          onChange={value => dispatch({ ...new ChangeCommandAction(value) })}
-        >
-          <Option value={ToolCommand.Originate}>Originate</Option>
         </Select>
       </Group>
       <Group>
