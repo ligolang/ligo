@@ -7,6 +7,7 @@ import           Control.Exception as E
 import           Control.Lens
 import           Control.Monad
 
+import           Data.Default
 import qualified Data.Text                             as Text
 import           Data.String.Interpolate (i)
 
@@ -26,7 +27,7 @@ import qualified System.Log                            as L
 import           ParseTree
 import           Parser
 import           Range
-import           AST
+import           AST hiding (def)
 import           HasErrors
 import           Pretty
 
@@ -49,12 +50,50 @@ mainLoop = do
         }
 
     Core.setupLogger (Just "log.txt") [] L.INFO
+    CTRL.run callbacks (lspHandlers chan) lspOptions (Just "log.txt")
     return 0
   `catches`
     [ Handler \(e :: SomeException) -> do
         print e
         return 1
     ]
+
+syncOptions :: J.TextDocumentSyncOptions
+syncOptions = J.TextDocumentSyncOptions
+  { J._openClose         = Just True
+  , J._change            = Just J.TdSyncIncremental
+  , J._willSave          = Just False
+  , J._willSaveWaitUntil = Just False
+  , J._save              = Just $ J.SaveOptions $ Just False
+  }
+
+lspOptions :: Core.Options
+lspOptions = def { Core.textDocumentSync = Just syncOptions
+                 , Core.executeCommandCommands = Just ["lsp-hello-command"]
+                 }
+
+lspHandlers :: TChan FromClientMessage -> Core.Handlers
+lspHandlers rin
+  = def { Core.initializedHandler                       = Just $ passHandler rin NotInitialized
+        , Core.renameHandler                            = Just $ passHandler rin ReqRename
+        , Core.hoverHandler                             = Just $ passHandler rin ReqHover
+        , Core.didOpenTextDocumentNotificationHandler   = Just $ passHandler rin NotDidOpenTextDocument
+        , Core.didSaveTextDocumentNotificationHandler   = Just $ passHandler rin NotDidSaveTextDocument
+        , Core.didChangeTextDocumentNotificationHandler = Just $ passHandler rin NotDidChangeTextDocument
+        , Core.didCloseTextDocumentNotificationHandler  = Just $ passHandler rin NotDidCloseTextDocument
+        , Core.cancelNotificationHandler                = Just $ passHandler rin NotCancelRequestFromClient
+        , Core.responseHandler                          = Just $ responseHandlerCb rin
+        , Core.codeActionHandler                        = Just $ passHandler rin ReqCodeAction
+        , Core.executeCommandHandler                    = Just $ passHandler rin ReqExecuteCommand
+        }
+
+passHandler :: TChan FromClientMessage -> (a -> FromClientMessage) -> Core.Handler a
+passHandler rin c notification = do
+  atomically $ writeTChan rin (c notification)
+
+responseHandlerCb :: TChan FromClientMessage -> Core.Handler J.BareResponseMessage
+responseHandlerCb _rin resp = do
+  U.logs $ "******** got ResponseMessage, ignoring:" ++ show resp
 
 send :: Core.LspFuncs () -> FromServerMessage -> IO ()
 send = Core.sendFunc
@@ -114,6 +153,8 @@ eventLoop funs chan = do
           (J.toNormalizedUri doc)
           (J.uriToFilePath doc)
           (Just 0)
+
+      _ -> putStrLn "unknown msg"
 
 
 collectErrors
