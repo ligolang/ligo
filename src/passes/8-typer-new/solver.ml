@@ -4,7 +4,7 @@ module Map = RedBlackTrees.PolyMap
 module Set = RedBlackTrees.PolySet
 module UF = UnionFind.Poly2
 open Ast_typed.Types
-open Solver_types
+open Typesystem.Solver_types
 
 (* sub-sub component: lazy selector (don't re-try all selectors every time)
  * For now: just re-try everytime *)

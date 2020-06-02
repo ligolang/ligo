@@ -6,7 +6,7 @@
 module Core = Typesystem.Core
 open Ast_typed.Misc
 open Ast_typed.Types
-open Solver_types
+open Typesystem.Solver_types
 
 let selector : (type_constraint_simpl, output_specialize1) selector =
   (* find two rules with the shape (x = forall b, d) and x = k'(var' …) or vice versa *)

@@ -3,7 +3,7 @@
 
 open Ast_typed.Misc
 open Ast_typed.Types
-open Solver_types
+open Typesystem.Solver_types
 
 let selector :  (type_constraint_simpl, output_break_ctor) selector =
   (* find two rules with the shape x = k(var …) and x = k'(var' …) *)

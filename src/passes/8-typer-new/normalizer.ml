@@ -2,7 +2,7 @@ module Core = Typesystem.Core
 module Map = RedBlackTrees.PolyMap
 open Ast_typed.Misc
 open Ast_typed.Types
-open Solver_types
+open Typesystem.Solver_types
 
 (* sub-sub component: constraint normalizer: remove dupes and give structure
  * right now: union-find of unification vars
