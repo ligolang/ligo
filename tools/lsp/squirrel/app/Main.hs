@@ -68,24 +68,25 @@ syncOptions = J.TextDocumentSyncOptions
   }
 
 lspOptions :: Core.Options
-lspOptions = def { Core.textDocumentSync = Just syncOptions
-                 , Core.executeCommandCommands = Just ["lsp-hello-command"]
-                 }
+lspOptions = def
+  { Core.textDocumentSync       = Just syncOptions
+  , Core.executeCommandCommands = Just ["lsp-hello-command"]
+  }
 
 lspHandlers :: TChan FromClientMessage -> Core.Handlers
-lspHandlers rin
-  = def { Core.initializedHandler                       = Just $ passHandler rin NotInitialized
-        , Core.renameHandler                            = Just $ passHandler rin ReqRename
-        , Core.hoverHandler                             = Just $ passHandler rin ReqHover
-        , Core.didOpenTextDocumentNotificationHandler   = Just $ passHandler rin NotDidOpenTextDocument
-        , Core.didSaveTextDocumentNotificationHandler   = Just $ passHandler rin NotDidSaveTextDocument
-        , Core.didChangeTextDocumentNotificationHandler = Just $ passHandler rin NotDidChangeTextDocument
-        , Core.didCloseTextDocumentNotificationHandler  = Just $ passHandler rin NotDidCloseTextDocument
-        , Core.cancelNotificationHandler                = Just $ passHandler rin NotCancelRequestFromClient
-        , Core.responseHandler                          = Just $ responseHandlerCb rin
-        , Core.codeActionHandler                        = Just $ passHandler rin ReqCodeAction
-        , Core.executeCommandHandler                    = Just $ passHandler rin ReqExecuteCommand
-        }
+lspHandlers rin = def
+  { Core.initializedHandler                       = Just $ passHandler rin NotInitialized
+  , Core.renameHandler                            = Just $ passHandler rin ReqRename
+  , Core.hoverHandler                             = Just $ passHandler rin ReqHover
+  , Core.didOpenTextDocumentNotificationHandler   = Just $ passHandler rin NotDidOpenTextDocument
+  , Core.didSaveTextDocumentNotificationHandler   = Just $ passHandler rin NotDidSaveTextDocument
+  , Core.didChangeTextDocumentNotificationHandler = Just $ passHandler rin NotDidChangeTextDocument
+  , Core.didCloseTextDocumentNotificationHandler  = Just $ passHandler rin NotDidCloseTextDocument
+  , Core.cancelNotificationHandler                = Just $ passHandler rin NotCancelRequestFromClient
+  , Core.responseHandler                          = Just $ responseHandlerCb rin
+  , Core.codeActionHandler                        = Just $ passHandler rin ReqCodeAction
+  , Core.executeCommandHandler                    = Just $ passHandler rin ReqExecuteCommand
+  }
 
 passHandler :: TChan FromClientMessage -> (a -> FromClientMessage) -> Core.Handler a
 passHandler rin c notification = do
