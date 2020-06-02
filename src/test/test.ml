@@ -11,6 +11,8 @@ let () =
     Coase_tests.main ;
     Vote_tests.main ;
     Id_tests.main ;
+    Id_tests_p.main ;
+    Id_tests_r.main ;
     Multisig_tests.main ;
     Multisig_v2_tests.main ;
     Replaceable_id_tests.main ;

@@ -127,4 +127,3 @@ let fold_map__poly_set : type a state new_a . new_a extra_info__comparable -> (s
     ok (state , PolySet.add new_elt s) in
   let%bind (state , m) = PolySet.fold_inc aux s ~init:(ok (state, PolySet.create ~cmp:new_compare)) in
   ok (state , m)
-

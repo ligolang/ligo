@@ -11,6 +11,7 @@ val get_opt : expression_variable -> t -> element option
 val get_type_opt : type_variable -> t -> type_expression option
 val get_constructor : Ast_core.constructor' -> t -> (type_expression * type_expression) option
 
+val add_ez_sum_type : ?env:environment -> ?type_name:type_variable -> (constructor' * ctor_content) list ->  environment
 module PP : sig
   open Format
 

@@ -50,7 +50,7 @@ let empty_message = e_lambda (Var.of_name "arguments")
 
 
 let commit () =
-  let%bind program,_ = get_program () in
+  let%bind (program , state) = get_program () in
   let%bind predecessor_timestamp = mk_time "2000-01-01T00:10:10Z" in
   let%bind lock_time = mk_time "2000-01-02T00:10:11Z" in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
@@ -79,12 +79,12 @@ let commit () =
       ~sender:first_contract
       ()
   in
-  expect_eq ~options program "commit"
+  expect_eq ~options (program, state) "commit"
     (e_pair salted_hash init_storage) (e_pair empty_op_list post_storage)
 
 (* Test that the contract fails if we haven't committed before revealing the answer *)
 let reveal_no_commit () =
-  let%bind program,_ = get_program () in
+  let%bind (program , state) = get_program () in
   let empty_message = empty_message in
   let reveal = e_record_ez [("hashable", e_bytes_string "hello world");
                             ("message", empty_message)]
@@ -95,13 +95,13 @@ let reveal_no_commit () =
                                                               ("salted_hash", (t_bytes ()))])
   in
   let init_storage = storage test_hash true pre_commits in
-  expect_string_failwith program "reveal"
+  expect_string_failwith (program, state) "reveal"
     (e_pair reveal init_storage)
     "You have not made a commitment to hash against yet."
 
 (* Test that the contract fails if our commit isn't 24 hours old yet *)
 let reveal_young_commit () =
-  let%bind program,_ = get_program () in
+  let%bind (program , state) = get_program () in
   let empty_message = empty_message in
   let reveal = e_record_ez [("hashable", e_bytes_string "hello world");
                             ("message", empty_message)]
@@ -128,13 +128,13 @@ let reveal_young_commit () =
       ~sender:first_contract
       ()
   in
-  expect_string_failwith ~options program "reveal"
+  expect_string_failwith ~options (program, state) "reveal"
     (e_pair reveal init_storage)
     "It has not been 24 hours since your commit yet."
 
 (* Test that the contract fails if our reveal doesn't meet our commitment *)
 let reveal_breaks_commit () =
-  let%bind program,_ = get_program () in
+  let%bind (program , state) = get_program () in
   let empty_message = empty_message in
   let reveal = e_record_ez [("hashable", e_bytes_string "hello world");
                             ("message", empty_message)]
@@ -160,13 +160,13 @@ let reveal_breaks_commit () =
       ~sender:first_contract
       ()
   in
-  expect_string_failwith ~options program "reveal"
+  expect_string_failwith ~options (program, state) "reveal"
     (e_pair reveal init_storage)
     "This reveal does not match your commitment."
 
 (* Test that the contract fails if we reveal the wrong bytes for the stored hash *)
 let reveal_wrong_commit () =
-  let%bind program,_ = get_program () in
+  let%bind (program , state) = get_program () in
   let empty_message = empty_message in
   let reveal = e_record_ez [("hashable", e_bytes_string "hello");
                             ("message", empty_message)]
@@ -192,13 +192,13 @@ let reveal_wrong_commit () =
       ~sender:first_contract
       ()
   in
-  expect_string_failwith ~options program "reveal"
+  expect_string_failwith ~options (program, state) "reveal"
     (e_pair reveal init_storage)
     "Your commitment did not match the storage hash."
 
 (* Test that the contract fails if we try to reuse it after unused flag changed *)
 let reveal_no_reuse () =
-  let%bind program,_ = get_program () in
+  let%bind (program , state) = get_program () in
   let empty_message = empty_message in
   let reveal = e_record_ez [("hashable", e_bytes_string "hello");
                             ("message", empty_message)]
@@ -224,13 +224,13 @@ let reveal_no_reuse () =
       ~sender:first_contract
       ()
   in
-  expect_string_failwith ~options program "reveal"
+  expect_string_failwith ~options (program, state) "reveal"
     (e_pair reveal init_storage)
     "This contract has already been used."
 
 (* Test that the contract executes successfully with valid commit-reveal *)
 let reveal () =
-  let%bind program,_ = get_program () in
+  let%bind (program , state) = get_program () in
   let empty_message = empty_message in
   let reveal = e_record_ez [("hashable", e_bytes_string "hello world");
                             ("message", empty_message)]
@@ -257,7 +257,7 @@ let reveal () =
       ~sender:first_contract
       ()
   in
-  expect_eq ~options program "reveal"
+  expect_eq ~options (program, state) "reveal"
     (e_pair reveal init_storage) (e_pair empty_op_list post_storage)
 
 let main = test_suite "Hashlock" [

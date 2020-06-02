@@ -24,10 +24,9 @@ module Errors = struct
 end
 
 let make_t ?(loc = Location.generated) type_content core = {type_content; location=loc; type_meta = core}
-let make_e ?(location = Location.generated) expression_content type_expression environment = {
+let make_e ?(location = Location.generated) expression_content type_expression = {
   expression_content ;
   type_expression ;
-  environment ;
   location ;
 }
 let make_n_t type_name type_value = { type_name ; type_value }
@@ -83,7 +82,6 @@ let t_shallow_closure param result ?loc ?s () : type_expression = make_t ?loc (T
 
 let get_type_expression (x:expression) = x.type_expression
 let get_type' (x:type_expression) = x.type_content
-let get_environment (x:expression) = x.environment
 let get_expression (x:expression) = x.expression_content
 
 let get_lambda e : _ result = match e.expression_content with
@@ -330,13 +328,13 @@ let e_let_in let_binder inline rhs let_result = E_let_in { let_binder ; rhs ; le
 
 let e_constructor constructor element: expression_content = E_constructor {constructor;element}
 
-let e_bool b env : expression_content = e_constructor (Constructor (string_of_bool b)) (make_e (e_unit ())(t_unit()) env)
+let e_bool b : expression_content = e_constructor (Constructor (string_of_bool b)) (make_e (e_unit ())(t_unit()))
 
 let e_a_unit = make_e (e_unit ()) (t_unit ())
 let e_a_int n = make_e (e_int n) (t_int ())
 let e_a_nat n = make_e (e_nat n) (t_nat ())
 let e_a_mutez n = make_e (e_mutez n) (t_mutez ())
-let e_a_bool b = fun env -> make_e (e_bool b env) (t_bool ()) env
+let e_a_bool b = make_e (e_bool b) (t_bool ())
 let e_a_string s = make_e (e_string s) (t_string ())
 let e_a_address s = make_e (e_address s) (t_address ())
 let e_a_pair a b = make_e (e_pair a b)
@@ -381,7 +379,8 @@ let get_a_record_accessor = fun t ->
 let get_declaration_by_name : program -> string -> declaration result = fun p name ->
   let aux : declaration -> bool = fun declaration ->
     match declaration with
-    | Declaration_constant { binder ; expr=_ ; inline=_ ; post_env=_ } -> binder = Var.of_name name
+    | Declaration_constant { binder ; expr=_ ; inline=_ } -> binder = Var.of_name name
+    | Declaration_type _ -> false
   in
   trace_option (Errors.declaration_not_found name ()) @@
   List.find_opt aux @@ List.map Location.unwrap p

@@ -34,7 +34,7 @@ module TestExpressions = struct
 
   module I = Simplified.Combinators
   module O = Typed.Combinators
-  module E = O
+  module E = Typed.Environment
 
   let unit   () : unit result = test_expression I.(e_unit ())    O.(t_unit ())
   let int    () : unit result = test_expression I.(e_int (Z.of_int 32))     O.(t_int ())
@@ -59,7 +59,7 @@ module TestExpressions = struct
         (Typed.Constructor "foo", {ctor_type = Typed.t_int () ; michelson_annotation = None ; ctor_decl_pos = 0});
         (Typed.Constructor "bar", {ctor_type = Typed.t_string () ; michelson_annotation = None ; ctor_decl_pos = 1}) ]
     in test_expression
-      ~env:(E.env_sum_type variant_foo_bar)
+      ~env:(E.add_ez_sum_type variant_foo_bar)
       I.(e_constructor "foo" (e_int (Z.of_int 32)))
       O.(make_t_ez_sum variant_foo_bar)
 

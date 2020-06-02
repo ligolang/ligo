@@ -7,7 +7,7 @@ let bad_contract basename =
 
 let%expect_test _ =
   run_ligo_good [ "measure-contract" ; contract "coase.ligo" ; "main" ] ;
-  [%expect {| 1700 bytes |}] ;
+  [%expect {| 1668 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig.ligo" ; "main" ] ;
   [%expect {| 995 bytes |}] ;
@@ -276,7 +276,7 @@ let%expect_test _ =
                  DIG 7 ;
                  DUP ;
                  DUG 8 ;
-                 NONE (pair (address %card_owner) (nat %card_pattern)) ;
+                 NONE (pair address nat) ;
                  SWAP ;
                  UPDATE ;
                  DIG 2 ;

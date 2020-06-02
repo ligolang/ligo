@@ -63,12 +63,14 @@ test:
     - /^.*-run-dev$/
   script:
     - nix-build nix -A ligo-coverage
+    - cat result/share/coverage-all
     - cp -Lr --no-preserve=mode,ownership,timestamps result/share/coverage .
   artifacts:
     paths:
       - coverage
 
-webide-e2e:
+# Strange race conditions, disable for now
+.webide-e2e:
   extends: .nix
   only:
     - merge_requests

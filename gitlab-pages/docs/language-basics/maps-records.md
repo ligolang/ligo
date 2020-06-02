@@ -5,20 +5,18 @@ title: Records and Maps
 
 import Syntax from '@theme/Syntax';
 
-So far we have seen pretty basic data types. LIGO also offers more
+So far, we have seen pretty basic data types. LIGO also offers more
 complex built-in constructs, such as *records* and *maps*.
 
 ## Records
 
-Records are one way data of different types can be packed into a
+Records are one-way data of different types can be packed into a
 single type. A record is made of a set of *fields*, which are made of
 a *field name* and a *field type*. Given a value of a record type, the
 value bound to a field can be accessed by giving its field name to a
 special operator (`.`).
 
 Let us first consider and example of record type declaration.
-
-
 
 <Syntax syntax="pascaligo">
 
@@ -55,9 +53,7 @@ type user = {
 
 </Syntax>
 
-
 And here is how a record value is defined:
-
 
 <Syntax syntax="pascaligo">
 
@@ -142,7 +138,7 @@ points on a plane.
 
 In PascaLIGO, the shape of that expression is
 `<record variable> with <record value>`.
-The record variable is the record to update and the
+The record variable is the record to update, and the
 record value is the update itself.
 
 ```pascaligo group=records2
@@ -160,13 +156,13 @@ following command of the shell:
 ```shell
 ligo run-function
 gitlab-pages/docs/language-basics/src/maps-records/record_update.ligo
-translate "(record [x=2;y=3;z=1], record [dx=3;dy=4])"
+xy_translate "(record [x=2;y=3;z=1], record [dx=3;dy=4])"
 # Outputs: {z = 1 , y = 7 , x = 5}
 ```
 
 You have to understand that `p` has not been changed by the functional
-update: a namless new version of it has been created and returned by
-the blockless function.
+update: a nameless new version of it has been created and returned by
+the block-less function.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -186,6 +182,7 @@ let xy_translate (p, vec : point * vector) : point =
 
 You can call the function `xy_translate` defined above by running the
 following command of the shell:
+
 ```shell
 ligo run-function
 gitlab-pages/docs/language-basics/src/maps-records/record_update.mligo
@@ -218,6 +215,7 @@ let xy_translate = ((p, vec) : (point, vector)) : point =>
 
 You can call the function `xy_translate` defined above by running the
 following command of the shell:
+
 ```shell
 ligo run-function
 gitlab-pages/docs/language-basics/src/maps-records/record_update.religo
@@ -326,12 +324,21 @@ let change_color_preference = (account : account, color : color): account =>
 Note that all the records in the path will get updated. In this example that's
 `account` and `preferences`.
 
+You can call the function `change_color_preference` defined above by running the
+following command:
+
+```shell
+ligo run-function gitlab-pages/docs/language-basics/src/maps-records/record_nested_update.ligo 
+change_color_preference "(record [id=1001; preferences=record [color=Blue; other=1]], Green)"
+# Outputs: record[id -> 1001 , preferences -> record[color -> Green(unit) , other -> 1]]
+```
+
 <Syntax syntax="pascaligo">
 
 ### Record Patches
 
 Another way to understand what it means to update a record value is to
-make sure that any further reference to the value afterwards will
+make sure that any further reference to the value afterward will
 exhibit the modification. This is called a `patch` and this is only
 possible in PascaLIGO, because a patch is an *instruction*, therefore
 we can only use it in a block. Similarly to a *functional update*, a
@@ -355,6 +362,7 @@ function xy_translate (var p : point; const vec : vector) : point is
 
 You can call the function `xy_translate` defined above by running the
 following command of the shell:
+
 ```shell
 ligo run-function
 gitlab-pages/docs/language-basics/src/maps-records/record_patch.ligo
@@ -378,6 +386,7 @@ function xy_translate (var p : point; const vec : vector) : point is
 
 You can call the new function `xy_translate` defined above by running the
 following command of the shell:
+
 ```shell
 ligo run-function
 gitlab-pages/docs/language-basics/src/maps-records/record_patch2.ligo
@@ -401,6 +410,7 @@ function xy_translate (var p : point; const vec : vector) : point is
 
 You can call the new function `xy_translate` defined above by running the
 following command of the shell:
+
 ```shell
 ligo run-function
 gitlab-pages/docs/language-basics/src/maps-records/record_simu.ligo
@@ -424,8 +434,6 @@ sense.
 
 Here is how a custom map from addresses to a pair of integers is
 defined.
-
-
 
 <Syntax syntax="pascaligo">
 
@@ -680,8 +688,8 @@ let assign = (m : register) : register =>
     (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), Some ((4,9)), m);
 ```
 
-Notice the optional value `Some (4,9)` instead of `(4,9)`. If we had
-use `None` instead, that would have meant that the binding is removed.
+Notice the optional value `Some (4,9)` instead of `(4,9)`. If we used
+`None` instead that would have meant that the binding is removed.
 
 As a particular case, we can only add a key and its associated value.
 
@@ -692,7 +700,6 @@ let add = (m : register) : register =>
 ```
 
 </Syntax>
-
 
 To remove a binding from a map, we need its key.
 
@@ -748,8 +755,8 @@ There are three kinds of functional iterations over LIGO maps: the
 
 The first, the *iterated operation*, is an iteration over the map with
 no return value: its only use is to produce side-effects. This can be
-useful if for example you would like to check that each value inside
-of a map is within a certain range, and fail with an error otherwise.
+useful if, for example you would like to check that each value inside
+of a map is within a certain range and fail with an error otherwise.
 
 The predefined functional iterator implementing the iterated operation
 over maps is called `Map.iter`. In the following example, the register
@@ -985,7 +992,7 @@ let moves : register =
     (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), (0,3))]
 ```
 
-The predefind function `Big_map.literal` constructs a big map from a
+The predefined function `Big_map.literal` constructs a big map from a
 list of key-value pairs `(<key>, <value>)`. Note also the semicolon
 separating individual map entries.  The annotated value `("<string>
 value>" : address)` means that we cast a string into an address.
@@ -1000,7 +1007,7 @@ let moves : register =
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address, (0,3))]);
 ```
 
-The predefind function `Big_map.literal` constructs a big map from a
+The predefined function `Big_map.literal` constructs a big map from a
 list of key-value pairs `(<key>, <value>)`. Note also the semicolon
 separating individual map entries.  The annotated value `("<string>
 value>" : address)` means that we cast a string into an address.

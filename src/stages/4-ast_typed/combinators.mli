@@ -3,7 +3,7 @@ open Types
 
 val make_n_t : type_variable -> type_expression -> named_type_content
 val make_t : ?loc:Location.t -> type_content -> S.type_expression option -> type_expression
-val make_e : ?location:Location.t -> expression_content -> type_expression -> environment -> expression
+val make_e : ?location:Location.t -> expression_content -> type_expression -> expression
 
 val t_bool : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
 val t_string : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
@@ -38,7 +38,6 @@ val t_function : type_expression -> type_expression -> ?loc:Location.t -> ?s:S.t
 val t_shallow_closure : type_expression -> type_expression -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
 val get_type_expression : expression -> type_expression
 val get_type' : type_expression -> type_content
-val get_environment : expression -> environment
 val get_expression : expression -> expression_content
 val get_lambda : expression -> lambda result
 val get_lambda_with_type : expression -> (lambda * ( type_expression * type_expression) ) result
@@ -119,7 +118,7 @@ val e_unit : unit -> expression_content
 val e_int : Z.t -> expression_content
 val e_nat : Z.t -> expression_content
 val e_mutez : Z.t -> expression_content
-val e_bool : bool -> environment -> expression_content
+val e_bool : bool -> expression_content
 val e_string : ligo_string -> expression_content
 val e_bytes : bytes -> expression_content
 val e_timestamp : Z.t -> expression_content
@@ -135,22 +134,22 @@ val e_application : expression -> expression -> expression_content
 val e_variable : expression_variable -> expression_content
 val e_let_in : expression_variable -> inline -> expression -> expression -> expression_content
 
-val e_a_unit : environment -> expression
-val e_a_int : Z.t -> environment -> expression
-val e_a_nat : Z.t -> environment -> expression
-val e_a_mutez : Z.t -> environment -> expression
-val e_a_bool : bool -> environment -> expression
-val e_a_string : ligo_string -> environment -> expression
-val e_a_address : string -> environment -> expression
-val e_a_pair : expression -> expression -> environment -> expression
-val e_a_some : expression -> environment -> expression
-val e_a_lambda : lambda -> type_expression -> type_expression -> environment -> expression
-val e_a_none : type_expression -> environment -> expression
-val e_a_record : expression label_map -> environment -> expression
-val e_a_application : expression -> expression -> environment -> expression
-val e_a_variable : expression_variable -> type_expression -> environment -> expression
-val ez_e_a_record : ( label * expression ) list -> environment -> expression
-val e_a_let_in : expression_variable -> bool -> expression -> expression -> environment -> expression
+val e_a_unit : expression
+val e_a_int : Z.t -> expression
+val e_a_nat : Z.t -> expression
+val e_a_mutez : Z.t -> expression
+val e_a_bool : bool -> expression
+val e_a_string : ligo_string -> expression
+val e_a_address : string -> expression
+val e_a_pair : expression -> expression -> expression
+val e_a_some : expression -> expression
+val e_a_lambda : lambda -> type_expression -> type_expression -> expression
+val e_a_none : type_expression -> expression
+val e_a_record : expression label_map -> expression
+val e_a_application : expression -> expression -> expression
+val e_a_variable : expression_variable -> type_expression -> expression
+val ez_e_a_record : ( label * expression ) list -> expression
+val e_a_let_in : expression_variable -> bool -> expression -> expression -> expression
 
 val get_a_int : expression -> Z.t result
 val get_a_unit : expression -> unit result

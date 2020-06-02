@@ -3,8 +3,8 @@ open Test_helpers
 open Ast_imperative
 
 
-let mtype_file f =
-  let%bind typed,state = Ligo.Compile.Utils.type_file f "cameligo" (Contract "main") in
+let retype_file f =
+  let%bind typed,state = Ligo.Compile.Utils.type_file f "reasonligo" (Contract "main") in
   ok (typed,state)
 
 let get_program =
@@ -12,7 +12,7 @@ let get_program =
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-        let%bind program = mtype_file "./contracts/id.mligo" in
+        let%bind program = retype_file "./contracts/id.religo" in
         s := Some program ;
         ok program
       )
@@ -33,7 +33,7 @@ let (first_owner , first_contract) =
   Protocol.Alpha_context.Contract.to_b58check kt , kt
 
 let buy_id () =
-  let%bind (program , state) = get_program () in
+  let%bind program = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -65,13 +65,13 @@ let buy_id () =
                                  ("name_price", e_mutez 1000000) ;
                                  ("skip_price", e_mutez 1000000) ; ]
   in
-  let%bind () = expect_eq ~options (program, state) "buy" 
+  let%bind () = expect_eq ~options program "buy" 
       (e_pair param storage) 
       (e_pair (e_list []) new_storage)
   in ok ()
 
 let buy_id_sender_addr () =
-  let%bind (program , state) = get_program () in
+  let%bind program = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -102,14 +102,14 @@ let buy_id_sender_addr () =
                                  ("name_price", e_mutez 1000000) ;
                                  ("skip_price", e_mutez 1000000) ; ]
   in
-  let%bind () = expect_eq ~options (program, state) "buy" 
-      (e_pair param storage) 
+  let%bind () = expect_eq ~options program "buy"
+      (e_pair param storage)
       (e_pair (e_list []) new_storage)
   in ok ()
 
 (* Test that contract fails if we attempt to buy an ID for the wrong amount *)
 let buy_id_wrong_amount () =
-  let%bind (program , state) = get_program () in
+  let%bind program = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -128,13 +128,13 @@ let buy_id_wrong_amount () =
   in
   let param = e_record_ez [("profile", owner_website) ;
                            ("initial_controller", (e_some (e_address new_addr)))] in
-  let%bind () = expect_string_failwith ~options (program, state) "buy" 
+  let%bind () = expect_string_failwith ~options program "buy"
       (e_pair param storage)
       "Incorrect amount paid."
   in ok ()
 
 let update_details_owner () =
-  let%bind (program , state) = get_program () in
+  let%bind program = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -173,13 +173,13 @@ let update_details_owner () =
   let param = e_record_ez [("id", e_int 1) ;
                        ("new_profile", e_some details) ;
                        ("new_controller", e_some (e_address new_addr))] in
-  let%bind () = expect_eq ~options (program, state) "update_details"
+  let%bind () = expect_eq ~options program "update_details"
       (e_pair param storage)
       (e_pair (e_list []) new_storage)
   in ok ()
 
 let update_details_controller () =
-  let%bind (program , state) = get_program () in
+  let%bind program = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -218,14 +218,14 @@ let update_details_controller () =
   let param = e_record_ez [("id", e_int 1) ;
                            ("new_profile", e_some details) ;
                            ("new_controller", e_some (e_address owner_addr))] in
-  let%bind () = expect_eq ~options (program, state) "update_details"
+  let%bind () = expect_eq ~options program "update_details"
       (e_pair param storage)
       (e_pair (e_list []) new_storage)
   in ok ()
 
 (* Test that contract fails when we attempt to update details of nonexistent ID *)
 let update_details_nonexistent () = 
-  let%bind (program , state) = get_program () in
+  let%bind program = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -254,14 +254,14 @@ let update_details_nonexistent () =
   let param = e_record_ez [("id", e_int 2) ;
                            ("new_profile", e_some details) ;
                            ("new_controller", e_some (e_address owner_addr))] in
-  let%bind () = expect_string_failwith ~options (program, state) "update_details"
+  let%bind () = expect_string_failwith ~options program "update_details"
       (e_pair param storage)
       "This ID does not exist."
   in ok ()
 
 (* Test that contract fails when we attempt to update details from wrong addr *)
 let update_details_wrong_addr () =
-  let%bind (program , state) = get_program () in
+  let%bind program = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -289,14 +289,14 @@ let update_details_wrong_addr () =
   let param = e_record_ez [("id", e_int 0) ;
                            ("new_profile", e_some details) ;
                            ("new_controller", e_some (e_address owner_addr))] in
-  let%bind () = expect_string_failwith ~options (program, state) "update_details"
+  let%bind () = expect_string_failwith ~options program "update_details"
       (e_pair param storage)
       "You are not the owner or controller of this ID."
   in ok ()
 
 (* Test that giving none on both profile and controller address is a no-op *)
 let update_details_unchanged () =
-  let%bind (program , state) = get_program () in
+  let%bind program = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -324,13 +324,13 @@ let update_details_unchanged () =
   let param = e_record_ez [("id", e_int 1) ;
                            ("new_profile", e_typed_none (t_bytes ())) ;
                            ("new_controller", e_typed_none (t_address ()))] in
-  let%bind () = expect_eq ~options (program, state) "update_details"
+  let%bind () = expect_eq ~options program "update_details"
       (e_pair param storage)
       (e_pair (e_list []) storage)
   in ok ()
 
 let update_owner () =
-  let%bind (program , state) = get_program () in
+  let%bind program = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -367,14 +367,14 @@ let update_owner () =
   in
   let param = e_record_ez [("id", e_int 1) ;
                            ("new_owner", e_address owner_addr)] in
-  let%bind () = expect_eq ~options (program, state) "update_owner"
+  let%bind () = expect_eq ~options program "update_owner"
       (e_pair param storage)
       (e_pair (e_list []) new_storage)
   in ok ()
 
 (* Test that contract fails when we attempt to update owner of nonexistent ID *)
 let update_owner_nonexistent () =
-  let%bind (program , state) = get_program () in
+  let%bind program = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -401,14 +401,14 @@ let update_owner_nonexistent () =
   in
   let param = e_record_ez [("id", e_int 2);
                            ("new_owner", e_address new_addr)] in
-  let%bind () = expect_string_failwith ~options (program, state) "update_owner"
+  let%bind () = expect_string_failwith ~options program "update_owner"
       (e_pair param storage)
       "This ID does not exist."
   in ok ()
 
 (* Test that contract fails when we attempt to update owner from non-owner addr *)
 let update_owner_wrong_addr () =
-  let%bind (program , state) = get_program () in
+  let%bind program = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -435,13 +435,13 @@ let update_owner_wrong_addr () =
   in
   let param = e_record_ez [("id", e_int 0);
                            ("new_owner", e_address new_addr)] in
-  let%bind () = expect_string_failwith ~options (program, state) "update_owner"
+  let%bind () = expect_string_failwith ~options program "update_owner"
       (e_pair param storage)
       "You are not the owner of this ID."
   in ok ()
 
 let skip () =
-  let%bind (program , state) = get_program () in
+  let%bind program = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -472,14 +472,14 @@ let skip () =
                              ("name_price", e_mutez 1000000) ;
                              ("skip_price", e_mutez 1000000) ; ]
   in
-  let%bind () = expect_eq ~options (program, state) "skip"
+  let%bind () = expect_eq ~options program "skip"
       (e_pair (e_unit ()) storage)
       (e_pair (e_list []) new_storage)
   in ok ()
 
 (* Test that contract fails if we try to skip without paying the right amount *)
 let skip_wrong_amount () =
-  let%bind (program , state) = get_program () in
+  let%bind program = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -503,12 +503,12 @@ let skip_wrong_amount () =
                              ("name_price", e_mutez 1000000) ;
                              ("skip_price", e_mutez 1000000) ; ]
   in
-  let%bind () = expect_string_failwith ~options (program, state) "skip"
+  let%bind () = expect_string_failwith ~options program "skip"
       (e_pair (e_unit ()) storage)
       "Incorrect amount paid."
   in ok ()
 
-let main = test_suite "ID Layer (CameLIGO)" [
+let main = test_suite "ID Layer (ReasonLIGO)" [
     test "buy"    buy_id ;
     test "buy (sender addr)" buy_id_sender_addr ;
     test "buy (wrong amount)" buy_id_wrong_amount ;
