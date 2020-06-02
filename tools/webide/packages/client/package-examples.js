@@ -108,6 +108,9 @@ async function main() {
   'pascaligo/arithmetic-contract.ligo',
   'cameligo/arithmetic-contract.ligo',
   'reasonligo/arithmetic-contract.ligo',
+  'cameligo/id.mligo',
+  'pascaligo/id.ligo',   
+  'reasonligo/id.religo',
   'cameligo/hashlock.mligo',
   'pascaligo/hashlock.ligo',   
   'reasonligo/hashlock.religo'
