@@ -2,6 +2,7 @@ module Types = Types
 module Environment = Environment
 module PP = PP
 module PP_generic = PP_generic
+module Compare_generic = Compare_generic
 module Combinators = struct
   include Combinators
 end
