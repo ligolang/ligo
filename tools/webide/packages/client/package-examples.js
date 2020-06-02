@@ -4,6 +4,7 @@ const join = require('path').join;
 const fs = require('fs');
 const YAML = require('yamljs');
 
+
 function urlFriendlyHash(content) {
   const hash = createHash('md5');
   hash.update(content);
@@ -104,9 +105,11 @@ async function main() {
   // const files = await findFiles(EXAMPLES_GLOB, EXAMPLES_DIR);
 
   const CURATED_EXAMPLES = [
-    'pascaligo/arithmetic-contract.ligo',
     'cameligo/arithmetic-contract.ligo',
-    'reasonligo/arithmetic-contract.ligo'
+    'pascaligo/arithmetic-contract.ligo',
+    'reasonligo/arithmetic-contract.ligo',
+    'cameligo/hashlock.ligo',
+    'pascaligo/hashlock.ligo'
   ];
     // Disable ID examples pending https://ligo.atlassian.net/browse/LIGO-676
     //'pascaligo/id.ligo',
