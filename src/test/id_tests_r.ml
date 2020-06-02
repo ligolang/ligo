@@ -33,7 +33,7 @@ let (first_owner , first_contract) =
   Protocol.Alpha_context.Contract.to_b58check kt , kt
 
 let buy_id () =
-  let%bind program, _ = get_program () in
+  let%bind program = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -71,7 +71,7 @@ let buy_id () =
   in ok ()
 
 let buy_id_sender_addr () =
-  let%bind program, _ = get_program () in
+  let%bind program = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -109,7 +109,7 @@ let buy_id_sender_addr () =
 
 (* Test that contract fails if we attempt to buy an ID for the wrong amount *)
 let buy_id_wrong_amount () =
-  let%bind program, _ = get_program () in
+  let%bind program = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -134,7 +134,7 @@ let buy_id_wrong_amount () =
   in ok ()
 
 let update_details_owner () =
-  let%bind program, _ = get_program () in
+  let%bind program = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -179,7 +179,7 @@ let update_details_owner () =
   in ok ()
 
 let update_details_controller () =
-  let%bind program, _ = get_program () in
+  let%bind program = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -225,7 +225,7 @@ let update_details_controller () =
 
 (* Test that contract fails when we attempt to update details of nonexistent ID *)
 let update_details_nonexistent () = 
-  let%bind program, _ = get_program () in
+  let%bind program = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -261,7 +261,7 @@ let update_details_nonexistent () =
 
 (* Test that contract fails when we attempt to update details from wrong addr *)
 let update_details_wrong_addr () =
-  let%bind program, _ = get_program () in
+  let%bind program = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -296,7 +296,7 @@ let update_details_wrong_addr () =
 
 (* Test that giving none on both profile and controller address is a no-op *)
 let update_details_unchanged () =
-  let%bind program, _ = get_program () in
+  let%bind program = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -330,7 +330,7 @@ let update_details_unchanged () =
   in ok ()
 
 let update_owner () =
-  let%bind program, _ = get_program () in
+  let%bind program = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -374,7 +374,7 @@ let update_owner () =
 
 (* Test that contract fails when we attempt to update owner of nonexistent ID *)
 let update_owner_nonexistent () =
-  let%bind program, _ = get_program () in
+  let%bind program = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -408,7 +408,7 @@ let update_owner_nonexistent () =
 
 (* Test that contract fails when we attempt to update owner from non-owner addr *)
 let update_owner_wrong_addr () =
-  let%bind program, _ = get_program () in
+  let%bind program = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -441,7 +441,7 @@ let update_owner_wrong_addr () =
   in ok ()
 
 let skip () =
-  let%bind program, _ = get_program () in
+  let%bind program = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -479,7 +479,7 @@ let skip () =
 
 (* Test that contract fails if we try to skip without paying the right amount *)
 let skip_wrong_amount () =
-  let%bind program, _ = get_program () in
+  let%bind program = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
