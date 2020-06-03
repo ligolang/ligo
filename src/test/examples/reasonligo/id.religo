@@ -1,5 +1,5 @@
 /* (*_*
-  name: ID Contract (ReasonLIGO)
+  name: ID (ReasonLIGO)
   language: reasonligo
   compile:
     entrypoint: main

@@ -1,5 +1,5 @@
 (*_*
-  name: Increment Contract (ReasonLIGO)
+  name: Increment (ReasonLIGO)
   language: reasonligo
   compile:
     entrypoint: main
