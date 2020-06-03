@@ -231,8 +231,14 @@ module Substitution = struct
           let aux c = constraint_ ~c ~substs in
           let constraints = List.map aux p.constraints in
           if (Var.equal p.binder v) then (
+            (* The variable v is shadowed by the forall's binder, so
+               we don't substitute inside the body. This should be
+               handled in a more elegant manner once we have a proper
+               environment and scopes. *)
             { tsrc = "?TODO3?" ; t = P_forall { p with constraints } }
           ) else (
+            (* The variable v is still visible within the forall, so
+               substitute also within the body *)
             let body = self p.body in
             { tsrc = "?TODO4?" ; t = P_forall { p with constraints ; body } }
           )
