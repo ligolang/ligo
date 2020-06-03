@@ -31,7 +31,11 @@ export const DEFAULT_STATE: ExamplesState = {
   list: []
 };
 
+
 if (process.env.NODE_ENV === 'development') {
+
+  // The name value configured in this list will only be for the development environment.
+  // For other environments, the name value will be taken directly from your contract's yaml configuration.
   DEFAULT_STATE.list = [
     { id: 'FEb62HL7onjg1424eUsGSg', name: 'Increment (PascaLIGO)' },
     { id: 'MzkMQ1oiVHJqbcfUuVFKTw', name: 'Increment (CameLIGO)' },
