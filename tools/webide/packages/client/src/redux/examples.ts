@@ -33,12 +33,12 @@ export const DEFAULT_STATE: ExamplesState = {
 
 if (process.env.NODE_ENV === 'development') {
   DEFAULT_STATE.list = [
-    { id: 'MzkMQ1oiVHJqbcfUuVFKTw', name: 'Increment Example CameLIGO ' },
-    { id: 'FEb62HL7onjg1424eUsGSg', name: 'Increment Example PascaLIGO' },
-    { id: 'JPhSOehj_2MFwRIlml0ymQ', name: 'Increment Example ReasonLIGO' },
-    { id: 'ehDv-Xaf70mQoiPhQDTAUQ', name: 'ID Example CameLIGO' },
-    { id: 'CpnK7TFuUjJiQTT8KiiGyQ', name: 'ID Example ReasonLIGO' },
-    { id: 'yP-THvmURsaqHxpwCravWg', name: 'ID Example PascaLIGO' },
+    { id: 'FEb62HL7onjg1424eUsGSg', name: 'Increment (PascaLIGO)' },
+    { id: 'MzkMQ1oiVHJqbcfUuVFKTw', name: 'Increment (CameLIGO)' },
+    { id: 'JPhSOehj_2MFwRIlml0ymQ', name: 'Increment (ReasonLIGO)' },
+    { id: 'yP-THvmURsaqHxpwCravWg', name: 'ID (PascaLIGO)' },
+    { id: 'ehDv-Xaf70mQoiPhQDTAUQ', name: 'ID (CameLIGO)' },
+    { id: 'CpnK7TFuUjJiQTT8KiiGyQ', name: 'ID (ReasonLIGO)' }
   ];
 }
 

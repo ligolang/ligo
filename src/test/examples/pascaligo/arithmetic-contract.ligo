@@ -1,5 +1,5 @@
 (*_*
-  name: PascaLIGO Contract
+  name: Increment Contract (PascaLIGO)
   language: pascaligo
   compile:
     entrypoint: main

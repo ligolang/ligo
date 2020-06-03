@@ -1,5 +1,5 @@
 (*_*
-  name: CameLIGO Contract
+  name: Increment Contract (CameLIGO)
   language: cameligo
   compile:
     entrypoint: main
