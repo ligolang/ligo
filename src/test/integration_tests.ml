@@ -2492,6 +2492,7 @@ let main = test_suite "Integration (End to End)" [
     test "counter contract" counter_contract ;
     test "super counter contract" super_counter_contract ;
     test "super counter contract" super_counter_contract_mligo ;
+    test "super counter contract (reasonligo)" super_counter_contract_religo ;
     test "dispatch counter contract" dispatch_counter_contract ;
     test "basic (mligo)" basic_mligo ;
     test "basic (religo)" basic_religo ;

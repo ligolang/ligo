@@ -317,7 +317,7 @@ and pp_projection {value; _} =
   let fields = Utils.nsepseq_to_list field_path
   and sep    = string "." ^^ break 0 in
   let fields = separate_map sep pp_selection fields in
-  group (pp_ident struct_name ^^ string "." ^^ break 0 ^^ fields)
+  group (pp_ident struct_name ^^ break 0 ^^ string "[" ^^ fields ^^ string "]")
 
 and pp_selection = function
   FieldName v   -> string v.value
