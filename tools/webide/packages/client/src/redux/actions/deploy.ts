@@ -1,5 +1,5 @@
 import { Tezos } from '@taquito/taquito';
-import { TezBridgeSigner } from '@taquito/tezbridge-signer';
+import { TezBridgeWallet } from '@taquito/tezbridge-wallet';
 import { Dispatch } from 'redux';
 
 import { compileContract, compileStorage, deploy, getErrorMessage } from '../../services/api';
@@ -12,7 +12,7 @@ import { CancellableAction } from './cancellable';
 
 Tezos.setProvider({
   rpc: 'https://api.tez.ie/rpc/carthagenet',
-  signer: new TezBridgeSigner()
+  wallet: new TezBridgeWallet()
 });
 
 export class DeployAction extends CancellableAction {
@@ -45,12 +45,12 @@ export class DeployAction extends CancellableAction {
       return;
     }
 
-    dispatch({ ...new UpdateLoadingAction('Waiting for TezBridge signer...') });
+    dispatch({ ...new UpdateLoadingAction('Waiting for TezBridge wallet...') });
 
-    const op = await Tezos.contract.originate({
+    const op = await Tezos.wallet.originate({
       code: JSON.parse(michelsonCode.result),
       init: JSON.parse(michelsonStorage.result)
-    });
+    }).send();
 
     if (this.isCancelled()) {
       return;
@@ -61,7 +61,7 @@ export class DeployAction extends CancellableAction {
     });
     return {
       address: (await op.contract()).address,
-      storage: michelsonStorage
+      storage: michelsonStorage.result
     };
   }
 
