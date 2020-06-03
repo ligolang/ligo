@@ -21,7 +21,7 @@ type    c_equation_e          =    Ast_typed.c_equation_e
 type    c_typeclass_simpl     =    Ast_typed.c_typeclass_simpl
 type    c_poly_simpl          =    Ast_typed.c_poly_simpl
 type    type_constraint_simpl =    Ast_typed.type_constraint_simpl
-type    state                 =    Ast_typed.typer_state
+type    state                 =    Solver_types.typer_state
 
 type type_variable = Ast_typed.type_variable
 type type_expression = Ast_typed.type_expression

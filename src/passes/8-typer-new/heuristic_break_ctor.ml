@@ -3,7 +3,7 @@
 
 open Ast_typed.Misc
 open Ast_typed.Types
-open Solver_types
+open Typesystem.Solver_types
 
 let selector :  (type_constraint_simpl, output_break_ctor) selector =
   (* find two rules with the shape x = k(var …) and x = k'(var' …) *)
@@ -24,7 +24,7 @@ let selector :  (type_constraint_simpl, output_break_ctor) selector =
   | SC_Typeclass   _                -> WasNotSelected
 
 let propagator : output_break_ctor propagator =
-  fun selected dbs ->
+  fun dbs selected ->
   let () = ignore (dbs) in (* this propagator doesn't need to use the dbs *)
   let a = selected.a_k_var in
   let b = selected.a_k'_var' in
@@ -50,3 +50,5 @@ let propagator : output_break_ctor propagator =
     let eqs3 = List.map2 (fun aa bb -> c_equation { tsrc = "solver: propagator: break_ctor aa" ; t = P_variable aa} { tsrc = "solver: propagator: break_ctor bb" ; t = P_variable bb} "propagator: break_ctor") a.tv_list b.tv_list in
     let eqs = eq1 :: eqs3 in
     (eqs , []) (* no new assignments *)
+
+let heuristic = Propagator_heuristic { selector ; propagator ; comparator = Solver_should_be_generated.compare_output_break_ctor }

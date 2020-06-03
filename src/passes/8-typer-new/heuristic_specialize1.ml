@@ -6,7 +6,7 @@
 module Core = Typesystem.Core
 open Ast_typed.Misc
 open Ast_typed.Types
-open Solver_types
+open Typesystem.Solver_types
 
 let selector : (type_constraint_simpl, output_specialize1) selector =
   (* find two rules with the shape (x = forall b, d) and x = k'(var' …) or vice versa *)
@@ -29,7 +29,7 @@ let selector : (type_constraint_simpl, output_specialize1) selector =
   | SC_Typeclass   _                -> WasNotSelected
 
 let propagator : output_specialize1 propagator =
-  fun selected dbs ->
+  fun dbs selected ->
   let () = ignore (dbs) in (* this propagator doesn't need to use the dbs *)
   let a = selected.poly in
   let b = selected.a_k_var in
@@ -51,3 +51,5 @@ let propagator : output_specialize1 propagator =
   let eq1 = c_equation { tsrc = "solver: propagator: specialize1 eq1" ; t = P_variable b.tv } reduced "propagator: specialize1" in
   let eqs = eq1 :: new_constraints in
   (eqs, []) (* no new assignments *)
+
+let heuristic = Propagator_heuristic { selector ; propagator ; comparator = Solver_should_be_generated.compare_output_specialize1 }
