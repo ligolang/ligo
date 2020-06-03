@@ -150,3 +150,8 @@ let type_error ?(msg="") ~(expected: O.type_expression) ~(actual: O.type_express
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
   error ~data title message ()
+
+let bad_type_operator type_op =
+  let title () = Format.asprintf "bad type operator %a" I.PP.type_expression type_op in
+  let message () = "" in
+  error title message

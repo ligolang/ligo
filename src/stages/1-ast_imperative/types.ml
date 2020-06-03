@@ -11,7 +11,8 @@ type type_content =
   | T_arrow of arrow
   | T_variable of type_variable
   | T_constant of type_constant
-  | T_operator of type_operator
+  | T_operator of (type_operator * type_expression list)
+  | T_annoted  of (type_expression * string)
 
 and arrow = {type1: type_expression; type2: type_expression}
 
@@ -20,20 +21,6 @@ and field_content = {field_type : type_expression ; field_decl_pos : int}
 and ctor_content = {ctor_type : type_expression ; ctor_decl_pos : int} 
 
 and michelson_prct_annotation = string
-
-and type_operator =
-  | TC_contract of type_expression
-  | TC_option of type_expression
-  | TC_list of type_expression
-  | TC_set of type_expression
-  | TC_map of type_expression * type_expression
-  | TC_big_map of type_expression * type_expression
-  | TC_michelson_or of type_expression * michelson_prct_annotation * type_expression * michelson_prct_annotation
-  | TC_michelson_pair of type_expression * michelson_prct_annotation * type_expression * michelson_prct_annotation
-  | TC_michelson_or_right_comb of type_expression
-  | TC_michelson_or_left_comb of type_expression
-  | TC_michelson_pair_right_comb of type_expression
-  | TC_michelson_pair_left_comb of type_expression
 
 and type_expression = {type_content: type_content; location: Location.t}
 

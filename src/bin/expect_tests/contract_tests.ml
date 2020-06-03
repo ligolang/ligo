@@ -1321,7 +1321,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_type_operator.ligo" ; "main" ] ;
   [%expect {|
-    ligo: bad type operator (TO_Map (unit,unit)):
+    ligo: bad type operator (type_operator: Map (binding)):
 
      If you're not sure how to fix this error, you can
      do one of the following:

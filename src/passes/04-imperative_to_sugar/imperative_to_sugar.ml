@@ -161,58 +161,28 @@ let rec compile_type_expression : I.type_expression -> O.type_expression result 
       return @@ T_arrow {type1;type2}
     | I.T_variable type_variable -> return @@ T_variable type_variable 
     | I.T_constant type_constant -> return @@ T_constant type_constant
-    | I.T_operator (TC_michelson_or (l,l_ann,r,r_ann)) ->
+    | I.T_operator (TC_michelson_or, [l;r]) ->
+      let%bind (l, l_ann) = I.get_t_annoted l in
+      let%bind (r, r_ann) = I.get_t_annoted r in
       let%bind (l,r) = bind_map_pair compile_type_expression (l,r) in
       let sum : (O.constructor' * O.ctor_content) list = [
         (O.Constructor "M_left" , {ctor_type = l ; michelson_annotation = Some l_ann ; ctor_decl_pos = 0}); 
         (O.Constructor "M_right", {ctor_type = r ; michelson_annotation = Some r_ann ; ctor_decl_pos = 1}); ]
       in
       return @@ O.T_sum (O.CMap.of_list sum)
-    | I.T_operator (TC_michelson_pair (l,l_ann,r,r_ann)) ->
+    | I.T_operator (TC_michelson_pair, [l;r]) ->
+      let%bind (l, l_ann) = I.get_t_annoted l in
+      let%bind (r, r_ann) = I.get_t_annoted r in
       let%bind (l,r) = bind_map_pair compile_type_expression (l,r) in
       let sum : (O.label * O.field_content) list = [
         (O.Label "0" , {field_type = l ; michelson_annotation = Some l_ann ; field_decl_pos = 0}); 
         (O.Label "1", {field_type = r ; michelson_annotation = Some r_ann ; field_decl_pos = 0}); ]
       in
       return @@ O.T_record (O.LMap.of_list sum)
-    | I.T_operator type_operator ->
-      let%bind type_operator = compile_type_operator type_operator in
-      return @@ T_operator type_operator
-
-and compile_type_operator : I.type_operator -> O.type_operator result =
-  fun t_o ->
-  match t_o with
-    | TC_contract c -> 
-      let%bind c = compile_type_expression c in
-      ok @@ O.TC_contract c
-    | TC_option o ->
-      let%bind o = compile_type_expression o in
-      ok @@ O.TC_option o
-    | TC_list l ->
-      let%bind l = compile_type_expression l in
-      ok @@ O.TC_list l
-    | TC_set s ->
-      let%bind s = compile_type_expression s in
-      ok @@ O.TC_set s
-    | TC_map (k,v) ->
-      let%bind (k,v) = bind_map_pair compile_type_expression (k,v) in
-      ok @@ O.TC_map (k,v)
-    | TC_big_map (k,v) ->
-      let%bind (k,v) = bind_map_pair compile_type_expression (k,v) in
-      ok @@ O.TC_big_map (k,v)
-    | TC_michelson_or _ | TC_michelson_pair _ -> fail @@ Errors.corner_case __LOC__
-    | TC_michelson_pair_right_comb c ->
-      let%bind c = compile_type_expression c in
-      ok @@ O.TC_michelson_pair_right_comb c
-    | TC_michelson_pair_left_comb c ->
-      let%bind c = compile_type_expression c in
-      ok @@ O.TC_michelson_pair_left_comb c
-    | TC_michelson_or_right_comb c ->
-      let%bind c = compile_type_expression c in
-      ok @@ O.TC_michelson_or_right_comb c
-    | TC_michelson_or_left_comb c ->
-      let%bind c = compile_type_expression c in
-      ok @@ O.TC_michelson_or_left_comb c
+    | I.T_operator (type_operator, lst) ->
+      let%bind lst = bind_map_list compile_type_expression lst in
+      return @@ T_operator (type_operator, lst)
+    | I.T_annoted (ty, _) -> compile_type_expression ty
 
 let rec compile_expression : I.expression -> O.expression result =
   fun e ->
@@ -627,43 +597,9 @@ let rec uncompile_type_expression : O.type_expression -> I.type_expression resul
       return @@ T_arrow {type1;type2}
     | O.T_variable type_variable -> return @@ T_variable type_variable 
     | O.T_constant type_constant -> return @@ T_constant type_constant
-    | O.T_operator type_operator ->
-      let%bind type_operator = uncompile_type_operator type_operator in
-      return @@ T_operator type_operator
-
-and uncompile_type_operator : O.type_operator -> I.type_operator result =
-  fun t_o ->
-  match t_o with
-    | TC_contract c -> 
-      let%bind c = uncompile_type_expression c in
-      ok @@ I.TC_contract c
-    | TC_option o ->
-      let%bind o = uncompile_type_expression o in
-      ok @@ I.TC_option o
-    | TC_list l ->
-      let%bind l = uncompile_type_expression l in
-      ok @@ I.TC_list l
-    | TC_set s ->
-      let%bind s = uncompile_type_expression s in
-      ok @@ I.TC_set s
-    | TC_map (k,v) ->
-      let%bind (k,v) = bind_map_pair uncompile_type_expression (k,v) in
-      ok @@ I.TC_map (k,v)
-    | TC_big_map (k,v) ->
-      let%bind (k,v) = bind_map_pair uncompile_type_expression (k,v) in
-      ok @@ I.TC_big_map (k,v)
-    | TC_michelson_pair_right_comb c ->
-      let%bind c = uncompile_type_expression c in
-      ok @@ I.TC_michelson_pair_right_comb c
-    | TC_michelson_pair_left_comb c ->
-      let%bind c = uncompile_type_expression c in
-      ok @@ I.TC_michelson_pair_left_comb c
-    | TC_michelson_or_right_comb c ->
-      let%bind c = uncompile_type_expression c in
-      ok @@ I.TC_michelson_or_right_comb c
-    | TC_michelson_or_left_comb c ->
-      let%bind c = uncompile_type_expression c in
-      ok @@ I.TC_michelson_or_left_comb c
+    | O.T_operator (type_operator, lst) ->
+      let%bind lst = bind_map_list uncompile_type_expression lst in
+      return @@ T_operator (type_operator, lst)
 
 let rec uncompile_expression' : O.expression -> I.expression result =
   fun e ->

@@ -178,28 +178,28 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression) resul
       let%bind type_name = match type_name with
       | O.TC_option t -> 
          let%bind t' = untype_type_expression t in
-         ok @@ I.TC_option t'
+         ok @@ (I.TC_option, [t'])
       | O.TC_list   t ->
          let%bind t' = untype_type_expression t in
-         ok @@ I.TC_list t'
+         ok @@ (I.TC_list, [t'])
       | O.TC_set    t ->     
          let%bind t' = untype_type_expression t in
-         ok @@ I.TC_set t'
+         ok @@ (I.TC_set, [t'])
       | O.TC_map   {k;v} ->     
          let%bind k = untype_type_expression k in
          let%bind v = untype_type_expression v in
-         ok @@ I.TC_map (k,v)
+         ok @@ (I.TC_map, [k;v])
       | O.TC_big_map {k;v} ->
          let%bind k = untype_type_expression k in
          let%bind v = untype_type_expression v in
-         ok @@ I.TC_big_map (k,v)
+         ok @@ (I.TC_big_map, [k;v])
       | O.TC_map_or_big_map {k;v} ->     
          let%bind k = untype_type_expression k in
          let%bind v = untype_type_expression v in
-         ok @@ I.TC_map_or_big_map (k,v)
+         ok @@ (I.TC_map_or_big_map, [k;v])
       | O.TC_contract c->
          let%bind c = untype_type_expression c in
-         ok @@ I.TC_contract c
+         ok @@ (I.TC_contract, [c])
       in
       ok @@ I.T_operator (type_name)
     in

@@ -213,7 +213,7 @@ let rec compile_type_expression (t:Raw.type_expr) : type_expression result =
           let%bind cst =
             trace_option (unknown_predefined_type name) @@
             type_operators name.value in
-          t_operator ~loc cst lst)
+          ok @@ t_operator ~loc cst lst)
   | TProd p ->
       let%bind tpl = compile_list_type_expression
     @@ npseq_to_list p.value in

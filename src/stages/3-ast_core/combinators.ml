@@ -12,10 +12,6 @@ module Errors = struct
       ("location" , fun () -> Format.asprintf "%a" Location.pp location) ;
     ] in
     error ~data title message
-  let bad_type_operator type_op =
-    let title () = Format.asprintf "bad type operator %a" (PP.type_operator PP.type_expression) type_op in
-    let message () = "" in
-    error title message
 end
 open Errors
 
@@ -40,8 +36,8 @@ let t_signature ?loc ()   : type_expression = make_t ?loc @@ T_constant (TC_sign
 let t_key ?loc ()         : type_expression = make_t ?loc @@ T_constant (TC_key)
 let t_key_hash ?loc ()    : type_expression = make_t ?loc @@ T_constant (TC_key_hash)
 let t_timestamp ?loc ()   : type_expression = make_t ?loc @@ T_constant (TC_timestamp)
-let t_option ?loc o       : type_expression = make_t ?loc @@ T_operator (TC_option o)
-let t_list ?loc t         : type_expression = make_t ?loc @@ T_operator (TC_list t)
+let t_option ?loc o       : type_expression = make_t ?loc @@ T_operator (TC_option, [o])
+let t_list ?loc t         : type_expression = make_t ?loc @@ T_operator (TC_list, [t])
 let t_variable ?loc n     : type_expression = make_t ?loc @@ T_variable (Var.of_name n)
 let t_record_ez ?loc lst =
   let lst = List.map (fun (k, v) -> (Label k, v)) lst in
@@ -63,21 +59,12 @@ let t_sum ?loc m : type_expression =
   ez_t_sum ?loc lst
 
 let t_function ?loc type1 type2  : type_expression = make_t ?loc @@ T_arrow {type1; type2}
-let t_map ?loc key value         : type_expression = make_t ?loc @@ T_operator (TC_map (key, value))
-let t_big_map ?loc key value     : type_expression = make_t ?loc @@ T_operator (TC_big_map (key , value))
-let t_set ?loc key               : type_expression = make_t ?loc @@ T_operator (TC_set key)
-let t_contract ?loc contract     : type_expression = make_t ?loc @@ T_operator (TC_contract contract)
 
-(* TODO find a better way than using list*)
-let t_operator ?loc op lst: type_expression result =
-  match op,lst with 
-  | TC_set _         , [t] -> ok @@ t_set ?loc t
-  | TC_list _        , [t] -> ok @@ t_list ?loc t
-  | TC_option _      , [t] -> ok @@ t_option ?loc t
-  | TC_map (_,_)     , [kt;vt] -> ok @@ t_map kt ?loc vt
-  | TC_big_map (_,_) , [kt;vt] -> ok @@ t_big_map ?loc kt vt
-  | TC_contract _    , [t] -> ok @@ t_contract ?loc t
-  | _ , _ -> fail @@ bad_type_operator op
+let t_operator ?loc op lst       : type_expression = make_t ?loc @@ T_operator (op, lst)
+let t_map ?loc key value         : type_expression = make_t ?loc @@ T_operator (TC_map, [key; value])
+let t_big_map ?loc key value     : type_expression = make_t ?loc @@ T_operator (TC_big_map, [key; value])
+let t_set ?loc key               : type_expression = make_t ?loc @@ T_operator (TC_set, [key])
+let t_contract ?loc contract     : type_expression = make_t ?loc @@ T_operator (TC_contract, [contract])
 
 let make_e ?(loc = Location.generated) expression_content = { expression_content; location=loc }
 

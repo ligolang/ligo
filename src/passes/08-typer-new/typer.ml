@@ -156,36 +156,37 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
     ok tv
   | T_constant cst ->
       return (T_constant (convert_type_constant cst))
-  | T_operator opt ->
-      let%bind opt = match opt with
-        | TC_set s ->
+  | T_operator (op, lst) ->
+      let%bind opt = match op,lst with
+        | TC_set, [s] ->
             let%bind s = evaluate_type e s in
             ok @@ O.TC_set (s)
-        | TC_option o ->
+        | TC_option, [o] ->
             let%bind o = evaluate_type e o in
             ok @@ O.TC_option (o)
-        | TC_list l ->
+        | TC_list, [l] ->
             let%bind l = evaluate_type e l in
             ok @@ O.TC_list (l)
-        | TC_map (k,v) ->
+        | TC_map, [k;v] ->
             let%bind k = evaluate_type e k in
             let%bind v = evaluate_type e v in
             ok @@ O.TC_map {k;v}
-        | TC_big_map (k,v) ->
+        | TC_big_map, [k;v] ->
             let%bind k = evaluate_type e k in
             let%bind v = evaluate_type e v in
             ok @@ O.TC_big_map {k;v}
-        | TC_map_or_big_map (k,v) ->
+        | TC_map_or_big_map, [k;v] ->
             let%bind k = evaluate_type e k in
             let%bind v = evaluate_type e v in
             ok @@ O.TC_map_or_big_map {k;v}
-        | TC_contract c ->
+        | TC_contract, [c] ->
             let%bind c = evaluate_type e c in
             ok @@ O.TC_contract c
-        | TC_michelson_pair_right_comb _c | TC_michelson_pair_left_comb _c 
-        | TC_michelson_or_right_comb _c | TC_michelson_or_left_comb _c ->
+        | TC_michelson_pair_right_comb, _c | TC_michelson_pair_left_comb, _c 
+        | TC_michelson_or_right_comb, _c | TC_michelson_or_left_comb, _c ->
           (* not really sure what to do in the new typer, should be converted to a pair using functions defined in Helpers.Typer.Converter *)
           simple_fail "to be implemented"
+        | _ -> fail @@ bad_type_operator t
         in
       return (T_operator (opt))
 
