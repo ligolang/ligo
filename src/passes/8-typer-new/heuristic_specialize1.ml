@@ -29,7 +29,7 @@ let selector : (type_constraint_simpl, output_specialize1) selector =
   | SC_Typeclass   _                -> WasNotSelected
 
 let propagator : output_specialize1 propagator =
-  fun selected dbs ->
+  fun dbs selected ->
   let () = ignore (dbs) in (* this propagator doesn't need to use the dbs *)
   let a = selected.poly in
   let b = selected.a_k_var in
@@ -52,4 +52,4 @@ let propagator : output_specialize1 propagator =
   let eqs = eq1 :: new_constraints in
   (eqs, []) (* no new assignments *)
 
-let heuristic = Propagator_heuristic { selector ; propagator ; empty_already_selected = Set.create ~cmp:Solver_should_be_generated.compare_output_specialize1 }
+let heuristic = Propagator_heuristic { selector ; propagator ; comparator = Solver_should_be_generated.compare_output_specialize1 }

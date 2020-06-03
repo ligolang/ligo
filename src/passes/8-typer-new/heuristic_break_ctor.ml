@@ -24,7 +24,7 @@ let selector :  (type_constraint_simpl, output_break_ctor) selector =
   | SC_Typeclass   _                -> WasNotSelected
 
 let propagator : output_break_ctor propagator =
-  fun selected dbs ->
+  fun dbs selected ->
   let () = ignore (dbs) in (* this propagator doesn't need to use the dbs *)
   let a = selected.a_k_var in
   let b = selected.a_k'_var' in
@@ -51,4 +51,4 @@ let propagator : output_break_ctor propagator =
     let eqs = eq1 :: eqs3 in
     (eqs , []) (* no new assignments *)
 
-let heuristic = Propagator_heuristic { selector ; propagator ; empty_already_selected = Set.create ~cmp:Solver_should_be_generated.compare_output_break_ctor }
+let heuristic = Propagator_heuristic { selector ; propagator ; comparator = Solver_should_be_generated.compare_output_break_ctor }
