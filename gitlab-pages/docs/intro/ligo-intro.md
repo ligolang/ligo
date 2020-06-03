@@ -1,6 +1,6 @@
 ---
 id: introduction
-title: Introduction To LIGO
+title: Introduction to LIGO
 ---
 
 import Tabs from '@theme/Tabs';
@@ -9,13 +9,13 @@ import TabItem from '@theme/TabItem';
 LIGO is a programming language for writing [Tezos](https://tezos.com/) smart contracts.
 Smart contracts are a unique domain with extreme resource constraints and even
 more extreme security risks. Unlike desktop, mobile, or web
-application development smart contracts cannot rely on cheap CPU time and memory.
+application development, smart contracts cannot rely on cheap CPU time and memory.
 All resources used by contracts are expensive, and tracked as 'gas costs'. Smart
 contracts often directly control money or assets, which if stolen could rack up to
 a large financial loss to the contracts controllers and users. Tezos smart contracts
 live on the blockchain forever, if there's a bug in them they can't be patched or
-amended. Naturally under these conditions it's not possible to develop smart contracts
-the way we're used to developing user facing applications.
+amended. Naturally, under these conditions, it's not possible to develop smart contracts
+the way we're used to developing user-facing applications.
 
 LIGO is designed with these problems in mind. The design philosophy can be
 described in a few bullet points:
@@ -29,7 +29,7 @@ compiled output using a project like [Mi-Cho-Coq](https://gitlab.com/nomadic-lab
 
 4. Significantly reduce the risk that your smart contract will lose its balance to an [avoidable exploit](https://www.wired.com/2016/06/50-million-hack-just-showed-dao-human/).
 
-LIGO is a functional language designed to include the features you need, while
+LIGO is a functional language designed to include the features you need while
 avoiding patterns that make formal verification hard. Most useful smart contracts
 can express their core functionality in under a thousand lines of code. This makes
 them a good target for formal methods, and what can't be easily proven can at least
@@ -41,11 +41,11 @@ LIGO currently offers three syntaxes:
   - **PascaLIGO**, a syntax inspired by Pascal which provides an
     imperative developer experience.
 
-  - **CameLIGO**, an [OCaml]((https://ocaml.org/)) inspired
+  - **CameLIGO**, an [OCaml](https://ocaml.org/) inspired
     syntax that allows you to write in a functional style.
 
-  - **ReasonLIGO**, an [ReasonML]((https://reasonml.github.io/)) inspired syntax
-    that builds on the strong points of OCaml. It aims to be familiar for those
+  - **ReasonLIGO**, a [ReasonML](https://reasonml.github.io/) inspired syntax
+    that builds on the strong points of OCaml. It aims to be familiar to those
     coming from JavaScript.
 
 Let's define some LIGO contract in the three flavours above. Do
@@ -134,20 +134,19 @@ This LIGO contract accepts the following LIGO expressions:
 
 ---
 
-## Runnable code snippets & exercises
+## Runnable code snippets
 
-Some of the sections in this documentation will include runnable code snippets and exercises. Sources for those are available at
+Some of the sections in this documentation will include runnable code snippets. Sources for those are available at
 the [LIGO Gitlab repository](https://gitlab.com/ligolang/ligo).
 
 ### Snippets
+
 For example **code snippets** for the *Types* subsection of this doc, can be found here:
 `gitlab-pages/docs/language-basics/src/types/**`
 
-### Exercises
-Solutions to exercises can be found e.g. here:  `gitlab-pages/docs/language-basics/exercises/types/**/solutions/**`
+### Running snippets
 
-### Running snippets / exercise solutions
-In certain cases it makes sense to be able to run/evaluate the given snippet or a solution, usually there'll be an example command which you can use, such as:
+In certain cases it makes sense to be able to run/evaluate the given snippet. Usually there'll be an example command which you can use, such as:
 
 ```shell
 ligo evaluate-value -s pascaligo gitlab-pages/docs/language-basics/src/variables-and-constants/const.ligo age

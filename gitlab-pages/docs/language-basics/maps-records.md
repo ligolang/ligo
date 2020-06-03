@@ -16,7 +16,7 @@ a *field name* and a *field type*. Given a value of a record type, the
 value bound to a field can be accessed by giving its field name to a
 special operator (`.`).
 
-Let us first consider and example of record type declaration.
+Let us first consider an example of record type declaration.
 
 <Syntax syntax="pascaligo">
 

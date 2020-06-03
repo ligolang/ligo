@@ -742,9 +742,7 @@ val set_delegate : key_hash option -> operation
 let set_delegate: option(key_hash) => operation
 </SyntaxTitle>
 
-Modify the 
-(delegate)[http://tezos.gitlab.io/user/glossary.html?highlight=delegate#delegate] 
-of the current contract.
+Modify the [delegate](http://tezos.gitlab.io/user/glossary.html?highlight=delegate#delegate) of the current contract.
 
 The operation fails when:
 - the delegate is the same as current delegate
