@@ -1,5 +1,5 @@
 (*_*
-  name: ID Contract (CameLIGO)
+  name: ID (CameLIGO)
   language: cameligo
   compile:
     entrypoint: main
