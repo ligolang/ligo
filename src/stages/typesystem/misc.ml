@@ -230,7 +230,7 @@ module Substitution = struct
       | P_forall p -> (
           let aux c = constraint_ ~c ~substs in
           let constraints = List.map aux p.constraints in
-          if (p.binder = v) then (
+          if (Var.equal p.binder v) then (
             { tsrc = "?TODO3?" ; t = P_forall { p with constraints } }
           ) else (
             let body = self p.body in
