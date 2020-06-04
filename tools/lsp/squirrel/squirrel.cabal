@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.2.
+-- This file has been generated from package.yaml by hpack version 0.33.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1c4275313cf3b683e190f5dc3ea95cd8cde978c09aa4f2269958de6128c73df3
+-- hash: a49f1d3cbdae65e52d4685178a1d0fc9b72502cc4b3c8cfa45f245ffdf32922d
 
 name:           squirrel
 version:        0.0.0
@@ -18,13 +18,11 @@ library
       AST.Types
       Error
       HasComments
-      HasErrors
       Lattice
       Parser
       ParseTree
       Pretty
       Range
-      Stubbed
       TH
       Tree
       Union
@@ -33,7 +31,7 @@ library
       Paths_squirrel
   hs-source-dirs:
       src/
-  default-extensions: BangPatterns BlockArguments DataKinds DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia FlexibleContexts FlexibleInstances GADTs GeneralisedNewtypeDeriving LambdaCase MultiParamTypeClasses NamedFieldPuns OverloadedStrings QuasiQuotes ScopedTypeVariables StandaloneDeriving TemplateHaskell TypeFamilies TypeOperators UndecidableInstances
+  default-extensions: BangPatterns BlockArguments DataKinds DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia FlexibleContexts FlexibleInstances GADTs GeneralisedNewtypeDeriving LambdaCase MultiParamTypeClasses NamedFieldPuns OverloadedStrings QuasiQuotes ScopedTypeVariables StandaloneDeriving TemplateHaskell TypeFamilies TypeOperators UndecidableInstances FunctionalDependencies ViewPatterns
   ghc-options: -freverse-errors -Wall -threaded
   include-dirs:
       vendor
@@ -58,7 +56,7 @@ executable squirrel
       Paths_squirrel
   hs-source-dirs:
       app/
-  default-extensions: BangPatterns BlockArguments DataKinds DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia FlexibleContexts FlexibleInstances GADTs GeneralisedNewtypeDeriving LambdaCase MultiParamTypeClasses NamedFieldPuns OverloadedStrings QuasiQuotes ScopedTypeVariables StandaloneDeriving TemplateHaskell TypeFamilies TypeOperators UndecidableInstances
+  default-extensions: BangPatterns BlockArguments DataKinds DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia FlexibleContexts FlexibleInstances GADTs GeneralisedNewtypeDeriving LambdaCase MultiParamTypeClasses NamedFieldPuns OverloadedStrings QuasiQuotes ScopedTypeVariables StandaloneDeriving TemplateHaskell TypeFamilies TypeOperators UndecidableInstances FunctionalDependencies ViewPatterns
   ghc-options: -freverse-errors -Wall -threaded
   build-depends:
       base

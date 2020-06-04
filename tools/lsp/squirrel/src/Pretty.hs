@@ -52,6 +52,9 @@ class Pretty p where
 class Pretty1 p where
   pp1 :: p Doc -> Doc
 
+instance Pretty () where
+  pp _ = "-"
+
 instance (Pretty1 p, Functor p, Pretty a) => Pretty (p a) where
   pp = pp1 . fmap pp
 

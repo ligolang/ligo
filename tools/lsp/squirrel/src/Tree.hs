@@ -26,10 +26,8 @@ import Union
 import Update
 import Lattice
 import HasComments
-import HasErrors
 import Pretty
 import Error
-import Stubbed
 
 -- | A tree, where each layer is one of @layers@ `Functor`s.
 --
@@ -38,26 +36,27 @@ import Stubbed
 --   Can contain `Error` instead of all the above.
 --
 newtype Tree layers info = Tree
-  { unTree :: Fix (Either Error `Compose` (,) info `Compose` Union layers)
+  { unTree :: Fix (Either (Error info) `Compose` (,) info `Compose` Union layers)
   }
 
 instance (Functor (Union layers)) => Functor (Tree layers) where
   fmap f (Tree fixpoint) = Tree $ cata (Fix . go) fixpoint
     where
-      go (Compose (Left err)) = Compose $ Left err
+      go (Compose (Left err)) = Compose $ Left $ fmap f err
       go (Compose (Right (Compose (a, rest)))) =
         Compose $ Right $ Compose (f a, rest)
 
 instance (Functor (Union layers), Foldable (Union layers)) => Foldable (Tree layers) where
   foldMap f (Tree fixpoint) = cata go fixpoint
     where
-      go (Compose (Left err))                  = mempty
+      go (Compose (Left err))                  = foldMap f err
       go (Compose (Right (Compose (a, rest)))) = f a <> fold rest
 
 instance
-    ( Functor (Union layers)
+    ( Functor    (Union layers)
     , HasComments info
-    , Pretty  (Union layers Doc)
+    , Pretty     (Union layers Doc)
+    , Pretty      info
     )
   =>
     Show (Tree layers info)
@@ -66,8 +65,9 @@ instance
 
 instance {-# OVERLAPS #-}
     ( HasComments info
-    , Functor (Union fs)
-    , Pretty  (Union fs Doc)
+    , Functor    (Union fs)
+    , Pretty     (Union fs Doc)
+    , Pretty      info
     )
   =>
     Pretty (Tree fs info)
@@ -113,7 +113,8 @@ updateTree act = fmap Tree . go . unTree
       return (Fix (Compose (Right (Compose (b, union')))))
 
     go (Fix (Compose (Left err))) = do
-      return (Fix (Compose (Left err)))
+      err' <- traverse act err
+      return (Fix (Compose (Left err')))
 
 -- | Make a tree out of a layer and an info.
 mk :: (Functor f, Member f fs) => info -> f (Tree fs info) -> Tree fs info
@@ -126,10 +127,10 @@ infoOf (Tree (Fix (Compose it))) =
     (const Nothing)
     (Just . fst . getCompose) it
 
-instance Stubbed (Tree fs info) where
+instance Stubbed (Tree fs info) info where
   stub = Tree . Fix . Compose . Left
 
-instance Foldable (Union fs) => HasErrors (Tree fs info) where
+instance Foldable (Union fs) => HasErrors (Tree fs info) info where
   errors = go . unTree
     where
       go (Fix (Compose (Left err))) = pure err

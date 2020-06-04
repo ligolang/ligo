@@ -81,7 +81,6 @@ import Range
 import Pretty
 import HasComments
 import Error
-import Stubbed
 
 import Debug.Trace
 
@@ -91,9 +90,9 @@ import Debug.Trace
 --
 newtype Parser a = Parser
   { unParser
-      :: WriterT [Error]                -- Early I though to report errors that way.
+      :: WriterT [Error ASTInfo]        -- Early I though to report errors that way.
       (  StateT  (ParseForest, [Text])  -- Current forest to recognise + comments.
-      (  ExceptT Error                  -- Backtracking. Change `Error` to `()`?
+      (  ExceptT (Error ASTInfo)        -- Backtracking. Change `Error` to `()`?
       (  Identity )))                   -- I forgot why. `#include`? Debug via `print`?
          a
   }
@@ -102,27 +101,26 @@ newtype Parser a = Parser
     , Applicative
     , Monad
     , MonadState   (ParseForest, [Text])
-    , MonadWriter [Error]
-    , MonadError   Error
+    , MonadWriter [Error ASTInfo]
+    , MonadError  (Error ASTInfo)
     )
 
 -- | Generate error originating at current location.
-makeError :: Text -> Parser Error
+makeError :: Text -> Parser (Error ASTInfo)
 makeError msg = do
-  rng <- currentRange
+  rng <- getInfo
   makeError' msg rng
 
 -- | Generate error originating at given location.
-makeError' :: Text -> Range -> Parser Error
-makeError' msg rng = do
-  rng <- currentRange
+makeError' :: Text -> info -> Parser (Error info)
+makeError' msg i = do
   src <- gets (pfGrove . fst) <&> \case
     []                     -> ""
     (,) _ ParseTree { ptSource } : _ -> ptSource
   return Expected
     { eMsg   = msg
     , eWhole = src
-    , eRange = rng
+    , eInfo  = i
     }
 
 -- | Pick next tree in a forest or die with msg.
@@ -211,11 +209,11 @@ field name parser = do
       return res
 
 -- | Variuos error reports.
-fallback  :: Stubbed a => Text          -> Parser a
-fallback' :: Stubbed a => Text -> Range -> Parser a
-die       ::              Text          -> Parser a
-die'      ::              Text -> Range -> Parser a
-complain  ::              Text -> Range -> Parser ()
+fallback  :: Stubbed a ASTInfo => Text            -> Parser a
+fallback' :: Stubbed a ASTInfo => Text -> ASTInfo -> Parser a
+die       ::                      Text            -> Parser a
+die'      ::                      Text -> ASTInfo -> Parser a
+complain  ::                      Text -> ASTInfo -> Parser ()
 fallback  msg     = pure . stub =<< makeError  msg
 fallback' msg rng = pure . stub =<< makeError' msg rng
 die       msg     = throwError  =<< makeError  msg
@@ -223,12 +221,12 @@ die'      msg rng = throwError  =<< makeError' msg rng
 complain  msg rng = tell . pure =<< makeError' msg rng
 
 -- | When tree-sitter found something it was unable to process.
-unexpected :: ParseTree -> Error
+unexpected :: ParseTree -> Error ASTInfo
 unexpected ParseTree { ptSource, ptRange } =
-  Expected "not that" ptSource ptRange
+  Expected "not that" ptSource (ASTInfo ptRange [])
 
 -- | If a parser fails, return stub with error originating here.
-stubbed :: Stubbed a => Text -> Parser a -> Parser a
+stubbed :: Stubbed a ASTInfo => Text -> Parser a -> Parser a
 stubbed msg parser = do
   parser <|> fallback msg
 
@@ -286,7 +284,7 @@ some p = some'
 
 -- | Run parser on given file.
 --
-runParser :: Parser a -> FilePath -> IO (a, [Error])
+runParser :: Parser a -> FilePath -> IO (a, [Error ASTInfo])
 runParser (Parser parser) fin = do
   pforest <- toParseTree fin
   let
@@ -314,10 +312,11 @@ debugParser parser fin = do
 -- | Consume next tree if it has the given name. Or die.
 token :: Text -> Parser Text
 token node = do
-  tree@ParseTree {ptName, ptRange, ptSource} <- takeNext node
+  i <- getInfo
+  tree@ParseTree {ptName, ptSource} <- takeNext node
   if ptName == node
   then return ptSource
-  else die' node ptRange
+  else die' node i
 
 -- | Consume next tree, return its textual representation.
 anything :: Parser Text
@@ -394,7 +393,7 @@ notFollowedBy parser = do
 --   > inside "$field"
 --   > inside ":$treename" -- don't, use "subtree"
 --
-inside :: Stubbed a => Text -> Parser a -> Parser a
+inside :: Stubbed a ASTInfo => Text -> Parser a -> Parser a
 inside sig parser = do
   let (f, st') = Text.breakOn ":" sig
   let st       = Text.drop 1 st'
@@ -419,6 +418,9 @@ data ASTInfo = ASTInfo
   { aiRange    :: Range
   , aiComments :: [Text]
   }
+
+instance Pretty ASTInfo where
+  pp (ASTInfo r comms) = pp r $$ vcat (map (text . unpack) comms)
 
 instance HasComments ASTInfo where
   getComments = aiComments

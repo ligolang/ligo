@@ -28,7 +28,6 @@ import           ParseTree
 import           Parser
 import           Range
 import           AST hiding (def)
-import           HasErrors
 import           Pretty
 import           Error
 
@@ -173,8 +172,8 @@ collectErrors funs uri path version = do
         $ partitionBySource
         $ map errorToDiag (errs <> errors tree)
 
-errorToDiag :: Error -> J.Diagnostic
-errorToDiag (Expected what instead (Range (sl, sc, _) (el, ec, _))) =
+errorToDiag :: Error ASTInfo -> J.Diagnostic
+errorToDiag (Expected what instead (getRange -> (Range (sl, sc, _) (el, ec, _)))) =
   J.Diagnostic
     (J.Range begin end)
     (Just J.DsError)

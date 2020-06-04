@@ -36,6 +36,8 @@ default-extensions:
   - TypeFamilies
   - TypeOperators
   - UndecidableInstances
+  - FunctionalDependencies
+  - ViewPatterns
 
 ghc-options: -freverse-errors -Wall -threaded
 
