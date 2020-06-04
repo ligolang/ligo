@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b811c8b08ccf5e457be7e405973ea06f046839b90e70ebd729a1df9bb668dc69
+-- hash: 0561ca5eedeec178effcd82246fe314b488637ceea34ea241eb4943714bdb7aa
 
 name:           squirrel
 version:        0.0.0
@@ -25,7 +25,6 @@ library
       Range
       Tree
       Union
-      Update
   other-modules:
       Paths_squirrel
   hs-source-dirs:

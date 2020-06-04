@@ -63,11 +63,12 @@ module Parser
   , ASTInfo(..)
   ) where
 
-import Control.Lens hiding (inside)
 import Control.Monad.State
 import Control.Monad.Writer
 import Control.Monad.Except
+import Control.Monad.Identity
 
+import Data.Functor ((<&>))
 import Data.Foldable
 import Data.Text (Text, unpack)
 import qualified Data.Text as Text
@@ -204,17 +205,15 @@ field name parser = do
 
       return res
 
--- | Variuos error reports.
-fallback  :: Stubbed a ASTInfo => Text            -> Parser a
--- fallback' :: Stubbed a ASTInfo => Text -> ASTInfo -> Parser a
-die       ::                      Text            -> Parser a
-die'      ::                      Text -> ASTInfo -> Parser a
--- complain  ::                      Text -> ASTInfo -> Parser ()
-fallback  msg     = pure . stub =<< makeError  msg
--- fallback' msg rng = pure . stub =<< makeError' msg rng
-die       msg     = throwError  =<< makeError  msg
-die'      msg rng = throwError  =<< makeError' msg rng
--- complain  msg rng = tell . pure =<< makeError' msg rng
+fallback :: Stubbed a ASTInfo => Text -> Parser a
+fallback msg = pure . stub =<< makeError msg
+
+-- | Produce "expected ${X}" error at this point.
+die :: Text -> Parser a
+die msg = throwError =<< makeError msg
+
+die' ::Text -> ASTInfo -> Parser a
+die' msg rng = throwError =<< makeError' msg rng
 
 -- | When tree-sitter found something it was unable to process.
 unexpected :: ParseTree -> Error ASTInfo
@@ -398,7 +397,7 @@ inside sig parser = do
           subtree st do
             parser
 
--- Auto-accumulated information to be fed into AST being build.
+-- | Auto-accumulated information to be put into AST being build.
 data ASTInfo = ASTInfo
   { aiRange    :: Range
   , aiComments :: [Text]

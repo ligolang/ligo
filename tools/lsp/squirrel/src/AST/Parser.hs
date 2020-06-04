@@ -1,20 +1,15 @@
 
-{-
-  Parser for a contract. The `example` is exported to run on current debug target.
-
-  TODO: prune some "path" and alike stuff from grammar, refactor common things.
-
-  TODO: break <*>/do ladders onto separate named parsers.
+{- | Parser for a contract.
 -}
 
-module AST.Parser (example, contract) where
+module AST.Parser ({-example,-} contract) where
 
 import Data.Text (Text)
 
 import AST.Types
 
 import Parser
-import Tree
+import Tree hiding (skip)
 import Union
 
 -- import Debug.Trace
@@ -30,6 +25,7 @@ ranged p = do
   a <- p
   return $ mk r a
 
+-- | The entrypoint.
 contract :: Parser (Pascal ASTInfo)
 contract =
   ranged do
@@ -844,6 +840,7 @@ typeTuple = do
   subtree "type_tuple" do
     many do inside "element" type_
 
+-- example :: Text
 -- example = "../../../src/test/contracts/application.ligo"
 -- example = "../../../src/test/contracts/address.ligo"
 -- example = "../../../src/test/contracts/amount.ligo"
@@ -861,8 +858,7 @@ typeTuple = do
 -- example = "../../../src/test/contracts/bytes_arithmetic.ligo"
 -- example = "../../../src/test/contracts/bytes_unpack.ligo"
 -- example = "../../../src/test/contracts/chain_id.ligo"
-example :: Text
-example = "../../../src/test/contracts/coase.ligo"
+-- example = "../../../src/test/contracts/coase.ligo"
 -- example = "../../../src/test/contracts/failwith.ligo"
 -- example = "../../../src/test/contracts/loop.ligo"
 -- example = "../../../src/test/contracts/application.ligo"

@@ -13,7 +13,7 @@ Grammars are in separate folders, in form of tree-sitter grammars.
 They are compiled via `tree-sitter generate` command in their respective folder.
 
 Then they are linked as `parser.c` file with GHC toolchain.
-Because GHC is unable to link from outside of project folder, the `parser.c` is
+Because GHCi REPL is unable to link from outside of project folder, the `parser.c` is
 symlinked into `vendor/` directory.
 
 Right now only one parser is linked there; the name of symlink should be changed

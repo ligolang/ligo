@@ -1,4 +1,4 @@
-{-
+{- |
   Pretty printer, a small extension of GHC `pretty` package.
 -}
 

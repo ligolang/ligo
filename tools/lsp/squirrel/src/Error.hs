@@ -1,4 +1,7 @@
 
+{- | Parsing errors and utilities.
+-}
+
 module Error
   ( Error(..)
   , HasErrors (..)

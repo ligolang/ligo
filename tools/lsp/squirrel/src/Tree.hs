@@ -10,11 +10,16 @@
 -}
 
 module Tree
-  ( Tree
+  ( -- * Tree type
+    Tree
   , spineTo
   , updateTree
   , mk
   , infoOf
+
+    -- * Callbacks on update
+  , UpdateOver (..)
+  , skip
   )
   where
 
@@ -23,7 +28,6 @@ import Data.Functor.Compose
 import Data.Foldable
 
 import Union
-import Update
 import Lattice
 import HasComments
 import Pretty
@@ -132,3 +136,23 @@ instance Foldable (Union fs) => HasErrors (Tree fs info) info where
     where
       go (Fix (Compose (Left err))) = pure err
       go (Fix rest)                 = foldMap go rest
+
+-- | Update callbacks for a @f a@ while working inside monad @m@.
+class Monad m => UpdateOver m f a where
+  before :: f a -> m ()
+  after  :: f a -> m ()
+
+  before _ = skip
+  after  _ = skip
+
+-- | Do nothing.
+skip :: Monad m => m ()
+skip = return ()
+
+instance Monad m => UpdateOver m (Union '[]) a where
+  before = error "Union.empty"
+  after  = error "Union.empty"
+
+instance (UpdateOver m f a, UpdateOver m (Union fs) a) => UpdateOver m (Union (f : fs)) a where
+  before = eliminate before before
+  after  = eliminate after  after

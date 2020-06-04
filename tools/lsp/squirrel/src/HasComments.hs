@@ -1,4 +1,7 @@
 
+{- | Comments and utilities.
+-}
+
 module HasComments
   ( HasComments(..)
   , c

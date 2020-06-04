@@ -1,4 +1,7 @@
 
+{- | Continious location inside the source and utilities.
+-}
+
 module Range
   ( Range(..)
   , HasRange(..)

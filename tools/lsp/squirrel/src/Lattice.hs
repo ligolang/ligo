@@ -1,4 +1,7 @@
 
+{- | The property the @Tree@ @info@ should abide.
+-}
+
 module Lattice
   ( Lattice(..)
   )

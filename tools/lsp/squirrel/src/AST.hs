@@ -1,4 +1,7 @@
 
+{- | The "all things AST"-module.
+-}
+
 module AST (module M) where
 
 import AST.Types as M

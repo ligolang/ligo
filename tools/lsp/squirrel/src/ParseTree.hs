@@ -57,7 +57,7 @@ data ParseTree = ParseTree
   }
   deriving (Show) via PP ParseTree
 
--- ^ The forest we work with.
+-- | The forest we work with.
 data ParseForest = Forest
   { pfID    :: Int                  -- ^ Unique number for comparison.
   , pfGrove :: [(Text, ParseTree)]  -- ^ Subtrees.

@@ -27,19 +27,25 @@ import Data.Text (Text)
 
 import Parser
 import Range
-import Update
 import AST.Types
 import Tree
 import HasComments
 import Pretty
 
+-- | Scope-holding monad.
 type ScopeM = State [Env]
 
+-- | Run the computation with scope starting from empty scope.
+evalScopeM :: ScopeM a -> a
+evalScopeM action = evalState action [Env []]
+
+-- | The environment.
 newtype Env = Env
   { _eDecls :: [ScopedDecl]
   }
   deriving newtype (Semigroup, Monoid)
 
+-- | The type/value declaration.
 data ScopedDecl = ScopedDecl
   { _sdName   :: (Pascal ())
   , _sdOrigin :: Range
@@ -47,14 +53,22 @@ data ScopedDecl = ScopedDecl
   , _sdType   :: Maybe (Either (Pascal ()) Kind)
   }
 
+-- | The kind.
 data Kind = Star
 
-enter, leave :: ScopeM ()
+-- | Make a new scope out of enclosing parent one.
+enter  :: ScopeM ()
+enter = modify \(a : b) -> a : a : b
+
+-- | Leave current scope, return to parent one.
+leave  :: ScopeM ()
+leave = modify tail
+
+-- | Add a declaration to the current scope.
 define :: ScopedDecl -> ScopeM ()
-enter    = modify \(a : b) -> a : a : b
-leave    = modify tail
 define d = modify \(Env a : b) -> Env (d : a) : b
 
+-- | Add a type declaration to the current scope.
 defType :: HasRange a => Pascal a -> Kind -> Pascal a -> ScopeM ()
 defType name kind body = do
   define $ ScopedDecl
@@ -63,6 +77,7 @@ defType name kind body = do
     (Just $ getRange $ infoOf body)
     (Just (Right kind))
 
+-- | Add a value declaration to the current scope.
 def
   :: HasRange a
   => Pascal a
@@ -315,9 +330,6 @@ data Scope = Scope { unScope :: Text }
 
 instance HasComments Scope where
   getComments = pure . ("(* " <>) . (<> " *)") . unScope
-
-evalScopeM :: ScopeM a -> a
-evalScopeM action = evalState action [Env []]
 
 _testUpdate :: Pascal ASTInfo -> ScopeM (Pascal Scope)
 _testUpdate = updateTree \_ -> do

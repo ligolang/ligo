@@ -15,7 +15,6 @@ module Union
   )
   where
 
-import Update
 import Pretty
 
 -- | The "one of" datatype.
@@ -53,10 +52,13 @@ eliminate here there = \case
   Here  fx   -> here fx
   There rest -> there rest
 
--- | The `f` functior is in the `fs` list.
+-- | The @f@ functior is in the @fs@ list.
 class Member f fs where
-  inj  :: f x -> Union fs x          -- ^ embed @f@ into some `Union`
-  proj :: Union fs x -> Maybe (f x)  -- ^ check if a `Union` is actually @f@
+  -- | Embed @f@ into some `Union`.
+  inj  :: f x -> Union fs x
+
+  -- | Check if a `Union` is actually @f@.
+  proj :: Union fs x -> Maybe (f x)
 
 instance {-# OVERLAPS #-} Member f (f : fs) where
   inj  = Here
@@ -65,14 +67,6 @@ instance {-# OVERLAPS #-} Member f (f : fs) where
 instance Member f fs => Member f (g : fs) where
   inj  = There . inj
   proj = eliminate (const Nothing) proj
-
-instance Monad m => UpdateOver m (Union '[]) a where
-  before = error "Union.empty"
-  after  = error "Union.empty"
-
-instance (UpdateOver m f a, UpdateOver m (Union fs) a) => UpdateOver m (Union (f : fs)) a where
-  before = eliminate before before
-  after  = eliminate after  after
 
 instance Pretty1 (Union '[]) where
   pp1 = error "Union.empty"
