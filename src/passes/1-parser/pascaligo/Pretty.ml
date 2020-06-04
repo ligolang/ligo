@@ -5,8 +5,17 @@ module Region = Simple_utils.Region
 open! Region
 open! PPrint
 
-let pp_par (printer: 'a -> document) ({value; _} : 'a par reg) =
-  string "(" ^^ nest 1 (printer value.inside ^^ string ")")
+let pp_par : ('a -> document) -> 'a par reg -> document =
+  fun printer {value; _} ->
+    string "(" ^^ nest 1 (printer value.inside ^^ string ")")
+
+let pp_brackets : ('a -> document) -> 'a brackets reg -> document =
+  fun printer {value; _} ->
+    string "[" ^^ nest 1 (printer value.inside ^^ string "]")
+
+let pp_braces : ('a -> document) -> 'a braces reg -> document =
+  fun printer {value; _} ->
+    string "{" ^^ nest 1 (printer value.inside ^^ string "}")
 
 let rec print ast =
   let app decl = group (pp_declaration decl) in
@@ -123,7 +132,7 @@ and pp_fun_decl {value; _} =
     match block_with with
       None -> empty, empty, empty
     | Some (b,_) ->
-        hardline ^^ string "is block [", pp_block b, string "] with " in
+        hardline ^^ string "is block [", pp_block b, string "] with" in
   let expr = pp_expr return in
   let attr = match attributes with
                None -> empty
@@ -132,7 +141,7 @@ and pp_fun_decl {value; _} =
      ^/^ string ": " ^^ nest 2 return_t
      ^^ blk_opening
      ^^ nest 2 (break 0 ^^ blk_in)
-     ^/^ blk_closing ^^ nest 4 (break 1 ^^ expr)
+     ^/^ group (blk_closing ^^ nest 4 (break 1 ^^ expr))
      ^^ attr
 
 and pp_parameters p = pp_nsepseq ";" pp_param_decl p
@@ -203,20 +212,20 @@ and pp_cond_expr {value; _} = string "TODO:pp_cond_expr"
 
 and pp_conditional {value; _} =
   let {test; ifso; ifnot; _} : conditional = value in
-  let if_then =
-    string "if " ^^ group (nest 3 (pp_expr test)) ^/^ string "then"
-    ^^ group (nest 2 (break 1 ^^ pp_if_clause ifso)) in
-  let if_else =
-    string "else" ^^ group (nest 2 (break 1 ^^ pp_if_clause ifnot))
-  in if_then ^/^ if_else
+  let if_then = string "if " ^^ group (nest 3 (pp_expr test)) in
+  let ifso = prefix 2 1 (string "then") (pp_if_clause ifso) in
+  let ifnot =
+    string "else" ^^ group (nest 2 (blank 1 ^^ pp_if_clause ifnot))
+  in group (if_then ^/^ ifso ^/^ ifnot)
 
 and pp_if_clause = function
-  ClauseInstr i -> pp_instruction i
-| ClauseBlock b -> pp_clause_block b
+  ClauseInstr i -> nest 1 (pp_instruction i)
+| ClauseBlock b ->
+    string "{" ^^ hardline ^^ pp_clause_block b ^^ hardline ^^ string "}"
 
 and pp_clause_block = function
-  LongBlock b -> pp_block b
-| ShortBlock b -> pp_short_block b
+  LongBlock b  -> pp_block b
+| ShortBlock {value; _} -> Utils.(pp_statements <@ fst) value.inside
 
 and pp_short_block {value; _} = string "TODO:pp_short_block"
 
@@ -226,8 +235,9 @@ and pp_case :
   'a.('a -> document) -> 'a case Region.reg -> document =
   fun printer {value; _} ->
   let {expr; cases; _} = value in
-  group (string "case " ^^ nest 5 (pp_expr expr) ^/^ string "of")
-  ^^ hardline ^^ nest 2 (pp_cases printer cases)
+  group (string "case " ^^ nest 5 (pp_expr expr) ^/^ string "of [")
+  ^^ hardline ^^ pp_cases printer cases
+  ^^ hardline ^^ string "]"
 
 and pp_cases :
   'a.('a -> document) ->
@@ -235,23 +245,25 @@ and pp_cases :
   fun printer {value; _} ->
     let head, tail = value in
     let head = pp_case_clause printer head in
-    let head = if tail = [] then head
-               else string "    " ^^ head in
+    let head = if tail = [] then head else blank 4 ^^ head in
     let rest = List.map snd tail in
     let app clause =
       break 1 ^^ string "| " ^^ pp_case_clause printer clause
-    in  head ^^ concat_map app rest
+    in head ^^ concat_map app rest
 
 and pp_case_clause :
   'a.('a -> document) -> 'a case_clause Region.reg -> document =
-  fun printer clause -> string "TODO:pp_case_clause"
+  fun printer {value; _} ->
+    let {pattern; rhs; _} = value in
+    prefix 4 1 (pp_pattern pattern ^^ string " ->") (printer rhs)
+
 
 and pp_assignment {value; _} =
   let {lhs; rhs; _} = value in
   prefix 2 1 (pp_lhs lhs ^^ string " :=") (pp_expr rhs)
 
 and pp_lhs : lhs -> document = function
-  Path p -> pp_path p
+  Path p    -> pp_path p
 | MapPath p -> pp_map_lookup p
 
 and pp_loop = function
@@ -279,12 +291,12 @@ and pp_collection = function
 
 and pp_expr = function
   ECase   e -> pp_case pp_expr e
-| ECond   e -> pp_cond_expr e
+| ECond   e -> group (pp_cond_expr e)
 | EAnnot  e -> pp_annot_expr e
 | ELogic  e -> pp_logic_expr e
-| EArith  e -> pp_arith_expr e
+| EArith  e -> group (pp_arith_expr e)
 | EString e -> pp_string_expr e
-| EList   e -> pp_list_expr e
+| EList   e -> group (pp_list_expr e)
 | ESet    e -> pp_set_expr e
 | EConstr e -> pp_constr_expr e
 | ERecord e -> pp_record e
@@ -307,10 +319,11 @@ and pp_set_expr = function
 
 and pp_map_expr = function
   MapLookUp fetch -> pp_map_lookup fetch
-| MapInj inj -> pp_injection pp_binding inj
-| BigMapInj inj -> pp_injection pp_binding inj
+| MapInj inj      -> pp_injection pp_binding inj
+| BigMapInj inj   -> pp_injection pp_binding inj
 
-and pp_map_lookup {value; _} = string "TODO:pp_map_lookup"
+and pp_map_lookup {value; _} =
+  pp_path value.path ^^ pp_brackets pp_expr value.index
 
 and pp_path = function
   Name v -> pp_ident v
@@ -386,14 +399,19 @@ and pp_field_assign {value; _} = string "TODO:pp_field_assign"
 
 and pp_record ne_inj = group (pp_ne_injection pp_field_assign ne_inj)
 
-and pp_projection {value; _} = string "TODO:pp_projection"
+and pp_projection {value; _} =
+  let {struct_name; field_path; _} = value in
+  let fields = Utils.nsepseq_to_list field_path
+  and sep    = string "." ^^ break 0 in
+  let fields = separate_map sep pp_selection fields in
+  group (pp_ident struct_name ^^ string "." ^^ break 0 ^^ fields)
 
 and pp_update {value; _} = string "TODO:pp_update"
 
 and pp_field_path_assign {value; _} = string "TODO:pp_field_path_assign"
 
 and pp_selection = function
-  FieldName _   -> string "TODO:pp_selection:FieldName"
+  FieldName v   -> string v.value
 | Component cmp -> cmp.value |> snd |> Z.to_string |> string
 
 and pp_tuple_expr {value; _} =
@@ -420,7 +438,21 @@ and pp_arguments v = pp_tuple_expr v
 
 and pp_injection :
   'a.('a -> document) -> 'a injection reg -> document =
-  fun printer {value; _} -> string "TODO:pp_injection"
+  fun printer {value; _} ->
+    let {kind; enclosing; elements; _} = value in
+    let sep      = string ";" ^^ break 1 in
+    let elements = Utils.sepseq_to_list elements in
+    let elements = separate_map sep printer elements in
+    let kwd      = pp_injection_kwd kind in
+    let offset   = String.length kwd + 2 in
+    string (kwd ^ " [")
+    ^^ group (nest 2 (break 0 ^^ elements ^^ string "]"))
+
+and pp_injection_kwd = function
+  InjSet    _ -> "set"
+| InjMap    _ -> "map"
+| InjBigMap _ -> "big_map"
+| InjList   _ -> "list"
 
 and pp_ne_injection :
   'a.('a -> document) -> 'a ne_injection reg -> document =

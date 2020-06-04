@@ -404,8 +404,7 @@ and pp_cartesian {value; _} =
 and pp_variants {value; _} =
   let head, tail = value in
   let head = pp_variant head in
-  let head = if tail = [] then head
-             else ifflat head (string "  " ^^ head) in
+  let head = if tail = [] then head else ifflat head (blank 2 ^^ head) in
   let rest = List.map snd tail in
   let app variant = break 1 ^^ string "| " ^^ pp_variant variant
   in head ^^ concat_map app rest
