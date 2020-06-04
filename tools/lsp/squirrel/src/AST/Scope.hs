@@ -1,12 +1,25 @@
 
-{-
-  The AST and auxillary types along with their pretty-printers.
-
-  TODO: Untangle pretty-printing mess into combinators.
-  TODO: Store offending text verbatim in Wrong*.
+{- | /The/ scope resolution system.
 -}
 
-module AST.Scope where
+module AST.Scope
+  ( -- * Monad
+    ScopeM
+  , evalScopeM
+
+    -- * Scope
+  , Env(..)
+  , ScopedDecl(..)
+  , Kind(..)
+
+    -- * Methods
+  , enter
+  , leave
+  , define
+  , defType
+  , def
+  )
+  where
 
 import Control.Lens hiding (Const, List)
 import Control.Monad.State

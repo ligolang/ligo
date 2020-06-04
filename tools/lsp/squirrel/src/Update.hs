@@ -1,7 +1,13 @@
 
+{- | Utils for updating the @Tree@ type.
+-}
+
 module Update
-  ( HasMethods(..)
+  ( -- * Interfaces
+    HasMethods(..)
   , UpdateOver(..)
+
+    -- * Default implementation
   , skip
   )
   where

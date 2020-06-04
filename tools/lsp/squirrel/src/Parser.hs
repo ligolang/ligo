@@ -1,6 +1,6 @@
 
 {- |
-  The thing that can untangle the mess that tree-sitter produced.
+  The thing that can untangle the mess that TreeSitter produces.
 
   In presence of serious errors, it /will/ be a mess, anyway.
 
@@ -33,24 +33,31 @@
 -}
 
 module Parser
-  ( Parser
+  ( -- * Parser type
+    Parser
   , runParser
   , debugParser
+
+    -- * Combinators
   , subtree
   , anything
   , token
-  , ASTInfo(..)
+  , stubbed
   , getInfo
   , inside
+
+    -- * Replacement for `Alternative`, because reasons
   , many
   , some
   , (<|>)
   , optional
   , select
+
+    -- * Debug
   , dump
-  , stubbed
-  , Stubbed (..)
-  , Error (..)
+
+    -- * Comments and ranges
+  , ASTInfo(..)
   ) where
 
 import Control.Lens hiding (inside)

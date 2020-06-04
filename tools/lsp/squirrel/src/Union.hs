@@ -1,7 +1,17 @@
 
+{- | The union of functors and utilities.
+
+-}
+
 module Union
-  ( Union(..), eliminate
-  , Member, proj, inj
+  ( -- * Union type
+    Union(..)
+  , eliminate
+
+    -- * Interface
+  , Member
+  , proj
+  , inj
   )
   where
 

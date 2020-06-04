@@ -30,6 +30,7 @@ import           Range
 import           AST hiding (def)
 import           HasErrors
 import           Pretty
+import           Error
 
 main :: IO ()
 main = do

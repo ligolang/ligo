@@ -1,4 +1,14 @@
 
+{- | The carrier type for AST.
+
+     "Untypedness" of the tree is a payoff to ablity to stop and navigate
+     anywhere, not just inside the expression context.
+
+     Is a `Functor` and `Foldable` over its @info@ parameter.
+     Is not `Traversable`, because this will definitely not preserve scope.
+     Use `updateTree` instead of `traverse`/`for`.
+-}
+
 module Tree
   ( Tree
   , spineTo
@@ -10,6 +20,7 @@ module Tree
 
 import Data.Fix
 import Data.Functor.Compose
+import Data.Foldable
 
 import Union
 import Update
@@ -36,6 +47,12 @@ instance (Functor (Union layers)) => Functor (Tree layers) where
       go (Compose (Left err)) = Compose $ Left err
       go (Compose (Right (Compose (a, rest)))) =
         Compose $ Right $ Compose (f a, rest)
+
+instance (Functor (Union layers), Foldable (Union layers)) => Foldable (Tree layers) where
+  foldMap f (Tree fixpoint) = cata go fixpoint
+    where
+      go (Compose (Left err))                  = mempty
+      go (Compose (Right (Compose (a, rest)))) = f a <> fold rest
 
 instance
     ( Functor (Union layers)
@@ -71,14 +88,13 @@ spineTo
 spineTo info = reverse . go . unTree
   where
     go tree@(Fix (Compose (Right (Compose (info', fres))))) =
-      -- traceShow (info <? info', info, info') $
       if   info <? info'
       then Tree tree : foldMap go fres
       else []
 
     go _ = []
 
--- | Update the tree over some monad that exports its methods.
+-- | Traverse the tree over some monad that exports its methods.
 --
 --   For each tree piece, will call `before` and `after` callbacks.
 --
@@ -86,8 +102,7 @@ updateTree
   :: ( UpdateOver m (Union fs) (Tree fs a)
      , Traversable  (Union fs)
      )
-  => (a -> m b)
-  -> Tree fs a -> m (Tree fs b)
+  => (a -> m b) -> Tree fs a -> m (Tree fs b)
 updateTree act = fmap Tree . go . unTree
   where
     go (Fix (Compose (Right (Compose (a, union))))) = do

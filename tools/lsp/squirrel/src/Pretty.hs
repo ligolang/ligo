@@ -1,12 +1,19 @@
 {-
-  Pretty printer, based on GHC one.
+  Pretty printer, a small extension of GHC `pretty` package.
 -}
 
 module Pretty
-  ( ppToText
+  ( -- * Output `Text`
+    ppToText
+
+    -- * `Show` instance generator
   , PP(..)
+
+    -- * Interfaces
   , Pretty(..)
   , Pretty1(..)
+
+    -- * Helpers
   , tuple
   , list
   , indent
@@ -16,6 +23,8 @@ module Pretty
   , sepByDot
   , mb
   , sparseBlock
+
+    -- * Full might of pretty printing
   , module Text.PrettyPrint
   )
   where

@@ -1,6 +1,7 @@
 
-{- |
-  The AST and auxillary types along with their pretty-printers.
+{- | The AST and auxillary types along with their pretty-printers.
+
+     The comments for fields in types are the type before it was made untyped.
 -}
 
 module AST.Types where
@@ -32,7 +33,7 @@ type Pascal = Tree
   ]
 
 data Contract it
-  = Contract      [it]
+  = Contract      [it] -- ^ Declaration
   deriving (Show) via PP (Contract it)
   deriving stock (Functor, Foldable, Traversable)
 
@@ -84,7 +85,7 @@ data TField it
   deriving (Show) via PP (TField it)
   deriving stock (Functor, Foldable, Traversable)
 
--- | TODO: break onto smaller types? Literals -> Constannt; mapOps; mmove Annots to Decls.
+-- | TODO: break onto smaller types? Literals -> Constant; mapOps; mmove Annots to Decls.
 data Expr it
   = Let       [it] it -- [Declaration] (Expr)
   | Apply     it [it] -- (Expr) [Expr]

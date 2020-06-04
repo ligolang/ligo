@@ -3,10 +3,16 @@ module Range
   ( Range(..)
   , HasRange(..)
   , diffRange
+  , cutOut
   )
   where
 
 import Control.Lens
+
+import qualified Data.ByteString as BS
+import Data.ByteString (ByteString)
+import Data.Text (Text)
+import Data.Text.Encoding
 
 import Pretty
 
@@ -29,3 +35,12 @@ instance Pretty Range where
 -- | Ability to get range out of something.
 class HasRange a where
   getRange :: a -> Range
+
+-- | Extract textual representation of given range.
+cutOut :: Range -> ByteString -> Text
+cutOut (Range (_, _, s) (_, _, f)) bs =
+  decodeUtf8
+    $ BS.take (f - s)
+    $ BS.drop  s
+      bs
+

@@ -1,22 +1,30 @@
 
 {-# language StrictData #-}
 
+{- | The input tree from TreeSitter. Doesn't have any pointers to any data
+     from actual tree the TS produced and therefore has no usage limitations.
+
+     All datatypes here are strict.
+-}
+
 module ParseTree
-  ( ParseTree(..)
+  ( -- * Tree/Forest
+    ParseTree(..)
   , ParseForest(..)
+
+    -- * Invoke the TreeSitter and get the tree it outputs
   , toParseTree
-  , cutOut
   )
   where
 
+import Data.ByteString (ByteString)
 import Data.IORef
+import qualified Data.ByteString as BS
 import qualified Data.Text as Text
 import Data.Text (Text)
 import Data.Traversable (for)
 import Data.Text.Encoding
 import Data.Text.Foreign (withCStringLen)
-import qualified Data.ByteString as BS
-import Data.ByteString (ByteString)
 
 import           TreeSitter.Parser
 import           TreeSitter.Tree
@@ -77,14 +85,6 @@ instance Pretty ParseForest where
         if field == Text.empty
         then nest 2 $ pp tree
         else hang (text (Text.unpack field) <> ": ") 2 (pp tree)
-
--- | Extract textual representation of given range.
-cutOut :: Range -> ByteString -> Text
-cutOut (Range (_, _, s) (_, _, f)) bs =
-  decodeUtf8
-    $ BS.take (f - s)
-    $ BS.drop  s
-      bs
 
 -- | Feed file contents into PascaLIGO grammar recogniser.
 toParseTree :: FilePath -> IO ParseForest
