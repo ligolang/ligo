@@ -1,3 +1,3 @@
 let main = 
-  ((parameter: int), (storage: address)) => 
+  (parameter: int, storage: address) => 
     ([] : list(operation), "KT1badaddr" : address);

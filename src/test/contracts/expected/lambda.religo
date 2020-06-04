@@ -1,5 +1,5 @@
 type storage = unit;
 
 let main = 
-  (((p, s): (unit, storage))): unit => 
-    ((((useless: unit))) => ())(());
+  ((p, s): (unit, storage)): unit => 
+    (((useless: unit)) => ())(());

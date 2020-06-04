@@ -1,5 +1,5 @@
 let rec aux_simple = 
-  ((i: int)): int => 
+  (i: int): int => 
     if(i
     < 100) {
       aux_simple(i + 1)
@@ -7,16 +7,16 @@ let rec aux_simple =
       i
     };
 
-let counter_simple = ((n: int)): int => aux_simple(n);
+let counter_simple = (n: int): int => aux_simple(n);
 
 type sum_aggregator = {counter: int, sum: int };
 
 let counter = 
-  ((n: int)): int => 
+  (n: int): int => 
     {
       let initial: sum_aggregator = {counter: 0, sum: 0 };
       let rec aggregate = 
-        ((prev: sum_aggregator)): int => 
+        (prev: sum_aggregator): int => 
           if(prev.counter
           <= n) {
           
@@ -32,7 +32,7 @@ let counter =
     };
 
 let rec aux_nest = 
-  ((prev: sum_aggregator)): sum_aggregator => 
+  (prev: sum_aggregator): sum_aggregator => 
     if(prev.counter
     < 100) {
     
@@ -43,7 +43,7 @@ let rec aux_nest =
     };
 
 let counter_nest = 
-  ((n: int)): int => 
+  (n: int): int => 
     {
       let initial: sum_aggregator = {counter: 0, sum: 0 };
       let out: sum_aggregator = aux_nest(initial);

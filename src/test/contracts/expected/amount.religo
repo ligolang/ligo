@@ -1,5 +1,5 @@
 let check_ = 
-  ((p: unit)): int => 
+  (p: unit): int => 
     if(Tezos.amount
     == 100000000mutez) {
       42

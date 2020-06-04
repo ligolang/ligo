@@ -5,7 +5,7 @@ type parameter = Add(int) | Sub(int);
 type return = (list(operation), storage);
 
 let main = 
-  (((action, store): (parameter, storage))) => 
+  ((action, store): (parameter, storage)) => 
     {
       let store = 
         store

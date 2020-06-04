@@ -14,9 +14,9 @@ let g = (a + 1, c);
 
 let h = ("a" ++ "2", d);
 
-let i = ((a: int), (b: int)) => a + b;
+let i = (a: int, b: int) => a + b;
 
-let j = ((a: int), (b: int)) => a - b;
+let j = (a: int, b: int) => a - b;
 
 let m = 
   {
@@ -24,13 +24,13 @@ let m =
     z
   };
 
-let n = ((a: int)): int => a + 1;
+let n = (a: int): int => a + 1;
 
-let o = ((a: int)): int => a + 1;
+let o = (a: int): int => a + 1;
 
-let n = ((a: int), (b: int)): int => a + 1;
+let n = (a: int, b: int): int => a + 1;
 
-let o = ((a: int), (b: int)): int => a + 1;
+let o = (a: int, b: int): int => a + 1;
 
 let p = 
   {

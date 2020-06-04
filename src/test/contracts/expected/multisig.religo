@@ -13,7 +13,7 @@ type storage = {
   auth: authorized_keys
 };
 
-type message = (unit => list(operation));
+type message = unit => list(operation);
 
 type dummy = (key_hash, signature);
 
@@ -30,7 +30,7 @@ type return = (list(operation), storage);
 type parameter = CheckMessage(check_message_pt);
 
 let check_message = 
-  (((param, s): (check_message_pt, storage))): return => 
+  ((param, s): (check_message_pt, storage)): return => 
     {
       let message: message = param.message;
       let s = 
@@ -46,8 +46,8 @@ let check_message =
           let valid: nat = 0n;
           let keys: authorized_keys = s.auth;
           let aux = 
-            (((vk, pkh_sig):
-             ((nat, authorized_keys), (key_hash, signature))))
+            ((vk, pkh_sig):
+             ((nat, authorized_keys), (key_hash, signature)))
             :
               (nat, authorized_keys) => 
               {
@@ -91,7 +91,7 @@ let check_message =
     };
 
 let main = 
-  (((action, store): (parameter, storage))): return => 
+  ((action, store): (parameter, storage)): return => 
     switch(action) {
     | CheckMessage(p) => check_message((p, store))
     };

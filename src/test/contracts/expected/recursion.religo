@@ -1,5 +1,5 @@
 let rec sum = 
-  (((n, acc): (int, int))): int => 
+  ((n, acc): (int, int)): int => 
     if(n
     < 1) {
       acc
@@ -8,7 +8,7 @@ let rec sum =
     };
 
 let rec fibo = 
-  (((n, n_1, n_0): (int, int, int))): int => 
+  ((n, n_1, n_0): (int, int, int)): int => 
     if(n
     < 2) {
       n_1

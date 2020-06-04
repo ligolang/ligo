@@ -12,12 +12,11 @@ let b: int = abc.b;
 
 let c: int = abc.c;
 
-let projection = ((r: foobar)): int => r.foo + r.bar;
+let projection = (r: foobar): int => r.foo + r.bar;
 
-let modify = 
-  ((r: foobar)): foobar => {foo: 256, bar: r.bar };
+let modify = (r: foobar): foobar => {foo: 256, bar: r.bar };
 
-let modify_abc = ((r: abc)): abc => {...r, b: 2048, c: 42};
+let modify_abc = (r: abc): abc => {...r, b: 2048, c: 42};
 
 type big_record = {a: int, b: int, c: int, d: int, e: int };
 
@@ -26,6 +25,4 @@ let br: big_record = {a: 23, b: 23, c: 23, d: 23, e: 23 };
 type double_record = {inner: abc };
 
 let modify_inner = 
-  ((r: double_record)): double_record => 
-    {...r,
-      inner.b: 2048};
+  (r: double_record): double_record => {...r, inner.b: 2048};

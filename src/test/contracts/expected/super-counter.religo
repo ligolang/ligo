@@ -5,7 +5,7 @@ type storage = int;
 type return = (list(operation), storage);
 
 let main = 
-  (((action, store): (parameter, storage))): return => 
+  ((action, store): (parameter, storage)): return => 
     {
       let store = 
         switch(action) {

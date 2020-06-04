@@ -98,7 +98,10 @@ and pp_bytes {value; _} =
   string ("0x" ^ Hex.show (snd value))
 
 and pp_ppar {value; _} =
-  string "(" ^^ nest 1 (pp_pattern value.inside) ^^ string ")"
+  if value.lpar = Region.ghost then
+    nest 1 (pp_pattern value.inside)
+  else
+    string "(" ^^ nest 1 (pp_pattern value.inside) ^^ string ")"
 
 and pp_plist = function
   PListComp cmp -> pp_list_comp cmp
@@ -475,9 +478,10 @@ and pp_fun_args {value; _} =
 
 and pp_fun_type {value; _} =
   let lhs, _, rhs = value in
-  match rhs with 
-  | TFun tf -> string "(" ^^ pp_type_expr lhs ^^ string ", " ^^ pp_fun_args tf 
-  | _ -> group (string "(" ^^ pp_type_expr lhs ^^ string " =>" ^/^ pp_type_expr rhs ^^ string ")")
+  match lhs, rhs with 
+  | _, TFun tf -> string "(" ^^ pp_type_expr lhs ^^ string ", " ^^ pp_fun_args tf 
+  | TVar _ , _ -> group (pp_type_expr lhs ^^ string " =>" ^/^ pp_type_expr rhs)
+  | _ -> group (string "(" ^^ pp_type_expr lhs  ^^ string ")" ^^ string " =>" ^/^ pp_type_expr rhs)
   
   (* group (string "(" ^^ pp_type_expr lhs ^^ string ")" ^^ string " =>" ^/^ pp_type_expr rhs) *)
 
