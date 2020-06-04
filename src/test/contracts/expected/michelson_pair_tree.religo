@@ -6,7 +6,7 @@ type storage = michelson_pair
 type return = (list(operation), storage);
 
 let main = 
-  ((action, store): (unit, storage)): return => 
+  (((action, store): (unit, storage))): return => 
     {
       let foo = (3, (1, 2n));
       (([] : list(operation)), (foo : storage))

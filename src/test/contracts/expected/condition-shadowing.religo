@@ -1,5 +1,5 @@
 let main = 
-  (i: int) => 
+  ((i: int)) => 
     {
       let result = 0;
       if(i

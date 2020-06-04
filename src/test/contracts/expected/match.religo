@@ -5,13 +5,13 @@ type parameter = Add(int) | Sub(int);
 type return = (list(operation), storage);
 
 let main = 
-  ((action, store): (parameter, storage)) => 
+  (((action, store): (parameter, storage))) => 
     {
       let store = 
         store
         + (switch(action) {
-           | Addn => n
-           | Subn => -n
+           | Add(n) => n
+           | Sub(n) => -n
            });
       (([] : list(operation)), store)
     };

@@ -1,3 +1,3 @@
 type p = {x: int };
 
-let o = (p: int): p => {x = p };
+let o = ((p: int)): p => {x: p };

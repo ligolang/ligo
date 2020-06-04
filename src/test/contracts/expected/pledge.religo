@@ -1,16 +1,16 @@
 type storage = address;
 
 type parameter =   Donate(unit)
-| Distribute((unit) => list(operation)));
+| Distribute(((unit => list(operation))));
 
 let donate = 
-  ((p, s): (unit, storage)): (list(operation), storage) => 
+  (((p, s): (unit, storage))): (list(operation), storage) => 
     {
       (([] : list(operation)), s)
     };
 
 let distribute = 
-  ((p, s): (unit) => list(operation), storage))
+  (((p, s): ((unit => list(operation)), storage)))
   :
     (list(operation), storage) => 
     {
@@ -26,7 +26,9 @@ let distribute =
     };
 
 let main = 
-  ((p, s): (parameter, storage)): (list(operation), storage) => 
+  (((p, s): (parameter, storage)))
+  :
+    (list(operation), storage) => 
     {
       switch(p) {
       | Donate => donate(((), s))

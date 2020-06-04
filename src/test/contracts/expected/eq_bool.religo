@@ -1,5 +1,5 @@
 let main = 
-  ((a, b): (bool, bool)) => 
+  (((a, b): (bool, bool))) => 
     if(a
     == b) {
       999

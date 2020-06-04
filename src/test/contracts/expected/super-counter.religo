@@ -5,12 +5,12 @@ type storage = int;
 type return = (list(operation), storage);
 
 let main = 
-  ((action, store): (parameter, storage)): return => 
+  (((action, store): (parameter, storage))): return => 
     {
       let store = 
         switch(action) {
-        | Incrementn => store + n
-        | Decrementn => store - n
+        | Increment(n) => store + n
+        | Decrement(n) => store - n
         };
       ([] : list(operation), store)
     };

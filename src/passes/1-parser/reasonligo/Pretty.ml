@@ -98,7 +98,7 @@ and pp_bytes {value; _} =
   string ("0x" ^ Hex.show (snd value))
 
 and pp_ppar {value; _} =
-  nest 1 (pp_pattern value.inside)
+  string "(" ^^ nest 1 (pp_pattern value.inside) ^^ string ")"
 
 and pp_plist = function
   PListComp cmp -> pp_list_comp cmp
@@ -286,7 +286,7 @@ and pp_record_expr ne_inj = pp_ne_injection pp_field_assign ne_inj
 
 and pp_field_assign {value; _} =
   let {field_name; field_expr; _} = value in
-  prefix 2 1 (pp_ident field_name ^^ string " =") (pp_expr field_expr)
+  prefix 2 1 (pp_ident field_name ^^ string ":") (pp_expr field_expr)
 
 and pp_ne_injection :
   'a.('a -> document) -> 'a ne_injection reg -> document =
@@ -313,15 +313,15 @@ and pp_nseq : 'a.('a -> document) -> 'a Utils.nseq -> document =
     separate_map (break 1) printer (head::tail)
 
 and pp_projection {value; _} =
-  let {struct_name; field_path; _} = value in
+  let {struct_name; field_path; _ } = value in
   let fields = Utils.nsepseq_to_list field_path
-  and sep    = string "." ^^ break 0 in
+  and sep    = break 0 in
   let fields = separate_map sep pp_selection fields in
-  group (pp_ident struct_name ^^ break 0 ^^ string "[" ^^ fields ^^ string "]")
+  group (pp_ident struct_name ^^ break 0 ^^ fields)
 
 and pp_selection = function
-  FieldName v   -> string v.value
-| Component cmp -> cmp.value |> snd |> Z.to_string |> string
+  FieldName v   -> string "." ^^ string v.value
+| Component cmp -> string "[" ^^ (cmp.value |> snd |> Z.to_string |> string) ^^ string "]"
 
 and pp_update {value; _} =
   let {record; updates; _} = value in
@@ -343,7 +343,10 @@ and pp_path = function
 
 and pp_call_expr {value; _} =
   let lambda, arguments = value in
-  let arguments = string "(" ^^ pp_nseq pp_expr arguments ^^ string ")" in
+  let arguments = Utils.nseq_to_list arguments in
+  let arguments = string "(" ^^ group (separate_map (string "," ^^ break 0 ^^ string " ") pp_expr arguments) ^^ string ")" in
+
+  (* let arguments = string "(" ^^ pp_nseq pp_expr arguments ^^ string ")" in *)
   group (break 0 ^^ pp_expr lambda ^^ nest 2 arguments)
 
 and pp_tuple_expr {value; _} =
@@ -412,7 +415,8 @@ and pp_cartesian {value; _} =
   | [e] -> group (break 1 ^^ pp_type_expr e)
   | e::items ->
       group (break 1 ^^ pp_type_expr e ^^ string ",") ^^ app items
-  in string "(" ^^ pp_type_expr head ^^ string "," ^^ app (List.map snd tail) ^^ string ")"
+  in 
+  string "(" ^^ pp_type_expr head ^^ (if tail <> [] then string "," else empty) ^^ app (List.map snd tail) ^^ string ")"
 
 and pp_variants {value; _} =
   let head, tail = value in
@@ -473,7 +477,7 @@ and pp_fun_type {value; _} =
   let lhs, _, rhs = value in
   match rhs with 
   | TFun tf -> string "(" ^^ pp_type_expr lhs ^^ string ", " ^^ pp_fun_args tf 
-  | _ -> group (pp_type_expr lhs ^^ string ")" ^^ string " =>" ^/^ pp_type_expr rhs)
+  | _ -> group (string "(" ^^ pp_type_expr lhs ^^ string " =>" ^/^ pp_type_expr rhs ^^ string ")")
   
   (* group (string "(" ^^ pp_type_expr lhs ^^ string ")" ^^ string " =>" ^/^ pp_type_expr rhs) *)
 

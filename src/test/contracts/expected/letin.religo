@@ -1,24 +1,24 @@
 type storage = (int, int);
 
 let main = 
-  (n: (int, storage)): (list(operation), storage) => 
+  ((n: (int, storage))): (list(operation), storage) => 
     {
       let x: (int, int) = 
         {
           let x: int = 7;
-          (x + n[0], n[1.0] + n[1.1])
+          (x + n[0], n[1][0] + n[1][1])
         };
       ([] : list(operation), x)
     };
 
-let f0 = (a: string) => true;
+let f0 = ((a: string)) => true;
 
-let f1 = (a: string) => true;
+let f1 = ((a: string)) => true;
 
-let f2 = (a: string) => true;
+let f2 = ((a: string)) => true;
 
 let letin_nesting = 
-  (_: unit) => 
+  ((_: unit)) => 
     {
       let s = "test";
       let p0 = f0(s);
@@ -31,7 +31,7 @@ let letin_nesting =
     };
 
 let letin_nesting2 = 
-  (x: int) => 
+  ((x: int)) => 
     {
       let y = 2;
       let z = 3;

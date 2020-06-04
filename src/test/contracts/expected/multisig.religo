@@ -13,7 +13,7 @@ type storage = {
   auth: authorized_keys
 };
 
-type message = unit) => list(operation);
+type message = (unit => list(operation));
 
 type dummy = (key_hash, signature);
 
@@ -30,28 +30,28 @@ type return = (list(operation), storage);
 type parameter = CheckMessage(check_message_pt);
 
 let check_message = 
-  ((param, s): (check_message_pt, storage)): return => 
+  (((param, s): (check_message_pt, storage))): return => 
     {
-      let message: message = param[message];
+      let message: message = param.message;
       let s = 
-        if(param[counter]
-        != s[counter]) {
+        if(param.counter
+        != s.counter) {
           (failwith("Counters does not match") : storage)
         } else {
         
           let packed_payload: bytes = 
             
-            Bytes.pack((message, param[counter], s[id],
+            Bytes.pack((message, param.counter, s.id,
               chain_id));
           let valid: nat = 0n;
-          let keys: authorized_keys = s[auth];
+          let keys: authorized_keys = s.auth;
           let aux = 
-            ((vk, pkh_sig):
-             ((nat, authorized_keys), (key_hash, signature)))
+            (((vk, pkh_sig):
+             ((nat, authorized_keys), (key_hash, signature))))
             :
               (nat, authorized_keys) => 
               {
-                let (valid, keys) = vk;
+                let ((valid, keys)) = vk;
                 switch(keys) {
                 | [] => vk
                 | [key, ...keys] =>
@@ -60,9 +60,9 @@ let check_message =
                     
                       let valid = 
                         if(
-                        Crypto.check(key
-                          pkh_sig[1]
-                          packed_payload)) {
+                        Crypto.check(key,
+                           pkh_sig[1],
+                           packed_payload)) {
                           valid + 1n
                         } else {
                         
@@ -75,23 +75,23 @@ let check_message =
                     }
                 }
               };
-          let (valid, keys) = 
-            List.fold(aux param[signatures] (valid, keys));
+          let ((valid, keys)) = 
+            List.fold(aux, param.signatures, (valid, keys));
           if(valid
-          < s[threshold]) {
+          < s.threshold) {
           
             (
               failwith("Not enough signatures passed the check")
               : storage)
           } else {
-            {...s, counter: s[counter] + 1n}
+            {...s, counter: s.counter + 1n}
           }
         };
       (message(unit), s)
     };
 
 let main = 
-  ((action, store): (parameter, storage)): return => 
+  (((action, store): (parameter, storage))): return => 
     switch(action) {
-    | CheckMessagep => check_message((p, store))
+    | CheckMessage(p) => check_message((p, store))
     };
