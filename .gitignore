@@ -33,3 +33,4 @@ nix/result
 .idea
 *.iml
 stale_outputs_checked
+*.cabal

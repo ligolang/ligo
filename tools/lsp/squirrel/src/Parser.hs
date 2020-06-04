@@ -76,7 +76,7 @@ import qualified Data.Text as Text
 import ParseTree
 import Range
 import Pretty
-import HasComments
+import Comment
 import Error
 
 import Debug.Trace

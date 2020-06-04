@@ -16,10 +16,10 @@ import Union
 
 ranged
   :: ( Functor f
-     , Member f fs
+     , Member  f fs
      )
   => Parser (f (Tree fs ASTInfo))
-  -> Parser (Tree fs ASTInfo)
+  -> Parser    (Tree fs ASTInfo)
 ranged p = do
   r <- getInfo
   a <- p
@@ -46,8 +46,8 @@ declaration
   =   do ranged do pure ValueDecl <*> binding
   <|> do ranged do pure ValueDecl <*> vardecl
   <|> do ranged do pure ValueDecl <*> constdecl
+  <|> do ranged do pure Action    <*> attributes
   <|> do typedecl
-  <|> do ranged do pure Action <*> attributes
   <|> do include
 
 include :: Parser (Pascal ASTInfo)

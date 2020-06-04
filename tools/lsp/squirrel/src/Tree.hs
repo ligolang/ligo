@@ -29,7 +29,7 @@ import Data.Foldable
 
 import Union
 import Lattice
-import HasComments
+import Comment
 import Pretty
 import Error
 

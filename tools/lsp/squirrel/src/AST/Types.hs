@@ -37,15 +37,15 @@ data Declaration it
   deriving stock (Functor, Foldable, Traversable)
 
 data Binding it
-  = Irrefutable  it it -- ^ (Pattern) (Expr)
-  | Function     Bool it [it] it it -- ^ (Name) [VarDecl] (Type) (Expr)
-  | Var          it it it -- ^ (Name) (Type) (Expr)
-  | Const        it it it -- ^ (Name) (Type) (Expr)
+  = Irrefutable  it it               -- ^ (Pattern) (Expr)
+  | Function     Bool it [it] it it  -- ^ (Name) [VarDecl] (Type) (Expr)
+  | Var          it it it            -- ^ (Name) (Type) (Expr)
+  | Const        it it it            -- ^ (Name) (Type) (Expr)
   deriving (Show) via PP (Binding it)
   deriving stock (Functor, Foldable, Traversable)
 
 data VarDecl it
-  = Decl         it it it -- ^ (Mutable) (Name) (Type)
+  = Decl         it it it  -- ^ (Mutable) (Name) (Type)
   deriving (Show) via PP (VarDecl it)
   deriving stock (Functor, Foldable, Traversable)
 
@@ -57,22 +57,22 @@ data Mutable it
 
 
 data Type it
-  = TArrow    it it -- ^ (Type) (Type)
-  | TRecord   [it] -- ^ [TField]
-  | TVar      it -- ^ (Name)
-  | TSum      [it] -- ^ [Variant]
-  | TProduct  [it] -- ^ [Type]
-  | TApply    it [it] -- (Name) [Type]
+  = TArrow    it it    -- ^ (Type) (Type)
+  | TRecord   [it]     -- ^ [TField]
+  | TVar      it       -- ^ (Name)
+  | TSum      [it]     -- ^ [Variant]
+  | TProduct  [it]     -- ^ [Type]
+  | TApply    it [it]  -- (Name) [Type]
   deriving (Show) via PP (Type it)
   deriving stock (Functor, Foldable, Traversable)
 
 data Variant it
-  = Variant it (Maybe it) -- (Name) (Maybe (Type))
+  = Variant it (Maybe it)  -- (Name) (Maybe (Type))
   deriving (Show) via PP (Variant it)
   deriving stock (Functor, Foldable, Traversable)
 
 data TField it
-  = TField it it -- (Name) (Type)
+  = TField it it  -- (Name) (Type)
   deriving (Show) via PP (TField it)
   deriving stock (Functor, Foldable, Traversable)
 
@@ -97,12 +97,12 @@ data Expr it
   | MapRemove it it -- (Expr) (QualifiedName)
   | SetRemove it it -- (Expr) (QualifiedName)
   | Indexing  it it -- (QualifiedName) (Expr)
-  | Case      it [it] -- (Expr) [Alt]
+  | Case      it [it]                  -- (Expr) [Alt]
   | Skip
-  | ForLoop   it it it it -- (Name) (Expr) (Expr) (Expr)
-  | WhileLoop it it -- (Expr) (Expr)
-  | Seq       [it] -- [Declaration]
-  | Lambda    [it] it it -- [VarDecl] (Type) (Expr)
+  | ForLoop   it it it it              -- (Name) (Expr) (Expr) (Expr)
+  | WhileLoop it it                    -- (Expr) (Expr)
+  | Seq       [it]                     -- [Declaration]
+  | Lambda    [it] it it               -- [VarDecl] (Type) (Expr)
   | ForBox    it (Maybe it) Text it it -- (Name) (Maybe (Name)) Text (Expr) (Expr)
   | MapPatch  it [it] -- (QualifiedName) [MapBinding]
   | SetPatch  it [it] -- (QualifiedName) [Expr]

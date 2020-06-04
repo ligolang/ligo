@@ -2,7 +2,7 @@
 {- | Comments and utilities.
 -}
 
-module HasComments
+module Comment
   ( HasComments(..)
   , c
   )

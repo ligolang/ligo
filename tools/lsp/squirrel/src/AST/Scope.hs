@@ -29,7 +29,7 @@ import Parser
 import Range
 import AST.Types
 import Tree
-import HasComments
+import Comment
 import Pretty
 
 -- | Scope-holding monad.
