@@ -25,7 +25,7 @@ and pp_let_decl {value; _} =
     | Some _ -> "let rec " in
   let binding = pp_let_binding binding
   and attr    = pp_attributes attr
-  in string let_str ^^ nest 4 binding ^^ attr
+  in string let_str ^^ binding ^^ attr
 
 and pp_attributes = function
     [] -> empty
@@ -44,12 +44,11 @@ and pp_let_binding (binding : let_binding) =
   let patterns = Utils.nseq_to_list binders in
   let patterns = group (separate_map (break 1) pp_pattern patterns) in
   let lhs =
+    patterns ^^
     match lhs_type with
-      None -> patterns
-    | Some (_,e) ->
-        patterns ^^ group (break 1 ^^ string ": " ^^ pp_type_expr e)
-  and rhs = group (break 1 ^^ string "= " ^^ nest 2 (pp_expr let_rhs))
-  in lhs ^^ rhs
+            None -> empty
+    | Some (_,e) -> group (break 1 ^^ string ": " ^^ pp_type_expr e)
+  in prefix 2 1 (lhs ^^ string " =") (pp_expr let_rhs)
 
 and pp_pattern = function
   PConstr p -> pp_pconstr p
@@ -155,14 +154,13 @@ and pp_expr = function
 and pp_case_expr {value; _} =
   let {expr; cases; _} = value in
   group (string "match " ^^ nest 6 (pp_expr expr) ^/^ string "with")
-  ^^ hardline ^^ nest 2 (pp_cases cases)
+  ^^ hardline ^^ pp_cases cases
 
 and pp_cases {value; _} =
   let head, tail = value in
-  let head = pp_clause head in
-  let head = if tail = [] then head
-             else string "    " ^^ head in
-  let rest = List.map snd tail in
+  let head       = pp_clause head in
+  let head       = if tail = [] then head else blank 2 ^^ head in
+  let rest       = List.map snd tail in
   let app clause = break 1 ^^ string "| " ^^ pp_clause clause
   in  head ^^ concat_map app rest
 
@@ -172,14 +170,11 @@ and pp_clause {value; _} =
 
 and pp_cond_expr {value; _} =
   let {test; ifso; kwd_else; ifnot; _} = value in
-  let if_then =
-    string "if " ^^ group (nest 3 (pp_expr test)) ^/^ string "then"
-    ^^ group (nest 2 (break 1 ^^ pp_expr ifso)) in
-  if kwd_else#is_ghost then
-    if_then
-  else
-    if_then
-    ^/^ string "else" ^^ group (nest 2 (break 1 ^^ pp_expr ifnot))
+  let test = string "if " ^^ group (nest 3 (pp_expr test))
+  and ifso = string "then" ^^ group (nest 2 (break 1 ^^ pp_expr ifso))
+  and ifnot = string "else" ^^ group (nest 2 (break 1 ^^ pp_expr ifnot))
+  in if kwd_else#is_ghost then test ^/^ ifso
+  else test ^/^ ifso ^/^ ifnot
 
 and pp_annot_expr {value; _} =
   let expr, _, type_expr = value.inside in
@@ -356,7 +351,7 @@ and pp_let_in {value; _} =
     | Some _ -> "let rec " in
   let binding = pp_let_binding binding
   and attr    = pp_attributes attributes
-  in string let_str ^^ nest 4 binding ^^ attr
+  in string let_str ^^ binding ^^ attr
      ^^ hardline ^^ group (string "in " ^^ nest 3 (pp_expr body))
 
 and pp_fun {value; _} =

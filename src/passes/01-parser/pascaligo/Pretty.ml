@@ -180,11 +180,11 @@ and pp_var_decl {value; _} =
   let {name; var_type; init; _} = value in
   let start  = string ("var " ^ name.value ^ " :") in
   let t_expr = pp_type_expr var_type
-  in prefix 2 1 start t_expr
-     ^/^ prefix 2 1 (string ":=") (pp_expr init)
+  in prefix 2 1 start
+                (t_expr ^/^ prefix 2 1 (string ":=") (pp_expr init))
 
 and pp_instruction = function
-  Cond        i -> pp_conditional i
+  Cond        i -> group (pp_conditional i)
 | CaseInstr   i -> pp_case pp_if_clause i
 | Assign      i -> pp_assignment i
 | Loop        i -> pp_loop i
@@ -212,22 +212,28 @@ and pp_cond_expr {value; _} = string "TODO:pp_cond_expr"
 
 and pp_conditional {value; _} =
   let {test; ifso; ifnot; _} : conditional = value in
-  let if_then = string "if " ^^ group (nest 3 (pp_expr test)) in
-  let ifso = prefix 2 1 (string "then") (pp_if_clause ifso) in
-  let ifnot =
-    string "else" ^^ group (nest 2 (blank 1 ^^ pp_if_clause ifnot))
-  in group (if_then ^/^ ifso ^/^ ifnot)
+  let test  = string "if "  ^^ group (nest 3 (pp_expr test))
+  and ifso  = string "then" ^^ group (nest 2 (break 1 ^^ pp_if_clause ifso))
+  and ifnot =
+    if is_clause_block ifnot then
+      string "else {"
+      ^^ group (nest 2 (hardline ^^ pp_if_clause ifnot))
+      ^^ hardline ^^ string "}"
+    else
+      string "else" ^^ group (nest 2 (break 1 ^^ pp_if_clause ifnot))
+  in test ^/^ ifso ^/^ ifnot
 
 and pp_if_clause = function
-  ClauseInstr i -> nest 1 (pp_instruction i)
-| ClauseBlock b ->
-    string "{" ^^ hardline ^^ pp_clause_block b ^^ hardline ^^ string "}"
+  ClauseInstr i -> pp_instruction i
+| ClauseBlock b -> pp_clause_block b
+
+and is_clause_block = function
+  ClauseInstr _ -> false
+| ClauseBlock _ -> true
 
 and pp_clause_block = function
   LongBlock b  -> pp_block b
 | ShortBlock {value; _} -> Utils.(pp_statements <@ fst) value.inside
-
-and pp_short_block {value; _} = string "TODO:pp_short_block"
 
 and pp_set_membership {value; _} = string "TODO:pp_set_membership"
 
@@ -244,12 +250,11 @@ and pp_cases :
     ('a case_clause reg, vbar) Utils.nsepseq Region.reg -> document =
   fun printer {value; _} ->
     let head, tail = value in
-    let head = pp_case_clause printer head in
-    let head = if tail = [] then head else blank 4 ^^ head in
-    let rest = List.map snd tail in
-    let app clause =
-      break 1 ^^ string "| " ^^ pp_case_clause printer clause
-    in head ^^ concat_map app rest
+    let head       = pp_case_clause printer head in
+    let head       = if tail = [] then head else blank 2 ^^ head in
+    let rest       = List.map snd tail in
+    let app clause = break 1 ^^ string "| " ^^ pp_case_clause printer clause
+    in  head ^^ concat_map app rest
 
 and pp_case_clause :
   'a.('a -> document) -> 'a case_clause Region.reg -> document =
@@ -268,7 +273,7 @@ and pp_lhs : lhs -> document = function
 
 and pp_loop = function
   While l -> pp_while_loop l
-| For f -> pp_for_loop f
+| For f   -> pp_for_loop f
 
 and pp_while_loop {value; _} = string "TODO:pp_while_loop"
 
@@ -323,7 +328,7 @@ and pp_map_expr = function
 | BigMapInj inj   -> pp_injection pp_binding inj
 
 and pp_map_lookup {value; _} =
-  pp_path value.path ^^ pp_brackets pp_expr value.index
+  pp_path value.path ^^ blank 1 ^^ pp_brackets pp_expr value.index
 
 and pp_path = function
   Name v -> pp_ident v
