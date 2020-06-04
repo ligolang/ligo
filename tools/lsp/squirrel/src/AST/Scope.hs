@@ -45,8 +45,8 @@ newtype Env = Env
   deriving newtype (Semigroup, Monoid)
 
 data ScopedDecl = ScopedDecl
-  { _sdName   :: Maybe (Pascal ())
-  , _sdOrigin :: Maybe Range
+  { _sdName   :: (Pascal ())
+  , _sdOrigin :: Range
   , _sdBody   :: Maybe Range
   , _sdType   :: Maybe (Either (Pascal ()) Kind)
   }
@@ -73,9 +73,9 @@ define = define_ method
 defType :: HasRange a => Pascal a -> Kind -> Pascal a -> ScopeM ()
 defType name kind body = do
   define $ ScopedDecl
-    (Just (void name))
-    (getRange <$> infoOf name)
-    (getRange <$> infoOf body)
+    (void name)
+    (getRange $ infoOf name)
+    (Just $ getRange $ infoOf body)
     (Just (Right kind))
 
 def
@@ -86,9 +86,9 @@ def
   -> ScopeM ()
 def name ty body = do
   define $ ScopedDecl
-    (Just (void name))
-    (getRange <$> infoOf name)
-    (getRange <$> do infoOf =<< body)
+    (void name)
+    (getRange $ infoOf name)
+    ((getRange . infoOf) <$> body)
     ((Left . void) <$> ty)
 
 instance UpdateOver ScopeM Contract (Pascal a)
@@ -337,6 +337,6 @@ evalScopeM action = evalState action [Env []]
 testUpdate :: Pascal ASTInfo -> ScopeM (Pascal Scope)
 testUpdate = updateTree \_ -> do
   Env topmost <- gets head
-  let names = catMaybes $ _sdName <$> topmost
+  let names = _sdName <$> topmost
   let res = ppToText $ fsep $ map pp names
   return $ Scope res

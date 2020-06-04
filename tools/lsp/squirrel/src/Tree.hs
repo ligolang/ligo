@@ -121,11 +121,8 @@ mk :: (Functor f, Member f fs) => info -> f (Tree fs info) -> Tree fs info
 mk i fx = Tree $ Fix $ Compose $ Right $ Compose (i, inj $ fmap unTree fx)
 
 -- | Get info from the tree.
-infoOf :: Tree fs info -> Maybe info
-infoOf (Tree (Fix (Compose it))) =
-  either
-    (const Nothing)
-    (Just . fst . getCompose) it
+infoOf :: Tree fs info -> info
+infoOf = either eInfo (fst . getCompose) . getCompose . unFix . unTree
 
 instance Stubbed (Tree fs info) info where
   stub = Tree . Fix . Compose . Left
