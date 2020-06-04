@@ -368,19 +368,23 @@ and eval : Ast_typed.expression -> env -> value result
 
 let dummy : Ast_typed.program -> string result =
   fun prg ->
-    let%bind (res,_) = bind_fold_list
-      (fun (pp,top_env) el ->
-        let (Ast_typed.Declaration_constant {binder; expr ; inline=_ ; _}) = Location.unwrap el in
-        let%bind v =
-        (*TODO This TRY-CATCH is here until we properly implement effects*)
-        try
-          eval expr top_env
-        with Temporary_hack s -> ok @@ V_Failure s
-        (*TODO This TRY-CATCH is here until we properly implement effects*)
-        in
-        let pp' = pp^"\n val "^(Var.to_name binder)^" = "^(Ligo_interpreter.PP.pp_value v) in
-        let top_env' = Env.extend top_env (binder, v) in
-        ok @@ (pp',top_env')
-      )
+  let aux  (pp,top_env) el =
+    match Location.unwrap el with
+    | Ast_typed.Declaration_constant {binder; expr ; inline=_ ; _} ->
+       let%bind v =
+         (*TODO This TRY-CATCH is here until we properly implement effects*)
+         try
+           eval expr top_env
+         with Temporary_hack s ->
+           ok (V_Failure s)
+              (*TODO This TRY-CATCH is here until we properly implement effects*)
+       in
+    let pp' = pp^"\n val "^(Var.to_name binder)^" = "^(Ligo_interpreter.PP.pp_value v) in
+    let top_env' = Env.extend top_env (binder, v) in
+    ok @@ (pp',top_env')
+    | Ast_typed.Declaration_type _ ->
+       ok (pp , top_env)
+  in
+  let%bind (res,_) = bind_fold_list aux
       ("",Env.empty_env) prg in
     ok @@ res

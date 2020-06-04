@@ -43,21 +43,21 @@ let storage st interval execute =
                ("execute", execute)]
 
 let early_call () =
-  let%bind program,_ = get_program () in
+  let%bind (program , state) = get_program () in
   let%bind predecessor_timestamp = mk_time "2000-01-01T00:10:10Z" in
   let%bind lock_time = mk_time "2000-01-01T10:10:10Z" in
   let init_storage = storage lock_time 86400 empty_message in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.make_options ~predecessor_timestamp () in
   let exp_failwith = "You have to wait before you can execute this contract again." in
-  expect_string_failwith ~options program "main"
+  expect_string_failwith ~options (program, state) "main"
     (e_pair (e_unit ())  init_storage) exp_failwith
 
 let fake_uncompiled_empty_message = e_string "[lambda of type: (lambda unit (list operation)) ]"
 
 (* Test that when we use the contract the next use time advances by correct interval *)
 let interval_advance () =
-  let%bind program,_ = get_program () in
+  let%bind (program , state) = get_program () in
   let%bind predecessor_timestamp = mk_time "2000-01-01T10:10:10Z" in
   let%bind lock_time = mk_time "2000-01-01T00:10:10Z" in
   let init_storage = storage lock_time 86400 empty_message in
@@ -66,7 +66,7 @@ let interval_advance () =
   let new_storage_fake = storage new_timestamp 86400 fake_uncompiled_empty_message in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.make_options ~predecessor_timestamp () in
-  expect_eq ~options program "main"
+  expect_eq ~options (program, state) "main"
   (e_pair (e_unit ()) init_storage) (e_pair empty_op_list new_storage_fake)
 
 let main = test_suite "Time Lock Repeating" [

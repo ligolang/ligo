@@ -24,7 +24,7 @@ describe('Share', () => {
     await responseCallback;
 
     const actualShareLink = await page.evaluate(getInputValue, 'share-link');
-    const expectedShareLink = `${API_HOST}/p/WxKPBq9-mkZ_kq4cMHXfCQ`;
+    const expectedShareLink = `${API_HOST}/p/2GnQR0cUYeO7feAw71SJYQ`
 
     expect(actualShareLink).toEqual(expectedShareLink);
     done();

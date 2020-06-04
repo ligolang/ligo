@@ -27,11 +27,11 @@ let mk_state ~offsets ~mode ~buffer =
     val pad_node    = ""
     method pad_node = pad_node
 
-    (** The method [pad] updates the current padding, which is
-        comprised of two components: the padding to reach the new node
-        (space before reaching a subtree, then a vertical bar for it)
-        and the padding for the new node itself (Is it the last child
-        of its parent?).
+    (* The method [pad] updates the current padding, which is
+       comprised of two components: the padding to reach the new node
+       (space before reaching a subtree, then a vertical bar for it)
+       and the padding for the new node itself (Is it the last child
+       of its parent?).
      *)
     method pad arity rank =
       {< pad_path =
@@ -44,7 +44,7 @@ let mk_state ~offsets ~mode ~buffer =
 let compact state (region: Region.t) =
   region#compact ~offsets:state#offsets state#mode
 
-(** {1 Printing the tokens with their source regions} *)
+(* Printing the tokens with their source regions *)
 
 let print_nsepseq :
   state -> string -> (state -> 'a -> unit) ->
@@ -117,7 +117,7 @@ let rec print_tokens state ast =
   print_token state eof "EOF"
 
 and print_attr_decl state =
-  print_ne_injection state "attributes" print_string
+  print_ne_injection state print_string
 
 and print_decl state = function
   TypeDecl  decl -> print_type_decl  state decl
@@ -170,8 +170,8 @@ and print_variant state ({value; _}: variant reg) =
 and print_sum_type state {value; _} =
   print_nsepseq state "|" print_variant value
 
-and print_record_type state record_type =
-  print_ne_injection state "record" print_field_decl record_type
+and print_record_type state =
+  print_ne_injection state print_field_decl
 
 and print_type_app state {value; _} =
   let type_name, type_tuple = value in
@@ -256,22 +256,19 @@ and print_param_var state {value; _} =
   print_type_expr state param_type
 
 and print_block state block =
-  let {opening; statements; terminator; closing} = block.value in
-  print_block_opening state opening;
-  print_statements    state statements;
-  print_terminator    state terminator;
-  print_block_closing state closing
-
-and print_block_opening state = function
-  Block (kwd_block, lbrace) ->
-    print_token state kwd_block "block";
-    print_token state lbrace    "{"
-| Begin kwd_begin ->
-    print_token state kwd_begin "begin"
-
-and print_block_closing state = function
-  Block rbrace -> print_token state rbrace  "}"
-| End kwd_end  -> print_token state kwd_end "end"
+  let {enclosing; statements; terminator} = block.value in
+  match enclosing with
+    Block (kwd_block, lbrace, rbrace) ->
+      print_token      state kwd_block "block";
+      print_token      state lbrace    "{";
+      print_statements state statements;
+      print_terminator state terminator;
+      print_token state rbrace  "}"
+  | BeginEnd (kwd_begin, kwd_end) ->
+      print_token      state kwd_begin "begin";
+      print_statements state statements;
+      print_terminator state terminator;
+      print_token      state kwd_end "end"
 
 and print_data_decl state = function
   LocalConst decl -> print_const_decl state decl
@@ -344,14 +341,20 @@ and print_clause_block state = function
     print_token      state rbrace "}"
 
 and print_case_instr state (node : if_clause case) =
-  let {kwd_case; expr; opening;
-       lead_vbar; cases; closing} = node in
+  let {kwd_case; expr; kwd_of; enclosing; lead_vbar; cases} = node in
   print_token       state kwd_case "case";
   print_expr        state expr;
-  print_opening     state "of" opening;
-  print_token_opt   state lead_vbar "|";
-  print_cases_instr state cases;
-  print_closing     state closing
+  print_token       state kwd_of "of";
+  match enclosing with
+    Brackets (lbracket, rbracket) ->
+      print_token       state lbracket "[";
+      print_token_opt   state lead_vbar "|";
+      print_cases_instr state cases;
+      print_token       state rbracket "]"
+  | End kwd_end ->
+      print_token_opt   state lead_vbar "|";
+      print_cases_instr state cases;
+      print_token       state kwd_end "end"
 
 and print_token_opt state = function
          None -> fun _ -> ()
@@ -466,14 +469,20 @@ and print_annot_expr state (expr , type_expr) =
   print_type_expr state type_expr
 
 and print_case_expr state (node : expr case) =
-  let {kwd_case; expr; opening;
-       lead_vbar; cases; closing} = node in
+  let {kwd_case; expr; kwd_of; enclosing; lead_vbar; cases} = node in
   print_token      state kwd_case "case";
   print_expr       state expr;
-  print_opening    state "of" opening;
-  print_token_opt  state lead_vbar "|";
-  print_cases_expr state cases;
-  print_closing    state closing
+  print_token       state kwd_of "of";
+  match enclosing with
+    Brackets (lbracket, rbracket) ->
+      print_token      state lbracket "[";
+      print_token_opt  state lead_vbar "|";
+      print_cases_expr state cases;
+      print_token      state rbracket "]"
+  | End kwd_end ->
+      print_token_opt  state lead_vbar "|";
+      print_cases_expr state cases;
+      print_token      state kwd_end "end"
 
 and print_cases_expr state {value; _} =
   print_nsepseq state "|" print_case_clause_expr value
@@ -486,11 +495,11 @@ and print_case_clause_expr state {value; _} =
 
 and print_map_expr state = function
   MapLookUp {value; _} -> print_map_lookup state value
-| MapInj inj           -> print_injection  state "map" print_binding inj
-| BigMapInj inj        -> print_injection  state "big_map" print_binding inj
+| MapInj inj           -> print_injection  state print_binding inj
+| BigMapInj inj        -> print_injection  state print_binding inj
 
 and print_set_expr state = function
-  SetInj inj -> print_injection state "set" print_expr inj
+  SetInj inj -> print_injection state print_expr inj
 | SetMem mem -> print_set_membership state mem
 
 and print_set_membership state {value; _} =
@@ -600,7 +609,7 @@ and print_list_expr state = function
     print_expr  state arg1;
     print_token state op "#";
     print_expr  state arg2
-| EListComp e -> print_injection state "list" print_expr e
+| EListComp e -> print_injection state print_expr e
 | ENil e -> print_nil state e
 
 and print_constr_expr state = function
@@ -608,8 +617,8 @@ and print_constr_expr state = function
 | NoneExpr e  -> print_none_expr  state e
 | ConstrApp e -> print_constr_app state e
 
-and print_record_expr state e =
-  print_ne_injection state "record" print_field_assign e
+and print_record_expr state =
+  print_ne_injection state print_field_assign
 
 and print_field_assign state {value; _} =
   let {field_name; equal; field_expr} = value in
@@ -627,8 +636,7 @@ and print_update_expr state {value; _} =
   let {record; kwd_with; updates} = value in
   print_path state record;
   print_token state kwd_with "with";
-  print_ne_injection state "updates field" print_field_path_assign updates
-
+  print_ne_injection state print_field_path_assign updates
 
 and print_projection state {value; _} =
   let {struct_name; selector; field_path} = value in
@@ -648,21 +656,21 @@ and print_record_patch state node =
   print_token        state kwd_patch "patch";
   print_path         state path;
   print_token        state kwd_with "with";
-  print_ne_injection state "record" print_field_assign record_inj
+  print_ne_injection state print_field_assign record_inj
 
 and print_set_patch state node =
   let {kwd_patch; path; kwd_with; set_inj} = node in
   print_token        state kwd_patch "patch";
   print_path         state path;
   print_token        state kwd_with "with";
-  print_ne_injection state "set" print_expr set_inj
+  print_ne_injection state print_expr set_inj
 
 and print_map_patch state node =
   let {kwd_patch; path; kwd_with; map_inj} = node in
   print_token        state kwd_patch "patch";
   print_path         state path;
   print_token        state kwd_with "with";
-  print_ne_injection state "map" print_binding map_inj
+  print_ne_injection state print_binding map_inj
 
 and print_map_remove state node =
   let {kwd_remove; key; kwd_from; kwd_map; map} = node in
@@ -681,35 +689,48 @@ and print_set_remove state node =
   print_path  state set
 
 and print_injection :
-  'a.state -> string -> (state -> 'a -> unit) ->
-  'a injection reg -> unit =
-  fun state kwd print {value; _} ->
-    let {opening; elements; terminator; closing} = value in
-    print_opening    state kwd opening;
-    print_sepseq     state ";" print elements;
-    print_terminator state terminator;
-    print_closing    state closing
+  'a.state -> (state -> 'a -> unit) -> 'a injection reg -> unit =
+  fun state print {value; _} ->
+    let {kind; enclosing; elements; terminator} = value in
+    print_injection_kwd state kind;
+    match enclosing with
+      Brackets (lbracket, rbracket) ->
+        print_token      state lbracket "[";
+        print_sepseq     state ";" print elements;
+        print_terminator state terminator;
+        print_token      state rbracket "]"
+    | End kwd_end ->
+        print_sepseq     state ";" print elements;
+        print_terminator state terminator;
+        print_token      state kwd_end "end"
+
+and print_injection_kwd state = function
+  InjSet    kwd_set     -> print_token state kwd_set "set"
+| InjMap    kwd_map     -> print_token state kwd_map "map"
+| InjBigMap kwd_big_map -> print_token state kwd_big_map "big_map"
+| InjList   kwd_list    -> print_token state kwd_list "list"
 
 and print_ne_injection :
-  'a.state -> string -> (state -> 'a -> unit) ->
-  'a ne_injection reg -> unit =
-  fun state kwd print {value; _} ->
-    let {opening; ne_elements; terminator; closing} = value in
-    print_opening    state kwd opening;
-    print_nsepseq    state ";" print ne_elements;
-    print_terminator state terminator;
-    print_closing    state closing
+  'a.state -> (state -> 'a -> unit) -> 'a ne_injection reg -> unit =
+  fun state print {value; _} ->
+    let {kind; enclosing; ne_elements; terminator} = value in
+    print_ne_injection_kwd state kind;
+    match enclosing with
+      Brackets (lbracket, rbracket) ->
+        print_token      state lbracket "[";
+        print_nsepseq     state ";" print ne_elements;
+        print_terminator state terminator;
+        print_token      state rbracket "]"
+    | End kwd_end ->
+        print_nsepseq     state ";" print ne_elements;
+        print_terminator state terminator;
+        print_token      state kwd_end "end"
 
-and print_opening state lexeme = function
-  Kwd kwd ->
-    print_token state kwd lexeme
-| KwdBracket (kwd, lbracket) ->
-    print_token state kwd lexeme;
-    print_token state lbracket "["
-
-and print_closing state = function
-  RBracket rbracket -> print_token state rbracket "]"
-| End kwd_end       -> print_token state kwd_end "end"
+and print_ne_injection_kwd state = function
+  NEInjAttr   kwd_attributes -> print_token state kwd_attributes "attributes"
+| NEInjSet    kwd_set        -> print_token state kwd_set "set"
+| NEInjMap    kwd_map        -> print_token state kwd_map "map"
+| NEInjRecord kwd_record     -> print_token state kwd_record "record"
 
 and print_binding state {value; _} =
   let {source; arrow; image} = value in
@@ -787,7 +808,7 @@ and print_patterns state {value; _} =
 
 and print_list_pattern state = function
   PListComp comp ->
-   print_injection state "list" print_pattern comp
+   print_injection state print_pattern comp
 | PNil kwd_nil ->
     print_token state kwd_nil "nil"
 | PParCons cons ->
@@ -831,7 +852,7 @@ let pattern_to_string ~offsets ~mode =
 let instruction_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_instruction
 
-(** {1 Pretty-printing the AST} *)
+(* Pretty-printing the AST *)
 
 let pp_ident state {value=name; region} =
   let reg  = compact state region in
@@ -952,8 +973,8 @@ and pp_type_expr state = function
     let fields = Utils.nsepseq_to_list value.ne_elements in
     List.iteri (List.length fields |> apply) fields
 | TString s ->
-  pp_node   state "TString";
-  pp_string (state#pad 1 0) s
+    pp_node   state "TString";
+    pp_string (state#pad 1 0) s
 
 and pp_cartesian state {value; _} =
   let apply len rank =

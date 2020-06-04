@@ -17,7 +17,7 @@ export interface ExamplesState {
 
 export class ChangeSelectedAction {
   public readonly type = ActionType.ChangeSelected;
-  constructor(public payload: ExamplesState['selected']) {}
+  constructor(public payload: ExamplesState['selected']) { }
 }
 
 export class ClearSelectedAction {
@@ -33,9 +33,12 @@ export const DEFAULT_STATE: ExamplesState = {
 
 if (process.env.NODE_ENV === 'development') {
   DEFAULT_STATE.list = [
-    { id: 'MzkMQ1oiVHJqbcfUuVFKTw', name: 'CameLIGO Contract' },
-    { id: 'FEb62HL7onjg1424eUsGSg', name: 'PascaLIGO Contract' },
-    { id: 'JPhSOehj_2MFwRIlml0ymQ', name: 'ReasonLIGO Contract' }
+    { id: 'MzkMQ1oiVHJqbcfUuVFKTw', name: 'Increment Example CameLIGO ' },
+    { id: 'FEb62HL7onjg1424eUsGSg', name: 'Increment Example PascaLIGO' },
+    { id: 'JPhSOehj_2MFwRIlml0ymQ', name: 'Increment Example ReasonLIGO' },
+    { id: 'ehDv-Xaf70mQoiPhQDTAUQ', name: 'ID Example CameLIGO' },
+    { id: 'CpnK7TFuUjJiQTT8KiiGyQ', name: 'ID Example ReasonLIGO' },
+    { id: 'yP-THvmURsaqHxpwCravWg', name: 'ID Example PascaLIGO' },
   ];
 }
 

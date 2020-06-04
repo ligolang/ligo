@@ -46,9 +46,27 @@ val find : 'elt -> 'elt t -> 'elt
 
 val find_opt : 'elt -> 'elt t -> 'elt option
 
+(* The value of the call [mem elt set] is [true] if there exists an
+   element [y] of set [set] such that [cmp y elt = true], where [cmp]
+   is the comparison function of [set] (see [create]). If [elt] is not
+   in [set], then [false] is returned instead. *)
+
+val mem : 'elt -> 'elt t -> bool
+
 (* The value of the call [element set] is the list of elements of the
    set [set] in increasing order (with respect to the total comparison
    function used to create the set). *)
+
+(* The value of the call [add_list element_list set] is a record of
+   type ['a added]. The elements from the [element_list] are added to
+   the [set] starting from the head of the list. The elements which
+   are already part of the [set] at the point at which they are added
+   are gathered in the [duplicates] list (and the [set] is not updated
+   for these elements, i.e. it keeps the pre-existing version of the
+   element). The elements which are not already members of the set are
+   added to the [set], and gathered in the [added] list. *)
+type 'a added = {set : 'a set; duplicates : 'a list; added : 'a list}
+val add_list : 'a list -> 'a set -> 'a added
 
 val elements : 'elt t -> 'elt list
 

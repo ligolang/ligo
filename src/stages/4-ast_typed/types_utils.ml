@@ -32,6 +32,10 @@ type packed_internal_operation = Memory_proto_alpha.Protocol.Alpha_context.packe
 type location = Location.t
 type inline = bool
 
+type 'a extra_info__comparable = {
+  compare : 'a -> 'a -> int ;
+}
+
 let fold_map__constructor_map : type a new_a state . (state -> a -> (state * new_a) result) -> state -> a constructor_map -> (state * new_a constructor_map) result =
   fun f state m ->
   let aux k v acc =
@@ -93,9 +97,9 @@ type 'v typeVariableMap = (type_variable, 'v) RedBlackTrees.PolyMap.t
 
 type 'a poly_set = 'a RedBlackTrees.PolySet.t
 
-let fold_map__poly_unionfind : type a state new_a . (state -> a -> (state * new_a) result) -> state -> a poly_unionfind -> (state * new_a poly_unionfind) Simple_utils.Trace.result =
-  fun f state l ->
-  ignore (f, state, l) ; failwith "TODO
+let fold_map__poly_unionfind : type a state new_a . new_a extra_info__comparable -> (state -> a -> (state * new_a) result) -> state -> a poly_unionfind -> (state * new_a poly_unionfind) Simple_utils.Trace.result =
+  fun extra_info f state l ->
+  ignore (extra_info, f, state, l) ; failwith "TODO
   let aux acc element =
     let%bind state , l = acc in
     let%bind (state , new_element) = f state element in ok (state , new_element :: l) in
@@ -114,9 +118,9 @@ let fold_map__PolyMap : type k v state new_v . (state -> v -> (state * new_v) re
 let fold_map__typeVariableMap : type a state new_a . (state -> a -> (state * new_a) result) -> state -> a typeVariableMap -> (state * new_a typeVariableMap) result =
   fold_map__PolyMap
 
-let fold_map__poly_set : type a state new_a . (state -> a -> (state * new_a) result) -> state -> a poly_set -> (state * new_a poly_set) result =
-  fun f state s ->
-  let new_compare : (new_a -> new_a -> int) = failwith "TODO: thread enough information about the target AST so that we may compare things here." in
+let fold_map__poly_set : type a state new_a . new_a extra_info__comparable -> (state -> a -> (state * new_a) result) -> state -> a poly_set -> (state * new_a poly_set) result =
+  fun extra_info f state s ->
+  let new_compare : (new_a -> new_a -> int) = extra_info.compare in
   let aux elt ~acc =
     let%bind (state , s) = acc in
     let%bind (state , new_elt) = f state elt in

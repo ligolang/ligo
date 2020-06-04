@@ -7,7 +7,7 @@ open! PPrint
 
 (*let paragraph (s : string) = flow (break 1) (words s)*)
 
-let rec make ast =
+let rec print ast =
   let app decl = group (pp_declaration decl) in
   separate_map (hardline ^^ hardline) app (Utils.nseq_to_list ast.decl)
 

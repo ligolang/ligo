@@ -136,6 +136,11 @@ let lt r1 r2 =
 && Pos.lt r1#start r2#start
 && Pos.lt r1#stop  r2#stop
 
+let compare r1 r2 =
+  if equal r1 r2 then 0
+  else if lt r1 r2 then -1
+  else 1
+
 let cover r1 r2 =
   if r1#is_ghost
   then r2

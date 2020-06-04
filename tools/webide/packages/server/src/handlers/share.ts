@@ -35,7 +35,7 @@ interface ShareBody {
   };
 }
 
-const validateRequest = (body: any): { value: ShareBody; error: any } => {
+const validateRequest = (body: any): { value: ShareBody; error?: any } => {
   return joi
     .object({
       editor: joi

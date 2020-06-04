@@ -29,7 +29,6 @@ module Substitution = struct
           ok @@ T.{expr_var=variable ; env_elt={ type_value; source_environment; definition }}) env
     and s_type_environment : T.type_environment w = fun ~substs tenv ->
       bind_map_list (fun T.{type_variable ; type_} ->
-        let%bind type_variable = s_type_variable ~substs type_variable in
         let%bind type_ = s_type_expression ~substs type_ in
         ok @@ T.{type_variable ; type_}) tenv
     and s_environment : T.environment w = fun ~substs T.{expression_environment ; type_environment} ->
@@ -45,14 +44,6 @@ module Substitution = struct
       let () = ignore @@ substs in
       ok var
 
-    and s_type_variable : T.type_variable w = fun ~substs tvar ->
-      let _TODO = ignore @@ substs in
-      Printf.printf "TODO: subst: unimplemented case s_type_variable";
-      ok @@ tvar
-      (* if String.equal tvar v then
-       *   expr
-       * else
-       *   ok tvar *)
     and s_label : T.label w = fun ~substs l ->
       let () = ignore @@ substs in
       ok l
@@ -71,7 +62,12 @@ module Substitution = struct
       ok @@ type_name
 
     and s_type_content : T.type_content w = fun ~substs -> function
-        | T.T_sum _ -> failwith "TODO: T_sum"
+        | T.T_sum s ->
+           let aux T.{ ctor_type; michelson_annotation ; ctor_decl_pos } =
+             let%bind ctor_type = s_type_expression ~substs ctor_type in
+             ok @@ T.{ ctor_type; michelson_annotation; ctor_decl_pos } in
+           let%bind s = Ast_typed.Helpers.bind_map_cmap aux s in
+           ok @@ T.T_sum s
         | T.T_record _ -> failwith "TODO: T_record"
         | T.T_constant type_name ->
           let%bind type_name = s_type_name_constant ~substs type_name in
@@ -195,20 +191,19 @@ module Substitution = struct
         let%bind cases = s_matching_expr ~substs cases in
         ok @@ T.E_matching {matchee;cases}
 
-    and s_expression : T.expression w = fun ~(substs:substs) { expression_content; type_expression; environment; location } ->
+    and s_expression : T.expression w = fun ~(substs:substs) { expression_content; type_expression; location } ->
       let%bind expression_content = s_expression_content ~substs expression_content in
       let%bind type_expr = s_type_expression ~substs type_expression in
-      let%bind environment = s_environment ~substs environment in
       let location = location in
-      ok T.{ expression_content;type_expression=type_expr; environment; location }
+      ok T.{ expression_content;type_expression=type_expr; location }
 
     and s_declaration : T.declaration w = fun ~substs ->
       function
-        Ast_typed.Declaration_constant {binder ; expr ; inline ; post_env} ->
-        let%bind binder = s_variable ~substs binder in
-        let%bind expr = s_expression ~substs expr in
-        let%bind post_env = s_environment ~substs post_env in
-        ok @@ Ast_typed.Declaration_constant {binder; expr; inline; post_env}
+      | Ast_typed.Declaration_constant {binder ; expr ; inline} ->
+         let%bind binder = s_variable ~substs binder in
+         let%bind expr = s_expression ~substs expr in
+         ok @@ Ast_typed.Declaration_constant {binder; expr; inline}
+      | Declaration_type t -> ok (Ast_typed.Declaration_type t)
 
     and s_declaration_wrap :T.declaration Location.wrap w = fun ~substs d ->
       Trace.bind_map_location (s_declaration ~substs) d    
@@ -224,24 +219,24 @@ module Substitution = struct
     and type_value ~tv ~substs =
       let self tv = type_value ~tv ~substs in
       let (v, expr) = substs in
-      match (tv : type_value) with
+      match (tv : type_value).t with
       | P_variable v' when Var.equal v' v -> expr
       | P_variable _ -> tv
       | P_constant {p_ctor_tag=x ; p_ctor_args=lst} -> (
           let lst' = List.map self lst in
-          P_constant {p_ctor_tag=x ; p_ctor_args=lst'}
+          { tsrc = "?TODO1?" ; t = P_constant {p_ctor_tag=x ; p_ctor_args=lst'} }
         )
       | P_apply { tf; targ } -> (
-          P_apply { tf = self tf ; targ = self targ }
+          { tsrc = "?TODO2?" ; t = P_apply { tf = self tf ; targ = self targ } }
         )
       | P_forall p -> (
           let aux c = constraint_ ~c ~substs in
           let constraints = List.map aux p.constraints in
           if (p.binder = v) then (
-            P_forall { p with constraints }
+            { tsrc = "?TODO3?" ; t = P_forall { p with constraints } }
           ) else (
             let body = self p.body in
-            P_forall { p with constraints ; body }
+            { tsrc = "?TODO4?" ; t = P_forall { p with constraints ; body } }
           )
         )
 
@@ -271,9 +266,10 @@ module Substitution = struct
 
     (* Performs beta-reduction at the root of the type *)
     let eval_beta_root ~(tv : type_value) =
-      match tv with
-        P_apply {tf = P_forall { binder; constraints; body }; targ} ->
+      match tv.t with
+        P_apply {tf = { tsrc = _ ; t = P_forall { binder; constraints; body } }; targ} ->
         let constraints = List.map (fun c -> constraint_ ~c ~substs:(mk_substs ~v:binder ~expr:targ)) constraints in
+        (* TODO: indicate in the result's tsrc that it was obtained via beta-reduction of the original type *)
         (type_value ~tv:body ~substs:(mk_substs ~v:binder ~expr:targ) , constraints)
       | _ -> (tv , [])
   end

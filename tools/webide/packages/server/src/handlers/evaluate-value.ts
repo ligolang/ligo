@@ -12,7 +12,7 @@ interface EvaluateValueBody {
 
 const validateRequest = (
   body: any
-): { value: EvaluateValueBody; error: any } => {
+): { value: EvaluateValueBody; error?: any } => {
   return joi
     .object({
       syntax: joi.string().required(),
