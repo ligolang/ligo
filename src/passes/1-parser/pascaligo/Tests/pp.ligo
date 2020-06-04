@@ -1,7 +1,7 @@
 type t is timestamp * nat -> map (string, address)
 type u is A | B of t * int | C of int -> (string -> int)
-type v is record a : t; b : record c : string end end
-
+type v is record aaaaaa : ttttttt; bbbbbb : record ccccccccc : string end end
+(*
 function back (var store : store) : list (operation) * store is
   begin
     var operations : list (operation) := list [];
@@ -52,11 +52,12 @@ function back (var store : store) : list (operation) * store is
       | B (x, C (y,z)) -> skip
       | False#True#Unit#0xAA#"hi"#4#nil -> skip
       ]
-  end with (operations, store)
-
-function claim (var store : store) : list (operation) * store is
+  end with (operations, store, (more_stuff, and_here_too))
+*)
+  function claim (var store : store; const bar : t; const baz : u; var z : operations * store * (more_stuff * and_here_too)) : list (operation) * store * timestamp * nat -> map (string, address) is
   begin
-    var operations : list (operation) := nil;
+     var operations : list (operation * map (address, map (longname, domain))) := nilllllllllll;
+     attributes ["foo"; "inline"];
     if now <= store.deadline then
       failwith ("Too soon.")
     else
@@ -72,8 +73,11 @@ function claim (var store : store) : list (operation) * store is
               remove sender from map store.backers
             end
       end
-  end with (operations, store)
+  end with long_function_name (operations, store, (more_stuff, (and_here_too, well_in_here_too), hello))
 
+attributes ["inline"; "foo"]
+
+(*
 function withdraw (var store : store) : list (operation) * store is
   begin
     var operations : list (operation) := list end;
@@ -91,3 +95,4 @@ function withdraw (var store : store) : list (operation) * store is
              nil -> (operations, (store : store))
            |   _ -> (operations, store)
            end
+*)

@@ -1,6 +1,5 @@
 let patch_ (m : foobar) : foobar = Map.literal [(0, 5); (1, 6); (2, 7)]
 
-(*
 let (greet_num : int), (greeting : string), one_more_component =
   different_types of_many_things + ffffff 124312
 
@@ -14,7 +13,7 @@ let main (n : int * storage)
   in ([] : operation list), x
 
 let y : t =
-  if true then -30000 * 10000 - 100000 + f x x y y y y - ((x / 4000) * -5) else (10000 + 100000) / 10000000000
+  if true then ffffffffff (-30000 * 10000 - 100000 + f x x y y y y - ((x / 4000) * -5), 103+5) else (10000 + 100000) / 10000000000
 type return = operation list * (storage * fsdgsdgf * sdfsdfsdf * ssdf)
 let xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx =
   ttttttttttttt <= (aaaaaaaaaaaaaaaaaaaaaaaa - bbbbbbbbbbbbbbbbbbbb)
@@ -53,4 +52,3 @@ let w =
   match f 3 with
     None -> []
   | Some (1::[2;3;4;5;6]) -> [4;5]::[]
- *)
