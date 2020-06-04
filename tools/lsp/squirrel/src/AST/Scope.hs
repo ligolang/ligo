@@ -21,13 +21,9 @@ module AST.Scope
   )
   where
 
-import Control.Lens hiding (Const, List)
 import Control.Monad.State
 
-import Data.Maybe
 import Data.Text (Text)
-import Data.Traversable
-import Data.Foldable
 
 import Parser
 import Range
@@ -53,22 +49,11 @@ data ScopedDecl = ScopedDecl
 
 data Kind = Star
 
-instance HasMethods ScopeM where
-  data Methods ScopeM = MethodsScopeM
-    { enter_  :: ScopeM ()
-    , leave_  :: ScopeM ()
-    , define_ :: ScopedDecl -> ScopeM ()
-    }
-
-  method = MethodsScopeM
-    { enter_  = modify \(a : b) -> a : a : b
-    , leave_  = modify tail
-    , define_ = \d -> modify \(Env a : b) -> Env (d : a) : b
-    }
-
-enter  = enter_  method
-leave  = leave_  method
-define = define_ method
+enter, leave :: ScopeM ()
+define :: ScopedDecl -> ScopeM ()
+enter    = modify \(a : b) -> a : a : b
+leave    = modify tail
+define d = modify \(Env a : b) -> Env (d : a) : b
 
 defType :: HasRange a => Pascal a -> Kind -> Pascal a -> ScopeM ()
 defType name kind body = do
@@ -113,7 +98,7 @@ instance HasRange a => UpdateOver ScopeM Declaration (Pascal a) where
 
 instance HasRange a => UpdateOver ScopeM Binding (Pascal a) where
   before = \case
-    Function recur name args ty body -> do
+    Function recur name _args ty body -> do
       when recur do
         def name (Just ty) (Just body)
       enter
@@ -124,7 +109,7 @@ instance HasRange a => UpdateOver ScopeM Binding (Pascal a) where
     Irrefutable name    body -> do leave; def name  Nothing  (Just body)
     Var         name ty body -> do leave; def name (Just ty) (Just body)
     Const       name ty body -> do leave; def name (Just ty) (Just body)
-    Function recur name args ty body -> do
+    Function recur name _args ty body -> do
       leave
       unless recur do
         def name (Just ty) (Just body)
@@ -334,9 +319,9 @@ instance HasComments Scope where
 evalScopeM :: ScopeM a -> a
 evalScopeM action = evalState action [Env []]
 
-testUpdate :: Pascal ASTInfo -> ScopeM (Pascal Scope)
-testUpdate = updateTree \_ -> do
+_testUpdate :: Pascal ASTInfo -> ScopeM (Pascal Scope)
+_testUpdate = updateTree \_ -> do
   Env topmost <- gets head
   let names = _sdName <$> topmost
-  let res = ppToText $ fsep $ map pp names
+  let res   = ppToText $ fsep $ map pp names
   return $ Scope res

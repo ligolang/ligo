@@ -66,11 +66,11 @@ instance Member f fs => Member f (g : fs) where
   inj  = There . inj
   proj = eliminate (const Nothing) proj
 
-instance HasMethods m => UpdateOver m (Union '[]) a where
+instance Monad m => UpdateOver m (Union '[]) a where
   before = error "Union.empty"
   after  = error "Union.empty"
 
-instance (HasMethods m, UpdateOver m f a, UpdateOver m (Union fs) a) => UpdateOver m (Union (f : fs)) a where
+instance (UpdateOver m f a, UpdateOver m (Union fs) a) => UpdateOver m (Union (f : fs)) a where
   before = eliminate before before
   after  = eliminate after  after
 

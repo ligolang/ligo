@@ -11,14 +11,13 @@ module AST.Parser (example, contract) where
 
 import Data.Text (Text)
 
-import AST.Types hiding (tuple)
+import AST.Types
 
 import Parser
-import Range
 import Tree
 import Union
 
-import Debug.Trace
+-- import Debug.Trace
 
 ranged
   :: ( Functor f
@@ -55,6 +54,7 @@ declaration
   <|> do ranged do pure Action <*> attributes
   <|> do include
 
+include :: Parser (Pascal ASTInfo)
 include = do
   subtree "include" do
     ranged do
@@ -101,6 +101,7 @@ binding = do
         <*> inside "type:" type_
         <*> inside "body:" letExpr
 
+recursive :: Parser Bool
 recursive = do
   mr <- optional do
     inside "recursive" do
@@ -173,6 +174,7 @@ set_patch = do
         <*> inside "container:path" (qname <|> projection)
         <*> many do inside "key" expr
 
+record_update :: Parser (Pascal ASTInfo)
 record_update = do
   subtree "update_record" do
     ranged do
@@ -180,6 +182,7 @@ record_update = do
         <*> inside "record:path" do qname <|> projection
         <*> many do inside "assignment" field_path_assignment
 
+field_path_assignment :: Parser (Pascal ASTInfo)
 field_path_assignment = do
   subtree "field_path_assignment" do
     ranged do
@@ -187,6 +190,7 @@ field_path_assignment = do
         <*> inside "lhs:path" do qname <|> projection
         <*> inside "_rhs" expr
 
+map_patch :: Parser (Pascal ASTInfo)
 map_patch = do
   subtree "map_patch" do
     ranged do
@@ -201,6 +205,7 @@ set_expr = do
       pure List <*> many do
         inside "element" expr
 
+lambda_expr :: Parser (Pascal ASTInfo)
 lambda_expr = do
   subtree "fun_expr" do
     ranged do
@@ -210,6 +215,7 @@ lambda_expr = do
         <*> inside "type" newtype_
         <*> inside "body" expr
 
+seq_expr :: Parser (Pascal ASTInfo)
 seq_expr = do
   subtree "block" do
     ranged do
@@ -217,10 +223,12 @@ seq_expr = do
         inside "statement" do
           declaration <|> statement
 
+loop :: Parser (Pascal ASTInfo)
 loop = do
   subtree "loop" do
     for_loop <|> while_loop <|> for_container
 
+for_container :: Parser (Pascal ASTInfo)
 for_container = do
   subtree "for_loop" do
     ranged do
@@ -231,6 +239,7 @@ for_container = do
         <*> inside "collection" expr
         <*> inside "body" (expr <|> seq_expr)
 
+while_loop :: Parser (Pascal ASTInfo)
 while_loop = do
   subtree "while_loop" do
     ranged do
@@ -238,6 +247,7 @@ while_loop = do
         <*> inside "breaker" expr
         <*> inside "body"    expr
 
+for_loop :: Parser (Pascal ASTInfo)
 for_loop = do
   subtree "for_loop" do
     ranged do
@@ -247,6 +257,7 @@ for_loop = do
         <*> inside "end"   expr
         <*> inside "body"  expr
 
+clause_block :: Parser (Pascal ASTInfo)
 clause_block = do
     subtree "clause_block" do
       inside "block:block" do
@@ -400,6 +411,7 @@ nullary_ctor = do
                    true <|> false <|> none <|> unit
           <*> pure []
 
+true, false, none, unit :: Parser Text
 true  = token "True"
 false = token "False"
 none  = token "None"
@@ -617,7 +629,7 @@ method_call = do
         <*> optional do inside "arguments" arguments
   where
     apply' i f (Just xs) = Apply (mk i $ Ident f) xs
-    apply' i f _         = Ident f
+    apply' _ f _         = Ident f
 
 projection :: Parser (Pascal ASTInfo)
 projection = do
@@ -650,7 +662,7 @@ par_call = do
       -> Maybe [Pascal ASTInfo]
       -> Pascal ASTInfo
     apply' i f (Just xs) = mk i $ Apply f xs
-    apply' i f  _        = f
+    apply' _ f  _        = f
 
 int_literal :: Parser (Pascal ASTInfo)
 int_literal = do
@@ -678,6 +690,7 @@ fun_call = do
         <*> ranged do pure Ident <*> inside "f" function_id
         <*> inside "arguments" arguments
 
+arguments :: Parser [Pascal ASTInfo]
 arguments =
   subtree "arguments" do
     many do inside "argument" expr
@@ -708,6 +721,7 @@ opCall = do
             <*> inside "negate" anything
             <*> inside "arg"    expr
 
+letExpr :: Parser (Pascal ASTInfo)
 letExpr = do
   subtree "let_expr" do
     pure let'
@@ -733,25 +747,29 @@ paramDecl = do
       pure Decl
         <*> inside "access" do
               ranged do
-                pure access' <*> anything
+                access' =<< anything
         <*> inside "name" name
         <*> inside "type" type_
   where
-    access' "var"   = Mutable
-    access' "const" = Immutable
+    access' "var"   = pure Mutable
+    access' "const" = pure Immutable
+    access' _       = die  "`var` or `const`"
 
+newtype_ :: Parser (Pascal ASTInfo)
 newtype_ = select
   [ record_type
   , type_
   , sum_type
   ]
 
+sum_type :: Parser (Pascal ASTInfo)
 sum_type = do
   subtree "sum_type" do
     ranged do
       pure TSum <*> many do
         inside "variant" variant
 
+variant :: Parser (Pascal ASTInfo)
 variant = do
   subtree "variant" do
     ranged do
@@ -759,6 +777,7 @@ variant = do
         <*> inside "constructor:constr" capitalName
         <*> optional do inside "arguments" type_
 
+record_type :: Parser (Pascal ASTInfo)
 record_type = do
   subtree "record_type" do
     ranged do
@@ -766,6 +785,7 @@ record_type = do
         inside "field" do
           field_decl
 
+field_decl :: Parser (Pascal ASTInfo)
 field_decl = do
   subtree "field_decl" do
     ranged do
@@ -841,6 +861,7 @@ typeTuple = do
 -- example = "../../../src/test/contracts/bytes_arithmetic.ligo"
 -- example = "../../../src/test/contracts/bytes_unpack.ligo"
 -- example = "../../../src/test/contracts/chain_id.ligo"
+example :: Text
 example = "../../../src/test/contracts/coase.ligo"
 -- example = "../../../src/test/contracts/failwith.ligo"
 -- example = "../../../src/test/contracts/loop.ligo"

@@ -86,7 +86,7 @@ above a b = hang a 0 b
 
 -- | Pretty print as a sequence with given separator.
 train :: Pretty p => Doc -> [p] -> Doc
-train sep = fsep . punctuate sep . map pp
+train sep' = fsep . punctuate sep' . map pp
 
 -- | Pretty print as a vertical block.
 block :: Pretty p => [p] -> Doc

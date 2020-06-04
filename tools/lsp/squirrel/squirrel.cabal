@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a49f1d3cbdae65e52d4685178a1d0fc9b72502cc4b3c8cfa45f245ffdf32922d
+-- hash: b811c8b08ccf5e457be7e405973ea06f046839b90e70ebd729a1df9bb668dc69
 
 name:           squirrel
 version:        0.0.0
@@ -23,7 +23,6 @@ library
       ParseTree
       Pretty
       Range
-      TH
       Tree
       Union
       Update
@@ -42,7 +41,6 @@ library
     , bytestring
     , data-default
     , data-fix
-    , lens
     , mtl
     , pretty
     , template-haskell

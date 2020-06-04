@@ -5,7 +5,6 @@ dependencies:
   - bytestring
   - data-default
   - data-fix
-  - lens
   - mtl
   - pretty
   - template-haskell
@@ -54,7 +53,7 @@ library:
 executables:
   squirrel:
     dependencies:
-      - base
+      - lens
       - stm
       - haskell-lsp
       - squirrel

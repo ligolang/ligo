@@ -23,8 +23,6 @@ import qualified Data.ByteString as BS
 import qualified Data.Text as Text
 import Data.Text (Text)
 import Data.Traversable (for)
-import Data.Text.Encoding
-import Data.Text.Foreign (withCStringLen)
 
 import           TreeSitter.Parser
 import           TreeSitter.Tree
@@ -43,8 +41,6 @@ import           Foreign.Storable               ( peek
 import           Control.Monad ((>=>))
 
 import Text.PrettyPrint hiding ((<>))
-
-import Paths_squirrel
 
 import Range
 import Pretty

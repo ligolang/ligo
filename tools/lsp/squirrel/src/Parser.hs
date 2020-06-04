@@ -46,6 +46,9 @@ module Parser
   , getInfo
   , inside
 
+    -- * Error
+  , die
+
     -- * Replacement for `Alternative`, because reasons
   , many
   , some
@@ -63,18 +66,11 @@ module Parser
 import Control.Lens hiding (inside)
 import Control.Monad.State
 import Control.Monad.Writer
-import Control.Monad.Reader
 import Control.Monad.Except
-import Control.Monad.Identity
 
 import Data.Foldable
-import Data.Traversable
-import Data.Functor
-import Data.Text (Text, pack, unpack)
+import Data.Text (Text, unpack)
 import qualified Data.Text as Text
-
-import qualified Data.ByteString as ByteString
-import Data.ByteString (ByteString)
 
 import ParseTree
 import Range
@@ -132,8 +128,8 @@ takeNext msg = do
     (_, t) : f -> do
       if "comment" `Text.isSuffixOf` ptName t
       then do
-        (st, comms) <- get
-        put (st, ptSource t : comms)
+        (st', comms') <- get
+        put (st', ptSource t : comms')
         takeNext msg
       else do
         put
@@ -210,15 +206,15 @@ field name parser = do
 
 -- | Variuos error reports.
 fallback  :: Stubbed a ASTInfo => Text            -> Parser a
-fallback' :: Stubbed a ASTInfo => Text -> ASTInfo -> Parser a
+-- fallback' :: Stubbed a ASTInfo => Text -> ASTInfo -> Parser a
 die       ::                      Text            -> Parser a
 die'      ::                      Text -> ASTInfo -> Parser a
-complain  ::                      Text -> ASTInfo -> Parser ()
+-- complain  ::                      Text -> ASTInfo -> Parser ()
 fallback  msg     = pure . stub =<< makeError  msg
-fallback' msg rng = pure . stub =<< makeError' msg rng
+-- fallback' msg rng = pure . stub =<< makeError' msg rng
 die       msg     = throwError  =<< makeError  msg
 die'      msg rng = throwError  =<< makeError' msg rng
-complain  msg rng = tell . pure =<< makeError' msg rng
+-- complain  msg rng = tell . pure =<< makeError' msg rng
 
 -- | When tree-sitter found something it was unable to process.
 unexpected :: ParseTree -> Error ASTInfo
@@ -285,7 +281,7 @@ some p = some'
 -- | Run parser on given file.
 --
 runParser :: Parser a -> FilePath -> IO (a, [Error ASTInfo])
-runParser (Parser parser) fin = do
+runParser parser fin = do
   pforest <- toParseTree fin
   let
     res =
@@ -293,6 +289,7 @@ runParser (Parser parser) fin = do
       $      runExceptT
       $ flip runStateT (pforest, [])
       $      runWriterT
+      $       unParser
       $ parser
 
   either (error . show) (return . fst) res
@@ -313,7 +310,7 @@ debugParser parser fin = do
 token :: Text -> Parser Text
 token node = do
   i <- getInfo
-  tree@ParseTree {ptName, ptSource} <- takeNext node
+  ParseTree {ptName, ptSource} <- takeNext node
   if ptName == node
   then return ptSource
   else die' node i
@@ -356,14 +353,14 @@ delete k ((k', v) : rest) =
   else (addIfError v vs, addIfComment v cs, remains)
   where
     (vs, cs, remains) = delete k rest
-    addIfError v =
-      if ptName v == "ERROR"
-      then (:) v
+    addIfError v' =
+      if ptName v' == "ERROR"
+      then (:) v'
       else id
 
-    addIfComment v =
-      if "comment" `Text.isSuffixOf` ptName v
-      then (ptSource v :)
+    addIfComment v' =
+      if "comment" `Text.isSuffixOf` ptName v'
+      then (ptSource v' :)
       else id
 
 -- | Report all ERRORs from the list.
@@ -372,18 +369,6 @@ collectErrors vs =
   for_ vs \(_, v) -> do
     when (ptName v == "ERROR") do
       tell [unexpected v]
-
--- | Parser negation.
-notFollowedBy :: Parser a -> Parser ()
-notFollowedBy parser = do
-  good <- do
-      parser
-      return False
-    <|> do
-      return True
-
-  unless good do
-    die "notFollowedBy"
 
 -- | Universal accessor.
 --

@@ -1,6 +1,4 @@
 
-import Data.Foldable (for_)
-
 import           Control.Concurrent
 import           Control.Concurrent.STM
 import           Control.Exception as E
@@ -18,17 +16,14 @@ import           Language.Haskell.LSP.Messages         as Msg
 import qualified Language.Haskell.LSP.Types            as J
 import qualified Language.Haskell.LSP.Types.Lens       as J
 import qualified Language.Haskell.LSP.Utility          as U
-import           Language.Haskell.LSP.VFS
+-- import           Language.Haskell.LSP.VFS
 
-import           System.Environment
 import           System.Exit
 import qualified System.Log                            as L
 
-import           ParseTree
 import           Parser
 import           Range
 import           AST hiding (def)
-import           Pretty
 import           Error
 
 main :: IO ()
@@ -51,7 +46,6 @@ mainLoop = do
 
     Core.setupLogger (Just "log.txt") [] L.INFO
     CTRL.run callbacks (lspHandlers chan) lspOptions (Just "log.txt")
-    return 0
   `catches`
     [ Handler \(e :: SomeException) -> do
         print e
@@ -155,7 +149,7 @@ eventLoop funs chan = do
           (J.uriToFilePath doc)
           (Just 0)
 
-      _ -> putStrLn "unknown msg"
+      _ -> U.logs "unknown msg"
 
 
 collectErrors
@@ -172,8 +166,10 @@ collectErrors funs uri path version = do
         $ partitionBySource
         $ map errorToDiag (errs <> errors tree)
 
+    Nothing -> error "TODO: implement URI file loading"
+
 errorToDiag :: Error ASTInfo -> J.Diagnostic
-errorToDiag (Expected what instead (getRange -> (Range (sl, sc, _) (el, ec, _)))) =
+errorToDiag (Expected what _ (getRange -> (Range (sl, sc, _) (el, ec, _)))) =
   J.Diagnostic
     (J.Range begin end)
     (Just J.DsError)

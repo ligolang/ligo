@@ -7,8 +7,6 @@ module Range
   )
   where
 
-import Control.Lens
-
 import qualified Data.ByteString as BS
 import Data.ByteString (ByteString)
 import Data.Text (Text)

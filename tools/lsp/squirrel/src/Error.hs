@@ -9,7 +9,6 @@ module Error
 import Data.Text (Text, pack)
 
 import Pretty
-import Range
 
 -- | Parse error.
 data Error info

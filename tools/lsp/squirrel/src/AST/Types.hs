@@ -6,21 +6,12 @@
 
 module AST.Types where
 
-import Control.Monad.State
-import Control.Lens hiding (Const, List)
-
-import qualified Data.Text as Text
 import Data.Text (Text)
-import Data.Void
 
-import Parser
-import ParseTree
 import Pretty
 import Tree
 
-import TH
-
-import Debug.Trace
+-- import Debug.Trace
 
 -- | The AST for Pascali... wait. It is, em, universal one.
 --
@@ -199,7 +190,7 @@ instance Pretty1 Declaration where
 
 instance Pretty1 Binding where
   pp1 = \case
-    Irrefutable  pat expr -> error "irrefs in pascaligo?"
+    Irrefutable  pat expr -> "irref" <+> pat <+> "=" `indent` expr
     Function     isRec name params ty body ->
       (
         (
@@ -232,8 +223,6 @@ instance Pretty1 Type where
     TSum      variants  -> block variants
     TProduct  elements  -> train " *" elements
     TApply    f xs      -> f <> tuple xs
-    where
-      ppField (name, ty) = name <> ": " <> ty <> ";"
 
 instance Pretty1 Variant where
   pp1 = \case
