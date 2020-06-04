@@ -1503,12 +1503,28 @@
   dependencies:
     xhr2-cookies "^1.1.0"
 
+"@taquito/http-utils@^6.3.0-wallet.4":
+  version "6.3.0-wallet.4"
+  resolved "https://registry.yarnpkg.com/@taquito/http-utils/-/http-utils-6.3.0-wallet.4.tgz#3b6ffd2794feaea9d5c9010af5574661d7fb5139"
+  integrity sha512-dLZZyqFK7ohp02BJ9dxQO5Wih7ifRET658hshhi9GWNg9bEYmDNuBG1qL4e2FUyJPblllZQPOoEA9ayZ66HOlg==
+  dependencies:
+    xhr2-cookies "^1.1.0"
+
 "@taquito/michelson-encoder@^6.1.0-beta.0":
   version "6.1.0-beta.0"
   resolved "https://registry.yarnpkg.com/@taquito/michelson-encoder/-/michelson-encoder-6.1.0-beta.0.tgz#8f8d143a69814723550776dfe9c024a2196cbb57"
   integrity sha512-02CHk0Ag7pBLCDIJnAKXPp4Owcl3qLkIKB8pQa5uOT1fxefaT2EadMnxQEpbXPiFp4tcBRJq16Bd4JtogO+/CQ==
   dependencies:
     "@taquito/utils" "^6.1.0-beta.0"
+    bignumber.js "^9.0.0"
+    fast-json-stable-stringify "^2.1.0"
+
+"@taquito/michelson-encoder@^6.3.0-wallet.4":
+  version "6.3.0-wallet.4"
+  resolved "https://registry.yarnpkg.com/@taquito/michelson-encoder/-/michelson-encoder-6.3.0-wallet.4.tgz#c0480ada4f6a52783d9cdbb41f07a490c7ac1586"
+  integrity sha512-JwLBmtDiwof3hAWOeCe0O84lNl4W8ufUnYH1it178F17q/gKKAxKefTv0lQ3P2a0oVYtv1j6OIOHUIHmgjX3Ew==
+  dependencies:
+    "@taquito/utils" "^6.3.0-wallet.4"
     bignumber.js "^9.0.0"
     fast-json-stable-stringify "^2.1.0"
 
@@ -1521,12 +1537,34 @@
     bignumber.js "^9.0.0"
     lodash "^4.17.15"
 
+"@taquito/rpc@^6.3.0-wallet.4":
+  version "6.3.0-wallet.4"
+  resolved "https://registry.yarnpkg.com/@taquito/rpc/-/rpc-6.3.0-wallet.4.tgz#98c5ce98146eeddb982ce0596ff49c43a18e24ba"
+  integrity sha512-OYVxOeRE8q1zeY8IKbXeUk8B+SL9wMY7xsHLNkUJOMXC7BA9isSLvkCzily3s+iw1kF2j6pDRurD7VtD/KdAcA==
+  dependencies:
+    "@taquito/http-utils" "^6.3.0-wallet.4"
+    bignumber.js "^9.0.0"
+    lodash "^4.17.15"
+
 "@taquito/signer@^6.1.0-beta.0":
   version "6.1.0-beta.0"
   resolved "https://registry.yarnpkg.com/@taquito/signer/-/signer-6.1.0-beta.0.tgz#05d3994347de460f0f1722a99ac0bdc95528d3cf"
   integrity sha512-/N5X+e029r5xJ8/LCdRqzBMh3or0n3BL2m15CRsZdhH21n8I1SHRh7vqXG/jDHLqB7i47lWW6rb5V2Pql2q0og==
   dependencies:
     "@taquito/utils" "^6.1.0-beta.0"
+    bignumber.js "^9.0.0"
+    bip39 "^3.0.2"
+    elliptic "^6.5.1"
+    libsodium-wrappers "^0.7.5"
+    pbkdf2 "^3.0.17"
+    typedarray-to-buffer "^3.1.5"
+
+"@taquito/signer@^6.3.0-wallet.4":
+  version "6.3.0-wallet.4"
+  resolved "https://registry.yarnpkg.com/@taquito/signer/-/signer-6.3.0-wallet.4.tgz#da4c7c8fed82aa09698abd5f37af68cf600e3ef3"
+  integrity sha512-r8nMhm0ORjc3nu0KKd8wieeCqBd/sJATj7BbSueAMyTMqeahB5ce4Cmr/J48x0EuwuUdkqP3q05mWeklcoyoRw==
+  dependencies:
+    "@taquito/utils" "^6.3.0-wallet.4"
     bignumber.js "^9.0.0"
     bip39 "^3.0.2"
     elliptic "^6.5.1"
@@ -1546,18 +1584,47 @@
     bignumber.js "^9.0.0"
     rxjs "^6.5.3"
 
-"@taquito/tezbridge-signer@^6.1.0-beta.0":
-  version "6.1.0-beta.0"
-  resolved "https://registry.yarnpkg.com/@taquito/tezbridge-signer/-/tezbridge-signer-6.1.0-beta.0.tgz#adaad917091e946d6284ce4fd74f314b9c52c8d3"
-  integrity sha512-diVlbdJTqrw23xZ86E3NqfKDLrJSdg6sNQ1tZkQUvinEwYUGCUTTu7+kDM9vOM/loEH0vfyUUBE+cf27uJ7j1w==
+"@taquito/taquito@^6.3.0-wallet.4":
+  version "6.3.0-wallet.4"
+  resolved "https://registry.yarnpkg.com/@taquito/taquito/-/taquito-6.3.0-wallet.4.tgz#6673b5784ed80abbfde9c1b93bbf9b030eecc86c"
+  integrity sha512-mYHML0R41hq0iIAHTTUylEUbew0dman9vNxBa3hIfwbsPkBuW2G9EdMQWbZta1hJU9w3IHuBsmM7QHFyl+FTIA==
   dependencies:
-    "@taquito/utils" "^6.1.0-beta.0"
+    "@taquito/http-utils" "^6.3.0-wallet.4"
+    "@taquito/michelson-encoder" "^6.3.0-wallet.4"
+    "@taquito/rpc" "^6.3.0-wallet.4"
+    "@taquito/signer" "^6.3.0-wallet.4"
+    "@taquito/utils" "^6.3.0-wallet.4"
+    bignumber.js "^9.0.0"
+    rxjs "^6.5.3"
+
+"@taquito/tezbridge-signer@^6.3.0-wallet.4":
+  version "6.3.0-wallet.4"
+  resolved "https://registry.yarnpkg.com/@taquito/tezbridge-signer/-/tezbridge-signer-6.3.0-wallet.4.tgz#6c4adfbaa4261c7dc8f9e128cde0a408ce97ed11"
+  integrity sha512-PBEwEwv9mBDSSnlw2qHQj44ZJIyRAmqgusVVv6wAlkIDk2Nqbh1MWBNesUdmpJ0lXKLa0D3ii2+28jSVEBqbfQ==
+  dependencies:
+    "@taquito/utils" "^6.3.0-wallet.4"
     typedarray-to-buffer "^3.1.5"
+
+"@taquito/tezbridge-wallet@^6.3.0-wallet.4":
+  version "6.3.0-wallet.4"
+  resolved "https://registry.yarnpkg.com/@taquito/tezbridge-wallet/-/tezbridge-wallet-6.3.0-wallet.4.tgz#826effe66f09bd7844ed36ce792eb7e2805f9a23"
+  integrity sha512-73uvCv21EDrCMPXKK2sMh9Olor/HYff7UtVs0kGyrEC0Gc+jMVPqGrUMSQytsAS5Q8h1hovpRSG6Pe/mBKF9dg==
+  dependencies:
+    "@taquito/taquito" "^6.3.0-wallet.4"
 
 "@taquito/utils@^6.1.0-beta.0":
   version "6.1.0-beta.0"
   resolved "https://registry.yarnpkg.com/@taquito/utils/-/utils-6.1.0-beta.0.tgz#11e8887379738cae10d7a696c7b6cc0cec9eeab0"
   integrity sha512-RaqVw1F7tR9RV71wuDs2Qn1DSH5qwcVVQc/JZMwQS92YUGyFGM5Sp3d+TivBaMhcjgESJNPUNijKj2xNCLd1aQ==
+  dependencies:
+    blakejs "^1.1.0"
+    bs58check "^2.1.2"
+    buffer "^5.2.1"
+
+"@taquito/utils@^6.3.0-wallet.4":
+  version "6.3.0-wallet.4"
+  resolved "https://registry.yarnpkg.com/@taquito/utils/-/utils-6.3.0-wallet.4.tgz#3aba5b1c287dafb56cfc787782d881714a381c24"
+  integrity sha512-EcczTwWsVdAQxdOkrzWq9YnOxFdeLxIrN/qCIDTLbj+dw48hGT44gLBFMX2Ru9EAQrLJzNPAFsnE4V1LRF7VbQ==
   dependencies:
     blakejs "^1.1.0"
     bs58check "^2.1.2"

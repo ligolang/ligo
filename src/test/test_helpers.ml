@@ -86,7 +86,7 @@ let sha_256_hash pl =
 open Ast_imperative.Combinators
 
 let typed_program_with_imperative_input_to_michelson
-    ((program , state): Ast_typed.program * Ast_typed.typer_state) (entry_point: string)
+    ((program , state): Ast_typed.program * Typesystem.Solver_types.typer_state) (entry_point: string)
     (input: Ast_imperative.expression) : Compiler.compiled_expression result =
   Printexc.record_backtrace true;
   let env = Ast_typed.program_environment Environment.default program in
@@ -99,7 +99,7 @@ let typed_program_with_imperative_input_to_michelson
   Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg compiled_applied
 
 let run_typed_program_with_imperative_input ?options
-    ((program , state): Ast_typed.program * Ast_typed.typer_state) (entry_point: string)
+    ((program , state): Ast_typed.program * Typesystem.Solver_types.typer_state) (entry_point: string)
     (input: Ast_imperative.expression) : Ast_core.expression result =
   let%bind michelson_program = typed_program_with_imperative_input_to_michelson (program , state) entry_point input in
   let%bind michelson_output  = Ligo.Run.Of_michelson.run_no_failwith ?options michelson_program.expr michelson_program.expr_ty in
@@ -172,7 +172,7 @@ let expect_evaluate (program, _state) entry_point expecter =
   let%bind res_simpl       = Uncompile.uncompile_typed_program_entry_expression_result program entry_point res_michelson in
   expecter res_simpl
 
-let expect_eq_evaluate ((program , state) : Ast_typed.program * Ast_typed.typer_state) entry_point expected =
+let expect_eq_evaluate ((program , state) : Ast_typed.program * Typesystem.Solver_types.typer_state) entry_point expected =
   let%bind expected  = expression_to_core expected in
   let expecter = fun result ->
     Ast_core.Misc.assert_value_eq (expected , result) in

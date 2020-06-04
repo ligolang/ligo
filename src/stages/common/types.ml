@@ -29,6 +29,21 @@ type 'a constructor_map = 'a CMap.t
     | TC_signature
     | TC_timestamp
     | TC_void
+  and type_operator =
+    | TC_contract
+    | TC_option
+    | TC_list
+    | TC_set
+    | TC_map
+    | TC_big_map
+    | TC_map_or_big_map
+    | TC_michelson_pair
+    | TC_michelson_or
+    | TC_michelson_pair_right_comb
+    | TC_michelson_pair_left_comb
+    | TC_michelson_or_right_comb
+    | TC_michelson_or_left_comb
+
 module type AST_PARAMETER_TYPE = sig
   type type_meta
 end
@@ -44,7 +59,7 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
     | T_arrow of arrow
     | T_variable of type_variable
     | T_constant of type_constant
-    | T_operator of type_operator
+    | T_operator of (type_operator * type_expression list)
 
   and arrow = {type1: type_expression; type2: type_expression}
   
@@ -52,69 +67,32 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
 
   and field_content = {field_type : type_expression ; field_annotation : string option ; field_decl_pos : int}
 
-  and type_operator =
-    | TC_contract of type_expression
-    | TC_option of type_expression
-    | TC_list of type_expression
-    | TC_set of type_expression
-    | TC_map of type_expression * type_expression
-    | TC_big_map of type_expression * type_expression
-    | TC_map_or_big_map of type_expression * type_expression
-    | TC_michelson_pair_right_comb of type_expression
-    | TC_michelson_pair_left_comb of type_expression
-    | TC_michelson_or_right_comb of type_expression
-    | TC_michelson_or_left_comb of type_expression
-
 
   and type_expression = {type_content: type_content; location: Location.t; type_meta: type_meta}
 
   open Trace
-  let map_type_operator f = function
-      TC_contract x -> TC_contract (f x)
-    | TC_option x -> TC_option (f x)
-    | TC_list x -> TC_list (f x)
-    | TC_set x -> TC_set (f x)
-    | TC_map (x , y) -> TC_map (f x , f y)
-    | TC_big_map (x , y)-> TC_big_map (f x , f y)
-    | TC_map_or_big_map (x , y)-> TC_map_or_big_map (f x , f y)
-    | TC_michelson_pair_right_comb c -> TC_michelson_pair_right_comb (f c)
-    | TC_michelson_pair_left_comb c -> TC_michelson_pair_left_comb (f c)
-    | TC_michelson_or_right_comb c -> TC_michelson_or_right_comb (f c)
-    | TC_michelson_or_left_comb c -> TC_michelson_or_left_comb (f c)
-
-  let bind_map_type_operator f = function
-      TC_contract x -> let%bind x = f x in ok @@ TC_contract x
-    | TC_option x -> let%bind x = f x in ok @@ TC_option x
-    | TC_list x -> let%bind x = f x in ok @@ TC_list x
-    | TC_set x -> let%bind x = f x in ok @@ TC_set x
-    | TC_map (x , y) -> let%bind x = f x in let%bind y = f y in ok @@ TC_map (x , y)
-    | TC_big_map (x , y)-> let%bind x = f x in let%bind y = f y in ok @@ TC_big_map (x , y)
-    | TC_map_or_big_map (x , y)-> let%bind x = f x in let%bind y = f y in ok @@ TC_map_or_big_map (x , y)
-    | TC_michelson_pair_right_comb c -> let%bind c = f c in ok @@ TC_michelson_pair_right_comb c
-    | TC_michelson_pair_left_comb c -> let%bind c = f c in ok @@ TC_michelson_pair_left_comb c
-    | TC_michelson_or_right_comb c -> let%bind c = f c in ok @@ TC_michelson_or_right_comb c
-    | TC_michelson_or_left_comb c -> let%bind c = f c in ok @@ TC_michelson_or_left_comb c
-
   let type_operator_name = function
-        TC_contract _ -> "TC_contract"
-      | TC_option   _ -> "TC_option"
-      | TC_list     _ -> "TC_list"
-      | TC_set      _ -> "TC_set"
-      | TC_map      _ -> "TC_map"
-      | TC_big_map  _ -> "TC_big_map"
-      | TC_map_or_big_map _ -> "TC_map_or_big_map"
-      | TC_michelson_pair_right_comb _ -> "TC_michelson_pair_right_comb" 
-      | TC_michelson_pair_left_comb _ -> "TC_michelson_pair_left_comb" 
-      | TC_michelson_or_right_comb _ -> "TC_michelson_or_right_comb" 
-      | TC_michelson_or_left_comb _ -> "TC_michelson_or_left_comb" 
+        TC_contract                  -> "TC_contract"
+      | TC_option                    -> "TC_option"
+      | TC_list                      -> "TC_list"
+      | TC_set                       -> "TC_set"
+      | TC_map                       -> "TC_map"
+      | TC_big_map                   -> "TC_big_map"
+      | TC_map_or_big_map            -> "TC_map_or_big_map"
+      | TC_michelson_pair            -> "TC_michelson_pair"
+      | TC_michelson_or              -> "TC_michelson_or"
+      | TC_michelson_pair_right_comb -> "TC_michelson_pair_right_comb" 
+      | TC_michelson_pair_left_comb  -> "TC_michelson_pair_left_comb" 
+      | TC_michelson_or_right_comb   -> "TC_michelson_or_right_comb" 
+      | TC_michelson_or_left_comb    -> "TC_michelson_or_left_comb" 
 
   let type_expression'_of_string = function
-    | "TC_contract" , [x]     -> ok @@ T_operator(TC_contract x)
-    | "TC_option"   , [x]     -> ok @@ T_operator(TC_option x)
-    | "TC_list"     , [x]     -> ok @@ T_operator(TC_list x)
-    | "TC_set"      , [x]     -> ok @@ T_operator(TC_set x)
-    | "TC_map"      , [x ; y] -> ok @@ T_operator(TC_map (x , y))
-    | "TC_big_map"  , [x ; y] -> ok @@ T_operator(TC_big_map (x, y))
+    | "TC_contract" , [x]     -> ok @@ T_operator(TC_contract, [x])
+    | "TC_option"   , [x]     -> ok @@ T_operator(TC_option, [x])
+    | "TC_list"     , [x]     -> ok @@ T_operator(TC_list, [x])
+    | "TC_set"      , [x]     -> ok @@ T_operator(TC_set, [x])
+    | "TC_map"      , [x ; y] -> ok @@ T_operator(TC_map, [x ; y])
+    | "TC_big_map"  , [x ; y] -> ok @@ T_operator(TC_big_map, [x; y])
     | ("TC_contract" | "TC_option" | "TC_list" | "TC_set" | "TC_map" | "TC_big_map"), _ ->
       failwith "internal error: wrong number of arguments for type operator"
 
@@ -137,17 +115,19 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
       failwith "internal error: unknown type operator"
 
   let string_of_type_operator = function
-    | TC_contract       x       -> "TC_contract"     , [x]
-    | TC_option         x       -> "TC_option"       , [x]
-    | TC_list           x       -> "TC_list"         , [x]
-    | TC_set            x       -> "TC_set"          , [x]
-    | TC_map            (x , y) -> "TC_map"          , [x ; y]
-    | TC_big_map        (x , y) -> "TC_big_map"      , [x ; y]
-    | TC_map_or_big_map (x , y) -> "TC_map_or_big_map"  , [x ; y]
-    | TC_michelson_pair_right_comb c -> "TC_michelson_pair_right_comb" , [c]
-    | TC_michelson_pair_left_comb c -> "TC_michelson_pair_left_comb" , [c]
-    | TC_michelson_or_right_comb c -> "TC_michelson_or_right_comb" , [c]
-    | TC_michelson_or_left_comb c -> "TC_michelson_or_left_comb" , [c]
+    | TC_contract                  , lst -> "TC_contract"                  , lst
+    | TC_option                    , lst -> "TC_option"                    , lst
+    | TC_list                      , lst -> "TC_list"                      , lst
+    | TC_set                       , lst -> "TC_set"                       , lst
+    | TC_map                       , lst -> "TC_map"                       , lst
+    | TC_big_map                   , lst -> "TC_big_map"                   , lst
+    | TC_map_or_big_map            , lst -> "TC_map_or_big_map"            , lst
+    | TC_michelson_pair            , lst -> "TC_michelson_pair"            , lst
+    | TC_michelson_or              , lst -> "TC_michelson_or"              , lst
+    | TC_michelson_pair_right_comb , lst -> "TC_michelson_pair_right_comb" , lst
+    | TC_michelson_pair_left_comb  , lst -> "TC_michelson_pair_left_comb"  , lst
+    | TC_michelson_or_right_comb   , lst -> "TC_michelson_or_right_comb"   , lst
+    | TC_michelson_or_left_comb    , lst -> "TC_michelson_or_left_comb"    , lst
 
   let string_of_type_constant = function
     | TC_unit      -> "TC_unit", []

@@ -15,25 +15,13 @@ type type_content =
   | T_arrow of arrow
   | T_variable of type_variable
   | T_constant of type_constant
-  | T_operator of type_operator
+  | T_operator of (type_operator * type_expression list)
 
 and arrow = {type1: type_expression; type2: type_expression}
 
 and ctor_content = {ctor_type : type_expression ; michelson_annotation : string option ; ctor_decl_pos : int}
 
 and field_content = {field_type : type_expression ; michelson_annotation : string option ; field_decl_pos : int}
-
-and type_operator =
-  | TC_contract of type_expression
-  | TC_option of type_expression
-  | TC_list of type_expression
-  | TC_set of type_expression
-  | TC_map of type_expression * type_expression
-  | TC_big_map of type_expression * type_expression
-  | TC_michelson_pair_right_comb of type_expression
-  | TC_michelson_pair_left_comb of type_expression
-  | TC_michelson_or_right_comb of type_expression
-  | TC_michelson_or_left_comb of type_expression
 
 and type_expression = {type_content: type_content; location: Location.t}
 

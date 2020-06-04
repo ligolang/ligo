@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017-present, Facebook, Inc.
+ * Copyright (c) Facebook, Inc. and its affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -8,19 +8,24 @@
 import React, {useState, useCallback} from 'react';
 import classnames from 'classnames';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import useBaseUrl from '@docusaurus/useBaseUrl';
 import useLockBodyScroll from '@theme/hooks/useLockBodyScroll';
+import useLogo from '@theme/hooks/useLogo';
 import Link from '@docusaurus/Link';
-import isInternalUrl from '@docusaurus/utils'; // eslint-disable-line import/no-extraneous-dependencies
+import isInternalUrl from '@docusaurus/isInternalUrl';
 
 import styles from './styles.module.css';
 
 import SyntaxSwitch from '@theme/Syntax/SyntaxSwitch';
 
-
 const MOBILE_TOGGLE_SIZE = 24;
 
-function DocSidebarItem({item, onItemClick, collapsible}) {
+function DocSidebarItem({
+  item,
+  onItemClick,
+  collapsible,
+  activePath,
+  ...props
+}) {
   const {items, href, label, type} = item;
   const [collapsed, setCollapsed] = useState(item.collapsed);
   const [prevCollapsedProp, setPreviousCollapsedProp] = useState(null);
@@ -33,9 +38,10 @@ function DocSidebarItem({item, onItemClick, collapsible}) {
     setCollapsed(item.collapsed);
   }
 
-  const handleItemClick = useCallback(e => {
+  const handleItemClick = useCallback((e) => {
     e.preventDefault();
-    setCollapsed(state => !state);
+    e.target.blur();
+    setCollapsed((state) => !state);
   });
 
   switch (type) {
@@ -53,16 +59,19 @@ function DocSidebarItem({item, onItemClick, collapsible}) {
                 'menu__link--active': collapsible && !item.collapsed,
               })}
               href="#!"
-              onClick={collapsible ? handleItemClick : undefined}>
+              onClick={collapsible ? handleItemClick : undefined}
+              {...props}>
               {label}
             </a>
             <ul className="menu__list">
-              {items.map(childItem => (
+              {items.map((childItem) => (
                 <DocSidebarItem
+                  tabIndex={collapsed ? '-1' : '0'}
                   key={childItem.label}
                   item={childItem}
                   onItemClick={onItemClick}
                   collapsible={collapsible}
+                  activePath={activePath}
                 />
               ))}
             </ul>
@@ -75,18 +84,21 @@ function DocSidebarItem({item, onItemClick, collapsible}) {
       return (
         <li className="menu__list-item" key={label}>
           <Link
-            className="menu__link"
+            className={classnames('menu__link', {
+              'menu__link--active': href === activePath,
+            })}
             to={href}
             {...(isInternalUrl(href)
               ? {
-                  activeClassName: 'menu__link--active',
+                  isNavLink: true,
                   exact: true,
                   onClick: onItemClick,
                 }
               : {
                   target: '_blank',
                   rel: 'noreferrer noopener',
-                })}>
+                })}
+            {...props}>
             {label}
           </Link>
         </li>
@@ -102,8 +114,8 @@ function mutateSidebarCollapsingState(item, path) {
     case 'category': {
       const anyChildItemsActive =
         items
-          .map(childItem => mutateSidebarCollapsingState(childItem, path))
-          .filter(val => val).length > 0;
+          .map((childItem) => mutateSidebarCollapsingState(childItem, path))
+          .filter((val) => val).length > 0;
       // eslint-disable-next-line no-param-reassign
       item.collapsed = !anyChildItemsActive;
       return anyChildItemsActive;
@@ -118,9 +130,12 @@ function mutateSidebarCollapsingState(item, path) {
 function DocSidebar(props) {
   const [showResponsiveSidebar, setShowResponsiveSidebar] = useState(false);
   const {
-    siteConfig: {themeConfig: {navbar: {title, logo = {}} = {}}} = {}, isClient
+    siteConfig: {
+      themeConfig: {navbar: {title, hideOnScroll = false} = {}},
+    } = {},
+    isClient,
   } = useDocusaurusContext();
-  const logoUrl = useBaseUrl(logo.src);
+  const {logoLink, logoLinkProps, logoImageUrl, logoAlt} = useLogo();
 
   const {
     docsSidebars,
@@ -144,21 +159,29 @@ function DocSidebar(props) {
   }
 
   if (sidebarCollapsible) {
-    sidebarData.forEach(sidebarItem =>
+    sidebarData.forEach((sidebarItem) =>
       mutateSidebarCollapsingState(sidebarItem, path),
     );
   }
 
   return (
     <div className={styles.sidebar}>
-      <div className={styles.sidebarLogo}>
-        {logo != null && <img src={logoUrl} alt={logo.alt} />}
-        {title != null && <strong>{title}</strong>}
-      </div>
+      {hideOnScroll && (
+        <Link
+          tabIndex="-1"
+          className={styles.sidebarLogo}
+          to={logoLink}
+          {...logoLinkProps}>
+          {logoImageUrl != null && (
+            <img key={isClient} src={logoImageUrl} alt={logoAlt} />
+          )}
+          {title != null && <strong>{title}</strong>}
+        </Link>
+      )}
       {isClient && document.location.pathname.startsWith('/docs') && !showResponsiveSidebar ? 
-          <div className={styles.switchContainer}>
-            Display syntax: <SyntaxSwitch syntax={props.syntax} onSyntaxChange={s => props.onSyntaxChange(s)} /> 
-          </div>
+        <div className={styles.switchContainer}>
+          Display syntax: <SyntaxSwitch syntax={props.syntax} onSyntaxChange={s => props.onSyntaxChange(s)} /> 
+        </div>
         :
         null
       }
@@ -168,14 +191,14 @@ function DocSidebar(props) {
         })}>
         {isClient && document.location.pathname.startsWith('/docs') && showResponsiveSidebar ? 
           <div className={styles.switchContainerResponsive}>
-            Display syntax: 
-            <SyntaxSwitch syntax={props.syntax} onSyntaxChange={s => props.onSyntaxChange(s)} /> 
+            Display syntax: <SyntaxSwitch syntax={props.syntax} onSyntaxChange={s => props.onSyntaxChange(s)} /> 
           </div>
-        :
-        null
-      }
+          :
+          null
+        }
         <button
           aria-label={showResponsiveSidebar ? 'Close Menu' : 'Open Menu'}
+          aria-haspopup="true"
           className="button button--secondary button--sm menu__button"
           type="button"
           onClick={() => {
@@ -191,6 +214,7 @@ function DocSidebar(props) {
             </span>
           ) : (
             <svg
+              aria-label="Menu"
               className={styles.sidebarMenuIcon}
               xmlns="http://www.w3.org/2000/svg"
               height={MOBILE_TOGGLE_SIZE}
@@ -210,14 +234,16 @@ function DocSidebar(props) {
           )}
         </button>
         <ul className="menu__list">
-          {sidebarData.map(item => (
+          {sidebarData.map((item) => (
             <DocSidebarItem
               key={item.label}
               item={item}
-              onItemClick={() => {
+              onItemClick={(e) => {
+                e.target.blur();
                 setShowResponsiveSidebar(false);
               }}
               collapsible={sidebarCollapsible}
+              activePath={path}
             />
           ))}
         </ul>

@@ -88,7 +88,7 @@ const FEATURES = [
   {
     image: 'img/easy-integration.svg',
     title: 'Easy Integration',
-    content: 'You can use LIGO as a NodeJS library with Granary'
+    content: 'You can use LIGO as a Node.js library with Truffle.'
   }
 ];
 
@@ -100,9 +100,9 @@ const PARTNERS = [
     pinned: true
   },
   {
-    name: 'Tocqueville Group',
+    name: 'TQ Tezos',
     image: 'img/tq-logo.svg',
-    link: 'https://tqgroup.io/',
+    link: 'https://tqtezos.com/',
     pinned: true
   },
   {
