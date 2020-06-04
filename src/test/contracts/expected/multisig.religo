@@ -51,7 +51,7 @@ let check_message =
             :
               (nat, authorized_keys) => 
               {
-                let ((valid, keys)) = vk;
+                let (valid, keys) = vk;
                 switch(keys) {
                 | [] => vk
                 | [key, ...keys] =>
@@ -75,7 +75,7 @@ let check_message =
                     }
                 }
               };
-          let ((valid, keys)) = 
+          let (valid, keys) = 
             List.fold(aux, param.signatures, (valid, keys));
           if(valid
           < s.threshold) {

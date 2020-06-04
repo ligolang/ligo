@@ -278,8 +278,7 @@ let_binding:
   }
 | par(closed_irrefutable) type_annotation? "=" expr {
     wild_error $4;
-    Scoping.check_pattern $1.value.inside;
-    {binders = PPar $1, []; lhs_type=$2; eq=$3; let_rhs=$4}
+    {binders = $1.value.inside, []; lhs_type=$2; eq=$3; let_rhs=$4}
   }
 | tuple(sub_irrefutable) type_annotation? "=" expr {
     wild_error $4;
