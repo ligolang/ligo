@@ -105,15 +105,15 @@ async function main() {
   // const files = await findFiles(EXAMPLES_GLOB, EXAMPLES_DIR);
  
   const CURATED_EXAMPLES = [
-  'pascaligo/arithmetic-contract.ligo',
-  'cameligo/arithmetic-contract.ligo',
-  'reasonligo/arithmetic-contract.ligo',
-  'cameligo/id.mligo',
-  'pascaligo/id.ligo',   
-  'reasonligo/id.religo',
-  'cameligo/hashlock.mligo',
-  'pascaligo/hashlock.ligo',   
-  'reasonligo/hashlock.religo'
+    'pascaligo/arithmetic-contract.ligo',
+    'cameligo/arithmetic-contract.ligo',
+    'reasonligo/arithmetic-contract.ligo',
+    'cameligo/id.mligo',
+    'pascaligo/id.ligo',
+    'reasonligo/id.religo',
+    'cameligo/hashlock.mligo',
+    'pascaligo/hashlock.ligo',
+    'reasonligo/hashlock.religo'
   ];
 
 
