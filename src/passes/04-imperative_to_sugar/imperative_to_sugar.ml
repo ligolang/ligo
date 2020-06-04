@@ -365,7 +365,7 @@ and compile_matching : I.matching -> Location.t -> (O.expression option -> O.exp
   match cases with 
     | I.Match_option {match_none;match_some} ->
       let%bind match_none' = compile_expression match_none in
-      let (n,expr,tv) = match_some in
+      let (n,expr) = match_some in
       let%bind expr' = compile_expression expr in
       let env = Var.fresh () in
       let%bind ((_,free_vars_none), match_none) = repair_mutable_variable_in_matching match_none' [] env in
@@ -374,7 +374,7 @@ and compile_matching : I.matching -> Location.t -> (O.expression option -> O.exp
       let expr       = add_to_end expr (O.e_variable env) in
       let free_vars = List.sort_uniq Var.compare @@ free_vars_none @ free_vars_some in
       if (List.length free_vars != 0) then
-        let match_expr  = O.e_matching matchee (O.Match_option {match_none; match_some=(n,expr,tv)}) in
+        let match_expr  = O.e_matching matchee (O.Match_option {match_none; match_some=(n,expr)}) in
         let return_expr = fun expr ->
           O.e_let_in (env,None) false false (store_mutable_variable free_vars) @@
           O.e_let_in (env,None) false false match_expr @@
@@ -382,19 +382,19 @@ and compile_matching : I.matching -> Location.t -> (O.expression option -> O.exp
         in
         ok @@ restore_mutable_variable return_expr free_vars env
       else
-        return @@ O.e_matching ~loc matchee @@ O.Match_option {match_none=match_none'; match_some=(n,expr',tv)}
+        return @@ O.e_matching ~loc matchee @@ O.Match_option {match_none=match_none'; match_some=(n,expr')}
     | I.Match_list {match_nil;match_cons} ->
       let%bind match_nil' = compile_expression match_nil in
-      let (hd,tl,expr,tv) = match_cons in
+      let (hd,tl,expr) = match_cons in
       let%bind expr' = compile_expression expr in
       let env = Var.fresh () in
       let%bind ((_,free_vars_nil), match_nil) = repair_mutable_variable_in_matching match_nil' [] env in
       let%bind ((_,free_vars_cons), expr) = repair_mutable_variable_in_matching expr' [hd;tl] env in
       let match_nil = add_to_end match_nil (O.e_variable env) in
-      let expr       = add_to_end expr (O.e_variable env) in
+      let expr      = add_to_end expr (O.e_variable env) in
       let free_vars = List.sort_uniq Var.compare @@ free_vars_nil @ free_vars_cons in
       if (List.length free_vars != 0) then
-        let match_expr  = O.e_matching matchee (O.Match_list {match_nil; match_cons=(hd,tl,expr,tv)}) in
+        let match_expr  = O.e_matching matchee (O.Match_list {match_nil; match_cons=(hd,tl,expr)}) in
         let return_expr = fun expr ->
           O.e_let_in (env,None) false false (store_mutable_variable free_vars) @@
           O.e_let_in (env,None) false false match_expr @@
@@ -402,11 +402,8 @@ and compile_matching : I.matching -> Location.t -> (O.expression option -> O.exp
         in
         ok @@ restore_mutable_variable return_expr free_vars env
       else
-        return @@ O.e_matching ~loc matchee @@ O.Match_list {match_nil=match_nil'; match_cons=(hd,tl,expr',tv)}
-    | I.Match_tuple ((lst,expr), tv) ->
-      let%bind expr = compile_expression expr in
-      return @@ O.e_matching ~loc matchee @@ O.Match_tuple ((lst,expr), tv)
-    | I.Match_variant (lst,tv) ->
+        return @@ O.e_matching ~loc matchee @@ O.Match_list {match_nil=match_nil'; match_cons=(hd,tl,expr')}
+    | I.Match_variant lst ->
       let env = Var.fresh () in
       let aux fv ((c,n),expr) =
         let%bind expr = compile_expression expr in
@@ -418,10 +415,10 @@ and compile_matching : I.matching -> Location.t -> (O.expression option -> O.exp
       let free_vars = List.sort_uniq Var.compare @@ List.concat fv in
       if (List.length free_vars == 0) then (
         let cases = List.map (fun case -> let (a,_,b) = case in (a,b)) cases in
-        return @@ O.e_matching ~loc matchee @@ O.Match_variant (cases,tv)
+        return @@ O.e_matching ~loc matchee @@ O.Match_variant cases
       ) else (
         let cases = List.map (fun case -> let (a,b,_) = case in (a,b)) cases in
-        let match_expr = O.e_matching matchee @@ O.Match_variant (cases,tv) in
+        let match_expr = O.e_matching matchee @@ O.Match_variant cases in
         let return_expr = fun expr ->
           O.e_let_in (env,None) false false (store_mutable_variable free_vars) @@
           O.e_let_in (env,None) false false match_expr @@
@@ -429,6 +426,18 @@ and compile_matching : I.matching -> Location.t -> (O.expression option -> O.exp
         in
         ok @@ restore_mutable_variable return_expr free_vars env
       )
+    | I.Match_record (lst,ty_opt,expr) ->
+      let%bind expr = compile_expression expr in
+      let%bind ty_opt = bind_map_option (bind_map_list compile_type_expression) ty_opt in
+      return @@ O.e_matching ~loc matchee @@ O.Match_record (lst,ty_opt,expr)
+    | I.Match_tuple (lst,ty_opt,expr) ->
+      let%bind expr = compile_expression expr in
+      let%bind ty_opt = bind_map_option (bind_map_list compile_type_expression) ty_opt in
+      return @@ O.e_matching ~loc matchee @@ O.Match_tuple (lst,ty_opt,expr)
+    | I.Match_variable (lst,ty_opt,expr) ->
+      let%bind expr = compile_expression expr in
+      let%bind ty_opt = bind_map_option compile_type_expression ty_opt in
+      return @@ O.e_matching ~loc matchee @@ O.Match_variable (lst,ty_opt,expr)
  
 and compile_while I.{condition;body} =
   let env_rec = Var.fresh () in
@@ -707,22 +716,31 @@ and uncompile_matching : O.matching_expr -> I.matching_expr result =
   match m with 
     | O.Match_list {match_nil;match_cons} ->
       let%bind match_nil = uncompile_expression' match_nil in
-      let (hd,tl,expr,tv) = match_cons in
+      let (hd,tl,expr) = match_cons in
       let%bind expr = uncompile_expression' expr in
-      ok @@ I.Match_list {match_nil; match_cons=(hd,tl,expr,tv)}
+      ok @@ I.Match_list {match_nil; match_cons=(hd,tl,expr)}
     | O.Match_option {match_none;match_some} ->
       let%bind match_none = uncompile_expression' match_none in
-      let (n,expr,tv) = match_some in
+      let (n,expr) = match_some in
       let%bind expr = uncompile_expression' expr in
-      ok @@ I.Match_option {match_none; match_some=(n,expr,tv)}
-    | O.Match_tuple ((lst,expr), tv) ->
-      let%bind expr = uncompile_expression' expr in
-      ok @@ O.Match_tuple ((lst,expr), tv)
-    | O.Match_variant (lst,tv) ->
+      ok @@ I.Match_option {match_none; match_some=(n,expr)}
+    | O.Match_variant lst ->
       let%bind lst = bind_map_list (
         fun ((c,n),expr) ->
           let%bind expr = uncompile_expression' expr in
           ok @@ ((c,n),expr)
       ) lst 
       in
-      ok @@ I.Match_variant (lst,tv)
+      ok @@ I.Match_variant lst
+    | O.Match_record (lst,ty_opt,expr) ->
+      let%bind expr = uncompile_expression' expr in
+      let%bind ty_opt = bind_map_option (bind_map_list uncompile_type_expression) ty_opt in
+      ok @@ I.Match_record (lst,ty_opt,expr)
+    | O.Match_tuple (lst,ty_opt,expr) ->
+      let%bind expr = uncompile_expression' expr in
+      let%bind ty_opt = bind_map_option (bind_map_list uncompile_type_expression) ty_opt in
+      ok @@ I.Match_tuple (lst,ty_opt,expr)
+    | O.Match_variable (lst,ty_opt,expr) ->
+      let%bind expr = uncompile_expression' expr in
+      let%bind ty_opt = bind_map_option uncompile_type_expression ty_opt in
+      ok @@ I.Match_variable (lst,ty_opt,expr)

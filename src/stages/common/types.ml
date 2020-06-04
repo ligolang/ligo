@@ -11,6 +11,7 @@ type label = Label of string
 module CMap = Map.Make( struct type t = constructor' let compare (Constructor a) (Constructor b) = compare a b end)
 module LMap = Map.Make( struct type t = label let compare (Label a) (Label b) = String.compare a b end)
 
+
 type 'a label_map = 'a LMap.t
 type 'a constructor_map = 'a CMap.t
 
@@ -169,18 +170,6 @@ type literal =
   | Literal_void
   | Literal_operation of
       Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation
-and ('a,'tv) matching_content =
-  | Match_list of {
-      match_nil : 'a ;
-      match_cons : expression_variable * expression_variable * 'a * 'tv;
-    }
-  | Match_option of {
-      match_none : 'a ;
-      match_some : expression_variable * 'a * 'tv;
-    }
-  | Match_tuple of (expression_variable list * 'a) * 'tv list
-  | Match_variant of ((constructor' * expression_variable) * 'a) list * 'tv
-
 and constant' =
   | C_INT
   | C_UNIT

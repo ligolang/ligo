@@ -98,8 +98,11 @@ val e_let_in : ?loc:Location.t -> ( expression_variable * type_expression option
 
 val e_constructor : ?loc:Location.t -> string -> expression -> expression
 val e_matching : ?loc:Location.t -> expression -> matching_expr -> expression
-val ez_match_variant : ((string * string ) * 'a ) list -> ('a,unit) matching_content
+val ez_match_variant : ((string * string ) * expression) list -> matching_expr
 val e_matching_variant : ?loc:Location.t -> expression -> ((string * string) * expression) list -> expression
+val e_matching_record  : ?loc:Location.t -> expression -> (label * expression_variable) list -> type_expression list option -> expression -> expression
+val e_matching_tuple   : ?loc:Location.t -> expression -> expression_variable list -> type_expression list option -> expression -> expression
+val e_matching_variable: ?loc:Location.t -> expression -> expression_variable -> type_expression option -> expression -> expression
 
 val e_record : ?loc:Location.t -> expr Map.String.t -> expression
 val e_record_ez  : ?loc:Location.t -> ( string * expr ) list -> expression

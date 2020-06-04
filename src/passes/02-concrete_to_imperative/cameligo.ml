@@ -960,7 +960,7 @@ and compile_declaration : Raw.declaration -> declaration Location.wrap list resu
       ok @@ [loc x @@ (Declaration_constant (Var.of_name var.value , lhs_type , inline, rhs'))]
     )
 
-and compile_cases : type a . (Raw.pattern * a) list -> (a, unit) matching_content result =
+and compile_cases : (Raw.pattern * expression) list -> matching_expr result =
   fun t ->
   let open Raw in
   let rec get_var (t:Raw.pattern) =
@@ -1031,7 +1031,7 @@ and compile_cases : type a . (Raw.pattern * a) list -> (a, unit) matching_conten
   match patterns with
   | [(PFalse _, f) ; (PTrue _, t)]
   | [(PTrue _, t) ; (PFalse _, f)] ->
-      ok @@ Match_variant ([((Constructor "true", Var.of_name "_"), t); ((Constructor "false", Var.of_name "_"), f)], ())
+      ok @@ Match_variant ([((Constructor "true", Var.of_name "_"), t); ((Constructor "false", Var.of_name "_"), f)])
   | [(PList (PCons c), cons); (PList (PListComp sugar_nil), nil)]
   | [(PList (PListComp sugar_nil), nil); (PList (PCons c), cons)] ->
       let%bind () =
@@ -1044,7 +1044,7 @@ and compile_cases : type a . (Raw.pattern * a) list -> (a, unit) matching_conten
         let%bind a = get_var a in
         let%bind b = get_var b in
         ok (a, b) in
-      ok @@ Match_list {match_cons=(Var.of_name a, Var.of_name b, cons, ()); match_nil=nil}
+      ok @@ Match_list {match_cons=(Var.of_name a, Var.of_name b, cons); match_nil=nil}
   | lst ->
       let error x =
         let title () = "Pattern" in
@@ -1075,7 +1075,7 @@ and compile_cases : type a . (Raw.pattern * a) list -> (a, unit) matching_conten
         | [ (("None", None), none_expr);
             (("Some", Some some_var), some_expr) ] ->
            ok @@ Match_option {
-                    match_some = (Var.of_name some_var, some_expr, ());
+                    match_some = (Var.of_name some_var, some_expr);
                     match_none = none_expr }
         | _ -> simple_fail "bad option pattern"
       in bind_or (as_option () , as_variant ())

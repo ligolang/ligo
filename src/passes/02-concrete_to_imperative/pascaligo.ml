@@ -1059,14 +1059,14 @@ and compile_cases : (Raw.pattern * expression) list -> matching_expr result = fu
   match patterns with
   | [(PConstr PFalse _ , f) ; (PConstr PTrue _ , t)]
   | [(PConstr PTrue _ , t) ; (PConstr PFalse _ , f)] ->
-      ok @@ Match_variant ([((Constructor "true", Var.of_name "_"), t); ((Constructor "false", Var.of_name "_"), f)], ())
+      ok @@ Match_variant ([((Constructor "true", Var.of_name "_"), t); ((Constructor "false", Var.of_name "_"), f)])
   | [(PConstr PSomeApp v , some) ; (PConstr PNone _ , none)]
   | [(PConstr PNone _ , none) ; (PConstr PSomeApp v , some)] -> (
       let (_, v) = v.value in
       let%bind v = match v.value.inside with
         | PVar v -> ok v.value
         | p -> fail @@ unsupported_deep_Some_patterns p in
-      ok @@ Match_option {match_none = none ; match_some = (Var.of_name v, some, ()) }
+      ok @@ Match_option {match_none = none ; match_some = (Var.of_name v, some) }
     )
   | [(PList PCons c, cons) ; (PList (PNil _), nil)]
   | [(PList (PNil _), nil) ; (PList PCons c, cons)] ->
@@ -1079,7 +1079,7 @@ and compile_cases : (Raw.pattern * expression) list -> matching_expr result = fu
         | _ -> fail @@ unsupported_deep_list_patterns c
 
       in
-      ok @@ Match_list {match_cons = (Var.of_name a, Var.of_name b, cons,()) ; match_nil = nil}
+      ok @@ Match_list {match_cons = (Var.of_name a, Var.of_name b, cons) ; match_nil = nil}
   | lst ->
       trace (simple_info "currently, only booleans, options, lists and \
                          user-defined constructors are supported in patterns") @@

@@ -92,21 +92,6 @@ and cases : environment -> matching_expr -> matching_expr = fun env cs ->
     in
     return @@ Match_option { match_none ; match_some }
   )
-  | Match_tuple c -> (
-    let var_tvs =
-      try (
-        List.combine c.vars c.tvs
-      ) with _ -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
-    in
-    let env' =
-      let aux prev (var , tv) =
-        Environment.add_ez_binder var tv prev
-      in
-      List.fold_left aux env var_tvs
-    in
-    let body = self ~env' c.body in
-    return @@ Match_tuple { c with body }
-  )
   | Match_variant c -> (
     let variant_type = Combinators.get_t_sum_exn c.tv in
     let cases =

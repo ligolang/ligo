@@ -63,10 +63,6 @@ and fold_cases : 'a . 'a folder -> 'a -> matching_expr -> 'a result = fun f init
       let%bind res = fold_expression f res body in
       ok res
     )
-  | Match_tuple {vars=_ ; body; tvs=_} -> (
-      let%bind res = fold_expression f init body in
-      ok res
-    )
   | Match_variant {cases;tv=_} -> (
       let aux init' {constructor=_; pattern=_ ; body} =
         let%bind res' = fold_expression f init' body in
@@ -139,10 +135,6 @@ and map_cases : mapper -> matching_expr -> matching_expr result = fun f m ->
       let%bind match_none = map_expression f match_none in
       let%bind body = map_expression f body in
       ok @@ Match_option { match_none ; match_some = { opt ; body ; tv } }
-    )
-  | Match_tuple { vars ; body ; tvs } -> (
-      let%bind body = map_expression f body in
-      ok @@ Match_tuple { vars ; body ; tvs }
     )
   | Match_variant {cases;tv} -> (
       let aux { constructor ; pattern ; body } =
@@ -230,10 +222,6 @@ and fold_map_cases : 'a . 'a fold_mapper -> 'a -> matching_expr -> ('a * matchin
       let%bind (init, match_none) = fold_map_expression f init match_none in
       let%bind (init, body) = fold_map_expression f init body in
       ok @@ (init, Match_option { match_none ; match_some = { opt ; body ; tv } })
-    )
-  | Match_tuple { vars ; body ; tvs } -> (
-      let%bind (init, body) = fold_map_expression f init body in
-      ok @@ (init, Match_tuple {vars ; body ; tvs })
     )
   | Match_variant {cases ; tv} -> (
       let aux init {constructor ; pattern ; body} =

@@ -107,7 +107,7 @@ let e_constructor ?loc s a : expression = make_e ?loc @@ E_constructor { constru
 let e_matching ?loc a b : expression = make_e ?loc @@ E_matching {matchee=a;cases=b}
 
 let e_record ?loc map = make_e ?loc @@ E_record map
-let e_record_accessor ?loc a b = make_e ?loc @@ E_record_accessor {record = a; path = Label b}
+let e_record_accessor ?loc a b = make_e ?loc @@ E_record_accessor {record = a; path = b}
 let e_record_update ?loc record path update = make_e ?loc @@ E_record_update {record; path; update}
 
 let e_annotation ?loc anno_expr ty = make_e ?loc @@ E_ascription {anno_expr; type_annotation = ty}

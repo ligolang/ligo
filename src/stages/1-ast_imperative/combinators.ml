@@ -148,9 +148,14 @@ let e_bool ?loc   b : expression = e_constructor ?loc (string_of_bool b) (e_unit
 
 let ez_match_variant (lst : ((string * string) * 'a) list) =
   let lst = List.map (fun ((c,n),a) -> ((Constructor c, Var.of_name n), a) ) lst in
-  Match_variant (lst,())
+  Match_variant lst
 let e_matching_variant ?loc a (lst : ((string * string)* 'a) list) =
   e_matching ?loc a (ez_match_variant lst)
+
+let e_matching_record   ?loc m lst ty_opt expr = e_matching ?loc m @@ Match_record   (lst,ty_opt, expr)
+let e_matching_tuple    ?loc m lst ty_opt expr = e_matching ?loc m @@ Match_tuple    (lst,ty_opt, expr)
+let e_matching_variable ?loc m var ty_opt expr = e_matching ?loc m @@ Match_variable (var,ty_opt, expr)
+
 let e_record_ez ?loc (lst : (string * expr) list) : expression =
   let map = List.fold_left (fun m (x, y) -> LMap.add (Label x) y m) LMap.empty lst in
   make_e ?loc @@ E_record map

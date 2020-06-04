@@ -76,8 +76,7 @@ let rec compile_expression : I.expression -> O.expression result =
       return @@ O.E_constructor {constructor;element}
     | I.E_matching {matchee; cases} ->
       let%bind matchee = compile_expression matchee in
-      let%bind cases   = compile_matching cases in
-      return @@ O.E_matching {matchee;cases}
+      compile_matching e.location matchee cases
     | I.E_record record ->
       let record = I.LMap.to_kv_list record in
       let%bind record = 
@@ -137,7 +136,7 @@ let rec compile_expression : I.expression -> O.expression result =
       let%bind matchee = compile_expression condition in
       let%bind match_true = compile_expression then_clause in
       let%bind match_false = compile_expression else_clause in
-      return @@ O.E_matching {matchee; cases=Match_variant ([((Constructor "true", Var.of_name "_"),match_true);((Constructor "false", Var.of_name "_"), match_false)],())}
+      return @@ O.E_matching {matchee; cases=Match_variant ([((Constructor "true", Var.of_name "_"),match_true);((Constructor "false", Var.of_name "_"), match_false)])}
     | I.E_sequence {expr1; expr2} ->
       let%bind expr1 = compile_expression expr1 in
       let%bind expr2 = compile_expression expr2 in
@@ -166,30 +165,64 @@ and compile_lambda : I.lambda -> O.lambda result =
     let%bind output_type = bind_map_option idle_type_expression output_type in
     let%bind result = compile_expression result in
     ok @@ O.{binder;input_type;output_type;result}
-and compile_matching : I.matching_expr -> O.matching_expr result =
-  fun m -> 
+and compile_matching : Location.t -> O.expression -> I.matching_expr -> O.expression result =
+  fun loc e m -> 
   match m with 
     | I.Match_list {match_nil;match_cons} ->
       let%bind match_nil = compile_expression match_nil in
-      let (hd,tl,expr,tv) = match_cons in
+      let (hd,tl,expr) = match_cons in
       let%bind expr = compile_expression expr in
-      ok @@ O.Match_list {match_nil; match_cons=(hd,tl,expr,tv)}
+      ok @@ O.e_matching ~loc e @@ O.Match_list {match_nil; match_cons=(hd,tl,expr)}
     | I.Match_option {match_none;match_some} ->
       let%bind match_none = compile_expression match_none in
-      let (n,expr,tv) = match_some in
+      let (n,expr) = match_some in
       let%bind expr = compile_expression expr in
-      ok @@ O.Match_option {match_none; match_some=(n,expr,tv)}
-    | I.Match_tuple ((lst,expr), tv) ->
-      let%bind expr = compile_expression expr in
-      ok @@ O.Match_tuple ((lst,expr), tv)
-    | I.Match_variant (lst,tv) ->
+      ok @@ O.e_matching ~loc e @@ O.Match_option {match_none; match_some=(n,expr)}
+    | I.Match_variant lst ->
       let%bind lst = bind_map_list (
         fun ((c,n),expr) ->
           let%bind expr = compile_expression expr in
           ok @@ ((c,n),expr)
       ) lst 
       in
-      ok @@ O.Match_variant (lst,tv)
+      ok @@ O.e_matching ~loc e @@ O.Match_variant lst
+    | I.Match_record (fields,field_types, expr) ->
+      let combine fields field_types =
+        match field_types with
+          Some ft -> List.combine fields @@ List.map (fun x -> Some x) ft
+        | None    -> List.map (fun x -> (x, None)) fields
+      in
+      let%bind next   = compile_expression expr in
+      let%bind field_types = bind_map_option (bind_map_list idle_type_expression) field_types in
+      let aux ((index,expr) : int * _ ) ((field,name): (O.label * (O.expression_variable * O.type_expression option))) =
+        let f = fun expr' -> O.e_let_in name false (O.e_record_accessor e field) expr' in
+        (index+1, fun expr' -> expr (f expr'))
+      in
+      let (_,header) = List.fold_left aux (0, fun e -> e) @@
+        List.map (fun ((a,b),c) -> (a,(b,c))) @@
+        combine fields field_types
+      in
+      ok @@ header next
+    | I.Match_tuple (fields,field_types, expr) ->
+      let combine fields field_types =
+        match field_types with
+          Some ft -> List.combine fields @@ List.map (fun x -> Some x) ft
+        | None    -> List.map (fun x -> (x, None)) fields
+      in
+      let%bind next   = compile_expression expr in
+      let%bind field_types = bind_map_option (bind_map_list idle_type_expression) field_types in
+      let aux ((index,expr) : int * _ ) (field: O.expression_variable * O.type_expression option) =
+        let f = fun expr' -> O.e_let_in field false (O.e_record_accessor e (Label (string_of_int index))) expr' in
+        (index+1, fun expr' -> expr (f expr'))
+      in
+      let (_,header) = List.fold_left aux (0, fun e -> e) @@
+        combine fields field_types
+      in
+      ok @@ header next
+    | I.Match_variable (a, ty_opt, expr) ->
+      let%bind ty_opt = bind_map_option idle_type_expression ty_opt in
+      let%bind expr = compile_expression expr in
+      ok @@ O.e_let_in (a,ty_opt) false e expr
  
 let compile_declaration : I.declaration Location.wrap -> _ =
   fun {wrap_content=declaration;location} ->
@@ -313,22 +346,19 @@ and uncompile_matching : O.matching_expr -> I.matching_expr result =
   match m with 
     | O.Match_list {match_nil;match_cons} ->
       let%bind match_nil = uncompile_expression match_nil in
-      let (hd,tl,expr,tv) = match_cons in
+      let (hd,tl,expr) = match_cons in
       let%bind expr = uncompile_expression expr in
-      ok @@ I.Match_list {match_nil; match_cons=(hd,tl,expr,tv)}
+      ok @@ I.Match_list {match_nil; match_cons=(hd,tl,expr)}
     | O.Match_option {match_none;match_some} ->
       let%bind match_none = uncompile_expression match_none in
-      let (n,expr,tv) = match_some in
+      let (n,expr) = match_some in
       let%bind expr = uncompile_expression expr in
-      ok @@ I.Match_option {match_none; match_some=(n,expr,tv)}
-    | O.Match_tuple ((lst,expr), tv) ->
-      let%bind expr = uncompile_expression expr in
-      ok @@ O.Match_tuple ((lst,expr), tv)
-    | O.Match_variant (lst,tv) ->
+      ok @@ I.Match_option {match_none; match_some=(n,expr)}
+    | O.Match_variant lst ->
       let%bind lst = bind_map_list (
         fun ((c,n),expr) ->
           let%bind expr = uncompile_expression expr in
           ok @@ ((c,n),expr)
       ) lst 
       in
-      ok @@ I.Match_variant (lst,tv)
+      ok @@ I.Match_variant lst
