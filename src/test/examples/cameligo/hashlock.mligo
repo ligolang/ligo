@@ -43,7 +43,15 @@
       )
   generateDeployScript:
     entrypoint: main
-    storage: 0
+    storage: |
+      { hashed=0x0e2ab5866b0ec701a0204881645dc50e1d60668f1433a385e999f0af1b6cd8ce; 
+        unused=false; 
+        commits=(Big_map.literal[(
+          ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address),  
+          {date=("2020-05-29T11:22:33Z" : timestamp); 
+           salted_hash=0x0e2ab5866b0ec701a0204881645dc50e1d60668f1433a385e999f0af1b6cd8ce}
+          );]
+        )}
 *_*)
 type commit = {
   date        : timestamp;
