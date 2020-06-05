@@ -3,12 +3,12 @@ let foobar =
     {
       let foo: int => int = (i: int) => i;
       let bar: ((int => int) => int) = 
-        (f: int => int) => f(i);
+        (f: (int => int)) => f(i);
       bar(foo)
     };
 
 let higher2 = 
-  (i: int, f: int => int): int => 
+  (i: int, f: (int => int)): int => 
     {
       let ii: int = f(i);
       ii
@@ -37,7 +37,7 @@ let g = (i: int): int => f(i);
 let foobar4 = (i: int): int => g(g(i));
 
 let higher3 = 
-  (i: int, f: int => int, g: int => int): int => 
+  (i: int, f: (int => int), g: (int => int)): int => 
     {
       let ii: int = f(g(i));
       ii

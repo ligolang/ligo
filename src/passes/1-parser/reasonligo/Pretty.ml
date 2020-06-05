@@ -50,11 +50,8 @@ and pp_let_binding let_ (binding : let_binding) =
       | Some (_,e) ->
           patterns ^^ group (break 0 ^^ string ": " ^^ pp_type_expr e ^^ string " = ")
   in
-  match let_rhs with
-  (* | EFun { } -> *)
-  | e ->  
-    let rhs = pp_expr e
-    in prefix 2 0 lhs rhs
+  let rhs = pp_expr let_rhs
+  in prefix 2 0 lhs rhs
 
 and pp_pattern = function
   PConstr p -> pp_pconstr p
@@ -403,7 +400,7 @@ and pp_seq {value; _} =
 
 and pp_type_expr = function
   TProd t   -> pp_cartesian t
-| TSum t    -> pp_variants t
+| TSum t    -> break 0 ^^ pp_variants t
 | TRecord t -> pp_fields t
 | TApp t    -> pp_type_app t
 | TFun t    -> pp_fun_type t

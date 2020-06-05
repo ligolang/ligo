@@ -430,7 +430,18 @@ type_expr_simple:
     TProd {region = cover $1 $3; value=$2}
   }
 | "(" type_expr_simple "=>" type_expr_simple ")" {
-    TFun {region = cover $1 $5; value=$2,$3,$4} }
+    TPar { 
+      value = {
+        lpar = $1;
+        rpar = $5;
+        inside = TFun {
+          region = cover (type_expr_to_region $2) (type_expr_to_region $4);
+          value=$2,$3,$4
+        } 
+      };
+      region = cover $1 $5;
+    }
+}
 
 type_annotation_simple:
   ":" type_expr_simple { $1,$2 }
