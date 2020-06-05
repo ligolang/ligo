@@ -18,11 +18,10 @@ let i = (a: int, b: int) => a + b;
 
 let j = (a: int, b: int) => a - b;
 
-let m = 
-  {
-    let z = 3;
-    z
-  };
+let m = {
+  let z = 3;
+  z
+};
 
 let n = (a: int): int => a + 1;
 
@@ -32,28 +31,25 @@ let n = (a: int, b: int): int => a + 1;
 
 let o = (a: int, b: int): int => a + 1;
 
-let p = 
+let p = {
   {
-    {
-      3
-    }
-  };
+    3
+  }
+};
 
-let q = 
-  {
-    f: 3,
-    g: 6,
-    h: {i: "bla", j: 1 + 2, k: {l: 1, z: 2 } }
-  };
+let q = {
+  f: 3,
+  g: 6,
+  h: {i: "bla", j: 1 + 2, k: {l: 1, z: 2 } }
+};
 
-let s = 
+let s = {
+  let a = 2;
   {
-    let a = 2;
-    {
-      z: a,
-      a: a
-    }
-  };
+    z: a,
+    a: a
+  }
+};
 
 let t = (((((((2)))))));
 

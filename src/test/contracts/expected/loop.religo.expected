@@ -12,7 +12,10 @@ type sum_aggregator = {counter: int, sum: int };
 
 let counter = 
   (n: int): int => {
-    let initial: sum_aggregator = {counter: 0, sum: 0 };
+    let initial: sum_aggregator = {
+      counter: 0,
+      sum: 0
+    };
     let rec aggregate = 
       (prev: sum_aggregator): int => 
         if(prev.counter <= n) {
@@ -40,7 +43,10 @@ let rec aux_nest =
 
 let counter_nest = 
   (n: int): int => {
-    let initial: sum_aggregator = {counter: 0, sum: 0 };
+    let initial: sum_aggregator = {
+      counter: 0,
+      sum: 0
+    };
     let out: sum_aggregator = aux_nest(initial);
     out.sum
   };

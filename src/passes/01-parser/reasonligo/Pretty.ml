@@ -46,8 +46,11 @@ and pp_let_binding let_ (binding : let_binding) =
       | Some (_,e) ->
           patterns ^^ group (break 0 ^^ string ": " ^^ pp_type_expr e ^^ string " = ")
   in
-  let rhs = pp_expr let_rhs
-  in prefix 2 0 lhs rhs
+  let rhs = pp_expr let_rhs in 
+  match let_rhs with 
+  | ESeq _
+  | ERecord _ -> lhs ^^ rhs
+  | _ -> prefix 2 0 lhs rhs
 
 and pp_pattern = function
   PConstr p -> pp_pconstr p
