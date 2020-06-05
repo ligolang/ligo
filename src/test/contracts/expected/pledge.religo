@@ -31,6 +31,6 @@ let main =
     {
       switch(p) {
       | Donate => donate(((), s))
-      | Distributemsg => distribute((msg, s))
+      | Distribute msg => distribute((msg, s))
       }
     };

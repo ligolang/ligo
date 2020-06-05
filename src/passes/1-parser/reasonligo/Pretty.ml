@@ -79,7 +79,9 @@ and pp_pconstr = function
 and pp_patt_c_app {value; _} =
   match value with
     constr, None -> pp_ident constr
-  | constr, Some pat ->
+  | constr, Some (PVar _ as pat) ->
+      prefix 2 1 (pp_ident constr)  (pp_pattern pat)
+  | constr, Some (_ as pat)->
       prefix 2 0 (pp_ident constr)  (pp_pattern pat)
 
 and pp_patt_some {value; _} =
