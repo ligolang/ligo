@@ -5,13 +5,9 @@ module Region = Simple_utils.Region
 open! Region
 open! PPrint
 
-(*let paragraph (s : string) = flow (break 1) (words s)*)
-
 let rec print ast =
   let app decl = group (pp_declaration decl) in
   separate_map (hardline ^^ hardline) app (Utils.nseq_to_list ast.decl)
-
-(* and indent_x =  *)
 
 and pp_declaration = function
   Let decl -> pp_let_decl decl
@@ -167,9 +163,6 @@ and pp_case_expr {value; _} =
 
 and pp_cases {value; _} =
   let head, tail = value in
-  (* let head = pp_clause head in *)
-  (* let head = if tail = [] then head
-             else string "| " ^^ head in *)
   let rest = List.map snd tail in
   let app clause = break 1 ^^ string "| " ^^ pp_clause clause
   in  concat_map app (head :: rest)
@@ -241,10 +234,6 @@ and pp_string_expr = function
 | Verbatim e -> pp_verbatim e
 
 and pp_list_expr = function
-(* let {arg1; arg2; _} = value
-  and length = String.length op + 1 in
-  pp_expr arg1 ^/^ string (op ^ " ") ^^ nest length (pp_expr arg2) *)
-
 | ECons {value = {arg1; arg2; _}; _ } -> 
   string "[" ^^ pp_expr arg1 ^^ string "," ^^ break 1 ^^ string "..." ^^ pp_expr arg2 ^^ string "]"
 | EListComp e -> group (pp_injection pp_expr e)
@@ -347,8 +336,6 @@ and pp_call_expr {value; _} =
   let lambda, arguments = value in
   let arguments = Utils.nseq_to_list arguments in
   let arguments = string "(" ^^ group (separate_map (string "," ^^ break 0 ^^ string " ") pp_expr arguments) ^^ string ")" in
-
-  (* let arguments = string "(" ^^ pp_nseq pp_expr arguments ^^ string ")" in *)
   group (break 0 ^^ pp_expr lambda ^^ nest 2 arguments)
 
 and pp_tuple_expr {value; _} =
@@ -481,8 +468,6 @@ and pp_fun_type {value; _} =
   | _, TFun tf -> string "(" ^^ pp_type_expr lhs ^^ string ", " ^^ pp_fun_args tf 
   | TVar _ , _ -> group (pp_type_expr lhs ^^ string " =>" ^/^ pp_type_expr rhs)
   | _ -> group (string "(" ^^ pp_type_expr lhs  ^^ string ")" ^^ string " =>" ^/^ pp_type_expr rhs)
-  
-  (* group (string "(" ^^ pp_type_expr lhs ^^ string ")" ^^ string " =>" ^/^ pp_type_expr rhs) *)
 
 and pp_type_par {value; _} =
   string "(" ^^ nest 1 (pp_type_expr value.inside ^^ string ")")
