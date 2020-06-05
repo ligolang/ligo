@@ -30,9 +30,6 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
     let%bind res = bind_fold_list (bind_fold_pair self) init' lst in
     ok res
   )
-  | E_look_up ab ->
-      let%bind res = bind_fold_pair self init' ab in
-      ok res
   | E_application {lamb;args} -> (
       let ab = (lamb,args) in
       let%bind res = bind_fold_pair self init' ab in
@@ -56,15 +53,25 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
     let%bind res = bind_fold_lmap aux (ok init') m in
     ok res
   )
-  | E_record_update {record;update} -> (
+  | E_update {record;path;update} -> (
     let%bind res = self init' record in
+    let aux res a = match a with
+    | Access_map e -> self res e 
+    | _ -> ok res
+    in
+    let%bind res = bind_fold_list aux res path in
     let%bind res = fold_expression self res update in
     ok res 
   )
-  | E_record_accessor {record} -> (
-     let%bind res = self init' record in
-     ok res
-    )
+  | E_accessor {record;path} -> (
+    let%bind res = self init' record in
+    let aux res a = match a with
+    | Access_map e -> self res e 
+    | _ -> ok res
+    in
+    let%bind res = bind_fold_list aux res path in
+    ok res
+  )
   | E_let_in { let_binder = _ ; rhs ; let_result } -> (
       let%bind res = self init' rhs in
       let%bind res = self res let_result in
@@ -90,15 +97,6 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
     let%bind res = bind_fold_list aux (init') t in
     ok res
   )
-  | E_tuple_update {tuple;update} -> (
-    let%bind res = self init' tuple in
-    let%bind res = fold_expression self res update in
-    ok res 
-  )
-  | E_tuple_accessor {tuple} -> (
-     let%bind res = self init' tuple in
-     ok res
-    )
      
 and fold_cases : 'a folder -> 'a -> matching_expr -> 'a result = fun f init m ->
   match m with
@@ -158,10 +156,6 @@ let rec map_expression : exp_mapper -> expression -> expression result = fun f e
     let%bind lst' = bind_map_list (bind_map_pair self) lst in
     return @@ E_big_map lst'
   )
-  | E_look_up ab -> (
-      let%bind ab' = bind_map_pair self ab in
-      return @@ E_look_up ab'
-    )
   | E_ascription ascr -> (
       let%bind e' = self ascr.anno_expr in
       return @@ E_ascription {ascr with anno_expr=e'}
@@ -171,18 +165,32 @@ let rec map_expression : exp_mapper -> expression -> expression result = fun f e
       let%bind cases' = map_cases f cases in
       return @@ E_matching {matchee=e';cases=cases'}
     )
-  | E_record_accessor acc -> (
-      let%bind e' = self acc.record in
-      return @@ E_record_accessor {acc with record = e'}
-    )
   | E_record m -> (
     let%bind m' = bind_map_lmap self m in
     return @@ E_record m'
   )
-  | E_record_update {record; path; update} -> (
+  | E_accessor {record; path} -> (
     let%bind record = self record in
+    let aux a = match a with
+    | Access_map e -> 
+      let%bind e = self e in
+      ok @@ Access_map e
+    | e -> ok @@ e
+    in
+    let%bind path = bind_map_list aux path in
+    return @@ E_accessor {record; path}
+  )
+  | E_update {record; path; update} -> (
+    let%bind record = self record in
+    let aux a = match a with
+    | Access_map e -> 
+      let%bind e = self e in
+      ok @@ Access_map e
+    | e -> ok @@ e
+    in
+    let%bind path = bind_map_list aux path in
     let%bind update = self update in
-    return @@ E_record_update {record;path;update}
+    return @@ E_update {record;path;update}
   )
   | E_constructor c -> (
       let%bind e' = self c.element in
@@ -223,15 +231,6 @@ let rec map_expression : exp_mapper -> expression -> expression result = fun f e
     let%bind t' = bind_map_list self t in
     return @@ E_tuple t'
   )
-  | E_tuple_update {tuple; path; update} -> (
-    let%bind tuple  = self tuple in
-    let%bind update = self update in
-    return @@ E_tuple_update {tuple; path; update}
-  )
-  | E_tuple_accessor {tuple;path} -> (
-     let%bind tuple = self tuple in
-     return @@ E_tuple_accessor {tuple;path}
-    )
   | E_literal _ | E_variable _ | E_skip as e' -> return e'
 
 and map_type_expression : ty_exp_mapper -> type_expression -> type_expression result = fun f te ->
@@ -328,10 +327,6 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expres
     let%bind (res, lst') = bind_fold_map_list (bind_fold_map_pair self) init' lst in
     ok (res, return @@ E_big_map lst')
   )
-  | E_look_up ab -> (
-      let%bind (res, ab') = bind_fold_map_pair self init' ab in
-      ok (res, return @@ E_look_up ab')
-    )
   | E_ascription ascr -> (
       let%bind (res,e') = self init' ascr.anno_expr in
       ok (res, return @@ E_ascription {ascr with anno_expr=e'})
@@ -341,33 +336,38 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expres
       let%bind (res,cases') = fold_map_cases f res cases in
       ok (res, return @@ E_matching {matchee=e';cases=cases'})
     )
-  | E_record_accessor acc -> (
-      let%bind (res, e') = self init' acc.record in
-      ok (res, return @@ E_record_accessor {acc with record = e'})
-    )
   | E_record m -> (
     let%bind (res, lst') = bind_fold_map_list (fun res (k,e) -> let%bind (res,e) = self res e in ok (res,(k,e))) init' (LMap.to_kv_list m) in
     let m' = LMap.of_list lst' in
     ok (res, return @@ E_record m')
   )
-  | E_record_update {record; path; update} -> (
+  | E_accessor {record;path} -> (
     let%bind (res, record) = self init' record in
+    let aux res a = match a with
+    | Access_map e -> 
+      let%bind (res,e) = self res e in
+      ok @@ (res,Access_map e)
+    | e -> ok @@ (res,e)
+    in
+    let%bind (res, path)   = bind_fold_map_list aux res path in
+    ok (res, return @@ E_accessor {record; path})
+  )
+  | E_update {record; path; update} -> (
+    let%bind (res, record) = self init' record in
+    let aux res a = match a with
+    | Access_map e -> 
+      let%bind (res,e) = self res e in
+      ok @@ (res,Access_map e)
+    | e -> ok @@ (res,e)
+    in
+    let%bind (res, path)   = bind_fold_map_list aux res path in
     let%bind (res, update) = self res update in
-    ok (res, return @@ E_record_update {record;path;update})
+    ok (res, return @@ E_update {record;path;update})
   )
   | E_tuple t -> (
     let%bind (res, t') = bind_fold_map_list self init' t in
     ok (res, return @@ E_tuple t')
   )
-  | E_tuple_update {tuple; path; update} -> (
-    let%bind (res, tuple) = self init' tuple in
-    let%bind (res, update) = self res update in
-    ok (res, return @@ E_tuple_update {tuple;path;update})
-  )
-  | E_tuple_accessor {tuple; path} -> (
-     let%bind (res, tuple) = self init' tuple in
-     ok (res, return @@ E_tuple_accessor {tuple; path})
-    )
   | E_constructor c -> (
       let%bind (res,e') = self init' c.element in
       ok (res, return @@ E_constructor {c with element = e'})

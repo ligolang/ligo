@@ -53,8 +53,8 @@ and expression_content =
   | E_matching of matching
   (* Record *)
   | E_record of expression label_map
-  | E_record_accessor of record_accessor
-  | E_record_update   of record_update
+  | E_accessor of accessor
+  | E_update   of update
   (* Advanced *)
   | E_ascription of ascription
   (* Sugar *)
@@ -62,14 +62,11 @@ and expression_content =
   | E_sequence of sequence
   | E_skip
   | E_tuple of expression list
-  | E_tuple_accessor of tuple_accessor
-  | E_tuple_update   of tuple_update
   (* Data Structures *)
   | E_map of (expression * expression) list 
   | E_big_map of (expression * expression) list
   | E_list of expression list
   | E_set of expression list
-  | E_look_up of (expression * expression)
   (* Imperative *)
   | E_assign of assign
   | E_for of for_
@@ -105,8 +102,8 @@ and let_in =
 
 and constructor = {constructor: constructor'; element: expression}
 
-and record_accessor = {record: expression; path: label}
-and record_update   = {record: expression; path: label ; update: expression}
+and accessor = {record: expression; path: access list}
+and update   = {record: expression; path: access list; update: expression}
 
 
 
@@ -142,9 +139,6 @@ and sequence = {
   expr2: expression ;
   }
 
-and tuple_accessor = {tuple: expression; path: int}
-and tuple_update   = {tuple: expression; path: int ; update: expression}
-
 and assign = {
   variable : expression_variable;
   access_path : access list;
@@ -152,7 +146,7 @@ and assign = {
 }
 
 and access =
-  | Access_tuple of int
+  | Access_tuple of Z.t
   | Access_record of string
   | Access_map of expr
 

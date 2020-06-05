@@ -108,14 +108,12 @@ let e_constructor ?loc s a : expression = make_e ?loc @@ E_constructor { constru
 let e_matching ?loc a b : expression = make_e ?loc @@ E_matching {matchee=a;cases=b}
 
 let e_record ?loc map : expression = make_e ?loc @@ E_record map
-let e_record_accessor ?loc record path = make_e ?loc @@ E_record_accessor {record; path}
-let e_record_update ?loc record path update = make_e ?loc @@ E_record_update {record; path; update}
+let e_accessor ?loc record path = make_e ?loc @@ E_accessor {record; path}
+let e_update ?loc record path update = make_e ?loc @@ E_update {record; path; update}
 
 let e_annotation ?loc anno_expr ty = make_e ?loc @@ E_ascription {anno_expr; type_annotation = ty}
 
 let e_tuple ?loc lst : expression = make_e ?loc @@ E_tuple lst
-let e_tuple_accessor ?loc tuple path = make_e ?loc @@ E_tuple_accessor {tuple; path}
-let e_tuple_update ?loc tuple path update = make_e ?loc @@ E_tuple_update {tuple; path; update}
 let e_pair ?loc a b  : expression = e_tuple ?loc [a;b]
 
 let e_cond ?loc condition then_clause else_clause = make_e ?loc @@ E_cond {condition;then_clause;else_clause}
@@ -126,7 +124,6 @@ let e_list ?loc lst : expression = make_e ?loc @@ E_list lst
 let e_set ?loc lst : expression = make_e ?loc @@ E_set lst
 let e_map ?loc lst : expression = make_e ?loc @@ E_map lst
 let e_big_map ?loc lst : expression = make_e ?loc @@ E_big_map lst
-let e_look_up ?loc a b : expression = make_e ?loc @@ E_look_up (a,b)
 
 let e_bool ?loc   b : expression = e_constructor ?loc (Constructor (string_of_bool b)) (e_unit ())
 
@@ -150,13 +147,13 @@ let e_typed_set ?loc lst k = e_annotation ?loc (e_set lst) (t_set k)
 
 
 
-let get_e_record_accessor = fun t ->
+let get_e_accessor = fun t ->
   match t with
-  | E_record_accessor {record; path} -> ok (record, path)
+  | E_accessor {record; path} -> ok (record, path)
   | _ -> simple_fail "not a record accessor"
 
 let assert_e_accessor = fun t ->
-  let%bind _ = get_e_record_accessor t in
+  let%bind _ = get_e_accessor t in
   ok ()
 
 let get_e_pair = fun t ->

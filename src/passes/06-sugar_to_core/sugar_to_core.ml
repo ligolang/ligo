@@ -86,13 +86,46 @@ let rec compile_expression : I.expression -> O.expression result =
         ) record
       in
       return @@ O.E_record (O.LMap.of_list record)
-    | I.E_record_accessor {record;path} ->
+    | I.E_accessor {record;path} ->
       let%bind record = compile_expression record in
-      return @@ O.E_record_accessor {record;path}
-    | I.E_record_update {record;path;update} ->
+      let accessor ?loc e a =
+        match a with 
+          I.Access_tuple  i -> ok @@ O.e_record_accessor ?loc e (Label (Z.to_string i))
+        | I.Access_record a -> ok @@ O.e_record_accessor ?loc e (Label a)
+        | I.Access_map k -> 
+          let%bind k = compile_expression k in
+          ok @@ O.e_constant ?loc C_MAP_FIND_OPT [k;e]
+      in
+      bind_fold_list accessor record path
+    | I.E_update {record;path;update} ->
       let%bind record = compile_expression record in
       let%bind update = compile_expression update in
-      return @@ O.E_record_update {record;path;update}
+      let accessor ?loc e a =
+        match a with 
+          I.Access_tuple  i -> ok @@ O.e_record_accessor ?loc e (Label (Z.to_string i))
+        | I.Access_record a -> ok @@ O.e_record_accessor ?loc e (Label a)
+        | I.Access_map k -> 
+          let%bind k = compile_expression k in
+          ok @@ O.e_constant ?loc C_MAP_FIND_OPT [k;e]
+      in
+      let updator ?loc (s:O.expression) a e =
+        match a with
+          I.Access_tuple  i -> ok @@ O.e_record_update ?loc s (Label (Z.to_string i)) e
+        | I.Access_record a -> ok @@ O.e_record_update ?loc s (Label a) e
+        | I.Access_map k ->
+          let%bind k = compile_expression k in
+          ok @@ O.e_constant ?loc C_UPDATE [k;O.e_some (e);s]
+      in
+      let aux (s, e : O.expression * _) lst =
+        let%bind s' = accessor ~loc:s.location s lst in
+        let e' = fun expr -> 
+          let%bind u = updator ~loc:s.location s lst (expr)
+          in e u 
+        in
+        ok @@ (s',e')
+      in
+      let%bind (_,rhs) = bind_fold_list aux (record, fun e -> ok @@ e) path in
+      rhs @@ update
     | I.E_map map -> (
       let map = List.sort_uniq compare map in
       let aux = fun prev (k, v) ->
@@ -125,9 +158,6 @@ let rec compile_expression : I.expression -> O.expression result =
       let%bind init = return @@ E_constant {cons_name=C_SET_EMPTY;arguments=[]} in
       bind_fold_list aux init lst'
       )
-    | I.E_look_up look_up ->
-      let%bind (path, index) = bind_map_pair compile_expression look_up in
-      return @@ O.E_constant {cons_name=C_MAP_FIND_OPT;arguments=[index;path]}
     | I.E_ascription {anno_expr; type_annotation} ->
       let%bind anno_expr = compile_expression anno_expr in
       let%bind type_annotation = idle_type_expression type_annotation in
@@ -149,15 +179,6 @@ let rec compile_expression : I.expression -> O.expression result =
       let%bind (_, lst ) = bind_fold_list aux (0,[]) t in
       let m = O.LMap.of_list lst in
       return @@ O.E_record m
-    | I.E_tuple_accessor {tuple;path} ->
-      let%bind record = compile_expression tuple in
-      let path        = O.Label (string_of_int path) in
-      return @@ O.E_record_accessor {record;path}
-    | I.E_tuple_update {tuple;path;update} ->
-      let%bind record = compile_expression tuple in
-      let path        = O.Label (string_of_int path) in
-      let%bind update = compile_expression update in
-      return @@ O.E_record_update {record;path;update}
 
 and compile_lambda : I.lambda -> O.lambda result =
   fun {binder;input_type;output_type;result}->
@@ -325,11 +346,13 @@ let rec uncompile_expression : O.expression -> I.expression result =
     return @@ I.E_record (O.LMap.of_list record)
   | O.E_record_accessor {record;path} ->
     let%bind record = uncompile_expression record in
-    return @@ I.E_record_accessor {record;path}
+    let Label path  = path in
+    return @@ I.E_accessor {record;path=[I.Access_record path]}
   | O.E_record_update {record;path;update} ->
     let%bind record = uncompile_expression record in
     let%bind update = uncompile_expression update in
-    return @@ I.E_record_update {record;path;update}
+    let Label path  = path in
+    return @@ I.E_update {record;path=[I.Access_record path];update}
   | O.E_ascription {anno_expr; type_annotation} ->
     let%bind anno_expr = uncompile_expression anno_expr in
     let%bind type_annotation = uncompile_type_expression type_annotation in

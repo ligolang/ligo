@@ -1012,19 +1012,28 @@ field_assignment:
       field_expr = $3}
     in {region; value} }
 
+real_selection:
+  field_name { FieldName $1 }
+| "<int>"    { Component $1 }
+
 field_path_assignment:
-  field_name {
-    let value = {
+  real_selection {
+    let region = selection_to_region $1 
+    and value  = {
       field_path = ($1,[]);
       assignment = ghost;
-      field_expr = EVar $1 }
-    in {$1 with value}
+      field_expr = match $1 with
+        FieldName var -> EVar var
+      | Component {value;region} -> 
+        let value = Z.to_string (snd value) in
+        EVar {value;region} }
+    in {region; value}
   }
-| nsepseq(field_name,".") ":" expr {
-    let start  = nsepseq_to_region (fun x -> x.region) $1 in
-    let stop   = expr_to_region $3 in
-    let region = cover start stop in
-    let value  = {
+| nsepseq(real_selection,".") ":" expr {
+    let start  = nsepseq_to_region selection_to_region $1
+    and stop   = expr_to_region $3 in
+    let region = cover start stop
+    and value  = {
       field_path = $1;
       assignment = $2;
       field_expr = $3}

@@ -987,8 +987,8 @@ field_assignment:
     in {region; value} }
 
 field_path_assignment:
-  nsepseq(field_name,".") "=" expr {
-    let start  = nsepseq_to_region (fun x -> x.region) $1
+  nsepseq(selection,".") "=" expr {
+    let start  = nsepseq_to_region selection_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
     and value  = {field_path=$1; equal=$2; field_expr=$3}
