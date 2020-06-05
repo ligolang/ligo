@@ -2,7 +2,7 @@ module I = Ast_sugar
 module O = Ast_core
 open Trace
 
-let rec idle_type_expression : I.type_expression -> O.type_expression result =
+let rec compile_type_expression : I.type_expression -> O.type_expression result =
   fun te ->
   let return tc = ok @@ O.make_t ~loc:te.location tc in
   match te.type_content with
@@ -11,7 +11,7 @@ let rec idle_type_expression : I.type_expression -> O.type_expression result =
       let%bind sum = 
         bind_map_list (fun (k,v) ->
           let {ctor_type ; michelson_annotation ; ctor_decl_pos} : I.ctor_content = v in
-          let%bind ctor_type = idle_type_expression ctor_type in
+          let%bind ctor_type = compile_type_expression ctor_type in
           let v' : O.ctor_content = {ctor_type ; michelson_annotation ; ctor_decl_pos} in
           ok @@ (k,v')
         ) sum
@@ -22,7 +22,7 @@ let rec idle_type_expression : I.type_expression -> O.type_expression result =
       let%bind record = 
         bind_map_list (fun (k,v) ->
           let {field_type ; michelson_annotation ; field_decl_pos} : I.field_content = v in
-          let%bind field_type = idle_type_expression field_type in
+          let%bind field_type = compile_type_expression field_type in
           let v' : O.field_content = {field_type ; field_annotation=michelson_annotation ; field_decl_pos} in
           ok @@ (k,v')
         ) record
@@ -30,19 +30,19 @@ let rec idle_type_expression : I.type_expression -> O.type_expression result =
       return @@ O.T_record (O.LMap.of_list record)
     | I.T_tuple tuple ->
       let aux (i,acc) el = 
-        let%bind el = idle_type_expression el in
+        let%bind el = compile_type_expression el in
         ok @@ (i+1,(O.Label (string_of_int i), ({field_type=el;field_annotation=None;field_decl_pos=0}:O.field_content))::acc) in
       let%bind (_, lst ) = bind_fold_list aux (0,[]) tuple in
       let record = O.LMap.of_list lst in
       return @@ O.T_record record
     | I.T_arrow {type1;type2} ->
-      let%bind type1 = idle_type_expression type1 in
-      let%bind type2 = idle_type_expression type2 in
+      let%bind type1 = compile_type_expression type1 in
+      let%bind type2 = compile_type_expression type2 in
       return @@ T_arrow {type1;type2}
     | I.T_variable type_variable -> return @@ T_variable type_variable 
     | I.T_constant type_constant -> return @@ T_constant type_constant
     | I.T_operator (type_operator, lst) ->
-      let%bind lst = bind_map_list idle_type_expression lst in
+      let%bind lst = bind_map_list compile_type_expression lst in
       return @@ T_operator (type_operator, lst)
 
 let rec compile_expression : I.expression -> O.expression result =
@@ -62,12 +62,12 @@ let rec compile_expression : I.expression -> O.expression result =
       let%bind lambda = compile_lambda lambda in
       return @@ O.E_lambda lambda
     | I.E_recursive {fun_name;fun_type;lambda} ->
-      let%bind fun_type = idle_type_expression fun_type in
+      let%bind fun_type = compile_type_expression fun_type in
       let%bind lambda = compile_lambda lambda in
       return @@ O.E_recursive {fun_name;fun_type;lambda}
     | I.E_let_in {let_binder;inline;rhs;let_result} ->
       let (binder,ty_opt) = let_binder in
-      let%bind ty_opt = bind_map_option idle_type_expression ty_opt in
+      let%bind ty_opt = bind_map_option compile_type_expression ty_opt in
       let%bind rhs = compile_expression rhs in
       let%bind let_result = compile_expression let_result in
       return @@ O.E_let_in {let_binder=(binder,ty_opt);inline;rhs;let_result}
@@ -160,7 +160,7 @@ let rec compile_expression : I.expression -> O.expression result =
       )
     | I.E_ascription {anno_expr; type_annotation} ->
       let%bind anno_expr = compile_expression anno_expr in
-      let%bind type_annotation = idle_type_expression type_annotation in
+      let%bind type_annotation = compile_type_expression type_annotation in
       return @@ O.E_ascription {anno_expr; type_annotation}
     | I.E_cond {condition; then_clause; else_clause} ->
       let%bind matchee = compile_expression condition in
@@ -182,8 +182,8 @@ let rec compile_expression : I.expression -> O.expression result =
 
 and compile_lambda : I.lambda -> O.lambda result =
   fun {binder;input_type;output_type;result}->
-    let%bind input_type = bind_map_option idle_type_expression input_type in
-    let%bind output_type = bind_map_option idle_type_expression output_type in
+    let%bind input_type = bind_map_option compile_type_expression input_type in
+    let%bind output_type = bind_map_option compile_type_expression output_type in
     let%bind result = compile_expression result in
     ok @@ O.{binder;input_type;output_type;result}
 and compile_matching : Location.t -> O.expression -> I.matching_expr -> O.expression result =
@@ -214,7 +214,7 @@ and compile_matching : Location.t -> O.expression -> I.matching_expr -> O.expres
         | None    -> List.map (fun x -> (x, None)) fields
       in
       let%bind next   = compile_expression expr in
-      let%bind field_types = bind_map_option (bind_map_list idle_type_expression) field_types in
+      let%bind field_types = bind_map_option (bind_map_list compile_type_expression) field_types in
       let aux ((index,expr) : int * _ ) ((field,name): (O.label * (O.expression_variable * O.type_expression option))) =
         let f = fun expr' -> O.e_let_in name false (O.e_record_accessor e field) expr' in
         (index+1, fun expr' -> expr (f expr'))
@@ -231,7 +231,7 @@ and compile_matching : Location.t -> O.expression -> I.matching_expr -> O.expres
         | None    -> List.map (fun x -> (x, None)) fields
       in
       let%bind next   = compile_expression expr in
-      let%bind field_types = bind_map_option (bind_map_list idle_type_expression) field_types in
+      let%bind field_types = bind_map_option (bind_map_list compile_type_expression) field_types in
       let aux ((index,expr) : int * _ ) (field: O.expression_variable * O.type_expression option) =
         let f = fun expr' -> O.e_let_in field false (O.e_record_accessor e (Label (string_of_int index))) expr' in
         (index+1, fun expr' -> expr (f expr'))
@@ -241,7 +241,7 @@ and compile_matching : Location.t -> O.expression -> I.matching_expr -> O.expres
       in
       ok @@ header next
     | I.Match_variable (a, ty_opt, expr) ->
-      let%bind ty_opt = bind_map_option idle_type_expression ty_opt in
+      let%bind ty_opt = bind_map_option compile_type_expression ty_opt in
       let%bind expr = compile_expression expr in
       ok @@ O.e_let_in (a,ty_opt) false e expr
  
@@ -251,10 +251,10 @@ let compile_declaration : I.declaration Location.wrap -> _ =
   match declaration with 
   | I.Declaration_constant (n, te_opt, inline, expr) ->
     let%bind expr = compile_expression expr in
-    let%bind te_opt = bind_map_option idle_type_expression te_opt in
+    let%bind te_opt = bind_map_option compile_type_expression te_opt in
     return @@ O.Declaration_constant (n, te_opt, inline, expr)
   | I.Declaration_type (n, te) ->
-    let%bind te = idle_type_expression te in
+    let%bind te = compile_type_expression te in
     return @@ O.Declaration_type (n,te)
 
 let compile_program : I.program -> O.program result =
