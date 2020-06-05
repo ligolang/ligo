@@ -3,13 +3,13 @@ open Trace
 
 type 'a sdata = { erroneous_source_file : string ; parser : string -> 'a result }
 let pascaligo_sdata = {
-  erroneous_source_file = "../passes/1-parser/pascaligo/all.ligo" ;
+  erroneous_source_file = "../passes/01-parser/pascaligo/all.ligo" ;
   parser = Parser.Pascaligo.parse_expression }
 let cameligo_sdata = {
-  erroneous_source_file = "../passes/1-parser/cameligo/all.mligo" ;
+  erroneous_source_file = "../passes/01-parser/cameligo/all.mligo" ;
   parser = Parser.Cameligo.parse_expression }
 let reasonligo_sdata = {
-  erroneous_source_file = "../passes/1-parser/reasonligo/all.religo" ;
+  erroneous_source_file = "../passes/01-parser/reasonligo/all.religo" ;
   parser = Parser.Reasonligo.parse_expression }
 
 let get_exp_as_string filename =

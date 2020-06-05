@@ -24,9 +24,9 @@
   (name parser-negative-tests)
   (action (run ./parser_negative_tests.exe))
   (deps
-    ../passes/1-parser/pascaligo/all.ligo
-    ../passes/1-parser/cameligo/all.mligo
-    ../passes/1-parser/reasonligo/all.religo
+    ../passes/01-parser/pascaligo/all.ligo
+    ../passes/01-parser/cameligo/all.mligo
+    ../passes/01-parser/reasonligo/all.religo
   ))
 
 (alias

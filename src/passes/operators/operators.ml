@@ -32,8 +32,6 @@ module Concrete_to_imperative = struct
     - The left-hand-side is the reserved name in the given front-end.
     - The right-hand-side is the name that will be used in the AST.
   *)
-  let unit_expr = make_t @@ T_constant TC_unit
-
   let type_constants s =
     match s with
       "chain_id"  -> Some TC_chain_id
@@ -53,17 +51,17 @@ module Concrete_to_imperative = struct
 
   let type_operators s =
     match s with
-      "list"         -> Some (TC_list unit_expr)
-    | "option"       -> Some (TC_option unit_expr)
-    | "set"          -> Some (TC_set unit_expr)
-    | "map"          -> Some (TC_map (unit_expr,unit_expr))
-    | "big_map"      -> Some (TC_big_map (unit_expr,unit_expr))
-    | "contract"     -> Some (TC_contract unit_expr)
-    | "michelson_pair_right_comb" -> Some (TC_michelson_pair_right_comb unit_expr)
-    | "michelson_pair_left_comb" -> Some (TC_michelson_pair_left_comb unit_expr)
-    | "michelson_or_right_comb" -> Some (TC_michelson_or_right_comb unit_expr)
-    | "michelson_or_left_comb" -> Some (TC_michelson_or_left_comb unit_expr)
-    | _              -> None
+      "list"                      -> Some (TC_list)
+    | "option"                    -> Some (TC_option)
+    | "set"                       -> Some (TC_set)
+    | "map"                       -> Some (TC_map)
+    | "big_map"                   -> Some (TC_big_map)
+    | "contract"                  -> Some (TC_contract)
+    | "michelson_pair_right_comb" -> Some (TC_michelson_pair_right_comb)
+    | "michelson_pair_left_comb"  -> Some (TC_michelson_pair_left_comb)
+    | "michelson_or_right_comb"   -> Some (TC_michelson_or_right_comb)
+    | "michelson_or_left_comb"    -> Some (TC_michelson_or_left_comb)
+    | _                           -> None
 
   let pseudo_modules = function
     | "Tezos.chain_id"           -> Some C_CHAIN_ID

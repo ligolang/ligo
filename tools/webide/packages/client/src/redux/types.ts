@@ -16,7 +16,3 @@ export enum Command {
 export enum Tool {
   TezosClient = 'tezos-client'
 }
-
-export enum ToolCommand {
-  Originate = 'originate'
-}

@@ -56,7 +56,7 @@ export const Examples = () => {
 
   return (
     <Container>
-      <Header>Examples</Header>
+      <Header>Contract Examples</Header>
       <MenuContainer>
         {examples.map(example => {
           return (

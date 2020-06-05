@@ -113,14 +113,14 @@ const siteConfig = {
   // template. For example, if you need your repo's URL...
   // repoUrl: repoUrl,
   plugins: [
-    '@ligo/syntax', {
+    require.resolve('@ligo/syntax', {
 
     },
     '@docusaurus/plugin-sitemap', {
       cacheTime: 600 * 1000, // 600 sec - cache purge period
       changefreq: 'weekly',
       priority: 0.5,
-    }
+    })
   ],
   
   presets: [
@@ -156,17 +156,18 @@ const siteConfig = {
         srcDark: 'img/logo-night.svg'
       },
       links: [
-        { href: 'https://ide.ligolang.org/', label: 'Try Online' },
-        { to: 'docs/intro/installation', label: 'Install' },
-        { to: 'docs/intro/introduction', label: 'Docs' },
+        { href: 'https://ide.ligolang.org/', label: 'Try Online', position: 'left', target: '_self' },
+        { to: 'docs/intro/installation', label: 'Install', position: 'left' },
+        { to: 'docs/intro/introduction', label: 'Docs', position: 'left' },
         {
           to: 'docs/tutorials/get-started/tezos-taco-shop-smart-contract',
-          label: 'Tutorials'
+          label: 'Tutorials',
+          position: 'left'
         },
-        { href: 'https://forum.tezosagora.org/tag/ligo', label: 'Blog' },
+        { href: 'https://forum.tezosagora.org/tag/ligo', label: 'Blog', position: 'left' },
         // TODO: { href: "/odoc", label: "API" },
         // { doc: 'contributors/origin', label: 'Contribute' },
-        { to: '/contact', label: 'Ask Questions' }        
+        { to: '/contact', label: 'Ask Questions', position: 'left' }
       ],
     },
     footer: {
@@ -176,28 +177,28 @@ const siteConfig = {
           items: [
             { to: 'docs/intro/installation', label: 'Install' },
             { to: 'docs/api/cli-commands', label: 'CLI Commands' },
-            { to: 'docs/contributors/origin', label: 'Contribute' },
-            { to: '/odoc', label: 'API Documentation' }
+            { to: 'docs/api/cheat-sheet', label: 'Cheat Sheet' },
+            { href: 'https://ligolang.org/odoc/', label: 'API Documentation' }
           ]
         },
         {
           title: 'Community',
           items: [
             {
-              href: 'https://forum.tezosagora.org/tag/ligo',
-              label: 'Tezos Agora Forum'
-            },
-            {
               href: 'https://tezos.stackexchange.com/questions/tagged/ligo',
               label: 'Tezos Stack Exchange'
+            },
+            {
+              href: 'https://discord.gg/9rhYaEt',
+              label: 'Discord'
             },
             {
               href: 'https://t.me/LigoLang',
               label: 'Telegram'
             },
             {
-              href: 'https://discord.gg/9rhYaEt',
-              label: 'Discord'
+              href: 'https://riot.im/app/#/room/#ligo-public:matrix.org',
+              label: 'Riot'
             }
           ]
         },
@@ -209,8 +210,16 @@ const siteConfig = {
               to: 'docs/tutorials/get-started/tezos-taco-shop-smart-contract'
             },
             {
+              href: 'https://forum.tezosagora.org/tag/ligo',
+              label: 'Blog'
+            },
+            {
               label: 'GitLab',
               href: repoUrl
+            },
+            {
+              label: 'Contribute',
+              to: 'docs/contributors/origin'
             }
           ]
         }
