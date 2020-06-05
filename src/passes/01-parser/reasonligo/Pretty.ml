@@ -48,6 +48,7 @@ and pp_let_binding let_ (binding : let_binding) =
   in
   let rhs = pp_expr let_rhs in 
   match let_rhs with 
+  | EFun _
   | ESeq _
   | ERecord _ -> lhs ^^ rhs
   | _ -> prefix 2 0 lhs rhs
@@ -130,7 +131,7 @@ and pp_field_pattern {value; _} =
 
 and pp_ptyped {value; _} =
   let {pattern; type_expr; _} = value in
-  group (pp_pattern pattern ^^ string ":" ^/^ pp_type_expr type_expr)
+  group (pp_pattern pattern ^^ string ": " ^^ pp_type_expr type_expr)
 
 and pp_type_decl decl =
   let {name; type_expr; _} = decl.value in
@@ -374,7 +375,7 @@ and pp_fun {value; _} =
     match lhs_type with
       None -> empty
     | Some (_,e) ->
-        group (break 0 ^^ string ":" ^^ nest 2 (break 1 ^^ pp_type_expr e))
+        group (break 0 ^^ string ": " ^^ nest 2 (pp_type_expr e))
   in 
   match body with 
   | ESeq _ -> string "(" ^^ binders ^^ string ")" ^^ annot ^^ string " => " ^^ pp_expr body

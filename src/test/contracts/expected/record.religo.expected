@@ -24,5 +24,6 @@ let br: big_record = {a: 23, b: 23, c: 23, d: 23, e: 23 };
 
 type double_record = {inner: abc };
 
-let modify_inner = 
-  (r: double_record): double_record => {...r, inner.b: 2048};
+let modify_inner = (r: double_record): double_record => 
+  {...r,
+    inner.b: 2048};
