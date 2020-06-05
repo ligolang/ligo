@@ -180,9 +180,9 @@ and print_type_app state {value; _} =
 
 and print_type_fun state {value; _} =
   let type_expr_a, arrow, type_expr_b = value in
-  print_type_expr  state type_expr_a;
-  print_token      state arrow "->";
-  print_type_expr  state type_expr_b
+  print_type_expr state type_expr_a;
+  print_token     state arrow "->";
+  print_type_expr state type_expr_b
 
 and print_par_type state {value; _} =
   let {lpar; inside; rpar} = value in
@@ -206,12 +206,12 @@ and print_fun_decl state {value; _} =
   let {kwd_function; fun_name; param; colon;
        ret_type; kwd_is; block_with;
        return; terminator; _} = value in
-  print_token       state kwd_function "function";
-  print_var         state fun_name;
-  print_parameters  state param;
-  print_token       state colon ":";
-  print_type_expr   state ret_type;
-  print_token       state kwd_is "is";
+  print_token      state kwd_function "function";
+  print_var        state fun_name;
+  print_parameters state param;
+  print_token      state colon ":";
+  print_type_expr  state ret_type;
+  print_token      state kwd_is "is";
   (match block_with with
     None -> ()
   | Some (block, kwd_with) ->
@@ -221,15 +221,14 @@ and print_fun_decl state {value; _} =
   print_terminator state terminator;
 
 and print_fun_expr state {value; _} =
-  let {kwd_recursive; kwd_function; param; colon;
+  let {kwd_function; param; colon;
        ret_type; kwd_is; return} : fun_expr = value in
-  print_token_opt   state kwd_recursive "recursive";
-  print_token       state kwd_function "function";
-  print_parameters  state param;
-  print_token       state colon ":";
-  print_type_expr   state ret_type;
-  print_token       state kwd_is "is";
-  print_expr        state return
+  print_token      state kwd_function "function";
+  print_parameters state param;
+  print_token      state colon ":";
+  print_type_expr  state ret_type;
+  print_token      state kwd_is "is";
+  print_expr       state return
 
 and print_parameters state {value; _} =
   let {lpar; inside; rpar} = value in
@@ -260,10 +259,10 @@ and print_block state block =
   match enclosing with
     Block (kwd_block, lbrace, rbrace) ->
       print_token      state kwd_block "block";
-      print_token      state lbrace    "{";
+      print_token      state lbrace "{";
       print_statements state statements;
       print_terminator state terminator;
-      print_token state rbrace  "}"
+      print_token      state rbrace "}"
   | BeginEnd (kwd_begin, kwd_end) ->
       print_token      state kwd_begin "begin";
       print_statements state statements;
@@ -464,7 +463,9 @@ and print_expr state = function
 | EPar    e -> print_par_expr state e
 | EFun    e -> print_fun_expr state e
 
-and print_annot_expr state (expr , type_expr) =
+and print_annot_expr state node =
+  let {inside; _} : annot_expr par = node in
+  let expr, _, type_expr = inside in
   print_expr state expr;
   print_type_expr state type_expr
 
@@ -1432,7 +1433,7 @@ and pp_expr state = function
     pp_cond_expr state value
 | EAnnot {value; region} ->
     pp_loc_node state "EAnnot" region;
-    pp_annotated state value
+    pp_annotated state value.inside
 | ELogic e_logic ->
     pp_node state "ELogic";
     pp_e_logic (state#pad 1 0) e_logic
@@ -1607,7 +1608,7 @@ and pp_string_expr state = function
     pp_node   state "Verbatim";
     pp_verbatim (state#pad 1 0) v
 
-and pp_annotated state (expr, t_expr) =
+and pp_annotated state (expr, _, t_expr) =
   pp_expr      (state#pad 2 0) expr;
   pp_type_expr (state#pad 2 1) t_expr
 

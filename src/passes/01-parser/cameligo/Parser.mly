@@ -583,7 +583,10 @@ core_expr:
 | record_expr                         {                    ERecord $1 }
 | update_record                       {                    EUpdate $1 }
 | par(expr)                           {                       EPar $1 }
-| par(expr ":" type_expr {$1,$2,$3})  {                     EAnnot $1 }
+| par(annot_expr)                     {                     EAnnot $1 }
+
+annot_expr:
+  expr ":" type_expr { $1,$2,$3 }
 
 module_field:
   module_name "." module_fun {

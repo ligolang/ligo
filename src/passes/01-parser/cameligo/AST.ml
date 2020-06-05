@@ -228,7 +228,7 @@ and field_pattern = {
 and expr =
   ECase   of expr case reg
 | ECond   of cond_expr reg
-| EAnnot  of (expr * colon * type_expr) par reg
+| EAnnot  of annot_expr par reg
 | ELogic  of logic_expr
 | EArith  of arith_expr
 | EString of string_expr
@@ -246,6 +246,8 @@ and expr =
 | ELetIn  of let_in reg
 | EFun    of fun_expr reg
 | ESeq    of expr injection reg
+
+and annot_expr = expr * colon * type_expr
 
 and 'a injection = {
   compound   : compound;

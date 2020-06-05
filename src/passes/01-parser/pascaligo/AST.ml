@@ -206,7 +206,6 @@ and type_tuple = (type_expr, comma) nsepseq par reg
 (* Function and procedure declarations *)
 
 and fun_expr = {
-  kwd_recursive: kwd_recursive option;
   kwd_function : kwd_function;
   param        : parameters;
   colon        : colon;
@@ -448,7 +447,7 @@ and collection =
 and expr =
   ECase   of expr case reg
 | ECond   of cond_expr reg
-| EAnnot  of annot_expr reg
+| EAnnot  of annot_expr par reg
 | ELogic  of logic_expr
 | EArith  of arith_expr
 | EString of string_expr
@@ -467,7 +466,7 @@ and expr =
 | EPar    of expr par reg
 | EFun    of fun_expr reg
 
-and annot_expr = expr * type_expr
+and annot_expr = expr * colon * type_expr
 
 and set_expr =
   SetInj of expr injection reg
