@@ -174,13 +174,13 @@ and pp_clause {value; _} =
 and pp_cond_expr {value; _} =
   let {test; ifso; kwd_else; ifnot; _} = value in
   let if_then =
-    string "if" ^^ string "(" ^^ pp_expr test ^^ string ")" ^^ string " {" ^^ hardline 
+    string "if" ^^ string "(" ^^ pp_expr test ^^ string ")" ^^ string " {" ^^ break 0 
     ^^ group (nest 2 (break 2 ^^ pp_expr ifso)) ^^ hardline ^^ string "}" in
   if kwd_else#is_ghost then
     if_then
   else
     if_then
-    ^^ string " else" ^^ string " {" ^^ hardline ^^ group (nest 2 (break 2 ^^ pp_expr ifnot)) ^^ hardline ^^ string "}"
+    ^^ string " else" ^^ string " {" ^^ break 0 ^^ group (nest 2 (break 2 ^^ pp_expr ifnot)) ^^ hardline ^^ string "}"
 
 and pp_annot_expr {value; _} =
   let expr, _, type_expr = value.inside in
@@ -201,7 +201,7 @@ and pp_bool_expr = function
 and pp_bin_op op {value; _} =
   let {arg1; arg2; _} = value
   and length = String.length op + 1 in
-  pp_expr arg1 ^/^ string (op ^ " ") ^^ nest length (pp_expr arg2)
+  pp_expr arg1 ^^ string " " ^^ string (op ^ " ") ^^ nest length (pp_expr arg2)
 
 and pp_un_op op {value; _} =
   string (op ^ " ") ^^ pp_expr value.arg
@@ -372,8 +372,11 @@ and pp_fun {value; _} =
       None -> empty
     | Some (_,e) ->
         group (break 0 ^^ string ":" ^^ nest 2 (break 1 ^^ pp_type_expr e))
-  in prefix 2 0 (string "(" ^^ binders ^^ string ")" ^^ annot
-     ^^ string " => ") (pp_expr body)
+  in 
+  match body with 
+  | ESeq _ -> string "(" ^^ binders ^^ string ")" ^^ annot ^^ string " => " ^^ pp_expr body
+  | _ -> (prefix 2 0 (string "(" ^^ binders ^^ string ")" ^^ annot
+     ^^ string " => ") (pp_expr body))
 
 and pp_seq {value; _} =
   let {compound; elements; _} = value in

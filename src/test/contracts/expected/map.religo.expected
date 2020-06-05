@@ -40,32 +40,28 @@ let get_ = (m: foobar): option(int) => Map.find_opt(42, m);
 let mem = (km: (int, foobar)): bool => Map.mem(km[0], km[1]);
 
 let iter_op = 
-  (m: foobar): unit => 
-    {
-      let assert_eq = (i: int, j: int) => assert(i == j);
-      Map.iter(assert_eq, m)
-    };
+  (m: foobar): unit => {
+    let assert_eq = (i: int, j: int) => assert(i == j);
+    Map.iter(assert_eq, m)
+  };
 
 let map_op = 
-  (m: foobar): foobar => 
-    {
-      let increment = (z: int, j: int) => j + 1;
-      Map.map(increment, m)
-    };
+  (m: foobar): foobar => {
+    let increment = (z: int, j: int) => j + 1;
+    Map.map(increment, m)
+  };
 
 let fold_op = 
-  (m: foobar): foobar => 
-    {
-      let aggregate = 
-        (i: int, j: (int, int)) => i + j[0] + j[1];
-      Map.fold(aggregate, m, 10)
-    };
+  (m: foobar): foobar => {
+    let aggregate = 
+      (i: int, j: (int, int)) => i + j[0] + j[1];
+    Map.fold(aggregate, m, 10)
+  };
 
 let deep_op = 
-  (m: foobar): foobar => 
-    {
-      let coco = (0, m);
-      let coco = (0, Map.remove(42, coco[1]));
-      let coco = (0, Map.update(32, Some (16), coco[1]));
-      coco[1]
-    };
+  (m: foobar): foobar => {
+    let coco = (0, m);
+    let coco = (0, Map.remove(42, coco[1]));
+    let coco = (0, Map.update(32, Some (16), coco[1]));
+    coco[1]
+  };
