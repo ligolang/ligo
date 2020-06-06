@@ -412,13 +412,12 @@ and for_loop =
 | ForCollect of for_collect reg
 
 and for_int = {
-  kwd_for  : kwd_for;
-  assign   : var_assign reg;
-  kwd_to   : kwd_to;
-  bound    : expr;
-  kwd_step : kwd_step option;
-  step     : expr option;
-  block    : block reg
+  kwd_for : kwd_for;
+  assign  : var_assign reg;
+  kwd_to  : kwd_to;
+  bound   : expr;
+  step    : (kwd_step * expr) option;
+  block   : block reg
 }
 
 and var_assign = {

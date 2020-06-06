@@ -622,7 +622,6 @@ for_loop:
                   assign   = $2;
                   kwd_to   = $3;
                   bound    = $4;
-                  kwd_step = None;
                   step     = None;
                   block    = $5}
     in For (ForInt {region; value})
@@ -633,8 +632,7 @@ for_loop:
                   assign   = $2;
                   kwd_to   = $3;
                   bound    = $4;
-                  kwd_step = Some $5;
-                  step     = Some $6;
+                  step     = Some ($5, $6);
                   block    = $7}
     in For (ForInt {region; value})
   }

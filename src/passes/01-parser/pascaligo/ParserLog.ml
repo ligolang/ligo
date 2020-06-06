@@ -395,19 +395,16 @@ and print_for_loop state = function
 | ForCollect for_collect -> print_for_collect state for_collect
 
 and print_for_int state ({value; _} : for_int reg) =
-  let {kwd_for; assign; kwd_to; bound; kwd_step; step; block} = value in
+  let {kwd_for; assign; kwd_to; bound; step; block} = value in
   print_token      state kwd_for "for";
   print_var_assign state assign;
   print_token      state kwd_to "to";
   print_expr       state bound;
-  match kwd_step with
-  | None -> ();
-  | Some kwd_step ->
-  print_token      state kwd_step "step";
-  match step with
-  | None -> ();
-  | Some step ->
-  print_expr       state step;
+  (match step with
+     None -> ();
+   | Some (kwd_step, expr) ->
+       print_token  state kwd_step "step";
+       print_expr   state expr);
   print_block      state block
 
 and print_var_assign state {value; _} =
@@ -1274,7 +1271,7 @@ and pp_projection state proj =
   List.iteri (apply len) selections
 
 and pp_update state update =
-  pp_path state update.record;
+  pp_path (state#pad 2 0) update.record;
   pp_ne_injection pp_field_path_assign state update.updates.value
 
 and pp_selection state = function
@@ -1315,17 +1312,27 @@ and pp_for_loop state = function
     pp_for_collect state value
 
 and pp_for_int state for_int =
+  let {assign; bound; step; block; _} = for_int in
+  let arity =
+    match step with None -> 3 | Some _ -> 4 in
   let () =
-    let state = state#pad 3 0 in
+    let state = state#pad arity 0 in
     pp_node state "<init>";
-    pp_var_assign state for_int.assign.value in
+    pp_var_assign state assign.value in
   let () =
-    let state = state#pad 3 1 in
+    let state = state#pad arity 1 in
     pp_node state "<bound>";
-    pp_expr (state#pad 1 0) for_int.bound in
+    pp_expr (state#pad 1 0) bound in
   let () =
-    let state = state#pad 3 2 in
-    let statements = for_int.block.value.statements in
+    match step with
+      None -> ()
+    | Some (_, expr) ->
+        let state = state#pad arity 2 in
+        pp_node state "<step>";
+        pp_expr (state#pad 1 0) expr in
+  let () =
+    let state = state#pad arity (arity-1) in
+    let statements = block.value.statements in
     pp_node state "<statements>";
     pp_statements state statements
   in ()
@@ -1348,10 +1355,10 @@ and pp_for_collect state collect =
     pp_collection (state#pad 2 0) collect.collection;
     pp_expr (state#pad 1 0) collect.expr in
   let () =
-      let state = state#pad 3 2 in
-      let statements = collect.block.value.statements in
-      pp_node state "<statements>";
-      pp_statements state statements
+    let state = state#pad 3 2 in
+    let statements = collect.block.value.statements in
+    pp_node state "<statements>";
+    pp_statements state statements
   in ()
 
 and pp_collection state = function
@@ -1381,10 +1388,10 @@ and pp_field_assign state {value; _} =
   pp_expr  (state#pad 2 1) value.field_expr
 
 and pp_field_path_assign state {value; _} =
-  pp_node  state "<field path for update>";
+  pp_node state "<update>";
   let path = Utils.nsepseq_to_list value.field_path in
   List.iter (pp_ident (state#pad 2 0)) path;
-  pp_expr  (state#pad 2 1) value.field_expr
+  pp_expr (state#pad 2 1) value.field_expr
 
 and pp_map_patch state patch =
   pp_path (state#pad 2 0) patch.path;
