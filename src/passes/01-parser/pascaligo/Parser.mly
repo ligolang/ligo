@@ -976,7 +976,7 @@ update_record:
 field_assignment:
   field_name "=" expr {
     let region = cover $1.region (expr_to_region $3)
-    and value  = {field_name=$1; equal=$2; field_expr=$3}
+    and value  = {field_name=$1; assignment=$2; field_expr=$3}
     in {region; value} }
 
 field_path_assignment:
@@ -984,7 +984,7 @@ field_path_assignment:
     let start  = nsepseq_to_region (fun x -> x.region) $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
-    and value  = {field_path=$1; equal=$2; field_expr=$3}
+    and value  = {field_path=$1; assignment=$2; field_expr=$3}
     in {region; value} }
 
 fun_call:

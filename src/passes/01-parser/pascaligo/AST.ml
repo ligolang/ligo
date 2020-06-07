@@ -543,7 +543,7 @@ and constr_expr =
 
 and field_assign = {
   field_name : field_name;
-  equal      : equal;
+  assignment : equal;
   field_expr : expr
 }
 
@@ -563,7 +563,7 @@ and update = {
 
 and field_path_assign = {
   field_path : (field_name, dot) nsepseq;
-  equal      : equal;
+  assignment : equal;
   field_expr : expr
 }
 

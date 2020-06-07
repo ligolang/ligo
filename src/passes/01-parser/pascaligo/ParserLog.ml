@@ -619,15 +619,15 @@ and print_record_expr state =
   print_ne_injection state print_field_assign
 
 and print_field_assign state {value; _} =
-  let {field_name; equal; field_expr} = value in
+  let {field_name; assignment; field_expr} = value in
   print_var   state field_name;
-  print_token state equal "=";
+  print_token state assignment "=";
   print_expr  state field_expr
 
 and print_field_path_assign state {value; _} =
-  let {field_path; equal; field_expr} = value in
+  let {field_path; assignment; field_expr} = value in
   print_nsepseq state "field_path" print_var field_path;
-  print_token state equal "=";
+  print_token state assignment "=";
   print_expr  state field_expr
 
 and print_update_expr state {value; _} =
