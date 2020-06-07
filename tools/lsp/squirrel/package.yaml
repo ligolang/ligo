@@ -36,6 +36,10 @@ default-extensions:
   - UndecidableInstances
   - FunctionalDependencies
   - ViewPatterns
+  - ConstraintKinds
+  - TypeApplications
+  - AllowAmbiguousTypes
+  - MagicHash
 
 ghc-options: -freverse-errors -Wall -threaded
 
