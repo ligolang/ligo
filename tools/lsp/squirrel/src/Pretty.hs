@@ -29,6 +29,8 @@ module Pretty
   )
   where
 
+import Data.Sum
+
 import qualified Data.Text as Text
 import Data.Text (Text, pack)
 
@@ -51,6 +53,12 @@ class Pretty p where
 -- | Pretty-printable `Functors`.
 class Pretty1 p where
   pp1 :: p Doc -> Doc
+
+instance Pretty1 (Sum '[]) where
+  pp1 = error "Sum.empty"
+
+instance (Pretty1 f, Pretty1 (Sum fs)) => Pretty1 (Sum (f : fs)) where
+  pp1 = either pp1 pp1 . decompose
 
 instance Pretty () where
   pp _ = "-"

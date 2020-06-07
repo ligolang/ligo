@@ -9,6 +9,7 @@ dependencies:
   - template-haskell
   - text
   - tree-sitter
+  - fastsum
 
 default-extensions:
   - BangPatterns

@@ -32,6 +32,13 @@ packages:
       sha256: f3b6dd7ac1fa1b7a259334ff342405263da053af5c115bd86499227e2373d8ec
   original:
     hackage: semilattices-0.0.0.4@sha256:333707e460923711d1edbdd02ebe1c3957d4e0808eab9886747b52ee3e443639,1909
+- completed:
+    hackage: fastsum-0.1.1.1@sha256:984ce99c8c153f31bffe03af6cc0599818878d62e9dae6ecb26b6623c92d6cec,2325
+    pantry-tree:
+      size: 431
+      sha256: 1c89d4034e6d06e15ff0ec421a95206c030ddc2d35b9eee7f0a02aa30c6051c1
+  original:
+    hackage: fastsum-0.1.1.1
 snapshots:
 - completed:
     size: 493124

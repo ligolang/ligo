@@ -23,7 +23,8 @@ module Tree
   )
   where
 
-import Union
+import Data.Sum
+
 import Lattice
 import Comment
 import Pretty
@@ -36,25 +37,25 @@ import Error
 --   Can contain `Error` instead of all the above.
 --
 newtype Tree layers info = Tree
-  { unTree :: Either (Error info) (info, Union layers (Tree layers info))
+  { unTree :: Either (Error info) (info, Sum layers (Tree layers info))
   }
 
-instance (Functor (Union layers)) => Functor (Tree layers) where
+instance Apply Functor layers => Functor (Tree layers) where
   fmap f = go
     where
       go (Tree (Left   err))      = Tree $ Left $ fmap f err
       go (Tree (Right (a, rest))) = Tree $ Right (f a, fmap go rest)
 
-instance (Functor (Union layers), Foldable (Union layers)) => Foldable (Tree layers) where
+instance Apply Foldable layers => Foldable (Tree layers) where
   foldMap f = go
     where
       go (Tree (Left   err))      = foldMap f err
       go (Tree (Right (a, rest))) = f a <> foldMap go rest
 
 instance
-    ( Functor    (Union layers)
+    ( Apply Functor layers
     , HasComments info
-    , Pretty1    (Union layers)
+    , Pretty1    (Sum layers)
     , Pretty      info
     )
   =>
@@ -64,8 +65,8 @@ instance
 
 instance {-# OVERLAPS #-}
     ( HasComments info
-    , Functor    (Union fs)
-    , Pretty1    (Union fs)
+    , Apply Functor fs
+    , Pretty1    (Sum fs)
     , Pretty      info
     )
   =>
@@ -79,7 +80,7 @@ instance {-# OVERLAPS #-}
 -- | Return all subtrees that cover the range, ascending in size.
 spineTo
   :: ( Lattice   info
-     , Foldable (Union fs)
+     , Apply Foldable fs
      )
   => info
   -> Tree fs info
@@ -98,8 +99,10 @@ spineTo info = reverse . go
 --   For each tree piece, will call `before` and `after` callbacks.
 --
 traverseTree
-  :: ( UpdateOver m (Union fs) (Tree fs a)
-     , Traversable  (Union fs)
+  :: ( UpdateOver m (Sum fs) (Tree fs a)
+     , Apply Foldable fs
+     , Apply Functor fs
+     , Apply Traversable fs
      )
   => (a -> m b) -> Tree fs a -> m (Tree fs b)
 traverseTree act = go
@@ -116,8 +119,8 @@ traverseTree act = go
       return (Tree (Left err'))
 
 -- | Make a tree out of a layer and an info.
-mk :: (Functor f, Member f fs) => info -> f (Tree fs info) -> Tree fs info
-mk i fx = Tree $ Right (i, inj fx)
+mk :: (Functor f, Element f fs) => info -> f (Tree fs info) -> Tree fs info
+mk i fx = Tree $ Right (i, inject fx)
 
 -- | Get info from the tree.
 infoOf :: Tree fs info -> info
@@ -126,7 +129,7 @@ infoOf = either eInfo fst . unTree
 instance Stubbed (Tree fs info) info where
   stub = Tree . Left
 
-instance Foldable (Union fs) => HasErrors (Tree fs info) info where
+instance Apply Foldable fs => HasErrors (Tree fs info) info where
   errors = go
     where
       go (Tree (Left   err))      = pure err
@@ -144,10 +147,10 @@ class Monad m => UpdateOver m f a where
 skip :: Monad m => m ()
 skip = return ()
 
-instance Monad m => UpdateOver m (Union '[]) a where
-  before = error "Union.empty"
-  after  = error "Union.empty"
+instance Monad m => UpdateOver m (Sum '[]) a where
+  before = error "Sum.empty"
+  after  = error "Sum.empty"
 
-instance (UpdateOver m f a, UpdateOver m (Union fs) a) => UpdateOver m (Union (f : fs)) a where
-  before = eliminate before before
-  after  = eliminate after  after
+instance (UpdateOver m f a, UpdateOver m (Sum fs) a) => UpdateOver m (Sum (f : fs)) a where
+  before = either before before . decompose
+  after  = either after  after  . decompose

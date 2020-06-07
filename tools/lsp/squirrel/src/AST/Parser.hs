@@ -2,21 +2,21 @@
 {- | Parser for a contract.
 -}
 
-module AST.Parser ({-example,-} contract) where
+module AST.Parser (example, contract) where
 
 import Data.Text (Text)
+import Data.Sum
 
 import AST.Types
 
 import Parser
 import Tree hiding (skip)
-import Union
 
 -- import Debug.Trace
 
 ranged
   :: ( Functor f
-     , Member  f fs
+     , Element f fs
      )
   => Parser (f (Tree fs ASTInfo))
   -> Parser    (Tree fs ASTInfo)
@@ -858,7 +858,7 @@ typeTuple = do
 -- example = "../../../src/test/contracts/bytes_arithmetic.ligo"
 -- example = "../../../src/test/contracts/bytes_unpack.ligo"
 -- example = "../../../src/test/contracts/chain_id.ligo"
--- example = "../../../src/test/contracts/coase.ligo"
+example = "../../../src/test/contracts/coase.ligo"
 -- example = "../../../src/test/contracts/failwith.ligo"
 -- example = "../../../src/test/contracts/loop.ligo"
 -- example = "../../../src/test/contracts/application.ligo"
