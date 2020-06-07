@@ -4,7 +4,6 @@ dependencies:
   - base
   - bytestring
   - data-default
-  - data-fix
   - mtl
   - pretty
   - template-haskell

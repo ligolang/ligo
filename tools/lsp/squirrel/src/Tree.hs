@@ -13,7 +13,7 @@ module Tree
   ( -- * Tree type
     Tree
   , spineTo
-  , updateTree
+  , traverseTree
   , mk
   , infoOf
 
@@ -22,10 +22,6 @@ module Tree
   , skip
   )
   where
-
-import Data.Fix
-import Data.Functor.Compose
-import Data.Foldable
 
 import Union
 import Lattice
@@ -40,26 +36,25 @@ import Error
 --   Can contain `Error` instead of all the above.
 --
 newtype Tree layers info = Tree
-  { unTree :: Fix (Either (Error info) `Compose` (,) info `Compose` Union layers)
+  { unTree :: Either (Error info) (info, Union layers (Tree layers info))
   }
 
 instance (Functor (Union layers)) => Functor (Tree layers) where
-  fmap f (Tree fixpoint) = Tree $ cata (Fix . go) fixpoint
+  fmap f = go
     where
-      go (Compose (Left err)) = Compose $ Left $ fmap f err
-      go (Compose (Right (Compose (a, rest)))) =
-        Compose $ Right $ Compose (f a, rest)
+      go (Tree (Left   err))      = Tree $ Left $ fmap f err
+      go (Tree (Right (a, rest))) = Tree $ Right (f a, fmap go rest)
 
 instance (Functor (Union layers), Foldable (Union layers)) => Foldable (Tree layers) where
-  foldMap f (Tree fixpoint) = cata go fixpoint
+  foldMap f = go
     where
-      go (Compose (Left err))                  = foldMap f err
-      go (Compose (Right (Compose (a, rest)))) = f a <> fold rest
+      go (Tree (Left   err))      = foldMap f err
+      go (Tree (Right (a, rest))) = f a <> foldMap go rest
 
 instance
     ( Functor    (Union layers)
     , HasComments info
-    , Pretty     (Union layers Doc)
+    , Pretty1    (Union layers)
     , Pretty      info
     )
   =>
@@ -70,16 +65,16 @@ instance
 instance {-# OVERLAPS #-}
     ( HasComments info
     , Functor    (Union fs)
-    , Pretty     (Union fs Doc)
+    , Pretty1    (Union fs)
     , Pretty      info
     )
   =>
     Pretty (Tree fs info)
   where
-    pp (Tree it) = cata aux it
+    pp = go
       where
-        aux (Compose (Left err)) = pp err
-        aux (Compose (Right (Compose (info, fTree)))) = c info $ pp fTree
+        go (Tree (Left  err))           = pp err
+        go (Tree (Right (info, fTree))) = c info $ pp fTree
 
 -- | Return all subtrees that cover the range, ascending in size.
 spineTo
@@ -89,11 +84,11 @@ spineTo
   => info
   -> Tree fs info
   -> [Tree fs info]
-spineTo info = reverse . go . unTree
+spineTo info = reverse . go
   where
-    go tree@(Fix (Compose (Right (Compose (info', fres))))) =
+    go tree@(Tree (Right (info', fres))) =
       if   info <? info'
-      then Tree tree : foldMap go fres
+      then tree : foldMap go fres
       else []
 
     go _ = []
@@ -102,40 +97,40 @@ spineTo info = reverse . go . unTree
 --
 --   For each tree piece, will call `before` and `after` callbacks.
 --
-updateTree
+traverseTree
   :: ( UpdateOver m (Union fs) (Tree fs a)
      , Traversable  (Union fs)
      )
   => (a -> m b) -> Tree fs a -> m (Tree fs b)
-updateTree act = fmap Tree . go . unTree
+traverseTree act = go
   where
-    go (Fix (Compose (Right (Compose (a, union))))) = do
+    go (Tree (Right (a, union))) = do
       b <- act a
-      before (Tree <$> union)
+      before union
       union' <- traverse go union
-      after (Tree <$> union)
-      return (Fix (Compose (Right (Compose (b, union')))))
+      after union
+      return (Tree (Right (b, union')))
 
-    go (Fix (Compose (Left err))) = do
+    go (Tree (Left err)) = do
       err' <- traverse act err
-      return (Fix (Compose (Left err')))
+      return (Tree (Left err'))
 
 -- | Make a tree out of a layer and an info.
 mk :: (Functor f, Member f fs) => info -> f (Tree fs info) -> Tree fs info
-mk i fx = Tree $ Fix $ Compose $ Right $ Compose (i, inj $ fmap unTree fx)
+mk i fx = Tree $ Right (i, inj fx)
 
 -- | Get info from the tree.
 infoOf :: Tree fs info -> info
-infoOf = either eInfo (fst . getCompose) . getCompose . unFix . unTree
+infoOf = either eInfo fst . unTree
 
 instance Stubbed (Tree fs info) info where
-  stub = Tree . Fix . Compose . Left
+  stub = Tree . Left
 
 instance Foldable (Union fs) => HasErrors (Tree fs info) info where
-  errors = go . unTree
+  errors = go
     where
-      go (Fix (Compose (Left err))) = pure err
-      go (Fix rest)                 = foldMap go rest
+      go (Tree (Left   err))      = pure err
+      go (Tree (Right (_, rest))) = foldMap go rest
 
 -- | Update callbacks for a @f a@ while working inside monad @m@.
 class Monad m => UpdateOver m f a where

@@ -326,14 +326,14 @@ instance UpdateOver ScopeM Name (Pascal a)
 --   deriving (Show) via PP (Name it)
 --   deriving stock (Functor, Foldable, Traversable)
 
-data Scope = Scope { unScope :: Text }
+data Scope = Scope { unScope :: [Text] }
 
 instance HasComments Scope where
-  getComments = pure . ("(* " <>) . (<> " *)") . unScope
+  getComments = unScope
 
-_testUpdate :: Pascal ASTInfo -> ScopeM (Pascal Scope)
-_testUpdate = updateTree \_ -> do
+currentScope :: ASTInfo -> ScopeM Scope
+currentScope _ = do
   Env topmost <- gets head
   let names = _sdName <$> topmost
-  let res   = ppToText $ fsep $ map pp names
+  let res   = map ppToText names
   return $ Scope res
