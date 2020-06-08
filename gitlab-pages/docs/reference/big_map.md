@@ -17,52 +17,6 @@ The gast costs of big maps are higher than standard maps as data is lazily
 deserialized.
 
 <SyntaxTitle syntax="pascaligo">
-type big_map ('key, 'value)
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-type ('key, 'value) big_map
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-type big_map ('key, 'value)
-</SyntaxTitle>
-
-<Syntax syntax="pascaligo">
-
-The type of a big map from values of type `key` to
-values of type `value` is `big_map (key, value)`.
-
-```pascaligo group=big_map
-type move is int * int
-type register is big_map (address, move)
-```
-
-</Syntax>
-<Syntax syntax="cameligo">
-
-The type of a big map from values of type `key` to values
-of type `value` is `(key, value) big_map`.
-
-```cameligo group=big_map
-type move = int * int
-type register = (address, move) big_map
-```
-
-</Syntax>
-<Syntax syntax="reasonligo">
-
-The type of a big map from values of type `key` to
-values of type `value` is `big_map(key, value)`.
-
-```reasonligo group=big_map
-type move = (int, int);
-type register = big_map(address, move);
-```
-
-</Syntax>
-
-Be aware that a `big_map` cannot appear inside another `big_map`.
-
-<SyntaxTitle syntax="pascaligo">
 function empty : big_map ('key, 'value)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
@@ -77,6 +31,9 @@ Create an empty big_map.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=big_map
+type move is int * int
+type register is big_map (address, move)
+
 const empty : register = Big_map.empty
 ```
 
@@ -90,6 +47,9 @@ const empty_alternative : register = big_map []
 <Syntax syntax="cameligo">
 
 ```cameligo group=big_map
+type move = int * int
+type register = (address, move) big_map
+
 let empty : register = Big_map.empty
 ```
 
@@ -97,6 +57,9 @@ let empty : register = Big_map.empty
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=big_map
+type move = (int, int);
+type register = big_map(address, move);
+
 let empty: register = Big_map.empty
 ```
 

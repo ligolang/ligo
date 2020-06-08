@@ -9,18 +9,6 @@ import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
 <SyntaxTitle syntax="pascaligo">
-type string
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-type string
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-type string
-</SyntaxTitle>
-
-A sequence of characters.
-
-<SyntaxTitle syntax="pascaligo">
 function length : string -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">

@@ -9,50 +9,6 @@ import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
 <SyntaxTitle syntax="pascaligo">
-type map ('key, 'value)
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-type ('key, 'value) map
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-type map ('key, 'value)
-</SyntaxTitle>
-
-<Syntax syntax="pascaligo">
-
-The type of a map from values of type `key` to
-values of type `value` is `map (key, value)`.
-
-```pascaligo group=maps
-type move is int * int
-type register is map (address, move)
-```
-
-</Syntax>
-<Syntax syntax="cameligo">
-
-The type of a map from values of type `key` to values
-of type `value` is `(key, value) map`.
-
-```cameligo group=maps
-type move = int * int
-type register = (address, move) map
-```
-
-</Syntax>
-<Syntax syntax="reasonligo">
-
-The type of a map from values of type `key` to
-values of type `value` is `map (key, value)`.
-
-```reasonligo group=maps
-type move = (int, int);
-type register = map (address, move);
-```
-
-</Syntax>
-
-<SyntaxTitle syntax="pascaligo">
 function empty : map ('key, 'value)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
@@ -67,6 +23,9 @@ Create an empty map.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=maps
+type move is int * int
+type register is map (address, move)
+
 const empty : register = Map.empty
 ```
 
@@ -80,6 +39,9 @@ const empty : register = map []
 <Syntax syntax="cameligo">
 
 ```cameligo group=maps
+type move = int * int
+type register = (address, move) map
+
 let empty : register = Map.empty
 ```
 
@@ -87,6 +49,9 @@ let empty : register = Map.empty
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=maps
+type move = (int, int);
+type register = map (address, move);
+
 let empty : register = Map.empty
 ```
 

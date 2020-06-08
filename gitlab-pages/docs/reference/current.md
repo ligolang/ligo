@@ -9,80 +9,6 @@ import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
 <SyntaxTitle syntax="pascaligo">
-type timestamp
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-type timestamp
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-type timestamp
-</SyntaxTitle>
-
-A date in the real world.
-
-<SyntaxTitle syntax="pascaligo">
-type tez
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-type tez
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-type tez
-</SyntaxTitle>
-
-A specific type for tokens.
-
-<SyntaxTitle syntax="pascaligo">
-type address
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-type address
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-type address
-</SyntaxTitle>
-
-An untyped address which can refer to a smart contract or account.
-
-<SyntaxTitle syntax="pascaligo">
-type contract('parameter)
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-type 'parameter contract
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-type contract('parameter)
-</SyntaxTitle>
-
-A typed contract. 
-
-Use `unit` as `parameter` to indicate an implicit account. 
-
-<SyntaxTitle syntax="pascaligo">
-type operation
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-type operation
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-type operation
-</SyntaxTitle>
-
-An operation emitted by the contract
-
-<SyntaxTitle syntax="pascaligo">
-type chain_id
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-type chain_id
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-type chain_id
-</SyntaxTitle>
-
-The identifier of a chain, used to indicate test or main chains.
-
-<SyntaxTitle syntax="pascaligo">
 function balance : tez
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
@@ -93,8 +19,6 @@ let balance: tez
 </SyntaxTitle>
 
 Get the balance for the contract.
-
-
 
 <Syntax syntax="pascaligo">
 
