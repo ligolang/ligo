@@ -254,7 +254,14 @@ and pp_cond_expr {value; _} =
 and pp_conditional {value; _} =
   let {test; ifso; ifnot; _} : conditional = value in
   let test  = string "if "  ^^ group (nest 3 (pp_expr test))
-  and ifso  = string "then" ^^ group (nest 2 (break 1 ^^ pp_if_clause ifso))
+  and ifso  = match ifso with
+                ClauseInstr _ | ClauseBlock LongBlock _ ->
+                  string "then"
+                  ^^ group (nest 2 (break 1 ^^ pp_if_clause ifso))
+              | ClauseBlock ShortBlock _ ->
+                  string "then {"
+                  ^^ group (nest 2 (hardline ^^ pp_if_clause ifso))
+                  ^^ hardline ^^ string "}"
   and ifnot = match ifnot with
                 ClauseInstr _ | ClauseBlock LongBlock _ ->
                   string "else"
@@ -401,8 +408,8 @@ and pp_logic_expr = function
 | CompExpr e -> pp_comp_expr e
 
 and pp_bool_expr = function
-  Or   e  -> pp_bin_op "||" e
-| And  e  -> pp_bin_op "&&" e
+  Or   e  -> pp_bin_op "or" e
+| And  e  -> pp_bin_op "and" e
 | Not  e  -> pp_un_op "not" e
 | True  _ -> string "true"
 | False _ -> string "false"
@@ -421,7 +428,7 @@ and pp_comp_expr = function
 | Gt    e -> pp_bin_op ">"  e
 | Geq   e -> pp_bin_op ">=" e
 | Equal e -> pp_bin_op "="  e
-| Neq   e -> pp_bin_op "<>" e
+| Neq   e -> pp_bin_op "=/=" e
 
 and pp_arith_expr = function
   Add   e -> pp_bin_op "+" e

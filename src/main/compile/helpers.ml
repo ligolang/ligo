@@ -186,8 +186,13 @@ let preprocess syntax source =
 
 let pretty_print_pascaligo source =
   let%bind ast = Parser.Pascaligo.parse_file source in
-  let () = ignore ast in (* TODO *)
-  let buffer = Buffer.create 131
+  let doc    = Parser_pascaligo.Pretty.print ast in
+  let buffer = Buffer.create 131 in
+  let width  =
+    match Terminal_size.get_columns () with
+      None -> 60
+    | Some c -> c in
+  let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
   in Trace.ok buffer
 
 let pretty_print_cameligo source =
