@@ -17,6 +17,8 @@
   (modules
      Scoping AST pascaligo Parser ParserLog LexToken ParErr Pretty)
   (libraries
+     pprint
+     terminal_size
      menhirLib
      parser_shared
      hex
