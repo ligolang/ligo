@@ -1,0 +1,1 @@
+function main (const i : int) : int is i

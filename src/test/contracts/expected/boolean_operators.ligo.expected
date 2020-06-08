@@ -1,0 +1,9 @@
+function or_true (const b : bool) : bool is b or true
+
+function or_false (const b : bool) : bool is b or false
+
+function and_true (const b : bool) : bool is b and true
+
+function and_false (const b : bool) : bool is b and false
+
+function not_bool (const b : bool) : bool is not b
