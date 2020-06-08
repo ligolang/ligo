@@ -9,11 +9,12 @@ let
   inherit (import sources."gitignore.nix" { inherit (self) lib; })
     gitignoreSource;
   # Remove list of directories or files from source (to stop unneeded rebuilds)
+  # Also, apply the gitignore here.
   filterOut = xs:
-    self.lib.cleanSourceWith {
+    gitignoreSource (self.lib.cleanSourceWith {
       filter = p: type: !(builtins.elem (builtins.baseNameOf p) xs);
       src = gitignoreSource ../.;
-    };
+    });
 in {
   ocamlPackages = self.ocaml-ng.ocamlPackages_4_07.overrideScope'
     (builtins.foldl' self.lib.composeExtensions (_: _: { }) [
