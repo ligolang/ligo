@@ -343,26 +343,25 @@ let rec compile_expression :
     let path' =
       let aux (s:Raw.selection) =
         match s with
-          FieldName property -> property.value
-        | Component index -> Z.to_string (snd index.value)
+          FieldName property -> Access_record property.value
+        | Component index -> Access_tuple (snd index.value)
       in
       List.map aux @@ npseq_to_list path in
-    return @@ List.fold_left (e_record_accessor ~loc ) var path'
+    return @@ e_accessor ~loc var path'
   in
-  let compile_path : Raw.path -> string * label list = fun p ->
+  let compile_selection : Raw.selection -> access = fun s ->
+    match s with
+    | FieldName property -> Access_record property.value
+    | Component index -> (Access_tuple (snd index.value))
+  in
+  let compile_path : Raw.path -> string * access list = fun p ->
     match p with
     | Raw.Name v -> (v.value , [])
     | Raw.Path p -> (
         let p' = p.value in
         let var = p'.struct_name.value in
         let path = p'.field_path in
-        let path' =
-          let aux (s:Raw.selection) =
-            match s with
-            | FieldName property -> Label property.value
-            | Component index -> Label (Z.to_string (snd index.value))
-          in
-          List.map aux @@ npseq_to_list path in
+        let path' = List.map compile_selection @@ npseq_to_list path in
         (var , path')
       )
   in
@@ -371,30 +370,19 @@ let rec compile_expression :
     let (name, path) = compile_path u.record in
     let record = match path with
     | [] -> e_variable (Var.of_name name)
-    | _ ->
-      let aux expr (Label l) = e_record_accessor expr l in
-      List.fold_left aux (e_variable (Var.of_name name)) path in
+    | _ -> e_accessor (e_variable (Var.of_name name)) path in 
     let updates = u.updates.value.ne_elements in
     let%bind updates' =
       let aux (f:Raw.field_path_assign Raw.reg) =
         let (f,_) = r_split f in
         let%bind expr = compile_expression f.field_expr in
-        ok ( List.map (fun (x: _ Raw.reg) -> x.value) (npseq_to_list f.field_path), expr)
+          ok ( List.map compile_selection (npseq_to_list f.field_path), expr)
       in
       bind_map_list aux @@ npseq_to_list updates
     in
-    let aux ur (path, expr) =
-      let rec aux record = function
-        | [] -> failwith "error in parsing"
-        | hd :: [] -> ok @@ e_record_update ~loc record hd expr
-        | hd :: tl ->
-          let%bind expr = (aux (e_record_accessor ~loc record hd) tl) in
-          ok @@ e_record_update ~loc record hd expr
-      in
-      aux ur path in
+    let aux ur (path, expr) = ok @@ e_update ~loc ur path expr in
     bind_fold_list aux record updates'
   in
-
   trace (abstracting_expr t) @@
   match t with
     Raw.ELetIn e ->
@@ -439,11 +427,11 @@ let rec compile_expression :
         | hd :: [] ->
           if (List.length prep_vars = 1)
           then e_let_in ~loc hd inline rhs_b_expr body
-          else e_let_in ~loc hd inline (e_record_accessor ~loc rhs_b_expr (string_of_int ((List.length prep_vars) - 1))) body
+          else e_let_in ~loc hd inline (e_accessor ~loc rhs_b_expr [Access_tuple (Z.of_int ((List.length prep_vars) - 1))]) body
         | hd :: tl ->
           e_let_in ~loc hd
           inline
-          (e_record_accessor ~loc rhs_b_expr (string_of_int ((List.length prep_vars) - (List.length tl) - 1)))
+          (e_accessor ~loc rhs_b_expr [Access_tuple (Z.of_int ((List.length prep_vars) - (List.length tl) - 1))])
           (chain_let_in tl body)
         | [] -> body (* Precluded by corner case assertion above *)
       in
@@ -960,7 +948,7 @@ and compile_declaration : Raw.declaration -> declaration Location.wrap list resu
       ok @@ [loc x @@ (Declaration_constant (Var.of_name var.value , lhs_type , inline, rhs'))]
     )
 
-and compile_cases : type a . (Raw.pattern * a) list -> (a, unit) matching_content result =
+and compile_cases : (Raw.pattern * expression) list -> matching_expr result =
   fun t ->
   let open Raw in
   let rec get_var (t:Raw.pattern) =
@@ -1031,7 +1019,7 @@ and compile_cases : type a . (Raw.pattern * a) list -> (a, unit) matching_conten
   match patterns with
   | [(PFalse _, f) ; (PTrue _, t)]
   | [(PTrue _, t) ; (PFalse _, f)] ->
-      ok @@ Match_variant ([((Constructor "true", Var.of_name "_"), t); ((Constructor "false", Var.of_name "_"), f)], ())
+      ok @@ Match_variant ([((Constructor "true", Var.of_name "_"), t); ((Constructor "false", Var.of_name "_"), f)])
   | [(PList (PCons c), cons); (PList (PListComp sugar_nil), nil)]
   | [(PList (PListComp sugar_nil), nil); (PList (PCons c), cons)] ->
       let%bind () =
@@ -1044,7 +1032,7 @@ and compile_cases : type a . (Raw.pattern * a) list -> (a, unit) matching_conten
         let%bind a = get_var a in
         let%bind b = get_var b in
         ok (a, b) in
-      ok @@ Match_list {match_cons=(Var.of_name a, Var.of_name b, cons, ()); match_nil=nil}
+      ok @@ Match_list {match_cons=(Var.of_name a, Var.of_name b, cons); match_nil=nil}
   | lst ->
       let error x =
         let title () = "Pattern" in
@@ -1075,7 +1063,7 @@ and compile_cases : type a . (Raw.pattern * a) list -> (a, unit) matching_conten
         | [ (("None", None), none_expr);
             (("Some", Some some_var), some_expr) ] ->
            ok @@ Match_option {
-                    match_some = (Var.of_name some_var, some_expr, ());
+                    match_some = (Var.of_name some_var, some_expr);
                     match_none = none_expr }
         | _ -> simple_fail "bad option pattern"
       in bind_or (as_option () , as_variant ())

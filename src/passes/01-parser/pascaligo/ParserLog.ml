@@ -626,9 +626,9 @@ and print_field_assign state {value; _} =
 
 and print_field_path_assign state {value; _} =
   let {field_path; assignment; field_expr} = value in
-  print_nsepseq state "field_path" print_var field_path;
-  print_token state assignment "=";
-  print_expr  state field_expr
+  print_nsepseq state "field_path" print_selection field_path;
+  print_token   state assignment "=";
+  print_expr    state field_expr
 
 and print_update_expr state {value; _} =
   let {record; kwd_with; updates} = value in
@@ -1390,8 +1390,8 @@ and pp_field_assign state {value; _} =
 and pp_field_path_assign state {value; _} =
   pp_node state "<update>";
   let path = Utils.nsepseq_to_list value.field_path in
-  List.iter (pp_ident (state#pad 2 0)) path;
-  pp_expr (state#pad 2 1) value.field_expr
+  List.iter (pp_selection (state#pad 2 0)) path;
+  pp_expr  (state#pad 2 1) value.field_expr
 
 and pp_map_patch state patch =
   pp_path (state#pad 2 0) patch.path;

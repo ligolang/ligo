@@ -119,15 +119,12 @@ let e_let_in ?loc (binder, ascr) inline rhs let_result = make_e ?loc @@ E_let_in
 let e_constructor ?loc s a : expression = make_e ?loc @@ E_constructor { constructor = Constructor s; element = a}
 let e_matching ?loc a b : expression = make_e ?loc @@ E_matching {matchee=a;cases=b}
 
-let e_record_accessor ?loc a b = make_e ?loc @@ E_record_accessor {record = a; path = Label b}
-let e_accessor_list ?loc a b  = List.fold_left (fun a b -> e_record_accessor ?loc a b) a b
-let e_record_update ?loc record path update = make_e ?loc @@ E_record_update {record; path=Label path; update}
+let e_accessor ?loc record path      = make_e ?loc @@ E_accessor {record; path}
+let e_update ?loc record path update = make_e ?loc @@ E_update {record; path; update}
 
 let e_annotation ?loc anno_expr ty = make_e ?loc @@ E_ascription {anno_expr; type_annotation = ty}
 
 let e_tuple ?loc lst : expression = make_e ?loc @@ E_tuple lst
-let e_tuple_accessor ?loc tuple path : expression = make_e ?loc @@ E_tuple_accessor {tuple; path}
-let e_tuple_update ?loc tuple path update : expression = make_e ?loc @@ E_tuple_update {tuple; path; update}
 
 let e_pair ?loc a b  : expression = e_tuple ?loc [a;b]
 let e_cond ?loc condition then_clause else_clause = make_e ?loc @@ E_cond {condition;then_clause;else_clause}
@@ -138,7 +135,6 @@ let e_list ?loc lst : expression = make_e ?loc @@ E_list lst
 let e_set ?loc lst : expression = make_e ?loc @@ E_set lst
 let e_map ?loc lst : expression = make_e ?loc @@ E_map lst
 let e_big_map ?loc lst : expression = make_e ?loc @@ E_big_map lst
-let e_look_up ?loc x y = make_e ?loc @@ E_look_up (x , y)
 
 let e_while ?loc condition body = make_e ?loc @@ E_while {condition; body}
 let e_for ?loc binder start final increment body = make_e ?loc @@ E_for {binder;start;final;increment;body}
@@ -148,9 +144,14 @@ let e_bool ?loc   b : expression = e_constructor ?loc (string_of_bool b) (e_unit
 
 let ez_match_variant (lst : ((string * string) * 'a) list) =
   let lst = List.map (fun ((c,n),a) -> ((Constructor c, Var.of_name n), a) ) lst in
-  Match_variant (lst,())
+  Match_variant lst
 let e_matching_variant ?loc a (lst : ((string * string)* 'a) list) =
   e_matching ?loc a (ez_match_variant lst)
+
+let e_matching_record   ?loc m lst ty_opt expr = e_matching ?loc m @@ Match_record   (lst,ty_opt, expr)
+let e_matching_tuple    ?loc m lst ty_opt expr = e_matching ?loc m @@ Match_tuple    (lst,ty_opt, expr)
+let e_matching_variable ?loc m var ty_opt expr = e_matching ?loc m @@ Match_variable (var,ty_opt, expr)
+
 let e_record_ez ?loc (lst : (string * expr) list) : expression =
   let map = List.fold_left (fun m (x, y) -> LMap.add (Label x) y m) LMap.empty lst in
   make_e ?loc @@ E_record map
@@ -184,14 +185,10 @@ let e_typed_set ?loc lst k = e_annotation ?loc (e_set lst) (t_set k)
 
 let e_assign ?loc variable access_path expression =
   make_e ?loc @@ E_assign {variable;access_path;expression} 
-let e_ez_assign ?loc variable access_path expression = 
-  let variable = Var.of_name variable in
-  let access_path = List.map (fun s -> Access_record s) access_path in
-  e_assign ?loc variable access_path expression 
 
 let get_e_accessor = fun t ->
   match t with
-  | E_record_accessor {record; path} -> ok (record , path)
+  | E_accessor {record; path} -> ok (record , path)
   | _ -> simple_fail "not an accessor"
 
 let assert_e_accessor = fun t ->

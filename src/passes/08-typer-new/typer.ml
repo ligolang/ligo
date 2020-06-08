@@ -40,7 +40,7 @@ and type_match : environment -> O'.typer_state -> O.type_expression -> I.matchin
         trace_strong (match_error ~expected:i ~actual:t loc)
         @@ get_t_option t in
       let%bind (match_none , state') = type_expression e state match_none in
-      let (opt, b, _) = match_some in
+      let (opt, b) = match_some in
       let e' = Environment.add_ez_binder opt tv e in
       let%bind (body , state'') = type_expression e' state' b in
       ok (O.Match_option {match_none ; match_some = { opt; body; tv}} , state'')
@@ -49,23 +49,12 @@ and type_match : environment -> O'.typer_state -> O.type_expression -> I.matchin
         trace_strong (match_error ~expected:i ~actual:t loc)
         @@ get_t_list t in
       let%bind (match_nil , state') = type_expression e state match_nil in
-      let (hd, tl, b, _) = match_cons in
+      let (hd, tl, b) = match_cons in
       let e' = Environment.add_ez_binder hd t_elt e in
       let e' = Environment.add_ez_binder tl t e' in
       let%bind (body , state'') = type_expression e' state' b in
       ok (O.Match_list {match_nil ; match_cons = {hd; tl; body;tv=t}} , state'')
-    | Match_tuple ((vars, b),_) ->
-      let%bind tvs =
-        trace_strong (match_error ~expected:i ~actual:t loc)
-        @@ get_t_tuple t in
-      let%bind lst' =
-        generic_try (match_tuple_wrong_arity tvs vars loc)
-        @@ (fun () -> List.combine vars tvs) in
-      let aux prev (name, tv) = Environment.add_ez_binder name tv prev in
-      let e' = List.fold_left aux e lst' in
-      let%bind (body , state') = type_expression e' state b in
-      ok (O.Match_tuple {vars ; body ; tvs} , state')
-    | Match_variant (lst,_) ->
+    | Match_variant lst ->
       let%bind variant_opt =
         let aux acc ((constructor_name , _) , _) =
           let%bind (_ , variant) =
@@ -362,7 +351,6 @@ and type_expression : environment -> O'.typer_state -> ?tv_opt:O.type_expression
           match cur with
           | Match_list { match_nil ; match_cons = { hd=_ ; tl=_ ; body ; tv=_} } -> [ match_nil ; body ]
           | Match_option { match_none ; match_some = {opt=_; body; tv=_} } -> [ match_none ; body ]
-          | Match_tuple { vars=_ ; body ; tvs=_ } -> [ body ]
           | Match_variant { cases ; tv=_ } -> List.map (fun ({constructor=_; pattern=_; body} : O.matching_content_case) -> body) cases in
         List.map get_type_expression @@ aux m' in
       let%bind () = match tvs with

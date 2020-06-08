@@ -124,12 +124,6 @@ and matching_content_option = {
 and expression_variable_list = expression_variable list
 and type_expression_list = type_expression list
 
-and matching_content_tuple = {
-    vars : expression_variable_list ;
-    body : expression ;
-    tvs : type_expression_list ;
-  }
-
 and matching_content_case = {
     constructor : constructor' ;
     pattern : expression_variable ;
@@ -146,7 +140,6 @@ and matching_content_variant = {
 and matching_expr =
   | Match_list    of matching_content_list
   | Match_option  of matching_content_option
-  | Match_tuple   of matching_content_tuple
   | Match_variant of matching_content_variant
 
 and constant' =

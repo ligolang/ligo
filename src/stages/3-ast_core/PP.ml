@@ -66,26 +66,22 @@ and assoc_expression ppf : expr * expr -> unit =
 and single_record_patch ppf ((p, expr) : label * expr) =
   fprintf ppf "%a <- %a" label p expression expr
 
-and matching_variant_case : type a . (_ -> a -> unit) -> _ -> (constructor' * expression_variable) * a -> unit =
+and matching_variant_case : (_ -> expression -> unit) -> _ -> (constructor' * expression_variable) * expression -> unit =
   fun f ppf ((c,n),a) ->
   fprintf ppf "| %a %a ->@;<1 2>%a@ " constructor c expression_variable n f a
 
-and matching : type a . (formatter -> a -> unit) -> formatter -> (a,unit) matching_content -> unit =
+and matching : (formatter -> expression -> unit) -> formatter -> matching_expr -> unit =
   fun f ppf m -> match m with
-    | Match_tuple ((lst, b), _) ->
-        fprintf ppf "@[<hv>| (%a) ->@;<1 2>%a@]" (list_sep_d expression_variable) lst f b
-    | Match_variant (lst, _) ->
+    | Match_variant lst ->
         fprintf ppf "@[<hv>%a@]" (list_sep (matching_variant_case f) (tag "@ ")) lst
-    | Match_list {match_nil ; match_cons = (hd, tl, match_cons, _)} ->
+    | Match_list {match_nil ; match_cons = (hd, tl, match_cons)} ->
         fprintf ppf "@[<hv>| Nil ->@;<1 2>%a@ | %a :: %a ->@;<1 2>%a@]" f match_nil expression_variable hd expression_variable tl f match_cons
-    | Match_option {match_none ; match_some = (some, match_some, _)} ->
+    | Match_option {match_none ; match_some = (some, match_some)} ->
         fprintf ppf "@[<hv>| None ->@;<1 2>%a@ | Some %a ->@;<1 2>%a@]" f match_none expression_variable some f match_some
 
 (* Shows the type expected for the matched value *)
 and matching_type ppf m = match m with
-  | Match_tuple _ ->
-      fprintf ppf "tuple"
-  | Match_variant (lst, _) ->
+  | Match_variant lst ->
       fprintf ppf "variant %a" (list_sep matching_variant_case_type (tag "@.")) lst
   | Match_list _ ->
       fprintf ppf "list"
