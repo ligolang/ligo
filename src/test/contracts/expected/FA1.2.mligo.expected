@@ -24,11 +24,11 @@ type getBalance = {owner : address; callback : nat contract}
 type getTotalSupply = {callback : nat contract}
 
 type action =
-    Transfer of transfer
-  | Approve of approve
-  | GetAllowance of getAllowance
-  | GetBalance of getBalance
-  | GetTotalSupply of getTotalSupply
+  Transfer of transfer
+| Approve of approve
+| GetAllowance of getAllowance
+| GetBalance of getBalance
+| GetTotalSupply of getTotalSupply
 
 let transfer (p, s : transfer * storage)
 : operation list * storage =
