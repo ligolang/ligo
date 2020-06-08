@@ -72,9 +72,9 @@ and pp_pattern = function
 and pp_pconstr = function
   PNone      _ -> string "None"
 | PSomeApp   p -> pp_patt_some p
-| PConstrApp a -> pp_patt_c_app a
+| PConstrApp a -> pp_pconstr_app a
 
-and pp_patt_c_app {value; _} =
+and pp_pconstr_app {value; _} =
   match value with
     constr, None -> pp_ident constr
   | constr, Some pat ->

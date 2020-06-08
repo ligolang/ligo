@@ -148,7 +148,7 @@ and pp_fun_decl {value; _} =
         None -> empty
     | Some a -> hardline ^^ pp_attr_decl a in
   prefix 2 1 start parameters
-  ^^ group (nest 2 (break 1 ^^ string ": " ^^ return_t ^^ string " is"))
+  ^^ group (nest 2 (break 1 ^^ string ": " ^^ nest 2 return_t ^^ string " is"))
   ^^ body ^^ attr
 
 and pp_parameters p = pp_nsepseq ";" pp_param_decl p
@@ -456,11 +456,20 @@ and pp_constr_expr = function
 | NoneExpr  _ -> string "None"
 | ConstrApp a -> pp_constr_app a
 
-and pp_some_app {value; _} = string "TODO:pp_some_app"
+and pp_some_app {value; _} =
+  prefix 4 1 (string "Some") (pp_arguments (snd value))
 
-and pp_constr_app {value; _} = string "TODO:pp_constr_app"
+and pp_constr_app {value; _} =
+  let constr, args = value in
+  let constr = string constr.value in
+  match args with
+          None -> constr
+  | Some tuple -> prefix 2 1 constr (pp_tuple_expr tuple)
 
-and pp_field_assign {value; _} = string "TODO:pp_field_assign"
+
+and pp_field_assign {value; _} =
+  let {field_name; field_expr; _} = value in
+  prefix 2 1 (pp_ident field_name ^^ string " =") (pp_expr field_expr)
 
 and pp_record ne_inj = group (pp_ne_injection pp_field_assign ne_inj)
 
@@ -471,7 +480,11 @@ and pp_projection {value; _} =
   let fields = separate_map sep pp_selection fields in
   group (pp_ident struct_name ^^ string "." ^^ break 0 ^^ fields)
 
-and pp_update {value; _} = string "TODO:pp_update"
+and pp_update {value; _} =
+  let {record; updates; _} = value in
+  let updates = group (pp_ne_injection pp_field_path_assign updates)
+  and record  = pp_path record in
+  record ^^ string " with" ^^ nest 2 (break 1 ^^ updates)
 
 and pp_field_path_assign {value; _} =
   let {field_path; field_expr; _} = value in
@@ -540,10 +553,7 @@ and pp_ne_injection_kwd = function
 | NEInjRecord _ -> "record"
 
 and pp_nsepseq :
-  'a.string ->
-    ('a -> document) ->
-    ('a, t) Utils.nsepseq ->
-    document =
+  'a.string -> ('a -> document) -> ('a, t) Utils.nsepseq -> document =
   fun sep printer elements ->
     let elems = Utils.nsepseq_to_list elements
     and sep   = string sep ^^ break 1
@@ -596,7 +606,7 @@ and pp_tuple_pattern {value; _} =
   | e::items ->
       group (break 1 ^^ pp_pattern e ^^ string ",") ^^ app items in
   let components =
-    if tail = []
+    if   tail = []
     then pp_pattern head
     else pp_pattern head ^^ string "," ^^ app (List.map snd tail)
   in string "(" ^^ nest 1 (components ^^ string ")")
