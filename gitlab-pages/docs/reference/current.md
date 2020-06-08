@@ -598,53 +598,17 @@ let main = (p : unit) : address => Tezos.source;
 
 
 <SyntaxTitle syntax="pascaligo">
-function failwith : string -> unit
+function failwith : 'a -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-function failwith : string -> unit
+function failwith : 'a -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-function failwith : string -> unit
+function failwith: 'a -> unit
 </SyntaxTitle>
 
-Cause the contract to fail with an error message.
+[See `failwith`](toplevel.md#failwith)
 
-> ⚠ Using this currently requires in general a type annotation on the
-> `failwith` call.
-
-<Syntax syntax="cameligo">
-Note that `Current.failwith` is deprecated. Use `Tezos.failwith` or `failwith` instead.
-</Syntax>
-<Syntax syntax="reasonligo">
-Note that `Current.failwith` is deprecated. Use `Tezos.failwith` or `failwith` instead.
-</Syntax>
-
-<Syntax syntax="pascaligo">
-
-```pascaligo
-function main (const p : int; const s : unit) : list (operation) * unit is
-  block {
-    if p > 10 then failwith ("Failure.") else skip
-  }
-  with ((nil : list (operation)), s)
-```
-
-</Syntax>
-<Syntax syntax="cameligo">
-
-```cameligo
-let main (p,s : int * unit) = if p > 10 then failwith "Failure."
-```
-
-</Syntax>
-<Syntax syntax="reasonligo">
-
-```reasonligo
-let main = ((p,s) : (int, unit)) =>
-  if (p > 10) { failwith ("Failure."); };
-```
-
-</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function chain_id : chain_id

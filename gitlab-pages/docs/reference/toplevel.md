@@ -60,20 +60,56 @@ let (): unit
 
 A helper to create a unit.
 
+<a name="failwith"></a>
 <SyntaxTitle syntax="pascaligo">
-function failwith : string -> unit
+function failwith : 'a -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val failwith : string -> unit
+val failwith : 'a -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let failwith: string => unit
+let failwith: 'a => unit
 </SyntaxTitle>
 
-Cause the contract to fail with an error message.
+Cause the contract to fail with an error message or integer. Other types are 
+not supported at the moment.
 
-> ⚠ Using this currently requires in general a type annotation on the
-> `failwith` call.
+Using this currently requires in general a type annotation on the
+`failwith` call.
+
+<Syntax syntax="pascaligo">
+
+```pascaligo
+function main (const p : int; const s : unit) : list (operation) * unit is
+  block {
+    if p > 10 then failwith ("Failure.") else skip
+  }
+  with ((nil : list (operation)), s)
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo
+let main (p,s : int * unit) = if p > 10 then failwith "Failure."
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo
+let main = ((p,s) : (int, unit)) =>
+  if (p > 10) { failwith ("Failure."); };
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+`Current.failwith` is deprecated. Use `Tezos.failwith` or `failwith` instead.
+</Syntax>
+<Syntax syntax="reasonligo">
+`Current.failwith` is deprecated. Use `Tezos.failwith` or `failwith` instead.
+</Syntax>
+
 
 <SyntaxTitle syntax="pascaligo">
 function assert : bool -> unit
