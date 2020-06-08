@@ -411,8 +411,8 @@ and pp_bool_expr = function
   Or   e  -> pp_bin_op "or" e
 | And  e  -> pp_bin_op "and" e
 | Not  e  -> pp_un_op "not" e
-| True  _ -> string "true"
-| False _ -> string "false"
+| True  _ -> string "True"
+| False _ -> string "False"
 
 and pp_bin_op op {value; _} =
   let {arg1; arg2; _} = value

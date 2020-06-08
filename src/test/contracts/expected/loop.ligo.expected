@@ -208,7 +208,7 @@ block {
 
 function dummy (const n : nat) : nat is
 block {
-  while false
+  while False
   block {
     skip
   }
@@ -218,7 +218,7 @@ function inner_capture_in_conditional_block (var nee : unit)
   : bool * int is
 block {
   var count : int := 1;
-  var ret : bool := false;
+  var ret : bool := False;
   var mylist : list (int) := list [1; 2; 3];
   for it1 in list mylist
   block {
