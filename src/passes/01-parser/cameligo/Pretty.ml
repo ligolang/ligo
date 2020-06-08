@@ -41,8 +41,9 @@ and pp_verbatim s = string "{|" ^^ pp_ident s ^^ string "|}"
 
 and pp_let_binding (binding : let_binding) =
   let {binders; lhs_type; let_rhs; _} = binding in
-  let patterns = Utils.nseq_to_list binders in
-  let patterns = group (separate_map (break 1) pp_pattern patterns) in
+  let head, tail = binders in
+  let patterns =
+    group (nest 2 (separate_map (break 1) pp_pattern (head::tail))) in
   let lhs =
     patterns ^^
     match lhs_type with
@@ -71,9 +72,9 @@ and pp_pattern = function
 and pp_pconstr = function
   PNone      _ -> string "None"
 | PSomeApp   p -> pp_patt_some p
-| PConstrApp a -> pp_patt_c_app a
+| PConstrApp a -> pp_pconstr_app a
 
-and pp_patt_c_app {value; _} =
+and pp_pconstr_app {value; _} =
   match value with
     constr, None -> pp_ident constr
   | constr, Some pat ->
@@ -95,11 +96,11 @@ and pp_ppar p = pp_par pp_pattern p
 
 and pp_plist = function
   PListComp cmp -> pp_list_comp cmp
-| PCons cons -> pp_cons cons
+| PCons cons -> pp_pcons cons
 
 and pp_list_comp e = group (pp_injection pp_pattern e)
 
-and pp_cons {value; _} =
+and pp_pcons {value; _} =
   let patt1, _, patt2 = value in
   prefix 2 1 (pp_pattern patt1 ^^ string " ::") (pp_pattern patt2)
 
@@ -126,14 +127,15 @@ and pp_ptyped {value; _} =
 
 and pp_type_decl decl =
   let {name; type_expr; _} = decl.value in
+  let padding = match type_expr with TSum _ -> 0 | _ -> 2 in
   string "type " ^^ string name.value ^^ string " ="
-  ^^ group (nest 2 (break 1 ^^ pp_type_expr type_expr))
+  ^^ group (nest padding (break 1 ^^ pp_type_expr type_expr))
 
 and pp_expr = function
   ECase   e -> pp_case_expr e
 | ECond   e -> group (pp_cond_expr e)
 | EAnnot  e -> pp_annot_expr e
-| ELogic  e -> pp_logic_expr e
+| ELogic  e -> group (pp_logic_expr e)
 | EArith  e -> group (pp_arith_expr e)
 | EString e -> pp_string_expr e
 | EList   e -> group (pp_list_expr e)
@@ -166,15 +168,16 @@ and pp_cases {value; _} =
 
 and pp_clause {value; _} =
   let {pattern; rhs; _} = value in
-  prefix 4 1 (pp_pattern pattern ^^ string " ->") (pp_expr rhs)
+    pp_pattern pattern ^^ prefix 4 1 (string " ->") (pp_expr rhs)
 
 and pp_cond_expr {value; _} =
   let {test; ifso; kwd_else; ifnot; _} = value in
   let test = string "if " ^^ group (nest 3 (pp_expr test))
   and ifso = string "then" ^^ group (nest 2 (break 1 ^^ pp_expr ifso))
   and ifnot = string "else" ^^ group (nest 2 (break 1 ^^ pp_expr ifnot))
-  in if kwd_else#is_ghost then test ^/^ ifso
-  else test ^/^ ifso ^/^ ifnot
+  in if   kwd_else#is_ghost
+     then test ^/^ ifso
+     else test ^/^ ifso ^/^ ifnot
 
 and pp_annot_expr {value; _} =
   let expr, _, type_expr = value.inside in
@@ -420,7 +423,7 @@ and pp_field_decl {value; _} =
   in prefix 2 1 (name ^^ string " :") t_expr
 
 and pp_type_app {value = ctor, tuple; _} =
-  prefix 2 1 (pp_type_tuple tuple) (pp_type_constr ctor)
+  pp_type_tuple tuple ^^ group (nest 2 (break 1 ^^ pp_type_constr ctor))
 
 and pp_type_tuple {value; _} =
   let head, tail = value.inside in

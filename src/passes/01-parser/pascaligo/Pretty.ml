@@ -34,14 +34,14 @@ and pp_attr_decl decl = pp_ne_injection pp_string decl
 
 and pp_const_decl {value; _} =
   let {name; const_type; init; attributes; _} = value in
-  let start  = string ("const " ^ name.value ^ " :") in
+  let start = string ("const " ^ name.value) in
   let t_expr = pp_type_expr const_type in
   let attr   = match attributes with
                  None -> empty
-               | Some a -> hardline ^^ pp_attr_decl a
-  in prefix 2 1 start t_expr
-     ^/^ prefix 2 1 (string "=") (pp_expr init)
-     ^^ attr
+               | Some a -> hardline ^^ pp_attr_decl a in
+  group (start ^/^ nest 2 (string ": " ^^ t_expr))
+  ^^ group (break 1 ^^ nest 2 (string "= " ^^ pp_expr init))
+  ^^ attr
 
 (* Type declarations *)
 
@@ -119,32 +119,39 @@ and pp_type_tuple {value; _} =
 
 (* Function and procedure declarations *)
 
-and pp_fun_expr {value; _} = string "TODO:pp_fun_expr"
+and pp_fun_expr {value; _} =
+  let {param; ret_type; return; _} : fun_expr = value in
+  let start = string "function" in
+  let parameters = pp_par pp_parameters param in
+  let return_t = pp_type_expr ret_type in
+  let expr = pp_expr return in
+  group (start ^^ nest 2 (break 1 ^^ parameters))
+  ^^ group (break 1 ^^ nest 2 (string ": " ^^ return_t))
+  ^^ string " is" ^^ group (nest 4 (break 1 ^^ expr))
 
 and pp_fun_decl {value; _} =
   let {kwd_recursive; fun_name; param;
        ret_type; block_with; return; attributes; _} = value in
   let start =
     match kwd_recursive with
-      None   -> string "function"
+        None -> string "function"
     | Some _ -> string "recursive" ^/^ string "function" in
+  let start = start ^^ group (break 1 ^^ nest 2 (pp_ident fun_name)) in
   let parameters = pp_par pp_parameters param in
   let return_t = pp_type_expr ret_type in
-  let blk_opening, blk_in, blk_closing =
-    match block_with with
-      None -> empty, empty, empty
-    | Some (b,_) ->
-        hardline ^^ string "is block [", pp_block b, string "] with" in
   let expr = pp_expr return in
-  let attr = match attributes with
-               None -> empty
-             | Some a -> hardline ^^ pp_attr_decl a
-  in group (start ^^ nest 2 (break 1 ^^ parameters))
-     ^/^ string ": " ^^ nest 2 return_t
-     ^^ blk_opening
-     ^^ nest 2 (break 0 ^^ blk_in)
-     ^/^ group (blk_closing ^^ nest 4 (break 1 ^^ expr))
-     ^^ attr
+  let body =
+    match block_with with
+            None -> group (nest 2 (break 1 ^^ expr))
+    | Some (b,_) -> hardline ^^ pp_block b ^^ string " with"
+                   ^^ group (nest 4 (break 1 ^^ expr))
+  and attr =
+    match attributes with
+        None -> empty
+    | Some a -> hardline ^^ pp_attr_decl a in
+  prefix 2 1 start parameters
+  ^^ group (nest 2 (break 1 ^^ string ": " ^^ nest 2 return_t ^^ string " is"))
+  ^^ body ^^ attr
 
 and pp_parameters p = pp_nsepseq ";" pp_param_decl p
 
@@ -164,7 +171,10 @@ and pp_param_var {value; _} =
   let t_expr = pp_type_expr param_type
   in prefix 2 1 (name ^^ string " :") t_expr
 
-and pp_block {value; _} = pp_statements value.statements
+and pp_block {value; _} =
+  string "block {"
+  ^^ nest 2 (hardline ^^ pp_statements value.statements)
+  ^^ hardline ^^ string "}"
 
 and pp_statements s = pp_nsepseq ";" pp_statement s
 
@@ -180,10 +190,10 @@ and pp_data_decl = function
 
 and pp_var_decl {value; _} =
   let {name; var_type; init; _} = value in
-  let start  = string ("var " ^ name.value ^ " :") in
-  let t_expr = pp_type_expr var_type
-  in prefix 2 1 start
-                (t_expr ^/^ prefix 2 1 (string ":=") (pp_expr init))
+  let start = string ("var " ^ name.value) in
+  let t_expr = pp_type_expr var_type in
+  group (start ^/^ nest 2 (string ": " ^^ t_expr))
+  ^^ group (break 1 ^^ nest 2 (string ":= " ^^ pp_expr init))
 
 and pp_instruction = function
   Cond        i -> group (pp_conditional i)
@@ -198,62 +208,90 @@ and pp_instruction = function
 | MapRemove   i -> pp_map_remove i
 | SetRemove   i -> pp_set_remove i
 
-and pp_set_remove {value; _} = string "TODO:pp_set_remove"
+and pp_set_remove {value; _} =
+  let {element; set; _} : set_remove = value in
+  string "remove" ^^ group (nest 2 (break 1 ^^ pp_expr element))
+  ^^ group (break 1 ^^ prefix 2 1 (string "from set") (pp_path set))
 
-and pp_map_remove {value; _} = string "TODO:pp_map_remove"
+and pp_map_remove {value; _} =
+  let {key; map; _} = value in
+  string "remove" ^^ group (nest 2 (break 1 ^^ pp_expr key))
+  ^^ group (break 1 ^^ prefix 2 1 (string "from map") (pp_path map))
 
-and pp_set_patch {value; _} = string "TODO:pp_set_patch"
+and pp_set_patch {value; _} =
+  let {path; set_inj; _} = value in
+  let inj = pp_ne_injection pp_expr set_inj in
+  string "patch"
+  ^^ group (nest 2 (break 1 ^^ pp_path path) ^/^ string "with")
+  ^^ group (nest 2 (break 1 ^^ inj))
 
-and pp_map_patch {value; _} = string "TODO:pp_map_patch"
+and pp_map_patch {value; _} =
+  let {path; map_inj; _} = value in
+  let inj = pp_ne_injection pp_binding map_inj in
+  string "patch"
+  ^^ group (nest 2 (break 1 ^^ pp_path path) ^/^ string "with")
+  ^^ group (nest 2 (break 1 ^^ inj))
 
-and pp_binding b = string "TODO:pp_binding"
+and pp_binding {value; _} =
+  let {source; image; _} = value in
+  pp_expr source
+  ^^ string " ->" ^^ group (nest 2 (break 1 ^^ pp_expr image))
 
-and pp_record_patch {value; _} = string "TODO:pp_record_patch"
+and pp_record_patch {value; _} =
+  let {path; record_inj; _} = value in
+  let inj = pp_record record_inj in
+  string "patch"
+  ^^ group (nest 2 (break 1 ^^ pp_path path) ^/^ string "with")
+  ^^ group (nest 2 (break 1 ^^ inj))
 
-and pp_cond_expr {value; _} = string "TODO:pp_cond_expr"
+and pp_cond_expr {value; _} =
+  let {test; ifso; ifnot; _} : cond_expr = value in
+  let test  = string "if "  ^^ group (nest 3 (pp_expr test))
+  and ifso  = string "then" ^^ group (nest 2 (break 1 ^^ pp_expr ifso))
+  and ifnot = string "else" ^^ group (nest 2 (break 1 ^^ pp_expr ifnot))
+  in test ^/^ ifso ^/^ ifnot
 
 and pp_conditional {value; _} =
   let {test; ifso; ifnot; _} : conditional = value in
   let test  = string "if "  ^^ group (nest 3 (pp_expr test))
   and ifso  = string "then" ^^ group (nest 2 (break 1 ^^ pp_if_clause ifso))
-  and ifnot =
-    if is_clause_block ifnot then
-      string "else {"
-      ^^ group (nest 2 (hardline ^^ pp_if_clause ifnot))
-      ^^ hardline ^^ string "}"
-    else
-      string "else" ^^ group (nest 2 (break 1 ^^ pp_if_clause ifnot))
+  and ifnot = match ifnot with
+                ClauseInstr _ | ClauseBlock LongBlock _ ->
+                  string "else"
+                  ^^ group (nest 2 (break 1 ^^ pp_if_clause ifnot))
+              | ClauseBlock ShortBlock _ ->
+                  string "else {"
+                  ^^ group (nest 2 (hardline ^^ pp_if_clause ifnot))
+                  ^^ hardline ^^ string "}"
   in test ^/^ ifso ^/^ ifnot
 
 and pp_if_clause = function
   ClauseInstr i -> pp_instruction i
 | ClauseBlock b -> pp_clause_block b
 
-and is_clause_block = function
-  ClauseInstr _ -> false
-| ClauseBlock _ -> true
-
 and pp_clause_block = function
   LongBlock b  -> pp_block b
-| ShortBlock {value; _} -> Utils.(pp_statements <@ fst) value.inside
+| ShortBlock b -> Utils.(pp_statements <@ fst) b.value.inside
 
-and pp_set_membership {value; _} = string "TODO:pp_set_membership"
+and pp_set_membership {value; _} =
+  let {set; element; _} : set_membership = value in
+  group (pp_expr set ^/^ string "contains" ^/^ pp_expr element)
 
-and pp_case :
-  'a.('a -> document) -> 'a case Region.reg -> document =
+and pp_case : 'a.('a -> document) -> 'a case Region.reg -> document =
   fun printer {value; _} ->
-  let {expr; cases; _} = value in
-  group (string "case " ^^ nest 5 (pp_expr expr) ^/^ string "of [")
-  ^^ hardline ^^ pp_cases printer cases
-  ^^ hardline ^^ string "]"
+    let {expr; cases; _} = value in
+    group (string "case " ^^ nest 5 (pp_expr expr) ^/^ string "of [")
+    ^^ hardline ^^ pp_cases printer cases
+    ^^ hardline ^^ string "]"
 
 and pp_cases :
   'a.('a -> document) ->
-    ('a case_clause reg, vbar) Utils.nsepseq Region.reg -> document =
+    ('a case_clause reg, vbar) Utils.nsepseq Region.reg ->
+    document =
   fun printer {value; _} ->
     let head, tail = value in
     let head       = pp_case_clause printer head in
-    let head       = if tail = [] then head else blank 2 ^^ head in
+    let head       = blank 2 ^^ head in
     let rest       = List.map snd tail in
     let app clause = break 1 ^^ string "| " ^^ pp_case_clause printer clause
     in  head ^^ concat_map app rest
@@ -262,8 +300,7 @@ and pp_case_clause :
   'a.('a -> document) -> 'a case_clause Region.reg -> document =
   fun printer {value; _} ->
     let {pattern; rhs; _} = value in
-    prefix 4 1 (pp_pattern pattern ^^ string " ->") (printer rhs)
-
+    pp_pattern pattern ^^ prefix 4 1 (string " ->") (printer rhs)
 
 and pp_assignment {value; _} =
   let {lhs; rhs; _} = value in
@@ -277,17 +314,37 @@ and pp_loop = function
   While l -> pp_while_loop l
 | For f   -> pp_for_loop f
 
-and pp_while_loop {value; _} = string "TODO:pp_while_loop"
+and pp_while_loop {value; _} =
+  let {cond; block; _} = value in
+  prefix 2 1 (string "while") (pp_expr cond) ^^ hardline ^^ pp_block block
 
 and pp_for_loop = function
-  ForInt l -> pp_for_int l
+  ForInt l     -> pp_for_int l
 | ForCollect l -> pp_for_collect l
 
-and pp_for_int {value; _} = string "TODO:pp_for_int"
+and pp_for_int {value; _} =
+  let {assign; bound; step; block; _} = value in
+  let step =
+    match step with
+      None -> empty
+    | Some (_, e) -> prefix 2 1 (string " step") (pp_expr e) in
+  prefix 2 1 (string "for") (pp_var_assign assign)
+  ^^ prefix 2 1 (string " to") (pp_expr bound)
+  ^^ step ^^ hardline ^^ pp_block block
 
-and pp_var_assign {value; _} = string "TODO:pp_var_assign"
+and pp_var_assign {value; _} =
+  let {name; expr; _} = value in
+  prefix 2 1 (pp_ident name ^^ string " :=") (pp_expr expr)
 
-and pp_for_collect {value; _} = string "TODO:pp_for_collect"
+and pp_for_collect {value; _} =
+  let {var; bind_to; collection; expr; block; _} = value in
+  let binding =
+    match bind_to with
+      None -> pp_ident var
+    | Some (_, dest) -> pp_ident var ^^ string " -> " ^^ pp_ident dest in
+  prefix 2 1 (string "for") binding
+  ^^ prefix 2 1 (string " in") (pp_collection collection ^/^ pp_expr expr)
+  ^^ hardline ^^ pp_block block
 
 and pp_collection = function
   Map  _ -> string "map"
@@ -300,7 +357,7 @@ and pp_expr = function
   ECase   e -> pp_case pp_expr e
 | ECond   e -> group (pp_cond_expr e)
 | EAnnot  e -> pp_annot_expr e
-| ELogic  e -> pp_logic_expr e
+| ELogic  e -> group (pp_logic_expr e)
 | EArith  e -> group (pp_arith_expr e)
 | EString e -> pp_string_expr e
 | EList   e -> group (pp_list_expr e)
@@ -318,11 +375,14 @@ and pp_expr = function
 | EPar    e -> pp_par pp_expr e
 | EFun    e -> pp_fun_expr e
 
-and pp_annot_expr {value; _} = string "TODO:pp_annot_expr"
+and pp_annot_expr {value; _} =
+  let expr, _, type_expr = value.inside in
+  group (string "(" ^^ nest 1 (pp_expr expr ^/^ string ": "
+                               ^^ pp_type_expr type_expr ^^ string ")"))
 
 and pp_set_expr = function
-  SetInj inj -> string "TODO:pp_set_expr:SetInj"
-| SetMem mem -> string "TODO:pp_set_expr:SetMem"
+  SetInj inj -> pp_injection pp_expr inj
+| SetMem mem -> pp_set_membership mem
 
 and pp_map_expr = function
   MapLookUp fetch -> pp_map_lookup fetch
@@ -330,7 +390,7 @@ and pp_map_expr = function
 | BigMapInj inj   -> pp_injection pp_binding inj
 
 and pp_map_lookup {value; _} =
-  pp_path value.path ^^ blank 1 ^^ pp_brackets pp_expr value.index
+  prefix 2 1 (pp_path value.path) (pp_brackets pp_expr value.index)
 
 and pp_path = function
   Name v -> pp_ident v
@@ -378,8 +438,8 @@ and pp_mutez {value; _} =
   Z.to_string (snd value) ^ "mutez" |> string
 
 and pp_string_expr = function
-     Cat e -> pp_bin_op "^" e
-| String e -> pp_string e
+  Cat      e -> pp_bin_op "^" e
+| String   e -> pp_string e
 | Verbatim e -> pp_verbatim e
 
 and pp_ident {value; _} = string value
@@ -389,20 +449,29 @@ and pp_string s = string "\"" ^^ pp_ident s ^^ string "\""
 and pp_verbatim s = string "{|" ^^ pp_ident s ^^ string "|}"
 
 and pp_list_expr = function
-      ECons e -> pp_bin_op "#" e
-| EListComp e -> group (pp_injection pp_expr e)
-|      ENil _ -> string "nil"
+  ECons     e -> pp_bin_op "#" e
+| EListComp e -> pp_injection pp_expr e
+| ENil      _ -> string "nil"
 
 and pp_constr_expr = function
-  SomeApp a   -> pp_some_app a
-| NoneExpr _  -> string "None"
+  SomeApp   a -> pp_some_app a
+| NoneExpr  _ -> string "None"
 | ConstrApp a -> pp_constr_app a
 
-and pp_some_app {value; _} = string "TODO:pp_some_app"
+and pp_some_app {value; _} =
+  prefix 4 1 (string "Some") (pp_arguments (snd value))
 
-and pp_constr_app {value; _} = string "TODO:pp_constr_app"
+and pp_constr_app {value; _} =
+  let constr, args = value in
+  let constr = string constr.value in
+  match args with
+          None -> constr
+  | Some tuple -> prefix 2 1 constr (pp_tuple_expr tuple)
 
-and pp_field_assign {value; _} = string "TODO:pp_field_assign"
+
+and pp_field_assign {value; _} =
+  let {field_name; field_expr; _} = value in
+  prefix 2 1 (pp_ident field_name ^^ string " =") (pp_expr field_expr)
 
 and pp_record ne_inj = group (pp_ne_injection pp_field_assign ne_inj)
 
@@ -413,9 +482,18 @@ and pp_projection {value; _} =
   let fields = separate_map sep pp_selection fields in
   group (pp_ident struct_name ^^ string "." ^^ break 0 ^^ fields)
 
-and pp_update {value; _} = string "TODO:pp_update"
+and pp_update {value; _} =
+  let {record; updates; _} = value in
+  let updates = group (pp_ne_injection pp_field_path_assign updates)
+  and record  = pp_path record in
+  record ^^ string " with" ^^ nest 2 (break 1 ^^ updates)
 
-and pp_field_path_assign {value; _} = string "TODO:pp_field_path_assign"
+and pp_field_path_assign {value; _} =
+  let {field_path; field_expr; _} = value in
+  let fields = Utils.nsepseq_to_list field_path
+  and sep    = string "." ^^ break 0 in
+  let fields = separate_map sep pp_ident fields in
+  group (fields ^^ nest 2 (break 1 ^^ string "= " ^^ pp_expr field_expr))
 
 and pp_selection = function
   FieldName v   -> string v.value
@@ -446,14 +524,13 @@ and pp_arguments v = pp_tuple_expr v
 and pp_injection :
   'a.('a -> document) -> 'a injection reg -> document =
   fun printer {value; _} ->
-    let {kind; enclosing; elements; _} = value in
+    let {kind; elements; _} = value in
     let sep      = string ";" ^^ break 1 in
     let elements = Utils.sepseq_to_list elements in
     let elements = separate_map sep printer elements in
     let kwd      = pp_injection_kwd kind in
-    let offset   = String.length kwd + 2 in
-    string (kwd ^ " [")
-    ^^ group (nest 2 (break 0 ^^ elements ^^ string "]"))
+    group (string (kwd ^ " [")
+           ^^ nest 2 (break 0 ^^ elements) ^^ break 0 ^^ string "]")
 
 and pp_injection_kwd = function
   InjSet    _ -> "set"
@@ -464,12 +541,12 @@ and pp_injection_kwd = function
 and pp_ne_injection :
   'a.('a -> document) -> 'a ne_injection reg -> document =
   fun printer {value; _} ->
-    let {kind; enclosing; ne_elements; _} = value in
+    let {kind; ne_elements; _} = value in
     let elements = pp_nsepseq ";" printer ne_elements in
     let kwd      = pp_ne_injection_kwd kind in
-    let offset   = String.length kwd + 2 in
-    string (kwd ^ " [")
-    ^^ group (nest 2 (break 0 ^^ elements ^^ string "]"))
+    group (string (kwd ^ " [")
+           ^^ group (nest 2 (break 0 ^^ elements ))
+           ^^ break 0 ^^ string "]")
 
 and pp_ne_injection_kwd = function
   NEInjAttr   _ -> "attributes"
@@ -478,10 +555,7 @@ and pp_ne_injection_kwd = function
 | NEInjRecord _ -> "record"
 
 and pp_nsepseq :
-  'a.string ->
-  ('a -> document) ->
-  ('a, t) Utils.nsepseq ->
-  document =
+  'a.string -> ('a -> document) -> ('a, t) Utils.nsepseq -> document =
   fun sep printer elements ->
     let elems = Utils.nsepseq_to_list elements
     and sep   = string sep ^^ break 1
@@ -520,18 +594,34 @@ and pp_constr_pattern = function
 and pp_psome {value=_, p; _} =
   prefix 4 1 (string "Some") (pp_par pp_pattern p)
 
-and pp_pconstr_app {value; _} = string "TODO:pp_pconstr_app"
+and pp_pconstr_app {value; _} =
+  match value with
+    constr, None -> pp_ident constr
+  | constr, Some ptuple ->
+      prefix 4 1 (pp_ident constr) (pp_tuple_pattern ptuple)
 
-and pp_tuple_pattern {value; _} = string "TODO:tuple_pattern"
+and pp_tuple_pattern {value; _} =
+  let head, tail = value.inside in
+  let rec app = function
+    []  -> empty
+  | [e] -> group (break 1 ^^ pp_pattern e)
+  | e::items ->
+      group (break 1 ^^ pp_pattern e ^^ string ",") ^^ app items in
+  let components =
+    if   tail = []
+    then pp_pattern head
+    else pp_pattern head ^^ string "," ^^ app (List.map snd tail)
+  in string "(" ^^ nest 1 (components ^^ string ")")
 
 and pp_list_pattern = function
   PListComp cmp -> pp_list_comp cmp
 | PNil _        -> string "nil"
 | PParCons p    -> pp_ppar_cons p
-| PCons p       -> pp_nsepseq "#" pp_pattern p.value
+| PCons p       -> nest 4 (pp_nsepseq " #" pp_pattern p.value)
 
-and pp_list_comp {value; _} = string "TODO:pp_list_comp"
+and pp_list_comp e = pp_injection pp_pattern e
 
-and pp_ppar_cons {value; _} = string "TODO:pp_ppar_cons"
-
-and pp_cons {value; _} = string "TODO:pp_cons"
+and pp_ppar_cons {value; _} =
+  let patt1, _, patt2 = value.inside in
+  let comp = prefix 2 1 (pp_pattern patt1 ^^ string " ::") (pp_pattern patt2)
+  in string "(" ^^ nest 1 (comp ^^ string ")")

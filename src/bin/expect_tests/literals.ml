@@ -7,7 +7,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad ["interpret" ; "(\"thisisnotasignature\":signature)" ; "--syntax=pascaligo"] ;
   [%expect {|
-    ligo: in file "", line 0, characters 1-32. Badly formatted literal: Signature thisisnotasignature {"location":"in file \"\", line 0, characters 1-32"}
+    ligo: in file "", line 0, characters 0-33. Badly formatted literal: Signature thisisnotasignature {"location":"in file \"\", line 0, characters 0-33"}
 
 
      If you're not sure how to fix this error, you can
@@ -25,7 +25,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad ["interpret" ; "(\"thisisnotapublickey\":key)" ; "--syntax=pascaligo"] ;
   [%expect {|
-    ligo: in file "", line 0, characters 1-26. Badly formatted literal: key thisisnotapublickey {"location":"in file \"\", line 0, characters 1-26"}
+    ligo: in file "", line 0, characters 0-27. Badly formatted literal: key thisisnotapublickey {"location":"in file \"\", line 0, characters 0-27"}
 
 
      If you're not sure how to fix this error, you can

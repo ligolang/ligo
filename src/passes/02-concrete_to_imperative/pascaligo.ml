@@ -282,20 +282,21 @@ let rec compile_expression (t:Raw.expr) : expr result =
   let return x = ok x in
   match t with
   | EAnnot a -> (
-      let ((expr , type_expr) , loc) = r_split a in
+      let par, loc = r_split a in
+      let expr, _, type_expr = par.inside in
       let%bind expr' = compile_expression expr in
       let%bind type_expr' = compile_type_expression type_expr in
       return @@ e_annotation ~loc expr' type_expr'
     )
   | EVar c -> (
-      let (c' , loc) = r_split c in
+      let (c', loc) = r_split c in
       match constants c' with
       | None   -> return @@ e_variable ~loc (Var.of_name c.value)
       | Some s -> return @@ e_constant ~loc s []
     )
   | ECall x -> (
-      let ((f, args) , loc) = r_split x in
-      let (args , args_loc) = r_split args in
+      let ((f, args), loc) = r_split x in
+      let (args, args_loc) = r_split args in
       let args' = npseq_to_list args.inside in
       match f with
       | EVar name -> (
@@ -698,7 +699,7 @@ and compile_fun_expression :
   loc:_ -> Raw.fun_expr -> (type_expression option * expression) result =
   fun ~loc x ->
   let open! Raw in
-  let {kwd_recursive;param;ret_type;return} : fun_expr = x in
+  let {param; ret_type; return; _} : fun_expr = x in
   let statements = [] in
   (match param.value.inside with
     a, [] -> (
@@ -714,10 +715,8 @@ and compile_fun_expression :
           bind_fold_right_list aux result body in
         let binder = Var.of_name binder in
         let fun_type = t_function input_type output_type in
-        let expression = match kwd_recursive with
-          | None -> e_lambda ~loc binder (Some input_type)(Some output_type) result
-          | Some _ -> e_recursive ~loc binder fun_type
-          @@ {binder;input_type=Some input_type; output_type= Some output_type; result}
+        let expression =
+          e_lambda ~loc binder (Some input_type)(Some output_type) result
         in
         ok (Some fun_type , expression)
       )
@@ -745,10 +744,8 @@ and compile_fun_expression :
          let aux prec cur = cur (Some prec) in
          bind_fold_right_list aux result body in
       let fun_type = t_function input_type output_type in
-      let expression = match kwd_recursive with
-        | None -> e_lambda ~loc binder (Some input_type)(Some output_type) result
-        | Some _ -> e_recursive ~loc binder fun_type
-        @@ {binder;input_type=Some input_type; output_type= Some output_type; result}
+      let expression =
+        e_lambda ~loc binder (Some input_type)(Some output_type) result
       in
       ok (Some fun_type , expression)
      )
@@ -822,7 +819,7 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
       let%bind bound = compile_expression fi.bound in
       let%bind step = match fi.step with
         | None -> ok @@ e_int_z Z.one
-        | Some step -> compile_expression step in
+        | Some (_, step) -> compile_expression step in
       let%bind body = compile_block fi.block.value in
       let%bind body = body @@ None in
       return_statement @@ e_for ~loc binder start bound step body
@@ -910,23 +907,24 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
       let%bind m = compile_cases cases in
       return_statement @@ e_matching ~loc expr m
     )
-  | RecordPatch r -> (
+  | RecordPatch r ->
       let reg = r.region in
       let (r,loc) = r_split r in
-      let aux (fa :Raw.field_assign Raw.reg) : Raw.field_path_assign Raw.reg=
-         {value = {field_path = (fa.value.field_name, []); equal=fa.value.equal; field_expr = fa.value.field_expr};
-         region = fa.region}
-      in
+      let aux (fa :Raw.field_assign Raw.reg) : Raw.field_path_assign Raw.reg =
+        {value = {field_path = fa.value.field_name, [];
+                  assignment = fa.value.assignment;
+                  field_expr = fa.value.field_expr};
+         region = fa.region} in
       let update : Raw.field_path_assign Raw.reg Raw.ne_injection Raw.reg = {
-        value = Raw.map_ne_injection aux r.record_inj.value;
-        region=r.record_inj.region
-        } in
-      let u : Raw.update = {record=r.path;kwd_with=r.kwd_with; updates=update} in
+        value  = Raw.map_ne_injection aux r.record_inj.value;
+        region = r.record_inj.region} in
+      let u : Raw.update = {
+          record   = r.path;
+          kwd_with = r.kwd_with;
+          updates  = update} in
       let%bind expr = compile_update {value=u;region=reg} in
       let (name , access_path) = compile_path r.path in
        return_statement @@ e_ez_assign ~loc name access_path expr
-
-  )
   | MapPatch patch -> (
       let (map_p, loc) = r_split patch in
       let (name, access_path) = compile_path map_p.path in

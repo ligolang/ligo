@@ -206,7 +206,6 @@ and type_tuple = (type_expr, comma) nsepseq par reg
 (* Function and procedure declarations *)
 
 and fun_expr = {
-  kwd_recursive: kwd_recursive option;
   kwd_function : kwd_function;
   param        : parameters;
   colon        : colon;
@@ -413,13 +412,12 @@ and for_loop =
 | ForCollect of for_collect reg
 
 and for_int = {
-  kwd_for  : kwd_for;
-  assign   : var_assign reg;
-  kwd_to   : kwd_to;
-  bound    : expr;
-  kwd_step : kwd_step option;
-  step     : expr option;
-  block    : block reg
+  kwd_for : kwd_for;
+  assign  : var_assign reg;
+  kwd_to  : kwd_to;
+  bound   : expr;
+  step    : (kwd_step * expr) option;
+  block   : block reg
 }
 
 and var_assign = {
@@ -448,7 +446,7 @@ and collection =
 and expr =
   ECase   of expr case reg
 | ECond   of cond_expr reg
-| EAnnot  of annot_expr reg
+| EAnnot  of annot_expr par reg
 | ELogic  of logic_expr
 | EArith  of arith_expr
 | EString of string_expr
@@ -467,7 +465,7 @@ and expr =
 | EPar    of expr par reg
 | EFun    of fun_expr reg
 
-and annot_expr = expr * type_expr
+and annot_expr = expr * colon * type_expr
 
 and set_expr =
   SetInj of expr injection reg
@@ -545,7 +543,7 @@ and constr_expr =
 
 and field_assign = {
   field_name : field_name;
-  equal      : equal;
+  assignment : equal;
   field_expr : expr
 }
 
@@ -565,7 +563,7 @@ and update = {
 
 and field_path_assign = {
   field_path : (field_name, dot) nsepseq;
-  equal      : equal;
+  assignment : equal;
   field_expr : expr
 }
 

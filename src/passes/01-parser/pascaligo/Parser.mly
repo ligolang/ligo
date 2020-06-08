@@ -239,16 +239,15 @@ field_decl:
 
 
 fun_expr:
-  ioption ("recursive") "function" parameters ":" type_expr "is" expr {
-    let stop   = expr_to_region $7 in
-    let region = cover $2 stop
-    and value  = {kwd_recursive= $1;
-                  kwd_function = $2;
-                  param        = $3;
-                  colon        = $4;
-                  ret_type     = $5;
-                  kwd_is       = $6;
-                  return       = $7}
+  "function" parameters ":" type_expr "is" expr {
+    let stop   = expr_to_region $6 in
+    let region = cover $1 stop
+    and value  = {kwd_function = $1;
+                  param        = $2;
+                  colon        = $3;
+                  ret_type     = $4;
+                  kwd_is       = $5;
+                  return       = $6}
     in {region; value} }
 
 (* Function declarations *)
@@ -623,7 +622,6 @@ for_loop:
                   assign   = $2;
                   kwd_to   = $3;
                   bound    = $4;
-                  kwd_step = None;
                   step     = None;
                   block    = $5}
     in For (ForInt {region; value})
@@ -634,8 +632,7 @@ for_loop:
                   assign   = $2;
                   kwd_to   = $3;
                   bound    = $4;
-                  kwd_step = Some $5;
-                  step     = Some $6;
+                  step     = Some ($5, $6);
                   block    = $7}
     in For (ForInt {region; value})
   }
@@ -849,7 +846,7 @@ core_expr:
 | "False"                       { ELogic (BoolExpr (False $1)) }
 | "True"                        { ELogic (BoolExpr (True  $1)) }
 | "Unit"                        { EUnit $1                     }
-| annot_expr                    { EAnnot $1                    }
+| par(annot_expr)               { EAnnot $1                    }
 | tuple_expr                    { ETuple $1                    }
 | list_expr                     { EList $1                     }
 | "None"                        { EConstr (NoneExpr $1)        }
@@ -891,12 +888,7 @@ fun_call_or_par_or_projection:
 | fun_call { ECall $1 }
 
 annot_expr:
-  "(" disj_expr ":" type_expr ")" {
-    let start  = expr_to_region $2
-    and stop   = type_expr_to_region $4 in
-    let region = cover start stop
-    and value  = $2, $4
-    in {region; value} }
+  disj_expr ":" type_expr { $1,$2,$3 }
 
 set_expr:
   injection("set",expr) { SetInj ($1 (fun region -> InjSet region)) }
@@ -984,7 +976,7 @@ update_record:
 field_assignment:
   field_name "=" expr {
     let region = cover $1.region (expr_to_region $3)
-    and value  = {field_name=$1; equal=$2; field_expr=$3}
+    and value  = {field_name=$1; assignment=$2; field_expr=$3}
     in {region; value} }
 
 field_path_assignment:
@@ -992,7 +984,7 @@ field_path_assignment:
     let start  = nsepseq_to_region (fun x -> x.region) $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
-    and value  = {field_path=$1; equal=$2; field_expr=$3}
+    and value  = {field_path=$1; assignment=$2; field_expr=$3}
     in {region; value} }
 
 fun_call:

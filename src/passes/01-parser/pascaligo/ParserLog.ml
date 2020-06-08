@@ -180,9 +180,9 @@ and print_type_app state {value; _} =
 
 and print_type_fun state {value; _} =
   let type_expr_a, arrow, type_expr_b = value in
-  print_type_expr  state type_expr_a;
-  print_token      state arrow "->";
-  print_type_expr  state type_expr_b
+  print_type_expr state type_expr_a;
+  print_token     state arrow "->";
+  print_type_expr state type_expr_b
 
 and print_par_type state {value; _} =
   let {lpar; inside; rpar} = value in
@@ -206,12 +206,12 @@ and print_fun_decl state {value; _} =
   let {kwd_function; fun_name; param; colon;
        ret_type; kwd_is; block_with;
        return; terminator; _} = value in
-  print_token       state kwd_function "function";
-  print_var         state fun_name;
-  print_parameters  state param;
-  print_token       state colon ":";
-  print_type_expr   state ret_type;
-  print_token       state kwd_is "is";
+  print_token      state kwd_function "function";
+  print_var        state fun_name;
+  print_parameters state param;
+  print_token      state colon ":";
+  print_type_expr  state ret_type;
+  print_token      state kwd_is "is";
   (match block_with with
     None -> ()
   | Some (block, kwd_with) ->
@@ -221,15 +221,14 @@ and print_fun_decl state {value; _} =
   print_terminator state terminator;
 
 and print_fun_expr state {value; _} =
-  let {kwd_recursive; kwd_function; param; colon;
+  let {kwd_function; param; colon;
        ret_type; kwd_is; return} : fun_expr = value in
-  print_token_opt   state kwd_recursive "recursive";
-  print_token       state kwd_function "function";
-  print_parameters  state param;
-  print_token       state colon ":";
-  print_type_expr   state ret_type;
-  print_token       state kwd_is "is";
-  print_expr        state return
+  print_token      state kwd_function "function";
+  print_parameters state param;
+  print_token      state colon ":";
+  print_type_expr  state ret_type;
+  print_token      state kwd_is "is";
+  print_expr       state return
 
 and print_parameters state {value; _} =
   let {lpar; inside; rpar} = value in
@@ -260,10 +259,10 @@ and print_block state block =
   match enclosing with
     Block (kwd_block, lbrace, rbrace) ->
       print_token      state kwd_block "block";
-      print_token      state lbrace    "{";
+      print_token      state lbrace "{";
       print_statements state statements;
       print_terminator state terminator;
-      print_token state rbrace  "}"
+      print_token      state rbrace "}"
   | BeginEnd (kwd_begin, kwd_end) ->
       print_token      state kwd_begin "begin";
       print_statements state statements;
@@ -396,19 +395,16 @@ and print_for_loop state = function
 | ForCollect for_collect -> print_for_collect state for_collect
 
 and print_for_int state ({value; _} : for_int reg) =
-  let {kwd_for; assign; kwd_to; bound; kwd_step; step; block} = value in
+  let {kwd_for; assign; kwd_to; bound; step; block} = value in
   print_token      state kwd_for "for";
   print_var_assign state assign;
   print_token      state kwd_to "to";
   print_expr       state bound;
-  match kwd_step with
-  | None -> ();
-  | Some kwd_step ->
-  print_token      state kwd_step "step";
-  match step with
-  | None -> ();
-  | Some step ->
-  print_expr       state step;
+  (match step with
+     None -> ();
+   | Some (kwd_step, expr) ->
+       print_token  state kwd_step "step";
+       print_expr   state expr);
   print_block      state block
 
 and print_var_assign state {value; _} =
@@ -464,7 +460,9 @@ and print_expr state = function
 | EPar    e -> print_par_expr state e
 | EFun    e -> print_fun_expr state e
 
-and print_annot_expr state (expr , type_expr) =
+and print_annot_expr state node =
+  let {inside; _} : annot_expr par = node in
+  let expr, _, type_expr = inside in
   print_expr state expr;
   print_type_expr state type_expr
 
@@ -621,15 +619,15 @@ and print_record_expr state =
   print_ne_injection state print_field_assign
 
 and print_field_assign state {value; _} =
-  let {field_name; equal; field_expr} = value in
+  let {field_name; assignment; field_expr} = value in
   print_var   state field_name;
-  print_token state equal "=";
+  print_token state assignment "=";
   print_expr  state field_expr
 
 and print_field_path_assign state {value; _} =
-  let {field_path; equal; field_expr} = value in
+  let {field_path; assignment; field_expr} = value in
   print_nsepseq state "field_path" print_var field_path;
-  print_token state equal "=";
+  print_token state assignment "=";
   print_expr  state field_expr
 
 and print_update_expr state {value; _} =
@@ -1273,7 +1271,7 @@ and pp_projection state proj =
   List.iteri (apply len) selections
 
 and pp_update state update =
-  pp_path state update.record;
+  pp_path (state#pad 2 0) update.record;
   pp_ne_injection pp_field_path_assign state update.updates.value
 
 and pp_selection state = function
@@ -1314,17 +1312,27 @@ and pp_for_loop state = function
     pp_for_collect state value
 
 and pp_for_int state for_int =
+  let {assign; bound; step; block; _} = for_int in
+  let arity =
+    match step with None -> 3 | Some _ -> 4 in
   let () =
-    let state = state#pad 3 0 in
+    let state = state#pad arity 0 in
     pp_node state "<init>";
-    pp_var_assign state for_int.assign.value in
+    pp_var_assign state assign.value in
   let () =
-    let state = state#pad 3 1 in
+    let state = state#pad arity 1 in
     pp_node state "<bound>";
-    pp_expr (state#pad 1 0) for_int.bound in
+    pp_expr (state#pad 1 0) bound in
   let () =
-    let state = state#pad 3 2 in
-    let statements = for_int.block.value.statements in
+    match step with
+      None -> ()
+    | Some (_, expr) ->
+        let state = state#pad arity 2 in
+        pp_node state "<step>";
+        pp_expr (state#pad 1 0) expr in
+  let () =
+    let state = state#pad arity (arity-1) in
+    let statements = block.value.statements in
     pp_node state "<statements>";
     pp_statements state statements
   in ()
@@ -1347,10 +1355,10 @@ and pp_for_collect state collect =
     pp_collection (state#pad 2 0) collect.collection;
     pp_expr (state#pad 1 0) collect.expr in
   let () =
-      let state = state#pad 3 2 in
-      let statements = collect.block.value.statements in
-      pp_node state "<statements>";
-      pp_statements state statements
+    let state = state#pad 3 2 in
+    let statements = collect.block.value.statements in
+    pp_node state "<statements>";
+    pp_statements state statements
   in ()
 
 and pp_collection state = function
@@ -1380,10 +1388,10 @@ and pp_field_assign state {value; _} =
   pp_expr  (state#pad 2 1) value.field_expr
 
 and pp_field_path_assign state {value; _} =
-  pp_node  state "<field path for update>";
+  pp_node state "<update>";
   let path = Utils.nsepseq_to_list value.field_path in
   List.iter (pp_ident (state#pad 2 0)) path;
-  pp_expr  (state#pad 2 1) value.field_expr
+  pp_expr (state#pad 2 1) value.field_expr
 
 and pp_map_patch state patch =
   pp_path (state#pad 2 0) patch.path;
@@ -1432,7 +1440,7 @@ and pp_expr state = function
     pp_cond_expr state value
 | EAnnot {value; region} ->
     pp_loc_node state "EAnnot" region;
-    pp_annotated state value
+    pp_annotated state value.inside
 | ELogic e_logic ->
     pp_node state "ELogic";
     pp_e_logic (state#pad 1 0) e_logic
@@ -1607,7 +1615,7 @@ and pp_string_expr state = function
     pp_node   state "Verbatim";
     pp_verbatim (state#pad 1 0) v
 
-and pp_annotated state (expr, t_expr) =
+and pp_annotated state (expr, _, t_expr) =
   pp_expr      (state#pad 2 0) expr;
   pp_type_expr (state#pad 2 1) t_expr
 
