@@ -3,6 +3,7 @@ module O = Ast_typed
 
 let convert_constructor' (I.Constructor c) = O.Constructor c
 let convert_label (I.Label c) = O.Label c
+
 let convert_type_constant : I.type_constant -> O.type_constant = function
     | TC_unit -> TC_unit
     | TC_string -> TC_string

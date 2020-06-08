@@ -2135,18 +2135,6 @@ interactive_expr: Switch WILD LBRACE VBAR WILD COMMA VBAR
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: Switch WILD LBRACE VBAR WILD COMMA WILD COMMA VBAR
-##
-## Ends in an error in state: 331.
-##
-## nsepseq(sub_pattern,COMMA) -> sub_pattern COMMA . nsepseq(sub_pattern,COMMA) [ RPAR ARROW ]
-##
-## The known suffix of the stack is as follows:
-## sub_pattern COMMA
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
 interactive_expr: Switch WILD LBRACE VBAR WILD COMMA WILD WILD
 ##
 ## Ends in an error in state: 330.
@@ -2156,6 +2144,18 @@ interactive_expr: Switch WILD LBRACE VBAR WILD COMMA WILD WILD
 ##
 ## The known suffix of the stack is as follows:
 ## sub_pattern
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch WILD LBRACE VBAR WILD COMMA WILD COMMA VBAR
+##
+## Ends in an error in state: 336.
+##
+## nsepseq(sub_pattern,COMMA) -> sub_pattern COMMA . nsepseq(sub_pattern,COMMA) [ RPAR ARROW ]
+##
+## The known suffix of the stack is as follows:
+## sub_pattern COMMA
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>

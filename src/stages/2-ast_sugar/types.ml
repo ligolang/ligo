@@ -54,8 +54,8 @@ and expression_content =
   | E_matching of matching
   (* Record *)
   | E_record of expression label_map
-  | E_record_accessor of record_accessor
-  | E_record_update   of record_update
+  | E_accessor of accessor
+  | E_update   of update
   (* Advanced *)
   | E_ascription of ascription
   (* Sugar *)
@@ -63,14 +63,11 @@ and expression_content =
   | E_sequence of sequence
   | E_skip
   | E_tuple of expression list
-  | E_tuple_accessor of tuple_accessor
-  | E_tuple_update   of tuple_update
   (* Data Structures *)
   | E_map of (expression * expression) list 
   | E_big_map of (expression * expression) list
   | E_list of expression list
   | E_set of expression list
-  | E_look_up of (expression * expression)
 
 and constant =
   { cons_name: constant' (* this is at the end because it is huge *)
@@ -103,10 +100,28 @@ and let_in = {
 
 and constructor = {constructor: constructor'; element: expression}
 
-and record_accessor = {record: expression; path: label}
-and record_update   = {record: expression; path: label ; update: expression}
+and accessor = {record: expression; path: access list}
+and update   = {record: expression; path: access list ; update: expression}
 
-and matching_expr = (expr,unit) matching_content
+and access =
+  | Access_tuple of Z.t
+  | Access_record of string
+  | Access_map of expr
+
+and matching_expr =
+  | Match_variant of ((constructor' * expression_variable) * expression) list
+  | Match_list of {
+      match_nil  : expression ;
+      match_cons : expression_variable * expression_variable * expression ;
+    }
+  | Match_option of {
+      match_none : expression ;
+      match_some : expression_variable * expression ;
+    }
+  | Match_tuple of expression_variable list * type_expression list option * expression
+  | Match_record of (label * expression_variable) list * type_expression list option * expression
+  | Match_variable of expression_variable * type_expression option * expression
+
 and matching =
   { matchee: expression
   ; cases: matching_expr
@@ -123,9 +138,6 @@ and sequence = {
   expr1: expression ;
   expr2: expression ;
   }
-
-and tuple_accessor = {tuple: expression; path: int}
-and tuple_update   = {tuple: expression; path: int ; update: expression}
 
 and environment_element_definition =
   | ED_binder

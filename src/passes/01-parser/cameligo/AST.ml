@@ -344,7 +344,7 @@ and update = {
 }
 
 and field_path_assign = {
-  field_path  : (field_name, dot) nsepseq;
+  field_path  : (selection, dot) nsepseq;
   assignment : equal;
   field_expr : expr
 }

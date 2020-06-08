@@ -264,8 +264,8 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
     return (e_record @@ LMap.of_list r')
   | E_record_accessor {record; path} ->
     let%bind r' = untype_expression record in
-    let Label s = path in
-    return (e_record_accessor r' s)
+    let Label path = path in
+    return (e_record_accessor r' (Label path))
   | E_record_update {record; path; update} ->
     let%bind r' = untype_expression record in
     let%bind e = untype_expression update in 
@@ -299,22 +299,19 @@ and untype_lambda ty {binder; result} : I.lambda result =
 and untype_matching : (O.expression -> I.expression result) -> O.matching_expr -> I.matching_expr result = fun f m ->
   let open I in
   match m with
-  | Match_tuple { vars ; body ; tvs=_ } ->
-      let%bind b = f body in
-      ok @@ I.Match_tuple ((vars, b),[])
   | Match_option {match_none ; match_some = {opt; body;tv=_}} ->
       let%bind match_none = f match_none in
       let%bind some = f body in
-      let match_some = opt, some, () in
+      let match_some = opt, some in
       ok @@ Match_option {match_none ; match_some}
   | Match_list {match_nil ; match_cons = {hd;tl;body;tv=_}} ->
       let%bind match_nil = f match_nil in
       let%bind cons = f body in
-      let match_cons = hd , tl , cons, () in
+      let match_cons = hd , tl , cons in
       ok @@ Match_list {match_nil ; match_cons}
   | Match_variant { cases ; tv=_ } ->
       let aux ({constructor;pattern;body} : O.matching_content_case) =
         let%bind body = f body in
         ok ((unconvert_constructor' constructor,pattern),body) in
       let%bind lst' = bind_map_list aux cases in
-      ok @@ Match_variant (lst',())
+      ok @@ Match_variant lst'

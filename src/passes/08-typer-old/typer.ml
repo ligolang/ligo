@@ -125,17 +125,6 @@ module Errors = struct
     ] in
     error ~data title message ()
 
-
-  let match_tuple_wrong_arity (expected:'a list) (actual:'b list) (loc:Location.t) () =
-    let title () = "matching tuple of different size" in
-    let message () = "" in
-    let data = [
-      ("expected" , fun () -> Format.asprintf "%d" (List.length expected)) ;
-      ("actual" , fun () -> Format.asprintf "%d" (List.length actual)) ;
-      ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
-    ] in
-    error ~data title message ()
-
   (* TODO: this should be a trace_info? *)
   let program_error (p:I.program) () =
     let message () = "" in
@@ -528,7 +517,7 @@ and type_match : (environment -> I.expression -> O.expression result) -> environ
         trace_strong (match_error ~expected:i ~actual:t loc)
         @@ get_t_option t in
       let%bind match_none = f e match_none in
-      let (opt, b,_) = match_some in
+      let (opt, b) = match_some in
       let e' = Environment.add_ez_binder opt tv e in
       let%bind body = f e' b in
       ok (O.Match_option {match_none ; match_some = {opt; body; tv}})
@@ -537,23 +526,12 @@ and type_match : (environment -> I.expression -> O.expression result) -> environ
         trace_strong (match_error ~expected:i ~actual:t loc)
         @@ get_t_list t in
       let%bind match_nil = f e match_nil in
-      let (hd, tl, b,_) = match_cons in
+      let (hd, tl, b) = match_cons in
       let e' = Environment.add_ez_binder hd t_elt e in
       let e' = Environment.add_ez_binder tl t e' in
       let%bind body = f e' b in
       ok (O.Match_list {match_nil ; match_cons = {hd; tl; body; tv=t_elt}})
-  | Match_tuple ((vars, b),_) ->
-      let%bind tvs =
-        trace_strong (match_error ~expected:i ~actual:t loc)
-        @@ get_t_tuple t in
-      let%bind vars' =
-        generic_try (match_tuple_wrong_arity tvs vars loc)
-        @@ (fun () -> List.combine vars tvs) in
-      let aux prev (name, tv) = Environment.add_ez_binder name tv prev in
-      let e' = List.fold_left aux e vars' in
-      let%bind body = f e' b in
-      ok (O.Match_tuple { vars ; body ; tvs})
-  | Match_variant (lst,_) ->
+  | Match_variant lst ->
       let%bind variant_cases' =
         trace (match_error ~expected:i ~actual:t loc)
         @@ Ast_typed.Combinators.get_t_sum t in
@@ -937,7 +915,6 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
           match cur with
           | Match_list { match_nil ; match_cons = {hd=_ ; tl=_ ; body ; tv=_} } -> [ match_nil ; body ]
           | Match_option { match_none ; match_some = {opt=_ ; body ; tv=_ } } -> [ match_none ; body ]
-          | Match_tuple {vars=_;body;tvs=_} -> [ body ]
           | Match_variant {cases; tv=_} -> List.map (fun (c : O.matching_content_case) -> c.body) cases in
         List.map get_type_expression @@ aux m' in
       let aux prec cur =
@@ -1081,7 +1058,7 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
   | E_record_accessor {record; path} ->
       let%bind r' = untype_expression record in
       let Label s = path in
-      return (e_record_accessor r' s)
+      return (e_record_accessor r' (Label s))
   | E_record_update {record=r; path=O.Label l; update=e} ->
     let%bind r' = untype_expression r in
     let%bind e = untype_expression e in 
@@ -1104,22 +1081,19 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
 and untype_matching : (O.expression -> I.expression result) -> O.matching_expr -> I.matching_expr result = fun f m ->
   let open I in
   match m with
-  | Match_tuple {vars; body;tvs=_} ->
-      let%bind b = f body in
-      ok @@ I.Match_tuple ((vars, b),[])
   | Match_option {match_none ; match_some = {opt; body ; tv=_}} ->
       let%bind match_none = f match_none in
       let%bind some = f body in
-      let match_some = opt, some, () in
+      let match_some = opt, some in
       ok @@ Match_option {match_none ; match_some}
   | Match_list {match_nil ; match_cons = {hd ; tl ; body ; tv=_}} ->
       let%bind match_nil = f match_nil in
       let%bind cons = f body in
-      let match_cons = hd , tl , cons, () in
+      let match_cons = hd , tl , cons in
       ok @@ Match_list {match_nil ; match_cons}
   | Match_variant {cases;tv=_} ->
       let aux ({constructor;pattern;body} : O.matching_content_case) =
         let%bind c' = f body in
         ok ((unconvert_constructor' constructor,pattern),c') in
       let%bind lst' = bind_map_list aux cases in
-      ok @@ Match_variant (lst',())
+      ok @@ Match_variant lst'

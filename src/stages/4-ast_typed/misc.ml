@@ -236,8 +236,6 @@ module Free_variables = struct
     match m with
     | Match_list { match_nil = n ; match_cons = {hd; tl; body; tv=_} } -> union (f b n) (f (union (of_list [hd ; tl]) b) body)
     | Match_option { match_none = n ; match_some = {opt; body; tv=_} } -> union (f b n) (f (union (singleton opt) b) body)
-    | Match_tuple { vars ; body ; tvs=_ } ->
-       f (union (of_list vars) b) body
     | Match_variant { cases ; tv=_ } -> unions @@ List.map (matching_variant_case f b) cases
 
   and matching_expression = fun x -> matching expression x

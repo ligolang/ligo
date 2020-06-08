@@ -315,8 +315,6 @@ and matching_variant_case : (_ -> expression -> unit) -> _ -> matching_content_c
   fprintf ppf "| %a %a -> %a" constructor c expression_variable pattern f body
 
 and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit = fun f ppf m -> match m with
-  | Match_tuple {vars; body; tvs=_} ->
-      fprintf ppf "let (%a) = %a" (list_sep_d expression_variable) vars f body
   | Match_variant {cases ; tv=_} ->
       fprintf ppf "%a" (list_sep (matching_variant_case f) (tag "@.")) cases
   | Match_list {match_nil ; match_cons = {hd; tl; body; tv=_}} -> 
