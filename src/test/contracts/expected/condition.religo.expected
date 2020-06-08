@@ -1,5 +1,5 @@
 let main = (i: int) => 
-  if(i == 2) {
+  if (i == 2) {
     42
   } else {
     0

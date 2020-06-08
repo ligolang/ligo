@@ -120,8 +120,8 @@ and pp_ptuple {value; _} =
   | p::items ->
       group (break 1 ^^ pp_pattern p ^^ string ",") ^^ app items
   in if tail = []
-     then string "(" ^^ pp_pattern head ^^ string ")"
-     else string "(" ^^ pp_pattern head ^^ string "," ^^ app (List.map snd tail) ^^ string ")"
+     then string "(" ^^ nest 1 (pp_pattern head) ^^ string ")"
+     else string "(" ^^ nest 1 (pp_pattern head ^^ string "," ^^ app (List.map snd tail)) ^^ string ")"
 
 and pp_precord fields = pp_ne_injection pp_field_pattern fields
 
@@ -162,7 +162,7 @@ and pp_expr = function
 
 and pp_case_expr {value; _} =
   let {expr; cases; _} = value in
-  group (string "switch" ^^ string "(" ^^ pp_expr expr ^^ (string ") " ^^ string "{")
+  group (string "switch" ^^ string "(" ^^ nest 1 (pp_expr expr) ^^ (string ") " ^^ string "{")
   ^^ (pp_cases cases) ^^ hardline ^^ string "}" )
 
 and pp_cases {value; _} =
@@ -178,7 +178,7 @@ and pp_clause {value; _} =
 and pp_cond_expr {value; _} =
   let {test; ifso; kwd_else; ifnot; _} = value in
   let if_then =
-    string "if" ^^ string "(" ^^ pp_expr test ^^ string ")" ^^ string " {" ^^ break 0 
+    string "if" ^^ string " (" ^^ pp_expr test ^^ string ")" ^^ string " {" ^^ break 0 
     ^^ group (nest 2 (break 2 ^^ pp_expr ifso)) ^^ hardline ^^ string "}" in
   if kwd_else#is_ghost then
     if_then
@@ -350,8 +350,8 @@ and pp_tuple_expr {value; _} =
   | e::items ->
       group (break 1 ^^ pp_expr e ^^ string ",") ^^ app items
   in if tail = []
-     then string "(" ^^ pp_expr head ^^ string ")"
-     else string "(" ^^ pp_expr head ^^ string "," ^^ app (List.map snd tail) ^^ string ")"
+     then string "(" ^^ nest 1 (pp_expr head) ^^ string ")"
+     else string "(" ^^ nest 1 (pp_expr head ^^ string "," ^^ app (List.map snd tail)) ^^ string ")"
 
 and pp_par_expr {value; _} =
   string "(" ^^ nest 1 (pp_expr value.inside ^^ string ")")
@@ -378,8 +378,8 @@ and pp_fun {value; _} =
         group (break 0 ^^ string ": " ^^ nest 2 (pp_type_expr e))
   in 
   match body with 
-  | ESeq _ -> string "(" ^^ binders ^^ string ")" ^^ annot ^^ string " => " ^^ pp_expr body
-  | _ -> (prefix 2 0 (string "(" ^^ binders ^^ string ")" ^^ annot
+  | ESeq _ -> string "(" ^^ nest 1 binders ^^ string ")" ^^ annot ^^ string " => " ^^ pp_expr body
+  | _ -> (prefix 2 0 (string "(" ^^ nest 1 binders ^^ string ")" ^^ annot
      ^^ string " => ") (pp_expr body))
 
 and pp_seq {value; _} =
@@ -412,7 +412,7 @@ and pp_cartesian {value; _} =
   | e::items ->
       group (break 1 ^^ pp_type_expr e ^^ string ",") ^^ app items
   in 
-  string "(" ^^ pp_type_expr head ^^ (if tail <> [] then string "," else empty) ^^ app (List.map snd tail) ^^ string ")"
+  string "(" ^^ nest 1 (pp_type_expr head ^^ (if tail <> [] then string "," else empty) ^^ app (List.map snd tail)) ^^ string ")"
 
 and pp_variants {value; _} =
   let head, tail = value in
@@ -445,7 +445,7 @@ and pp_field_decl {value; _} =
 
 and pp_type_app {value; _} =
   let ctor, tuple = value in
-  prefix 2 0 (pp_type_constr ctor) (string "(" ^^ pp_type_tuple tuple ^^ string ")") 
+  prefix 2 0 (pp_type_constr ctor) (string "(" ^^ nest 1 (pp_type_tuple tuple) ^^ string ")") 
 
 and pp_type_tuple {value; _} =
   let head, tail = value.inside in
@@ -474,7 +474,7 @@ and pp_fun_type {value; _} =
   match lhs, rhs with 
   | _, TFun tf -> string "(" ^^ pp_type_expr lhs ^^ string ", " ^^ pp_fun_args tf 
   | TVar _ , _ -> group (pp_type_expr lhs ^^ string " =>" ^/^ pp_type_expr rhs)
-  | _ -> group (string "(" ^^ pp_type_expr lhs  ^^ string ")" ^^ string " =>" ^/^ pp_type_expr rhs)
+  | _ -> group (string "(" ^^ nest 1 (pp_type_expr lhs) ^^ string ")" ^^ string " =>" ^/^ pp_type_expr rhs)
 
 and pp_type_par {value; _} =
   string "(" ^^ nest 1 (pp_type_expr value.inside ^^ string ")")

@@ -1,7 +1,7 @@
 type f = int;
 
 let a = (b: f) => {
-  if(b == 2) {
+  if (b == 2) {
     3
   } else {
     4

@@ -54,7 +54,7 @@ let s = {
 let t = (((((((2)))))));
 
 let u = 
-  if(true) {
+  if (true) {
     1
   } else {
     2

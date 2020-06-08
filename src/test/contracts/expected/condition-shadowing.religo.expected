@@ -1,6 +1,6 @@
 let main = (i: int) => {
   let result = 0;
-  if(i == 2) {
+  if (i == 2) {
   
     let result = 42;
     result

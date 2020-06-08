@@ -1,6 +1,6 @@
 type storage = unit;
 
 let main = (p: unit, storage) => 
-  if(true) {
+  if (true) {
     failwith("This contract always fails")
   };
