@@ -90,20 +90,6 @@ type return is list(operation) * storage
 
 (* We use hash-commit so that a baker can not steal *)
 
-function test_bytes (const p : bytes) : string is "Parameter(bytes) OK!"
-function test_timestamp (const d : timestamp) : string is "Parameter(timestamp) OK!"
-function test_commit (const c : commit) : string is "Parameter(commit) OK!"
-function test_commit_set (const c : commit_set) : string is "Parameter(commit) OK!"
-function test_storage(const s : storage) : string is "Parameter(storage) OK!"
-function test_func_commit (const p : bytes; var s: storage) : string is "Function(commit) OK!"
-function test_reveal (const r : reveal) : string is "Parameter(reveal) OK!"
-function commit_ret (const p : bytes; var s: storage) : return is
-  begin
-    const commit : commit = record [date = Tezos.now + 86_400; salted_hash = p];
-    const updated_map: commit_set = Big_map.update(Tezos.sender, Some(commit), s.commits);
-    s := s with record [commits = updated_map];    
-  end with ((nil : list(operation)), s)
-
 function commit (const p : bytes; var s: storage) : return is
   begin
     const commit : commit = record [date = Tezos.now + 86_400; salted_hash = p];
