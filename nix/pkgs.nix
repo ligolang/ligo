@@ -27,6 +27,10 @@ in pkgs.extend (self: super: {
   inherit (self.ocamlPackages) ligo ligo-out ligo-tests ligo-doc ligo-coverage;
   ligo-bin = separateBinary self.ligo-out.bin;
   ligo-docker = self.callPackage ./docker.nix { ligo = self.ligo-bin; };
+  ligo-docker-large = self.callPackage ./docker.nix {
+    ligo = self.ligo-bin;
+    extraContents = [ self.coreutils ];
+  };
   ligo-deb = self.callPackage ./packageDeb.nix { };
   ligo-editor = self.callPackage ./ligo-editor.nix { inherit sources; };
   ligo-editor-docker = self.callPackage ./docker.nix {
