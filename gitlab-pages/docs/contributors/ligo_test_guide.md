@@ -102,7 +102,7 @@ What's going on is similar to the last program: `expect_eq_evaluate` runs a prog
 
 For example, once the program stops running the value of `address` is `"tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx"`. The *comparison*, however, is made to a constructed expression.  
 
-Remember that we're testing from OCaml, but the program is written and evaluated as LIGO. In order to provide a proper comparison, we convert our expected test values into LIGO expressions and data. Constructors such as `e_list` and `e_address` provide a bridge between LIGO and OCaml. Their definitions can be found in files such as [src/stages/ast_core/combinators.ml](https://gitlab.com/ligolang/ligo/blob/dev/src/stages/ast_core/combinators.ml), or using [Merlin's definition point finder](https://github.com/ocaml/merlin/wiki). These same functions are used during the simplification stage of LIGO compilation, so becoming familiar with them will help prepare you to work on the [front end](contributors/big-picture/front-end/).
+Remember that we're testing from OCaml, but the program is written and evaluated as LIGO. In order to provide a proper comparison, we convert our expected test values into LIGO expressions and data. Constructors such as `e_list` and `e_address` provide a bridge between LIGO and OCaml. Their definitions can be found in files such as [src/stages/ast_core/combinators.ml](https://gitlab.com/ligolang/ligo/blob/dev/src/stages/ast_core/combinators.ml), or using [Merlin's definition point finder](https://github.com/ocaml/merlin/wiki). These same functions are used during the simplification stage of LIGO compilation, so becoming familiar with them will help prepare you to work on the [front end](big-picture/front-end.md).
 
 ## How To Write A Test For LIGO
 
