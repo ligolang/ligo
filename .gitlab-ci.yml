@@ -176,7 +176,8 @@ deploy-handoff:
     LIGO_COMMIT_REF_NAME: "${CI_COMMIT_SHORT_SHA}"
   trigger: ligolang/ligo-webide-deploy
   rules:
-    - if: '$CI_COMMIT_REF_NAME == "dev"'
+    # Only deploy handoff when from the dev branch AND on the canonical ligolang/ligo repository
+    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
 
 static-binary:
