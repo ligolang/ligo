@@ -135,7 +135,7 @@ docker-large-push:
   script:
     - echo "${LIGO_REGISTRY_PASSWORD}" | docker login -u "${LIGO_REGISTRY_USER}" --password-stdin
     - docker load -i=./ligo.tar.gz
-    - export LIGO_REGISTRY_FULL_NAME=${LIGO_REGISTRY_IMAGE_BUILD:-ligolang/ligo}:$(if test "$CI_COMMIT_REF_NAME" = "dev"; then echo next-large; else echo next-attempt-large; fi)
+    - export LIGO_REGISTRY_FULL_NAME="${LIGO_REGISTRY_IMAGE_BUILD:-ligolang/ligo}":"$(if test "x$CI_COMMIT_REF_NAME" = "xdev"; then echo next-large; else echo next-attempt-large; fi)"
     - docker tag ligo "${LIGO_REGISTRY_FULL_NAME}"
     - docker push "${LIGO_REGISTRY_FULL_NAME}"
 
