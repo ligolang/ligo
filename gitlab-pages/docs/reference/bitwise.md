@@ -101,7 +101,7 @@ const three: nat = Bitwise.xor(2n, 1n)
 <Syntax syntax="cameligo">
 
 ```cameligo
-let two: nat = Bitwise.xor 2n 1n
+let three: nat = Bitwise.xor 2n 1n
 ```
 
 </Syntax>
