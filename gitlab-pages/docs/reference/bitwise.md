@@ -108,7 +108,7 @@ let two: nat = Bitwise.xor 2n 1n
 <Syntax syntax="reasonligo">
 
 ```reasonligo
-let two: nat = Bitwise.xor(2n, 1n);
+let three: nat = Bitwise.xor(2n, 1n);
 ```
 
 </Syntax>
