@@ -81,11 +81,13 @@ Prism.languages = {
     ]
   }
 };
+
 import defaultTheme from 'prism-react-renderer/themes/palenight';
 import Clipboard from 'clipboard';
 import rangeParser from 'parse-numeric-range';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import useThemeContext from '@theme/hooks/useThemeContext';
+import { LigoSnippet } from '@ligolang/ligo-snippets'
 
 import styles from './styles.module.css';
 
@@ -159,7 +161,8 @@ const highlightDirectiveRegex = (lang) => {
 };
 const codeBlockTitleRegex = /title=".*"/;
 
-export default ({children, className: languageClassName, metastring}) => {
+export default ({ children, className: languageClassName, metastring }) => {
+
   const {
     siteConfig: {
       themeConfig: {prism = {}},
@@ -276,6 +279,34 @@ export default ({children, className: languageClassName, metastring}) => {
 
     setTimeout(() => setShowCopied(false), 2000);
   };
+
+  // ligo-snippets - begin
+  if (metastring) {
+    const theme = isDarkTheme ? 'dark' : 'light';
+    let isObject = true
+    let metadata
+
+    try {
+      metadata = JSON.parse(metastring)
+    } catch (e) {
+      isObject = false
+    }
+
+    if (isObject) {
+      const snippetData = {
+        "language": language,
+        "name": metadata.name,
+        "code": children,
+        "theme": theme,
+        "height": "" // Optional 
+      }
+
+      if (metadata.editor) {
+        return <LigoSnippet data={snippetData} />
+      }
+    }
+  }
+  // ligo-snippets - end
 
   return (
     <Highlight
