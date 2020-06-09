@@ -94,7 +94,7 @@ A bitwise `xor` operation.
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-const two: nat = Bitwise.xor(2n, 1n)
+const three: nat = Bitwise.xor(2n, 1n)
 ```
 
 </Syntax>
