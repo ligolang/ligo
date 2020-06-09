@@ -64,7 +64,7 @@ module Parser
   ) where
 
 import Control.Monad.State
-import Control.Monad.Writer
+import Control.Monad.Writer hiding (Product)
 import Control.Monad.Except
 import Control.Monad.Identity
 
@@ -78,6 +78,7 @@ import Range
 import Pretty
 import Comment
 import Error
+import Product
 
 import Debug.Trace
 
@@ -218,7 +219,7 @@ die' msg rng = throwError =<< makeError' msg rng
 -- | When tree-sitter found something it was unable to process.
 unexpected :: ParseTree -> Error ASTInfo
 unexpected ParseTree { ptSource, ptRange } =
-  Expected "not that" ptSource (ASTInfo ptRange [])
+  Expected "not that" ptSource (Cons ptRange $ Cons [] Nil)
 
 -- | If a parser fails, return stub with error originating here.
 stubbed :: Stubbed a ASTInfo => Text -> Parser a -> Parser a
@@ -324,7 +325,7 @@ anything = do
 range :: Parser a -> Parser (a, Range)
 range parser =
   get >>= \case
-    (,) Forest {pfGrove = (,) _ ParseTree {ptRange} : _} _ -> do
+    (,) Forest {pfGrove = [(,) _ ParseTree {ptRange}]} _ -> do
       a <- parser
       return (a, ptRange)
 
@@ -398,23 +399,11 @@ inside sig parser = do
             parser
 
 -- | Auto-accumulated information to be put into AST being build.
-data ASTInfo = ASTInfo
-  { aiRange    :: Range
-  , aiComments :: [Text]
-  }
-
-instance Pretty ASTInfo where
-  pp (ASTInfo r comms) = pp r $$ vcat (map (text . unpack) comms)
-
-instance HasComments ASTInfo where
-  getComments = aiComments
-
-instance HasRange ASTInfo where
-  getRange = aiRange
+type ASTInfo = Product [Range, [Text]]
 
 -- | Equip given constructor with info.
 getInfo :: Parser ASTInfo
-getInfo = ASTInfo <$> currentRange <*> grabComments
+getInfo = Cons <$> currentRange <*> do Cons <$> grabComments <*> pure Nil
 
 -- | Take the accumulated comments, clean the accumulator.
 grabComments :: Parser [Text]

@@ -16,6 +16,8 @@ import Data.Text (Text)
 import Data.Text.Encoding
 
 import Pretty
+import Lattice
+import Product
 
 -- | A continious location in text.
 data Range = Range
@@ -37,6 +39,9 @@ instance Pretty Range where
 class HasRange a where
   getRange :: a -> Range
 
+instance Contains Range xs => HasRange (Product xs) where
+  getRange = getElem
+
 -- | Extract textual representation of given range.
 cutOut :: Range -> ByteString -> Text
 cutOut (Range (_, _, s) (_, _, f)) bs =
@@ -45,3 +50,7 @@ cutOut (Range (_, _, s) (_, _, f)) bs =
     $ BS.drop  s
       bs
 
+instance Lattice Range where
+  Range (ll1, lc1, _) (ll2, lc2, _) <? Range (rl1, rc1, _) (rl2, rc2, _) =
+    (rl1 < ll1 || rl1 == ll1 && rc1 <= lc1) &&
+    (rl2 > ll2 || rl2 == ll2 && rc2 >= lc2)

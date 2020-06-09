@@ -12,7 +12,7 @@
 module Tree
   ( -- * Tree type
     Tree
-  , spineTo
+  , lookupTree
   , traverseTree
   , mk
   , infoOf
@@ -23,12 +23,17 @@ module Tree
   )
   where
 
+import Data.Foldable
+import Data.List
 import Data.Sum
+import Data.Monoid (First(..), getFirst)
 
 import Lattice
 import Comment
 import Pretty
 import Error
+
+import Debug.Trace
 
 -- | A tree, where each layer is one of @layers@ `Functor`s.
 --
@@ -39,6 +44,16 @@ import Error
 newtype Tree layers info = Tree
   { unTree :: Either (Error info) (info, Sum layers (Tree layers info))
   }
+
+dumpTree
+  :: (Apply Functor layers, Apply Foldable layers, HasComments info, Pretty1 (Sum layers), Pretty info)
+  => Tree layers info
+  -> Doc
+dumpTree (Tree tree) =
+  case tree of
+    Left e -> "ERR"
+    Right (i, ls) ->
+      pp (Tree tree) `indent` block (dumpTree <$> toList ls)
 
 instance Apply Functor layers => Functor (Tree layers) where
   fmap f = go
@@ -78,22 +93,24 @@ instance {-# OVERLAPS #-}
         go (Tree (Right (info, fTree))) = c info $ pp fTree
 
 -- | Return all subtrees that cover the range, ascending in size.
-spineTo
-  :: ( Lattice   info
-     , Apply Foldable fs
+lookupTree
+  :: forall fs info
+  .  ( Apply Foldable fs
+     , Apply Functor fs
      )
-  => info
+  => (info -> Bool)
   -> Tree fs info
-  -> [Tree fs info]
-spineTo info = reverse . go
+  -> Maybe (Tree fs info)
+lookupTree rightInfo = go
   where
-    go tree@(Tree (Right (info', fres))) =
-      if   info <? info'
-      then tree : foldMap go fres
-      else []
+    go :: Tree fs info -> Maybe (Tree fs info)
+    go tree = do
+      if rightInfo (infoOf tree)
+      then getFirst $ foldMap (First . go) (layers tree) <> First (Just tree)
+      else Nothing
 
-    go _ = []
-
+    layers :: (Apply Foldable fs) => Tree fs info -> [Tree fs info]
+    layers (Tree (Right (_, ls))) = toList ls
 -- | Traverse the tree over some monad that exports its methods.
 --
 --   For each tree piece, will call `before` and `after` callbacks.

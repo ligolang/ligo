@@ -21,7 +21,7 @@ data Error info
     , eInfo  :: info   -- ^ Location of the error.
     }
   deriving (Show) via PP (Error info)
-  deriving stock (Functor, Foldable, Traversable)
+  deriving stock (Eq, Functor, Foldable, Traversable)
 
 instance Pretty1 Error where
   pp1 (Expected msg found r) = "░" <> pp msg <> r <> "▒" <> pp found <> "▓"

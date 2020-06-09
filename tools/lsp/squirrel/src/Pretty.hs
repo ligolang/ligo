@@ -66,6 +66,9 @@ instance Pretty () where
 instance (Pretty1 p, Functor p, Pretty a) => Pretty (p a) where
   pp = pp1 . fmap pp
 
+instance Pretty1 [] where
+  pp1 = list
+
 -- | Common instance.
 instance Pretty Text where
   pp = text . Text.unpack

@@ -9,8 +9,10 @@ module Comment
   where
 
 import qualified Data.Text as Text
+import           Data.Text   (Text)
 
 import Pretty
+import Product
 
 -- | Ability to contain comments.
 class HasComments c where
@@ -31,3 +33,6 @@ c i d =
 -- | Narrator: /But there was none/.
 instance HasComments () where
   getComments () = []
+
+instance (Contains [Text] xs) => HasComments (Product xs) where
+  getComments = getElem

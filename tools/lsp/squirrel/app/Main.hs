@@ -25,6 +25,7 @@ import           Parser
 import           Range
 import           AST hiding (def)
 import           Error
+import           Tree
 
 main :: IO ()
 main = do
@@ -148,6 +149,9 @@ eventLoop funs chan = do
           (J.toNormalizedUri doc)
           (J.uriToFilePath doc)
           (Just 0)
+
+      -- ReqDefinition req -> do
+
 
       _ -> U.logs "unknown msg"
 

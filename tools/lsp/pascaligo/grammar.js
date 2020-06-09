@@ -756,6 +756,6 @@ module.exports = grammar({
     Unit:          $ => 'Unit',
     None:          $ => 'None',
     skip:          $ => 'skip',
-    recursive: $ => 'recursive',
+    recursive:     $ => 'recursive',
   }
 });
