@@ -242,6 +242,10 @@ p {
   border-top: none;
 }
 
+.tabs .tabs__item {
+  outline: 0;
+}
+
 .tabs .nav-tabs > div {
   font-size: 1em;
   font-weight: normal;
