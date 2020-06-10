@@ -47,7 +47,10 @@ type command = Quiet | Copy | Units | Tokens
       {li If the field [expr] is [true], then the parser for
           expressions is used, otherwise a full-fledged contract is
           expected.}
-} *)
+
+       {li If the field [pretty] is [true], then the source is
+           pretty-printed on the standard out.}
+    } *)
 
 module SSet : Set.S with type elt = string and type t = Set.Make(String).t
 
@@ -67,7 +70,8 @@ type options = <
   mode    : [`Byte | `Point];
   cmd     : command;
   mono    : bool;
-  expr    : bool
+  expr    : bool;
+  pretty  : bool
 >
 
 val make :
@@ -82,6 +86,7 @@ val make :
   cmd:command ->
   mono:bool ->
   expr:bool ->
+  pretty:bool ->
   options
 
 (** Parsing the command-line options on stdin. *)

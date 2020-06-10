@@ -17,7 +17,8 @@ module type SubIO =
       ext     : string;
       mode    : [`Byte | `Point];
       cmd     : EvalOpt.command;
-      mono    : bool
+      mono    : bool;
+      pretty  : bool
     >
 
     val options : options
@@ -35,7 +36,7 @@ module type Printer =
     val mk_state :
       offsets:bool -> mode:[`Point|`Byte] -> buffer:Buffer.t -> state
 
-    val pp_ast       : state -> ast -> unit
+    val pp_cst       : state -> ast -> unit
     val pp_expr      : state -> expr -> unit
     val print_tokens : state -> ast -> unit
     val print_expr   : state -> expr -> unit

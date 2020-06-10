@@ -22,7 +22,8 @@ module SubIO =
       ext     : string;
       mode    : [`Byte | `Point];
       cmd     : EvalOpt.command;
-      mono    : bool
+      mono    : bool;
+      pretty  : bool
     >
 
     let options : options =
@@ -36,6 +37,7 @@ module SubIO =
         method mode    = IO.options#mode
         method cmd     = IO.options#cmd
         method mono    = IO.options#mono
+        method pretty  = IO.options#pretty
       end
 
     let make =
@@ -48,6 +50,7 @@ module SubIO =
                    ~mode:options#mode
                    ~cmd:options#cmd
                    ~mono:options#mono
+                   ~pretty:options#pretty
   end
 
 module Parser =
@@ -67,12 +70,23 @@ module ParserLog =
 module Lexer = Lexer.Make (LexToken)
 
 module Unit =
-  ParserUnit.Make (Lexer)(AST)(Parser)(ParErr)(ParserLog)(SubIO)
+  ParserUnit.Make (Lexer)(AST)(Parser)(Parser_msg)(ParserLog)(SubIO)
 
 (* Main *)
 
 let wrap = function
-  Stdlib.Ok _ -> flush_all ()
+  Stdlib.Ok ast ->
+    if IO.options#pretty then
+      begin
+        let doc = Pretty.print ast in
+        let width =
+          match Terminal_size.get_columns () with
+            None -> 60
+          | Some c -> c in
+        PPrint.ToChannel.pretty 1.0 width stdout doc;
+        print_newline ()
+      end;
+    flush_all ()
 | Error msg ->
     (flush_all (); Printf.eprintf "\027[31m%s\027[0m%!" msg.Region.value)
 

@@ -159,10 +159,22 @@ let preprocess =
   let doc = "Subcommand: Preprocess the source file.\nWarning: Intended for development of LIGO and can break at any time." in
   (Term.ret term, Term.info ~doc cmdname)
 
+let pretty_print =
+  let f source_file syntax display_format = (
+    toplevel ~display_format @@
+      let%bind pp =
+        Compile.Of_source.pretty_print source_file (Syntax_name syntax) in
+      ok @@ Buffer.contents pp
+  ) in
+  let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
+  let cmdname = "pretty-print" in
+  let doc = "Subcommand: Pretty-print the source file."
+  in (Term.ret term, Term.info ~doc cmdname)
+
 let print_cst =
   let f source_file syntax display_format = (
     toplevel ~display_format @@
-    let%bind pp = Compile.Of_source.pretty_print source_file (Syntax_name syntax) in
+    let%bind pp = Compile.Of_source.pretty_print_cst source_file (Syntax_name syntax) in
     ok @@ Format.asprintf "%s \n" (Buffer.contents pp)
   )
   in
@@ -489,5 +501,6 @@ let run ?argv () =
     print_ast_typed ;
     print_mini_c ;
     list_declarations ;
-    preprocess
+    preprocess;
+    pretty_print
   ]

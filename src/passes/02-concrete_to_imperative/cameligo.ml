@@ -352,38 +352,32 @@ let rec compile_expression :
   let compile_selection : Raw.selection -> access = fun s ->
     match s with
     | FieldName property -> Access_record property.value
-    | Component index -> (Access_tuple (snd index.value))
-  in
-  let compile_path : Raw.path -> string * access list = fun p ->
-    match p with
-    | Raw.Name v -> (v.value , [])
-    | Raw.Path p -> (
-        let p' = p.value in
-        let var = p'.struct_name.value in
-        let path = p'.field_path in
-        let path' = List.map compile_selection @@ npseq_to_list path in
-        (var , path')
-      )
-  in
-  let compile_update = fun (u:Raw.update Region.reg) ->
-    let (u, loc) = r_split u in
-    let (name, path) = compile_path u.record in
-    let record = match path with
-    | [] -> e_variable (Var.of_name name)
-    | _ -> e_accessor (e_variable (Var.of_name name)) path in 
-    let updates = u.updates.value.ne_elements in
-    let%bind updates' =
-      let aux (f:Raw.field_path_assign Raw.reg) =
-        let (f,_) = r_split f in
-        let%bind expr = compile_expression f.field_expr in
-          ok ( List.map compile_selection (npseq_to_list f.field_path), expr)
-      in
-      bind_map_list aux @@ npseq_to_list updates
-    in
-    let aux ur (path, expr) = ok @@ e_update ~loc ur path expr in
-    bind_fold_list aux record updates'
-  in
-  trace (abstracting_expr t) @@
+    | Component index -> (Access_tuple (snd index.value)) in
+
+  let compile_path : Raw.path -> string * access list = function
+      Raw.Name v -> v.value, []
+    | Raw.Path {value; _} ->
+       let Raw.{struct_name; field_path; _} = value in
+       let var  = struct_name.value in
+       let path = List.map compile_selection @@ npseq_to_list field_path
+       in var, path in
+
+let compile_update (u: Raw.update Region.reg) =
+  let u, loc     = r_split u in
+  let name, path = compile_path u.record in
+  let var        = e_variable (Var.of_name name) in
+  let record     = if path = [] then var else e_accessor var path in
+  let updates    = u.updates.value.ne_elements in
+  let%bind updates' =
+    let aux (f: Raw.field_path_assignment Raw.reg) =
+      let f, _ = r_split f in
+      let%bind expr = compile_expression f.field_expr
+      in ok (compile_path f.field_path, expr)
+    in bind_map_list aux @@ npseq_to_list updates in
+  let aux ur ((var, path), expr) =
+    ok @@ e_update ~loc ur (Access_record var :: path) expr
+  in bind_fold_list aux record updates'
+in trace (abstracting_expr t) @@
   match t with
     Raw.ELetIn e ->
       let Raw.{kwd_rec; binding; body; attributes; _} = e.value in

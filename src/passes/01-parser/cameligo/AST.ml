@@ -137,10 +137,13 @@ and ast = t
 and attributes = attribute list
 
 and declaration =
-  Let      of (kwd_let * kwd_rec option * let_binding * attributes) reg
+  Let      of let_decl
 | TypeDecl of type_decl reg
 
 (* Non-recursive values *)
+
+and let_decl =
+  (kwd_let * kwd_rec option * let_binding * attributes) reg
 
 and let_binding = {
   binders  : pattern nseq;
@@ -225,7 +228,7 @@ and field_pattern = {
 and expr =
   ECase   of expr case reg
 | ECond   of cond_expr reg
-| EAnnot  of (expr * colon * type_expr) par reg
+| EAnnot  of annot_expr par reg
 | ELogic  of logic_expr
 | EArith  of arith_expr
 | EString of string_expr
@@ -243,6 +246,8 @@ and expr =
 | ELetIn  of let_in reg
 | EFun    of fun_expr reg
 | ESeq    of expr injection reg
+
+and annot_expr = expr * colon * type_expr
 
 and 'a injection = {
   compound   : compound;
@@ -336,18 +341,19 @@ and field_assign = {
 }
 
 and update = {
-  lbrace : lbrace;
-  record : path;
+  lbrace   : lbrace;
+  record   : path;
   kwd_with : kwd_with;
-  updates : field_path_assign reg ne_injection reg;
-  rbrace : rbrace;
+  updates  : field_path_assignment reg ne_injection reg;
+  rbrace   : rbrace
 }
 
-and field_path_assign = {
-  field_path  : (selection, dot) nsepseq;
+and field_path_assignment = {
+  field_path : path;
   assignment : equal;
   field_expr : expr
 }
+
 and path =
   Name of variable
 | Path of projection reg

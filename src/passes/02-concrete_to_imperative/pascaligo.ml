@@ -152,7 +152,7 @@ let return_statement expr = ok @@ fun expr'_opt ->
   | Some expr' -> ok @@ e_sequence expr expr'
 
 let get_t_string_singleton_opt = function
-  | Raw.TStringLiteral s -> Some s.value
+  | Raw.TString s -> Some s.value
   | _ -> None
 
 
@@ -176,7 +176,7 @@ let rec compile_type_expression (t:Raw.type_expr) : type_expression result =
       let (x, loc) = r_split x in
       let (name, tuple) = x in
       (match name.value with
-        | "michelson_or" -> 
+        | "michelson_or" ->
           let lst = npseq_to_list tuple.value.inside in
           (match lst with
           | [a ; b ; c ; d ] -> (
@@ -252,7 +252,7 @@ let rec compile_type_expression (t:Raw.type_expr) : type_expression result =
         @@ npseq_to_list s in
       let m = List.fold_left (fun m ((x,i), y) -> CMap.add (Constructor x) {ctor_type=y;ctor_decl_pos=i} m) CMap.empty lst in
       ok @@ make_t ~loc @@ T_sum m
-  | TStringLiteral _s -> simple_fail "we don't support singleton string type"
+  | TString _s -> simple_fail "we don't support singleton string type"
 
 and compile_list_type_expression (lst:Raw.type_expr list) : type_expression result =
   match lst with
@@ -282,20 +282,21 @@ let rec compile_expression (t:Raw.expr) : expr result =
   let return x = ok x in
   match t with
   | EAnnot a -> (
-      let ((expr , type_expr) , loc) = r_split a in
+      let par, loc = r_split a in
+      let expr, _, type_expr = par.inside in
       let%bind expr' = compile_expression expr in
       let%bind type_expr' = compile_type_expression type_expr in
       return @@ e_annotation ~loc expr' type_expr'
     )
   | EVar c -> (
-      let (c' , loc) = r_split c in
+      let (c', loc) = r_split c in
       match constants c' with
       | None   -> return @@ e_variable ~loc (Var.of_name c.value)
       | Some s -> return @@ e_constant ~loc s []
     )
   | ECall x -> (
-      let ((f, args) , loc) = r_split x in
-      let (args , args_loc) = r_split args in
+      let ((f, args), loc) = r_split x in
+      let (args, args_loc) = r_split args in
       let args' = npseq_to_list args.inside in
       match f with
       | EVar name -> (
@@ -327,7 +328,8 @@ let rec compile_expression (t:Raw.expr) : expr result =
   | ERecord r ->
       let%bind fields = bind_list
         @@ List.map (fun ((k : _ Raw.reg), v) -> let%bind v = compile_expression v in ok (k.value, v))
-        @@ List.map (fun (x:Raw.field_assign Raw.reg) -> (x.value.field_name, x.value.field_expr))
+        @@ List.map (fun (x:Raw.field_assignment Raw.reg) ->
+                      (x.value.field_name, x.value.field_expr))
         @@ npseq_to_list r.value.ne_elements in
       let aux prev (k, v) = SMap.add k v prev in
       return @@ e_record (List.fold_left aux SMap.empty fields)
@@ -457,37 +459,28 @@ let rec compile_expression (t:Raw.expr) : expr result =
     let (f , loc) = r_split f in
     let%bind (_ty_opt, f') = compile_fun_expression ~loc f
     in return @@ f'
-
-
-and compile_update = fun (u:Raw.update Region.reg) ->
-  let (u, loc) = r_split u in
-  let (name, path) = compile_path u.record in
-  let record = match path with
-  | [] -> e_variable (Var.of_name name)
-  | _ -> e_accessor (e_variable (Var.of_name name)) path in 
-  let updates = u.updates.value.ne_elements in
+and compile_update (u: Raw.update Region.reg) =
+  let u, loc     = r_split u in
+  let name, path = compile_path u.record in
+  let var        = e_variable (Var.of_name name) in
+  let record     = if path = [] then var else e_accessor var path in
+  let updates    = u.updates.value.ne_elements in
   let%bind updates' =
-    let aux (f:Raw.field_path_assign Raw.reg) =
-      let (f,_) = r_split f in
-      let%bind expr = compile_expression f.field_expr in
-        ok ( List.map compile_selection (npseq_to_list f.field_path), expr)
-    in
-    bind_map_list aux @@ npseq_to_list updates
-  in
-  let aux ur (path, expr) = ok @@ e_update ~loc ur path expr in
-  bind_fold_list aux record updates'
+    let aux (f: Raw.field_path_assignment Raw.reg) =
+      let f, _ = r_split f in
+      let%bind expr = compile_expression f.field_expr
+      in ok (compile_path f.field_path, expr)
+    in bind_map_list aux @@ npseq_to_list updates in
+  let aux ur ((var, path), expr) =
+    ok @@ e_update ~loc ur (Access_record var :: path) expr
+  in bind_fold_list aux record updates'
 
 and compile_logic_expression (t:Raw.logic_expr) : expression result =
-  let return x = ok x in
   match t with
-  | BoolExpr (False reg) -> (
-      let loc = Location.lift reg in
-      return @@ e_bool ~loc false
-    )
-  | BoolExpr (True reg) -> (
-      let loc = Location.lift reg in
-      return @@ e_bool ~loc true
-    )
+  | BoolExpr (False reg) ->
+      ok @@ e_bool ~loc:(Location.lift reg) false
+  | BoolExpr (True reg) ->
+     ok @@ e_bool ~loc:(Location.lift reg) true
   | BoolExpr (Or b) ->
       compile_binop "OR" b
   | BoolExpr (And b) ->
@@ -640,11 +633,11 @@ and compile_fun_decl :
       let binder = Var.of_name binder in
       let fun_name = Var.of_name fun_name.value in
       let fun_type = t_function input_type output_type in
-      let expression : expression = 
+      let expression : expression =
         e_lambda ~loc binder (Some input_type)(Some output_type) result in
       let%bind expression = match kwd_recursive with
         None -> ok @@ expression |
-        Some _ -> ok @@ e_recursive ~loc fun_name fun_type 
+        Some _ -> ok @@ e_recursive ~loc fun_name fun_type
         @@ {binder;input_type=Some input_type; output_type= Some output_type; result}
       in
        ok ((fun_name, Some fun_type), expression)
@@ -675,11 +668,11 @@ and compile_fun_decl :
          bind_fold_right_list aux result body in
       let fun_name = Var.of_name fun_name.value in
       let fun_type = t_function input_type output_type in
-      let expression : expression = 
+      let expression : expression =
         e_lambda ~loc binder (Some input_type)(Some output_type) result in
       let%bind expression = match kwd_recursive with
         None -> ok @@ expression |
-        Some _ -> ok @@ e_recursive ~loc fun_name fun_type 
+        Some _ -> ok @@ e_recursive ~loc fun_name fun_type
         @@ {binder;input_type=Some input_type; output_type= Some output_type; result}
       in
        ok ((fun_name, Some fun_type), expression)
@@ -690,7 +683,7 @@ and compile_fun_expression :
   loc:_ -> Raw.fun_expr -> (type_expression option * expression) result =
   fun ~loc x ->
   let open! Raw in
-  let {kwd_recursive;param;ret_type;return} : fun_expr = x in
+  let {param; ret_type; return; _} : fun_expr = x in
   let statements = [] in
   (match param.value.inside with
     a, [] -> (
@@ -706,10 +699,8 @@ and compile_fun_expression :
           bind_fold_right_list aux result body in
         let binder = Var.of_name binder in
         let fun_type = t_function input_type output_type in
-        let expression = match kwd_recursive with
-          | None -> e_lambda ~loc binder (Some input_type)(Some output_type) result
-          | Some _ -> e_recursive ~loc binder fun_type 
-          @@ {binder;input_type=Some input_type; output_type= Some output_type; result}
+        let expression =
+          e_lambda ~loc binder (Some input_type)(Some output_type) result
         in
         ok (Some fun_type , expression)
       )
@@ -737,10 +728,8 @@ and compile_fun_expression :
          let aux prec cur = cur (Some prec) in
          bind_fold_right_list aux result body in
       let fun_type = t_function input_type output_type in
-      let expression = match kwd_recursive with
-        | None -> e_lambda ~loc binder (Some input_type)(Some output_type) result
-        | Some _ -> e_recursive ~loc binder fun_type 
-        @@ {binder;input_type=Some input_type; output_type= Some output_type; result}
+      let expression =
+        e_lambda ~loc binder (Some input_type)(Some output_type) result
       in
       ok (Some fun_type , expression)
      )
@@ -814,7 +803,7 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
       let%bind bound = compile_expression fi.bound in
       let%bind step = match fi.step with
         | None -> ok @@ e_int_z Z.one
-        | Some step -> compile_expression step in
+        | Some (_, step) -> compile_expression step in
       let%bind body = compile_block fi.block.value in
       let%bind body = body @@ None in
       return_statement @@ e_for ~loc binder start bound step body
@@ -852,7 +841,7 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
                 compile_block value
             | ShortBlock {value; _} ->
                 compile_statements @@ fst value.inside in
-      
+
       let%bind match_true = match_true None in
       let%bind match_false = match_false None in
       return_statement @@ e_cond ~loc expr match_true match_false
@@ -861,25 +850,25 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
       let (a , loc) = r_split a in
       let%bind value_expr = compile_expression a.rhs in
       match a.lhs with
-        | Path path -> (
-            let (name , path') = compile_path path in
+        | Path path ->
+            let name , path' = compile_path path in
             let name = Var.of_name name in
             return_statement @@ e_assign ~loc name path' value_expr
-          )
-        | MapPath v -> (
+        | MapPath v ->
             let v' = v.value in
             let%bind (varname,map,path) = match v'.path with
-              | Name name -> ok (name.value , e_variable (Var.of_name name.value), [])
+              | Name name ->
+                  ok (name.value ,
+                      e_variable (Var.of_name name.value), [])
               | Path p ->
-                let (name,p') = compile_path v'.path in
-                let%bind accessor = compile_projection p in
-                ok @@ (name , accessor , p')
-            in
-            let%bind key_expr = compile_expression v'.index.value.inside in
+                  let name, p' = compile_path v'.path in
+                  let%bind accessor = compile_projection p in
+                  ok @@ (name, accessor, p') in
+            let%bind key_expr =
+              compile_expression v'.index.value.inside in
             let expr' = e_map_add key_expr value_expr map in
             let varname = Var.of_name varname in
             return_statement @@ e_assign ~loc varname path expr'
-          )
     )
   | CaseInstr c -> (
       let (c , loc) = r_split c in
@@ -895,7 +884,7 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
                   LongBlock {value; _} ->
                     compile_block value
                 | ShortBlock {value; _} ->
-                  compile_statements @@ fst value.inside in
+                    compile_statements @@ fst value.inside in
           let%bind case_clause = case_clause None in
           ok (x.value.pattern, case_clause) in
         bind_list
@@ -904,27 +893,28 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
       let%bind m = compile_cases cases in
       return_statement @@ e_matching ~loc expr m
     )
-  | RecordPatch r -> (
+  | RecordPatch r ->
       let reg = r.region in
-      let (r,loc) = r_split r in
-      let aux (fa :Raw.field_assign Raw.reg) : Raw.field_path_assign Raw.reg=
-         {value = {field_path = (FieldName fa.value.field_name, []); equal=fa.value.equal; field_expr = fa.value.field_expr};
-         region = fa.region}
-      in
-      let update : Raw.field_path_assign Raw.reg Raw.ne_injection Raw.reg = {
-        value = Raw.map_ne_injection aux r.record_inj.value;
-        region=r.record_inj.region
-        } in
-      let u : Raw.update = {record=r.path;kwd_with=r.kwd_with; updates=update} in
+      let r, loc = r_split r in
+      let aux (fa: Raw.field_assignment Raw.reg) : Raw.field_path_assignment Raw.reg =
+        {value = {field_path = Name fa.value.field_name;
+                  assignment = fa.value.assignment;
+                  field_expr = fa.value.field_expr};
+         region = fa.region} in
+      let update : Raw.field_path_assignment Raw.reg Raw.ne_injection Raw.reg = {
+        value  = Raw.map_ne_injection aux r.record_inj.value;
+        region = r.record_inj.region} in
+      let u : Raw.update = {
+          record   = r.path;
+          kwd_with = r.kwd_with;
+          updates  = update} in
       let%bind expr = compile_update {value=u;region=reg} in
-      let (name , access_path) = compile_path r.path in
+      let name, access_path = compile_path r.path in
       let name = Var.of_name name in
       return_statement @@ e_assign ~loc name access_path expr
-
-  )
-  | MapPatch patch -> (
-      let (map_p, loc) = r_split patch in
-      let (name, access_path) = compile_path map_p.path in
+  | MapPatch patch ->
+      let map_p, loc = r_split patch in
+      let name, access_path = compile_path map_p.path in
       let%bind inj = bind_list
           @@ List.map (fun (x:Raw.binding Region.reg) ->
             let x = x.value in
@@ -934,20 +924,18 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
             in ok @@ (key', value')
           )
         @@ npseq_to_list map_p.map_inj.value.ne_elements in
-      match inj with
+      (match inj with
       | [] -> return_statement @@ e_skip ~loc ()
       | _ :: _ ->
         let assigns = List.fold_right
             (fun (key, value) map ->  (e_map_add key value map))
             inj
             (e_accessor ~loc (e_variable (Var.of_name name)) access_path)
-        in 
-        let name = Var.of_name name in
-        return_statement @@ e_assign ~loc name access_path assigns
-    )
+        and name = Var.of_name name in
+        return_statement @@ e_assign ~loc name access_path assigns)
   | SetPatch patch -> (
-      let (setp, loc) = r_split patch in
-      let (name , access_path) = compile_path setp.path in
+      let setp, loc = r_split patch in
+      let name, access_path = compile_path setp.path in
       let%bind inj =
         bind_list @@
         List.map compile_expression @@
@@ -961,13 +949,13 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
         let name = Var.of_name name in
         return_statement @@ e_assign ~loc name access_path assigns
     )
-  | MapRemove r -> (
+  | MapRemove r ->
       let (v , loc) = r_split r in
       let key = v.key in
       let%bind (name,map,path) = match v.map with
         | Name v -> ok (v.value , e_variable (Var.of_name v.value) , [])
         | Path p ->
-          let (name,p') = compile_path v.map in
+          let name, p' = compile_path v.map in
           let%bind accessor = compile_projection p in
           ok @@ (name , accessor , p')
       in
@@ -975,37 +963,32 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
       let expr = e_constant ~loc C_MAP_REMOVE [key' ; map] in
       let name = Var.of_name name in
       return_statement @@ e_assign ~loc name path expr
-    )
-  | SetRemove r -> (
-      let (set_rm, loc) = r_split r in
-      let%bind (name, set, path) = match set_rm.set with
-        | Name v -> ok (v.value, e_variable (Var.of_name v.value), [])
+  | SetRemove r ->
+      let set_rm, loc = r_split r in
+      let%bind (name, set, path) =
+        match set_rm.set with
+        | Name v ->
+            ok (v.value, e_variable (Var.of_name v.value), [])
         | Path path ->
-          let(name, p') = compile_path set_rm.set in
-          let%bind accessor = compile_projection path in
-          ok @@ (name, accessor, p')
-      in
+            let name, p' = compile_path set_rm.set in
+            let%bind accessor = compile_projection path in
+            ok @@ (name, accessor, p') in
       let%bind removed' = compile_expression set_rm.element in
       let expr = e_constant ~loc C_SET_REMOVE [removed' ; set] in
       let name = Var.of_name name in
       return_statement @@ e_assign ~loc name path expr
-    )
 
-and compile_path : Raw.path -> string * access list = fun p ->
-  match p with
-  | Raw.Name v -> (v.value , [])
-  | Raw.Path p -> (
-      let p' = p.value in
-      let var = p'.struct_name.value in
-      let path = p'.field_path in
-      let path' = List.map compile_selection @@ npseq_to_list path in
-      (var , path')
-    )
+and compile_path : Raw.path -> string * access list = function
+  Raw.Name v -> v.value, []
+| Raw.Path {value; _} ->
+    let Raw.{struct_name; field_path; _} = value in
+    let var  = struct_name.value in
+    let path = List.map compile_selection @@ npseq_to_list field_path
+    in var, path
 
-and compile_selection : Raw.selection -> access = fun s ->
-  match s with
-  | FieldName property -> Access_record property.value
-  | Component index -> (Access_tuple (snd index.value))
+and compile_selection : Raw.selection -> access = function
+  FieldName property -> Access_record property.value
+| Component index    -> Access_tuple (snd index.value)
 
 and compile_cases : (Raw.pattern * expression) list -> matching_expr result = fun t ->
   let open Raw in
