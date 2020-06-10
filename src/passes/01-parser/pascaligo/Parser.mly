@@ -949,7 +949,7 @@ record_expr:
   "record" sep_or_term_list(field_assignment,";") "end" {
     let ne_elements, terminator = $2 in
     let region = cover $1 $3
-    and value : field_assign AST.reg ne_injection = {
+    and value : field_assignment AST.reg ne_injection = {
       kind      = NEInjRecord $1;
       enclosing = End $3;
       ne_elements;
@@ -959,7 +959,7 @@ record_expr:
 | "record" "[" sep_or_term_list(field_assignment,";") "]" {
     let ne_elements, terminator = $3 in
     let region = cover $1 $4
-    and value : field_assign AST.reg ne_injection = {
+    and value : field_assignment AST.reg ne_injection = {
       kind      = NEInjRecord $1;
       enclosing = Brackets ($2,$4);
       ne_elements;
@@ -969,8 +969,8 @@ record_expr:
 update_record:
   path "with" ne_injection("record",field_path_assignment) {
     let updates = $3 (fun region -> NEInjRecord region) in
-    let region = cover (path_to_region $1) updates.region in
-    let value  = {record=$1; kwd_with=$2; updates}
+    let region  = cover (path_to_region $1) updates.region in
+    let value   = {record=$1; kwd_with=$2; updates}
     in {region; value} }
 
 field_assignment:
@@ -980,10 +980,8 @@ field_assignment:
     in {region; value} }
 
 field_path_assignment:
-  nsepseq(selection,".") "=" expr {
-    let start  = nsepseq_to_region selection_to_region $1
-    and stop   = expr_to_region $3 in
-    let region = cover start stop
+  path "=" expr {
+    let region = cover (path_to_region $1) (expr_to_region $3)
     and value  = {field_path=$1; assignment=$2; field_expr=$3}
     in {region; value} }
 

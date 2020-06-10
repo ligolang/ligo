@@ -40,14 +40,14 @@ and pp_let_binding let_ (binding : let_binding) =
   let patterns = Utils.nseq_to_list binders in
   let patterns = group (separate_map (break 0) pp_pattern patterns) in
   let lhs =
-    string let_ ^^ 
+    string let_ ^^
       match lhs_type with
         None -> patterns ^^ string " = "
       | Some (_,e) ->
           patterns ^^ group (break 0 ^^ string ": " ^^ pp_type_expr e ^^ string " = ")
   in
-  let rhs = pp_expr let_rhs in 
-  match let_rhs with 
+  let rhs = pp_expr let_rhs in
+  match let_rhs with
   | EFun _
   | ESeq _
   | ERecord _ -> lhs ^^ rhs
@@ -110,7 +110,7 @@ and pp_list_comp e = group (pp_injection pp_pattern e)
 
 and pp_cons {value; _} =
   let patt1, _, patt2 = value in
-  string "[" ^^ (pp_pattern patt1 ^^ string ", ") ^^ group ( break 0 ^^ string "..." ^^ pp_pattern patt2) ^^ string "]" 
+  string "[" ^^ (pp_pattern patt1 ^^ string ", ") ^^ group ( break 0 ^^ string "..." ^^ pp_pattern patt2) ^^ string "]"
 
 and pp_ptuple {value; _} =
   let head, tail = value in
@@ -162,8 +162,9 @@ and pp_expr = function
 
 and pp_case_expr {value; _} =
   let {expr; cases; _} = value in
-  group (string "switch" ^^ string "(" ^^ nest 1 (pp_expr expr) ^^ (string ") " ^^ string "{")
-  ^^ (pp_cases cases) ^^ hardline ^^ string "}" )
+  group (string "switch" ^^ string "(" ^^ nest 1 (pp_expr expr)
+         ^^ string ") " ^^ string "{"
+         ^^ pp_cases cases ^^ hardline ^^ string "}")
 
 and pp_cases {value; _} =
   let head, tail = value in
@@ -238,7 +239,7 @@ and pp_string_expr = function
 | Verbatim e -> pp_verbatim e
 
 and pp_list_expr = function
-| ECons {value = {arg1; arg2; _}; _ } -> 
+| ECons {value = {arg1; arg2; _}; _ } ->
   string "[" ^^ pp_expr arg1 ^^ string "," ^^ break 1 ^^ string "..." ^^ pp_expr arg2 ^^ string "]"
 | EListComp e -> group (pp_injection pp_expr e)
 
@@ -294,29 +295,22 @@ and pp_ne_injection :
         string opening ^^ nest 2 (break 0 ^^ elements) ^^ break 1 ^^ string closing
 
 and pp_nsepseq :
-  'a.string ->
-  ('a -> document) ->
-  ('a, t) Utils.nsepseq ->
-  document =
+  'a.string -> ('a -> document) -> ('a, t) Utils.nsepseq -> document =
   fun sep printer elements ->
     let elems = Utils.nsepseq_to_list elements
     and sep   = string sep ^^ break 1
     in separate_map sep printer elems
 
-and pp_nseq : 'a.('a -> document) -> 'a Utils.nseq -> document =
-  fun printer (head, tail) ->
-    separate_map (break 1) printer (head::tail)
-
 and pp_projection {value; _} =
-  let {struct_name; field_path; _ } = value in
-  let fields = Utils.nsepseq_to_list field_path
-  and sep    = break 0 in
-  let fields = separate_map sep pp_selection fields in
-  group (pp_ident struct_name ^^ break 0 ^^ fields)
+  let {struct_name; field_path; _} = value in
+  let subpath = Utils.nsepseq_to_list field_path in
+  let subpath = concat_map pp_selection subpath in
+  group (pp_ident struct_name ^^ subpath)
 
 and pp_selection = function
-  FieldName v   -> string "." ^^ string v.value
-| Component cmp -> string "[" ^^ (cmp.value |> snd |> Z.to_string |> string) ^^ string "]"
+  FieldName v   -> string "." ^^ break 0 ^^ string v.value
+| Component cmp ->
+    string "[" ^^ (cmp.value |> snd |> Z.to_string |> string) ^^ string "]"
 
 and pp_update {value; _} =
   let {record; updates; _} = value in
@@ -327,9 +321,7 @@ and pp_update {value; _} =
 
 and pp_field_path_assign {value; _} =
   let {field_path; field_expr; _} = value in
-  let fields = Utils.nsepseq_to_list field_path
-  and sep    = string "." ^^ break 0 in
-  let path   = separate_map sep pp_ident fields in
+  let path = pp_path field_path in
   prefix 2 1 (path ^^ string ":") (pp_expr field_expr)
 
 and pp_path = function
@@ -376,8 +368,8 @@ and pp_fun {value; _} =
       None -> empty
     | Some (_,e) ->
         group (break 0 ^^ string ": " ^^ nest 2 (pp_type_expr e))
-  in 
-  match body with 
+  in
+  match body with
   | ESeq _ -> string "(" ^^ nest 1 binders ^^ string ")" ^^ annot ^^ string " => " ^^ pp_expr body
   | _ -> (prefix 2 0 (string "(" ^^ nest 1 binders ^^ string ")" ^^ annot
      ^^ string " => ") (pp_expr body))
@@ -411,7 +403,7 @@ and pp_cartesian {value; _} =
   | [e] -> group (break 1 ^^ pp_type_expr e)
   | e::items ->
       group (break 1 ^^ pp_type_expr e ^^ string ",") ^^ app items
-  in 
+  in
   string "(" ^^ nest 1 (pp_type_expr head ^^ (if tail <> [] then string "," else empty) ^^ app (List.map snd tail)) ^^ string ")"
 
 and pp_variants {value; _} =
@@ -435,17 +427,16 @@ and pp_fields fields = group (pp_ne_injection pp_field_decl fields)
 and pp_field_decl {value; _} =
   let {field_name; field_type; _} = value in
   let name = pp_ident field_name in
-  match field_type with 
+  match field_type with
   | TVar v when v = field_name ->
     name
-  | _ -> (
+  | _ ->
     let t_expr = pp_type_expr field_type
     in prefix 2 1 (name ^^ string ":") t_expr
-  )
 
 and pp_type_app {value; _} =
   let ctor, tuple = value in
-  prefix 2 0 (pp_type_constr ctor) (string "(" ^^ nest 1 (pp_type_tuple tuple) ^^ string ")") 
+  prefix 2 0 (pp_type_constr ctor) (string "(" ^^ nest 1 (pp_type_tuple tuple) ^^ string ")")
 
 and pp_type_tuple {value; _} =
   let head, tail = value.inside in
@@ -465,14 +456,14 @@ and pp_type_constr ctor = string ctor.value
 
 and pp_fun_args {value; _} =
   let lhs, _, rhs = value in
-  match rhs with 
+  match rhs with
   | TFun tf -> group (pp_type_expr lhs ^^ string ", " ^^ pp_fun_args tf)
   | _ -> group (pp_type_expr lhs ^^ string ")" ^^ string " =>" ^/^ pp_type_expr rhs)
 
 and pp_fun_type {value; _} =
   let lhs, _, rhs = value in
-  match lhs, rhs with 
-  | _, TFun tf -> string "(" ^^ pp_type_expr lhs ^^ string ", " ^^ pp_fun_args tf 
+  match lhs, rhs with
+  | _, TFun tf -> string "(" ^^ pp_type_expr lhs ^^ string ", " ^^ pp_fun_args tf
   | TVar _ , _ -> group (pp_type_expr lhs ^^ string " =>" ^/^ pp_type_expr rhs)
   | _ -> group (string "(" ^^ nest 1 (pp_type_expr lhs) ^^ string ")" ^^ string " =>" ^/^ pp_type_expr rhs)
 

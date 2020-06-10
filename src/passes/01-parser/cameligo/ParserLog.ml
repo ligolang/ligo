@@ -526,7 +526,7 @@ and print_field_assign state {value; _} =
 
 and print_field_path_assign state {value; _} =
   let {field_path; assignment; field_expr} = value in
-  print_nsepseq state "." print_selection field_path;
+  print_path  state field_path;
   print_token state assignment "=";
   print_expr  state field_expr
 
@@ -945,7 +945,7 @@ and pp_projection state proj =
   List.iteri (apply len) selections
 
 and pp_update state update =
-  pp_path state update.record;
+  pp_path (state#pad 2 0) update.record;
   pp_ne_injection pp_field_path_assign state update.updates.value
 
 and pp_path state = function
@@ -970,10 +970,10 @@ and pp_field_assign state {value; _} =
   pp_expr  (state#pad 2 1) value.field_expr
 
 and pp_field_path_assign state {value; _} =
-  pp_node  state "<field path for update>";
-  let path = Utils.nsepseq_to_list value.field_path in
-  List.iter (pp_selection (state#pad 2 0)) path;
-  pp_expr  (state#pad 2 1) value.field_expr
+  let {field_path; field_expr; _} = value in
+  pp_node state "<update>";
+  pp_path (state#pad 2 0) field_path;
+  pp_expr (state#pad 2 1) field_expr
 
 and pp_constr_expr state = function
   ENone region ->

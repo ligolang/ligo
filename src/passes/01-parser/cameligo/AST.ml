@@ -344,12 +344,12 @@ and update = {
   lbrace   : lbrace;
   record   : path;
   kwd_with : kwd_with;
-  updates  : field_path_assign reg ne_injection reg;
+  updates  : field_path_assignment reg ne_injection reg;
   rbrace   : rbrace
 }
 
-and field_path_assign = {
-  field_path  : (selection, dot) nsepseq;
+and field_path_assignment = {
+  field_path : path;
   assignment : equal;
   field_expr : expr
 }

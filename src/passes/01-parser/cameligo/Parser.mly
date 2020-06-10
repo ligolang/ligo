@@ -524,8 +524,7 @@ mult_expr_level:
 | unary_expr_level                                 {               $1 }
 
 unary_expr_level:
-  call_expr_level { $1 }
-| "-" call_expr_level {
+  "-" call_expr_level {
     let start = $1 in
     let stop = expr_to_region $2 in
     let region = cover start stop
@@ -537,7 +536,9 @@ unary_expr_level:
     let stop = expr_to_region $2 in
     let region = cover start stop
     and value  = {op=$1; arg=$2} in
-    ELogic (BoolExpr (Not ({region; value}))) }
+    ELogic (BoolExpr (Not ({region; value})))
+  }
+| call_expr_level { $1 }
 
 call_expr_level:
   call_expr | constr_expr | core_expr { $1 }
@@ -595,7 +596,7 @@ module_field:
 
 module_fun:
   field_name { $1 }
-| "or"       { {value="or";  region=$1} }
+| "or"       { {value="or"; region=$1} }
 
 projection:
   struct_name "." nsepseq(selection,".") {
@@ -643,20 +644,15 @@ update_record:
     in {region; value} }
 
 field_path_assignment :
-  nsepseq(selection,".") "=" expr {
-    let start  = nsepseq_to_region selection_to_region $1 in
-    let region = cover start (expr_to_region $3) in
-    let value  = {field_path = $1;
-                  assignment = $2;
-                  field_expr = $3}
-    in {region; value}}
+  path "=" expr {
+    let region = cover (path_to_region $1) (expr_to_region $3)
+    and value  = {field_path=$1; assignment=$2; field_expr=$3}
+    in {region; value} }
 
 field_assignment:
   field_name "=" expr {
-    let start  = $1.region in
-    let stop   = expr_to_region $3 in
-    let region = cover start stop in
-    let value  = {field_name = $1;
+    let region = cover $1.region (expr_to_region $3)
+    and value  = {field_name = $1;
                   assignment = $2;
                   field_expr = $3}
     in {region; value} }

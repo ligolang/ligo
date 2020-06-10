@@ -19,5 +19,3 @@ $HOME/git/OCaml-build/Makefile
 ../shared/LexerUnit.ml
 ../shared/ParserUnit.mli
 ../shared/ParserUnit.ml
-
-$HOME/git/ligo/_build/default/src/passes/1-parser/cameligo/ParErr.ml

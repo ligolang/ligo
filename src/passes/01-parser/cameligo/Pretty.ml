@@ -286,18 +286,14 @@ and pp_ne_injection :
         string opening ^^ nest 1 elements ^^ string closing
 
 and pp_nsepseq :
-  'a.string ->
-  ('a -> document) ->
-  ('a, t) Utils.nsepseq ->
-  document =
+  'a.string -> ('a -> document) -> ('a, t) Utils.nsepseq -> document =
   fun sep printer elements ->
     let elems = Utils.nsepseq_to_list elements
     and sep   = string sep ^^ break 1
     in separate_map sep printer elems
 
 and pp_nseq : 'a.('a -> document) -> 'a Utils.nseq -> document =
-  fun printer (head, tail) ->
-    separate_map (break 1) printer (head::tail)
+  fun printer (head, tail) -> separate_map (break 1) printer (head::tail)
 
 and pp_projection {value; _} =
   let {struct_name; field_path; _} = value in
@@ -319,9 +315,7 @@ and pp_update {value; _} =
 
 and pp_field_path_assign {value; _} =
   let {field_path; field_expr; _} = value in
-  let fields = Utils.nsepseq_to_list field_path
-  and sep    = string "." ^^ break 0 in
-  let path   = separate_map sep pp_ident fields in
+  let path = pp_path field_path in
   prefix 2 1 (path ^^ string " =") (pp_expr field_expr)
 
 and pp_path = function

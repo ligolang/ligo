@@ -497,10 +497,8 @@ and pp_update {value; _} =
 
 and pp_field_path_assign {value; _} =
   let {field_path; field_expr; _} = value in
-  let fields = Utils.nsepseq_to_list field_path
-  and sep    = string "." ^^ break 0 in
-  let fields = separate_map sep pp_ident fields in
-  group (fields ^^ nest 2 (break 1 ^^ string "= " ^^ pp_expr field_expr))
+  let path = pp_path field_path in
+  prefix 2 1 (path ^^ string " =") (pp_expr field_expr)
 
 and pp_selection = function
   FieldName v   -> string v.value

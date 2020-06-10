@@ -430,14 +430,14 @@ type_expr_simple:
     TProd {region = cover $1 $3; value=$2}
   }
 | "(" type_expr_simple "=>" type_expr_simple ")" {
-    TPar { 
+    TPar {
       value = {
         lpar = $1;
         rpar = $5;
         inside = TFun {
           region = cover (type_expr_to_region $2) (type_expr_to_region $4);
           value=$2,$3,$4
-        } 
+        }
       };
       region = cover $1 $5;
     }
@@ -912,9 +912,9 @@ update_record:
       lbrace   = $1;
       record   = $3;
       kwd_with = $4;
-      updates  = {value = {compound = Braces(Region.ghost, Region.ghost);
-                  ne_elements;
-                  terminator};
+      updates  = {value = {compound = Braces (ghost, ghost);
+                           ne_elements;
+                           terminator};
                   region = cover $4 $6};
       rbrace   = $6}
     in {region; value} }
@@ -942,10 +942,9 @@ exprs:
       in
       let sequence = ESeq {
         value = {
-          compound = BeginEnd(Region.ghost, Region.ghost);
-          elements = Some val_;
-          terminator = (snd c)
-        };
+          compound   = BeginEnd (ghost, ghost);
+          elements   = Some val_;
+          terminator = snd c};
         region = sequence_region
       }
       in
@@ -1012,48 +1011,23 @@ field_assignment_punning:
   (* This can only happen with multiple fields -
      one item punning does NOT work in ReasonML *)
   field_name {
-    let value = {
-      field_name = $1;
-      assignment = ghost;
-      field_expr = EVar $1 }
+    let value = {field_name = $1;
+                 assignment = ghost;
+                 field_expr = EVar $1}
     in {$1 with value}
   }
 | field_assignment { $1 }
 
 field_assignment:
   field_name ":" expr {
-    let start  = $1.region in
-    let stop   = expr_to_region $3 in
-    let region = cover start stop in
-    let value  = {
-      field_name = $1;
-      assignment = $2;
-      field_expr = $3}
+    let region = cover $1.region (expr_to_region $3)
+    and value  = {field_name = $1;
+                  assignment = $2;
+                  field_expr = $3}
     in {region; value} }
 
-real_selection:
-  field_name { FieldName $1 }
-| "<int>"    { Component $1 }
-
 field_path_assignment:
-  real_selection {
-    let region = selection_to_region $1 
-    and value  = {
-      field_path = ($1,[]);
-      assignment = ghost;
-      field_expr = match $1 with
-        FieldName var -> EVar var
-      | Component {value;region} -> 
-        let value = Z.to_string (snd value) in
-        EVar {value;region} }
-    in {region; value}
-  }
-| nsepseq(real_selection,".") ":" expr {
-    let start  = nsepseq_to_region selection_to_region $1
-    and stop   = expr_to_region $3 in
-    let region = cover start stop
-    and value  = {
-      field_path = $1;
-      assignment = $2;
-      field_expr = $3}
+  path ":" expr {
+    let region = cover (path_to_region $1) (expr_to_region $3)
+    and value  = {field_path=$1; assignment=$2; field_expr=$3}
     in {region; value} }

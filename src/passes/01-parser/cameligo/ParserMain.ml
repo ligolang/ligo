@@ -70,7 +70,7 @@ module ParserLog =
 module Lexer = Lexer.Make (LexToken)
 
 module Unit =
-  ParserUnit.Make (Lexer)(AST)(Parser)(ParErr)(ParserLog)(SubIO)
+  ParserUnit.Make (Lexer)(AST)(Parser)(Parser_msg)(ParserLog)(SubIO)
 
 (* Main *)
 

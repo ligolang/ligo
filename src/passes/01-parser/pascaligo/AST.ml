@@ -541,13 +541,13 @@ and constr_expr =
 | NoneExpr  of c_None
 | ConstrApp of (constr * arguments option) reg
 
-and field_assign = {
+and field_assignment = {
   field_name : field_name;
   assignment : equal;
   field_expr : expr
 }
 
-and record = field_assign reg ne_injection
+and record = field_assignment reg ne_injection
 
 and projection = {
   struct_name : variable;
@@ -558,11 +558,11 @@ and projection = {
 and update = {
   record   : path;
   kwd_with : kwd_with;
-  updates  : field_path_assign reg ne_injection reg
+  updates  : field_path_assignment reg ne_injection reg
 }
 
-and field_path_assign = {
-  field_path : (selection, dot) nsepseq;
+and field_path_assignment = {
+  field_path : path;
   assignment : equal;
   field_expr : expr
 }
