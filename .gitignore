@@ -3,6 +3,8 @@
 *.merlin
 cache/*
 Version.ml
+/result
+/result-*
 /_opam/
 /*.pp.ligo
 /*.pp.mligo
