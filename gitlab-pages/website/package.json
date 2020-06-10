@@ -30,7 +30,7 @@
   "dependencies": {
     "@docusaurus/plugin-sitemap": "^2.0.0-alpha.56",
     "@ligo/syntax": "file:src/@ligo/syntax",
-    "@ligolang/ligo-snippets": "^1.0.0",
+    "@ligolang/ligo-snippets": "^1.0.1",
     "axios": "^0.19.2",
     "react-codejar": "^1.0.1",
     "yaml": "^1.10.0"
