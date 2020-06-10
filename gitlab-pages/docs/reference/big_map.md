@@ -13,7 +13,7 @@ Lazily means that storage is read or written per key on demand. Therefore
 there are no `map`, `fold`, and `iter` operations as in 
 [Map](./map-reference).
 
-The gast costs of big maps are higher than standard maps as data is lazily 
+The gas costs of big maps are higher than standard maps as data is lazily 
 deserialized.
 
 <SyntaxTitle syntax="pascaligo">
