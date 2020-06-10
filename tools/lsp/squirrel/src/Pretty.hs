@@ -23,6 +23,7 @@ module Pretty
   , sepByDot
   , mb
   , sparseBlock
+  , color
 
     -- * Full might of pretty printing
   , module Text.PrettyPrint
@@ -69,6 +70,12 @@ instance (Pretty1 p, Functor p, Pretty a) => Pretty (p a) where
 instance Pretty1 [] where
   pp1 = list
 
+instance Pretty1 Maybe where
+  pp1 = maybe empty pp
+
+instance {-# OVERLAPS #-} (Pretty a, Pretty b) => Pretty (Either a b) where
+  pp = either pp pp
+
 -- | Common instance.
 instance Pretty Text where
   pp = text . Text.unpack
@@ -114,3 +121,11 @@ mb f = maybe empty (f . pp)
 -- | Pretty print as a vertical with elements separated by newline.
 sparseBlock :: Pretty a => [a] -> Doc
 sparseBlock = vcat . punctuate "\n" . map (($$ empty) . pp)
+
+type Color = Int
+
+color :: Color -> Doc -> Doc
+color c d = zeroWidthText begin <> d <> zeroWidthText end
+  where
+    begin = "\x1b[" ++ show (30 + c) ++ "m"
+    end   = "\x1b[0m"

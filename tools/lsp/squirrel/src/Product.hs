@@ -1,6 +1,8 @@
 
 module Product where
 
+import qualified Data.Text as Text
+
 import Pretty
 
 data Product xs where
@@ -29,4 +31,9 @@ instance Pretty (Product '[]) where
   pp _ = "{}"
 
 instance (Pretty x, Pretty (Product xs)) => Pretty (Product (x : xs)) where
-  pp (Cons x xs) = pp x <+> "&" <+> pp xs
+  pp (Cons x xs) =
+    if Text.null $ Text.strip ppx
+    then pp xs
+    else pp ppx <+> "&" <+> pp xs
+    where
+      ppx = ppToText x

@@ -3,6 +3,7 @@ name: squirrel
 dependencies:
   - base
   - bytestring
+  - containers
   - data-default
   - mtl
   - pretty

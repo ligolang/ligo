@@ -39,6 +39,9 @@ instance Pretty Range where
 class HasRange a where
   getRange :: a -> Range
 
+instance HasRange Range where
+  getRange = id
+
 instance Contains Range xs => HasRange (Product xs) where
   getRange = getElem
 
@@ -54,3 +57,7 @@ instance Lattice Range where
   Range (ll1, lc1, _) (ll2, lc2, _) <? Range (rl1, rc1, _) (rl2, rc2, _) =
     (rl1 < ll1 || rl1 == ll1 && rc1 <= lc1) &&
     (rl2 > ll2 || rl2 == ll2 && rc2 >= lc2)
+
+instance Eq Range where
+  Range (l, c, _) (r, d, _) == Range (l1, c1, _) (r1, d1, _) =
+    (l, c, r, d) == (l1, c1, r1, d1)

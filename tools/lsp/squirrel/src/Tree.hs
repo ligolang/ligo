@@ -10,17 +10,17 @@
 -}
 
 module Tree
-  ( -- * Tree type
-    Tree
-  , lookupTree
-  , traverseTree
-  , mk
-  , infoOf
+  -- ( -- * Tree type
+  --   Tree
+  -- , lookupTree
+  -- , traverseTree
+  -- , mk
+  -- , infoOf
 
-    -- * Callbacks on update
-  , UpdateOver (..)
-  , skip
-  )
+  --   -- * Callbacks on update
+  -- , UpdateOver (..)
+  -- , skip
+  -- )
   where
 
 import Data.Foldable
@@ -32,6 +32,7 @@ import Lattice
 import Comment
 import Pretty
 import Error
+import Range
 
 import Debug.Trace
 
@@ -97,20 +98,22 @@ lookupTree
   :: forall fs info
   .  ( Apply Foldable fs
      , Apply Functor fs
+     , HasRange info
      )
-  => (info -> Bool)
+  => Range
   -> Tree fs info
   -> Maybe (Tree fs info)
-lookupTree rightInfo = go
+lookupTree target = go
   where
     go :: Tree fs info -> Maybe (Tree fs info)
     go tree = do
-      if rightInfo (infoOf tree)
+      if target <? getRange (infoOf tree)
       then getFirst $ foldMap (First . go) (layers tree) <> First (Just tree)
       else Nothing
 
     layers :: (Apply Foldable fs) => Tree fs info -> [Tree fs info]
     layers (Tree (Right (_, ls))) = toList ls
+
 -- | Traverse the tree over some monad that exports its methods.
 --
 --   For each tree piece, will call `before` and `after` callbacks.
@@ -120,24 +123,68 @@ traverseTree
      , Apply Foldable fs
      , Apply Functor fs
      , Apply Traversable fs
+     , HasRange a
      )
   => (a -> m b) -> Tree fs a -> m (Tree fs b)
 traverseTree act = go
   where
     go (Tree (Right (a, union))) = do
       b <- act a
-      before union
+      before (getRange a) union
       union' <- traverse go union
-      after union
+      after (getRange a) union
       return (Tree (Right (b, union')))
 
     go (Tree (Left err)) = do
       err' <- traverse act err
       return (Tree (Left err'))
 
+traverseOnly
+  :: forall f fs m a
+  .  ( UpdateOver m      f   (Tree fs a)
+     , UpdateOver m (Sum fs) (Tree fs a)
+     , Element f fs
+     , Apply Foldable fs
+     , Apply Functor fs
+     , Apply Traversable fs
+     , Traversable f
+     , HasRange a
+     , Show (f (Tree fs a))
+     , Show a
+     )
+  => (f (Tree fs a) -> m (f (Tree fs a)))
+  ->     Tree fs a  -> m    (Tree fs a)
+traverseOnly act = go
+  where
+    go (match -> Just (r, fa)) = do
+      traceShowM ("traversingA", fa)
+      before (getRange r) fa
+      fb <- act fa
+      fc <- traverse go fb
+      after  (getRange r) fa
+      return $ mk r fc
+
+    go tree@(Tree (Right (r, union))) = do
+      traceShowM ("traversingB", ())
+      before (getRange r) union
+      union' <- traverse go union
+      after  (getRange r) union
+      return $ Tree $ Right (r, union')
+
+    go tree = return tree
+
 -- | Make a tree out of a layer and an info.
 mk :: (Functor f, Element f fs) => info -> f (Tree fs info) -> Tree fs info
 mk i fx = Tree $ Right (i, inject fx)
+
+match
+  :: (Functor f, Element f fs)
+  => Tree fs info
+  -> Maybe (info, f (Tree fs info))
+match (Tree (Left   _))      = Nothing
+match (Tree (Right (r, it))) = do
+  f <- project it
+  return (r, f)
 
 -- | Get info from the tree.
 infoOf :: Tree fs info -> info
@@ -154,11 +201,11 @@ instance Apply Foldable fs => HasErrors (Tree fs info) info where
 
 -- | Update callbacks for a @f a@ while working inside monad @m@.
 class Monad m => UpdateOver m f a where
-  before :: f a -> m ()
-  after  :: f a -> m ()
+  before :: Range -> f a -> m ()
+  after  :: Range -> f a -> m ()
 
-  before _ = skip
-  after  _ = skip
+  before _ _ = skip
+  after  _ _ = skip
 
 -- | Do nothing.
 skip :: Monad m => m ()
@@ -169,5 +216,5 @@ instance Monad m => UpdateOver m (Sum '[]) a where
   after  = error "Sum.empty"
 
 instance (UpdateOver m f a, UpdateOver m (Sum fs) a) => UpdateOver m (Sum (f : fs)) a where
-  before = either before before . decompose
-  after  = either after  after  . decompose
+  before r = either (before r) (before r) . decompose
+  after  r = either (after  r) (after  r) . decompose

@@ -5,10 +5,13 @@ import Control.Monad
 
 import AST.Types
 import AST.Scope
+import AST.Parser
 
+import Parser
 import Tree
 import Range
 import Lattice
+import Pretty
 
 import Debug.Trace
 
@@ -20,9 +23,9 @@ findScopedDecl
   -> Pascal info
   -> Maybe ScopedDecl
 findScopedDecl pos tree = do
-  point <- lookupTree (\info -> pos <? getRange info) tree
+  point <- lookupTree pos tree
   let env = getEnv (infoOf point)
-  lookupEnv (void point) env
+  lookupEnv (ppToText $ void point) env
 
 definitionOf
   :: ( HasEnv info
@@ -53,3 +56,13 @@ implementationOf
   -> Maybe Range
 implementationOf pos tree =
   _sdBody =<< findScopedDecl pos tree
+
+referencesOf
+  :: ( HasEnv info
+     , HasRange info
+     )
+  => Range
+  -> Pascal info
+  -> Maybe [Range]
+referencesOf pos tree =
+  _sdRefs <$> findScopedDecl pos tree

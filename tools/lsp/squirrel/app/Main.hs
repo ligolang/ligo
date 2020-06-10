@@ -7,6 +7,7 @@ import           Control.Monad
 
 import           Data.Default
 import qualified Data.Text                             as Text
+import           Data.Text                               (Text)
 import           Data.String.Interpolate (i)
 
 import qualified Language.Haskell.LSP.Control          as CTRL
@@ -23,7 +24,9 @@ import qualified System.Log                            as L
 
 import           Parser
 import           Range
+import           Product
 import           AST hiding (def)
+import qualified AST.Find as Find
 import           Error
 import           Tree
 
@@ -150,11 +153,32 @@ eventLoop funs chan = do
           (J.uriToFilePath doc)
           (Just 0)
 
-      -- ReqDefinition req -> do
-
+      ReqDefinition req -> do
+        let uri = req^.J.params.J.textDocument.J.uri
+        let pos = posToRange $ req^.J.params.J.position
+        tree <- loadByURI uri
+        case Find.definitionOf pos tree of
+          Just defPos -> do
+            error "do later"
+            -- Core.sendFunc funs $ RspDefinition $ _ $ J.SingleLoc $ J.Location uri $ rangeToLoc defPos
 
       _ -> U.logs "unknown msg"
 
+posToRange :: J.Position -> Range
+posToRange (J.Position l c) = Range (l, c, 0) (l, c, 0)
+
+rangeToJRange :: Range -> J.Range
+rangeToJRange (Range (a, b, _) (c, d, _)) = J.Range (J.Position a b) (J.Position c d)
+
+rangeToLoc :: Range -> J.Range
+rangeToLoc (Range (a, b, _) (c, d, _)) = J.Range (J.Position a b) (J.Position c d)
+
+loadByURI :: J.Uri -> IO (Pascal (Product [Env, Range, [Text]]))
+loadByURI uri = do
+  case J.uriToFilePath uri of
+    Just fin -> do
+      (tree, _) <- runParser contract fin
+      return $ ascribeEnv tree
 
 collectErrors
   :: Core.LspFuncs ()
