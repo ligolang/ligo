@@ -361,26 +361,27 @@ and pp_collection = function
 (* Expressions *)
 
 and pp_expr = function
-  ECase   e -> pp_case pp_expr e
-| ECond   e -> group (pp_cond_expr e)
-| EAnnot  e -> pp_annot_expr e
-| ELogic  e -> group (pp_logic_expr e)
-| EArith  e -> group (pp_arith_expr e)
-| EString e -> pp_string_expr e
-| EList   e -> group (pp_list_expr e)
-| ESet    e -> pp_set_expr e
-| EConstr e -> pp_constr_expr e
-| ERecord e -> pp_record e
-| EProj   e -> pp_projection e
-| EUpdate e -> pp_update e
-| EMap    e -> pp_map_expr e
-| EVar    e -> pp_ident e
-| ECall   e -> pp_fun_call e
-| EBytes  e -> pp_bytes e
-| EUnit   _ -> string "Unit"
-| ETuple  e -> pp_tuple_expr e
-| EPar    e -> pp_par pp_expr e
-| EFun    e -> pp_fun_expr e
+  ECase       e -> pp_case pp_expr e
+| ECond       e -> group (pp_cond_expr e)
+| EAnnot      e -> pp_annot_expr e
+| ELogic      e -> group (pp_logic_expr e)
+| EArith      e -> group (pp_arith_expr e)
+| EString     e -> pp_string_expr e
+| EList       e -> group (pp_list_expr e)
+| ESet        e -> pp_set_expr e
+| EConstr     e -> pp_constr_expr e
+| ERecord     e -> pp_record e
+| EProj       e -> pp_projection e
+| EUpdate     e -> pp_update e
+| EMap        e -> pp_map_expr e
+| EVar        e -> pp_ident e
+| ECall       e -> pp_fun_call e
+| EBytes      e -> pp_bytes e
+| EUnit       _ -> string "Unit"
+| ETuple      e -> pp_tuple_expr e
+| EPar        e -> pp_par pp_expr e
+| EFun        e -> pp_fun_expr e
+| ECodeInsert e -> pp_code_insert e
 
 and pp_annot_expr {value; _} =
   let expr, _, type_expr = value.inside in
@@ -494,6 +495,12 @@ and pp_update {value; _} =
   let updates = group (pp_ne_injection pp_field_path_assign updates)
   and record  = pp_path record in
   record ^^ string " with" ^^ nest 2 (break 1 ^^ updates)
+
+and pp_code_insert {value; _} =
+  let {language; code; _} = value in
+  let language = pp_string language 
+  and code = pp_expr code in
+  string "[%" ^^ language ^^ string " " ^^ code ^^ string " ]"
 
 and pp_field_path_assign {value; _} =
   let {field_path; field_expr; _} = value in

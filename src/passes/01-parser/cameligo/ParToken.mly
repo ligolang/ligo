@@ -17,10 +17,11 @@
 
   (* Symbols *)
 
-%token <Region.t> MINUS "-"
-%token <Region.t> PLUS  "+"
-%token <Region.t> SLASH "/"
-%token <Region.t> TIMES "*"
+%token <Region.t> MINUS   "-"
+%token <Region.t> PLUS    "+"
+%token <Region.t> SLASH   "/"
+%token <Region.t> TIMES   "*"
+%token <Region.t> PERCENT "%"
 
 %token <Region.t> LPAR     "("
 %token <Region.t> RPAR     ")"

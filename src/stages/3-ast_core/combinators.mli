@@ -77,6 +77,7 @@ val e_matching : ?loc:Location.t -> expression -> matching_expr -> expression
 val e_record_accessor : ?loc:Location.t -> expression -> label -> expression
 val e_variable : ?loc:Location.t -> expression_variable -> expression
 val e_let_in : ?loc:Location.t -> ( expression_variable * type_expression option ) -> bool -> expression -> expression -> expression
+val e_raw_code : ?loc:Location.t -> string -> expression -> expression
 val e_annotation : ?loc:Location.t -> expression -> type_expression -> expression
 val e_application : ?loc:Location.t -> expression -> expression -> expression
 val e_constant : ?loc:Location.t -> constant' -> expression list -> expression
@@ -100,6 +101,7 @@ val get_e_pair : expression_content -> ( expression * expression ) result
 
 val get_e_list : expression_content -> ( expression list ) result
 val get_e_tuple : expression_content -> ( expression list ) result
+val get_e_ascription : expression_content -> ( expression * type_expression ) result
 (*
 val get_e_failwith : expression -> expression result 
 val is_e_failwith : expression -> bool

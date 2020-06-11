@@ -638,6 +638,12 @@ in trace (abstracting_expr t) @@
       let%bind match_false = compile_expression c.ifnot in
       return @@ e_cond ~loc expr match_true match_false
     )
+  | ECodeInsert ci -> (
+      let (ci, loc) = r_split ci in
+      let      language  = ci.language.value in
+      let%bind code      = compile_expression ci.code in
+      return @@ e_raw_code ~loc language code
+    )
 
 and compile_fun lamb' : expr result =
   let return x = ok x in

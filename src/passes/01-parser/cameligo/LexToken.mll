@@ -22,10 +22,11 @@ type t =
 
   (* Arithmetics *)
 
-| MINUS of Region.t    (* "-" *)
-| PLUS  of Region.t    (* "+" *)
-| SLASH of Region.t    (* "/" *)
-| TIMES of Region.t    (* "*" *)
+| MINUS   of Region.t    (* "-" *)
+| PLUS    of Region.t    (* "+" *)
+| SLASH   of Region.t    (* "/" *)
+| TIMES   of Region.t    (* "*" *)
+| PERCENT of Region.t    (* "%" *)
 
   (* Compounds *)
 
@@ -75,24 +76,24 @@ type t =
   (* Keywords *)
 
 (*| And*)
-| Begin of Region.t
-| Else  of Region.t
-| End   of Region.t
-| False of Region.t
-| Fun   of Region.t
-| Rec   of Region.t
-| If    of Region.t
-| In    of Region.t
-| Let   of Region.t
-| Match of Region.t
-| Mod   of Region.t
-| Not   of Region.t
-| Of    of Region.t
-| Or    of Region.t
-| Then  of Region.t
-| True  of Region.t
-| Type  of Region.t
-| With  of Region.t
+| Begin     of Region.t
+| Else      of Region.t
+| End       of Region.t
+| False     of Region.t
+| Fun       of Region.t
+| Rec       of Region.t
+| If        of Region.t
+| In        of Region.t
+| Let       of Region.t
+| Match     of Region.t
+| Mod       of Region.t
+| Not       of Region.t
+| Of        of Region.t
+| Or        of Region.t
+| Then      of Region.t
+| True      of Region.t
+| Type      of Region.t
+| With      of Region.t
 
   (* Data constructors *)
 
@@ -140,6 +141,7 @@ let proj_token = function
 | PLUS     region -> region, "PLUS"
 | SLASH    region -> region, "SLASH"
 | TIMES    region -> region, "TIMES"
+| PERCENT  region -> region, "PERCENT"
 | LPAR     region -> region, "LPAR"
 | RPAR     region -> region, "RPAR"
 | LBRACKET region -> region, "LBRACKET"
@@ -214,6 +216,7 @@ let to_lexeme = function
 | PLUS     _ -> "+"
 | SLASH    _ -> "/"
 | TIMES    _ -> "*"
+| PERCENT  _ -> "%"
 | LPAR     _ -> "("
 | RPAR     _ -> ")"
 | LBRACKET _ -> "["
@@ -277,24 +280,24 @@ let to_region token = proj_token token |> fst
 (* LEXIS *)
 
 let keywords = [
-  (fun reg -> Begin reg);
-  (fun reg -> Else  reg);
-  (fun reg -> End   reg);
-  (fun reg -> False reg);
-  (fun reg -> Fun   reg);
-  (fun reg -> Rec   reg);
-  (fun reg -> If    reg);
-  (fun reg -> In    reg);
-  (fun reg -> Let   reg);
-  (fun reg -> Match reg);
-  (fun reg -> Mod   reg);
-  (fun reg -> Not   reg);
-  (fun reg -> Of    reg);
-  (fun reg -> Or    reg);
-  (fun reg -> Then  reg);
-  (fun reg -> True  reg);
-  (fun reg -> Type  reg);
-  (fun reg -> With  reg)]
+  (fun reg -> Begin     reg);
+  (fun reg -> Else      reg);
+  (fun reg -> End       reg);
+  (fun reg -> False     reg);
+  (fun reg -> Fun       reg);
+  (fun reg -> Rec       reg);
+  (fun reg -> If        reg);
+  (fun reg -> In        reg);
+  (fun reg -> Let       reg);
+  (fun reg -> Match     reg);
+  (fun reg -> Mod       reg);
+  (fun reg -> Not       reg);
+  (fun reg -> Of        reg);
+  (fun reg -> Or        reg);
+  (fun reg -> Then      reg);
+  (fun reg -> True      reg);
+  (fun reg -> Type      reg);
+  (fun reg -> With      reg)]
 
 let reserved =
   let open SSet in
@@ -475,6 +478,7 @@ let mk_sym lexeme region =
   | "-"   -> Ok (MINUS    region)
   | "*"   -> Ok (TIMES    region)
   | "/"   -> Ok (SLASH    region)
+  | "%"   -> Ok (PERCENT  region)
   | "<"   -> Ok (LT       region)
   | "<="  -> Ok (LE       region)
   | ">"   -> Ok (GT       region)

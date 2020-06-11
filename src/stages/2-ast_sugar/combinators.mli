@@ -77,6 +77,7 @@ val e_lambda : ?loc:Location.t -> expression_variable -> type_expression option 
 val e_application : ?loc:Location.t -> expression -> expression -> expression
 val e_recursive : ?loc:Location.t -> expression_variable -> type_expression -> lambda -> expression
 val e_let_in : ?loc:Location.t -> ( expression_variable * type_expression option ) -> bool -> bool -> expression -> expression -> expression
+val e_raw_code : ?loc:Location.t -> string -> expression -> expression
 
 val e_record   : ?loc:Location.t -> expr label_map -> expression
 val e_accessor : ?loc:Location.t -> expression -> access list -> expression

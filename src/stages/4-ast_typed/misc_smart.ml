@@ -73,6 +73,7 @@ module Captured_variables = struct
     | E_let_in li ->
       let b' = union (singleton li.let_binder) b in
       expression b' li.let_result
+    | E_raw_code _ -> ok empty
     | E_recursive r -> 
       let b' = union (singleton r.fun_name) b in
       expression_content b' @@ E_lambda r.lambda

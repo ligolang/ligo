@@ -73,6 +73,7 @@ type t =
 | DOT      of Region.t  (* "."   *)
 | WILD     of Region.t  (* "_"   *)
 | CAT      of Region.t  (* "^"   *)
+| PERCENT  of Region.t  (* "%"   *)
 
   (* Keywords *)
 

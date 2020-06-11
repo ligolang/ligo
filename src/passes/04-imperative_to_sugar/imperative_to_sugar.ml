@@ -57,7 +57,7 @@ let repair_mutable_variable_in_matching (match_body : O.expression) (element_nam
       | E_constant _
       | E_skip
       | E_literal _ | E_variable _
-      | E_application _ | E_lambda _| E_recursive _
+      | E_application _ | E_lambda _| E_recursive _ | E_raw_code _
       | E_constructor _ | E_record _| E_accessor _|E_update _
       | E_ascription _  | E_sequence _ | E_tuple _
       | E_map _ | E_big_map _ |E_list _ | E_set _
@@ -100,7 +100,7 @@ and repair_mutable_variable_in_loops (for_body : O.expression) (element_names : 
       | E_constant _
       | E_skip
       | E_literal _ | E_variable _
-      | E_application _ | E_lambda _| E_recursive _
+      | E_application _ | E_lambda _| E_recursive _ | E_raw_code _
       | E_constructor _ | E_record _| E_accessor _| E_update _
       | E_ascription _  | E_sequence _ | E_tuple _
       | E_map _ | E_big_map _ |E_list _ | E_set _
@@ -218,6 +218,9 @@ and compile_expression' : I.expression -> (O.expression option -> O.expression) 
       let%bind rhs = compile_expression rhs in
       let%bind let_result = compile_expression let_result in
       return @@ O.e_let_in ~loc (binder,ty_opt) false inline rhs let_result
+    | I.E_raw_code {language;code} ->
+      let%bind code = compile_expression code in
+      return @@ O.e_raw_code ~loc language code 
     | I.E_constructor {constructor;element} ->
       let%bind element = compile_expression element in
       return @@ O.e_constructor ~loc constructor element
@@ -613,6 +616,9 @@ let rec uncompile_expression : O.expression -> I.expression result =
     let%bind rhs = uncompile_expression rhs in
     let%bind let_result = uncompile_expression let_result in
     return @@ I.E_let_in {let_binder=(binder,ty_opt);inline;rhs;let_result}
+  | O.E_raw_code {language;code} ->
+    let%bind code  = uncompile_expression code in
+    return @@ I.E_raw_code {language;code} 
   | O.E_constructor {constructor;element} ->
     let%bind element = uncompile_expression element in
     return @@ I.E_constructor {constructor;element}

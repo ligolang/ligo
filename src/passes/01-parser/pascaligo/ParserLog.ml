@@ -230,6 +230,14 @@ and print_fun_expr state {value; _} =
   print_token      state kwd_is "is";
   print_expr       state return
 
+and print_code_insert state {value; _} =
+  let {lbracket;percent;language;code;rbracket} : code_insert = value in
+  print_token     state lbracket "[";
+  print_token     state percent  "%";
+  print_string    state language;
+  print_expr      state code;
+  print_token     state rbracket "]"
+
 and print_parameters state {value; _} =
   let {lpar; inside; rpar} = value in
   print_token state lpar "(";
@@ -439,26 +447,27 @@ and print_bind_to state = function
 | None -> ()
 
 and print_expr state = function
-  ECase   {value;_} -> print_case_expr state value
-| ECond   {value;_} -> print_cond_expr state value
-| EAnnot  {value;_} -> print_annot_expr state value
-| ELogic  e -> print_logic_expr state e
-| EArith  e -> print_arith_expr state e
-| EString e -> print_string_expr state e
-| EList   e -> print_list_expr state e
-| ESet    e -> print_set_expr state e
-| EConstr e -> print_constr_expr state e
-| ERecord e -> print_record_expr state e
-| EUpdate e -> print_update_expr state e
-| EProj   e -> print_projection state e
-| EMap    e -> print_map_expr state e
-| EVar    v -> print_var state v
-| ECall   e -> print_fun_call state e
-| EBytes  b -> print_bytes state b
-| EUnit   r -> print_token state r "Unit"
-| ETuple  e -> print_tuple_expr state e
-| EPar    e -> print_par_expr state e
-| EFun    e -> print_fun_expr state e
+  ECase    {value;_} -> print_case_expr state value
+| ECond    {value;_} -> print_cond_expr state value
+| EAnnot   {value;_} -> print_annot_expr state value
+| ELogic   e -> print_logic_expr state e
+| EArith   e -> print_arith_expr state e
+| EString  e -> print_string_expr state e
+| EList    e -> print_list_expr state e
+| ESet     e -> print_set_expr state e
+| EConstr  e -> print_constr_expr state e
+| ERecord  e -> print_record_expr state e
+| EUpdate  e -> print_update_expr state e
+| EProj    e -> print_projection state e
+| EMap     e -> print_map_expr state e
+| EVar     v -> print_var state v
+| ECall    e -> print_fun_call state e
+| EBytes   b -> print_bytes state b
+| EUnit    r -> print_token state r "Unit"
+| ETuple   e -> print_tuple_expr state e
+| EPar     e -> print_par_expr state e
+| EFun     e -> print_fun_expr state e
+| ECodeInsert e -> print_code_insert state e
 
 and print_annot_expr state node =
   let {inside; _} : annot_expr par = node in
@@ -1010,6 +1019,17 @@ and pp_fun_expr state (expr: fun_expr) =
     pp_expr (state#pad 1 0) expr.return
   in ()
 
+and pp_code_insert state (rc : code_insert) =
+  let () =
+    let state = state#pad 3 0 in
+    pp_node state "<language>";
+    pp_string (state#pad 1 0) rc.language in
+  let () =
+    let state = state#pad 3 1 in
+    pp_node state "<code>";
+    pp_expr (state#pad 1 0) rc.code in
+  ()
+
 and pp_parameters state {value; _} =
   let params = Utils.nsepseq_to_list value.inside in
   let arity  = List.length params in
@@ -1491,6 +1511,9 @@ and pp_expr state = function
 | EFun {value; region} ->
     pp_loc_node state "EFun" region;
     pp_fun_expr state value;
+| ECodeInsert {value; region} -> 
+    pp_loc_node state "ECodeInsert" region;
+    pp_code_insert state value;
 
 and pp_list_expr state = function
   ECons {value; region} ->

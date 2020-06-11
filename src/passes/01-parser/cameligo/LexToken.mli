@@ -38,10 +38,11 @@ type t =
 
   (* Arithmetics *)
 
-| MINUS of Region.t    (* "-" *)
-| PLUS  of Region.t    (* "+" *)
-| SLASH of Region.t    (* "/" *)
-| TIMES of Region.t    (* "*" *)
+| MINUS   of Region.t    (* "-" *)
+| PLUS    of Region.t    (* "+" *)
+| SLASH   of Region.t    (* "/" *)
+| TIMES   of Region.t    (* "*" *)
+| PERCENT of Region.t    (* "%" *)
 
   (* Compounds *)
 
@@ -91,24 +92,24 @@ type t =
   (* Keywords *)
 
 (*| And*)
-| Begin of Region.t
-| Else  of Region.t
-| End   of Region.t
-| False of Region.t
-| Fun   of Region.t
-| Rec   of Region.t
-| If    of Region.t
-| In    of Region.t
-| Let   of Region.t
-| Match of Region.t
-| Mod   of Region.t
-| Not   of Region.t
-| Of    of Region.t
-| Or    of Region.t
-| Then  of Region.t
-| True  of Region.t
-| Type  of Region.t
-| With  of Region.t
+| Begin     of Region.t
+| Else      of Region.t
+| End       of Region.t
+| False     of Region.t
+| Fun       of Region.t
+| Rec       of Region.t
+| If        of Region.t
+| In        of Region.t
+| Let       of Region.t
+| Match     of Region.t
+| Mod       of Region.t
+| Not       of Region.t
+| Of        of Region.t
+| Or        of Region.t
+| Then      of Region.t
+| True      of Region.t
+| Type      of Region.t
+| With      of Region.t
 
 (* Data constructors *)
 

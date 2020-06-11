@@ -61,6 +61,7 @@ type t =
 | DOT      of Region.t
 | WILD     of Region.t
 | CAT      of Region.t
+| PERCENT  of Region.t  (* "%"   *)
 
   (* Keywords *)
 
@@ -141,6 +142,11 @@ let proj_token = function
 | Constr Region.{region; value} ->
     region, sprintf "Constr \"%s\"" value
 
+(*
+| Attr {header; string={region; value}} ->
+    region, sprintf "Attr (\"%s\",\"%s\")" header value
+ *)
+
   (* Symbols *)
 
 | SEMI     region -> region, "SEMI"
@@ -169,6 +175,7 @@ let proj_token = function
 | DOT      region -> region, "DOT"
 | WILD     region -> region, "WILD"
 | CAT      region -> region, "CAT"
+| PERCENT  region -> region, "PERCENT"
 
   (* Keywords *)
 
@@ -262,6 +269,7 @@ let to_lexeme = function
 | DOT      _ -> "."
 | WILD     _ -> "_"
 | CAT      _ -> "^"
+| PERCENT  _ -> "%"
 
   (* Keywords *)
 
@@ -365,7 +373,7 @@ let keywords = [
   (fun reg -> Unit       reg);
   (fun reg -> Var        reg);
   (fun reg -> While      reg);
-  (fun reg -> With       reg)
+  (fun reg -> With       reg);
 ]
 
 let reserved = SSet.empty
@@ -513,6 +521,7 @@ let mk_sym lexeme region =
   | "-"   -> Ok (MINUS    region)
   | "*"   -> Ok (TIMES    region)
   | "/"   -> Ok (SLASH    region)
+  | "%"   -> Ok (PERCENT  region)
   | "<"   -> Ok (LT       region)
   | "<="  -> Ok (LE       region)
   | ">"   -> Ok (GT       region)

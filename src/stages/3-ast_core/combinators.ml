@@ -102,6 +102,7 @@ let e_application ?loc a b = make_e ?loc @@ E_application {lamb=a ; args=b}
 let e_lambda ?loc binder input_type output_type result =  make_e ?loc @@ E_lambda {binder; input_type; output_type; result ;  }
 let e_recursive ?loc fun_name fun_type lambda = make_e ?loc @@ E_recursive {fun_name; fun_type; lambda}
 let e_let_in ?loc (binder, ascr) inline rhs let_result = make_e ?loc @@ E_let_in { let_binder = (binder,ascr) ; rhs ; let_result; inline }
+let e_raw_code ?loc language code = make_e ?loc @@ E_raw_code {language; code}
 
 let e_constructor ?loc s a : expression = make_e ?loc @@ E_constructor { constructor = Constructor s; element = a}
 let e_matching ?loc a b : expression = make_e ?loc @@ E_matching {matchee=a;cases=b}
@@ -162,6 +163,11 @@ let get_e_tuple = fun t ->
   match t with
   | E_record r -> ok @@ List.map snd @@ Stage_common.Helpers.tuple_of_record r
   | _ -> simple_fail "ast_core: get_e_tuple: not a tuple"
+
+let get_e_ascription = fun a ->
+  match a with 
+  | E_ascription {anno_expr; type_annotation} -> ok @@ (anno_expr,type_annotation)
+  | _ -> simple_fail "ast_core: get_e_ascription: not an ascription"
 
 (* Same as get_e_pair *)
 let extract_pair : expression -> (expression * expression) result = fun e ->

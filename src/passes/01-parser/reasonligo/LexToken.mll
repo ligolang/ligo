@@ -21,10 +21,11 @@ type t =
 
   (* Arithmetics *)
 
-| MINUS of Region.t (* "-" *)
-| PLUS  of Region.t (* "+" *)
-| SLASH of Region.t (* "/" *)
-| TIMES of Region.t (* "*" *)
+| MINUS   of Region.t (* "-" *)
+| PLUS    of Region.t (* "+" *)
+| SLASH   of Region.t (* "/" *)
+| TIMES   of Region.t (* "*" *)
+| PERCENT of Region.t (* "%" *)
 
   (* Compounds *)
 
@@ -132,6 +133,7 @@ let proj_token = function
 | PLUS     region -> region, "PLUS"
 | SLASH    region -> region, "SLASH"
 | TIMES    region -> region, "TIMES"
+| PERCENT  region -> region, "PERCENT"
 | LPAR     region -> region, "LPAR"
 | RPAR     region -> region, "RPAR"
 | LBRACKET region -> region, "LBRACKET"
@@ -191,6 +193,7 @@ let to_lexeme = function
 | PLUS     _ -> "+"
 | SLASH    _ -> "/"
 | TIMES    _ -> "*"
+| PERCENT  _ -> "%"
 | LPAR     _ -> "("
 | RPAR     _ -> ")"
 | LBRACKET _ -> "["
@@ -429,6 +432,7 @@ let mk_sym lexeme region =
   | "+"  -> Ok (PLUS      region)
   | "/"  -> Ok (SLASH     region)
   | "*"  -> Ok (TIMES     region)
+  | "%"  -> Ok (PERCENT   region)
   | "["  -> Ok (LBRACKET  region)
   | "]"  -> Ok (RBRACKET  region)
   | "{"  -> Ok (LBRACE    region)

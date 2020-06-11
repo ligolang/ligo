@@ -7,7 +7,7 @@ let rec fold_expression : 'a . 'a folder -> 'a -> expression -> 'a result = fun 
   let self = fold_expression f in 
   let%bind init' = f init e in
   match e.expression_content with
-  | E_literal _ | E_variable _ -> ok init'
+  | E_literal _ | E_variable _ | E_raw_code _ -> ok init'
   | E_constant {arguments=lst} -> (
     let%bind res = bind_fold_list self init' lst in
     ok res
@@ -121,7 +121,7 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
       let%bind args = bind_map_list self c.arguments in
       return @@ E_constant {c with arguments=args}
     )
-  | E_literal _ | E_variable _ as e' -> return e'
+  | E_literal _ | E_variable _ | E_raw_code _ as e' -> return e'
 
 
 and map_cases : mapper -> matching_expr -> matching_expr result = fun f m ->
@@ -209,7 +209,7 @@ let rec fold_map_expression : 'a . 'a fold_mapper -> 'a -> expression -> ('a * e
       let%bind (res,args) = bind_fold_map_list self init' c.arguments in
       ok (res, return @@ E_constant {c with arguments=args})
     )
-  | E_literal _ | E_variable _ as e' -> ok (init', return e')
+  | E_literal _ | E_variable _ | E_raw_code _ as e' -> ok (init', return e')
 
 and fold_map_cases : 'a . 'a fold_mapper -> 'a -> matching_expr -> ('a * matching_expr) result = fun f init m ->
   match m with

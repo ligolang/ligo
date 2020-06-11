@@ -23,6 +23,16 @@ them. please report this to the developers." in
       [ ("location", fun () -> loc) ;
       ] in
     error ~data title content
+
+  let raw_michelson_parsing_error code =
+    let title () = "Error while parsing Michelson code insertion" in
+    let content () = "Unable to parse the michelson code" in
+    let data = [ 
+      ("code", fun () -> code);
+      (* TODO : add location in Mini-c *)
+      (* ("location", fun () -> Format.asprintf "%a" Location.pp location); *)
+    ] in
+    error ~data title content
 end
 open Errors
 
@@ -483,6 +493,15 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
         i_push_unit ;
       ]
     )
+  | E_raw_michelson code -> 
+      let%bind code = 
+        Proto_alpha_utils.Trace.trace_tzresult (raw_michelson_parsing_error code) @@
+        Tezos_micheline.Micheline_parser.no_parsing_error @@ 
+        Michelson_parser.V1.parse_expression ~check:false code
+      in
+      let code = Tezos_micheline.Micheline.root code.expanded in
+      let%bind ty = Compiler_type.type_ ty in
+      return @@ i_push ty code
 
 and translate_function_body ({body ; binder} : anon_function) lst input : michelson result =
   let pre_env = Environment.of_list lst in

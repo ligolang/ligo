@@ -282,6 +282,9 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
     let%bind rhs = untype_expression rhs in
     let%bind result = untype_expression let_result in
     return (e_let_in (let_binder , (Some tv)) inline rhs result)
+  | E_raw_code {language; code} ->
+    let%bind code = untype_expression code in
+    return @@ e_raw_code language code
   | E_recursive {fun_name; fun_type; lambda} ->
       let%bind lambda = untype_lambda fun_type lambda in
       let%bind fun_type = untype_type_expression fun_type in

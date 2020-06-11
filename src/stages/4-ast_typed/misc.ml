@@ -218,6 +218,7 @@ module Free_variables = struct
       union
         (expression b' let_result)
         (self rhs)
+    | E_raw_code _ -> empty
     | E_recursive {fun_name;lambda;_} ->
       let b' = union (singleton fun_name) b in
       expression_content b' @@ E_lambda lambda
@@ -491,7 +492,7 @@ let rec assert_value_eq (a, b: (expression*expression)) : unit result =
       fail @@ (different_values_because_different_types "record vs. non-record" a b)
 
   | (E_literal _, _) | (E_variable _, _) | (E_application _, _)
-  | (E_lambda _, _) | (E_let_in _, _) | (E_recursive _, _)
+  | (E_lambda _, _) | (E_let_in _, _) | (E_raw_code _, _) | (E_recursive _, _)
   | (E_record_accessor _, _) | (E_record_update _,_)
   | (E_matching _, _)
   -> fail @@ error_uncomparable_values "can't compare sequences nor loops" a b

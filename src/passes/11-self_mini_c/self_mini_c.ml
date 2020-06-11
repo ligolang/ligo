@@ -49,6 +49,7 @@ let rec is_pure : expression -> bool = fun e ->
   | E_skip
   | E_variable _
   | E_make_none _
+  | E_raw_michelson _
     -> true
 
   | E_if_bool (cond, bt, bf)

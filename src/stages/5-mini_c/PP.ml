@@ -47,7 +47,7 @@ and type_constant ppf (tb:type_base) : unit =
     | TB_chain_id  -> "chain_id"
     | TB_void      -> "void"
     in
-  fprintf ppf "(TC %s)" s
+  fprintf ppf "%s" s
 
 let rec value ppf : value -> unit = function
   | D_bool b -> fprintf ppf "%b" b
@@ -69,6 +69,21 @@ let rec value ppf : value -> unit = function
   | D_big_map m -> fprintf ppf "Big_map[%a]" (list_sep_d value_assoc) m
   | D_list lst -> fprintf ppf "List[%a]" (list_sep_d value) lst
   | D_set lst -> fprintf ppf "Set[%a]" (list_sep_d value) lst
+
+and type_expression_annotated ppf : type_expression annotated -> unit = fun (_, tv) ->
+  type_expression ppf tv
+
+and type_expression ppf : type_expression -> unit = fun te -> match te.type_content with
+  | T_pair (a,b) -> fprintf ppf "pair %a %a" type_expression_annotated a type_expression_annotated b
+  | T_or    (a,b) -> fprintf ppf "or %a %a" type_expression_annotated a type_expression_annotated b
+  | T_function (a, b) -> fprintf ppf "lambda (%a) %a" type_expression a type_expression b
+  | T_base tc -> fprintf ppf "%a" type_constant tc
+  | T_map (k,v) -> fprintf ppf "Map (%a,%a)" type_expression k type_expression v
+  | T_big_map (k,v) -> fprintf ppf "Big_map (%a,%a)" type_expression k type_expression v
+  | T_list e -> fprintf ppf "List (%a)" type_expression e
+  | T_set e -> fprintf ppf "Set (%a)" type_expression e
+  | T_contract c -> fprintf ppf "Contract (%a)" type_expression c
+  | T_option c -> fprintf ppf "Option (%a)" type_expression c 
 
 and value_assoc ppf : (value * value) -> unit = fun (a, b) ->
   fprintf ppf "%a -> %a" value a value b
@@ -110,6 +125,8 @@ and expression_content ppf (e:expression_content) = match e with
       fprintf ppf "@[{ %a@;<1 2>with@;<1 2>{ %a = %a } }@]" expression r (list_sep lr (const ".")) path expression update
   | E_while (e , b) ->
       fprintf ppf "@[while %a do %a@]" expression e expression b
+  | E_raw_michelson code ->
+      fprintf ppf "%s" code 
 
 and expression_with_type : _ -> expression -> _  = fun ppf e ->
   fprintf ppf "%a : %a"

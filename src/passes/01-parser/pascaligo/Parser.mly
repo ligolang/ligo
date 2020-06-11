@@ -855,6 +855,7 @@ core_expr:
 | set_expr                      { ESet $1                      }
 | record_expr                   { ERecord $1                   }
 | update_record                 { EUpdate $1                   }
+| code_insert_expr              { ECodeInsert $1               }
 | "<constr>" arguments {
     let region = cover $1.region $2.region in
     EConstr (ConstrApp {region; value = $1, Some $2})
@@ -971,6 +972,17 @@ update_record:
     let updates = $3 (fun region -> NEInjRecord region) in
     let region  = cover (path_to_region $1) updates.region in
     let value   = {record=$1; kwd_with=$2; updates}
+    in {region; value} }
+
+code_insert_expr:
+  "[" "%" Constr expr "]" {
+    let region = cover $1 $5 in
+    let value = {
+                  lbracket =$1;
+                  percent  =$2;
+                  language =$3;
+                  code     =$4;
+                  rbracket =$5}
     in {region; value} }
 
 field_assignment:

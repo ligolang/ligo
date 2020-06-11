@@ -48,6 +48,8 @@ and expression_content ppf (ec : expression_content) =
         cases
   | E_let_in { let_binder ;rhs ; let_result; inline } ->    
     fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]" option_type_name let_binder expression rhs option_inline inline expression let_result
+  | E_raw_code {language; code} ->
+      fprintf ppf "[%%%s %a]" language expression code
   | E_ascription {anno_expr; type_annotation} ->
       fprintf ppf "%a : %a" expression anno_expr type_expression
         type_annotation

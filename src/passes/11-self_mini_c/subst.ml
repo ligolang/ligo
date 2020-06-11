@@ -94,6 +94,7 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let cond = replace cond in
     let body = replace body in
     return @@ E_while (cond, body)
+  | E_raw_michelson _ -> e
 
 (**
    Computes `body[x := expr]`.
@@ -169,7 +170,7 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
     return @@ E_if_left (c, ((name_l, tvl) , l), ((name_r, tvr) , r))
   )
   (* All that follows is boilerplate *)
-  | E_literal _ | E_skip | E_make_none _
+  | E_literal _ | E_skip | E_make_none _ | E_raw_michelson _
     as em -> return em
   | E_constant (c) -> (
       let lst = List.map self c.arguments in

@@ -152,6 +152,8 @@ val ez_e_a_record : ( label * expression ) list -> expression
 val e_a_let_in : expression_variable -> bool -> expression -> expression -> expression
 
 val get_a_int : expression -> Z.t result
+val get_a_string : expression -> string result
+val get_a_verbatim : expression -> string result
 val get_a_unit : expression -> unit result
 val get_a_bool : expression -> bool result
 val get_a_record_accessor : expression -> (expression * label) result

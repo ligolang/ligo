@@ -35,10 +35,11 @@ type t =
 
   (* Arithmetics *)
 
-| MINUS of Region.t (* "-" *)
-| PLUS  of Region.t (* "+" *)
-| SLASH of Region.t (* "/" *)
-| TIMES of Region.t (* "*" *)
+| MINUS   of Region.t (* "-" *)
+| PLUS    of Region.t (* "+" *)
+| SLASH   of Region.t (* "/" *)
+| TIMES   of Region.t (* "*" *)
+| PERCENT of Region.t (* "%" *)
 
   (* Compounds *)
 
