@@ -32,16 +32,6 @@ them. please report this to the developers." in
     let content () = Format.asprintf "%a" Var.pp name in
     error title content
 
-  let row_loc l = ("location" , fun () -> Format.asprintf "%a" Location.pp l)
-
-  let unsupported_pattern_matching kind location =
-    let title () = "unsupported pattern-matching" in
-    let content () = Format.asprintf "%s patterns aren't supported yet" kind in
-    let data = [
-        row_loc location ;
-      ] in
-    error ~data title content
-
   let not_functional_main location =
     let title () = "not functional main" in
     let content () = "main should be a function" in
@@ -615,7 +605,6 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
           trace_strong (corner_case ~loc:__LOC__ "building constructor") @@
           aux expr' tree''
        )
-      | AST.Match_tuple _ -> fail @@ unsupported_pattern_matching "tuple" ae.location
   )
 
 and transpile_lambda l (input_type , output_type) =
@@ -739,7 +728,6 @@ and transpile_recursive {fun_name; fun_type; lambda} =
           trace_strong (corner_case ~loc:__LOC__ "building constructor") @@
           aux expr tree''
        )
-      | AST.Match_tuple _ -> failwith "match_tuple not supported"
   in
   let%bind fun_type = transpile_type fun_type in
   let%bind (input_type,output_type) = get_t_function fun_type in

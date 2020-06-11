@@ -46,7 +46,7 @@ let repair_mutable_variable_in_matching (match_body : O.expression) (element_nam
             ok (true,(decl_var, free_var), O.e_let_in let_binder false false rhs let_result)
           else(
             let free_var = if (List.mem name free_var) then free_var else name::free_var in
-            let expr = O.e_let_in (env,None) false false (O.e_record_update (O.e_variable env) (O.Label (Var.to_name name)) (O.e_variable name)) let_result in
+            let expr = O.e_let_in (env,None) false false (O.e_update (O.e_variable env) [O.Access_record (Var.to_name name)] (O.e_variable name)) let_result in
             ok (true,(decl_var, free_var), O.e_let_in let_binder false  false rhs expr)
           )
         | E_constant {cons_name=C_MAP_FOLD;arguments= _}
@@ -58,9 +58,9 @@ let repair_mutable_variable_in_matching (match_body : O.expression) (element_nam
       | E_skip
       | E_literal _ | E_variable _
       | E_application _ | E_lambda _| E_recursive _
-      | E_constructor _ | E_record _| E_record_accessor _|E_record_update _
-      | E_ascription _  | E_sequence _ | E_tuple _ | E_tuple_accessor _ | E_tuple_update _
-      | E_map _ | E_big_map _ |E_list _ | E_set _ |E_look_up _
+      | E_constructor _ | E_record _| E_accessor _|E_update _
+      | E_ascription _  | E_sequence _ | E_tuple _
+      | E_map _ | E_big_map _ |E_list _ | E_set _
        -> ok (true, (decl_var, free_var),ass_exp)
     )
       (element_names,[])
@@ -87,8 +87,7 @@ and repair_mutable_variable_in_loops (for_body : O.expression) (element_names : 
           else(
             let free_var = if (List.mem name free_var) then free_var else name::free_var in
             let expr = O.e_let_in (env,None) false false (
-              O.e_record_update (O.e_variable env) (Label "0") 
-              (O.e_record_update (O.e_record_accessor (O.e_variable env) (Label "0")) (Label (Var.to_name name)) (O.e_variable name))
+              O.e_update (O.e_variable env) [O.Access_tuple Z.zero; O.Access_record (Var.to_name name)] (O.e_variable name)
               )
               let_result in
             ok (true,(decl_var, free_var), O.e_let_in let_binder false  false rhs expr)
@@ -102,9 +101,9 @@ and repair_mutable_variable_in_loops (for_body : O.expression) (element_names : 
       | E_skip
       | E_literal _ | E_variable _
       | E_application _ | E_lambda _| E_recursive _
-      | E_constructor _ | E_record _| E_record_accessor _|E_record_update _
-      | E_ascription _  | E_sequence _ | E_tuple _ | E_tuple_accessor _ | E_tuple_update _
-      | E_map _ | E_big_map _ |E_list _ | E_set _ |E_look_up _
+      | E_constructor _ | E_record _| E_accessor _| E_update _
+      | E_ascription _  | E_sequence _ | E_tuple _
+      | E_map _ | E_big_map _ |E_list _ | E_set _
        -> ok (true, (decl_var, free_var),ass_exp)
     )
       (element_names,[])
@@ -120,7 +119,7 @@ and store_mutable_variable (free_vars : I.expression_variable list) =
  
 and restore_mutable_variable (expr : O.expression->O.expression) (free_vars : O.expression_variable list) (env : O.expression_variable) =
   let aux (f: O.expression -> O.expression) (ev: O.expression_variable) =
-    fun expr -> f (O.e_let_in (ev,None) true false (O.e_record_accessor (O.e_variable env) (Label (Var.to_name ev))) expr)
+    fun expr -> f (O.e_let_in (ev,None) true false (O.e_accessor (O.e_variable env) [O.Access_record (Var.to_name ev)]) expr)
   in
   let ef = List.fold_left aux (fun e -> e) free_vars in
   fun e -> match e with 
@@ -234,13 +233,15 @@ and compile_expression' : I.expression -> (O.expression option -> O.expression) 
         ) record
       in
       return @@ O.e_record ~loc (O.LMap.of_list record)
-    | I.E_record_accessor {record;path} ->
+    | I.E_accessor {record;path} ->
       let%bind record = compile_expression record in
-      return @@ O.e_record_accessor ~loc record path
-    | I.E_record_update {record;path;update} ->
+      let%bind path   = compile_path path in
+      return @@ O.e_accessor ~loc record path
+    | I.E_update {record;path;update} ->
       let%bind record = compile_expression record in
+      let%bind path   = compile_path path in
       let%bind update = compile_expression update in
-      return @@ O.e_record_update ~loc record path update
+      return @@ O.e_update ~loc record path update
     | I.E_map map ->
       let%bind map = bind_map_list (
         bind_map_pair compile_expression
@@ -259,9 +260,6 @@ and compile_expression' : I.expression -> (O.expression option -> O.expression) 
     | I.E_set set ->
       let%bind set = bind_map_list compile_expression set in
       return @@ O.e_set ~loc set 
-    | I.E_look_up look_up ->
-      let%bind (a,b) = bind_map_pair compile_expression look_up in
-      return @@ O.e_look_up ~loc a b
     | I.E_ascription {anno_expr; type_annotation} ->
       let%bind anno_expr = compile_expression anno_expr in
       let%bind type_annotation = compile_type_expression type_annotation in
@@ -298,41 +296,10 @@ and compile_expression' : I.expression -> (O.expression option -> O.expression) 
     | I.E_tuple tuple ->
       let%bind tuple = bind_map_list compile_expression tuple in
       return @@ O.e_tuple ~loc tuple
-    | I.E_tuple_accessor {tuple;path} ->
-      let%bind tuple = compile_expression tuple in
-      return @@ O.e_tuple_accessor ~loc tuple path
-    | I.E_tuple_update {tuple;path;update} ->
-      let%bind tuple = compile_expression tuple in
-      let%bind update = compile_expression update in
-      return @@ O.e_tuple_update ~loc tuple path update
     | I.E_assign {variable; access_path; expression} ->
-      let accessor ?loc s a =
-        match a with 
-          I.Access_tuple _i -> failwith "adding tuple soon"
-        | I.Access_record a -> ok @@ O.e_record_accessor ?loc s (Label a)
-        | I.Access_map k -> 
-          let%bind k = compile_expression k in
-          ok @@ O.e_constant ?loc C_MAP_FIND_OPT [k;s]
-      in
-      let update ?loc (s:O.expression) a e =
-        match a with
-          I.Access_tuple _i -> failwith "adding tuple soon"      
-        | I.Access_record a -> ok @@ O.e_record_update ?loc s (Label a) e
-        | I.Access_map k ->
-          let%bind k = compile_expression k in
-          ok @@ O.e_constant ?loc C_UPDATE [k;O.e_some (e);s]
-      in
-      let aux (s, e : O.expression * _) lst =
-        let%bind s' = accessor ~loc:s.location s lst in
-        let e' = fun expr -> 
-          let%bind u = update ~loc:s.location s lst (expr)
-          in e u 
-        in
-        ok @@ (s',e')
-      in
-      let%bind (_,rhs) = bind_fold_list aux (O.e_variable variable, fun e -> ok @@ e) access_path in
+      let%bind access_path = compile_path access_path in
       let%bind expression = compile_expression expression in
-      let%bind rhs = rhs @@ expression in
+      let rhs = O.e_update ~loc (O.e_variable ~loc variable) access_path expression in
       ok @@ fun expr -> (match expr with 
        | None -> O.e_let_in ~loc (variable,None) true false rhs (O.e_skip ())
        | Some e -> O.e_let_in ~loc (variable, None) true false rhs e
@@ -347,6 +314,16 @@ and compile_expression' : I.expression -> (O.expression option -> O.expression) 
       let%bind w = compile_while w in
       ok @@ w
 
+and compile_path : I.access list -> O.access list result =
+  fun path ->
+  let aux a = match a with
+    | I.Access_record s -> ok @@ O.Access_record s
+    | I.Access_tuple  i -> ok @@ O.Access_tuple  i
+    | I.Access_map e ->
+      let%bind e = compile_expression e in
+      ok @@ O.Access_map e
+  in
+  bind_map_list aux path
 
 and compile_lambda : I.lambda -> O.lambda result =
   fun {binder;input_type;output_type;result}->
@@ -365,7 +342,7 @@ and compile_matching : I.matching -> Location.t -> (O.expression option -> O.exp
   match cases with 
     | I.Match_option {match_none;match_some} ->
       let%bind match_none' = compile_expression match_none in
-      let (n,expr,tv) = match_some in
+      let (n,expr) = match_some in
       let%bind expr' = compile_expression expr in
       let env = Var.fresh () in
       let%bind ((_,free_vars_none), match_none) = repair_mutable_variable_in_matching match_none' [] env in
@@ -374,7 +351,7 @@ and compile_matching : I.matching -> Location.t -> (O.expression option -> O.exp
       let expr       = add_to_end expr (O.e_variable env) in
       let free_vars = List.sort_uniq Var.compare @@ free_vars_none @ free_vars_some in
       if (List.length free_vars != 0) then
-        let match_expr  = O.e_matching matchee (O.Match_option {match_none; match_some=(n,expr,tv)}) in
+        let match_expr  = O.e_matching matchee (O.Match_option {match_none; match_some=(n,expr)}) in
         let return_expr = fun expr ->
           O.e_let_in (env,None) false false (store_mutable_variable free_vars) @@
           O.e_let_in (env,None) false false match_expr @@
@@ -382,19 +359,19 @@ and compile_matching : I.matching -> Location.t -> (O.expression option -> O.exp
         in
         ok @@ restore_mutable_variable return_expr free_vars env
       else
-        return @@ O.e_matching ~loc matchee @@ O.Match_option {match_none=match_none'; match_some=(n,expr',tv)}
+        return @@ O.e_matching ~loc matchee @@ O.Match_option {match_none=match_none'; match_some=(n,expr')}
     | I.Match_list {match_nil;match_cons} ->
       let%bind match_nil' = compile_expression match_nil in
-      let (hd,tl,expr,tv) = match_cons in
+      let (hd,tl,expr) = match_cons in
       let%bind expr' = compile_expression expr in
       let env = Var.fresh () in
       let%bind ((_,free_vars_nil), match_nil) = repair_mutable_variable_in_matching match_nil' [] env in
       let%bind ((_,free_vars_cons), expr) = repair_mutable_variable_in_matching expr' [hd;tl] env in
       let match_nil = add_to_end match_nil (O.e_variable env) in
-      let expr       = add_to_end expr (O.e_variable env) in
+      let expr      = add_to_end expr (O.e_variable env) in
       let free_vars = List.sort_uniq Var.compare @@ free_vars_nil @ free_vars_cons in
       if (List.length free_vars != 0) then
-        let match_expr  = O.e_matching matchee (O.Match_list {match_nil; match_cons=(hd,tl,expr,tv)}) in
+        let match_expr  = O.e_matching matchee (O.Match_list {match_nil; match_cons=(hd,tl,expr)}) in
         let return_expr = fun expr ->
           O.e_let_in (env,None) false false (store_mutable_variable free_vars) @@
           O.e_let_in (env,None) false false match_expr @@
@@ -402,11 +379,8 @@ and compile_matching : I.matching -> Location.t -> (O.expression option -> O.exp
         in
         ok @@ restore_mutable_variable return_expr free_vars env
       else
-        return @@ O.e_matching ~loc matchee @@ O.Match_list {match_nil=match_nil'; match_cons=(hd,tl,expr',tv)}
-    | I.Match_tuple ((lst,expr), tv) ->
-      let%bind expr = compile_expression expr in
-      return @@ O.e_matching ~loc matchee @@ O.Match_tuple ((lst,expr), tv)
-    | I.Match_variant (lst,tv) ->
+        return @@ O.e_matching ~loc matchee @@ O.Match_list {match_nil=match_nil'; match_cons=(hd,tl,expr')}
+    | I.Match_variant lst ->
       let env = Var.fresh () in
       let aux fv ((c,n),expr) =
         let%bind expr = compile_expression expr in
@@ -418,10 +392,10 @@ and compile_matching : I.matching -> Location.t -> (O.expression option -> O.exp
       let free_vars = List.sort_uniq Var.compare @@ List.concat fv in
       if (List.length free_vars == 0) then (
         let cases = List.map (fun case -> let (a,_,b) = case in (a,b)) cases in
-        return @@ O.e_matching ~loc matchee @@ O.Match_variant (cases,tv)
+        return @@ O.e_matching ~loc matchee @@ O.Match_variant cases
       ) else (
         let cases = List.map (fun case -> let (a,b,_) = case in (a,b)) cases in
-        let match_expr = O.e_matching matchee @@ O.Match_variant (cases,tv) in
+        let match_expr = O.e_matching matchee @@ O.Match_variant cases in
         let return_expr = fun expr ->
           O.e_let_in (env,None) false false (store_mutable_variable free_vars) @@
           O.e_let_in (env,None) false false match_expr @@
@@ -429,6 +403,18 @@ and compile_matching : I.matching -> Location.t -> (O.expression option -> O.exp
         in
         ok @@ restore_mutable_variable return_expr free_vars env
       )
+    | I.Match_record (lst,ty_opt,expr) ->
+      let%bind expr = compile_expression expr in
+      let%bind ty_opt = bind_map_option (bind_map_list compile_type_expression) ty_opt in
+      return @@ O.e_matching ~loc matchee @@ O.Match_record (lst,ty_opt,expr)
+    | I.Match_tuple (lst,ty_opt,expr) ->
+      let%bind expr = compile_expression expr in
+      let%bind ty_opt = bind_map_option (bind_map_list compile_type_expression) ty_opt in
+      return @@ O.e_matching ~loc matchee @@ O.Match_tuple (lst,ty_opt,expr)
+    | I.Match_variable (lst,ty_opt,expr) ->
+      let%bind expr = compile_expression expr in
+      let%bind ty_opt = bind_map_option compile_type_expression ty_opt in
+      return @@ O.e_matching ~loc matchee @@ O.Match_variable (lst,ty_opt,expr)
  
 and compile_while I.{condition;body} =
   let env_rec = Var.fresh () in
@@ -444,7 +430,7 @@ and compile_while I.{condition;body} =
   let for_body = add_to_end for_body ctrl in
 
   let aux name expr=
-    O.e_let_in (name,None) false false (O.e_record_accessor (O.e_record_accessor (O.e_variable binder) (Label "0")) (Label (Var.to_name name))) expr
+    O.e_let_in (name,None) false false (O.e_accessor (O.e_variable binder) [Access_tuple Z.zero; Access_record (Var.to_name name)]) expr
   in
   let init_rec = O.e_tuple [store_mutable_variable @@ captured_name_list] in
   let restore = fun expr -> List.fold_right aux captured_name_list expr in
@@ -459,7 +445,7 @@ and compile_while I.{condition;body} =
   let return_expr = fun expr -> 
     O.e_let_in let_binder false false init_rec @@
     O.e_let_in let_binder false false loop @@
-    O.e_let_in let_binder false false (O.e_record_accessor (O.e_variable env_rec) (Label"0")) @@
+    O.e_let_in let_binder false false (O.e_accessor (O.e_variable env_rec) [Access_tuple Z.zero]) @@
     expr
   in
   ok @@ restore_mutable_variable return_expr captured_name_list env_rec 
@@ -474,7 +460,7 @@ and compile_for I.{binder;start;final;increment;body} =
   let continue_expr = O.e_constant C_FOLD_CONTINUE [(O.e_variable env_rec)] in
   let ctrl = 
     O.e_let_in (binder,Some (O.t_int ())) false false (O.e_constant C_ADD [ O.e_variable binder ; step ]) @@
-    O.e_let_in (env_rec, None) false false (O.e_record_update (O.e_variable env_rec) (Label "1") @@ O.e_variable binder)@@
+    O.e_let_in (env_rec, None) false false (O.e_update (O.e_variable env_rec) [Access_tuple Z.one] @@ O.e_variable binder)@@
     continue_expr
   in
   (* Modify the body loop*)
@@ -483,7 +469,7 @@ and compile_for I.{binder;start;final;increment;body} =
   let for_body = add_to_end for_body ctrl in
 
   let aux name expr=
-    O.e_let_in (name,None) false false (O.e_record_accessor (O.e_record_accessor (O.e_variable env_rec) (Label "0")) (Label (Var.to_name name))) expr
+    O.e_let_in (name,None) false false (O.e_accessor (O.e_variable env_rec) [Access_tuple Z.zero; Access_record (Var.to_name name)]) expr
   in
 
   (* restores the initial value of the free_var*)
@@ -492,7 +478,7 @@ and compile_for I.{binder;start;final;increment;body} =
   (*Prep the lambda for the fold*)
   let stop_expr = O.e_constant C_FOLD_STOP [O.e_variable env_rec] in
   let aux_func = O.e_lambda env_rec None None @@ 
-                 O.e_let_in (binder,Some (O.t_int ())) false false (O.e_record_accessor (O.e_variable env_rec) (Label "1")) @@
+                 O.e_let_in (binder,Some (O.t_int ())) false false (O.e_accessor (O.e_variable env_rec) [Access_tuple Z.one]) @@
                  O.e_cond cond (restore for_body) (stop_expr) in
 
   (* Make the fold_while en precharge the vakye *)
@@ -505,7 +491,7 @@ and compile_for I.{binder;start;final;increment;body} =
     O.e_let_in (binder, Some (O.t_int ())) false false start @@
     O.e_let_in let_binder false false init_rec @@
     O.e_let_in let_binder false false loop @@
-    O.e_let_in let_binder false false (O.e_record_accessor (O.e_variable env_rec) (Label "0")) @@
+    O.e_let_in let_binder false false (O.e_accessor (O.e_variable env_rec) [Access_tuple Z.zero]) @@
     expr
   in
   ok @@ restore_mutable_variable return_expr captured_name_list env_rec 
@@ -521,21 +507,21 @@ and compile_for_each I.{binder;collection;collection_type; body} =
   
   let%bind body = compile_expression body in
   let%bind ((_,free_vars), body) = repair_mutable_variable_in_loops body element_names args in
-  let for_body = add_to_end body @@ (O.e_record_accessor (O.e_variable args) (Label "0")) in
+  let for_body = add_to_end body @@ (O.e_accessor (O.e_variable args) [Access_tuple Z.zero]) in
 
   let init_record = store_mutable_variable free_vars in
   let%bind collect = compile_expression collection in
   let aux name expr=
-    O.e_let_in (name,None) false false (O.e_record_accessor (O.e_record_accessor (O.e_variable args) (Label "0")) (Label (Var.to_name name))) expr
+    O.e_let_in (name,None) false false (O.e_accessor (O.e_variable args) [Access_tuple Z.zero; Access_record (Var.to_name name)]) expr
   in
   let restore = fun expr -> List.fold_right aux free_vars expr in
   let restore = match collection_type with
     | Map -> (match snd binder with 
-      | Some v -> fun expr -> restore (O.e_let_in (fst binder, None) false false (O.e_record_accessor (O.e_record_accessor (O.e_variable args) (Label "1")) (Label "0")) 
-                                    (O.e_let_in (v, None) false false (O.e_record_accessor (O.e_record_accessor (O.e_variable args) (Label "1")) (Label "1")) expr))
-      | None -> fun expr -> restore (O.e_let_in (fst binder, None) false false (O.e_record_accessor (O.e_record_accessor (O.e_variable args) (Label "1")) (Label "0")) expr) 
+      | Some v -> fun expr -> restore (O.e_let_in (fst binder, None) false false (O.e_accessor (O.e_variable args) [Access_tuple Z.one; Access_tuple Z.zero]) 
+                                    (O.e_let_in (v, None) false false (O.e_accessor (O.e_variable args) [Access_tuple Z.one; Access_tuple Z.one]) expr))
+      | None -> fun expr -> restore (O.e_let_in (fst binder, None) false false (O.e_accessor (O.e_variable args) [Access_tuple Z.one; Access_tuple Z.zero]) expr) 
     )
-    | _ -> fun expr -> restore (O.e_let_in (fst binder, None) false false (O.e_record_accessor (O.e_variable args) (Label "1")) expr)
+    | _ -> fun expr -> restore (O.e_let_in (fst binder, None) false false (O.e_accessor (O.e_variable args) [Access_tuple Z.one]) expr)
   in
   let lambda = O.e_lambda args None None (restore for_body) in
   let%bind op_name = match collection_type with
@@ -601,18 +587,18 @@ let rec uncompile_type_expression : O.type_expression -> I.type_expression resul
       let%bind lst = bind_map_list uncompile_type_expression lst in
       return @@ T_operator (type_operator, lst)
 
-let rec uncompile_expression' : O.expression -> I.expression result =
+let rec uncompile_expression : O.expression -> I.expression result =
   fun e ->
   let return expr = ok @@ I.make_e ~loc:e.location expr in
   match e.expression_content with 
     O.E_literal lit -> return @@ I.E_literal lit
   | O.E_constant {cons_name;arguments} -> 
-    let%bind arguments = bind_map_list uncompile_expression' arguments in
+    let%bind arguments = bind_map_list uncompile_expression arguments in
     return @@ I.E_constant {cons_name;arguments}
   | O.E_variable name     -> return @@ I.E_variable name
   | O.E_application {lamb; args} -> 
-    let%bind lamb = uncompile_expression' lamb in
-    let%bind args = uncompile_expression' args in
+    let%bind lamb = uncompile_expression lamb in
+    let%bind args = uncompile_expression args in
     return @@ I.E_application {lamb; args}
   | O.E_lambda lambda ->
     let%bind lambda = uncompile_lambda lambda in
@@ -624,105 +610,116 @@ let rec uncompile_expression' : O.expression -> I.expression result =
   | O.E_let_in {let_binder;inline;rhs;let_result} ->
     let (binder,ty_opt) = let_binder in
     let%bind ty_opt = bind_map_option uncompile_type_expression ty_opt in
-    let%bind rhs = uncompile_expression' rhs in
-    let%bind let_result = uncompile_expression' let_result in
+    let%bind rhs = uncompile_expression rhs in
+    let%bind let_result = uncompile_expression let_result in
     return @@ I.E_let_in {let_binder=(binder,ty_opt);inline;rhs;let_result}
   | O.E_constructor {constructor;element} ->
-    let%bind element = uncompile_expression' element in
+    let%bind element = uncompile_expression element in
     return @@ I.E_constructor {constructor;element}
   | O.E_matching {matchee; cases} ->
-    let%bind matchee = uncompile_expression' matchee in
+    let%bind matchee = uncompile_expression matchee in
     let%bind cases   = uncompile_matching cases in
     return @@ I.E_matching {matchee;cases}
   | O.E_record record ->
     let record = I.LMap.to_kv_list record in
     let%bind record = 
       bind_map_list (fun (k,v) ->
-        let%bind v = uncompile_expression' v in
+        let%bind v = uncompile_expression v in
         ok @@ (k,v)
       ) record
     in
     return @@ I.E_record (O.LMap.of_list record)
-  | O.E_record_accessor {record;path} ->
-    let%bind record = uncompile_expression' record in
-    return @@ I.E_record_accessor {record;path}
-  | O.E_record_update {record;path;update} ->
-    let%bind record = uncompile_expression' record in
-    let%bind update = uncompile_expression' update in
-    return @@ I.E_record_update {record;path;update}
+  | O.E_accessor {record;path} ->
+    let%bind record = uncompile_expression record in
+    let%bind path = uncompile_path path in
+    return @@ I.E_accessor {record;path}
+  | O.E_update {record;path;update} ->
+    let%bind record = uncompile_expression record in
+    let%bind path = uncompile_path path in
+    let%bind update = uncompile_expression update in
+    return @@ I.E_update {record;path;update}
   | O.E_tuple tuple ->
-    let%bind tuple = bind_map_list uncompile_expression' tuple in
+    let%bind tuple = bind_map_list uncompile_expression tuple in
     return @@ I.E_tuple tuple
-  | O.E_tuple_accessor {tuple;path} ->
-    let%bind tuple = uncompile_expression' tuple in
-    return @@ I.E_tuple_accessor {tuple;path}
-  | O.E_tuple_update {tuple;path;update} ->
-    let%bind tuple  = uncompile_expression' tuple in
-    let%bind update = uncompile_expression' update in
-    return @@ I.E_tuple_update {tuple;path;update}
   | O.E_map map ->
     let%bind map = bind_map_list (
-      bind_map_pair uncompile_expression'
+      bind_map_pair uncompile_expression
     ) map
     in
     return @@ I.E_map map
   | O.E_big_map big_map ->
     let%bind big_map = bind_map_list (
-      bind_map_pair uncompile_expression'
+      bind_map_pair uncompile_expression
     ) big_map
     in
     return @@ I.E_big_map big_map
   | O.E_list lst ->
-    let%bind lst = bind_map_list uncompile_expression' lst in
+    let%bind lst = bind_map_list uncompile_expression lst in
     return @@ I.E_list lst
   | O.E_set set ->
-    let%bind set = bind_map_list uncompile_expression' set in
+    let%bind set = bind_map_list uncompile_expression set in
     return @@ I.E_set set 
-  | O.E_look_up look_up ->
-    let%bind look_up = bind_map_pair uncompile_expression' look_up in
-    return @@ I.E_look_up look_up
   | O.E_ascription {anno_expr; type_annotation} ->
-    let%bind anno_expr = uncompile_expression' anno_expr in
+    let%bind anno_expr = uncompile_expression anno_expr in
     let%bind type_annotation = uncompile_type_expression type_annotation in
     return @@ I.E_ascription {anno_expr; type_annotation}
   | O.E_cond {condition;then_clause;else_clause} ->
-    let%bind condition   = uncompile_expression' condition in
-    let%bind then_clause = uncompile_expression' then_clause in
-    let%bind else_clause = uncompile_expression' else_clause in
+    let%bind condition   = uncompile_expression condition in
+    let%bind then_clause = uncompile_expression then_clause in
+    let%bind else_clause = uncompile_expression else_clause in
     return @@ I.E_cond {condition; then_clause; else_clause}
   | O.E_sequence {expr1; expr2} ->
-    let%bind expr1 = uncompile_expression' expr1 in
-    let%bind expr2 = uncompile_expression' expr2 in
+    let%bind expr1 = uncompile_expression expr1 in
+    let%bind expr2 = uncompile_expression expr2 in
     return @@ I.E_sequence {expr1; expr2}
   | O.E_skip -> return @@ I.E_skip
+
+and uncompile_path : O.access list -> I.access list result =
+  fun path -> let aux a = match a with
+    | O.Access_record s -> ok @@ I.Access_record s
+    | O.Access_tuple  i -> ok @@ I.Access_tuple  i
+    | O.Access_map e ->
+      let%bind e = uncompile_expression e in
+      ok @@ I.Access_map e
+  in
+  bind_map_list aux path
 
 and uncompile_lambda : O.lambda -> I.lambda result =
   fun {binder;input_type;output_type;result}->
     let%bind input_type = bind_map_option uncompile_type_expression input_type in
     let%bind output_type = bind_map_option uncompile_type_expression output_type in
-    let%bind result = uncompile_expression' result in
+    let%bind result = uncompile_expression result in
     ok @@ I.{binder;input_type;output_type;result}
 and uncompile_matching : O.matching_expr -> I.matching_expr result =
   fun m -> 
   match m with 
     | O.Match_list {match_nil;match_cons} ->
-      let%bind match_nil = uncompile_expression' match_nil in
-      let (hd,tl,expr,tv) = match_cons in
-      let%bind expr = uncompile_expression' expr in
-      ok @@ I.Match_list {match_nil; match_cons=(hd,tl,expr,tv)}
+      let%bind match_nil = uncompile_expression match_nil in
+      let (hd,tl,expr) = match_cons in
+      let%bind expr = uncompile_expression expr in
+      ok @@ I.Match_list {match_nil; match_cons=(hd,tl,expr)}
     | O.Match_option {match_none;match_some} ->
-      let%bind match_none = uncompile_expression' match_none in
-      let (n,expr,tv) = match_some in
-      let%bind expr = uncompile_expression' expr in
-      ok @@ I.Match_option {match_none; match_some=(n,expr,tv)}
-    | O.Match_tuple ((lst,expr), tv) ->
-      let%bind expr = uncompile_expression' expr in
-      ok @@ O.Match_tuple ((lst,expr), tv)
-    | O.Match_variant (lst,tv) ->
+      let%bind match_none = uncompile_expression match_none in
+      let (n,expr) = match_some in
+      let%bind expr = uncompile_expression expr in
+      ok @@ I.Match_option {match_none; match_some=(n,expr)}
+    | O.Match_variant lst ->
       let%bind lst = bind_map_list (
         fun ((c,n),expr) ->
-          let%bind expr = uncompile_expression' expr in
+          let%bind expr = uncompile_expression expr in
           ok @@ ((c,n),expr)
       ) lst 
       in
-      ok @@ I.Match_variant (lst,tv)
+      ok @@ I.Match_variant lst
+    | O.Match_record (lst,ty_opt,expr) ->
+      let%bind expr = uncompile_expression expr in
+      let%bind ty_opt = bind_map_option (bind_map_list uncompile_type_expression) ty_opt in
+      ok @@ I.Match_record (lst,ty_opt,expr)
+    | O.Match_tuple (lst,ty_opt,expr) ->
+      let%bind expr = uncompile_expression expr in
+      let%bind ty_opt = bind_map_option (bind_map_list uncompile_type_expression) ty_opt in
+      ok @@ I.Match_tuple (lst,ty_opt,expr)
+    | O.Match_variable (lst,ty_opt,expr) ->
+      let%bind expr = uncompile_expression expr in
+      let%bind ty_opt = bind_map_option uncompile_type_expression ty_opt in
+      ok @@ I.Match_variable (lst,ty_opt,expr)

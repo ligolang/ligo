@@ -31,9 +31,9 @@ val sepseq_cons  : 'a -> 'sep -> ('a,'sep)  sepseq -> ('a,'sep) nsepseq
 
 (* Reversing *)
 
-val nseq_rev:    'a nseq -> 'a nseq
-val nsepseq_rev: ('a,'sep) nsepseq -> ('a,'sep) nsepseq
-val sepseq_rev:  ('a,'sep)  sepseq -> ('a,'sep)  sepseq
+val nseq_rev    : 'a nseq -> 'a nseq
+val nsepseq_rev : ('a,'sep) nsepseq -> ('a,'sep) nsepseq
+val sepseq_rev  : ('a,'sep)  sepseq -> ('a,'sep)  sepseq
 
 (* Rightwards iterators *)
 
@@ -55,7 +55,7 @@ val sepseq_foldr  : ('a -> 'b -> 'b) -> ('a,'c)  sepseq -> 'b -> 'b
 
 val nseq_map    : ('a -> 'b) -> 'a nseq -> 'b nseq
 val nsepseq_map : ('a -> 'b) -> ('a,'c) nsepseq -> ('b,'c) nsepseq
-val sepseq_map  : ('a -> 'b) -> ('a,'c) sepseq -> ('b,'c) sepseq
+val sepseq_map  : ('a -> 'b) -> ('a,'c)  sepseq -> ('b,'c)  sepseq
 
 (* Conversions to lists *)
 

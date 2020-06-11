@@ -106,14 +106,15 @@ type eof = Region.t
 
 (* Literals *)
 
-type variable   = string reg
-type fun_name   = string reg
-type type_name  = string reg
-type field_name = string reg
-type map_name   = string reg
-type set_name   = string reg
-type constr     = string reg
-type attribute  = string reg
+type variable    = string reg
+type fun_name    = string reg
+type type_name   = string reg
+type type_constr = string reg
+type field_name  = string reg
+type map_name    = string reg
+type set_name    = string reg
+type constr      = string reg
+type attribute   = string reg
 
 (* Parentheses *)
 
@@ -181,11 +182,11 @@ and type_expr =
   TProd   of cartesian
 | TSum    of (variant reg, vbar) nsepseq reg
 | TRecord of field_decl reg ne_injection reg
-| TApp    of (type_name * type_tuple) reg
+| TApp    of (type_constr * type_tuple) reg
 | TFun    of (type_expr * arrow * type_expr) reg
 | TPar    of type_expr par reg
 | TVar    of variable
-| TStringLiteral of Lexer.lexeme reg
+| TString of Lexer.lexeme reg
 
 and cartesian = (type_expr, times) nsepseq reg
 
@@ -205,7 +206,6 @@ and type_tuple = (type_expr, comma) nsepseq par reg
 (* Function and procedure declarations *)
 
 and fun_expr = {
-  kwd_recursive: kwd_recursive option;
   kwd_function : kwd_function;
   param        : parameters;
   colon        : colon;
@@ -215,17 +215,17 @@ and fun_expr = {
 }
 
 and fun_decl = {
-  kwd_recursive: kwd_recursive option;
-  kwd_function : kwd_function;
-  fun_name     : variable;
-  param        : parameters;
-  colon        : colon;
-  ret_type     : type_expr;
-  kwd_is       : kwd_is;
-  block_with   : (block reg * kwd_with) option;
-  return       : expr;
-  terminator   : semi option;
-  attributes   : attr_decl option
+  kwd_recursive : kwd_recursive option;
+  kwd_function  : kwd_function;
+  fun_name      : variable;
+  param         : parameters;
+  colon         : colon;
+  ret_type      : type_expr;
+  kwd_is        : kwd_is;
+  block_with    : (block reg * kwd_with) option;
+  return        : expr;
+  terminator    : semi option;
+  attributes    : attr_decl option
 }
 
 and parameters = (param_decl, semi) nsepseq par reg
@@ -249,19 +249,14 @@ and param_var = {
 }
 
 and block = {
-  opening    : block_opening;
+  enclosing  : block_enclosing;
   statements : statements;
-  terminator : semi option;
-  closing    : block_closing
+  terminator : semi option
 }
 
-and block_opening =
-  Block of kwd_block * lbrace
-| Begin of kwd_begin
-
-and block_closing =
-  Block of rbrace
-| End   of kwd_end
+and block_enclosing =
+  Block    of kwd_block * lbrace * rbrace
+| BeginEnd of kwd_begin * kwd_end
 
 and statements = (statement, semi) nsepseq
 
@@ -378,10 +373,10 @@ and set_membership = {
 and 'a case = {
   kwd_case  : kwd_case;
   expr      : expr;
-  opening   : opening;
+  kwd_of    : kwd_of;
+  enclosing : enclosing;
   lead_vbar : vbar option;
-  cases     : ('a case_clause reg, vbar) nsepseq reg;
-  closing   : closing
+  cases     : ('a case_clause reg, vbar) nsepseq reg
 }
 
 and 'a case_clause = {
@@ -417,13 +412,12 @@ and for_loop =
 | ForCollect of for_collect reg
 
 and for_int = {
-  kwd_for  : kwd_for;
-  assign   : var_assign reg;
-  kwd_to   : kwd_to;
-  bound    : expr;
-  kwd_step : kwd_step option;
-  step     : expr option;
-  block    : block reg
+  kwd_for : kwd_for;
+  assign  : var_assign reg;
+  kwd_to  : kwd_to;
+  bound   : expr;
+  step    : (kwd_step * expr) option;
+  block   : block reg
 }
 
 and var_assign = {
@@ -452,7 +446,7 @@ and collection =
 and expr =
   ECase   of expr case reg
 | ECond   of cond_expr reg
-| EAnnot  of annot_expr reg
+| EAnnot  of annot_expr par reg
 | ELogic  of logic_expr
 | EArith  of arith_expr
 | EString of string_expr
@@ -471,33 +465,11 @@ and expr =
 | EPar    of expr par reg
 | EFun    of fun_expr reg
 
-and annot_expr = (expr * type_expr)
+and annot_expr = expr * colon * type_expr
 
 and set_expr =
   SetInj of expr injection reg
 | SetMem of set_membership reg
-
-and 'a injection = {
-  opening    : opening;
-  elements   : ('a, semi) sepseq;
-  terminator : semi option;
-  closing    : closing
-}
-
-and 'a ne_injection = {
-  opening     : opening;
-  ne_elements : ('a, semi) nsepseq;
-  terminator  : semi option;
-  closing     : closing
-}
-
-and opening =
-  Kwd        of keyword
-| KwdBracket of keyword * lbracket
-
-and closing =
-  End       of kwd_end
-| RBracket  of rbracket
 
 and map_expr =
   MapLookUp of map_lookup reg
@@ -520,7 +492,7 @@ and logic_expr =
 and bool_expr =
   Or    of kwd_or  bin_op reg
 | And   of kwd_and bin_op reg
-| Not   of kwd_not un_op reg
+| Not   of kwd_not un_op  reg
 | False of c_False
 | True  of c_True
 
@@ -544,15 +516,15 @@ and comp_expr =
 | Neq   of neq   bin_op reg
 
 and arith_expr =
-  Add  of plus    bin_op reg
-| Sub  of minus   bin_op reg
-| Mult of times   bin_op reg
-| Div  of slash   bin_op reg
-| Mod  of kwd_mod bin_op reg
-| Neg  of minus    un_op reg
-| Int  of (Lexer.lexeme * Z.t) reg
-| Nat  of (Lexer.lexeme * Z.t) reg
-| Mutez  of (Lexer.lexeme * Z.t) reg
+  Add   of plus    bin_op reg
+| Sub   of minus   bin_op reg
+| Mult  of times   bin_op reg
+| Div   of slash   bin_op reg
+| Mod   of kwd_mod bin_op reg
+| Neg   of minus    un_op reg
+| Int   of (Lexer.lexeme * Z.t) reg
+| Nat   of (Lexer.lexeme * Z.t) reg
+| Mutez of (Lexer.lexeme * Z.t) reg
 
 and string_expr =
   Cat      of cat bin_op reg
@@ -569,13 +541,13 @@ and constr_expr =
 | NoneExpr  of c_None
 | ConstrApp of (constr * arguments option) reg
 
-and field_assign = {
+and field_assignment = {
   field_name : field_name;
-  equal      : equal;
+  assignment : equal;
   field_expr : expr
 }
 
-and record = field_assign reg ne_injection
+and record = field_assignment reg ne_injection
 
 and projection = {
   struct_name : variable;
@@ -584,14 +556,14 @@ and projection = {
 }
 
 and update = {
-  record : path;
+  record   : path;
   kwd_with : kwd_with;
-  updates : field_path_assign reg ne_injection reg
+  updates  : field_path_assignment reg ne_injection reg
 }
 
-and field_path_assign = {
-  field_path  : (field_name, dot) nsepseq;
-  equal : equal;
+and field_path_assignment = {
+  field_path : path;
+  assignment : equal;
   field_expr : expr
 }
 
@@ -604,6 +576,38 @@ and tuple_expr = (expr, comma) nsepseq par reg
 and fun_call = (expr * arguments) reg
 
 and arguments = tuple_expr
+
+(* Injections *)
+
+and 'a injection = {
+  kind       : injection_kwd;
+  enclosing  : enclosing;
+  elements   : ('a, semi) sepseq;
+  terminator : semi option
+}
+
+and injection_kwd =
+  InjSet    of keyword
+| InjMap    of keyword
+| InjBigMap of keyword
+| InjList   of keyword
+
+and enclosing =
+  Brackets of lbracket * rbracket
+| End      of kwd_end
+
+and 'a ne_injection = {
+  kind        : ne_injection_kwd;
+  enclosing   : enclosing;
+  ne_elements : ('a, semi) nsepseq;
+  terminator  : semi option
+}
+
+and ne_injection_kwd =
+  NEInjAttr   of keyword
+| NEInjSet    of keyword
+| NEInjMap    of keyword
+| NEInjRecord of keyword
 
 (* Patterns *)
 
@@ -635,7 +639,7 @@ and list_pattern =
 | PCons     of (pattern, cons) nsepseq reg
 
 
-(* Projecting regions *)
+(* PROJECTING REGIONS *)
 
 let rec last to_region = function
     [] -> Region.ghost
@@ -660,7 +664,7 @@ let type_expr_to_region = function
 | TApp    {region; _}
 | TFun    {region; _}
 | TPar    {region; _}
-| TStringLiteral {region; _}
+| TString {region; _}
 | TVar    {region; _} -> region
 
 let rec expr_to_region = function

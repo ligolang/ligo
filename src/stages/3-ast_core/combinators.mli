@@ -74,7 +74,7 @@ val e_string_cat : ?loc:Location.t -> expression -> expression -> expression
 val e_map_add : ?loc:Location.t -> expression -> expression ->  expression -> expression
 val e_constructor : ?loc:Location.t -> string -> expression -> expression
 val e_matching : ?loc:Location.t -> expression -> matching_expr -> expression
-val e_record_accessor : ?loc:Location.t -> expression -> string -> expression
+val e_record_accessor : ?loc:Location.t -> expression -> label -> expression
 val e_variable : ?loc:Location.t -> expression_variable -> expression
 val e_let_in : ?loc:Location.t -> ( expression_variable * type_expression option ) -> bool -> expression -> expression -> expression
 val e_annotation : ?loc:Location.t -> expression -> type_expression -> expression

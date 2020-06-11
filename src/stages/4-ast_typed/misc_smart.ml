@@ -90,8 +90,6 @@ module Captured_variables = struct
       let%bind n' = f b n in
       let%bind s' = f (union (singleton opt) b) body in
       ok @@ union n' s'
-    | Match_tuple { vars ; body ; tvs=_ } ->
-      f (union (of_list vars) b) body
     | Match_variant { cases ; tv=_ } ->
       let%bind lst' = bind_map_list (matching_variant_case f b) cases in
       ok @@ unions lst'

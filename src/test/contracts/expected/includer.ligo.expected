@@ -1,0 +1,3 @@
+const foo : int = 144
+
+const bar : int = foo

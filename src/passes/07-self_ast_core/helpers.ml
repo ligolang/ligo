@@ -72,21 +72,17 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
 
 and fold_cases : 'a folder -> 'a -> matching_expr -> 'a result = fun f init m ->
   match m with
-  | Match_list { match_nil ; match_cons = (_ , _ , cons, _) } -> (
+  | Match_list { match_nil ; match_cons = (_ , _ , cons) } -> (
       let%bind res = fold_expression f init match_nil in
       let%bind res = fold_expression f res cons in
       ok res
     )
-  | Match_option { match_none ; match_some = (_ , some, _) } -> (
+  | Match_option { match_none ; match_some = (_ , some) } -> (
       let%bind res = fold_expression f init match_none in
       let%bind res = fold_expression f res some in
       ok res
     )
-  | Match_tuple ((_ , e), _) -> (
-      let%bind res = fold_expression f init e in
-      ok res
-    )
-  | Match_variant (lst, _) -> (
+  | Match_variant lst -> (
       let aux init' ((_ , _) , e) =
         let%bind res' = fold_expression f init' e in
         ok res' in
@@ -174,27 +170,23 @@ and map_type_expression : ty_exp_mapper -> type_expression -> type_expression re
 
 and map_cases : exp_mapper -> matching_expr -> matching_expr result = fun f m ->
   match m with
-  | Match_list { match_nil ; match_cons = (hd , tl , cons, _) } -> (
+  | Match_list { match_nil ; match_cons = (hd , tl , cons) } -> (
       let%bind match_nil = map_expression f match_nil in
       let%bind cons = map_expression f cons in
-      ok @@ Match_list { match_nil ; match_cons = (hd , tl , cons, ()) }
+      ok @@ Match_list { match_nil ; match_cons = (hd , tl , cons) }
     )
-  | Match_option { match_none ; match_some = (name , some, _) } -> (
+  | Match_option { match_none ; match_some = (name , some) } -> (
       let%bind match_none = map_expression f match_none in
       let%bind some = map_expression f some in
-      ok @@ Match_option { match_none ; match_some = (name , some, ()) }
+      ok @@ Match_option { match_none ; match_some = (name , some) }
     )
-  | Match_tuple ((names , e), _) -> (
-      let%bind e' = map_expression f e in
-      ok @@ Match_tuple ((names , e'), [])
-    )
-  | Match_variant (lst, _) -> (
+  | Match_variant lst -> (
       let aux ((a , b) , e) =
         let%bind e' = map_expression f e in
         ok ((a , b) , e')
       in
       let%bind lst' = bind_map_list aux lst in
-      ok @@ Match_variant (lst', ())
+      ok @@ Match_variant lst'
     )
 
 and map_program : abs_mapper -> program -> program result = fun m p ->
@@ -274,25 +266,21 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expres
 
 and fold_map_cases : 'a fold_mapper -> 'a -> matching_expr -> ('a * matching_expr) result = fun f init m ->
   match m with
-  | Match_list { match_nil ; match_cons = (hd , tl , cons, _) } -> (
+  | Match_list { match_nil ; match_cons = (hd , tl , cons) } -> (
       let%bind (init, match_nil) = fold_map_expression f init match_nil in
       let%bind (init, cons) = fold_map_expression f init cons in
-      ok @@ (init, Match_list { match_nil ; match_cons = (hd , tl , cons, ()) })
+      ok @@ (init, Match_list { match_nil ; match_cons = (hd , tl , cons) })
     )
-  | Match_option { match_none ; match_some = (name , some, _) } -> (
+  | Match_option { match_none ; match_some = (name , some) } -> (
       let%bind (init, match_none) = fold_map_expression f init match_none in
       let%bind (init, some) = fold_map_expression f init some in
-      ok @@ (init, Match_option { match_none ; match_some = (name , some, ()) })
+      ok @@ (init, Match_option { match_none ; match_some = (name , some) })
     )
-  | Match_tuple ((names , e), _) -> (
-      let%bind (init, e') = fold_map_expression f init e in
-      ok @@ (init, Match_tuple ((names , e'), []))
-    )
-  | Match_variant (lst, _) -> (
+  | Match_variant lst -> (
       let aux init ((a , b) , e) =
         let%bind (init,e') = fold_map_expression f init e in
         ok (init, ((a , b) , e'))
       in
       let%bind (init,lst') = bind_fold_map_list aux init lst in
-      ok @@ (init, Match_variant (lst', ()))
+      ok @@ (init, Match_variant lst')
     )  

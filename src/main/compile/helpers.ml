@@ -129,7 +129,7 @@ let parsify_string syntax source =
   let%bind applied = Self_ast_imperative.all_program parsified
   in ok applied
 
-let pretty_print_pascaligo source =
+let pretty_print_pascaligo_cst source =
   let%bind ast = Parser.Pascaligo.parse_file source in
   let buffer = Buffer.create 59 in
   let state =
@@ -137,10 +137,10 @@ let pretty_print_pascaligo source =
       ~offsets:true
       ~mode:`Byte
       ~buffer in
-  Parser_pascaligo.ParserLog.pp_ast state ast;
+  Parser_pascaligo.ParserLog.pp_cst state ast;
   ok buffer
 
-let pretty_print_cameligo source =
+let pretty_print_cameligo_cst source =
   let%bind ast = Parser.Cameligo.parse_file source in
   let buffer = Buffer.create 59 in
   let state = (* TODO: Should flow from the CLI *)
@@ -148,10 +148,10 @@ let pretty_print_cameligo source =
       ~offsets:true
       ~mode:`Point
       ~buffer in
-  Parser_cameligo.ParserLog.pp_ast state ast;
+  Parser_cameligo.ParserLog.pp_cst state ast;
   ok buffer
 
-let pretty_print_reasonligo source =
+let pretty_print_reasonligo_cst source =
   let%bind ast = Parser.Reasonligo.parse_file source in
   let buffer = Buffer.create 59 in
   let state = (* TODO: Should flow from the CLI *)
@@ -159,16 +159,16 @@ let pretty_print_reasonligo source =
       ~offsets:true
       ~mode:`Point
       ~buffer in
-  Parser_cameligo.ParserLog.pp_ast state ast;
+  Parser_cameligo.ParserLog.pp_cst state ast;
   ok buffer
 
-let pretty_print syntax source =
+let pretty_print_cst syntax source =
   let%bind v_syntax =
     syntax_to_variant syntax (Some source) in
   match v_syntax with
-    PascaLIGO  -> pretty_print_pascaligo  source
-  | CameLIGO   -> pretty_print_cameligo   source
-  | ReasonLIGO -> pretty_print_reasonligo source
+    PascaLIGO  -> pretty_print_pascaligo_cst  source
+  | CameLIGO   -> pretty_print_cameligo_cst   source
+  | ReasonLIGO -> pretty_print_reasonligo_cst source
 
 let preprocess_pascaligo = Parser.Pascaligo.preprocess
 
@@ -183,3 +183,44 @@ let preprocess syntax source =
     PascaLIGO  -> preprocess_pascaligo  source
   | CameLIGO   -> preprocess_cameligo   source
   | ReasonLIGO -> preprocess_reasonligo source
+
+let pretty_print_pascaligo source =
+  let%bind ast = Parser.Pascaligo.parse_file source in
+  let doc    = Parser_pascaligo.Pretty.print ast in
+  let buffer = Buffer.create 131 in
+  let width  =
+    match Terminal_size.get_columns () with
+      None -> 60
+    | Some c -> c in
+  let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
+  in Trace.ok buffer
+
+let pretty_print_cameligo source =
+  let%bind ast = Parser.Cameligo.parse_file source in
+  let doc    = Parser_cameligo.Pretty.print ast in
+  let buffer = Buffer.create 131 in
+  let width  =
+    match Terminal_size.get_columns () with
+      None -> 60
+    | Some c -> c in
+  let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
+  in Trace.ok buffer
+
+let pretty_print_reasonligo source =
+  let%bind ast = Parser.Reasonligo.parse_file source in
+  let doc    = Parser_reasonligo.Pretty.print ast in
+  let buffer = Buffer.create 131 in
+  let width  =
+    match Terminal_size.get_columns () with
+      None -> 60
+    | Some c -> c in
+  let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
+  in Trace.ok buffer
+
+let pretty_print syntax source =
+  let%bind v_syntax =
+    syntax_to_variant syntax (Some source) in
+  match v_syntax with
+    PascaLIGO  -> pretty_print_pascaligo  source
+  | CameLIGO   -> pretty_print_cameligo   source
+  | ReasonLIGO -> pretty_print_reasonligo source

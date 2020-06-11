@@ -136,11 +136,10 @@ let rec print_tokens state {decl;eof} =
   print_token state eof "EOF"
 
 and print_attributes state attributes =
-  List.iter (
-    fun ({value = attribute; region}) ->
-      let attribute_formatted = sprintf "[@@%s]" attribute in
-      print_token state region attribute_formatted
-   ) attributes
+  let apply {value = attribute; region} =
+    let attribute_formatted = sprintf "[@@%s]" attribute in
+    print_token state region attribute_formatted
+  in List.iter apply attributes
 
 and print_statement state = function
   Let {value=kwd_let, kwd_rec, let_binding, attributes; _} ->
@@ -527,7 +526,7 @@ and print_field_assign state {value; _} =
 
 and print_field_path_assign state {value; _} =
   let {field_path; assignment; field_expr} = value in
-  print_nsepseq state "." print_var field_path;
+  print_path  state field_path;
   print_token state assignment "=";
   print_expr  state field_expr
 
@@ -616,12 +615,20 @@ let pp_node state name =
   let node = sprintf "%s%s\n" state#pad_path name
   in Buffer.add_string state#buffer node
 
-let pp_string state = pp_ident state
+let pp_string state {value=name; region} =
+  let reg  = compact state region in
+  let node = sprintf "%s%S (%s)\n" state#pad_path name reg
+  in Buffer.add_string state#buffer node
+
+let pp_verbatim state {value=name; region} =
+  let reg  = compact state region in
+  let node = sprintf "%s{|%s|} (%s)\n" state#pad_path name reg
+  in Buffer.add_string state#buffer node
 
 let pp_loc_node state name region =
   pp_ident state {value=name; region}
 
-let rec pp_ast state {decl; _} =
+let rec pp_cst state {decl; _} =
   let apply len rank =
     pp_declaration (state#pad len rank) in
   let decls = Utils.nseq_to_list decl in
@@ -704,7 +711,7 @@ and pp_pattern state = function
     pp_string (state#pad 1 0) s
 | PVerbatim v ->
     pp_node   state "PVerbatim";
-    pp_string (state#pad 1 0) v
+    pp_verbatim (state#pad 1 0) v
 | PUnit {region; _} ->
     pp_loc_node state "PUnit" region
 | PFalse region ->
@@ -938,7 +945,7 @@ and pp_projection state proj =
   List.iteri (apply len) selections
 
 and pp_update state update =
-  pp_path state update.record;
+  pp_path (state#pad 2 0) update.record;
   pp_ne_injection pp_field_path_assign state update.updates.value
 
 and pp_path state = function
@@ -963,10 +970,10 @@ and pp_field_assign state {value; _} =
   pp_expr  (state#pad 2 1) value.field_expr
 
 and pp_field_path_assign state {value; _} =
-  pp_node  state "<field path for update>";
-  let path = Utils.nsepseq_to_list value.field_path in
-  List.iter (pp_ident (state#pad 2 0)) path;
-  pp_expr  (state#pad 2 1) value.field_expr
+  let {field_path; field_expr; _} = value in
+  pp_node state "<update>";
+  pp_path (state#pad 2 0) field_path;
+  pp_expr (state#pad 2 1) field_expr
 
 and pp_constr_expr state = function
   ENone region ->
@@ -987,11 +994,11 @@ and pp_constr_app_expr state (constr, expr_opt) =
 
 and pp_list_expr state = function
   ECons {value; region} ->
-    pp_loc_node state "Cons" region;
+    pp_loc_node state "ECons" region;
     pp_expr (state#pad 2 0) value.arg1;
     pp_expr (state#pad 2 1) value.arg2
 | EListComp {value; region} ->
-    pp_loc_node state "List" region;
+    pp_loc_node state "EListComp" region;
     if   value.elements = None
     then pp_node (state#pad 1 0) "<nil>"
     else pp_injection pp_expr state value
@@ -1134,13 +1141,13 @@ and pp_type_expr state = function
       pp_type_expr (state#pad len rank) in
     let domain, _, range = value in
     List.iteri (apply 2) [domain; range]
- | TPar {value={inside;_}; region} ->
+| TPar {value={inside;_}; region} ->
     pp_loc_node  state "TPar" region;
     pp_type_expr (state#pad 1 0) inside
- | TVar v ->
+| TVar v ->
     pp_node  state "TVar";
     pp_ident (state#pad 1 0) v
- | TString s ->
+| TString s ->
     pp_node   state "TString";
     pp_string (state#pad 1 0) s
 

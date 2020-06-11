@@ -19,8 +19,11 @@ let compile_contract_input : string -> string -> v_syntax -> Ast_imperative.expr
   let%bind (storage,parameter) = bind_map_pair (compile_expression syntax) (storage,parameter) in
   ok @@ Ast_imperative.e_pair storage parameter
 
-let pretty_print source_filename syntax =
-  Helpers.pretty_print syntax source_filename
+let pretty_print_cst source_filename syntax =
+  Helpers.pretty_print_cst syntax source_filename
 
 let preprocess source_filename syntax =
   Helpers.preprocess syntax source_filename
+
+let pretty_print source_filename syntax =
+  Helpers.pretty_print syntax source_filename

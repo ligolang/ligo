@@ -86,7 +86,7 @@ nsepseq(item,sep):
 (* Non-empty comma-separated values (at least two values) *)
 
 tuple(item):
-  item "," nsepseq(item,",") { let h,t = $3 in $1,($2,h)::t }
+  item "," nsepseq(item,",") { let h,t = $3 in $1, ($2,h)::t }
 
 (* Possibly empty semicolon-separated values between brackets *)
 
@@ -236,10 +236,7 @@ type_annotation:
 irrefutable:
   sub_irrefutable { $1 }
 | tuple(sub_irrefutable) {
-    let hd, tl = $1 in
-    let start  = pattern_to_region hd in
-    let stop   = last fst tl in
-    let region = cover start stop
+    let region = nsepseq_to_region pattern_to_region $1
     in PTuple {region; value=$1} }
 
 sub_irrefutable:
@@ -276,9 +273,7 @@ pattern:
     PList (PCons {region; value=$1,$2,$3})
   }
 | tuple(sub_pattern) {
-    let start  = pattern_to_region (fst $1) in
-    let stop   = last fst (snd $1) in
-    let region = cover start stop
+    let region = nsepseq_to_region pattern_to_region $1
     in PTuple {region; value=$1} }
 
 sub_pattern:
@@ -333,10 +328,7 @@ constr_pattern:
 
 ptuple:
   tuple(tail) {
-    let hd, tl = $1 in
-    let start  = pattern_to_region hd in
-    let stop   = last fst tl in
-    let region = cover start stop
+    let region = nsepseq_to_region pattern_to_region $1
     in PTuple {region; value=$1} }
 
 unit:
@@ -372,9 +364,7 @@ base_expr(right_expr):
 
 tuple_expr:
   tuple(disj_expr_level) {
-    let start  = expr_to_region (fst $1) in
-    let stop   = last fst (snd $1) in
-    let region = cover start stop
+    let region = nsepseq_to_region expr_to_region $1
     in ETuple {region; value=$1} }
 
 conditional(right_expr):
@@ -534,8 +524,7 @@ mult_expr_level:
 | unary_expr_level                                 {               $1 }
 
 unary_expr_level:
-  call_expr_level { $1 }
-| "-" call_expr_level {
+  "-" call_expr_level {
     let start = $1 in
     let stop = expr_to_region $2 in
     let region = cover start stop
@@ -547,7 +536,9 @@ unary_expr_level:
     let stop = expr_to_region $2 in
     let region = cover start stop
     and value  = {op=$1; arg=$2} in
-    ELogic (BoolExpr (Not ({region; value}))) }
+    ELogic (BoolExpr (Not ({region; value})))
+  }
+| call_expr_level { $1 }
 
 call_expr_level:
   call_expr | constr_expr | core_expr { $1 }
@@ -593,7 +584,10 @@ core_expr:
 | record_expr                         {                    ERecord $1 }
 | update_record                       {                    EUpdate $1 }
 | par(expr)                           {                       EPar $1 }
-| par(expr ":" type_expr {$1,$2,$3})  {                     EAnnot $1 }
+| par(annot_expr)                     {                     EAnnot $1 }
+
+annot_expr:
+  expr ":" type_expr { $1,$2,$3 }
 
 module_field:
   module_name "." module_fun {
@@ -602,7 +596,7 @@ module_field:
 
 module_fun:
   field_name { $1 }
-| "or"       { {value="or";  region=$1} }
+| "or"       { {value="or"; region=$1} }
 
 projection:
   struct_name "." nsepseq(selection,".") {
@@ -642,7 +636,7 @@ update_record:
       lbrace   = $1;
       record   = $2;
       kwd_with = $3;
-      updates  = {value = {compound = Braces($1,$5);
+      updates  = {value = {compound = Braces (ghost, ghost);
                            ne_elements;
                            terminator};
                   region = cover $3 $5};
@@ -650,20 +644,15 @@ update_record:
     in {region; value} }
 
 field_path_assignment :
-  nsepseq(field_name,".") "=" expr {
-    let start  = nsepseq_to_region (fun x -> x.region) $1 in
-    let region = cover start (expr_to_region $3) in
-    let value  = {field_path = $1;
-                  assignment = $2;
-                  field_expr = $3}
-    in {region; value}}
+  path "=" expr {
+    let region = cover (path_to_region $1) (expr_to_region $3)
+    and value  = {field_path=$1; assignment=$2; field_expr=$3}
+    in {region; value} }
 
 field_assignment:
   field_name "=" expr {
-    let start  = $1.region in
-    let stop   = expr_to_region $3 in
-    let region = cover start stop in
-    let value  = {field_name = $1;
+    let region = cover $1.region (expr_to_region $3)
+    and value  = {field_name = $1;
                   assignment = $2;
                   field_expr = $3}
     in {region; value} }

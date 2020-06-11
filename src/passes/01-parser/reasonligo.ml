@@ -8,6 +8,7 @@ module Region      = Simple_utils.Region
 module ParErr      = Parser_reasonligo.ParErr
 module SyntaxError = Parser_reasonligo.SyntaxError
 module SSet        = Set.Make (String)
+module Pretty      = Parser_reasonligo.Pretty
 
 (* Mock IOs TODO: Fill them with CLI options *)
 
@@ -22,7 +23,8 @@ module SubIO =
       ext     : string;   (* ".religo" *)
       mode    : [`Byte | `Point];
       cmd     : EvalOpt.command;
-      mono    : bool
+      mono    : bool;
+      pretty  : bool
     >
 
     let options : options =
@@ -37,6 +39,7 @@ module SubIO =
            method mode    = `Point
            method cmd     = EvalOpt.Quiet
            method mono    = false
+           method pretty  = false
          end
 
     let make =
@@ -49,6 +52,7 @@ module SubIO =
                    ~mode:options#mode
                    ~cmd:options#cmd
                    ~mono:options#mono
+                   ~pretty:options#pretty
   end
 
 module Parser =
@@ -178,3 +182,18 @@ let parse_expression source = apply (fun () -> Unit.expr_in_string source)
 (* Preprocessing a contract in a file *)
 
 let preprocess source = apply (fun () -> Unit.preprocess source)
+
+(* Pretty-print a file (after parsing it). *)
+
+let pretty_print source =
+  match parse_file source with
+    Stdlib.Error _ as e -> e
+  | Ok ast ->
+      let doc    = Pretty.print (fst ast) in
+      let buffer = Buffer.create 131 in
+      let width  =
+        match Terminal_size.get_columns () with
+          None -> 60
+        | Some c -> c in
+      let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
+      in Trace.ok buffer

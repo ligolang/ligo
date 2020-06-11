@@ -29,11 +29,12 @@ type options = <
   mode    : [`Byte | `Point];
   cmd     : command;
   mono    : bool;
-  expr    : bool
+  expr    : bool;
+  pretty  : bool
 >
 
 let make ~input ~libs ~verbose ~offsets ?block
-         ?line ~ext ~mode ~cmd ~mono ~expr : options =
+         ?line ~ext ~mode ~cmd ~mono ~expr ~pretty : options =
   object
     method input   = input
     method libs    = libs
@@ -46,6 +47,7 @@ let make ~input ~libs ~verbose ~offsets ?block
     method cmd     = cmd
     method mono    = mono
     method expr    = expr
+    method pretty  = pretty
   end
 
 (* Auxiliary functions *)
@@ -77,6 +79,7 @@ let help extension () =
   print "      --bytes            Bytes for source locations";
   print "      --mono             Use Menhir monolithic API";
   print "      --expr             Parse an expression";
+  print "      --pretty           Pretty-print the input";
   print "      --verbose=<stages> cli, preproc, ast-tokens, ast (colon-separated)";
   print "      --version          Commit hash on stdout";
   print "  -h, --help             This help";
@@ -100,6 +103,7 @@ and libs     = ref []
 and verb_str = ref ""
 and mono     = ref false
 and expr     = ref false
+and pretty   = ref false
 
 let split_at_colon = Str.(split (regexp ":"))
 
@@ -121,6 +125,7 @@ let specs extension =
     noshort, "bytes",   set bytes true, None;
     noshort, "mono",    set mono true, None;
     noshort, "expr",    set expr true, None;
+    noshort, "pretty",  set pretty true, None;
     noshort, "verbose", None, Some add_verbose;
     'h',     "help",    Some (help extension), None;
     noshort, "version", Some version, None
@@ -156,6 +161,7 @@ let print_opt () =
   printf "bytes    = %b\n" !bytes;
   printf "mono     = %b\n" !mono;
   printf "expr     = %b\n" !expr;
+  printf "pretty   = %b\n" !pretty;
   printf "verbose  = %s\n" !verb_str;
   printf "input    = %s\n" (string_of quote !input);
   printf "libs     = %s\n" (string_of_path !libs)
@@ -185,6 +191,7 @@ let check ?block ?line ~ext =
   and mono    = !mono
   and expr    = !expr
   and verbose = !verbose
+  and pretty  = !pretty
   and libs    = !libs in
 
   let () =
@@ -199,6 +206,7 @@ let check ?block ?line ~ext =
         printf "mode     = %s\n" (if mode = `Byte then "`Byte" else "`Point");
         printf "mono     = %b\n" mono;
         printf "expr     = %b\n" expr;
+        printf "pretty   = %b\n" pretty;
         printf "verbose  = %s\n" !verb_str;
         printf "input    = %s\n" (string_of quote input);
         printf "libs     = %s\n" (string_of_path libs)
@@ -214,7 +222,7 @@ let check ?block ?line ~ext =
     | _ -> abort "Choose one of -q, -c, -u, -t."
 
   in make ~input ~libs ~verbose ~offsets ~mode
-          ~cmd ~mono ~expr ?block ?line ~ext
+          ~cmd ~mono ~expr ?block ?line ~ext ~pretty
 
 (* Parsing the command-line options *)
 

@@ -76,7 +76,17 @@ and constructor = {constructor: constructor'; element: expression}
 and record_accessor = {record: expression; path: label}
 and record_update   = {record: expression; path: label ; update: expression}
 
-and matching_expr = (expr,unit) matching_content
+and matching_expr =
+  | Match_list of {
+      match_nil  : expression ;
+      match_cons : expression_variable * expression_variable * expression ;
+    }
+  | Match_option of {
+      match_none : expression ;
+      match_some : expression_variable * expression ;
+    }
+  | Match_variant of ((constructor' * expression_variable) * expression) list
+
 and matching =
   { matchee: expression
   ; cases: matching_expr

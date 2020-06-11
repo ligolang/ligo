@@ -125,7 +125,7 @@ nsepseq(item,sep):
 (* Non-empty comma-separated values (at least two values) *)
 
 tuple(item):
-  item "," nsepseq(item,",") { let h,t = $3 in $1,($2,h)::t }
+  item "," nsepseq(item,",") { let h,t = $3 in $1, ($2,h)::t }
 
 (* Possibly empty semicolon-separated values between brackets *)
 
@@ -279,15 +279,12 @@ let_binding:
 | par(closed_irrefutable) type_annotation? "=" expr {
     wild_error $4;
     Scoping.check_pattern $1.value.inside;
-    {binders = PPar $1, []; lhs_type=$2; eq=$3; let_rhs=$4}
+    {binders = $1.value.inside, []; lhs_type=$2; eq=$3; let_rhs=$4}
   }
 | tuple(sub_irrefutable) type_annotation? "=" expr {
     wild_error $4;
     Utils.nsepseq_iter Scoping.check_pattern $1;
-    let hd, tl  = $1 in
-    let start   = pattern_to_region hd in
-    let stop    = last fst tl in
-    let region  = cover start stop in
+    let region  = nsepseq_to_region pattern_to_region $1 in
     let binders = PTuple {value=$1; region}, [] in
     {binders; lhs_type=$2; eq=$3; let_rhs=$4} }
 
@@ -433,7 +430,18 @@ type_expr_simple:
     TProd {region = cover $1 $3; value=$2}
   }
 | "(" type_expr_simple "=>" type_expr_simple ")" {
-    TFun {region = cover $1 $5; value=$2,$3,$4} }
+    TPar {
+      value = {
+        lpar = $1;
+        rpar = $5;
+        inside = TFun {
+          region = cover (type_expr_to_region $2) (type_expr_to_region $4);
+          value=$2,$3,$4
+        }
+      };
+      region = cover $1 $5;
+    }
+}
 
 type_annotation_simple:
   ":" type_expr_simple { $1,$2 }
@@ -456,8 +464,15 @@ fun_expr(right_expr):
         )
     | EAnnot {region; value = {inside = EVar v, colon, typ; _}} ->
         Scoping.check_reserved_name v;
-        let value = {pattern = PVar v; colon; type_expr = typ}
-        in PTyped {region; value}
+        let value = {pattern = PVar v; colon; type_expr = typ} in
+        PPar {
+          value = {
+            lpar = Region.ghost;
+            rpar = Region.ghost;
+            inside = PTyped {region; value}
+          };
+          region
+        }
     | EPar p ->
         let value =
           {p.value with inside = arg_to_pattern p.value.inside}
@@ -497,7 +512,13 @@ fun_expr(right_expr):
          (arg_to_pattern fun_arg, [])
       | EPar {value = {inside = EFun {
           value = {
-              binders = PTyped { value = { pattern; colon; type_expr }; region = fun_region }, [];
+              binders = PPar {
+                value = {
+                  inside = PTyped { value = { pattern; colon; type_expr }; region = fun_region };
+                  _
+                };
+                _
+              }, [];
               arrow;
               body;
               _
@@ -531,7 +552,7 @@ fun_expr(right_expr):
           };
           region;
         }, []
-      | EPar {value = {inside =  fun_arg; _ }; _} ->
+      | EPar {value = {inside = fun_arg; _ }; _} ->
           arg_to_pattern fun_arg, []
       | EAnnot _ as e ->
           arg_to_pattern e, []
@@ -656,7 +677,7 @@ disj_expr_level:
   disj_expr
 | conj_expr_level { $1 }
 | par(tuple(disj_expr_level)) type_annotation_simple? {
-    let region = $1.region in
+    let region = nsepseq_to_region expr_to_region $1.value.inside in
     let tuple  = ETuple {value=$1.value.inside; region} in
     let region =
       match $2 with
@@ -891,9 +912,9 @@ update_record:
       lbrace   = $1;
       record   = $3;
       kwd_with = $4;
-      updates  = {value = {compound = Braces($1,$6);
-                  ne_elements;
-                  terminator};
+      updates  = {value = {compound = Braces (ghost, ghost);
+                           ne_elements;
+                           terminator};
                   region = cover $4 $6};
       rbrace   = $6}
     in {region; value} }
@@ -902,48 +923,47 @@ expr_with_let_expr:
   expr
 | let_expr(expr_with_let_expr) { $1 }
 
-exprs: 
-  expr_with_let_expr ";"? { 
-    (($1, []), $2) 
+exprs:
+  expr_with_let_expr ";"? {
+    (($1, []), $2)
   }
 | expr_with_let_expr ";" exprs {
   let rec fix_let_in a b c =
-    match a with 
+    match a with
     | ELetIn {value = {body; _} as v; _} -> (
       let end_ = (nsepseq_to_region expr_to_region (fst c)) in
-      let sequence_region = 
+      let sequence_region =
         cover (expr_to_region body) end_
       in
-      let val_ = 
-        match body with 
+      let val_ =
+        match body with
         | ELetIn _ -> fst (fix_let_in body b c)
         | e -> Utils.nsepseq_cons e b (fst c)
       in
       let sequence = ESeq {
         value = {
-          compound = BeginEnd(Region.ghost, Region.ghost);
-          elements = Some val_;
-          terminator = (snd c)
-        };
+          compound   = BeginEnd (ghost, ghost);
+          elements   = Some val_;
+          terminator = snd c};
         region = sequence_region
       }
-      in 
-      let region = 
+      in
+      let region =
         cover (expr_to_region a) end_
       in
-      let let_in = 
-        ELetIn { 
+      let let_in =
+        ELetIn {
           value = {
             v with
             body = sequence
-          }; 
-          region 
+          };
+          region
         }
       in
-      ((let_in, []), snd c) 
+      ((let_in, []), snd c)
     )
     | e -> Utils.nsepseq_cons e b (fst c), None
-  in 
+  in
   fix_let_in $1 $2 $3
 }
 
@@ -952,25 +972,24 @@ more_field_assignments:
     let elts, _region = $2
     in $1, elts }
 
-sequence: 
+sequence:
   "{" exprs "}" {
-    let elts, _region = $2 in    
+    let elts, _region = $2 in
     let compound = Braces ($1, $3) in
-    let value = {compound;
-                     elements = Some elts;
-                     terminator = None} in
-    let region   = cover $1 $3 in  
-    {region; value}
-  }
+    let value    = {compound;
+                    elements = Some elts;
+                    terminator = None} in
+    let region   = cover $1 $3
+    in {region; value} }
 
-record: 
+record:
   "{" field_assignment more_field_assignments? "}" {
     let compound = Braces ($1,$4) in
     let region   = cover $1 $4 in
 
     match $3 with
     | Some (comma, elts) ->
-        let ne_elements = Utils.nsepseq_cons $2 comma elts in    
+        let ne_elements = Utils.nsepseq_cons $2 comma elts in
         { value = {compound; ne_elements; terminator = None}; region }
     | None ->
         let ne_elements = ($2,[]) in
@@ -986,46 +1005,29 @@ record:
     let ne_elements = Utils.nsepseq_cons field_name comma elts in
     let compound = Braces ($1,$4) in
     let region   = cover $1 $4 in
-    { value = {compound; ne_elements; terminator = None}; region }
-  }
+    {value = {compound; ne_elements; terminator = None}; region} }
 
 field_assignment_punning:
   (* This can only happen with multiple fields -
      one item punning does NOT work in ReasonML *)
   field_name {
-    let value = {
-      field_name = $1;
-      assignment = ghost;
-      field_expr = EVar $1 }
+    let value = {field_name = $1;
+                 assignment = ghost;
+                 field_expr = EVar $1}
     in {$1 with value}
   }
 | field_assignment { $1 }
 
 field_assignment:
   field_name ":" expr {
-    let start  = $1.region in
-    let stop   = expr_to_region $3 in
-    let region = cover start stop in
-    let value  = {
-      field_name = $1;
-      assignment = $2;
-      field_expr = $3}
+    let region = cover $1.region (expr_to_region $3)
+    and value  = {field_name = $1;
+                  assignment = $2;
+                  field_expr = $3}
     in {region; value} }
 
 field_path_assignment:
-  field_name {
-    let value = {
-      field_path = ($1,[]);
-      assignment = ghost;
-      field_expr = EVar $1 }
-    in {$1 with value}
-  }
-| nsepseq(field_name,".") ":" expr {
-    let start  = nsepseq_to_region (fun x -> x.region) $1 in
-    let stop   = expr_to_region $3 in
-    let region = cover start stop in
-    let value  = {
-      field_path = $1;
-      assignment = $2;
-      field_expr = $3}
+  path ":" expr {
+    let region = cover (path_to_region $1) (expr_to_region $3)
+    and value  = {field_path=$1; assignment=$2; field_expr=$3}
     in {region; value} }
