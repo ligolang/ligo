@@ -55,8 +55,8 @@ val sub : nat -> nat -> bytes -> bytes
 let sub : (nat, nat, bytes) => bytes
 </SyntaxTitle>
 
-Extract the bytes between `pos1` and `pos2`. **Positions are zero indexed and
-inclusive**. For example if you gave the input "ff7a7aff" to the following:
+Extract bytes from `start` to `length`. For example if you gave the 
+input "ff7a7aff" to the following function:
 
 <Syntax syntax="pascaligo">
 
@@ -86,7 +86,7 @@ let slice_op = (s: bytes): bytes => Bytes.sub(1n, 2n, s);
 
 </Syntax>
 
-It would return "7a7a" rather than "ff7a" or "ff" or "7a".
+It would return "7a7a".
 
 <SyntaxTitle syntax="pascaligo">
 function pack : 'a -> bytes
