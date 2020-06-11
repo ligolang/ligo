@@ -9,42 +9,6 @@ import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
 <SyntaxTitle syntax="pascaligo">
-type key
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-type key
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-type key
-</SyntaxTitle>
-
-A public cryptographic key.
-
-<SyntaxTitle syntax="pascaligo">
-type key_hash
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-type key_hash
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-type key_hash
-</SyntaxTitle>
-
-The hash of a public cryptographic key.
-
-<SyntaxTitle syntax="pascaligo">
-type signature
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-type signature
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-type signature
-</SyntaxTitle>
-
-A cryptographic signature.
-
-<SyntaxTitle syntax="pascaligo">
 function blake2b : bytes -> bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">

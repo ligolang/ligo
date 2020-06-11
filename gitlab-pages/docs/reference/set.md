@@ -11,16 +11,6 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 Sets are unordered collections of unique values of the same type.
 
 <SyntaxTitle syntax="pascaligo">
-type set ('value)
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-type 'value set
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-type set('value)
-</SyntaxTitle>
-
-<SyntaxTitle syntax="pascaligo">
 function empty : set('value)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">

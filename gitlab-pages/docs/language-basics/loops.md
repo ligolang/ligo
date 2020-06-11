@@ -1,6 +1,6 @@
 ---
 id: loops
-title: Loops
+title: Iteration
 ---
 
 import Syntax from '@theme/Syntax';
@@ -110,6 +110,7 @@ let gcd = ((x,y) : (nat, nat)) : nat => {
 
 </Syntax>
 
+<Syntax syntax="pascaligo">
 
 ## Bounded Loops
 
@@ -212,3 +213,5 @@ gitlab-pages/docs/language-basics/src/loops/collection.ligo sum_map
 'map ["1"->1; "2"->2; "3"->3]'
 # Outputs: ( "123", 6 )
 ```
+
+</Syntax>

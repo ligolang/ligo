@@ -9,16 +9,6 @@ import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
 <SyntaxTitle syntax="pascaligo">
-type bytes
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-type bytes
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-type bytes
-</SyntaxTitle>
-
-<SyntaxTitle syntax="pascaligo">
 function concat : bytes -> bytes -> bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">

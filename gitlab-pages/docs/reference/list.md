@@ -9,18 +9,6 @@ import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
 <SyntaxTitle syntax="pascaligo">
-type list ('t)
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-type 't list
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-type list('t)
-</SyntaxTitle>
-
-A sequence of elements of the same type.
-
-<SyntaxTitle syntax="pascaligo">
 function length : nat
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
