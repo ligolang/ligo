@@ -29,11 +29,17 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-storage" ; contract "coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ] ;
   [%expect {|
-    ligo: different kinds:  {"a":"record[card_patterns -> (type_operator: Map (nat,record[coefficient -> mutez , quantity -> nat])) ,\n       cards -> (type_operator: Map (nat,record[card_owner -> address , card_pattern -> nat])) ,\n       next_id -> nat]","b":"sum[Buy_single -> record[card_to_buy -> nat] ,\n    Sell_single -> record[card_to_sell -> nat] ,\n    Transfer_single -> record[card_to_transfer -> nat ,\n                              destination -> address]]"}
+    ligo: error
+    Provided storage type does not match contract storage type
+    Bad types: expected record[card_patterns -> (type_operator: Map (nat,record[coefficient -> mutez , quantity -> nat])) ,
+                               cards -> (type_operator: Map (nat,record[card_owner -> address , card_pattern -> nat])) ,
+                               next_id -> nat] got sum[Buy_single -> record[card_to_buy -> nat] ,
+                                                       Sell_single -> record[card_to_sell -> nat] ,
+                                                       Transfer_single -> record[card_to_transfer -> nat ,
+                                                                        destination -> address]]
 
 
-     If you're not sure how to fix this error, you can
-     do one of the following:
+    If you're not sure how to fix this error, you can do one of the following:
 
     * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
@@ -42,11 +48,17 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-parameter" ; contract "coase.ligo" ; "main" ; "record cards = (map end : cards) ; card_patterns = (map end : card_patterns) ; next_id = 3n ; end" ] ;
   [%expect {|
-    ligo: different kinds:  {"a":"sum[Buy_single -> record[card_to_buy -> nat] ,\n    Sell_single -> record[card_to_sell -> nat] ,\n    Transfer_single -> record[card_to_transfer -> nat ,\n                              destination -> address]]","b":"record[card_patterns -> (type_operator: Map (nat,record[coefficient -> mutez , quantity -> nat])) ,\n       cards -> (type_operator: Map (nat,record[card_owner -> address , card_pattern -> nat])) ,\n       next_id -> nat]"}
+    ligo: error
+    Provided parameter type does not match contract parameter type
+    Bad types: expected sum[Buy_single -> record[card_to_buy -> nat] ,
+                            Sell_single -> record[card_to_sell -> nat] ,
+                            Transfer_single -> record[card_to_transfer -> nat ,
+                                                      destination -> address]] got record[card_patterns -> (type_operator: Map (nat,record[coefficient -> mutez , quantity -> nat])) ,
+                                                                        cards -> (type_operator: Map (nat,record[card_owner -> address , card_pattern -> nat])) ,
+                                                                        next_id -> nat]
 
 
-     If you're not sure how to fix this error, you can
-     do one of the following:
+    If you're not sure how to fix this error, you can do one of the following:
 
     * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
@@ -1321,10 +1333,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_type_operator.ligo" ; "main" ] ;
   [%expect {|
-    ligo: bad type operator (type_operator: Map (binding)):
+    ligo: error
+    in file "bad_type_operator.ligo", line 4, characters 16-29
+    unrecognized type operator (type_operator: Map (binding))
 
-     If you're not sure how to fix this error, you can
-     do one of the following:
+
+    If you're not sure how to fix this error, you can do one of the following:
 
     * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
@@ -1334,11 +1348,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_address_format.religo" ; "main" ] ;
   [%expect {|
-    ligo: in file "bad_address_format.religo", line 2, characters 26-48. Badly formatted literal: @"KT1badaddr" {"location":"in file \"bad_address_format.religo\", line 2, characters 26-48"}
+    ligo: error
+    in file "bad_address_format.religo", line 2, characters 26-48
+    Badly formatted literal: @"KT1badaddr"
 
 
-     If you're not sure how to fix this error, you can
-     do one of the following:
+    If you're not sure how to fix this error, you can do one of the following:
 
     * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
@@ -1348,11 +1363,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_timestamp.ligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "bad_timestamp.ligo", line 7, characters 30-44. Badly formatted timestamp "badtimestamp":  {"location":"in file \"bad_timestamp.ligo\", line 7, characters 30-44"}
+    ligo: error
+    in file "bad_timestamp.ligo", line 7, characters 30-44
+    Badly formatted timestamp 'badtimestamp'
 
 
-     If you're not sure how to fix this error, you can
-     do one of the following:
+    If you're not sure how to fix this error, you can do one of the following:
 
     * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
@@ -1385,10 +1401,11 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "self_in_lambda.mligo" ; "main" ] ;
   [%expect {|
-    ligo: Wrong SELF_ADDRESS location: SELF_ADDRESS is only allowed at top-level
+    ligo: error
+    SELF_ADDRESS is only allowed at top-level
 
-     If you're not sure how to fix this error, you can
-     do one of the following:
+
+    If you're not sure how to fix this error, you can do one of the following:
 
     * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
@@ -1410,10 +1427,13 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "long_sum_type_names.ligo" ; "main" ] ;
   [%expect {|
-    ligo: Too long constructor 'Incrementttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt': names length is limited to 32 (tezos limitation)
+    ligo: error
+    in file "long_sum_type_names.ligo", line 2, character 2 to line 4, character 18
+    Too long constructor 'Incrementttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt'
+    names length are limited to 32 (tezos limitation)
 
-     If you're not sure how to fix this error, you can
-     do one of the following:
+
+    If you're not sure how to fix this error, you can do one of the following:
 
     * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
@@ -1428,11 +1448,15 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "redundant_constructors.mligo" ; "main" ] ;
   [%expect {|
-    ligo: redundant constructor:  {"constructor":"Add","environment":"- E[]\tT[union_a -> sum[Add -> int , Remove -> int]\nbool -> sum[false -> unit , true -> unit]]"}
+    ligo: error
+    in file "redundant_constructors.mligo", line 7, character 2 to line 9, character 15
+    Redundant constructor:
+    Add
+    - Env:[]	Type env:[union_a -> sum[Add -> int , Remove -> int]
+    bool -> sum[false -> unit , true -> unit]]
 
 
-     If you're not sure how to fix this error, you can
-     do one of the following:
+    If you're not sure how to fix this error, you can do one of the following:
 
     * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
@@ -1442,11 +1466,14 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_toplevel.mligo" ; "main" ] ;
   [%expect {|
-ligo: in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8. No free variable allowed in this lambda: variable 'store' {"expression":"CREATE_CONTRACT(lambda (#P:Some(( nat * string ))) : None return\n                let rhs#2 = #P in\n                let p = rhs#2.0 in\n                let s = rhs#2.1 in\n                ( LIST_EMPTY() : (type_operator: list(operation)) , store ) ,\n                NONE() : (type_operator: option(key_hash)) ,\n                300000000mutez ,\n                \"un\")","location":"in file \"create_contract_toplevel.mligo\", line 4, character 35 to line 8, character 8"}
+ligo: error
+in file "create_contract_toplevel.mligo", line 3, characters 0-3
+Constant declaration 'main'
+in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8
+Free variable 'store' is not allowed in CREATE_CONTRACT lambda
 
 
- If you're not sure how to fix this error, you can
- do one of the following:
+If you're not sure how to fix this error, you can do one of the following:
 
 * Visit our documentation: https://ligolang.org/docs/intro/introduction
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
@@ -1455,11 +1482,14 @@ ligo: in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, 
 
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_var.mligo" ; "main" ] ;
   [%expect {|
-ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, character 5. No free variable allowed in this lambda: variable 'a' {"expression":"CREATE_CONTRACT(lambda (#P:Some(( nat * int ))) : None return\n                let rhs#2 = #P in\n                let p = rhs#2.0 in\n                let s = rhs#2.1 in\n                ( LIST_EMPTY() : (type_operator: list(operation)) , a ) ,\n                NONE() : (type_operator: option(key_hash)) ,\n                300000000mutez ,\n                1)","location":"in file \"create_contract_var.mligo\", line 6, character 35 to line 10, character 5"}
+ligo: error
+in file "create_contract_var.mligo", line 5, characters 0-3
+Constant declaration 'main'
+in file "create_contract_var.mligo", line 6, character 35 to line 10, character 5
+Free variable 'a' is not allowed in CREATE_CONTRACT lambda
 
 
- If you're not sure how to fix this error, you can
- do one of the following:
+If you're not sure how to fix this error, you can do one of the following:
 
 * Visit our documentation: https://ligolang.org/docs/intro/introduction
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
@@ -1468,11 +1498,13 @@ ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, char
 
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_no_inline.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "create_contract_no_inline.mligo", line 3, characters 40-46. unbound type variable:  {"variable":"return","location":"in file \"create_contract_no_inline.mligo\", line 3, characters 40-46","in":"- E[foo -> int]\tT[bool -> sum[false -> unit , true -> unit]]","did_you_mean":"no suggestion"}
+    ligo: error
+    in file "create_contract_no_inline.mligo", line 3, characters 40-46
+    Unbound type variable 'return'
+    - Env:[foo -> int]	Type env:[bool -> sum[false -> unit , true -> unit]]
 
 
-     If you're not sure how to fix this error, you can
-     do one of the following:
+    If you're not sure how to fix this error, you can do one of the following:
 
     * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
@@ -1522,11 +1554,14 @@ ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, char
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "self_type_annotation.ligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "self_type_annotation.ligo", line 8, characters 41-64. bad self type: expected (type_operator: Contract (int)) but got (type_operator: Contract (nat)) {"location":"in file \"self_type_annotation.ligo\", line 8, characters 41-64"}
+    ligo: error
+    in file "self_type_annotation.ligo", line 8, characters 41-64
+    Bad self type
+    expected (type_operator: Contract (int))
+    got (type_operator: Contract (nat))
 
 
-     If you're not sure how to fix this error, you can
-     do one of the following:
+    If you're not sure how to fix this error, you can do one of the following:
 
     * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
@@ -1549,11 +1584,13 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "bad_contract.mligo", line 4, characters 0-3. badly typed contract: unexpected entrypoint type {"location":"in file \"bad_contract.mligo\", line 4, characters 0-3","entrypoint":"main","entrypoint_type":"( nat * int ) -> int"}
+    ligo: error
+    in file "bad_contract.mligo", line 4, characters 0-3
+    Badly typed contract:
+    unexpected entrypoint type ( nat * int ) -> int
 
 
-     If you're not sure how to fix this error, you can
-     do one of the following:
+    If you're not sure how to fix this error, you can do one of the following:
 
     * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
@@ -1562,11 +1599,13 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract2.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "bad_contract2.mligo", line 5, characters 0-3. bad return type: expected (type_operator: list(operation)), got string {"location":"in file \"bad_contract2.mligo\", line 5, characters 0-3","entrypoint":"main"}
+    ligo: error
+    in file "bad_contract2.mligo", line 5, characters 0-3
+    Badly typed contract:
+    expected (type_operator: list(operation)) but got string
 
 
-     If you're not sure how to fix this error, you can
-     do one of the following:
+    If you're not sure how to fix this error, you can do one of the following:
 
     * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
@@ -1575,11 +1614,15 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract3.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "bad_contract3.mligo", line 5, characters 0-3. badly typed contract: expected {int} and {string} to be the same in the entrypoint type {"location":"in file \"bad_contract3.mligo\", line 5, characters 0-3","entrypoint":"main","entrypoint_type":"( nat * int ) -> ( (type_operator: list(operation)) * string )"}
+    ligo: error
+    in file "bad_contract3.mligo", line 5, characters 0-3
+    Badly typed contract main:
+    expected storage type as right member of a pair in the input and output, but got:
+    - int in the input
+    - string in the output
 
 
-     If you're not sure how to fix this error, you can
-     do one of the following:
+    If you're not sure how to fix this error, you can do one of the following:
 
     * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
@@ -1631,11 +1674,13 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; bad_contract "self_bad_entrypoint_format.ligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "self_bad_entrypoint_format.ligo", line 8, characters 52-58. bad entrypoint format: entrypoint "Toto" is badly formatted. We expect "%bar" for entrypoint Bar and "%default" when no entrypoint used {"location":"in file \"self_bad_entrypoint_format.ligo\", line 8, characters 52-58"}
+    ligo: error
+    in file "self_bad_entrypoint_format.ligo", line 8, characters 52-58
+    Bad entrypoint format 'Toto'
+    We expect '%bar' for entrypoint Bar and '%default' when no entrypoint used
 
 
-     If you're not sure how to fix this error, you can
-     do one of the following:
+    If you're not sure how to fix this error, you can do one of the following:
 
     * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
@@ -1644,11 +1689,12 @@ let%expect_test _ =
 
   run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_1.religo"; "main"];
   [%expect {|
-    ligo: It looks like you have nested a big map inside another big map. This is not supported. :  {}
+    ligo: error
+    in file "nested_bigmap_1.religo", line 1, characters 11-29
+    It looks like you have nested a big map inside another big map, this is not supported
 
 
-     If you're not sure how to fix this error, you can
-     do one of the following:
+    If you're not sure how to fix this error, you can do one of the following:
 
     * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
@@ -1657,11 +1703,12 @@ let%expect_test _ =
 
   run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_2.religo"; "main"];
   [%expect {|
-    ligo: It looks like you have nested a big map inside another big map. This is not supported. :  {}
+    ligo: error
+    in file "nested_bigmap_2.religo", line 2, characters 29-50
+    It looks like you have nested a big map inside another big map, this is not supported
 
 
-     If you're not sure how to fix this error, you can
-     do one of the following:
+    If you're not sure how to fix this error, you can do one of the following:
 
     * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
@@ -1670,11 +1717,12 @@ let%expect_test _ =
   
   run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_3.religo"; "main"];
   [%expect {|
-    ligo: It looks like you have nested a big map inside another big map. This is not supported. :  {}
+    ligo: error
+    in file "nested_bigmap_3.religo", line 1, characters 11-29
+    It looks like you have nested a big map inside another big map, this is not supported
 
 
-     If you're not sure how to fix this error, you can
-     do one of the following:
+    If you're not sure how to fix this error, you can do one of the following:
 
     * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
@@ -1683,11 +1731,12 @@ let%expect_test _ =
 
   run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_4.religo"; "main"];
   [%expect {|
-    ligo: It looks like you have nested a big map inside another big map. This is not supported. :  {}
+    ligo: error
+    in file "nested_bigmap_4.religo", line 2, characters 39-60
+    It looks like you have nested a big map inside another big map, this is not supported
 
 
-     If you're not sure how to fix this error, you can
-     do one of the following:
+    If you're not sure how to fix this error, you can do one of the following:
 
     * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt

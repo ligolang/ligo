@@ -8,19 +8,21 @@ let bad_contract basename =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_michelson_insertion_1.ligo" ; "main" ] ;
   [%expect{|
-    ligo: generated Michelson contract failed to typecheck: bad contract type
-          { parameter nat ;
-            storage nat ;
-            code { DUP ;
-                   LAMBDA (pair nat nat) nat ADD ;
-                   SWAP ;
-                   EXEC ;
-                   NIL operation ;
-                   PAIR ;
-                   DIP { DROP } } }
+    ligo: error
+    generated Michelson contract failed to typecheck : bad contract type
+    code:
+     { parameter nat ;
+      storage nat ;
+      code { DUP ;
+             LAMBDA (pair nat nat) nat ADD ;
+             SWAP ;
+             EXEC ;
+             NIL operation ;
+             PAIR ;
+             DIP { DROP } } }
 
-     If you're not sure how to fix this error, you can
-     do one of the following:
+
+    If you're not sure how to fix this error, you can do one of the following:
 
     * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
@@ -30,11 +32,13 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_michelson_insertion_2.ligo" ; "main" ] ;
   [%expect{|
-    ligo: in file "bad_michelson_insertion_2.ligo", line 5, characters 32-40. different kinds:  {"a":"nat","b":"( nat * nat )"}
+    ligo: error
+    in file "bad_michelson_insertion_2.ligo", line 3, character 0 to line 5, character 41
+    Constant declaration 'main'
+    Bad types: expected nat got ( nat * nat )
 
 
-     If you're not sure how to fix this error, you can
-     do one of the following:
+    If you're not sure how to fix this error, you can do one of the following:
 
     * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
