@@ -411,9 +411,10 @@ let rec compile_expression : CST.expr -> (AST.expr , Errors_pascaligo.abs_error)
       let%bind map = bind_map_list aux lst in
       return @@ e_big_map ~loc map
   )
-  | ECodeInsert ci ->
+  | ECodeInj ci ->
     let (ci, loc) = r_split ci in
     let (language, _) = r_split ci.language in
+    let (language, _) = r_split language in
     let%bind code = compile_expression ci.code in
     return @@ e_raw_code ~loc language code
 

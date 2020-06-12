@@ -227,27 +227,27 @@ and field_pattern = {
 }
 
 and expr =
-  ECase       of expr case reg
-| ECond       of cond_expr reg
-| EAnnot      of annot_expr par reg
-| ELogic      of logic_expr
-| EArith      of arith_expr
-| EString     of string_expr
-| EList       of list_expr
-| EConstr     of constr_expr
-| ERecord     of record reg
-| EProj       of projection reg
-| EUpdate     of update reg
-| EVar        of variable
-| ECall       of (expr * expr nseq) reg
-| EBytes      of (string * Hex.t) reg
-| EUnit       of the_unit reg
-| ETuple      of (expr, comma) nsepseq reg
-| EPar        of expr par reg
-| ELetIn      of let_in reg
-| EFun        of fun_expr reg
-| ESeq        of expr injection reg
-| ECodeInsert of code_insert reg
+  ECase    of expr case reg
+| ECond    of cond_expr reg
+| EAnnot   of annot_expr par reg
+| ELogic   of logic_expr
+| EArith   of arith_expr
+| EString  of string_expr
+| EList    of list_expr
+| EConstr  of constr_expr
+| ERecord  of record reg
+| EProj    of projection reg
+| EUpdate  of update reg
+| EVar     of variable
+| ECall    of (expr * expr nseq) reg
+| EBytes   of (string * Hex.t) reg
+| EUnit    of the_unit reg
+| ETuple   of (expr, comma) nsepseq reg
+| EPar     of expr par reg
+| ELetIn   of let_in reg
+| EFun     of fun_expr reg
+| ESeq     of expr injection reg
+| ECodeInj of code_inj reg
 
 and annot_expr = expr * colon * type_expr
 
@@ -400,13 +400,12 @@ and cond_expr = {
   ifnot    : expr
 }
 
-and code_insert = {
-  lbracket  : lbracket;
-  percent   : percent;
-  language  : string reg;
-  code      : expr;
-  rbracket  : rbracket;
+and code_inj = {
+  language : string reg reg;
+  code     : expr;
+  rbracket : rbracket;
 }
+
 (* Projecting regions from some nodes of the AST *)
 
 let rec last to_region = function
@@ -490,8 +489,8 @@ let expr_to_region = function
 | ECond {region;_}   | ETuple {region;_}   | ECase {region;_}
 | ECall {region;_}   | EVar {region; _}    | EProj {region; _}
 | EUnit {region;_}   | EPar {region;_}     | EBytes {region; _}
-| ESeq {region; _}   | ERecord {region; _} | EUpdate {region; _} 
-| ECodeInsert {region; _} -> region
+| ESeq {region; _}   | ERecord {region; _} | EUpdate {region; _}
+| ECodeInj {region; _} -> region
 
 let declaration_to_region = function
 | Let {region;_}

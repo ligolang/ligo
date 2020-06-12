@@ -79,6 +79,7 @@ module type TOKEN =
     val mk_bytes    : lexeme -> Region.t -> token
     val mk_constr   : lexeme -> Region.t -> token
     val mk_attr     : string -> lexeme -> Region.t -> (token, attr_err) result
+    val mk_lang     : lexeme Region.reg -> Region.t -> token
     val eof         : Region.t -> token
 
     (* Predicates *)

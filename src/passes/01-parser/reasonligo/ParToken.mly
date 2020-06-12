@@ -5,15 +5,16 @@
 
   (* Literals *)
 
-%token                    <string Region.reg> String   "<string>"
-%token                    <string Region.reg> Verbatim "<verbatim>"
-%token <(LexToken.lexeme * Hex.t) Region.reg> Bytes    "<bytes>"
-%token            <(string * Z.t) Region.reg> Int      "<int>"
-%token            <(string * Z.t) Region.reg> Nat      "<nat>"
-%token            <(string * Z.t) Region.reg> Mutez    "<mutez>"
-%token                    <string Region.reg> Ident    "<ident>"
-%token                    <string Region.reg> Constr   "<constr>"
-%token                    <string Region.reg> Attr     "<attr>"
+%token                     <string Region.reg> String   "<string>"
+%token                     <string Region.reg> Verbatim "<verbatim>"
+%token  <(LexToken.lexeme * Hex.t) Region.reg> Bytes    "<bytes>"
+%token             <(string * Z.t) Region.reg> Int      "<int>"
+%token             <(string * Z.t) Region.reg> Nat      "<nat>"
+%token             <(string * Z.t) Region.reg> Mutez    "<mutez>"
+%token                     <string Region.reg> Ident    "<ident>"
+%token                     <string Region.reg> Constr   "<constr>"
+%token                     <string Region.reg> Attr     "<attr>"
+%token <LexToken.lexeme Region.reg Region.reg> Lang     "<lang>"
 
   (* Symbols *)
 
@@ -21,7 +22,6 @@
 %token <Region.t> PLUS    "+"
 %token <Region.t> SLASH   "/"
 %token <Region.t> TIMES   "*"
-%token <Region.t> PERCENT "%"
 
 %token <Region.t> LPAR     "("
 %token <Region.t> RPAR     ")"

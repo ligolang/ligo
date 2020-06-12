@@ -32,6 +32,7 @@ type t =
 | Mutez    of (lexeme * Z.t) Region.reg
 | Ident    of lexeme Region.reg
 | Constr   of lexeme Region.reg
+| Lang     of lexeme Region.reg Region.reg
 
   (* Symbols *)
 
@@ -61,7 +62,6 @@ type t =
 | DOT      of Region.t
 | WILD     of Region.t
 | CAT      of Region.t
-| PERCENT  of Region.t  (* "%"   *)
 
   (* Keywords *)
 
@@ -126,26 +126,23 @@ let proj_token = function
     region, sprintf "String %S" value
 
 | Verbatim Region.{region; value} ->
-    region, sprintf "Verbatim {|%s|}" value
+    region, sprintf "Verbatim %S" value
 
 | Bytes Region.{region; value = s,b} ->
     region,
-    sprintf "Bytes (\"%s\", \"0x%s\")" s (Hex.show b)
+    sprintf "Bytes (%S, \"0x%s\")" s (Hex.show b)
 | Int Region.{region; value = s,n} ->
-    region, sprintf "Int (\"%s\", %s)" s (Z.to_string n)
+    region, sprintf "Int (%S, %s)" s (Z.to_string n)
 | Nat Region.{region; value = s,n} ->
-    region, sprintf "Nat (\"%s\", %s)" s (Z.to_string n)
+    region, sprintf "Nat (%S, %s)" s (Z.to_string n)
 | Mutez Region.{region; value = s,n} ->
-    region, sprintf "Mutez (\"%s\", %s)" s (Z.to_string n)
+    region, sprintf "Mutez (%S, %s)" s (Z.to_string n)
 | Ident Region.{region; value} ->
-    region, sprintf "Ident \"%s\"" value
+    region, sprintf "Ident %S" value
 | Constr Region.{region; value} ->
-    region, sprintf "Constr \"%s\"" value
-
-(*
-| Attr {header; string={region; value}} ->
-    region, sprintf "Attr (\"%s\",\"%s\")" header value
- *)
+    region, sprintf "Constr %S" value
+| Lang Region.{region; value} ->
+    region, sprintf "Lang %S" (value.Region.value)
 
   (* Symbols *)
 
@@ -175,7 +172,6 @@ let proj_token = function
 | DOT      region -> region, "DOT"
 | WILD     region -> region, "WILD"
 | CAT      region -> region, "CAT"
-| PERCENT  region -> region, "PERCENT"
 
   (* Keywords *)
 
@@ -232,14 +228,15 @@ let proj_token = function
 let to_lexeme = function
   (* Literals *)
 
-  String s  -> String.escaped s.Region.value
+  String s   -> String.escaped s.Region.value
 | Verbatim v -> String.escaped v.Region.value
-| Bytes b   -> fst b.Region.value
+| Bytes b    -> fst b.Region.value
 | Int i
 | Nat i
-| Mutez i   -> fst i.Region.value
+| Mutez i    -> fst i.Region.value
 | Ident id
-| Constr id -> id.Region.value
+| Constr id  -> id.Region.value
+| Lang lang  -> Region.(lang.value.value)
 
   (* Symbols *)
 
@@ -269,7 +266,6 @@ let to_lexeme = function
 | DOT      _ -> "."
 | WILD     _ -> "_"
 | CAT      _ -> "^"
-| PERCENT  _ -> "%"
 
   (* Keywords *)
 
@@ -521,7 +517,6 @@ let mk_sym lexeme region =
   | "-"   -> Ok (MINUS    region)
   | "*"   -> Ok (TIMES    region)
   | "/"   -> Ok (SLASH    region)
-  | "%"   -> Ok (PERCENT  region)
   | "<"   -> Ok (LT       region)
   | "<="  -> Ok (LE       region)
   | ">"   -> Ok (GT       region)
@@ -551,6 +546,10 @@ let mk_constr lexeme region =
 type attr_err = Invalid_attribute
 
 let mk_attr _ _ _ = Error Invalid_attribute
+
+(* Language injection *)
+
+let mk_lang lang region = Lang Region.{value=lang; region}
 
 (* Predicates *)
 
@@ -613,7 +612,7 @@ let check_right_context token next_token buffer : unit =
                    else ()
               else
                 if   is_bytes token
-                then if is_string next || is_ident next
+                then if   is_string next || is_ident next
                      then fail region Missing_break
                      else if   is_int next
                           then fail region Odd_lengthed_bytes
