@@ -806,6 +806,12 @@ let pattern_to_region = function
 | PList PCons {region; _}
 | PTuple      {region; _} -> region
 
+let declaration_to_region = function
+  TypeDecl {region;_}
+| ConstDecl {region;_}
+| FunDecl {region;_}
+| AttrDecl {region;_} -> region
+
 let lhs_to_region : lhs -> Region.t = function
   Path path -> path_to_region path
 | MapPath {region; _} -> region

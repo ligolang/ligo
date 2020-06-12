@@ -1,23 +1,10 @@
 open Types
-open Simple_utils.Trace
 module Option = Simple_utils.Option
 
 module SMap = Map.String
 
-module Errors = struct
-  let bad_kind expected location =
-    let title () = Format.asprintf "a %s was expected" expected in
-    let message () = "" in
-    let data = [
-      ("location" , fun () -> Format.asprintf "%a" Location.pp location) ;
-    ] in
-    error ~data title message
-end
-open Errors
-
 let make_t ?(loc = Location.generated) type_content = {type_content; location=loc; type_meta = ()}
 
-  
 let tuple_to_record lst =
   let aux (i,acc) el = (i+1,(string_of_int i, el)::acc) in
   let (_, lst ) = List.fold_left aux (0,[]) lst in
@@ -81,12 +68,12 @@ let e_signature ?loc s : expression = make_e ?loc @@ E_literal (Literal_signatur
 let e_key ?loc s : expression = make_e ?loc @@ E_literal (Literal_key s)
 let e_key_hash ?loc s : expression = make_e ?loc @@ E_literal (Literal_key_hash s)
 let e_chain_id ?loc s : expression = make_e ?loc @@ E_literal (Literal_chain_id s)
-let e'_bytes b : expression_content result =
-  let%bind bytes = generic_try (simple_error "bad hex to bytes") (fun () -> Hex.to_bytes (`Hex b)) in
-  ok @@ E_literal (Literal_bytes bytes)
-let e_bytes_hex ?loc b : expression result =
-  let%bind e' = e'_bytes b in
-  ok @@ make_e ?loc e'
+let e'_bytes b : expression_content =
+  let bytes = Hex.to_bytes (`Hex b) in
+  E_literal (Literal_bytes bytes)
+let e_bytes_hex ?loc b : expression =
+  let e' = e'_bytes b in
+  make_e ?loc e'
 let e_bytes_raw ?loc (b: bytes) : expression =
   make_e ?loc @@ E_literal (Literal_bytes b)
 let e_bytes_string ?loc (s: string) : expression =
@@ -128,12 +115,13 @@ let e_typed_none ?loc t_opt =
 
 let get_e_record_accessor = fun t ->
   match t with
-  | E_record_accessor {record; path} -> ok (record, path)
-  | _ -> simple_fail "not an accessor"
+  | E_record_accessor {record; path} -> Some (record, path)
+  | _ -> None
 
 let assert_e_record_accessor = fun t ->
-  let%bind _ = get_e_record_accessor t in
-  ok ()
+  match get_e_record_accessor t with
+  | Some _ -> Some ()
+  | None -> None
 
 let get_e_pair = fun t ->
   match t with
@@ -142,58 +130,62 @@ let get_e_pair = fun t ->
     match lst with 
     | [(Label "O",a);(Label "1",b)]
     | [(Label "1",b);(Label "0",a)] -> 
-        ok (a , b)
-    | _ -> simple_fail "not a pair"
+        Some (a , b)
+    | _ -> None
     )
-  | _ -> simple_fail "not a pair"
+  | _ -> None
 
 let get_e_list = fun t ->
   let rec aux t = 
     match t with
       E_constant {cons_name=C_CONS;arguments=[key;lst]} -> 
-        let%bind lst = aux lst.expression_content in
-        ok @@ key::(lst)
+        let lst = aux lst.expression_content in
+        (Some key)::(lst)
     | E_constant {cons_name=C_LIST_EMPTY;arguments=[]} ->
-        ok @@ []
-    | _ -> simple_fail "not a list"
+        []
+    | _ -> [None]
   in
-  aux t
+  let opts = aux t in
+  if List.exists (Option.is_none) opts then None
+  else Some (List.map Option.unopt_exn opts)
 
 let get_e_tuple = fun t ->
   match t with
-  | E_record r -> ok @@ List.map snd @@ Stage_common.Helpers.tuple_of_record r
-  | _ -> simple_fail "ast_core: get_e_tuple: not a tuple"
+  | E_record r -> Some (List.map snd @@ Stage_common.Helpers.tuple_of_record r)
+  | _ -> None
 
 let get_e_ascription = fun a ->
   match a with 
-  | E_ascription {anno_expr; type_annotation} -> ok @@ (anno_expr,type_annotation)
-  | _ -> simple_fail "ast_core: get_e_ascription: not an ascription"
+  | E_ascription {anno_expr; type_annotation} -> Some (anno_expr,type_annotation)
+  | _ -> None
 
 (* Same as get_e_pair *)
-let extract_pair : expression -> (expression * expression) result = fun e ->
+let extract_pair : expression -> (expression * expression) option = fun e ->
   match e.expression_content with
   | E_record r -> ( 
   let lst = LMap.to_kv_list r in
     match lst with 
     | [(Label "O",a);(Label "1",b)]
     | [(Label "1",b);(Label "0",a)] -> 
-        ok (a , b)
-    | _ -> fail @@ bad_kind "pair" e.location
+      Some (a , b)
+    | _ -> None
     )
-  | _ -> fail @@ bad_kind "pair" e.location
+  | _ -> None
 
-let extract_record : expression -> (label * expression) list result = fun e ->
+let extract_record : expression -> (label * expression) list option = fun e ->
   match e.expression_content with
-  | E_record lst -> ok @@ LMap.to_kv_list lst
-  | _ -> fail @@ bad_kind "record" e.location
+  | E_record lst -> Some (LMap.to_kv_list lst)
+  | _ -> None
 
-let extract_map : expression -> (expression * expression) list result = fun e ->
+let extract_map : expression -> (expression * expression) list option = fun e ->
   let rec aux e =
     match e.expression_content with
       E_constant {cons_name=C_UPDATE|C_MAP_ADD; arguments=[k;v;map]} -> 
-        let%bind map = aux map in
-        ok @@ (k,v)::map 
-    | E_constant {cons_name=C_MAP_EMPTY|C_BIG_MAP_EMPTY; arguments=[]} -> ok @@ []
-    | _ -> fail @@ bad_kind "map" e.location
+        let map = aux map in
+        (Some (k,v))::map 
+    | E_constant {cons_name=C_MAP_EMPTY|C_BIG_MAP_EMPTY; arguments=[]} -> []
+    | _ -> [None]
   in
-  aux e
+  let opts = aux e in
+  if List.exists (Option.is_none) opts then None
+  else Some (List.map Option.unopt_exn opts)

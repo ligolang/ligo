@@ -1,5 +1,3 @@
-open Trace
-
 module AST         = Parser_cameligo.AST
 module LexToken    = Parser_reasonligo.LexToken
 module Lexer       = Lexer.Make (LexToken)
@@ -71,42 +69,6 @@ module ParserLog =
 
 module Unit =
   ParserUnit.Make (Lexer)(AST)(Parser)(ParErr)(ParserLog)(SubIO)
-
-module Errors =
-  struct
-    let generic message =
-      let title () = ""
-      and message () = message.Region.value
-      in Trace.error ~data:[] title message
-
-    let wrong_function_arguments (expr: AST.expr) =
-      let title () = "" in
-      let message () =
-        "It looks like you are defining a function, \
-         however we do not\n\
-         understand the parameters declaration.\n\
-         Examples of valid functions:\n\
-         let x = (a: string, b: int) : int => 3;\n\
-         let tuple = ((a, b): (int, int)) => a + b; \n\
-         let x = (a: string) : string => \"Hello, \" ++ a;\n" in
-      let expression_loc = AST.expr_to_region expr in
-      let data = [
-        ("location",
-         fun () -> Format.asprintf "%a" Location.pp_lift @@ expression_loc)]
-      in error ~data title message
-
-    let invalid_wild (expr: AST.expr) =
-      let title () = "" in
-      let message () =
-        "It looks like you are using a wild pattern where it cannot be used."
-      in
-      let expression_loc = AST.expr_to_region expr in
-      let data = [
-        ("location",
-         fun () -> Format.asprintf "%a" Location.pp_lift @@ expression_loc)]
-      in error ~data title message
-
-  end
 
 let apply parser =
   let local_fail error =

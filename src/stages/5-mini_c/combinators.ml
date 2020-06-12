@@ -1,4 +1,3 @@
-open Trace
 open Types
 
 module Expression = struct
@@ -30,141 +29,136 @@ module Expression = struct
 end
 
 let get_bool (v:value) = match v with
-  | D_bool b -> ok b
-  | _ -> simple_fail "not a bool"
+  | D_bool b -> Some b
+  | _ -> None
 
 let get_int (v:value) = match v with
-  | D_int n -> ok n
-  | _ -> simple_fail "not an int"
+  | D_int n -> Some n
+  | _ -> None
 
 let get_nat (v:value) = match v with
-  | D_nat n -> ok n
-  | _ -> simple_fail "not a nat"
+  | D_nat n -> Some n
+  | _ -> None
 
 let get_mutez (v:value) = match v with
-  | D_mutez n -> ok n
-  | _ -> simple_fail "not a mutez"
+  | D_mutez n -> Some n
+  | _ -> None
 
 let get_timestamp (v:value) = match v with
-  | D_timestamp n -> ok n
-  | _ -> simple_fail "not a timestamp"
+  | D_timestamp n -> Some n
+  | _ -> None
 
 let get_string (v:value) = match v with
-  | D_string s -> ok s
-  | _ -> simple_fail "not a string"
+  | D_string s -> Some s
+  | _ -> None
 
 let get_bytes (v:value) = match v with
-  | D_bytes b -> ok b
-  | _ -> simple_fail "not a bytes"
+  | D_bytes b -> Some b
+  | _ -> None
 
 let get_unit (v:value) = match v with
-  | D_unit -> ok ()
-  | _ -> simple_fail "not a unit"
+  | D_unit -> Some ()
+  | _ -> None
 
 let get_option (v:value) = match v with
-  | D_none -> ok None
-  | D_some s -> ok (Some s)
-  | _ -> simple_fail "not an option"
+  | D_none -> Some None
+  | D_some s -> Some (Some s)
+  | _ -> None
 
 let get_map (v:value) = match v with
-  | D_map lst -> ok lst
-  | _ -> simple_fail "not a map"
+  | D_map lst -> Some lst
+  | _ -> None
 
 let get_big_map (v:value) = match v with
-  | D_big_map lst -> ok lst
-  | _ -> simple_fail "not a big_map"
+  | D_big_map lst -> Some lst
+  | _ -> None
 
 let get_list (v:value) = match v with
-  | D_list lst -> ok lst
-  | _ -> simple_fail "not a list"
+  | D_list lst -> Some lst
+  | _ -> None
 
 let get_set (v:value) = match v with
-  | D_set lst -> ok lst
-  | _ -> simple_fail "not a set"
+  | D_set lst -> Some lst
+  | _ -> None
 
 let get_function_with_ty (e : expression) =
   match (e.content , e.type_expression.type_content) with
-  | E_closure f , T_function ty -> ok (f , ty)
-  | _ -> simple_fail "not a function with functional type"
+  | E_closure f , T_function ty -> Some (f , ty)
+  | _ -> None
 
 let get_function (e : expression) =
   match (e.content) with
-  | E_closure f -> ok f
-  | _ -> simple_fail "not a function"
+  | E_closure f -> Some f
+  | _ -> None
 
 let get_t_function tv = match tv.type_content with
-  | T_function ty -> ok ty
-  | _ -> simple_fail "not a function"
+  | T_function ty -> Some ty
+  | _ -> None
 
 let get_t_option (v:type_expression) = match v.type_content with
-  | T_option t -> ok t
-  | _ -> simple_fail "not an option"
+  | T_option t -> Some t
+  | _ -> None
 
 let get_pair (v:value) = match v with
-  | D_pair (a, b) -> ok (a, b)
-  | _ -> simple_fail "not a pair"
+  | D_pair (a, b) -> Some (a, b)
+  | _ -> None
 
 let get_t_pair (t:type_expression) = match t.type_content with
-  | T_pair ((_, a), (_, b)) -> ok (a, b)
-  | _ -> simple_fail "not a type pair"
+  | T_pair ((_, a), (_, b)) -> Some (a, b)
+  | _ -> None
 
 let get_t_or (t:type_expression) = match t.type_content with
-  | T_or ((_, a), (_, b)) -> ok (a, b)
-  | _ -> simple_fail "not a type or"
+  | T_or ((_, a), (_, b)) -> Some (a, b)
+  | _ -> None
 
 let get_t_map (t:type_expression) = match t.type_content with
-  | T_map kv -> ok kv
-  | _ -> simple_fail "not a type map"
+  | T_map kv -> Some kv
+  | _ -> None
 
 let get_t_big_map (t:type_expression) = match t.type_content with
-  | T_big_map kv -> ok kv
-  | _ -> simple_fail "not a type big_map"
+  | T_big_map kv -> Some kv
+  | _ -> None
 
 let get_t_list (t:type_expression) = match t.type_content with
-  | T_list t -> ok t
-  | _ -> simple_fail "not a type list"
+  | T_list t -> Some t
+  | _ -> None
 
 let get_t_set (t:type_expression) = match t.type_content with
-  | T_set t -> ok t
-  | _ -> simple_fail "not a type set"
+  | T_set t -> Some t
+  | _ -> None
 
 let get_left (v:value) = match v with
-  | D_left b -> ok b
-  | _ -> simple_fail "not a left"
+  | D_left b -> Some b
+  | _ -> None
 
 let get_right (v:value) = match v with
-  | D_right b -> ok b
-  | _ -> simple_fail "not a right"
+  | D_right b -> Some b
+  | _ -> None
 
 let get_or (v:value) = match v with
-  | D_left b -> ok (false, b)
-  | D_right b -> ok (true, b)
-  | _ -> simple_fail "not a left/right"
-
-let wrong_type name t =
-  let title () = "not a " ^ name in
-  let content () = Format.asprintf "%a" PP.type_variable t in
-  error title content
+  | D_left b -> Some (false, b)
+  | D_right b -> Some (true, b)
+  | _ -> None
 
 let get_t_left t = match t.type_content with
-  | T_or ((_, a) , _) -> ok a
-  | _ -> fail @@ wrong_type "union" t
+  | T_or ((_, a) , _) -> Some a
+  | _ -> None
 
 let get_t_right t = match t.type_content with
-  | T_or (_ , (_, b)) -> ok b
-  | _ -> fail @@ wrong_type "union" t
+  | T_or (_ , (_, b)) -> Some b
+  | _ -> None
 
 let get_t_contract t = match t.type_content with
-  | T_contract x -> ok x
-  | _ -> fail @@ wrong_type "contract" t
+  | T_contract x -> Some x
+  | _ -> None
 
 let get_t_operation t = match t.type_content with
-  | T_base TB_operation -> ok t
-  | _ -> fail @@ wrong_type "operation" t
+  | T_base TB_operation -> Some t
+  | _ -> None
 
 let get_operation (v:value) = match v with
-  | D_operation x -> ok x
-  | _ -> simple_fail "not an operation"
+  | D_operation x -> Some x
+  | _ -> None
 
 
 let t_int  ?loc () : type_expression = Expression.make_t ?loc @@ T_base TB_int

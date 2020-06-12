@@ -1,4 +1,5 @@
 open Trace
+open Typer_common.Errors
 
 module I = Ast_core
 module O = Ast_typed
@@ -12,220 +13,7 @@ module Solver = Typer_new.Solver
 
 type environment = Environment.t
 
-module Errors = struct
-  let michelson_comb_no_record (loc:Location.t) () =
-    let title = (thunk "bad michelson_pair_right_comb type parameter") in
-    let message () = "michelson_pair_right_comb type operator must be used on a record type" in
-    let data = [
-      ("location" , fun () -> Format.asprintf "%a" Location.pp loc) ;
-    ] in
-    error ~data title message ()
-
-  let michelson_comb_no_variant (loc:Location.t) () =
-    let title = (thunk "bad michelson_or_right_comb type parameter") in
-    let message () = "michelson_or_right_comb type operator must be used on a variant type" in
-    let data = [
-      ("location" , fun () -> Format.asprintf "%a" Location.pp loc) ;
-    ] in
-    error ~data title message ()
-
-  let unbound_type_variable (e:environment) (tv:I.type_variable) (loc:Location.t) () =
-    let name = Var.to_name tv in
-    let suggestion = match name with
-        | "integer" -> "int"
-        | "str" -> "string"
-        | "boolean" -> "bool"
-        | _ -> "no suggestion" in
-    let title = (thunk "unbound type variable") in
-    let message () = "" in
-    let data = [
-      ("variable" , fun () -> Format.asprintf "%a" I.PP.type_variable tv) ;
-      ("location" , fun () -> Format.asprintf "%a" Location.pp loc) ;
-      ("in" , fun () -> Format.asprintf "%a" Environment.PP.environment e) ;
-      ("did_you_mean" , fun () -> suggestion)
-    ] in
-    error ~data title message ()
-
-  let unbound_variable (e:environment) (n:I.expression_variable) () =
-    let name () = Format.asprintf "%a" I.PP.expression_variable n in
-    let title = (thunk ("unbound variable "^(name ()))) in
-    let message () = "" in
-    let data = [
-      ("variable" , name) ;
-      ("environment" , fun () -> Format.asprintf "%a" Environment.PP.environment e) ;
-    ] in
-    error ~data title message ()
-
-  let match_empty_variant : I.matching_expr -> Location.t -> unit -> _ =
-    fun matching loc () ->
-      let title = (thunk "match with no cases") in
-      let message () = "" in
-      let data = [
-        ("variant" , fun () -> Format.asprintf "%a" I.PP.matching_type matching) ;
-        ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
-      ] in
-      error ~data title message ()
-
-  let match_missing_case : I.matching_expr -> Location.t -> unit -> _ =
-    fun matching loc () ->
-    let title = (thunk "missing case in match") in
-    let message () = "" in
-    let data = [
-      ("variant" , fun () -> Format.asprintf "%a" I.PP.matching_type matching) ;
-      ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
-    ] in
-    error ~data title message ()
-
-  let match_redundant_case : I.matching_expr -> Location.t -> unit -> _ =
-    fun matching loc () ->
-    let title = (thunk "redundant case in match") in
-    let message () = "" in
-    let data = [
-      ("variant" , fun () -> Format.asprintf "%a" I.PP.matching_type matching) ;
-      ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
-    ] in
-    error ~data title message ()
-
-  let unbound_constructor (e:environment) (c:I.constructor') (loc:Location.t) () =
-    let title = (thunk "unbound constructor") in
-    let message () = "" in
-    let data = [
-      ("constructor" , fun () -> Format.asprintf "%a" I.PP.constructor c);
-      ("environment" , fun () -> Format.asprintf "%a" Environment.PP.environment e) ;
-      ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
-    ] in
-    error ~data title message ()
-
-  let redundant_constructor (e:environment) (c:I.constructor') () =
-    let title = (thunk "redundant constructor") in
-    let message () = "" in
-    let data = [
-      ("constructor" , fun () -> Format.asprintf "%a" I.PP.constructor c);
-      ("environment" , fun () -> Format.asprintf "%a" Environment.PP.environment e) ;
-    ] in
-    error ~data title message ()
-  
-  let michelson_or (c:I.constructor') loc () =
-    let title = (thunk "michelson_or types must be annotated") in
-    let message () = "" in
-    let data = [
-      ("constructor" , fun () -> Format.asprintf "%a" I.PP.constructor c);
-      ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
-    ] in
-    error ~data title message ()
-
-  let wrong_arity (n:string) (expected:int) (actual:int) (loc : Location.t) () =
-    let title () = "wrong arity" in
-    let message () = "" in
-    let data = [
-      ("function" , fun () -> Format.asprintf "%s" n) ;
-      ("expected" , fun () -> Format.asprintf "%d" expected) ;
-      ("actual" , fun () -> Format.asprintf "%d" actual) ;
-      ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
-    ] in
-    error ~data title message ()
-
-  (* TODO: this should be a trace_info? *)
-  let program_error (p:I.program) () =
-    let message () = "" in
-    let title = (thunk "typing program") in
-    let data = [
-      ("program" , fun () -> Format.asprintf "%a" I.PP.program p)
-    ] in
-    error ~data title message ()
-
-  let constant_declaration_error (name:I.expression_variable) (ae:I.expr) (expected: O.type_expression option) () =
-    let title = (thunk "typing constant declaration") in
-    let message () = "" in
-    let data = [
-      ("constant" , fun () -> Format.asprintf "%a" I.PP.expression_variable name) ;
-      ("expression" , fun () -> Format.asprintf "%a" I.PP.expression ae) ;
-      ("expected" , fun () ->
-          match expected with
-            None -> "(no annotation for the expected type)"
-          | Some expected -> Format.asprintf "%a" O.PP.type_expression expected) ;
-      ("location" , fun () -> Format.asprintf "%a" Location.pp ae.location)
-    ] in
-    error ~data title message ()
-
-  let match_error : ?msg:string -> expected: I.matching_expr -> actual: O.type_expression -> Location.t -> unit -> _ =
-    fun ?(msg = "") ~expected ~actual loc () ->
-    let title = (thunk "typing match") in
-    let message () = msg in
-    let data = [
-      ("expected" , fun () -> Format.asprintf "%a" I.PP.matching_type expected);
-      ("actual" , fun () -> Format.asprintf "%a" O.PP.type_expression actual) ;
-      ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
-    ] in
-    error ~data title message ()
-
-  let needs_annotation (e : I.expression) (case : string) () =
-    let title = (thunk "this expression must be annotated with its type") in
-    let message () = Format.asprintf "%s needs an annotation" case in
-    let data = [
-      ("expression" , fun () -> Format.asprintf "%a" I.PP.expression e) ;
-      ("location" , fun () -> Format.asprintf "%a" Location.pp e.location)
-    ] in
-    error ~data title message ()
-
-  let fvs_in_create_contract_lambda (e : I.expression) (fvar : Ast_typed.expression_variable) () =
-    let title = (thunk "No free variable allowed in this lambda") in
-    let message () = Format.asprintf "variable '%a'" Var.pp fvar in
-    let data = [
-      ("expression" , fun () -> Format.asprintf "%a" I.PP.expression e) ;
-      ("location" , fun () -> Format.asprintf "%a" Location.pp e.location)
-    ] in
-    error ~data title message ()
-
-  let create_contract_lambda (cst : I.constant') (e : I.expression) () =
-    let title () = Format.asprintf "%a first argument must be inlined" I.PP.constant cst in
-    let message () = Format.asprintf "contract code can be inlined using a lambda" in
-    let data = [
-      ("expression" , fun () -> Format.asprintf "%a" I.PP.expression e) ;
-      ("location" , fun () -> Format.asprintf "%a" Location.pp e.location)
-    ] in
-    error ~data title message ()
-
-  let type_error_approximate ?(msg="") ~(expected: string) ~(actual: O.type_expression) ~(expression : I.expression) (loc:Location.t) () =
-    let title = (thunk "type error") in
-    let message () = msg in
-    let data = [
-      ("expected"   , fun () -> Format.asprintf "%s" expected);
-      ("actual"     , fun () -> Format.asprintf "%a" O.PP.type_expression actual);
-      ("expression" , fun () -> Format.asprintf "%a" I.PP.expression expression) ;
-      ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
-    ] in
-    error ~data title message ()
-
-  let _type_error ?(msg="") ~(expected: O.type_expression) ~(actual: O.type_expression) ~(expression : I.expression) (loc:Location.t) () =
-    let title = (thunk "type error") in
-    let message () = msg in
-    let data = [
-      ("expected"   , fun () -> Format.asprintf "%a" O.PP.type_expression expected);
-      ("actual"     , fun () -> Format.asprintf "%a" O.PP.type_expression actual);
-      ("expression" , fun () -> Format.asprintf "%a" I.PP.expression expression) ;
-      ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
-    ] in
-    error ~data title message ()
-
-  let bad_record_access (field : I.label) (ae : I.expression) (t : O.type_expression) (loc:Location.t) () =
-    let title = (thunk "invalid record field") in
-    let message () = "" in
-    let data = [
-      ("field" , fun () -> Format.asprintf "%a" I.PP.label field) ;
-      ("record_value" , fun () -> Format.asprintf "%a" I.PP.expression ae) ;
-      ("tuple_type" , fun () -> Format.asprintf "%a" O.PP.type_expression t) ;
-      ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
-    ] in
-    error ~data title message ()
-
-  let bad_type_operator type_op =
-    let title () = Format.asprintf "bad type operator %a" I.PP.type_expression type_op in
-    let message () = "" in
-    error title message
-
-end
-open Errors
+let assert_type_expression_eq = Typer_common.Helpers.assert_type_expression_eq
 
 let convert_constructor' (I.Constructor c) = O.Constructor c
 let unconvert_constructor' (O.Constructor c) = I.Constructor c
@@ -484,7 +272,7 @@ let unconvert_constant' : O.constant' -> I.constant' = function
   | C_CONVERT_FROM_LEFT_COMB -> C_CONVERT_FROM_LEFT_COMB
   | C_CONVERT_FROM_RIGHT_COMB -> C_CONVERT_FROM_RIGHT_COMB
 
-let rec type_program (p:I.program) : (O.program * O'.typer_state) result =
+let rec type_program (p:I.program) : (O.program * O'.typer_state, typer_error) result =
   let aux (e, acc:(environment * O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
     let%bind ed' = (bind_map_location (type_declaration e (Solver.placeholder_for_state_of_new_typer ()))) d in
     let loc : 'a . 'a Location.wrap -> _ -> _ = fun x v -> Location.wrap ~loc:x.location v in
@@ -492,11 +280,12 @@ let rec type_program (p:I.program) : (O.program * O'.typer_state) result =
     ok (e', loc ed' d' :: acc)
   in
   let%bind (_, lst) =
-    trace (fun () -> program_error p ()) @@
+    trace (program_error_tracer p) @@
     bind_fold_list aux (DEnv.default, []) p in
   ok @@ (List.rev lst , (Solver.placeholder_for_state_of_new_typer ()))
 
-and type_declaration env (_placeholder_for_state_of_new_typer : O'.typer_state) : I.declaration -> (environment * O'.typer_state * O.declaration) result = function
+
+and type_declaration env (_placeholder_for_state_of_new_typer : O'.typer_state) : I.declaration -> (environment * O'.typer_state * O.declaration, typer_error) result = function
   | Declaration_type (type_binder , type_expr) ->
       let%bind tv = evaluate_type env type_expr in
       let env' = Environment.add_type (type_binder) tv env in
@@ -504,17 +293,17 @@ and type_declaration env (_placeholder_for_state_of_new_typer : O'.typer_state) 
   | Declaration_constant (binder , tv_opt , inline, expression) -> (
       let%bind tv'_opt = bind_map_option (evaluate_type env) tv_opt in
       let%bind expr =
-        trace (constant_declaration_error binder expression tv'_opt) @@
+        trace (constant_declaration_error_tracer binder expression tv'_opt) @@
         type_expression' ?tv_opt:tv'_opt env expression in
       let post_env = Environment.add_ez_declaration binder expr env in
       ok (post_env, (Solver.placeholder_for_state_of_new_typer ()) , (O.Declaration_constant { binder ; expr ; inline}))
     )
 
-and type_match : (environment -> I.expression -> O.expression result) -> environment -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> O.matching_expr result =
+and type_match : (environment -> I.expression -> (O.expression , typer_error) result) -> environment -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> (O.matching_expr, typer_error) result =
   fun f e t i _ae loc -> match i with
   | Match_option {match_none ; match_some} ->
       let%bind tv =
-        trace_strong (match_error ~expected:i ~actual:t loc)
+        trace_option (match_error ~expected:i ~actual:t loc)
         @@ get_t_option t in
       let%bind match_none = f e match_none in
       let (opt, b) = match_some in
@@ -523,7 +312,7 @@ and type_match : (environment -> I.expression -> O.expression result) -> environ
       ok (O.Match_option {match_none ; match_some = {opt; body; tv}})
   | Match_list {match_nil ; match_cons} ->
       let%bind t_elt =
-        trace_strong (match_error ~expected:i ~actual:t loc)
+        trace_option (match_error ~expected:i ~actual:t loc)
         @@ get_t_list t in
       let%bind match_nil = f e match_nil in
       let (hd, tl, b) = match_cons in
@@ -533,19 +322,18 @@ and type_match : (environment -> I.expression -> O.expression result) -> environ
       ok (O.Match_list {match_nil ; match_cons = {hd; tl; body; tv=t_elt}})
   | Match_variant lst ->
       let%bind variant_cases' =
-        trace (match_error ~expected:i ~actual:t loc)
+        trace_option (match_error ~expected:i ~actual:t loc)
         @@ Ast_typed.Combinators.get_t_sum t in
       let variant_cases = List.map fst @@ O.CMap.to_kv_list variant_cases' in
       let match_cases = List.map (fun x -> convert_constructor' @@ fst @@ fst x) lst in
       let test_case = fun c ->
-        Assert.assert_true (List.mem c match_cases)
+        Assert.assert_true (corner_case "match case") (List.mem c match_cases)
       in
       let%bind () =
         trace_strong (match_missing_case i loc) @@
         bind_iter_list test_case variant_cases in
       let%bind () =
-        trace_strong (match_redundant_case i loc) @@
-        Assert.assert_true List.(length variant_cases = length match_cases) in
+        Assert.assert_true (match_redundant_case i loc) List.(length variant_cases = length match_cases) in
       let%bind cases =
         let aux ((constructor_name , pattern) , b) =
           let%bind {ctor_type=constructor;_} =
@@ -559,7 +347,7 @@ and type_match : (environment -> I.expression -> O.expression result) -> environ
         bind_map_list aux lst in
       ok (O.Match_variant { cases ; tv=t })
 
-and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression result =
+and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, typer_error) result =
   let return tv' = ok (make_t ~loc:t.location tv' (Some t)) in
   match t.type_content with
   | T_arrow {type1;type2} ->
@@ -574,7 +362,7 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
           | Some _ ->
             if I.CMap.mem (Constructor "M_left") m || I.CMap.mem (Constructor "M_right") m then
               ok ()
-            else fail (redundant_constructor e k)
+            else fail (redundant_constructor e k t.location)
           | None -> ok () in
         let v' : O.ctor_content = {ctor_type;michelson_annotation;ctor_decl_pos} in
         ok @@ O.CMap.add (convert_constructor' k) v' prev'
@@ -627,61 +415,52 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
         let%bind lmap = match c'.type_content with
           | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap)) -> ok lmap
           | _ -> fail (michelson_comb_no_record t.location) in
-        let record = Operators.Typer.Converter.convert_pair_to_right_comb (Ast_typed.LMap.to_kv_list lmap) in
+        let record = Typer_common.Michelson_type_converter.convert_pair_to_right_comb (Ast_typed.LMap.to_kv_list lmap) in
         return @@ record
     | TC_michelson_pair_left_comb, [c] ->
         let%bind c' = evaluate_type e c in
         let%bind lmap = match c'.type_content with
           | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap)) -> ok lmap
           | _ -> fail (michelson_comb_no_record t.location) in
-        let record = Operators.Typer.Converter.convert_pair_to_left_comb (Ast_typed.LMap.to_kv_list lmap) in
+        let record = Typer_common.Michelson_type_converter.convert_pair_to_left_comb (Ast_typed.LMap.to_kv_list lmap) in
         return @@ record
     | TC_michelson_or_right_comb, [c] ->
         let%bind c' = evaluate_type e c in
         let%bind cmap = match c'.type_content with
           | T_sum cmap -> ok cmap
           | _ -> fail (michelson_comb_no_variant t.location) in
-        let pair = Operators.Typer.Converter.convert_variant_to_right_comb (Ast_typed.CMap.to_kv_list cmap) in
+        let pair = Typer_common.Michelson_type_converter.convert_variant_to_right_comb (Ast_typed.CMap.to_kv_list cmap) in
         return @@ pair
     | TC_michelson_or_left_comb, [c] ->
         let%bind c' = evaluate_type e c in
         let%bind cmap = match c'.type_content with
           | T_sum cmap -> ok cmap
           | _ -> fail (michelson_comb_no_variant t.location) in
-        let pair = Operators.Typer.Converter.convert_variant_to_left_comb (Ast_typed.CMap.to_kv_list cmap) in
+        let pair = Typer_common.Michelson_type_converter.convert_variant_to_left_comb (Ast_typed.CMap.to_kv_list cmap) in
         return @@ pair
-    | _ -> fail @@ bad_type_operator t
+    | _ -> fail @@ unrecognized_type_op t
   )
 
-and type_expression : environment -> O'.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * O'.typer_state) result
+and type_expression : environment -> O'.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * O'.typer_state, typer_error) result
   = fun e _placeholder_for_state_of_new_typer ?tv_opt ae ->
     let%bind res = type_expression' e ?tv_opt ae in
     ok (res, (Solver.placeholder_for_state_of_new_typer ()))
 
-and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression -> O.expression result = fun e ?tv_opt ae ->
+and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression -> (O.expression, typer_error) result = fun e ?tv_opt ae ->
   let module L = Logger.Stateful() in
   let return expr tv =
     let%bind () =
       match tv_opt with
       | None -> ok ()
-      | Some tv' -> O.assert_type_expression_eq (tv' , tv) in
+      | Some tv' -> assert_type_expression_eq (tv' , tv) in
     let location = ae.location in
     ok @@ make_e ~location expr tv in
-  let main_error =
-    let title () = "typing expression" in
-    let content () = "" in
-    let data = [
-      ("expression" , fun () -> Format.asprintf "%a" I.PP.expression ae) ;
-      ("location" , fun () -> Format.asprintf "%a" Location.pp ae.location) ;
-      ("misc" , fun () -> L.get ()) ;
-    ] in
-    error ~data title content in
-  trace main_error @@
+  trace (expression_tracer ae) @@
   match ae.expression_content with
   (* Basic *)
   | E_variable name ->
       let%bind tv' =
-        trace_option (unbound_variable e name)
+        trace_option (unbound_variable e name ae.location)
         @@ Environment.get_opt name e in
       return (E_variable name) tv'.type_value
   | E_literal Literal_unit ->
@@ -713,49 +492,41 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       return (e_operation op) (t_operation ())
   | E_record_accessor {record;path} ->
       let%bind e' = type_expression' e record in
-      let aux (prev:O.expression) (a:I.label) : O.expression result =
+      let aux (prev:O.expression) (a:I.label) : (O.expression , typer_error) result =
             let property = a in
-            let%bind r_tv = get_t_record prev.type_expression in
+            let%bind r_tv = trace_option (bad_record_access property ae prev.type_expression ae.location) @@
+             get_t_record prev.type_expression in
             let%bind tv =
-              generic_try (bad_record_access property ae prev.type_expression ae.location)
-              @@ (fun () -> let ({field_type;_} : O.field_content) = O.LMap.find (convert_label property) r_tv in field_type) in
+              trace_option (bad_record_access property ae prev.type_expression ae.location) @@
+              O.LMap.find_opt (convert_label property) r_tv in
             let location = ae.location in
-            ok @@ make_e ~location (E_record_accessor {record=prev; path=convert_label property}) tv
+            ok @@ make_e ~location (E_record_accessor {record=prev; path=convert_label property}) tv.field_type
       in
       let%bind ae =
-      trace (simple_info "accessing") @@ aux e' path in
+      trace (record_access_tracer e') @@ aux e' path in
       (* check type annotation of the final accessed element *)
       let%bind () =
         match tv_opt with
         | None -> ok ()
-        | Some tv' -> O.assert_type_expression_eq (tv' , ae.type_expression) in
+        | Some tv' -> assert_type_expression_eq (tv' , ae.type_expression) in
       ok(ae)
   | E_constructor {constructor = Constructor s ; element} when String.equal s "M_left" || String.equal s "M_right" -> (
-    let%bind t = trace_option (Errors.michelson_or (Constructor s) ae.location) @@ tv_opt in 
+    let%bind t = trace_option (michelson_or (Constructor s) ae.location) @@ tv_opt in 
     let%bind expr' = type_expression' e element in
     ( match t.type_content with
       | T_sum c ->
         let {ctor_type ; _} : O.ctor_content = O.CMap.find (O.Constructor s) c in
-        let%bind _assert = O.assert_type_expression_eq (expr'.type_expression, ctor_type) in
+        let%bind () = assert_type_expression_eq (expr'.type_expression, ctor_type) in
         return (E_constructor {constructor = Constructor s; element=expr'}) t
-      | _ -> simple_fail "ll" 
+      | _ -> fail (michelson_or (Constructor s) ae.location)
     )
   )
   (* Sum *)
   | E_constructor {constructor; element} ->
-      let%bind (c_tv, sum_tv) =
-        let error =
-          let title () = "no such constructor" in
-          let content () =
-            Format.asprintf "%a in:\n%a\n"
-              Stage_common.PP.constructor constructor 
-              O.Environment.PP.environment e
-          in
-          error title content in
-        trace_option error @@
+      let%bind (c_tv, sum_tv) = trace_option (unbound_constructor e constructor ae.location) @@
         Environment.get_constructor constructor e in
       let%bind expr' = type_expression' e element in
-      let%bind _assert = O.assert_type_expression_eq (expr'.type_expression, c_tv) in
+      let%bind _assert = assert_type_expression_eq (expr'.type_expression, c_tv) in
       let constructor = convert_constructor' constructor in
       return (E_constructor {constructor; element=expr'}) sum_tv
   (* Record *)
@@ -765,9 +536,6 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
         ok (O.LMap.add (convert_label k) expr' prev)
       in
       let%bind m' = Stage_common.Helpers.bind_fold_lmap aux (ok O.LMap.empty) m in
-      (* let () = match tv_opt with
-        Some _ -> Format.printf "YES"
-       | None -> Format.printf "NO" in *)
       let lmap = O.LMap.map (fun e -> ({field_type = get_type_expression e; michelson_annotation = None; field_decl_pos=0}:O.field_content)) m' in
       return (E_record m') (t_record lmap ())
   | E_record_update {record; path; update} ->
@@ -785,7 +553,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       )
       | _ -> failwith "Update an expression which is not a record"
     in
-    let%bind () = O.assert_type_expression_eq (tv, get_type_expression update) in
+    let%bind () = assert_type_expression_eq (tv, get_type_expression update) in
     return (E_record_update {record; path; update}) wrapped
   (* Data-structure *)
   | E_lambda lambda -> 
@@ -801,7 +569,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
                     collect ; 
                     init_record ;
                   ]} ->
-      (* this special case is here force annotation of the untyped lambda
+      (* this special case is here to force annotation of the untyped lambda
          generated by pascaligo's for_collect loop *)
       let%bind (v_col , v_initr ) = bind_map_pair (type_expression' e) (collect , init_record ) in
       let tv_col = get_type_expression v_col   in (* this is the type of the collection  *)
@@ -809,10 +577,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let%bind input_type = match tv_col.type_content with
         | O.T_operator ( TC_list t | TC_set t) -> ok @@ make_t_ez_record (("0",tv_out)::[("1",t)])
         | O.T_operator ( TC_map {k;v}| TC_big_map {k;v}) -> ok @@ make_t_ez_record (("0",tv_out)::[("1",make_t_ez_record [("0",k);("1",v)])])
-        | _ ->
-          let wtype = Format.asprintf
-            "Loops over collections expect lists, sets or maps, got type %a" O.PP.type_expression tv_col in 
-          fail @@ simple_error wtype in 
+        | _ -> fail @@ bad_collect_loop tv_col ae.location in
       let e' = Environment.add_ez_binder lname input_type e in
       let%bind body = type_expression' ?tv_opt:(Some tv_out) e' result in
       let output_type = body.type_expression in
@@ -896,14 +661,12 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let%bind args' = type_expression' e args in
       let%bind tv = match lamb'.type_expression.type_content with
         | T_arrow {type1;type2} ->
-            let%bind _ = O.assert_type_expression_eq (type1, args'.type_expression) in
+            let%bind _ = assert_type_expression_eq (type1, args'.type_expression) in
             ok type2
         | _ ->
           fail @@ type_error_approximate
-            ~expected:"should be a function type"
             ~expression:lamb
             ~actual:lamb'.type_expression
-            lamb'.location
       in
       return (E_application {lamb=lamb'; args=args'}) tv
   (* Advanced *)
@@ -921,7 +684,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
         let%bind () =
           match prec with
           | None -> ok ()
-          | Some cur' -> Ast_typed.assert_type_expression_eq (cur , cur') in
+          | Some cur' -> assert_type_expression_eq (cur , cur') in
         ok (Some cur) in
       let%bind tv_opt = bind_fold_list aux None tvs in
       let%bind tv =
@@ -937,7 +700,8 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
     let%bind let_result = type_expression' e' let_result in
     return (E_let_in {let_binder; rhs; let_result; inline}) let_result.type_expression
   | E_raw_code {language;code} ->
-    let%bind (code,type_expression) = I.get_e_ascription code.expression_content in
+    let%bind (code,type_expression) = trace_option (expected_ascription code) @@
+      I.get_e_ascription code.expression_content in
     let%bind code = type_expression' e code in
     let%bind type_expression = evaluate_type e type_expression in
     let code = {code with type_expression} in
@@ -951,15 +715,16 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
     let%bind tv = evaluate_type e type_annotation in
     let%bind expr' = type_expression' ~tv_opt:tv e anno_expr in
     let%bind type_annotation =
+      trace_option (corner_case "merge_annotations (Some ...) (Some ...) failed") @@
       O.merge_annotation
         (Some tv)
         (Some expr'.type_expression)
-        (internal_assertion_failure "merge_annotations (Some ...) (Some ...) failed") in
+        O.assert_type_expression_eq in
     (* check type annotation of the expression as a whole (e.g. let x : t = (v : t') ) *)
     let%bind () =
       match tv_opt with
       | None -> ok ()
-      | Some tv' -> O.assert_type_expression_eq (tv' , type_annotation) in
+      | Some tv' -> assert_type_expression_eq (tv' , type_annotation) in
     ok {expr' with type_expression=type_annotation}
 
 and type_lambda e {
@@ -999,18 +764,18 @@ and type_lambda e {
 
 
 
-and type_constant (name:I.constant') (lst:O.type_expression list) (tv_opt:O.type_expression option) : (O.constant' * O.type_expression) result =
+and type_constant (name:I.constant') (lst:O.type_expression list) (tv_opt:O.type_expression option) : (O.constant' * O.type_expression , typer_error) result =
   let name = convert_constant' name in
-  let%bind typer = Operators.Typer.constant_typers name in
+  let%bind typer = Typer_common.Constant_typers.constant_typers name in
   let%bind tv = typer lst tv_opt in
-  ok(name, tv)
+  ok (name, tv)
 
-let untype_type_expression (t:O.type_expression) : (I.type_expression) result =
+let untype_type_expression (t:O.type_expression) : (I.type_expression , typer_error) result =
   match t.type_meta with
   | Some s -> ok s
-  | _ -> fail @@ internal_assertion_failure "trying to untype generated type"
+  | _ -> fail @@ corner_case "Trying to untype generated type"
 
-let untype_literal (l:O.literal) : I.literal result =
+let untype_literal (l:O.literal) : (I.literal , typer_error) result =
   let open I in
   match l with
   | Literal_unit -> ok Literal_unit
@@ -1029,9 +794,9 @@ let untype_literal (l:O.literal) : I.literal result =
   | Literal_address s -> ok (Literal_address s)
   | Literal_operation s -> ok (Literal_operation s)
 
-let rec untype_expression (e:O.expression) : (I.expression) result =
+let rec untype_expression (e:O.expression) : (I.expression , typer_error) result =
   untype_expression_content e.type_expression e.expression_content
-  and untype_expression_content ty (ec:O.expression_content) : (I.expression) result =
+  and untype_expression_content ty (ec:O.expression_content) : (I.expression , typer_error) result =
   let open I in
   let return e = ok e in
   match ec with
@@ -1048,7 +813,7 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
       let%bind arg' = untype_expression args in
       return (e_application f' arg')
   | E_lambda {binder ; result} -> (
-      let%bind io = get_t_function ty in
+      let io = get_t_function_exn ty in
       let%bind (input_type , output_type) = bind_map_pair untype_type_expression io in
       let%bind result = untype_expression result in
       return (e_lambda (binder) (Some input_type) (Some output_type) result)
@@ -1087,7 +852,7 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
       let lambda = match unty_expr.expression_content with I.E_lambda l -> l | _ -> failwith "impossible case" in
       return @@ e_recursive fun_name fun_type lambda
 
-and untype_matching : (O.expression -> I.expression result) -> O.matching_expr -> I.matching_expr result = fun f m ->
+and untype_matching : (O.expression -> (I.expression , typer_error) result) -> O.matching_expr -> (I.matching_expr , typer_error) result = fun f m ->
   let open I in
   match m with
   | Match_option {match_none ; match_some = {opt; body ; tv=_}} ->

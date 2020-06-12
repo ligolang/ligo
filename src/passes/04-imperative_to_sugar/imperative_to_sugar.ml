@@ -1,26 +1,7 @@
+module Errors = Errors
 module I = Ast_imperative
 module O = Ast_sugar
 open Trace
-
-module Errors = struct
-  let corner_case loc =
-    let title () = "corner case" in
-    let message () = Format.asprintf "corner case, please report to developers\n" in
-    let data = [
-      ("location",
-      fun () -> Format.asprintf  "%s" loc)
-    ] in
-    error ~data title message
-
-  let bad_collection expr =
-    let title () = "" in
-    let message () = Format.asprintf "\nCannot loop over this collection : %a\n" I.PP.expression expr in
-    let data = [
-      ("location",
-      fun () -> Format.asprintf  "%a" Location.pp expr.location)
-    ] in
-    error ~data title message
-end
 
 let rec add_to_end (expression: O.expression) to_add =
   match expression.expression_content with
@@ -127,7 +108,7 @@ and restore_mutable_variable (expr : O.expression->O.expression) (free_vars : O.
     | Some e -> expr (ef e)
 
 
-let rec compile_type_expression : I.type_expression -> O.type_expression result =
+let rec compile_type_expression : I.type_expression -> (O.type_expression,Errors.imperative_to_sugar_error) result =
   fun te ->
   let return tc = ok @@ O.make_t ~loc:te.location tc in
   match te.type_content with
@@ -161,8 +142,8 @@ let rec compile_type_expression : I.type_expression -> O.type_expression result 
     | I.T_variable type_variable -> return @@ T_variable type_variable 
     | I.T_constant type_constant -> return @@ T_constant type_constant
     | I.T_operator (TC_michelson_or, [l;r]) ->
-      let%bind (l, l_ann) = I.get_t_annoted l in
-      let%bind (r, r_ann) = I.get_t_annoted r in
+      let%bind (l, l_ann) = trace_option (Errors.corner_case "not an annotated type") @@ I.get_t_annoted l in
+      let%bind (r, r_ann) = trace_option (Errors.corner_case "not an annotated type") @@ I.get_t_annoted r in
       let%bind (l,r) = bind_map_pair compile_type_expression (l,r) in
       let sum : (O.constructor' * O.ctor_content) list = [
         (O.Constructor "M_left" , {ctor_type = l ; michelson_annotation = Some l_ann ; ctor_decl_pos = 0}); 
@@ -170,8 +151,8 @@ let rec compile_type_expression : I.type_expression -> O.type_expression result 
       in
       return @@ O.T_sum (O.CMap.of_list sum)
     | I.T_operator (TC_michelson_pair, [l;r]) ->
-      let%bind (l, l_ann) = I.get_t_annoted l in
-      let%bind (r, r_ann) = I.get_t_annoted r in
+      let%bind (l, l_ann) = trace_option (Errors.corner_case "not an annotated type") @@ I.get_t_annoted l in
+      let%bind (r, r_ann) = trace_option (Errors.corner_case "not an annotated type") @@ I.get_t_annoted r in
       let%bind (l,r) = bind_map_pair compile_type_expression (l,r) in
       let sum : (O.label * O.field_content) list = [
         (O.Label "0" , {field_type = l ; michelson_annotation = Some l_ann ; field_decl_pos = 0}); 
@@ -183,12 +164,12 @@ let rec compile_type_expression : I.type_expression -> O.type_expression result 
       return @@ T_operator (type_operator, lst)
     | I.T_annoted (ty, _) -> compile_type_expression ty
 
-let rec compile_expression : I.expression -> O.expression result =
+let rec compile_expression : I.expression -> (O.expression , _) result =
   fun e ->
   let%bind e = compile_expression' e in
   ok @@ e None
 
-and compile_expression' : I.expression -> (O.expression option -> O.expression) result =
+and compile_expression' : I.expression -> (O.expression option -> O.expression, Errors.imperative_to_sugar_error) result =
   fun e ->
   let return expr = ok @@ function
     | None -> expr 
@@ -317,7 +298,7 @@ and compile_expression' : I.expression -> (O.expression option -> O.expression) 
       let%bind w = compile_while w in
       ok @@ w
 
-and compile_path : I.access list -> O.access list result =
+and compile_path : I.access list -> (O.access list, Errors.imperative_to_sugar_error) result =
   fun path ->
   let aux a = match a with
     | I.Access_record s -> ok @@ O.Access_record s
@@ -328,14 +309,14 @@ and compile_path : I.access list -> O.access list result =
   in
   bind_map_list aux path
 
-and compile_lambda : I.lambda -> O.lambda result =
+and compile_lambda : I.lambda -> (O.lambda, _) result =
   fun {binder;input_type;output_type;result}->
     let%bind input_type = bind_map_option compile_type_expression input_type in
     let%bind output_type = bind_map_option compile_type_expression output_type in
     let%bind result = compile_expression result in
     ok @@ O.{binder;input_type;output_type;result}
 
-and compile_matching : I.matching -> Location.t -> (O.expression option -> O.expression) result =
+and compile_matching : I.matching -> Location.t -> (O.expression option -> O.expression, Errors.imperative_to_sugar_error) result =
   fun {matchee;cases} loc ->
   let return expr = ok @@ function
     | None -> expr 
@@ -547,12 +528,12 @@ let compile_declaration : I.declaration Location.wrap -> _ =
     let%bind te = compile_type_expression te in
     return @@ O.Declaration_type (n,te)
 
-let compile_program : I.program -> O.program result =
+let compile_program : I.program -> (O.program , Errors.imperative_to_sugar_error) result =
   fun p ->
   bind_map_list compile_declaration p
 
 (* uncompiling *)
-let rec uncompile_type_expression : O.type_expression -> I.type_expression result =
+let rec uncompile_type_expression : O.type_expression -> (I.type_expression , Errors.imperative_to_sugar_error) result =
   fun te ->
   let return te = ok @@ I.make_t te in
   match te.type_content with
@@ -590,7 +571,7 @@ let rec uncompile_type_expression : O.type_expression -> I.type_expression resul
       let%bind lst = bind_map_list uncompile_type_expression lst in
       return @@ T_operator (type_operator, lst)
 
-let rec uncompile_expression : O.expression -> I.expression result =
+let rec uncompile_expression : O.expression -> (I.expression , Errors.imperative_to_sugar_error) result =
   fun e ->
   let return expr = ok @@ I.make_e ~loc:e.location expr in
   match e.expression_content with 
@@ -680,7 +661,7 @@ let rec uncompile_expression : O.expression -> I.expression result =
     return @@ I.E_sequence {expr1; expr2}
   | O.E_skip -> return @@ I.E_skip
 
-and uncompile_path : O.access list -> I.access list result =
+and uncompile_path : O.access list -> (I.access list, Errors.imperative_to_sugar_error) result =
   fun path -> let aux a = match a with
     | O.Access_record s -> ok @@ I.Access_record s
     | O.Access_tuple  i -> ok @@ I.Access_tuple  i
@@ -690,13 +671,13 @@ and uncompile_path : O.access list -> I.access list result =
   in
   bind_map_list aux path
 
-and uncompile_lambda : O.lambda -> I.lambda result =
+and uncompile_lambda : O.lambda -> (I.lambda , Errors.imperative_to_sugar_error) result =
   fun {binder;input_type;output_type;result}->
     let%bind input_type = bind_map_option uncompile_type_expression input_type in
     let%bind output_type = bind_map_option uncompile_type_expression output_type in
     let%bind result = uncompile_expression result in
     ok @@ I.{binder;input_type;output_type;result}
-and uncompile_matching : O.matching_expr -> I.matching_expr result =
+and uncompile_matching : O.matching_expr -> (I.matching_expr , Errors.imperative_to_sugar_error) result =
   fun m -> 
   match m with 
     | O.Match_list {match_nil;match_cons} ->

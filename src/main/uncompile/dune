@@ -11,6 +11,7 @@
     ast_typed
     mini_c
     transpiler
+    main_errors
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)

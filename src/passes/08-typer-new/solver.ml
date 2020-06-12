@@ -67,7 +67,7 @@ let select_and_propagate_all' : ex_propagator_state list -> type_constraint_simp
 
 (* Takes a list of constraints, applies all selector+propagator pairs
    to each in turn. *)
-let rec select_and_propagate_all : typer_state -> type_constraint selector_input list -> typer_state result =
+let rec select_and_propagate_all : typer_state -> type_constraint selector_input list -> (typer_state,_) result =
   fun { already_selected_and_propagators ; structured_dbs } new_constraints ->
   match new_constraints with
   | [] -> ok { already_selected_and_propagators ; structured_dbs }

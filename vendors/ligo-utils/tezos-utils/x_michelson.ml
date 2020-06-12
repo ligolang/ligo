@@ -91,16 +91,18 @@ let pp ppf (michelson:michelson) =
   let node = printable string_of_prim canonical in
   print_expr ppf node
 
-let pp_json ppf (michelson : michelson) =
+let get_json (michelson : michelson) =
   let open Micheline_printer in
   let canonical = strip_locations michelson in
   let node = printable string_of_prim canonical in
-  let json = Tezos_data_encoding.(
+  Tezos_data_encoding.(
       Json.construct
         (Micheline.erased_encoding ~variant:"???" {comment = None} Data_encoding.string)
         node
     )
-  in
+
+let pp_json ppf (michelson : michelson) =
+  let json = get_json michelson in
   Format.fprintf ppf "%a" Tezos_data_encoding.Json.pp json
 
 let pp_hex ppf (michelson : michelson) =
@@ -113,3 +115,39 @@ let measure (michelson : michelson) =
   let canonical = strip_locations michelson in
   let bytes = Tezos_data_encoding.Binary_writer.to_bytes_exn Script_repr.expr_encoding canonical in
   Bytes.length bytes
+
+type michelson_format = [
+  | `Text
+  | `Json
+  | `Hex
+]
+
+let michelson_ppformat michelson_format ~display_format f (a,_) =
+  let mich_pp = fun michelson_format ->  match michelson_format with
+    | `Text -> pp
+    | `Json -> pp_json
+    | `Hex -> pp_hex in
+  match display_format with
+  | Display.Human_readable | Dev -> (
+     let m = Format.asprintf "%a\n" (mich_pp michelson_format) a in
+     Format.pp_print_string f m
+  )
+
+let michelson_jsonformat michelson_format (a,_) : Display.json = match michelson_format with
+  | `Text ->
+    let code_as_str = Format.asprintf "%a" pp a in
+    `Assoc [("text_code" , `String code_as_str)]
+  | `Hex -> 
+    let code_as_hex = Format.asprintf "%a" pp_hex a in
+    `Assoc [("hex_code" , `String code_as_hex)]
+  | `Json ->
+    (* Ideally , would like to do that :
+    Michelson.get_json a *)
+    let code_as_str = Format.asprintf "%a" pp_json a in
+    `Assoc [("json_code" , `String code_as_str)]
+
+
+let michelson_format : michelson_format -> 'a Display.format = fun mf -> {
+  pp = michelson_ppformat mf;
+  to_json = michelson_jsonformat mf;
+}

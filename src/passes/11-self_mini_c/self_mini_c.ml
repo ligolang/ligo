@@ -1,5 +1,12 @@
+module Errors = Errors
+open Errors
 open Mini_c
 open Trace
+
+let get_t_function e = trace_option not_a_function @@ Mini_c.get_t_function e
+let get_function e = trace_option not_a_function @@ Mini_c.get_function e
+let aggregate_entry p f = trace_option could_not_aggregate_entry @@ Mini_c.aggregate_entry p f
+let get_entry l n = trace_option could_not_aggregate_entry @@ Mini_c.get_entry l n
 
 (* TODO hack to specialize map_expression to identity monad *)
 let map_expression :

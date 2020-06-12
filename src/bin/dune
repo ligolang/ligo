@@ -5,7 +5,7 @@
     cmdliner
     ligo
   )
-  (modules cli cli_helpers version)
+  (modules cli cli_helpers formatter version)
   (preprocess
     (pps ppx_let ppx_blob bisect_ppx --conditional)
   )

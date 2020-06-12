@@ -18,6 +18,7 @@ val type_expression : formatter -> type_expression -> unit
 val value_assoc : formatter -> (value * value) -> unit
 *)
 val expression_content : formatter -> expression_content -> unit
+val type_constant : formatter -> type_base -> unit
 
 val expression : formatter -> expression -> unit
 val expression_with_type : formatter -> expression -> unit

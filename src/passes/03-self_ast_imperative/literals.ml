@@ -1,57 +1,9 @@
+open Errors
 open Ast_imperative
 open Trace
 open Proto_alpha_utils
 
-module Errors = struct
-
-  let bad_format e () =
-    let title = (thunk ("Badly formatted literal")) in
-    let message () = Format.asprintf "%a" PP.expression e in
-    let data = [
-      ("location" , fun () -> Format.asprintf "%a" Location.pp e.location)
-    ] in
-    error ~data title message ()
-
-  let bad_empty_arity cst loc () =
-    let cst_name = thunk @@ Format.asprintf "%a" Stage_common.PP.constant cst in
-    let title = thunk @@ "Wrong "^(cst_name ())^" literal arity" in
-    let message = thunk @@ (cst_name ())^" literal expects no parameter" in
-    let data = [
-      ("location" , fun () -> Format.asprintf "%a" Location.pp loc) ;
-    ] in
-    error ~data title message ()
-
-  let bad_single_arity cst loc () =
-    let cst_name = thunk @@ Format.asprintf "%a" Stage_common.PP.constant cst in
-    let title = thunk @@ "Wrong "^(cst_name ())^" literal arity" in
-    let message = thunk @@ (cst_name ())^" literal expects a single parameter" in
-    let data = [
-      ("location" , fun () -> Format.asprintf "%a" Location.pp loc) ;
-    ] in
-    error ~data title message ()
-
-  let bad_map_param_type cst loc () =
-    let cst_name = thunk @@ Format.asprintf "%a" Stage_common.PP.constant cst in
-    let title = thunk @@ "Wrong "^(cst_name ())^" literal parameter type" in
-    let message = thunk @@ (cst_name ())^" literal expects a list of pairs as parameter" in
-    let data = [
-      ("location" , fun () -> Format.asprintf "%a" Location.pp loc) ;
-    ] in
-    error ~data title message ()
-
-  let bad_set_param_type cst loc () =
-    let cst_name = thunk @@ Format.asprintf "%a" Stage_common.PP.constant cst in
-    let title = thunk @@ "Wrong "^(cst_name ())^" literal parameter type" in
-    let message = thunk @@ (cst_name ())^" literal expects a list as parameter" in
-    let data = [
-      ("location" , fun () -> Format.asprintf "%a" Location.pp loc) ;
-    ] in
-    error ~data title message ()
-  
-end
-open Errors
-
-let peephole_expression : expression -> expression result = fun e ->
+let peephole_expression : expression -> (expression , self_ast_imperative_error) result = fun e ->
   let return expression_content = ok { e with expression_content } in
   match e.expression_content with
   | E_literal (Literal_key_hash s) as l -> (
@@ -84,76 +36,65 @@ let peephole_expression : expression -> expression result = fun e ->
     )
   | E_constant {cons_name=C_BIG_MAP_LITERAL as cst; arguments=lst} -> (
       let%bind elt =
-        trace_option (bad_single_arity cst e.location) @@
+        trace_option (bad_single_arity cst e) @@
         List.to_singleton lst
       in
       let%bind lst =
-        trace_strong (bad_map_param_type cst e.location) @@
+        trace_option (bad_map_param_type cst e) @@
         get_e_list elt.expression_content
       in
       let aux = fun (e : expression) ->
-        trace_strong (bad_map_param_type cst e.location) @@
-        let%bind tpl = get_e_tuple e.expression_content in
-        let%bind (a , b) =
-          trace_option (simple_error "of pairs") @@
-          List.to_pair tpl
-        in
-        ok (a , b)
+        trace_option (bad_map_param_type cst e) @@
+          Option.(get_e_tuple e.expression_content >>= fun t ->
+            List.to_pair t)
       in
       let%bind pairs = bind_map_list aux lst in
       return @@ E_big_map pairs
     )
   | E_constant {cons_name=C_MAP_LITERAL as cst; arguments=lst} -> (
       let%bind elt =
-        trace_option (bad_single_arity cst e.location) @@
+        trace_option (bad_single_arity cst e) @@
         List.to_singleton lst
       in
       let%bind lst =
-        trace_strong (bad_map_param_type cst e.location) @@
+        trace_option (bad_map_param_type cst e) @@
         get_e_list elt.expression_content
       in
       let aux = fun (e : expression) ->
-        trace_strong (bad_map_param_type cst e.location) @@
-        let%bind tpl = get_e_tuple e.expression_content in
-        let%bind (a , b) =
-          trace_option (simple_error "of pairs") @@
-          List.to_pair tpl
-        in
-        ok (a , b)
+        trace_option (bad_map_param_type cst e) @@
+          Option.(get_e_tuple e.expression_content >>= fun t ->
+            List.to_pair t)
       in
       let%bind pairs = bind_map_list aux lst in
       return @@ E_map pairs
     )
   | E_constant {cons_name=C_BIG_MAP_EMPTY as cst; arguments=lst} -> (
       let%bind () =
-        trace_strong (bad_empty_arity cst e.location) @@
-        Assert.assert_list_empty lst
+        Assert.assert_list_empty (bad_empty_arity cst e) lst
       in
       return @@ E_big_map []
     )
   | E_constant {cons_name=C_MAP_EMPTY as cst; arguments=lst} -> (
       let%bind () =
-        trace_strong (bad_empty_arity cst e.location) @@
-        Assert.assert_list_empty lst
+        Assert.assert_list_empty (bad_empty_arity cst e) lst
       in
       return @@ E_map []
     )
 
   | E_constant {cons_name=C_SET_LITERAL as cst; arguments=lst} -> (
       let%bind elt =
-        trace_option (bad_single_arity cst e.location) @@
+        trace_option (bad_single_arity cst e) @@
         List.to_singleton lst
       in
       let%bind lst =
-        trace_strong (bad_set_param_type cst e.location) @@
+        trace_option (bad_set_param_type cst e) @@
         get_e_list elt.expression_content
       in
       return @@ E_set lst
     )
   | E_constant {cons_name=C_SET_EMPTY as cst; arguments=lst} -> (
       let%bind () =
-        trace_strong (bad_empty_arity cst e.location) @@
-        Assert.assert_list_empty lst
+        Assert.assert_list_empty (bad_empty_arity cst e) lst
       in
       return @@ E_set []
     )

@@ -1,4 +1,5 @@
 open Trace
+module Errors = Errors
 
 let all_expression_mapper = [
   Tezos_type_annotation.peephole_expression ;

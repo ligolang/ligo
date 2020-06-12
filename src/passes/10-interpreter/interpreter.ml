@@ -5,8 +5,11 @@ include Ast_typed.Types
 
 module Env = Ligo_interpreter.Environment
 
+(*TODO, maybe the interpreter should never fail ?*)
+type interpreter_error = []
 
-let apply_comparison : Ast_typed.constant' -> value list -> value result =
+
+let apply_comparison : Ast_typed.constant' -> value list -> (value , interpreter_error) result =
   fun c operands -> match (c,operands) with
     | ( comp , [ V_Ct (C_int a'      ) ; V_Ct (C_int b'      ) ] )
     | ( comp , [ V_Ct (C_nat a'      ) ; V_Ct (C_nat b'      ) ] )
@@ -49,10 +52,10 @@ let apply_comparison : Ast_typed.constant' -> value list -> value result =
       ok @@ v_bool (f_op a' b')
     | _ ->
       let () = List.iter (fun el -> Format.printf "%s" (Ligo_interpreter.PP.pp_value el)) operands in
-      simple_fail "unsupported comparison"
+      failwith "unsupported comparison"
 
 (* applying those operators does not involve extending the environment *)
-let rec apply_operator : Ast_typed.constant' -> value list -> value result =
+let rec apply_operator : Ast_typed.constant' -> value list -> (value, interpreter_error) result =
   fun c operands ->
   let return_ct v = ok @@ V_Ct v in
   let return_none () = ok @@ v_none () in
@@ -160,9 +163,7 @@ let rec apply_operator : Ast_typed.constant' -> value list -> value result =
       aux @@ v_pair (v_bool true,init)
     (* tertiary *)
     | ( C_SLICE , [ V_Ct (C_nat st) ; V_Ct (C_nat ed) ; V_Ct (C_string s) ] ) ->
-      generic_try (simple_error "bad slice") @@ (fun () ->
-        V_Ct (C_string (String.sub s (Z.to_int st) (Z.to_int ed)))
-      )
+      ok @@ V_Ct (C_string (String.sub s (Z.to_int st) (Z.to_int ed)))
     | ( C_LIST_FOLD , [ V_Func_val (arg_name, body, env) ; V_List elts ; init ] ) ->
       bind_fold_list
         (fun prev elt ->
@@ -188,7 +189,7 @@ let rec apply_operator : Ast_typed.constant' -> value list -> value result =
     | ( C_MAP_UPDATE , [ k ; V_Construct (option,v) ; V_Map kvs] ) -> (match option with
       | "Some" -> ok @@ V_Map ((k,v)::(List.remove_assoc k kvs))
       | "None" -> ok @@ V_Map (List.remove_assoc k kvs)
-      | _ -> simple_fail "update without an option"
+      | _ -> failwith "update without an option"
     )
     | ( C_SET_EMPTY, []) -> ok @@ V_Set ([])
     | ( C_SET_ADD , [ v ; V_Set l ] ) -> ok @@ V_Set (List.sort_uniq compare (v::l))
@@ -212,7 +213,7 @@ let rec apply_operator : Ast_typed.constant' -> value list -> value result =
     | _ ->
       let () = Format.printf "%a\n" Ast_typed.PP.constant c in
       let () = List.iter ( fun e -> Format.printf "%s\n" (Ligo_interpreter.PP.pp_value e)) operands in
-      simple_fail "Unsupported constant op"
+      failwith "Unsupported constant op"
   )
 
 (* TODO
@@ -253,7 +254,7 @@ C_STEPS_TO_QUOTA
 *)
 
 (*interpreter*)
-and eval_literal : Ast_typed.literal -> value result = function
+and eval_literal : Ast_typed.literal -> (value , _) result = function
   | Literal_unit        -> ok @@ V_Ct (C_unit)
   | Literal_int i       -> ok @@ V_Ct (C_int i)
   | Literal_nat n       -> ok @@ V_Ct (C_nat n)
@@ -267,9 +268,9 @@ and eval_literal : Ast_typed.literal -> value result = function
   | Literal_key_hash s  -> ok @@ V_Ct (C_key_hash s)
   | Literal_chain_id s  -> ok @@ V_Ct (C_key_hash s)
   | Literal_operation o -> ok @@ V_Ct (C_operation o)
-  | Literal_void -> simple_fail "iguess ?"
+  | Literal_void -> failwith "iguess ?"
 
-and eval : Ast_typed.expression -> env -> value result
+and eval : Ast_typed.expression -> env -> (value , _) result
   = fun term env ->
     match term.expression_content with
     | E_application ({lamb = f; args}) -> (
@@ -283,7 +284,7 @@ and eval : Ast_typed.expression -> env -> value result
         let f_env' = Env.extend f_env (arg_names, args') in
         let f_env'' = Env.extend f_env' (fun_name, f') in
         eval body f_env''
-      | _ -> simple_fail "trying to apply on something that is not a function"
+      | _ -> failwith "trying to apply on something that is not a function"
     )
     | E_lambda {binder; result;} ->
       ok @@ V_Func_val (binder,result,env)
@@ -306,10 +307,9 @@ and eval : Ast_typed.expression -> env -> value result
       let%bind record' = eval record env in
       match record' with
       | V_Record recmap ->
-        let%bind a = trace_option (simple_error "unknown record field") @@
-          LMap.find_opt path recmap in
+        let a = LMap.find path recmap in
         ok a
-      | _ -> simple_fail "trying to access a non-record"
+      | _ -> failwith "trying to access a non-record"
     )
     | E_record_update {record ; path ; update} -> (
       let%bind record' = eval record env in
@@ -319,8 +319,8 @@ and eval : Ast_typed.expression -> env -> value result
           let%bind field' = eval update env in
           ok @@ V_Record (LMap.add path field' recmap)
         else
-          simple_fail "field l does not exist in record"
-      | _ -> simple_fail "this expression isn't a record"
+          failwith "field l does not exist in record"
+      | _ -> failwith "this expression isn't a record"
     )
     | E_constant {cons_name ; arguments} -> (
       let%bind operands' = bind_map_list
@@ -360,14 +360,14 @@ and eval : Ast_typed.expression -> env -> value result
         eval body env'
       | Match_option cases, V_Construct ("None" , V_Ct C_unit) ->
         eval cases.match_none env
-      | _ -> simple_fail "not yet supported case"
+      | _ -> failwith "not yet supported case"
         (* ((ctor,name),body) *)
     )
     | E_recursive {fun_name; fun_type=_; lambda} ->
       ok @@ V_Func_rec (fun_name, lambda.binder, lambda.result, env)
-    | E_raw_code _ -> simple_fail "Can't evaluate a raw code insertion"
+    | E_raw_code _ -> failwith "Can't evaluate a raw code insertion"
 
-let dummy : Ast_typed.program -> string result =
+let eval : Ast_typed.program -> (string , _) result =
   fun prg ->
   let aux  (pp,top_env) el =
     match Location.unwrap el with

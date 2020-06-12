@@ -1,46 +1,15 @@
 open Trace
+open Errors
 open Mini_c
 open Michelson
 open Memory_proto_alpha.Protocol.Script_ir_translator
 open Operators.Compiler
 
-module Errors = struct
-  let corner_case ~loc message =
-    let title () = "corner case" in
-    let content () = "we don't have a good error message for this case. we are
-striving find ways to better report them and find the use-cases that generate
-them. please report this to the developers." in
-    let data = [
-      ("location" , fun () -> loc) ;
-      ("message" , fun () -> message) ;
-    ] in
-    error ~data title content
-
-  let contract_entrypoint_must_be_literal ~loc =
-    let title () = "contract entrypoint must be literal" in
-    let content () = "For get_entrypoint, entrypoint must be given as a literal string" in
-    let data =
-      [ ("location", fun () -> loc) ;
-      ] in
-    error ~data title content
-
-  let raw_michelson_parsing_error code =
-    let title () = "Error while parsing Michelson code insertion" in
-    let content () = "Unable to parse the michelson code" in
-    let data = [ 
-      ("code", fun () -> code);
-      (* TODO : add location in Mini-c *)
-      (* ("location", fun () -> Format.asprintf "%a" Location.pp location); *)
-    ] in
-    error ~data title content
-end
-open Errors
-
 (* This does not makes sense to me *)
-let rec get_operator : constant' -> type_expression -> expression list -> predicate result = fun s ty lst ->
+let rec get_operator : constant' -> type_expression -> expression list -> (predicate , compiler_error) result = fun s ty lst ->
   match Operators.Compiler.get_operators s with
-  | Ok (x,_) -> ok x
-  | Error _ -> (
+  | Some x -> ok x
+  | None -> (
       match s with
       | C_SELF -> (
           let%bind entrypoint_as_string = match lst with
@@ -57,85 +26,84 @@ let rec get_operator : constant' -> type_expression -> expression list -> predic
           ]
       )
       | C_NONE -> (
-          let%bind ty' = Mini_c.get_t_option ty in
+          let%bind ty' = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ Mini_c.get_t_option ty in
           let%bind m_ty = Compiler_type.type_ ty' in
           ok @@ simple_constant @@ prim ~children:[m_ty] I_NONE
         )
       | C_NIL -> (
-          let%bind ty' = Mini_c.get_t_list ty in
+          let%bind ty' = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  Mini_c.get_t_list ty in
           let%bind m_ty = Compiler_type.type_ ty' in
           ok @@ simple_unary @@ prim ~children:[m_ty] I_NIL
         )
       | C_LOOP_CONTINUE -> (
-          let%bind (_,ty) = get_t_or ty in
+          let%bind (_,ty) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_or ty in
           let%bind m_ty = Compiler_type.type_ ty in
           ok @@ simple_unary @@ prim ~children:[m_ty] I_LEFT
       )
       | C_LOOP_STOP -> (
-          let%bind (ty, _) = get_t_or ty in
+          let%bind (ty, _) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_or ty in
           let%bind m_ty = Compiler_type.type_ ty in
           ok @@ simple_unary @@ prim ~children:[m_ty] I_RIGHT
       )
       | C_LIST_EMPTY -> (
-          let%bind ty' = Mini_c.get_t_list ty in
+          let%bind ty' = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  Mini_c.get_t_list ty in
           let%bind m_ty = Compiler_type.type_ ty' in
           ok @@ simple_constant @@ i_nil m_ty
         )
       | C_SET_EMPTY -> (
-          let%bind ty' = Mini_c.get_t_set ty in
+          let%bind ty' = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  Mini_c.get_t_set ty in
           let%bind m_ty = Compiler_type.type_ ty' in
           ok @@ simple_constant @@ i_empty_set m_ty
         )
       | C_MAP_EMPTY -> (
-          let%bind sd = Mini_c.get_t_map ty in
+          let%bind sd = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  Mini_c.get_t_map ty in
           let%bind (src, dst) = bind_map_pair Compiler_type.type_ sd in
           ok @@ simple_constant @@ i_empty_map src dst
         )
       | C_BIG_MAP_EMPTY -> (
-          let%bind sd = Mini_c.get_t_big_map ty in
+          let%bind sd = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  Mini_c.get_t_big_map ty in
           let%bind (src, dst) = bind_map_pair Compiler_type.type_ sd in
           ok @@ simple_constant @@ i_empty_big_map src dst
         )
       | C_BYTES_UNPACK -> (
-          let%bind ty' = Mini_c.get_t_option ty in
+          let%bind ty' = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  Mini_c.get_t_option ty in
           let%bind m_ty = Compiler_type.type_ ty' in
           ok @@ simple_unary @@ prim ~children:[m_ty] I_UNPACK
         )
       | C_MAP_REMOVE ->
-          let%bind v = match lst with
+          let%bind (_k,v) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  match lst with
             | [ _ ; expr ] ->
-                let%bind (_, v) = Mini_c.Combinators.(bind_map_or (get_t_map , get_t_big_map) (Expression.get_type expr)) in
-                ok v
-            | _ -> simple_fail "mini_c . MAP_REMOVE" in
+              Option.(map_pair_or (get_t_map , get_t_big_map) (Expression.get_type expr))
+            | _ -> None in
           let%bind v_ty = Compiler_type.type_ v in
           ok @@ simple_binary @@ seq [dip (i_none v_ty) ; prim I_UPDATE ]
       | C_LEFT ->
-          let%bind r = match lst with
+          let%bind r = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  match lst with
             | [ _ ] -> get_t_right ty
-            | _ -> simple_fail "mini_c . LEFT" in
+            | _ -> None in
           let%bind r_ty = Compiler_type.type_ r in
           ok @@ simple_unary @@ prim ~children:[r_ty] I_LEFT
       | C_RIGHT ->
-          let%bind l = match lst with
+          let%bind l = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  match lst with
             | [ _ ] -> get_t_left ty
-            | _ -> simple_fail "mini_c . RIGHT" in
+            | _ -> None in
           let%bind l_ty = Compiler_type.type_ l in
           ok @@ simple_unary @@ prim ~children:[l_ty] I_RIGHT
       | C_CONTRACT ->
-          let%bind r = get_t_contract ty in
+          let%bind r = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_contract ty in
           let%bind r_ty = Compiler_type.type_ r in
           ok @@ simple_unary @@ seq [
             prim ~children:[r_ty] I_CONTRACT ;
             i_assert_some_msg (i_push_string "bad address for get_contract") ;
           ]
       | C_CONTRACT_OPT -> 
-          let%bind tc = get_t_option ty in
-          let%bind r = get_t_contract tc in
+          let%bind tc = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_option ty in
+          let%bind r = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_contract tc in
           let%bind r_ty = Compiler_type.type_ r in
           ok @@ simple_unary @@ prim ~children:[r_ty] I_CONTRACT ;
 
       | C_CONTRACT_ENTRYPOINT ->
-          let%bind r = get_t_contract ty in
+          let%bind r = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_contract ty in
           let%bind r_ty = Compiler_type.type_ r in
           let%bind entry = match lst with
             | [ { content = E_literal (D_string entry); type_expression = _ } ; _addr ] -> ok entry
@@ -149,8 +117,8 @@ let rec get_operator : constant' -> type_expression -> expression list -> predic
             i_assert_some_msg (i_push_string @@ Format.sprintf "bad address for get_entrypoint (%s)" entry) ;
           ]
       | C_CONTRACT_ENTRYPOINT_OPT ->
-          let%bind tc = get_t_option ty in
-          let%bind r = get_t_contract tc in
+          let%bind tc = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_option ty in
+          let%bind r = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_contract tc in
           let%bind r_ty = Compiler_type.type_ r in
           let%bind entry = match lst with
             | [ { content = E_literal (D_string entry); type_expression = _ } ; _addr ] -> ok entry
@@ -175,10 +143,10 @@ let rec get_operator : constant' -> type_expression -> expression list -> predic
           prim ~children:[ch] I_CREATE_CONTRACT ;
           i_pair ;
         ]
-      | x -> simple_fail (Format.asprintf "predicate \"%a\" doesn't exist" PP.constant x)
+      | x -> fail @@ corner_case ~loc:__LOC__ (Format.asprintf "predicate \"%a\" doesn't exist" PP.constant x)
     )
 
-and translate_value (v:value) ty : michelson result = match v with
+and translate_value (v:value) ty : (michelson , compiler_error) result = match v with
   | D_bool b -> ok @@ prim (if b then D_True else D_False)
   | D_int n -> ok @@ int n
   | D_nat n -> ok @@ int n
@@ -188,18 +156,18 @@ and translate_value (v:value) ty : michelson result = match v with
   | D_bytes s -> ok @@ bytes s
   | D_unit -> ok @@ prim D_Unit
   | D_pair (a, b) -> (
-      let%bind (a_ty , b_ty) = get_t_pair ty in
+      let%bind (a_ty , b_ty) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_pair ty in
       let%bind a = translate_value a a_ty in
       let%bind b = translate_value b b_ty in
       ok @@ prim ~children:[a;b] D_Pair
     )
   | D_left a -> (
-      let%bind (a_ty , _) = get_t_or ty in
+      let%bind (a_ty , _) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_or ty in
       let%bind a' = translate_value a a_ty in
       ok @@ prim ~children:[a'] D_Left
     )
   | D_right b -> (
-      let%bind (_ , b_ty) = get_t_or ty in
+      let%bind (_ , b_ty) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_or ty in
       let%bind b' = translate_value b b_ty in
       ok @@ prim ~children:[b'] D_Right
     )
@@ -208,7 +176,7 @@ and translate_value (v:value) ty : michelson result = match v with
       let%bind s' = translate_value s ty in
       ok @@ prim ~children:[s'] D_Some
   | D_map lst -> (
-      let%bind (k_ty , v_ty) = get_t_map ty in
+      let%bind (k_ty , v_ty) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_map ty in
       let%bind lst' =
         let aux (k , v) = bind_pair (translate_value k k_ty , translate_value v v_ty) in
         bind_map_list aux lst in
@@ -217,7 +185,7 @@ and translate_value (v:value) ty : michelson result = match v with
       ok @@ seq @@ List.map aux sorted
     )
   | D_big_map lst -> (
-      let%bind (k_ty , v_ty) = get_t_big_map ty in
+      let%bind (k_ty , v_ty) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_big_map ty in
       let%bind lst' =
         let aux (k , v) = bind_pair (translate_value k k_ty , translate_value v v_ty) in
         bind_map_list aux lst in
@@ -226,27 +194,24 @@ and translate_value (v:value) ty : michelson result = match v with
       ok @@ seq @@ List.map aux sorted
     )
   | D_list lst -> (
-      let%bind e_ty = get_t_list ty in
+      let%bind e_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_list ty in
       let%bind lst' = bind_map_list (fun x -> translate_value x e_ty) lst in
       ok @@ seq lst'
     )
   | D_set lst -> (
-      let%bind e_ty = get_t_set ty in
+      let%bind e_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_set ty in
       let%bind lst' = bind_map_list (fun x -> translate_value x e_ty) lst in
       let sorted = List.sort compare lst' in
       ok @@ seq sorted
     )
   | D_operation _ ->
-      simple_fail "can't compile an operation"
+      fail @@ corner_case ~loc:__LOC__ "can't compile an operation"
 
-and translate_expression (expr:expression) (env:environment) : michelson result =
+and translate_expression (expr:expression) (env:environment) : (michelson , compiler_error) result =
   let (expr' , ty) = Combinators.Expression.(get_content expr , get_type expr) in
-  let error_message () =
-    Format.asprintf  "\n- expr: %a\n- type: %a\n" PP.expression expr PP.type_variable ty
-  in
   let return code = ok code in
 
-  trace (error (thunk "compiling expression") error_message) @@
+  trace (compile_expression_tracer expr ty) @@ 
   match expr' with
   | E_skip -> return @@ i_push_unit
   | E_literal v ->
@@ -257,10 +222,10 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
       match ty.type_content with
       | T_function (input_ty , output_ty) ->
         translate_function anon env input_ty output_ty
-      | _ -> simple_fail "expected function type"
+      | _ -> fail @@ corner_case ~loc:__LOC__ "expected function type"
     )
   | E_application (f , arg) -> (
-      trace (simple_error "Compiling quote application") @@
+      trace_strong (corner_case ~loc:__LOC__ "Compiling quote application") @@
       let%bind f = translate_expression f (Environment.add (Var.fresh (), arg.type_expression) env) in
       let%bind arg = translate_expression arg env in
       return @@ seq [
@@ -318,13 +283,8 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
             pre_code ;
             f ;
           ]
-        | _ -> simple_fail (Format.asprintf "bad arity for %a" PP.constant str)
+        | _ -> fail @@ bad_constant_arity str
       in
-      let error =
-        let title () = "error compiling constant" in
-        let content () = L.get () in
-        error title content in
-      trace error @@
       return code
   | E_make_none o ->
       let%bind o' = Compiler_type.type_ o in
@@ -424,7 +384,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
           return code
         )
       | C_LOOP_LEFT -> (
-          let%bind (_, ty) = get_t_or (snd v) in
+          let%bind (_, ty) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_or (snd v) in
           let%bind m_ty = Compiler_type.type_ ty in
           let%bind code = ok (seq [
               expr' ;
@@ -434,9 +394,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
           return code
         )
       | s -> (
-          let iter = Format.asprintf "iter %a" PP.constant s in
-          let error = error (thunk "bad iterator") (thunk iter) in
-          fail error
+          fail (bad_iterator s)
         )
     )
   | E_fold ((v , body) , collection , initial) -> (
@@ -495,7 +453,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
     )
   | E_raw_michelson code -> 
       let%bind code = 
-        Proto_alpha_utils.Trace.trace_tzresult (raw_michelson_parsing_error code) @@
+        Proto_alpha_utils.Trace.trace_tzresult (fun _ -> corner_case ~loc:__LOC__ "Error while parsing michelson code insertion") @@
         Tezos_micheline.Micheline_parser.no_parsing_error @@ 
         Michelson_parser.V1.parse_expression ~check:false code
       in
@@ -503,7 +461,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
       let%bind ty = Compiler_type.type_ ty in
       return @@ i_push ty code
 
-and translate_function_body ({body ; binder} : anon_function) lst input : michelson result =
+and translate_function_body ({body ; binder} : anon_function) lst input : (michelson , compiler_error) result =
   let pre_env = Environment.of_list lst in
   let env = Environment.(add (binder , input) pre_env) in
   let%bind expr_code = translate_expression body env in
@@ -520,7 +478,7 @@ and translate_function_body ({body ; binder} : anon_function) lst input : michel
 
   ok code
 
-and translate_function anon env input_ty output_ty : michelson result =
+and translate_function anon env input_ty output_ty : (michelson , compiler_error) result =
   let fvs = Mini_c.Free_variables.lambda [] anon in
   let small_env = Mini_c.Environment.select fvs env in
   let%bind (_lambda_ty , input_ty' , output_ty') =

@@ -1,35 +1,7 @@
 open Trace
 open Types
-open Combinators
 open Misc
 (* open Stage_common.Types *)
-
-let program_to_main : program -> string -> lambda result = fun p s ->
-  let%bind (main , input_type , _) =
-    let pred = fun d ->
-      match d with
-      | Declaration_constant { binder; expr; inline=_ } when binder = Var.of_name s -> Some expr
-      | Declaration_constant _ -> None
-      | Declaration_type _ -> None
-    in
-    let%bind main =
-      trace_option (simple_error "no main with given name") @@
-      List.find_map (Function.compose pred Location.unwrap) p in
-    let%bind (input_ty , output_ty) =
-      match (get_type' @@ get_type_expression main) with
-      | T_arrow {type1;type2} -> ok (type1 , type2)
-      | _ -> simple_fail "program main isn't a function" in
-    ok (main , input_ty , output_ty)
-  in
-  let binder = Var.of_name "@contract_input" in
-  let result =
-    let input_expr = e_a_variable binder input_type in
-    let main_expr = e_a_variable (Var.of_name s) (get_type_expression main) in
-    e_a_application main_expr input_expr in
-  ok {
-    binder ;
-    result ;
-  }
 
 module Captured_variables = struct
 
@@ -41,9 +13,9 @@ module Captured_variables = struct
   let empty : bindings = []
   let of_list : expression_variable list -> bindings = fun x -> x
 
-  let rec expression : bindings -> expression -> bindings result = fun b e ->
+  let rec expression : bindings -> expression -> (bindings,_) result = fun b e ->
     expression_content b e.expression_content
-  and expression_content : bindings -> expression_content -> bindings result = fun b ec ->
+  and expression_content : bindings -> expression_content -> (bindings,_) result = fun b ec ->
     let self = expression b in
     match ec with
     | E_lambda l -> ok @@ Free_variables.lambda empty l
@@ -78,10 +50,10 @@ module Captured_variables = struct
       let b' = union (singleton r.fun_name) b in
       expression_content b' @@ E_lambda r.lambda
 
-  and matching_variant_case : (bindings -> expression -> bindings result) -> bindings -> matching_content_case -> bindings result  = fun f b { constructor=_ ; pattern ; body } ->
+  and matching_variant_case : (bindings -> expression -> (bindings,_) result) -> bindings -> matching_content_case -> (bindings,_) result  = fun f b { constructor=_ ; pattern ; body } ->
     f (union (singleton pattern) b) body
 
-  and matching : (bindings -> expression -> bindings result) -> bindings -> matching_expr -> bindings result = fun f b m ->
+  and matching : (bindings -> expression -> (bindings,_) result) -> bindings -> matching_expr -> (bindings,_) result = fun f b m ->
     match m with
     | Match_list { match_nil = n ; match_cons = {hd; tl; body; tv=_} } ->
       let%bind n' = f b n in

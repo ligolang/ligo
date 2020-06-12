@@ -1,9 +1,10 @@
+open Errors_pascaligo
 open Trace
 open Ast_imperative
 
 module Raw = Parser.Pascaligo.AST
 module SMap = Map.String
-module ParserLog = Parser_pascaligo.ParserLog
+(* module ParserLog = Parser_pascaligo.ParserLog *)
 
 open Combinators
 
@@ -14,114 +15,6 @@ let pseq_to_list = function
 | Some lst -> npseq_to_list lst
 let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 
-module Errors = struct
-  let unsupported_cst_constr p =
-    let title () = "" in
-    let message () =
-      Format.asprintf "\nConstant constructors are not supported yet.\n" in
-    let pattern_loc = Raw.pattern_to_region p in
-    let data = [
-      ("location",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
-    ] in
-    error ~data title message
-
-  let unknown_predefined_type name =
-    let title () = "\nType constants" in
-    let message () =
-      Format.asprintf "Unknown predefined type \"%s\".\n" name.Region.value in
-    let data = [
-      ("location",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ name.Region.region)
-    ] in
-    error ~data title message
-
-  let unsupported_non_var_pattern p =
-    let title () = "" in
-    let message () =
-      Format.asprintf "\nNon-variable patterns in constructors \
-                       are not supported yet.\n" in
-    let pattern_loc = Raw.pattern_to_region p in
-    let data = [
-      ("location",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
-    ] in
-    error ~data title message
-
-  let only_constructors p =
-    let title () = "" in
-    let message () =
-      Format.asprintf "\nCurrently, only constructors \
-                       are supported in patterns.\n" in
-    let pattern_loc = Raw.pattern_to_region p in
-    let data = [
-      ("location",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
-    ] in
-    error ~data title message
-
-  let unsupported_tuple_pattern p =
-    let title () = "" in
-    let message () =
-      Format.asprintf "\nTuple patterns are not supported yet.\n" in
-    let pattern_loc = Raw.pattern_to_region p in
-    let data = [
-      ("location",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc) ;
-      (** TODO: The labelled arguments should be flowing from the CLI. *)
-      ("pattern",
-       fun () -> ParserLog.pattern_to_string
-                ~offsets:true ~mode:`Point p)
-    ] in
-    error ~data title message
-
-  let unsupported_deep_Some_patterns pattern =
-    let title () = "" in
-    let message () =
-      Format.asprintf "\nCurrently, only variables in constructors \
-                       \"Some\" in patterns are supported.\n" in
-    let pattern_loc = Raw.pattern_to_region pattern in
-    let data = [
-      ("location",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
-    ] in
-    error ~data title message
-
-  let unsupported_deep_list_patterns cons =
-    let title () = "" in
-    let message () =
-      Format.asprintf "\nCurrently, only empty lists and x::y \
-                       are supported in patterns.\n" in
-    let data = [
-      ("location",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ cons.Region.region)
-    ] in
-    error ~data title message
-
-  (* Logging *)
-
-  let abstracting_instruction t =
-    let title () = "\nSimplifiying instruction" in
-    let message () = "" in
-    (** TODO: The labelled arguments should be flowing from the CLI. *)
-    let data = [
-      ("instruction",
-       fun () -> ParserLog.instruction_to_string
-                ~offsets:true ~mode:`Point t)
-    ] in
-    error ~data title message
-
-  let unknown_built_in name =
-    let title () = "\n Unknown built-in function" in
-    let message () = "" in
-    let data = [
-      ("built-in", fun  () -> name);
-    ] in
-    error ~data title message
-
-end
-
-open Errors
 open Operators.Concrete_to_imperative.Pascaligo
 
 let r_split = Location.r_split
@@ -156,7 +49,7 @@ let get_t_string_singleton_opt = function
   | _ -> None
 
 
-let rec compile_type_expression (t:Raw.type_expr) : type_expression result =
+let rec compile_type_expression (t:Raw.type_expr) : (type_expression , (abs_error)) result =
   match t with
     TPar x -> compile_type_expression x.value.inside
   | TVar v -> (
@@ -181,31 +74,31 @@ let rec compile_type_expression (t:Raw.type_expr) : type_expression result =
           (match lst with
           | [a ; b ; c ; d ] -> (
             let%bind b' =
-              trace_option (simple_error "second argument of michelson_or must be a string singleton") @@
+              trace_option (michelson_type_wrong t name.value) @@
                 get_t_string_singleton_opt b in
             let%bind d' =
-              trace_option (simple_error "fourth argument of michelson_or must be a string singleton") @@
+              trace_option (michelson_type_wrong t name.value) @@
                 get_t_string_singleton_opt d in
             let%bind a' = compile_type_expression a in
             let%bind c' = compile_type_expression c in
             ok @@ t_michelson_or ~loc a' b' c' d'
             )
-          | _ -> simple_fail "michelson_or does not have the right number of argument")
+          | _ -> fail @@ michelson_type_wrong_arity loc name.value)
         | "michelson_pair" ->
           let lst = npseq_to_list tuple.value.inside in
           (match lst with
           | [a ; b ; c ; d ] -> (
             let%bind b' =
-              trace_option (simple_error "second argument of michelson_pair must be a string singleton") @@
+              trace_option (michelson_type_wrong t name.value) @@
                 get_t_string_singleton_opt b in
             let%bind d' =
-              trace_option (simple_error "fourth argument of michelson_pair must be a string singleton") @@
+              trace_option (michelson_type_wrong t name.value) @@
                 get_t_string_singleton_opt d in
             let%bind a' = compile_type_expression a in
             let%bind c' = compile_type_expression c in
             ok @@ t_michelson_pair ~loc a' b' c' d'
             )
-          | _ -> simple_fail "michelson_pair does not have the right number of argument")
+          | _ -> fail @@ michelson_type_wrong_arity loc name.value)
         | _ ->
           let lst = npseq_to_list tuple.value.inside in
           let%bind lst =
@@ -213,7 +106,7 @@ let rec compile_type_expression (t:Raw.type_expr) : type_expression result =
           let%bind cst =
             trace_option (unknown_predefined_type name) @@
             type_operators name.value in
-          ok @@ t_operator ~loc cst lst)
+          ok @@ t_operator ~loc cst lst )
   | TProd p ->
       let%bind tpl = compile_list_type_expression
     @@ npseq_to_list p.value in
@@ -252,9 +145,9 @@ let rec compile_type_expression (t:Raw.type_expr) : type_expression result =
         @@ npseq_to_list s in
       let m = List.fold_left (fun m ((x,i), y) -> CMap.add (Constructor x) {ctor_type=y;ctor_decl_pos=i} m) CMap.empty lst in
       ok @@ make_t ~loc @@ T_sum m
-  | TString _s -> simple_fail "we don't support singleton string type"
+  | TString _s -> fail @@ unsupported_string_singleton t
 
-and compile_list_type_expression (lst:Raw.type_expr list) : type_expression result =
+and compile_list_type_expression (lst:Raw.type_expr list) : (type_expression , (abs_error)) result =
   match lst with
   | [] -> ok @@ t_unit ()
   | [hd] -> compile_type_expression hd
@@ -278,7 +171,7 @@ let compile_projection : Raw.projection Region.reg -> _ = fun p ->
   ok @@ e_accessor ~loc var path'
 
 
-let rec compile_expression (t:Raw.expr) : expr result =
+let rec compile_expression (t:Raw.expr) : (expr , (abs_error)) result =
   let return x = ok x in
   match t with
   | EAnnot a -> (
@@ -423,7 +316,7 @@ let rec compile_expression (t:Raw.expr) : expr result =
       let (mi , loc) = r_split mi in
       let%bind lst =
         let lst = List.map get_value @@ pseq_to_list mi.elements in
-        let aux : Raw.binding -> (expression * expression) result =
+        let aux : Raw.binding -> (expression * expression, (abs_error)) result =
           fun b ->
             let%bind src = compile_expression b.source in
             let%bind dst = compile_expression b.image in
@@ -435,7 +328,7 @@ let rec compile_expression (t:Raw.expr) : expr result =
       let (mi , loc) = r_split mi in
       let%bind lst =
         let lst = List.map get_value @@ pseq_to_list mi.elements in
-        let aux : Raw.binding -> (expression * expression) result =
+        let aux : Raw.binding -> (expression * expression, (abs_error)) result =
           fun b ->
             let%bind src = compile_expression b.source in
             let%bind dst = compile_expression b.image in
@@ -481,7 +374,7 @@ and compile_update (u: Raw.update Region.reg) =
     ok @@ e_update ~loc ur (Access_record var :: path) expr
   in bind_fold_list aux record updates'
 
-and compile_logic_expression (t:Raw.logic_expr) : expression result =
+and compile_logic_expression (t:Raw.logic_expr) : (expression , (abs_error)) result =
   match t with
   | BoolExpr (False reg) ->
       ok @@ e_bool ~loc:(Location.lift reg) false
@@ -506,7 +399,7 @@ and compile_logic_expression (t:Raw.logic_expr) : expression result =
   | CompExpr (Neq c) ->
       compile_binop "NEQ" c
 
-and compile_list_expression (t:Raw.list_expr) : expression result =
+and compile_list_expression (t:Raw.list_expr) : (expression , (abs_error)) result =
   let return x = ok x in
   match t with
     ECons c ->
@@ -521,7 +414,7 @@ and compile_list_expression (t:Raw.list_expr) : expression result =
       let loc = Location.lift reg in
       return @@ e_list ~loc []
 
-and compile_set_expression (t:Raw.set_expr) : expression result =
+and compile_set_expression (t:Raw.set_expr) : (expression , (abs_error)) result =
   match t with
   | SetMem x -> (
     let (x' , loc) = r_split x in
@@ -536,7 +429,7 @@ and compile_set_expression (t:Raw.set_expr) : expression result =
     ok @@ e_set ~loc elements'
   )
 
-and compile_binop (name:string) (t:_ Raw.bin_op Region.reg) : expression result =
+and compile_binop (name:string) (t:_ Raw.bin_op Region.reg) : (expression , (abs_error)) result =
   let return x = ok x in
   let (t , loc) = r_split t in
   let%bind a = compile_expression t.arg1 in
@@ -544,14 +437,14 @@ and compile_binop (name:string) (t:_ Raw.bin_op Region.reg) : expression result 
   let%bind name = trace_option (unknown_built_in name) @@ constants name in
   return @@ e_constant ~loc name [ a ; b ]
 
-and compile_unop (name:string) (t:_ Raw.un_op Region.reg) : expression result =
+and compile_unop (name:string) (t:_ Raw.un_op Region.reg) : (expression , (abs_error)) result =
   let return x = ok x in
   let (t , loc) = r_split t in
   let%bind a = compile_expression t.arg in
   let%bind name = trace_option (unknown_built_in name) @@ constants name in
   return @@ e_constant ~loc name [ a ]
 
-and compile_tuple_expression ?loc (lst:Raw.expr list) : expression result =
+and compile_tuple_expression ?loc (lst:Raw.expr list) : (expression , (abs_error)) result =
   let return x = ok x in
   match lst with
   | [] -> return @@ e_literal Literal_unit
@@ -593,7 +486,7 @@ and compile_data_declaration : Raw.data_decl -> _ result =
       in return_let_in ~loc binder inline expr
 
 and compile_param :
-      Raw.param_decl -> (string * type_expression) result =
+      Raw.param_decl -> (string * type_expression, (abs_error)) result =
   fun t ->
   match t with
   | ParamConst c ->
@@ -609,7 +502,7 @@ and compile_param :
 
 and compile_fun_decl :
       loc:_ -> Raw.fun_decl ->
-      ((expression_variable * type_expression option) * expression) result =
+      ((expression_variable * type_expression option) * expression , (abs_error)) result =
   fun ~loc x ->
   let open! Raw in
   let {kwd_recursive;fun_name; param; ret_type; block_with;
@@ -686,7 +579,7 @@ and compile_fun_decl :
   )
 
 and compile_fun_expression :
-  loc:_ -> Raw.fun_expr -> (type_expression option * expression) result =
+  loc:_ -> Raw.fun_expr -> (type_expression option * expression , (abs_error)) result =
   fun ~loc x ->
   let open! Raw in
   let {param; ret_type; return; _} : fun_expr = x in
@@ -768,7 +661,7 @@ and compile_statement_list statements =
       hook (compile_data_declaration d :: acc) statements
   in bind_list @@ hook [] (List.rev statements)
 
-and compile_single_instruction : Raw.instruction -> (_ -> expression result) result =
+and compile_single_instruction : Raw.instruction -> ((_ -> (expression , (abs_error)) result), (abs_error)) result =
   fun t ->
   match t with
   | ProcCall x -> (
@@ -996,7 +889,7 @@ and compile_selection : Raw.selection -> access = function
   FieldName property -> Access_record property.value
 | Component index    -> Access_tuple (snd index.value)
 
-and compile_cases : (Raw.pattern * expression) list -> matching_expr result = fun t ->
+and compile_cases : (Raw.pattern * expression) list -> (matching_expr , (abs_error)) result = fun t ->
   let open Raw in
   let get_var (t:Raw.pattern) =
     match t with
@@ -1009,8 +902,7 @@ and compile_cases : (Raw.pattern * expression) list -> matching_expr result = fu
   let get_single (t: Raw.pattern) =
     let t' = get_tuple t in
     let%bind () =
-      trace_strong (unsupported_tuple_pattern t) @@
-      Assert.assert_list_size t' 1 in
+      Assert.assert_list_size (unsupported_tuple_pattern t) t' 1 in
     ok (List.hd t') in
   let get_toplevel (t : Raw.pattern) =
     match t with
@@ -1052,7 +944,7 @@ and compile_cases : (Raw.pattern * expression) list -> matching_expr result = fu
       let (_, v) = v.value in
       let%bind v = match v.value.inside with
         | PVar v -> ok v.value
-        | p -> fail @@ unsupported_deep_Some_patterns p in
+        | p -> fail @@ unsupported_deep_some_patterns p in
       ok @@ Match_option {match_none = none ; match_some = (Var.of_name v, some) }
     )
   | [(PList PCons c, cons) ; (PList (PNil _), nil)]
@@ -1068,33 +960,23 @@ and compile_cases : (Raw.pattern * expression) list -> matching_expr result = fu
       in
       ok @@ Match_list {match_cons = (Var.of_name a, Var.of_name b, cons) ; match_nil = nil}
   | lst ->
-      trace (simple_info "currently, only booleans, options, lists and \
-                         user-defined constructors are supported in patterns") @@
       let%bind constrs =
+        trace_strong (unsupported_pattern_type (List.map fst lst)) @@
         let aux (x , y) =
-          let error =
-            let title () = "Pattern" in
-            (* TODO: The labelled arguments should be flowing from the CLI. *)
-            let content () =
-              Printf.sprintf "Pattern : %s"
-                (ParserLog.pattern_to_string
-                   ~offsets:true ~mode:`Point x) in
-            error title content in
           let%bind x' =
-            trace error @@
             get_constr x in
           ok (x' , y) in
         bind_map_list aux lst in
       ok @@ ez_match_variant constrs
 
-and compile_instruction : Raw.instruction -> (_ -> expression result) result =
-  fun t -> trace (abstracting_instruction t) @@ compile_single_instruction t
+and compile_instruction : Raw.instruction -> ((_ -> (expression, (abs_error)) result) , (abs_error)) result =
+  fun t -> trace (abstracting_instruction_tracer t) @@ compile_single_instruction t
 
-and compile_statements : Raw.statements -> (_ -> expression result) result =
+and compile_statements : Raw.statements -> ((_ -> (expression,(abs_error)) result) , (abs_error)) result =
   fun statements ->
     let lst = npseq_to_list statements in
     let%bind fs = compile_statement_list lst in
-    let aux : _ -> (expression option -> expression result) -> _ =
+    let aux : _ -> (expression option -> (expression, (abs_error)) result) -> _ =
       fun prec cur ->
         let%bind res = cur prec
         in ok @@ Some res in
@@ -1102,11 +984,11 @@ and compile_statements : Raw.statements -> (_ -> expression result) result =
            let%bind ret = bind_fold_right_list aux expr' fs in
            ok @@ Option.unopt_exn ret
 
-and compile_block : Raw.block -> (_ -> expression result) result =
+and compile_block : Raw.block -> ((_ -> (expression , (abs_error)) result) , (abs_error)) result =
   fun t -> compile_statements t.statements
 
 
-and compile_declaration_list declarations : declaration Location.wrap list result =
+and compile_declaration_list declarations : (declaration Location.wrap list, (abs_error)) result =
   let open Raw in
   let rec hook acc = function
     [] -> acc
@@ -1169,5 +1051,8 @@ and compile_declaration_list declarations : declaration Location.wrap list resul
       hook (bind_list_cons res acc) declarations
   in hook (ok @@ []) (List.rev declarations)
 
-let compile_program : Raw.ast -> program result =
-  fun t -> compile_declaration_list @@ nseq_to_list t.decl
+let compile_program : Raw.ast -> (program , (abs_error)) result =
+  fun t ->
+  let declarations = nseq_to_list t.decl in
+  trace (program_tracer declarations) @@
+    compile_declaration_list declarations

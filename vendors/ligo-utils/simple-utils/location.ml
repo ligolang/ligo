@@ -14,7 +14,7 @@ type t =
 
 let pp = fun ppf t ->
   match t with
-  | Virtual s -> Format.fprintf ppf "%s" s
+  | Virtual _s -> Format.fprintf ppf ""
   | File f -> Format.fprintf ppf "%s" (f#to_string `Point)
 
 let compare a b = match a,b with

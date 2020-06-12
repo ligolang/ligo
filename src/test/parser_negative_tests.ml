@@ -1,7 +1,8 @@
 open Test_helpers
 open Trace
+open Main_errors
 
-type 'a sdata = { erroneous_source_file : string ; parser : string -> 'a result }
+type ('a,'err) sdata = { erroneous_source_file : string ; parser : string -> ('a,'err) result }
 let pascaligo_sdata = {
   erroneous_source_file = "../passes/01-parser/pascaligo/all.ligo" ;
   parser = Parser.Pascaligo.parse_expression }
@@ -25,7 +26,7 @@ let get_exp_as_string filename =
 
 let assert_syntax_error sdata () =
   let%bind _l = bind_iter_list
-    (fun entry -> Assert.assert_fail @@ sdata.parser entry)
+    (fun entry -> Assert.assert_fail (test_internal __LOC__) @@ sdata.parser entry)
     (get_exp_as_string sdata.erroneous_source_file) in
   ok ()
 

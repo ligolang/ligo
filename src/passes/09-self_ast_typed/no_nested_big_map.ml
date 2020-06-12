@@ -1,22 +1,13 @@
+open Errors
 open Ast_typed
 open Trace
 
 type contract_pass_data = Contract_passes.contract_pass_data
 
-module Errors = struct
-  let no_nested_bigmap () =
-    let title = (thunk ("It looks like you have nested a big map inside another big map. This is not supported. ")) in
-    let message () = "" in
-    let data = [
-      (* ("location" , fun () -> Format.asprintf "%a" Location.pp loc) TODO once types have an actual location *)
-    ] in
-    error ~data title message ()
-end
-
 let rec check_no_nested_bigmap is_in_bigmap e = 
   match e.type_content with
   | T_operator (TC_big_map _) when is_in_bigmap  -> 
-    fail @@ Errors.no_nested_bigmap
+    fail @@ nested_bigmap e.location
   | T_operator (TC_big_map {k ; v}) ->
     let%bind _ = check_no_nested_bigmap false k in
     let%bind _ = check_no_nested_bigmap true  v in
@@ -51,6 +42,6 @@ let rec check_no_nested_bigmap is_in_bigmap e =
   | T_constant _ -> 
     ok ()
 
-let self_typing : contract_pass_data -> expression -> (bool * contract_pass_data * expression) result = fun dat el ->
+let self_typing : contract_pass_data -> expression -> (bool * contract_pass_data * expression , self_ast_typed_error) result = fun dat el ->
   let%bind _ = check_no_nested_bigmap false el.type_expression in 
   ok (true, dat, el)

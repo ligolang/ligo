@@ -2,7 +2,12 @@ module I = Ast_sugar
 module O = Ast_core
 open Trace
 
-let rec compile_type_expression : I.type_expression -> O.type_expression result =
+module Errors = struct
+  type sugar_to_core_error = []
+end
+open Errors
+
+let rec compile_type_expression : I.type_expression -> (O.type_expression , sugar_to_core_error) result =
   fun te ->
   let return tc = ok @@ O.make_t ~loc:te.location tc in
   match te.type_content with
@@ -45,7 +50,7 @@ let rec compile_type_expression : I.type_expression -> O.type_expression result 
       let%bind lst = bind_map_list compile_type_expression lst in
       return @@ T_operator (type_operator, lst)
 
-let rec compile_expression : I.expression -> O.expression result =
+let rec compile_expression : I.expression -> (O.expression , sugar_to_core_error) result =
   fun e ->
   let return expr = ok @@ O.make_e ~loc:e.location expr in
   match e.expression_content with
@@ -183,13 +188,13 @@ let rec compile_expression : I.expression -> O.expression result =
       let m = O.LMap.of_list lst in
       return @@ O.E_record m
 
-and compile_lambda : I.lambda -> O.lambda result =
+and compile_lambda : I.lambda -> (O.lambda , sugar_to_core_error) result =
   fun {binder;input_type;output_type;result}->
     let%bind input_type = bind_map_option compile_type_expression input_type in
     let%bind output_type = bind_map_option compile_type_expression output_type in
     let%bind result = compile_expression result in
     ok @@ O.{binder;input_type;output_type;result}
-and compile_matching : Location.t -> O.expression -> I.matching_expr -> O.expression result =
+and compile_matching : Location.t -> O.expression -> I.matching_expr -> (O.expression, sugar_to_core_error) result =
   fun loc e m -> 
   match m with 
     | I.Match_list {match_nil;match_cons} ->
@@ -260,12 +265,12 @@ let compile_declaration : I.declaration Location.wrap -> _ =
     let%bind te = compile_type_expression te in
     return @@ O.Declaration_type (n,te)
 
-let compile_program : I.program -> O.program result =
+let compile_program : I.program -> (O.program , sugar_to_core_error) result =
   fun p ->
   bind_map_list compile_declaration p
 
 (* uncompiling *)
-let rec uncompile_type_expression : O.type_expression -> I.type_expression result =
+let rec uncompile_type_expression : O.type_expression -> (I.type_expression , sugar_to_core_error) result =
   fun te ->
   let return te = ok @@ I.make_t te in
   match te.type_content with
@@ -301,7 +306,7 @@ let rec uncompile_type_expression : O.type_expression -> I.type_expression resul
       let%bind lst = bind_map_list uncompile_type_expression lst in
       return @@ T_operator (type_operator, lst)
 
-let rec uncompile_expression : O.expression -> I.expression result =
+let rec uncompile_expression : O.expression -> (I.expression , sugar_to_core_error) result =
   fun e ->
   let return expr = ok @@ I.make_e ~loc:e.location expr in
   match e.expression_content with 
@@ -364,13 +369,13 @@ let rec uncompile_expression : O.expression -> I.expression result =
     let%bind type_annotation = uncompile_type_expression type_annotation in
     return @@ I.E_ascription {anno_expr; type_annotation}
 
-and uncompile_lambda : O.lambda -> I.lambda result =
+and uncompile_lambda : O.lambda -> (I.lambda , sugar_to_core_error) result =
   fun {binder;input_type;output_type;result}->
     let%bind input_type = bind_map_option uncompile_type_expression input_type in
     let%bind output_type = bind_map_option uncompile_type_expression output_type in
     let%bind result = uncompile_expression result in
     ok @@ I.{binder;input_type;output_type;result}
-and uncompile_matching : O.matching_expr -> I.matching_expr result =
+and uncompile_matching : O.matching_expr -> (I.matching_expr , sugar_to_core_error) result =
   fun m -> 
   match m with 
     | O.Match_list {match_nil;match_cons} ->

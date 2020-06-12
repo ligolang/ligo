@@ -3,6 +3,7 @@ module Environment = Environment
 module PP = PP
 module PP_generic = PP_generic
 module Compare_generic = Compare_generic
+module Formatter = Formatter
 module Combinators = struct
   include Combinators
 end

@@ -1,14 +1,7 @@
 open Types
-open Simple_utils.Trace
-(*
-module Option = Simple_utils.Option
 
 module SMap = Map.String
 
-module Errors : sig
-  val bad_kind : name -> Location.t -> unit -> error
-end
-*)
 val make_t      : ?loc:Location.t -> type_content -> type_expression
 val t_bool      : ?loc:Location.t -> unit -> type_expression
 val t_string    : ?loc:Location.t -> unit -> type_expression
@@ -23,14 +16,8 @@ val t_key       : ?loc:Location.t -> unit -> type_expression
 val t_key_hash  : ?loc:Location.t -> unit -> type_expression
 val t_timestamp : ?loc:Location.t -> unit -> type_expression
 val t_signature : ?loc:Location.t -> unit -> type_expression
-(*
-val t_option    : type_expression -> type_expression
-*)
 val t_list      : ?loc:Location.t -> type_expression -> type_expression
 val t_variable  : ?loc:Location.t -> string -> type_expression
-(*
-val t_record    : te_map -> type_expression
-*)
 val t_pair   : ?loc:Location.t -> ( type_expression * type_expression ) -> type_expression
 val t_tuple  : ?loc:Location.t -> type_expression list -> type_expression
 
@@ -56,7 +43,7 @@ val t_set      : ?loc:Location.t -> type_expression -> type_expression
 val t_contract : ?loc:Location.t -> type_expression -> type_expression
 
 val t_annoted : ?loc:Location.t -> type_expression -> string -> type_expression
-val get_t_annoted : type_expression -> (type_expression* string) result
+val get_t_annoted : type_expression -> (type_expression* string) option
 
 val make_e : ?loc:Location.t -> expression_content -> expression
 
@@ -78,8 +65,8 @@ val e_key_hash : ?loc:Location.t -> string -> expression
 val e_chain_id : ?loc:Location.t -> string -> expression 
 val e_mutez_z : ?loc:Location.t -> Z.t -> expression
 val e_mutez : ?loc:Location.t -> int -> expression
-val e'_bytes : string -> expression_content result
-val e_bytes_hex : ?loc:Location.t -> string -> expression result
+val e'_bytes : string -> expression_content option
+val e_bytes_hex : ?loc:Location.t -> string -> expression option
 val e_bytes_raw : ?loc:Location.t -> bytes -> expression
 val e_bytes_string : ?loc:Location.t -> string -> expression
 
@@ -143,21 +130,11 @@ val e_typed_big_map : ?loc:Location.t -> ( expression * expression ) list  -> ty
 val e_typed_set : ?loc:Location.t -> expression list -> type_expression -> expression
 
 
-
-val assert_e_accessor : expression_content -> unit result
-
-val get_e_pair : expression_content -> ( expression * expression ) result
-
-val get_e_list : expression_content -> ( expression list ) result
-val get_e_tuple : expression_content -> ( expression list ) result
-(*
-val get_e_failwith : expression -> expression result 
-val is_e_failwith : expression -> bool
-*)
-val extract_pair : expression -> ( expression * expression ) result 
-
-val extract_list : expression -> (expression list) result
-
-val extract_record : expression -> (label * expression) list result
-
-val extract_map : expression -> (expression * expression) list result
+val assert_e_accessor : expression_content -> unit option
+val get_e_pair : expression_content -> (expression * expression) option
+val get_e_list : expression_content -> expression list option
+val get_e_tuple : expression_content -> expression list option
+val extract_pair : expression -> (expression * expression) option
+val extract_list : expression -> expression list option
+val extract_record : expression -> (label * expression) list option
+val extract_map : expression -> (expression * expression) list option 
