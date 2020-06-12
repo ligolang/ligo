@@ -1,5 +1,5 @@
 
-module Concrete_to_imperative : sig
+module Tree_abstraction : sig
  open Ast_imperative
 
   module Pascaligo : sig
@@ -16,9 +16,9 @@ module Concrete_to_imperative : sig
 
 end
 
-module Compiler : sig
+module Stacking : sig
   (*
-  include Helpers.Compiler
+  include Helpers.Stacking
   *)
   open Tezos_utils.Michelson
   open Mini_c

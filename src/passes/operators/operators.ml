@@ -3,11 +3,11 @@
   that you have to modify when you add a new operator/constant to the language.
 
   This file mirrors the LIGO pipeline, starting with Simplify, then Typer and
-  ending with Compiler. Usually, when adding a new operator, you'll have to add
+  ending with Stacking. Usually, when adding a new operator, you'll have to add
   a new constructor at all those places.
 *)
 
-module Concrete_to_imperative = struct
+module Tree_abstraction = struct
 
   open Ast_imperative
   (*
@@ -375,13 +375,13 @@ module Concrete_to_imperative = struct
   end
 end
 
-module Compiler = struct
+module Stacking = struct
   (*
-    Most constants pass through the Transpiler unchanged. So they need to be
+    Most constants pass through the Spilling unchanged. So they need to be
     compiled down to Michelson. This is the last step.
 
     When compiling the constant, we need to provide its arity (through the type
-    predicate, defined in `Helpers.Compiler`, and its michelson code.
+    predicate, defined in `Helpers.Stacking`, and its michelson code.
     In the case of an n-ary constant, we assume that the stack has the form:
     `x1 :: x2 :: x3 ... :: xn :: _`.
 
@@ -390,7 +390,7 @@ module Compiler = struct
     be written by hand.
   *)
 
-  include Helpers.Compiler
+  include Helpers.Stacking
   open Tezos_utils.Michelson
   open Mini_c
 

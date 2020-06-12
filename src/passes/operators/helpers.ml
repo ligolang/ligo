@@ -1,4 +1,4 @@
-module Compiler = struct
+module Stacking = struct
 
   open Tezos_utils.Michelson
 
