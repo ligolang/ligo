@@ -381,7 +381,7 @@ and pp_expr = function
 | ETuple      e -> pp_tuple_expr e
 | EPar        e -> pp_par pp_expr e
 | EFun        e -> pp_fun_expr e
-| ECodeInsert e -> pp_code_insert e
+| ECodeInj    e -> pp_code_inj e
 
 and pp_annot_expr {value; _} =
   let expr, _, type_expr = value.inside in
@@ -496,11 +496,11 @@ and pp_update {value; _} =
   and record  = pp_path record in
   record ^^ string " with" ^^ nest 2 (break 1 ^^ updates)
 
-and pp_code_insert {value; _} =
+and pp_code_inj {value; _} =
   let {language; code; _} = value in
-  let language = pp_string language 
-  and code = pp_expr code in
-  string "[%" ^^ language ^^ string " " ^^ code ^^ string " ]"
+  let language = pp_string language.value
+  and code     = pp_expr code in
+  string "[%" ^^ language ^/^ code ^^ string "]"
 
 and pp_field_path_assign {value; _} =
   let {field_path; field_expr; _} = value in

@@ -71,26 +71,32 @@ let print_token state region lexeme =
 
 let print_var state {region; value} =
   let line =
-    sprintf "%s: Ident \"%s\"\n"
+    sprintf "%s: Ident %S\n"
             (compact state region) value
   in Buffer.add_string state#buffer line
 
 let print_constr state {region; value} =
   let line =
-    sprintf "%s: Constr \"%s\"\n"
+    sprintf "%s: Constr %S\n"
             (compact state region) value
   in Buffer.add_string state#buffer line
 
 let print_string state {region; value} =
   let line =
-    sprintf "%s: String %s\n"
+    sprintf "%s: String %S\n"
+            (compact state region) value
+  in Buffer.add_string state#buffer line
+
+let print_verbatim state {region; value} =
+  let line =
+    sprintf "%s: Verbatim %S\n"
             (compact state region) value
   in Buffer.add_string state#buffer line
 
 let print_bytes state {region; value} =
   let lexeme, abstract = value in
   let line =
-    sprintf "%s: Bytes (\"%s\", \"0x%s\")\n"
+    sprintf "%s: Bytes (%S, \"0x%s\")\n"
             (compact state region) lexeme
             (Hex.show abstract)
   in Buffer.add_string state#buffer line
@@ -98,7 +104,7 @@ let print_bytes state {region; value} =
 let print_int state {region; value} =
   let lexeme, abstract = value in
   let line =
-    sprintf "%s: Int (\"%s\", %s)\n"
+    sprintf "%s: Int (%S, %s)\n"
             (compact state region) lexeme
             (Z.to_string abstract)
   in Buffer.add_string state#buffer line
@@ -106,7 +112,7 @@ let print_int state {region; value} =
 let print_nat state {region; value} =
   let lexeme, abstract = value in
   let line =
-    sprintf "%s: Nat (\"%s\", %s)\n"
+    sprintf "%s: Nat (%S, %s)\n"
             (compact state region) lexeme
             (Z.to_string abstract)
   in Buffer.add_string state#buffer line
@@ -230,13 +236,15 @@ and print_fun_expr state {value; _} =
   print_token      state kwd_is "is";
   print_expr       state return
 
-and print_code_insert state {value; _} =
-  let {lbracket;percent;language;code;rbracket} : code_insert = value in
-  print_token     state lbracket "[";
-  print_token     state percent  "%";
-  print_string    state language;
-  print_expr      state code;
-  print_token     state rbracket "]"
+and print_code_inj state {value; _} =
+  let {language; code; rbracket} = value in
+  let {value=lang; region} = language in
+  let header_stop = region#start#shift_bytes 1 in
+  let header_reg  = Region.make ~start:region#start ~stop:header_stop in
+  print_token  state header_reg "[%";
+  print_string state lang;
+  print_expr   state code;
+  print_token  state rbracket "]"
 
 and print_parameters state {value; _} =
   let {lpar; inside; rpar} = value in
@@ -467,7 +475,7 @@ and print_expr state = function
 | ETuple   e -> print_tuple_expr state e
 | EPar     e -> print_par_expr state e
 | EFun     e -> print_fun_expr state e
-| ECodeInsert e -> print_code_insert state e
+| ECodeInj e -> print_code_inj state e
 
 and print_annot_expr state node =
   let {inside; _} : annot_expr par = node in
@@ -609,7 +617,7 @@ and print_string_expr state = function
 | String s ->
     print_string state s
 | Verbatim v ->
-    print_string state v
+    print_verbatim state v
 
 and print_list_expr state = function
   ECons {value = {arg1; op; arg2}; _} ->
@@ -1019,16 +1027,16 @@ and pp_fun_expr state (expr: fun_expr) =
     pp_expr (state#pad 1 0) expr.return
   in ()
 
-and pp_code_insert state (rc : code_insert) =
+and pp_code_inj state rc =
   let () =
-    let state = state#pad 3 0 in
+    let state = state#pad 2 0 in
     pp_node state "<language>";
-    pp_string (state#pad 1 0) rc.language in
+    pp_string (state#pad 1 0) rc.language.value in
   let () =
-    let state = state#pad 3 1 in
+    let state = state#pad 2 1 in
     pp_node state "<code>";
-    pp_expr (state#pad 1 0) rc.code in
-  ()
+    pp_expr (state#pad 1 0) rc.code
+  in ()
 
 and pp_parameters state {value; _} =
   let params = Utils.nsepseq_to_list value.inside in
@@ -1511,9 +1519,9 @@ and pp_expr state = function
 | EFun {value; region} ->
     pp_loc_node state "EFun" region;
     pp_fun_expr state value;
-| ECodeInsert {value; region} -> 
-    pp_loc_node state "ECodeInsert" region;
-    pp_code_insert state value;
+| ECodeInj {value; region} ->
+    pp_loc_node state "ECodeInj" region;
+    pp_code_inj state value;
 
 and pp_list_expr state = function
   ECons {value; region} ->

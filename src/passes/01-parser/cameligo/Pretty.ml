@@ -52,22 +52,22 @@ and pp_let_binding (binding : let_binding) =
   in prefix 2 1 (lhs ^^ string " =") (pp_expr let_rhs)
 
 and pp_pattern = function
-  PConstr p -> pp_pconstr p
-| PUnit   _ -> string "()"
-| PFalse  _ -> string "false"
-| PTrue   _ -> string "true"
-| PVar    v -> pp_ident v
-| PInt    i -> pp_int i
-| PNat    n -> pp_nat n
-| PBytes  b -> pp_bytes b
-| PString s -> pp_string s
+  PConstr   p -> pp_pconstr p
+| PUnit     _ -> string "()"
+| PFalse    _ -> string "false"
+| PTrue     _ -> string "true"
+| PVar      v -> pp_ident v
+| PInt      i -> pp_int i
+| PNat      n -> pp_nat n
+| PBytes    b -> pp_bytes b
+| PString   s -> pp_string s
 | PVerbatim s -> pp_verbatim s
-| PWild   _ -> string "_"
-| PList   l -> pp_plist l
-| PTuple  t -> pp_ptuple t
-| PPar    p -> pp_ppar p
-| PRecord r -> pp_precord r
-| PTyped  t -> pp_ptyped t
+| PWild     _ -> string "_"
+| PList     l -> pp_plist l
+| PTuple    t -> pp_ptuple t
+| PPar      p -> pp_ppar p
+| PRecord   r -> pp_precord r
+| PTyped    t -> pp_ptyped t
 
 and pp_pconstr = function
   PNone      _ -> string "None"
@@ -152,7 +152,7 @@ and pp_expr = function
 | ELetIn      e -> pp_let_in e
 | EFun        e -> pp_fun e
 | ESeq        e -> pp_seq e
-| ECodeInsert e -> pp_code_insert e
+| ECodeInj    e -> pp_code_inj e
 
 and pp_case_expr {value; _} =
   let {expr; cases; _} = value in
@@ -314,11 +314,11 @@ and pp_update {value; _} =
   string "{" ^^ record ^^ string " with"
   ^^ nest 2 (break 1 ^^ updates ^^ string "}")
 
-and pp_code_insert {value; _} =
+and pp_code_inj {value; _} =
   let {language; code; _} = value in
-  let language = pp_string language 
-  and code = pp_expr code in
-  string "[%" ^^ language ^^ string " " ^^ code ^^ string " ]"
+  let language = pp_string language.value
+  and code     = pp_expr code in
+  string "[%" ^^ language ^/^ code ^^ string "]"
 
 and pp_field_path_assign {value; _} =
   let {field_path; field_expr; _} = value in

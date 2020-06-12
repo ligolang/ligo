@@ -43,6 +43,7 @@ module type TOKEN =
     val mk_bytes    : lexeme -> Region.t -> token
     val mk_constr   : lexeme -> Region.t -> token
     val mk_attr     : string -> lexeme -> Region.t -> (token, attr_err) result
+    val mk_lang     : lexeme Region.reg -> Region.t -> token
     val eof         : Region.t -> token
 
     (* Predicates *)
@@ -273,6 +274,15 @@ module Make (Token : TOKEN) : (S with module Token = Token) =
       let token = Token.mk_constr lexeme region
       in state#enqueue token
 
+    let mk_lang lang state buffer =
+      let region, _, state = state#sync buffer in
+      let start            = region#start#shift_bytes 1 in
+      let stop             = region#stop in
+      let lang_reg         = Region.make ~start ~stop in
+      let lang             = Region.{value=lang; region=lang_reg} in
+      let token            = Token.mk_lang lang region
+      in state#enqueue token
+
     let mk_sym state buffer =
       let region, lexeme, state = state#sync buffer in
       match Token.mk_sym lexeme region with
@@ -314,7 +324,7 @@ let esc        = "\\n" | "\\\"" | "\\\\" | "\\b"
 
 let common_sym     =   ';' | ',' | '(' | ')'  | '[' | ']'  | '{' | '}'
                      | '=' | ':' | '|' | "->" | '.' | '_'  | '^'
-                     | '+' | '-' | '*' | '/'  | '%' | '<' | "<=" | '>' | ">="
+                     | '+' | '-' | '*' | '/'  | '<' | "<=" | '>' | ">="
 let pascaligo_sym  = "=/=" | '#' | ":="
 let cameligo_sym   = "<>" | "::" | "||" | "&&"
 let reasonligo_sym = '!' | "=>" | "!=" | "==" | "++" | "..." | "||" | "&&"
@@ -388,6 +398,7 @@ and scan state = parse
 | eof                    { mk_eof          state lexbuf }
 | "[@"  (attr as a) "]"  { mk_attr "[@"  a state lexbuf }
 | "[@@" (attr as a) "]"  { mk_attr "[@@" a state lexbuf }
+| "[%"  (attr as l)      { mk_lang       l state lexbuf }
 
   (* Management of #include preprocessing directives
 
@@ -512,7 +523,7 @@ and scan_string thread state = parse
 
 and scan_verbatim thread state = parse
 | eof        { fail thread#opening Unterminated_verbatim}
-| "|}"       { let _, _, state = state#sync lexbuf 
+| "|}"       { let _, _, state = state#sync lexbuf
                in thread, state }
 | _ as c     { let _, _, state = state#sync lexbuf in
                scan_verbatim (thread#push_char c) state lexbuf }

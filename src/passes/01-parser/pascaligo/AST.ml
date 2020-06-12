@@ -82,7 +82,6 @@ type rbrace   = Region.t  (* "}"   *)
 type lbracket = Region.t  (* "["   *)
 type rbracket = Region.t  (* "]"   *)
 type cons     = Region.t  (* "#"   *)
-type percent  = Region.t  (* "%"   *)
 type vbar     = Region.t  (* "|"   *)
 type arrow    = Region.t  (* "->"  *)
 type assign   = Region.t  (* ":="  *)
@@ -437,12 +436,10 @@ and for_collect = {
   block      : block reg
 }
 
-and code_insert = {
-  lbracket  : lbracket;
-  percent   : percent;
-  language  : string reg;
-  code      : expr;
-  rbracket  : rbracket;
+and code_inj = {
+  language : string reg reg;
+  code     : expr;
+  rbracket : rbracket;
 }
 
 and collection =
@@ -453,27 +450,27 @@ and collection =
 (* Expressions *)
 
 and expr =
-  ECase   of expr case reg
-| ECond   of cond_expr reg
-| EAnnot  of annot_expr par reg
-| ELogic  of logic_expr
-| EArith  of arith_expr
-| EString of string_expr
-| EList   of list_expr
-| ESet    of set_expr
-| EConstr of constr_expr
-| ERecord of record reg
-| EProj   of projection reg
-| EUpdate of update reg
-| EMap    of map_expr
-| EVar    of Lexer.lexeme reg
-| ECall   of fun_call
-| EBytes  of (Lexer.lexeme * Hex.t) reg
-| EUnit   of c_Unit
-| ETuple  of tuple_expr
-| EPar    of expr par reg
-| EFun    of fun_expr reg
-| ECodeInsert of code_insert reg
+  ECase    of expr case reg
+| ECond    of cond_expr reg
+| EAnnot   of annot_expr par reg
+| ELogic   of logic_expr
+| EArith   of arith_expr
+| EString  of string_expr
+| EList    of list_expr
+| ESet     of set_expr
+| EConstr  of constr_expr
+| ERecord  of record reg
+| EProj    of projection reg
+| EUpdate  of update reg
+| EMap     of map_expr
+| EVar     of Lexer.lexeme reg
+| ECall    of fun_call
+| EBytes   of (Lexer.lexeme * Hex.t) reg
+| EUnit    of c_Unit
+| ETuple   of tuple_expr
+| EPar     of expr par reg
+| EFun     of fun_expr reg
+| ECodeInj of code_inj reg
 
 and annot_expr = expr * colon * type_expr
 
@@ -688,17 +685,17 @@ let rec expr_to_region = function
 | ERecord e -> record_expr_to_region e
 | EMap    e -> map_expr_to_region e
 | ETuple  e -> tuple_expr_to_region e
-| EUpdate {region; _}
-| EProj  {region; _}
-| EVar   {region; _}
-| ECall  {region; _}
-| EBytes {region; _}
-| EUnit   region
-| ECase  {region;_}
-| ECond  {region; _}
-| EPar   {region; _}
-| EFun   {region; _}
-| ECodeInsert {region; _} -> region
+| EUpdate  {region; _}
+| EProj    {region; _}
+| EVar     {region; _}
+| ECall    {region; _}
+| EBytes   {region; _}
+| EUnit    region
+| ECase    {region;_}
+| ECond    {region; _}
+| EPar     {region; _}
+| EFun     {region; _}
+| ECodeInj {region; _} -> region
 
 and tuple_expr_to_region {region; _} = region
 

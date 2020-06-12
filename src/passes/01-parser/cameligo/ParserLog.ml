@@ -89,12 +89,6 @@ let print_pvar state {region; value} =
             (compact state region) value
   in Buffer.add_string state#buffer line
 
-let print_uident state {region; value} =
-  let line =
-    sprintf "%s: Uident %s\n"
-            (compact state region) value
-  in Buffer.add_string state#buffer line
-
 let print_string state {region; value} =
   let line =
     sprintf "%s: String %S\n"
@@ -103,7 +97,7 @@ let print_string state {region; value} =
 
 let print_verbatim state {region; value} =
   let line =
-    sprintf "%s: Verbatim {|%s|}\n"
+    sprintf "%s: Verbatim %S\n"
             (compact state region) value
   in Buffer.add_string state#buffer line
 
@@ -211,7 +205,7 @@ and print_cartesian state Region.{value;_} =
   print_nsepseq state "*" print_type_expr value
 
 and print_variant state {value = {constr; arg}; _} =
-  print_uident state constr;
+  print_constr state constr;
   match arg with
     None -> ()
   | Some (kwd_of, t_expr) ->
@@ -340,7 +334,7 @@ and print_some_app_pattern state {value; _} =
 
 and print_constr_app_pattern state node =
   let {value=constr, p_opt; _} = node in
-  print_uident state constr;
+  print_constr state constr;
   match p_opt with
     None -> ()
   | Some pattern -> print_pattern state pattern
@@ -366,7 +360,7 @@ and print_expr state = function
 | ESeq seq      -> print_sequence state seq
 | ERecord e     -> print_record_expr state e
 | EConstr e     -> print_constr_expr state e
-| ECodeInsert e -> print_code_insert state e
+| ECodeInj e    -> print_code_inj state e
 
 and print_constr_expr state = function
   ENone e      -> print_none_expr       state e
@@ -519,13 +513,15 @@ and print_comp_expr state = function
 and print_record_expr state e =
   print_ne_injection state print_field_assign e
 
-and print_code_insert state {value; _} =
-  let {lbracket;percent;language;code;rbracket} : code_insert = value in
-  print_token     state lbracket "[";
-  print_token     state percent  "%";
-  print_string    state language;
-  print_expr      state code;
-  print_token     state rbracket "]"
+and print_code_inj state {value; _} =
+  let {language; code; rbracket} = value in
+  let {value=lang; region} = language in
+  let header_stop = region#start#shift_bytes 1 in
+  let header_reg  = Region.make ~start:region#start ~stop:header_stop in
+  print_token  state header_reg "[%";
+  print_string state lang;
+  print_expr   state code;
+  print_token  state rbracket "]"
 
 and print_field_assign state {value; _} =
   let {field_name; assignment; field_expr} = value in
@@ -869,9 +865,9 @@ and pp_expr state = function
 | ESeq {value; region} ->
     pp_loc_node state "ESeq" region;
     pp_injection pp_expr state value
-| ECodeInsert {value; region} ->
-    pp_loc_node state "ECodeInsert" region;
-    pp_code_insert state value
+| ECodeInj {value; region} ->
+    pp_loc_node state "ECodeInj" region;
+    pp_code_inj state value
 
 and pp_fun_expr state node =
   let {binders; lhs_type; body; _} = node in
@@ -893,16 +889,16 @@ and pp_fun_expr state node =
     pp_expr (state#pad 1 0) body
   in ()
 
-and pp_code_insert state (rc : code_insert) =
+and pp_code_inj state rc =
   let () =
-    let state = state#pad 3 0 in
+    let state = state#pad 2 0 in
     pp_node state "<language>";
-    pp_string (state#pad 1 0) rc.language in
+    pp_string (state#pad 1 0) rc.language.value in
   let () =
-    let state = state#pad 3 1 in
+    let state = state#pad 2 1 in
     pp_node state "<code>";
-    pp_expr (state#pad 1 0) rc.code in
-  ()
+    pp_expr (state#pad 1 0) rc.code
+  in ()
 
 and pp_let_in state node =
   let {binding; body; attributes; kwd_rec; _} = node in

@@ -801,20 +801,20 @@ call_expr:
     in ECall {region; value} }
 
 common_expr:
-  "<int>"                             {               EArith (Int $1) }
-| "<mutez>"                           {             EArith (Mutez $1) }
-| "<nat>"                             {               EArith (Nat $1) }
-| "<bytes>"                           {                     EBytes $1 }
-| "<ident>" | module_field            {                       EVar $1 }
-| projection                          {                      EProj $1 }
-| "_"                                 {   EVar {value = "_"; region = $1} }
-| update_record                       {                    EUpdate $1 }
-| "<string>"                          {           EString (String $1) }
-| "<verbatim>"                        {         EString (Verbatim $1) }
-| unit                                {                      EUnit $1 }
-| "false"                             {  ELogic (BoolExpr (False $1)) }
-| "true"                              {   ELogic (BoolExpr (True $1)) }
-| code_insert                         {                ECodeInsert $1 }
+  "<int>"                             {                 EArith (Int $1) }
+| "<mutez>"                           {               EArith (Mutez $1) }
+| "<nat>"                             {                 EArith (Nat $1) }
+| "<bytes>"                           {                       EBytes $1 }
+| "<ident>" | module_field            {                         EVar $1 }
+| projection                          {                        EProj $1 }
+| "_"                                 { EVar {value = "_"; region = $1} }
+| update_record                       {                      EUpdate $1 }
+| "<string>"                          {             EString (String $1) }
+| "<verbatim>"                        {           EString (Verbatim $1) }
+| unit                                {                        EUnit $1 }
+| "false"                             {    ELogic (BoolExpr (False $1)) }
+| "true"                              {     ELogic (BoolExpr (True $1)) }
+| code_inj                            {                     ECodeInj $1 }
 
 core_expr_2:
   common_expr   {                   $1 }
@@ -920,15 +920,10 @@ update_record:
       rbrace   = $6}
     in {region; value} }
 
-code_insert:
-  "[" "%" Constr expr "]" {
-    let region = cover $1 $5 in
-    let value = {
-                  lbracket =$1;
-                  percent  =$2;
-                  language =$3;
-                  code     =$4;
-                  rbracket =$5}
+code_inj:
+  "<lang>" expr "]" {
+    let region   = cover $1.region $3
+    and value    = {language=$1; code=$2; rbracket=$3}
     in {region; value} }
 
 expr_with_let_expr:
