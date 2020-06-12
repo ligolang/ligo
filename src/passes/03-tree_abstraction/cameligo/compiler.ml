@@ -19,7 +19,7 @@ let pseq_to_list = function
   | Some lst -> npseq_to_list lst
 let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 
-open Operators.Tree_abstraction.Cameligo
+open Predefined.Tree_abstraction.Cameligo
 
 let r_split = Location.r_split
 

@@ -3,11 +3,11 @@ open Errors
 open Mini_c
 open Michelson
 open Memory_proto_alpha.Protocol.Script_ir_translator
-open Operators.Stacking
+open Predefined.Stacking
 
 (* This does not makes sense to me *)
 let rec get_operator : constant' -> type_expression -> expression list -> (predicate , stacking_error) result = fun s ty lst ->
-  match Operators.Stacking.get_operators s with
+  match Predefined.Stacking.get_operators s with
   | Some x -> ok x
   | None -> (
       match s with

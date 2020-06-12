@@ -6,7 +6,7 @@
     proto-alpha-utils
     tezos-utils
     mini_c
-    operators
+    predefined
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)

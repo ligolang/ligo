@@ -4,7 +4,7 @@ open Mini_c
 
 open Michelson
 open Memory_proto_alpha.Protocol.Script_ir_translator
-open Operators.Stacking
+open Predefined.Stacking
 
 (*
 module Contract_types = Meta_michelson.Types

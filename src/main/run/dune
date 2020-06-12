@@ -14,7 +14,7 @@
     ast_typed
     spilling
     mini_c
-    operators
+    predefined
     stacking
     compile
   )

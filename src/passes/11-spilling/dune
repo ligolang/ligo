@@ -7,7 +7,7 @@
     ast_typed
     mini_c
     self_mini_c
-    operators
+    predefined
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)

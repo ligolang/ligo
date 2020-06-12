@@ -1,6 +1,6 @@
 (library
-  (name operators)
-  (public_name ligo.operators)
+  (name predefined)
+  (public_name ligo.predefined)
   (libraries
     simple-utils
     tezos-utils

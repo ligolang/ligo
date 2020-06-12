@@ -2,12 +2,8 @@
   (name tree_abstraction)
   (public_name ligo.tree_abstraction)
   (libraries
-    simple-utils
-    tezos-utils
     cameligo
-    pascaligo
-    ast_imperative
-    operators)
+    pascaligo)
   (preprocess
     (pps
       ppx_let

@@ -8,7 +8,7 @@
     ast_core
     ast_typed
     typer_new
-    operators
+    predefined
     environment
   )
   (preprocess

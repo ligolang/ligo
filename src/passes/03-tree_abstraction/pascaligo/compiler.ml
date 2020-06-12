@@ -12,7 +12,7 @@ let npseq_to_ne_list (hd, tl) = (hd, List.map snd tl)
 
 let (<@) f g x = f (g x)
 
-open Operators.Tree_abstraction.Pascaligo
+open Predefined.Tree_abstraction.Pascaligo
 
 let r_split = Location.r_split
 

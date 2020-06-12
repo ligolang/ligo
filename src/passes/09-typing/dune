@@ -8,7 +8,7 @@
     ast_typed
     typer_old
     typer_new
-    operators
+    predefined
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)

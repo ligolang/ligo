@@ -6,7 +6,7 @@
     tezos-utils
     ast_core
     ast_typed
-    operators
+    predefined
     UnionFind
     environment
     typer_common

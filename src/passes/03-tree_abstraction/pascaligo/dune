@@ -6,7 +6,7 @@
     tezos-utils
     cst
     ast_imperative
-    operators)
+    predefined)
   (preprocess
     (pps
       ppx_let
