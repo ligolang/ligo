@@ -69,10 +69,10 @@ module PP = struct
     fprintf ppf "%a -> %a" PP.type_variable type_variable PP.type_expression type_
 
   let expr_environment : _ -> expression_environment -> unit = fun ppf lst ->
-    fprintf ppf "E[%a]" (list_sep environment_element (tag "@,")) lst
+    fprintf ppf "Env:[%a]" (list_sep environment_element (tag "@,")) lst
 
   let type_environment = fun ppf lst ->
-    fprintf ppf "T[%a]" (list_sep type_environment_element (tag "@,")) lst
+    fprintf ppf "Type env:[%a]" (list_sep type_environment_element (tag "@,")) lst
 
   let environment : _ -> environment -> unit = fun ppf e ->
     fprintf ppf "- %a\t%a"

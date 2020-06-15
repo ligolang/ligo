@@ -1,3 +1,4 @@
+open Errors
 open Proto_alpha_utils
 open Trace
 open Mini_c
@@ -7,10 +8,11 @@ open Michelson
 module Stack = Meta_michelson.Stack
 *)
 val empty: environment
-val get : environment -> expression_variable -> michelson result
+val get : environment -> expression_variable ->
+  (michelson , compiler_error) result
 
-val pack_closure : environment -> selector -> michelson result
-val unpack_closure : environment -> michelson result
+val pack_closure : environment -> selector -> (michelson , compiler_error) result
+val unpack_closure : environment -> (michelson , compiler_error) result
 
 (*
 val add : environment -> (string * type_value) -> michelson result

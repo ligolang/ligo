@@ -1,3 +1,4 @@
+open Errors
 open Mini_c.Types
 open Proto_alpha_utils.Memory_proto_alpha
 open X
@@ -6,7 +7,7 @@ open Protocol
 open Script_typed_ir
 open Script_ir_translator
 
-let rec translate_value (Ex_typed_value (ty, value)) : value result =
+let rec translate_value (Ex_typed_value (ty, value)) : (value , compiler_error) result =
   match (ty, value) with
   | Pair_t ((a_ty, _, _), (b_ty, _, _), _ , _), (a, b) -> (
       let%bind a = translate_value @@ Ex_typed_value(a_ty, a) in
@@ -43,7 +44,7 @@ let rec translate_value (Ex_typed_value (ty, value)) : value result =
       ok @@ D_timestamp n
   | (Mutez_t _), n ->
       let%bind n =
-        generic_try (simple_error "too big to fit an int") @@
+        generic_try (corner_case ~loc:__LOC__ "too big to fit an int") @@
         (fun () -> Z.of_int64 @@ Alpha_context.Tez.to_mutez n) in
       ok @@ D_mutez n
   | (Bool_t _), b ->
@@ -115,24 +116,20 @@ let rec translate_value (Ex_typed_value (ty, value)) : value result =
   | (Operation_t _) , (op , _) ->
       ok @@ D_operation op
   | (Lambda_t _ as ty) , _ ->
-      let%bind m_ty =
-        trace_tzresult_lwt (simple_error "unparsing unrecognized data") @@
+      let%bind m_ty = trace_strong (corner_case ~loc:"TODO" "TODO") @@
+        trace_tzresult_lwt unrecognized_data @@
         Proto_alpha_utils.Memory_proto_alpha.unparse_michelson_ty ty in
       let pp_lambda =
         Format.asprintf "[lambda of type: %a ]" Michelson.pp m_ty in
         ok @@ D_string pp_lambda
   | ty, v ->
-      let%bind error =
+      let%bind error = trace_strong (corner_case ~loc:"TODO" "TODO") @@
         let%bind m_data =
-          trace_tzresult_lwt (simple_error "unparsing unrecognized data") @@
+          trace_tzresult_lwt unrecognized_data @@
           Proto_alpha_utils.Memory_proto_alpha.unparse_michelson_data ty v in
         let%bind m_ty =
-          trace_tzresult_lwt (simple_error "unparsing unrecognized data") @@
+          trace_tzresult_lwt unrecognized_data @@
           Proto_alpha_utils.Memory_proto_alpha.unparse_michelson_ty ty in
-        let error_content () =
-          Format.asprintf "%a : %a"
-            Michelson.pp m_data
-            Michelson.pp m_ty in
-        ok @@ (fun () -> error (thunk "this value can't be transpiled back yet") error_content ())
+        fail (untranspilable m_data m_ty)
       in
       fail error

@@ -1,5 +1,6 @@
 open Trace
 open Test_helpers
+open Main_errors
 
 let type_file f =
   Ligo.Compile.Utils.type_file f "cameligo" (Contract "main")
@@ -39,12 +40,12 @@ let init_vote () =
   let%bind result =
     Test_helpers.run_typed_program_with_imperative_input
       (program, state) "main" (e_pair yea (init_storage "basic")) in
-  let%bind (_, storage) = Ast_core.extract_pair result in
-  let%bind storage' = Ast_core.extract_record storage in
+  let%bind (_, storage) = trace_option (test_internal __LOC__) @@ Ast_core.extract_pair result in
+  let%bind storage' = trace_option (test_internal __LOC__) @@ Ast_core.extract_record storage in
 (*  let votes = List.assoc (Label "voters") storage' in
   let%bind votes' = extract_map votes in *)
   let yea = List.assoc (Label "yea") storage' in
-  let%bind () = Ast_core.Misc.assert_value_eq (yea, Ast_core.e_nat Z.one) in
+  let%bind () = trace_option (test_internal __LOC__) @@ Ast_core.Misc.assert_value_eq (yea, Ast_core.e_nat Z.one) in
   ok ()
 
 let main = test_suite "Vote" [

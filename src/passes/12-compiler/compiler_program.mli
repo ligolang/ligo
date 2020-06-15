@@ -1,3 +1,4 @@
+open Errors
 open Trace
 open Mini_c
 
@@ -14,28 +15,11 @@ type compiled_expression = {
   expr : michelson ;
 }
 
-val get_operator : constant' -> type_expression -> expression list -> predicate result
-val translate_expression : expression -> environment -> michelson result
-val translate_function_body : anon_function -> environment_element list -> type_expression -> michelson result
-val translate_value : value -> type_expression -> michelson result 
 
-(*
+val get_operator : constant' -> type_expression -> expression list -> (predicate, compiler_error) result
 
-open Operators.Compiler
+val translate_expression : expression -> environment -> (michelson, compiler_error) result
 
-val get_predicate : string -> type_value -> expression list -> predicate result
+val translate_function_body : anon_function -> environment_element list -> type_expression -> (michelson, compiler_error) result
 
-val translate_function : anon_function -> michelson result
-
-val translate_expression : ?push_var_name:string -> expression -> environment -> ( michelson * environment ) result
-
-val translate_quote_body : anon_function -> michelson result
-
-val get_main : program -> string -> anon_function result
-
-
-module Errors : sig
-  val corner_case : loc:string -> string -> unit -> error
-end
-
-*)
+val translate_value : value -> type_expression -> (michelson, compiler_error) result

@@ -5,6 +5,7 @@
     run
     compile
     uncompile
+    main_errors
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)

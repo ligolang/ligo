@@ -14,7 +14,7 @@ let to_core f stx =
   let%bind core   = Of_sugar.compile sugar in
   ok @@ core
 
-let type_file f stx env =
+let type_file f stx env : (Ast_typed.program * Typesystem.Solver_types.typer_state, _) result =
   let%bind core        = to_core f stx in
   let%bind typed,state = Of_core.compile env core in
   ok @@ (typed,state)
@@ -24,7 +24,7 @@ let to_mini_c f stx env =
   let%bind mini_c     = Of_typed.compile typed in
   ok @@ mini_c
 
-let compile_file f stx ep =
+let compile_file f stx ep : (Michelson.michelson, _) result =
   let%bind typed, _ = type_file f stx @@ Contract ep in
   let%bind mini_c     = Of_typed.compile typed in
   let%bind michelson  = Of_mini_c.aggregate_and_compile_contract mini_c ep in

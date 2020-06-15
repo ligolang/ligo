@@ -42,10 +42,9 @@ let is_tuple_lmap m =
   List.for_all (fun i -> LMap.mem i m) @@ (label_range 0 (LMap.cardinal m))
 
 let get_pair m =
-  let open Trace in
   match (LMap.find_opt (Label "0") m , LMap.find_opt (Label "1") m) with
-  | Some e1, Some e2 -> ok (e1,e2)
-  | _ -> simple_fail "not a pair"
+  | Some e1, Some e2 -> Some (e1,e2)
+  | _ -> None
 
 let tuple_of_record (m: _ LMap.t) =
   let aux i = 

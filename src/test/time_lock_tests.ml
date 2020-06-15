@@ -1,4 +1,5 @@
 open Trace
+open Main_errors
 open Test_helpers
 
 let type_file f = 
@@ -36,7 +37,7 @@ let call msg = e_constructor "Call" msg
 let mk_time st =
   match Memory_proto_alpha.Protocol.Alpha_context.Timestamp.of_notation st with
   | Some s -> ok s
-  | None -> simple_fail "bad timestamp notation"
+  | None -> fail @@ test_internal "bad timestamp notation"
 let to_sec t = Tezos_utils.Time.Protocol.to_seconds t
 let storage st = e_timestamp (Int64.to_int @@ to_sec st)
 

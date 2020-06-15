@@ -1,4 +1,5 @@
 open Trace
+open Typer_common.Errors
 
 module I = Ast_core
 module O = Ast_typed
@@ -140,15 +141,15 @@ let unconvert_constant' : O.constant' -> I.constant' = function
   | C_CONVERT_FROM_LEFT_COMB -> C_CONVERT_FROM_LEFT_COMB
   | C_CONVERT_FROM_RIGHT_COMB -> C_CONVERT_FROM_RIGHT_COMB
 
-let untype_type_value (t:O.type_expression) : (I.type_expression) result =
+let untype_type_value (t:O.type_expression) : (I.type_expression, typer_error) result =
   match t.type_meta with
   | Some s -> ok s
-  | _ -> fail @@ internal_assertion_failure "trying to untype generated type"
+  | _ -> fail @@ corner_case "trying to untype generated type"
 
 (*
   Tranform a Ast_typed type_expression into an ast_core type_expression
 *)
-let rec untype_type_expression (t:O.type_expression) : (I.type_expression) result =
+let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer_error) result =
   (* TODO: or should we use t.core if present? *)
   let%bind t = match t.type_content with
   | O.T_sum x ->
@@ -213,7 +214,7 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression) resul
 (*
   Tranform a Ast_typed literal into an ast_core literal
 *)
-let untype_literal (l:O.literal) : I.literal result =
+let untype_literal (l:O.literal) : (I.literal, typer_error) result =
   let open I in
   match l with
   | Literal_unit -> ok Literal_unit
@@ -234,7 +235,7 @@ let untype_literal (l:O.literal) : I.literal result =
 (*
   Tranform a Ast_typed expression into an ast_core matching
 *)
-let rec untype_expression (e:O.expression) : (I.expression) result =
+let rec untype_expression (e:O.expression) : (I.expression, typer_error) result =
   let open I in
   let return e = ok e in
   match e.expression_content with
@@ -290,8 +291,8 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
       let%bind fun_type = untype_type_expression fun_type in
       return @@ e_recursive fun_name fun_type lambda
 
-and untype_lambda ty {binder; result} : I.lambda result =
-      let%bind io = get_t_function ty in
+and untype_lambda ty {binder; result} : (I.lambda, typer_error) result =
+      let%bind io = trace_option (corner_case "TODO") @@ get_t_function ty in
       let%bind (input_type , output_type) = bind_map_pair untype_type_value io in
       let%bind result = untype_expression result in
       ok ({binder;input_type = Some input_type; output_type = Some output_type; result}: I.lambda)
@@ -299,7 +300,7 @@ and untype_lambda ty {binder; result} : I.lambda result =
 (*
   Tranform a Ast_typed matching into an ast_core matching
 *)
-and untype_matching : (O.expression -> I.expression result) -> O.matching_expr -> I.matching_expr result = fun f m ->
+and untype_matching : (O.expression -> (I.expression, typer_error) result) -> O.matching_expr -> (I.matching_expr, typer_error) result = fun f m ->
   let open I in
   match m with
   | Match_option {match_none ; match_some = {opt; body;tv=_}} ->

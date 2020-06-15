@@ -2,6 +2,7 @@
   (name typer_old)
   (public_name ligo.typer_old)
   (libraries
+    typer_common
     simple-utils
     tezos-utils
     ast_core

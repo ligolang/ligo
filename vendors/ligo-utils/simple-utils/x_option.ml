@@ -35,6 +35,9 @@ let bind_eager_or = fun a b -> match (a , b) with
   | _ , Some b -> Some b
   | _ -> None
 
+let map_pair_or = fun (fa, fb) p ->
+  bind_eager_or (fa p) (fb p)
+
 let bind_union (a , b) = match (a , b) with
   | Some x , _ -> Some (`Left x)
   | None , Some x -> Some (`Right x)
@@ -85,3 +88,13 @@ let compare compare x y =
   | (None, Some _) -> -1
   | (Some _, None) -> 1
   | (Some x, Some y) -> compare x y
+
+let is_some x =
+  match x with
+  | Some _ -> true
+  | None -> false
+
+let is_none x =
+  match x with
+  | Some _ -> false
+  | None -> true

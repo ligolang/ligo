@@ -4,6 +4,8 @@ For more info, see back-end.md: https://gitlab.com/ligolang/ligo/blob/dev/gitlab
 
 open Trace
 open Helpers
+module Errors = Errors
+open Errors
 
 module AST = Ast_typed
 module Append_tree = Tree.Append
@@ -14,96 +16,6 @@ let untranspile = Untranspiler.untranspile
 
 let temp_unwrap_loc = Location.unwrap
 let temp_unwrap_loc_list = List.map Location.unwrap
-
-module Errors = struct
-  let corner_case ~loc message =
-    let title () = "corner case" in
-    let content () = "we don't have a good error message for this case. we are
-striving find ways to better report them and find the use-cases that generate
-them. please report this to the developers." in
-    let data = [
-      ("location" , fun () -> loc) ;
-      ("message" , fun () -> message) ;
-    ] in
-    error ~data title content
-
-  let no_type_variable name =
-    let title () = "type variables can't be transpiled" in
-    let content () = Format.asprintf "%a" Var.pp name in
-    error title content
-
-  let not_functional_main location =
-    let title () = "not functional main" in
-    let content () = "main should be a function" in
-    let data = [
-      ("location" , fun () -> Format.asprintf "%a" Location.pp location) ;
-    ] in
-    error ~data title content
-
-  let bad_big_map location =
-    let title () = "bad arguments for main" in
-    let content () = "only one big_map per program which must appear
-      on the left hand side of a pair in the contract's storage" in
-    let data = [
-      ("location" , fun () -> Format.asprintf "%a" Location.pp location) ;
-    ] in
-    error ~data title content
-
-  let missing_entry_point name =
-    let title () = "missing entry point" in
-    let content () = "no entry point with the given name" in
-    let data = [
-      ("name" , fun () -> name) ;
-    ] in
-    error ~data title content
-
-  let wrong_mini_c_value expected_type actual =
-    let title () = "transpiler: illed typed intermediary value" in
-    let content () = "type of intermediary value doesn't match what was expected" in
-    let data = [
-      ("expected_type" , fun () -> expected_type) ;
-      ("actual" , fun () -> Format.asprintf "%a" Mini_c.PP.value actual ) ;
-    ] in
-    error ~data title content
-
-  let bad_untranspile bad_type value =
-    let title () = "untranspiling bad value" in
-    let content () = Format.asprintf "can not untranspile %s" bad_type in
-    let data = [
-      ("bad_type" , fun () -> bad_type) ;
-      ("value" , fun () -> Format.asprintf "%a" Mini_c.PP.value value) ;
-    ] in
-    error ~data title content
-
-  let unknown_untranspile unknown_type value =
-    let title () = "untranspiling unknown value" in
-    let content () = Format.asprintf "can not untranspile %s" unknown_type in
-    let data = [
-      ("unknown_type" , fun () -> unknown_type) ;
-      ("value" , fun () -> Format.asprintf "%a" Mini_c.PP.value value) ;
-    ] in
-    error ~data title content
-  
-  let unsupported_recursive_function expression_variable =
-    let title () = "unsupported recursive function yet" in
-    let content () = "only fuction with one variable are supported" in
-    let data = [
-      ("value" , fun () -> Format.asprintf "%a" AST.PP.expression_variable expression_variable) ;
-    ] in
-    error ~data title content
-
-  let language_backend_mismatch language backend =
-    let title () = "Language insert - Backend Mismatch" in
-    let content () = "only provide code insertion in the language you are compiling to" in
-    let data = [
-      ("Code Insertion Language", fun () -> language);
-      ("Target backend", fun () -> backend);
-    ] in
-    error ~data title content
-
-
-end
-open Errors
 
 let transpile_constant' : AST.constant' -> constant' = function
   | C_INT -> C_INT
@@ -224,7 +136,7 @@ let transpile_constant' : AST.constant' -> constant' = function
   | C_CONVERT_FROM_LEFT_COMB -> C_CONVERT_FROM_LEFT_COMB
   | C_CONVERT_FROM_RIGHT_COMB -> C_CONVERT_FROM_RIGHT_COMB
 
-let rec transpile_type (t:AST.type_expression) : type_expression result =
+let rec transpile_type (t:AST.type_expression) : (type_expression, transpiler_error) result =
   let return tc = ok @@ Expression.make_t ~loc:t.location @@ tc in
   match t.type_content with
   | T_variable (name) when Var.equal name Stage_common.Constant.t_bool -> return (T_base TB_bool)
@@ -266,7 +178,7 @@ let rec transpile_type (t:AST.type_expression) : type_expression result =
       return (T_option o')
   | T_sum m when Ast_typed.Helpers.is_michelson_or m ->
       let node = Append_tree.of_list @@ kv_list_of_cmap m in
-      let aux a b : type_expression annotated result =
+      let aux a b : (type_expression annotated , transpiler_error) result =
         let%bind a = a in
         let%bind b = b in
         let%bind t = return @@ T_or (a,b) in
@@ -280,7 +192,7 @@ let rec transpile_type (t:AST.type_expression) : type_expression result =
       ok @@ snd m'
   | T_sum m ->
       let node = Append_tree.of_list @@ kv_list_of_cmap m in
-      let aux a b : type_expression annotated result =
+      let aux a b : (type_expression annotated , transpiler_error) result =
         let%bind a = a in
         let%bind b = b in
         let%bind t = return @@ T_or (a,b) in
@@ -294,7 +206,7 @@ let rec transpile_type (t:AST.type_expression) : type_expression result =
       ok @@ snd m'
   | T_record m when Ast_typed.Helpers.is_michelson_pair m ->
       let node = Append_tree.of_list @@ Ast_typed.Helpers.tuple_of_record m in
-      let aux a b : type_expression annotated result =
+      let aux a b : (type_expression annotated , transpiler_error) result =
         let%bind a = a in
         let%bind b = b in
         let%bind t = return @@ T_pair (a, b) in
@@ -315,7 +227,7 @@ let rec transpile_type (t:AST.type_expression) : type_expression result =
           List.rev @@ Ast_typed.Types.LMap.to_kv_list m
         )
       in
-      let aux a b : type_expression annotated result =
+      let aux a b : (type_expression annotated, transpiler_error) result =
         let%bind a = a in
         let%bind b = b in
         let%bind t = return @@ T_pair (a, b) in
@@ -338,7 +250,7 @@ let rec transpile_type (t:AST.type_expression) : type_expression result =
       return @@ (T_function (param',result'))
     )
 
-let record_access_to_lr : type_expression -> type_expression AST.label_map -> AST.label -> (type_expression * [`Left | `Right]) list result = fun ty tym ind ->
+let record_access_to_lr : type_expression -> type_expression AST.label_map -> AST.label -> ((type_expression * [`Left | `Right]) list , transpiler_error) result = fun ty tym ind ->
   let tys = Ast_typed.Helpers.kv_list_of_record_or_tuple tym in
   let node_tv = Append_tree.of_list tys in
   let%bind path =
@@ -349,7 +261,7 @@ let record_access_to_lr : type_expression -> type_expression AST.label_map -> AS
   let%bind (_ , lst) =
     let aux = fun (ty , acc) cur ->
       let%bind (a , b) =
-        trace_strong (corner_case ~loc:__LOC__ "record access pair") @@
+        trace_option (corner_case ~loc:__LOC__ "record access pair") @@
         Mini_c.get_t_pair ty in
       match cur with
       | `Left -> ok (a , acc @ [(a , `Left)])
@@ -373,19 +285,17 @@ let rec transpile_literal : AST.literal -> value = fun l -> match l with
   | Literal_unit -> D_unit
   | Literal_void -> D_none
 
-and tree_of_sum : AST.type_expression -> (AST.constructor' * AST.type_expression) Append_tree.t result = fun t ->
-  let%bind map_tv = get_t_sum t in
+and tree_of_sum : AST.type_expression -> ((AST.constructor' * AST.type_expression) Append_tree.t, transpiler_error) result = fun t ->
+  let%bind map_tv =
+    trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
+    get_t_sum t in
   let kt_list = List.map (fun (k,({ctor_type;_}:AST.ctor_content)) -> (k,ctor_type)) (kv_list_of_cmap map_tv) in
   ok @@ Append_tree.of_list kt_list
 
-and transpile_annotated_expression (ae:AST.expression) : expression result =
+and transpile_annotated_expression (ae:AST.expression) : (expression , transpiler_error) result =
   let%bind tv = transpile_type ae.type_expression in
   let return ?(tv = tv) expr = ok @@ Combinators.Expression.make_tpl ~loc:ae.location (expr, tv) in
-  let info =
-    let title () = "translating expression" in
-    let content () = Format.asprintf "%a" Location.pp ae.location in
-    info title content in
-  trace info @@
+  trace (translation_tracer ae.location) @@
   match ae.expression_content with
   | E_let_in {let_binder; rhs; let_result; inline} ->
     let%bind rhs' = transpile_annotated_expression rhs in
@@ -407,17 +317,17 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       let%bind node_tv =
         trace_strong (corner_case ~loc:__LOC__ "getting lr tree") @@
         tree_of_sum ae.type_expression in
-      let leaf (k, tv) : (expression_content option * type_expression) result =
+      let leaf (k, tv) : (expression_content option * type_expression , transpiler_error) result =
         if k = constructor then (
           let%bind _ =
-            trace_strong (corner_case ~loc:__LOC__ "wrong type for constructor parameter")
+            trace_option (corner_case ~loc:__LOC__ "wrong type for constructor parameter")
             @@ AST.assert_type_expression_eq (tv, element.type_expression) in
           ok (Some (param'_expr), param'_tv)
         ) else (
           let%bind tv = transpile_type tv in
           ok (None, tv)
         ) in
-      let node a b : (expression_content option * type_expression) result =
+      let node a b : (expression_content option * type_expression , transpiler_error) result =
         let%bind a = a in
         let%bind b = b in
         match (a, b) with
@@ -434,7 +344,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
     )
   | E_record m -> (
       let node = Append_tree.of_list @@ Ast_typed.Helpers.list_of_record_or_tuple m in
-      let aux a b : expression result =
+      let aux a b : (expression , transpiler_error) result =
         let%bind a = a in
         let%bind b = b in
         let a_ty = Combinators.Expression.get_type a in
@@ -448,12 +358,10 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
   | E_record_accessor {record; path} ->
       let%bind ty' = transpile_type (get_type_expression record) in
       let%bind ty_lmap =
-        trace_strong (corner_case ~loc:__LOC__ "not a record") @@
+        trace_option (corner_case ~loc:__LOC__ "not a record") @@
         get_t_record (get_type_expression record) in
       let%bind ty'_lmap = Ast_typed.Helpers.bind_map_lmap_t transpile_type ty_lmap in
-      let%bind path =
-        trace_strong (corner_case ~loc:__LOC__ "record access") @@
-        record_access_to_lr ty' ty'_lmap path in
+      let%bind path = record_access_to_lr ty' ty'_lmap path in
       let aux = fun pred (ty, lr) ->
         let c = match lr with
           | `Left  -> C_CAR
@@ -468,7 +376,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       let rec aux res (r,p,up) =
         let ty = get_type_expression r in
         let%bind ty_lmap =
-          trace_strong (corner_case ~loc:__LOC__ "not a record") @@
+          trace_option (corner_case ~loc:__LOC__ "not a record") @@
           get_t_record (ty) in
         let%bind ty' = transpile_type (ty) in 
         let%bind ty'_lmap = Ast_typed.Helpers.bind_map_lmap_t transpile_type ty_lmap in
@@ -495,7 +403,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
   | E_constant {cons_name=name; arguments=lst} -> (
       let iterator_generator iterator_name =
         let expression_to_iterator_body (f : AST.expression) =
-          let%bind (input , output) = AST.get_t_function f.type_expression in
+          let%bind (input , output) = trace_option (corner_case ~loc:__LOC__ "expected function type") @@ AST.get_t_function f.type_expression in
           let%bind f' = transpile_annotated_expression f in
           let%bind input' = transpile_type input in
           let%bind output' = transpile_type output in
@@ -533,7 +441,8 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
         )
     )
   | E_lambda l ->
-    let%bind io = AST.get_t_function ae.type_expression in
+    let%bind io = trace_option (corner_case ~loc:__LOC__ "expected function type") @@
+      AST.get_t_function ae.type_expression in
     transpile_lambda l io
   | E_recursive r ->
     transpile_recursive r
@@ -598,13 +507,13 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
               )
             | ((`Node (a , b)) , tv) ->
                 let%bind a' =
-                  let%bind a_ty = get_t_left tv in
+                  let%bind a_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_left tv in
                   let left_var = Var.fresh ~name:"left" () in
                   let%bind e = aux (((Expression.make (E_variable left_var) a_ty))) a in
                   ok ((left_var , a_ty) , e)
                 in
                 let%bind b' =
-                  let%bind b_ty = get_t_right tv in
+                  let%bind b_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_right tv in
                   let right_var = Var.fresh ~name:"right" () in
                   let%bind e = aux (((Expression.make (E_variable right_var) b_ty))) b in
                   ok ((right_var , b_ty) , e)
@@ -618,12 +527,13 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
   | E_raw_code { language; code} -> 
     let backend = "Michelson" in
     let%bind () =
-      trace_strong (language_backend_mismatch language backend) @@
-      Assert.assert_true (String.equal language backend)
+      Assert.assert_true
+        (corner_case ~loc:__LOC__ "Language insert - backend mismatch only provide code insertion in the language you are compiling to")
+        (String.equal language backend)
     in
     let type_anno  = get_type_expression code in
     let%bind type_anno' = transpile_type type_anno in
-    let%bind code = get_a_string code in
+    let%bind code = trace_option (corner_case ~loc:__LOC__ "could not get a string") @@ get_a_string code in
     return ~tv:type_anno' @@ E_raw_michelson code
 
 and transpile_lambda l (input_type , output_type) =
@@ -637,7 +547,7 @@ and transpile_lambda l (input_type , output_type) =
   ok @@ Combinators.Expression.make_tpl ~loc:result.location (closure , tv)
 
 and transpile_recursive {fun_name; fun_type; lambda} =
-  let rec map_lambda : AST.expression_variable -> type_expression -> AST.expression -> (expression * expression_variable list) result = fun fun_name loop_type e ->
+  let rec map_lambda : AST.expression_variable -> type_expression -> AST.expression -> (expression * expression_variable list , transpiler_error) result = fun fun_name loop_type e ->
     match e.expression_content with 
       E_lambda {binder;result} -> 
         let%bind (body,l) = map_lambda fun_name loop_type result in
@@ -646,7 +556,7 @@ and transpile_recursive {fun_name; fun_type; lambda} =
         let%bind res = replace_callback fun_name loop_type false e in
         ok @@ (res, [])
 
-  and replace_callback : AST.expression_variable -> type_expression -> bool -> AST.expression -> expression result = fun fun_name loop_type shadowed e ->
+  and replace_callback : AST.expression_variable -> type_expression -> bool -> AST.expression -> (expression , transpiler_error) result = fun fun_name loop_type shadowed e ->
     match e.expression_content with
       E_let_in li -> 
         let shadowed = shadowed || Var.equal li.let_binder fun_name in 
@@ -670,7 +580,7 @@ and transpile_recursive {fun_name; fun_type; lambda} =
         let%bind expr = transpile_annotated_expression e in
         ok @@ Expression.make (E_constant {cons_name=C_LOOP_STOP;arguments=[expr]}) loop_type
 
-  and matching : AST.expression_variable -> type_expression -> bool -> AST.matching -> type_expression -> expression result = fun fun_name loop_type shadowed m ty ->
+  and matching : AST.expression_variable -> type_expression -> bool -> AST.matching -> type_expression -> (expression , transpiler_error) result = fun fun_name loop_type shadowed m ty ->
     let return ret = ok @@ Expression.make ret @@ ty in
     let%bind expr = transpile_annotated_expression m.matchee in
     match m.cases with
@@ -731,13 +641,13 @@ and transpile_recursive {fun_name; fun_type; lambda} =
               )
             | ((`Node (a , b)) , tv) ->
                 let%bind a' =
-                  let%bind a_ty = get_t_left tv in
+                  let%bind a_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_left tv in
                   let left_var = Var.fresh ~name:"left" () in
                   let%bind e = aux (((Expression.make (E_variable left_var) a_ty))) a in
                   ok ((left_var , a_ty) , e)
                 in
                 let%bind b' =
-                  let%bind b_ty = get_t_right tv in
+                  let%bind b_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_right tv in
                   let right_var = Var.fresh ~name:"right" () in
                   let%bind e = aux (((Expression.make (E_variable right_var) b_ty))) b in
                   ok ((right_var , b_ty) , e)
@@ -749,7 +659,7 @@ and transpile_recursive {fun_name; fun_type; lambda} =
        )
   in
   let%bind fun_type = transpile_type fun_type in
-  let%bind (input_type,output_type) = get_t_function fun_type in
+  let%bind (input_type,output_type) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_function fun_type in
   let loop_type = t_union (None, input_type) (None, output_type) in
   let%bind (body,binder) = map_lambda fun_name loop_type lambda.result in
   let binder = lambda.binder::binder in
@@ -758,7 +668,7 @@ and transpile_recursive {fun_name; fun_type; lambda} =
   let body = Expression.make (E_iterator (C_LOOP_LEFT, ((lambda.binder, loop_type),body), expr)) output_type in
   ok @@ Expression.make (E_closure {binder;body}) fun_type
 
-let transpile_declaration env (d:AST.declaration) : toplevel_statement option result =
+let transpile_declaration env (d:AST.declaration) : (toplevel_statement option , transpiler_error) result =
   match d with
   | Declaration_constant { binder ; expr ; inline } ->
       let%bind expression = transpile_annotated_expression expr in
@@ -767,8 +677,8 @@ let transpile_declaration env (d:AST.declaration) : toplevel_statement option re
       ok @@ Some ((binder, inline, expression), environment_wrap env env')
   | _ -> ok None
 
-let transpile_program (lst : AST.program) : program result =
-  let aux (prev:(toplevel_statement list * Environment.t) result) cur =
+let transpile_program (lst : AST.program) : (program , transpiler_error) result =
+  let aux (prev:(toplevel_statement list * Environment.t , transpiler_error) result) cur =
     let%bind (hds, env) = prev in
     match%bind transpile_declaration env cur with
     | Some ((_ , env')  as cur') -> ok (hds @ [ cur' ] , env'.post_environment)
@@ -777,63 +687,40 @@ let transpile_program (lst : AST.program) : program result =
   let%bind (statements, _) = List.fold_left aux (ok ([], Environment.empty)) (temp_unwrap_loc_list lst) in
   ok statements
 
-(* check whether the storage contains a big_map, if yes, check that
-  it appears on the left hand side of a pair 
-  TODO : checking should appears in check_pass.  
-*)
-let check_storage f ty loc : (anon_function * _) result =
-  let rec aux (t:type_expression) on_big_map =
-    match t.type_content with
-      | T_big_map _ -> on_big_map
-      | T_pair (a , b) -> (aux (snd a) true) && (aux (snd b) false)
-      | T_or (a,b) -> (aux (snd a) false) && (aux (snd b) false)
-      | T_function (a,b) -> (aux a false) && (aux b false)
-      | T_map (a,b) -> (aux a false) && (aux b false)
-      | T_list a -> (aux a false)
-      | T_set a -> (aux a false)
-      | T_contract a -> (aux a false)
-      | T_option a -> (aux a false)
-      | _ -> true
-  in
-  match f.body.type_expression.type_content with
-    | T_pair (_, storage) ->
-      if aux (snd storage) false then ok (f, ty) else fail @@ bad_big_map loc
-    | _ -> ok (f, ty)
-
-let extract_constructor (v : value) (tree : _ Append_tree.t') : (string * value * AST.type_expression) result =
+let extract_constructor (v : value) (tree : _ Append_tree.t') : (string * value * AST.type_expression , transpiler_error) result =
   let open Append_tree in
-  let rec aux tv : (string * value * AST.type_expression) result=
+  let rec aux tv : (string * value * AST.type_expression , transpiler_error) result=
     match tv with
     | Leaf (k, t), v -> ok (k, v, t)
     | Node {a}, D_left v -> aux (a, v)
     | Node {b}, D_right v -> aux (b, v)
-    | _ -> fail @@ internal_assertion_failure "bad constructor path"
+    | _ -> fail (corner_case ~loc:__LOC__ "extract constructor")
   in
   let%bind (s, v, t) = aux (tree, v) in
   ok (s, v, t)
 
-let extract_tuple (v : value) (tree : AST.type_expression Append_tree.t') : ((value * AST.type_expression) list) result =
+let extract_tuple (v : value) (tree : AST.type_expression Append_tree.t') : ((value * AST.type_expression) list , transpiler_error) result =
   let open Append_tree in
-  let rec aux tv : ((value * AST.type_expression) list) result =
+  let rec aux tv : ((value * AST.type_expression) list , transpiler_error) result =
     match tv with
     | Leaf t, v -> ok @@ [v, t]
     | Node {a;b}, D_pair (va, vb) ->
         let%bind a' = aux (a, va) in
         let%bind b' = aux (b, vb) in
         ok (a' @ b')
-    | _ -> fail @@ internal_assertion_failure "bad tuple path"
+    | _ -> fail (corner_case ~loc:__LOC__ "extract tuple")
   in
   aux (tree, v)
 
-let extract_record (v : value) (tree : _ Append_tree.t') : (_ list) result =
+let extract_record (v : value) (tree : _ Append_tree.t') : (_ list , transpiler_error) result =
   let open Append_tree in
-  let rec aux tv : ((string * (value * AST.type_expression)) list) result =
+  let rec aux tv : ((string * (value * AST.type_expression)) list , transpiler_error) result =
     match tv with
     | Leaf (s, t), v -> ok @@ [s, (v, t)]
     | Node {a;b}, D_pair (va, vb) ->
         let%bind a' = aux (a, va) in
         let%bind b' = aux (b, vb) in
         ok (a' @ b')
-    | _ -> fail @@ internal_assertion_failure "bad record path"
+    | _ -> fail (corner_case ~loc:__LOC__ "bad record path")
   in
   aux (tree, v)

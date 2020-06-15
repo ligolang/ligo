@@ -36,7 +36,7 @@ type 'a extra_info__comparable = {
   compare : 'a -> 'a -> int ;
 }
 
-let fold_map__constructor_map : type a new_a state . (state -> a -> (state * new_a) result) -> state -> a constructor_map -> (state * new_a constructor_map) result =
+let fold_map__constructor_map : type a new_a state err. (state -> a -> (state * new_a, err) result) -> state -> a constructor_map -> (state * new_a constructor_map, err) result =
   fun f state m ->
   let aux k v acc =
     let%bind (state , m) = acc in
@@ -45,7 +45,7 @@ let fold_map__constructor_map : type a new_a state . (state -> a -> (state * new
   let%bind (state , m) = CMap.fold aux m (ok (state, CMap.empty)) in
   ok (state , m)
 
-let fold_map__label_map : type a state new_a . (state -> a -> (state * new_a) result) -> state -> a label_map -> (state * new_a label_map) result =
+let fold_map__label_map : type a state new_a err . (state -> a -> (state * new_a , err) result) -> state -> a label_map -> (state * new_a label_map , err) result =
   fun f state m ->
   let aux k v acc =
     let%bind (state , m) = acc in
@@ -54,7 +54,7 @@ let fold_map__label_map : type a state new_a . (state -> a -> (state * new_a) re
   let%bind (state , m) = LMap.fold aux m (ok (state, LMap.empty)) in
   ok (state , m)
 
-let fold_map__list : type a state new_a . (state -> a -> (state * new_a) result) -> state -> a list -> (state * new_a list) Simple_utils.Trace.result =
+let fold_map__list : type a state new_a err . (state -> a -> (state * new_a , err) result) -> state -> a list -> (state * new_a list , err) result =
   fun f state l ->
   let aux acc element =
     let%bind state , l = acc in
@@ -62,12 +62,12 @@ let fold_map__list : type a state new_a . (state -> a -> (state * new_a) result)
   let%bind (state , l) = List.fold_left aux (ok (state , [])) l in
   ok (state , l)
 
-let fold_map__location_wrap : type a state new_a . (state -> a -> (state * new_a) result) -> state -> a location_wrap -> (state * new_a location_wrap) Simple_utils.Trace.result =
+let fold_map__location_wrap : type a state new_a err . (state -> a -> (state * new_a , err) result) -> state -> a location_wrap -> (state * new_a location_wrap , err) result =
   fun f state { wrap_content ; location } ->
   let%bind ( state , wrap_content ) = f state wrap_content in
   ok (state , ({ wrap_content ; location } : new_a location_wrap))
 
-let fold_map__list_ne : type a state new_a . (state -> a -> (state * new_a) result) -> state -> a list_ne -> (state * new_a list_ne) Simple_utils.Trace.result =
+let fold_map__list_ne : type a state new_a err . (state -> a -> (state * new_a , err) result) -> state -> a list_ne -> (state * new_a list_ne , err) result =
   fun f state (first , l) ->
   let%bind (state , new_first) = f state first in
   let aux acc element =
@@ -77,7 +77,7 @@ let fold_map__list_ne : type a state new_a . (state -> a -> (state * new_a) resu
   let%bind (state , l) = List.fold_left aux (ok (state , [])) l in
   ok (state , (new_first , l))
 
-let fold_map__option : type a state new_a . (state -> a -> (state * new_a) result) -> state -> a option -> (state * new_a option) Simple_utils.Trace.result =
+let fold_map__option : type a state new_a err . (state -> a -> (state * new_a , err) result) -> state -> a option -> (state * new_a option , err) result =
   fun f state o ->
   match o with
   | None -> ok (state, None)
@@ -97,7 +97,7 @@ type 'v typeVariableMap = (type_variable, 'v) RedBlackTrees.PolyMap.t
 
 type 'a poly_set = 'a RedBlackTrees.PolySet.t
 
-let fold_map__poly_unionfind : type a state new_a . new_a extra_info__comparable -> (state -> a -> (state * new_a) result) -> state -> a poly_unionfind -> (state * new_a poly_unionfind) Simple_utils.Trace.result =
+let fold_map__poly_unionfind : type a state new_a err . new_a extra_info__comparable -> (state -> a -> (state * new_a, err) result) -> state -> a poly_unionfind -> (state * new_a poly_unionfind, err) result =
   fun extra_info f state l ->
   ignore (extra_info, f, state, l) ; failwith "TODO
   let aux acc element =
@@ -106,7 +106,7 @@ let fold_map__poly_unionfind : type a state new_a . new_a extra_info__comparable
   let%bind (state , l) = List.fold_left aux (ok (state , [])) l in
   ok (state , l)"
 
-let fold_map__PolyMap : type k v state new_v . (state -> v -> (state * new_v) result) -> state -> (k, v) PolyMap.t -> (state * (k, new_v) PolyMap.t) result =
+let fold_map__PolyMap : type k v state new_v err . (state -> v -> (state * new_v, err) result) -> state -> (k, v) PolyMap.t -> (state * (k, new_v) PolyMap.t , err) result =
   fun f state m ->
   let aux k v ~acc =
     let%bind (state , m) = acc in
@@ -115,10 +115,10 @@ let fold_map__PolyMap : type k v state new_v . (state -> v -> (state * new_v) re
   let%bind (state , m) = PolyMap.fold_inc aux m ~init:(ok (state, PolyMap.empty m)) in
   ok (state , m)
 
-let fold_map__typeVariableMap : type a state new_a . (state -> a -> (state * new_a) result) -> state -> a typeVariableMap -> (state * new_a typeVariableMap) result =
+let fold_map__typeVariableMap : type a state new_a err . (state -> a -> (state * new_a , err) result) -> state -> a typeVariableMap -> (state * new_a typeVariableMap , err) result =
   fold_map__PolyMap
 
-let fold_map__poly_set : type a state new_a . new_a extra_info__comparable -> (state -> a -> (state * new_a) result) -> state -> a poly_set -> (state * new_a poly_set) result =
+let fold_map__poly_set : type a state new_a err . new_a extra_info__comparable -> (state -> a -> (state * new_a, err) result) -> state -> a poly_set -> (state * new_a poly_set, err) result =
   fun extra_info f state s ->
   let new_compare : (new_a -> new_a -> int) = extra_info.compare in
   let aux elt ~acc =

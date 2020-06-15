@@ -6,9 +6,9 @@ let extend :
     = fun env (var,exp) -> Env.add var exp env
 
 let lookup :
-  env -> expression_variable -> value result
+  env -> expression_variable -> (value,_) result
     = fun env var -> match Env.find_opt var env with
       | Some res -> ok res
-      | None -> simple_fail "TODO: not found in env"
+      | None -> failwith "TODO: not found in env"
 
 let empty_env = Env.empty

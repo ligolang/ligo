@@ -9,6 +9,7 @@
     operators
     UnionFind
     environment
+    typer_common
   )
   (preprocess
     (pps ppx_let)

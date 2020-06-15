@@ -858,6 +858,8 @@ let pattern_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_pattern
 let instruction_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_instruction
+let type_expr_to_string ~offsets ~mode =
+  to_string ~offsets ~mode print_type_expr
 
 (* Pretty-printing the AST *)
 

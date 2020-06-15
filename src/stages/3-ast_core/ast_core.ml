@@ -6,3 +6,4 @@ module Types = Types
 module Misc = Misc
 module PP=PP
 module Combinators = Combinators
+module Formatter = Formatter

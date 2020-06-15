@@ -1,5 +1,6 @@
 [@@@warning "-45"]
 
+open Errors_cameligo
 open Trace
 open Ast_imperative
 
@@ -17,152 +18,6 @@ let pseq_to_list = function
   | None -> []
   | Some lst -> npseq_to_list lst
 let get_value : 'a Raw.reg -> 'a = fun x -> x.value
-
-module Errors = struct
-  let wrong_pattern expected_name actual =
-    let title () = "wrong pattern" in
-    let message () =
-      match actual with
-      | Raw.PVar v -> v.value
-      | Raw.PTuple _ -> "tuple"
-      | Raw.PRecord _ -> "record"
-      | Raw.PList _ -> "list"
-      | Raw.PBytes _ -> "bytes"
-      | _ -> "other"
-    in
-    let data = [
-      ("expected", fun () -> expected_name);
-      ("location",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@
-                Raw.pattern_to_region actual)]
-    in error ~data title message
-
-  let unsupported_let_in_function (region : Region.t) (patterns : Raw.pattern list) =
-    let title () = "" in
-    let message () = "\nDefining functions with \"let ... in\" \
-                      is not supported yet.\n" in
-    let patterns_loc =
-      List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p))
-        region patterns in
-    let data = [
-      ("location",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ patterns_loc)]
-    in error ~data title message
-
-  let unknown_predefined_type name =
-    let title () = "Type constants" in
-    let message () =
-      Format.asprintf "Unknown predefined type \"%s\".\n"
-                      name.Region.value in
-    let data = [
-      ("location",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ name.Region.region)]
-    in error ~data title message
-
-  let untyped_fun_param var =
-    let title () = "" in
-    let message () =
-      Format.asprintf "\nUntyped function parameters \
-                       are not supported yet.\n" in
-    let param_loc = var.Region.region in
-    let data = [
-      ("location",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ param_loc)]
-    in error ~data title message
-
-  let untyped_recursive_function var =
-    let title () = "" in
-    let message () =
-      Format.asprintf "\nUntyped recursive functions \
-                       are not supported yet.\n" in
-    let param_loc = var.Region.region in
-    let data = [
-      ("location",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ param_loc)]
-    in error ~data title message
-
-  let unsupported_tuple_pattern p =
-    let title () = "" in
-    let message () =
-      Format.asprintf "\nTuple patterns are not supported yet.\n" in
-    let pattern_loc = Raw.pattern_to_region p in
-    let data = [
-      ("location",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
-    ] in
-    error ~data title message
-
-  let unsupported_cst_constr p =
-    let title () = "" in
-    let message () =
-      Format.asprintf "\nConstant constructors are not supported yet.\n" in
-    let pattern_loc = Raw.pattern_to_region p in
-    let data = [
-      ("location",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)]
-    in error ~data title message
-
-  let unsupported_non_var_pattern p =
-    let title () = "" in
-    let message () =
-      Format.asprintf "\nNon-variable patterns in constructors \
-                       are not supported yet.\n" in
-    let pattern_loc = Raw.pattern_to_region p in
-    let data = [
-      ("location",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
-    ] in
-    error ~data title message
-
-  let abstracting_expr t =
-    let title () = "abstracting expression" in
-    let message () = "" in
-    let data = [
-        ("expression" ,
-         (** TODO: The labelled arguments should be flowing from the CLI. *)
-       thunk @@ Parser_cameligo.ParserLog.expr_to_string
-                 ~offsets:true ~mode:`Point t)]
-    in error ~data title message
-
-  let only_constructors p =
-    let title () = "" in
-    let message () =
-      Format.asprintf "\nCurrently, only constructors are \
-                       supported in patterns.\n" in
-    let pattern_loc = Raw.pattern_to_region p in
-    let data = [
-      ("location",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
-    ] in
-    error ~data title message
-
-  let unsupported_sugared_lists region =
-    let title () = "" in
-    let message () =
-      Format.asprintf "\nCurrently, only empty lists and \
-                       constructors (::) \
-                       are supported in patterns.\n" in
-    let data = [
-      ("location",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ region)]
-    in error ~data title message
-
-  let corner_case description =
-    let title () = "Corner case" in
-    let message () = description in
-    error title message
-
-  let unknown_built_in name =
-    let title () = "\n Unknown built-in function" in
-    let message () = "" in
-    let data = [
-      ("built-in", fun  () -> name);
-    ] in
-    error ~data title message
-
-end
-
-open Errors
 
 open Operators.Concrete_to_imperative.Cameligo
 
@@ -226,8 +81,8 @@ and unpar_pattern : Raw.pattern -> Raw.pattern = function
   | PPar p -> unpar_pattern p.value.inside
   | _ as p -> p
 
-and compile_type_expression : Raw.type_expr -> type_expression result = fun te ->
-  trace (simple_info "abstracting this type expression...") @@
+and compile_type_expression : Raw.type_expr -> (type_expression, abs_error) result = fun te ->
+  trace (abstracting_type_expr_tracer te) @@
   match te with
     TPar x -> compile_type_expression x.value.inside
   | TVar v -> (
@@ -255,38 +110,39 @@ and compile_type_expression : Raw.type_expr -> type_expression result = fun te -
           (match lst with
           | [a ; b ; c ; d ] -> (
             let%bind b' =
-              trace_option (simple_error "second argument of michelson_or must be a string singleton") @@
+              trace_option (michelson_type_wrong te name.value) @@
                 get_t_string_singleton_opt b in
             let%bind d' =
-              trace_option (simple_error "fourth argument of michelson_or must be a string singleton") @@
+              trace_option (michelson_type_wrong te name.value) @@
                 get_t_string_singleton_opt d in
             let%bind a' = compile_type_expression a in
             let%bind c' = compile_type_expression c in
             ok @@ t_michelson_or ~loc a' b' c' d'
             )
-          | _ -> simple_fail "michelson_or does not have the right number of argument")
+          | _ -> fail @@ michelson_type_wrong_arity loc name.value)
         | "michelson_pair" ->
           let lst = npseq_to_list tuple.value.inside in
           (match lst with
           | [a ; b ; c ; d ] -> (
             let%bind b' =
-              trace_option (simple_error "second argument of michelson_pair must be a string singleton") @@
+              trace_option (michelson_type_wrong te name.value) @@
                 get_t_string_singleton_opt b in
             let%bind d' =
-              trace_option (simple_error "fourth argument of michelson_pair must be a string singleton") @@
+              trace_option (michelson_type_wrong te name.value) @@
                 get_t_string_singleton_opt d in
             let%bind a' = compile_type_expression a in
             let%bind c' = compile_type_expression c in
             ok @@ t_michelson_pair ~loc a' b' c' d'
             )
-          | _ -> simple_fail "michelson_pair does not have the right number of argument")
+          | _ -> fail @@ michelson_type_wrong_arity loc name.value)
         | _ ->
           let lst = npseq_to_list tuple.value.inside in
           let%bind lst' = bind_map_list compile_type_expression lst in
           let%bind cst =
           trace_option (unknown_predefined_type name) @@
-          type_operators name.value in
-          ok @@ t_operator ~loc cst lst' )
+            type_operators name.value in
+          ok @@ t_operator ~loc cst lst'
+      )
     )
   | TProd p -> (
       let%bind tpl = compile_list_type_expression  @@ npseq_to_list p.value in
@@ -321,9 +177,9 @@ and compile_type_expression : Raw.type_expr -> type_expression result = fun te -
         @@ npseq_to_list s in
       let m = List.fold_left (fun m ((x,i), y) -> CMap.add (Constructor x) {ctor_type=y;ctor_decl_pos=i} m) CMap.empty lst in
       ok @@ make_t ~loc @@ T_sum m
-  | TString _s -> simple_fail "we don't support singleton string type"
+  | TString _s -> fail @@ unsupported_string_singleton te
 
-and compile_list_type_expression (lst:Raw.type_expr list) : type_expression result =
+and compile_list_type_expression (lst:Raw.type_expr list) : (type_expression , abs_error) result =
   match lst with
   | [] -> ok @@ t_unit ()
   | [hd] -> compile_type_expression hd
@@ -332,7 +188,7 @@ and compile_list_type_expression (lst:Raw.type_expr list) : type_expression resu
       ok @@ t_tuple lst
 
 let rec compile_expression :
-  Raw.expr -> expr result = fun t ->
+  Raw.expr -> (expr , abs_error) result = fun t ->
   let return x = ok x in
   let compile_projection = fun (p:Raw.projection Region.reg) ->
     let (p , loc) = r_split p in
@@ -377,7 +233,7 @@ let compile_update (u: Raw.update Region.reg) =
   let aux ur ((var, path), expr) =
     ok @@ e_update ~loc ur (Access_record var :: path) expr
   in bind_fold_list aux record updates'
-in trace (abstracting_expr t) @@
+in trace (abstracting_expr_tracer t) @@
   match t with
     Raw.ELetIn e ->
       let Raw.{kwd_rec; binding; body; attributes; _} = e.value in
@@ -464,7 +320,7 @@ in trace (abstracting_expr t) @@
                 | Some t -> ok @@ t
                 | None -> match rhs'.expression_content with
                       | E_ascription a -> ok a.type_annotation
-                      | _ -> fail @@ untyped_recursive_function e
+                      | _ -> fail @@ untyped_recursive_fun e.Region.region
               in
               let expression_content = E_recursive {fun_name;fun_type;lambda} in
               let expression_content = E_let_in {li with rhs = {li.rhs with  expression_content}} in
@@ -476,7 +332,7 @@ in trace (abstracting_expr t) @@
 
       (* let f p1 ps... = rhs in body *)
       | (f, p1 :: ps) ->
-        fail @@ unsupported_let_in_function e.region (f :: p1 :: ps)
+        fail @@ unsupported_let_in_function (f :: p1 :: ps)
       end
   | Raw.EAnnot a ->
       let Raw.{inside=expr, _, type_expr; _}, loc = r_split a in
@@ -645,7 +501,7 @@ in trace (abstracting_expr t) @@
       return @@ e_raw_code ~loc language code
     )
 
-and compile_fun lamb' : expr result =
+and compile_fun lamb' : (expr , abs_error) result =
   let return x = ok x in
   let (lamb , loc) = r_split lamb' in
   let%bind params' =
@@ -756,7 +612,7 @@ and compile_fun lamb' : expr result =
   return @@ ret_lamb
 
 
-and compile_logic_expression ?te_annot (t:Raw.logic_expr) : expr result =
+and compile_logic_expression ?te_annot (t:Raw.logic_expr) : (expr , abs_error) result =
   let return x = ok @@ make_option_typed x te_annot in
   match t with
   | BoolExpr (False reg) -> (
@@ -786,7 +642,7 @@ and compile_logic_expression ?te_annot (t:Raw.logic_expr) : expr result =
   | CompExpr (Neq c) ->
       compile_binop "NEQ" c
 
-and compile_list_expression (t:Raw.list_expr) : expression result =
+and compile_list_expression (t:Raw.list_expr) : (expression , abs_error) result =
   let return x = ok @@ x in
   match t with
     ECons c -> compile_binop "CONS" c
@@ -798,7 +654,7 @@ and compile_list_expression (t:Raw.list_expr) : expression result =
       return @@ e_list ~loc lst'
     )
 
-and compile_binop (name:string) (t:_ Raw.bin_op Region.reg) : expression result =
+and compile_binop (name:string) (t:_ Raw.bin_op Region.reg) : (expression , abs_error) result =
   let return x = ok @@ x in
   let (args , loc) = r_split t in
   let%bind a = compile_expression args.arg1 in
@@ -806,14 +662,14 @@ and compile_binop (name:string) (t:_ Raw.bin_op Region.reg) : expression result 
   let%bind name = trace_option (unknown_built_in name) @@ constants name in
   return @@ e_constant ~loc name [ a ; b ]
 
-and compile_unop (name:string) (t:_ Raw.un_op Region.reg) : expression result =
+and compile_unop (name:string) (t:_ Raw.un_op Region.reg) : (expression , abs_error) result =
   let return x = ok @@ x in
   let (t , loc) = r_split t in
   let%bind a = compile_expression t.arg in
   let%bind name = trace_option (unknown_built_in name) @@ constants name in
   return @@ e_constant ~loc name [ a ]
 
-and compile_tuple_expression ?loc (lst:Raw.expr list) : expression result =
+and compile_tuple_expression ?loc (lst:Raw.expr list) : (expression , abs_error) result =
   let return x = ok @@ x in
   match lst with
   | [] -> return @@ e_literal ?loc Literal_unit
@@ -822,7 +678,7 @@ and compile_tuple_expression ?loc (lst:Raw.expr list) : expression result =
       let%bind lst = bind_list @@ List.map compile_expression lst in
       return @@ e_tuple ?loc lst
 
-and compile_declaration : Raw.declaration -> declaration Location.wrap list result =
+and compile_declaration : Raw.declaration -> (declaration Location.wrap list , abs_error) result =
   fun t ->
   let open! Raw in
   let loc : 'a . 'a Raw.reg -> _ -> _ =
@@ -881,7 +737,7 @@ and compile_declaration : Raw.declaration -> declaration Location.wrap list resu
                      gen_access_tuple name ~i: (i + 1) ~accesses
                  in ok (gen_access_tuple name)
                (* TODO: Improve this error message *)
-               | other -> fail @@ abstracting_expr other
+               | other -> fail @@ bad_deconstruction other
           in let%bind decls =
                (* TODO: Rewrite the gen_access_tuple so there's no List.rev *)
                bind_map_list process_variable (List.combine variables (List.rev expr_bind_lst))
@@ -939,7 +795,7 @@ and compile_declaration : Raw.declaration -> declaration Location.wrap list resu
         | Some _ -> match rhs'.expression_content with
           E_lambda lambda ->
             (match lhs_type with
-              None -> fail @@ untyped_recursive_function var
+              None -> fail @@ untyped_recursive_fun var.Region.region
               | Some (lhs_type) ->
               let expression_content = E_recursive {fun_name=binder;fun_type=lhs_type;lambda} in
               ok @@ {rhs' with expression_content})
@@ -948,7 +804,7 @@ and compile_declaration : Raw.declaration -> declaration Location.wrap list resu
       ok @@ [loc x @@ (Declaration_constant (Var.of_name var.value , lhs_type , inline, rhs'))]
     )
 
-and compile_cases : (Raw.pattern * expression) list -> matching_expr result =
+and compile_cases : (Raw.pattern * expression) list -> (matching_expr, abs_error) result =
   fun t ->
   let open Raw in
   let rec get_var (t:Raw.pattern) =
@@ -964,8 +820,7 @@ and compile_cases : (Raw.pattern * expression) list -> matching_expr result =
   let get_single (t:Raw.pattern) =
     let t' = get_tuple t in
     let%bind () =
-      trace_strong (unsupported_tuple_pattern t) @@
-      Assert.assert_list_size t' 1 in
+      Assert.assert_list_size (unsupported_tuple_pattern t) t' 1 in
     ok (List.hd t') in
   let rec get_constr (t:Raw.pattern) =
     match t with
@@ -1011,8 +866,7 @@ and compile_cases : (Raw.pattern * expression) list -> matching_expr result =
   let%bind patterns =
     let aux (x , y) =
       let xs = get_tuple x in
-      trace_strong (unsupported_tuple_pattern x) @@
-      Assert.assert_list_size xs 1 >>? fun () ->
+      let%bind () = Assert.assert_list_size (unsupported_tuple_pattern x) xs 1 in
       ok (List.hd xs , y)
     in
     bind_map_list aux t in
@@ -1023,8 +877,7 @@ and compile_cases : (Raw.pattern * expression) list -> matching_expr result =
   | [(PList (PCons c), cons); (PList (PListComp sugar_nil), nil)]
   | [(PList (PListComp sugar_nil), nil); (PList (PCons c), cons)] ->
       let%bind () =
-        trace_strong (unsupported_sugared_lists sugar_nil.region)
-        @@ Assert.assert_list_empty
+        Assert.assert_list_empty (unsupported_sugared_lists sugar_nil.region)
         @@ pseq_to_list
         @@ sugar_nil.value.elements in
       let%bind (a, b) =
@@ -1034,27 +887,18 @@ and compile_cases : (Raw.pattern * expression) list -> matching_expr result =
         ok (a, b) in
       ok @@ Match_list {match_cons=(Var.of_name a, Var.of_name b, cons); match_nil=nil}
   | lst ->
-      let error x =
-        let title () = "Pattern" in
-         (** TODO: The labelled arguments should be flowing from the CLI. *)
-        let content () =
-          Printf.sprintf "Pattern : %s"
-                         (Parser_cameligo.ParserLog.pattern_to_string
-                            ~offsets:true ~mode:`Point x) in
-        error title content
-      in
       let as_variant () =
-        trace (simple_info "currently, only booleans, lists, options, and constructors \
-                            are supported in patterns") @@
+        trace_strong (unsupported_pattern_type (List.map fst lst)) @@
         let%bind constrs =
           let aux (x, y) =
-            let%bind x' = trace (error x) @@ get_constr x
+            let%bind x' = get_constr x
             in ok (x', y)
           in bind_map_list aux lst
         in ok @@ ez_match_variant constrs in
       let as_option () =
+        trace_strong (unsupported_pattern_type (List.map fst lst)) @@
         let aux (x, y) =
-          let%bind x' = trace (error x) @@ get_constr_opt x
+          let%bind x' = get_constr_opt x
           in ok (x', y) in
         let%bind constrs = bind_map_list aux lst in
         match constrs with
@@ -1065,9 +909,12 @@ and compile_cases : (Raw.pattern * expression) list -> matching_expr result =
            ok @@ Match_option {
                     match_some = (Var.of_name some_var, some_expr);
                     match_none = none_expr }
-        | _ -> simple_fail "bad option pattern"
+        | _ -> fail @@ corner_case "bad option pattern"
       in bind_or (as_option () , as_variant ())
 
-let compile_program : Raw.ast -> program result = fun t ->
-  let%bind decls = bind_map_list compile_declaration @@ nseq_to_list t.decl in
+let compile_program : Raw.ast -> (program , abs_error) result = fun t ->
+  let declarations = nseq_to_list t.decl in
+  let%bind decls =
+    trace (program_tracer declarations) @@
+    bind_map_list compile_declaration declarations in
   ok @@ List.concat @@ decls

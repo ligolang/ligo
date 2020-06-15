@@ -1,5 +1,4 @@
 open Types
-open Simple_utils.Trace
 (*
 module Option = Simple_utils.Option
 
@@ -62,8 +61,8 @@ val e_key : ?loc:Location.t -> string -> expression
 val e_key_hash : ?loc:Location.t -> string -> expression 
 val e_chain_id : ?loc:Location.t -> string -> expression 
 val e_mutez : ?loc:Location.t -> Z.t -> expression
-val e'_bytes : string -> expression_content result
-val e_bytes_hex : ?loc:Location.t -> string -> expression result
+val e'_bytes : string -> expression_content
+val e_bytes_hex : ?loc:Location.t -> string -> expression
 val e_bytes_raw : ?loc:Location.t -> bytes -> expression
 val e_bytes_string : ?loc:Location.t -> string -> expression
 val e_some : ?loc:Location.t -> expression -> expression
@@ -110,20 +109,16 @@ val e_typed_big_map : ?loc:Location.t -> ( expression * expression ) list  -> ty
 val e_typed_set : ?loc:Location.t -> expression list -> type_expression -> expression
 
 
-val assert_e_accessor : expression_content -> unit result
+val assert_e_accessor : expression_content -> unit option
 
-val get_e_pair : expression_content -> ( expression * expression ) result
+val get_e_pair : expression_content ->  (expression * expression)  option
 
-val get_e_list : expression_content -> ( expression list ) result
-val get_e_tuple : expression_content -> ( expression list ) result
-(*
-val get_e_failwith : expression -> expression result 
-val is_e_failwith : expression -> bool
-*)
-val extract_pair : expression -> ( expression * expression ) result 
+val get_e_list : expression_content -> (expression list) option
+val get_e_tuple : expression_content -> (expression list) option
+val extract_pair : expression -> (expression * expression) option
 
-val extract_list : expression -> (expression list) result
+val extract_list : expression -> (expression list) option
 
-val extract_record : expression -> (label * expression) list result
+val extract_record : expression -> ((label * expression) list) option
 
-val extract_map : expression -> (expression * expression) list result
+val extract_map : expression -> ((expression * expression) list) option
