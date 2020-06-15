@@ -1,6 +1,7 @@
 open Trace
 open Test_helpers
 open Ast_imperative
+open Main_errors
 
 let type_file f =
   let%bind typed,state = Ligo.Compile.Utils.type_file f "cameligo" (Contract "main") in
@@ -29,7 +30,7 @@ let call msg = e_constructor "Call" msg
 let mk_time st =
   match Memory_proto_alpha.Protocol.Alpha_context.Timestamp.of_notation st with
   | Some s -> ok s
-  | None -> simple_fail "bad timestamp notation"
+  | None -> fail @@ test_internal "bad timestamp notation"
 let to_sec t = Tezos_utils.Time.Protocol.to_seconds t
 let storage hashed used commits =
   e_record_ez [("hashed", hashed);

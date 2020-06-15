@@ -1,25 +1,31 @@
 open Trace
+open Main_errors
 
 type test_case = unit Alcotest.test_case
 type test =
   | Test_suite of (string * test list)
   | Test of test_case
 
+let test_format : 'a Simple_utils.Display.format = {
+  (* do not display anything if test succeed *)
+  pp = (fun ~display_format _ _ -> ignore display_format; ()) ;
+  to_json = (fun _ -> (`Null:Display.json)) ;
+}
+
 let wrap_test name f =
   let result =
-    trace (error (thunk "running test") (thunk name)) @@
-    f () in
+    trace (test_tracer name) @@
+    f ()
+  in
+  let format = Display.bind_format test_format Main.Formatter.error_format in
+  let disp = Simple_utils.Display.Displayable {value=result ; format} in
+  let s = Simple_utils.Display.convert ~display_format:(Human_readable) disp in
   match result with
   | Ok ((), annotations) -> ignore annotations; ()
-  | Error err ->
-    Format.printf "%a\n%!" (Ligo.Display.error_pp ~dev:true) (err ()) ;
+  | Error _ ->
+    Format.printf "%s\n%!" s ;
     raise Alcotest.Test_error
 
-let wrap_test_raw f =
-  match f () with
-  | Ok ((), annotations) -> ignore annotations; ()
-  | Error err ->
-    Format.printf "%a\n%!" (Ligo.Display.error_pp ~dev:true) (err ())
 
 let test name f =
   Test (
@@ -36,7 +42,7 @@ let expression_to_core expression =
 
 open Ast_imperative
 
-let pack_payload (program:Ast_typed.program) (payload:expression) : bytes result =
+let pack_payload (program:Ast_typed.program) (payload:expression) : (bytes,_) result =
   let%bind code =
     let env = Ast_typed.program_environment Environment.default program in
 
@@ -51,7 +57,7 @@ let pack_payload (program:Ast_typed.program) (payload:expression) : bytes result
     Ligo.Run.Of_michelson.evaluate_expression code.expr code.expr_ty in
   Ligo.Run.Of_michelson.pack_payload payload payload_ty
 
-let sign_message (program:Ast_typed.program) (payload : expression) sk : string result =
+let sign_message (program:Ast_typed.program) (payload : expression) sk : (string,_) result =
   let open Tezos_crypto in
   let%bind packed_payload = pack_payload program payload in
   let signed_data = Signature.sign sk packed_payload in
@@ -87,7 +93,7 @@ open Ast_imperative.Combinators
 
 let typed_program_with_imperative_input_to_michelson
     ((program , state): Ast_typed.program * Typesystem.Solver_types.typer_state) (entry_point: string)
-    (input: Ast_imperative.expression) : Compiler.compiled_expression result =
+    (input: Ast_imperative.expression) : (Compiler.compiled_expression,_) result =
   Printexc.record_backtrace true;
   let env = Ast_typed.program_environment Environment.default program in
   let%bind sugar            = Compile.Of_imperative.compile_expression input in
@@ -100,81 +106,62 @@ let typed_program_with_imperative_input_to_michelson
 
 let run_typed_program_with_imperative_input ?options
     ((program , state): Ast_typed.program * Typesystem.Solver_types.typer_state) (entry_point: string)
-    (input: Ast_imperative.expression) : Ast_core.expression result =
+    (input: Ast_imperative.expression) : (Ast_core.expression, _) result =
   let%bind michelson_program = typed_program_with_imperative_input_to_michelson (program , state) entry_point input in
   let%bind michelson_output  = Ligo.Run.Of_michelson.run_no_failwith ?options michelson_program.expr michelson_program.expr_ty in
-  Uncompile.uncompile_typed_program_entry_function_result program entry_point michelson_output
+  let%bind res =  Uncompile.uncompile_typed_program_entry_function_result program entry_point (Runned_result.Success michelson_output) in
+  match res with
+  | Runned_result.Success exp -> ok exp
+  | Runned_result.Fail _ -> fail test_not_expected_to_fail
  
 let expect ?options program entry_point input expecter =
   let%bind result =
-    let run_error =
-      let title () = "expect run" in
-      let content () = Format.asprintf "Entry_point: %s" entry_point in
-      error title content
-    in
-    trace run_error @@
+    trace (test_run_tracer entry_point) @@
     run_typed_program_with_imperative_input ?options program entry_point input in
   expecter result
 
 let expect_fail ?options program entry_point input =
-  let run_error =
-    let title () = "expect run" in
-    let content () = Format.asprintf "Entry_point: %s" entry_point in
-    error title content
-  in
-  trace run_error @@
-  Assert.assert_fail @@
-  run_typed_program_with_imperative_input ?options program entry_point input
+  trace (test_run_tracer entry_point) @@
+    Assert.assert_fail (test_expected_to_fail) @@
+    run_typed_program_with_imperative_input ?options program entry_point input
 
 let expect_string_failwith ?options program entry_point input expected_failwith =
   let%bind michelson_program = typed_program_with_imperative_input_to_michelson program entry_point input in
   let%bind err = Ligo.Run.Of_michelson.run_failwith
     ?options michelson_program.expr michelson_program.expr_ty in
   match err with
-    | Ligo.Run.Of_michelson.Failwith_string s -> Assert.assert_equal_string expected_failwith s
-    | _ -> simple_fail "Expected to fail with a string"
+    | Runned_result.Failwith_string s when String.equal s expected_failwith -> ok ()
+    | _ -> fail test_expected_to_fail
 
 let expect_eq ?options program entry_point input expected =
   let%bind expected = expression_to_core expected in
   let expecter = fun result ->
-    let expect_error =
-      let title () = "expect result" in
-      let content () = Format.asprintf "Expected %a, got %a"
-          Ast_core.PP.expression expected
-          Ast_core.PP.expression result in
-      error title content in
-    trace expect_error @@
+    trace_option (test_expect expected result) @@
     Ast_core.Misc.assert_value_eq (expected,result) in
   expect ?options program entry_point input expecter
 
 let expect_eq_core ?options program entry_point input expected =
   let expecter = fun result ->
-    let expect_error =
-      let title () = "expect result" in
-      let content () = Format.asprintf "Expected %a, got %a"
-          Ast_core.PP.expression expected
-          Ast_core.PP.expression result in
-      error title content in
-    trace expect_error @@
+    trace_option (test_expect expected result) @@
     Ast_core.Misc.assert_value_eq (expected,result) in
   expect ?options program entry_point input expecter
 
 let expect_evaluate (program, _state) entry_point expecter =
-  let error =
-    let title () = "expect evaluate" in
-    let content () = Format.asprintf "Entry_point: %s" entry_point in
-    error title content in
-  trace error @@
+  trace (test_run_tracer entry_point) @@
   let%bind mini_c          = Ligo.Compile.Of_typed.compile program in
-  let%bind (exp,_)         = Mini_c.get_entry mini_c entry_point in
+  let%bind (exp,_)         = trace_option unknown @@ Mini_c.get_entry mini_c entry_point in
   let%bind michelson_value = Ligo.Compile.Of_mini_c.aggregate_and_compile_expression mini_c exp in
   let%bind res_michelson   = Ligo.Run.Of_michelson.run_no_failwith michelson_value.expr michelson_value.expr_ty in
-  let%bind res_simpl       = Uncompile.uncompile_typed_program_entry_expression_result program entry_point res_michelson in
-  expecter res_simpl
+  let%bind res             = Uncompile.uncompile_typed_program_entry_expression_result program entry_point (Success res_michelson) in
+  let%bind res' = match res with
+  | Runned_result.Success exp -> ok exp
+  | Runned_result.Fail _ -> fail test_not_expected_to_fail in
+  expecter res'
 
 let expect_eq_evaluate ((program , state) : Ast_typed.program * Typesystem.Solver_types.typer_state) entry_point expected =
   let%bind expected  = expression_to_core expected in
   let expecter = fun result ->
+    trace_option (test_expect expected result) @@
     Ast_core.Misc.assert_value_eq (expected , result) in
   expect_evaluate (program, state) entry_point expecter
 
@@ -182,7 +169,7 @@ let expect_n_aux ?options lst program entry_point make_input make_expecter =
   let aux n =
     let input = make_input n in
     let expecter = make_expecter n in
-    trace (simple_error ("expect_n " ^ (string_of_int n))) @@
+    trace (test_expect_n_tracer n) @@
     let result = expect ?options program entry_point input expecter in
     result
   in
@@ -193,7 +180,7 @@ let expect_eq_n_trace_aux ?options lst program entry_point make_input make_expec
   let aux n =
     let%bind input = make_input n in
     let%bind expected = make_expected n in
-    trace (simple_error ("expect_eq_n " ^ (string_of_int n))) @@
+    trace (test_expect_n_tracer n) @@
     let result = expect_eq ?options program entry_point input expected in
     result
   in
@@ -204,8 +191,7 @@ let expect_eq_exp_trace_aux ?options explst program entry_point make_input make_
   let aux exp =
     let%bind input = make_input exp in
     let%bind expected = make_expected exp in
-    let pps = Format.asprintf "%a" Ast_core.PP.expression exp in
-    trace (simple_error ("expect_eq_exp " ^ pps )) @@
+    trace (test_expect_exp_tracer exp) @@
     let result = expect_eq ?options program entry_point input expected in
     result
   in
@@ -216,8 +202,7 @@ let expect_failwith_exp_trace_aux ?options explst program entry_point make_input
   let aux exp =
     let%bind input = make_input exp in
     let%bind expected = make_expected_failwith exp in
-    let pps = Format.asprintf "%a" Ast_core.PP.expression exp in
-    trace (simple_error ("expect_eq_exp " ^ pps )) @@
+    trace (test_expect_exp_tracer exp) @@
     let result = expect_string_failwith ?options program entry_point input expected in
     result
   in
@@ -228,7 +213,7 @@ let expect_eq_n_aux ?options lst program entry_point make_input make_expected =
   let aux n =
     let input = make_input n in
     let expected = make_expected n in
-    trace (simple_error ("expect_eq_n " ^ (string_of_int n))) @@
+    trace (test_expect_eq_n_tracer n) @@
     let result = expect_eq ?options program entry_point input expected in
     result
   in

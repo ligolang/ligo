@@ -1,17 +1,8 @@
 open Trace
 open Test_helpers
+open Main_errors
 
 module SnippetsGroup = Map.Make(struct type t = (string * string) let compare a b = compare a b end)
-
-let failed_to_compile_md_file md_file (s,group,prg) =
-  let title () = "Failed to compile ```"^s^" block (group '"^group^"') in file '"^md_file^"'" in
-  let content () = "\n"^prg in
-  error title content
-
-let bad_code_block_argument arg =
-  let title () = Format.asprintf "Bad code block argument '%s'" arg in
-  let content () = "only 'group=NAME' or 'skip' are allowed" in
-  error title content
 
 (**
   binds the snippets by (syntax, group_name)
@@ -31,7 +22,7 @@ let get_groups md_file =
         let%bind () = bind_iter_list
           (fun arg -> match arg with
           | Md.Field "" | Md.Field "skip" | Md.NameValue ("group",_) -> ok ()
-          | Md.Field f | Md.NameValue (f,_) -> fail @@ bad_code_block_argument f)
+          | Md.Field f | Md.NameValue (f,_) -> fail @@ test_code_block_arg f)
           el.arguments in
         match el.arguments with
         | [Md.Field ""] ->
@@ -63,10 +54,10 @@ let get_groups md_file =
 (**
   evaluate each expression in each programs from the snippets group map
 **)
-let compile_groups _filename grp_list =
+let compile_groups filename grp_list =
   let%bind (_michelsons : Compiler.compiled_expression list list) = bind_map_list
     (fun ((s,grp),contents) ->
-      trace (failed_to_compile_md_file _filename (s,grp,contents)) @@
+      trace (test_md_file_tracer filename s grp contents) @@
       let%bind v_syntax   = Compile.Helpers.syntax_to_variant (Syntax_name s) None in
       let%bind imperative = Compile.Of_source.compile_string contents v_syntax in
       let%bind sugar      = Ligo.Compile.Of_imperative.compile imperative in

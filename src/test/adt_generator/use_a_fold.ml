@@ -6,17 +6,11 @@ module O = Fold.O
 
 let (|>) v f = f v
 
-module Errors = struct
-  let test_fail msg =
-    let title () = "test failed" in
-    let message () = msg in
-    error title message
-end
-
 (* TODO: how should we plug these into our test framework? *)
-let test (x : unit result) : unit = match x with
+let test (x : (unit,_) result) : unit = match x with
 | Ok (() , _annotation_thunk) -> ()
-| Error err -> failwith (Yojson.Basic.to_string @@ err ())
+(* | Error err -> failwith (Yojson.Basic.to_string @@ err ()) *)
+| Error _err -> failwith ("TODO")
 
 let () =
   test @@
@@ -31,7 +25,8 @@ let () =
   let state = 0 in
   let%bind (state , _) = fold_map__root op state some_root in
   if state != 2 then
-    fail @@ Errors.test_fail (Printf.sprintf "expected folder to count 2 nodes, but it counted %d nodes" state)
+    (* expected folder to count 2 nodes, but it counted 'state' nodes *)
+    fail @@ Main_errors.test_internal __LOC__
   else
     ok ()
 
@@ -43,7 +38,8 @@ let () =
   let state = 0 in
   let%bind (state , _) = fold_map__root op state some_root in
   if state != 2 then
-    fail @@ Errors.test_fail (Printf.sprintf "expected folder to count 2 nodes, but it counted %d nodes" state)
+    (* expected folder to count 2 nodes, but it counted 'state' nodes *)
+    fail @@ Main_errors.test_internal __LOC__
   else
     ok ()
 
@@ -54,14 +50,15 @@ let () =
   let state = 0 in
   let%bind (state , _) = fold_map__root op state some_root in
   if state != 2 then
-    fail @@ Errors.test_fail (Printf.sprintf "expected folder to count 2 nodes, but it counted %d nodes" state)
+    (* expected folder to count 2 nodes, but it counted 'state' nodes *)
+    fail @@ Main_errors.test_internal __LOC__
   else
     ok ()
 
 
 (* Test that the same fold_map_config can be ascibed with different 'a type arguments *)
-let _noi : (int, [> error]) fold_map_config__Amodule = no_op (* (fun _ -> ()) *)
-let _nob : (bool, [> error]) fold_map_config__Amodule = no_op (* (fun _ -> ()) *)
+let _noi : (int, _) fold_map_config__Amodule = no_op (* (fun _ -> ()) *)
+let _nob : (bool, _) fold_map_config__Amodule = no_op (* (fun _ -> ()) *)
 
 type no_state = NoState
 let () =

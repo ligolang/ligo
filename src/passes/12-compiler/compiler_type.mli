@@ -1,3 +1,4 @@
+open Errors
 open Trace
 open Mini_c.Types
 open Proto_alpha_utils.Memory_proto_alpha
@@ -63,11 +64,11 @@ module Ty : sig
   val comparable_type : type_value -> ex_comparable_ty result
   val base_type : type_base -> ex_ty result
  *)
-  val type_ : type_expression -> ex_ty result
+  val type_ : type_expression -> (ex_ty, compiler_error) result
 
-  val environment_representation : environment -> ex_ty result
+  val environment_representation : environment -> (ex_ty, compiler_error) result
 
-  val environment : environment -> ex_stack_ty result
+  val environment : environment -> (ex_stack_ty, compiler_error) result
   (*
   val not_comparable : string -> unit -> error
   val not_compilable_type : string -> unit -> error
@@ -81,17 +82,14 @@ module Ty : sig
   *)
 end
 
-val type_ : type_expression -> O.t result
+val type_ : type_expression -> (O.t, compiler_error) result
 
-val environment_element : string * type_expression -> (int, O.prim) Tezos_micheline.Micheline.node result
+val environment_element : string * type_expression -> ((int, O.prim) Tezos_micheline.Micheline.node, compiler_error) result
 
-val environment : ( 'a * type_expression ) list -> O.t list result
-val lambda_closure : environment * type_expression  * type_expression -> (int, O.prim) Tezos_micheline.Micheline.node result
+val environment : ( 'a * type_expression ) list -> (O.t list , compiler_error) result
 val lambda_closure_with_ty : environment * type_expression  * type_expression ->
-                     (O.michelson * O.michelson * O.michelson) result
+                     (O.michelson * O.michelson * O.michelson, compiler_error) result
 
-val environment_closure : environment -> (int , O.prim ) Tezos_micheline.Micheline.node result
-(*
-val base_type : type_base -> O.michelson result
+val lambda_closure : environment * type_expression  * type_expression -> ((int, O.prim) Tezos_micheline.Micheline.node, compiler_error) result
 
-*)
+val environment_closure : environment -> ((int , O.prim ) Tezos_micheline.Micheline.node, compiler_error) result

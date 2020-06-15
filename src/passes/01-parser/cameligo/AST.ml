@@ -496,6 +496,10 @@ let expr_to_region = function
 | ESeq {region; _}   | ERecord {region; _} | EUpdate {region; _}
 | ECodeInj {region; _} -> region
 
+let declaration_to_region = function
+| Let {region;_}
+| TypeDecl {region;_} -> region
+
 let selection_to_region = function
   FieldName f -> f.region
 | Component c -> c.region

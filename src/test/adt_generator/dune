@@ -7,7 +7,7 @@
 
 (executable
   (name test_adt_generator)
-  (libraries adt_generator simple-utils)
+  (libraries adt_generator simple-utils ligo)
   (preprocess
     (pps ppx_let bisect_ppx --conditional)
   )

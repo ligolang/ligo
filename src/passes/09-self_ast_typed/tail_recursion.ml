@@ -1,27 +1,16 @@
+open Errors
 open Ast_typed
 open Trace
 
-module Errors = struct
-  let recursive_call_is_only_allowed_as_the_last_operation name loc () =
-    let title = (thunk ("Recursion must be achieved through tail-calls only")) in
-    let message () = "" in
-    let data = [
-      ("function" , fun () -> Format.asprintf "%a" PP.expression_variable name);
-      ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
-    ] in
-    error ~data title message ()
-end
-open Errors
-
-let rec check_recursive_call : expression_variable -> bool -> expression -> unit result = fun n final_path e ->
+let rec check_recursive_call : expression_variable -> bool -> expression -> (unit, self_ast_typed_error) result = fun n final_path e ->
   match e.expression_content with
   | E_literal _   -> ok ()
   | E_constant c  ->
     let%bind _ = bind_map_list (check_recursive_call n false) c.arguments in
     ok ()
   | E_variable v  -> (
-    let%bind _ = trace_strong (recursive_call_is_only_allowed_as_the_last_operation n e.location) @@
-    Assert.assert_true (final_path || n <> v) in
+    let%bind _ = Assert.assert_true (recursive_call_is_only_allowed_as_the_last_operation n e.location)
+      (final_path || n <> v) in
     ok ()
     )
   | E_application {lamb;args} ->
@@ -78,7 +67,7 @@ and check_recursive_call_in_matching = fun n final_path c ->
     ok ()
     
 
-let peephole_expression : expression -> expression result = fun e ->
+let peephole_expression : expression -> (expression, self_ast_typed_error) result = fun e ->
   let return expression_content = ok { e with expression_content } in
   match e.expression_content with
   | E_recursive {fun_name; lambda} as e-> (

@@ -2,6 +2,7 @@
   (name compile)
   (public_name ligo.compile)
   (libraries
+    main_errors
     simple-utils
     tezos-utils
     parser

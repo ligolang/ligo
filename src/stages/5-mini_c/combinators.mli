@@ -1,4 +1,3 @@
-open Trace
 open Types
 
 module Expression : sig
@@ -17,41 +16,41 @@ module Expression : sig
   val pair : t -> t -> t'
 end
 
-val get_bool : value ->bool result
-val get_int : value -> Z.t result
-val get_nat : value -> Z.t result
-val get_mutez : value -> Z.t result
-val get_timestamp : value -> Z.t result
-val get_string : value -> string result
-val get_bytes : value -> bytes result
-val get_unit : value -> unit result
-val get_option : value -> value option result
-val get_map : value -> ( value * value ) list result
-val get_big_map : value -> ( value * value ) list result
-val get_list : value -> value list result
-val get_set : value -> value list result
-val get_function_with_ty : expression -> ( anon_function * ( type_expression * type_expression) ) result
-val get_function : expression -> anon_function result
-val get_t_function : type_expression -> ( type_expression * type_expression ) result
-val get_t_option : type_expression -> type_expression result
-val get_pair : value -> ( value * value ) result
-val get_t_pair : type_expression -> ( type_expression * type_expression ) result
-val get_t_or : type_expression -> ( type_expression * type_expression ) result
-val get_t_map : type_expression -> ( type_expression * type_expression ) result
-val get_t_big_map : type_expression -> ( type_expression * type_expression ) result
-val get_t_list : type_expression -> type_expression result
-val get_t_set : type_expression -> type_expression result
-val get_left : value -> value result
-val get_right : value -> value result
-val get_or : value -> ( bool * value ) result
+val get_bool : value -> bool option
+val get_int : value -> Z.t option
+val get_nat : value -> Z.t option
+val get_mutez : value -> Z.t option
+val get_timestamp : value -> Z.t option
+val get_string : value -> string option
+val get_bytes : value -> bytes option
+val get_unit : value -> unit option
+val get_option : value -> value option option
+val get_map : value -> (value * value) list option
+val get_big_map : value -> ( value * value ) list option
+val get_list : value -> value list option
+val get_set : value -> value list option
+val get_function_with_ty : expression -> ( anon_function * ( type_expression * type_expression) ) option
+val get_function : expression -> anon_function option
+val get_t_function : type_expression -> ( type_expression * type_expression ) option
+val get_t_option : type_expression -> type_expression option
+val get_pair : value -> ( value * value ) option
+val get_t_pair : type_expression -> ( type_expression * type_expression ) option
+val get_t_or : type_expression -> ( type_expression * type_expression ) option
+val get_t_map : type_expression -> ( type_expression * type_expression ) option
+val get_t_big_map : type_expression -> ( type_expression * type_expression ) option
+val get_t_list : type_expression -> type_expression option
+val get_t_set : type_expression -> type_expression option
+val get_left : value -> value option
+val get_right : value -> value option
+val get_or : value -> ( bool * value ) option
 (*
-val wrong_type : string -> type_value -> unit -> error
+val wrong_type : string -> type_expression -> unit -> error
 *)
-val get_t_left  : type_expression -> type_expression result
-val get_t_right : type_expression -> type_expression result
-val get_t_contract  : type_expression -> type_expression result
-val get_t_operation : type_expression -> type_expression result
-val get_operation : value -> Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation result
+val get_t_left : type_expression -> type_expression option
+val get_t_right : type_expression -> type_expression option
+val get_t_contract : type_expression -> type_expression option
+val get_t_operation : type_expression -> type_expression option
+val get_operation : value -> Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation option
 
 val t_int      : ?loc:Location.t -> unit -> type_expression 
 val t_unit     : ?loc:Location.t -> unit -> type_expression 
@@ -60,7 +59,7 @@ val t_function : ?loc:Location.t -> type_expression -> type_expression -> type_e
 val t_pair     : ?loc:Location.t -> type_expression annotated -> type_expression annotated -> type_expression
 val t_union    : ?loc:Location.t -> type_expression annotated -> type_expression annotated -> type_expression
 (*
-val quote : string -> type_value -> type_value -> Expression.t -> anon_function
+val quote : string -> type_expression -> type_expression -> Expression.t -> anon_function
 
 
 val e_int : Expression.t' -> Expression.t

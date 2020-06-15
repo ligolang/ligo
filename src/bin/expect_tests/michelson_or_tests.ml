@@ -29,11 +29,14 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_michelson_or.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "bad_michelson_or.mligo", line 6, characters 12-27. michelson_or types must be annotated:  {"constructor":"M_right","location":"in file \"bad_michelson_or.mligo\", line 6, characters 12-27"}
+    ligo: error
+    in file "bad_michelson_or.mligo", line 5, characters 0-3
+    Constant declaration 'main'
+    in file "bad_michelson_or.mligo", line 6, characters 12-27
+    michelson_or contructor M_right must be annotated with a sum type
 
 
-     If you're not sure how to fix this error, you can
-     do one of the following:
+    If you're not sure how to fix this error, you can do one of the following:
 
     * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt

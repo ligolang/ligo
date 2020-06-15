@@ -7,7 +7,7 @@
     parser
     ast_imperative
     operators)
-  (modules cameligo pascaligo concrete_to_imperative)
+  (modules errors_cameligo errors_pascaligo cameligo pascaligo concrete_to_imperative)
   (preprocess
     (pps
       ppx_let

@@ -1,19 +1,8 @@
+open Errors
 open Mini_c
 open Trace
 
-module Errors = struct
-
-  let bad_self_address cst () =
-    let title = thunk @@
-      Format.asprintf "Wrong %a location" Stage_common.PP.constant cst in
-    let message = thunk @@
-      Format.asprintf "%a is only allowed at top-level" Stage_common.PP.constant cst in
-    error title message ()
-  
-end
-open Errors
-
-let self_in_lambdas : expression -> expression result = 
+let self_in_lambdas : expression -> (expression,_) result = 
   fun e ->
     match e.content with
     | E_closure {binder=_ ; body} ->

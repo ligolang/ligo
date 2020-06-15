@@ -1,25 +1,9 @@
-open Trace
 open Ast_typed.Misc
 module Core = Typesystem.Core
 
 module I = Ast_core
 module T = Ast_typed
 module O = Core
-
-module Errors = struct
-
-  let unknown_type_constructor (ctor : string) (te : T.type_expression) () =
-    let title = (thunk "unknown type constructor") in
-    (* TODO: sanitize the "ctor" argument before displaying it. *)
-    let message () = ctor in
-    let data = [
-        ("ctor" , fun () -> ctor) ;
-        ("expression" , fun () -> Format.asprintf "%a"  T.PP.type_expression te) ;
-        (* ("location" , fun () -> Format.asprintf "%a" Location.pp te.location) *) (* TODO *)
-      ] in
-    error ~data title message ()
-end
-
 
 type constraints = O.type_constraint list
 

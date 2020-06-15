@@ -24,6 +24,8 @@ val pattern_to_string :
   offsets:bool -> mode:[`Point|`Byte] -> AST.pattern -> string
 val expr_to_string :
   offsets:bool -> mode:[`Point|`Byte] -> AST.expr -> string
+val type_expr_to_string :
+  offsets:bool -> mode:[`Point|`Byte] -> AST.type_expr -> string
 
 (** {1 Pretty-printing of AST nodes} *)
 

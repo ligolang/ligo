@@ -1,9 +1,10 @@
+open Errors
 open Ast_typed
 open Trace
 open Ast_typed.Helpers
 
-type 'a folder = 'a -> expression -> 'a result
-let rec fold_expression : 'a . 'a folder -> 'a -> expression -> 'a result = fun f init e ->
+type ('a ,'err) folder = 'a -> expression -> ('a , 'err) result
+let rec fold_expression : ('a , self_ast_typed_error) folder -> 'a -> expression -> ('a , self_ast_typed_error) result = fun f init e ->
   let self = fold_expression f in 
   let%bind init' = f init e in
   match e.expression_content with
@@ -51,7 +52,7 @@ let rec fold_expression : 'a . 'a folder -> 'a -> expression -> 'a result = fun 
       ok res
     )
 
-and fold_cases : 'a . 'a folder -> 'a -> matching_expr -> 'a result = fun f init m ->
+and fold_cases : ('a , 'err) folder -> 'a -> matching_expr -> ('a , 'err) result = fun f init m ->
   match m with
   | Match_list { match_nil ; match_cons = {hd=_; tl=_ ; body; tv=_} } -> (
       let%bind res = fold_expression f init match_nil in
@@ -71,8 +72,8 @@ and fold_cases : 'a . 'a folder -> 'a -> matching_expr -> 'a result = fun f init
       ok res
     )
 
-type mapper = expression -> expression result
-let rec map_expression : mapper -> expression -> expression result = fun f e ->
+type 'err mapper = expression -> (expression , 'err) result
+let rec map_expression : self_ast_typed_error mapper -> expression -> (expression , self_ast_typed_error) result = fun f e ->
   let self = map_expression f in
   let%bind e' = f e in
   let return expression_content = ok { e' with expression_content } in
@@ -124,7 +125,7 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
   | E_literal _ | E_variable _ | E_raw_code _ as e' -> return e'
 
 
-and map_cases : mapper -> matching_expr -> matching_expr result = fun f m ->
+and map_cases : self_ast_typed_error mapper -> matching_expr -> (matching_expr , self_ast_typed_error) result = fun f m ->
   match m with
   | Match_list { match_nil ; match_cons = {hd ; tl ; body ; tv} } -> (
       let%bind match_nil = map_expression f match_nil in
@@ -145,7 +146,7 @@ and map_cases : mapper -> matching_expr -> matching_expr result = fun f m ->
       ok @@ Match_variant {cases ; tv}
     )
 
-and map_program : mapper -> program -> program result = fun m p ->
+and map_program : self_ast_typed_error mapper -> program -> (program, self_ast_typed_error) result = fun m p ->
   let aux = fun (x : declaration) ->
     match x with
     | Declaration_constant {binder; expr ; inline} -> (
@@ -156,8 +157,8 @@ and map_program : mapper -> program -> program result = fun m p ->
   in
   bind_map_list (bind_map_location aux) p
 
-type 'a fold_mapper = 'a -> expression -> (bool * 'a * expression) result
-let rec fold_map_expression : 'a . 'a fold_mapper -> 'a -> expression -> ('a * expression) result = fun f a e ->
+type ('a , 'err) fold_mapper = 'a -> expression -> (bool * 'a * expression , 'err) result
+let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> ('a * expression , 'err) result = fun f a e ->
   let self = fold_map_expression f in
   let%bind (continue, init',e') = f a e in
   if (not continue) then ok(init',e')
@@ -211,7 +212,7 @@ let rec fold_map_expression : 'a . 'a fold_mapper -> 'a -> expression -> ('a * e
     )
   | E_literal _ | E_variable _ | E_raw_code _ as e' -> ok (init', return e')
 
-and fold_map_cases : 'a . 'a fold_mapper -> 'a -> matching_expr -> ('a * matching_expr) result = fun f init m ->
+and fold_map_cases : ('a , self_ast_typed_error) fold_mapper -> 'a -> matching_expr -> ('a * matching_expr , self_ast_typed_error) result = fun f init m ->
   match m with
   | Match_list { match_nil ; match_cons = { hd ; tl ; body ; tv } } -> (
       let%bind (init, match_nil) = fold_map_expression f init match_nil in
@@ -232,7 +233,7 @@ and fold_map_cases : 'a . 'a fold_mapper -> 'a -> matching_expr -> ('a * matchin
       ok @@ (init, Match_variant {cases ; tv})
     )
 
-and fold_map_program : 'a . 'a fold_mapper -> 'a -> program -> ('a * program) result = fun m init p ->
+and fold_map_program : ('a, self_ast_typed_error) fold_mapper -> 'a -> program -> ('a * program , self_ast_typed_error) result = fun m init p ->
   let aux = fun (acc,acc_prg) (x : declaration Location.wrap) ->
     match Location.unwrap x with
     | Declaration_constant {binder ; expr ; inline} -> (
@@ -247,50 +248,12 @@ and fold_map_program : 'a . 'a fold_mapper -> 'a -> program -> ('a * program) re
   in
   bind_fold_list aux (init,[]) p
 
-module Errors = struct
-  let bad_contract_io entrypoint (e:expression) () =
-    let title = thunk "badly typed contract" in
-    let message () = Format.asprintf "unexpected entrypoint type" in
-    let data = [
-      ("location" , fun () -> Format.asprintf "%a" Location.pp e.location);
-      ("entrypoint" , fun () -> entrypoint);
-      ("entrypoint_type" , fun () -> Format.asprintf "%a" Ast_typed.PP.type_expression e.type_expression)
-    ] in
-    error ~data title message ()
-
-  let expected_list_operation entrypoint got (e:expression) () =
-    let title = thunk "bad return type" in
-    let message () = Format.asprintf "expected %a, got %a"
-      Ast_typed.PP.type_expression {got with type_content= T_operator (TC_list {got with type_content=T_constant TC_operation})}
-      Ast_typed.PP.type_expression got
-    in
-    let data = [
-      ("location" , fun () -> Format.asprintf "%a" Location.pp e.location);
-      ("entrypoint" , fun () -> entrypoint)
-    ] in
-    error ~data title message ()
-
-  let expected_same entrypoint t1 t2 (e:expression) () =
-    let title = thunk "badly typed contract" in
-    let message () = Format.asprintf "expected {%a} and {%a} to be the same in the entrypoint type"
-      Ast_typed.PP.type_expression t1
-      Ast_typed.PP.type_expression t2
-    in
-    let data = [
-      ("location" , fun () -> Format.asprintf "%a" Location.pp e.location);
-      ("entrypoint" , fun () -> entrypoint);
-      ("entrypoint_type" , fun () -> Format.asprintf "%a" Ast_typed.PP.type_expression e.type_expression)
-    ] in
-    error ~data title message ()
-  
-end
-
 type contract_type = {
   parameter : Ast_typed.type_expression ;
   storage : Ast_typed.type_expression ;
 }
 
-let fetch_contract_type : string -> program -> contract_type result = fun main_fname program ->
+let fetch_contract_type : string -> program -> (contract_type, self_ast_typed_error) result = fun main_fname program ->
   let aux declt = match Location.unwrap declt with
     | Declaration_constant ({ binder ; expr=_ ; inline=_ } as p) ->
        if String.equal (Var.to_name binder) main_fname
@@ -300,7 +263,7 @@ let fetch_contract_type : string -> program -> contract_type result = fun main_f
   in
   let main_decl_opt = List.find_map aux @@ List.rev  program in
   let%bind main_decl =
-    trace_option (simple_error ("Entrypoint '"^main_fname^"' does not exist")) @@
+    trace_option (corner_case ("Entrypoint '"^main_fname^"' does not exist")) @@
       main_decl_opt
     in
   let { binder=_ ; expr ; inline=_ } = main_decl in
@@ -308,14 +271,14 @@ let fetch_contract_type : string -> program -> contract_type result = fun main_f
   | T_arrow {type1 ; type2} -> (
     match type1.type_content , type2.type_content with
     | T_record tin , T_record tout when (is_tuple_lmap tin) && (is_tuple_lmap tout) ->
-       let%bind (parameter,storage) = Ast_typed.Helpers.get_pair tin in
-       let%bind (listop,storage') = Ast_typed.Helpers.get_pair tout in
-       let%bind () = trace_strong (Errors.expected_list_operation main_fname listop expr) @@
+       let%bind (parameter,storage) = trace_option (expected_pair_in expr.location) @@ Ast_typed.Helpers.get_pair tin in
+       let%bind (listop,storage') = trace_option (expected_pair_out expr.location) @@ Ast_typed.Helpers.get_pair tout in
+       let%bind () = trace_option (expected_list_operation main_fname listop expr) @@
                        Ast_typed.assert_t_list_operation listop in
-       let%bind () = trace_strong (Errors.expected_same main_fname storage storage' expr) @@
+       let%bind () = trace_option (expected_same main_fname storage storage' expr) @@
                        Ast_typed.assert_type_expression_eq (storage,storage') in
        (* TODO: on storage/parameter : assert_storable, assert_passable ? *)
        ok { parameter ; storage }
-    |  _ -> fail @@ Errors.bad_contract_io main_fname expr
+    |  _ -> fail @@ bad_contract_io main_fname expr
   )
-  | _ -> fail @@ Errors.bad_contract_io main_fname expr
+  | _ -> fail @@ bad_contract_io main_fname expr

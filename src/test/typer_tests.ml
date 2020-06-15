@@ -1,22 +1,23 @@
 open Trace
 open Ast_core
 open Test_helpers
+open Main_errors
 
 module Typed = Ast_typed
 module Typer = Typer
 module Simplified = Ast_core
 
-let int () : unit result =
+let int () : (unit, _) result =
   let open Combinators in
   let pre = e_int (Z.of_int 32) in
   let open Typer in
   let e = Environment.empty in
   let state = Typer.Solver.initial_state in
-  let%bind (post , new_state) = type_expression_subst e state pre in
+  let%bind (post , new_state) = trace typer_tracer @@ type_expression_subst e state pre in
   let () = Typer.Solver.discard_state new_state in
   let open! Typed in
   let open Combinators in
-  let%bind () = assert_type_expression_eq (post.type_expression, t_int ()) in
+  let%bind () = trace_option (test_internal __LOC__) @@ assert_type_expression_eq (post.type_expression, t_int ()) in
   ok ()
 
 module TestExpressions = struct
@@ -27,34 +28,34 @@ module TestExpressions = struct
     let pre = expr in
     let open Typer in
     let open! Typed in
-    let%bind (post , new_state) = type_expression_subst env state pre in
+    let%bind (post , new_state) = trace typer_tracer @@ type_expression_subst env state pre in
     let () = Typer.Solver.discard_state new_state in
-    let%bind () = assert_type_expression_eq (post.type_expression, test_expected_ty) in
+    let%bind () = trace_option (test_internal __LOC__) @@ assert_type_expression_eq (post.type_expression, test_expected_ty) in
     ok ()
 
   module I = Simplified.Combinators
   module O = Typed.Combinators
   module E = Typed.Environment
 
-  let unit   () : unit result = test_expression I.(e_unit ())    O.(t_unit ())
-  let int    () : unit result = test_expression I.(e_int (Z.of_int 32))     O.(t_int ())
-  let bool   () : unit result = test_expression I.(e_bool true)  O.(t_bool ())
-  let string () : unit result = test_expression I.(e_string (Standard "s")) O.(t_string ())
-  let bytes  () : unit result =
-    let%bind b = I.e_bytes_hex "0b" in
+  let unit   () : (unit, _) result = test_expression I.(e_unit ())    O.(t_unit ())
+  let int    () : (unit, _) result = test_expression I.(e_int (Z.of_int 32))     O.(t_int ())
+  let bool   () : (unit, _) result = test_expression I.(e_bool true)  O.(t_bool ())
+  let string () : (unit, _) result = test_expression I.(e_string (Standard "s")) O.(t_string ())
+  let bytes  () : (unit, _) result =
+    let b = I.e_bytes_hex "0b" in
     test_expression b  O.(t_bytes ())
 
-  let lambda () : unit result =
+  let lambda () : (unit, _) result =
     test_expression
       I.(e_lambda (Var.of_name "x") (Some (t_int ())) (Some (t_int ())) (e_var "x"))
       O.(t_function (t_int ()) (t_int ()) ())
 
-  let tuple () : unit result =
+  let tuple () : (unit, _) result =
     test_expression
       I.(e_record @@ LMap.of_list [(Label "0",e_int (Z.of_int 32)); (Label "1", e_string (Standard "foo"))])
       O.(make_t_ez_record [("0",t_int ()); ("1",t_string ())])
 
-  let constructor () : unit result =
+  let constructor () : (unit, _) result =
     let variant_foo_bar : (Typed.constructor' * Typed.ctor_content) list = [
         (Typed.Constructor "foo", {ctor_type = Typed.t_int () ; michelson_annotation = None ; ctor_decl_pos = 0});
         (Typed.Constructor "bar", {ctor_type = Typed.t_string () ; michelson_annotation = None ; ctor_decl_pos = 1}) ]
@@ -63,7 +64,7 @@ module TestExpressions = struct
       I.(e_constructor "foo" (e_int (Z.of_int 32)))
       O.(make_t_ez_sum variant_foo_bar)
 
-  let record () : unit result =
+  let record () : (unit, _) result =
     test_expression
       I.(e_record @@ LMap.of_list [(Label "foo", e_int (Z.of_int 32)); (Label "bar", e_string (Standard "foo"))])
       O.(make_t_ez_record [("foo", t_int ()); ("bar", t_string ())])

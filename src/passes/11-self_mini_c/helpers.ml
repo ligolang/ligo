@@ -1,7 +1,7 @@
 open Mini_c
 open Trace
 
-let rec fold_type_value : ('a -> type_expression -> 'a result) -> 'a -> type_expression -> 'a result = fun f init t ->
+let rec fold_type_value : ('a -> type_expression -> ('a,_) result) -> 'a -> type_expression -> ('a,_) result = fun f init t ->
   let self = fold_type_value f in
   let%bind init' = f init t in
   match t.type_content with
@@ -19,8 +19,8 @@ let rec fold_type_value : ('a -> type_expression -> 'a result) -> 'a -> type_exp
   | T_base _ ->
      ok init'
 
-type 'a folder = 'a -> expression -> 'a result
-let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f init e ->
+type ('a,'err) folder = 'a -> expression -> ('a,'err) result
+let rec fold_expression : ('a,'err) folder -> 'a -> expression -> ('a, 'err) result = fun f init e ->
   let self = fold_expression f in 
   let%bind init' = f init e in
   match e.content with
@@ -81,9 +81,9 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
       ok res
   )
 
-type mapper = expression -> expression result
+type 'err mapper = expression -> (expression,'err) result
 
-let rec map_expression : mapper -> expression -> expression result = fun f e ->
+let rec map_expression : 'err mapper -> expression -> (expression, 'err) result = fun f e ->
   let self = map_expression f in
   let%bind e' = f e in
   let return content = ok { e' with content } in
@@ -144,7 +144,7 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
       return @@ E_record_update(r, l, e)
   )
 
-let map_sub_level_expression : mapper -> expression -> expression result = fun f e ->
+let map_sub_level_expression : 'err mapper -> expression -> (expression , 'err) result = fun f e ->
   match e.content with
   | E_closure {binder ; body} ->
     let%bind body = map_expression f body in

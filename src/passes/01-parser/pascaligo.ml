@@ -68,14 +68,6 @@ module ParserLog =
 module Unit =
   ParserUnit.Make (Lexer)(AST)(Parser)(ParErr)(ParserLog)(SubIO)
 
-module Errors =
-  struct
-    let generic message =
-      let title () = ""
-      and message () = message.Region.value
-      in Trace.error ~data:[] title message
-  end
-
 let apply parser =
   let local_fail error =
     Trace.fail

@@ -1,26 +1,5 @@
 open Types
 open Combinators
-open Trace
-
-module Errors = struct
-
-  let missing_entry_point name =
-    let title () = "missing entry point" in
-    let content () = "no entry point with the given name" in
-    let data = [
-      ("name" , fun () -> name) ;
-    ] in
-    error ~data title content
-
-  let not_functional_main name =
-    let title () = "not functional main" in
-    let content () = "main should be a function" in
-    let data = [
-      ("name" , fun () -> Format.asprintf "%s" name) ;
-    ] in
-    error ~data title content
-
-end
 
 module Free_variables = struct
 
@@ -116,9 +95,8 @@ module Free_variables = struct
 
 end
 
-let get_entry (lst : program) (name : string) : (expression * int) result =
-  let%bind entry_expression =
-    trace_option (Errors.missing_entry_point name) @@
+let get_entry (lst : program) (name : string) : (expression * int) option =
+  let entry_expression =
     let aux x =
       let (((decl_name , _, decl_expr) , _)) = x in
       if (Var.equal decl_name (Var.of_name name))
@@ -127,20 +105,23 @@ let get_entry (lst : program) (name : string) : (expression * int) result =
     in
     List.find_map aux (List.rev lst)
   in
-  let entry_index =
-    let aux x =
-      let (((decl_name , _, _) , _)) = x in
-      Var.equal decl_name (Var.of_name name)
-    in
-    (List.length lst) - (List.find_index aux (List.rev lst)) - 1
-  in
-  ok (entry_expression , entry_index)
+  match entry_expression with
+    | Some exp ->
+      let entry_index =
+        let aux x =
+          let (((decl_name , _, _) , _)) = x in
+          Var.equal decl_name (Var.of_name name)
+        in
+        (List.length lst) - (List.find_index aux (List.rev lst)) - 1
+      in
+      Some (exp, entry_index)
+    | None -> None
 
 type form_t =
   | ContractForm of expression
   | ExpressionForm of expression
 
-let aggregate_entry (lst : program) (form : form_t) : expression result =
+let aggregate_entry (lst : program) (form : form_t) : expression option =
   let wrapper =
     let aux prec cur =
       let (((name , inline, expr) , _)) = cur in
@@ -158,8 +139,8 @@ let aggregate_entry (lst : program) (form : form_t) : expression result =
           type_expression = entry_expression.type_expression ;
           location = entry_expression.location;
         } in
-        ok e'
+        Some e'
       )
-    | _ -> simple_fail "a contract must be a closure" )
+    | _ -> None )
   | ExpressionForm entry_expression ->
-    ok @@ wrapper entry_expression
+    Some (wrapper entry_expression)

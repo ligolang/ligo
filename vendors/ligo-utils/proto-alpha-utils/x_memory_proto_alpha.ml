@@ -1077,7 +1077,7 @@ let make_options
   =
   let tezos_context = { tezos_context with predecessor_timestamp } in
   let tezos_context_error =
-    Trace.trace_alpha_tzresult_lwt (Trace.simple_error "lol") @@
+    Trace.trace_alpha_tzresult_lwt (fun _ -> `Vendors "could not set balance") @@
     Alpha_context.Contract.set_balance tezos_context self balance
   in
   let tezos_context = match tezos_context_error with
@@ -1085,7 +1085,6 @@ let make_options
     | Error _ -> tezos_context in
   {
     tezos_context ;
-    (* yep *)
     source = sender ;
     payer = source ;
     self ;

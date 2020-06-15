@@ -1,23 +1,23 @@
 open Cmdliner
-open Trace
 open Main.Display
 
-let error_suggest: string = "\n If you're not sure how to fix this error, you can
- do one of the following:
+let returned_value : (_,_) result -> unit -> unit Term.ret = 
+  fun v () -> match v with
+  | Ok _ -> `Ok ()
+  | Error _ -> `Error (false, "error")
 
-* Visit our documentation: https://ligolang.org/docs/intro/introduction
-* Ask a question on our Discord: https://discord.gg/9rhYaEt
-* Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-* Check the changelog by running 'ligo changelog'\n"
+let toplevel : display_format:ex_display_format -> displayable -> (unit -> unit Term.ret) -> unit Term.ret =
+  fun ~display_format disp return ->
+  let (Ex_display_format t) = display_format in
+  let as_str : string =
+    match t with
+    | Human_readable -> convert ~display_format:t disp ;
+    | Dev -> convert ~display_format:t disp ;
+    | Json -> Yojson.Basic.to_string @@ convert ~display_format:t disp in
+  Format.printf "%s\n" as_str ;
+  return ()
 
-let toplevel ~(display_format : display_format) (x : string result) : unit Term.ret =
-  match x with
-  | Ok _ -> Format.printf "%a%!" (formatted_string_result_pp display_format) x;
-            `Ok ()
-  | Error _ ->
-    begin
-    match display_format with 
-    | `Human_readable -> print_string error_suggest ;
-    | _ -> () 
-    end ;       
-    `Error (false, Format.asprintf "%a%!" (formatted_string_result_pp display_format) x)
+let return_result : display_format:ex_display_format -> 'value format -> ('value, Main_errors.Types.all) result -> unit Term.ret =
+  fun ~display_format value_format value ->
+    let format = Display.bind_format value_format Main.Formatter.error_format in
+    toplevel ~display_format (Display.Displayable {value ; format}) (returned_value value)
