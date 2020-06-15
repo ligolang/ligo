@@ -400,6 +400,10 @@ and cond_expr = {
   ifnot    : expr
 }
 
+(* Code injection.  Note how the field [language] wraps a region in
+   another: the outermost region covers the header "[%<language>" and
+   the innermost covers the <language>. *)
+
 and code_inj = {
   language : string reg reg;
   code     : expr;

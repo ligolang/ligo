@@ -121,11 +121,10 @@ type_decl:
   "type" type_name "=" type_expr {
     Scoping.check_reserved_name $2;
     let region = cover $1 (type_expr_to_region $4) in
-    let value = {
-      kwd_type   = $1;
-      name       = $2;
-      eq         = $3;
-      type_expr  = $4}
+    let value  = {kwd_type  = $1;
+                  name      = $2;
+                  eq        = $3;
+                  type_expr = $4}
     in {region; value} }
 
 type_expr:
@@ -710,6 +709,6 @@ seq_expr:
 
 code_inj:
   "<lang>" expr "]" {
-    let region   = cover $1.region $3
-    and value    = {language=$1; code=$2; rbracket=$3}
+    let region = cover $1.region $3
+    and value  = {language=$1; code=$2; rbracket=$3}
     in {region; value} }
