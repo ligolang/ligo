@@ -543,7 +543,7 @@ and compile_fun lamb' : (expr , abs_error) result =
     let aux ((var : Raw.variable) , ty_opt) =
       match var.value , ty_opt with
       | "storage" , None ->
-        ok (var , t_variable "storage")
+        ok (var , t_variable ~loc @@ Var.fresh ~name:"storage" ())
       | _ , None ->
           fail @@ untyped_fun_param var
       | _ , Some ty -> (

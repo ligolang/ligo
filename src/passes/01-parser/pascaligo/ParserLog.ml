@@ -64,6 +64,11 @@ let print_sepseq :
         None -> ()
   | Some seq -> print_nsepseq state sep print seq
 
+let print_option : state -> (state -> 'a -> unit ) -> 'a option -> unit =
+  fun state print -> function
+    None -> ()
+  | Some opt -> print state opt
+
 let print_token state region lexeme =
   let line =
     sprintf "%s: %s\n"(compact state region) lexeme
@@ -126,12 +131,11 @@ and print_decl state = function
 | AttrDecl  decl -> print_attr_decl  state decl
 
 and print_const_decl state {value; _} =
-  let {kwd_const; name; colon; const_type;
+  let {kwd_const; name; const_type;
        equal; init; terminator; _} = value in
   print_token      state kwd_const "const";
   print_var        state name;
-  print_token      state colon ":";
-  print_type_expr  state const_type;
+  print_option     state print_colon_type_expr const_type;
   print_token      state equal "=";
   print_expr       state init;
   print_terminator state terminator
@@ -154,6 +158,10 @@ and print_type_expr state = function
 | TPar    par_type    -> print_par_type    state par_type
 | TVar    type_var    -> print_var         state type_var
 | TString str         -> print_string      state str
+
+and print_colon_type_expr state (colon, type_expr) =
+  print_token     state colon ":";
+  print_type_expr state type_expr;
 
 and print_cartesian state {value; _} =
   print_nsepseq state "*" print_type_expr value
@@ -203,14 +211,13 @@ and print_type_tuple state {value; _} =
   print_token state rpar ")"
 
 and print_fun_decl state {value; _} =
-  let {kwd_function; fun_name; param; colon;
+  let {kwd_function; fun_name; param;
        ret_type; kwd_is; block_with;
        return; terminator; _} = value in
   print_token      state kwd_function "function";
   print_var        state fun_name;
   print_parameters state param;
-  print_token      state colon ":";
-  print_type_expr  state ret_type;
+  print_option     state print_colon_type_expr  ret_type;
   print_token      state kwd_is "is";
   (match block_with with
     None -> ()
@@ -221,12 +228,11 @@ and print_fun_decl state {value; _} =
   print_terminator state terminator;
 
 and print_fun_expr state {value; _} =
-  let {kwd_function; param; colon;
+  let {kwd_function; param;
        ret_type; kwd_is; return} : fun_expr = value in
   print_token      state kwd_function "function";
   print_parameters state param;
-  print_token      state colon ":";
-  print_type_expr  state ret_type;
+  print_option     state print_colon_type_expr ret_type;
   print_token      state kwd_is "is";
   print_expr       state return
 
@@ -249,18 +255,16 @@ and print_param_decl state = function
 | ParamVar   param_var   -> print_param_var   state param_var
 
 and print_param_const state {value; _} =
-  let {kwd_const; var; colon; param_type} = value in
+  let {kwd_const; var; param_type} = value in
   print_token     state kwd_const "const";
   print_var       state var;
-  print_token     state colon ":";
-  print_type_expr state param_type
+  print_option    state print_colon_type_expr param_type
 
 and print_param_var state {value; _} =
-  let {kwd_var; var; colon; param_type} = value in
-  print_token     state kwd_var "var";
-  print_var       state var;
-  print_token     state colon ":";
-  print_type_expr state param_type
+  let {kwd_var; var; param_type} = value in
+  print_token    state kwd_var "var";
+  print_var      state var;
+  print_option   state print_colon_type_expr param_type
 
 and print_block state block =
   let {enclosing; statements; terminator} = block.value in
@@ -283,12 +287,11 @@ and print_data_decl state = function
 | LocalFun  decl -> print_fun_decl  state decl
 
 and print_var_decl state {value; _} =
-  let {kwd_var; name; colon; var_type;
+  let {kwd_var; name; var_type;
        assign; init; terminator} = value in
   print_token      state kwd_var "var";
   print_var        state name;
-  print_token      state colon ":";
-  print_type_expr  state var_type;
+  print_option     state print_colon_type_expr var_type;
   print_token      state assign ":=";
   print_expr       state init;
   print_terminator state terminator
@@ -403,9 +406,11 @@ and print_for_loop state = function
 | ForCollect for_collect -> print_for_collect state for_collect
 
 and print_for_int state ({value; _} : for_int reg) =
-  let {kwd_for; assign; kwd_to; bound; step; block} = value in
+  let {kwd_for; binder; assign; init; kwd_to; bound; step; block} = value in
   print_token      state kwd_for "for";
-  print_var_assign state assign;
+  print_var        state binder;
+  print_token      state assign ":=";
+  print_expr       state init;
   print_token      state kwd_to "to";
   print_expr       state bound;
   (match step with
@@ -414,12 +419,6 @@ and print_for_int state ({value; _} : for_int reg) =
        print_token  state kwd_step "step";
        print_expr   state expr);
   print_block      state block
-
-and print_var_assign state {value; _} =
-  let {name; assign; expr} = value in
-  print_var   state name;
-  print_token state assign ":=";
-  print_expr  state expr
 
 and print_for_collect state ({value; _} : for_collect reg) =
   let {kwd_for; var; bind_to;
@@ -927,7 +926,7 @@ and pp_fun_decl state decl =
   let () =
     let state = state#pad arity (start + 2) in
     pp_node state "<return type>";
-    pp_type_expr (state#pad 1 0) decl.ret_type in
+    print_option (state#pad 1 0) pp_type_expr @@ Option.map snd decl.ret_type in
   let () =
     let state = state#pad arity (start + 3) in
     pp_node state "<body>";
@@ -945,7 +944,7 @@ and pp_fun_decl state decl =
 and pp_const_decl state decl =
   let arity = 3 in
   pp_ident (state#pad arity 0) decl.name;
-  pp_type_expr (state#pad arity 1) decl.const_type;
+  print_option (state#pad arity 1) pp_type_expr @@ Option.map snd decl.const_type;
   pp_expr (state#pad arity 2) decl.init
 
 and pp_type_expr state = function
@@ -1014,7 +1013,7 @@ and pp_fun_expr state (expr: fun_expr) =
   let () =
     let state = state#pad 3 1 in
     pp_node state "<return type>";
-    pp_type_expr (state#pad 1 0) expr.ret_type in
+    print_option (state#pad 1 0) pp_type_expr @@ Option.map snd expr.ret_type in
   let () =
     let state = state#pad 3 2 in
     pp_node state "<return>";
@@ -1042,11 +1041,11 @@ and pp_param_decl state = function
   ParamConst {value; region} ->
     pp_loc_node state "ParamConst" region;
     pp_ident (state#pad 2 0) value.var;
-    pp_type_expr (state#pad 2 1) value.param_type
+    print_option (state#pad 2 1) pp_type_expr @@ Option.map snd value.param_type
 | ParamVar {value; region} ->
     pp_loc_node state "ParamVar" region;
     pp_ident (state#pad 2 0) value.var;
-    pp_type_expr (state#pad 2 1) value.param_type
+    print_option (state#pad 2 1) pp_type_expr @@ Option.map snd value.param_type
 
 and pp_statements state statements =
   let statements = Utils.nsepseq_to_list statements in
@@ -1334,13 +1333,15 @@ and pp_for_loop state = function
     pp_for_collect state value
 
 and pp_for_int state for_int =
-  let {assign; bound; step; block; _} = for_int in
+  let {binder; init; bound; step; block; _} = for_int in
   let arity =
     match step with None -> 3 | Some _ -> 4 in
   let () =
     let state = state#pad arity 0 in
     pp_node state "<init>";
-    pp_var_assign state assign.value in
+    pp_ident (state#pad 2 0) binder;
+    pp_expr  (state#pad 2 1) init
+    in
   let () =
     let state = state#pad arity 1 in
     pp_node state "<bound>";
@@ -1358,10 +1359,6 @@ and pp_for_int state for_int =
     pp_node state "<statements>";
     pp_statements state statements
   in ()
-
-and pp_var_assign state asgn =
-  pp_ident (state#pad 2 0) asgn.name;
-  pp_expr  (state#pad 2 1) asgn.expr
 
 and pp_for_collect state collect =
   let () =
@@ -1450,7 +1447,7 @@ and pp_data_decl state = function
 
 and pp_var_decl state decl =
   pp_ident     (state#pad 3 0) decl.name;
-  pp_type_expr (state#pad 3 1) decl.var_type;
+  print_option (state#pad 3 1) pp_type_expr @@ Option.map snd decl.var_type;
   pp_expr      (state#pad 3 2) decl.init
 
 and pp_expr state = function

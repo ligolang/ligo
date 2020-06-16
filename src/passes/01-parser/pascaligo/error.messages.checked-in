@@ -827,18 +827,6 @@ interactive_expr: Function LPAR Var Ident COLON Ident VBAR
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: Function LPAR Var Ident COLON With
-##
-## Ends in an error in state: 74.
-##
-## param_decl -> Var Ident COLON . param_type [ SEMI RPAR ]
-##
-## The known suffix of the stack is as follows:
-## Var Ident COLON
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
 interactive_expr: Function LPAR Var Ident With
 ##
 ## Ends in an error in state: 73.
@@ -2828,18 +2816,6 @@ contract: Const Ident COLON String VBAR
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Const Ident COLON With
-##
-## Ends in an error in state: 495.
-##
-## unqualified_decl(EQ) -> Ident COLON . type_expr EQ expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
-##
-## The known suffix of the stack is as follows:
-## Ident COLON
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
 contract: Const Ident With
 ##
 ## Ends in an error in state: 494.
@@ -4010,18 +3986,6 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON String Is Begin
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON String Is Begin Var Ident COLON With
-##
-## Ends in an error in state: 418.
-##
-## unqualified_decl(ASS) -> Ident COLON . type_expr ASS expr [ SEMI RBRACE End ]
-##
-## The known suffix of the stack is as follows:
-## Ident COLON
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON String Is Begin Var Ident With
 ##
 ## Ends in an error in state: 417.
@@ -4174,19 +4138,6 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON String VBAR
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON With
-##
-## Ends in an error in state: 463.
-##
-## open_fun_decl -> Function Ident parameters COLON . type_expr Is block With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
-## open_fun_decl -> Function Ident parameters COLON . type_expr Is expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
-##
-## The known suffix of the stack is as follows:
-## Function Ident parameters COLON
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
 contract: Function Ident LPAR Const Ident COLON Ident RPAR With
 ##
 ## Ends in an error in state: 462.
@@ -4280,19 +4231,6 @@ contract: Recursive Function Ident LPAR Const Ident COLON Ident RPAR COLON Strin
 ## In state 30, spurious reduction of production cartesian -> core_type 
 ## In state 36, spurious reduction of production fun_type -> cartesian 
 ## In state 44, spurious reduction of production type_expr -> fun_type 
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: Recursive Function Ident LPAR Const Ident COLON Ident RPAR COLON With
-##
-## Ends in an error in state: 87.
-##
-## open_fun_decl -> Recursive Function Ident parameters COLON . type_expr Is block With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
-## open_fun_decl -> Recursive Function Ident parameters COLON . type_expr Is expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
-##
-## The known suffix of the stack is as follows:
-## Recursive Function Ident parameters COLON
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -4836,4 +4774,3 @@ contract: With
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
-
