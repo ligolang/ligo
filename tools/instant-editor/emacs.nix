@@ -1,24 +1,16 @@
-
+{ pkgs ? import ../../nix/pkgs.nix }:
 
 let
-  sources = import ./nix/sources.nix { };
-  nixpkgs = import sources.nixpkgs { };
-  init-el = nixpkgs.writeText "init.el" ''
+  init-el = pkgs.writeText "init.el" ''
+    (setq use-package-always-ensure nil) ;; Dependencies are installed via nix
+
     (eval-when-compile
-      ${
-        builtins.concatStringsSep "\n    "
-        (builtins.map (package: ''(add-to-list 'load-path "${package}")'')
-          (with sources; [ use-package tuareg company-mode nix-mode ]))
-      }
-      (require 'use-package)
-    )
+      (require 'use-package))
 
     (use-package company)
 
     (use-package nix-mode
       :mode "\\.nix\\'")
-
-    (load "${sources.tuareg}/tuareg-site-file")
 
     ${builtins.readFile ./ocaml-config.el}
 
@@ -26,15 +18,34 @@ let
 
     (message "Welcome to LIGO Instant Emacs")
   '';
-  emacs = nixpkgs.runCommand "emacs" {
-    nativeBuildInputs = [ nixpkgs.makeWrapper ];
-  } ''
-    makeWrapper ${nixpkgs.emacs}/bin/emacs $out/bin/emacs \
-      --add-flags "-l ${init-el}" \
-      --add-flags "-q"
+  emacs = pkgs.writeShellScriptBin "emacs" ''
+    ${
+      pkgs.emacsWithPackages (ps:
+        with ps; [
+          use-package
+          tuareg
+          company
+          nix-mode
+          merlin
+          utop
+          ocp-indent
+        ])
+    }/bin/emacs \
+      -l "${init-el}" \
+      -q \
+      "$@"
   '';
 
-in nixpkgs.mkShell {
-  buildInputs = [ sources.niv emacs nixpkgs.lorri nixpkgs.tmux nixpkgs.direnv ];
-  shellHook = ''eval "$(${nixpkgs.direnv}/bin/direnv hook bash)"'';
+in {
+  buildInputs = [
+    pkgs.niv
+    pkgs.opam
+    emacs
+    pkgs.lorri
+    pkgs.tmux
+    pkgs.direnv
+    pkgs.ocamlPackages.ocp-indent
+    pkgs.ocamlPackages.merlin
+  ];
+  shellHook = ''eval "$(${pkgs.direnv}/bin/direnv hook bash)"'';
 }
