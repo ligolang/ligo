@@ -43,3 +43,5 @@ val fresh_like : 'a t -> 'b t
 (* Reset the global counter. Danger, do not use... Provided for tests
    only. *)
 val reset_counter : unit -> unit
+
+val debug : 'a t -> string

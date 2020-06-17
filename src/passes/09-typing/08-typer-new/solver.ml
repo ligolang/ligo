@@ -45,6 +45,15 @@ let select_and_propagate : ('old_input, 'selector_output) selector -> 'selector_
      (* Call the propagation rule *)
      let (new_constraints , new_assignments) = List.split @@ List.map (propagator dbs) selected_outputs in
      (* return so that the new constraints are pushed to some kind of work queue and the new assignments stored *)
+let () =
+  (if Ast_typed.Debug.debug_new_typer && false then
+   let s str = (fun ppf () -> Format.fprintf ppf str) in
+   Format.printf "propagator produced\nnew_constraints = %a\nnew_assignments = %a\n"
+     (PP_helpers.list_sep (PP_helpers.list_sep Ast_typed.PP_generic.type_constraint (s "\n")) (s "\n"))
+     new_constraints
+     (PP_helpers.list_sep (PP_helpers.list_sep Ast_typed.PP_generic.c_constructor_simpl (s "\n")) (s "\n"))
+     new_assignments)
+in
      (already_selected , List.flatten new_constraints , List.flatten new_assignments)
   | WasNotSelected ->
      (already_selected, [] , [])

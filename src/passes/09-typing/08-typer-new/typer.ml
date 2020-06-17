@@ -455,16 +455,20 @@ let type_and_subst_xyz
       (apply_substs : ('b , Typer_common.Errors.typer_error) Typesystem.Misc.Substitution.Pattern.w)
       (type_xyz_returns_state : (environment * O'.typer_state * 'a) -> (environment * O'.typer_state * 'b , typer_error) Trace.result)
     : ('b * O'.typer_state , typer_error) result =
+  let () = (if Ast_typed.Debug.debug_new_typer then Printf.printf "\nTODO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA Print env_state_node here.\n\n") in
+  let () = (if Ast_typed.Debug.debug_new_typer then print_env_state_node in_printer env_state_node) in
   let%bind (env, state, node) = type_xyz_returns_state env_state_node in
   let subst_all =
     let aliases = state.structured_dbs.aliases in
     let assignments = state.structured_dbs.assignments in
     let substs : variable: I.type_variable -> _ = fun ~variable ->
       to_option @@
+      let () = (if Ast_typed.Debug.debug_new_typer then Printf.printf "%s" @@ Format.asprintf "TRY   %a\n" Var.pp variable) in
       let%bind root =
         trace_option (corner_case (Format.asprintf "can't find alias root of variable %a" Var.pp variable)) @@
           (* TODO: after upgrading UnionFind, this will be an option, not an exception. *)
           try Some (Solver.UF.repr variable aliases) with Not_found -> None in
+      let () = (if Ast_typed.Debug.debug_new_typer then Printf.printf "%s" @@ Format.asprintf "TRYR  %a (%a)\n" Var.pp variable Var.pp root) in
       let%bind assignment =
         trace_option (corner_case (Format.asprintf "can't find assignment for root %a" Var.pp root)) @@
           (Map.find_opt root assignments) in
@@ -472,11 +476,14 @@ let type_and_subst_xyz
       let () = ignore tv (* I think there is an issue where the tv is stored twice (as a key and in the element itself) *) in
       let%bind (expr : O.type_content) = trace_option (corner_case "wrong constant tag") @@
         Typesystem.Core.type_expression'_of_simple_c_constant (c_tag , (List.map (fun s -> O.t_variable s ()) tv_list)) in
+      let () = (if Ast_typed.Debug.debug_new_typer then Printf.printf "%s" @@ Format.asprintf "SUBST %a (%a is %a)\n" Var.pp variable Var.pp root Ast_typed.PP_generic.type_content expr) in
       ok @@ expr
     in
     let p = apply_substs ~substs node in
     p in
   let%bind node = subst_all in
+  let () = (if Ast_typed.Debug.debug_new_typer then Printf.printf "\nTODO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA Print env,state,node here again.\n\n") in
+  let () = (if Ast_typed.Debug.debug_new_typer then print_env_state_node out_printer (env, state, node)) in
   let () = ignore env in        (* TODO: shouldn't we use the `env` somewhere? *)
   ok (node, state)
 

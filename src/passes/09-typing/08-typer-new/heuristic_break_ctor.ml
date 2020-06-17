@@ -36,6 +36,9 @@ let propagator : output_break_ctor propagator =
 
   (* a.tv = b.tv *)
   let eq1 = c_equation { tsrc = "solver: propagator: break_ctor a" ; t = P_variable a.tv} { tsrc = "solver: propagator: break_ctor b" ; t = P_variable b.tv} "propagator: break_ctor" in
+  let () = if Ast_typed.Debug.debug_new_typer then
+           let p = Ast_typed.PP_generic.c_constructor_simpl in
+           Format.printf "\npropagator_break_ctor\na = %a\nb = %a\n%!" p a p b in
   (* a.c_tag = b.c_tag *)
   if (Solver_should_be_generated.compare_simple_c_constant a.c_tag b.c_tag) <> 0 then
     failwith (Format.asprintf "type error: incompatible types, not same ctor %a vs. %a (compare returns %d)"
