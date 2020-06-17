@@ -447,10 +447,8 @@ let rec error_ppformat : display_format:string display_format ->
       Ast_typed.PP.type_expression t
     | `Typer_uncomparable_types (a,b) ->
       Format.fprintf f
-        "@[<hv>Those two types are not comparable:@ %a - %a@ %a - %a@]"
-      Location.pp a.location
+        "@[<hv>Those two types are not comparable:@ - %a@ - %a@]"
       Ast_typed.PP.type_expression a
-      Location.pp b.location
       Ast_typed.PP.type_expression b
     | `Typer_comparator_composed a ->
       Format.fprintf f

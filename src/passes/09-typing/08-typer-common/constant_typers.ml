@@ -652,7 +652,7 @@ let rec pair_comparator : string -> typer = fun s -> typer_2 s @@ fun a b ->
   comparator s [a_v;b_v] None
     
 and comparator : string -> typer = fun s -> typer_2 s @@ fun a b ->
-  bind_or (simple_comparator s [a;b] None, pair_comparator s [a;b] None)
+  bind_or (pair_comparator s [a;b] None, simple_comparator s [a;b] None)
 
 let constant_typers c : (typer , typer_error) result = match c with
   | C_INT                 -> ok @@ int ;
