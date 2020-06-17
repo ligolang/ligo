@@ -1,4 +1,4 @@
-{ pkgs ? import ../../nix/pkgs.nix }:
+{ sources ? import ./nix/sources.nix, pkgs ? import sources.nixpkgs { } }:
 
 let
   init-el = pkgs.writeText "init.el" ''
@@ -46,6 +46,7 @@ in {
     pkgs.direnv
     pkgs.ocamlPackages.ocp-indent
     pkgs.ocamlPackages.merlin
+    pkgs.git
   ];
   shellHook = ''eval "$(${pkgs.direnv}/bin/direnv hook bash)"'';
 }
