@@ -34,5 +34,5 @@ c i d =
 instance HasComments () where
   getComments () = []
 
--- instance (Contains [Text] xs) => HasComments (Product xs) where
---   getComments = getElem
+instance (Contains [Text] xs) => HasComments (Product xs) where
+  getComments = getElem

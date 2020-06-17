@@ -24,8 +24,8 @@ instance Contains x xs => Contains x (y : xs) where
   getElem   (Cons _ xs) = getElem xs
   putElem x (Cons y xs) = Cons y (putElem x xs)
 
-modifyElem :: Contains x xs => (x -> x) -> Product xs -> Product xs
-modifyElem f xs = putElem (f $ getElem xs) xs
+modElem :: Contains x xs => (x -> x) -> Product xs -> Product xs
+modElem f xs = putElem (f $ getElem xs) xs
 
 instance Pretty (Product '[]) where
   pp _ = "{}"

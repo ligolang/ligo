@@ -173,12 +173,12 @@ rangeToJRange (Range (a, b, _) (c, d, _)) = J.Range (J.Position a b) (J.Position
 rangeToLoc :: Range -> J.Range
 rangeToLoc (Range (a, b, _) (c, d, _)) = J.Range (J.Position a b) (J.Position c d)
 
-loadByURI :: J.Uri -> IO (Pascal (Product [Env, Range, [Text]]))
+loadByURI :: J.Uri -> IO (Pascal (Product [[ScopedDecl], Range, [Text]]))
 loadByURI uri = do
   case J.uriToFilePath uri of
     Just fin -> do
       (tree, _) <- runParser contract fin
-      return $ ascribeEnv tree
+      return $ addLocalScopes tree
 
 collectErrors
   :: Core.LspFuncs ()

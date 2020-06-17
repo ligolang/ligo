@@ -1,20 +1,23 @@
-name: squirrel
+name: ligo-squirrel
 
 dependencies:
   - base
   - bytestring
   - containers
   - data-default
+  - fastsum
   - mtl
   - pretty
   - template-haskell
   - text
   - tree-sitter
-  - fastsum
 
 default-extensions:
+  - AllowAmbiguousTypes
+  - ApplicativeDo
   - BangPatterns
   - BlockArguments
+  - ConstraintKinds
   - DataKinds
   - DeriveFoldable
   - DeriveFunctor
@@ -23,9 +26,11 @@ default-extensions:
   - DerivingVia
   - FlexibleContexts
   - FlexibleInstances
+  - FunctionalDependencies
   - GADTs
   - GeneralisedNewtypeDeriving
   - LambdaCase
+  - MagicHash
   - MultiParamTypeClasses
   - NamedFieldPuns
   - OverloadedStrings
@@ -33,15 +38,11 @@ default-extensions:
   - ScopedTypeVariables
   - StandaloneDeriving
   - TemplateHaskell
+  - TypeApplications
   - TypeFamilies
   - TypeOperators
   - UndecidableInstances
-  - FunctionalDependencies
   - ViewPatterns
-  - ConstraintKinds
-  - TypeApplications
-  - AllowAmbiguousTypes
-  - MagicHash
 
 ghc-options: -freverse-errors -Wall -threaded
 
@@ -58,12 +59,12 @@ library:
 executables:
   squirrel:
     dependencies:
-      - lens
-      - stm
       - haskell-lsp
-      - squirrel
       - hslogger
       - interpolate
+      - lens
+      - ligo-squirrel
+      - stm
 
     main: Main.hs
 

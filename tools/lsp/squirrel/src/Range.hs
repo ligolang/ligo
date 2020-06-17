@@ -25,6 +25,7 @@ data Range = Range
   , rFinish :: (Int, Int, Int)  -- ^ ... End: line, col, byte-offset).
   }
   deriving (Show) via PP Range
+  deriving stock (Ord)
 
 -- | TODO: Ugh. Purge it.
 diffRange :: Range -> Range -> Range
@@ -32,8 +33,9 @@ diffRange (Range ws wf) (Range ps _) = Range (max ws ps) wf
 
 instance Pretty Range where
   pp (Range (ll, lc, _) (rl, rc, _)) =
-    brackets do
-      int ll <> ":" <> int lc <> "-" <> int rl <> ":" <> int rc
+    color 2 do
+      brackets do
+        int ll <> ":" <> int lc <> "-" <> int rl <> ":" <> int rc
 
 -- | Ability to get range out of something.
 class HasRange a where

@@ -76,6 +76,9 @@ instance Pretty1 Maybe where
 instance {-# OVERLAPS #-} (Pretty a, Pretty b) => Pretty (Either a b) where
   pp = either pp pp
 
+instance Pretty Int where
+  pp = int
+
 -- | Common instance.
 instance Pretty Text where
   pp = text . Text.unpack
@@ -108,7 +111,7 @@ train sep' = fsep . punctuate sep' . map pp
 
 -- | Pretty print as a vertical block.
 block :: Pretty p => [p] -> Doc
-block = vcat . map pp
+block = foldr ($+$) empty . map pp
 
 -- | For pretty-printing qualified names.
 sepByDot :: Pretty p => [p] -> Doc

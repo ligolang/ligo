@@ -69,6 +69,22 @@ instance Apply Foldable layers => Foldable (Tree layers) where
       go (Tree (Right (a, rest))) = f a <> foldMap go rest
 
 instance
+    ( Apply Traversable layers
+    , Apply Foldable    layers
+    , Apply Functor     layers
+    )
+  =>
+    Traversable (Tree layers)
+  where
+    traverse f = go
+      where
+        go (Tree (Left   err))      = (Tree . Left) <$> traverse f err
+        go (Tree (Right (a, rest))) = do
+          a'    <- f a
+          rest' <- (traverse.traverse) f rest
+          return $ Tree $ Right (a', rest')
+
+instance
     ( Apply Functor layers
     , HasComments info
     , Pretty1    (Sum layers)
@@ -140,38 +156,63 @@ traverseTree act = go
       return (Tree (Left err'))
 
 traverseOnly
-  :: forall f fs m a
-  .  ( UpdateOver m      f   (Tree fs a)
-     , UpdateOver m (Sum fs) (Tree fs a)
+  :: forall f a b fs m
+  .  ( Monad m
+     , Monad m
      , Element f fs
      , Apply Foldable fs
      , Apply Functor fs
      , Apply Traversable fs
      , Traversable f
      , HasRange a
-     , Show (f (Tree fs a))
-     , Show a
      )
-  => (f (Tree fs a) -> m (f (Tree fs a)))
-  ->     Tree fs a  -> m    (Tree fs a)
+  => (a -> f (Tree fs a) -> m (f (Tree fs a)))
+  ->          Tree fs a  -> m    (Tree fs a)
 traverseOnly act = go
   where
     go (match -> Just (r, fa)) = do
-      traceShowM ("traversingA", fa)
-      before (getRange r) fa
-      fb <- act fa
+      fb <- act r fa
       fc <- traverse go fb
-      after  (getRange r) fa
-      return $ mk r fc
+      pure $ mk r fc
 
     go tree@(Tree (Right (r, union))) = do
-      traceShowM ("traversingB", ())
-      before (getRange r) union
       union' <- traverse go union
-      after  (getRange r) union
-      return $ Tree $ Right (r, union')
+      pure $ Tree $ Right (r, union')
 
-    go tree = return tree
+    go tree = pure tree
+
+data Visit fs a m where
+  Visit
+    :: (Element f fs, Traversable f)
+    => (a -> f (Tree fs a) -> m (f (Tree fs a)))
+    -> Visit fs a m
+
+traverseMany
+  :: ( Apply Functor fs
+     , Apply Foldable fs
+     , Apply Traversable fs
+     , Monad m
+     )
+  => [Visit fs a m]
+  -> Tree fs a
+  -> m (Tree fs a)
+traverseMany visitors = go
+  where
+    go tree = aux visitors
+      where
+        aux (Visit visitor : rest) = do
+          case match tree of
+            Just (r, fa) -> do
+              fa'  <- visitor r fa
+              fa'' <- traverse go fa'
+              return $ mk r fa''
+            Nothing -> do
+              aux rest
+        aux [] = do
+          case tree of
+            Tree (Right (r, union)) -> do
+              union' <- traverse go union
+              return $ Tree (Right (r, union'))
 
 -- | Make a tree out of a layer and an info.
 mk :: (Functor f, Element f fs) => info -> f (Tree fs info) -> Tree fs info

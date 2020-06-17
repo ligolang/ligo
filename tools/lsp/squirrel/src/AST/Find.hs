@@ -16,7 +16,7 @@ import Pretty
 import Debug.Trace
 
 findScopedDecl
-  :: ( HasEnv info
+  :: ( HasLocalScope info
      , HasRange info
      )
   => Range
@@ -24,11 +24,10 @@ findScopedDecl
   -> Maybe ScopedDecl
 findScopedDecl pos tree = do
   point <- lookupTree pos tree
-  let env = getEnv (infoOf point)
-  lookupEnv (ppToText $ void point) env
+  lookupEnv (ppToText $ void point) (getLocalScope (infoOf point))
 
 definitionOf
-  :: ( HasEnv info
+  :: ( HasLocalScope info
      , HasRange info
      )
   => Range
@@ -38,7 +37,7 @@ definitionOf pos tree =
   _sdOrigin <$> findScopedDecl pos tree
 
 typeOf
-  :: ( HasEnv info
+  :: ( HasLocalScope info
      , HasRange info
      )
   => Range
@@ -48,7 +47,7 @@ typeOf pos tree =
   _sdType =<< findScopedDecl pos tree
 
 implementationOf
-  :: ( HasEnv info
+  :: ( HasLocalScope info
      , HasRange info
      )
   => Range
@@ -58,7 +57,7 @@ implementationOf pos tree =
   _sdBody =<< findScopedDecl pos tree
 
 referencesOf
-  :: ( HasEnv info
+  :: ( HasLocalScope info
      , HasRange info
      )
   => Range
