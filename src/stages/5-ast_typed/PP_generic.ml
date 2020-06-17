@@ -89,7 +89,7 @@ module M = struct
       option = (fun _visitor continue NoState o ->
         match o with
         | None -> fprintf ppf "None"
-        | Some v -> fprintf ppf "%a" (fun _ppf -> continue NoState) v) ;
+        | Some v -> fprintf ppf "Some %a" (fun _ppf -> continue NoState) v) ;
       poly_unionfind            = (fun _visitor continue NoState p   ->
         let lst = (UnionFind.Poly2.partitions p) in
         let aux1 l = fprintf ppf "[@,@[<hv 2> (*%a*) %a @]@,]"
