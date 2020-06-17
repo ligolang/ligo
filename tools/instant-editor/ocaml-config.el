@@ -23,7 +23,8 @@
 (setq ligo-developer/utop-site-elisp (getenv "UTOP_SITE_LISP"))
 (setq ligo-developer/ocp-site-elisp (getenv "OCP_INDENT_SITE_LISP"))
 
-(use-package tuareg)
+(use-package tuareg
+  :mode ("\\.ml[ily]?$" . tuareg-mode))
 
 (use-package merlin
   :if ligo-developer/merlin-site-elisp

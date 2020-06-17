@@ -2,7 +2,7 @@
 set -euEo pipefail
 
 if [ $# -eq 2 ]; then
-    nix-shell --run "$1 '$2'";
+    nix-shell --arg emacs true --run "$1 '$2'";
 elif [ $# -eq 0 ]; then
     nix-shell;
 else
