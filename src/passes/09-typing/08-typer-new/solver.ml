@@ -13,8 +13,8 @@ let propagator_heuristics =
     Heuristic_specialize1.heuristic ;
   ]
 
-let init_propagator_heuristic (Propagator_heuristic { selector ; propagator ; printer ; comparator }) =
-  Propagator_state { selector ; propagator ; printer ; already_selected = Set.create ~cmp:comparator }
+let init_propagator_heuristic (Propagator_heuristic { selector ; propagator ; printer ; comparator ; initial_private_storage }) =
+  Propagator_state { selector ; propagator ; printer ; already_selected = Set.create ~cmp:comparator ; private_storage = initial_private_storage }
 
 let initial_state : typer_state = {
     structured_dbs =
@@ -35,15 +35,17 @@ let initial_state : typer_state = {
    entirely accidental (dfs/bfs/something in-between). *)
 
 (* sub-component: constraint selector (worklist / dynamic queries) *)
-let select_and_propagate : ('old_input, 'selector_output) selector -> 'selector_output propagator -> 'selector_output poly_set -> 'old_input -> structured_dbs -> 'selector_output poly_set * new_constraints * new_assignments =
+let select_and_propagate : 'old_input 'selector_output 'private_storage . ('old_input, 'selector_output, 'private_storage) selector -> ('selector_output , 'private_storage) propagator -> 'selector_output poly_set -> 'private_storage -> 'old_input -> structured_dbs -> 'selector_output poly_set * 'private_storage * new_constraints * new_assignments =
   fun selector propagator ->
-  fun already_selected old_type_constraint dbs ->
+  fun already_selected private_storage old_type_constraint dbs ->
   (* TODO: thread some state to know which selector outputs were already seen *)
-  match selector old_type_constraint dbs with
+  let private_storage , x = selector old_type_constraint private_storage dbs in
+  match x with
     WasSelected selected_outputs ->
      let Set.{ set = already_selected ; duplicates = _ ; added = selected_outputs } = Set.add_list selected_outputs already_selected in
      (* Call the propagation rule *)
-     let (new_constraints , new_assignments) = List.split @@ List.map (propagator dbs) selected_outputs in
+     let (private_storage, l) = List.fold_map_acc (fun private_storage selected -> let (a, b, c) = propagator private_storage dbs selected in (a, (b, c))) private_storage selected_outputs in
+     let (new_constraints , new_assignments) = List.split l in
      (* return so that the new constraints are pushed to some kind of work queue and the new assignments stored *)
 let () =
   (if Ast_typed.Debug.debug_new_typer && false then
@@ -54,16 +56,16 @@ let () =
      (PP_helpers.list_sep (PP_helpers.list_sep Ast_typed.PP_generic.c_constructor_simpl (s "\n")) (s "\n"))
      new_assignments)
 in
-     (already_selected , List.flatten new_constraints , List.flatten new_assignments)
+     (already_selected , private_storage , List.flatten new_constraints , List.flatten new_assignments)
   | WasNotSelected ->
-     (already_selected, [] , [])
+     (already_selected, private_storage , [] , [])
 
-let select_and_propagate_one new_constraint (new_states , new_constraints , dbs) (Propagator_state { selector; propagator; printer ; already_selected }) =
+let select_and_propagate_one new_constraint (new_states , new_constraints , dbs) (Propagator_state { selector; propagator; printer ; already_selected ; private_storage }) =
   let sel_propag = (select_and_propagate selector propagator) in
-  let (already_selected , new_constraints', new_assignments) = sel_propag already_selected new_constraint dbs in
+  let (already_selected , private_storage, new_constraints', new_assignments) = sel_propag already_selected private_storage new_constraint dbs in
   let assignments = List.fold_left (fun acc ({tv;c_tag=_;tv_list=_} as ele) -> Map.update tv (function None -> Some ele | x -> x) acc) dbs.assignments new_assignments in
   let dbs = { dbs with assignments } in
-  Propagator_state { selector; propagator; printer ; already_selected } :: new_states, new_constraints' @ new_constraints, dbs
+  Propagator_state { selector; propagator; printer ; already_selected ; private_storage } :: new_states, new_constraints' @ new_constraints, dbs
 
 (* Takes a constraint, applies all selector+propagator pairs to it.
    Keeps track of which constraints have already been selected. *)
