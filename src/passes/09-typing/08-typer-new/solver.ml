@@ -13,8 +13,8 @@ let propagator_heuristics =
     Heuristic_specialize1.heuristic ;
   ]
 
-let init_propagator_heuristic (Propagator_heuristic { selector ; propagator ; comparator }) =
-  Propagator_state { selector ; propagator ; already_selected = Set.create ~cmp:comparator }
+let init_propagator_heuristic (Propagator_heuristic { selector ; propagator ; printer ; comparator }) =
+  Propagator_state { selector ; propagator ; printer ; already_selected = Set.create ~cmp:comparator }
 
 let initial_state : typer_state = {
     structured_dbs =
@@ -49,12 +49,12 @@ let select_and_propagate : ('old_input, 'selector_output) selector -> 'selector_
   | WasNotSelected ->
      (already_selected, [] , [])
 
-let select_and_propagate_one new_constraint (new_states , new_constraints , dbs) (Propagator_state { selector; propagator; already_selected }) =
+let select_and_propagate_one new_constraint (new_states , new_constraints , dbs) (Propagator_state { selector; propagator; printer ; already_selected }) =
   let sel_propag = (select_and_propagate selector propagator) in
   let (already_selected , new_constraints', new_assignments) = sel_propag already_selected new_constraint dbs in
   let assignments = List.fold_left (fun acc ({tv;c_tag=_;tv_list=_} as ele) -> Map.update tv (function None -> Some ele | x -> x) acc) dbs.assignments new_assignments in
   let dbs = { dbs with assignments } in
-  Propagator_state { selector; propagator; already_selected } :: new_states, new_constraints' @ new_constraints, dbs
+  Propagator_state { selector; propagator; printer ; already_selected } :: new_states, new_constraints' @ new_constraints, dbs
 
 (* Takes a constraint, applies all selector+propagator pairs to it.
    Keeps track of which constraints have already been selected. *)

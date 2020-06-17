@@ -52,4 +52,11 @@ let propagator : output_specialize1 propagator =
   let eqs = eq1 :: new_constraints in
   (eqs, []) (* no new assignments *)
 
-let heuristic = Propagator_heuristic { selector ; propagator ; comparator = Solver_should_be_generated.compare_output_specialize1 }
+let heuristic =
+  Propagator_heuristic
+    {
+      selector ;
+      propagator ;
+      printer = Ast_typed.PP_generic.output_specialize1 ;
+      comparator = Solver_should_be_generated.compare_output_specialize1
+    }
