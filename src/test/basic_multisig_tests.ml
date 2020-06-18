@@ -49,12 +49,6 @@ let (first_owner , first_contract) =
   let kt = id.implicit_contract in
   Protocol.Alpha_context.Contract.to_b58check kt , kt
 
-  let bad_contract () =
-    let title = (thunk ("Not a contract")) in
-    let message () = Format.asprintf "" in
-    let data = [
-    ] in
-    error ~data title message ()
 
 let op_list = 
   let open Memory_proto_alpha.Protocol.Alpha_context in
@@ -63,7 +57,8 @@ let op_list =
     let parameters : Script.lazy_expr = Script.unit_parameter in
     let entrypoint = "default" in
     let open Proto_alpha_utils in
-    let%bind destination = Trace.trace_alpha_tzresult (bad_contract) @@ 
+    let%bind destination = 
+      Trace.trace_alpha_tzresult (fun _ -> Main_errors.test_internal __LOC__) @@
        Contract.of_b58check "tz1PpDGHRXFQq3sYDuH8EpLWzPm5PFpe1sLE" 
     in
     ok @@ Transaction {amount=Tez.zero; parameters; entrypoint; destination} in
