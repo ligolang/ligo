@@ -36,10 +36,10 @@ module M = struct
   let op : (no_state, t) fold_config = {
       generic = (fun NoState info ->
         match info.node_instance.instance_kind with
-        | RecordInstance { fields } ->
+        | RecordInstance { field_instances } ->
            let aux (fld : ('xi, 'xo) Adt_info.ctor_or_field_instance) =
              ( fld.cf.name , fun () -> fld.cf_continue NoState ) in
-           Record ("name_of_the_record", List.map aux fields)
+           Record ("name_of_the_record", List.map aux field_instances)
         | VariantInstance { constructor ; _ } ->
            VariantConstructor ("name_of_the_variant", constructor.cf.name, fun () -> constructor.cf_continue NoState)
         | PolyInstance { poly=_; arguments=_; poly_continue } ->

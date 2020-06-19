@@ -12,3 +12,10 @@ let fold_map__option continue state v =
   match v with
     Some x -> continue state x
   | None -> ok None
+
+let make__list f l =
+  List.fold_right
+    (fun elt acc -> match acc, f elt with
+         Some acc, Some x -> Some (x :: acc)
+       | _ -> None)
+    l (Some [])

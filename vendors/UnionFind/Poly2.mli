@@ -54,6 +54,11 @@ val elements : 'item partition -> 'item list
    have the same order). *)
 val partitions : 'item partition -> 'item list list
 
+(** The value of the call [get_compare p] is the comparison function
+    used by p *)
+val get_compare : 'item partition -> ('item -> 'item -> int)
+
+
 (** The call [print p] is a value of type [Buffer.t] containing
         strings denoting the partition [p], based on
         [Ord.to_string]. *)

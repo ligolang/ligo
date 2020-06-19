@@ -36,6 +36,8 @@ let add_list elts set =
 
 let elements set = RB.elements set.tree
 
+let get_compare set = set.cmp
+
 let iter f set = RB.iter f set.tree
 
 let fold_inc f set = RB.fold_inc (fun ~elt -> f elt) set.tree
