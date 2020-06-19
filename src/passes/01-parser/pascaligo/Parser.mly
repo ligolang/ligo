@@ -142,6 +142,7 @@ type_decl:
                   terminator = $5}
     in {region; value} }
 
+type_expr_colon: ":" type_expr { $1,$2 }
 type_expr:
   fun_type | sum_type | record_type { $1 }
 
@@ -239,52 +240,49 @@ field_decl:
 
 
 fun_expr:
-  "function" parameters ":" type_expr "is" expr {
-    let stop   = expr_to_region $6 in
+  "function" parameters type_expr_colon? "is" expr {
+    let stop   = expr_to_region $5 in
     let region = cover $1 stop
     and value  = {kwd_function = $1;
                   param        = $2;
-                  colon        = $3;
-                  ret_type     = $4;
-                  kwd_is       = $5;
-                  return       = $6}
+                  ret_type     = $3;
+                  kwd_is       = $4;
+                  return       = $5}
     in {region; value} }
 
 (* Function declarations *)
 
 open_fun_decl:
-  ioption ("recursive") "function" fun_name parameters ":" type_expr "is"
+  ioption ("recursive") "function" fun_name parameters type_expr_colon? "is"
   block "with" expr {
     Scoping.check_reserved_name $3;
-    let stop   = expr_to_region $10 in
+    let stop   = expr_to_region $9 in
     let region = cover $2 stop
     and value  = {kwd_recursive= $1;
                   kwd_function = $2;
                   fun_name     = $3;
                   param        = $4;
-                  colon        = $5;
-                  ret_type     = $6;
-                  kwd_is       = $7;
-                  block_with   = Some ($8, $9);
-                  return       = $10;
+                  ret_type     = $5;
+                  kwd_is       = $6;
+                  block_with   = Some ($7, $8);
+                  return       = $9;
                   terminator   = None;
                   attributes   = None}
     in {region; value}
   }
-| ioption ("recursive") "function" fun_name parameters ":" type_expr "is"
+| ioption ("recursive") "function" fun_name parameters type_expr_colon? "is"
   expr {
     Scoping.check_reserved_name $3;
-    let stop   = expr_to_region $8 in
+    let stop   = expr_to_region $7 in
     let region = cover $2 stop
     and value  = {kwd_recursive= $1;
                   kwd_function = $2;
                   fun_name     = $3;
                   param        = $4;
-                  colon        = $5;
-                  ret_type     = $6;
-                  kwd_is       = $7;
+                  ret_type     = $5;
+                  kwd_is       = $6;
                   block_with   = None;
-                  return       = $8;
+                  return       = $7;
                   terminator   = None;
                   attributes   = None}
     in {region; value} }
@@ -300,28 +298,26 @@ parameters:
     in Scoping.check_parameters params; $1 }
 
 param_decl:
-  "var" var ":" param_type {
+  "var" var param_type? {
     Scoping.check_reserved_name $2;
-    let stop   = type_expr_to_region $4 in
+    let stop   = match $3 with None -> $2.region | Some (_,t) -> type_expr_to_region t in
     let region = cover $1 stop
     and value  = {kwd_var    = $1;
                   var        = $2;
-                  colon      = $3;
-                  param_type = $4}
+                  param_type = $3}
     in ParamVar {region; value}
   }
-| "const" var ":" param_type {
+| "const" var param_type? {
     Scoping.check_reserved_name $2;
-    let stop   = type_expr_to_region $4 in
+    let stop   = match $3 with None -> $2.region | Some (_,t) -> type_expr_to_region t in
     let region = cover $1 stop
     and value  = {kwd_const  = $1;
                   var        = $2;
-                  colon      = $3;
-                  param_type = $4}
+                  param_type = $3}
     in ParamConst {region; value} }
 
 param_type:
-  fun_type { $1 }
+  ":" fun_type { $1,$2 }
 
 block:
   "begin" sep_or_term_list(statement,";") "end" {
@@ -352,11 +348,10 @@ open_data_decl:
 
 open_const_decl:
   "const" unqualified_decl("=") {
-    let name, colon, const_type, equal, init, stop = $2 in
+    let name, const_type, equal, init, stop = $2 in
     let region = cover $1 stop
     and value  = {kwd_const = $1;
                   name;
-                  colon;
                   const_type;
                   equal;
                   init;
@@ -366,11 +361,10 @@ open_const_decl:
 
 open_var_decl:
   "var" unqualified_decl(":=") {
-    let name, colon, var_type, assign, init, stop = $2 in
+    let name, var_type, assign, init, stop = $2 in
     let region = cover $1 stop
     and value  = {kwd_var = $1;
                   name;
-                  colon;
                   var_type;
                   assign;
                   init;
@@ -378,10 +372,10 @@ open_var_decl:
     in {region; value} }
 
 unqualified_decl(OP):
-  var ":" type_expr OP expr {
+  var type_expr_colon? OP expr {
     Scoping.check_reserved_name $1;
-    let region = expr_to_region $5
-    in $1, $2, $3, $4, $5, region }
+    let region = expr_to_region $4
+    in $1, $2, $3, $4, region }
 
 const_decl:
   open_const_decl ";"? {
@@ -616,24 +610,28 @@ while_loop:
     in While {region; value} }
 
 for_loop:
-  "for" var_assign "to" expr block {
-    let region = cover $1 $5.region in
-    let value  = {kwd_for  = $1;
-                  assign   = $2;
-                  kwd_to   = $3;
-                  bound    = $4;
-                  step     = None;
-                  block    = $5}
-    in For (ForInt {region; value})
-  }
-| "for" var_assign "to" expr "step" expr block {
+  "for" var ":=" expr "to" expr block {
     let region = cover $1 $7.region in
     let value  = {kwd_for  = $1;
-                  assign   = $2;
-                  kwd_to   = $3;
-                  bound    = $4;
-                  step     = Some ($5, $6);
+                  binder   = $2;
+                  assign   = $3;
+                  init     = $4;
+                  kwd_to   = $5;
+                  bound    = $6;
+                  step     = None;
                   block    = $7}
+    in For (ForInt {region; value})
+  }
+| "for" var ":=" expr "to" expr "step" expr block {
+    let region = cover $1 $9.region in
+    let value  = {kwd_for  = $1;
+                  binder   = $2;
+                  assign   = $3;
+                  init     = $4;
+                  kwd_to   = $5;
+                  bound    = $6;
+                  step     = Some ($7, $8);
+                  block    = $9}
     in For (ForInt {region; value})
   }
 | "for" var arrow_clause? "in" collection expr block {
@@ -652,13 +650,6 @@ collection:
   "map"  { Map  $1 }
 | "set"  { Set  $1 }
 | "list" { List $1 }
-
-var_assign:
-  var ":=" expr {
-    Scoping.check_reserved_name $1;
-    let region = cover $1.region (expr_to_region $3)
-    and value  = {name=$1; assign=$2; expr=$3}
-    in {region; value} }
 
 arrow_clause:
   "->" var { Scoping.check_reserved_name $2; ($1,$2) }

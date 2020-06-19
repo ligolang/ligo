@@ -10,32 +10,38 @@ type abs_error = [
   | `Concrete_pascaligo_unknown_predefined_type of Raw.constr
   | `Concrete_pascaligo_unsupported_non_var_pattern of Raw.pattern
   | `Concrete_pascaligo_only_constructors of Raw.pattern
-  | `Concrete_pascaligo_unsupported_pattern_type of Raw.pattern list
+  | `Concrete_pascaligo_unsupported_pattern_type of Raw.pattern
   | `Concrete_pascaligo_unsupported_tuple_pattern of Raw.pattern
   | `Concrete_pascaligo_unsupported_string_singleton of Raw.type_expr
   | `Concrete_pascaligo_unsupported_deep_some_pattern of Raw.pattern
-  | `Concrete_pascaligo_unsupported_deep_list_pattern of (Raw.pattern, Raw.wild) Parser_shared.Utils.nsepseq Raw.reg
+  | `Concrete_pascaligo_unsupported_deep_list_pattern of Raw.pattern
+  | `Concrete_pascaligo_unsupported_deep_tuple_pattern of (Raw.pattern, Raw.wild) Parser_shared.Utils.nsepseq Raw.par Raw.reg
   | `Concrete_pascaligo_unknown_built_in of string
   | `Concrete_pascaligo_michelson_type_wrong of Raw.type_expr * string
   | `Concrete_pascaligo_michelson_type_wrong_arity of Location.t * string
   | `Concrete_pascaligo_instruction_tracer of Raw.instruction * abs_error
   | `Concrete_pascaligo_program_tracer of Raw.declaration list * abs_error
+  | `Concrete_pascaligo_recursive_fun of Location.t
+  | `Concrete_pascaligo_block_attribute of Raw.block Region.reg
   ]
 
 let unsupported_cst_constr p = `Concrete_pascaligo_unsupported_constant_constr p
 let unknown_predefined_type name = `Concrete_pascaligo_unknown_predefined_type name
 let unsupported_non_var_pattern p = `Concrete_pascaligo_unsupported_non_var_pattern p
+let untyped_recursive_fun loc = `Concrete_pascaligo_recursive_fun loc
 let only_constructors p = `Concrete_pascaligo_only_constructors p
 let unsupported_pattern_type pl = `Concrete_pascaligo_unsupported_pattern_type pl
 let unsupported_tuple_pattern p = `Concrete_pascaligo_unsupported_tuple_pattern p
 let unsupported_string_singleton te = `Concrete_pascaligo_unsupported_string_singleton te
 let unsupported_deep_some_patterns p = `Concrete_pascaligo_unsupported_deep_some_pattern p
 let unsupported_deep_list_patterns cons = `Concrete_pascaligo_unsupported_deep_list_pattern cons
+let unsupported_deep_tuple_patterns t = `Concrete_pascaligo_unsupported_deep_tuple_pattern t
 let unknown_built_in name = `Concrete_pascaligo_unknown_built_in name
 let michelson_type_wrong texpr name = `Concrete_pascaligo_michelson_type_wrong (texpr,name)
 let michelson_type_wrong_arity loc name = `Concrete_pascaligo_michelson_type_wrong_arity (loc,name)
 let abstracting_instruction_tracer i err = `Concrete_pascaligo_instruction_tracer (i,err)
 let program_tracer decl err = `Concrete_pascaligo_program_tracer (decl,err)
+let block_start_with_attribute block = `Concrete_pascaligo_block_attribute block
 
 let rec error_ppformat : display_format:string display_format ->
   Format.formatter -> abs_error -> unit =
@@ -51,7 +57,7 @@ let rec error_ppformat : display_format:string display_format ->
     | `Concrete_pascaligo_unsupported_pattern_type pl ->
       Format.fprintf f
         "@[<hv>%a@Currently, only booleans, lists, options, and constructors are supported in patterns@]"
-        Location.pp_lift (List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost pl)
+        Location.pp_lift @@ Raw.pattern_to_region pl
     | `Concrete_pascaligo_unsupported_tuple_pattern p ->
       Format.fprintf f
         "@[<hv>%a@The following tuple pattern is not supported yet:@\"%s\"@]"
@@ -76,7 +82,11 @@ let rec error_ppformat : display_format:string display_format ->
     | `Concrete_pascaligo_unsupported_deep_list_pattern cons ->
       Format.fprintf f
         "@[<hv>%a@Currently, only empty lists and x::y are supported in list patterns@]"
-        Location.pp_lift @@ cons.Region.region
+        Location.pp_lift @@ Raw.pattern_to_region cons
+    | `Concrete_pascaligo_unsupported_deep_tuple_pattern tuple ->
+      Format.fprintf f
+        "@[<hv>%a@Currently, nested tuple pattern is not suppoerted@]"
+        Location.pp_lift @@ tuple.Region.region
     | `Concrete_pascaligo_only_constructors p ->
       Format.fprintf f
         "@[<hv>%a@Currently, only constructors are supported in patterns@]"
@@ -105,6 +115,14 @@ let rec error_ppformat : display_format:string display_format ->
         "@[<hv>%a@Abstracting program@%a@]"
         Location.pp_lift (List.fold_left (fun a d -> Region.cover a (Raw.declaration_to_region d)) Region.ghost decl)
         (error_ppformat ~display_format) err
+    | `Concrete_pascaligo_recursive_fun loc ->
+      Format.fprintf f
+        "@[<hv>%a@Untyped recursive functions are not supported yet@]"
+        Location.pp loc
+    | `Concrete_pascaligo_block_attribute block ->
+      Format.fprintf f
+        "@[<hv>%a@Attributes have to follow the declaration it is attached@]"
+        Location.pp_lift @@ block.region
   )
 
 
@@ -125,9 +143,16 @@ let rec error_jsonformat : abs_error -> J.t = fun a ->
       ("location", `String loc);
       ("type", t ) ] in
     json_error ~stage ~content
+  | `Concrete_pascaligo_recursive_fun loc ->
+    let message = `String "Untyped recursive functions are not supported yet" in
+    let loc = Format.asprintf "%a" Location.pp loc in
+    let content = `Assoc [
+      ("message", message );
+      ("location", `String loc);] in
+    json_error ~stage ~content
   | `Concrete_pascaligo_unsupported_pattern_type pl ->
     let loc = Format.asprintf "%a"
-      Location.pp_lift (List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost pl) in
+      Location.pp_lift @@ Raw.pattern_to_region pl in
     let message = `String "Currently, only booleans, lists, options, and constructors are supported in patterns" in
     let content = `Assoc [
       ("message", message );
@@ -172,7 +197,14 @@ let rec error_jsonformat : abs_error -> J.t = fun a ->
     json_error ~stage ~content
   | `Concrete_pascaligo_unsupported_deep_list_pattern cons ->
     let message = `String "Currently, only empty lists and x::y are supported in list patterns" in
-    let loc = Format.asprintf "%a" Location.pp_lift @@ cons.Region.region in
+    let loc = Format.asprintf "%a" Location.pp_lift @@ Raw.pattern_to_region cons in
+    let content = `Assoc [
+      ("message", message );
+      ("location", `String loc);] in
+    json_error ~stage ~content
+  | `Concrete_pascaligo_unsupported_deep_tuple_pattern tuple ->
+    let message = `String "Currently, nested tuple pattern is not supported" in
+    let loc = Format.asprintf "%a" Location.pp_lift @@ tuple.Region.region in
     let content = `Assoc [
       ("message", message );
       ("location", `String loc);] in
@@ -224,4 +256,11 @@ let rec error_jsonformat : abs_error -> J.t = fun a ->
       ("message", message );
       ("location", `String loc);
       ("children", children) ] in
+    json_error ~stage ~content
+  | `Concrete_pascaligo_block_attribute block ->
+    let message = Format.asprintf "Attributes have to follow the declaration it is attached" in
+    let loc = Format.asprintf "%a" Location.pp_lift block.region in
+    let content = `Assoc [
+      ("message", `String message );
+      ("location", `String loc); ] in
     json_error ~stage ~content

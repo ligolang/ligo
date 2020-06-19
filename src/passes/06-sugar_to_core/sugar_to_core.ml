@@ -122,7 +122,7 @@ let rec compile_expression : I.expression -> (O.expression , sugar_to_core_error
         | I.Access_record a -> ok @@ O.e_record_update ?loc s (Label a) e
         | I.Access_map k ->
           let%bind k = compile_expression k in
-          ok @@ O.e_constant ?loc C_UPDATE [k;O.e_some (e);s]
+          ok @@ O.e_constant ?loc C_MAP_ADD [k;e;s]
       in
       let aux (s, e : O.expression * _) lst =
         let%bind s' = accessor ~loc:s.location s lst in

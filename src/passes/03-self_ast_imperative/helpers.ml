@@ -97,8 +97,13 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a, 'err) re
       let ab = (expr1,expr2) in
       let%bind res = bind_fold_pair self init' ab in
       ok res
-  | E_assign {variable=_;access_path=_;expression} ->
-      let%bind res = self init' expression in
+  | E_assign {variable=_;access_path;expression} ->
+      let aux res a = match a with
+      | Access_map e -> self res e 
+      | _ -> ok res
+      in
+      let%bind res = bind_fold_list aux init' access_path in
+      let%bind res = self res expression in
       ok res
   | E_for {body; _} ->
       let%bind res = self init' body in
@@ -246,6 +251,13 @@ let rec map_expression : 'err exp_mapper -> expression -> (expression, 'err) res
       return @@ E_sequence {expr1;expr2}
     )
   | E_assign {variable;access_path;expression} -> (
+      let aux a = match a with
+      | Access_map e -> 
+        let%bind e = self e in
+        ok @@ Access_map e
+      | e -> ok @@ e
+      in
+      let%bind access_path = bind_map_list aux access_path in
       let%bind expression = self expression in
       return @@ E_assign {variable;access_path;expression}
   )
@@ -437,7 +449,14 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> ('a 
       ok (res, return @@ E_sequence {expr1;expr2})
     )
   | E_assign {variable;access_path;expression} ->
-      let%bind (res, expression) = self init' expression in
+      let aux res a = match a with
+      | Access_map e -> 
+        let%bind (res,e) = self res e in
+        ok @@ (res,Access_map e)
+      | e -> ok @@ (res,e)
+      in
+      let%bind (res, access_path)   = bind_fold_map_list aux init' access_path in
+      let%bind (res, expression) = self res expression in
       ok (res, return @@ E_assign {variable;access_path;expression})
   | E_for {binder; start; final; increment; body} ->
       let%bind (res, body) = self init' body in

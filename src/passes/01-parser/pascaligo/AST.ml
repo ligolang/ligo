@@ -161,8 +161,7 @@ and attr_decl = string reg ne_injection reg
 and const_decl = {
   kwd_const  : kwd_const;
   name       : variable;
-  colon      : colon;
-  const_type : type_expr;
+  const_type : (colon * type_expr) option;
   equal      : equal;
   init       : expr;
   terminator : semi option;
@@ -209,8 +208,7 @@ and type_tuple = (type_expr, comma) nsepseq par reg
 and fun_expr = {
   kwd_function : kwd_function;
   param        : parameters;
-  colon        : colon;
-  ret_type     : type_expr;
+  ret_type     : (colon * type_expr) option;
   kwd_is       : kwd_is;
   return       : expr
 }
@@ -220,8 +218,7 @@ and fun_decl = {
   kwd_function  : kwd_function;
   fun_name      : variable;
   param         : parameters;
-  colon         : colon;
-  ret_type      : type_expr;
+  ret_type      : (colon * type_expr) option;
   kwd_is        : kwd_is;
   block_with    : (block reg * kwd_with) option;
   return        : expr;
@@ -238,15 +235,13 @@ and param_decl =
 and param_const = {
   kwd_const  : kwd_const;
   var        : variable;
-  colon      : colon;
-  param_type : type_expr
+  param_type : (colon * type_expr) option
 }
 
 and param_var = {
   kwd_var    : kwd_var;
   var        : variable;
-  colon      : colon;
-  param_type : type_expr
+  param_type : (colon * type_expr) option
 }
 
 and block = {
@@ -274,8 +269,7 @@ and data_decl =
 and var_decl = {
   kwd_var    : kwd_var;
   name       : variable;
-  colon      : colon;
-  var_type   : type_expr;
+  var_type   : (colon * type_expr) option;
   assign     : assign;
   init       : expr;
   terminator : semi option;
@@ -413,18 +407,14 @@ and for_loop =
 | ForCollect of for_collect reg
 
 and for_int = {
-  kwd_for : kwd_for;
-  assign  : var_assign reg;
-  kwd_to  : kwd_to;
-  bound   : expr;
-  step    : (kwd_step * expr) option;
-  block   : block reg
-}
-
-and var_assign = {
-  name   : variable;
-  assign : assign;
-  expr   : expr
+  kwd_for    : kwd_for;
+  binder     : variable;
+  assign     : assign;
+  init       : expr;
+  kwd_to     : kwd_to;
+  bound      : expr;
+  step       : (kwd_step * expr) option;
+  block      : block reg
 }
 
 and for_collect = {
@@ -633,6 +623,7 @@ and pattern =
 | PTuple  of tuple_pattern
 
 and constr_pattern =
+  (*What is a unit pattern what does it catch ? is it like PWild ? *)
   PUnit      of c_Unit
 | PFalse     of c_False
 | PTrue      of c_True
@@ -645,6 +636,7 @@ and tuple_pattern = (pattern, comma) nsepseq par reg
 and list_pattern =
   PListComp of pattern injection reg
 | PNil      of kwd_nil
+  (* Currently hd # tl is PCons, i would expect this to have type pattern * cons * pattern just like PParCons*)
 | PParCons  of (pattern * cons * pattern) par reg
 | PCons     of (pattern, cons) nsepseq reg
 
