@@ -1,5 +1,59 @@
 open Types
 
+open Memory_proto_alpha.Protocol.Alpha_context
+let assert_operation_eq (a: packed_internal_operation) (b: packed_internal_operation): unit option =
+  let Internal_operation {source=sa; operation=oa; nonce=na} = a in
+  let Internal_operation {source=sb; operation=ob; nonce=nb} = b in
+  let assert_source_eq sa sb =
+    let sa = Contract.to_b58check sa in
+    let sb = Contract.to_b58check sb in
+    if String.equal sa sb then Some () else None
+  in
+  let rec assert_param_eq (pa,pb) =
+    let open Tezos_micheline.Micheline in
+    match (pa, pb) with
+    | Int (la, ia), Int (lb, ib) when la = lb && ia = ib -> Some ()
+    | String (la, sa), String (lb, sb) when la = lb && sa = sb -> Some ()
+    | Bytes (la, ba), Bytes (lb, bb) when la = lb && ba = bb -> Some ()
+    | Prim (la, pa, nla, aa), Prim (lb, pb, nlb, ab) when la = lb && pa = pb -> 
+      let la = List.map assert_param_eq @@ List.combine nla nlb in 
+      let lb = List.map ( fun (sa,sb) -> 
+        if String.equal sa sb then Some () else None) @@
+        List.combine aa ab
+      in
+      Option.map (fun _ -> ()) @@ Option.bind_list @@ la @ lb 
+    | Seq (la, nla), Seq (lb, nlb) when la = lb -> 
+      Option.map (fun _ -> ()) @@ Option.bind_list @@ List.map assert_param_eq @@
+        List.combine nla nlb
+    | _ -> None
+  in
+  let assert_operation_eq (type a b) (oa: a manager_operation) (ob: b manager_operation) = 
+    match (oa, ob) with 
+    | Reveal sa, Reveal sb when sa = sb -> Some ()
+    | Reveal _, _ -> None
+    | Transaction ta, Transaction tb ->
+      let aa,pa,ea,da = ta.amount,ta.parameters,ta.entrypoint,ta.destination in
+      let ab,pb,eb,db = tb.amount,tb.parameters,tb.entrypoint,tb.destination in
+      Format.printf "amount : %b; p : %b, e: %b, d : %b\n" (aa=ab) (pa=pb) (ea=eb) (da=db) ;
+      let (pa,pb) = Tezos_data_encoding.Data_encoding.(force_decode pa, force_decode pb) in
+      Option.bind (fun _ -> Some ()) @@ 
+      Option.bind_list [
+        Option.bind (fun (pa,pb) -> assert_param_eq Tezos_micheline.Micheline.(root pa, root pb)) @@
+        Option.bind_pair (pa,pb);
+      if aa = ab && ea = eb && da = db then Some () else None ]
+    | Transaction _, _ -> None
+    | Origination _oa, Origination _ob -> Some ()
+    | Origination _, _ -> None
+    | Delegation da, Delegation db when da = db -> Some ()
+    | Delegation _, _ -> None
+  in
+  let assert_nonce_eq na nb = if na = nb then Some () else None in
+  Option.bind (fun _ -> Some ()) @@ 
+  Option.bind_list [
+    assert_source_eq sa sb; 
+    assert_operation_eq oa ob;
+    assert_nonce_eq na nb]
+
 let assert_literal_eq (a, b : literal * literal) : unit option =
   match (a, b) with
   | Literal_int a, Literal_int b when a = b -> Some ()
@@ -27,7 +81,7 @@ let assert_literal_eq (a, b : literal * literal) : unit option =
   | Literal_address a, Literal_address b when a = b -> Some ()
   | Literal_address _, Literal_address _ -> None
   | Literal_address _, _ -> None
-  | Literal_operation _, Literal_operation _ -> None
+  | Literal_operation opa, Literal_operation opb -> assert_operation_eq opa opb
   | Literal_operation _, _ -> None
   | Literal_signature a, Literal_signature b when a = b -> Some ()
   | Literal_signature _, Literal_signature _ -> None
