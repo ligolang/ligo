@@ -579,7 +579,7 @@ core_expr:
 | "false"                             {  ELogic (BoolExpr (False $1)) }
 | "true"                              {  ELogic (BoolExpr (True  $1)) }
 | list__(expr)                        {          EList (EListComp $1) }
-| sequence                            {                            $1 }
+| sequence                            {                       ESeq $1 }
 | record_expr                         {                    ERecord $1 }
 | update_record                       {                    EUpdate $1 }
 | code_insert                         {                ECodeInsert $1 }
@@ -678,7 +678,7 @@ sequence:
     and compound = BeginEnd ($1,$3) in
     let elements = $2 in
     let value    = {compound; elements; terminator=None}
-    in ESeq {region; value} }
+    in {region; value} }
 
 series:
   seq_expr ";" series { Utils.nsepseq_cons $1 $2 $3 }
