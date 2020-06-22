@@ -56,7 +56,6 @@ type c_Some  = Region.t
 
 type arrow    = Region.t  (* "->" *)
 type cons     = Region.t  (* "::" *)
-type percent  = Region.t  (* "%"  *)
 type cat      = Region.t  (* "^"  *)
 type append   = Region.t  (* "@"  *)
 type dot      = Region.t  (* "."  *)

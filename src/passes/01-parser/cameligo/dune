@@ -53,7 +53,7 @@
 (executable
   (name ParserMain)
   (libraries parser_cameligo)
-  (modules ParserMain)
+  (modules ParserMain Parser_msg)
   (preprocess
     (pps bisect_ppx --conditional))
   (flags (:standard -open Simple_utils -open Parser_shared -open Parser_cameligo)))
@@ -65,6 +65,19 @@
   (deps (:script_messages ../../../../vendors/ligo-utils/simple-utils/messages.sh) Parser.mly LexToken.mli ParToken.mly)
   (action (run %{script_messages} --lex-tokens=LexToken.mli --par-tokens=ParToken.mly Parser.mly)))
 
+(rule
+ (targets Parser_msg.ml)
+ (deps Parser.mly ParToken.mly Parser.msg)
+ (action
+  (with-stdout-to %{targets}
+   (bash
+     "menhir \
+       --compile-errors Parser.msg \
+       --external-tokens LexToken \
+       --base Parser \
+       ParToken.mly \
+       Parser.mly"))))
+
 ;; Build of all the LIGO source file that cover all error states
 
 (rule
@@ -73,27 +86,6 @@
   (action (run %{script_cover} --lex-tokens=LexToken.mli --par-tokens=ParToken.mly --ext=mligo --unlexer=./Unlexer.exe --messages=Parser.msg --dir=. --concatenate Parser.mly )))
 
 ;; Error messages
-
-;; Generate error messages from scratch
-; (rule
-;  (targets error.messages)
-;  (deps Parser.mly ParToken.mly error.messages.checked-in)
-;  (action
-;   (with-stdout-to %{targets}
-;   (bash
-;     "menhir \
-;       --unused-tokens \
-;       --list-errors  \
-;       --table  \
-;       --strict  \
-;       --external-tokens LexToken.mli  \
-;       --base Parser.mly  \
-;       ParToken.mly  \
-;       Parser.mly
-;     "
-;     )
-;  ))
-; )
 
 (rule
  (targets error.messages)

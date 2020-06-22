@@ -586,6 +586,12 @@ core_expr:
 | par(expr)                           {                       EPar $1 }
 | par(annot_expr)                     {                     EAnnot $1 }
 
+code_inj:
+  "<lang>" expr "]" {
+    let region = cover $1.region $3
+    and value  = {language=$1; code=$2; rbracket=$3}
+    in {region; value} }
+
 annot_expr:
   expr ":" type_expr { $1,$2,$3 }
 
@@ -652,49 +658,41 @@ field_path_assignment :
 field_assignment:
   field_name "=" expr {
     let region = cover $1.region (expr_to_region $3)
-    and value  = {field_name = $1;
-                  assignment = $2;
-                  field_expr = $3}
+    and value  = {field_name=$1; assignment=$2; field_expr=$3}
     in {region; value} }
 
 path :
  "<ident>"   { Name $1 }
 | projection { Path $1 }
 
+(* Sequences *)
+
 sequence:
   "begin" series? "end" {
     let region   = cover $1 $3
     and compound = BeginEnd ($1,$3) in
-    let elements, terminator =
-      match $2 with
-        None -> None, None
-      | Some (ne_elements, terminator) ->
-          Some ne_elements, terminator in
-    let value = {compound; elements; terminator}
+    let elements = $2 in
+    let value    = {compound; elements; terminator=None}
     in {region; value} }
 
 series:
-  last_expr {
-    let expr, term = $1 in (expr, []), term
-  }
-| seq_expr ";" series {
-    let rest, term = $3 in
-    let seq = Utils.nsepseq_cons $1 $2 rest
-    in seq, term }
+  seq_expr ";" series { Utils.nsepseq_cons $1 $2 $3 }
+| last_expr           { $1,[] }
 
 last_expr:
-  seq_expr ";"?
-| fun_expr(seq_expr) ";"?
-| match_expr(seq_expr) ";"? {
-    $1,$2
-  }
-| "let" ioption("rec") let_binding seq(Attr) "in" series  {
-    let seq, term = $6 in
+  seq_expr
+| fun_expr(last_expr)
+| match_expr(last_expr)
+| let_in_sequence       { $1 }
+
+let_in_sequence:
+  "let" ioption("rec") let_binding seq(Attr) "in" series  {
+    let seq       = $6 in
     let stop      = nsepseq_to_region expr_to_region seq in
     let region    = cover $1 stop in
     let compound  = BeginEnd (Region.ghost, Region.ghost) in
     let elements  = Some seq in
-    let value     = {compound; elements; terminator=term} in
+    let value     = {compound; elements; terminator=None} in
     let body      = ESeq {region; value} in
     let value     = {kwd_let    = $1;
                      kwd_rec    = $2;
@@ -702,13 +700,7 @@ last_expr:
                      attributes = $4;
                      kwd_in     = $5;
                      body}
-    in ELetIn {region; value}, term }
+    in ELetIn {region; value} }
 
 seq_expr:
   disj_expr_level | if_then_else (seq_expr) { $1 }
-
-code_inj:
-  "<lang>" expr "]" {
-    let region = cover $1.region $3
-    and value  = {language=$1; code=$2; rbracket=$3}
-    in {region; value} }

@@ -17,15 +17,17 @@ val t_key_hash  : ?loc:Location.t -> unit -> type_expression
 val t_timestamp : ?loc:Location.t -> unit -> type_expression
 val t_signature : ?loc:Location.t -> unit -> type_expression
 val t_list      : ?loc:Location.t -> type_expression -> type_expression
-val t_variable  : ?loc:Location.t -> string -> type_expression
+val t_constant  : ?loc:Location.t -> type_constant -> type_expression
+val t_variable  : ?loc:Location.t -> type_variable -> type_expression
+val t_variable_ez : ?loc:Location.t -> string -> type_expression
 val t_pair   : ?loc:Location.t -> ( type_expression * type_expression ) -> type_expression
 val t_tuple  : ?loc:Location.t -> type_expression list -> type_expression
 
-val t_record    : ?loc:Location.t -> type_expression Map.String.t -> type_expression
+val t_record    : ?loc:Location.t -> field_content label_map -> type_expression
 val t_record_ez : ?loc:Location.t -> (string * type_expression) list -> type_expression
 
-val t_sum    : ?loc:Location.t -> type_expression Map.String.t -> type_expression
-val ez_t_sum : ?loc:Location.t -> ( string * type_expression ) list -> type_expression
+val t_sum    : ?loc:Location.t -> ctor_content constructor_map -> type_expression
+val t_sum_ez : ?loc:Location.t -> ( string * type_expression ) list -> type_expression
 
 val t_function : ?loc:Location.t -> type_expression -> type_expression -> type_expression
 val t_map      : ?loc:Location.t -> type_expression -> type_expression -> type_expression
@@ -65,8 +67,11 @@ val e_key_hash : ?loc:Location.t -> string -> expression
 val e_chain_id : ?loc:Location.t -> string -> expression 
 val e_mutez_z : ?loc:Location.t -> Z.t -> expression
 val e_mutez : ?loc:Location.t -> int -> expression
+val e_true  : ?loc:Location.t -> unit -> expression
+val e_false : ?loc:Location.t -> unit -> expression
 val e'_bytes : string -> expression_content option
-val e_bytes_hex : ?loc:Location.t -> string -> expression option
+val e_bytes_hex_ez : ?loc:Location.t -> string -> expression option
+val e_bytes_hex : ?loc:Location.t -> Hex.t -> expression
 val e_bytes_raw : ?loc:Location.t -> bytes -> expression
 val e_bytes_string : ?loc:Location.t -> string -> expression
 
@@ -78,21 +83,27 @@ val e_map_add : ?loc:Location.t -> expression -> expression ->  expression -> ex
 
 val e_constant : ?loc:Location.t -> constant' -> expression list -> expression
 val e_variable : ?loc:Location.t -> expression_variable -> expression
+val e_variable_ez : ?loc:Location.t -> string -> expression
 val e_application : ?loc:Location.t -> expression -> expression -> expression
 val e_lambda : ?loc:Location.t -> expression_variable -> type_expression option -> type_expression option -> expression -> expression
 val e_recursive : ?loc:Location.t -> expression_variable -> type_expression -> lambda -> expression
+val e_recursive_ez : ?loc:Location.t -> string -> type_expression -> lambda -> expression
 val e_let_in : ?loc:Location.t -> ( expression_variable * type_expression option ) -> bool -> expression -> expression -> expression
+val e_let_in_ez : ?loc:Location.t -> string -> type_expression option -> bool -> expression -> expression -> expression
 val e_raw_code : ?loc:Location.t -> string -> expression -> expression
 
 val e_constructor : ?loc:Location.t -> string -> expression -> expression
 val e_matching : ?loc:Location.t -> expression -> matching_expr -> expression
+
 val ez_match_variant : ((string * string ) * expression) list -> matching_expr
-val e_matching_variant : ?loc:Location.t -> expression -> ((string * string) * expression) list -> expression
+val e_matching_variant : ?loc:Location.t -> expression -> ((constructor' * expression_variable) * expression) list -> expression
 val e_matching_record  : ?loc:Location.t -> expression -> (label * expression_variable) list -> type_expression list option -> expression -> expression
 val e_matching_tuple   : ?loc:Location.t -> expression -> expression_variable list -> type_expression list option -> expression -> expression
 val e_matching_variable: ?loc:Location.t -> expression -> expression_variable -> type_expression option -> expression -> expression
 
-val e_record : ?loc:Location.t -> expr Map.String.t -> expression
+val e_matching_tuple_ez: ?loc:Location.t -> expression -> string list -> type_expression list option -> expression -> expression
+
+val e_record     : ?loc:Location.t -> expr label_map -> expression
 val e_record_ez  : ?loc:Location.t -> ( string * expr ) list -> expression
 val e_accessor : ?loc:Location.t -> expression -> access list -> expression
 val e_update   : ?loc:Location.t -> expression -> access list -> expression -> expression
@@ -112,10 +123,14 @@ val e_map : ?loc:Location.t -> ( expression * expression ) list -> expression
 val e_big_map : ?loc:Location.t -> ( expr * expr ) list -> expression
 
 val e_assign : ?loc:Location.t -> expression_variable -> access list -> expression -> expression
+val e_assign_ez : ?loc:Location.t -> string -> access list -> expression -> expression
 
 val e_while  : ?loc:Location.t -> expression -> expression -> expression
 val e_for     : ?loc:Location.t -> expression_variable -> expression -> expression -> expression -> expression -> expression
 val e_for_each : ?loc:Location.t -> expression_variable * expression_variable option -> expression -> collect_type -> expression -> expression
+
+val e_for_ez  : ?loc:Location.t -> string -> expression -> expression -> expression -> expression -> expression
+val e_for_each_ez : ?loc:Location.t -> string * string option -> expression -> collect_type -> expression -> expression
 
 val make_option_typed : ?loc:Location.t -> expression -> type_expression option -> expression
 

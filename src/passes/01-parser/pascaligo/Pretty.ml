@@ -19,6 +19,11 @@ let pp_braces : ('a -> document) -> 'a braces reg -> document =
   fun printer {value; _} ->
     string "{" ^^ nest 1 (printer value.inside ^^ string "}")
 
+let pp_option : ('a -> document) -> 'a option -> document =
+  fun printer -> function
+    None -> empty
+  | Some opt -> printer opt
+
 let rec print ast =
   let app decl = group (pp_declaration decl) in
   let decl = Utils.nseq_to_list ast.decl in
@@ -35,11 +40,11 @@ and pp_attr_decl decl = pp_ne_injection pp_string decl
 and pp_const_decl {value; _} =
   let {name; const_type; init; attributes; _} = value in
   let start = string ("const " ^ name.value) in
-  let t_expr = pp_type_expr const_type in
+  let t_expr = const_type in
   let attr   = match attributes with
                  None -> empty
                | Some a -> hardline ^^ pp_attr_decl a in
-  group (start ^/^ nest 2 (string ": " ^^ t_expr))
+  group (start ^/^ pp_option (fun (_, d) -> nest 2 (string ": " ^^ pp_type_expr d)) t_expr)
   ^^ group (break 1 ^^ nest 2 (string "= " ^^ pp_expr init))
   ^^ attr
 
@@ -123,10 +128,9 @@ and pp_fun_expr {value; _} =
   let {param; ret_type; return; _} : fun_expr = value in
   let start = string "function" in
   let parameters = pp_par pp_parameters param in
-  let return_t = pp_type_expr ret_type in
   let expr = pp_expr return in
   group (start ^^ nest 2 (break 1 ^^ parameters))
-  ^^ group (break 1 ^^ nest 2 (string ": " ^^ return_t))
+  ^^ pp_option (fun (_,d) -> group (break 1 ^^ nest 2 (string ": " ^^ pp_type_expr d))) ret_type
   ^^ string " is" ^^ group (nest 4 (break 1 ^^ expr))
 
 and pp_fun_decl {value; _} =
@@ -138,7 +142,6 @@ and pp_fun_decl {value; _} =
     | Some _ -> string "recursive" ^/^ string "function" in
   let start = start ^^ group (break 1 ^^ nest 2 (pp_ident fun_name)) in
   let parameters = pp_par pp_parameters param in
-  let return_t = pp_type_expr ret_type in
   let expr = pp_expr return in
   let body =
     match block_with with
@@ -150,7 +153,7 @@ and pp_fun_decl {value; _} =
         None -> empty
     | Some a -> hardline ^^ pp_attr_decl a in
   prefix 2 1 start parameters
-  ^^ group (nest 2 (break 1 ^^ string ": " ^^ nest 2 return_t ^^ string " is"))
+  ^^ group (nest 2 (pp_option (fun (_, d) -> break 1 ^^ string ": " ^^ nest 2 (pp_type_expr d)) ret_type ^^ string " is"))
   ^^ body ^^ attr
 
 and pp_parameters p = pp_nsepseq ";" pp_param_decl p
@@ -161,15 +164,13 @@ and pp_param_decl = function
 
 and pp_param_const {value; _} =
   let {var; param_type; _} : param_const = value in
-  let name   = string ("const " ^ var.value) in
-  let t_expr = pp_type_expr param_type
-  in prefix 2 1 (name ^^ string " :") t_expr
+  let name   = string ("const " ^ var.value)
+  in prefix 2 1 name @@ pp_option (fun (_,d) -> string ": " ^^ pp_type_expr d) param_type
 
 and pp_param_var {value; _} =
   let {var; param_type; _} : param_var = value in
-  let name   = string ("var " ^ var.value) in
-  let t_expr = pp_type_expr param_type
-  in prefix 2 1 (name ^^ string " :") t_expr
+  let name   = string ("var " ^ var.value)
+  in prefix 2 1 name @@ pp_option (fun (_,d) -> string ": " ^^ pp_type_expr d) param_type
 
 and pp_block {value; _} =
   string "block {"
@@ -191,8 +192,7 @@ and pp_data_decl = function
 and pp_var_decl {value; _} =
   let {name; var_type; init; _} = value in
   let start = string ("var " ^ name.value) in
-  let t_expr = pp_type_expr var_type in
-  group (start ^/^ nest 2 (string ": " ^^ t_expr))
+  group (start ^/^ pp_option (fun (_,d) -> nest 2 (string ": " ^^ pp_type_expr d)) var_type)
   ^^ group (break 1 ^^ nest 2 (string ":= " ^^ pp_expr init))
 
 and pp_instruction = function
@@ -330,18 +330,14 @@ and pp_for_loop = function
 | ForCollect l -> pp_for_collect l
 
 and pp_for_int {value; _} =
-  let {assign; bound; step; block; _} = value in
+  let {binder; init; bound; step; block; _} = value in
   let step =
     match step with
       None -> empty
     | Some (_, e) -> prefix 2 1 (string " step") (pp_expr e) in
-  prefix 2 1 (string "for") (pp_var_assign assign)
+  prefix 2 1 (string "for") (prefix 2 1 (pp_ident binder ^^ string " :=") (pp_expr init))
   ^^ prefix 2 1 (string " to") (pp_expr bound)
   ^^ step ^^ hardline ^^ pp_block block
-
-and pp_var_assign {value; _} =
-  let {name; expr; _} = value in
-  prefix 2 1 (pp_ident name ^^ string " :=") (pp_expr expr)
 
 and pp_for_collect {value; _} =
   let {var; bind_to; collection; expr; block; _} = value in
