@@ -14,8 +14,7 @@ module Map = RedBlackTrees.PolyMap
 open Todo_use_fold_generator
 
 let assert_type_expression_eq ((tv',tv):O.type_expression * O.type_expression) : (unit,typer_error) result = 
-  trace_option (assert_equal tv' tv) @@
-    O.assert_type_expression_eq (tv' , tv)
+  Compare.assert_type_expression_eq (tv' , tv)
 
 (*
   Extract pairs of (name,type) in the declaration and add it to the environment
@@ -67,8 +66,8 @@ and type_match : environment -> O'.typer_state -> O.type_expression -> I.matchin
           let%bind acc = match acc with
             | None -> ok (Some variant)
             | Some variant' ->
-                let%bind () = trace_option (not_matching variant variant') @@
-                  Ast_typed.assert_type_expression_eq (variant , variant') in
+                let%bind () =
+                  assert_type_expression_eq (variant , variant') in
                 ok (Some variant)
             in
           ok acc in
