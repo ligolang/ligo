@@ -121,11 +121,10 @@ type_decl:
   "type" type_name "=" type_expr {
     Scoping.check_reserved_name $2;
     let region = cover $1 (type_expr_to_region $4) in
-    let value = {
-      kwd_type   = $1;
-      name       = $2;
-      eq         = $3;
-      type_expr  = $4}
+    let value  = {kwd_type  = $1;
+                  name      = $2;
+                  eq        = $3;
+                  type_expr = $4}
     in {region; value} }
 
 type_expr:
@@ -583,7 +582,7 @@ core_expr:
 | sequence                            {                       ESeq $1 }
 | record_expr                         {                    ERecord $1 }
 | update_record                       {                    EUpdate $1 }
-| code_insert                         {                ECodeInsert $1 }
+| code_inj                            {                   ECodeInj $1 }
 | par(expr)                           {                       EPar $1 }
 | par(annot_expr)                     {                     EAnnot $1 }
 
@@ -708,13 +707,8 @@ last_expr:
 seq_expr:
   disj_expr_level | if_then_else (seq_expr) { $1 }
 
-code_insert:
-  "[" "%" Constr expr "]" {
-    let region = cover $1 $5 in
-    let value = {
-                  lbracket =$1;
-                  percent  =$2;
-                  language =$3;
-                  code     =$4;
-                  rbracket =$5}
+code_inj:
+  "<lang>" expr "]" {
+    let region = cover $1.region $3
+    and value  = {language=$1; code=$2; rbracket=$3}
     in {region; value} }

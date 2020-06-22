@@ -29,9 +29,22 @@ type lexeme = string
 (* TOKENS *)
 
 type t =
+  (* Identifiers, labels, numbers and strings *)
+
+| Ident    of string Region.reg
+| Constr   of string Region.reg
+| Int      of (string * Z.t) Region.reg
+| Nat      of (string * Z.t) Region.reg
+| Mutez    of (string * Z.t) Region.reg
+| String   of string Region.reg
+| Verbatim of string Region.reg
+| Bytes    of (string * Hex.t) Region.reg
+| Attr     of string Region.reg
+| Lang     of lexeme Region.reg Region.reg
+
   (* Symbols *)
 
-  CAT of Region.t (* "++"  *)
+| CAT     of Region.t (* "++" *)
 
   (* Arithmetics *)
 
@@ -39,7 +52,6 @@ type t =
 | PLUS    of Region.t (* "+" *)
 | SLASH   of Region.t (* "/" *)
 | TIMES   of Region.t (* "*" *)
-| PERCENT of Region.t (* "%" *)
 
   (* Compounds *)
 
@@ -79,18 +91,6 @@ type t =
 | BOOL_OR  of Region.t (* "||" *)
 | BOOL_AND of Region.t (* "&&" *)
 | NOT      of Region.t (* ! *)
-
-  (* Identifiers, labels, numbers and strings *)
-
-| Ident    of string Region.reg
-| Constr   of string Region.reg
-| Int      of (string * Z.t) Region.reg
-| Nat      of (string * Z.t) Region.reg
-| Mutez    of (string * Z.t) Region.reg
-| String   of string Region.reg
-| Verbatim of string Region.reg
-| Bytes    of (string * Hex.t) Region.reg
-| Attr     of string Region.reg
 
   (* Keywords *)
 
@@ -147,13 +147,14 @@ val mk_int      : lexeme -> Region.t -> (token,   int_err) result
 val mk_nat      : lexeme -> Region.t -> (token,   nat_err) result
 val mk_mutez    : lexeme -> Region.t -> (token,   int_err) result
 val mk_ident    : lexeme -> Region.t -> (token, ident_err) result
-val mk_attr     : string -> lexeme -> Region.t -> (token,  attr_err) result
 val mk_sym      : lexeme -> Region.t -> (token,   sym_err) result
 val mk_kwd      : lexeme -> Region.t -> (token,   kwd_err) result
 val mk_string   : lexeme -> Region.t -> token
 val mk_verbatim : lexeme -> Region.t -> token
 val mk_bytes    : lexeme -> Region.t -> token
 val mk_constr   : lexeme -> Region.t -> token
+val mk_attr     : string -> lexeme -> Region.t -> (token,  attr_err) result
+val mk_lang     : lexeme Region.reg -> Region.t -> token
 val eof         : Region.t -> token
 
 (* Predicates *)

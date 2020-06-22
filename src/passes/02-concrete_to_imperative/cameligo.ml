@@ -487,19 +487,17 @@ in trace (abstracting_expr_tracer t) @@
             return @@ e_sequence a e1'
           in List.fold_left apply expr' more)
     )
-  | ECond c -> (
+  | ECond c ->
       let (c , loc) = r_split c in
       let%bind expr = compile_expression c.test in
       let%bind match_true = compile_expression c.ifso in
       let%bind match_false = compile_expression c.ifnot in
       return @@ e_cond ~loc expr match_true match_false
-    )
-  | ECodeInsert ci -> (
-      let (ci, loc) = r_split ci in
-      let      language  = ci.language.value in
-      let%bind code      = compile_expression ci.code in
-      return @@ e_raw_code ~loc language code
-    )
+  | ECodeInj ci ->
+     let ci, loc   = r_split ci in
+     let language  = ci.language.value.value in
+     let%bind code = compile_expression ci.code
+     in ok @@ e_raw_code ~loc language code
 
 and compile_fun lamb' : (expr , abs_error) result =
   let return x = ok x in

@@ -44,6 +44,7 @@ type t =
 | Mutez    of (lexeme * Z.t) Region.reg
 | Ident    of lexeme Region.reg
 | Constr   of lexeme Region.reg
+| Lang     of lexeme Region.reg Region.reg
 
   (* Symbols *)
 
@@ -73,7 +74,6 @@ type t =
 | DOT      of Region.t  (* "."   *)
 | WILD     of Region.t  (* "_"   *)
 | CAT      of Region.t  (* "^"   *)
-| PERCENT  of Region.t  (* "%"   *)
 
   (* Keywords *)
 
@@ -162,6 +162,7 @@ val mk_verbatim : lexeme -> Region.t -> token
 val mk_bytes    : lexeme -> Region.t -> token
 val mk_constr   : lexeme -> Region.t -> token
 val mk_attr     : string -> lexeme -> Region.t -> (token, attr_err) result
+val mk_lang     : lexeme Region.reg -> Region.t -> token
 val eof         : Region.t -> token
 
 (* Predicates *)
