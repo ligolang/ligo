@@ -65,34 +65,25 @@
   (deps (:script_messages ../../../../vendors/ligo-utils/simple-utils/messages.sh) Parser.mly LexToken.mli ParToken.mly)
   (action (run %{script_messages} --lex-tokens=LexToken.mli --par-tokens=ParToken.mly Parser.mly )))
 
+(rule
+ (targets Parser_msg.ml)
+ (deps Parser.mly ParToken.mly Parser.msg)
+ (action
+  (with-stdout-to %{targets}
+   (bash
+     "menhir \
+       --compile-errors Parser.msg \
+       --external-tokens LexToken \
+       --base Parser \
+       ParToken.mly \
+       Parser.mly"))))
+
 ;; Build of all the LIGO source file that cover all error states
 
 (rule
   (targets all.religo)
   (deps (:script_cover ../../../../vendors/ligo-utils/simple-utils/cover.sh) Parser.mly LexToken.mli ParToken.mly Parser.msg Unlexer.exe)
   (action (run %{script_cover} --lex-tokens=LexToken.mli --par-tokens=ParToken.mly --ext=religo --unlexer=./Unlexer.exe --messages=Parser.msg --dir=. --concatenate Parser.mly )))
-
-;; Error messages
-;; Generate error messages from scratch
-; (rule
-;  (targets error.messages)
-;  (deps Parser.mly ParToken.mly error.messages.checked-in)
-;  (action
-;   (with-stdout-to %{targets}
-;   (bash
-;     "menhir \
-;       --unused-tokens \
-;       --list-errors  \
-;       --table  \
-;       --strict  \
-;       --external-tokens LexToken.mli  \
-;       --base Parser.mly  \
-;       ParToken.mly  \
-;       Parser.mly
-;     "
-;     )
-;  ))
-; )
 
 (rule
  (targets error.messages)
