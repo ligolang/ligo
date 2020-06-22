@@ -13,9 +13,22 @@ module SSet   = Utils.String.Set
 (* TOKENS *)
 
 type t =
+  (* Identifiers, labels, numbers and strings *)
+
+  Ident    of string Region.reg
+| Constr   of string Region.reg
+| Int      of (string * Z.t) Region.reg
+| Nat      of (string * Z.t) Region.reg
+| Mutez    of (string * Z.t) Region.reg
+| String   of string Region.reg
+| Verbatim of string Region.reg
+| Bytes    of (string * Hex.t) Region.reg
+| Attr     of string Region.reg
+| Lang     of lexeme Region.reg Region.reg
+
   (* Symbols *)
 
-  ARROW of Region.t  (* "->" *)
+| ARROW of Region.t  (* "->" *)
 | CONS  of Region.t  (* "::" *)
 | CAT   of Region.t  (* "^"  *)
 (*| APPEND   (* "@"  *)*)
@@ -26,7 +39,6 @@ type t =
 | PLUS    of Region.t    (* "+" *)
 | SLASH   of Region.t    (* "/" *)
 | TIMES   of Region.t    (* "*" *)
-| PERCENT of Region.t    (* "%" *)
 
   (* Compounds *)
 
@@ -60,18 +72,6 @@ type t =
 
 | BOOL_OR  of Region.t (* "||" *)
 | BOOL_AND of Region.t (* "&&" *)
-
-  (* Identifiers, labels, numbers and strings *)
-
-| Ident    of string Region.reg
-| Constr   of string Region.reg
-| Int      of (string * Z.t) Region.reg
-| Nat      of (string * Z.t) Region.reg
-| Mutez    of (string * Z.t) Region.reg
-| String   of string Region.reg
-| Verbatim of string Region.reg
-| Bytes    of (string * Hex.t) Region.reg
-| Attr     of string Region.reg
 
   (* Keywords *)
 
@@ -113,26 +113,28 @@ let proj_token = function
   (* Literals *)
 
   String Region.{region; value} ->
-    region, sprintf "String %s" value
+    region, sprintf "String %S" value
 | Verbatim Region.{region; value} ->
-    region, sprintf "Verbatim {|%s|}" value
+    region, sprintf "Verbatim %S" value
 | Bytes Region.{region; value = s,b} ->
     region,
-    sprintf "Bytes (\"%s\", \"0x%s\")" s (Hex.show b)
+    sprintf "Bytes (%S, \"0x%s\")" s (Hex.show b)
 | Int Region.{region; value = s,n} ->
-    region, sprintf "Int (\"%s\", %s)" s (Z.to_string n)
+    region, sprintf "Int (%S, %s)" s (Z.to_string n)
 | Nat Region.{region; value = s,n} ->
-    region, sprintf "Nat (\"%s\", %s)" s (Z.to_string n)
+    region, sprintf "Nat (%S, %s)" s (Z.to_string n)
 | Mutez Region.{region; value = s,n} ->
-    region, sprintf "Mutez (\"%s\", %s)" s (Z.to_string n)
+    region, sprintf "Mutez (%S, %s)" s (Z.to_string n)
 | Ident Region.{region; value} ->
-    region, sprintf "Ident %s" value
+    region, sprintf "Ident %S" value
 | Constr Region.{region; value} ->
-    region, sprintf "Constr %s" value
+    region, sprintf "Constr %S" value
 | Attr Region.{region; value} ->
-   region, sprintf "Attr \"%s\"" value
+   region, sprintf "Attr %S" value
+| Lang Region.{region; value} ->
+   region, sprintf "Lang %S" (value.Region.value)
 
-  (* Symbols *)
+(* Symbols *)
 
 | ARROW    region -> region, "ARROW"
 | CONS     region -> region, "CONS"
@@ -141,7 +143,6 @@ let proj_token = function
 | PLUS     region -> region, "PLUS"
 | SLASH    region -> region, "SLASH"
 | TIMES    region -> region, "TIMES"
-| PERCENT  region -> region, "PERCENT"
 | LPAR     region -> region, "LPAR"
 | RPAR     region -> region, "RPAR"
 | LBRACKET region -> region, "LBRACKET"
@@ -206,6 +207,7 @@ let to_lexeme = function
 | Ident id   -> id.Region.value
 | Constr id  -> id.Region.value
 | Attr a     -> a.Region.value
+| Lang lang  -> Region.(lang.value.value)
 
   (* Symbols *)
 
@@ -216,7 +218,6 @@ let to_lexeme = function
 | PLUS     _ -> "+"
 | SLASH    _ -> "/"
 | TIMES    _ -> "*"
-| PERCENT  _ -> "%"
 | LPAR     _ -> "("
 | RPAR     _ -> ")"
 | LBRACKET _ -> "["
@@ -478,7 +479,6 @@ let mk_sym lexeme region =
   | "-"   -> Ok (MINUS    region)
   | "*"   -> Ok (TIMES    region)
   | "/"   -> Ok (SLASH    region)
-  | "%"   -> Ok (PERCENT  region)
   | "<"   -> Ok (LT       region)
   | "<="  -> Ok (LE       region)
   | ">"   -> Ok (GT       region)
@@ -511,6 +511,10 @@ type attr_err = Invalid_attribute
 let mk_attr header lexeme region =
   if header = "[@" then Error Invalid_attribute
   else Ok (Attr Region.{value=lexeme; region})
+
+(* Language injection *)
+
+let mk_lang lang region = Lang Region.{value=lang; region}
 
 (* Predicates *)
 
@@ -573,7 +577,7 @@ let check_right_context token next_token buffer : unit =
                    else ()
               else
                 if   is_bytes token
-                then if is_string next || is_ident next
+                then if   is_string next || is_ident next
                      then fail region Missing_break
                      else if   is_int next
                           then fail region Odd_lengthed_bytes
