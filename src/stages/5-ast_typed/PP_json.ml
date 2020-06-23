@@ -58,7 +58,7 @@ module M = struct
         `Assoc [("wrap_content", continue NoState wrap_content) ; ("location", `String (asprintf "%a" Location.pp location))] ); (*TODO*)
       option = (fun _visitor continue NoState o ->
         match o with
-        | None -> `Null
+        | None -> `List [ `String "None" ; `Null ]
         | Some v -> `List [ `String "Some" ; continue NoState v ] );
       poly_unionfind            = (fun _visitor continue NoState p   ->
         let lst = (UnionFind.Poly2.partitions p) in
