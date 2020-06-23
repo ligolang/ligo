@@ -72,7 +72,7 @@ const current_purchase_price : tez =
 ### Replacing *spendable* Smart Contracts
 
 However, due to the
-[recent protocol upgrade](http://tezos.gitlab.io/mainnet/protocols/004_Pt24m4xi.html)
+[recent protocol upgrade](http://tezos.gitlab.io/protocols/004_Pt24m4xi.html)
 of the Tezos `mainnet`, Pedro cannot access the tokens stored in his
 shop's contract directly. This was previously possible via *spendable
 smart contracts*, which are no longer available in the new
