@@ -4,7 +4,7 @@ title: Paying out profits from the Taco Shop
 ---
 
 In the
-[previous tutorial](tutorials/get-started/tezos-taco-shop-smart-contract.md)
+[previous tutorial](tezos-taco-shop-smart-contract.md)
 we have learnt how to setup & interact with the LIGO CLI. Followed an
 implementation of a simple Taco Shop smart contract for our
 entrepreneur Pedro.

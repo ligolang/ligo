@@ -11,7 +11,7 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 A lazily deserialized map that's intended to store large amounts of data. 
 Lazily means that storage is read or written per key on demand. Therefore 
 there are no `map`, `fold`, and `iter` operations as in 
-[Map](./map-reference).
+[Map](map.md).
 
 The gas costs of big maps are higher than standard maps as data is lazily 
 deserialized.

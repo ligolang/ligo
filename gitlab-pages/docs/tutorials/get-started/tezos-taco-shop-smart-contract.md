@@ -67,7 +67,7 @@ current_purchase_price = max_price / available_stock
 
 In this tutorial, we will use LIGO's dockerized version, for the sake
 of simplicity. You can find the installation instructions
-[here](intro/installation.md#dockerized-installation-recommended).
+[here](../../intro/installation.md#dockerized-installation-recommended).
 
 The best way to install the dockerized LIGO is as a **global
 executable** through the installation script, as shown in the
@@ -203,7 +203,7 @@ function main (const parameter : unit; const taco_shop_storage :  taco_shop_stor
 When dry-running a contract, it is crucial to provide a correct
 initial storage value.  In our case the storage is type-checked as
 `taco_shop_storage`. Reflecting
-[Pedro's daily offer](tutorials/get-started/tezos-taco-shop-smart-contract.md#daily-offer),
+[Pedro's daily offer](tezos-taco-shop-smart-contract.md#daily-offer),
 our storage's value will be defined as follows:
 
 **Storage value**
@@ -340,7 +340,7 @@ accessible within LIGO as `amount`.
 To make sure we get paid, we will:
 
 - calculate a `current_purchase_price` based on the
-  [equation specified earlier](tutorials/get-started/tezos-taco-shop-smart-contract.md#calculating-the-current-purchase-price)
+  [equation specified earlier](tezos-taco-shop-smart-contract.md#calculating-the-current-purchase-price)
 - check if the sent `amount` matches the `current_purchase_price`:
   - if not, then our contract will fail (`failwith`)
   - otherwise, stock for the given `taco_kind` will be decreased and

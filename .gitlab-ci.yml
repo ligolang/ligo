@@ -69,6 +69,17 @@ test:
     paths:
       - coverage
 
+xrefcheck:
+  extends: .nix
+  only:
+    - merge_requests
+  script:
+    # Should be replaced with
+    # nix run github:serokell/xrefcheck
+    # Once flakes roll out to stable
+    - nix run -f https://github.com/serokell/xrefcheck/archive/v0.1.1.2.tar.gz -c xrefcheck
+
+
 # Strange race conditions, disable for now
 .webide-e2e:
   extends: .nix
