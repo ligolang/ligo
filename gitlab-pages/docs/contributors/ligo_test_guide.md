@@ -7,7 +7,7 @@ Bonus: you'll become more familiar with LIGO in the process!
 Tests are written in OCaml, as LIGO doesn't (yet) have a good way to do automated testing. Thankfully the test code is typically less demanding than the features being tested.  
 
 Tests are currently contained in [src/test](https://gitlab.com/ligolang/ligo/tree/dev/src/test), but most are integration tests which rely on test contracts kept in [src/test/contracts](https://gitlab.com/ligolang/ligo/tree/dev/src/test/contracts). If you're new to LIGO, reading these contracts can be a useful introduction to a particular LIGO syntax. In the future we plan 
-to have detailed documentation for each syntax, but at the moment we only have a reference manual for [PascaLIGO](https://gitlab.com/ligolang/ligo/blob/dev/src/passes/1-parser/pascaligo/Doc/pascaligo.md)
+to have detailed documentation for each syntax, but at the moment we only have a reference manual for [PascaLIGO](https://gitlab.com/ligolang/ligo/blob/dev/src/passes/01-parsing/pascaligo/Doc/pascaligo.md)
 
 ## How To Find Good Test Cases
 
@@ -23,7 +23,7 @@ LIGO is divided into two parts
 - the **front end** handles syntax  
 - the **backend** optimizes and compiles a core language shared between syntaxes
 
-You can find basic test cases for a particular LIGO syntax by studying its parser. You will find the parser under [src/passes/1-parser](https://gitlab.com/ligolang/ligo/tree/dev/src/passes/1-parser).  
+You can find basic test cases for a particular LIGO syntax by studying its parser. You will find the parser under [src/passes/1-parser](https://gitlab.com/ligolang/ligo/tree/dev/src/passes/01-parsing).  
 
 ### Two Useful Test Cases Using LIGO
 
