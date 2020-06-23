@@ -703,10 +703,10 @@ interactive_expr: Function LPAR Const Ident RPAR COLON Ident VBAR
 ##
 ## Ends in an error in state: 116.
 ##
-## fun_expr -> Function parameters option(type_expr_colon) . Is expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## fun_expr -> Function parameters option(type_annot) . Is expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
-## Function parameters option(type_expr_colon)
+## Function parameters option(type_annot)
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -716,8 +716,8 @@ interactive_expr: Function LPAR Const Ident RPAR COLON Ident VBAR
 ## In state 30, spurious reduction of production cartesian -> core_type 
 ## In state 36, spurious reduction of production fun_type -> cartesian 
 ## In state 44, spurious reduction of production type_expr -> fun_type 
-## In state 88, spurious reduction of production type_expr_colon -> COLON type_expr 
-## In state 89, spurious reduction of production option(type_expr_colon) -> type_expr_colon 
+## In state 88, spurious reduction of production type_annot -> COLON type_expr 
+## In state 89, spurious reduction of production option(type_annot) -> type_annot 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -726,10 +726,10 @@ interactive_expr: Function LPAR Const Ident RPAR Is With
 ##
 ## Ends in an error in state: 117.
 ##
-## fun_expr -> Function parameters option(type_expr_colon) Is . expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## fun_expr -> Function parameters option(type_annot) Is . expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
-## Function parameters option(type_expr_colon) Is
+## Function parameters option(type_annot) Is
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -738,7 +738,7 @@ interactive_expr: Function LPAR Const Ident RPAR With
 ##
 ## Ends in an error in state: 115.
 ##
-## fun_expr -> Function parameters . option(type_expr_colon) Is expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## fun_expr -> Function parameters . option(type_annot) Is expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Function parameters
@@ -857,7 +857,7 @@ interactive_expr: Function With
 ##
 ## Ends in an error in state: 114.
 ##
-## fun_expr -> Function . parameters option(type_expr_colon) Is expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## fun_expr -> Function . parameters option(type_annot) Is expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Function
@@ -2515,7 +2515,7 @@ interactive_expr: Verbatim TIMES With
 
 interactive_expr: Verbatim VBAR
 ##
-## Ends in an error in state: 601.
+## Ends in an error in state: 602.
 ##
 ## interactive_expr -> expr . EOF [ # ]
 ##
@@ -2555,7 +2555,7 @@ interactive_expr: Verbatim With
 
 interactive_expr: With
 ##
-## Ends in an error in state: 599.
+## Ends in an error in state: 600.
 ##
 ## interactive_expr' -> . interactive_expr [ # ]
 ##
@@ -2567,7 +2567,7 @@ interactive_expr: With
 
 contract: Attributes LBRACKET String End
 ##
-## Ends in an error in state: 545.
+## Ends in an error in state: 546.
 ##
 ## ne_injection(Attributes,String) -> Attributes LBRACKET sep_or_term_list(String,SEMI) . RBRACKET [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
@@ -2578,15 +2578,15 @@ contract: Attributes LBRACKET String End
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 537, spurious reduction of production nsepseq(String,SEMI) -> String 
-## In state 548, spurious reduction of production sep_or_term_list(String,SEMI) -> nsepseq(String,SEMI) 
+## In state 538, spurious reduction of production nsepseq(String,SEMI) -> String 
+## In state 549, spurious reduction of production sep_or_term_list(String,SEMI) -> nsepseq(String,SEMI) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Attributes LBRACKET With
 ##
-## Ends in an error in state: 544.
+## Ends in an error in state: 545.
 ##
 ## ne_injection(Attributes,String) -> Attributes LBRACKET . sep_or_term_list(String,SEMI) RBRACKET [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
@@ -2598,7 +2598,7 @@ contract: Attributes LBRACKET With
 
 contract: Attributes String End Attributes String End SEMI With
 ##
-## Ends in an error in state: 594.
+## Ends in an error in state: 595.
 ##
 ## seq(declaration) -> declaration . seq(declaration) [ EOF ]
 ##
@@ -2610,7 +2610,7 @@ contract: Attributes String End Attributes String End SEMI With
 
 contract: Attributes String End SEMI With
 ##
-## Ends in an error in state: 592.
+## Ends in an error in state: 593.
 ##
 ## nseq(declaration) -> declaration . seq(declaration) [ EOF ]
 ##
@@ -2622,7 +2622,7 @@ contract: Attributes String End SEMI With
 
 contract: Attributes String End With
 ##
-## Ends in an error in state: 587.
+## Ends in an error in state: 588.
 ##
 ## attr_decl -> open_attr_decl . option(SEMI) [ Type Recursive Function EOF Const Attributes ]
 ##
@@ -2634,7 +2634,7 @@ contract: Attributes String End With
 
 contract: Attributes String RBRACKET
 ##
-## Ends in an error in state: 549.
+## Ends in an error in state: 550.
 ##
 ## ne_injection(Attributes,String) -> Attributes sep_or_term_list(String,SEMI) . End [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
@@ -2645,15 +2645,15 @@ contract: Attributes String RBRACKET
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 537, spurious reduction of production nsepseq(String,SEMI) -> String 
-## In state 548, spurious reduction of production sep_or_term_list(String,SEMI) -> nsepseq(String,SEMI) 
+## In state 538, spurious reduction of production nsepseq(String,SEMI) -> String 
+## In state 549, spurious reduction of production sep_or_term_list(String,SEMI) -> nsepseq(String,SEMI) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Attributes String SEMI String SEMI With
 ##
-## Ends in an error in state: 540.
+## Ends in an error in state: 541.
 ##
 ## nsepseq(String,SEMI) -> String SEMI . nsepseq(String,SEMI) [ RBRACKET End ]
 ## seq(__anonymous_0(String,SEMI)) -> String SEMI . seq(__anonymous_0(String,SEMI)) [ RBRACKET End ]
@@ -2666,7 +2666,7 @@ contract: Attributes String SEMI String SEMI With
 
 contract: Attributes String SEMI String With
 ##
-## Ends in an error in state: 539.
+## Ends in an error in state: 540.
 ##
 ## nsepseq(String,SEMI) -> String . [ RBRACKET End ]
 ## nsepseq(String,SEMI) -> String . SEMI nsepseq(String,SEMI) [ RBRACKET End ]
@@ -2680,7 +2680,7 @@ contract: Attributes String SEMI String With
 
 contract: Attributes String SEMI With
 ##
-## Ends in an error in state: 538.
+## Ends in an error in state: 539.
 ##
 ## nsepseq(String,SEMI) -> String SEMI . nsepseq(String,SEMI) [ RBRACKET End ]
 ## nseq(__anonymous_0(String,SEMI)) -> String SEMI . seq(__anonymous_0(String,SEMI)) [ RBRACKET End ]
@@ -2693,7 +2693,7 @@ contract: Attributes String SEMI With
 
 contract: Attributes String With
 ##
-## Ends in an error in state: 537.
+## Ends in an error in state: 538.
 ##
 ## nsepseq(String,SEMI) -> String . [ RBRACKET End ]
 ## nsepseq(String,SEMI) -> String . SEMI nsepseq(String,SEMI) [ RBRACKET End ]
@@ -2707,7 +2707,7 @@ contract: Attributes String With
 
 contract: Attributes With
 ##
-## Ends in an error in state: 536.
+## Ends in an error in state: 537.
 ##
 ## ne_injection(Attributes,String) -> Attributes . sep_or_term_list(String,SEMI) End [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ## ne_injection(Attributes,String) -> Attributes . LBRACKET sep_or_term_list(String,SEMI) RBRACKET [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
@@ -2720,12 +2720,12 @@ contract: Attributes With
 
 contract: Const Ident COLON Ident VBAR
 ##
-## Ends in an error in state: 491.
+## Ends in an error in state: 492.
 ##
-## unqualified_decl(EQ) -> Ident option(type_expr_colon) . EQ expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## unqualified_decl(EQ) -> Ident option(type_annot) . EQ expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
 ## The known suffix of the stack is as follows:
-## Ident option(type_expr_colon)
+## Ident option(type_annot)
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -2735,8 +2735,8 @@ contract: Const Ident COLON Ident VBAR
 ## In state 30, spurious reduction of production cartesian -> core_type 
 ## In state 36, spurious reduction of production fun_type -> cartesian 
 ## In state 44, spurious reduction of production type_expr -> fun_type 
-## In state 88, spurious reduction of production type_expr_colon -> COLON type_expr 
-## In state 89, spurious reduction of production option(type_expr_colon) -> type_expr_colon 
+## In state 88, spurious reduction of production type_annot -> COLON type_expr 
+## In state 89, spurious reduction of production option(type_annot) -> type_annot 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -2745,7 +2745,7 @@ contract: Const Ident COLON With
 ##
 ## Ends in an error in state: 87.
 ##
-## type_expr_colon -> COLON . type_expr [ Is EQ ASS ]
+## type_annot -> COLON . type_expr [ Is EQ ASS ]
 ##
 ## The known suffix of the stack is as follows:
 ## COLON
@@ -2755,7 +2755,7 @@ contract: Const Ident COLON With
 
 contract: Const Ident EQ Bytes VBAR
 ##
-## Ends in an error in state: 585.
+## Ends in an error in state: 586.
 ##
 ## const_decl -> open_const_decl . option(SEMI) [ Type Recursive Function EOF Const Attributes ]
 ##
@@ -2776,29 +2776,29 @@ contract: Const Ident EQ Bytes VBAR
 ## In state 147, spurious reduction of production conj_expr -> set_membership 
 ## In state 228, spurious reduction of production disj_expr -> conj_expr 
 ## In state 196, spurious reduction of production expr -> disj_expr 
-## In state 493, spurious reduction of production unqualified_decl(EQ) -> Ident option(type_expr_colon) EQ expr 
-## In state 494, spurious reduction of production open_const_decl -> Const unqualified_decl(EQ) 
+## In state 494, spurious reduction of production unqualified_decl(EQ) -> Ident option(type_annot) EQ expr 
+## In state 495, spurious reduction of production open_const_decl -> Const unqualified_decl(EQ) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Const Ident EQ With
 ##
-## Ends in an error in state: 492.
+## Ends in an error in state: 493.
 ##
-## unqualified_decl(EQ) -> Ident option(type_expr_colon) EQ . expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## unqualified_decl(EQ) -> Ident option(type_annot) EQ . expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
 ## The known suffix of the stack is as follows:
-## Ident option(type_expr_colon) EQ
+## Ident option(type_annot) EQ
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Const Ident With
 ##
-## Ends in an error in state: 490.
+## Ends in an error in state: 491.
 ##
-## unqualified_decl(EQ) -> Ident . option(type_expr_colon) EQ expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## unqualified_decl(EQ) -> Ident . option(type_annot) EQ expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
 ## The known suffix of the stack is as follows:
 ## Ident
@@ -2808,7 +2808,7 @@ contract: Const Ident With
 
 contract: Const With
 ##
-## Ends in an error in state: 489.
+## Ends in an error in state: 490.
 ##
 ## open_const_decl -> Const . unqualified_decl(EQ) [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
@@ -2822,11 +2822,11 @@ contract: Function Ident LPAR Const Ident RPAR COLON Ident VBAR
 ##
 ## Ends in an error in state: 461.
 ##
-## open_fun_decl -> Function Ident parameters option(type_expr_colon) . Is block With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
-## open_fun_decl -> Function Ident parameters option(type_expr_colon) . Is expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## open_fun_decl -> Function Ident parameters option(type_annot) . Is block With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## open_fun_decl -> Function Ident parameters option(type_annot) . Is expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
 ## The known suffix of the stack is as follows:
-## Function Ident parameters option(type_expr_colon)
+## Function Ident parameters option(type_annot)
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -2836,15 +2836,15 @@ contract: Function Ident LPAR Const Ident RPAR COLON Ident VBAR
 ## In state 30, spurious reduction of production cartesian -> core_type 
 ## In state 36, spurious reduction of production fun_type -> cartesian 
 ## In state 44, spurious reduction of production type_expr -> fun_type 
-## In state 88, spurious reduction of production type_expr_colon -> COLON type_expr 
-## In state 89, spurious reduction of production option(type_expr_colon) -> type_expr_colon 
+## In state 88, spurious reduction of production type_annot -> COLON type_expr 
+## In state 89, spurious reduction of production option(type_annot) -> type_annot 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin Case Verbatim Of LBRACKET VBAR Block
 ##
-## Ends in an error in state: 499.
+## Ends in an error in state: 500.
 ##
 ## case(if_clause) -> Case expr Of LBRACKET option(VBAR) . cases(if_clause) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -2856,7 +2856,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Case Verbatim Of LBRACKE
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin Case Verbatim Of LBRACKET WILD ARROW Skip End
 ##
-## Ends in an error in state: 528.
+## Ends in an error in state: 529.
 ##
 ## case(if_clause) -> Case expr Of LBRACKET option(VBAR) cases(if_clause) . RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -2867,15 +2867,15 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Case Verbatim Of LBRACKE
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 530, spurious reduction of production nsepseq(case_clause(if_clause),VBAR) -> case_clause(if_clause) 
-## In state 527, spurious reduction of production cases(if_clause) -> nsepseq(case_clause(if_clause),VBAR) 
+## In state 531, spurious reduction of production nsepseq(case_clause(if_clause),VBAR) -> case_clause(if_clause) 
+## In state 528, spurious reduction of production cases(if_clause) -> nsepseq(case_clause(if_clause),VBAR) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin Case Verbatim Of LBRACKET With
 ##
-## Ends in an error in state: 498.
+## Ends in an error in state: 499.
 ##
 ## case(if_clause) -> Case expr Of LBRACKET . option(VBAR) cases(if_clause) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -2887,7 +2887,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Case Verbatim Of LBRACKE
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin Case Verbatim Of VBAR Block
 ##
-## Ends in an error in state: 533.
+## Ends in an error in state: 534.
 ##
 ## case(if_clause) -> Case expr Of option(VBAR) . cases(if_clause) End [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -2899,7 +2899,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Case Verbatim Of VBAR Bl
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin Case Verbatim Of WILD ARROW Skip RBRACKET
 ##
-## Ends in an error in state: 534.
+## Ends in an error in state: 535.
 ##
 ## case(if_clause) -> Case expr Of option(VBAR) cases(if_clause) . End [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -2910,15 +2910,15 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Case Verbatim Of WILD AR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 530, spurious reduction of production nsepseq(case_clause(if_clause),VBAR) -> case_clause(if_clause) 
-## In state 527, spurious reduction of production cases(if_clause) -> nsepseq(case_clause(if_clause),VBAR) 
+## In state 531, spurious reduction of production nsepseq(case_clause(if_clause),VBAR) -> case_clause(if_clause) 
+## In state 528, spurious reduction of production cases(if_clause) -> nsepseq(case_clause(if_clause),VBAR) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin Case Verbatim Of WILD ARROW Skip VBAR With
 ##
-## Ends in an error in state: 531.
+## Ends in an error in state: 532.
 ##
 ## nsepseq(case_clause(if_clause),VBAR) -> case_clause(if_clause) VBAR . nsepseq(case_clause(if_clause),VBAR) [ RBRACKET End ]
 ##
@@ -2930,7 +2930,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Case Verbatim Of WILD AR
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin Case Verbatim Of WILD ARROW Skip With
 ##
-## Ends in an error in state: 530.
+## Ends in an error in state: 531.
 ##
 ## nsepseq(case_clause(if_clause),VBAR) -> case_clause(if_clause) . [ RBRACKET End ]
 ## nsepseq(case_clause(if_clause),VBAR) -> case_clause(if_clause) . VBAR nsepseq(case_clause(if_clause),VBAR) [ RBRACKET End ]
@@ -2943,7 +2943,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Case Verbatim Of WILD AR
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin Case Verbatim Of WILD ARROW With
 ##
-## Ends in an error in state: 501.
+## Ends in an error in state: 502.
 ##
 ## case_clause(if_clause) -> pattern ARROW . if_clause [ VBAR RBRACKET End ]
 ##
@@ -2955,7 +2955,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Case Verbatim Of WILD AR
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin Case Verbatim Of WILD RPAR
 ##
-## Ends in an error in state: 500.
+## Ends in an error in state: 501.
 ##
 ## case_clause(if_clause) -> pattern . ARROW if_clause [ VBAR RBRACKET End ]
 ##
@@ -2973,7 +2973,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Case Verbatim Of WILD RP
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin Case Verbatim Of With
 ##
-## Ends in an error in state: 497.
+## Ends in an error in state: 498.
 ##
 ## case(if_clause) -> Case expr Of . option(VBAR) cases(if_clause) End [ VBAR SEMI RBRACKET RBRACE End Else ]
 ## case(if_clause) -> Case expr Of . LBRACKET option(VBAR) cases(if_clause) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
@@ -2986,7 +2986,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Case Verbatim Of With
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin Case Verbatim VBAR
 ##
-## Ends in an error in state: 496.
+## Ends in an error in state: 497.
 ##
 ## case(if_clause) -> Case expr . Of option(VBAR) cases(if_clause) End [ VBAR SEMI RBRACKET RBRACE End Else ]
 ## case(if_clause) -> Case expr . Of LBRACKET option(VBAR) cases(if_clause) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
@@ -3014,7 +3014,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Case Verbatim VBAR
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin Case With
 ##
-## Ends in an error in state: 495.
+## Ends in an error in state: 496.
 ##
 ## case(if_clause) -> Case . expr Of option(VBAR) cases(if_clause) End [ VBAR SEMI RBRACKET RBRACE End Else ]
 ## case(if_clause) -> Case . expr Of LBRACKET option(VBAR) cases(if_clause) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
@@ -3027,7 +3027,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Case With
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin Constr DOT And With
 ##
-## Ends in an error in state: 508.
+## Ends in an error in state: 509.
 ##
 ## fun_call -> module_field . arguments [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -3039,7 +3039,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Constr DOT And With
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin Constr With
 ##
-## Ends in an error in state: 488.
+## Ends in an error in state: 489.
 ##
 ## module_field -> Constr . DOT module_fun [ LPAR ]
 ## projection -> Constr . DOT Ident DOT nsepseq(selection,DOT) [ LBRACKET ASS ]
@@ -3052,7 +3052,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Constr With
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin For Ident ARROW Ident With
 ##
-## Ends in an error in state: 479.
+## Ends in an error in state: 480.
 ##
 ## for_loop -> For Ident option(arrow_clause) . In collection expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -3064,7 +3064,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin For Ident ARROW Ident Wi
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin For Ident ARROW With
 ##
-## Ends in an error in state: 477.
+## Ends in an error in state: 478.
 ##
 ## arrow_clause -> ARROW . Ident [ In ]
 ##
@@ -3076,12 +3076,12 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin For Ident ARROW With
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin For Ident ASS Verbatim To Verbatim Step Verbatim VBAR
 ##
-## Ends in an error in state: 474.
+## Ends in an error in state: 476.
 ##
-## for_loop -> For Ident ASS expr To expr Step expr . block [ VBAR SEMI RBRACKET RBRACE End Else ]
+## for_loop -> For Ident ASS expr To expr option(step_clause) . block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
-## For Ident ASS expr To expr Step expr
+## For Ident ASS expr To expr option(step_clause)
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -3097,6 +3097,8 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin For Ident ASS Verbatim T
 ## In state 147, spurious reduction of production conj_expr -> set_membership 
 ## In state 228, spurious reduction of production disj_expr -> conj_expr 
 ## In state 196, spurious reduction of production expr -> disj_expr 
+## In state 474, spurious reduction of production step_clause -> Step expr 
+## In state 475, spurious reduction of production option(step_clause) -> step_clause 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -3105,10 +3107,10 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin For Ident ASS Verbatim T
 ##
 ## Ends in an error in state: 473.
 ##
-## for_loop -> For Ident ASS expr To expr Step . expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
+## step_clause -> Step . expr [ Block Begin ]
 ##
 ## The known suffix of the stack is as follows:
-## For Ident ASS expr To expr Step
+## Step
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -3117,8 +3119,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin For Ident ASS Verbatim T
 ##
 ## Ends in an error in state: 472.
 ##
-## for_loop -> For Ident ASS expr To expr . block [ VBAR SEMI RBRACKET RBRACE End Else ]
-## for_loop -> For Ident ASS expr To expr . Step expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
+## for_loop -> For Ident ASS expr To expr . option(step_clause) block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## For Ident ASS expr To expr
@@ -3145,8 +3146,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin For Ident ASS Verbatim T
 ##
 ## Ends in an error in state: 471.
 ##
-## for_loop -> For Ident ASS expr To . expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
-## for_loop -> For Ident ASS expr To . expr Step expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
+## for_loop -> For Ident ASS expr To . expr option(step_clause) block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## For Ident ASS expr To
@@ -3158,8 +3158,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin For Ident ASS Verbatim V
 ##
 ## Ends in an error in state: 470.
 ##
-## for_loop -> For Ident ASS expr . To expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
-## for_loop -> For Ident ASS expr . To expr Step expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
+## for_loop -> For Ident ASS expr . To expr option(step_clause) block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## For Ident ASS expr
@@ -3186,8 +3185,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin For Ident ASS With
 ##
 ## Ends in an error in state: 469.
 ##
-## for_loop -> For Ident ASS . expr To expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
-## for_loop -> For Ident ASS . expr To expr Step expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
+## for_loop -> For Ident ASS . expr To expr option(step_clause) block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## For Ident ASS
@@ -3197,7 +3195,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin For Ident ASS With
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin For Ident In Set Verbatim VBAR
 ##
-## Ends in an error in state: 485.
+## Ends in an error in state: 486.
 ##
 ## for_loop -> For Ident option(arrow_clause) In collection expr . block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -3224,7 +3222,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin For Ident In Set Verbati
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin For Ident In Set With
 ##
-## Ends in an error in state: 484.
+## Ends in an error in state: 485.
 ##
 ## for_loop -> For Ident option(arrow_clause) In collection . expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -3236,7 +3234,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin For Ident In Set With
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin For Ident In With
 ##
-## Ends in an error in state: 480.
+## Ends in an error in state: 481.
 ##
 ## for_loop -> For Ident option(arrow_clause) In . collection expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -3250,8 +3248,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin For Ident With
 ##
 ## Ends in an error in state: 468.
 ##
-## for_loop -> For Ident . ASS expr To expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
-## for_loop -> For Ident . ASS expr To expr Step expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
+## for_loop -> For Ident . ASS expr To expr option(step_clause) block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ## for_loop -> For Ident . option(arrow_clause) In collection expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
@@ -3264,8 +3261,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin For With
 ##
 ## Ends in an error in state: 467.
 ##
-## for_loop -> For . Ident ASS expr To expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
-## for_loop -> For . Ident ASS expr To expr Step expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
+## for_loop -> For . Ident ASS expr To expr option(step_clause) block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ## for_loop -> For . Ident option(arrow_clause) In collection expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
@@ -3276,7 +3272,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin For With
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin Ident ASS With
 ##
-## Ends in an error in state: 514.
+## Ends in an error in state: 515.
 ##
 ## assignment -> lhs ASS . rhs [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -3288,7 +3284,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Ident ASS With
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin Ident DOT Ident With
 ##
-## Ends in an error in state: 507.
+## Ends in an error in state: 508.
 ##
 ## lhs -> path . [ ASS ]
 ## map_lookup -> path . brackets(expr) [ ASS ]
@@ -3309,7 +3305,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Ident DOT Ident With
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin Ident LBRACKET Bytes RBRACKET With
 ##
-## Ends in an error in state: 513.
+## Ends in an error in state: 514.
 ##
 ## assignment -> lhs . ASS rhs [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -3335,7 +3331,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Ident With
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin If Verbatim Then LBRACE Skip End
 ##
-## Ends in an error in state: 565.
+## Ends in an error in state: 566.
 ##
 ## clause_block -> LBRACE sep_or_term_list(statement,SEMI) . RBRACE [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -3346,8 +3342,8 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin If Verbatim Then LBRACE 
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 551, spurious reduction of production nsepseq(statement,SEMI) -> statement 
-## In state 568, spurious reduction of production sep_or_term_list(statement,SEMI) -> nsepseq(statement,SEMI) 
+## In state 552, spurious reduction of production nsepseq(statement,SEMI) -> statement 
+## In state 569, spurious reduction of production sep_or_term_list(statement,SEMI) -> nsepseq(statement,SEMI) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -3366,7 +3362,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin If Verbatim Then LBRACE 
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin If Verbatim Then Skip Else With
 ##
-## Ends in an error in state: 571.
+## Ends in an error in state: 572.
 ##
 ## conditional -> If expr Then if_clause option(SEMI) Else . if_clause [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -3378,7 +3374,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin If Verbatim Then Skip El
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin If Verbatim Then Skip SEMI EQ
 ##
-## Ends in an error in state: 570.
+## Ends in an error in state: 571.
 ##
 ## conditional -> If expr Then if_clause option(SEMI) . Else if_clause [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -3390,7 +3386,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin If Verbatim Then Skip SE
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin If Verbatim Then Skip With
 ##
-## Ends in an error in state: 569.
+## Ends in an error in state: 570.
 ##
 ## conditional -> If expr Then if_clause . option(SEMI) Else if_clause [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -3834,10 +3830,10 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Skip End While
 ##
 ## Ends in an error in state: 464.
 ##
-## open_fun_decl -> Function Ident parameters option(type_expr_colon) Is block . With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## open_fun_decl -> Function Ident parameters option(type_annot) Is block . With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
 ## The known suffix of the stack is as follows:
-## Function Ident parameters option(type_expr_colon) Is block
+## Function Ident parameters option(type_annot) Is block
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -3846,17 +3842,17 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Skip End With With
 ##
 ## Ends in an error in state: 465.
 ##
-## open_fun_decl -> Function Ident parameters option(type_expr_colon) Is block With . expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## open_fun_decl -> Function Ident parameters option(type_annot) Is block With . expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
 ## The known suffix of the stack is as follows:
-## Function Ident parameters option(type_expr_colon) Is block With
+## Function Ident parameters option(type_annot) Is block With
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin Skip RBRACE
 ##
-## Ends in an error in state: 573.
+## Ends in an error in state: 574.
 ##
 ## block -> Begin sep_or_term_list(statement,SEMI) . End [ With VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -3867,15 +3863,15 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Skip RBRACE
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 551, spurious reduction of production nsepseq(statement,SEMI) -> statement 
-## In state 568, spurious reduction of production sep_or_term_list(statement,SEMI) -> nsepseq(statement,SEMI) 
+## In state 552, spurious reduction of production nsepseq(statement,SEMI) -> statement 
+## In state 569, spurious reduction of production sep_or_term_list(statement,SEMI) -> nsepseq(statement,SEMI) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin Skip SEMI Skip SEMI With
 ##
-## Ends in an error in state: 554.
+## Ends in an error in state: 555.
 ##
 ## nsepseq(statement,SEMI) -> statement SEMI . nsepseq(statement,SEMI) [ RBRACE End ]
 ## seq(__anonymous_0(statement,SEMI)) -> statement SEMI . seq(__anonymous_0(statement,SEMI)) [ RBRACE End ]
@@ -3888,7 +3884,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Skip SEMI Skip SEMI With
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin Skip SEMI Skip With
 ##
-## Ends in an error in state: 553.
+## Ends in an error in state: 554.
 ##
 ## nsepseq(statement,SEMI) -> statement . [ RBRACE End ]
 ## nsepseq(statement,SEMI) -> statement . SEMI nsepseq(statement,SEMI) [ RBRACE End ]
@@ -3902,7 +3898,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Skip SEMI Skip With
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin Skip SEMI With
 ##
-## Ends in an error in state: 552.
+## Ends in an error in state: 553.
 ##
 ## nsepseq(statement,SEMI) -> statement SEMI . nsepseq(statement,SEMI) [ RBRACE End ]
 ## nseq(__anonymous_0(statement,SEMI)) -> statement SEMI . seq(__anonymous_0(statement,SEMI)) [ RBRACE End ]
@@ -3915,7 +3911,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Skip SEMI With
 
 contract: Function Ident LPAR Const Ident RPAR Is Begin Skip With
 ##
-## Ends in an error in state: 551.
+## Ends in an error in state: 552.
 ##
 ## nsepseq(statement,SEMI) -> statement . [ RBRACE End ]
 ## nsepseq(statement,SEMI) -> statement . SEMI nsepseq(statement,SEMI) [ RBRACE End ]
@@ -3931,10 +3927,10 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Var Ident ASS With
 ##
 ## Ends in an error in state: 418.
 ##
-## unqualified_decl(ASS) -> Ident option(type_expr_colon) ASS . expr [ SEMI RBRACE End ]
+## unqualified_decl(ASS) -> Ident option(type_annot) ASS . expr [ SEMI RBRACE End ]
 ##
 ## The known suffix of the stack is as follows:
-## Ident option(type_expr_colon) ASS
+## Ident option(type_annot) ASS
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -3943,10 +3939,10 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Var Ident COLON Ident VB
 ##
 ## Ends in an error in state: 417.
 ##
-## unqualified_decl(ASS) -> Ident option(type_expr_colon) . ASS expr [ SEMI RBRACE End ]
+## unqualified_decl(ASS) -> Ident option(type_annot) . ASS expr [ SEMI RBRACE End ]
 ##
 ## The known suffix of the stack is as follows:
-## Ident option(type_expr_colon)
+## Ident option(type_annot)
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -3956,8 +3952,8 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Var Ident COLON Ident VB
 ## In state 30, spurious reduction of production cartesian -> core_type 
 ## In state 36, spurious reduction of production fun_type -> cartesian 
 ## In state 44, spurious reduction of production type_expr -> fun_type 
-## In state 88, spurious reduction of production type_expr_colon -> COLON type_expr 
-## In state 89, spurious reduction of production option(type_expr_colon) -> type_expr_colon 
+## In state 88, spurious reduction of production type_annot -> COLON type_expr 
+## In state 89, spurious reduction of production option(type_annot) -> type_annot 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -3966,7 +3962,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin Var Ident With
 ##
 ## Ends in an error in state: 416.
 ##
-## unqualified_decl(ASS) -> Ident . option(type_expr_colon) ASS expr [ SEMI RBRACE End ]
+## unqualified_decl(ASS) -> Ident . option(type_annot) ASS expr [ SEMI RBRACE End ]
 ##
 ## The known suffix of the stack is as follows:
 ## Ident
@@ -4039,7 +4035,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Begin With
 
 contract: Function Ident LPAR Const Ident RPAR Is Block LBRACE Skip End
 ##
-## Ends in an error in state: 576.
+## Ends in an error in state: 577.
 ##
 ## block -> Block LBRACE sep_or_term_list(statement,SEMI) . RBRACE [ With VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -4050,8 +4046,8 @@ contract: Function Ident LPAR Const Ident RPAR Is Block LBRACE Skip End
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 551, spurious reduction of production nsepseq(statement,SEMI) -> statement 
-## In state 568, spurious reduction of production sep_or_term_list(statement,SEMI) -> nsepseq(statement,SEMI) 
+## In state 552, spurious reduction of production nsepseq(statement,SEMI) -> statement 
+## In state 569, spurious reduction of production sep_or_term_list(statement,SEMI) -> nsepseq(statement,SEMI) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -4082,7 +4078,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Block With
 
 contract: Function Ident LPAR Const Ident RPAR Is Bytes VBAR
 ##
-## Ends in an error in state: 583.
+## Ends in an error in state: 584.
 ##
 ## fun_decl -> open_fun_decl . option(SEMI) [ Type Recursive Function EOF Const Attributes ]
 ##
@@ -4103,7 +4099,7 @@ contract: Function Ident LPAR Const Ident RPAR Is Bytes VBAR
 ## In state 147, spurious reduction of production conj_expr -> set_membership 
 ## In state 228, spurious reduction of production disj_expr -> conj_expr 
 ## In state 196, spurious reduction of production expr -> disj_expr 
-## In state 463, spurious reduction of production open_fun_decl -> Function Ident parameters option(type_expr_colon) Is expr 
+## In state 463, spurious reduction of production open_fun_decl -> Function Ident parameters option(type_annot) Is expr 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -4112,11 +4108,11 @@ contract: Function Ident LPAR Const Ident RPAR Is With
 ##
 ## Ends in an error in state: 462.
 ##
-## open_fun_decl -> Function Ident parameters option(type_expr_colon) Is . block With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
-## open_fun_decl -> Function Ident parameters option(type_expr_colon) Is . expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## open_fun_decl -> Function Ident parameters option(type_annot) Is . block With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## open_fun_decl -> Function Ident parameters option(type_annot) Is . expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
 ## The known suffix of the stack is as follows:
-## Function Ident parameters option(type_expr_colon) Is
+## Function Ident parameters option(type_annot) Is
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -4125,8 +4121,8 @@ contract: Function Ident LPAR Const Ident RPAR With
 ##
 ## Ends in an error in state: 460.
 ##
-## open_fun_decl -> Function Ident parameters . option(type_expr_colon) Is block With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
-## open_fun_decl -> Function Ident parameters . option(type_expr_colon) Is expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## open_fun_decl -> Function Ident parameters . option(type_annot) Is block With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## open_fun_decl -> Function Ident parameters . option(type_annot) Is expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
 ## The known suffix of the stack is as follows:
 ## Function Ident parameters
@@ -4138,8 +4134,8 @@ contract: Function Ident With
 ##
 ## Ends in an error in state: 459.
 ##
-## open_fun_decl -> Function Ident . parameters option(type_expr_colon) Is block With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
-## open_fun_decl -> Function Ident . parameters option(type_expr_colon) Is expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## open_fun_decl -> Function Ident . parameters option(type_annot) Is block With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## open_fun_decl -> Function Ident . parameters option(type_annot) Is expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
 ## The known suffix of the stack is as follows:
 ## Function Ident
@@ -4151,8 +4147,8 @@ contract: Function With
 ##
 ## Ends in an error in state: 458.
 ##
-## open_fun_decl -> Function . Ident parameters option(type_expr_colon) Is block With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
-## open_fun_decl -> Function . Ident parameters option(type_expr_colon) Is expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## open_fun_decl -> Function . Ident parameters option(type_annot) Is block With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## open_fun_decl -> Function . Ident parameters option(type_annot) Is expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
 ## The known suffix of the stack is as follows:
 ## Function
@@ -4164,11 +4160,11 @@ contract: Recursive Function Ident LPAR Const Ident RPAR COLON String VBAR
 ##
 ## Ends in an error in state: 90.
 ##
-## open_fun_decl -> Recursive Function Ident parameters option(type_expr_colon) . Is block With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
-## open_fun_decl -> Recursive Function Ident parameters option(type_expr_colon) . Is expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## open_fun_decl -> Recursive Function Ident parameters option(type_annot) . Is block With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## open_fun_decl -> Recursive Function Ident parameters option(type_annot) . Is expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
 ## The known suffix of the stack is as follows:
-## Recursive Function Ident parameters option(type_expr_colon)
+## Recursive Function Ident parameters option(type_annot)
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -4177,32 +4173,32 @@ contract: Recursive Function Ident LPAR Const Ident RPAR COLON String VBAR
 ## In state 30, spurious reduction of production cartesian -> core_type 
 ## In state 36, spurious reduction of production fun_type -> cartesian 
 ## In state 44, spurious reduction of production type_expr -> fun_type 
-## In state 88, spurious reduction of production type_expr_colon -> COLON type_expr 
-## In state 89, spurious reduction of production option(type_expr_colon) -> type_expr_colon 
+## In state 88, spurious reduction of production type_annot -> COLON type_expr 
+## In state 89, spurious reduction of production option(type_annot) -> type_annot 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Recursive Function Ident LPAR Const Ident RPAR Is Begin Skip End While
 ##
-## Ends in an error in state: 579.
+## Ends in an error in state: 580.
 ##
-## open_fun_decl -> Recursive Function Ident parameters option(type_expr_colon) Is block . With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## open_fun_decl -> Recursive Function Ident parameters option(type_annot) Is block . With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
 ## The known suffix of the stack is as follows:
-## Recursive Function Ident parameters option(type_expr_colon) Is block
+## Recursive Function Ident parameters option(type_annot) Is block
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Recursive Function Ident LPAR Const Ident RPAR Is Begin Skip End With With
 ##
-## Ends in an error in state: 580.
+## Ends in an error in state: 581.
 ##
-## open_fun_decl -> Recursive Function Ident parameters option(type_expr_colon) Is block With . expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## open_fun_decl -> Recursive Function Ident parameters option(type_annot) Is block With . expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
 ## The known suffix of the stack is as follows:
-## Recursive Function Ident parameters option(type_expr_colon) Is block With
+## Recursive Function Ident parameters option(type_annot) Is block With
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -4211,11 +4207,11 @@ contract: Recursive Function Ident LPAR Const Ident RPAR Is With
 ##
 ## Ends in an error in state: 91.
 ##
-## open_fun_decl -> Recursive Function Ident parameters option(type_expr_colon) Is . block With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
-## open_fun_decl -> Recursive Function Ident parameters option(type_expr_colon) Is . expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## open_fun_decl -> Recursive Function Ident parameters option(type_annot) Is . block With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## open_fun_decl -> Recursive Function Ident parameters option(type_annot) Is . expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
 ## The known suffix of the stack is as follows:
-## Recursive Function Ident parameters option(type_expr_colon) Is
+## Recursive Function Ident parameters option(type_annot) Is
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -4224,8 +4220,8 @@ contract: Recursive Function Ident LPAR Const Ident RPAR With
 ##
 ## Ends in an error in state: 86.
 ##
-## open_fun_decl -> Recursive Function Ident parameters . option(type_expr_colon) Is block With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
-## open_fun_decl -> Recursive Function Ident parameters . option(type_expr_colon) Is expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## open_fun_decl -> Recursive Function Ident parameters . option(type_annot) Is block With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## open_fun_decl -> Recursive Function Ident parameters . option(type_annot) Is expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
 ## The known suffix of the stack is as follows:
 ## Recursive Function Ident parameters
@@ -4237,8 +4233,8 @@ contract: Recursive Function Ident With
 ##
 ## Ends in an error in state: 70.
 ##
-## open_fun_decl -> Recursive Function Ident . parameters option(type_expr_colon) Is block With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
-## open_fun_decl -> Recursive Function Ident . parameters option(type_expr_colon) Is expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## open_fun_decl -> Recursive Function Ident . parameters option(type_annot) Is block With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## open_fun_decl -> Recursive Function Ident . parameters option(type_annot) Is expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
 ## The known suffix of the stack is as follows:
 ## Recursive Function Ident
@@ -4250,8 +4246,8 @@ contract: Recursive Function With
 ##
 ## Ends in an error in state: 69.
 ##
-## open_fun_decl -> Recursive Function . Ident parameters option(type_expr_colon) Is block With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
-## open_fun_decl -> Recursive Function . Ident parameters option(type_expr_colon) Is expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## open_fun_decl -> Recursive Function . Ident parameters option(type_annot) Is block With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## open_fun_decl -> Recursive Function . Ident parameters option(type_annot) Is expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
 ## The known suffix of the stack is as follows:
 ## Recursive Function
@@ -4263,8 +4259,8 @@ contract: Recursive With
 ##
 ## Ends in an error in state: 68.
 ##
-## open_fun_decl -> Recursive . Function Ident parameters option(type_expr_colon) Is block With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
-## open_fun_decl -> Recursive . Function Ident parameters option(type_expr_colon) Is expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## open_fun_decl -> Recursive . Function Ident parameters option(type_annot) Is block With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
+## open_fun_decl -> Recursive . Function Ident parameters option(type_annot) Is expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
 ## The known suffix of the stack is as follows:
 ## Recursive

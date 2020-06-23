@@ -569,7 +569,6 @@ let rec compile_instruction : ?next: AST.expression -> CST.instruction -> _ resu
       let%bind (_, var, path) = compile_path mlu.path in
       let%bind index = compile_expression @@ mlu.index.value.inside in
       ok @@ (var, path @ [Access_map index])
-
   in
   match instruction with
     Cond c ->
@@ -725,8 +724,8 @@ and compile_block : ?next:AST.expression -> CST.block CST.reg -> _ result = fun 
   let (block', _loc) = r_split block in
   let statements = npseq_to_list block'.statements in
   let aux (next,attr) statement =
-    let%bind (statement, attr) = compile_statement ?next attr statement in
-    return (statement,attr)
+    let%bind (statement, attr) = compile_statement ?next attr statement
+    in return (statement,attr)
   in
   let%bind (block', _) = bind_fold_right_list aux (next,None) statements in
   match block' with

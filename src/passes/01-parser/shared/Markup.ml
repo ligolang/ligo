@@ -42,3 +42,9 @@ let to_string markup ?(offsets=true) mode =
         region, sprintf "BOM \"%s\"" (String.escaped value) in
   let reg_str = region#compact ~offsets mode
   in sprintf "%s: %s" reg_str val_str
+
+(* Comments *)
+
+type comment =
+  Line  of lexeme Region.reg
+| Block of lexeme Region.reg
