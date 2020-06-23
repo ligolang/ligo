@@ -71,7 +71,7 @@ module M = struct
       typeVariableMap           = (fun _visitor continue NoState tvmap   ->
         let lst = List.sort (fun (a, _) (b, _) -> Var.compare a b) (RedBlackTrees.PolyMap.bindings tvmap) in
         let aux (k, v) =
-          `Assoc [ ("key", `String (asprintf "%a" Var.pp k)) ; ("value", continue NoState v) ] in
+          `Assoc [ asprintf "%a" Var.pp k ; continue NoState v ] in
         let lst' = List.map aux lst in
         `Assoc ["typeVariableMap",  `List lst'] );
     }
