@@ -59,7 +59,7 @@ module M = struct
       option = (fun _visitor continue NoState o ->
         match o with
         | None -> `Null
-        | Some v -> continue NoState v );
+        | Some v -> `List [ `String "Some" ; continue NoState v ] );
       poly_unionfind            = (fun _visitor continue NoState p   ->
         let lst = (UnionFind.Poly2.partitions p) in
         let lst' = List.map (fun l -> continue NoState (UnionFind.Poly2.repr (List.hd l) p )) lst in
