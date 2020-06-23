@@ -253,3 +253,21 @@ let%expect_test _ =
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/compare_sum_types.ligo" ; "main" ] ;
+  [%expect {|
+    ligo: error
+    in file "compare_sum_types.ligo", line 3, characters 9-13
+    Constant declaration 'main'
+    Those two types are not comparable:
+    - sum[Bar -> unit , Foo -> unit]
+    - sum[Bar -> unit , Foo -> unit]
+
+
+    If you're not sure how to fix this error, you can do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/introduction
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}]
