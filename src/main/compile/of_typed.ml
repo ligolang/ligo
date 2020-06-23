@@ -1,12 +1,13 @@
-open Main_errors
 open Trace
 open Ast_typed
+open Spilling
+open Main_errors
 
 let compile : Ast_typed.program -> (Mini_c.program, _) result = fun p ->
-  trace transpiler_tracer @@ Transpiler.transpile_program p
+  trace spilling_tracer @@ compile_program p
 
 let compile_expression : expression -> (Mini_c.expression, _) result = fun e ->
-  trace transpiler_tracer @@ Transpiler.transpile_annotated_expression e
+  trace spilling_tracer @@ compile_expression e
 
 let assert_equal_contract_type : Simple_utils.Runned_result.check_type -> string -> Ast_typed.program -> Ast_typed.expression -> (unit , _) result =
     fun c entry contract param ->

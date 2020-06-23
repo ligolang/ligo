@@ -1,0 +1,18 @@
+(library
+  (name predefined)
+  (public_name ligo.predefined)
+  (libraries
+    simple-utils
+    tezos-utils
+    ast_imperative
+    ast_sugar
+    ast_core
+    ast_typed
+    typesystem
+    mini_c
+  )
+  (preprocess
+    (pps ppx_let bisect_ppx --conditional)
+  )
+  (flags (:standard -open Simple_utils ))
+)

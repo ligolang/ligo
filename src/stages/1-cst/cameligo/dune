@@ -1,0 +1,13 @@
+(library
+  (name cst_cameligo)
+  (public_name ligo.cst.cameligo)
+  (libraries
+    simple-utils
+    tezos-utils
+    parser_shared
+  )
+  (preprocess
+    (pps ppx_let bisect_ppx --conditional)
+  )
+  (flags (:standard -open Parser_shared -open Simple_utils ))
+)
