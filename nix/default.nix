@@ -5,5 +5,6 @@ in {
     ligo ligo-tests ligo-doc ligo-coverage
     ligo-bin ligo-static ligo-docker ligo-deb
     ligo-editor ligo-editor-docker
-    ligo-website;
+    ligo-website
+    ligo-changelog;
 }

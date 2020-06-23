@@ -2,7 +2,8 @@
 
 { sources ? import ./sources.nix
 , CI_COMMIT_SHA ? builtins.getEnv "CI_COMMIT_SHA"
-, COMMIT_DATE ? builtins.getEnv "COMMIT_DATE" }:
+, COMMIT_DATE ? builtins.getEnv "COMMIT_DATE"
+, CI_COMMIT_TAG ? builtins.getEnv "CI_COMMIT_TAG" }:
 self: super:
 let
   opam-nix = import sources.opam-nix (import sources.nixpkgs { });
@@ -79,7 +80,20 @@ in {
         # LIGO executable and public libraries
         ligo-out = osuper.ligo.overrideAttrs (oa: {
           name = "ligo-out";
-          inherit CI_COMMIT_SHA COMMIT_DATE;
+          LIGO_VERSION = if isNull
+          (builtins.match "[0-9]+\\.[0-9]+\\.[0-9]+" CI_COMMIT_TAG) then
+            (if CI_COMMIT_SHA != "" && COMMIT_DATE != "" then ''
+              Rolling release
+              Commit SHA: ${CI_COMMIT_SHA}
+              Commit Date: ${COMMIT_DATE}
+            '' else ''
+              Rolling release
+              Commit SHA: ${self.lib.commitIdFromGitRepo ../.git}
+            '')
+          else
+            "${CI_COMMIT_TAG}";
+          inherit CI_COMMIT_TAG CI_COMMIT_SHA COMMIT_DATE;
+          CHANGELOG_PATH = builtins.toFile "changelog.txt" (builtins.readFile "${self.buildPackages.ligo-changelog}/changelog.txt");
           buildInputs = oa.buildInputs
             ++ [ oself.UnionFind oself.Preprocessor ];
           nativeBuildInputs = oa.nativeBuildInputs
