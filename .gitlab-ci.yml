@@ -77,8 +77,10 @@ xrefcheck:
     # Should be replaced with
     # nix run github:serokell/xrefcheck
     # Once flakes roll out to stable
-    - nix run -f https://github.com/serokell/xrefcheck/archive/v0.1.1.2.tar.gz -c xrefcheck
-
+    # - nix run -f https://github.com/serokell/xrefcheck/archive/v0.1.1.2.tar.gz -c 'xrefcheck local-only'
+    - curl -L https://github.com/serokell/xrefcheck/releases/download/v0.1.1/release.tar.gz | tar -zxf - xrefcheck/bin/xrefcheck
+    # TODO: for now use --mode=local-only because we cannot configure the timeout and some Tezos documentation URLs take a while to reply.
+    - xrefcheck/bin/xrefcheck --mode=local-only
 
 # Strange race conditions, disable for now
 .webide-e2e:
