@@ -545,6 +545,9 @@ module Assert = struct
 
   let assert_list_empty err lst =
     assert_true err List.(length lst = 0)
+  
+  let assert_list_same_size err lsta lstb =
+    assert_true err List.(length lsta = length lstb)
 
 end
 

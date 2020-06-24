@@ -1,6 +1,7 @@
 open Trace
 open Simple_utils.Display
 
+
 let stage = "typer"
 
 type typer_error = [
@@ -69,7 +70,28 @@ type typer_error = [
   | `Typer_constant_decl_tracer of Ast_core.expression_variable * Ast_core.expr * Ast_typed.type_expression option * typer_error
   | `Typer_match_variant_tracer of Ast_core.matching_expr * typer_error
   | `Typer_unrecognized_type_operator of Ast_core.type_expression
-  |`Typer_expected_ascription of Ast_core.expression
+  | `Typer_expected_ascription of Ast_core.expression
+  | `Typer_different_kinds of Ast_typed.type_expression * Ast_typed.type_expression
+  | `Typer_different_constants of Ast_typed.type_constant * Ast_typed.type_constant
+  | `Typer_different_operators of Ast_typed.type_operator * Ast_typed.type_operator
+  | `Typer_operator_number_of_arguments of Ast_typed.type_operator * Ast_typed.type_operator * int * int
+  | `Typer_different_record_props of
+    Ast_typed.type_expression * Ast_typed.type_expression * Ast_typed.te_lmap * Ast_typed.te_lmap * string * string
+  | `Typer_different_kind_record_tuple of
+    Ast_typed.type_expression * Ast_typed.type_expression * Ast_typed.te_lmap * Ast_typed.te_lmap
+  | `Typer_different_size_records_tuples of
+    Ast_typed.type_expression * Ast_typed.type_expression * Ast_typed.te_lmap * Ast_typed.te_lmap
+  | `Typer_different_size_sums of
+    Ast_typed.type_expression * Ast_typed.type_expression
+  | `Typer_different_types of string * Ast_typed.type_expression * Ast_typed.type_expression * typer_error
+  | `Typer_different_literals of string * Ast_typed.literal * Ast_typed.literal
+  | `Typer_different_values of string * Ast_typed.expression * Ast_typed.expression
+  | `Typer_different_literals_because_different_types of string * Ast_typed.literal * Ast_typed.literal
+  | `Typer_different_values_because_different_types of string * Ast_typed.expression * Ast_typed.expression
+  | `Typer_uncomparable_literals of string * Ast_typed.literal * Ast_typed.literal
+  | `Typer_uncomparable_values of string * Ast_typed.expression * Ast_typed.expression
+  | `Typer_missing_key_in_record_value of string
+  | `Typer_compare_tracer of typer_error
 ]
 
 let michelson_comb_no_record (loc:Location.t) = `Typer_michelson_comb_no_record loc
@@ -150,6 +172,23 @@ let constant_declaration_tracer (name: Ast_core.expression_variable) (ae:Ast_cor
   `Typer_constant_decl_tracer (name,ae,expected,err)
 let in_match_variant_tracer (ae:Ast_core.matching_expr) (err:typer_error) =
   `Typer_match_variant_tracer (ae,err)
+let different_kinds a b = `Typer_different_kinds (a,b)
+let different_constants a b = `Typer_different_constants (a,b)
+let different_operators a b = `Typer_different_operators (a,b)
+let different_operator_number_of_arguments opa opb lena lenb = `Typer_operator_number_of_arguments (opa, opb, lena, lenb)
+let different_props_in_record a b ra rb ka kb = `Typer_different_record_props (a,b,ra,rb,ka,kb)
+let different_kind_record_tuple a b ra rb = `Typer_different_kind_record_tuple (a,b,ra,rb)
+let different_size_records_tuples a b ra rb = `Typer_different_size_records_tuples (a,b,ra,rb)
+let different_size_sums a b = `Typer_different_size_sums (a,b)
+let different_types name a b err = `Typer_different_types (name,a,b,err)
+let different_literals name a b = `Typer_different_literals (name,a,b)
+let different_values name a b = `Typer_different_values (name,a,b)
+let different_literals_because_different_types name a b = `Typer_different_literals_because_different_types (name,a,b)
+let different_values_because_different_types name a b = `Typer_different_values_because_different_types (name,a,b)
+let error_uncomparable_literals name a b = `Typer_uncomparable_literals (name,a,b)
+let error_uncomparable_values name a b = `Typer_uncomparable_values (name,a,b)
+let missing_key_in_record_value k = `Typer_missing_key_in_record_value k
+let compare_tracer err = `Typer_compare_tracer err
 
 let rec error_ppformat : display_format:string display_format ->
   Format.formatter -> typer_error -> unit =
@@ -470,6 +509,75 @@ let rec error_ppformat : display_format:string display_format ->
         "@[<hv>%a@ expected ascription but got %a@]"
         Location.pp t.location
         Ast_core.PP.expression t
+    | `Typer_different_kinds (a,b) ->
+      Format.fprintf f
+        "@[<hv> different kinds %a@ %a@]"
+        Ast_typed.PP.type_expression a
+        Ast_typed.PP.type_expression b
+    | `Typer_different_constants (a,b) ->
+      Format.fprintf f
+        "@[<hv> different type constructors.@ \
+        Expected these two constant type constructors to be the same, but they're different@ %a@ %a@]"
+        Ast_typed.PP.type_constant a
+        Ast_typed.PP.type_constant b
+    | `Typer_different_operators (a,b) ->
+      Format.fprintf f
+        "@[<hv> different type constructors.@ \
+        Expected these two n-ary type constructors to be the same, but they're different@ %a@ %a@]"
+        (Ast_typed.PP.type_operator Ast_typed.PP.type_expression) a
+        (Ast_typed.PP.type_operator Ast_typed.PP.type_expression) b
+    | `Typer_operator_number_of_arguments (opa, _opb, lena, lenb) ->
+      Format.fprintf f
+        "@[<hv> different number of arguments to type constructors.@ \
+        Expected these two n-ary type constructors to be the same, but they have different number\
+        of arguments (both use the %s type constructor, but they have %d and %d arguments, respectively)@]"
+        (Ast_typed.Helpers.type_operator_name opa) lena lenb
+    | `Typer_different_record_props (_a,_b,ra,rb,_ka,_kb) ->
+      let names = if Ast_typed.Helpers.is_tuple_lmap ra &&Ast_typed.Helpers.is_tuple_lmap rb
+        then "tuples" else "records" in
+      Format.fprintf f
+        "@[<hv> different keys in %s@]"
+        names
+    | `Typer_different_kind_record_tuple (_a,_b,ra,rb) ->
+      let name_a = if Ast_typed.Helpers.is_tuple_lmap ra then "tuple" else "record" in
+      let name_b = if Ast_typed.Helpers.is_tuple_lmap rb then "tuple" else "record" in
+      Format.fprintf f
+        "@[<hv> different keys.@ Expected these two types to be the same, but they're different (one is a %s\ 
+        and the other is a %s)@]"
+        name_a name_b
+    | `Typer_different_size_records_tuples (_a,_b,ra,rb) ->
+      let n = if Ast_typed.Helpers.is_tuple_lmap ra && Ast_typed.Helpers.is_tuple_lmap rb
+        then "tuples" else "records" in
+      Format.fprintf f 
+        "@[<hv> %s have different sizes.@ Expected these two types to be the same, but they're \
+        different (both are %s, but with a different number of arguments)@]"
+        n n
+    | `Typer_different_size_sums (_a,_b) ->
+      Format.fprintf f 
+        "@[<hv> sum types have different sizes.@ Expected these two types to be the same, but they're \
+        different"
+    | `Typer_different_types (name,_a,_b,err) ->
+      Format.fprintf f
+      "@[<hv> %s are different.\ 
+      Expected these two types to be the same, but they're different.@ %a@]"
+      name
+      (error_ppformat ~display_format) err
+    | `Typer_different_literals (name,_a,_b) ->
+      Format.fprintf f "@[<hv> %s are different@]" name
+    | `Typer_different_values (name,_a,_b) ->
+      Format.fprintf f "@[<hv> %s are different@]" name
+    | `Typer_different_literals_because_different_types (name,_a,_b) ->
+      Format.fprintf f "@[<hv> Literals have different types: %s@]" name
+    | `Typer_different_values_because_different_types (name,_a,_b) ->
+      Format.fprintf f "@[<hv> Values have different types: %s@]" name
+    | `Typer_uncomparable_literals (name,_a,_b) ->
+      Format.fprintf f "@[<hv> %s are not comparable @]" name
+    | `Typer_uncomparable_values (name,_a,_b) ->
+      Format.fprintf f "@[<hv> %s are not comparable @]" name
+    | `Typer_missing_key_in_record_value k ->
+      Format.fprintf f "@[<hv> missing %s in one of the record @]" k
+    | `Typer_compare_tracer err ->
+      error_ppformat ~display_format f err 
   )
 
 let rec error_jsonformat : typer_error -> J.t = fun a ->
@@ -1149,5 +1257,191 @@ let rec error_jsonformat : typer_error -> J.t = fun a ->
       ("message", message) ;
       ("location", location) ;
       ("value", value) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_different_kinds (a,b) ->
+    let message = `String "different kinds" in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.type_expression a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.type_expression b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_different_constants (a,b) ->
+    let message = `String "different type constructors.\
+      Expected these two constant type constructors to be the same, but they're different" in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.type_constant a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.type_constant b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_different_operators (a,b) ->
+    let message = `String "different type constructors.\
+      Expected these two n-ary type constructors to be the same, but they're different" in
+    let a = `String (Format.asprintf "%a" (Ast_typed.PP.type_operator Ast_typed.PP.type_expression) a) in
+    let b = `String (Format.asprintf "%a" (Ast_typed.PP.type_operator Ast_typed.PP.type_expression) b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_operator_number_of_arguments (opa, opb, lena, lenb) ->
+    let message = `String "different number of arguments to type constructors.\ 
+      Expected these two n-ary type constructors to be the same, but they have different number\ 
+      of arguments" in
+    let a = `String (Format.asprintf "%a" (Ast_typed.PP.type_operator Ast_typed.PP.type_expression) opa) in
+    let b = `String (Format.asprintf "%a" (Ast_typed.PP.type_operator Ast_typed.PP.type_expression) opb) in
+    let op = `String (Ast_typed.Helpers.type_operator_name opa) in
+    let len_a = `Int lena in
+    let len_b = `Int lenb in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+      ("op", op) ;
+      ("len_a", len_a) ;
+      ("len_b", len_b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_different_record_props (a,b,ra,rb,ka,kb) ->
+    let names = if Ast_typed.Helpers.is_tuple_lmap ra &&Ast_typed.Helpers.is_tuple_lmap rb
+      then "tuples" else "records" in
+    let message = `String ("different keys in " ^ names) in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.type_expression a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.type_expression b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+      ("ka", `String ka) ;
+      ("kb", `String kb) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_different_kind_record_tuple (a,b,ra,rb) ->
+    let name_a = if Ast_typed.Helpers.is_tuple_lmap ra then "tuple" else "record" in
+    let name_b = if Ast_typed.Helpers.is_tuple_lmap rb then "tuple" else "record" in
+    let message = `String ("different keys. Expected these two types to be the same, but they're different (one is a "
+      ^ name_a ^ " and the other is a " ^ name_b ^ ")") in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.type_expression a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.type_expression b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_different_size_records_tuples (a,b,ra,rb) ->
+    let n = if Ast_typed.Helpers.is_tuple_lmap ra && Ast_typed.Helpers.is_tuple_lmap rb
+       then "tuples" else "records" in
+    let message = `String (n^ " have different sizes. Expected these two types to be the same, but they're \
+      different (both are " ^ n ^ ", but with a different number of arguments)") in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.type_expression a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.type_expression b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_different_size_sums (a,b) ->
+    let message = `String (" sum types have different sizes. Expected these two types to be the same, but they're \
+      different") in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.type_expression a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.type_expression b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_different_types (name,a,b,err) ->
+    let message = `String (name ^" are different.\ 
+      Expected these two types to be the same, but they're different") in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.type_expression a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.type_expression b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+      ("children", error_jsonformat err)
+    ] in
+    json_error ~stage ~content
+  | `Typer_different_literals (name,a,b) ->
+    let message = `String (name ^ " are different") in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.literal a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.literal b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_different_values (name,a,b) ->
+    let message = `String (name ^ " are different") in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.expression a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.expression b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_different_literals_because_different_types (name,a,b) ->
+    let message = `String ("literals have different types: " ^ name) in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.literal a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.literal b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_different_values_because_different_types (name,a,b) ->
+    let message = `String ("values have different types: " ^ name) in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.expression a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.expression b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_uncomparable_literals (name,a,b) ->
+    let message = `String (name ^ " are not comparable") in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.literal a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.literal b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_uncomparable_values (name,a,b) ->
+    let message = `String (name ^ " are not comparable") in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.expression a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.expression b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_missing_key_in_record_value k ->
+    let message = `String "missing keys in one of the records" in
+    let content = `Assoc [
+      ("message", message) ;
+      ("missing_key", `String k) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_compare_tracer err ->
+    let content = `Assoc [
+      ("message", `String "not equal") ;
+      ("children", error_jsonformat err)
     ] in
     json_error ~stage ~content
