@@ -4,19 +4,19 @@
   (libraries
     simple-utils
     parser
-    concrete_to_imperative
+    tree_abstraction
     self_ast_imperative
-    interpreter
-    imperative_to_sugar
+    purification
     ast_sugar
     self_ast_sugar
-    sugar_to_core
+    desugaring
     self_ast_core
     typer
     self_ast_typed
-    transpiler
+    interpreter
+    spilling
     self_mini_c
-    compiler
+    stacking
     self_michelson
   )
   (preprocess

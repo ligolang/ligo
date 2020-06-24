@@ -1,17 +1,17 @@
 open Main_errors
 open Trace
 open Ast_imperative
-open Imperative_to_sugar
+open Purification
 
 type form = 
   | Contract of string
   | Env
 
 let compile (program : program) : (Ast_sugar.program, _) result =
-  trace imperative_to_sugar_tracer @@ compile_program program
+  trace purification_tracer @@ compile_program program
 
 let compile_expression (e : expression) : (Ast_sugar.expression , _) result =
-  trace imperative_to_sugar_tracer @@ compile_expression e
+  trace purification_tracer @@ compile_expression e
 
 let pretty_print formatter (program : program) = 
   PP.program formatter program

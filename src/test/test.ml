@@ -6,7 +6,7 @@ let () =
   Printexc.record_backtrace true ;
   run_test @@ test_suite "LIGO" [
     Integration_tests.main ;
-    Transpiler_tests.main ;
+    Spilling_tests.main ;
     Typer_tests.main ;
     Coase_tests.main ;
     Vote_tests.main ;

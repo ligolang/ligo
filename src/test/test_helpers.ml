@@ -93,13 +93,14 @@ open Ast_imperative.Combinators
 
 let typed_program_with_imperative_input_to_michelson
     ((program , state): Ast_typed.program * Typesystem.Solver_types.typer_state) (entry_point: string)
-    (input: Ast_imperative.expression) : (Compiler.compiled_expression,_) result =
+    (input: Ast_imperative.expression) : (Stacking.compiled_expression,_) result =
   Printexc.record_backtrace true;
   let env = Ast_typed.program_environment Environment.default program in
   let%bind sugar            = Compile.Of_imperative.compile_expression input in
   let%bind core             = Compile.Of_sugar.compile_expression sugar in
   let%bind app              = Compile.Of_core.apply entry_point core in
-  let%bind (typed_app,_)    = Compile.Of_core.compile_expression ~env ~state app in
+  let%bind (typed_app,new_state)    = Compile.Of_core.compile_expression ~env ~state app in
+  let () = Typer.Solver.discard_state new_state in
   let%bind compiled_applied = Compile.Of_typed.compile_expression typed_app in
   let%bind mini_c_prg       = Compile.Of_typed.compile program in
   Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg compiled_applied

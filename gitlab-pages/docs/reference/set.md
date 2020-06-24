@@ -248,7 +248,7 @@ val fold : ('accumulator -> 'item -> 'accumulator) -> 'set list -> 'accumulator 
 let fold: ((('accumulator, 'item) => 'accumulator), set('item), 'accumulator) => 'accumulator
 </SyntaxTitle>
 
-[Fold over values in a set](../language-basics/sets-lists-tuples#folded-operation)
+[Fold over values in a set](../language-basics/sets-lists-tuples.md#folded-operation)
 
 
 <Syntax syntax="pascaligo">

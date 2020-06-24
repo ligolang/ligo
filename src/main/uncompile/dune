@@ -3,14 +3,14 @@
   (public_name ligo.uncompile)
   (libraries
     simple-utils
-    compiler
-    imperative_to_sugar
-    sugar_to_core
+    purification
+    desugaring
     typer_new
     typer
     ast_typed
+    spilling
     mini_c
-    transpiler
+    stacking
     main_errors
   )
   (preprocess

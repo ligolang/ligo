@@ -127,7 +127,7 @@ in CameLIGO.  While this approach is faithful to the original OCaml,
 it is costlier in Michelson than naive function execution accepting
 multiple arguments. Instead, for most functions with more than one
 parameter, we should gather the arguments in a
-[tuple](language-basics/sets-lists-tuples.md) and pass the tuple in as
+[tuple](sets-lists-tuples.md) and pass the tuple in as
 a single parameter.
 
 Here is how you define a basic function that accepts two integers and
