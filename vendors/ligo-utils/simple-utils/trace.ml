@@ -321,6 +321,14 @@ let to_option = function
   | Error _ -> None
 
 (**
+  Convert a result to a json, if res in an error, the produces JSON will be
+  empty, otherwise the provided to_json function will be used
+*)
+let to_json to_json = function
+  | Ok (v,_) ->  to_json v
+  | Error _ -> `Null 
+
+(**
    Convert an option to a result, with a given error if the parameter is None.
 *)
 let trace_option error = function
@@ -330,6 +338,7 @@ let trace_option error = function
 let trace_assert_fail_option error = function
     None -> ok ()
     | Some _s -> fail error
+
 
 (** Utilities to interact with other data-structure.  [bind_t] takes
    an ['a result t] and makes a ['a t result] out of it. It "lifts" the

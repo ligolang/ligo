@@ -80,7 +80,7 @@ module M = struct
     fold to_json NoState v
   
   let print : ((no_state, json) fold_config -> no_state -> 'a -> json) -> formatter -> 'a -> unit  = fun fold ppf v ->
-    fprintf ppf "%a" Yojson.Basic.pp (to_json fold v)
+    fprintf ppf "%a" Yojson.pp (to_json fold v)
 end
 
 module Yojson = Fold.Folds(struct

@@ -484,6 +484,17 @@ let transpile_expression =
   (Term.ret term , Term.info ~doc cmdname)
 
 
+let get_scope =
+  let f source_file syntax display_format =
+    return_result ~display_format Ligo.Scopes.Formatter.scope_format @@
+    Ligo.Scopes.scopes source_file syntax
+  in
+  let term =
+    Term.(const f $ source_file 0 $ syntax $ display_format) in
+  let cmdname = "get-scope" in
+  let doc = "Subcommand: Return the JSON encoded environment for a given file." in
+  (Term.ret term , Term.info ~doc cmdname)
+
 let run ?argv () =
   Term.eval_choice ?argv main [
     temp_ligo_interpreter ;
@@ -507,5 +518,6 @@ let run ?argv () =
     print_mini_c ;
     list_declarations ;
     preprocess;
-    pretty_print
+    pretty_print;
+    get_scope;
   ]

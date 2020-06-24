@@ -1,12 +1,13 @@
 (library
-  (name main)
-  (public_name ligo.main)
+  (name scopes)
+  (public_name ligo.scopes)
   (libraries
-    run
-    compile
-    decompile
     main_errors
-    scopes
+    compile
+    simple-utils
+    self_ast_core
+    typer
+    ast_typed
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)
