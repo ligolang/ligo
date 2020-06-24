@@ -215,7 +215,7 @@ and pp_var_decl {value; _} =
   let {name; var_type; init; _} = value in
   let start = string ("var " ^ name.value) in
   let start =
-    match const_type with
+    match var_type with
       None -> start
     | Some (_, e) ->
         group (start ^/^ nest 2 (string ": " ^^ pp_type_expr e)) in
