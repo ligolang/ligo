@@ -17,5 +17,6 @@ module Helpers = Helpers
 include Types
 include Misc
 include Combinators
+module Debug = Stage_common.Debug
 
 let program_environment env program = fst (Compute_environment.program env program)

@@ -114,7 +114,7 @@ let rec normalizer_simpl : (type_constraint , type_constraint_simpl) normalizer 
   | C_equation {aval=({ tsrc = _ ; t = P_apply _ } as a); bval=(_ as b)}               -> reduce_type_app b a
   (* break down (TC(args)) into (TC('a, …) and ('a = arg) …) *)
   | C_typeclass { tc_args; typeclass }                              -> split_typeclass tc_args typeclass
-  | C_access_label { c_access_label_tval; accessor; c_access_label_tvar } -> let _todo = ignore (c_access_label_tval, accessor, c_access_label_tvar) in failwith "TODO" (* tv, label, result *)
+  | C_access_label { c_access_label_tval; accessor; c_access_label_tvar } -> let _todo = ignore (c_access_label_tval, accessor, c_access_label_tvar) in failwith "TODO C_access_label" (* tv, label, result *)
 
 let normalizers : type_constraint -> structured_dbs -> (structured_dbs , 'modified_constraint) state_list_monad =
   fun new_constraint dbs ->

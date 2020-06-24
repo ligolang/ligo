@@ -440,19 +440,36 @@ let type_program_returns_state ((env, state, p) : environment * O'.typer_state *
   let declarations = List.rev declarations in (* Common hack to have O(1) append: prepend and then reverse *)
   ok (env', state', declarations)
 
+let print_env_state_node (node_printer : Format.formatter -> 'a -> unit) ((env,state,node) : environment * O'.typer_state * 'a) =
+  ignore node; (* TODO *)
+  Printf.printf "%s" @@
+    Format.asprintf "{ \"ENV\": %a,\n\"STATE\": %a,\n\"NODE\": %a\n},\n"
+      Ast_typed.PP_json.environment env
+      Typesystem.Solver_types.json_typer_state state
+      node_printer node
+
 let type_and_subst_xyz
-  (env_state_node : environment * O'.typer_state * 'a) (apply_substs : ('b, Typer_common.Errors.typer_error) Typesystem.Misc.Substitution.Pattern.w)
-  (type_xyz_returns_state : (environment * O'.typer_state * 'a) -> (environment * O'.typer_state * 'b, typer_error) Trace.result) : ('b * O'.typer_state, typer_error) result =
+      (in_printer : Format.formatter -> 'a -> unit)
+      (out_printer : Format.formatter -> 'b -> unit)
+      (env_state_node : environment * O'.typer_state * 'a)
+      (apply_substs : ('b , Typer_common.Errors.typer_error) Typesystem.Misc.Substitution.Pattern.w)
+      (type_xyz_returns_state : (environment * O'.typer_state * 'a) -> (environment * O'.typer_state * 'b , typer_error) Trace.result)
+    : ('b * O'.typer_state , typer_error) result =
+  let () = (if Ast_typed.Debug.json_new_typer then Printf.printf "%!\n###############################START_OF_JSON\n[%!") in
+  let () = (if Ast_typed.Debug.debug_new_typer then Printf.printf "\nTODO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA Print env_state_node here.\n\n") in
+  let () = (if Ast_typed.Debug.debug_new_typer || Ast_typed.Debug.json_new_typer then print_env_state_node in_printer env_state_node) in
   let%bind (env, state, node) = type_xyz_returns_state env_state_node in
   let subst_all =
     let aliases = state.structured_dbs.aliases in
     let assignments = state.structured_dbs.assignments in
     let substs : variable: I.type_variable -> _ = fun ~variable ->
       to_option @@
+      let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "TRY   %a\n" Var.pp variable) in
       let%bind root =
         trace_option (corner_case (Format.asprintf "can't find alias root of variable %a" Var.pp variable)) @@
           (* TODO: after upgrading UnionFind, this will be an option, not an exception. *)
           try Some (Solver.UF.repr variable aliases) with Not_found -> None in
+      let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "TRYR  %a (%a)\n" Var.pp variable Var.pp root) in
       let%bind assignment =
         trace_option (corner_case (Format.asprintf "can't find assignment for root %a" Var.pp root)) @@
           (Map.find_opt root assignments) in
@@ -460,18 +477,22 @@ let type_and_subst_xyz
       let () = ignore tv (* I think there is an issue where the tv is stored twice (as a key and in the element itself) *) in
       let%bind (expr : O.type_content) = trace_option (corner_case "wrong constant tag") @@
         Typesystem.Core.type_expression'_of_simple_c_constant (c_tag , (List.map (fun s -> O.t_variable s ()) tv_list)) in
+      let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "SUBST %a (%a is %a)\n" Var.pp variable Var.pp root Ast_typed.PP_generic.type_content expr) in
       ok @@ expr
     in
     let p = apply_substs ~substs node in
     p in
   let%bind node = subst_all in
+  let () = (if Ast_typed.Debug.debug_new_typer then Printf.printf "\nTODO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA Print env,state,node here again.\n\n") in
+  let () = (if Ast_typed.Debug.debug_new_typer || Ast_typed.Debug.json_new_typer then print_env_state_node out_printer (env, state, node)) in
+  let () = (if Ast_typed.Debug.json_new_typer then Printf.printf "%!\"end of JSON\"],\n###############################END_OF_JSON\n%!") in
   let () = ignore env in        (* TODO: shouldn't we use the `env` somewhere? *)
   ok (node, state)
 
 let type_program (p : I.program) : (O.program * O'.typer_state, typer_error) result =
   let empty_env = DEnv.default in
   let empty_state = Solver.initial_state in
-  type_and_subst_xyz (empty_env , empty_state , p) Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_state
+  type_and_subst_xyz (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.program\"") Ast_typed.PP_json.program (empty_env , empty_state , p) Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_state
 
 let type_expression_returns_state : (environment * O'.typer_state * I.expression) -> (environment * O'.typer_state * O.expression, typer_error) result =
   fun (env, state, e) ->
@@ -480,7 +501,7 @@ let type_expression_returns_state : (environment * O'.typer_state * I.expression
 
 let type_expression_subst (env : environment) (state : O'.typer_state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.expression * O'.typer_state , typer_error) result =
   let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
-  type_and_subst_xyz (env , state , e) Typesystem.Misc.Substitution.Pattern.s_expression type_expression_returns_state
+  type_and_subst_xyz (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.expression\"") Ast_typed.PP_json.expression (env , state , e) Typesystem.Misc.Substitution.Pattern.s_expression type_expression_returns_state
 
 let untype_type_expression  = Untyper.untype_type_expression
 let untype_expression       = Untyper.untype_expression
@@ -493,7 +514,7 @@ and [@warning "-32"] type_expression : environment -> O'.typer_state -> ?tv_opt:
 and [@warning "-32"] type_lambda e state lam = type_lambda e state lam
 and [@warning "-32"] type_constant (name:I.constant') (lst:O.type_expression list) (tv_opt:O.type_expression option) : (O.constant' * O.type_expression, typer_error) result = type_constant name lst tv_opt
 let [@warning "-32"] type_program_returns_state ((env, state, p) : environment * O'.typer_state * I.program) : (environment * O'.typer_state * O.program, typer_error) result = type_program_returns_state (env, state, p)
-let [@warning "-32"] type_and_subst_xyz (env_state_node : environment * O'.typer_state * 'a) (apply_substs : ('b,typer_error) Typesystem.Misc.Substitution.Pattern.w) (type_xyz_returns_state : (environment * O'.typer_state * 'a) -> (environment * O'.typer_state * 'b, typer_error) result) : ('b * O'.typer_state, typer_error) result = type_and_subst_xyz env_state_node apply_substs type_xyz_returns_state
+let [@warning "-32"] type_and_subst_xyz (in_printer : (Format.formatter -> 'a -> unit)) (out_printer : (Format.formatter -> 'b -> unit)) (env_state_node : environment * O'.typer_state * 'a) (apply_substs : ('b,typer_error) Typesystem.Misc.Substitution.Pattern.w) (type_xyz_returns_state : (environment * O'.typer_state * 'a) -> (environment * O'.typer_state * 'b, typer_error) result) : ('b * O'.typer_state, typer_error) result = type_and_subst_xyz in_printer out_printer env_state_node apply_substs type_xyz_returns_state
 let [@warning "-32"] type_program (p : I.program) : (O.program * O'.typer_state, typer_error) result = type_program p
 let [@warning "-32"] type_expression_returns_state : (environment * O'.typer_state * I.expression) -> (environment * O'.typer_state * O.expression, typer_error) Trace.result = type_expression_returns_state
 let [@warning "-32"] type_expression_subst (env : environment) (state : O'.typer_state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.expression * O'.typer_state, typer_error) result = type_expression_subst env state ?tv_opt e

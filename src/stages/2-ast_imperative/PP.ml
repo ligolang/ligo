@@ -71,7 +71,7 @@ let rec expression ppf (e : expression) =
 and expression_content ppf (ec : expression_content) =
   match ec with
   | E_literal l ->
-      literal ppf l
+      fprintf ppf "%a" literal l
   | E_variable n ->
       fprintf ppf "%a" expression_variable n
   | E_application {lamb;args} ->

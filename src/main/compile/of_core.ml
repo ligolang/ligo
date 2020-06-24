@@ -18,7 +18,6 @@ let compile (cform: form) (program : Ast_core.program) : (Ast_typed.program * Ty
 let compile_expression ?(env = Ast_typed.Environment.empty) ~(state : Typesystem.Solver_types.typer_state) (e : Ast_core.expression)
     : (Ast_typed.expression * Typesystem.Solver_types.typer_state , _) result =
   let%bind (ae_typed,state) = trace typer_tracer @@ Typer.type_expression_subst env state e in
-  let () = Typer.Solver.discard_state state in
   let%bind ae_typed' = trace self_ast_typed_tracer @@ Self_ast_typed.all_expression ae_typed in
   ok @@ (ae_typed',state)
 

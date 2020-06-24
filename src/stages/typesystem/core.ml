@@ -27,8 +27,10 @@ type type_variable = Ast_typed.type_variable
 type type_expression = Ast_typed.type_expression
 
 (* generate a new type variable and gave it an id *)
-let fresh_type_variable : ?name:string -> unit -> type_variable =
-    Var.fresh
+let fresh_type_variable : ?name:string -> unit -> type_variable = fun ?name () ->
+  let fresh_name = Var.fresh ?name () in
+  let () = (if Ast_typed.Debug.debug_new_typer && false then Printf.printf "Generated variable %s\n%!%s\n%!" (Var.debug fresh_name) (Printexc.get_backtrace ())) in
+  fresh_name
 
 let type_expression'_of_simple_c_constant : constant_tag * type_expression list -> Ast_typed.type_content option = fun (c, l) ->
   match c, l with

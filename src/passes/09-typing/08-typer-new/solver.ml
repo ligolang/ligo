@@ -13,8 +13,8 @@ let propagator_heuristics =
     Heuristic_specialize1.heuristic ;
   ]
 
-let init_propagator_heuristic (Propagator_heuristic { selector ; propagator ; comparator }) =
-  Propagator_state { selector ; propagator ; already_selected = Set.create ~cmp:comparator }
+let init_propagator_heuristic (Propagator_heuristic { selector ; propagator ; printer ; comparator }) =
+  Propagator_state { selector ; propagator ; printer ; already_selected = Set.create ~cmp:comparator }
 
 let initial_state : typer_state = {
     structured_dbs =
@@ -45,16 +45,25 @@ let select_and_propagate : ('old_input, 'selector_output) selector -> 'selector_
      (* Call the propagation rule *)
      let (new_constraints , new_assignments) = List.split @@ List.map (propagator dbs) selected_outputs in
      (* return so that the new constraints are pushed to some kind of work queue and the new assignments stored *)
+let () =
+  (if Ast_typed.Debug.debug_new_typer && false then
+   let s str = (fun ppf () -> Format.fprintf ppf str) in
+   Format.printf "propagator produced\nnew_constraints = %a\nnew_assignments = %a\n"
+     (PP_helpers.list_sep (PP_helpers.list_sep Ast_typed.PP_generic.type_constraint (s "\n")) (s "\n"))
+     new_constraints
+     (PP_helpers.list_sep (PP_helpers.list_sep Ast_typed.PP_generic.c_constructor_simpl (s "\n")) (s "\n"))
+     new_assignments)
+in
      (already_selected , List.flatten new_constraints , List.flatten new_assignments)
   | WasNotSelected ->
      (already_selected, [] , [])
 
-let select_and_propagate_one new_constraint (new_states , new_constraints , dbs) (Propagator_state { selector; propagator; already_selected }) =
+let select_and_propagate_one new_constraint (new_states , new_constraints , dbs) (Propagator_state { selector; propagator; printer ; already_selected }) =
   let sel_propag = (select_and_propagate selector propagator) in
   let (already_selected , new_constraints', new_assignments) = sel_propag already_selected new_constraint dbs in
   let assignments = List.fold_left (fun acc ({tv;c_tag=_;tv_list=_} as ele) -> Map.update tv (function None -> Some ele | x -> x) acc) dbs.assignments new_assignments in
   let dbs = { dbs with assignments } in
-  Propagator_state { selector; propagator; already_selected } :: new_states, new_constraints' @ new_constraints, dbs
+  Propagator_state { selector; propagator; printer ; already_selected } :: new_states, new_constraints' @ new_constraints, dbs
 
 (* Takes a constraint, applies all selector+propagator pairs to it.
    Keeps track of which constraints have already been selected. *)
