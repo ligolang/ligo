@@ -53,19 +53,21 @@ export const EditorComponent = () => {
             }}
           ></StyledEditableTitleComponent>
         </LeftActions>
-        <Select
-          id="syntax-select"
-          value={language}
-          onChange={language => {
-            dispatch({ ...new ChangeLanguageAction(language) });
-          }}
-        >
-          <Option value={Language.PascaLigo}>PascaLIGO</Option>
-          <Option value={Language.CameLigo}>CameLIGO</Option>
-          <Option value={Language.ReasonLIGO}>ReasonLIGO</Option>
-        </Select>
+        <LeftActions >
+          <Select
+            id="syntax-select"
+            value={language}
+            onChange={language => {
+              dispatch({ ...new ChangeLanguageAction(language) });
+            }}
+          >
+            <Option value={Language.PascaLigo}>PascaLIGO</Option>
+            <Option value={Language.CameLigo}>CameLIGO</Option>
+            <Option value={Language.ReasonLIGO}>ReasonLIGO</Option>
+          </Select>
+        </LeftActions>
       </Header>
-      <MonacoComponent></MonacoComponent>
+      <MonacoComponent ></MonacoComponent>
     </Container>
   );
 };

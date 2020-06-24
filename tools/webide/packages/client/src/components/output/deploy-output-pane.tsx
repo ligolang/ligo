@@ -24,6 +24,7 @@ const Pre = styled.pre`
   margin: 0 -0.5em;
   overflow: scroll;
   height: 100%;
+  width: -webkit-fill-available;
 `;
 
 export const DeployOutputPane = () => {

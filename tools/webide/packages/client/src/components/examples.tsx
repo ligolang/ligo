@@ -1,6 +1,7 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
+import 'bootstrap/dist/css/bootstrap.min.css'
 
 import { AppState } from '../redux/app';
 import { ChangeDirtyAction, EditorState } from '../redux/editor';
@@ -30,15 +31,10 @@ const MenuContainer = styled.div`
 `;
 
 const MenuItem = styled.span`
-  height: 1em;
+ 
   padding: 0.6em;
   cursor: pointer;
   background-color: transparent;
-
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-
   :hover {
     background-color: var(--blue_trans2);
   }
@@ -65,7 +61,6 @@ export const Examples = () => {
               key={example.id}
               onClick={async () => {
                 const response = await getExample(example.id);
-
                 if (
                   !editorDirty ||
                   window.confirm(
