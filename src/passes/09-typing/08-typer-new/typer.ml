@@ -14,7 +14,7 @@ module Map = RedBlackTrees.PolyMap
 open Todo_use_fold_generator
 
 let assert_type_expression_eq ((tv',tv):O.type_expression * O.type_expression) : (unit,typer_error) result = 
-  Compare.assert_type_expression_eq (tv' , tv)
+  Compare_types.assert_type_expression_eq (tv' , tv)
 
 (*
   Extract pairs of (name,type) in the declaration and add it to the environment
