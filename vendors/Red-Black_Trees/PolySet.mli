@@ -63,12 +63,16 @@ val mem : 'elt -> 'elt t -> bool
    are already part of the [set] at the point at which they are added
    are gathered in the [duplicates] list (and the [set] is not updated
    for these elements, i.e. it keeps the pre-existing version of the
-   element). The elements which are not already members of the set are
-   added to the [set], and gathered in the [added] list. *)
+   element). The elements which are not already members of the [set]
+   are added to the [set], and gathered in the [added] list. *)
 type 'a added = {set : 'a set; duplicates : 'a list; added : 'a list}
 val add_list : 'a list -> 'a set -> 'a added
 
 val elements : 'elt t -> 'elt list
+
+(* The value of the call [get_compare set] is the comparison function
+   used by the given set *)
+val get_compare : 'elt t -> ('elt -> 'elt -> int)
 
 (* The side-effect of evaluating the call [iter f set] is the
    successive side-effects of the calls [f elt], for all the elements

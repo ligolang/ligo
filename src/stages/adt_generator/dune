@@ -3,5 +3,6 @@
   (public_name ligo.adt_generator)
   (libraries
     simple-utils
+    RedBlackTrees
   )
 )

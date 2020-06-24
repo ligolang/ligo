@@ -42,10 +42,10 @@ module M = struct
   let op ppf : (no_state, unit) fold_config = {
       generic = (fun NoState info ->
         match info.node_instance.instance_kind with
-        | RecordInstance { fields } ->
+        | RecordInstance { field_instances } ->
            let aux ppf (fld : ('xi , 'xo) Adt_info.ctor_or_field_instance) =
              fprintf ppf "%s = %a" fld.cf.name (fun _ppf -> fld.cf_continue) NoState in
-           fprintf ppf "{@,@[<hv 2> %a @]@,}" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) fields
+           fprintf ppf "{@,@[<hv 2> %a @]@,}" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) field_instances
         | VariantInstance { constructor ; _ } ->
            if constructor.cf_new_fold needs_parens NoState
            then fprintf ppf "%s (%a)" constructor.cf.name (fun _ppf -> constructor.cf_continue) NoState

@@ -10,12 +10,12 @@ module M = struct
   let to_json : (no_state, json) fold_config = {
       generic = (fun NoState info ->
         match info.node_instance.instance_kind with
-        | RecordInstance { fields } ->
-          let fields' = List.fold_left
+        | RecordInstance { field_instances } ->
+          let field_instances' = List.fold_left
             (fun acc (fld : ('xi, json) Adt_info.ctor_or_field_instance) -> (fld.cf.name, fld.cf_continue NoState)::acc)
-            [] fields 
+            [] field_instances 
           in
-          `Assoc fields'
+          `Assoc field_instances'
         | VariantInstance { constructor ; _ } ->
           `List [ `String constructor.cf.name ; constructor.cf_continue NoState ]
         | PolyInstance { poly=_; arguments=_; poly_continue } ->

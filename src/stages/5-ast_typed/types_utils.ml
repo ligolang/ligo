@@ -127,3 +127,33 @@ let fold_map__poly_set : type a state new_a err . new_a extra_info__comparable -
     ok (state , PolySet.add new_elt s) in
   let%bind (state , m) = PolySet.fold_inc aux s ~init:(ok (state, PolySet.create ~cmp:new_compare)) in
   ok (state , m)
+
+
+(* This takes a fold_map__xxx function and turns it into a make__xxx
+   function.
+   It just swaps the error monad with the option monad, and uses unit
+   as the type for the state and for "errors". *)
+let fold_map_to_make fold_map = fun f v ->
+  match fold_map (fun () x -> match f x with Some x' -> ok ((), x') | None -> Pervasives.Error ()) () v with
+    Pervasives.Ok (((), v'), _) -> Some v'
+  | Pervasives.Error () -> None
+
+(* This can't be done automatically, because the auto-generated
+   comparison functions make use of the fold, the fold supplies to
+   users some "make" functions, and there's no deterministic way to
+   extract the comparison functions (or other typeclass-like
+   functions).
+
+   Instead of writing the following functions, we could just write the
+   get_typeclass_compare functions for poly_unionfind and poly_set,
+   but the resulting code wouldn't be much clearer. *)
+let make__constructor_map f v = fold_map_to_make fold_map__constructor_map f v
+let make__label_map f v = fold_map_to_make fold_map__label_map f v
+let make__list f v = fold_map_to_make fold_map__list f v
+let make__location_wrap f v = fold_map_to_make fold_map__location_wrap f v
+let make__list_ne f v = fold_map_to_make fold_map__list_ne f v
+let make__option f v = fold_map_to_make fold_map__option f v
+let make__poly_unionfind f v = fold_map_to_make (fold_map__poly_unionfind { compare = failwith "TODO" (*UnionFind.Poly2.get_compare v*) }) f v
+let make__PolyMap f v = fold_map_to_make fold_map__PolyMap f v
+let make__typeVariableMap f v = fold_map_to_make fold_map__typeVariableMap f v
+let make__poly_set f v = fold_map_to_make (fold_map__poly_set { compare = failwith "TODO" (*PolySet.get_compare v*) }) f v
