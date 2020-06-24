@@ -212,15 +212,12 @@ module Trace_tutorial = struct
 
 end (* end Trace_tutorial. *)
 
-module J = Yojson.Basic
-
-
 (* Annotations should be used in debug mode to aggregate information
    about some value history. Where it was produced, when it was
    modified, etc.  It is currently not being used. *)
 
 type 'a thunk = unit -> 'a
-type annotation = J.t
+type annotation = Yojson.t
 
 (* Even in debug mode, building annotations can be quite
    resource-intensive.  Instead, a thunk is passed, that is computed
@@ -554,5 +551,3 @@ module Assert = struct
     assert_true err List.(length lsta = length lstb)
 
 end
-
-let json_of_error = J.to_string

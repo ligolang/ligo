@@ -1,4 +1,3 @@
-open Trace
 open Simple_utils.Display
 open Stage_common.Types
 
@@ -92,7 +91,7 @@ let rec error_ppformat : display_format:string display_format ->
         Mini_c.PP.constant c
   )
 
-let rec error_jsonformat : stacking_error -> J.t = fun a ->
+let rec error_jsonformat : stacking_error -> Yojson.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;

@@ -1,4 +1,3 @@
-open Trace
 open Simple_utils.Display
 
 
@@ -580,7 +579,7 @@ let rec error_ppformat : display_format:string display_format ->
       error_ppformat ~display_format f err 
   )
 
-let rec error_jsonformat : typer_error -> J.t = fun a ->
+let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;

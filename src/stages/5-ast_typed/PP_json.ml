@@ -2,7 +2,7 @@ open Types
 open Fold
 open Format
 
-type json = Yojson.Basic.t
+type json = Yojson.t
 
 module M = struct
   type no_state = NoState
