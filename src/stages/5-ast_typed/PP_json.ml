@@ -76,13 +76,23 @@ module M = struct
         `Assoc ["typeVariableMap",  `List lst'] );
     }
 
-  let print : ((no_state, json) fold_config -> no_state -> 'a -> json) -> 'a -> json = fun fold v ->
+  let to_json : ((no_state, json) fold_config -> no_state -> 'a -> json) -> 'a -> json = fun fold v ->
     fold to_json NoState v
+  
+  let print : ((no_state, json) fold_config -> no_state -> 'a -> json) -> formatter -> 'a -> unit  = fun fold ppf v ->
+    fprintf ppf "%a" Yojson.Basic.pp (to_json fold v)
 end
+
+module Yojson = Fold.Folds(struct
+  type in_state = M.no_state ;;
+  type out_state = json ;;
+  type 'a t = 'a -> json ;;
+  let f = M.to_json ;;
+end)
 
 include Fold.Folds(struct
   type in_state = M.no_state ;;
   type out_state = json ;;
-  type 'a t = 'a -> json ;;
+  type 'a t = formatter -> 'a -> unit ;;
   let f = M.print ;;
 end)
