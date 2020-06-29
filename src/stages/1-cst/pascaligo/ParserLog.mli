@@ -19,6 +19,7 @@ val print_path        : state -> CST.path -> unit
 val print_pattern     : state -> CST.pattern -> unit
 val print_instruction : state -> CST.instruction -> unit
 val print_expr        : state -> CST.expr -> unit
+val print_statements  : state -> CST.statements -> unit
 
 (** {1 Printing tokens from the CST in a string} *)
 

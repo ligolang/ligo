@@ -131,7 +131,7 @@ tuple(item):
 
 list__(item):
   "[" sep_or_term_list(item,";")? "]" {
-    let compound = Brackets ($1,$3)
+    let compound = Some (Brackets ($1,$3))
     and region = cover $1 $3 in
     let elements, terminator =
       match $2 with
@@ -224,7 +224,7 @@ record_type:
     let () = Utils.nsepseq_to_list ne_elements
              |> Scoping.check_fields in
     let region = cover $1 $3
-    and value  = {compound = Braces ($1,$3); ne_elements; terminator}
+    and value  = {compound = Some(Braces ($1,$3)); ne_elements; terminator}
     in TRecord {region; value} }
 
 type_expr_field:
@@ -362,7 +362,7 @@ record_pattern:
   "{" sep_or_term_list(field_pattern,",") "}" {
     let ne_elements, terminator = $2 in
     let region = cover $1 $3 in
-    let value  = {compound = Braces ($1,$3);
+    let value  = {compound = Some (Braces ($1,$3));
                   ne_elements;
                   terminator}
     in {region; value} }
@@ -592,15 +592,12 @@ parenthesized_expr:
 
 if_then(right_expr):
   "if" parenthesized_expr "{" closed_if ";"? "}" {
-    let the_unit = ghost, ghost in
-    let ifnot    = EUnit {region=ghost; value=the_unit} in
     let region   = cover $1 $6 in
     let value    = {kwd_if   = $1;
                     test     = $2;
                     kwd_then = $3;
                     ifso     = $4;
-                    kwd_else = ghost;
-                    ifnot}
+                    ifnot    = None}
     in ECond {region; value} }
 
 if_then_else(right_expr):
@@ -611,8 +608,7 @@ if_then_else(right_expr):
                   test     = $2;
                   kwd_then = $3;
                   ifso     = $4;
-                  kwd_else = $6;
-                  ifnot    = $9}
+                  ifnot    = Some ($6,$9)}
     in ECond {region; value} }
 
 base_if_then_else__open(x):
@@ -825,7 +821,7 @@ list_or_spread:
     let elts, terminator = $4 in
     let elts = Utils.nsepseq_cons $2 $3 elts in
     let value = {
-      compound = Brackets ($1,$5);
+      compound = Some (Brackets ($1,$5));
       elements = Some elts;
       terminator}
     and region = cover $1 $5 in
@@ -837,7 +833,7 @@ list_or_spread:
     in EList (ECons {region; value})
   }
 | "[" expr? "]" {
-    let compound = Brackets ($1,$3)
+    let compound = Some (Brackets ($1,$3))
     and elements =
       match $2 with
         None -> None
@@ -913,7 +909,7 @@ update_record:
       lbrace   = $1;
       record   = $3;
       kwd_with = $4;
-      updates  = {value = {compound = Braces (ghost, ghost);
+      updates  = {value = {compound = None;
                            ne_elements;
                            terminator};
                   region = cover $4 $6};
@@ -949,7 +945,7 @@ exprs:
       in
       let sequence = ESeq {
         value = {
-          compound   = BeginEnd (ghost, ghost);
+          compound   = None; 
           elements   = Some val_;
           terminator = snd c};
         region = sequence_region
@@ -982,7 +978,7 @@ more_field_assignments:
 sequence:
   "{" exprs "}" {
     let elts, _region = $2 in
-    let compound = Braces ($1, $3) in
+    let compound = Some (Braces ($1, $3)) in
     let value    = {compound;
                     elements = Some elts;
                     terminator = None} in
@@ -991,7 +987,7 @@ sequence:
 
 record:
   "{" field_assignment more_field_assignments? "}" {
-    let compound = Braces ($1,$4) in
+    let compound = Some (Braces ($1,$4)) in
     let region   = cover $1 $4 in
 
     match $3 with
@@ -1010,7 +1006,7 @@ record:
     let field_name = {$2 with value} in
     let comma, elts = $3 in
     let ne_elements = Utils.nsepseq_cons field_name comma elts in
-    let compound = Braces ($1,$4) in
+    let compound = Some (Braces ($1,$4)) in
     let region   = cover $1 $4 in
     {value = {compound; ne_elements; terminator = None}; region} }
 

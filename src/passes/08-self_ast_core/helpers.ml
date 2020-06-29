@@ -3,7 +3,6 @@ open Trace
 open Stage_common.Helpers
 
 include Stage_common.PP
-include Stage_common.Types.Ast_generic_type(Ast_core_parameter)
 
 let bind_map_cmap f map = bind_cmap (
   CMap.map 
@@ -23,7 +22,7 @@ type ('a,'err) folder = 'a -> expression -> ('a, 'err) result
 let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a,'err) result = fun f init e ->
   let self = fold_expression f in 
   let%bind init' = f init e in
-  match e.expression_content with
+  match e.content with
   | E_literal _ | E_variable _ | E_raw_code _ -> ok init'
   | E_constant {arguments=lst} -> (
     let%bind res = bind_fold_list self init' lst in
@@ -98,8 +97,8 @@ type 'err abs_mapper =
 let rec map_expression : 'err exp_mapper -> expression -> (expression , 'err) result = fun f e ->
   let self = map_expression f in
   let%bind e' = f e in
-  let return expression_content = ok { e' with expression_content } in
-  match e'.expression_content with
+  let return content = ok { e' with content } in
+  match e'.content with
   | E_ascription ascr -> (
       let%bind e' = self ascr.anno_expr in
       return @@ E_ascription {ascr with anno_expr=e'}
@@ -151,11 +150,11 @@ let rec map_expression : 'err exp_mapper -> expression -> (expression , 'err) re
   | E_literal _ | E_variable _ | E_raw_code _ as e' -> return e'
 
 and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_expression , 'err) result =
-    fun f ({type_content ; location ; type_meta} as te) ->
+    fun f ({content ; sugar; location } as te) ->
   let self = map_type_expression f in
   let%bind te' = f te in
-  let return type_content = ok { type_content; location ; type_meta } in
-  match type_content with
+  let return content = ok @@ ({ content; sugar; location}: type_expression) in
+  match content with
   | T_sum temap ->
     let%bind temap' = bind_map_cmap self temap in
     return @@ (T_sum temap')
@@ -212,8 +211,8 @@ let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> ('a
   let%bind (continue, init',e') = f a e in
   if (not continue) then ok(init',e')
   else
-  let return expression_content = { e' with expression_content } in
-  match e'.expression_content with
+  let return content = { e' with content } in
+  match e'.content with
   | E_ascription ascr -> (
       let%bind (res,e') = self init' ascr.anno_expr in
       ok (res, return @@ E_ascription {ascr with anno_expr=e'})

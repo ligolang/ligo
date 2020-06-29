@@ -3,10 +3,6 @@ open Ast_sugar
 open Desugaring
 open Main_errors
 
-type form = 
-  | Contract of string
-  | Env
-
 let compile (program : program) : (Ast_core.program , _) result =
   trace desugaring_tracer @@ compile_program program
 

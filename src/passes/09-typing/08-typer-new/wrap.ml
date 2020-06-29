@@ -62,7 +62,7 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
      p_constant csttag (List.map type_expression_to_type_value args)
 
 let rec type_expression_to_type_value_copypasted : I.type_expression -> O.type_value = fun te ->
-  match te.type_content with
+  match te.content with
   | T_sum kvmap ->
      let () = failwith "fixme: don't use to_list, it drops the variant keys, rows have a differnt kind than argument lists for now!" in
      let tlist = List.map (fun ({ctor_type;_}:I.ctor_content) -> ctor_type) (I.CMap.to_list kvmap) in

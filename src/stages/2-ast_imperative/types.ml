@@ -135,7 +135,7 @@ and matching =
 and ascription = {anno_expr: expression; type_annotation: type_expression}
 
 and conditional = {
-  condition : expression ;
+  condition   : expression ;
   then_clause : expression ;
   else_clause : expression ;
 }

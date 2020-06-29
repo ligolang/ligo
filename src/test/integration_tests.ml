@@ -2096,9 +2096,9 @@ let get_contract_ligo () : (unit, _) result =
   let%bind () =
     let make_input = fun _n -> e_unit () in
     let make_expected : int -> Ast_core.expression -> (unit, _) result = fun _n result ->
-      let%bind (ops , storage) = trace_option (test_internal __LOC__) @@ Ast_core.get_e_pair result.expression_content in
+      let%bind (ops , storage) = trace_option (test_internal __LOC__) @@ Ast_core.get_e_pair result.content in
       let%bind () =
-        let%bind lst = trace_option (test_internal __LOC__) @@ Ast_core.get_e_list ops.expression_content in
+        let%bind lst = trace_option (test_internal __LOC__) @@ Ast_core.get_e_list ops.content in
         Assert.assert_list_size (test_internal __LOC__) lst 1 in
       let expected_storage = Ast_core.e_unit () in
       trace_option (test_internal __LOC__) @@ Ast_core.Misc.assert_value_eq (expected_storage , storage)

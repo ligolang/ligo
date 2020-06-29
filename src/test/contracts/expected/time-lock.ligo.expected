@@ -9,8 +9,7 @@ type call_pt is message_t
 type contract_return_t is list (operation) * storage_t
 
 type entry_point_t is
-    Call of call_pt
-  | Default of default_pt
+    Call of call_pt | Default of default_pt
 
 function call (const p : call_pt; const s : storage_t)
   : contract_return_t is

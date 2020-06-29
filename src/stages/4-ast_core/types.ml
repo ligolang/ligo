@@ -2,15 +2,11 @@
 
 module Location = Simple_utils.Location
 
-module Ast_core_parameter = struct
-  type type_meta = unit
-end
-
 include Stage_common.Types
 
-include Ast_generic_type (Ast_core_parameter)
-
-type inline = bool 
+type attribute = {
+  inline: bool
+} 
 type program = declaration Location.wrap list
 and declaration =
   | Declaration_type of (type_variable * type_expression)
@@ -20,10 +16,35 @@ and declaration =
    *   an optional type annotation
    *   a boolean indicating whether it should be inlined
    *   an expression *)
-  | Declaration_constant of (expression_variable * type_expression option * inline * expression)
+  | Declaration_constant of (expression_variable * type_expression option * attribute * expression)
 
 (* | Macro_declaration of macro_declaration *)
-and expression = {expression_content: expression_content; location: Location.t}
+
+
+and type_content =
+  | T_sum of ctor_content constructor_map
+  | T_record of field_content label_map
+  | T_arrow of arrow
+  | T_variable of type_variable
+  | T_constant of type_constant
+  | T_operator of (type_operator * type_expression list)
+
+and arrow = {type1: type_expression; type2: type_expression}
+and ctor_content = {ctor_type : type_expression ; michelson_annotation : string option ; ctor_decl_pos : int}
+and field_content = {field_type : type_expression ; field_annotation : string option ; field_decl_pos : int}
+
+and type_expression = {
+  content  : type_content; 
+  sugar    : Ast_sugar.type_expression option;
+  location : Location.t;
+  }
+
+
+and expression = {
+  content  : expression_content; 
+  sugar    : Ast_sugar.expression option;
+  location : Location.t
+  }
 
 and expression_content =
   (* Base *)

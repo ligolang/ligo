@@ -3,10 +3,6 @@ open Trace
 open Ast_imperative
 open Purification
 
-type form = 
-  | Contract of string
-  | Env
-
 let compile (program : program) : (Ast_sugar.program, _) result =
   trace purification_tracer @@ compile_program program
 

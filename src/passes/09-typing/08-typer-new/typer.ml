@@ -24,7 +24,7 @@ let rec type_declaration env state : I.declaration -> (environment * O'.typer_st
     let%bind tv = evaluate_type env type_expression in
     let env' = Environment.add_type (type_name) tv env in
     ok (env', state , None)
-  | Declaration_constant (binder , tv_opt , inline, expression) -> (
+  | Declaration_constant (binder , tv_opt , attr, expression) -> (
     (*
       Determine the type of the expression and add it to the environment
     *)
@@ -33,7 +33,7 @@ let rec type_declaration env state : I.declaration -> (environment * O'.typer_st
         trace (constant_declaration_tracer binder expression tv'_opt) @@
         type_expression env state expression in
       let post_env = Environment.add_ez_declaration binder expr env in
-      ok (post_env, state' , Some (O.Declaration_constant { binder ; expr ; inline} ))
+      ok (post_env, state' , Some (O.Declaration_constant { binder ; expr ; inline=attr.inline} ))
     )
 
 and type_match : environment -> O'.typer_state -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> (O.matching_expr * O'.typer_state, typer_error) result =
@@ -111,7 +111,7 @@ and type_match : environment -> O'.typer_state -> O.type_expression -> I.matchin
 *)
 and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, typer_error) result =
   let return tv' = ok (make_t ~loc:t.location tv' (Some t)) in
-  match t.type_content with
+  match t.content with
   | T_arrow {type1;type2} ->
     let%bind type1 = evaluate_type e type1 in
     let%bind type2 = evaluate_type e type2 in
@@ -210,7 +210,7 @@ and type_expression : environment -> O'.typer_state -> ?tv_opt:O.type_expression
     ok @@ (expr' , new_state) in
   let return_wrapped expr state (constraints , expr_type) = return expr state constraints expr_type in
   trace (expression_tracer ae) @@
-  match ae.expression_content with
+  match ae.content with
 
   (* TODO: this file should take care only of the order in which program fragments
      are translated by Wrap.xyz

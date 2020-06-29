@@ -52,7 +52,6 @@ end
 module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
   open PARAMETER
 
-  type michelson_annotation = string
 
   type type_content =
     | T_sum of ctor_content constructor_map

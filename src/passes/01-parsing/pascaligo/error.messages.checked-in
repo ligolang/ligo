@@ -4147,30 +4147,6 @@ contract: Function With
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Recursive Function Ident LPAR Const Ident COLON Ident RPAR COLON String Is Begin Skip End While
-##
-## Ends in an error in state: 582.
-##
-## open_fun_decl -> Recursive Function Ident parameters COLON type_expr Is block . With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
-##
-## The known suffix of the stack is as follows:
-## Recursive Function Ident parameters COLON type_expr Is block
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: Recursive Function Ident LPAR Const Ident COLON Ident RPAR COLON String Is Begin Skip End With With
-##
-## Ends in an error in state: 583.
-##
-## open_fun_decl -> Recursive Function Ident parameters COLON type_expr Is block With . expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
-##
-## The known suffix of the stack is as follows:
-## Recursive Function Ident parameters COLON type_expr Is block With
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
 contract: Recursive Function Ident LPAR Const Ident COLON Ident RPAR COLON String Is With
 ##
 ## Ends in an error in state: 89.

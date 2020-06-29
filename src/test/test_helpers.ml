@@ -112,7 +112,7 @@ let run_typed_program_with_imperative_input ?options
     (input: Ast_imperative.expression) : (Ast_core.expression, _) result =
   let%bind michelson_program = typed_program_with_imperative_input_to_michelson (program , state) entry_point input in
   let%bind michelson_output  = Ligo.Run.Of_michelson.run_no_failwith ?options michelson_program.expr michelson_program.expr_ty in
-  let%bind res =  Uncompile.uncompile_typed_program_entry_function_result program entry_point (Runned_result.Success michelson_output) in
+  let%bind res =  Decompile.Of_michelson.decompile_typed_program_entry_function_result program entry_point (Runned_result.Success michelson_output) in
   match res with
   | Runned_result.Success exp -> ok exp
   | Runned_result.Fail _ -> fail test_not_expected_to_fail
@@ -155,7 +155,7 @@ let expect_evaluate (program, _state) entry_point expecter =
   let%bind (exp,_)         = trace_option unknown @@ Mini_c.get_entry mini_c entry_point in
   let%bind michelson_value = Ligo.Compile.Of_mini_c.aggregate_and_compile_expression mini_c exp in
   let%bind res_michelson   = Ligo.Run.Of_michelson.run_no_failwith michelson_value.expr michelson_value.expr_ty in
-  let%bind res             = Uncompile.uncompile_typed_program_entry_expression_result program entry_point (Success res_michelson) in
+  let%bind res             = Decompile.Of_michelson.decompile_typed_program_entry_expression_result program entry_point (Success res_michelson) in
   let%bind res' = match res with
   | Runned_result.Success exp -> ok exp
   | Runned_result.Fail _ -> fail test_not_expected_to_fail in
