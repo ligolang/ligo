@@ -31,21 +31,8 @@ const FeedbackContainer = styled.div`
   position: absolute;
 `;
 
-const OutputDiv = styled.div`
-  height: 200px;
-  position: sticky;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  resize: vertical;
-  overflow: auto;
-  padding: 0;
-  flex-shrink: 0;
-  transform: rotateZ(180deg);
-`;
 
 const InsideDiv = styled.div`
-  transform: rotateZ(180deg);
   width: 100%;
   height: 100%;
   overflow: auto;
