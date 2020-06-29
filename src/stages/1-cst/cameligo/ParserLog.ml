@@ -63,6 +63,11 @@ let print_sepseq :
         None -> ()
   | Some seq -> print_nsepseq state sep print seq
 
+let print_option : state -> (state -> 'a -> unit ) -> 'a option -> unit =
+  fun state print -> function
+    None -> ()
+  | Some opt -> print state opt
+
 let print_csv state print {value; _} =
   print_nsepseq state "," print value
 
@@ -74,7 +79,7 @@ let print_token state region lexeme =
 let print_var state {region; value} =
   let line =
     sprintf "%s: Ident %s\n"
-            (compact state region) value
+            (compact state region)value
   in Buffer.add_string state#buffer line
 
 let print_constr state {region; value} =
@@ -244,14 +249,18 @@ and print_ne_injection :
     print_close_compound state compound
 
 and print_open_compound state = function
-  BeginEnd (kwd_begin,_) -> print_token state kwd_begin "begin"
-| Braces   (lbrace,_)    -> print_token state lbrace    "{"
-| Brackets (lbracket,_)  -> print_token state lbracket  "["
+  None -> ()
+| Some compound -> match compound with
+    BeginEnd (kwd_begin,_) -> print_token state kwd_begin "begin"
+  | Braces   (lbrace,_)    -> print_token state lbrace    "{"
+  | Brackets (lbracket,_)  -> print_token state lbracket  "["
 
 and print_close_compound state = function
-  BeginEnd (_,kwd_end)  -> print_token state kwd_end  "end"
-| Braces   (_,rbrace)   -> print_token state rbrace   "}"
-| Brackets (_,rbracket) -> print_token state rbracket "]"
+  None -> ()
+| Some compound -> match compound with
+    BeginEnd (_,kwd_end)  -> print_token state kwd_end  "end"
+  | Braces   (_,rbrace)   -> print_token state rbrace   "}"
+  | Brackets (_,rbracket) -> print_token state rbracket "]"
 
 and print_terminator state = function
   Some semi -> print_token state semi ";"
@@ -584,15 +593,18 @@ and print_fun_expr state {value; _} =
 
 and print_conditional state {value; _} =
   let {kwd_if; test; kwd_then;
-       ifso; kwd_else; ifnot} = value in
-   print_token state ghost "(";
-   print_token state kwd_if "if";
-   print_expr  state test;
-   print_token state kwd_then "then";
-   print_expr  state ifso;
-   print_token state kwd_else "else";
-   print_expr  state ifnot;
-   print_token state ghost ")"
+       ifso; ifnot} = value in
+  print_token state ghost "(";
+  print_token state kwd_if "if";
+  print_expr  state test;
+  print_token state kwd_then "then";
+  print_expr  state ifso;
+  print_option state 
+    (fun state (kwd_else,ifnot) -> 
+      print_token state kwd_else "else";
+      print_expr state ifnot;
+    ) ifnot;
+  print_token state ghost ")"
 
 (* Conversion to string *)
 
@@ -1114,10 +1126,12 @@ and pp_cond_expr state (cond: cond_expr) =
     let state = state#pad 3 1 in
     pp_node state "<true>";
     pp_expr (state#pad 1 0) cond.ifso in
-  let () =
+  let () = match cond.ifnot with
+    Some (_, ifnot) ->
     let state = state#pad 3 2 in
     pp_node state "<false>";
-    pp_expr (state#pad 1 0) cond.ifnot
+    pp_expr (state#pad 1 0) ifnot
+  | None -> ()
   in ()
 
 and pp_case :

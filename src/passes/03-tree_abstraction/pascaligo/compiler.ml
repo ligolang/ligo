@@ -418,6 +418,11 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     let (language, _) = r_split language in
     let%bind code = compile_expression ci.code in
     return @@ e_raw_code ~loc language code
+  | EBlock be ->
+    let be, _ = r_split be in
+    let%bind next = compile_expression be.expr in
+    compile_block ~next be.block
+
 
 and compile_matching_expr : type a.(a -> _ result) -> a CST.case_clause CST.reg List.Ne.t -> _ =
 fun compiler cases ->
@@ -497,11 +502,11 @@ fun compiler cases ->
     return @@ AST.Match_variant (List.combine constrs lst)
   | (p, _), _ -> fail @@ unsupported_pattern_type p
 
-let compile_attribute_declaration = function
+and compile_attribute_declaration = function
   None   -> return false
 | Some _ -> return true
 
-let compile_parameters (params : CST.parameters) =
+and compile_parameters (params : CST.parameters) =
   let compile_param_decl (param : CST.param_decl) =
     match param with
       ParamConst pc ->
@@ -519,10 +524,10 @@ let compile_parameters (params : CST.parameters) =
   let params = npseq_to_list params.inside in
   bind_map_list compile_param_decl params
 
-let rec compile_instruction : ?next: AST.expression -> CST.instruction -> _ result  = fun ?next instruction ->
-  let return expr = match next with
-    Some e -> return @@ e_sequence expr e
-  | None -> return expr
+and compile_instruction : ?next: AST.expression -> CST.instruction -> _ result  = fun ?next instruction ->
+  let return expr = match next with 
+    Some e -> ok @@ e_sequence expr e
+  | None -> ok @@ expr 
   in
   let compile_tuple_expression (tuple_expr : CST.tuple_expr) =
     let (lst, loc) = r_split tuple_expr in
@@ -534,7 +539,7 @@ let rec compile_instruction : ?next: AST.expression -> CST.instruction -> _ resu
   let compile_if_clause : ?next:AST.expression -> CST.if_clause -> _ = fun ?next if_clause ->
     match if_clause with
       ClauseInstr i -> compile_instruction ?next i
-    | ClauseBlock (LongBlock block) -> compile_block ?next block
+    | ClauseBlock (LongBlock  block) -> compile_block ?next block
     | ClauseBlock (ShortBlock block) ->
       (* This looks like it should be the job of the parser *)
       let CST.{lbrace; inside; rbrace} = block.value in
@@ -734,16 +739,13 @@ and compile_block : ?next:AST.expression -> CST.block CST.reg -> _ result = fun 
     Some block -> return block
   | None -> fail @@ block_start_with_attribute block
 
-and compile_fun_decl ({kwd_recursive; fun_name; param; ret_type; block_with; return=r; attributes}: CST.fun_decl) =
+and compile_fun_decl ({kwd_recursive; fun_name; param; ret_type; return=r; attributes}: CST.fun_decl) =
   let%bind attr = compile_attribute_declaration attributes in
   let (fun_name, loc) = r_split fun_name in
   let%bind ret_type = bind_map_option (compile_type_expression <@ snd) ret_type in
   let%bind param = compile_parameters param in
-  let%bind r     = compile_expression r in
+  let%bind result    = compile_expression r in
   let (param, param_type) = List.split param in
-  let%bind body = Option.unopt ~default:(return r) @@
-    Option.map (compile_block ~next:r <@ fst) block_with
-  in
   (* This handle the parameter case *)
   let (lambda,fun_type) = (match param_type with
     ty::[] ->
@@ -751,18 +753,18 @@ and compile_fun_decl ({kwd_recursive; fun_name; param; ret_type; block_with; ret
       binder = (Var.of_name @@ List.hd param);
       input_type  = ty ;
       output_type = ret_type ;
-      result = body;
+      result;
     } in
     lambda,Option.map (fun (a,b) -> t_function a b)@@ Option.bind_pair (ty,ret_type)
   | lst ->
     let lst = Option.bind_list lst in
     let input_type = Option.map t_tuple lst in
-    let binder = Var.fresh ~name:"parameter" () in
+    let binder = Var.fresh ~name:"parameters" () in
     let lambda : AST.lambda = {
       binder;
       input_type = input_type;
       output_type = ret_type;
-      result = e_matching_tuple_ez (e_variable binder) param lst body;
+      result = e_matching_tuple_ez (e_variable binder) param lst result;
     } in
     lambda,Option.map (fun (a,b) -> t_function a b)@@ Option.bind_pair (input_type,ret_type)
   )

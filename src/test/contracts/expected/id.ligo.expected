@@ -23,10 +23,8 @@ type update_details is
   ]
 
 type action is
-    Buy of buy
-  | Update_owner of update_owner
-  | Update_details of update_details
-  | Skip of unit
+    Buy of buy | Update_owner of update_owner
+  | Update_details of update_details | Skip of unit
 
 type storage is
   record [

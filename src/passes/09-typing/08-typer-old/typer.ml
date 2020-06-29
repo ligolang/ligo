@@ -290,13 +290,13 @@ and type_declaration env (_placeholder_for_state_of_new_typer : O'.typer_state) 
       let%bind tv = evaluate_type env type_expr in
       let env' = Environment.add_type (type_binder) tv env in
       ok (env', (Solver.placeholder_for_state_of_new_typer ()) , (O.Declaration_type { type_binder ; type_expr = tv } ))
-  | Declaration_constant (binder , tv_opt , inline, expression) -> (
+  | Declaration_constant (binder , tv_opt , attr, expression) -> (
       let%bind tv'_opt = bind_map_option (evaluate_type env) tv_opt in
       let%bind expr =
         trace (constant_declaration_error_tracer binder expression tv'_opt) @@
         type_expression' ?tv_opt:tv'_opt env expression in
       let post_env = Environment.add_ez_declaration binder expr env in
-      ok (post_env, (Solver.placeholder_for_state_of_new_typer ()) , (O.Declaration_constant { binder ; expr ; inline}))
+      ok (post_env, (Solver.placeholder_for_state_of_new_typer ()) , (O.Declaration_constant { binder ; expr ; inline=attr.inline}))
     )
 
 and type_match : (environment -> I.expression -> (O.expression , typer_error) result) -> environment -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> (O.matching_expr, typer_error) result =
@@ -349,7 +349,7 @@ and type_match : (environment -> I.expression -> (O.expression , typer_error) re
 
 and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, typer_error) result =
   let return tv' = ok (make_t ~loc:t.location tv' (Some t)) in
-  match t.type_content with
+  match t.content with
   | T_arrow {type1;type2} ->
       let%bind type1 = evaluate_type e type1 in
       let%bind type2 = evaluate_type e type2 in
@@ -456,7 +456,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
     let location = ae.location in
     ok @@ make_e ~location expr tv in
   trace (expression_tracer ae) @@
-  match ae.expression_content with
+  match ae.content with
   (* Basic *)
   | E_variable name ->
       let%bind tv' =
@@ -561,7 +561,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
    return (E_lambda lambda ) lambda_type
   | E_constant {cons_name=( C_LIST_FOLD | C_MAP_FOLD | C_SET_FOLD) as opname ;
                 arguments=[
-                    ( { expression_content = (I.E_lambda { binder = lname ;
+                    ( { content = (I.E_lambda { binder = lname ;
                                                    input_type = None ; 
                                                    output_type = None ; 
                                                    result }) ;
@@ -589,7 +589,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       return (E_constant {cons_name=opname';arguments=lst'}) tv
   | E_constant {cons_name=C_FOLD_WHILE as opname;
                 arguments = [
-                    ( { expression_content = (I.E_lambda { binder = lname ;
+                    ( { content = (I.E_lambda { binder = lname ;
                                                    input_type = None ; 
                                                    output_type = None ; 
                                                    result }) ;
@@ -701,7 +701,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
     return (E_let_in {let_binder; rhs; let_result; inline}) let_result.type_expression
   | E_raw_code {language;code} ->
     let%bind (code,type_expression) = trace_option (expected_ascription code) @@
-      I.get_e_ascription code.expression_content in
+      I.get_e_ascription code.content in
     let%bind code = type_expression' e code in
     let%bind type_expression = evaluate_type e type_expression in
     let code = {code with type_expression} in
@@ -740,9 +740,9 @@ and type_lambda e {
           match input_type with
           | Some ty -> ok ty
           | None -> (
-              match result.expression_content with
+              match result.content with
               | I.E_let_in li -> (
-                  match li.rhs.expression_content with
+                  match li.rhs.content with
                   | I.E_variable name when name = (binder) -> (
                       match snd li.let_binder with
                       | Some ty -> ok ty
@@ -849,7 +849,7 @@ let rec untype_expression (e:O.expression) : (I.expression , typer_error) result
   | E_recursive {fun_name;fun_type; lambda} ->
       let%bind fun_type = untype_type_expression fun_type in
       let%bind unty_expr= untype_expression_content ty @@ E_lambda lambda in
-      let lambda = match unty_expr.expression_content with I.E_lambda l -> l | _ -> failwith "impossible case" in
+      let lambda = match unty_expr.content with I.E_lambda l -> l | _ -> failwith "impossible case" in
       return @@ e_recursive fun_name fun_type lambda
 
 and untype_matching : (O.expression -> (I.expression , typer_error) result) -> O.matching_expr -> (I.matching_expr , typer_error) result = fun f m ->

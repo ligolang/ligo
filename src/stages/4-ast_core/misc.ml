@@ -97,7 +97,7 @@ let assert_literal_eq (a, b : literal * literal) : unit option =
   | Literal_chain_id _, _ -> None
 
 let rec assert_value_eq (a, b: (expression * expression )) : unit option =
-  match (a.expression_content , b.expression_content) with
+  match (a.content , b.content) with
   | E_literal a , E_literal b ->
     assert_literal_eq (a, b)
   | E_constant (ca) , E_constant (cb) when ca.cons_name = cb.cons_name -> (

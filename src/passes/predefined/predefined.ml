@@ -47,6 +47,23 @@ module Tree_abstraction = struct
     | "timestamp" -> Some TC_timestamp
     | _           -> None
 
+  let type_constant_to_string tc = 
+    match tc with
+      TC_chain_id  -> "chain_id"  
+    | TC_unit      -> "unit"      
+    | TC_string    -> "string"    
+    | TC_bytes     -> "bytes"     
+    | TC_nat       -> "nat"       
+    | TC_int       -> "int"       
+    | TC_mutez     -> "tez"       
+    | TC_operation -> "operation" 
+    | TC_address   -> "address"   
+    | TC_key       -> "key"       
+    | TC_key_hash  -> "key_hash"  
+    | TC_signature -> "signature" 
+    | TC_timestamp -> "timestamp" 
+    | TC_void      -> "void"
+
   let type_operators s =
     match s with
       "list"                      -> Some (TC_list)
@@ -60,6 +77,23 @@ module Tree_abstraction = struct
     | "michelson_or_right_comb"   -> Some (TC_michelson_or_right_comb)
     | "michelson_or_left_comb"    -> Some (TC_michelson_or_left_comb)
     | _                           -> None
+
+  let type_operator_to_string s =
+    match s with
+      TC_list -> "list"                      
+    | TC_option -> "option"                    
+    | TC_set -> "set"                       
+    | TC_map -> "map"                       
+    | TC_big_map -> "big_map"                   
+    | TC_contract -> "contract"                  
+    | TC_michelson_pair -> "michelson_pair"
+    | TC_michelson_or -> "michelson_or"
+    | TC_michelson_pair_right_comb -> "michelson_pair_right_comb" 
+    | TC_michelson_pair_left_comb -> "michelson_pair_left_comb"  
+    | TC_michelson_or_right_comb -> "michelson_or_right_comb"   
+    | TC_michelson_or_left_comb -> "michelson_or_left_comb"    
+    | TC_map_or_big_map -> "map_or_big_map"
+    
 
   let pseudo_modules = function
     | "Tezos.chain_id"           -> Some C_CHAIN_ID
@@ -163,6 +197,113 @@ module Tree_abstraction = struct
     | "Layout.convert_from_left_comb" -> Some C_CONVERT_FROM_LEFT_COMB
 
     | _ -> None
+
+
+  let pseudo_module_to_string = function
+    | C_CHAIN_ID                -> "Tezos.chain_id"
+    | C_BALANCE                 -> "Tezos.balance"
+    | C_NOW                     -> "Tezos.now"
+    | C_AMOUNT                  -> "Tezos.amount"
+    | C_SENDER                  -> "Tezos.sender"
+    | C_ADDRESS                 -> "Tezos.address"
+    | C_SELF                    -> "Tezos.self"
+    | C_SELF_ADDRESS            -> "Tezos.self_address"
+    | C_IMPLICIT_ACCOUNT        -> "Tezos.implicit_account"
+    | C_SOURCE                  -> "Tezos.source"
+    | C_FAILWITH                -> "Tezos.failwith"
+    | C_CREATE_CONTRACT         -> "Tezos.create_contract"
+    | C_CALL                    -> "Tezos.transaction"
+    | C_SET_DELEGATE            -> "Tezos.set_delegate"
+    | C_CONTRACT_OPT            -> "Tezos.get_contract_opt"
+    | C_CONTRACT_ENTRYPOINT_OPT -> "Tezos.get_entrypoint_opt"
+    | C_CONTRACT                -> "Tezos.get_contract"
+    | C_CONTRACT_ENTRYPOINT     -> "Tezos.get_entrypoint"
+
+    (* Crypto module *)
+
+    | C_CHECK_SIGNATURE -> "Crypto.check"
+    | C_HASH_KEY        -> "Crypto.hash_key"
+    | C_BLAKE2b         -> "Crypto.blake2b"
+    | C_SHA256          -> "Crypto.sha256"
+    | C_SHA512          -> "Crypto.sha512"
+    
+    (* Bytes module *)
+
+    | C_BYTES_PACK   -> "Bytes.pack"
+    | C_BYTES_UNPACK -> "Bytes.unpack"
+    | C_SIZE         -> "Bytes.length"
+    | C_CONCAT       -> "Bytes.concat"
+    | C_SLICE        -> "Bytes.sub"
+
+    (* List module *)   
+
+  (*  | C_SIZE      -> "List.size" *)
+    | C_LIST_ITER -> "List.iter"
+    | C_LIST_MAP  -> "List.map"
+    | C_LIST_FOLD -> "List.fold"
+
+    (* Set module *)   
+
+    | C_SET_EMPTY   -> "Set.empty"
+    | C_SET_LITERAL -> "Set.literal"
+   (* | C_SIZE        -> "Set.cardinal"*)
+    | C_SET_MEM     -> "Set.mem"
+    | C_SET_ADD     -> "Set.add"
+    | C_SET_REMOVE  -> "Set.remove"
+    | C_SET_ITER    -> "Set.iter"
+    | C_SET_FOLD    -> "Set.fold"
+
+    (* Map module *)   
+
+    | C_MAP_FIND_OPT -> "Map.find_opt"
+    | C_MAP_UPDATE   -> "Map.update"
+    | C_MAP_ITER     -> "Map.iter"
+    | C_MAP_MAP      -> "Map.map"
+    | C_MAP_FOLD     -> "Map.fold"
+    | C_MAP_MEM      -> "Map.mem"
+  (*  | C_SIZE         -> "Map.size" *)
+    | C_MAP_ADD      -> "Map.add"
+    | C_MAP_REMOVE   -> "Map.remove"
+    | C_MAP_EMPTY    -> "Map.empty"
+    | C_MAP_LITERAL  -> "Map.literal"
+    
+    (* Big_map module *)   
+    
+    | C_MAP_FIND        -> "Big_map.find"
+  (*  | C_MAP_FIND_OPT    -> "Big_map.find_opt"
+    | C_MAP_UPDATE      -> "Big_map.update" *)
+    | C_BIG_MAP_LITERAL -> "Big_map.literal"
+    | C_BIG_MAP_EMPTY   -> "Big_map.empty"
+  (*  | C_MAP_MEM         -> "Big_map.mem"
+    | C_MAP_REMOVE      -> "Big_map.remove"
+    | C_MAP_ADD         -> "Big_map.add" *)
+
+    (* Bitwise module *)
+
+    | C_OR  -> "Bitwise.or"
+    | C_AND -> "Bitwise.and"
+    | C_XOR -> "Bitwise.xor"
+    | C_LSL -> "Bitwise.shift_left"
+    | C_LSR -> "Bitwise.shift_right"
+
+    (* String module *)
+
+  (*  | C_SIZE   -> "String.length" (* will never trigger, rename size *)
+    | C_SLICE  -> "String.sub"
+    | C_CONCAT -> "String.concat" *)
+
+    (* michelson pair/or type converter module *)
+
+    | C_CONVERT_TO_RIGHT_COMB   -> "Layout.convert_to_right_comb"
+    | C_CONVERT_TO_LEFT_COMB    -> "Layout.convert_to_left_comb"
+    | C_CONVERT_FROM_RIGHT_COMB -> "Layout.convert_from_right_comb"
+    | C_CONVERT_FROM_LEFT_COMB  -> "Layout.convert_from_left_comb"
+
+    (* Not parsed *)
+    | C_SOME -> "Some"
+    | C_NONE -> "None"
+
+    | _ as c -> failwith @@ Format.asprintf "Constant not handled : %a" Stage_common.PP.constant c 
 
 
   module Pascaligo = struct
@@ -283,8 +424,46 @@ module Tree_abstraction = struct
 
     | _ as c            -> pseudo_modules c
 
+    let constant_to_string = function
+    (* Tezos module (ex-Michelson) *)
+    | C_FAILWITH -> "failwith"
+
+    | C_IS_NAT -> "is_nat"
+    | C_INT    -> "int"
+    | C_ABS    -> "abs"
+    | C_EDIV   -> "ediv"
+    | C_UNIT   -> "unit"
+
+    | C_NEG  -> "NEG"
+    | C_ADD  -> "ADD"
+    | C_SUB  -> "SUB"
+    | C_MUL  -> "TIMES"
+    | C_DIV  -> "DIV"
+    | C_MOD  -> "MOD"
+    | C_EQ   -> "EQ"
+    | C_NOT  -> "NOT"
+    | C_AND  -> "AND"
+    | C_OR   -> "OR"
+    | C_GT   -> "GT"
+    | C_GE   -> "GE"
+    | C_LT   -> "LT"
+    | C_LE   -> "LE"
+    | C_CONS -> "CONS"
+    | C_NEQ  -> "NEQ"
+
+    (*->  Others *)
+
+    | C_ASSERTION -> "assert"
+    
+    | C_CONVERT_TO_RIGHT_COMB -> "Layout.convert_to_right_comb"
+    | C_CONVERT_TO_LEFT_COMB  -> "Layout.convert_to_left_comb"
+
+    | _ as c            -> pseudo_module_to_string c
+
     let type_constants = type_constants
     let type_operators = type_operators
+    let type_constant_to_string = type_constant_to_string
+    let type_operator_to_string = type_operator_to_string
   end
 
   module Cameligo = struct
@@ -370,8 +549,43 @@ module Tree_abstraction = struct
 
     | _ as c -> pseudo_modules c
 
+    let constant_to_string = function
+    (* Tezos (ex-Michelson, ex-Current, ex-Operation) *)
+    | C_FAILWITH -> "failwith"
+    
+    | C_IS_NAT -> "is_nat"
+    | C_INT    -> "int"
+    | C_ABS    -> "abs"
+    | C_EDIV   -> "ediv"
+    | C_UNIT   -> "unit"
+
+    | C_NEG  -> "NEG"
+    | C_ADD  -> "ADD"
+    | C_SUB  -> "SUB"
+    | C_MUL  -> "TIMES"
+    | C_DIV  -> "DIV"
+    | C_MOD  -> "MOD"
+    | C_EQ   -> "EQ"
+    | C_NOT  -> "NOT"
+    | C_AND  -> "AND"
+    | C_OR   -> "OR"
+    | C_GT   -> "GT"
+    | C_GE   -> "GE"
+    | C_LT   -> "LT"
+    | C_LE   -> "LE"
+    | C_CONS -> "CONS"
+    | C_NEQ  -> "NEQ"
+
+    (* Others *)
+
+    | C_ASSERTION -> "assert"
+
+    | _ as c -> pseudo_module_to_string c
+
     let type_constants = type_constants
     let type_operators = type_operators
+    let type_constant_to_string = type_constant_to_string
+    let type_operator_to_string = type_operator_to_string
   end
 end
 

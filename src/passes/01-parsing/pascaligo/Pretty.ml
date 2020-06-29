@@ -81,7 +81,7 @@ and pp_variants {value; _} =
   let head = if tail = [] then head
              else ifflat head (string "  " ^^ head) in
   let rest = List.map snd tail in
-  let app variant = break 1 ^^ string "| " ^^ pp_variant variant
+  let app variant = group (break 1 ^^ string "| " ^^ pp_variant variant)
   in head ^^ concat_map app rest
 
 and pp_variant {value; _} =
@@ -136,7 +136,7 @@ and pp_fun_expr {value; _} =
 
 and pp_fun_decl {value; _} =
   let {kwd_recursive; fun_name; param;
-       ret_type; block_with; return; attributes; _} = value in
+       ret_type; return; attributes; _} = value in
   let start =
     match kwd_recursive with
         None -> string "function"
@@ -145,10 +145,9 @@ and pp_fun_decl {value; _} =
   let parameters = pp_par pp_parameters param in
   let expr = pp_expr return in
   let body =
-    match block_with with
-            None -> group (nest 2 (break 1 ^^ expr))
-    | Some (b,_) -> hardline ^^ pp_block b ^^ string " with"
-                   ^^ group (nest 4 (break 1 ^^ expr))
+    match return with
+      EBlock _ -> group (break 1 ^^ expr)
+    | _ -> group (nest 2 (break 1 ^^ expr))
   and attr =
     match attributes with
         None -> empty
@@ -379,6 +378,14 @@ and pp_expr = function
 | EPar        e -> pp_par pp_expr e
 | EFun        e -> pp_fun_expr e
 | ECodeInj    e -> pp_code_inj e
+| EBlock      e -> pp_block_with e
+
+and pp_block_with {value; _} =
+  let {block;kwd_with; expr;_} = value in
+  let expr = value.expr in
+  let expr = pp_expr expr in
+  group(pp_block block ^^ string " with"
+    ^^ group (nest 4 (break 1 ^^ expr)))
 
 and pp_annot_expr {value; _} =
   let expr, _, type_expr = value.inside in

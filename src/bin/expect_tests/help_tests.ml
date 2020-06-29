@@ -87,6 +87,12 @@ let%expect_test _ =
            run-function
                Subcommand: Run a function with the given parameter.
 
+           transpile-contract
+               Subcommand: Transpile a contract to another syntax.
+
+           transpile-expression
+               Subcommand: Transpile an expression to another syntax.
+
     OPTIONS
            --help[=FMT] (default=auto)
                Show this help in format FMT. The value FMT must be one of `auto',
@@ -180,6 +186,12 @@ let%expect_test _ =
 
            run-function
                Subcommand: Run a function with the given parameter.
+
+           transpile-contract
+               Subcommand: Transpile a contract to another syntax.
+
+           transpile-expression
+               Subcommand: Transpile an expression to another syntax.
 
     OPTIONS
            --help[=FMT] (default=auto)

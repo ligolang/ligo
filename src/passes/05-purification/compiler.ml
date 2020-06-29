@@ -252,7 +252,7 @@ and compile_expression' : I.expression -> (O.expression option -> O.expression, 
       let%bind condition    = compile_expression condition in
       let%bind then_clause' = compile_expression then_clause in
       let%bind else_clause' = compile_expression else_clause in
-      let env = Var.fresh () in
+      let env = Var.fresh ~name:"env" () in
       let%bind ((_,free_vars_true), then_clause) = repair_mutable_variable_in_matching then_clause' [] env in
       let%bind ((_,free_vars_false), else_clause) = repair_mutable_variable_in_matching else_clause' [] env in
       let then_clause  = add_to_end then_clause (O.e_variable env) in
@@ -283,7 +283,9 @@ and compile_expression' : I.expression -> (O.expression option -> O.expression, 
     | I.E_assign {variable; access_path; expression} ->
       let%bind access_path = compile_path access_path in
       let%bind expression = compile_expression expression in
-      let rhs = O.e_update ~loc (O.e_variable ~loc variable) access_path expression in
+      let rhs = match access_path with
+        [] -> expression
+      | _  -> O.e_update ~loc (O.e_variable ~loc variable) access_path expression in
       ok @@ fun expr -> (match expr with 
        | None -> O.e_let_in ~loc (variable,None) true false rhs (O.e_skip ())
        | Some e -> O.e_let_in ~loc (variable, None) true false rhs e
@@ -328,7 +330,7 @@ and compile_matching : I.matching -> Location.t -> (O.expression option -> O.exp
       let%bind match_none' = compile_expression match_none in
       let (n,expr) = match_some in
       let%bind expr' = compile_expression expr in
-      let env = Var.fresh () in
+      let env = Var.fresh ~name:"env" () in
       let%bind ((_,free_vars_none), match_none) = repair_mutable_variable_in_matching match_none' [] env in
       let%bind ((_,free_vars_some), expr) = repair_mutable_variable_in_matching expr' [n] env in
       let match_none = add_to_end match_none (O.e_variable env) in
@@ -348,7 +350,7 @@ and compile_matching : I.matching -> Location.t -> (O.expression option -> O.exp
       let%bind match_nil' = compile_expression match_nil in
       let (hd,tl,expr) = match_cons in
       let%bind expr' = compile_expression expr in
-      let env = Var.fresh () in
+      let env = Var.fresh ~name:"name" () in
       let%bind ((_,free_vars_nil), match_nil) = repair_mutable_variable_in_matching match_nil' [] env in
       let%bind ((_,free_vars_cons), expr) = repair_mutable_variable_in_matching expr' [hd;tl] env in
       let match_nil = add_to_end match_nil (O.e_variable env) in
@@ -365,7 +367,7 @@ and compile_matching : I.matching -> Location.t -> (O.expression option -> O.exp
       else
         return @@ O.e_matching ~loc matchee @@ O.Match_list {match_nil=match_nil'; match_cons=(hd,tl,expr')}
     | I.Match_variant lst ->
-      let env = Var.fresh () in
+      let env = Var.fresh ~name:"env" () in
       let aux fv ((c,n),expr) =
         let%bind expr = compile_expression expr in
         let%bind ((_,free_vars), case_clause) = repair_mutable_variable_in_matching expr [n] env in
@@ -401,8 +403,8 @@ and compile_matching : I.matching -> Location.t -> (O.expression option -> O.exp
       return @@ O.e_matching ~loc matchee @@ O.Match_variable (lst,ty_opt,expr)
  
 and compile_while I.{condition;body} =
-  let env_rec = Var.fresh () in
-  let binder  = Var.fresh () in
+  let env_rec = Var.fresh ~name:"env_rec" () in
+  let binder  = Var.fresh ~name:"binder"  () in
 
   let%bind cond = compile_expression condition in
   let ctrl = 
@@ -436,7 +438,7 @@ and compile_while I.{condition;body} =
 
 
 and compile_for I.{binder;start;final;increment;body} =
-  let env_rec = Var.fresh () in
+  let env_rec = Var.fresh ~name:"env_rec" () in
   (*Make the cond and the step *)
   let cond = I.e_annotation (I.e_constant C_LE [I.e_variable binder ; final]) (I.t_bool ()) in
   let%bind cond = compile_expression cond in
@@ -481,8 +483,8 @@ and compile_for I.{binder;start;final;increment;body} =
   ok @@ restore_mutable_variable return_expr captured_name_list env_rec 
 
 and compile_for_each I.{binder;collection;collection_type; body} =
-  let env_rec = Var.fresh () in
-  let args = Var.fresh () in
+  let env_rec = Var.fresh ~name:"env_rec" () in
+  let args    = Var.fresh ~name:"args" () in
 
   let%bind element_names = ok @@ match snd binder with
     | Some v -> [fst binder;v]

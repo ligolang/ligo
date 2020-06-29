@@ -31,10 +31,8 @@ type getBalance is
 type getTotalSupply is record [callback : contract (nat)]
 
 type action is
-    Transfer of transfer
-  | Approve of approve
-  | GetAllowance of getAllowance
-  | GetBalance of getBalance
+    Transfer of transfer | Approve of approve
+  | GetAllowance of getAllowance | GetBalance of getBalance
   | GetTotalSupply of getTotalSupply
 
 function transfer (const p : transfer; const s : storage)

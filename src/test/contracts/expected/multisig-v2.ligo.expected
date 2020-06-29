@@ -34,8 +34,7 @@ type default_pt is unit
 type return is list (operation) * storage
 
 type parameter is
-    Send of send_pt
-  | Withdraw of withdraw_pt
+    Send of send_pt | Withdraw of withdraw_pt
   | Default of default_pt
 
 function send (const param : send_pt; const s : storage)

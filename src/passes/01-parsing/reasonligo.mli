@@ -21,5 +21,10 @@ val parse_expression : string -> (CST.expr , Errors.parser_error) result
 (** Preprocess a given ReasonLIGO file and preprocess it. *)
 val preprocess : string -> (Buffer.t , Errors.parser_error) result
 
-(** Pretty-print a given CameLIGO file (after parsing it). *)
-val pretty_print : string -> (Buffer.t , Errors.parser_error) result
+(** Pretty-print a given ReasonLIGO file (after parsing it). *)
+val pretty_print_from_source : string -> (Buffer.t , Errors.parser_error) result
+
+(** Take a ReasonLIGO cst and pretty_print it *)
+val pretty_print : CST.t -> (Buffer.t, _) result
+
+val pretty_print_expression : CST.expr -> (Buffer.t, _) result

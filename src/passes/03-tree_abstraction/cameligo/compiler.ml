@@ -11,6 +11,7 @@ module Option = Simple_utils.Option
 
 open Combinators
 
+let (<@) f g x = f (g x)
 let nseq_to_list (hd, tl) = hd :: tl
 let npseq_to_list (hd, tl) = hd :: (List.map snd tl)
 let npseq_to_nelist (hd, tl) = hd, (List.map snd tl)
@@ -247,7 +248,7 @@ in trace (abstracting_expr_tracer t) @@
       let%bind ty_opt =
         bind_map_option (fun (re,te) -> let%bind te = compile_type_expression te in ok(Location.lift re,te)) lhs_type in
       let%bind rhs = compile_expression let_rhs in
-      let rhs_b = Var.fresh ~name: "rhs" () in
+      let rhs_b = Var.fresh ~name:"rhs" () in
       let rhs',rhs_b_expr =
         match ty_opt with
           None -> rhs, e_variable ~loc rhs_b
@@ -491,7 +492,8 @@ in trace (abstracting_expr_tracer t) @@
       let (c , loc) = r_split c in
       let%bind expr = compile_expression c.test in
       let%bind match_true = compile_expression c.ifso in
-      let%bind match_false = compile_expression c.ifnot in
+      let%bind match_false = bind_map_option (compile_expression <@ snd) c.ifnot in
+      let match_false = Option.unopt ~default:(e_unit ()) match_false in
       return @@ e_cond ~loc expr match_true match_false
   | ECodeInj ci ->
      let ci, loc   = r_split ci in
@@ -541,7 +543,7 @@ and compile_fun lamb' : (expr , abs_error) result =
     let aux ((var : Raw.variable) , ty_opt) =
       match var.value , ty_opt with
       | "storage" , None ->
-        ok (var , t_variable ~loc @@ Var.fresh ~name:"storage" ())
+        ok (var , t_variable_ez ~loc "storage")
       | _ , None ->
           fail @@ untyped_fun_param var
       | _ , Some ty -> (

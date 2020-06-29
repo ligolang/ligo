@@ -173,13 +173,15 @@ and pp_clause {value; _} =
     pp_pattern pattern ^^ prefix 4 1 (string " ->") (pp_expr rhs)
 
 and pp_cond_expr {value; _} =
-  let {test; ifso; kwd_else; ifnot; _} = value in
+  let {test; ifso; ifnot; _} = value in
   let test = string "if " ^^ group (nest 3 (pp_expr test))
   and ifso = string "then" ^^ group (nest 2 (break 1 ^^ pp_expr ifso))
-  and ifnot = string "else" ^^ group (nest 2 (break 1 ^^ pp_expr ifnot))
-  in if   kwd_else#is_ghost
-     then test ^/^ ifso
-     else test ^/^ ifso ^/^ ifnot
+  in match ifnot with
+    Some (_,ifnot) ->
+    let ifnot = string "else" ^^ group (nest 2 (break 1 ^^ pp_expr ifnot)) in
+    test ^/^ ifso ^/^ ifnot
+  | None ->
+    test ^/^ ifso
 
 and pp_annot_expr {value; _} =
   let expr, _, type_expr = value.inside in
@@ -243,18 +245,15 @@ and pp_injection :
     let sep = string ";" ^^ break 1 in
     let elements = Utils.sepseq_to_list elements in
     let elements = separate_map sep printer elements in
-    match pp_compound compound with
+    match Option.map pp_compound compound with
       None -> elements
     | Some (opening, closing) ->
         string opening ^^ nest 1 elements ^^ string closing
 
 and pp_compound = function
-  BeginEnd (start, _) ->
-    if start#is_ghost then None else Some ("begin","end")
-| Braces (start, _) ->
-    if start#is_ghost then None else Some ("{","}")
-| Brackets (start, _) ->
-    if start#is_ghost then None else Some ("[","]")
+  BeginEnd (_, _) -> ("begin","end")
+| Braces (_, _)   -> ("{","}")
+| Brackets (_, _) -> ("[","]")
 
 and pp_constr_expr = function
   ENone      _ -> string "None"
@@ -282,7 +281,7 @@ and pp_ne_injection :
   fun printer {value; _} ->
     let {compound; ne_elements; _} = value in
     let elements = pp_nsepseq ";" printer ne_elements in
-    match pp_compound compound with
+    match Option.map pp_compound compound with
       None -> elements
     | Some (opening, closing) ->
         string opening ^^ nest 1 elements ^^ string closing
@@ -356,8 +355,8 @@ and pp_let_in {value; _} =
     | Some _ -> "let rec " in
   let binding = pp_let_binding binding
   and attr    = pp_attributes attributes
-  in string let_str ^^ binding ^^ attr
-     ^^ hardline ^^ group (string "in " ^^ nest 3 (pp_expr body))
+  in string let_str ^^ binding ^^ attr ^^ string " in"
+     ^^ hardline ^^ group (pp_expr body)
 
 and pp_fun {value; _} =
   let {binders; lhs_type; body; _} = value in
@@ -375,7 +374,7 @@ and pp_seq {value; _} =
   let sep = string ";" ^^ hardline in
   let elements = Utils.sepseq_to_list elements in
   let elements = separate_map sep pp_expr elements in
-  match pp_compound compound with
+  match Option.map pp_compound compound with
     None -> elements
   | Some (opening, closing) ->
      string opening
@@ -406,7 +405,7 @@ and pp_variants {value; _} =
   let head = pp_variant head in
   let head = if tail = [] then head else ifflat head (blank 2 ^^ head) in
   let rest = List.map snd tail in
-  let app variant = break 1 ^^ string "| " ^^ pp_variant variant
+  let app variant = group (break 1 ^^ string "| " ^^ pp_variant variant)
   in head ^^ concat_map app rest
 
 and pp_variant {value; _} =

@@ -345,6 +345,10 @@ let trace_assert_fail_option error = function
    [let%bind lst' = bind_map_list f lst].  Same thing with folds.
  *)
 
+let bind_compose f g x = 
+  let%bind y = g x in
+  f y
+
 let bind_map_option f = function
     None -> ok None
 | Some s -> f s >>? fun x -> ok (Some x)

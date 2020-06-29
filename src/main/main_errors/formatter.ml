@@ -121,9 +121,12 @@ let rec error_ppformat' : display_format:string display_format ->
     | `Main_michelson_execution_error _ -> Format.fprintf f "@[<hv>Error of execution@]"
 
     | `Main_parser e -> Parser.Errors.error_ppformat ~display_format f e
+    | `Main_pretty _e -> () (*no error in this pass*)
     | `Main_self_ast_imperative e -> Self_ast_imperative.Errors.error_ppformat ~display_format f e 
     | `Main_purification e -> Purification.Errors.error_ppformat ~display_format f e
+    | `Main_depurification _e -> () (*no error in this pass*)
     | `Main_desugaring _e -> () (*no error in this pass*)
+    | `Main_sugaring _e -> () (*no error in this pass*)
     | `Main_cit_pascaligo e -> Tree_abstraction.Pascaligo.Errors.error_ppformat ~display_format f e
     | `Main_cit_cameligo e -> Tree_abstraction.Cameligo.Errors.error_ppformat ~display_format f e
     | `Main_typer e -> Typer.Errors.error_ppformat ~display_format f e
@@ -133,9 +136,9 @@ let rec error_ppformat' : display_format:string display_format ->
     | `Main_spilling e -> Spilling.Errors.error_ppformat ~display_format f  e
     | `Main_stacking e -> Stacking.Errors.error_ppformat ~display_format f e
 
-    | `Main_uncompile_michelson e -> Stacking.Errors.error_ppformat ~display_format f  e
-    | `Main_uncompile_mini_c e -> Spilling.Errors.error_ppformat ~display_format f  e
-    | `Main_uncompile_typed e -> Typer.Errors.error_ppformat ~display_format f  e
+    | `Main_decompile_michelson e -> Stacking.Errors.error_ppformat ~display_format f  e
+    | `Main_decompile_mini_c e -> Spilling.Errors.error_ppformat ~display_format f  e
+    | `Main_decompile_typed e -> Typer.Errors.error_ppformat ~display_format f  e
   )
   
 let error_ppformat : display_format:string display_format ->
@@ -272,9 +275,12 @@ let rec error_jsonformat : Types.all -> J.t = fun a ->
   | `Main_entrypoint_not_found -> json_error ~stage:"top-level glue" ~content:(`String "Missing entrypoint")
 
   | `Main_parser e -> Parser.Errors.error_jsonformat e
+  | `Main_pretty _ -> `Null (*no error in this pass*)
   | `Main_self_ast_imperative e -> Self_ast_imperative.Errors.error_jsonformat e
   | `Main_purification e -> Purification.Errors.error_jsonformat e
+  | `Main_depurification _ -> `Null (*no error in this pass*)
   | `Main_desugaring _ -> `Null (*no error in this pass*)
+  | `Main_sugaring _ -> `Null (*no error in this pass*)
   | `Main_cit_pascaligo e -> Tree_abstraction.Pascaligo.Errors.error_jsonformat e
   | `Main_cit_cameligo e -> Tree_abstraction.Cameligo.Errors.error_jsonformat e
   | `Main_typer e -> Typer.Errors.error_jsonformat e
@@ -284,9 +290,9 @@ let rec error_jsonformat : Types.all -> J.t = fun a ->
   | `Main_self_mini_c e -> Self_mini_c.Errors.error_jsonformat e
   | `Main_stacking e -> Stacking.Errors.error_jsonformat e
   
-  | `Main_uncompile_michelson e -> Stacking.Errors.error_jsonformat e
-  | `Main_uncompile_mini_c e -> Spilling.Errors.error_jsonformat e
-  | `Main_uncompile_typed e -> Typer.Errors.error_jsonformat e
+  | `Main_decompile_michelson e -> Stacking.Errors.error_jsonformat e
+  | `Main_decompile_mini_c e -> Spilling.Errors.error_jsonformat e
+  | `Main_decompile_typed e -> Typer.Errors.error_jsonformat e
 
 let error_format : _ Display.format = {
   pp = error_ppformat;

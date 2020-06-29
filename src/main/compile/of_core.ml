@@ -24,10 +24,12 @@ let compile_expression ?(env = Ast_typed.Environment.empty) ~(state : Typesystem
 let apply (entry_point : string) (param : Ast_core.expression) : (Ast_core.expression , _) result =
   let name = Var.of_name entry_point in
   let entry_point_var : Ast_core.expression =
-    { expression_content = Ast_core.E_variable name ;
+    { content  = Ast_core.E_variable name ;
+      sugar    = None ;
       location = Virtual "generated entry-point variable" } in
   let applied : Ast_core.expression = 
-    { expression_content = Ast_core.E_application {lamb=entry_point_var; args=param} ;
+    { content  = Ast_core.E_application {lamb=entry_point_var; args=param} ;
+      sugar    = None ;
       location = Virtual "generated application" } in
   ok applied
 
