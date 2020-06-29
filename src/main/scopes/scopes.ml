@@ -4,10 +4,10 @@ open Misc
 
 module Formatter = Formatter
 
-let scopes : string -> string -> ((def_map * scopes), Main_errors.all) result = fun source_file syntax ->
-  let make_v_def_from_core = make_v_def_from_core source_file syntax in
-  let make_v_def_option_type = make_v_def_option_type source_file syntax in
-  let make_v_def_ppx_type = make_v_def_ppx_type source_file syntax in 
+let scopes : with_types:bool -> string -> string -> ((def_map * scopes), Main_errors.all) result = fun ~with_types source_file syntax ->
+  let make_v_def_from_core = make_v_def_from_core ~with_types source_file syntax in
+  let make_v_def_option_type = make_v_def_option_type ~with_types source_file syntax in
+  let make_v_def_ppx_type = make_v_def_ppx_type ~with_types source_file syntax in 
 
   let rec find_scopes' = fun (i,all_defs,env,scopes,lastloc) (e : Ast_core.expression) ->
     match e.content with

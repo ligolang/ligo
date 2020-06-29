@@ -96,6 +96,13 @@ let disable_michelson_typechecking =
     info ~doc ["disable-michelson-typechecking"] in
   value @@ flag info
 
+let with_types =
+  let open Arg in
+  let info =
+    let doc = "tries to infer types for all named expressions" in
+    info ~doc ["with-types"] in
+  value @@ flag info
+
 let predecessor_timestamp =
   let open Arg in
   let info =
@@ -485,12 +492,12 @@ let transpile_expression =
 
 
 let get_scope =
-  let f source_file syntax display_format =
+  let f source_file syntax display_format with_types =
     return_result ~display_format Ligo.Scopes.Formatter.scope_format @@
-    Ligo.Scopes.scopes source_file syntax
+    Ligo.Scopes.scopes ~with_types source_file syntax
   in
   let term =
-    Term.(const f $ source_file 0 $ syntax $ display_format) in
+    Term.(const f $ source_file 0 $ syntax $ display_format $ with_types) in
   let cmdname = "get-scope" in
   let doc = "Subcommand: Return the JSON encoded environment for a given file." in
   (Term.ret term , Term.info ~doc cmdname)

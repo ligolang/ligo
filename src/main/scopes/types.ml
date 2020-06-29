@@ -27,8 +27,9 @@ module Definitions = struct
     | Type t -> t.range
     | Variable v -> v.range
 
-  let make_v_def : string -> Ast_typed.type_expression option -> Location.t -> Location.t -> def =
-    fun name t range body_range ->
+  let make_v_def : with_types:bool -> string -> Ast_typed.type_expression option -> Location.t -> Location.t -> def =
+    fun ~with_types name t range body_range ->
+      let t = if with_types then t else None in
       Variable { name ; range ; body_range ; t ; references = None }
 
   let make_t_def : string -> Ast_core.declaration Location.wrap -> Ast_core.type_expression -> def =
