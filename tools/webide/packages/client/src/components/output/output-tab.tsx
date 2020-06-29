@@ -21,7 +21,7 @@ const Container = styled.div<{ visible?: boolean }>`
   overflow-x: hidden; 
   overflow-y: auto; 
   border: 1px solid grey;
-  background-color: rgba(220,220,220, 0.5);
+  background-color: rgba(220,220,220, 1);
 
   font-family: Menlo, Monaco, 'Courier New', monospace;
   display: flex;

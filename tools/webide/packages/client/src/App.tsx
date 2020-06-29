@@ -2,6 +2,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import styled from 'styled-components';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import ResizePanel from "react-resize-panel";
 
 import { EditorComponent } from './components/editor/editor';
 import { Examples } from './components/examples';
@@ -50,6 +51,15 @@ const InsideDiv = styled.div`
   overflow: auto;
 `;
 
+const SomeCustomHandle = {
+  background: "rgb(255, 255, 255)",
+  borderRadius: "2px",
+  border: "1px solid rgb(221, 221, 221)",
+  height: "100%",
+  width: "100%",
+  padding: 0
+}
+
 const App: React.FC = () => {
 
   return (
@@ -62,11 +72,18 @@ const App: React.FC = () => {
         <div className="col-sm-12 col-md-3 order-md-3"><TabsPanelComponent /></div>
         </div>
       </Container>
-      <OutputDiv className="col-sm-12 col-md-12 order-md-4">
-          <InsideDiv>
+      <ResizePanel direction="n" style={{
+          height: 200,
+          position: "sticky",
+          right: "0",
+          bottom: "0",
+          left: "0",
+          overflow: "auto",
+          padding: "0"}}>
+        <InsideDiv>
             <OutputTab selected={true} />
           </InsideDiv>
-      </OutputDiv> 
+      </ResizePanel>
       <FeedbackContainer>
         <FloatButtonComponent
           tooltip="Report an issue"
