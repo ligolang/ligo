@@ -40,7 +40,8 @@ interactive_expr: Begin Fun WILD ARROW With
 ## Fun nseq(irrefutable) ARROW
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function expression.
+At this point a function body, in the form of an expression, is expected.
 
 interactive_expr: Begin Fun With
 ##
@@ -52,7 +53,8 @@ interactive_expr: Begin Fun With
 ## Fun
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function expression.
+At this point function arguments are expected.
 
 interactive_expr: Begin If Verbatim Then Fun WILD ARROW With
 ##
@@ -64,7 +66,8 @@ interactive_expr: Begin If Verbatim Then Fun WILD ARROW With
 ## Fun nseq(irrefutable) ARROW
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function expression.
+At this point an expression is expected.
 
 interactive_expr: Begin If Verbatim Then Fun With
 ##
@@ -76,7 +79,8 @@ interactive_expr: Begin If Verbatim Then Fun With
 ## Fun
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function expression.
+At this point function arguments are expected.
 
 interactive_expr: Begin If Verbatim Then If Verbatim Then Verbatim COMMA Bytes With
 ##
@@ -120,7 +124,8 @@ interactive_expr: Begin If Verbatim Then If Verbatim Then Verbatim Else With
 ## If expr Then closed_if Else
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'if' ... 'else' ... expression.
+At this point an expression is expected.
 
 interactive_expr: Begin If Verbatim Then If Verbatim Then With
 ##
@@ -132,7 +137,8 @@ interactive_expr: Begin If Verbatim Then If Verbatim Then With
 ## If expr Then
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'if' ... 'else' ... expression.
+At this point an expression is expected.
 
 interactive_expr: Begin If Verbatim Then If Verbatim With
 ##
@@ -173,7 +179,8 @@ interactive_expr: Begin If Verbatim Then If With
 ## If
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'if' ... 'else' ... expression.
+At this point a test, in the form of an expression, is expected.
 
 interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes Attr Type
 ##
@@ -204,7 +211,8 @@ interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes In With
 ## Let Rec let_binding seq(Attr) In
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'let' ... 'in' ... expression.
+At this point an expression is expected.
 
 interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes With
 ##
@@ -246,7 +254,8 @@ interactive_expr: Begin If Verbatim Then Let Rec With
 ## Let Rec
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'let' expression. 
+At this point an identifier is expected.
 
 interactive_expr: Begin If Verbatim Then Let WILD EQ Bytes Attr Type
 ##
@@ -277,7 +286,8 @@ interactive_expr: Begin If Verbatim Then Let WILD EQ Bytes In With
 ## Let let_binding seq(Attr) In
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'let' ... 'in' ... expression.
+At this point an expression is expected.
 
 interactive_expr: Begin If Verbatim Then Let WILD EQ Bytes With
 ##
@@ -320,7 +330,11 @@ interactive_expr: Begin If Verbatim Then Let With
 ## Let
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'let' expression.
+At this point one of the following is expected:
+  destructuring; or 
+  an identifier; or
+  a 'rec' keyword followed by an identifier.
 
 interactive_expr: Begin If Verbatim Then Match Verbatim Type
 ##
@@ -361,7 +375,8 @@ interactive_expr: Begin If Verbatim Then Match Verbatim With VBAR Begin
 ## Match expr With option(VBAR)
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'match' expression.
+At this point a case is expected.
 
 interactive_expr: Begin If Verbatim Then Match Verbatim With WILD ARROW Bytes With
 ##
@@ -405,7 +420,8 @@ interactive_expr: Begin If Verbatim Then Match Verbatim With With
 ## Match expr With
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'match' expression. 
+At this point a case is expected.
 
 interactive_expr: Begin If Verbatim Then Match With
 ##
@@ -417,7 +433,8 @@ interactive_expr: Begin If Verbatim Then Match With
 ## Match
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'match' expression.
+At this point an expression is expected.
 
 interactive_expr: Begin If Verbatim Then Verbatim COMMA Bytes With
 ##
@@ -461,7 +478,8 @@ interactive_expr: Begin If Verbatim Then Verbatim Else With
 ## If expr Then closed_if Else
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'if' ... 'else' ... expression.
+At this point an expression is expected.
 
 interactive_expr: Begin If Verbatim Then Verbatim With
 ##
@@ -502,7 +520,8 @@ interactive_expr: Begin If Verbatim Then With
 ## If expr Then
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'if' ... 'else' ... expression.
+At this point an expression is expected.
 
 interactive_expr: Begin If Verbatim With
 ##
@@ -543,7 +562,8 @@ interactive_expr: Begin If With
 ## If
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'if' ... 'else' ... expression.
+At this point an expression is expected.
 
 interactive_expr: Begin Let Rec WILD EQ Bytes Attr Type
 ##
@@ -574,7 +594,8 @@ interactive_expr: Begin Let Rec WILD EQ Bytes In With
 ## Let Rec let_binding seq(Attr) In
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'let' ... 'in' ... expression.
+At this point an expression is expected.
 
 interactive_expr: Begin Let Rec WILD EQ Bytes With
 ##
@@ -616,7 +637,8 @@ interactive_expr: Begin Let Rec With
 ## Let Rec
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'let' expression.
+At this point an identifier is expected.
 
 interactive_expr: Begin Let WILD EQ Bytes Attr Type
 ##
@@ -647,7 +669,8 @@ interactive_expr: Begin Let WILD EQ Bytes In With
 ## Let let_binding seq(Attr) In
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'let' ... 'in' ... expression.
+At this point an expression is expected.
 
 interactive_expr: Begin Let WILD EQ Bytes With
 ##
@@ -690,7 +713,11 @@ interactive_expr: Begin Let With
 ## Let
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'let' expression.
+At this point one of the following is expected:
+  a tuple; or 
+  an identifier; or
+  a 'rec' keyword followed by an identifier.
 
 interactive_expr: Begin Match Verbatim Type
 ##
@@ -731,7 +758,8 @@ interactive_expr: Begin Match Verbatim With VBAR Begin
 ## Match expr With option(VBAR)
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'match' expression.
+At this point a case is expected.
 
 interactive_expr: Begin Match Verbatim With WILD ARROW Bytes VBAR With
 ##
@@ -744,7 +772,8 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Bytes VBAR With
 ## cases(base_cond) VBAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'match' expression.
+At this point another case is expected.
 
 interactive_expr: Begin Match Verbatim With WILD ARROW Fun WILD ARROW With
 ##
@@ -757,7 +786,8 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Fun WILD ARROW With
 ## Fun nseq(irrefutable) ARROW
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function expression.
+At this point a function body, in the form of an expression, is expected.
 
 interactive_expr: Begin Match Verbatim With WILD ARROW Fun With
 ##
@@ -770,7 +800,8 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Fun With
 ## Fun
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function expression.
+At this point function arguments are expected.
 
 interactive_expr: Begin Match Verbatim With WILD ARROW If Verbatim Then Verbatim Else With
 ##
@@ -783,7 +814,8 @@ interactive_expr: Begin Match Verbatim With WILD ARROW If Verbatim Then Verbatim
 ## If expr Then closed_if Else
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'if' ... 'else' ... expression.
+At this point an expression is expected.
 
 interactive_expr: Begin Match Verbatim With WILD ARROW If Verbatim Then With
 ##
@@ -797,7 +829,8 @@ interactive_expr: Begin Match Verbatim With WILD ARROW If Verbatim Then With
 ## If expr Then
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'if' ... 'else' ... expression.
+At this point an expression is expected.
 
 interactive_expr: Begin Match Verbatim With WILD ARROW If Verbatim With
 ##
@@ -842,7 +875,8 @@ interactive_expr: Begin Match Verbatim With WILD ARROW If With
 ## If
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'if' ... 'else' ... expression.
+At this point an expression is expected.
 
 interactive_expr: Begin Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes Attr Type
 ##
@@ -875,7 +909,8 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes In 
 ## Let Rec let_binding seq(Attr) In
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'let' ... 'in' ... expression.
+At this point an expression is expected.
 
 interactive_expr: Begin Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes With
 ##
@@ -919,7 +954,8 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Let Rec With
 ## Let Rec
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'let' expression.
+At this point an identifier is expected.
 
 interactive_expr: Begin Match Verbatim With WILD ARROW Let WILD EQ Bytes Attr Type
 ##
@@ -952,7 +988,8 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Let WILD EQ Bytes In With
 ## Let let_binding seq(Attr) In
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'let' expression.
+At this point an expression is expected.
 
 interactive_expr: Begin Match Verbatim With WILD ARROW Let WILD EQ Bytes With
 ##
@@ -998,7 +1035,11 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Let With
 ## Let
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'let' expression.
+At this point one of the following is expected:
+  destructuring; or 
+  an identifier; or
+  a 'rec' keyword followed by an identifier.
 
 interactive_expr: Begin Match Verbatim With WILD ARROW Verbatim COMMA Bytes With
 ##
@@ -1076,7 +1117,8 @@ interactive_expr: Begin Match Verbatim With WILD ARROW With
 ## pattern ARROW
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'match' case.
+At this point an expression is expected.
 
 interactive_expr: Begin Match Verbatim With WILD CONS Bytes SEMI
 ##
@@ -1108,7 +1150,8 @@ interactive_expr: Begin Match Verbatim With With
 ## Match expr With
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'match' expression.
+At this point a case is expected.
 
 interactive_expr: Begin Match With
 ##
@@ -1120,7 +1163,8 @@ interactive_expr: Begin Match With
 ## Match
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'match' expression.
+At this point an expression is expected.
 
 interactive_expr: Begin Verbatim SEMI With
 ##
@@ -1199,7 +1243,8 @@ interactive_expr: C_Some With
 ## C_Some
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'Some' constructor.
+At this point an expression is expected.
 
 interactive_expr: Constr DOT Ident DOT With
 ##
@@ -1211,7 +1256,10 @@ interactive_expr: Constr DOT Ident DOT With
 ## Constr DOT Ident DOT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed selection.
+At this point one of the following is expected:
+  a field name; or 
+  a tuple index '<int>'.
 
 interactive_expr: Constr DOT Ident WILD
 ##
@@ -1264,7 +1312,8 @@ interactive_expr: Fun WILD ARROW With
 ## Fun nseq(irrefutable) ARROW
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function expression.
+At this point a function body, in the form of an expression, is expected.
 
 interactive_expr: Fun WILD RPAR
 ##
@@ -1312,7 +1361,8 @@ interactive_expr: Fun With
 ## Fun
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function expression.
+At this point function arguments are expected.
 
 interactive_expr: Ident DOT Int DOT With
 ##
@@ -1324,7 +1374,10 @@ interactive_expr: Ident DOT Int DOT With
 ## selection DOT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed selection.
+At this point one of the following is expected:
+  a field name; or 
+  a tuple index '<int>'.
 
 interactive_expr: Ident DOT Int WILD
 ##
@@ -1337,7 +1390,7 @@ interactive_expr: Ident DOT Int WILD
 ## selection
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed selection.
 
 interactive_expr: Ident DOT With
 ##
@@ -1349,7 +1402,10 @@ interactive_expr: Ident DOT With
 ## Ident DOT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed selection.
+At this point one of the following is expected:
+  a field name; or 
+  a tuple index '<int>'.
 
 interactive_expr: Ident WILD
 ##
@@ -1375,7 +1431,8 @@ interactive_expr: If Verbatim Then Fun WILD ARROW With
 ## Fun nseq(irrefutable) ARROW
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function expression.
+At this point a function body, in the form of an expression, is expected.
 
 interactive_expr: If Verbatim Then Fun With
 ##
@@ -1388,7 +1445,8 @@ interactive_expr: If Verbatim Then Fun With
 ## Fun
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function expression.
+At this point function arguments are expected.
 
 interactive_expr: If Verbatim Then If Verbatim Then Verbatim Else With
 ##
@@ -1401,7 +1459,8 @@ interactive_expr: If Verbatim Then If Verbatim Then Verbatim Else With
 ## If expr Then closed_if Else
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'if' ... 'else' ... expression.
+At this point an expression is expected.
 
 interactive_expr: If Verbatim Then If Verbatim Then With
 ##
@@ -1415,7 +1474,8 @@ interactive_expr: If Verbatim Then If Verbatim Then With
 ## If expr Then
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'if' ... 'else' ... expression.
+At this point an expression is expected.
 
 interactive_expr: If Verbatim Then If Verbatim With
 ##
@@ -1493,7 +1553,8 @@ interactive_expr: If Verbatim Then Let Rec WILD EQ Bytes In With
 ## Let Rec let_binding seq(Attr) In
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'let' ... 'in' ... expression.
+At this point an expression is expected.
 
 interactive_expr: If Verbatim Then Let Rec WILD EQ Bytes With
 ##
@@ -1537,7 +1598,8 @@ interactive_expr: If Verbatim Then Let Rec With
 ## Let Rec
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'let' expression.
+At this point an identifier is expected.
 
 interactive_expr: If Verbatim Then Let WILD EQ Bytes Attr Type
 ##
@@ -1570,7 +1632,8 @@ interactive_expr: If Verbatim Then Let WILD EQ Bytes In With
 ## Let let_binding seq(Attr) In
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'let' ... 'in' ... expression.
+At this point an expression is expected.
 
 interactive_expr: If Verbatim Then Let WILD EQ Bytes With
 ##
@@ -1616,7 +1679,11 @@ interactive_expr: If Verbatim Then Let With
 ## Let
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'let' expression.
+At this point one of the following is expected:
+  destructuring; or 
+  an identifier; or
+  a 'rec' keyword followed by an identifier.
 
 interactive_expr: If Verbatim Then Match Verbatim Type
 ##
