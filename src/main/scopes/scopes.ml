@@ -12,10 +12,22 @@ let scopes : string -> string -> ((def_map * scopes), Main_errors.all) result = 
   let rec find_scopes' = fun (i,all_defs,env,scopes,lastloc) (e : Ast_core.expression) ->
     match e.content with
     | E_let_in { let_binder = (n,_) ; rhs ; let_result } -> (
-      let (i,all_defs,_, scopes) = find_scopes' (i,all_defs,env,scopes,e.location) rhs in
-      let (i,env) = add_shadowing_def (i,n) (make_v_def_from_core (get_binder_name n) rhs e.location rhs.location) env in
-      let all_defs = merge_defs env all_defs in
-      find_scopes' (i,all_defs,env,scopes,let_result.location) let_result
+      match rhs.content with
+      | E_recursive { fun_name ;  fun_type ; lambda = { result;_ } } -> (
+        (* Note:
+            It is not entirely true that 'fun_name' is in 'result' scope; because only tail calls are allowed
+        *)
+        let def = make_v_def_option_type (get_binder_name fun_name) (Some fun_type) e.location e.location in
+        let (i,env) = add_shadowing_def (i,fun_name) def env in
+        find_scopes' (i,all_defs,env,scopes,result.location) result
+      )
+      | _ -> (
+        (*TODO : n needs location and should be  used bellow in union with rhs *)
+        let (i,all_defs,_, scopes) = find_scopes' (i,all_defs,env,scopes,e.location) rhs in
+        let (i,env) = add_shadowing_def (i,n) (make_v_def_from_core (get_binder_name n) rhs rhs.location rhs.location) env in
+        let all_defs = merge_defs env all_defs in
+        find_scopes' (i,all_defs,env,scopes,let_result.location) let_result
+      )
     )
     | E_lambda { binder ; input_type ; output_type = _ ; result } -> (
       let (i,env) = add_shadowing_def (i,binder) (make_v_def_option_type (get_binder_name binder) input_type result.location result.location) env in
