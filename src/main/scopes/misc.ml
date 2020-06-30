@@ -7,7 +7,7 @@ let get_binder_name : 'a Var.t -> string = fun (v: _ Var.t) ->
   else Var.to_name v
 
 let make_def_id name i =
-  (name ^ (string_of_int i), i+1)
+  (name ^ "#" ^ (string_of_int i), i+1)
 
 let add_shadowing_def : (int * _ Var.t) -> def -> def_map -> (int * def_map) =  fun (i,var) def env -> 
   if Var.is_generated var then (i,env)
