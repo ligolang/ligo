@@ -5,4 +5,5 @@ let b =
     let k = i + j + a in
     c (k,1)
   in
-  c (a,2)
+  let b = 2 in
+  c (a, b)
