@@ -1,6 +1,6 @@
 [@@@warning "-42"]
 
-module CST=Cst.Cameligo
+module CST = Cst.Cameligo
 open CST
 module Region = Simple_utils.Region
 open! Region

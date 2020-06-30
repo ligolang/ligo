@@ -1,10 +1,13 @@
+(* Menhir specification of the parsing of PascaLIGO *)
 %{
 (* START HEADER *)
 
 [@@@warning "-42"]
 
+(* Dependencies *)
+
 open Simple_utils.Region
-module CST      = Cst.Pascaligo
+module CST = Cst.Pascaligo
 open CST
 
 (* END HEADER *)
@@ -15,8 +18,8 @@ open CST
 (* Entry points *)
 
 %start contract interactive_expr
-%type <Cst.Pascaligo.t> contract
-%type <Cst.Pascaligo.expr> interactive_expr
+%type <CST.t> contract
+%type <CST.expr> interactive_expr
 
 %%
 

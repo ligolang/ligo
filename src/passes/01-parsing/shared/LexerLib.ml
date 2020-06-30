@@ -1,5 +1,8 @@
+(* A library for writing UTF8-aware lexers *)
+
 module Region = Simple_utils.Region
-module Pos = Simple_utils.Pos
+module Pos    = Simple_utils.Pos
+module FQueue = Simple_utils.FQueue
 
 (* LEXER ENGINE *)
 

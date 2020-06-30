@@ -1,7 +1,8 @@
 (* A library for writing UTF8-aware lexers *)
 
 module Region = Simple_utils.Region
-module Pos = Simple_utils.Pos
+module Pos    = Simple_utils.Pos
+module FQueue = Simple_utils.FQueue
 
 (* The function [rollback] resets the lexing buffer to the state it
    was when it matched the last regular expression. This function is

@@ -1,7 +1,9 @@
 [@@@warning "-42"]
 
+(* Dependencies *)
+
 module Region = Simple_utils.Region
-module CST = Cst.Cameligo
+module CST    = Cst.Cameligo
 
 type t =
   Reserved_name      of CST.variable
@@ -17,7 +19,7 @@ open Region
 
 (* Useful modules *)
 
-module SSet = Utils.String.Set
+module SSet = Set.Make (String)
 
 module Ord =
   struct

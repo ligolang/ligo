@@ -15,8 +15,8 @@ open CST
 (* Entry points *)
 
 %start contract interactive_expr
-%type <Cst.Cameligo.t> contract
-%type <Cst.Cameligo.expr> interactive_expr
+%type <CST.t> contract
+%type <CST.expr> interactive_expr
 
 %%
 

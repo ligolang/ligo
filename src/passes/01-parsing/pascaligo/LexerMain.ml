@@ -1,6 +1,14 @@
 (* Driver for the PascaLIGO lexer *)
 
-module Region = Simple_utils.Region
+(* Dependencies *)
+
+module Region    = Simple_utils.Region
+module EvalOpt   = Lexer_shared.EvalOpt
+module Lexer     = Lexer_shared.Lexer
+module LexerUnit = Lexer_shared.LexerUnit
+module LexToken  = Lexer_pascaligo.LexToken
+
+(* Input/Output *)
 
 module IO =
   struct
@@ -10,7 +18,11 @@ module IO =
       in read ~block ~line:"//" ".ligo"
   end
 
+(* Instantiating the standalone lexer *)
+
 module M = LexerUnit.Make (IO) (Lexer.Make (LexToken))
+
+(* Tracing all tokens in the source *)
 
 let () =
   match M.trace () with

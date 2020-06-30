@@ -1,6 +1,9 @@
+(* Dependencies *)
+
+module EvalOpt  = Lexer_shared.EvalOpt
 module CST      = Cst.Pascaligo
-module LexToken = Parser_pascaligo.LexToken
-module Lexer    = Lexer.Make(LexToken)
+module LexToken = Lexer_pascaligo.LexToken
+module Lexer    = Lexer_shared.Lexer.Make (LexToken)
 module Scoping  = Parser_pascaligo.Scoping
 module Region   = Simple_utils.Region
 module ParErr   = Parser_pascaligo.ParErr
