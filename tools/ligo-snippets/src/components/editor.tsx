@@ -6,8 +6,6 @@ import YAML from 'yaml';
 import './ligo-prism.css';
 import { PushSpinner } from 'react-spinners-kit';
 
-//require('ligo-snippets-css/css/ligo-prism.css')
-
 const { Prism } = require("prism-react-renderer");
 
 Prism.languages = {
@@ -231,9 +229,10 @@ function getLanguageHighlight(language) {
 }
 
 export const LigoSnippet = (props) => {
+    
     const data = props.data
     const editorParams = parseEditorConfigs(data);
-    
+
     const [snippetCode, onUpdate] = useState(editorParams.editor.code);
     const [output, setOutput] = useState("");
     const [theme, setTheme] = useState(getTheme(data, false));
@@ -243,11 +242,21 @@ export const LigoSnippet = (props) => {
         setOutput(""); setLoading(true);
         setTheme(getTheme(data, true));
         const entrypoint = "main", syntax = snippetCode.editor.language, code = snippetCode.editor.code;
-        const response = await axios.post('https://cors-anywhere.herokuapp.com/https://ide.ligolang.org/api/compile-contract', {
-            syntax,
-            code,
-            entrypoint  
-        });
+        let response;
+        if(data.api && data.api != "") {
+            response = await axios.post(data.api, {
+                syntax,
+                code,
+                entrypoint  
+            });
+        } else {
+            response = await axios.post('https://cors-anywhere.herokuapp.com/https://ide.ligolang.org/api/compile-contract', {
+                syntax,
+                code,
+                entrypoint  
+            });
+        }
+        
         const output = await response.data;
         setOutput(JSON.stringify(output).replace(/\\n/g, "\n"));
         setLoading(false);
