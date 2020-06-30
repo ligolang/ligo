@@ -128,7 +128,7 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
   let return_id = body in
   match body.content with
   | E_variable x' ->
-     if x' = x
+     if Location.equal_content ~equal:Var.equal x' x
      then expr
      else return_id
   | E_closure { binder; body } -> (

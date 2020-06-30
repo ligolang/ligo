@@ -4,11 +4,13 @@ open Combinators
 module Free_variables = struct
 
   type bindings = expression_variable list
-  let mem : expression_variable -> bindings -> bool = List.mem
+  let var_equal = Location.equal_content ~equal:Var.equal
+  let var_compare = Location.compare_content ~compare:Var.compare
+  let mem : expression_variable -> bindings -> bool = List.mem ~compare:var_compare
   let singleton : expression_variable -> bindings = fun s -> [ s ]
   let mem_count : expression_variable -> bindings -> int =
     fun x fvs ->
-    List.length (List.filter (fun (a:expression_variable) -> Var.equal x.wrap_content a.wrap_content) fvs)
+    List.length (List.filter (var_equal x) fvs)
   let union : bindings -> bindings -> bindings = (@)
   let unions : bindings list -> bindings = List.concat
   let empty : bindings = []

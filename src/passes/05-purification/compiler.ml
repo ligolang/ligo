@@ -3,7 +3,7 @@ module I = Ast_imperative
 module O = Ast_sugar
 open Trace
 
-let compare_var : O.expression_variable -> O.expression_variable -> int = fun (a:O.expression_variable) (b:O.expression_variable) -> Var.compare a.wrap_content b.wrap_content
+let compare_var = Location.compare_content ~compare:Var.compare
 
 let rec add_to_end (expression: O.expression) to_add =
   match expression.expression_content with
@@ -25,10 +25,10 @@ let repair_mutable_variable_in_matching (match_body : O.expression) (element_nam
           ok (true,(name::decl_var, free_var),O.e_let_in let_binder false false rhs let_result)
         | E_let_in {let_binder;mut=true; rhs;let_result} ->
           let (name,_) = let_binder in
-          if List.mem name decl_var then 
+          if List.mem ~compare:compare_var name decl_var then
             ok (true,(decl_var, free_var), O.e_let_in let_binder false false rhs let_result)
           else(
-            let free_var = if (List.mem name free_var) then free_var else name::free_var in
+            let free_var = if (List.mem ~compare:compare_var name free_var) then free_var else name::free_var in
             let expr = O.e_let_in (env,None) false false (O.e_update (O.e_variable env) [O.Access_record (Var.to_name name.wrap_content)] (O.e_variable name)) let_result in
             ok (true,(decl_var, free_var), O.e_let_in let_binder false  false rhs expr)
           )
@@ -65,10 +65,13 @@ and repair_mutable_variable_in_loops (for_body : O.expression) (element_names : 
           ok (true,(name::decl_var, free_var),ass_exp)
         | E_let_in {let_binder;mut=true; rhs;let_result} ->
           let (name,_) = let_binder in
-          if List.mem name decl_var then 
+          if List.mem ~compare:compare_var name decl_var then
             ok (true,(decl_var, free_var), O.e_let_in let_binder false false rhs let_result)
           else(
-            let free_var = if (List.mem name free_var) then free_var else name::free_var in
+            let free_var =
+              if (List.mem ~compare:compare_var name free_var)
+              then free_var
+              else name::free_var in
             let expr = O.e_let_in (env,None) false false (
               O.e_update (O.e_variable env) [O.Access_tuple Z.zero; O.Access_record (Var.to_name name.wrap_content)] (O.e_variable name)
               )
