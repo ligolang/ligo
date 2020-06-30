@@ -224,10 +224,15 @@ and fun_decl = {
   param         : parameters;
   ret_type      : (colon * type_expr) option;
   kwd_is        : kwd_is;
-  block_with    : (block reg * kwd_with) option;
   return        : expr;
   terminator    : semi option;
   attributes    : attr_decl option
+}
+
+and block_with = {
+  block    : block reg;
+  kwd_with : kwd_with;
+  expr     : expr
 }
 
 and parameters = (param_decl, semi) nsepseq par reg
@@ -387,14 +392,12 @@ and 'a case_clause = {
 and assignment = {
   lhs    : lhs;
   assign : assign;
-  rhs    : rhs
+  rhs    : expr;
 }
 
 and lhs =
   Path    of path
 | MapPath of map_lookup reg
-
-and rhs = expr
 
 and loop =
   While of while_loop reg
@@ -470,6 +473,7 @@ and expr =
 | EPar     of expr par reg
 | EFun     of fun_expr reg
 | ECodeInj of code_inj reg
+| EBlock   of block_with reg
 
 and annot_expr = expr * colon * type_expr
 
@@ -696,7 +700,8 @@ let rec expr_to_region = function
 | ECond    {region; _}
 | EPar     {region; _}
 | EFun     {region; _}
-| ECodeInj {region; _} -> region
+| ECodeInj {region; _}
+| EBlock   {region; _} -> region
 
 and tuple_expr_to_region {region; _} = region
 
@@ -813,8 +818,6 @@ let declaration_to_region = function
 let lhs_to_region : lhs -> Region.t = function
   Path path -> path_to_region path
 | MapPath {region; _} -> region
-
-let rhs_to_region = expr_to_region
 
 let selection_to_region = function
   FieldName {region; _}

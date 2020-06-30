@@ -1,6 +1,6 @@
 let f1 (x : unit) : unit -> tez =
-  let amt : tez = Current.amount
-  in fun (x : unit) -> amt
+  let amt : tez = Current.amount in
+  fun (x : unit) -> amt
 
 let f2 (x : unit) : unit -> tez =
   fun (x : unit) -> Current.amount

@@ -216,5 +216,6 @@ module Ne = struct
     match f hd with
     | Some x -> Some x
     | None -> find_map f tl
+  let append : 'a t -> 'a t -> 'a t = fun (hd, tl) (hd', tl') -> hd, List.append tl @@ hd' :: tl'
 
 end

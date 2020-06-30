@@ -259,25 +259,7 @@ fun_expr:
 (* Function declarations *)
 
 open_fun_decl:
-  ioption ("recursive") "function" fun_name parameters type_annot? "is"
-  block "with" expr {
-    Scoping.check_reserved_name $3;
-    let stop   = expr_to_region $9 in
-    let region = cover $2 stop
-    and value  = {kwd_recursive= $1;
-                  kwd_function = $2;
-                  fun_name     = $3;
-                  param        = $4;
-                  ret_type     = $5;
-                  kwd_is       = $6;
-                  block_with   = Some ($7, $8);
-                  return       = $9;
-                  terminator   = None;
-                  attributes   = None}
-    in {region; value}
-  }
-| ioption ("recursive") "function" fun_name parameters type_annot? "is"
-  expr {
+  ioption("recursive") "function" fun_name parameters type_annot? "is" expr {
     Scoping.check_reserved_name $3;
     let stop   = expr_to_region $7 in
     let region = cover $2 stop
@@ -287,11 +269,11 @@ open_fun_decl:
                   param        = $4;
                   ret_type     = $5;
                   kwd_is       = $6;
-                  block_with   = None;
                   return       = $7;
                   terminator   = None;
                   attributes   = None}
-    in {region; value} }
+    in {region; value}
+  }
 
 fun_decl:
   open_fun_decl ";"? {
@@ -593,7 +575,7 @@ case_clause(rhs):
 
 assignment:
   lhs ":=" rhs {
-    let stop   = rhs_to_region $3 in
+    let stop   = expr_to_region $3 in
     let region = cover (lhs_to_region $1) stop
     and value  = {lhs = $1; assign = $2; rhs = $3}
     in {region; value} }
@@ -662,6 +644,15 @@ expr:
 | cond_expr  { $1                        }
 | disj_expr  { $1                        }
 | fun_expr   { EFun $1                   }
+| block_with { EBlock $1                 }
+
+block_with:
+  block "with" expr {
+    let start  = $2
+    and stop   = expr_to_region $3 in
+    let region = cover start stop in
+    let value  = {block=$1; kwd_with=$2; expr=$3}
+    in {region; value} }
 
 cond_expr:
   "if" expr "then" expr ";"? "else" expr {

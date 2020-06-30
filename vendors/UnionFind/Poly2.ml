@@ -145,6 +145,8 @@ let partitions : 'item . 'item partition -> 'item list list =
   let partitions = List.sort (compare_lists_by_first compare) partitions in
   partitions
 
+let get_compare p = p.compare
+
 (** {1 Printing} *)
 
 let print ppf (p: 'item partition) =

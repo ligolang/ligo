@@ -256,13 +256,13 @@ and expr =
 and annot_expr = expr * colon * type_expr
 
 and 'a injection = {
-  compound   : compound;
+  compound   : compound option;
   elements   : ('a, semi) sepseq;
   terminator : semi option
 }
 
 and 'a ne_injection = {
-  compound    : compound;
+  compound    : compound option;
   ne_elements : ('a, semi) nsepseq;
   terminator  : semi option
 }
@@ -400,8 +400,7 @@ and cond_expr = {
   test     : expr;
   kwd_then : kwd_then;
   ifso     : expr;
-  kwd_else : kwd_else;
-  ifnot    : expr
+  ifnot    : (kwd_else * expr) option;
 }
 
 (* Code injection.  Note how the field [language] wraps a region in

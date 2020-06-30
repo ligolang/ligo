@@ -21,9 +21,12 @@ type all =
  | `Main_michelson_execution_error of Proto_alpha_utils.Trace.tezos_alpha_error list
 
  | `Main_parser of Parser.Errors.parser_error
+ | `Main_pretty of Parser.Errors.parser_error
  | `Main_self_ast_imperative of Self_ast_imperative.Errors.self_ast_imperative_error
- | `Main_purification of Purification.Errors.purification_error
+ | `Main_purification   of Purification.Errors.purification_error
+ | `Main_depurification of Purification.Errors.purification_error
  | `Main_desugaring of Desugaring.Errors.desugaring_error
+ | `Main_sugaring   of Desugaring.Errors.desugaring_error
  | `Main_cit_pascaligo of Tree_abstraction.Pascaligo.Errors.abs_error
  | `Main_cit_cameligo of Tree_abstraction.Cameligo.Errors.abs_error
  | `Main_typer of Typer.Errors.typer_error
@@ -33,9 +36,9 @@ type all =
  | `Main_spilling of Spilling.Errors.spilling_error
  | `Main_stacking of Stacking.Errors.stacking_error
 
- | `Main_uncompile_michelson of Stacking.Errors.stacking_error
- | `Main_uncompile_mini_c of Spilling.Errors.spilling_error
- | `Main_uncompile_typed of Typer.Errors.typer_error
+ | `Main_decompile_michelson of Stacking.Errors.stacking_error
+ | `Main_decompile_mini_c of Spilling.Errors.spilling_error
+ | `Main_decompile_typed of Typer.Errors.typer_error
  | `Main_entrypoint_not_a_function
  | `Main_entrypoint_not_found
  | `Main_invalid_amount of string

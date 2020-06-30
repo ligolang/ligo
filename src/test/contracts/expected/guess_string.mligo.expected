@@ -10,8 +10,8 @@ let attempt (p, store : param * storage) : return =
            : unit contract option)
     with
       Some contract -> contract
-    | None -> (failwith "No contract" : unit contract)
-  in let transfer : operation =
-       Tezos.transaction (unit, contract, 10000000mutez)
-     in let store : storage = {challenge = p.new_challenge}
-        in ([] : operation list), store
+    | None -> (failwith "No contract" : unit contract) in
+  let transfer : operation =
+    Tezos.transaction (unit, contract, 10000000mutez) in
+  let store : storage = {challenge = p.new_challenge} in
+  ([] : operation list), store

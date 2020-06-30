@@ -7,5 +7,5 @@ let main (action, store : string * string) : return =
          (([] : operation list), "one"))
       (None : key_hash option)
       300000000mutez
-      "un"
-  in ([toto.0], store)
+      "un" in
+  ([toto.0], store)

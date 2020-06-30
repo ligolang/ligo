@@ -2096,9 +2096,9 @@ let get_contract_ligo () : (unit, _) result =
   let%bind () =
     let make_input = fun _n -> e_unit () in
     let make_expected : int -> Ast_core.expression -> (unit, _) result = fun _n result ->
-      let%bind (ops , storage) = trace_option (test_internal __LOC__) @@ Ast_core.get_e_pair result.expression_content in
+      let%bind (ops , storage) = trace_option (test_internal __LOC__) @@ Ast_core.get_e_pair result.content in
       let%bind () =
-        let%bind lst = trace_option (test_internal __LOC__) @@ Ast_core.get_e_list ops.expression_content in
+        let%bind lst = trace_option (test_internal __LOC__) @@ Ast_core.get_e_list ops.content in
         Assert.assert_list_size (test_internal __LOC__) lst 1 in
       let expected_storage = Ast_core.e_unit () in
       trace_option (test_internal __LOC__) @@ Ast_core.Misc.assert_value_eq (expected_storage , storage)
@@ -2403,16 +2403,16 @@ let loop_bugs_ligo () : (unit, _) result =
   ok ()
 
 let main = test_suite "Integration (End to End)" [
-    test "bytes unpack" bytes_unpack ;
-    test "bytes unpack (mligo)" bytes_unpack_mligo ;
-    test "bytes unpack (religo)" bytes_unpack_religo ;
-    test "key hash" key_hash ;
-    test "key hash (mligo)" key_hash_mligo ;
-    test "key hash (religo)" key_hash_religo ;
-    test "check signature" check_signature ;
-    test "check signature (mligo)" check_signature_mligo ;
-    test "check signature (religo)" check_signature_religo ;
-    test "chain id" chain_id ;
+    test "chain id" chain_id ;                         (* record *)
+    test "bytes unpack" bytes_unpack ;                 (* record *)
+    test "bytes unpack (mligo)" bytes_unpack_mligo ;   (* record *)
+    test "bytes unpack (religo)" bytes_unpack_religo ; (* record *)
+    test "key hash" key_hash ;                         (* C_access_label *)
+    test "key hash (mligo)" key_hash_mligo ;           (* C_access_label *)
+    test "key hash (religo)" key_hash_religo ;         (* C_access_label *)
+    test "check signature" check_signature ;                 (* C_access_label *)
+    test "check signature (mligo)" check_signature_mligo ;   (* C_access_label *)
+    test "check signature (religo)" check_signature_religo ; (* C_access_label *)
     test "type alias" type_alias ;
     test "function" function_ ;
     test "blockless function" blockless;

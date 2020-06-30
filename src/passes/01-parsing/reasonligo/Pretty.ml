@@ -5,6 +5,7 @@ open CST
 module Region = Simple_utils.Region
 open! Region
 open! PPrint
+module Option = Simple_utils.Option
 
 let rec print ast =
   let app decl = group (pp_declaration decl) in
@@ -179,13 +180,13 @@ and pp_clause {value; _} =
   prefix 4 1 (pp_pattern pattern ^^ string " =>") (pp_expr rhs)
 
 and pp_cond_expr {value; _} =
-  let {test; ifso; kwd_else; ifnot; _} = value in
+  let {test; ifso; ifnot; _} = value in
   let if_then =
     string "if" ^^ string " (" ^^ pp_expr test ^^ string ")" ^^ string " {" ^^ break 0
     ^^ group (nest 2 (break 2 ^^ pp_expr ifso)) ^^ hardline ^^ string "}" in
-  if kwd_else#is_ghost then
-    if_then
-  else
+  match ifnot with
+    None -> if_then
+  | Some (_,ifnot) ->
     if_then
     ^^ string " else" ^^ string " {" ^^ break 0 ^^ group (nest 2 (break 2 ^^ pp_expr ifnot)) ^^ hardline ^^ string "}"
 
@@ -252,18 +253,15 @@ and pp_injection :
     let sep = (string ",") ^^ break 1 in
     let elements = Utils.sepseq_to_list elements in
     let elements = separate_map sep printer elements in
-    match pp_compound compound with
+    match Option.map pp_compound compound with
       None -> elements
     | Some (opening, closing) ->
         string opening ^^ nest 1 elements ^^ string closing
 
 and pp_compound = function
-  BeginEnd (start, _) ->
-    if start#is_ghost then None else Some ("begin","end")
-| Braces (start, _) ->
-    if start#is_ghost then None else Some ("{","}")
-| Brackets (start, _) ->
-    if start#is_ghost then None else Some ("[","]")
+  BeginEnd (_, _) -> ("begin","end")
+| Braces   (_, _) -> ("{","}")
+| Brackets (_, _) -> ("[","]")
 
 and pp_constr_expr = function
   ENone      _ -> string "None"
@@ -291,7 +289,7 @@ and pp_ne_injection :
   fun printer {value; _} ->
     let {compound; ne_elements; _} = value in
     let elements = pp_nsepseq "," printer ne_elements in
-    match pp_compound compound with
+    match Option.map pp_compound compound with
       None -> elements
     | Some (opening, closing) ->
         string opening ^^ nest 2 (break 0 ^^ elements) ^^ break 1 ^^ string closing
@@ -387,7 +385,7 @@ and pp_seq {value; _} =
   let sep = string ";" ^^ hardline in
   let elements = Utils.sepseq_to_list elements in
   let elements = separate_map sep pp_expr elements in
-  match pp_compound compound with
+  match Option.map pp_compound compound with
     None -> elements
   | Some (opening, closing) ->
      string opening

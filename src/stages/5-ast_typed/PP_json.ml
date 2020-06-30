@@ -10,12 +10,12 @@ module M = struct
   let to_json : (no_state, json) fold_config = {
       generic = (fun NoState info ->
         match info.node_instance.instance_kind with
-        | RecordInstance { fields } ->
-          let fields' = List.fold_left
+        | RecordInstance { field_instances } ->
+          let field_instances' = List.fold_left
             (fun acc (fld : ('xi, json) Adt_info.ctor_or_field_instance) -> (fld.cf.name, fld.cf_continue NoState)::acc)
-            [] fields 
+            [] field_instances 
           in
-          `Assoc fields'
+          `Assoc field_instances'
         | VariantInstance { constructor ; _ } ->
           `List [ `String constructor.cf.name ; constructor.cf_continue NoState ]
         | PolyInstance { poly=_; arguments=_; poly_continue } ->
@@ -76,13 +76,23 @@ module M = struct
         `Assoc ["typeVariableMap",  `List lst'] );
     }
 
-  let print : ((no_state, json) fold_config -> no_state -> 'a -> json) -> 'a -> json = fun fold v ->
+  let to_json : ((no_state, json) fold_config -> no_state -> 'a -> json) -> 'a -> json = fun fold v ->
     fold to_json NoState v
+  
+  let print : ((no_state, json) fold_config -> no_state -> 'a -> json) -> formatter -> 'a -> unit  = fun fold ppf v ->
+    fprintf ppf "%a" Yojson.Basic.pp (to_json fold v)
 end
+
+module Yojson = Fold.Folds(struct
+  type in_state = M.no_state ;;
+  type out_state = json ;;
+  type 'a t = 'a -> json ;;
+  let f = M.to_json ;;
+end)
 
 include Fold.Folds(struct
   type in_state = M.no_state ;;
   type out_state = json ;;
-  type 'a t = 'a -> json ;;
+  type 'a t = formatter -> 'a -> unit ;;
   let f = M.print ;;
 end)

@@ -218,18 +218,13 @@ and print_type_tuple state {value; _} =
 
 and print_fun_decl state {value; _} =
   let {kwd_function; fun_name; param;
-       ret_type; kwd_is; block_with;
+       ret_type; kwd_is;
        return; terminator; _} = value in
   print_token      state kwd_function "function";
   print_var        state fun_name;
   print_parameters state param;
   print_option     state print_type_annot ret_type;
   print_token      state kwd_is "is";
-  (match block_with with
-    None -> ()
-  | Some (block, kwd_with) ->
-     print_block state block;
-     print_token state kwd_with "with");
   print_expr state return;
   print_terminator state terminator;
 
@@ -251,6 +246,12 @@ and print_code_inj state {value; _} =
   print_string state lang;
   print_expr   state code;
   print_token  state rbracket "]"
+
+and print_block_expr state {value; _} =
+  let {block;kwd_with;expr} = value in
+  print_block state block;
+  print_token state kwd_with "with";
+  print_expr  state expr;
 
 and print_parameters state {value; _} =
   let {lpar; inside; rpar} = value in
@@ -475,6 +476,7 @@ and print_expr state = function
 | EPar     e -> print_par_expr state e
 | EFun     e -> print_fun_expr state e
 | ECodeInj e -> print_code_inj state e
+| EBlock   e -> print_block_expr state e
 
 and print_annot_expr state node =
   let {inside; _} : annot_expr par = node in
@@ -919,8 +921,7 @@ and pp_attr_decl state = pp_ne_injection pp_string state
 and pp_fun_decl state decl =
   let kwd_recursive = if decl.kwd_recursive = None then 0 else 1 in
   let ret_type = if decl.ret_type = None then 0 else 1 in
-  let block_with = if decl.block_with = None then 0 else 1 in
-  let arity = kwd_recursive + ret_type + block_with + 3 in
+  let arity = kwd_recursive + ret_type + 3 in
   let index = 0 in
   let index =
     match decl.kwd_recursive with
@@ -945,15 +946,6 @@ and pp_fun_decl state decl =
        pp_node state "<return type>";
        pp_type_expr (state#pad 1 0) t_expr;
        index+1 in
-  let index =
-    match decl.block_with with
-      None -> index
-    | Some (block,_) ->
-        let statements = block.value.statements in
-        let state = state#pad arity index in
-        pp_node state "<body>";
-        pp_statements state statements;
-        index+1 in
   let () =
     let state = state#pad arity index in
     pp_node state "<return>";
@@ -1051,15 +1043,27 @@ and pp_fun_expr state (expr: fun_expr) =
     pp_expr (state#pad 1 0) expr.return
   in ()
 
-and pp_code_inj state rc =
+and pp_code_inj state node =
   let () =
     let state = state#pad 2 0 in
     pp_node state "<language>";
-    pp_string (state#pad 1 0) rc.language.value in
+    pp_string (state#pad 1 0) node.language.value in
   let () =
     let state = state#pad 2 1 in
     pp_node state "<code>";
-    pp_expr (state#pad 1 0) rc.code
+    pp_expr (state#pad 1 0) node.code
+  in ()
+
+and pp_block_expr state node =
+  let {block; expr; _} : block_with = node in
+  let () =
+    let state = state#pad 2 0 in
+    pp_node state "<block>";
+    pp_statements state block.value.statements in
+  let () =
+    let state = state#pad 2 1 in
+    pp_node state "<expr>";
+    pp_expr (state#pad 1 0) expr
   in ()
 
 and pp_parameters state {value; _} =
@@ -1548,6 +1552,9 @@ and pp_expr state = function
 | ECodeInj {value; region} ->
     pp_loc_node state "ECodeInj" region;
     pp_code_inj state value;
+| EBlock {value; region} ->
+    pp_loc_node state "EBlock" region;
+    pp_block_expr state value;
 
 and pp_list_expr state = function
   ECons {value; region} ->

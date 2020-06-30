@@ -10,19 +10,45 @@ module BlahBluh = struct
   type 'state generic_continue_fold = ('state generic_continue_fold_node) StringMap.t;;
 end
 
-module Adt_info (M : sig type ('in_state , 'out_state , 'adt_info_node_instance_info) fold_config end) = struct
+module Adt_info (M : sig type ('in_state , 'out_state , 'adt_info_node_instance_info) fold_config;; type whatever;; type make_poly;; end) = struct
   type kind =
-  | Record
-  | Variant
-  | Poly of string
+  | RecordType of record_type
+  | VariantType of variant_type
+  | PolyType of poly_type
 
-  type ('in_state , 'out_state) record_instance = {
-    fields : ('in_state , 'out_state) ctor_or_field_instance list;
+  and ctor_or_field =
+    {
+      name : string;
+      is_builtin : bool;
+      type_ : string;
+    }
+
+  and record_type = {
+    fields : ctor_or_field list;
+    make_record : (string , M.whatever) RedBlackTrees.PolyMap.t -> M.whatever option
+  }
+
+  and ('in_state , 'out_state) record_instance = {
+    field_instances : ('in_state , 'out_state) ctor_or_field_instance list;
+  }
+
+  and variant_type = {
+    constructors : constructor_type list;
+  }
+
+  and constructor_type = {
+    ctor : ctor_or_field;
+    make_ctor : M.whatever -> M.whatever option;
   }
 
   and ('in_state , 'out_state) constructor_instance = {
     constructor : ('in_state , 'out_state) ctor_or_field_instance ;
     variant : ctor_or_field list
+  }
+
+  and poly_type = {
+    poly_name : string;
+    make_poly : M.make_poly;
   }
 
   and ('in_state , 'out_state) poly_instance = {
@@ -41,13 +67,6 @@ module Adt_info (M : sig type ('in_state , 'out_state , 'adt_info_node_instance_
     instance_kind : ('in_state , 'out_state) kind_instance;
   }
 
-  and ctor_or_field =
-    {
-      name : string;
-      is_builtin : bool;
-      type_ : string;
-    }
-
   and ('in_state , 'out_state) ctor_or_field_instance =
     {
       cf : ctor_or_field;
@@ -59,11 +78,10 @@ module Adt_info (M : sig type ('in_state , 'out_state , 'adt_info_node_instance_
     {
       kind : kind;
       declaration_name : string;
-      ctors_or_fields : ctor_or_field list;
     }
 
   (* TODO: rename things a bit in this file. *)
-  and adt = node list
+  and adt = (string, node) RedBlackTrees.PolyMap.t
   and ('in_state , 'out_state) node_instance_info = {
     adt           : adt ;
     node_instance : ('in_state , 'out_state) instance ;

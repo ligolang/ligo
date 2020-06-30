@@ -96,9 +96,9 @@ module Substitution = struct
       | Ast_core.T_constant constant ->
          ok @@ Ast_core.T_constant constant
 
-    and s_abstr_type_expression : (Ast_core.type_expression,_) w = fun ~substs {type_content;location;type_meta} ->
-      let%bind type_content = s_abstr_type_content ~substs type_content in
-      ok @@ Ast_core.{type_content;location;type_meta}
+    and s_abstr_type_expression : (Ast_core.type_expression,_) w = fun ~substs {content;sugar;location} ->
+      let%bind content = s_abstr_type_content ~substs content in
+      ok @@ (Ast_core.{content;sugar;location} : Ast_core.type_expression)
 
     and s_type_expression : (T.type_expression,_) w = fun ~substs { type_content; location; type_meta } ->
       let%bind type_content = s_type_content ~substs type_content in
