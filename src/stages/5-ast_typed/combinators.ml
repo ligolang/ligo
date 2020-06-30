@@ -335,7 +335,7 @@ let get_a_record_accessor = fun t ->
 let get_declaration_by_name : program -> string -> declaration option = fun p name ->
   let aux : declaration -> bool = fun declaration ->
     match declaration with
-    | Declaration_constant { binder ; expr=_ ; inline=_ } -> binder = Var.of_name name
+    | Declaration_constant { binder ; expr=_ ; inline=_ } -> binder.wrap_content = Var.of_name name
     | Declaration_type _ -> false
   in
   List.find_opt aux @@ List.map Location.unwrap p

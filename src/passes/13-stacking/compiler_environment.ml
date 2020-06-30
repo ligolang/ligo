@@ -31,8 +31,9 @@ let pack_closure : environment -> selector -> (michelson, stacking_error) result
   let e_lst =
     let e_lst = Environment.to_list e in
     let aux selector (s , _) =
-      match List.mem ~compare:Var.compare s selector with
-      | true -> List.remove_element ~compare:Var.compare s selector , true
+      let var_compare = fun (a:var_name) (b:var_name) -> Var.compare a.wrap_content b.wrap_content in
+      match List.mem ~compare:var_compare s selector with
+      | true -> List.remove_element ~compare:var_compare s selector , true
       | false -> selector , false in
     let e_lst' = List.fold_map_right aux lst e_lst in
     let e_lst'' = List.combine e_lst e_lst' in

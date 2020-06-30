@@ -226,7 +226,7 @@ and translate_expression (expr:expression) (env:environment) : (michelson , stac
     )
   | E_application (f , arg) -> (
       trace_strong (corner_case ~loc:__LOC__ "Compiling quote application") @@
-      let%bind f = translate_expression f (Environment.add (Var.fresh (), arg.type_expression) env) in
+      let%bind f = translate_expression f (Environment.add (Location.wrap @@ Var.fresh (), arg.type_expression) env) in
       let%bind arg = translate_expression arg env in
       return @@ seq [
         arg ;
@@ -256,7 +256,7 @@ and translate_expression (expr:expression) (env:environment) : (michelson , stac
             PP.expression expr
             Michelson.pp expr_code
             PP.environment env ;
-          let env = Environment.add (Var.fresh (), expr.type_expression) env in
+          let env = Environment.add (Location.wrap @@ Var.fresh (), expr.type_expression) env in
           let code = code @ [expr_code] in
           ok (code, env) in
         bind_fold_right_list aux ([], env) lst in
@@ -401,7 +401,7 @@ and translate_expression (expr:expression) (env:environment) : (michelson , stac
       let%bind collection' =
         translate_expression
           collection
-          (Environment.add (Var.fresh (), initial.type_expression) env) in
+          (Environment.add (Location.wrap @@ Var.fresh (), initial.type_expression) env) in
       let%bind initial' = translate_expression initial env in
       let%bind body' = translate_expression body (Environment.add v env) in
       let code = seq [
@@ -417,7 +417,7 @@ and translate_expression (expr:expression) (env:environment) : (michelson , stac
   | E_record_update (record, path, expr) -> (
     let%bind record' = translate_expression record env in
 
-    let record_var = Var.fresh () in
+    let record_var = Location.wrap @@ Var.fresh () in
     let env' = Environment.add (record_var, record.type_expression) env in
     let%bind expr' = translate_expression expr env' in
     let modify_code =

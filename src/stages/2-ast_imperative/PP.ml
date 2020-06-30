@@ -26,7 +26,7 @@ let record_sep value sep ppf (m : 'a label_map) =
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
 let expression_variable ppf (ev : expression_variable) : unit =
-  fprintf ppf "%a" Var.pp ev
+  fprintf ppf "%a" Var.pp ev.wrap_content
 
 let rec type_expression' :
         (formatter -> type_expression -> unit)

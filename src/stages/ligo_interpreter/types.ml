@@ -4,7 +4,7 @@ include Ast_typed.Types
 module Env = Map.Make(
   struct
     type t = expression_variable
-    let compare a b = Var.compare a b
+    let compare (a:expression_variable) (b:expression_variable) = Var.compare a.wrap_content b.wrap_content
   end
 )
 

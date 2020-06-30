@@ -8,7 +8,7 @@ module Free_variables = struct
   let singleton : expression_variable -> bindings = fun s -> [ s ]
   let mem_count : expression_variable -> bindings -> int =
     fun x fvs ->
-    List.length (List.filter (Var.equal x) fvs)
+    List.length (List.filter (fun (a:expression_variable) -> Var.equal x.wrap_content a.wrap_content) fvs)
   let union : bindings -> bindings -> bindings = (@)
   let unions : bindings list -> bindings = List.concat
   let empty : bindings = []
@@ -98,8 +98,8 @@ end
 let get_entry (lst : program) (name : string) : (expression * int) option =
   let entry_expression =
     let aux x =
-      let (((decl_name , _, decl_expr) , _)) = x in
-      if (Var.equal decl_name (Var.of_name name))
+      let ((((decl_name:expression_variable) , _, decl_expr) , _)) = x in
+      if (Var.equal decl_name.wrap_content (Var.of_name name))
       then Some decl_expr
       else None
     in
@@ -109,8 +109,8 @@ let get_entry (lst : program) (name : string) : (expression * int) option =
     | Some exp ->
       let entry_index =
         let aux x =
-          let (((decl_name , _, _) , _)) = x in
-          Var.equal decl_name (Var.of_name name)
+          let ((((decl_name:expression_variable) , _, _) , _)) = x in
+          Var.equal decl_name.wrap_content (Var.of_name name)
         in
         (List.length lst) - (List.find_index aux (List.rev lst)) - 1
       in

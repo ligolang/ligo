@@ -258,7 +258,7 @@ and type_operator :
 (* end include Stage_common.PP *)
 
 let expression_variable ppf (ev : expression_variable) : unit =
-  fprintf ppf "%a" Var.pp ev
+  fprintf ppf "%a" Var.pp ev.wrap_content
 
 
 let rec expression ppf (e : expression) =

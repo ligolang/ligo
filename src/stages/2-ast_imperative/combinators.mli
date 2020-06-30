@@ -87,21 +87,21 @@ val e_variable_ez : ?loc:Location.t -> string -> expression
 val e_application : ?loc:Location.t -> expression -> expression -> expression
 val e_lambda : ?loc:Location.t -> expression_variable -> type_expression option -> type_expression option -> expression -> expression
 val e_recursive : ?loc:Location.t -> expression_variable -> type_expression -> lambda -> expression
-val e_recursive_ez : ?loc:Location.t -> string -> type_expression -> lambda -> expression
+(* val e_recursive_ez : ?loc:Location.t -> string -> type_expression -> lambda -> expression *)
 val e_let_in : ?loc:Location.t -> ( expression_variable * type_expression option ) -> bool -> expression -> expression -> expression
-val e_let_in_ez : ?loc:Location.t -> string -> type_expression option -> bool -> expression -> expression -> expression
+(* val e_let_in_ez : ?loc:Location.t -> string -> type_expression option -> bool -> expression -> expression -> expression *)
 val e_raw_code : ?loc:Location.t -> string -> expression -> expression
 
 val e_constructor : ?loc:Location.t -> string -> expression -> expression
 val e_matching : ?loc:Location.t -> expression -> matching_expr -> expression
 
-val ez_match_variant : ((string * string ) * expression) list -> matching_expr
+(* val ez_match_variant : ((string * string ) * expression) list -> matching_expr *)
 val e_matching_variant : ?loc:Location.t -> expression -> ((constructor' * expression_variable) * expression) list -> expression
 val e_matching_record  : ?loc:Location.t -> expression -> (label * expression_variable) list -> type_expression list option -> expression -> expression
 val e_matching_tuple   : ?loc:Location.t -> expression -> expression_variable list -> type_expression list option -> expression -> expression
 val e_matching_variable: ?loc:Location.t -> expression -> expression_variable -> type_expression option -> expression -> expression
 
-val e_matching_tuple_ez: ?loc:Location.t -> expression -> string list -> type_expression list option -> expression -> expression
+(* val e_matching_tuple_ez: ?loc:Location.t -> expression -> string list -> type_expression list option -> expression -> expression *)
 
 val e_record     : ?loc:Location.t -> expr label_map -> expression
 val e_record_ez  : ?loc:Location.t -> ( string * expr ) list -> expression
@@ -129,8 +129,8 @@ val e_while  : ?loc:Location.t -> expression -> expression -> expression
 val e_for     : ?loc:Location.t -> expression_variable -> expression -> expression -> expression -> expression -> expression
 val e_for_each : ?loc:Location.t -> expression_variable * expression_variable option -> expression -> collect_type -> expression -> expression
 
-val e_for_ez  : ?loc:Location.t -> string -> expression -> expression -> expression -> expression -> expression
-val e_for_each_ez : ?loc:Location.t -> string * string option -> expression -> collect_type -> expression -> expression
+(* val e_for_ez  : ?loc:Location.t -> string -> expression -> expression -> expression -> expression -> expression
+val e_for_each_ez : ?loc:Location.t -> string * string option -> expression -> collect_type -> expression -> expression *)
 
 val make_option_typed : ?loc:Location.t -> expression -> type_expression option -> expression
 

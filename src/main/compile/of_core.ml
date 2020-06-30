@@ -22,7 +22,7 @@ let compile_expression ?(env = Ast_typed.Environment.empty) ~(state : Typesystem
   ok @@ (ae_typed',state)
 
 let apply (entry_point : string) (param : Ast_core.expression) : (Ast_core.expression , _) result =
-  let name = Var.of_name entry_point in
+  let name = Location.wrap @@ Var.of_name entry_point in
   let entry_point_var : Ast_core.expression =
     { content  = Ast_core.E_variable name ;
       sugar    = None ;
@@ -39,6 +39,6 @@ let list_declarations (program : Ast_core.program) : string list =
       let open Location in
       let open Ast_core in
       match el.wrap_content with
-      | Declaration_constant (var,_,_,_) -> (Var.to_name var)::prev
+      | Declaration_constant (var,_,_,_) -> (Var.to_name var.wrap_content)::prev
       | _ -> prev) 
     [] program
