@@ -86,20 +86,19 @@ let%expect_test _ =
   run_ligo_good [ "get-scope" ; gs "rec.mligo" ; "--format=dev" ] ;
   [%expect {|
     Scopes:
-    [ k5 j4 i3 generated2 c1 a0 ] in file "rec.mligo", line 6, characters 4-11
-    [ j4 i3 generated2 c1 a0 ] in file "rec.mligo", line 5, character 4 to line 6, character 11
-    [ i3 generated2 c1 a0 ] in file "rec.mligo", line 4, characters 36-49
-    [ generated2 c1 a0 ] in file "rec.mligo", line 4, characters 36-49
+    [ k4 j3 i2 c1 a0 ] in file "rec.mligo", line 6, characters 4-11
+    [ j3 i2 c1 a0 ] in file "rec.mligo", line 5, character 4 to line 6, character 11
+    [ i2 c1 a0 ] in file "rec.mligo", line 4, characters 36-49
+    [ c1 a0 ] in file "rec.mligo", line 4, characters 36-49
     [ c1 a0 ]
     [ ] in file "rec.mligo", line 1, characters 0-9
 
     Variable definitions:
-    (k5 -> k) in file "rec.mligo", line 5, characters 12-21
-    (j4 -> j)
-    (i3 -> i)
-    (generated2 -> generated) in file "rec.mligo", line 4, characters 36-49
+    (k4 -> k) in file "rec.mligo", line 5, characters 12-21
+    (j3 -> j)
+    (i2 -> i)
     (c1 -> c) in file "rec.mligo", line 4, character 2 to line 8, character 9
-    (b6 -> b) in file "rec.mligo", line 3, character 0 to line 8, character 9
+    (b5 -> b) in file "rec.mligo", line 3, character 0 to line 8, character 9
     (a0 -> a) in file "rec.mligo", line 1, characters 0-9
     Type definitions: |} ] ;
 
