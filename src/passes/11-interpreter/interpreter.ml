@@ -380,7 +380,7 @@ let eval : Ast_typed.program -> (string , _) result =
            ok (V_Failure s)
               (*TODO This TRY-CATCH is here until we properly implement effects*)
        in
-    let pp' = pp^"\n val "^(Var.to_name binder)^" = "^(Ligo_interpreter.PP.pp_value v) in
+    let pp' = pp^"\n val "^(Var.to_name binder.wrap_content)^" = "^(Ligo_interpreter.PP.pp_value v) in
     let top_env' = Env.extend top_env (binder, v) in
     ok @@ (pp',top_env')
     | Ast_typed.Declaration_type _ ->

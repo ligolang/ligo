@@ -181,7 +181,7 @@ let eta : bool ref -> expression -> expression =
                                                   { content = E_constant {cons_name = C_CDR; arguments = [ e2 ]} ; type_expression = _ }]} ->
     (match (e1.content, e2.content) with
      | E_variable x1, E_variable x2 ->
-       if Var.equal x1 x2
+       if Var.equal x1.wrap_content x2.wrap_content
        then
          (changed := true;
           { e with content = e1.content })
