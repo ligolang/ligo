@@ -100,13 +100,13 @@ let e_binop ?loc name a b  = make_e ?loc @@ E_constant {cons_name = name ; argum
 
 let e_constant ?loc name lst = make_e ?loc @@ E_constant {cons_name=name ; arguments = lst}
 let e_variable ?loc v = make_e ?loc @@ E_variable v
-let e_variable_ez ?loc v = e_variable ?loc @@ Var.of_name v
+let e_variable_ez ?loc v = e_variable ?loc @@ Location.wrap ?loc (Var.of_name v)
 let e_application ?loc a b = make_e ?loc @@ E_application {lamb=a ; args=b}
 let e_lambda ?loc binder input_type output_type result : expression = make_e ?loc @@ E_lambda {binder; input_type; output_type; result}
 let e_recursive ?loc fun_name fun_type lambda = make_e ?loc @@ E_recursive {fun_name; fun_type; lambda}
-let e_recursive_ez ?loc fun_name fun_type lambda = e_recursive ?loc (Var.of_name fun_name) fun_type lambda
+(* let e_recursive_ez ?loc fun_name fun_type lambda = e_recursive ?loc (Var.of_name fun_name) fun_type lambda *)
 let e_let_in ?loc let_binder inline rhs let_result = make_e ?loc @@ E_let_in { let_binder; rhs ; let_result; inline }
-let e_let_in_ez ?loc binder ascr inline rhs let_result = e_let_in ?loc (Var.of_name binder, ascr) inline rhs let_result
+(* let e_let_in_ez ?loc binder ascr inline rhs let_result = e_let_in ?loc (Var.of_name binder, ascr) inline rhs let_result *)
 let e_raw_code ?loc language code = make_e ?loc @@ E_raw_code {language; code}
 
 let e_constructor ?loc s a : expression = make_e ?loc @@ E_constructor { constructor = Constructor s; element = a}
@@ -135,8 +135,8 @@ let e_while ?loc condition body = make_e ?loc @@ E_while {condition; body}
 let e_for ?loc binder start final increment body = make_e ?loc @@ E_for {binder;start;final;increment;body}
 let e_for_each ?loc binder collection collection_type body = make_e ?loc @@ E_for_each {binder;collection;collection_type;body}
 
-let e_for_ez ?loc binder start final increment body = e_for ?loc (Var.of_name binder) start final increment body
-let e_for_each_ez ?loc (b,bo) collection collection_type body = e_for_each ?loc (Var.of_name b, Option.map Var.of_name bo) collection collection_type body
+(* let e_for_ez ?loc binder start final increment body = e_for ?loc (Var.of_name binder) start final increment body *)
+(* let e_for_each_ez ?loc (b,bo) collection collection_type body = e_for_each ?loc (Var.of_name b, Option.map Var.of_name bo) collection collection_type body *)
 
 let e_bool ?loc   b : expression = e_constructor ?loc (string_of_bool b) (e_unit ())
 
@@ -145,13 +145,13 @@ let e_matching_record   ?loc m lst ty_opt expr = e_matching ?loc m @@ Match_reco
 let e_matching_tuple    ?loc m lst ty_opt expr = e_matching ?loc m @@ Match_tuple    (lst,ty_opt, expr)
 let e_matching_variable ?loc m var ty_opt expr = e_matching ?loc m @@ Match_variable (var,ty_opt, expr)
 
-let e_matching_tuple_ez ?loc m lst ty_opt expr =
+(* let e_matching_tuple_ez ?loc m lst ty_opt expr =
   let lst = List.map Var.of_name lst in
-  e_matching_tuple ?loc m lst ty_opt expr
+  e_matching_tuple ?loc m lst ty_opt expr *)
 
-let ez_match_variant (lst : ((string * string) * 'a) list) =
+(* let ez_match_variant (lst : ((string * string) * 'a) list) =
   let lst = List.map (fun ((c,n),a) -> ((Constructor c, Var.of_name n), a) ) lst in
-  Match_variant lst
+  Match_variant lst *)
 
 let e_record ?loc map = make_e ?loc @@ E_record map
 let e_record_ez ?loc (lst : (string * expr) list) : expression =
@@ -181,7 +181,7 @@ let e_typed_set ?loc lst k = e_annotation ?loc (e_set lst) (t_set k)
 
 
 let e_assign ?loc variable access_path expression = make_e ?loc @@ E_assign {variable;access_path;expression} 
-let e_assign_ez ?loc variable access_path expression = e_assign ?loc (Var.of_name variable) access_path expression
+let e_assign_ez ?loc variable access_path expression = e_assign ?loc (Location.wrap ?loc @@ Var.of_name variable) access_path expression
 
 
 let get_e_accessor = fun t ->

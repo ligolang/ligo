@@ -99,7 +99,7 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
 
 let get_e_variable : AST.expression -> _ result = fun expr ->
   match expr.expression_content with 
-    E_variable var -> ok @@ var
+    E_variable var -> ok @@ var.wrap_content
   | _ -> failwith @@ 
     Format.asprintf "%a should be a variable expression"
     AST.PP.expression expr
@@ -186,7 +186,7 @@ and decompile_eos : eos -> AST.expression -> ((CST.statement List.Ne.t option)* 
   let return_inst inst = return_stat_ez @@ CST.Instr inst in
   match expr.expression_content with
     E_variable name -> 
-    let var = decompile_variable name in
+    let var = decompile_variable name.wrap_content in
     return_expr @@ CST.EVar (var)
   | E_constant {cons_name; arguments} ->
     let expr = CST.EVar (wrap @@ Predefined.constant_to_string cons_name) in
@@ -255,7 +255,8 @@ and decompile_eos : eos -> AST.expression -> ((CST.statement List.Ne.t option)* 
     return_expr_with_par @@ CST.EFun (wrap @@ fun_expr)
   | E_recursive _ ->
     failwith "corner case : annonymous recursive function"
-  | E_let_in {let_binder;rhs={expression_content=E_update {record={expression_content=E_variable var;_};path;update};_};let_result;inline=_} when Var.equal (fst let_binder) var ->
+  | E_let_in {let_binder;rhs={expression_content=E_update {record={expression_content=E_variable var;_};path;update};_};let_result;inline=_}
+      when Var.equal (fst let_binder).wrap_content var.wrap_content ->
     let%bind lhs = (match List.rev path with
       Access_map e :: path ->
       let%bind path  = decompile_to_path var @@ List.rev path in
@@ -356,7 +357,7 @@ and decompile_eos : eos -> AST.expression -> ((CST.statement List.Ne.t option)* 
       Access_record var::path -> ok @@ (var,path)
     | _ -> failwith "Impossible case %a"
     in
-    let%bind field_path = decompile_to_path (Var.of_name var) path in
+    let%bind field_path = decompile_to_path (Location.wrap @@ Var.of_name var) path in
     let%bind field_expr = decompile_expression update in
     let field_assign : CST.field_path_assignment = {field_path;assignment=rg;field_expr} in
     let updates = updates.value.ne_elements in
@@ -469,7 +470,7 @@ and decompile_eos : eos -> AST.expression -> ((CST.statement List.Ne.t option)* 
     let assign : CST.assignment = {lhs;assign=rg;rhs} in
     return_inst @@ Assign (wrap assign)
   | E_for {binder;start;final;increment;body} ->
-    let binder     = decompile_variable binder in
+    let binder     = decompile_variable binder.wrap_content in
     let%bind init  = decompile_expression start in
     let%bind bound = decompile_expression final in
     let%bind step  = decompile_expression increment in
@@ -479,8 +480,8 @@ and decompile_eos : eos -> AST.expression -> ((CST.statement List.Ne.t option)* 
     let fl : CST.for_int = {kwd_for=rg;binder;assign=rg;init;kwd_to=rg;bound;step;block} in
     return_inst @@ CST.Loop (For (ForInt (wrap fl)))
   | E_for_each {binder;collection;collection_type;body} ->
-    let var = decompile_variable @@ fst binder in
-    let bind_to = Option.map (fun x -> (rg,decompile_variable x)) @@ snd binder in
+    let var = decompile_variable @@ (fst binder).wrap_content in
+    let bind_to = Option.map (fun (x:AST.expression_variable) -> (rg,decompile_variable x.wrap_content)) @@ snd binder in
     let%bind expr = decompile_expression collection in
     let collection = match collection_type with 
       Map -> CST.Map rg | Set -> Set rg | List -> List rg in
@@ -505,7 +506,7 @@ and decompile_if_clause : AST.expression -> (CST.if_clause, _) result = fun e ->
     ok @@ CST.ClauseBlock (ShortBlock (wrap @@ braces @@ clause))
 
 and decompile_to_data_decl : (AST.expression_variable * AST.type_expression option) -> AST.expression -> bool -> (CST.data_decl, _) result = fun (name,ty_opt) expr inline ->
-  let name = decompile_variable name in
+  let name = decompile_variable name.wrap_content in
   let%bind const_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) ty_opt in
   let attributes : CST.attr_decl option = match inline with 
     true -> Some (wrap @@ ne_inject (NEInjAttr rg) @@ (wrap @@ "inline",[]))
@@ -529,7 +530,7 @@ and decompile_to_data_decl : (AST.expression_variable * AST.type_expression opti
 
 and decompile_to_lhs : AST.expression_variable -> AST.access list -> (CST.lhs, _) result = fun var access ->
   match List.rev access with
-    [] -> ok @@ (CST.Path (Name (decompile_variable var)) : CST.lhs)
+    [] -> ok @@ (CST.Path (Name (decompile_variable var.wrap_content)) : CST.lhs)
   | hd :: tl -> 
     match hd with 
     | AST.Access_map e ->
@@ -542,7 +543,7 @@ and decompile_to_lhs : AST.expression_variable -> AST.access list -> (CST.lhs, _
       ok @@ (CST.Path (path) : CST.lhs)
 
 and decompile_to_path : AST.expression_variable -> AST.access list -> (CST.path, _) result = fun var access ->
-  let struct_name = decompile_variable var in
+  let struct_name = decompile_variable var.wrap_content in
   match access with
     [] -> ok @@ CST.Name struct_name
   | lst ->
@@ -559,7 +560,7 @@ and decompile_to_selection : AST.access -> (CST.selection, _) result = fun acces
     "Can't decompile access_map to selection"
 
 and decompile_lambda : AST.lambda -> _ = fun {binder;input_type;output_type;result} ->
-    let var = decompile_variable binder in
+    let var = decompile_variable binder.wrap_content in
     let%bind param_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) input_type in
     let param_const : CST.param_const = {kwd_const=rg;var;param_type} in
     let param_decl : CST.param_decl = ParamConst (wrap param_const) in
@@ -573,12 +574,12 @@ and decompile_matching_expr : type a.(AST.expr ->(a,_) result) -> AST.matching_e
 fun f m ->
   let%bind cases = match m with
     Match_variable (var, _ty_opt, expr) ->
-    let pattern : CST.pattern = PVar (decompile_variable var) in 
+    let pattern : CST.pattern = PVar (decompile_variable var.wrap_content) in 
     let%bind rhs = f expr in
     let case : _ CST.case_clause = {pattern; arrow=rg; rhs}in
     ok @@ [wrap case]
   | Match_tuple (lst, _ty_opt, expr) ->
-    let aux var = CST.PVar (decompile_variable var) in
+    let aux (var:AST.expression_variable) = CST.PVar (decompile_variable var.wrap_content) in
     let%bind tuple = list_to_nsepseq @@ List.map aux lst in
     let pattern : CST.pattern = PTuple (wrap @@ par @@ tuple) in 
     let%bind rhs = f expr in
@@ -589,13 +590,13 @@ fun f m ->
     let%bind rhs = f match_none in
     let none_case : _ CST.case_clause = {pattern=PConstr (PNone rg);arrow=rg; rhs} in
     let%bind rhs = f @@ snd match_some in
-    let var = wrap @@ par @@ CST.PVar (decompile_variable @@ fst match_some)in
+    let var = wrap @@ par @@ CST.PVar (decompile_variable @@ (fst match_some).wrap_content)in
     let some_case : _ CST.case_clause = {pattern=PConstr (PSomeApp (wrap (rg,var)));arrow=rg; rhs} in
     ok @@ [wrap some_case;wrap none_case]
   | Match_list {match_nil; match_cons} ->
     let (hd,tl,expr) = match_cons in
-    let hd = CST.PVar (decompile_variable hd) in
-    let tl = CST.PVar (decompile_variable tl) in
+    let hd = CST.PVar (decompile_variable hd.wrap_content) in
+    let tl = CST.PVar (decompile_variable tl.wrap_content) in
     let cons = (hd,[rg,tl]) in
     let%bind rhs = f @@ expr in
     let cons_case : _ CST.case_clause = {pattern=PList (PCons (wrap cons));arrow=rg; rhs} in
@@ -603,10 +604,10 @@ fun f m ->
     let nil_case : _ CST.case_clause = {pattern=PList (PNil rg);arrow=rg; rhs} in
     ok @@ [wrap cons_case; wrap nil_case]
   | Match_variant lst ->
-    let aux ((c,v),e) = 
+    let aux ((c,(v:AST.expression_variable)),e) = 
       let AST.Constructor c = c in
       let constr = wrap @@ c in
-      let var : CST.pattern = PVar (decompile_variable v) in
+      let var : CST.pattern = PVar (decompile_variable v.wrap_content) in
       let tuple = wrap @@ par @@ (var,[]) in
       let pattern : CST.pattern = PConstr (PConstrApp (wrap (constr, Some tuple))) in
       let%bind rhs = f e in
@@ -637,7 +638,7 @@ let decompile_declaration : AST.declaration Location.wrap -> (CST.declaration, _
         Some attr_decl
     | false -> None
     in
-    let name = decompile_variable var in
+    let name = decompile_variable var.wrap_content in
     let fun_name = name in
     match expr.expression_content with
       E_lambda lambda ->

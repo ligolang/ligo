@@ -20,8 +20,8 @@ let rec replace : expression -> var_name -> var_name -> expression =
   fun e x y ->
   let replace e = replace e x y in
   let return content = { e with content } in
-  let replace_var v =
-    if Var.equal v x
+  let replace_var (v:var_name) =
+    if Var.equal v.wrap_content x.wrap_content
     then y
     else v in
   match e.content with
@@ -103,16 +103,16 @@ let rec replace : expression -> var_name -> var_name -> expression =
 let rec subst_expression : body:expression -> x:var_name -> expr:expression -> expression =
   fun ~body ~x ~expr ->
   let self body = subst_expression ~body ~x ~expr in
-  let subst_binder y expr' =
+  let subst_binder (y:var_name) expr' =
     (* if x is shadowed, binder doesn't change *)
-    if Var.equal x y
+    if Var.equal x.wrap_content y.wrap_content
     then (y, expr')
     (* else, if no capture, subst in binder *)
     else if not (Free_variables.mem y (Free_variables.expression [] expr))
     then (y, self expr')
     (* else, avoid capture and subst in binder *)
     else
-      let fresh = Var.fresh_like y in
+      let fresh = Location.wrap @@ Var.fresh_like y.wrap_content in
       let new_body = replace expr' y fresh in
       (fresh, self new_body) in
   (* hack to avoid reimplementing subst_binder for 2-ary binder in E_if_cons:
@@ -128,7 +128,7 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
   let return_id = body in
   match body.content with
   | E_variable x' ->
-     if x' = x
+     if Location.equal_content ~equal:Var.equal x' x
      then expr
      else return_id
   | E_closure { binder; body } -> (
@@ -202,16 +202,16 @@ let%expect_test _ =
   let dummy_type = Expression.make_t @@ T_base TB_unit in
   let wrap e = Expression.make e dummy_type in
 
-  let show_subst ~body ~x ~expr =
+  let show_subst ~body ~(x:var_name) ~expr =
     Format.printf "(%a)[%a := %a] =@ %a"
       PP.expression body
-      Var.pp x
+      Var.pp x.wrap_content
       PP.expression expr
       PP.expression (subst_expression ~body ~x ~expr) in
 
-  let x = Var.of_name "x" in
-  let y = Var.of_name "y" in
-  let z = Var.of_name "z" in
+  let x = Location.wrap @@ Var.of_name "x" in
+  let y = Location.wrap @@ Var.of_name "y" in
+  let z = Location.wrap @@ Var.of_name "z" in
 
   let var x = wrap (E_variable x) in
   let app f x = wrap (E_application (f, x)) in
@@ -411,7 +411,7 @@ let%expect_test _ =
 
   (* old bug *)
   Var.reset_counter () ;
-  let y0 = Var.fresh ~name:"y" () in
+  let y0 = Location.wrap @@ Var.fresh ~name:"y" () in
   show_subst
     ~body:(lam y (lam y0 (app (var x) (app (var y) (var y0)))))
     ~x:x

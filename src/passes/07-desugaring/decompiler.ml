@@ -66,7 +66,9 @@ let rec decompile_expression : O.expression -> (I.expression, desugaring_error) 
       let%bind fun_type = decompile_type_expression fun_type in
       let%bind lambda = decompile_lambda lambda in
       return @@ I.E_recursive {fun_name;fun_type;lambda}
-    | O.E_let_in {let_binder;inline=false;rhs=expr1;let_result=expr2} when let_binder = (Var.of_name "_", Some (O.t_unit ())) ->
+    | O.E_let_in {let_binder = (var, ty);inline=false;rhs=expr1;let_result=expr2}
+      when Var.equal var.wrap_content (Var.of_name "_")
+           && Pervasives.(=) ty (Some (O.t_unit ())) ->
       let%bind expr1 = decompile_expression expr1 in
       let%bind expr2 = decompile_expression expr2 in
       return @@ I.E_sequence {expr1;expr2}

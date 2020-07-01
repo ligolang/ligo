@@ -54,7 +54,7 @@ let t_contract ?loc ?sugar contract     : type_expression = make_t ?loc ?sugar @
 
 let make_e ?(loc = Location.generated) ?sugar content = {content; sugar; location=loc }
 
-let e_var       ?loc ?sugar n  : expression = make_e ?loc ?sugar @@ E_variable (Var.of_name n)
+let e_var       ?loc ?sugar n  : expression = make_e ?loc ?sugar @@ E_variable (Location.wrap ?loc (Var.of_name n))
 let e_literal   ?loc ?sugar l  : expression = make_e ?loc ?sugar @@ E_literal l
 let e_unit      ?loc ?sugar () : expression = make_e ?loc ?sugar @@ E_literal (Literal_unit)
 let e_int       ?loc ?sugar n  : expression = make_e ?loc ?sugar @@ E_literal (Literal_int n)
