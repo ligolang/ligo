@@ -146,7 +146,7 @@ module M = struct
     | (Bool a, Bool b)                               -> (Pervasives.compare : bool -> bool -> int) a b
     | (Bytes a, Bytes b)                             -> Bytes.compare a b
     | (Constructor' a, Constructor' b)               -> String.compare a b
-    | (Expression_variable a, Expression_variable b) -> Var.compare a b
+    | (Expression_variable a, Expression_variable b) -> Var.compare a.wrap_content b.wrap_content
     | (Int a, Int b)                                 -> Int.compare a b
     | (Label' a, Label' b)                           -> String.compare a b
     | (Ligo_string a, Ligo_string b)                 -> Simple_utils.Ligo_string.compare a b

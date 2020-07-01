@@ -34,7 +34,7 @@ let rec pp_value : value -> string = function
 let pp_env : env -> unit = fun env ->
   let () = Format.printf "{ #elements : %i\n" @@ Env.cardinal env in
   let () = Env.iter (fun var v ->
-    Format.printf "\t%a -> %s\n" Var.pp var (pp_value v))
+    Format.printf "\t%a -> %s\n" Var.pp var.wrap_content (pp_value v))
   env in
   let () = Format.printf "\n}\n" in
   ()
