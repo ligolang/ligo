@@ -241,3 +241,36 @@ let%expect_test _ =
     (b#3 -> b) in file "application.mligo", line 3, characters 7-8
     (a#5 -> a) in file "application.mligo", line 1, characters 4-5
     Type definitions: |} ] ;
+
+  run_ligo_good [ "get-scope" ; gs "include.mligo" ; "--format=dev" ] ;
+  [%expect {|
+    Scopes:
+    [ x#6 b#5 a#0 ] in file "include.mligo", line 5, characters 12-13
+    [ x#6 b#5 a#0 ] in file "include.mligo", line 5, characters 8-9
+    [ b#5 a#0 ] in file "include.mligo", line 3, characters 0-9
+    [ d#4 c#1 a#0 ] in file "letin.mligo", line 10, characters 10-11
+    [ d#4 c#1 a#0 ] in file "letin.mligo", line 10, characters 6-7
+    [ d#4 c#1 a#0 ] in file "letin.mligo", line 10, characters 2-3
+    [ f#3 e#2 c#1 a#0 ] in file "letin.mligo", line 8, characters 16-17
+    [ f#3 e#2 c#1 a#0 ] in file "letin.mligo", line 8, characters 12-13
+    [ f#3 e#2 c#1 a#0 ] in file "letin.mligo", line 8, characters 8-9
+    [ f#3 e#2 c#1 a#0 ] in file "letin.mligo", line 8, characters 4-5
+    [ e#2 c#1 a#0 ] in file "letin.mligo", line 7, characters 20-21
+    [ e#2 c#1 a#0 ] in file "letin.mligo", line 7, characters 16-17
+    [ e#2 c#1 a#0 ] in file "letin.mligo", line 7, characters 12-13
+    [ c#1 a#0 ] in file "letin.mligo", line 6, characters 16-17
+    [ c#1 a#0 ] in file "letin.mligo", line 6, characters 12-13
+    [ a#0 ] in file "letin.mligo", line 4, characters 14-15
+    [ a#0 ] in file "letin.mligo", line 4, characters 10-11
+    [ ] in file "letin.mligo", line 1, characters 0-9
+
+    Variable definitions:
+    (y#7 -> y) in file "include.mligo", line 5, characters 4-5
+    (x#6 -> x) in file "include.mligo", line 3, characters 4-5
+    (f#3 -> f) in file "letin.mligo", line 7, characters 8-9
+    (e#2 -> e) in file "letin.mligo", line 6, characters 8-9
+    (d#4 -> d) in file "letin.mligo", line 5, characters 6-7
+    (c#1 -> c) in file "letin.mligo", line 4, characters 6-7
+    (b#5 -> b) in file "letin.mligo", line 3, characters 4-5
+    (a#0 -> a) in file "letin.mligo", line 1, characters 4-5
+    Type definitions: |} ] ;
