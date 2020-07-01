@@ -39,7 +39,10 @@ interactive_expr: BigMap LBRACKET With
 ## BigMap LBRACKET
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'big_map' creation.
+At this point one of the following is expected:
+  a binding; or
+  a closing bracket ']'.
 
 interactive_expr: BigMap Verbatim ARROW Bytes RBRACKET
 ##
@@ -69,7 +72,11 @@ interactive_expr: BigMap Verbatim ARROW Bytes RBRACKET
 ## In state 247, spurious reduction of production sep_or_term_list(binding,SEMI) -> nsepseq(binding,SEMI) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'big_map' creation.
+At this point one of the following is expected:
+  a semicolon ';',
+    followed by another binding; or 
+  the 'end' keyword.
 
 interactive_expr: BigMap With
 ##
@@ -84,7 +91,10 @@ interactive_expr: BigMap With
 ## BigMap
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'big_map' creation.
+One of the following is expected: 
+  a list of bindings; or 
+  the closing 'end' keyword.
 
 interactive_expr: C_Some With
 ##
@@ -96,7 +106,8 @@ interactive_expr: C_Some With
 ## C_Some
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'Some' constructor.
+At this point arguments wrapped in parentheses are expected.
 
 interactive_expr: Case Verbatim Of C_Some LPAR WILD With
 ##
@@ -108,7 +119,8 @@ interactive_expr: Case Verbatim Of C_Some LPAR WILD With
 ## LPAR core_pattern
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'Some' constructor.
+At this point a closing parenthesis ')' is expected.
 
 interactive_expr: Case Verbatim Of C_Some LPAR With
 ##
@@ -120,7 +132,8 @@ interactive_expr: Case Verbatim Of C_Some LPAR With
 ## LPAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'Some' constructor.
+At this point a pattern is expected.
 
 interactive_expr: Case Verbatim Of C_Some With
 ##
@@ -132,7 +145,8 @@ interactive_expr: Case Verbatim Of C_Some With
 ## C_Some
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'Some' constructor.
+At this point arguments are expected.
 
 interactive_expr: Case Verbatim Of Constr LPAR WILD With
 ##
@@ -145,7 +159,11 @@ interactive_expr: Case Verbatim Of Constr LPAR WILD With
 ## core_pattern
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed constructor.
+At this point one of the following is expected:
+  a comma ',',
+    followed by another pattern; or
+  a closing parenthesis ')'.
 
 interactive_expr: Case Verbatim Of Constr LPAR With
 ##
@@ -157,7 +175,8 @@ interactive_expr: Case Verbatim Of Constr LPAR With
 ## LPAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed constructor.
+At this point a pattern is expected.
 
 interactive_expr: Case Verbatim Of Constr With
 ##
@@ -182,7 +201,8 @@ interactive_expr: Case Verbatim Of LBRACKET VBAR Block
 ## Case expr Of LBRACKET option(VBAR)
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'case' expression.
+At this point an expression is expected.
 
 interactive_expr: Case Verbatim Of LBRACKET WILD ARROW Bytes End
 ##
@@ -224,7 +244,8 @@ interactive_expr: Case Verbatim Of LBRACKET With
 ## Case expr Of LBRACKET
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'case' expression.
+At this point an expression is expected.
 
 interactive_expr: Case Verbatim Of LPAR WILD COMMA With
 ##
@@ -236,7 +257,8 @@ interactive_expr: Case Verbatim Of LPAR WILD COMMA With
 ## core_pattern COMMA
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'case' expression.
+At this point a pattern is expected.
 
 interactive_expr: Case Verbatim Of LPAR WILD CONS Bytes ARROW
 ##
@@ -267,7 +289,8 @@ interactive_expr: Case Verbatim Of LPAR WILD CONS With
 ## core_pattern CONS
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'case' expression.
+At this point a pattern is expected.
 
 interactive_expr: Case Verbatim Of LPAR WILD With
 ##
@@ -281,7 +304,8 @@ interactive_expr: Case Verbatim Of LPAR WILD With
 ## core_pattern
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'case' expression.
+At this point a pattern is expected.
 
 interactive_expr: Case Verbatim Of LPAR With
 ##
@@ -294,7 +318,8 @@ interactive_expr: Case Verbatim Of LPAR With
 ## LPAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'case' expression.
+At this point a pattern is expected.
 
 interactive_expr: Case Verbatim Of List LBRACKET WILD End
 ##
@@ -313,7 +338,8 @@ interactive_expr: Case Verbatim Of List LBRACKET WILD End
 ## In state 313, spurious reduction of production sep_or_term_list(core_pattern,SEMI) -> nsepseq(core_pattern,SEMI) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'list' expression.
+At this point a pattern is expected.
 
 interactive_expr: Case Verbatim Of List LBRACKET With
 ##
@@ -326,7 +352,11 @@ interactive_expr: Case Verbatim Of List LBRACKET With
 ## List LBRACKET
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'list' expression.
+At this point a list of patterns is expected,
+  followed by a closing bracket ']'.
+
+A list cannot be used as a case pattern; only constructors are supported.
 
 interactive_expr: Case Verbatim Of List WILD RBRACKET
 ##
@@ -345,7 +375,10 @@ interactive_expr: Case Verbatim Of List WILD RBRACKET
 ## In state 313, spurious reduction of production sep_or_term_list(core_pattern,SEMI) -> nsepseq(core_pattern,SEMI) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'list' expression.
+At this point one of the following is expected:
+  a pattern; or
+  the 'end' keyword.
 
 interactive_expr: Case Verbatim Of List WILD SEMI WILD SEMI With
 ##
@@ -358,7 +391,8 @@ interactive_expr: Case Verbatim Of List WILD SEMI WILD SEMI With
 ## core_pattern SEMI
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'case' expression.
+At this point a pattern is expected.
 
 interactive_expr: Case Verbatim Of List WILD SEMI WILD With
 ##
@@ -372,7 +406,11 @@ interactive_expr: Case Verbatim Of List WILD SEMI WILD With
 ## core_pattern
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'case' expression.
+At this point one of the following is expected:
+  a semicolon ';', 
+    followed by a pattern; or
+  the closing 'end' keyword. 
 
 interactive_expr: Case Verbatim Of List WILD SEMI With
 ##
@@ -385,7 +423,8 @@ interactive_expr: Case Verbatim Of List WILD SEMI With
 ## core_pattern SEMI
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'case' expression.
+At this point a pattern is expected.
 
 interactive_expr: Case Verbatim Of List WILD With
 ##
@@ -399,7 +438,11 @@ interactive_expr: Case Verbatim Of List WILD With
 ## core_pattern
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'case' expression.
+At this point one of the following is expected:
+  a semicolon ';', 
+    followed by a pattern; or
+  the closing 'end' keyword. 
 
 interactive_expr: Case Verbatim Of List With
 ##
@@ -414,7 +457,10 @@ interactive_expr: Case Verbatim Of List With
 ## List
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'list' expression.
+At this point one of the following is expected:
+  a list of patterns; or
+  the closing 'end' keyword.
 
 interactive_expr: Case Verbatim Of VBAR Block
 ##
@@ -426,7 +472,8 @@ interactive_expr: Case Verbatim Of VBAR Block
 ## Case expr Of option(VBAR)
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'case' expression.
+At this point an expression is expected.
 
 interactive_expr: Case Verbatim Of WILD ARROW Bytes RBRACKET
 ##
@@ -456,7 +503,10 @@ interactive_expr: Case Verbatim Of WILD ARROW Bytes RBRACKET
 ## In state 327, spurious reduction of production cases(expr) -> nsepseq(case_clause(expr),VBAR) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'case' expression.
+At this point one of the following is expected:
+  another pattern, in the form of an expression; or
+  the closing 'end' keyword.
 
 interactive_expr: Case Verbatim Of WILD ARROW Bytes Type
 ##
@@ -485,7 +535,10 @@ interactive_expr: Case Verbatim Of WILD ARROW Bytes Type
 ## In state 326, spurious reduction of production case_clause(expr) -> pattern ARROW expr 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'case' expression.
+At this point one of the following is expected:
+  another case clause; or
+  the closing 'end' keyword.
 
 interactive_expr: Case Verbatim Of WILD ARROW Bytes VBAR With
 ##
@@ -497,7 +550,8 @@ interactive_expr: Case Verbatim Of WILD ARROW Bytes VBAR With
 ## case_clause(expr) VBAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'case' expression.
+At this point an expression is expected.
 
 interactive_expr: Case Verbatim Of WILD ARROW With
 ##
@@ -509,7 +563,8 @@ interactive_expr: Case Verbatim Of WILD ARROW With
 ## pattern ARROW
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'case' expression.
+At this point a function body, in the form of an expression, is expected.
 
 interactive_expr: Case Verbatim Of WILD CONS WILD CONS With
 ##
@@ -521,7 +576,8 @@ interactive_expr: Case Verbatim Of WILD CONS WILD CONS With
 ## core_pattern CONS
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'case' expression.
+At this point a pattern is expected.
 
 interactive_expr: Case Verbatim Of WILD CONS WILD With
 ##
@@ -534,7 +590,11 @@ interactive_expr: Case Verbatim Of WILD CONS WILD With
 ## core_pattern
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'case' expression.
+At this point one of the following is expected:
+  an arrow '->'; or 
+  a '::' operator,
+    followed by a pattern.
 
 interactive_expr: Case Verbatim Of WILD CONS With
 ##
@@ -546,7 +606,8 @@ interactive_expr: Case Verbatim Of WILD CONS With
 ## core_pattern CONS
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'case' expression.
+At this point a pattern is expected.
 
 interactive_expr: Case Verbatim Of WILD RPAR
 ##
@@ -564,7 +625,8 @@ interactive_expr: Case Verbatim Of WILD RPAR
 ## In state 300, spurious reduction of production pattern -> core_pattern 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'case' expression.
+At this point an arrow '->' is expected.
 
 interactive_expr: Case Verbatim Of WILD With
 ##
@@ -577,7 +639,11 @@ interactive_expr: Case Verbatim Of WILD With
 ## core_pattern
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'case' expression.
+At this point one of the following is expected:
+  a '::' operator,
+    followed by a pattern; or
+  an arrow '->'.
 
 interactive_expr: Case Verbatim Of With
 ##
@@ -590,7 +656,10 @@ interactive_expr: Case Verbatim Of With
 ## Case expr Of
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'case' expression.
+At this point one of the following is expected:
+  a case, in the form of an expression; or 
+  an opening bracket '[' followed by an expression.
 
 interactive_expr: Case Verbatim VBAR
 ##
@@ -618,7 +687,8 @@ interactive_expr: Case Verbatim VBAR
 ## In state 195, spurious reduction of production expr -> disj_expr 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'case' expression.
+At this point the 'of' keyword is expected.
 
 interactive_expr: Case With
 ##
@@ -631,7 +701,8 @@ interactive_expr: Case With
 ## Case
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed 'case' expression.
+At this point an expression is expected.
 
 interactive_expr: Constr DOT And With
 ##
@@ -765,7 +836,8 @@ interactive_expr: Function LPAR Const Ident COLON With
 ## Const Ident COLON
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function expression.
+At this point a type is expected.
 
 interactive_expr: Function LPAR Const Ident With
 ##
@@ -777,7 +849,9 @@ interactive_expr: Function LPAR Const Ident With
 ## Const Ident
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function expression.
+At this point a colon ':' is expected,
+  followed by a type.
 
 interactive_expr: Function LPAR Const With
 ##
@@ -789,7 +863,8 @@ interactive_expr: Function LPAR Const With
 ## Const
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function expression.
+At this point an identifier is expected.
 
 interactive_expr: Function LPAR Var Ident COLON Ident SEMI With
 ##
@@ -801,7 +876,10 @@ interactive_expr: Function LPAR Var Ident COLON Ident SEMI With
 ## param_decl SEMI
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function expression.
+At this point one of the following is expected:
+  another function argument; or
+  a closing parenthesis ')'.
 
 interactive_expr: Function LPAR Var Ident COLON Ident VBAR
 ##
@@ -836,7 +914,9 @@ interactive_expr: Function LPAR Var Ident With
 ## Var Ident
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function expression.
+At this point a colon ':' is expected,
+  followed by a type.
 
 interactive_expr: Function LPAR Var With
 ##
@@ -848,7 +928,9 @@ interactive_expr: Function LPAR Var With
 ## Var
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+
+Ill-formed function expression.
+At this point an identifier is expected. 
 
 interactive_expr: Function LPAR With
 ##
@@ -860,7 +942,8 @@ interactive_expr: Function LPAR With
 ## LPAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function expression.
+At this point a parameter is expected.
 
 interactive_expr: Function With
 ##
@@ -872,7 +955,8 @@ interactive_expr: Function With
 ## Function
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function expression.
+At this point parameters are expected.
 
 interactive_expr: Ident DOT Ident ASS
 ##
@@ -904,7 +988,10 @@ interactive_expr: Ident DOT Int DOT With
 ## selection DOT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed selection.
+At this point one of the following is expected:
+  a field name; or
+  a tuple index '<int>'.
 
 interactive_expr: Ident DOT Int While
 ##
@@ -929,7 +1016,10 @@ interactive_expr: Ident DOT With
 ## Ident DOT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed selection.
+At this point one of the following is expected:
+  a field name; or
+  a tuple index '<int>'.
 
 interactive_expr: Ident LBRACKET Verbatim VBAR
 ##
