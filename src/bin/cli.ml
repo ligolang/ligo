@@ -257,7 +257,7 @@ let measure_contract =
       let%bind contract   = Compile.Utils.compile_file source_file syntax entry_point in
       ok @@ Tezos_utils.Michelson.measure contract in
     let format = Display.bind_format Formatter.contract_size_format Main.Formatter.error_format in
-    toplevel ~display_format (Display.Displayable { value ; format }) (returned_value value)
+    toplevel ~display_format (Display.Displayable { value ; format }) value
   in
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ display_format) in
@@ -436,7 +436,7 @@ let dump_changelog =
   let f display_format =
     let value = [%blob "../../CHANGELOG.md"] in
     let format = Formatter.changelog_format in
-    toplevel ~display_format (Display.Displayable {value ; format}) (returned_value (ok ())) in
+    toplevel ~display_format (Display.Displayable {value ; format}) (ok value) in
   let term =
     Term.(const f $ display_format) in
   let cmdname = "changelog" in
