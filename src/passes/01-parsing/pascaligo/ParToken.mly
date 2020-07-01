@@ -1,4 +1,5 @@
 %{
+module LexToken = Lexer_pascaligo.LexToken
 %}
 
 (* Tokens (mirroring thise defined in module LexToken) *)

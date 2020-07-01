@@ -1,16 +1,18 @@
+(* ocamlex specification for CameLIGO *)
 {
-  (* START HEADER *)
+(* START HEADER *)
 
-type lexeme = string
-
-let sprintf = Printf.sprintf
+(* Dependencies *)
 
 module Region = Simple_utils.Region
 module Pos    = Simple_utils.Pos
-module SMap   = Utils.String.Map
-module SSet   = Utils.String.Set
+module Markup = Lexer_shared.Markup
+module SMap   = Map.Make (String)
+module SSet   = Set.Make (String)
 
 (* TOKENS *)
+
+type lexeme = string
 
 type t =
   (* Identifiers, labels, numbers and strings *)
@@ -106,6 +108,8 @@ type t =
 
 
 (* Projections *)
+
+let sprintf = Printf.sprintf
 
 type token = t
 

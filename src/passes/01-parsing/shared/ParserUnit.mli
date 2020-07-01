@@ -1,8 +1,12 @@
 (* Functor to build a standalone LIGO parser *)
 
-module Region = Simple_utils.Region
+(* Dependencies *)
 
-module SSet : Set.S with type elt = string and type t = Set.Make(String).t
+module Region  = Simple_utils.Region
+module EvalOpt = Lexer_shared.EvalOpt
+module Lexer   = Lexer_shared.Lexer
+module SSet    : Set.S with type elt = string
+                        and type t = Set.Make(String).t
 
 (* A subtype of [EvalOpt.options] *)
 

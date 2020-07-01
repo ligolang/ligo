@@ -1,6 +1,14 @@
 (* Driver for the ReasonLIGO lexer *)
 
-module Region = Simple_utils.Region
+(* Dependencies *)
+
+module Region    = Simple_utils.Region
+module EvalOpt   = Lexer_shared.EvalOpt
+module Lexer     = Lexer_shared.Lexer
+module LexerUnit = Lexer_shared.LexerUnit
+module LexToken  = Lexer_reasonligo.LexToken
+
+(* Input/Output *)
 
 module IO =
   struct

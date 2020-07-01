@@ -1,13 +1,48 @@
+;; --------------------------------------------------------------------
+;; LEXING
+
 ;; Build of the lexer
 
 (ocamllex LexToken)
+
+;; Build of the lexer as a library
+
+(library
+  (name lexer_pascaligo)
+  (public_name ligo.lexer.pascaligo)
+  (modules LexToken)
+  (libraries
+    ;; Ligo
+    lexer_shared
+    ;; Third party
+    hex)
+  (preprocess
+    (pps bisect_ppx --conditional)))
+
+;; Build of a standalone lexer
+
+(executable
+  (name LexerMain)
+  (libraries
+    ;; Ligo
+    lexer_shared
+    lexer_pascaligo
+    ;; Third party
+    hex)
+  (modules LexerMain)
+  (preprocess
+    (pps bisect_ppx --conditional)))
+
+;; --------------------------------------------------------------------
+;; PARSING
 
 ;; Build of the parser
 
 (menhir
   (merge_into Parser)
   (modules ParToken Parser)
-  (flags -la 1 --table --strict --explain --external-tokens LexToken))
+  (flags -la 1 --table --strict --explain
+         --external-tokens Lexer_pascaligo.LexToken))
 
 ;; Build of the parser as a library
 
@@ -15,19 +50,22 @@
   (name parser_pascaligo)
   (public_name ligo.parser.pascaligo)
   (modules
-     Scoping pascaligo Parser LexToken ParErr Pretty)
+    Scoping Parser ParErr Pretty)
   (libraries
-     pprint
-     terminal_size
-     menhirLib
-     parser_shared
-     hex
-     Preprocessor
-     simple-utils
-     cst)
+    ;; Ligo
+    lexer_pascaligo
+    parser_shared
+    cst
+    ;; Vendors
+    simple-utils
+    ;; Third party
+    pprint
+    terminal_size
+    menhirLib
+    hex)
   (preprocess
     (pps bisect_ppx --conditional))
-  (flags (:standard -open Parser_shared -open Simple_utils)))
+  (flags (:standard -open Cst_pascaligo))) ;; For CST in Parser.mli
 
 ;; Build of the unlexer (for covering the
 ;; error states of the LR automaton)
@@ -35,30 +73,24 @@
 (executable
   (name Unlexer)
   (libraries str)
+  (modules Unlexer)
   (preprocess
-    (pps bisect_ppx --conditional))
-  (modules Unlexer))
-
-;; Local build of a standalone lexer
-
-(executable
-  (name LexerMain)
-  (libraries
-     hex simple-utils tezos-utils parser_pascaligo)
-  (modules LexerMain)
-  (preprocess
-    (pps bisect_ppx --conditional))
-  (flags (:standard -open Parser_shared -open Parser_pascaligo)))
+    (pps bisect_ppx --conditional)))
 
 ;; Local build of a standalone parser
 
 (executable
   (name ParserMain)
-  (libraries parser_pascaligo)
-  (modules ParserMain)
+  (libraries
+    ;; Ligo
+    parser_shared
+    parser_pascaligo
+    cst
+    ;; Third party
+    hex)
+  (modules ParserMain Parser_msg)
   (preprocess
-    (pps bisect_ppx --conditional))
-  (flags (:standard -open Simple_utils -open Parser_shared -open Parser_pascaligo)))
+    (pps bisect_ppx --conditional)))
 
 ;; Build of the covering of error states in the LR automaton
 
@@ -85,7 +117,14 @@
 (rule
   (targets all.ligo)
   (deps (:script_cover ../../../../vendors/ligo-utils/simple-utils/cover.sh) Parser.mly LexToken.mli ParToken.mly Parser.msg Unlexer.exe)
-  (action (run %{script_cover} --lex-tokens=LexToken.mli --par-tokens=ParToken.mly --ext=ligo --unlexer=./Unlexer.exe --messages=Parser.msg --dir=. --concatenate Parser.mly)))
+  (action (run %{script_cover}
+               --lex-tokens=LexToken.mli
+               --par-tokens=ParToken.mly
+               --ext=ligo
+               --unlexer=./Unlexer.exe
+               --messages=Parser.msg
+               --dir=.
+               --concatenate Parser.mly)))
 
 ;; Error messages
 
@@ -95,58 +134,45 @@
  (deps Parser.mly ParToken.mly error.messages.checked-in LexToken.mli)
  (action
   (with-stdout-to %{targets}
-  (run
-    menhir
-      --unused-tokens
-      --update-errors error.messages.checked-in
-      --table
-      --strict
-      --external-tokens LexToken.mli
-      --base Parser.mly
-      ParToken.mly
-      Parser.mly
-    )
- ))
-)
+  (run menhir
+       --unused-tokens
+       --update-errors error.messages.checked-in
+       --table
+       --strict
+       --external-tokens LexToken.mli
+       --base Parser.mly
+       ParToken.mly
+       Parser.mly))))
 
 (rule
   (target error.messages.new)
   (mode (promote (until-clean) (only *)))
   (action
     (with-stdout-to %{target}
-      (run
-        menhir
-          --unused-tokens
-          --list-errors
-          --table
-          --strict
-          --external-tokens LexToken.mli
-          --base Parser.mly
-          ParToken.mly
-          Parser.mly
-      )
-    )
-  )
-)
+      (run menhir
+           --unused-tokens
+           --list-errors
+           --table
+           --strict
+           --external-tokens LexToken.mli
+           --base Parser.mly
+           ParToken.mly
+           Parser.mly))))
 
 (alias
   (name runtest)
   (deps error.messages error.messages.new)
   (action
-    (run
-      menhir
-        --unused-tokens
-        --table
-        --strict
-        --external-tokens LexToken.mli
-        --base Parser.mly
-        ParToken.mly
-        Parser.mly
-        --compare-errors error.messages.new
-        --compare-errors error.messages
-      )
-    )
-  )
+    (run menhir
+         --unused-tokens
+         --table
+         --strict
+         --external-tokens LexToken.mli
+         --base Parser.mly
+         ParToken.mly
+         Parser.mly
+         --compare-errors error.messages.new
+         --compare-errors error.messages)))
 
 (rule
  (targets ParErr.ml)
@@ -154,16 +180,12 @@
  (deps Parser.mly ParToken.mly error.messages.checked-in LexToken.mli)
  (action
   (with-stdout-to %{targets}
-  (run
-    menhir
-      --unused-tokens
-      --table
-      --strict
-      --external-tokens LexToken.mli
-      --base Parser.mly
-      ParToken.mly
-      Parser.mly
-      --compile-errors error.messages.checked-in
-    )
- ))
-)
+  (run menhir
+       --unused-tokens
+       --table
+       --strict
+       --external-tokens LexToken.mli
+       --base Parser.mly
+       ParToken.mly
+       Parser.mly
+       --compile-errors error.messages.checked-in))))

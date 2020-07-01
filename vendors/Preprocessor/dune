@@ -5,11 +5,17 @@
   (public_name Preprocessor)
   (wrapped true)
   (libraries
-     getopt
-     simple-utils)
-  (modules EvalOpt E_Parser E_Lexer E_AST Preproc)
+    getopt
+    simple-utils)
+  (modules
+    EvalOpt
+    E_Parser
+    E_Lexer
+    E_AST
+    Preproc)
   (preprocess
-    (pps bisect_ppx --conditional)))
+    (pps bisect_ppx --conditional))
+  (flags (:standard -open Simple_utils)))
 
 ;; Building the lexers of the preprocessor
 

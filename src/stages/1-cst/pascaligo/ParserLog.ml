@@ -64,7 +64,7 @@ let print_sepseq :
         None -> ()
   | Some seq -> print_nsepseq state sep print seq
 
-let print_option : state -> (state -> 'a -> unit ) -> 'a option -> unit =
+let print_option : state -> (state -> 'a -> unit) -> 'a option -> unit =
   fun state print -> function
     None -> ()
   | Some opt -> print state opt
@@ -141,7 +141,7 @@ and print_const_decl state {value; _} =
        equal; init; terminator; _} = value in
   print_token      state kwd_const "const";
   print_var        state name;
-  print_option     state print_colon_type_expr const_type;
+  print_option     state print_type_annot const_type;
   print_token      state equal "=";
   print_expr       state init;
   print_terminator state terminator
@@ -165,7 +165,7 @@ and print_type_expr state = function
 | TVar    type_var    -> print_var         state type_var
 | TString str         -> print_string      state str
 
-and print_colon_type_expr state (colon, type_expr) =
+and print_type_annot state (colon, type_expr) =
   print_token     state colon ":";
   print_type_expr state type_expr;
 
@@ -223,7 +223,7 @@ and print_fun_decl state {value; _} =
   print_token      state kwd_function "function";
   print_var        state fun_name;
   print_parameters state param;
-  print_option     state print_colon_type_expr  ret_type;
+  print_option     state print_type_annot ret_type;
   print_token      state kwd_is "is";
   print_expr state return;
   print_terminator state terminator;
@@ -233,7 +233,7 @@ and print_fun_expr state {value; _} =
        ret_type; kwd_is; return} : fun_expr = value in
   print_token      state kwd_function "function";
   print_parameters state param;
-  print_option     state print_colon_type_expr ret_type;
+  print_option     state print_type_annot ret_type;
   print_token      state kwd_is "is";
   print_expr       state return
 
@@ -255,9 +255,9 @@ and print_block_expr state {value; _} =
 
 and print_parameters state {value; _} =
   let {lpar; inside; rpar} = value in
-  print_token state lpar "(";
+  print_token   state lpar "(";
   print_nsepseq state ";" print_param_decl inside;
-  print_token state rpar ")"
+  print_token   state rpar ")"
 
 and print_param_decl state = function
   ParamConst param_const -> print_param_const state param_const
@@ -265,15 +265,15 @@ and print_param_decl state = function
 
 and print_param_const state {value; _} =
   let {kwd_const; var; param_type} = value in
-  print_token     state kwd_const "const";
-  print_var       state var;
-  print_option    state print_colon_type_expr param_type
+  print_token  state kwd_const "const";
+  print_var    state var;
+  print_option state print_type_annot param_type
 
 and print_param_var state {value; _} =
   let {kwd_var; var; param_type} = value in
   print_token    state kwd_var "var";
   print_var      state var;
-  print_option   state print_colon_type_expr param_type
+  print_option   state print_type_annot param_type
 
 and print_block state block =
   let {enclosing; statements; terminator} = block.value in
@@ -300,7 +300,7 @@ and print_var_decl state {value; _} =
        assign; init; terminator} = value in
   print_token      state kwd_var "var";
   print_var        state name;
-  print_option     state print_colon_type_expr var_type;
+  print_option     state print_type_annot var_type;
   print_token      state assign ":=";
   print_expr       state init;
   print_terminator state terminator
@@ -919,35 +919,49 @@ and pp_declaration state = function
 and pp_attr_decl state = pp_ne_injection pp_string state
 
 and pp_fun_decl state decl =
-  let arity, start =
+  let kwd_recursive = if decl.kwd_recursive = None then 0 else 1 in
+  let ret_type = if decl.ret_type = None then 0 else 1 in
+  let arity = kwd_recursive + ret_type + 3 in
+  let index = 0 in
+  let index =
     match decl.kwd_recursive with
-      None -> 4,0
-    | Some _ ->
-       let state = state#pad 5 0 in
-       let () = pp_node state "recursive"
-       in 5,1 in
-  let () =
-    let state = state#pad arity start in
-    pp_ident state decl.fun_name in
-  let () =
-    let state = state#pad arity (start + 1) in
+        None -> index
+    | Some _ -> let state = state#pad arity index in
+               pp_node state "recursive";
+               index + 1 in
+  let index =
+    let state = state#pad arity index in
+    pp_ident state decl.fun_name;
+    index + 1 in
+  let index =
+    let state = state#pad arity index in
     pp_node state "<parameters>";
-    pp_parameters state decl.param in
+    pp_parameters state decl.param;
+    index + 1 in
+  let index =
+    match decl.ret_type with
+      None -> index
+    | Some (_, t_expr) ->
+       let state = state#pad arity index in
+       pp_node state "<return type>";
+       pp_type_expr (state#pad 1 0) t_expr;
+       index+1 in
   let () =
-    let state = state#pad arity (start + 2) in
-    pp_node state "<return type>";
-    print_option (state#pad 1 0) pp_type_expr @@ Option.map snd decl.ret_type in
-  let () =
-    let state = state#pad arity (start + 3) in
+    let state = state#pad arity index in
     pp_node state "<return>";
     pp_expr (state#pad 1 0) decl.return
   in ()
 
 and pp_const_decl state decl =
-  let arity = 3 in
-  pp_ident (state#pad arity 0) decl.name;
-  print_option (state#pad arity 1) pp_type_expr @@ Option.map snd decl.const_type;
-  pp_expr (state#pad arity 2) decl.init
+  let arity = if decl.const_type = None then 2 else 3 in
+  let index = 0 in
+  let index =
+    pp_ident (state#pad arity 0) decl.name; index+1 in
+  let index =
+    pp_type_annot (state#pad arity index) index decl.const_type in
+  let () =
+    pp_expr (state#pad arity index) decl.init
+  in ()
 
 and pp_type_expr state = function
   TProd cartesian ->
@@ -1008,43 +1022,49 @@ and pp_type_tuple state {value; _} =
   in List.iteri (List.length components |> apply) components
 
 and pp_fun_expr state (expr: fun_expr) =
-  let () =
-    let state = state#pad 3 0 in
+  let arity = if expr.ret_type = None then 2 else 3 in
+  let index = 0 in
+  let index =
+    let state = state#pad arity index in
     pp_node state "<parameters>";
-    pp_parameters state expr.param in
+    pp_parameters state expr.param;
+    index + 1 in
+  let index =
+    match expr.ret_type with
+      None -> index
+    | Some (_, t_expr) ->
+        let state = state#pad arity index in
+        pp_node state "<return type>";
+        pp_type_expr (state#pad 1 0) t_expr;
+        index + 1 in
   let () =
-    let state = state#pad 3 1 in
-    pp_node state "<return type>";
-    print_option (state#pad 1 0) pp_type_expr @@ Option.map snd expr.ret_type in
-  let () =
-    let state = state#pad 3 2 in
+    let state = state#pad arity index in
     pp_node state "<return>";
     pp_expr (state#pad 1 0) expr.return
   in ()
 
-and pp_code_inj state rc =
+and pp_code_inj state node =
   let () =
     let state = state#pad 2 0 in
     pp_node state "<language>";
-    pp_string (state#pad 1 0) rc.language.value in
+    pp_string (state#pad 1 0) node.language.value in
   let () =
     let state = state#pad 2 1 in
     pp_node state "<code>";
-    pp_expr (state#pad 1 0) rc.code
+    pp_expr (state#pad 1 0) node.code
   in ()
 
-and pp_block_expr state (bw : block_with) =
-  let {block;expr;_}:CST.block_with = bw in
+and pp_block_expr state node =
+  let {block; expr; _} : block_with = node in
   let () =
     let state = state#pad 2 0 in
     pp_node state "<block>";
-    pp_statements state block.value.statements
-  in
+    pp_statements state block.value.statements in
   let () =
     let state = state#pad 2 1 in
     pp_node state "<expr>";
-    pp_expr (state#pad 1 0) expr in
-  ()
+    pp_expr (state#pad 1 0) expr
+  in ()
 
 and pp_parameters state {value; _} =
   let params = Utils.nsepseq_to_list value.inside in
@@ -1054,13 +1074,15 @@ and pp_parameters state {value; _} =
 
 and pp_param_decl state = function
   ParamConst {value; region} ->
+    let arity = if value.param_type = None then 1 else 2 in
     pp_loc_node state "ParamConst" region;
-    pp_ident (state#pad 2 0) value.var;
-    print_option (state#pad 2 1) pp_type_expr @@ Option.map snd value.param_type
+    pp_ident (state#pad arity 0) value.var;
+    ignore (pp_type_annot (state#pad arity 1) 1 value.param_type)
 | ParamVar {value; region} ->
+    let arity = if value.param_type = None then 1 else 2 in
     pp_loc_node state "ParamVar" region;
     pp_ident (state#pad 2 0) value.var;
-    print_option (state#pad 2 1) pp_type_expr @@ Option.map snd value.param_type
+    ignore (pp_type_annot (state#pad arity 1) 1 value.param_type)
 
 and pp_statements state statements =
   let statements = Utils.nsepseq_to_list statements in
@@ -1461,9 +1483,11 @@ and pp_data_decl state = function
     pp_fun_decl state value
 
 and pp_var_decl state decl =
-  pp_ident     (state#pad 3 0) decl.name;
-  print_option (state#pad 3 1) pp_type_expr @@ Option.map snd decl.var_type;
-  pp_expr      (state#pad 3 2) decl.init
+  let arity = if decl.var_type = None then 2 else 3 in
+  let index = 0 in
+  let index = pp_ident (state#pad arity index) decl.name; index+1 in
+  let index = pp_type_annot (state#pad arity index) index decl.var_type
+  in pp_expr (state#pad arity index) decl.init
 
 and pp_expr state = function
   ECase {value; region} ->
@@ -1663,3 +1687,7 @@ and pp_bin_op node region state op =
   pp_loc_node state node region;
   pp_expr     (state#pad 2 0) op.arg1;
   pp_expr     (state#pad 2 1) op.arg2
+
+and pp_type_annot state index = function
+  None -> index
+| Some (_, e) -> pp_type_expr state e; index+1
