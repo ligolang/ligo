@@ -87,7 +87,7 @@ and type_operator : (formatter -> type_expression -> unit) -> formatter -> type_
   fprintf ppf "(type_operator: %s)" s
 
 let expression_variable ppf (ev : expression_variable) : unit =
-  fprintf ppf "%a" Var.pp ev
+  fprintf ppf "%a" Var.pp ev.wrap_content
 
 
 let rec expression ppf (e : expression) =

@@ -47,7 +47,7 @@ module TestExpressions = struct
 
   let lambda () : (unit, _) result =
     test_expression
-      I.(e_lambda (Var.of_name "x") (Some (t_int ())) (Some (t_int ())) (e_var "x"))
+      I.(e_lambda (Location.wrap @@ Var.of_name "x") (Some (t_int ())) (Some (t_int ())) (e_var "x"))
       O.(t_function (t_int ()) (t_int ()) ())
 
   let tuple () : (unit, _) result =

@@ -27,7 +27,7 @@ let add_type : type_variable -> type_expression -> t -> t = fun type_variable ty
 (* TODO: generate : these are now messy, clean them up. *)
 let get_opt : expression_variable -> t -> element option = fun k x ->
   Option.bind (fun {expr_var=_ ; env_elt} -> Some env_elt) @@
-    List.find_opt (fun {expr_var ; env_elt=_} -> Var.equal expr_var k) (get_expr_environment x)
+    List.find_opt (fun {expr_var ; env_elt=_} -> Var.equal expr_var.wrap_content k.wrap_content) (get_expr_environment x)
 let get_type_opt : type_variable -> t -> type_expression option = fun k x ->
   Option.bind (fun {type_variable=_ ; type_} -> Some type_) @@
     List.find_opt (fun {type_variable ; type_=_} -> Var.equal type_variable k) (get_type_environment x)

@@ -23,7 +23,7 @@ let constructor (constructor:constructor') (element:expression) (t:type_expressi
   }
 
 let match_var (t:type_expression) =
-  { expression_content = E_variable (Var.of_name "x") ;
+  { expression_content = E_variable (Location.wrap @@ Var.of_name "x") ;
     location = Location.generated ;
     type_expression = t ;
   }
@@ -151,20 +151,20 @@ let rec from_right_comb_or (to_convert:expression) (e:expression) (matchee_t,bod
   | [m] , bl::br::[] ->
     let cases = [
       { constructor = Constructor "M_left" ;
-        pattern = Var.of_name "x";
+        pattern = Location.wrap @@ Var.of_name "x";
         body = bl } ;
       { constructor = Constructor "M_right" ;
-        pattern = Var.of_name "x";
+        pattern = Location.wrap @@ Var.of_name "x";
         body = br } ] in
     ok @@ matching e m (Match_variant { cases ; tv = to_convert.type_expression })
   | m::mtl , b::btl ->
     let%bind body = from_right_comb_or to_convert e (mtl,btl) in
     let cases = [
       { constructor = Constructor "M_left" ;
-        pattern = Var.of_name "x";
+        pattern = Location.wrap @@ Var.of_name "x";
         body = b } ;
       { constructor = Constructor "M_right" ;
-        pattern = Var.of_name "x";
+        pattern = Location.wrap @@ Var.of_name "x";
         body } ] in
     ok @@ matching e m (Match_variant { cases ; tv = to_convert.type_expression })
   | _ -> fail @@ corner_case "from_right_comb conversion"
@@ -174,20 +174,20 @@ let rec from_left_comb_or (to_convert:expression) (e:expression) (matchee_t,bodi
   | [m] , bl::br::[] ->
     let cases = [
       { constructor = Constructor "M_right" ;
-        pattern = Var.of_name "x";
+        pattern = Location.wrap @@ Var.of_name "x";
         body = bl } ;
       { constructor = Constructor "M_left" ;
-        pattern = Var.of_name "x";
+        pattern = Location.wrap @@ Var.of_name "x";
         body = br } ] in
     ok @@ matching e m (Match_variant { cases ; tv = to_convert.type_expression })
   | m::mtl , b::btl ->
     let%bind body = from_left_comb_or to_convert e (mtl,btl) in
     let cases = [
       { constructor = Constructor "M_right" ;
-        pattern = Var.of_name "x";
+        pattern = Location.wrap @@ Var.of_name "x";
         body = b } ;
       { constructor = Constructor "M_left" ;
-        pattern = Var.of_name "x";
+        pattern = Location.wrap @@ Var.of_name "x";
         body } ] in
     ok @@ matching e m (Match_variant { cases ; tv = to_convert.type_expression })
   | _ -> fail @@ corner_case "from_left_comb conversion"
@@ -210,7 +210,7 @@ let peephole_expression : expression -> (expression , self_ast_typed_error) resu
         let src_kvl = to_sorted_kv_list_c src_cmap in
         let bodies = left_comb_variant_combination e dst_cmap src_kvl in
         let to_cases ((constructor,{ctor_type=_;_}),body) =
-          let pattern = (Var.of_name "x") in
+          let pattern = Location.wrap @@ Var.of_name "x" in
           {constructor ; pattern ; body }
         in
         let cases = Match_variant {
@@ -230,7 +230,7 @@ let peephole_expression : expression -> (expression , self_ast_typed_error) resu
         let src_kvl = to_sorted_kv_list_c src_cmap in
         let bodies = right_comb_variant_combination e dst_cmap src_kvl in
         let to_cases ((constructor,{ctor_type=_;_}),body) =
-          let pattern = (Var.of_name "x") in
+          let pattern = Location.wrap @@ Var.of_name "x" in
           {constructor ; pattern ; body }
         in
         let cases = Match_variant {

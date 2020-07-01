@@ -2,6 +2,8 @@ open Errors
 open Ast_typed
 open Trace
 
+let var_equal = Location.equal_content ~equal:Var.equal
+
 let rec check_recursive_call : expression_variable -> bool -> expression -> (unit, self_ast_typed_error) result = fun n final_path e ->
   match e.expression_content with
   | E_literal _   -> ok ()
@@ -10,7 +12,7 @@ let rec check_recursive_call : expression_variable -> bool -> expression -> (uni
     ok ()
   | E_variable v  -> (
     let%bind _ = Assert.assert_true (recursive_call_is_only_allowed_as_the_last_operation n e.location)
-      (final_path || n <> v) in
+      (final_path || not (var_equal n v)) in
     ok ()
     )
   | E_application {lamb;args} ->
