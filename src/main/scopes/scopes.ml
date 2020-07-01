@@ -77,10 +77,38 @@ let scopes : with_types:bool -> string -> string -> ((def_map * scopes), Main_er
         (i,all_defs,env,scopes)
       )
     )
-    | E_ascription { anno_expr ; _ } -> find_scopes' (i,all_defs,env,scopes,anno_expr.location) anno_expr
-    | _ ->
+    | E_record emap -> (
+      let aux = fun (i,all_defs,scopes) (exp:Ast_core.expression) -> 
+        let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,exp.location) exp in
+        (i,all_defs,scopes)
+      in
+      let (i,all_defs,scopes) = List.fold_left aux (i,all_defs,scopes) (Ast_core.LMap.to_list emap) in
+      (i,all_defs,env,scopes)
+    )
+    | E_record_update { record ; update ; _ } -> (
+      (*TODO: here record has a virtual location, check this out.. not normal *)
+      let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,record.location) record in
+      find_scopes' (i,all_defs,env,scopes,update.location) update
+    )
+    | E_constant { arguments ; _ } -> (
+      let aux = fun (i,all_defs,scopes) (exp:Ast_core.expression) -> 
+        let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,exp.location) exp in
+        (i,all_defs,scopes)
+      in
+      let (i,all_defs,scopes) = List.fold_left aux (i,all_defs,scopes) arguments in
+      (i,all_defs,env,scopes)
+    )
+    | E_application { lamb ; args } -> (
+      let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,lamb.location) lamb in
+      find_scopes' (i,all_defs,env,scopes,args.location) args
+    )
+    | E_ascription { anno_expr=e;_ } | E_record_accessor { record=e;_ } | E_constructor { element=e;_ } -> (
+      find_scopes' (i,all_defs,env,scopes,e.location) e
+    )
+    | E_literal _ | E_raw_code _ | E_variable _ -> (
       let scopes = add_scope (lastloc, env) scopes in
       (i,all_defs,env,scopes)
+    )
   in
   let find_scopes (i,top_lvl_defs,scopes,loc) e =
     let (i,defs,_,scopes) = find_scopes' (i,top_lvl_defs,top_lvl_defs,scopes,loc) e in 
