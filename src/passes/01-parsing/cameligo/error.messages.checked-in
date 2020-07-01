@@ -1504,6 +1504,7 @@ interactive_expr: If Verbatim Then Let WILD EQ Bytes Attr Type
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
+
 interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes In With
 ##
 ## Ends in an error in state: 460.
