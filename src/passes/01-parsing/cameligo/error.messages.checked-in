@@ -80,7 +80,7 @@ interactive_expr: Begin If Verbatim Then Fun With
 ##
 
 Ill-formed function expression.
-At this point function arguments are expected.
+At this point a parameter is expected.
 
 interactive_expr: Begin If Verbatim Then If Verbatim Then Verbatim COMMA Bytes With
 ##
@@ -114,31 +114,6 @@ interactive_expr: Begin If Verbatim Then If Verbatim Then Verbatim COMMA Bytes W
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: Begin If Verbatim Then If Verbatim Then Verbatim Else With
-##
-## Ends in an error in state: 470.
-##
-## if_then_else(closed_if) -> If expr Then closed_if Else . closed_if [ Else ]
-##
-## The known suffix of the stack is as follows:
-## If expr Then closed_if Else
-##
-
-Ill-formed 'if' ... 'else' ... expression.
-At this point an expression is expected.
-
-interactive_expr: Begin If Verbatim Then If Verbatim Then With
-##
-## Ends in an error in state: 463.
-##
-## if_then_else(closed_if) -> If expr Then . closed_if Else closed_if [ Else ]
-##
-## The known suffix of the stack is as follows:
-## If expr Then
-##
-
-Ill-formed 'if' ... 'else' ... expression.
-At this point an expression is expected.
 
 interactive_expr: Begin If Verbatim Then If Verbatim With
 ##
@@ -179,7 +154,7 @@ interactive_expr: Begin If Verbatim Then If With
 ## If
 ##
 
-Ill-formed 'if' ... 'else' ... expression.
+Ill-formed conditional expression.
 At this point a test, in the form of an expression, is expected.
 
 interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes Attr Type
@@ -201,18 +176,7 @@ interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes Attr Type
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes In With
-##
-## Ends in an error in state: 460.
-##
-## let_expr(closed_if) -> Let Rec let_binding seq(Attr) In . closed_if [ Else ]
-##
-## The known suffix of the stack is as follows:
-## Let Rec let_binding seq(Attr) In
-##
 
-Ill-formed 'let' ... 'in' ... expression.
-At this point an expression is expected.
 
 interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes With
 ##
@@ -255,7 +219,7 @@ interactive_expr: Begin If Verbatim Then Let Rec With
 ##
 
 Ill-formed 'let' expression. 
-At this point an identifier is expected.
+At this point an irrefutable pattern is expected, for instance an identifier.
 
 interactive_expr: Begin If Verbatim Then Let WILD EQ Bytes Attr Type
 ##
@@ -275,19 +239,6 @@ interactive_expr: Begin If Verbatim Then Let WILD EQ Bytes Attr Type
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
-
-interactive_expr: Begin If Verbatim Then Let WILD EQ Bytes In With
-##
-## Ends in an error in state: 473.
-##
-## let_expr(closed_if) -> Let let_binding seq(Attr) In . closed_if [ Else ]
-##
-## The known suffix of the stack is as follows:
-## Let let_binding seq(Attr) In
-##
-
-Ill-formed 'let' ... 'in' ... expression.
-At this point an expression is expected.
 
 interactive_expr: Begin If Verbatim Then Let WILD EQ Bytes With
 ##
@@ -332,9 +283,8 @@ interactive_expr: Begin If Verbatim Then Let With
 
 Ill-formed 'let' expression.
 At this point one of the following is expected:
-  destructuring; or 
-  an identifier; or
-  a 'rec' keyword followed by an identifier.
+  an irrefutable pattern, like an identifier; or
+  the 'rec' keyword, if your definition is likely to be recursive.
 
 interactive_expr: Begin If Verbatim Then Match Verbatim Type
 ##
@@ -364,19 +314,6 @@ interactive_expr: Begin If Verbatim Then Match Verbatim Type
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
-
-interactive_expr: Begin If Verbatim Then Match Verbatim With VBAR Begin
-##
-## Ends in an error in state: 270.
-##
-## match_expr(base_if_then_else) -> Match expr With option(VBAR) . cases(base_if_then_else) [ Else ]
-##
-## The known suffix of the stack is as follows:
-## Match expr With option(VBAR)
-##
-
-Ill-formed 'match' expression.
-At this point a case is expected.
 
 interactive_expr: Begin If Verbatim Then Match Verbatim With WILD ARROW Bytes With
 ##
@@ -421,7 +358,7 @@ interactive_expr: Begin If Verbatim Then Match Verbatim With With
 ##
 
 Ill-formed 'match' expression. 
-At this point a case is expected.
+At this point the pattern of a case is expected.
 
 interactive_expr: Begin If Verbatim Then Match With
 ##
@@ -434,7 +371,7 @@ interactive_expr: Begin If Verbatim Then Match With
 ##
 
 Ill-formed 'match' expression.
-At this point an expression is expected.
+At this point the expression to be matched is expected.
 
 interactive_expr: Begin If Verbatim Then Verbatim COMMA Bytes With
 ##
@@ -468,18 +405,7 @@ interactive_expr: Begin If Verbatim Then Verbatim COMMA Bytes With
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: Begin If Verbatim Then Verbatim Else With
-##
-## Ends in an error in state: 475.
-##
-## if_then_else(seq_expr) -> If expr Then closed_if Else . seq_expr [ SEMI End ]
-##
-## The known suffix of the stack is as follows:
-## If expr Then closed_if Else
-##
 
-Ill-formed 'if' ... 'else' ... expression.
-At this point an expression is expected.
 
 interactive_expr: Begin If Verbatim Then Verbatim With
 ##
@@ -509,19 +435,6 @@ interactive_expr: Begin If Verbatim Then Verbatim With
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
-
-interactive_expr: Begin If Verbatim Then With
-##
-## Ends in an error in state: 455.
-##
-## if_then_else(seq_expr) -> If expr Then . closed_if Else seq_expr [ SEMI End ]
-##
-## The known suffix of the stack is as follows:
-## If expr Then
-##
-
-Ill-formed 'if' ... 'else' ... expression.
-At this point an expression is expected.
 
 interactive_expr: Begin If Verbatim With
 ##
@@ -562,8 +475,8 @@ interactive_expr: Begin If With
 ## If
 ##
 
-Ill-formed 'if' ... 'else' ... expression.
-At this point an expression is expected.
+Ill-formed conditional expression.
+At this point the test expression is expected.
 
 interactive_expr: Begin Let Rec WILD EQ Bytes Attr Type
 ##
@@ -583,19 +496,6 @@ interactive_expr: Begin Let Rec WILD EQ Bytes Attr Type
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
-
-interactive_expr: Begin Let Rec WILD EQ Bytes In With
-##
-## Ends in an error in state: 452.
-##
-## let_in_sequence -> Let Rec let_binding seq(Attr) In . series [ End ]
-##
-## The known suffix of the stack is as follows:
-## Let Rec let_binding seq(Attr) In
-##
-
-Ill-formed 'let' ... 'in' ... expression.
-At this point an expression is expected.
 
 interactive_expr: Begin Let Rec WILD EQ Bytes With
 ##
@@ -658,19 +558,6 @@ interactive_expr: Begin Let WILD EQ Bytes Attr Type
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
-
-interactive_expr: Begin Let WILD EQ Bytes In With
-##
-## Ends in an error in state: 483.
-##
-## let_in_sequence -> Let let_binding seq(Attr) In . series [ End ]
-##
-## The known suffix of the stack is as follows:
-## Let let_binding seq(Attr) In
-##
-
-Ill-formed 'let' ... 'in' ... expression.
-At this point an expression is expected.
 
 interactive_expr: Begin Let WILD EQ Bytes With
 ##
@@ -748,19 +635,6 @@ interactive_expr: Begin Match Verbatim Type
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: Begin Match Verbatim With VBAR Begin
-##
-## Ends in an error in state: 247.
-##
-## match_expr(last_expr) -> Match expr With option(VBAR) . cases(last_expr) [ End ]
-##
-## The known suffix of the stack is as follows:
-## Match expr With option(VBAR)
-##
-
-Ill-formed 'match' expression.
-At this point a case is expected.
-
 interactive_expr: Begin Match Verbatim With WILD ARROW Bytes VBAR With
 ##
 ## Ends in an error in state: 492.
@@ -803,35 +677,6 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Fun With
 Ill-formed function expression.
 At this point function arguments are expected.
 
-interactive_expr: Begin Match Verbatim With WILD ARROW If Verbatim Then Verbatim Else With
-##
-## Ends in an error in state: 415.
-##
-## if_then_else(base_cond) -> If expr Then closed_if Else . base_cond [ VBAR ]
-## if_then_else(seq_expr) -> If expr Then closed_if Else . seq_expr [ SEMI End ]
-##
-## The known suffix of the stack is as follows:
-## If expr Then closed_if Else
-##
-
-Ill-formed 'if' ... 'else' ... expression.
-At this point an expression is expected.
-
-interactive_expr: Begin Match Verbatim With WILD ARROW If Verbatim Then With
-##
-## Ends in an error in state: 266.
-##
-## if_then(base_cond) -> If expr Then . base_cond [ VBAR ]
-## if_then_else(base_cond) -> If expr Then . closed_if Else base_cond [ VBAR ]
-## if_then_else(seq_expr) -> If expr Then . closed_if Else seq_expr [ SEMI End ]
-##
-## The known suffix of the stack is as follows:
-## If expr Then
-##
-
-Ill-formed 'if' ... 'else' ... expression.
-At this point an expression is expected.
-
 interactive_expr: Begin Match Verbatim With WILD ARROW If Verbatim With
 ##
 ## Ends in an error in state: 265.
@@ -863,21 +708,6 @@ interactive_expr: Begin Match Verbatim With WILD ARROW If Verbatim With
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: Begin Match Verbatim With WILD ARROW If With
-##
-## Ends in an error in state: 264.
-##
-## if_then(base_cond) -> If . expr Then base_cond [ VBAR ]
-## if_then_else(base_cond) -> If . expr Then closed_if Else base_cond [ VBAR ]
-## if_then_else(seq_expr) -> If . expr Then closed_if Else seq_expr [ SEMI End ]
-##
-## The known suffix of the stack is as follows:
-## If
-##
-
-Ill-formed 'if' ... 'else' ... expression.
-At this point an expression is expected.
-
 interactive_expr: Begin Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes Attr Type
 ##
 ## Ends in an error in state: 262.
@@ -897,20 +727,6 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes Att
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
-
-interactive_expr: Begin Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes In With
-##
-## Ends in an error in state: 263.
-##
-## let_expr(base_cond) -> Let Rec let_binding seq(Attr) In . base_cond [ VBAR ]
-## let_in_sequence -> Let Rec let_binding seq(Attr) In . series [ End ]
-##
-## The known suffix of the stack is as follows:
-## Let Rec let_binding seq(Attr) In
-##
-
-Ill-formed 'let' ... 'in' ... expression.
-At this point an expression is expected.
 
 interactive_expr: Begin Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes With
 ##
@@ -1140,6 +956,24 @@ interactive_expr: Begin Match Verbatim With WILD CONS Bytes SEMI
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
+interactive_expr: Begin If Verbatim Then Match Verbatim With VBAR Begin
+##
+## Ends in an error in state: 270.
+##
+## match_expr(base_if_then_else) -> Match expr With option(VBAR) . cases(base_if_then_else) [ Else ]
+##
+## The known suffix of the stack is as follows:
+## Match expr With option(VBAR)
+##
+interactive_expr: Begin Match Verbatim With VBAR Begin
+##
+## Ends in an error in state: 247.
+##
+## match_expr(last_expr) -> Match expr With option(VBAR) . cases(last_expr) [ End ]
+##
+## The known suffix of the stack is as follows:
+## Match expr With option(VBAR)
+##
 interactive_expr: Begin Match Verbatim With With
 ##
 ## Ends in an error in state: 245.
@@ -1151,7 +985,7 @@ interactive_expr: Begin Match Verbatim With With
 ##
 
 Ill-formed 'match' expression.
-At this point a case is expected.
+At this point the pattern of a case is expected.
 
 interactive_expr: Begin Match With
 ##
@@ -1448,6 +1282,74 @@ interactive_expr: If Verbatim Then Fun With
 Ill-formed function expression.
 At this point function arguments are expected.
 
+interactive_expr: Begin If Verbatim Then If Verbatim Then Verbatim Else With
+##
+## Ends in an error in state: 470.
+##
+## if_then_else(closed_if) -> If expr Then closed_if Else . closed_if [ Else ]
+##
+## The known suffix of the stack is as follows:
+## If expr Then closed_if Else
+##
+interactive_expr: Begin If Verbatim Then If Verbatim Then With
+##
+## Ends in an error in state: 463.
+##
+## if_then_else(closed_if) -> If expr Then . closed_if Else closed_if [ Else ]
+##
+## The known suffix of the stack is as follows:
+## If expr Then
+##
+interactive_expr: Begin If Verbatim Then Verbatim Else With
+##
+## Ends in an error in state: 475.
+##
+## if_then_else(seq_expr) -> If expr Then closed_if Else . seq_expr [ SEMI End ]
+##
+## The known suffix of the stack is as follows:
+## If expr Then closed_if Else
+##
+interactive_expr: Begin If Verbatim Then With
+##
+## Ends in an error in state: 455.
+##
+## if_then_else(seq_expr) -> If expr Then . closed_if Else seq_expr [ SEMI End ]
+##
+## The known suffix of the stack is as follows:
+## If expr Then
+##
+interactive_expr: Begin Match Verbatim With WILD ARROW If Verbatim Then Verbatim Else With
+##
+## Ends in an error in state: 415.
+##
+## if_then_else(base_cond) -> If expr Then closed_if Else . base_cond [ VBAR ]
+## if_then_else(seq_expr) -> If expr Then closed_if Else . seq_expr [ SEMI End ]
+##
+## The known suffix of the stack is as follows:
+## If expr Then closed_if Else
+##
+interactive_expr: Begin Match Verbatim With WILD ARROW If Verbatim Then With
+##
+## Ends in an error in state: 266.
+##
+## if_then(base_cond) -> If expr Then . base_cond [ VBAR ]
+## if_then_else(base_cond) -> If expr Then . closed_if Else base_cond [ VBAR ]
+## if_then_else(seq_expr) -> If expr Then . closed_if Else seq_expr [ SEMI End ]
+##
+## The known suffix of the stack is as follows:
+## If expr Then
+##
+interactive_expr: Begin Match Verbatim With WILD ARROW If With
+##
+## Ends in an error in state: 264.
+##
+## if_then(base_cond) -> If . expr Then base_cond [ VBAR ]
+## if_then_else(base_cond) -> If . expr Then closed_if Else base_cond [ VBAR ]
+## if_then_else(seq_expr) -> If . expr Then closed_if Else seq_expr [ SEMI End ]
+##
+## The known suffix of the stack is as follows:
+## If
+##
 interactive_expr: If Verbatim Then If Verbatim Then Verbatim Else With
 ##
 ## Ends in an error in state: 522.
@@ -1458,10 +1360,6 @@ interactive_expr: If Verbatim Then If Verbatim Then Verbatim Else With
 ## The known suffix of the stack is as follows:
 ## If expr Then closed_if Else
 ##
-
-Ill-formed 'if' ... 'else' ... expression.
-At this point an expression is expected.
-
 interactive_expr: If Verbatim Then If Verbatim Then With
 ##
 ## Ends in an error in state: 514.
@@ -1474,7 +1372,7 @@ interactive_expr: If Verbatim Then If Verbatim Then With
 ## If expr Then
 ##
 
-Ill-formed 'if' ... 'else' ... expression.
+Ill-formed conditional expression.
 At this point an expression is expected.
 
 interactive_expr: If Verbatim Then If Verbatim With
@@ -1542,20 +1440,6 @@ interactive_expr: If Verbatim Then Let Rec WILD EQ Bytes Attr Type
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: If Verbatim Then Let Rec WILD EQ Bytes In With
-##
-## Ends in an error in state: 511.
-##
-## let_expr(closed_if) -> Let Rec let_binding seq(Attr) In . closed_if [ Else ]
-## let_expr(expr) -> Let Rec let_binding seq(Attr) In . expr [ With Type Then SEMI RPAR RBRACKET RBRACE Let In EOF COLON Attr ]
-##
-## The known suffix of the stack is as follows:
-## Let Rec let_binding seq(Attr) In
-##
-
-Ill-formed 'let' ... 'in' ... expression.
-At this point an expression is expected.
-
 interactive_expr: If Verbatim Then Let Rec WILD EQ Bytes With
 ##
 ## Ends in an error in state: 509.
@@ -1620,7 +1504,62 @@ interactive_expr: If Verbatim Then Let WILD EQ Bytes Attr Type
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
-
+interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes In With
+##
+## Ends in an error in state: 460.
+##
+## let_expr(closed_if) -> Let Rec let_binding seq(Attr) In . closed_if [ Else ]
+##
+## The known suffix of the stack is as follows:
+## Let Rec let_binding seq(Attr) In
+##
+interactive_expr: Begin If Verbatim Then Let WILD EQ Bytes In With
+##
+## Ends in an error in state: 473.
+##
+## let_expr(closed_if) -> Let let_binding seq(Attr) In . closed_if [ Else ]
+##
+## The known suffix of the stack is as follows:
+## Let let_binding seq(Attr) In
+##
+interactive_expr: Begin Let Rec WILD EQ Bytes In With
+##
+## Ends in an error in state: 452.
+##
+## let_in_sequence -> Let Rec let_binding seq(Attr) In . series [ End ]
+##
+## The known suffix of the stack is as follows:
+## Let Rec let_binding seq(Attr) In
+##
+interactive_expr: Begin Let WILD EQ Bytes In With
+##
+## Ends in an error in state: 483.
+##
+## let_in_sequence -> Let let_binding seq(Attr) In . series [ End ]
+##
+## The known suffix of the stack is as follows:
+## Let let_binding seq(Attr) In
+##
+interactive_expr: Begin Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes In With
+##
+## Ends in an error in state: 263.
+##
+## let_expr(base_cond) -> Let Rec let_binding seq(Attr) In . base_cond [ VBAR ]
+## let_in_sequence -> Let Rec let_binding seq(Attr) In . series [ End ]
+##
+## The known suffix of the stack is as follows:
+## Let Rec let_binding seq(Attr) In
+##
+interactive_expr: If Verbatim Then Let Rec WILD EQ Bytes In With
+##
+## Ends in an error in state: 511.
+##
+## let_expr(closed_if) -> Let Rec let_binding seq(Attr) In . closed_if [ Else ]
+## let_expr(expr) -> Let Rec let_binding seq(Attr) In . expr [ With Type Then SEMI RPAR RBRACKET RBRACE Let In EOF COLON Attr ]
+##
+## The known suffix of the stack is as follows:
+## Let Rec let_binding seq(Attr) In
+##
 interactive_expr: If Verbatim Then Let WILD EQ Bytes In With
 ##
 ## Ends in an error in state: 527.
@@ -1632,7 +1571,7 @@ interactive_expr: If Verbatim Then Let WILD EQ Bytes In With
 ## Let let_binding seq(Attr) In
 ##
 
-Ill-formed 'let' ... 'in' ... expression.
+Ill-formed let-in expression.
 At this point an expression is expected.
 
 interactive_expr: If Verbatim Then Let WILD EQ Bytes With
