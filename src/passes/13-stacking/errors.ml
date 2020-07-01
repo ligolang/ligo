@@ -59,7 +59,7 @@ let rec error_ppformat : display_format:string display_format ->
       Format.pp_print_string f s ;
     | `Stacking_expression_tracer (e,ty,err) ->
       Format.fprintf f
-        "@[<hv>compiling expression@%a of type %a@%a]"
+        "@[<hv>compiling expression %a@ of type %a@ %a]"
         Mini_c.PP.expression e 
         Mini_c.PP.type_variable ty
         (error_ppformat ~display_format) err
