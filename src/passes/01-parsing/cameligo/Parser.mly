@@ -18,6 +18,9 @@ open CST
 %type <CST.t> contract
 %type <CST.expr> interactive_expr
 
+%on_error_reduce 
+  nsepseq(selection,DOT)
+
 %%
 
 (* RULES *)

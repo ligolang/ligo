@@ -1109,19 +1109,6 @@ interactive_expr: Fun WILD WILD RPAR
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: Ident DOT Int WILD
-##
-## Ends in an error in state: 188.
-##
-## nsepseq(selection,DOT) -> selection . [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
-## nsepseq(selection,DOT) -> selection . DOT nsepseq(selection,DOT) [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
-##
-## The known suffix of the stack is as follows:
-## selection
-##
-#
-Ill-formed selection.
-
 interactive_expr: Constr DOT Ident DOT With
 ##
 ## Ends in an error in state: 200.
