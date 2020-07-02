@@ -29,7 +29,10 @@ export const OutputToolbarComponent = (props: {
   onCopy?: () => void;
   onDownload?: () => void;
 }) => {
-  const output = compressToEncodedURIComponent(useSelector<AppState, ResultState['output']>(
+  // const output = compressToEncodedURIComponent(useSelector<AppState, ResultState['output']>(
+  //   state => state.result.output
+  // ));
+  const output = (useSelector<AppState, ResultState['output']>(
     state => state.result.output
   ));
 
