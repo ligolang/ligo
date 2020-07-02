@@ -4,7 +4,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_function_annotation_1.mligo"; "main"];
   [%expect {|
     ligo: error
-    in file "error_function_annotation_1.mligo", line 1, characters 0-3
+    in file "error_function_annotation_1.mligo", line 1, characters 4-8
     Constant declaration 'main'
     Bad types: expected int -> unit got int -> int
 
@@ -19,7 +19,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_function_annotation_2.mligo"; "f"];
   [%expect {|
     ligo: error
-    in file "error_function_annotation_2.mligo", line 1, characters 14-43
+    in file "error_function_annotation_2.mligo", line 1, characters 4-5
     Constant declaration 'f'
     Bad types: expected int got ( int * int ) -> int
 
@@ -34,14 +34,11 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_function_annotation_3.mligo"; "f"];
   [%expect {|
     ligo: error
-    in file "error_function_annotation_3.mligo", line 6, characters 0-3
+    in file "error_function_annotation_3.mligo", line 6, characters 4-8
     Constant declaration 'main'
-    Bad types: expected ( int * sum[Add -> int , Sub -> int] ) -> ( (type_operator: list(operation)) *
-                                                                    sum[Add -> int ,
-                                                                        Sub -> int] ) got ( int *
-                                                                        sum[Add -> int ,
-                                                                        Sub -> int] ) -> sum[Add -> int ,
-                                                                        Sub -> int]
+    Bad types:
+    expected ( int * sum[Add -> int , Sub -> int] ) -> ( (type_operator: list(operation)) * sum[Add -> int , Sub -> int] )
+    got ( int * sum[Add -> int , Sub -> int] ) -> sum[Add -> int , Sub -> int]
 
 
     If you're not sure how to fix this error, you can do one of the following:
@@ -68,7 +65,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_type.ligo" ; "main" ] ;
   [%expect {|
     ligo: error
-    in file "error_type.ligo", line 3, characters 18-28
+    in file "error_type.ligo", line 3, characters 6-9
     Constant declaration 'foo'
     Expected arguments with one of the following combinations of type:
     (nat , nat) or (int , int) or (mutez , mutez) or (nat , int) or (int , nat) or (timestamp , int) or (int , timestamp)
@@ -85,7 +82,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_1.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-    in file "error_typer_1.mligo", line 3, characters 19-27
+    in file "error_typer_1.mligo", line 3, characters 4-7
     Constant declaration 'foo'
     Bad types: expected string got int
 
@@ -100,9 +97,11 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_2.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-    in file "error_typer_2.mligo", line 3, characters 24-39
+    in file "error_typer_2.mligo", line 3, characters 4-7
     Constant declaration 'foo'
-    Bad types: expected (type_operator: list(string)) got (type_operator: option(int))
+    Bad types:
+    expected (type_operator: list(string))
+    got (type_operator: option(int))
 
 
     If you're not sure how to fix this error, you can do one of the following:
@@ -115,10 +114,11 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_3.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-    in file "error_typer_3.mligo", line 3, characters 34-53
+    in file "error_typer_3.mligo", line 3, characters 4-7
     Constant declaration 'foo'
-    Bad types: expected ( int * string * sum[false -> unit , true -> unit] ) got ( int *
-                                                                        string )
+    Bad types:
+    expected ( int * string * sum[false -> unit , true -> unit] )
+    got ( int * string )
 
 
     If you're not sure how to fix this error, you can do one of the following:
@@ -131,14 +131,11 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_4.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-    in file "error_typer_4.mligo", line 4, characters 17-56
+    in file "error_typer_4.mligo", line 4, characters 4-7
     Constant declaration 'foo'
-    Bad types: expected record[a -> int ,
-                               c -> sum[false -> unit , true -> unit] ,
-                               d -> string] got record[a -> int ,
-                                                       b -> string ,
-                                                       c -> sum[false -> unit ,
-                                                                true -> unit]]
+    Bad types:
+    expected record[a -> int , c -> sum[false -> unit , true -> unit] , d -> string]
+    got record[a -> int , b -> string , c -> sum[false -> unit , true -> unit]]
 
 
     If you're not sure how to fix this error, you can do one of the following:
@@ -166,9 +163,11 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_6.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-    in file "error_typer_6.mligo", line 1, characters 30-64
+    in file "error_typer_6.mligo", line 1, characters 4-7
     Constant declaration 'foo'
-    Bad types: expected (type_operator: Map (int,string)) got (type_operator: Map (int,sum[false -> unit , true -> unit]))
+    Bad types:
+    expected (type_operator: Map (int,string))
+    got (type_operator: Map (int,sum[false -> unit , true -> unit]))
 
 
     If you're not sure how to fix this error, you can do one of the following:
@@ -181,12 +180,11 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_7.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-    in file "error_typer_7.mligo", line 4, characters 17-56
+    in file "error_typer_7.mligo", line 4, characters 4-7
     Constant declaration 'foo'
-    Bad types: expected record[a -> int , b -> string] got record[a -> int ,
-                                                                  b -> string ,
-                                                                  c -> sum[false -> unit ,
-                                                                        true -> unit]]
+    Bad types:
+    expected record[a -> int , b -> string]
+    got record[a -> int , b -> string , c -> sum[false -> unit , true -> unit]]
 
 
     If you're not sure how to fix this error, you can do one of the following:
@@ -199,12 +197,10 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/id.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-    in file "id.mligo", line 28, characters 0-3
+    in file "id.mligo", line 28, characters 4-7
     Constant declaration 'buy'
     in file "id.mligo", line 3, character 18 to line 7, character 1
-    Expected an option but got record[controller -> address ,
-                                      owner -> address ,
-                                      profile -> bytes]
+    Expected an option but got record[controller -> address , owner -> address , profile -> bytes]
 
 
     If you're not sure how to fix this error, you can do one of the following:
@@ -240,7 +236,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/failwith_wrong_type.ligo" ; "main" ] ;
   [%expect {|
     ligo: error
-    in file "failwith_wrong_type.ligo", line 2, characters 19-46
+    in file "failwith_wrong_type.ligo", line 2, characters 6-9
     Constant declaration 'bad'
     Expected arguments with one of the following combinations of type:
     (string) or (nat) or (int)
