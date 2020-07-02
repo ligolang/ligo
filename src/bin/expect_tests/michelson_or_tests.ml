@@ -30,7 +30,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_michelson_or.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-    in file "bad_michelson_or.mligo", line 5, characters 0-3
+    in file "bad_michelson_or.mligo", line 5, characters 4-8
     Constant declaration 'main'
     in file "bad_michelson_or.mligo", line 6, characters 12-27
     michelson_or contructor M_right must be annotated with a sum type
