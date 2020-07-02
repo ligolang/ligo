@@ -1,4 +1,5 @@
 %{
+module LexToken = Lexer_reasonligo.LexToken
 %}
 
 (* Tokens (mirroring those defined in module LexToken) *)

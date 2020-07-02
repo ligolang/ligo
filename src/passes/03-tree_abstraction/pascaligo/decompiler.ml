@@ -13,10 +13,10 @@ let wrap : type a. a -> a CST.reg = fun value -> {value;region=rg}
 let list_to_sepseq lst =
   match lst with
     [] -> None
-  |  hd :: lst -> 
+  |  hd :: lst ->
       let aux e = (rg, e) in
       Some (hd, List.map aux lst)
-let list_to_nsepseq lst = 
+let list_to_nsepseq lst =
   match list_to_sepseq lst with
     Some s -> ok @@ s
   | None   -> failwith "List is not a non_empty list"
@@ -40,7 +40,7 @@ let decompile_variable : type a. a Var.t -> CST.variable = fun var ->
   if String.contains var '#' then
     let var = String.split_on_char '#' var in
     wrap @@ "gen__" ^ (String.concat "" var)
-  else 
+  else
     if String.length var > 4 && String.equal "gen__" @@ String.sub var 0 5 then
       wrap @@ "user__" ^ var
     else
@@ -52,23 +52,23 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
     T_sum sum ->
     let sum = AST.CMap.to_kv_list sum in
     let aux (AST.Constructor c, AST.{ctor_type;_}) =
-      let constr = wrap c in 
+      let constr = wrap c in
       let%bind arg = decompile_type_expr ctor_type in
       let arg = Some (rg, arg) in
       let variant : CST.variant = {constr;arg} in
-      ok @@ wrap variant 
+      ok @@ wrap variant
     in
     let%bind sum = bind_map_list aux sum in
     let%bind sum = list_to_nsepseq sum in
     return @@ CST.TSum (wrap sum)
-  | T_record record -> 
+  | T_record record ->
     let record = AST.LMap.to_kv_list record in
     let aux (AST.Label c, AST.{field_type;_}) =
-      let field_name = wrap c in 
+      let field_name = wrap c in
       let colon = rg in
       let%bind field_type = decompile_type_expr field_type in
       let variant : CST.field_decl = {field_name;colon;field_type} in
-      ok @@ wrap variant 
+      ok @@ wrap variant
     in
     let%bind record = bind_map_list aux record in
     let%bind record = list_to_nsepseq record in
@@ -98,30 +98,30 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
     failwith "let's work on it later"
 
 let get_e_variable : AST.expression -> _ result = fun expr ->
-  match expr.expression_content with 
+  match expr.expression_content with
     E_variable var -> ok @@ var.wrap_content
-  | _ -> failwith @@ 
+  | _ -> failwith @@
     Format.asprintf "%a should be a variable expression"
     AST.PP.expression expr
- 
+
 let rec get_e_accessor : AST.expression -> _ result = fun expr ->
-  match expr.expression_content with 
+  match expr.expression_content with
     E_variable var -> ok @@ (var, [])
   | E_accessor {record;path} ->
     let%bind (var, lst) = get_e_accessor record in
     ok @@ (var, lst @ path)
-  | _ -> failwith @@ 
+  | _ -> failwith @@
     Format.asprintf "%a should be a variable expression"
     AST.PP.expression expr
 
 let get_e_tuple : AST.expression -> _ result = fun expr ->
-  match expr.expression_content with 
+  match expr.expression_content with
     E_tuple tuple -> ok @@ tuple
   | E_variable _
   | E_literal _
   | E_constant _
   | E_lambda _ -> ok @@ [expr]
-  | _ -> failwith @@ 
+  | _ -> failwith @@
     Format.asprintf "%a should be a tuple expression"
     AST.PP.expression expr
 type eos =
@@ -138,7 +138,7 @@ let statements_of_expression : CST.expr -> CST.statement List.Ne.t option = fun 
 let rec decompile_expression : AST.expression -> _ result = fun e ->
   let%bind (block,expr) = decompile_to_block e in
   match expr with
-    Some expr -> 
+    Some expr ->
     ( match block with
       Some block ->
         let block = wrap @@ block in
@@ -146,7 +146,7 @@ let rec decompile_expression : AST.expression -> _ result = fun e ->
     | None -> ok @@ expr
     )
   | None ->
-    failwith @@ Format.asprintf 
+    failwith @@ Format.asprintf
       "An expression was expected, but this was decompile to statements. \n
       Expr : %a
       Loc : %a"
@@ -157,8 +157,8 @@ and decompile_statements : AST.expression -> _ result = fun expr ->
   let%bind (stat,_) = decompile_eos Statements expr in
   match stat with
     Some stat -> ok @@ stat
-  | None -> 
-      failwith @@ Format.asprintf 
+  | None ->
+      failwith @@ Format.asprintf
         "Statements was expected, but this was decompile to expression. \n
         Expr : %a
         Loc : %a"
@@ -185,7 +185,7 @@ and decompile_eos : eos -> AST.expression -> ((CST.statement List.Ne.t option)* 
   let return_stat_ez stat = return_stat @@ (stat, []) in
   let return_inst inst = return_stat_ez @@ CST.Instr inst in
   match expr.expression_content with
-    E_variable name -> 
+    E_variable name ->
     let var = decompile_variable name.wrap_content in
     return_expr @@ CST.EVar (var)
   | E_constant {cons_name; arguments} ->
@@ -195,7 +195,7 @@ and decompile_eos : eos -> AST.expression -> ((CST.statement List.Ne.t option)* 
     | _ ->
       let%bind arguments = decompile_to_tuple_expr arguments in
       let const : CST.fun_call = wrap (expr, arguments) in
-      (match output with 
+      (match output with
         Expression -> return_expr (CST.ECall const)
       | Statements -> return_inst (CST.ProcCall const)
       )
@@ -205,7 +205,7 @@ and decompile_eos : eos -> AST.expression -> ((CST.statement List.Ne.t option)* 
         Literal_unit  ->  return_expr @@ CST.EUnit rg
       | Literal_int i ->  return_expr @@ CST.EArith (Int (wrap ("",i)))
       | Literal_nat n ->  return_expr @@ CST.EArith (Nat (wrap ("",n)))
-      | Literal_timestamp time -> 
+      | Literal_timestamp time ->
         let time = Tezos_utils.Time.Protocol.to_notation @@
           Tezos_utils.Time.Protocol.of_seconds @@ Z.to_int64 time in
           (* TODO combinators for CSTs. *)
@@ -235,7 +235,7 @@ and decompile_eos : eos -> AST.expression -> ((CST.statement List.Ne.t option)* 
         let kh = CST.EString (String (wrap kh)) in
         let%bind ty = decompile_type_expr @@ AST.t_key_hash () in
         return_expr @@ CST.EAnnot (wrap @@ par (kh,rg,ty))
-      | Literal_chain_id _ 
+      | Literal_chain_id _
       | Literal_void
       | Literal_operation _ ->
         failwith "chain_id, void, operation are not created currently ?"
@@ -244,7 +244,7 @@ and decompile_eos : eos -> AST.expression -> ((CST.statement List.Ne.t option)* 
     let%bind lamb = decompile_expression lamb in
     let%bind args = bind decompile_to_tuple_expr @@ get_e_tuple args in
     (match output with
-      Expression -> 
+      Expression ->
       return_expr @@ CST.ECall (wrap (lamb,args))
     | Statements ->
       return_inst @@ CST.ProcCall (wrap (lamb,args))
@@ -281,7 +281,7 @@ and decompile_eos : eos -> AST.expression -> ((CST.statement List.Ne.t option)* 
   | E_let_in {let_binder;rhs;let_result;inline} ->
     let%bind lin = decompile_to_data_decl let_binder rhs inline in
     let%bind (lst, expr) = decompile_eos Expression let_result in
-    let lst = match lst with 
+    let lst = match lst with
       Some lst -> List.Ne.cons (CST.Data lin) lst
     | None -> (CST.Data lin, [])
     in
@@ -310,7 +310,7 @@ and decompile_eos : eos -> AST.expression -> ((CST.statement List.Ne.t option)* 
     )
   | E_record record  ->
     let record = AST.LMap.to_kv_list record in
-    let aux (AST.Label str, expr) = 
+    let aux (AST.Label str, expr) =
       let field_name = wrap str in
       let%bind field_expr = decompile_expression expr in
       let field : CST.field_assignment = {field_name;assignment=rg;field_expr} in
@@ -350,10 +350,10 @@ and decompile_eos : eos -> AST.expression -> ((CST.statement List.Ne.t option)* 
   | E_update {record={expression_content=E_update _;_} as record;path;update} ->
     let%bind record = decompile_expression record in
     let%bind (record,updates) = match record with
-      CST.EUpdate {value;_} -> ok @@ (value.record,value.updates) 
-    | _ -> failwith @@ Format.asprintf "Inpossible case %a" AST.PP.expression expr 
+      CST.EUpdate {value;_} -> ok @@ (value.record,value.updates)
+    | _ -> failwith @@ Format.asprintf "Inpossible case %a" AST.PP.expression expr
     in
-    let%bind var,path = match path with 
+    let%bind var,path = match path with
       Access_record var::path -> ok @@ (var,path)
     | _ -> failwith "Impossible case %a"
     in
@@ -369,7 +369,7 @@ and decompile_eos : eos -> AST.expression -> ((CST.statement List.Ne.t option)* 
     let%bind field_expr = decompile_expression update in
     let (struct_name,field_path) = List.Ne.of_list path in
     (match field_path with
-      [] -> 
+      [] ->
       (match struct_name with
         Access_record name ->
         let record : CST.path = Name record in
@@ -483,7 +483,7 @@ and decompile_eos : eos -> AST.expression -> ((CST.statement List.Ne.t option)* 
     let var = decompile_variable @@ (fst binder).wrap_content in
     let bind_to = Option.map (fun (x:AST.expression_variable) -> (rg,decompile_variable x.wrap_content)) @@ snd binder in
     let%bind expr = decompile_expression collection in
-    let collection = match collection_type with 
+    let collection = match collection_type with
       Map -> CST.Map rg | Set -> Set rg | List -> List rg in
     let%bind (block,_next) = decompile_to_block body in
     let block = wrap @@ Option.unopt ~default:(empty_block) block in
@@ -498,7 +498,7 @@ and decompile_eos : eos -> AST.expression -> ((CST.statement List.Ne.t option)* 
 
 and decompile_if_clause : AST.expression -> (CST.if_clause, _) result = fun e ->
   let%bind clause = decompile_statements e in
-  match clause with 
+  match clause with
     CST.Instr instr,[] ->
     ok @@ CST.ClauseInstr instr
   | _ ->
@@ -508,12 +508,12 @@ and decompile_if_clause : AST.expression -> (CST.if_clause, _) result = fun e ->
 and decompile_to_data_decl : (AST.expression_variable * AST.type_expression option) -> AST.expression -> bool -> (CST.data_decl, _) result = fun (name,ty_opt) expr inline ->
   let name = decompile_variable name.wrap_content in
   let%bind const_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) ty_opt in
-  let attributes : CST.attr_decl option = match inline with 
+  let attributes : CST.attr_decl option = match inline with
     true -> Some (wrap @@ ne_inject (NEInjAttr rg) @@ (wrap @@ "inline",[]))
   | false -> None
   in
   let fun_name = name in
-  match expr.expression_content with 
+  match expr.expression_content with
     E_lambda lambda ->
     let%bind (param,ret_type,return) = decompile_lambda lambda in
     let fun_decl : CST.fun_decl = {kwd_recursive=None;kwd_function=rg;fun_name;param;ret_type;kwd_is=rg;return;terminator=Some rg;attributes} in
@@ -531,14 +531,14 @@ and decompile_to_data_decl : (AST.expression_variable * AST.type_expression opti
 and decompile_to_lhs : AST.expression_variable -> AST.access list -> (CST.lhs, _) result = fun var access ->
   match List.rev access with
     [] -> ok @@ (CST.Path (Name (decompile_variable var.wrap_content)) : CST.lhs)
-  | hd :: tl -> 
-    match hd with 
+  | hd :: tl ->
+    match hd with
     | AST.Access_map e ->
       let%bind path = decompile_to_path var @@ List.rev tl in
       let%bind index = map (wrap <@ brackets) @@ decompile_expression e in
       let mlu: CST.map_lookup = {path;index} in
       ok @@ CST.MapPath (wrap @@ mlu)
-    | _ -> 
+    | _ ->
       let%bind path = decompile_to_path var @@ access in
       ok @@ (CST.Path (path) : CST.lhs)
 
@@ -570,18 +570,18 @@ and decompile_lambda : AST.lambda -> _ = fun {binder;input_type;output_type;resu
     let%bind return = decompile_expression result in
     ok @@ (param,ret_type,return)
 
-and decompile_matching_expr : type a.(AST.expr ->(a,_) result) -> AST.matching_expr -> ((a CST.case_clause Region.reg, Region.t) Parser_shared.Utils.nsepseq Region.reg,_) result = 
+and decompile_matching_expr : type a.(AST.expr ->(a,_) result) -> AST.matching_expr -> ((a CST.case_clause Region.reg, Region.t) Simple_utils.Utils.nsepseq Region.reg,_) result =
 fun f m ->
   let%bind cases = match m with
     Match_variable (var, _ty_opt, expr) ->
-    let pattern : CST.pattern = PVar (decompile_variable var.wrap_content) in 
+    let pattern : CST.pattern = PVar (decompile_variable var.wrap_content) in
     let%bind rhs = f expr in
     let case : _ CST.case_clause = {pattern; arrow=rg; rhs}in
     ok @@ [wrap case]
   | Match_tuple (lst, _ty_opt, expr) ->
     let aux (var:AST.expression_variable) = CST.PVar (decompile_variable var.wrap_content) in
     let%bind tuple = list_to_nsepseq @@ List.map aux lst in
-    let pattern : CST.pattern = PTuple (wrap @@ par @@ tuple) in 
+    let pattern : CST.pattern = PTuple (wrap @@ par @@ tuple) in
     let%bind rhs = f expr in
     let case : _ CST.case_clause = {pattern; arrow=rg; rhs}in
     ok @@ [wrap case]
@@ -604,7 +604,7 @@ fun f m ->
     let nil_case : _ CST.case_clause = {pattern=PList (PNil rg);arrow=rg; rhs} in
     ok @@ [wrap cons_case; wrap nil_case]
   | Match_variant lst ->
-    let aux ((c,(v:AST.expression_variable)),e) = 
+    let aux ((c,(v:AST.expression_variable)),e) =
       let AST.Constructor c = c in
       let constr = wrap @@ c in
       let var : CST.pattern = PVar (decompile_variable v.wrap_content) in
@@ -630,9 +630,9 @@ let decompile_declaration : AST.declaration Location.wrap -> (CST.declaration, _
     ok @@ CST.TypeDecl (wrap (CST.{kwd_type; name; kwd_is; type_expr; terminator}))
   | Declaration_constant (var, ty_opt, inline, expr) ->
     let attributes = match inline with
-      true -> 
+      true ->
         let attr = wrap "inline" in
-        let ne_inj : _ CST.ne_injection = 
+        let ne_inj : _ CST.ne_injection =
           {kind=NEInjAttr rg;enclosing=End rg;ne_elements=(attr, []);terminator=Some rg} in
         let attr_decl = wrap ne_inj in
         Some attr_decl

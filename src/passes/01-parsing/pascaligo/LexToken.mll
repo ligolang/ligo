@@ -1,20 +1,19 @@
-(* Lexer specification for LIGO, to be processed by [ocamllex] *)
+(* ocamlex specification for PascaLIGO *)
 
 {
 (* START HEADER *)
 
-(* Shorthands *)
+(* Dependencies *)
 
 module Region = Simple_utils.Region
 module Pos    = Simple_utils.Pos
+module Markup = Lexer_shared.Markup
 module SMap   = Map.Make (String)
 module SSet   = Set.Make (String)
 
-type lexeme = string
-
-let sprintf = Printf.sprintf
-
 (* TOKENS *)
+
+type lexeme = string
 
 type attribute = {
   header : string;
@@ -116,6 +115,8 @@ type t =
 
 
 (* Projections *)
+
+let sprintf = Printf.sprintf
 
 type token = t
 

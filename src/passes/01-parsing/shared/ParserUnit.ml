@@ -1,8 +1,16 @@
 (* Functor to build a LIGO parser *)
 
-module Region  = Simple_utils.Region
-module Preproc = Preprocessor.Preproc
-module SSet    = Set.Make (String)
+(* Dependencies *)
+
+module Region   = Simple_utils.Region
+module EvalOpt  = Lexer_shared.EvalOpt
+module Lexer    = Lexer_shared.Lexer
+module LexerLib = Lexer_shared.LexerLib
+module LexerLog = Lexer_shared.LexerLog
+module Preproc  = Preprocessor.Preproc
+module SSet     = Set.Make (String)
+
+(* A subtype of [EvalOpt.options] *)
 
 module type SubIO =
   sig
