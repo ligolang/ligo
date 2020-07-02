@@ -39,10 +39,6 @@ interactive_expr: Begin Fun WILD ARROW With
 ## The known suffix of the stack is as follows:
 ## Fun nseq(irrefutable) ARROW
 ##
-
-Ill-formed function expression.
-At this point a function body, in the form of an expression, is expected.
-
 interactive_expr: Begin If Verbatim Then Fun WILD ARROW With
 ##
 ## Ends in an error in state: 466.
@@ -54,7 +50,7 @@ interactive_expr: Begin If Verbatim Then Fun WILD ARROW With
 ##
 
 Ill-formed function expression.
-At this point an expression is expected.
+At this point a function body, in the form of an expression, is expected.
 
 interactive_expr: Begin If Verbatim Then If Verbatim Then Verbatim COMMA Bytes With
 ##
@@ -117,19 +113,6 @@ interactive_expr: Begin If Verbatim Then If Verbatim With
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
-
-interactive_expr: Begin If Verbatim Then If With
-##
-## Ends in an error in state: 461.
-##
-## if_then_else(closed_if) -> If . expr Then closed_if Else closed_if [ Else ]
-##
-## The known suffix of the stack is as follows:
-## If
-##
-
-Ill-formed conditional expression.
-At this point a test, in the form of an expression, is expected.
 
 interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes Attr Type
 ##
@@ -411,6 +394,15 @@ interactive_expr: Begin If Verbatim With
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
+interactive_expr: Begin If Verbatim Then If With
+##
+## Ends in an error in state: 461.
+##
+## if_then_else(closed_if) -> If . expr Then closed_if Else closed_if [ Else ]
+##
+## The known suffix of the stack is as follows:
+## If
+##
 interactive_expr: Begin If With
 ##
 ## Ends in an error in state: 453.
@@ -422,7 +414,7 @@ interactive_expr: Begin If With
 ##
 
 Ill-formed conditional expression.
-At this point the test expression is expected.
+At this point a test, in the form of an expression, is expected.
 
 interactive_expr: Begin Let Rec WILD EQ Bytes Attr Type
 ##
@@ -1117,7 +1109,7 @@ interactive_expr: Fun WILD WILD RPAR
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-# interactive_expr: Ident DOT Int WILD
+interactive_expr: Ident DOT Int WILD
 ##
 ## Ends in an error in state: 188.
 ##
@@ -1128,7 +1120,7 @@ interactive_expr: Fun WILD WILD RPAR
 ## selection
 ##
 #
-# Ill-formed selection.
+Ill-formed selection.
 
 interactive_expr: Constr DOT Ident DOT With
 ##
