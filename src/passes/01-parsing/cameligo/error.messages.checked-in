@@ -43,19 +43,6 @@ interactive_expr: Begin Fun WILD ARROW With
 Ill-formed function expression.
 At this point a function body, in the form of an expression, is expected.
 
-interactive_expr: Begin Fun With
-##
-## Ends in an error in state: 477.
-##
-## fun_expr(last_expr) -> Fun . nseq(irrefutable) ARROW last_expr [ End ]
-##
-## The known suffix of the stack is as follows:
-## Fun
-##
-
-Ill-formed function expression.
-At this point function arguments are expected.
-
 interactive_expr: Begin If Verbatim Then Fun WILD ARROW With
 ##
 ## Ends in an error in state: 466.
@@ -68,19 +55,6 @@ interactive_expr: Begin If Verbatim Then Fun WILD ARROW With
 
 Ill-formed function expression.
 At this point an expression is expected.
-
-interactive_expr: Begin If Verbatim Then Fun With
-##
-## Ends in an error in state: 464.
-##
-## fun_expr(closed_if) -> Fun . nseq(irrefutable) ARROW closed_if [ Else ]
-##
-## The known suffix of the stack is as follows:
-## Fun
-##
-
-Ill-formed function expression.
-At this point a parameter is expected.
 
 interactive_expr: Begin If Verbatim Then If Verbatim Then Verbatim COMMA Bytes With
 ##
@@ -218,7 +192,7 @@ interactive_expr: Begin If Verbatim Then Let Rec With
 ## Let Rec
 ##
 
-Ill-formed 'let' expression. 
+Ill-formed let-in expression. 
 At this point an irrefutable pattern is expected, for instance an identifier.
 
 interactive_expr: Begin If Verbatim Then Let WILD EQ Bytes Attr Type
@@ -281,7 +255,7 @@ interactive_expr: Begin If Verbatim Then Let With
 ## Let
 ##
 
-Ill-formed 'let' expression.
+Ill-formed let-in expression.
 At this point one of the following is expected:
   an irrefutable pattern, like an identifier; or
   the 'rec' keyword, if your definition is likely to be recursive.
@@ -347,32 +321,6 @@ interactive_expr: Begin If Verbatim Then Match Verbatim With WILD ARROW Bytes Wi
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: Begin If Verbatim Then Match Verbatim With With
-##
-## Ends in an error in state: 269.
-##
-## match_expr(base_if_then_else) -> Match expr With . option(VBAR) cases(base_if_then_else) [ Else ]
-##
-## The known suffix of the stack is as follows:
-## Match expr With
-##
-
-Ill-formed 'match' expression. 
-At this point the pattern of a case is expected.
-
-interactive_expr: Begin If Verbatim Then Match With
-##
-## Ends in an error in state: 267.
-##
-## match_expr(base_if_then_else) -> Match . expr With option(VBAR) cases(base_if_then_else) [ Else ]
-##
-## The known suffix of the stack is as follows:
-## Match
-##
-
-Ill-formed 'match' expression.
-At this point the expression to be matched is expected.
-
 interactive_expr: Begin If Verbatim Then Verbatim COMMA Bytes With
 ##
 ## Ends in an error in state: 474.
@@ -404,8 +352,6 @@ interactive_expr: Begin If Verbatim Then Verbatim COMMA Bytes With
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
-
-
 
 interactive_expr: Begin If Verbatim Then Verbatim With
 ##
@@ -537,7 +483,7 @@ interactive_expr: Begin Let Rec With
 ## Let Rec
 ##
 
-Ill-formed 'let' expression.
+Ill-formed let-in expression.
 At this point an identifier is expected.
 
 interactive_expr: Begin Let WILD EQ Bytes Attr Type
@@ -600,7 +546,7 @@ interactive_expr: Begin Let With
 ## Let
 ##
 
-Ill-formed 'let' expression.
+Ill-formed let-in expression.
 At this point one of the following is expected:
   a tuple; or 
   an identifier; or
@@ -635,20 +581,6 @@ interactive_expr: Begin Match Verbatim Type
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: Begin Match Verbatim With WILD ARROW Bytes VBAR With
-##
-## Ends in an error in state: 492.
-##
-## cases(base_cond) -> cases(base_cond) VBAR . case_clause(base_cond) [ VBAR ]
-## cases(last_expr) -> cases(base_cond) VBAR . case_clause(last_expr) [ End ]
-##
-## The known suffix of the stack is as follows:
-## cases(base_cond) VBAR
-##
-
-Ill-formed 'match' expression.
-At this point another case is expected.
-
 interactive_expr: Begin Match Verbatim With WILD ARROW Fun WILD ARROW With
 ##
 ## Ends in an error in state: 439.
@@ -662,20 +594,6 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Fun WILD ARROW With
 
 Ill-formed function expression.
 At this point a function body, in the form of an expression, is expected.
-
-interactive_expr: Begin Match Verbatim With WILD ARROW Fun With
-##
-## Ends in an error in state: 437.
-##
-## fun_expr(base_cond) -> Fun . nseq(irrefutable) ARROW base_cond [ VBAR ]
-## fun_expr(last_expr) -> Fun . nseq(irrefutable) ARROW last_expr [ End ]
-##
-## The known suffix of the stack is as follows:
-## Fun
-##
-
-Ill-formed function expression.
-At this point function arguments are expected.
 
 interactive_expr: Begin Match Verbatim With WILD ARROW If Verbatim With
 ##
@@ -770,7 +688,7 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Let Rec With
 ## Let Rec
 ##
 
-Ill-formed 'let' expression.
+Ill-formed let-in expression.
 At this point an identifier is expected.
 
 interactive_expr: Begin Match Verbatim With WILD ARROW Let WILD EQ Bytes Attr Type
@@ -804,7 +722,7 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Let WILD EQ Bytes In With
 ## Let let_binding seq(Attr) In
 ##
 
-Ill-formed 'let' expression.
+Ill-formed let-in expression.
 At this point an expression is expected.
 
 interactive_expr: Begin Match Verbatim With WILD ARROW Let WILD EQ Bytes With
@@ -851,7 +769,7 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Let With
 ## Let
 ##
 
-Ill-formed 'let' expression.
+Ill-formed let-in expression.
 At this point one of the following is expected:
   destructuring; or 
   an identifier; or
@@ -956,6 +874,35 @@ interactive_expr: Begin Match Verbatim With WILD CONS Bytes SEMI
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
+
+interactive_expr: Begin If Verbatim Then Match Verbatim With With
+##
+## Ends in an error in state: 269.
+##
+## match_expr(base_if_then_else) -> Match expr With . option(VBAR) cases(base_if_then_else) [ Else ]
+##
+## The known suffix of the stack is as follows:
+## Match expr With
+##
+interactive_expr: Begin If Verbatim Then Match With
+##
+## Ends in an error in state: 267.
+##
+## match_expr(base_if_then_else) -> Match . expr With option(VBAR) cases(base_if_then_else) [ Else ]
+##
+## The known suffix of the stack is as follows:
+## Match
+##
+interactive_expr: Begin Match Verbatim With WILD ARROW Bytes VBAR With
+##
+## Ends in an error in state: 492.
+##
+## cases(base_cond) -> cases(base_cond) VBAR . case_clause(base_cond) [ VBAR ]
+## cases(last_expr) -> cases(base_cond) VBAR . case_clause(last_expr) [ End ]
+##
+## The known suffix of the stack is as follows:
+## cases(base_cond) VBAR
+##
 interactive_expr: Begin If Verbatim Then Match Verbatim With VBAR Begin
 ##
 ## Ends in an error in state: 270.
@@ -985,7 +932,7 @@ interactive_expr: Begin Match Verbatim With With
 ##
 
 Ill-formed 'match' expression.
-At this point the pattern of a case is expected.
+At this point the pattern to be matched is expected.
 
 interactive_expr: Begin Match With
 ##
@@ -1080,21 +1027,6 @@ interactive_expr: C_Some With
 Ill-formed 'Some' constructor.
 At this point an expression is expected.
 
-interactive_expr: Constr DOT Ident DOT With
-##
-## Ends in an error in state: 200.
-##
-## projection -> Constr DOT Ident DOT . nsepseq(selection,DOT) [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
-##
-## The known suffix of the stack is as follows:
-## Constr DOT Ident DOT
-##
-
-Ill-formed selection.
-At this point one of the following is expected:
-  a field name; or 
-  a tuple index '<int>'.
-
 interactive_expr: Constr DOT Ident WILD
 ##
 ## Ends in an error in state: 199.
@@ -1185,35 +1117,7 @@ interactive_expr: Fun WILD WILD RPAR
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: Fun With
-##
-## Ends in an error in state: 192.
-##
-## fun_expr(expr) -> Fun . nseq(irrefutable) ARROW expr [ With Type Then SEMI RPAR RBRACKET RBRACE Let In EOF COLON Attr ]
-##
-## The known suffix of the stack is as follows:
-## Fun
-##
-
-Ill-formed function expression.
-At this point function arguments are expected.
-
-interactive_expr: Ident DOT Int DOT With
-##
-## Ends in an error in state: 189.
-##
-## nsepseq(selection,DOT) -> selection DOT . nsepseq(selection,DOT) [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
-##
-## The known suffix of the stack is as follows:
-## selection DOT
-##
-
-Ill-formed selection.
-At this point one of the following is expected:
-  a field name; or 
-  a tuple index '<int>'.
-
-interactive_expr: Ident DOT Int WILD
+# interactive_expr: Ident DOT Int WILD
 ##
 ## Ends in an error in state: 188.
 ##
@@ -1223,9 +1127,27 @@ interactive_expr: Ident DOT Int WILD
 ## The known suffix of the stack is as follows:
 ## selection
 ##
+#
+# Ill-formed selection.
 
-Ill-formed selection.
-
+interactive_expr: Constr DOT Ident DOT With
+##
+## Ends in an error in state: 200.
+##
+## projection -> Constr DOT Ident DOT . nsepseq(selection,DOT) [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
+##
+## The known suffix of the stack is as follows:
+## Constr DOT Ident DOT
+##
+interactive_expr: Ident DOT Int DOT With
+##
+## Ends in an error in state: 189.
+##
+## nsepseq(selection,DOT) -> selection DOT . nsepseq(selection,DOT) [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
+##
+## The known suffix of the stack is as follows:
+## selection DOT
+##
 interactive_expr: Ident DOT With
 ##
 ## Ends in an error in state: 185.
@@ -1239,7 +1161,7 @@ interactive_expr: Ident DOT With
 Ill-formed selection.
 At this point one of the following is expected:
   a field name; or 
-  a tuple index '<int>'.
+  a tuple index as a literal integer greater than or equal to 0.
 
 interactive_expr: Ident WILD
 ##
@@ -1268,6 +1190,34 @@ interactive_expr: If Verbatim Then Fun WILD ARROW With
 Ill-formed function expression.
 At this point a function body, in the form of an expression, is expected.
 
+interactive_expr: Begin Fun With
+##
+## Ends in an error in state: 477.
+##
+## fun_expr(last_expr) -> Fun . nseq(irrefutable) ARROW last_expr [ End ]
+##
+## The known suffix of the stack is as follows:
+## Fun
+##
+interactive_expr: Begin Match Verbatim With WILD ARROW Fun With
+##
+## Ends in an error in state: 437.
+##
+## fun_expr(base_cond) -> Fun . nseq(irrefutable) ARROW base_cond [ VBAR ]
+## fun_expr(last_expr) -> Fun . nseq(irrefutable) ARROW last_expr [ End ]
+##
+## The known suffix of the stack is as follows:
+## Fun
+##
+interactive_expr: Fun With
+##
+## Ends in an error in state: 192.
+##
+## fun_expr(expr) -> Fun . nseq(irrefutable) ARROW expr [ With Type Then SEMI RPAR RBRACKET RBRACE Let In EOF COLON Attr ]
+##
+## The known suffix of the stack is as follows:
+## Fun
+##
 interactive_expr: If Verbatim Then Fun With
 ##
 ## Ends in an error in state: 515.
@@ -1278,9 +1228,18 @@ interactive_expr: If Verbatim Then Fun With
 ## The known suffix of the stack is as follows:
 ## Fun
 ##
+interactive_expr: Begin If Verbatim Then Fun With
+##
+## Ends in an error in state: 464.
+##
+## fun_expr(closed_if) -> Fun . nseq(irrefutable) ARROW closed_if [ Else ]
+##
+## The known suffix of the stack is as follows:
+## Fun
+##
 
 Ill-formed function expression.
-At this point function arguments are expected.
+At this point a parameter is expected.
 
 interactive_expr: Begin If Verbatim Then If Verbatim Then Verbatim Else With
 ##
@@ -1482,7 +1441,7 @@ interactive_expr: If Verbatim Then Let Rec With
 ## Let Rec
 ##
 
-Ill-formed 'let' expression.
+Ill-formed let-in expression.
 At this point an identifier is expected.
 
 interactive_expr: If Verbatim Then Let WILD EQ Bytes Attr Type
@@ -1619,7 +1578,7 @@ interactive_expr: If Verbatim Then Let With
 ## Let
 ##
 
-Ill-formed 'let' expression.
+Ill-formed let-in expression.
 At this point one of the following is expected:
   destructuring; or 
   an identifier; or
