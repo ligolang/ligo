@@ -31,12 +31,9 @@ let%expect_test _ =
   [%expect {|
     ligo: error
     Provided storage type does not match contract storage type
-    Bad types: expected record[card_patterns -> (type_operator: Map (nat,record[coefficient -> mutez , quantity -> nat])) ,
-                               cards -> (type_operator: Map (nat,record[card_owner -> address , card_pattern -> nat])) ,
-                               next_id -> nat] got sum[Buy_single -> record[card_to_buy -> nat] ,
-                                                       Sell_single -> record[card_to_sell -> nat] ,
-                                                       Transfer_single -> record[card_to_transfer -> nat ,
-                                                                        destination -> address]]
+    Bad types:
+    expected record[card_patterns -> (type_operator: Map (nat,record[coefficient -> mutez , quantity -> nat])) , cards -> (type_operator: Map (nat,record[card_owner -> address , card_pattern -> nat])) , next_id -> nat]
+    got sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]
 
 
     If you're not sure how to fix this error, you can do one of the following:
@@ -50,12 +47,9 @@ let%expect_test _ =
   [%expect {|
     ligo: error
     Provided parameter type does not match contract parameter type
-    Bad types: expected sum[Buy_single -> record[card_to_buy -> nat] ,
-                            Sell_single -> record[card_to_sell -> nat] ,
-                            Transfer_single -> record[card_to_transfer -> nat ,
-                                                      destination -> address]] got record[card_patterns -> (type_operator: Map (nat,record[coefficient -> mutez , quantity -> nat])) ,
-                                                                        cards -> (type_operator: Map (nat,record[card_owner -> address , card_pattern -> nat])) ,
-                                                                        next_id -> nat]
+    Bad types:
+    expected sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]
+    got record[card_patterns -> (type_operator: Map (nat,record[coefficient -> mutez , quantity -> nat])) , cards -> (type_operator: Map (nat,record[card_owner -> address , card_pattern -> nat])) , next_id -> nat]
 
 
     If you're not sure how to fix this error, you can do one of the following:
@@ -1467,7 +1461,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_toplevel.mligo" ; "main" ] ;
   [%expect {|
 ligo: error
-in file "create_contract_toplevel.mligo", line 3, characters 0-3
+in file "create_contract_toplevel.mligo", line 3, characters 4-8
 Constant declaration 'main'
 in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8
 Free variable 'store' is not allowed in CREATE_CONTRACT lambda
@@ -1483,7 +1477,7 @@ If you're not sure how to fix this error, you can do one of the following:
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_var.mligo" ; "main" ] ;
   [%expect {|
 ligo: error
-in file "create_contract_var.mligo", line 5, characters 0-3
+in file "create_contract_var.mligo", line 5, characters 4-8
 Constant declaration 'main'
 in file "create_contract_var.mligo", line 6, character 35 to line 10, character 5
 Free variable 'a' is not allowed in CREATE_CONTRACT lambda
