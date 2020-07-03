@@ -42,28 +42,28 @@
         "url_template": "https://github.com/sass/node-sass/releases/download/v<version>/linux-x64-64_binding.node",
         "version": "4.12.0"
     },
+    "tezos-packaging": {
+        "branch": "master",
+        "description": "Nix expressions for building tezos-client",
+        "homepage": "",
+        "owner": "serokell",
+        "repo": "tezos-packaging",
+        "rev": "8db9b53c465c2edc6ccff6f24505b8b39686e258",
+        "sha256": "1pshvjbswh1rcm1pzcnwzwna8ipb122shil526rscs1izkc4qa05",
+        "type": "tarball",
+        "url": "https://github.com/serokell/tezos-packaging/archive/8db9b53c465c2edc6ccff6f24505b8b39686e258.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
     "opam-nix": {
         "branch": "master",
         "description": "A handy nix library to package OCaml software from OPAM repositories",
         "homepage": null,
         "owner": "balsoft",
         "repo": "opam-nix",
-        "rev": "7a1404a9196775175757a18ff3ff59ce639dafa3",
-        "sha256": "0fpnbm88alvm84crwndadq232pihnxj1ldnv0xc5snxh07bpnkcx",
+        "rev": "a7b8e16ab28c840eab2c3be2f5069524dc87fd58",
+        "sha256": "0ydbwbirz1ag1lprl2mxz3cvzqxn945yfnakhzm19q2qm78zlb37",
         "type": "tarball",
-        "url": "https://github.com/balsoft/opam-nix/archive/7a1404a9196775175757a18ff3ff59ce639dafa3.tar.gz",
-        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
-    },
-    "opam-repository": {
-        "branch": "master",
-        "description": "Main public package repository for OPAM, the source package manager of OCaml.",
-        "homepage": "https://opam.ocaml.org",
-        "owner": "ocaml",
-        "repo": "opam-repository",
-        "rev": "e81ab2996896b21cba74c43a903b305a5a6341ef",
-        "sha256": "09ml0nj65yci6g9jya9sann1qz1p4aprzcq1kvg6w3b6say258yv",
-        "type": "tarball",
-        "url": "https://github.com/ocaml/opam-repository/archive/e81ab2996896b21cba74c43a903b305a5a6341ef.tar.gz",
+        "url": "https://github.com/balsoft/opam-nix/archive/a7b8e16ab28c840eab2c3be2f5069524dc87fd58.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "xmldiff": {
