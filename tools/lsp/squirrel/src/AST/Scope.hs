@@ -5,12 +5,12 @@
 -}
 
 module AST.Scope
-  ( HasLocalScope (..)
-  , addLocalScopes
-  , lookupEnv
-  , Kind (..)
-  , ScopedDecl (..)
-  )
+  -- ( HasLocalScope (..)
+  -- , addLocalScopes
+  -- , lookupEnv
+  -- , Kind (..)
+  -- , ScopedDecl (..)
+  -- )
   where
 
 import           Control.Arrow (second)
@@ -60,10 +60,14 @@ addLocalScopes
 addLocalScopes tree =
     fmap (\xs -> Cons (envAt envWithREfs $ getRange xs) xs) tree
   where
+    envWithREfs = getEnvTree tree
+
+getEnvTree tree = envWithREfs
+  where
     envWithREfs = flip execState env do
       flip traverseOnly tree \r (Name t) -> do
-        modify $ addRef (getRange r) t
-        return (Name t)
+        modify $ getRange r `addRef` t
+        return $ Name t
 
     env
       = execCollectM
