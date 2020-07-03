@@ -468,11 +468,20 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
           in
           return @@ E_if_cons (expr' , nil , cons)
         )
-      | Match_variant {cases=[{constructor=Constructor t;body=match_true};{constructor=Constructor f;body=match_false}];_}
-        when String.equal t "true" && String.equal f "false" ->
-          let%bind (t , f) = bind_map_pair (compile_expression) (match_true, match_false) in
-          return @@ E_if_bool (expr', t, f)
       | Match_variant {cases ; tv} -> (
+        match expr'.type_expression.type_content with
+          | T_base TB_bool ->
+            let ctor_body (case : AST.matching_content_case) = (case.constructor, case.body) in
+            let cases = AST.CMap.of_list (List.map ctor_body cases) in
+            let get_case c =
+              trace_option
+                (corner_case ~loc:__LOC__ ("missing " ^ c ^ " case in match"))
+                (AST.CMap.find_opt (Constructor c) cases) in
+            let%bind match_true  = get_case "true" in
+            let%bind match_false = get_case "false" in
+            let%bind (t , f) = bind_map_pair (compile_expression) (match_true, match_false) in
+            return @@ E_if_bool (expr', t, f)
+          | _ ->
           let%bind tree =
             trace_strong (corner_case ~loc:__LOC__ "getting lr tree") @@
             tree_of_sum tv in

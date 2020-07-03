@@ -40,6 +40,9 @@ let%expect_test _ =
            evaluate-value
                Subcommand: Evaluate a given definition.
 
+           get-scope
+               Subcommand: Return the JSON encoded environment for a given file.
+
            interpret
                Subcommand: Interpret the expression in the context initialized by
                the provided source file.
@@ -139,6 +142,9 @@ let%expect_test _ =
 
            evaluate-value
                Subcommand: Evaluate a given definition.
+
+           get-scope
+               Subcommand: Return the JSON encoded environment for a given file.
 
            interpret
                Subcommand: Interpret the expression in the context initialized by

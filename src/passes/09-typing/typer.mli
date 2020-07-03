@@ -15,5 +15,6 @@ type environment = Environment.t
 val type_program : I.program -> (O.program * O'.typer_state, Errors.typer_error) result
 val type_expression_subst : environment -> O'.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * O'.typer_state , Errors.typer_error) result
 val untype_expression : O.expression -> (I.expression , Errors.typer_error) result
+val evaluate_type : environment -> O.ast_core_type_expression -> (O.type_expression, Errors.typer_error) result
 
 val assert_type_expression_eq : O.type_expression * O.type_expression -> (unit, Errors.typer_error) result

@@ -13,7 +13,7 @@ let toplevel : display_format:ex_display_format -> displayable -> (unit -> unit 
     match t with
     | Human_readable -> convert ~display_format:t disp ;
     | Dev -> convert ~display_format:t disp ;
-    | Json -> Yojson.Basic.to_string @@ convert ~display_format:t disp in
+    | Json -> Yojson.to_string @@ convert ~display_format:t disp in
   Format.printf "%s\n" as_str ;
   return ()
 

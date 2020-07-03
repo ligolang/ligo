@@ -1,5 +1,4 @@
 open Simple_utils.Display
-open Trace
 
 let stage = "self_ast_typed"
 
@@ -104,7 +103,7 @@ let error_ppformat : display_format:string display_format ->
         Location.pp loc
   )
 
-let error_jsonformat : self_ast_typed_error -> J.t = fun a ->
+let error_jsonformat : self_ast_typed_error -> Yojson.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;
