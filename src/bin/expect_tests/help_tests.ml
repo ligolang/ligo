@@ -246,6 +246,10 @@ let%expect_test _ =
                compile-contract for the resulting Michelson. Available formats
                are 'text' (default), 'json' and 'hex'.
 
+           --output-file=OUTPUT_FILE, --output=OUTPUT_FILE
+               OUTPUT_FILE if used, prints the output into the specified file
+               instead of stdout
+
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
