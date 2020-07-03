@@ -163,7 +163,6 @@ eventLoop funs chan = do
         case Find.definitionOf pos tree of
           Just defPos -> do
             error "do later"
-            Core.sendFunc funs $ RspDefinition $ _ $ J.SingleLoc $ J.Location uri $ rangeToLoc defPos
 
       _ -> U.logs "unknown msg"
 

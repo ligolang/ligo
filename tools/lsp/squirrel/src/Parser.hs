@@ -74,6 +74,7 @@ import Data.Foldable
 import Data.IORef
 import Data.Text (Text, unpack)
 import qualified Data.Text as Text
+import qualified Data.Set as Set
 
 import System.FilePath
 
@@ -95,7 +96,7 @@ type Parser =
   (StateT (Product PList)
    IO)
 
-type PList = [ParseForest, [Text], FilePath]
+type PList = [ParseForest, [Text], FilePath, Set.Set FilePath]
 
 -- | Auto-accumulated information to be put into AST being build.
 type ASTInfo = Product [Range, [Text]]
@@ -109,14 +110,29 @@ runParser parser fin = do
 
   let dir = takeDirectory fin
 
-  runWriterT parser `evalStateT` Cons pforest (Cons [] (Cons dir Nil))
+  runWriterT parser `evalStateT`
+     Cons pforest
+    (Cons []
+    (Cons dir
+    (Cons Set.empty
+     Nil)))
 
-restart :: Parser a -> FilePath -> Parser a
+restart :: Stubbed a ASTInfo => Parser a -> FilePath -> Parser a
 restart p fin = do
   dir <- get' @FilePath
-  (a, errs) <- liftIO do runParser p (dir </> fin)
-  tell errs
-  return a
+  let full = dir </> fin
+  set <- get' @(Set.Set FilePath)
+
+  if Set.member full set
+  then do
+    fallback "recusive imports"
+  else do
+    (a, errs) <- liftIO do
+      flip runParser full do
+        put' (Set.insert full set)
+        p
+    tell errs
+    return a
 
 get' :: forall x. Contains x PList => Parser x
 get' = gets getElem
