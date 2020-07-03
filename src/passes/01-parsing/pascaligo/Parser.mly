@@ -18,6 +18,13 @@ open CST
 %type <Cst.Pascaligo.t> contract
 %type <Cst.Pascaligo.expr> interactive_expr
 
+%on_error_reduce
+  nsepseq(case_clause(expr),VBAR)
+  nsepseq(core_pattern,SEMI)
+  seq(__anonymous_0(core_pattern,SEMI))
+  pattern
+  nsepseq(core_pattern,CONS)
+
 %%
 
 (* RULES *)
