@@ -56,6 +56,8 @@ type step_constants = {
   self : Contract.t;
   amount : Tez.t;
   chain_id : Chain_id.t;
+  balance : Tez.t;
+  now : Script_timestamp.t;
 }
 
 type 'tys stack =

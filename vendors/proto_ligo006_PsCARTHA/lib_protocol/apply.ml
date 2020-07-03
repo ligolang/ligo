@@ -606,9 +606,10 @@ let apply_manager_operation_content :
           let cost_parameter = Script.deserialized_cost parameter in
           Lwt.return (Gas.consume ctxt cost_parameter)
           >>=? fun ctxt ->
+          Contract.get_balance ctxt destination >>=? fun balance ->
           let step_constants =
             let open Script_interpreter in
-            {source; payer; self = destination; amount; chain_id}
+            {source; payer; self = destination; amount; chain_id; balance; now = Script_timestamp.now ctxt}
           in
           Script_interpreter.execute
             ctxt

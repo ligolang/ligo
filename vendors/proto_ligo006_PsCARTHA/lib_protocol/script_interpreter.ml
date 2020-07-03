@@ -289,6 +289,8 @@ type step_constants = {
   self : Contract.t;
   amount : Tez.t;
   chain_id : Chain_id.t;
+  balance : Tez.t;
+  now : Script_timestamp.t;
 }
 
 let rec step :
@@ -1305,13 +1307,11 @@ let rec step :
   | (Balance, rest) ->
       Lwt.return (Gas.consume ctxt Interp_costs.balance)
       >>=? fun ctxt ->
-      Contract.get_balance ctxt step_constants.self
-      >>=? fun balance -> logged_return (Item (balance, rest), ctxt)
+      logged_return (Item (step_constants.balance, rest), ctxt)
   | (Now, rest) ->
       Lwt.return (Gas.consume ctxt Interp_costs.now)
       >>=? fun ctxt ->
-      let now = Script_timestamp.now ctxt in
-      logged_return (Item (now, rest), ctxt)
+      logged_return (Item (step_constants.now, rest), ctxt)
   | (Check_signature, Item (key, Item (signature, Item (message, rest)))) ->
       Lwt.return (Gas.consume ctxt (Interp_costs.check_signature key message))
       >>=? fun ctxt ->
