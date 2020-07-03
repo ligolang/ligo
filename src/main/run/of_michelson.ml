@@ -47,7 +47,7 @@ let make_dry_run_options (opts : dry_run_options) : (options , _) result =
     match opts.predecessor_timestamp with
     | None -> ok None
     | Some st ->
-      match Memory_proto_alpha.Protocol.Alpha_context.Timestamp.of_notation st with
+      match Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp.of_string st with
         | Some t -> ok (Some t)
         | None -> fail @@ Errors.invalid_timestamp st in
   ok @@ make_options ?predecessor_timestamp:predecessor_timestamp ~amount ~balance ?sender ?source ()

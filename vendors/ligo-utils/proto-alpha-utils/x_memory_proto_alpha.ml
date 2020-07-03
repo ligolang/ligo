@@ -226,11 +226,13 @@ type options = {
   self: Alpha_context.Contract.t ;
   amount: Alpha_context.Tez.t ;
   chain_id: Environment.Chain_id.t ;
+  balance : Alpha_context.Tez.t;
+  now : Alpha_context.Script_timestamp.t;
 }
 
 let make_options
     ?(tezos_context = dummy_environment.tezos_context)
-    ?(predecessor_timestamp = Alpha_context.Timestamp.current dummy_environment.tezos_context)
+    ?(predecessor_timestamp = Alpha_context.Script_timestamp.now dummy_environment.tezos_context)
     ?(sender = (List.nth dummy_environment.identities 0).implicit_contract)
     ?(self = (List.nth dummy_environment.identities 0).implicit_contract)
     ?(source = (List.nth dummy_environment.identities 1).implicit_contract)
@@ -239,17 +241,6 @@ let make_options
     ?(chain_id = Environment.Chain_id.zero)
     ()
   =
-  (* TODO ugh *)
-  ignore predecessor_timestamp;
-  ignore balance;
-  (* let tezos_context = { tezos_context with predecessor_timestamp } in
-   * let tezos_context_error =
-   *   Trace.trace_alpha_tzresult_lwt (fun _ -> `Vendors "could not set balance") @@
-   *   Alpha_context.Contract.set_balance tezos_context self balance
-   * in
-   * let tezos_context = match tezos_context_error with
-   *   | Ok (a,_) -> a
-   *   | Error _ -> tezos_context in *)
   {
     tezos_context ;
     source = sender ;
@@ -257,6 +248,8 @@ let make_options
     self ;
     amount ;
     chain_id ;
+    balance ;
+    now = predecessor_timestamp ;
   }
 
 let default_options = make_options ()
@@ -269,8 +262,10 @@ let interpret ?(options = default_options) (instr:('a, 'b) descr) (bef:'a stack)
     payer ;
     amount ;
     chain_id ;
+    balance ;
+    now ;
   } = options in
-  let step_constants = { source ; self ; payer ; amount ; chain_id } in
+  let step_constants = { source ; self ; payer ; amount ; chain_id ; balance ; now } in
   Script_interpreter.step tezos_context step_constants instr bef >>=??
   fun (stack, _) -> return stack
 
@@ -314,8 +309,10 @@ let failure_interpret
     payer ;
     amount ;
     chain_id ;
+    balance ;
+    now ;
   } = options in
-  let step_constants = { source ; self ; payer ; amount ; chain_id } in
+  let step_constants = { source ; self ; payer ; amount ; chain_id ; balance ; now } in
   Script_interpreter.step tezos_context step_constants instr bef >>= fun x ->
   match x with
   | Ok (s , _ctxt) -> return @@ Succeed s

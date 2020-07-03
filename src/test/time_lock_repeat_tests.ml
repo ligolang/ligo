@@ -34,12 +34,12 @@ let empty_message = e_lambda (Location.wrap @@ Var.of_name "arguments")
 
 let call msg = e_constructor "Call" msg
 let mk_time st =
-  match Memory_proto_alpha.Protocol.Alpha_context.Timestamp.of_notation st with
+  match Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp.of_string st with
   | Some s -> ok s
   | None -> fail @@ test_internal "bad timestamp notation"
-let to_sec t = Tezos_utils.Time.Protocol.to_seconds t
+let to_sec t = Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp.to_zint t
 let storage st interval execute =
-  e_record_ez [("next_use", e_timestamp (Int64.to_int @@ to_sec st)) ;
+  e_record_ez [("next_use", e_timestamp_z (to_sec st)) ;
                ("interval", e_int interval) ;
                ("execute", execute)]
 

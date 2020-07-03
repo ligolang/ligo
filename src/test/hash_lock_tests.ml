@@ -28,10 +28,10 @@ let compile_main () =
 
 let call msg = e_constructor "Call" msg
 let mk_time st =
-  match Memory_proto_alpha.Protocol.Alpha_context.Timestamp.of_notation st with
+  match Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp.of_string st with
   | Some s -> ok s
   | None -> fail @@ test_internal "bad timestamp notation"
-let to_sec t = Tezos_utils.Time.Protocol.to_seconds t
+let to_sec t = Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp.to_zint t
 let storage hashed used commits =
   e_record_ez [("hashed", hashed);
                ("unused", e_bool used);
@@ -67,8 +67,7 @@ let commit () =
   in
   let init_storage = storage test_hash true pre_commits in
   let commit =
-    e_record_ez [("date", e_timestamp
-                    (Int64.to_int (to_sec lock_time)));
+    e_record_ez [("date", e_timestamp_z (to_sec lock_time));
                  ("salted_hash", salted_hash)]
   in
   let post_commits = e_big_map [((e_address first_committer), commit)]
@@ -116,8 +115,7 @@ let reveal_young_commit () =
                                    (Bytes.concat Bytes.empty [test_hash_raw;
                                                               packed_sender])) in
   let commit =
-    e_record_ez [("date", e_timestamp
-                    (Int64.to_int (to_sec lock_time)));
+    e_record_ez [("date", e_timestamp_z (to_sec lock_time));
                  ("salted_hash", salted_hash)]
   in
   let commits = e_big_map [((e_address first_committer), commit)]
@@ -148,8 +146,7 @@ let reveal_breaks_commit () =
                                    (Bytes.concat Bytes.empty [Bytes.of_string "hello";
                                                               packed_sender])) in
   let commit =
-    e_record_ez [("date", e_timestamp
-                    (Int64.to_int (to_sec predecessor_timestamp)));
+    e_record_ez [("date", e_timestamp_z (to_sec predecessor_timestamp));
                  ("salted_hash", salted_hash)]
   in
   let commits = e_big_map [((e_address first_committer), commit)]
@@ -180,8 +177,7 @@ let reveal_wrong_commit () =
                                    (Bytes.concat Bytes.empty [Bytes.of_string "hello";
                                                               packed_sender])) in
   let commit =
-    e_record_ez [("date", e_timestamp
-                    (Int64.to_int (to_sec predecessor_timestamp)));
+    e_record_ez [("date", e_timestamp_z (to_sec predecessor_timestamp));
                  ("salted_hash", salted_hash)]
   in
   let commits = e_big_map [((e_address first_committer), commit)]
@@ -212,8 +208,7 @@ let reveal_no_reuse () =
                                    (Bytes.concat Bytes.empty [Bytes.of_string "hello";
                                                               packed_sender])) in
   let commit =
-    e_record_ez [("date", e_timestamp
-                    (Int64.to_int (to_sec predecessor_timestamp)));
+    e_record_ez [("date", e_timestamp_z (to_sec predecessor_timestamp));
                  ("salted_hash", salted_hash)]
   in
   let commits = e_big_map [((e_address first_committer), commit)]
@@ -244,8 +239,7 @@ let reveal () =
                                    (Bytes.concat Bytes.empty [Bytes.of_string "hello world";
                                                               packed_sender])) in
   let commit =
-    e_record_ez [("date", e_timestamp
-                    (Int64.to_int (to_sec predecessor_timestamp)));
+    e_record_ez [("date", e_timestamp_z (to_sec predecessor_timestamp));
                  ("salted_hash", salted_hash)]
   in
   let commits = e_big_map [((e_address first_committer), commit)]
