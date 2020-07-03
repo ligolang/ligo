@@ -257,10 +257,10 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "%a"
         (error_ppformat ~display_format) err
-    | `Typer_constant_declaration_tracer (name,_ae,_,err) ->
+    | `Typer_constant_declaration_tracer (name,ae,_,err) ->
       Format.fprintf f
         "@[<hv>%a@ Constant declaration '%a'@ %a@]"
-        Location.pp name.location
+        Location.pp ae.location
         Ast_core.PP.expression_variable name
       (error_ppformat ~display_format) err
     | `Typer_match_error (expected,actual,loc) ->
