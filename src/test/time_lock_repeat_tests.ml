@@ -45,11 +45,11 @@ let storage st interval execute =
 
 let early_call () =
   let%bind (program , state) = get_program () in
-  let%bind predecessor_timestamp = mk_time "2000-01-01T00:10:10Z" in
+  let%bind now = mk_time "2000-01-01T00:10:10Z" in
   let%bind lock_time = mk_time "2000-01-01T10:10:10Z" in
   let init_storage = storage lock_time 86400 empty_message in
   let options =
-    Proto_alpha_utils.Memory_proto_alpha.make_options ~predecessor_timestamp () in
+    Proto_alpha_utils.Memory_proto_alpha.make_options ~now () in
   let exp_failwith = "You have to wait before you can execute this contract again." in
   expect_string_failwith ~options (program, state) "main"
     (e_pair (e_unit ())  init_storage) exp_failwith
@@ -59,14 +59,13 @@ let fake_decompiled_empty_message = e_string "[lambda of type: (lambda unit (lis
 (* Test that when we use the contract the next use time advances by correct interval *)
 let interval_advance () =
   let%bind (program , state) = get_program () in
-  let%bind predecessor_timestamp = mk_time "2000-01-01T10:10:10Z" in
+  let%bind now = mk_time "2000-01-01T10:10:10Z" in
   let%bind lock_time = mk_time "2000-01-01T00:10:10Z" in
   let init_storage = storage lock_time 86400 empty_message in
-  (* It takes a second for Tezos.now to be called, awful hack *)
-  let%bind new_timestamp = mk_time "2000-01-02T10:10:11Z" in
+  let%bind new_timestamp = mk_time "2000-01-02T10:10:10Z" in
   let new_storage_fake = storage new_timestamp 86400 fake_decompiled_empty_message in
   let options =
-    Proto_alpha_utils.Memory_proto_alpha.make_options ~predecessor_timestamp () in
+    Proto_alpha_utils.Memory_proto_alpha.make_options ~now () in
   expect_eq ~options (program, state) "main"
   (e_pair (e_unit ()) init_storage) (e_pair empty_op_list new_storage_fake)
 

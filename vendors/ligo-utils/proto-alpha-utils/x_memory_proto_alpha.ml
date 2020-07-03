@@ -232,7 +232,7 @@ type options = {
 
 let make_options
     ?(tezos_context = dummy_environment.tezos_context)
-    ?(predecessor_timestamp = Alpha_context.Script_timestamp.now dummy_environment.tezos_context)
+    ?(now = Alpha_context.Script_timestamp.now dummy_environment.tezos_context)
     ?(sender = (List.nth dummy_environment.identities 0).implicit_contract)
     ?(self = (List.nth dummy_environment.identities 0).implicit_contract)
     ?(source = (List.nth dummy_environment.identities 1).implicit_contract)
@@ -249,7 +249,7 @@ let make_options
     amount ;
     chain_id ;
     balance ;
-    now = predecessor_timestamp ;
+    now ;
   }
 
 let default_options = make_options ()

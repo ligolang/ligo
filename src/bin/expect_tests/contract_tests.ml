@@ -62,7 +62,7 @@ let%expect_test _ =
   ()
 
 let%expect_test _  =
-  run_ligo_good [ "compile-storage" ; contract "timestamp.ligo" ; "main" ; "now" ; "--predecessor-timestamp" ; "2042-01-01T00:00:00Z" ] ;
+  run_ligo_good [ "compile-storage" ; contract "timestamp.ligo" ; "main" ; "now" ; "--now" ; "2042-01-01T00:00:00Z" ] ;
   [%expect {| "2042-01-01T00:00:01Z" |}]
 
 let%expect_test _ =

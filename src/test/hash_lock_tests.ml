@@ -52,8 +52,8 @@ let empty_message = e_lambda (Location.wrap @@ Var.of_name "arguments")
 
 let commit () =
   let%bind (program , state) = get_program () in
-  let%bind predecessor_timestamp = mk_time "2000-01-01T00:10:10Z" in
-  let%bind lock_time = mk_time "2000-01-02T00:10:11Z" in
+  let%bind now = mk_time "2000-01-01T00:10:10Z" in
+  let%bind lock_time = mk_time "2000-01-02T00:10:10Z" in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
   let test_hash = e_bytes_raw test_hash_raw in
   let%bind packed_sender = pack_payload program (e_address first_committer) in
@@ -75,7 +75,7 @@ let commit () =
   let post_storage = storage test_hash true post_commits in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.make_options
-      ~predecessor_timestamp
+      ~now
       ~sender:first_contract
       ()
   in
@@ -106,8 +106,8 @@ let reveal_young_commit () =
   let reveal = e_record_ez [("hashable", e_bytes_string "hello world");
                             ("message", empty_message)]
   in
-  let%bind predecessor_timestamp = mk_time "2000-01-01T00:10:10Z" in
-  let%bind lock_time = mk_time "2000-01-02T00:10:11Z" in
+  let%bind now = mk_time "2000-01-01T00:10:10Z" in
+  let%bind lock_time = mk_time "2000-01-02T00:10:10Z" in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
   let test_hash = e_bytes_raw test_hash_raw in
   let%bind packed_sender = pack_payload program (e_address first_committer) in
@@ -123,7 +123,7 @@ let reveal_young_commit () =
   let init_storage = storage test_hash true commits in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.make_options
-      ~predecessor_timestamp
+      ~now
       ~sender:first_contract
       ()
   in
@@ -138,7 +138,7 @@ let reveal_breaks_commit () =
   let reveal = e_record_ez [("hashable", e_bytes_string "hello world");
                             ("message", empty_message)]
   in
-  let%bind predecessor_timestamp = mk_time "2000-01-01T00:10:10Z" in
+  let%bind now = mk_time "2000-01-01T00:10:10Z" in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
   let test_hash = e_bytes_raw test_hash_raw in
   let%bind packed_sender = pack_payload program (e_address first_committer) in
@@ -146,7 +146,7 @@ let reveal_breaks_commit () =
                                    (Bytes.concat Bytes.empty [Bytes.of_string "hello";
                                                               packed_sender])) in
   let commit =
-    e_record_ez [("date", e_timestamp_z (to_sec predecessor_timestamp));
+    e_record_ez [("date", e_timestamp_z (to_sec now));
                  ("salted_hash", salted_hash)]
   in
   let commits = e_big_map [((e_address first_committer), commit)]
@@ -154,7 +154,7 @@ let reveal_breaks_commit () =
   let init_storage = storage test_hash true commits in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.make_options
-      ~predecessor_timestamp
+      ~now
       ~sender:first_contract
       ()
   in
@@ -169,7 +169,7 @@ let reveal_wrong_commit () =
   let reveal = e_record_ez [("hashable", e_bytes_string "hello");
                             ("message", empty_message)]
   in
-  let%bind predecessor_timestamp = mk_time "2000-01-01T00:10:10Z" in
+  let%bind now = mk_time "2000-01-01T00:10:10Z" in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
   let test_hash = e_bytes_raw test_hash_raw in
   let%bind packed_sender = pack_payload program (e_address first_committer) in
@@ -177,7 +177,7 @@ let reveal_wrong_commit () =
                                    (Bytes.concat Bytes.empty [Bytes.of_string "hello";
                                                               packed_sender])) in
   let commit =
-    e_record_ez [("date", e_timestamp_z (to_sec predecessor_timestamp));
+    e_record_ez [("date", e_timestamp_z (to_sec now));
                  ("salted_hash", salted_hash)]
   in
   let commits = e_big_map [((e_address first_committer), commit)]
@@ -185,7 +185,7 @@ let reveal_wrong_commit () =
   let init_storage = storage test_hash true commits in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.make_options
-      ~predecessor_timestamp
+      ~now
       ~sender:first_contract
       ()
   in
@@ -200,7 +200,7 @@ let reveal_no_reuse () =
   let reveal = e_record_ez [("hashable", e_bytes_string "hello");
                             ("message", empty_message)]
   in
-  let%bind predecessor_timestamp = mk_time "2000-01-01T00:10:10Z" in
+  let%bind now = mk_time "2000-01-01T00:10:10Z" in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
   let test_hash = e_bytes_raw test_hash_raw in
   let%bind packed_sender = pack_payload program (e_address first_committer) in
@@ -208,7 +208,7 @@ let reveal_no_reuse () =
                                    (Bytes.concat Bytes.empty [Bytes.of_string "hello";
                                                               packed_sender])) in
   let commit =
-    e_record_ez [("date", e_timestamp_z (to_sec predecessor_timestamp));
+    e_record_ez [("date", e_timestamp_z (to_sec now));
                  ("salted_hash", salted_hash)]
   in
   let commits = e_big_map [((e_address first_committer), commit)]
@@ -216,7 +216,7 @@ let reveal_no_reuse () =
   let init_storage = storage test_hash false commits in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.make_options
-      ~predecessor_timestamp
+      ~now
       ~sender:first_contract
       ()
   in
@@ -231,7 +231,7 @@ let reveal () =
   let reveal = e_record_ez [("hashable", e_bytes_string "hello world");
                             ("message", empty_message)]
   in
-  let%bind predecessor_timestamp = mk_time "2000-01-01T00:10:10Z" in
+  let%bind now = mk_time "2000-01-01T00:10:10Z" in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
   let test_hash = e_bytes_raw test_hash_raw in
   let%bind packed_sender = pack_payload program (e_address first_committer) in
@@ -239,7 +239,7 @@ let reveal () =
                                    (Bytes.concat Bytes.empty [Bytes.of_string "hello world";
                                                               packed_sender])) in
   let commit =
-    e_record_ez [("date", e_timestamp_z (to_sec predecessor_timestamp));
+    e_record_ez [("date", e_timestamp_z (to_sec now));
                  ("salted_hash", salted_hash)]
   in
   let commits = e_big_map [((e_address first_committer), commit)]
@@ -248,7 +248,7 @@ let reveal () =
   let post_storage = storage test_hash false commits in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.make_options
-      ~predecessor_timestamp
+      ~now
       ~sender:first_contract
       ()
   in

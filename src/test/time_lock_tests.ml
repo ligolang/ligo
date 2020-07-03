@@ -43,22 +43,22 @@ let storage st = e_timestamp_z (to_sec st)
 
 let early_call () =
   let%bind (program , state) = get_program () in
-  let%bind predecessor_timestamp = mk_time "2000-01-01T00:10:10Z" in
+  let%bind now = mk_time "2000-01-01T00:10:10Z" in
   let%bind lock_time = mk_time "2000-01-01T10:10:10Z" in
   let init_storage = storage lock_time in
   let options =
-    Proto_alpha_utils.Memory_proto_alpha.make_options ~predecessor_timestamp () in
+    Proto_alpha_utils.Memory_proto_alpha.make_options ~now () in
   let exp_failwith = "Contract is still time locked" in
   expect_string_failwith ~options (program, state) "main"
     (e_pair (call empty_message)  init_storage) exp_failwith
 
 let call_on_time () =
   let%bind (program , state) = get_program () in
-  let%bind predecessor_timestamp = mk_time "2000-01-01T10:10:10Z" in
+  let%bind now = mk_time "2000-01-01T10:10:10Z" in
   let%bind lock_time = mk_time "2000-01-01T00:10:10Z" in
   let init_storage = storage lock_time in
   let options =
-    Proto_alpha_utils.Memory_proto_alpha.make_options ~predecessor_timestamp () in
+    Proto_alpha_utils.Memory_proto_alpha.make_options ~now () in
   expect_eq ~options (program, state) "main"
     (e_pair (call empty_message) init_storage) (e_pair empty_op_list init_storage)
 

@@ -11,7 +11,7 @@ type options = Memory_proto_alpha.options
 type dry_run_options =
   { amount : string ;
     balance : string ;
-    predecessor_timestamp : string option ;
+    now : string option ;
     sender : string option ;
     source : string option }
 
@@ -43,14 +43,14 @@ let make_dry_run_options (opts : dry_run_options) : (options , _) result =
           (fun _ -> Errors.invalid_address source)
           (Contract.of_b58check source) in
       ok (Some source) in
-  let%bind predecessor_timestamp =
-    match opts.predecessor_timestamp with
+  let%bind now =
+    match opts.now with
     | None -> ok None
     | Some st ->
       match Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp.of_string st with
         | Some t -> ok (Some t)
         | None -> fail @@ Errors.invalid_timestamp st in
-  ok @@ make_options ?predecessor_timestamp:predecessor_timestamp ~amount ~balance ?sender ?source ()
+  ok @@ make_options ?now:now ~amount ~balance ?sender ?source ()
 
 let ex_value_ty_to_michelson (v : ex_typed_value) : (Michelson.t , _) result =
   let (Ex_typed_value (value , ty)) = v in
