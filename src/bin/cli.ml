@@ -124,6 +124,14 @@ let display_format =
     human_readable
     info
 
+let output_file =
+  let open Arg in
+  let info  =
+    let docv = "OUTPUT_FILE" in
+    let doc = "$(docv) if used, prints the output into the specified file instead of stdout" in
+    info ~docv ~doc ["output" ; "output-file"] in
+  value @@ opt (some string) None info
+
 let michelson_code_format =
   let open Arg in
   let info  =
@@ -150,15 +158,15 @@ module Decompile = Ligo.Decompile
 module Run = Ligo.Run.Of_michelson
 
 let compile_file =
-  let f source_file entry_point syntax display_format disable_typecheck michelson_format =
-    return_result ~display_format (Tezos_utils.Michelson.michelson_format michelson_format) @@
+  let f source_file entry_point syntax display_format disable_typecheck michelson_format output_file =
+    return_result ~output_file ~display_format (Tezos_utils.Michelson.michelson_format michelson_format) @@
       let%bind typed,_    = Compile.Utils.type_file source_file syntax (Contract entry_point) in
       let%bind mini_c     = Compile.Of_typed.compile typed in
       let%bind michelson  = Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
       Compile.Of_michelson.build_contract ~disable_typecheck michelson
   in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ display_format $ disable_michelson_typechecking $ michelson_code_format) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ display_format $ disable_michelson_typechecking $ michelson_code_format $ output_file) in
   let cmdname = "compile-contract" in
   let doc = "Subcommand: Compile a contract." in
   (Term.ret term , Term.info ~doc cmdname)
