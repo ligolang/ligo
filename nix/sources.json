@@ -5,10 +5,10 @@
         "homepage": "",
         "owner": "hercules-ci",
         "repo": "gitignore.nix",
-        "rev": "2ced4519f865341adcb143c5d668f955a2cb997f",
-        "sha256": "0fc5bgv9syfcblp23y05kkfnpgh3gssz6vn24frs8dzw39algk2z",
+        "rev": "647d0821b590ee96056f4593640534542d8700e5",
+        "sha256": "0ks37vclz2jww9q0fvkk9jyhscw0ial8yx2fpakra994dm12yy1d",
         "type": "tarball",
-        "url": "https://github.com/hercules-ci/gitignore.nix/archive/2ced4519f865341adcb143c5d668f955a2cb997f.tar.gz",
+        "url": "https://github.com/hercules-ci/gitignore.nix/archive/647d0821b590ee96056f4593640534542d8700e5.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "nix-npm-buildpackage": {
@@ -17,10 +17,10 @@
         "homepage": "",
         "owner": "serokell",
         "repo": "nix-npm-buildpackage",
-        "rev": "f2107f638f7df7450a5b7b77b96aaf9752b838d9",
-        "sha256": "02w8jxmmhxsq7fgzml75b8w8i9mdqxnaajia99jajg6rdiam8zfp",
+        "rev": "9fd293facc8da7db68618bfe6c81892fb264e863",
+        "sha256": "09zqnibs0yr2smkpkfydx931y6sj9qfyvqrrjpfn5w3c2pcbzf5v",
         "type": "tarball",
-        "url": "https://github.com/serokell/nix-npm-buildpackage/archive/f2107f638f7df7450a5b7b77b96aaf9752b838d9.tar.gz",
+        "url": "https://github.com/serokell/nix-npm-buildpackage/archive/9fd293facc8da7db68618bfe6c81892fb264e863.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "nixpkgs": {
@@ -29,10 +29,10 @@
         "homepage": "",
         "owner": "nixos",
         "repo": "nixpkgs-channels",
-        "rev": "3320a06049fc259e87a2bd98f4cd42f15f746b96",
-        "sha256": "1g5l186d5xh187vdcpfsz1ff8s749949c1pclvzfkylpar09ldkl",
+        "rev": "55668eb671b915b49bcaaeec4518cc49d8de0a99",
+        "sha256": "0b2mrrjsdpxpyvnv98dph5av3xjps1mbd87x8510mnc4pfa2zc8z",
         "type": "tarball",
-        "url": "https://github.com/nixos/nixpkgs-channels/archive/3320a06049fc259e87a2bd98f4cd42f15f746b96.tar.gz",
+        "url": "https://github.com/nixos/nixpkgs-channels/archive/55668eb671b915b49bcaaeec4518cc49d8de0a99.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "node-sass-bin": {
@@ -48,10 +48,10 @@
         "homepage": null,
         "owner": "balsoft",
         "repo": "opam-nix",
-        "rev": "75ad75c18b8d80d82c13dc30c3b8d70960b1b441",
-        "sha256": "0mcr32f5i71diysvpblbvgdnx2pdymwjb9nxz5gbcsib3vdg2p83",
+        "rev": "7a1404a9196775175757a18ff3ff59ce639dafa3",
+        "sha256": "0fpnbm88alvm84crwndadq232pihnxj1ldnv0xc5snxh07bpnkcx",
         "type": "tarball",
-        "url": "https://github.com/balsoft/opam-nix/archive/75ad75c18b8d80d82c13dc30c3b8d70960b1b441.tar.gz",
+        "url": "https://github.com/balsoft/opam-nix/archive/7a1404a9196775175757a18ff3ff59ce639dafa3.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "opam-repository": {
@@ -60,10 +60,10 @@
         "homepage": "https://opam.ocaml.org",
         "owner": "ocaml",
         "repo": "opam-repository",
-        "rev": "d67e70b40203a6a1c77ccb2edbe136c1509a73a3",
-        "sha256": "1yphw9xcss284p51qnml5jvfs4mhjcjgdka3wk25q0437zdzqj4n",
+        "rev": "e81ab2996896b21cba74c43a903b305a5a6341ef",
+        "sha256": "09ml0nj65yci6g9jya9sann1qz1p4aprzcq1kvg6w3b6say258yv",
         "type": "tarball",
-        "url": "https://github.com/ocaml/opam-repository/archive/d67e70b40203a6a1c77ccb2edbe136c1509a73a3.tar.gz",
+        "url": "https://github.com/ocaml/opam-repository/archive/e81ab2996896b21cba74c43a903b305a5a6341ef.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "xmldiff": {
