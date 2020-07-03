@@ -24,7 +24,7 @@ and annotated ppf : type_expression annotated -> _ = function
   | (None, a) -> type_variable ppf a
 
 and environment_element ppf ((n, tv) : environment_element) =
-  Format.fprintf ppf "%a : %a" Var.pp n type_variable tv
+  Format.fprintf ppf "%a : %a" Var.pp n.wrap_content type_variable tv
 
 and environment ppf (x:environment) =
   fprintf ppf "Env[%a]" (list_sep_d environment_element) x
@@ -94,7 +94,7 @@ and expression ppf (e:expression) =
 and expression_content ppf (e:expression_content) = match e with
   | E_skip -> fprintf ppf "skip"
   | E_closure x -> function_ ppf x
-  | E_variable v -> fprintf ppf "%a" Var.pp v
+  | E_variable v -> fprintf ppf "%a" Var.pp v.wrap_content
   | E_application(a, b) -> fprintf ppf "@[(%a)@(%a)@]" expression a expression b
 
   | E_constant c -> fprintf ppf "@[%a@[<hv 1>(%a)@]@]" constant c.cons_name (list_sep_d expression) c.arguments
@@ -107,19 +107,21 @@ and expression_content ppf (e:expression_content) = match e with
   | E_if_none (c, n, ((name, _) , s)) ->
     fprintf ppf
       "@[match %a with@ @[<hv>| None ->@;<1 2>%a@ | Some %a ->@;<1 2>%a@]@]"
-      expression c expression n Var.pp name expression s
-  | E_if_cons (c, n, (((hd_name, _) , (tl_name, _)) , cons)) -> fprintf ppf "@[%a ?? %a : (%a :: %a) -> %a@]" expression c expression n Var.pp hd_name Var.pp tl_name expression cons
+      expression c expression n Var.pp name.wrap_content expression s
+  | E_if_cons (c, n, (((hd_name, _) , (tl_name, _)) , cons)) ->
+    fprintf ppf "@[%a ?? %a : (%a :: %a) -> %a@]"
+      expression c expression n Var.pp hd_name.wrap_content Var.pp tl_name.wrap_content expression cons
   | E_if_left (c, ((name_l, _) , l), ((name_r, _) , r)) ->
       fprintf ppf
         "@[match %a with@ @[<hv>| Left %a ->@;<1 2>%a@ | Right %a ->@;<1 2>%a@]@]"
-        expression c Var.pp name_l expression l Var.pp name_r expression r
+        expression c Var.pp name_l.wrap_content expression l Var.pp name_r.wrap_content expression r
   | E_sequence (a , b) -> fprintf ppf "@[%a ;; %a@]" expression a expression b
   | E_let_in ((name , _) , inline, expr , body) ->
-      fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]" Var.pp name expression expr option_inline inline expression body
+      fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]" Var.pp name.wrap_content expression expr option_inline inline expression body
   | E_iterator (b , ((name , _) , body) , expr) ->
-      fprintf ppf "@[for_%a %a of %a do ( %a )@]" constant b Var.pp name expression expr expression body
+      fprintf ppf "@[for_%a %a of %a do ( %a )@]" constant b Var.pp name.wrap_content expression expr expression body
   | E_fold (((name , _) , body) , collection , initial) ->
-      fprintf ppf "@[fold %a on %a with %a do ( %a )@]" expression collection expression initial Var.pp name expression body
+      fprintf ppf "@[fold %a on %a with %a do ( %a )@]" expression collection expression initial Var.pp name.wrap_content expression body
 
   | E_record_update (r, path,update) ->
       fprintf ppf "@[{ %a@;<1 2>with@;<1 2>{ %a = %a } }@]" expression r (list_sep lr (const ".")) path expression update
@@ -135,7 +137,7 @@ and expression_with_type : _ -> expression -> _  = fun ppf e ->
 
 and function_ ppf ({binder ; body}:anon_function) =
   fprintf ppf "@[fun %a ->@ (%a)@]"
-    Var.pp binder
+    Var.pp binder.wrap_content
     expression body
 
 and option_inline ppf inline = 
@@ -144,7 +146,7 @@ and option_inline ppf inline =
   else
     fprintf ppf ""
 
-and declaration ppf ((n,i, e):assignment) = fprintf ppf "@[let %a =@;<1 2>%a%a@]" Var.pp n expression e option_inline i
+and declaration ppf ((n,i, e):assignment) = fprintf ppf "@[let %a =@;<1 2>%a%a@]" Var.pp n.wrap_content expression e option_inline i
 
 and tl_statement ppf (ass, _) = declaration ppf ass
 
@@ -278,11 +280,13 @@ let%expect_test _ =
   let pp = expression_content Format.std_formatter in
   let dummy_type = {type_content=T_base TB_unit;location=Location.generated} in
   let wrap e = { content = e ; type_expression = dummy_type ; location = Location.generated} in
-  pp @@ E_closure { binder = Var.of_name "y" ; body = wrap (E_variable (Var.of_name "y")) } ;
+  let y = Location.wrap ~loc:(Location.generated) (Var.of_name "y") in
+  let z = Location.wrap ~loc:(Location.generated) (Var.of_name "z") in
+  pp @@ E_closure { binder = y ; body = wrap (E_variable y) } ;
   [%expect{|
     fun y -> (y)
   |}] ;
-  pp @@ E_closure { binder = Var.of_name "z" ; body = wrap (E_variable (Var.of_name "z")) } ;
+  pp @@ E_closure { binder = z ; body = wrap (E_variable z) } ;
   [%expect{|
     fun z -> (z)
   |}]

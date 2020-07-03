@@ -6,7 +6,8 @@ open Misc
 module Captured_variables = struct
 
   type bindings = expression_variable list
-  let mem : expression_variable -> bindings -> bool = List.mem
+  let var_compare = Location.compare_content ~compare:Var.compare
+  let mem : expression_variable -> bindings -> bool = List.mem ~compare:var_compare
   let singleton : expression_variable -> bindings = fun s -> [ s ]
   let union : bindings -> bindings -> bindings = (@)
   let unions : bindings list -> bindings = List.concat

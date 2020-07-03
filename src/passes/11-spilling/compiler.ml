@@ -406,7 +406,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
           let%bind f' = compile_expression f in
           let%bind input' = compile_type input in
           let%bind output' = compile_type output in
-          let binder = Var.fresh ~name:"iterated" () in
+          let binder = Location.wrap @@ Var.fresh ~name:"iterated" () in
           let application = Mini_c.Combinators.e_application f' output' (Mini_c.Combinators.e_var binder input') in
           ok ((binder , input'), application)
         in
@@ -468,11 +468,20 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
           in
           return @@ E_if_cons (expr' , nil , cons)
         )
-      | Match_variant {cases=[{constructor=Constructor t;body=match_true};{constructor=Constructor f;body=match_false}];_}
-        when String.equal t "true" && String.equal f "false" ->
-          let%bind (t , f) = bind_map_pair (compile_expression) (match_true, match_false) in
-          return @@ E_if_bool (expr', t, f)
       | Match_variant {cases ; tv} -> (
+        match expr'.type_expression.type_content with
+          | T_base TB_bool ->
+            let ctor_body (case : AST.matching_content_case) = (case.constructor, case.body) in
+            let cases = AST.CMap.of_list (List.map ctor_body cases) in
+            let get_case c =
+              trace_option
+                (corner_case ~loc:__LOC__ ("missing " ^ c ^ " case in match"))
+                (AST.CMap.find_opt (Constructor c) cases) in
+            let%bind match_true  = get_case "true" in
+            let%bind match_false = get_case "false" in
+            let%bind (t , f) = bind_map_pair (compile_expression) (match_true, match_false) in
+            return @@ E_if_bool (expr', t, f)
+          | _ ->
           let%bind tree =
             trace_strong (corner_case ~loc:__LOC__ "getting lr tree") @@
             tree_of_sum tv in
@@ -507,13 +516,13 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
             | ((`Node (a , b)) , tv) ->
                 let%bind a' =
                   let%bind a_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_left tv in
-                  let left_var = Var.fresh ~name:"left" () in
+                  let left_var = Location.wrap @@ Var.fresh ~name:"left" () in
                   let%bind e = aux (((Expression.make (E_variable left_var) a_ty))) a in
                   ok ((left_var , a_ty) , e)
                 in
                 let%bind b' =
                   let%bind b_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_right tv in
-                  let right_var = Var.fresh ~name:"right" () in
+                  let right_var = Location.wrap @@ Var.fresh ~name:"right" () in
                   let%bind e = aux (((Expression.make (E_variable right_var) b_ty))) b in
                   ok ((right_var , b_ty) , e)
                 in
@@ -558,7 +567,7 @@ and compile_recursive {fun_name; fun_type; lambda} =
   and replace_callback : AST.expression_variable -> type_expression -> bool -> AST.expression -> (expression , spilling_error) result = fun fun_name loop_type shadowed e ->
     match e.expression_content with
       E_let_in li -> 
-        let shadowed = shadowed || Var.equal li.let_binder fun_name in 
+        let shadowed = shadowed || Var.equal li.let_binder.wrap_content fun_name.wrap_content in 
         let%bind let_result = replace_callback fun_name loop_type shadowed li.let_result in
         let%bind rhs = compile_expression li.rhs in
         let%bind ty  = compile_type e.type_expression in
@@ -568,7 +577,7 @@ and compile_recursive {fun_name; fun_type; lambda} =
         matching fun_name loop_type shadowed m ty |
       E_application {lamb;args} -> (
         match lamb.expression_content,shadowed with
-        E_variable name, false when Var.equal fun_name name -> 
+        E_variable name, false when Var.equal fun_name.wrap_content name.wrap_content -> 
           let%bind expr = compile_expression args in
           ok @@ Expression.make (E_constant {cons_name=C_LOOP_CONTINUE;arguments=[expr]}) loop_type |
         _ -> 
@@ -641,13 +650,13 @@ and compile_recursive {fun_name; fun_type; lambda} =
             | ((`Node (a , b)) , tv) ->
                 let%bind a' =
                   let%bind a_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_left tv in
-                  let left_var = Var.fresh ~name:"left" () in
+                  let left_var = Location.wrap @@ Var.fresh ~name:"left" () in
                   let%bind e = aux (((Expression.make (E_variable left_var) a_ty))) a in
                   ok ((left_var , a_ty) , e)
                 in
                 let%bind b' =
                   let%bind b_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_right tv in
-                  let right_var = Var.fresh ~name:"right" () in
+                  let right_var = Location.wrap @@ Var.fresh ~name:"right" () in
                   let%bind e = aux (((Expression.make (E_variable right_var) b_ty))) b in
                   ok ((right_var , b_ty) , e)
                 in

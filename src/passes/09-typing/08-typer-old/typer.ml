@@ -743,7 +743,7 @@ and type_lambda e {
               match result.content with
               | I.E_let_in li -> (
                   match li.rhs.content with
-                  | I.E_variable name when name = (binder) -> (
+                  | I.E_variable name when Location.equal_content ~equal:Var.equal name binder -> (
                       match snd li.let_binder with
                       | Some ty -> ok ty
                       | None -> default_action li.rhs ()

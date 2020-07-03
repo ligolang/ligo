@@ -2,13 +2,7 @@
   (name cst)
   (public_name ligo.cst)
   (libraries
-    simple-utils
-    tezos-utils
     cst_cameligo
-    cst_pascaligo
-  )
+    cst_pascaligo)
   (preprocess
-    (pps ppx_let bisect_ppx --conditional)
-  )
-  (flags (:standard -open Simple_utils ))
-)
+    (pps ppx_let bisect_ppx --conditional)))

@@ -1,7 +1,8 @@
 (* A library for writing UTF8-aware lexers *)
 
 module Region = Simple_utils.Region
-module Pos = Simple_utils.Pos
+module Pos    = Simple_utils.Pos
+module FQueue = Simple_utils.FQueue
 
 (* The function [rollback] resets the lexing buffer to the state it
    was when it matched the last regular expression. This function is
@@ -39,7 +40,7 @@ type thread = <
   set_opening : Region.t -> thread
 >
 
-val mk_thread : Region.t -> lexeme -> thread
+val mk_thread : Region.t -> thread
 
 (* STATE *)
 
@@ -108,15 +109,16 @@ type 'token window =
 | Two of 'token * 'token
 
 type 'token state = <
-  units   : (Markup.t list * 'token) FQueue.t;
-  markup  : Markup.t list;
-  window  : 'token window;
-  last    : Region.t;
-  pos     : Pos.t;
-  decoder : Uutf.decoder;
-  supply  : Bytes.t -> int -> int -> unit;
-  block   : EvalOpt.block_comment option;
-  line    : EvalOpt.line_comment option;
+  units    : (Markup.t list * 'token) FQueue.t;
+  markup   : Markup.t list;
+  comments : Markup.comment FQueue.t;
+  window   : 'token window;
+  last     : Region.t;
+  pos      : Pos.t;
+  decoder  : Uutf.decoder;
+  supply   : Bytes.t -> int -> int -> unit;
+  block    : EvalOpt.block_comment option;
+  line     : EvalOpt.line_comment option;
 
   enqueue      : 'token -> 'token state;
   set_units    : (Markup.t list * 'token) FQueue.t -> 'token state;
@@ -133,6 +135,7 @@ type 'token state = <
   push_tabs    : Lexing.lexbuf -> 'token state;
   push_bom     : Lexing.lexbuf -> 'token state;
   push_markup  : Markup.t -> 'token state;
+  push_comment : Markup.comment -> 'token state
 >
 
 (* LEXER INSTANCE *)
@@ -178,11 +181,12 @@ type 'token instance = {
   input    : input;
   read     : log:('token logger) -> Lexing.lexbuf -> 'token;
   buffer   : Lexing.lexbuf;
+  close    : unit -> unit;
   get_win  : unit -> 'token window;
   get_pos  : unit -> Pos.t;
   get_last : unit -> Region.t;
   get_file : unit -> file_path;
-  close    : unit -> unit
+  get_comments : unit -> Markup.comment FQueue.t
 }
 
 type open_err = File_opening of string

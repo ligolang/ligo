@@ -195,7 +195,7 @@ let rec compile_expression :
     let (p , loc) = r_split p in
     let var =
       let name = Var.of_name p.struct_name.value in
-      e_variable ~loc name in
+      e_variable ~loc (Location.wrap ?loc:(Some loc) name) in
     let path = p.field_path in
     let path' =
       let aux (s:Raw.selection) =
@@ -222,7 +222,7 @@ let rec compile_expression :
 let compile_update (u: Raw.update Region.reg) =
   let u, loc     = r_split u in
   let name, path = compile_path u.record in
-  let var        = e_variable (Var.of_name name) in
+  let var        = e_variable (Location.wrap ?loc:(Some loc) @@ Var.of_name name) in
   let record     = if path = [] then var else e_accessor var path in
   let updates    = u.updates.value.ne_elements in
   let%bind updates' =
@@ -248,7 +248,7 @@ in trace (abstracting_expr_tracer t) @@
       let%bind ty_opt =
         bind_map_option (fun (re,te) -> let%bind te = compile_type_expression te in ok(Location.lift re,te)) lhs_type in
       let%bind rhs = compile_expression let_rhs in
-      let rhs_b = Var.fresh ~name:"rhs" () in
+      let rhs_b = Location.wrap @@ Var.fresh ~name:"rhs" () in
       let rhs',rhs_b_expr =
         match ty_opt with
           None -> rhs, e_variable ~loc rhs_b
@@ -256,7 +256,8 @@ in trace (abstracting_expr_tracer t) @@
       let%bind body = compile_expression body in
       let prepare_variable (ty_var: Raw.variable * Raw.type_expr option) =
         let variable, ty_opt = ty_var in
-        let var_expr = Var.of_name variable.value in
+        let (variable,loc) = r_split variable in
+        let var_expr = Location.wrap ?loc:(Some loc) @@ Var.of_name variable in
         let%bind ty_expr_opt =
           match ty_opt with
           | Some ty -> bind_map_option compile_type_expression (Some ty)
@@ -343,7 +344,7 @@ in trace (abstracting_expr_tracer t) @@
   | EVar c ->
       let (c',loc) = r_split c in
       (match constants c' with
-       | None   -> return @@ e_variable ~loc (Var.of_name c.value)
+       | None   -> return @@ e_variable ~loc (Location.wrap ?loc:(Some loc) @@ Var.of_name c.value)
        | Some s -> return @@ e_constant s [])
   | ECall x -> (
       let ((e1 , e2) , loc) = r_split x in
@@ -357,7 +358,7 @@ in trace (abstracting_expr_tracer t) @@
       | EVar f -> (
           let (f , f_loc) = r_split f in
           match constants f with
-          | None   -> return @@ chain_application (e_variable ~loc:f_loc (Var.of_name f)) args
+          | None   -> return @@ chain_application (e_variable ~loc:f_loc (Location.wrap ?loc:(Some f_loc) @@ Var.of_name f)) args
           | Some s -> return @@ e_constant ~loc s args
               )
       | e1 ->
@@ -463,7 +464,8 @@ in trace (abstracting_expr_tracer t) @@
                   let x' = x.value in
                   match x'.pattern with
                   | Raw.PVar y ->
-                    let var_name = Var.of_name y.value in
+                    let (y,loc) = r_split y in
+                    let var_name = Location.wrap ?loc:(Some loc) @@ Var.of_name y in
                     let%bind type_expr = compile_type_expression x'.type_expr in
                     return @@ e_let_in (var_name , Some type_expr) false e rhs
                   | _ -> default_action ()
@@ -603,8 +605,9 @@ and compile_fun lamb' : (expr , abs_error) result =
   let rec layer_arguments (arguments: (Raw.variable * type_expression) list) =
     match arguments with
     | hd :: tl ->
+      let (hd_binder,hd_loc) = r_split (fst hd) in
       let (binder , input_type) =
-        (Var.of_name (fst hd).value , snd hd) in
+        (Location.wrap ?loc:(Some hd_loc) @@ Var.of_name hd_binder , snd hd) in
       e_lambda ~loc (binder) (Some input_type) output_type (layer_arguments tl)
     | [] -> body
   in
@@ -705,7 +708,8 @@ and compile_declaration : Raw.declaration -> (declaration Location.wrap list , a
               | None -> ok None
             in
             let%bind compile_rhs_expr = compile_expression rhs_expr in
-              ok @@ loc x @@ Declaration_constant (Var.of_name v.value, v_type_expression, inline, compile_rhs_expr) )
+            let (v_binder,v_loc) = r_split v in
+            ok @@ loc x @@ Declaration_constant (Location.wrap ?loc:(Some v_loc) @@ Var.of_name v_binder, v_type_expression, inline, compile_rhs_expr) )
           in let%bind variables = ok @@ npseq_to_list pt.value
           in let%bind expr_bind_lst =
                match let_rhs with
@@ -789,7 +793,8 @@ and compile_declaration : Raw.declaration -> (declaration Location.wrap list , a
         )
       | Some t -> ok @@ Some t
       in
-      let binder = Var.of_name var.value in
+      let (var_binder, var_loc) = r_split var in
+      let fun_name = Location.wrap ?loc:(Some var_loc) @@ Var.of_name var_binder in
       let%bind rhs' = match recursive with
         None -> ok @@ rhs'
         | Some _ -> match rhs'.expression_content with
@@ -797,11 +802,11 @@ and compile_declaration : Raw.declaration -> (declaration Location.wrap list , a
             (match lhs_type with
               None -> fail @@ untyped_recursive_fun var.Region.region
               | Some (lhs_type) ->
-              let expression_content = E_recursive {fun_name=binder;fun_type=lhs_type;lambda} in
+              let expression_content = E_recursive {fun_name;fun_type=lhs_type;lambda} in
               ok @@ {rhs' with expression_content})
           | _ -> ok @@ rhs'
       in
-      ok @@ [loc x @@ (Declaration_constant (Var.of_name var.value , lhs_type , inline, rhs'))]
+      ok @@ [loc x @@ (Declaration_constant (fun_name , lhs_type , inline, rhs'))]
     )
 
 and compile_cases : (Raw.pattern * expression) list -> (matching_expr, abs_error) result =
@@ -840,8 +845,7 @@ and compile_cases : (Raw.pattern * expression) list -> (matching_expr, abs_error
         let%bind pat =
           trace_option (unsupported_cst_constr t) @@ pat_opt in
         let%bind single_pat = get_single pat in
-        let%bind var = get_var single_pat in
-        ok (const.value, var)
+        ok (const.value, single_pat)
     | _ -> fail @@ only_constructors t in
   let rec get_constr_opt (t:Raw.pattern) =
     match t with
@@ -859,8 +863,7 @@ and compile_cases : (Raw.pattern * expression) list -> (matching_expr, abs_error
           | None -> ok None
           | Some pat ->
               let%bind single_pat = get_single pat in
-              let%bind var = get_var single_pat in
-              ok (Some var)
+              ok (Some single_pat)
         in ok (const.value , var_opt)
     | _ -> fail @@ only_constructors t in
   let%bind patterns =
@@ -873,7 +876,8 @@ and compile_cases : (Raw.pattern * expression) list -> (matching_expr, abs_error
   match patterns with
   | [(PFalse _, f) ; (PTrue _, t)]
   | [(PTrue _, t) ; (PFalse _, f)] ->
-      ok @@ Match_variant ([((Constructor "true", Var.of_name "_"), t); ((Constructor "false", Var.of_name "_"), f)])
+    let muted = Location.wrap @@ Var.of_name "_" in
+    ok @@ Match_variant ([((Constructor "true", muted), t); ((Constructor "false", muted), f)])
   | [(PList (PCons c), cons); (PList (PListComp sugar_nil), nil)]
   | [(PList (PListComp sugar_nil), nil); (PList (PCons c), cons)] ->
       let%bind () =
@@ -882,19 +886,26 @@ and compile_cases : (Raw.pattern * expression) list -> (matching_expr, abs_error
         @@ sugar_nil.value.elements in
       let%bind (a, b) =
         let a, _, b = c.value in
+        let a_loc = Location.lift (Raw.pattern_to_region a) in
+        let b_loc = Location.lift (Raw.pattern_to_region b) in
         let%bind a = get_var a in
         let%bind b = get_var b in
+        let a = Location.wrap ?loc:(Some a_loc) @@ Var.of_name a in
+        let b = Location.wrap ?loc:(Some b_loc) @@ Var.of_name b in
         ok (a, b) in
-      ok @@ Match_list {match_cons=(Var.of_name a, Var.of_name b, cons); match_nil=nil}
+      ok @@ Match_list {match_cons=(a, b, cons); match_nil=nil}
   | lst ->
       let as_variant () =
         trace_strong (unsupported_pattern_type (List.map fst lst)) @@
         let%bind constrs =
           let aux (x, y) =
-            let%bind x' = get_constr x
-            in ok (x', y)
+            let%bind (c,v) = get_constr x in
+            let v_loc = Location.lift (Raw.pattern_to_region v) in
+            let%bind v = get_var v in
+            let v' = Location.wrap ?loc:(Some v_loc) @@ Var.of_name v in
+            ok ((Constructor c, v'), y)
           in bind_map_list aux lst
-        in ok @@ ez_match_variant constrs in
+        in ok @@ Match_variant constrs in
       let as_option () =
         trace_strong (unsupported_pattern_type (List.map fst lst)) @@
         let aux (x, y) =
@@ -906,9 +917,12 @@ and compile_cases : (Raw.pattern * expression) list -> (matching_expr, abs_error
             (("None" , None) , none_expr) ]
         | [ (("None", None), none_expr);
             (("Some", Some some_var), some_expr) ] ->
-           ok @@ Match_option {
-                    match_some = (Var.of_name some_var, some_expr);
-                    match_none = none_expr }
+          let var_loc = Location.lift (Raw.pattern_to_region some_var) in
+          let%bind var_binder = get_var some_var in
+          let proj = Location.wrap ?loc:(Some var_loc) @@ Var.of_name var_binder in
+          ok @@ Match_option {
+                   match_some = (proj, some_expr);
+                   match_none = none_expr }
         | _ -> fail @@ corner_case "bad option pattern"
       in bind_or (as_option () , as_variant ())
 

@@ -171,11 +171,12 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
       let%bind matchee = compile_expression condition in
       let%bind match_true = compile_expression then_clause in
       let%bind match_false = compile_expression else_clause in
-      return @@ O.E_matching {matchee; cases=Match_variant ([((Constructor "true", Var.of_name "_"),match_true);((Constructor "false", Var.of_name "_"), match_false)])}
+      let muted = Location.wrap @@ Var.of_name "_" in
+      return @@ O.E_matching {matchee; cases=Match_variant ([((Constructor "true", muted), match_true);((Constructor "false", muted), match_false)])}
     | I.E_sequence {expr1; expr2} ->
       let%bind expr1 = compile_expression expr1 in
       let%bind expr2 = compile_expression expr2 in
-      return @@ O.E_let_in {let_binder=(Var.of_name "_", Some (O.t_unit ())); rhs=expr1;let_result=expr2; inline=false}
+      return @@ O.E_let_in {let_binder=(Location.wrap @@ Var.of_name "_", Some (O.t_unit ())); rhs=expr1;let_result=expr2; inline=false}
     | I.E_skip -> ok @@ O.e_unit ~loc:sugar.location ~sugar ()
     | I.E_tuple t ->
       let aux (i,acc) el = 

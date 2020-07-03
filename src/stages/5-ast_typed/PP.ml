@@ -58,8 +58,8 @@ let tuple_or_record_sep_t value format_record sep_record format_tuple sep_tuple 
 
 let list_sep_d x = list_sep x (tag " ,@ ")
 let cmap_sep_d x = cmap_sep x (tag " ,@ ")
-let tuple_or_record_sep_expr value = tuple_or_record_sep value "@[<hv 7>record[%a]@]" " ,@ " "@[<hv 2>( %a )@]" " ,@ "
-let tuple_or_record_sep_type value = tuple_or_record_sep_t value "@[<hv 7>record[%a]@]" " ,@ " "@[<hv 2>( %a )@]" " *@ "
+let tuple_or_record_sep_expr value = tuple_or_record_sep value "@[<h>record[%a]@]" " ,@ " "@[<h>( %a )@]" " ,@ "
+let tuple_or_record_sep_type value = tuple_or_record_sep_t value "@[<h>record[%a]@]" " ,@ " "@[<h>( %a )@]" " *@ "
 
 let constant ppf : constant' -> unit = function
   | C_INT                   -> fprintf ppf "INT"
@@ -228,9 +228,9 @@ let rec type_expression' :
           -> unit =
   fun f ppf te ->
   match te.type_content with
-  | T_sum m -> fprintf ppf "@[<hv 4>sum[%a]@]" (cmap_sep_d f) (List.map (fun (c,{ctor_type;_}) -> (c,ctor_type)) (CMap.to_kv_list m))
+  | T_sum m -> fprintf ppf "@[<h>sum[%a]@]" (cmap_sep_d f) (List.map (fun (c,{ctor_type;_}) -> (c,ctor_type)) (CMap.to_kv_list m))
   | T_record m -> fprintf ppf "%a" (tuple_or_record_sep_type f) m
-  | T_arrow a -> fprintf ppf "%a -> %a" f a.type1 f a.type2
+  | T_arrow a -> fprintf ppf "@[<h>%a ->@ %a@]" f a.type1 f a.type2
   | T_variable tv -> type_variable ppf tv
   | T_constant tc -> type_constant ppf tc
   | T_operator to_ -> type_operator f ppf to_
@@ -258,7 +258,7 @@ and type_operator :
 (* end include Stage_common.PP *)
 
 let expression_variable ppf (ev : expression_variable) : unit =
-  fprintf ppf "%a" Var.pp ev
+  fprintf ppf "%a" Var.pp ev.wrap_content
 
 
 let rec expression ppf (e : expression) =

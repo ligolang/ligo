@@ -342,8 +342,13 @@ and eval : Ast_typed.expression -> env -> (value , _) result
         let {hd;tl;body;tv=_} = cases.match_cons in
         let env' = Env.extend (Env.extend env (hd,head)) (tl, V_List tail) in
         eval body env'
-      | Match_variant {cases=[{constructor=Constructor t;body=match_true};{constructor=Constructor f; body=match_false}];_}, V_Ct (C_bool b)
-        when String.equal t "true" && String.equal f "false" ->
+      | Match_variant {cases;_}, V_Ct (C_bool b) ->
+        let ctor_body (case : matching_content_case) = (case.constructor, case.body) in
+        let cases = CMap.of_list (List.map ctor_body cases) in
+        let get_case c =
+            (CMap.find (Constructor c) cases) in
+        let match_true  = get_case "true" in
+        let match_false = get_case "false" in
         if b then eval match_true env
         else eval match_false env
       | Match_variant {cases ; tv=_} , V_Construct (matched_c , proj) ->
@@ -380,7 +385,7 @@ let eval : Ast_typed.program -> (string , _) result =
            ok (V_Failure s)
               (*TODO This TRY-CATCH is here until we properly implement effects*)
        in
-    let pp' = pp^"\n val "^(Var.to_name binder)^" = "^(Ligo_interpreter.PP.pp_value v) in
+    let pp' = pp^"\n val "^(Var.to_name binder.wrap_content)^" = "^(Ligo_interpreter.PP.pp_value v) in
     let top_env' = Env.extend top_env (binder, v) in
     ok @@ (pp',top_env')
     | Ast_typed.Declaration_type _ ->

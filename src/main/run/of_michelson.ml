@@ -83,7 +83,6 @@ let run_contract ?options (exp:Michelson.t) (exp_type:ex_ty) (input_michelson:Mi
       root_name = None ; legacy_create_contract_literal = false } in
   let ty_stack_before = Script_typed_ir.Item_t (input_ty, Empty_t, None) in
   let ty_stack_after = Script_typed_ir.Item_t (output_ty, Empty_t, None) in
-  let exp = Michelson.strip_annots exp in
   let%bind descr =
     Trace.trace_tzresult_lwt Errors.parsing_code_tracer @@
     Memory_proto_alpha.parse_michelson_fail ~top_level exp ty_stack_before ty_stack_after in
@@ -104,7 +103,6 @@ let run_contract ?options (exp:Michelson.t) (exp_type:ex_ty) (input_michelson:Mi
 let run_expression ?options (exp:Michelson.t) (exp_type:ex_ty) : (ex_typed_value runned_result, _) result =
   let open! Tezos_raw_protocol_006_PsCARTHA in
   let (Ex_ty exp_type') = exp_type in
-  let exp = Michelson.strip_annots exp in
   let top_level = Script_ir_translator.Lambda
   and ty_stack_before = Script_typed_ir.Empty_t
   and ty_stack_after = Script_typed_ir.Item_t (exp_type', Empty_t, None) in

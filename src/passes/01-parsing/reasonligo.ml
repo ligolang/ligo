@@ -1,12 +1,13 @@
 module CST         = Cst.Cameligo
-module LexToken    = Parser_reasonligo.LexToken
-module Lexer       = Lexer.Make (LexToken)
+module LexToken    = Lexer_reasonligo.LexToken
+module Lexer       = Lexer_shared.Lexer.Make (LexToken)
 module Scoping     = Parser_cameligo.Scoping
 module Region      = Simple_utils.Region
 module ParErr      = Parser_reasonligo.ParErr
 module SyntaxError = Parser_reasonligo.SyntaxError
 module SSet        = Set.Make (String)
 module Pretty      = Parser_reasonligo.Pretty
+module EvalOpt     = Lexer_shared.EvalOpt
 
 (* Mock IOs TODO: Fill them with CLI options *)
 

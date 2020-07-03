@@ -46,6 +46,12 @@ let compare_wrap ~compare:compare_content { wrap_content = wca ; location = la }
   | 0 -> compare la lb
   | c -> c
 
+let compare_content ~compare:compare_content wa wb =
+  compare_content wa.wrap_content wb.wrap_content
+
+let equal_content ~equal:equal_content wa wb =
+  equal_content wa.wrap_content wb.wrap_content
+
 let wrap ?(loc = generated) wrap_content = { wrap_content ; location = loc }
 let get_location x = x.location
 let unwrap { wrap_content ; _ } = wrap_content
