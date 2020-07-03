@@ -134,9 +134,9 @@ let fold_map__poly_set : type a state new_a err . new_a extra_info__comparable -
    It just swaps the error monad with the option monad, and uses unit
    as the type for the state and for "errors". *)
 let fold_map_to_make fold_map = fun f v ->
-  match fold_map (fun () x -> match f x with Some x' -> ok ((), x') | None -> Pervasives.Error ()) () v with
-    Pervasives.Ok (((), v'), _) -> Some v'
-  | Pervasives.Error () -> None
+  match fold_map (fun () x -> match f x with Some x' -> ok ((), x') | None -> Stdlib.Error ()) () v with
+    Stdlib.Ok (((), v'), _) -> Some v'
+  | Stdlib.Error () -> None
 
 (* This can't be done automatically, because the auto-generated
    comparison functions make use of the fold, the fold supplies to

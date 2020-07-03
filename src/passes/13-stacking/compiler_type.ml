@@ -8,9 +8,12 @@ open Script_ir_translator
 
 module O = Tezos_utils.Michelson
 
+(* TODO why are we dealing with GADT here? *)
 module Ty = struct
 
   open Script_typed_ir
+
+  let has_big_map = X.has_big_map
 
   let bool_k = Bool_key None
   let nat_k = Nat_key None

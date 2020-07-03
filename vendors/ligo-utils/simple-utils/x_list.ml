@@ -179,7 +179,7 @@ let rec assoc_opt ?compare:cmp x =
   | (a,b)::l -> if compare a x = 0 then Some b else assoc_opt ~compare x l
 
 let rec compare ?compare:cmp a b =
-  let cmp = unopt ~default:Pervasives.compare cmp in
+  let cmp = unopt ~default:Stdlib.compare cmp in
   match a,b with
     [], [] -> 0
   | [], _::_ -> -1

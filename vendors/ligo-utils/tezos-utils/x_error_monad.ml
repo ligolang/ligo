@@ -2,7 +2,7 @@ module Error_monad = Tezos_error_monad.Error_monad
 
 let to_string err =
   let json = Error_monad.json_of_error err in
-  Tezos_data_encoding.Json.to_string json
+  Data_encoding.Json.to_string json
 
 let print err =
   Format.printf "%s\n" @@ to_string err

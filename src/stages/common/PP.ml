@@ -149,7 +149,7 @@ let operation ppf (o : Memory_proto_alpha.Protocol.Alpha_context.packed_internal
         (list_sep_d prim) nl
   in
   let l ppf (l: Memory_proto_alpha.Protocol.Alpha_context.Script.lazy_expr) =
-    let oo = Tezos_data_encoding.Data_encoding.force_decode l in
+    let oo = Data_encoding.force_decode l in
     match oo with
       Some o -> fprintf ppf "%a" prim (Tezos_micheline.Micheline.root o)
     | None  -> fprintf ppf "Fail decoding"
