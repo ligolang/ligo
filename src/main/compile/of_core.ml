@@ -42,3 +42,5 @@ let list_declarations (program : Ast_core.program) : string list =
       | Declaration_constant (var,_,_,_) -> (Var.to_name var.wrap_content)::prev
       | _ -> prev) 
     [] program
+
+let evaluate_type (env : Ast_typed.Environment.t) (t: Ast_core.type_expression) = trace typer_tracer @@ Typer.evaluate_type env t

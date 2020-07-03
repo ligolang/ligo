@@ -45,3 +45,5 @@ val fresh_like : 'a t -> 'b t
 val reset_counter : unit -> unit
 
 val debug : 'a t -> string
+
+val is_generated : 'a t -> bool

@@ -1,4 +1,3 @@
-open Trace
 open Simple_utils.Display
 
 module Raw = Cst.Pascaligo
@@ -126,7 +125,7 @@ let rec error_ppformat : display_format:string display_format ->
   )
 
 
-let rec error_jsonformat : abs_error -> J.t = fun a ->
+let rec error_jsonformat : abs_error -> Yojson.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;

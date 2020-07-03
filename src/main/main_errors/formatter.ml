@@ -1,4 +1,3 @@
-open Trace
 open Display
 
 let error_suggest: string = "\n
@@ -147,7 +146,7 @@ let error_ppformat : display_format:string display_format ->
       (error_ppformat' ~display_format) a
       error_suggest
 
-let rec error_jsonformat : Types.all -> J.t = fun a ->
+let rec error_jsonformat : Types.all -> Yojson.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;

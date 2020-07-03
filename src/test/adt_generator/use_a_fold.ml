@@ -9,7 +9,7 @@ let (|>) v f = f v
 (* TODO: how should we plug these into our test framework? *)
 let test (x : (unit,_) result) : unit = match x with
 | Ok (() , _annotation_thunk) -> ()
-(* | Error err -> failwith (Yojson.Basic.to_string @@ err ()) *)
+(* | Error err -> failwith (Yojson.to_string @@ err ()) *)
 | Error _err -> failwith ("TODO")
 
 let () =

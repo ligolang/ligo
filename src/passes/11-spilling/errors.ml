@@ -1,4 +1,3 @@
-open Trace
 open Simple_utils.Display
 
 type spilling_error = [
@@ -77,7 +76,7 @@ let rec error_ppformat : display_format:string display_format ->
       Format.pp_print_string f s
   )
 
-let rec error_jsonformat : spilling_error -> J.t = fun a ->
+let rec error_jsonformat : spilling_error -> Yojson.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;
