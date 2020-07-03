@@ -16,11 +16,10 @@ let
       src = gitignoreSource ../.;
     });
 in {
-  ocamlPackages = self.ocaml-ng.ocamlPackages_4_07.overrideScope'
+  ocamlPackages = self.ocaml-ng.ocamlPackages_4_09.overrideScope'
     (builtins.foldl' self.lib.composeExtensions (_: _: { }) [
-      # Both opam-repository and tezos-opam-repository are updated manually with `niv update`
+      # opam-repository is updated manually with `niv update`
       (opam-nix.traverseOPAMRepo' sources.opam-repository)
-      (opam-nix.traverseOPAMRepo sources.tezos-opam-repository)
       (opam-nix.callOPAMPackage (filterOut [
         ".git"
         ".gitlab-ci.yml"

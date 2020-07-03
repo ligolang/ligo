@@ -5,7 +5,7 @@ native: self: super:
 let dds = x: x.overrideAttrs (o: { dontDisableStatic = true; });
 in {
   buildPackages = super.buildPackages // { inherit (native) rakudo; };
-  ocaml = self.ocaml-ng.ocamlPackages_4_07.ocaml;
+  ocaml = self.ocaml-ng.ocamlPackages_4_09.ocaml;
   libev = dds super.libev;
   libusb = self.libusb1;
   systemd = self.eudev;

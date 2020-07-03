@@ -66,12 +66,6 @@
         "url": "https://github.com/ocaml/opam-repository/archive/d67e70b40203a6a1c77ccb2edbe136c1509a73a3.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
-    "tezos-opam-repository": {
-        "ref": "master",
-        "repo": "https://gitlab.com/ligolang/tezos-opam-repository",
-        "rev": "dfc46bd895b070bd89028a7ad98741d05ec684df",
-        "type": "git"
-    },
     "xmldiff": {
         "branch": "master",
         "description": "Diffs on XML trees",
