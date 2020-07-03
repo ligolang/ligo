@@ -225,7 +225,6 @@ and translate_expression (expr:expression) (env:environment) : (michelson , stac
       | _ -> fail @@ corner_case ~loc:__LOC__ "expected function type"
     )
   | E_application (f , arg) -> (
-      trace_strong (corner_case ~loc:__LOC__ "Compiling quote application") @@
       let%bind f = translate_expression f (Environment.add (Location.wrap @@ Var.fresh (), arg.type_expression) env) in
       let%bind arg = translate_expression arg env in
       return @@ seq [
