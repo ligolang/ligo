@@ -2,7 +2,7 @@ open Types
 open Fold
 open Format
 
-type json = Yojson.Basic.t
+type json = Yojson.t
 
 module M = struct
   type no_state = NoState
@@ -33,7 +33,7 @@ module M = struct
       packed_internal_operation = (fun _visitor NoState _op             -> `String "Operation(...bytes)") ;
       expression_variable       = (fun _visitor NoState ev              -> `Assoc ["exp-var", `String (asprintf "%a" Var.pp ev.wrap_content)] ) ;
       constructor'              = (fun _visitor NoState (Constructor c) -> `Assoc ["constructor", `String c] ) ;
-      location                  = (fun _visitor NoState loc             -> `String (asprintf "%a" Location.pp loc) ) ; (*TODO*)
+      location                  = (fun _visitor NoState loc             -> Location.pp_json loc) ;
       label                     = (fun _visitor NoState (Label lbl)     -> `Assoc ["label" , `String lbl] ) ;
       ast_core_type_expression  = (fun _visitor NoState te              -> `String (asprintf "%a" (Ast_core.PP.type_expression) te) ) ; (*TODO*)
       constructor_map           = (fun _visitor continue NoState cmap   ->
@@ -80,7 +80,7 @@ module M = struct
     fold to_json NoState v
   
   let print : ((no_state, json) fold_config -> no_state -> 'a -> json) -> formatter -> 'a -> unit  = fun fold ppf v ->
-    fprintf ppf "%a" Yojson.Basic.pp (to_json fold v)
+    fprintf ppf "%a" Yojson.pp (to_json fold v)
 end
 
 module Yojson = Fold.Folds(struct
