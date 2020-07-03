@@ -78,7 +78,7 @@ let mockup_protocol_parameters_encoding :
        (req "constants" Protocol.Constants_repr.parametric_encoding))
 
 let default_mockup_parameters : mockup_protocol_parameters =
-  let open Tezos_protocol_006_PsCARTHA_parameters in
+  let open Tezos_protocol_ligo006_PsCARTHA_parameters in
   let parameters =
     Default_parameters.parameters_of_constants
       Default_parameters.constants_sandbox
@@ -138,7 +138,7 @@ end
 
 let initial_context (header : Block_header.shell_header)
     (params : mockup_protocol_parameters) =
-  let open Tezos_protocol_006_PsCARTHA_parameters in
+  let open Tezos_protocol_ligo006_PsCARTHA_parameters in
   let parameters =
     Default_parameters.parameters_of_constants
       ~bootstrap_accounts:params.bootstrap_accounts

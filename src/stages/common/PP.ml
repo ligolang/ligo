@@ -156,8 +156,8 @@ let operation ppf (o : Memory_proto_alpha.Protocol.Alpha_context.packed_internal
   in
 
   let op ppf (type a) : a Memory_proto_alpha.Protocol.Alpha_context.manager_operation -> unit = function
-    | Reveal (s: Tezos_protocol_environment_006_PsCARTHA__Environment.Signature.Public_key.t) -> 
-      fprintf ppf "R %a" Tezos_protocol_environment_006_PsCARTHA__Environment.Signature.Public_key.pp s
+    | Reveal (s: Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key.t) -> 
+      fprintf ppf "R %a" Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key.pp s
     | Transaction {amount; parameters; entrypoint; destination} ->
       fprintf ppf "T {%a; %a; %s; %a}"
         Memory_proto_alpha.Protocol.Alpha_context.Tez.pp amount
@@ -167,13 +167,13 @@ let operation ppf (o : Memory_proto_alpha.Protocol.Alpha_context.packed_internal
 
     | Origination {delegate; script; credit; preorigination} ->
       fprintf ppf "O {%a; %a; %a; %a}" 
-        (print_option Tezos_protocol_environment_006_PsCARTHA__Environment.Signature.Public_key_hash.pp) delegate
+        (print_option Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key_hash.pp) delegate
         l script.code
         Memory_proto_alpha.Protocol.Alpha_context.Tez.pp credit
         (print_option Memory_proto_alpha.Protocol.Alpha_context.Contract.pp) preorigination
         
     | Delegation so ->
-      fprintf ppf "D %a" (print_option Tezos_protocol_environment_006_PsCARTHA__Environment.Signature.Public_key_hash.pp) so
+      fprintf ppf "D %a" (print_option Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key_hash.pp) so
   in
   let Internal_operation {source;operation;nonce} = o in
   fprintf ppf "{source: %s; operation: %a; nonce: %i"

@@ -39,8 +39,8 @@ depends: [
   "tezos-crypto"
   "tezos-stdlib-unix"
   "tezos-protocol-environment"
-  "tezos-protocol-006-PsCARTHA"
-  "tezos-client-006-PsCARTHA"
+  "tezos-protocol-ligo006-PsCARTHA"
+  "tezos-client-ligo006-PsCARTHA"
   "simple-utils"
   "tezos-utils"
 ]

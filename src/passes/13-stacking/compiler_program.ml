@@ -454,7 +454,7 @@ and translate_expression (expr:expression) (env:environment) : (michelson , stac
       let%bind code = 
         Proto_alpha_utils.Trace.trace_tzresult (fun _ -> corner_case ~loc:__LOC__ "Error while parsing michelson code insertion") @@
         Tezos_micheline.Micheline_parser.no_parsing_error @@ 
-        Tezos_client_006_PsCARTHA.Michelson_v1_parser.parse_expression ~check:false code
+        Tezos_client_ligo006_PsCARTHA.Michelson_v1_parser.parse_expression ~check:false code
       in
       let code = Tezos_micheline.Micheline.root code.expanded in
       let%bind ty = Compiler_type.type_ ty in

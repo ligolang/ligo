@@ -10,13 +10,6 @@ depends: [
   "dune" { >= "1.11" }
   "tezos-base"
   "tezos-protocol-compiler"
-  "alcotest-lwt" { with-test & = "0.8.5" }
-  "tezos-006-PsCARTHA-test-helpers" { with-test }
-  "tezos-stdlib-unix" { with-test }
-  "tezos-protocol-environment" { with-test }
-  "tezos-protocol-006-PsCARTHA-parameters" { with-test }
-  "tezos-client-base" { with-test }
-  "tezos-shell-services" { with-test }
 ]
 build: [
   [
@@ -24,9 +17,9 @@ build: [
     "%{tezos-protocol-compiler:lib}%/dune_protocol.template"
     "dune"
     "%{tezos-protocol-compiler:lib}%/final_protocol_versions"
-    "006_PsCARTHA"
+    "ligo006_PsCARTHA"
   ]
   ["dune" "build" "-p" name "-j" jobs]
   ["dune" "runtest" "-p" name "-j" jobs] {with-test}
 ]
-synopsis: "Tezos/Protocol: tests for economic-protocol definition"
+synopsis: "Tezos/Protocol: economic-protocol definition"

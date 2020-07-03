@@ -34,8 +34,8 @@ depends: [
   "ocplib-json-typed-bson"
   "tezos-crypto"
   "tezos-protocol-environment"
-  "tezos-protocol-006-PsCARTHA"
-  "tezos-client-006-PsCARTHA"
+  "tezos-protocol-ligo006-PsCARTHA"
+  "tezos-client-ligo006-PsCARTHA"
   "data-encoding"
   "simple-utils"
 ]

@@ -9,16 +9,19 @@ depends: [
   "tezos-tooling" { with-test }
   "dune" { >= "1.11" }
   "tezos-base"
-  "tezos-protocol-environment"
-  "tezos-protocol-006-PsCARTHA"
-  "tezos-shell-services"
-  "tezos-mockup-registration"
-  "tezos-signer-backends"
-  "tezos-protocol-006-PsCARTHA-parameters"
-  "alcotest-lwt" { with-test & = "0.8.5" }
+  "tezos-protocol-ligo006-PsCARTHA"
+  "tezos-protocol-compiler"
+  "tezos-protocol-updater"
 ]
 build: [
+  [
+    "%{tezos-protocol-compiler:lib}%/replace"
+    "%{tezos-protocol-compiler:lib}%/dune_protocol.template"
+    "dune"
+    "%{tezos-protocol-compiler:lib}%/final_protocol_versions"
+    "ligo006_PsCARTHA"
+  ]
   ["dune" "build" "-p" name "-j" jobs]
   ["dune" "runtest" "-p" name "-j" jobs] {with-test}
 ]
-synopsis: "Tezos/Protocol: protocol specific library for `tezos-client`"
+synopsis: "Tezos/Protocol: economic-protocol definition, embedded in `tezos-node`"

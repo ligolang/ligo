@@ -10,7 +10,7 @@ bug-reports: "https://gitlab.com/ligolang/tezos/issues"
 depends: [
   "dune"
   "tezos-protocol-environment"
-  "tezos-protocol-006-PsCARTHA"
+  "tezos-protocol-ligo006-PsCARTHA"
 ]
 build: [
   ["dune" "build" "-p" name]

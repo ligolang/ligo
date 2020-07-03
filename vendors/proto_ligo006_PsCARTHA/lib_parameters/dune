@@ -1,22 +1,22 @@
 (library
- (name tezos_protocol_006_PsCARTHA_parameters)
- (public_name tezos-protocol-006-PsCARTHA-parameters)
+ (name tezos_protocol_ligo006_PsCARTHA_parameters)
+ (public_name tezos-protocol-ligo006-PsCARTHA-parameters)
  (modules :standard \ gen)
  (libraries tezos-base
             tezos-protocol-environment
-            tezos-protocol-006-PsCARTHA)
+            tezos-protocol-ligo006-PsCARTHA)
  (flags (:standard -open Tezos_base__TzPervasives
-                   -open Tezos_protocol_006_PsCARTHA
+                   -open Tezos_protocol_ligo006_PsCARTHA
                    -linkall))
 )
 
 (executable
  (name gen)
  (libraries tezos-base
-            tezos-protocol-006-PsCARTHA-parameters)
+            tezos-protocol-ligo006-PsCARTHA-parameters)
  (modules gen)
  (flags (:standard -open Tezos_base__TzPervasives
-                   -open Tezos_protocol_006_PsCARTHA_parameters
+                   -open Tezos_protocol_ligo006_PsCARTHA_parameters
                    -linkall)))
 
 (rule
