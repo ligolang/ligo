@@ -106,11 +106,12 @@ async function main() {
   const CURATED_EXAMPLES = [
     'pascaligo/arithmetic-contract.ligo',
     'cameligo/arithmetic-contract.ligo',
-    'reasonligo/arithmetic-contract.ligo',
-    'pascaligo/id.ligo',
-    'cameligo/id.mligo',
-    'reasonligo/id.religo',
+    'reasonligo/arithmetic-contract.ligo'
   ];
+    // Disable ID examples pending https://ligo.atlassian.net/browse/LIGO-676
+    //'pascaligo/id.ligo',
+    //'cameligo/id.mligo',
+    //'reasonligo/id.religo',
 
   const EXAMPLES_DEST_DIR = join(process.cwd(), 'build', 'static', 'examples');
   fs.mkdirSync(EXAMPLES_DEST_DIR, { recursive: true });
