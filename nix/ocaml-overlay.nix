@@ -102,6 +102,7 @@ in {
           nativeBuildInputs = oa.nativeBuildInputs
             ++ [ self.buildPackages.rakudo ];
           installPhase = "mkdir $out";
+          buildInputs = oa.buildInputs ++ oa.checkInputs;
         });
         # LIGO odoc documentation
         ligo-doc = osuper.ligo.overrideAttrs (oa: {
