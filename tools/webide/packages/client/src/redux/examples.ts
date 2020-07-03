@@ -39,12 +39,12 @@ if (process.env.NODE_ENV === 'development') {
   DEFAULT_STATE.list = [
     { id: 'FEb62HL7onjg1424eUsGSg', name: 'Increment (PascaLIGO)' },
     { id: 'MzkMQ1oiVHJqbcfUuVFKTw', name: 'Increment (CameLIGO)' },
-    { id: 'JPhSOehj_2MFwRIlml0ymQ', name: 'Increment (ReasonLIGO)' },
-    { id: 'yP-THvmURsaqHxpwCravWg', name: 'ID (PascaLIGO)' },
-    { id: 'ehDv-Xaf70mQoiPhQDTAUQ', name: 'ID (CameLIGO)' },
-    { id: 'CpnK7TFuUjJiQTT8KiiGyQ', name: 'ID (ReasonLIGO)' }
+    { id: 'JPhSOehj_2MFwRIlml0ymQ', name: 'Increment (ReasonLIGO)' }
   ];
 }
+    //{ id: 'yP-THvmURsaqHxpwCravWg', name: 'ID (PascaLIGO)' },
+    //{ id: 'ehDv-Xaf70mQoiPhQDTAUQ', name: 'ID (CameLIGO)' },
+    //{ id: 'CpnK7TFuUjJiQTT8KiiGyQ', name: 'ID (ReasonLIGO)' }
 
 export default (state = DEFAULT_STATE, action: Action): ExamplesState => {
   switch (action.type) {
