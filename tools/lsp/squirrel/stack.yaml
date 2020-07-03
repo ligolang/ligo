@@ -40,7 +40,8 @@ extra-deps:
   - lingo-0.3.2.0@sha256:80b9ded65f2ddc0272a2872d9c3fc43c37934accae076d3e547dfc6c6b6e16d3,1899
   - semilattices-0.0.0.4@sha256:333707e460923711d1edbdd02ebe1c3957d4e0808eab9886747b52ee3e443639,1909
   - fastsum-0.1.1.1
-
+  - git: https://github.com/Heimdell/dual-effects.git
+    commit: dc3e8bcd0aa00b9264e86293ec42c0b5835e930c
 # - acme-missiles-0.3
 # - git: https://github.com/commercialhaskell/stack.git
 #   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a

@@ -45,6 +45,7 @@ module Parser
   , stubbed
   , getInfo
   , inside
+  , restart
 
     -- * Error
   , die
@@ -63,15 +64,18 @@ module Parser
   , ASTInfo(..)
   ) where
 
-import Control.Monad.State
 import Control.Monad.Writer hiding (Product)
-import Control.Monad.Except
-import Control.Monad.Identity
+import Control.Monad.State
+import Control.Monad.Catch
+import qualified Control.Monad.Reader as MTL
 
 import Data.Functor ((<&>))
 import Data.Foldable
+import Data.IORef
 import Data.Text (Text, unpack)
 import qualified Data.Text as Text
+
+import System.FilePath
 
 import ParseTree
 import Range
@@ -86,22 +90,45 @@ import Debug.Trace
 --
 --   TODO: separate state. Polysemy?
 --
-newtype Parser a = Parser
-  { unParser
-      :: WriterT [Error ASTInfo]        -- Early I though to report errors that way.
-      (  StateT  (ParseForest, [Text])  -- Current forest to recognise + comments.
-      (  ExceptT (Error ASTInfo)        -- Backtracking. Change `Error` to `()`?
-      (  Identity )))                   -- I forgot why. `#include`? Debug via `print`?
-         a
-  }
-  deriving newtype
-    ( Functor
-    , Applicative
-    , Monad
-    , MonadState   (ParseForest, [Text])
-    , MonadWriter [Error ASTInfo]
-    , MonadError  (Error ASTInfo)
-    )
+type Parser =
+   WriterT [Error ASTInfo]
+  (StateT (Product PList)
+   IO)
+
+type PList = [ParseForest, [Text], FilePath]
+
+-- | Auto-accumulated information to be put into AST being build.
+type ASTInfo = Product [Range, [Text]]
+
+runParser
+  :: Parser a
+  -> FilePath
+  -> IO (a, [Error ASTInfo])
+runParser parser fin = do
+  pforest <- toParseTree fin
+
+  let dir = takeDirectory fin
+
+  runWriterT parser `evalStateT` Cons pforest (Cons [] (Cons dir Nil))
+
+restart :: Parser a -> FilePath -> Parser a
+restart p fin = do
+  dir <- get' @FilePath
+  (a, errs) <- liftIO do runParser p (dir </> fin)
+  tell errs
+  return a
+
+get' :: forall x. Contains x PList => Parser x
+get' = gets getElem
+
+gets' :: forall x a. Contains x PList => (x -> a) -> Parser a
+gets' f = gets (f . getElem)
+
+put' :: forall x. Contains x PList => x -> Parser ()
+put' x = modify $ modElem $ const x
+
+mod' :: forall x. Contains x PList => (x -> x) -> Parser ()
+mod' = modify . modElem
 
 -- | Generate error originating at current location.
 makeError :: Text -> Parser (Error ASTInfo)
@@ -112,7 +139,7 @@ makeError msg = do
 -- | Generate error originating at given location.
 makeError' :: Text -> info -> Parser (Error info)
 makeError' msg i = do
-  src <- gets (pfGrove . fst) <&> \case
+  src <- gets' pfGrove <&> \case
     []                     -> ""
     (,) _ ParseTree { ptSource } : _ -> ptSource
   return Expected
@@ -124,23 +151,18 @@ makeError' msg i = do
 -- | Pick next tree in a forest or die with msg.
 takeNext :: Text -> Parser ParseTree
 takeNext msg = do
-  (st@Forest {pfGrove, pfRange}, comms) <- get
-  case pfGrove of
+  gets' pfGrove >>= \case
     [] -> die msg
     (_, t) : f -> do
       if "comment" `Text.isSuffixOf` ptName t
       then do
-        (st', comms') <- get
-        put (st', ptSource t : comms')
+        mod' (ptSource t :)
         takeNext msg
       else do
-        put
-          ( st
-            { pfRange = diffRange pfRange (ptRange t)
-            , pfGrove = f
-            }
-          , comms
-          )
+        mod' \st -> st
+          { pfRange = diffRange (pfRange st) (ptRange t)
+          , pfGrove = f
+          }
         return t
 
 --fields :: Text -> Parser a -> Parser [a]
@@ -168,39 +190,35 @@ takeNext msg = do
 --
 field :: Text -> Parser a -> Parser a
 field name parser = do
-  grove <- gets (pfGrove . fst)
-  case grove of
+  gets' pfGrove >>= \case
     (name', t) : _
       | name == name' -> do
         sandbox True t
 
-    _ -> do
+    grove -> do
       case lookup name grove of
         Just tree -> sandbox False tree
         Nothing   -> die name
 
   where
     sandbox firstOne tree@ParseTree {ptID, ptRange} = do
-      (st@Forest {pfGrove = grove, pfRange = rng}, comments) <- get
+      st@Forest {pfGrove = grove, pfRange = rng} <- get'
       let (errs, new_comments, grove') = delete name grove
-      put
-        ( Forest
-          { pfID    = ptID
-          , pfGrove = [(name, tree)]
-          , pfRange = ptRange
-          }
-        , comments ++ new_comments
-        )
+      mod' (++ new_comments)
+      put' Forest
+        { pfID    = ptID
+        , pfGrove = [(name, tree)]
+        , pfRange = ptRange
+        }
 
       res <- parser
 
-      put
-        ( st
-          { pfGrove = grove'
-          , pfRange = if firstOne then diffRange rng ptRange else rng
-          }
-        , []
-        )
+      put' st
+        { pfGrove = grove'
+        , pfRange = if firstOne then diffRange rng ptRange else rng
+        }
+
+      put' @[Text] []
 
       for_ errs (tell . pure . unexpected)
 
@@ -211,10 +229,10 @@ fallback msg = pure . stub =<< makeError msg
 
 -- | Produce "expected ${X}" error at this point.
 die :: Text -> Parser a
-die msg = throwError =<< makeError msg
+die msg = throwM =<< makeError msg
 
 die' ::Text -> ASTInfo -> Parser a
-die' msg rng = throwError =<< makeError' msg rng
+die' msg rng = throwM =<< makeError' msg rng
 
 -- | When tree-sitter found something it was unable to process.
 unexpected :: ParseTree -> Error ASTInfo
@@ -233,18 +251,23 @@ subtree msg parser = do
   ParseTree {ptChildren, ptName} <- takeNext msg
   if ptName == msg
   then do
-    (save, comms) <- get
-    put (ptChildren, comms)
-    rest <- gets (pfGrove . fst)
+    save <- get' @ParseForest
+    put' ptChildren
+    rest <- gets' pfGrove
     collectErrors rest
-    (_, comms') <- get
-    parser <* put (save, comms')
+    parser <* put' save
   else do
     die msg
 
 -- | Because `ExceptT` requires error to be `Monoid` for `Alternative`.
 (<|>) :: Parser a -> Parser a -> Parser a
-Parser l <|> Parser r = Parser (l `catchError` const r)
+l <|> r = do
+  s <- get' @ParseForest
+  c <- get' @[Text]
+  l `catch` \(e :: Error ASTInfo) -> do
+    put' s
+    put' c
+    r
 
 -- | Custom @foldl1 (<|>)@.
 select :: [Parser a] -> Parser a
@@ -278,22 +301,6 @@ some p = some'
       xs <- many'
       return (x : xs)
 
--- | Run parser on given file.
---
-runParser :: Parser a -> FilePath -> IO (a, [Error ASTInfo])
-runParser parser fin = do
-  pforest <- toParseTree fin
-  let
-    res =
-             runIdentity
-      $      runExceptT
-      $ flip runStateT (pforest, [])
-      $      runWriterT
-      $       unParser
-      $ parser
-
-  either (error . show) (return . fst) res
-
 -- | Run parser on given file and pretty-print stuff.
 --
 debugParser :: Show a => Parser a -> FilePath -> IO ()
@@ -301,7 +308,7 @@ debugParser parser fin = do
   (res, errs) <- runParser parser fin
   putStrLn "Result:"
   print res
-  unless (null errs) do
+  MTL.unless (null errs) do
     putStrLn ""
     putStrLn "Errors:"
     for_ errs (print . nest 2 . pp)
@@ -324,12 +331,12 @@ anything = do
 -- | Get range of the current tree (or forest) before the parser was run.
 range :: Parser a -> Parser (a, Range)
 range parser =
-  get >>= \case
-    (,) Forest {pfGrove = [(,) _ ParseTree {ptRange}]} _ -> do
+  get' >>= \case
+    Forest {pfGrove = [(,) _ ParseTree {ptRange}]} -> do
       a <- parser
       return (a, ptRange)
 
-    (,) Forest {pfRange} _ -> do
+    Forest {pfRange} -> do
       a <- parser
       return (a, pfRange)
 
@@ -367,7 +374,7 @@ delete k ((k', v) : rest) =
 collectErrors :: [(Text, ParseTree)] -> Parser ()
 collectErrors vs =
   for_ vs \(_, v) -> do
-    when (ptName v == "ERROR") do
+    MTL.when (ptName v == "ERROR") do
       tell [unexpected v]
 
 -- | Universal accessor.
@@ -398,9 +405,6 @@ inside sig parser = do
           subtree st do
             parser
 
--- | Auto-accumulated information to be put into AST being build.
-type ASTInfo = Product [Range, [Text]]
-
 -- | Equip given constructor with info.
 getInfo :: Parser ASTInfo
 getInfo = Cons <$> currentRange <*> do Cons <$> grabComments <*> pure Nil
@@ -408,10 +412,10 @@ getInfo = Cons <$> currentRange <*> do Cons <$> grabComments <*> pure Nil
 -- | Take the accumulated comments, clean the accumulator.
 grabComments :: Parser [Text]
 grabComments = do
-  (st, comms) <- get
-  put (st, [])
+  comms <- get'
+  mod' @[Text] $ const []
   return comms
 
 -- | /Actual/ debug pring.
 dump :: Parser ()
-dump = gets (pfGrove . fst) >>= traceShowM
+dump = gets' pfGrove >>= traceShowM

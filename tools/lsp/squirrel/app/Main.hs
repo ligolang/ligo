@@ -8,6 +8,7 @@ import           Control.Monad
 import           Data.Default
 import qualified Data.Text                             as Text
 import           Data.Text                               (Text)
+import           Data.Foldable
 import           Data.String.Interpolate (i)
 
 import qualified Language.Haskell.LSP.Control          as CTRL
@@ -32,6 +33,8 @@ import           Tree
 
 main :: IO ()
 main = do
+  -- for_ [1.. 100] \_ -> do
+  --   print =<< runParser contract example
   errCode <- mainLoop
   exit errCode
 
@@ -165,13 +168,13 @@ eventLoop funs chan = do
       _ -> U.logs "unknown msg"
 
 posToRange :: J.Position -> Range
-posToRange (J.Position l c) = Range (l, c, 0) (l, c, 0)
+posToRange (J.Position l c) = Range (l, c, 0) (l, c, 0) ""
 
 rangeToJRange :: Range -> J.Range
-rangeToJRange (Range (a, b, _) (c, d, _)) = J.Range (J.Position a b) (J.Position c d)
+rangeToJRange (Range (a, b, _) (c, d, _) _) = J.Range (J.Position a b) (J.Position c d)
 
 rangeToLoc :: Range -> J.Range
-rangeToLoc (Range (a, b, _) (c, d, _)) = J.Range (J.Position a b) (J.Position c d)
+rangeToLoc (Range (a, b, _) (c, d, _) _) = J.Range (J.Position a b) (J.Position c d)
 
 loadByURI :: J.Uri -> IO (Pascal (Product [[ScopedDecl], Range, [Text]]))
 loadByURI uri = do
@@ -197,7 +200,7 @@ collectErrors funs uri path version = do
     Nothing -> error "TODO: implement URI file loading"
 
 errorToDiag :: Error ASTInfo -> J.Diagnostic
-errorToDiag (Expected what _ (getRange -> (Range (sl, sc, _) (el, ec, _)))) =
+errorToDiag (Expected what _ (getRange -> (Range (sl, sc, _) (el, ec, _) _))) =
   J.Diagnostic
     (J.Range begin end)
     (Just J.DsError)

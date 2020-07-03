@@ -5,6 +5,7 @@
 module AST.Parser (example, contract) where
 
 import Data.Text (Text)
+import qualified Data.Text as Text
 import Data.Sum
 
 import AST.Types
@@ -53,10 +54,11 @@ declaration
 include :: Parser (Pascal ASTInfo)
 include = do
   subtree "include" do
-    ranged do
-      pure Include
-        <*> inside "filename" do
-              token "String"
+    inside "filename" do
+      ranged do
+        f <- token "String"
+        t <- restart contract (init $ tail $ Text.unpack f)
+        return $ Include f t
 
 typedecl :: Parser (Pascal ASTInfo)
 typedecl = do
@@ -858,11 +860,11 @@ typeTuple = do
 -- example = "../../../src/test/contracts/bytes_arithmetic.ligo"
 -- example = "../../../src/test/contracts/bytes_unpack.ligo"
 -- example = "../../../src/test/contracts/chain_id.ligo"
-example = "../../../src/test/contracts/coase.ligo"
+-- example = "../../../src/test/contracts/coase.ligo"
 -- example = "../../../src/test/contracts/failwith.ligo"
 -- example = "../../../src/test/contracts/loop.ligo"
 -- example = "../../../src/test/contracts/redeclaration.ligo"
--- example = "../../../src/test/contracts/application.ligo"
+example = "../../../src/test/contracts/includer.ligo"
 -- example = "../../../src/test/contracts/application.ligo"
 -- example = "../../../src/test/contracts/application.ligo"
 -- example = "../../../src/test/contracts/application.ligo"

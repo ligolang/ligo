@@ -40,6 +40,8 @@ import           Foreign.Storable               ( peek
                                                 )
 import           Control.Monad ((>=>))
 
+import           System.FilePath
+
 import Text.PrettyPrint hiding ((<>))
 
 import Range
@@ -144,6 +146,7 @@ toParseTree fin = do
                   , i $ pointColumn finish2D + 1
                   , i $ nodeEndByte node
                   )
+              , rFile = takeFileName fin
               }
 
           return $ ParseTree

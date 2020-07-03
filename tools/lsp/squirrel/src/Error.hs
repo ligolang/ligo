@@ -1,5 +1,5 @@
 
-{- | Parsing errors and utilities.
+{- | Parsing Errors and utilities.
 -}
 
 module Error
@@ -9,19 +9,24 @@ module Error
   )
   where
 
+import Control.Monad.Catch
+
 import Data.Text (Text, pack)
+import Data.Typeable
 
 import Pretty
 
--- | Parse error.
+-- | Parse Error.
 data Error info
   = Expected
     { eMsg   :: Text   -- ^ Description of what was expected.
     , eWhole :: Text   -- ^ Offending text.
-    , eInfo  :: info   -- ^ Location of the error.
+    , eInfo  :: info   -- ^ Location of the Error.
     }
   deriving (Show) via PP (Error info)
   deriving stock (Eq, Functor, Foldable, Traversable)
+
+instance (Pretty i, Typeable i) => Exception (Error i)
 
 instance Pretty1 Error where
   pp1 (Expected msg found r) = "░" <> pp msg <> r <> "▒" <> pp found <> "▓"

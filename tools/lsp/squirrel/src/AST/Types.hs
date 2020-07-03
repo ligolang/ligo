@@ -32,7 +32,7 @@ data Declaration it
   = ValueDecl it     -- ^ Binding
   | TypeDecl  it it  -- ^ Name Type
   | Action    it     -- ^ Expr
-  | Include   Text
+  | Include   Text it
   deriving (Show) via PP (Declaration it)
   deriving stock (Functor, Foldable, Traversable)
 
@@ -186,7 +186,11 @@ instance Pretty1 Declaration where
     ValueDecl binding -> binding
     TypeDecl  n ty    -> "type" <+> n <+> "=" `indent` ty
     Action    e       -> e
-    Include   f       -> "#include" <+> pp f
+
+    Include   f t     ->
+      "(* module" <+> pp f <+> "*)"
+        `indent` pp t
+        `above` "(* end" <+> pp f <+> "*)"
 
 instance Pretty1 Binding where
   pp1 = \case

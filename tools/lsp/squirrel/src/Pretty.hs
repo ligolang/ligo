@@ -37,6 +37,8 @@ import Data.Text (Text, pack)
 
 import Text.PrettyPrint hiding ((<>))
 
+import Product
+
 -- | Pretty-print to `Text`. Through `String`. Yep.
 ppToText :: Pretty a => a -> Text
 ppToText = pack . show . pp
@@ -132,3 +134,9 @@ color c d = zeroWidthText begin <> d <> zeroWidthText end
   where
     begin = "\x1b[" ++ show (30 + c) ++ "m"
     end   = "\x1b[0m"
+
+instance Pretty (Product '[]) where
+  pp _ = "{}"
+
+instance (Pretty x, Pretty (Product xs)) => Pretty (Product (x : xs)) where
+  pp (Cons x xs) = pp x <+> "&" <+> pp xs

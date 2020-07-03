@@ -5,10 +5,11 @@ dependencies:
   - bytestring
   - containers
   - data-default
+  - filepath
+  - exceptions
   - fastsum
   - mtl
   - pretty
-  - template-haskell
   - text
   - tree-sitter
 

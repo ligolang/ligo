@@ -39,6 +39,20 @@ packages:
       sha256: 1c89d4034e6d06e15ff0ec421a95206c030ddc2d35b9eee7f0a02aa30c6051c1
   original:
     hackage: fastsum-0.1.1.1
+- completed:
+    cabal-file:
+      size: 1569
+      sha256: 828a5bc60b97347d491038b435da664ae281a6dab26e9beb261d319c2601c4dc
+    name: eff
+    version: 0.0.0
+    git: https://github.com/Heimdell/dual-effects.git
+    pantry-tree:
+      size: 972
+      sha256: 4443705f2fc31929822a3cda4036f9a93950686f4729cd28280253e981828391
+    commit: dc3e8bcd0aa00b9264e86293ec42c0b5835e930c
+  original:
+    git: https://github.com/Heimdell/dual-effects.git
+    commit: dc3e8bcd0aa00b9264e86293ec42c0b5835e930c
 snapshots:
 - completed:
     size: 493124

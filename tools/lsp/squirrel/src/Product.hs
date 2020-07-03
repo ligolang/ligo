@@ -1,39 +1,44 @@
+{-|
+  The heterogeneous list.
+-}
 
 module Product where
 
-import qualified Data.Text as Text
-
-import Pretty
-
+-- | `Product xs` contains elements of each of the types from the `xs` list.
 data Product xs where
+  Cons :: x -> Product xs -> Product (x : xs)
   Nil  :: Product '[]
-  Cons :: { pHead :: x, pTail :: Product xs } -> Product (x : xs)
 
-instance Pretty (Product xs) => Show (Product xs) where
-  show = show . PP
-
+-- | Find/modify the element with a given type.
+--
+--   If you want to have same-types, use newtype wrappers.
+--
 class Contains x xs where
   getElem :: Product xs -> x
-  putElem :: x -> Product xs -> Product xs
+  modElem :: (x -> x) -> Product xs -> Product xs
 
 instance {-# OVERLAPS #-} Contains x (x : xs) where
-  getElem   (Cons x _)  = x
-  putElem x (Cons _ xs) = Cons x xs
+  getElem   (Cons x _) = x
+  modElem f (Cons x xs) = Cons (f x) xs
 
 instance Contains x xs => Contains x (y : xs) where
   getElem   (Cons _ xs) = getElem xs
-  putElem x (Cons y xs) = Cons y (putElem x xs)
+  modElem f (Cons x xs) = Cons x (modElem f xs)
 
-modElem :: Contains x xs => (x -> x) -> Product xs -> Product xs
-modElem f xs = putElem (f $ getElem xs) xs
+-- | Add a name to the type.
+--
+newtype (s :: String) := t = Tag { unTag :: t }
 
-instance Pretty (Product '[]) where
-  pp _ = "{}"
+-- | Retrieve a type associated with the given name.
+--
+getTag :: forall s t xs. Contains (s := t) xs => Product xs -> t
+getTag = unTag . getElem @(s := t)
 
-instance (Pretty x, Pretty (Product xs)) => Pretty (Product (x : xs)) where
-  pp (Cons x xs) =
-    if Text.null $ Text.strip ppx
-    then pp xs
-    else pp ppx <+> "&" <+> pp xs
-    where
-      ppx = ppToText x
+-- | Modify a type associated with the given name.
+--
+modTag
+  :: forall s t xs
+  .  Contains (s := t) xs
+  => (t -> t)
+  -> Product xs -> Product xs
+modTag f = modElem @(s := t) (Tag . f . unTag)
