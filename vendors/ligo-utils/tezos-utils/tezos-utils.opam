@@ -38,6 +38,7 @@ depends: [
   "tezos-client-ligo006-PsCARTHA"
   "data-encoding"
   "simple-utils"
+  "tezos-memory-proto-alpha"
 ]
 build: [
   ["dune" "build" "-p" name]
