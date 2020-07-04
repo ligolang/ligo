@@ -199,6 +199,7 @@ type peep1 = michelson -> michelson list option
 type peep2 = michelson * michelson -> michelson list option
 type peep3 = michelson * michelson * michelson -> michelson list option
 type peep4 = michelson * michelson * michelson * michelson -> michelson list option
+type peep5 = michelson * michelson * michelson * michelson * michelson -> michelson list option
 
 let rec peep1 (f : peep1) : michelson list -> bool * michelson list = function
   | [] -> (false, [])
@@ -240,6 +241,19 @@ let rec peep4 (f : peep4) : michelson list -> bool * michelson list = function
      | Some xs' -> let (_, xs') = peep4 f (xs' @ xs) in
                    (true, xs')
      | None -> let (changed, xs') = peep4 f (x2 :: x3 :: x4 :: xs) in
+               (changed, x1 :: xs')
+
+let rec peep5 (f : peep5) : michelson list -> bool * michelson list = function
+  | [] -> (false, [])
+  | [x] -> (false, [x])
+  | [x ; y] -> (false, [x ; y])
+  | [x ; y ; z] -> (false, [x ; y ; z])
+  | [x ; y ; z ; w] -> (false, [x ; y ; z ; w])
+  | x1 :: x2 :: x3 :: x4 :: x5 :: xs ->
+     match f (x1, x2, x3, x4, x5) with
+     | Some xs' -> let (_, xs') = peep5 f (xs' @ xs) in
+                   (true, xs')
+     | None -> let (changed, xs') = peep5 f (x2 :: x3 :: x4 :: x5 :: xs) in
                (changed, x1 :: xs')
 
 (* apply f to all seqs *)
@@ -352,6 +366,34 @@ let opt_swap2 : peep2 = function
   (* etc *)
   | Prim (_, I_SWAP, _, _), (Prim (_, (I_ADD | I_OR | I_AND | I_XOR), _, _) as comm_op) ->
      Some [comm_op]
+  | _ -> None
+
+(* for inserted Michelson lambdas *)
+let opt_beta3 : peep3 = function
+  (* PUSH (lambda ...) code ; SWAP ; EXEC  ↦  f *)
+  | Prim (_, I_PUSH, [Prim(_, T_lambda, _, _); code], _),
+    Prim (_, I_SWAP, _, _),
+    Prim (_, I_EXEC, _, _) ->
+      (match flatten_seqs code with
+       | Seq (_, code) -> Some code
+       | _ -> None)
+  | _ -> None
+
+let opt_beta5 : peep5 = function
+  (* PAIR ; DUP ; CDR ; SWAP ; CAR  ↦  *)
+  | Prim (_, I_PAIR, _, _),
+    Prim (_, I_DUP, _, _),
+    Prim (_, I_CDR, _, _),
+    Prim (_, I_SWAP, _, _),
+    Prim (_, I_CAR, _, _) ->
+    Some []
+  (* PAIR ; DUP ; CAR ; SWAP ; CDR  ↦  SWAP *)
+  | Prim (_, I_PAIR, _, _),
+    Prim (_, I_DUP, _, _),
+    Prim (_, I_CAR, _, _),
+    Prim (_, I_SWAP, _, _),
+    Prim (_, I_CDR, _, _) ->
+    Some [Prim(-1, I_SWAP, [], [])]
   | _ -> None
 
 (* This "optimization" deletes dead code produced by the compiler
@@ -483,6 +525,8 @@ let optimize : michelson -> michelson =
                      peephole @@ peep2 opt_dip2 ;
                      peephole @@ peep1 opt_dip1 ;
                      peephole @@ peep2 opt_swap2 ;
+                     peephole @@ peep3 opt_beta3 ;
+                     peephole @@ peep5 opt_beta5 ;
                    ] in
   let x = iterate_optimizer (sequence_optimizers optimizers) x in
   let x = opt_combine_drops x in
