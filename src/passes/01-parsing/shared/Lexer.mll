@@ -516,11 +516,22 @@ and scan_string thread state = parse
            scan_string (thread#push_char c) state lexbuf }
 
 and scan_verbatim thread state = parse
-| eof        { fail thread#opening Unterminated_verbatim}
-| "|}"       { let _, _, state = state#sync lexbuf
-               in thread, state }
-| _ as c     { let _, _, state = state#sync lexbuf in
-               scan_verbatim (thread#push_char c) state lexbuf }
+  nl as nl { let ()    = Lexing.new_line lexbuf
+             and state = state#set_pos (state#pos#new_line nl)
+             in scan_verbatim (thread#push_string nl) state lexbuf }
+| '#' blank* (natural as line) blank+ '"' (string as file) '"' {
+             let  _, _, state = state#sync lexbuf in
+             let flags, state = scan_flags state [] lexbuf in
+             let           () = ignore flags in
+             let line         = int_of_string line
+             and file         = Filename.basename file in
+             let pos          = state#pos#set ~file ~line ~offset:0 in
+             let state        = state#set_pos pos in
+             scan_verbatim thread state lexbuf }
+| eof      { fail thread#opening Unterminated_verbatim             }
+| "|}"     { let _, _, state = state#sync lexbuf in thread, state  }
+| _ as c   { let _, _, state = state#sync lexbuf in
+             scan_verbatim (thread#push_char c) state lexbuf       }
 
 (* Finishing a block comment
 
