@@ -431,6 +431,7 @@ let prim_type_args : prim -> int option = function
   | I_EMPTY_MAP -> Some 2
   | I_EMPTY_BIG_MAP -> Some 2
   | I_LAMBDA -> Some 2
+  | I_PUSH -> Some 1
   (* _not_ I_CONTRACT! annot is important there *)
   (* but could include I_SELF, maybe? *)
   | _ -> None
