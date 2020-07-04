@@ -30,18 +30,18 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_michelson_or.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-    in file "bad_michelson_or.mligo", line 5, characters 0-3
-    Constant declaration 'main'
-    in file "bad_michelson_or.mligo", line 6, characters 12-27
-    michelson_or contructor M_right must be annotated with a sum type
+          in file "bad_michelson_or.mligo", line 5, characters 0-3
+          Constant declaration 'main'
+          in file "bad_michelson_or.mligo", line 6, characters 12-27
+          michelson_or contructor M_right must be annotated with a sum type
 
 
-    If you're not sure how to fix this error, you can do one of the following:
+          If you're not sure how to fix this error, you can do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/introduction
-    * Ask a question on our Discord: https://discord.gg/9rhYaEt
-    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}]
+          * Visit our documentation: https://ligolang.org/docs/intro/introduction
+          * Ask a question on our Discord: https://discord.gg/9rhYaEt
+          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+          * Check the changelog by running 'ligo changelog' |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "michelson_or_tree_intermediary.ligo" ; "main" ] ;

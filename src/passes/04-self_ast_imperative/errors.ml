@@ -1,6 +1,5 @@
 open Simple_utils.Display
 open Ast_imperative
-open Trace
 
 let stage = "self_ast_imperative"
 
@@ -67,7 +66,7 @@ let error_ppformat : display_format:string display_format ->
         Location.pp e.location
   )
 
-let error_jsonformat : self_ast_imperative_error -> J.t = fun a ->
+let error_jsonformat : self_ast_imperative_error -> Yojson.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;

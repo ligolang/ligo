@@ -676,26 +676,26 @@ let%expect_test _ =
 
     type entrypointReturn is list (operation) * storage
 
-    const errorTokenUndefined  = "TOKEN_UNDEFINED"
+    const errorTokenUndefined = "TOKEN_UNDEFINED"
 
-    const errorNotOwner  = "NOT_OWNER"
+    const errorNotOwner = "NOT_OWNER"
 
-    const errorInsufficientBalance  = "INSUFFICIENT_BALANCE"
+    const errorInsufficientBalance = "INSUFFICIENT_BALANCE"
 
     type transferContentsIteratorAccumulator is
       storage * tokenOwner
 
     function transferContentsIterator
-      (const gen__P
-         : transferContentsIteratorAccumulator *
+      (const gen__P :
+         transferContentsIteratorAccumulator *
          transferContentsMichelson) is
     block {
-      const gen__rhs1  = gen__P;
-      const accumulator  = gen__rhs1.0;
-      const transferContentsMichelson  = gen__rhs1.1;
-      const gen__rhs2  = accumulator;
-      const storage  = gen__rhs2.0;
-      const from_  = gen__rhs2.1;
+      const gen__rhs1 = gen__P;
+      const accumulator = gen__rhs1.0;
+      const transferContentsMichelson = gen__rhs1.1;
+      const gen__rhs2 = accumulator;
+      const storage = gen__rhs2.0;
+      const from_ = gen__rhs2.1;
       const transferContents
       = (Layout.convert_from_right_comb
            (transferContentsMichelson)
@@ -726,37 +726,37 @@ let%expect_test _ =
     function transferIterator
       (const gen__P : storage * transferMichelson) is
     block {
-      const gen__rhs7  = gen__P;
-      const storage  = gen__rhs7.0;
-      const transferMichelson  = gen__rhs7.1;
+      const gen__rhs7 = gen__P;
+      const storage = gen__rhs7.0;
+      const transferMichelson = gen__rhs7.1;
       const transferAuxiliary2
       = (Layout.convert_from_right_comb (transferMichelson)
          : transferAuxiliary);
-      const from_  = (transferAuxiliary2.from_ : tokenOwner);
+      const from_ = (transferAuxiliary2.from_ : tokenOwner);
       allowOnlyOwnTransfer (from_);
       const gen__rhs10
       = List.fold
           (transferContentsIterator, transferAuxiliary2.txs,
            (storage, from_));
-      const storage  = gen__rhs10.0;
-      const _  = gen__rhs10.1
+      const storage = gen__rhs10.0;
+      const _ = gen__rhs10.1
     } with storage
 
     function transfer
       (const gen__P : transferParameter * storage) is
     block {
-      const gen__rhs11  = gen__P;
-      const transferParameter  = gen__rhs11.0;
-      const storage  = gen__rhs11.1;
+      const gen__rhs11 = gen__P;
+      const transferParameter = gen__rhs11.0;
+      const storage = gen__rhs11.1;
       const storage
       = List.fold (transferIterator, transferParameter, storage)
     } with ((list [] : list (operation)), storage)
 
     function main (const gen__P : entrypointParameter) is
     block {
-      const gen__rhs13  = gen__P;
-      const parameter  = gen__rhs13.0;
-      const storage  = gen__rhs13.1
+      const gen__rhs13 = gen__P;
+      const parameter = gen__rhs13.0;
+      const storage = gen__rhs13.1
     } with
         case parameter of [
           Transfer (transferParameter) ->
@@ -1086,7 +1086,7 @@ let%expect_test _ =
             = if EQ (Tezos.sender, p.address_from)
               then
                 block {
-                  const new_allowances  = s.allowances;
+                  const new_allowances = s.allowances;
                   gen__env9.new_allowances := new_allowances;
                   skip
                 } with gen__env9
@@ -1127,14 +1127,14 @@ let%expect_test _ =
                   gen__env9.new_allowances := new_allowances;
                   skip
                 } with gen__env9;
-            const new_allowances  = gen__env9.new_allowances;
+            const new_allowances = gen__env9.new_allowances;
             const sender_balance : nat
             = case Map.find_opt (p.address_from, s.tokens) of [
                 Some (value) -> value
               | None -> 0n
               ];
             const new_tokens : tokens = big_map [];
-            const gen__env12  = record [new_tokens = new_tokens];
+            const gen__env12 = record [new_tokens = new_tokens];
             const gen__env12
             = if LT (sender_balance, p.value)
               then
@@ -1164,7 +1164,7 @@ let%expect_test _ =
                   gen__env12.new_tokens := new_tokens;
                   skip
                 } with gen__env12;
-            const new_tokens  = gen__env12.new_tokens
+            const new_tokens = gen__env12.new_tokens
           } with
               ((list [] : list (operation)),
                s with
@@ -1205,7 +1205,7 @@ let%expect_test _ =
                   gen__env14.new_allowances := new_allowances;
                   skip
                 } with gen__env14;
-            const new_allowances  = gen__env14.new_allowances
+            const new_allowances = gen__env14.new_allowances
           } with
               ((list [] : list (operation)),
                s with
@@ -1801,22 +1801,22 @@ let%expect_test _ =
     function foobar (const i : int) : int is
     block {
       const p : parameter = (Zero (42n));
-      const gen__env7  = record [i = i];
+      const gen__env7 = record [i = i];
       const gen__env7
       = if GT (i, 0)
         then
           block {
-            const i  = ADD (i, 1);
+            const i = ADD (i, 1);
             gen__env7.i := i;
-            const gen__env5  = record [i = i];
+            const gen__env5 = record [i = i];
             const gen__env5
             = if GT (i, 10)
               then
                 block {
-                  const i  = 20;
+                  const i = 20;
                   gen__env5.i := i;
                   failwith ("who knows");
-                  const i  = 30;
+                  const i = 30;
                   gen__env5.i := i;
                   skip
                 } with gen__env5
@@ -1824,7 +1824,7 @@ let%expect_test _ =
                 block {
                   skip
                 } with gen__env5;
-            const i  = gen__env5.i;
+            const i = gen__env5.i;
             gen__env7.i := i;
             skip
           } with gen__env7
@@ -1835,7 +1835,7 @@ let%expect_test _ =
             | Pos (n) -> skip
             ]
           } with gen__env7;
-      const i  = gen__env7.i
+      const i = gen__env7.i
     } with
         case p of [
           Zero (n) -> i

@@ -1,10 +1,11 @@
 [@@@warning "-42"]
 
-module CST=Cst.Cameligo
+module CST = Cst.Cameligo
 open CST
 module Region = Simple_utils.Region
 open! Region
 open! PPrint
+module Option = Simple_utils.Option
 
 let pp_par printer {value; _} =
   string "(" ^^ nest 1 (printer value.inside ^^ string ")")

@@ -10,10 +10,14 @@ module Int = X_int
 module Tuple = Tuple
 module Map = X_map
 module Tree = Tree
-module Region = Region
-module Pos = Pos
 module Var = Var
 module Ligo_string = X_string
 module Display = Display
 module Runned_result = Runned_result
 
+(* Originally by Christian Rinderknecht *)
+
+module Pos    = Pos
+module Region = Region
+module Utils  = Utils
+module FQueue = FQueue

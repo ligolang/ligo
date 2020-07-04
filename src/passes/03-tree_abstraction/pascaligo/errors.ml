@@ -1,4 +1,3 @@
-open Trace
 open Simple_utils.Display
 
 module Raw = Cst.Pascaligo
@@ -15,7 +14,7 @@ type abs_error = [
   | `Concrete_pascaligo_unsupported_string_singleton of Raw.type_expr
   | `Concrete_pascaligo_unsupported_deep_some_pattern of Raw.pattern
   | `Concrete_pascaligo_unsupported_deep_list_pattern of Raw.pattern
-  | `Concrete_pascaligo_unsupported_deep_tuple_pattern of (Raw.pattern, Raw.wild) Parser_shared.Utils.nsepseq Raw.par Raw.reg
+  | `Concrete_pascaligo_unsupported_deep_tuple_pattern of (Raw.pattern, Raw.wild) Simple_utils.Utils.nsepseq Raw.par Raw.reg
   | `Concrete_pascaligo_unknown_built_in of string
   | `Concrete_pascaligo_michelson_type_wrong of Raw.type_expr * string
   | `Concrete_pascaligo_michelson_type_wrong_arity of Location.t * string
@@ -126,7 +125,7 @@ let rec error_ppformat : display_format:string display_format ->
   )
 
 
-let rec error_jsonformat : abs_error -> J.t = fun a ->
+let rec error_jsonformat : abs_error -> Yojson.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;

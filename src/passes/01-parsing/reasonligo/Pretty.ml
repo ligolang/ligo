@@ -5,6 +5,7 @@ open CST
 module Region = Simple_utils.Region
 open! Region
 open! PPrint
+module Option = Simple_utils.Option
 
 let rec print ast =
   let app decl = group (pp_declaration decl) in

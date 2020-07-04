@@ -40,6 +40,9 @@ let%expect_test _ =
            evaluate-value
                Subcommand: Evaluate a given definition.
 
+           get-scope
+               Subcommand: Return the JSON encoded environment for a given file.
+
            interpret
                Subcommand: Interpret the expression in the context initialized by
                the provided source file.
@@ -140,6 +143,9 @@ let%expect_test _ =
            evaluate-value
                Subcommand: Evaluate a given definition.
 
+           get-scope
+               Subcommand: Return the JSON encoded environment for a given file.
+
            interpret
                Subcommand: Interpret the expression in the context initialized by
                the provided source file.
@@ -239,6 +245,10 @@ let%expect_test _ =
                MICHELSON_FORMAT is the format that will be used by
                compile-contract for the resulting Michelson. Available formats
                are 'text' (default), 'json' and 'hex'.
+
+           --output-file=OUTPUT_FILE, --output=OUTPUT_FILE
+               OUTPUT_FILE if used, prints the output into the specified file
+               instead of stdout
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported

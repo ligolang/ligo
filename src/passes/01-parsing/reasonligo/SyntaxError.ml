@@ -1,6 +1,6 @@
 module CST = Cst.Cameligo
 
-type error = 
+type error =
   | WrongFunctionArguments of CST.expr
   | InvalidWild of CST.expr
 

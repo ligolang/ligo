@@ -1,4 +1,3 @@
-open Trace
 open Simple_utils.Display
 
 
@@ -301,7 +300,7 @@ let rec error_ppformat : display_format:string display_format ->
       error_ppformat ~display_format f err
     | `Typer_assert_equal (expected,actual) ->
       Format.fprintf f
-        "@[<h>Bad types:@ expected %a@ got %a@]"
+        "@[<hv>Bad types:@ expected %a@ got %a@]"
         Ast_typed.PP.type_expression expected 
         Ast_typed.PP.type_expression actual
     | `Typer_corner_case desc ->
@@ -580,7 +579,7 @@ let rec error_ppformat : display_format:string display_format ->
       error_ppformat ~display_format f err 
   )
 
-let rec error_jsonformat : typer_error -> J.t = fun a ->
+let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;
@@ -716,13 +715,15 @@ let rec error_jsonformat : typer_error -> J.t = fun a ->
     json_error ~stage ~content
   | `Typer_constant_declaration_tracer (name,ae,Some t,err) ->
     let message = `String "Typing constant declaration" in
-    let loc = `String (Format.asprintf "%a" Location.pp ae.location) in
+    let value = `String (Format.asprintf "%a" Ast_core.PP.expression ae) in
+    let loc = `String (Format.asprintf "%a" Location.pp name.location) in
     let name = `String (Format.asprintf "%a" Ast_core.PP.expression_variable name) in
     let expected = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t) in
     let content = `Assoc [
       ("message", message);
       ("location", loc);
       ("name", name);
+      ("value", value);
       ("expected", expected);
       ("children", error_jsonformat err);
     ] in

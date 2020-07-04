@@ -6,6 +6,7 @@
     compile
     decompile
     main_errors
+    scopes
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)

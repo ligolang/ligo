@@ -21,12 +21,15 @@
    aliased to [token].
 *)
 
+(* Dependencies *)
+
 module Region = Simple_utils.Region
 module Pos    = Simple_utils.Pos
-
-type lexeme = string
+module Markup = Lexer_shared.Markup
 
 (* TOKENS *)
+
+type lexeme = string
 
 type t =
   (* Identifiers, labels, numbers and strings *)

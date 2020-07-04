@@ -1,5 +1,4 @@
 open Simple_utils.Display
-open Trace
 
 let stage = "self_mini_c"
 
@@ -27,7 +26,7 @@ let error_ppformat : display_format:string display_format ->
     | `Self_mini_c_aggregation -> Format.fprintf f "could not aggregate"
   )
 
-let error_jsonformat : self_mini_c_error -> J.t = fun a ->
+let error_jsonformat : self_mini_c_error -> Yojson.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;

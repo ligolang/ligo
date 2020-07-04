@@ -1,10 +1,13 @@
+(* Menhir specification of the parsing of PascaLIGO *)
 %{
 (* START HEADER *)
 
 [@@@warning "-42"]
 
+(* Dependencies *)
+
 open Simple_utils.Region
-module CST      = Cst.Pascaligo
+module CST = Cst.Pascaligo
 open CST
 
 (* END HEADER *)
@@ -15,8 +18,8 @@ open CST
 (* Entry points *)
 
 %start contract interactive_expr
-%type <Cst.Pascaligo.t> contract
-%type <Cst.Pascaligo.expr> interactive_expr
+%type <CST.t> contract
+%type <CST.expr> interactive_expr
 
 %%
 
@@ -143,7 +146,9 @@ type_decl:
                   terminator = $5}
     in {region; value} }
 
-type_expr_colon: ":" type_expr { $1,$2 }
+type_annot:
+  ":" type_expr { $1,$2 }
+
 type_expr:
   fun_type | sum_type | record_type { $1 }
 
@@ -241,7 +246,7 @@ field_decl:
 
 
 fun_expr:
-  "function" parameters type_expr_colon? "is" expr {
+  "function" parameters type_annot? "is" expr {
     let stop   = expr_to_region $5 in
     let region = cover $1 stop
     and value  = {kwd_function = $1;
@@ -254,8 +259,7 @@ fun_expr:
 (* Function declarations *)
 
 open_fun_decl:
-  ioption ("recursive") "function" fun_name parameters type_expr_colon? "is"
-  expr {
+  ioption("recursive") "function" fun_name parameters type_annot? "is" expr {
     Scoping.check_reserved_name $3;
     let stop   = expr_to_region $7 in
     let region = cover $2 stop
@@ -356,7 +360,7 @@ open_var_decl:
     in {region; value} }
 
 unqualified_decl(OP):
-  var type_expr_colon? OP expr {
+  var type_annot? OP expr {
     Scoping.check_reserved_name $1;
     let region = expr_to_region $4
     in $1, $2, $3, $4, region }
@@ -594,28 +598,17 @@ while_loop:
     in While {region; value} }
 
 for_loop:
-  "for" var ":=" expr "to" expr block {
-    let region = cover $1 $7.region in
-    let value  = {kwd_for  = $1;
-                  binder   = $2;
-                  assign   = $3;
-                  init     = $4;
-                  kwd_to   = $5;
-                  bound    = $6;
-                  step     = None;
-                  block    = $7}
-    in For (ForInt {region; value})
-  }
-| "for" var ":=" expr "to" expr "step" expr block {
-    let region = cover $1 $9.region in
-    let value  = {kwd_for  = $1;
-                  binder   = $2;
-                  assign   = $3;
-                  init     = $4;
-                  kwd_to   = $5;
-                  bound    = $6;
-                  step     = Some ($7, $8);
-                  block    = $9}
+  "for" var ":=" expr "to" expr step_clause? block {
+    Scoping.check_reserved_name $2;
+    let region = cover $1 $8.region in
+    let value  = {kwd_for = $1;
+                  binder  = $2;
+                  assign  = $3;
+                  init    = $4;
+                  kwd_to  = $5;
+                  bound   = $6;
+                  step    = $7;
+                  block   = $8}
     in For (ForInt {region; value})
   }
 | "for" var arrow_clause? "in" collection expr block {
@@ -629,6 +622,9 @@ for_loop:
                   expr       = $6;
                   block      = $7}
     in For (ForCollect {region; value}) }
+
+step_clause:
+  "step" expr { $1,$2 }
 
 collection:
   "map"  { Map  $1 }
@@ -650,18 +646,13 @@ expr:
 | fun_expr   { EFun $1                   }
 | block_with { EBlock $1                 }
 
-block_with :
+block_with:
   block "with" expr {
-    let start = $2
-    and stop  = expr_to_region $3 in
+    let start  = $2
+    and stop   = expr_to_region $3 in
     let region = cover start stop in
-    let value : CST.block_with = {
-      block    = $1;
-      kwd_with = $2;
-      expr     = $3;
-    }
-    in {value;region}
-  }
+    let value  = {block=$1; kwd_with=$2; expr=$3}
+    in {region; value} }
 
 cond_expr:
   "if" expr "then" expr ";"? "else" expr {

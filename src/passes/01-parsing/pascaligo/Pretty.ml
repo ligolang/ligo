@@ -40,12 +40,16 @@ and pp_attr_decl decl = pp_ne_injection pp_string decl
 
 and pp_const_decl {value; _} =
   let {name; const_type; init; attributes; _} = value in
+  let attr  = match attributes with
+                None -> empty
+              | Some a -> hardline ^^ pp_attr_decl a in
   let start = string ("const " ^ name.value) in
-  let t_expr = const_type in
-  let attr   = match attributes with
-                 None -> empty
-               | Some a -> hardline ^^ pp_attr_decl a in
-  group (start ^/^ pp_option (fun (_, d) -> nest 2 (string ": " ^^ pp_type_expr d)) t_expr)
+  let start =
+    match const_type with
+      None -> start
+    | Some (_, e) ->
+        group (start ^/^ nest 2 (string ": " ^^ pp_type_expr e)) in
+  start
   ^^ group (break 1 ^^ nest 2 (string "= " ^^ pp_expr init))
   ^^ attr
 
@@ -127,34 +131,46 @@ and pp_type_tuple {value; _} =
 
 and pp_fun_expr {value; _} =
   let {param; ret_type; return; _} : fun_expr = value in
-  let start = string "function" in
+  let start      = string "function" in
   let parameters = pp_par pp_parameters param in
-  let expr = pp_expr return in
+  let t_annot    =
+    match ret_type with
+      None -> empty
+    | Some (_, e) ->
+        group (break 1 ^^ nest 2 (string ": " ^^ pp_type_expr e)) in
   group (start ^^ nest 2 (break 1 ^^ parameters))
-  ^^ pp_option (fun (_,d) -> group (break 1 ^^ nest 2 (string ": " ^^ pp_type_expr d))) ret_type
-  ^^ string " is" ^^ group (nest 4 (break 1 ^^ expr))
+  ^^ t_annot
+  ^^ string " is" ^^ group (nest 4 (break 1 ^^ pp_expr return))
 
 and pp_fun_decl {value; _} =
-  let {kwd_recursive; fun_name; param;
-       ret_type; return; attributes; _} = value in
+  let {kwd_recursive; fun_name; param; ret_type;
+       return; attributes; _} = value in
   let start =
     match kwd_recursive with
         None -> string "function"
     | Some _ -> string "recursive" ^/^ string "function" in
-  let start = start ^^ group (break 1 ^^ nest 2 (pp_ident fun_name)) in
-  let parameters = pp_par pp_parameters param in
-  let expr = pp_expr return in
-  let body =
+  let start = start ^^ group (break 1 ^^ nest 2 (pp_ident fun_name))
+  and parameters = pp_par pp_parameters param
+  and t_annot_is =
+    match ret_type with
+      None -> string " is"
+    | Some (_, e) ->
+        let ret_type = pp_type_expr e in
+        group (nest 2 (break 1 ^^ string ": " ^^ nest 2 ret_type
+                       ^^ string " is"))
+  and body =
+    let expr = pp_expr return in
     match return with
       EBlock _ -> group (break 1 ^^ expr)
     | _ -> group (nest 2 (break 1 ^^ expr))
   and attr =
     match attributes with
-        None -> empty
+      None -> empty
     | Some a -> hardline ^^ pp_attr_decl a in
   prefix 2 1 start parameters
-  ^^ group (nest 2 (pp_option (fun (_, d) -> break 1 ^^ string ": " ^^ nest 2 (pp_type_expr d)) ret_type ^^ string " is"))
-  ^^ body ^^ attr
+  ^^ t_annot_is
+  ^^ body
+  ^^ attr
 
 and pp_parameters p = pp_nsepseq ";" pp_param_decl p
 
@@ -164,13 +180,19 @@ and pp_param_decl = function
 
 and pp_param_const {value; _} =
   let {var; param_type; _} : param_const = value in
-  let name   = string ("const " ^ var.value)
-  in prefix 2 1 name @@ pp_option (fun (_,d) -> string ": " ^^ pp_type_expr d) param_type
+  let name = string ("const " ^ var.value) in
+  match param_type with
+    None -> name
+  | Some (_, e) ->
+      prefix 2 1 (name ^^ string " :") (pp_type_expr e)
 
 and pp_param_var {value; _} =
   let {var; param_type; _} : param_var = value in
-  let name   = string ("var " ^ var.value)
-  in prefix 2 1 name @@ pp_option (fun (_,d) -> string ": " ^^ pp_type_expr d) param_type
+  let name   = string ("var " ^ var.value) in
+  match param_type with
+    None -> name
+  | Some (_, e) ->
+      prefix 2 1 (name ^^ string " :") (pp_type_expr e)
 
 and pp_block {value; _} =
   string "block {"
@@ -192,7 +214,12 @@ and pp_data_decl = function
 and pp_var_decl {value; _} =
   let {name; var_type; init; _} = value in
   let start = string ("var " ^ name.value) in
-  group (start ^/^ pp_option (fun (_,d) -> nest 2 (string ": " ^^ pp_type_expr d)) var_type)
+  let start =
+    match var_type with
+      None -> start
+    | Some (_, e) ->
+        group (start ^/^ nest 2 (string ": " ^^ pp_type_expr e)) in
+  start
   ^^ group (break 1 ^^ nest 2 (string ":= " ^^ pp_expr init))
 
 and pp_instruction = function
@@ -381,11 +408,11 @@ and pp_expr = function
 | EBlock      e -> pp_block_with e
 
 and pp_block_with {value; _} =
-  let {block;kwd_with; expr;_} = value in
+  let {block; kwd_with; expr} = value in
   let expr = value.expr in
   let expr = pp_expr expr in
-  group(pp_block block ^^ string " with"
-    ^^ group (nest 4 (break 1 ^^ expr)))
+  group (pp_block block ^^ string " with"
+         ^^ group (nest 4 (break 1 ^^ expr)))
 
 and pp_annot_expr {value; _} =
   let expr, _, type_expr = value.inside in

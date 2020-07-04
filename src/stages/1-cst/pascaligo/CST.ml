@@ -6,6 +6,7 @@
 
 (* Utilities *)
 
+module Utils = Simple_utils.Utils
 open Utils
 
 (* Regions
@@ -22,6 +23,10 @@ open Utils
 module Region = Simple_utils.Region
 
 type 'a reg = 'a Region.reg
+
+(* Lexemes *)
+
+type lexeme = string
 
 (* Keywords of LIGO *)
 
@@ -185,7 +190,7 @@ and type_expr =
 | TFun    of (type_expr * arrow * type_expr) reg
 | TPar    of type_expr par reg
 | TVar    of variable
-| TString of Lexer.lexeme reg
+| TString of lexeme reg
 
 and cartesian = (type_expr, times) nsepseq reg
 
@@ -227,7 +232,7 @@ and fun_decl = {
 and block_with = {
   block    : block reg;
   kwd_with : kwd_with;
-  expr     : expr;
+  expr     : expr
 }
 
 and parameters = (param_decl, semi) nsepseq par reg
@@ -460,15 +465,15 @@ and expr =
 | EProj    of projection reg
 | EUpdate  of update reg
 | EMap     of map_expr
-| EVar     of Lexer.lexeme reg
+| EVar     of lexeme reg
 | ECall    of fun_call
-| EBytes   of (Lexer.lexeme * Hex.t) reg
+| EBytes   of (lexeme * Hex.t) reg
 | EUnit    of c_Unit
 | ETuple   of tuple_expr
 | EPar     of expr par reg
 | EFun     of fun_expr reg
 | ECodeInj of code_inj reg
-| EBlock      of block_with reg
+| EBlock   of block_with reg
 
 and annot_expr = expr * colon * type_expr
 
@@ -527,14 +532,14 @@ and arith_expr =
 | Div   of slash   bin_op reg
 | Mod   of kwd_mod bin_op reg
 | Neg   of minus    un_op reg
-| Int   of (Lexer.lexeme * Z.t) reg
-| Nat   of (Lexer.lexeme * Z.t) reg
-| Mutez of (Lexer.lexeme * Z.t) reg
+| Int   of (lexeme * Z.t) reg
+| Nat   of (lexeme * Z.t) reg
+| Mutez of (lexeme * Z.t) reg
 
 and string_expr =
   Cat      of cat bin_op reg
-| String   of Lexer.lexeme reg
-| Verbatim of Lexer.lexeme reg
+| String   of lexeme reg
+| Verbatim of lexeme reg
 
 and list_expr =
   ECons     of cons bin_op reg
@@ -574,7 +579,7 @@ and field_path_assignment = {
 
 and selection =
   FieldName of field_name
-| Component of (Lexer.lexeme * Z.t) reg
+| Component of (lexeme * Z.t) reg
 
 and tuple_expr = (expr, comma) nsepseq par reg
 
@@ -618,12 +623,12 @@ and ne_injection_kwd =
 
 and pattern =
   PConstr of constr_pattern
-| PVar    of Lexer.lexeme reg
+| PVar    of lexeme reg
 | PWild   of wild
-| PInt    of (Lexer.lexeme * Z.t) reg
-| PNat    of (Lexer.lexeme * Z.t) reg
-| PBytes  of (Lexer.lexeme * Hex.t) reg
-| PString of Lexer.lexeme reg
+| PInt    of (lexeme * Z.t) reg
+| PNat    of (lexeme * Z.t) reg
+| PBytes  of (lexeme * Hex.t) reg
+| PString of lexeme reg
 | PList   of list_pattern
 | PTuple  of tuple_pattern
 

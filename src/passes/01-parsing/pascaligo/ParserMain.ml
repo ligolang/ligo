@@ -1,7 +1,16 @@
 (* Driver for the PascaLIGO parser *)
 
-module Region = Simple_utils.Region
-module SSet   = Set.Make (String)
+(* Dependencies *)
+
+module Region     = Simple_utils.Region
+module EvalOpt    = Lexer_shared.EvalOpt
+module LexToken   = Lexer_pascaligo.LexToken
+module CST        = Cst.Pascaligo
+module SSet       = Set.Make (String)
+module ParserUnit = Parser_shared.ParserUnit
+module Pretty     = Parser_pascaligo.Pretty
+
+(* Input/Output *)
 
 module IO =
   struct
@@ -55,22 +64,22 @@ module SubIO =
 
 module Parser =
   struct
-    type ast  = AST.t
-    type expr = AST.expr
-    include Parser
+    type ast  = CST.t
+    type expr = CST.expr
+    include Parser_pascaligo.Parser
   end
 
 module ParserLog =
   struct
-    type ast  = AST.t
-    type expr = AST.expr
-    include ParserLog
+    type ast  = CST.t
+    type expr = CST.expr
+    include Cst_pascaligo.ParserLog
   end
 
-module Lexer = Lexer.Make (LexToken)
+module Lexer = Lexer_shared.Lexer.Make (LexToken)
 
 module Unit =
-  ParserUnit.Make (Lexer)(AST)(Parser)(Parser_msg)(ParserLog)(SubIO)
+  ParserUnit.Make (Lexer)(CST)(Parser)(Parser_msg)(ParserLog)(SubIO)
 
 (* Main *)
 
