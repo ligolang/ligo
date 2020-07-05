@@ -8,6 +8,7 @@ license: "MIT"
 depends: [
   "dune" { >= "1.11" }
   "tezos-base"
+  "tezos-client-base"
   "tezos-protocol-environment"
   "tezos-protocol-ligo006-PsCARTHA"
   "tezos-protocol-ligo006-PsCARTHA-parameters"
