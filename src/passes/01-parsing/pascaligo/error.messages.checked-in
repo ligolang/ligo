@@ -169,7 +169,7 @@ interactive_expr: Begin Case Verbatim VBAR
 ##
 
 Ill-formed case expression.
-At this point, if the expression is complete, the 'of' keyword is expected.
+At this point, if the test is complete, the 'of' keyword is expected.
 
 interactive_expr: Begin Case With
 ##
@@ -209,7 +209,9 @@ interactive_expr: Begin Constr With
 ## Constr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function call.
+At this point, if the module name if complete, a dot '.' is expected,
+  followed by a function name.
 
 interactive_expr: Begin For Ident ARROW Ident With
 ##
@@ -432,7 +434,12 @@ interactive_expr: Begin For Ident With
 ## For Ident
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed for loop.
+If this is an iteration through numbers, 
+  then at this point an assignment ':=' is expected.
+If this is an iteration through a collection,
+  then at this point optionally an arrow '->' and value name is expected,
+    followed by the 'in' keyword.
 
 interactive_expr: Begin For With
 ##
@@ -478,7 +485,9 @@ interactive_expr: Begin Ident With
 ## In state 434, spurious reduction of production lhs -> path 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed assignment.
+At this point, if this left hand side of the assignment is complete, an assignment ':=' is expected,
+  followed by the value in a form of an expression.
 
 interactive_expr: Begin If Verbatim Then LBRACE Skip End
 ##
@@ -497,7 +506,11 @@ interactive_expr: Begin If Verbatim Then LBRACE Skip End
 ## In state 495, spurious reduction of production sep_or_term_list(statement,SEMI) -> nsepseq(statement,SEMI) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed if statement.
+At this point one of the following is expected:
+  a semicolon ';',
+    followed by another statement; or
+  a closing brace '}'.
 
 interactive_expr: Begin If Verbatim Then LBRACE With
 ##
@@ -509,7 +522,8 @@ interactive_expr: Begin If Verbatim Then LBRACE With
 ## LBRACE
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed if statement.
+At this point a statement is expected.
 
 interactive_expr: Begin If Verbatim Then Skip Else With
 ##
@@ -521,7 +535,8 @@ interactive_expr: Begin If Verbatim Then Skip Else With
 ## If expr Then if_clause option(SEMI) Else
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed if statement.
+At this point a statement or block is expected.
 
 interactive_expr: Begin If Verbatim Then Skip SEMI EQ
 ##
@@ -533,7 +548,8 @@ interactive_expr: Begin If Verbatim Then Skip SEMI EQ
 ## If expr Then if_clause option(SEMI)
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed if statement.
+At this point the 'else' keyword is expected.  
 
 interactive_expr: Begin If Verbatim Then Skip With
 ##
@@ -545,7 +561,8 @@ interactive_expr: Begin If Verbatim Then Skip With
 ## If expr Then if_clause
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed if statement.
+At this point the 'else' keyword is expected.
 
 interactive_expr: Begin If Verbatim Then With
 ##
@@ -557,7 +574,8 @@ interactive_expr: Begin If Verbatim Then With
 ## If expr Then
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed if statement.
+At this point a statement or block is expected.
 
 interactive_expr: Begin If Verbatim VBAR
 ##
@@ -584,7 +602,8 @@ interactive_expr: Begin If Verbatim VBAR
 ## In state 202, spurious reduction of production expr -> disj_expr 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed if statement.
+At this point, if the test is complete, the 'then' keyword is expected.
 
 interactive_expr: Begin If With
 ##
@@ -596,7 +615,8 @@ interactive_expr: Begin If With
 ## If
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed if statement.
+At this point a test, in the form of an expression, is expected.
 
 interactive_expr: Begin Patch Constr DOT Ident With
 ##
@@ -608,7 +628,11 @@ interactive_expr: Begin Patch Constr DOT Ident With
 ## Constr DOT Ident
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed path.
+At this a point a '.' is expected, followed by: 
+  a field name; or
+  a tuple component index '<int'>.
+
 
 interactive_expr: Begin Patch Constr DOT With
 ##
@@ -620,7 +644,8 @@ interactive_expr: Begin Patch Constr DOT With
 ## Constr DOT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed path.
+At this point a field name is expected.
 
 interactive_expr: Begin Patch Constr With
 ##
@@ -632,7 +657,9 @@ interactive_expr: Begin Patch Constr With
 ## Constr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed path.
+At this point, if the module name is complete, a dot '.' is expected,
+  followed by a module field.
 
 interactive_expr: Begin Patch Ident While
 ##
@@ -652,7 +679,8 @@ interactive_expr: Begin Patch Ident While
 ## In state 165, spurious reduction of production path -> Ident 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed patch statement.
+At this point, if the path is complete, the 'with' keyword is expected.
 
 interactive_expr: Begin Patch Ident With Map LBRACKET Verbatim ARROW Bytes End
 ##
@@ -682,7 +710,10 @@ interactive_expr: Begin Patch Ident With Map LBRACKET Verbatim ARROW Bytes End
 ## In state 305, spurious reduction of production sep_or_term_list(binding,SEMI) -> nsepseq(binding,SEMI) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed map statement.
+At this point one of the following is expected:
+  a key/value binding; or
+  a closing bracket ']'.
 
 interactive_expr: Begin Patch Ident With Map LBRACKET With
 ##
@@ -694,7 +725,8 @@ interactive_expr: Begin Patch Ident With Map LBRACKET With
 ## Map LBRACKET
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed map statement.
+At this point a key/value binding is expected.
 
 interactive_expr: Begin Patch Ident With Map Verbatim ARROW Bytes RBRACKET
 ##
@@ -724,7 +756,10 @@ interactive_expr: Begin Patch Ident With Map Verbatim ARROW Bytes RBRACKET
 ## In state 305, spurious reduction of production sep_or_term_list(binding,SEMI) -> nsepseq(binding,SEMI) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed map statement.
+At this point one of the following is expected:
+  a key/value binding; or 
+  the closing 'end' keyword.
 
 interactive_expr: Begin Patch Ident With Map With
 ##
@@ -737,7 +772,13 @@ interactive_expr: Begin Patch Ident With Map With
 ## Map
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed map statement.
+At this point one of the following is expected:
+  a semicolon separated list of key/value bindings,
+    which are closed by the 'end' keyword; or
+  an opening bracket '[',
+    followed by a semicolon separated list of key/value bindings,
+      which are closed by a closing bracket ']'.
 
 interactive_expr: Begin Patch Ident With Record Ident EQ Bytes RBRACKET
 ##
@@ -767,8 +808,10 @@ interactive_expr: Begin Patch Ident With Record Ident EQ Bytes RBRACKET
 ## In state 290, spurious reduction of production sep_or_term_list(field_assignment,SEMI) -> nsepseq(field_assignment,SEMI) 
 ##
 
-Ill-formed function expression.
-At this point another parameter declaration is expected.
+Ill-formed record statement.
+At this point one of the following is expected:
+  another record field assignment; or 
+  the closing 'end' keyword.
 
 interactive_expr: Begin Patch Ident With Record LBRACKET Ident EQ Bytes End
 ##
@@ -798,7 +841,10 @@ interactive_expr: Begin Patch Ident With Record LBRACKET Ident EQ Bytes End
 ## In state 290, spurious reduction of production sep_or_term_list(field_assignment,SEMI) -> nsepseq(field_assignment,SEMI) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed record statement.
+At this point one of the following is expected:
+  another record field assignment; or 
+  a closing bracket ']'.
 
 interactive_expr: Begin Patch Ident With Record LBRACKET With
 ##
@@ -810,7 +856,8 @@ interactive_expr: Begin Patch Ident With Record LBRACKET With
 ## Record LBRACKET
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed record statement.
+At this point a record field assignment is expected.
 
 interactive_expr: Begin Patch Ident With Record With
 ##
@@ -823,7 +870,13 @@ interactive_expr: Begin Patch Ident With Record With
 ## Record
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed record statement.
+At this point one of the following is expected:
+  a semicolon separated list of record field assignments,
+    which are closed by the 'end' keyword; or
+  an opening bracket '[',
+    followed by a semicolon separated list of record field assignments,
+      which are closed by a closing bracket ']'.
 
 interactive_expr: Begin Patch Ident With Set LBRACKET Verbatim End
 ##
@@ -1148,7 +1201,7 @@ interactive_expr: Begin While Verbatim VBAR
 ##
 
 Ill-formed while loop.
-At this point, if the expression is complete, a while body in the form of a block is expected.
+At this point, if the test is complete, a while body in the form of a block is expected.
 
 interactive_expr: Begin While With
 ##
