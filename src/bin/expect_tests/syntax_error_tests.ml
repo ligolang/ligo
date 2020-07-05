@@ -5,7 +5,7 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           Parse error in file "error_syntax.ligo", line 1, characters 16-17 at "-", after "bar":
-          16: <syntax error>
+          65: <syntax error>
 
 
           If you're not sure how to fix this error, you can do one of the following:
