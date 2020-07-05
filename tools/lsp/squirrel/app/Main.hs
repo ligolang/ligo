@@ -29,7 +29,6 @@ import           Product
 import           AST hiding (def)
 import qualified AST.Find as Find
 import           Error
-import           Tree
 
 main :: IO ()
 main = do
@@ -77,8 +76,8 @@ lspOptions = def
 lspHandlers :: TChan FromClientMessage -> Core.Handlers
 lspHandlers rin = def
   { Core.initializedHandler                       = Just $ passHandler rin NotInitialized
-  , Core.renameHandler                            = Just $ passHandler rin ReqRename
-  , Core.hoverHandler                             = Just $ passHandler rin ReqHover
+  , Core.definitionHandler                        = Just $ passHandler rin ReqDefinition
+  , Core.referencesHandler                        = Just $ passHandler rin ReqFindReferences
   , Core.didOpenTextDocumentNotificationHandler   = Just $ passHandler rin NotDidOpenTextDocument
   , Core.didSaveTextDocumentNotificationHandler   = Just $ passHandler rin NotDidSaveTextDocument
   , Core.didChangeTextDocumentNotificationHandler = Just $ passHandler rin NotDidChangeTextDocument
@@ -162,18 +161,38 @@ eventLoop funs chan = do
         tree <- loadByURI uri
         case Find.definitionOf pos tree of
           Just defPos -> do
-            error "do later"
+            respondWith req RspDefinition $ J.MultiLoc [J.Location uri $ rangeToLoc defPos]
+          Nothing -> do
+            respondWith req RspDefinition $ J.MultiLoc []
+
+      ReqFindReferences req -> do
+        let uri = req^.J.params.J.textDocument.J.uri
+        let pos = posToRange $ req^.J.params.J.position
+        tree <- loadByURI uri
+        case Find.referencesOf pos tree of
+          Just refs -> do
+            let locations = J.Location uri . rangeToLoc <$> refs
+            respondWith req RspFindReferences $ J.List locations
+          Nothing -> do
+            respondWith req RspFindReferences $ J.List []
 
       _ -> U.logs "unknown msg"
+  where
+    respondWith
+      :: J.RequestMessage J.ClientMethod req rsp
+      -> (J.ResponseMessage rsp -> FromServerMessage)
+      -> rsp
+      -> IO ()
+    respondWith req wrap rsp = Core.sendFunc funs $ wrap $ Core.makeResponseMessage req rsp
 
 posToRange :: J.Position -> Range
-posToRange (J.Position l c) = Range (l, c, 0) (l, c, 0) ""
-
-rangeToJRange :: Range -> J.Range
-rangeToJRange (Range (a, b, _) (c, d, _) _) = J.Range (J.Position a b) (J.Position c d)
+posToRange (J.Position l c) = Range (l + 1, c + 1, 0) (l + 1, c + 1, 0) ""
 
 rangeToLoc :: Range -> J.Range
-rangeToLoc (Range (a, b, _) (c, d, _) _) = J.Range (J.Position a b) (J.Position c d)
+rangeToLoc (Range (a, b, _) (c, d, _) _) =
+  J.Range
+    (J.Position (a - 1) (b - 1))
+    (J.Position (c - 1) (d - 1))
 
 loadByURI :: J.Uri -> IO (Pascal (Product [[ScopedDecl], Range, [Text]]))
 loadByURI uri = do
