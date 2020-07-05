@@ -183,26 +183,3 @@ let mem_init :
       block_header = shell;
       context;
     }
-
-(* ------------------------------------------------------------------------- *)
-(* Register mockup *)
-
-let () =
-  let open Tezos_mockup_registration.Registration in
-  let module M : Mockup_sig = struct
-    type parameters = mockup_protocol_parameters
-
-    let parameters_encoding = mockup_protocol_parameters_encoding
-
-    let default_parameters = default_mockup_parameters
-
-    let protocol_hash = Protocol.hash
-
-    module Protocol = Protocol_client_context.Lifted_protocol
-    module Block_services = Protocol_client_context.Alpha_block_services
-
-    let directory = Protocol.rpc_services
-
-    let init = mem_init
-  end in
-  register_mockup_context (module M)
