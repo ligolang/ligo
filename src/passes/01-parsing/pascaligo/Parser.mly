@@ -77,6 +77,8 @@ open CST
   nsepseq(type_expr,COMMA)
   expr
   nsepseq(expr,COMMA)
+  option(SEMI)
+  option(VBAR)
 %%
 
 (* RULES *)
