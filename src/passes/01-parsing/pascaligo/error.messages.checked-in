@@ -3359,7 +3359,7 @@ interactive_expr: With
 ##
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed expression.
 
 contract: Attributes LBRACKET String With
 ##
@@ -3378,7 +3378,12 @@ contract: Attributes LBRACKET String With
 ## In state 475, spurious reduction of production sep_or_term_list(String,SEMI) -> nsepseq(String,SEMI) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed attributes.
+At this point one of the following is expected:
+  a semicolon ';',
+    followed by an attribute in the form of a string,
+      closed with a closing bracket ']'; or
+  a closing bracket ']'.
 
 contract: Attributes LBRACKET With
 ##
@@ -3390,7 +3395,9 @@ contract: Attributes LBRACKET With
 ## Attributes LBRACKET
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed attributes.
+At this point a semicolon separated ';' list of attributes is expected,
+  followed with a closing bracket ']'.
 
 contract: Attributes String End Attributes String End With
 ##
@@ -3410,7 +3417,8 @@ contract: Attributes String End Attributes String End With
 ## In state 596, spurious reduction of production declaration -> attr_decl 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed declaration.
+At this point a declaration is expected.
 
 contract: Attributes String End With
 ##
@@ -3430,7 +3438,8 @@ contract: Attributes String End With
 ## In state 596, spurious reduction of production declaration -> attr_decl 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed declaration.
+At this point a declaration is expected.
 
 contract: Attributes String With
 ##
@@ -3449,7 +3458,10 @@ contract: Attributes String With
 ## In state 475, spurious reduction of production sep_or_term_list(String,SEMI) -> nsepseq(String,SEMI) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed attributes.
+At this point one of the following is expected:
+  an attribute in the form of a string; or
+  the closing 'end' keyword.
 
 contract: Attributes With
 ##
@@ -3462,7 +3474,13 @@ contract: Attributes With
 ## Attributes
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed attributes.
+At this point one of the following is expected:
+  a semicolon ';' separated list of strings,
+    followed with the 'end' keyword.
+  an opening bracket '[',
+    followed by a semicolon ';' separated list of strings, 
+      closed with an closing bracket ']'.
 
 contract: Const Ident COLON Ident With
 ##
@@ -3485,7 +3503,9 @@ contract: Const Ident COLON Ident With
 ## In state 89, spurious reduction of production option(type_annot) -> type_annot 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed constant declaration.
+At this point an equals '=' symbol is expected,
+  followed by a value in the form of an expression.
 
 contract: Const Ident EQ With
 ##
@@ -3497,7 +3517,8 @@ contract: Const Ident EQ With
 ## Ident option(type_annot) EQ
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed constant declaration.
+At this point the value, in the form of an expression, is expected.
 
 contract: Const Ident With
 ##
@@ -3509,7 +3530,11 @@ contract: Const Ident With
 ## Ident
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed constant declaration.
+At this point one of the following is expected:
+  a type annotation; or
+  an equals '=' symbol, 
+    followed by a value in the form of an expression.
 
 contract: Const With
 ##
@@ -3521,7 +3546,9 @@ contract: Const With
 ## Const
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed constant declaration.
+At this point the name of the constant is expected,
+  followed with equals '=' symbol and a value in the form of an expression.
 
 contract: Function Ident LPAR Const Ident RPAR COLON Ident With
 ##
@@ -3544,7 +3571,9 @@ contract: Function Ident LPAR Const Ident RPAR COLON Ident With
 ## In state 89, spurious reduction of production option(type_annot) -> type_annot 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function declaration.
+At this point the 'is' keyword is expected, 
+  followed by an expression.
 
 contract: Function Ident LPAR Const Ident RPAR Is With
 ##
@@ -3556,7 +3585,8 @@ contract: Function Ident LPAR Const Ident RPAR Is With
 ## Function Ident parameters option(type_annot) Is
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function declaration.
+At this point the function body, in the form of an expression, is expected.
 
 contract: Function Ident LPAR Const Ident RPAR With
 ##
@@ -3568,7 +3598,11 @@ contract: Function Ident LPAR Const Ident RPAR With
 ## Function Ident parameters
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function declaration.
+At this point one of the following is expected:
+  a type annotation; or 
+  the 'is' keyword,
+    followed by an expression.
 
 contract: Function Ident With
 ##
@@ -3580,7 +3614,8 @@ contract: Function Ident With
 ## Function Ident
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function declaration.
+At this point function parameters are expected.
 
 contract: Function With
 ##
@@ -3592,7 +3627,8 @@ contract: Function With
 ## Function
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function declaration.
+At this point the name of the function is expected.
 
 contract: Recursive Function Ident LPAR Const Ident RPAR COLON String With
 ##
@@ -3614,7 +3650,8 @@ contract: Recursive Function Ident LPAR Const Ident RPAR COLON String With
 ## In state 89, spurious reduction of production option(type_annot) -> type_annot 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function declaration.
+At this point the 'is' keyword is expected.
 
 contract: Recursive Function Ident LPAR Const Ident RPAR Is With
 ##
@@ -3626,7 +3663,8 @@ contract: Recursive Function Ident LPAR Const Ident RPAR Is With
 ## Recursive Function Ident parameters option(type_annot) Is
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function declaration.
+At this point the function body, in the form of an expression, is expected.
 
 contract: Recursive Function Ident LPAR Const Ident RPAR With
 ##
@@ -3638,7 +3676,11 @@ contract: Recursive Function Ident LPAR Const Ident RPAR With
 ## Recursive Function Ident parameters
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function declaration.
+At this point one of the following is expected:
+  a type annotation; or 
+  the 'is' keyword,
+    followed by an expression.
 
 contract: Recursive Function Ident With
 ##
@@ -3650,7 +3692,8 @@ contract: Recursive Function Ident With
 ## Recursive Function Ident
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function declaration.
+At this point function parameters are expected.
 
 contract: Recursive Function With
 ##
@@ -3662,7 +3705,8 @@ contract: Recursive Function With
 ## Recursive Function
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function declaration.
+At this point the name of the function is expected.
 
 contract: Recursive With
 ##
@@ -3674,7 +3718,8 @@ contract: Recursive With
 ## Recursive
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function declaration.
+At this point the 'function' keyword is expected.
 
 contract: Type Ident Is BigMap With
 ##
