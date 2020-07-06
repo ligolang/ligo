@@ -236,7 +236,7 @@ type_annotation:
 (* Patterns *)
 
 irrefutable:
-  sub_irrefutable { $1 }
+  sub_irrefutable        { $1 }
 | tuple(sub_irrefutable) {
     let region = nsepseq_to_region pattern_to_region $1
     in PTuple {region; value=$1} }
