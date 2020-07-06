@@ -2473,7 +2473,8 @@ interactive_expr: If Verbatim Then Verbatim With
 ## In state 535, spurious reduction of production option(SEMI) -> 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed if conditional expression.
+At this point, if the expression is complete, the 'else' keyword is expected.
 
 interactive_expr: If Verbatim Then With
 ##
@@ -2485,7 +2486,8 @@ interactive_expr: If Verbatim Then With
 ## If expr Then
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed if conditional expression.
+At this point an expression is expected.
 
 interactive_expr: If Verbatim With
 ##
@@ -2512,7 +2514,8 @@ interactive_expr: If Verbatim With
 ## In state 202, spurious reduction of production expr -> disj_expr 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed if conditional expression.
+At this point, if the test expression is complete, the 'then' keyword is expected.
 
 interactive_expr: If With
 ##
@@ -2524,19 +2527,8 @@ interactive_expr: If With
 ## If
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-interactive_expr: LPAR Bytes RPAR With
-##
-## Ends in an error in state: 177.
-##
-## fun_call_or_par_or_projection -> par(expr) . option(arguments) [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-##
-## The known suffix of the stack is as follows:
-## par(expr)
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed if conditional expression.
+At this point a test, in the form of an expression, is expected.
 
 interactive_expr: LPAR Verbatim COLON Ident With
 ##
@@ -2558,7 +2550,8 @@ interactive_expr: LPAR Verbatim COLON Ident With
 ## In state 547, spurious reduction of production annot_expr -> disj_expr COLON type_expr 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed expression.
+At this point, if the type annotation is complete, a closing parenthesis ')' is expected.
 
 interactive_expr: LPAR Verbatim COMMA Bytes With
 ##
@@ -2603,7 +2596,8 @@ interactive_expr: LPAR Verbatim COMMA With
 ## expr COMMA
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed tuple expression.
+At this point a tuple component, in the form of an expression, is expected.
 
 interactive_expr: LPAR Verbatim With
 ##
@@ -2649,7 +2643,8 @@ interactive_expr: LPAR With
 ## LPAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed parenthesized expression.
+At this point an expression is expected.
 
 interactive_expr: Lang Verbatim With
 ##
@@ -2676,7 +2671,8 @@ interactive_expr: Lang Verbatim With
 ## In state 202, spurious reduction of production expr -> disj_expr 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed code injection.
+At this point, if the expression is complete, a closing bracket ']' is expected.
 
 interactive_expr: Lang With
 ##
@@ -2688,7 +2684,8 @@ interactive_expr: Lang With
 ## Lang
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed code injection.
+At this point code, in the form of an expression, is expected.
 
 interactive_expr: List LBRACKET Verbatim With
 ##
@@ -2717,7 +2714,11 @@ interactive_expr: List LBRACKET Verbatim With
 ## In state 275, spurious reduction of production sep_or_term_list(expr,SEMI) -> nsepseq(expr,SEMI) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed list expression.
+At this point one of the following is expected:
+  a semicolon ';',
+    followed by a item in the form of an expression; or
+  a closing bracket ']' if the list is complete.
 
 interactive_expr: List LBRACKET With
 ##
@@ -2730,7 +2731,10 @@ interactive_expr: List LBRACKET With
 ## List LBRACKET
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed list expression.
+At this point one of the following is expected:
+  a semicolon ';' separated list of expressions; or
+  a closing bracket ']'.
 
 interactive_expr: List Verbatim With
 ##
@@ -2759,7 +2763,11 @@ interactive_expr: List Verbatim With
 ## In state 275, spurious reduction of production sep_or_term_list(expr,SEMI) -> nsepseq(expr,SEMI) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed list expression.
+At this point one of the following is expected:
+  a semicolon ';', 
+    followed by a list item in the form of an expression; or
+  the closing 'end' keyword.
 
 interactive_expr: List With
 ##
