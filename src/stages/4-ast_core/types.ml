@@ -1,144 +1,218 @@
 [@@@warning "-30"]
 
-module Location = Simple_utils.Location
-
+open Types_utils
 include Stage_common.Types
 
 type attribute = {
-  inline: bool
+  inline: bool ;
 } 
-type program = declaration Location.wrap list
+type program_loc = declaration location_wrap
+and program = program_loc list
+and declaration_type = {
+    type_binder : type_variable ;
+    type_expr : type_expression ;
+  }
+and declaration_constant = {
+    binder : expression_variable ;
+    type_opt : type_expression_option ;
+    inline : attribute ;
+    expr : expression ;
+  }
 and declaration =
-  | Declaration_type of (type_variable * type_expression)
-
+  | Declaration_type of declaration_type
   (* A Declaration_constant is described by
    *   a name
    *   an optional type annotation
    *   a boolean indicating whether it should be inlined
    *   an expression *)
-  | Declaration_constant of (expression_variable * type_expression option * attribute * expression)
+  | Declaration_constant of declaration_constant
 
 (* | Macro_declaration of macro_declaration *)
 
+and ctor_constructor_map = ctor_content constructor_map
+and field_label_map = field_content label_map
+and type_expression_list = type_expression list
+and content_type_operator = {
+    type_operator : type_operator ;
+    arguments : type_expression_list ;
+  }
 
 and type_content =
-  | T_sum of ctor_content constructor_map
-  | T_record of field_content label_map
+  | T_sum of ctor_constructor_map
+  | T_record of field_label_map
   | T_arrow of arrow
   | T_variable of type_variable
   | T_constant of type_constant
-  | T_operator of (type_operator * type_expression list)
+  | T_operator of content_type_operator
 
-and arrow = {type1: type_expression; type2: type_expression}
-and ctor_content = {ctor_type : type_expression ; michelson_annotation : string option ; ctor_decl_pos : int}
-and field_content = {field_type : type_expression ; field_annotation : string option ; field_decl_pos : int}
+and arrow = {
+    type1: type_expression ;
+    type2: type_expression ;
+  }
+and ctor_content = {
+    ctor_type : type_expression ;
+    michelson_annotation : string_option ;
+    ctor_decl_pos : int ;
+  }
+and field_content = {
+    field_type : type_expression ;
+    field_annotation : string_option ;
+    field_decl_pos : int ;
+  }
 
 and type_expression = {
-  content  : type_content; 
-  sugar    : Ast_sugar.type_expression option;
-  location : Location.t;
+  content  : type_content ;
+  sugar    : sugar_type_expression_option ;
+  location : location ;
   }
-
 
 and expression = {
-  content  : expression_content; 
-  sugar    : Ast_sugar.expression option;
-  location : Location.t
+  content  : expression_content ;
+  sugar    : sugar_expression_option ;
+  location : location ;
   }
 
+and expression_label_map = expression label_map
 and expression_content =
-  (* Base *)
   | E_literal of literal
-  | E_constant of constant (* For language constants, like (Cons hd tl) or (plus i j) *)
+  | E_constant of constant
   | E_variable of expression_variable
   | E_application of application
   | E_lambda of lambda
   | E_recursive of recursive
   | E_let_in of let_in
   | E_raw_code of raw_code
-  (* Variant *)
-  | E_constructor of constructor (* For user defined constructors *)
+  | E_constructor of constructor
   | E_matching of matching
-  (* Record *)
-  | E_record of expression label_map
+  | E_record of expression_label_map
   | E_record_accessor of record_accessor
   | E_record_update   of record_update
-  (* Advanced *)
   | E_ascription of ascription
 
-and constant =
-  { cons_name: constant' (* this is at the end because it is huge *)
-  ; arguments: expression list }
-
-and application = {
-  lamb: expression ; 
-  args: expression ;
+and expression_list = expression list
+and constant = {
+    cons_name: constant' ;
+    arguments: expression_list ;
   }
 
-and lambda =
-  { binder: expression_variable
-  ; input_type: type_expression option
-  ; output_type: type_expression option
-  ; result: expression }
+and application = {
+    lamb: expression ;
+    args: expression ;
+  }
+
+and type_expression_option = type_expression option
+
+and lambda = {
+    binder: expression_variable ;
+    input_type: type_expression_option ;
+    output_type: type_expression_option ;
+    result: expression ;
+  }
 
 and recursive = {
-  fun_name :  expression_variable;
-  fun_type : type_expression;
-  lambda : lambda;
-}
-
-and let_in =
-  { let_binder: expression_variable * type_expression option
-  ; rhs: expression
-  ; let_result: expression
-  ; inline: bool }
+    fun_name : expression_variable ;
+    fun_type : type_expression ;
+    lambda : lambda ;
+  }
+ 
+and let_binder = {
+    binder : expression_variable ;
+    ascr : type_expression_option ;
+  }
+and let_in = {
+    let_binder: let_binder ;
+    rhs: expression ;
+    let_result: expression ;
+    inline: bool ;
+  }
 
 and raw_code = { 
   language : string ;
   code : expression ;
   }
 
-and constructor = {constructor: constructor'; element: expression}
-
-and record_accessor = {record: expression; path: label}
-and record_update   = {record: expression; path: label ; update: expression}
-
-and matching_expr =
-  | Match_list of {
-      match_nil  : expression ;
-      match_cons : expression_variable * expression_variable * expression ;
-    }
-  | Match_option of {
-      match_none : expression ;
-      match_some : expression_variable * expression ;
-    }
-  | Match_variant of ((constructor' * expression_variable) * expression) list
-
-and matching =
-  { matchee: expression
-  ; cases: matching_expr
+and constructor = {
+    constructor: constructor' ;
+    element: expression ;
   }
 
-and ascription = {anno_expr: expression; type_annotation: type_expression}
+and record_accessor = {
+    record: expression ;
+    path: label ;
+  }
+and record_update = {
+    record: expression ;
+    path: label ;
+    update: expression ;
+  }
+and match_cons = {
+    hd : expression_variable ;
+    tl : expression_variable ;
+    body : expression ;
+  }
+and match_list = {
+    match_nil  : expression ;
+    match_cons : match_cons ;
+  }
+and match_some = {
+    opt : expression_variable ;
+    body : expression ;
+  }
+and match_option = {
+    match_none : expression ;
+    match_some : match_some ;
+  }
+and match_variant = {
+    constructor : constructor' ;
+    proj : expression_variable ;
+    body : expression ;
+  }
+and match_variant_list = match_variant list
+and matching_expr =
+  | Match_list of match_list
+  | Match_option of match_option
+  | Match_variant of match_variant_list
 
+and matching = {
+    matchee: expression ;
+    cases: matching_expr ;
+  }
+
+and ascription = {
+    anno_expr: expression ;
+    type_annotation: type_expression ;
+  }
+
+and env_def_declaration = {
+  expr : expression ;
+  free_variables : free_variables ;
+}
 and environment_element_definition =
   | ED_binder
-  | ED_declaration of (expression * free_variables)
+  | ED_declaration of env_def_declaration
 
 and free_variables = expression_variable list
 
-and environment_element =
-  { type_value: type_expression
-  ; source_environment: environment
-  ; definition: environment_element_definition }
+and environment_element = {
+    type_value: type_expression ;
+    source_environment: environment ;
+    definition: environment_element_definition ;
+  }
 
-and expr_environment = (expression_variable * environment_element) list
+and expr_env_binding = {
+    binder : expression_variable ;
+    element : environment_element ;
+  }
 
-and type_environment = (type_variable * type_expression) list
+and expr_environment = expr_env_binding list
 
-(* SUBST ??? *)
-and environment = expr_environment * type_environment
+and type_env_binding = {
+    binder : type_variable ;
+    element : type_expression ;
+}
+and type_environment = type_env_binding list
 
-and expr = expression
-
-and texpr = type_expression
+and environment = {
+  expr_environment : expr_environment ;
+  type_environment : type_environment ;
+}

@@ -39,8 +39,8 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, des
         return @@ T_arrow {type1;type2}
       | O.T_variable type_variable -> return @@ T_variable type_variable 
       | O.T_constant type_constant -> return @@ T_constant type_constant
-      | O.T_operator (type_operator, lst) ->
-        let%bind lst = bind_map_list decompile_type_expression lst in
+      | O.T_operator { type_operator ; arguments } ->
+        let%bind lst = bind_map_list decompile_type_expression arguments in
         return @@ T_operator (type_operator, lst)
 
 let rec decompile_expression : O.expression -> (I.expression, desugaring_error) result =
@@ -66,15 +66,14 @@ let rec decompile_expression : O.expression -> (I.expression, desugaring_error) 
       let%bind fun_type = decompile_type_expression fun_type in
       let%bind lambda = decompile_lambda lambda in
       return @@ I.E_recursive {fun_name;fun_type;lambda}
-    | O.E_let_in {let_binder = (var, ty);inline=false;rhs=expr1;let_result=expr2}
-      when Var.equal var.wrap_content (Var.of_name "_")
-           && Stdlib.(=) ty (Some (O.t_unit ())) ->
+    | O.E_let_in {let_binder = {binder; ascr};inline=false;rhs=expr1;let_result=expr2}
+      when Var.equal binder.wrap_content (Var.of_name "_")
+           && Stdlib.(=) ascr (Some (O.t_unit ())) ->
       let%bind expr1 = decompile_expression expr1 in
       let%bind expr2 = decompile_expression expr2 in
       return @@ I.E_sequence {expr1;expr2}
-    | O.E_let_in {let_binder;inline;rhs;let_result} ->
-      let (binder,ty_opt) = let_binder in
-      let%bind ty_opt = bind_map_option decompile_type_expression ty_opt in
+    | O.E_let_in {let_binder = { binder ; ascr } ;inline;rhs;let_result} ->
+      let%bind ty_opt = bind_map_option decompile_type_expression ascr in
       let%bind rhs = decompile_expression rhs in
       let%bind let_result = decompile_expression let_result in
       return @@ I.E_let_in {let_binder=(binder,ty_opt);mut=false;inline;rhs;let_result}
@@ -120,21 +119,19 @@ and decompile_lambda : O.lambda -> (I.lambda, desugaring_error) result =
 and decompile_matching : O.matching_expr -> (I.matching_expr, desugaring_error) result =
   fun m -> 
   match m with 
-    | O.Match_list {match_nil;match_cons} ->
+    | O.Match_list {match_nil;match_cons = { hd ; tl ; body }} ->
       let%bind match_nil = decompile_expression match_nil in
-      let (hd,tl,expr) = match_cons in
-      let%bind expr = decompile_expression expr in
+      let%bind expr = decompile_expression body in
       ok @@ I.Match_list {match_nil; match_cons=(hd,tl,expr)}
-    | O.Match_option {match_none;match_some} ->
+    | O.Match_option {match_none; match_some = { opt ; body }} ->
       let%bind match_none = decompile_expression match_none in
-      let (n,expr) = match_some in
-      let%bind expr = decompile_expression expr in
-      ok @@ I.Match_option {match_none; match_some=(n,expr)}
+      let%bind expr = decompile_expression body in
+      ok @@ I.Match_option {match_none; match_some=(opt,expr)}
     | O.Match_variant lst ->
       let%bind lst = bind_map_list (
-        fun ((c,n),expr) ->
-          let%bind expr = decompile_expression expr in
-          ok @@ ((c,n),expr)
+        fun ({ constructor ; proj ; body } : O.match_variant) ->
+          let%bind expr = decompile_expression body in
+          ok @@ ((constructor,proj),expr)
       ) lst 
       in
       ok @@ I.Match_variant lst
@@ -142,13 +139,13 @@ and decompile_matching : O.matching_expr -> (I.matching_expr, desugaring_error) 
 let decompile_declaration : O.declaration Location.wrap -> _ result = fun {wrap_content=declaration;location} ->
   let return decl = ok @@ Location.wrap ~loc:location decl in
   match declaration with 
-  | O.Declaration_constant (n, te_opt, {inline}, expr) ->
+  | O.Declaration_constant {binder ; type_opt ; inline={inline}; expr} ->
     let%bind expr = decompile_expression expr in
-    let%bind te_opt = bind_map_option decompile_type_expression te_opt in
-    return @@ I.Declaration_constant (n, te_opt, inline, expr)
-  | O.Declaration_type (n, te) ->
-    let%bind te = decompile_type_expression te in
-    return @@ I.Declaration_type (n,te)
+    let%bind te_opt = bind_map_option decompile_type_expression type_opt in
+    return @@ I.Declaration_constant (binder, te_opt, inline, expr)
+  | O.Declaration_type {type_binder ; type_expr} ->
+    let%bind te = decompile_type_expression type_expr in
+    return @@ I.Declaration_type (type_binder,te)
 
 let decompile_program : O.program -> (I.program, desugaring_error) result = fun prg ->
   bind_map_list decompile_declaration prg

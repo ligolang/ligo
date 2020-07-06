@@ -285,46 +285,44 @@ let rec type_program (p:I.program) : (O.program * O'.typer_state, typer_error) r
 
 
 and type_declaration env (_placeholder_for_state_of_new_typer : O'.typer_state) : I.declaration -> (environment * O'.typer_state * O.declaration, typer_error) result = function
-  | Declaration_type (type_binder , type_expr) ->
+  | Declaration_type {type_binder ; type_expr} ->
       let%bind tv = evaluate_type env type_expr in
       let env' = Environment.add_type (type_binder) tv env in
       ok (env', (Solver.placeholder_for_state_of_new_typer ()) , (O.Declaration_type { type_binder ; type_expr = tv } ))
-  | Declaration_constant (binder , tv_opt , attr, expression) -> (
-      let%bind tv'_opt = bind_map_option (evaluate_type env) tv_opt in
+  | Declaration_constant {binder ; type_opt ; inline={inline} ; expr} -> (
+      let%bind tv'_opt = bind_map_option (evaluate_type env) type_opt in
       let%bind expr =
-        trace (constant_declaration_error_tracer binder expression tv'_opt) @@
-        type_expression' ?tv_opt:tv'_opt env expression in
+        trace (constant_declaration_error_tracer binder expr tv'_opt) @@
+        type_expression' ?tv_opt:tv'_opt env expr in
       let post_env = Environment.add_ez_declaration binder expr env in
-      ok (post_env, (Solver.placeholder_for_state_of_new_typer ()) , (O.Declaration_constant { binder ; expr ; inline=attr.inline}))
+      ok (post_env, (Solver.placeholder_for_state_of_new_typer ()) , (O.Declaration_constant { binder ; expr ; inline}))
     )
 
 and type_match : (environment -> I.expression -> (O.expression , typer_error) result) -> environment -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> (O.matching_expr, typer_error) result =
   fun f e t i _ae loc -> match i with
-  | Match_option {match_none ; match_some} ->
+  | Match_option {match_none ; match_some = { opt ; body }} ->
       let%bind tv =
         trace_option (match_error ~expected:i ~actual:t loc)
         @@ get_t_option t in
       let%bind match_none = f e match_none in
-      let (opt, b) = match_some in
       let e' = Environment.add_ez_binder opt tv e in
-      let%bind body = f e' b in
+      let%bind body = f e' body in
       ok (O.Match_option {match_none ; match_some = {opt; body; tv}})
-  | Match_list {match_nil ; match_cons} ->
+  | Match_list {match_nil ; match_cons = {hd ; tl ; body}} ->
       let%bind t_elt =
         trace_option (match_error ~expected:i ~actual:t loc)
         @@ get_t_list t in
       let%bind match_nil = f e match_nil in
-      let (hd, tl, b) = match_cons in
       let e' = Environment.add_ez_binder hd t_elt e in
       let e' = Environment.add_ez_binder tl t e' in
-      let%bind body = f e' b in
+      let%bind body = f e' body in
       ok (O.Match_list {match_nil ; match_cons = {hd; tl; body; tv=t_elt}})
   | Match_variant lst ->
       let%bind variant_cases' =
         trace_option (match_error ~expected:i ~actual:t loc)
         @@ Ast_typed.Combinators.get_t_sum t in
       let variant_cases = List.map fst @@ O.CMap.to_kv_list variant_cases' in
-      let match_cases = List.map (fun x -> convert_constructor' @@ fst @@ fst x) lst in
+      let match_cases = List.map (fun ({constructor;_}:I.match_variant) -> convert_constructor' constructor) lst in
       let test_case = fun c ->
         Assert.assert_true (corner_case "match case") (List.mem c match_cases)
       in
@@ -334,14 +332,14 @@ and type_match : (environment -> I.expression -> (O.expression , typer_error) re
       let%bind () =
         Assert.assert_true (match_redundant_case i loc) List.(length variant_cases = length match_cases) in
       let%bind cases =
-        let aux ((constructor_name , pattern) , b) =
-          let%bind {ctor_type=constructor;_} =
-            trace_option (unbound_constructor e constructor_name loc) @@
-            O.CMap.find_opt (convert_constructor' constructor_name) variant_cases' in
-          let e' = Environment.add_ez_binder pattern constructor e in
-          let%bind body = f e' b in
-          let constructor = convert_constructor' constructor_name in
-          ok ({constructor ; pattern ; body} : O.matching_content_case)
+        let aux ({constructor ; proj ; body}:I.match_variant) =
+          let%bind {ctor_type=constructor_t;_} =
+            trace_option (unbound_constructor e constructor loc) @@
+            O.CMap.find_opt (convert_constructor' constructor) variant_cases' in
+          let e' = Environment.add_ez_binder proj constructor_t e in
+          let%bind body = f e' body in
+          let constructor = convert_constructor' constructor in
+          ok ({constructor ; pattern = proj ; body} : O.matching_content_case)
         in
         bind_map_list aux lst in
       ok (O.Match_variant { cases ; tv=t })
@@ -384,7 +382,7 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
       ok tv
   | T_constant cst ->
       return (T_constant (convert_type_constant cst))
-  | T_operator (op, lst) -> ( match op,lst with
+  | T_operator {type_operator; arguments} -> ( match type_operator,arguments with
     | TC_set, [s] -> 
         let%bind s = evaluate_type e s in 
         return @@ T_operator (O.TC_set (s))
@@ -690,13 +688,12 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
         tv_opt in
       return (O.E_matching {matchee=ex'; cases=m'}) tv
     )
-  | E_let_in {let_binder ; rhs ; let_result; inline} ->
-    let%bind rhs_tv_opt = bind_map_option (evaluate_type e) (snd let_binder) in
+  | E_let_in {let_binder = {binder ; ascr} ; rhs ; let_result; inline} ->
+    let%bind rhs_tv_opt = bind_map_option (evaluate_type e) ascr in
     let%bind rhs = type_expression' ?tv_opt:rhs_tv_opt e rhs in
-    let let_binder = fst let_binder in
-    let e' = Environment.add_ez_declaration (let_binder) rhs e in
+    let e' = Environment.add_ez_declaration binder rhs e in
     let%bind let_result = type_expression' e' let_result in
-    return (E_let_in {let_binder; rhs; let_result; inline}) let_result.type_expression
+    return (E_let_in {let_binder = binder; rhs; let_result; inline}) let_result.type_expression
   | E_raw_code {language;code} ->
     let%bind (code,type_expression) = trace_option (expected_ascription code) @@
       I.get_e_ascription code.content in
@@ -742,7 +739,7 @@ and type_lambda e {
               | I.E_let_in li -> (
                   match li.rhs.content with
                   | I.E_variable name when Location.equal_content ~equal:Var.equal name binder -> (
-                      match snd li.let_binder with
+                      match li.let_binder.ascr with
                       | Some ty -> ok ty
                       | None -> default_action li.rhs ()
                     )
@@ -854,17 +851,15 @@ and untype_matching : (O.expression -> (I.expression , typer_error) result) -> O
   match m with
   | Match_option {match_none ; match_some = {opt; body ; tv=_}} ->
       let%bind match_none = f match_none in
-      let%bind some = f body in
-      let match_some = opt, some in
-      ok @@ Match_option {match_none ; match_some}
+      let%bind body = f body in
+      ok @@ Match_option {match_none ; match_some = {opt ; body}}
   | Match_list {match_nil ; match_cons = {hd ; tl ; body ; tv=_}} ->
       let%bind match_nil = f match_nil in
-      let%bind cons = f body in
-      let match_cons = hd , tl , cons in
-      ok @@ Match_list {match_nil ; match_cons}
+      let%bind body = f body in
+      ok @@ Match_list {match_nil ; match_cons = { hd ; tl ; body }}
   | Match_variant {cases;tv=_} ->
       let aux ({constructor;pattern;body} : O.matching_content_case) =
-        let%bind c' = f body in
-        ok ((unconvert_constructor' constructor,pattern),c') in
+        let%bind body = f body in
+        ok {constructor = unconvert_constructor' constructor ; proj = pattern ;  body } in
       let%bind lst' = bind_map_list aux cases in
       ok @@ Match_variant lst'

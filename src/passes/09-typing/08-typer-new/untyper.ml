@@ -176,7 +176,7 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer
     let%bind type2 = untype_type_expression type2 in
     ok @@ I.T_arrow {type1;type2}
   | O.T_operator (type_name) ->
-      let%bind type_name = match type_name with
+      let%bind (type_operator, arguments) = match type_name with
       | O.TC_option t -> 
          let%bind t' = untype_type_expression t in
          ok @@ (I.TC_option, [t'])
@@ -202,7 +202,7 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer
          let%bind c = untype_type_expression c in
          ok @@ (I.TC_contract, [c])
       in
-      ok @@ I.T_operator (type_name)
+      ok @@ I.T_operator {type_operator ; arguments}
     in
   ok @@ I.make_t t
 
@@ -304,17 +304,17 @@ and untype_matching : (O.expression -> (I.expression, typer_error) result) -> O.
   match m with
   | Match_option {match_none ; match_some = {opt; body;tv=_}} ->
       let%bind match_none = f match_none in
-      let%bind some = f body in
-      let match_some = opt, some in
+      let%bind body = f body in
+      let match_some = {opt; body} in
       ok @@ Match_option {match_none ; match_some}
   | Match_list {match_nil ; match_cons = {hd;tl;body;tv=_}} ->
       let%bind match_nil = f match_nil in
-      let%bind cons = f body in
-      let match_cons = hd , tl , cons in
+      let%bind body = f body in
+      let match_cons = { hd ; tl ; body } in
       ok @@ Match_list {match_nil ; match_cons}
   | Match_variant { cases ; tv=_ } ->
       let aux ({constructor;pattern;body} : O.matching_content_case) =
         let%bind body = f body in
-        ok ((unconvert_constructor' constructor,pattern),body) in
+        ok {constructor=unconvert_constructor' constructor ; proj = pattern ; body} in
       let%bind lst' = bind_map_list aux cases in
       ok @@ Match_variant lst'

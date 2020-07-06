@@ -80,8 +80,8 @@ let rec type_expression_to_type_value_copypasted : I.type_expression -> O.type_v
                         | _        -> failwith "unknown type constructor")
      in
      p_constant csttag []
-  | T_operator (type_name, args) ->
-     let csttag = T.(match type_name with
+  | T_operator ({type_operator ; arguments } : I.content_type_operator) ->
+     let csttag = T.(match type_operator with
                                 | TC_option                    -> C_option 
                                 | TC_list                      -> C_list   
                                 | TC_set                       -> C_set    
@@ -97,7 +97,7 @@ let rec type_expression_to_type_value_copypasted : I.type_expression -> O.type_v
                                 | TC_michelson_or_left_comb    -> C_record
                           )
      in
-     p_constant csttag (List.map type_expression_to_type_value_copypasted args)
+     p_constant csttag (List.map type_expression_to_type_value_copypasted arguments)
 
 let failwith_ : unit -> (constraints * O.type_variable) = fun () ->
   let type_name = Core.fresh_type_variable () in
