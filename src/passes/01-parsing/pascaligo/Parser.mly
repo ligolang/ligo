@@ -73,6 +73,11 @@ open CST
   set_membership
   disj_expr
   nsepseq(variant,VBAR)
+  core_pattern
+  nsepseq(type_expr,COMMA)
+  expr
+  nsepseq(expr,COMMA)
+  nseq(__anonymous_0(core_pattern,SEMI)) 
 %%
 
 (* RULES *)
