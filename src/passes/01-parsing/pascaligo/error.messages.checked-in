@@ -2155,7 +2155,10 @@ interactive_expr: Ident DOT With
 ## Ident DOT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed selection of a substructure.
+At this point one of the following is expected:
+  a field name; or
+  a tuple component index '<int>'.
 
 interactive_expr: Ident LBRACKET Verbatim VBAR
 ##
@@ -2182,7 +2185,9 @@ interactive_expr: Ident LBRACKET Verbatim VBAR
 ## In state 202, spurious reduction of production expr -> disj_expr 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed map lookup.
+At this point, if the key in the form of an expression is complete, a closing bracket ']' is expected.
+
 
 interactive_expr: Ident LBRACKET With
 ##
@@ -2194,7 +2199,8 @@ interactive_expr: Ident LBRACKET With
 ## LBRACKET
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed map lookup.
+At this point a key, in the form of an expression, is expected.
 
 interactive_expr: Ident LPAR Verbatim COMMA With
 ##
@@ -2206,7 +2212,8 @@ interactive_expr: Ident LPAR Verbatim COMMA With
 ## expr COMMA
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function call. 
+At this point an argument, in the form of an expression, is expected.
 
 interactive_expr: Ident LPAR Verbatim VBAR
 ##
@@ -2234,7 +2241,11 @@ interactive_expr: Ident LPAR Verbatim VBAR
 ## In state 202, spurious reduction of production expr -> disj_expr 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function call.
+At this point one of the following is expected:
+  a comma ',',
+    followed by another argument in the form of an expression; or
+  closing parenthesis ')'.
 
 interactive_expr: Ident LPAR With
 ##
@@ -2246,7 +2257,8 @@ interactive_expr: Ident LPAR With
 ## LPAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function call.
+At this point an argument, in the form of an expression, is expected.
 
 interactive_expr: Ident While
 ##
@@ -2261,8 +2273,23 @@ interactive_expr: Ident While
 ## Ident
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
+Ill-formed expression.
+If this is a function call, 
+  then at this point an opening parenthesis '(' is expected,
+    followed by comma separated ',' list of arguments,
+      closed by a closing parenthesis ')'.
+If this is a selection of a substructure,
+  then at this point a dot '.' is expected,
+    followed by one of the following:
+      a field name; or
+      a tuple component index '<int>'.
+If this is a map lookup, 
+  then at this point an opening bracket '[' is expected,
+    followed by a value in the form of an expression,
+      closed by a closing bracket ']'.
+If this is a record update,
+  then at this point the "with" keyword is expected,
+    followed by record field assignments.
 
 interactive_expr: Ident With Record Ident EQ Bytes VBAR
 ##
@@ -2292,7 +2319,11 @@ interactive_expr: Ident With Record Ident EQ Bytes VBAR
 ## In state 242, spurious reduction of production sep_or_term_list(field_path_assignment,SEMI) -> nsepseq(field_path_assignment,SEMI) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed record update expression.
+At this point one of the following is expected:
+  a semicolon ';',
+    followed with a record field assignment; or
+  the closing 'end' keyword.
 
 interactive_expr: Ident With Record Ident EQ With
 ##
@@ -2304,7 +2335,8 @@ interactive_expr: Ident With Record Ident EQ With
 ## path EQ
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed record field assignment.
+At this point a value, in the form of an expression, is expected.
 
 interactive_expr: Ident With Record Ident With
 ##
@@ -2322,7 +2354,8 @@ interactive_expr: Ident With Record Ident With
 ## In state 165, spurious reduction of production path -> Ident 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed record field assignment.
+At this point, if the path is complete, an equals '=' symbol is expected.
 
 interactive_expr: Ident With Record LBRACKET Ident EQ Bytes End
 ##
@@ -2352,7 +2385,11 @@ interactive_expr: Ident With Record LBRACKET Ident EQ Bytes End
 ## In state 242, spurious reduction of production sep_or_term_list(field_path_assignment,SEMI) -> nsepseq(field_path_assignment,SEMI) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed record update expression.
+At this point one of the following is expected:
+  a semicolon ';',
+    followed by a record field assignment; or
+  a closing brace '}'.
 
 interactive_expr: Ident With Record LBRACKET With
 ##
@@ -2364,7 +2401,8 @@ interactive_expr: Ident With Record LBRACKET With
 ## Record LBRACKET
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed record update expression.
+At this point a record field assignment is expected.
 
 interactive_expr: Ident With Record With
 ##
@@ -3853,7 +3891,8 @@ contract: Type Ident Is String ARROW With
 ## cartesian ARROW
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed function type.
+At this point a type is expected.
 
 contract: Type Ident Is String TIMES String TIMES With
 ##
@@ -3865,7 +3904,8 @@ contract: Type Ident Is String TIMES String TIMES With
 ## core_type TIMES
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed tuple type.
+At this point a type is expected.
 
 contract: Type Ident Is String TIMES With
 ##
@@ -3877,7 +3917,8 @@ contract: Type Ident Is String TIMES With
 ## core_type TIMES
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed tuple type.
+At this point a type is expected.
 
 contract: Type Ident Is String With
 ##
@@ -3897,7 +3938,13 @@ contract: Type Ident Is String With
 ## In state 44, spurious reduction of production type_expr -> fun_type 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed declaration.
+At this point, if the type declaration is complete, then at this point one of the following declarations is expected:
+  a type declaration; or
+  a function declaration; or 
+  a constant declaration; or
+  attributes; or
+  the end of the file.
 
 contract: Type Ident Is VBAR Const
 ##
@@ -3909,7 +3956,8 @@ contract: Type Ident Is VBAR Const
 ## option(VBAR)
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed sum type declaration.
+At this point a variant, in the form of a constructor, is expected.
 
 contract: Type Ident Is With
 ##
@@ -3921,7 +3969,8 @@ contract: Type Ident Is With
 ## Type Ident Is
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed type declaration.
+At this point a type expression is expected.
 
 contract: Type Ident With
 ##
@@ -3933,7 +3982,9 @@ contract: Type Ident With
 ## Type Ident
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed type declaration.
+At this point, if the name of the type is complete, the "is" keyword is expected,
+  followed by a type expression.
 
 contract: Type With
 ##
@@ -3945,7 +3996,8 @@ contract: Type With
 ## Type
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed type declaration.
+At this point the name of the type is expected.
 
 contract: With
 ##
@@ -3957,7 +4009,7 @@ contract: With
 ##
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed contract.
 
 contract: Type Ident Is Record Ident COLON Ident With
 ##
@@ -3981,7 +4033,11 @@ contract: Type Ident Is Record Ident COLON Ident With
 ## In state 52, spurious reduction of production sep_or_term_list(field_decl,SEMI) -> nsepseq(field_decl,SEMI) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed record type declaration.
+At this point one of the following is expected:
+  a semicolon ';',
+    followed by another record field; or
+  the closing 'end' keyword.
 
 interactive_expr: Ident DOT Ident While
 ##
@@ -4002,7 +4058,14 @@ interactive_expr: Ident DOT Ident While
 ## In state 158, spurious reduction of production path -> projection 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed expression.
+If this is a map lookup, 
+  then at this point an opening bracket '[' is expected,
+    followed by a value in the form of an expression,
+      closed by a closing bracket ']'.
+If this is a record update,
+  then at this point the "with" keyword is expected,
+    followed by record field assignments.
 
 interactive_expr: LPAR Verbatim COMMA Bytes With
 ##
@@ -4031,7 +4094,11 @@ interactive_expr: LPAR Verbatim COMMA Bytes With
 ## In state 544, spurious reduction of production tuple_comp -> expr COMMA nsepseq(expr,COMMA) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed tuple expression.
+At this point one of the following is expected:
+  a comma ',',
+    followed with another tuple component; or
+  a closing parenthesis ')'.
 
 interactive_expr: LPAR Verbatim With
 ##
@@ -4059,7 +4126,11 @@ interactive_expr: LPAR Verbatim With
 ## In state 545, spurious reduction of production expr -> disj_expr 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed expression.
+At this point one of the following is expected:
+  a comma ',',
+    followed by a tuple component, in the form of an expression; or
+  a closing parenthesis ')'.
 
 interactive_expr: Verbatim With
 ##
@@ -4086,4 +4157,4 @@ interactive_expr: Verbatim With
 ## In state 202, spurious reduction of production expr -> disj_expr 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed expression.

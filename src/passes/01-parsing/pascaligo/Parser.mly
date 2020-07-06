@@ -77,7 +77,6 @@ open CST
   nsepseq(type_expr,COMMA)
   expr
   nsepseq(expr,COMMA)
-  nseq(__anonymous_0(core_pattern,SEMI)) 
 %%
 
 (* RULES *)
