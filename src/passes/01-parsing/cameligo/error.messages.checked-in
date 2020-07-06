@@ -639,8 +639,8 @@ interactive_expr: Let Rec WILD EQ Bytes With
 
 Ill-formed recursive definition.
 
-At this point, if the bound expression is complete, one of the
-following is expected:
+At this point, if the right-hand side of the definition is a complete
+expression, one of the following is expected:
   * a series of attributes;
   * the keyword 'in' followed by an expression.
 
@@ -810,7 +810,7 @@ interactive_expr: Let WILD EQ Bytes Attr Type
 Ill-formed definition.
 
 At this point, if the series of attributes is complete, the keyword
-'in' is expected.
+'in' is expected, followed by en expression.
 
 interactive_expr: Begin If Verbatim Then Let WILD EQ Bytes With
 ##
@@ -980,10 +980,10 @@ interactive_expr: Let WILD EQ Bytes With
 
 Ill-formed definition.
 
-At this point, if the bound expression is complete, one of the
-following is expected:
+At this point, if the right-hand side of the definition is a complete
+expression, one of the following is expected:
   * a series of attributes;
-  * the keyword 'in' followed by an expression.
+  * the keyword 'in', followed by an expression.
 
 interactive_expr: Begin If Verbatim Then Let With
 ##
@@ -1055,7 +1055,7 @@ interactive_expr: Let With
 Ill-formed definition.
 
 At this point, one of the following is expected:
-  * an irrefutable pattern, e.g, a variable;
+  * an irrefutable pattern, e.g, an identifier;
   * the 'rec' keyword, if the definition is recursive.
 
 interactive_expr: Begin If Verbatim Then Match Verbatim Type
@@ -1140,7 +1140,7 @@ interactive_expr: Match Verbatim Type
 Ill-formed pattern matching.
 
 At this point, if the matched expression is complete, the keyword
-'with' is expected, followed by the matching cases.
+'with' is expected, followed by matching cases.
 
 interactive_expr: Begin If Verbatim Then Match Verbatim With WILD ARROW Bytes With
 ##
@@ -1263,7 +1263,7 @@ interactive_expr: If With
 
 Ill-formed conditional expression.
 
-At this point a test is expected as an expression.
+At this point, a test is expected as an expression.
 
 interactive_expr: Begin Match Verbatim With WILD ARROW Verbatim With
 ##
@@ -1516,7 +1516,7 @@ interactive_expr: Begin Verbatim SEMI With
 Ill-formed sequence expression.
 
 At this point, one of the following is expected:
-   * the keyword 'end' if your sequence is complete;
+   * the keyword 'end', if your sequence is complete;
    * another expression.
 
 interactive_expr: Begin Verbatim With
