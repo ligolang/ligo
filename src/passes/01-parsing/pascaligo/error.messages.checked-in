@@ -18,7 +18,7 @@ interactive_expr: Begin Case Verbatim Of LBRACKET WILD ARROW Skip With
 Ill-formed case statement.
 At this point one of the following is expected:
   a case in the form of a pattern; or
-  a closing bracket ']'.
+  a closing bracket ']' if the list of cases is complete.
 
 interactive_expr: Begin Case Verbatim Of LBRACKET With
 ##
@@ -72,7 +72,7 @@ interactive_expr: Begin Case Verbatim Of WILD ARROW Skip With
 Ill-formed case statement.
 At this point one of the following is expected:
   a case in the form of a pattern; or
-  the 'end' keyword to close the case.
+  the 'end' keyword if the list of cases is complete.
 
 interactive_expr: Begin Case Verbatim Of WILD ARROW With
 ##
@@ -85,7 +85,7 @@ interactive_expr: Begin Case Verbatim Of WILD ARROW With
 ##
 
 Ill-formed case clause.
-At this point an expression is expected.
+At this point the body of the case clause, in the form of an expression, is expected.
 
 interactive_expr: Begin Case Verbatim Of WILD With
 ##
@@ -104,7 +104,8 @@ interactive_expr: Begin Case Verbatim Of WILD With
 ##
 
 Ill-formed case clause.
-At this point, if the pattern is complete, an arrow '->' is expected.
+At this point, if the pattern is complete, an arrow '->' is expected,
+  followed with the body of the case clause.
 
 interactive_expr: Begin Case Verbatim Of With
 ##
@@ -152,7 +153,8 @@ interactive_expr: Begin Case Verbatim With
 ##
 
 Ill-formed case statement.
-At this point, if the test is complete, the 'of' keyword is expected.
+At this point, if the test expression is complete, the 'of' keyword is expected,
+  followed with a list of cases.
 
 interactive_expr: Begin Case With
 ##
@@ -166,7 +168,7 @@ interactive_expr: Begin Case With
 ##
 
 Ill-formed case statement.
-At this point an expression is expected.
+At this point the expression to match is expected.
 
 interactive_expr: Begin Constr DOT And With
 ##
@@ -194,7 +196,7 @@ interactive_expr: Begin Constr With
 
 Ill-formed function call.
 At this point, if the module name if complete, a dot '.' is expected,
-  followed by a function name.
+  followed with a function name.
 
 interactive_expr: Begin For Ident ARROW Ident With
 ##
@@ -207,7 +209,8 @@ interactive_expr: Begin For Ident ARROW Ident With
 ##
 
 Ill-formed for loop.
-At this point, if the arrow clause is complete, the 'in' keyword is expected.
+At this point, if the key variable and optional arrow clause is complete, the 'in' keyword is expected,
+  followed with the collection to iterate over.
 
 interactive_expr: Begin For Ident ARROW With
 ##
@@ -220,7 +223,7 @@ interactive_expr: Begin For Ident ARROW With
 ##
 
 Ill-formed for loop.
-At this point a variable is expected.
+At this point the value name is expected.
 
 interactive_expr: Begin For Ident ASS Verbatim To Verbatim Step Verbatim Attributes
 ##
@@ -263,7 +266,7 @@ interactive_expr: Begin For Ident ASS Verbatim To Verbatim Step With
 ##
 
 Ill-formed for loop.
-At this point an expression is expected.
+At this point the amount to add at every iteration, in the form of an expression, is expected.
 
 interactive_expr: Begin For Ident ASS Verbatim To Verbatim With
 ##
@@ -306,7 +309,7 @@ interactive_expr: Begin For Ident ASS Verbatim To With
 ##
 
 Ill-formed for loop.
-At this point an expression is expected.
+At this point the value at which the for loop stops, in the form of an expression, is expected.
 
 interactive_expr: Begin For Ident ASS Verbatim With
 ##
@@ -334,7 +337,8 @@ interactive_expr: Begin For Ident ASS Verbatim With
 ##
 
 Ill-formed for loop.
-At this point, if the assignment is complete, the 'to' keyword is expected.
+At this point, if the assignment is complete, the 'to' keyword is expected,
+  followed with the value at which the for loop stops.
 
 interactive_expr: Begin For Ident ASS With
 ##
@@ -346,8 +350,8 @@ interactive_expr: Begin For Ident ASS With
 ## For Ident ASS
 ##
 
-Ill-formed assignment.
-At this point an expression is expected.
+Ill-formed for loop.
+At this point the value at which the for loop starts, in the form of an expression, is expected.
 
 interactive_expr: Begin For Ident In Set Verbatim With
 ##
@@ -388,7 +392,7 @@ interactive_expr: Begin For Ident In Set With
 ##
 
 Ill-formed for loop.
-At this point an expression is expected.
+At this point the collection to iterate over, in the form of an expression, is expected.
 
 interactive_expr: Begin For Ident In With
 ##
@@ -401,10 +405,8 @@ interactive_expr: Begin For Ident In With
 ##
 
 Ill-formed for loop.
-At this point one of the following collections is expected:
-  a 'map' keyword; or
-  a 'set' keyword; or
-  a 'list' keyword.
+At this point the type of collection to loop over is expected: 'map', 'set', or 'list',
+  followed with the actual colection in the form of an expression.
 
 interactive_expr: Begin For Ident With
 ##
@@ -419,10 +421,11 @@ interactive_expr: Begin For Ident With
 
 Ill-formed for loop.
 If this is an iteration through numbers, 
-  then at this point an assignment ':=' is expected.
+  then at this point an assignment ':=' symbol is expected,
+    followed with the value in the form of an assignment.
 If this is an iteration through a collection,
   then at this point optionally an arrow '->' and value name is expected,
-    followed by the 'in' keyword.
+    followed with the 'in' keyword and collection to loop over.
 
 interactive_expr: Begin For With
 ##
@@ -449,7 +452,7 @@ interactive_expr: Begin Ident ASS With
 ##
 
 Ill-formed assignment.
-At this point an expression is expected.
+At this point the right side of the assignment, in the form of an expression, is expected.
 
 interactive_expr: Begin Ident With
 ##
@@ -469,8 +472,8 @@ interactive_expr: Begin Ident With
 ##
 
 Ill-formed assignment.
-At this point, if this left hand side of the assignment is complete, an assignment ':=' is expected,
-  followed by the value in a form of an expression.
+At this point, if this left side of the assignment is complete, an assignment ':=' is expected,
+  followed with the value in a form of an expression.
 
 interactive_expr: Begin If Verbatim Then LBRACE Skip With
 ##
@@ -493,7 +496,7 @@ Ill-formed if statement.
 At this point one of the following is expected:
   a semicolon ';',
     followed by another statement; or
-  a closing brace '}'.
+  a closing brace '}' if the block is complete.
 
 interactive_expr: Begin If Verbatim Then LBRACE With
 ##
@@ -538,7 +541,8 @@ interactive_expr: Begin If Verbatim Then Skip With
 ##
 
 Ill-formed if statement.
-At this point the 'else' keyword is expected.
+At this point the 'else' keyword is expected,
+  followed with a statement or block.
 
 interactive_expr: Begin If Verbatim Then With
 ##
@@ -579,7 +583,7 @@ interactive_expr: Begin If Verbatim With
 ##
 
 Ill-formed if statement.
-At this point, if the test is complete, the 'then' keyword is expected.
+At this point, if the test expression is complete, the 'then' keyword is expected.
 
 interactive_expr: Begin If With
 ##
@@ -592,7 +596,7 @@ interactive_expr: Begin If With
 ##
 
 Ill-formed if statement.
-At this point a test, in the form of an expression, is expected.
+At this point a test expression is expected.
 
 interactive_expr: Begin Patch Constr DOT Ident With
 ##
@@ -607,7 +611,7 @@ interactive_expr: Begin Patch Constr DOT Ident With
 Ill-formed path.
 At this a point a '.' is expected, followed by: 
   a field name; or
-  a tuple component index '<int'>.
+  a tuple component index '<int>'.
 
 interactive_expr: Begin Patch Constr DOT With
 ##
@@ -634,7 +638,7 @@ interactive_expr: Begin Patch Constr With
 
 Ill-formed path.
 At this point, if the module name is complete, a dot '.' is expected,
-  followed by a module field.
+  followed by a field name.
 
 interactive_expr: Begin Patch Ident While
 ##
@@ -688,7 +692,7 @@ interactive_expr: Begin Patch Ident With Map LBRACKET Verbatim ARROW Bytes With
 Ill-formed map statement.
 At this point one of the following is expected:
   a key/value binding; or
-  a closing bracket ']'.
+  a closing bracket ']' if the map is complete.
 
 interactive_expr: Begin Patch Ident With Map LBRACKET With
 ##
@@ -734,7 +738,7 @@ interactive_expr: Begin Patch Ident With Map Verbatim ARROW Bytes With
 Ill-formed map statement.
 At this point one of the following is expected:
   a key/value binding; or 
-  the closing 'end' keyword.
+  the closing 'end' keyword if the map is complete.
 
 interactive_expr: Begin Patch Ident With Map With
 ##
@@ -882,8 +886,7 @@ interactive_expr: Begin Patch Ident With Set LBRACKET Verbatim With
 
 Ill-formed set statement.
 At this point one of the following is expected:
-  a semicolon ';', 
-    followed by an expression; or
+  an item in the form of an expression; or
   a closing bracket ']' if the set is complete.
 
 interactive_expr: Begin Patch Ident With Set LBRACKET With
@@ -898,7 +901,7 @@ interactive_expr: Begin Patch Ident With Set LBRACKET With
 
 Ill-formed set statement.
 At this point a semicolon ';' separated list of expressions is expected,
-  followed by a closing bracket ']'.
+  followed with a closing bracket ']'.
 
 interactive_expr: Begin Patch Ident With Set Verbatim With
 ##
@@ -929,9 +932,8 @@ interactive_expr: Begin Patch Ident With Set Verbatim With
 
 Ill-formed set statement.
 At this point one of the following is expected:
-  a semicolon ';', 
-    followed by an expression; or
-  the closing 'end' keyword.
+  an item in the form of an expression; or
+  the closing 'end' keyword if the set is complete.
 
 interactive_expr: Begin Patch Ident With Set With
 ##
@@ -1115,9 +1117,8 @@ interactive_expr: Begin Skip With
 
 Ill-formed block statement.
 At this point one of the following is expected:
-  a semicolon ';',
-    followed by a statement; or
-  a closing 'end' keyword.
+  a statement; or
+  a closing 'end' keyword if the block is complete.
 
 interactive_expr: Begin Var Ident ASS With
 ##
@@ -1129,8 +1130,8 @@ interactive_expr: Begin Var Ident ASS With
 ## Ident option(type_annot) ASS
 ##
 
-Ill-formed assignment.
-At this point an expression is expected.
+Ill-formed variable declaration.
+At this point the value of the variable, in the form of an expression, is expected.
 
 interactive_expr: Begin Var Ident COLON Constr ARROW
 ##
@@ -1155,7 +1156,7 @@ interactive_expr: Begin Var Ident COLON Constr ARROW
 
 Ill-formed variable declaration.
 At this point, if the type annotation is complete, an assignment ':=' is expected, 
-  followed by an expression.
+  followed with the value.
 
 interactive_expr: Begin Var Ident With
 ##
@@ -1169,7 +1170,7 @@ interactive_expr: Begin Var Ident With
 
 Ill-formed variable declaration.
 At this point, if the variable name is complete, an optional type annotation is expected,
-  followed by an assignment ':=' and expression.
+  followed by an assignment ':=' and the value.
 
 interactive_expr: Begin Var With
 ##
@@ -1210,7 +1211,7 @@ interactive_expr: Begin While Verbatim With
 ##
 
 Ill-formed while loop.
-At this point, if the test is complete, a while body in the form of a block is expected.
+At this point, if the test expression is complete, a while body in the form of a block is expected.
 
 interactive_expr: Begin While With
 ##
@@ -1223,7 +1224,7 @@ interactive_expr: Begin While With
 ##
 
 Ill-formed while loop.
-At this point an expression is expected.
+At this point a test, in the form of an expression, is expected.
 
 interactive_expr: Begin With
 ##
@@ -1240,16 +1241,18 @@ At this point one of the following statements is expected:
   a variable declaration; or
   a constant declaration; or
   a function declaration; or
-  an if instruction; or
-  a case instruction; or
+  an if statement; or
+  a case statement; or
   an assignment; or
-  a loop; or 
+  a for loop; or 
+  a while loop; or
   a function call; or 
   the 'skip' keyword; or
   a record patch; or
   a map patch; or 
-  a record item removal; or
-  a map item removal.
+  a set patch; or
+  a map item removal; or
+  a set item removal.
 
 interactive_expr: BigMap LBRACKET Verbatim ARROW Bytes With
 ##
@@ -1281,8 +1284,7 @@ interactive_expr: BigMap LBRACKET Verbatim ARROW Bytes With
 
 Ill-formed big_map expression.
 At this point one of the following is expected:
-  a semicolon ';', 
-    followed by a key/value binding; or
+  a key/value binding; or
   a closing bracket ']' if the big_map is complete.
 
 interactive_expr: BigMap LBRACKET With
@@ -1331,8 +1333,7 @@ interactive_expr: BigMap Verbatim ARROW Bytes With
 
 Ill-formed big_map expression.
 At this point of the following is expected: 
-  a semicolon ';', 
-    followed by a key/value binding; or 
+  a key/value binding; or 
   the closing 'end' keyword if the big_map is complete.
 
 interactive_expr: BigMap With
@@ -1354,10 +1355,10 @@ At this point one of the following is expected:
     closed with the 'end' keyword; or
   the 'end' keyword if the big_map is empty; or
   an opening bracket '[',
-    followed by one of the following:
+    followed with one of the following:
       a semicolon ';' separated list of key/value bindings,
         closed by a bracket; or
-    a closing bracket if the big_map is empty.
+      a closing bracket if the big_map is empty.
 
 interactive_expr: Block LBRACE Skip With
 ##
@@ -1376,11 +1377,24 @@ interactive_expr: Block LBRACE Skip With
 ## In state 495, spurious reduction of production sep_or_term_list(statement,SEMI) -> nsepseq(statement,SEMI) 
 ##
 
-Ill-formed block statement.
-At this point one of the following is expected:
-  a semicolon ';',
-    followed by a statement; or
-  a closing brace '}'.
+Ill-formed block statement. 
+If a statement is expected, then one of the following statements is expected:
+  a variable declaration; or
+  a constant declaration; or
+  a function declaration; or
+  an if statement; or
+  a case statement; or
+  an assignment; or
+  a for loop; or 
+  a while loop; or
+  a function call; or 
+  the 'skip' keyword; or
+  a record patch; or
+  a map patch; or 
+  a set patch; or
+  a map item removal; or
+  a set item removal.
+If the block is complete, then a closing brace '}' is expected.
 
 interactive_expr: Block LBRACE With
 ##
@@ -1394,7 +1408,7 @@ interactive_expr: Block LBRACE With
 
 Ill-formed block statement.
 At this point a semicolon ';' separated list of statements is expected,
-  followed by a closing brace '}'.
+  followed with a closing brace '}'.
 
 interactive_expr: Block With
 ##
@@ -1409,7 +1423,7 @@ interactive_expr: Block With
 Ill-formed block statement.
 At this point a opening brace '{' is expected,
   followed by a semicolon ';' separated list of statements,
-    followed by a closing brace '}'.
+    closed with a brace '}'.
 
 interactive_expr: C_Some With
 ##
@@ -1422,7 +1436,7 @@ interactive_expr: C_Some With
 ##
 
 Ill-formed application of the constructor 'Some'.
-At this point, comma ',' separated arguments between parentheses are expected.
+At this point comma ',' separated arguments between parentheses '(' and ')' are expected.
 
 interactive_expr: Case Verbatim Of C_Some LPAR WILD With
 ##
@@ -1437,7 +1451,7 @@ interactive_expr: Case Verbatim Of C_Some LPAR WILD With
 Ill-formed application of the constructor 'Some' in a pattern.
 At this point one of the following is expected:
   a comma ',', 
-    followed by a pattern; or
+    followed with a pattern; or
   a closing parenthesis ')'.
 
 interactive_expr: Case Verbatim Of C_Some LPAR With
@@ -1510,7 +1524,7 @@ interactive_expr: Case Verbatim Of LBRACKET WILD ARROW Bytes With
 Ill-formed case expression.
 At this point one of the following is expected:
   a case in the form of a pattern; or
-  a closing bracket ']'.
+  a closing bracket ']' if the case is complete.
 
 interactive_expr: Case Verbatim Of LBRACKET With
 ##
