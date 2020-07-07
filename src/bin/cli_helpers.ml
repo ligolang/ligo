@@ -25,11 +25,11 @@ let toplevel : ?output_file:string option -> brief:bool -> display_format:ex_dis
     in
     match value with
     | Ok _ ->
-      let fmt = match output_file with
+      let fmt : Format.formatter = match output_file with
         | Some file_path -> Format.formatter_of_out_channel @@ open_out file_path
         | None -> Format.std_formatter
       in
-      return_good @@ Format.fprintf fmt "%s\n" as_str
+      return_good @@ (Format.fprintf fmt "%s\n" as_str ; Format.pp_print_flush fmt ())
     | Error _ -> return_bad as_str brief
 
 let return_result : ?output_file:string option -> brief:bool -> display_format:ex_display_format -> 'value format -> ('value, Main_errors.Types.all) result -> unit Term.ret =
