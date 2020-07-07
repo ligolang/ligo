@@ -8,7 +8,6 @@ let constructor ppf (c:constructor') : unit =
 let label ppf (l:label) : unit =
   let Label l = l in fprintf ppf "%s" l
 
-
 let list_sep_d x = list_sep x (tag " ,@ ")
 
 let constant ppf : constant' -> unit = function

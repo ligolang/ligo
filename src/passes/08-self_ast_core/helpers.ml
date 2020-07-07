@@ -1,8 +1,8 @@
 open Ast_core
 open Trace
-open Stage_common.Helpers
+open Ast_core.Helpers
 
-include Stage_common.PP
+include Ast_core.PP
 
 let bind_map_cmap f map = bind_cmap (
   CMap.map 

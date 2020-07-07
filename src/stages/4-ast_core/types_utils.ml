@@ -1,11 +1,27 @@
 open Trace
 module Location = Simple_utils.Location
 
-include Stage_common.Types
-
 type location = Location.t
 type 'a location_wrap = 'a Location.wrap
-type string_option = string option
+type z = Z.t
+type ligo_string = Stage_common.Types.ligo_string
+type packed_internal_operation = Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation
+
+type expression_
+and expression_variable = expression_ Var.t location_wrap
+type type_
+and type_variable = type_ Var.t
+
+type constructor' =
+| Constructor of string
+type label =
+| Label of string
+
+module CMap = Map.Make( struct type t = constructor' let compare (Constructor a) (Constructor b) = compare a b end)
+module LMap = Map.Make( struct type t = label let compare (Label a) (Label b) = String.compare a b end)
+
+type 'a label_map = 'a LMap.t
+type 'a constructor_map = 'a CMap.t
 
 type sugar_type_expression_option = Ast_sugar.type_expression option
 type sugar_expression_option = Ast_sugar.expression option

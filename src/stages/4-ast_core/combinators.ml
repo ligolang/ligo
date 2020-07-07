@@ -10,7 +10,7 @@ let tuple_to_record lst =
   let (_, lst ) = List.fold_left aux (0,[]) lst in
   lst
 
-let t_bool      ?loc ?sugar () : type_expression = make_t ?loc ?sugar @@ T_variable (Stage_common.Constant.t_bool)
+let t_bool      ?loc ?sugar () : type_expression = make_t ?loc ?sugar @@ T_variable (Var.of_name "bool")
 let t_string    ?loc ?sugar () : type_expression = make_t ?loc ?sugar @@ T_constant (TC_string)
 let t_bytes     ?loc ?sugar () : type_expression = make_t ?loc ?sugar @@ T_constant (TC_bytes)
 let t_int       ?loc ?sugar () : type_expression = make_t ?loc ?sugar @@ T_constant (TC_int)
@@ -158,7 +158,7 @@ let get_e_list = fun t ->
 
 let get_e_tuple = fun t ->
   match t with
-  | E_record r -> Some (List.map snd @@ Stage_common.Helpers.tuple_of_record r)
+  | E_record r -> Some (List.map snd @@ Helpers.tuple_of_record r)
   | _ -> None
 
 let get_e_ascription = fun a ->
