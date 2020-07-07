@@ -123,9 +123,7 @@ interactive_expr: Begin Case Verbatim Of With
 ##
 
 Ill-formed case statement.
-At this point cases are expected that:
-  are ended with the 'end' keyword; or
-  are between brackets '[' ']'.
+At this point a case, in the form of a pattern, is expected.
 
 interactive_expr: Begin Case Verbatim With
 ##
@@ -1281,7 +1279,7 @@ interactive_expr: BigMap LBRACKET Verbatim ARROW Bytes With
 ## In state 305, spurious reduction of production sep_or_term_list(binding,SEMI) -> nsepseq(binding,SEMI) 
 ##
 
-Ill-formed big_map creation.
+Ill-formed big_map expression.
 At this point one of the following is expected:
   a semicolon ';', 
     followed by a key/value binding; or
@@ -1298,7 +1296,7 @@ interactive_expr: BigMap LBRACKET With
 ## BigMap LBRACKET
 ##
 
-Ill-formed big_map creation.
+Ill-formed big_map expression.
 At this point one of the following is expected:
   a key/value binding; or 
   a closing bracket ']' if the big_map is empty.
@@ -1331,7 +1329,7 @@ interactive_expr: BigMap Verbatim ARROW Bytes With
 ## In state 305, spurious reduction of production sep_or_term_list(binding,SEMI) -> nsepseq(binding,SEMI) 
 ##
 
-Ill-formed big_map creation.
+Ill-formed big_map expression.
 At this point of the following is expected: 
   a semicolon ';', 
     followed by a key/value binding; or 
@@ -1350,7 +1348,7 @@ interactive_expr: BigMap With
 ## BigMap
 ##
 
-Ill-formed big_map creation.
+Ill-formed big_map expression.
 At this point one of the following is expected: 
   a semicolon ';' separated list of key/value bindings,
     closed with the 'end' keyword; or
@@ -2734,7 +2732,7 @@ interactive_expr: List LBRACKET With
 Ill-formed list expression.
 At this point one of the following is expected:
   a semicolon ';' separated list of expressions; or
-  a closing bracket ']'.
+  a closing bracket ']' if the list is empty.
 
 interactive_expr: List Verbatim With
 ##
@@ -2766,8 +2764,8 @@ interactive_expr: List Verbatim With
 Ill-formed list expression.
 At this point one of the following is expected:
   a semicolon ';', 
-    followed by a list item in the form of an expression; or
-  the closing 'end' keyword.
+    followed by an item in the form of an expression; or
+  the closing 'end' keyword if the list is complete.
 
 interactive_expr: List With
 ##
@@ -2782,7 +2780,16 @@ interactive_expr: List With
 ## List
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed list expression.
+At this point one of the following is expected: 
+  a semicolon ';' separated list of items,
+    closed with the 'end' keyword; or
+  the 'end' keyword if the list is empty; or
+  an opening bracket '[',
+    followed by one of the following:
+      a semicolon ';' separated list of items,
+        closed by a bracket; or
+    a closing bracket if the list is empty.
 
 interactive_expr: MINUS With
 ##
@@ -2794,7 +2801,8 @@ interactive_expr: MINUS With
 ## MINUS
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed unary expression.
+At this point an expression is expected.
 
 interactive_expr: Map LBRACKET Verbatim ARROW Bytes With
 ##
@@ -2824,7 +2832,11 @@ interactive_expr: Map LBRACKET Verbatim ARROW Bytes With
 ## In state 305, spurious reduction of production sep_or_term_list(binding,SEMI) -> nsepseq(binding,SEMI) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed map expression.
+At this point one of the following is expected:
+  a semicolon ';', 
+    followed by a key/value binding; or
+  a closing bracket ']' if the map is complete.
 
 interactive_expr: Map LBRACKET With
 ##
@@ -2837,7 +2849,10 @@ interactive_expr: Map LBRACKET With
 ## Map LBRACKET
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed map expression.
+At this point one of the following is expected:
+  a key/value binding; or 
+  a closing bracket ']' if the map is empty.
 
 interactive_expr: Map Verbatim ARROW Bytes With
 ##
@@ -2867,7 +2882,11 @@ interactive_expr: Map Verbatim ARROW Bytes With
 ## In state 305, spurious reduction of production sep_or_term_list(binding,SEMI) -> nsepseq(binding,SEMI) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed map expression.
+At this point of the following is expected: 
+  a semicolon ';', 
+    followed by a key/value binding; or 
+  the closing 'end' keyword if the map is complete.
 
 interactive_expr: Map Verbatim ARROW With
 ##
@@ -2879,7 +2898,8 @@ interactive_expr: Map Verbatim ARROW With
 ## expr ARROW
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed map expression.
+At this point a value, in the form of an expression, is expected.
 
 interactive_expr: Map Verbatim With
 ##
@@ -2906,7 +2926,9 @@ interactive_expr: Map Verbatim With
 ## In state 202, spurious reduction of production expr -> disj_expr 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed map expression.
+At this point, if the key is complete, an arrow '->' is expected,
+  followed with a value in the form of an expression.
 
 interactive_expr: Map With
 ##
@@ -2921,7 +2943,16 @@ interactive_expr: Map With
 ## Map
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed map expression.
+At this point one of the following is expected: 
+  a semicolon ';' separated list of key/value bindings,
+    closed with the 'end' keyword; or
+  the 'end' keyword if the map is empty; or
+  an opening bracket '[',
+    followed by one of the following:
+      a semicolon ';' separated list of key/value bindings,
+        closed by a bracket; or
+    a closing bracket if the map is empty.
 
 interactive_expr: Not With
 ##
@@ -2933,7 +2964,8 @@ interactive_expr: Not With
 ## Not
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed unary expression.
+At this point an expression is expected.
 
 interactive_expr: Record Ident EQ Bytes With
 ##
@@ -2963,7 +2995,11 @@ interactive_expr: Record Ident EQ Bytes With
 ## In state 290, spurious reduction of production sep_or_term_list(field_assignment,SEMI) -> nsepseq(field_assignment,SEMI) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed record expression.
+At this point one of the following is expected:
+  a semicolon ';',
+    followed with another record field assignment; or
+  the closing 'end' keyword.
 
 interactive_expr: Record Ident EQ With
 ##
@@ -2975,7 +3011,8 @@ interactive_expr: Record Ident EQ With
 ## Ident EQ
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed record field assignment.
+At this point a value, in the form of an expression, is expected.
 
 interactive_expr: Record Ident With
 ##
@@ -2987,7 +3024,9 @@ interactive_expr: Record Ident With
 ## Ident
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed record field assignment.
+At this point, if the record field name is complete, an equals '=' symbol is expected,
+  followed with a value in the form of an expression.
 
 interactive_expr: Record LBRACKET Ident EQ Bytes With
 ##
@@ -3017,7 +3056,10 @@ interactive_expr: Record LBRACKET Ident EQ Bytes With
 ## In state 290, spurious reduction of production sep_or_term_list(field_assignment,SEMI) -> nsepseq(field_assignment,SEMI) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed record expression.
+At this point one of the following is expected:
+  another record field assignment; or 
+  the closing 'end' keyword.
 
 interactive_expr: Record LBRACKET With
 ##
@@ -3029,7 +3071,10 @@ interactive_expr: Record LBRACKET With
 ## Record LBRACKET
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed record expression.
+At this point one of the following is expected:
+  a record field assignment; or 
+  a closing brace '}'.
 
 interactive_expr: Record With
 ##
@@ -3042,7 +3087,13 @@ interactive_expr: Record With
 ## Record
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed record expression.
+At this point one of the following is expected:
+  a semicolon ';' separated list of record field assignments,
+    which are closed by the 'end' keyword; or
+  an opening bracket '[',
+    followed by a semicolon ';' separated list of record field assignments,
+      which are closed by a closing bracket ']'.
 
 interactive_expr: Set LBRACKET Verbatim With
 ##
@@ -3071,7 +3122,11 @@ interactive_expr: Set LBRACKET Verbatim With
 ## In state 275, spurious reduction of production sep_or_term_list(expr,SEMI) -> nsepseq(expr,SEMI) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed set expression.
+At this point one of the following is expected:
+  a semicolon ';',
+    followed by a item in the form of an expression; or
+  a closing bracket ']' if the set is complete.
 
 interactive_expr: Set LBRACKET With
 ##
@@ -3084,7 +3139,10 @@ interactive_expr: Set LBRACKET With
 ## Set LBRACKET
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed set expression.
+At this point one of the following is expected:
+  a semicolon ';' separated list of expressions; or
+  a closing bracket ']' if the set is empty.
 
 interactive_expr: Set Verbatim With
 ##
@@ -3113,7 +3171,11 @@ interactive_expr: Set Verbatim With
 ## In state 275, spurious reduction of production sep_or_term_list(expr,SEMI) -> nsepseq(expr,SEMI) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed set expression.
+At this point one of the following is expected:
+  a semicolon ';', 
+    followed by an item in the form of an expression; or
+  the closing 'end' keyword if the set is complete.
 
 interactive_expr: Set With
 ##
@@ -3128,7 +3190,16 @@ interactive_expr: Set With
 ## Set
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed set expression.
+At this point one of the following is expected: 
+  a semicolon ';' separated list of items,
+    closed with the 'end' keyword; or
+  the 'end' keyword if the set is empty; or
+  an opening bracket '[',
+    followed by one of the following:
+      a semicolon ';' separated list of items,
+        closed by a bracket; or
+    a closing bracket if the set is empty.
 
 interactive_expr: Verbatim And With
 ##
@@ -3140,7 +3211,8 @@ interactive_expr: Verbatim And With
 ## conj_expr And
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed boolean operation.
+At this point an expression is expected.
 
 interactive_expr: Verbatim CAT With
 ##
@@ -3152,7 +3224,8 @@ interactive_expr: Verbatim CAT With
 ## cons_expr CAT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed concatenation operation.
+At this point an expression is expected.
 
 interactive_expr: Verbatim CONS With
 ##
@@ -3164,7 +3237,8 @@ interactive_expr: Verbatim CONS With
 ## add_expr CONS
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed cons operation.
+At this point an expression is expected.
 
 interactive_expr: Verbatim Contains With
 ##
@@ -3176,7 +3250,8 @@ interactive_expr: Verbatim Contains With
 ## core_expr Contains
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed unary expression.
+At this point an expression is expected.
 
 interactive_expr: Verbatim EQ With
 ##
@@ -3188,7 +3263,8 @@ interactive_expr: Verbatim EQ With
 ## comp_expr EQ
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed contains operation.
+At this point a value, in the form of an expression, is expected.
 
 interactive_expr: Verbatim GE With
 ##
@@ -3200,7 +3276,8 @@ interactive_expr: Verbatim GE With
 ## comp_expr GE
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed boolean operation.
+At this point an expression is expected.
 
 interactive_expr: Verbatim GT With
 ##
@@ -3212,7 +3289,8 @@ interactive_expr: Verbatim GT With
 ## comp_expr GT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed boolean operation.
+At this point an expression is expected.
 
 interactive_expr: Verbatim LE With
 ##
@@ -3224,7 +3302,8 @@ interactive_expr: Verbatim LE With
 ## comp_expr LE
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed boolean operation.
+At this point an expression is expected.
 
 interactive_expr: Verbatim LT With
 ##
@@ -3236,7 +3315,8 @@ interactive_expr: Verbatim LT With
 ## comp_expr LT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed boolean operation.
+At this point an expression is expected.
 
 interactive_expr: Verbatim MINUS With
 ##
@@ -3248,7 +3328,8 @@ interactive_expr: Verbatim MINUS With
 ## add_expr MINUS
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed calculation.
+At this point an expression is expected.
 
 interactive_expr: Verbatim Mod With
 ##
@@ -3260,7 +3341,8 @@ interactive_expr: Verbatim Mod With
 ## mult_expr Mod
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed calculation.
+At this point an expression is expected.
 
 interactive_expr: Verbatim NE With
 ##
@@ -3272,7 +3354,8 @@ interactive_expr: Verbatim NE With
 ## comp_expr NE
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed boolean operation.
+At this point an expression is expected.
 
 interactive_expr: Verbatim Or With
 ##
@@ -3284,7 +3367,8 @@ interactive_expr: Verbatim Or With
 ## disj_expr Or
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed boolean operation.
+At this point an expression is expected.
 
 interactive_expr: Verbatim PLUS With
 ##
@@ -3296,7 +3380,8 @@ interactive_expr: Verbatim PLUS With
 ## add_expr PLUS
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed calculation.
+At this point an expression is expected.
 
 interactive_expr: Verbatim SLASH With
 ##
@@ -3308,7 +3393,9 @@ interactive_expr: Verbatim SLASH With
 ## mult_expr SLASH
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+
+Ill-formed calculation.
+At this point an expression is expected.
 
 interactive_expr: Verbatim TIMES With
 ##
@@ -3320,7 +3407,9 @@ interactive_expr: Verbatim TIMES With
 ## mult_expr TIMES
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+
+Ill-formed calculation.
+At this point an expression is expected.
 
 interactive_expr: Verbatim With
 ##
@@ -3731,7 +3820,8 @@ contract: Type Ident Is BigMap With
 ## BigMap
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed big_map type.
+At this point a tuple type is expected.
 
 contract: Type Ident Is Constr Of With
 ##
@@ -3743,7 +3833,8 @@ contract: Type Ident Is Constr Of With
 ## Constr Of
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed variant constructor.
+At this point a type is expected.
 
 contract: Type Ident Is Constr VBAR With
 ##
@@ -3755,7 +3846,8 @@ contract: Type Ident Is Constr VBAR With
 ## variant VBAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed variants type.
+At this point a constructor is expected.
 
 contract: Type Ident Is LPAR String With
 ##
@@ -3775,7 +3867,8 @@ contract: Type Ident Is LPAR String With
 ## In state 44, spurious reduction of production type_expr -> fun_type 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed type.
+At this point, if the type expression is complete, a closing parenthesis ')' is expected.
 
 contract: Type Ident Is List With
 ##
@@ -3787,7 +3880,8 @@ contract: Type Ident Is List With
 ## List
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed list type.
+At this point a type parameter is expected.
 
 contract: Type Ident Is Map LPAR String With
 ##
@@ -3808,7 +3902,11 @@ contract: Type Ident Is Map LPAR String With
 ## In state 21, spurious reduction of production nsepseq(type_expr,COMMA) -> type_expr 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed map type.
+At this point one of the following is expected:
+  a comma ',',
+    followed with a type expression; or
+  a closing parenthesis ')' if the map type is complete.
 
 contract: Type Ident Is Map With
 ##
@@ -3820,7 +3918,8 @@ contract: Type Ident Is Map With
 ## Map
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed map type.
+At this point a tuple type is expected.
 
 contract: Type Ident Is Record Ident COLON Ident With
 ##
@@ -3860,7 +3959,9 @@ contract: Type Ident Is Record Ident With
 ## Ident
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed record type.
+At this point, if the field name is complete, a colon ':' is expected,
+  followed with a type expression.
 
 contract: Type Ident Is Record LBRACKET Ident COLON Ident With
 ##
@@ -3884,7 +3985,11 @@ contract: Type Ident Is Record LBRACKET Ident COLON Ident With
 ## In state 52, spurious reduction of production sep_or_term_list(field_decl,SEMI) -> nsepseq(field_decl,SEMI) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed record type.
+At this point one of the following is expected:
+  a semicolon ';',
+    followed with a record field declaration; or
+  a closing bracket ']' if the record type is complete.
 
 contract: Type Ident Is Record LBRACKET With
 ##
@@ -3896,7 +4001,9 @@ contract: Type Ident Is Record LBRACKET With
 ## Record LBRACKET
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed record type.
+At this point a semicolon ';' separated list of field declarations is expected,
+  followed by a closing bracket ']'.
 
 contract: Type Ident Is Record With
 ##
@@ -3909,7 +4016,13 @@ contract: Type Ident Is Record With
 ## Record
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed record type.
+At this point one of the following is expected:
+  a semicolon ';' separated list of record field declarations,
+    which are closed by the 'end' keyword; or
+  an opening bracket '[',
+    followed by a semicolon ';' separated list of record field declarations,
+      which are closed by a closing bracket ']'.
 
 contract: Type Ident Is Set With
 ##
@@ -3921,7 +4034,8 @@ contract: Type Ident Is Set With
 ## Set
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed set type. 
+At this point a type parameter is expected.
 
 contract: Type Ident Is String ARROW With
 ##
