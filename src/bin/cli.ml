@@ -281,8 +281,8 @@ let measure_contract =
   (Term.ret term , Term.info ~doc cmdname)
 
 let compile_parameter =
-  let f source_file entry_point expression syntax amount balance sender source predecessor_timestamp display_format michelson_format brief =
-    return_result ~display_format ~brief (Tezos_utils.Michelson.michelson_format michelson_format) @@
+  let f source_file entry_point expression syntax amount balance sender source predecessor_timestamp display_format michelson_format output_file brief =
+    return_result ~output_file ~display_format ~brief (Tezos_utils.Michelson.michelson_format michelson_format) @@
       let%bind typed_prg,state = Compile.Utils.type_file source_file syntax (Contract entry_point) in
       let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
       let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
@@ -300,7 +300,7 @@ let compile_parameter =
       Run.evaluate_expression ~options compiled_param.expr compiled_param.expr_ty
     in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ syntax $ amount $ balance $ sender $ source $ predecessor_timestamp $ display_format $ michelson_code_format $ brief) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ syntax $ amount $ balance $ sender $ source $ predecessor_timestamp $ display_format $ michelson_code_format $ output_file $ brief) in
   let cmdname = "compile-parameter" in
   let doc = "Subcommand: Compile parameters to a Michelson expression. The resulting Michelson expression can be passed as an argument in a transaction which calls a contract." in
   (Term.ret term , Term.info ~doc cmdname)
@@ -342,8 +342,8 @@ let temp_ligo_interpreter =
   (Term.ret term , Term.info ~doc cmdname)
 
 let compile_storage =
-  let f source_file entry_point expression syntax amount balance sender source predecessor_timestamp display_format michelson_format brief =
-    return_result ~display_format ~brief (Tezos_utils.Michelson.michelson_format michelson_format) @@
+  let f source_file entry_point expression syntax amount balance sender source predecessor_timestamp display_format michelson_format output_file brief =
+    return_result ~output_file ~display_format ~brief (Tezos_utils.Michelson.michelson_format michelson_format) @@
       let%bind typed_prg,state = Compile.Utils.type_file source_file syntax (Contract entry_point) in
       let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
       let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
@@ -360,7 +360,7 @@ let compile_storage =
       let%bind options          = Run.make_dry_run_options {predecessor_timestamp ; amount ; balance ; sender ; source } in
       Run.evaluate_expression ~options compiled_param.expr compiled_param.expr_ty in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ expression "STORAGE" 2 $ syntax $ amount $ balance $ sender $ source $ predecessor_timestamp $ display_format $ michelson_code_format $ brief) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ expression "STORAGE" 2 $ syntax $ amount $ balance $ sender $ source $ predecessor_timestamp $ display_format $ michelson_code_format $ output_file $ brief) in
   let cmdname = "compile-storage" in
   let doc = "Subcommand: Compile an initial storage in ligo syntax to a Michelson expression. The resulting Michelson expression can be passed as an argument in a transaction which originates a contract." in
   (Term.ret term , Term.info ~doc cmdname)
