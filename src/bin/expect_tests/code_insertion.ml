@@ -51,9 +51,11 @@ let%expect_test _ =
     { parameter nat ;
       storage nat ;
       code { DUP ;
-             LAMBDA (pair nat nat) nat { { { DUP ; CDR ; SWAP ; CAR } } ; ADD } ;
+             DUP ;
+             CDR ;
              SWAP ;
-             EXEC ;
+             CAR ;
+             ADD ;
              NIL operation ;
              PAIR ;
              DIP { DROP } } } |}]
