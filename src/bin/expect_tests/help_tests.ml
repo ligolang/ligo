@@ -313,6 +313,10 @@ let%expect_test _ =
                compile-contract for the resulting Michelson. Available formats
                are 'text' (default), 'json' and 'hex'.
 
+           --output-file=OUTPUT_FILE, --output=OUTPUT_FILE
+               OUTPUT_FILE if used, prints the output into the specified file
+               instead of stdout
+
            --predecessor-timestamp=PREDECESSOR_TIMESTAMP
                PREDECESSOR_TIMESTAMP is the predecessor_timestamp (now value
                minus one minute) the Michelson interpreter will use (e.g.
@@ -386,6 +390,10 @@ let%expect_test _ =
                MICHELSON_FORMAT is the format that will be used by
                compile-contract for the resulting Michelson. Available formats
                are 'text' (default), 'json' and 'hex'.
+
+           --output-file=OUTPUT_FILE, --output=OUTPUT_FILE
+               OUTPUT_FILE if used, prints the output into the specified file
+               instead of stdout
 
            --predecessor-timestamp=PREDECESSOR_TIMESTAMP
                PREDECESSOR_TIMESTAMP is the predecessor_timestamp (now value
