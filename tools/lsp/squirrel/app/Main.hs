@@ -18,12 +18,13 @@ import           Language.Haskell.LSP.Messages         as Msg
 import qualified Language.Haskell.LSP.Types            as J
 import qualified Language.Haskell.LSP.Types.Lens       as J
 import qualified Language.Haskell.LSP.Utility          as U
--- import           Language.Haskell.LSP.VFS
+import           Language.Haskell.LSP.VFS
 
 import           System.Exit
 import qualified System.Log                            as L
 
 import           Parser
+import           ParseTree
 import           Range
 import           Product
 import           AST hiding (def)
@@ -168,7 +169,7 @@ eventLoop funs chan = do
       ReqFindReferences req -> do
         let uri = req^.J.params.J.textDocument.J.uri
         let pos = posToRange $ req^.J.params.J.position
-        tree <- loadByURI uri
+        tree <- loadFromVFS funs uri
         case Find.referencesOf pos tree of
           Just refs -> do
             let locations = J.Location uri . rangeToLoc <$> refs
@@ -194,11 +195,22 @@ rangeToLoc (Range (a, b, _) (c, d, _) _) =
     (J.Position (a - 1) (b - 1))
     (J.Position (c - 1) (d - 1))
 
+loadFromVFS
+  :: Core.LspFuncs ()
+  -> J.Uri
+  -> IO (Pascal (Product [[ScopedDecl], Range, [Text]]))
+loadFromVFS funs uri = do
+  Just vf <- Core.getVirtualFileFunc funs $ J.toNormalizedUri uri
+  let txt = virtualFileText vf
+  let Just fin = J.uriToFilePath uri
+  (tree, _) <- runParser contract (Text fin txt)
+  return $ addLocalScopes tree
+
 loadByURI :: J.Uri -> IO (Pascal (Product [[ScopedDecl], Range, [Text]]))
 loadByURI uri = do
   case J.uriToFilePath uri of
     Just fin -> do
-      (tree, _) <- runParser contract fin
+      (tree, _) <- runParser contract (Path fin)
       return $ addLocalScopes tree
 
 collectErrors
@@ -210,7 +222,7 @@ collectErrors
 collectErrors funs uri path version = do
   case path of
     Just fin -> do
-      (tree, errs) <- runParser contract fin
+      (tree, errs) <- runParser contract (Path fin)
       Core.publishDiagnosticsFunc funs 100 uri version
         $ partitionBySource
         $ map errorToDiag (errs <> errors tree)

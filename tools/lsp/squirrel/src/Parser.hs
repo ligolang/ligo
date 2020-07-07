@@ -103,12 +103,12 @@ type ASTInfo = Product [Range, [Text]]
 
 runParser
   :: Parser a
-  -> FilePath
+  -> Source
   -> IO (a, [Error ASTInfo])
 runParser parser fin = do
   pforest <- toParseTree fin
 
-  let dir = takeDirectory fin
+  let dir = takeDirectory $ srcPath fin
 
   runWriterT parser `evalStateT`
      Cons pforest
@@ -128,7 +128,7 @@ restart p fin = do
     fallback "recusive imports"
   else do
     (a, errs) <- liftIO do
-      flip runParser full do
+      flip runParser (Path full) do
         put' (Set.insert full set)
         p
     tell errs
@@ -319,7 +319,7 @@ some p = some'
 
 -- | Run parser on given file and pretty-print stuff.
 --
-debugParser :: Show a => Parser a -> FilePath -> IO ()
+debugParser :: Show a => Parser a -> Source -> IO ()
 debugParser parser fin = do
   (res, errs) <- runParser parser fin
   putStrLn "Result:"

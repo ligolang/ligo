@@ -11,6 +11,7 @@ module ParseTree
   ( -- * Tree/Forest
     ParseTree(..)
   , ParseForest(..)
+  , Source(..)
 
     -- * Invoke the TreeSitter and get the tree it outputs
   , toParseTree
@@ -21,6 +22,7 @@ import Data.ByteString (ByteString)
 import Data.IORef
 import qualified Data.ByteString as BS
 import qualified Data.Text as Text
+import qualified Data.Text.Encoding as Text
 import Data.Text (Text)
 import Data.Traversable (for)
 
@@ -48,6 +50,17 @@ import Range
 import Pretty
 
 foreign import ccall unsafe tree_sitter_PascaLigo :: Ptr Language
+
+data Source
+  = Path       { srcPath :: FilePath }
+  | Text       { srcPath :: FilePath, srcText :: Text }
+  | ByteString { srcPath :: FilePath, srcBS   :: ByteString }
+
+srcToBytestring :: Source -> IO ByteString
+srcToBytestring = \case
+  Path       p   -> BS.readFile p
+  Text       _ t -> return $ Text.encodeUtf8 t
+  ByteString _ s -> return s
 
 -- | The tree tree-sitter produces.
 data ParseTree = ParseTree
@@ -85,12 +98,12 @@ instance Pretty ParseForest where
         else hang (text (Text.unpack field) <> ": ") 2 (pp tree)
 
 -- | Feed file contents into PascaLIGO grammar recogniser.
-toParseTree :: FilePath -> IO ParseForest
+toParseTree :: Source -> IO ParseForest
 toParseTree fin = do
   parser <- ts_parser_new
   True   <- ts_parser_set_language parser tree_sitter_PascaLigo
 
-  src <- BS.readFile fin
+  src <- srcToBytestring fin
 
   idCounter <- newIORef 0
 
@@ -146,7 +159,7 @@ toParseTree fin = do
                   , i $ pointColumn finish2D + 1
                   , i $ nodeEndByte node
                   )
-              , rFile = takeFileName fin
+              , rFile = takeFileName $ srcPath fin
               }
 
           return $ ParseTree
