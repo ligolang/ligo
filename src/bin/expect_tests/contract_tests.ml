@@ -1446,8 +1446,6 @@ let%expect_test _ =
           in file "redundant_constructors.mligo", line 7, character 2 to line 9, character 15
           Redundant constructor:
           Add
-          - Env:[]	Type env:[union_a -> sum[Add -> int , Remove -> int]
-          bool -> sum[false -> unit , true -> unit]]
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1495,7 +1493,6 @@ ligo: error
     ligo: error
           in file "create_contract_no_inline.mligo", line 3, characters 40-46
           Unbound type variable 'return'
-          - Env:[foo -> int]	Type env:[bool -> sum[false -> unit , true -> unit]]
 
 
           If you're not sure how to fix this error, you can do one of the following:

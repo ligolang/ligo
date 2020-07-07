@@ -203,18 +203,16 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@ Bad michelson or comb type parameter@ can only be used on a variant type@]"
         Location.pp loc
-    | `Typer_unbound_type_variable (env,tv,loc) ->
+    | `Typer_unbound_type_variable (_env,tv,loc) ->
       Format.fprintf f
-        "@[<hv>%a@ Unbound type variable '%a'@ %a@]"
+        "@[<hv>%a@ Unbound type variable '%a'@]"
         Location.pp loc
         Ast_core.PP.type_variable tv
-        Ast_typed.Environment.PP.environment env
-    | `Typer_unbound_variable (env,v,loc) ->
+    | `Typer_unbound_variable (_env,v,loc) ->
       Format.fprintf f
-        "@[<hv>%a@ Unbound variable '%a'@ %a@]"
+        "@[<hv>%a@ Unbound variable '%a'@]"
         Location.pp loc
         Ast_core.PP.expression_variable v
-        Ast_typed.Environment.PP.environment env
     | `Typer_match_empty_variant (m,loc) ->
       Format.fprintf f
         "@[<hv>%a@ Match with no case: @ %a@]"
@@ -230,18 +228,16 @@ let rec error_ppformat : display_format:string display_format ->
         "@[<hv>%a@ Redundant match case in: @ %a@]"
         Location.pp loc
         Ast_core.PP.matching_type m
-    | `Typer_unbound_constructor (env,c,loc) ->
+    | `Typer_unbound_constructor (_env,c,loc) ->
       Format.fprintf f
-        "@[<hv>%a@ Unbound constructor %a@ %a@]"
+        "@[<hv>%a@ Unbound constructor %a@]"
         Location.pp loc
         Ast_core.PP.constructor c
-        Ast_typed.Environment.PP.environment env
-    | `Typer_redundant_constructor (env,c,loc) ->
+    | `Typer_redundant_constructor (_env,c,loc) ->
       Format.fprintf f
-        "@[<hv>%a@ Redundant constructor:@ %a@ %a@]"
+        "@[<hv>%a@ Redundant constructor:@ %a@]"
         Location.pp loc
         Ast_core.PP.constructor c
-        Ast_typed.Environment.PP.environment env
     | `Typer_michelson_or_no_annotation (c,loc) ->
       Format.fprintf f
         "@[<hv>%a@ michelson_or contructor %a must be annotated with a sum type@]"
