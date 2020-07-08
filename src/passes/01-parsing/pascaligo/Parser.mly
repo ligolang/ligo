@@ -41,21 +41,16 @@ open CST
   nsepseq(selection,DOT)
   nsepseq(field_path_assignment,SEMI)
   seq(__anonymous_0(field_path_assignment,SEMI))
-  nseq(__anonymous_0(field_path_assignment,SEMI))
   nsepseq(binding,SEMI)
   seq(__anonymous_0(binding,SEMI))
-  nseq(__anonymous_0(binding,SEMI))
   nsepseq(field_assignment,SEMI)
   seq(__anonymous_0(field_assignment,SEMI))
-  nseq(__anonymous_0(field_assignment,SEMI))
   nsepseq(expr,SEMI)
   seq(__anonymous_0(expr,SEMI))
-  nseq(__anonymous_0(expr,SEMI))
   add_expr
   unary_expr
   nsepseq(String,SEMI)
   seq(__anonymous_0(String,SEMI))
-  nseq(__anonymous_0(String,SEMI))
   const_decl
   open_const_decl
   fun_decl
@@ -63,7 +58,6 @@ open CST
   core_type
   nsepseq(field_decl,SEMI)
   seq(__anonymous_0(field_decl,SEMI))
-  nseq(__anonymous_0(field_decl,SEMI))
   nsepseq(core_type,TIMES)
   type_decl
   cartesian

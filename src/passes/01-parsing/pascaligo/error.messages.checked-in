@@ -495,7 +495,7 @@ interactive_expr: Begin If Verbatim Then LBRACE Skip With
 Ill-formed if statement.
 At this point one of the following is expected:
   a semicolon ';',
-    followed by another statement; or
+    followed with another statement; or
   a closing brace '}' if the block is complete.
 
 interactive_expr: Begin If Verbatim Then LBRACE With
@@ -609,7 +609,7 @@ interactive_expr: Begin Patch Constr DOT Ident With
 ##
 
 Ill-formed path.
-At this a point a '.' is expected, followed by: 
+At this a point a '.' is expected, followed with: 
   a field name; or
   a tuple component index '<int>'.
 
@@ -638,7 +638,7 @@ interactive_expr: Begin Patch Constr With
 
 Ill-formed path.
 At this point, if the module name is complete, a dot '.' is expected,
-  followed by a field name.
+  followed with a field name.
 
 interactive_expr: Begin Patch Ident While
 ##
@@ -756,8 +756,8 @@ At this point one of the following is expected:
   a semicolon ';' separated list of key/value bindings,
     which are closed by the 'end' keyword; or
   an opening bracket '[',
-    followed by a semicolon ';' separated list of key/value bindings,
-      which are closed by a closing bracket ']'.
+    followed with a semicolon ';' separated list of key/value bindings,
+      which are closed by a bracket ']'.
 
 interactive_expr: Begin Patch Ident With Record Ident EQ Bytes With
 ##
@@ -854,8 +854,8 @@ At this point one of the following is expected:
   a semicolon ';' separated list of record field assignments,
     which are closed by the 'end' keyword; or
   an opening bracket '[',
-    followed by a semicolon ';' separated list of record field assignments,
-      which are closed by a closing bracket ']'.
+    followed with a semicolon ';' separated list of record field assignments,
+      which are closed by a bracket ']'.
 
 interactive_expr: Begin Patch Ident With Set LBRACKET Verbatim With
 ##
@@ -951,8 +951,8 @@ At this point one of the following is expected:
   a semicolon ';' separated list of expressions,
     which are closed by the 'end' keyword; or
   an opening bracket '[',
-    followed by a semicolon ';' separated list of expressions,
-      which are closed by a closing bracket ']'.
+    followed with a semicolon ';' separated list of expressions,
+      which are closed by a bracket ']'.
 
 interactive_expr: Begin Patch Ident With With
 ##
@@ -1026,7 +1026,7 @@ interactive_expr: Begin Remove Verbatim From With
 
 Ill-formed remove statement.
 At this point a map or set is expected, 
-  followed by a path.
+  followed with a path.
 
 interactive_expr: Begin Remove Verbatim With
 ##
@@ -1083,7 +1083,7 @@ interactive_expr: Begin Skip End While
 
 Ill-formed block statement. 
 At this point the 'with' keyword is expected,
-  followed by the return value, in the form of an expression.
+  followed with the return value, in the form of an expression.
 
 interactive_expr: Begin Skip End With With
 ##
@@ -1170,7 +1170,7 @@ interactive_expr: Begin Var Ident With
 
 Ill-formed variable declaration.
 At this point, if the variable name is complete, an optional type annotation is expected,
-  followed by an assignment ':=' and the value.
+  followed with an assignment ':=' and the value.
 
 interactive_expr: Begin Var With
 ##
@@ -1352,12 +1352,12 @@ interactive_expr: BigMap With
 Ill-formed big_map expression.
 At this point one of the following is expected: 
   a semicolon ';' separated list of key/value bindings,
-    closed with the 'end' keyword; or
+    which are closed with the 'end' keyword; or
   the 'end' keyword if the big_map is empty; or
   an opening bracket '[',
     followed with one of the following:
       a semicolon ';' separated list of key/value bindings,
-        closed by a bracket; or
+        which are closed by a bracket ']'; or
       a closing bracket if the big_map is empty.
 
 interactive_expr: Block LBRACE Skip With
@@ -1422,8 +1422,8 @@ interactive_expr: Block With
 
 Ill-formed block statement.
 At this point a opening brace '{' is expected,
-  followed by a semicolon ';' separated list of statements,
-    closed with a brace '}'.
+  followed with a semicolon ';' separated list of statements,
+    which are closed with a brace '}'.
 
 interactive_expr: C_Some With
 ##
@@ -1578,7 +1578,7 @@ interactive_expr: Case Verbatim Of LPAR WILD CONS Bytes With
 Ill-formed case expression.
 At this point one of the following is expected:
   a cons operator '#',
-    followed by a pattern; or
+    followed with a pattern; or
   a closing parenthesis ')'.
 
 interactive_expr: Case Verbatim Of LPAR WILD CONS With
@@ -1613,7 +1613,7 @@ interactive_expr: Case Verbatim Of LPAR WILD With
 Ill-formed tuple pattern.
 At this point one of the following is expected:
   a comma ',',
-    followed by another tuple component, in the form of a pattern; or
+    followed with another tuple component, in the form of a pattern; or
   the closing parenthesis ')'.
 
 interactive_expr: Case Verbatim Of LPAR With
@@ -1650,7 +1650,7 @@ interactive_expr: Case Verbatim Of List LBRACKET WILD With
 Ill-formed list pattern.
 At this point one of the following is expected:
   a semicolon ';',
-    followed by a pattern; or
+    followed with a pattern; or
   a closing bracket ']'.
 
 interactive_expr: Case Verbatim Of List LBRACKET With
@@ -1667,7 +1667,7 @@ interactive_expr: Case Verbatim Of List LBRACKET With
 Ill-formed list pattern.
 At this point one of the following is expected:
   a semicolon ';' separated list of patterns,
-    followed by a closing bracket.
+    followed with a closing bracket.
   a closing bracket ']' if it should be an empty list pattern.
 
 interactive_expr: Case Verbatim Of List WILD With
@@ -1690,7 +1690,7 @@ interactive_expr: Case Verbatim Of List WILD With
 Ill-formed list pattern.
 At this point one of the following is expected:
   a semicolon ';',
-    followed by a pattern; or
+    followed with a pattern; or
   the closing 'end' keyword.
 
 interactive_expr: Case Verbatim Of List With
@@ -1709,12 +1709,12 @@ interactive_expr: Case Verbatim Of List With
 Ill-formed list pattern.
 At this point one of the following is expected: 
   a semicolon ';' separated list of patterns,
-    closed with the 'end' keyword; or
+    which are closed with the 'end' keyword; or
   the 'end' keyword if the list pattern should be empty; or
   an opening bracket '[',
-    followed by one of the following:
+    followed with one of the following:
       a semicolon ';' separated list of patterns,
-        closed by a bracket ']'; or
+        which are closed by a bracket ']'; or
     a closing bracket ']' if the big_map is empty.
 
 interactive_expr: Case Verbatim Of WILD ARROW Bytes VBAR With
@@ -1840,10 +1840,10 @@ interactive_expr: Case Verbatim Of With
 Ill-formed case expression.
 At this point one of the following is expected:
   a list of vertical bar '|' separated case clauses,
-    closed with the 'end' keyword; or
+    which are closed with the 'end' keyword; or
   a opening bracket '[',
-    followed by a list of vertical bar '|' separated case clauses,
-      closed with a bracket ']'.
+    followed with a list of vertical bar '|' separated case clauses,
+      which are closed with a bracket ']'.
 
 interactive_expr: Case Verbatim With
 ##
@@ -1873,7 +1873,7 @@ interactive_expr: Case Verbatim With
 
 Ill-formed case expression.
 If the expression is complete, then the 'of' keyword is expected, 
-  followed by a list of case clauses.
+  followed with a list of case clauses.
 
 interactive_expr: Case With
 ##
@@ -1941,7 +1941,7 @@ interactive_expr: Function LPAR Const Ident RPAR COLON Ident With
 
 Ill-formed function expression.
 At this point the "is" keyword is expected, 
-  followed by the function body, in the form of an expression.
+  followed with the function body, in the form of an expression.
 
 interactive_expr: Function LPAR Const Ident RPAR Is With
 ##
@@ -1970,7 +1970,7 @@ Ill-formed function expression.
 At this point one of the following is expected:
   a type annotation; or 
   the "is" keyword, 
-    followed by the function in the form of an expressionb.
+    followed with the function in the form of an expressionb.
 
 interactive_expr: Function LPAR Const Ident With
 ##
@@ -1986,7 +1986,7 @@ Ill-formed function parameter declaration.
 At this point one of the following is expected:
   a type annotation; or
   a semicolon ';', 
-    followed by another parameter; or
+    followed with another parameter; or
   a closing parenthesis ')'.
 
 interactive_expr: Function LPAR Const With
@@ -2026,7 +2026,7 @@ interactive_expr: Function LPAR Var Ident COLON String With
 Ill-formed function parameter declaration.
 At this point one of the following is expected:
   a semicolon ';',
-    followed by another parameter declaration; or
+    followed with another parameter declaration; or
   a closing parenthesis ')'.
 
 interactive_expr: Function LPAR Var Ident COLON With
@@ -2069,7 +2069,7 @@ Ill-formed function parameter declaration.
 At this point one of the following is expected:
   a type annotation; or
   a semicolon ';', 
-    followed by another parameter; or
+    followed with another parameter; or
   a closing parenthesis ')'.
 
 interactive_expr: Function LPAR Var With
@@ -2113,13 +2113,13 @@ At this point function parameter declarations between parenthesis are expected.
 
 interactive_expr: Ident DOT Ident While
 ##
-## Ends in an error in state: 161.
+## Ends in an error in state: 158.
 ##
-## map_lookup -> path . brackets(expr) [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## update_record -> path . With ne_injection(Record,field_path_assignment) [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## fun_call_or_par_or_projection -> projection . option(arguments) [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## path -> projection . [ With LBRACKET ]
 ##
 ## The known suffix of the stack is as follows:
-## path
+## projection
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -2127,17 +2127,17 @@ interactive_expr: Ident DOT Ident While
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 128, spurious reduction of production nsepseq(selection,DOT) -> selection 
 ## In state 167, spurious reduction of production projection -> Ident DOT nsepseq(selection,DOT) 
-## In state 158, spurious reduction of production path -> projection 
 ##
 
 Ill-formed expression.
+TODO: INCOMPLETE.
 If this is a map lookup, 
   then at this point an opening bracket '[' is expected,
-    followed by a value in the form of an expression,
-      closed by a closing bracket ']'.
+    followed with a value in the form of an expression,
+      which is closed by a bracket ']'.
 If this is a record update,
   then at this point the "with" keyword is expected,
-    followed by record field assignments.
+    followed with record field assignments.
 
 interactive_expr: Ident DOT Int DOT With
 ##
@@ -2253,7 +2253,7 @@ interactive_expr: Ident LPAR Verbatim With
 Ill-formed function call.
 At this point one of the following is expected:
   a comma ',',
-    followed by another argument in the form of an expression; or
+    followed with another argument in the form of an expression; or
   closing parenthesis ')'.
 
 interactive_expr: Ident LPAR With
@@ -2285,20 +2285,20 @@ interactive_expr: Ident While
 Ill-formed expression.
 If this is a function call, 
   then at this point an opening parenthesis '(' is expected,
-    followed by comma separated ',' list of arguments,
-      closed by a closing parenthesis ')'.
+    followed with comma separated ',' list of arguments,
+      which are closed by a parenthesis ')'.
 If this is a selection of a substructure,
   then at this point a dot '.' is expected,
-    followed by one of the following:
+    followed with one of the following:
       a field name; or
       a tuple component index '<int>'.
 If this is a map lookup, 
   then at this point an opening bracket '[' is expected,
-    followed by a value in the form of an expression,
-      closed by a closing bracket ']'.
+    followed with a value in the form of an expression,
+      which is closed by a bracket ']'.
 If this is a record update,
   then at this point the "with" keyword is expected,
-    followed by record field assignments.
+    followed with record field assignments.
 
 interactive_expr: Ident With Record Ident EQ Bytes With
 ##
@@ -2397,7 +2397,7 @@ interactive_expr: Ident With Record LBRACKET Ident EQ Bytes With
 Ill-formed record update expression.
 At this point one of the following is expected:
   a semicolon ';',
-    followed by a record field assignment; or
+    followed with a record field assignment; or
   a closing brace '}'.
 
 interactive_expr: Ident With Record LBRACKET With
@@ -2427,10 +2427,10 @@ interactive_expr: Ident With Record With
 Ill-formed record update expression.
 At this point one of the following is expected:
   a semicolon ';' separated list of record field assignments,
-    closed with an 'end' keyword; or
+    which are closed with an 'end' keyword; or
   an opening bracket '[',
-    followed by a semicolon ';' separated list of record field assignments,
-      which are closed by a closing bracket ']'.
+    followed with a semicolon ';' separated list of record field assignments,
+      which are closed by a bracket ']'.
   
 interactive_expr: Ident With With
 ##
@@ -2444,7 +2444,7 @@ interactive_expr: Ident With With
 
 Ill-formed record update expression.
 At this point a 'record' keyword is expected, 
-  followed by record field assignments.
+  followed with record field assignments.
 
 interactive_expr: If Verbatim Then Verbatim Else With
 ##
@@ -2640,7 +2640,7 @@ interactive_expr: LPAR Verbatim With
 Ill-formed expression.
 At this point one of the following is expected:
   a comma ',',
-    followed by a tuple component, in the form of an expression; or
+    followed with a tuple component, in the form of an expression; or
   a closing parenthesis ')'.
 
 interactive_expr: LPAR With
@@ -2729,7 +2729,7 @@ interactive_expr: List LBRACKET Verbatim With
 Ill-formed list expression.
 At this point one of the following is expected:
   a semicolon ';',
-    followed by a item in the form of an expression; or
+    followed with a item in the form of an expression; or
   a closing bracket ']' if the list is complete.
 
 interactive_expr: List LBRACKET With
@@ -2778,7 +2778,7 @@ interactive_expr: List Verbatim With
 Ill-formed list expression.
 At this point one of the following is expected:
   a semicolon ';', 
-    followed by an item in the form of an expression; or
+    followed with an item in the form of an expression; or
   the closing 'end' keyword if the list is complete.
 
 interactive_expr: List With
@@ -2797,12 +2797,12 @@ interactive_expr: List With
 Ill-formed list expression.
 At this point one of the following is expected: 
   a semicolon ';' separated list of items,
-    closed with the 'end' keyword; or
+    which are closed with the 'end' keyword; or
   the 'end' keyword if the list is empty; or
   an opening bracket '[',
-    followed by one of the following:
+    followed with one of the following:
       a semicolon ';' separated list of items,
-        closed by a bracket; or
+        which are closed by a bracket; or
     a closing bracket if the list is empty.
 
 interactive_expr: MINUS With
@@ -2848,8 +2848,7 @@ interactive_expr: Map LBRACKET Verbatim ARROW Bytes With
 
 Ill-formed map expression.
 At this point one of the following is expected:
-  a semicolon ';', 
-    followed by a key/value binding; or
+  a key/value binding; or
   a closing bracket ']' if the map is complete.
 
 interactive_expr: Map LBRACKET With
@@ -2898,8 +2897,7 @@ interactive_expr: Map Verbatim ARROW Bytes With
 
 Ill-formed map expression.
 At this point of the following is expected: 
-  a semicolon ';', 
-    followed by a key/value binding; or 
+  a key/value binding; or 
   the closing 'end' keyword if the map is complete.
 
 interactive_expr: Map Verbatim ARROW With
@@ -2960,12 +2958,12 @@ interactive_expr: Map With
 Ill-formed map expression.
 At this point one of the following is expected: 
   a semicolon ';' separated list of key/value bindings,
-    closed with the 'end' keyword; or
+    which are closed with the 'end' keyword; or
   the 'end' keyword if the map is empty; or
   an opening bracket '[',
-    followed by one of the following:
+    followed with one of the following:
       a semicolon ';' separated list of key/value bindings,
-        closed by a bracket; or
+        which are closed by a bracket; or
     a closing bracket if the map is empty.
 
 interactive_expr: Not With
@@ -3106,8 +3104,8 @@ At this point one of the following is expected:
   a semicolon ';' separated list of record field assignments,
     which are closed by the 'end' keyword; or
   an opening bracket '[',
-    followed by a semicolon ';' separated list of record field assignments,
-      which are closed by a closing bracket ']'.
+    followed with a semicolon ';' separated list of record field assignments,
+      which are closed by a bracket ']'.
 
 interactive_expr: Set LBRACKET Verbatim With
 ##
@@ -3139,7 +3137,7 @@ interactive_expr: Set LBRACKET Verbatim With
 Ill-formed set expression.
 At this point one of the following is expected:
   a semicolon ';',
-    followed by a item in the form of an expression; or
+    followed with a item in the form of an expression; or
   a closing bracket ']' if the set is complete.
 
 interactive_expr: Set LBRACKET With
@@ -3188,7 +3186,7 @@ interactive_expr: Set Verbatim With
 Ill-formed set expression.
 At this point one of the following is expected:
   a semicolon ';', 
-    followed by an item in the form of an expression; or
+    followed with an item in the form of an expression; or
   the closing 'end' keyword if the set is complete.
 
 interactive_expr: Set With
@@ -3207,12 +3205,12 @@ interactive_expr: Set With
 Ill-formed set expression.
 At this point one of the following is expected: 
   a semicolon ';' separated list of items,
-    closed with the 'end' keyword; or
+    which are closed with the 'end' keyword; or
   the 'end' keyword if the set is empty; or
   an opening bracket '[',
-    followed by one of the following:
+    followed with one of the following:
       a semicolon ';' separated list of items,
-        closed by a bracket; or
+        which are closed by a bracket; or
     a closing bracket if the set is empty.
 
 interactive_expr: Verbatim And With
@@ -3484,8 +3482,8 @@ contract: Attributes LBRACKET String With
 Ill-formed attributes.
 At this point one of the following is expected:
   a semicolon ';',
-    followed by an attribute in the form of a string,
-      closed with a closing bracket ']'; or
+    followed with an attribute in the form of a string,
+      which are closed with a closing bracket ']'; or
   a closing bracket ']'.
 
 contract: Attributes LBRACKET With
@@ -3582,8 +3580,8 @@ At this point one of the following is expected:
   a semicolon ';' separated list of strings,
     followed with the 'end' keyword.
   an opening bracket '[',
-    followed by a semicolon ';' separated list of strings, 
-      closed with an closing bracket ']'.
+    followed with a semicolon ';' separated list of strings, 
+      which are closed with an closing bracket ']'.
 
 contract: Const Ident COLON Ident With
 ##
@@ -3608,7 +3606,7 @@ contract: Const Ident COLON Ident With
 
 Ill-formed constant declaration.
 At this point an equals '=' symbol is expected,
-  followed by a value in the form of an expression.
+  followed with a value in the form of an expression.
 
 contract: Const Ident EQ With
 ##
@@ -3637,7 +3635,7 @@ Ill-formed constant declaration.
 At this point one of the following is expected:
   a type annotation; or
   an equals '=' symbol, 
-    followed by a value in the form of an expression.
+    followed with a value in the form of an expression.
 
 contract: Const With
 ##
@@ -3676,7 +3674,7 @@ contract: Function Ident LPAR Const Ident RPAR COLON Ident With
 
 Ill-formed function declaration.
 At this point the 'is' keyword is expected, 
-  followed by an expression.
+  followed with an expression.
 
 contract: Function Ident LPAR Const Ident RPAR Is With
 ##
@@ -3705,7 +3703,7 @@ Ill-formed function declaration.
 At this point one of the following is expected:
   a type annotation; or 
   the 'is' keyword,
-    followed by an expression.
+    followed with an expression.
 
 contract: Function Ident With
 ##
@@ -3783,7 +3781,7 @@ Ill-formed function declaration.
 At this point one of the following is expected:
   a type annotation; or 
   the 'is' keyword,
-    followed by an expression.
+    followed with an expression.
 
 contract: Recursive Function Ident With
 ##
@@ -3960,7 +3958,7 @@ contract: Type Ident Is Record Ident COLON Ident With
 Ill-formed record type declaration.
 At this point one of the following is expected:
   a semicolon ';',
-    followed by another record field; or
+    followed with another record field; or
   the closing 'end' keyword.
 
 contract: Type Ident Is Record Ident With
@@ -4017,7 +4015,7 @@ contract: Type Ident Is Record LBRACKET With
 
 Ill-formed record type.
 At this point a semicolon ';' separated list of field declarations is expected,
-  followed by a closing bracket ']'.
+  followed with a closing bracket ']'.
 
 contract: Type Ident Is Record With
 ##
@@ -4035,8 +4033,8 @@ At this point one of the following is expected:
   a semicolon ';' separated list of record field declarations,
     which are closed by the 'end' keyword; or
   an opening bracket '[',
-    followed by a semicolon ';' separated list of record field declarations,
-      which are closed by a closing bracket ']'.
+    followed with a semicolon ';' separated list of record field declarations,
+      which are closed by a bracket ']'.
 
 contract: Type Ident Is Set With
 ##
@@ -4121,7 +4119,7 @@ contract: Type Ident With
 
 Ill-formed type declaration.
 At this point, if the name of the type is complete, the "is" keyword is expected,
-  followed by a type expression.
+  followed with a type expression.
 
 contract: Type With
 ##
