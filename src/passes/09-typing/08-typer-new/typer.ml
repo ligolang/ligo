@@ -268,9 +268,6 @@ and type_expression : environment -> O'.typer_state -> ?tv_opt:O.type_expression
   | E_literal (Literal_unit) -> (
       return_wrapped (e_unit ()) state @@ Wrap.literal (t_unit ())
     )
-  | E_literal (Literal_void) -> (
-      failwith "TODO: missing implementation for literal void"
-    )
 
   | E_record_accessor {record;path} -> (
       let%bind (base' , state') = type_expression e state record in

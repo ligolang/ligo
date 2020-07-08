@@ -44,7 +44,6 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
                         | TC_signature -> C_signature
                         | TC_operation -> C_operation
                         | TC_chain_id  -> C_unit    (* TODO : replace  with chain_id *)
-                        | TC_void      -> C_unit    (* TODO : replace with void *)
                   )
      in
      p_constant csttag []

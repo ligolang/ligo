@@ -99,12 +99,6 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
         get_string v in
       return (E_literal (Literal_chain_id n))
     )
-    | TC_void -> (
-      let%bind () =
-        trace_option (wrong_mini_c_value t v) @@
-        get_unit v in
-      return (E_literal (Literal_void))
-    )
     |  TC_signature -> (
       let%bind n =
         trace_option (wrong_mini_c_value t v) @@

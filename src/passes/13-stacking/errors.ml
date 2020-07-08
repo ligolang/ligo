@@ -10,7 +10,6 @@ type stacking_error = [
   | `Stacking_not_comparable_base of Mini_c.type_base
   | `Stacking_not_comparable of Mini_c.type_expression
   | `Stacking_not_comparable_pair_struct
-  | `Stacking_void_type_not_compilable
   | `Stacking_unparsing_unrecognized_data of
     (Proto_alpha_utils.Trace.tezos_alpha_error list)
   | `Stacking_untranspilable of Michelson.michelson * Michelson.michelson
@@ -32,7 +31,6 @@ let bad_iterator cst = `Stacking_bad_iterator cst
 let not_comparable_base tb = `Stacking_not_comparable_base tb
 let not_comparable t = `Stacking_not_comparable t
 let not_comparable_pair_struct = `Stacking_not_comparable_pair_struct
-let void_type_not_compilable = `Stacking_void_type_not_compilable
 let unrecognized_data errs = `Stacking_unparsing_unrecognized_data errs
 let untranspilable m_data m_type = `Stacking_untranspilable (m_data, m_type)
 let bad_constant_arity c = `Stacking_bad_constant_arity c
@@ -73,9 +71,6 @@ let rec error_ppformat : display_format:string display_format ->
       Format.pp_print_string f s ;
     | `Stacking_not_comparable_pair_struct ->
       let s = "pair does not have a comparable structure. (hint: use (a,(b,c)) instead of (a,b,c))" in
-      Format.pp_print_string f s;
-    | `Stacking_void_type_not_compilable ->
-      let s = "void is not a compilable type" in
       Format.pp_print_string f s;
     | `Stacking_unparsing_unrecognized_data _errlist ->
       let s = "unparsing unrecognized data" in
@@ -153,11 +148,6 @@ let rec error_jsonformat : stacking_error -> Yojson.t = fun a ->
     let content = `Assoc [
        ("message", `String "pair does not have a comparable structure");
        ("hint", `String "use (a,(b,c)) instead of (a,b,c)"); ]
-    in
-    json_error ~stage ~content
-  | `Stacking_void_type_not_compilable ->
-    let content = `Assoc [
-       ("message", `String "void is not a compilable type"); ]
     in
     json_error ~stage ~content
   | `Stacking_unparsing_unrecognized_data _errlist ->

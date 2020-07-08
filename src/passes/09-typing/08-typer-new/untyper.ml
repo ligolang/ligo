@@ -21,7 +21,7 @@ let unconvert_type_constant : O.type_constant -> I.type_constant = function
     | TC_chain_id -> TC_chain_id
     | TC_signature -> TC_signature
     | TC_timestamp -> TC_timestamp
-    | TC_void -> TC_void
+
 let unconvert_constant' : O.constant' -> I.constant' = function
   | C_INT -> C_INT
   | C_UNIT -> C_UNIT
@@ -218,7 +218,6 @@ let untype_literal (l:O.literal) : (I.literal, typer_error) result =
   let open I in
   match l with
   | Literal_unit -> ok Literal_unit
-  | Literal_void -> ok Literal_void
   | Literal_nat n -> ok (Literal_nat n)
   | Literal_timestamp n -> ok (Literal_timestamp n)
   | Literal_mutez n -> ok (Literal_mutez n)
