@@ -36,6 +36,7 @@ module Parser
   ( -- * Parser type
     Parser
   , runParser
+  , runParser'
   , debugParser
 
     -- * Combinators
@@ -62,6 +63,8 @@ module Parser
 
     -- * Comments and ranges
   , ASTInfo(..)
+  , Source(..)
+  , module ParseTree
   ) where
 
 import Control.Monad.Writer hiding (Product)
@@ -116,6 +119,12 @@ runParser parser fin = do
     (Cons dir
     (Cons Set.empty
      Nil)))
+
+runParser'
+  :: Parser a
+  -> Source
+  -> IO a
+runParser' parser fin = fst <$> runParser parser fin
 
 restart :: Stubbed a ASTInfo => Parser a -> FilePath -> Parser a
 restart p fin = do

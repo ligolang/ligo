@@ -685,7 +685,7 @@ fun_call = do
   subtree "fun_call" do
     ranged do
       pure Apply
-        <*> ranged do pure Ident <*> inside "f" function_id
+        <*> inside "f" function_id
         <*> inside "arguments" arguments
 
 arguments :: Parser [Pascal ASTInfo]
@@ -694,16 +694,17 @@ arguments =
     many do inside "argument" expr
 
 function_id :: Parser (Pascal ASTInfo)
-function_id = select
-  [ qname
-  , do
-      subtree "module_field" do
-        ranged do
-          pure QualifiedName
-            <*> inside "module" capitalName
-            <*> do pure <$> ranged do
-                    pure At <*> inside "method" do name <|> name'
-  ]
+function_id = ranged do
+  pure Ident <*> select
+    [ qname
+    , do
+        subtree "module_field" do
+          ranged do
+            pure QualifiedName
+              <*> inside "module" capitalName
+              <*> do pure <$> ranged do
+                      pure At <*> inside "method" do name <|> name'
+    ]
 
 opCall :: Parser (Pascal ASTInfo)
 opCall = do
@@ -848,7 +849,7 @@ typeTuple = do
 -- example = "../../../src/test/contracts/amount.ligo"
 -- example = "../../../src/test/contracts/annotation.ligo"
 -- example = "../../../src/test/contracts/arithmetic.ligo"
--- example = "../../../src/test/contracts/assign.ligo"
+example = "../../../src/test/contracts/assign.ligo"
 -- example = "../../../src/test/contracts/attributes.ligo"
 -- example = "../../../src/test/contracts/bad_timestamp.ligo"
 -- example = "../../../src/test/contracts/bad_type_operator.ligo"
@@ -864,7 +865,7 @@ typeTuple = do
 -- example = "../../../src/test/contracts/failwith.ligo"
 -- example = "../../../src/test/contracts/loop.ligo"
 -- example = "../../../src/test/contracts/redeclaration.ligo"
-example = "../../../src/test/contracts/includer.ligo"
+-- example = "../../../src/test/contracts/includer.ligo"
 -- example = "../../../src/test/contracts/application.ligo"
 -- example = "../../../src/test/contracts/application.ligo"
 -- example = "../../../src/test/contracts/application.ligo"

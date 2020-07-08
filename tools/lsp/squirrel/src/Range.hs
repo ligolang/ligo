@@ -7,6 +7,7 @@ module Range
   , HasRange(..)
   , diffRange
   , cutOut
+  , point
   )
   where
 
@@ -20,6 +21,9 @@ import System.FilePath
 import Pretty
 import Lattice
 import Product
+
+point :: Int -> Int -> Range
+point l c = Range (l, c, 0) (l, c, 0) ""
 
 -- | A continious location in text.
 data Range = Range
