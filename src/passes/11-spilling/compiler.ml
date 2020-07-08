@@ -154,7 +154,6 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
   | T_constant (TC_key)       -> return (T_base TB_key)
   | T_constant (TC_key_hash)  -> return (T_base TB_key_hash)
   | T_constant (TC_chain_id)  -> return (T_base TB_chain_id)
-  | T_constant (TC_void)      -> return (T_base TB_void)
   | T_operator (TC_contract x) ->
       let%bind x' = compile_type x in
       return (T_contract x')
@@ -282,7 +281,6 @@ let rec compile_literal : AST.literal -> value = fun l -> match l with
   | Literal_chain_id s -> D_string s
   | Literal_operation op -> D_operation op
   | Literal_unit -> D_unit
-  | Literal_void -> D_none
 
 and tree_of_sum : AST.type_expression -> ((AST.constructor' * AST.type_expression) Append_tree.t, spilling_error) result = fun t ->
   let%bind map_tv =

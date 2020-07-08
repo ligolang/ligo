@@ -74,8 +74,6 @@ let assert_literal_eq (a, b : literal * literal) : unit option =
   | Literal_bytes a, Literal_bytes b when a = b -> Some ()
   | Literal_bytes _, Literal_bytes _ -> None
   | Literal_bytes _, _ -> None
-  | Literal_void, Literal_void -> Some ()
-  | Literal_void, _ -> None
   | Literal_unit, Literal_unit -> Some ()
   | Literal_unit, _ -> None
   | Literal_address a, Literal_address b when a = b -> Some ()

@@ -32,7 +32,6 @@ let convert_type_constant : I.type_constant -> O.type_constant = function
     | TC_chain_id -> TC_chain_id
     | TC_signature -> TC_signature
     | TC_timestamp -> TC_timestamp
-    | TC_void -> TC_void
 
 let convert_constant' : I.constant' -> O.constant' = function
   | C_INT -> C_INT
@@ -465,7 +464,6 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       return (E_variable name) tv'.type_value
   | E_literal Literal_unit ->
       return (E_literal (Literal_unit)) (t_unit ())
-  | E_literal Literal_void -> return (E_literal (Literal_void)) (t_unit ()) (* TODO : IS this really a t_unit ?*)
   | E_literal (Literal_string s) ->
       return (E_literal (Literal_string s)) (t_string ())
   | E_literal (Literal_key s) ->
@@ -779,7 +777,6 @@ let untype_literal (l:O.literal) : (I.literal , typer_error) result =
   let open I in
   match l with
   | Literal_unit -> ok Literal_unit
-  | Literal_void -> ok Literal_void
   | Literal_nat n -> ok (Literal_nat n)
   | Literal_timestamp n -> ok (Literal_timestamp n)
   | Literal_mutez n -> ok (Literal_mutez n)

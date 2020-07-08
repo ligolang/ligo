@@ -98,8 +98,6 @@ let assert_literal_eq (a, b : literal * literal) : (unit, typer_error) result =
   | Literal_bytes a, Literal_bytes b when a = b -> ok ()
   | Literal_bytes _, Literal_bytes _ -> fail @@ different_literals "different bytes" a b
   | Literal_bytes _, _ -> fail @@ different_literals_because_different_types "bytes vs non-bytes" a b
-  | Literal_void, Literal_void -> ok ()
-  | Literal_void, _ -> fail @@ different_literals_because_different_types "void vs non-void" a b
   | Literal_unit, Literal_unit -> ok ()
   | Literal_unit, _ -> fail @@ different_literals_because_different_types "unit vs non-unit" a b
   | Literal_address a, Literal_address b when a = b -> ok ()

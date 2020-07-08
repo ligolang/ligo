@@ -23,7 +23,6 @@ type type_constant =
     | TC_chain_id
     | TC_signature
     | TC_timestamp
-    | TC_void
 
 type te_cmap = ctor_content constructor_map
 and te_lmap = field_content label_map
@@ -94,7 +93,6 @@ type literal =
   | Literal_key of string
   | Literal_key_hash of string
   | Literal_chain_id of string
-  | Literal_void
   | Literal_operation of packed_internal_operation
 
 

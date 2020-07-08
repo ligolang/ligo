@@ -34,7 +34,6 @@ and type_base =
   | TB_chain_id
   | TB_signature
   | TB_timestamp
-  | TB_void
 
 and environment_element = expression_variable * type_expression
 

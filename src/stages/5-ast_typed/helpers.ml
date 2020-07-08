@@ -79,7 +79,6 @@ let string_of_type_constant = function
   | TC_chain_id  -> "TC_chain_id", []
   | TC_signature -> "TC_signature", []
   | TC_timestamp -> "TC_timestamp", []
-  | TC_void      -> "TC_void", []
 
 let string_of_type_expression' = function
   | T_operator o -> string_of_type_operator o

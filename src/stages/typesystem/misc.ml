@@ -108,9 +108,6 @@ module Substitution = struct
       | T.Literal_unit ->
         let () = ignore @@ substs in
         ok @@ T.Literal_unit
-      | T.Literal_void ->
-        let () = ignore @@ substs in
-        ok @@ T.Literal_void
       | (T.Literal_int _ as x)
       | (T.Literal_nat _ as x)
       | (T.Literal_timestamp _ as x)

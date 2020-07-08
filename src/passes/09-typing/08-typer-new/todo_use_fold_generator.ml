@@ -18,7 +18,6 @@ let convert_type_constant : I.type_constant -> O.type_constant = function
     | TC_chain_id -> TC_chain_id
     | TC_signature -> TC_signature
     | TC_timestamp -> TC_timestamp
-    | TC_void -> TC_void
 
 let convert_constant' : I.constant' -> O.constant' = function
   | C_INT -> C_INT

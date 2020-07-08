@@ -184,7 +184,6 @@ let operation ppf (o : Memory_proto_alpha.Protocol.Alpha_context.packed_internal
 let literal ppf (l : literal) =
   match l with
   | Literal_unit -> fprintf ppf "unit"
-  | Literal_void -> fprintf ppf "void"
   | Literal_int z -> fprintf ppf "%a" Z.pp_print z
   | Literal_nat z -> fprintf ppf "+%a" Z.pp_print z
   | Literal_timestamp z -> fprintf ppf "+%a" Z.pp_print z
@@ -216,7 +215,6 @@ let s =
     | TC_signature -> "signature"
     | TC_timestamp -> "timestamp"
     | TC_chain_id -> "chain_id"
-    | TC_void -> "void"
 in
 fprintf ppf "%s" s
 
