@@ -53,7 +53,7 @@ module M = struct
         `List (List.map aux lst) );
       location_wrap             = (fun _visitor continue NoState lwrap  ->
         let ({ wrap_content; location } : _ Location.wrap) = lwrap in
-        `Assoc [("wrap_content", continue NoState wrap_content) ; ("location", `String (asprintf "%a" Location.pp location))] ); (*TODO*)
+        `Assoc [("wrap_content", continue NoState wrap_content) ; ("location", Location.pp_json location)] );
       option = (fun _visitor continue NoState o ->
         match o with
         | None -> `List [ `String "None" ; `Null ]
