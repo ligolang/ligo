@@ -39,6 +39,12 @@ contract =
 name :: Parser (Pascal ASTInfo)
 name = ranged do pure Name <*> token "Name"
 
+typeName :: Parser (Pascal ASTInfo)
+typeName = ranged do pure TypeName <*> token "TypeName"
+
+fieldName :: Parser (Pascal ASTInfo)
+fieldName = ranged do pure FieldName <*> token "FieldName"
+
 capitalName :: Parser (Pascal ASTInfo)
 capitalName = ranged do pure Name <*> token "Name_Capital"
 
@@ -65,7 +71,7 @@ typedecl = do
   subtree "type_decl" do
     ranged do
       pure TypeDecl
-        <*> inside "typeName:"  name
+        <*> inside "typeName:"  typeName
         <*> inside "typeValue:" newtype_
 
 vardecl :: Parser (Pascal ASTInfo)
@@ -185,7 +191,7 @@ field_path_assignment = do
   subtree "field_path_assignment" do
     ranged do
       pure FieldAssignment
-        <*> inside "lhs:path" do qname <|> projection
+        <*> inside "lhs:fpath" do fqname <|> projection
         <*> inside "_rhs" expr
 
 map_patch :: Parser (Pascal ASTInfo)
@@ -556,6 +562,13 @@ qname = do
       <*> name
       <*> pure []
 
+fqname :: Parser (Pascal ASTInfo)
+fqname = do
+  ranged do
+    pure QualifiedName
+      <*> fieldName
+      <*> pure []
+
 qname' :: Parser (Pascal ASTInfo)
 qname' = do
   ranged do
@@ -640,7 +653,7 @@ projection = do
 selection :: Parser (Pascal ASTInfo)
 selection = do
     inside "index:selection"
-      $   ranged do pure At <*> name
+      $   ranged do pure At <*> fieldName
       <|> ranged do pure Ix <*> token "Int"
   <|>
     inside "index" do
@@ -677,7 +690,7 @@ record_expr = do
         inside "assignment:field_assignment" do
           ranged do
             pure Assignment
-              <*> inside "name" name
+              <*> inside "name" fieldName
               <*> inside "_rhs" expr
 
 fun_call :: Parser (Pascal ASTInfo)
@@ -789,7 +802,7 @@ field_decl = do
   subtree "field_decl" do
     ranged do
       pure TField
-        <*> inside "fieldName" name
+        <*> inside "fieldName" fieldName
         <*> inside "fieldType" newtype_
 
 type_ :: Parser (Pascal ASTInfo)
@@ -819,7 +832,7 @@ type_ =
 
     core_type = do
       select
-        [ ranged do pure TVar <*> name
+        [ ranged do pure TVar <*> typeName
         , subtree "invokeBinary" do
             ranged do
               pure TApply
@@ -849,7 +862,7 @@ typeTuple = do
 -- example = "../../../src/test/contracts/amount.ligo"
 -- example = "../../../src/test/contracts/annotation.ligo"
 -- example = "../../../src/test/contracts/arithmetic.ligo"
-example = "../../../src/test/contracts/assign.ligo"
+-- example = "../../../src/test/contracts/assign.ligo"
 -- example = "../../../src/test/contracts/attributes.ligo"
 -- example = "../../../src/test/contracts/bad_timestamp.ligo"
 -- example = "../../../src/test/contracts/bad_type_operator.ligo"
@@ -866,7 +879,7 @@ example = "../../../src/test/contracts/assign.ligo"
 -- example = "../../../src/test/contracts/loop.ligo"
 -- example = "../../../src/test/contracts/redeclaration.ligo"
 -- example = "../../../src/test/contracts/includer.ligo"
--- example = "../../../src/test/contracts/application.ligo"
+example = "../../../src/test/contracts/namespaces.ligo"
 -- example = "../../../src/test/contracts/application.ligo"
 -- example = "../../../src/test/contracts/application.ligo"
 -- example = "../../../src/test/contracts/application.ligo"

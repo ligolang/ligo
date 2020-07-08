@@ -198,7 +198,7 @@ rangeToLoc (Range (a, b, _) (c, d, _) _) =
 loadFromVFS
   :: Core.LspFuncs ()
   -> J.Uri
-  -> IO (Pascal (Product [[ScopedDecl], Range, [Text]]))
+  -> IO (Pascal (Product [[ScopedDecl], Maybe Category, Range, [Text]]))
 loadFromVFS funs uri = do
   Just vf <- Core.getVirtualFileFunc funs $ J.toNormalizedUri uri
   let txt = virtualFileText vf
@@ -206,7 +206,9 @@ loadFromVFS funs uri = do
   (tree, _) <- runParser contract (Text fin txt)
   return $ addLocalScopes tree
 
-loadByURI :: J.Uri -> IO (Pascal (Product [[ScopedDecl], Range, [Text]]))
+loadByURI
+  :: J.Uri
+  -> IO (Pascal (Product [[ScopedDecl], Maybe Category, Range, [Text]]))
 loadByURI uri = do
   case J.uriToFilePath uri of
     Just fin -> do

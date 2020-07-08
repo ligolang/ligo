@@ -75,7 +75,7 @@ module.exports = grammar({
     type_decl: $ =>
       seq(
         "type",
-        field("typeName", $.Name),
+        field("typeName", $.TypeName),
         "is",
         field("typeValue", $._type_expr),
       ),
@@ -109,14 +109,14 @@ module.exports = grammar({
 
     _core_type: $ =>
       choice(
-        $.Name,
+        $.TypeName,
         $.invokeBinary,
         $.invokeUnary,
       ),
 
     invokeBinary: $ =>
       seq(
-        field("typeConstr", choice('map', 'big_map', $.Name)),
+        field("typeConstr", choice('map', 'big_map', $.TypeName)),
         field("arguments", $.type_tuple),
       ),
 
@@ -159,7 +159,7 @@ module.exports = grammar({
 
     field_decl: $ =>
       seq(
-        field("fieldName", $.Name),
+        field("fieldName", $.FieldName),
         ':',
         field("fieldType", $._type_expr),
       ),
@@ -575,6 +575,8 @@ module.exports = grammar({
 
     path: $ => choice($.Name, $._projection),
 
+    fpath: $ => choice($.FieldName, $._projection),
+
     module_field: $ =>
       seq(
         field("module", $.Name_Capital),
@@ -616,7 +618,7 @@ module.exports = grammar({
         sepBy1('.', field("index", $.selection)),
       ),
 
-    selection: $ => choice($.Name, $.Int),
+    selection: $ => choice($.FieldName, $.Int),
 
     record_expr: $ =>
       choice(
@@ -642,14 +644,14 @@ module.exports = grammar({
 
     field_assignment: $ =>
       seq(
-        field("name", $.Name),
+        field("name", $.FieldName),
         '=',
         field("_rhs", $._expr),
       ),
 
     field_path_assignment: $ =>
       seq(
-        field("lhs", $.path),
+        field("lhs", $.fpath),
         '=',
         field("_rhs", $._expr),
       ),
@@ -747,6 +749,8 @@ module.exports = grammar({
     Nat:          $ => /([1-9][0-9_]*|0)n/,
     Tez:          $ => /([1-9][0-9_]*|0)(\.[0-9_]+)?(tz|tez|mutez)/,
     Bytes:        $ => /0x[0-9a-fA-F]+/,
+    FieldName:    $ => /[a-z][a-zA-Z0-9_]*/,
+    TypeName:     $ => /[a-z][a-zA-Z0-9_]*/,
     Name:         $ => /[a-z][a-zA-Z0-9_]*/,
     Name_Capital: $ => /[A-Z][a-zA-Z0-9_]*/,
     Keyword:      $ => /[A-Za-z][a-z]*/,

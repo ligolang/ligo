@@ -181,11 +181,11 @@ traverseOnly act = go
 
     go tree = pure tree
 
-data Visit fs a m where
+data Visit fs a b m where
   Visit
     :: (Element f fs, Traversable f)
-    => (a -> f (Tree fs a) -> m (f (Tree fs a)))
-    -> Visit fs a m
+    => (a -> f (Tree fs a) -> m (b, f (Tree fs a)))
+    -> Visit fs a b m
 
 traverseMany
   :: ( Apply Functor fs
@@ -193,26 +193,27 @@ traverseMany
      , Apply Traversable fs
      , Monad m
      )
-  => [Visit fs a m]
+  => [Visit fs a b m]
+  -> (a -> b)
   -> Tree fs a
-  -> m (Tree fs a)
-traverseMany visitors = go
+  -> m (Tree fs b)
+traverseMany visitors orElse = go
   where
     go tree = aux visitors
       where
         aux (Visit visitor : rest) = do
           case match tree of
             Just (r, fa) -> do
-              fa'  <- visitor r fa
+              (r', fa')  <- visitor r fa
               fa'' <- traverse go fa'
-              return $ mk r fa''
+              return $ mk r' fa''
             Nothing -> do
               aux rest
         aux [] = do
           case tree of
             Tree (Right (r, union)) -> do
               union' <- traverse go union
-              return $ Tree (Right (r, union'))
+              return $ Tree (Right (orElse r, union'))
 
 -- | Make a tree out of a layer and an info.
 mk :: (Functor f, Element f fs) => info -> f (Tree fs info) -> Tree fs info

@@ -20,7 +20,7 @@ import Tree
 type Pascal = Tree
   [ Name, Path, QualifiedName, Pattern, Constant, FieldAssignment, Assignment
   , MapBinding, LHS, Alt, Expr, TField, Variant, Type, Mutable, VarDecl, Binding
-  , Declaration, Contract
+  , Declaration, Contract, TypeName, FieldName
   ]
 
 data Contract it
@@ -170,11 +170,19 @@ data Path it
   deriving (Show) via PP (Path it)
   deriving stock (Functor, Foldable, Traversable)
 
-data Name it = Name
+newtype Name it = Name
   { _raw     :: Text
   }
   deriving (Show) via PP (Name it)
   deriving stock (Functor, Foldable, Traversable)
+
+newtype TypeName it = TypeName Text
+  deriving (Show) via PP (TypeName it)
+  deriving stock   (Functor, Foldable, Traversable)
+
+newtype FieldName it = FieldName Text
+  deriving (Show) via PP (TypeName it)
+  deriving stock   (Functor, Foldable, Traversable)
 
 instance Pretty1 Contract where
   pp1 = \case
@@ -307,7 +315,15 @@ instance Pretty1 Pattern where
 
 instance Pretty1 Name where
   pp1 = \case
-    Name      raw -> pp raw
+    Name         raw -> pp raw
+
+instance Pretty1 TypeName where
+  pp1 = \case
+    TypeName     raw -> pp raw
+
+instance Pretty1 FieldName where
+  pp1 = \case
+    FieldName    raw -> pp raw
 
 instance Pretty1 Path where
   pp1 = \case

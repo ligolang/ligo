@@ -48,32 +48,81 @@ type CollectM = State (Product [FullEnv, [Range]])
 
 type AddRefsM = State FullEnv
 
-type FullEnv = Map Range [ScopedDecl]
+data FullEnv = FullEnv
+  { vars   :: Env
+  , types  :: Env
+  }
+
+data Category = Variable | Type
+
+emptyEnv = FullEnv Map.empty Map.empty
+
+with Variable (FullEnv vs ts) f = FullEnv (f vs) ts
+with Type     (FullEnv vs ts) f = FullEnv vs (f ts)
+
+grab Variable (FullEnv vs ts) = vs
+grab Type     (FullEnv vs ts) = ts
+
+type Env = Map Range [ScopedDecl]
+
+ofCategory Variable ScopedDecl { _sdType = Just (Right Star) } = False
+ofCategory Variable _                                          = True
+ofCategory Type     ScopedDecl { _sdType = Just (Right Star) } = True
+ofCategory _        _                                          = False
 
 -- | Calculate scopes and attach to all tree points declarations that are
 --   visible there.
 --
 addLocalScopes
-  :: HasRange (Product xs)
+  :: Contains Range xs
   => Pascal (Product xs)
-  -> Pascal (Product ([ScopedDecl] : xs))
+  -> Pascal (Product ([ScopedDecl] : Maybe Category : xs))
 addLocalScopes tree =
-    fmap (\xs -> Cons (envAt envWithREfs $ getRange xs) xs) tree
+    fmap (\xs -> Cons (fullEnvAt envWithREfs (getRange xs)) xs) tree1
   where
+    tree1       = addNameCategories tree
     envWithREfs = getEnvTree tree
+
+addNameCategories
+  :: Contains Range xs
+  => Pascal (Product xs)
+  -> Pascal (Product (Maybe Category : xs))
+addNameCategories tree = flip evalState emptyEnv do
+  traverseMany
+    [ Visit \r (Name t) -> do
+        modify $ getRange r `addRef` (Variable, t)
+        return $ (Cons (Just Variable) r, Name t)
+
+    , Visit \r (TypeName t) -> do
+        modify $ getRange r `addRef` (Type, t)
+        return $ (Cons (Just Type) r, TypeName t)
+    ]
+    (Cons Nothing)
+    tree
 
 getEnvTree tree = envWithREfs
   where
     envWithREfs = flip execState env do
-      flip traverseOnly tree \r (Name t) -> do
-        modify $ getRange r `addRef` t
-        return $ Name t
+      traverseMany
+        [ Visit \r (Name t) -> do
+            modify $ getRange r `addRef` (Variable, t)
+            return $ (r, Name t)
+
+        , Visit \r (TypeName t) -> do
+            modify $ getRange r `addRef` (Type, t)
+            return $ (r, TypeName t)
+        ]
+        id
+        tree
 
     env
       = execCollectM
       $ traverseTree pure tree
 
-envAt :: FullEnv -> Range -> [ScopedDecl]
+fullEnvAt :: FullEnv -> Range -> [ScopedDecl]
+fullEnvAt fe r = envAt (grab Type fe) r <> envAt (grab Variable fe) r
+
+envAt :: Env -> Range -> [ScopedDecl]
 envAt env pos =
     Map.elems scopes
   where
@@ -83,21 +132,25 @@ envAt env pos =
     isCovering = (pos <?)
     toScopeMap sd@ScopedDecl {_sdName} = Map.singleton (ppToText _sdName) sd
 
-addRef :: Range -> Text -> FullEnv -> FullEnv
-addRef r n env = Map.union (go range) env
+addRef :: Range -> (Category, Text) -> FullEnv -> FullEnv
+addRef r (cat, n) env =
+  with cat env \slice ->
+    Map.union
+      (go slice $ range slice)
+      slice
   where
-    go (r' : rest) =
-      let decls = env Map.! r'
+    go slice (r' : rest) =
+      let decls = slice Map.! r'
       in
         case updateOnly n r addRefToDecl decls of
           (True,  decls) -> Map.singleton r' decls
-          (False, decls) -> Map.insert r' decls (go rest)
-    go [] = Map.empty
+          (False, decls) -> Map.insert r' decls (go slice rest)
+    go _ [] = Map.empty
 
-    range
+    range slice
       = List.sortBy partOrder
       $ filter (r <?)
-      $ Map.keys env
+      $ Map.keys slice
 
     addRefToDecl sd = sd
       { _sdRefs = r : _sdRefs sd
@@ -125,25 +178,28 @@ enter :: Range -> CollectM ()
 enter r = do
   modify $ modElem (r :)
 
-define :: ScopedDecl -> CollectM ()
-define sd = do
+define :: Category -> ScopedDecl -> CollectM ()
+define cat sd = do
   r <- gets (head . getElem)
   modify
-    $ modElem @FullEnv
-    $ Map.insertWith (++) r [sd]
+    $ modElem @FullEnv \env ->
+        with cat env
+        $ Map.insertWith (++) r [sd]
 
 leave :: CollectM ()
 leave = modify $ modElem @[Range] tail
 
 -- | Run the computation with scope starting from empty scope.
 execCollectM :: CollectM a -> FullEnv
-execCollectM action = getElem $ execState action $ Cons Map.empty (Cons [] Nil)
+execCollectM action = getElem $ execState action $ Cons emptyEnv (Cons [] Nil)
 
 instance {-# OVERLAPS #-} Pretty FullEnv where
-  pp = block . map aux .  Map.toList
+  pp = block . map aux . Map.toList . mergeFE
     where
-      aux (r, decls) =
-        pp r `indent` block decls
+      aux (r, fe) =
+        pp r `indent` block fe
+
+      mergeFE (FullEnv a b) = a <> b
 
 -- | The type/value declaration.
 data ScopedDecl = ScopedDecl
@@ -172,7 +228,7 @@ lookupEnv name = listToMaybe . filter ((name ==) . ppToText . _sdName)
 -- | Add a type declaration to the current scope.
 defType :: HasRange a => Pascal a -> Kind -> Pascal a -> CollectM ()
 defType name kind body = do
-  define
+  define Type
     $ ScopedDecl
       (void name)
       (getRange $ infoOf name)
@@ -194,7 +250,7 @@ def
   -> Maybe (Pascal a)
   -> CollectM ()
 def name ty body = do
-  define
+  define Variable
     $ ScopedDecl
       (void name)
       (getRange $ infoOf name)
@@ -276,4 +332,6 @@ instance HasRange a => UpdateOver CollectM Pattern (Pascal a) where
 
 instance UpdateOver CollectM QualifiedName (Pascal a)
 instance UpdateOver CollectM Path          (Pascal a)
-instance UpdateOver CollectM Name          (Pascal a) where
+instance UpdateOver CollectM Name          (Pascal a)
+instance UpdateOver CollectM TypeName      (Pascal a)
+instance UpdateOver CollectM FieldName     (Pascal a)
