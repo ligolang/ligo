@@ -5,7 +5,11 @@ let fold_map__list continue state v =
     let%bind (state , lst') = acc in
     let%bind (state , elt') = continue state elt in
     ok (state , elt' :: lst') in
-  List.fold_left aux (ok (state, [])) v
+  let%bind (state, l) = List.fold_left aux (ok (state, [])) v in
+  (* fold_left with a list accumulator will produce the results in
+     reverse order, so we apply List.rev to put them back in the right
+     order. *)
+  ok (state, List.rev l)
 
 
 let fold_map__option continue state v =
