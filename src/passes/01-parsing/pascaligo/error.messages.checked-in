@@ -71,7 +71,8 @@ interactive_expr: Begin Case Verbatim Of WILD ARROW Skip With
 
 Ill-formed case statement.
 At this point one of the following is expected:
-  a case in the form of a pattern; or
+  a  vertical bar '|', 
+    followed with case in the form of a pattern; or
   the 'end' keyword if the list of cases is complete.
 
 interactive_expr: Begin Case Verbatim Of WILD ARROW With
@@ -691,7 +692,8 @@ interactive_expr: Begin Patch Ident With Map LBRACKET Verbatim ARROW Bytes With
 
 Ill-formed map statement.
 At this point one of the following is expected:
-  a key/value binding; or
+  a semicolon ';', 
+    followed with a key/value binding; or
   a closing bracket ']' if the map is complete.
 
 interactive_expr: Begin Patch Ident With Map LBRACKET With
@@ -737,7 +739,8 @@ interactive_expr: Begin Patch Ident With Map Verbatim ARROW Bytes With
 
 Ill-formed map statement.
 At this point one of the following is expected:
-  a key/value binding; or 
+  a semicolon ';', 
+    followed with a key/value binding; or 
   the closing 'end' keyword if the map is complete.
 
 interactive_expr: Begin Patch Ident With Map With
@@ -789,7 +792,8 @@ interactive_expr: Begin Patch Ident With Record Ident EQ Bytes With
 
 Ill-formed record statement.
 At this point one of the following is expected:
-  another record field assignment; or 
+  a semicolon ';',
+    followed with another record field assignment; or 
   the closing 'end' keyword.
 
 interactive_expr: Begin Patch Ident With Record LBRACKET Ident EQ Bytes With
@@ -822,7 +826,8 @@ interactive_expr: Begin Patch Ident With Record LBRACKET Ident EQ Bytes With
 
 Ill-formed record statement.
 At this point one of the following is expected:
-  another record field assignment; or 
+  a semicolon ';',
+    followed with another record field assignment; or 
   a closing bracket ']'.
 
 interactive_expr: Begin Patch Ident With Record LBRACKET With
@@ -886,7 +891,8 @@ interactive_expr: Begin Patch Ident With Set LBRACKET Verbatim With
 
 Ill-formed set statement.
 At this point one of the following is expected:
-  an item in the form of an expression; or
+  a semicolon ';',
+    followed with an item in the form of an expression; or
   a closing bracket ']' if the set is complete.
 
 interactive_expr: Begin Patch Ident With Set LBRACKET With
@@ -932,7 +938,8 @@ interactive_expr: Begin Patch Ident With Set Verbatim With
 
 Ill-formed set statement.
 At this point one of the following is expected:
-  an item in the form of an expression; or
+  a semicolon ';', 
+    followed with an item in the form of an expression; or
   the closing 'end' keyword if the set is complete.
 
 interactive_expr: Begin Patch Ident With Set With
@@ -1117,7 +1124,8 @@ interactive_expr: Begin Skip With
 
 Ill-formed block statement.
 At this point one of the following is expected:
-  a statement; or
+  a semicolon ';',
+    followed with a statement; or
   a closing 'end' keyword if the block is complete.
 
 interactive_expr: Begin Var Ident ASS With
@@ -1332,8 +1340,9 @@ interactive_expr: BigMap Verbatim ARROW Bytes With
 ##
 
 Ill-formed big_map expression.
-At this point of the following is expected: 
-  a key/value binding; or 
+At this point one of the following is expected: 
+  a semicolon ';',
+    followed with a key/value binding; or 
   the closing 'end' keyword if the big_map is complete.
 
 interactive_expr: BigMap With
@@ -1378,22 +1387,23 @@ interactive_expr: Block LBRACE Skip With
 ##
 
 Ill-formed block statement. 
-If a statement is expected, then one of the following statements is expected:
-  a variable declaration; or
-  a constant declaration; or
-  a function declaration; or
-  an if statement; or
-  a case statement; or
-  an assignment; or
-  a for loop; or 
-  a while loop; or
-  a function call; or 
-  the 'skip' keyword; or
-  a record patch; or
-  a map patch; or 
-  a set patch; or
-  a map item removal; or
-  a set item removal.
+If a statement is expected, then at this point a semicolon ';' is expected,
+  followed with one of the following statements:
+    a variable declaration; or
+    a constant declaration; or
+    a function declaration; or
+    an if statement; or
+    a case statement; or
+    an assignment; or
+    a for loop; or 
+    a while loop; or
+    a function call; or 
+    the 'skip' keyword; or
+    a record patch; or
+    a map patch; or 
+    a set patch; or
+    a map item removal; or
+    a set item removal.
 If the block is complete, then a closing brace '}' is expected.
 
 interactive_expr: Block LBRACE With
@@ -2130,7 +2140,8 @@ interactive_expr: Ident DOT Ident While
 ##
 
 Ill-formed expression.
-TODO: INCOMPLETE.
+If this is a function call,
+  then at this point function arguments are expected.
 If this is a map lookup, 
   then at this point an opening bracket '[' is expected,
     followed with a value in the form of an expression,
@@ -2252,8 +2263,8 @@ interactive_expr: Ident LPAR Verbatim With
 
 Ill-formed function call.
 At this point one of the following is expected:
-  a comma ',',
-    followed with another argument in the form of an expression; or
+  a comma ',', 
+    followed with an argument in the form of an expression; or
   closing parenthesis ')'.
 
 interactive_expr: Ident LPAR With
@@ -2333,19 +2344,6 @@ At this point one of the following is expected:
   a semicolon ';',
     followed with a record field assignment; or
   the closing 'end' keyword.
-
-interactive_expr: Ident With Record Ident EQ With
-##
-## Ends in an error in state: 175.
-##
-## field_path_assignment -> path EQ . expr [ SEMI RBRACKET End ]
-##
-## The known suffix of the stack is as follows:
-## path EQ
-##
-
-Ill-formed record field assignment.
-At this point a value, in the form of an expression, is expected.
 
 interactive_expr: Ident With Record Ident With
 ##
@@ -2446,19 +2444,6 @@ Ill-formed record update expression.
 At this point a 'record' keyword is expected, 
   followed with record field assignments.
 
-interactive_expr: If Verbatim Then Verbatim Else With
-##
-## Ends in an error in state: 537.
-##
-## cond_expr -> If expr Then expr option(SEMI) Else . expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
-##
-## The known suffix of the stack is as follows:
-## If expr Then expr option(SEMI) Else
-##
-
-Ill-formed if conditional expression.
-At this point an expression is expected.
-
 interactive_expr: If Verbatim Then Verbatim With
 ##
 ## Ends in an error in state: 536.
@@ -2488,6 +2473,15 @@ interactive_expr: If Verbatim Then Verbatim With
 Ill-formed if conditional expression.
 At this point, if the expression is complete, the 'else' keyword is expected.
 
+interactive_expr: If Verbatim Then Verbatim Else With
+##
+## Ends in an error in state: 537.
+##
+## cond_expr -> If expr Then expr option(SEMI) Else . expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+##
+## The known suffix of the stack is as follows:
+## If expr Then expr option(SEMI) Else
+##
 interactive_expr: If Verbatim Then With
 ##
 ## Ends in an error in state: 534.
@@ -2848,7 +2842,8 @@ interactive_expr: Map LBRACKET Verbatim ARROW Bytes With
 
 Ill-formed map expression.
 At this point one of the following is expected:
-  a key/value binding; or
+  a semicolon ';',
+    followed with a key/value binding; or
   a closing bracket ']' if the map is complete.
 
 interactive_expr: Map LBRACKET With
@@ -2896,8 +2891,9 @@ interactive_expr: Map Verbatim ARROW Bytes With
 ##
 
 Ill-formed map expression.
-At this point of the following is expected: 
-  a key/value binding; or 
+At this point one of the following is expected: 
+  a semicolon ';',
+    followed with a key/value binding; or 
   the closing 'end' keyword if the map is complete.
 
 interactive_expr: Map Verbatim ARROW With
@@ -3013,6 +3009,15 @@ At this point one of the following is expected:
     followed with another record field assignment; or
   the closing 'end' keyword.
 
+interactive_expr: Ident With Record Ident EQ With
+##
+## Ends in an error in state: 175.
+##
+## field_path_assignment -> path EQ . expr [ SEMI RBRACKET End ]
+##
+## The known suffix of the stack is as follows:
+## path EQ
+##
 interactive_expr: Record Ident EQ With
 ##
 ## Ends in an error in state: 100.
@@ -3070,8 +3075,9 @@ interactive_expr: Record LBRACKET Ident EQ Bytes With
 
 Ill-formed record expression.
 At this point one of the following is expected:
-  another record field assignment; or 
-  the closing 'end' keyword.
+  a semicolon ';',
+    followed with another record field assignment; or 
+  a closing bracket ']'.
 
 interactive_expr: Record LBRACKET With
 ##
@@ -3561,7 +3567,8 @@ contract: Attributes String With
 
 Ill-formed attributes.
 At this point one of the following is expected:
-  an attribute in the form of a string; or
+  a semicolon ';',
+    followed with an attribute in the form of a string; or
   the closing 'end' keyword.
 
 contract: Attributes With
