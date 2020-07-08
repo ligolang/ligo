@@ -5,10 +5,10 @@
         "homepage": "",
         "owner": "hercules-ci",
         "repo": "gitignore.nix",
-        "rev": "2ced4519f865341adcb143c5d668f955a2cb997f",
-        "sha256": "0fc5bgv9syfcblp23y05kkfnpgh3gssz6vn24frs8dzw39algk2z",
+        "rev": "647d0821b590ee96056f4593640534542d8700e5",
+        "sha256": "0ks37vclz2jww9q0fvkk9jyhscw0ial8yx2fpakra994dm12yy1d",
         "type": "tarball",
-        "url": "https://github.com/hercules-ci/gitignore.nix/archive/2ced4519f865341adcb143c5d668f955a2cb997f.tar.gz",
+        "url": "https://github.com/hercules-ci/gitignore.nix/archive/647d0821b590ee96056f4593640534542d8700e5.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "nix-npm-buildpackage": {
@@ -17,10 +17,10 @@
         "homepage": "",
         "owner": "serokell",
         "repo": "nix-npm-buildpackage",
-        "rev": "f2107f638f7df7450a5b7b77b96aaf9752b838d9",
-        "sha256": "02w8jxmmhxsq7fgzml75b8w8i9mdqxnaajia99jajg6rdiam8zfp",
+        "rev": "9fd293facc8da7db68618bfe6c81892fb264e863",
+        "sha256": "09zqnibs0yr2smkpkfydx931y6sj9qfyvqrrjpfn5w3c2pcbzf5v",
         "type": "tarball",
-        "url": "https://github.com/serokell/nix-npm-buildpackage/archive/f2107f638f7df7450a5b7b77b96aaf9752b838d9.tar.gz",
+        "url": "https://github.com/serokell/nix-npm-buildpackage/archive/9fd293facc8da7db68618bfe6c81892fb264e863.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "nixpkgs": {
@@ -42,35 +42,29 @@
         "url_template": "https://github.com/sass/node-sass/releases/download/v<version>/linux-x64-64_binding.node",
         "version": "4.12.0"
     },
+    "tezos-packaging": {
+        "branch": "master",
+        "description": "Nix expressions for building tezos-client",
+        "homepage": "",
+        "owner": "serokell",
+        "repo": "tezos-packaging",
+        "rev": "8db9b53c465c2edc6ccff6f24505b8b39686e258",
+        "sha256": "1pshvjbswh1rcm1pzcnwzwna8ipb122shil526rscs1izkc4qa05",
+        "type": "tarball",
+        "url": "https://github.com/serokell/tezos-packaging/archive/8db9b53c465c2edc6ccff6f24505b8b39686e258.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
     "opam-nix": {
         "branch": "master",
         "description": "A handy nix library to package OCaml software from OPAM repositories",
         "homepage": null,
         "owner": "balsoft",
         "repo": "opam-nix",
-        "rev": "75ad75c18b8d80d82c13dc30c3b8d70960b1b441",
-        "sha256": "0mcr32f5i71diysvpblbvgdnx2pdymwjb9nxz5gbcsib3vdg2p83",
+        "rev": "a7b8e16ab28c840eab2c3be2f5069524dc87fd58",
+        "sha256": "0ydbwbirz1ag1lprl2mxz3cvzqxn945yfnakhzm19q2qm78zlb37",
         "type": "tarball",
-        "url": "https://github.com/balsoft/opam-nix/archive/75ad75c18b8d80d82c13dc30c3b8d70960b1b441.tar.gz",
+        "url": "https://github.com/balsoft/opam-nix/archive/a7b8e16ab28c840eab2c3be2f5069524dc87fd58.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
-    },
-    "opam-repository": {
-        "branch": "master",
-        "description": "Main public package repository for OPAM, the source package manager of OCaml.",
-        "homepage": "https://opam.ocaml.org",
-        "owner": "ocaml",
-        "repo": "opam-repository",
-        "rev": "d67e70b40203a6a1c77ccb2edbe136c1509a73a3",
-        "sha256": "1yphw9xcss284p51qnml5jvfs4mhjcjgdka3wk25q0437zdzqj4n",
-        "type": "tarball",
-        "url": "https://github.com/ocaml/opam-repository/archive/d67e70b40203a6a1c77ccb2edbe136c1509a73a3.tar.gz",
-        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
-    },
-    "tezos-opam-repository": {
-        "ref": "master",
-        "repo": "https://gitlab.com/ligolang/tezos-opam-repository",
-        "rev": "dfc46bd895b070bd89028a7ad98741d05ec684df",
-        "type": "git"
     },
     "xmldiff": {
         "branch": "master",

@@ -95,7 +95,7 @@ let get_json (michelson : michelson) =
   let open Micheline_printer in
   let canonical = strip_locations michelson in
   let node = printable string_of_prim canonical in
-  Tezos_data_encoding.(
+  Data_encoding.(
       Json.construct
         (Micheline.erased_encoding ~variant:"???" {comment = None} Data_encoding.string)
         node
@@ -103,17 +103,17 @@ let get_json (michelson : michelson) =
 
 let pp_json ppf (michelson : michelson) =
   let json = get_json michelson in
-  Format.fprintf ppf "%a" Tezos_data_encoding.Json.pp json
+  Format.fprintf ppf "%a" Data_encoding.Json.pp json
 
 let pp_hex ppf (michelson : michelson) =
   let canonical = strip_locations michelson in
-  let bytes = Tezos_data_encoding.Binary_writer.to_bytes_exn Script_repr.expr_encoding canonical in
+  let bytes = Data_encoding.Binary.to_bytes_exn Script_repr.expr_encoding canonical in
   let hex = Hex.of_bytes bytes in
   Format.fprintf ppf "%a" Hex.pp hex
 
 let measure (michelson : michelson) =
   let canonical = strip_locations michelson in
-  let bytes = Tezos_data_encoding.Binary_writer.to_bytes_exn Script_repr.expr_encoding canonical in
+  let bytes = Data_encoding.Binary.to_bytes_exn Script_repr.expr_encoding canonical in
   Bytes.length bytes
 
 type michelson_format = [

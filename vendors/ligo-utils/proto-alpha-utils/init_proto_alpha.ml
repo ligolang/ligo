@@ -102,10 +102,10 @@ module Context_init = struct
         (initial_accounts : (account * Tez_repr.t) list)
     =
     if initial_accounts = [] then
-      Pervasives.failwith "Must have one account with a roll to bake";
+      Stdlib.failwith "Must have one account with a roll to bake";
 
     (* Check there is at least one roll *)
-    let constants : Constants_repr.parametric = Tezos_protocol_006_PsCARTHA_parameters.Default_parameters.constants_test in
+    let constants : Constants_repr.parametric = Tezos_protocol_ligo006_PsCARTHA_parameters.Default_parameters.constants_test in
     check_constants_consistency constants >>=? fun () ->
 
     let hash =

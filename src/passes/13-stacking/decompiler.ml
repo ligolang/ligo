@@ -5,7 +5,6 @@ open X
 open Proto_alpha_utils.Trace
 open Protocol
 open Script_typed_ir
-open Script_ir_translator
 
 let rec decompile_value (Ex_typed_value (ty, value)) : (value , stacking_error) result =
   match (ty, value) with
@@ -63,7 +62,7 @@ let rec decompile_value (Ex_typed_value (ty, value)) : (value , stacking_error) 
       let%bind s' = decompile_value @@ Ex_typed_value (o_ty, s) in
       ok @@ D_some s'
   | (Map_t (k_cty, v_ty, _ , _)), m ->
-      let k_ty = Script_ir_translator.ty_of_comparable_ty k_cty in
+      let k_ty = X.ty_of_comparable_ty k_cty in
       let lst =
         let aux k v acc = (k, v) :: acc in
         let lst = Script_ir_translator.map_fold aux m [] in
@@ -78,7 +77,7 @@ let rec decompile_value (Ex_typed_value (ty, value)) : (value , stacking_error) 
       in
       ok @@ D_map lst'
   | (Big_map_t (k_cty, v_ty, _)), m ->
-      let k_ty = Script_ir_translator.ty_of_comparable_ty k_cty in
+      let k_ty = X.ty_of_comparable_ty k_cty in
       let lst =
         let aux k v acc = (k, v) :: acc in
         let lst = Script_ir_translator.map_fold aux m.diff [] in

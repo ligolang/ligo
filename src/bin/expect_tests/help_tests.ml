@@ -313,14 +313,13 @@ let%expect_test _ =
                compile-contract for the resulting Michelson. Available formats
                are 'text' (default), 'json' and 'hex'.
 
+           --now=NOW
+               NOW is the NOW value the Michelson interpreter will use (e.g.
+               '2000-01-01T10:10:10Z')
+
            --output-file=OUTPUT_FILE, --output=OUTPUT_FILE
                OUTPUT_FILE if used, prints the output into the specified file
                instead of stdout
-
-           --predecessor-timestamp=PREDECESSOR_TIMESTAMP
-               PREDECESSOR_TIMESTAMP is the predecessor_timestamp (now value
-               minus one minute) the Michelson interpreter will use (e.g.
-               '2000-01-01T10:10:10Z')
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
@@ -391,14 +390,13 @@ let%expect_test _ =
                compile-contract for the resulting Michelson. Available formats
                are 'text' (default), 'json' and 'hex'.
 
+           --now=NOW
+               NOW is the NOW value the Michelson interpreter will use (e.g.
+               '2000-01-01T10:10:10Z')
+
            --output-file=OUTPUT_FILE, --output=OUTPUT_FILE
                OUTPUT_FILE if used, prints the output into the specified file
                instead of stdout
-
-           --predecessor-timestamp=PREDECESSOR_TIMESTAMP
-               PREDECESSOR_TIMESTAMP is the predecessor_timestamp (now value
-               minus one minute) the Michelson interpreter will use (e.g.
-               '2000-01-01T10:10:10Z')
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
@@ -465,9 +463,8 @@ let%expect_test _ =
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
                `plain' whenever the TERM env var is `dumb' or undefined.
 
-           --predecessor-timestamp=PREDECESSOR_TIMESTAMP
-               PREDECESSOR_TIMESTAMP is the predecessor_timestamp (now value
-               minus one minute) the Michelson interpreter will use (e.g.
+           --now=NOW
+               NOW is the NOW value the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
@@ -532,9 +529,8 @@ let%expect_test _ =
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
                `plain' whenever the TERM env var is `dumb' or undefined.
 
-           --predecessor-timestamp=PREDECESSOR_TIMESTAMP
-               PREDECESSOR_TIMESTAMP is the predecessor_timestamp (now value
-               minus one minute) the Michelson interpreter will use (e.g.
+           --now=NOW
+               NOW is the NOW value the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
@@ -594,9 +590,8 @@ let%expect_test _ =
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
                `plain' whenever the TERM env var is `dumb' or undefined.
 
-           --predecessor-timestamp=PREDECESSOR_TIMESTAMP
-               PREDECESSOR_TIMESTAMP is the predecessor_timestamp (now value
-               minus one minute) the Michelson interpreter will use (e.g.
+           --now=NOW
+               NOW is the NOW value the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)

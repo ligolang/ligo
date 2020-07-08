@@ -2,7 +2,7 @@ open Types
 open Generated_fold
 
 module M = struct
-  let compare = ()              (* Hide Pervasives.compare to avoid calling it without explicit qualification. *)
+  let compare = ()              (* Hide Stdlib.compare to avoid calling it without explicit qualification. *)
   type 'a lz = unit -> 'a       (* Lazy values *)
   type t =
     | EmptyCtor
@@ -143,7 +143,7 @@ module M = struct
          String.compare va vb
          String.compare ca cb
          compare_lz_t xa xb
-    | (Bool a, Bool b)                               -> (Pervasives.compare : bool -> bool -> int) a b
+    | (Bool a, Bool b)                               -> (Stdlib.compare : bool -> bool -> int) a b
     | (Bytes a, Bytes b)                             -> Bytes.compare a b
     | (Constructor' a, Constructor' b)               -> String.compare a b
     | (Expression_variable a, Expression_variable b) -> Var.compare a.wrap_content b.wrap_content
@@ -151,9 +151,9 @@ module M = struct
     | (Label' a, Label' b)                           -> String.compare a b
     | (Ligo_string a, Ligo_string b)                 -> Simple_utils.Ligo_string.compare a b
     | (Location a, Location b)                       -> Location.compare a b
-    | (Operation a, Operation b)                     -> Pervasives.compare a b (* TODO: is there a proper comparison function defined for packed_internal_operation ? *)
+    | (Operation a, Operation b)                     -> Stdlib.compare a b (* TODO: is there a proper comparison function defined for packed_internal_operation ? *)
     | (Str a, Str b)                                 -> String.compare a b
-    | (Type_expression a, Type_expression b)         -> Pervasives.compare a b (* TODO: is there a proper comparison function defined for ast_core_type_expression ? *)
+    | (Type_expression a, Type_expression b)         -> Stdlib.compare a b (* TODO: is there a proper comparison function defined for ast_core_type_expression ? *)
     | (Unit (), Unit ())                             -> 0
     | (Var a, Var b)                                 -> Var.compare a b
     | (Z a, Z b)                                     -> Z.compare a b
