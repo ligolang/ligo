@@ -418,8 +418,8 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim With
 
 Ill-formed conditional expression.
 
-At this point, if the tested expression is complete, the branch 'then'
-is expected.
+At this point, if the Boolean test expression is complete, the branch
+'then' is expected.
 
 interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes Attr Type
 ##
@@ -863,11 +863,20 @@ interactive_expr: Match Verbatim With WILD ARROW Let Rec With
 ## The known suffix of the stack is as follows:
 ## Let Rec
 ##
+contract: Let Rec With
+##
+## Ends in an error in state: 64.
+##
+## let_declaration -> Let Rec . let_binding seq(Attr) [ Type Let EOF ]
+##
+## The known suffix of the stack is as follows:
+## Let Rec
+##
 
 Ill-formed recursive definition.
 
 At this point, an irrefutable pattern is expected, for instance an
-identifier.
+identifier denoting the value being defined.
 
 interactive_expr: Begin If Verbatim Then Let WILD EQ Bytes Attr Type
 ##
@@ -1323,11 +1332,21 @@ interactive_expr: Match Verbatim With WILD ARROW Let With
 ## The known suffix of the stack is as follows:
 ## Let
 ##
+contract: Let With
+##
+## Ends in an error in state: 62.
+##
+## let_declaration -> Let . let_binding seq(Attr) [ Type Let EOF ]
+## let_declaration -> Let . Rec let_binding seq(Attr) [ Type Let EOF ]
+##
+## The known suffix of the stack is as follows:
+## Let
+##
 
 Ill-formed definition.
 
 At this point, one of the following is expected:
-  * an irrefutable pattern, e.g, an identifier;
+  * an irrefutable pattern, for example, an identifier;
   * the 'rec' keyword, if the definition is recursive.
 
 interactive_expr: Begin If Verbatim Then Match Verbatim Type
@@ -1545,7 +1564,7 @@ interactive_expr: Match Verbatim With WILD ARROW If With
 
 Ill-formed conditional expression.
 
-At this point, a test is expected as an expression.
+At this point, a Boolean test expression is expected.
 
 interactive_expr: Begin Match Verbatim With WILD ARROW Verbatim With
 ##
@@ -1861,7 +1880,13 @@ interactive_expr: Begin Verbatim With
 ## In state 349, spurious reduction of production disj_expr_level -> conj_expr_level
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed sequence of expressions.
+
+At this point, if the expression is complete, one of the following is
+expected:
+  * the disjunctive operator '||', if the expression is Boolean;
+  * a semicolon ';' followed by another expression;
+  * the keyword 'end' if the sequence is complete.
 
 interactive_expr: Begin With
 ##
@@ -1873,11 +1898,11 @@ interactive_expr: Begin With
 ## Begin
 ##
 
-Ill-formed sequence expression.
+Ill-formed sequence of expressions.
 
 At this point, one of the following is expected:
-  * the keyword 'end' if your sequence is empty;
-  * the first expression.
+  * the first expression;
+  * the keyword 'end' if your sequence is empty.
 
 interactive_expr: C_None WILD
 ##
@@ -1904,9 +1929,9 @@ interactive_expr: C_Some With
 ## C_Some
 ##
 
-Ill-formed application of the 'Some' constructor.
+Ill-formed application of the data constructor 'Some'.
 
-At this point, its argument  is expected as an expression.
+At this point, its argument is expected as an expression.
 
 interactive_expr: Constr DOT Ident WILD
 ##
@@ -1931,8 +1956,26 @@ interactive_expr: Constr DOT With
 ## The known suffix of the stack is as follows:
 ## Constr DOT
 ##
+interactive_expr: LBRACE Constr DOT With
+##
+## Ends in an error in state: 533.
+##
+## projection -> Constr DOT . Ident DOT nsepseq(selection,DOT) [ With EQ ]
+##
+## The known suffix of the stack is as follows:
+## Constr DOT
+##
+contract: Type Ident EQ Constr DOT With
+##
+## Ends in an error in state: 14.
+##
+## core_type -> Constr DOT . Ident [ VBAR Type TIMES SEMI RPAR RBRACE Let Ident EQ EOF COMMA ARROW ]
+##
+## The known suffix of the stack is as follows:
+## Constr DOT
+##
 
-Ill-formed field selection in a module.
+Ill-formed selection in a module.
 
 At this point, a field name is expected.
 
@@ -1986,7 +2029,7 @@ Ill-formed function expression.
 
 At this point, if the parameter is complete, one of the following is
 expected:
-  * one more parameter as an irrefutable pattern, e.g., a variable;
+  * another parameter as an irrefutable pattern, e.g., a variable;
   * an arrow '->', followed by the function body as an expression.
 
 interactive_expr: Constr DOT Ident DOT With
@@ -2020,7 +2063,7 @@ interactive_expr: Ident DOT With
 Ill-formed selection of a substructure.
 
 At this point, one of the following is expected:
-  * a field name;
+  * a record field name;
   * a tuple index as a literal integer greater than or equal to 0.
 
 interactive_expr: Ident WILD
@@ -2197,7 +2240,7 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Verbatim Else 
 
 Ill-formed conditional expression.
 
-At this point, the `else` branch is expected as an expression.
+At this point, the 'else' branch is expected as an expression.
 
 interactive_expr: Begin If Verbatim Then If Verbatim Then With
 ##
@@ -2284,7 +2327,7 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then With
 
 Ill-formed conditional expression.
 
-At this point, the `then` branch is expected as an expression.
+At this point, the expression of the 'then' branch is expected.
 
 interactive_expr: Begin Match Verbatim With WILD ARROW If With
 ##
@@ -2311,7 +2354,7 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then If With
 
 Ill-formed conditional expression.
 
-At this point, the tested expression is expected.
+At this point, a Boolean test expression is expected.
 
 interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes In With
 ##
@@ -2607,6 +2650,11 @@ interactive_expr: LBRACE Constr DOT Ident With
 ## The known suffix of the stack is as follows:
 ## Constr DOT Ident
 ##
+
+Ill-formed selection in a record or a tuple.
+
+At this point, a dot '.' is expected.
+
 interactive_expr: LBRACE Constr With
 ##
 ## Ends in an error in state: 532.
@@ -2617,23 +2665,9 @@ interactive_expr: LBRACE Constr With
 ## Constr
 ##
 
-Ill-formed selection of a substructure.
+Ill-formed selection in a module.
 
-At this point, a dot '.' is expected.
-
-interactive_expr: LBRACE Constr DOT With
-##
-## Ends in an error in state: 533.
-##
-## projection -> Constr DOT . Ident DOT nsepseq(selection,DOT) [ With EQ ]
-##
-## The known suffix of the stack is as follows:
-## Constr DOT
-##
-
-Ill-formed field selection in a module.
-
-At this point, a field name is expected.
+At this point, a dot '.' followed by a module field name is expected.
 
 interactive_expr: LBRACE Ident DOT Ident Verbatim
 ##
@@ -2749,7 +2783,7 @@ Ill-formed record expression.
 
 At this point, if the expression of the field assignment is complete,
 one of the following is expected:
-  * another field assignment;
+  * a semicolon ';' followed by another field assignment;
   * a closing brace '}', if the record is complete.
 
 interactive_expr: LBRACE Ident EQ Bytes SEMI Ident With
@@ -2762,7 +2796,7 @@ interactive_expr: LBRACE Ident EQ Bytes SEMI Ident With
 ## Ident
 ##
 
-Ill-formed record expression.
+Ill-formed field assignment in a record.
 
 At this point, the assignment operator '=' is expected, followed by an
 expression.
@@ -2793,7 +2827,14 @@ interactive_expr: LBRACE Ident WILD
 ## Ident
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed record expression or record update.
+
+At this point, one of the following is expected:
+  * the keyword `with`, followed by field updates (assignments);
+  * the selection operator '.' if the record to update is not fully
+    qualified;
+  * the assignment operator '=' followed by an expression, if defining
+    a record (as opposed to a record update.)
 
 interactive_expr: LBRACE Ident With Ident DOT Ident With
 ##
@@ -2908,7 +2949,7 @@ Ill-formed record update.
 
 At this point, if the right-hand side of the field assignment (update)
 is complete, then one of the following is expected:
-  * another field assignment;
+  * a semicolon ';' followed by another field assignment;
   * a closing brace '}', if the update is complete.
 
 interactive_expr: LBRACE Ident With Ident EQ With
@@ -2940,10 +2981,9 @@ interactive_expr: LBRACE Ident With Ident With
 Ill-formed record update.
 
 At this point, one of the following is expected:
-  * the assignment operator '=', if the left-hand side of the field
-    assignment (update) is complete;
-  * the selection operator '.', followed by a selection in the
-    structure to the updated.
+  * the assignment operator '=', if the field to update is fully
+    qualified;
+  * the selection operator '.' to further qualify the field to update.
 
 interactive_expr: LBRACE Ident With With
 ##
@@ -2957,7 +2997,7 @@ interactive_expr: LBRACE Ident With With
 
 Ill-formed record update.
 
-At this point, the left-hand side of the first assignment is expected.
+At this point, the first field update (assignment) is expected.
 
 interactive_expr: LBRACE With
 ##
@@ -3284,8 +3324,6 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Verbatim End
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
-
-
 
 interactive_expr: Match Verbatim With WILD ARROW Verbatim COMMA Bytes Else
 ##
@@ -3651,7 +3689,7 @@ interactive_expr: Verbatim Mod With
 ## mult_expr_level Mod
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed arithmetic expression.
 
 interactive_expr: Verbatim NE With
 ##
@@ -3870,6 +3908,15 @@ contract: Let Ident WILD EQ With
 ##
 ## The known suffix of the stack is as follows:
 ## Ident nseq(sub_irrefutable) option(type_annotation) EQ
+##
+contract: Let WILD EQ With
+##
+## Ends in an error in state: 378.
+##
+## let_binding -> irrefutable option(type_annotation) EQ . expr [ Type Let In EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## irrefutable option(type_annotation) EQ
 ##
 
 Ill-formed definition.
@@ -4308,17 +4355,6 @@ contract: Let Rec WILD EQ Bytes With
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let Rec With
-##
-## Ends in an error in state: 64.
-##
-## let_declaration -> Let Rec . let_binding seq(Attr) [ Type Let EOF ]
-##
-## The known suffix of the stack is as follows:
-## Let Rec
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Let WILD COLON Ident VBAR
 ##
@@ -4340,7 +4376,10 @@ contract: Let WILD COLON Ident VBAR
 ## In state 158, spurious reduction of production option(type_annotation) -> type_annotation
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed value definition.
+
+At this point, if the type annotation is complete, the assignment
+operator '=' is expected, followed by an expression.
 
 contract: Let WILD COLON With
 ##
@@ -4352,19 +4391,9 @@ contract: Let WILD COLON With
 ## COLON
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed type annotation.
 
-contract: Let WILD COMMA WILD COMMA With
-##
-## Ends in an error in state: 140.
-##
-## nsepseq(sub_irrefutable,COMMA) -> sub_irrefutable COMMA . nsepseq(sub_irrefutable,COMMA) [ WILD RPAR LPAR LBRACE Ident EQ Constr COLON ARROW ]
-##
-## The known suffix of the stack is as follows:
-## sub_irrefutable COMMA
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
+At this point, a type expression is expected.
 
 contract: Let WILD COMMA WILD With
 ##
@@ -4388,8 +4417,20 @@ contract: Let WILD COMMA With
 ## The known suffix of the stack is as follows:
 ## sub_irrefutable COMMA
 ##
+contract: Let WILD COMMA WILD COMMA With
+##
+## Ends in an error in state: 140.
+##
+## nsepseq(sub_irrefutable,COMMA) -> sub_irrefutable COMMA . nsepseq(sub_irrefutable,COMMA) [ WILD RPAR LPAR LBRACE Ident EQ Constr COLON ARROW ]
+##
+## The known suffix of the stack is as follows:
+## sub_irrefutable COMMA
+##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed tuple pattern.
+
+At this point, another component is expected as a pattern.
+Hint: Perhaps try adding parentheses around your pattern.
 
 contract: Let WILD EQ Bytes Attr With
 ##
@@ -4431,19 +4472,13 @@ contract: Let WILD EQ Bytes With
 ## In state 379, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed declaration.
 
-contract: Let WILD EQ With
-##
-## Ends in an error in state: 378.
-##
-## let_binding -> irrefutable option(type_annotation) EQ . expr [ Type Let In EOF Attr ]
-##
-## The known suffix of the stack is as follows:
-## irrefutable option(type_annotation) EQ
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
+At this point, if the value expression is complete, one of the
+following is expected:
+  * a series of attribute declarations;
+  * a value or type declaration;
+  * the end of the file (EOF) if the contract is complete.
 
 contract: Let WILD WILD
 ##
@@ -4472,55 +4507,6 @@ contract: Let WILD With
 ##
 ## The known suffix of the stack is as follows:
 ## sub_irrefutable
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: Let With
-##
-## Ends in an error in state: 62.
-##
-## let_declaration -> Let . let_binding seq(Attr) [ Type Let EOF ]
-## let_declaration -> Let . Rec let_binding seq(Attr) [ Type Let EOF ]
-##
-## The known suffix of the stack is as follows:
-## Let
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: Type Ident EQ Constr DOT With
-##
-## Ends in an error in state: 14.
-##
-## core_type -> Constr DOT . Ident [ VBAR Type TIMES SEMI RPAR RBRACE Let Ident EQ EOF COMMA ARROW ]
-##
-## The known suffix of the stack is as follows:
-## Constr DOT
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: Type Ident EQ Constr Of With
-##
-## Ends in an error in state: 6.
-##
-## variant -> Constr Of . fun_type [ VBAR Type SEMI RPAR RBRACE Let EQ EOF COMMA ]
-##
-## The known suffix of the stack is as follows:
-## Constr Of
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: Type Ident EQ Constr VBAR With
-##
-## Ends in an error in state: 17.
-##
-## nsepseq(variant,VBAR) -> variant VBAR . nsepseq(variant,VBAR) [ Type SEMI RPAR RBRACE Let EQ EOF COMMA ]
-##
-## The known suffix of the stack is as follows:
-## variant VBAR
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -4560,20 +4546,12 @@ contract: Type Ident EQ Ident VBAR
 ## In state 602, spurious reduction of production declaration -> type_decl
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed declaration.
 
-contract: Type Ident EQ LBRACE Ident COLON Constr SEMI Ident COLON Constr SEMI With
-##
-## Ends in an error in state: 48.
-##
-## nsepseq(field_decl,SEMI) -> field_decl SEMI . nsepseq(field_decl,SEMI) [ RBRACE ]
-## seq(__anonymous_0(field_decl,SEMI)) -> field_decl SEMI . seq(__anonymous_0(field_decl,SEMI)) [ RBRACE ]
-##
-## The known suffix of the stack is as follows:
-## field_decl SEMI
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
+At this point, if the type declaration is complete, one of the
+following is expected:
+  * another type or value declaration;
+  * the end of the file (EOF) if the contract is complete.
 
 contract: Type Ident EQ LBRACE Ident COLON Constr SEMI Ident COLON Ident VBAR
 ##
@@ -4595,22 +4573,6 @@ contract: Type Ident EQ LBRACE Ident COLON Constr SEMI Ident COLON Ident VBAR
 ## In state 27, spurious reduction of production type_expr -> fun_type
 ## In state 21, spurious reduction of production field_decl -> Ident COLON type_expr
 ##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: Type Ident EQ LBRACE Ident COLON Constr SEMI With
-##
-## Ends in an error in state: 44.
-##
-## nsepseq(field_decl,SEMI) -> field_decl SEMI . nsepseq(field_decl,SEMI) [ RBRACE ]
-## nseq(__anonymous_0(field_decl,SEMI)) -> field_decl SEMI . seq(__anonymous_0(field_decl,SEMI)) [ RBRACE ]
-##
-## The known suffix of the stack is as follows:
-## field_decl SEMI
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
 contract: Type Ident EQ LBRACE Ident COLON Ident VBAR
 ##
 ## Ends in an error in state: 43.
@@ -4632,7 +4594,39 @@ contract: Type Ident EQ LBRACE Ident COLON Ident VBAR
 ## In state 21, spurious reduction of production field_decl -> Ident COLON type_expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed record type.
+
+At this point, if the type of the field is complete, one of the
+following is expected:
+  * a semicolon ';' followed by another field declaration;
+  * a closing brace '}' if the record type is complete.
+
+contract: Type Ident EQ LBRACE Ident COLON Constr SEMI With
+##
+## Ends in an error in state: 44.
+##
+## nsepseq(field_decl,SEMI) -> field_decl SEMI . nsepseq(field_decl,SEMI) [ RBRACE ]
+## nseq(__anonymous_0(field_decl,SEMI)) -> field_decl SEMI . seq(__anonymous_0(field_decl,SEMI)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## field_decl SEMI
+##
+contract: Type Ident EQ LBRACE Ident COLON Constr SEMI Ident COLON Constr SEMI With
+##
+## Ends in an error in state: 48.
+##
+## nsepseq(field_decl,SEMI) -> field_decl SEMI . nsepseq(field_decl,SEMI) [ RBRACE ]
+## seq(__anonymous_0(field_decl,SEMI)) -> field_decl SEMI . seq(__anonymous_0(field_decl,SEMI)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## field_decl SEMI
+##
+
+Ill-formed record type.
+
+At this point, one of the following is expected:
+  * another field declaration;
+  * a closing brace '}' if the record type is complete.
 
 contract: Type Ident EQ LBRACE Ident COLON With
 ##
@@ -4644,7 +4638,10 @@ contract: Type Ident EQ LBRACE Ident COLON With
 ## Ident COLON
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed record type.
+
+At this point, a type expression is expected to conclude the field
+declaration.
 
 contract: Type Ident EQ LBRACE Ident With
 ##
@@ -4656,7 +4653,10 @@ contract: Type Ident EQ LBRACE Ident With
 ## Ident
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed record type.
+
+At this point, a colon ':' followed by the type of the field is
+expected.
 
 contract: Type Ident EQ LBRACE With
 ##
@@ -4668,7 +4668,9 @@ contract: Type Ident EQ LBRACE With
 ## LBRACE
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed record type.
+
+At this point, the first field declaration is expected.
 
 contract: Type Ident EQ LPAR String COMMA Constr RPAR With
 ##
@@ -4680,7 +4682,9 @@ contract: Type Ident EQ LPAR String COMMA Constr RPAR With
 ## type_tuple
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed type expression.
+
+At this point, a type constructor is expected, for example: 'map'.
 
 contract: Type Ident EQ LPAR String COMMA String COMMA With
 ##
@@ -4691,8 +4695,19 @@ contract: Type Ident EQ LPAR String COMMA String COMMA With
 ## The known suffix of the stack is as follows:
 ## type_expr COMMA
 ##
+contract: Type Ident EQ LPAR String COMMA With
+##
+## Ends in an error in state: 52.
+##
+## tuple(type_expr) -> type_expr COMMA . nsepseq(type_expr,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## type_expr COMMA
+##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed type expression.
+
+At this point, a type component is expected as a type expression.
 
 contract: Type Ident EQ LPAR String COMMA String VBAR
 ##
@@ -4712,21 +4727,6 @@ contract: Type Ident EQ LPAR String COMMA String VBAR
 ## In state 36, spurious reduction of production fun_type -> cartesian
 ## In state 27, spurious reduction of production type_expr -> fun_type
 ##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: Type Ident EQ LPAR String COMMA With
-##
-## Ends in an error in state: 52.
-##
-## tuple(type_expr) -> type_expr COMMA . nsepseq(type_expr,COMMA) [ RPAR ]
-##
-## The known suffix of the stack is as follows:
-## type_expr COMMA
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
 contract: Type Ident EQ LPAR String VBAR
 ##
 ## Ends in an error in state: 50.
@@ -4746,7 +4746,13 @@ contract: Type Ident EQ LPAR String VBAR
 ## In state 27, spurious reduction of production type_expr -> fun_type
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed type expression.
+
+At this point, if the type expression is complete, one of the
+following is expected:
+  * a closing parenthesis ')';
+  * a comma ',' followed by another type expression, if you want a
+    type tuple.
 
 contract: Type Ident EQ LPAR With
 ##
@@ -4759,7 +4765,7 @@ contract: Type Ident EQ LPAR With
 ## LPAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed type expression.
 
 contract: Type Ident EQ String ARROW With
 ##
@@ -4770,8 +4776,19 @@ contract: Type Ident EQ String ARROW With
 ## The known suffix of the stack is as follows:
 ## cartesian ARROW
 ##
+contract: Type Ident EQ Constr Of With
+##
+## Ends in an error in state: 6.
+##
+## variant -> Constr Of . fun_type [ VBAR Type SEMI RPAR RBRACE Let EQ EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## Constr Of
+##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed type expression.
+
+At this point, a type other than a sum type or a record is expected.
 
 contract: Type Ident EQ String TIMES Constr With
 ##
@@ -4783,7 +4800,10 @@ contract: Type Ident EQ String TIMES Constr With
 ## Constr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed type selection in a module.
+
+At this point, the selection operator '.' is expected, followed by a
+type name.
 
 contract: Type Ident EQ String TIMES String TIMES With
 ##
@@ -4794,8 +4814,24 @@ contract: Type Ident EQ String TIMES String TIMES With
 ## The known suffix of the stack is as follows:
 ## core_type TIMES
 ##
+contract: Type Ident EQ String TIMES With
+##
+## Ends in an error in state: 29.
+##
+## cartesian -> core_type TIMES . nsepseq(core_type,TIMES) [ VBAR Type SEMI RPAR RBRACE Let EQ EOF COMMA ARROW ]
+##
+## The known suffix of the stack is as follows:
+## core_type TIMES
+##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed product type.
+
+At this point, one of the following type expressions is expected:
+  * a type name;
+  * a type selection in a module, e.g., 'M.t';
+  * an instantiation of a parametric type, e.g., 'int list' or '(int,
+    string) map';
+  * a parenthesised type expression.
 
 contract: Type Ident EQ String TIMES String With
 ##
@@ -4807,18 +4843,6 @@ contract: Type Ident EQ String TIMES String With
 ##
 ## The known suffix of the stack is as follows:
 ## core_type
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: Type Ident EQ String TIMES With
-##
-## Ends in an error in state: 29.
-##
-## cartesian -> core_type TIMES . nsepseq(core_type,TIMES) [ VBAR Type SEMI RPAR RBRACE Let EQ EOF COMMA ARROW ]
-##
-## The known suffix of the stack is as follows:
-## core_type TIMES
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -4859,8 +4883,19 @@ contract: Type Ident EQ VBAR With
 ## The known suffix of the stack is as follows:
 ## VBAR
 ##
+contract: Type Ident EQ Constr VBAR With
+##
+## Ends in an error in state: 17.
+##
+## nsepseq(variant,VBAR) -> variant VBAR . nsepseq(variant,VBAR) [ Type SEMI RPAR RBRACE Let EQ EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## variant VBAR
+##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed variant of a sum type.
+
+At this point, a data constructor is expected.
 
 contract: Type Ident EQ With
 ##
@@ -4872,7 +4907,9 @@ contract: Type Ident EQ With
 ## Type Ident EQ
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed type declaration.
+
+At this point, a type expression is expected.
 
 contract: Type Ident With
 ##
@@ -4884,7 +4921,10 @@ contract: Type Ident With
 ## Type Ident
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed type declaration.
+
+At this point, the assignment operator '=' is expected, followed by a
+type expression.
 
 contract: Type With
 ##
@@ -4896,7 +4936,9 @@ contract: Type With
 ## Type
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed type declaration.
+
+At this point, a type name is expected.
 
 contract: With
 ##
@@ -4908,4 +4950,6 @@ contract: With
 ##
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed contract.
+
+At this point, a type or value declaration is expected.
