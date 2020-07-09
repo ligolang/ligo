@@ -2,8 +2,6 @@ type all =
 [
  | `Main_invalid_syntax_name of string
  | `Main_invalid_extension of string
- | `Main_bad_michelson_parameter of Michelson.michelson
- | `Main_bad_michelson_storage of Michelson.michelson
  | `Main_bad_michelson of Michelson.michelson
  | `Main_gas_exhaustion
  | `Main_unparse_tracer of [ `Tezos_alpha_error of Proto_alpha_utils.Error_monad.error ] list
