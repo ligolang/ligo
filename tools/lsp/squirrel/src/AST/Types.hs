@@ -24,7 +24,8 @@ type Pascal = Tree
   ]
 
 data Contract it
-  = Contract      [it] -- ^ Declaration
+  = ContractEnd
+  | ContractCons it it -- ^ Declaration
   deriving (Show) via PP (Contract it)
   deriving stock (Functor, Foldable, Traversable)
 
@@ -78,7 +79,7 @@ data TField it
 
 -- | TODO: break onto smaller types? Literals -> Constant; mapOps; mmove Annots to Decls.
 data Expr it
-  = Let       [it] it -- [Declaration] (Expr)
+  = Let       it it -- Declaration (Expr)
   | Apply     it [it] -- (Expr) [Expr]
   | Constant  it -- (Constant)
   | Ident     it -- (QualifiedName)
@@ -186,8 +187,8 @@ newtype FieldName it = FieldName Text
 
 instance Pretty1 Contract where
   pp1 = \case
-    Contract decls ->
-      sparseBlock decls
+    ContractEnd -> "(* end *)"
+    ContractCons x xs -> x $$ " " $$ xs
 
 instance Pretty1 Declaration where
   pp1 = \case
@@ -243,7 +244,7 @@ instance Pretty1 Variant where
 
 instance Pretty1 Expr where
   pp1 = \case
-    Let       decls body -> "block {" `indent` sparseBlock decls `above` "}" <+> "with" `indent` body
+    Let       decl body -> "block {" `indent` decl `above` "}" <+> "with" `indent` body
     Apply     f xs       -> f <+> tuple xs
     Constant  constant   -> constant
     Ident     qname      -> qname

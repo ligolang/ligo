@@ -11,6 +11,8 @@ import Data.Sum
 import AST.Types
 
 import Parser
+import Range
+import Product
 import Tree hiding (skip)
 
 -- import Debug.Trace
@@ -29,12 +31,30 @@ ranged p = do
 -- | The entrypoint.
 contract :: Parser (Pascal ASTInfo)
 contract =
-  ranged do
-    pure Contract
+    pure contract'
+      <*> getInfo
       <*> subtree "contract" do
             many do
               inside "declaration:" do
                 declaration
+
+  where
+    contract'
+      :: ASTInfo
+      -> [Pascal ASTInfo]
+      -> Pascal ASTInfo
+    contract' r = foldr (contract'' $ getElem r) (mk r ContractEnd)
+
+    contract''
+      :: Range
+      -> Pascal ASTInfo
+      -> Pascal ASTInfo
+      -> Pascal ASTInfo
+    contract'' r x xs = mk (Cons r' rest) $ ContractCons x xs
+      where
+        r' = Range start end f
+        Range _ end f = r
+        Cons (Range start _ _) rest = infoOf x
 
 name :: Parser (Pascal ASTInfo)
 name = ranged do pure Name <*> token "Name"
@@ -745,9 +765,25 @@ letExpr = do
               declaration <|> statement
       <*> inside "body"expr
   where
+    let'
+      :: ASTInfo
+      -> (Maybe [Pascal ASTInfo])
+      -> Pascal ASTInfo
+      -> Pascal ASTInfo
     let' r decls body = case decls of
-      Just them -> mk r $ Let them body
+      Just them -> foldr (let'' $ getElem r) body them
       Nothing   -> body
+
+    let''
+      :: Range
+      -> Pascal ASTInfo
+      -> Pascal ASTInfo
+      -> Pascal ASTInfo
+    let'' r decl b = mk (Cons r' rest) $ Let decl b
+      where
+        r' = Range start end f
+        Range _ end f = r
+        Cons (Range start _ _) rest = infoOf b
 
 statement :: Parser (Pascal ASTInfo)
 statement = ranged do pure Action <*> expr
