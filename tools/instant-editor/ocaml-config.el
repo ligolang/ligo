@@ -1,6 +1,5 @@
 ;;; ocaml-config.el -*- lexical-binding: t; -*-
 ;;
-;; Copyright (C) 2020
 ;;
 ;; Author:  alexjiverson@gmail.com
 ;; Maintainer:  alexjiverson@gmail.com
