@@ -421,143 +421,6 @@ Ill-formed conditional expression.
 At this point, if the Boolean test expression is complete, the branch
 'then' is expected.
 
-interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes Attr Type
-##
-## Ends in an error in state: 459.
-##
-## let_expr(closed_if) -> Let Rec let_binding seq(Attr) . In closed_if [ Else ]
-##
-## The known suffix of the stack is as follows:
-## Let Rec let_binding seq(Attr)
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 174, spurious reduction of production seq(Attr) ->
-## In state 175, spurious reduction of production seq(Attr) -> Attr seq(Attr)
-##
-interactive_expr: Begin Let Rec WILD EQ Bytes Attr Type
-##
-## Ends in an error in state: 451.
-##
-## let_in_sequence -> Let Rec let_binding seq(Attr) . In series [ End ]
-##
-## The known suffix of the stack is as follows:
-## Let Rec let_binding seq(Attr)
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 174, spurious reduction of production seq(Attr) ->
-## In state 175, spurious reduction of production seq(Attr) -> Attr seq(Attr)
-##
-interactive_expr: Begin Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes Attr Type
-##
-## Ends in an error in state: 262.
-##
-## let_expr(base_cond) -> Let Rec let_binding seq(Attr) . In base_cond [ VBAR ]
-## let_in_sequence -> Let Rec let_binding seq(Attr) . In series [ End ]
-##
-## The known suffix of the stack is as follows:
-## Let Rec let_binding seq(Attr)
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 174, spurious reduction of production seq(Attr) ->
-## In state 175, spurious reduction of production seq(Attr) -> Attr seq(Attr)
-##
-interactive_expr: If Verbatim Then Let Rec WILD EQ Bytes Attr Type
-##
-## Ends in an error in state: 510.
-##
-## let_expr(closed_if) -> Let Rec let_binding seq(Attr) . In closed_if [ Else ]
-## let_expr(expr) -> Let Rec let_binding seq(Attr) . In expr [ With Type Then SEMI RPAR RBRACKET RBRACE Let In EOF COLON Attr ]
-##
-## The known suffix of the stack is as follows:
-## Let Rec let_binding seq(Attr)
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 174, spurious reduction of production seq(Attr) ->
-## In state 175, spurious reduction of production seq(Attr) -> Attr seq(Attr)
-##
-interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes Attr Type
-##
-## Ends in an error in state: 276.
-##
-## let_expr(base_cond) -> Let Rec let_binding seq(Attr) . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Let In EOF COLON Attr ]
-## let_expr(base_if_then_else) -> Let Rec let_binding seq(Attr) . In base_if_then_else [ Else ]
-##
-## The known suffix of the stack is as follows:
-## Let Rec let_binding seq(Attr)
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 174, spurious reduction of production seq(Attr) ->
-## In state 175, spurious reduction of production seq(Attr) -> Attr seq(Attr)
-##
-interactive_expr: Let Rec WILD EQ Bytes Attr Type
-##
-## Ends in an error in state: 176.
-##
-## let_expr(expr) -> Let Rec let_binding seq(Attr) . In expr [ With Type Then SEMI RPAR RBRACKET RBRACE Let In EOF COLON Attr ]
-##
-## The known suffix of the stack is as follows:
-## Let Rec let_binding seq(Attr)
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 174, spurious reduction of production seq(Attr) ->
-## In state 175, spurious reduction of production seq(Attr) -> Attr seq(Attr)
-##
-interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Let Rec WILD EQ Bytes Attr Type
-##
-## Ends in an error in state: 284.
-##
-## let_expr(base_cond) -> Let Rec let_binding seq(Attr) . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Let In EOF COLON Attr ]
-## let_expr(closed_if) -> Let Rec let_binding seq(Attr) . In closed_if [ Else ]
-##
-## The known suffix of the stack is as follows:
-## Let Rec let_binding seq(Attr)
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 174, spurious reduction of production seq(Attr) ->
-## In state 175, spurious reduction of production seq(Attr) -> Attr seq(Attr)
-##
-interactive_expr: Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes Attr Type
-##
-## Ends in an error in state: 419.
-##
-## let_expr(base_cond) -> Let Rec let_binding seq(Attr) . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Let In EOF COLON Attr ]
-##
-## The known suffix of the stack is as follows:
-## Let Rec let_binding seq(Attr)
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 174, spurious reduction of production seq(Attr) ->
-## In state 175, spurious reduction of production seq(Attr) -> Attr seq(Attr)
-##
-
-Ill-formed recursive definition.
-
-At this point, if the series of attributes is complete, the keyword
-'in' is expected, followed by an expression.
 
 interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes With
 ##
@@ -878,6 +741,138 @@ Ill-formed recursive definition.
 At this point, an irrefutable pattern is expected, for instance an
 identifier denoting the value being defined.
 
+interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes Attr Type
+##
+## Ends in an error in state: 459.
+##
+## let_expr(closed_if) -> Let Rec let_binding seq(Attr) . In closed_if [ Else ]
+##
+## The known suffix of the stack is as follows:
+## Let Rec let_binding seq(Attr)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 174, spurious reduction of production seq(Attr) ->
+## In state 175, spurious reduction of production seq(Attr) -> Attr seq(Attr)
+##
+interactive_expr: Begin Let Rec WILD EQ Bytes Attr Type
+##
+## Ends in an error in state: 451.
+##
+## let_in_sequence -> Let Rec let_binding seq(Attr) . In series [ End ]
+##
+## The known suffix of the stack is as follows:
+## Let Rec let_binding seq(Attr)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 174, spurious reduction of production seq(Attr) ->
+## In state 175, spurious reduction of production seq(Attr) -> Attr seq(Attr)
+##
+interactive_expr: Begin Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes Attr Type
+##
+## Ends in an error in state: 262.
+##
+## let_expr(base_cond) -> Let Rec let_binding seq(Attr) . In base_cond [ VBAR ]
+## let_in_sequence -> Let Rec let_binding seq(Attr) . In series [ End ]
+##
+## The known suffix of the stack is as follows:
+## Let Rec let_binding seq(Attr)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 174, spurious reduction of production seq(Attr) ->
+## In state 175, spurious reduction of production seq(Attr) -> Attr seq(Attr)
+##
+interactive_expr: If Verbatim Then Let Rec WILD EQ Bytes Attr Type
+##
+## Ends in an error in state: 510.
+##
+## let_expr(closed_if) -> Let Rec let_binding seq(Attr) . In closed_if [ Else ]
+## let_expr(expr) -> Let Rec let_binding seq(Attr) . In expr [ With Type Then SEMI RPAR RBRACKET RBRACE Let In EOF COLON Attr ]
+##
+## The known suffix of the stack is as follows:
+## Let Rec let_binding seq(Attr)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 174, spurious reduction of production seq(Attr) ->
+## In state 175, spurious reduction of production seq(Attr) -> Attr seq(Attr)
+##
+interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes Attr Type
+##
+## Ends in an error in state: 276.
+##
+## let_expr(base_cond) -> Let Rec let_binding seq(Attr) . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Let In EOF COLON Attr ]
+## let_expr(base_if_then_else) -> Let Rec let_binding seq(Attr) . In base_if_then_else [ Else ]
+##
+## The known suffix of the stack is as follows:
+## Let Rec let_binding seq(Attr)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 174, spurious reduction of production seq(Attr) ->
+## In state 175, spurious reduction of production seq(Attr) -> Attr seq(Attr)
+##
+interactive_expr: Let Rec WILD EQ Bytes Attr Type
+##
+## Ends in an error in state: 176.
+##
+## let_expr(expr) -> Let Rec let_binding seq(Attr) . In expr [ With Type Then SEMI RPAR RBRACKET RBRACE Let In EOF COLON Attr ]
+##
+## The known suffix of the stack is as follows:
+## Let Rec let_binding seq(Attr)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 174, spurious reduction of production seq(Attr) ->
+## In state 175, spurious reduction of production seq(Attr) -> Attr seq(Attr)
+##
+interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Let Rec WILD EQ Bytes Attr Type
+##
+## Ends in an error in state: 284.
+##
+## let_expr(base_cond) -> Let Rec let_binding seq(Attr) . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Let In EOF COLON Attr ]
+## let_expr(closed_if) -> Let Rec let_binding seq(Attr) . In closed_if [ Else ]
+##
+## The known suffix of the stack is as follows:
+## Let Rec let_binding seq(Attr)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 174, spurious reduction of production seq(Attr) ->
+## In state 175, spurious reduction of production seq(Attr) -> Attr seq(Attr)
+##
+interactive_expr: Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes Attr Type
+##
+## Ends in an error in state: 419.
+##
+## let_expr(base_cond) -> Let Rec let_binding seq(Attr) . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Let In EOF COLON Attr ]
+##
+## The known suffix of the stack is as follows:
+## Let Rec let_binding seq(Attr)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 174, spurious reduction of production seq(Attr) ->
+## In state 175, spurious reduction of production seq(Attr) -> Attr seq(Attr)
+##
 interactive_expr: Begin If Verbatim Then Let WILD EQ Bytes Attr Type
 ##
 ## Ends in an error in state: 472.
@@ -2432,11 +2427,6 @@ interactive_expr: Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes In With
 ## The known suffix of the stack is as follows:
 ## Let Rec let_binding seq(Attr) In
 ##
-
-Ill-formed recursive definition.
-
-At this point, an expression is expected.
-
 interactive_expr: Begin If Verbatim Then Let WILD EQ Bytes In With
 ##
 ## Ends in an error in state: 473.
@@ -3416,6 +3406,15 @@ contract: Let LPAR Constr LPAR WILD COMMA WILD COMMA With
 ## The known suffix of the stack is as follows:
 ## tail COMMA
 ##
+contract: Let LPAR Constr LPAR WILD COMMA With
+##
+## Ends in an error in state: 111.
+##
+## tuple(tail) -> tail COMMA . nsepseq(tail,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## tail COMMA
+##
 
 Ill-formed tuple pattern.
 
@@ -4186,18 +4185,6 @@ complete, then one of the following is expected:
   * a comma ',' followed by another component as a pattern;
   * a closing parenthesis ')', if the tuple is complete.
 
-contract: Let LPAR Constr LPAR WILD COMMA With
-##
-## Ends in an error in state: 111.
-##
-## tuple(tail) -> tail COMMA . nsepseq(tail,COMMA) [ RPAR ]
-##
-## The known suffix of the stack is as follows:
-## tail COMMA
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
 contract: Let LPAR Constr LPAR WILD CONS With
 ##
 ## Ends in an error in state: 98.
@@ -4208,7 +4195,12 @@ contract: Let LPAR Constr LPAR WILD CONS With
 ## sub_pattern CONS
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed list pattern.
+
+At this point, one of the following is expected:
+  * an identifier;
+  * a list pattern;
+  * a parenthesised pattern.
 
 contract: Let LPAR Constr LPAR WILD SEMI
 ##
@@ -4227,7 +4219,12 @@ contract: Let LPAR Constr LPAR WILD SEMI
 ## In state 97, spurious reduction of production tail -> sub_pattern
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed parenthesised pattern.
+
+At this point, if the pattern inside is complete, then one of the
+following is expected:
+  * a closing parenthesis ')' if the pattern is complete;
+  * a comma ',' followed by another pattern if matching a tuple.
 
 contract: Let LPAR Constr LPAR WILD With
 ##
@@ -4254,7 +4251,11 @@ contract: Let LPAR Constr LPAR With
 ## LPAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed pattern.
+
+At this point, one of the following is expected:
+  * a closing parenthesis ')' if matching the unit value;
+  * a pattern.
 
 contract: Let LPAR Constr WILD With
 ##
@@ -4266,7 +4267,9 @@ contract: Let LPAR Constr WILD With
 ## LPAR closed_irrefutable
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed parenthesised pattern.
+
+At this point, a closing parenthesis ')' is expected.
 
 contract: Let LPAR Constr With
 ##
@@ -4291,7 +4294,9 @@ contract: Let LPAR WILD COLON With
 ## irrefutable COLON
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed typed pattern.
+
+At this point, a type expression is expected.
 
 contract: Let LPAR WILD WILD
 ##
@@ -4310,7 +4315,12 @@ contract: Let LPAR WILD WILD
 ## In state 136, spurious reduction of production irrefutable -> sub_irrefutable
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed parenthesised pattern.
+
+At this point, if the pattern inside is complete, one of the following
+is expected:
+  * a type annotation, followed by a closing parenthesis ')';
+  * a closing parenthesis ')'.
 
 contract: Let LPAR With
 ##
@@ -4323,38 +4333,13 @@ contract: Let LPAR With
 ## LPAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed pattern.
 
-contract: Let Rec WILD EQ Bytes With
-##
-## Ends in an error in state: 598.
-##
-## let_declaration -> Let Rec let_binding . seq(Attr) [ Type Let EOF ]
-##
-## The known suffix of the stack is as follows:
-## Let Rec let_binding
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 226, spurious reduction of production call_expr_level -> core_expr
-## In state 233, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 220, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 223, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 313, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 303, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 335, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 342, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 349, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 370, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 372, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 373, spurious reduction of production expr -> base_cond__open(expr)
-## In state 379, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
+At this point, one of the following is expected:
+  * a closing parenthesis ')' if your pattern matches the unit value;
+  * a pattern amongst the following: an identifier, a wildcard '_',
+    the unit '()', a record pattern, a parenthesised pattern or a
+    constructor application, or a typed pattern.
 
 contract: Let WILD COLON Ident VBAR
 ##
@@ -4429,8 +4414,9 @@ contract: Let WILD COMMA WILD COMMA With
 
 Ill-formed tuple pattern.
 
-At this point, another component is expected as a pattern.
-Hint: Perhaps try adding parentheses around your pattern.
+At this point, another component is expected as a pattern amongst the
+following: an identifier, a wildcard '_', the unit '()', a record
+pattern, a parenthesised pattern or a constant constructor (e.g., "K").
 
 contract: Let WILD EQ Bytes Attr With
 ##
@@ -4471,8 +4457,35 @@ contract: Let WILD EQ Bytes With
 ## In state 373, spurious reduction of production expr -> base_cond__open(expr)
 ## In state 379, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
 ##
+contract: Let Rec WILD EQ Bytes With
+##
+## Ends in an error in state: 598.
+##
+## let_declaration -> Let Rec let_binding . seq(Attr) [ Type Let EOF ]
+##
+## The known suffix of the stack is as follows:
+## Let Rec let_binding
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 226, spurious reduction of production call_expr_level -> core_expr
+## In state 233, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 220, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 223, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 313, spurious reduction of production cons_expr_level -> add_expr_level
+## In state 303, spurious reduction of production cat_expr_level -> cons_expr_level
+## In state 335, spurious reduction of production comp_expr_level -> cat_expr_level
+## In state 342, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 349, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 370, spurious reduction of production base_expr(expr) -> disj_expr_level
+## In state 372, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
+## In state 373, spurious reduction of production expr -> base_cond__open(expr)
+## In state 379, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
+##
 
-Ill-formed declaration.
+Ill-formed definition.
 
 At this point, if the value expression is complete, one of the
 following is expected:
@@ -4496,7 +4509,12 @@ contract: Let WILD WILD
 ## In state 136, spurious reduction of production irrefutable -> sub_irrefutable
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed definition.
+
+At this point, if the last pattern is complete, one of the following
+is expected:
+  * a type annotation for the value being defined;
+  * the assignment operator '=', followed by an expression.
 
 contract: Let WILD With
 ##
@@ -4546,7 +4564,7 @@ contract: Type Ident EQ Ident VBAR
 ## In state 602, spurious reduction of production declaration -> type_decl
 ##
 
-Ill-formed declaration.
+Ill-formed top-level declaration.
 
 At this point, if the type declaration is complete, one of the
 following is expected:
@@ -4707,7 +4725,7 @@ contract: Type Ident EQ LPAR String COMMA With
 
 Ill-formed type expression.
 
-At this point, a type component is expected as a type expression.
+At this point, a tuple component is expected as a type expression.
 
 contract: Type Ident EQ LPAR String COMMA String VBAR
 ##
