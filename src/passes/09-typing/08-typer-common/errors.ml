@@ -16,7 +16,7 @@ type typer_error = [
   | `Typer_michelson_or_no_annotation of Ast_core.constructor' * Location.t
   | `Typer_match_tuple_wrong_arity of Ast_typed.type_expression_list * Ast_core.expression_variable list * Location.t
   | `Typer_program_tracer of Ast_core.program * typer_error
-  | `Typer_constant_declaration_tracer of Ast_core.expression_variable * Ast_core.expr * (Ast_typed.type_expression option) * typer_error
+  | `Typer_constant_declaration_tracer of Ast_core.expression_variable * Ast_core.expression * (Ast_typed.type_expression option) * typer_error
   | `Typer_match_error of Ast_core.matching_expr * Ast_typed.type_expression * Location.t
   | `Typer_needs_annotation of Ast_core.expression * string
   | `Typer_fvs_in_create_contract_lambda of Ast_core.expression * Ast_typed.expression_variable
@@ -66,7 +66,7 @@ type typer_error = [
   | `Typer_converter of Ast_typed.type_expression
   | `Typer_uncomparable_types of Ast_typed.type_expression * Ast_typed.type_expression
   | `Typer_comparator_composed of Ast_typed.type_expression
-  | `Typer_constant_decl_tracer of Ast_core.expression_variable * Ast_core.expr * Ast_typed.type_expression option * typer_error
+  | `Typer_constant_decl_tracer of Ast_core.expression_variable * Ast_core.expression * Ast_typed.type_expression option * typer_error
   | `Typer_match_variant_tracer of Ast_core.matching_expr * typer_error
   | `Typer_unrecognized_type_operator of Ast_core.type_expression
   | `Typer_expected_ascription of Ast_core.expression
@@ -106,7 +106,7 @@ let michelson_or (c:Ast_core.constructor') (loc:Location.t) = `Typer_michelson_o
 let match_tuple_wrong_arity (expected: Ast_typed.type_expression_list) (actual:Ast_core.expression_variable list) (loc:Location.t) =
   `Typer_match_tuple_wrong_arity (expected,actual,loc)
 let program_error_tracer (p:Ast_core.program) (err:typer_error) = `Typer_program_tracer (p,err)
-let constant_declaration_error_tracer (name:Ast_core.expression_variable) (ae:Ast_core.expr) (expected: Ast_typed.type_expression option) (err:typer_error) =
+let constant_declaration_error_tracer (name:Ast_core.expression_variable) (ae:Ast_core.expression) (expected: Ast_typed.type_expression option) (err:typer_error) =
   `Typer_constant_declaration_tracer (name,ae,expected,err)
 let match_error ~(expected: Ast_core.matching_expr) ~(actual: Ast_typed.type_expression) (loc:Location.t) =
   `Typer_match_error (expected,actual,loc)
@@ -167,7 +167,7 @@ let comparator_composed (a:Ast_typed.type_expression) = `Typer_comparator_compos
 let unrecognized_type_op (e:Ast_core.type_expression) = `Typer_unrecognized_type_operator e
 
 (* new typer errors *)
-let constant_declaration_tracer (name: Ast_core.expression_variable) (ae:Ast_core.expr) (expected: Ast_typed.type_expression option) (err:typer_error) =
+let constant_declaration_tracer (name: Ast_core.expression_variable) (ae:Ast_core.expression) (expected: Ast_typed.type_expression option) (err:typer_error) =
   `Typer_constant_decl_tracer (name,ae,expected,err)
 let in_match_variant_tracer (ae:Ast_core.matching_expr) (err:typer_error) =
   `Typer_match_variant_tracer (ae,err)

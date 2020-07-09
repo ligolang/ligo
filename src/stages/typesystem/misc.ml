@@ -87,12 +87,12 @@ module Substitution = struct
       | Ast_core.T_record _ -> failwith "TODO: subst: unimplemented case s_type_expression record"
       | Ast_core.T_arrow _ -> failwith "TODO: subst: unimplemented case s_type_expression arrow"
       | Ast_core.T_variable _ -> failwith "TODO: subst: unimplemented case s_type_expression variable"
-      | Ast_core.T_operator (op,lst) ->
-         let%bind lst = bind_map_list
+      | Ast_core.T_operator {type_operator;arguments} ->
+         let%bind arguments = bind_map_list
              (s_abstr_type_expression ~substs)
-             lst in
+             arguments in
          (* TODO: when we have generalized operators, we might need to subst the operator name itself? *)
-         ok @@ Ast_core.T_operator (op, lst)
+         ok @@ Ast_core.T_operator {type_operator;arguments}
       | Ast_core.T_constant constant ->
          ok @@ Ast_core.T_constant constant
 

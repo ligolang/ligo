@@ -26,8 +26,7 @@ let expression_jsonformat (runned_result,_) : Display.json =
     let failstring = failwith_to_string fail_res in
     `Assoc [("value", `Null) ; ("failure", `String failstring)]
   | Success typed ->
-    let temp = Format.asprintf "%a" Ast_core.PP.expression typed in
-    `Assoc [("value", `String temp) ; ("failure", `Null)]
+    `Assoc [("value", Ast_core.PP_json.Yojson.expression typed) ; ("failure", `Null)]
 
 let expression_format : 'a Display.format = {
   pp = expression_ppformat ;

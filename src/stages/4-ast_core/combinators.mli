@@ -79,7 +79,7 @@ val e_typed_none      : ?loc:Location.t -> type_expression -> expression
 
 val e_lambda        : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> expression_variable -> type_expression option -> type_expression option -> expression -> expression
 val e_recursive     : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> expression_variable -> type_expression -> lambda -> expression
-val e_record        : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> expr label_map-> expression
+val e_record        : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> expression label_map-> expression
 val e_record_update : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> expression -> label -> expression -> expression
 
 val assert_e_record_accessor : expression_content -> unit option

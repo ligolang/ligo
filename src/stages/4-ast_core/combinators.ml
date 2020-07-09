@@ -10,7 +10,7 @@ let tuple_to_record lst =
   let (_, lst ) = List.fold_left aux (0,[]) lst in
   lst
 
-let t_bool      ?loc ?sugar () : type_expression = make_t ?loc ?sugar @@ T_variable (Stage_common.Constant.t_bool)
+let t_bool      ?loc ?sugar () : type_expression = make_t ?loc ?sugar @@ T_variable (Var.of_name "bool")
 let t_string    ?loc ?sugar () : type_expression = make_t ?loc ?sugar @@ T_constant (TC_string)
 let t_bytes     ?loc ?sugar () : type_expression = make_t ?loc ?sugar @@ T_constant (TC_bytes)
 let t_int       ?loc ?sugar () : type_expression = make_t ?loc ?sugar @@ T_constant (TC_int)
@@ -23,8 +23,10 @@ let t_signature ?loc ?sugar () : type_expression = make_t ?loc ?sugar @@ T_const
 let t_key       ?loc ?sugar () : type_expression = make_t ?loc ?sugar @@ T_constant (TC_key)
 let t_key_hash  ?loc ?sugar () : type_expression = make_t ?loc ?sugar @@ T_constant (TC_key_hash)
 let t_timestamp ?loc ?sugar () : type_expression = make_t ?loc ?sugar @@ T_constant (TC_timestamp)
-let t_option    ?loc ?sugar o  : type_expression = make_t ?loc ?sugar @@ T_operator (TC_option, [o])
-let t_list      ?loc ?sugar t  : type_expression = make_t ?loc ?sugar @@ T_operator (TC_list, [t])
+let t_option    ?loc ?sugar o  : type_expression = make_t ?loc ?sugar @@
+  T_operator {type_operator = TC_option; arguments = [o]}
+let t_list      ?loc ?sugar t  : type_expression = make_t ?loc ?sugar @@
+  T_operator {type_operator = TC_list; arguments = [t]}
 let t_variable  ?loc ?sugar n  : type_expression = make_t ?loc ?sugar @@ T_variable (Var.of_name n)
 let t_record_ez ?loc ?sugar lst =
   let lst = List.map (fun (k, v) -> (Label k, v)) lst in
@@ -46,11 +48,16 @@ let t_sum ?loc ?sugar m : type_expression =
   ez_t_sum ?loc ?sugar lst
 
 let t_function ?loc ?sugar type1 type2  : type_expression = make_t ?loc ?sugar @@ T_arrow {type1; type2}
-let t_operator ?loc ?sugar op lst       : type_expression = make_t ?loc ?sugar @@ T_operator (op, lst)
-let t_map      ?loc ?sugar key value    : type_expression = make_t ?loc ?sugar @@ T_operator (TC_map, [key; value])
-let t_big_map  ?loc ?sugar key value    : type_expression = make_t ?loc ?sugar @@ T_operator (TC_big_map, [key; value])
-let t_set      ?loc ?sugar key          : type_expression = make_t ?loc ?sugar @@ T_operator (TC_set, [key])
-let t_contract ?loc ?sugar contract     : type_expression = make_t ?loc ?sugar @@ T_operator (TC_contract, [contract])
+let t_operator ?loc ?sugar type_operator arguments : type_expression = make_t ?loc ?sugar @@
+  T_operator {type_operator ; arguments}
+let t_map      ?loc ?sugar key value : type_expression = make_t ?loc ?sugar @@
+  T_operator {type_operator = TC_map ; arguments = [key ; value]}
+let t_big_map  ?loc ?sugar key value : type_expression = make_t ?loc ?sugar @@
+  T_operator {type_operator = TC_big_map ; arguments = [key ; value]}
+let t_set      ?loc ?sugar t : type_expression = make_t ?loc ?sugar @@
+  T_operator {type_operator = TC_set ; arguments = [t]}
+let t_contract ?loc ?sugar t : type_expression = make_t ?loc ?sugar @@
+  T_operator {type_operator = TC_contract ; arguments = [t]}
 
 let make_e ?(loc = Location.generated) ?sugar content = {content; sugar; location=loc }
 
@@ -87,7 +94,8 @@ let e_variable    ?loc ?sugar v                                    = make_e ?loc
 let e_application ?loc ?sugar a b                                  = make_e ?loc ?sugar @@ E_application {lamb=a ; args=b}
 let e_lambda      ?loc ?sugar binder input_type output_type result = make_e ?loc ?sugar @@ E_lambda {binder; input_type; output_type; result ;  }
 let e_recursive   ?loc ?sugar fun_name fun_type lambda             = make_e ?loc ?sugar @@ E_recursive {fun_name; fun_type; lambda}
-let e_let_in      ?loc ?sugar (binder, ascr) inline rhs let_result = make_e ?loc ?sugar @@ E_let_in { let_binder = (binder,ascr) ; rhs ; let_result; inline }
+let e_let_in      ?loc ?sugar (binder, ascr) inline rhs let_result = make_e ?loc ?sugar @@
+  E_let_in { let_binder = {binder ; ascr} ; rhs ; let_result; inline }
 let e_raw_code    ?loc ?sugar language code                        = make_e ?loc ?sugar @@ E_raw_code {language; code}
 
 let e_constructor ?loc ?sugar s a : expression = make_e ?loc ?sugar @@ E_constructor { constructor = Constructor s; element = a}
@@ -150,7 +158,7 @@ let get_e_list = fun t ->
 
 let get_e_tuple = fun t ->
   match t with
-  | E_record r -> Some (List.map snd @@ Stage_common.Helpers.tuple_of_record r)
+  | E_record r -> Some (List.map snd @@ Helpers.tuple_of_record r)
   | _ -> None
 
 let get_e_ascription = fun a ->

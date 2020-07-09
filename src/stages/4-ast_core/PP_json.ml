@@ -1,6 +1,6 @@
-open Types
-open Fold
 open Format
+open Generated_fold
+open Types
 
 type json = Yojson.t
 
@@ -25,28 +25,26 @@ module M = struct
       int                       = (fun _visitor NoState i               -> `Int i ) ;
       type_variable             = (fun _visitor NoState tv              -> `Assoc ["type-var", `String (asprintf "%a" Var.pp tv)] ) ;
       bool                      = (fun _visitor NoState b               -> `Bool b ) ;
-      z                         = (fun _visitor NoState i               -> `String (asprintf "%a" Z.pp_print i) ) ;
       string                    = (fun _visitor NoState str             -> `String str ) ;
+      z                         = (fun _visitor NoState i               -> `String (asprintf "%a" Z.pp_print i) ) ;
       ligo_string               = (fun _visitor NoState s               -> `String (asprintf "%s" (match s with Standard s -> s | Verbatim s -> s)) ) ;
       bytes                     = (fun _visitor NoState bytes           -> `String (Bytes.to_string bytes)) ;
-      unit                      = (fun _visitor NoState ()              -> `String "unit" ) ;
       packed_internal_operation = (fun _visitor NoState _op             -> `String "Operation(...bytes)") ;
       expression_variable       = (fun _visitor NoState ev              -> `Assoc ["exp-var", `String (asprintf "%a" Var.pp ev.wrap_content)] ) ;
       constructor'              = (fun _visitor NoState (Constructor c) -> `Assoc ["constructor", `String c] ) ;
       location                  = (fun _visitor NoState loc             -> Location.pp_json loc) ;
       label                     = (fun _visitor NoState (Label lbl)     -> `Assoc ["label" , `String lbl] ) ;
-      ast_core_type_expression  = (fun _visitor NoState te              -> `String (asprintf "%a" (Ast_core.PP.type_expression) te) ) ; (*TODO*)
       constructor_map           = (fun _visitor continue NoState cmap   ->
-        let lst = List.sort (fun (Constructor a, _) (Constructor b, _) -> String.compare a b) (CMap.bindings cmap) in
+        let lst = List.sort (fun ((Constructor a:Types_utils.constructor'), _) (Constructor b, _) -> String.compare a b) (CMap.bindings cmap) in
         let lst' = List.fold_left
-          (fun acc (Constructor k, v) -> (k , continue NoState v)::acc)
+          (fun acc ((Constructor k:Types_utils.constructor'), v) -> (k , continue NoState v)::acc)
           [] lst
         in
         `Assoc lst' );
       label_map                 = (fun _visitor continue NoState lmap   ->
-        let lst = List.sort (fun (Label a, _) (Label b, _) -> String.compare a b) (LMap.bindings lmap) in
+        let lst = List.sort (fun ((Label a:Types_utils.label), _) (Label b, _) -> String.compare a b) (LMap.bindings lmap) in
         let lst' = List.fold_left
-          (fun acc (Label k, v) -> (k , continue NoState v)::acc)
+          (fun acc ((Label k:Types_utils.label), v) -> (k , continue NoState v)::acc)
           [] lst
         in
         `Assoc lst' );
@@ -60,20 +58,18 @@ module M = struct
         match o with
         | None -> `List [ `String "None" ; `Null ]
         | Some v -> `List [ `String "Some" ; continue NoState v ] );
-      poly_unionfind            = (fun _visitor continue NoState p   ->
-        let lst = (UnionFind.Poly2.partitions p) in
-        let lst' = List.map (fun l -> continue NoState (UnionFind.Poly2.repr (List.hd l) p )) lst in
-        `Assoc ["UnionFind", `List lst'] );
-      poly_set                  = (fun _visitor continue NoState set   ->
-        let lst = (RedBlackTrees.PolySet.elements set) in
-        let lst' = List.map (fun el -> continue NoState el) lst in
-        `Assoc ["Set", `List lst'] );
-      typeVariableMap           = (fun _visitor continue NoState tvmap   ->
-        let lst = List.sort (fun (a, _) (b, _) -> Var.compare a b) (RedBlackTrees.PolyMap.bindings tvmap) in
-        let aux (k, v) =
-          `Assoc [ asprintf "%a" Var.pp k , continue NoState v ] in
-        let lst' = List.map aux lst in
-        `Assoc ["typeVariableMap",  `List lst'] );
+      sugar_type_expression_option = (fun _visitor NoState teo ->
+        match teo with
+        | None -> `Null
+        (*TODO: Ast_sugar has no JSON representation for now*)
+        | Some t -> `String (Format.asprintf "%a" Ast_sugar.PP.type_expression t)
+        ) ;
+      sugar_expression_option = (fun _visitor NoState eo ->
+        match eo with
+        | None -> `Null
+        (*TODO: Ast_sugar has no JSON representation for now*)
+        | Some e -> `String (Format.asprintf "%a" Ast_sugar.PP.expression e)
+        ) ;
     }
 
   let to_json : ((no_state, json) fold_config -> no_state -> 'a -> json) -> 'a -> json = fun fold v ->
@@ -83,14 +79,14 @@ module M = struct
     fprintf ppf "%a" Yojson.pp (to_json fold v)
 end
 
-module Yojson = Fold.Folds(struct
+module Yojson = Generated_fold.Folds(struct
   type in_state = M.no_state ;;
   type out_state = json ;;
   type 'a t = 'a -> json ;;
   let f = M.to_json ;;
 end)
 
-include Fold.Folds(struct
+include Generated_fold.Folds(struct
   type in_state = M.no_state ;;
   type out_state = json ;;
   type 'a t = formatter -> 'a -> unit ;;
