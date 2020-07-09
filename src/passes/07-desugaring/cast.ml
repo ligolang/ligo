@@ -1,6 +1,8 @@
 module I = Ast_sugar
 module O = Ast_core
 
+(*those should be generated*)
+
 let cast_var (orig: 'a Var.t Location.wrap) = { orig with wrap_content = Var.todo_cast orig.wrap_content}
 let cast_type_constant (i:I.type_constant) = match i with
   | I.TC_unit -> O.TC_unit
@@ -16,7 +18,6 @@ let cast_type_constant (i:I.type_constant) = match i with
   | I.TC_chain_id -> O.TC_chain_id
   | I.TC_signature -> O.TC_signature
   | I.TC_timestamp -> O.TC_timestamp
-  | I.TC_void -> O.TC_void
 let cast_type_operator (i:I.type_operator) = match i with
   | I.TC_contract -> O.TC_contract
   | I.TC_option -> O.TC_option
@@ -33,7 +34,6 @@ let cast_type_operator (i:I.type_operator) = match i with
   | I.TC_michelson_or_left_comb -> O.TC_michelson_or_left_comb
 let cast_literal (i:I.literal) =  match i with
   | I.Literal_unit -> O.Literal_unit
-  | I.Literal_void -> O.Literal_void
   | I.Literal_int a -> O.Literal_int a
   | I.Literal_nat a -> O.Literal_nat a
   | I.Literal_timestamp a -> O.Literal_timestamp a
@@ -169,7 +169,6 @@ let cast_type_constant_rev (i:O.type_constant) = match i with
   | O.TC_chain_id -> I.TC_chain_id
   | O.TC_signature -> I.TC_signature
   | O.TC_timestamp -> I.TC_timestamp
-  | O.TC_void -> I.TC_void
 let cast_type_operator_rev (i:O.type_operator) = match i with
   | O.TC_contract -> I.TC_contract
   | O.TC_option -> I.TC_option
@@ -186,7 +185,6 @@ let cast_type_operator_rev (i:O.type_operator) = match i with
   | O.TC_michelson_or_left_comb -> I.TC_michelson_or_left_comb
 let cast_literal_rev (i:O.literal) =  match i with
   | O.Literal_unit -> I.Literal_unit
-  | O.Literal_void -> I.Literal_void
   | O.Literal_int a -> I.Literal_int a
   | O.Literal_nat a -> I.Literal_nat a
   | O.Literal_timestamp a -> I.Literal_timestamp a

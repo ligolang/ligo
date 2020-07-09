@@ -65,7 +65,6 @@ and type_constant =
   | TC_chain_id
   | TC_signature
   | TC_timestamp
-  | TC_void
 and type_content =
   | T_sum of ctor_constructor_map
   | T_record of field_label_map
@@ -115,7 +114,6 @@ and literal =
   | Literal_key of string
   | Literal_key_hash of string
   | Literal_chain_id of string
-  | Literal_void
   | Literal_operation of packed_internal_operation
 and expression_content =
   | E_literal of literal
