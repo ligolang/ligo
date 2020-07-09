@@ -61,6 +61,7 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           Provided storage type does not match contract storage type
+
           Bad types:
           expected record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]
           got sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]] |}] ;
