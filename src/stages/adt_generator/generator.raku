@@ -20,6 +20,7 @@ my $record = "_ _ record";
 sub poly { $^type_name }
 
 my $l = $inputADTfile.IO.lines;
+$l = $l.grep(none /^\(\*adt_generator_ignore\*\)/);
 $l = $l.map(*.subst: /(^\s+|\s+$)/, "");
 $l = $l.list.cache;
 my $statement_re = /^((\(\*\s+)?(open|include)\s|\[\@\@\@warning\s)/;
