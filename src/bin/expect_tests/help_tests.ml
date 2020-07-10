@@ -224,6 +224,9 @@ let%expect_test _ =
                SOURCE_FILE is the path to the smart contract file.
 
     OPTIONS
+           --brief
+               in case of an error, do not display links to online resources
+
            --disable-michelson-typechecking
                disable Michelson typecking, this might produce ill-typed
                Michelson code.
@@ -289,6 +292,9 @@ let%expect_test _ =
                BALANCE is the balance the Michelson interpreter will use for the
                contract balance.
 
+           --brief
+               in case of an error, do not display links to online resources
+
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
                DISPLAY_FORMAT is the format that will be used by the CLI.
@@ -306,6 +312,10 @@ let%expect_test _ =
                MICHELSON_FORMAT is the format that will be used by
                compile-contract for the resulting Michelson. Available formats
                are 'text' (default), 'json' and 'hex'.
+
+           --output-file=OUTPUT_FILE, --output=OUTPUT_FILE
+               OUTPUT_FILE if used, prints the output into the specified file
+               instead of stdout
 
            --predecessor-timestamp=PREDECESSOR_TIMESTAMP
                PREDECESSOR_TIMESTAMP is the predecessor_timestamp (now value
@@ -360,6 +370,9 @@ let%expect_test _ =
                BALANCE is the balance the Michelson interpreter will use for the
                contract balance.
 
+           --brief
+               in case of an error, do not display links to online resources
+
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
                DISPLAY_FORMAT is the format that will be used by the CLI.
@@ -377,6 +390,10 @@ let%expect_test _ =
                MICHELSON_FORMAT is the format that will be used by
                compile-contract for the resulting Michelson. Available formats
                are 'text' (default), 'json' and 'hex'.
+
+           --output-file=OUTPUT_FILE, --output=OUTPUT_FILE
+               OUTPUT_FILE if used, prints the output into the specified file
+               instead of stdout
 
            --predecessor-timestamp=PREDECESSOR_TIMESTAMP
                PREDECESSOR_TIMESTAMP is the predecessor_timestamp (now value
@@ -431,6 +448,9 @@ let%expect_test _ =
            --balance=BALANCE (absent=0)
                BALANCE is the balance the Michelson interpreter will use for the
                contract balance.
+
+           --brief
+               in case of an error, do not display links to online resources
 
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
@@ -496,6 +516,9 @@ let%expect_test _ =
                BALANCE is the balance the Michelson interpreter will use for the
                contract balance.
 
+           --brief
+               in case of an error, do not display links to online resources
+
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
                DISPLAY_FORMAT is the format that will be used by the CLI.
@@ -555,6 +578,9 @@ let%expect_test _ =
                BALANCE is the balance the Michelson interpreter will use for the
                contract balance.
 
+           --brief
+               in case of an error, do not display links to online resources
+
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
                DISPLAY_FORMAT is the format that will be used by the CLI.
@@ -609,6 +635,9 @@ let%expect_test _ =
                respectively).
 
     OPTIONS
+           --brief
+               in case of an error, do not display links to online resources
+
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
                DISPLAY_FORMAT is the format that will be used by the CLI.

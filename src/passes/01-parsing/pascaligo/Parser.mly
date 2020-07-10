@@ -21,6 +21,59 @@ open CST
 %type <CST.t> contract
 %type <CST.expr> interactive_expr
 
+%on_error_reduce
+  nsepseq(case_clause(expr),VBAR)
+  nsepseq(core_pattern,SEMI)
+  seq(__anonymous_0(core_pattern,SEMI))
+  pattern
+  nsepseq(core_pattern,CONS)
+  nsepseq(case_clause(if_clause),VBAR)
+  lhs
+  map_lookup
+  path
+  nsepseq(statement,SEMI)
+  seq(__anonymous_0(statement,SEMI))
+  nsepseq(core_pattern,COMMA)
+  constr_pattern
+  core_expr
+  module_fun
+  nsepseq(param_decl,SEMI)
+  nsepseq(selection,DOT)
+  nsepseq(field_path_assignment,SEMI)
+  seq(__anonymous_0(field_path_assignment,SEMI))
+  nsepseq(binding,SEMI)
+  seq(__anonymous_0(binding,SEMI))
+  nsepseq(field_assignment,SEMI)
+  seq(__anonymous_0(field_assignment,SEMI))
+  nsepseq(expr,SEMI)
+  seq(__anonymous_0(expr,SEMI))
+  add_expr
+  unary_expr
+  nsepseq(String,SEMI)
+  seq(__anonymous_0(String,SEMI))
+  const_decl
+  open_const_decl
+  fun_decl
+  variant
+  core_type
+  nsepseq(field_decl,SEMI)
+  seq(__anonymous_0(field_decl,SEMI))
+  nsepseq(core_type,TIMES)
+  type_decl
+  cartesian
+  fun_type
+  cons_expr
+  cat_expr
+  set_membership
+  disj_expr
+  nsepseq(variant,VBAR)
+  core_pattern
+  nsepseq(type_expr,COMMA)
+  expr
+  nsepseq(expr,COMMA)
+  option(SEMI)
+  option(VBAR)
+  option(arguments)
 %%
 
 (* RULES *)

@@ -1,14 +1,6 @@
 open Display
 
-let error_suggest: string = "\n
-If you're not sure how to fix this error, you can do one of the following:
-
-* Visit our documentation: https://ligolang.org/docs/intro/introduction
-* Ask a question on our Discord: https://discord.gg/9rhYaEt
-* Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-* Check the changelog by running 'ligo changelog'"
-
-let rec error_ppformat' : display_format:string display_format ->
+let rec error_ppformat : display_format:string display_format ->
   Format.formatter -> Types.all -> unit =
   fun ~display_format f a ->
   match display_format with
@@ -16,29 +8,29 @@ let rec error_ppformat' : display_format:string display_format ->
     match a with 
     | `Test_err_tracer (name,err) ->
       Format.fprintf f "@[<hv>Test '%s'@ %a@]"
-        name (error_ppformat' ~display_format) err
+        name (error_ppformat ~display_format) err
     | `Test_run_tracer (ep, err) ->
       Format.fprintf f "@[<hv>Running entrypoint '%s'@ %a@]"
-        ep (error_ppformat' ~display_format) err
+        ep (error_ppformat ~display_format) err
     | `Test_expect_tracer (expected, actual) ->
       Format.fprintf f "@[<hv>Expected:@ %a@ got:@ %a@]"
         Ast_core.PP.expression expected
         Ast_core.PP.expression actual
     | `Test_expect_n_tracer (i,err) ->
       Format.fprintf f "@[<hv>Expect n=%d@ %a@]"
-        i (error_ppformat' ~display_format) err
+        i (error_ppformat ~display_format) err
     | `Test_expect_exp_tracer (e,err) ->
       Format.fprintf f "@[<hv>Expect %a@ %a@]"
         Ast_core.PP.expression e
-        (error_ppformat' ~display_format) err
+        (error_ppformat ~display_format) err
     | `Test_expect_eq_n_tracer (i,err) ->
       Format.fprintf f "@[<hv>Expected eq_n=%d@ %a@]"
-        i (error_ppformat' ~display_format) err
+        i (error_ppformat ~display_format) err
     | `Test_internal t ->
       Format.fprintf f "@[<hv>Internal error:@ %s@]" t
     | `Test_md_file_tracer (md_file,s,grp,prg,err) ->
       Format.fprintf f "@[<hv>Failed to compile %s@ syntax: %s@ group: %s@ program: %s@ %a@]"
-      md_file s grp prg (error_ppformat' ~display_format) err
+      md_file s grp prg (error_ppformat ~display_format) err
     | `Test_bad_code_block arg ->
       Format.fprintf f "@[<hv>Bad code block argument '%s'@ only 'group=NAME' or 'skip' are allowed@]"
         arg
@@ -87,11 +79,11 @@ let rec error_ppformat' : display_format:string display_format ->
 
     | `Main_check_typed_arguments (Simple_utils.Runned_result.Check_parameter, err) ->
       Format.fprintf f "@[<v>Provided parameter type does not match contract parameter type@ %a@]"
-        (error_ppformat' ~display_format) err
+        (error_ppformat ~display_format) err
 
     | `Main_check_typed_arguments (Simple_utils.Runned_result.Check_storage, err) ->
       Format.fprintf f "@[<v>Provided storage type does not match contract storage type@ %a@]"
-        (error_ppformat' ~display_format) err
+        (error_ppformat ~display_format) err
 
     | `Main_unknown_failwith_type ->
       Format.fprintf f "@[<v>Execution failed with an unknown failwith type@]"
@@ -140,12 +132,6 @@ let rec error_ppformat' : display_format:string display_format ->
     | `Main_decompile_typed e -> Typer.Errors.error_ppformat ~display_format f  e
   )
   
-let error_ppformat : display_format:string display_format ->
-  Format.formatter -> Types.all -> unit = fun ~display_format f a ->
-    Format.fprintf f "@[<v>%a@ %s@]"
-      (error_ppformat' ~display_format) a
-      error_suggest
-
 let rec error_jsonformat : Types.all -> Yojson.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
