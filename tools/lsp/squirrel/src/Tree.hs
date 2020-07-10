@@ -213,7 +213,9 @@ traverseMany visitors orElse = go
           case tree of
             Tree (Right (r, union)) -> do
               union' <- traverse go union
-              return $ Tree (Right (orElse r, union'))
+              return $ Tree $ Right (orElse r, union')
+            Tree (Left err) -> do
+              return $ Tree $ Left $ fmap orElse err
 
 -- | Make a tree out of a layer and an info.
 mk :: (Functor f, Element f fs) => info -> f (Tree fs info) -> Tree fs info
