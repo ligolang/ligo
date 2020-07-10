@@ -15,7 +15,8 @@ import Range
 import Product
 import Tree hiding (skip)
 
--- import Debug.Trace
+import Pretty
+import Debug.Trace
 
 ranged
   :: ( Functor f
@@ -779,11 +780,12 @@ letExpr = do
       -> Pascal ASTInfo
       -> Pascal ASTInfo
       -> Pascal ASTInfo
-    let'' r decl b = mk (Cons r' rest) $ Let decl b
+    let'' r decl b =
+        mk (Cons r' rest) $ Let decl b
       where
         r' = Range start end f
         Range _ end f = r
-        Cons (Range start _ _) rest = infoOf b
+        Cons (Range start _ _) rest = infoOf decl
 
 statement :: Parser (Pascal ASTInfo)
 statement = ranged do pure Action <*> expr
@@ -913,12 +915,12 @@ example :: FilePath
 -- example = "../../../src/test/contracts/bytes_arithmetic.ligo"
 -- example = "../../../src/test/contracts/bytes_unpack.ligo"
 -- example = "../../../src/test/contracts/chain_id.ligo"
--- example = "../../../src/test/contracts/coase.ligo"
+example = "../../../src/test/contracts/coase.ligo"
 -- example = "../../../src/test/contracts/failwith.ligo"
 -- example = "../../../src/test/contracts/loop.ligo"
 -- example = "../../../src/test/contracts/redeclaration.ligo"
 -- example = "../../../src/test/contracts/includer.ligo"
 -- example = "../../../src/test/contracts/namespaces.ligo"
-example = "../../../src/test/contracts/application.ligo"
+-- example = "../../../src/test/contracts/blocks.ligo"
 -- example = "../../../src/test/contracts/application.ligo"
 -- example = "../../../src/test/contracts/application.ligo"

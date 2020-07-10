@@ -34,7 +34,7 @@ import Pretty
 import Error
 import Range
 
--- import Debug.Trace
+import Debug.Trace
 
 -- | A tree, where each layer is one of @layers@ `Functor`s.
 --
@@ -115,6 +115,9 @@ lookupTree
   .  ( Apply Foldable fs
      , Apply Functor fs
      , HasRange info
+    --  , HasComments info
+    --  , Pretty1 (Sum fs)
+    --  , Pretty info
      )
   => Range
   -> Tree fs info

@@ -12,13 +12,19 @@ import Range
 import Pretty
 import Product
 
+import Data.Text (Text)
 -- import Debug.Trace
 
+type CanSearch xs =
+  ( Contains [ScopedDecl] xs
+  , Contains Range xs
+  , Contains (Maybe Category) xs
+  , Contains [Text] xs
+  , Pretty (Product xs)
+  )
+
 findScopedDecl
-  :: ( Contains [ScopedDecl] xs
-     , Contains Range xs
-     , Contains (Maybe Category) xs
-     )
+  :: CanSearch xs
   => Range
   -> Pascal (Product xs)
   -> Maybe ScopedDecl
@@ -32,10 +38,7 @@ findScopedDecl pos tree = do
     lookupEnv (ppToText $ void pt) filtered
 
 definitionOf
-  :: ( Contains [ScopedDecl] xs
-     , Contains Range xs
-     , Contains (Maybe Category) xs
-     )
+  :: CanSearch xs
   => Range
   -> Pascal (Product xs)
   -> Maybe Range
@@ -43,10 +46,7 @@ definitionOf pos tree =
   _sdOrigin <$> findScopedDecl pos tree
 
 typeOf
-  :: ( Contains [ScopedDecl] xs
-     , Contains Range xs
-     , Contains (Maybe Category) xs
-     )
+  :: CanSearch xs
   => Range
   -> Pascal (Product xs)
   -> Maybe (Either (Pascal ()) Kind)
@@ -54,10 +54,7 @@ typeOf pos tree =
   _sdType =<< findScopedDecl pos tree
 
 implementationOf
-  :: ( Contains [ScopedDecl] xs
-     , Contains Range xs
-     , Contains (Maybe Category) xs
-     )
+  :: CanSearch xs
   => Range
   -> Pascal (Product xs)
   -> Maybe Range
@@ -65,10 +62,7 @@ implementationOf pos tree =
   _sdBody =<< findScopedDecl pos tree
 
 referencesOf
-  :: ( Contains [ScopedDecl] xs
-     , Contains Range xs
-     , Contains (Maybe Category) xs
-     )
+  :: CanSearch xs
   => Range
   -> Pascal (Product xs)
   -> Maybe [Range]

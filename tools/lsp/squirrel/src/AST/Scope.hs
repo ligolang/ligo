@@ -220,6 +220,10 @@ instance Pretty ScopedDecl where
 instance Pretty Kind where
   pp _ = "TYPE"
 
+instance Pretty Category where
+  pp Variable = "Variable"
+  pp Type     = "Type"
+
 -- | Search for a name inside a local scope.
 lookupEnv :: Text -> [ScopedDecl] -> Maybe ScopedDecl
 lookupEnv name = listToMaybe . filter ((name ==) . ppToText . _sdName)
