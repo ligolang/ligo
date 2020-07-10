@@ -6,9 +6,9 @@ import           Control.Lens
 import           Control.Monad
 
 import           Data.Default
+-- import           Data.Foldable
 import qualified Data.Text                             as Text
 import           Data.Text                               (Text)
-import           Data.Foldable
 import           Data.String.Interpolate (i)
 
 import qualified Language.Haskell.LSP.Control          as CTRL
@@ -214,6 +214,8 @@ loadByURI uri = do
     Just fin -> do
       (tree, _) <- runParser contract (Path fin)
       return $ addLocalScopes tree
+    Nothing -> do
+      error $ "uriToFilePath " ++ show uri ++ " has failed. We all are doomed."
 
 collectErrors
   :: Core.LspFuncs ()

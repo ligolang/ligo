@@ -5,9 +5,10 @@ dependencies:
   - bytestring
   - containers
   - data-default
-  - filepath
   - exceptions
   - fastsum
+  - filepath
+  - ghc-prim
   - mtl
   - pretty
   - text

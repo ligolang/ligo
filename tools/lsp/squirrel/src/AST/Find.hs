@@ -7,14 +7,12 @@ import AST.Types
 import AST.Scope
 import AST.Parser
 
-import Parser
 import Tree
 import Range
-import Lattice
 import Pretty
 import Product
 
-import Debug.Trace
+-- import Debug.Trace
 
 findScopedDecl
   :: ( Contains [ScopedDecl] xs
@@ -25,13 +23,13 @@ findScopedDecl
   -> Pascal (Product xs)
   -> Maybe ScopedDecl
 findScopedDecl pos tree = do
-  point <- lookupTree pos tree
-  let info = infoOf point
+  pt <- lookupTree pos tree
+  let info = infoOf pt
   let fullEnv = getElem info
   do
-    cat <- getElem info
-    let filtered = filter (ofCategory cat) fullEnv
-    lookupEnv (ppToText $ void point) filtered
+    categ <- getElem info
+    let filtered = filter (ofCategory categ) fullEnv
+    lookupEnv (ppToText $ void pt) filtered
 
 definitionOf
   :: ( Contains [ScopedDecl] xs

@@ -15,56 +15,58 @@ module AST.Scope
 
 import           Control.Arrow (second)
 import           Control.Monad.State
-import           Control.Monad.Writer.Strict hiding (Alt, Product)
 
-import           Data.Function
 import qualified Data.List   as List
-import           Data.Map      (Map)
+import           Data.Map            (Map)
 import qualified Data.Map    as Map
-import           Data.Maybe    (fromJust, listToMaybe)
-import           Data.Text     (Text)
-import qualified Data.Text   as Text
+import           Data.Maybe          (listToMaybe)
+import           Data.Sum            (Element, Apply, Sum)
+import           Data.Text           (Text)
 
-import           AST.Parser
+-- import           AST.Parser
 import           AST.Types
-import           Comment
+-- import           Comment
 import           Lattice
-import           Parser
+-- import           Parser
 import           Pretty
 import           Product
 import           Range
 import           Tree
 
-import           Debug.Trace
-
--- | Ability to contain a list of declarations.
-class HasLocalScope x where
-  getLocalScope :: x -> [ScopedDecl]
-
-instance Contains [ScopedDecl] xs => HasLocalScope (Product xs) where
-  getLocalScope = getElem
+-- import           Debug.Trace
 
 type CollectM = State (Product [FullEnv, [Range]])
 
-type AddRefsM = State FullEnv
-
-data FullEnv = FullEnv
-  { vars   :: Env
-  , types  :: Env
-  }
+type FullEnv = Product ["vars" := Env, "types" := Env]
+type Env     = Map Range [ScopedDecl]
 
 data Category = Variable | Type
 
-emptyEnv = FullEnv Map.empty Map.empty
+-- | The type/value declaration.
+data ScopedDecl = ScopedDecl
+  { _sdName    :: Pascal ()
+  , _sdOrigin  :: Range
+  , _sdBody    :: Maybe Range
+  , _sdType    :: Maybe (Either (Pascal ()) Kind)
+  , _sdRefs    :: [Range]
+  }
+  deriving Show via PP ScopedDecl
 
-with Variable (FullEnv vs ts) f = FullEnv (f vs) ts
-with Type     (FullEnv vs ts) f = FullEnv vs (f ts)
+-- | The kind.
+data Kind = Star
+  deriving Show via PP Kind
 
-grab Variable (FullEnv vs ts) = vs
-grab Type     (FullEnv vs ts) = ts
+emptyEnv :: FullEnv
+emptyEnv
+  = Cons (Tag Map.empty)
+  $ Cons (Tag Map.empty)
+    Nil
 
-type Env = Map Range [ScopedDecl]
+with :: Category -> FullEnv -> (Env -> Env) -> FullEnv
+with Variable env f = modTag @"vars"  f env
+with Type     env f = modTag @"types" f env
 
+ofCategory :: Category -> ScopedDecl -> Bool
 ofCategory Variable ScopedDecl { _sdType = Just (Right Star) } = False
 ofCategory Variable _                                          = True
 ofCategory Type     ScopedDecl { _sdType = Just (Right Star) } = True
@@ -100,6 +102,17 @@ addNameCategories tree = flip evalState emptyEnv do
     (Cons Nothing)
     tree
 
+getEnvTree
+  :: ( UpdateOver CollectM (Sum fs) (Tree fs b)
+     , Apply Foldable fs
+     , Apply Functor fs
+     , Apply Traversable fs
+     , HasRange b
+     , Element Name fs
+     , Element TypeName fs
+     )
+  => Tree fs b
+  -> FullEnv
 getEnvTree tree = envWithREfs
   where
     envWithREfs = flip execState env do
@@ -120,7 +133,7 @@ getEnvTree tree = envWithREfs
       $ traverseTree pure tree
 
 fullEnvAt :: FullEnv -> Range -> [ScopedDecl]
-fullEnvAt fe r = envAt (grab Type fe) r <> envAt (grab Variable fe) r
+fullEnvAt fe r = envAt (getTag @"types" fe) r <> envAt (getTag @"vars" fe) r
 
 envAt :: Env -> Range -> [ScopedDecl]
 envAt env pos =
@@ -133,8 +146,8 @@ envAt env pos =
     toScopeMap sd@ScopedDecl {_sdName} = Map.singleton (ppToText _sdName) sd
 
 addRef :: Range -> (Category, Text) -> FullEnv -> FullEnv
-addRef r (cat, n) env =
-  with cat env \slice ->
+addRef r (categ, n) env =
+  with categ env \slice ->
     Map.union
       (go slice $ range slice)
       slice
@@ -143,8 +156,8 @@ addRef r (cat, n) env =
       let decls = slice Map.! r'
       in
         case updateOnly n r addRefToDecl decls of
-          (True,  decls) -> Map.singleton r' decls
-          (False, decls) -> Map.insert r' decls (go slice rest)
+          (True,  decls') -> Map.singleton r' decls'
+          (False, decls') -> Map.insert    r' decls' (go slice rest)
     go _ [] = Map.empty
 
     range slice
@@ -179,11 +192,11 @@ enter r = do
   modify $ modElem (r :)
 
 define :: Category -> ScopedDecl -> CollectM ()
-define cat sd = do
-  r <- gets (head . getElem)
+define categ sd = do
+  r <- gets (head . getElem @[Range])
   modify
     $ modElem @FullEnv \env ->
-        with cat env
+        with categ env
         $ Map.insertWith (++) r [sd]
 
 leave :: CollectM ()
@@ -199,24 +212,10 @@ instance {-# OVERLAPS #-} Pretty FullEnv where
       aux (r, fe) =
         pp r `indent` block fe
 
-      mergeFE (FullEnv a b) = a <> b
-
--- | The type/value declaration.
-data ScopedDecl = ScopedDecl
-  { _sdName    :: Pascal ()
-  , _sdOrigin  :: Range
-  , _sdBody    :: Maybe Range
-  , _sdType    :: Maybe (Either (Pascal ()) Kind)
-  , _sdRefs    :: [Range]
-  }
-  deriving Show via PP ScopedDecl
+      mergeFE fe = getTag @"vars" @Env fe <> getTag @"types" fe
 
 instance Pretty ScopedDecl where
-  pp (ScopedDecl n o b t refs) = color 3 (pp n) <+> pp o <+> ":" <+> color 4 (maybe "?" (either pp pp) t) <+> "=" <+> pp refs
-
--- | The kind.
-data Kind = Star
-  deriving Show via PP Kind
+  pp (ScopedDecl n o _ t refs) = color 3 (pp n) <+> pp o <+> ":" <+> color 4 (maybe "?" (either pp pp) t) <+> "=" <+> pp refs
 
 instance Pretty Kind where
   pp _ = "TYPE"

@@ -4,6 +4,8 @@
 
 module Product where
 
+import GHC.Types
+
 -- | `Product xs` contains elements of each of the types from the `xs` list.
 data Product xs where
   Cons :: x -> Product xs -> Product (x : xs)
@@ -27,7 +29,7 @@ instance Contains x xs => Contains x (y : xs) where
 
 -- | Add a name to the type.
 --
-newtype (s :: String) := t = Tag { unTag :: t }
+newtype (s :: Symbol) := t = Tag { unTag :: t }
 
 -- | Retrieve a type associated with the given name.
 --

@@ -62,7 +62,7 @@ module Parser
   , dump
 
     -- * Comments and ranges
-  , ASTInfo(..)
+  , ASTInfo
   , Source(..)
   , module ParseTree
   ) where
@@ -74,8 +74,7 @@ import qualified Control.Monad.Reader as MTL
 
 import Data.Functor ((<&>))
 import Data.Foldable
-import Data.IORef
-import Data.Text (Text, unpack)
+import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Set as Set
 
@@ -84,7 +83,6 @@ import System.FilePath
 import ParseTree
 import Range
 import Pretty
-import Comment
 import Error
 import Product
 
@@ -289,7 +287,7 @@ subtree msg parser = do
 l <|> r = do
   s <- get' @ParseForest
   c <- get' @[Text]
-  l `catch` \(e :: Error ASTInfo) -> do
+  l `catch` \(_ :: Error ASTInfo) -> do
     put' s
     put' c
     r

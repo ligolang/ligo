@@ -24,7 +24,7 @@ module Tree
   where
 
 import Data.Foldable
-import Data.List
+-- import Data.List
 import Data.Sum
 import Data.Monoid (First(..), getFirst)
 
@@ -34,7 +34,7 @@ import Pretty
 import Error
 import Range
 
-import Debug.Trace
+-- import Debug.Trace
 
 -- | A tree, where each layer is one of @layers@ `Functor`s.
 --
@@ -52,8 +52,8 @@ dumpTree
   -> Doc
 dumpTree (Tree tree) =
   case tree of
-    Left e -> "ERR"
-    Right (i, ls) ->
+    Left _ -> "ERR"
+    Right (_, ls) ->
       pp (Tree tree) `indent` block (dumpTree <$> toList ls)
 
 instance Apply Functor layers => Functor (Tree layers) where
@@ -129,6 +129,7 @@ lookupTree target = go
 
     layers :: (Apply Foldable fs) => Tree fs info -> [Tree fs info]
     layers (Tree (Right (_, ls))) = toList ls
+    layers  _                     = []
 
 -- | Traverse the tree over some monad that exports its methods.
 --

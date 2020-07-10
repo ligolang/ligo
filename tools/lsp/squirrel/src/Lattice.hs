@@ -22,5 +22,5 @@ partOrder :: Lattice l => l -> l -> Ordering
 partOrder a b | a <? b && b <? a = EQ
 partOrder a b | a <? b           = LT
 partOrder a b |           b <? a = GT
-partOrder a b                    = error "partOrder: Non-orderable"
+partOrder _ _                    = error "partOrder: Non-orderable"
 

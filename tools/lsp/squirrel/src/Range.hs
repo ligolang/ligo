@@ -16,8 +16,6 @@ import Data.ByteString (ByteString)
 import Data.Text (Text)
 import Data.Text.Encoding
 
-import System.FilePath
-
 import Pretty
 import Lattice
 import Product

@@ -2,11 +2,11 @@
 {- | Parser for a contract.
 -}
 
-module AST.Parser (example, contract) where
+module AST.Parser (example, contract, sample) where
 
 import Data.Text (Text)
 import qualified Data.Text as Text
-import Data.Sum
+import Data.Sum (Element)
 
 import AST.Types
 
@@ -892,7 +892,10 @@ typeTuple = do
   subtree "type_tuple" do
     many do inside "element" type_
 
--- example :: Text
+sample :: IO (Pascal ASTInfo)
+sample = runParser' contract (Path example)
+
+example :: FilePath
 -- example = "../../../src/test/contracts/application.ligo"
 -- example = "../../../src/test/contracts/address.ligo"
 -- example = "../../../src/test/contracts/amount.ligo"
@@ -915,7 +918,7 @@ typeTuple = do
 -- example = "../../../src/test/contracts/loop.ligo"
 -- example = "../../../src/test/contracts/redeclaration.ligo"
 -- example = "../../../src/test/contracts/includer.ligo"
-example = "../../../src/test/contracts/namespaces.ligo"
--- example = "../../../src/test/contracts/application.ligo"
+-- example = "../../../src/test/contracts/namespaces.ligo"
+example = "../../../src/test/contracts/application.ligo"
 -- example = "../../../src/test/contracts/application.ligo"
 -- example = "../../../src/test/contracts/application.ligo"
