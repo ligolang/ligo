@@ -421,7 +421,6 @@ Ill-formed conditional expression.
 At this point, if the Boolean test expression is complete, the branch
 'then' is expected.
 
-
 interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes With
 ##
 ## Ends in an error in state: 458.
@@ -1422,10 +1421,37 @@ interactive_expr: Match Verbatim Type
 ## In state 372, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
 ## In state 373, spurious reduction of production expr -> base_cond__open(expr)
 ##
+interactive_expr: If Verbatim Then Match Verbatim Type
+##
+## Ends in an error in state: 503.
+##
+## match_expr(base_cond) -> Match expr . With option(VBAR) cases(base_cond) [ With Type Then SEMI RPAR RBRACKET RBRACE Let In EOF COLON Attr ]
+## match_expr(base_if_then_else) -> Match expr . With option(VBAR) cases(base_if_then_else) [ Else ]
+##
+## The known suffix of the stack is as follows:
+## Match expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 226, spurious reduction of production call_expr_level -> core_expr
+## In state 233, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 220, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 223, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 313, spurious reduction of production cons_expr_level -> add_expr_level
+## In state 303, spurious reduction of production cat_expr_level -> cons_expr_level
+## In state 335, spurious reduction of production comp_expr_level -> cat_expr_level
+## In state 342, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 349, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 370, spurious reduction of production base_expr(expr) -> disj_expr_level
+## In state 372, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
+## In state 373, spurious reduction of production expr -> base_cond__open(expr)
+##
 
 Ill-formed pattern matching.
 
-At this point, if the matched expression is complete, the keyword
+At this point, if the matched expression is complete, then the keyword
 'with' is expected, followed by matching cases.
 
 interactive_expr: Begin If Verbatim Then Match Verbatim With WILD ARROW Bytes With
@@ -1492,9 +1518,8 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Verbatim COMMA Bytes With
 
 Ill-formed pattern matching.
 
-At this point, if the right-hand side of the case is a complete
-expression, then a vertical bar '|' is expected, followed by another
-case.
+At this point, if the case is complete, then a vertical bar '|' is
+expected, followed by another case.
 
 interactive_expr: Begin If Verbatim Then If With
 ##
@@ -1789,7 +1814,7 @@ interactive_expr: Match Verbatim With With
 
 Ill-formed pattern matching.
 
-At this point, the left-hand side of a case is expected as a pattern.
+At this point, a case is expected to start with a pattern.
 
 interactive_expr: Begin Match With
 ##
@@ -1880,7 +1905,8 @@ Ill-formed sequence of expressions.
 At this point, if the expression is complete, one of the following is
 expected:
   * the disjunctive operator '||', if the expression is Boolean;
-  * a semicolon ';' followed by another expression;
+  * a semicolon ';' followed by another expression, if the expression
+    has type unit;
   * the keyword 'end' if the sequence is complete.
 
 interactive_expr: Begin With
@@ -2055,7 +2081,7 @@ interactive_expr: Ident DOT With
 ## Ident DOT
 ##
 
-Ill-formed selection of a substructure.
+Ill-formed selection in a record or a tuple.
 
 At this point, one of the following is expected:
   * a record field name;
@@ -2235,7 +2261,7 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Verbatim Else 
 
 Ill-formed conditional expression.
 
-At this point, the 'else' branch is expected as an expression.
+At this point, the expression of the 'else' branch is expected.
 
 interactive_expr: Begin If Verbatim Then If Verbatim Then With
 ##
@@ -2508,39 +2534,6 @@ Ill-formed definition.
 
 At this point, an expression is expected.
 
-interactive_expr: If Verbatim Then Match Verbatim Type
-##
-## Ends in an error in state: 503.
-##
-## match_expr(base_cond) -> Match expr . With option(VBAR) cases(base_cond) [ With Type Then SEMI RPAR RBRACKET RBRACE Let In EOF COLON Attr ]
-## match_expr(base_if_then_else) -> Match expr . With option(VBAR) cases(base_if_then_else) [ Else ]
-##
-## The known suffix of the stack is as follows:
-## Match expr
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 226, spurious reduction of production call_expr_level -> core_expr
-## In state 233, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 220, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 223, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 313, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 303, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 335, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 342, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 349, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 370, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 372, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 373, spurious reduction of production expr -> base_cond__open(expr)
-##
-
-Ill-formed pattern matching.
-
-At this point, if the matched expression is complete, then the keyword
-'with' is expected, followed by matching cases.
-
 interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Verbatim End
 ##
 ## Ends in an error in state: 394.
@@ -2771,7 +2764,7 @@ interactive_expr: LBRACE Ident EQ Bytes With
 
 Ill-formed record expression.
 
-At this point, if the expression of the field assignment is complete,
+At this point, if the expression assigned to the field is complete,
 one of the following is expected:
   * a semicolon ';' followed by another field assignment;
   * a closing brace '}', if the record is complete.
@@ -2803,7 +2796,7 @@ interactive_expr: LBRACE Ident EQ With
 
 Ill-formed field assignment in a record.
 
-At this point, the right-hand side is expected as an expression.
+At this point, the expression to assign is expected.
 
 interactive_expr: LBRACE Ident WILD
 ##
@@ -2817,10 +2810,10 @@ interactive_expr: LBRACE Ident WILD
 ## Ident
 ##
 
-Ill-formed record expression or record update.
+Ill-formed record expression or update.
 
 At this point, one of the following is expected:
-  * the keyword `with`, followed by field updates (assignments);
+  * the keyword 'with', followed by field updates (assignments);
   * the selection operator '.' if the record to update is not fully
     qualified;
   * the assignment operator '=' followed by an expression, if defining
@@ -2937,8 +2930,8 @@ interactive_expr: LBRACE Ident With Ident EQ Bytes With
 
 Ill-formed record update.
 
-At this point, if the right-hand side of the field assignment (update)
-is complete, then one of the following is expected:
+At this point, if the field update is complete, one of the
+following is expected:
   * a semicolon ';' followed by another field assignment;
   * a closing brace '}', if the update is complete.
 
@@ -3000,9 +2993,11 @@ interactive_expr: LBRACE With
 ## LBRACE
 ##
 
-Ill-formed record expression.
+Ill-formed record expression or update.
 
-At this point, the first field assignment is expected.
+At this point, one of the following is expected:
+  * the first field assignment, if defining a record;
+  * the qualified name of the record to update.
 
 interactive_expr: LBRACKET Verbatim SEMI Verbatim SEMI With
 ##
@@ -3117,8 +3112,8 @@ contract: Let LPAR Constr LBRACKET With
 Ill-formed list expression.
 
 At this point, one of the following is expected:
-  * a closing bracket ']` if the list is empty;
-  * a first element as an expression.
+  * the first element as an expression;
+  * a closing bracket ']' if the list is empty.
 
 interactive_expr: LPAR Verbatim COLON Ident VBAR
 ##
@@ -3190,8 +3185,7 @@ Ill formed expression.
 
 At this point, if the expression is complete, one of the following is
 expected:
-  * a colon ':' followed by a type expression annotating the
-    expression;
+  * a colon ':' followed by a type annotating the expression;
   * a closing parenthesis ')'.
 
 interactive_expr: LPAR With
@@ -3206,9 +3200,12 @@ interactive_expr: LPAR With
 ## LPAR
 ##
 
-Ill-formed annotated expression.
+Ill-formed expression.
 
-At this point, an expression is expected.
+At this point, one of the following is expected:
+  * a single expression, followed by a closing parenthesis ')';
+  * an expression annotated by its type;
+  * a closing parenthesis ')' if defining the unit value.
 
 interactive_expr: Lang Verbatim With
 ##
@@ -3282,8 +3279,9 @@ interactive_expr: Match Verbatim With LPAR Bytes RPAR With
 Ill-formed pattern matching.
 
 At this point, one of the following is expected:
-  * the cons operator '::' if you match a non-empty list;
-  * a comma ',' if you match a tuple.
+  * the cons operator '::' followed by another pattern, if matching a
+    non-empty list;
+  * a comma ',' followed by another pattern, if matching a tuple.
 
 interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Verbatim End
 ##
