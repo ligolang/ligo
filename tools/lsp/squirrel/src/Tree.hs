@@ -155,32 +155,6 @@ traverseTree act = go
       err' <- traverse act err
       return (Tree (Left err'))
 
-traverseOnly
-  :: forall f a b fs m
-  .  ( Monad m
-     , Monad m
-     , Element f fs
-     , Apply Foldable fs
-     , Apply Functor fs
-     , Apply Traversable fs
-     , Traversable f
-     , HasRange a
-     )
-  => (a -> f (Tree fs a) -> m (f (Tree fs a)))
-  ->          Tree fs a  -> m    (Tree fs a)
-traverseOnly act = go
-  where
-    go (match -> Just (r, fa)) = do
-      fb <- act r fa
-      fc <- traverse go fb
-      pure $ mk r fc
-
-    go tree@(Tree (Right (r, union))) = do
-      union' <- traverse go union
-      pure $ Tree $ Right (r, union')
-
-    go tree = pure tree
-
 data Visit fs a b m where
   Visit
     :: (Element f fs, Traversable f)
