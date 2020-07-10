@@ -102,7 +102,7 @@ interactive_expr: Match Verbatim With WILD ARROW Fun WILD ARROW With
 
 Ill-formed function expression.
 
-At this point, a function body is expected as an expression.
+At this point, a function body is expected in the form of an expression.
 
 interactive_expr: Begin If Verbatim Then If Verbatim Then Verbatim COMMA Bytes With
 ##
@@ -418,8 +418,8 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim With
 
 Ill-formed conditional expression.
 
-At this point, if the Boolean test expression is complete, the branch
-'then' is expected.
+At this point, if the test expression is complete, the branch 'then' is 
+expected.
 
 interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes With
 ##
@@ -642,9 +642,9 @@ interactive_expr: Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes With
 ## In state 379, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
 ##
 
-Ill-formed recursive definition.
+Ill-formed recursive let binding.
 
-At this point, if the right-hand side of the definition is a complete
+At this point, if the right-hand side of the let binding is a complete
 expression, one of the following is expected:
   * a series of attributes;
   * the keyword 'in' followed by an expression.
@@ -735,7 +735,7 @@ contract: Let Rec With
 ## Let Rec
 ##
 
-Ill-formed recursive definition.
+Ill-formed recursive let binding.
 
 At this point, an irrefutable pattern is expected, for instance an
 identifier denoting the value being defined.
@@ -1005,10 +1005,10 @@ interactive_expr: Match Verbatim With WILD ARROW Let WILD EQ Bytes Attr Type
 ## In state 175, spurious reduction of production seq(Attr) -> Attr seq(Attr)
 ##
 
-Ill-formed definition.
+Ill-formed let binding.
 
 At this point, if the series of attributes is complete, the keyword
-'in' is expected, followed by en expression.
+'in' is expected, followed by an expression.
 
 interactive_expr: Begin If Verbatim Then Let WILD EQ Bytes With
 ##
@@ -1231,9 +1231,9 @@ interactive_expr: Match Verbatim With WILD ARROW Let WILD EQ Bytes With
 ## In state 379, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
 ##
 
-Ill-formed definition.
+Ill-formed let binding.
 
-At this point, if the right-hand side of the definition is a complete
+At this point, if the right-hand side of the let binding is a complete
 expression, one of the following is expected:
   * a series of attributes;
   * the keyword 'in', followed by an expression.
@@ -1337,11 +1337,11 @@ contract: Let With
 ## Let
 ##
 
-Ill-formed definition.
+Ill-formed let binding.
 
 At this point, one of the following is expected:
-  * an irrefutable pattern, for example, an identifier;
-  * the 'rec' keyword, if the definition is recursive.
+  * an irrefutable pattern, for example: an identifier;
+  * the 'rec' keyword if the let binding is recursive.
 
 interactive_expr: Begin If Verbatim Then Match Verbatim Type
 ##
@@ -1584,7 +1584,7 @@ interactive_expr: Match Verbatim With WILD ARROW If With
 
 Ill-formed conditional expression.
 
-At this point, a Boolean test expression is expected.
+At this point, a test expression is expected.
 
 interactive_expr: Begin Match Verbatim With WILD ARROW Verbatim With
 ##
@@ -1870,9 +1870,7 @@ interactive_expr: Begin Verbatim SEMI With
 
 Ill-formed sequence expression.
 
-At this point, one of the following is expected:
-   * the keyword 'end', if your sequence is complete;
-   * another expression.
+At this point, another expression is expected.
 
 interactive_expr: Begin Verbatim With
 ##
@@ -1904,8 +1902,8 @@ Ill-formed sequence of expressions.
 
 At this point, if the expression is complete, one of the following is
 expected:
-  * the disjunctive operator '||', if the expression is Boolean;
-  * a semicolon ';' followed by another expression, if the expression
+  * an operator;
+  * a semicolon ';', followed by another expression, if the expression
     has type unit;
   * the keyword 'end' if the sequence is complete.
 
@@ -1923,7 +1921,7 @@ Ill-formed sequence of expressions.
 
 At this point, one of the following is expected:
   * the first expression;
-  * the keyword 'end' if your sequence is empty.
+  * the keyword 'end' if the sequence is empty.
 
 interactive_expr: C_None WILD
 ##
@@ -1952,7 +1950,7 @@ interactive_expr: C_Some With
 
 Ill-formed application of the data constructor 'Some'.
 
-At this point, its argument is expected as an expression.
+At this point, its argument is expected in the form of an expression.
 
 interactive_expr: Constr DOT Ident WILD
 ##
@@ -2050,8 +2048,8 @@ Ill-formed function expression.
 
 At this point, if the parameter is complete, one of the following is
 expected:
-  * another parameter as an irrefutable pattern, e.g., a variable;
-  * an arrow '->', followed by the function body as an expression.
+  * another parameter as an irrefutable pattern, e.g. a variable;
+  * an arrow '->', followed by the function body in the form of an expression.
 
 interactive_expr: Constr DOT Ident DOT With
 ##
@@ -2261,7 +2259,7 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Verbatim Else 
 
 Ill-formed conditional expression.
 
-At this point, the expression of the 'else' branch is expected.
+At this point, the 'else' branch is expected in the form of an expression.
 
 interactive_expr: Begin If Verbatim Then If Verbatim Then With
 ##
@@ -2348,7 +2346,7 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then With
 
 Ill-formed conditional expression.
 
-At this point, the expression of the 'then' branch is expected.
+At this point, the 'then' branch is expected in the form of an expression.
 
 interactive_expr: Begin Match Verbatim With WILD ARROW If With
 ##
@@ -2375,7 +2373,7 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then If With
 
 Ill-formed conditional expression.
 
-At this point, a Boolean test expression is expected.
+At this point, a test expression is expected.
 
 interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes In With
 ##
@@ -2530,7 +2528,7 @@ interactive_expr: Match Verbatim With WILD ARROW Let WILD EQ Bytes In With
 ## Let let_binding seq(Attr) In
 ##
 
-Ill-formed definition.
+Ill-formed let binding.
 
 At this point, an expression is expected.
 
@@ -2636,7 +2634,8 @@ interactive_expr: LBRACE Constr DOT Ident With
 
 Ill-formed selection in a record or a tuple.
 
-At this point, a dot '.' is expected.
+At this point, a dot '.' is expected,
+  followed by a field name or tuple index.
 
 interactive_expr: LBRACE Constr With
 ##
@@ -2650,7 +2649,7 @@ interactive_expr: LBRACE Constr With
 
 Ill-formed selection in a module.
 
-At this point, a dot '.' followed by a module field name is expected.
+At this point, a dot '.' is expected, followed by a field name.
 
 interactive_expr: LBRACE Ident DOT Ident Verbatim
 ##
@@ -2701,7 +2700,7 @@ Ill-formed record expression.
 
 At this point, one of the following is expected:
   * another field assignment;
-  * a closing brace '}', if the record is complete.
+  * a closing brace '}' if the record is complete.
 
 interactive_expr: LBRACE Ident EQ Bytes SEMI Ident EQ Bytes With
 ##
@@ -2766,8 +2765,8 @@ Ill-formed record expression.
 
 At this point, if the expression assigned to the field is complete,
 one of the following is expected:
-  * a semicolon ';' followed by another field assignment;
-  * a closing brace '}', if the record is complete.
+  * a semicolon ';', followed by another field assignment;
+  * a closing brace '}' if the record is complete.
 
 interactive_expr: LBRACE Ident EQ Bytes SEMI Ident With
 ##
@@ -2932,8 +2931,8 @@ Ill-formed record update.
 
 At this point, if the field update is complete, one of the
 following is expected:
-  * a semicolon ';' followed by another field assignment;
-  * a closing brace '}', if the update is complete.
+  * a semicolon ';', followed by another field assignment;
+  * a closing brace '}' if the update is complete.
 
 interactive_expr: LBRACE Ident With Ident EQ With
 ##
@@ -4968,4 +4967,4 @@ contract: With
 
 Ill-formed contract.
 
-At this point, a type or value declaration is expected.
+At this point, a type or let declaration is expected.
