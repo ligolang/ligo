@@ -268,7 +268,6 @@ and eval_literal : Ast_typed.literal -> (value , _) result = function
   | Literal_key_hash s  -> ok @@ V_Ct (C_key_hash s)
   | Literal_chain_id s  -> ok @@ V_Ct (C_key_hash s)
   | Literal_operation o -> ok @@ V_Ct (C_operation o)
-  | Literal_void -> failwith "iguess ?"
 
 and eval : Ast_typed.expression -> env -> (value , _) result
   = fun term env ->

@@ -11,7 +11,7 @@ type options = Memory_proto_alpha.options
 type dry_run_options =
   { amount : string ;
     balance : string ;
-    predecessor_timestamp : string option ;
+    now : string option ;
     sender : string option ;
     source : string option }
 
@@ -43,14 +43,14 @@ let make_dry_run_options (opts : dry_run_options) : (options , _) result =
           (fun _ -> Errors.invalid_address source)
           (Contract.of_b58check source) in
       ok (Some source) in
-  let%bind predecessor_timestamp =
-    match opts.predecessor_timestamp with
+  let%bind now =
+    match opts.now with
     | None -> ok None
     | Some st ->
-      match Memory_proto_alpha.Protocol.Alpha_context.Timestamp.of_notation st with
+      match Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp.of_string st with
         | Some t -> ok (Some t)
         | None -> fail @@ Errors.invalid_timestamp st in
-  ok @@ make_options ?predecessor_timestamp:predecessor_timestamp ~amount ~balance ?sender ?source ()
+  ok @@ make_options ?now:now ~amount ~balance ?sender ?source ()
 
 let ex_value_ty_to_michelson (v : ex_typed_value) : (Michelson.t , _) result =
   let (Ex_typed_value (value , ty)) = v in
@@ -72,7 +72,7 @@ let fetch_lambda_types (contract_ty:ex_ty) =
   | _ -> fail Errors.unknown (*TODO*)
 
 let run_contract ?options (exp:Michelson.t) (exp_type:ex_ty) (input_michelson:Michelson.t) : (ex_typed_value runned_result, _) result =
-  let open! Tezos_raw_protocol_006_PsCARTHA in
+  let open! Tezos_raw_protocol_ligo006_PsCARTHA in
   let%bind (Ex_ty input_ty, Ex_ty output_ty) = fetch_lambda_types exp_type in
   let%bind input =
     Trace.trace_tzresult_lwt Errors.parsing_input_tracer @@
@@ -101,7 +101,7 @@ let run_contract ?options (exp:Michelson.t) (exp_type:ex_ty) (input_michelson:Mi
     | _              -> fail @@ Errors.unknown_failwith_type )
 
 let run_expression ?options (exp:Michelson.t) (exp_type:ex_ty) : (ex_typed_value runned_result, _) result =
-  let open! Tezos_raw_protocol_006_PsCARTHA in
+  let open! Tezos_raw_protocol_ligo006_PsCARTHA in
   let (Ex_ty exp_type') = exp_type in
   let top_level = Script_ir_translator.Lambda
   and ty_stack_before = Script_typed_ir.Empty_t

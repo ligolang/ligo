@@ -8,7 +8,6 @@ let constructor ppf (c:constructor') : unit =
 let label ppf (l:label) : unit =
   let Label l = l in fprintf ppf "%s" l
 
-
 let list_sep_d x = list_sep x (tag " ,@ ")
 
 let constant ppf : constant' -> unit = function
@@ -149,15 +148,15 @@ let operation ppf (o : Memory_proto_alpha.Protocol.Alpha_context.packed_internal
         (list_sep_d prim) nl
   in
   let l ppf (l: Memory_proto_alpha.Protocol.Alpha_context.Script.lazy_expr) =
-    let oo = Tezos_data_encoding.Data_encoding.force_decode l in
+    let oo = Data_encoding.force_decode l in
     match oo with
       Some o -> fprintf ppf "%a" prim (Tezos_micheline.Micheline.root o)
     | None  -> fprintf ppf "Fail decoding"
   in
 
   let op ppf (type a) : a Memory_proto_alpha.Protocol.Alpha_context.manager_operation -> unit = function
-    | Reveal (s: Tezos_protocol_environment_006_PsCARTHA__Environment.Signature.Public_key.t) -> 
-      fprintf ppf "R %a" Tezos_protocol_environment_006_PsCARTHA__Environment.Signature.Public_key.pp s
+    | Reveal (s: Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key.t) -> 
+      fprintf ppf "R %a" Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key.pp s
     | Transaction {amount; parameters; entrypoint; destination} ->
       fprintf ppf "T {%a; %a; %s; %a}"
         Memory_proto_alpha.Protocol.Alpha_context.Tez.pp amount
@@ -167,13 +166,13 @@ let operation ppf (o : Memory_proto_alpha.Protocol.Alpha_context.packed_internal
 
     | Origination {delegate; script; credit; preorigination} ->
       fprintf ppf "O {%a; %a; %a; %a}" 
-        (print_option Tezos_protocol_environment_006_PsCARTHA__Environment.Signature.Public_key_hash.pp) delegate
+        (print_option Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key_hash.pp) delegate
         l script.code
         Memory_proto_alpha.Protocol.Alpha_context.Tez.pp credit
         (print_option Memory_proto_alpha.Protocol.Alpha_context.Contract.pp) preorigination
         
     | Delegation so ->
-      fprintf ppf "D %a" (print_option Tezos_protocol_environment_006_PsCARTHA__Environment.Signature.Public_key_hash.pp) so
+      fprintf ppf "D %a" (print_option Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key_hash.pp) so
   in
   let Internal_operation {source;operation;nonce} = o in
   fprintf ppf "{source: %s; operation: %a; nonce: %i"
@@ -184,7 +183,6 @@ let operation ppf (o : Memory_proto_alpha.Protocol.Alpha_context.packed_internal
 let literal ppf (l : literal) =
   match l with
   | Literal_unit -> fprintf ppf "unit"
-  | Literal_void -> fprintf ppf "void"
   | Literal_int z -> fprintf ppf "%a" Z.pp_print z
   | Literal_nat z -> fprintf ppf "+%a" Z.pp_print z
   | Literal_timestamp z -> fprintf ppf "+%a" Z.pp_print z
@@ -216,7 +214,6 @@ let s =
     | TC_signature -> "signature"
     | TC_timestamp -> "timestamp"
     | TC_chain_id -> "chain_id"
-    | TC_void -> "void"
 in
 fprintf ppf "%s" s
 

@@ -42,6 +42,7 @@ let init_vote () =
       (program, state) "main" (e_pair yea (init_storage "basic")) in
   let%bind (_, storage) = trace_option (test_internal __LOC__) @@ Ast_core.extract_pair result in
   let%bind storage' = trace_option (test_internal __LOC__) @@ Ast_core.extract_record storage in
+  let storage' =  List.map (fun (Ast_core.Label l,v) -> (Label l, v)) storage' in
 (*  let votes = List.assoc (Label "voters") storage' in
   let%bind votes' = extract_map votes in *)
   let yea = List.assoc (Label "yea") storage' in

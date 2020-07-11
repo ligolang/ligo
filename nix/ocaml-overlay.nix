@@ -6,6 +6,12 @@
 self: super:
 let
   opam-nix = import sources.opam-nix (import sources.nixpkgs { });
+
+  ocaml-overlay =
+    import "${sources.tezos-packaging}/nix/build/ocaml-overlay.nix" {
+      sources = import "${sources.tezos-packaging}/nix/nix/sources.nix";
+    };
+
   inherit (import sources."gitignore.nix" { inherit (self) lib; })
     gitignoreSource;
   # Remove list of directories or files from source (to stop unneeded rebuilds)
@@ -16,11 +22,10 @@ let
       src = gitignoreSource ../.;
     });
 in {
-  ocamlPackages = self.ocaml-ng.ocamlPackages_4_07.overrideScope'
+  ocamlPackages = self.ocaml-ng.ocamlPackages_4_09.overrideScope'
     (builtins.foldl' self.lib.composeExtensions (_: _: { }) [
-      # Both opam-repository and tezos-opam-repository are updated manually with `niv update`
-      (opam-nix.traverseOPAMRepo' sources.opam-repository)
-      (opam-nix.traverseOPAMRepo sources.tezos-opam-repository)
+      # opam-repository is updated manually with `niv update`
+      (oself: osuper: (ocaml-overlay self super).ocamlPackages)
       (opam-nix.callOPAMPackage (filterOut [
         ".git"
         ".gitlab-ci.yml"
@@ -34,26 +39,13 @@ in {
         # Strange naming in nixpkgs
         ocamlfind = oself.findlib;
         lablgtk = null;
-        lwt = oself.lwt4;
-
-        # Native dependencies
-        conf-gmp = self.gmp;
-        conf-libev = self.libev;
-        conf-hidapi = self.hidapi;
-        conf-pkg-config = self.pkg-config;
 
         # Strange problems
         bigstring = osuper.bigstring.overrideAttrs (_: { doCheck = false; });
         xmldiff = osuper.xmldiff.overrideAttrs (_: { src = sources.xmldiff; });
         getopt = osuper.getopt.overrideAttrs (_: { configurePhase = "true"; });
-
         # Force certain versions
-        ipaddr = osuper.ipaddr.versions."4.0.0";
-        conduit = osuper.conduit.versions."2.1.0";
-        conduit-lwt-unix = osuper.conduit-lwt-unix.versions."2.0.2";
-        cohttp-lwt-unix = osuper.cohttp-lwt-unix.versions."2.4.0";
         cohttp-lwt = osuper.cohttp-lwt.versions."2.4.0";
-        macaddr = osuper.macaddr.versions."4.0.0";
         ocaml-migrate-parsetree =
           osuper.ocaml-migrate-parsetree.versions."1.4.0";
         ppx_tools_versioned = osuper.ppx_tools_versioned.versions."5.2.3";
@@ -110,6 +102,7 @@ in {
           nativeBuildInputs = oa.nativeBuildInputs
             ++ [ self.buildPackages.rakudo ];
           installPhase = "mkdir $out";
+          buildInputs = oa.buildInputs ++ oa.checkInputs;
         });
         # LIGO odoc documentation
         ligo-doc = osuper.ligo.overrideAttrs (oa: {

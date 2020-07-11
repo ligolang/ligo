@@ -16,53 +16,57 @@ open Todo_use_fold_generator
 let assert_type_expression_eq ((tv',tv):O.type_expression * O.type_expression) : (unit,typer_error) result = 
   Compare_types.assert_type_expression_eq (tv' , tv)
 
+let cast_var (orig: 'a Var.t Location.wrap) = { orig with wrap_content = Var.todo_cast orig.wrap_content}
+
 (*
   Extract pairs of (name,type) in the declaration and add it to the environment
 *)
 let rec type_declaration env state : I.declaration -> (environment * O'.typer_state * O.declaration option, typer_error) result = function
-  | Declaration_type (type_name , type_expression) ->
-    let%bind tv = evaluate_type env type_expression in
-    let env' = Environment.add_type (type_name) tv env in
+  | Declaration_type {type_binder ; type_expr} ->
+    let%bind tv = evaluate_type env type_expr in
+    let env' = Environment.add_type (Var.todo_cast type_binder) tv env in
     ok (env', state , None)
-  | Declaration_constant (binder , tv_opt , attr, expression) -> (
+  | Declaration_constant {binder ; type_opt ; inline ; expr} -> (
     (*
       Determine the type of the expression and add it to the environment
     *)
-      let%bind tv'_opt = bind_map_option (evaluate_type env) tv_opt in
+      let%bind tv'_opt = bind_map_option (evaluate_type env) type_opt in
       let%bind (expr , state') =
-        trace (constant_declaration_tracer binder expression tv'_opt) @@
-        type_expression env state expression in
+        trace (constant_declaration_tracer binder expr tv'_opt) @@
+        type_expression env state expr in
+      let binder = cast_var binder in
       let post_env = Environment.add_ez_declaration binder expr env in
-      ok (post_env, state' , Some (O.Declaration_constant { binder ; expr ; inline=attr.inline} ))
+      ok (post_env, state' , Some (O.Declaration_constant { binder ; expr ; inline=inline.inline} ))
     )
 
 and type_match : environment -> O'.typer_state -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> (O.matching_expr * O'.typer_state, typer_error) result =
   fun e state t i _ae loc -> match i with
-    | Match_option {match_none ; match_some} ->
+    | Match_option {match_none ; match_some = {opt ; body}} ->
       let%bind tv =
         trace_option (match_error ~expected:i ~actual:t loc)
         @@ get_t_option t in
       let%bind (match_none , state') = type_expression e state match_none in
-      let (opt, b) = match_some in
+      let opt = cast_var opt in
       let e' = Environment.add_ez_binder opt tv e in
-      let%bind (body , state'') = type_expression e' state' b in
+      let%bind (body , state'') = type_expression e' state' body in
       ok (O.Match_option {match_none ; match_some = { opt; body; tv}} , state'')
-    | Match_list {match_nil ; match_cons} ->
+    | Match_list {match_nil ; match_cons = { hd ; tl ; body }} ->
+      let hd = cast_var hd in
+      let tl = cast_var tl in
       let%bind t_elt =
         trace_option (match_error ~expected:i ~actual:t loc)
         @@ get_t_list t in
       let%bind (match_nil , state') = type_expression e state match_nil in
-      let (hd, tl, b) = match_cons in
       let e' = Environment.add_ez_binder hd t_elt e in
       let e' = Environment.add_ez_binder tl t e' in
-      let%bind (body , state'') = type_expression e' state' b in
+      let%bind (body , state'') = type_expression e' state' body in
       ok (O.Match_list {match_nil ; match_cons = {hd; tl; body;tv=t}} , state'')
     | Match_variant lst ->
       let%bind variant_opt =
-        let aux acc ((constructor_name , _) , _) =
+        let aux acc ({constructor ; _ } : I.match_variant) =
           let%bind (_ , variant) =
-            trace_option (unbound_constructor e constructor_name loc) @@
-            Environment.get_constructor constructor_name e in
+            trace_option (unbound_constructor e constructor loc) @@
+            Environment.get_constructor constructor e in
           let%bind acc = match acc with
             | None -> ok (Some variant)
             | Some variant' ->
@@ -81,7 +85,7 @@ and type_match : environment -> O'.typer_state -> O.type_expression -> I.matchin
           trace_option (match_error ~expected:i ~actual:t loc)
           @@ Ast_typed.Combinators.get_t_sum variant in
         let variant_cases = List.map fst @@ O.CMap.to_kv_list variant_cases' in
-        let match_cases = List.map (fun x -> convert_constructor' @@ fst @@ fst x) lst in
+        let match_cases = List.map (fun ({constructor;_}:I.match_variant) -> convert_constructor' constructor) lst in
         let test_case = fun c ->
           Assert.assert_true (corner_case "match case") (List.mem c match_cases)
         in
@@ -93,14 +97,15 @@ and type_match : environment -> O'.typer_state -> O.type_expression -> I.matchin
         ok ()
       in
       let%bind (state'' , cases) =
-        let aux state ((constructor_name , pattern) , b) =
-          let%bind (constructor , _) =
-            trace_option (unbound_constructor e constructor_name loc) @@
-            Environment.get_constructor constructor_name e in
-          let e' = Environment.add_ez_binder pattern constructor e in
-          let%bind (body , state') = type_expression e' state b in
-          let constructor = convert_constructor' constructor_name in
-          ok (state' , ({constructor ; pattern ; body = body} : O.matching_content_case))
+        let aux state ({constructor ; proj ; body } : I.match_variant) =
+          let proj = cast_var proj in
+          let%bind (constructor_t , _) =
+            trace_option (unbound_constructor e constructor loc) @@
+            Environment.get_constructor constructor e in
+          let e' = Environment.add_ez_binder proj constructor_t e in
+          let%bind (body , state') = type_expression e' state body in
+          let constructor = convert_constructor' constructor in
+          ok (state' , ({constructor ; pattern=proj ; body = body} : O.matching_content_case))
         in
         bind_fold_map_list aux state lst in
       ok (O.Match_variant {cases ; tv=variant } , state'')
@@ -109,7 +114,7 @@ and type_match : environment -> O'.typer_state -> O.type_expression -> I.matchin
   Recursively search the type_expression and return a result containing the
   type_value at the leaves
 *)
-and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, typer_error) result =
+and evaluate_type : environment -> I.type_expression -> (O.type_expression, typer_error) result = fun e t ->
   let return tv' = ok (make_t ~loc:t.location tv' (Some t)) in
   match t.content with
   | T_arrow {type1;type2} ->
@@ -137,12 +142,12 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
   | T_variable name ->
     let%bind tv =
       trace_option (unbound_type_variable e name t.location)
-      @@ Environment.get_type_opt (name) e in
+      @@ Environment.get_type_opt (Var.todo_cast name) e in
     ok tv
   | T_constant cst ->
       return (T_constant (convert_type_constant cst))
-  | T_operator (op, lst) ->
-      ( match op,lst with
+  | T_operator {type_operator=op ; arguments} ->
+      ( match op, arguments with
         | TC_set, [s] ->
             let%bind s = evaluate_type e s in
             return @@ T_operator (O.TC_set s)
@@ -220,7 +225,7 @@ and type_expression : environment -> O'.typer_state -> ?tv_opt:O.type_expression
 
   (* Basic *)
   | E_variable name -> (
-      let name'= name in
+      let name' : O.expression_variable = cast_var name in
       let%bind (tv' : Environment.element) =
         trace_option (unbound_variable e name ae.location)
         @@ Environment.get_opt name' e in
@@ -268,9 +273,6 @@ and type_expression : environment -> O'.typer_state -> ?tv_opt:O.type_expression
   | E_literal (Literal_unit) -> (
       return_wrapped (e_unit ()) state @@ Wrap.literal (t_unit ())
     )
-  | E_literal (Literal_void) -> (
-      failwith "TODO: missing implementation for literal void"
-    )
 
   | E_record_accessor {record;path} -> (
       let%bind (base' , state') = type_expression e state record in
@@ -295,7 +297,7 @@ and type_expression : environment -> O'.typer_state -> ?tv_opt:O.type_expression
       let%bind (expr' , state') = type_expression e state expr in
       ok (O.LMap.add (convert_label k) expr' acc , state')
     in
-    let%bind (m' , state') = Stage_common.Helpers.bind_fold_lmap aux (ok (O.LMap.empty , state)) m in
+    let%bind (m' , state') = Ast_core.Helpers.bind_fold_lmap aux (ok (O.LMap.empty , state)) m in
     let wrapped = Wrap.record (O.LMap.map (fun e -> ({field_type = get_type_expression e ; michelson_annotation = None ; field_decl_pos = 0}: O.field_content)) m') in
     return_wrapped (E_record m') state' wrapped
   | E_record_update {record; path; update} ->
@@ -323,16 +325,16 @@ and type_expression : environment -> O'.typer_state -> ?tv_opt:O.type_expression
     return_wrapped (E_application {lamb=f';args}) state'' wrapped
 
   (* Advanced *)
-  | E_let_in {let_binder ; rhs ; let_result; inline} ->
-    let%bind rhs_tv_opt = bind_map_option (evaluate_type e) (snd let_binder) in
+  | E_let_in {let_binder = { binder ; ascr } ; rhs ; let_result; inline} ->
+    let binder = cast_var binder in
+    let%bind rhs_tv_opt = bind_map_option (evaluate_type e) ascr in
     (* TODO: the binder annotation should just be an annotation node *)
     let%bind (rhs , state') = type_expression e state rhs in
-    let let_binder = fst let_binder in 
-    let e' = Environment.add_ez_declaration (let_binder) rhs e in
+    let e' = Environment.add_ez_declaration binder rhs e in
     let%bind (let_result , state'') = type_expression e' state' let_result in
     let wrapped =
       Wrap.let_in rhs.type_expression rhs_tv_opt let_result.type_expression in
-    return_wrapped (E_let_in {let_binder; rhs; let_result; inline}) state'' wrapped
+    return_wrapped (E_let_in {let_binder = binder ; rhs; let_result; inline}) state'' wrapped
   | E_raw_code {language ; code} ->
     let%bind (code,state') = type_expression e state code in
     let wrapped = Wrap.raw_code code.type_expression in
@@ -374,6 +376,7 @@ and type_expression : environment -> O'.typer_state -> ?tv_opt:O.type_expression
         state' wrapped
 
   | E_recursive {fun_name;fun_type;lambda} ->
+    let fun_name = cast_var fun_name in
     let%bind fun_type = evaluate_type e fun_type in
     let e = Environment.add_ez_binder fun_name fun_type e in
     let%bind (lambda,state,_) = type_lambda e state lambda in
@@ -407,6 +410,7 @@ and type_lambda e state {
       output_type ;
       result ;
     } =
+      let binder = cast_var binder in
       let%bind input_type' = bind_map_option (evaluate_type e) input_type in
       let%bind output_type' = bind_map_option (evaluate_type e) output_type in
 
@@ -461,7 +465,7 @@ let type_and_subst_xyz
   let subst_all =
     let aliases = state.structured_dbs.aliases in
     let assignments = state.structured_dbs.assignments in
-    let substs : variable: I.type_variable -> _ = fun ~variable ->
+    let substs : variable: O.type_variable -> _ = fun ~variable ->
       to_option @@
       let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "TRY   %a\n" Var.pp variable) in
       let%bind root =

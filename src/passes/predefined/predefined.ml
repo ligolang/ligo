@@ -62,7 +62,6 @@ module Tree_abstraction = struct
     | TC_key_hash  -> "key_hash"  
     | TC_signature -> "signature" 
     | TC_timestamp -> "timestamp" 
-    | TC_void      -> "void"
 
   let type_operators s =
     match s with

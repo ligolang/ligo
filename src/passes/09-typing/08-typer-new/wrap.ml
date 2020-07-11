@@ -44,7 +44,6 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
                         | TC_signature -> C_signature
                         | TC_operation -> C_operation
                         | TC_chain_id  -> C_unit    (* TODO : replace  with chain_id *)
-                        | TC_void      -> C_unit    (* TODO : replace with void *)
                   )
      in
      p_constant csttag []
@@ -73,7 +72,7 @@ let rec type_expression_to_type_value_copypasted : I.type_expression -> O.type_v
      p_constant C_record (List.map type_expression_to_type_value_copypasted tlist)
   | T_arrow {type1;type2} ->
      p_constant C_arrow (List.map type_expression_to_type_value_copypasted [ type1 ; type2 ])
-  | T_variable type_name -> { tsrc = "wrap: from source code maybe?" ; t = P_variable type_name }
+  | T_variable type_name -> { tsrc = "wrap: from source code maybe?" ; t = P_variable (Var.todo_cast type_name) }
   | T_constant (type_name) ->
      let csttag = T.(match type_name with
                         | TC_unit   -> C_unit
@@ -81,8 +80,8 @@ let rec type_expression_to_type_value_copypasted : I.type_expression -> O.type_v
                         | _        -> failwith "unknown type constructor")
      in
      p_constant csttag []
-  | T_operator (type_name, args) ->
-     let csttag = T.(match type_name with
+  | T_operator ({type_operator ; arguments } : I.content_type_operator) ->
+     let csttag = T.(match type_operator with
                                 | TC_option                    -> C_option 
                                 | TC_list                      -> C_list   
                                 | TC_set                       -> C_set    
@@ -98,7 +97,7 @@ let rec type_expression_to_type_value_copypasted : I.type_expression -> O.type_v
                                 | TC_michelson_or_left_comb    -> C_record
                           )
      in
-     p_constant csttag (List.map type_expression_to_type_value_copypasted args)
+     p_constant csttag (List.map type_expression_to_type_value_copypasted arguments)
 
 let failwith_ : unit -> (constraints * O.type_variable) = fun () ->
   let type_name = Core.fresh_type_variable () in

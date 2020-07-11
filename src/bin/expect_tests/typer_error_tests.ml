@@ -150,7 +150,6 @@ let%expect_test _ =
     ligo: error
           in file "error_typer_5.mligo", line 1, characters 10-17
           Unbound type variable 'boolean'
-          - Env:[]	Type env:[bool -> sum[false -> unit , true -> unit]]
 
 
           If you're not sure how to fix this error, you can do one of the following:

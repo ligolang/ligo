@@ -35,7 +35,7 @@ let assert_operation_eq (a: packed_internal_operation) (b: packed_internal_opera
       let aa,pa,ea,da = ta.amount,ta.parameters,ta.entrypoint,ta.destination in
       let ab,pb,eb,db = tb.amount,tb.parameters,tb.entrypoint,tb.destination in
       Format.printf "amount : %b; p : %b, e: %b, d : %b\n" (aa=ab) (pa=pb) (ea=eb) (da=db) ;
-      let (pa,pb) = Tezos_data_encoding.Data_encoding.(force_decode pa, force_decode pb) in
+      let (pa,pb) = Data_encoding.(force_decode pa, force_decode pb) in
       Option.bind (fun _ -> Some ()) @@ 
       Option.bind_list [
         Option.bind (fun (pa,pb) -> assert_param_eq Tezos_micheline.Micheline.(root pa, root pb)) @@
@@ -74,8 +74,6 @@ let assert_literal_eq (a, b : literal * literal) : unit option =
   | Literal_bytes a, Literal_bytes b when a = b -> Some ()
   | Literal_bytes _, Literal_bytes _ -> None
   | Literal_bytes _, _ -> None
-  | Literal_void, Literal_void -> Some ()
-  | Literal_void, _ -> None
   | Literal_unit, Literal_unit -> Some ()
   | Literal_unit, _ -> None
   | Literal_address a, Literal_address b when a = b -> Some ()

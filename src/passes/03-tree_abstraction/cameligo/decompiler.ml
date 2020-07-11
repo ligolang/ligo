@@ -176,9 +176,8 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
         let%bind ty = decompile_type_expr @@ AST.t_key_hash () in
         return_expr @@ CST.EAnnot (wrap @@ par (kh,rg,ty))
       | Literal_chain_id _
-      | Literal_void
       | Literal_operation _ ->
-        failwith "chain_id, void, operation are not created currently ?"
+        failwith "chain_id, operation are not created currently ?"
     )
   | E_application {lamb;args} ->
     let%bind lamb = decompile_expression lamb in
