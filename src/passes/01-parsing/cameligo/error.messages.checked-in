@@ -102,7 +102,7 @@ interactive_expr: Match Verbatim With WILD ARROW Fun WILD ARROW With
 
 Ill-formed function expression.
 
-At this point, a function body is expected in the form of an expression.
+At this point, a function body is expected as an expression.
 
 interactive_expr: Begin If Verbatim Then If Verbatim Then Verbatim COMMA Bytes With
 ##
@@ -418,7 +418,7 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim With
 
 Ill-formed conditional expression.
 
-At this point, if the test expression is complete, the branch 'then' is 
+At this point, if condition is complete, the branch 'then' is
 expected.
 
 interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes With
@@ -642,9 +642,9 @@ interactive_expr: Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes With
 ## In state 379, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
 ##
 
-Ill-formed recursive let binding.
+Ill-formed recursive value definition.
 
-At this point, if the right-hand side of the let binding is a complete
+At this point, if the right-hand side of the definition is a complete
 expression, one of the following is expected:
   * a series of attributes;
   * the keyword 'in' followed by an expression.
@@ -735,7 +735,7 @@ contract: Let Rec With
 ## Let Rec
 ##
 
-Ill-formed recursive let binding.
+Ill-formed recursive value definition.
 
 At this point, an irrefutable pattern is expected, for instance an
 identifier denoting the value being defined.
@@ -1005,7 +1005,7 @@ interactive_expr: Match Verbatim With WILD ARROW Let WILD EQ Bytes Attr Type
 ## In state 175, spurious reduction of production seq(Attr) -> Attr seq(Attr)
 ##
 
-Ill-formed let binding.
+Ill-formed value definition.
 
 At this point, if the series of attributes is complete, the keyword
 'in' is expected, followed by an expression.
@@ -1231,12 +1231,12 @@ interactive_expr: Match Verbatim With WILD ARROW Let WILD EQ Bytes With
 ## In state 379, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
 ##
 
-Ill-formed let binding.
+Ill-formed value definition.
 
-At this point, if the right-hand side of the let binding is a complete
+At this point, if the right-hand side of the definition is a complete
 expression, one of the following is expected:
   * a series of attributes;
-  * the keyword 'in', followed by an expression.
+  * the keyword 'in' followed by an expression.
 
 interactive_expr: Begin If Verbatim Then Let With
 ##
@@ -1337,11 +1337,11 @@ contract: Let With
 ## Let
 ##
 
-Ill-formed let binding.
+Ill-formed value definition.
 
 At this point, one of the following is expected:
   * an irrefutable pattern, for example: an identifier;
-  * the 'rec' keyword if the let binding is recursive.
+  * the 'rec' keyword if the definition is recursive.
 
 interactive_expr: Begin If Verbatim Then Match Verbatim Type
 ##
@@ -1581,10 +1581,32 @@ interactive_expr: Match Verbatim With WILD ARROW If With
 ## The known suffix of the stack is as follows:
 ## If
 ##
+interactive_expr: Begin Match Verbatim With WILD ARROW If With
+##
+## Ends in an error in state: 264.
+##
+## if_then(base_cond) -> If . expr Then base_cond [ VBAR ]
+## if_then_else(base_cond) -> If . expr Then closed_if Else base_cond [ VBAR ]
+## if_then_else(seq_expr) -> If . expr Then closed_if Else seq_expr [ SEMI End ]
+##
+## The known suffix of the stack is as follows:
+## If
+##
+interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then If With
+##
+## Ends in an error in state: 286.
+##
+## if_then(base_cond) -> If . expr Then base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Let In EOF COLON Attr ]
+## if_then_else(base_cond) -> If . expr Then closed_if Else base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Let In EOF COLON Attr ]
+## if_then_else(closed_if) -> If . expr Then closed_if Else closed_if [ Else ]
+##
+## The known suffix of the stack is as follows:
+## If
+##
 
 Ill-formed conditional expression.
 
-At this point, a test expression is expected.
+At this point, the condition is expected as a Boolean expression.
 
 interactive_expr: Begin Match Verbatim With WILD ARROW Verbatim With
 ##
@@ -1903,7 +1925,7 @@ Ill-formed sequence of expressions.
 At this point, if the expression is complete, one of the following is
 expected:
   * an operator;
-  * a semicolon ';', followed by another expression, if the expression
+  * a semicolon ';' followed by another expression, if the expression
     has type unit;
   * the keyword 'end' if the sequence is complete.
 
@@ -1950,7 +1972,7 @@ interactive_expr: C_Some With
 
 Ill-formed application of the data constructor 'Some'.
 
-At this point, its argument is expected in the form of an expression.
+At this point, its argument is expected as an expression.
 
 interactive_expr: Constr DOT Ident WILD
 ##
@@ -2048,8 +2070,9 @@ Ill-formed function expression.
 
 At this point, if the parameter is complete, one of the following is
 expected:
-  * another parameter as an irrefutable pattern, e.g. a variable;
-  * an arrow '->', followed by the function body in the form of an expression.
+  * another parameter as an irrefutable pattern, for instance a
+    variable;
+  * an arrow '->' followed by the function body as an expression.
 
 interactive_expr: Constr DOT Ident DOT With
 ##
@@ -2259,7 +2282,7 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Verbatim Else 
 
 Ill-formed conditional expression.
 
-At this point, the 'else' branch is expected in the form of an expression.
+At this point, the expression of the 'else' branch is expected.
 
 interactive_expr: Begin If Verbatim Then If Verbatim Then With
 ##
@@ -2346,34 +2369,7 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then With
 
 Ill-formed conditional expression.
 
-At this point, the 'then' branch is expected in the form of an expression.
-
-interactive_expr: Begin Match Verbatim With WILD ARROW If With
-##
-## Ends in an error in state: 264.
-##
-## if_then(base_cond) -> If . expr Then base_cond [ VBAR ]
-## if_then_else(base_cond) -> If . expr Then closed_if Else base_cond [ VBAR ]
-## if_then_else(seq_expr) -> If . expr Then closed_if Else seq_expr [ SEMI End ]
-##
-## The known suffix of the stack is as follows:
-## If
-##
-interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then If With
-##
-## Ends in an error in state: 286.
-##
-## if_then(base_cond) -> If . expr Then base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Let In EOF COLON Attr ]
-## if_then_else(base_cond) -> If . expr Then closed_if Else base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Let In EOF COLON Attr ]
-## if_then_else(closed_if) -> If . expr Then closed_if Else closed_if [ Else ]
-##
-## The known suffix of the stack is as follows:
-## If
-##
-
-Ill-formed conditional expression.
-
-At this point, a test expression is expected.
+At this point, the expression of the 'then' branch is expected.
 
 interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes In With
 ##
@@ -2528,7 +2524,7 @@ interactive_expr: Match Verbatim With WILD ARROW Let WILD EQ Bytes In With
 ## Let let_binding seq(Attr) In
 ##
 
-Ill-formed let binding.
+Ill-formed value definition.
 
 At this point, an expression is expected.
 
@@ -2634,8 +2630,8 @@ interactive_expr: LBRACE Constr DOT Ident With
 
 Ill-formed selection in a record or a tuple.
 
-At this point, a dot '.' is expected,
-  followed by a field name or tuple index.
+At this point, the selection operator '.' is expected, followed by a
+field name or tuple index.
 
 interactive_expr: LBRACE Constr With
 ##
@@ -2649,7 +2645,8 @@ interactive_expr: LBRACE Constr With
 
 Ill-formed selection in a module.
 
-At this point, a dot '.' is expected, followed by a field name.
+At this point, the selection operator '.' is expected, followed by a
+module field name.
 
 interactive_expr: LBRACE Ident DOT Ident Verbatim
 ##
@@ -2765,7 +2762,7 @@ Ill-formed record expression.
 
 At this point, if the expression assigned to the field is complete,
 one of the following is expected:
-  * a semicolon ';', followed by another field assignment;
+  * a semicolon ';' followed by another field assignment;
   * a closing brace '}' if the record is complete.
 
 interactive_expr: LBRACE Ident EQ Bytes SEMI Ident With
@@ -2812,7 +2809,7 @@ interactive_expr: LBRACE Ident WILD
 Ill-formed record expression or update.
 
 At this point, one of the following is expected:
-  * the keyword 'with', followed by field updates (assignments);
+  * the keyword 'with' followed by field updates (assignments);
   * the selection operator '.' if the record to update is not fully
     qualified;
   * the assignment operator '=' followed by an expression, if defining
@@ -2931,7 +2928,7 @@ Ill-formed record update.
 
 At this point, if the field update is complete, one of the
 following is expected:
-  * a semicolon ';', followed by another field assignment;
+  * a semicolon ';' followed by another field assignment;
   * a closing brace '}' if the update is complete.
 
 interactive_expr: LBRACE Ident With Ident EQ With
@@ -2963,7 +2960,7 @@ interactive_expr: LBRACE Ident With Ident With
 Ill-formed record update.
 
 At this point, one of the following is expected:
-  * the assignment operator '=', if the field to update is fully
+  * the assignment operator '=' if the field to update is fully
     qualified;
   * the selection operator '.' to further qualify the field to update.
 
@@ -3086,8 +3083,8 @@ Ill-formed list expression.
 
 At this point, if the list element is complete, then one of the
 following is expected:
-  * a semicolon ';', followed by another element as an expression;
-  * a closing bracket ']', if the list is complete.
+  * a semicolon ';' followed by another element as an expression;
+  * a closing bracket ']' if the list is complete.
 
 interactive_expr: LBRACKET With
 ##
@@ -3432,7 +3429,7 @@ Ill-formed pattern matching.
 
 At this point, one of the following is expected:
   * an arrow '->' followed by the right-hand side of the case as an expression;
-  * a comma ',' followed by another pattern, if you match a tuple.
+  * a comma '' followed by another pattern, if you match a tuple.
 
 interactive_expr: Match Verbatim With WILD CONS With
 ##
@@ -3464,7 +3461,7 @@ Ill-formed pattern matching.
 At this point, one of the following is expected:
   * an arrow '->' if the left-hand side of the case is complete;
   * a cons operator '::' if the pattern matches a list;
-  * a comma ',' if the pattern matches a tuple.
+  * a comma '' if the pattern matches a tuple.
 
 interactive_expr: Not With
 ##
@@ -3586,7 +3583,7 @@ interactive_expr: Verbatim Constr With
 
 Ill-formed selection of a substructure.
 
-At this point, the dot '.' operator is expected.
+At this point, the selection operator '.' is expected.
 
 interactive_expr: Verbatim EQ With
 ##
@@ -3942,7 +3939,7 @@ Ill-formed function definition.
 
 At this point, one of the following is expected:
   * another parameter as a pattern, for instance and identifier;
-  * the assignment operator '=', followed by the function body as an
+  * the assignment operator '=' followed by the function body as an
     expression, if there are no more parameters;
   * a colon ':' followed by the type of the calls to the defined
     function.
@@ -3987,7 +3984,7 @@ Ill-formed record pattern.
 
 At this point, one of the following is expected:
   * another field pattern;
-  * a closing brace '}', if the pattern is complete.
+  * a closing brace '}' if the pattern is complete.
 
 contract: Let LBRACE Ident EQ Bytes SEMI Ident EQ Bytes With
 ##
@@ -4016,7 +4013,7 @@ Ill-formed record pattern.
 
 At this point, one of the following is expected:
   * a semicolon ';' followed by another field pattern;
-  * a closing brace '}', if the pattern is complete.
+  * a closing brace '}' if the pattern is complete.
 
 contract: Let LBRACE Ident EQ With
 ##
@@ -4128,7 +4125,7 @@ Ill-formed list pattern.
 
 At this point, if the pattern matching a list element is complete,
 then one of the following is expected:
-  * a closing bracket ']', if the list pattern is complete;
+  * a closing bracket ']' if the list pattern is complete;
   * a semicolon ';' followed by another list element as a pattern.
 
 contract: Let LPAR Constr LBRACKET WILD SEMI With
@@ -4180,7 +4177,7 @@ Ill-formed parenthises tuple pattern.
 At this point, if the pattern matching the tuple component is
 complete, then one of the following is expected:
   * a comma ',' followed by another component as a pattern;
-  * a closing parenthesis ')', if the tuple is complete.
+  * a closing parenthesis ')' if the tuple is complete.
 
 contract: Let LPAR Constr LPAR WILD CONS With
 ##
@@ -4413,7 +4410,7 @@ Ill-formed tuple pattern.
 
 At this point, another component is expected as a pattern amongst the
 following: an identifier, a wildcard '_', the unit '()', a record
-pattern, a parenthesised pattern or a constant constructor (e.g., "K").
+pattern, a parenthesised pattern or a constant constructor, like "K".
 
 contract: Let WILD EQ Bytes Attr With
 ##
@@ -4486,8 +4483,8 @@ Ill-formed definition.
 
 At this point, if the value expression is complete, one of the
 following is expected:
-  * a series of attribute declarations;
-  * a value or type declaration;
+  * a series of attributes;
+  * a value or type definition;
   * the end of the file (EOF) if the contract is complete.
 
 contract: Let WILD WILD
@@ -4511,7 +4508,7 @@ Ill-formed definition.
 At this point, if the last pattern is complete, one of the following
 is expected:
   * a type annotation for the value being defined;
-  * the assignment operator '=', followed by an expression.
+  * the assignment operator '=' followed by an expression.
 
 contract: Let WILD With
 ##
@@ -4561,11 +4558,11 @@ contract: Type Ident EQ Ident VBAR
 ## In state 602, spurious reduction of production declaration -> type_decl
 ##
 
-Ill-formed top-level declaration.
+Ill-formed top-level definition.
 
-At this point, if the type declaration is complete, one of the
+At this point, if the type definition is complete, one of the
 following is expected:
-  * another type or value declaration;
+  * another type or value definition;
   * the end of the file (EOF) if the contract is complete.
 
 contract: Type Ident EQ LBRACE Ident COLON Constr SEMI Ident COLON Ident VBAR
@@ -4613,7 +4610,7 @@ Ill-formed record type.
 
 At this point, if the type of the field is complete, one of the
 following is expected:
-  * a semicolon ';' followed by another field declaration;
+  * a semicolon ';' followed by another field definition;
   * a closing brace '}' if the record type is complete.
 
 contract: Type Ident EQ LBRACE Ident COLON Constr SEMI With
@@ -4640,7 +4637,7 @@ contract: Type Ident EQ LBRACE Ident COLON Constr SEMI Ident COLON Constr SEMI W
 Ill-formed record type.
 
 At this point, one of the following is expected:
-  * another field declaration;
+  * another field definition;
   * a closing brace '}' if the record type is complete.
 
 contract: Type Ident EQ LBRACE Ident COLON With
@@ -4656,7 +4653,7 @@ contract: Type Ident EQ LBRACE Ident COLON With
 Ill-formed record type.
 
 At this point, a type expression is expected to conclude the field
-declaration.
+definition.
 
 contract: Type Ident EQ LBRACE Ident With
 ##
@@ -4685,7 +4682,7 @@ contract: Type Ident EQ LBRACE With
 
 Ill-formed record type.
 
-At this point, the first field declaration is expected.
+At this point, the first field definition is expected.
 
 contract: Type Ident EQ LPAR String COMMA Constr RPAR With
 ##
@@ -4843,9 +4840,9 @@ Ill-formed product type.
 
 At this point, one of the following type expressions is expected:
   * a type name;
-  * a type selection in a module, e.g., 'M.t';
-  * an instantiation of a parametric type, e.g., 'int list' or '(int,
-    string) map';
+  * a type selection in a module, for example 'M.t';
+  * an instantiation of a parametric type, for example 'int list' or
+    '(int, string) map';
   * a parenthesised type expression.
 
 contract: Type Ident EQ String TIMES String With
@@ -4922,7 +4919,7 @@ contract: Type Ident EQ With
 ## Type Ident EQ
 ##
 
-Ill-formed type declaration.
+Ill-formed type definition.
 
 At this point, a type expression is expected.
 
@@ -4936,7 +4933,7 @@ contract: Type Ident With
 ## Type Ident
 ##
 
-Ill-formed type declaration.
+Ill-formed type definition.
 
 At this point, the assignment operator '=' is expected, followed by a
 type expression.
@@ -4951,7 +4948,7 @@ contract: Type With
 ## Type
 ##
 
-Ill-formed type declaration.
+Ill-formed type definition.
 
 At this point, a type name is expected.
 
@@ -4967,4 +4964,4 @@ contract: With
 
 Ill-formed contract.
 
-At this point, a type or let declaration is expected.
+At this point, a type or value definition is expected.
