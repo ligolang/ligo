@@ -14,7 +14,7 @@ my $combinators_filename = @*ARGS[2];
 my $folder_filename      = @*ARGS[3];
 my $mapper_filename      = @*ARGS[4];
 
-my $moduleName = $inputADTfile.subst(/\.ml$/, '').samecase("A_");
+my $moduleName = $inputADTfile.subst(/^g.*\.ml$/, 'types.ml').subst(/\.ml$/, '').samecase("A_"); # tempory hack untils we don't need to generate and intermediairy file
 my $variant = "_ _variant";
 my $record = "_ _ record";
 sub poly { $^type_name }
@@ -92,7 +92,7 @@ $*OUT = open $folder_filename, :w;
 {
     say "(* This is an auto-generated file. Do not edit. *)";
     say "";
-    for $statements -> $statement { say "$statement" }
+    # for $statements -> $statement { say "$statement" }
     say "open $moduleName;;";
 
     say "  (* must be provided by one of the open or include statements: *)";
@@ -334,7 +334,7 @@ $*OUT = open $mapper_filename, :w;
 {
     say "(* This is an auto-generated file. Do not edit. *)";
     say "";
-    for $statements -> $statement { say "$statement" }
+    # for $statements -> $statement { say "$statement" }
     say "open Adt_generator.Common;;";
     say "open $moduleName;;";
 
@@ -529,7 +529,7 @@ $*OUT = open $combinators_filename, :w;
 {
     say "(* This is an auto-generated file. Do not edit. *)";
     say "";
-    for $statements -> $statement { say "$statement" }
+    # for $statements -> $statement { say "$statement" }
     say "open $moduleName;;";
     say "";
     for $adts.list -> $t {
