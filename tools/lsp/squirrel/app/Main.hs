@@ -1,15 +1,16 @@
 
 import           Control.Concurrent
 import           Control.Concurrent.STM
-import           Control.Exception as E
+import           Control.Exception                     as E
 import           Control.Lens
 import           Control.Monad
 
 import           Data.Default
 -- import           Data.Foldable
 import qualified Data.Text                             as Text
-import           Data.Text                               (Text)
-import           Data.String.Interpolate (i)
+import           Data.Text                                     (Text)
+import           Data.String                                   (fromString)
+import           Data.String.Interpolate                       (i)
 
 import qualified Language.Haskell.LSP.Control          as CTRL
 import qualified Language.Haskell.LSP.Core             as Core
@@ -27,8 +28,8 @@ import           Parser
 import           ParseTree
 import           Range
 import           Product
-import           AST hiding (def)
-import qualified AST.Find as Find
+import           AST                                           hiding (def)
+import qualified AST.Find                              as Find
 import           Error
 
 main :: IO ()
@@ -157,34 +158,43 @@ eventLoop funs chan = do
           (Just 0)
 
       ReqDefinition req -> do
-        let uri = req^.J.params.J.textDocument.J.uri
-        let pos = posToRange $ req^.J.params.J.position
-        tree <- loadByURI uri
-        case Find.definitionOf pos tree of
-          Just defPos -> do
-            respondWith req RspDefinition $ J.MultiLoc [J.Location uri $ rangeToLoc defPos]
-          Nothing -> do
-            respondWith req RspDefinition $ J.MultiLoc []
+        stopDyingAlready funs req do
+          let uri = req^.J.params.J.textDocument.J.uri
+          let pos = posToRange $ req^.J.params.J.position
+          tree <- loadByURI uri
+          case Find.definitionOf pos tree of
+            Just defPos -> do
+              respondWith funs req RspDefinition $ J.MultiLoc [J.Location uri $ rangeToLoc defPos]
+            Nothing -> do
+              respondWith funs req RspDefinition $ J.MultiLoc []
 
       ReqFindReferences req -> do
-        let uri = req^.J.params.J.textDocument.J.uri
-        let pos = posToRange $ req^.J.params.J.position
-        tree <- loadFromVFS funs uri
-        case Find.referencesOf pos tree of
-          Just refs -> do
-            let locations = J.Location uri . rangeToLoc <$> refs
-            respondWith req RspFindReferences $ J.List locations
-          Nothing -> do
-            respondWith req RspFindReferences $ J.List []
+        stopDyingAlready funs req do
+          let uri = req^.J.params.J.textDocument.J.uri
+          let pos = posToRange $ req^.J.params.J.position
+          tree <- loadFromVFS funs uri
+          case Find.referencesOf pos tree of
+            Just refs -> do
+              let locations = J.Location uri . rangeToLoc <$> refs
+              respondWith funs req RspFindReferences $ J.List locations
+            Nothing -> do
+              respondWith funs req RspFindReferences $ J.List []
 
       _ -> U.logs "unknown msg"
-  where
-    respondWith
-      :: J.RequestMessage J.ClientMethod req rsp
-      -> (J.ResponseMessage rsp -> FromServerMessage)
-      -> rsp
-      -> IO ()
-    respondWith req wrap rsp = Core.sendFunc funs $ wrap $ Core.makeResponseMessage req rsp
+
+respondWith
+  :: Core.LspFuncs ()
+  -> J.RequestMessage J.ClientMethod req rsp
+  -> (J.ResponseMessage rsp -> FromServerMessage)
+  -> rsp
+  -> IO ()
+respondWith funs req wrap rsp = Core.sendFunc funs $ wrap $ Core.makeResponseMessage req rsp
+
+stopDyingAlready :: Core.LspFuncs () -> J.RequestMessage m a b -> IO () -> IO ()
+stopDyingAlready funs req = flip catch \(e :: SomeException) -> do
+  Core.sendErrorResponseS (Core.sendFunc funs) (req^.J.id.to J.responseId) J.InternalError
+    $ fromString
+    $ "this happened: " ++ show e
 
 posToRange :: J.Position -> Range
 posToRange (J.Position l c) = Range (l + 1, c + 1, 0) (l + 1, c + 1, 0) ""

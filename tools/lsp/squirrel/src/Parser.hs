@@ -94,7 +94,7 @@ import Debug.Trace
 --
 type Parser =
    WriterT [Error ASTInfo]
-  (StateT (Product PList)
+  (StateT  (Product PList)
    IO)
 
 type PList = [ParseForest, [Text], FilePath, Set.Set FilePath]
@@ -103,7 +103,8 @@ type PList = [ParseForest, [Text], FilePath, Set.Set FilePath]
 type ASTInfo = Product [Range, [Text]]
 
 runParser
-  :: Parser a
+  :: Stubbed a ASTInfo
+  => Parser a
   -> Source
   -> IO (a, [Error ASTInfo])
 runParser parser fin = do
@@ -117,9 +118,12 @@ runParser parser fin = do
     (Cons dir
     (Cons Set.empty
      Nil)))
+    `catch` \(e :: Error ASTInfo) -> do
+      return $ (stub e, [])
 
 runParser'
-  :: Parser a
+  :: Stubbed a ASTInfo
+  => Parser a
   -> Source
   -> IO a
 runParser' parser fin = fst <$> runParser parser fin
@@ -326,7 +330,7 @@ some p = some'
 
 -- | Run parser on given file and pretty-print stuff.
 --
-debugParser :: Show a => Parser a -> Source -> IO ()
+debugParser :: (Show a, Stubbed a ASTInfo) => Parser a -> Source -> IO ()
 debugParser parser fin = do
   (res, errs) <- runParser parser fin
   putStrLn "Result:"
