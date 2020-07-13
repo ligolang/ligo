@@ -213,7 +213,6 @@ and translate_expression (expr:expression) (env:environment) : (michelson , stac
 
   trace (compile_expression_tracer expr ty) @@ 
   match expr' with
-  | E_skip -> return @@ i_push_unit
   | E_literal v ->
       let%bind v = translate_value v ty in
       let%bind t = Compiler_type.type_ ty in
@@ -237,15 +236,6 @@ and translate_expression (expr:expression) (env:environment) : (michelson , stac
   | E_variable x ->
     let%bind code = Compiler_environment.get env x in
     return code
-  | E_sequence (a , b) -> (
-    let%bind a' = translate_expression a env in
-    let%bind b' = translate_expression b env in
-    return @@ seq [
-      a' ;
-      i_drop ;
-      b' ;
-    ]
-  )
   | E_constant{cons_name=str;arguments= lst} ->
       let module L = Logger.Stateful() in
       let%bind (pre_code, _env) =
@@ -285,9 +275,6 @@ and translate_expression (expr:expression) (env:environment) : (michelson , stac
         | _ -> fail @@ bad_constant_arity str
       in
       return code
-  | E_make_none o ->
-      let%bind o' = Compiler_type.type_ o in
-      return @@ i_none o'
   | E_if_bool (c, a, b) -> (
       let%bind c' = translate_expression c env in
       let%bind a' = translate_expression a env in
@@ -438,18 +425,6 @@ and translate_expression (expr:expression) (env:environment) : (michelson , stac
       ]
 
   )
-  | E_while (expr , block) -> (
-      let%bind expr' = translate_expression expr env in
-      let%bind block' = translate_expression block env in
-      return @@ seq [
-        expr' ;
-        prim ~children:[seq [
-            block' ;
-            i_drop ;
-            expr']] I_LOOP ;
-        i_push_unit ;
-      ]
-    )
   | E_raw_michelson code -> 
       let%bind code = 
         Proto_alpha_utils.Trace.trace_tzresult (fun _ -> corner_case ~loc:__LOC__ "Error while parsing michelson code insertion") @@

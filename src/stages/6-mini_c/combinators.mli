@@ -65,11 +65,9 @@ val quote : string -> type_expression -> type_expression -> Expression.t -> anon
 val e_int : Expression.t' -> Expression.t
 *)
 val e_unit    : ?loc:Location.t -> unit -> Expression.t
-val e_skip    : ?loc:Location.t -> unit -> Expression.t
 val e_var_int : ?loc:Location.t -> expression_variable -> Expression.t
 val e_let_in  : ?loc:Location.t -> expression_variable -> type_expression -> inline -> Expression.t -> Expression.t -> Expression.t
 
-val ez_e_sequence : ?loc:Location.t -> Expression.t' -> Expression.t -> expression
 (*
 val ez_e_return : Expression.t -> Expression.t
 *)
