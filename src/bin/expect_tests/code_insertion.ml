@@ -9,17 +9,21 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_michelson_insertion_1.ligo" ; "main" ] ;
   [%expect{|
     ligo: error
-          generated Michelson contract failed to typecheck : bad contract type
-          code:
-           { parameter nat ;
-            storage nat ;
-            code { DUP ;
-                   LAMBDA (pair nat nat) nat ADD ;
-                   SWAP ;
-                   EXEC ;
-                   NIL operation ;
-                   PAIR ;
-                   DIP { DROP } } }
+          Compiler bug
+          Ill typed contract:
+            01: { parameter nat ;
+            02:   storage nat ;
+            03:   code { DUP
+            04:          /* [ pair (nat @parameter) (nat @storage)
+            05:             : pair (nat @parameter) (nat @storage) ] */ ;
+            06:          LAMBDA (pair nat nat) nat ADD ;
+            07:          SWAP ;
+            08:          EXEC ;
+            09:          NIL operation ;
+            10:          PAIR ;
+            11:          DIP { DROP } } }
+          At line 6 characters 35 to 38, unexpected primitive, only a sequence
+          can be used here.
 
 
           If you're not sure how to fix this error, you can do one of the following:

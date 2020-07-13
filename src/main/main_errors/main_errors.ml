@@ -39,9 +39,6 @@ let unparse_tracer errs : all = `Main_unparse_tracer errs
 let typecheck_contract_tracer c errs : all = `Main_typecheck_contract_tracer (c,errs)
 let typecheck_parameters_tracer _ : all = `Main_typecheck_parameter
 
-let bad_parameter c : all = `Main_bad_michelson_parameter c
-let bad_storage   c : all = `Main_bad_michelson_storage c
-let bad_contract  c : all = `Main_bad_michelson c
 let gas_exhaustion : all = `Main_gas_exhaustion
 let unknown : all = `Main_unknown
 

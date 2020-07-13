@@ -283,12 +283,8 @@ let typecheck_contract contract =
   let contract' = Tezos_micheline.Micheline.strip_locations contract in
   Script_ir_translator.typecheck_code dummy_environment.tezos_context contract' >>= fun x ->
   match x with
-  | Ok _res -> return Type_checked
-  | Error (Script_tc_errors.Ill_formed_type (Some "parameter", _code, _)::_) -> return Err_parameter
-  | Error (Script_tc_errors.Ill_formed_type (Some "storage", _code, _)::_) -> return Err_storage
-  | Error (Script_tc_errors.Ill_typed_contract _ :: Script_tc_errors.Cannot_serialize_error :: []) -> return @@ Err_gas
-  | Error (Script_tc_errors.Ill_typed_contract (_code, _)::_) -> return @@ Err_contract
-  | Error _ -> return Err_unknown
+  | Ok _ -> return @@ contract
+  | Error errs -> Lwt.return @@ Error (List.map (alpha_error_wrap) errs)
 
 let assert_equal_michelson_type ty1 ty2 =
   (* alpha_wrap (Script_ir_translator.ty_eq tezos_context a b) >>? fun (Eq, _) -> *)
