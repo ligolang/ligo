@@ -1,5 +1,4 @@
 open Trace
-module Location = Simple_utils.Location
 
 type location = Location.t
 type 'a location_wrap = 'a Location.wrap

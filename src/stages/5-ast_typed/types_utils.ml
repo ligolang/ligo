@@ -1,15 +1,12 @@
 module S = Ast_core
 open Simple_utils.Trace
 
-(* include Stage_common.Types *)
-(* type expression_
- * and expression_variable = expression_ Var.t
- * type type_
- * and type_variable = type_ Var.t *)
-type expression_ = Stage_common.Types.expression_
-type expression_variable = Stage_common.Types.expression_variable
-type type_ = Stage_common.Types.type_
-type type_variable = Stage_common.Types.type_variable
+type 'a location_wrap = 'a Location.wrap
+
+type expression_
+and expression_variable = expression_ Var.t location_wrap
+type type_
+and type_variable = type_ Var.t
 type z = Z.t
 type ligo_string = Stage_common.Types.ligo_string
 
@@ -26,7 +23,6 @@ type 'a constructor_map = 'a CMap.t
 type ast_core_type_expression = S.type_expression
 
 
-type 'a location_wrap = 'a Location.wrap
 type 'a list_ne = 'a List.Ne.t
 type packed_internal_operation = Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation
 type location = Location.t

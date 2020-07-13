@@ -71,7 +71,7 @@ let get_lambda_with_type e =
   | _ -> None
 
 let get_t_bool (t:type_expression) : unit option = match t.type_content with
-  | T_variable v when Var.equal v Stage_common.Constant.t_bool -> Some ()
+  | T_variable v when Var.equal v Constant.t_bool -> Some ()
   | t when (compare t (t_bool ()).type_content) = 0-> Some ()
   | _ -> None
 

@@ -138,7 +138,7 @@ let compile_constant' : AST.constant' -> constant' = function
 let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error) result =
   let return tc = ok @@ Expression.make_t ~loc:t.location @@ tc in
   match t.type_content with
-  | T_variable (name) when Var.equal name Stage_common.Constant.t_bool -> return (T_base TB_bool)
+  | T_variable (name) when Var.equal name Ast_typed.Constant.t_bool -> return (T_base TB_bool)
   | t when (compare t (t_bool ()).type_content) = 0-> return (T_base TB_bool)
   | T_variable (name) -> fail @@ no_type_variable @@ name
   | T_constant (TC_int)       -> return (T_base TB_int)
@@ -297,10 +297,10 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
   | E_let_in {let_binder; rhs; let_result; inline} ->
     let%bind rhs' = compile_expression rhs in
     let%bind result' = compile_expression let_result in
-    return (E_let_in ((let_binder, rhs'.type_expression), inline, rhs', result'))
+    return (E_let_in ((Location.map Var.todo_cast let_binder, rhs'.type_expression), inline, rhs', result'))
   | E_literal l -> return @@ E_literal (compile_literal l)
   | E_variable name -> (
-      return @@ E_variable (name)
+      return @@ E_variable (Location.map Var.todo_cast name)
     )
   | E_application {lamb; args} ->
       let%bind a = compile_expression lamb in
@@ -453,7 +453,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
             let%bind s' = compile_expression body in
             ok (tv' , s')
           in
-          return @@ E_if_none (expr' , n , ((opt , tv') , s'))
+          return @@ E_if_none (expr' , n , ((Location.map Var.todo_cast opt , tv') , s'))
       | Match_list {
           match_nil ;
           match_cons = {hd; tl; body; tv} ;
@@ -462,7 +462,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
           let%bind cons =
             let%bind ty' = compile_type tv in
             let%bind match_cons' = compile_expression body in
-            ok (((hd , ty') , (tl , ty')) , match_cons')
+            ok (((Location.map Var.todo_cast hd , ty') , (Location.map Var.todo_cast tl , ty')) , match_cons')
           in
           return @@ E_if_cons (expr' , nil , cons)
         )
@@ -509,7 +509,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
                       (c = constructor_name) in
                   List.find_opt aux cases in
                 let%bind body' = compile_expression body in
-                return @@ E_let_in ((pattern , tv) , false , top , body')
+                return @@ E_let_in ((Location.map Var.todo_cast pattern , tv) , false , top , body')
               )
             | ((`Node (a , b)) , tv) ->
                 let%bind a' =
@@ -548,14 +548,15 @@ and compile_lambda l (input_type , output_type) =
   let%bind input = compile_type input_type in
   let%bind output = compile_type output_type in
   let tv = Combinators.t_function input output in
-  let binder = binder in 
+  let binder = Location.map Var.todo_cast binder in 
   let closure = E_closure { binder; body = result'} in
   ok @@ Combinators.Expression.make_tpl ~loc:result.location (closure , tv)
 
 and compile_recursive {fun_name; fun_type; lambda} =
   let rec map_lambda : AST.expression_variable -> type_expression -> AST.expression -> (expression * expression_variable list , spilling_error) result = fun fun_name loop_type e ->
     match e.expression_content with 
-      E_lambda {binder;result} -> 
+      E_lambda {binder;result} ->
+        let binder = Location.map Var.todo_cast binder in
         let%bind (body,l) = map_lambda fun_name loop_type result in
         ok @@ (Expression.make ~loc:e.location (E_closure {binder;body}) loop_type, binder::l)
       | _  -> 
@@ -569,7 +570,7 @@ and compile_recursive {fun_name; fun_type; lambda} =
         let%bind let_result = replace_callback fun_name loop_type shadowed li.let_result in
         let%bind rhs = compile_expression li.rhs in
         let%bind ty  = compile_type e.type_expression in
-        ok @@ e_let_in li.let_binder ty li.inline rhs let_result |
+        ok @@ e_let_in (Location.map Var.todo_cast li.let_binder) ty li.inline rhs let_result |
       E_matching m -> 
         let%bind ty = compile_type e.type_expression in
         matching fun_name loop_type shadowed m ty |
@@ -597,7 +598,7 @@ and compile_recursive {fun_name; fun_type; lambda} =
             let%bind s' = replace_callback fun_name loop_type shadowed body in
             ok (tv' , s')
           in
-          return @@ E_if_none (expr , n , ((opt , tv') , s'))
+          return @@ E_if_none (expr , n , ((Location.map Var.todo_cast opt , tv') , s'))
       | Match_list {
           match_nil ;
           match_cons = { hd ; tl ; body ; tv } ;
@@ -606,7 +607,7 @@ and compile_recursive {fun_name; fun_type; lambda} =
           let%bind cons =
             let%bind ty' = compile_type tv in
             let%bind match_cons' = replace_callback fun_name loop_type shadowed body in
-            ok (((hd , ty') , (tl , ty')) , match_cons')
+            ok (((Location.map Var.todo_cast hd , ty') , (Location.map Var.todo_cast tl , ty')) , match_cons')
           in
           return @@ E_if_cons (expr , nil , cons)
         )
@@ -643,7 +644,7 @@ and compile_recursive {fun_name; fun_type; lambda} =
                       (c = constructor_name) in
                   List.find_opt aux cases in
                 let%bind body' = replace_callback fun_name loop_type shadowed body in
-                return @@ E_let_in ((pattern , tv) , false , top , body')
+                return @@ E_let_in ((Location.map Var.todo_cast pattern , tv) , false , top , body')
               )
             | ((`Node (a , b)) , tv) ->
                 let%bind a' =
@@ -668,16 +669,17 @@ and compile_recursive {fun_name; fun_type; lambda} =
   let%bind (input_type,output_type) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_function fun_type in
   let loop_type = t_union (None, input_type) (None, output_type) in
   let%bind (body,binder) = map_lambda fun_name loop_type lambda.result in
-  let binder = lambda.binder::binder in
+  let binder = Location.map Var.todo_cast lambda.binder :: binder in
   let%bind binder = match binder with hd::[] -> ok @@ hd | _ -> fail @@ unsupported_recursive_function fun_name in
   let expr = Expression.make_tpl (E_variable binder, input_type) in
-  let body = Expression.make (E_iterator (C_LOOP_LEFT, ((lambda.binder, loop_type),body), expr)) output_type in
+  let body = Expression.make (E_iterator (C_LOOP_LEFT, ((Location.map Var.todo_cast lambda.binder, loop_type),body), expr)) output_type in
   ok @@ Expression.make (E_closure {binder;body}) fun_type
 
 let compile_declaration env (d:AST.declaration) : (toplevel_statement option , spilling_error) result =
   match d with
   | Declaration_constant { binder ; expr ; inline } ->
       let%bind expression = compile_expression expr in
+      let binder = Location.map Var.todo_cast binder in
       let tv = Combinators.Expression.get_type expression in
       let env' = Environment.add (binder, tv) env in
       ok @@ Some ((binder, inline, expression), environment_wrap env env')
