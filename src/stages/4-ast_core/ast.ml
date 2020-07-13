@@ -1,7 +1,7 @@
 [@@@warning "-30"]
 
 open Types_utils
-(*adt_generator_ignore*) include Stage_common.Enums
+include Stage_common.Enums (*@ follow ../common/enums.ml *)
 
 type string_option = string option
 

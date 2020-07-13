@@ -265,7 +265,7 @@ let loop : T.type_expression -> T.type_expression -> (constraints * T.type_varia
   let body' = type_expression_to_type_value body in
   let whole_expr = Core.fresh_type_variable () in
   [
-      c_equation expr'                   ({ tsrc = "built-in type" ; t = P_variable Stage_common.Constant.t_bool }) "wrap: loop: expr" ;
+      c_equation expr'                   ({ tsrc = "built-in type" ; t = P_variable Ast_typed.Constant.t_bool }) "wrap: loop: expr" ;
       c_equation body'                   (p_constant C_unit []) "wrap: loop: body" ;
       c_equation (p_constant C_unit [])  ({ tsrc = "wrap: loop: whole" ; t = P_variable whole_expr}) "wrap: loop: whole (unit)" ;
   ] , whole_expr

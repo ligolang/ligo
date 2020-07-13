@@ -1,7 +1,7 @@
 [@@@warning "-30"]
 
 open Types_utils
-(*adt_generator_ignore*) include Stage_common.Enums
+include Stage_common.Enums (*@ follow ../common/enums.ml *)
 
 (* pseudo-typeclasses: interfaces that must be provided for arguments
    of the givent polymmorphic types. For now, only one typeclass can

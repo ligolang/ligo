@@ -8,6 +8,7 @@ module PP_json = PP_json
 module Combinators = struct
   include Combinators
 end
+module Constant = Constant
 module Misc = struct
   include Misc
   include Misc_smart
