@@ -53,20 +53,20 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
     let%bind type2 = evaluate_type e type2 in
     return (T_arrow {type1;type2})
   | T_sum m ->
-    let aux k v prev =
-      let {ctor_type ; michelson_annotation ; ctor_decl_pos} : I.ctor_content = v in
-      let%bind ctor_type = evaluate_type e ctor_type in
-      map (O.CMap.add k ({ctor_type ; michelson_annotation ; ctor_decl_pos}:O.ctor_content)) @@ prev
+    let aux v =
+      let {associated_type ; michelson_annotation ; decl_pos} : I.row_element = v in
+      let%bind associated_type = evaluate_type e associated_type in
+      ok @@ ({associated_type ; michelson_annotation ; decl_pos}:O.row_element)
     in
-    let%bind m = I.CMap.fold aux m (ok O.CMap.empty) in
+    let%bind m = Stage_common.Helpers.bind_map_lmap aux m in
     return (T_sum m)
   | T_record m ->
-    let aux k v prev =
-      let {field_type ; field_annotation ; field_decl_pos} : I.field_content = v in
-      let%bind field_type = evaluate_type e field_type in
-      map (O.LMap.add k ({field_type ; michelson_annotation=field_annotation ; field_decl_pos}:O.field_content)) @@ prev
+    let aux v =
+      let {associated_type ; michelson_annotation ; decl_pos} : I.row_element = v in
+      let%bind associated_type = evaluate_type e associated_type in
+      ok @@ ({associated_type ; michelson_annotation ; decl_pos}:O.row_element)
     in
-    let%bind m = I.LMap.fold aux m (ok O.LMap.empty) in
+    let%bind m = Stage_common.Helpers.bind_map_lmap aux m in
     return (T_record m)
   | T_variable name ->
     (* Check that the variable is in the environment *)
@@ -122,14 +122,14 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
           let%bind cmap = match c.type_content with
             | T_sum cmap -> ok cmap
             | _ -> fail (michelson_comb_no_variant t.location) in
-          let pair = Typer_common.Michelson_type_converter.convert_variant_to_right_comb (Ast_typed.CMap.to_kv_list cmap) in
+          let pair = Typer_common.Michelson_type_converter.convert_variant_to_right_comb (Ast_typed.LMap.to_kv_list cmap) in
           return @@ pair
       | TC_michelson_or_left_comb ->
           let%bind c = bind (evaluate_type e) @@ get_unary arguments in
           let%bind cmap = match c.type_content with
             | T_sum cmap -> ok cmap
             | _ -> fail (michelson_comb_no_variant t.location) in
-          let pair = Typer_common.Michelson_type_converter.convert_variant_to_left_comb (Ast_typed.CMap.to_kv_list cmap) in
+          let pair = Typer_common.Michelson_type_converter.convert_variant_to_left_comb (Ast_typed.LMap.to_kv_list cmap) in
           return @@ pair
       | _ -> fail @@ unrecognized_type_op t
 
@@ -257,8 +257,8 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> O'.typer_state
   | E_record m ->
     let aux state _ expr = type_expression e state expr in
     let%bind (state', m') = Stage_common.Helpers.bind_fold_map_lmap aux state m in
-    (* Do we need field_content for AST_typed ? *)
-    let wrapped = Wrap.record (O.LMap.map (fun e -> ({field_type = get_type_expression e ; michelson_annotation = None ; field_decl_pos = 0}: O.field_content)) m') in
+    (* Do we need row_element for AST_typed ? *)
+    let wrapped = Wrap.record (O.LMap.map (fun e -> ({associated_type = get_type_expression e ; michelson_annotation = None ; decl_pos = 0}: O.row_element)) m') in
     return_wrapped (E_record m') state' wrapped
 
   | E_record_accessor {record;path} -> (
@@ -277,7 +277,7 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> O'.typer_state
           (* TODO: rewrite with trace_option *)
           let field_op = O.LMap.find_opt path record in
           match field_op with
-          | Some {field_type=tv;_} -> ok (record,tv)
+          | Some {associated_type=tv;_} -> ok (record,tv)
           | None -> failwith @@ Format.asprintf "field %a is not part of record" O.PP.label path
       )
       (* TODO: write a real error *)
@@ -399,7 +399,7 @@ and type_match : environment -> O'.typer_state -> O.type_expression -> I.matchin
         let%bind variant_cases' =
           trace_option (match_error ~expected:i ~actual:t loc)
           @@ Ast_typed.Combinators.get_t_sum variant in
-        let variant_cases = List.map fst @@ O.CMap.to_kv_list variant_cases' in
+        let variant_cases = List.map fst @@ O.LMap.to_kv_list variant_cases' in
         let match_cases = List.map (fun ({constructor;_} : I.match_variant) -> constructor) lst in
         let test_case = fun c ->
           Assert.assert_true (corner_case "match case") (List.mem c match_cases)

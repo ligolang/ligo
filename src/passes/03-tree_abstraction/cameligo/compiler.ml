@@ -161,7 +161,7 @@ and compile_type_expression : Raw.type_expr -> (type_expression, abs_error) resu
         @@ List.mapi order
         @@ List.map apply
         @@ npseq_to_list r.ne_elements in
-      let m = List.fold_left (fun m ((x,i), y) -> LMap.add (Label x) {field_type=y;field_decl_pos=i} m) LMap.empty lst in
+      let m = List.fold_left (fun m ((x,i), y) -> LMap.add (Label x) {associated_type=y;decl_pos=i} m) LMap.empty lst in
       ok @@ make_t ~loc @@ T_record m
   | TSum s ->
       let (s,loc) = r_split s in
@@ -176,7 +176,7 @@ and compile_type_expression : Raw.type_expr -> (type_expression, abs_error) resu
       let%bind lst = bind_list
         @@ List.mapi aux
         @@ npseq_to_list s in
-      let m = List.fold_left (fun m ((x,i), y) -> CMap.add (Constructor x) {ctor_type=y;ctor_decl_pos=i} m) CMap.empty lst in
+      let m = List.fold_left (fun m ((x,i), y) -> LMap.add (Label x) {associated_type=y;decl_pos=i} m) LMap.empty lst in
       ok @@ make_t ~loc @@ T_sum m
   | TString _s -> fail @@ unsupported_string_singleton te
 
@@ -877,7 +877,7 @@ and compile_cases : (Raw.pattern * expression) list -> (matching_expr, abs_error
   | [(PFalse _, f) ; (PTrue _, t)]
   | [(PTrue _, t) ; (PFalse _, f)] ->
     let muted = Location.wrap @@ Var.of_name "_" in
-    ok @@ Match_variant ([((Constructor "true", muted), t); ((Constructor "false", muted), f)])
+    ok @@ Match_variant ([((Label "true", muted), t); ((Label "false", muted), f)])
   | [(PList (PCons c), cons); (PList (PListComp sugar_nil), nil)]
   | [(PList (PListComp sugar_nil), nil); (PList (PCons c), cons)] ->
       let%bind () =
@@ -903,7 +903,7 @@ and compile_cases : (Raw.pattern * expression) list -> (matching_expr, abs_error
             let v_loc = Location.lift (Raw.pattern_to_region v) in
             let%bind v = get_var v in
             let v' = Location.wrap ?loc:(Some v_loc) @@ Var.of_name v in
-            ok ((Constructor c, v'), y)
+            ok ((Label c, v'), y)
           in bind_map_list aux lst
         in ok @@ Match_variant constrs in
       let as_option () =

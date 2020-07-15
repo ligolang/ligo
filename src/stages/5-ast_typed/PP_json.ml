@@ -32,17 +32,9 @@ module M = struct
       unit                      = (fun _visitor NoState ()              -> `String "unit" ) ;
       packed_internal_operation = (fun _visitor NoState _op             -> `String "Operation(...bytes)") ;
       expression_variable       = (fun _visitor NoState ev              -> `Assoc ["exp-var", `String (asprintf "%a" Var.pp ev.wrap_content)] ) ;
-      constructor'              = (fun _visitor NoState (Constructor c) -> `Assoc ["constructor", `String c] ) ;
       location                  = (fun _visitor NoState loc             -> Location.pp_json loc) ;
       label                     = (fun _visitor NoState (Label lbl)     -> `Assoc ["label" , `String lbl] ) ;
       ast_core_type_expression  = (fun _visitor NoState te              -> `String (asprintf "%a" (Ast_core.PP.type_expression) te) ) ; (*TODO*)
-      constructor_map           = (fun _visitor continue NoState cmap   ->
-        let lst = List.sort (fun (Constructor a, _) (Constructor b, _) -> String.compare a b) (CMap.bindings cmap) in
-        let lst' = List.fold_left
-          (fun acc (Constructor k, v) -> (k , continue NoState v)::acc)
-          [] lst
-        in
-        `Assoc lst' );
       label_map                 = (fun _visitor continue NoState lmap   ->
         let lst = List.sort (fun (Label a, _) (Label b, _) -> String.compare a b) (LMap.bindings lmap) in
         let lst' = List.fold_left

@@ -2,9 +2,6 @@ open Types
 open Format
 open PP_helpers
 
-let constructor ppf (c:constructor') : unit =
-  let Constructor c = c in fprintf ppf "%s" c
-
 let label ppf (l:label) : unit =
   let Label l = l in fprintf ppf "%s" l
 

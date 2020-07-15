@@ -573,12 +573,12 @@ let convert_to_right_comb = typer_1 "CONVERT_TO_RIGHT_COMB" @@ fun t ->
   match t.type_content with
     | T_record lmap ->
       let kvl = LMap.to_kv_list lmap in
-      let%bind () = Michelson_type_converter.record_checks kvl t.location in
+      let%bind () = Michelson_type_converter.field_checks kvl t.location in
       let pair = Michelson_type_converter.convert_pair_to_right_comb kvl in
       ok {t with type_content = pair}
     | T_sum cmap ->
-      let kvl = CMap.to_kv_list cmap in
-      let%bind () = Michelson_type_converter.variant_checks kvl t.location in
+      let kvl = LMap.to_kv_list cmap in
+      let%bind () = Michelson_type_converter.field_checks kvl t.location in
       let michelson_or = Michelson_type_converter.convert_variant_to_right_comb kvl in
       ok {t with type_content = michelson_or}
     | _ -> fail @@ wrong_converter t
@@ -587,12 +587,12 @@ let convert_to_left_comb = typer_1 "CONVERT_TO_LEFT_COMB" @@ fun t ->
   match t.type_content with
     | T_record lmap ->
       let kvl =  LMap.to_kv_list lmap in
-      let%bind () = Michelson_type_converter.record_checks kvl t.location in
+      let%bind () = Michelson_type_converter.field_checks kvl t.location in
       let pair = Michelson_type_converter.convert_pair_to_left_comb kvl in
       ok {t with type_content = pair}
     | T_sum cmap ->
-      let kvl = CMap.to_kv_list cmap in
-      let%bind () = Michelson_type_converter.variant_checks kvl t.location in
+      let kvl = LMap.to_kv_list cmap in
+      let%bind () = Michelson_type_converter.field_checks kvl t.location in
       let michelson_or = Michelson_type_converter.convert_variant_to_left_comb kvl in
       ok {t with type_content = michelson_or}
     | _ -> fail @@ wrong_converter t

@@ -24,11 +24,9 @@ module M = struct
       unit                      = (fun _ _ _ -> false) ;
       packed_internal_operation = (fun _ _ _ -> false) ;
       expression_variable       = (fun _ _ _ -> false) ;
-      constructor'              = (fun _ _ _ -> false) ;
       location                  = (fun _ _ _ -> false) ;
       label                     = (fun _ _ _ -> false) ;
       ast_core_type_expression  = (fun _ _ _ -> true) ;
-      constructor_map           = (fun _ _ _ _ -> false) ;
       label_map                 = (fun _ _ _ _ -> false) ;
       list                      = (fun _ _ _ _ -> false) ;
       location_wrap             = (fun _ _ _ _ -> false) ;
@@ -65,15 +63,9 @@ module M = struct
       unit                      = (fun _visitor NoState ()              -> fprintf ppf "()") ;
       packed_internal_operation = (fun _visitor NoState _op             -> fprintf ppf "Operation(...bytes)") ;
       expression_variable       = (fun _visitor NoState ev              -> fprintf ppf "%a" Var.pp ev.wrap_content) ;
-      constructor'              = (fun _visitor NoState (Constructor c) -> fprintf ppf "Constructor %s" c) ;
       location                  = (fun _visitor NoState loc             -> fprintf ppf "%a" Location.pp loc) ;
       label                     = (fun _visitor NoState (Label lbl)     -> fprintf ppf "Label %s" lbl) ;
       ast_core_type_expression  = (fun _visitor NoState te              -> fprintf ppf "%a" Ast_core.PP.type_expression te) ;
-      constructor_map           = (fun _visitor continue NoState cmap   ->
-        let lst = List.sort (fun (Constructor a, _) (Constructor b, _) -> String.compare a b) (CMap.bindings cmap) in
-        let aux ppf (Constructor k, v) =
-          fprintf ppf "(Constructor %s, %a)" k (fun _ppf -> continue NoState) v in
-        fprintf ppf "CMap [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ; ")) lst);
       label_map                 = (fun _visitor continue NoState lmap   ->
         let lst = List.sort (fun (Label a, _) (Label b, _) -> String.compare a b) (LMap.bindings lmap) in
         let aux ppf (Label k, v) =

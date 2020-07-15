@@ -22,6 +22,7 @@ let selector :  (type_constraint_simpl, output_break_ctor) selector =
   | SC_Alias       _                -> WasNotSelected (* TODO: ??? (beware: symmetry) *)
   | SC_Poly        _                -> WasNotSelected (* TODO: ??? (beware: symmetry) *)
   | SC_Typeclass   _                -> WasNotSelected
+  | SC_Row         _                -> WasNotSelected
 
 let propagator : output_break_ctor propagator =
   fun dbs selected ->

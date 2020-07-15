@@ -35,7 +35,7 @@ let t_map_or_big_map ?loc ?s k v             = t_operator ?loc ?s TC_map_or_big_
 
 let t_record m ?loc ?s () : type_expression = make_t ?loc (T_record m) s
 let make_t_ez_record ?loc (lst:(string * type_expression) list) : type_expression =
-  let lst = List.mapi (fun i (x,y) -> (Label x, {field_type=y;michelson_annotation=None;field_decl_pos=i}) ) lst in
+  let lst = List.mapi (fun i (x,y) -> (Label x, {associated_type=y;michelson_annotation=None;decl_pos=i}) ) lst in
   let map = LMap.of_list lst in
   make_t ?loc (T_record map) None
 let ez_t_record lst ?loc ?s () : type_expression =
@@ -43,17 +43,17 @@ let ez_t_record lst ?loc ?s () : type_expression =
   t_record m ?loc ?s ()
 let t_pair ?loc ?s a b : type_expression =
   ez_t_record [
-    (Label "0",{field_type=a;michelson_annotation=None ; field_decl_pos = 0}) ;
-    (Label "1",{field_type=b;michelson_annotation=None ; field_decl_pos = 0}) ] ?loc ?s ()
+    (Label "0",{associated_type=a;michelson_annotation=None ; decl_pos = 0}) ;
+    (Label "1",{associated_type=b;michelson_annotation=None ; decl_pos = 0}) ] ?loc ?s ()
 
 let t_sum m ?loc ?s () : type_expression = make_t ?loc (T_sum m) s
-let make_t_ez_sum ?loc ?s (lst:(constructor' * ctor_content) list) : type_expression =
-  let aux prev (k, v) = CMap.add k v prev in
-  let map = List.fold_left aux CMap.empty lst in
+let make_t_ez_sum ?loc ?s (lst:(label * row_element) list) : type_expression =
+  let aux prev (k, v) = LMap.add k v prev in
+  let map = List.fold_left aux LMap.empty lst in
   make_t ?loc (T_sum map) s
 
 let t_bool ?loc ?s ()       : type_expression = make_t_ez_sum ?loc ?s
-  [(Constructor "true", {ctor_type=t_unit ();michelson_annotation=None;ctor_decl_pos=0});(Constructor "false", {ctor_type=t_unit ();michelson_annotation=None;ctor_decl_pos=1})]
+  [(Label "true", {associated_type=t_unit ();michelson_annotation=None;decl_pos=0});(Label "false", {associated_type=t_unit ();michelson_annotation=None;decl_pos=1})]
 
 let t_function param result ?loc ?s () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result}) s
 let t_shallow_closure param result ?loc ?s () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result}) s
@@ -134,7 +134,7 @@ let tuple_of_record (m: _ LMap.t) =
     Option.bind (fun opt -> Some (opt,i+1)) opt
   in
   let l = Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux in
-  List.map (fun {field_type;_} -> field_type) l
+  List.map (fun {associated_type;_} -> associated_type) l
 
 
 let get_t_tuple (t:type_expression) : type_expression list option = match t.type_content with
@@ -158,15 +158,15 @@ let get_t_function_exn t = match get_t_function t with
   | Some x -> x
   | None -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
 
-let get_t_sum (t:type_expression) : ctor_content constructor_map option = match t.type_content with
+let get_t_sum (t:type_expression) : row_element label_map option = match t.type_content with
   | T_sum m -> Some m
   | _ -> None
 
-let get_t_sum_exn (t:type_expression) : ctor_content constructor_map = match t.type_content with
+let get_t_sum_exn (t:type_expression) : row_element label_map = match t.type_content with
   | T_sum m -> m
   | _ -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
 
-let get_t_record (t:type_expression) : field_content label_map option = match t.type_content with
+let get_t_record (t:type_expression) : row_element label_map option = match t.type_content with
   | T_record m -> Some m
   | _ -> None
 
@@ -272,7 +272,7 @@ let e_let_in let_binder inline rhs let_result = E_let_in { let_binder ; rhs ; le
 
 let e_constructor constructor element: expression_content = E_constructor {constructor;element}
 
-let e_bool b : expression_content = e_constructor (Constructor (string_of_bool b)) (make_e (e_unit ())(t_unit()))
+let e_bool b : expression_content = e_constructor (Label (string_of_bool b)) (make_e (e_unit ())(t_unit()))
 
 let e_a_unit = make_e (e_unit ()) (t_unit ())
 let e_a_int n = make_e (e_int n) (t_int ())
@@ -289,12 +289,12 @@ let e_a_none t = make_e (e_none ()) (t_option t)
 let e_a_record r = make_e (e_record r) (t_record
   (LMap.map
     (fun t ->
-      let field_type = get_type_expression t in
-      {field_type ; michelson_annotation=None ; field_decl_pos = 0} )
+      let associated_type = get_type_expression t in
+      {associated_type ; michelson_annotation=None ; decl_pos = 0} )
     r ) () )
 let e_a_application a b = make_e (e_application a b) (get_type_expression b)
 let e_a_variable v ty = make_e (e_variable v) ty
-let ez_e_a_record r = make_e (ez_e_record r) (ez_t_record (List.mapi (fun i (x, y) -> x, {field_type = y.type_expression ; michelson_annotation = None ; field_decl_pos = i}) r) ())
+let ez_e_a_record r = make_e (ez_e_record r) (ez_t_record (List.mapi (fun i (x, y) -> x, {associated_type = y.type_expression ; michelson_annotation = None ; decl_pos = i}) r) ())
 let e_a_let_in binder expr body attributes = make_e (e_let_in binder expr body attributes) (get_type_expression body)
 
 
@@ -321,7 +321,7 @@ let get_a_unit (t:expression) =
 
 let get_a_bool (t:expression) =
   match t.expression_content with
-  | E_constructor {constructor=Constructor name;element}
+  | E_constructor {constructor=Label name;element}
     when (String.equal name "true" || String.equal name "false") 
     && element.expression_content = e_unit () -> 
       Some (bool_of_string name)

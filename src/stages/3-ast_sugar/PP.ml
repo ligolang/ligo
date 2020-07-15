@@ -5,18 +5,19 @@ open PP_helpers
 
 include Stage_common.PP
 
-let cmap_sep value sep ppf m =
-  let lst = CMap.to_kv_list m in
-  let lst = List.sort (fun (Constructor a,_) (Constructor b,_) -> String.compare a b) lst in
-  let new_pp ppf (k, {ctor_type;_}) = fprintf ppf "@[<h>%a -> %a@]" constructor k value ctor_type in
+(* TODO: move to common *)
+let lmap_sep value sep ppf m =
+  let lst = LMap.to_kv_list m in
+  let lst = List.sort (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
+  let new_pp ppf (k, {associated_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value associated_type in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
-let cmap_sep_d x = cmap_sep x (tag " ,@ ")
+let lmap_sep_d x = lmap_sep x (tag " ,@ ")
 
 let record_sep_t value sep ppf (m : 'a label_map) =
   let lst = LMap.to_kv_list m in
   let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
-  let new_pp ppf (k, {field_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value field_type in
+  let new_pp ppf (k, {associated_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value associated_type in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
 
@@ -30,7 +31,7 @@ let rec type_expression' :
     -> unit =
   fun f ppf te ->
   match te.type_content with
-  | T_sum m -> fprintf ppf "@[<hv 4>sum[%a]@]" (cmap_sep_d f) m
+  | T_sum m -> fprintf ppf "@[<hv 4>sum[%a]@]" (lmap_sep_d f) m
   | T_record m -> fprintf ppf "{%a}" (record_sep_t f (const ";")) m
   | T_tuple  t -> fprintf ppf "(%a)" (list_sep_d f) t
   | T_arrow  a -> fprintf ppf "%a -> %a" f a.type1 f a.type2
@@ -52,7 +53,7 @@ and expression_content ppf (ec : expression_content) =
   | E_application {lamb;args} ->
       fprintf ppf "(%a)@(%a)" expression lamb expression args
   | E_constructor c ->
-      fprintf ppf "%a(%a)" constructor c.constructor expression c.element
+      fprintf ppf "%a(%a)" label c.constructor expression c.element
   | E_constant c ->
       fprintf ppf "%a(%a)" constant c.cons_name (list_sep_d expression)
         c.arguments
@@ -128,9 +129,9 @@ and assoc_expression ppf : expr * expr -> unit =
 and single_record_patch ppf ((p, expr) : label * expr) =
   fprintf ppf "%a <- %a" label p expression expr
 
-and matching_variant_case : type a . (_ -> a -> unit) -> _ -> (constructor' * expression_variable) * a -> unit =
+and matching_variant_case : type a . (_ -> a -> unit) -> _ -> (label * expression_variable) * a -> unit =
   fun f ppf ((c,n),a) ->
-  fprintf ppf "| %a %a -> %a" constructor c expression_variable n f a
+  fprintf ppf "| %a %a -> %a" label c expression_variable n f a
 
 and matching : (formatter -> expression -> unit) -> formatter -> matching_expr -> unit =
   fun f ppf m -> match m with
@@ -163,7 +164,7 @@ and matching_type ppf m = match m with
       fprintf ppf "variable"
 
 and matching_variant_case_type ppf ((c,n),_a) =
-  fprintf ppf "| %a %a" constructor c expression_variable n
+  fprintf ppf "| %a %a" label c expression_variable n
 
 and option_mut ppf mut = 
   if mut then 

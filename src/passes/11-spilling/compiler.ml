@@ -179,7 +179,7 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
   | T_operator {operator=(TC_contract|TC_option|TC_list|TC_set|TC_map|TC_big_map); _} ->
       fail @@ corner_case ~loc:"spilling" "Type operator with invalid arguments (wrong number or wrong kinds)"
   | T_sum m when Ast_typed.Helpers.is_michelson_or m ->
-      let node = Append_tree.of_list @@ kv_list_of_cmap m in
+      let node = Append_tree.of_list @@ kv_list_of_lmap m in
       let aux a b : (type_expression annotated , spilling_error) result =
         let%bind a = a in
         let%bind b = b in
@@ -187,13 +187,13 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
         ok (None, t)
       in
       let%bind m' = Append_tree.fold_ne
-                      (fun (_, ({ctor_type ; michelson_annotation}: AST.ctor_content)) ->
-                        let%bind a = compile_type ctor_type in
+                      (fun (_, ({associated_type ; michelson_annotation}: AST.row_element)) ->
+                        let%bind a = compile_type associated_type in
                         ok (Ast_typed.Helpers.remove_empty_annotation michelson_annotation, a) )
                       aux node in
       ok @@ snd m'
   | T_sum m ->
-      let node = Append_tree.of_list @@ kv_list_of_cmap m in
+      let node = Append_tree.of_list @@ kv_list_of_lmap m in
       let aux a b : (type_expression annotated , spilling_error) result =
         let%bind a = a in
         let%bind b = b in
@@ -201,8 +201,8 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
         ok (None, t)
       in
       let%bind m' = Append_tree.fold_ne
-                      (fun (Constructor ann, ({ctor_type ; _}: AST.ctor_content)) ->
-                        let%bind a = compile_type ctor_type in
+                      (fun (Label ann, ({associated_type ; _}: AST.row_element)) ->
+                        let%bind a = compile_type associated_type in
                         ok (Some (String.uncapitalize_ascii ann), a))
                       aux node in
       ok @@ snd m'
@@ -215,8 +215,8 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
         ok (None, t)
       in
       let%bind m' = Append_tree.fold_ne
-                      (fun (_, ({field_type ; michelson_annotation} : AST.field_content)) ->
-                        let%bind a = compile_type field_type in
+                      (fun (_, ({associated_type ; michelson_annotation} : AST.row_element)) ->
+                        let%bind a = compile_type associated_type in
                         ok (Ast_typed.Helpers.remove_empty_annotation michelson_annotation, a) )
                       aux node in
       ok @@ snd m'
@@ -236,8 +236,8 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
         ok (None, t)
       in
       let%bind m' = Append_tree.fold_ne
-                      (fun (Label ann, ({field_type;_}: AST.field_content)) ->
-                        let%bind a = compile_type field_type in
+                      (fun (Label ann, ({associated_type;_}: AST.row_element)) ->
+                        let%bind a = compile_type associated_type in
                         ok ((if is_tuple_lmap then 
                               None 
                             else 
@@ -286,11 +286,11 @@ let rec compile_literal : AST.literal -> value = fun l -> match l with
   | Literal_operation op -> D_operation op
   | Literal_unit -> D_unit
 
-and tree_of_sum : AST.type_expression -> ((AST.constructor' * AST.type_expression) Append_tree.t, spilling_error) result = fun t ->
+and tree_of_sum : AST.type_expression -> ((AST.label * AST.type_expression) Append_tree.t, spilling_error) result = fun t ->
   let%bind map_tv =
     trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
     get_t_sum t in
-  let kt_list = List.map (fun (k,({ctor_type;_}:AST.ctor_content)) -> (k,ctor_type)) (kv_list_of_cmap map_tv) in
+  let kt_list = List.map (fun (k,({associated_type;_}:AST.row_element)) -> (k,associated_type)) (kv_list_of_lmap map_tv) in
   ok @@ Append_tree.of_list kt_list
 
 and compile_expression (ae:AST.expression) : (expression , spilling_error) result =
@@ -310,7 +310,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
       let%bind a = compile_expression lamb in
       let%bind b = compile_expression args in
       return @@ E_application (a, b)
-  | E_constructor {constructor=Constructor name;element} when (String.equal name "true"|| String.equal name "false") && element.expression_content = AST.e_unit () ->
+  | E_constructor {constructor=Label name;element} when (String.equal name "true"|| String.equal name "false") && element.expression_content = AST.e_unit () ->
     return @@ E_literal (D_bool (bool_of_string name))
   | E_constructor {constructor;element} -> (
       let%bind param' = compile_expression element in
@@ -474,11 +474,11 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
         match expr'.type_expression.type_content with
           | T_base TB_bool ->
             let ctor_body (case : AST.matching_content_case) = (case.constructor, case.body) in
-            let cases = AST.CMap.of_list (List.map ctor_body cases) in
+            let cases = AST.LMap.of_list (List.map ctor_body cases) in
             let get_case c =
               trace_option
                 (corner_case ~loc:__LOC__ ("missing " ^ c ^ " case in match"))
-                (AST.CMap.find_opt (Constructor c) cases) in
+                (AST.LMap.find_opt (Label c) cases) in
             let%bind match_true  = get_case "true" in
             let%bind match_false = get_case "false" in
             let%bind (t , f) = bind_map_pair (compile_expression) (match_true, match_false) in
@@ -506,10 +506,10 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
 
           let rec aux top t =
             match t with
-            | ((`Leaf (Constructor constructor_name)) , tv) -> (
+            | ((`Leaf (Label constructor_name)) , tv) -> (
                 let%bind {constructor=_ ; pattern ; body} =
                   trace_option (corner_case ~loc:__LOC__ "missing match clause") @@
-                    let aux ({constructor = Constructor c ; pattern=_ ; body=_} : AST.matching_content_case) =
+                    let aux ({constructor = Label c ; pattern=_ ; body=_} : AST.matching_content_case) =
                       (c = constructor_name) in
                   List.find_opt aux cases in
                 let%bind body' = compile_expression body in
@@ -615,7 +615,7 @@ and compile_recursive {fun_name; fun_type; lambda} =
           in
           return @@ E_if_cons (expr , nil , cons)
         )
-      | Match_variant {cases=[{constructor=Constructor t;body=match_true};{constructor=Constructor f;body=match_false}];_}
+      | Match_variant {cases=[{constructor=Label t;body=match_true};{constructor=Label f;body=match_false}];_}
         when String.equal t "true" && String.equal f "false" ->
           let%bind (t , f) = bind_map_pair (replace_callback fun_name loop_type shadowed) (match_true, match_false) in
           return @@ E_if_bool (expr, t, f)
@@ -641,10 +641,10 @@ and compile_recursive {fun_name; fun_type; lambda} =
           in
           let rec aux top t =
             match t with
-            | ((`Leaf (Constructor constructor_name)) , tv) -> (
+            | ((`Leaf (Label constructor_name)) , tv) -> (
                 let%bind {constructor=_ ; pattern ; body} =
                   trace_option (corner_case ~loc:__LOC__ "missing match clause") @@
-                    let aux ({constructor = Constructor c ; pattern=_ ; body=_} : AST.matching_content_case) =
+                    let aux ({constructor = Label c ; pattern=_ ; body=_} : AST.matching_content_case) =
                       (c = constructor_name) in
                   List.find_opt aux cases in
                 let%bind body' = replace_callback fun_name loop_type shadowed body in

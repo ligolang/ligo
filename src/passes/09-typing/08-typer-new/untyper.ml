@@ -151,20 +151,18 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer
   (* TODO: or should we use t.core if present? *)
   let%bind t = match t.type_content with
   | O.T_sum x ->
-    let aux k ({ctor_type ; michelson_annotation ; ctor_decl_pos} : O.ctor_content) acc =
-      let%bind acc = acc in
-      let%bind ctor_type = untype_type_expression ctor_type in
-      let v' : I.ctor_content = {ctor_type ; michelson_annotation ; ctor_decl_pos} in 
-      ok @@ I.CMap.add k v' acc in
-    let%bind x' = O.CMap.fold aux x (ok I.CMap.empty) in
+    let aux ({associated_type ; michelson_annotation ; decl_pos} : O.row_element) =
+      let%bind associated_type = untype_type_expression associated_type in
+      let v' = ({associated_type ; michelson_annotation ; decl_pos} : I.row_element) in
+      ok @@ v' in
+    let%bind x' = Stage_common.Helpers.bind_map_lmap aux x in
     ok @@ I.T_sum x'
   | O.T_record x ->
-    let aux k ({field_type ; michelson_annotation ; field_decl_pos} : O.field_content) acc =
-      let%bind acc = acc in
-      let%bind field_type = untype_type_expression field_type in
-      let v' = ({field_type ; field_annotation=michelson_annotation ; field_decl_pos} : I.field_content) in
-      ok @@ I.LMap.add k v' acc in
-    let%bind x' = O.LMap.fold aux x (ok I.LMap.empty) in
+    let aux ({associated_type ; michelson_annotation ; decl_pos} : O.row_element) =
+      let%bind associated_type = untype_type_expression associated_type in
+      let v' = ({associated_type ; michelson_annotation ; decl_pos} : I.row_element) in
+      ok @@ v' in
+    let%bind x' = Stage_common.Helpers.bind_map_lmap aux x in
     ok @@ I.T_record x'
   | O.T_constant (tag) ->
     ok @@ I.T_constant (unconvert_type_constant tag)
@@ -211,7 +209,7 @@ let rec untype_expression (e:O.expression) : (I.expression, typer_error) result 
       return (e_lambda (binder) (input_type) (output_type) result)
   | E_constructor {constructor; element} ->
       let%bind p' = untype_expression element in
-      let Constructor n = constructor in
+      let Label n = constructor in
       return (e_constructor n p')
   | E_record r ->
     let r = O.LMap.to_kv_list r in

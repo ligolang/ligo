@@ -58,23 +58,17 @@ let operation ppf (o : Memory_proto_alpha.Protocol.Alpha_context.packed_internal
 
 let type_variable ppf (t : type_variable) : unit = fprintf ppf "%a" Var.pp t
 
-  let cmap_sep value sep ppf m =
-    let lst = CMap.to_kv_list m in
-    let lst = List.sort (fun (Constructor a,_) (Constructor b,_) -> String.compare a b) lst in
-    let new_pp ppf (k, {ctor_type;_}) = fprintf ppf "@[<h>%a -> %a@]" constructor k value ctor_type in
-    fprintf ppf "%a" (list_sep new_pp sep) lst
-  let cmap_sep_d x = cmap_sep x (tag " ,@ ")
-
   let record_sep value sep ppf (m : 'a label_map) =
     let lst = LMap.to_kv_list m in
     let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
-    let new_pp ppf (k, {field_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value field_type in
+    let new_pp ppf (k, {associated_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value associated_type in
     fprintf ppf "%a" (list_sep new_pp sep) lst
+  let variant_sep_d x = record_sep x (tag " ,@ ")
 
   let tuple_sep value sep ppf m =
     assert (Helpers.is_tuple_lmap m);
     let lst = Helpers.tuple_of_record m in
-    let new_pp ppf (_, {field_type;_}) = fprintf ppf "%a" value field_type in
+    let new_pp ppf (_, {associated_type;_}) = fprintf ppf "%a" value associated_type in
     fprintf ppf "%a" (list_sep new_pp sep) lst
 
   let record_sep_expr value sep ppf (m : 'a label_map) =
@@ -109,7 +103,7 @@ let tuple_or_record_sep_type value = tuple_or_record_sep_t value "@[<hv 7>record
 let rec type_content : formatter -> type_expression -> unit =
   fun ppf te ->
   match te.content with
-  | T_sum m -> fprintf ppf "@[<hv 4>sum[%a]@]" (cmap_sep_d type_expression) m
+  | T_sum m -> fprintf ppf "@[<hv 4>sum[%a]@]" (variant_sep_d type_expression) m
   | T_record m -> fprintf ppf "%a" (tuple_or_record_sep_type type_expression) m
   | T_arrow a -> fprintf ppf "%a -> %a" type_expression a.type1 type_expression a.type2
   | T_variable tv -> type_variable ppf tv
@@ -134,7 +128,7 @@ and expression_content ppf (ec : expression_content) =
   | E_application {lamb;args} ->
       fprintf ppf "@[<hv>(%a)@@(%a)@]" expression lamb expression args
   | E_constructor c ->
-      fprintf ppf "@[%a(%a)@]" constructor c.constructor expression c.element
+      fprintf ppf "@[%a(%a)@]" label c.constructor expression c.element
   | E_constant c ->
       fprintf ppf "@[%a@[<hv 1>(%a)@]@]" constant c.cons_name (list_sep_d expression)
         c.arguments
@@ -183,7 +177,7 @@ and single_record_patch ppf ((p, expr) : label * expression) =
 
 and matching_variant_case : (_ -> expression -> unit) -> _ -> match_variant -> unit =
   fun f ppf {constructor=c ; proj ; body } ->
-  fprintf ppf "| %a %a ->@;<1 2>%a@ " constructor c expression_variable proj f body
+  fprintf ppf "| %a %a ->@;<1 2>%a@ " label c expression_variable proj f body
 
 and matching : (formatter -> expression -> unit) -> formatter -> matching_expr -> unit =
   fun f ppf m -> match m with
@@ -205,7 +199,7 @@ and matching_type ppf m = match m with
       fprintf ppf "option"
 
 and matching_variant_case_type ppf {constructor=c ; proj ; body=_ } =
-  fprintf ppf "| %a %a" constructor c expression_variable proj
+  fprintf ppf "| %a %a" label c expression_variable proj
 
 and option_mut ppf mut = 
   if mut then 

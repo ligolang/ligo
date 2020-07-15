@@ -27,6 +27,7 @@ let selector : (type_constraint_simpl, output_specialize1) selector =
     let cs_pairs = List.map (fun x -> { poly = p ; a_k_var = x }) other_cs in
     WasSelected cs_pairs
   | SC_Typeclass   _                -> WasNotSelected
+  | SC_Row _ -> WasNotSelected
 
 let propagator : output_specialize1 propagator =
   fun dbs selected ->

@@ -91,9 +91,9 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   )
   | T_operator _, _ -> None
   | T_sum sa, T_sum sb -> (
-      let sa' = CMap.to_kv_list sa in
-      let sb' = CMap.to_kv_list sb in
-      let aux ((ka, {ctor_type=va;_}), (kb, {ctor_type=vb;_})) =
+      let sa' = LMap.to_kv_list sa in
+      let sb' = LMap.to_kv_list sb in
+      let aux ((ka, {associated_type=va;_}), (kb, {associated_type=vb;_})) =
         assert_eq ka kb >>= fun _ ->
           assert_type_expression_eq (va, vb)
       in
@@ -107,7 +107,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
       let sort_lmap r' = List.sort (fun (Label a,_) (Label b,_) -> String.compare a b) r' in
       let ra' = sort_lmap @@ LMap.to_kv_list ra in
       let rb' = sort_lmap @@ LMap.to_kv_list rb in
-      let aux ((ka, {field_type=va;_}), (kb, {field_type=vb;_})) =
+      let aux ((ka, {associated_type=va;_}), (kb, {associated_type=vb;_})) =
         let Label ka = ka in
         let Label kb = kb in
         assert_eq ka kb >>= fun _ ->
@@ -240,10 +240,23 @@ let p_constant (p_ctor_tag : constant_tag) (p_ctor_args : p_ctor_args) = {
     }
 }
 
+let p_row (p_row_tag : row_tag) (p_row_args : tv_lmap ) = {
+  tsrc = "misc.ml/p_constant" ;
+  t = P_row {
+      p_row_tag ;
+      p_row_args ;
+    }
+}
+
+let p_row_ez (p_row_tag : row_tag) (p_row_args : (string * type_value) list ) =
+  let p_row_args = LMap.of_list @@ List.map (fun (x,y) -> Label x,y) p_row_args in
+  p_row p_row_tag p_row_args
+
 let c_equation aval bval reason = { c = C_equation { aval ; bval }; reason }
 
 let reason_simpl : type_constraint_simpl -> string = function
   | SC_Constructor { reason_constr_simpl=reason; _ }
+  | SC_Row { reason_row_simpl=reason; _ }
   | SC_Alias { reason_alias_simpl=reason; _ }
   | SC_Poly { reason_poly_simpl=reason; _ }
   | SC_Typeclass { reason_typeclass_simpl=reason; _ }

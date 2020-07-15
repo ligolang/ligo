@@ -9,8 +9,6 @@ let type_constraint_ : _ -> type_constraint_simpl -> unit = fun ppf ->
     let ct = match c_tag with
       | C_arrow        -> "arrow"
       | C_option       -> "option"
-      | C_record       -> failwith "record"
-      | C_variant      -> failwith "variant"
       | C_map          -> "map"
       | C_big_map      -> "big_map"
       | C_list         -> "list"
@@ -34,6 +32,12 @@ let type_constraint_ : _ -> type_constraint_simpl -> unit = fun ppf ->
   |SC_Alias       { a; b } -> fprintf ppf "Alias %a %a" Var.pp a Var.pp b
   |SC_Poly        _ -> fprintf ppf "Poly"
   |SC_Typeclass   _ -> fprintf ppf "TC"
+  |SC_Row { tv; r_tag; tv_map=_ } ->
+    let r = match r_tag with
+      | C_record       -> "record"
+      | C_variant      -> "variant"
+    in
+    fprintf ppf "ROW %a %s()" Var.pp tv r
 
 let type_constraint : _ -> type_constraint_simpl -> unit = fun ppf c ->
   fprintf ppf "%a (reason: %s)" type_constraint_ c (reason_simpl c)

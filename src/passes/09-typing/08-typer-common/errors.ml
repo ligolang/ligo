@@ -10,10 +10,10 @@ type typer_error = [
   | `Typer_unbound_variable of Ast_typed.Environment.t * Ast_typed.expression_variable * Location.t
   | `Typer_match_missing_case of Ast_core.matching_expr * Location.t
   | `Typer_match_redundant_case of Ast_core.matching_expr * Location.t
-  | `Typer_unbound_constructor of Ast_typed.Environment.t * Ast_core.constructor' * Location.t
-  | `Typer_redundant_constructor of Ast_typed.Environment.t * Ast_core.constructor' * Location.t
+  | `Typer_unbound_constructor of Ast_typed.Environment.t * Ast_core.label * Location.t
+  | `Typer_redundant_constructor of Ast_typed.Environment.t * Ast_core.label * Location.t
   | `Typer_operator_wrong_number_of_arguments of Ast_core.type_operator' * int * int * Location.t
-  | `Typer_michelson_or_no_annotation of Ast_core.constructor' * Location.t
+  | `Typer_michelson_or_no_annotation of Ast_core.label * Location.t
   | `Typer_match_tuple_wrong_arity of Ast_typed.type_expression_list * Ast_core.expression_variable list * Location.t
   | `Typer_program_tracer of Ast_core.program * typer_error
   | `Typer_constant_declaration_tracer of Ast_core.expression_variable * Ast_core.expression * (Ast_typed.type_expression option) * typer_error
@@ -99,10 +99,10 @@ let unbound_type_variable (e:Ast_typed.Environment.t) (tv:Ast_typed.type_variabl
 let unbound_variable (e:Ast_typed.Environment.t) (v:Ast_typed.expression_variable) (loc:Location.t) = `Typer_unbound_variable (e,v,loc)
 let match_missing_case (m:Ast_core.matching_expr) (loc:Location.t) = `Typer_match_missing_case (m,loc)
 let match_redundant_case (m:Ast_core.matching_expr) (loc:Location.t) = `Typer_match_redundant_case (m,loc)
-let unbound_constructor (e:Ast_typed.Environment.t) (c:Ast_core.constructor') (loc:Location.t) = `Typer_unbound_constructor (e,c,loc)
+let unbound_constructor (e:Ast_typed.Environment.t) (c:Ast_core.label) (loc:Location.t) = `Typer_unbound_constructor (e,c,loc)
 let operator_wrong_number_of_arguments (op:Ast_core.type_operator') (expected:int) (actual:int) loc = `Typer_operator_wrong_number_of_arguments (op,expected,actual,loc)
-let redundant_constructor (e:Ast_typed.Environment.t) (c:Ast_core.constructor') (loc:Location.t) = `Typer_redundant_constructor (e,c,loc)
-let michelson_or (c:Ast_core.constructor') (loc:Location.t) = `Typer_michelson_or_no_annotation (c,loc)
+let redundant_constructor (e:Ast_typed.Environment.t) (c:Ast_core.label) (loc:Location.t) = `Typer_redundant_constructor (e,c,loc)
+let michelson_or (c:Ast_core.label) (loc:Location.t) = `Typer_michelson_or_no_annotation (c,loc)
 let match_tuple_wrong_arity (expected: Ast_typed.type_expression_list) (actual:Ast_core.expression_variable list) (loc:Location.t) =
   `Typer_match_tuple_wrong_arity (expected,actual,loc)
 let program_error_tracer (p:Ast_core.program) (err:typer_error) = `Typer_program_tracer (p,err)
@@ -227,12 +227,12 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@ Unbound constructor %a@]"
         Location.pp loc
-        Ast_core.PP.constructor c
+        Ast_core.PP.label c
     | `Typer_redundant_constructor (_env,c,loc) ->
       Format.fprintf f
         "@[<hv>%a@ Redundant constructor:@ %a@]"
         Location.pp loc
-        Ast_core.PP.constructor c
+        Ast_core.PP.label c
     | `Typer_operator_wrong_number_of_arguments (op,e,a,loc) ->
       Format.fprintf f
         "@[<hv>%a@ Wrong number of arguments for type operator: %a@ expected: %i@ got: %i@]"
@@ -243,7 +243,7 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@ michelson_or contructor %a must be annotated with a sum type@]"
         Location.pp loc
-        Ast_core.PP.constructor c
+        Ast_core.PP.label c
     | `Typer_match_tuple_wrong_arity (expected,actual,loc) ->
       Format.fprintf f
         "@[<hv>%a@ Matching tuple of different size. Expected size of %i but got %i@]"
@@ -647,7 +647,7 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
   | `Typer_unbound_constructor (env,c,loc) ->
     let message = `String "unbound type variable" in
     let loc = Format.asprintf "%a" Location.pp loc in
-    let value = Format.asprintf "%a" Ast_core.PP.constructor c in
+    let value = Format.asprintf "%a" Ast_core.PP.label c in
     let env = Format.asprintf "%a" Ast_typed.Environment.PP.environment env in
     let content = `Assoc [
       ("message", message);
@@ -659,7 +659,7 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
   | `Typer_redundant_constructor (env,c,loc) ->
     let message = `String "redundant constructor" in
     let loc = Format.asprintf "%a" Location.pp loc in
-    let value = Format.asprintf "%a" Ast_core.PP.constructor c in
+    let value = Format.asprintf "%a" Ast_core.PP.label c in
     let env = Format.asprintf "%a" Ast_typed.Environment.PP.environment env in
     let content = `Assoc [
       ("message", message);
@@ -683,7 +683,7 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
   | `Typer_michelson_or_no_annotation (c,loc) ->
     let message = `String "michelson_or must be annotated with a sum type" in
     let loc = Format.asprintf "%a" Location.pp loc in
-    let value = Format.asprintf "%a" Ast_core.PP.constructor c in
+    let value = Format.asprintf "%a" Ast_core.PP.label c in
     let content = `Assoc [
       ("message", message);
       ("location", `String loc);

@@ -31,8 +31,7 @@ and declaration =
 
 (* | Macro_declaration of macro_declaration *)
 
-and ctor_constructor_map = ctor_content constructor_map
-and field_label_map = field_content label_map
+and field_label_map = row_element label_map
 and type_expression_list = type_expression list
 
 and content_type_operator = {
@@ -40,7 +39,7 @@ and content_type_operator = {
     arguments : type_expression_list ;
   }
 and type_content =
-  | T_sum of ctor_constructor_map
+  | T_sum of field_label_map
   | T_record of field_label_map
   | T_arrow of arrow
   | T_variable of type_variable
@@ -51,15 +50,10 @@ and arrow = {
     type1: type_expression ;
     type2: type_expression ;
   }
-and ctor_content = {
-    ctor_type : type_expression ;
+and row_element = {
+    associated_type : type_expression ;
     michelson_annotation : string_option ;
-    ctor_decl_pos : int ;
-  }
-and field_content = {
-    field_type : type_expression ;
-    field_annotation : string_option ;
-    field_decl_pos : int ;
+    decl_pos : int ;
   }
 
 and type_expression = {
@@ -134,7 +128,7 @@ and raw_code = {
   }
 
 and constructor = {
-    constructor: constructor' ;
+    constructor: label ;
     element: expression ;
   }
 
@@ -165,7 +159,7 @@ and match_option = {
     match_some : match_some ;
   }
 and match_variant = {
-    constructor : constructor' ;
+    constructor : label ;
     proj : expression_variable ;
     body : expression ;
   }

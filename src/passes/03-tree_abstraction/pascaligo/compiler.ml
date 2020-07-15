@@ -464,15 +464,15 @@ fun compiler cases ->
       ( match c with
         PUnit _ ->
          fail @@ unsupported_pattern_type constr
-      | PFalse _ -> return (Constructor "false", Location.wrap @@ Var.of_name "_")
-      | PTrue  _ -> return (Constructor "true", Location.wrap @@ Var.of_name "_")
-      | PNone  _ -> return (Constructor "None", Location.wrap @@ Var.of_name "_")
+      | PFalse _ -> return (Label "false", Location.wrap @@ Var.of_name "_")
+      | PTrue  _ -> return (Label "true", Location.wrap @@ Var.of_name "_")
+      | PNone  _ -> return (Label "None", Location.wrap @@ Var.of_name "_")
       | PSomeApp some ->
         let (some,_) = r_split some in
         let (_, pattern) = some in
         let (pattern,loc) = r_split pattern in
         let%bind pattern = compile_simple_pattern pattern.inside in
-        return (Constructor "Some", Location.wrap ?loc:(Some loc) pattern)
+        return (Label "Some", Location.wrap ?loc:(Some loc) pattern)
       | PConstrApp constr ->
         let (constr, _) = r_split constr in
         let (constr, patterns) = constr in
@@ -482,7 +482,7 @@ fun compiler cases ->
           | None -> Location.generated in
         let%bind pattern = bind_map_option compile_simple_tuple_pattern patterns in
         let pattern = Location.wrap ?loc:(Some pattern_loc) @@ Option.unopt ~default:(Var.of_name "_") pattern in
-        return (Constructor constr, pattern)
+        return (Label constr, pattern)
     )
     | _ -> fail @@ unsupported_pattern_type constr
   in

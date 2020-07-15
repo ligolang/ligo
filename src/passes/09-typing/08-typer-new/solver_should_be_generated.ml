@@ -7,92 +7,94 @@ let compare_simple_c_constant = function
   | C_arrow -> (function
       (* N/A -> 1 *)
       | C_arrow -> 0
-      | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
+      | C_option | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_option -> (function
       | C_arrow -> 1
       | C_option -> 0
-      | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
-  | C_record -> (function
-      | C_arrow | C_option  -> 1
-      | C_record -> 0
-      | C_variant | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
-  | C_variant -> (function
-      | C_arrow | C_option  | C_record -> 1
-      | C_variant -> 0
       | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_map -> (function
-      | C_arrow | C_option  | C_record | C_variant -> 1
+      | C_arrow | C_option  -> 1
       | C_map -> 0
       | C_big_map | C_list | C_set | C_unit  | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_big_map -> (function
-      | C_arrow | C_option  | C_record | C_variant | C_map -> 1
+      | C_arrow | C_option  | C_map -> 1
       | C_big_map -> 0
       | C_list | C_set | C_unit  | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_list -> (function
-      | C_arrow | C_option  | C_record | C_variant | C_map | C_big_map -> 1
+      | C_arrow | C_option  | C_map | C_big_map -> 1
       | C_list -> 0
       | C_set | C_unit  | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_set -> (function
-      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list -> 1
+      | C_arrow | C_option | C_map | C_big_map | C_list -> 1
       | C_set -> 0
       | C_unit  | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_unit -> (function
-      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set -> 1
+      | C_arrow | C_option | C_map | C_big_map | C_list | C_set -> 1
       | C_unit -> 0
        | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_string -> (function
-      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit  -> 1
+      | C_arrow | C_option | C_map | C_big_map | C_list | C_set | C_unit  -> 1
       | C_string -> 0
       | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_nat -> (function
-      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit  | C_string -> 1
+      | C_arrow | C_option | C_map | C_big_map | C_list | C_set | C_unit  | C_string -> 1
       | C_nat -> 0
       | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_mutez -> (function
-      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat -> 1
+      | C_arrow | C_option | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat -> 1
       | C_mutez -> 0
       | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_timestamp -> (function
-      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat | C_mutez -> 1
+      | C_arrow | C_option | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat | C_mutez -> 1
       | C_timestamp -> 0
       | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_int -> (function
-      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat | C_mutez | C_timestamp -> 1
+      | C_arrow | C_option | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat | C_mutez | C_timestamp -> 1
       | C_int -> 0
       | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_address -> (function
-      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat | C_mutez | C_timestamp | C_int -> 1
+      | C_arrow | C_option | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat | C_mutez | C_timestamp | C_int -> 1
       | C_address -> 0
       | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_bytes -> (function
-      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address -> 1
+      | C_arrow | C_option | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address -> 1
       | C_bytes -> 0
       | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_key_hash -> (function
-      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes -> 1
+      | C_arrow | C_option | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes -> 1
       | C_key_hash -> 0
       | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_key -> (function
-      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash -> 1
+      | C_arrow | C_option | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash -> 1
       | C_key -> 0
       | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_signature -> (function
-      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key -> 1
+      | C_arrow | C_option | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key -> 1
       | C_signature -> 0
       | C_operation | C_contract | C_chain_id -> -1)
   | C_operation -> (function
-      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature -> 1
+      | C_arrow | C_option | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature -> 1
       | C_operation -> 0
       | C_contract | C_chain_id -> -1)
   | C_contract -> (function
-      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation -> 1
+      | C_arrow | C_option | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation -> 1
       | C_contract -> 0
       | C_chain_id -> -1)
   | C_chain_id -> (function
-      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> 1
+      | C_arrow | C_option | C_map | C_big_map | C_list | C_set | C_unit  | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> 1
       | C_chain_id -> 0
       (* N/A -> -1 *)
     )
+
+let compare_simple_c_row = function
+  | C_record  -> (function 
+    (* N/A -> 1 *)
+    | C_record  -> 0
+    | C_variant -> -1)
+  | C_variant -> (function
+    | C_record  -> 1
+    | C_variant -> 0
+    (* N/A -> -1 *))
 
 let (<?) ca cb =
   if ca = 0 then cb () else ca
@@ -103,12 +105,21 @@ let rec compare_list f = function
         f hd1 hd2 <? fun () ->
           compare_list f tl1 tl2)
   | [] -> (function [] -> 0 | _::_ -> -1) (* This follows the behaviour of Pervasives.compare for lists of different length *)
+
 let compare_type_variable a b =
   Var.compare a b
 let compare_label (a:label) (b:label) = 
   let Label a = a in
   let Label b = b in
   String.compare a b
+let compare_lmap f ma mb =
+  let la = LMap.to_kv_list ma in
+  let lb = LMap.to_kv_list mb in
+  let f  = fun (xa,ya) (xb, yb) ->
+    compare_label xa xb <? fun () -> f ya yb 
+  in
+  compare_list f la lb
+
 let rec compare_typeclass a b = compare_list (compare_list compare_type_expression) a b
 and compare_type_expression { tsrc = _ ; t = ta } { tsrc = _ ; t = tb } =
   (* Note: this comparison ignores the tsrc, the idea is that types
@@ -123,21 +134,31 @@ and compare_type_expression_ = function
             compare_type_expression a3 b3
       | P_variable _ -> -1
       | P_constant _ -> -1
-      | P_apply _ -> -1)
+      | P_row      _ -> -1
+      | P_apply _    -> -1)
   | P_variable a -> (function
       | P_forall _ -> 1
       | P_variable b -> compare_type_variable a b
       | P_constant _ -> -1
+      | P_row      _ -> -1
       | P_apply _ -> -1)
   | P_constant { p_ctor_tag=a1; p_ctor_args=a2 } -> (function
       | P_forall _ -> 1
       | P_variable _ -> 1
       | P_constant { p_ctor_tag=b1; p_ctor_args=b2 } -> compare_simple_c_constant a1 b1 <? fun () -> compare_list compare_type_expression a2 b2
+      | P_row      _ -> -1
       | P_apply _ -> -1)
+  | P_row { p_row_tag=a1; p_row_args=a2 } -> (function
+      | P_forall   _ -> 1
+      | P_variable _ -> 1
+      | P_constant _ -> 1
+      | P_row { p_row_tag=b1; p_row_args=b2 } -> compare_simple_c_row a1 b1 <? fun () -> compare_lmap compare_type_expression a2 b2
+      | P_apply    _ -> -1)
   | P_apply { tf=a1; targ=a2 } -> (function
       | P_forall _ -> 1
       | P_variable _ -> 1
       | P_constant _ -> 1
+      | P_row      _ -> 1
       | P_apply { tf=b1; targ=b2 } -> compare_type_expression a1 b1 <? fun () -> compare_type_expression a2 b2)
 and compare_type_constraint = fun { c = ca ; reason = ra } { c = cb ; reason = rb } ->
   let c = compare_type_constraint_ ca cb in
@@ -187,8 +208,6 @@ let debug_pp_constant : _ -> constant_tag -> unit = fun ppf c_tag ->
     let ct = match c_tag with
       | T.C_arrow     -> "arrow"
       | T.C_option    -> "option"
-      | T.C_record    -> failwith "record"
-      | T.C_variant   -> failwith "variant"
       | T.C_map       -> "map"
       | T.C_big_map   -> "big_map"
       | T.C_list      -> "list"

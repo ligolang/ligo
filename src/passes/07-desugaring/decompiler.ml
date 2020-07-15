@@ -14,27 +14,25 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, des
   | None ->
     match te.content with
       | O.T_sum sum -> 
-        let sum = O.CMap.to_kv_list sum in
         let%bind sum = 
-          bind_map_list (fun (O.Constructor k,v) ->
-            let {ctor_type;michelson_annotation;ctor_decl_pos} : O.ctor_content = v in
-            let%bind ctor_type = decompile_type_expression ctor_type in
-            let v' : I.ctor_content = {ctor_type;michelson_annotation;ctor_decl_pos} in
-            ok @@ (I.Constructor k,v')
+          Stage_common.Helpers.bind_map_lmap (fun v ->
+            let {associated_type;michelson_annotation;decl_pos} : O.row_element = v in
+            let%bind associated_type = decompile_type_expression associated_type in
+            let v' : I.row_element = {associated_type;michelson_annotation;decl_pos} in
+            ok @@ v'
           ) sum
         in
-        return @@ I.T_sum (I.CMap.of_list sum)
+        return @@ I.T_sum sum
       | O.T_record record -> 
-        let record = O.LMap.to_kv_list record in
         let%bind record = 
-          bind_map_list (fun (O.Label k,v) ->
-            let {field_type;field_annotation;field_decl_pos} : O.field_content = v in
-            let%bind field_type = decompile_type_expression field_type in
-            let v' : I.field_content = {field_type ; michelson_annotation=field_annotation ; field_decl_pos} in
-            ok @@ (I.Label k,v')
+          Stage_common.Helpers.bind_map_lmap (fun v ->
+            let {associated_type;michelson_annotation;decl_pos} : O.row_element = v in
+            let%bind associated_type = decompile_type_expression associated_type in
+            let v' : I.row_element = {associated_type ; michelson_annotation=michelson_annotation ; decl_pos} in
+            ok @@ v'
           ) record
         in
-        return @@ I.T_record (I.LMap.of_list record)
+        return @@ I.T_record record
       | O.T_arrow {type1;type2} ->
         let%bind type1 = decompile_type_expression type1 in
         let%bind type2 = decompile_type_expression type2 in
@@ -84,9 +82,9 @@ let rec decompile_expression : O.expression -> (I.expression, desugaring_error) 
     | O.E_raw_code {language;code} ->
       let%bind code = decompile_expression code in
       return @@ I.E_raw_code {language;code} 
-    | O.E_constructor {constructor = O.Constructor c;element} ->
+    | O.E_constructor {constructor;element} ->
       let%bind element = decompile_expression element in
-      return @@ I.E_constructor {constructor = I.Constructor c;element}
+      return @@ I.E_constructor {constructor;element}
     | O.E_matching {matchee; cases} ->
       let%bind matchee = decompile_expression matchee in
       let%bind cases   = decompile_matching cases in
@@ -137,9 +135,9 @@ and decompile_matching : O.matching_expr -> (I.matching_expr, desugaring_error) 
       ok @@ I.Match_option {match_none; match_some=(opt,expr)}
     | O.Match_variant lst ->
       let%bind lst = bind_map_list (
-        fun ({ constructor = O.Constructor c ; proj ; body } : O.match_variant) ->
+        fun ({ constructor; proj ; body } : O.match_variant) ->
           let%bind expr = decompile_expression body in
-          ok @@ ((I.Constructor c, cast_var proj),expr)
+          ok @@ ((constructor, cast_var proj),expr)
       ) lst 
       in
       ok @@ I.Match_variant lst

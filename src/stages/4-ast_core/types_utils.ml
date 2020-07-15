@@ -35,15 +35,6 @@ let fold_map__list : type a state new_a err . (state -> a -> (state * new_a , er
   let%bind (state , l) = List.fold_left aux (ok (state , [])) l in
   ok (state , l)
 
-let fold_map__constructor_map : type a new_a state err. (state -> a -> (state * new_a, err) result) -> state -> a constructor_map -> (state * new_a constructor_map, err) result =
-  fun f state m ->
-  let aux k v acc =
-    let%bind (state , m) = acc in
-    let%bind (state , new_v) = f state v in
-    ok (state , CMap.add k new_v m) in
-  let%bind (state , m) = CMap.fold aux m (ok (state, CMap.empty)) in
-  ok (state , m)
-
 let fold_map__label_map : type a state new_a err . (state -> a -> (state * new_a , err) result) -> state -> a label_map -> (state * new_a label_map , err) result =
   fun f state m ->
   let aux k v acc =
@@ -70,6 +61,5 @@ let fold_map__option : type a state new_a err . (state -> a -> (state * new_a , 
    but the resulting code wouldn't be much clearer. *)
 let make__location_wrap f v = fold_map_to_make fold_map__location_wrap f v
 let make__list f v = fold_map_to_make fold_map__list f v
-let make__constructor_map f v = fold_map_to_make fold_map__constructor_map f v
 let make__label_map f v = fold_map_to_make fold_map__label_map f v
 let make__option f v = fold_map_to_make fold_map__option f v

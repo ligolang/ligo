@@ -99,10 +99,10 @@ and cases : environment -> matching_expr -> matching_expr = fun env cs ->
       let aux (c : matching_content_case) =
         let case =
           try (
-            CMap.find c.constructor variant_type
+            LMap.find c.constructor variant_type
           ) with _ -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
         in
-        let env' = Environment.add_ez_binder c.pattern case.ctor_type env in
+        let env' = Environment.add_ez_binder c.pattern case.associated_type env in
         let body = self ~env' c.body in
         { c with body }
       in
