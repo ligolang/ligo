@@ -46,15 +46,15 @@ let specialise_and_print_expression_cameligo expression =
   in ok source
 
 let specialise_and_print_reasonligo program =
-  let%bind cst = trace cit_cameligo_tracer @@
-    Tree_abstraction.Cameligo.decompile_program program in
+  let%bind cst = trace cit_reasonligo_tracer @@
+    Tree_abstraction.Reasonligo.decompile_program program in
   let%bind source = trace pretty_tracer @@
     Parser.Reasonligo.pretty_print cst
   in ok source
 
 let specialise_and_print_expression_reasonligo expression =
-  let%bind cst = trace cit_cameligo_tracer @@
-    Tree_abstraction.Cameligo.decompile_expression expression in
+  let%bind cst = trace cit_reasonligo_tracer @@
+    Tree_abstraction.Reasonligo.decompile_expression expression in
   let%bind source = trace pretty_tracer @@
     Parser.Reasonligo.pretty_print_expression cst
   in ok source

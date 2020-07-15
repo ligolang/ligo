@@ -1,7 +1,7 @@
-module CST         = Cst.Cameligo
+module CST         = Cst.Reasonligo
 module LexToken    = Lexer_reasonligo.LexToken
 module Lexer       = Lexer_shared.Lexer.Make (LexToken)
-module Scoping     = Parser_cameligo.Scoping
+module Scoping     = Parser_reasonligo.Scoping
 module Region      = Simple_utils.Region
 module ParErr      = Parser_reasonligo.ParErr
 module SyntaxError = Parser_reasonligo.SyntaxError
@@ -65,7 +65,7 @@ module ParserLog =
   struct
     type ast  = CST.t
     type expr = CST.expr
-    include Cst_cameligo.ParserLog
+    include Cst_reasonligo.ParserLog
   end
 
 module Unit =

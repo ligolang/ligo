@@ -1,0 +1,12 @@
+(library
+  (name cst_reasonligo)
+  (public_name ligo.cst.reasonligo)
+  (libraries
+    ;; Ligo
+    simple-utils
+    ;; Third party
+    hex
+    zarith)
+  (modules CST ParserLog)
+  (preprocess
+    (pps ppx_let bisect_ppx --conditional)))

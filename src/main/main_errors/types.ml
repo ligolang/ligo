@@ -27,6 +27,7 @@ type all =
  | `Main_sugaring   of Desugaring.Errors.desugaring_error
  | `Main_cit_pascaligo of Tree_abstraction.Pascaligo.Errors.abs_error
  | `Main_cit_cameligo of Tree_abstraction.Cameligo.Errors.abs_error
+ | `Main_cit_reasonligo of Tree_abstraction.Reasonligo.Errors.abs_error
  | `Main_typer of Typer.Errors.typer_error
  | `Main_interpreter of Interpreter.interpreter_error
  | `Main_self_ast_typed of Self_ast_typed.Errors.self_ast_typed_error

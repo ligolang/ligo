@@ -1,10 +1,12 @@
 (library
-  (name tree_abstraction)
-  (public_name ligo.tree_abstraction)
+  (name reasonligo)
+  (public_name ligo.reasonligo)
   (libraries
-    cameligo
-    pascaligo
-    reasonligo)
+    simple-utils
+    tezos-utils
+    cst
+    ast_imperative
+    predefined)
   (preprocess
     (pps
       ppx_let
