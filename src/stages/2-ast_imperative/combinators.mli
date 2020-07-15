@@ -23,10 +23,10 @@ val t_variable_ez : ?loc:Location.t -> string -> type_expression
 val t_pair   : ?loc:Location.t -> ( type_expression * type_expression ) -> type_expression
 val t_tuple  : ?loc:Location.t -> type_expression list -> type_expression
 
-val t_record    : ?loc:Location.t -> field_content label_map -> type_expression
+val t_record    : ?loc:Location.t -> row_element label_map -> type_expression
 val t_record_ez : ?loc:Location.t -> (string * type_expression) list -> type_expression
 
-val t_sum    : ?loc:Location.t -> ctor_content constructor_map -> type_expression
+val t_sum    : ?loc:Location.t -> row_element label_map -> type_expression
 val t_sum_ez : ?loc:Location.t -> ( string * type_expression ) list -> type_expression
 
 val t_function : ?loc:Location.t -> type_expression -> type_expression -> type_expression
@@ -96,7 +96,7 @@ val e_constructor : ?loc:Location.t -> string -> expression -> expression
 val e_matching : ?loc:Location.t -> expression -> matching_expr -> expression
 
 (* val ez_match_variant : ((string * string ) * expression) list -> matching_expr *)
-val e_matching_variant : ?loc:Location.t -> expression -> ((constructor' * expression_variable) * expression) list -> expression
+val e_matching_variant : ?loc:Location.t -> expression -> ((label * expression_variable) * expression) list -> expression
 val e_matching_record  : ?loc:Location.t -> expression -> (label * expression_variable) list -> type_expression list option -> expression -> expression
 val e_matching_tuple   : ?loc:Location.t -> expression -> expression_variable list -> type_expression list option -> expression -> expression
 val e_matching_variable: ?loc:Location.t -> expression -> expression_variable -> type_expression option -> expression -> expression

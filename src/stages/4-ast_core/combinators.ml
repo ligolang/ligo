@@ -39,9 +39,9 @@ let t_record ?loc ?sugar m  : type_expression =
 let t_pair  ?loc ?sugar (a , b) : type_expression = t_record_ez ?loc ?sugar [("0",a) ; ("1",b)]
 let t_tuple ?loc ?sugar lst     : type_expression = t_record_ez ?loc ?sugar (tuple_to_record lst)
 
-let ez_t_sum ?loc ?sugar (lst:(string * ctor_content) list) : type_expression =
-  let aux prev (k, v) = CMap.add (Constructor k) v prev in
-  let map = List.fold_left aux CMap.empty lst in
+let ez_t_sum ?loc ?sugar (lst:(string * row_element) list) : type_expression =
+  let aux prev (k, v) = LMap.add (Label k) v prev in
+  let map = List.fold_left aux LMap.empty lst in
   make_t ?loc ?sugar @@ T_sum map
 let t_sum ?loc ?sugar m : type_expression =
   let lst = Map.String.to_kv_list m in
@@ -98,7 +98,7 @@ let e_let_in      ?loc ?sugar (binder, ascr) inline rhs let_result = make_e ?loc
   E_let_in { let_binder = {binder ; ascr} ; rhs ; let_result; inline }
 let e_raw_code    ?loc ?sugar language code                        = make_e ?loc ?sugar @@ E_raw_code {language; code}
 
-let e_constructor ?loc ?sugar s a : expression = make_e ?loc ?sugar @@ E_constructor { constructor = Constructor s; element = a}
+let e_constructor ?loc ?sugar s a : expression = make_e ?loc ?sugar @@ E_constructor { constructor = Label s; element = a}
 let e_matching    ?loc ?sugar a b : expression = make_e ?loc ?sugar @@ E_matching {matchee=a;cases=b}
 
 let e_record          ?loc ?sugar map = make_e ?loc ?sugar @@ E_record map

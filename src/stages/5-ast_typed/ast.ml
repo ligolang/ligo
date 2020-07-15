@@ -10,12 +10,11 @@ include Stage_common.Enums (*@ follow ../common/enums.ml *)
 (*@ typeclass poly_unionfind comparable *)
 (*@ typeclass poly_set       comparable *)
 
-type te_cmap = ctor_content constructor_map
-and te_lmap = field_content label_map
+type te_lmap = row_element label_map
 and type_meta = ast_core_type_expression option
 
 and type_content =
-  | T_sum of te_cmap
+  | T_sum of te_lmap
   | T_record of te_lmap
   | T_arrow of arrow
   | T_variable of type_variable
@@ -35,16 +34,10 @@ and type_operator = {
 
 and annot_option = string option
 
-and ctor_content = {
-    ctor_type : type_expression;
+and row_element = {
+    associated_type : type_expression;
     michelson_annotation : annot_option;
-    ctor_decl_pos : int;
-}
-
-and field_content = {
-    field_type : type_expression;
-    michelson_annotation : annot_option;
-    field_decl_pos : int;
+    decl_pos : int;
 }
 
 and type_map_args = {
@@ -90,7 +83,7 @@ and expression_variable_list = expression_variable list
 and type_expression_list = type_expression list
 
 and matching_content_case = {
-    constructor : constructor' ;
+    constructor : label ;
     pattern : expression_variable ;
     body : expression ;
   }
@@ -205,7 +198,7 @@ and recursive = {
 }
 
 and constructor = {
-    constructor: constructor';
+    constructor: label;
     element: expression ;
   }
 
@@ -286,8 +279,6 @@ type unionfind = type_variable poly_unionfind
 type constant_tag =
   | C_arrow     (* * -> * -> *    isn't this wrong? *)
   | C_option    (* * -> * *)
-  | C_record    (* ( label , * ) … -> * *)
-  | C_variant   (* ( label , * ) … -> * *)
   | C_map       (* * -> * -> * *)
   | C_big_map   (* * -> * -> * *)
   | C_list      (* * -> * *)
@@ -307,12 +298,18 @@ type constant_tag =
   | C_contract  (* * -> * *)
   | C_chain_id  (* * *)
 
+type row_tag =
+  | C_record    (* ( label , * ) … -> * *)
+  | C_variant   (* ( label , * ) … -> * *)
+
 (* TODO: rename to type_expression or something similar (it includes variables, and unevaluated functions + applications *)
 type type_value_ =
   | P_forall       of p_forall
   | P_variable     of type_variable
   | P_constant     of p_constant
   | P_apply        of p_apply
+  | P_row          of p_row
+
 and type_value = {
   tsrc : string;
   t : type_value_ ;
@@ -327,6 +324,13 @@ and p_constant = {
     p_ctor_tag : constant_tag ;
     p_ctor_args : p_ctor_args ;
   }
+
+and tv_lmap = type_value label_map
+and p_row = {
+    p_row_tag  : row_tag ;
+    p_row_args : tv_lmap ;
+}
+ 
 and p_constraints = type_constraint list
 and p_forall = {
   binder      : type_variable ;
@@ -397,18 +401,27 @@ and structured_dbs = {
 and c_constructor_simpl_list = c_constructor_simpl list
 and c_poly_simpl_list        = c_poly_simpl        list
 and c_typeclass_simpl_list   = c_typeclass_simpl   list
+and c_row_simpl_list         = c_row_simpl         list
 and constraints = {
   (* If implemented in a language with decent sets, these should be sets not lists. *)
   constructor : c_constructor_simpl_list ; (* List of ('a = constructor(args…)) constraints *)
   poly        : c_poly_simpl_list        ; (* List of ('a = forall 'b, some_type) constraints *)
   tc          : c_typeclass_simpl_list   ; (* List of (typeclass(args…)) constraints *)
+  row         : c_row_simpl_list         ; (* List of ('a = row (args..)) constraints *)
 }
 and type_variable_list = type_variable list
+and type_variable_lmap = type_variable label_map
 and c_constructor_simpl = {
   reason_constr_simpl : string ;
   tv : type_variable;
   c_tag : constant_tag;
   tv_list : type_variable_list;
+}
+and c_row_simpl = {
+  reason_row_simpl : string ;
+  tv : type_variable;
+  r_tag : row_tag;
+  tv_map : type_variable_lmap;
 }
 and c_const_e = {
     c_const_e_tv : type_variable ;
@@ -433,6 +446,7 @@ and type_constraint_simpl =
   | SC_Alias       of c_alias                         (* α = β *)
   | SC_Poly        of c_poly_simpl                    (* α = forall β, δ where δ can be a more complex type *)
   | SC_Typeclass   of c_typeclass_simpl               (* TC(α, …) *)
+  | SC_Row         of c_row_simpl                     (* α = row(l -> β, …) *)
 
 and c_alias = {
     reason_alias_simpl : string ;

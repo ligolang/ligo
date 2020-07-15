@@ -22,14 +22,14 @@ val t_variable  : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> string 
 (*
 val t_record    : te_map -> type_expression
 *)
-val t_pair   : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> ( field_content * field_content ) -> type_expression
-val t_tuple  : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> field_content list -> type_expression
+val t_pair   : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> ( row_element * row_element ) -> type_expression
+val t_tuple  : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> row_element list -> type_expression
 
-val t_record    : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> field_content Map.String.t -> type_expression
-val t_record_ez : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> (string * field_content) list -> type_expression
+val t_record    : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> row_element Map.String.t -> type_expression
+val t_record_ez : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> (string * row_element) list -> type_expression
 
-val t_sum    : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> Types.ctor_content Map.String.t -> type_expression
-val ez_t_sum : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> ( string * Types.ctor_content ) list -> type_expression
+val t_sum    : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> Types.row_element Map.String.t -> type_expression
+val ez_t_sum : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> ( string * Types.row_element ) list -> type_expression
 
 val t_function : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> type_expression -> type_expression -> type_expression
 

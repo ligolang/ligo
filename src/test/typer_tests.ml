@@ -56,9 +56,9 @@ module TestExpressions = struct
       O.(make_t_ez_record [("0",t_int ()); ("1",t_string ())])
 
   let constructor () : (unit, _) result =
-    let variant_foo_bar : (constructor' * Typed.ctor_content) list = [
-        (Constructor "foo", {ctor_type = Typed.t_int () ; michelson_annotation = None ; ctor_decl_pos = 0});
-        (Constructor "bar", {ctor_type = Typed.t_string () ; michelson_annotation = None ; ctor_decl_pos = 1}) ]
+    let variant_foo_bar : (label * Typed.row_element) list = [
+        (Label "foo", {associated_type = Typed.t_int ()    ; michelson_annotation = None ; decl_pos = 0});
+        (Label "bar", {associated_type = Typed.t_string () ; michelson_annotation = None ; decl_pos = 1}) ]
     in test_expression
       ~env:(E.add_ez_sum_type variant_foo_bar)
       I.(e_constructor "foo" (e_int (Z.of_int 32)))

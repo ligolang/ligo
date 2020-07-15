@@ -91,15 +91,6 @@ let bind_lmap (l:_ label_map) =
     ok @@ add k v' prev' in
   fold aux l (ok empty)
 
-let bind_cmap (c:_ constructor_map) =
-  let open Trace in
-  let open CMap in
-  let aux k v prev =
-    prev >>? fun prev' ->
-    v >>? fun v' ->
-    ok @@ add k v' prev' in
-  fold aux c (ok empty)
-
 let bind_fold_lmap f init (lmap:_ LMap.t) =
   let open Trace in
   let aux k v prev =
@@ -111,12 +102,10 @@ let bind_fold_lmap f init (lmap:_ LMap.t) =
 let bind_map_lmap f map = bind_lmap (LMap.map f map)
 let bind_map_lmap_t f map = bind_lmap (
   LMap.map 
-    (fun ({field_type;_}) -> 
-      f field_type)
+    (fun ({associated_type;_}) -> 
+      f associated_type)
     map)
-let bind_map_cmap f map = bind_cmap (CMap.map f map)
 let bind_map_lmapi f map = bind_lmap (LMap.mapi f map)
-let bind_map_cmapi f map = bind_cmap (CMap.mapi f map)
 
 let range i j =
   let rec aux i j acc = if i >= j then acc else aux i (j-1) (j-1 :: acc) in
@@ -130,7 +119,7 @@ let is_tuple_lmap m =
 
 let get_pair m =
   match (LMap.find_opt (Label "0") m , LMap.find_opt (Label "1") m) with
-  | Some {field_type=e1;_}, Some {field_type=e2;_} -> Some (e1,e2)
+  | Some {associated_type=e1;_}, Some {associated_type=e2;_} -> Some (e1,e2)
   | _ -> None
 
 let tuple_of_record (m: _ LMap.t) =
@@ -160,10 +149,10 @@ let remove_empty_annotation (ann : string option) : string option =
   | Some ann -> Some (String.uncapitalize_ascii ann)
   | None -> None
 
-let is_michelson_or (t: _ constructor_map) =
-  CMap.cardinal t = 2 && 
-  (CMap.mem (Constructor "M_left") t) &&
-  (CMap.mem (Constructor "M_right") t)
+let is_michelson_or (t: _ label_map) =
+  LMap.cardinal t = 2 && 
+  (LMap.mem (Label "M_left") t) &&
+  (LMap.mem (Label "M_right") t)
 
 let is_michelson_pair (t: _ label_map) =
   LMap.cardinal t = 2 && 

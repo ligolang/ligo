@@ -41,8 +41,6 @@ let type_expression'_of_simple_c_constant : constant_tag * type_expression list 
   | C_map       , [k ; v] -> Some (Ast_typed.T_operator{operator=TC_map; args=[k;v]})
   | C_big_map   , [k ; v] -> Some (Ast_typed.T_operator{operator=TC_big_map; args=[k;v]})
   | C_arrow     , [x ; y] -> Some (Ast_typed.T_arrow {type1=x ; type2=y}) (* For now, the arrow type constructor is special *)
-  | C_record    , _lst    -> None
-  | C_variant   , _lst    -> None
   | (C_contract | C_option | C_list | C_set | C_map | C_big_map | C_arrow ), _ -> None
 
   | C_unit      , [] -> Some (Ast_typed.T_constant(TC_unit))

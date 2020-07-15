@@ -7,9 +7,9 @@ let peephole_type_expression : type_expression -> (type_expression , self_ast_im
   let return type_content = ok {type_content; location=e.location } in
   match e.type_content with
   | T_sum cmap ->
-    let%bind _uu = bind_map_cmapi
+    let%bind _uu = bind_map_lmapi
       (fun k _ ->
-        let (Constructor name) = k in
+        let (Label name) = k in
         if (String.length name  >= 32) then fail @@ too_long_constructor name e
         else ok ()
       )

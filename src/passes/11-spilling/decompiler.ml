@@ -186,7 +186,7 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
       fail @@ corner_case ~loc:"unspiller" "Wrong number of args or wrong kinds for the type operator"
   )
   | T_sum m ->
-      let lst = List.map (fun (k,{ctor_type;_}) -> (k,ctor_type)) @@ kv_list_of_cmap m in
+      let lst = List.map (fun (k,{associated_type;_}) -> (k,associated_type)) @@ kv_list_of_lmap m in
       let%bind node = match Append_tree.of_list lst with
         | Empty -> fail @@ corner_case ~loc:__LOC__ "empty sum type"
         | Full t -> ok t
@@ -195,9 +195,9 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
         trace_strong (corner_case ~loc:__LOC__ "sum extract constructor") @@
         extract_constructor v node in
       let%bind sub = decompile v tv in
-      return (E_constructor {constructor=Constructor name;element=sub})
+      return (E_constructor {constructor=Label name;element=sub})
   | T_record m ->
-      let lst = List.map (fun (k,{field_type;_}) -> (k,field_type)) @@ Ast_typed.Helpers.kv_list_of_record_or_tuple m in
+      let lst = List.map (fun (k,{associated_type;_}) -> (k,associated_type)) @@ Ast_typed.Helpers.kv_list_of_record_or_tuple m in
       let%bind node = match Append_tree.of_list lst with
         | Empty -> fail @@ corner_case ~loc:__LOC__ "empty record"
         | Full t -> ok t in
