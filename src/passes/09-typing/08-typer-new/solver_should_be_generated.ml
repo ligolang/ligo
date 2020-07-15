@@ -98,14 +98,6 @@ let compare_simple_c_row = function
 
 let (<?) ca cb =
   if ca = 0 then cb () else ca
-let rec compare_list f = function
-  | hd1::tl1 -> (function
-        [] -> 1
-      | hd2::tl2 ->
-        f hd1 hd2 <? fun () ->
-          compare_list f tl1 tl2)
-  | [] -> (function [] -> 0 | _::_ -> -1) (* This follows the behaviour of Pervasives.compare for lists of different length *)
-
 let compare_type_variable a b =
   Var.compare a b
 let compare_label (a:label) (b:label) = 
@@ -118,10 +110,10 @@ let compare_lmap f ma mb =
   let f  = fun (xa,ya) (xb, yb) ->
     compare_label xa xb <? fun () -> f ya yb 
   in
-  compare_list f la lb
+  List.compare ~compare:f la lb
 
-let rec compare_typeclass a b = compare_list (compare_list compare_type_expression) a b
-and compare_type_expression { tsrc = _ ; t = ta } { tsrc = _ ; t = tb } =
+let rec compare_typeclass a b = List.compare ~compare:(List.compare ~compare:compare_type_value) a b
+and compare_type_value { tsrc = _ ; t = ta } { tsrc = _ ; t = tb } =
   (* Note: this comparison ignores the tsrc, the idea is that types
      will often be compared to see if they are the same, regardless of
      where the type comes from .*)
@@ -130,8 +122,8 @@ and compare_type_expression_ = function
   | P_forall { binder=a1; constraints=a2; body=a3 } -> (function
       | P_forall { binder=b1; constraints=b2; body=b3 } ->
         compare_type_variable a1 b1 <? fun () ->
-          compare_list compare_type_constraint a2 b2  <? fun () ->
-            compare_type_expression a3 b3
+          List.compare ~compare:compare_type_constraint a2 b2  <? fun () ->
+            compare_type_value a3 b3
       | P_variable _ -> -1
       | P_constant _ -> -1
       | P_row      _ -> -1
@@ -145,21 +137,21 @@ and compare_type_expression_ = function
   | P_constant { p_ctor_tag=a1; p_ctor_args=a2 } -> (function
       | P_forall _ -> 1
       | P_variable _ -> 1
-      | P_constant { p_ctor_tag=b1; p_ctor_args=b2 } -> compare_simple_c_constant a1 b1 <? fun () -> compare_list compare_type_expression a2 b2
+      | P_constant { p_ctor_tag=b1; p_ctor_args=b2 } -> compare_simple_c_constant a1 b1 <? fun () -> List.compare ~compare:compare_type_value a2 b2
       | P_row      _ -> -1
       | P_apply _ -> -1)
   | P_row { p_row_tag=a1; p_row_args=a2 } -> (function
       | P_forall   _ -> 1
       | P_variable _ -> 1
       | P_constant _ -> 1
-      | P_row { p_row_tag=b1; p_row_args=b2 } -> compare_simple_c_row a1 b1 <? fun () -> compare_lmap compare_type_expression a2 b2
+      | P_row { p_row_tag=b1; p_row_args=b2 } -> compare_simple_c_row a1 b1 <? fun () -> compare_lmap compare_type_value a2 b2
       | P_apply    _ -> -1)
   | P_apply { tf=a1; targ=a2 } -> (function
       | P_forall _ -> 1
       | P_variable _ -> 1
       | P_constant _ -> 1
       | P_row      _ -> 1
-      | P_apply { tf=b1; targ=b2 } -> compare_type_expression a1 b1 <? fun () -> compare_type_expression a2 b2)
+      | P_apply { tf=b1; targ=b2 } -> compare_type_value a1 b1 <? fun () -> compare_type_value a2 b2)
 and compare_type_constraint = fun { c = ca ; reason = ra } { c = cb ; reason = rb } ->
   let c = compare_type_constraint_ ca cb in
   if c < 0 then -1
@@ -167,31 +159,31 @@ and compare_type_constraint = fun { c = ca ; reason = ra } { c = cb ; reason = r
   else 1
 and compare_type_constraint_ = function
   | C_equation { aval=a1; bval=a2 } -> (function
-      | C_equation { aval=b1; bval=b2 } -> compare_type_expression a1 b1 <? fun () -> compare_type_expression a2 b2
+      | C_equation { aval=b1; bval=b2 } -> compare_type_value a1 b1 <? fun () -> compare_type_value a2 b2
       | C_typeclass _ -> -1
       | C_access_label _ -> -1)
   | C_typeclass { tc_args=a1; typeclass=a2 } -> (function
       | C_equation _ -> 1
-      | C_typeclass { tc_args=b1; typeclass=b2 } -> compare_list compare_type_expression a1 b1 <? fun () -> compare_typeclass a2 b2
+      | C_typeclass { tc_args=b1; typeclass=b2 } -> List.compare ~compare:compare_type_value a1 b1 <? fun () -> compare_typeclass a2 b2
       | C_access_label _ -> -1)
   | C_access_label { c_access_label_tval=a1; accessor=a2; c_access_label_tvar=a3 } -> (function
       | C_equation _ -> 1
       | C_typeclass _ -> 1
-      | C_access_label { c_access_label_tval=b1; accessor=b2; c_access_label_tvar=b3 } -> compare_type_expression a1 b1 <? fun () -> compare_label a2 b2  <? fun () -> compare_type_variable a3 b3)
-let compare_type_constraint_list = compare_list compare_type_constraint
+      | C_access_label { c_access_label_tval=b1; accessor=b2; c_access_label_tvar=b3 } -> compare_type_value a1 b1 <? fun () -> compare_label a2 b2  <? fun () -> compare_type_variable a3 b3)
+let compare_type_constraint_list = List.compare ~compare:compare_type_constraint
 let compare_p_forall
     { binder = a1; constraints = a2; body = a3 }
     { binder = b1; constraints = b2; body = b3 } =
   compare_type_variable a1 b1 <? fun () ->
     compare_type_constraint_list a2 b2 <? fun () ->
-      compare_type_expression a3 b3
+      compare_type_value a3 b3
 let compare_c_poly_simpl { tv = a1; forall = a2 } { tv = b1; forall = b2 } =
   compare_type_variable a1 b1 <? fun () ->
     compare_p_forall a2 b2
 let compare_c_constructor_simpl { reason_constr_simpl = _ ; tv=a1; c_tag=a2; tv_list=a3 } { reason_constr_simpl = _ ; tv=b1; c_tag=b2; tv_list=b3 } =
   (* We do not compare the reasons, as they are only for debugging and
      not part of the type *)
-  compare_type_variable a1 b1 <? fun () -> compare_simple_c_constant a2 b2  <? fun () -> compare_list compare_type_variable a3 b3
+  compare_type_variable a1 b1 <? fun () -> compare_simple_c_constant a2 b2  <? fun () -> List.compare ~compare:compare_type_variable a3 b3
 
 (* TODO: use Ast_typed.Compare_generic.output_specialize1 etc. but don't compare the reasons *)
 let compare_output_specialize1 { poly = a1; a_k_var = a2 } { poly = b1; a_k_var = b2 } =
@@ -200,6 +192,14 @@ let compare_output_specialize1 { poly = a1; a_k_var = a2 } { poly = b1; a_k_var 
 
 let compare_output_break_ctor { a_k_var=a1; a_k'_var'=a2 } { a_k_var=b1; a_k'_var'=b2 } =
   compare_c_constructor_simpl a1 b1 <? fun () -> compare_c_constructor_simpl a2 b2
+
+let compare_c_typeclass_simpl_args =
+  List.compare ~compare:Var.compare
+
+let compare_c_typeclass_simpl
+    { reason_typeclass_simpl = _ ; tc = a1 ; args = a2 }
+    { reason_typeclass_simpl = _ ; tc = b1 ; args = b2 } =
+  compare_typeclass a1 b1 <? fun () -> compare_c_typeclass_simpl_args a2 b2
 
 (* Using a pretty-printer from the PP.ml module creates a dependency
    loop, so the one that we need temporarily for debugging purposes
