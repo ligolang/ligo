@@ -5,7 +5,7 @@
 module Region     = Simple_utils.Region
 module EvalOpt    = Lexer_shared.EvalOpt
 module LexToken   = Lexer_reasonligo.LexToken
-module CST        = Cst.Cameligo
+module CST        = Cst.Reasonligo
 module SSet       = Set.Make (String)
 module ParserUnit = Parser_shared.ParserUnit
 module Pretty     = Parser_reasonligo.Pretty
@@ -73,7 +73,7 @@ module ParserLog =
   struct
     type ast  = CST.t
     type expr = CST.expr
-    include Cst_cameligo.ParserLog
+    include Cst_reasonligo.ParserLog
   end
 
 module Lexer = Lexer_shared.Lexer.Make (LexToken)

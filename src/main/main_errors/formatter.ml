@@ -107,6 +107,7 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_sugaring _e -> () (*no error in this pass*)
     | `Main_cit_pascaligo e -> Tree_abstraction.Pascaligo.Errors.error_ppformat ~display_format f e
     | `Main_cit_cameligo e -> Tree_abstraction.Cameligo.Errors.error_ppformat ~display_format f e
+    | `Main_cit_reasonligo e -> Tree_abstraction.Reasonligo.Errors.error_ppformat ~display_format f e
     | `Main_typer e -> Typer.Errors.error_ppformat ~display_format f e
     | `Main_interpreter _ -> () (*no error*)
     | `Main_self_ast_typed e -> Self_ast_typed.Errors.error_ppformat ~display_format f e
@@ -245,6 +246,7 @@ let rec error_jsonformat : Types.all -> Yojson.t = fun a ->
   | `Main_sugaring _ -> `Null (*no error in this pass*)
   | `Main_cit_pascaligo e -> Tree_abstraction.Pascaligo.Errors.error_jsonformat e
   | `Main_cit_cameligo e -> Tree_abstraction.Cameligo.Errors.error_jsonformat e
+  | `Main_cit_reasonligo e -> Tree_abstraction.Reasonligo.Errors.error_jsonformat e
   | `Main_typer e -> Typer.Errors.error_jsonformat e
   | `Main_interpreter _ -> `Null (*no error*)
   | `Main_self_ast_typed e -> Self_ast_typed.Errors.error_jsonformat e

@@ -1,6 +1,6 @@
 open Simple_utils.Display
 
-module CST = Cst.Cameligo
+module CST = Cst.Reasonligo
 
 type parser_error = [
   | `Parser_generic of string Region.reg

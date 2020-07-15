@@ -5,7 +5,7 @@
 
 module Region = Simple_utils.Region
 open Region
-module CST = Cst.Cameligo
+module CST = Cst.Reasonligo
 open! CST
 
 let (<@) f g x = f (g x)
@@ -41,8 +41,8 @@ let wild_error e =
 (* Entry points *)
 
 %start contract interactive_expr
-%type <Cst.Cameligo.t> contract
-%type <Cst.Cameligo.expr> interactive_expr
+%type <Cst.Reasonligo.t> contract
+%type <Cst.Reasonligo.expr> interactive_expr
 
 (* Solves a shift/reduce problem that happens with records and
    sequences. To elaborate: [sequence_or_record_in]

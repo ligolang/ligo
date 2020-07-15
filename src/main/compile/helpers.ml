@@ -49,15 +49,15 @@ let parse_and_abstract_expression_cameligo source =
 let parse_and_abstract_reasonligo source =
   let%bind raw = trace parser_tracer @@
     Parser.Reasonligo.parse_file source in
-  let%bind imperative = trace cit_cameligo_tracer @@
-    Tree_abstraction.Cameligo.compile_program raw
+  let%bind imperative = trace cit_reasonligo_tracer @@
+    Tree_abstraction.Reasonligo.compile_program raw
   in ok imperative
 
 let parse_and_abstract_expression_reasonligo source =
   let%bind raw = trace parser_tracer @@
     Parser.Reasonligo.parse_expression source in
-  let%bind imperative = trace cit_cameligo_tracer @@
-    Tree_abstraction.Cameligo.compile_expression raw
+  let%bind imperative = trace cit_reasonligo_tracer @@
+    Tree_abstraction.Reasonligo.compile_expression raw
   in ok imperative
 
 let parse_and_abstract syntax source : (Ast_imperative.program, _) Trace.result =
@@ -84,8 +84,8 @@ let parse_and_abstract_expression syntax source =
 let parse_and_abstract_string_reasonligo source =
   let%bind raw = trace parser_tracer @@
     Parser.Reasonligo.parse_string source in
-  let%bind imperative = trace cit_cameligo_tracer @@
-    Tree_abstraction.Cameligo.compile_program raw
+  let%bind imperative = trace cit_reasonligo_tracer @@
+    Tree_abstraction.Reasonligo.compile_program raw
   in ok imperative
 
 let parse_and_abstract_string_pascaligo source =
@@ -139,11 +139,11 @@ let pretty_print_reasonligo_cst source =
   let%bind ast = trace parser_tracer @@ Parser.Reasonligo.parse_file source in
   let buffer = Buffer.create 59 in
   let state = (* TODO: Should flow from the CLI *)
-    Cst_cameligo.ParserLog.mk_state
+    Cst_reasonligo.ParserLog.mk_state
       ~offsets:true
       ~mode:`Point
       ~buffer in
-  Cst_cameligo.ParserLog.pp_cst state ast;
+  Cst_reasonligo.ParserLog.pp_cst state ast;
   ok buffer
 
 let pretty_print_cst syntax source =
