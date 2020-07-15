@@ -3,7 +3,8 @@ module O = Ast_core
 open Trace
 
 open Errors
-open Cast
+
+let cast_var = Location.map Var.todo_cast
 
 let rec compile_type_expression : I.type_expression -> (O.type_expression , desugaring_error) result =
   fun te ->
@@ -43,19 +44,19 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression , desu
       let%bind type2 = compile_type_expression type2 in
       return @@ T_arrow {type1;type2}
     | I.T_variable type_variable -> return @@ T_variable (Var.todo_cast type_variable)
-    | I.T_constant type_constant -> return @@ T_constant (cast_type_constant type_constant)
+    | I.T_constant type_constant -> return @@ T_constant type_constant
     | I.T_operator (type_operator, arguments) ->
       let%bind arguments = bind_map_list compile_type_expression arguments in
-      let type_operator = cast_type_operator type_operator in
+      let type_operator = type_operator in
       return @@ T_operator {type_operator ; arguments}
 
 let rec compile_expression : I.expression -> (O.expression , desugaring_error) result =
   fun sugar ->
   let return expr = ok @@ O.make_e ~loc:sugar.location ~sugar expr in
   match sugar.expression_content with
-    | I.E_literal literal -> return @@ O.E_literal (cast_literal literal)
+    | I.E_literal literal -> return @@ O.E_literal literal
     | I.E_constant {cons_name;arguments} -> 
-      let cons_name = cast_constant cons_name in
+      let cons_name = cons_name in
       let%bind arguments = bind_map_list compile_expression arguments in
       return @@ O.E_constant {cons_name;arguments}
     | I.E_variable name -> return @@ O.E_variable (cast_var name)
@@ -82,7 +83,7 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
       let%bind code = compile_expression code in
       return @@ O.E_raw_code {language;code} 
     | I.E_constructor {constructor;element} ->
-      let constructor = cast_constructor constructor in
+      let constructor = constructor in
       let%bind element = compile_expression element in
       return @@ O.E_constructor {constructor;element}
     | I.E_matching {matchee; cases} ->
@@ -279,7 +280,7 @@ let compile_declaration : I.declaration Location.wrap -> _ =
     let binder = cast_var binder in
     let%bind expr = compile_expression expr in
     let%bind type_opt = bind_map_option compile_type_expression te_opt in
-    return @@ O.Declaration_constant {binder; type_opt; inline={inline}; expr}
+    return @@ O.Declaration_constant {binder; type_opt; attr={inline}; expr}
   | I.Declaration_type (type_binder, type_expr) ->
     let type_binder = Var.todo_cast type_binder in
     let%bind type_expr = compile_type_expression type_expr in

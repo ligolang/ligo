@@ -4,10 +4,6 @@ module Location = Simple_utils.Location
 
 include Stage_common.Types
 
-module Ast_sugar_parameter = struct
-  type type_meta = unit
-end
-
 type type_content =
   | T_sum of ctor_content constructor_map
   | T_record of field_content label_map
@@ -15,7 +11,7 @@ type type_content =
   | T_arrow of arrow
   | T_variable of type_variable
   | T_constant of type_constant
-  | T_operator of (type_operator * type_expression list)
+  | T_operator of (type_operator' * type_expression list)
 
 and arrow = {type1: type_expression; type2: type_expression}
 

@@ -37,7 +37,7 @@ let%expect_test _ =
           in file "error_function_annotation_3.mligo", line 6, characters 0-3
           Constant declaration 'main'
           Bad types:
-          expected ( int * sum[Add -> int , Sub -> int] ) -> ( (type_operator: list(operation)) * sum[Add -> int , Sub -> int] )
+          expected ( int * sum[Add -> int , Sub -> int] ) -> ( list (operation) * sum[Add -> int , Sub -> int] )
           got ( int * sum[Add -> int , Sub -> int] ) -> sum[Add -> int , Sub -> int]
 
 
@@ -99,9 +99,7 @@ let%expect_test _ =
     ligo: error
           in file "error_typer_2.mligo", line 3, characters 24-39
           Constant declaration 'foo'
-          Bad types:
-          expected (type_operator: list(string))
-          got (type_operator: option(int))
+          Bad types: expected list (string) got option (int)
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -165,8 +163,10 @@ let%expect_test _ =
           in file "error_typer_6.mligo", line 1, characters 30-64
           Constant declaration 'foo'
           Bad types:
-          expected (type_operator: Map (int,string))
-          got (type_operator: Map (int,sum[false -> unit , true -> unit]))
+          expected Map (int ,
+          string)
+          got Map (int ,
+          sum[false -> unit , true -> unit])
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -239,7 +239,7 @@ let%expect_test _ =
           Constant declaration 'bad'
           Expected arguments with one of the following combinations of type:
           (string) or (nat) or (int)
-          but got (type_operator: list(int))
+          but got list (int)
 
 
           If you're not sure how to fix this error, you can do one of the following:

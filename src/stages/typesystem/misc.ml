@@ -74,9 +74,9 @@ module Substitution = struct
              | Some expr -> s_type_content ~substs expr (* TODO: is it the right thing to recursively examine this? We mustn't go into an infinite loop. *)
              | None -> ok @@ T.T_variable variable
            end
-        | T.T_operator type_name_and_args ->
-          let%bind type_name_and_args = T.Helpers.bind_map_type_operator (s_type_expression ~substs) type_name_and_args in
-          ok @@ T.T_operator type_name_and_args
+        | T.T_operator {operator;args} ->
+          let%bind args = bind_map_list (s_type_expression ~substs) args in
+          ok @@ T.T_operator {operator;args}
         | T.T_arrow { type1; type2 } ->
            let%bind type1 = s_type_expression ~substs type1 in
            let%bind type2 = s_type_expression ~substs type2 in

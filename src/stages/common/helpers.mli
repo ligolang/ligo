@@ -8,13 +8,16 @@ val bind_cmap :
   ('a, 'c) result constructor_map -> ('a constructor_map , 'c) result
 
 val bind_fold_lmap :
-  ('a -> label -> 'b -> ('a , 'd) result) -> ('a , 'd) result ->
+  ('a -> label -> 'b -> ('a , 'd) result) -> 'a ->
   'b label_map -> ('a , 'd) result
 
 val bind_map_lmap :
   ('a -> ('b , 'd) result) ->
   'a label_map -> ('b label_map , 'd) result
 
+val bind_fold_map_lmap : 
+  ('a -> label -> 'b -> ('a * 'c, 'd) result) -> 'a ->
+  'b label_map -> ('a * 'c label_map, 'd) result
 (* val bind_map_cmap :
   ('a -> ('b * 'c list, 'd) result) ->
   'a Types.constructor_map ->

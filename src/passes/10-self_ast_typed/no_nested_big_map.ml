@@ -6,25 +6,14 @@ type contract_pass_data = Contract_passes.contract_pass_data
 
 let rec check_no_nested_bigmap is_in_bigmap e = 
   match e.type_content with
-  | T_operator (TC_big_map _) when is_in_bigmap  -> 
+  | T_operator {operator=TC_big_map; _} when is_in_bigmap  -> 
     fail @@ nested_bigmap e.location
-  | T_operator (TC_big_map {k ; v}) ->
+  | T_operator {operator=TC_big_map|TC_map_or_big_map; args=[k ; v]} ->
     let%bind _ = check_no_nested_bigmap false k in
     let%bind _ = check_no_nested_bigmap true  v in
     ok ()
-  | T_operator (TC_map_or_big_map {k ; v}) ->
-    let%bind _ = check_no_nested_bigmap false k in
-    let%bind _ = check_no_nested_bigmap true  v in
-    ok ()
-  | T_operator (TC_contract t)
-  | T_operator (TC_option t)
-  | T_operator (TC_list t)
-  | T_operator (TC_set t) ->
-    let%bind _ = check_no_nested_bigmap is_in_bigmap t in
-    ok ()
-  | T_operator (TC_map { k ; v }) ->
-    let%bind _ = check_no_nested_bigmap is_in_bigmap k in
-    let%bind _ = check_no_nested_bigmap is_in_bigmap v in
+  | T_operator {args;_} ->
+    let%bind _ = bind_map_list (check_no_nested_bigmap is_in_bigmap) args in
     ok ()
   | T_sum s -> 
     let es = List.map (fun {ctor_type;_} -> ctor_type) (CMap.to_list s) in

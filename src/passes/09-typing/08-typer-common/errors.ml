@@ -6,13 +6,13 @@ let stage = "typer"
 type typer_error = [
   | `Typer_michelson_comb_no_record of Location.t
   | `Typer_michelson_comb_no_variant of Location.t
-  | `Typer_unbound_type_variable of Ast_typed.Environment.t * Ast_core.type_variable * Location.t
-  | `Typer_unbound_variable of Ast_typed.Environment.t * Ast_core.expression_variable * Location.t
-  | `Typer_match_empty_variant of Ast_core.matching_expr * Location.t
+  | `Typer_unbound_type_variable of Ast_typed.Environment.t * Ast_typed.type_variable * Location.t
+  | `Typer_unbound_variable of Ast_typed.Environment.t * Ast_typed.expression_variable * Location.t
   | `Typer_match_missing_case of Ast_core.matching_expr * Location.t
   | `Typer_match_redundant_case of Ast_core.matching_expr * Location.t
   | `Typer_unbound_constructor of Ast_typed.Environment.t * Ast_core.constructor' * Location.t
   | `Typer_redundant_constructor of Ast_typed.Environment.t * Ast_core.constructor' * Location.t
+  | `Typer_operator_wrong_number_of_arguments of Ast_core.type_operator' * int * int * Location.t
   | `Typer_michelson_or_no_annotation of Ast_core.constructor' * Location.t
   | `Typer_match_tuple_wrong_arity of Ast_typed.type_expression_list * Ast_core.expression_variable list * Location.t
   | `Typer_program_tracer of Ast_core.program * typer_error
@@ -72,8 +72,8 @@ type typer_error = [
   | `Typer_expected_ascription of Ast_core.expression
   | `Typer_different_kinds of Ast_typed.type_expression * Ast_typed.type_expression
   | `Typer_different_constants of Ast_typed.type_constant * Ast_typed.type_constant
-  | `Typer_different_operators of Ast_typed.type_operator * Ast_typed.type_operator
-  | `Typer_operator_number_of_arguments of Ast_typed.type_operator * Ast_typed.type_operator * int * int
+  | `Typer_different_operators of Ast_typed.type_operator' * Ast_typed.type_operator'
+  | `Typer_operator_number_of_arguments of Ast_typed.type_operator' * Ast_typed.type_operator' * int * int
   | `Typer_different_record_props of
     Ast_typed.type_expression * Ast_typed.type_expression * Ast_typed.te_lmap * Ast_typed.te_lmap * string * string
   | `Typer_different_kind_record_tuple of
@@ -95,12 +95,12 @@ type typer_error = [
 
 let michelson_comb_no_record (loc:Location.t) = `Typer_michelson_comb_no_record loc
 let michelson_comb_no_variant (loc:Location.t) = `Typer_michelson_comb_no_variant loc
-let unbound_type_variable (e:Ast_typed.Environment.t) (tv:Ast_core.type_variable) (loc:Location.t) = `Typer_unbound_type_variable (e,tv,loc)
-let unbound_variable (e:Ast_typed.Environment.t) (v:Ast_core.expression_variable) (loc:Location.t) = `Typer_unbound_variable (e,v,loc)
-let match_empty_variant (m:Ast_core.matching_expr) (loc:Location.t) = `Typer_match_empty_variant (m,loc)
+let unbound_type_variable (e:Ast_typed.Environment.t) (tv:Ast_typed.type_variable) (loc:Location.t) = `Typer_unbound_type_variable (e,tv,loc)
+let unbound_variable (e:Ast_typed.Environment.t) (v:Ast_typed.expression_variable) (loc:Location.t) = `Typer_unbound_variable (e,v,loc)
 let match_missing_case (m:Ast_core.matching_expr) (loc:Location.t) = `Typer_match_missing_case (m,loc)
 let match_redundant_case (m:Ast_core.matching_expr) (loc:Location.t) = `Typer_match_redundant_case (m,loc)
 let unbound_constructor (e:Ast_typed.Environment.t) (c:Ast_core.constructor') (loc:Location.t) = `Typer_unbound_constructor (e,c,loc)
+let operator_wrong_number_of_arguments (op:Ast_core.type_operator') (expected:int) (actual:int) loc = `Typer_operator_wrong_number_of_arguments (op,expected,actual,loc)
 let redundant_constructor (e:Ast_typed.Environment.t) (c:Ast_core.constructor') (loc:Location.t) = `Typer_redundant_constructor (e,c,loc)
 let michelson_or (c:Ast_core.constructor') (loc:Location.t) = `Typer_michelson_or_no_annotation (c,loc)
 let match_tuple_wrong_arity (expected: Ast_typed.type_expression_list) (actual:Ast_core.expression_variable list) (loc:Location.t) =
@@ -207,17 +207,12 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@ Unbound type variable '%a'@]"
         Location.pp loc
-        Ast_core.PP.type_variable tv
+        Ast_typed.PP.type_variable tv
     | `Typer_unbound_variable (_env,v,loc) ->
       Format.fprintf f
         "@[<hv>%a@ Unbound variable '%a'@]"
         Location.pp loc
-        Ast_core.PP.expression_variable v
-    | `Typer_match_empty_variant (m,loc) ->
-      Format.fprintf f
-        "@[<hv>%a@ Match with no case: @ %a@]"
-        Location.pp loc
-        Ast_core.PP.matching_type m
+        Ast_typed.PP.expression_variable v
     | `Typer_match_missing_case (m,loc) ->
       Format.fprintf f
         "@[<hv>%a@ Missing match case in: @ %a@]"
@@ -238,6 +233,12 @@ let rec error_ppformat : display_format:string display_format ->
         "@[<hv>%a@ Redundant constructor:@ %a@]"
         Location.pp loc
         Ast_core.PP.constructor c
+    | `Typer_operator_wrong_number_of_arguments (op,e,a,loc) ->
+      Format.fprintf f
+        "@[<hv>%a@ Wrong number of arguments for type operator: %a@ expected: %i@ got: %i@]"
+        Location.pp loc
+        Ast_core.PP.type_operator op
+        e a
     | `Typer_michelson_or_no_annotation (c,loc) ->
       Format.fprintf f
         "@[<hv>%a@ michelson_or contructor %a must be annotated with a sum type@]"
@@ -519,8 +520,8 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv> different type constructors.@ \
         Expected these two n-ary type constructors to be the same, but they're different@ %a@ %a@]"
-        (Ast_typed.PP.type_operator Ast_typed.PP.type_expression) a
-        (Ast_typed.PP.type_operator Ast_typed.PP.type_expression) b
+        Ast_typed.PP.type_operator a
+        Ast_typed.PP.type_operator b
     | `Typer_operator_number_of_arguments (opa, _opb, lena, lenb) ->
       Format.fprintf f
         "@[<hv> different number of arguments to type constructors.@ \
@@ -602,7 +603,7 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
   | `Typer_unbound_type_variable (env,tv,loc) ->
     let message = `String "unbound type variable" in
     let loc = Format.asprintf "%a" Location.pp loc in
-    let value = Format.asprintf "%a" Ast_core.PP.type_variable tv in
+    let value = Format.asprintf "%a" Ast_typed.PP.type_variable tv in
     let env = Format.asprintf "%a" Ast_typed.Environment.PP.environment env in
     let content = `Assoc [
       ("message", message);
@@ -614,23 +615,13 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
   | `Typer_unbound_variable (env,v,loc) ->
     let message = `String "unbound type variable" in
     let loc = Format.asprintf "%a" Location.pp loc in
-    let value = Format.asprintf "%a" Ast_core.PP.expression_variable v in
+    let value = Format.asprintf "%a" Ast_typed.PP.expression_variable v in
     let env = Format.asprintf "%a" Ast_typed.Environment.PP.environment env in
     let content = `Assoc [
       ("message", message);
       ("location", `String loc);
       ("value", `String value);
       ("env", `String env);
-    ] in
-    json_error ~stage ~content
-  | `Typer_match_empty_variant (m,loc) ->
-    let message = `String "Match with no case" in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in
-    let value = `String (Format.asprintf "%a" Ast_core.PP.matching_type m) in
-    let content = `Assoc [
-      ("message", message);
-      ("location", loc);
-      ("value", value);
     ] in
     json_error ~stage ~content
   | `Typer_match_missing_case (m,loc) ->
@@ -675,6 +666,18 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
       ("location", `String loc);
       ("value", `String value);
       ("env", `String env);
+    ] in
+    json_error ~stage ~content
+  | `Typer_operator_wrong_number_of_arguments (op, e, a, loc) ->
+    let message = `String "Wrong number of arguments for type operator" in
+    let loc = Format.asprintf "%a" Location.pp loc in
+    let op  = Format.asprintf "%a" Ast_core.PP.type_operator op in
+    let content = `Assoc [
+      ("message", message);
+      ("location", `String loc);
+      ("operator", `String op);
+      ("expected", `Int e);
+      ("actuel", `Int a);
     ] in
     json_error ~stage ~content
   | `Typer_michelson_or_no_annotation (c,loc) ->
@@ -1280,8 +1283,8 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
   | `Typer_different_operators (a,b) ->
     let message = `String "different type constructors.\
       Expected these two n-ary type constructors to be the same, but they're different" in
-    let a = `String (Format.asprintf "%a" (Ast_typed.PP.type_operator Ast_typed.PP.type_expression) a) in
-    let b = `String (Format.asprintf "%a" (Ast_typed.PP.type_operator Ast_typed.PP.type_expression) b) in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.type_operator a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.type_operator b) in
     let content = `Assoc [
       ("message", message) ;
       ("a", a) ;
@@ -1292,8 +1295,8 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
     let message = `String "different number of arguments to type constructors.\ 
       Expected these two n-ary type constructors to be the same, but they have different number\ 
       of arguments" in
-    let a = `String (Format.asprintf "%a" (Ast_typed.PP.type_operator Ast_typed.PP.type_expression) opa) in
-    let b = `String (Format.asprintf "%a" (Ast_typed.PP.type_operator Ast_typed.PP.type_expression) opb) in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.type_operator opa) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.type_operator opb) in
     let op = `String (Ast_typed.Helpers.type_operator_name opa) in
     let len_a = `Int lena in
     let len_b = `Int lenb in

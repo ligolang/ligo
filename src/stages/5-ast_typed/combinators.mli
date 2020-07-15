@@ -4,33 +4,33 @@ val make_n_t : type_variable -> type_expression -> named_type_content
 val make_t : ?loc:Location.t -> type_content -> S.type_expression option -> type_expression
 val make_e : ?location:Location.t -> expression_content -> type_expression -> expression
 
-val t_bool : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
-val t_string : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
-val t_bytes : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
-val t_key : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
-val t_key_hash : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_bool      : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_string    : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_bytes     : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_key       : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_key_hash  : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
 val t_operation : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
 val t_timestamp : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
-val t_set : type_expression -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
-val t_contract : type_expression -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
-val t_int : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
-val t_nat : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
-val t_mutez : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
-val t_address : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
-val t_chain_id : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_set       : ?loc:Location.t -> ?s:S.type_expression -> type_expression -> type_expression
+val t_contract  : ?loc:Location.t -> ?s:S.type_expression -> type_expression -> type_expression
+val t_int       : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_nat       : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_mutez     : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_address   : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_chain_id  : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
 val t_signature : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
-val t_unit : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
-val t_option : type_expression -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
-val t_pair : type_expression -> type_expression -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
-val t_list  : type_expression -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
-val t_variable : type_variable -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
-val t_record : te_lmap -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_unit      : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_option    : ?loc:Location.t -> ?s:S.type_expression -> type_expression -> type_expression
+val t_pair      : ?loc:Location.t -> ?s:S.type_expression -> type_expression -> type_expression -> type_expression
+val t_list      : ?loc:Location.t -> ?s:S.type_expression -> type_expression -> type_expression
+val t_variable  : type_variable -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_record    : te_lmap -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
 val make_t_ez_record : ?loc:Location.t -> (string* type_expression) list -> type_expression 
 val ez_t_record : ( label * field_content ) list -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression 
 
-val t_map : ?loc:Location.t -> type_expression -> type_expression -> ?s:S.type_expression -> unit -> type_expression
-val t_big_map : ?loc:Location.t -> type_expression -> type_expression -> ?s:S.type_expression -> unit -> type_expression
-val t_map_or_big_map : ?loc:Location.t -> type_expression -> type_expression ->  ?s:S.type_expression -> unit -> type_expression
+val t_map            : ?loc:Location.t -> ?s:S.type_expression -> type_expression -> type_expression -> type_expression
+val t_big_map        : ?loc:Location.t -> ?s:S.type_expression -> type_expression -> type_expression -> type_expression
+val t_map_or_big_map : ?loc:Location.t -> ?s:S.type_expression -> type_expression -> type_expression -> type_expression
 val t_sum : Types.te_cmap -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
 val make_t_ez_sum : ?loc:Location.t -> ?s:S.type_expression -> ( constructor' * ctor_content ) list -> type_expression
 val t_function : type_expression -> type_expression -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression

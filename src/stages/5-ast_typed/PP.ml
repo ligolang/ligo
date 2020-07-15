@@ -1,18 +1,8 @@
 [@@@coverage exclude_file]
-(* open Types
- * open Format
- * open PP_helpers *)
-
-(* include Stage_common.PP *)
 open Types
 open Format
 open PP_helpers
-
-let constructor ppf (c:constructor') : unit =
-  let Constructor c = c in fprintf ppf "%s" c
-
-let label ppf (l:label) : unit =
-  let Label l = l in fprintf ppf "%s" l
+include Stage_common.PP
 
 let cmap_sep value sep ppf m =
   let lst = List.sort (fun (Constructor a,_) (Constructor b,_) -> String.compare a b) m in
@@ -231,29 +221,10 @@ let rec type_expression' :
   | T_arrow a -> fprintf ppf "@[<h>%a ->@ %a@]" f a.type1 f a.type2
   | T_variable tv -> type_variable ppf tv
   | T_constant tc -> type_constant ppf tc
-  | T_operator to_ -> type_operator f ppf to_
+  | T_operator {operator;args} -> fprintf ppf "%a (%a)" type_operator operator (list_sep_d type_expression) args
 
 and type_expression ppf (te : type_expression) : unit =
   type_expression' type_expression ppf te
-
-and type_operator :
-      (formatter -> type_expression -> unit)
-      -> formatter
-      -> type_operator
-      -> unit =
-  fun f ppf to_ ->
-  let s =
-    match to_ with
-    | TC_option te -> Format.asprintf "option(%a)" f te
-    | TC_list te -> Format.asprintf "list(%a)" f te
-    | TC_set te -> Format.asprintf "set(%a)" f te
-    | TC_map {k; v} -> Format.asprintf "Map (%a,%a)" f k f v
-    | TC_big_map {k; v} -> Format.asprintf "Big Map (%a,%a)" f k f v
-    | TC_map_or_big_map {k; v} -> Format.asprintf "Map Or Big Map (%a,%a)" f k f v
-    | TC_contract te  -> Format.asprintf "Contract (%a)" f te
-  in
-  fprintf ppf "(type_operator: %s)" s
-(* end include Stage_common.PP *)
 
 let expression_variable ppf (ev : expression_variable) : unit =
   fprintf ppf "%a" Var.pp ev.wrap_content

@@ -4,7 +4,6 @@ open Format
 open PP_helpers
 
 include Stage_common.PP
-include Stage_common.PP.Ast_PP_type(Ast_sugar_parameter)
 
 let cmap_sep value sep ppf m =
   let lst = CMap.to_kv_list m in
@@ -37,29 +36,10 @@ let rec type_expression' :
   | T_arrow  a -> fprintf ppf "%a -> %a" f a.type1 f a.type2
   | T_variable tv -> type_variable ppf tv
   | T_constant tc -> type_constant ppf tc
-  | T_operator to_ -> type_operator f ppf to_
+  | T_operator (to_, lst) -> fprintf ppf "%a (%a)" type_operator to_ (list_sep_d type_expression) lst
 
 and type_expression ppf (te : type_expression) : unit =
   type_expression' type_expression ppf te
-
-and type_operator : (formatter -> type_expression -> unit) -> formatter -> type_operator * type_expression list -> unit =
-  fun f ppf to_ ->
-  let s = match to_ with
-    TC_option                    , lst -> Format.asprintf "option(%a)"                     (list_sep_d f) lst
-  | TC_list                      , lst -> Format.asprintf "list(%a)"                       (list_sep_d f) lst
-  | TC_set                       , lst -> Format.asprintf "set(%a)"                        (list_sep_d f) lst
-  | TC_map                       , lst -> Format.asprintf "Map (%a)"                       (list_sep_d f) lst
-  | TC_big_map                   , lst -> Format.asprintf "Big Map (%a)"                   (list_sep_d f) lst
-  | TC_map_or_big_map            , lst -> Format.asprintf "Map Or Big Map (%a)"            (list_sep_d f) lst
-  | TC_contract                  , lst -> Format.asprintf "Contract (%a)"                  (list_sep_d f) lst
-  | TC_michelson_pair            , lst -> Format.asprintf "michelson_pair (%a)"            (list_sep_d f) lst                            
-  | TC_michelson_or              , lst -> Format.asprintf "michelson_or (%a)"              (list_sep_d f) lst
-  | TC_michelson_pair_right_comb , lst -> Format.asprintf "michelson_pair_right_comb (%a)" (list_sep_d f) lst
-  | TC_michelson_pair_left_comb  , lst -> Format.asprintf "michelson_pair_left_comb (%a)"  (list_sep_d f) lst
-  | TC_michelson_or_right_comb   , lst -> Format.asprintf "michelson_or_right_comb (%a)"   (list_sep_d f) lst
-  | TC_michelson_or_left_comb    , lst -> Format.asprintf "michelson_or_left_comb (%a)"    (list_sep_d f) lst
-  in
-  fprintf ppf "(TO_%s)" s
 
 let rec expression ppf (e : expression) =
   expression_content ppf e.expression_content

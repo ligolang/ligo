@@ -47,15 +47,16 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
                   )
      in
      p_constant csttag []
-  | T_operator (type_operator) ->
-     let (csttag, args) = T.(match type_operator with
-                                | TC_option o                -> (C_option, [o])
-                                | TC_set s                   -> (C_set, [s])
-                                | TC_map { k ; v }           -> (C_map, [k;v])
-                                | TC_big_map { k ; v }       -> (C_big_map, [k;v])
-                                | TC_map_or_big_map { k ; v } -> (C_map, [k;v])
-                                | TC_list l                  -> (C_list, [l])
-                                | TC_contract c              -> (C_contract, [c])
+  | T_operator {operator; args} ->
+     let (csttag, args) = Option.unopt_exn @@ T.(match operator,args with
+                                | TC_option, [o]                -> Some (C_option, [o])
+                                | TC_set, [s]                   -> Some (C_set, [s])
+                                | TC_map, [ k ; v ]             -> Some (C_map, [k;v])
+                                | TC_big_map, [ k ; v ]         -> Some (C_big_map, [k;v])
+                                | TC_map_or_big_map, [ k ; v ]  -> Some (C_map, [k;v])
+                                | TC_list, [l]                  -> Some (C_list, [l])
+                                | TC_contract, [c]              -> Some (C_contract, [c])
+                                | _ -> None
                           )
      in
      p_constant csttag (List.map type_expression_to_type_value args)
@@ -103,7 +104,7 @@ let failwith_ : unit -> (constraints * O.type_variable) = fun () ->
   let type_name = Core.fresh_type_variable () in
   [] , type_name
 
-let variable : I.expression_variable -> T.type_expression -> (constraints * T.type_variable) = fun _name expr ->
+let variable : T.type_expression -> (constraints * T.type_variable) = fun expr ->
   let pattern = type_expression_to_type_value expr in
   let type_name = Core.fresh_type_variable () in
   [{ c = C_equation { aval = { tsrc = "wrap: variable: whole" ; t = P_variable type_name } ; bval = pattern } ; reason = "wrap: variable" }] , type_name

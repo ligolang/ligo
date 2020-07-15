@@ -64,7 +64,7 @@ let scopes : with_types:bool -> string -> string -> ((def_map * scopes), Main_er
       | Match_variant lst -> (
         let aux = fun (i,all_defs,scopes) ({constructor;proj;body}:Ast_core.match_variant) ->
           let proj_f = fun (t:Ast_typed.type_expression) -> match Ast_typed.get_t_sum t with
-            | Some t -> (Ast_typed.CMap.find (Ast_typed.Environment.convert_constructor' constructor) t).ctor_type
+            | Some t -> (Ast_typed.CMap.find constructor t).ctor_type
             | None -> failwith "Could not get the inner type of a constructor" in
 
           let proj_def = make_v_def_ppx_type proj.wrap_content proj_f matchee proj.location proj.location in

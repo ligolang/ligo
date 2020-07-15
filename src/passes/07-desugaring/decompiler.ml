@@ -3,7 +3,8 @@ module O = Ast_core
 
 open Trace
 open Errors
-open Cast
+
+let cast_var = Location.map Var.todo_cast
 
 let rec decompile_type_expression : O.type_expression -> (I.type_expression, desugaring_error) result =
   fun te ->
@@ -39,10 +40,10 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, des
         let%bind type2 = decompile_type_expression type2 in
         return @@ T_arrow {type1;type2}
       | O.T_variable type_variable -> return @@ T_variable (Var.todo_cast type_variable)
-      | O.T_constant type_constant -> return @@ T_constant (cast_type_constant_rev type_constant)
+      | O.T_constant type_constant -> return @@ T_constant type_constant
       | O.T_operator { type_operator ; arguments } ->
         let%bind lst = bind_map_list decompile_type_expression arguments in
-        return @@ T_operator (cast_type_operator_rev type_operator, lst)
+        return @@ T_operator (type_operator, lst)
 
 let rec decompile_expression : O.expression -> (I.expression, desugaring_error) result =
   fun e ->
@@ -51,10 +52,10 @@ let rec decompile_expression : O.expression -> (I.expression, desugaring_error) 
     Some e -> ok @@ e
   | None -> 
     match e.content with 
-      O.E_literal lit -> return @@ I.E_literal (cast_literal_rev lit)
+      O.E_literal lit -> return @@ I.E_literal (lit)
     | O.E_constant {cons_name;arguments} -> 
       let%bind arguments = bind_map_list decompile_expression arguments in
-      return @@ I.E_constant {cons_name = cast_constant_rev cons_name;arguments}
+      return @@ I.E_constant {cons_name = cons_name;arguments}
     | O.E_variable name -> return @@ I.E_variable (cast_var name)
     | O.E_application {lamb; args} -> 
       let%bind lamb = decompile_expression lamb in
@@ -146,7 +147,7 @@ and decompile_matching : O.matching_expr -> (I.matching_expr, desugaring_error) 
 let decompile_declaration : O.declaration Location.wrap -> _ result = fun {wrap_content=declaration;location} ->
   let return decl = ok @@ Location.wrap ~loc:location decl in
   match declaration with 
-  | O.Declaration_constant {binder ; type_opt ; inline={inline}; expr} ->
+  | O.Declaration_constant {binder ; type_opt ; attr={inline}; expr} ->
     let binder = cast_var binder in
     let%bind expr = decompile_expression expr in
     let%bind te_opt = bind_map_option decompile_type_expression type_opt in

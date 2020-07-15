@@ -1,5 +1,6 @@
 module S = Ast_core
 open Simple_utils.Trace
+include Stage_common.Types
 
 type 'a location_wrap = 'a Location.wrap
 
@@ -8,18 +9,6 @@ and expression_variable = expression_ Var.t location_wrap
 type type_
 and type_variable = type_ Var.t
 type z = Z.t
-type ligo_string = Stage_common.Types.ligo_string
-
-type constructor' =
-| Constructor of string
-type label =
-| Label of string
-
-module CMap = Map.Make( struct type t = constructor' let compare (Constructor a) (Constructor b) = compare a b end)
-module LMap = Map.Make( struct type t = label let compare (Label a) (Label b) = String.compare a b end)
-
-type 'a label_map = 'a LMap.t
-type 'a constructor_map = 'a CMap.t
 type ast_core_type_expression = S.type_expression
 
 
@@ -34,20 +23,22 @@ type 'a extra_info__comparable = {
 
 let fold_map__constructor_map : type a new_a state err. (state -> a -> (state * new_a, err) result) -> state -> a constructor_map -> (state * new_a constructor_map, err) result =
   fun f state m ->
+  let open CMap in
   let aux k v acc =
     let%bind (state , m) = acc in
     let%bind (state , new_v) = f state v in
-    ok (state , CMap.add k new_v m) in
-  let%bind (state , m) = CMap.fold aux m (ok (state, CMap.empty)) in
+    ok (state , add k new_v m) in
+  let%bind (state , m) = fold aux m (ok (state, empty)) in
   ok (state , m)
 
 let fold_map__label_map : type a state new_a err . (state -> a -> (state * new_a , err) result) -> state -> a label_map -> (state * new_a label_map , err) result =
   fun f state m ->
+  let open LMap in
   let aux k v acc =
     let%bind (state , m) = acc in
     let%bind (state , new_v) = f state v in
-    ok (state , LMap.add k new_v m) in
-  let%bind (state , m) = LMap.fold aux m (ok (state, LMap.empty)) in
+    ok (state , add k new_v m) in
+  let%bind (state , m) = fold aux m (ok (state, empty)) in
   ok (state , m)
 
 let fold_map__list : type a state new_a err . (state -> a -> (state * new_a , err) result) -> state -> a list -> (state * new_a list , err) result =

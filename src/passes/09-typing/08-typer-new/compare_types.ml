@@ -7,24 +7,24 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
       Assert.assert_true (different_constants ca cb) (ca = cb)
     )
   | T_constant _, _ -> fail @@ different_kinds a b
-  | T_operator opa, T_operator opb -> (
-    let%bind (lsta, lstb) = match (opa, opb) with
-      | TC_option la, TC_option lb
-      | TC_list la, TC_list lb
-      | TC_contract la, TC_contract lb
-      | TC_set la, TC_set lb -> ok @@ ([la], [lb])
-      | (TC_map {k=ka;v=va} | TC_map_or_big_map {k=ka;v=va}), (TC_map {k=kb;v=vb} | TC_map_or_big_map {k=kb;v=vb})
-      | (TC_big_map {k=ka;v=va} | TC_map_or_big_map {k=ka;v=va}), (TC_big_map {k=kb;v=vb} | TC_map_or_big_map {k=kb;v=vb})
-        -> ok @@ ([ka;va] ,[kb;vb]) 
-      | (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_map_or_big_map _ ),
-        (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_map_or_big_map _ )
+  | T_operator {operator=opa;args=lsta}, T_operator {operator=opb;args=lstb} -> (
+    let%bind _ = match (opa, opb) with
+      | TC_option, TC_option
+      | TC_list, TC_list
+      | TC_contract, TC_contract
+      | TC_set, TC_set 
+      | (TC_map | TC_map_or_big_map), (TC_map | TC_map_or_big_map)
+      | (TC_big_map | TC_map_or_big_map), (TC_big_map | TC_map_or_big_map)
+        -> ok @@ () 
+      | (TC_option | TC_list | TC_contract | TC_set | TC_map | TC_big_map | TC_michelson_or | TC_michelson_or_left_comb | TC_michelson_or_right_comb | TC_michelson_pair | TC_michelson_pair_left_comb | TC_michelson_pair_right_comb | TC_map_or_big_map ),
+        (TC_option | TC_list | TC_contract | TC_set | TC_map | TC_big_map | TC_michelson_or | TC_michelson_or_left_comb | TC_michelson_or_right_comb | TC_michelson_pair | TC_michelson_pair_left_comb | TC_michelson_pair_right_comb | TC_map_or_big_map )
         -> fail @@ different_operators opa opb
-      in
-      if List.length lsta <> List.length lstb then
-        fail @@ different_operator_number_of_arguments opa opb (List.length lsta) (List.length lstb)
-      else
-        trace (different_types "arguments to type operators" a b)
-        @@ bind_list_iter (fun (a,b) -> assert_type_expression_eq (a,b) )(List.combine lsta lstb)
+    in
+    if List.length lsta <> List.length lstb then
+      fail @@ different_operator_number_of_arguments opa opb (List.length lsta) (List.length lstb)
+    else
+      trace (different_types "arguments to type operators" a b)
+      @@ bind_list_iter (fun (a,b) -> assert_type_expression_eq (a,b) )(List.combine lsta lstb)
   )
   | T_operator _, _ -> fail @@ different_kinds a b
   | T_sum sa, T_sum sb -> (

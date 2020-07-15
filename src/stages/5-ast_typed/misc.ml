@@ -67,7 +67,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   match (a.type_content, b.type_content) with
   | T_constant ca, T_constant cb -> assert_eq ca cb
   | T_constant _, _ -> None
-  | T_operator opa, T_operator opb -> (
+  | T_operator {operator=opa;args=la}, T_operator {operator=opb;args=lb} -> (
     let aux = fun lsta lstb ->
       if List.length lsta <> List.length lstb then None
       else
@@ -77,15 +77,16 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
           (Some ())
           (List.combine lsta lstb) in
     match (opa, opb) with
-      | TC_option la, TC_option lb
-      | TC_list la, TC_list lb
-      | TC_contract la, TC_contract lb
-      | TC_set la, TC_set lb -> aux [la] [lb]
-      | (TC_map {k=ka;v=va} | TC_map_or_big_map {k=ka;v=va}), (TC_map {k=kb;v=vb} | TC_map_or_big_map {k=kb;v=vb})
-      | (TC_big_map {k=ka;v=va} | TC_map_or_big_map {k=ka;v=va}), (TC_big_map {k=kb;v=vb} | TC_map_or_big_map {k=kb;v=vb}) ->
-        aux [ka;va] [kb;vb]
-      | (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_map_or_big_map _ ),
-        (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_map_or_big_map _ )
+      | TC_option, TC_option
+      | TC_list, TC_list
+      | TC_contract, TC_contract
+      | TC_set, TC_set
+      | (TC_map | TC_map_or_big_map) , (TC_map | TC_map_or_big_map)
+      | (TC_big_map | TC_map_or_big_map ), (TC_big_map | TC_map_or_big_map) ->
+        aux la lb
+      | (TC_option | TC_list | TC_contract | TC_set | TC_map | TC_big_map | TC_map_or_big_map | TC_michelson_pair|TC_michelson_or|TC_michelson_pair_right_comb | TC_michelson_pair_left_comb|TC_michelson_or_right_comb| TC_michelson_or_left_comb ),
+        (TC_option | TC_list | TC_contract | TC_set | TC_map | TC_big_map | TC_map_or_big_map | TC_michelson_pair|TC_michelson_or|TC_michelson_pair_right_comb | TC_michelson_pair_left_comb|TC_michelson_or_right_comb| TC_michelson_or_left_comb )
+
         -> None
   )
   | T_operator _, _ -> None

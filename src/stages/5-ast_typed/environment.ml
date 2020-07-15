@@ -41,13 +41,11 @@ let add_ez_declaration : expression_variable -> expression -> t -> t = fun k ae 
 let add_ez_sum_type ?(env = empty) ?(type_name = Var.of_name "a_sum_type") (lst : (constructor' * ctor_content) list) =
   add_type type_name (make_t_ez_sum lst) env
 
-let convert_constructor' (S.Constructor c) = Constructor c
-
 let get_constructor : Ast_core.constructor' -> t -> (type_expression * type_expression) option = fun k x -> (* Left is the constructor, right is the sum type *)
     let aux = fun {type_variable=_ ; type_} ->
       match type_.type_content with
       | T_sum m ->
-        (match CMap.find_opt (convert_constructor' k) m with
+        (match CMap.find_opt k m with
            Some {ctor_type ; _} -> Some (ctor_type , type_)
          | None -> None)
       | _ -> None
