@@ -34,12 +34,12 @@ let fresh_type_variable : ?name:string -> unit -> type_variable = fun ?name () -
 
 let type_expression'_of_simple_c_constant : constant_tag * type_expression list -> Ast_typed.type_content option = fun (c, l) ->
   match c, l with
-  | C_contract  , [x]     -> Some (Ast_typed.T_operator(TC_contract x))
-  | C_option    , [x]     -> Some (Ast_typed.T_operator(TC_option x))
-  | C_list      , [x]     -> Some (Ast_typed.T_operator(TC_list x))
-  | C_set       , [x]     -> Some (Ast_typed.T_operator(TC_set x))
-  | C_map       , [k ; v] -> Some (Ast_typed.T_operator(TC_map {k ; v}))
-  | C_big_map   , [k ; v] -> Some (Ast_typed.T_operator(TC_big_map {k ; v}))
+  | C_contract  , [x]     -> Some (Ast_typed.T_operator{operator=TC_contract;args=[x]})
+  | C_option    , [x]     -> Some (Ast_typed.T_operator{operator=TC_option; args=[x]})
+  | C_list      , [x]     -> Some (Ast_typed.T_operator{operator=TC_list; args=[x]})
+  | C_set       , [x]     -> Some (Ast_typed.T_operator{operator=TC_set; args=[x]})
+  | C_map       , [k ; v] -> Some (Ast_typed.T_operator{operator=TC_map; args=[k;v]})
+  | C_big_map   , [k ; v] -> Some (Ast_typed.T_operator{operator=TC_big_map; args=[k;v]})
   | C_arrow     , [x ; y] -> Some (Ast_typed.T_arrow {type1=x ; type2=y}) (* For now, the arrow type constructor is special *)
   | C_record    , _lst    -> None
   | C_variant   , _lst    -> None

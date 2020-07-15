@@ -27,6 +27,12 @@ and arrow = {
     type2: type_expression;
   }
 
+and te_list = type_expression list
+and type_operator = {
+    operator : type_operator';
+    args     : te_list;
+  }
+
 and annot_option = string option
 
 and ctor_content = {
@@ -50,15 +56,6 @@ and michelson_or_args = {
     l : type_expression;
     r : type_expression;
   }
-
-and type_operator =
-  | TC_contract of type_expression
-  | TC_option of type_expression
-  | TC_list of type_expression
-  | TC_set of type_expression
-  | TC_map of type_map_args
-  | TC_big_map of type_map_args
-  | TC_map_or_big_map of type_map_args
 
 and type_expression = {
     type_content: type_content;

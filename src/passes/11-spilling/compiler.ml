@@ -154,26 +154,30 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
   | T_constant (TC_key)       -> return (T_base TB_key)
   | T_constant (TC_key_hash)  -> return (T_base TB_key_hash)
   | T_constant (TC_chain_id)  -> return (T_base TB_chain_id)
-  | T_operator (TC_contract x) ->
+  | T_operator {operator=TC_contract; args=[x]} ->
       let%bind x' = compile_type x in
       return (T_contract x')
-  | T_operator (TC_map {k;v}) ->
+  | T_operator {operator=TC_map; args=[k;v]} ->
       let%bind kv' = bind_map_pair compile_type (k, v) in
       return (T_map kv')
-  | T_operator (TC_big_map {k;v}) ->
+  | T_operator {operator=TC_big_map; args=[k;v]} ->
       let%bind kv' = bind_map_pair compile_type (k, v) in
       return (T_big_map kv')
-  | T_operator (TC_map_or_big_map _) ->
-      fail @@ corner_case ~loc:"compiler" "TC_map_or_big_map should have been resolved before transpilation"
-  | T_operator (TC_list t) ->
+  | T_operator {operator=TC_map_or_big_map; _} ->
+      fail @@ corner_case ~loc:"spilling" "TC_map_or_big_map should have been resolved before spilling"
+  | T_operator {operator=TC_list; args=[t]} ->
       let%bind t' = compile_type t in
       return (T_list t')
-  | T_operator (TC_set t) ->
+  | T_operator {operator=TC_set; args=[t]} ->
       let%bind t' = compile_type t in
       return (T_set t')
-  | T_operator (TC_option o) ->
+  | T_operator {operator=TC_option; args=[o]} ->
       let%bind o' = compile_type o in
       return (T_option o')
+  | T_operator {operator=TC_michelson_pair|TC_michelson_or|TC_michelson_pair_right_comb| TC_michelson_pair_left_comb|TC_michelson_or_right_comb| TC_michelson_or_left_comb; _} ->
+      fail @@ corner_case ~loc:"spilling" "These types should have been resolved before spilling"
+  | T_operator {operator=(TC_contract|TC_option|TC_list|TC_set|TC_map|TC_big_map); _} ->
+      fail @@ corner_case ~loc:"spilling" "Type operator with invalid arguments (wrong number or wrong kinds)"
   | T_sum m when Ast_typed.Helpers.is_michelson_or m ->
       let node = Append_tree.of_list @@ kv_list_of_cmap m in
       let aux a b : (type_expression annotated , spilling_error) result =
@@ -197,7 +201,7 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
         ok (None, t)
       in
       let%bind m' = Append_tree.fold_ne
-                      (fun (Ast_typed.Types.Constructor ann, ({ctor_type ; _}: AST.ctor_content)) ->
+                      (fun (Constructor ann, ({ctor_type ; _}: AST.ctor_content)) ->
                         let%bind a = compile_type ctor_type in
                         ok (Some (String.uncapitalize_ascii ann), a))
                       aux node in
@@ -232,7 +236,7 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
         ok (None, t)
       in
       let%bind m' = Append_tree.fold_ne
-                      (fun (Ast_typed.Types.Label ann, ({field_type;_}: AST.field_content)) ->
+                      (fun (Label ann, ({field_type;_}: AST.field_content)) ->
                         let%bind a = compile_type field_type in
                         ok ((if is_tuple_lmap then 
                               None 
@@ -420,7 +424,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
               let%bind collection' = compile_expression collection in
               return @@ E_fold (f' , collection' , initial')
             )
-          | _ -> fail @@ corner_case ~loc:__LOC__ (Format.asprintf "bad iterator arity: %a" Stage_common.PP.constant iterator_name)
+          | _ -> fail @@ corner_case ~loc:__LOC__ (Format.asprintf "bad iterator arity: %a" PP.constant iterator_name)
       in
       let (iter , map , fold) = iterator_generator C_ITER, iterator_generator C_MAP, iterator_generator C_FOLD in
       match (name , lst) with
@@ -502,7 +506,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
 
           let rec aux top t =
             match t with
-            | ((`Leaf (AST.Constructor constructor_name)) , tv) -> (
+            | ((`Leaf (Constructor constructor_name)) , tv) -> (
                 let%bind {constructor=_ ; pattern ; body} =
                   trace_option (corner_case ~loc:__LOC__ "missing match clause") @@
                     let aux ({constructor = Constructor c ; pattern=_ ; body=_} : AST.matching_content_case) =
@@ -637,7 +641,7 @@ and compile_recursive {fun_name; fun_type; lambda} =
           in
           let rec aux top t =
             match t with
-            | ((`Leaf (AST.Constructor constructor_name)) , tv) -> (
+            | ((`Leaf (Constructor constructor_name)) , tv) -> (
                 let%bind {constructor=_ ; pattern ; body} =
                   trace_option (corner_case ~loc:__LOC__ "missing match clause") @@
                     let aux ({constructor = Constructor c ; pattern=_ ; body=_} : AST.matching_content_case) =

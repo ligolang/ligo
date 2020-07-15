@@ -1,7 +1,6 @@
 open Trace
 open Types
 open Misc
-(* open Stage_common.Types *)
 
 module Captured_variables = struct
 

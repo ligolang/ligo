@@ -32,7 +32,7 @@ let%expect_test _ =
     ligo: error
           Provided storage type does not match contract storage type
           Bad types:
-          expected record[card_patterns -> (type_operator: Map (nat,record[coefficient -> mutez , quantity -> nat])) , cards -> (type_operator: Map (nat,record[card_owner -> address , card_pattern -> nat])) , next_id -> nat]
+          expected record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]
           got sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]
 
 
@@ -49,7 +49,7 @@ let%expect_test _ =
           Provided parameter type does not match contract parameter type
           Bad types:
           expected sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]
-          got record[card_patterns -> (type_operator: Map (nat,record[coefficient -> mutez , quantity -> nat])) , cards -> (type_operator: Map (nat,record[card_owner -> address , card_pattern -> nat])) , next_id -> nat]
+          got record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1329,7 +1329,9 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "bad_type_operator.ligo", line 4, characters 16-29
-          unrecognized type operator (type_operator: Map (binding))
+          Wrong number of arguments for type operator: Map
+          expected: 2
+          got: 1
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1548,8 +1550,8 @@ let%expect_test _ =
     ligo: error
           in file "self_type_annotation.ligo", line 8, characters 41-64
           Bad self type
-          expected (type_operator: Contract (int))
-          got (type_operator: Contract (nat))
+          expected Contract (int)
+          got Contract (nat)
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1593,7 +1595,7 @@ let%expect_test _ =
     ligo: error
           in file "bad_contract2.mligo", line 5, characters 0-3
           Badly typed contract:
-          expected (type_operator: list(operation)) but got string
+          expected list (operation) but got string
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1739,13 +1741,13 @@ let%expect_test _ =
     type storage = (int ,
     int)
     const main : (int ,
-    storage) -> ((TO_list(operation)) ,
+    storage) -> (list (operation) ,
     storage) = lambda (n:Some((int ,
     storage))) : None return let x = let x = 7 : int in (ADD(x ,
     n.0) ,
     ADD(n.1.0 ,
     n.1.1)) : (int ,
-    int) in (list[] : (TO_list(operation)) ,
+    int) in (list[] : list (operation) ,
     x)
     const f0 = lambda (a:Some(string)) : None return true(unit)
     const f1 = lambda (a:Some(string)) : None return true(unit)
@@ -1764,13 +1766,13 @@ let%expect_test _ =
     type storage = (int ,
     int)
     const main : (int ,
-    storage) -> ((TO_list(operation)) ,
+    storage) -> (list (operation) ,
     storage) = lambda (n:Some((int ,
     storage))) : None return let x = let x = 7 : int in (ADD(x ,
     n.0) ,
     ADD(n.1.0 ,
     n.1.1)) : (int ,
-    int) in (list[] : (TO_list(operation)) ,
+    int) in (list[] : list (operation) ,
     x)
     const f0 = lambda (a:Some(string)) : None return true(unit)
     const f1 = lambda (a:Some(string)) : None return true(unit)
@@ -1783,5 +1785,3 @@ let%expect_test _ =
     y) ,
     z)
     |}];
-
-

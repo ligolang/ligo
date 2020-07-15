@@ -17,7 +17,7 @@ and declaration_type = {
 and declaration_constant = {
     binder : expression_variable ;
     type_opt : type_expression_option ;
-    inline : attribute ;
+    attr : attribute ;
     expr : expression ;
   }
 and declaration =
@@ -34,22 +34,9 @@ and declaration =
 and ctor_constructor_map = ctor_content constructor_map
 and field_label_map = field_content label_map
 and type_expression_list = type_expression list
-and type_operator =
-  | TC_contract
-  | TC_option
-  | TC_list
-  | TC_set
-  | TC_map
-  | TC_big_map
-  | TC_map_or_big_map
-  | TC_michelson_pair
-  | TC_michelson_or
-  | TC_michelson_pair_right_comb
-  | TC_michelson_pair_left_comb
-  | TC_michelson_or_right_comb
-  | TC_michelson_or_left_comb
+
 and content_type_operator = {
-    type_operator : type_operator ;
+    type_operator : type_operator' ;
     arguments : type_expression_list ;
   }
 and type_content =

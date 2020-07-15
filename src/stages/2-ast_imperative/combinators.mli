@@ -40,7 +40,7 @@ val t_michelson_pair_left_comb  : ?loc:Location.t -> type_expression -> type_exp
 val t_michelson_or_right_comb   : ?loc:Location.t -> type_expression -> type_expression
 val t_michelson_or_left_comb    : ?loc:Location.t -> type_expression -> type_expression
 
-val t_operator : ?loc:Location.t -> type_operator -> type_expression list -> type_expression
+val t_operator : ?loc:Location.t -> type_operator' -> type_expression list -> type_expression
 val t_set      : ?loc:Location.t -> type_expression -> type_expression
 val t_contract : ?loc:Location.t -> type_expression -> type_expression
 

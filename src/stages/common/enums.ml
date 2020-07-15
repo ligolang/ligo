@@ -15,6 +15,21 @@ type type_constant =
   | TC_signature
   | TC_timestamp
 
+type type_operator' =
+  | TC_contract
+  | TC_option
+  | TC_list
+  | TC_set
+  | TC_map
+  | TC_big_map
+  | TC_map_or_big_map
+  | TC_michelson_pair
+  | TC_michelson_or
+  | TC_michelson_pair_right_comb
+  | TC_michelson_pair_left_comb
+  | TC_michelson_or_right_comb
+  | TC_michelson_or_left_comb
+
 type literal =
   | Literal_unit
   | Literal_int of z

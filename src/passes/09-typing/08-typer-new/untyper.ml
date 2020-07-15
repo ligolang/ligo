@@ -5,8 +5,6 @@ module I = Ast_core
 module O = Ast_typed
 open O.Combinators
 
-let unconvert_constructor' (O.Constructor c) = I.Constructor c
-let unconvert_label (O.Label c) = I.Label c
 let unconvert_type_constant : O.type_constant -> I.type_constant = function
     | TC_unit -> TC_unit
     | TC_string -> TC_string
@@ -157,7 +155,7 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer
       let%bind acc = acc in
       let%bind ctor_type = untype_type_expression ctor_type in
       let v' : I.ctor_content = {ctor_type ; michelson_annotation ; ctor_decl_pos} in 
-      ok @@ I.CMap.add (unconvert_constructor' k) v' acc in
+      ok @@ I.CMap.add k v' acc in
     let%bind x' = O.CMap.fold aux x (ok I.CMap.empty) in
     ok @@ I.T_sum x'
   | O.T_record x ->
@@ -165,7 +163,7 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer
       let%bind acc = acc in
       let%bind field_type = untype_type_expression field_type in
       let v' = ({field_type ; field_annotation=michelson_annotation ; field_decl_pos} : I.field_content) in
-      ok @@ I.LMap.add (unconvert_label k) v' acc in
+      ok @@ I.LMap.add k v' acc in
     let%bind x' = O.LMap.fold aux x (ok I.LMap.empty) in
     ok @@ I.T_record x'
   | O.T_constant (tag) ->
@@ -175,62 +173,20 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer
     let%bind type1 = untype_type_expression type1 in
     let%bind type2 = untype_type_expression type2 in
     ok @@ I.T_arrow {type1;type2}
-  | O.T_operator (type_name) ->
-      let%bind (type_operator, arguments) = match type_name with
-      | O.TC_option t -> 
-         let%bind t' = untype_type_expression t in
-         ok @@ (I.TC_option, [t'])
-      | O.TC_list   t ->
-         let%bind t' = untype_type_expression t in
-         ok @@ (I.TC_list, [t'])
-      | O.TC_set    t ->     
-         let%bind t' = untype_type_expression t in
-         ok @@ (I.TC_set, [t'])
-      | O.TC_map   {k;v} ->     
-         let%bind k = untype_type_expression k in
-         let%bind v = untype_type_expression v in
-         ok @@ (I.TC_map, [k;v])
-      | O.TC_big_map {k;v} ->
-         let%bind k = untype_type_expression k in
-         let%bind v = untype_type_expression v in
-         ok @@ (I.TC_big_map, [k;v])
-      | O.TC_map_or_big_map {k;v} ->     
-         let%bind k = untype_type_expression k in
-         let%bind v = untype_type_expression v in
-         ok @@ (I.TC_map_or_big_map, [k;v])
-      | O.TC_contract c->
-         let%bind c = untype_type_expression c in
-         ok @@ (I.TC_contract, [c])
-      in
-      ok @@ I.T_operator {type_operator ; arguments}
+  | O.T_operator {operator;args} ->
+    let%bind arguments = bind_map_list untype_type_expression args in
+    ok @@ I.T_operator {type_operator=operator;arguments}
     in
   ok @@ I.make_t t
+
 
 (* match t.core with *)
 (* | Some s -> ok s *)
 (* | _ -> fail @@ internal_assertion_failure "trying to untype generated type" *)
 
-
 (*
   Tranform a Ast_typed literal into an ast_core literal
 *)
-let untype_literal (l:O.literal) : (I.literal, typer_error) result =
-  let open I in
-  match l with
-  | Literal_unit -> ok Literal_unit
-  | Literal_nat n -> ok (Literal_nat n)
-  | Literal_timestamp n -> ok (Literal_timestamp n)
-  | Literal_mutez n -> ok (Literal_mutez n)
-  | Literal_int n -> ok (Literal_int n)
-  | Literal_string s -> ok (Literal_string s)
-  | Literal_key s -> ok (Literal_key s)
-  | Literal_key_hash s -> ok (Literal_key_hash s)
-  | Literal_chain_id s -> ok (Literal_chain_id s)
-  | Literal_signature s -> ok (Literal_signature s)
-  | Literal_bytes b -> ok (Literal_bytes b)
-  | Literal_address s -> ok (Literal_address s)
-  | Literal_operation s -> ok (Literal_operation s)
-
 (*
   Tranform a Ast_typed expression into an ast_core matching
 *)
@@ -239,7 +195,6 @@ let rec untype_expression (e:O.expression) : (I.expression, typer_error) result 
   let return e = ok e in
   match e.expression_content with
   | E_literal l ->
-    let%bind l = untype_literal l in
     return (e_literal l)
   | E_constant {cons_name;arguments} ->
       let%bind lst' = bind_map_list untype_expression arguments in
@@ -260,7 +215,7 @@ let rec untype_expression (e:O.expression) : (I.expression, typer_error) result 
       return (e_constructor n p')
   | E_record r ->
     let r = O.LMap.to_kv_list r in
-    let%bind r' = bind_map_list (fun (O.Label k,e) -> let%bind e = untype_expression e in ok (I.Label k,e)) r in
+    let%bind r' = bind_map_list (fun (Label k,e) -> let%bind e = untype_expression e in ok (I.Label k,e)) r in
     return (e_record @@ LMap.of_list r')
   | E_record_accessor {record; path} ->
     let%bind r' = untype_expression record in
@@ -269,7 +224,7 @@ let rec untype_expression (e:O.expression) : (I.expression, typer_error) result 
   | E_record_update {record; path; update} ->
     let%bind r' = untype_expression record in
     let%bind e = untype_expression update in 
-    return (e_record_update r' (unconvert_label path) e)
+    return (e_record_update r' path e)
   | E_matching {matchee;cases} ->
     let%bind ae' = untype_expression matchee in
     let%bind m' = untype_matching untype_expression cases in
@@ -317,7 +272,6 @@ and untype_matching : (O.expression -> (I.expression, typer_error) result) -> O.
   | Match_variant { cases ; tv=_ } ->
       let aux ({constructor;pattern;body} : O.matching_content_case) =
         let%bind body = f body in
-        let pattern = { pattern with wrap_content = Var.todo_cast pattern.wrap_content } in
-        ok {constructor=unconvert_constructor' constructor ; proj = pattern ; body} in
+        ok @@ {constructor;proj=Location.map Var.todo_cast pattern;body} in
       let%bind lst' = bind_map_list aux cases in
       ok @@ Match_variant lst'

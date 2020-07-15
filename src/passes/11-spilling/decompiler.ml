@@ -106,9 +106,9 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
       return (E_literal (Literal_signature n))
     )
   )
-  | T_operator type_operator -> (
-    match type_operator with
-    | TC_option o -> (
+  | T_operator {operator;args} -> (
+    match operator,args with
+    | TC_option, [o] -> (
         let%bind opt =
           trace_option (wrong_mini_c_value t v) @@
           get_option v in
@@ -118,7 +118,7 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
             let%bind s' = decompile s o in
             ok (e_a_some s')
       )
-    | TC_map {k=k_ty;v=v_ty}-> (
+    | TC_map, [k_ty;v_ty] -> (
         let%bind map =
           trace_option (wrong_mini_c_value t v) @@
           get_map v in
@@ -135,7 +135,7 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
         let%bind init = return @@ E_constant {cons_name=C_MAP_EMPTY;arguments=[]} in
         bind_fold_right_list aux init map'
       )
-    | TC_big_map {k=k_ty; v=v_ty} -> (
+    | TC_big_map, [k_ty; v_ty] -> (
         let%bind big_map =
           trace_option (wrong_mini_c_value t v) @@
           get_big_map v in
@@ -152,8 +152,8 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
         let%bind init = return @@ E_constant {cons_name=C_BIG_MAP_EMPTY;arguments=[]} in
         bind_fold_right_list aux init big_map'
       )
-    | TC_map_or_big_map _ -> fail @@ corner_case ~loc:"decompiler" "TC_map_or_big_map t should not be present in mini-c"
-    | TC_list ty -> (
+    | TC_map_or_big_map, _ -> fail @@ corner_case ~loc:"unspiller" "TC_map_or_big_map t should not be present in mini-c"
+    | TC_list, [ty] -> (
         let%bind lst =
           trace_option (wrong_mini_c_value t v) @@
           get_list v in
@@ -165,7 +165,7 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
         let%bind init  = return @@ E_constant {cons_name=C_LIST_EMPTY;arguments=[]} in
         bind_fold_right_list aux init lst'
       )
-    | TC_set ty -> (
+    | TC_set, [ty] -> (
         let%bind lst =
           trace_option (wrong_mini_c_value t v) @@
           get_set v in
@@ -178,8 +178,12 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
         let%bind init = return @@ E_constant {cons_name=C_SET_EMPTY;arguments=[]} in
         bind_fold_list aux init lst'
       )
-    | TC_contract _ ->
+    | TC_contract, _ ->
       fail @@ bad_decompile v
+    | (TC_michelson_pair|TC_michelson_or|TC_michelson_pair_right_comb|TC_michelson_pair_left_comb|TC_michelson_or_right_comb| TC_michelson_or_left_comb), _ -> 
+      fail @@ corner_case ~loc:"unspiller" "Michelson_combs t should not be present in mini-c"
+    | _ -> 
+      fail @@ corner_case ~loc:"unspiller" "Wrong number of args or wrong kinds for the type operator"
   )
   | T_sum m ->
       let lst = List.map (fun (k,{ctor_type;_}) -> (k,ctor_type)) @@ kv_list_of_cmap m in

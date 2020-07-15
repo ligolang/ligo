@@ -50,7 +50,7 @@ let sub = typer_2 "SUB" @@ fun a b ->
   then ok @@ t_mutez () else
     fail bad_substraction
 
-let some = typer_1 "SOME" @@ fun a -> ok @@ t_option a ()
+let some = typer_1 "SOME" @@ fun a -> ok @@ t_option a
 
 let map_remove : typer = typer_2 "MAP_REMOVE" @@ fun k m ->
   let%bind (src , _) = bind_map_or (
@@ -65,14 +65,14 @@ let map_empty = typer_0 "MAP_EMPTY" @@ fun tv_opt ->
   | None -> fail not_annotated
   | Some t -> 
     let%bind (src, dst) = trace_option (expected_map t) @@ get_t_map t in
-    ok @@ t_map src dst ()
+    ok @@ t_map src dst
 
 let big_map_empty = typer_0 "BIG_MAP_EMPTY" @@ fun tv_opt ->
   match tv_opt with
   | None -> fail not_annotated
   | Some t -> 
     let%bind (src, dst) = trace_option (expected_big_map t) @@ get_t_big_map t in
-    ok @@ t_big_map src dst ()
+    ok @@ t_big_map src dst
 
 let map_add : typer = typer_3 "MAP_ADD" @@ fun k v m ->
   let%bind (src , dst) = bind_map_or (
@@ -115,12 +115,12 @@ let map_find_opt : typer = typer_2 "MAP_FIND_OPT" @@ fun k m ->
       (fun m -> trace_option (expected_big_map m) @@ get_t_big_map m)
     ) m in
   let%bind () = assert_eq src k in
-  ok @@ t_option dst ()
+  ok @@ t_option dst
 
 let map_iter : typer = typer_2 "MAP_ITER" @@ fun f m ->
   let%bind (k, v) = trace_option (expected_map m) @@ get_t_map m in
   let%bind (arg , res) = trace_option (expected_function f) @@ get_t_function f in
-  let kv = t_pair k v () in
+  let kv = t_pair k v in
   let unit = t_unit () in
   let%bind () = assert_eq arg kv in
   let%bind () = assert_eq res unit in
@@ -129,9 +129,9 @@ let map_iter : typer = typer_2 "MAP_ITER" @@ fun f m ->
 let map_map : typer = typer_2 "MAP_MAP" @@ fun f m ->
   let%bind (k, v) = trace_option (expected_map m) @@ get_t_map m in
   let%bind (arg , res) = trace_option (expected_function f) @@ get_t_function f in
-  let kv = t_pair k v () in
+  let kv = t_pair k v in
   let%bind () = assert_eq arg kv in
-  ok @@ t_map k res ()
+  ok @@ t_map k res
 
 let size = typer_1 "SIZE" @@ fun t ->
   let%bind () =
@@ -233,7 +233,7 @@ let self = typer_1_opt "SELF" @@ fun entrypoint_as_string tv_opt ->
 
 let implicit_account = typer_1 "IMPLICIT_ACCOUNT" @@ fun key_hash ->
   let%bind () = trace_option (expected_key_hash key_hash) @@ assert_t_key_hash key_hash in
-  ok @@ t_contract (t_unit () ) ()
+  ok @@ t_contract (t_unit () )
 
 let now = constant' "NOW" @@ t_timestamp ()
 
@@ -253,14 +253,14 @@ let create_contract = typer_4 "CREATE_CONTRACT" @@ fun f kh_opt amount init_stor
   let%bind () = assert_eq s init_storage in
   let%bind () = trace_option (expected_op_list oplist) @@ assert_t_list_operation oplist in
   let%bind () = trace_option (expected_key_hash delegate) @@ assert_t_key_hash delegate in
-  ok @@ t_pair (t_operation ()) (t_address ()) ()
+  ok @@ t_pair (t_operation ()) (t_address ())
 
 let get_contract = typer_1_opt "CONTRACT" @@ fun addr_tv tv_opt ->
   let t_addr = t_address () in
   let%bind () = assert_eq addr_tv t_addr in
   let%bind tv = trace_option not_annotated tv_opt in
   let%bind tv' = trace_option (expected_contract tv) @@ get_t_contract tv in
-  ok @@ t_contract tv' ()
+  ok @@ t_contract tv'
 
 let get_contract_opt = typer_1_opt "CONTRACT OPT" @@ fun addr_tv tv_opt ->
   let t_addr = t_address () in
@@ -268,7 +268,7 @@ let get_contract_opt = typer_1_opt "CONTRACT OPT" @@ fun addr_tv tv_opt ->
   let%bind tv = trace_option not_annotated tv_opt in
   let%bind tv = trace_option (expected_option tv) @@ get_t_option tv in
   let%bind tv' = trace_option (expected_contract tv) @@ get_t_contract tv in
-  ok @@ t_option (t_contract tv' ()) ()
+  ok @@ t_option (t_contract tv')
 
 let get_entrypoint = typer_2_opt "CONTRACT_ENTRYPOINT" @@ fun entry_tv addr_tv tv_opt ->
   let t_string = t_string () in
@@ -277,7 +277,7 @@ let get_entrypoint = typer_2_opt "CONTRACT_ENTRYPOINT" @@ fun entry_tv addr_tv t
   let%bind () = assert_eq addr_tv t_addr in
   let%bind tv = trace_option not_annotated tv_opt in
   let%bind tv' = trace_option (expected_contract tv) @@ get_t_contract tv in
-  ok @@ t_contract tv' ()
+  ok @@ t_contract tv'
 
 let get_entrypoint_opt = typer_2_opt "CONTRACT_ENTRYPOINT_OPT" @@ fun entry_tv addr_tv tv_opt ->
   let t_string = t_string () in
@@ -287,10 +287,10 @@ let get_entrypoint_opt = typer_2_opt "CONTRACT_ENTRYPOINT_OPT" @@ fun entry_tv a
   let%bind tv = trace_option not_annotated tv_opt in
   let%bind tv = trace_option (expected_option tv) @@ get_t_option tv in
   let%bind tv' = trace_option (expected_contract tv) @@ get_t_contract tv in
-  ok @@ t_option (t_contract tv' ())()
+  ok @@ t_option (t_contract tv' )
 
 let set_delegate = typer_1 "SET_DELEGATE" @@ fun delegate_opt ->
-  let kh_opt = (t_option (t_key_hash ()) ()) in
+  let kh_opt = (t_option (t_key_hash ()) ) in
   let%bind () = assert_eq delegate_opt kh_opt in
   ok @@ t_operation ()
 
@@ -300,7 +300,7 @@ let abs = typer_1 "ABS" @@ fun t ->
 
 let is_nat = typer_1 "ISNAT" @@ fun t ->
   let%bind () = trace_option (expected_int t) @@ assert_t_int t in
-  ok @@ t_option (t_nat ()) ()
+  ok @@ t_option (t_nat ())
 
 let neg = typer_1 "NEG" @@ fun t ->
   let%bind () = Assert.assert_true (wrong_neg t) @@ (eq_1 t (t_nat ()) || eq_1 t (t_int ())) in
@@ -328,13 +328,13 @@ let times = typer_2 "TIMES" @@ fun a b ->
 
 let ediv = typer_2 "EDIV" @@ fun a b ->
   if eq_2 (a , b) (t_nat ())
-  then ok @@ t_option (t_pair (t_nat ()) (t_nat ()) ()) () else
+  then ok @@ t_option (t_pair (t_nat ()) (t_nat ()) ) else
   if eq_2 (a , b) (t_int ())
-  then ok @@ t_option (t_pair (t_int ()) (t_nat ()) ()) () else
+  then ok @@ t_option (t_pair (t_int ()) (t_nat ()) ) else
   if eq_1 a (t_mutez ()) && eq_1 b (t_mutez ())
-  then ok @@ t_option (t_pair (t_nat ()) (t_mutez ()) ()) () else
+  then ok @@ t_option (t_pair (t_nat ()) (t_mutez ()) ) else
   if eq_1 a (t_mutez ()) && eq_1 b (t_nat ())
-  then ok @@ t_option (t_pair (t_mutez ()) (t_mutez ()) ()) () else
+  then ok @@ t_option (t_pair (t_mutez ()) (t_mutez ()) ) else
     fail @@ typeclass_error
               [
                 [t_nat();t_nat()] ;
@@ -438,7 +438,7 @@ let list_map = typer_2 "LIST_MAP" @@ fun body lst ->
   let%bind (arg , res) = trace_option (expected_function body) @@ get_t_function body in
   let%bind key = trace_option (expected_list lst) @@ get_t_list lst in
   let%bind () = assert_eq key arg in
-  ok (t_list res ())
+  ok (t_list res )
 
 let list_fold = typer_3 "LIST_FOLD" @@ fun body lst init ->
   let%bind (arg , res) = trace_option (expected_function body) @@ get_t_function body in
@@ -464,7 +464,7 @@ let map_fold = typer_3 "MAP_FOLD" @@ fun body map init ->
   let%bind (arg , res) = trace_option (expected_function body) @@ get_t_function body in
   let%bind (prec , cur) = trace_option (expected_pair arg) @@ get_t_pair arg in
   let%bind (key , value) = trace_option (expected_map map) @@ get_t_map map in
-  let kv = t_pair key value () in
+  let kv = t_pair key value in
   trace bad_map_fold_tracer @@
   let%bind () = assert_eq kv cur in
   let%bind () = assert_eq prec res in
@@ -480,15 +480,15 @@ let map_fold = typer_3 "MAP_FOLD" @@ fun body map init ->
 let fold_while = typer_2 "FOLD_WHILE" @@ fun body init ->
   let%bind (arg, result) = trace_option (expected_function body) @@ get_t_function body in
   let%bind () = assert_eq arg init in
-  let%bind () = assert_eq (t_pair (t_bool ()) init ()) result
+  let%bind () = assert_eq (t_pair (t_bool ()) init) result
   in ok init
 
 (* Continue and Stop are just syntactic sugar for building a pair (bool * a') *)
 let continue = typer_1 "CONTINUE" @@ fun arg ->
-  ok @@ t_pair (t_bool ()) arg ()
+  ok @@ t_pair (t_bool ()) arg
 
 let stop = typer_1 "STOP" @@ fun arg ->
-  ok (t_pair (t_bool ()) arg ())
+  ok (t_pair (t_bool ()) arg)
 
 let not_ = typer_1 "NOT" @@ fun elt ->
   if eq_1 elt (t_bool ())

@@ -48,7 +48,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a,'err) res
       let%bind res = fold_expression self init'' expr in
       ok res
     in
-    let%bind res = bind_fold_lmap aux (ok init') m in
+    let%bind res = bind_fold_lmap aux init' m in
     ok res
   )
   | E_record_update {record;update} -> (
