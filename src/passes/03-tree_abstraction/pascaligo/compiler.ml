@@ -1,5 +1,6 @@
 open Errors
 open Trace
+open Function
 
 module CST = Cst.Pascaligo
 module AST = Ast_imperative
@@ -10,15 +11,13 @@ let nseq_to_list (hd, tl) = hd :: tl
 let npseq_to_list (hd, tl) = hd :: (List.map snd tl)
 let npseq_to_ne_list (hd, tl) = (hd, List.map snd tl)
 
-let (<@) f g x = f (g x)
-
 open Predefined.Tree_abstraction.Pascaligo
 
 let r_split = Location.r_split
 
-let return = ok
 
 let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
+  let return te = ok @@ te in
   match te with
     TSum sum ->
     let (nsepseq, loc) = r_split sum in
@@ -426,6 +425,7 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
 
 and compile_matching_expr : type a.(a -> _ result) -> a CST.case_clause CST.reg List.Ne.t -> _ =
 fun compiler cases ->
+  let return = ok in
   let compile_pattern pattern = return pattern in
   let compile_simple_pattern (pattern : CST.pattern) =
     match pattern with
@@ -472,7 +472,7 @@ fun compiler cases ->
         let (_, pattern) = some in
         let (pattern,loc) = r_split pattern in
         let%bind pattern = compile_simple_pattern pattern.inside in
-        return (Label "Some", Location.wrap ?loc:(Some loc) pattern)
+        return (Label "Some", Location.wrap ~loc pattern)
       | PConstrApp constr ->
         let (constr, _) = r_split constr in
         let (constr, patterns) = constr in
@@ -510,11 +510,12 @@ fun compiler cases ->
   | (p, _), _ -> fail @@ unsupported_pattern_type p
 
 and compile_attribute_declaration = function
-  None   -> return false
-| Some _ -> return true
+  None   -> false
+| Some _ -> true
 
 and compile_parameters (params : CST.parameters) =
   let compile_param_decl (param : CST.param_decl) =
+    let return = ok in
     match param with
       ParamConst pc ->
       let (pc, _loc) = r_split pc in
@@ -709,7 +710,7 @@ and compile_instruction : ?next: AST.expression -> CST.instruction -> _ result  
 
 and compile_data_declaration : next:AST.expression -> ?attr:CST.attr_decl -> CST.data_decl -> _ = fun ~next ?attr data_decl ->
   let return loc name type_ init =
-    let%bind attr = compile_attribute_declaration attr in
+    let attr = compile_attribute_declaration attr in
     ok @@ e_let_in ~loc (name,type_) attr init next in
   match data_decl with
     LocalConst const_decl ->
@@ -732,6 +733,7 @@ and compile_data_declaration : next:AST.expression -> ?attr:CST.attr_decl -> CST
     return loc fun_name fun_type lambda
 
 and compile_statement : ?next:AST.expression -> CST.attr_decl option -> CST.statement -> _ result = fun ?next attr statement ->
+  let return = ok in
   match statement with
     Instr i ->
       let%bind i = compile_instruction ?next i in
@@ -743,6 +745,7 @@ and compile_statement : ?next:AST.expression -> CST.attr_decl option -> CST.stat
   | Attr at -> return (next, Some at)
 
 and compile_block : ?next:AST.expression -> CST.block CST.reg -> _ result = fun ?next block ->
+  let return = ok in
   let (block', _loc) = r_split block in
   let statements = npseq_to_list block'.statements in
   let aux (next,attr) statement =
@@ -755,7 +758,8 @@ and compile_block : ?next:AST.expression -> CST.block CST.reg -> _ result = fun 
   | None -> fail @@ block_start_with_attribute block
 
 and compile_fun_decl ({kwd_recursive; fun_name; param; ret_type; return=r; attributes}: CST.fun_decl) =
-  let%bind attr = compile_attribute_declaration attributes in
+  let return = ok in
+  let attr = compile_attribute_declaration attributes in
   let (fun_name, loc) = r_split fun_name in
   let fun_binder = Location.wrap ?loc:(Some loc) @@ Var.of_name fun_name in
   let%bind ret_type = bind_map_option (compile_type_expression <@ snd) ret_type in
@@ -799,7 +803,7 @@ and compile_fun_decl ({kwd_recursive; fun_name; param; ret_type; return=r; attri
   maked as ATR *)
 let compile_declaration : (CST.attr_decl option * _) -> CST.declaration -> _ = fun (attr, lst) decl ->
   let return ?attr reg decl =
-    return (attr, (Location.wrap ~loc:(Location.lift reg) decl)::lst) in (*ATR*)
+    ok @@ (attr, (Location.wrap ~loc:(Location.lift reg) decl)::lst) in (*ATR*)
   match decl with
     TypeDecl {value={name; type_expr; _};region} ->
     (* Todo : if attr isn't none, send warning *)
@@ -812,7 +816,7 @@ let compile_declaration : (CST.attr_decl option * _) -> CST.declaration -> _ = f
     let attributes = attr in (*ATR*)
     let%bind const_type = bind_map_option (compile_type_expression <@ snd) const_type in
     let%bind init = compile_expression init in
-    let%bind attr = compile_attribute_declaration attributes in
+    let      attr = compile_attribute_declaration attributes in
     return region @@ AST.Declaration_constant (name, const_type,attr,init)
   | FunDecl {value;region} ->
     let value = {value with attributes = attr} in (*ATR*)
@@ -826,6 +830,7 @@ let compile_program : CST.ast -> _ result = fun t ->
  *)
 let compile_program : CST.ast -> _ result =
   fun t ->
+  let return = ok in
   let declarations = List.rev @@ nseq_to_list t.decl in
   let attr = (None, []) in
   let%bind (_, declarations) = bind_fold_list compile_declaration attr declarations in

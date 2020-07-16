@@ -1324,7 +1324,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "print-ast-typed" ; contract "sequence.mligo" ; ];
-  [%expect {| const y = lambda (_) return let x = +1 in let _ = let x = +2 in UNIT() in let _ = let x = +23 in UNIT() in let _ = let x = +42 in UNIT() in x |}]
+  [%expect {| const y = lambda (#1) return let x = +1 in let _ = let x = +2 in UNIT() in let _ = let x = +23 in UNIT() in let _ = let x = +42 in UNIT() in x |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_type_operator.ligo" ; "main" ] ;
@@ -1576,7 +1576,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-          in file "bad_contract.mligo", line 4, characters 0-3
+          in file "bad_contract.mligo", line 4, characters 9-46
           Badly typed contract:
           unexpected entrypoint type ( nat * int ) -> int
 
@@ -1591,7 +1591,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract2.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-          in file "bad_contract2.mligo", line 5, characters 0-3
+          in file "bad_contract2.mligo", line 5, characters 9-46
           Badly typed contract:
           expected list (operation) but got string
 
@@ -1606,7 +1606,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract3.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-          in file "bad_contract3.mligo", line 5, characters 0-3
+          in file "bad_contract3.mligo", line 5, characters 9-46
           Badly typed contract main:
           expected storage type as right member of a pair in the input and output, but got:
           - int in the input
@@ -1741,16 +1741,17 @@ let%expect_test _ =
     const main : (int ,
     storage) -> (list (operation) ,
     storage) = lambda (n:Some((int ,
-    storage))) : None return let x = let x = 7 : int in (ADD(x ,
+    storage))) : Some((list (operation) ,
+    storage)) return let x : (int ,
+    int) = let x : int = 7 in (ADD(x ,
     n.0) ,
     ADD(n.1.0 ,
-    n.1.1)) : (int ,
-    int) in (list[] : list (operation) ,
+    n.1.1)) in (list[] : list (operation) ,
     x)
     const f0 = lambda (a:Some(string)) : None return true(unit)
     const f1 = lambda (a:Some(string)) : None return true(unit)
     const f2 = lambda (a:Some(string)) : None return true(unit)
-    const letin_nesting = lambda (_:Some(unit)) : None return let s = "test" in let p0 = (f0)@(s) in { ASSERTION(p0);
+    const letin_nesting = lambda (#1:Some(unit)) : None return let s = "test" in let p0 = (f0)@(s) in { ASSERTION(p0);
      let p1 = (f1)@(s) in { ASSERTION(p1);
      let p2 = (f2)@(s) in { ASSERTION(p2);
      s}}}

@@ -2,6 +2,7 @@
 
 open Errors
 open Trace
+open Function
 open Ast_imperative
 
 module Raw = Cst.Reasonligo
@@ -11,7 +12,6 @@ module Option = Simple_utils.Option
 
 open Combinators
 
-let (<@) f g x = f (g x)
 let nseq_to_list (hd, tl) = hd :: tl
 let npseq_to_list (hd, tl) = hd :: (List.map snd tl)
 let npseq_to_nelist (hd, tl) = hd, (List.map snd tl)

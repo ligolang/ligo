@@ -289,8 +289,6 @@ core_pattern:
 | "<string>"                                   {           PString $1 }
 | "<verbatim>"                                 {         PVerbatim $1 }
 | unit                                         {             PUnit $1 }
-| "false"                                      {            PFalse $1 }
-| "true"                                       {             PTrue $1 }
 | par(ptuple)                                  {              PPar $1 }
 | list__(tail)                                 { PList (PListComp $1) }
 | constr_pattern                               {           PConstr $1 }
@@ -319,6 +317,8 @@ constr_pattern:
     and value  = $1,$2
     in PSomeApp {region; value}
   }
+| "false" { PFalse $1 }
+| "true"  {  PTrue $1 }
 | "<constr>" {
     PConstrApp {$1 with value=$1,None}
   }
