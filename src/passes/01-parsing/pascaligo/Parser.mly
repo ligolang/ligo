@@ -325,8 +325,7 @@ open_fun_decl:
                   return       = $7;
                   terminator   = None;
                   attributes   = None}
-    in {region; value}
-  }
+    in {region; value} }
 
 fun_decl:
   open_fun_decl ";"? {
