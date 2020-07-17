@@ -10,7 +10,6 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "michelson_converter_no_annotation.mligo", line 4, characters 9-39
-          Constant declaration 'l4'
           Can't retrieve type declaration order in the converted record, you need to annotate it
 
 
@@ -24,8 +23,6 @@ let%expect_test _ =
   run_ligo_bad [ "interpret" ; "--init-file="^(bad_contract "michelson_converter_short_record.mligo") ; "l1"] ;
   [%expect {|
     ligo: error
-          in file "michelson_converter_short_record.mligo", line 4, characters 9-44
-          Constant declaration 'l1'
           in file "michelson_converter_short_record.mligo", line 1, characters 10-23
           Converted record must have at least two elements
 

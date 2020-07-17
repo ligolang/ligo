@@ -254,12 +254,8 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "%a"
         (error_ppformat ~display_format) err
-    | `Typer_constant_declaration_tracer (name,ae,_,err) ->
-      Format.fprintf f
-        "@[<hv>%a@ Constant declaration '%a'@ %a@]"
-        Location.pp ae.location
-        Ast_core.PP.expression_variable name
-      (error_ppformat ~display_format) err
+    | `Typer_constant_declaration_tracer (_,_,_,err) ->
+      error_ppformat ~display_format f err
     | `Typer_match_error (expected,actual,loc) ->
       Format.fprintf f
         "@[<hv>%a@ Typing match:@ expected %a got %a@]"
@@ -292,14 +288,6 @@ let rec error_ppformat : display_format:string display_format ->
         Location.pp loc
         Ast_core.PP.label field
         Ast_core.PP.expression ae
-    | `Typer_expression_tracer (_,err)
-    | `Typer_record_access_tracer (_,err) ->
-      error_ppformat ~display_format f err
-    | `Typer_assert_equal (expected,actual) ->
-      Format.fprintf f
-        "@[<hv>Bad types:@ expected %a@ got %a@]"
-        Ast_typed.PP.type_expression expected 
-        Ast_typed.PP.type_expression actual
     | `Typer_corner_case desc ->
       Format.fprintf f
         "@[<hv>%s@]"
@@ -309,13 +297,6 @@ let rec error_ppformat : display_format:string display_format ->
         "@[<hv>%a@ Loops over collections expect lists, sets or maps but got type %a@]"
         Location.pp loc
         Ast_typed.PP.type_expression t
-    | `Typer_declaration_order_record _loc ->
-      Format.fprintf f
-        "@[<hv>Can't retrieve type declaration order in the converted record, you need to annotate it@]"
-    | `Typer_declaration_order_variant loc ->
-      Format.fprintf f
-        "@[<hv>%a@ Can't retrieve type declaration order in the converted variant, you need to annotate it@]"
-        Location.pp loc
     | `Typer_too_small_record loc ->
       Format.fprintf f
         "@[<hv>%a@ Converted record must have at least two elements@]"
@@ -324,22 +305,6 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@ Converted variant must have at least two elements@]"
         Location.pp loc
-    | `Typer_expected_record t ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a record but got %a@]"
-        Location.pp t.location
-        Ast_typed.PP.type_expression t
-    | `Typer_expected_variant t ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a variant but got %a@]"
-        Location.pp t.location
-        Ast_typed.PP.type_expression t
-    | `Typer_wrong_param_number (name,expected,actual) ->
-      Format.fprintf f
-        "@[<hv>%a@ Constant %s has the wrong number of parameters@ expected %d, got %d @]"
-        Location.pp_lift (List.fold_left (fun a (t:Ast_typed.type_expression) -> match t.location with File reg -> Region.cover a reg | Virtual _ -> a) Region.ghost actual)
-        name
-        expected (List.length actual)
     | `Typer_bad_list_fold_tracer err ->
       Format.fprintf f
         "@[<hv>Badly typed list fold@]%a"
@@ -352,101 +317,25 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>Badly typed map fold@]%a"
         (error_ppformat ~display_format) err
-    | `Typer_expected_function e ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a function but got %a@]"
-        Location.pp e.location
-        Ast_typed.PP.type_expression e
-    | `Typer_expected_pair e ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a pair but got %a@]"
-        Location.pp e.location
-        Ast_typed.PP.type_expression e
-    | `Typer_expected_list e ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a list but got %a@]"
-        Location.pp e.location
-        Ast_typed.PP.type_expression e
-    | `Typer_expected_set e ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a set but got %a@]"
-        Location.pp e.location
-        Ast_typed.PP.type_expression e
-    | `Typer_expected_map e ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a map but got %a@]"
-        Location.pp e.location
-        Ast_typed.PP.type_expression e
-    | `Typer_expected_big_map e ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a big map but got %a@]"
-        Location.pp e.location
-        Ast_typed.PP.type_expression e
-    | `Typer_expected_option e ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected an option but got %a@]"
-        Location.pp e.location
-        Ast_typed.PP.type_expression e
-    | `Typer_expected_nat t ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a nat but got %a@]"
-        Location.pp t.location
-        Ast_typed.PP.type_expression t
-    | `Typer_expected_bytes t ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected bytes but got %a@]"
-        Location.pp t.location
-        Ast_typed.PP.type_expression t
-    | `Typer_expected_key t ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a key but got %a@]"
-        Location.pp t.location
-        Ast_typed.PP.type_expression t
-    | `Typer_expected_signature t ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a signature but got %a@]"
-        Location.pp t.location
-        Ast_typed.PP.type_expression t
-    | `Typer_expected_contract t ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a contract but got %a@]"
-        Location.pp t.location
-        Ast_typed.PP.type_expression t
-    | `Typer_expected_string t ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a string but got %a@]"
-        Location.pp t.location
-        Ast_typed.PP.type_expression t
-    | `Typer_expected_key_hash t ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a key hash but got %a@]"
-        Location.pp t.location
-        Ast_typed.PP.type_expression t
-    | `Typer_expected_mutez t ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a mutez but got %a@]"
-        Location.pp t.location
-        Ast_typed.PP.type_expression t
-    | `Typer_expected_op_list t ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a list of operations but got %a@]"
-        Location.pp t.location
-        Ast_typed.PP.type_expression t
-    | `Typer_expected_int t ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected an int of operations but got %a@]"
-        Location.pp t.location
-        Ast_typed.PP.type_expression t
-    | `Typer_expected_bool t ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a bool of operations but got %a@]"
-        Location.pp t.location
-        Ast_typed.PP.type_expression t
-    | `Typer_not_matching (t1,t2) ->
-      Format.fprintf f
-        "@[<hv>Types not matching:@ %a - %a@ %a - %a@]"
-        Location.pp t1.location Ast_typed.PP.type_expression t1
-        Location.pp t2.location Ast_typed.PP.type_expression t2
+    | `Typer_expression_tracer (e,err) ->
+      let exploc = e.location in
+      ( match err with 
+        | `Typer_assert_equal _ | `Typer_expected_record _
+        | `Typer_expected_variant _ | `Typer_wrong_param_number _
+        | `Typer_expected_function _ | `Typer_expected_pair _
+        | `Typer_expected_list _ | `Typer_expected_set _
+        | `Typer_expected_map _ | `Typer_expected_big_map _
+        | `Typer_expected_option _ | `Typer_expected_nat _
+        | `Typer_expected_bytes _ | `Typer_expected_key _
+        | `Typer_expected_signature _ | `Typer_expected_contract _
+        | `Typer_expected_string _ | `Typer_expected_key_hash _
+        | `Typer_expected_mutez _ | `Typer_expected_op_list _
+        | `Typer_expected_int _ | `Typer_expected_bool _
+        | `Typer_declaration_order_record _| `Typer_declaration_order_variant _
+        | `Typer_not_matching _ | `Typer_uncomparable_types _ | `Typer_typeclass_error _ -> no_loc_children f exploc err
+        | _ -> error_ppformat ~display_format f err
+      )
+    | `Typer_record_access_tracer (_,err) -> error_ppformat ~display_format f err
     | `Typer_not_annotated ->
       Format.fprintf f "@[<hv>Not annotated@]"
     | `Typer_bad_substraction ->
@@ -467,24 +356,11 @@ let rec error_ppformat : display_format:string display_format ->
         "@[<hv>%a@ should be of type bool, nat or int,@ got %a@]"
       Location.pp t.location
       Ast_typed.PP.type_expression t
-    | `Typer_typeclass_error (exps,acts) ->
-      let open Simple_utils.PP_helpers in
-      let printl printer ppf args =
-        Format.fprintf ppf "(%a)" (list_sep printer (const " , ")) args in
-      Format.fprintf f
-        "@[<hv>Expected arguments with one of the following combinations of type:@ %a@,but got %a@]"
-        (list_sep (printl Ast_typed.PP.type_expression) (const " or ")) exps
-        (list_sep Ast_typed.PP.type_expression (const " , ")) acts
     | `Typer_converter t ->
       Format.fprintf f
         "@[<hv>%a@ Converters can only be used on records or variants,@ got %a@]"
       Location.pp t.location
       Ast_typed.PP.type_expression t
-    | `Typer_uncomparable_types (a,b) ->
-      Format.fprintf f
-        "@[<hv>Those two types are not comparable:@ - %a@ - %a@]"
-      Ast_typed.PP.type_expression a
-      Ast_typed.PP.type_expression b
     | `Typer_comparator_composed a ->
       Format.fprintf f
         "@[<hv>%a@ Only composed types of not more than two element are allowed to be compared@]"
@@ -574,7 +450,165 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f "@[<hv> missing %s in one of the record @]" k
     | `Typer_compare_tracer err ->
       error_ppformat ~display_format f err 
+    | 
+    ( `Typer_assert_equal _ | `Typer_expected_record _
+    | `Typer_expected_variant _ | `Typer_wrong_param_number _
+    | `Typer_expected_function _ | `Typer_expected_pair _
+    | `Typer_expected_list _ | `Typer_expected_set _
+    | `Typer_expected_map _ | `Typer_expected_big_map _
+    | `Typer_expected_option _ | `Typer_expected_nat _
+    | `Typer_expected_bytes _ | `Typer_expected_key _
+    | `Typer_expected_signature _ | `Typer_expected_contract _
+    | `Typer_expected_string _ | `Typer_expected_key_hash _
+    | `Typer_expected_mutez _ | `Typer_expected_op_list _
+    | `Typer_expected_int _ | `Typer_expected_bool _
+    | `Typer_declaration_order_record _| `Typer_declaration_order_variant _
+    | `Typer_not_matching _ | `Typer_uncomparable_types _ | `Typer_typeclass_error _) as err -> no_loc_children f (Location.Virtual "") err
   )
+
+and no_loc_children : Format.formatter -> Location.t -> typer_error -> unit = fun f exploc err ->
+  match err with
+  | `Typer_assert_equal (expected,actual) ->
+    Format.fprintf f
+      "@[<hv>%a@ Bad types:@ expected %a@ got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression expected 
+      Ast_typed.PP.type_expression actual
+  | `Typer_expected_record t ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a record but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression t
+  | `Typer_expected_variant t ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a variant but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression t
+  | `Typer_wrong_param_number (name,expected,actual) ->
+    Format.fprintf f
+      "@[<hv>%a@ Constant %s has the wrong number of parameters@ expected %d, got %d @]"
+      Location.pp exploc
+      name
+      expected (List.length actual)
+  | `Typer_expected_function e ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a function but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression e
+  | `Typer_expected_pair e ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a pair but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression e
+  | `Typer_expected_list e ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a list but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression e
+  | `Typer_expected_set e ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a set but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression e
+  | `Typer_expected_map e ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a map but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression e
+  | `Typer_expected_big_map e ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a big map but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression e
+  | `Typer_expected_option e ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected an option but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression e
+  | `Typer_expected_nat t ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a nat but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression t
+  | `Typer_expected_bytes t ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected bytes but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression t
+  | `Typer_expected_key t ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a key but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression t
+  | `Typer_expected_signature t ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a signature but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression t
+  | `Typer_expected_contract t ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a contract but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression t
+  | `Typer_expected_string t ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a string but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression t
+  | `Typer_expected_key_hash t ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a key hash but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression t
+  | `Typer_expected_mutez t ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a mutez but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression t
+  | `Typer_expected_op_list t ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a list of operations but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression t
+  | `Typer_expected_int t ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected an int of operations but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression t
+  | `Typer_expected_bool t ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a bool of operations but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression t
+  | `Typer_not_matching (t1,t2) ->
+    Format.fprintf f
+      "@[<hv>Types not matching:@ %a - %a@ %a - %a@]"
+      Location.pp t1.location Ast_typed.PP.type_expression t1
+      Location.pp t2.location Ast_typed.PP.type_expression t2
+  | `Typer_uncomparable_types (a,b) ->
+    Format.fprintf f
+      "@[<hv>%a@ Those two types are not comparable:@ - %a@ - %a@]"
+    Location.pp exploc
+    Ast_typed.PP.type_expression a
+    Ast_typed.PP.type_expression b
+  | `Typer_typeclass_error (exps,acts) ->
+    let open Simple_utils.PP_helpers in
+    let printl printer ppf args =
+      Format.fprintf ppf "(%a)" (list_sep printer (const " , ")) args in
+    Format.fprintf f
+      "@[<hv>%a@ Expected arguments with one of the following combinations of type:@ %a@,but got %a@]"
+      Location.pp exploc
+      (list_sep (printl Ast_typed.PP.type_expression) (const " or ")) exps
+      (list_sep Ast_typed.PP.type_expression (const " , ")) acts
+  | `Typer_declaration_order_record _loc ->
+    Format.fprintf f
+      "@[<hv>%a@ Can't retrieve type declaration order in the converted record, you need to annotate it@]"
+      Location.pp exploc
+  | `Typer_declaration_order_variant _loc ->
+    Format.fprintf f
+      "@[<hv>%a@ Can't retrieve type declaration order in the converted variant, you need to annotate it@]"
+      Location.pp exploc
+  | _ -> ()
 
 let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
   let json_error ~stage ~content =

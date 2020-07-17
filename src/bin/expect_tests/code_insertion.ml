@@ -37,9 +37,10 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_michelson_insertion_2.ligo" ; "main" ] ;
   [%expect{|
     ligo: error
-          in file "bad_michelson_insertion_2.ligo", line 3, characters 9-13
-          Constant declaration 'main'
-          Bad types: expected nat got ( nat * nat )
+          in file "bad_michelson_insertion_2.ligo", line 5, characters 32-40
+          Bad types:
+          expected nat
+          got ( nat * nat )
 
 
           If you're not sure how to fix this error, you can do one of the following:
