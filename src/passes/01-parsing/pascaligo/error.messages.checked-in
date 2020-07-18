@@ -15,8 +15,10 @@ interactive_expr: Begin Case Verbatim Of LBRACKET WILD ARROW Skip With
 ## In state 454, spurious reduction of production cases(if_clause) -> nsepseq(case_clause(if_clause),VBAR)
 ##
 Ill-formed case instruction.
-At this point, if the case clause is complete and the series of cases
-is complete, then a closing bracket ']' is expected.
+At this point, if the case clause is complete, one of the following is
+expected:
+  * more case clauses, separated by vertical bars '|';
+  * a closing bracket ']' if the case instruction is complete.
 
 interactive_expr: Begin Case Verbatim Of LBRACKET With
 ##
@@ -61,9 +63,10 @@ interactive_expr: Begin Case Verbatim Of WILD ARROW Skip With
 ## In state 457, spurious reduction of production nsepseq(case_clause(if_clause),VBAR) -> case_clause(if_clause)
 ## In state 454, spurious reduction of production cases(if_clause) -> nsepseq(case_clause(if_clause),VBAR)
 ##
-Ill-formed case instruction.
-At this point, if the case clause is complete and the series of cases
-is complete, then the keyword 'end' is expected.
+At this point, if the case clause is complete, one of the following is
+expected:
+  * more case clause separated by vertical bars '|';
+  * the keyword 'end' if the case instruction is complete.
 
 interactive_expr: Begin Case Verbatim Of WILD ARROW With
 ##
@@ -142,8 +145,8 @@ interactive_expr: Begin Case Verbatim With
 ## In state 202, spurious reduction of production expr -> disj_expr
 ##
 Ill-formed case instruction.
-At this point, if the expression to match is complete, the keyword
-'of' is expected, followed with a series of cases.
+At this point, if the condition is complete, the keyword 'of' is
+expected, followed with a series of case clauses.
 
 interactive_expr: Begin Case With
 ##
@@ -156,7 +159,7 @@ interactive_expr: Begin Case With
 ## Case
 ##
 Ill-formed case instruction.
-At this point, the expression to match is expected.
+At this point, the condition is expected as an expression.
 
 interactive_expr: Begin Constr DOT And With
 ##
@@ -197,7 +200,7 @@ interactive_expr: Begin For Ident ARROW Ident With
 Ill-formed bounded loop.
 At this point, if the index is complete, the keyword 'in' is expected,
 followed by the kind of collection to be iterated, for example the
-keyword 'set', and the collection itself as an expression.
+keyword 'set', and then the collection itself as an expression.
 
 interactive_expr: Begin For Ident ARROW With
 ##
@@ -390,9 +393,8 @@ interactive_expr: Begin For Ident In With
 ## For Ident option(arrow_clause) In
 ##
 Ill-formed bounded loop.
-At this point, the type of collection to loop over is expected (for
-instance, 'map', 'set', or 'list'), followed by the actual collection
-as an expression.
+At this point, the type of collection to loop over is expected ('map',
+'set', or 'list'), followed by the actual collection as an expression.
 
 interactive_expr: Begin For Ident With
 ##
@@ -406,13 +408,14 @@ interactive_expr: Begin For Ident With
 ##
 Ill-formed bounded loop.
 At this point, one of the following is expected:
-  * if iterating over a numerical interval, then an assignment
+  * if iterating over a numerical interval, then the assignment
     operator ':=' is expected, followed by the initial value of the
     index as an expression;
   * if iterating over a list or a set, then the keyword 'in' is
-    expected, followed by either the key word 'list' or 'map';
+    expected, followed by either the keyword 'list' or 'map';
   * if iterating over a map, then a binding arrow '->' followed by a
-    value (as a opposed to key) is expected as an expression.
+    variable in the range of the map (that is, 'values', as opposed to
+    'keys').
 
 interactive_expr: Begin For With
 ##
@@ -425,7 +428,7 @@ interactive_expr: Begin For With
 ## For
 ##
 Ill-formed bounded loop.
-At this point the index is expected as an identifier.
+At this point, the index is expected as an identifier.
 
 interactive_expr: Begin Ident ASS With
 ##
@@ -457,7 +460,7 @@ interactive_expr: Begin Ident With
 ## In state 434, spurious reduction of production lhs -> path
 ##
 Ill-formed assignment.
-At this point, if this left-hand side of the assignment is complete,
+At this point, if the left-hand side of the assignment is complete,
 the assignment operator ':=' is expected, followed by an expression.
 
 interactive_expr: Begin If Verbatim Then LBRACE Skip With
@@ -477,8 +480,10 @@ interactive_expr: Begin If Verbatim Then LBRACE Skip With
 ## In state 495, spurious reduction of production sep_or_term_list(statement,SEMI) -> nsepseq(statement,SEMI)
 ##
 Ill-formed block of statements.
-At this point, if the series of statements (instructions and
-declarations) is complete, a closing brace '}' is expected.
+At this point, if the statement is complete, one of the following is
+expected:
+  * more statements (instruction or declaration) separated by semicolons ';';
+  * a closing brace '}' if the block is complete.
 
 interactive_expr: Begin If Verbatim Then LBRACE With
 ##
@@ -522,7 +527,7 @@ interactive_expr: Begin If Verbatim Then Skip With
 ## In state 496, spurious reduction of production option(SEMI) ->
 ##
 Ill-formed conditional instruction.
-At this point, if the `then` branch is complete, the keyword
+At this point, if the 'then' branch is complete, the keyword
 'else' is expected, followed by an instruction or block of statements
 (instructions and declarations).
 
@@ -537,7 +542,7 @@ interactive_expr: Begin If Verbatim Then With
 ##
 Ill-formed conditional instruction.
 At this point, the contents of the 'then' branch is expected as an
-instruction or block of statements (instructions and declarations).
+instruction or a block of statements (instructions and declarations).
 
 interactive_expr: Begin If Verbatim With
 ##
@@ -636,9 +641,10 @@ interactive_expr: Begin Patch Ident While
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 165, spurious reduction of production path -> Ident
 ##
-Ill-formed patch statement.
-At this point, if the data structure (map, set or record) is fully
-qualified, the keyword 'with' is expected, followed by the updates.
+Ill-formed patch instruction.
+At this point, if the data structure (map, set or record) being
+patched is fully qualified, the keyword 'with' is expected, followed
+by the updates.
 
 interactive_expr: Begin Patch Ident With Map LBRACKET Verbatim ARROW Bytes With
 ##
@@ -668,8 +674,10 @@ interactive_expr: Begin Patch Ident With Map LBRACKET Verbatim ARROW Bytes With
 ## In state 305, spurious reduction of production sep_or_term_list(binding,SEMI) -> nsepseq(binding,SEMI)
 ##
 Ill-formed map expression.
-At this point, if the series of key/value bindings is complete, a
-closing bracket ']' is expected.
+At this point, if key/value binding is complete, one of the following
+is expected:
+  * more key/value bindings, separated by semicolons ';';
+  * a closing bracket ']' if the map is complete.
 
 interactive_expr: Begin Patch Ident With Map LBRACKET With
 ##
@@ -681,7 +689,8 @@ interactive_expr: Begin Patch Ident With Map LBRACKET With
 ## Map LBRACKET
 ##
 Ill-formed map expression.
-At this point, a key/value binding is expected as two expressions separated by an arrow '->'.
+At this point, a key/value binding is expected as two expressions
+separated by an arrow '->'.
 
 interactive_expr: Begin Patch Ident With Map Verbatim ARROW Bytes With
 ##
@@ -711,8 +720,10 @@ interactive_expr: Begin Patch Ident With Map Verbatim ARROW Bytes With
 ## In state 305, spurious reduction of production sep_or_term_list(binding,SEMI) -> nsepseq(binding,SEMI)
 ##
 Ill-formed map expression.
-At this point, if the series of key/value bindings is complete, the
-keyword 'end' is expected.
+At this point, if the key/value binding is complete, one of the following
+is expected:
+  * more key/value bindings separated by semicolons ';';
+  * the keyword 'end' if the map is complete.
 
 interactive_expr: Begin Patch Ident With Map With
 ##
@@ -759,8 +770,10 @@ interactive_expr: Begin Patch Ident With Record Ident EQ Bytes With
 ## In state 290, spurious reduction of production sep_or_term_list(field_assignment,SEMI) -> nsepseq(field_assignment,SEMI)
 ##
 Ill-formed record expression.
-At this point, if the series of field assignments is complete, the
-keyword 'end' is expected.
+At this point, if the field assignment is complete, one of the
+following is expected:
+  * more field assignments separated by semicolons ';';
+  * the keyword 'end' if the record is complete.
 
 interactive_expr: Begin Patch Ident With Record LBRACKET Ident EQ Bytes With
 ##
@@ -790,8 +803,10 @@ interactive_expr: Begin Patch Ident With Record LBRACKET Ident EQ Bytes With
 ## In state 290, spurious reduction of production sep_or_term_list(field_assignment,SEMI) -> nsepseq(field_assignment,SEMI)
 ##
 Ill-formed record expression.
-At this point, if the series of field assignments is complete, a closing
-bracket ']' is expected.
+At this point, if the field assignment is complete, one of the
+following is expected:
+  * more field assignments separated by semicolons ';';
+  * a closing bracket ']' if the record is complete.
 
 interactive_expr: Begin Patch Ident With Record LBRACKET With
 ##
@@ -817,9 +832,8 @@ interactive_expr: Begin Patch Ident With Record With
 ##
 Ill-formed record patch.
 At this point, one of the following is expected:
-  * a series of assignments to record fields;
-  * an opening bracket '[' followed by a series of assignments to
-    record fields.
+  * assignments to record fields;
+  * an opening bracket '[' followed by assignments to record fields.
 
 interactive_expr: Record With
 ##
@@ -832,10 +846,7 @@ interactive_expr: Record With
 ## Record
 ##
 Ill-formed record expression.
-At this point, one of the following is expected:
-  * a series of assignments to record fields;
-  * an opening bracket '[' followed by a series of assignments to
-    record fields.
+At this point, assignments to record fields are expected.
 
 interactive_expr: Begin Patch Ident With Set LBRACKET Verbatim With
 ##
@@ -864,8 +875,11 @@ interactive_expr: Begin Patch Ident With Set LBRACKET Verbatim With
 ## In state 275, spurious reduction of production sep_or_term_list(expr,SEMI) -> nsepseq(expr,SEMI)
 ##
 Ill-formed set patch.
-At this point, if the series of set elements (updates) is complete, a
-closing bracket ']' is expected.
+
+At this point, if the set element (update) is complete, one of the
+following is expected:
+  * more set elements (updates);
+  * a closing bracket ']' if the set is complete.
 
 interactive_expr: Begin Patch Ident With Set LBRACKET With
 ##
@@ -1769,6 +1783,24 @@ interactive_expr: Constr DOT Ident DOT With
 ## The known suffix of the stack is as follows:
 ## Constr DOT Ident DOT
 ##
+interactive_expr: Ident DOT Int DOT With
+##
+## Ends in an error in state: 129.
+##
+## nsepseq(selection,DOT) -> selection DOT . nsepseq(selection,DOT) [ With VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE LBRACKET GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ASS ARROW ]
+##
+## The known suffix of the stack is as follows:
+## selection DOT
+##
+interactive_expr: Ident DOT With
+##
+## Ends in an error in state: 166.
+##
+## projection -> Ident DOT . nsepseq(selection,DOT) [ With VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE LBRACKET GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ASS ARROW ]
+##
+## The known suffix of the stack is as follows:
+## Ident DOT
+##
 Ill-formed selection of a substructure.
 At this point, one of the following is expected:
   * a record field name;
@@ -1808,7 +1840,6 @@ interactive_expr: Function LPAR Const Ident RPAR COLON Ident With
 ## In state 89, spurious reduction of production option(type_annot) -> type_annot
 ##
 Ill-formed function expression.
-
 At this point, the keyword 'is' keyword is expected, followed with the
 function body as an expression or a block of statements (instructions
 or declarations) ending with an expression.
@@ -1848,12 +1879,20 @@ interactive_expr: Function LPAR Const Ident With
 ## The known suffix of the stack is as follows:
 ## Const Ident
 ##
+interactive_expr: Function LPAR Var Ident With
+##
+## Ends in an error in state: 73.
+##
+## param_decl -> Var Ident . option(param_type) [ SEMI RPAR ]
+##
+## The known suffix of the stack is as follows:
+## Var Ident
+##
 Ill-formed function parameter declaration.
 At this point, one of the following is expected:
-  a type annotation; or
-  a semicolon ';',
-    followed with another parameter; or
-  a closing parenthesis ')'.
+  * a type annotation starting with a colon ':';
+  * a semicolon ';' followed with another parameter declaration;
+  * a closing parenthesis ')' if no more parameters.
 
 interactive_expr: Function LPAR Const With
 ##
@@ -1864,9 +1903,8 @@ interactive_expr: Function LPAR Const With
 ## The known suffix of the stack is as follows:
 ## Const
 ##
-
 Ill-formed function parameter declaration.
-At this point the name of the constant is expected.
+At this point, the name of the constant parameter is expected.
 
 interactive_expr: Function LPAR Var Ident COLON String With
 ##
@@ -1888,12 +1926,9 @@ interactive_expr: Function LPAR Var Ident COLON String With
 ## In state 77, spurious reduction of production param_decl -> Var Ident option(param_type)
 ## In state 81, spurious reduction of production nsepseq(param_decl,SEMI) -> param_decl
 ##
-
 Ill-formed function parameter declaration.
-At this point one of the following is expected:
-  a semicolon ';',
-    followed with another parameter declaration; or
-  a closing parenthesis ')'.
+At this point, if the parameter declaration is complete, a closing
+parenthesis ')' is expected.
 
 interactive_expr: Function LPAR Var Ident COLON With
 ##
@@ -1904,9 +1939,8 @@ interactive_expr: Function LPAR Var Ident COLON With
 ## The known suffix of the stack is as follows:
 ## COLON
 ##
-
 Ill-formed function parameter type.
-At this point a type is expected.
+At this point, a type is expected.
 
 interactive_expr: Function LPAR Var Ident SEMI With
 ##
@@ -1917,26 +1951,8 @@ interactive_expr: Function LPAR Var Ident SEMI With
 ## The known suffix of the stack is as follows:
 ## param_decl SEMI
 ##
-
 Ill-formed function parameters.
-At this point a function parameter declaration is expected.
-
-interactive_expr: Function LPAR Var Ident With
-##
-## Ends in an error in state: 73.
-##
-## param_decl -> Var Ident . option(param_type) [ SEMI RPAR ]
-##
-## The known suffix of the stack is as follows:
-## Var Ident
-##
-
-Ill-formed function parameter declaration.
-At this point one of the following is expected:
-  a type annotation; or
-  a semicolon ';',
-    followed with another parameter; or
-  a closing parenthesis ')'.
+At this point, a function parameter declaration is expected.
 
 interactive_expr: Function LPAR Var With
 ##
@@ -1947,9 +1963,8 @@ interactive_expr: Function LPAR Var With
 ## The known suffix of the stack is as follows:
 ## Var
 ##
-
 Ill-formed function parameter declaration.
-At this point the name of the variable is expected.
+At this point, the name of the variable parameter is expected.
 
 interactive_expr: Function LPAR With
 ##
@@ -1960,9 +1975,8 @@ interactive_expr: Function LPAR With
 ## The known suffix of the stack is as follows:
 ## LPAR
 ##
-
 Ill-formed function parameter declaration.
-At this point a parameter declaration is expected.
+At this point, a parameter declaration is expected.
 
 interactive_expr: Function With
 ##
@@ -1973,9 +1987,8 @@ interactive_expr: Function With
 ## The known suffix of the stack is as follows:
 ## Function
 ##
-
 Ill-formed function expression.
-At this point function parameter declarations between parenthesis are expected.
+At this point, parameter declarations between parentheses are expected.
 
 interactive_expr: Ident DOT Ident While
 ##
@@ -1994,47 +2007,7 @@ interactive_expr: Ident DOT Ident While
 ## In state 128, spurious reduction of production nsepseq(selection,DOT) -> selection
 ## In state 167, spurious reduction of production projection -> Ident DOT nsepseq(selection,DOT)
 ##
-
-Ill-formed expression.
-If this is a function call,
-  then at this point function arguments are expected.
-If this is a map lookup,
-  then at this point an opening bracket '[' is expected,
-    followed with a value in the form of an expression,
-      which is closed by a bracket ']'.
-If this is a record update,
-  then at this point the "with" keyword is expected,
-    followed with record field assignments.
-
-interactive_expr: Ident DOT Int DOT With
-##
-## Ends in an error in state: 129.
-##
-## nsepseq(selection,DOT) -> selection DOT . nsepseq(selection,DOT) [ With VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE LBRACKET GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ASS ARROW ]
-##
-## The known suffix of the stack is as follows:
-## selection DOT
-##
-
-Ill-formed selection of a substructure.
-At this point one of the following is expected:
-  a field name; or
-  a tuple component index '<int>'.
-
-interactive_expr: Ident DOT With
-##
-## Ends in an error in state: 166.
-##
-## projection -> Ident DOT . nsepseq(selection,DOT) [ With VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE LBRACKET GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ASS ARROW ]
-##
-## The known suffix of the stack is as follows:
-## Ident DOT
-##
-
-Ill-formed selection of a substructure.
-At this point one of the following is expected:
-  a field name; or
-  a tuple component index '<int>'.
+<YOU SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: Ident LBRACKET Verbatim With
 ##
@@ -2060,10 +2033,9 @@ interactive_expr: Ident LBRACKET Verbatim With
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ##
-
 Ill-formed map lookup.
-At this point, if the key in the form of an expression is complete, a closing bracket ']' is expected.
-
+At this point, if the key is complete, a closing bracket ']' is
+expected.
 
 interactive_expr: Ident LBRACKET With
 ##
@@ -2074,9 +2046,8 @@ interactive_expr: Ident LBRACKET With
 ## The known suffix of the stack is as follows:
 ## LBRACKET
 ##
-
 Ill-formed map lookup.
-At this point a key, in the form of an expression, is expected.
+At this point, a key is expected as an expression.
 
 interactive_expr: Ident LPAR Verbatim COMMA With
 ##
@@ -2087,9 +2058,8 @@ interactive_expr: Ident LPAR Verbatim COMMA With
 ## The known suffix of the stack is as follows:
 ## expr COMMA
 ##
-
-Ill-formed function call.
-At this point an argument, in the form of an expression, is expected.
+Ill-formed tuple expression.
+At this point, another component is expected as an expression.
 
 interactive_expr: Ident LPAR Verbatim With
 ##
@@ -2116,12 +2086,9 @@ interactive_expr: Ident LPAR Verbatim With
 ## In state 202, spurious reduction of production expr -> disj_expr
 ## In state 530, spurious reduction of production nsepseq(expr,COMMA) -> expr
 ##
-
 Ill-formed function call.
-At this point one of the following is expected:
-  a comma ',',
-    followed with an argument in the form of an expression; or
-  closing parenthesis ')'.
+At this point, if the argument is complete, a closing parenthesis ')'
+is expected.
 
 interactive_expr: Ident LPAR With
 ##
@@ -2132,9 +2099,8 @@ interactive_expr: Ident LPAR With
 ## The known suffix of the stack is as follows:
 ## LPAR
 ##
-
 Ill-formed function call.
-At this point an argument, in the form of an expression, is expected.
+At this point, an argument is expected as an expression.
 
 interactive_expr: Ident While
 ##
@@ -2148,24 +2114,7 @@ interactive_expr: Ident While
 ## The known suffix of the stack is as follows:
 ## Ident
 ##
-
-Ill-formed expression.
-If this is a function call,
-  then at this point an opening parenthesis '(' is expected,
-    followed with comma separated ',' list of arguments,
-      which are closed by a parenthesis ')'.
-If this is a selection of a substructure,
-  then at this point a dot '.' is expected,
-    followed with one of the following:
-      a field name; or
-      a tuple component index '<int>'.
-If this is a map lookup,
-  then at this point an opening bracket '[' is expected,
-    followed with a value in the form of an expression,
-      which is closed by a bracket ']'.
-If this is a record update,
-  then at this point the "with" keyword is expected,
-    followed with record field assignments.
+<YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: Ident With Record Ident EQ Bytes With
 ##
@@ -2194,12 +2143,10 @@ interactive_expr: Ident With Record Ident EQ Bytes With
 ## In state 243, spurious reduction of production nsepseq(field_path_assignment,SEMI) -> field_path_assignment
 ## In state 242, spurious reduction of production sep_or_term_list(field_path_assignment,SEMI) -> nsepseq(field_path_assignment,SEMI)
 ##
-
-Ill-formed record update expression.
-At this point one of the following is expected:
-  a semicolon ';',
-    followed with a record field assignment; or
-  the closing 'end' keyword.
+Ill-formed record update.
+At this point, if the field update is complete, one of the following is expected:
+  * more field updates (assignments) separated by semicolons ';';
+  * the keyword 'end' if the record update is complete.
 
 interactive_expr: Ident With Record Ident With
 ##
