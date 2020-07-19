@@ -16,8 +16,9 @@ import Data.ByteString (ByteString)
 import Data.Text (Text)
 import Data.Text.Encoding
 
-import Pretty
-import Lattice
+import Duplo.Lattice
+import Duplo.Pretty
+
 import Product
 
 point :: Int -> Int -> Range
@@ -40,11 +41,11 @@ instance Pretty Range where
   pp (Range (ll, lc, _) (rl, rc, _) f) =
     color 2 do
       brackets do
-        text f <> ":"
-          <> int ll <> ":"
-          <> int lc <> "-"
-          <> int rl <> ":"
-          <> int rc
+        text f <.> ":"
+          <.> int ll <.> ":"
+          <.> int lc <.> "-"
+          <.> int rl <.> ":"
+          <.> int rc
 
 -- | Ability to get range out of something.
 class HasRange a where
@@ -65,10 +66,14 @@ cutOut (Range (_, _, s) (_, _, f) _) bs =
       bs
 
 instance Lattice Range where
-  Range (ll1, lc1, _) (ll2, lc2, _) _ <? Range (rl1, rc1, _) (rl2, rc2, _) _ =
+  Range (ll1, lc1, _) (ll2, lc2, _) _
+    `leq` Range (rl1, rc1, _) (rl2, rc2, _) _ =
     (rl1 < ll1 || rl1 == ll1 && rc1 <= lc1) &&
     (rl2 > ll2 || rl2 == ll2 && rc2 >= lc2)
 
 instance Eq Range where
   Range (l, c, _) (r, d, _) f == Range (l1, c1, _) (r1, d1, _) f1 =
     (l, c, r, d, f) == (l1, c1, r1, d1, f1)
+
+instance (Contains Range xs, Eq (Product xs)) => Lattice (Product xs) where
+  a `leq` b = getElem @Range a `leq` getElem @Range b

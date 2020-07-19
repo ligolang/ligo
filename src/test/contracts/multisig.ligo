@@ -63,4 +63,7 @@ function check_message (const param : check_message_pt;
 } with (message (unit), s)
 
 function main (const param : parameter; const s : storage) : return is
-  case param of CheckMessage (p) -> check_message (p,s) end
+  case param of
+  | CheckMessage (p) -> check_message (p,s)
+  | a # b -> b
+  end

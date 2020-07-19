@@ -10,11 +10,13 @@
 module ParseTree
   ( -- * Tree/Forest
     ParseTree(..)
-  , ParseForest(..)
   , Source(..)
+  , RawTree
+  , RawInfo
 
     -- * Invoke the TreeSitter and get the tree it outputs
   , toParseTree
+  -- , example
   )
   where
 
@@ -27,7 +29,7 @@ import Data.Text (Text)
 import Data.Traversable (for)
 
 import           TreeSitter.Parser
-import           TreeSitter.Tree
+import           TreeSitter.Tree hiding (Tree)
 import           TreeSitter.Language
 import           TreeSitter.Node
 import           Foreign.C.String (peekCString)
@@ -42,12 +44,16 @@ import           Foreign.Storable               ( peek
                                                 )
 import           Control.Monad ((>=>))
 
-import           System.FilePath
+import           System.FilePath                (takeFileName)
 
-import Text.PrettyPrint hiding ((<>))
+import           System.IO.Unsafe (unsafePerformIO)
+
+import Duplo.Pretty
+import Duplo.Tree
 
 import Range
-import Pretty
+import Product
+import Debouncer
 
 foreign import ccall unsafe tree_sitter_PascaLigo :: Ptr Language
 
@@ -62,110 +68,97 @@ srcToBytestring = \case
   Text       _ t -> return $ Text.encodeUtf8 t
   ByteString _ s -> return s
 
+type RawTree = Tree '[ParseTree] RawInfo
+type RawInfo = Product [Range, Text]
+
+instance Modifies RawInfo where
+  ascribe (r :> n :> _) d = color 3 (pp n) <+> pp r `indent` pp d
+
 -- | The tree tree-sitter produces.
-data ParseTree = ParseTree
-  { ptID       :: Int          -- ^ Unique number, for fast comparison.
-  , ptName     :: Text         -- ^ Name of the node.
-  , ptRange    :: Range        -- ^ Range of the node.
-  , ptChildren :: ParseForest  -- ^ Subtrees.
+data ParseTree self = ParseTree
+  { ptName     :: Text         -- ^ Name of the node.
+  , ptChildren :: [self]       -- ^ Subtrees.
   , ptSource   :: ~Text        -- ^ Range of the node.
   }
-  deriving (Show) via PP ParseTree
+  deriving stock (Functor, Foldable, Traversable)
 
--- | The forest we work with.
-data ParseForest = Forest
-  { pfID    :: Int                  -- ^ Unique number for comparison.
-  , pfGrove :: [(Text, ParseTree)]  -- ^ Subtrees.
-  , pfRange :: Range                -- ^ Full range of the forest.
-  }
-  deriving (Show) via PP ParseForest
-
-instance Pretty ParseTree where
-  pp (ParseTree _ n r forest _) =
+instance Pretty1 ParseTree where
+  pp1 (ParseTree n forest _) =
     parens
       ( hang
-        (quotes (text (Text.unpack n)) <+> pp r)
+        (quotes (text (Text.unpack n)))
         2
         (pp forest)
       )
 
-instance Pretty ParseForest where
-  pp = vcat . map ppPair . pfGrove
-    where
-      ppPair (field, tree) =
-        if field == Text.empty
-        then nest 2 $ pp tree
-        else hang (text (Text.unpack field) <> ": ") 2 (pp tree)
-
 -- | Feed file contents into PascaLIGO grammar recogniser.
-toParseTree :: Source -> IO ParseForest
-toParseTree fin = do
-  parser <- ts_parser_new
-  True   <- ts_parser_set_language parser tree_sitter_PascaLigo
-
-  src <- srcToBytestring fin
-
-  idCounter <- newIORef 0
-
-  BS.useAsCStringLen src \(str, len) -> do
-    tree <- ts_parser_parse_string parser nullPtr str len
-    finalTree <- withRootNode tree (peek >=> go src idCounter)
-    return $ Forest 0 [("", finalTree)] (ptRange finalTree)
-
+toParseTree :: Source -> IO RawTree
+toParseTree = unsafePerformIO $ debounced inner
   where
-    nextID :: IORef Int -> IO Int
-    nextID ref = do
-      modifyIORef' ref (+ 1)
-      readIORef ref
+    inner fin = do
+      parser <- ts_parser_new
+      True   <- ts_parser_set_language parser tree_sitter_PascaLigo
 
-    go :: ByteString -> IORef Int -> Node -> IO ParseTree
-    go src idCounter node = do
-      let count = fromIntegral $ nodeChildCount node
-      allocaArray count \children -> do
-        alloca \tsNodePtr -> do
-          poke tsNodePtr $ nodeTSNode node
-          ts_node_copy_child_nodes tsNodePtr children
-          nodes <- for [0.. count - 1] \i -> do
-            peekElemOff children i
+      src <- srcToBytestring fin
 
-          trees <- for nodes \node' -> do
-            tree <- go src idCounter node'
-            field <-
-              if nodeFieldName node' == nullPtr
-              then return ""
-              else peekCString $ nodeFieldName node'
-            return (Text.pack field, tree)
+      idCounter <- newIORef 0
 
-          ty <- peekCString $ nodeType node
+      BS.useAsCStringLen src \(str, len) -> do
+        tree <- ts_parser_parse_string parser nullPtr str len
+        withRootNode tree (peek >=> go src idCounter)
 
-          let
-            start2D  = nodeStartPoint node
-            finish2D = nodeEndPoint   node
-            i = fromIntegral
+      where
+        nextID :: IORef Int -> IO Int
+        nextID ref = do
+          modifyIORef' ref (+ 1)
+          readIORef ref
 
-          treeID <- nextID idCounter
-          fID    <- nextID idCounter
+        go :: ByteString -> IORef Int -> Node -> IO RawTree
+        go src idCounter node = do
+          let count = fromIntegral $ nodeChildCount node
+          allocaArray count \children -> do
+            alloca \tsNodePtr -> do
+              poke tsNodePtr $ nodeTSNode node
+              ts_node_copy_child_nodes tsNodePtr children
+              nodes <- for [0.. count - 1] \i -> do
+                peekElemOff children i
 
-          let
-            range = Range
-              { rStart  =
-                  ( i $ pointRow    start2D + 1
-                  , i $ pointColumn start2D + 1
-                  , i $ nodeStartByte node
-                  )
+              trees <- for nodes \node' -> do
+                (only -> (r :> _, tree :: ParseTree RawTree)) <- go src idCounter node'
+                field <-
+                  if nodeFieldName node' == nullPtr
+                  then return ""
+                  else peekCString $ nodeFieldName node'
+                return $ make (r :> Text.pack field :> Nil, tree)
 
-              , rFinish =
-                  ( i $ pointRow    finish2D + 1
-                  , i $ pointColumn finish2D + 1
-                  , i $ nodeEndByte node
-                  )
-              , rFile = takeFileName $ srcPath fin
-              }
+              ty <- peekCString $ nodeType node
 
-          return $ ParseTree
-            { ptID       = treeID
-            , ptName     = Text.pack ty
-            , ptRange    = range
-            , ptChildren = Forest fID trees range
-            , ptSource   = cutOut range src
-            }
+              let
+                start2D  = nodeStartPoint node
+                finish2D = nodeEndPoint   node
+                i = fromIntegral
+
+              treeID <- nextID idCounter
+              fID    <- nextID idCounter
+
+              let
+                range = Range
+                  { rStart  =
+                      ( i $ pointRow    start2D + 1
+                      , i $ pointColumn start2D + 1
+                      , i $ nodeStartByte node
+                      )
+
+                  , rFinish =
+                      ( i $ pointRow    finish2D + 1
+                      , i $ pointColumn finish2D + 1
+                      , i $ nodeEndByte node
+                      )
+                  , rFile = takeFileName $ srcPath fin
+                  }
+
+              return $ make (range :> "" :> Nil, ParseTree
+                { ptName     = Text.pack ty
+                , ptChildren = trees
+                , ptSource   = cutOut range src
+                })

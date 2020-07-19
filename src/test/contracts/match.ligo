@@ -34,4 +34,5 @@ function match_expr_list (const l : list (int)) : int is
   case l of
     nil -> -1
   | hd # tl -> hd
+  | list [1; 2; foo] -> foo
   end

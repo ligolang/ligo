@@ -56,7 +56,7 @@ module.exports = grammar({
   extras: $ => [$.ocaml_comment, $.comment, /\s/],
 
   rules: {
-    contract: $ => sepBy(optional(';'), field("declaration", $._declaration)),
+    Start: $ => sepBy(optional(';'), field("declaration", $._declaration)),
 
     _declaration: $ =>
       choice(
@@ -80,30 +80,31 @@ module.exports = grammar({
         field("typeValue", $._type_expr),
       ),
 
-    type_expr : $ => $._type_expr,
-
     _type_expr: $ =>
       choice(
-        $.fun_type,
+        $._fun_type,
         $.sum_type,
         $.record_type,
       ),
 
-    fun_type: $ =>
+    _fun_type: $ =>
       choice(
+        $.fun_type,
+        $.cartesian
+      ),
+
+    fun_type: $ =>
+      seq(
         field("domain", $.cartesian),
-        seq(
-          field("domain", $.cartesian),
-          '->',
-          field("codomain", $.fun_type),
-        ),
+        '->',
+        field("codomain", $._fun_type),
       ),
 
     cartesian: $ =>
       sepBy1('*',
         choice(
           field("element", $._core_type),
-          par(field("element", $.type_expr)),
+          par(field("element", $._type_expr)),
         ),
       ),
 
@@ -112,17 +113,47 @@ module.exports = grammar({
         $.TypeName,
         $.invokeBinary,
         $.invokeUnary,
+        $.michelsonTypeOr,
+        $.michelsonTypeAnd,
+      ),
+
+    michelsonTypeOr: $ =>
+      seq(
+       "michelson_or",
+       "(",
+       field("left_type", $._type_expr),
+       ",",
+       field("left_type_name", $.String),
+       ",",
+       field("right_type", $._type_expr),
+       ",",
+       field("right_type_name", $.String),
+       ")",
+      ),
+
+    michelsonTypeAnd: $ =>
+      seq(
+       "michelson_pair",
+       "(",
+       field("left_type", $._type_expr),
+       ",",
+       field("left_type_name", $.String),
+       ",",
+       field("right_type", $._type_expr),
+       ",",
+       field("right_type_name", $.String),
+       ")",
       ),
 
     invokeBinary: $ =>
       seq(
-        field("typeConstr", choice('map', 'big_map', $.TypeName)),
+        field("typeConstr", choice('map', 'big_map')),
         field("arguments", $.type_tuple),
       ),
 
     invokeUnary: $ =>
       seq(
-        field("typeConstr", choice('list', 'set')),
+        field("typeConstr", choice('list', 'set', 'option', 'contract')),
         par(field("arguments", $._type_expr)),
       ),
 
@@ -145,7 +176,7 @@ module.exports = grammar({
         seq(
           field("constructor", $.constr),
           'of',
-          field("arguments", $.fun_type)
+          field("arguments", $._fun_type)
         ),
       ),
 
@@ -185,17 +216,20 @@ module.exports = grammar({
           ':',
           field("type", $._type_expr),
           'is',
-          field("body", $.let_expr),
+          field("body", $._let_expr),
         ),
       ),
 
-    let_expr: $ =>
+    _let_expr: $ =>
       choice(
-        seq(
-          field("locals", $.block),
-          'with',
-          field("body", $._expr),
-        ),
+        $.let_expr,
+        $._expr,
+      ),
+
+    let_expr: $ =>
+      seq(
+        field("locals", $.block),
+        'with',
         field("body", $._expr),
       ),
 
@@ -203,15 +237,15 @@ module.exports = grammar({
 
     param_decl: $ =>
       seq(
-        field("access", $.access),
+        field("access", $._access),
         field("name", $.Name),
         ':',
         field("type", $._param_type),
       ),
 
-    access: $ => choice('var', 'const'),
+    _access: $ => choice('var', 'const'),
 
-    _param_type: $ => $.fun_type,
+    _param_type: $ => $._fun_type,
 
     _statement: $ =>
       choice(
@@ -252,7 +286,7 @@ module.exports = grammar({
         $.conditional,
         $.case_instr,
         $.assignment,
-        $.loop,
+        $._loop,
         $._proc_call,
         $.skip,
         $.record_patch,
@@ -268,7 +302,7 @@ module.exports = grammar({
         field("key", $._expr),
         'from',
         'set',
-        field("container", $.path),
+        field("container", $._path),
       ),
 
     map_remove: $ =>
@@ -277,13 +311,13 @@ module.exports = grammar({
         field("key", $._expr),
         'from',
         'map',
-        field("container", $.path),
+        field("container", $._path),
       ),
 
     set_patch: $ =>
       seq(
         'patch',
-        field("container", $.path),
+        field("container", $._path),
         'with',
         ne_injection('set', field("key", $._expr)),
       ),
@@ -291,7 +325,7 @@ module.exports = grammar({
     map_patch: $ =>
       seq(
         'patch',
-        field("container", $.path),
+        field("container", $._path),
         'with',
         ne_injection('map', field("binding", $.binding)),
       ),
@@ -306,7 +340,7 @@ module.exports = grammar({
     record_patch: $ =>
       seq(
         'patch',
-        field("container", $.path),
+        field("container", $._path),
         'with',
         ne_injection('record', field("binding", $.field_assignment)),
       ),
@@ -319,13 +353,13 @@ module.exports = grammar({
         'if',
         field("selector", $._expr),
         'then',
-        field("then", $.if_clause),
+        field("then", $._if_clause),
         optional(';'),
         'else',
-        field("else", $.if_clause),
+        field("else", $._if_clause),
       ),
 
-    if_clause: $ =>
+    _if_clause: $ =>
       choice(
         $._instruction,
         $.clause_block,
@@ -375,9 +409,9 @@ module.exports = grammar({
 
     case_clause_instr: $ =>
       seq(
-        field("pattern", $.pattern),
+        field("pattern", $._pattern),
         '->',
-        field("body", $.if_clause),
+        field("body", $._if_clause),
       ),
 
     assignment: $ =>
@@ -388,9 +422,9 @@ module.exports = grammar({
       ),
 
     _rhs: $ => $._expr,
-    _lhs: $ => choice($.path, $.map_lookup),
+    _lhs: $ => choice($._path, $.map_lookup),
 
-    loop: $ => choice($.while_loop, $.for_loop),
+    _loop: $ => choice($.while_loop, $._for_loop),
 
     while_loop: $ =>
       seq(
@@ -399,29 +433,39 @@ module.exports = grammar({
         field("body", $.block),
       ),
 
-    for_loop: $ =>
+    _for_loop: $ =>
       choice(
-        seq(
-          'for',
-          field("name", $.Name),
-          ':=',
-          field("begin", $._rhs),
-          'to',
-          field("end", $._expr),
-          field("body", $.block),
-        ),
-        seq(
-          'for',
-          field("key", $.Name),
-          optional(seq('->', field("value", $.Name))),
-          'in',
-          field("kind", $.collection),
-          field("collection", $._expr),
-          field("body", $.block),
-        ),
+        $.for_cycle,
+        $.for_box,
       ),
 
-    collection: $ => choice('map', 'set', 'list'),
+    for_cycle: $ =>
+      seq(
+        'for',
+        field("name", $.Name),
+        ':=',
+        field("begin", $._rhs),
+        'to',
+        field("end", $._expr),
+        optional(seq(
+          "step",
+          field("step", $._expr),
+        )),
+        field("body", $.block),
+      ),
+
+    for_box: $ =>
+      seq(
+        'for',
+        field("key", $.Name),
+        optional(seq('->', field("value", $.Name))),
+        'in',
+        field("kind", $._collection),
+        field("collection", $._expr),
+        field("body", $.block),
+      ),
+
+    _collection: $ => choice('map', 'set', 'list'),
 
     interactive_expr: $ => $._expr,
 
@@ -429,7 +473,7 @@ module.exports = grammar({
       choice(
         $.case_expr,
         $.cond_expr,
-        $.op_expr,
+        $._op_expr,
         $.fun_expr,
       ),
 
@@ -456,7 +500,7 @@ module.exports = grammar({
 
     case_clause_expr: $ =>
       seq(
-        field("pattern", $.pattern),
+        field("pattern", $._pattern),
         '->',
         field("body", $._expr),
       ),
@@ -472,19 +516,26 @@ module.exports = grammar({
         field("else", $._expr),
       ),
 
-    op_expr: $ =>
+    _op_expr: $ =>
       choice(
-        field("the", $._core_expr),
-        prec.left (0, seq(field("arg1", $.op_expr),    field("op", 'or'),         field("arg2", $.op_expr))),
-        prec.left (1, seq(field("arg1", $.op_expr),    field("op", 'and'),        field("arg2", $.op_expr))),
-        prec.right(2, seq(field("arg1", $._core_expr), field("op", 'contains'),   field("arg2", $.op_expr))),
-        prec.left (3, seq(field("arg1", $.op_expr),    field("op", $.comparison), field("arg2", $.op_expr))),
-        prec.right(4, seq(field("arg1", $.op_expr),    field("op", '^'),          field("arg2", $.op_expr))),
-        prec.right(5, seq(field("arg1", $.op_expr),    field("op", '#'),          field("arg2", $.op_expr))),
-        prec.left (6, seq(field("arg1", $.op_expr),    field("op", $.adder),      field("arg2", $.op_expr))),
-        prec.left (7, seq(field("arg1", $.op_expr),    field("op", $.multiplier), field("arg2", $.op_expr))),
-        prec.right(8, seq(field("negate", $.negate), field("arg", $._core_expr))),
+        $._core_expr,
+        $.binop,
+        $.unop,
       ),
+
+    binop: $ =>
+      choice(
+        prec.left (0, seq(field("arg1", $._op_expr),    field("op", 'or'),         field("arg2", $._op_expr))),
+        prec.left (1, seq(field("arg1", $._op_expr),    field("op", 'and'),        field("arg2", $._op_expr))),
+        prec.right(2, seq(field("arg1", $._core_expr), field("op", 'contains'),   field("arg2", $._op_expr))),
+        prec.left (3, seq(field("arg1", $._op_expr),    field("op", $.comparison), field("arg2", $._op_expr))),
+        prec.right(4, seq(field("arg1", $._op_expr),    field("op", '^'),          field("arg2", $._op_expr))),
+        prec.right(5, seq(field("arg1", $._op_expr),    field("op", '#'),          field("arg2", $._op_expr))),
+        prec.left (6, seq(field("arg1", $._op_expr),    field("op", $.adder),      field("arg2", $._op_expr))),
+        prec.left (7, seq(field("arg1", $._op_expr),    field("op", $.multiplier), field("arg2", $._op_expr))),
+      ),
+
+    unop: $ => prec.right(8, seq(field("negate", $.negate), field("arg", $._core_expr))),
 
     comparison: $ => choice('<', '<=', '>', '>=', '=', '=/='),
     adder:      $ => choice('-', '+'),
@@ -505,23 +556,27 @@ module.exports = grammar({
         $.Unit,
         $.annot_expr,
         $.tuple_expr,
-        $.list_expr,
+        $._list_expr,
         $.None,
         $._fun_call_or_par_or_projection,
         $._map_expr,
         $.set_expr,
         $.record_expr,
         $.update_record,
-        $.constr_call,
+        $._constr_use,
         $.Some_call,
+      ),
+
+    _constr_use: $ =>
+      choice(
+        $.constr_call,
+        $.constr
       ),
 
     constr_call: $ =>
       seq(
         field("constr", $.constr),
-        optional(
-          field("arguments", $.arguments)
-        ),
+        field("arguments", $.arguments)
       ),
 
     Some_call: $ =>
@@ -535,22 +590,23 @@ module.exports = grammar({
         $.par_call,
         $.projection_call,
         $.fun_call,
+        $._projection,
       ),
 
     par_call: $ =>
       prec.right(1, seq(
         par(field("f", $._expr)),
-        optional(field("arguments", $.arguments))
+        field("arguments", $.arguments),
       )),
 
-    projection_call: $ => seq(
+    projection_call: $ => prec(1, seq(
       field("f", $._projection),
-      optional(field("arguments", $.arguments)),
-    ),
+      field("arguments", $.arguments),
+    )),
 
     annot_expr: $ =>
       par(seq(
-        field("subject", $.op_expr),
+        field("subject", $._op_expr),
         ':',
         field("type", $._type_expr)
       )),
@@ -569,13 +625,13 @@ module.exports = grammar({
 
     map_lookup: $ =>
       seq(
-        field("container", $.path),
+        field("container", $._path),
         brackets(field("index", $._expr)),
       ),
 
-    path: $ => choice($.Name, $._projection),
+    _path: $ => choice($.Name, $._projection),
 
-    fpath: $ => choice($.FieldName, $._projection),
+    _fpath: $ => choice($.FieldName, $._projection),
 
     module_field: $ =>
       seq(
@@ -606,7 +662,7 @@ module.exports = grammar({
     data_projection: $ => seq(
       field("struct", $.Name),
       '.',
-      sepBy1('.', field("index", $.selection)),
+      sepBy1('.', field("index", $._selection)),
     ),
 
     module_projection: $ =>
@@ -615,10 +671,10 @@ module.exports = grammar({
         '.',
         field("index", $.Name),
         '.',
-        sepBy1('.', field("index", $.selection)),
+        sepBy1('.', field("index", $._selection)),
       ),
 
-    selection: $ => choice($.FieldName, $.Int),
+    _selection: $ => choice($.FieldName, $.Int),
 
     record_expr: $ =>
       choice(
@@ -637,7 +693,7 @@ module.exports = grammar({
 
     update_record: $ =>
       seq(
-        field("record", $.path),
+        field("record", $._path),
         'with',
         ne_injection('record', field("assignment", $.field_path_assignment)),
       ),
@@ -651,7 +707,7 @@ module.exports = grammar({
 
     field_path_assignment: $ =>
       seq(
-        field("lhs", $.fpath),
+        field("lhs", $._fpath),
         '=',
         field("_rhs", $._expr),
       ),
@@ -665,14 +721,14 @@ module.exports = grammar({
     tuple_expr: $ => par(sepBy1(',', field("element",  $._expr))),
     arguments:  $ => par(sepBy(',',  field("argument", $._expr))),
 
-    list_expr: $ => choice($._list_injection, 'nil'),
+    _list_expr: $ => choice($.list_injection, 'nil'),
 
-    _list_injection: $ => injection('list', field("element", $._expr)),
+    list_injection: $ => injection('list', field("element", $._expr)),
 
-    pattern: $ =>
+    _pattern: $ =>
       choice(
-        $._cons_pattern,
-        field("the", $._core_pattern),
+        $.cons_pattern,
+        $._core_pattern,
       ),
 
     _core_pattern: $ =>
@@ -682,26 +738,28 @@ module.exports = grammar({
         $.Int,
         $.Nat,
         $.String,
-        $.list_pattern,
+        $._list_pattern,
         $.tuple_pattern,
         $._constr_pattern,
       ),
 
-    list_pattern: $ =>
+    _list_pattern: $ =>
       choice(
-        injection("list", field("element", $.pattern)),
+        $.list_pattern,
         'nil',
       ),
 
-    _cons_pattern: $ =>
+    list_pattern: $ => injection("list", field("element", $._pattern)),
+
+    cons_pattern: $ =>
       seq(
         field("head", $._core_pattern),
         '#',
-        field("tail", $.pattern),
+        field("tail", $._pattern),
       ),
 
     tuple_pattern: $ =>
-      par(sepBy1(',', field("element", $.pattern))),
+      par(sepBy1(',', field("element", $._pattern))),
 
     _constr_pattern: $ => choice(
       $.Unit,
@@ -715,7 +773,7 @@ module.exports = grammar({
     Some_pattern: $ =>
       seq(
         field("constr", 'Some'),
-        par(field("arg", $.pattern)),
+        par(field("arg", $._pattern)),
       ),
 
     user_constr_pattern: $ =>
@@ -744,7 +802,7 @@ module.exports = grammar({
 
     include: $ => seq('#include', field("filename", $.String)),
 
-    String:       $ => /\"(\\.|[^"])*\"/,
+    String:       $ => choice(/\"(\\.|[^"])*\"/, /{\|(\\.|[^\|])*\|}/),
     Int:          $ => /-?([1-9][0-9_]*|0)/,
     Nat:          $ => /([1-9][0-9_]*|0)n/,
     Tez:          $ => /([1-9][0-9_]*|0)(\.[0-9_]+)?(tz|tez|mutez)/,

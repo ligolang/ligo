@@ -8,3 +8,5 @@ const cards : cards = record [cards = cards]
 const cards : cards = cards with record [cards = cards]
 
 const cards : cards = cards.cards
+
+const cards : cards = cards with record [cards.foo.0.bar = cards]

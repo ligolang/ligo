@@ -6,10 +6,14 @@ module Product where
 
 import GHC.Types
 
+import Duplo.Pretty
+
 -- | `Product xs` contains elements of each of the types from the `xs` list.
 data Product xs where
-  Cons :: x -> Product xs -> Product (x : xs)
+  (:>) :: x -> Product xs -> Product (x : xs)
   Nil  :: Product '[]
+
+infixr 5 :>
 
 -- | Find/modify the element with a given type.
 --
@@ -20,12 +24,12 @@ class Contains x xs where
   modElem :: (x -> x) -> Product xs -> Product xs
 
 instance {-# OVERLAPS #-} Contains x (x : xs) where
-  getElem   (Cons x _) = x
-  modElem f (Cons x xs) = Cons (f x) xs
+  getElem   (x :> _) = x
+  modElem f (x :> xs) = f x :> xs
 
 instance Contains x xs => Contains x (y : xs) where
-  getElem   (Cons _ xs) = getElem xs
-  modElem f (Cons x xs) = Cons x (modElem f xs)
+  getElem   (_ :> xs) = getElem xs
+  modElem f (x :> xs) = x :> modElem f xs
 
 -- | Add a name to the type.
 --
@@ -44,3 +48,27 @@ modTag
   => (t -> t)
   -> Product xs -> Product xs
 modTag f = modElem @(s := t) (Tag . f . unTag)
+
+instance Eq (Product '[]) where
+  _ == _ = True
+
+instance (Eq x, Eq (Product xs)) => Eq (Product (x : xs)) where
+  x :> xs == y :> ys = and [x == y, xs == ys]
+
+-- instance Modifies (Product xs) where
+--   ascribe _ = id
+
+class PrettyProd xs where
+  ppProd :: Product xs -> Doc
+
+instance {-# OVERLAPS #-} Pretty x => PrettyProd '[x] where
+  ppProd (x :> Nil) = pp x
+
+instance (Pretty x, PrettyProd xs) => PrettyProd (x : xs) where
+  ppProd (x :> xs) = pp x <.> "," <+> ppProd xs
+
+instance Pretty (Product '[]) where
+  pp Nil = "{}"
+
+instance PrettyProd xs => Pretty (Product xs) where
+  pp = braces . ppProd

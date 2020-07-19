@@ -99,5 +99,6 @@ function pop (const h : heap) : heap * heap_elt * nat is
             h[left] := tmp
           } else skip
         } else skip
-    }
-   } with (h, result, c)
+    };
+    while False block { skip; }
+  } with (h, result, c)

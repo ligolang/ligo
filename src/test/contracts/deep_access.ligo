@@ -30,3 +30,5 @@ function nested_record (var nee : nested_record_t) : string is
            Some (s) -> s
          | None -> (failwith ("Should not happen.") : string)
          end
+
+const tuple : int * (int * (int * int)) = (0,(1,(2,3)))

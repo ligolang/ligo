@@ -11,7 +11,8 @@ module Comment
 import qualified Data.Text as Text
 import           Data.Text   (Text)
 
-import Pretty
+import Duplo.Pretty
+
 import Product
 
 -- | Ability to contain comments.

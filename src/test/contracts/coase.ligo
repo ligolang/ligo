@@ -123,7 +123,16 @@ function buy_single (const action : action_buy_single;
 
 function main (const action : parameter; const s : storage) : return is
   case action of
-    Buy_single (bs)      -> buy_single (bs, s)
   | Sell_single (as)     -> sell_single (as, s)
   | Transfer_single (at) -> transfer_single (at, s)
+  | None     -> (failwith (""))
+  | Some (x) -> skip
+  | Buy_single (bs)      -> buy_single (bs, s)
+  | Ex -> Ex(Ex)
   end
+
+type parameter is
+  Buy_single      of action_buy_single
+| Sell_single     of action_sell_single
+| Transfer_single of action_transfer_single
+

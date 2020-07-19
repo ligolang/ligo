@@ -1,1 +1,0 @@
-function foo (var x : int) is 1

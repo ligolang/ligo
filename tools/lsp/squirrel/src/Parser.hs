@@ -1,448 +1,158 @@
 
-{- |
-  The thing that can untangle the mess that TreeSitter produces.
+module Parser where
 
-  In presence of serious errors, it /will/ be a mess, anyway.
-
-  The AST you are building must be the @Tree@ in each point.
-
-  I recommend, in your tree-sitter grammar, to add `field("foo", ...)`
-  to each sub-rule, that has `$.` in front of it -  in a rule, that doesn't
-  start with `_` in its name.
-
-  As a general rule of thumb, make each significant part a separate rule,
-  even if it is a keyword. Then, apply previous advice.
-
-  Only make rule start with `_` if it is a pure choice.
-
-  > ('block'
-  >   ...
-  >   a: <a>
-  >   ...
-  >   b: <b>
-  >   ...)
-
-  ->
-
-  > block = do
-  >   subtree "block" do
-  >     ranged do
-  >       pure Block
-  >         <*> inside "a" a
-  >         <*> inside "b" b
--}
-
-module Parser
-  ( -- * Parser type
-    Parser
-  , runParser
-  , runParser'
-  , debugParser
-
-    -- * Combinators
-  , subtree
-  , anything
-  , token
-  , stubbed
-  , getInfo
-  , inside
-  , restart
-
-    -- * Error
-  , die
-
-    -- * Replacement for `Alternative`, because reasons
-  , many
-  , some
-  , (<|>)
-  , optional
-  , select
-
-    -- * Debug
-  , dump
-
-    -- * Comments and ranges
-  , ASTInfo
-  , Source(..)
-  , module ParseTree
-  ) where
-
-import Control.Monad.Writer hiding (Product)
-import Control.Monad.State
+import Control.Arrow
 import Control.Monad.Catch
-import qualified Control.Monad.Reader as MTL
+import Control.Monad.RWS hiding (Product)
+import Control.Monad.Trans.Maybe
 
-import Data.Functor ((<&>))
-import Data.Foldable
+import Data.String.Interpolate (i)
 import Data.Text (Text)
 import qualified Data.Text as Text
-import qualified Data.Set as Set
 
-import System.FilePath
+import Duplo.Tree
+import Duplo.Error
+import Duplo.Pretty
 
 import ParseTree
 import Range
-import Pretty
-import Error
 import Product
 
 import Debug.Trace
 
--- | Parser of tree-sitter-made tree.
---
---   TODO: separate state. Polysemy?
---
-type Parser =
-   WriterT [Error ASTInfo]
-  (StateT  (Product PList)
-   IO)
+{-
+  Comment grabber has 2 buffers: 1 and 2.
 
-type PList = [ParseForest, [Text], FilePath, Set.Set FilePath]
+  1) We collect all comments before the node and append them into buffer 1.
+  2) We collect all comments after the node and put them into buffer 2.
+  3) `grabComments` takes all comments from buffer 1.
+  4) On leaving, move move comments from 2 to 1.
+-}
 
--- | Auto-accumulated information to be put into AST being build.
-type ASTInfo = Product [Range, [Text]]
+runParserM :: ParserM a -> IO (a, [Err Text ()])
+runParserM p = (\(a, _, errs) -> (a, errs)) <$> runRWST p () ([], [])
 
-runParser
-  :: Stubbed a ASTInfo
-  => Parser a
-  -> Source
-  -> IO (a, [Error ASTInfo])
-runParser parser fin = do
-  pforest <- toParseTree fin
+runParserM1 :: [RawTree] -> ParserM1 a -> ParserM (Maybe a)
+runParserM1 cs p = do
+  s <- get
+  (a, s1, w) <- lift $ runRWST (runMaybeT p) cs s
+  tell w
+  put s1
+  return a
 
-  let dir = takeDirectory $ srcPath fin
+type ParserM  =         RWST ()        [Err Text ()] ([Text], [Text]) IO
+type ParserM1 = MaybeT (RWST [RawTree] [Err Text ()] ([Text], [Text]) IO)
 
-  runWriterT parser `evalStateT`
-     Cons pforest
-    (Cons []
-    (Cons dir
-    (Cons Set.empty
-     Nil)))
-    `catch` \(e :: Error ASTInfo) -> do
-      return $ (stub e, [])
+data Failure = Failure String
+  deriving stock (Show)
+  deriving anyclass (Exception)
 
-runParser'
-  :: Stubbed a ASTInfo
-  => Parser a
-  -> Source
-  -> IO a
-runParser' parser fin = fst <$> runParser parser fin
+instance Scoped (Product [Range, Text]) ParserM RawTree ParseTree where
+  enter (_ :> _ :> _) (ParseTree ty cs s) = do
+    let (comms, rest) = allComments cs
+    let (comms1, _)   = allComments $ reverse rest
+    modify $ first  (++ comms)
+    modify $ second (++ reverse comms1)
 
-restart :: Stubbed a ASTInfo => Parser a -> FilePath -> Parser a
-restart p fin = do
-  dir <- get' @FilePath
-  let full = dir </> fin
-  set <- get' @(Set.Set FilePath)
+    let errs = allErrors   cs
+    tell $ fmap Err errs
 
-  if Set.member full set
-  then do
-    fallback "recusive imports"
-  else do
-    (a, errs) <- liftIO do
-      flip runParser (Path full) do
-        put' (Set.insert full set)
-        p
-    tell errs
-    return a
+  leave _ _ = do
+    modify \(x, y) -> (y, [])
 
-get' :: forall x. Contains x PList => Parser x
-get' = gets getElem
-
-gets' :: forall x a. Contains x PList => (x -> a) -> Parser a
-gets' f = gets (f . getElem)
-
-put' :: forall x. Contains x PList => x -> Parser ()
-put' x = modify $ modElem $ const x
-
-mod' :: forall x. Contains x PList => (x -> x) -> Parser ()
-mod' = modify . modElem
-
--- | Generate error originating at current location.
-makeError :: Text -> Parser (Error ASTInfo)
-makeError msg = do
-  rng <- getInfo
-  makeError' msg rng
-
--- | Generate error originating at given location.
-makeError' :: Text -> info -> Parser (Error info)
-makeError' msg i = do
-  src <- gets' pfGrove <&> \case
-    []                     -> ""
-    (,) _ ParseTree { ptSource } : _ -> ptSource
-  return Expected
-    { eMsg   = msg
-    , eWhole = src
-    , eInfo  = i
-    }
-
--- | Pick next tree in a forest or die with msg.
-takeNext :: Text -> Parser ParseTree
-takeNext msg = do
-  gets' pfGrove >>= \case
-    [] -> die msg
-    (_, t) : f -> do
-      if "comment" `Text.isSuffixOf` ptName t
-      then do
-        mod' (ptSource t :)
-        takeNext msg
-      else do
-        mod' \st -> st
-          { pfRange = diffRange (pfRange st) (ptRange t)
-          , pfGrove = f
-          }
-        return t
-
---fields :: Text -> Parser a -> Parser [a]
---fields name parser = do
---  (fs, rest) <- gets $ splitForest name . fst
---  res <- for fs \f -> do
---    put f
---    parser
---
---  put rest
---  return res
---
---splitForest :: Text -> ParseForest -> [ParseForest]
---splitForest name = go . pfGrove
---  where
---    go []             acc fs = (fs, acc)
---    go ((tName, tree) : other) acc fs =
---      if tName == name
---      then go other [] (reverse (tree : acc) : fs)
---      else go other (tree : acc) fs
-
--- | Pick a tree with that /field name/ or die with name as msg.
---
---   Will erase all subtrees with different names on the path!
---
-field :: Text -> Parser a -> Parser a
-field name parser = do
-  gets' pfGrove >>= \case
-    (name', t) : _
-      | name == name' -> do
-        sandbox True t
-
-    grove -> do
-      case lookup name grove of
-        Just tree -> sandbox False tree
-        Nothing   -> die name
-
-  where
-    sandbox firstOne tree@ParseTree {ptID, ptRange} = do
-      st@Forest {pfGrove = grove, pfRange = rng} <- get'
-      let (errs, new_comments, grove') = delete name grove
-      mod' (++ new_comments)
-      put' Forest
-        { pfID    = ptID
-        , pfGrove = [(name, tree)]
-        , pfRange = ptRange
-        }
-
-      res <- parser
-
-      put' st
-        { pfGrove = grove'
-        , pfRange = if firstOne then diffRange rng ptRange else rng
-        }
-
-      put' @[Text] []
-
-      for_ errs (tell . pure . unexpected)
-
-      return res
-
-fallback :: Stubbed a ASTInfo => Text -> Parser a
-fallback msg = pure . stub =<< makeError msg
-
--- | Produce "expected ${X}" error at this point.
-die :: Text -> Parser a
-die msg = throwM =<< makeError msg
-
-die' ::Text -> ASTInfo -> Parser a
-die' msg rng = throwM =<< makeError' msg rng
-
--- | When tree-sitter found something it was unable to process.
-unexpected :: ParseTree -> Error ASTInfo
-unexpected ParseTree { ptSource, ptRange } =
-  Expected "not that" ptSource (Cons ptRange $ Cons [] Nil)
-
--- | If a parser fails, return stub with error originating here.
-stubbed :: Stubbed a ASTInfo => Text -> Parser a -> Parser a
-stubbed msg parser = do
-  parser <|> fallback msg
-
--- | The forest must start with tree of that name. Its subtrees become new
---   forest. Otherwise, it dies with name as msg.
-subtree :: Text -> Parser a -> Parser a
-subtree msg parser = do
-  ParseTree {ptChildren, ptName} <- takeNext msg
-  if ptName == msg
-  then do
-    save <- get' @ParseForest
-    put' ptChildren
-    rest <- gets' pfGrove
-    collectErrors rest
-    parser <* put' save
-  else do
-    die msg
-
--- | Because `ExceptT` requires error to be `Monoid` for `Alternative`.
-(<|>) :: Parser a -> Parser a -> Parser a
-l <|> r = do
-  s <- get' @ParseForest
-  c <- get' @[Text]
-  l `catch` \(_ :: Error ASTInfo) -> do
-    put' s
-    put' c
-    r
-
--- | Custom @foldl1 (<|>)@.
-select :: [Parser a] -> Parser a
-select = foldl1 (<|>)
-
--- | Custom @optionMaybe@.
-optional :: Parser a -> Parser (Maybe a)
-optional p = fmap Just p <|> return Nothing
-
--- | Custom `Alternative.many`.
---
---   TODO: remove, replace with `fields` combinator.
---
-many :: Parser a -> Parser [a]
-many p = many'
-  where
-    many' = some' <|> pure []
-    some' = do
-      x <- p
-      xs <- many'
-      return (x : xs)
-
--- | Custom `Alternative.some`.
---
-some :: Parser a -> Parser [a]
-some p = some'
-  where
-    many' = some' <|> pure []
-    some' = do
-      x <- p
-      xs <- many'
-      return (x : xs)
-
--- | Run parser on given file and pretty-print stuff.
---
-debugParser :: (Show a, Stubbed a ASTInfo) => Parser a -> Source -> IO ()
-debugParser parser fin = do
-  (res, errs) <- runParser parser fin
-  putStrLn "Result:"
-  print res
-  MTL.unless (null errs) do
-    putStrLn ""
-    putStrLn "Errors:"
-    for_ errs (print . nest 2 . pp)
-
--- | Consume next tree if it has the given name. Or die.
-token :: Text -> Parser Text
-token node = do
-  i <- getInfo
-  ParseTree {ptName, ptSource} <- takeNext node
-  if ptName == node
-  then return ptSource
-  else die' node i
-
--- | Consume next tree, return its textual representation.
-anything :: Parser Text
-anything = do
-  tree <- takeNext "anything"
-  return $ ptSource tree
-
--- | Get range of the current tree (or forest) before the parser was run.
-range :: Parser a -> Parser (a, Range)
-range parser =
-  get' >>= \case
-    Forest {pfGrove = [(,) _ ParseTree {ptRange}]} -> do
-      a <- parser
-      return (a, ptRange)
-
-    Forest {pfRange} -> do
-      a <- parser
-      return (a, pfRange)
-
--- | Get current range.
-currentRange :: Parser Range
-currentRange = snd <$> range (return ())
-
--- | Remove all keys until given key is found; remove the latter as well.
---
---   Also returns all ERROR-nodes.
---
---   TODO: rename.
---
---   Notice: this works differently from `Prelude.remove`!
---
-delete :: Text -> [(Text, ParseTree)] -> ([ParseTree], [Text], [(Text, ParseTree)])
-delete _ [] = ([], [], [])
-delete k ((k', v) : rest) =
-  if k == k'
-  then (addIfError v [], addIfComment v [], rest)
-  else (addIfError v vs, addIfComment v cs, remains)
-  where
-    (vs, cs, remains) = delete k rest
-    addIfError v' =
-      if ptName v' == "ERROR"
-      then (:) v'
-      else id
-
-    addIfComment v' =
-      if "comment" `Text.isSuffixOf` ptName v'
-      then (ptSource v' :)
-      else id
-
--- | Report all ERRORs from the list.
-collectErrors :: [(Text, ParseTree)] -> Parser ()
-collectErrors vs =
-  for_ vs \(_, v) -> do
-    MTL.when (ptName v == "ERROR") do
-      tell [unexpected v]
-
--- | Universal accessor.
---
---   Usage:
---
---   > inside "$field:$treename"
---   > inside "$field"
---   > inside ":$treename" -- don't, use "subtree"
---
-inside :: Stubbed a ASTInfo => Text -> Parser a -> Parser a
-inside sig parser = do
-  let (f, st') = Text.breakOn ":" sig
-  let st       = Text.drop 1 st'
-  if Text.null f
-  then do
-    -- The order is important.
-    subtree st do
-      stubbed f do
-        parser
-  else do
-    field f do
-      stubbed f do
-        if Text.null st
-        then do
-          parser
-        else do
-          subtree st do
-            parser
-
--- | Equip given constructor with info.
-getInfo :: Parser ASTInfo
-getInfo = Cons <$> currentRange <*> do Cons <$> grabComments <*> pure Nil
-
--- | Take the accumulated comments, clean the accumulator.
-grabComments :: Parser [Text]
+grabComments :: ParserM [Text]
 grabComments = do
-  comms <- get'
-  mod' @[Text] $ const []
-  return comms
+  ls <- gets fst
+  modify \(x, y) -> ([], y)
+  return ls
 
--- | /Actual/ debug pring.
-dump :: Parser ()
-dump = gets' pfGrove >>= traceShowM
+allComments :: [RawTree] -> ([Text], [RawTree])
+allComments = first (map getBody . filter isComment) . break isMeaningful
+  where
+    isMeaningful :: RawTree -> Bool
+    isMeaningful (extract -> _ :> "" :> _) = False
+    isMeaningful  _                        = True
+
+    isComment :: RawTree -> Bool
+    isComment (gist -> ParseTree ty _ _) = "comment" `Text.isSuffixOf` ty
+
+allErrors :: [RawTree] -> [Text]
+allErrors = map getBody . filter isUnnamedError
+  where
+    isUnnamedError :: RawTree -> Bool
+    isUnnamedError tree = case only tree of
+      (r :> "" :> _, ParseTree "ERROR" _ _) -> True
+      _                                     -> False
+
+getBody (gist -> f) = ptSource f
+
+field :: Text -> ParserM1 RawTree
+field name =
+  fieldOpt name
+    >>= maybe (throwM $ Failure [i|Cannot find field #{name}|]) return
+
+fieldOpt :: Text -> ParserM1 (Maybe RawTree)
+fieldOpt name = ask >>= go
+  where
+    go (tree@(extract -> _ :> n :> _) : rest)
+      | n == name = return (Just tree)
+      | otherwise = go rest
+
+    go [] = return Nothing
+
+fields :: Text -> ParserM1 [RawTree]
+fields name = ask >>= go
+  where
+    go (tree@(extract -> _ :> n :> _) : rest) =
+      (if n == name then ((tree :) <$>) else id)
+        $ go rest
+    go [] = return []
+
+data ShowRange
+  = Y | N
+  deriving stock Eq
+
+type Info    = Product [[Text], Range, ShowRange]
+type PreInfo = Product [Range, ShowRange]
+
+instance Modifies Info where
+  ascribe (comms :> r :> pin :> _) = ascribeRange r pin . ascribeComms comms
+
+ascribeComms comms
+  | null comms = id
+  | otherwise  = \d ->
+      block $ map (pp . Text.init) comms ++ [d]
+
+ascribeRange r Y = (pp r $$)
+ascribeRange _ _ = id
+
+withComments :: ParserM (Maybe (Product xs, a)) -> ParserM (Maybe (Product ([Text] : xs), a))
+withComments act = do
+  comms <- grabComments
+  res   <- act
+  return $ fmap (first (comms :>)) res
+
+boilerplate
+  :: (Text -> ParserM1 (f RawTree))
+  -> (RawInfo, ParseTree RawTree)
+  -> ParserM (Maybe (Info, f RawTree))
+boilerplate f (r :> _, ParseTree ty cs _) = do
+  withComments do
+    mbf <- runParserM1 cs $ f ty
+    return do
+      f <- mbf
+      return $ (r :> N :> Nil, f)
+
+boilerplate'
+  :: ((Text, Text) -> ParserM1 (f RawTree))
+  -> (RawInfo, ParseTree RawTree)
+  -> ParserM (Maybe (Info, f RawTree))
+boilerplate' f (r :> _, ParseTree ty cs src) = do
+  withComments do
+    mbf <- runParserM1 cs $ f (ty, src)
+    return do
+      f <- mbf
+      return $ (r :> N :> Nil, f)
+
+fallthrough :: MonadFail m => m a
+fallthrough = fail ""

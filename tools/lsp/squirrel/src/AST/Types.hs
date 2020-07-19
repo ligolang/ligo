@@ -7,9 +7,11 @@
 module AST.Types where
 
 import Data.Text (Text)
+import qualified Data.Text as Text
 
-import Pretty
-import Tree
+import Duplo.Pretty
+import Duplo.Tree
+import Duplo.Error
 
 -- import Debug.Trace
 
@@ -17,11 +19,30 @@ import Tree
 --
 --   TODO: Rename; add stuff if CamlLIGO/ReasonLIGO needs something.
 --
-type Pascal = Tree
+type LIGO = Tree RawLigoList
+
+type RawLigoList =
   [ Name, Path, QualifiedName, Pattern, Constant, FieldAssignment, Assignment
   , MapBinding, LHS, Alt, Expr, TField, Variant, Type, Mutable, VarDecl, Binding
-  , Declaration, Contract, TypeName, FieldName
+  , RawContract, TypeName, FieldName, Language
+  , Err Text, Parameters, Ctor
   ]
+
+data Undefined it
+  = Undefined Text
+  deriving (Show) via PP (Undefined it)
+  deriving stock (Functor, Foldable, Traversable)
+
+data Language it
+  = Language Lang it
+  deriving (Show) via PP (Language it)
+  deriving stock (Functor, Foldable, Traversable)
+
+data Lang
+  = Pascal
+  | Caml
+  | Reason
+  -- deriving (Show) via PP Lang
 
 data Contract it
   = ContractEnd
@@ -29,20 +50,24 @@ data Contract it
   deriving (Show) via PP (Contract it)
   deriving stock (Functor, Foldable, Traversable)
 
-data Declaration it
-  = ValueDecl it     -- ^ Binding
-  | TypeDecl  it it  -- ^ Name Type
-  | Action    it     -- ^ Expr
-  | Include   Text it
-  deriving (Show) via PP (Declaration it)
+data RawContract it
+  = RawContract [it] -- ^ Declaration
+  deriving (Show) via PP (RawContract it)
   deriving stock (Functor, Foldable, Traversable)
 
 data Binding it
   = Irrefutable  it it               -- ^ (Pattern) (Expr)
-  | Function     Bool it [it] it it  -- ^ (Name) [VarDecl] (Type) (Expr)
+  | Function     Bool it it it it    -- ^ (Name) Parameters (Type) (Expr)
   | Var          it it it            -- ^ (Name) (Type) (Expr)
   | Const        it it it            -- ^ (Name) (Type) (Expr)
+  | TypeDecl     it it               -- ^ Name Type
+  | Include      it
   deriving (Show) via PP (Binding it)
+  deriving stock (Functor, Foldable, Traversable)
+
+data Parameters it
+  = Parameters [it]
+  deriving (Show) via PP (Parameters it)
   deriving stock (Functor, Foldable, Traversable)
 
 data VarDecl it
@@ -63,7 +88,10 @@ data Type it
   | TVar      it       -- ^ (Name)
   | TSum      [it]     -- ^ [Variant]
   | TProduct  [it]     -- ^ [Type]
-  | TApply    it [it]  -- (Name) [Type]
+  | TApply    it it  -- (Name) [Type]
+  | TTuple    [it]
+  | TOr       it it it it
+  | TAnd      it it it it
   deriving (Show) via PP (Type it)
   deriving stock (Functor, Foldable, Traversable)
 
@@ -79,12 +107,13 @@ data TField it
 
 -- | TODO: break onto smaller types? Literals -> Constant; mapOps; mmove Annots to Decls.
 data Expr it
-  = Let       it it -- Declaration (Expr)
-  | Apply     it [it] -- (Expr) [Expr]
+  = Let       it it   -- Declaration Expr
+  | Apply     it it -- (Expr) [Expr]
   | Constant  it -- (Constant)
   | Ident     it -- (QualifiedName)
-  | BinOp     it Text it -- (Expr) Text (Expr)
-  | UnOp      Text it -- (Expr)
+  | BinOp     it it it -- (Expr) Text (Expr)
+  | UnOp      it it -- (Expr)
+  | Op        Text
   | Record    [it] -- [Assignment]
   | If        it it it -- (Expr) (Expr) (Expr)
   | Assign    it it -- (LHS) (Expr)
@@ -92,7 +121,7 @@ data Expr it
   | Set       [it] -- [Expr]
   | Tuple     [it] -- [Expr]
   | Annot     it it -- (Expr) (Type)
-  | Attrs     [Text]
+  | Attrs     [it]
   | BigMap    [it] -- [MapBinding]
   | Map       [it] -- [MapBinding]
   | MapRemove it it -- (Expr) (QualifiedName)
@@ -100,11 +129,11 @@ data Expr it
   | Indexing  it it -- (QualifiedName) (Expr)
   | Case      it [it]                  -- (Expr) [Alt]
   | Skip
-  | ForLoop   it it it it              -- (Name) (Expr) (Expr) (Expr)
+  | ForLoop   it it it (Maybe it) it              -- (Name) (Expr) (Expr) (Expr)
   | WhileLoop it it                    -- (Expr) (Expr)
   | Seq       [it]                     -- [Declaration]
-  | Lambda    [it] it it               -- [VarDecl] (Type) (Expr)
-  | ForBox    it (Maybe it) Text it it -- (Name) (Maybe (Name)) Text (Expr) (Expr)
+  | Lambda    it it it               -- [VarDecl] (Type) (Expr)
+  | ForBox    it (Maybe it) it it it -- (Name) (Maybe (Name)) Text (Expr) (Expr)
   | MapPatch  it [it] -- (QualifiedName) [MapBinding]
   | SetPatch  it [it] -- (QualifiedName) [Expr]
   | RecordUpd it [it] -- (QualifiedName) [FieldAssignment]
@@ -159,7 +188,7 @@ data Pattern it
 
 data QualifiedName it
   = QualifiedName
-    { qnSource :: it -- Name
+    { qnSource ::  it -- Name
     , qnPath   :: [it] -- [Path]
     }
   deriving (Show) via PP (QualifiedName it)
@@ -181,43 +210,55 @@ newtype TypeName it = TypeName Text
   deriving (Show) via PP (TypeName it)
   deriving stock   (Functor, Foldable, Traversable)
 
+newtype Ctor it = Ctor Text
+  deriving (Show) via PP (Ctor it)
+  deriving stock   (Functor, Foldable, Traversable)
+
 newtype FieldName it = FieldName Text
   deriving (Show) via PP (TypeName it)
   deriving stock   (Functor, Foldable, Traversable)
+
+instance Pretty1 Language where
+  pp1 = \case
+    Language _ p -> p
+
+instance Pretty1 Undefined where
+  pp1 = \case
+    Undefined mess -> "{{{" <.> pp (Text.take 20 mess) <.> "}}}"
 
 instance Pretty1 Contract where
   pp1 = \case
     ContractEnd -> "(* end *)"
     ContractCons x xs -> x $$ " " $$ xs
 
-instance Pretty1 Declaration where
+instance Pretty1 RawContract where
   pp1 = \case
-    ValueDecl binding -> binding
-    TypeDecl  n ty    -> "type" <+> n <+> "=" `indent` ty
-    Action    e       -> e
-
-    Include   f t     ->
-      "(* module" <+> pp f <+> "*)"
-        `indent` pp t
-        `above` "(* end" <+> pp f <+> "*)"
+    RawContract xs -> "(* begin *)" `indent` sparseBlock xs `above` "(* end *)"
 
 instance Pretty1 Binding where
   pp1 = \case
-    Irrefutable  pat expr -> "irref" <+> pat <+> "=" `indent` expr
-    Function     isRec name params ty body ->
+    Irrefutable  pat  expr     -> "irref" <+> pat  <+> "=" `indent` expr
+    TypeDecl     n    ty       -> "type"  <+> n    <+> "=" `indent` ty
+    Var          name ty value -> "var"   <+> name <+> ":" <+> ty <+> ":=" `indent` value
+    Const        name ty body  -> "const" <+> name <+> ":" <+> ty <+>  "=" `indent` body
+    Include      fname         -> "#include" <+> fname
+
+    Function isRec name params ty body ->
       (
         (
           (   (if isRec then "recursive" else empty)
           <+> "function"
           <+> name
           )
-          `indent` tuple params
+          `indent` params
         )
-        `indent` (":" <+> ty <+> "is")
+        `indent` (":" <+> ty `above` "is")
       )
       `indent` body
-    Var   name ty value -> "var"   <+> name <+> ":" <+> ty <+> ":=" `indent` value
-    Const name ty body  -> "const" <+> name <+> ":" <+> ty <+>  "=" `indent` body
+
+instance Pretty1 Parameters where
+  pp1 = \case
+    Parameters them -> tuple them
 
 instance Pretty1 VarDecl where
   pp1 = \case
@@ -235,7 +276,10 @@ instance Pretty1 Type where
     TVar      name      -> name
     TSum      variants  -> block variants
     TProduct  elements  -> train " *" elements
-    TApply    f xs      -> f <> tuple xs
+    TApply    f xs      -> f <+> xs
+    TTuple    xs        -> tuple xs
+    TOr       l n r m   -> "michelson_or"   <+> tuple [l, n, r, m]
+    TAnd      l n r m   -> "michelson_pair" <+> tuple [l, n, r, m]
 
 instance Pretty1 Variant where
   pp1 = \case
@@ -244,12 +288,13 @@ instance Pretty1 Variant where
 
 instance Pretty1 Expr where
   pp1 = \case
-    Let       decl body -> "block {" `indent` decl `above` "}" <+> "with" `indent` body
-    Apply     f xs       -> f <+> tuple xs
+    Let       decl body  -> decl `above` "with" `indent` body
+    Apply     f xs       -> f <+> xs
     Constant  constant   -> constant
     Ident     qname      -> qname
     BinOp     l o r      -> parens (l <+> pp o <+> r)
     UnOp        o r      -> parens (pp o <+> r)
+    Op          o        -> pp o
     Record    az         -> "record" <+> list az
     If        b t e      -> fsep ["if" `indent` b, "then" `indent` t, "else" `indent` e]
     Assign    l r        -> l <+> ":=" `indent` r
@@ -262,14 +307,14 @@ instance Pretty1 Expr where
     Map       bs         ->  "map"       <+> list bs
     MapRemove k m        -> "remove" `indent` k `above` "from" <+> "map" `indent` m
     SetRemove k s        -> "remove" `indent` k `above` "from" <+> "set" `indent` s
-    Indexing  a j        -> a <> list [j]
+    Indexing  a j        -> a <.> list [j]
     Case      s az       -> "case" <+> s <+> "of" `indent` block az
     Skip                 -> "skip"
-    ForLoop   j s f b    -> "for" <+> j <+> ":=" <+> s <+> "to" <+> f `indent` b
+    ForLoop   j s f d b  -> "for" <+> j <+> ":=" <+> s <+> "to" <+> f <+> mb ("step" <+>) d `indent` b
     ForBox    k mv t z b -> "for" <+> k <+> mb ("->" <+>) mv <+> "in" <+> pp t <+> z `indent` b
     WhileLoop f b        -> "while" <+> f `indent` b
-    Seq       es         -> "block {" `indent` sparseBlock es `above` "}"
-    Lambda    ps ty b    -> (("function" `indent` tuple ps) `indent` (":" <+> ty)) `indent` b
+    Seq       es         -> "block {" `indent` block es `above` "}"
+    Lambda    ps ty b    -> (("function" `indent` ps) `indent` (":" <+> ty)) `indent` b
     MapPatch  z bs       -> "patch" `indent` z `above` "with" <+> "map" `indent` list bs
     SetPatch  z bs       -> "patch" `indent` z `above` "with" <+> "set" `indent` list bs
     RecordUpd r up       -> r `indent` "with" <+> "record" `indent` list up
@@ -301,7 +346,7 @@ instance Pretty1 Constant where
 
 instance Pretty1 QualifiedName where
   pp1 = \case
-    QualifiedName src path -> src <> sepByDot path
+    QualifiedName src path -> src <.> sepByDot path
 
 instance Pretty1 Pattern where
   pp1 = \case
@@ -326,6 +371,10 @@ instance Pretty1 FieldName where
   pp1 = \case
     FieldName    raw -> pp raw
 
+instance Pretty1 Ctor where
+  pp1 = \case
+    Ctor         raw -> pp raw
+
 instance Pretty1 Path where
   pp1 = \case
     At n -> n
@@ -333,8 +382,8 @@ instance Pretty1 Path where
 
 instance Pretty1 TField where
   pp1 = \case
-    TField      n t -> n <> ":" `indent` t
+    TField      n t -> n <.> ":" `indent` t
 
 instance Pretty1 LHS where
   pp1 = \case
-    LHS    qn mi -> qn <> foldMap brackets mi
+    LHS    qn mi -> qn <.> foldMap brackets mi

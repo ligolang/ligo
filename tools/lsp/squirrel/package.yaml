@@ -5,13 +5,16 @@ dependencies:
   - bytestring
   - containers
   - data-default
+  - duplo
   - exceptions
   - fastsum
   - filepath
   - ghc-prim
+  - interpolate
   - mtl
   - pretty
   - text
+  - transformers
   - tree-sitter
 
 default-extensions:
@@ -21,6 +24,7 @@ default-extensions:
   - BlockArguments
   - ConstraintKinds
   - DataKinds
+  - DeriveAnyClass
   - DeriveFoldable
   - DeriveFunctor
   - DeriveTraversable
@@ -46,7 +50,7 @@ default-extensions:
   - UndecidableInstances
   - ViewPatterns
 
-ghc-options: -freverse-errors -Wall -threaded
+ghc-options: -freverse-errors -Wall
 
 library:
   source-dirs:
@@ -72,3 +76,5 @@ executables:
 
     source-dirs:
       - app/
+
+    ghc-options: -threaded

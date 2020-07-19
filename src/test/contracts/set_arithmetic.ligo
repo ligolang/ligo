@@ -25,3 +25,10 @@ function patch_op_deep (var s : set (string) * nat) : set (string) * nat is
 
 function mem_op (const s : set (string)) : bool is
   set_mem ("foobar", s)
+
+function patch_op_deep (var s : set (string) * nat) : set (string) * nat is
+  block {
+    patch s.0 with set ["foobar"];
+    remove "foobar" from set s.0
+  } with s
+

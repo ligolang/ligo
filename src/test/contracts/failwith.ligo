@@ -39,5 +39,7 @@ function foobar (const i : int) : int is
       end
 
 function failer (const p : int) : int is block {
-  if p = 1 then failwith (42) else skip
+  if p = 1 then failwith (42) else {
+   skip
+  }
 } with p

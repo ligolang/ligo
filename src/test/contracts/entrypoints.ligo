@@ -16,3 +16,5 @@ function cbo (const a : address; const s : storage) : return is
       | None -> (failwith ("cbo: Entrypoint not found.") : contract (unit))
       end
   } with (list [Tezos.transaction (unit, 0tez, c)], s)
+
+const x : option (int) = 1
