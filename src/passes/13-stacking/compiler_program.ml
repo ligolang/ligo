@@ -1,19 +1,80 @@
 open Trace
 open Errors
-open Mini_c
+open Stage_common.Types
+open Co_de_bruijn
 open Michelson
 open Memory_proto_alpha.Protocol.Script_ir_translator
 open Predefined.Stacking
 
-(* This does not makes sense to me *)
-let rec get_operator : constant' -> type_expression -> expression list -> (predicate , stacking_error) result = fun s ty lst ->
+open Co_de_bruijn.Util
+
+let smaller m1 m2 =
+  let open Michelson in
+  let open Self_michelson in
+  if measure (optimize m1) <= measure (optimize m2)
+  then m1
+  else m2
+
+(* TODO optimize? *)
+let translate_usages (us : usages) : michelson =
+  let rec aux n us =
+    match us with
+    | [] -> seq []
+    | Drop :: us -> seq [ i_dig n ; i_drop ; aux n us ]
+    | Keep :: us -> seq [ aux (n + 1) us ] in
+  aux 0 us
+
+(* TODO optimize? *)
+let translate_splitting1 (s : splitting) : michelson =
+  let rec aux n s =
+    match s with
+    | [] -> seq []
+    | Left :: s -> seq [ i_dig (n - 1) ; aux n s ]
+    | Right :: s -> aux (n - 1) s
+    | Both :: s -> seq [ i_dig (n - 1) ; i_dup ; i_dug n ; aux n s ] in
+  aux (List.length s) (List.rev s)
+
+let translate_splitting2 (s : splitting) : michelson =
+  let rec aux i n s =
+    match s with
+    | [] -> seq []
+    | Left :: s -> aux (i - 1) n s
+    | Right :: s -> seq [ i_dig i ; i_dug (n - 1) ; aux (i - 1) (n - 1) s ]
+    | Both :: s -> seq [ i_dig i ; i_dup ; i_dug n ; i_dug i ; aux (i - 1) n s ]
+  in
+  aux (List.length s - 1) (List.length s) (List.rev s)
+
+let translate_splitting (s : splitting) : michelson =
+  smaller (translate_splitting1 s) (translate_splitting2 s)
+
+(* Using left combs here because it's easier. This is only used for
+   APPLY. If COMB/UNCOMB instructions are added someday, can switch to
+   them. Must also switch Compiler_type.environment_closure at that
+   time. *)
+let comb n = seq (List.repeat n i_pair)
+let uncomb n = seq (List.repeat n (seq [i_dup; i_cdr; i_swap; i_car]))
+
+let translate_bind' translate (body : 'a bind) env outer =
+  let (ty, used, body) = body in
+  match used with
+  | Keep -> translate body (ty :: env) (Left :: outer)
+  | Drop ->
+    let%bind body = translate body env outer in
+    ok (seq [ i_drop ; body ])
+
+let rec translate_binds' translate (binds : 'a binds) env outer =
+  match binds with
+  | Bind_zero x -> translate x env outer
+  | Bind_suc bind -> translate_bind' (translate_binds' translate) bind env outer
+
+let rec get_operator : constant' -> type_expression -> expression args -> (predicate , stacking_error) result = fun s ty lst ->
   match Predefined.Stacking.get_operators s with
   | Some x -> ok x
   | None -> (
       match s with
       | C_SELF -> (
           let%bind entrypoint_as_string = match lst with
-            | [{ content = E_literal (D_string s); type_expression = _ }] -> (
+            | Arg_cons (_, { content = E_literal (D_string s); type_expression = _ }, _) -> (
                 match String.split_on_char '%' s with
                 | ["" ; s] -> ok @@ String.concat "" ["%" ; (String.uncapitalize_ascii s)]
                 | _ -> fail @@ corner_case ~loc:__LOC__ "mini_c . SELF"
@@ -36,12 +97,12 @@ let rec get_operator : constant' -> type_expression -> expression list -> (predi
           ok @@ simple_unary @@ prim ~children:[m_ty] I_NIL
         )
       | C_LOOP_CONTINUE -> (
-          let%bind (_,ty) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_or ty in
+          let%bind (_,ty) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  Mini_c.get_t_or ty in
           let%bind m_ty = Compiler_type.type_ ty in
           ok @@ simple_unary @@ prim ~children:[m_ty] I_LEFT
       )
       | C_LOOP_STOP -> (
-          let%bind (ty, _) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_or ty in
+          let%bind (ty, _) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  Mini_c.get_t_or ty in
           let%bind m_ty = Compiler_type.type_ ty in
           ok @@ simple_unary @@ prim ~children:[m_ty] I_RIGHT
       )
@@ -72,68 +133,63 @@ let rec get_operator : constant' -> type_expression -> expression list -> (predi
         )
       | C_MAP_REMOVE ->
           let%bind (_k,v) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  match lst with
-            | [ _ ; expr ] ->
-              Option.(map_pair_or (get_t_map , get_t_big_map) (Expression.get_type expr))
+            | Arg_cons (_, _, Arg_cons (_, expr, _)) ->
+              Option.(map_pair_or (Mini_c.get_t_map , Mini_c.get_t_big_map) expr.type_expression)
             | _ -> None in
           let%bind v_ty = Compiler_type.type_ v in
           ok @@ simple_binary @@ seq [dip (i_none v_ty) ; prim I_UPDATE ]
       | C_LEFT ->
-          let%bind r = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  match lst with
-            | [ _ ] -> get_t_right ty
-            | _ -> None in
+          let%bind r = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  Mini_c.get_t_right ty in
           let%bind r_ty = Compiler_type.type_ r in
           ok @@ simple_unary @@ prim ~children:[r_ty] I_LEFT
       | C_RIGHT ->
-          let%bind l = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  match lst with
-            | [ _ ] -> get_t_left ty
-            | _ -> None in
+          let%bind l = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  Mini_c.get_t_left ty in
           let%bind l_ty = Compiler_type.type_ l in
           ok @@ simple_unary @@ prim ~children:[l_ty] I_RIGHT
       | C_CONTRACT ->
-          let%bind r = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_contract ty in
+          let%bind r = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  Mini_c.get_t_contract ty in
           let%bind r_ty = Compiler_type.type_ r in
           ok @@ simple_unary @@ seq [
             prim ~children:[r_ty] I_CONTRACT ;
             i_assert_some_msg (i_push_string "bad address for get_contract") ;
           ]
       | C_CONTRACT_OPT -> 
-          let%bind tc = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_option ty in
-          let%bind r = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_contract tc in
+          let%bind tc = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  Mini_c.get_t_option ty in
+          let%bind r = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  Mini_c.get_t_contract tc in
           let%bind r_ty = Compiler_type.type_ r in
           ok @@ simple_unary @@ prim ~children:[r_ty] I_CONTRACT ;
 
       | C_CONTRACT_ENTRYPOINT ->
-          let%bind r = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_contract ty in
+          let%bind r = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  Mini_c.get_t_contract ty in
           let%bind r_ty = Compiler_type.type_ r in
           let%bind entry = match lst with
-            | [ { content = E_literal (D_string entry); type_expression = _ } ; _addr ] -> ok entry
-            | [ _entry ; _addr ] ->
-               fail @@ contract_entrypoint_must_be_literal ~loc:__LOC__
+            | Arg_cons (_, { content = E_literal (D_string entry); type_expression = _ }, _) -> ok entry
             | _ ->
-               fail @@ corner_case ~loc:__LOC__ "mini_c . CONTRACT_ENTRYPOINT" in
+               fail @@ contract_entrypoint_must_be_literal ~loc:__LOC__ in
           ok @@ simple_binary @@ seq [
             i_drop ; (* drop the entrypoint... *)
             prim ~annot:[entry] ~children:[r_ty] I_CONTRACT ;
             i_assert_some_msg (i_push_string @@ Format.sprintf "bad address for get_entrypoint (%s)" entry) ;
           ]
       | C_CONTRACT_ENTRYPOINT_OPT ->
-          let%bind tc = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_option ty in
-          let%bind r = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_contract tc in
+          let%bind tc = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  Mini_c.get_t_option ty in
+          let%bind r = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  Mini_c.get_t_contract tc in
           let%bind r_ty = Compiler_type.type_ r in
           let%bind entry = match lst with
-            | [ { content = E_literal (D_string entry); type_expression = _ } ; _addr ] -> ok entry
-            | [ _entry ; _addr ] ->
-               fail @@ contract_entrypoint_must_be_literal ~loc:__LOC__
+            | Arg_cons (_, { content = E_literal (D_string entry); type_expression = _ }, _) -> ok entry
             | _ ->
-               fail @@ corner_case ~loc:__LOC__ "mini_c . CONTRACT_ENTRYPOINT" in
+               fail @@ contract_entrypoint_must_be_literal ~loc:__LOC__ in
           ok @@ simple_binary @@ seq [
             i_drop ; (* drop the entrypoint... *)
             prim ~annot:[entry] ~children:[r_ty] I_CONTRACT ;
           ]
       | C_CREATE_CONTRACT ->
         let%bind ch = match lst with
-          | { content= E_closure {body;binder} ; type_expression = {type_content=T_function ({type_content=T_pair ((_,p),(_,s));_} as tin,_);_}} :: _ ->
-            let%bind closure = translate_function_body {body;binder} [] tin in
+          (* {type_content=T_function ({type_content=T_pair ((_,p),(_,s));_} as tin,_);_} *)
+          | Arg_cons (_, { content= E_closure body ; type_expression = closure_ty }, _) ->
+            let%bind closure = translate_function_body body [] [] in
+            let%bind (input_ty, _) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ Mini_c.get_t_function closure_ty in
+            let%bind (p, s) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ Mini_c.get_t_pair input_ty in
             let%bind (p',s') = bind_map_pair Compiler_type.type_ (p,s) in
             ok @@ contract p' s' closure
           | _ -> fail @@ corner_case ~loc:__LOC__ "mini_c . CREATE_CONTRACT"
@@ -143,7 +199,7 @@ let rec get_operator : constant' -> type_expression -> expression list -> (predi
           prim ~children:[ch] I_CREATE_CONTRACT ;
           i_pair ;
         ]
-      | x -> fail @@ corner_case ~loc:__LOC__ (Format.asprintf "predicate \"%a\" doesn't exist" PP.constant x)
+      | x -> fail @@ corner_case ~loc:__LOC__ (Format.asprintf "predicate \"%a\" doesn't exist" Mini_c.PP.constant x)
     )
 
 and translate_value (v:value) ty : (michelson , stacking_error) result = match v with
@@ -156,18 +212,18 @@ and translate_value (v:value) ty : (michelson , stacking_error) result = match v
   | D_bytes s -> ok @@ bytes s
   | D_unit -> ok @@ prim D_Unit
   | D_pair (a, b) -> (
-      let%bind (a_ty , b_ty) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_pair ty in
+      let%bind (a_ty , b_ty) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  Mini_c.get_t_pair ty in
       let%bind a = translate_value a a_ty in
       let%bind b = translate_value b b_ty in
       ok @@ prim ~children:[a;b] D_Pair
     )
   | D_left a -> (
-      let%bind (a_ty , _) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_or ty in
+      let%bind (a_ty , _) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  Mini_c.get_t_or ty in
       let%bind a' = translate_value a a_ty in
       ok @@ prim ~children:[a'] D_Left
     )
   | D_right b -> (
-      let%bind (_ , b_ty) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_or ty in
+      let%bind (_ , b_ty) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  Mini_c.get_t_or ty in
       let%bind b' = translate_value b b_ty in
       ok @@ prim ~children:[b'] D_Right
     )
@@ -176,7 +232,7 @@ and translate_value (v:value) ty : (michelson , stacking_error) result = match v
       let%bind s' = translate_value s ty in
       ok @@ prim ~children:[s'] D_Some
   | D_map lst -> (
-      let%bind (k_ty , v_ty) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_map ty in
+      let%bind (k_ty , v_ty) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  Mini_c.get_t_map ty in
       let%bind lst' =
         let aux (k , v) = bind_pair (translate_value k k_ty , translate_value v v_ty) in
         bind_map_list aux lst in
@@ -185,7 +241,7 @@ and translate_value (v:value) ty : (michelson , stacking_error) result = match v
       ok @@ seq @@ List.map aux sorted
     )
   | D_big_map lst -> (
-      let%bind (k_ty , v_ty) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_big_map ty in
+      let%bind (k_ty , v_ty) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  Mini_c.get_t_big_map ty in
       let%bind lst' =
         let aux (k , v) = bind_pair (translate_value k k_ty , translate_value v v_ty) in
         bind_map_list aux lst in
@@ -194,12 +250,12 @@ and translate_value (v:value) ty : (michelson , stacking_error) result = match v
       ok @@ seq @@ List.map aux sorted
     )
   | D_list lst -> (
-      let%bind e_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_list ty in
+      let%bind e_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  Mini_c.get_t_list ty in
       let%bind lst' = bind_map_list (fun x -> translate_value x e_ty) lst in
       ok @@ seq lst'
     )
   | D_set lst -> (
-      let%bind e_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_set ty in
+      let%bind e_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  Mini_c.get_t_set ty in
       let%bind lst' = bind_map_list (fun x -> translate_value x e_ty) lst in
       let sorted = List.sort compare lst' in
       ok @@ seq sorted
@@ -207,8 +263,9 @@ and translate_value (v:value) ty : (michelson , stacking_error) result = match v
   | D_operation _ ->
       fail @@ corner_case ~loc:__LOC__ "can't compile an operation"
 
-and translate_expression (expr:expression) (env:environment) : (michelson , stacking_error) result =
-  let (expr' , ty) = Combinators.Expression.(get_content expr , get_type expr) in
+and translate_expression (expr : expression) env outer : (michelson , stacking_error) result =
+  let expr' = expr.content in
+  let ty = expr.type_expression in
   let return code = ok code in
 
   trace (compile_expression_tracer expr ty) @@ 
@@ -217,147 +274,72 @@ and translate_expression (expr:expression) (env:environment) : (michelson , stac
       let%bind v = translate_value v ty in
       let%bind t = Compiler_type.type_ ty in
       return @@ i_push t v
-  | E_closure anon -> (
+  | E_closure body -> (
       match ty.type_content with
-      | T_function (input_ty , output_ty) ->
-        translate_function anon env input_ty output_ty
+      | T_function (_ , output_ty) ->
+        translate_function body env outer output_ty
       | _ -> fail @@ corner_case ~loc:__LOC__ "expected function type"
     )
-  | E_application (f , arg) -> (
-      let%bind f = translate_expression f (Environment.add (Location.wrap @@ Var.fresh (), arg.type_expression) env) in
-      let%bind arg = translate_expression arg env in
+  | E_application (inner, f , arg) -> (
+      let (env_f, env_arg) = split inner env in
+      let inner = flip inner in
+      let (outer', inner') = assoc outer inner in
+      let%bind arg = translate_expression arg env_arg outer' in
+      let%bind f = translate_expression f env_f (Right :: inner') in
       return @@ seq [
         arg ;
         f ;
+        (* we could avoid the swap, but, this makes it easier to
+           reduce applications of inlined literal michelson
+           lambdas. *)
         i_swap ;
         prim I_EXEC ;
       ]
     )
-  | E_variable x ->
-    let%bind code = Compiler_environment.get env x in
-    return code
-  | E_constant{cons_name=str;arguments= lst} ->
-      let module L = Logger.Stateful() in
-      let%bind (pre_code, _env) =
-        let aux (code, env) expr =
-          let%bind expr_code = translate_expression expr env in
-          L.log @@ Format.asprintf "\n%a -> %a in %a\n"
-            PP.expression expr
-            Michelson.pp expr_code
-            PP.environment env ;
-          let env = Environment.add (Location.wrap @@ Var.fresh (), expr.type_expression) env in
-          let code = code @ [expr_code] in
-          ok (code, env) in
-        bind_fold_right_list aux ([], env) lst in
-      let pre_code = seq pre_code in
-      let%bind predicate = get_operator str ty lst in
-      let%bind code = match (predicate, List.length lst) with
-        | Constant c, 0 -> ok @@ seq [
-            pre_code ;
-            c ;
-          ]
-        | Unary f, 1 -> ok @@ seq [
-            pre_code ;
-            f ;
-          ]
-        | Binary f, 2 -> ok @@ seq [
-            pre_code ;
-            f ;
-          ]
-        | Ternary f, 3 -> ok @@ seq [
-            pre_code ;
-            f ;
-          ]
-        | Tetrary f, 4 -> ok @@ seq [
-            pre_code ;
-            f ;
-          ]
-        | _ -> fail @@ bad_constant_arity str
-      in
-      return code
-  | E_if_bool (c, a, b) -> (
-      let%bind c' = translate_expression c env in
-      let%bind a' = translate_expression a env in
-      let%bind b' = translate_expression b env in
-      let%bind code = ok (seq [
-          c' ;
-          i_if a' b' ;
-        ]) in
+  | E_variable -> ok (translate_splitting outer)
+  | E_constant {cons_name; arguments} ->
+      let%bind pre_code = translate_args arguments env outer in
+      let%bind predicate = get_operator cons_name ty arguments in
+      let predicate = Predefined.Stacking.unpredicate predicate in
+      return (seq [ pre_code ; predicate ])
+  | E_if_bool (inner1, c, (inner2, a, b)) -> (
+      let%bind code = translate_conditional I_IF (inner1, c, (inner2, binds0 a, binds0 b)) env outer in
       return code
     )
-  | E_if_none (c, n, (ntv , s)) -> (
-      let%bind c' = translate_expression c env in
-      let%bind n' = translate_expression n env in
-      let s_env = Environment.add ntv env in
-      let%bind s' = translate_expression s s_env in
-      let%bind code = ok (seq [
-          c' ;
-          i_if_none n' (seq [
-              s' ;
-              dip i_drop ;
-            ])
-          ;
-        ]) in
+  | E_if_none (inner1, c, (inner2, n, s)) -> (
+      let%bind code = translate_conditional I_IF_NONE (inner1, c, (inner2, binds0 n, binds1 s)) env outer in
       return code
     )
-  | E_if_cons (cond , nil , ((hd , tl) , cons)) -> (
-      let%bind cond' = translate_expression cond env in
-      let%bind nil' = translate_expression nil env in
-      let s_env =
-        Environment.add hd
-        @@ Environment.add tl env
-      in
-      let%bind s' = translate_expression cons s_env in
-      let%bind code = ok (seq [
-          cond' ;
-          i_if_cons (seq [
-              s' ;
-              dip (seq [ i_drop ; i_drop ]) ;
-            ]) nil'
-          ;
-        ]) in
+  | E_if_cons (inner1, c, (inner2, cons, nil)) -> (
+      let%bind code = translate_conditional I_IF_CONS
+          (* TODO get rid of this... *)
+          ~extra_left:i_swap
+          (inner1, c, (inner2, binds2 cons, binds0 nil)) env outer in
       return code
     )
-  | E_if_left (c, (l_ntv , l), (r_ntv , r)) -> (
-      let%bind c' = translate_expression c env in
-      let l_env = Environment.add l_ntv env in
-      let%bind l' = translate_expression l l_env in
-      let r_env = Environment.add r_ntv env in
-      let%bind r' = translate_expression r r_env in
-      let%bind code = ok (seq [
-          c' ;
-          i_if_left (seq [
-              l' ;
-              i_comment "restrict left" ;
-              dip i_drop ;
-            ]) (seq [
-              r' ;
-              i_comment "restrict right" ;
-              dip i_drop ;
-            ])
-          ;
-        ]) in
+  | E_if_left (inner1, c, (inner2, l, r)) -> (
+      let%bind code = translate_conditional I_IF_LEFT (inner1, c, (inner2, binds1 l, binds1 r)) env outer in
       return code
     )
-  | E_let_in (v , _, expr , body) -> (
-      let%bind expr' = translate_expression expr env in
-      let%bind body' = translate_expression body (Environment.add v env) in
-      let%bind code = ok (seq [
-          expr' ;
-          body' ;
-          i_comment "restrict let" ;
-          dip i_drop ;
-        ]) in
-      return code
+  | E_let_in (_, (inner, e1, e2)) -> (
+      let (env1, env2) = split inner env in
+      let (outer', inner') = assoc outer inner in
+      let%bind e1 = translate_expression e1 env1 outer' in
+      let%bind e2 = translate_bind e2 env2 inner' in
+      return (seq [ e1 ; e2 ])
     )
-  | E_iterator (name,(v , body) , expr) -> (
-      let%bind expr' = translate_expression expr env in
-      let%bind body' = translate_expression body (Environment.add v env) in
+  | E_iterator (name, (inner, body, expr)) -> (
+      let (env_body, env_expr) = split inner env in
+      let inner = flip inner in
+      let (outer, inner) = assoc outer inner in
+      let%bind expr' = translate_expression expr env_expr outer in
+      let%bind body' = translate_bind body env_body (rights_with (left_usages inner)) in
       match name with
       | C_ITER -> (
           let%bind code = ok (seq [
               expr' ;
-              i_iter (seq [body' ; i_drop ; i_drop]) ;
+              i_iter (seq [body' ; i_drop]) ;
+              translate_usages (right_usages inner) ;
               i_push_unit ;
             ]) in
           return code
@@ -365,17 +347,20 @@ and translate_expression (expr:expression) (env:environment) : (michelson , stac
       | C_MAP -> (
           let%bind code = ok (seq [
               expr' ;
-              i_map (seq [body' ; dip i_drop]) ;
+              i_map (seq [body']) ;
+              translate_usages (Keep :: right_usages inner) ;
             ]) in
           return code
         )
       | C_LOOP_LEFT -> (
-          let%bind (_, ty) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  get_t_or (snd v) in
+          let (ty, _, _) = body in
+          let%bind (_, ty) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  Mini_c.get_t_or ty in
           let%bind m_ty = Compiler_type.type_ ty in
           let%bind code = ok (seq [
               expr' ;
               prim ~children:[m_ty] I_LEFT;
               i_loop_left body';
+              translate_usages (Keep :: right_usages inner) ;
             ]) in
           return code
         )
@@ -383,29 +368,30 @@ and translate_expression (expr:expression) (env:environment) : (michelson , stac
           fail (bad_iterator s)
         )
     )
-  | E_fold ((v , body) , collection , initial) -> (
-      let%bind collection' =
-        translate_expression
-          collection
-          (Environment.add (Location.wrap @@ Var.fresh (), initial.type_expression) env) in
-      let%bind initial' = translate_expression initial env in
-      let%bind body' = translate_expression body (Environment.add v env) in
+  | E_fold (inner1, initial, (inner2, collection, body)) -> (
+      let (env_init, env') = split inner1 env in
+      let (env_coll, env_body) = split inner2 env' in
+      let (outer, inner1) = assoc outer inner1 in
+      let (inner1, inner2) = assoc inner1 inner2 in
+      let%bind initial' = translate_expression initial env_init outer in
+      let%bind collection' = translate_expression collection env_coll (Right :: inner1) in
+      let%bind body' = translate_bind body env_body (rights_with (left_usages inner2)) in
       let code = seq [
           initial' ;
           collection' ;
           i_iter (seq [
               i_swap ;
-              i_pair ; body' ; dip i_drop ;
+              i_pair ; body' ;
             ]) ;
+          translate_usages (Keep :: right_usages inner2) ;
         ] in
       ok code
     )
-  | E_record_update (record, path, expr) -> (
-    let%bind record' = translate_expression record env in
-
-    let record_var = Location.wrap @@ Var.fresh () in
-    let env' = Environment.add (record_var, record.type_expression) env in
-    let%bind expr' = translate_expression expr env' in
+  | E_record_update (path, (inner, record, expr)) -> (
+    let (env_record, env_expr) = split inner env in
+    let (outer', inner') = assoc outer inner in
+    let%bind record' = translate_expression record env_record outer' in
+    let%bind expr' = translate_expression expr env_expr (Right :: inner') in
     let modify_code =
       let aux acc step = match step with
         | `Left -> seq [dip i_unpair ; acc ; i_pair]
@@ -435,35 +421,76 @@ and translate_expression (expr:expression) (env:environment) : (michelson , stac
       let%bind ty = Compiler_type.type_ ty in
       return @@ i_push ty code
 
-and translate_function_body ({body ; binder} : anon_function) lst input : (michelson , stacking_error) result =
-  let pre_env = Environment.of_list lst in
-  let env = Environment.(add (binder , input) pre_env) in
-  let%bind expr_code = translate_expression body env in
-  let%bind unpack_closure_code = Compiler_environment.unpack_closure pre_env in
+and translate_bind (body : expression bind) env outer =
+  translate_bind' translate_expression body env outer
+
+and translate_binds (body : expression binds) env outer =
+  translate_binds' translate_expression body env outer
+
+and translate_args (args : expression args) env outer =
+  match args with
+  | Arg_nil -> ok (translate_splitting outer)
+  | Arg_cons (inner, arg, args) ->
+    let args_env = select (right_usages inner) env in
+    let arg_env = select (left_usages inner) env in
+    let (outer', inner') = assoc outer (flip inner) in
+    let%bind args' = translate_args args args_env outer' in
+    let inner' = List.repeat (args_count args) Right @ inner' in
+    let%bind arg' = translate_expression arg arg_env inner' in
+    ok (seq [ args' ; arg' ])
+
+and translate_conditional (if_prim : prim) ?extra_left
+    (cond : (expression, (expression binds, expression binds) split) split) (env : environment) (outer : splitting) =
+  let (inner1, e1, (inner2, e2, e3)) = cond in
+  let (env1, env') = split inner1 env in
+  let (env2, env3) = split inner2 env' in
+  let (outer', inner1') = assoc outer inner1 in
+  let (outerL, innerR) = assoc inner1' inner2 in
+  let (outerR, innerL) = assoc inner1' (flip inner2) in
+  let%bind e1 = translate_expression e1 env1 outer' in
+  let p2 = translate_usages (List.repeat (num_binds e2) Keep @ right_usages outerR) in
+  let p3 = translate_usages (List.repeat (num_binds e3) Keep @ right_usages outerL) in
+  let%bind e2 = translate_binds e2 env2 innerL in
+  let%bind e3 = translate_binds e3 env3 innerR in
+  (* TODO get rid of this... *)
+  let extra_left = match extra_left with
+    | None -> seq []
+    | Some code -> code in
+  ok (seq [ e1 ;
+            prim ~children:[seq [extra_left; p2; e2];
+                            seq [p3; e3]]
+              if_prim])
+
+and translate_function_body (body : expression bind) env outer : (michelson , stacking_error) result =
+  let%bind expr_code = translate_bind body env outer in
+  let unpack_closure_code = match env with
+    | [] -> seq []
+    | _ :: _ ->
+      (* TODO ? *)
+      seq [ i_unpair ;
+            uncomb (List.length env - 1) ;
+            i_dig (List.length env) ] in
   let code = seq [
       i_comment "unpack closure env" ;
       unpack_closure_code ;
       i_comment "function result" ;
       expr_code ;
-      i_comment "remove env" ;
-      dip i_drop ;
-      seq (List.map (Function.constant (dip i_drop)) lst) ;
     ] in
 
   ok code
 
-and translate_function anon env input_ty output_ty : (michelson , stacking_error) result =
-  let fvs = Mini_c.Free_variables.lambda [] anon in
-  let small_env = Mini_c.Environment.select fvs env in
+and translate_function body env outer output_ty : (michelson , stacking_error) result =
+  let (input_ty, _, _) = body in
   let%bind (_lambda_ty , input_ty' , output_ty') =
-    Compiler_type.lambda_closure_with_ty (small_env , input_ty , output_ty) in
-  let%bind lambda_body_code = translate_function_body anon small_env input_ty in
-  match fvs with
-  | [] -> ok @@ seq [ i_lambda input_ty' output_ty' lambda_body_code ]
+    Compiler_type.lambda_closure_with_ty (env , input_ty , output_ty) in
+  let%bind lambda_body_code = translate_function_body body env (List.repeat (List.length env) Left) in
+  match env with
+  | [] -> ok @@ seq [ translate_splitting outer ;
+                      i_lambda input_ty' output_ty' lambda_body_code ]
   | _ :: _ ->
-    let selector = List.map fst small_env in
-    let%bind closure_pack_code = Compiler_environment.pack_closure env selector in
+    let closure_pack_code = comb (List.length env - 1) in
     ok @@ seq [
+      translate_splitting outer ;
       closure_pack_code ;
       i_lambda input_ty' output_ty' lambda_body_code ;
       i_swap ;
@@ -474,3 +501,71 @@ type compiled_expression = {
   expr_ty : ex_ty ;
   expr : michelson ;
 }
+
+
+
+
+(* some tests by typechecking returned Michelson with generic types *)
+
+let%test_module _ = (module struct
+  open Proto_alpha_utils.Memory_proto_alpha.Protocol.Script_ir_translator
+
+  (* generate n distinct Michelson types *)
+  let rec fake_types n =
+    if n <= 0
+    then []
+    else
+      let incr_type (Ex_ty t) = Ex_ty (Option_t (t, None, false)) in
+      Ex_ty (Unit_t None) :: List.map incr_type (fake_types (n - 1))
+
+  let rec build_stack ts : ex_stack_ty =
+    match ts with
+    | [] -> Ex_stack_ty Empty_t
+    | Ex_ty t :: ts ->
+      let (Ex_stack_ty s) = build_stack ts in
+      Ex_stack_ty (Item_t (t, s, None))
+
+  let for_all xs p = List.for_all p xs
+
+  (* test translate_usages *)
+  let%test _ =
+    for_all [0; 1; 2; 3; 4; 5] @@ fun n ->
+    for_all (all_usages n) @@ fun us ->
+    let ts = fake_types n in
+    let (Ex_stack_ty bef) = build_stack ts in
+    let (Ex_stack_ty aft) = build_stack (select us ts) in
+    ignore (Proto_alpha_utils.Error_monad.force_lwt ~msg:"bad"
+              (Proto_alpha_utils.Memory_proto_alpha.parse_michelson (translate_usages us) bef aft));
+    true
+
+  (* test translate_splitting1 *)
+  let%test _ =
+    for_all [0; 1; 2; 3; 4; 5] @@ fun n ->
+    for_all (all_splittings n) @@ fun ss ->
+    let ts = fake_types n in
+    let (Ex_stack_ty bef) = build_stack ts in
+    let (Ex_stack_ty aft) = build_stack (select (left_usages ss) ts @ select (right_usages ss) ts) in
+    ignore (Proto_alpha_utils.Error_monad.force_lwt ~msg:"bad"
+              (Proto_alpha_utils.Memory_proto_alpha.parse_michelson (translate_splitting1 ss) bef aft));
+    true
+
+  (* test translate_splitting2 *)
+  let%test _ =
+    for_all [0; 1; 2; 3; 4; 5] @@ fun n ->
+    for_all (all_splittings n) @@ fun ss ->
+    let ts = fake_types n in
+    let (Ex_stack_ty bef) = build_stack ts in
+    let (Ex_stack_ty aft) = build_stack (select (left_usages ss) ts @ select (right_usages ss) ts) in
+    ignore (Proto_alpha_utils.Error_monad.force_lwt ~msg:"bad"
+              (Proto_alpha_utils.Memory_proto_alpha.parse_michelson (translate_splitting2 ss) bef aft));
+    true
+
+  (* example showing that translate_splitting2 can be useful *)
+  let%test _ =
+    let s = [Left; Left; Left; Right; Left; Left; Left] in
+    let open Michelson in
+    let open Self_michelson in
+    let m1 = translate_splitting1 s in
+    let m2 = translate_splitting2 s in
+    measure (optimize m1) > measure (optimize m2)
+end)

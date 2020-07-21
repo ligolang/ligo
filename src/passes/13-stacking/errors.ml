@@ -1,19 +1,14 @@
 open Simple_utils.Display
-open Stage_common.Types
+open Co_de_bruijn.Types
 
 type stacking_error = [
-  | `Stacking_get_environment of expression_variable * Mini_c.environment
   | `Stacking_corner_case of string * string
   | `Stacking_contract_entrypoint of string
-  | `Stacking_expression_tracer of Mini_c.expression * Mini_c.type_expression * stacking_error
+  | `Stacking_expression_tracer of expression * type_expression * stacking_error
   | `Stacking_bad_iterator of Mini_c.constant'
   | `Stacking_not_comparable_base of Mini_c.type_base
   | `Stacking_not_comparable of Mini_c.type_expression
   | `Stacking_not_comparable_pair_struct
-  | `Stacking_unparsing_unrecognized_data of
-    (Proto_alpha_utils.Trace.tezos_alpha_error list)
-  | `Stacking_untranspilable of Michelson.michelson * Michelson.michelson
-  | `Stacking_bad_constant_arity of Mini_c.constant'
 ]
 
 let stage = "stacking"
@@ -41,11 +36,6 @@ let rec error_ppformat : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
-    | `Stacking_get_environment (var,env) ->
-      let s = Format.asprintf "failed to get var %a in environment %a"
-        Var.pp var.wrap_content
-        Mini_c.PP.environment env in
-      Format.pp_print_string f s ;
     | `Stacking_corner_case (loc,msg) ->
       let s = Format.asprintf "stacking corner case at %s : %s\n %s"
         loc msg (corner_case_msg ()) in
@@ -54,11 +44,9 @@ let rec error_ppformat : display_format:string display_format ->
       let s = Format.asprintf "contract entrypoint must be given as a literal string: %s"
         loc in
       Format.pp_print_string f s ;
-    | `Stacking_expression_tracer (e,ty,err) ->
+    | `Stacking_expression_tracer (_e,_ty,err) ->
       Format.fprintf f
-        "@[<hv>compiling expression %a@ of type %a@ %a]"
-        Mini_c.PP.expression e 
-        Mini_c.PP.type_variable ty
+        "@[<hv>compiling expression TODO@ of type TODO@ %a]"
         (error_ppformat ~display_format) err
     | `Stacking_bad_iterator cst ->
        let s = Format.asprintf "bad iterator: iter %a" Mini_c.PP.constant cst in
@@ -72,18 +60,6 @@ let rec error_ppformat : display_format:string display_format ->
     | `Stacking_not_comparable_pair_struct ->
       let s = "pair does not have a comparable structure. (hint: use (a,(b,c)) instead of (a,b,c))" in
       Format.pp_print_string f s;
-    | `Stacking_unparsing_unrecognized_data _errlist ->
-      let s = "unparsing unrecognized data" in
-      Format.pp_print_string f s;
-    | `Stacking_untranspilable (mdata,mty) ->
-      let s = Format.asprintf "this value can't be transpiled back yet. data : %a type : %a"
-        Michelson.pp mdata
-        Michelson.pp mty in
-      Format.pp_print_string f s;
-    | `Stacking_bad_constant_arity c ->
-      Format.fprintf f
-        "Bad arity for %a"
-        Mini_c.PP.constant c
   )
 
 let rec error_jsonformat : stacking_error -> Yojson.t = fun a ->
@@ -94,14 +70,6 @@ let rec error_jsonformat : stacking_error -> Yojson.t = fun a ->
       ("content",  content )]
   in
   match a with
-  | `Stacking_get_environment (var,env) ->
-    let var' = Format.asprintf "%a" Var.pp var.wrap_content in
-    let env' = Format.asprintf "%a" Mini_c.PP.environment env in
-    let content = `Assoc [
-      ("message", `String "failed to get var from environment");
-      ("var", `String var'); 
-      ("environment", `String env'); ] in
-    json_error ~stage ~content
   | `Stacking_corner_case (loc,msg) ->
     let content = `Assoc [
       ("location", `String loc); 
@@ -112,9 +80,9 @@ let rec error_jsonformat : stacking_error -> Yojson.t = fun a ->
       ("location", `String loc); 
       ("message", `String "contract entrypoint must be given as literal string"); ] in
     json_error ~stage ~content
-  | `Stacking_expression_tracer (e,ty,err) ->
-    let e' = Format.asprintf "%a" Mini_c.PP.expression e in
-    let ty' = Format.asprintf "%a" Mini_c.PP.type_variable ty in
+  | `Stacking_expression_tracer (_e,_ty,err) ->
+    let e' = "TODO" in
+    let ty' = "TODO" in
     let children = error_jsonformat err in
     let content = `Assoc [
       ("message", `String "compiling expression");
@@ -148,27 +116,5 @@ let rec error_jsonformat : stacking_error -> Yojson.t = fun a ->
     let content = `Assoc [
        ("message", `String "pair does not have a comparable structure");
        ("hint", `String "use (a,(b,c)) instead of (a,b,c)"); ]
-    in
-    json_error ~stage ~content
-  | `Stacking_unparsing_unrecognized_data _errlist ->
-    let content = `Assoc [
-       ("message", `String "unparsing unrecognized data"); ]
-    in
-    json_error ~stage:unstacking_stage ~content
-  | `Stacking_untranspilable (mdata,mty) ->
-    let mdata' = Format.asprintf "%a" Michelson.pp mdata in
-    let mty' = Format.asprintf "%a" Michelson.pp mty in
-    let content = `Assoc [
-       ("message", `String "this value can't be transpiled back yet");
-       ("michelson data", `String mdata');
-       ("michelson type", `String mty');
-       ]
-    in
-    json_error ~stage:unstacking_stage ~content
-  | `Stacking_bad_constant_arity c ->
-    let constant = Format.asprintf "%a" Mini_c.PP.constant c in
-    let content = `Assoc [
-       ("message", `String "Bad constant arity");
-       ("constant", `String constant)]
     in
     json_error ~stage ~content

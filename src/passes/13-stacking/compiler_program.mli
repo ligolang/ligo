@@ -1,10 +1,10 @@
 open Errors
 open Trace
-open Mini_c
+open Co_de_bruijn
+open Co_de_bruijn.Util
 
 open Michelson
 open Memory_proto_alpha.Protocol.Script_ir_translator
-open Predefined.Stacking
 
 (*
 module Contract_types = Meta_michelson.Types
@@ -16,10 +16,8 @@ type compiled_expression = {
 }
 
 
-val get_operator : constant' -> type_expression -> expression list -> (predicate, stacking_error) result
+val translate_expression : expression -> environment -> splitting -> (michelson, stacking_error) result
 
-val translate_expression : expression -> environment -> (michelson, stacking_error) result
-
-val translate_function_body : anon_function -> environment_element list -> type_expression -> (michelson, stacking_error) result
+val translate_function_body : expression bind -> environment -> splitting -> (michelson, stacking_error) result
 
 val translate_value : value -> type_expression -> (michelson, stacking_error) result

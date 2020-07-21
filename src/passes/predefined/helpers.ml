@@ -17,4 +17,14 @@ module Stacking = struct
   let simple_tetrary c = Tetrary c
   let simple_pentary c = Pentary c
   let simple_hexary c = Hexary c
+
+  let unpredicate =
+    function
+    | Constant code -> code
+    | Unary code -> code
+    | Binary code -> code
+    | Ternary code -> code
+    | Tetrary code -> code
+    | Pentary code -> code
+    | Hexary code -> code
 end

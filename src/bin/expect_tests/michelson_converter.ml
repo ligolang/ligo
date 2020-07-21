@@ -68,22 +68,18 @@ let%expect_test _ =
   [%expect {|
     { parameter (pair (int %one) (pair (nat %two) (pair (string %three) (bool %four)))) ;
       storage string ;
-      code { DUP ;
-             CAR ;
+      code { CAR ;
              DUP ;
              CDR ;
              CDR ;
              CAR ;
-             DIG 1 ;
-             DUP ;
-             DUG 2 ;
+             SWAP ;
              CDR ;
              CDR ;
              CAR ;
              CONCAT ;
              NIL operation ;
-             PAIR ;
-             DIP { DROP 2 } } } |}];
+             PAIR } } |}];
   run_ligo_good [ "dry-run" ; (contract "michelson_converter_pair.mligo") ; "main_l" ; "test_input_pair_l" ; "s"] ;
   [%expect {|
     ( LIST_EMPTY() , "eqeq" ) |}] ;
@@ -91,20 +87,7 @@ let%expect_test _ =
   [%expect {|
     { parameter (pair (pair (pair (int %one) (nat %two)) (string %three)) (bool %four)) ;
       storage string ;
-      code { DUP ;
-             CAR ;
-             DUP ;
-             CAR ;
-             CDR ;
-             DIG 1 ;
-             DUP ;
-             DUG 2 ;
-             CAR ;
-             CDR ;
-             CONCAT ;
-             NIL operation ;
-             PAIR ;
-             DIP { DROP 2 } } } |}];
+      code { CAR ; DUP ; CAR ; CDR ; SWAP ; CAR ; CDR ; CONCAT ; NIL operation ; PAIR } } |}];
   run_ligo_good [ "dry-run" ; contract "michelson_converter_or.mligo" ; "main_r" ; "vr" ; "Foo4 2"] ;
   [%expect {|
     ( LIST_EMPTY() , Baz4("eq") ) |}] ;
@@ -112,32 +95,16 @@ let%expect_test _ =
   [%expect {|
     { parameter (or (int %foo4) (or (nat %bar4) (or (string %baz4) (bool %boz4)))) ;
       storage (or (or (nat %bar4) (string %baz4)) (or (bool %boz4) (int %foo4))) ;
-      code { PUSH string "eq" ;
-             LEFT bool ;
-             RIGHT nat ;
-             RIGHT int ;
-             PUSH string "eq" ;
-             RIGHT (or (int %foo4) (nat %bar4)) ;
-             LEFT bool ;
-             DIG 2 ;
-             DUP ;
-             DUG 3 ;
-             CAR ;
+      code { CAR ;
              IF_LEFT
-               { DUP ; RIGHT bool ; RIGHT (or nat string) ; DIP { DROP } }
-               { DUP ;
-                 IF_LEFT
-                   { DUP ; LEFT string ; LEFT (or bool int) ; DIP { DROP } }
-                   { DUP ;
-                     IF_LEFT
-                       { DUP ; RIGHT nat ; LEFT (or bool int) ; DIP { DROP } }
-                       { DUP ; LEFT int ; RIGHT (or nat string) ; DIP { DROP } } ;
-                     DIP { DROP } } ;
-                 DIP { DROP } } ;
-             DUP ;
+               { RIGHT bool ; RIGHT (or nat string) }
+               { IF_LEFT
+                   { LEFT string ; LEFT (or bool int) }
+                   { IF_LEFT
+                       { RIGHT nat ; LEFT (or bool int) }
+                       { LEFT int ; RIGHT (or nat string) } } } ;
              NIL operation ;
-             PAIR ;
-             DIP { DROP 4 } } } |}] ;
+             PAIR } } |}] ;
   run_ligo_good [ "dry-run" ; contract "michelson_converter_or.mligo" ; "main_l" ; "vl" ; "Foo4 2"] ;
   [%expect {|
     ( LIST_EMPTY() , Baz4("eq") ) |}] ;
@@ -145,32 +112,16 @@ let%expect_test _ =
   [%expect {|
     { parameter (or (or (or (int %foo4) (nat %bar4)) (string %baz4)) (bool %boz4)) ;
       storage (or (or (nat %bar4) (string %baz4)) (or (bool %boz4) (int %foo4))) ;
-      code { PUSH string "eq" ;
-             LEFT bool ;
-             RIGHT nat ;
-             RIGHT int ;
-             PUSH string "eq" ;
-             RIGHT (or (int %foo4) (nat %bar4)) ;
-             LEFT bool ;
-             DIG 2 ;
-             DUP ;
-             DUG 3 ;
-             CAR ;
+      code { CAR ;
              IF_LEFT
-               { DUP ;
-                 IF_LEFT
-                   { DUP ;
-                     IF_LEFT
-                       { DUP ; RIGHT bool ; RIGHT (or nat string) ; DIP { DROP } }
-                       { DUP ; LEFT string ; LEFT (or bool int) ; DIP { DROP } } ;
-                     DIP { DROP } }
-                   { DUP ; RIGHT nat ; LEFT (or bool int) ; DIP { DROP } } ;
-                 DIP { DROP } }
-               { DUP ; LEFT int ; RIGHT (or nat string) ; DIP { DROP } } ;
-             DUP ;
+               { IF_LEFT
+                   { IF_LEFT
+                       { RIGHT bool ; RIGHT (or nat string) }
+                       { LEFT string ; LEFT (or bool int) } }
+                   { RIGHT nat ; LEFT (or bool int) } }
+               { LEFT int ; RIGHT (or nat string) } ;
              NIL operation ;
-             PAIR ;
-             DIP { DROP 4 } } } |}]
+             PAIR } } |}]
 
 
 let%expect_test _ =
@@ -178,13 +129,13 @@ let%expect_test _ =
   [%expect {|
     { parameter (pair (int %foo) (pair (nat %bar) (string %baz))) ;
       storage unit ;
-      code { UNIT ; NIL operation ; PAIR ; DIP { DROP } } } |}] ;
+      code { DROP ; UNIT ; NIL operation ; PAIR } } |}] ;
 
   run_ligo_good [ "compile-contract" ; contract "michelson_comb_type_operators.mligo" ; "main_l"] ;
   [%expect {|
     { parameter (pair (pair (int %foo) (nat %bar)) (string %baz)) ;
       storage unit ;
-      code { UNIT ; NIL operation ; PAIR ; DIP { DROP } } } |}]
+      code { DROP ; UNIT ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; (contract "michelson_converter_mixed_pair_or.mligo") ; "main2" ] ;
@@ -192,21 +143,14 @@ let%expect_test _ =
     { parameter
         (or (pair %option1 (string %bar) (nat %baz)) (pair %option2 (string %bar) (nat %baz))) ;
       storage nat ;
-      code { DUP ;
-             CAR ;
+      code { CAR ;
              IF_LEFT
-               { DUP ; LEFT (pair (string %bar) (nat %baz)) ; DIP { DROP } }
-               { DUP ; RIGHT (pair (string %bar) (nat %baz)) ; DIP { DROP } } ;
-             DUP ;
+               { LEFT (pair (string %bar) (nat %baz)) }
+               { RIGHT (pair (string %bar) (nat %baz)) } ;
              IF_LEFT
-               { DUP ; LEFT (pair (string %bar) (nat %baz)) ; DIP { DROP } }
-               { DUP ; RIGHT (pair (string %bar) (nat %baz)) ; DIP { DROP } } ;
-             DIP { DROP } ;
-             DUP ;
-             IF_LEFT
-               { DUP ; CDR ; NIL operation ; PAIR ; DIP { DROP } }
-               { DUP ; CDR ; NIL operation ; PAIR ; DIP { DROP } } ;
-             DIP { DROP 2 } } } |}]
+               { LEFT (pair (string %bar) (nat %baz)) }
+               { RIGHT (pair (string %bar) (nat %baz)) } ;
+             IF_LEFT { CDR ; NIL operation ; PAIR } { CDR ; NIL operation ; PAIR } } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; (contract "double_fold_converter.religo") ; "main" ] ;
@@ -217,9 +161,7 @@ let%expect_test _ =
       storage (big_map nat address) ;
       code { DUP ;
              CDR ;
-             DIG 1 ;
-             DUP ;
-             DUG 2 ;
+             SWAP ;
              CAR ;
              ITER { SWAP ;
                     PAIR ;
@@ -228,50 +170,33 @@ let%expect_test _ =
                     DUP ;
                     CAR ;
                     SENDER ;
-                    DIG 1 ;
+                    SWAP ;
                     DUP ;
                     DUG 2 ;
                     COMPARE ;
                     NEQ ;
                     IF { PUSH string "NOT_OWNER" ; FAILWITH } { PUSH unit Unit } ;
-                    DIG 1 ;
-                    DUP ;
-                    DUG 2 ;
-                    DIG 4 ;
-                    DUP ;
-                    DUG 5 ;
+                    DROP ;
+                    DIG 2 ;
                     CAR ;
                     PAIR ;
-                    DIG 3 ;
-                    DUP ;
-                    DUG 4 ;
+                    SWAP ;
                     CDR ;
                     ITER { SWAP ;
-                           PAIR ;
-                           DUP ;
-                           CDR ;
-                           DIG 1 ;
-                           DUP ;
-                           DUG 2 ;
-                           CAR ;
                            DUP ;
                            CAR ;
-                           DIG 1 ;
-                           DUP ;
-                           DUG 2 ;
+                           SWAP ;
                            CDR ;
+                           DIG 2 ;
+                           DUP ;
+                           DUG 3 ;
+                           CDR ;
+                           CAR ;
                            DIG 3 ;
                            DUP ;
                            DUG 4 ;
-                           CDR ;
                            CAR ;
                            DIG 4 ;
-                           DUP ;
-                           DUG 5 ;
-                           CAR ;
-                           DIG 5 ;
-                           DUP ;
-                           DUG 6 ;
                            CDR ;
                            CDR ;
                            PAIR ;
@@ -279,7 +204,7 @@ let%expect_test _ =
                            DIG 2 ;
                            DUP ;
                            DUG 3 ;
-                           DIG 1 ;
+                           SWAP ;
                            DUP ;
                            DUG 2 ;
                            CDR ;
@@ -289,36 +214,24 @@ let%expect_test _ =
                              { DIG 2 ;
                                DUP ;
                                DUG 3 ;
-                               DIG 1 ;
+                               SWAP ;
                                DUP ;
                                DUG 2 ;
                                COMPARE ;
                                EQ ;
-                               IF { DUP } { PUSH string "INSUFFICIENT_BALANCE" ; FAILWITH } ;
-                               DIP { DROP } } ;
-                           DIG 2 ;
+                               IF {} { DROP ; PUSH string "INSUFFICIENT_BALANCE" ; FAILWITH } } ;
+                           DROP ;
+                           SWAP ;
+                           DUG 2 ;
                            DUP ;
                            DUG 3 ;
-                           DIG 4 ;
-                           DUP ;
-                           DUG 5 ;
-                           DIG 3 ;
-                           DUP ;
-                           DUG 4 ;
                            CAR ;
                            CDR ;
                            SOME ;
-                           DIG 4 ;
-                           DUP ;
-                           DUG 5 ;
+                           DIG 3 ;
                            CDR ;
                            UPDATE ;
-                           PAIR ;
-                           DIP { DROP 7 } } ;
-                    DUP ;
-                    CAR ;
-                    DIP { DROP 5 } } ;
-             DUP ;
+                           PAIR } ;
+                    CAR } ;
              NIL operation ;
-             PAIR ;
-             DIP { DROP 2 } } } |}]
+             PAIR } } |}]
