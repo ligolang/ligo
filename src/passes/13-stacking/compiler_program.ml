@@ -462,21 +462,30 @@ and translate_conditional (if_prim : prim) ?extra_left
               if_prim])
 
 and translate_function_body (body : expression bind) env outer : (michelson , stacking_error) result =
-  let%bind expr_code = translate_bind body env outer in
-  let unpack_closure_code = match env with
-    | [] -> seq []
-    | _ :: _ ->
-      (* TODO ? *)
-      seq [ i_unpair ;
-            uncomb (List.length env - 1) ;
-            i_dig (List.length env) ] in
+  let (ty, used, body) = body in
+  let%bind expr_code = match used with
+    | Keep -> translate_expression body (ty :: env) (Left :: outer)
+    | Drop -> translate_expression body env outer in
+  let unpack_closure_code = match used with
+    | Keep ->
+      (match env with
+       | [] -> seq []
+       | _ :: _ ->
+         seq [ i_unpair ;
+               uncomb (List.length env - 1) ;
+               i_dig (List.length env) ])
+    | Drop ->
+      (match env with
+       | [] -> seq [i_drop]
+       | _ :: _ ->
+         seq [ i_car ;
+               uncomb (List.length env - 1) ]) in
   let code = seq [
       i_comment "unpack closure env" ;
       unpack_closure_code ;
       i_comment "function result" ;
       expr_code ;
     ] in
-
   ok code
 
 and translate_function body env outer output_ty : (michelson , stacking_error) result =
