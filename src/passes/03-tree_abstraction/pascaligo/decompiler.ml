@@ -3,9 +3,7 @@ module CST = Cst.Pascaligo
 module Predefined = Predefined.Tree_abstraction.Pascaligo
 
 open Trace
-
-(* General tools *)
-let (<@) f g x = f (g x)
+open Function
 
 (* Utils *)
 let rg = Region.ghost

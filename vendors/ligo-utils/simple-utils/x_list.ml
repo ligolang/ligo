@@ -194,6 +194,7 @@ module Ne = struct
 
   type 'a t = 'a * 'a list
 
+  let split ((hd,tl): _ t) = let (a,b) = hd and (la,lb) = List.split tl in (a,la),(b,lb)
   let of_list lst = List.hd lst, List.tl lst
   let to_list (hd, tl : _ t) = hd :: tl
   let singleton hd : 'a t = hd , []

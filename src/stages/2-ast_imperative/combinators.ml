@@ -209,6 +209,11 @@ let get_e_tuple = fun t ->
   | E_tuple t -> Some t
   | _ -> None
 
+let get_e_lambda = fun e ->
+  match e with
+    E_lambda e -> Some e
+  | _ -> None
+
 (* Same as get_e_pair *)
 let extract_pair : expression -> (expression * expression) option = fun e ->
   match e.expression_content with

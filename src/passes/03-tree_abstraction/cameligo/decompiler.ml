@@ -3,9 +3,7 @@ module CST = Cst.Cameligo
 module Predefined = Predefined.Tree_abstraction.Cameligo
 
 open Trace
-
-(* General tools *)
-let (<@) f g x = f (g x)
+open Function
 
 (* Utils *)
 let rg = Region.ghost

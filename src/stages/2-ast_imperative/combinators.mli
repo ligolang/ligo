@@ -149,6 +149,7 @@ val assert_e_accessor : expression_content -> unit option
 val get_e_pair : expression_content -> (expression * expression) option
 val get_e_list : expression_content -> expression list option
 val get_e_tuple : expression_content -> expression list option
+val get_e_lambda : expression_content -> lambda option
 val extract_pair : expression -> (expression * expression) option
 val extract_list : expression -> expression list option
 val extract_record : expression -> (label * expression) list option

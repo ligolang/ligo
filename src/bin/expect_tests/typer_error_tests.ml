@@ -4,10 +4,10 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_function_annotation_1.mligo"; "main"];
   [%expect {|
     ligo: error
-          in file "error_function_annotation_1.mligo", line 1, characters 0-3
+          in file "error_function_annotation_1.mligo", line 1, characters 26-27
           Bad types:
-          expected int -> unit
-          got int -> int
+          expected unit
+          got int
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -36,10 +36,10 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_function_annotation_3.mligo"; "f"];
   [%expect {|
     ligo: error
-          in file "error_function_annotation_3.mligo", line 6, characters 0-3
+
           Bad types:
-          expected ( int * sum[Add -> int , Sub -> int] ) -> ( list (operation) * sum[Add -> int , Sub -> int] )
-          got ( int * sum[Add -> int , Sub -> int] ) -> sum[Add -> int , Sub -> int]
+          expected ( list (operation) * sum[Add -> int , Sub -> int] )
+          got sum[Add -> int , Sub -> int]
 
 
           If you're not sure how to fix this error, you can do one of the following:

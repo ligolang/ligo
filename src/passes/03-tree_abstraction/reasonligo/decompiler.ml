@@ -3,9 +3,7 @@ module CST = Cst.Reasonligo
 module Predefined = Predefined.Tree_abstraction.Reasonligo
 
 open Trace
-
-(* General tools *)
-let (<@) f g x = f (g x)
+open Function
 
 (* Utils *)
 let rg = Region.ghost
