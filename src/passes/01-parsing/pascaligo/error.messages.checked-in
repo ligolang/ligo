@@ -63,9 +63,11 @@ interactive_expr: Begin Case Verbatim Of WILD ARROW Skip With
 ## In state 457, spurious reduction of production nsepseq(case_clause(if_clause),VBAR) -> case_clause(if_clause)
 ## In state 454, spurious reduction of production cases(if_clause) -> nsepseq(case_clause(if_clause),VBAR)
 ##
-At this point, if the case clause is complete, one of the following is
+Ill-formed case instruction.
+At this point, if the clause is complete, one of the following is
 expected:
-  * more clauses separated by vertical bars '|';
+  * more clauses starting by a pattern and separated by vertical bars
+    '|';
   * the keyword 'end' if the case is complete.
 
 interactive_expr: Begin Case Verbatim Of WILD ARROW With
@@ -77,7 +79,7 @@ interactive_expr: Begin Case Verbatim Of WILD ARROW With
 ## The known suffix of the stack is as follows:
 ## pattern ARROW
 ##
-Ill-formed case clause.
+Ill-formed clause of a case instruction.
 At this point, one of the following is expected:
   * a single instruction;
   * a block of statements (instructions and declarations).
@@ -97,7 +99,7 @@ interactive_expr: Begin Case Verbatim Of WILD With
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 403, spurious reduction of production pattern -> core_pattern
 ##
-Ill-formed case clause.
+Ill-formed clause of a case instruction.
 At this point, if the pattern is complete, an arrow '->' is expected,
 followed by one of the following:
   * a single instruction;
@@ -119,7 +121,8 @@ interactive_expr: Begin Case Verbatim Of With
 ## In state 365, spurious reduction of production option(VBAR) ->
 ##
 Ill-formed case instruction.
-At this point, a case clause is expected, starting with a pattern.
+At this point, a series of clauses is expected, starting with a
+pattern and separated by vertical bars '|'.
 
 interactive_expr: Begin Case Verbatim With
 ##
@@ -162,7 +165,8 @@ interactive_expr: Begin Case With
 ## Case
 ##
 Ill-formed case instruction.
-At this point, the condition is expected as an expression.
+At this point, the condition is expected as an expression, followed by
+the keyword 'of'.
 
 interactive_expr: Begin Constr DOT And With
 ##
@@ -187,9 +191,9 @@ interactive_expr: Begin Constr With
 ## The known suffix of the stack is as follows:
 ## Constr
 ##
-Ill-formed selection in a module.
-At this point, the selection operator '.' is expected, followed by a
-field name.
+Ill-formed selection from a module.
+At this point, the selection operator '.' is expected, followed by the
+name of a value declared in the module.
 
 interactive_expr: Begin For Ident ARROW Ident With
 ##
@@ -287,7 +291,8 @@ interactive_expr: Begin For Ident ASS Verbatim To Verbatim With
 Ill-formed bounded loop.
 At this point, if the upper bound of the loop is complete, one of the
 following is expected:
-  * a step clause introduced by the keyword 'step';
+  * a step clause introduced by the keyword 'step' and followed by an
+    expression;
   * a loop body as a block of instructions.
 
 interactive_expr: Begin For Ident ASS Verbatim To With
@@ -370,7 +375,7 @@ interactive_expr: Begin For Ident In Set Verbatim With
 ## In state 202, spurious reduction of production expr -> disj_expr
 ##
 Ill-formed bounded loop.
-At this point, if the collection to be iterate is complete, the body
+At this point, if the collection to be traversed is complete, the body
 of the loop is expected as a block of instructions.
 
 interactive_expr: Begin For Ident In Set With
@@ -383,7 +388,7 @@ interactive_expr: Begin For Ident In Set With
 ## For Ident option(arrow_clause) In collection
 ##
 Ill-formed bounded loop.
-At this point, the collection to iterate over is expected as an
+At this point, the collection to be traversed is expected as an
 expression.
 
 interactive_expr: Begin For Ident In With
@@ -396,8 +401,9 @@ interactive_expr: Begin For Ident In With
 ## For Ident option(arrow_clause) In
 ##
 Ill-formed bounded loop.
-At this point, the type of collection to loop over is expected ('map',
-'set', or 'list'), followed by the actual collection as an expression.
+At this point, the kind of the collection to be traversed is expected
+('map', 'set', or 'list'), followed by the actual collection as an
+expression.
 
 interactive_expr: Begin For Ident With
 ##
@@ -417,8 +423,8 @@ At this point, one of the following is expected:
   * if iterating over a list or a set, then the keyword 'in' is
     expected, followed by either the keyword 'list' or 'map';
   * if iterating over a map, then a binding arrow '->' followed by a
-    variable in the range of the map (that is, 'values', as opposed to
-    'keys').
+    variable matching the range of the map (that is, 'values', as
+    opposed to 'keys').
 
 interactive_expr: Begin For With
 ##
@@ -532,8 +538,9 @@ interactive_expr: Begin If Verbatim Then Skip With
 ##
 Ill-formed conditional instruction.
 At this point, if the 'then' branch is complete, the keyword 'else' is
-expected, followed by an instruction or a block of statements
-(instructions and declarations).
+expected, followed by one of the following:
+  * a single instruction;
+  * a block of statements (instructions and declarations).
 
 interactive_expr: Begin If Verbatim Then With
 ##
@@ -575,8 +582,9 @@ interactive_expr: Begin If Verbatim With
 ##
 Ill-formed conditional instruction.
 At this point, if the condition is complete, the keyword 'then' is
-expected, followed by an instruction or a block of statements
-(instructions and declarations).
+expected, followed by one of the following:
+  * a single instruction;
+  * a block of statements (instructions and declarations).
 
 interactive_expr: Begin If With
 ##
@@ -599,10 +607,10 @@ interactive_expr: Begin Patch Constr DOT Ident With
 ## The known suffix of the stack is as follows:
 ## Constr DOT Ident
 ##
-Ill-formed selection of substructure.
+Ill-formed selection of a substructure.
 At this a point, the selection operator '.' is expected, followed by
 one of the following:
-  * a record field name, if selecting in a record;
+  * a record field name, if selecting from a record;
   * a tuple component index, '0' denoting the first component.
 
 interactive_expr: Begin Patch Constr DOT With
@@ -614,9 +622,8 @@ interactive_expr: Begin Patch Constr DOT With
 ## The known suffix of the stack is as follows:
 ## Constr DOT
 ##
-Ill-formed selection in a module.
-At this point, the name of a type or a value in the module is
-expected.
+Ill-formed selection from a module.
+At this point, the name of a value declared in the module is expected.
 
 interactive_expr: Begin Patch Constr With
 ##
@@ -627,9 +634,9 @@ interactive_expr: Begin Patch Constr With
 ## The known suffix of the stack is as follows:
 ## Constr
 ##
-Ill-formed selection in a module.
-At this point, the selection operator '.' is expected, followed by a
-field name (of a type or a value) in the module.
+Ill-formed selection from a module.
+At this point, the operator '.' is expected, followed by the name of a
+value declared in the module.
 
 interactive_expr: Begin Patch Ident While
 ##
@@ -648,7 +655,7 @@ interactive_expr: Begin Patch Ident While
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 165, spurious reduction of production path -> Ident
 ##
-Ill-formed patch instruction.
+Ill-formed patch.
 At this point, if the data structure (map, set or record) being
 patched is fully qualified, the keyword 'with' is expected, followed
 by the updates.
@@ -681,12 +688,11 @@ interactive_expr: Begin Patch Ident With Map LBRACKET Verbatim ARROW Bytes With
 ## In state 305, spurious reduction of production sep_or_term_list(binding,SEMI) -> nsepseq(binding,SEMI)
 ##
 Ill-formed map patch.
-At this point, if key/value binding is complete, one of the following
-is expected:
+At this point, if the key/value binding is complete, one of the
+following is expected:
   * more key/value bindings, separated by semicolons ';';
   * a closing bracket ']' if the map is complete.
-Note: A binding is a made of two expressions separated by an arrow
-'->'.
+Note: A binding is made of two expressions separated by an arrow '->'.
 
 interactive_expr: Begin Patch Ident With Map LBRACKET With
 ##
@@ -698,9 +704,9 @@ interactive_expr: Begin Patch Ident With Map LBRACKET With
 ## Map LBRACKET
 ##
 Ill-formed map patch.
-At this point, key/value bindings are expected, separated by semicolond ';".
-Note: A binding is a made of two expressions separated by an arrow
-'->'.
+At this point, key/value bindings are expected, separated by
+semicolons ';'.
+Note: A binding is made of two expressions separated by an arrow '->'.
 
 interactive_expr: Begin Patch Ident With Map Verbatim ARROW Bytes With
 ##
@@ -734,8 +740,7 @@ At this point, if the key/value binding is complete, one of the following
 is expected:
   * more key/value bindings (updates) separated by semicolons ';';
   * the keyword 'end' if the map is complete.
-Note: A binding is a made of two expressions separated by an arrow
-'->'.
+Note: A binding is made of two expressions separated by an arrow '->'.
 
 interactive_expr: Begin Patch Ident With Map With
 ##
@@ -749,10 +754,9 @@ interactive_expr: Begin Patch Ident With Map With
 ##
 Ill-formed map patch.
 At this point, one of the following is expected:
-  * a series of key/value (updates) bindings;
+  * a series of key/value (updates) bindings separated by semicolons ';';
   * an opening bracket '[' followed by a series of key/value bindings.
-Note: A binding is a made of two expressions separated by an arrow
-'->'.
+Note: A binding is made of two expressions separated by an arrow '->'.
 
 interactive_expr: Begin Patch Ident With Record Ident EQ Bytes With
 ##
@@ -817,7 +821,7 @@ interactive_expr: Begin Patch Ident With Record LBRACKET Ident EQ Bytes With
 Ill-formed record patch.
 At this point, if the field assignment is complete, one of the
 following is expected:
-  * more field assignments separated by semicolons ';';
+  * more field assignments (updates) separated by semicolons ';';
   * a closing bracket ']' if the record is complete.
 
 interactive_expr: Begin Patch Ident With Record LBRACKET With
@@ -830,8 +834,8 @@ interactive_expr: Begin Patch Ident With Record LBRACKET With
 ## Record LBRACKET
 ##
 Ill-formed record patch.
-At this point, assignments to record fields are expected, separated by
-semicolons ';'.
+At this point, assignments to record fields (updates) are expected,
+separated by semicolons ';'.
 
 interactive_expr: Begin Patch Ident With Record With
 ##
@@ -845,7 +849,7 @@ interactive_expr: Begin Patch Ident With Record With
 ##
 Ill-formed record patch.
 At this point, one of the following is expected:
-  * assignments to record fields;
+  * assignments to record fields, separated by semicolons ';';
   * an opening bracket '[' followed by assignments to record fields.
 
 interactive_expr: Record With
@@ -964,7 +968,7 @@ interactive_expr: Begin Patch Ident With With
 ## The known suffix of the stack is as follows:
 ## Patch path With
 ##
-Ill-formed patch instruction.
+Ill-formed patch.
 At this point, one of the keywords 'map', 'record' or 'patch' is
 expected
 
@@ -979,7 +983,7 @@ interactive_expr: Begin Patch With
 ## The known suffix of the stack is as follows:
 ## Patch
 ##
-Ill-formed patch instruction.
+Ill-formed patch.
 At this point, a fully qualified record, set or map name is expexted.
 
 interactive_expr: Begin Remove Verbatim From Map With
@@ -1490,7 +1494,8 @@ interactive_expr: Case Verbatim Of LPAR WILD COMMA With
 ## core_pattern COMMA
 ##
 Ill-formed tuple of patterns in a case expression.
-At this point, another tuple component is expected as a pattern.
+At this point, more tuple components are expected as patterns
+separated by commas ','.
 
 interactive_expr: Case Verbatim Of LPAR WILD CONS Bytes With
 ##
@@ -1624,12 +1629,11 @@ interactive_expr: Case Verbatim Of List With
 ## List
 ##
 Ill-formed list pattern.
-
 At this point, one of the following is expected:
   * a series of patterns matching list elements, separated by
     semicolons ';';
   * an opening bracket '[' followed by a series of patterns;
-  * a closing bracket ']' if matching the empty list.
+  * the brackets '[]' or the keyword 'end' if matching the empty list.
 
 interactive_expr: Case Verbatim Of WILD ARROW Bytes VBAR With
 ##
@@ -1640,8 +1644,24 @@ interactive_expr: Case Verbatim Of WILD ARROW Bytes VBAR With
 ## The known suffix of the stack is as follows:
 ## case_clause(expr) VBAR
 ##
+interactive_expr: Case Verbatim Of With
+##
+## Ends in an error in state: 524.
+##
+## case(expr) -> Case expr Of option(VBAR) . cases(expr) End [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+##
+## The known suffix of the stack is as follows:
+## Case expr Of option(VBAR)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 512, spurious reduction of production option(VBAR) ->
+##
 Ill-formed case expression.
-At this point, another case is expected, starting with a pattern.
+At this point, more clauses are expected, starting with a pattern, and
+separated by vertical bars '|'.
 
 interactive_expr: Case Verbatim Of WILD ARROW Bytes With
 ##
@@ -1725,25 +1745,6 @@ interactive_expr: Case Verbatim Of WILD With
 Ill-formed case clause.
 At this point, if the pattern is complete, an arrow '->' is expected,
 followed by the right-hand side as an expression.
-
-interactive_expr: Case Verbatim Of With
-##
-## Ends in an error in state: 524.
-##
-## case(expr) -> Case expr Of option(VBAR) . cases(expr) End [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
-##
-## The known suffix of the stack is as follows:
-## Case expr Of option(VBAR)
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 512, spurious reduction of production option(VBAR) ->
-##
-Ill-formed case expression.
-At this point, a series of cases is expected, separated by vertical
-bars '|'.
 
 interactive_expr: Case Verbatim With
 ##
@@ -1829,7 +1830,7 @@ interactive_expr: Constr DOT With
 ## The known suffix of the stack is as follows:
 ## Constr DOT
 ##
-Ill-formed selection in a module.
+Ill-formed selection from a module.
 At this point, a function name is expected.
 
 interactive_expr: Function LPAR Const Ident RPAR COLON Ident With
@@ -2245,7 +2246,7 @@ interactive_expr: Ident With With
 ##
 ## Ends in an error in state: 162.
 ##
-## update_record -> path With . ne_injection(Record,field_path_assignment) [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## record_update -> path With . ne_injection(Record,field_path_assignment) [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## path With
@@ -2683,12 +2684,11 @@ interactive_expr: Map Verbatim ARROW Bytes With
 ## In state 309, spurious reduction of production nsepseq(binding,SEMI) -> binding
 ## In state 305, spurious reduction of production sep_or_term_list(binding,SEMI) -> nsepseq(binding,SEMI)
 ##
-
 Ill-formed map expression.
-At this point one of the following is expected:
-  a semicolon ';',
-    followed with a key/value binding; or
-  the closing 'end' keyword if the map is complete.
+At this point, if the key/value binding is complete, one of the
+following is expected:
+  * a semicolon ';' followed by another key/value binding;
+  * the keyword 'end' keyword if the map is complete.
 
 interactive_expr: Map Verbatim ARROW With
 ##
@@ -2699,7 +2699,6 @@ interactive_expr: Map Verbatim ARROW With
 ## The known suffix of the stack is as follows:
 ## expr ARROW
 ##
-
 Ill-formed map expression.
 At this point a value, in the form of an expression, is expected.
 

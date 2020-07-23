@@ -545,6 +545,16 @@ binding:
                   image  = $3}
     in {region; value} }
 
+(* TODO:
+record_patch:
+  "patch" path "with" record_expr {
+    let region = cover $1 $4.region in
+    let value  = {kwd_patch = $1;
+                  path      = $2;
+                  kwd_with  = $3;
+                  record_inj}
+    in {region; value} }
+ *)
 record_patch:
   "patch" path "with" ne_injection("record",field_assignment) {
     let record_inj = $4 (fun region -> NEInjRecord region) in
@@ -663,6 +673,7 @@ for_loop:
                   block   = $8}
     in For (ForInt {region; value})
   }
+(* TODO: use ioption(arrow_clause) *)
 | "for" var arrow_clause? "in" collection expr block {
     Scoping.check_reserved_name $2;
     let region = cover $1 $7.region in
@@ -886,7 +897,7 @@ core_expr:
 | map_expr                      { EMap $1                      }
 | set_expr                      { ESet $1                      }
 | record_expr                   { ERecord $1                   }
-| update_record                 { EUpdate $1                   }
+| record_update                 { EUpdate $1                   }
 | code_inj                      { ECodeInj $1                  }
 | "<constr>" arguments {
     let region = cover $1.region $2.region in
@@ -978,6 +989,12 @@ selection:
   field_name { FieldName $1 }
 | "<int>"    { Component $1 }
 
+(* TODO:
+record_expr:
+  ne_injection("record",field_assignment) {
+    $1 (fun region -> NEInjRecord region)
+  }
+*)
 record_expr:
   "record" sep_or_term_list(field_assignment,";") "end" {
     let ne_elements, terminator = $2 in
@@ -999,7 +1016,7 @@ record_expr:
       terminator}
     in {region; value} }
 
-update_record:
+record_update:
   path "with" ne_injection("record",field_path_assignment) {
     let updates = $3 (fun region -> NEInjRecord region) in
     let region  = cover (path_to_region $1) updates.region in
