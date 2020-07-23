@@ -540,10 +540,9 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
     let%bind tv =
       match wrapped.type_content with
       | T_record record -> (
-          let field_op = O.LMap.find_opt path record in
-          match field_op with
-          | Some {associated_type;_} -> ok associated_type
-          | None -> failwith @@ Format.asprintf "field %a is not part of record %a" Ast_typed.PP.label path O.PP.type_expression wrapped
+          let%bind {associated_type;_} = trace_option (bad_record_access path ae wrapped update.location) @@
+            O.LMap.find_opt path record in
+          ok associated_type
       )
       | _ -> failwith "Update an expression which is not a record"
     in

@@ -274,11 +274,9 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> O'.typer_state
     let%bind (wrapped,tv) = 
       match wrapped.type_content with 
       | T_record record -> (
-          (* TODO: rewrite with trace_option *)
-          let field_op = O.LMap.find_opt path record in
-          match field_op with
-          | Some {associated_type=tv;_} -> ok (record,tv)
-          | None -> failwith @@ Format.asprintf "field %a is not part of record" O.PP.label path
+          let%bind {associated_type;_} = trace_option (bad_record_access path ae wrapped update.location) @@
+            O.LMap.find_opt path record in
+          ok (record, associated_type)
       )
       (* TODO: write a real error *)
       | _ -> failwith "Update an expression which is not a record"
