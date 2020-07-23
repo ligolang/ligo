@@ -185,14 +185,14 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     in
     return_expr @@ CST.ECall (wrap (lamb,args))
   | E_lambda lambda ->
-    let%bind (binders,_lhs_type,_block_with,body) = decompile_lambda lambda in
-    let fun_expr : CST.fun_expr = {kwd_fun=rg;binders;lhs_type=None;arrow=rg;body} in
+    let%bind (binders,lhs_type,body) = decompile_lambda lambda in
+    let fun_expr : CST.fun_expr = {binders;lhs_type;arrow=rg;body} in
     return_expr_with_par @@ CST.EFun (wrap @@ fun_expr)
   | E_recursive _ ->
     failwith "corner case : annonymous recursive function"
   | E_let_in {let_binder;rhs;let_result;inline} ->
     let var = CST.PVar (decompile_variable @@ (fst let_binder).wrap_content) in
-    let binders = (var,[]) in
+    let binders = var,[] in
     let%bind lhs_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) @@ snd let_binder in
     let%bind let_rhs = decompile_expression rhs in
     let binding : CST.let_binding = {binders;lhs_type;eq=rg;let_rhs} in
@@ -213,7 +213,7 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
   | E_matching {matchee; cases} ->
     let%bind expr  = decompile_expression matchee in
     let%bind cases = decompile_matching_cases cases in
-    let cases : _ CST.case = {kwd_match=rg;expr;kwd_with=rg;lead_vbar=None;cases} in
+    let cases : _ CST.case = {kwd_switch=rg;expr;lbrace=rg;cases;rbrace=rg} in
     return_expr @@ CST.ECase (wrap cases)
   | E_record record  ->
     let record = AST.LMap.to_kv_list record in
@@ -397,10 +397,10 @@ and decompile_to_selection : AST.access -> (CST.selection, _) result = fun acces
 
 and decompile_lambda : AST.lambda -> _ = fun {binder;input_type;output_type;result} ->
     let%bind param_decl = pattern_type binder.wrap_content input_type in
-    let param = (param_decl, []) in
+    let param = CST.PPar (wrap @@ par @@ param_decl) in
     let%bind ret_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) output_type in
     let%bind return = decompile_expression result in
-    ok @@ (param,ret_type,None,return)
+    ok @@ (param,ret_type,return)
 
 and decompile_attributes = function
     true -> [wrap "inline"]
@@ -474,26 +474,26 @@ let decompile_declaration : AST.declaration Location.wrap -> (CST.declaration, _
   | Declaration_constant (var, ty_opt, inline, expr) ->
     let attributes : CST.attributes = decompile_attributes inline in
     let var = CST.PVar (decompile_variable var.wrap_content) in
-    let binders = (var,[]) in
+    let binders = var,[] in
     match expr.expression_content with
       E_lambda lambda ->
       let%bind lhs_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) ty_opt in
       let%bind let_rhs = decompile_expression @@ AST.make_e @@ AST.E_lambda lambda in
       let let_binding : CST.let_binding = {binders;lhs_type;eq=rg;let_rhs} in
-      let let_decl : CST.let_decl = wrap (rg,None,let_binding,attributes) in
-      ok @@ CST.Let let_decl
+      let let_decl = wrap (rg,None,let_binding,attributes) in
+      ok @@ CST.ConstDecl let_decl
     | E_recursive {lambda; _} ->
       let%bind lhs_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) ty_opt in
       let%bind let_rhs = decompile_expression @@ AST.make_e @@ AST.E_lambda lambda in
       let let_binding : CST.let_binding = {binders;lhs_type;eq=rg;let_rhs} in
-      let let_decl : CST.let_decl = wrap (rg,Some rg,let_binding,attributes) in
-      ok @@ CST.Let (let_decl)
+      let let_decl = wrap (rg,Some rg,let_binding,attributes) in
+      ok @@ CST.ConstDecl let_decl
     | _ ->
       let%bind lhs_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) ty_opt in
       let%bind let_rhs = decompile_expression expr in
       let let_binding : CST.let_binding = {binders;lhs_type;eq=rg;let_rhs} in
-      let let_decl : CST.let_decl = wrap (rg,None,let_binding,attributes) in
-      ok @@ CST.Let let_decl
+      let let_decl = wrap (rg,None,let_binding,attributes) in
+      ok @@ CST.ConstDecl let_decl
 
 let decompile_program : AST.program -> (CST.ast, _) result = fun prg ->
   let%bind decl = bind_map_list decompile_declaration prg in

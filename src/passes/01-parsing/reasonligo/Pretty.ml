@@ -12,10 +12,10 @@ let rec print ast =
   separate_map (hardline ^^ hardline) app (Utils.nseq_to_list ast.decl)
 
 and pp_declaration = function
-  Let decl -> pp_let_decl decl
-| TypeDecl decl -> pp_type_decl decl
+  ConstDecl decl -> pp_const_decl decl
+| TypeDecl  decl -> pp_type_decl decl
 
-and pp_let_decl = function
+and pp_const_decl = function
 | {value = (_,rec_opt, binding, attr); _} ->
   let let_str =
     match rec_opt with
@@ -58,8 +58,6 @@ and pp_let_binding let_ (binding : let_binding) =
 and pp_pattern = function
   PConstr p -> pp_pconstr p
 | PUnit   _ -> string "()"
-| PFalse  _ -> string "false"
-| PTrue   _ -> string "true"
 | PVar    v -> pp_ident v
 | PInt    i -> pp_int i
 | PNat    n -> pp_nat n
@@ -76,6 +74,8 @@ and pp_pattern = function
 and pp_pconstr = function
   PNone      _ -> string "None"
 | PSomeApp   p -> pp_patt_some p
+| PFalse  _ -> string "false"
+| PTrue   _ -> string "true"
 | PConstrApp a -> pp_patt_c_app a
 
 and pp_patt_c_app {value; _} =
@@ -99,10 +99,7 @@ and pp_bytes {value; _} =
   string ("0x" ^ Hex.show (snd value))
 
 and pp_ppar {value; _} =
-  if value.lpar = Region.ghost then
-    nest 1 (pp_pattern value.inside)
-  else
-    string "(" ^^ nest 1 (pp_pattern value.inside) ^^ string ")"
+  string "(" ^^ nest 1 (pp_pattern value.inside) ^^ string ")"
 
 and pp_plist = function
   PListComp cmp -> pp_list_comp cmp
@@ -367,8 +364,7 @@ and pp_let_in {value; _} =
 
 and pp_fun {value; _} =
   let {binders; lhs_type; body; _} = value in
-  let patterns = Utils.nseq_to_list binders in
-  let binders = group (separate_map (string "," ^^ break 0 ^^ string " ") pp_pattern patterns)
+  let binders = pp_pattern binders
   and annot   =
     match lhs_type with
       None -> empty
@@ -376,9 +372,8 @@ and pp_fun {value; _} =
         group (break 0 ^^ string ": " ^^ nest 2 (pp_type_expr e))
   in
   match body with
-  | ESeq _ -> string "(" ^^ nest 1 binders ^^ string ")" ^^ annot ^^ string " => " ^^ pp_expr body
-  | _ -> (prefix 2 0 (string "(" ^^ nest 1 binders ^^ string ")" ^^ annot
-     ^^ string " => ") (pp_expr body))
+  | ESeq _ -> nest 1 binders ^^ annot ^^ string " => " ^^ pp_expr body
+  | _ -> (prefix 2 0 (nest 1 binders ^^ annot ^^ string " => ") (pp_expr body))
 
 and pp_seq {value; _} =
   let {compound; elements; _} = value in
@@ -468,10 +463,7 @@ and pp_fun_args {value; _} =
 
 and pp_fun_type {value; _} =
   let lhs, _, rhs = value in
-  match lhs, rhs with
-  | _, TFun tf -> string "(" ^^ pp_type_expr lhs ^^ string ", " ^^ pp_fun_args tf
-  | TVar _ , _ -> group (pp_type_expr lhs ^^ string " =>" ^/^ pp_type_expr rhs)
-  | _ -> group (string "(" ^^ nest 1 (pp_type_expr lhs) ^^ string ")" ^^ string " =>" ^/^ pp_type_expr rhs)
+  group ( nest 1 (pp_type_expr lhs) ^^ string " =>" ^/^ pp_type_expr rhs)
 
 and pp_type_par {value; _} =
   string "(" ^^ nest 1 (pp_type_expr value.inside ^^ string ")")
