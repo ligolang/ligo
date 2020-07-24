@@ -2725,29 +2725,6 @@ contract: Attr WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let Ident COLON Constr Type
-##
-## Ends in an error in state: 382.
-##
-## let_binding -> Ident option(type_annotation) . EQ expr [ Type SEMI Let EOF Attr ]
-##
-## The known suffix of the stack is as follows:
-## Ident option(type_annotation)
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 33, spurious reduction of production variant -> Constr 
-## In state 34, spurious reduction of production nsepseq(variant,VBAR) -> variant 
-## In state 41, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
-## In state 39, spurious reduction of production type_expr -> sum_type 
-## In state 79, spurious reduction of production type_annotation -> COLON type_expr 
-## In state 80, spurious reduction of production option(type_annotation) -> type_annotation 
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
 contract: Let Ident EQ VBAR
 ##
 ## Ends in an error in state: 383.
@@ -2814,41 +2791,6 @@ contract: Let LBRACE Ident EQ Bytes COMMA WILD
 ##
 ## The known suffix of the stack is as follows:
 ## field_pattern COMMA
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: Let LBRACE Ident EQ Bytes RBRACE COLON Constr Type
-##
-## Ends in an error in state: 395.
-##
-## let_binding -> record_pattern option(type_annotation) . EQ expr [ Type SEMI Let EOF Attr ]
-##
-## The known suffix of the stack is as follows:
-## record_pattern option(type_annotation)
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 33, spurious reduction of production variant -> Constr 
-## In state 34, spurious reduction of production nsepseq(variant,VBAR) -> variant 
-## In state 41, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
-## In state 39, spurious reduction of production type_expr -> sum_type 
-## In state 79, spurious reduction of production type_annotation -> COLON type_expr 
-## In state 80, spurious reduction of production option(type_annotation) -> type_annotation 
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: Let LBRACE Ident EQ Bytes RBRACE EQ VBAR
-##
-## Ends in an error in state: 396.
-##
-## let_binding -> record_pattern option(type_annotation) EQ . expr [ Type SEMI Let EOF Attr ]
-##
-## The known suffix of the stack is as follows:
-## record_pattern option(type_annotation) EQ
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -3054,41 +2996,6 @@ contract: Let LPAR Constr VBAR
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let LPAR RPAR COLON Constr Type
-##
-## Ends in an error in state: 386.
-##
-## let_binding -> unit option(type_annotation) . EQ expr [ Type SEMI Let EOF Attr ]
-##
-## The known suffix of the stack is as follows:
-## unit option(type_annotation)
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 33, spurious reduction of production variant -> Constr 
-## In state 34, spurious reduction of production nsepseq(variant,VBAR) -> variant 
-## In state 41, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
-## In state 39, spurious reduction of production type_expr -> sum_type 
-## In state 79, spurious reduction of production type_annotation -> COLON type_expr 
-## In state 80, spurious reduction of production option(type_annotation) -> type_annotation 
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: Let LPAR RPAR EQ VBAR
-##
-## Ends in an error in state: 387.
-##
-## let_binding -> unit option(type_annotation) EQ . expr [ Type SEMI Let EOF Attr ]
-##
-## The known suffix of the stack is as follows:
-## unit option(type_annotation) EQ
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
 contract: Let LPAR RPAR WILD
 ##
 ## Ends in an error in state: 385.
@@ -3160,41 +3067,6 @@ contract: Let LPAR WILD COMMA Ident EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let LPAR WILD RPAR COLON Constr Type
-##
-## Ends in an error in state: 399.
-##
-## let_binding -> par(closed_irrefutable) option(type_annotation) . EQ expr [ Type SEMI Let EOF Attr ]
-##
-## The known suffix of the stack is as follows:
-## par(closed_irrefutable) option(type_annotation)
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 33, spurious reduction of production variant -> Constr 
-## In state 34, spurious reduction of production nsepseq(variant,VBAR) -> variant 
-## In state 41, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
-## In state 39, spurious reduction of production type_expr -> sum_type 
-## In state 79, spurious reduction of production type_annotation -> COLON type_expr 
-## In state 80, spurious reduction of production option(type_annotation) -> type_annotation 
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: Let LPAR WILD RPAR EQ VBAR
-##
-## Ends in an error in state: 400.
-##
-## let_binding -> par(closed_irrefutable) option(type_annotation) EQ . expr [ Type SEMI Let EOF Attr ]
-##
-## The known suffix of the stack is as follows:
-## par(closed_irrefutable) option(type_annotation) EQ
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
 contract: Let LPAR WILD RPAR WILD
 ##
 ## Ends in an error in state: 398.
@@ -3246,27 +3118,6 @@ contract: Let Verbatim
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let WILD COLON String Type
-##
-## Ends in an error in state: 81.
-##
-## let_binding -> WILD option(type_annotation) . EQ expr [ Type SEMI Let EOF Attr ]
-##
-## The known suffix of the stack is as follows:
-## WILD option(type_annotation)
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 29, spurious reduction of production fun_type -> cartesian 
-## In state 42, spurious reduction of production type_expr -> fun_type 
-## In state 79, spurious reduction of production type_annotation -> COLON type_expr 
-## In state 80, spurious reduction of production option(type_annotation) -> type_annotation 
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
 contract: Let WILD COLON WILD
 ##
 ## Ends in an error in state: 78.
@@ -3298,18 +3149,6 @@ contract: Let WILD COMMA Ident COLON Constr Type
 ## In state 39, spurious reduction of production type_expr -> sum_type 
 ## In state 79, spurious reduction of production type_annotation -> COLON type_expr 
 ## In state 80, spurious reduction of production option(type_annotation) -> type_annotation 
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: Let WILD COMMA Ident EQ VBAR
-##
-## Ends in an error in state: 391.
-##
-## let_binding -> tuple(sub_irrefutable) option(type_annotation) EQ . expr [ Type SEMI Let EOF Attr ]
-##
-## The known suffix of the stack is as follows:
-## tuple(sub_irrefutable) option(type_annotation) EQ
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -3398,18 +3237,6 @@ contract: Let WILD EQ Bytes VBAR
 ## In state 232, spurious reduction of production expr -> base_cond 
 ## In state 528, spurious reduction of production let_binding -> WILD option(type_annotation) EQ expr 
 ## In state 531, spurious reduction of production let_declaration -> seq(Attr) Let let_binding 
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: Let WILD EQ VBAR
-##
-## Ends in an error in state: 82.
-##
-## let_binding -> WILD option(type_annotation) EQ . expr [ Type SEMI Let EOF Attr ]
-##
-## The known suffix of the stack is as follows:
-## WILD option(type_annotation) EQ
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>

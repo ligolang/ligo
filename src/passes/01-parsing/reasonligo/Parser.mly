@@ -244,35 +244,22 @@ let_declaration:
     in {region; value} }
 
 let_binding:
-  "<ident>" type_annotation? "=" expr {
+  let_pattern_simple type_annotation? "=" expr {
     wild_error $4;
-    Scoping.check_reserved_name $1;
-    {binders = PVar $1, []; lhs_type=$2; eq=$3; let_rhs=$4}
+    {binders = $1; lhs_type=$2; eq=$3; let_rhs=$4}
   }
-| "_" type_annotation? "=" expr {
-    wild_error $4;
-    {binders = PWild $1, []; lhs_type=$2; eq=$3; let_rhs=$4}
-  }
-| unit type_annotation? "=" expr {
-    wild_error $4;
-    {binders = PUnit $1, []; lhs_type=$2; eq=$3; let_rhs=$4}
-  }
-| record_pattern type_annotation? "=" expr {
-    wild_error $4;
-    Scoping.check_pattern (PRecord $1);
-    {binders = PRecord $1, []; lhs_type=$2; eq=$3; let_rhs=$4}
-  }
-| par(closed_irrefutable) type_annotation? "=" expr {
-    wild_error $4;
-    Scoping.check_pattern $1.value.inside;
-    {binders = $1.value.inside, []; lhs_type=$2; eq=$3; let_rhs=$4}
-  }
-| tuple(sub_irrefutable) type_annotation? "=" expr {
-    wild_error $4;
+
+let_pattern_simple :
+  Ident                       {                Scoping.check_reserved_name $1; PVar $1 }
+| "_"                         {                                               PWild $1 }
+| unit                        {                                               PUnit $1 }
+| record_pattern              {         Scoping.check_pattern (PRecord $1); PRecord $1 }
+| par (closed_irrefutable)    { Scoping.check_pattern $1.value.inside; $1.value.inside }
+| tuple (sub_irrefutable)     {
     Utils.nsepseq_iter Scoping.check_pattern $1;
     let region  = nsepseq_to_region pattern_to_region $1 in
-    let binders = PTuple {value=$1; region}, [] in
-    {binders; lhs_type=$2; eq=$3; let_rhs=$4} }
+    PTuple {value=$1; region}
+}
 
 type_annotation:
   ":" type_expr { $1,$2 }
@@ -429,29 +416,6 @@ type_expr_simple:
       region = cover $1 $5;
     }
 }
-
-(*
-*reasonligo
-let fun = (toto,tata) => output;
-let const = toto ;
-let titi = (toto, tata);
-let (toto,tata) = titi;
-
-let (toto,tata) = (titi, tutu) => output;
-
- ((titi,tutu) => output)(toto,tata)
-
-* cameligo
-let tata titi toto = 
-  let foo bar = blabla in
-
-fun_decl : 
-  kwd_let ident kwd_equal (param => expr) ";"
-
-const_decl :
-  kwd_let ident kwd_equal expr ";"
-
-*)
 
 type_annotation_simple:
   ":" type_expr_simple { $1,$2 }

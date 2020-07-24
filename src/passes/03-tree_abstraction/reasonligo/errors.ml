@@ -13,7 +13,7 @@ type abs_error = [
   | `Concrete_reasonligo_unsupported_tuple_pattern of Raw.pattern
   | `Concrete_reasonligo_unsupported_constant_constr of Raw.pattern
   | `Concrete_reasonligo_unsupported_non_var_pattern of Raw.pattern
-  | `Concrete_reasonligo_unsupported_pattern_type of Raw.pattern list
+  | `Concrete_reasonligo_unsupported_pattern_type of Raw.pattern
   | `Concrete_reasonligo_unsupported_string_singleton of Raw.type_expr
   | `Concrete_cameligo_unsupported_deep_list_pattern of Raw.pattern
   | `Concrete_cameligo_unsupported_deep_tuple_pattern of (Raw.pattern, Raw.wild) Simple_utils.Utils.nsepseq Raw.par Raw.reg
@@ -97,7 +97,7 @@ let rec error_ppformat : display_format:string display_format ->
     | `Concrete_reasonligo_unsupported_pattern_type pl ->
       Format.fprintf f
         "@[<hv>%a@Currently, only booleans, lists, options, and constructors are supported in patterns@]"
-        Location.pp_lift (List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost pl)
+        Location.pp_lift ((fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost pl)
     | `Concrete_reasonligo_unsupported_string_singleton te ->
       Format.fprintf f
         "@[<hv>%a@Unsupported singleton string type@]"
@@ -232,7 +232,7 @@ let rec error_jsonformat : abs_error -> Yojson.t = fun a ->
     json_error ~stage ~content
   | `Concrete_reasonligo_unsupported_pattern_type pl ->
     let loc = Format.asprintf "%a"
-      Location.pp_lift (List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost pl) in
+      Location.pp_lift ((fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost pl) in
     let message = `String "Currently, only booleans, lists, options, and constructors are supported in patterns" in
     let content = `Assoc [
       ("message", message );

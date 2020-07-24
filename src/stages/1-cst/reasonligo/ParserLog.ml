@@ -267,7 +267,7 @@ and print_terminator state = function
 | None -> ()
 
 and print_let_binding state {binders; lhs_type; eq; let_rhs} =
-  let () = Utils.nseq_iter (print_pattern state) binders in
+  let () = print_pattern state binders in
   let () =
     match lhs_type with
       None -> ()
@@ -673,7 +673,7 @@ and pp_let_binding state node attr =
   let arity =
     let state = state#pad fields 0 in
     pp_node    state "<binders>";
-    pp_binders state binders; 0 in
+    pp_pattern state binders; 0 in
   let arity =
     match lhs_type with
       None -> arity
@@ -699,12 +699,6 @@ and pp_let_binding state node attr =
 and pp_type_decl state decl =
   pp_ident     (state#pad 2 0) decl.name;
   pp_type_expr (state#pad 2 1) decl.type_expr
-
-and pp_binders state patterns =
-  let patterns       = Utils.nseq_to_list patterns in
-  let arity          = List.length patterns in
-  let apply len rank = pp_pattern (state#pad len rank)
-  in List.iteri (apply arity) patterns
 
 and pp_pattern state = function
   PConstr p ->
@@ -928,7 +922,7 @@ and pp_let_in state node =
   let arity =
     let state = state#pad fields 0 in
     pp_node state "<binders>";
-    pp_binders state binders; arity in
+    pp_pattern state binders; arity in
   let arity =
     match lhs_type with
       None -> arity

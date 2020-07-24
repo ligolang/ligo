@@ -39,8 +39,7 @@ and pp_verbatim s = string "{|" ^^ pp_ident s ^^ string "|}"
 
 and pp_let_binding let_ (binding : let_binding) =
   let {binders; lhs_type; let_rhs; _} = binding in
-  let patterns = Utils.nseq_to_list binders in
-  let patterns = group (separate_map (break 0) pp_pattern patterns) in
+  let patterns = group (pp_pattern binders) in
   let lhs =
     string let_ ^^
       match lhs_type with

@@ -151,7 +151,7 @@ and let_decl =
   (kwd_let * kwd_rec option * let_binding * attributes)
 
 and let_binding = {
-  binders  : pattern nseq;
+  binders  : pattern;
   lhs_type : (colon * type_expr) option;
   eq       : equal;
   let_rhs  : expr

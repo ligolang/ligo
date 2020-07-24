@@ -192,7 +192,7 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     failwith "corner case : annonymous recursive function"
   | E_let_in {let_binder;rhs;let_result;inline} ->
     let var = CST.PVar (decompile_variable @@ (fst let_binder).wrap_content) in
-    let binders = var,[] in
+    let binders = var in
     let%bind lhs_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) @@ snd let_binder in
     let%bind let_rhs = decompile_expression rhs in
     let binding : CST.let_binding = {binders;lhs_type;eq=rg;let_rhs} in
@@ -474,7 +474,7 @@ let decompile_declaration : AST.declaration Location.wrap -> (CST.declaration, _
   | Declaration_constant (var, ty_opt, inline, expr) ->
     let attributes : CST.attributes = decompile_attributes inline in
     let var = CST.PVar (decompile_variable var.wrap_content) in
-    let binders = var,[] in
+    let binders = var in
     match expr.expression_content with
       E_lambda lambda ->
       let%bind lhs_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) ty_opt in
