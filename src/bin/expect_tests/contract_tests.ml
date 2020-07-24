@@ -1764,14 +1764,13 @@ let%expect_test _ =
   [%expect {|
     type storage = (int ,
     int)
-    const main : (int ,
-    storage) -> (list (operation) ,
-    storage) = lambda (n:Some((int ,
-    storage))) : None return let x = let x = 7 : int in (ADD(x ,
+    const main = lambda (n:Some((int ,
+    storage))) : Some((list (operation) ,
+    storage)) return let x : (int ,
+    int) = let x : int = 7 in (ADD(x ,
     n.0) ,
     ADD(n.1.0 ,
-    n.1.1)) : (int ,
-    int) in (list[] : list (operation) ,
+    n.1.1)) in (list[] : list (operation) ,
     x)
     const f0 = lambda (a:Some(string)) : None return true(unit)
     const f1 = lambda (a:Some(string)) : None return true(unit)

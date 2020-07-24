@@ -30,26 +30,26 @@ type lexeme = string
 
 (* Keywords of OCaml *)
 
-type keyword   = Region.t
-type kwd_and   = Region.t
-type kwd_begin = Region.t
-type kwd_else  = Region.t
-type kwd_end   = Region.t
-type kwd_false = Region.t
-type kwd_fun   = Region.t
-type kwd_rec   = Region.t
-type kwd_if    = Region.t
-type kwd_in    = Region.t
-type kwd_let   = Region.t
-type kwd_match = Region.t
-type kwd_mod   = Region.t
-type kwd_not   = Region.t
-type kwd_of    = Region.t
-type kwd_or    = Region.t
-type kwd_then  = Region.t
-type kwd_true  = Region.t
-type kwd_type  = Region.t
-type kwd_with  = Region.t
+type keyword    = Region.t
+type kwd_and    = Region.t
+type kwd_begin  = Region.t
+type kwd_else   = Region.t
+type kwd_end    = Region.t
+type kwd_false  = Region.t
+type kwd_fun    = Region.t
+type kwd_rec    = Region.t
+type kwd_if     = Region.t
+type kwd_in     = Region.t
+type kwd_let    = Region.t
+type kwd_switch = Region.t
+type kwd_mod    = Region.t
+type kwd_not    = Region.t
+type kwd_of     = Region.t
+type kwd_or     = Region.t
+type kwd_then   = Region.t
+type kwd_true   = Region.t
+type kwd_type   = Region.t
+type kwd_with   = Region.t
 type kwd_let_entry = Region.t
 
 (* Data constructors *)
@@ -142,16 +142,16 @@ and ast = t
 and attributes = attribute list
 
 and declaration =
-  Let      of let_decl
-| TypeDecl of type_decl reg
+  ConstDecl of let_decl reg
+| TypeDecl  of type_decl  reg
 
 (* Non-recursive values *)
 
 and let_decl =
-  (kwd_let * kwd_rec option * let_binding * attributes) reg
+  (kwd_let * kwd_rec option * let_binding * attributes)
 
 and let_binding = {
-  binders  : pattern nseq;
+  binders  : pattern;
   lhs_type : (colon * type_expr) option;
   eq       : equal;
   let_rhs  : expr
@@ -194,8 +194,6 @@ and type_tuple = (type_expr, comma) nsepseq par reg
 and pattern =
   PConstr   of constr_pattern
 | PUnit     of the_unit reg
-| PFalse    of kwd_false
-| PTrue     of kwd_true
 | PVar      of variable
 | PInt      of (lexeme * Z.t) reg
 | PNat      of (lexeme * Z.t) reg
@@ -212,6 +210,8 @@ and pattern =
 and constr_pattern =
   PNone      of c_None
 | PSomeApp   of (c_Some * pattern) reg
+| PFalse    of kwd_false
+| PTrue     of kwd_true
 | PConstrApp of (constr * pattern option) reg
 
 and list_pattern =
@@ -365,11 +365,11 @@ and path =
 | Path of projection reg
 
 and 'a case = {
-  kwd_match : kwd_match;
+  kwd_switch : kwd_switch;
   expr      : expr;
-  kwd_with  : kwd_with;
-  lead_vbar : vbar option;
-  cases     : ('a case_clause reg, vbar) nsepseq reg
+  lbrace    : kwd_with;
+  cases     : ('a case_clause reg, vbar) nsepseq reg;
+  rbrace : rbrace
 }
 
 and 'a case_clause = {
@@ -388,8 +388,7 @@ and let_in = {
 }
 
 and fun_expr = {
-  kwd_fun    : kwd_fun;
-  binders    : pattern nseq;
+  binders    : pattern;
   lhs_type   : (colon * type_expr) option;
   arrow      : arrow;
   body       : expr;
@@ -439,13 +438,13 @@ let list_pattern_to_region = function
 
 let constr_pattern_to_region = function
   PNone region | PSomeApp {region;_}
+| PTrue region | PFalse region
 | PConstrApp {region;_} -> region
 
 let pattern_to_region = function
 | PList p -> list_pattern_to_region p
 | PConstr c -> constr_pattern_to_region c
 | PUnit {region;_}
-| PTrue region | PFalse region
 | PTuple {region;_} | PVar {region;_}
 | PInt {region;_}
 | PString {region;_} | PVerbatim {region;_}
@@ -500,7 +499,7 @@ let expr_to_region = function
 | ECodeInj {region; _} -> region
 
 let declaration_to_region = function
-| Let {region;_}
+| ConstDecl {region;_}
 | TypeDecl {region;_} -> region
 
 let selection_to_region = function

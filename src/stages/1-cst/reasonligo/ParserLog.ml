@@ -141,7 +141,7 @@ and print_attributes state attributes =
   in List.iter apply attributes
 
 and print_statement state = function
-  Let {value=kwd_let, kwd_rec, let_binding, attributes; _} ->
+  ConstDecl {value=kwd_let, kwd_rec, let_binding, attributes; _} ->
     print_token       state kwd_let "let";
     print_token_opt   state kwd_rec "rec";
     print_let_binding state let_binding;
@@ -267,7 +267,7 @@ and print_terminator state = function
 | None -> ()
 
 and print_let_binding state {binders; lhs_type; eq; let_rhs} =
-  let () = Utils.nseq_iter (print_pattern state) binders in
+  let () = print_pattern state binders in
   let () =
     match lhs_type with
       None -> ()
@@ -301,8 +301,6 @@ and print_pattern state = function
 | PTyped t ->
     print_typed_pattern state t
 | PUnit p -> print_unit state p
-| PFalse kwd_false -> print_token state kwd_false "false"
-| PTrue kwd_true -> print_token state kwd_true "true"
 
 and print_list_pattern state = function
   PListComp p -> print_injection state print_pattern p
@@ -331,6 +329,8 @@ and print_field_pattern state {value; _} =
 and print_constr_pattern state = function
   PNone p      -> print_none_pattern state p
 | PSomeApp p   -> print_some_app_pattern state p
+| PFalse kwd_false -> print_token state kwd_false "false"
+| PTrue kwd_true -> print_token state kwd_true "true"
 | PConstrApp p -> print_constr_app_pattern state p
 
 and print_none_pattern state value =
@@ -548,12 +548,12 @@ and print_sequence state seq =
   print_injection state print_expr seq
 
 and print_match_expr state {value; _} =
-  let {kwd_match; expr; kwd_with; lead_vbar; cases} = value in
-  print_token     state kwd_match "match";
+  let {kwd_switch; expr; lbrace; cases; rbrace} = value in
+  print_token     state kwd_switch "switch";
   print_expr      state expr;
-  print_token     state kwd_with "with";
-  print_token_opt state lead_vbar "|";
-  print_cases     state cases
+  print_token     state lbrace "{";
+  print_cases     state cases;
+  print_token     state rbrace "}";
 
 and print_token_opt state = function
          None -> fun _ -> ()
@@ -578,9 +578,8 @@ and print_let_in state {value; _} =
   print_expr        state body
 
 and print_fun_expr state {value; _} =
-  let {kwd_fun; binders; lhs_type; arrow; body} = value in
-  let () = print_token state kwd_fun "fun" in
-  let () = Utils.nseq_iter (print_pattern state) binders in
+  let {binders; lhs_type; arrow; body} = value in
+  let () = print_pattern state binders in
   let () =
     match lhs_type with
       None -> ()
@@ -655,7 +654,7 @@ let rec pp_cst state {decl; _} =
   List.iteri (List.length decls |> apply) decls
 
 and pp_declaration state = function
-  Let {value = (_, kwd_rec, let_binding, attr); region} ->
+  ConstDecl {value = (_, kwd_rec, let_binding, attr); region} ->
     pp_loc_node    state "Let" region;
     (match kwd_rec with
     | None -> ()
@@ -674,7 +673,7 @@ and pp_let_binding state node attr =
   let arity =
     let state = state#pad fields 0 in
     pp_node    state "<binders>";
-    pp_binders state binders; 0 in
+    pp_pattern state binders; 0 in
   let arity =
     match lhs_type with
       None -> arity
@@ -700,12 +699,6 @@ and pp_let_binding state node attr =
 and pp_type_decl state decl =
   pp_ident     (state#pad 2 0) decl.name;
   pp_type_expr (state#pad 2 1) decl.type_expr
-
-and pp_binders state patterns =
-  let patterns       = Utils.nseq_to_list patterns in
-  let arity          = List.length patterns in
-  let apply len rank = pp_pattern (state#pad len rank)
-  in List.iteri (apply arity) patterns
 
 and pp_pattern state = function
   PConstr p ->
@@ -733,10 +726,6 @@ and pp_pattern state = function
     pp_verbatim (state#pad 1 0) v
 | PUnit {region; _} ->
     pp_loc_node state "PUnit" region
-| PFalse region ->
-    pp_loc_node state "PFalse" region
-| PTrue region ->
-    pp_loc_node state "PTrue" region
 | PList plist ->
     pp_node state "PList";
     pp_list_pattern (state#pad 1 0) plist
@@ -809,6 +798,10 @@ and pp_constr_pattern state = function
 | PSomeApp {value=_,param; region} ->
     pp_loc_node state "PSomeApp" region;
     pp_pattern  (state#pad 1 0) param
+| PFalse region ->
+    pp_loc_node state "PFalse" region
+| PTrue region ->
+    pp_loc_node state "PTrue" region
 | PConstrApp {value; region} ->
     pp_loc_node state "PConstrApp" region;
     pp_constr_app_pattern (state#pad 1 0) value
@@ -889,7 +882,7 @@ and pp_fun_expr state node =
   let () =
     let state = state#pad fields 0 in
     pp_node state "<parameters>";
-    pp_binders state binders in
+    pp_pattern state binders in
   let () =
     match lhs_type with
       None -> ()
@@ -929,7 +922,7 @@ and pp_let_in state node =
   let arity =
     let state = state#pad fields 0 in
     pp_node state "<binders>";
-    pp_binders state binders; arity in
+    pp_pattern state binders; arity in
   let arity =
     match lhs_type with
       None -> arity
