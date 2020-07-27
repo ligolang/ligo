@@ -34,52 +34,64 @@ import           AST.Types
 import           Product
 import           Range
 
--- import           Debug.Trace
+import           Debug.Trace
 
--- type CollectM = State (Product [FullEnv, [Range]])
+type CollectM = State (Product [FullEnv, [Range]])
 
--- type FullEnv = Product ["vars" := Env, "types" := Env]
--- type Env     = Map Range [ScopedDecl]
+type FullEnv = Product ["vars" := Env, "types" := Env]
+type Env     = Map Range [ScopedDecl]
 
--- data Category = Variable | Type
+data Category = Variable | Type
 
--- -- | The type/value declaration.
--- data ScopedDecl = ScopedDecl
---   { _sdName    :: Pascal ()
---   , _sdOrigin  :: Range
---   , _sdBody    :: Maybe Range
---   , _sdType    :: Maybe (Either (Pascal ()) Kind)
---   , _sdRefs    :: [Range]
---   }
---   deriving Show via PP ScopedDecl
+-- | The type/value declaration.
+data ScopedDecl = ScopedDecl
+  { _sdName    :: LIGO ()
+  , _sdOrigin  :: Range
+  , _sdBody    :: Maybe Range
+  , _sdType    :: Maybe (Either (LIGO ()) Kind)
+  , _sdRefs    :: [Range]
+  }
+  deriving Show via PP ScopedDecl
 
--- -- | The kind.
--- data Kind = Star
---   deriving Show via PP Kind
+-- | The kind.
+data Kind = Star
+  deriving Show via PP Kind
 
--- emptyEnv :: FullEnv
--- emptyEnv
---   = Cons (Tag Map.empty)
---   $ Cons (Tag Map.empty)
---     Nil
+instance {-# OVERLAPS #-} Pretty FullEnv where
+  pp = block . map aux . Map.toList . mergeFE
+    where
+      aux (r, fe) =
+        pp r `indent` block fe
 
--- with :: Category -> FullEnv -> (Env -> Env) -> FullEnv
--- with Variable env f = modTag @"vars"  f env
--- with Type     env f = modTag @"types" f env
+      mergeFE fe = getTag @"vars" @Env fe Prelude.<> getTag @"types" fe
 
--- ofCategory :: Category -> ScopedDecl -> Bool
--- ofCategory Variable ScopedDecl { _sdType = Just (Right Star) } = False
--- ofCategory Variable _                                          = True
--- ofCategory Type     ScopedDecl { _sdType = Just (Right Star) } = True
--- ofCategory _        _                                          = False
+instance Pretty ScopedDecl where
+  pp (ScopedDecl n o _ t refs) = color 3 (pp n) <+> pp o <+> ":" <+> color 4 (maybe "?" (either pp pp) t) <+> "=" <+> pp refs
 
--- -- | Calculate scopes and attach to all tree points declarations that are
--- --   visible there.
--- --
+instance Pretty Kind where
+  pp _ = "TYPE"
+
+instance Pretty Category where
+  pp Variable = "Variable"
+  pp Type     = "Type"
+
+emptyEnv :: FullEnv
+emptyEnv = Tag Map.empty :> Tag Map.empty :> Nil
+
+with :: Category -> FullEnv -> (Env -> Env) -> FullEnv
+with Variable env f = modTag @"vars"  f env
+with Type     env f = modTag @"types" f env
+
+ofCategory :: Category -> ScopedDecl -> Bool
+ofCategory Variable ScopedDecl { _sdType = Just (Right Star) } = False
+ofCategory Variable _                                          = True
+ofCategory Type     ScopedDecl { _sdType = Just (Right Star) } = True
+ofCategory _        _                                          = False
+
 -- addLocalScopes
 --   :: Contains Range xs
---   => Pascal (Product xs)
---   -> Pascal (Product ([ScopedDecl] : Maybe Category : xs))
+--   => LIGO (Product xs)
+--   -> LIGO (Product ([ScopedDecl] : Maybe Category : xs))
 -- addLocalScopes tree =
 --     fmap (\xs -> Cons (fullEnvAt envWithREfs (getRange xs)) xs) tree1
 --   where
@@ -88,8 +100,8 @@ import           Range
 
 -- addNameCategories
 --   :: Contains Range xs
---   => Pascal (Product xs)
---   -> Pascal (Product (Maybe Category : xs))
+--   => LIGO (Product xs)
+--   -> LIGO (Product (Maybe Category : xs))
 -- addNameCategories tree = flip evalState emptyEnv do
 --   traverseMany
 --     [ Visit \r (Name t) -> do
@@ -104,7 +116,7 @@ import           Range
 --     tree
 
 -- getEnvTree
---   :: ( Scoped CollectM (Sum fs) (Tree fs b)
+--   :: ( Apply (Scoped b CollectM (Tree fs b)) fs
 --      , Apply Foldable fs
 --      , Apply Functor fs
 --      , Apply Traversable fs
@@ -117,128 +129,115 @@ import           Range
 -- getEnvTree tree = envWithREfs
 --   where
 --     envWithREfs = flip execState env do
---       traverseMany
---         [ Visit \r (Name t) -> do
+--       descent return
+--         [ usingScope $ Descent
+--           [ \(r, Name t) -> do
 --             modify $ getRange r `addRef` (Variable, t)
 --             return $ (r, Name t)
+--           ]
 
---         , Visit \r (TypeName t) -> do
+--         , usingScope $ Descent
+--           [ \(r, TypeName t) -> do
 --             modify $ getRange r `addRef` (Type, t)
 --             return $ (r, TypeName t)
+--           ]
 --         ]
---         id
 --         tree
 
 --     env
 --       = execCollectM
 --       $ traverseTree pure tree
 
--- fullEnvAt :: FullEnv -> Range -> [ScopedDecl]
--- fullEnvAt fe r = envAt (getTag @"types" fe) r <> envAt (getTag @"vars" fe) r
+fullEnvAt :: FullEnv -> Range -> [ScopedDecl]
+fullEnvAt fe r
+  = envAt (getTag @"types" fe) r
+  `mappend` envAt (getTag @"vars" fe) r
 
--- envAt :: Env -> Range -> [ScopedDecl]
--- envAt env pos =
---     Map.elems scopes
---   where
---     ranges = List.sortBy partOrder $ filter isCovering $ Map.keys env
---     scopes = Map.unions $ (map.foldMap) toScopeMap $ map (env Map.!) ranges
+envAt :: Env -> Range -> [ScopedDecl]
+envAt env pos =
+    Map.elems scopes
+  where
+    ranges = List.sortBy partOrder $ filter isCovering $ Map.keys env
+    scopes = Map.unions $ (map.foldMap) toScopeMap $ map (env Map.!) ranges
 
---     isCovering = (pos <?)
---     toScopeMap sd@ScopedDecl {_sdName} = Map.singleton (ppToText _sdName) sd
+    isCovering = (pos `leq`)
+    toScopeMap sd@ScopedDecl {_sdName} = Map.singleton (ppToText _sdName) sd
 
--- addRef :: Range -> (Category, Text) -> FullEnv -> FullEnv
--- addRef r (categ, n) env =
---   with categ env \slice ->
---     Map.union
---       (go slice $ range slice)
---       slice
---   where
---     go slice (r' : rest) =
---       let decls = slice Map.! r'
---       in
---         case updateOnly n r addRefToDecl decls of
---           (True,  decls') -> Map.singleton r' decls'
---           (False, decls') -> Map.insert    r' decls' (go slice rest)
---     go _ [] = Map.empty
+addRef :: Range -> (Category, Text) -> FullEnv -> FullEnv
+addRef r (categ, n) env =
+  with categ env \slice ->
+    Map.union
+      (go slice $ range slice)
+      slice
+  where
+    go slice (r' : rest) =
+      let decls = slice Map.! r'
+      in
+        case updateOnly n r addRefToDecl decls of
+          (True,  decls') -> Map.singleton r' decls'
+          (False, decls') -> Map.insert    r' decls' (go slice rest)
+    go _ [] = Map.empty
 
---     range slice
---       = List.sortBy partOrder
---       $ filter (r <?)
---       $ Map.keys slice
+    range slice
+      = List.sortBy partOrder
+      $ filter (r `leq`)
+      $ Map.keys slice
 
---     addRefToDecl sd = sd
---       { _sdRefs = r : _sdRefs sd
---       }
+    addRefToDecl sd = sd
+      { _sdRefs = r : _sdRefs sd
+      }
 
--- updateOnly
---   :: Text
---   -> Range
---   -> (ScopedDecl -> ScopedDecl)
---   -> [ScopedDecl]
---   -> (Bool, [ScopedDecl])
--- updateOnly name r f = go
---   where
---     go = \case
---       d : ds
---         | ppToText (_sdName d) == name ->
---           if r == _sdOrigin d
---           then         (True,   d : ds)
---           else         (True, f d : ds)
---         | otherwise -> second (d :) (go ds)
+updateOnly
+  :: Text
+  -> Range
+  -> (ScopedDecl -> ScopedDecl)
+  -> [ScopedDecl]
+  -> (Bool, [ScopedDecl])
+updateOnly name r f = go
+  where
+    go = \case
+      d : ds
+        | ppToText (_sdName d) == name ->
+          if r == _sdOrigin d
+          then         (True,   d : ds)
+          else         (True, f d : ds)
+        | otherwise -> second (d :) (go ds)
 
---       [] -> (False, [])
+      [] -> (False, [])
 
--- enter :: Range -> CollectM ()
--- enter r = do
---   modify $ modElem (r :)
+enter :: Contains Range xs => Product xs -> CollectM ()
+enter r = do
+  modify $ modElem (getElem @Range r :)
 
--- define :: Category -> ScopedDecl -> CollectM ()
--- define categ sd = do
---   r <- gets (head . getElem @[Range])
---   modify
---     $ modElem @FullEnv \env ->
---         with categ env
---         $ Map.insertWith (++) r [sd]
+define :: Category -> ScopedDecl -> CollectM ()
+define categ sd = do
+  r <- gets (head . getElem @[Range])
+  modify
+    $ modElem @FullEnv \env ->
+        with categ env
+        $ Map.insertWith (++) r [sd]
 
--- leave :: CollectM ()
--- leave = modify $ modElem @[Range] tail
+leave :: CollectM ()
+leave = modify $ modElem @[Range] tail
 
--- -- | Run the computation with scope starting from empty scope.
--- execCollectM :: CollectM a -> FullEnv
--- execCollectM action = getElem $ execState action $ Cons emptyEnv (Cons [] Nil)
+-- | Run the computation with scope starting from empty scope.
+execCollectM :: CollectM a -> FullEnv
+execCollectM action = getElem $ execState action $ emptyEnv :> [] :> Nil
 
--- instance {-# OVERLAPS #-} Pretty FullEnv where
---   pp = block . map aux . Map.toList . mergeFE
---     where
---       aux (r, fe) =
---         pp r `indent` block fe
+-- | Search for a name inside a local scope.
+lookupEnv :: Text -> [ScopedDecl] -> Maybe ScopedDecl
+lookupEnv name = listToMaybe . filter ((name ==) . ppToText . _sdName)
 
---       mergeFE fe = getTag @"vars" @Env fe <> getTag @"types" fe
-
--- instance Pretty ScopedDecl where
---   pp (ScopedDecl n o _ t refs) = color 3 (pp n) <+> pp o <+> ":" <+> color 4 (maybe "?" (either pp pp) t) <+> "=" <+> pp refs
-
--- instance Pretty Kind where
---   pp _ = "TYPE"
-
--- instance Pretty Category where
---   pp Variable = "Variable"
---   pp Type     = "Type"
-
--- -- | Search for a name inside a local scope.
--- lookupEnv :: Text -> [ScopedDecl] -> Maybe ScopedDecl
--- lookupEnv name = listToMaybe . filter ((name ==) . ppToText . _sdName)
-
--- -- | Add a type declaration to the current scope.
--- defType :: HasRange a => Pascal a -> Kind -> Pascal a -> CollectM ()
--- defType name kind body = do
---   define Type
---     $ ScopedDecl
---       (void name)
---       (getRange $ infoOf name)
---       (Just $ getRange $ infoOf body)
---       (Just (Right kind))
---       []
+-- | Add a type declaration to the current scope.
+defType :: HasRange a => LIGO a -> Kind -> LIGO a -> CollectM ()
+defType name kind body = do
+  define Type
+    $ ScopedDecl
+      (void name)
+      (getRange $ extract name)
+      (Just $ getRange $ extract body)
+      (Just (Right kind))
+      []
 
 -- -- observe :: Pretty i => Pretty res => Text -> i -> res -> res
 -- -- observe msg i res
@@ -246,96 +245,93 @@ import           Range
 -- --   $ traceShow (pp msg, "OUTPUT", pp res)
 -- --   $ res
 
--- -- | Add a value declaration to the current scope.
--- def
---   :: HasRange a
---   => Pascal a
---   -> Maybe (Pascal a)
---   -> Maybe (Pascal a)
---   -> CollectM ()
--- def name ty body = do
---   define Variable
---     $ ScopedDecl
---       (void name)
---       (getRange $ infoOf name)
---       ((getRange . infoOf) <$> body)
---       ((Left . void) <$> ty)
---       []
+-- | Add a value declaration to the current scope.
+def
+  :: HasRange a
+  => LIGO a
+  -> Maybe (LIGO a)
+  -> Maybe (LIGO a)
+  -> CollectM ()
+def name ty body = do
+  define Variable
+    $ ScopedDecl
+      (void name)
+      (getRange $ extract name)
+      ((getRange . extract) <$> body)
+      ((Left . void) <$> ty)
+      []
 
--- instance UpdateOver CollectM Contract (Pascal a) where
---   before r _ = enter r
---   after  _ _ = skip
+instance Contains Range xs => Scoped (Product xs) CollectM (LIGO (Product xs)) Contract where
+  before r _ = enter r
+  after  _ _ = skip
 
--- instance HasRange a => UpdateOver CollectM Declaration (Pascal a) where
---   before _ = \case
---     TypeDecl ty body -> defType ty Star body
---     _ -> skip
+instance Contains Range xs => Scoped (Product xs) CollectM (LIGO (Product xs)) Binding where
+  before r = \case
+    Function recur name _args ty body -> do
+      when recur do
+        def name (Just ty) (Just body)
+      enter r
 
--- instance HasRange a => UpdateOver CollectM Binding (Pascal a) where
---   before r = \case
---     Function recur name _args ty body -> do
---       when recur do
---         def name (Just ty) (Just body)
---       enter r
+    TypeDecl ty body -> defType ty Star body
+    _ -> enter r
 
---     _ -> enter r
+  after _ = \case
+    Irrefutable name    body -> do leave; def name  Nothing  (Just body)
+    Var         name ty body -> do leave; def name (Just ty) (Just body)
+    Const       name ty body -> do leave; def name (Just ty) (Just body)
+    Function recur name _args ty body -> do
+      leave
+      unless recur do
+        def name (Just ty) (Just body)
+    _ -> skip
 
---   after _ = \case
---     Irrefutable name    body -> do leave; def name  Nothing  (Just body)
---     Var         name ty body -> do leave; def name (Just ty) (Just body)
---     Const       name ty body -> do leave; def name (Just ty) (Just body)
---     Function recur name _args ty body -> do
---       leave
---       unless recur do
---         def name (Just ty) (Just body)
+instance Contains Range xs => Scoped (Product xs) CollectM (LIGO (Product xs)) VarDecl where
+  after _ (Decl _ name ty) = def name (Just ty) Nothing
 
--- instance HasRange a => UpdateOver CollectM VarDecl (Pascal a) where
---   after _ (Decl _ name ty) = def name (Just ty) Nothing
+instance Scoped a CollectM (LIGO a) Mutable
+instance Scoped a CollectM (LIGO a) Type
+instance Scoped a CollectM (LIGO a) Variant
+instance Scoped a CollectM (LIGO a) TField
 
--- instance UpdateOver CollectM Mutable (Pascal a)
--- instance UpdateOver CollectM Type    (Pascal a)
--- instance UpdateOver CollectM Variant (Pascal a)
--- instance UpdateOver CollectM TField  (Pascal a)
+instance Contains Range xs => Scoped (Product xs) CollectM (LIGO (Product xs)) Expr where
+  before r = \case
+    Let    {} -> enter r
+    Lambda {} -> enter r
+    ForLoop k _ _ _ _ -> do
+      enter r
+      def k Nothing Nothing
 
--- instance HasRange a => UpdateOver CollectM Expr (Pascal a) where
---   before r = \case
---     Let    {} -> enter r
---     Lambda {} -> enter r
---     ForLoop k _ _ _ -> do
---       enter r
---       def k Nothing Nothing
+    ForBox k mv _ _ _ -> do
+      enter r
+      def k Nothing Nothing
+      maybe skip (\v -> def v Nothing Nothing) mv
 
---     ForBox k mv _ _ _ -> do
---       enter r
---       def k Nothing Nothing
---       maybe skip (\v -> def v Nothing Nothing) mv
+    _ -> skip
 
---     _ -> skip
+  after _ = \case
+    Let     {} -> leave
+    Lambda  {} -> leave
+    ForLoop {} -> leave
+    ForBox  {} -> leave
+    _ -> skip
 
---   after _ = \case
---     Let     {} -> leave
---     Lambda  {} -> leave
---     ForLoop {} -> leave
---     ForBox  {} -> leave
---     _ -> skip
+instance Contains Range xs => Scoped (Product xs) CollectM (LIGO (Product xs)) Alt where
+  before r _ = enter r
+  after  _ _ = leave
 
--- instance HasRange a => UpdateOver CollectM Alt (Pascal a) where
---   before r _ = enter r
---   after  _ _ = leave
+instance Scoped a CollectM (LIGO a) LHS
+instance Scoped a CollectM (LIGO a) MapBinding
+instance Scoped a CollectM (LIGO a) Assignment
+instance Scoped a CollectM (LIGO a) FieldAssignment
+instance Scoped a CollectM (LIGO a) Constant
 
--- instance UpdateOver CollectM LHS             (Pascal a)
--- instance UpdateOver CollectM MapBinding      (Pascal a)
--- instance UpdateOver CollectM Assignment      (Pascal a)
--- instance UpdateOver CollectM FieldAssignment (Pascal a)
--- instance UpdateOver CollectM Constant        (Pascal a)
+instance Contains Range xs => Scoped (Product xs) CollectM (LIGO (Product xs)) Pattern where
+  before _ = \case
+    IsVar n -> def n Nothing Nothing
+    _       -> skip
 
--- instance HasRange a => UpdateOver CollectM Pattern (Pascal a) where
---   before _ = \case
---     IsVar n -> def n Nothing Nothing
---     _       -> skip
-
--- instance UpdateOver CollectM QualifiedName (Pascal a)
--- instance UpdateOver CollectM Path          (Pascal a)
--- instance UpdateOver CollectM Name          (Pascal a)
--- instance UpdateOver CollectM TypeName      (Pascal a)
--- instance UpdateOver CollectM FieldName     (Pascal a)
+instance Scoped a CollectM (LIGO a) QualifiedName
+instance Scoped a CollectM (LIGO a) Path
+instance Scoped a CollectM (LIGO a) Name
+instance Scoped a CollectM (LIGO a) TypeName
+instance Scoped a CollectM (LIGO a) FieldName

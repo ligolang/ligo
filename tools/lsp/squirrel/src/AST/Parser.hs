@@ -70,7 +70,7 @@ source
   >>= print . pp
 
 recognise :: RawTree -> ParserM (LIGO Info)
-recognise = descent (error . show . pp) $ map usingScope
+recognise = descent (error . show . pp . fst) $ map usingScope
   [ -- Contract
     Descent
     [ boilerplate \case

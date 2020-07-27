@@ -48,7 +48,7 @@ data Failure = Failure String
   deriving anyclass (Exception)
 
 instance Scoped (Product [Range, Text]) ParserM RawTree ParseTree where
-  enter (_ :> _ :> _) (ParseTree ty cs s) = do
+  before (_ :> _ :> _) (ParseTree ty cs s) = do
     let (comms, rest) = allComments cs
     let (comms1, _)   = allComments $ reverse rest
     modify $ first  (++ comms)
@@ -57,7 +57,7 @@ instance Scoped (Product [Range, Text]) ParserM RawTree ParseTree where
     let errs = allErrors   cs
     tell $ fmap Err errs
 
-  leave _ _ = do
+  after _ _ = do
     modify \(x, y) -> (y, [])
 
 grabComments :: ParserM [Text]
