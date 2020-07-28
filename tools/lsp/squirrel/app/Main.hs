@@ -24,6 +24,8 @@ import           Language.Haskell.LSP.VFS
 import           System.Exit
 import qualified System.Log                            as L
 
+import           Duplo.Pretty
+
 import           Parser
 import           ParseTree
 import           Range
@@ -36,7 +38,7 @@ main :: IO ()
 main = do
   return ()
   for_ [1.. 100] \_ -> do
-    print . length . show =<< sample' "../../../src/test/contracts/loop.ligo"
+    print . length . show . pp =<< sample' "../../../src/test/contracts/loop.ligo"
   -- errCode <- mainLoop
   -- exit errCode
 

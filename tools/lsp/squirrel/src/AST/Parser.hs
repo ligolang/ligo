@@ -47,11 +47,11 @@ import Debug.Trace
 -- example = "../../../src/test/contracts/chain_id.ligo"
 example = "../../../src/test/contracts/closure-3.ligo"
 
-sample' :: FilePath -> IO Doc
+sample' :: FilePath -> IO (LIGO Info)
 sample' f
   =   toParseTree (Path f)
   >>= runParserM . recognise
-  >>= return . pp . fst
+  >>= return . fst
 
 source' :: FilePath -> IO ()
 source' f
@@ -70,7 +70,7 @@ source
   >>= print . pp
 
 recognise :: RawTree -> ParserM (LIGO Info)
-recognise = descent (error . show . pp . fst) $ map usingScope
+recognise = descent (\_ -> error . show . pp) $ map usingScope
   [ -- Contract
     Descent
     [ boilerplate \case

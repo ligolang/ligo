@@ -13,7 +13,7 @@ module AST.Scope
   -- )
   where
 
-import           Control.Arrow (second)
+import           Control.Arrow (first, second)
 import           Control.Monad.State
 
 import qualified Data.List   as List
@@ -26,11 +26,12 @@ import           Data.Text           (Text)
 import           Duplo.Lattice
 import           Duplo.Pretty
 import           Duplo.Tree
+import           Duplo.Error
 
--- import           AST.Parser
+import           AST.Parser
 import           AST.Types
 -- import           Comment
--- import           Parser
+import           Parser
 import           Product
 import           Range
 
@@ -42,6 +43,7 @@ type FullEnv = Product ["vars" := Env, "types" := Env]
 type Env     = Map Range [ScopedDecl]
 
 data Category = Variable | Type
+  deriving Eq
 
 -- | The type/value declaration.
 data ScopedDecl = ScopedDecl
@@ -88,65 +90,74 @@ ofCategory Variable _                                          = True
 ofCategory Type     ScopedDecl { _sdType = Just (Right Star) } = True
 ofCategory _        _                                          = False
 
--- addLocalScopes
---   :: Contains Range xs
---   => LIGO (Product xs)
---   -> LIGO (Product ([ScopedDecl] : Maybe Category : xs))
--- addLocalScopes tree =
---     fmap (\xs -> Cons (fullEnvAt envWithREfs (getRange xs)) xs) tree1
---   where
---     tree1       = addNameCategories tree
---     envWithREfs = getEnvTree tree
+instance Modifies (Product '[[ScopedDecl], Maybe Category, [Text], Range, a]) where
+  ascribe (ds :> _) d =
+    color 2 (fsep (map (pp . _sdName) ds))
+    $$ d
 
--- addNameCategories
---   :: Contains Range xs
---   => LIGO (Product xs)
---   -> LIGO (Product (Maybe Category : xs))
--- addNameCategories tree = flip evalState emptyEnv do
---   traverseMany
---     [ Visit \r (Name t) -> do
---         modify $ getRange r `addRef` (Variable, t)
---         return $ (Cons (Just Variable) r, Name t)
+addLocalScopes
+  :: (Contains Range xs, Eq (Product xs))
+  => LIGO (Product xs)
+  -> LIGO (Product ([ScopedDecl] : Maybe Category : xs))
+addLocalScopes tree =
+    fmap (\xs -> fullEnvAt envWithREfs (getRange xs) :> xs) tree1
+  where
+    tree1       = addNameCategories tree
+    envWithREfs = getEnvTree tree
 
---     , Visit \r (TypeName t) -> do
---         modify $ getRange r `addRef` (Type, t)
---         return $ (Cons (Just Type) r, TypeName t)
---     ]
---     (Cons Nothing)
---     tree
+addNameCategories
+  :: (Contains Range xs, Eq (Product xs))
+  => LIGO (Product xs)
+  -> LIGO (Product (Maybe Category : xs))
+addNameCategories tree = flip evalState emptyEnv do
+  descent (changeInfo (Nothing :>))
+    [ Descent
+      [ \(r, Name t) -> do
+        -- modify $ getRange r `addRef` (Variable, t)
+        return $ Just $ (Just Variable :> r, Name t)
+      ]
 
--- getEnvTree
---   :: ( Apply (Scoped b CollectM (Tree fs b)) fs
---      , Apply Foldable fs
---      , Apply Functor fs
---      , Apply Traversable fs
---      , HasRange b
---      , Element Name fs
---      , Element TypeName fs
---      )
---   => Tree fs b
---   -> FullEnv
--- getEnvTree tree = envWithREfs
---   where
---     envWithREfs = flip execState env do
---       descent return
---         [ usingScope $ Descent
---           [ \(r, Name t) -> do
---             modify $ getRange r `addRef` (Variable, t)
---             return $ (r, Name t)
---           ]
+    , Descent
+      [ \(r, TypeName t) -> do
+        -- modify $ getRange r `addRef` (Type, t)
+        return $ Just $ (Just Type :> r, TypeName t)
+      ]
+    ]
+    tree
 
---         , usingScope $ Descent
---           [ \(r, TypeName t) -> do
---             modify $ getRange r `addRef` (Type, t)
---             return $ (r, TypeName t)
---           ]
---         ]
---         tree
+getEnvTree
+  :: ( Apply (Scoped b CollectM (Tree fs b)) fs
+     , Apply Foldable fs
+     , Apply Functor fs
+     , Apply Traversable fs
+     , Lattice b
+     , HasRange b
+     , Element Name fs
+     , Element TypeName fs
+     )
+  => Tree fs b
+  -> FullEnv
+getEnvTree tree = envWithREfs
+  where
+    envWithREfs = flip execState env do
+      descent leaveBe
+        [ Descent
+          [ \(r, Name t) -> do
+            modify $ getRange r `addRef` (Variable, t)
+            return $ Just (r, Name t)
+          ]
 
---     env
---       = execCollectM
---       $ traverseTree pure tree
+        , Descent
+          [ \(r, TypeName t) -> do
+            modify $ getRange r `addRef` (Type, t)
+            return $ Just (r, TypeName t)
+          ]
+        ]
+        tree
+
+    env
+      = execCollectM
+      $ descent (usingScope' leaveBe) [] tree
 
 fullEnvAt :: FullEnv -> Range -> [ScopedDecl]
 fullEnvAt fe r
@@ -265,6 +276,10 @@ instance Contains Range xs => Scoped (Product xs) CollectM (LIGO (Product xs)) C
   before r _ = enter r
   after  _ _ = skip
 
+instance Contains Range xs => Scoped (Product xs) CollectM (LIGO (Product xs)) RawContract where
+  before r _ = enter r
+  after  _ _ = skip
+
 instance Contains Range xs => Scoped (Product xs) CollectM (LIGO (Product xs)) Binding where
   before r = \case
     Function recur name _args ty body -> do
@@ -335,3 +350,8 @@ instance Scoped a CollectM (LIGO a) Path
 instance Scoped a CollectM (LIGO a) Name
 instance Scoped a CollectM (LIGO a) TypeName
 instance Scoped a CollectM (LIGO a) FieldName
+
+instance Scoped a CollectM (LIGO a) (Err Text)
+instance Scoped a CollectM (LIGO a) Language
+instance Scoped a CollectM (LIGO a) Parameters
+instance Scoped a CollectM (LIGO a) Ctor

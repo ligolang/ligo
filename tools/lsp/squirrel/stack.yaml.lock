@@ -45,11 +45,11 @@ packages:
     git: https://github.com/serokell/duplo.git
     pantry-tree:
       size: 557
-      sha256: adf7b6a5ae51a4ffa8a8db534bc030fb61209cc0be28c3bf82864267e40346c7
-    commit: 325aefe2a0e6c7a6bdd08935be669da308ed0cb1
+      sha256: d8258e8fa560d07da3bf4a5e7f956494a8d1b374e67c3af1b7b6875f8175a309
+    commit: 3bb313af0c78c669c1b39ab2f912508b148e8aae
   original:
     git: https://github.com/serokell/duplo.git
-    commit: 325aefe2a0e6c7a6bdd08935be669da308ed0cb1
+    commit: 3bb313af0c78c669c1b39ab2f912508b148e8aae
 snapshots:
 - completed:
     size: 493124
