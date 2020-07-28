@@ -15,6 +15,7 @@ module AST.Scope
 
 import           Control.Arrow (first, second)
 import           Control.Monad.State
+import           Control.Monad.Identity
 
 import qualified Data.List   as List
 import           Data.Map            (Map)
@@ -91,8 +92,9 @@ ofCategory Type     ScopedDecl { _sdType = Just (Right Star) } = True
 ofCategory _        _                                          = False
 
 instance Modifies (Product '[[ScopedDecl], Maybe Category, [Text], Range, a]) where
-  ascribe (ds :> _) d =
-    color 2 (fsep (map (pp . _sdName) ds))
+  ascribe (ds :> _ :> _ :> r :> _) d =
+    color 3 (fsep (map (pp . _sdName) ds))
+    $$ pp r
     $$ d
 
 addLocalScopes
@@ -102,8 +104,34 @@ addLocalScopes
 addLocalScopes tree =
     fmap (\xs -> fullEnvAt envWithREfs (getRange xs) :> xs) tree1
   where
-    tree1       = addNameCategories tree
-    envWithREfs = getEnvTree tree
+    tree0       = runIdentity $ unLetRec tree
+    tree1       = addNameCategories tree0
+    envWithREfs = getEnvTree tree0
+
+unLetRec
+  :: forall xs m
+  .  ( Monad m
+     , Contains Range xs
+     , Eq (Product xs)
+     )
+  => LIGO (Product xs)
+  -> m (LIGO (Product xs))
+unLetRec = descent leaveBe
+  [ Descent
+    [ \case
+       (r, Let (layer -> Just (Seq xs)) b) -> return $ convert (getElem r) b xs
+       _                                   -> return Nothing
+    ]
+  ]
+  where
+    convert :: Range -> LIGO (Product xs) -> [LIGO (Product xs)] -> Maybe (Product xs, Expr (LIGO (Product xs)))
+    convert r b = match @Expr . linearize r b
+
+    linearize :: Range -> LIGO (Product xs) -> [LIGO (Product xs)] -> LIGO (Product xs)
+    linearize r b [x]      = make (modElem @Range (delta r) $ extract x, Let x b)
+    linearize r b (x : xs) = make (modElem @Range (delta r) $ extract x, Let x (linearize r b xs))
+
+    delta (Range _ f _) (Range s _ t) = Range s f t
 
 addNameCategories
   :: (Contains Range xs, Eq (Product xs))

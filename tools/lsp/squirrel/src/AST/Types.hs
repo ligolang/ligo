@@ -288,7 +288,7 @@ instance Pretty1 Variant where
 
 instance Pretty1 Expr where
   pp1 = \case
-    Let       decl body  -> decl `above` "with" `indent` body
+    Let       decl body  -> "let" <+> decl `above` body
     Apply     f xs       -> f <+> xs
     Constant  constant   -> constant
     Ident     qname      -> qname

@@ -5,6 +5,6 @@
 function foobar (const i : int) : int is
   block {
     const j : int = 3;
-    const k : int = 4;
-    function add (const l : int) : int is i+j+k+l
+    const k : int = j;
+    const l : int = l;
   } with add (42)
