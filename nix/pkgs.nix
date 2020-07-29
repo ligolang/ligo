@@ -2,7 +2,7 @@
 { sources ? import ./sources.nix }:
 let
   ocaml-overlay = import ./ocaml-overlay.nix { inherit sources; };
-  static-overlay = import ./static-overlay.nix pkgs;
+  static-overlay = import ./static-overlay.nix;
   mac-overlay = import ./mac-overlay.nix;
   nodejs-overlay = import ./nodejs-overlay.nix;
   nix-npm-buildpackage = pkgs.callPackage sources.nix-npm-buildpackage { };
@@ -18,7 +18,11 @@ let
   # Takes $pkg/ligo and creates a new package with $pkg/bin/ligo
   separateBinary = pkg:
     pkgs.runCommandNoCC "${pkg.name}-bin" { }
-    "mkdir -p $out/bin; cp -Lr ${pkg}/ligo $out/bin";
+      "mkdir -p $out/bin; cp -Lr ${pkg}/ligo $out/bin";
+
+  compressBinaries = pkg:
+    pkgs.runCommandNoCC "${pkg.name}-compressed" { nativeBuildInputs = [ pkgs.upx ]; }
+      "cp -Lr ${pkg} $out; chmod -R +w $out/bin; upx $out/bin/*";
 
 
   tmp = pkgs.runCommandNoCC "tmpdir" { } "mkdir -p $out/tmp";
@@ -37,6 +41,7 @@ in pkgs.extend (self: super: {
   ligo-website = self.callPackage ./ligo-website.nix {
     inherit (nix-npm-buildpackage) buildNpmPackage;
   };
-  ligo-static = self.pkgsMusl.ligo-bin;
-  pkgsMusl = super.pkgsMusl.extend static-overlay;
+  ligo-changelog = self.callPackage ./changelog.nix { };
+  ligo-static = compressBinaries self.pkgsMusl.ligo-bin;
+  pkgsMusl = super.pkgsMusl.extend (static-overlay self);
 })

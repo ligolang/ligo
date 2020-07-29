@@ -11,4 +11,7 @@ export CI_JOB_ID="0"
 export CI_COMMIT_SHORT_SHA="$(git rev-parse --short HEAD)"
 export CI_COMMIT_SHA="$(git rev-parse HEAD)"
 export COMMIT_DATE="$(git show --no-patch --format=%ci)"
+export LIGO_VERSION="Rolling release\
+Commit SHA: $CI_COMMIT_SHA\
+Commit Date: $COMMIT_DATE"
 export LIGO_DIST_DIR="./dist"
