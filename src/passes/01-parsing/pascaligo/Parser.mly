@@ -10,6 +10,22 @@ open Simple_utils.Region
 module CST = Cst.Pascaligo
 open CST
 
+(* Utility *)
+
+let mk_comp f e1 op e2 =
+  let start  = expr_to_region e1
+  and stop   = expr_to_region e2 in
+  let region = cover start stop
+  and value  = {arg1=21; op; arg2=e2}
+  in ELogic (CompExpr (f Region.{value; region}))
+
+let mk_arith f e1 op e2 =
+  let start  = expr_to_region e1
+  and stop   = expr_to_region e2 in
+  let region = cover start stop
+  and value  = {arg1=21; op; arg2=e2}
+  in EArith (f Region.{value; region})
+
 (* END HEADER *)
 %}
 
@@ -704,10 +720,10 @@ interactive_expr:
 
 expr:
   case(expr) { ECase ($1 expr_to_region) }
-| cond_expr  { $1                        }
-| disj_expr  { $1                        }
 | fun_expr   { EFun $1                   }
 | block_with { EBlock $1                 }
+| cond_expr
+| disj_expr  { $1 }
 
 block_with:
   block "with" expr {
@@ -758,49 +774,13 @@ set_membership:
     in ESet (SetMem {region; value}) }
 
 comp_expr:
-  comp_expr "<" cat_expr {
-    let start  = expr_to_region $1
-    and stop   = expr_to_region $3 in
-    let region = cover start stop
-    and value  = {arg1 = $1; op = $2; arg2 = $3}
-    in ELogic (CompExpr (Lt {region; value}))
-  }
-| comp_expr "<=" cat_expr {
-    let start  = expr_to_region $1
-    and stop   = expr_to_region $3 in
-    let region = cover start stop
-    and value  = {arg1 = $1; op = $2; arg2 = $3}
-    in ELogic (CompExpr (Leq {region; value}))
-  }
-| comp_expr ">" cat_expr {
-    let start  = expr_to_region $1
-    and stop   = expr_to_region $3 in
-    let region = cover start stop
-    and value  = {arg1 = $1; op = $2; arg2 = $3}
-    in ELogic (CompExpr (Gt {region; value}))
-  }
-| comp_expr ">=" cat_expr {
-    let start  = expr_to_region $1
-    and stop   = expr_to_region $3 in
-    let region = cover start stop
-    and value  = {arg1 = $1; op = $2; arg2 = $3}
-    in ELogic (CompExpr (Geq {region; value}))
-  }
-| comp_expr "=" cat_expr {
-    let start  = expr_to_region $1
-    and stop   = expr_to_region $3 in
-    let region = cover start stop
-    and value  = {arg1 = $1; op = $2; arg2 = $3}
-    in ELogic (CompExpr (Equal {region; value}))
-  }
-| comp_expr "=/=" cat_expr {
-    let start  = expr_to_region $1
-    and stop   = expr_to_region $3 in
-    let region = cover start stop
-    and value  = {arg1 = $1; op = $2; arg2 = $3}
-    in ELogic (CompExpr (Neq {region; value}))
-  }
-| cat_expr { $1 }
+  comp_expr "<"   cat_expr { mk_comp (fun reg -> Lt reg)    $1 $2 $3 }
+| comp_expr "<="  cat_expr { mk_comp (fun reg -> Leq reg)   $1 $2 $3 }
+| comp_expr ">"   cat_expr { mk_comp (fun reg -> Gt reg)    $1 $2 $3 }
+| comp_expr ">="  cat_expr { mk_comp (fun reg -> Geq reg)   $1 $2 $3 }
+| comp_expr "="   cat_expr { mk_comp (fun reg -> Equal reg) $1 $2 $3 }
+| comp_expr "=/=" cat_expr { mk_comp (fun reg -> Neq reg)   $1 $2 $3 }
+| cat_expr                 { $1 }
 
 cat_expr:
   cons_expr "^" cat_expr {
@@ -823,45 +803,15 @@ cons_expr:
 | add_expr { $1 }
 
 add_expr:
-  add_expr "+" mult_expr {
-    let start  = expr_to_region $1
-    and stop   = expr_to_region $3 in
-    let region = cover start stop
-    and value  = {arg1 = $1; op = $2; arg2 = $3}
-    in EArith (Add {region; value})
-  }
-| add_expr "-" mult_expr {
-    let start  = expr_to_region $1
-    and stop   = expr_to_region $3 in
-    let region = cover start stop
-    and value  = {arg1 = $1; op = $2; arg2 = $3}
-    in EArith (Sub {region; value})
-  }
-| mult_expr { $1 }
+  add_expr "+" mult_expr { mk_arith (fun reg -> Add reg) $1 $2 $3 }
+| add_expr "-" mult_expr { mk_arith (fun reg -> Sub reg) $1 $2 $3 }
+| mult_expr              { $1 }
 
 mult_expr:
-  mult_expr "*" unary_expr {
-    let start  = expr_to_region $1
-    and stop   = expr_to_region $3 in
-    let region = cover start stop
-    and value  = {arg1 = $1; op = $2; arg2 = $3}
-    in EArith (Mult {region; value})
-  }
-| mult_expr "/" unary_expr {
-    let start  = expr_to_region $1
-    and stop   = expr_to_region $3 in
-    let region = cover start stop
-    and value  = {arg1 = $1; op = $2; arg2 = $3}
-    in EArith (Div {region; value})
-  }
-| mult_expr "mod" unary_expr {
-    let start  = expr_to_region $1
-    and stop   = expr_to_region $3 in
-    let region = cover start stop
-    and value  = {arg1 = $1; op = $2; arg2 = $3}
-    in EArith (Mod {region; value})
-  }
-| unary_expr { $1 }
+  mult_expr "*"   unary_expr { mk_arith (fun reg -> Mult reg) $1 $2 $3 }
+| mult_expr "/"   unary_expr { mk_arith (fun reg -> Div reg)  $1 $2 $3 }
+| mult_expr "mod" unary_expr { mk_arith (fun reg -> Mod reg)  $1 $2 $3 }
+| unary_expr                 { $1 }
 
 unary_expr:
   "-" core_expr {
