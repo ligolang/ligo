@@ -3323,7 +3323,7 @@ contract: Attributes String End With
 ## In state 596, spurious reduction of production declaration -> attr_decl
 ##
 Ill-formed declaration.
-At this point, if your contract is not complete, you can write another
+At this point, if the contract is not complete, you can write another
 declaration.
 
 contract: Attributes String With
@@ -3361,7 +3361,7 @@ contract: Attributes With
 Ill-formed attribute list.
 At this point, one of the following is expected:
   * attributes as strings separated by semicolons ';' and followed by
-    the kewyword 'end';
+    the keyword 'end';
   * an opening bracket '[' followed by attributes as strings.
 
 contract: Const Ident COLON Ident With
@@ -3560,7 +3560,8 @@ contract: Recursive Function Ident LPAR Const Ident RPAR With
 ## Recursive Function Ident parameters
 ##
 Ill-formed function declaration.
-At this point, one of the following is expected:
+At this point, if the paramters are complete, one of the following is
+expected:
   * a type annotation for the result, starting with a colon ':';
   * the keyword 'is' followed by the function body as an expression.
 
@@ -3638,7 +3639,7 @@ contract: Type Ident Is With
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 3, spurious reduction of production option(VBAR) ->
 ##
-Ill-formed sum type.
+Ill-formed variant type.
 At this point, a variant is expected, starting with a data constructor
 followed by the keyword 'of'.
 
@@ -3764,7 +3765,7 @@ contract: Type Ident Is Record LBRACKET Ident COLON Ident With
 Ill-formed record type.
 At this point, if the field declaration is complete, one of the
 following is expected:
-  * a semicolon ';' followed by aanother field;
+  * a semicolon ';' followed by another field;
   * a closing bracket ']' if the record type is complete.
 
 contract: Type Ident Is Record LBRACKET With
