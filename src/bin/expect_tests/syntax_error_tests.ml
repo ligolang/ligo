@@ -6,7 +6,8 @@ let%expect_test _ =
     ligo: error
           Parse error in file "error_syntax.ligo", line 1, characters 16-17 at "-", after "bar":
           Ill-formed declaration.
-          At this point a declaration is expected.
+          At this point, if the contract is not complete, you can write another
+          declaration.
 
 
 

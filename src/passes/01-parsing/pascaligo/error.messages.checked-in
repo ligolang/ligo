@@ -149,13 +149,13 @@ interactive_expr: Begin Case Verbatim With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ##
@@ -254,13 +254,13 @@ interactive_expr: Begin For Ident ASS Verbatim To Verbatim Step Verbatim Attribu
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ## In state 341, spurious reduction of production step_clause -> Step expr
@@ -298,13 +298,13 @@ interactive_expr: Begin For Ident ASS Verbatim To Verbatim With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ##
@@ -344,13 +344,13 @@ interactive_expr: Begin For Ident ASS Verbatim With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ##
@@ -388,13 +388,13 @@ interactive_expr: Begin For Ident In Set Verbatim With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ##
@@ -617,13 +617,13 @@ interactive_expr: Begin If Verbatim With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ##
@@ -762,13 +762,13 @@ interactive_expr: Begin Patch Ident With Map LBRACKET Verbatim ARROW Bytes With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ## In state 308, spurious reduction of production binding -> expr ARROW expr
@@ -814,13 +814,13 @@ interactive_expr: Begin Patch Ident With Map Verbatim ARROW Bytes With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ## In state 308, spurious reduction of production binding -> expr ARROW expr
@@ -870,13 +870,13 @@ interactive_expr: Begin Patch Ident With Record Ident EQ Bytes With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ## In state 568, spurious reduction of production field_assignment -> Ident EQ expr
@@ -904,13 +904,13 @@ interactive_expr: Begin Patch Ident With Record LBRACKET Ident EQ Bytes With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ## In state 568, spurious reduction of production field_assignment -> Ident EQ expr
@@ -985,13 +985,13 @@ interactive_expr: Begin Patch Ident With Set LBRACKET Verbatim With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ## In state 276, spurious reduction of production nsepseq(expr,SEMI) -> expr
@@ -1032,13 +1032,13 @@ interactive_expr: Begin Patch Ident With Set Verbatim With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ## In state 276, spurious reduction of production nsepseq(expr,SEMI) -> expr
@@ -1154,13 +1154,13 @@ interactive_expr: Begin Remove Verbatim With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ##
@@ -1325,13 +1325,13 @@ interactive_expr: Begin While Verbatim With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ##
@@ -1384,13 +1384,13 @@ interactive_expr: BigMap LBRACKET Verbatim ARROW Bytes With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ## In state 308, spurious reduction of production binding -> expr ARROW expr
@@ -1440,13 +1440,13 @@ interactive_expr: BigMap Verbatim ARROW Bytes With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ## In state 308, spurious reduction of production binding -> expr ARROW expr
@@ -1617,13 +1617,13 @@ interactive_expr: Case Verbatim Of LBRACKET WILD ARROW Bytes With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ## In state 517, spurious reduction of production case_clause(expr) -> pattern ARROW expr
@@ -1862,13 +1862,13 @@ interactive_expr: Case Verbatim Of WILD ARROW Bytes With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ## In state 517, spurious reduction of production case_clause(expr) -> pattern ARROW expr
@@ -1957,13 +1957,13 @@ interactive_expr: Case Verbatim With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ##
@@ -2185,26 +2185,6 @@ interactive_expr: Function With
 Ill-formed function expression.
 At this point, parameter declarations are expected between parentheses.
 
-interactive_expr: Ident DOT Ident While
-##
-## Ends in an error in state: 158.
-##
-## fun_call_or_par_or_projection -> projection . option(arguments) [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## path -> projection . [ With LBRACKET ]
-##
-## The known suffix of the stack is as follows:
-## projection
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 128, spurious reduction of production nsepseq(selection,DOT) -> selection
-## In state 167, spurious reduction of production projection -> Ident DOT nsepseq(selection,DOT)
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
 interactive_expr: Ident LBRACKET Verbatim With
 ##
 ## Ends in an error in state: 254.
@@ -2219,13 +2199,13 @@ interactive_expr: Ident LBRACKET Verbatim With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ##
@@ -2274,13 +2254,13 @@ interactive_expr: Ident LPAR Verbatim With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ## In state 530, spurious reduction of production nsepseq(expr,COMMA) -> expr
@@ -2305,18 +2285,28 @@ At this point, an argument is expected as an expression.
 
 interactive_expr: Ident While
 ##
-## Ends in an error in state: 112.
+## Ends in an error in state: 161.
 ##
-## core_expr -> Ident . [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## fun_call -> Ident . arguments [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## path -> Ident . [ With LBRACKET ]
-## projection -> Ident . DOT nsepseq(selection,DOT) [ With VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE LBRACKET GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## map_lookup -> path . brackets(expr) [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## record_update -> path . With ne_injection(Record,field_path_assignment) [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
-## Ident
+## path
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 112, spurious reduction of production path -> Ident
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed map lookup or record update.
+At this point, if the name is fully qualified, one of the following is
+expected:
+  * if the name denotes a map, then a key as an expression between
+    brackets '[' and ']';
+  * if the name denotes a record, then the keyword 'with', followed by
+    a record (update)
 
 interactive_expr: Ident With Record Ident EQ Bytes With
 ##
@@ -2332,13 +2322,13 @@ interactive_expr: Ident With Record Ident EQ Bytes With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ## In state 201, spurious reduction of production field_path_assignment -> path EQ expr
@@ -2387,13 +2377,13 @@ interactive_expr: Ident With Record LBRACKET Ident EQ Bytes With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ## In state 201, spurious reduction of production field_path_assignment -> path EQ expr
@@ -2464,13 +2454,13 @@ interactive_expr: If Verbatim Then Verbatim With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ## In state 535, spurious reduction of production option(SEMI) ->
@@ -2521,13 +2511,13 @@ interactive_expr: If Verbatim With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ##
@@ -2587,13 +2577,13 @@ interactive_expr: LPAR Verbatim COMMA Bytes With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ## In state 530, spurious reduction of production nsepseq(expr,COMMA) -> expr
@@ -2634,13 +2624,13 @@ interactive_expr: LPAR Verbatim With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 545, spurious reduction of production expr -> disj_expr
 ##
@@ -2683,13 +2673,13 @@ interactive_expr: Lang Verbatim With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ##
@@ -2725,13 +2715,13 @@ interactive_expr: List LBRACKET Verbatim With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ## In state 276, spurious reduction of production nsepseq(expr,SEMI) -> expr
@@ -2774,13 +2764,13 @@ interactive_expr: List Verbatim With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ## In state 276, spurious reduction of production nsepseq(expr,SEMI) -> expr
@@ -2839,13 +2829,13 @@ interactive_expr: Map LBRACKET Verbatim ARROW Bytes With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ## In state 308, spurious reduction of production binding -> expr ARROW expr
@@ -2893,13 +2883,13 @@ interactive_expr: Map Verbatim ARROW Bytes With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ## In state 308, spurious reduction of production binding -> expr ARROW expr
@@ -2944,13 +2934,13 @@ interactive_expr: Map Verbatim With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ##
@@ -3007,13 +2997,13 @@ interactive_expr: Record Ident EQ Bytes With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ## In state 568, spurious reduction of production field_assignment -> Ident EQ expr
@@ -3078,13 +3068,13 @@ interactive_expr: Record LBRACKET Ident EQ Bytes With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ## In state 568, spurious reduction of production field_assignment -> Ident EQ expr
@@ -3126,13 +3116,13 @@ interactive_expr: Set LBRACKET Verbatim With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ## In state 276, spurious reduction of production nsepseq(expr,SEMI) -> expr
@@ -3172,13 +3162,13 @@ interactive_expr: Set Verbatim With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ## In state 276, spurious reduction of production nsepseq(expr,SEMI) -> expr
@@ -3392,13 +3382,13 @@ interactive_expr: Verbatim With
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 153, spurious reduction of production mult_expr -> unary_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
 ## In state 180, spurious reduction of production add_expr -> mult_expr
 ## In state 210, spurious reduction of production cons_expr -> add_expr
 ## In state 207, spurious reduction of production cat_expr -> cons_expr
 ## In state 230, spurious reduction of production comp_expr -> cat_expr
 ## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 155, spurious reduction of production conj_expr -> set_membership
+## In state 154, spurious reduction of production conj_expr -> set_membership
 ## In state 234, spurious reduction of production disj_expr -> conj_expr
 ## In state 202, spurious reduction of production expr -> disj_expr
 ##

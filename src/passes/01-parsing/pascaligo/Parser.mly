@@ -12,18 +12,18 @@ open CST
 
 (* Utility *)
 
-let mk_comp f e1 op e2 =
-  let start  = expr_to_region e1
-  and stop   = expr_to_region e2 in
+let mk_comp f arg1 op arg2 =
+  let start  = expr_to_region arg1
+  and stop   = expr_to_region arg2 in
   let region = cover start stop
-  and value  = {arg1=21; op; arg2=e2}
+  and value  = {arg1; op; arg2}
   in ELogic (CompExpr (f Region.{value; region}))
 
-let mk_arith f e1 op e2 =
-  let start  = expr_to_region e1
-  and stop   = expr_to_region e2 in
+let mk_arith f arg1 op arg2 =
+  let start  = expr_to_region arg1
+  and stop   = expr_to_region arg2 in
   let region = cover start stop
-  and value  = {arg1=21; op; arg2=e2}
+  and value  = {arg1; op; arg2}
   in EArith (f Region.{value; region})
 
 (* END HEADER *)
@@ -46,7 +46,6 @@ let mk_arith f e1 op e2 =
   nsepseq(case_clause(if_clause),VBAR)
   lhs
   map_lookup
-  path
   nsepseq(statement,SEMI)
   seq(__anonymous_0(statement,SEMI))
   nsepseq(core_pattern,COMMA)
@@ -89,7 +88,12 @@ let mk_arith f e1 op e2 =
   nsepseq(expr,COMMA)
   option(SEMI)
   option(VBAR)
-  option(arguments)
+%on_error_reduce
+   projection
+%on_error_reduce
+   option(arguments)
+%on_error_reduce
+   path
 %%
 
 (* RULES *)
