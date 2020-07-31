@@ -29,9 +29,9 @@ interactive_expr: Begin Fun WILD ARROW Bytes SEMI
 ##
 
 Ill-formed sequence of expressions.
-
-At this point, if the last expression is complete, the keyword 'end'
-is expected.
+At this point, if the expression is complete, one of the following is expected:
+  * a semicolon ';' followed by another expression;
+  * the keyword 'end' if the sequence is complete.
 
 interactive_expr: Begin Fun WILD ARROW With
 ##
@@ -101,7 +101,6 @@ interactive_expr: Match Verbatim With WILD ARROW Fun WILD ARROW With
 ##
 
 Ill-formed function expression.
-
 At this point, a function body is expected as an expression.
 
 interactive_expr: Begin If Verbatim Then If Verbatim Then Verbatim COMMA Bytes With
@@ -162,12 +161,6 @@ interactive_expr: Begin If Verbatim Then Verbatim COMMA Bytes With
 ## In state 357, spurious reduction of production base_if_then_else__open(closed_if) -> base_expr(closed_if)
 ## In state 356, spurious reduction of production closed_if -> base_if_then_else__open(closed_if)
 ##
-
-Ill-formed conditional expression.
-
-At this point, if the expression of the branch 'then' is complete, the
-branch 'else' is expected.
-
 interactive_expr: Begin If Verbatim Then Verbatim With
 ##
 ## Ends in an error in state: 468.
@@ -195,7 +188,9 @@ interactive_expr: Begin If Verbatim Then Verbatim With
 ## In state 349, spurious reduction of production disj_expr_level -> conj_expr_level
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed conditional expression.
+At this point, if the expression of the branch 'then' is complete, the
+keyword 'else' is expected, followed by an expression.
 
 interactive_expr: Begin If Verbatim Then If Verbatim With
 ##
@@ -417,9 +412,8 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim With
 ##
 
 Ill-formed conditional expression.
-
-At this point, if condition is complete, the branch 'then' is
-expected.
+At this point, if the condition is complete, the keyword 'then' is
+expected, followed by an expression.
 
 interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes With
 ##
@@ -1233,8 +1227,8 @@ interactive_expr: Match Verbatim With WILD ARROW Let WILD EQ Bytes With
 
 Ill-formed value definition.
 
-At this point, if the right-hand side of the definition is a complete
-expression, one of the following is expected:
+At this point, if the right-hand side of the definition is complete,
+one of the following is expected:
   * a series of attributes;
   * the keyword 'in' followed by an expression.
 
@@ -1338,9 +1332,8 @@ contract: Let With
 ##
 
 Ill-formed value definition.
-
 At this point, one of the following is expected:
-  * an irrefutable pattern, for example: an identifier;
+  * an irrefutable pattern (for example, an identifier);
   * the 'rec' keyword if the definition is recursive.
 
 interactive_expr: Begin If Verbatim Then Match Verbatim Type
@@ -1375,7 +1368,7 @@ interactive_expr: Begin Match Verbatim Type
 ##
 ## match_expr(last_expr) -> Match expr . With option(VBAR) cases(last_expr) [ End ]
 ##
-## The known suffix of the stack is as follows:
+<## The known suffix of the stack is as follows:
 ## Match expr
 ##
 ## WARNING: This example involves spurious reductions.
@@ -1450,7 +1443,6 @@ interactive_expr: If Verbatim Then Match Verbatim Type
 ##
 
 Ill-formed pattern matching.
-
 At this point, if the matched expression is complete, then the keyword
 'with' is expected, followed by matching cases.
 
@@ -1517,7 +1509,6 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Verbatim COMMA Bytes With
 ##
 
 Ill-formed pattern matching.
-
 At this point, if the case is complete, then a vertical bar '|' is
 expected, followed by another case.
 
@@ -1605,7 +1596,6 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then If With
 ##
 
 Ill-formed conditional expression.
-
 At this point, the condition is expected as a Boolean expression.
 
 interactive_expr: Begin Match Verbatim With WILD ARROW Verbatim With
@@ -1669,7 +1659,6 @@ interactive_expr: Match Verbatim With WILD ARROW With
 ##
 
 Ill-formed pattern matching.
-
 At this point, the right-hand side of the case is expected as an
 expression.
 
@@ -1725,10 +1714,8 @@ interactive_expr: Match Verbatim With WILD CONS Bytes SEMI
 ##
 
 Ill-formed pattern matching.
-
-At this point, if the pattern is complete, then an arrow '->' is
-expected, followed by the right-hand side of the case as an
-expression.
+At this point, if the pattern is complete, an arrow '->' is expected,
+followed by the right-hand side of the case as an expression.
 
 interactive_expr: Begin If Verbatim Then Match Verbatim With With
 ##
@@ -1835,7 +1822,6 @@ interactive_expr: Match Verbatim With With
 ##
 
 Ill-formed pattern matching.
-
 At this point, a case is expected to start with a pattern.
 
 interactive_expr: Begin Match With
@@ -1891,7 +1877,6 @@ interactive_expr: Begin Verbatim SEMI With
 ##
 
 Ill-formed sequence expression.
-
 At this point, another expression is expected.
 
 interactive_expr: Begin Verbatim With
@@ -1924,9 +1909,7 @@ Ill-formed sequence of expressions.
 
 At this point, if the expression is complete, one of the following is
 expected:
-  * an operator;
-  * a semicolon ';' followed by another expression, if the expression
-    has type unit;
+  * a semicolon ';' followed by another expression;
   * the keyword 'end' if the sequence is complete.
 
 interactive_expr: Begin With
@@ -1940,7 +1923,6 @@ interactive_expr: Begin With
 ##
 
 Ill-formed sequence of expressions.
-
 At this point, one of the following is expected:
   * the first expression;
   * the keyword 'end' if the sequence is empty.
@@ -1971,7 +1953,6 @@ interactive_expr: C_Some With
 ##
 
 Ill-formed application of the data constructor 'Some'.
-
 At this point, its argument is expected as an expression.
 
 interactive_expr: Constr DOT Ident WILD
@@ -2017,8 +1998,7 @@ contract: Type Ident EQ Constr DOT With
 ##
 
 Ill-formed selection in a module.
-
-At this point, a field name is expected.
+At this point, the name of a value defined in the module is expected.
 
 interactive_expr: Constr WILD
 ##
@@ -2067,11 +2047,10 @@ interactive_expr: Fun WILD WILD RPAR
 ##
 
 Ill-formed function expression.
-
 At this point, if the parameter is complete, one of the following is
 expected:
-  * another parameter as an irrefutable pattern, for instance a
-    variable;
+  * another parameter as an irrefutable pattern (for instance, a
+    variable);
   * an arrow '->' followed by the function body as an expression.
 
 interactive_expr: Constr DOT Ident DOT With
@@ -2103,10 +2082,10 @@ interactive_expr: Ident DOT With
 ##
 
 Ill-formed selection in a record or a tuple.
-
 At this point, one of the following is expected:
   * a record field name;
-  * a tuple index as a literal integer greater than or equal to 0.
+  * the index of a component in a tuple, '0' denoting the first
+    component.
 
 interactive_expr: Ident WILD
 ##
@@ -2199,7 +2178,6 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Fun With
 ##
 
 Ill-formed function expression.
-
 At this point, the first parameter is expected as an irrefutable
 pattern, for example a variable.
 
@@ -2281,7 +2259,6 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Verbatim Else 
 ##
 
 Ill-formed conditional expression.
-
 At this point, the expression of the 'else' branch is expected.
 
 interactive_expr: Begin If Verbatim Then If Verbatim Then With
@@ -2368,7 +2345,6 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then With
 ##
 
 Ill-formed conditional expression.
-
 At this point, the expression of the 'then' branch is expected.
 
 interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes In With
@@ -2525,7 +2501,6 @@ interactive_expr: Match Verbatim With WILD ARROW Let WILD EQ Bytes In With
 ##
 
 Ill-formed value definition.
-
 At this point, an expression is expected.
 
 interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Verbatim End
@@ -2629,9 +2604,8 @@ interactive_expr: LBRACE Constr DOT Ident With
 ##
 
 Ill-formed selection in a record or a tuple.
-
 At this point, the selection operator '.' is expected, followed by a
-field name or tuple index.
+field name or a tuple index.
 
 interactive_expr: LBRACE Constr With
 ##
@@ -2644,9 +2618,8 @@ interactive_expr: LBRACE Constr With
 ##
 
 Ill-formed selection in a module.
-
-At this point, the selection operator '.' is expected, followed by a
-module field name.
+At this point, the selection operator '.' is expected, followed by the
+name of a value defined in the module.
 
 interactive_expr: LBRACE Ident DOT Ident Verbatim
 ##
@@ -2668,9 +2641,9 @@ interactive_expr: LBRACE Ident DOT Ident Verbatim
 
 Ill-formed record update.
 
-At this point, if the expression denoting the record to update is
-complete, then the keyword 'with' is expected, followed by a field
-update (assignment).
+At this point, if name of the record is fully qualified, then the
+keyword 'with' is expected, followed by field updates (assignments)
+separated by semicolons ';'.
 
 interactive_expr: LBRACE Ident EQ Bytes SEMI Ident EQ Bytes SEMI With
 ##
@@ -2694,7 +2667,6 @@ interactive_expr: LBRACE Ident EQ Bytes SEMI With
 ##
 
 Ill-formed record expression.
-
 At this point, one of the following is expected:
   * another field assignment;
   * a closing brace '}' if the record is complete.
@@ -2759,7 +2731,6 @@ interactive_expr: LBRACE Ident EQ Bytes With
 ##
 
 Ill-formed record expression.
-
 At this point, if the expression assigned to the field is complete,
 one of the following is expected:
   * a semicolon ';' followed by another field assignment;
@@ -2776,7 +2747,6 @@ interactive_expr: LBRACE Ident EQ Bytes SEMI Ident With
 ##
 
 Ill-formed field assignment in a record.
-
 At this point, the assignment operator '=' is expected, followed by an
 expression.
 
@@ -2791,7 +2761,6 @@ interactive_expr: LBRACE Ident EQ With
 ##
 
 Ill-formed field assignment in a record.
-
 At this point, the expression to assign is expected.
 
 interactive_expr: LBRACE Ident WILD
@@ -2807,7 +2776,6 @@ interactive_expr: LBRACE Ident WILD
 ##
 
 Ill-formed record expression or update.
-
 At this point, one of the following is expected:
   * the keyword 'with' followed by field updates (assignments);
   * the selection operator '.' if the record to update is not fully

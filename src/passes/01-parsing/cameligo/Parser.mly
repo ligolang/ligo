@@ -648,7 +648,7 @@ update_record:
       rbrace   = $5}
     in {region; value} }
 
-field_path_assignment :
+field_path_assignment:
   path "=" expr {
     let region = cover (path_to_region $1) (expr_to_region $3)
     and value  = {field_path=$1; assignment=$2; field_expr=$3}
@@ -660,7 +660,7 @@ field_assignment:
     and value  = {field_name=$1; assignment=$2; field_expr=$3}
     in {region; value} }
 
-path :
+path:
  "<ident>"   { Name $1 }
 | projection { Path $1 }
 
@@ -686,19 +686,19 @@ last_expr:
 
 let_in_sequence:
   "let" ioption("rec") let_binding seq(Attr) "in" series  {
-    let seq       = $6 in
-    let stop      = nsepseq_to_region expr_to_region seq in
-    let region    = cover $1 stop in
-    let compound  = None in
-    let elements  = Some seq in
-    let value     = {compound; elements; terminator=None} in
-    let body      = ESeq {region; value} in
-    let value     = {kwd_let    = $1;
-                     kwd_rec    = $2;
-                     binding    = $3;
-                     attributes = $4;
-                     kwd_in     = $5;
-                     body}
+    let seq      = $6 in
+    let stop     = nsepseq_to_region expr_to_region seq in
+    let region   = cover $1 stop in
+    let compound = None in
+    let elements = Some seq in
+    let value    = {compound; elements; terminator=None} in
+    let body     = ESeq {region; value} in
+    let value    = {kwd_let    = $1;
+                    kwd_rec    = $2;
+                    binding    = $3;
+                    attributes = $4;
+                    kwd_in     = $5;
+                    body}
     in ELetIn {region; value} }
 
 seq_expr:
