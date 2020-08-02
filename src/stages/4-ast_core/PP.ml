@@ -1,28 +1,74 @@
 [@@@coverage exclude_file]
+(* open Stage_common.Types *)
 open Types
 open Format
 open PP_helpers
-module Helpers = Stage_common.Helpers
 include Stage_common.PP
 
+let operation ppf (o : Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation) : unit =
+  let print_option f ppf o =
+    match o with
+      Some (s) -> fprintf ppf "%a" f s
+    | None -> fprintf ppf "None"
+  in
+    let open Tezos_micheline.Micheline in
+  let rec prim ppf (node : (_,Memory_proto_alpha.Protocol.Alpha_context.Script.prim) node)= match node with
+    | Int (l , i) -> fprintf ppf "Int (%i, %a)" l Z.pp_print i
+    | String (l , s) -> fprintf ppf "String (%i, %s)" l s
+    | Bytes (l, b) -> fprintf ppf "B (%i, %s)" l (Bytes.to_string b)
+    | Prim (l , p , nl, a) -> fprintf ppf "P (%i, %s, %a, %a)" l
+        (Memory_proto_alpha.Protocol.Michelson_v1_primitives.string_of_prim p)
+        (list_sep_d prim) nl
+        (list_sep_d (fun ppf s -> fprintf ppf "%s" s)) a
+    | Seq (l, nl) -> fprintf ppf "S (%i, %a)" l
+        (list_sep_d prim) nl
+  in
+  let l ppf (l: Memory_proto_alpha.Protocol.Alpha_context.Script.lazy_expr) =
+    let oo = Data_encoding.force_decode l in
+    match oo with
+      Some o -> fprintf ppf "%a" prim (Tezos_micheline.Micheline.root o)
+    | None  -> fprintf ppf "Fail decoding"
+  in
 
-  let cmap_sep value sep ppf m =
-    let lst = CMap.to_kv_list m in
-    let lst = List.sort (fun (Constructor a,_) (Constructor b,_) -> String.compare a b) lst in
-    let new_pp ppf (k, {ctor_type;_}) = fprintf ppf "@[<h>%a -> %a@]" constructor k value ctor_type in
-    fprintf ppf "%a" (list_sep new_pp sep) lst
-  let cmap_sep_d x = cmap_sep x (tag " ,@ ")
+  let op ppf (type a) : a Memory_proto_alpha.Protocol.Alpha_context.manager_operation -> unit = function
+    | Reveal (s: Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key.t) -> 
+      fprintf ppf "R %a" Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key.pp s
+    | Transaction {amount; parameters; entrypoint; destination} ->
+      fprintf ppf "T {%a; %a; %s; %a}"
+        Memory_proto_alpha.Protocol.Alpha_context.Tez.pp amount
+        l parameters
+        entrypoint
+        Memory_proto_alpha.Protocol.Alpha_context.Contract.pp destination
+
+    | Origination {delegate; script; credit; preorigination} ->
+      fprintf ppf "O {%a; %a; %a; %a}" 
+        (print_option Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key_hash.pp) delegate
+        l script.code
+        Memory_proto_alpha.Protocol.Alpha_context.Tez.pp credit
+        (print_option Memory_proto_alpha.Protocol.Alpha_context.Contract.pp) preorigination
+        
+    | Delegation so ->
+      fprintf ppf "D %a" (print_option Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key_hash.pp) so
+  in
+  let Internal_operation {source;operation;nonce} = o in
+  fprintf ppf "{source: %s; operation: %a; nonce: %i"
+    (Memory_proto_alpha.Protocol.Alpha_context.Contract.to_b58check source)
+    op operation
+    nonce
+
+let type_variable ppf (t : type_variable) : unit = fprintf ppf "%a" Var.pp t
 
   let record_sep value sep ppf (m : 'a label_map) =
     let lst = LMap.to_kv_list m in
     let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
-    let new_pp ppf (k, {field_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value field_type in
+    let new_pp ppf (k, {associated_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value associated_type in
     fprintf ppf "%a" (list_sep new_pp sep) lst
+  let variant_sep_d x = record_sep x (tag " ,@ ")
 
   let tuple_sep value sep ppf m =
     assert (Helpers.is_tuple_lmap m);
     let lst = Helpers.tuple_of_record m in
-    let new_pp ppf (_, {field_type;_}) = fprintf ppf "%a" value field_type in
+    let new_pp ppf (_, {associated_type;_}) = fprintf ppf "%a" value associated_type in
     fprintf ppf "%a" (list_sep new_pp sep) lst
 
   let record_sep_expr value sep ppf (m : 'a label_map) =
@@ -57,34 +103,15 @@ let tuple_or_record_sep_type value = tuple_or_record_sep_t value "@[<hv 7>record
 let rec type_content : formatter -> type_expression -> unit =
   fun ppf te ->
   match te.content with
-  | T_sum m -> fprintf ppf "@[<hv 4>sum[%a]@]" (cmap_sep_d type_expression) m
+  | T_sum m -> fprintf ppf "@[<hv 4>sum[%a]@]" (variant_sep_d type_expression) m
   | T_record m -> fprintf ppf "%a" (tuple_or_record_sep_type type_expression) m
   | T_arrow a -> fprintf ppf "%a -> %a" type_expression a.type1 type_expression a.type2
   | T_variable tv -> type_variable ppf tv
   | T_constant tc -> type_constant ppf tc
-  | T_operator to_ -> type_operator type_expression ppf to_
+  | T_operator {type_operator=top;arguments} -> fprintf ppf "%a (%a)" type_operator top (list_sep_d type_expression) arguments
 
 and type_expression ppf (te : type_expression) : unit =
   fprintf ppf "%a" type_content te
-
-and type_operator : (formatter -> type_expression -> unit) -> formatter -> type_operator * type_expression list -> unit =
-  fun f ppf to_ ->
-  let s = match to_ with
-    TC_option                    , lst -> Format.asprintf "option(%a)"                     (list_sep_d f) lst
-  | TC_list                      , lst -> Format.asprintf "list(%a)"                       (list_sep_d f) lst
-  | TC_set                       , lst -> Format.asprintf "set(%a)"                        (list_sep_d f) lst
-  | TC_map                       , lst -> Format.asprintf "Map (%a)"                       (list_sep_d f) lst
-  | TC_big_map                   , lst -> Format.asprintf "Big Map (%a)"                   (list_sep_d f) lst
-  | TC_map_or_big_map            , lst -> Format.asprintf "Map Or Big Map (%a)"            (list_sep_d f) lst
-  | TC_contract                  , lst -> Format.asprintf "Contract (%a)"                  (list_sep_d f) lst
-  | TC_michelson_pair            , lst -> Format.asprintf "michelson_pair (%a)"            (list_sep_d f) lst                            
-  | TC_michelson_or              , lst -> Format.asprintf "michelson_or (%a)"              (list_sep_d f) lst
-  | TC_michelson_pair_right_comb , lst -> Format.asprintf "michelson_pair_right_comb (%a)" (list_sep_d f) lst
-  | TC_michelson_pair_left_comb  , lst -> Format.asprintf "michelson_pair_left_comb (%a)"  (list_sep_d f) lst
-  | TC_michelson_or_right_comb   , lst -> Format.asprintf "michelson_or_right_comb (%a)"   (list_sep_d f) lst
-  | TC_michelson_or_left_comb    , lst -> Format.asprintf "michelson_or_left_comb (%a)"    (list_sep_d f) lst
-  in
-  fprintf ppf "(type_operator: %s)" s
 
 let expression_variable ppf (ev : expression_variable) : unit =
   fprintf ppf "%a" Var.pp ev.wrap_content
@@ -101,7 +128,7 @@ and expression_content ppf (ec : expression_content) =
   | E_application {lamb;args} ->
       fprintf ppf "@[<hv>(%a)@@(%a)@]" expression lamb expression args
   | E_constructor c ->
-      fprintf ppf "@[%a(%a)@]" constructor c.constructor expression c.element
+      fprintf ppf "@[%a(%a)@]" label c.constructor expression c.element
   | E_constant c ->
       fprintf ppf "@[%a@[<hv 1>(%a)@]@]" constant c.cons_name (list_sep_d expression)
         c.arguments
@@ -135,31 +162,32 @@ and expression_content ppf (ec : expression_content) =
         type_annotation
 
 and option_type_name ppf
-    ((n, ty_opt) : expression_variable * type_expression option) =
-  match ty_opt with
+    ({binder; ascr} : let_binder) =
+  match ascr with
   | None ->
-      fprintf ppf "%a" expression_variable n
+      fprintf ppf "%a" expression_variable binder
   | Some ty ->
-      fprintf ppf "%a : %a" expression_variable n type_expression ty
+      fprintf ppf "%a : %a" expression_variable binder type_expression ty
 
-and assoc_expression ppf : expr * expr -> unit =
+and assoc_expression ppf : expression * expression -> unit =
  fun (a, b) -> fprintf ppf "@[<2>%a ->@;<1 2>%a@]" expression a expression b
 
-and single_record_patch ppf ((p, expr) : label * expr) =
+and single_record_patch ppf ((p, expr) : label * expression) =
   fprintf ppf "%a <- %a" label p expression expr
 
-and matching_variant_case : (_ -> expression -> unit) -> _ -> (constructor' * expression_variable) * expression -> unit =
-  fun f ppf ((c,n),a) ->
-  fprintf ppf "| %a %a ->@;<1 2>%a@ " constructor c expression_variable n f a
+and matching_variant_case : (_ -> expression -> unit) -> _ -> match_variant -> unit =
+  fun f ppf {constructor=c ; proj ; body } ->
+  fprintf ppf "| %a %a ->@;<1 2>%a@ " label c expression_variable proj f body
 
 and matching : (formatter -> expression -> unit) -> formatter -> matching_expr -> unit =
   fun f ppf m -> match m with
     | Match_variant lst ->
         fprintf ppf "@[<hv>%a@]" (list_sep (matching_variant_case f) (tag "@ ")) lst
-    | Match_list {match_nil ; match_cons = (hd, tl, match_cons)} ->
-        fprintf ppf "@[<hv>| Nil ->@;<1 2>%a@ | %a :: %a ->@;<1 2>%a@]" f match_nil expression_variable hd expression_variable tl f match_cons
-    | Match_option {match_none ; match_some = (some, match_some)} ->
-        fprintf ppf "@[<hv>| None ->@;<1 2>%a@ | Some %a ->@;<1 2>%a@]" f match_none expression_variable some f match_some
+    | Match_list {match_nil ; match_cons = {hd; tl; body}} ->
+        fprintf ppf "@[<hv>| Nil ->@;<1 2>%a@ | %a :: %a ->@;<1 2>%a@]"
+          f match_nil expression_variable hd expression_variable tl f body 
+    | Match_option {match_none ; match_some = {opt; body}} ->
+        fprintf ppf "@[<hv>| None ->@;<1 2>%a@ | Some %a ->@;<1 2>%a@]" f match_none expression_variable opt f body
 
 (* Shows the type expected for the matched value *)
 and matching_type ppf m = match m with
@@ -170,8 +198,8 @@ and matching_type ppf m = match m with
   | Match_option _ ->
       fprintf ppf "option"
 
-and matching_variant_case_type ppf ((c,n),_a) =
-  fprintf ppf "| %a %a" constructor c expression_variable n
+and matching_variant_case_type ppf {constructor=c ; proj ; body=_ } =
+  fprintf ppf "| %a %a" label c expression_variable proj
 
 and option_mut ppf mut = 
   if mut then 
@@ -187,10 +215,10 @@ and option_inline ppf inline =
 
 let declaration ppf (d : declaration) =
   match d with
-  | Declaration_type (type_name, te) ->
-      fprintf ppf "@[<2>type %a =@ %a@]" type_variable type_name type_expression te
-  | Declaration_constant (name, ty_opt, attr, expr) ->
-      fprintf ppf "@[<2>const %a =@ %a%a@]" option_type_name (name, ty_opt) expression
+  | Declaration_type {type_binder ; type_expr} ->
+      fprintf ppf "@[<2>type %a =@ %a@]" type_variable type_binder type_expression type_expr
+  | Declaration_constant {binder ; type_opt ; attr ; expr} ->
+      fprintf ppf "@[<2>const %a =@ %a%a@]" option_type_name {binder; ascr = type_opt} expression
         expr
         option_inline attr.inline
 

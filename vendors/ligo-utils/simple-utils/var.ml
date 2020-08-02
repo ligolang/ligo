@@ -54,3 +54,5 @@ let is_generated var =
   match var.counter with
   | None -> false
   | Some _ -> true
+
+let todo_cast : 'a 'b . 'a t -> 'b t = fun { name ; counter } -> { name ; counter }

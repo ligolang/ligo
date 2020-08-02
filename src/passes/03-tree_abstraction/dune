@@ -3,7 +3,8 @@
   (public_name ligo.tree_abstraction)
   (libraries
     cameligo
-    pascaligo)
+    pascaligo
+    reasonligo)
   (preprocess
     (pps
       ppx_let

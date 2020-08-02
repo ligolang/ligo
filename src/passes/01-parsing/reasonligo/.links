@@ -21,8 +21,8 @@ $HOME/git/OCaml-build/Makefile
 ./Stubs/Parser_shared.ml
 ./Stubs/Parser_reasonligo.ml
 ./Stubs/Cst.ml
-./Stubs/Cst_cameligo.ml
+./Stubs/Cst_reasonligo.ml
 
-$HOME/git/ligo/src/stages/1-cst/cameligo/CST.ml
-$HOME/git/ligo/src/stages/1-cst/cameligo/ParserLog.mli
-$HOME/git/ligo/src/stages/1-cst/cameligo/ParserLog.ml
+$HOME/git/ligo/src/stages/1-cst/reasonligo/CST.ml
+$HOME/git/ligo/src/stages/1-cst/reasonligo/ParserLog.mli
+$HOME/git/ligo/src/stages/1-cst/reasonligo/ParserLog.ml

@@ -67,7 +67,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   match (a.type_content, b.type_content) with
   | T_constant ca, T_constant cb -> assert_eq ca cb
   | T_constant _, _ -> None
-  | T_operator opa, T_operator opb -> (
+  | T_operator {operator=opa;args=la}, T_operator {operator=opb;args=lb} -> (
     let aux = fun lsta lstb ->
       if List.length lsta <> List.length lstb then None
       else
@@ -77,22 +77,23 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
           (Some ())
           (List.combine lsta lstb) in
     match (opa, opb) with
-      | TC_option la, TC_option lb
-      | TC_list la, TC_list lb
-      | TC_contract la, TC_contract lb
-      | TC_set la, TC_set lb -> aux [la] [lb]
-      | (TC_map {k=ka;v=va} | TC_map_or_big_map {k=ka;v=va}), (TC_map {k=kb;v=vb} | TC_map_or_big_map {k=kb;v=vb})
-      | (TC_big_map {k=ka;v=va} | TC_map_or_big_map {k=ka;v=va}), (TC_big_map {k=kb;v=vb} | TC_map_or_big_map {k=kb;v=vb}) ->
-        aux [ka;va] [kb;vb]
-      | (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_map_or_big_map _ ),
-        (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_map_or_big_map _ )
+      | TC_option, TC_option
+      | TC_list, TC_list
+      | TC_contract, TC_contract
+      | TC_set, TC_set
+      | (TC_map | TC_map_or_big_map) , (TC_map | TC_map_or_big_map)
+      | (TC_big_map | TC_map_or_big_map ), (TC_big_map | TC_map_or_big_map) ->
+        aux la lb
+      | (TC_option | TC_list | TC_contract | TC_set | TC_map | TC_big_map | TC_map_or_big_map | TC_michelson_pair|TC_michelson_or|TC_michelson_pair_right_comb | TC_michelson_pair_left_comb|TC_michelson_or_right_comb| TC_michelson_or_left_comb ),
+        (TC_option | TC_list | TC_contract | TC_set | TC_map | TC_big_map | TC_map_or_big_map | TC_michelson_pair|TC_michelson_or|TC_michelson_pair_right_comb | TC_michelson_pair_left_comb|TC_michelson_or_right_comb| TC_michelson_or_left_comb )
+
         -> None
   )
   | T_operator _, _ -> None
   | T_sum sa, T_sum sb -> (
-      let sa' = CMap.to_kv_list sa in
-      let sb' = CMap.to_kv_list sb in
-      let aux ((ka, {ctor_type=va;_}), (kb, {ctor_type=vb;_})) =
+      let sa' = LMap.to_kv_list sa in
+      let sb' = LMap.to_kv_list sb in
+      let aux ((ka, {associated_type=va;_}), (kb, {associated_type=vb;_})) =
         assert_eq ka kb >>= fun _ ->
           assert_type_expression_eq (va, vb)
       in
@@ -106,7 +107,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
       let sort_lmap r' = List.sort (fun (Label a,_) (Label b,_) -> String.compare a b) r' in
       let ra' = sort_lmap @@ LMap.to_kv_list ra in
       let rb' = sort_lmap @@ LMap.to_kv_list rb in
-      let aux ((ka, {field_type=va;_}), (kb, {field_type=vb;_})) =
+      let aux ((ka, {associated_type=va;_}), (kb, {associated_type=vb;_})) =
         let Label ka = ka in
         let Label kb = kb in
         assert_eq ka kb >>= fun _ ->
@@ -146,8 +147,6 @@ let assert_literal_eq (a, b : literal * literal) : unit option =
   | Literal_bytes a, Literal_bytes b when a = b -> Some ()
   | Literal_bytes _, Literal_bytes _ -> None
   | Literal_bytes _, _ -> None
-  | Literal_void, Literal_void -> Some ()
-  | Literal_void, _ -> None
   | Literal_unit, Literal_unit -> Some ()
   | Literal_unit, _ -> None
   | Literal_address a, Literal_address b when a = b -> Some ()
@@ -241,10 +240,23 @@ let p_constant (p_ctor_tag : constant_tag) (p_ctor_args : p_ctor_args) = {
     }
 }
 
+let p_row (p_row_tag : row_tag) (p_row_args : tv_lmap ) = {
+  tsrc = "misc.ml/p_constant" ;
+  t = P_row {
+      p_row_tag ;
+      p_row_args ;
+    }
+}
+
+let p_row_ez (p_row_tag : row_tag) (p_row_args : (string * type_value) list ) =
+  let p_row_args = LMap.of_list @@ List.map (fun (x,y) -> Label x,y) p_row_args in
+  p_row p_row_tag p_row_args
+
 let c_equation aval bval reason = { c = C_equation { aval ; bval }; reason }
 
 let reason_simpl : type_constraint_simpl -> string = function
   | SC_Constructor { reason_constr_simpl=reason; _ }
+  | SC_Row { reason_row_simpl=reason; _ }
   | SC_Alias { reason_alias_simpl=reason; _ }
   | SC_Poly { reason_poly_simpl=reason; _ }
   | SC_Typeclass { reason_typeclass_simpl=reason; _ }

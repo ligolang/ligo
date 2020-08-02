@@ -47,3 +47,5 @@ val reset_counter : unit -> unit
 val debug : 'a t -> string
 
 val is_generated : 'a t -> bool
+
+val todo_cast : 'a t -> 'b t

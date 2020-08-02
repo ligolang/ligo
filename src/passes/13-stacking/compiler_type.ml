@@ -8,9 +8,12 @@ open Script_ir_translator
 
 module O = Tezos_utils.Michelson
 
+(* TODO why are we dealing with GADT here? *)
 module Ty = struct
 
   open Script_typed_ir
+
+  let has_big_map = X.has_big_map
 
   let bool_k = Bool_key None
   let nat_k = Nat_key None
@@ -61,7 +64,6 @@ module Ty = struct
     let return x = ok @@ Ex_comparable_ty x in
     match tb with
     | TB_unit -> fail (Errors.not_comparable_base tb)
-    | TB_void -> fail (Errors.not_comparable_base tb)
     | TB_bool -> return bool_k
     | TB_nat -> return nat_k
     | TB_mutez -> return tez_k
@@ -111,7 +113,6 @@ module Ty = struct
     let return x = ok @@ Ex_ty x in
    match b with
     | TB_unit -> return unit
-    | TB_void -> fail (Errors.void_type_not_compilable)
     | TB_bool -> return bool
     | TB_int -> return int
     | TB_nat -> return nat
@@ -195,7 +196,6 @@ end
 let base_type : type_base -> (O.michelson , stacking_error) result =
   function
   | TB_unit -> ok @@ O.prim T_unit
-  | TB_void -> fail (Errors.void_type_not_compilable)
   | TB_bool -> ok @@ O.prim T_bool
   | TB_int -> ok @@ O.prim T_int
   | TB_nat -> ok @@ O.prim T_nat

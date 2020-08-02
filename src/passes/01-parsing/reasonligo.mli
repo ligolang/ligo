@@ -1,7 +1,7 @@
 (** This file provides an interface to the ReasonLIGO parser. *)
 
 open Trace
-module CST = Cst.Cameligo
+module CST = Cst.Reasonligo
 
 (** Open a ReasonLIGO filename given by string and convert into an
     abstract syntax tree. *)

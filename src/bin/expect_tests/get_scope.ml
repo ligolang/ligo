@@ -25,8 +25,8 @@ let%expect_test _ =
 
     Variable definitions:
     (k#4 -> k) in file "lambda_letin.mligo", line 6, characters 8-9
-    (j#2 -> j) in file "lambda_letin.mligo", line 4, characters 47-48
-    (i#1 -> i) in file "lambda_letin.mligo", line 4, characters 37-38
+    (j#2 -> j) in file "lambda_letin.mligo", line 4, characters 46-55
+    (i#1 -> i) in file "lambda_letin.mligo", line 4, characters 36-45
     (g#3 -> g) in file "lambda_letin.mligo", line 5, characters 8-9
     (f#5 -> f) in file "lambda_letin.mligo", line 4, characters 6-7
     (b#6 -> b) in file "lambda_letin.mligo", line 3, characters 4-5
@@ -72,8 +72,8 @@ let%expect_test _ =
     [ ] in file "lambda.mligo", line 1, characters 0-9
 
     Variable definitions:
-    (j#2 -> j) in file "lambda.mligo", line 4, characters 46-47
-    (i#1 -> i) in file "lambda.mligo", line 4, characters 36-37
+    (j#2 -> j) in file "lambda.mligo", line 4, characters 45-54
+    (i#1 -> i) in file "lambda.mligo", line 4, characters 35-44
     (f#3 -> f) in file "lambda.mligo", line 4, characters 6-7
     (b#4 -> b) in file "lambda.mligo", line 3, characters 4-5
     (a#0 -> a) in file "lambda.mligo", line 1, characters 4-5
@@ -103,10 +103,10 @@ let%expect_test _ =
     [ mytype#0 ] in file "match.mligo", line 3, characters 0-9
 
     Variable definitions:
-    (y#4 -> y) in file "match.mligo", line 8, characters 8-9
-    (x#3 -> x) in file "match.mligo", line 7, characters 8-9
-    (tl#8 -> tl) in file "match.mligo", line 15, characters 8-10
-    (s#11 -> s) in file "match.mligo", line 19, characters 10-11
+    (y#4 -> y) in file "match.mligo", line 8, characters 4-9
+    (x#3 -> x) in file "match.mligo", line 7, characters 4-9
+    (tl#8 -> tl) in file "match.mligo", line 15, characters 4-6
+    (s#11 -> s) in file "match.mligo", line 19, characters 4-12
     (hd#7 -> hd) in file "match.mligo", line 15, characters 4-6
     (d#12 -> d) in file "match.mligo", line 17, characters 4-5
     (d#10 -> d) in file "match.mligo", line 18, characters 13-14
@@ -131,8 +131,7 @@ let%expect_test _ =
     [ j#3 i#2 c#1 a#0 ] in file "rec.mligo", line 5, characters 20-21
     [ j#3 i#2 c#1 a#0 ] in file "rec.mligo", line 5, characters 16-17
     [ j#3 i#2 c#1 a#0 ] in file "rec.mligo", line 5, characters 12-13
-    [ i#2 c#1 a#0 ] in file "rec.mligo", line 4, characters 36-49
-    [ c#1 a#0 ] in file "rec.mligo", line 4, characters 36-49
+    [ i#2 c#1 a#0 ]
     [ c#1 a#0 ]
     [ ] in file "rec.mligo", line 1, characters 0-9
 
@@ -181,7 +180,7 @@ let%expect_test _ =
     [ myrec#0 g#5 b#4 a#1 ] in file "records.mligo", line 16, characters 32-37
     [ myrec#0 g#5 b#4 a#1 ] in file "records.mligo", line 16, characters 28-29
     [ myrec#0 b#4 a#1 ] in file "records.mligo", line 16, characters 15-41
-    [ myrec#0 b#4 a#1 ]
+    [ myrec#0 b#4 a#1 ] in file "records.mligo", line 16, characters 3-4
     [ myrec#0 a#1 ] in file "records.mligo", line 6, characters 53-55
     [ myrec#0 j#3 i#2 a#1 ] in file "records.mligo", line 6, characters 44-45
     [ myrec#0 j#3 i#2 a#1 ] in file "records.mligo", line 6, characters 42-43
@@ -217,7 +216,7 @@ let%expect_test _ =
     Variable definitions:
     (e#3 -> e) in file "constant.mligo", line 6, characters 9-10
     (d#2 -> d) in file "constant.mligo", line 5, characters 26-27
-    (c#1 -> c) in file "constant.mligo", line 5, characters 10-11
+    (c#1 -> c) in file "constant.mligo", line 5, characters 9-18
     (b#4 -> b) in file "constant.mligo", line 3, characters 4-5
     (a#0 -> a) in file "constant.mligo", line 1, characters 4-5
     Type definitions: |} ] ;
@@ -234,8 +233,8 @@ let%expect_test _ =
     [ j#1 i#0 ] in file "application.mligo", line 2, characters 58-59
 
     Variable definitions:
-    (j#1 -> j) in file "application.mligo", line 2, characters 46-47
-    (i#0 -> i) in file "application.mligo", line 2, characters 36-37
+    (j#1 -> j) in file "application.mligo", line 2, characters 45-54
+    (i#0 -> i) in file "application.mligo", line 2, characters 35-44
     (f#2 -> f) in file "application.mligo", line 2, characters 6-7
     (c#4 -> c) in file "application.mligo", line 3, characters 26-27
     (b#3 -> b) in file "application.mligo", line 3, characters 7-8

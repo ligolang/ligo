@@ -15,7 +15,6 @@ build-deps:
 	if [ -n "`opam switch show | grep -P ".+/ligo"`" ];
 	then :; else scripts/setup_switch.sh;
 	fi
-	scripts/setup_repos.sh
 	eval $$(opam config env)
 #	Install OCaml build dependencies for Ligo
 	scripts/install_vendors_deps.sh

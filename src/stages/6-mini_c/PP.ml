@@ -45,7 +45,6 @@ and type_constant ppf (tb:type_base) : unit =
     | TB_signature -> "signature"
     | TB_timestamp -> "timestamp"
     | TB_chain_id  -> "chain_id"
-    | TB_void      -> "void"
     in
   fprintf ppf "%s" s
 

@@ -62,7 +62,6 @@ module Tree_abstraction = struct
     | TC_key_hash  -> "key_hash"  
     | TC_signature -> "signature" 
     | TC_timestamp -> "timestamp" 
-    | TC_void      -> "void"
 
   let type_operators s =
     match s with
@@ -467,6 +466,128 @@ module Tree_abstraction = struct
   end
 
   module Cameligo = struct
+    let constants = function
+    (* Tezos (ex-Michelson, ex-Current, ex-Operation) *)
+
+    | "chain_id"                   -> Some C_CHAIN_ID            (* Deprecated *)    
+    | "Current.balance"            -> Some C_BALANCE             (* Deprecated *)
+    | "balance"                    -> Some C_BALANCE             (* Deprecated *)    
+    | "Current.time"               -> Some C_NOW                 (* Deprecated *)
+    | "time"                       -> Some C_NOW                 (* Deprecated *)    
+    | "Current.amount"             -> Some C_AMOUNT              (* Deprecated *)
+    | "amount"                     -> Some C_AMOUNT              (* Deprecated *)    
+    | "Current.sender"             -> Some C_SENDER              (* Deprecated *)
+    | "sender"                     -> Some C_SENDER              (* Deprecated *)    
+    | "Current.address"            -> Some C_ADDRESS             (* Deprecated *)    
+    | "Current.self_address"       -> Some C_SELF_ADDRESS        (* Deprecated *)    
+    | "Current.implicit_account"   -> Some C_IMPLICIT_ACCOUNT    (* Deprecated *)    
+    | "Current.source"             -> Some C_SOURCE              (* Deprecated *)
+    | "source"                     -> Some C_SOURCE              (* Deprecated *)    
+    | "Current.failwith"           -> Some C_FAILWITH            (* Deprecated *)
+    | "failwith"                   -> Some C_FAILWITH
+    
+    | "Operation.transaction"        -> Some C_CALL              (* Deprecated *)
+    | "Operation.set_delegate"       -> Some C_SET_DELEGATE      (* Deprecated *)
+    | "Operation.get_contract"       -> Some C_CONTRACT          (* Deprecated *)
+    | "Operation.get_contract_opt"   -> Some C_CONTRACT_OPT      (* Deprecated *)
+    | "Operation.get_entrypoint"     -> Some C_CONTRACT_ENTRYPOINT (* Deprecated *)
+    | "Operation.get_entrypoint_opt" -> Some C_CONTRACT_ENTRYPOINT_OPT (* Deprecated *)
+
+    | "Michelson.is_nat" -> Some C_IS_NAT  (* Deprecated *)
+    | "is_nat"           -> Some C_IS_NAT
+    | "int"              -> Some C_INT
+    | "abs"              -> Some C_ABS
+    | "ediv"             -> Some C_EDIV
+    | "unit"             -> Some C_UNIT
+
+    | "NEG"              -> Some C_NEG
+    | "ADD"              -> Some C_ADD
+    | "SUB"              -> Some C_SUB
+    | "TIMES"            -> Some C_MUL
+    | "DIV"              -> Some C_DIV
+    | "MOD"              -> Some C_MOD
+    | "EQ"               -> Some C_EQ
+    | "NOT"              -> Some C_NOT
+    | "AND"              -> Some C_AND
+    | "OR"               -> Some C_OR
+    | "GT"               -> Some C_GT
+    | "GE"               -> Some C_GE
+    | "LT"               -> Some C_LT
+    | "LE"               -> Some C_LE
+    | "CONS"             -> Some C_CONS
+    | "NEQ"              -> Some C_NEQ
+
+    (* Bytes module *)
+
+    | "Bytes.size"   -> Some C_SIZE       (* Deprecated *)
+    | "Bytes.slice"  -> Some C_SLICE      (* Deprecated *)
+
+    (* Set module *)   
+    | "Set.size"     -> Some C_SIZE (* Deprecated *)
+
+    (* Map module *)
+    | "Map.find"     -> Some C_MAP_FIND     (* Deprecated *)
+
+    (* Bitwise module *)
+
+    | "Bitwise.lor"         -> Some C_OR  (* Deprecated *)
+    | "Bitwise.land"        -> Some C_AND (* Deprecated *)
+    | "Bitwise.lxor"        -> Some C_XOR (* Deprecated *)
+
+    (* Loop module *)
+
+    | "Loop.fold_while" -> Some C_FOLD_WHILE    (* Deprecated *)
+    | "Loop.resume"     -> Some C_FOLD_CONTINUE (* Deprecated *)
+    | "continue"        -> Some C_FOLD_CONTINUE (* Deprecated *)
+    | "Loop.stop"       -> Some C_FOLD_STOP     (* Deprecated *)
+    | "stop"            -> Some C_FOLD_STOP     (* Deprecated *)
+
+    (* Others *)
+
+    | "assert" -> Some C_ASSERTION
+
+    | _ as c -> pseudo_modules c
+
+    let constant_to_string = function
+    (* Tezos (ex-Michelson, ex-Current, ex-Operation) *)
+    | C_FAILWITH -> "failwith"
+    
+    | C_IS_NAT -> "is_nat"
+    | C_INT    -> "int"
+    | C_ABS    -> "abs"
+    | C_EDIV   -> "ediv"
+    | C_UNIT   -> "unit"
+
+    | C_NEG  -> "NEG"
+    | C_ADD  -> "ADD"
+    | C_SUB  -> "SUB"
+    | C_MUL  -> "TIMES"
+    | C_DIV  -> "DIV"
+    | C_MOD  -> "MOD"
+    | C_EQ   -> "EQ"
+    | C_NOT  -> "NOT"
+    | C_AND  -> "AND"
+    | C_OR   -> "OR"
+    | C_GT   -> "GT"
+    | C_GE   -> "GE"
+    | C_LT   -> "LT"
+    | C_LE   -> "LE"
+    | C_CONS -> "CONS"
+    | C_NEQ  -> "NEQ"
+
+    (* Others *)
+
+    | C_ASSERTION -> "assert"
+
+    | _ as c -> pseudo_module_to_string c
+
+    let type_constants = type_constants
+    let type_operators = type_operators
+    let type_constant_to_string = type_constant_to_string
+    let type_operator_to_string = type_operator_to_string
+  end
+
+  module Reasonligo = struct
     let constants = function
     (* Tezos (ex-Michelson, ex-Current, ex-Operation) *)
 

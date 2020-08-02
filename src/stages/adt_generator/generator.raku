@@ -15,12 +15,25 @@ my $folder_filename      = @*ARGS[3];
 my $mapper_filename      = @*ARGS[4];
 
 my $moduleName = $inputADTfile.subst(/\.ml$/, '').samecase("A_");
+say "\$moduleName is $moduleName";
 my $variant = "_ _variant";
 my $record = "_ _ record";
 sub poly { $^type_name }
 
 my $l = $inputADTfile.IO.lines;
-$l = $l.map(*.subst: /(^\s+|\s+$)/, "");
+# TODO: do the inlining recursively?
+$l = $l.map({
+    given $_ {
+        when /^(\(\*\s+)?(open|include) \s+ (<-blank -[\(]>*) \s* \(\*\@ \s* follow \s* (<-blank -[\*]>*) \s* \*\)\s*$/ {
+            flat ["(* $/[2] followed from $/[3] *)"],
+                 $/[3].IO.lines.list,
+                 ["(* end of $/[2] followed from $/[3] *)"]
+        }
+        default { [$_] }
+    }
+}).flat;
+$l = $l.grep(none /^\(\*\@ \s* ignore \s* \*\)/);
+$l = $l.map(*.subst: /(^\s+|\s+$)/, "", :g);
 $l = $l.list.cache;
 my $statement_re = /^((\(\*\s+)?(open|include)\s|\[\@\@\@warning\s)/;
 my $statements = $l.grep($statement_re);

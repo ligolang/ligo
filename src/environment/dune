@@ -6,6 +6,7 @@
     tezos-utils
     ast_typed
     stage_common
+    typesystem
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)

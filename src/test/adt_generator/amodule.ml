@@ -1,5 +1,5 @@
 [@@@warning "-33"]
-(* open Amodule_utils *)
+include Amodule_utils
 
 type root =
 | A of rootA

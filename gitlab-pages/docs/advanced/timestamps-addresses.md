@@ -47,7 +47,7 @@ let today : timestamp = Tezos.now;
 </Syntax>
 
 
-> When running code, the LIGO CLI option `--predecessor-timestamp`
+> When running code, the LIGO CLI option `--now`
 > allows you to control what `Tezos.now` returns.
 
 ### Timestamp Arithmetics

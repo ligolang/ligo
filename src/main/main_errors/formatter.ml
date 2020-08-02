@@ -47,18 +47,6 @@ let rec error_ppformat : display_format:string display_format ->
         "@[<hv>Invalid extension '%s'@ Hint: Use '.ligo', '.mligo', '.religo' or the --syntax option@]"
         extension
 
-    | `Main_bad_michelson_parameter c ->
-      let s = Format.asprintf
-        "generated Michelson contract failed to typecheck : bad contract parameter type\n\
-        code:\n %a" Michelson.pp c in
-      Format.pp_print_string f s
-
-    | `Main_bad_michelson_storage c ->
-      let s = Format.asprintf
-        "generated Michelson contract failed to typecheck : bad contract storage type\n\
-        code:\n %a" Michelson.pp c in
-      Format.pp_print_string f s
-
     | `Main_bad_michelson c ->
       let s = Format.asprintf
         "generated Michelson contract failed to typecheck : bad contract type\n\
@@ -69,12 +57,11 @@ let rec error_ppformat : display_format:string display_format ->
 
     | `Main_unparse_tracer _ -> Format.pp_print_string f "could not unparse michelson type"
 
-    | `Main_typecheck_contract_tracer (c,_) ->
-      let s = Format.asprintf
-        "Could not typecheck michelson code:\n %a"
-        Michelson.pp c in
-      Format.pp_print_string f s
-    
+    | `Main_typecheck_contract_tracer (_c,err_l) ->
+      let errs = List.map ( fun e -> match e with `Tezos_alpha_error a -> a) err_l in
+      Format.fprintf f "@[<hv>Compiler bug@ %a@]"
+      (Tezos_client_ligo006_PsCARTHA.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+
     | `Main_typecheck_parameter -> Format.pp_print_string f "Passed parameter does not match the contract type"
 
     | `Main_check_typed_arguments (Simple_utils.Runned_result.Check_parameter, err) ->
@@ -120,6 +107,7 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_sugaring _e -> () (*no error in this pass*)
     | `Main_cit_pascaligo e -> Tree_abstraction.Pascaligo.Errors.error_ppformat ~display_format f e
     | `Main_cit_cameligo e -> Tree_abstraction.Cameligo.Errors.error_ppformat ~display_format f e
+    | `Main_cit_reasonligo e -> Tree_abstraction.Reasonligo.Errors.error_ppformat ~display_format f e
     | `Main_typer e -> Typer.Errors.error_ppformat ~display_format f e
     | `Main_interpreter _ -> () (*no error*)
     | `Main_self_ast_typed e -> Self_ast_typed.Errors.error_ppformat ~display_format f e
@@ -159,16 +147,6 @@ let rec error_jsonformat : Types.all -> Yojson.t = fun a ->
 
   | `Main_invalid_extension _ ->
     json_error ~stage:"command line interpreter" ~content:(`String "bad file extension")
-
-  | `Main_bad_michelson_parameter c ->
-    let code = Format.asprintf "%a" Michelson.pp c in
-    let content = `Assoc [("message", `String "bad contract parameter type") ; ("code", `String code)] in
-    json_error ~stage:"michelson contract build" ~content
-
-  | `Main_bad_michelson_storage c ->
-    let code = Format.asprintf "%a" Michelson.pp c in
-    let content = `Assoc [("message", `String "bad contract storage type") ; ("code", `String code)] in
-    json_error ~stage:"michelson contract build" ~content
 
   | `Main_bad_michelson c ->
     let code = Format.asprintf "%a" Michelson.pp c in
@@ -268,6 +246,7 @@ let rec error_jsonformat : Types.all -> Yojson.t = fun a ->
   | `Main_sugaring _ -> `Null (*no error in this pass*)
   | `Main_cit_pascaligo e -> Tree_abstraction.Pascaligo.Errors.error_jsonformat e
   | `Main_cit_cameligo e -> Tree_abstraction.Cameligo.Errors.error_jsonformat e
+  | `Main_cit_reasonligo e -> Tree_abstraction.Reasonligo.Errors.error_jsonformat e
   | `Main_typer e -> Typer.Errors.error_jsonformat e
   | `Main_interpreter _ -> `Null (*no error*)
   | `Main_self_ast_typed e -> Self_ast_typed.Errors.error_jsonformat e

@@ -633,7 +633,6 @@ and pattern =
 | PTuple  of tuple_pattern
 
 and constr_pattern =
-  (*What is a unit pattern what does it catch ? is it like PWild ? *)
   PUnit      of c_Unit
 | PFalse     of c_False
 | PTrue      of c_True
@@ -646,7 +645,6 @@ and tuple_pattern = (pattern, comma) nsepseq par reg
 and list_pattern =
   PListComp of pattern injection reg
 | PNil      of kwd_nil
-  (* Currently hd # tl is PCons, i would expect this to have type pattern * cons * pattern just like PParCons*)
 | PParCons  of (pattern * cons * pattern) par reg
 | PCons     of (pattern, cons) nsepseq reg
 

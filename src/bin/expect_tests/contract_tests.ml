@@ -31,8 +31,9 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           Provided storage type does not match contract storage type
+
           Bad types:
-          expected record[card_patterns -> (type_operator: Map (nat,record[coefficient -> mutez , quantity -> nat])) , cards -> (type_operator: Map (nat,record[card_owner -> address , card_pattern -> nat])) , next_id -> nat]
+          expected record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]
           got sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]
 
 
@@ -47,9 +48,10 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           Provided parameter type does not match contract parameter type
+
           Bad types:
           expected sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]
-          got record[card_patterns -> (type_operator: Map (nat,record[coefficient -> mutez , quantity -> nat])) , cards -> (type_operator: Map (nat,record[card_owner -> address , card_pattern -> nat])) , next_id -> nat]
+          got record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -62,8 +64,8 @@ let%expect_test _ =
   ()
 
 let%expect_test _  =
-  run_ligo_good [ "compile-storage" ; contract "timestamp.ligo" ; "main" ; "now" ; "--predecessor-timestamp" ; "2042-01-01T00:00:00Z" ] ;
-  [%expect {| "2042-01-01T00:00:01Z" |}]
+  run_ligo_good [ "compile-storage" ; contract "timestamp.ligo" ; "main" ; "now" ; "--now" ; "2042-01-01T00:00:00Z" ] ;
+  [%expect {| "2042-01-01T00:00:00Z" |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "coase.ligo" ; "main" ] ;
@@ -1322,14 +1324,16 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "print-ast-typed" ; contract "sequence.mligo" ; ];
-  [%expect {| const y = lambda (_) return let x = +1 in let _ = let x = +2 in UNIT() in let _ = let x = +23 in UNIT() in let _ = let x = +42 in UNIT() in x |}]
+  [%expect {| const y = lambda (#1) return let x = +1 in let _ = let x = +2 in UNIT() in let _ = let x = +23 in UNIT() in let _ = let x = +42 in UNIT() in x |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_type_operator.ligo" ; "main" ] ;
   [%expect {|
     ligo: error
           in file "bad_type_operator.ligo", line 4, characters 16-29
-          unrecognized type operator (type_operator: Map (binding))
+          Wrong number of arguments for type operator: Map
+          expected: 2
+          got: 1
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1459,8 +1463,6 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_toplevel.mligo" ; "main" ] ;
   [%expect {|
 ligo: error
-      in file "create_contract_toplevel.mligo", line 3, characters 0-3
-      Constant declaration 'main'
       in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8
       Free variable 'store' is not allowed in CREATE_CONTRACT lambda
 
@@ -1475,8 +1477,6 @@ ligo: error
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_var.mligo" ; "main" ] ;
   [%expect {|
 ligo: error
-      in file "create_contract_var.mligo", line 5, characters 0-3
-      Constant declaration 'main'
       in file "create_contract_var.mligo", line 6, character 35 to line 10, character 5
       Free variable 'a' is not allowed in CREATE_CONTRACT lambda
 
@@ -1548,8 +1548,8 @@ let%expect_test _ =
     ligo: error
           in file "self_type_annotation.ligo", line 8, characters 41-64
           Bad self type
-          expected (type_operator: Contract (int))
-          got (type_operator: Contract (nat))
+          expected Contract (int)
+          got Contract (nat)
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1576,7 +1576,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-          in file "bad_contract.mligo", line 4, characters 0-3
+          in file "bad_contract.mligo", line 4, characters 9-46
           Badly typed contract:
           unexpected entrypoint type ( nat * int ) -> int
 
@@ -1591,9 +1591,9 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract2.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-          in file "bad_contract2.mligo", line 5, characters 0-3
+          in file "bad_contract2.mligo", line 5, characters 9-46
           Badly typed contract:
-          expected (type_operator: list(operation)) but got string
+          expected list (operation) but got string
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1606,7 +1606,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract3.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-          in file "bad_contract3.mligo", line 5, characters 0-3
+          in file "bad_contract3.mligo", line 5, characters 9-46
           Badly typed contract main:
           expected storage type as right member of a pair in the input and output, but got:
           - int in the input
@@ -1739,18 +1739,19 @@ let%expect_test _ =
     type storage = (int ,
     int)
     const main : (int ,
-    storage) -> ((TO_list(operation)) ,
+    storage) -> (list (operation) ,
     storage) = lambda (n:Some((int ,
-    storage))) : None return let x = let x = 7 : int in (ADD(x ,
+    storage))) : Some((list (operation) ,
+    storage)) return let x : (int ,
+    int) = let x : int = 7 in (ADD(x ,
     n.0) ,
     ADD(n.1.0 ,
-    n.1.1)) : (int ,
-    int) in (list[] : (TO_list(operation)) ,
+    n.1.1)) in (list[] : list (operation) ,
     x)
     const f0 = lambda (a:Some(string)) : None return true(unit)
     const f1 = lambda (a:Some(string)) : None return true(unit)
     const f2 = lambda (a:Some(string)) : None return true(unit)
-    const letin_nesting = lambda (_:Some(unit)) : None return let s = "test" in let p0 = (f0)@(s) in { ASSERTION(p0);
+    const letin_nesting = lambda (#1:Some(unit)) : None return let s = "test" in let p0 = (f0)@(s) in { ASSERTION(p0);
      let p1 = (f1)@(s) in { ASSERTION(p1);
      let p2 = (f2)@(s) in { ASSERTION(p2);
      s}}}
@@ -1763,14 +1764,13 @@ let%expect_test _ =
   [%expect {|
     type storage = (int ,
     int)
-    const main : (int ,
-    storage) -> ((TO_list(operation)) ,
-    storage) = lambda (n:Some((int ,
-    storage))) : None return let x = let x = 7 : int in (ADD(x ,
+    const main = lambda (n:Some((int ,
+    storage))) : Some((list (operation) ,
+    storage)) return let x : (int ,
+    int) = let x : int = 7 in (ADD(x ,
     n.0) ,
     ADD(n.1.0 ,
-    n.1.1)) : (int ,
-    int) in (list[] : (TO_list(operation)) ,
+    n.1.1)) in (list[] : list (operation) ,
     x)
     const f0 = lambda (a:Some(string)) : None return true(unit)
     const f1 = lambda (a:Some(string)) : None return true(unit)
@@ -1783,5 +1783,3 @@ let%expect_test _ =
     y) ,
     z)
     |}];
-
-

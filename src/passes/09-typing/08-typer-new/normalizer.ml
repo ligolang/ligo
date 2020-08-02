@@ -38,9 +38,10 @@ let normalizer_grouped_by_variable : (type_constraint_simpl , type_constraint_si
     in List.fold_left aux dbs tvars
   in
   let dbs = match new_constraint with
-      SC_Constructor ({tv ; c_tag = _ ; tv_list} as c) -> store_constraint (tv :: tv_list) {constructor = [c] ; poly = []  ; tc = []}
-    | SC_Typeclass   ({tc = _ ; args}            as c) -> store_constraint args            {constructor = []  ; poly = []  ; tc = [c]}
-    | SC_Poly        ({tv; forall = _}           as c) -> store_constraint [tv]            {constructor = []  ; poly = [c] ; tc = []}
+      SC_Constructor ({tv ; c_tag = _ ; tv_list} as c) -> store_constraint (tv :: tv_list)             {constructor = [c] ; poly = []  ; tc = [] ; row = []}
+    | SC_Row         ({tv ; r_tag = _ ; tv_map } as c) -> store_constraint (tv :: LMap.to_list tv_map) {constructor = []  ; poly = []  ; tc = [] ; row = [c]}
+    | SC_Typeclass   ({tc = _ ; args}            as c) -> store_constraint args                        {constructor = []  ; poly = []  ; tc = [c]; row = []}
+    | SC_Poly        ({tv; forall = _}           as c) -> store_constraint [tv]                        {constructor = []  ; poly = [c] ; tc = [] ; row = []}
     | SC_Alias { a; b } -> Constraint_databases.merge_constraints a b dbs
   in (dbs , [new_constraint])
 
@@ -82,6 +83,15 @@ let rec normalizer_simpl : (type_constraint , type_constraint_simpl) normalizer 
     let fresh_eqns = List.map (fun (v,t) -> c_equation { tsrc = "solver: normalizer: split_constant" ; t = P_variable v } t "normalizer: split_constant") (List.combine fresh_vars args) in
     let (dbs , recur) = List.fold_map_acc normalizer_simpl dbs fresh_eqns in
     (dbs , [SC_Constructor {tv=a;c_tag;tv_list=fresh_vars;reason_constr_simpl=Format.asprintf "normalizer: split constant %a = %a (%a)" Var.pp a Ast_typed.PP_generic.constant_tag c_tag (PP_helpers.list_sep Ast_typed.PP_generic.type_value (fun ppf () -> Format.fprintf ppf ", ")) args}] @ List.flatten recur) in
+  let split_row a r_tag args = 
+    let aux const _ v =
+      let var = Core.fresh_type_variable () in
+      let v   = c_equation { tsrc = "solver: normalizer: split_row" ; t = P_variable var } v "normalizer: split_row" in
+      (v::const, var)
+    in
+    let fresh_eqns, fresh_vars = LMap.fold_map aux [] args in
+    let (dbs , recur) = List.fold_map_acc normalizer_simpl dbs fresh_eqns in
+    (dbs , [SC_Row {tv=a;r_tag;tv_map=fresh_vars;reason_row_simpl=Format.asprintf "normalizer: split constant %a = %a (%a)" Var.pp a Ast_typed.PP_generic.row_tag r_tag (Ast_typed.PP.record_sep Ast_typed.PP_generic.type_value (fun ppf () -> Format.fprintf ppf ", ")) args}] @ List.flatten recur) in
   let gather_forall a forall = (dbs , [SC_Poly { tv=a; forall ; reason_poly_simpl="normalizer: gather_forall"}]) in
   let gather_alias a b = (dbs , [SC_Alias { a ; b ; reason_alias_simpl="normalizer: gather_alias"}]) in
   let reduce_type_app a b =
@@ -100,15 +110,26 @@ let rec normalizer_simpl : (type_constraint , type_constraint_simpl) normalizer 
   | C_equation {aval=({ tsrc = _ ; t = P_forall _ } as a); bval=({ tsrc = _ ; t = P_forall _ } as b)}     -> insert_fresh a b
   (* break down (forall 'b, body = c(args)) into ('a = forall 'b, body and 'a = c(args)) *)
   | C_equation {aval=({ tsrc = _ ; t = P_forall _ } as a); bval=({ tsrc = _ ; t = P_constant _ } as b)}   -> insert_fresh a b
+  (* break down (forall 'b, body = r(args)) into ('a = forall 'b, body and 'a = r(args)) *)
+  | C_equation {aval=({ tsrc = _ ; t = P_forall _ } as a); bval=({ tsrc = _ ; t = P_row _ } as b)}   -> insert_fresh a b
   (* break down (c(args) = c'(args')) into ('a = c(args) and 'a = c'(args')) *)
   | C_equation {aval=({ tsrc = _ ; t = P_constant _ } as a); bval=({ tsrc = _ ; t = P_constant _ } as b)} -> insert_fresh a b
+  (* break down (r(args) = r'(args')) into ('a = r(args) and 'a = r'(args')) *)
+  | C_equation {aval=({ tsrc = _ ; t = P_row _ } as a); bval=({ tsrc = _ ; t = P_row _ } as b)} -> insert_fresh a b
   (* break down (c(args) = forall 'b, body) into ('a = c(args) and 'a = forall 'b, body) *)
   | C_equation {aval=({ tsrc = _ ; t = P_constant _ } as a); bval=({ tsrc = _ ; t = P_forall _ } as b)}   -> insert_fresh a b
+  (* break down (r(args) = forall 'b, body) into ('a = r(args) and 'a = forall 'b, body) *)
+  | C_equation {aval=({ tsrc = _ ; t = P_row _ } as a); bval=({ tsrc = _ ; t = P_forall _ } as b)}   -> insert_fresh a b
+  (* break down (r(args) = c(args')) into ('a = r(args) and 'a = c(args')) *)
+  | C_equation {aval=({ tsrc = _ ; t = P_constant _} as a); bval = ({ tsrc = _ ; t = P_row _} as b)}
+  | C_equation {aval=({ tsrc = _ ; t = P_row _} as a); bval = ({ tsrc = _ ; t = P_constant _} as b)} -> insert_fresh a b
   | C_equation {aval={ tsrc = _ ; t = P_forall forall }; bval={ tsrc = _ ; t = P_variable b }}        -> gather_forall b forall
   | C_equation {aval={ tsrc = _ ; t = P_variable a }; bval={ tsrc = _ ; t = P_forall forall }}            -> gather_forall a forall
   | C_equation {aval={ tsrc = _ ; t = P_variable a }; bval={ tsrc = _ ; t = P_variable b }}               -> gather_alias a b
-  | C_equation {aval={ tsrc = _ ; t = P_variable a }; bval={ tsrc = _ ; t = P_constant { p_ctor_tag; p_ctor_args } }} -> split_constant a p_ctor_tag p_ctor_args
-  | C_equation {aval={ tsrc = _ ; t = P_constant {p_ctor_tag; p_ctor_args} }; bval={ tsrc = _ ; t = P_variable b }}   -> split_constant b p_ctor_tag p_ctor_args
+  | C_equation {aval={ tsrc = _ ; t = P_variable a }; bval={ tsrc = _ ; t = P_constant { p_ctor_tag; p_ctor_args } }}
+  | C_equation {aval={ tsrc = _ ; t = P_constant {p_ctor_tag; p_ctor_args} }; bval={ tsrc = _ ; t = P_variable a }}   -> split_constant a p_ctor_tag p_ctor_args
+  | C_equation {aval={ tsrc = _ ; t = P_variable a }; bval={ tsrc = _ ; t = P_row { p_row_tag; p_row_args } }}
+  | C_equation {aval={ tsrc = _ ; t = P_row { p_row_tag; p_row_args }}; bval={ tsrc = _ ; t = P_variable a}} -> split_row a p_row_tag p_row_args
   (*  Reduce the type-level application, and simplify the resulting constraint + the extra constraints (typeclasses) that appeared at the forall binding site *)
   | C_equation {aval=(_ as a); bval=({ tsrc = _ ; t = P_apply _ } as b)}               -> reduce_type_app a b
   | C_equation {aval=({ tsrc = _ ; t = P_apply _ } as a); bval=(_ as b)}               -> reduce_type_app b a
