@@ -37,4 +37,3 @@ let%expect_test _ =
           * Ask a question on our Discord: https://discord.gg/9rhYaEt
           * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
           * Check the changelog by running 'ligo changelog' |} ] ;
-

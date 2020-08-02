@@ -65,6 +65,8 @@ let assert_same_size = fun a b -> if (List.length a = List.length b) then Some (
 let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : unit option =
   let open Option in
   match (a.type_content, b.type_content) with
+  | T_wildcard, _ -> Some ()
+  | _, T_wildcard -> Some ()
   | T_constant ca, T_constant cb -> assert_eq ca cb
   | T_constant _, _ -> None
   | T_operator {operator=opa;args=la}, T_operator {operator=opb;args=lb} -> (

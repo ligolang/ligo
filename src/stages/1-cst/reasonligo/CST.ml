@@ -174,6 +174,7 @@ and type_expr =
 | TFun    of (type_expr * arrow * type_expr) reg
 | TPar    of type_expr par reg
 | TVar    of variable
+| TWild   of wild
 | TString of lexeme reg
 
 and cartesian = (type_expr, times) nsepseq reg
@@ -424,14 +425,16 @@ let nsepseq_to_region to_region (hd,tl) =
   Region.cover (to_region hd) (last reg tl)
 
 let type_expr_to_region = function
-  TProd {region; _}
-| TSum {region; _}
+  TProd   {region; _}
+| TSum    {region; _}
 | TRecord {region; _}
-| TApp {region; _}
-| TFun {region; _}
-| TPar {region; _}
+| TApp    {region; _}
+| TFun    {region; _}
+| TPar    {region; _}
 | TString {region; _}
-| TVar {region; _} -> region
+| TVar    {region; _}
+| TWild    region
+ -> region
 
 let list_pattern_to_region = function
   PListComp {region; _} | PCons {region; _} -> region

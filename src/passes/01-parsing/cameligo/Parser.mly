@@ -79,10 +79,10 @@ nsepseq(item,sep):
 
 (* Helpers *)
 
-%inline type_name   : "<ident>"  { $1 }
-%inline field_name  : "<ident>"  { $1 }
-%inline struct_name : "<ident>"  { $1 }
-%inline module_name : "<constr>" { $1 }
+%inline type_name        : "<ident>"  { $1 }
+%inline field_name       : "<ident>"  { $1 }
+%inline struct_name      : "<ident>"  { $1 }
+%inline module_name      : "<constr>" { $1 }
 
 (* Non-empty comma-separated values (at least two values) *)
 
@@ -148,6 +148,7 @@ cartesian:
 
 core_type:
   type_name      {    TVar $1 }
+| "_"            {  TWild  $1 }
 | par(type_expr) {    TPar $1 }
 | "<string>"     { TString $1 }
 | module_name "." type_name {

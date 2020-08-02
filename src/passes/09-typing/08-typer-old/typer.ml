@@ -382,6 +382,8 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
         trace_option (unbound_type_variable e name t.location)
         @@ Environment.get_type_opt (Var.todo_cast name) e in
       ok tv
+  | T_wildcard ->
+    return @@ T_wildcard
   | T_constant cst ->
       return (T_constant (convert_type_constant cst))
   | T_operator {type_operator; arguments} ->
@@ -728,30 +730,12 @@ and type_lambda e {
       result ;
     } = 
       let%bind input_type =
-        let%bind input_type =
-          (* Hack to take care of let_in introduced by `simplify/cameligo.ml` in ECase's hack *)
-          let default_action e () = fail @@ (needs_annotation e "the returned value") in
-          match input_type with
-          | Some ty -> ok ty
-          | None -> (
-              match result.content with
-              | I.E_let_in li -> (
-                  match li.rhs.content with
-                  | I.E_variable name when Location.equal_content ~equal:Var.equal name binder -> (
-                      match li.let_binder.ascr with
-                      | Some ty -> ok ty
-                      | None -> default_action li.rhs ()
-                    )
-                  | _ -> default_action li.rhs ()
-                )
-              | _ -> default_action result ()
-            )
-        in
-        evaluate_type e input_type in
+        bind_map_option (evaluate_type e) input_type in
       let%bind output_type =
         bind_map_option (evaluate_type e) output_type
       in
       let binder = cast_var binder in
+      let input_type = Option.unopt ~default: (make_t T_wildcard None) input_type in
       let e' = Environment.add_ez_binder binder input_type e in
       let%bind body = type_expression' ?tv_opt:output_type e' result in
       let output_type = body.type_expression in

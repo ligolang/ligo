@@ -107,6 +107,9 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
       Some const -> return @@ t_constant ~loc const
     | None -> return @@ t_variable_ez ~loc name
     )
+  | TWild reg ->
+    let loc = Location.lift reg in
+    return @@ make_t ~loc @@ T_wildcard
   | TString _s -> fail @@ unsupported_string_singleton te
 
 let compile_selection (selection : CST.selection) =

@@ -79,7 +79,7 @@ let string_of_type_constant = function
 let string_of_type_expression' = function
   | T_operator {operator; args} -> string_of_type_operator operator,args
   | T_constant c -> string_of_type_constant c,[]
-  | T_sum _ | T_record _ | T_arrow _ | T_variable _ ->
+  | T_sum _ | T_record _ | T_arrow _ | T_variable _ | T_wildcard ->
      failwith "not a type operator or constant"
 
 let bind_lmap (l:_ label_map) =

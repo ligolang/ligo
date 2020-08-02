@@ -26,7 +26,8 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
   | T_arrow {type1;type2} ->
      p_constant C_arrow (List.map type_expression_to_type_value [ type1 ; type2 ])
 
-  | T_variable (type_name) -> { tsrc = "wrap: from source code maybe?" ; t = P_variable type_name }
+  | T_variable    (type_name) -> { tsrc = "wrap: from source code" ; t = P_variable type_name }
+  | T_wildcard -> { tsrc = "wrap: from source code" ; t = P_variable (Var.fresh ()) }
   | T_constant (type_name) ->
      let csttag = T.(match type_name with
                         | TC_unit      -> C_unit
@@ -69,7 +70,8 @@ let rec type_expression_to_type_value_copypasted : I.type_expression -> O.type_v
      p_row C_record (T.LMap.map type_expression_to_type_value_copypasted tlist)
   | T_arrow {type1;type2} ->
      p_constant C_arrow (List.map type_expression_to_type_value_copypasted [ type1 ; type2 ])
-  | T_variable type_name -> { tsrc = "wrap: from source code maybe?" ; t = P_variable (Var.todo_cast type_name) }
+  | T_variable    type_name -> { tsrc = "wrap: from source code" ; t = P_variable (Var.todo_cast type_name) }
+  | T_wildcard -> { tsrc = "wrap: from source code" ; t = P_variable (Var.fresh ()) }
   | T_constant (type_name) ->
      let csttag = T.(match type_name with
                         | TC_unit   -> C_unit

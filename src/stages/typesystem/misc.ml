@@ -69,11 +69,13 @@ module Substitution = struct
           let%bind type_name = s_type_name_constant ~substs type_name in
           ok @@ T.T_constant (type_name)
         | T.T_variable variable ->
-           begin
-             match substs ~variable with
-             | Some expr -> s_type_content ~substs expr (* TODO: is it the right thing to recursively examine this? We mustn't go into an infinite loop. *)
-             | None -> ok @@ T.T_variable variable
-           end
+          begin
+            match substs ~variable with
+            | Some expr -> s_type_content ~substs expr (* TODO: is it the right thing to recursively examine this? We mustn't go into an infinite loop. *)
+            | None -> ok @@ T.T_variable variable
+          end
+        | T.T_wildcard ->
+          ok @@ T.T_wildcard
         | T.T_operator {operator;args} ->
           let%bind args = bind_map_list (s_type_expression ~substs) args in
           ok @@ T.T_operator {operator;args}
@@ -87,6 +89,7 @@ module Substitution = struct
       | Ast_core.T_record _ -> failwith "TODO: subst: unimplemented case s_type_expression record"
       | Ast_core.T_arrow _ -> failwith "TODO: subst: unimplemented case s_type_expression arrow"
       | Ast_core.T_variable _ -> failwith "TODO: subst: unimplemented case s_type_expression variable"
+      | Ast_core.T_wildcard -> failwith "TODO: subst: unimplemented case s_type_expression wildcard"
       | Ast_core.T_operator {type_operator;arguments} ->
          let%bind arguments = bind_map_list
              (s_abstr_type_expression ~substs)

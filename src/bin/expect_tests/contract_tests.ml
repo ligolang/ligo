@@ -1783,3 +1783,18 @@ let%expect_test _ =
     y) ,
     z)
     |}];
+
+  run_ligo_bad ["print-ast-typed"; contract "existential.mligo"];
+  [%expect {|
+    ligo: error
+          Lexical error in file "existential.mligo", line 1, characters 8-9:
+          Unexpected character '\''.
+
+
+
+          If you're not sure how to fix this error, you can do one of the following:
+
+          * Visit our documentation: https://ligolang.org/docs/intro/introduction
+          * Ask a question on our Discord: https://discord.gg/9rhYaEt
+          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+          * Check the changelog by running 'ligo changelog' |}]
