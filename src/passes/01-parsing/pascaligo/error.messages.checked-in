@@ -1,6 +1,6 @@
 interactive_expr: Begin Case Verbatim Of LBRACKET WILD ARROW Skip With
 ##
-## Ends in an error in state: 455.
+## Ends in an error in state: 442.
 ##
 ## case(if_clause) -> Case expr Of LBRACKET option(VBAR) cases(if_clause) . RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -11,8 +11,8 @@ interactive_expr: Begin Case Verbatim Of LBRACKET WILD ARROW Skip With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 457, spurious reduction of production nsepseq(case_clause(if_clause),VBAR) -> case_clause(if_clause)
-## In state 454, spurious reduction of production cases(if_clause) -> nsepseq(case_clause(if_clause),VBAR)
+## In state 444, spurious reduction of production nsepseq(case_clause(if_clause),VBAR) -> case_clause(if_clause)
+## In state 441, spurious reduction of production cases(if_clause) -> nsepseq(case_clause(if_clause),VBAR)
 ##
 
 Ill-formed case instruction.
@@ -25,7 +25,7 @@ a block, separated by an arrow '->'.
 
 interactive_expr: Begin Case Verbatim Of LBRACKET With
 ##
-## Ends in an error in state: 367.
+## Ends in an error in state: 354.
 ##
 ## case(if_clause) -> Case expr Of LBRACKET option(VBAR) . cases(if_clause) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -36,11 +36,11 @@ interactive_expr: Begin Case Verbatim Of LBRACKET With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 366, spurious reduction of production option(VBAR) ->
+## In state 353, spurious reduction of production option(VBAR) ->
 ##
 interactive_expr: Begin Case Verbatim Of With
 ##
-## Ends in an error in state: 460.
+## Ends in an error in state: 447.
 ##
 ## case(if_clause) -> Case expr Of option(VBAR) . cases(if_clause) End [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -51,11 +51,11 @@ interactive_expr: Begin Case Verbatim Of With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 365, spurious reduction of production option(VBAR) ->
+## In state 352, spurious reduction of production option(VBAR) ->
 ##
 interactive_expr: Begin Case Verbatim Of WILD ARROW Skip VBAR With
 ##
-## Ends in an error in state: 458.
+## Ends in an error in state: 445.
 ##
 ## nsepseq(case_clause(if_clause),VBAR) -> case_clause(if_clause) VBAR . nsepseq(case_clause(if_clause),VBAR) [ RBRACKET End ]
 ##
@@ -69,7 +69,7 @@ instruction or block, separated by an arrow '->'.
 
 interactive_expr: Begin Case Verbatim Of WILD ARROW Skip With
 ##
-## Ends in an error in state: 461.
+## Ends in an error in state: 448.
 ##
 ## case(if_clause) -> Case expr Of option(VBAR) cases(if_clause) . End [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -80,8 +80,8 @@ interactive_expr: Begin Case Verbatim Of WILD ARROW Skip With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 457, spurious reduction of production nsepseq(case_clause(if_clause),VBAR) -> case_clause(if_clause)
-## In state 454, spurious reduction of production cases(if_clause) -> nsepseq(case_clause(if_clause),VBAR)
+## In state 444, spurious reduction of production nsepseq(case_clause(if_clause),VBAR) -> case_clause(if_clause)
+## In state 441, spurious reduction of production cases(if_clause) -> nsepseq(case_clause(if_clause),VBAR)
 ##
 
 Ill-formed case instruction.
@@ -94,7 +94,7 @@ a block, separated by an arrow '->'.
 
 interactive_expr: Begin Case Verbatim Of WILD ARROW With
 ##
-## Ends in an error in state: 428.
+## Ends in an error in state: 415.
 ##
 ## case_clause(if_clause) -> pattern ARROW . if_clause [ VBAR RBRACKET End ]
 ##
@@ -112,7 +112,7 @@ block, separated by an arrow '->'. A block is either delimited by
 
 interactive_expr: Begin Case Verbatim Of WILD With
 ##
-## Ends in an error in state: 427.
+## Ends in an error in state: 414.
 ##
 ## case_clause(if_clause) -> pattern . ARROW if_clause [ VBAR RBRACKET End ]
 ##
@@ -123,7 +123,7 @@ interactive_expr: Begin Case Verbatim Of WILD With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 403, spurious reduction of production pattern -> core_pattern
+## In state 390, spurious reduction of production pattern -> core_pattern
 ##
 
 Ill-formed clause of a case instruction.
@@ -136,7 +136,7 @@ Note: A block is either delimited by 'block {' and '}' or 'begin' and
 
 interactive_expr: Begin Case Verbatim With
 ##
-## Ends in an error in state: 364.
+## Ends in an error in state: 351.
 ##
 ## case(if_clause) -> Case expr . Of option(VBAR) cases(if_clause) End [ VBAR SEMI RBRACKET RBRACE End Else ]
 ## case(if_clause) -> Case expr . Of LBRACKET option(VBAR) cases(if_clause) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
@@ -148,16 +148,16 @@ interactive_expr: Begin Case Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
 ##
 
 Ill-formed case instruction.
@@ -169,7 +169,7 @@ a block, separated by an arrow '->'.
 
 interactive_expr: Begin Case With
 ##
-## Ends in an error in state: 363.
+## Ends in an error in state: 350.
 ##
 ## case(if_clause) -> Case . expr Of option(VBAR) cases(if_clause) End [ VBAR SEMI RBRACKET RBRACE End Else ]
 ## case(if_clause) -> Case . expr Of LBRACKET option(VBAR) cases(if_clause) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
@@ -184,7 +184,7 @@ the keyword 'of'.
 
 interactive_expr: Begin Constr DOT And With
 ##
-## Ends in an error in state: 435.
+## Ends in an error in state: 422.
 ##
 ## fun_call -> module_field . arguments [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -198,7 +198,7 @@ are expected between parentheses.
 
 interactive_expr: Begin Constr With
 ##
-## Ends in an error in state: 356.
+## Ends in an error in state: 343.
 ##
 ## module_field -> Constr . DOT module_fun [ LPAR ]
 ## projection -> Constr . DOT Ident DOT nsepseq(selection,DOT) [ LBRACKET ASS ]
@@ -211,29 +211,83 @@ Ill-formed selection from a module.
 At this point, the selection operator '.' is expected, followed by the
 name of a value declared in the module.
 
-interactive_expr: Begin For Ident ARROW Ident With
+interactive_expr: Begin For Ident ARROW Ident In With
 ##
-## Ends in an error in state: 347.
+## Ends in an error in state: 339.
 ##
-## for_loop -> For Ident option(arrow_clause) . In collection expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
+## for_loop -> For Ident ARROW Ident In . Map expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
-## For Ident option(arrow_clause)
+## For Ident ARROW Ident In
 ##
 
-Ill-formed bounded loop.
-At this point, the keyword 'in' is expected, followed by the kind of
-collection to be iterated as a keyword, and then the collection itself
-as an expression.
+Ill-formed bounded loop over a map.
+At this point, the keyword 'map' is expected.
+
+interactive_expr: Begin For Ident ARROW Ident In Map With
+##
+## Ends in an error in state: 340.
+##
+## for_loop -> For Ident ARROW Ident In Map . expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
+##
+## The known suffix of the stack is as follows:
+## For Ident ARROW Ident In Map
+##
+
+Ill-formed bounded loop over a map.
+At this point, the map to be iterated is expected as an expression.
+
+interactive_expr: Begin For Ident ARROW Ident In Map Verbatim With
+##
+## Ends in an error in state: 341.
+##
+## for_loop -> For Ident ARROW Ident In Map expr . block [ VBAR SEMI RBRACKET RBRACE End Else ]
+##
+## The known suffix of the stack is as follows:
+## For Ident ARROW Ident In Map expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 205, spurious reduction of production unary_expr -> core_expr
+## In state 152, spurious reduction of production mult_expr -> unary_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
+## In state 154, spurious reduction of production conj_expr -> set_membership
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
+##
+
+Ill-formed bounded loop over a map.
+At this point, the body of the loop is expected as a block of
+instructions.
+
+interactive_expr: Begin For Ident ARROW Ident With
+##
+## Ends in an error in state: 338.
+##
+## for_loop -> For Ident ARROW Ident . In Map expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
+##
+## The known suffix of the stack is as follows:
+## For Ident ARROW Ident
+##
+
+Ill-formed bounded loop over a map.
+At this point, the keywords 'in map' are expected, followed by map to
+be iterated, as an expression.
 
 interactive_expr: Begin For Ident ARROW With
 ##
-## Ends in an error in state: 345.
+## Ends in an error in state: 337.
 ##
-## arrow_clause -> ARROW . Ident [ In ]
+## for_loop -> For Ident ARROW . Ident In Map expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
-## ARROW
+## For Ident ARROW
 ##
 
 Ill-formed bounded loop over a map.
@@ -242,7 +296,7 @@ map is expected.
 
 interactive_expr: Begin For Ident ASS Verbatim To Verbatim Step Verbatim Attributes
 ##
-## Ends in an error in state: 343.
+## Ends in an error in state: 335.
 ##
 ## for_loop -> For Ident ASS expr To expr option(step_clause) . block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -253,18 +307,18 @@ interactive_expr: Begin For Ident ASS Verbatim To Verbatim Step Verbatim Attribu
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
-## In state 341, spurious reduction of production step_clause -> Step expr
-## In state 342, spurious reduction of production option(step_clause) -> step_clause
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
+## In state 333, spurious reduction of production step_clause -> Step expr
+## In state 334, spurious reduction of production option(step_clause) -> step_clause
 ##
 
 Ill-formed bounded loop over a numerical interval.
@@ -273,7 +327,7 @@ expected as a block of instructions.
 
 interactive_expr: Begin For Ident ASS Verbatim To Verbatim Step With
 ##
-## Ends in an error in state: 340.
+## Ends in an error in state: 332.
 ##
 ## step_clause -> Step . expr [ Block Begin ]
 ##
@@ -286,7 +340,7 @@ At this point, the index increment is expected as an expression.
 
 interactive_expr: Begin For Ident ASS Verbatim To Verbatim With
 ##
-## Ends in an error in state: 339.
+## Ends in an error in state: 331.
 ##
 ## for_loop -> For Ident ASS expr To expr . option(step_clause) block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -297,16 +351,16 @@ interactive_expr: Begin For Ident ASS Verbatim To Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
 ##
 
 Ill-formed bounded loop over a numerical interval.
@@ -318,7 +372,7 @@ following is expected:
 
 interactive_expr: Begin For Ident ASS Verbatim To With
 ##
-## Ends in an error in state: 338.
+## Ends in an error in state: 330.
 ##
 ## for_loop -> For Ident ASS expr To . expr option(step_clause) block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -332,7 +386,7 @@ expression.
 
 interactive_expr: Begin For Ident ASS Verbatim With
 ##
-## Ends in an error in state: 337.
+## Ends in an error in state: 329.
 ##
 ## for_loop -> For Ident ASS expr . To expr option(step_clause) block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -343,16 +397,16 @@ interactive_expr: Begin For Ident ASS Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
 ##
 
 Ill-formed bounded loop over a numerical interval.
@@ -362,7 +416,7 @@ final value of the index.
 
 interactive_expr: Begin For Ident ASS With
 ##
-## Ends in an error in state: 336.
+## Ends in an error in state: 328.
 ##
 ## for_loop -> For Ident ASS . expr To expr option(step_clause) block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -376,41 +430,41 @@ one for the index.
 
 interactive_expr: Begin For Ident In Set Verbatim With
 ##
-## Ends in an error in state: 353.
+## Ends in an error in state: 326.
 ##
-## for_loop -> For Ident option(arrow_clause) In collection expr . block [ VBAR SEMI RBRACKET RBRACE End Else ]
+## for_loop -> For Ident In collection expr . block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
-## For Ident option(arrow_clause) In collection expr
+## For Ident In collection expr
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
 ##
 
-Ill-formed bounded loop over a collection.
+Ill-formed bounded loop over a list or a set.
 At this point, if the collection is complete, the body of the loop is
 expected as a block of instructions.
 
 interactive_expr: Begin For Ident In Set With
 ##
-## Ends in an error in state: 352.
+## Ends in an error in state: 325.
 ##
-## for_loop -> For Ident option(arrow_clause) In collection . expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
+## for_loop -> For Ident In collection . expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
-## For Ident option(arrow_clause) In collection
+## For Ident In collection
 ##
 
 Ill-formed bounded loop over a collection.
@@ -418,24 +472,25 @@ At this point, the collection is expected as an expression.
 
 interactive_expr: Begin For Ident In With
 ##
-## Ends in an error in state: 348.
+## Ends in an error in state: 322.
 ##
-## for_loop -> For Ident option(arrow_clause) In . collection expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
+## for_loop -> For Ident In . collection expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
-## For Ident option(arrow_clause) In
+## For Ident In
 ##
 
-Ill-formed bounded loop over a collection.
-At this point, the kind of the collection is expected ('map', 'set',
-or 'list'), followed by the actual collection as an expression.
+Ill-formed bounded loop over a set or a list.
+At this point, the keywords 'set' or 'list' are expected, followed by
+the actual collection as an expression.
 
 interactive_expr: Begin For Ident With
 ##
-## Ends in an error in state: 335.
+## Ends in an error in state: 321.
 ##
+## for_loop -> For Ident . ARROW Ident In Map expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ## for_loop -> For Ident . ASS expr To expr option(step_clause) block [ VBAR SEMI RBRACKET RBRACE End Else ]
-## for_loop -> For Ident . option(arrow_clause) In collection expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
+## for_loop -> For Ident . In collection expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## For Ident
@@ -454,10 +509,11 @@ At this point, one of the following is expected:
 
 interactive_expr: Begin For With
 ##
-## Ends in an error in state: 334.
+## Ends in an error in state: 320.
 ##
+## for_loop -> For . Ident ARROW Ident In Map expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ## for_loop -> For . Ident ASS expr To expr option(step_clause) block [ VBAR SEMI RBRACKET RBRACE End Else ]
-## for_loop -> For . Ident option(arrow_clause) In collection expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
+## for_loop -> For . Ident In collection expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## For
@@ -474,7 +530,7 @@ At this point, one of the following is expected:
 
 interactive_expr: Begin Ident ASS With
 ##
-## Ends in an error in state: 441.
+## Ends in an error in state: 428.
 ##
 ## assignment -> lhs ASS . rhs [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -488,7 +544,7 @@ expression.
 
 interactive_expr: Begin Ident With
 ##
-## Ends in an error in state: 440.
+## Ends in an error in state: 427.
 ##
 ## assignment -> lhs . ASS rhs [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -499,8 +555,8 @@ interactive_expr: Begin Ident With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 325, spurious reduction of production path -> Ident
-## In state 434, spurious reduction of production lhs -> path
+## In state 311, spurious reduction of production path -> Ident
+## In state 421, spurious reduction of production lhs -> path
 ##
 
 Ill-formed assignment.
@@ -509,7 +565,7 @@ the assignment operator ':=' is expected, followed by an expression.
 
 interactive_expr: Begin If Verbatim Then LBRACE Skip With
 ##
-## Ends in an error in state: 492.
+## Ends in an error in state: 479.
 ##
 ## clause_block -> LBRACE sep_or_term_list(statement,SEMI) . RBRACE [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -520,8 +576,8 @@ interactive_expr: Begin If Verbatim Then LBRACE Skip With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 478, spurious reduction of production nsepseq(statement,SEMI) -> statement
-## In state 495, spurious reduction of production sep_or_term_list(statement,SEMI) -> nsepseq(statement,SEMI)
+## In state 465, spurious reduction of production nsepseq(statement,SEMI) -> statement
+## In state 482, spurious reduction of production sep_or_term_list(statement,SEMI) -> nsepseq(statement,SEMI)
 ##
 
 Ill-formed block of statements.
@@ -533,7 +589,7 @@ expected:
 
 interactive_expr: Begin If Verbatim Then LBRACE With
 ##
-## Ends in an error in state: 324.
+## Ends in an error in state: 310.
 ##
 ## clause_block -> LBRACE . sep_or_term_list(statement,SEMI) RBRACE [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -547,7 +603,7 @@ semicolons ';' are expected and followed by a closing brace '}'.
 
 interactive_expr: Begin If Verbatim Then Skip Else With
 ##
-## Ends in an error in state: 498.
+## Ends in an error in state: 485.
 ##
 ## conditional -> If expr Then if_clause option(SEMI) Else . if_clause [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -564,7 +620,7 @@ Note: A block, in this context, is either delimited by '{' and '}' or
 
 interactive_expr: Begin If Verbatim Then Skip With
 ##
-## Ends in an error in state: 497.
+## Ends in an error in state: 484.
 ##
 ## conditional -> If expr Then if_clause option(SEMI) . Else if_clause [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -575,7 +631,7 @@ interactive_expr: Begin If Verbatim Then Skip With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 496, spurious reduction of production option(SEMI) ->
+## In state 483, spurious reduction of production option(SEMI) ->
 ##
 
 Ill-formed conditional instruction.
@@ -588,7 +644,7 @@ Note: A block, in this context, is either delimited by '{' and '}' or
 
 interactive_expr: Begin If Verbatim Then With
 ##
-## Ends in an error in state: 323.
+## Ends in an error in state: 309.
 ##
 ## conditional -> If expr Then . if_clause option(SEMI) Else if_clause [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -605,7 +661,7 @@ Note: A block, in this context, is either delimited by '{' and '}' or
 
 interactive_expr: Begin If Verbatim With
 ##
-## Ends in an error in state: 322.
+## Ends in an error in state: 308.
 ##
 ## conditional -> If expr . Then if_clause option(SEMI) Else if_clause [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -616,16 +672,16 @@ interactive_expr: Begin If Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
 ##
 
 Ill-formed conditional instruction.
@@ -638,7 +694,7 @@ Note: A block, in this context, is either delimited by '{' and '}' or
 
 interactive_expr: Begin If With
 ##
-## Ends in an error in state: 321.
+## Ends in an error in state: 307.
 ##
 ## conditional -> If . expr Then if_clause option(SEMI) Else if_clause [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -727,10 +783,10 @@ value declared in the module.
 
 interactive_expr: Begin Patch Ident While
 ##
-## Ends in an error in state: 268.
+## Ends in an error in state: 269.
 ##
 ## map_patch -> Patch path . With ne_injection(Map,binding) [ VBAR SEMI RBRACKET RBRACE End Else ]
-## record_patch -> Patch path . With ne_injection(Record,field_assignment) [ VBAR SEMI RBRACKET RBRACE End Else ]
+## record_patch -> Patch path . With record_expr [ VBAR SEMI RBRACKET RBRACE End Else ]
 ## set_patch -> Patch path . With ne_injection(Set,expr) [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
@@ -750,7 +806,7 @@ by a map, a set or a record expression.
 
 interactive_expr: Begin Patch Ident With Map LBRACKET Verbatim ARROW Bytes With
 ##
-## Ends in an error in state: 302.
+## Ends in an error in state: 288.
 ##
 ## ne_injection(Map,binding) -> Map LBRACKET sep_or_term_list(binding,SEMI) . RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -761,19 +817,19 @@ interactive_expr: Begin Patch Ident With Map LBRACKET Verbatim ARROW Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
-## In state 308, spurious reduction of production binding -> expr ARROW expr
-## In state 309, spurious reduction of production nsepseq(binding,SEMI) -> binding
-## In state 305, spurious reduction of production sep_or_term_list(binding,SEMI) -> nsepseq(binding,SEMI)
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
+## In state 294, spurious reduction of production binding -> expr ARROW expr
+## In state 295, spurious reduction of production nsepseq(binding,SEMI) -> binding
+## In state 291, spurious reduction of production sep_or_term_list(binding,SEMI) -> nsepseq(binding,SEMI)
 ##
 
 Ill-formed map patch.
@@ -786,7 +842,7 @@ separated by an arrow '->'.
 
 interactive_expr: Begin Patch Ident With Map LBRACKET With
 ##
-## Ends in an error in state: 301.
+## Ends in an error in state: 287.
 ##
 ## ne_injection(Map,binding) -> Map LBRACKET . sep_or_term_list(binding,SEMI) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -802,7 +858,7 @@ separated by an arrow '->'.
 
 interactive_expr: Begin Patch Ident With Map Verbatim ARROW Bytes With
 ##
-## Ends in an error in state: 316.
+## Ends in an error in state: 302.
 ##
 ## ne_injection(Map,binding) -> Map sep_or_term_list(binding,SEMI) . End [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -813,19 +869,19 @@ interactive_expr: Begin Patch Ident With Map Verbatim ARROW Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
-## In state 308, spurious reduction of production binding -> expr ARROW expr
-## In state 309, spurious reduction of production nsepseq(binding,SEMI) -> binding
-## In state 305, spurious reduction of production sep_or_term_list(binding,SEMI) -> nsepseq(binding,SEMI)
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
+## In state 294, spurious reduction of production binding -> expr ARROW expr
+## In state 295, spurious reduction of production nsepseq(binding,SEMI) -> binding
+## In state 291, spurious reduction of production sep_or_term_list(binding,SEMI) -> nsepseq(binding,SEMI)
 ##
 
 Ill-formed map patch.
@@ -838,7 +894,7 @@ separated by an arrow '->'.
 
 interactive_expr: Begin Patch Ident With Map With
 ##
-## Ends in an error in state: 300.
+## Ends in an error in state: 286.
 ##
 ## ne_injection(Map,binding) -> Map . sep_or_term_list(binding,SEMI) End [ VBAR SEMI RBRACKET RBRACE End Else ]
 ## ne_injection(Map,binding) -> Map . LBRACKET sep_or_term_list(binding,SEMI) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
@@ -856,124 +912,27 @@ At this point, one of the following is expected:
 Note: A binding is made of two expressions (a key and a value)
 separated by an arrow '->'.
 
-interactive_expr: Begin Patch Ident With Record Ident EQ Bytes With
-##
-## Ends in an error in state: 298.
-##
-## ne_injection(Record,field_assignment) -> Record sep_or_term_list(field_assignment,SEMI) . End [ VBAR SEMI RBRACKET RBRACE End Else ]
-##
-## The known suffix of the stack is as follows:
-## Record sep_or_term_list(field_assignment,SEMI)
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
-## In state 568, spurious reduction of production field_assignment -> Ident EQ expr
-## In state 291, spurious reduction of production nsepseq(field_assignment,SEMI) -> field_assignment
-## In state 290, spurious reduction of production sep_or_term_list(field_assignment,SEMI) -> nsepseq(field_assignment,SEMI)
-##
-
-Ill-formed record patch.
-At this point, if the field assignment (update) is complete, one of
-the following is expected:
-  * a semicolon ';' followed by another field assignment (update);
-  * the keyword 'end' if the record is complete.
-
-interactive_expr: Begin Patch Ident With Record LBRACKET Ident EQ Bytes With
-##
-## Ends in an error in state: 287.
-##
-## ne_injection(Record,field_assignment) -> Record LBRACKET sep_or_term_list(field_assignment,SEMI) . RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
-##
-## The known suffix of the stack is as follows:
-## Record LBRACKET sep_or_term_list(field_assignment,SEMI)
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
-## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
-## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
-## In state 568, spurious reduction of production field_assignment -> Ident EQ expr
-## In state 291, spurious reduction of production nsepseq(field_assignment,SEMI) -> field_assignment
-## In state 290, spurious reduction of production sep_or_term_list(field_assignment,SEMI) -> nsepseq(field_assignment,SEMI)
-##
-
-Ill-formed record patch.
-At this point, if the field assignment (update) is complete, one of
-the following is expected:
-  * a semicolon ';' followed by another field assignment (update);
-  * a closing bracket ']' if the record is complete.
-
-interactive_expr: Begin Patch Ident With Record LBRACKET With
-##
-## Ends in an error in state: 286.
-##
-## ne_injection(Record,field_assignment) -> Record LBRACKET . sep_or_term_list(field_assignment,SEMI) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
-##
-## The known suffix of the stack is as follows:
-## Record LBRACKET
-##
-
-Ill-formed record patch.
-At this point, assignments to record fields (updates) are expected,
-separated by semicolons ';' and followed by a closing bracket ']'.
-
-interactive_expr: Begin Patch Ident With Record With
-##
-## Ends in an error in state: 285.
-##
-## ne_injection(Record,field_assignment) -> Record . sep_or_term_list(field_assignment,SEMI) End [ VBAR SEMI RBRACKET RBRACE End Else ]
-## ne_injection(Record,field_assignment) -> Record . LBRACKET sep_or_term_list(field_assignment,SEMI) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
-##
-## The known suffix of the stack is as follows:
-## Record
-##
-
-Ill-formed record patch.
-At this point, one of the following is expected:
-  * assignments to record fields (updates), separated by semicolons
-    ';' and followed by the keyword 'end';
-  * an opening bracket '[' followed by assignments to record fields
-    and a closing bracket ']'.
-
 interactive_expr: Record With
 ##
 ## Ends in an error in state: 97.
 ##
-## record_expr -> Record . sep_or_term_list(field_assignment,SEMI) End [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## record_expr -> Record . LBRACKET sep_or_term_list(field_assignment,SEMI) RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## ne_injection(Record,field_assignment) -> Record . sep_or_term_list(field_assignment,SEMI) End [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## ne_injection(Record,field_assignment) -> Record . LBRACKET sep_or_term_list(field_assignment,SEMI) RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Record
 ##
 
 Ill-formed record expression.
-At this point, assignments to record fields are expected and followed
-by the keyword 'end'.
+At this point, one of the following is expected:
+  * assignments to record fields, separated by semicolons
+    ';' and followed by the keyword 'end';
+  * an opening bracket '[' followed by assignments and a closing
+    bracket ']'.
 
 interactive_expr: Begin Patch Ident With Set LBRACKET Verbatim With
 ##
-## Ends in an error in state: 272.
+## Ends in an error in state: 273.
 ##
 ## ne_injection(Set,expr) -> Set LBRACKET sep_or_term_list(expr,SEMI) . RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -984,18 +943,18 @@ interactive_expr: Begin Patch Ident With Set LBRACKET Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
-## In state 276, spurious reduction of production nsepseq(expr,SEMI) -> expr
-## In state 275, spurious reduction of production sep_or_term_list(expr,SEMI) -> nsepseq(expr,SEMI)
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
+## In state 277, spurious reduction of production nsepseq(expr,SEMI) -> expr
+## In state 276, spurious reduction of production sep_or_term_list(expr,SEMI) -> nsepseq(expr,SEMI)
 ##
 
 Ill-formed set patch.
@@ -1006,7 +965,7 @@ following is expected:
 
 interactive_expr: Begin Patch Ident With Set LBRACKET With
 ##
-## Ends in an error in state: 271.
+## Ends in an error in state: 272.
 ##
 ## ne_injection(Set,expr) -> Set LBRACKET . sep_or_term_list(expr,SEMI) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -1020,7 +979,7 @@ expected and followed by a closing brace ']'.
 
 interactive_expr: Begin Patch Ident With Set Verbatim With
 ##
-## Ends in an error in state: 283.
+## Ends in an error in state: 284.
 ##
 ## ne_injection(Set,expr) -> Set sep_or_term_list(expr,SEMI) . End [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -1031,18 +990,18 @@ interactive_expr: Begin Patch Ident With Set Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
-## In state 276, spurious reduction of production nsepseq(expr,SEMI) -> expr
-## In state 275, spurious reduction of production sep_or_term_list(expr,SEMI) -> nsepseq(expr,SEMI)
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
+## In state 277, spurious reduction of production nsepseq(expr,SEMI) -> expr
+## In state 276, spurious reduction of production sep_or_term_list(expr,SEMI) -> nsepseq(expr,SEMI)
 ##
 
 Ill-formed set patch.
@@ -1053,7 +1012,7 @@ following is expected:
 
 interactive_expr: Begin Patch Ident With Set With
 ##
-## Ends in an error in state: 270.
+## Ends in an error in state: 271.
 ##
 ## ne_injection(Set,expr) -> Set . sep_or_term_list(expr,SEMI) End [ VBAR SEMI RBRACKET RBRACE End Else ]
 ## ne_injection(Set,expr) -> Set . LBRACKET sep_or_term_list(expr,SEMI) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
@@ -1070,10 +1029,10 @@ At this point, one of the following is expected:
 
 interactive_expr: Begin Patch Ident With With
 ##
-## Ends in an error in state: 269.
+## Ends in an error in state: 270.
 ##
 ## map_patch -> Patch path With . ne_injection(Map,binding) [ VBAR SEMI RBRACKET RBRACE End Else ]
-## record_patch -> Patch path With . ne_injection(Record,field_assignment) [ VBAR SEMI RBRACKET RBRACE End Else ]
+## record_patch -> Patch path With . record_expr [ VBAR SEMI RBRACKET RBRACE End Else ]
 ## set_patch -> Patch path With . ne_injection(Set,expr) [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
@@ -1085,10 +1044,10 @@ At this point, a map, a record or a set is expected.
 
 interactive_expr: Begin Patch With
 ##
-## Ends in an error in state: 267.
+## Ends in an error in state: 268.
 ##
 ## map_patch -> Patch . path With ne_injection(Map,binding) [ VBAR SEMI RBRACKET RBRACE End Else ]
-## record_patch -> Patch . path With ne_injection(Record,field_assignment) [ VBAR SEMI RBRACKET RBRACE End Else ]
+## record_patch -> Patch . path With record_expr [ VBAR SEMI RBRACKET RBRACE End Else ]
 ## set_patch -> Patch . path With ne_injection(Set,expr) [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
@@ -1101,7 +1060,7 @@ expected.
 
 interactive_expr: Begin Remove Verbatim From Map With
 ##
-## Ends in an error in state: 265.
+## Ends in an error in state: 266.
 ##
 ## map_remove -> Remove expr From Map . path [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -1114,7 +1073,7 @@ At this point, the fully qualified name of a map is expected.
 
 interactive_expr: Begin Remove Verbatim From Set With
 ##
-## Ends in an error in state: 263.
+## Ends in an error in state: 264.
 ##
 ## set_remove -> Remove expr From Set . path [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -1127,7 +1086,7 @@ At this point, the fully qualified name of a set is expected.
 
 interactive_expr: Begin Remove Verbatim From With
 ##
-## Ends in an error in state: 262.
+## Ends in an error in state: 263.
 ##
 ## map_remove -> Remove expr From . Map path [ VBAR SEMI RBRACKET RBRACE End Else ]
 ## set_remove -> Remove expr From . Set path [ VBAR SEMI RBRACKET RBRACE End Else ]
@@ -1141,7 +1100,7 @@ At this point, either the keyword 'map' or 'set' is expected.
 
 interactive_expr: Begin Remove Verbatim With
 ##
-## Ends in an error in state: 261.
+## Ends in an error in state: 262.
 ##
 ## map_remove -> Remove expr . From Map path [ VBAR SEMI RBRACKET RBRACE End Else ]
 ## set_remove -> Remove expr . From Set path [ VBAR SEMI RBRACKET RBRACE End Else ]
@@ -1153,16 +1112,16 @@ interactive_expr: Begin Remove Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
 ##
 
 Ill-formed removal in a map or a set.
@@ -1172,7 +1131,7 @@ the keyword 'from' is expected, followed by the keyword 'map' or
 
 interactive_expr: Begin Remove With
 ##
-## Ends in an error in state: 260.
+## Ends in an error in state: 261.
 ##
 ## map_remove -> Remove . expr From Map path [ VBAR SEMI RBRACKET RBRACE End Else ]
 ## set_remove -> Remove . expr From Set path [ VBAR SEMI RBRACKET RBRACE End Else ]
@@ -1192,7 +1151,7 @@ separated by an arrow '->'.
 
 interactive_expr: Begin Skip End While
 ##
-## Ends in an error in state: 238.
+## Ends in an error in state: 239.
 ##
 ## block_with -> block . With expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
@@ -1206,7 +1165,7 @@ expression whose value is that of the whole block.
 
 interactive_expr: Begin Skip End With With
 ##
-## Ends in an error in state: 239.
+## Ends in an error in state: 240.
 ##
 ## block_with -> block With . expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
@@ -1220,7 +1179,7 @@ block.
 
 interactive_expr: Begin Skip With
 ##
-## Ends in an error in state: 500.
+## Ends in an error in state: 487.
 ##
 ## block -> Begin sep_or_term_list(statement,SEMI) . End [ With VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -1231,8 +1190,8 @@ interactive_expr: Begin Skip With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 478, spurious reduction of production nsepseq(statement,SEMI) -> statement
-## In state 495, spurious reduction of production sep_or_term_list(statement,SEMI) -> nsepseq(statement,SEMI)
+## In state 465, spurious reduction of production nsepseq(statement,SEMI) -> statement
+## In state 482, spurious reduction of production sep_or_term_list(statement,SEMI) -> nsepseq(statement,SEMI)
 ##
 
 Ill-formed block of statements.
@@ -1313,7 +1272,7 @@ At this point, a variable name is expected.
 
 interactive_expr: Begin While Verbatim With
 ##
-## Ends in an error in state: 507.
+## Ends in an error in state: 494.
 ##
 ## while_loop -> While expr . block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -1324,16 +1283,16 @@ interactive_expr: Begin While Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
 ##
 
 Ill-formed general loop.
@@ -1372,7 +1331,7 @@ At this point, one of the following statements is expected:
 
 interactive_expr: BigMap LBRACKET Verbatim ARROW Bytes With
 ##
-## Ends in an error in state: 502.
+## Ends in an error in state: 489.
 ##
 ## injection(BigMap,binding) -> BigMap LBRACKET sep_or_term_list(binding,SEMI) . RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
@@ -1383,19 +1342,19 @@ interactive_expr: BigMap LBRACKET Verbatim ARROW Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
-## In state 308, spurious reduction of production binding -> expr ARROW expr
-## In state 309, spurious reduction of production nsepseq(binding,SEMI) -> binding
-## In state 305, spurious reduction of production sep_or_term_list(binding,SEMI) -> nsepseq(binding,SEMI)
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
+## In state 294, spurious reduction of production binding -> expr ARROW expr
+## In state 295, spurious reduction of production nsepseq(binding,SEMI) -> binding
+## In state 291, spurious reduction of production sep_or_term_list(binding,SEMI) -> nsepseq(binding,SEMI)
 ##
 
 Ill-formed big_map expression.
@@ -1428,7 +1387,7 @@ separated by an arrow '->'.
 
 interactive_expr: BigMap Verbatim ARROW Bytes With
 ##
-## Ends in an error in state: 505.
+## Ends in an error in state: 492.
 ##
 ## injection(BigMap,binding) -> BigMap sep_or_term_list(binding,SEMI) . End [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
@@ -1439,19 +1398,19 @@ interactive_expr: BigMap Verbatim ARROW Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
-## In state 308, spurious reduction of production binding -> expr ARROW expr
-## In state 309, spurious reduction of production nsepseq(binding,SEMI) -> binding
-## In state 305, spurious reduction of production sep_or_term_list(binding,SEMI) -> nsepseq(binding,SEMI)
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
+## In state 294, spurious reduction of production binding -> expr ARROW expr
+## In state 295, spurious reduction of production nsepseq(binding,SEMI) -> binding
+## In state 291, spurious reduction of production sep_or_term_list(binding,SEMI) -> nsepseq(binding,SEMI)
 ##
 
 Ill-formed big_map expression.
@@ -1488,7 +1447,7 @@ separated by an arrow '->'.
 
 interactive_expr: Block LBRACE Skip With
 ##
-## Ends in an error in state: 509.
+## Ends in an error in state: 496.
 ##
 ## block -> Block LBRACE sep_or_term_list(statement,SEMI) . RBRACE [ With VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -1499,8 +1458,8 @@ interactive_expr: Block LBRACE Skip With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 478, spurious reduction of production nsepseq(statement,SEMI) -> statement
-## In state 495, spurious reduction of production sep_or_term_list(statement,SEMI) -> nsepseq(statement,SEMI)
+## In state 465, spurious reduction of production nsepseq(statement,SEMI) -> statement
+## In state 482, spurious reduction of production sep_or_term_list(statement,SEMI) -> nsepseq(statement,SEMI)
 ##
 
 Ill-formed block of statements.
@@ -1552,7 +1511,7 @@ At this point, the arguments are expected as a tuple of expressions.
 
 interactive_expr: Case Verbatim Of C_Some LPAR WILD With
 ##
-## Ends in an error in state: 390.
+## Ends in an error in state: 377.
 ##
 ## par(core_pattern) -> LPAR core_pattern . RPAR [ SEMI RPAR RBRACKET End CONS COMMA ARROW ]
 ##
@@ -1566,7 +1525,7 @@ is expected
 
 interactive_expr: Case Verbatim Of C_Some LPAR With
 ##
-## Ends in an error in state: 382.
+## Ends in an error in state: 369.
 ##
 ## par(core_pattern) -> LPAR . core_pattern RPAR [ SEMI RPAR RBRACKET End CONS COMMA ARROW ]
 ##
@@ -1579,7 +1538,7 @@ At this point, the parameter is expected as a pattern.
 
 interactive_expr: Case Verbatim Of C_Some With
 ##
-## Ends in an error in state: 381.
+## Ends in an error in state: 368.
 ##
 ## constr_pattern -> C_Some . par(core_pattern) [ SEMI RPAR RBRACKET End CONS COMMA ARROW ]
 ##
@@ -1592,7 +1551,7 @@ At this point, the parameters are expected in a tuple of patterns.
 
 interactive_expr: Case Verbatim Of Constr LPAR With
 ##
-## Ends in an error in state: 380.
+## Ends in an error in state: 367.
 ##
 ## par(nsepseq(core_pattern,COMMA)) -> LPAR . nsepseq(core_pattern,COMMA) RPAR [ SEMI RPAR RBRACKET End CONS COMMA ARROW ]
 ##
@@ -1605,7 +1564,7 @@ At this point, the first component is expected as a pattern.
 
 interactive_expr: Case Verbatim Of LBRACKET WILD ARROW Bytes With
 ##
-## Ends in an error in state: 519.
+## Ends in an error in state: 506.
 ##
 ## case(expr) -> Case expr Of LBRACKET option(VBAR) cases(expr) . RBRACKET [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
@@ -1616,19 +1575,19 @@ interactive_expr: Case Verbatim Of LBRACKET WILD ARROW Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
-## In state 517, spurious reduction of production case_clause(expr) -> pattern ARROW expr
-## In state 521, spurious reduction of production nsepseq(case_clause(expr),VBAR) -> case_clause(expr)
-## In state 518, spurious reduction of production cases(expr) -> nsepseq(case_clause(expr),VBAR)
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
+## In state 504, spurious reduction of production case_clause(expr) -> pattern ARROW expr
+## In state 508, spurious reduction of production nsepseq(case_clause(expr),VBAR) -> case_clause(expr)
+## In state 505, spurious reduction of production cases(expr) -> nsepseq(case_clause(expr),VBAR)
 ##
 
 Ill-formed case expression.
@@ -1641,7 +1600,7 @@ by an arrow '->'.
 
 interactive_expr: Case Verbatim Of LBRACKET With
 ##
-## Ends in an error in state: 514.
+## Ends in an error in state: 501.
 ##
 ## case(expr) -> Case expr Of LBRACKET option(VBAR) . cases(expr) RBRACKET [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
@@ -1652,11 +1611,11 @@ interactive_expr: Case Verbatim Of LBRACKET With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 513, spurious reduction of production option(VBAR) ->
+## In state 500, spurious reduction of production option(VBAR) ->
 ##
 interactive_expr: Case Verbatim Of With
 ##
-## Ends in an error in state: 524.
+## Ends in an error in state: 511.
 ##
 ## case(expr) -> Case expr Of option(VBAR) . cases(expr) End [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
@@ -1667,11 +1626,11 @@ interactive_expr: Case Verbatim Of With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 512, spurious reduction of production option(VBAR) ->
+## In state 499, spurious reduction of production option(VBAR) ->
 ##
 interactive_expr: Case Verbatim Of WILD ARROW Bytes VBAR With
 ##
-## Ends in an error in state: 522.
+## Ends in an error in state: 509.
 ##
 ## nsepseq(case_clause(expr),VBAR) -> case_clause(expr) VBAR . nsepseq(case_clause(expr),VBAR) [ RBRACKET End ]
 ##
@@ -1685,7 +1644,7 @@ expression separated by an arrow '->'.
 
 interactive_expr: Case Verbatim Of LPAR WILD COMMA With
 ##
-## Ends in an error in state: 397.
+## Ends in an error in state: 384.
 ##
 ## nsepseq(core_pattern,COMMA) -> core_pattern COMMA . nsepseq(core_pattern,COMMA) [ RPAR ]
 ##
@@ -1698,7 +1657,7 @@ At this point, a tuple component is expected as a pattern.
 
 interactive_expr: Case Verbatim Of LPAR WILD CONS Bytes With
 ##
-## Ends in an error in state: 409.
+## Ends in an error in state: 396.
 ##
 ## par(cons_pattern) -> LPAR cons_pattern . RPAR [ SEMI RPAR RBRACKET End CONS COMMA ARROW ]
 ##
@@ -1709,8 +1668,8 @@ interactive_expr: Case Verbatim Of LPAR WILD CONS Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 403, spurious reduction of production pattern -> core_pattern
-## In state 402, spurious reduction of production cons_pattern -> core_pattern CONS pattern
+## In state 390, spurious reduction of production pattern -> core_pattern
+## In state 389, spurious reduction of production cons_pattern -> core_pattern CONS pattern
 ##
 
 Ill-formed case expression.
@@ -1719,7 +1678,7 @@ At this point, if the list pattern is complete, a closing parenthesis
 
 interactive_expr: Case Verbatim Of LPAR WILD CONS With
 ##
-## Ends in an error in state: 401.
+## Ends in an error in state: 388.
 ##
 ## cons_pattern -> core_pattern CONS . pattern [ RPAR ]
 ##
@@ -1732,7 +1691,7 @@ At this point, a pattern matching a list is expected.
 
 interactive_expr: Case Verbatim Of LPAR WILD With
 ##
-## Ends in an error in state: 394.
+## Ends in an error in state: 381.
 ##
 ## par(nsepseq(core_pattern,COMMA)) -> LPAR nsepseq(core_pattern,COMMA) . RPAR [ SEMI RPAR RBRACKET End CONS COMMA ARROW ]
 ##
@@ -1743,7 +1702,7 @@ interactive_expr: Case Verbatim Of LPAR WILD With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 400, spurious reduction of production nsepseq(core_pattern,COMMA) -> core_pattern
+## In state 387, spurious reduction of production nsepseq(core_pattern,COMMA) -> core_pattern
 ##
 
 Ill-formed tuple of patterns.
@@ -1754,7 +1713,7 @@ following is expected:
 
 interactive_expr: Case Verbatim Of LPAR With
 ##
-## Ends in an error in state: 375.
+## Ends in an error in state: 362.
 ##
 ## par(cons_pattern) -> LPAR . cons_pattern RPAR [ SEMI RPAR RBRACKET End CONS COMMA ARROW ]
 ## par(nsepseq(core_pattern,COMMA)) -> LPAR . nsepseq(core_pattern,COMMA) RPAR [ SEMI RPAR RBRACKET End CONS COMMA ARROW ]
@@ -1768,7 +1727,7 @@ At this point, a pattern matching non-empty lists is expected.
 
 interactive_expr: Case Verbatim Of List LBRACKET WILD With
 ##
-## Ends in an error in state: 413.
+## Ends in an error in state: 400.
 ##
 ## injection(List,core_pattern) -> List LBRACKET sep_or_term_list(core_pattern,SEMI) . RBRACKET [ SEMI RPAR RBRACKET End CONS COMMA ARROW ]
 ##
@@ -1779,8 +1738,8 @@ interactive_expr: Case Verbatim Of List LBRACKET WILD With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 417, spurious reduction of production nsepseq(core_pattern,SEMI) -> core_pattern
-## In state 416, spurious reduction of production sep_or_term_list(core_pattern,SEMI) -> nsepseq(core_pattern,SEMI)
+## In state 404, spurious reduction of production nsepseq(core_pattern,SEMI) -> core_pattern
+## In state 403, spurious reduction of production sep_or_term_list(core_pattern,SEMI) -> nsepseq(core_pattern,SEMI)
 ##
 
 Ill-formed list of patterns.
@@ -1791,7 +1750,7 @@ the following is expected:
 
 interactive_expr: Case Verbatim Of List LBRACKET With
 ##
-## Ends in an error in state: 411.
+## Ends in an error in state: 398.
 ##
 ## injection(List,core_pattern) -> List LBRACKET . sep_or_term_list(core_pattern,SEMI) RBRACKET [ SEMI RPAR RBRACKET End CONS COMMA ARROW ]
 ## injection(List,core_pattern) -> List LBRACKET . RBRACKET [ SEMI RPAR RBRACKET End CONS COMMA ARROW ]
@@ -1807,7 +1766,7 @@ At this point, one of the following is expected:
 
 interactive_expr: Case Verbatim Of List WILD With
 ##
-## Ends in an error in state: 425.
+## Ends in an error in state: 412.
 ##
 ## injection(List,core_pattern) -> List sep_or_term_list(core_pattern,SEMI) . End [ SEMI RPAR RBRACKET End CONS COMMA ARROW ]
 ##
@@ -1818,8 +1777,8 @@ interactive_expr: Case Verbatim Of List WILD With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 417, spurious reduction of production nsepseq(core_pattern,SEMI) -> core_pattern
-## In state 416, spurious reduction of production sep_or_term_list(core_pattern,SEMI) -> nsepseq(core_pattern,SEMI)
+## In state 404, spurious reduction of production nsepseq(core_pattern,SEMI) -> core_pattern
+## In state 403, spurious reduction of production sep_or_term_list(core_pattern,SEMI) -> nsepseq(core_pattern,SEMI)
 ##
 
 Ill-formed list of patterns.
@@ -1830,7 +1789,7 @@ the following is expected:
 
 interactive_expr: Case Verbatim Of List With
 ##
-## Ends in an error in state: 374.
+## Ends in an error in state: 361.
 ##
 ## injection(List,core_pattern) -> List . sep_or_term_list(core_pattern,SEMI) End [ SEMI RPAR RBRACKET End CONS COMMA ARROW ]
 ## injection(List,core_pattern) -> List . End [ SEMI RPAR RBRACKET End CONS COMMA ARROW ]
@@ -1850,7 +1809,7 @@ At this point, one of the following is expected:
 
 interactive_expr: Case Verbatim Of WILD ARROW Bytes With
 ##
-## Ends in an error in state: 525.
+## Ends in an error in state: 512.
 ##
 ## case(expr) -> Case expr Of option(VBAR) cases(expr) . End [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
@@ -1861,19 +1820,19 @@ interactive_expr: Case Verbatim Of WILD ARROW Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
-## In state 517, spurious reduction of production case_clause(expr) -> pattern ARROW expr
-## In state 521, spurious reduction of production nsepseq(case_clause(expr),VBAR) -> case_clause(expr)
-## In state 518, spurious reduction of production cases(expr) -> nsepseq(case_clause(expr),VBAR)
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
+## In state 504, spurious reduction of production case_clause(expr) -> pattern ARROW expr
+## In state 508, spurious reduction of production nsepseq(case_clause(expr),VBAR) -> case_clause(expr)
+## In state 505, spurious reduction of production cases(expr) -> nsepseq(case_clause(expr),VBAR)
 ##
 
 Ill-formed case expression
@@ -1886,7 +1845,7 @@ by an arrow '->'.
 
 interactive_expr: Case Verbatim Of WILD ARROW With
 ##
-## Ends in an error in state: 516.
+## Ends in an error in state: 503.
 ##
 ## case_clause(expr) -> pattern ARROW . expr [ VBAR RBRACKET End ]
 ##
@@ -1902,7 +1861,7 @@ by an arrow '->'.
 
 interactive_expr: Case Verbatim Of WILD CONS WILD CONS With
 ##
-## Ends in an error in state: 407.
+## Ends in an error in state: 394.
 ##
 ## nsepseq(core_pattern,CONS) -> core_pattern CONS . nsepseq(core_pattern,CONS) [ RPAR ARROW ]
 ##
@@ -1911,7 +1870,7 @@ interactive_expr: Case Verbatim Of WILD CONS WILD CONS With
 ##
 interactive_expr: Case Verbatim Of WILD CONS With
 ##
-## Ends in an error in state: 404.
+## Ends in an error in state: 391.
 ##
 ## pattern -> core_pattern CONS . nsepseq(core_pattern,CONS) [ RPAR ARROW ]
 ##
@@ -1924,7 +1883,7 @@ At this point, a pattern matching a non-empty list is expected.
 
 interactive_expr: Case Verbatim Of WILD With
 ##
-## Ends in an error in state: 515.
+## Ends in an error in state: 502.
 ##
 ## case_clause(expr) -> pattern . ARROW expr [ VBAR RBRACKET End ]
 ##
@@ -1935,7 +1894,7 @@ interactive_expr: Case Verbatim Of WILD With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 403, spurious reduction of production pattern -> core_pattern
+## In state 390, spurious reduction of production pattern -> core_pattern
 ##
 
 Ill-formed case clause.
@@ -1944,7 +1903,7 @@ followed by the right-hand side as an expression.
 
 interactive_expr: Case Verbatim With
 ##
-## Ends in an error in state: 511.
+## Ends in an error in state: 498.
 ##
 ## case(expr) -> Case expr . Of option(VBAR) cases(expr) End [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ## case(expr) -> Case expr . Of LBRACKET option(VBAR) cases(expr) RBRACKET [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
@@ -1956,16 +1915,16 @@ interactive_expr: Case Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
 ##
 
 Ill-formed case expression.
@@ -2187,7 +2146,7 @@ At this point, parameter declarations are expected between parentheses.
 
 interactive_expr: Ident LBRACKET Verbatim With
 ##
-## Ends in an error in state: 254.
+## Ends in an error in state: 255.
 ##
 ## brackets(expr) -> LBRACKET expr . RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ASS ARROW ]
 ##
@@ -2198,16 +2157,16 @@ interactive_expr: Ident LBRACKET Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
 ##
 
 Ill-formed map lookup.
@@ -2216,7 +2175,7 @@ expected.
 
 interactive_expr: Ident LBRACKET With
 ##
-## Ends in an error in state: 253.
+## Ends in an error in state: 254.
 ##
 ## brackets(expr) -> LBRACKET . expr RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ASS ARROW ]
 ##
@@ -2229,7 +2188,7 @@ At this point, a key is expected as an expression.
 
 interactive_expr: Ident LPAR Verbatim COMMA With
 ##
-## Ends in an error in state: 531.
+## Ends in an error in state: 518.
 ##
 ## nsepseq(expr,COMMA) -> expr COMMA . nsepseq(expr,COMMA) [ RPAR ]
 ##
@@ -2242,7 +2201,7 @@ At this point, another component is expected as an expression.
 
 interactive_expr: Ident LPAR Verbatim With
 ##
-## Ends in an error in state: 528.
+## Ends in an error in state: 515.
 ##
 ## par(nsepseq(expr,COMMA)) -> LPAR nsepseq(expr,COMMA) . RPAR [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
@@ -2253,17 +2212,17 @@ interactive_expr: Ident LPAR Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
-## In state 530, spurious reduction of production nsepseq(expr,COMMA) -> expr
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
+## In state 517, spurious reduction of production nsepseq(expr,COMMA) -> expr
 ##
 
 Ill-formed function call.
@@ -2310,7 +2269,7 @@ expected:
 
 interactive_expr: Ident With Record Ident EQ Bytes With
 ##
-## Ends in an error in state: 250.
+## Ends in an error in state: 251.
 ##
 ## ne_injection(Record,field_path_assignment) -> Record sep_or_term_list(field_path_assignment,SEMI) . End [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
@@ -2321,19 +2280,19 @@ interactive_expr: Ident With Record Ident EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
-## In state 201, spurious reduction of production field_path_assignment -> path EQ expr
-## In state 243, spurious reduction of production nsepseq(field_path_assignment,SEMI) -> field_path_assignment
-## In state 242, spurious reduction of production sep_or_term_list(field_path_assignment,SEMI) -> nsepseq(field_path_assignment,SEMI)
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
+## In state 202, spurious reduction of production field_path_assignment -> path EQ expr
+## In state 244, spurious reduction of production nsepseq(field_path_assignment,SEMI) -> field_path_assignment
+## In state 243, spurious reduction of production sep_or_term_list(field_path_assignment,SEMI) -> nsepseq(field_path_assignment,SEMI)
 ##
 
 Ill-formed record update.
@@ -2376,19 +2335,19 @@ interactive_expr: Ident With Record LBRACKET Ident EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
-## In state 201, spurious reduction of production field_path_assignment -> path EQ expr
-## In state 243, spurious reduction of production nsepseq(field_path_assignment,SEMI) -> field_path_assignment
-## In state 242, spurious reduction of production sep_or_term_list(field_path_assignment,SEMI) -> nsepseq(field_path_assignment,SEMI)
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
+## In state 202, spurious reduction of production field_path_assignment -> path EQ expr
+## In state 244, spurious reduction of production nsepseq(field_path_assignment,SEMI) -> field_path_assignment
+## In state 243, spurious reduction of production sep_or_term_list(field_path_assignment,SEMI) -> nsepseq(field_path_assignment,SEMI)
 ##
 
 Ill-formed record update.
@@ -2442,7 +2401,7 @@ At this point, a record is expected.
 
 interactive_expr: If Verbatim Then Verbatim With
 ##
-## Ends in an error in state: 536.
+## Ends in an error in state: 523.
 ##
 ## cond_expr -> If expr Then expr option(SEMI) . Else expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
@@ -2453,17 +2412,17 @@ interactive_expr: If Verbatim Then Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
-## In state 535, spurious reduction of production option(SEMI) ->
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
+## In state 522, spurious reduction of production option(SEMI) ->
 ##
 
 Ill-formed conditional expression.
@@ -2472,7 +2431,7 @@ keyword 'else' is expected, followed by an expression.
 
 interactive_expr: If Verbatim Then Verbatim Else With
 ##
-## Ends in an error in state: 537.
+## Ends in an error in state: 524.
 ##
 ## cond_expr -> If expr Then expr option(SEMI) Else . expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
@@ -2485,7 +2444,7 @@ At this point, the keyword 'else' is expected, followed by an expression.
 
 interactive_expr: If Verbatim Then With
 ##
-## Ends in an error in state: 534.
+## Ends in an error in state: 521.
 ##
 ## cond_expr -> If expr Then . expr option(SEMI) Else expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
@@ -2499,7 +2458,7 @@ expression.
 
 interactive_expr: If Verbatim With
 ##
-## Ends in an error in state: 533.
+## Ends in an error in state: 520.
 ##
 ## cond_expr -> If expr . Then expr option(SEMI) Else expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
@@ -2510,16 +2469,16 @@ interactive_expr: If Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
 ##
 
 Ill-formed conditional expression.
@@ -2541,7 +2500,7 @@ At this point, the condition is expected as an expression.
 
 interactive_expr: LPAR Verbatim COLON Ident With
 ##
-## Ends in an error in state: 548.
+## Ends in an error in state: 535.
 ##
 ## par(annot_expr) -> LPAR annot_expr . RPAR [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
@@ -2556,7 +2515,7 @@ interactive_expr: LPAR Verbatim COLON Ident With
 ## In state 30, spurious reduction of production cartesian -> core_type
 ## In state 36, spurious reduction of production fun_type -> cartesian
 ## In state 44, spurious reduction of production type_expr -> fun_type
-## In state 547, spurious reduction of production annot_expr -> disj_expr COLON type_expr
+## In state 534, spurious reduction of production annot_expr -> disj_expr COLON type_expr
 ##
 
 Ill-formed annotated expression.
@@ -2565,7 +2524,7 @@ parenthesis ')' is expected.
 
 interactive_expr: LPAR Verbatim COMMA Bytes With
 ##
-## Ends in an error in state: 539.
+## Ends in an error in state: 526.
 ##
 ## par(tuple_comp) -> LPAR tuple_comp . RPAR [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
@@ -2576,18 +2535,18 @@ interactive_expr: LPAR Verbatim COMMA Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
-## In state 530, spurious reduction of production nsepseq(expr,COMMA) -> expr
-## In state 544, spurious reduction of production tuple_comp -> expr COMMA nsepseq(expr,COMMA)
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
+## In state 517, spurious reduction of production nsepseq(expr,COMMA) -> expr
+## In state 531, spurious reduction of production tuple_comp -> expr COMMA nsepseq(expr,COMMA)
 ##
 
 Ill-formed tuple expression.
@@ -2598,7 +2557,7 @@ expected:
 
 interactive_expr: LPAR Verbatim COMMA With
 ##
-## Ends in an error in state: 543.
+## Ends in an error in state: 530.
 ##
 ## tuple_comp -> expr COMMA . nsepseq(expr,COMMA) [ RPAR ]
 ##
@@ -2611,7 +2570,7 @@ At this point, a tuple component is expected as an expression.
 
 interactive_expr: LPAR Verbatim With
 ##
-## Ends in an error in state: 541.
+## Ends in an error in state: 528.
 ##
 ## par(expr) -> LPAR expr . RPAR [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ## tuple_comp -> expr . COMMA nsepseq(expr,COMMA) [ RPAR ]
@@ -2623,16 +2582,16 @@ interactive_expr: LPAR Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 545, spurious reduction of production expr -> disj_expr
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 532, spurious reduction of production expr -> disj_expr
 ##
 
 Ill-formed expression.
@@ -2661,7 +2620,7 @@ At this point, an expression is expected, denoting either
 
 interactive_expr: Lang Verbatim With
 ##
-## Ends in an error in state: 550.
+## Ends in an error in state: 537.
 ##
 ## code_inj -> Lang expr . RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
@@ -2672,16 +2631,16 @@ interactive_expr: Lang Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
 ##
 
 Ill-formed code injection.
@@ -2703,7 +2662,7 @@ At this point, the code is expected as an expression.
 
 interactive_expr: List LBRACKET Verbatim With
 ##
-## Ends in an error in state: 554.
+## Ends in an error in state: 541.
 ##
 ## injection(List,expr) -> List LBRACKET sep_or_term_list(expr,SEMI) . RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
@@ -2714,18 +2673,18 @@ interactive_expr: List LBRACKET Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
-## In state 276, spurious reduction of production nsepseq(expr,SEMI) -> expr
-## In state 275, spurious reduction of production sep_or_term_list(expr,SEMI) -> nsepseq(expr,SEMI)
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
+## In state 277, spurious reduction of production nsepseq(expr,SEMI) -> expr
+## In state 276, spurious reduction of production sep_or_term_list(expr,SEMI) -> nsepseq(expr,SEMI)
 ##
 
 Ill-formed list of expressions.
@@ -2736,7 +2695,7 @@ is expected:
 
 interactive_expr: List LBRACKET With
 ##
-## Ends in an error in state: 552.
+## Ends in an error in state: 539.
 ##
 ## injection(List,expr) -> List LBRACKET . sep_or_term_list(expr,SEMI) RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ## injection(List,expr) -> List LBRACKET . RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
@@ -2752,7 +2711,7 @@ At this point, one of the following is expected:
 
 interactive_expr: List Verbatim With
 ##
-## Ends in an error in state: 557.
+## Ends in an error in state: 544.
 ##
 ## injection(List,expr) -> List sep_or_term_list(expr,SEMI) . End [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
@@ -2763,18 +2722,18 @@ interactive_expr: List Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
-## In state 276, spurious reduction of production nsepseq(expr,SEMI) -> expr
-## In state 275, spurious reduction of production sep_or_term_list(expr,SEMI) -> nsepseq(expr,SEMI)
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
+## In state 277, spurious reduction of production nsepseq(expr,SEMI) -> expr
+## In state 276, spurious reduction of production sep_or_term_list(expr,SEMI) -> nsepseq(expr,SEMI)
 ##
 
 Ill-formed list of expressions.
@@ -2817,7 +2776,7 @@ At this point, an expression is expected.
 
 interactive_expr: Map LBRACKET Verbatim ARROW Bytes With
 ##
-## Ends in an error in state: 562.
+## Ends in an error in state: 549.
 ##
 ## injection(Map,binding) -> Map LBRACKET sep_or_term_list(binding,SEMI) . RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
@@ -2828,19 +2787,19 @@ interactive_expr: Map LBRACKET Verbatim ARROW Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
-## In state 308, spurious reduction of production binding -> expr ARROW expr
-## In state 309, spurious reduction of production nsepseq(binding,SEMI) -> binding
-## In state 305, spurious reduction of production sep_or_term_list(binding,SEMI) -> nsepseq(binding,SEMI)
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
+## In state 294, spurious reduction of production binding -> expr ARROW expr
+## In state 295, spurious reduction of production nsepseq(binding,SEMI) -> binding
+## In state 291, spurious reduction of production sep_or_term_list(binding,SEMI) -> nsepseq(binding,SEMI)
 ##
 
 Ill-formed map expression.
@@ -2853,7 +2812,7 @@ separated by an arrow '->'.
 
 interactive_expr: Map LBRACKET With
 ##
-## Ends in an error in state: 560.
+## Ends in an error in state: 547.
 ##
 ## injection(Map,binding) -> Map LBRACKET . sep_or_term_list(binding,SEMI) RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ## injection(Map,binding) -> Map LBRACKET . RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
@@ -2871,7 +2830,7 @@ separated by an arrow '->'.
 
 interactive_expr: Map Verbatim ARROW Bytes With
 ##
-## Ends in an error in state: 565.
+## Ends in an error in state: 552.
 ##
 ## injection(Map,binding) -> Map sep_or_term_list(binding,SEMI) . End [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
@@ -2882,19 +2841,19 @@ interactive_expr: Map Verbatim ARROW Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
-## In state 308, spurious reduction of production binding -> expr ARROW expr
-## In state 309, spurious reduction of production nsepseq(binding,SEMI) -> binding
-## In state 305, spurious reduction of production sep_or_term_list(binding,SEMI) -> nsepseq(binding,SEMI)
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
+## In state 294, spurious reduction of production binding -> expr ARROW expr
+## In state 295, spurious reduction of production nsepseq(binding,SEMI) -> binding
+## In state 291, spurious reduction of production sep_or_term_list(binding,SEMI) -> nsepseq(binding,SEMI)
 ##
 
 Ill-formed map expression.
@@ -2907,7 +2866,7 @@ separated by an arrow '->'.
 
 interactive_expr: Map Verbatim ARROW With
 ##
-## Ends in an error in state: 307.
+## Ends in an error in state: 293.
 ##
 ## binding -> expr ARROW . expr [ SEMI RBRACKET End ]
 ##
@@ -2922,7 +2881,7 @@ separated by an arrow '->'.
 
 interactive_expr: Map Verbatim With
 ##
-## Ends in an error in state: 306.
+## Ends in an error in state: 292.
 ##
 ## binding -> expr . ARROW expr [ SEMI RBRACKET End ]
 ##
@@ -2933,16 +2892,16 @@ interactive_expr: Map Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
 ##
 
 Ill-formed key/value binding in a map.
@@ -2985,9 +2944,9 @@ At this point, an expression is expected.
 
 interactive_expr: Record Ident EQ Bytes With
 ##
-## Ends in an error in state: 571.
+## Ends in an error in state: 567.
 ##
-## record_expr -> Record sep_or_term_list(field_assignment,SEMI) . End [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## ne_injection(Record,field_assignment) -> Record sep_or_term_list(field_assignment,SEMI) . End [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Record sep_or_term_list(field_assignment,SEMI)
@@ -2996,19 +2955,19 @@ interactive_expr: Record Ident EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
-## In state 568, spurious reduction of production field_assignment -> Ident EQ expr
-## In state 291, spurious reduction of production nsepseq(field_assignment,SEMI) -> field_assignment
-## In state 290, spurious reduction of production sep_or_term_list(field_assignment,SEMI) -> nsepseq(field_assignment,SEMI)
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
+## In state 555, spurious reduction of production field_assignment -> Ident EQ expr
+## In state 560, spurious reduction of production nsepseq(field_assignment,SEMI) -> field_assignment
+## In state 559, spurious reduction of production sep_or_term_list(field_assignment,SEMI) -> nsepseq(field_assignment,SEMI)
 ##
 
 Ill-formed record expression.
@@ -3056,9 +3015,9 @@ expression.
 
 interactive_expr: Record LBRACKET Ident EQ Bytes With
 ##
-## Ends in an error in state: 569.
+## Ends in an error in state: 556.
 ##
-## record_expr -> Record LBRACKET sep_or_term_list(field_assignment,SEMI) . RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## ne_injection(Record,field_assignment) -> Record LBRACKET sep_or_term_list(field_assignment,SEMI) . RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Record LBRACKET sep_or_term_list(field_assignment,SEMI)
@@ -3067,19 +3026,19 @@ interactive_expr: Record LBRACKET Ident EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
-## In state 568, spurious reduction of production field_assignment -> Ident EQ expr
-## In state 291, spurious reduction of production nsepseq(field_assignment,SEMI) -> field_assignment
-## In state 290, spurious reduction of production sep_or_term_list(field_assignment,SEMI) -> nsepseq(field_assignment,SEMI)
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
+## In state 555, spurious reduction of production field_assignment -> Ident EQ expr
+## In state 560, spurious reduction of production nsepseq(field_assignment,SEMI) -> field_assignment
+## In state 559, spurious reduction of production sep_or_term_list(field_assignment,SEMI) -> nsepseq(field_assignment,SEMI)
 ##
 
 Ill-formed record expression.
@@ -3092,19 +3051,19 @@ interactive_expr: Record LBRACKET With
 ##
 ## Ends in an error in state: 98.
 ##
-## record_expr -> Record LBRACKET . sep_or_term_list(field_assignment,SEMI) RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## ne_injection(Record,field_assignment) -> Record LBRACKET . sep_or_term_list(field_assignment,SEMI) RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Record LBRACKET
 ##
 
 Ill-formed record expression.
-At this point one, field assignments separated by semicolons ';' are
+At this point, field assignments separated by semicolons ';' are
 expected.
 
 interactive_expr: Set LBRACKET Verbatim With
 ##
-## Ends in an error in state: 575.
+## Ends in an error in state: 571.
 ##
 ## injection(Set,expr) -> Set LBRACKET sep_or_term_list(expr,SEMI) . RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
@@ -3115,18 +3074,18 @@ interactive_expr: Set LBRACKET Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
-## In state 276, spurious reduction of production nsepseq(expr,SEMI) -> expr
-## In state 275, spurious reduction of production sep_or_term_list(expr,SEMI) -> nsepseq(expr,SEMI)
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
+## In state 277, spurious reduction of production nsepseq(expr,SEMI) -> expr
+## In state 276, spurious reduction of production sep_or_term_list(expr,SEMI) -> nsepseq(expr,SEMI)
 ##
 
 Ill-formed set expression.
@@ -3136,7 +3095,7 @@ At this point, one of the following is expected:
 
 interactive_expr: Set LBRACKET With
 ##
-## Ends in an error in state: 573.
+## Ends in an error in state: 569.
 ##
 ## injection(Set,expr) -> Set LBRACKET . sep_or_term_list(expr,SEMI) RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ## injection(Set,expr) -> Set LBRACKET . RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
@@ -3150,7 +3109,7 @@ At this point, set elements separated by semicolons ';' are expected.
 
 interactive_expr: Set Verbatim With
 ##
-## Ends in an error in state: 578.
+## Ends in an error in state: 574.
 ##
 ## injection(Set,expr) -> Set sep_or_term_list(expr,SEMI) . End [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
@@ -3161,18 +3120,18 @@ interactive_expr: Set Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
-## In state 276, spurious reduction of production nsepseq(expr,SEMI) -> expr
-## In state 275, spurious reduction of production sep_or_term_list(expr,SEMI) -> nsepseq(expr,SEMI)
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
+## In state 277, spurious reduction of production nsepseq(expr,SEMI) -> expr
+## In state 276, spurious reduction of production sep_or_term_list(expr,SEMI) -> nsepseq(expr,SEMI)
 ##
 
 Ill-formed set expression.
@@ -3202,7 +3161,7 @@ At this point, one of the following is expected:
 
 interactive_expr: Verbatim CAT With
 ##
-## Ends in an error in state: 208.
+## Ends in an error in state: 209.
 ##
 ## cat_expr -> cons_expr CAT . cat_expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Or Of NE LT LE GT GE Function From End Else EQ EOF Const COMMA COLON Block Begin Attributes And ARROW ]
 ##
@@ -3215,7 +3174,7 @@ At this point, an expression is expected.
 
 interactive_expr: Verbatim CONS With
 ##
-## Ends in an error in state: 215.
+## Ends in an error in state: 216.
 ##
 ## cons_expr -> add_expr CONS . cons_expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Or Of NE LT LE GT GE Function From End Else EQ EOF Const COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
@@ -3228,7 +3187,7 @@ At this point, an expression denoting a list is expected.
 
 interactive_expr: Verbatim Contains With
 ##
-## Ends in an error in state: 205.
+## Ends in an error in state: 206.
 ##
 ## set_membership -> core_expr Contains . set_membership [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Or Of Function From End Else EOF Const COMMA COLON Block Begin Attributes And ARROW ]
 ##
@@ -3241,7 +3200,7 @@ At this point, an expression denoting a set element is expected.
 
 interactive_expr: Verbatim And With
 ##
-## Ends in an error in state: 232.
+## Ends in an error in state: 233.
 ##
 ## conj_expr -> conj_expr And . set_membership [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Or Of Function From End Else EOF Const COMMA COLON Block Begin Attributes And ARROW ]
 ##
@@ -3250,7 +3209,7 @@ interactive_expr: Verbatim And With
 ##
 interactive_expr: Verbatim Or With
 ##
-## Ends in an error in state: 203.
+## Ends in an error in state: 204.
 ##
 ## disj_expr -> disj_expr Or . conj_expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Or Of Function From End Else EOF Const COMMA COLON Block Begin Attributes ARROW ]
 ##
@@ -3263,7 +3222,7 @@ At this point, a Boolean expression is expected.
 
 interactive_expr: Verbatim EQ With
 ##
-## Ends in an error in state: 228.
+## Ends in an error in state: 229.
 ##
 ## comp_expr -> comp_expr EQ . cat_expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Or Of NE LT LE GT GE Function From End Else EQ EOF Const COMMA COLON Block Begin Attributes And ARROW ]
 ##
@@ -3272,7 +3231,7 @@ interactive_expr: Verbatim EQ With
 ##
 interactive_expr: Verbatim NE With
 ##
-## Ends in an error in state: 218.
+## Ends in an error in state: 219.
 ##
 ## comp_expr -> comp_expr NE . cat_expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Or Of NE LT LE GT GE Function From End Else EQ EOF Const COMMA COLON Block Begin Attributes And ARROW ]
 ##
@@ -3281,7 +3240,7 @@ interactive_expr: Verbatim NE With
 ##
 interactive_expr: Verbatim GE With
 ##
-## Ends in an error in state: 226.
+## Ends in an error in state: 227.
 ##
 ## comp_expr -> comp_expr GE . cat_expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Or Of NE LT LE GT GE Function From End Else EQ EOF Const COMMA COLON Block Begin Attributes And ARROW ]
 ##
@@ -3290,7 +3249,7 @@ interactive_expr: Verbatim GE With
 ##
 interactive_expr: Verbatim GT With
 ##
-## Ends in an error in state: 224.
+## Ends in an error in state: 225.
 ##
 ## comp_expr -> comp_expr GT . cat_expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Or Of NE LT LE GT GE Function From End Else EQ EOF Const COMMA COLON Block Begin Attributes And ARROW ]
 ##
@@ -3299,7 +3258,7 @@ interactive_expr: Verbatim GT With
 ##
 interactive_expr: Verbatim LE With
 ##
-## Ends in an error in state: 222.
+## Ends in an error in state: 223.
 ##
 ## comp_expr -> comp_expr LE . cat_expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Or Of NE LT LE GT GE Function From End Else EQ EOF Const COMMA COLON Block Begin Attributes And ARROW ]
 ##
@@ -3308,7 +3267,7 @@ interactive_expr: Verbatim LE With
 ##
 interactive_expr: Verbatim LT With
 ##
-## Ends in an error in state: 220.
+## Ends in an error in state: 221.
 ##
 ## comp_expr -> comp_expr LT . cat_expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Or Of NE LT LE GT GE Function From End Else EQ EOF Const COMMA COLON Block Begin Attributes And ARROW ]
 ##
@@ -3321,7 +3280,7 @@ At this point, an expression is expected.
 
 interactive_expr: Verbatim MINUS With
 ##
-## Ends in an error in state: 213.
+## Ends in an error in state: 214.
 ##
 ## add_expr -> add_expr MINUS . mult_expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
@@ -3330,7 +3289,7 @@ interactive_expr: Verbatim MINUS With
 ##
 interactive_expr: Verbatim Mod With
 ##
-## Ends in an error in state: 198.
+## Ends in an error in state: 199.
 ##
 ## mult_expr -> mult_expr Mod . unary_expr [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
@@ -3339,7 +3298,7 @@ interactive_expr: Verbatim Mod With
 ##
 interactive_expr: Verbatim PLUS With
 ##
-## Ends in an error in state: 211.
+## Ends in an error in state: 212.
 ##
 ## add_expr -> add_expr PLUS . mult_expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
@@ -3348,7 +3307,7 @@ interactive_expr: Verbatim PLUS With
 ##
 interactive_expr: Verbatim SLASH With
 ##
-## Ends in an error in state: 196.
+## Ends in an error in state: 197.
 ##
 ## mult_expr -> mult_expr SLASH . unary_expr [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
@@ -3357,7 +3316,7 @@ interactive_expr: Verbatim SLASH With
 ##
 interactive_expr: Verbatim TIMES With
 ##
-## Ends in an error in state: 181.
+## Ends in an error in state: 182.
 ##
 ## mult_expr -> mult_expr TIMES . unary_expr [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
@@ -3370,7 +3329,7 @@ At this point, an expression is expected.
 
 interactive_expr: Verbatim With
 ##
-## Ends in an error in state: 600.
+## Ends in an error in state: 596.
 ##
 ## interactive_expr -> expr . EOF [ # ]
 ##
@@ -3381,20 +3340,20 @@ interactive_expr: Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production unary_expr -> core_expr
+## In state 205, spurious reduction of production unary_expr -> core_expr
 ## In state 152, spurious reduction of production mult_expr -> unary_expr
-## In state 180, spurious reduction of production add_expr -> mult_expr
-## In state 210, spurious reduction of production cons_expr -> add_expr
-## In state 207, spurious reduction of production cat_expr -> cons_expr
-## In state 230, spurious reduction of production comp_expr -> cat_expr
-## In state 217, spurious reduction of production set_membership -> comp_expr
+## In state 181, spurious reduction of production add_expr -> mult_expr
+## In state 211, spurious reduction of production cons_expr -> add_expr
+## In state 208, spurious reduction of production cat_expr -> cons_expr
+## In state 231, spurious reduction of production comp_expr -> cat_expr
+## In state 218, spurious reduction of production set_membership -> comp_expr
 ## In state 154, spurious reduction of production conj_expr -> set_membership
-## In state 234, spurious reduction of production disj_expr -> conj_expr
-## In state 202, spurious reduction of production expr -> disj_expr
+## In state 235, spurious reduction of production disj_expr -> conj_expr
+## In state 203, spurious reduction of production expr -> disj_expr
 ##
 interactive_expr: With
 ##
-## Ends in an error in state: 598.
+## Ends in an error in state: 594.
 ##
 ## interactive_expr' -> . interactive_expr [ # ]
 ##
@@ -3406,7 +3365,7 @@ Ill-formed expression.
 
 contract: Attributes LBRACKET String With
 ##
-## Ends in an error in state: 472.
+## Ends in an error in state: 459.
 ##
 ## ne_injection(Attributes,String) -> Attributes LBRACKET sep_or_term_list(String,SEMI) . RBRACKET [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
@@ -3417,8 +3376,8 @@ contract: Attributes LBRACKET String With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 464, spurious reduction of production nsepseq(String,SEMI) -> String
-## In state 475, spurious reduction of production sep_or_term_list(String,SEMI) -> nsepseq(String,SEMI)
+## In state 451, spurious reduction of production nsepseq(String,SEMI) -> String
+## In state 462, spurious reduction of production sep_or_term_list(String,SEMI) -> nsepseq(String,SEMI)
 ##
 
 Ill-formed attribute list.
@@ -3429,7 +3388,7 @@ expected:
 
 contract: Attributes LBRACKET With
 ##
-## Ends in an error in state: 471.
+## Ends in an error in state: 458.
 ##
 ## ne_injection(Attributes,String) -> Attributes LBRACKET . sep_or_term_list(String,SEMI) RBRACKET [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
@@ -3442,7 +3401,7 @@ At this point, attributes as strings are expected, separated by semicolons ';'.
 
 contract: Attributes String End Attributes String End With
 ##
-## Ends in an error in state: 593.
+## Ends in an error in state: 589.
 ##
 ## seq(declaration) -> declaration . seq(declaration) [ EOF ]
 ##
@@ -3453,13 +3412,13 @@ contract: Attributes String End Attributes String End With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 586, spurious reduction of production option(SEMI) ->
-## In state 587, spurious reduction of production attr_decl -> open_attr_decl option(SEMI)
-## In state 596, spurious reduction of production declaration -> attr_decl
+## In state 582, spurious reduction of production option(SEMI) ->
+## In state 583, spurious reduction of production attr_decl -> open_attr_decl option(SEMI)
+## In state 592, spurious reduction of production declaration -> attr_decl
 ##
 contract: Attributes String End With
 ##
-## Ends in an error in state: 591.
+## Ends in an error in state: 587.
 ##
 ## nseq(declaration) -> declaration . seq(declaration) [ EOF ]
 ##
@@ -3470,9 +3429,9 @@ contract: Attributes String End With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 586, spurious reduction of production option(SEMI) ->
-## In state 587, spurious reduction of production attr_decl -> open_attr_decl option(SEMI)
-## In state 596, spurious reduction of production declaration -> attr_decl
+## In state 582, spurious reduction of production option(SEMI) ->
+## In state 583, spurious reduction of production attr_decl -> open_attr_decl option(SEMI)
+## In state 592, spurious reduction of production declaration -> attr_decl
 ##
 
 Ill-formed declaration.
@@ -3481,7 +3440,7 @@ declaration.
 
 contract: Attributes String With
 ##
-## Ends in an error in state: 476.
+## Ends in an error in state: 463.
 ##
 ## ne_injection(Attributes,String) -> Attributes sep_or_term_list(String,SEMI) . End [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
@@ -3492,8 +3451,8 @@ contract: Attributes String With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 464, spurious reduction of production nsepseq(String,SEMI) -> String
-## In state 475, spurious reduction of production sep_or_term_list(String,SEMI) -> nsepseq(String,SEMI)
+## In state 451, spurious reduction of production nsepseq(String,SEMI) -> String
+## In state 462, spurious reduction of production sep_or_term_list(String,SEMI) -> nsepseq(String,SEMI)
 ##
 
 Ill-formed attribute list.
@@ -3504,7 +3463,7 @@ expected:
 
 contract: Attributes With
 ##
-## Ends in an error in state: 463.
+## Ends in an error in state: 450.
 ##
 ## ne_injection(Attributes,String) -> Attributes . sep_or_term_list(String,SEMI) End [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ## ne_injection(Attributes,String) -> Attributes . LBRACKET sep_or_term_list(String,SEMI) RBRACKET [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
@@ -3521,7 +3480,7 @@ At this point, one of the following is expected:
 
 contract: Const Ident COLON Ident With
 ##
-## Ends in an error in state: 359.
+## Ends in an error in state: 346.
 ##
 ## unqualified_decl(EQ) -> Ident option(type_annot) . EQ expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
@@ -3546,7 +3505,7 @@ whose value is that of the constant being defined.
 
 contract: Const Ident EQ With
 ##
-## Ends in an error in state: 360.
+## Ends in an error in state: 347.
 ##
 ## unqualified_decl(EQ) -> Ident option(type_annot) EQ . expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
@@ -3560,7 +3519,7 @@ constant.
 
 contract: Const Ident With
 ##
-## Ends in an error in state: 358.
+## Ends in an error in state: 345.
 ##
 ## unqualified_decl(EQ) -> Ident . option(type_annot) EQ expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
@@ -3576,7 +3535,7 @@ At this point, one of the following is expected:
 
 contract: Const With
 ##
-## Ends in an error in state: 357.
+## Ends in an error in state: 344.
 ##
 ## open_const_decl -> Const . unqualified_decl(EQ) [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
@@ -3589,7 +3548,7 @@ At this point, the name of the constant is expected.
 
 contract: Function Ident LPAR Const Ident RPAR COLON Ident With
 ##
-## Ends in an error in state: 330.
+## Ends in an error in state: 316.
 ##
 ## open_fun_decl -> Function Ident parameters option(type_annot) . Is expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
@@ -3633,7 +3592,7 @@ body as an expression.
 
 contract: Function Ident LPAR Const Ident RPAR Is With
 ##
-## Ends in an error in state: 331.
+## Ends in an error in state: 317.
 ##
 ## open_fun_decl -> Function Ident parameters option(type_annot) Is . expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
@@ -3655,7 +3614,7 @@ At this point, the function body is expected as an expression.
 
 contract: Function Ident LPAR Const Ident RPAR With
 ##
-## Ends in an error in state: 329.
+## Ends in an error in state: 315.
 ##
 ## open_fun_decl -> Function Ident parameters . option(type_annot) Is expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
@@ -3671,7 +3630,7 @@ expected:
 
 contract: Function Ident With
 ##
-## Ends in an error in state: 328.
+## Ends in an error in state: 314.
 ##
 ## open_fun_decl -> Function Ident . parameters option(type_annot) Is expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
@@ -3694,7 +3653,7 @@ parentheses.
 
 contract: Function With
 ##
-## Ends in an error in state: 327.
+## Ends in an error in state: 313.
 ##
 ## open_fun_decl -> Function . Ident parameters option(type_annot) Is expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
