@@ -10,7 +10,6 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "michelson_converter_no_annotation.mligo", line 4, characters 9-39
-          Constant declaration 'l4'
           Can't retrieve type declaration order in the converted record, you need to annotate it
 
 
@@ -24,8 +23,6 @@ let%expect_test _ =
   run_ligo_bad [ "interpret" ; "--init-file="^(bad_contract "michelson_converter_short_record.mligo") ; "l1"] ;
   [%expect {|
     ligo: error
-          in file "michelson_converter_short_record.mligo", line 4, characters 9-44
-          Constant declaration 'l1'
           in file "michelson_converter_short_record.mligo", line 1, characters 10-23
           Converted record must have at least two elements
 
@@ -252,31 +249,29 @@ let%expect_test _ =
                     ITER { SWAP ;
                            PAIR ;
                            DUP ;
-                           CAR ;
-                           DIG 1 ;
-                           DUP ;
-                           DUG 2 ;
                            CDR ;
                            DIG 1 ;
                            DUP ;
                            DUG 2 ;
                            CAR ;
-                           DIG 2 ;
                            DUP ;
-                           DUG 3 ;
-                           CDR ;
-                           DIG 2 ;
-                           DUP ;
-                           DUG 3 ;
-                           CDR ;
                            CAR ;
+                           DIG 1 ;
+                           DUP ;
+                           DUG 2 ;
+                           CDR ;
                            DIG 3 ;
                            DUP ;
                            DUG 4 ;
+                           CDR ;
                            CAR ;
                            DIG 4 ;
                            DUP ;
                            DUG 5 ;
+                           CAR ;
+                           DIG 5 ;
+                           DUP ;
+                           DUG 6 ;
                            CDR ;
                            CDR ;
                            PAIR ;

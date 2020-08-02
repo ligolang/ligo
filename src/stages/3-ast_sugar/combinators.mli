@@ -31,17 +31,17 @@ val t_variable  : ?loc:Location.t -> string -> type_expression
 val t_record    : te_map -> type_expression
 *)
 val t_pair   : ?loc:Location.t -> ( type_expression * type_expression ) -> type_expression
-val t_tuple  : ?loc:Location.t -> field_content list -> type_expression
+val t_tuple  : ?loc:Location.t -> row_element list -> type_expression
 
-val t_record    : ?loc:Location.t -> field_content Map.String.t -> type_expression
-val t_record_ez : ?loc:Location.t -> (string * field_content) list -> type_expression
+val t_record    : ?loc:Location.t -> row_element Map.String.t -> type_expression
+val t_record_ez : ?loc:Location.t -> (string * row_element) list -> type_expression
 
-val t_sum    : ?loc:Location.t -> ctor_content Map.String.t -> type_expression
-val ez_t_sum : ?loc:Location.t -> ( string * ctor_content ) list -> type_expression
+val t_sum    : ?loc:Location.t -> row_element Map.String.t -> type_expression
+val ez_t_sum : ?loc:Location.t -> ( string * row_element ) list -> type_expression
 
 val t_function : ?loc:Location.t -> type_expression -> type_expression -> type_expression
 
-val t_operator : ?loc:Location.t -> type_operator -> type_expression list -> type_expression
+val t_operator : ?loc:Location.t -> type_operator' -> type_expression list -> type_expression
 val t_map : ?loc:Location.t -> type_expression -> type_expression -> type_expression
 val t_big_map : ?loc:Location.t -> type_expression -> type_expression -> type_expression
 val t_contract : ?loc:Location.t -> type_expression -> type_expression
@@ -69,7 +69,7 @@ val e_some : ?loc:Location.t -> expression -> expression
 val e_none : ?loc:Location.t -> unit -> expression
 
 val e_variable : ?loc:Location.t -> expression_variable -> expression
-val e_constructor : ?loc:Location.t -> constructor' -> expression -> expression
+val e_constructor : ?loc:Location.t -> label -> expression -> expression
 val e_constant : ?loc:Location.t -> constant' -> expression list -> expression
 
 val e_lambda : ?loc:Location.t -> expression_variable -> type_expression option -> type_expression option -> expression -> expression

@@ -14,6 +14,7 @@ let get_constraints_related_to : type_variable -> structured_dbs -> constraints 
         constructor = [] ;
         poly        = [] ;
         tc          = [] ;
+        row         = [] ;
       }
 let add_constraints_related_to : type_variable -> constraints -> structured_dbs -> structured_dbs =
   fun variable c dbs ->
@@ -27,6 +28,7 @@ let add_constraints_related_to : type_variable -> constraints -> structured_dbs 
             constructor = c.constructor @ x.constructor ;
             poly        = c.poly        @ x.poly        ;
             tc          = c.tc          @ x.tc          ;
+            row         = c.row         @ x.row         ;
           })
         dbs.grouped_by_variable
     in
@@ -51,13 +53,14 @@ let merge_constraints : type_variable -> type_variable -> structured_dbs -> stru
     let get_constraints ab =
       match Map.find_opt ab dbs.grouped_by_variable with
       | Some x -> x
-      | None -> { constructor = [] ; poly = [] ; tc = [] } in
+      | None -> { constructor = [] ; poly = [] ; tc = [] ; row = [] } in
     let constraints_a = get_constraints variable_repr_a in
     let constraints_b = get_constraints variable_repr_b in
     let all_constraints = {
         constructor = constraints_a.constructor @ constraints_b.constructor ;
         poly        = constraints_a.poly        @ constraints_b.poly        ;
         tc          = constraints_a.tc          @ constraints_b.tc          ;
+        row         = constraints_a.row         @ constraints_b.row         ;
       } in
     let grouped_by_variable =
       Map.add variable_repr_a all_constraints dbs.grouped_by_variable in

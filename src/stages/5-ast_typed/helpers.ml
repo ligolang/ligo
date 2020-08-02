@@ -1,40 +1,30 @@
 open Types
 open Trace
 
-let map_type_operator f = function
-    TC_contract x -> TC_contract (f x)
-  | TC_option x -> TC_option (f x)
-  | TC_list x -> TC_list (f x)
-  | TC_set x -> TC_set (f x)
-  | TC_map {k ; v} -> TC_map { k = f k ; v = f v }
-  | TC_big_map {k ; v}-> TC_big_map { k = f k ; v = f v }
-  | TC_map_or_big_map { k ; v }-> TC_map_or_big_map { k = f k ; v = f v }
-
-let bind_map_type_operator f = function
-    TC_contract x -> let%bind x = f x in ok @@ TC_contract x
-  | TC_option x -> let%bind x = f x in ok @@ TC_option x
-  | TC_list x -> let%bind x = f x in ok @@ TC_list x
-  | TC_set x -> let%bind x = f x in ok @@ TC_set x
-  | TC_map {k ; v} -> let%bind k = f k in let%bind v = f v in ok @@ TC_map {k ; v}
-  | TC_big_map {k ; v} -> let%bind k = f k in let%bind v = f v in ok @@ TC_big_map {k ; v}
-  | TC_map_or_big_map {k ; v} -> let%bind k = f k in let%bind v = f v in ok @@ TC_map_or_big_map {k ; v}
-
 let type_operator_name = function
-    TC_contract _ -> "TC_contract"
-  | TC_option   _ -> "TC_option"
-  | TC_list     _ -> "TC_list"
-  | TC_set      _ -> "TC_set"
-  | TC_map      _ -> "TC_map"
-  | TC_big_map  _ -> "TC_big_map"
-  | TC_map_or_big_map _ -> "TC_map_or_big_map"
+    TC_contract         -> "TC_contract"
+  | TC_option           -> "TC_option"
+  | TC_list             -> "TC_list"
+  | TC_set              -> "TC_set"
+  | TC_map              -> "TC_map"
+  | TC_big_map          -> "TC_big_map"
+  | TC_map_or_big_map   -> "TC_map_or_big_map"
+  | TC_michelson_pair   -> "TC_michelson_pair"
+  | TC_michelson_or     -> "TC_michelson_or"
+  | TC_michelson_pair_right_comb -> "TC_michelson_pair_right_comb"
+  | TC_michelson_pair_left_comb  -> "TC_michelson_pair_left_comb"
+  | TC_michelson_or_right_comb   -> "TC_michelson_or_right_comb"
+  | TC_michelson_or_left_comb    -> "TC_michelson_or_left_comb"
 
-let type_expression'_of_string = function
-  | "TC_contract" , [x]     -> ok @@ T_operator(TC_contract x)
-  | "TC_option"   , [x]     -> ok @@ T_operator(TC_option x)
-  | "TC_list"     , [x]     -> ok @@ T_operator(TC_list x)
-  | "TC_set"      , [x]     -> ok @@ T_operator(TC_set x)
-  | "TC_map"      , [k ; v] -> ok @@ T_operator(TC_map { k ; v })
-  | "TC_big_map"  , [k ; v] -> ok @@ T_operator(TC_big_map { k ; v })
+let type_expression'_of_string = fun t ->
+  let aux operator args = T_operator {operator; args} in
+  match t with
+  | "TC_contract" , [x]     -> ok @@ aux TC_contract [ x ]
+  | "TC_option"   , [x]     -> ok @@ aux TC_option   [ x ]
+  | "TC_list"     , [x]     -> ok @@ aux TC_list     [ x ]
+  | "TC_set"      , [x]     -> ok @@ aux TC_set      [ x ]
+  | "TC_map"      , [k ; v] -> ok @@ aux TC_map      [ k; v ]
+  | "TC_big_map"  , [k ; v] -> ok @@ aux TC_big_map  [ k; v ]
   | ("TC_contract" | "TC_option" | "TC_list" | "TC_set" | "TC_map" | "TC_big_map"), _ ->
      failwith "internal error: wrong number of arguments for type operator"
 
@@ -57,32 +47,38 @@ let type_expression'_of_string = function
      failwith "internal error: unknown type operator"
 
 let string_of_type_operator = function
-  | TC_contract       x                 -> "TC_contract" , [x]
-  | TC_option         x                 -> "TC_option"   , [x]
-  | TC_list           x                 -> "TC_list"     , [x]
-  | TC_set            x                 -> "TC_set"      , [x]
-  | TC_map            { k ; v }         -> "TC_map"      , [k ; v]
-  | TC_big_map        { k ; v }         -> "TC_big_map"  , [k ; v]
-  | TC_map_or_big_map { k ; v }         -> "TC_map_or_big_map"  , [k ; v]
+  | TC_contract       -> "TC_contract"
+  | TC_option         -> "TC_option"
+  | TC_list           -> "TC_list"
+  | TC_set            -> "TC_set"
+  | TC_map            -> "TC_map"
+  | TC_big_map        -> "TC_big_map"
+  | TC_map_or_big_map -> "TC_map_or_big_map"
+  | TC_michelson_pair   -> "TC_michelson_pair"
+  | TC_michelson_or     -> "TC_michelson_or"
+  | TC_michelson_pair_right_comb -> "TC_michelson_pair_right_comb"
+  | TC_michelson_pair_left_comb  -> "TC_michelson_pair_left_comb"
+  | TC_michelson_or_right_comb   -> "TC_michelson_or_right_comb"
+  | TC_michelson_or_left_comb    -> "TC_michelson_or_left_comb"
 
 let string_of_type_constant = function
-  | TC_unit      -> "TC_unit", []
-  | TC_string    -> "TC_string", []
-  | TC_bytes     -> "TC_bytes", []
-  | TC_nat       -> "TC_nat", []
-  | TC_int       -> "TC_int", []
-  | TC_mutez     -> "TC_mutez", []
-  | TC_operation -> "TC_operation", []
-  | TC_address   -> "TC_address", []
-  | TC_key       -> "TC_key", []
-  | TC_key_hash  -> "TC_key_hash", []
-  | TC_chain_id  -> "TC_chain_id", []
-  | TC_signature -> "TC_signature", []
-  | TC_timestamp -> "TC_timestamp", []
+  | TC_unit      -> "TC_unit"
+  | TC_string    -> "TC_string"
+  | TC_bytes     -> "TC_bytes"
+  | TC_nat       -> "TC_nat"
+  | TC_int       -> "TC_int"
+  | TC_mutez     -> "TC_mutez"
+  | TC_operation -> "TC_operation"
+  | TC_address   -> "TC_address"
+  | TC_key       -> "TC_key"
+  | TC_key_hash  -> "TC_key_hash"
+  | TC_chain_id  -> "TC_chain_id"
+  | TC_signature -> "TC_signature"
+  | TC_timestamp -> "TC_timestamp"
 
 let string_of_type_expression' = function
-  | T_operator o -> string_of_type_operator o
-  | T_constant c -> string_of_type_constant c
+  | T_operator {operator; args} -> string_of_type_operator operator,args
+  | T_constant c -> string_of_type_constant c,[]
   | T_sum _ | T_record _ | T_arrow _ | T_variable _ ->
      failwith "not a type operator or constant"
 
@@ -95,15 +91,6 @@ let bind_lmap (l:_ label_map) =
     ok @@ add k v' prev' in
   fold aux l (ok empty)
 
-let bind_cmap (c:_ constructor_map) =
-  let open Trace in
-  let open CMap in
-  let aux k v prev =
-    prev >>? fun prev' ->
-    v >>? fun v' ->
-    ok @@ add k v' prev' in
-  fold aux c (ok empty)
-
 let bind_fold_lmap f init (lmap:_ LMap.t) =
   let open Trace in
   let aux k v prev =
@@ -115,12 +102,10 @@ let bind_fold_lmap f init (lmap:_ LMap.t) =
 let bind_map_lmap f map = bind_lmap (LMap.map f map)
 let bind_map_lmap_t f map = bind_lmap (
   LMap.map 
-    (fun ({field_type;_}) -> 
-      f field_type)
+    (fun ({associated_type;_}) -> 
+      f associated_type)
     map)
-let bind_map_cmap f map = bind_cmap (CMap.map f map)
 let bind_map_lmapi f map = bind_lmap (LMap.mapi f map)
-let bind_map_cmapi f map = bind_cmap (CMap.mapi f map)
 
 let range i j =
   let rec aux i j acc = if i >= j then acc else aux i (j-1) (j-1 :: acc) in
@@ -134,7 +119,7 @@ let is_tuple_lmap m =
 
 let get_pair m =
   match (LMap.find_opt (Label "0") m , LMap.find_opt (Label "1") m) with
-  | Some {field_type=e1;_}, Some {field_type=e2;_} -> Some (e1,e2)
+  | Some {associated_type=e1;_}, Some {associated_type=e2;_} -> Some (e1,e2)
   | _ -> None
 
 let tuple_of_record (m: _ LMap.t) =
@@ -164,10 +149,10 @@ let remove_empty_annotation (ann : string option) : string option =
   | Some ann -> Some (String.uncapitalize_ascii ann)
   | None -> None
 
-let is_michelson_or (t: _ constructor_map) =
-  CMap.cardinal t = 2 && 
-  (CMap.mem (Constructor "M_left") t) &&
-  (CMap.mem (Constructor "M_right") t)
+let is_michelson_or (t: _ label_map) =
+  LMap.cardinal t = 2 && 
+  (LMap.mem (Label "M_left") t) &&
+  (LMap.mem (Label "M_right") t)
 
 let is_michelson_pair (t: _ label_map) =
   LMap.cardinal t = 2 && 

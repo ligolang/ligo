@@ -301,8 +301,6 @@ and print_pattern state = function
 | PTyped t ->
     print_typed_pattern state t
 | PUnit p -> print_unit state p
-| PFalse kwd_false -> print_token state kwd_false "false"
-| PTrue kwd_true -> print_token state kwd_true "true"
 
 and print_list_pattern state = function
   PListComp p -> print_injection state print_pattern p
@@ -331,6 +329,8 @@ and print_field_pattern state {value; _} =
 and print_constr_pattern state = function
   PNone p      -> print_none_pattern state p
 | PSomeApp p   -> print_some_app_pattern state p
+| PFalse kwd_false -> print_token state kwd_false "false"
+| PTrue kwd_true -> print_token state kwd_true "true"
 | PConstrApp p -> print_constr_app_pattern state p
 
 and print_none_pattern state value =
@@ -733,10 +733,6 @@ and pp_pattern state = function
     pp_verbatim (state#pad 1 0) v
 | PUnit {region; _} ->
     pp_loc_node state "PUnit" region
-| PFalse region ->
-    pp_loc_node state "PFalse" region
-| PTrue region ->
-    pp_loc_node state "PTrue" region
 | PList plist ->
     pp_node state "PList";
     pp_list_pattern (state#pad 1 0) plist
@@ -809,6 +805,10 @@ and pp_constr_pattern state = function
 | PSomeApp {value=_,param; region} ->
     pp_loc_node state "PSomeApp" region;
     pp_pattern  (state#pad 1 0) param
+| PFalse region ->
+    pp_loc_node state "PFalse" region
+| PTrue region ->
+    pp_loc_node state "PTrue" region
 | PConstrApp {value; region} ->
     pp_loc_node state "PConstrApp" region;
     pp_constr_app_pattern (state#pad 1 0) value

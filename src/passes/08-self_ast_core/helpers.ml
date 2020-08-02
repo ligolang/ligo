@@ -4,18 +4,11 @@ open Ast_core.Helpers
 
 include Ast_core.PP
 
-let bind_map_cmap f map = bind_cmap (
-  CMap.map 
-    (fun ({ctor_type;_} as ctor) -> 
-      let%bind ctor' = f ctor_type in
-      ok {ctor with ctor_type = ctor'}) 
-    map)
-
 let bind_map_lmap_t f map = bind_lmap (
   LMap.map 
-    (fun ({field_type;_} as field) -> 
-      let%bind field' = f field_type in
-      ok {field with field_type = field'}) 
+    (fun ({associated_type;_} as field) -> 
+      let%bind field' = f associated_type in
+      ok {field with associated_type = field'}) 
     map)
 
 type ('a,'err) folder = 'a -> expression -> ('a, 'err) result
@@ -48,7 +41,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a,'err) res
       let%bind res = fold_expression self init'' expr in
       ok res
     in
-    let%bind res = bind_fold_lmap aux (ok init') m in
+    let%bind res = bind_fold_lmap aux init' m in
     ok res
   )
   | E_record_update {record;update} -> (
@@ -156,7 +149,7 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_express
   let return content = ok @@ ({ content; sugar; location}: type_expression) in
   match content with
   | T_sum temap ->
-    let%bind temap' = bind_map_cmap self temap in
+    let%bind temap' = bind_map_lmap_t self temap in
     return @@ (T_sum temap')
   | T_record temap ->
     let%bind temap' = bind_map_lmap_t self temap in

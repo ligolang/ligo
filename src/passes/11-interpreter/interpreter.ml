@@ -327,9 +327,9 @@ and eval : Ast_typed.expression -> env -> (value , _) result
         arguments in
       apply_operator cons_name operands'
     )
-    | E_constructor { constructor = Constructor c ; element } when (String.equal c "true" || String.equal c "false")
+    | E_constructor { constructor = Label c ; element } when (String.equal c "true" || String.equal c "false")
      && element.expression_content = Ast_typed.e_unit () -> ok @@ V_Ct (C_bool (bool_of_string c))
-    | E_constructor { constructor = Constructor c ; element } ->
+    | E_constructor { constructor = Label c ; element } ->
       let%bind v' = eval element env in
       ok @@ V_Construct (c,v')
     | E_matching { matchee ; cases} -> (
@@ -343,9 +343,9 @@ and eval : Ast_typed.expression -> env -> (value , _) result
         eval body env'
       | Match_variant {cases;_}, V_Ct (C_bool b) ->
         let ctor_body (case : matching_content_case) = (case.constructor, case.body) in
-        let cases = CMap.of_list (List.map ctor_body cases) in
+        let cases = LMap.of_list (List.map ctor_body cases) in
         let get_case c =
-            (CMap.find (Constructor c) cases) in
+            (LMap.find (Label c) cases) in
         let match_true  = get_case "true" in
         let match_false = get_case "false" in
         if b then eval match_true env
@@ -353,7 +353,7 @@ and eval : Ast_typed.expression -> env -> (value , _) result
       | Match_variant {cases ; tv=_} , V_Construct (matched_c , proj) ->
         let {constructor=_ ; pattern ; body} =
           List.find
-            (fun {constructor = (Constructor c) ; pattern=_ ; body=_} ->
+            (fun {constructor = (Label c) ; pattern=_ ; body=_} ->
               String.equal matched_c c)
             cases in
         let env' = Env.extend env (pattern, proj) in

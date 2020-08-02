@@ -3,9 +3,7 @@ module CST = Cst.Pascaligo
 module Predefined = Predefined.Tree_abstraction.Pascaligo
 
 open Trace
-
-(* General tools *)
-let (<@) f g x = f (g x)
+open Function
 
 (* Utils *)
 let rg = Region.ghost
@@ -50,10 +48,10 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
   let return te = ok @@ te in
   match te.type_content with
     T_sum sum ->
-    let sum = AST.CMap.to_kv_list sum in
-    let aux (AST.Constructor c, AST.{ctor_type;_}) =
+    let sum = AST.LMap.to_kv_list sum in
+    let aux (AST.Label c, AST.{associated_type;_}) =
       let constr = wrap c in
-      let%bind arg = decompile_type_expr ctor_type in
+      let%bind arg = decompile_type_expr associated_type in
       let arg = Some (rg, arg) in
       let variant : CST.variant = {constr;arg} in
       ok @@ wrap variant
@@ -63,10 +61,10 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
     return @@ CST.TSum (wrap sum)
   | T_record record ->
     let record = AST.LMap.to_kv_list record in
-    let aux (AST.Label c, AST.{field_type;_}) =
+    let aux (AST.Label c, AST.{associated_type;_}) =
       let field_name = wrap c in
       let colon = rg in
-      let%bind field_type = decompile_type_expr field_type in
+      let%bind field_type = decompile_type_expr associated_type in
       let variant : CST.field_decl = {field_name;colon;field_type} in
       ok @@ wrap variant
     in
@@ -291,7 +289,7 @@ and decompile_eos : eos -> AST.expression -> ((CST.statement List.Ne.t option)* 
     let ci : CST.code_inj = {language;code;rbracket=rg} in
     return_expr @@ CST.ECodeInj (wrap ci)
   | E_constructor {constructor;element} ->
-    let Constructor constr = constructor in
+    let Label constr = constructor in
     let constr = wrap constr in
     let%bind element = bind decompile_to_tuple_expr @@ get_e_tuple element in
     return_expr_with_par @@ CST.EConstr (ConstrApp (wrap (constr, Some element)))
@@ -604,7 +602,7 @@ fun f m ->
     ok @@ [wrap cons_case; wrap nil_case]
   | Match_variant lst ->
     let aux ((c,(v:AST.expression_variable)),e) =
-      let AST.Constructor c = c in
+      let AST.Label c = c in
       let constr = wrap @@ c in
       let var : CST.pattern = PVar (decompile_variable v.wrap_content) in
       let tuple = wrap @@ par @@ (var,[]) in

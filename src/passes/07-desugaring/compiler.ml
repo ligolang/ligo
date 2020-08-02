@@ -3,38 +3,37 @@ module O = Ast_core
 open Trace
 
 open Errors
-open Cast
+
+let cast_var = Location.map Var.todo_cast
 
 let rec compile_type_expression : I.type_expression -> (O.type_expression , desugaring_error) result =
   fun te ->
   let return tc = ok @@ O.make_t ~loc:te.location ~sugar:te tc in
   match te.type_content with
     | I.T_sum sum -> 
-      let sum = I.CMap.to_kv_list sum in
       let%bind sum = 
-        bind_map_list (fun ((I.Constructor c),v) ->
-          let {ctor_type ; michelson_annotation ; ctor_decl_pos} : I.ctor_content = v in
-          let%bind ctor_type = compile_type_expression ctor_type in
-          let v' : O.ctor_content = {ctor_type ; michelson_annotation ; ctor_decl_pos} in
-          ok @@ ((O.Constructor c),v')
+        Stage_common.Helpers.bind_map_lmap (fun v ->
+          let {associated_type ; michelson_annotation ; decl_pos} : I.row_element = v in
+          let%bind associated_type = compile_type_expression associated_type in
+          let v' : O.row_element = {associated_type ; michelson_annotation ; decl_pos} in
+          ok @@ v'
         ) sum
       in
-      return @@ O.T_sum (O.CMap.of_list sum)
+      return @@ O.T_sum sum
     | I.T_record record -> 
-      let record = I.LMap.to_kv_list record in
       let%bind record = 
-        bind_map_list (fun ((I.Label l),v) ->
-          let {field_type ; michelson_annotation ; field_decl_pos} : I.field_content = v in
-          let%bind field_type = compile_type_expression field_type in
-          let v' : O.field_content = {field_type ; field_annotation=michelson_annotation ; field_decl_pos} in
-          ok @@ ((O.Label l),v')
+        Stage_common.Helpers.bind_map_lmap (fun v ->
+          let {associated_type ; michelson_annotation ; decl_pos} : I.row_element = v in
+          let%bind associated_type = compile_type_expression associated_type in
+          let v' : O.row_element = {associated_type ; michelson_annotation ; decl_pos} in
+          ok @@ v'
         ) record
       in
-      return @@ O.T_record (O.LMap.of_list record)
+      return @@ O.T_record record
     | I.T_tuple tuple ->
       let aux (i,acc) el = 
         let%bind el = compile_type_expression el in
-        ok @@ (i+1,(O.Label (string_of_int i), ({field_type=el;field_annotation=None;field_decl_pos=0}:O.field_content))::acc) in
+        ok @@ (i+1,(O.Label (string_of_int i), ({associated_type=el;michelson_annotation=None;decl_pos=0}:O.row_element))::acc) in
       let%bind (_, lst ) = bind_fold_list aux (0,[]) tuple in
       let record = O.LMap.of_list lst in
       return @@ O.T_record record
@@ -43,19 +42,19 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression , desu
       let%bind type2 = compile_type_expression type2 in
       return @@ T_arrow {type1;type2}
     | I.T_variable type_variable -> return @@ T_variable (Var.todo_cast type_variable)
-    | I.T_constant type_constant -> return @@ T_constant (cast_type_constant type_constant)
+    | I.T_constant type_constant -> return @@ T_constant type_constant
     | I.T_operator (type_operator, arguments) ->
       let%bind arguments = bind_map_list compile_type_expression arguments in
-      let type_operator = cast_type_operator type_operator in
+      let type_operator = type_operator in
       return @@ T_operator {type_operator ; arguments}
 
 let rec compile_expression : I.expression -> (O.expression , desugaring_error) result =
   fun sugar ->
   let return expr = ok @@ O.make_e ~loc:sugar.location ~sugar expr in
   match sugar.expression_content with
-    | I.E_literal literal -> return @@ O.E_literal (cast_literal literal)
+    | I.E_literal literal -> return @@ O.E_literal literal
     | I.E_constant {cons_name;arguments} -> 
-      let cons_name = cast_constant cons_name in
+      let cons_name = cons_name in
       let%bind arguments = bind_map_list compile_expression arguments in
       return @@ O.E_constant {cons_name;arguments}
     | I.E_variable name -> return @@ O.E_variable (cast_var name)
@@ -82,7 +81,7 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
       let%bind code = compile_expression code in
       return @@ O.E_raw_code {language;code} 
     | I.E_constructor {constructor;element} ->
-      let constructor = cast_constructor constructor in
+      let constructor = constructor in
       let%bind element = compile_expression element in
       return @@ O.E_constructor {constructor;element}
     | I.E_matching {matchee; cases} ->
@@ -181,8 +180,8 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
       return @@ O.E_matching {
         matchee ;
         cases = Match_variant ([
-          {constructor=Constructor "true"; proj=muted; body=match_true} ;
-          {constructor=Constructor "false"; proj=muted; body=match_false} ;
+          {constructor=Label "true"; proj=muted; body=match_true} ;
+          {constructor=Label "false"; proj=muted; body=match_false} ;
         ])}
     | I.E_sequence {expr1; expr2} ->
       let%bind expr1 = compile_expression expr1 in
@@ -224,20 +223,20 @@ and compile_matching : I.expression -> O.expression -> I.matching_expr -> (O.exp
       ok @@ O.e_matching ~loc ~sugar e @@ O.Match_option {match_none; match_some={opt;body}}
     | I.Match_variant lst ->
       let%bind lst = bind_map_list (
-        fun ((I.Constructor c,proj),expr) ->
+        fun ((c,proj),expr) ->
           let%bind body = compile_expression expr in
-          ok @@ ({constructor=O.Constructor c;proj=cast_var proj;body} : O.match_variant)
+          ok @@ ({constructor=c;proj=cast_var proj;body} : O.match_variant)
       ) lst 
       in
       ok @@ O.e_matching ~loc ~sugar e @@ O.Match_variant lst
-    | I.Match_record (fields,field_types, expr) ->
-      let combine fields field_types =
-        match field_types with
+    | I.Match_record (fields,associated_types, expr) ->
+      let combine fields associated_types =
+        match associated_types with
           Some ft -> List.combine fields @@ List.map (fun x -> Some x) ft
         | None    -> List.map (fun x -> (x, None)) fields
       in
       let%bind next   = compile_expression expr in
-      let%bind field_types = bind_map_option (bind_map_list compile_type_expression) field_types in
+      let%bind associated_types = bind_map_option (bind_map_list compile_type_expression) associated_types in
       let aux ((index,expr) : int * _ ) ((I.Label field,(ev,topt)): (I.label * (I.expression_variable * O.type_expression option))) =
         let ev = cast_var ev in
         let f = fun expr' -> O.e_let_in ~sugar (ev,topt) false (O.e_record_accessor ~sugar e (O.Label field)) expr' in
@@ -245,24 +244,24 @@ and compile_matching : I.expression -> O.expression -> I.matching_expr -> (O.exp
       in
       let (_,header) = List.fold_left aux (0, fun e -> e) @@
         List.map (fun ((a,b),c) -> (a,(b,c))) @@
-        combine fields field_types
+        combine fields associated_types
       in
       ok @@ header next
-    | I.Match_tuple (fields,field_types, expr) ->
-      let combine fields field_types =
-        match field_types with
+    | I.Match_tuple (fields,associated_types, expr) ->
+      let combine fields associated_types =
+        match associated_types with
           Some ft -> List.combine fields @@ List.map (fun x -> Some x) ft
         | None    -> List.map (fun x -> (x, None)) fields
       in
       let%bind next   = compile_expression expr in
-      let%bind field_types = bind_map_option (bind_map_list compile_type_expression) field_types in
+      let%bind associated_types = bind_map_option (bind_map_list compile_type_expression) associated_types in
       let aux ((index,expr) : int * _ ) ((ev,topt): I.expression_variable * O.type_expression option) =
         let ev = cast_var ev in
         let f = fun expr' -> O.e_let_in ~sugar (ev,topt) false (O.e_record_accessor ~sugar e (Label (string_of_int index))) expr' in
         (index+1, fun expr' -> expr (f expr'))
       in
       let (_,header) = List.fold_left aux (0, fun e -> e) @@
-        combine fields field_types
+        combine fields associated_types
       in
       ok @@ header next
     | I.Match_variable (a, ty_opt, expr) ->
@@ -279,7 +278,7 @@ let compile_declaration : I.declaration Location.wrap -> _ =
     let binder = cast_var binder in
     let%bind expr = compile_expression expr in
     let%bind type_opt = bind_map_option compile_type_expression te_opt in
-    return @@ O.Declaration_constant {binder; type_opt; inline={inline}; expr}
+    return @@ O.Declaration_constant {binder; type_opt; attr={inline}; expr}
   | I.Declaration_type (type_binder, type_expr) ->
     let type_binder = Var.todo_cast type_binder in
     let%bind type_expr = compile_type_expression type_expr in

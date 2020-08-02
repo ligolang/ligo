@@ -18,13 +18,11 @@ type constraints = O.type_constraint list
 let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun te ->
   match te.type_content with
   | T_sum kvmap ->
-     let () = failwith "fixme: don't use to_list, it drops the variant keys, rows have a differnt kind than argument lists for now!" in
-     let tlist = List.map (fun ({ctor_type;_}:T.ctor_content) -> ctor_type) (T.CMap.to_list kvmap) in
-     p_constant C_variant (List.map type_expression_to_type_value tlist)
+     let tmap = T.LMap.map (fun ({associated_type;_}:T.row_element) -> associated_type) kvmap in
+     p_row C_variant (T.LMap.map type_expression_to_type_value tmap)
   | T_record kvmap ->
-     let () = failwith "fixme: don't use to_list, it drops the record keys, rows have a differnt kind than argument lists for now!" in
-     let tlist = List.map (fun ({field_type;_}:T.field_content) -> field_type) (T.LMap.to_list kvmap) in
-     p_constant C_record (List.map type_expression_to_type_value tlist)
+     let tmap = T.LMap.map (fun ({associated_type;_}:T.row_element) -> associated_type) kvmap in
+     p_row C_record (T.LMap.map type_expression_to_type_value tmap)
   | T_arrow {type1;type2} ->
      p_constant C_arrow (List.map type_expression_to_type_value [ type1 ; type2 ])
 
@@ -47,15 +45,16 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
                   )
      in
      p_constant csttag []
-  | T_operator (type_operator) ->
-     let (csttag, args) = T.(match type_operator with
-                                | TC_option o                -> (C_option, [o])
-                                | TC_set s                   -> (C_set, [s])
-                                | TC_map { k ; v }           -> (C_map, [k;v])
-                                | TC_big_map { k ; v }       -> (C_big_map, [k;v])
-                                | TC_map_or_big_map { k ; v } -> (C_map, [k;v])
-                                | TC_list l                  -> (C_list, [l])
-                                | TC_contract c              -> (C_contract, [c])
+  | T_operator {operator; args} ->
+     let (csttag, args) = Option.unopt_exn @@ T.(match operator,args with
+                                | TC_option, [o]                -> Some (C_option, [o])
+                                | TC_set, [s]                   -> Some (C_set, [s])
+                                | TC_map, [ k ; v ]             -> Some (C_map, [k;v])
+                                | TC_big_map, [ k ; v ]         -> Some (C_big_map, [k;v])
+                                | TC_map_or_big_map, [ k ; v ]  -> Some (C_map, [k;v])
+                                | TC_list, [l]                  -> Some (C_list, [l])
+                                | TC_contract, [c]              -> Some (C_contract, [c])
+                                | _ -> None
                           )
      in
      p_constant csttag (List.map type_expression_to_type_value args)
@@ -63,13 +62,11 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
 let rec type_expression_to_type_value_copypasted : I.type_expression -> O.type_value = fun te ->
   match te.content with
   | T_sum kvmap ->
-     let () = failwith "fixme: don't use to_list, it drops the variant keys, rows have a differnt kind than argument lists for now!" in
-     let tlist = List.map (fun ({ctor_type;_}:I.ctor_content) -> ctor_type) (I.CMap.to_list kvmap) in
-     p_constant C_variant (List.map type_expression_to_type_value_copypasted tlist)
+     let tlist = T.LMap.map (fun ({associated_type;_}:I.row_element) -> associated_type) kvmap in
+     p_row C_variant (T.LMap.map type_expression_to_type_value_copypasted tlist)
   | T_record kvmap ->
-     let () = failwith "fixme: don't use to_list, it drops the record keys, rows have a differnt kind than argument lists for now!" in
-     let tlist = List.map (fun ({field_type;_}:I.field_content) -> field_type) (I.LMap.to_list kvmap) in
-     p_constant C_record (List.map type_expression_to_type_value_copypasted tlist)
+     let tlist = T.LMap.map (fun ({associated_type;_}:I.row_element) -> associated_type) kvmap in
+     p_row C_record (T.LMap.map type_expression_to_type_value_copypasted tlist)
   | T_arrow {type1;type2} ->
      p_constant C_arrow (List.map type_expression_to_type_value_copypasted [ type1 ; type2 ])
   | T_variable type_name -> { tsrc = "wrap: from source code maybe?" ; t = P_variable (Var.todo_cast type_name) }
@@ -81,29 +78,33 @@ let rec type_expression_to_type_value_copypasted : I.type_expression -> O.type_v
      in
      p_constant csttag []
   | T_operator ({type_operator ; arguments } : I.content_type_operator) ->
-     let csttag = T.(match type_operator with
-                                | TC_option                    -> C_option 
-                                | TC_list                      -> C_list   
-                                | TC_set                       -> C_set    
-                                | TC_map                       -> C_map    
-                                | TC_big_map                   -> C_big_map
-                                | TC_map_or_big_map            -> C_map
-                                | TC_contract                  -> C_contract
-                                | TC_michelson_pair
-                                | TC_michelson_or
-                                | TC_michelson_pair_right_comb -> C_record
-                                | TC_michelson_pair_left_comb  -> C_record
-                                | TC_michelson_or_right_comb   -> C_record
-                                | TC_michelson_or_left_comb    -> C_record
-                          )
-     in
-     p_constant csttag (List.map type_expression_to_type_value_copypasted arguments)
+    let csttag = T.(match type_operator with
+                              | TC_option                    -> Some C_option 
+                              | TC_list                      -> Some C_list   
+                              | TC_set                       -> Some C_set    
+                              | TC_map                       -> Some C_map    
+                              | TC_big_map                   -> Some C_big_map
+                              | TC_map_or_big_map            -> Some C_map
+                              | TC_contract                  -> Some C_contract
+                              | TC_michelson_pair
+                              | TC_michelson_or
+                              | TC_michelson_pair_right_comb 
+                              | TC_michelson_pair_left_comb  
+                              | TC_michelson_or_right_comb   
+                              | TC_michelson_or_left_comb    -> None
+                        )
+    in
+    match csttag with
+      Some csttag ->
+      p_constant csttag (List.map type_expression_to_type_value_copypasted arguments)
+    | None ->
+      type_expression_to_type_value_copypasted @@ List.hd arguments
 
 let failwith_ : unit -> (constraints * O.type_variable) = fun () ->
   let type_name = Core.fresh_type_variable () in
   [] , type_name
 
-let variable : I.expression_variable -> T.type_expression -> (constraints * T.type_variable) = fun _name expr ->
+let variable : T.type_expression -> (constraints * T.type_variable) = fun expr ->
   let pattern = type_expression_to_type_value expr in
   let type_name = Core.fresh_type_variable () in
   [{ c = C_equation { aval = { tsrc = "wrap: variable: whole" ; t = P_variable type_name } ; bval = pattern } ; reason = "wrap: variable" }] , type_name
@@ -125,9 +126,14 @@ let literal : T.type_expression -> (constraints * T.type_variable) = fun t ->
     [C_equation (P_variable (type_name) , pattern)] , type_name
  *)
 
+(* TODO : move to common *)
+let lmap_of_tuple lst =
+  let aux i e = (i+1,(T.Label (string_of_int i),e)) in
+  T.LMap.of_list @@ List.fold_map aux 0 lst
+
 let tuple : T.type_expression list -> (constraints * T.type_variable) = fun tys ->
-  let patterns = List.map type_expression_to_type_value tys in
-  let pattern = p_constant C_record patterns in
+  let patterns = lmap_of_tuple @@ List.map type_expression_to_type_value tys in
+  let pattern = p_row C_record patterns in
   let type_name = Core.fresh_type_variable () in
   [{ c = C_equation { aval = { tsrc = "wrap: tuple: whole" ; t = P_variable type_name } ; bval = pattern} ; reason = "wrap: tuple" }] , type_name
 
@@ -173,7 +179,7 @@ let constructor
     c_equation t_arg c_arg "wrap: construcotr: arg" ;
   ] , whole_expr
 
-let record : T.field_content T.label_map -> (constraints * T.type_variable) = fun fields ->
+let record : T.row_element T.label_map -> (constraints * T.type_variable) = fun fields ->
   let record_type = type_expression_to_type_value (T.t_record fields ()) in
   let whole_expr = Core.fresh_type_variable () in
   [c_equation { tsrc = "wrap: record: whole" ; t = P_variable whole_expr } record_type "wrap: record: whole"] , whole_expr
@@ -265,7 +271,7 @@ let loop : T.type_expression -> T.type_expression -> (constraints * T.type_varia
   let body' = type_expression_to_type_value body in
   let whole_expr = Core.fresh_type_variable () in
   [
-      c_equation expr'                   ({ tsrc = "built-in type" ; t = P_variable Stage_common.Constant.t_bool }) "wrap: loop: expr" ;
+      c_equation expr'                   ({ tsrc = "built-in type" ; t = P_variable Ast_typed.Constant.t_bool }) "wrap: loop: expr" ;
       c_equation body'                   (p_constant C_unit []) "wrap: loop: body" ;
       c_equation (p_constant C_unit [])  ({ tsrc = "wrap: loop: whole" ; t = P_variable whole_expr}) "wrap: loop: whole (unit)" ;
   ] , whole_expr
@@ -357,8 +363,8 @@ let lambda
 let constant : O.type_value -> T.type_expression list -> (constraints * T.type_variable) =
   fun f args ->
   let whole_expr = Core.fresh_type_variable () in
-  let args'      = List.map type_expression_to_type_value args in
-  let args_tuple = p_constant C_record args' in
+  let args'      = lmap_of_tuple @@ List.map type_expression_to_type_value args in
+  let args_tuple = p_row C_record args' in
   [
       c_equation f (p_constant C_arrow ([args_tuple ; { tsrc = "wrap: lambda: whole" ; t = P_variable whole_expr }])) "wrap: constant: as declared for built-in"
   ] , whole_expr

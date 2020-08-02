@@ -449,7 +449,7 @@ let compile_expression =
 
 let dump_changelog =
   let f display_format brief =
-    let value = [%blob "../../CHANGELOG.md"] in
+    let value = Changelog.changelog in
     let format = Formatter.changelog_format in
     toplevel ~display_format ~brief (Display.Displayable {value ; format}) (ok value) in
   let term =

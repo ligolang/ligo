@@ -8,6 +8,7 @@ let parser_tracer (e:Parser.Errors.parser_error) : all = `Main_parser e
 let pretty_tracer (e:Parser.Errors.parser_error) : all = `Main_pretty e
 let cit_cameligo_tracer (e:Tree_abstraction.Cameligo.Errors.abs_error) : all = `Main_cit_cameligo e
 let cit_pascaligo_tracer (e:Tree_abstraction.Pascaligo.Errors.abs_error) : all = `Main_cit_pascaligo e
+let cit_reasonligo_tracer (e:Tree_abstraction.Reasonligo.Errors.abs_error) : all = `Main_cit_reasonligo e
 let self_ast_imperative_tracer (e:Self_ast_imperative.Errors.self_ast_imperative_error) : all = `Main_self_ast_imperative e
 let purification_tracer (e:Purification.Errors.purification_error) : all = `Main_purification e
 let depurification_tracer (e:Purification.Errors.purification_error) : all = `Main_depurification e
@@ -39,9 +40,6 @@ let unparse_tracer errs : all = `Main_unparse_tracer errs
 let typecheck_contract_tracer c errs : all = `Main_typecheck_contract_tracer (c,errs)
 let typecheck_parameters_tracer _ : all = `Main_typecheck_parameter
 
-let bad_parameter c : all = `Main_bad_michelson_parameter c
-let bad_storage   c : all = `Main_bad_michelson_storage c
-let bad_contract  c : all = `Main_bad_michelson c
 let gas_exhaustion : all = `Main_gas_exhaustion
 let unknown : all = `Main_unknown
 

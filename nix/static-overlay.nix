@@ -4,7 +4,7 @@
 native: self: super:
 let dds = x: x.overrideAttrs (o: { dontDisableStatic = true; });
 in {
-  buildPackages = super.buildPackages // { inherit (native) rakudo; };
+  buildPackages = super.buildPackages // { inherit (native) rakudo upx ligo-changelog; };
   ocaml = self.ocaml-ng.ocamlPackages_4_09.ocaml;
   libev = dds super.libev;
   libusb = self.libusb1;
