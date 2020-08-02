@@ -1,10 +1,8 @@
 open Simple_utils.Display
-open Co_de_bruijn.Types
 
 type stacking_error = [
   | `Stacking_corner_case of string * string
   | `Stacking_contract_entrypoint of string
-  | `Stacking_expression_tracer of expression * type_expression * stacking_error
   | `Stacking_bad_iterator of Mini_c.constant'
   | `Stacking_not_comparable_base of Mini_c.type_base
   | `Stacking_not_comparable of Mini_c.type_expression
@@ -21,7 +19,6 @@ let corner_case_msg () =
 let get_env var env = `Stacking_get_environment (var , env)
 let corner_case ~loc  message = `Stacking_corner_case (loc,message)
 let contract_entrypoint_must_be_literal ~loc = `Stacking_contract_entrypoint loc
-let compile_expression_tracer e ty err = `Stacking_expression_tracer (e,ty,err)
 let bad_iterator cst = `Stacking_bad_iterator cst
 let not_comparable_base tb = `Stacking_not_comparable_base tb
 let not_comparable t = `Stacking_not_comparable t
@@ -30,7 +27,7 @@ let unrecognized_data errs = `Stacking_unparsing_unrecognized_data errs
 let untranspilable m_data m_type = `Stacking_untranspilable (m_data, m_type)
 let bad_constant_arity c = `Stacking_bad_constant_arity c
 
-let rec error_ppformat : display_format:string display_format ->
+let error_ppformat : display_format:string display_format ->
   Format.formatter -> stacking_error -> unit =
   fun ~display_format f a ->
   match display_format with
@@ -44,10 +41,6 @@ let rec error_ppformat : display_format:string display_format ->
       let s = Format.asprintf "contract entrypoint must be given as a literal string: %s"
         loc in
       Format.pp_print_string f s ;
-    | `Stacking_expression_tracer (_e,_ty,err) ->
-      Format.fprintf f
-        "@[<hv>compiling expression TODO@ of type TODO@ %a]"
-        (error_ppformat ~display_format) err
     | `Stacking_bad_iterator cst ->
        let s = Format.asprintf "bad iterator: iter %a" Mini_c.PP.constant cst in
       Format.pp_print_string f s ;
@@ -62,7 +55,7 @@ let rec error_ppformat : display_format:string display_format ->
       Format.pp_print_string f s;
   )
 
-let rec error_jsonformat : stacking_error -> Yojson.t = fun a ->
+let error_jsonformat : stacking_error -> Yojson.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;
@@ -79,17 +72,6 @@ let rec error_jsonformat : stacking_error -> Yojson.t = fun a ->
     let content = `Assoc [
       ("location", `String loc); 
       ("message", `String "contract entrypoint must be given as literal string"); ] in
-    json_error ~stage ~content
-  | `Stacking_expression_tracer (_e,_ty,err) ->
-    let e' = "TODO" in
-    let ty' = "TODO" in
-    let children = error_jsonformat err in
-    let content = `Assoc [
-      ("message", `String "compiling expression");
-      ("expression", `String e');
-      ("type", `String ty');
-      ("children", children) ]
-    in
     json_error ~stage ~content
   | `Stacking_bad_iterator cst ->
     let s = Format.asprintf "%a" Mini_c.PP.constant cst in

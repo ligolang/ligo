@@ -268,7 +268,6 @@ and translate_expression (expr : expression) env outer : (michelson , stacking_e
   let ty = expr.type_expression in
   let return code = ok code in
 
-  trace (compile_expression_tracer expr ty) @@ 
   match expr' with
   | E_literal v ->
       let%bind v = translate_value v ty in
