@@ -19,7 +19,6 @@ let%expect_test _ =
     dummy
     nested_for_collection_local_var
     nested_for_collection
-    for_collection_map_k
     for_collection_map_kv
     for_collection_empty
     for_collection_with_patches

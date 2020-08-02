@@ -134,15 +134,6 @@ function for_collection_map_kv (var nee : unit) : int * string is
     }
   } with (acc, st)
 
-function for_collection_map_k (var nee : unit) : string is
-  block {
-    var st : string := "";
-    var mymap : map (string, int) := map ["1" -> 1; "2" -> 2; "3" -> 3];
-    for k in map mymap block {
-      st := st ^ k
-    }
-  } with st
-
 function nested_for_collection (var nee : unit) : int * string is
   block {
     var myint : int := 0;
