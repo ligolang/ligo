@@ -390,6 +390,7 @@ and pp_type_expr = function
 | TFun t    -> pp_fun_type t
 | TPar t    -> pp_type_par t
 | TVar t    -> pp_ident t
+| TWild   _ -> string "_"
 | TString s -> pp_string s
 
 and pp_cartesian {value; _} =

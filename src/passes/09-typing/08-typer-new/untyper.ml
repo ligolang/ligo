@@ -167,6 +167,7 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer
   | O.T_constant (tag) ->
     ok @@ I.T_constant (unconvert_type_constant tag)
   | O.T_variable (name) -> ok @@ I.T_variable (Var.todo_cast name) (* TODO: is this the right conversion? *)
+  | O.T_wildcard -> ok @@ I.T_wildcard
   | O.T_arrow {type1;type2} ->
     let%bind type1 = untype_type_expression type1 in
     let%bind type2 = untype_type_expression type2 in

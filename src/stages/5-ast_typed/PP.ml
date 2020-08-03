@@ -220,6 +220,7 @@ let rec type_expression' :
   | T_record m -> fprintf ppf "%a" (tuple_or_record_sep_type f) m
   | T_arrow a -> fprintf ppf "@[<h>%a ->@ %a@]" f a.type1 f a.type2
   | T_variable tv -> type_variable ppf tv
+  | T_wildcard -> fprintf ppf "_"
   | T_constant tc -> type_constant ppf tc
   | T_operator {operator;args} -> fprintf ppf "%a (%a)" type_operator operator (list_sep_d type_expression) args
 

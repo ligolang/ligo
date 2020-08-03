@@ -107,6 +107,7 @@ let rec type_content : formatter -> type_expression -> unit =
   | T_record m -> fprintf ppf "%a" (tuple_or_record_sep_type type_expression) m
   | T_arrow a -> fprintf ppf "%a -> %a" type_expression a.type1 type_expression a.type2
   | T_variable tv -> type_variable ppf tv
+  | T_wildcard -> fprintf ppf "_"
   | T_constant tc -> type_constant ppf tc
   | T_operator {type_operator=top;arguments} -> fprintf ppf "%a (%a)" type_operator top (list_sep_d type_expression) arguments
 
