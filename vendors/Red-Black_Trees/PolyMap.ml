@@ -31,6 +31,10 @@ let find key map =
 let find_opt key map =
   try Some (find key map) with Not_found -> None
 
+let find_default key make_default_v map =
+  try find key map, map with
+    Not_found -> let v = make_default_v () in v, add key v map
+
 let has_key key map =
   match find_opt key map with
     Some _ -> true
