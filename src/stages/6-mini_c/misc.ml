@@ -21,11 +21,9 @@ module Free_variables = struct
     match e.content with
     | E_literal v -> value b v
     | E_closure f -> lambda b f
-    | E_skip -> empty
     | E_constant (c) -> unions @@ List.map self c.arguments
     | E_application (f, x) -> unions @@ [ self f ; self x ]
     | E_variable n -> var_name b n
-    | E_make_none _ -> empty
     | E_iterator (_, ((v, _), body), expr) ->
       unions [ expression (union (singleton v) b) body ;
                self expr ;
@@ -55,9 +53,7 @@ module Free_variables = struct
       unions [ self expr ;
                expression (union (singleton v) b) body ;
              ]
-    | E_sequence (x, y) -> union (self x) (self y)
     | E_record_update (r, _,e) -> union (self r) (self e)
-    | E_while (cond , body) -> union (self cond) (self body)
     | E_raw_michelson _ -> empty
 
   and var_name : bindings -> var_name -> bindings = fun b n ->

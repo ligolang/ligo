@@ -53,9 +53,7 @@ let rec is_pure : expression -> bool = fun e ->
   match e.content with
   | E_literal _
   | E_closure _
-  | E_skip
   | E_variable _
-  | E_make_none _
   | E_raw_michelson _
     -> true
 
@@ -66,7 +64,6 @@ let rec is_pure : expression -> bool = fun e ->
     -> List.for_all is_pure [ cond ; bt ; bf ]
 
   | E_let_in (_, _, e1, e2)
-  | E_sequence (e1, e2)
     -> List.for_all is_pure [ e1 ; e2 ]
 
   | E_constant (c)
@@ -79,10 +76,6 @@ let rec is_pure : expression -> bool = fun e ->
   | E_iterator _
   | E_fold _
     -> false
-
-  (* Could be pure, but, divergence is an effect, so halting problem
-     is near... *)
-  | E_while _ -> false
 
 let occurs_in : expression_variable -> expression -> bool =
   fun x e ->

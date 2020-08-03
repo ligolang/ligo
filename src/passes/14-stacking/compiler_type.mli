@@ -1,6 +1,6 @@
 open Errors
 open Trace
-open Mini_c.Types
+open Co_de_bruijn
 open Proto_alpha_utils.Memory_proto_alpha
 open Protocol
 open Script_ir_translator
@@ -66,9 +66,6 @@ module Ty : sig
  *)
   val type_ : type_expression -> (ex_ty, stacking_error) result
 
-  val environment_representation : environment -> (ex_ty, stacking_error) result
-
-  val environment : environment -> (ex_stack_ty, stacking_error) result
   (*
   val not_comparable : string -> unit -> error
   val not_compilable_type : string -> unit -> error

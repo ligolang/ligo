@@ -18,13 +18,7 @@ let%expect_test _ =
   [%expect {|
     { parameter unit ;
       storage (or (int %three) (or %four (int %one) (nat %two))) ;
-      code { PUSH int 1 ;
-             LEFT nat ;
-             RIGHT int ;
-             DUP ;
-             NIL operation ;
-             PAIR ;
-             DIP { DROP 2 } } } |}]
+      code { DROP ; PUSH int 1 ; LEFT nat ; RIGHT int ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_michelson_or.mligo" ; "main" ] ;
@@ -46,10 +40,5 @@ let%expect_test _ =
   [%expect {|
     { parameter unit ;
       storage (or (int %three) (or (int %one) (nat %two))) ;
-      code { PUSH int 1 ;
-             LEFT nat ;
-             RIGHT int ;
-             DUP ;
-             NIL operation ;
-             PAIR ;
-             DIP { DROP 2 } } } |}]
+      code { DROP ; PUSH int 1 ; LEFT nat ; RIGHT int ; NIL operation ; PAIR } } |}]
+

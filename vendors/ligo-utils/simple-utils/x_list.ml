@@ -80,6 +80,9 @@ let range n =
   in
   aux [] n
 
+let repeat n x =
+  List.map (fun _ -> x) (range n)
+
 let find_map f lst =
   let rec aux = function
     | [] -> None
