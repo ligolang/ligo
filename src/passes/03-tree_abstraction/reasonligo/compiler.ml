@@ -292,7 +292,8 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     let%bind lhs_type = bind_map_option (compile_type_expression <@ snd) lhs_type in
     let%bind ((binder,ty_opt),exprs) = compile_parameter binders in
     let%bind body = compile_expression body in
-    let expr = List.fold_right (@@) exprs body  in
+    let aux (binder, ty_opt,attr,rhs) expr = e_let_in (binder, ty_opt) attr rhs expr in
+    let expr = List.fold_right aux exprs body  in
     return @@ e_lambda ~loc binder ty_opt lhs_type expr 
   | EConstr (ESomeApp some) ->
     let ((_, arg), loc) = r_split some in
@@ -439,7 +440,7 @@ fun cases ->
   | _ -> fail @@ unsupported_pattern_type @@ List.hd @@ List.map fst @@ List.Ne.to_list cases
 
 and compile_let_binding ?kwd_rec attributes binding =
-  let return = ok in
+  let return lst = ok lst in
   let return_1 a = return [a] in
   let ({binders; lhs_type; let_rhs; _} : CST.let_binding) = binding in
   let attr = compile_attribute_declaration attributes in
@@ -465,11 +466,12 @@ and compile_let_binding ?kwd_rec attributes binding =
   | PTuple tuple -> (* Tuple destructuring *)
     let (tuple, loc) = r_split tuple in
     let%bind lst = bind_map_ne_list compile_parameter @@ npseq_to_ne_list tuple in
-    let (lst, _) = List.Ne.split lst in
+    let (lst, exprs) = List.Ne.split lst in
+    let exprs = List.flatten @@ List.Ne.to_list exprs in
     let var = Location.wrap ~loc @@ Var.fresh () in
     let body = e_variable var in
     let aux i (var, ty_opt) = Z.add i Z.one, (var,ty_opt, attr, e_accessor body @@ [Access_tuple i]) in
-    return @@ (var,None, false, expr) :: (List.fold_map aux Z.zero @@ List.Ne.to_list lst)
+    return @@ (var,None, false, expr) :: (List.fold_map aux Z.zero @@ List.Ne.to_list lst) @ exprs
   | _ -> fail @@ unsupported_pattern_type @@ binders
   in aux binders
 
@@ -502,7 +504,8 @@ and compile_parameter : CST.pattern -> _ result = fun pattern ->
       Location.unwrap var, []
     | var, lst ->
       let binder = Var.fresh () in
-      binder, [e_matching_tuple ~loc (e_variable @@ Location.wrap ~loc binder) (var::lst) None ]
+      let aux i var = Z.add i Z.one, (var,None, false, e_accessor (e_variable @@ Location.wrap ~loc binder) @@ [Access_tuple i]) in
+      binder, List.fold_map aux Z.zero @@ var :: lst
     in
     let exprs = List.flatten @@ expr :: List.Ne.to_list exprs in
     return ?ty loc exprs @@ var 

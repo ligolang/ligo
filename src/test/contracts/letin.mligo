@@ -27,3 +27,7 @@ let letin_nesting2 (x: int) =
   let y = 2 in 
   let z = 3 in
   x + y + z
+
+let x =
+  let (_, (x, _)) = (1n, (2n, 3n)) in 
+  x

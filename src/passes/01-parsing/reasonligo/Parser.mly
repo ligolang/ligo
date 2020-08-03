@@ -627,12 +627,15 @@ disj_expr_level:
 | par(tuple(disj_expr_level)) type_annotation_simple? {
     let region = nsepseq_to_region expr_to_region $1.value.inside in
     let tuple  = ETuple {value=$1.value.inside; region} in
+    let par = 
+      EPar {$1 with value = {$1.value with inside = tuple}} in
     match $2 with
       Some (colon, typ) ->
         let region = cover $1.region (type_expr_to_region typ)
-        and value = {$1.value with inside = tuple,colon,typ}
+        and value = {$1.value with inside = par,colon,typ}
         in EAnnot {region; value}
-    | None -> tuple }
+    | None -> par
+    }
 
 bin_op(arg1,op,arg2):
   arg1 op arg2 {
