@@ -21,7 +21,6 @@ module ParseTree
   where
 
 import Data.ByteString (ByteString)
-import Data.IORef
 import qualified Data.ByteString as BS
 import qualified Data.Text as Text
 import qualified Data.Text.Encoding as Text
@@ -101,20 +100,13 @@ toParseTree = unsafePerformIO $ debounced inner
 
       src <- srcToBytestring fin
 
-      idCounter <- newIORef 0
-
       BS.useAsCStringLen src \(str, len) -> do
         tree <- ts_parser_parse_string parser nullPtr str len
-        withRootNode tree (peek >=> go src idCounter)
+        withRootNode tree (peek >=> go src)
 
       where
-        nextID :: IORef Int -> IO Int
-        nextID ref = do
-          modifyIORef' ref (+ 1)
-          readIORef ref
-
-        go :: ByteString -> IORef Int -> Node -> IO RawTree
-        go src idCounter node = do
+        go :: ByteString -> Node -> IO RawTree
+        go src node = do
           let count = fromIntegral $ nodeChildCount node
           allocaArray count \children -> do
             alloca \tsNodePtr -> do
@@ -124,7 +116,7 @@ toParseTree = unsafePerformIO $ debounced inner
                 peekElemOff children i
 
               trees <- for nodes \node' -> do
-                (only -> (r :> _, tree :: ParseTree RawTree)) <- go src idCounter node'
+                (only -> (r :> _, tree :: ParseTree RawTree)) <- go src node'
                 field <-
                   if nodeFieldName node' == nullPtr
                   then return ""
@@ -137,9 +129,6 @@ toParseTree = unsafePerformIO $ debounced inner
                 start2D  = nodeStartPoint node
                 finish2D = nodeEndPoint   node
                 i = fromIntegral
-
-              treeID <- nextID idCounter
-              fID    <- nextID idCounter
 
               let
                 range = Range

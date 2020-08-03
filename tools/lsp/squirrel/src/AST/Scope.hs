@@ -56,6 +56,12 @@ data ScopedDecl = ScopedDecl
   }
   deriving Show via PP ScopedDecl
 
+instance Eq ScopedDecl where
+  sd == sd1 = and
+    [ pp (_sdName   sd) == pp (_sdName   sd1)
+    ,     _sdOrigin sd  ==     _sdOrigin sd1
+    ]
+
 -- | The kind.
 data Kind = Star
   deriving Show via PP Kind
@@ -90,6 +96,8 @@ ofCategory Variable ScopedDecl { _sdType = Just (Right Star) } = False
 ofCategory Variable _                                          = True
 ofCategory Type     ScopedDecl { _sdType = Just (Right Star) } = True
 ofCategory _        _                                          = False
+
+type Info' = Product [[ScopedDecl], Maybe Category, [Text], Range, ShowRange]
 
 instance Modifies (Product '[[ScopedDecl], Maybe Category, [Text], Range, a]) where
   ascribe (ds :> _ :> _ :> r :> _) d =

@@ -41,7 +41,7 @@ extra-deps:
   - semilattices-0.0.0.4@sha256:333707e460923711d1edbdd02ebe1c3957d4e0808eab9886747b52ee3e443639,1909
   - fastsum-0.1.1.1
   - git: https://github.com/serokell/duplo.git
-    commit: 3bb313af0c78c669c1b39ab2f912508b148e8aae
+    commit: e6e2e382bb381ce629e71ab3d08274396e686ba3
 # - acme-missiles-0.3
 # - git: https://github.com/commercialhaskell/stack.git
 #   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a

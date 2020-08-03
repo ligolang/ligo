@@ -25,7 +25,7 @@ type RawLigoList =
   [ Name, Path, QualifiedName, Pattern, Constant, FieldAssignment, Assignment
   , MapBinding, LHS, Alt, Expr, TField, Variant, Type, Mutable, VarDecl, Binding
   , RawContract, TypeName, FieldName, Language
-  , Err Text, Parameters, Ctor
+  , Err Text, Parameters, Ctor, Contract
   ]
 
 data Undefined it

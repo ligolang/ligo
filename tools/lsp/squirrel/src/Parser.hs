@@ -29,7 +29,7 @@ import Debug.Trace
   4) On leaving, move move comments from 2 to 1.
 -}
 
-runParserM :: ParserM a -> IO (a, [Err Text ()])
+runParserM :: ParserM a -> IO (a, [Msg])
 runParserM p = (\(a, _, errs) -> (a, errs)) <$> runRWST p () ([], [])
 
 runParserM1 :: [RawTree] -> ParserM1 a -> ParserM (Maybe a)
@@ -40,22 +40,23 @@ runParserM1 cs p = do
   put s1
   return a
 
-type ParserM  =         RWST ()        [Err Text ()] ([Text], [Text]) IO
-type ParserM1 = MaybeT (RWST [RawTree] [Err Text ()] ([Text], [Text]) IO)
+type Msg      = (Range, Err Text ())
+type ParserM  =         RWST ()        [Msg] ([Text], [Text]) IO
+type ParserM1 = MaybeT (RWST [RawTree] [Msg] ([Text], [Text]) IO)
 
 data Failure = Failure String
   deriving stock (Show)
   deriving anyclass (Exception)
 
 instance Scoped (Product [Range, Text]) ParserM RawTree ParseTree where
-  before (_ :> _ :> _) (ParseTree ty cs s) = do
+  before (r :> _ :> _) (ParseTree ty cs s) = do
     let (comms, rest) = allComments cs
     let (comms1, _)   = allComments $ reverse rest
     modify $ first  (++ comms)
     modify $ second (++ reverse comms1)
 
     let errs = allErrors   cs
-    tell $ fmap Err errs
+    tell $ fmap (\t -> (r, Err t)) errs
 
   after _ _ = do
     modify \(x, y) -> (y, [])
@@ -111,6 +112,10 @@ fields name = ask >>= go
 data ShowRange
   = Y | N
   deriving stock Eq
+
+instance Pretty ShowRange where
+  pp Y = "Yau"
+  pp N = "Nah"
 
 type Info    = Product [[Text], Range, ShowRange]
 type PreInfo = Product [Range, ShowRange]
