@@ -73,7 +73,7 @@ type value =
 and selector = var_name list
 
 and expression_content =
-  | E_literal of value
+  | E_literal of literal
   | E_closure of anon_function
   | E_constant of constant
   | E_application of (expression * expression)

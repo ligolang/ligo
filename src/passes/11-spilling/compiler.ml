@@ -74,6 +74,8 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_CDR -> C_CDR
   | C_LEFT -> C_LEFT
   | C_RIGHT -> C_RIGHT
+  | C_TRUE -> C_TRUE
+  | C_FALSE -> C_FALSE
   (* Set *)
   | C_SET_EMPTY -> C_SET_EMPTY
   | C_SET_LITERAL -> C_SET_LITERAL
@@ -273,22 +275,7 @@ let record_access_to_lr : type_expression -> type_expression AST.label_map -> AS
     bind_fold_list aux (ty , []) lr_path in
   ok lst
 
-let rec compile_literal : AST.literal -> value = fun l -> match l with
-  | Literal_int n -> D_int n
-  | Literal_nat n -> D_nat n
-  | Literal_timestamp n -> D_timestamp n
-  | Literal_mutez n -> D_mutez n
-  | Literal_bytes s -> D_bytes s
-  | Literal_string s -> D_string (Ligo_string.extract s)
-  | Literal_address s -> D_string s
-  | Literal_signature s -> D_string s
-  | Literal_key s -> D_string s
-  | Literal_key_hash s -> D_string s
-  | Literal_chain_id s -> D_string s
-  | Literal_operation op -> D_operation op
-  | Literal_unit -> D_unit
-
-and tree_of_sum : AST.type_expression -> ((AST.label * AST.type_expression) Append_tree.t, spilling_error) result = fun t ->
+let rec tree_of_sum : AST.type_expression -> ((AST.label * AST.type_expression) Append_tree.t, spilling_error) result = fun t ->
   let%bind map_tv =
     trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
     get_t_sum t in
@@ -304,7 +291,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
     let%bind rhs' = compile_expression rhs in
     let%bind result' = compile_expression let_result in
     return (E_let_in ((Location.map Var.todo_cast let_binder, rhs'.type_expression), inline, rhs', result'))
-  | E_literal l -> return @@ E_literal (compile_literal l)
+  | E_literal l -> return @@ E_literal l
   | E_variable name -> (
       return @@ E_variable (Location.map Var.todo_cast name)
     )
@@ -313,7 +300,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
       let%bind b = compile_expression args in
       return @@ E_application (a, b)
   | E_constructor {constructor=Label name;element} when (String.equal name "true"|| String.equal name "false") && element.expression_content = AST.e_unit () ->
-    return @@ E_literal (D_bool (bool_of_string name))
+    return @@ E_constant { cons_name = if bool_of_string name then C_TRUE else C_FALSE ; arguments = [] }
   | E_constructor {constructor;element} -> (
       let%bind param' = compile_expression element in
       let (param'_expr , param'_tv) = Combinators.Expression.(get_content param' , get_type param') in

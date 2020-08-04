@@ -71,6 +71,8 @@ let constant ppf : constant' -> unit = function
   | C_CDR                   -> fprintf ppf "CDR"
   | C_LEFT                  -> fprintf ppf "LEFT"
   | C_RIGHT                 -> fprintf ppf "RIGHT"
+  | C_TRUE                  -> fprintf ppf "TRUE"
+  | C_FALSE                 -> fprintf ppf "FALSE"
   (* Set *)
   | C_SET_EMPTY             -> fprintf ppf "SET_EMPTY"
   | C_SET_LITERAL           -> fprintf ppf "SET_LITERAL"

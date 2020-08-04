@@ -33,7 +33,7 @@ let rec num_binds : 'a binds -> int = function
   | Bind_suc (_, _, b) -> 1 + num_binds b
 
 type expression_content =
-  | E_literal of value
+  | E_literal of literal
   | E_closure of expression bind
   | E_constant of constant
   | E_application of (expression, expression) split

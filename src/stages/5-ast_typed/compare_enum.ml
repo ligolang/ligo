@@ -149,6 +149,9 @@ let constant'_tag = function
   | C_CONVERT_TO_RIGHT_COMB   -> 104
   | C_CONVERT_FROM_LEFT_COMB  -> 105
   | C_CONVERT_FROM_RIGHT_COMB -> 106
+  (* and more *)
+  | C_TRUE                    -> 107
+  | C_FALSE                   -> 108
 
 let constant' a b = Int.compare (constant'_tag a) (constant'_tag b)
 

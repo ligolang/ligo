@@ -198,7 +198,7 @@ let%expect_test _ =
   let var x = wrap (E_variable x) in
   let app f x = wrap (E_application (f, x)) in
   let lam x u = wrap (E_closure { binder = x ; body = u }) in
-  let unit = wrap (E_literal D_unit) in
+  let unit = wrap (E_literal Literal_unit) in
 
   (* substituted var *)
   Var.reset_counter () ;

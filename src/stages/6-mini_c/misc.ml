@@ -19,7 +19,7 @@ module Free_variables = struct
   let rec expression : bindings -> expression -> bindings = fun b e ->
     let self = expression b in
     match e.content with
-    | E_literal v -> value b v
+    | E_literal _ -> empty
     | E_closure f -> lambda b f
     | E_constant (c) -> unions @@ List.map self c.arguments
     | E_application (f, x) -> unions @@ [ self f ; self x ]
@@ -60,32 +60,6 @@ module Free_variables = struct
     if mem n b
     then empty
     else singleton n
-
-  and value : bindings -> value -> bindings = fun b v ->
-    let self = value b in
-    match v with
-    | D_unit
-    | D_bool _
-    | D_nat _
-    | D_timestamp _
-    | D_mutez _
-    | D_int _
-    | D_string _
-    | D_bytes _
-    | D_none
-    | D_operation _
-      -> empty
-    | D_pair (x, y) -> unions [ self x ; self y ]
-    | D_left x
-    | D_right x
-    | D_some x
-      -> self x
-    | D_map kvs
-    | D_big_map kvs
-      -> unions @@ List.map (fun (k, v) -> unions [ self k ; self v ]) kvs
-    | D_list xs
-    | D_set xs
-      -> unions @@ List.map self xs
 
   and lambda : bindings -> anon_function -> bindings = fun b l ->
     let b = union (singleton l.binder) b in

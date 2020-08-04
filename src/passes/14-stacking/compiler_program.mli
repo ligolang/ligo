@@ -18,5 +18,3 @@ type compiled_expression = {
 val translate_expression : expression -> environment -> splitting -> (michelson, stacking_error) result
 
 val translate_function_body : expression bind -> environment -> splitting -> (michelson, stacking_error) result
-
-val translate_value : value -> type_expression -> (michelson, stacking_error) result

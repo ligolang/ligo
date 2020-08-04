@@ -99,6 +99,8 @@ type constant' =
   | C_PAIR
   | C_CAR
   | C_CDR
+  | C_TRUE
+  | C_FALSE
   | C_LEFT
   | C_RIGHT
   (* Set *)
