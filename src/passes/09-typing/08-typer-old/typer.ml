@@ -269,7 +269,7 @@ let unconvert_constant' : O.constant' -> I.constant' = function
   | C_CONVERT_FROM_LEFT_COMB -> C_CONVERT_FROM_LEFT_COMB
   | C_CONVERT_FROM_RIGHT_COMB -> C_CONVERT_FROM_RIGHT_COMB
 
-let rec type_program (p:I.program) : (O.program * O'.typer_state, typer_error) result =
+let rec type_program (p:I.program) : (O.program * _ O'.typer_state, typer_error) result =
   let aux (e, acc:(environment * O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
     let%bind ed' = (bind_map_location (type_declaration e (Solver.placeholder_for_state_of_new_typer ()))) d in
     let loc : 'a . 'a Location.wrap -> _ -> _ = fun x v -> Location.wrap ~loc:x.location v in
@@ -282,7 +282,7 @@ let rec type_program (p:I.program) : (O.program * O'.typer_state, typer_error) r
   ok @@ (List.rev lst , (Solver.placeholder_for_state_of_new_typer ()))
 
 
-and type_declaration env (_placeholder_for_state_of_new_typer : O'.typer_state) : I.declaration -> (environment * O'.typer_state * O.declaration, typer_error) result = function
+and type_declaration env (_placeholder_for_state_of_new_typer : _ O'.typer_state) : I.declaration -> (environment * _ O'.typer_state * O.declaration, typer_error) result = function
   | Declaration_type {type_binder ; type_expr} ->
       let type_binder = Var.todo_cast type_binder in
       let%bind tv = evaluate_type env type_expr in
@@ -443,7 +443,7 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
           return @@ pair
       | _ -> fail @@ unrecognized_type_op t
 
-and type_expression : environment -> O'.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * O'.typer_state, typer_error) result
+and type_expression : environment -> _ O'.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * _ O'.typer_state, typer_error) result
   = fun e _placeholder_for_state_of_new_typer ?tv_opt ae ->
     let%bind res = type_expression' e ?tv_opt ae in
     ok (res, (Solver.placeholder_for_state_of_new_typer ()))
