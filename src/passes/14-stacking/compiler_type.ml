@@ -260,8 +260,16 @@ and lcomb =
   | [a] -> type_ @@ a
   | a :: b ->
       let%bind a = type_ @@ a in
-      let%bind b = environment_closure b in
+      let%bind b = lcomb b in
       ok @@ O.t_pair b a
 
 and environment_closure c =
   lcomb (List.rev c)
+
+let%expect_test _ =
+  let wrap a = {type_content = a; location = Location.dummy} in
+  (match environment_closure [wrap (T_base TB_nat); wrap (T_base TB_int); wrap (T_base TB_timestamp)] with
+   | Error _ -> Format.printf "ERROR"
+   | Ok (t, _) ->
+     Format.printf "%a" Michelson.pp t);
+  [%expect {| (pair (pair nat int) timestamp) |}]
