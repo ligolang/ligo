@@ -17,7 +17,7 @@ import AST.Scope
 import Product
 import Range
 
--- import Debug.Trace
+import Debug.Trace
 
 type CanSearch xs =
   ( Contains [ScopedDecl] xs
@@ -25,6 +25,7 @@ type CanSearch xs =
   , Contains (Maybe Category) xs
   , Contains [Text] xs
   , Pretty (Product xs)
+  , Modifies (Product xs)
   , Eq (Product xs)
   )
 

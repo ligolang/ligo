@@ -16,6 +16,8 @@ module AST.Scope
 import           Control.Arrow (first, second)
 import           Control.Monad.State
 import           Control.Monad.Identity
+import           Control.Monad.Catch
+import           Control.Monad.Catch.Pure
 
 import qualified Data.List   as List
 import           Data.Map            (Map)
@@ -23,6 +25,7 @@ import qualified Data.Map    as Map
 import           Data.Maybe          (listToMaybe)
 import           Data.Sum            (Element, Apply, Sum)
 import           Data.Text           (Text)
+import           Data.Either         (fromRight)
 
 import           Duplo.Lattice
 import           Duplo.Pretty
@@ -38,7 +41,7 @@ import           Range
 
 import           Debug.Trace
 
-type CollectM = State (Product [FullEnv, [Range]])
+type CollectM = StateT (Product [FullEnv, [Range]]) Catch
 
 type FullEnv = Product ["vars" := Env, "types" := Env]
 type Env     = Map Range [ScopedDecl]
@@ -106,19 +109,20 @@ instance Modifies (Product '[[ScopedDecl], Maybe Category, [Text], Range, a]) wh
     $$ d
 
 addLocalScopes
-  :: (Contains Range xs, Eq (Product xs))
+  :: forall xs
+  .  (Contains Range xs, Eq (Product xs))
   => LIGO (Product xs)
   -> LIGO (Product ([ScopedDecl] : Maybe Category : xs))
 addLocalScopes tree =
     fmap (\xs -> fullEnvAt envWithREfs (getRange xs) :> xs) tree1
   where
-    tree0       = runIdentity $ unLetRec tree
+    tree0       = either (error . show) id $ runCatch $ unLetRec tree
     tree1       = addNameCategories tree0
     envWithREfs = getEnvTree tree0
 
 unLetRec
   :: forall xs m
-  .  ( Monad m
+  .  ( MonadCatch m
      , Contains Range xs
      , Eq (Product xs)
      )
@@ -126,10 +130,9 @@ unLetRec
   -> m (LIGO (Product xs))
 unLetRec = descent leaveBe
   [ Descent
-    [ \case
-       (r, Let (layer -> Just (Seq xs)) b) -> return $ convert (getElem r) b xs
-       _                                   -> return Nothing
-    ]
+      \case
+        (r, Let (layer -> Just (Seq xs)) b) -> maybe (throwM HandlerFailed) return $ convert (getElem r) b xs
+        _                                   -> fallthrough
   ]
   where
     convert :: Range -> LIGO (Product xs) -> [LIGO (Product xs)] -> Maybe (Product xs, Expr (LIGO (Product xs)))
@@ -145,19 +148,17 @@ addNameCategories
   :: (Contains Range xs, Eq (Product xs))
   => LIGO (Product xs)
   -> LIGO (Product (Maybe Category : xs))
-addNameCategories tree = flip evalState emptyEnv do
+addNameCategories tree = evalCollectM do
   descent (changeInfo (Nothing :>))
     [ Descent
-      [ \(r, Name t) -> do
-        -- modify $ getRange r `addRef` (Variable, t)
-        return $ Just $ (Just Variable :> r, Name t)
-      ]
+        \(r, Name t) -> do
+        modify $ modElem $ getRange r `addRef` (Variable, t)
+        return $ (Just Variable :> r, Name t)
 
     , Descent
-      [ \(r, TypeName t) -> do
-        -- modify $ getRange r `addRef` (Type, t)
-        return $ Just $ (Just Type :> r, TypeName t)
-      ]
+        \(r, TypeName t) -> do
+        modify $ modElem $ getRange r `addRef` (Type, t)
+        return $ (Just Type :> r, TypeName t)
     ]
     tree
 
@@ -175,19 +176,15 @@ getEnvTree
   -> FullEnv
 getEnvTree tree = envWithREfs
   where
-    envWithREfs = flip execState env do
+    envWithREfs = execCollectM' env do
       descent leaveBe
-        [ Descent
-          [ \(r, Name t) -> do
-            modify $ getRange r `addRef` (Variable, t)
-            return $ Just (r, Name t)
-          ]
+        [ Descent \(r, Name t) -> do
+            modify $ modElem $ getRange r `addRef` (Variable, t)
+            return (r, Name t)
 
-        , Descent
-          [ \(r, TypeName t) -> do
-            modify $ getRange r `addRef` (Type, t)
-            return $ Just (r, TypeName t)
-          ]
+        , Descent \(r, TypeName t) -> do
+            modify $ modElem $ getRange r `addRef` (Type, t)
+            return (r, TypeName t)
         ]
         tree
 
@@ -269,7 +266,27 @@ leave = modify $ modElem @[Range] tail
 
 -- | Run the computation with scope starting from empty scope.
 execCollectM :: CollectM a -> FullEnv
-execCollectM action = getElem $ execState action $ emptyEnv :> [] :> Nil
+execCollectM = execCollectM' emptyEnv
+
+execCollectM' :: FullEnv -> CollectM a -> FullEnv
+execCollectM' env action
+  = getElem
+  $ either (error . show) id
+  $ runCatch
+  $ execStateT action
+  $ env :> [] :> Nil
+
+-- | Run the computation with scope starting from empty scope.
+evalCollectM :: CollectM a -> a
+evalCollectM  = evalCollectM' emptyEnv
+
+-- | Run the computation with scope starting from empty scope.
+evalCollectM' :: FullEnv -> CollectM a -> a
+evalCollectM' env action
+  = either (error . show) id
+  $ runCatch
+  $ evalStateT action
+  $ env :> [] :> Nil
 
 -- | Search for a name inside a local scope.
 lookupEnv :: Text -> [ScopedDecl] -> Maybe ScopedDecl

@@ -72,15 +72,14 @@ source
 recognise :: RawTree -> ParserM (LIGO Info)
 recognise = descent (\_ -> error . show . pp) $ map usingScope
   [ -- Contract
-    Descent
-    [ boilerplate \case
+    Descent do
+      boilerplate \case
         "Start" -> RawContract <$> fields "declaration"
         _ -> fallthrough
-    ]
 
     -- Expr
-  , Descent
-    [ boilerplate \case
+  , Descent do
+      boilerplate \case
         "let_expr"          -> Let       <$> field  "locals"    <*> field "body"
         "fun_call"          -> Apply     <$> field  "f"         <*> field "arguments"
         "par_call"          -> Apply     <$> field  "f"         <*> field "arguments"
@@ -118,44 +117,39 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
         "map_remove"        -> SetRemove <$> field  "key"        <*> field  "container"
         "update_record"     -> RecordUpd <$> field  "record"     <*> fields "assignment"
         _                   -> fallthrough
-    ]
 
     -- Pattern
-  , Descent
-    [ boilerplate \case
+  , Descent do
+      boilerplate \case
         "user_constr_pattern" -> IsConstr <$> field  "constr" <*> fieldOpt "arguments"
         "tuple_pattern"       -> IsTuple  <$> fields "element"
         "nil"                 -> return $ IsList []
         "list_pattern"        -> IsList   <$> fields "element"
         "cons_pattern"        -> IsCons   <$> field  "head"   <*> field "tail"
         _                     -> fallthrough
-    ]
 
     -- Alt
-  , Descent
-    [ boilerplate \case
+  , Descent do
+      boilerplate \case
         "case_clause_expr"  -> Alt <$> field "pattern" <*> field  "body"
         "case_clause_instr" -> Alt <$> field "pattern" <*> field  "body"
         _                   -> fallthrough
-    ]
 
     -- FieldAssignment
-  , Descent
-    [ boilerplate \case
+  , Descent do
+      boilerplate \case
         "field_assignment"      -> FieldAssignment <$> field "name" <*> field "_rhs"
         "field_path_assignment" -> FieldAssignment <$> field "lhs"  <*> field "_rhs"
         _                  -> fallthrough
-    ]
 
     -- MapBinding
-  , Descent
-    [ boilerplate \case
+  , Descent do
+      boilerplate \case
         "binding" -> MapBinding <$> field "key" <*> field "value"
         _         -> fallthrough
-    ]
 
-  , Descent
-    [ boilerplate' \case
+  , Descent do
+      boilerplate' \case
         ("negate",     op) -> return $ Op op
         ("adder",      op) -> return $ Op op
         ("multiplier", op) -> return $ Op op
@@ -163,72 +157,64 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
         ("^",          _)  -> return $ Op "^"
         ("#",          _)  -> return $ Op "#"
         _                  -> fallthrough
-    ]
 
-  , Descent
-    [ boilerplate \case
+  , Descent do
+      boilerplate \case
         "data_projection" -> QualifiedName <$> field "struct"    <*> fields "index"
         "map_lookup"      -> QualifiedName <$> field "container" <*> fields "index"
         "module_field"    -> QualifiedName <$> field "module"    <*> fields "method"
         _                 -> fallthrough
-    ]
 
     -- Literal
-  , Descent
-    [ boilerplate' \case
+  , Descent do
+      boilerplate' \case
         ("Int",    i) -> return $ Int i
         ("Nat",    i) -> return $ Nat i
         ("Bytes",  i) -> return $ Bytes i
         ("String", i) -> return $ String i
         ("Tez",    i) -> return $ Tez i
         _             -> fallthrough
-    ]
 
     -- Declaration
-  , Descent
-    [ boilerplate \case
+  , Descent do
+      boilerplate \case
         "fun_decl"   -> Function <$> (isJust <$> fieldOpt "recursive") <*> field "name" <*> field "parameters" <*> field "type" <*> field "body"
         "const_decl" -> Const    <$>             field    "name"       <*> field "type" <*> field "value"
         "var_decl"   -> Var      <$>             field    "name"       <*> field "type" <*> field "value"
         "type_decl"  -> TypeDecl <$>             field    "typeName"   <*> field "typeValue"
         "include"    -> Include  <$>             field    "filename"
         _            -> fallthrough
-    ]
 
     -- Parameters
-  , Descent
-    [ boilerplate \case
+  , Descent do
+      boilerplate \case
         "parameters" -> Parameters <$> fields "parameter"
         _            -> fallthrough
-    ]
 
     -- VarDecl
-  , Descent
-    [ boilerplate \case
+  , Descent do
+      boilerplate \case
         "param_decl" -> Decl <$> field "access" <*> field "name" <*> field "type"
         _            -> fallthrough
-    ]
 
     -- Mutable
-  , Descent
-    [ boilerplate \case
+  , Descent do
+      boilerplate \case
         "const" -> return Immutable
         "var"   -> return Mutable
         _       -> fallthrough
-    ]
 
     -- Name
-  , Descent
-    [ boilerplate' \case
+  , Descent do
+      boilerplate' \case
         ("Name", n) -> return $ Name n
         ("and", _)  -> return $ Name "and"
         ("or", _)   -> return $ Name "or"
         _           -> fallthrough
-    ]
 
     -- Type
-  , Descent
-    [ boilerplate \case
+  , Descent do
+      boilerplate \case
         "fun_type"         -> TArrow   <$> field  "domain"     <*> field "codomain"
         "cartesian"        -> TProduct <$> fields "element"
         "invokeBinary"     -> TApply   <$> field  "typeConstr" <*> field "arguments"
@@ -239,25 +225,22 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
         "michelsonTypeOr"  -> TOr      <$> field "left_type" <*> field "left_type_name" <*> field "right_type" <*> field "right_type_name"
         "michelsonTypeAnd" -> TAnd     <$> field "left_type" <*> field "left_type_name" <*> field "right_type" <*> field "right_type_name"
         _                 -> fallthrough
-    ]
 
     -- Variant
-  , Descent
-    [ boilerplate \case
+  , Descent do
+      boilerplate \case
         "variant" -> Variant <$> field "constructor" <*> fieldOpt "arguments"
         _         -> fallthrough
-    ]
 
     -- TField
-  , Descent
-    [ boilerplate \case
+  , Descent do
+      boilerplate \case
         "field_decl" -> TField <$> field "fieldName" <*> field "fieldType"
         _            -> fallthrough
-    ]
 
     -- TypeName
-  , Descent
-    [ boilerplate' \case
+  , Descent do
+      boilerplate' \case
         ("TypeName", name) -> return $ TypeName name
         ("list",     _)    -> return $ TypeName "list"
         ("big_map",  _)    -> return $ TypeName "big_map"
@@ -266,11 +249,10 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
         ("option",   _)    -> return $ TypeName "option"
         ("contract", _)    -> return $ TypeName "contract"
         _                  -> fallthrough
-    ]
 
     -- Ctor
-  , Descent
-    [ boilerplate' \case
+  , Descent do
+      boilerplate' \case
         ("Name_Capital", name) -> return $ Ctor name
         ("Some", _)            -> return $ Ctor "Some"
         ("Some_pattern", _)    -> return $ Ctor "Some"
@@ -280,27 +262,23 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
         ("Unit", _)            -> return $ Ctor "Unit"
         ("constr", n)          -> return $ Ctor n
         _                      -> fallthrough
-    ]
 
     -- FieldName
-  , Descent
-    [ boilerplate' \case
+  , Descent do
+      boilerplate' \case
         ("FieldName", name) -> return $ FieldName name
         _                   -> fallthrough
-    ]
 
     -- Err
-  , Descent
-    [ \(r :> _, ParseTree _ _ text) -> do
+  , Descent do
+      \(r :> _, ParseTree _ _ text) -> do
         withComments do
-          return $ Just (r :> N :> Nil, Err text)
-    ]
+          return (r :> N :> Nil, Err text)
 
-  , Descent
-    [ \case
+  , Descent do
+      \case
         (r :> _, ParseTree "ERROR" _ text) -> do
-          return $ Just ([] :> r :> Y :> Nil, Err text)
+          return ([] :> r :> Y :> Nil, Err text)
 
-        _ -> return Nothing
-    ]
+        _ -> fallthrough
   ]

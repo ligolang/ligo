@@ -30,19 +30,10 @@ import Debug.Trace
 -}
 
 runParserM :: ParserM a -> IO (a, [Msg])
-runParserM p = (\(a, _, errs) -> (a, errs)) <$> runRWST p () ([], [])
-
-runParserM1 :: [RawTree] -> ParserM1 a -> ParserM (Maybe a)
-runParserM1 cs p = do
-  s <- get
-  (a, s1, w) <- lift $ runRWST (runMaybeT p) cs s
-  tell w
-  put s1
-  return a
+runParserM p = (\(a, _, errs) -> (a, errs)) <$> runRWST p [] ([], [])
 
 type Msg      = (Range, Err Text ())
-type ParserM  =         RWST ()        [Msg] ([Text], [Text]) IO
-type ParserM1 = MaybeT (RWST [RawTree] [Msg] ([Text], [Text]) IO)
+type ParserM  = RWST [RawTree] [Msg] ([Text], [Text]) IO
 
 data Failure = Failure String
   deriving stock (Show)
@@ -87,12 +78,12 @@ allErrors = map getBody . filter isUnnamedError
 
 getBody (gist -> f) = ptSource f
 
-field :: Text -> ParserM1 RawTree
+field :: Text -> ParserM RawTree
 field name =
   fieldOpt name
     >>= maybe (throwM $ Failure [i|Cannot find field #{name}|]) return
 
-fieldOpt :: Text -> ParserM1 (Maybe RawTree)
+fieldOpt :: Text -> ParserM (Maybe RawTree)
 fieldOpt name = ask >>= go
   where
     go (tree@(extract -> _ :> n :> _) : rest)
@@ -101,7 +92,7 @@ fieldOpt name = ask >>= go
 
     go [] = return Nothing
 
-fields :: Text -> ParserM1 [RawTree]
+fields :: Text -> ParserM [RawTree]
 fields name = ask >>= go
   where
     go (tree@(extract -> _ :> n :> _) : rest) =
@@ -131,33 +122,29 @@ ascribeComms comms
 ascribeRange r Y = (pp r $$)
 ascribeRange _ _ = id
 
-withComments :: ParserM (Maybe (Product xs, a)) -> ParserM (Maybe (Product ([Text] : xs), a))
+withComments :: ParserM (Product xs, a) -> ParserM (Product ([Text] : xs), a)
 withComments act = do
   comms <- grabComments
   res   <- act
-  return $ fmap (first (comms :>)) res
+  return $ first (comms :>) res
 
 boilerplate
-  :: (Text -> ParserM1 (f RawTree))
+  :: (Text -> ParserM (f RawTree))
   -> (RawInfo, ParseTree RawTree)
-  -> ParserM (Maybe (Info, f RawTree))
+  -> ParserM (Info, f RawTree)
 boilerplate f (r :> _, ParseTree ty cs _) = do
   withComments do
-    mbf <- runParserM1 cs $ f ty
-    return do
-      f <- mbf
-      return $ (r :> N :> Nil, f)
+    f <- local (const cs) $ f ty
+    return $ (r :> N :> Nil, f)
 
 boilerplate'
-  :: ((Text, Text) -> ParserM1 (f RawTree))
+  :: ((Text, Text) -> ParserM (f RawTree))
   -> (RawInfo, ParseTree RawTree)
-  -> ParserM (Maybe (Info, f RawTree))
+  -> ParserM (Info, f RawTree)
 boilerplate' f (r :> _, ParseTree ty cs src) = do
   withComments do
-    mbf <- runParserM1 cs $ f (ty, src)
-    return do
-      f <- mbf
-      return $ (r :> N :> Nil, f)
+    f <- local (const cs) $ f (ty, src)
+    return $ (r :> N :> Nil, f)
 
-fallthrough :: MonadFail m => m a
-fallthrough = fail ""
+fallthrough :: MonadThrow m => m a
+fallthrough = throwM HandlerFailed
