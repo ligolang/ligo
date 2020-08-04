@@ -6,7 +6,7 @@ let
   emacsAttrs = lib.optionalAttrs emacs
     (import ./tools/instant-editor/emacs.nix { inherit pkgs; });
 in mkShell ({
-  inputsFrom = [ pkgs.ocamlPackages.ligo-out ];
+  inputsFrom = [ pkgs.ocamlPackages.ligo-tests ];
 
   UTOP_SITE_LISP = "${ocamlPackages.utop}/share/emacs/site-lisp";
   MERLIN_SITE_LISP = "${ocamlPackages.merlin}/share/emacs/site-lisp";
