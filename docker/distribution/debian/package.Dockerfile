@@ -9,7 +9,7 @@ RUN apt-get -y -qq install \
 
 RUN mkdir /package && mkdir /package/bin && mkdir /package/DEBIAN && mkdir /package/dist
 # @TODO: make the binary path configurable
-RUN cp /home/opam/.opam/4.07/bin/ligo /package/bin/ligo
+RUN cp /home/opam/.opam/4.09/bin/ligo /package/bin/ligo
 
 # @TODO: inherit version (and other details) from the ligo opam package definition
 # In our case we're using the version field to name our package accordingly,

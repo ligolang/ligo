@@ -1,3 +1,10 @@
+(rule
+  (targets generated_fold.ml generated_map.ml generated_o.ml)
+  (deps ../adt_generator/generator.raku ast.ml ../common/enums.ml)
+  (action (run perl6 ../adt_generator/generator.raku ast.ml Generated_o generated_o.ml generated_fold.ml generated_map.ml core))
+  (mode (promote (until-clean) (only *)))
+)
+
 (library
   (name ast_core)
   (public_name ligo.ast_core)
@@ -6,6 +13,7 @@
     tezos-utils
     stage_common
     ast_sugar
+    adt_generator
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)

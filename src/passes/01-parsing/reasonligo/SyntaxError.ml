@@ -1,4 +1,4 @@
-module CST = Cst.Cameligo
+module CST = Cst.Reasonligo
 
 type error =
   | WrongFunctionArguments of CST.expr

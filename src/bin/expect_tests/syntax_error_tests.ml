@@ -5,7 +5,10 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           Parse error in file "error_syntax.ligo", line 1, characters 16-17 at "-", after "bar":
-          16: <syntax error>
+          Ill-formed declaration.
+          At this point, if the contract is not complete, you can write another
+          declaration.
+
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -34,4 +37,3 @@ let%expect_test _ =
           * Ask a question on our Discord: https://discord.gg/9rhYaEt
           * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
           * Check the changelog by running 'ligo changelog' |} ] ;
-

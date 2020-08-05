@@ -56,8 +56,6 @@ and pp_let_binding (binding : let_binding) =
 and pp_pattern = function
   PConstr   p -> pp_pconstr p
 | PUnit     _ -> string "()"
-| PFalse    _ -> string "false"
-| PTrue     _ -> string "true"
 | PVar      v -> pp_ident v
 | PInt      i -> pp_int i
 | PNat      n -> pp_nat n
@@ -74,6 +72,8 @@ and pp_pattern = function
 and pp_pconstr = function
   PNone      _ -> string "None"
 | PSomeApp   p -> pp_patt_some p
+| PFalse    _ -> string "false"
+| PTrue     _ -> string "true"
 | PConstrApp a -> pp_pconstr_app a
 
 and pp_pconstr_app {value; _} =
@@ -390,6 +390,7 @@ and pp_type_expr = function
 | TFun t    -> pp_fun_type t
 | TPar t    -> pp_type_par t
 | TVar t    -> pp_ident t
+| TWild   _ -> string "_"
 | TString s -> pp_string s
 
 and pp_cartesian {value; _} =

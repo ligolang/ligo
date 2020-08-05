@@ -34,7 +34,6 @@ and type_base =
   | TB_chain_id
   | TB_signature
   | TB_timestamp
-  | TB_void
 
 and environment_element = expression_variable * type_expression
 
@@ -76,11 +75,9 @@ and selector = var_name list
 and expression_content =
   | E_literal of value
   | E_closure of anon_function
-  | E_skip
   | E_constant of constant
   | E_application of (expression * expression)
   | E_variable of var_name
-  | E_make_none of type_expression
   | E_iterator of constant' * ((var_name * type_expression) * expression) * expression
   | E_fold of (((var_name * type_expression) * expression) * expression * expression)
   | E_if_bool of (expression * expression * expression)
@@ -88,9 +85,7 @@ and expression_content =
   | E_if_cons of (expression * expression * (((var_name * type_expression) * (var_name * type_expression)) * expression))
   | E_if_left of expression * ((var_name * type_expression) * expression) * ((var_name * type_expression) * expression)
   | E_let_in of ((var_name * type_expression) * inline * expression * expression)
-  | E_sequence of (expression * expression)
   | E_record_update of (expression * [`Left | `Right] list * expression)
-  | E_while of (expression * expression)
   | E_raw_michelson of string
 
 and expression = {

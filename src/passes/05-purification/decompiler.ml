@@ -10,25 +10,23 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, Err
   match te.type_content with
     | O.T_sum sum -> 
       (* This type sum could be a michelson_or as well, we could use is_michelson_or *)
-      let sum = I.CMap.to_kv_list sum in
       let%bind sum = 
-        bind_map_list (fun (k,v) ->
-          let {ctor_type;ctor_decl_pos;_} : O.ctor_content = v in
-          let%bind v = decompile_type_expression ctor_type in
-          ok @@ (k,({ctor_type=v; ctor_decl_pos}: I.ctor_content))
+        Stage_common.Helpers.bind_map_lmap (fun v ->
+          let {associated_type;decl_pos} : O.row_element = v in
+          let%bind v = decompile_type_expression associated_type in
+          ok @@ ({associated_type=v;decl_pos}:I.row_element)
         ) sum
       in
-      return @@ I.T_sum (O.CMap.of_list sum)
+      return @@ I.T_sum sum
     | O.T_record record -> 
-      let record = I.LMap.to_kv_list record in
       let%bind record = 
-        bind_map_list (fun (k,v) ->
-          let {field_type;field_decl_pos} : O.field_content = v in
-          let%bind v = decompile_type_expression field_type in
-          ok @@ (k,({field_type=v;field_decl_pos}:I.field_content))
+        Stage_common.Helpers.bind_map_lmap (fun v ->
+          let {associated_type;decl_pos} : O.row_element = v in
+          let%bind v = decompile_type_expression associated_type in
+          ok @@ ({associated_type=v;decl_pos}:I.row_element)
         ) record
       in
-      return @@ I.T_record (O.LMap.of_list record)
+      return @@ I.T_record record
     | O.T_tuple tuple ->
       let%bind tuple = bind_map_list decompile_type_expression tuple in
       return @@ I.T_tuple tuple
@@ -37,6 +35,7 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, Err
       let%bind type2 = decompile_type_expression type2 in
       return @@ T_arrow {type1;type2}
     | O.T_variable type_variable -> return @@ T_variable type_variable 
+    | O.T_wildcard               -> return @@ T_wildcard
     | O.T_constant type_constant -> return @@ T_constant type_constant
     | O.T_operator (type_operator, lst) ->
       let%bind lst = bind_map_list decompile_type_expression lst in

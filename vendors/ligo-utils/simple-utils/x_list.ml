@@ -80,6 +80,9 @@ let range n =
   in
   aux [] n
 
+let repeat n x =
+  List.map (fun _ -> x) (range n)
+
 let find_map f lst =
   let rec aux = function
     | [] -> None
@@ -179,7 +182,7 @@ let rec assoc_opt ?compare:cmp x =
   | (a,b)::l -> if compare a x = 0 then Some b else assoc_opt ~compare x l
 
 let rec compare ?compare:cmp a b =
-  let cmp = unopt ~default:Pervasives.compare cmp in
+  let cmp = unopt ~default:Stdlib.compare cmp in
   match a,b with
     [], [] -> 0
   | [], _::_ -> -1
@@ -194,6 +197,7 @@ module Ne = struct
 
   type 'a t = 'a * 'a list
 
+  let split ((hd,tl): _ t) = let (a,b) = hd and (la,lb) = List.split tl in (a,la),(b,lb)
   let of_list lst = List.hd lst, List.tl lst
   let to_list (hd, tl : _ t) = hd :: tl
   let singleton hd : 'a t = hd , []

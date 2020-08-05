@@ -1,21 +1,14 @@
 open Ast_core
 open Trace
-open Stage_common.Helpers
+open Ast_core.Helpers
 
-include Stage_common.PP
-
-let bind_map_cmap f map = bind_cmap (
-  CMap.map 
-    (fun ({ctor_type;_} as ctor) -> 
-      let%bind ctor' = f ctor_type in
-      ok {ctor with ctor_type = ctor'}) 
-    map)
+include Ast_core.PP
 
 let bind_map_lmap_t f map = bind_lmap (
   LMap.map 
-    (fun ({field_type;_} as field) -> 
-      let%bind field' = f field_type in
-      ok {field with field_type = field'}) 
+    (fun ({associated_type;_} as field) -> 
+      let%bind field' = f associated_type in
+      ok {field with associated_type = field'}) 
     map)
 
 type ('a,'err) folder = 'a -> expression -> ('a, 'err) result
@@ -48,7 +41,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a,'err) res
       let%bind res = fold_expression self init'' expr in
       ok res
     in
-    let%bind res = bind_fold_lmap aux (ok init') m in
+    let%bind res = bind_fold_lmap aux init' m in
     ok res
   )
   | E_record_update {record;update} -> (
@@ -71,19 +64,19 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a,'err) res
 
 and fold_cases : ('a , 'err) folder -> 'a -> matching_expr -> ('a , 'err) result = fun f init m ->
   match m with
-  | Match_list { match_nil ; match_cons = (_ , _ , cons) } -> (
+  | Match_list { match_nil ; match_cons = { body ; _ } } -> (
       let%bind res = fold_expression f init match_nil in
-      let%bind res = fold_expression f res cons in
+      let%bind res = fold_expression f res body in
       ok res
     )
-  | Match_option { match_none ; match_some = (_ , some) } -> (
+  | Match_option { match_none ; match_some = { body ; _ } } -> (
       let%bind res = fold_expression f init match_none in
-      let%bind res = fold_expression f res some in
+      let%bind res = fold_expression f res body in
       ok res
     )
   | Match_variant lst -> (
-      let aux init' ((_ , _) , e) =
-        let%bind res' = fold_expression f init' e in
+      let aux init' ({ body ; _ } : match_variant) =
+        let%bind res' = fold_expression f init' body in
         ok res' in
       let%bind res = bind_fold_list aux init lst in
       ok res
@@ -156,7 +149,7 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_express
   let return content = ok @@ ({ content; sugar; location}: type_expression) in
   match content with
   | T_sum temap ->
-    let%bind temap' = bind_map_cmap self temap in
+    let%bind temap' = bind_map_lmap_t self temap in
     return @@ (T_sum temap')
   | T_record temap ->
     let%bind temap' = bind_map_lmap_t self temap in
@@ -166,24 +159,24 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_express
     let%bind type2' = self type2 in
     return @@ (T_arrow {type1=type1' ; type2=type2'})
   | T_operator _
-  | T_variable _ | T_constant _ -> ok te'
+  | T_variable _ | T_wildcard  | T_constant _ -> ok te'
 
 and map_cases : 'err exp_mapper -> matching_expr -> (matching_expr , 'err) result = fun f m ->
   match m with
-  | Match_list { match_nil ; match_cons = (hd , tl , cons) } -> (
+  | Match_list { match_nil ; match_cons = {hd ; tl ; body} } -> (
       let%bind match_nil = map_expression f match_nil in
-      let%bind cons = map_expression f cons in
-      ok @@ Match_list { match_nil ; match_cons = (hd , tl , cons) }
+      let%bind body = map_expression f body in
+      ok @@ Match_list { match_nil ; match_cons = {hd ; tl ; body} }
     )
-  | Match_option { match_none ; match_some = (name , some) } -> (
+  | Match_option { match_none ; match_some = {opt ; body} } -> (
       let%bind match_none = map_expression f match_none in
-      let%bind some = map_expression f some in
-      ok @@ Match_option { match_none ; match_some = (name , some) }
+      let%bind body = map_expression f body in
+      ok @@ Match_option { match_none ; match_some = { opt ; body } }
     )
   | Match_variant lst -> (
-      let aux ((a , b) , e) =
-        let%bind e' = map_expression f e in
-        ok ((a , b) , e')
+      let aux (match_variant:match_variant) =
+        let%bind body = map_expression f match_variant.body in
+        ok { match_variant with body }
       in
       let%bind lst' = bind_map_list aux lst in
       ok @@ Match_variant lst'
@@ -192,13 +185,13 @@ and map_cases : 'err exp_mapper -> matching_expr -> (matching_expr , 'err) resul
 and map_program : 'err abs_mapper -> program -> (program , 'err) result = fun m p ->
   let aux = fun (x : declaration) ->
     match x,m with
-    | (Declaration_constant (t , o , i, e), Expression m') -> (
-        let%bind e' = map_expression m' e in
-        ok (Declaration_constant (t , o , i, e'))
+    | (Declaration_constant decl_cst, Expression m') -> (
+        let%bind expr = map_expression m' decl_cst.expr in
+        ok (Declaration_constant {decl_cst with expr})
       )
-    | (Declaration_type (tv,te), Type_expression m') -> (
-        let%bind te' = map_type_expression m' te in
-        ok (Declaration_type (tv, te'))
+    | (Declaration_type decl_ty, Type_expression m') -> (
+        let%bind type_expr = map_type_expression m' decl_ty.type_expr in
+        ok (Declaration_type {decl_ty with type_expr})
       )
     | decl,_ -> ok decl
   (* | Declaration_type of (type_variable * type_expression) *)
@@ -267,20 +260,20 @@ let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> ('a
 and fold_map_cases : ('a , 'err) fold_mapper -> 'a -> matching_expr -> ('a * matching_expr , 'err) result =
     fun f init m ->
   match m with
-  | Match_list { match_nil ; match_cons = (hd , tl , cons) } -> (
+  | Match_list { match_nil ; match_cons = {hd ; tl ; body} } -> (
       let%bind (init, match_nil) = fold_map_expression f init match_nil in
-      let%bind (init, cons) = fold_map_expression f init cons in
-      ok @@ (init, Match_list { match_nil ; match_cons = (hd , tl , cons) })
+      let%bind (init, body ) = fold_map_expression f init body in
+      ok @@ (init, Match_list { match_nil ; match_cons = { hd ; tl ; body } })
     )
-  | Match_option { match_none ; match_some = (name , some) } -> (
+  | Match_option { match_none ; match_some = {opt ; body} } -> (
       let%bind (init, match_none) = fold_map_expression f init match_none in
-      let%bind (init, some) = fold_map_expression f init some in
-      ok @@ (init, Match_option { match_none ; match_some = (name , some) })
+      let%bind (init, body) = fold_map_expression f init body in
+      ok @@ (init, Match_option { match_none ; match_some = {opt ; body} })
     )
   | Match_variant lst -> (
-      let aux init ((a , b) , e) =
-        let%bind (init,e') = fold_map_expression f init e in
-        ok (init, ((a , b) , e'))
+      let aux init (match_variant:match_variant) =
+        let%bind (init,body) = fold_map_expression f init match_variant.body in
+        ok (init, {match_variant with body})
       in
       let%bind (init,lst') = bind_fold_map_list aux init lst in
       ok @@ (init, Match_variant lst')

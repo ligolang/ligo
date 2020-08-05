@@ -17,16 +17,9 @@ let build_contract : ?disable_typecheck:bool -> Stacking.compiled_expression -> 
   if disable_typecheck then
     ok contract
   else
-    let%bind res =
-      Trace.trace_tzresult_lwt (typecheck_contract_tracer contract) @@
+    let%bind _ = Trace.trace_tzresult_lwt (typecheck_contract_tracer contract) @@
       Proto_alpha_utils.Memory_proto_alpha.typecheck_contract contract in
-    match res with
-    | Type_checked  -> ok contract
-    | Err_parameter -> fail @@ bad_parameter contract
-    | Err_storage   -> fail @@ bad_storage contract
-    | Err_contract  -> fail @@ bad_contract contract
-    | Err_gas       -> fail @@ gas_exhaustion
-    | Err_unknown   -> fail @@ unknown
+    ok contract
 
 let assert_equal_contract_type : Simple_utils.Runned_result.check_type -> Stacking.compiled_expression -> Stacking.compiled_expression -> (unit , _) result =
   fun c compiled_prg compiled_param ->

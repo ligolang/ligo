@@ -2,7 +2,7 @@ open Types
 open Generated_fold
 
 module M = struct
-  let compare = ()              (* Hide Pervasives.compare to avoid calling it without explicit qualification. *)
+  let compare = ()              (* Hide Stdlib.compare to avoid calling it without explicit qualification. *)
   type 'a lz = unit -> 'a       (* Lazy values *)
   type t =
     | EmptyCtor
@@ -24,7 +24,6 @@ module M = struct
     | Z of z
     | List of t lz list
     | Location_wrap of t lz Location.wrap
-    | CMap of (constructor' * t lz) list
     | LMap of (label * t lz) list
     | UnionFind of t lz list list
     | Set of t lz list
@@ -56,14 +55,9 @@ module M = struct
       unit                      = (fun _visitor _state ()              -> Unit ()) ;
       packed_internal_operation = (fun _visitor _state op              -> Operation op) ;
       expression_variable       = (fun _visitor _state ev              -> Expression_variable ev) ;
-      constructor'              = (fun _visitor _state (Constructor c) -> Constructor' c) ;
       location                  = (fun _visitor _state loc             -> Location loc) ;
       label                     = (fun _visitor _state (Label lbl)     -> Label' lbl) ;
       ast_core_type_expression  = (fun _visitor _state te              -> Type_expression te) ;
-      constructor_map           = (fun _visitor continue _state cmap   ->
-        let kcmp (Constructor a, _) (Constructor b, _) = String.compare a b in
-        let lst = List.sort kcmp (CMap.bindings cmap) in
-        CMap (List.map (fun (k, v) -> (k, fun () -> continue NoState v)) lst));
       label_map                 = (fun _visitor continue _state lmap   ->
         let kcmp (Label a, _) (Label b, _) = String.compare a b in
         let lst = List.sort kcmp (LMap.bindings lmap) in
@@ -121,7 +115,6 @@ module M = struct
     | Z                   _ -> 16
     | List                _ -> 17
     | Location_wrap       _ -> 18
-    | CMap                _ -> 19
     | LMap                _ -> 20
     | UnionFind           _ -> 21
     | Set                 _ -> 22
@@ -130,7 +123,6 @@ module M = struct
   let cmp2 f a1 b1 g a2 b2 = match f a1 b1 with 0 -> g a2 b2 | c -> c
   let cmp3 f a1 b1 g a2 b2 h a3 b3 = match f a1 b1 with 0 -> (match g a2 b2 with 0 -> h a3 b3 | c -> c) | c -> c
   let rec compare_field (na, va) (nb, vb) = cmp2 String.compare na nb compare_lz_t va vb
-  and compare_cmap_entry (Constructor na, va) (Constructor nb, vb) = cmp2 String.compare na nb compare_lz_t va vb
   and compare_lmap_entry (Label       na, va) (Label       nb, vb) = cmp2 String.compare na nb compare_lz_t va vb
   and compare_tvmap_entry (tva, va) (tvb, vb) = cmp2 Var.compare tva tvb compare_lz_t va vb
   and compare_lz_t a b = compare_t (a ()) (b ())
@@ -143,7 +135,7 @@ module M = struct
          String.compare va vb
          String.compare ca cb
          compare_lz_t xa xb
-    | (Bool a, Bool b)                               -> (Pervasives.compare : bool -> bool -> int) a b
+    | (Bool a, Bool b)                               -> (Stdlib.compare : bool -> bool -> int) a b
     | (Bytes a, Bytes b)                             -> Bytes.compare a b
     | (Constructor' a, Constructor' b)               -> String.compare a b
     | (Expression_variable a, Expression_variable b) -> Var.compare a.wrap_content b.wrap_content
@@ -151,22 +143,21 @@ module M = struct
     | (Label' a, Label' b)                           -> String.compare a b
     | (Ligo_string a, Ligo_string b)                 -> Simple_utils.Ligo_string.compare a b
     | (Location a, Location b)                       -> Location.compare a b
-    | (Operation a, Operation b)                     -> Pervasives.compare a b (* TODO: is there a proper comparison function defined for packed_internal_operation ? *)
+    | (Operation a, Operation b)                     -> Stdlib.compare a b (* TODO: is there a proper comparison function defined for packed_internal_operation ? *)
     | (Str a, Str b)                                 -> String.compare a b
-    | (Type_expression a, Type_expression b)         -> Pervasives.compare a b (* TODO: is there a proper comparison function defined for ast_core_type_expression ? *)
+    | (Type_expression a, Type_expression b)         -> Stdlib.compare a b (* TODO: is there a proper comparison function defined for ast_core_type_expression ? *)
     | (Unit (), Unit ())                             -> 0
     | (Var a, Var b)                                 -> Var.compare a b
     | (Z a, Z b)                                     -> Z.compare a b
     | (List a, List b)                               -> List.compare ~compare:compare_lz_t a b
     | (Location_wrap a, Location_wrap b)             -> Location.compare_wrap ~compare:compare_lz_t a b
-    | (CMap a, CMap b)                               -> List.compare ~compare:compare_cmap_entry a b
     | (LMap a, LMap b)                               -> List.compare ~compare:compare_lmap_entry a b
     | (UnionFind a, UnionFind b)                     -> List.compare ~compare:(List.compare ~compare:compare_lz_t) a b
     | (Set a, Set b)                                 -> List.compare ~compare:compare_lz_t a b
     | (TypeVariableMap a, TypeVariableMap b)         -> List.compare ~compare:compare_tvmap_entry a b
 
-    | ((EmptyCtor | Record _ | VariantConstructor _ | Bool _ | Bytes _ | Constructor' _ | Expression_variable _ | Int _ | Label' _ | Ligo_string _ | Location _ | Operation _ | Str _ | Type_expression _ | Unit _ | Var _ | Z _ | List _ | Location_wrap _ | CMap _ | LMap _ | UnionFind _ | Set _ | TypeVariableMap _) as a),
-      ((EmptyCtor | Record _ | VariantConstructor _ | Bool _ | Bytes _ | Constructor' _ | Expression_variable _ | Int _ | Label' _ | Ligo_string _ | Location _ | Operation _ | Str _ | Type_expression _ | Unit _ | Var _ | Z _ | List _ | Location_wrap _ | CMap _ | LMap _ | UnionFind _ | Set _ | TypeVariableMap _) as b) ->
+    | ((EmptyCtor | Record _ | VariantConstructor _ | Bool _ | Bytes _ | Constructor' _ | Expression_variable _ | Int _ | Label' _ | Ligo_string _ | Location _ | Operation _ | Str _ | Type_expression _ | Unit _ | Var _ | Z _ | List _ | Location_wrap _ | LMap _ | UnionFind _ | Set _ | TypeVariableMap _) as a),
+      ((EmptyCtor | Record _ | VariantConstructor _ | Bool _ | Bytes _ | Constructor' _ | Expression_variable _ | Int _ | Label' _ | Ligo_string _ | Location _ | Operation _ | Str _ | Type_expression _ | Unit _ | Var _ | Z _ | List _ | Location_wrap _ | LMap _ | UnionFind _ | Set _ | TypeVariableMap _) as b) ->
        Int.compare (tag a) (tag b)
 
 

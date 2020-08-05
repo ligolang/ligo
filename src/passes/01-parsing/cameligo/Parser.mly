@@ -79,10 +79,10 @@ nsepseq(item,sep):
 
 (* Helpers *)
 
-%inline type_name   : "<ident>"  { $1 }
-%inline field_name  : "<ident>"  { $1 }
-%inline struct_name : "<ident>"  { $1 }
-%inline module_name : "<constr>" { $1 }
+%inline type_name        : "<ident>"  { $1 }
+%inline field_name       : "<ident>"  { $1 }
+%inline struct_name      : "<ident>"  { $1 }
+%inline module_name      : "<constr>" { $1 }
 
 (* Non-empty comma-separated values (at least two values) *)
 
@@ -148,6 +148,7 @@ cartesian:
 
 core_type:
   type_name      {    TVar $1 }
+| "_"            {  TWild  $1 }
 | par(type_expr) {    TPar $1 }
 | "<string>"     { TString $1 }
 | module_name "." type_name {
@@ -289,8 +290,6 @@ core_pattern:
 | "<string>"                                   {           PString $1 }
 | "<verbatim>"                                 {         PVerbatim $1 }
 | unit                                         {             PUnit $1 }
-| "false"                                      {            PFalse $1 }
-| "true"                                       {             PTrue $1 }
 | par(ptuple)                                  {              PPar $1 }
 | list__(tail)                                 { PList (PListComp $1) }
 | constr_pattern                               {           PConstr $1 }
@@ -319,6 +318,8 @@ constr_pattern:
     and value  = $1,$2
     in PSomeApp {region; value}
   }
+| "false" { PFalse $1 }
+| "true"  {  PTrue $1 }
 | "<constr>" {
     PConstrApp {$1 with value=$1,None}
   }

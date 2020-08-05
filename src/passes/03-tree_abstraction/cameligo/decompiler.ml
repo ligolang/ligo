@@ -3,9 +3,7 @@ module CST = Cst.Cameligo
 module Predefined = Predefined.Tree_abstraction.Cameligo
 
 open Trace
-
-(* General tools *)
-let (<@) f g x = f (g x)
+open Function
 
 (* Utils *)
 let rg = Region.ghost
@@ -49,10 +47,10 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
   let return te = ok @@ te in
   match te.type_content with
     T_sum sum ->
-    let sum = AST.CMap.to_kv_list sum in
-    let aux (AST.Constructor c, AST.{ctor_type;_}) =
+    let sum = AST.LMap.to_kv_list sum in
+    let aux (AST.Label c, AST.{associated_type;_}) =
       let constr = wrap c in
-      let%bind arg = decompile_type_expr ctor_type in
+      let%bind arg = decompile_type_expr associated_type in
       let arg = Some (rg, arg) in
       let variant : CST.variant = {constr;arg} in
       ok @@ wrap variant
@@ -62,10 +60,10 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
     return @@ CST.TSum (wrap sum)
   | T_record record ->
     let record = AST.LMap.to_kv_list record in
-    let aux (AST.Label c, AST.{field_type;_}) =
+    let aux (AST.Label c, AST.{associated_type;_}) =
       let field_name = wrap c in
       let colon = rg in
-      let%bind field_type = decompile_type_expr field_type in
+      let%bind field_type = decompile_type_expr associated_type in
       let variant : CST.field_decl = {field_name;colon;field_type} in
       ok @@ wrap variant
     in
@@ -84,6 +82,8 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
   | T_variable var ->
     let var = decompile_variable var in
     return @@ CST.TVar (var)
+  | T_wildcard ->
+    return @@ CST.TWild rg
   | T_constant const ->
     let const = Predefined.type_constant_to_string const in
     return @@ CST.TVar (wrap const)
@@ -176,9 +176,8 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
         let%bind ty = decompile_type_expr @@ AST.t_key_hash () in
         return_expr @@ CST.EAnnot (wrap @@ par (kh,rg,ty))
       | Literal_chain_id _
-      | Literal_void
       | Literal_operation _ ->
-        failwith "chain_id, void, operation are not created currently ?"
+        failwith "chain_id, operation are not created currently ?"
     )
   | E_application {lamb;args} ->
     let%bind lamb = decompile_expression lamb in
@@ -209,7 +208,7 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     let ci : CST.code_inj = {language;code;rbracket=rg} in
     return_expr @@ CST.ECodeInj (wrap ci)
   | E_constructor {constructor;element} ->
-    let Constructor constr = constructor in
+    let Label constr = constructor in
     let constr = wrap constr in
     let%bind element = decompile_expression element in
     return_expr_with_par @@ CST.EConstr (EConstrApp (wrap (constr, Some element)))
@@ -454,7 +453,7 @@ fun m ->
     ok @@ [wrap cons_case; wrap nil_case]
   | Match_variant lst ->
     let aux ((c,(v:AST.expression_variable)),e) =
-      let AST.Constructor c = c in
+      let AST.Label c = c in
       let constr = wrap @@ c in
       let var : CST.pattern = PVar (decompile_variable v.wrap_content) in
       let tuple = var in

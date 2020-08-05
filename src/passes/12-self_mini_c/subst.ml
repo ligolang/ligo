@@ -30,7 +30,6 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let body = replace body in
     let binder = replace_var binder in
     return @@ E_closure { binder ; body }
-  | E_skip -> e
   | E_constant (c) ->
     let args = List.map replace c.arguments in
     return @@ E_constant {cons_name = c.cons_name; arguments = args}
@@ -40,7 +39,6 @@ let rec replace : expression -> var_name -> var_name -> expression =
   | E_variable z ->
     let z = replace_var z in
     return @@ E_variable z
-  | E_make_none _ -> e
   | E_iterator (name, ((v, tv), body), expr) ->
     let body = replace body in
     let expr = replace expr in
@@ -82,18 +80,10 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let e1 = replace e1 in
     let e2 = replace e2 in
     return @@ E_let_in ((v, tv), inline, e1, e2)
-  | E_sequence (e1, e2) ->
-    let e1 = replace e1 in
-    let e2 = replace e2 in
-    return @@ E_sequence (e1, e2)
   | E_record_update (r, p, e) ->
     let r = replace r in
     let e = replace e in
     return @@ E_record_update (r, p, e)
-  | E_while (cond, body) ->
-    let cond = replace cond in
-    let body = replace body in
-    return @@ E_while (cond, body)
   | E_raw_michelson _ -> e
 
 (**
@@ -170,7 +160,7 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
     return @@ E_if_left (c, ((name_l, tvl) , l), ((name_r, tvr) , r))
   )
   (* All that follows is boilerplate *)
-  | E_literal _ | E_skip | E_make_none _ | E_raw_michelson _
+  | E_literal _ | E_raw_michelson _
     as em -> return em
   | E_constant (c) -> (
       let lst = List.map self c.arguments in
@@ -180,17 +170,9 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
       let farg' = Tuple.map2 self farg in
       return @@ E_application farg'
   )
-  | E_while eb -> (
-      let eb' = Tuple.map2 self eb in
-      return @@ E_while eb'
-  )
   | E_if_bool cab -> (
       let cab' = Tuple.map3 self cab in
       return @@ E_if_bool cab'
-  )
-  | E_sequence ab -> (
-      let ab' = Tuple.map2 self ab in
-      return @@ E_sequence ab'
   )
   | E_record_update (r, p, e) -> (
     let r' = self r in

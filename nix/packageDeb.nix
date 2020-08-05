@@ -43,5 +43,6 @@ in stdenv.mkDerivation rec {
     dpkg-deb --build ${pkgName}
     mkdir -p $out
     cp ${name} $out/
+    ln $out/${name} $out/${project}.deb
   '';
 }

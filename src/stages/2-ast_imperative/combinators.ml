@@ -26,18 +26,18 @@ let t_variable_ez ?loc n  : type_expression = t_variable ?loc @@ Var.of_name n
 
 let t_record ?loc record  : type_expression = make_t ?loc @@ T_record record
 let t_record_ez ?loc lst =
-  let lst = List.mapi (fun i (k, v) -> (Label k, {field_type=v;field_decl_pos=i})) lst in
+  let lst = List.mapi (fun i (k, v) -> (Label k, {associated_type=v;decl_pos=i})) lst in
   let record = LMap.of_list lst in
-  t_record ?loc (record:field_content label_map)
+  t_record ?loc (record:row_element label_map)
 
 let t_tuple ?loc lst    : type_expression = make_t ?loc @@ T_tuple lst
 let t_pair ?loc (a , b) : type_expression = t_tuple ?loc [a; b]
 
 let t_sum ?loc sum : type_expression = make_t ?loc @@ T_sum sum
 let t_sum_ez ?loc (lst:(string * type_expression) list) : type_expression =
-  let aux (prev,i) (k, v) = (CMap.add (Constructor k) {ctor_type=v;ctor_decl_pos=i} prev, i+1) in
-  let (map,_) = List.fold_left aux (CMap.empty,0) lst in
-  t_sum ?loc (map: ctor_content constructor_map)
+  let aux (prev,i) (k, v) = (LMap.add (Label k) {associated_type=v;decl_pos=i} prev, i+1) in
+  let (map,_) = List.fold_left aux (LMap.empty,0) lst in
+  t_sum ?loc (map: row_element label_map)
 
 let t_operator ?loc op lst: type_expression = make_t ?loc @@ T_operator (op, lst)
 let t_annoted ?loc ty str : type_expression = make_t ?loc @@ T_annoted (ty, str)
@@ -109,7 +109,7 @@ let e_let_in ?loc let_binder inline rhs let_result = make_e ?loc @@ E_let_in { l
 (* let e_let_in_ez ?loc binder ascr inline rhs let_result = e_let_in ?loc (Var.of_name binder, ascr) inline rhs let_result *)
 let e_raw_code ?loc language code = make_e ?loc @@ E_raw_code {language; code}
 
-let e_constructor ?loc s a : expression = make_e ?loc @@ E_constructor { constructor = Constructor s; element = a}
+let e_constructor ?loc s a : expression = make_e ?loc @@ E_constructor { constructor = Label s; element = a}
 let e_true  ?loc (): expression = e_constructor ?loc "true"  @@ e_unit ?loc ()
 let e_false ?loc (): expression = e_constructor ?loc "false" @@ e_unit ?loc ()
 let e_matching ?loc a b : expression = make_e ?loc @@ E_matching {matchee=a;cases=b}
@@ -207,6 +207,11 @@ let get_e_list = fun t ->
 let get_e_tuple = fun t ->
   match t with
   | E_tuple t -> Some t
+  | _ -> None
+
+let get_e_lambda = fun e ->
+  match e with
+    E_lambda e -> Some e
   | _ -> None
 
 (* Same as get_e_pair *)
