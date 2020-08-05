@@ -70,7 +70,7 @@ srcToBytestring = \case
 type RawTree = Tree '[ParseTree] RawInfo
 type RawInfo = Product [Range, Text]
 
-instance Modifies RawInfo where
+instance {-# OVERLAPS #-} Modifies RawInfo where
   ascribe (r :> n :> _) d = color 3 (pp n) <+> pp r `indent` pp d
 
 -- | The tree tree-sitter produces.

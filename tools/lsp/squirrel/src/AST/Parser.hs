@@ -45,7 +45,8 @@ import Debug.Trace
 -- example = "../../../src/test/contracts/blockless.ligo"
 -- example = "../../../src/test/contracts/bytes_arithmetic.ligo"
 -- example = "../../../src/test/contracts/chain_id.ligo"
-example = "../../../src/test/contracts/closure-3.ligo"
+-- example = "../../../src/test/contracts/closure-3.ligo"
+example = "../../../src/test/contracts/coase.ligo"
 
 sample' :: FilePath -> IO (LIGO Info)
 sample' f

@@ -111,8 +111,16 @@ instance Pretty ShowRange where
 type Info    = Product [[Text], Range, ShowRange]
 type PreInfo = Product [Range, ShowRange]
 
-instance Modifies Info where
-  ascribe (comms :> r :> pin :> _) = ascribeRange r pin . ascribeComms comms
+instance
+  ( Contains Range xs
+  , Contains [Text] xs
+  , Contains ShowRange xs
+  )
+  => Modifies (Product xs)
+  where
+    ascribe xs
+      = ascribeRange (getElem @Range xs) (getElem xs)
+      . ascribeComms (getElem xs)
 
 ascribeComms comms
   | null comms = id

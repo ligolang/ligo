@@ -102,11 +102,11 @@ ofCategory _        _                                          = False
 
 type Info' = Product [[ScopedDecl], Maybe Category, [Text], Range, ShowRange]
 
-instance Modifies (Product '[[ScopedDecl], Maybe Category, [Text], Range, a]) where
-  ascribe (ds :> _ :> _ :> r :> _) d =
-    color 3 (fsep (map (pp . _sdName) ds))
-    $$ pp r
-    $$ d
+-- instance Modifies (Product '[[ScopedDecl], Maybe Category, [Text], Range, a]) where
+--   ascribe (ds :> _ :> _ :> r :> _) d =
+--     color 3 (fsep (map (pp . _sdName) ds))
+--     $$ pp r
+--     $$ d
 
 addLocalScopes
   :: forall xs

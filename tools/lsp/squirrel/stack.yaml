@@ -15,7 +15,7 @@ extra-deps:
   - semilattices-0.0.0.4@sha256:333707e460923711d1edbdd02ebe1c3957d4e0808eab9886747b52ee3e443639,1909
   - fastsum-0.1.1.1
   - git: https://github.com/serokell/duplo.git
-    commit: 0cc243e90bc497989ec48417a6b5a5ce6a01759f
+    commit: 60983e6e1fd21eba57af83da7d541fe555678cc8
 
 nix:
   packages: [zlib]
