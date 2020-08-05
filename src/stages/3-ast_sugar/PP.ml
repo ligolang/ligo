@@ -36,6 +36,7 @@ let rec type_expression' :
   | T_tuple  t -> fprintf ppf "(%a)" (list_sep_d f) t
   | T_arrow  a -> fprintf ppf "%a -> %a" f a.type1 f a.type2
   | T_variable tv -> type_variable ppf tv
+  | T_wildcard -> fprintf ppf "_"
   | T_constant tc -> type_constant ppf tc
   | T_operator (to_, lst) -> fprintf ppf "%a (%a)" type_operator to_ (list_sep_d type_expression) lst
 

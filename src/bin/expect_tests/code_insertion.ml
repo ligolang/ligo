@@ -11,18 +11,10 @@ let%expect_test _ =
     ligo: error
           Compiler bug
           Ill typed contract:
-            01: { parameter nat ;
-            02:   storage nat ;
-            03:   code { DUP
-            04:          /* [ pair (nat @parameter) (nat @storage)
-            05:             : pair (nat @parameter) (nat @storage) ] */ ;
-            06:          LAMBDA (pair nat nat) nat ADD ;
-            07:          SWAP ;
-            08:          EXEC ;
-            09:          NIL operation ;
-            10:          PAIR ;
-            11:          DIP { DROP } } }
-          At line 6 characters 35 to 38, unexpected primitive, only a sequence
+            1: { parameter nat ;
+            2:   storage nat ;
+            3:   code { LAMBDA (pair nat nat) nat ADD ; SWAP ; EXEC ; NIL operation ; PAIR } }
+          At line 3 characters 35 to 38, unexpected primitive, only a sequence
           can be used here.
 
 
@@ -55,12 +47,4 @@ let%expect_test _ =
   [%expect{|
     { parameter nat ;
       storage nat ;
-      code { DUP ;
-             DUP ;
-             CDR ;
-             SWAP ;
-             CAR ;
-             ADD ;
-             NIL operation ;
-             PAIR ;
-             DIP { DROP } } } |}]
+      code { DUP ; CDR ; SWAP ; CAR ; ADD ; NIL operation ; PAIR } } |}]

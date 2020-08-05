@@ -396,6 +396,39 @@ let opt_beta5 : peep5 = function
     Some [Prim(-1, I_SWAP, [], [])]
   | _ -> None
 
+let opt_digdug1 : peep1 = function
+  (* DUG/DIG 0  ↦   *)
+  | Prim (_, (I_DIG|I_DUG), [Int (_, n)], _) when Z.equal n Z.zero ->
+     Some []
+  (* DUG/DIG 1  ↦  SWAP *)
+  | Prim (_, (I_DIG|I_DUG), [Int (_, n)], _) when Z.equal n Z.one ->
+     Some [i_swap]
+  | _ -> None
+
+let opt_digdug2 : peep2 = function
+  (* DIG k ; DUG k  ↦   *)
+  | (Prim (_, I_DIG, [Int (_, k1)], _), Prim (_, I_DUG, [Int (_, k2)], _)) when Z.equal k1 k2 ->
+     Some []
+  (* DUG k ; DIG k  ↦   *)
+  | (Prim (_, I_DUG, [Int (_, k1)], _), Prim (_, I_DIG, [Int (_, k2)], _)) when Z.equal k1 k2 ->
+     Some []
+  (* DIG 2 ; DIG 2  ↦  DUG 2 *)
+  | (Prim (_, I_DIG, [Int (_, k1)], _), Prim (_, I_DIG, [Int (_, k2)], _)) when Z.equal k1 k2 && Z.equal k1 (Z.of_int 2) ->
+     Some [Prim (-1, I_DUG, [Int (-1, Z.of_int 2)], [])]
+  (* DUG 2 ; DUG 2  ↦  DIG 2 *)
+  | (Prim (_, I_DUG, [Int (_, k1)], _), Prim (_, I_DUG, [Int (_, k2)], _)) when Z.equal k1 k2 && Z.equal k1 (Z.of_int 2) ->
+     Some [Prim (-1, I_DIG, [Int (-1, Z.of_int 2)], [])]
+  | _ -> None
+
+let opt_digdug3 : peep3 = function
+  (* DIG 3 ; DIG 3 ; DIG 3  ↦  DUG 3 *)
+  | (Prim (_, I_DIG, [Int (_, k1)], _), Prim (_, I_DIG, [Int (_, k2)], _), Prim (_, I_DIG, [Int (_, k3)], _)) when Z.equal k1 k2 && Z.equal k2 k3 && Z.equal k1 (Z.of_int 3) ->
+     Some [Prim (-1, I_DUG, [Int (-1, Z.of_int 3)], [])]
+  (* DUG 3 ; DUG 3 ; DUG 3  ↦  DIG 3 *)
+  | (Prim (_, I_DUG, [Int (_, k1)], _), Prim (_, I_DUG, [Int (_, k2)], _), Prim (_, I_DUG, [Int (_, k3)], _)) when Z.equal k1 k2 && Z.equal k2 k3 && Z.equal k1 (Z.of_int 3) ->
+     Some [Prim (-1, I_DIG, [Int (-1, Z.of_int 3)], [])]
+  | _ -> None
+
 (* This "optimization" deletes dead code produced by the compiler
    after a FAILWITH, which is illegal in Michelson. This means we are
    thwarting the intent of the Michelson tail fail restriction -- the
@@ -527,6 +560,9 @@ let optimize : michelson -> michelson =
                      peephole @@ peep2 opt_swap2 ;
                      peephole @@ peep3 opt_beta3 ;
                      peephole @@ peep5 opt_beta5 ;
+                     peephole @@ peep1 opt_digdug1 ;
+                     peephole @@ peep2 opt_digdug2 ;
+                     peephole @@ peep3 opt_digdug3 ;
                    ] in
   let x = iterate_optimizer (sequence_optimizers optimizers) x in
   let x = opt_combine_drops x in

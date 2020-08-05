@@ -73,6 +73,8 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
     let name : O.type_variable = Var.todo_cast name in
     trace_option (unbound_type_variable e name t.location)
     @@ Environment.get_type_opt (name) e
+  | T_wildcard ->
+    return @@ T_variable (Var.fresh ())
   | T_constant cst ->
     (* TODO: O.constant = I.constant*)
     return @@ T_constant cst

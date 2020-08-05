@@ -21,7 +21,8 @@
       "advanced/first-contract",
       "advanced/michelson-and-ligo",      
       "advanced/inline",
-      "advanced/interop"
+      "advanced/interop",
+      "advanced/embedded-michelson"
     ],
     "Reference": [
       "api/cli-commands",

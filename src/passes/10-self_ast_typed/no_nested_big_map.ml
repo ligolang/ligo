@@ -28,6 +28,7 @@ let rec check_no_nested_bigmap is_in_bigmap e =
     let%bind _ = check_no_nested_bigmap false type2 in
     ok ()
   | T_variable _
+  | T_wildcard
   | T_constant _ -> 
     ok ()
 

@@ -49,7 +49,6 @@ module Ty = struct
   let lambda a b = Lambda_t (a, b, None)
   let timestamp = Timestamp_t None
   let map a b = Map_t (a, b, None , has_big_map b)
-  let pair a b = Pair_t ((a, None, None), (b, None, None), None , has_big_map a || has_big_map b)
   let union a b = Union_t ((a, None), (b, None), None , has_big_map a || has_big_map b)
 
   let field_annot = Option.map (fun ann -> `Field_annot ann)
@@ -170,27 +169,6 @@ module Ty = struct
     fun (ann, a) -> let%bind a = type_ a in
                     ok @@ (ann, a)
 
-  and environment_representation = fun e ->
-    match List.rev_uncons_opt e with
-    | None -> ok @@ Ex_ty unit
-    | Some (hds , tl) -> (
-        let%bind tl_ty = type_ @@ snd tl in
-        let aux (Ex_ty prec_ty) cur =
-          let%bind (Ex_ty cur_ty) = type_ @@ snd cur in
-          ok @@ Ex_ty (pair prec_ty cur_ty)
-        in
-        bind_fold_right_list aux tl_ty hds
-      )
-
-  and environment : environment -> (ex_stack_ty , stacking_error) result = fun env ->
-    let%bind lst =
-      bind_map_list type_
-      @@ List.map snd env in
-    let aux (Ex_stack_ty st) (Ex_ty cur) =
-      Ex_stack_ty (Item_t(cur, st, None))
-    in
-    ok @@ List.fold_right' aux (Ex_stack_ty Empty_t) lst
-
 end
 
 let base_type : type_base -> (O.michelson , stacking_error) result =
@@ -276,11 +254,22 @@ and lambda_closure_with_ty = fun (c , arg , ret) ->
     let arg' = O.t_pair capture arg in
     ok @@ (O.t_lambda arg' ret , arg' , ret)
 
-and environment_closure =
+and lcomb =
   function
   | [] -> fail @@ corner_case ~loc:"TODO" "Type of empty env"
-  | [a] -> type_ @@ snd a
+  | [a] -> type_ @@ a
   | a :: b ->
-      let%bind a = type_ @@ snd a in
-      let%bind b = environment_closure b in
-      ok @@ O.t_pair a b
+      let%bind a = type_ @@ a in
+      let%bind b = lcomb b in
+      ok @@ O.t_pair b a
+
+and environment_closure c =
+  lcomb (List.rev c)
+
+let%expect_test _ =
+  let wrap a = {type_content = a; location = Location.dummy} in
+  (match environment_closure [wrap (T_base TB_nat); wrap (T_base TB_int); wrap (T_base TB_timestamp)] with
+   | Error _ -> Format.printf "ERROR"
+   | Ok (t, _) ->
+     Format.printf "%a" Michelson.pp t);
+  [%expect {| (pair (pair nat int) timestamp) |}]

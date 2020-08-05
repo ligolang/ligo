@@ -11,12 +11,6 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
   let open! AST in
   let return e = ok (make_e e t) in
   match t.type_content with
-  | T_variable (name) when Var.equal name Ast_typed.Constant.t_bool -> (
-        let%bind b =
-          trace_option (wrong_mini_c_value t v) @@
-          get_bool v in
-        return (e_bool b)
-      )
   | tc when (compare tc (t_bool ()).type_content) = 0-> (
         let%bind b =
           trace_option (wrong_mini_c_value t v) @@
@@ -216,3 +210,5 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
       return (E_literal (Literal_string n))
   | T_variable _ ->
     fail @@ corner_case ~loc:__LOC__ "trying to decompile at variable type"
+  | T_wildcard ->
+    fail @@ corner_case ~loc:__LOC__ "trying to decompile a wildcard type"

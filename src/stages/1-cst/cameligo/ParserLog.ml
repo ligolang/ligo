@@ -159,6 +159,7 @@ and print_type_expr state = function
 | TApp app        -> print_type_app state app
 | TPar par        -> print_type_par state par
 | TVar var        -> print_var state var
+| TWild wild      -> print_token state wild " "
 | TFun t          -> print_fun_type state t
 | TString s       -> print_string state s
 
@@ -1182,6 +1183,9 @@ and pp_type_expr state = function
 | TVar v ->
     pp_node  state "TVar";
     pp_ident (state#pad 1 0) v
+| TWild wild ->
+    pp_node  state "TWild";
+    pp_loc_node state "TWild" wild
 | TString s ->
     pp_node   state "TString";
     pp_string (state#pad 1 0) s

@@ -18,6 +18,8 @@ and type_content =
   | T_record of te_lmap
   | T_arrow of arrow
   | T_variable of type_variable
+  (* TODO: remove this when we remove the old typer *)
+  | T_wildcard
   | T_constant of type_constant
   | T_operator of type_operator
 
