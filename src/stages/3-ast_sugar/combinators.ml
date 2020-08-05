@@ -36,13 +36,13 @@ let t_record ?loc m  : type_expression =
   t_record_ez ?loc lst
 
 let t_pair ?loc (a , b) : type_expression = t_record_ez ?loc [
-  ("0",{field_type=a ; michelson_annotation=None ; field_decl_pos=0}) ;
-  ("1",{field_type=b ; michelson_annotation=None ; field_decl_pos=0})]
+  ("0",{associated_type=a ; michelson_annotation=None ; decl_pos=0}) ;
+  ("1",{associated_type=b ; michelson_annotation=None ; decl_pos=0})]
 let t_tuple ?loc lst    : type_expression = t_record_ez ?loc (tuple_to_record lst)
 
-let ez_t_sum ?loc (lst:((string * ctor_content) list)) : type_expression =
-  let aux prev (k, v) = CMap.add (Constructor k) v prev in
-  let map = List.fold_left aux CMap.empty lst in
+let ez_t_sum ?loc (lst:((string * row_element) list)) : type_expression =
+  let aux prev (k, v) = LMap.add (Label k) v prev in
+  let map = List.fold_left aux LMap.empty lst in
   make_t ?loc @@ T_sum map
 let t_sum ?loc m : type_expression =
   let lst = Map.String.to_kv_list m in
@@ -114,7 +114,7 @@ let e_set ?loc lst : expression = make_e ?loc @@ E_set lst
 let e_map ?loc lst : expression = make_e ?loc @@ E_map lst
 let e_big_map ?loc lst : expression = make_e ?loc @@ E_big_map lst
 
-let e_bool ?loc   b : expression = e_constructor ?loc (Constructor (string_of_bool b)) (e_unit ())
+let e_bool ?loc   b : expression = e_constructor ?loc (Label (string_of_bool b)) (e_unit ())
 
 let make_option_typed ?loc e t_opt =
   match t_opt with

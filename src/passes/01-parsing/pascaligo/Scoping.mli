@@ -1,7 +1,11 @@
 (* This module exports checks on scoping, called from the parser. *)
 
+(* Dependencies *)
+
 module Region = Simple_utils.Region
-module CST      = Cst.Pascaligo
+module CST    = Cst.Pascaligo
+
+(* Errors *)
 
 type t =
   Reserved_name       of CST.variable

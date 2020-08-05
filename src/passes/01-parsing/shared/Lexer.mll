@@ -438,13 +438,13 @@ and scan state = parse
 
 (* String *)
 
-| '"' { let opening, _, state = state#sync lexbuf in
-        let thread = LexerLib.mk_thread opening "" in
-        scan_string thread state lexbuf |> mk_string }
+| '"'  { let opening, _, state = state#sync lexbuf in
+         let thread = LexerLib.mk_thread opening in
+         scan_string thread state lexbuf |> mk_string }
 
 | "{|" { let opening, _, state = state#sync lexbuf in
-        let thread = LexerLib.mk_thread opening "" in
-        scan_verbatim thread state lexbuf |> mk_verbatim }
+         let thread = LexerLib.mk_thread opening in
+         scan_verbatim thread state lexbuf |> mk_verbatim }
 
 (* Comments *)
 
@@ -453,33 +453,28 @@ and scan state = parse
     match state#block with
       Some block when block#opening = lexeme ->
         let opening, _, state = state#sync lexbuf in
-        let thread            = LexerLib.mk_thread opening lexeme in
-        let thread, state     = scan_block block thread state lexbuf in
-        let state             = state#push_block thread
-        in scan state lexbuf
-    | Some _ | None ->
-        let n = String.length lexeme in
-          begin
-            LexerLib.rollback lexbuf;
-            assert (n > 0);
-            scan (scan_n_sym n state lexbuf) lexbuf
-          end }
+        let thread            = LexerLib.mk_thread opening in
+        let thread            = thread#push_string lexeme in
+        let thread, state     = scan_block block thread state lexbuf
+        in scan (state#push_block thread) lexbuf
+    | Some _ | None -> (* Not a comment for this LIGO syntax *)
+        let n  = String.length lexeme in
+        let () = LexerLib.rollback lexbuf in
+        scan (scan_n_sym n state lexbuf) lexbuf }
 
 | line_comments {
     let lexeme = Lexing.lexeme lexbuf in
     match state#line with
       Some line when line = lexeme ->
         let opening, _, state = state#sync lexbuf in
-        let thread            = LexerLib.mk_thread opening lexeme in
-        let thread, state     = scan_line thread state lexbuf in
-        let state             = state#push_line thread
-        in scan state lexbuf
-    | Some _ | None ->
-        let n = String.length lexeme in
-          begin
-            LexerLib.rollback lexbuf;
-            scan (scan_n_sym n state lexbuf) lexbuf
-          end }
+        let thread            = LexerLib.mk_thread opening in
+        let thread            = thread#push_string lexeme in
+        let thread, state     = scan_line thread state lexbuf
+        in scan (state#push_line thread) lexbuf
+    | Some _ | None -> (* Not a comment for this LIGO syntax *)
+        let n  = String.length lexeme in
+        let () = LexerLib.rollback lexbuf in
+        scan (scan_n_sym n state lexbuf) lexbuf }
 
 | _ as c { let region, _, _ = state#sync lexbuf
            in fail region (Unexpected_character c) }
@@ -488,8 +483,7 @@ and scan state = parse
 
 and scan_n_sym n state = parse
   symbol { let state = mk_sym state lexbuf in
-           if n = 1 then state
-           else scan_n_sym (n-1) state lexbuf }
+           if n = 1 then state else scan_n_sym (n-1) state lexbuf }
 
 (* Scanning #include flag *)
 
@@ -522,11 +516,22 @@ and scan_string thread state = parse
            scan_string (thread#push_char c) state lexbuf }
 
 and scan_verbatim thread state = parse
-| eof        { fail thread#opening Unterminated_verbatim}
-| "|}"       { let _, _, state = state#sync lexbuf
-               in thread, state }
-| _ as c     { let _, _, state = state#sync lexbuf in
-               scan_verbatim (thread#push_char c) state lexbuf }
+  nl as nl { let ()    = Lexing.new_line lexbuf
+             and state = state#set_pos (state#pos#new_line nl)
+             in scan_verbatim (thread#push_string nl) state lexbuf }
+| '#' blank* (natural as line) blank+ '"' (string as file) '"' {
+             let  _, _, state = state#sync lexbuf in
+             let flags, state = scan_flags state [] lexbuf in
+             let           () = ignore flags in
+             let line         = int_of_string line
+             and file         = Filename.basename file in
+             let pos          = state#pos#set ~file ~line ~offset:0 in
+             let state        = state#set_pos pos in
+             scan_verbatim thread state lexbuf }
+| eof      { fail thread#opening Unterminated_verbatim             }
+| "|}"     { let _, _, state = state#sync lexbuf in thread, state  }
+| _ as c   { let _, _, state = state#sync lexbuf in
+             scan_verbatim (thread#push_char c) state lexbuf       }
 
 (* Finishing a block comment
 
@@ -552,7 +557,6 @@ and scan_block block thread state = parse
          in scan_block block thread state lexbuf
     else let ()    = LexerLib.rollback lexbuf in
          let n     = String.length lexeme in
-         let ()    = assert (n > 0) in
          let state = scan_n_sym n state lexbuf
          in scan_block block thread state lexbuf }
 
@@ -563,7 +567,6 @@ and scan_block block thread state = parse
          in thread#push_string lexeme, state
     else let ()    = LexerLib.rollback lexbuf in
          let n     = String.length lexeme in
-         let ()    = assert (n > 0) in
          let state = scan_n_sym n state lexbuf
          in scan_block block thread state lexbuf }
 
@@ -588,27 +591,6 @@ and scan_block block thread state = parse
             let region = Region.make ~start:state#pos ~stop:pos
             in fail region error }
 
-(* Finishing a line comment *)
-
-and scan_line thread state = parse
-  nl as nl { let     () = Lexing.new_line lexbuf
-             and thread = thread#push_string nl
-             and state  = state#set_pos (state#pos#new_line nl)
-             in thread, state }
-| eof      { thread, state }
-| _        { let     () = LexerLib.rollback lexbuf in
-             let len    = thread#length in
-             let thread,
-                 status = scan_utf8_inline thread state lexbuf in
-             let delta  = thread#length - len in
-             let pos    = state#pos#shift_one_uchar delta in
-             match status with
-               Stdlib.Ok () ->
-                 scan_line thread (state#set_pos pos) lexbuf
-             | Error error ->
-                 let region = Region.make ~start:state#pos ~stop:pos
-                 in fail region error }
-
 and scan_utf8 block thread state = parse
      eof { let err = Unterminated_comment block#closing
            in fail thread#opening err }
@@ -620,6 +602,27 @@ and scan_utf8 block thread state = parse
            | `Malformed _ -> thread, Stdlib.Error Invalid_utf8_sequence
            | `Await       -> scan_utf8 block thread state lexbuf
            | `End         -> assert false }
+
+(* Finishing a line comment *)
+
+and scan_line thread state = parse
+  nl as nl { let ()     = Lexing.new_line lexbuf
+             and thread = thread#push_string nl
+             and state  = state#set_pos (state#pos#new_line nl)
+             in thread, state }
+| eof      { thread, state }
+| _        { let ()     = LexerLib.rollback lexbuf in
+             let len    = thread#length in
+             let thread,
+                 status = scan_utf8_inline thread state lexbuf in
+             let delta  = thread#length - len in
+             let pos    = state#pos#shift_one_uchar delta in
+             match status with
+               Stdlib.Ok () ->
+                 scan_line thread (state#set_pos pos) lexbuf
+             | Error error ->
+                 let region = Region.make ~start:state#pos ~stop:pos
+                 in fail region error }
 
 and scan_utf8_inline thread state = parse
      eof { thread, Stdlib.Ok () }

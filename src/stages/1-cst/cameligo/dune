@@ -2,12 +2,11 @@
   (name cst_cameligo)
   (public_name ligo.cst.cameligo)
   (libraries
+    ;; Ligo
     simple-utils
-    tezos-utils
-    parser_shared
-  )
+    ;; Third party
+    hex
+    zarith)
+  (modules CST ParserLog)
   (preprocess
-    (pps ppx_let bisect_ppx --conditional)
-  )
-  (flags (:standard -open Parser_shared -open Simple_utils ))
-)
+    (pps ppx_let bisect_ppx --conditional)))

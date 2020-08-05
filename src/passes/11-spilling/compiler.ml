@@ -138,9 +138,10 @@ let compile_constant' : AST.constant' -> constant' = function
 let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error) result =
   let return tc = ok @@ Expression.make_t ~loc:t.location @@ tc in
   match t.type_content with
-  | T_variable (name) when Var.equal name Stage_common.Constant.t_bool -> return (T_base TB_bool)
+  | T_variable (name) when Var.equal name Ast_typed.Constant.t_bool -> return (T_base TB_bool)
   | t when (compare t (t_bool ()).type_content) = 0-> return (T_base TB_bool)
   | T_variable (name) -> fail @@ no_type_variable @@ name
+  | T_wildcard        -> failwith "trying to compile wildcard"
   | T_constant (TC_int)       -> return (T_base TB_int)
   | T_constant (TC_nat)       -> return (T_base TB_nat)
   | T_constant (TC_mutez)     -> return (T_base TB_mutez)
@@ -154,29 +155,32 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
   | T_constant (TC_key)       -> return (T_base TB_key)
   | T_constant (TC_key_hash)  -> return (T_base TB_key_hash)
   | T_constant (TC_chain_id)  -> return (T_base TB_chain_id)
-  | T_constant (TC_void)      -> return (T_base TB_void)
-  | T_operator (TC_contract x) ->
+  | T_operator {operator=TC_contract; args=[x]} ->
       let%bind x' = compile_type x in
       return (T_contract x')
-  | T_operator (TC_map {k;v}) ->
+  | T_operator {operator=TC_map; args=[k;v]} ->
       let%bind kv' = bind_map_pair compile_type (k, v) in
       return (T_map kv')
-  | T_operator (TC_big_map {k;v}) ->
+  | T_operator {operator=TC_big_map; args=[k;v]} ->
       let%bind kv' = bind_map_pair compile_type (k, v) in
       return (T_big_map kv')
-  | T_operator (TC_map_or_big_map _) ->
-      fail @@ corner_case ~loc:"compiler" "TC_map_or_big_map should have been resolved before transpilation"
-  | T_operator (TC_list t) ->
+  | T_operator {operator=TC_map_or_big_map; _} ->
+      fail @@ corner_case ~loc:"spilling" "TC_map_or_big_map should have been resolved before spilling"
+  | T_operator {operator=TC_list; args=[t]} ->
       let%bind t' = compile_type t in
       return (T_list t')
-  | T_operator (TC_set t) ->
+  | T_operator {operator=TC_set; args=[t]} ->
       let%bind t' = compile_type t in
       return (T_set t')
-  | T_operator (TC_option o) ->
+  | T_operator {operator=TC_option; args=[o]} ->
       let%bind o' = compile_type o in
       return (T_option o')
+  | T_operator {operator=TC_michelson_pair|TC_michelson_or|TC_michelson_pair_right_comb| TC_michelson_pair_left_comb|TC_michelson_or_right_comb| TC_michelson_or_left_comb; _} ->
+      fail @@ corner_case ~loc:"spilling" "These types should have been resolved before spilling"
+  | T_operator {operator=(TC_contract|TC_option|TC_list|TC_set|TC_map|TC_big_map); _} ->
+      fail @@ corner_case ~loc:"spilling" "Type operator with invalid arguments (wrong number or wrong kinds)"
   | T_sum m when Ast_typed.Helpers.is_michelson_or m ->
-      let node = Append_tree.of_list @@ kv_list_of_cmap m in
+      let node = Append_tree.of_list @@ kv_list_of_lmap m in
       let aux a b : (type_expression annotated , spilling_error) result =
         let%bind a = a in
         let%bind b = b in
@@ -184,13 +188,13 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
         ok (None, t)
       in
       let%bind m' = Append_tree.fold_ne
-                      (fun (_, ({ctor_type ; michelson_annotation}: AST.ctor_content)) ->
-                        let%bind a = compile_type ctor_type in
+                      (fun (_, ({associated_type ; michelson_annotation}: AST.row_element)) ->
+                        let%bind a = compile_type associated_type in
                         ok (Ast_typed.Helpers.remove_empty_annotation michelson_annotation, a) )
                       aux node in
       ok @@ snd m'
   | T_sum m ->
-      let node = Append_tree.of_list @@ kv_list_of_cmap m in
+      let node = Append_tree.of_list @@ kv_list_of_lmap m in
       let aux a b : (type_expression annotated , spilling_error) result =
         let%bind a = a in
         let%bind b = b in
@@ -198,8 +202,8 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
         ok (None, t)
       in
       let%bind m' = Append_tree.fold_ne
-                      (fun (Ast_typed.Types.Constructor ann, ({ctor_type ; _}: AST.ctor_content)) ->
-                        let%bind a = compile_type ctor_type in
+                      (fun (Label ann, ({associated_type ; _}: AST.row_element)) ->
+                        let%bind a = compile_type associated_type in
                         ok (Some (String.uncapitalize_ascii ann), a))
                       aux node in
       ok @@ snd m'
@@ -212,8 +216,8 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
         ok (None, t)
       in
       let%bind m' = Append_tree.fold_ne
-                      (fun (_, ({field_type ; michelson_annotation} : AST.field_content)) ->
-                        let%bind a = compile_type field_type in
+                      (fun (_, ({associated_type ; michelson_annotation} : AST.row_element)) ->
+                        let%bind a = compile_type associated_type in
                         ok (Ast_typed.Helpers.remove_empty_annotation michelson_annotation, a) )
                       aux node in
       ok @@ snd m'
@@ -233,8 +237,8 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
         ok (None, t)
       in
       let%bind m' = Append_tree.fold_ne
-                      (fun (Ast_typed.Types.Label ann, ({field_type;_}: AST.field_content)) ->
-                        let%bind a = compile_type field_type in
+                      (fun (Label ann, ({associated_type;_}: AST.row_element)) ->
+                        let%bind a = compile_type associated_type in
                         ok ((if is_tuple_lmap then 
                               None 
                             else 
@@ -282,13 +286,12 @@ let rec compile_literal : AST.literal -> value = fun l -> match l with
   | Literal_chain_id s -> D_string s
   | Literal_operation op -> D_operation op
   | Literal_unit -> D_unit
-  | Literal_void -> D_none
 
-and tree_of_sum : AST.type_expression -> ((AST.constructor' * AST.type_expression) Append_tree.t, spilling_error) result = fun t ->
+and tree_of_sum : AST.type_expression -> ((AST.label * AST.type_expression) Append_tree.t, spilling_error) result = fun t ->
   let%bind map_tv =
     trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
     get_t_sum t in
-  let kt_list = List.map (fun (k,({ctor_type;_}:AST.ctor_content)) -> (k,ctor_type)) (kv_list_of_cmap map_tv) in
+  let kt_list = List.map (fun (k,({associated_type;_}:AST.row_element)) -> (k,associated_type)) (kv_list_of_lmap map_tv) in
   ok @@ Append_tree.of_list kt_list
 
 and compile_expression (ae:AST.expression) : (expression , spilling_error) result =
@@ -299,16 +302,16 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
   | E_let_in {let_binder; rhs; let_result; inline} ->
     let%bind rhs' = compile_expression rhs in
     let%bind result' = compile_expression let_result in
-    return (E_let_in ((let_binder, rhs'.type_expression), inline, rhs', result'))
+    return (E_let_in ((Location.map Var.todo_cast let_binder, rhs'.type_expression), inline, rhs', result'))
   | E_literal l -> return @@ E_literal (compile_literal l)
   | E_variable name -> (
-      return @@ E_variable (name)
+      return @@ E_variable (Location.map Var.todo_cast name)
     )
   | E_application {lamb; args} ->
       let%bind a = compile_expression lamb in
       let%bind b = compile_expression args in
       return @@ E_application (a, b)
-  | E_constructor {constructor=Constructor name;element} when (String.equal name "true"|| String.equal name "false") && element.expression_content = AST.e_unit () ->
+  | E_constructor {constructor=Label name;element} when (String.equal name "true"|| String.equal name "false") && element.expression_content = AST.e_unit () ->
     return @@ E_literal (D_bool (bool_of_string name))
   | E_constructor {constructor;element} -> (
       let%bind param' = compile_expression element in
@@ -406,7 +409,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
           let%bind f' = compile_expression f in
           let%bind input' = compile_type input in
           let%bind output' = compile_type output in
-          let binder = Var.fresh ~name:"iterated" () in
+          let binder = Location.wrap @@ Var.fresh ~name:"iterated" () in
           let application = Mini_c.Combinators.e_application f' output' (Mini_c.Combinators.e_var binder input') in
           ok ((binder , input'), application)
         in
@@ -422,7 +425,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
               let%bind collection' = compile_expression collection in
               return @@ E_fold (f' , collection' , initial')
             )
-          | _ -> fail @@ corner_case ~loc:__LOC__ (Format.asprintf "bad iterator arity: %a" Stage_common.PP.constant iterator_name)
+          | _ -> fail @@ corner_case ~loc:__LOC__ (Format.asprintf "bad iterator arity: %a" PP.constant iterator_name)
       in
       let (iter , map , fold) = iterator_generator C_ITER, iterator_generator C_MAP, iterator_generator C_FOLD in
       match (name , lst) with
@@ -455,7 +458,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
             let%bind s' = compile_expression body in
             ok (tv' , s')
           in
-          return @@ E_if_none (expr' , n , ((opt , tv') , s'))
+          return @@ E_if_none (expr' , n , ((Location.map Var.todo_cast opt , tv') , s'))
       | Match_list {
           match_nil ;
           match_cons = {hd; tl; body; tv} ;
@@ -464,15 +467,24 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
           let%bind cons =
             let%bind ty' = compile_type tv in
             let%bind match_cons' = compile_expression body in
-            ok (((hd , ty') , (tl , ty')) , match_cons')
+            ok (((Location.map Var.todo_cast hd , ty') , (Location.map Var.todo_cast tl , ty')) , match_cons')
           in
           return @@ E_if_cons (expr' , nil , cons)
         )
-      | Match_variant {cases=[{constructor=Constructor t;body=match_true};{constructor=Constructor f;body=match_false}];_}
-        when String.equal t "true" && String.equal f "false" ->
-          let%bind (t , f) = bind_map_pair (compile_expression) (match_true, match_false) in
-          return @@ E_if_bool (expr', t, f)
       | Match_variant {cases ; tv} -> (
+        match expr'.type_expression.type_content with
+          | T_base TB_bool ->
+            let ctor_body (case : AST.matching_content_case) = (case.constructor, case.body) in
+            let cases = AST.LMap.of_list (List.map ctor_body cases) in
+            let get_case c =
+              trace_option
+                (corner_case ~loc:__LOC__ ("missing " ^ c ^ " case in match"))
+                (AST.LMap.find_opt (Label c) cases) in
+            let%bind match_true  = get_case "true" in
+            let%bind match_false = get_case "false" in
+            let%bind (t , f) = bind_map_pair (compile_expression) (match_true, match_false) in
+            return @@ E_if_bool (expr', t, f)
+          | _ ->
           let%bind tree =
             trace_strong (corner_case ~loc:__LOC__ "getting lr tree") @@
             tree_of_sum tv in
@@ -495,25 +507,25 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
 
           let rec aux top t =
             match t with
-            | ((`Leaf (AST.Constructor constructor_name)) , tv) -> (
+            | ((`Leaf (Label constructor_name)) , tv) -> (
                 let%bind {constructor=_ ; pattern ; body} =
                   trace_option (corner_case ~loc:__LOC__ "missing match clause") @@
-                    let aux ({constructor = Constructor c ; pattern=_ ; body=_} : AST.matching_content_case) =
+                    let aux ({constructor = Label c ; pattern=_ ; body=_} : AST.matching_content_case) =
                       (c = constructor_name) in
                   List.find_opt aux cases in
                 let%bind body' = compile_expression body in
-                return @@ E_let_in ((pattern , tv) , false , top , body')
+                return @@ E_let_in ((Location.map Var.todo_cast pattern , tv) , false , top , body')
               )
             | ((`Node (a , b)) , tv) ->
                 let%bind a' =
                   let%bind a_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_left tv in
-                  let left_var = Var.fresh ~name:"left" () in
+                  let left_var = Location.wrap @@ Var.fresh ~name:"left" () in
                   let%bind e = aux (((Expression.make (E_variable left_var) a_ty))) a in
                   ok ((left_var , a_ty) , e)
                 in
                 let%bind b' =
                   let%bind b_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_right tv in
-                  let right_var = Var.fresh ~name:"right" () in
+                  let right_var = Location.wrap @@ Var.fresh ~name:"right" () in
                   let%bind e = aux (((Expression.make (E_variable right_var) b_ty))) b in
                   ok ((right_var , b_ty) , e)
                 in
@@ -541,14 +553,15 @@ and compile_lambda l (input_type , output_type) =
   let%bind input = compile_type input_type in
   let%bind output = compile_type output_type in
   let tv = Combinators.t_function input output in
-  let binder = binder in 
+  let binder = Location.map Var.todo_cast binder in 
   let closure = E_closure { binder; body = result'} in
   ok @@ Combinators.Expression.make_tpl ~loc:result.location (closure , tv)
 
 and compile_recursive {fun_name; fun_type; lambda} =
   let rec map_lambda : AST.expression_variable -> type_expression -> AST.expression -> (expression * expression_variable list , spilling_error) result = fun fun_name loop_type e ->
     match e.expression_content with 
-      E_lambda {binder;result} -> 
+      E_lambda {binder;result} ->
+        let binder = Location.map Var.todo_cast binder in
         let%bind (body,l) = map_lambda fun_name loop_type result in
         ok @@ (Expression.make ~loc:e.location (E_closure {binder;body}) loop_type, binder::l)
       | _  -> 
@@ -558,17 +571,17 @@ and compile_recursive {fun_name; fun_type; lambda} =
   and replace_callback : AST.expression_variable -> type_expression -> bool -> AST.expression -> (expression , spilling_error) result = fun fun_name loop_type shadowed e ->
     match e.expression_content with
       E_let_in li -> 
-        let shadowed = shadowed || Var.equal li.let_binder fun_name in 
+        let shadowed = shadowed || Var.equal li.let_binder.wrap_content fun_name.wrap_content in 
         let%bind let_result = replace_callback fun_name loop_type shadowed li.let_result in
         let%bind rhs = compile_expression li.rhs in
         let%bind ty  = compile_type e.type_expression in
-        ok @@ e_let_in li.let_binder ty li.inline rhs let_result |
+        ok @@ e_let_in (Location.map Var.todo_cast li.let_binder) ty li.inline rhs let_result |
       E_matching m -> 
         let%bind ty = compile_type e.type_expression in
         matching fun_name loop_type shadowed m ty |
       E_application {lamb;args} -> (
         match lamb.expression_content,shadowed with
-        E_variable name, false when Var.equal fun_name name -> 
+        E_variable name, false when Var.equal fun_name.wrap_content name.wrap_content -> 
           let%bind expr = compile_expression args in
           ok @@ Expression.make (E_constant {cons_name=C_LOOP_CONTINUE;arguments=[expr]}) loop_type |
         _ -> 
@@ -590,7 +603,7 @@ and compile_recursive {fun_name; fun_type; lambda} =
             let%bind s' = replace_callback fun_name loop_type shadowed body in
             ok (tv' , s')
           in
-          return @@ E_if_none (expr , n , ((opt , tv') , s'))
+          return @@ E_if_none (expr , n , ((Location.map Var.todo_cast opt , tv') , s'))
       | Match_list {
           match_nil ;
           match_cons = { hd ; tl ; body ; tv } ;
@@ -599,11 +612,11 @@ and compile_recursive {fun_name; fun_type; lambda} =
           let%bind cons =
             let%bind ty' = compile_type tv in
             let%bind match_cons' = replace_callback fun_name loop_type shadowed body in
-            ok (((hd , ty') , (tl , ty')) , match_cons')
+            ok (((Location.map Var.todo_cast hd , ty') , (Location.map Var.todo_cast tl , ty')) , match_cons')
           in
           return @@ E_if_cons (expr , nil , cons)
         )
-      | Match_variant {cases=[{constructor=Constructor t;body=match_true};{constructor=Constructor f;body=match_false}];_}
+      | Match_variant {cases=[{constructor=Label t;body=match_true};{constructor=Label f;body=match_false}];_}
         when String.equal t "true" && String.equal f "false" ->
           let%bind (t , f) = bind_map_pair (replace_callback fun_name loop_type shadowed) (match_true, match_false) in
           return @@ E_if_bool (expr, t, f)
@@ -629,25 +642,25 @@ and compile_recursive {fun_name; fun_type; lambda} =
           in
           let rec aux top t =
             match t with
-            | ((`Leaf (AST.Constructor constructor_name)) , tv) -> (
+            | ((`Leaf (Label constructor_name)) , tv) -> (
                 let%bind {constructor=_ ; pattern ; body} =
                   trace_option (corner_case ~loc:__LOC__ "missing match clause") @@
-                    let aux ({constructor = Constructor c ; pattern=_ ; body=_} : AST.matching_content_case) =
+                    let aux ({constructor = Label c ; pattern=_ ; body=_} : AST.matching_content_case) =
                       (c = constructor_name) in
                   List.find_opt aux cases in
                 let%bind body' = replace_callback fun_name loop_type shadowed body in
-                return @@ E_let_in ((pattern , tv) , false , top , body')
+                return @@ E_let_in ((Location.map Var.todo_cast pattern , tv) , false , top , body')
               )
             | ((`Node (a , b)) , tv) ->
                 let%bind a' =
                   let%bind a_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_left tv in
-                  let left_var = Var.fresh ~name:"left" () in
+                  let left_var = Location.wrap @@ Var.fresh ~name:"left" () in
                   let%bind e = aux (((Expression.make (E_variable left_var) a_ty))) a in
                   ok ((left_var , a_ty) , e)
                 in
                 let%bind b' =
                   let%bind b_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_right tv in
-                  let right_var = Var.fresh ~name:"right" () in
+                  let right_var = Location.wrap @@ Var.fresh ~name:"right" () in
                   let%bind e = aux (((Expression.make (E_variable right_var) b_ty))) b in
                   ok ((right_var , b_ty) , e)
                 in
@@ -661,16 +674,17 @@ and compile_recursive {fun_name; fun_type; lambda} =
   let%bind (input_type,output_type) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_function fun_type in
   let loop_type = t_union (None, input_type) (None, output_type) in
   let%bind (body,binder) = map_lambda fun_name loop_type lambda.result in
-  let binder = lambda.binder::binder in
+  let binder = Location.map Var.todo_cast lambda.binder :: binder in
   let%bind binder = match binder with hd::[] -> ok @@ hd | _ -> fail @@ unsupported_recursive_function fun_name in
   let expr = Expression.make_tpl (E_variable binder, input_type) in
-  let body = Expression.make (E_iterator (C_LOOP_LEFT, ((lambda.binder, loop_type),body), expr)) output_type in
+  let body = Expression.make (E_iterator (C_LOOP_LEFT, ((Location.map Var.todo_cast lambda.binder, loop_type),body), expr)) output_type in
   ok @@ Expression.make (E_closure {binder;body}) fun_type
 
 let compile_declaration env (d:AST.declaration) : (toplevel_statement option , spilling_error) result =
   match d with
   | Declaration_constant { binder ; expr ; inline } ->
       let%bind expression = compile_expression expr in
+      let binder = Location.map Var.todo_cast binder in
       let tv = Combinators.Expression.get_type expression in
       let env' = Environment.add (binder, tv) env in
       ok @@ Some ((binder, inline, expression), environment_wrap env env')

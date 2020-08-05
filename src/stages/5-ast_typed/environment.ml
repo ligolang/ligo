@@ -27,7 +27,7 @@ let add_type : type_variable -> type_expression -> t -> t = fun type_variable ty
 (* TODO: generate : these are now messy, clean them up. *)
 let get_opt : expression_variable -> t -> element option = fun k x ->
   Option.bind (fun {expr_var=_ ; env_elt} -> Some env_elt) @@
-    List.find_opt (fun {expr_var ; env_elt=_} -> Var.equal expr_var k) (get_expr_environment x)
+    List.find_opt (fun {expr_var ; env_elt=_} -> Var.equal expr_var.wrap_content k.wrap_content) (get_expr_environment x)
 let get_type_opt : type_variable -> t -> type_expression option = fun k x ->
   Option.bind (fun {type_variable=_ ; type_} -> Some type_) @@
     List.find_opt (fun {type_variable ; type_=_} -> Var.equal type_variable k) (get_type_environment x)
@@ -38,17 +38,15 @@ let add_ez_binder : expression_variable -> type_expression -> t -> t = fun k v e
 let add_ez_declaration : expression_variable -> expression -> t -> t = fun k ae e ->
   add_expr k (make_element_declaration e ae) e
 
-let add_ez_sum_type ?(env = empty) ?(type_name = Var.of_name "a_sum_type") (lst : (constructor' * ctor_content) list) =
+let add_ez_sum_type ?(env = empty) ?(type_name = Var.of_name "a_sum_type") (lst : (label * row_element) list) =
   add_type type_name (make_t_ez_sum lst) env
 
-let convert_constructor' (S.Constructor c) = Constructor c
-
-let get_constructor : Ast_core.constructor' -> t -> (type_expression * type_expression) option = fun k x -> (* Left is the constructor, right is the sum type *)
+let get_constructor : label -> t -> (type_expression * type_expression) option = fun k x -> (* Left is the constructor, right is the sum type *)
     let aux = fun {type_variable=_ ; type_} ->
       match type_.type_content with
       | T_sum m ->
-        (match CMap.find_opt (convert_constructor' k) m with
-           Some {ctor_type ; _} -> Some (ctor_type , type_)
+        (match LMap.find_opt k m with
+           Some {associated_type ; _} -> Some (associated_type , type_)
          | None -> None)
       | _ -> None
     in

@@ -1,10 +1,14 @@
+(* Dependencies *)
+
+module EvalOpt  = Lexer_shared.EvalOpt
 module CST      = Cst.Pascaligo
-module LexToken = Parser_pascaligo.LexToken
-module Lexer    = Lexer.Make(LexToken)
+module LexToken = Lexer_pascaligo.LexToken
+module Lexer    = Lexer_shared.Lexer.Make (LexToken)
 module Scoping  = Parser_pascaligo.Scoping
 module Region   = Simple_utils.Region
 module ParErr   = Parser_pascaligo.ParErr
 module SSet     = Set.Make (String)
+module Pretty   = Parser_pascaligo.Pretty
 
 (* Mock IOs TODO: Fill them with CLI options *)
 
@@ -153,3 +157,23 @@ let parse_expression source = apply (fun () -> Unit.expr_in_string source)
 (* Preprocessing a contract in a file *)
 
 let preprocess source = apply (fun () -> Unit.preprocess source)
+
+let pretty_print cst =
+  let doc    = Pretty.print cst in
+  let buffer = Buffer.create 131 in
+  let width  =
+    match Terminal_size.get_columns () with
+      None -> 60
+    | Some c -> c in
+  let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
+  in Trace.ok buffer
+
+let pretty_print_expression cst =
+  let doc    = Pretty.pp_expr cst in
+  let buffer = Buffer.create 131 in
+  let width  =
+    match Terminal_size.get_columns () with
+      None -> 60
+    | Some c -> c in
+  let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
+  in Trace.ok buffer

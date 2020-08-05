@@ -54,13 +54,13 @@ let forall2_tc a b f =
 let (=>) tc ty = (tc , ty)
 let (-->) arg ret = p_constant C_arrow     [arg; ret]
 let option t      = p_constant C_option    [t]
-let pair a b      = p_constant C_record    [a; b]
-let sum  a b      = p_constant C_variant   [a; b]
+let pair a b      = p_row_ez   C_record    [("left",a);("right",b)]
+let sum  a b      = p_row_ez   C_variant   [("left",a);("right",b)]
 let map  k v      = p_constant C_map       [k; v]
 let unit          = p_constant C_unit      []
 let list   t      = p_constant C_list      [t]
 let set    t      = p_constant C_set       [t]
-let bool          = { tsrc = "built-in type" ; t = P_variable Stage_common.Constant.t_bool }
+let bool          = { tsrc = "built-in type" ; t = P_variable Ast_typed.Constant.t_bool }
 let string        = p_constant C_string    []
 let nat           = p_constant C_nat       []
 let mutez         = p_constant C_mutez     []
@@ -77,7 +77,7 @@ let contract t    = p_constant C_contract  [t]
 let ( * ) a b = pair a b
 
 (* These are used temporarily to de-curry functions that correspond to Michelson operators *)
-let tuple0        = p_constant C_record    []
-let tuple1 a      = p_constant C_record    [a]
-let tuple2 a b    = p_constant C_record    [a; b]
-let tuple3 a b c  = p_constant C_record    [a; b; c]
+let tuple0        = p_row_ez   C_record    []
+let tuple1 a      = p_row_ez   C_record    [("0",a)]
+let tuple2 a b    = p_row_ez   C_record    [("0",a);("1",b)]
+let tuple3 a b c  = p_row_ez   C_record    [("0",a);("1",b);("2",c)]

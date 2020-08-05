@@ -6,6 +6,7 @@
 
 (* Utilities *)
 
+module Utils = Simple_utils.Utils
 open Utils
 
 (* Regions
@@ -22,6 +23,10 @@ open Utils
 module Region = Simple_utils.Region
 
 type 'a reg = 'a Region.reg
+
+(* Lexemes *)
+
+type lexeme = string
 
 (* Keywords of OCaml *)
 
@@ -169,7 +174,8 @@ and type_expr =
 | TFun    of (type_expr * arrow * type_expr) reg
 | TPar    of type_expr par reg
 | TVar    of variable
-| TString of Lexer.lexeme reg
+| TWild   of wild
+| TString of lexeme reg
 
 and cartesian = (type_expr, times) nsepseq reg
 
@@ -189,12 +195,10 @@ and type_tuple = (type_expr, comma) nsepseq par reg
 and pattern =
   PConstr   of constr_pattern
 | PUnit     of the_unit reg
-| PFalse    of kwd_false
-| PTrue     of kwd_true
 | PVar      of variable
-| PInt      of (Lexer.lexeme * Z.t) reg
-| PNat      of (Lexer.lexeme * Z.t) reg
-| PBytes    of (Lexer.lexeme * Hex.t) reg
+| PInt      of (lexeme * Z.t) reg
+| PNat      of (lexeme * Z.t) reg
+| PBytes    of (lexeme * Hex.t) reg
 | PString   of string reg
 | PVerbatim of string reg
 | PWild     of wild
@@ -207,6 +211,8 @@ and pattern =
 and constr_pattern =
   PNone      of c_None
 | PSomeApp   of (c_Some * pattern) reg
+| PFalse    of kwd_false
+| PTrue     of kwd_true
 | PConstrApp of (constr * pattern option) reg
 
 and list_pattern =
@@ -251,13 +257,13 @@ and expr =
 and annot_expr = expr * colon * type_expr
 
 and 'a injection = {
-  compound   : compound;
+  compound   : compound option;
   elements   : ('a, semi) sepseq;
   terminator : semi option
 }
 
 and 'a ne_injection = {
-  compound    : compound;
+  compound    : compound option;
   ne_elements : ('a, semi) nsepseq;
   terminator  : semi option
 }
@@ -395,8 +401,7 @@ and cond_expr = {
   test     : expr;
   kwd_then : kwd_then;
   ifso     : expr;
-  kwd_else : kwd_else;
-  ifnot    : expr
+  ifnot    : (kwd_else * expr) option;
 }
 
 (* Code injection.  Note how the field [language] wraps a region in
@@ -421,27 +426,29 @@ let nsepseq_to_region to_region (hd,tl) =
   Region.cover (to_region hd) (last reg tl)
 
 let type_expr_to_region = function
-  TProd {region; _}
-| TSum {region; _}
+  TProd   {region; _}
+| TSum    {region; _}
 | TRecord {region; _}
-| TApp {region; _}
-| TFun {region; _}
-| TPar {region; _}
+| TApp    {region; _}
+| TFun    {region; _}
+| TPar    {region; _}
 | TString {region; _}
-| TVar {region; _} -> region
+| TVar    {region; _}
+| TWild    region
+ -> region
 
 let list_pattern_to_region = function
   PListComp {region; _} | PCons {region; _} -> region
 
 let constr_pattern_to_region = function
   PNone region | PSomeApp {region;_}
+| PTrue region | PFalse region
 | PConstrApp {region;_} -> region
 
 let pattern_to_region = function
 | PList p -> list_pattern_to_region p
 | PConstr c -> constr_pattern_to_region c
 | PUnit {region;_}
-| PTrue region | PFalse region
 | PTuple {region;_} | PVar {region;_}
 | PInt {region;_}
 | PString {region;_} | PVerbatim {region;_}

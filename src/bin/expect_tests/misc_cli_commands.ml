@@ -19,7 +19,6 @@ let%expect_test _ =
     dummy
     nested_for_collection_local_var
     nested_for_collection
-    for_collection_map_k
     for_collection_map_kv
     for_collection_empty
     for_collection_with_patches
@@ -56,3 +55,12 @@ let%expect_test _ =
     counter
     counter_simple
     aux_simple |} ];
+
+  run_ligo_bad [ "compile-storage" ; "../../test/contracts/coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ; "--brief" ] ;
+  [%expect {|
+    ligo: error
+          Provided storage type does not match contract storage type
+
+          Bad types:
+          expected record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]
+          got sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]] |}] ;

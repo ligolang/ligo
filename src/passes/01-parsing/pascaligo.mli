@@ -21,3 +21,8 @@ val parse_expression : string -> (CST.expr, parser_error) result
 
 (** Preprocess a given PascaLIGO file and preprocess it. *)
 val preprocess : string -> (Buffer.t, parser_error) result
+
+(** Take a PascaLIGO cst and pretty_print it *)
+val pretty_print : CST.t -> (Buffer.t, _) result
+
+val pretty_print_expression : CST.expr -> (Buffer.t, _) result

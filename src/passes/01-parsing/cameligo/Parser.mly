@@ -15,8 +15,8 @@ open CST
 (* Entry points *)
 
 %start contract interactive_expr
-%type <Cst.Cameligo.t> contract
-%type <Cst.Cameligo.expr> interactive_expr
+%type <CST.t> contract
+%type <CST.expr> interactive_expr
 
 %%
 
@@ -79,10 +79,10 @@ nsepseq(item,sep):
 
 (* Helpers *)
 
-%inline type_name   : "<ident>"  { $1 }
-%inline field_name  : "<ident>"  { $1 }
-%inline struct_name : "<ident>"  { $1 }
-%inline module_name : "<constr>" { $1 }
+%inline type_name        : "<ident>"  { $1 }
+%inline field_name       : "<ident>"  { $1 }
+%inline struct_name      : "<ident>"  { $1 }
+%inline module_name      : "<constr>" { $1 }
 
 (* Non-empty comma-separated values (at least two values) *)
 
@@ -93,7 +93,7 @@ tuple(item):
 
 list__(item):
   "[" sep_or_term_list(item,";")? "]" {
-    let compound = Brackets ($1,$3)
+    let compound = Some (Brackets ($1,$3))
     and region = cover $1 $3 in
     let elements, terminator =
       match $2 with
@@ -148,6 +148,7 @@ cartesian:
 
 core_type:
   type_name      {    TVar $1 }
+| "_"            {  TWild  $1 }
 | par(type_expr) {    TPar $1 }
 | "<string>"     { TString $1 }
 | module_name "." type_name {
@@ -194,7 +195,7 @@ record_type:
     let () = Utils.nsepseq_to_list ne_elements
              |> Scoping.check_fields in
     let region = cover $1 $3
-    and value  = {compound = Braces ($1,$3); ne_elements; terminator}
+    and value  = {compound = Some (Braces ($1,$3)); ne_elements; terminator}
     in TRecord {region; value} }
 
 field_decl:
@@ -289,8 +290,6 @@ core_pattern:
 | "<string>"                                   {           PString $1 }
 | "<verbatim>"                                 {         PVerbatim $1 }
 | unit                                         {             PUnit $1 }
-| "false"                                      {            PFalse $1 }
-| "true"                                       {             PTrue $1 }
 | par(ptuple)                                  {              PPar $1 }
 | list__(tail)                                 { PList (PListComp $1) }
 | constr_pattern                               {           PConstr $1 }
@@ -300,7 +299,7 @@ record_pattern:
   "{" sep_or_term_list(field_pattern,";") "}" {
     let ne_elements, terminator = $2 in
     let region = cover $1 $3 in
-    let value  = {compound = Braces ($1,$3); ne_elements; terminator}
+    let value  = {compound = Some (Braces ($1,$3)); ne_elements; terminator}
     in {region; value} }
 
 field_pattern:
@@ -319,6 +318,8 @@ constr_pattern:
     and value  = $1,$2
     in PSomeApp {region; value}
   }
+| "false" { PFalse $1 }
+| "true"  {  PTrue $1 }
 | "<constr>" {
     PConstrApp {$1 with value=$1,None}
   }
@@ -377,22 +378,18 @@ if_then_else(right_expr):
                   test     = $2;
                   kwd_then = $3;
                   ifso     = $4;
-                  kwd_else = $5;
-                  ifnot    = $6}
+                  ifnot    = Some($5,$6)}
     in ECond {region; value} }
 
 if_then(right_expr):
   "if" expr "then" right_expr {
-    let the_unit = ghost, ghost in
-    let ifnot    = EUnit (wrap_ghost the_unit) in
     let stop     = expr_to_region $4 in
     let region   = cover $1 stop in
     let value    = {kwd_if   = $1;
                     test     = $2;
                     kwd_then = $3;
                     ifso     = $4;
-                    kwd_else = ghost;
-                    ifnot}
+                    ifnot    = None}
     in ECond {region; value} }
 
 base_if_then_else__open(x):
@@ -630,7 +627,7 @@ record_expr:
   "{" sep_or_term_list(field_assignment,";") "}" {
     let ne_elements, terminator = $2 in
     let region = cover $1 $3 in
-    let value  = {compound = Braces ($1,$3);
+    let value  = {compound = Some (Braces ($1,$3));
                   ne_elements;
                   terminator}
     in {region; value} }
@@ -643,7 +640,7 @@ update_record:
       lbrace   = $1;
       record   = $2;
       kwd_with = $3;
-      updates  = {value = {compound = Braces (ghost, ghost);
+      updates  = {value = {compound = None;
                            ne_elements;
                            terminator};
                   region = cover $3 $5};
@@ -671,7 +668,7 @@ path :
 sequence:
   "begin" series? "end" {
     let region   = cover $1 $3
-    and compound = BeginEnd ($1,$3) in
+    and compound = Some (BeginEnd ($1,$3)) in
     let elements = $2 in
     let value    = {compound; elements; terminator=None}
     in {region; value} }
@@ -691,7 +688,7 @@ let_in_sequence:
     let seq       = $6 in
     let stop      = nsepseq_to_region expr_to_region seq in
     let region    = cover $1 stop in
-    let compound  = BeginEnd (Region.ghost, Region.ghost) in
+    let compound  = None in
     let elements  = Some seq in
     let value     = {compound; elements; terminator=None} in
     let body      = ESeq {region; value} in

@@ -23,6 +23,7 @@
     spilling
     mini_c
     self_mini_c
+    scoping
     stacking
     self_michelson
   )

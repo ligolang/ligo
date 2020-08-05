@@ -20,8 +20,8 @@ let rec replace : expression -> var_name -> var_name -> expression =
   fun e x y ->
   let replace e = replace e x y in
   let return content = { e with content } in
-  let replace_var v =
-    if Var.equal v x
+  let replace_var (v:var_name) =
+    if Var.equal v.wrap_content x.wrap_content
     then y
     else v in
   match e.content with
@@ -30,7 +30,6 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let body = replace body in
     let binder = replace_var binder in
     return @@ E_closure { binder ; body }
-  | E_skip -> e
   | E_constant (c) ->
     let args = List.map replace c.arguments in
     return @@ E_constant {cons_name = c.cons_name; arguments = args}
@@ -40,7 +39,6 @@ let rec replace : expression -> var_name -> var_name -> expression =
   | E_variable z ->
     let z = replace_var z in
     return @@ E_variable z
-  | E_make_none _ -> e
   | E_iterator (name, ((v, tv), body), expr) ->
     let body = replace body in
     let expr = replace expr in
@@ -82,18 +80,10 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let e1 = replace e1 in
     let e2 = replace e2 in
     return @@ E_let_in ((v, tv), inline, e1, e2)
-  | E_sequence (e1, e2) ->
-    let e1 = replace e1 in
-    let e2 = replace e2 in
-    return @@ E_sequence (e1, e2)
   | E_record_update (r, p, e) ->
     let r = replace r in
     let e = replace e in
     return @@ E_record_update (r, p, e)
-  | E_while (cond, body) ->
-    let cond = replace cond in
-    let body = replace body in
-    return @@ E_while (cond, body)
   | E_raw_michelson _ -> e
 
 (**
@@ -103,16 +93,16 @@ let rec replace : expression -> var_name -> var_name -> expression =
 let rec subst_expression : body:expression -> x:var_name -> expr:expression -> expression =
   fun ~body ~x ~expr ->
   let self body = subst_expression ~body ~x ~expr in
-  let subst_binder y expr' =
+  let subst_binder (y:var_name) expr' =
     (* if x is shadowed, binder doesn't change *)
-    if Var.equal x y
+    if Var.equal x.wrap_content y.wrap_content
     then (y, expr')
     (* else, if no capture, subst in binder *)
     else if not (Free_variables.mem y (Free_variables.expression [] expr))
     then (y, self expr')
     (* else, avoid capture and subst in binder *)
     else
-      let fresh = Var.fresh_like y in
+      let fresh = Location.wrap @@ Var.fresh_like y.wrap_content in
       let new_body = replace expr' y fresh in
       (fresh, self new_body) in
   (* hack to avoid reimplementing subst_binder for 2-ary binder in E_if_cons:
@@ -128,7 +118,7 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
   let return_id = body in
   match body.content with
   | E_variable x' ->
-     if x' = x
+     if Location.equal_content ~equal:Var.equal x' x
      then expr
      else return_id
   | E_closure { binder; body } -> (
@@ -170,7 +160,7 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
     return @@ E_if_left (c, ((name_l, tvl) , l), ((name_r, tvr) , r))
   )
   (* All that follows is boilerplate *)
-  | E_literal _ | E_skip | E_make_none _ | E_raw_michelson _
+  | E_literal _ | E_raw_michelson _
     as em -> return em
   | E_constant (c) -> (
       let lst = List.map self c.arguments in
@@ -180,17 +170,9 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
       let farg' = Tuple.map2 self farg in
       return @@ E_application farg'
   )
-  | E_while eb -> (
-      let eb' = Tuple.map2 self eb in
-      return @@ E_while eb'
-  )
   | E_if_bool cab -> (
       let cab' = Tuple.map3 self cab in
       return @@ E_if_bool cab'
-  )
-  | E_sequence ab -> (
-      let ab' = Tuple.map2 self ab in
-      return @@ E_sequence ab'
   )
   | E_record_update (r, p, e) -> (
     let r' = self r in
@@ -202,16 +184,16 @@ let%expect_test _ =
   let dummy_type = Expression.make_t @@ T_base TB_unit in
   let wrap e = Expression.make e dummy_type in
 
-  let show_subst ~body ~x ~expr =
+  let show_subst ~body ~(x:var_name) ~expr =
     Format.printf "(%a)[%a := %a] =@ %a"
       PP.expression body
-      Var.pp x
+      Var.pp x.wrap_content
       PP.expression expr
       PP.expression (subst_expression ~body ~x ~expr) in
 
-  let x = Var.of_name "x" in
-  let y = Var.of_name "y" in
-  let z = Var.of_name "z" in
+  let x = Location.wrap @@ Var.of_name "x" in
+  let y = Location.wrap @@ Var.of_name "y" in
+  let z = Location.wrap @@ Var.of_name "z" in
 
   let var x = wrap (E_variable x) in
   let app f x = wrap (E_application (f, x)) in
@@ -411,7 +393,7 @@ let%expect_test _ =
 
   (* old bug *)
   Var.reset_counter () ;
-  let y0 = Var.fresh ~name:"y" () in
+  let y0 = Location.wrap @@ Var.fresh ~name:"y" () in
   show_subst
     ~body:(lam y (lam y0 (app (var x) (app (var y) (var y0)))))
     ~x:x

@@ -1,7 +1,9 @@
 [@@@warning "-42"]
 
+(* Dependencies *)
+
 module Region = Simple_utils.Region
-module CST = Cst.Cameligo
+module CST    = Cst.Cameligo
 
 type t =
   Reserved_name      of CST.variable
@@ -17,7 +19,7 @@ open Region
 
 (* Useful modules *)
 
-module SSet = Utils.String.Set
+module SSet = Set.Make (String)
 
 module Ord =
   struct
@@ -76,7 +78,7 @@ open! CST
 
 let rec vars_of_pattern env = function
   PConstr p -> vars_of_pconstr env p
-| PUnit _ | PFalse _ | PTrue _
+| PUnit _
 | PInt _ | PNat _ | PBytes _
 | PString _ | PVerbatim _
 | PWild _ -> env
@@ -105,6 +107,7 @@ and vars_of_pconstr env = function
   PNone _ -> env
 | PSomeApp {value=_, pattern; _} ->
     vars_of_pattern env pattern
+| PFalse _ | PTrue _ -> env
 | PConstrApp {value=_, Some pattern; _} ->
     vars_of_pattern env pattern
 | PConstrApp {value=_,None; _} -> env

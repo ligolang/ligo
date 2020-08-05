@@ -4,11 +4,13 @@ open Combinators
 module Free_variables = struct
 
   type bindings = expression_variable list
-  let mem : expression_variable -> bindings -> bool = List.mem
+  let var_equal = Location.equal_content ~equal:Var.equal
+  let var_compare = Location.compare_content ~compare:Var.compare
+  let mem : expression_variable -> bindings -> bool = List.mem ~compare:var_compare
   let singleton : expression_variable -> bindings = fun s -> [ s ]
   let mem_count : expression_variable -> bindings -> int =
     fun x fvs ->
-    List.length (List.filter (Var.equal x) fvs)
+    List.length (List.filter (var_equal x) fvs)
   let union : bindings -> bindings -> bindings = (@)
   let unions : bindings list -> bindings = List.concat
   let empty : bindings = []
@@ -19,11 +21,9 @@ module Free_variables = struct
     match e.content with
     | E_literal v -> value b v
     | E_closure f -> lambda b f
-    | E_skip -> empty
     | E_constant (c) -> unions @@ List.map self c.arguments
     | E_application (f, x) -> unions @@ [ self f ; self x ]
     | E_variable n -> var_name b n
-    | E_make_none _ -> empty
     | E_iterator (_, ((v, _), body), expr) ->
       unions [ expression (union (singleton v) b) body ;
                self expr ;
@@ -53,9 +53,7 @@ module Free_variables = struct
       unions [ self expr ;
                expression (union (singleton v) b) body ;
              ]
-    | E_sequence (x, y) -> union (self x) (self y)
     | E_record_update (r, _,e) -> union (self r) (self e)
-    | E_while (cond , body) -> union (self cond) (self body)
     | E_raw_michelson _ -> empty
 
   and var_name : bindings -> var_name -> bindings = fun b n ->
@@ -98,8 +96,8 @@ end
 let get_entry (lst : program) (name : string) : (expression * int) option =
   let entry_expression =
     let aux x =
-      let (((decl_name , _, decl_expr) , _)) = x in
-      if (Var.equal decl_name (Var.of_name name))
+      let ((((decl_name:expression_variable) , _, decl_expr) , _)) = x in
+      if (Var.equal decl_name.wrap_content (Var.of_name name))
       then Some decl_expr
       else None
     in
@@ -109,8 +107,8 @@ let get_entry (lst : program) (name : string) : (expression * int) option =
     | Some exp ->
       let entry_index =
         let aux x =
-          let (((decl_name , _, _) , _)) = x in
-          Var.equal decl_name (Var.of_name name)
+          let ((((decl_name:expression_variable) , _, _) , _)) = x in
+          Var.equal decl_name.wrap_content (Var.of_name name)
         in
         (List.length lst) - (List.find_index aux (List.rev lst)) - 1
       in

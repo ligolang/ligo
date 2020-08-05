@@ -1,22 +1,12 @@
 [@@@coverage exclude_file]
-(* open Types
- * open Format
- * open PP_helpers *)
-
-(* include Stage_common.PP *)
 open Types
 open Format
 open PP_helpers
+include Stage_common.PP
 
-let constructor ppf (c:constructor') : unit =
-  let Constructor c = c in fprintf ppf "%s" c
-
-let label ppf (l:label) : unit =
-  let Label l = l in fprintf ppf "%s" l
-
-let cmap_sep value sep ppf m =
-  let lst = List.sort (fun (Constructor a,_) (Constructor b,_) -> String.compare a b) m in
-  let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" constructor k value v in
+let lmap_sep value sep ppf m =
+  let lst = List.sort (fun (Label a,_) (Label b,_) -> String.compare a b) m in
+  let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" label k value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
 let record_sep value sep ppf (m : 'a label_map) =
@@ -34,13 +24,13 @@ let tuple_sep value sep ppf m =
 let record_sep_t value sep ppf (m : 'a label_map) =
   let lst = LMap.to_kv_list m in
   let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
-  let new_pp ppf (k, {field_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value field_type in
+  let new_pp ppf (k, {associated_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value associated_type in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
 let tuple_sep_t value sep ppf m =
   assert (Helpers.is_tuple_lmap m);
   let lst = Helpers.tuple_of_record m in
-  let new_pp ppf (_, {field_type;_}) = fprintf ppf "%a" value field_type in
+  let new_pp ppf (_, {associated_type;_}) = fprintf ppf "%a" value associated_type in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
 (* Prints records which only contain the consecutive fields
@@ -57,9 +47,9 @@ let tuple_or_record_sep_t value format_record sep_record format_tuple sep_tuple 
     fprintf ppf format_record (record_sep_t value (tag sep_record)) m
 
 let list_sep_d x = list_sep x (tag " ,@ ")
-let cmap_sep_d x = cmap_sep x (tag " ,@ ")
-let tuple_or_record_sep_expr value = tuple_or_record_sep value "@[<hv 7>record[%a]@]" " ,@ " "@[<hv 2>( %a )@]" " ,@ "
-let tuple_or_record_sep_type value = tuple_or_record_sep_t value "@[<hv 7>record[%a]@]" " ,@ " "@[<hv 2>( %a )@]" " *@ "
+let lmap_sep_d x = lmap_sep x (tag " ,@ ")
+let tuple_or_record_sep_expr value = tuple_or_record_sep value "@[<h>record[%a]@]" " ,@ " "@[<h>( %a )@]" " ,@ "
+let tuple_or_record_sep_type value = tuple_or_record_sep_t value "@[<h>record[%a]@]" " ,@ " "@[<h>( %a )@]" " *@ "
 
 let constant ppf : constant' -> unit = function
   | C_INT                   -> fprintf ppf "INT"
@@ -183,7 +173,6 @@ let constant ppf : constant' -> unit = function
 let literal ppf (l : literal) =
   match l with
   | Literal_unit -> fprintf ppf "unit"
-  | Literal_void -> fprintf ppf "void"
   | Literal_int z -> fprintf ppf "%a" Z.pp_print z
   | Literal_nat z -> fprintf ppf "+%a" Z.pp_print z
   | Literal_timestamp z -> fprintf ppf "+%a" Z.pp_print z
@@ -215,7 +204,6 @@ let s =
     | TC_signature -> "signature"
     | TC_timestamp -> "timestamp"
     | TC_chain_id -> "chain_id"
-    | TC_void -> "void"
 in
 fprintf ppf "%s" s
 
@@ -228,37 +216,19 @@ let rec type_expression' :
           -> unit =
   fun f ppf te ->
   match te.type_content with
-  | T_sum m -> fprintf ppf "@[<hv 4>sum[%a]@]" (cmap_sep_d f) (List.map (fun (c,{ctor_type;_}) -> (c,ctor_type)) (CMap.to_kv_list m))
+  | T_sum m -> fprintf ppf "@[<h>sum[%a]@]" (lmap_sep_d f) (LMap.to_kv_list @@ LMap.map (fun {associated_type;_} -> associated_type) m)
   | T_record m -> fprintf ppf "%a" (tuple_or_record_sep_type f) m
-  | T_arrow a -> fprintf ppf "%a -> %a" f a.type1 f a.type2
+  | T_arrow a -> fprintf ppf "@[<h>%a ->@ %a@]" f a.type1 f a.type2
   | T_variable tv -> type_variable ppf tv
+  | T_wildcard -> fprintf ppf "_"
   | T_constant tc -> type_constant ppf tc
-  | T_operator to_ -> type_operator f ppf to_
+  | T_operator {operator;args} -> fprintf ppf "%a (%a)" type_operator operator (list_sep_d type_expression) args
 
 and type_expression ppf (te : type_expression) : unit =
   type_expression' type_expression ppf te
 
-and type_operator :
-      (formatter -> type_expression -> unit)
-      -> formatter
-      -> type_operator
-      -> unit =
-  fun f ppf to_ ->
-  let s =
-    match to_ with
-    | TC_option te -> Format.asprintf "option(%a)" f te
-    | TC_list te -> Format.asprintf "list(%a)" f te
-    | TC_set te -> Format.asprintf "set(%a)" f te
-    | TC_map {k; v} -> Format.asprintf "Map (%a,%a)" f k f v
-    | TC_big_map {k; v} -> Format.asprintf "Big Map (%a,%a)" f k f v
-    | TC_map_or_big_map {k; v} -> Format.asprintf "Map Or Big Map (%a,%a)" f k f v
-    | TC_contract te  -> Format.asprintf "Contract (%a)" f te
-  in
-  fprintf ppf "(type_operator: %s)" s
-(* end include Stage_common.PP *)
-
 let expression_variable ppf (ev : expression_variable) : unit =
-  fprintf ppf "%a" Var.pp ev
+  fprintf ppf "%a" Var.pp ev.wrap_content
 
 
 let rec expression ppf (e : expression) =
@@ -273,7 +243,7 @@ and expression_content ppf (ec: expression_content) =
   | E_application {lamb;args} ->
       fprintf ppf "(%a)@(%a)" expression lamb expression args
   | E_constructor c ->
-      fprintf ppf "%a(%a)" constructor c.constructor expression c.element
+      fprintf ppf "%a(%a)" label c.constructor expression c.element
   | E_constant c ->
       fprintf ppf "%a(%a)" constant c.cons_name (list_sep_d expression)
         c.arguments
@@ -314,7 +284,7 @@ and option_inline ppf inline =
 
 and matching_variant_case : (_ -> expression -> unit) -> _ -> matching_content_case -> unit =
   fun f ppf {constructor=c; pattern; body} ->
-  fprintf ppf "| %a %a -> %a" constructor c expression_variable pattern f body
+  fprintf ppf "| %a %a -> %a" label c expression_variable pattern f body
 
 and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit = fun f ppf m -> match m with
   | Match_variant {cases ; tv=_} ->

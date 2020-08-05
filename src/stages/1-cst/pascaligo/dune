@@ -2,12 +2,11 @@
   (name cst_pascaligo)
   (public_name ligo.cst.pascaligo)
   (libraries
+    ;; Ligo
     simple-utils
-    tezos-utils
-    parser_shared
-  )
+    ;; Third party
+    hex
+    zarith)
+  (modules CST ParserLog)
   (preprocess
-    (pps ppx_let bisect_ppx --conditional)
-  )
-  (flags (:standard -open Parser_shared -open Simple_utils ))
-)
+    (pps ppx_let bisect_ppx --conditional)))

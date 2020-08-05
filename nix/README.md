@@ -20,7 +20,7 @@ The output of `nix build` can be found in `result` directory.
 
 ## Quick maintenance guide
 
-- `opam-repository` and `tezos-opam-repository` are pinned. To update them when required, run `niv update` (you can get niv with `nix shell 'nixpkgs#niv'`)
+- `opam-repository` is pinned. To update it when required, run `niv update` (you can get niv with `nix shell 'nixpkgs#niv'`)
 - `ocaml` version is pinned in `ocaml-overlay.nix`. If you want to update it, go there and change the version.
 - If something fails, `nix repl pkgs.nix` can be very useful to investigate it.
 

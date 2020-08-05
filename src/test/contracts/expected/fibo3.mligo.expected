@@ -8,5 +8,5 @@ let main (p, s : unit * storage) : operation list * storage =
        f y (x + y))
       (fun (x : int) (y : int) -> x + y)
       0
-      1
-  in ([] : operation list), store
+      1 in
+  ([] : operation list), store

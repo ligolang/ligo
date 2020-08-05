@@ -1,4 +1,3 @@
-open Trace
 open Simple_utils.Display
 
 module Raw = Cst.Cameligo
@@ -16,6 +15,8 @@ type abs_error = [
   | `Concrete_cameligo_unsupported_non_var_pattern of Raw.pattern
   | `Concrete_cameligo_unsupported_pattern_type of Raw.pattern list
   | `Concrete_cameligo_unsupported_string_singleton of Raw.type_expr
+  | `Concrete_cameligo_unsupported_deep_list_pattern of Raw.pattern
+  | `Concrete_cameligo_unsupported_deep_tuple_pattern of (Raw.pattern, Raw.wild) Simple_utils.Utils.nsepseq Raw.par Raw.reg
   | `Concrete_cameligo_abstraction_tracer of Raw.expr * abs_error
   | `Concrete_cameligo_abstraction_type_tracer of Raw.type_expr * abs_error
   | `Concrete_cameligo_bad_deconstruction of Raw.expr
@@ -37,6 +38,8 @@ let unsupported_tuple_pattern p = `Concrete_cameligo_unsupported_tuple_pattern p
 let unsupported_cst_constr p = `Concrete_cameligo_unsupported_constant_constr p
 let unsupported_non_var_pattern p = `Concrete_cameligo_unsupported_non_var_pattern p
 let unsupported_pattern_type pl = `Concrete_cameligo_unsupported_pattern_type pl
+let unsupported_deep_list_patterns cons = `Concrete_cameligo_unsupported_deep_list_pattern cons
+let unsupported_deep_tuple_patterns t = `Concrete_cameligo_unsupported_deep_tuple_pattern t
 let unsupported_string_singleton te = `Concrete_cameligo_unsupported_string_singleton te
 let abstracting_expr_tracer t err = `Concrete_cameligo_abstraction_tracer (t,err)
 let abstracting_type_expr_tracer t err = `Concrete_cameligo_abstraction_type_tracer (t,err)
@@ -99,6 +102,14 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@Unsupported singleton string type@]"
         Location.pp_lift (Raw.type_expr_to_region te)
+    | `Concrete_cameligo_unsupported_deep_list_pattern cons ->
+      Format.fprintf f
+        "@[<hv>%a@Currently, only empty lists and x::y are supported in list patterns@]"
+        Location.pp_lift @@ Raw.pattern_to_region cons
+    | `Concrete_cameligo_unsupported_deep_tuple_pattern tuple ->
+      Format.fprintf f
+        "@[<hv>%a@Currently, nested tuple pattern is not suppoerted@]"
+        Location.pp_lift @@ tuple.Region.region
     | `Concrete_cameligo_abstraction_tracer (expr,err) ->
       Format.fprintf f
         "@[<hv>%a@Abstracting expression:@\"%s\"@%a@]"
@@ -147,7 +158,7 @@ let rec error_ppformat : display_format:string display_format ->
   )
 
 
-let rec error_jsonformat : abs_error -> J.t = fun a ->
+let rec error_jsonformat : abs_error -> Yojson.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;
@@ -230,6 +241,20 @@ let rec error_jsonformat : abs_error -> J.t = fun a ->
   | `Concrete_cameligo_unsupported_string_singleton te ->
     let message = `String "Unsupported singleton string type" in
     let loc = Format.asprintf "%a" Location.pp_lift (Raw.type_expr_to_region te) in
+    let content = `Assoc [
+      ("message", message );
+      ("location", `String loc);] in
+    json_error ~stage ~content
+  | `Concrete_cameligo_unsupported_deep_list_pattern cons ->
+    let message = `String "Currently, only empty lists and x::y are supported in list patterns" in
+    let loc = Format.asprintf "%a" Location.pp_lift @@ Raw.pattern_to_region cons in
+    let content = `Assoc [
+      ("message", message );
+      ("location", `String loc);] in
+    json_error ~stage ~content
+  | `Concrete_cameligo_unsupported_deep_tuple_pattern tuple ->
+    let message = `String "Currently, nested tuple pattern is not supported" in
+    let loc = Format.asprintf "%a" Location.pp_lift @@ tuple.Region.region in
     let content = `Assoc [
       ("message", message );
       ("location", `String loc);] in

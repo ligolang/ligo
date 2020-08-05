@@ -1,5 +1,8 @@
+(* A library for writing UTF8-aware lexers *)
+
 module Region = Simple_utils.Region
-module Pos = Simple_utils.Pos
+module Pos    = Simple_utils.Pos
+module FQueue = Simple_utils.FQueue
 
 (* LEXER ENGINE *)
 
@@ -69,7 +72,7 @@ type thread = <
   set_opening : Region.t -> thread
 >
 
-let mk_thread region lexeme : thread =
+let mk_thread region : thread =
   (* The call [explode s a] is the list made by pushing the characters
      in the string [s] on top of [a], in reverse order. For example,
      [explode "ba" ['c';'d'] = ['a'; 'b'; 'c'; 'd']]. *)
@@ -83,10 +86,10 @@ let mk_thread region lexeme : thread =
     val opening = region
     method opening = opening
 
-    val length = String.length lexeme
+    val length = 0
     method length = length
 
-    val acc = explode lexeme []
+    val acc = []
     method acc = acc
 
     method set_opening opening = {< opening; length; acc >}
@@ -100,10 +103,10 @@ let mk_thread region lexeme : thread =
          acc = explode str acc >}
 
     (* The value of [thread#to_string] is a string of length
-       [thread#length] containing the [thread#length] characters in
-       the list [thread#acc], in reverse order. For instance,
-       [thread#to_string = "abc"] if [thread#length = 3] and
-       [thread#acc = ['c';'b';'a']]. *)
+       [thread#length] containing the characters in the list
+       [thread#acc], in reverse order. For instance, [thread#to_string
+       = "abc"] if [thread#length = 3] and [thread#acc =
+       ['c';'b';'a']]. *)
 
     method to_string =
       let bytes = Bytes.make length ' ' in
@@ -159,15 +162,16 @@ type 'token window =
 | Two of 'token * 'token
 
 type 'token state = <
-  units   : (Markup.t list * 'token) FQueue.t;
-  markup  : Markup.t list;
-  window  : 'token window;
-  last    : Region.t;
-  pos     : Pos.t;
-  decoder : Uutf.decoder;
-  supply  : Bytes.t -> int -> int -> unit;
-  block   : EvalOpt.block_comment option;
-  line    : EvalOpt.line_comment option;
+  units    : (Markup.t list * 'token) FQueue.t;
+  markup   : Markup.t list;
+  comments : Markup.comment FQueue.t;
+  window   : 'token window;
+  last     : Region.t;
+  pos      : Pos.t;
+  decoder  : Uutf.decoder;
+  supply   : Bytes.t -> int -> int -> unit;
+  block    : EvalOpt.block_comment option;
+  line     : EvalOpt.line_comment option;
 
   enqueue      : 'token -> 'token state;
   set_units    : (Markup.t list * 'token) FQueue.t -> 'token state;
@@ -184,25 +188,28 @@ type 'token state = <
   push_tabs    : Lexing.lexbuf -> 'token state;
   push_bom     : Lexing.lexbuf -> 'token state;
   push_markup  : Markup.t -> 'token state;
+  push_comment : Markup.comment -> 'token state
 >
 
-let mk_state ~units ~markup ~window ~last ~pos ~decoder ~supply
+let mk_state ~units ~markup ~comments ~window ~last ~pos ~decoder ~supply
              ?block ?line () : _ state =
   object (self)
-    val units      = units
-    method units   = units
-    val markup     = markup
-    method markup  = markup
-    val window     = window
-    method window  = window
-    val last       = last
-    method last    = last
-    val pos        = pos
-    method pos     = pos
-    method decoder = decoder
-    method supply  = supply
-    method block   = block
-    method line    = line
+    val units       = units
+    method units    = units
+    val markup      = markup
+    method markup   = markup
+    val comments    = comments
+    method comments = comments
+    val window      = window
+    method window   = window
+    val last        = last
+    method last     = last
+    val pos         = pos
+    method pos      = pos
+    method decoder  = decoder
+    method supply   = supply
+    method block    = block
+    method line     = line
 
     method enqueue token =
       {< units  = FQueue.enq (markup, token) units;
@@ -229,6 +236,9 @@ let mk_state ~units ~markup ~window ~last ~pos ~decoder ~supply
 
     (* Committing markup to the current logical state *)
 
+    method push_comment comment =
+      {< comments = FQueue.enq comment comments >}
+
     method push_markup unit = {< markup = unit :: markup >}
 
     method push_newline buffer =
@@ -238,21 +248,23 @@ let mk_state ~units ~markup ~window ~last ~pos ~decoder ~supply
       let stop   = start#new_line value in
       let region = Region.make ~start ~stop in
       let unit   = Markup.Newline Region.{region; value}
-      in {< pos = stop; markup = unit::markup >}
+      in (self#push_markup unit)#set_pos stop
 
     method push_line thread =
       let start  = thread#opening#start in
       let region = Region.make ~start ~stop:self#pos
       and value  = thread#to_string in
-      let unit   = Markup.LineCom Region.{region; value}
-      in {< markup = unit::markup >}
+      let reg    = Region.{region; value} in
+      let unit   = Markup.LineCom reg
+      in (self#push_markup unit)#push_comment (Markup.Line reg)
 
     method push_block thread =
       let start  = thread#opening#start in
       let region = Region.make ~start ~stop:self#pos
       and value  = thread#to_string in
-      let unit   = Markup.BlockCom Region.{region; value}
-      in {< markup = unit::markup >}
+      let reg    = Region.{region; value} in
+      let unit   = Markup.BlockCom reg
+      in (self#push_markup unit)#push_comment (Markup.Block reg)
 
     method push_space buffer =
       let region, lex, state = self#sync buffer in
@@ -283,14 +295,15 @@ type input =
 type 'token logger = Markup.t list -> 'token -> unit
 
 type 'token instance = {
-  input    : input;
-  read     : log:('token logger) -> Lexing.lexbuf -> 'token;
-  buffer   : Lexing.lexbuf;
-  get_win  : unit -> 'token window;
-  get_pos  : unit -> Pos.t;
-  get_last : unit -> Region.t;
-  get_file : unit -> file_path;
-  close    : unit -> unit
+  input        : input;
+  read         : log:('token logger) -> Lexing.lexbuf -> 'token;
+  buffer       : Lexing.lexbuf;
+  close        : unit -> unit;
+  get_win      : unit -> 'token window;
+  get_pos      : unit -> Pos.t;
+  get_last     : unit -> Region.t;
+  get_file     : unit -> file_path;
+  get_comments : unit -> Markup.comment FQueue.t
 }
 
 type open_err = File_opening of string
@@ -329,15 +342,18 @@ let open_token_stream ?line ?block ~scan
                           ~window:Nil
                           ~pos
                           ~markup:[]
+                          ~comments:FQueue.empty
                           ~decoder
                           ~supply
                           ?block
                           ?line
                           ()) in
-  let get_pos  () = !state#pos
-  and get_last () = !state#last
-  and get_win  () = !state#window
-  and get_file () = file_path in
+
+  let get_pos      () = !state#pos
+  and get_last     () = !state#last
+  and get_win      () = !state#window
+  and get_comments () = !state#comments
+  and get_file     () = file_path in
 
   let patch_buffer (start, stop) buffer =
     let open Lexing in
@@ -368,8 +384,8 @@ let open_token_stream ?line ?block ~scan
     | Some (units, (left_mark, token)) ->
         log left_mark token;
         state := ((!state#set_units units)
-                    #set_last (token_to_region token))
-                   #slide_token token;
+                         #set_last (token_to_region token))
+                         #slide_token token;
         style token (next_token scan) buffer;
         patch_buffer (token_to_region token)#byte_pos buffer;
         token in
@@ -382,6 +398,7 @@ let open_token_stream ?line ?block ~scan
         | _ -> () in
       let instance = {
         read = read scan ~token_to_region ~style;
-        input; buffer; get_win; get_pos; get_last; get_file; close}
+        input; buffer; close;
+        get_win; get_pos; get_last; get_file; get_comments}
       in Ok instance
   | Error _ as e -> e

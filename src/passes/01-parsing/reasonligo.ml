@@ -1,12 +1,13 @@
-module CST         = Cst.Cameligo
-module LexToken    = Parser_reasonligo.LexToken
-module Lexer       = Lexer.Make (LexToken)
-module Scoping     = Parser_cameligo.Scoping
+module CST         = Cst.Reasonligo
+module LexToken    = Lexer_reasonligo.LexToken
+module Lexer       = Lexer_shared.Lexer.Make (LexToken)
+module Scoping     = Parser_reasonligo.Scoping
 module Region      = Simple_utils.Region
 module ParErr      = Parser_reasonligo.ParErr
 module SyntaxError = Parser_reasonligo.SyntaxError
 module SSet        = Set.Make (String)
 module Pretty      = Parser_reasonligo.Pretty
+module EvalOpt     = Lexer_shared.EvalOpt
 
 (* Mock IOs TODO: Fill them with CLI options *)
 
@@ -64,7 +65,7 @@ module ParserLog =
   struct
     type ast  = CST.t
     type expr = CST.expr
-    include Cst_cameligo.ParserLog
+    include Cst_reasonligo.ParserLog
   end
 
 module Unit =
@@ -146,16 +147,29 @@ let parse_expression source = apply (fun () -> Unit.expr_in_string source)
 let preprocess source = apply (fun () -> Unit.preprocess source)
 
 (* Pretty-print a file (after parsing it). *)
+let pretty_print cst =
+  let doc    = Pretty.print cst in
+  let buffer = Buffer.create 131 in
+  let width  =
+    match Terminal_size.get_columns () with
+      None -> 60
+    | Some c -> c in
+  let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
+  in Trace.ok buffer
 
-let pretty_print source =
+let pretty_print_from_source source =
   match parse_file source with
     Stdlib.Error _ as e -> e
-  | Ok ast ->
-      let doc    = Pretty.print (fst ast) in
-      let buffer = Buffer.create 131 in
-      let width  =
-        match Terminal_size.get_columns () with
-          None -> 60
-        | Some c -> c in
-      let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
-      in Trace.ok buffer
+  | Ok cst ->
+    pretty_print @@ fst cst
+
+
+let pretty_print_expression cst =
+  let doc    = Pretty.pp_expr cst in
+  let buffer = Buffer.create 131 in
+  let width  =
+    match Terminal_size.get_columns () with
+      None -> 60
+    | Some c -> c in
+  let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
+  in Trace.ok buffer

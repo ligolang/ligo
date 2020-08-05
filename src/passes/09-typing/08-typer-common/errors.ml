@@ -1,22 +1,22 @@
-open Trace
 open Simple_utils.Display
+
 
 let stage = "typer"
 
 type typer_error = [
   | `Typer_michelson_comb_no_record of Location.t
   | `Typer_michelson_comb_no_variant of Location.t
-  | `Typer_unbound_type_variable of Ast_typed.Environment.t * Ast_core.type_variable * Location.t
-  | `Typer_unbound_variable of Ast_typed.Environment.t * Ast_core.expression_variable * Location.t
-  | `Typer_match_empty_variant of Ast_core.matching_expr * Location.t
+  | `Typer_unbound_type_variable of Ast_typed.Environment.t * Ast_typed.type_variable * Location.t
+  | `Typer_unbound_variable of Ast_typed.Environment.t * Ast_typed.expression_variable * Location.t
   | `Typer_match_missing_case of Ast_core.matching_expr * Location.t
   | `Typer_match_redundant_case of Ast_core.matching_expr * Location.t
-  | `Typer_unbound_constructor of Ast_typed.Environment.t * Ast_core.constructor' * Location.t
-  | `Typer_redundant_constructor of Ast_typed.Environment.t * Ast_core.constructor' * Location.t
-  | `Typer_michelson_or_no_annotation of Ast_core.constructor' * Location.t
+  | `Typer_unbound_constructor of Ast_typed.Environment.t * Ast_core.label * Location.t
+  | `Typer_redundant_constructor of Ast_typed.Environment.t * Ast_core.label * Location.t
+  | `Typer_operator_wrong_number_of_arguments of Ast_core.type_operator' * int * int * Location.t
+  | `Typer_michelson_or_no_annotation of Ast_core.label * Location.t
   | `Typer_match_tuple_wrong_arity of Ast_typed.type_expression_list * Ast_core.expression_variable list * Location.t
   | `Typer_program_tracer of Ast_core.program * typer_error
-  | `Typer_constant_declaration_tracer of Ast_core.expression_variable * Ast_core.expr * (Ast_typed.type_expression option) * typer_error
+  | `Typer_constant_declaration_tracer of Ast_core.expression_variable * Ast_core.expression * (Ast_typed.type_expression option) * typer_error
   | `Typer_match_error of Ast_core.matching_expr * Ast_typed.type_expression * Location.t
   | `Typer_needs_annotation of Ast_core.expression * string
   | `Typer_fvs_in_create_contract_lambda of Ast_core.expression * Ast_typed.expression_variable
@@ -66,26 +66,47 @@ type typer_error = [
   | `Typer_converter of Ast_typed.type_expression
   | `Typer_uncomparable_types of Ast_typed.type_expression * Ast_typed.type_expression
   | `Typer_comparator_composed of Ast_typed.type_expression
-  | `Typer_constant_decl_tracer of Ast_core.expression_variable * Ast_core.expr * Ast_typed.type_expression option * typer_error
+  | `Typer_constant_decl_tracer of Ast_core.expression_variable * Ast_core.expression * Ast_typed.type_expression option * typer_error
   | `Typer_match_variant_tracer of Ast_core.matching_expr * typer_error
   | `Typer_unrecognized_type_operator of Ast_core.type_expression
-  |`Typer_expected_ascription of Ast_core.expression
+  | `Typer_expected_ascription of Ast_core.expression
+  | `Typer_different_kinds of Ast_typed.type_expression * Ast_typed.type_expression
+  | `Typer_different_constants of Ast_typed.type_constant * Ast_typed.type_constant
+  | `Typer_different_operators of Ast_typed.type_operator' * Ast_typed.type_operator'
+  | `Typer_operator_number_of_arguments of Ast_typed.type_operator' * Ast_typed.type_operator' * int * int
+  | `Typer_different_record_props of
+    Ast_typed.type_expression * Ast_typed.type_expression * Ast_typed.te_lmap * Ast_typed.te_lmap * string * string
+  | `Typer_different_kind_record_tuple of
+    Ast_typed.type_expression * Ast_typed.type_expression * Ast_typed.te_lmap * Ast_typed.te_lmap
+  | `Typer_different_size_records_tuples of
+    Ast_typed.type_expression * Ast_typed.type_expression * Ast_typed.te_lmap * Ast_typed.te_lmap
+  | `Typer_different_size_sums of
+    Ast_typed.type_expression * Ast_typed.type_expression
+  | `Typer_different_types of string * Ast_typed.type_expression * Ast_typed.type_expression * typer_error
+  | `Typer_different_literals of string * Ast_typed.literal * Ast_typed.literal
+  | `Typer_different_values of string * Ast_typed.expression * Ast_typed.expression
+  | `Typer_different_literals_because_different_types of string * Ast_typed.literal * Ast_typed.literal
+  | `Typer_different_values_because_different_types of string * Ast_typed.expression * Ast_typed.expression
+  | `Typer_uncomparable_literals of string * Ast_typed.literal * Ast_typed.literal
+  | `Typer_uncomparable_values of string * Ast_typed.expression * Ast_typed.expression
+  | `Typer_missing_key_in_record_value of string
+  | `Typer_compare_tracer of typer_error
 ]
 
 let michelson_comb_no_record (loc:Location.t) = `Typer_michelson_comb_no_record loc
 let michelson_comb_no_variant (loc:Location.t) = `Typer_michelson_comb_no_variant loc
-let unbound_type_variable (e:Ast_typed.Environment.t) (tv:Ast_core.type_variable) (loc:Location.t) = `Typer_unbound_type_variable (e,tv,loc)
-let unbound_variable (e:Ast_typed.Environment.t) (v:Ast_core.expression_variable) (loc:Location.t) = `Typer_unbound_variable (e,v,loc)
-let match_empty_variant (m:Ast_core.matching_expr) (loc:Location.t) = `Typer_match_empty_variant (m,loc)
+let unbound_type_variable (e:Ast_typed.Environment.t) (tv:Ast_typed.type_variable) (loc:Location.t) = `Typer_unbound_type_variable (e,tv,loc)
+let unbound_variable (e:Ast_typed.Environment.t) (v:Ast_typed.expression_variable) (loc:Location.t) = `Typer_unbound_variable (e,v,loc)
 let match_missing_case (m:Ast_core.matching_expr) (loc:Location.t) = `Typer_match_missing_case (m,loc)
 let match_redundant_case (m:Ast_core.matching_expr) (loc:Location.t) = `Typer_match_redundant_case (m,loc)
-let unbound_constructor (e:Ast_typed.Environment.t) (c:Ast_core.constructor') (loc:Location.t) = `Typer_unbound_constructor (e,c,loc)
-let redundant_constructor (e:Ast_typed.Environment.t) (c:Ast_core.constructor') (loc:Location.t) = `Typer_redundant_constructor (e,c,loc)
-let michelson_or (c:Ast_core.constructor') (loc:Location.t) = `Typer_michelson_or_no_annotation (c,loc)
+let unbound_constructor (e:Ast_typed.Environment.t) (c:Ast_core.label) (loc:Location.t) = `Typer_unbound_constructor (e,c,loc)
+let operator_wrong_number_of_arguments (op:Ast_core.type_operator') (expected:int) (actual:int) loc = `Typer_operator_wrong_number_of_arguments (op,expected,actual,loc)
+let redundant_constructor (e:Ast_typed.Environment.t) (c:Ast_core.label) (loc:Location.t) = `Typer_redundant_constructor (e,c,loc)
+let michelson_or (c:Ast_core.label) (loc:Location.t) = `Typer_michelson_or_no_annotation (c,loc)
 let match_tuple_wrong_arity (expected: Ast_typed.type_expression_list) (actual:Ast_core.expression_variable list) (loc:Location.t) =
   `Typer_match_tuple_wrong_arity (expected,actual,loc)
 let program_error_tracer (p:Ast_core.program) (err:typer_error) = `Typer_program_tracer (p,err)
-let constant_declaration_error_tracer (name:Ast_core.expression_variable) (ae:Ast_core.expr) (expected: Ast_typed.type_expression option) (err:typer_error) =
+let constant_declaration_error_tracer (name:Ast_core.expression_variable) (ae:Ast_core.expression) (expected: Ast_typed.type_expression option) (err:typer_error) =
   `Typer_constant_declaration_tracer (name,ae,expected,err)
 let match_error ~(expected: Ast_core.matching_expr) ~(actual: Ast_typed.type_expression) (loc:Location.t) =
   `Typer_match_error (expected,actual,loc)
@@ -146,10 +167,27 @@ let comparator_composed (a:Ast_typed.type_expression) = `Typer_comparator_compos
 let unrecognized_type_op (e:Ast_core.type_expression) = `Typer_unrecognized_type_operator e
 
 (* new typer errors *)
-let constant_declaration_tracer (name: Ast_core.expression_variable) (ae:Ast_core.expr) (expected: Ast_typed.type_expression option) (err:typer_error) =
+let constant_declaration_tracer (name: Ast_core.expression_variable) (ae:Ast_core.expression) (expected: Ast_typed.type_expression option) (err:typer_error) =
   `Typer_constant_decl_tracer (name,ae,expected,err)
 let in_match_variant_tracer (ae:Ast_core.matching_expr) (err:typer_error) =
   `Typer_match_variant_tracer (ae,err)
+let different_kinds a b = `Typer_different_kinds (a,b)
+let different_constants a b = `Typer_different_constants (a,b)
+let different_operators a b = `Typer_different_operators (a,b)
+let different_operator_number_of_arguments opa opb lena lenb = `Typer_operator_number_of_arguments (opa, opb, lena, lenb)
+let different_props_in_record a b ra rb ka kb = `Typer_different_record_props (a,b,ra,rb,ka,kb)
+let different_kind_record_tuple a b ra rb = `Typer_different_kind_record_tuple (a,b,ra,rb)
+let different_size_records_tuples a b ra rb = `Typer_different_size_records_tuples (a,b,ra,rb)
+let different_size_sums a b = `Typer_different_size_sums (a,b)
+let different_types name a b err = `Typer_different_types (name,a,b,err)
+let different_literals name a b = `Typer_different_literals (name,a,b)
+let different_values name a b = `Typer_different_values (name,a,b)
+let different_literals_because_different_types name a b = `Typer_different_literals_because_different_types (name,a,b)
+let different_values_because_different_types name a b = `Typer_different_values_because_different_types (name,a,b)
+let error_uncomparable_literals name a b = `Typer_uncomparable_literals (name,a,b)
+let error_uncomparable_values name a b = `Typer_uncomparable_values (name,a,b)
+let missing_key_in_record_value k = `Typer_missing_key_in_record_value k
+let compare_tracer err = `Typer_compare_tracer err
 
 let rec error_ppformat : display_format:string display_format ->
   Format.formatter -> typer_error -> unit =
@@ -165,23 +203,16 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@ Bad michelson or comb type parameter@ can only be used on a variant type@]"
         Location.pp loc
-    | `Typer_unbound_type_variable (env,tv,loc) ->
+    | `Typer_unbound_type_variable (_env,tv,loc) ->
       Format.fprintf f
-        "@[<hv>%a@ Unbound type variable '%a'@ %a@]"
+        "@[<hv>%a@ Unbound type variable '%a'@]"
         Location.pp loc
-        Ast_core.PP.type_variable tv
-        Ast_typed.Environment.PP.environment env
-    | `Typer_unbound_variable (env,v,loc) ->
+        Ast_typed.PP.type_variable tv
+    | `Typer_unbound_variable (_env,v,loc) ->
       Format.fprintf f
-        "@[<hv>%a@ Unbound variable '%a'@ %a@]"
+        "@[<hv>%a@ Unbound variable '%a'@]"
         Location.pp loc
-        Ast_core.PP.expression_variable v
-        Ast_typed.Environment.PP.environment env
-    | `Typer_match_empty_variant (m,loc) ->
-      Format.fprintf f
-        "@[<hv>%a@ Match with no case: @ %a@]"
-        Location.pp loc
-        Ast_core.PP.matching_type m
+        Ast_typed.PP.expression_variable v
     | `Typer_match_missing_case (m,loc) ->
       Format.fprintf f
         "@[<hv>%a@ Missing match case in: @ %a@]"
@@ -192,23 +223,27 @@ let rec error_ppformat : display_format:string display_format ->
         "@[<hv>%a@ Redundant match case in: @ %a@]"
         Location.pp loc
         Ast_core.PP.matching_type m
-    | `Typer_unbound_constructor (env,c,loc) ->
+    | `Typer_unbound_constructor (_env,c,loc) ->
       Format.fprintf f
-        "@[<hv>%a@ Unbound constructor %a@ %a@]"
+        "@[<hv>%a@ Unbound constructor %a@]"
         Location.pp loc
-        Ast_core.PP.constructor c
-        Ast_typed.Environment.PP.environment env
-    | `Typer_redundant_constructor (env,c,loc) ->
+        Ast_core.PP.label c
+    | `Typer_redundant_constructor (_env,c,loc) ->
       Format.fprintf f
-        "@[<hv>%a@ Redundant constructor:@ %a@ %a@]"
+        "@[<hv>%a@ Redundant constructor:@ %a@]"
         Location.pp loc
-        Ast_core.PP.constructor c
-        Ast_typed.Environment.PP.environment env
+        Ast_core.PP.label c
+    | `Typer_operator_wrong_number_of_arguments (op,e,a,loc) ->
+      Format.fprintf f
+        "@[<hv>%a@ Wrong number of arguments for type operator: %a@ expected: %i@ got: %i@]"
+        Location.pp loc
+        Ast_core.PP.type_operator op
+        e a
     | `Typer_michelson_or_no_annotation (c,loc) ->
       Format.fprintf f
         "@[<hv>%a@ michelson_or contructor %a must be annotated with a sum type@]"
         Location.pp loc
-        Ast_core.PP.constructor c
+        Ast_core.PP.label c
     | `Typer_match_tuple_wrong_arity (expected,actual,loc) ->
       Format.fprintf f
         "@[<hv>%a@ Matching tuple of different size. Expected size of %i but got %i@]"
@@ -219,12 +254,8 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "%a"
         (error_ppformat ~display_format) err
-    | `Typer_constant_declaration_tracer (name,ae,_,err) ->
-      Format.fprintf f
-        "@[<hv>%a@ Constant declaration '%a'@ %a@]"
-        Location.pp ae.location
-        Ast_core.PP.expression_variable name
-      (error_ppformat ~display_format) err
+    | `Typer_constant_declaration_tracer (_,_,_,err) ->
+      error_ppformat ~display_format f err
     | `Typer_match_error (expected,actual,loc) ->
       Format.fprintf f
         "@[<hv>%a@ Typing match:@ expected %a got %a@]"
@@ -257,14 +288,6 @@ let rec error_ppformat : display_format:string display_format ->
         Location.pp loc
         Ast_core.PP.label field
         Ast_core.PP.expression ae
-    | `Typer_expression_tracer (_,err)
-    | `Typer_record_access_tracer (_,err) ->
-      error_ppformat ~display_format f err
-    | `Typer_assert_equal (expected,actual) ->
-      Format.fprintf f
-        "@[<h>Bad types:@ expected %a@ got %a@]"
-        Ast_typed.PP.type_expression expected 
-        Ast_typed.PP.type_expression actual
     | `Typer_corner_case desc ->
       Format.fprintf f
         "@[<hv>%s@]"
@@ -274,13 +297,6 @@ let rec error_ppformat : display_format:string display_format ->
         "@[<hv>%a@ Loops over collections expect lists, sets or maps but got type %a@]"
         Location.pp loc
         Ast_typed.PP.type_expression t
-    | `Typer_declaration_order_record _loc ->
-      Format.fprintf f
-        "@[<hv>Can't retrieve type declaration order in the converted record, you need to annotate it@]"
-    | `Typer_declaration_order_variant loc ->
-      Format.fprintf f
-        "@[<hv>%a@ Can't retrieve type declaration order in the converted variant, you need to annotate it@]"
-        Location.pp loc
     | `Typer_too_small_record loc ->
       Format.fprintf f
         "@[<hv>%a@ Converted record must have at least two elements@]"
@@ -289,22 +305,6 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@ Converted variant must have at least two elements@]"
         Location.pp loc
-    | `Typer_expected_record t ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a record but got %a@]"
-        Location.pp t.location
-        Ast_typed.PP.type_expression t
-    | `Typer_expected_variant t ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a variant but got %a@]"
-        Location.pp t.location
-        Ast_typed.PP.type_expression t
-    | `Typer_wrong_param_number (name,expected,actual) ->
-      Format.fprintf f
-        "@[<hv>%a@ Constant %s has the wrong number of parameters@ expected %d, got %d @]"
-        Location.pp_lift (List.fold_left (fun a (t:Ast_typed.type_expression) -> match t.location with File reg -> Region.cover a reg | Virtual _ -> a) Region.ghost actual)
-        name
-        expected (List.length actual)
     | `Typer_bad_list_fold_tracer err ->
       Format.fprintf f
         "@[<hv>Badly typed list fold@]%a"
@@ -317,101 +317,25 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>Badly typed map fold@]%a"
         (error_ppformat ~display_format) err
-    | `Typer_expected_function e ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a function but got %a@]"
-        Location.pp e.location
-        Ast_typed.PP.type_expression e
-    | `Typer_expected_pair e ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a pair but got %a@]"
-        Location.pp e.location
-        Ast_typed.PP.type_expression e
-    | `Typer_expected_list e ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a list but got %a@]"
-        Location.pp e.location
-        Ast_typed.PP.type_expression e
-    | `Typer_expected_set e ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a set but got %a@]"
-        Location.pp e.location
-        Ast_typed.PP.type_expression e
-    | `Typer_expected_map e ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a map but got %a@]"
-        Location.pp e.location
-        Ast_typed.PP.type_expression e
-    | `Typer_expected_big_map e ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a big map but got %a@]"
-        Location.pp e.location
-        Ast_typed.PP.type_expression e
-    | `Typer_expected_option e ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected an option but got %a@]"
-        Location.pp e.location
-        Ast_typed.PP.type_expression e
-    | `Typer_expected_nat t ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a nat but got %a@]"
-        Location.pp t.location
-        Ast_typed.PP.type_expression t
-    | `Typer_expected_bytes t ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected bytes but got %a@]"
-        Location.pp t.location
-        Ast_typed.PP.type_expression t
-    | `Typer_expected_key t ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a key but got %a@]"
-        Location.pp t.location
-        Ast_typed.PP.type_expression t
-    | `Typer_expected_signature t ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a signature but got %a@]"
-        Location.pp t.location
-        Ast_typed.PP.type_expression t
-    | `Typer_expected_contract t ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a contract but got %a@]"
-        Location.pp t.location
-        Ast_typed.PP.type_expression t
-    | `Typer_expected_string t ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a string but got %a@]"
-        Location.pp t.location
-        Ast_typed.PP.type_expression t
-    | `Typer_expected_key_hash t ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a key hash but got %a@]"
-        Location.pp t.location
-        Ast_typed.PP.type_expression t
-    | `Typer_expected_mutez t ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a mutez but got %a@]"
-        Location.pp t.location
-        Ast_typed.PP.type_expression t
-    | `Typer_expected_op_list t ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a list of operations but got %a@]"
-        Location.pp t.location
-        Ast_typed.PP.type_expression t
-    | `Typer_expected_int t ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected an int of operations but got %a@]"
-        Location.pp t.location
-        Ast_typed.PP.type_expression t
-    | `Typer_expected_bool t ->
-      Format.fprintf f
-        "@[<hv>%a@ Expected a bool of operations but got %a@]"
-        Location.pp t.location
-        Ast_typed.PP.type_expression t
-    | `Typer_not_matching (t1,t2) ->
-      Format.fprintf f
-        "@[<hv>Types not matching:@ %a - %a@ %a - %a@]"
-        Location.pp t1.location Ast_typed.PP.type_expression t1
-        Location.pp t2.location Ast_typed.PP.type_expression t2
+    | `Typer_expression_tracer (e,err) ->
+      let exploc = e.location in
+      ( match err with 
+        | `Typer_assert_equal _ | `Typer_expected_record _
+        | `Typer_expected_variant _ | `Typer_wrong_param_number _
+        | `Typer_expected_function _ | `Typer_expected_pair _
+        | `Typer_expected_list _ | `Typer_expected_set _
+        | `Typer_expected_map _ | `Typer_expected_big_map _
+        | `Typer_expected_option _ | `Typer_expected_nat _
+        | `Typer_expected_bytes _ | `Typer_expected_key _
+        | `Typer_expected_signature _ | `Typer_expected_contract _
+        | `Typer_expected_string _ | `Typer_expected_key_hash _
+        | `Typer_expected_mutez _ | `Typer_expected_op_list _
+        | `Typer_expected_int _ | `Typer_expected_bool _
+        | `Typer_declaration_order_record _| `Typer_declaration_order_variant _
+        | `Typer_not_matching _ | `Typer_uncomparable_types _ | `Typer_typeclass_error _ -> no_loc_children f exploc err
+        | _ -> error_ppformat ~display_format f err
+      )
+    | `Typer_record_access_tracer (_,err) -> error_ppformat ~display_format f err
     | `Typer_not_annotated ->
       Format.fprintf f "@[<hv>Not annotated@]"
     | `Typer_bad_substraction ->
@@ -432,24 +356,11 @@ let rec error_ppformat : display_format:string display_format ->
         "@[<hv>%a@ should be of type bool, nat or int,@ got %a@]"
       Location.pp t.location
       Ast_typed.PP.type_expression t
-    | `Typer_typeclass_error (exps,acts) ->
-      let open Simple_utils.PP_helpers in
-      let printl printer ppf args =
-        Format.fprintf ppf "(%a)" (list_sep printer (const " , ")) args in
-      Format.fprintf f
-        "@[<hv>Expected arguments with one of the following combinations of type:@ %a@,but got %a@]"
-        (list_sep (printl Ast_typed.PP.type_expression) (const " or ")) exps
-        (list_sep Ast_typed.PP.type_expression (const " , ")) acts
     | `Typer_converter t ->
       Format.fprintf f
         "@[<hv>%a@ Converters can only be used on records or variants,@ got %a@]"
       Location.pp t.location
       Ast_typed.PP.type_expression t
-    | `Typer_uncomparable_types (a,b) ->
-      Format.fprintf f
-        "@[<hv>Those two types are not comparable:@ - %a@ - %a@]"
-      Ast_typed.PP.type_expression a
-      Ast_typed.PP.type_expression b
     | `Typer_comparator_composed a ->
       Format.fprintf f
         "@[<hv>%a@ Only composed types of not more than two element are allowed to be compared@]"
@@ -470,9 +381,236 @@ let rec error_ppformat : display_format:string display_format ->
         "@[<hv>%a@ expected ascription but got %a@]"
         Location.pp t.location
         Ast_core.PP.expression t
+    | `Typer_different_kinds (a,b) ->
+      Format.fprintf f
+        "@[<hv> different kinds %a@ %a@]"
+        Ast_typed.PP.type_expression a
+        Ast_typed.PP.type_expression b
+    | `Typer_different_constants (a,b) ->
+      Format.fprintf f
+        "@[<hv> different type constructors.@ \
+        Expected these two constant type constructors to be the same, but they're different@ %a@ %a@]"
+        Ast_typed.PP.type_constant a
+        Ast_typed.PP.type_constant b
+    | `Typer_different_operators (a,b) ->
+      Format.fprintf f
+        "@[<hv> different type constructors.@ \
+        Expected these two n-ary type constructors to be the same, but they're different@ %a@ %a@]"
+        Ast_typed.PP.type_operator a
+        Ast_typed.PP.type_operator b
+    | `Typer_operator_number_of_arguments (opa, _opb, lena, lenb) ->
+      Format.fprintf f
+        "@[<hv> different number of arguments to type constructors.@ \
+        Expected these two n-ary type constructors to be the same, but they have different number\
+        of arguments (both use the %s type constructor, but they have %d and %d arguments, respectively)@]"
+        (Ast_typed.Helpers.type_operator_name opa) lena lenb
+    | `Typer_different_record_props (_a,_b,ra,rb,_ka,_kb) ->
+      let names = if Ast_typed.Helpers.is_tuple_lmap ra &&Ast_typed.Helpers.is_tuple_lmap rb
+        then "tuples" else "records" in
+      Format.fprintf f
+        "@[<hv> different keys in %s@]"
+        names
+    | `Typer_different_kind_record_tuple (_a,_b,ra,rb) ->
+      let name_a = if Ast_typed.Helpers.is_tuple_lmap ra then "tuple" else "record" in
+      let name_b = if Ast_typed.Helpers.is_tuple_lmap rb then "tuple" else "record" in
+      Format.fprintf f
+        "@[<hv> different keys.@ Expected these two types to be the same, but they're different (one is a %s\ 
+        and the other is a %s)@]"
+        name_a name_b
+    | `Typer_different_size_records_tuples (_a,_b,ra,rb) ->
+      let n = if Ast_typed.Helpers.is_tuple_lmap ra && Ast_typed.Helpers.is_tuple_lmap rb
+        then "tuples" else "records" in
+      Format.fprintf f 
+        "@[<hv> %s have different sizes.@ Expected these two types to be the same, but they're \
+        different (both are %s, but with a different number of arguments)@]"
+        n n
+    | `Typer_different_size_sums (_a,_b) ->
+      Format.fprintf f 
+        "@[<hv> sum types have different sizes.@ Expected these two types to be the same, but they're \
+        different"
+    | `Typer_different_types (name,_a,_b,err) ->
+      Format.fprintf f
+      "@[<hv> %s are different.\ 
+      Expected these two types to be the same, but they're different.@ %a@]"
+      name
+      (error_ppformat ~display_format) err
+    | `Typer_different_literals (name,_a,_b) ->
+      Format.fprintf f "@[<hv> %s are different@]" name
+    | `Typer_different_values (name,_a,_b) ->
+      Format.fprintf f "@[<hv> %s are different@]" name
+    | `Typer_different_literals_because_different_types (name,_a,_b) ->
+      Format.fprintf f "@[<hv> Literals have different types: %s@]" name
+    | `Typer_different_values_because_different_types (name,_a,_b) ->
+      Format.fprintf f "@[<hv> Values have different types: %s@]" name
+    | `Typer_uncomparable_literals (name,_a,_b) ->
+      Format.fprintf f "@[<hv> %s are not comparable @]" name
+    | `Typer_uncomparable_values (name,_a,_b) ->
+      Format.fprintf f "@[<hv> %s are not comparable @]" name
+    | `Typer_missing_key_in_record_value k ->
+      Format.fprintf f "@[<hv> missing %s in one of the record @]" k
+    | `Typer_compare_tracer err ->
+      error_ppformat ~display_format f err 
+    | 
+    ( `Typer_assert_equal _ | `Typer_expected_record _
+    | `Typer_expected_variant _ | `Typer_wrong_param_number _
+    | `Typer_expected_function _ | `Typer_expected_pair _
+    | `Typer_expected_list _ | `Typer_expected_set _
+    | `Typer_expected_map _ | `Typer_expected_big_map _
+    | `Typer_expected_option _ | `Typer_expected_nat _
+    | `Typer_expected_bytes _ | `Typer_expected_key _
+    | `Typer_expected_signature _ | `Typer_expected_contract _
+    | `Typer_expected_string _ | `Typer_expected_key_hash _
+    | `Typer_expected_mutez _ | `Typer_expected_op_list _
+    | `Typer_expected_int _ | `Typer_expected_bool _
+    | `Typer_declaration_order_record _| `Typer_declaration_order_variant _
+    | `Typer_not_matching _ | `Typer_uncomparable_types _ | `Typer_typeclass_error _) as err -> no_loc_children f (Location.Virtual "") err
   )
 
-let rec error_jsonformat : typer_error -> J.t = fun a ->
+and no_loc_children : Format.formatter -> Location.t -> typer_error -> unit = fun f exploc err ->
+  match err with
+  | `Typer_assert_equal (expected,actual) ->
+    Format.fprintf f
+      "@[<hv>%a@ Bad types:@ expected %a@ got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression expected 
+      Ast_typed.PP.type_expression actual
+  | `Typer_expected_record t ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a record but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression t
+  | `Typer_expected_variant t ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a variant but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression t
+  | `Typer_wrong_param_number (name,expected,actual) ->
+    Format.fprintf f
+      "@[<hv>%a@ Constant %s has the wrong number of parameters@ expected %d, got %d @]"
+      Location.pp exploc
+      name
+      expected (List.length actual)
+  | `Typer_expected_function e ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a function but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression e
+  | `Typer_expected_pair e ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a pair but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression e
+  | `Typer_expected_list e ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a list but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression e
+  | `Typer_expected_set e ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a set but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression e
+  | `Typer_expected_map e ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a map but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression e
+  | `Typer_expected_big_map e ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a big map but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression e
+  | `Typer_expected_option e ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected an option but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression e
+  | `Typer_expected_nat t ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a nat but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression t
+  | `Typer_expected_bytes t ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected bytes but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression t
+  | `Typer_expected_key t ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a key but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression t
+  | `Typer_expected_signature t ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a signature but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression t
+  | `Typer_expected_contract t ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a contract but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression t
+  | `Typer_expected_string t ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a string but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression t
+  | `Typer_expected_key_hash t ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a key hash but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression t
+  | `Typer_expected_mutez t ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a mutez but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression t
+  | `Typer_expected_op_list t ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a list of operations but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression t
+  | `Typer_expected_int t ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected an int of operations but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression t
+  | `Typer_expected_bool t ->
+    Format.fprintf f
+      "@[<hv>%a@ Expected a bool of operations but got %a@]"
+      Location.pp exploc
+      Ast_typed.PP.type_expression t
+  | `Typer_not_matching (t1,t2) ->
+    Format.fprintf f
+      "@[<hv>Types not matching:@ %a - %a@ %a - %a@]"
+      Location.pp t1.location Ast_typed.PP.type_expression t1
+      Location.pp t2.location Ast_typed.PP.type_expression t2
+  | `Typer_uncomparable_types (a,b) ->
+    Format.fprintf f
+      "@[<hv>%a@ Those two types are not comparable:@ - %a@ - %a@]"
+    Location.pp exploc
+    Ast_typed.PP.type_expression a
+    Ast_typed.PP.type_expression b
+  | `Typer_typeclass_error (exps,acts) ->
+    let open Simple_utils.PP_helpers in
+    let printl printer ppf args =
+      Format.fprintf ppf "(%a)" (list_sep printer (const " , ")) args in
+    Format.fprintf f
+      "@[<hv>%a@ Expected arguments with one of the following combinations of type:@ %a@,but got %a@]"
+      Location.pp exploc
+      (list_sep (printl Ast_typed.PP.type_expression) (const " or ")) exps
+      (list_sep Ast_typed.PP.type_expression (const " , ")) acts
+  | `Typer_declaration_order_record _loc ->
+    Format.fprintf f
+      "@[<hv>%a@ Can't retrieve type declaration order in the converted record, you need to annotate it@]"
+      Location.pp exploc
+  | `Typer_declaration_order_variant _loc ->
+    Format.fprintf f
+      "@[<hv>%a@ Can't retrieve type declaration order in the converted variant, you need to annotate it@]"
+      Location.pp exploc
+  | _ -> ()
+
+let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;
@@ -499,7 +637,7 @@ let rec error_jsonformat : typer_error -> J.t = fun a ->
   | `Typer_unbound_type_variable (env,tv,loc) ->
     let message = `String "unbound type variable" in
     let loc = Format.asprintf "%a" Location.pp loc in
-    let value = Format.asprintf "%a" Ast_core.PP.type_variable tv in
+    let value = Format.asprintf "%a" Ast_typed.PP.type_variable tv in
     let env = Format.asprintf "%a" Ast_typed.Environment.PP.environment env in
     let content = `Assoc [
       ("message", message);
@@ -511,23 +649,13 @@ let rec error_jsonformat : typer_error -> J.t = fun a ->
   | `Typer_unbound_variable (env,v,loc) ->
     let message = `String "unbound type variable" in
     let loc = Format.asprintf "%a" Location.pp loc in
-    let value = Format.asprintf "%a" Ast_core.PP.expression_variable v in
+    let value = Format.asprintf "%a" Ast_typed.PP.expression_variable v in
     let env = Format.asprintf "%a" Ast_typed.Environment.PP.environment env in
     let content = `Assoc [
       ("message", message);
       ("location", `String loc);
       ("value", `String value);
       ("env", `String env);
-    ] in
-    json_error ~stage ~content
-  | `Typer_match_empty_variant (m,loc) ->
-    let message = `String "Match with no case" in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in
-    let value = `String (Format.asprintf "%a" Ast_core.PP.matching_type m) in
-    let content = `Assoc [
-      ("message", message);
-      ("location", loc);
-      ("value", value);
     ] in
     json_error ~stage ~content
   | `Typer_match_missing_case (m,loc) ->
@@ -553,7 +681,7 @@ let rec error_jsonformat : typer_error -> J.t = fun a ->
   | `Typer_unbound_constructor (env,c,loc) ->
     let message = `String "unbound type variable" in
     let loc = Format.asprintf "%a" Location.pp loc in
-    let value = Format.asprintf "%a" Ast_core.PP.constructor c in
+    let value = Format.asprintf "%a" Ast_core.PP.label c in
     let env = Format.asprintf "%a" Ast_typed.Environment.PP.environment env in
     let content = `Assoc [
       ("message", message);
@@ -565,7 +693,7 @@ let rec error_jsonformat : typer_error -> J.t = fun a ->
   | `Typer_redundant_constructor (env,c,loc) ->
     let message = `String "redundant constructor" in
     let loc = Format.asprintf "%a" Location.pp loc in
-    let value = Format.asprintf "%a" Ast_core.PP.constructor c in
+    let value = Format.asprintf "%a" Ast_core.PP.label c in
     let env = Format.asprintf "%a" Ast_typed.Environment.PP.environment env in
     let content = `Assoc [
       ("message", message);
@@ -574,10 +702,22 @@ let rec error_jsonformat : typer_error -> J.t = fun a ->
       ("env", `String env);
     ] in
     json_error ~stage ~content
+  | `Typer_operator_wrong_number_of_arguments (op, e, a, loc) ->
+    let message = `String "Wrong number of arguments for type operator" in
+    let loc = Format.asprintf "%a" Location.pp loc in
+    let op  = Format.asprintf "%a" Ast_core.PP.type_operator op in
+    let content = `Assoc [
+      ("message", message);
+      ("location", `String loc);
+      ("operator", `String op);
+      ("expected", `Int e);
+      ("actuel", `Int a);
+    ] in
+    json_error ~stage ~content
   | `Typer_michelson_or_no_annotation (c,loc) ->
     let message = `String "michelson_or must be annotated with a sum type" in
     let loc = Format.asprintf "%a" Location.pp loc in
-    let value = Format.asprintf "%a" Ast_core.PP.constructor c in
+    let value = Format.asprintf "%a" Ast_core.PP.label c in
     let content = `Assoc [
       ("message", message);
       ("location", `String loc);
@@ -608,13 +748,15 @@ let rec error_jsonformat : typer_error -> J.t = fun a ->
     json_error ~stage ~content
   | `Typer_constant_declaration_tracer (name,ae,Some t,err) ->
     let message = `String "Typing constant declaration" in
-    let loc = `String (Format.asprintf "%a" Location.pp ae.location) in
+    let value = `String (Format.asprintf "%a" Ast_core.PP.expression ae) in
+    let loc = `String (Format.asprintf "%a" Location.pp name.location) in
     let name = `String (Format.asprintf "%a" Ast_core.PP.expression_variable name) in
     let expected = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t) in
     let content = `Assoc [
       ("message", message);
       ("location", loc);
       ("name", name);
+      ("value", value);
       ("expected", expected);
       ("children", error_jsonformat err);
     ] in
@@ -1149,5 +1291,191 @@ let rec error_jsonformat : typer_error -> J.t = fun a ->
       ("message", message) ;
       ("location", location) ;
       ("value", value) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_different_kinds (a,b) ->
+    let message = `String "different kinds" in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.type_expression a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.type_expression b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_different_constants (a,b) ->
+    let message = `String "different type constructors.\
+      Expected these two constant type constructors to be the same, but they're different" in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.type_constant a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.type_constant b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_different_operators (a,b) ->
+    let message = `String "different type constructors.\
+      Expected these two n-ary type constructors to be the same, but they're different" in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.type_operator a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.type_operator b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_operator_number_of_arguments (opa, opb, lena, lenb) ->
+    let message = `String "different number of arguments to type constructors.\ 
+      Expected these two n-ary type constructors to be the same, but they have different number\ 
+      of arguments" in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.type_operator opa) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.type_operator opb) in
+    let op = `String (Ast_typed.Helpers.type_operator_name opa) in
+    let len_a = `Int lena in
+    let len_b = `Int lenb in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+      ("op", op) ;
+      ("len_a", len_a) ;
+      ("len_b", len_b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_different_record_props (a,b,ra,rb,ka,kb) ->
+    let names = if Ast_typed.Helpers.is_tuple_lmap ra &&Ast_typed.Helpers.is_tuple_lmap rb
+      then "tuples" else "records" in
+    let message = `String ("different keys in " ^ names) in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.type_expression a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.type_expression b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+      ("ka", `String ka) ;
+      ("kb", `String kb) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_different_kind_record_tuple (a,b,ra,rb) ->
+    let name_a = if Ast_typed.Helpers.is_tuple_lmap ra then "tuple" else "record" in
+    let name_b = if Ast_typed.Helpers.is_tuple_lmap rb then "tuple" else "record" in
+    let message = `String ("different keys. Expected these two types to be the same, but they're different (one is a "
+      ^ name_a ^ " and the other is a " ^ name_b ^ ")") in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.type_expression a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.type_expression b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_different_size_records_tuples (a,b,ra,rb) ->
+    let n = if Ast_typed.Helpers.is_tuple_lmap ra && Ast_typed.Helpers.is_tuple_lmap rb
+       then "tuples" else "records" in
+    let message = `String (n^ " have different sizes. Expected these two types to be the same, but they're \
+      different (both are " ^ n ^ ", but with a different number of arguments)") in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.type_expression a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.type_expression b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_different_size_sums (a,b) ->
+    let message = `String (" sum types have different sizes. Expected these two types to be the same, but they're \
+      different") in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.type_expression a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.type_expression b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_different_types (name,a,b,err) ->
+    let message = `String (name ^" are different.\ 
+      Expected these two types to be the same, but they're different") in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.type_expression a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.type_expression b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+      ("children", error_jsonformat err)
+    ] in
+    json_error ~stage ~content
+  | `Typer_different_literals (name,a,b) ->
+    let message = `String (name ^ " are different") in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.literal a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.literal b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_different_values (name,a,b) ->
+    let message = `String (name ^ " are different") in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.expression a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.expression b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_different_literals_because_different_types (name,a,b) ->
+    let message = `String ("literals have different types: " ^ name) in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.literal a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.literal b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_different_values_because_different_types (name,a,b) ->
+    let message = `String ("values have different types: " ^ name) in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.expression a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.expression b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_uncomparable_literals (name,a,b) ->
+    let message = `String (name ^ " are not comparable") in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.literal a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.literal b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_uncomparable_values (name,a,b) ->
+    let message = `String (name ^ " are not comparable") in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.expression a) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.expression b) in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_missing_key_in_record_value k ->
+    let message = `String "missing keys in one of the records" in
+    let content = `Assoc [
+      ("message", message) ;
+      ("missing_key", `String k) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_compare_tracer err ->
+    let content = `Assoc [
+      ("message", `String "not equal") ;
+      ("children", error_jsonformat err)
     ] in
     json_error ~stage ~content

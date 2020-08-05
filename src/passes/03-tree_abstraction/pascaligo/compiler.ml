@@ -1,5 +1,6 @@
 open Errors
 open Trace
+open Function
 
 module CST = Cst.Pascaligo
 module AST = Ast_imperative
@@ -10,15 +11,13 @@ let nseq_to_list (hd, tl) = hd :: tl
 let npseq_to_list (hd, tl) = hd :: (List.map snd tl)
 let npseq_to_ne_list (hd, tl) = (hd, List.map snd tl)
 
-let (<@) f g x = f (g x)
-
 open Predefined.Tree_abstraction.Pascaligo
 
 let r_split = Location.r_split
 
-let return = ok
 
 let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
+  let return te = ok @@ te in
   match te with
     TSum sum ->
     let (nsepseq, loc) = r_split sum in
@@ -108,6 +107,9 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
       Some const -> return @@ t_constant ~loc const
     | None -> return @@ t_variable_ez ~loc name
     )
+  | TWild reg ->
+    let loc = Location.lift reg in
+    return @@ make_t ~loc @@ T_wildcard
   | TString _s -> fail @@ unsupported_string_singleton te
 
 let compile_selection (selection : CST.selection) =
@@ -282,32 +284,32 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
       match param with
         ParamConst p ->
         let (p, _) = r_split p in
-        let (var, _loc) = r_split p.var in
+        let (var, loc) = r_split p.var in
         let%bind p_type = bind_map_option (compile_type_expression <@ snd) p.param_type in
-        return (var, p_type)
+        return (Location.wrap ?loc:(Some loc) @@ Var.of_name var, p_type)
       | ParamVar p ->
         let (p, _) = r_split p in
-        let (var, _loc) = r_split p.var in
+        let (var, loc) = r_split p.var in
         let%bind p_type = bind_map_option (compile_type_expression <@ snd) p.param_type in
-        return (var, p_type)
+        return (Location.wrap ?loc:(Some loc) @@ Var.of_name var, p_type)
     in
     let (func, loc) = r_split func in
     let (param, loc_par)  = r_split func.param in
-    let%bind param  = bind_map_list compile_param @@ npseq_to_list param.inside in
+    let%bind param = bind_map_list compile_param @@ npseq_to_list param.inside in
     let (param, param_type) = List.split param in
     let%bind ret_type = bind_map_option (compile_type_expression <@ snd )func.ret_type in
     let%bind body = compile_expression func.return in
     let (lambda, fun_type) = match param_type with
       ty::[] ->
-      e_lambda ~loc (Var.of_name @@ List.hd param) ty ret_type body,
+      e_lambda ~loc (List.hd param) ty ret_type body,
       Option.map (fun (a,b) -> t_function a b)@@ Option.bind_pair (ty,ret_type)
     (* Cannot be empty *)
     | lst ->
       let lst = Option.bind_list lst in
       let input_type = Option.map t_tuple lst in
-      let binder = Var.fresh ~name:"parameter" () in
+      let binder = Location.wrap ?loc:(Some loc_par) @@ Var.fresh ~name:"parameter" () in
       e_lambda ~loc binder input_type (ret_type) @@
-        e_matching_tuple_ez ~loc:loc_par (e_variable binder) param lst body,
+        e_matching_tuple ~loc:loc_par (e_variable binder) param lst body,
       Option.map (fun (a,b) -> t_function a b)@@ Option.bind_pair (input_type,ret_type)
     in
     return @@ Option.unopt ~default:lambda @@
@@ -418,9 +420,15 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     let (language, _) = r_split language in
     let%bind code = compile_expression ci.code in
     return @@ e_raw_code ~loc language code
+  | EBlock be ->
+    let be, _ = r_split be in
+    let%bind next = compile_expression be.expr in
+    compile_block ~next be.block
+
 
 and compile_matching_expr : type a.(a -> _ result) -> a CST.case_clause CST.reg List.Ne.t -> _ =
 fun compiler cases ->
+  let return = ok in
   let compile_pattern pattern = return pattern in
   let compile_simple_pattern (pattern : CST.pattern) =
     match pattern with
@@ -438,7 +446,11 @@ fun compiler cases ->
         tl::[] -> return (fst cons,tl)
       | _ -> fail @@ unsupported_deep_list_patterns @@ fst cons
       in
+      let hd_loc = Location.lift @@ Raw.pattern_to_region hd in
+      let tl_loc = Location.lift @@ Raw.pattern_to_region hd in
       let%bind (hd,tl) = bind_map_pair compile_simple_pattern (hd,tl) in
+      let hd = Location.wrap ?loc:(Some hd_loc) hd in
+      let tl = Location.wrap ?loc:(Some tl_loc) tl in
       let match_cons = (hd,tl,econs) in
         return (match_nil,match_cons)
     | _ -> fail @@ unsupported_deep_list_patterns @@ fst @@ List.hd cases
@@ -455,22 +467,25 @@ fun compiler cases ->
       ( match c with
         PUnit _ ->
          fail @@ unsupported_pattern_type constr
-      | PFalse _ -> return (Constructor "false", Var.of_name "_")
-      | PTrue  _ -> return (Constructor "true", Var.of_name "_")
-      | PNone  _ -> return (Constructor "None", Var.of_name "_")
+      | PFalse _ -> return (Label "false", Location.wrap @@ Var.of_name "_")
+      | PTrue  _ -> return (Label "true", Location.wrap @@ Var.of_name "_")
+      | PNone  _ -> return (Label "None", Location.wrap @@ Var.of_name "_")
       | PSomeApp some ->
         let (some,_) = r_split some in
         let (_, pattern) = some in
-        let (pattern,_) = r_split pattern in
+        let (pattern,loc) = r_split pattern in
         let%bind pattern = compile_simple_pattern pattern.inside in
-        return (Constructor "Some", pattern)
+        return (Label "Some", Location.wrap ~loc pattern)
       | PConstrApp constr ->
         let (constr, _) = r_split constr in
         let (constr, patterns) = constr in
         let (constr, _) = r_split constr in
+        let pattern_loc = match patterns with
+          | Some (v:CST.tuple_pattern) -> Location.lift v.region
+          | None -> Location.generated in
         let%bind pattern = bind_map_option compile_simple_tuple_pattern patterns in
-        let pattern = Option.unopt ~default:(Var.of_name "_") pattern in
-        return (Constructor constr, pattern)
+        let pattern = Location.wrap ?loc:(Some pattern_loc) @@ Option.unopt ~default:(Var.of_name "_") pattern in
+        return (Label constr, pattern)
     )
     | _ -> fail @@ unsupported_pattern_type constr
   in
@@ -483,8 +498,8 @@ fun compiler cases ->
   let%bind cases = bind_map_ne_list aux cases in
   match cases with
   | (PVar var, expr), [] ->
-    let (var, _) = r_split var in
-    let var = Var.of_name var in
+    let (var, loc) = r_split var in
+    let var = Location.wrap ?loc:(Some loc) @@ Var.of_name var in
     return @@ AST.Match_variable (var, None, expr)
   | (PTuple tuple, _expr), [] ->
     fail @@ unsupported_tuple_pattern @@ CST.PTuple tuple
@@ -497,21 +512,24 @@ fun compiler cases ->
     return @@ AST.Match_variant (List.combine constrs lst)
   | (p, _), _ -> fail @@ unsupported_pattern_type p
 
-let compile_attribute_declaration = function
-  None   -> return false
-| Some _ -> return true
+and compile_attribute_declaration = function
+  None   -> false
+| Some _ -> true
 
-let compile_parameters (params : CST.parameters) =
+and compile_parameters (params : CST.parameters) =
   let compile_param_decl (param : CST.param_decl) =
+    let return = ok in
     match param with
       ParamConst pc ->
       let (pc, _loc) = r_split pc in
-      let (var, _) = r_split pc.var in
+      let (var, loc) = r_split pc.var in
+      let var = Location.wrap ?loc:(Some loc) @@ Var.of_name var in
       let%bind param_type = bind_map_option (compile_type_expression <@ snd) pc.param_type in
       return (var, param_type)
     | ParamVar pv ->
       let (pv, _loc) = r_split pv in
-      let (var, _) = r_split pv.var in
+      let (var, loc) = r_split pv.var in
+      let var = Location.wrap ?loc:(Some loc) @@ Var.of_name var in
       let%bind param_type = bind_map_option (compile_type_expression <@ snd) pv.param_type in
       return (var, param_type)
   in
@@ -519,10 +537,10 @@ let compile_parameters (params : CST.parameters) =
   let params = npseq_to_list params.inside in
   bind_map_list compile_param_decl params
 
-let rec compile_instruction : ?next: AST.expression -> CST.instruction -> _ result  = fun ?next instruction ->
-  let return expr = match next with
-    Some e -> return @@ e_sequence expr e
-  | None -> return expr
+and compile_instruction : ?next: AST.expression -> CST.instruction -> _ result  = fun ?next instruction ->
+  let return expr = match next with 
+    Some e -> ok @@ e_sequence expr e
+  | None -> ok @@ expr 
   in
   let compile_tuple_expression (tuple_expr : CST.tuple_expr) =
     let (lst, loc) = r_split tuple_expr in
@@ -534,7 +552,7 @@ let rec compile_instruction : ?next: AST.expression -> CST.instruction -> _ resu
   let compile_if_clause : ?next:AST.expression -> CST.if_clause -> _ = fun ?next if_clause ->
     match if_clause with
       ClauseInstr i -> compile_instruction ?next i
-    | ClauseBlock (LongBlock block) -> compile_block ?next block
+    | ClauseBlock (LongBlock  block) -> compile_block ?next block
     | ClauseBlock (ShortBlock block) ->
       (* This looks like it should be the job of the parser *)
       let CST.{lbrace; inside; rbrace} = block.value in
@@ -570,7 +588,6 @@ let rec compile_instruction : ?next: AST.expression -> CST.instruction -> _ resu
       let%bind (_, var, path) = compile_path mlu.path in
       let%bind index = compile_expression @@ mlu.index.value.inside in
       ok @@ (var, path @ [Access_map index])
-
   in
   match instruction with
     Cond c ->
@@ -596,27 +613,32 @@ let rec compile_instruction : ?next: AST.expression -> CST.instruction -> _ resu
     return @@ e_while ~loc cond body
   | Loop (For (ForInt fl)) ->
     let (fl, loc) = r_split fl in
-    let (binder, _) = r_split fl.binder in
+    let (binder, binder_loc) = r_split fl.binder in
     let%bind start = compile_expression fl.init in
     let%bind bound = compile_expression fl.bound in
     let%bind increment = Option.unopt ~default:(ok @@ e_int_z Z.one) @@
       Option.map (compile_expression <@ snd) fl.step
     in
     let%bind body  = compile_block fl.block in
-    return @@ e_for_ez ~loc binder start bound increment body
+    return @@ e_for ~loc (Location.wrap ?loc:(Some binder_loc) @@ Var.of_name binder) start bound increment body
   | Loop (For (ForCollect el)) ->
     let (el, loc) = r_split el in
     let binder =
-      let (key, _) = r_split el.var in
-      let value = Option.map (fun x -> fst (r_split (snd x))) el.bind_to in
-      (key,value)
+      let (key, loc) = r_split el.var in
+      let key' = Location.wrap ?loc:(Some loc) @@ Var.of_name key in
+      let value = Option.map
+        (fun x -> 
+          let (v,loc) = r_split (snd x) in
+          Location.wrap ?loc:(Some loc) @@ Var.of_name v)
+        el.bind_to in
+      (key',value)
     in
     let%bind collection = compile_expression el.expr in
     let (collection_type, _) = match el.collection with
       Map loc -> (Map, loc) | Set loc -> (Set, loc) | List loc -> (List, loc)
     in
     let%bind body = compile_block el.block in
-    return @@ e_for_each_ez ~loc binder collection collection_type body
+    return @@ e_for_each ~loc binder collection collection_type body
   | ProcCall {value=(EVar var,args);region} ->
     let loc = Location.lift region in
     let (var, loc_var) = r_split var in
@@ -691,27 +713,30 @@ let rec compile_instruction : ?next: AST.expression -> CST.instruction -> _ resu
 
 and compile_data_declaration : next:AST.expression -> ?attr:CST.attr_decl -> CST.data_decl -> _ = fun ~next ?attr data_decl ->
   let return loc name type_ init =
-    let%bind attr = compile_attribute_declaration attr in
-    ok @@ e_let_in_ez ~loc name type_ attr init next in
+    let attr = compile_attribute_declaration attr in
+    ok @@ e_let_in ~loc (name,type_) attr init next in
   match data_decl with
     LocalConst const_decl ->
     let (cd, loc) = r_split const_decl in
-    let (name, _) = r_split cd.name in
+    let (name, ploc) = r_split cd.name in
     let%bind type_ = bind_map_option (compile_type_expression <@ snd)cd.const_type in
     let%bind init = compile_expression cd.init in
-    return loc name type_ init
+    let p = Location.wrap ?loc:(Some ploc) @@ Var.of_name name in
+    return loc p type_ init
   | LocalVar var_decl ->
     let (vd, loc) = r_split var_decl in
-    let (name, _) = r_split vd.name in
+    let (name, ploc) = r_split vd.name in
     let%bind type_ = bind_map_option (compile_type_expression <@ snd) vd.var_type in
     let%bind init = compile_expression vd.init in
-    return loc name type_ init
+    let p = Location.wrap ?loc:(Some ploc) @@ Var.of_name name in
+    return loc p type_ init
   | LocalFun fun_decl ->
     let (fun_decl,loc) = r_split fun_decl in
     let%bind (fun_name,fun_type,_attr,lambda) = compile_fun_decl fun_decl in
     return loc fun_name fun_type lambda
 
 and compile_statement : ?next:AST.expression -> CST.attr_decl option -> CST.statement -> _ result = fun ?next attr statement ->
+  let return = ok in
   match statement with
     Instr i ->
       let%bind i = compile_instruction ?next i in
@@ -723,65 +748,65 @@ and compile_statement : ?next:AST.expression -> CST.attr_decl option -> CST.stat
   | Attr at -> return (next, Some at)
 
 and compile_block : ?next:AST.expression -> CST.block CST.reg -> _ result = fun ?next block ->
+  let return = ok in
   let (block', _loc) = r_split block in
   let statements = npseq_to_list block'.statements in
   let aux (next,attr) statement =
-    let%bind (statement, attr) = compile_statement ?next attr statement in
-    return (statement,attr)
+    let%bind (statement, attr) = compile_statement ?next attr statement
+    in return (statement,attr)
   in
   let%bind (block', _) = bind_fold_right_list aux (next,None) statements in
   match block' with
     Some block -> return block
   | None -> fail @@ block_start_with_attribute block
 
-and compile_fun_decl ({kwd_recursive; fun_name; param; ret_type; block_with; return=r; attributes}: CST.fun_decl) =
-  let%bind attr = compile_attribute_declaration attributes in
+and compile_fun_decl ({kwd_recursive; fun_name; param; ret_type; return=r; attributes}: CST.fun_decl) =
+  let return = ok in
+  let attr = compile_attribute_declaration attributes in
   let (fun_name, loc) = r_split fun_name in
+  let fun_binder = Location.wrap ?loc:(Some loc) @@ Var.of_name fun_name in
   let%bind ret_type = bind_map_option (compile_type_expression <@ snd) ret_type in
   let%bind param = compile_parameters param in
-  let%bind r     = compile_expression r in
+  let%bind result    = compile_expression r in
   let (param, param_type) = List.split param in
-  let%bind body = Option.unopt ~default:(return r) @@
-    Option.map (compile_block ~next:r <@ fst) block_with
-  in
   (* This handle the parameter case *)
   let (lambda,fun_type) = (match param_type with
     ty::[] ->
     let lambda : AST.lambda = {
-      binder = (Var.of_name @@ List.hd param);
+      binder = List.hd param;
       input_type  = ty ;
       output_type = ret_type ;
-      result = body;
+      result;
     } in
     lambda,Option.map (fun (a,b) -> t_function a b)@@ Option.bind_pair (ty,ret_type)
   | lst ->
     let lst = Option.bind_list lst in
     let input_type = Option.map t_tuple lst in
-    let binder = Var.fresh ~name:"parameter" () in
+    let binder = Location.wrap @@ Var.fresh ~name:"parameters" () in
     let lambda : AST.lambda = {
       binder;
       input_type = input_type;
       output_type = ret_type;
-      result = e_matching_tuple_ez (e_variable binder) param lst body;
+      result = e_matching_tuple (e_variable binder) param lst result;
     } in
-    lambda,Option.map (fun (a,b) -> t_function a b)@@ Option.bind_pair (input_type,ret_type)
+    lambda,Option.map (fun (a,b) -> t_function a b) @@ Option.bind_pair (input_type,ret_type)
   )
   in
   (* This handle the recursion *)
   let%bind func = match kwd_recursive with
     Some reg ->
       let%bind fun_type = trace_option (untyped_recursive_fun loc) @@ fun_type in
-      return @@ e_recursive_ez ~loc:(Location.lift reg) fun_name fun_type lambda
+      return @@ e_recursive ~loc:(Location.lift reg) fun_binder fun_type lambda
   | None   ->
       return @@ make_e ~loc @@ E_lambda lambda
   in
-  return (fun_name,fun_type, attr, func)
+  return (fun_binder,fun_type, attr, func)
 
 (* Currently attributes are badly proccess, some adaptation are made to accomodate this
   maked as ATR *)
 let compile_declaration : (CST.attr_decl option * _) -> CST.declaration -> _ = fun (attr, lst) decl ->
   let return ?attr reg decl =
-    return (attr, (Location.wrap ~loc:(Location.lift reg) decl)::lst) in (*ATR*)
+    ok @@ (attr, (Location.wrap ~loc:(Location.lift reg) decl)::lst) in (*ATR*)
   match decl with
     TypeDecl {value={name; type_expr; _};region} ->
     (* Todo : if attr isn't none, send warning *)
@@ -789,16 +814,17 @@ let compile_declaration : (CST.attr_decl option * _) -> CST.declaration -> _ = f
     let%bind type_expr = compile_type_expression type_expr in
     return region @@ AST.Declaration_type (Var.of_name name, type_expr)
   | ConstDecl {value={name; const_type; init; attributes=_};region} ->
-    let (name, _) = r_split name in
+    let (name, loc) = r_split name in
+    let name = Location.wrap ?loc:(Some loc) @@ Var.of_name name in
     let attributes = attr in (*ATR*)
     let%bind const_type = bind_map_option (compile_type_expression <@ snd) const_type in
     let%bind init = compile_expression init in
-    let%bind attr = compile_attribute_declaration attributes in
-    return region @@ AST.Declaration_constant (Var.of_name name, const_type,attr,init)
+    let      attr = compile_attribute_declaration attributes in
+    return region @@ AST.Declaration_constant (name, const_type,attr,init)
   | FunDecl {value;region} ->
     let value = {value with attributes = attr} in (*ATR*)
     let%bind (fun_name,fun_type,attr,lambda) = compile_fun_decl value in
-    return region @@ AST.Declaration_constant (Var.of_name fun_name, fun_type, attr, lambda)
+    return region @@ AST.Declaration_constant (fun_name, fun_type, attr, lambda)
   | AttrDecl decl -> ok (Some decl, lst) (*ATR*)
 
 (* This should be change to the commented function when attributes are fixed
@@ -807,6 +833,7 @@ let compile_program : CST.ast -> _ result = fun t ->
  *)
 let compile_program : CST.ast -> _ result =
   fun t ->
+  let return = ok in
   let declarations = List.rev @@ nseq_to_list t.decl in
   let attr = (None, []) in
   let%bind (_, declarations) = bind_fold_list compile_declaration attr declarations in

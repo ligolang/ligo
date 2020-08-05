@@ -1,9 +1,8 @@
-open Trace
 open Simple_utils.Display
 
 type spilling_error = [
   | `Spilling_corner_case of string * string
-  | `Spilling_no_type_variable of Stage_common.Types.type_variable
+  | `Spilling_no_type_variable of Ast_typed.type_variable
   | `Spilling_unsupported_pattern_matching of Location.t
   | `Spilling_unsupported_iterator of Location.t
   | `Spilling_unsupported_recursive_function of Ast_typed.expression_variable
@@ -77,7 +76,7 @@ let rec error_ppformat : display_format:string display_format ->
       Format.pp_print_string f s
   )
 
-let rec error_jsonformat : spilling_error -> J.t = fun a ->
+let rec error_jsonformat : spilling_error -> Yojson.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;

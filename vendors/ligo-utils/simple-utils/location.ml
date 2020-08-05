@@ -17,6 +17,18 @@ let pp = fun ppf t ->
   | Virtual _s -> Format.fprintf ppf ""
   | File f -> Format.fprintf ppf "%s" (f#to_string `Point)
 
+let pp_json = fun t ->
+  match t with
+  | Virtual s -> `Assoc ["virtual" , `String s]
+  | File f ->
+    `Assoc [
+      ("file", `String f#file) ;
+      ("from_row", `Int f#start#line) ;
+      ("from_col", `Int (f#start#column `Point)) ;
+      ("to_row", `Int f#stop#line) ;
+      ("to_col", `Int (f#stop#column `Point)) ;
+    ]
+
 let compare a b = match a,b with
   | (File a, File b) -> Region.compare a b
   | (File _, Virtual _) -> -1
@@ -45,6 +57,12 @@ let compare_wrap ~compare:compare_content { wrap_content = wca ; location = la }
   match compare_content wca wcb with
   | 0 -> compare la lb
   | c -> c
+
+let compare_content ~compare:compare_content wa wb =
+  compare_content wa.wrap_content wb.wrap_content
+
+let equal_content ~equal:equal_content wa wb =
+  equal_content wa.wrap_content wb.wrap_content
 
 let wrap ?(loc = generated) wrap_content = { wrap_content ; location = loc }
 let get_location x = x.location

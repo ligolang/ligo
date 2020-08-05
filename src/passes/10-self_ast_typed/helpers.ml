@@ -256,12 +256,12 @@ type contract_type = {
 let fetch_contract_type : string -> program -> (contract_type, self_ast_typed_error) result = fun main_fname program ->
   let aux declt = match Location.unwrap declt with
     | Declaration_constant ({ binder ; expr=_ ; inline=_ } as p) ->
-       if String.equal (Var.to_name binder) main_fname
+       if Var.equal binder.wrap_content (Var.of_name main_fname)
        then Some p
        else None
     | Declaration_type _ -> None
   in
-  let main_decl_opt = List.find_map aux @@ List.rev  program in
+  let main_decl_opt = List.find_map aux @@ List.rev program in
   let%bind main_decl =
     trace_option (corner_case ("Entrypoint '"^main_fname^"' does not exist")) @@
       main_decl_opt

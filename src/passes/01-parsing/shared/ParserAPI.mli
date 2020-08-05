@@ -1,6 +1,13 @@
 (* Generic parser API for LIGO *)
 
-module Region = Simple_utils.Region
+(* Dependencies *)
+
+module Region   = Simple_utils.Region
+module EvalOpt  = Lexer_shared.EvalOpt
+module Lexer    = Lexer_shared.Lexer
+module LexerLib = Lexer_shared.LexerLib
+
+(* Input/Output *)
 
 type options = <
   offsets : bool;

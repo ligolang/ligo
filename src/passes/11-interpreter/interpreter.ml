@@ -268,7 +268,6 @@ and eval_literal : Ast_typed.literal -> (value , _) result = function
   | Literal_key_hash s  -> ok @@ V_Ct (C_key_hash s)
   | Literal_chain_id s  -> ok @@ V_Ct (C_key_hash s)
   | Literal_operation o -> ok @@ V_Ct (C_operation o)
-  | Literal_void -> failwith "iguess ?"
 
 and eval : Ast_typed.expression -> env -> (value , _) result
   = fun term env ->
@@ -328,9 +327,9 @@ and eval : Ast_typed.expression -> env -> (value , _) result
         arguments in
       apply_operator cons_name operands'
     )
-    | E_constructor { constructor = Constructor c ; element } when (String.equal c "true" || String.equal c "false")
+    | E_constructor { constructor = Label c ; element } when (String.equal c "true" || String.equal c "false")
      && element.expression_content = Ast_typed.e_unit () -> ok @@ V_Ct (C_bool (bool_of_string c))
-    | E_constructor { constructor = Constructor c ; element } ->
+    | E_constructor { constructor = Label c ; element } ->
       let%bind v' = eval element env in
       ok @@ V_Construct (c,v')
     | E_matching { matchee ; cases} -> (
@@ -342,14 +341,19 @@ and eval : Ast_typed.expression -> env -> (value , _) result
         let {hd;tl;body;tv=_} = cases.match_cons in
         let env' = Env.extend (Env.extend env (hd,head)) (tl, V_List tail) in
         eval body env'
-      | Match_variant {cases=[{constructor=Constructor t;body=match_true};{constructor=Constructor f; body=match_false}];_}, V_Ct (C_bool b)
-        when String.equal t "true" && String.equal f "false" ->
+      | Match_variant {cases;_}, V_Ct (C_bool b) ->
+        let ctor_body (case : matching_content_case) = (case.constructor, case.body) in
+        let cases = LMap.of_list (List.map ctor_body cases) in
+        let get_case c =
+            (LMap.find (Label c) cases) in
+        let match_true  = get_case "true" in
+        let match_false = get_case "false" in
         if b then eval match_true env
         else eval match_false env
       | Match_variant {cases ; tv=_} , V_Construct (matched_c , proj) ->
         let {constructor=_ ; pattern ; body} =
           List.find
-            (fun {constructor = (Constructor c) ; pattern=_ ; body=_} ->
+            (fun {constructor = (Label c) ; pattern=_ ; body=_} ->
               String.equal matched_c c)
             cases in
         let env' = Env.extend env (pattern, proj) in
@@ -380,7 +384,7 @@ let eval : Ast_typed.program -> (string , _) result =
            ok (V_Failure s)
               (*TODO This TRY-CATCH is here until we properly implement effects*)
        in
-    let pp' = pp^"\n val "^(Var.to_name binder)^" = "^(Ligo_interpreter.PP.pp_value v) in
+    let pp' = pp^"\n val "^(Var.to_name binder.wrap_content)^" = "^(Ligo_interpreter.PP.pp_value v) in
     let top_env' = Env.extend top_env (binder, v) in
     ok @@ (pp',top_env')
     | Ast_typed.Declaration_type _ ->

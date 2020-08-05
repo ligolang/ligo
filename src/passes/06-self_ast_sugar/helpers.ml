@@ -2,18 +2,11 @@ open Ast_sugar
 open Trace
 open Stage_common.Helpers
 
-let bind_map_cmap f map = bind_cmap (
-  CMap.map 
-    (fun ({ctor_type;_} as ctor) -> 
-      let%bind ctor' = f ctor_type in
-      ok {ctor with ctor_type = ctor'}) 
-    map)
-
 let bind_map_lmap_t f map = bind_lmap (
   LMap.map 
-    (fun ({field_type;_} as field) -> 
-      let%bind field' = f field_type in
-      ok {field with field_type = field'}) 
+    (fun ({associated_type;_} as field) -> 
+      let%bind field' = f associated_type in
+      ok {field with associated_type = field'}) 
     map)
 
 type ('a , 'err) folder = 'a -> expression -> ('a , 'err) result
@@ -50,7 +43,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a, 'err) re
       let%bind res = fold_expression self init'' expr in
       ok res
     in
-    let%bind res = bind_fold_lmap aux (ok init') m in
+    let%bind res = bind_fold_lmap aux init' m in
     ok res
   )
   | E_update {record;path;update} -> (
@@ -239,7 +232,7 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_express
   let return type_content = ok { type_content; location=te.location } in
   match te'.type_content with
   | T_sum temap ->
-    let%bind temap' = bind_map_cmap self temap in
+    let%bind temap' = bind_map_lmap_t self temap in
     return @@ (T_sum temap')
   | T_record temap ->
     let%bind temap' = bind_map_lmap_t self temap in
@@ -252,7 +245,7 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_express
     let%bind type2' = self type2 in
     return @@ (T_arrow {type1=type1' ; type2=type2'})
   | T_operator _
-  | T_variable _ | T_constant _ -> ok te'
+  | T_variable _ | T_wildcard | T_constant _ -> ok te'
 
 and map_cases : 'err exp_mapper -> matching_expr -> (matching_expr, 'err) result = fun f m ->
   match m with

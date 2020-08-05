@@ -48,7 +48,7 @@ module Substitution = struct
       let () = ignore @@ substs in
       ok b
 
-    and s_constructor : (T.constructor',_) w = fun ~substs c ->
+    and s_constructor : (T.label,_) w = fun ~substs c ->
       let () = ignore @@ substs in
       ok c
 
@@ -59,24 +59,26 @@ module Substitution = struct
 
     and s_type_content : (T.type_content,_) w = fun ~substs -> function
         | T.T_sum s ->
-           let aux T.{ ctor_type; michelson_annotation ; ctor_decl_pos } =
-             let%bind ctor_type = s_type_expression ~substs ctor_type in
-             ok @@ T.{ ctor_type; michelson_annotation; ctor_decl_pos } in
-           let%bind s = Ast_typed.Helpers.bind_map_cmap aux s in
+           let aux T.{ associated_type; michelson_annotation ; decl_pos } =
+             let%bind associated_type = s_type_expression ~substs associated_type in
+             ok @@ T.{ associated_type; michelson_annotation; decl_pos } in
+           let%bind s = Ast_typed.Helpers.bind_map_lmap aux s in
            ok @@ T.T_sum s
         | T.T_record _ -> failwith "TODO: T_record"
         | T.T_constant type_name ->
           let%bind type_name = s_type_name_constant ~substs type_name in
           ok @@ T.T_constant (type_name)
         | T.T_variable variable ->
-           begin
-             match substs ~variable with
-             | Some expr -> s_type_content ~substs expr (* TODO: is it the right thing to recursively examine this? We mustn't go into an infinite loop. *)
-             | None -> ok @@ T.T_variable variable
-           end
-        | T.T_operator type_name_and_args ->
-          let%bind type_name_and_args = T.Helpers.bind_map_type_operator (s_type_expression ~substs) type_name_and_args in
-          ok @@ T.T_operator type_name_and_args
+          begin
+            match substs ~variable with
+            | Some expr -> s_type_content ~substs expr (* TODO: is it the right thing to recursively examine this? We mustn't go into an infinite loop. *)
+            | None -> ok @@ T.T_variable variable
+          end
+        | T.T_wildcard ->
+          ok @@ T.T_wildcard
+        | T.T_operator {operator;args} ->
+          let%bind args = bind_map_list (s_type_expression ~substs) args in
+          ok @@ T.T_operator {operator;args}
         | T.T_arrow { type1; type2 } ->
            let%bind type1 = s_type_expression ~substs type1 in
            let%bind type2 = s_type_expression ~substs type2 in
@@ -87,18 +89,19 @@ module Substitution = struct
       | Ast_core.T_record _ -> failwith "TODO: subst: unimplemented case s_type_expression record"
       | Ast_core.T_arrow _ -> failwith "TODO: subst: unimplemented case s_type_expression arrow"
       | Ast_core.T_variable _ -> failwith "TODO: subst: unimplemented case s_type_expression variable"
-      | Ast_core.T_operator (op,lst) ->
-         let%bind lst = bind_map_list
+      | Ast_core.T_wildcard -> failwith "TODO: subst: unimplemented case s_type_expression wildcard"
+      | Ast_core.T_operator {type_operator;arguments} ->
+         let%bind arguments = bind_map_list
              (s_abstr_type_expression ~substs)
-             lst in
+             arguments in
          (* TODO: when we have generalized operators, we might need to subst the operator name itself? *)
-         ok @@ Ast_core.T_operator (op, lst)
+         ok @@ Ast_core.T_operator {type_operator;arguments}
       | Ast_core.T_constant constant ->
          ok @@ Ast_core.T_constant constant
 
-    and s_abstr_type_expression : (Ast_core.type_expression,_) w = fun ~substs {type_content;location;type_meta} ->
-      let%bind type_content = s_abstr_type_content ~substs type_content in
-      ok @@ Ast_core.{type_content;location;type_meta}
+    and s_abstr_type_expression : (Ast_core.type_expression,_) w = fun ~substs {content;sugar;location} ->
+      let%bind content = s_abstr_type_content ~substs content in
+      ok @@ (Ast_core.{content;sugar;location} : Ast_core.type_expression)
 
     and s_type_expression : (T.type_expression,_) w = fun ~substs { type_content; location; type_meta } ->
       let%bind type_content = s_type_content ~substs type_content in
@@ -108,9 +111,6 @@ module Substitution = struct
       | T.Literal_unit ->
         let () = ignore @@ substs in
         ok @@ T.Literal_unit
-      | T.Literal_void ->
-        let () = ignore @@ substs in
-        ok @@ T.Literal_void
       | (T.Literal_int _ as x)
       | (T.Literal_nat _ as x)
       | (T.Literal_timestamp _ as x)
@@ -227,6 +227,9 @@ module Substitution = struct
       | P_apply { tf; targ } -> (
           { tsrc = "?TODO2?" ; t = P_apply { tf = self tf ; targ = self targ } }
         )
+      | P_row {p_row_tag; p_row_args} ->
+        let p_row_args = T.LMap.map self p_row_args in
+        { tsrc = "?TODO3?" ; t = P_row {p_row_tag ; p_row_args}}
       | P_forall p -> (
           let aux c = constraint_ ~c ~substs in
           let constraints = List.map aux p.constraints in
@@ -235,12 +238,12 @@ module Substitution = struct
                we don't substitute inside the body. This should be
                handled in a more elegant manner once we have a proper
                environment and scopes. *)
-            { tsrc = "?TODO3?" ; t = P_forall { p with constraints } }
+            { tsrc = "?TODO4?" ; t = P_forall { p with constraints } }
           ) else (
             (* The variable v is still visible within the forall, so
                substitute also within the body *)
             let body = self p.body in
-            { tsrc = "?TODO4?" ; t = P_forall { p with constraints ; body } }
+            { tsrc = "?TODO5?" ; t = P_forall { p with constraints ; body } }
           )
         )
 

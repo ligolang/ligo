@@ -2,7 +2,7 @@ open Types
 open Fold
 open Format
 
-type json = Yojson.Basic.t
+type json = Yojson.t
 
 module M = struct
   type no_state = NoState
@@ -31,18 +31,10 @@ module M = struct
       bytes                     = (fun _visitor NoState bytes           -> `String (Bytes.to_string bytes)) ;
       unit                      = (fun _visitor NoState ()              -> `String "unit" ) ;
       packed_internal_operation = (fun _visitor NoState _op             -> `String "Operation(...bytes)") ;
-      expression_variable       = (fun _visitor NoState ev              -> `Assoc ["exp-var", `String (asprintf "%a" Var.pp ev)] ) ;
-      constructor'              = (fun _visitor NoState (Constructor c) -> `Assoc ["constructor", `String c] ) ;
-      location                  = (fun _visitor NoState loc             -> `String (asprintf "%a" Location.pp loc) ) ; (*TODO*)
+      expression_variable       = (fun _visitor NoState ev              -> `Assoc ["exp-var", `String (asprintf "%a" Var.pp ev.wrap_content)] ) ;
+      location                  = (fun _visitor NoState loc             -> Location.pp_json loc) ;
       label                     = (fun _visitor NoState (Label lbl)     -> `Assoc ["label" , `String lbl] ) ;
       ast_core_type_expression  = (fun _visitor NoState te              -> `String (asprintf "%a" (Ast_core.PP.type_expression) te) ) ; (*TODO*)
-      constructor_map           = (fun _visitor continue NoState cmap   ->
-        let lst = List.sort (fun (Constructor a, _) (Constructor b, _) -> String.compare a b) (CMap.bindings cmap) in
-        let lst' = List.fold_left
-          (fun acc (Constructor k, v) -> (k , continue NoState v)::acc)
-          [] lst
-        in
-        `Assoc lst' );
       label_map                 = (fun _visitor continue NoState lmap   ->
         let lst = List.sort (fun (Label a, _) (Label b, _) -> String.compare a b) (LMap.bindings lmap) in
         let lst' = List.fold_left
@@ -55,7 +47,7 @@ module M = struct
         `List (List.map aux lst) );
       location_wrap             = (fun _visitor continue NoState lwrap  ->
         let ({ wrap_content; location } : _ Location.wrap) = lwrap in
-        `Assoc [("wrap_content", continue NoState wrap_content) ; ("location", `String (asprintf "%a" Location.pp location))] ); (*TODO*)
+        `Assoc [("wrap_content", continue NoState wrap_content) ; ("location", Location.pp_json location)] );
       option = (fun _visitor continue NoState o ->
         match o with
         | None -> `List [ `String "None" ; `Null ]
@@ -80,7 +72,7 @@ module M = struct
     fold to_json NoState v
   
   let print : ((no_state, json) fold_config -> no_state -> 'a -> json) -> formatter -> 'a -> unit  = fun fold ppf v ->
-    fprintf ppf "%a" Yojson.Basic.pp (to_json fold v)
+    fprintf ppf "%a" Yojson.pp (to_json fold v)
 end
 
 module Yojson = Fold.Folds(struct

@@ -63,6 +63,11 @@ let print_sepseq :
         None -> ()
   | Some seq -> print_nsepseq state sep print seq
 
+let print_option : state -> (state -> 'a -> unit ) -> 'a option -> unit =
+  fun state print -> function
+    None -> ()
+  | Some opt -> print state opt
+
 let print_csv state print {value; _} =
   print_nsepseq state "," print value
 
@@ -74,7 +79,7 @@ let print_token state region lexeme =
 let print_var state {region; value} =
   let line =
     sprintf "%s: Ident %s\n"
-            (compact state region) value
+            (compact state region)value
   in Buffer.add_string state#buffer line
 
 let print_constr state {region; value} =
@@ -154,6 +159,7 @@ and print_type_expr state = function
 | TApp app        -> print_type_app state app
 | TPar par        -> print_type_par state par
 | TVar var        -> print_var state var
+| TWild wild      -> print_token state wild " "
 | TFun t          -> print_fun_type state t
 | TString s       -> print_string state s
 
@@ -244,14 +250,18 @@ and print_ne_injection :
     print_close_compound state compound
 
 and print_open_compound state = function
-  BeginEnd (kwd_begin,_) -> print_token state kwd_begin "begin"
-| Braces   (lbrace,_)    -> print_token state lbrace    "{"
-| Brackets (lbracket,_)  -> print_token state lbracket  "["
+  None -> ()
+| Some compound -> match compound with
+    BeginEnd (kwd_begin,_) -> print_token state kwd_begin "begin"
+  | Braces   (lbrace,_)    -> print_token state lbrace    "{"
+  | Brackets (lbracket,_)  -> print_token state lbracket  "["
 
 and print_close_compound state = function
-  BeginEnd (_,kwd_end)  -> print_token state kwd_end  "end"
-| Braces   (_,rbrace)   -> print_token state rbrace   "}"
-| Brackets (_,rbracket) -> print_token state rbracket "]"
+  None -> ()
+| Some compound -> match compound with
+    BeginEnd (_,kwd_end)  -> print_token state kwd_end  "end"
+  | Braces   (_,rbrace)   -> print_token state rbrace   "}"
+  | Brackets (_,rbracket) -> print_token state rbracket "]"
 
 and print_terminator state = function
   Some semi -> print_token state semi ";"
@@ -292,8 +302,6 @@ and print_pattern state = function
 | PTyped t ->
     print_typed_pattern state t
 | PUnit p -> print_unit state p
-| PFalse kwd_false -> print_token state kwd_false "false"
-| PTrue kwd_true -> print_token state kwd_true "true"
 
 and print_list_pattern state = function
   PListComp p -> print_injection state print_pattern p
@@ -322,6 +330,8 @@ and print_field_pattern state {value; _} =
 and print_constr_pattern state = function
   PNone p      -> print_none_pattern state p
 | PSomeApp p   -> print_some_app_pattern state p
+| PFalse kwd_false -> print_token state kwd_false "false"
+| PTrue kwd_true -> print_token state kwd_true "true"
 | PConstrApp p -> print_constr_app_pattern state p
 
 and print_none_pattern state value =
@@ -584,15 +594,18 @@ and print_fun_expr state {value; _} =
 
 and print_conditional state {value; _} =
   let {kwd_if; test; kwd_then;
-       ifso; kwd_else; ifnot} = value in
-   print_token state ghost "(";
-   print_token state kwd_if "if";
-   print_expr  state test;
-   print_token state kwd_then "then";
-   print_expr  state ifso;
-   print_token state kwd_else "else";
-   print_expr  state ifnot;
-   print_token state ghost ")"
+       ifso; ifnot} = value in
+  print_token state ghost "(";
+  print_token state kwd_if "if";
+  print_expr  state test;
+  print_token state kwd_then "then";
+  print_expr  state ifso;
+  print_option state 
+    (fun state (kwd_else,ifnot) -> 
+      print_token state kwd_else "else";
+      print_expr state ifnot;
+    ) ifnot;
+  print_token state ghost ")"
 
 (* Conversion to string *)
 
@@ -721,10 +734,6 @@ and pp_pattern state = function
     pp_verbatim (state#pad 1 0) v
 | PUnit {region; _} ->
     pp_loc_node state "PUnit" region
-| PFalse region ->
-    pp_loc_node state "PFalse" region
-| PTrue region ->
-    pp_loc_node state "PTrue" region
 | PList plist ->
     pp_node state "PList";
     pp_list_pattern (state#pad 1 0) plist
@@ -797,6 +806,10 @@ and pp_constr_pattern state = function
 | PSomeApp {value=_,param; region} ->
     pp_loc_node state "PSomeApp" region;
     pp_pattern  (state#pad 1 0) param
+| PFalse region ->
+    pp_loc_node state "PFalse" region
+| PTrue region ->
+    pp_loc_node state "PTrue" region
 | PConstrApp {value; region} ->
     pp_loc_node state "PConstrApp" region;
     pp_constr_app_pattern (state#pad 1 0) value
@@ -1114,10 +1127,12 @@ and pp_cond_expr state (cond: cond_expr) =
     let state = state#pad 3 1 in
     pp_node state "<true>";
     pp_expr (state#pad 1 0) cond.ifso in
-  let () =
+  let () = match cond.ifnot with
+    Some (_, ifnot) ->
     let state = state#pad 3 2 in
     pp_node state "<false>";
-    pp_expr (state#pad 1 0) cond.ifnot
+    pp_expr (state#pad 1 0) ifnot
+  | None -> ()
   in ()
 
 and pp_case :
@@ -1168,6 +1183,9 @@ and pp_type_expr state = function
 | TVar v ->
     pp_node  state "TVar";
     pp_ident (state#pad 1 0) v
+| TWild wild ->
+    pp_node  state "TWild";
+    pp_loc_node state "TWild" wild
 | TString s ->
     pp_node   state "TString";
     pp_string (state#pad 1 0) s

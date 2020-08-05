@@ -5,20 +5,19 @@ module Location = Simple_utils.Location
 include Stage_common.Types
 
 type type_content =
-  | T_sum of ctor_content constructor_map
-  | T_record of field_content label_map
+  | T_sum of row_element label_map
+  | T_record of row_element label_map
   | T_tuple  of type_expression list
   | T_arrow of arrow
   | T_variable of type_variable
+  | T_wildcard
   | T_constant of type_constant
-  | T_operator of (type_operator * type_expression list)
+  | T_operator of (type_operator' * type_expression list)
   | T_annoted  of (type_expression * string)
 
 and arrow = {type1: type_expression; type2: type_expression}
 
-and field_content = {field_type : type_expression ; field_decl_pos : int} 
-
-and ctor_content = {ctor_type : type_expression ; ctor_decl_pos : int} 
+and row_element = {associated_type : type_expression ; decl_pos : int} 
 
 and michelson_prct_annotation = string
 
@@ -106,7 +105,7 @@ and raw_code = {
   code : expression ;
   }
 
-and constructor = {constructor: constructor'; element: expression}
+and constructor = {constructor: label; element: expression}
 
 and accessor = {record: expression; path: access list}
 and update   = {record: expression; path: access list; update: expression}
@@ -114,7 +113,7 @@ and update   = {record: expression; path: access list; update: expression}
 
 
 and matching_expr =
-  | Match_variant of ((constructor' * expression_variable) * expression) list
+  | Match_variant of ((label * expression_variable) * expression) list
   | Match_list of {
       match_nil  : expression ;
       match_cons : expression_variable * expression_variable * expression ;
@@ -135,7 +134,7 @@ and matching =
 and ascription = {anno_expr: expression; type_annotation: type_expression}
 
 and conditional = {
-  condition : expression ;
+  condition   : expression ;
   then_clause : expression ;
   else_clause : expression ;
 }
