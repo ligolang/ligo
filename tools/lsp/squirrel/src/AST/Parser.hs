@@ -6,12 +6,7 @@ module AST.Parser
   -- (example, contract, sample)
   where
 
-import Control.Arrow
-
 import Data.Maybe (isJust)
-import Data.Text (Text)
-import qualified Data.Text as Text
-import Data.Sum (Element)
 
 import AST.Types
 
@@ -19,13 +14,13 @@ import Duplo.Error
 import Duplo.Tree
 import Duplo.Pretty
 
-import Range
 import Product
 import Parser
 import ParseTree
 
-import Debug.Trace
+-- import Debug.Trace
 
+example :: FilePath
 -- example = "../../../src/test/contracts/arithmetic.ligo"
 -- example = "../../../src/test/contracts/address.ligo"
 -- example = "../../../src/test/contracts/annotation.ligo"
@@ -115,7 +110,6 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
         "map_patch"         -> MapPatch  <$> field  "container"  <*> fields "binding"
         "set_patch"         -> SetPatch  <$> field  "container"  <*> fields "key"
         "set_remove"        -> SetRemove <$> field  "key"        <*> field  "container"
-        "map_remove"        -> SetRemove <$> field  "key"        <*> field  "container"
         "update_record"     -> RecordUpd <$> field  "record"     <*> fields "assignment"
         _                   -> fallthrough
 
@@ -272,14 +266,14 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
 
     -- Err
   , Descent do
-      \(r :> _, ParseTree _ _ text) -> do
+      \(r :> _, ParseTree _ _ text') -> do
         withComments do
-          return (r :> N :> Nil, Err text)
+          return (r :> N :> Nil, Err text')
 
   , Descent do
       \case
-        (r :> _, ParseTree "ERROR" _ text) -> do
-          return ([] :> r :> Y :> Nil, Err text)
+        (r :> _, ParseTree "ERROR" _ text') -> do
+          return ([] :> r :> Y :> Nil, Err text')
 
         _ -> fallthrough
   ]

@@ -13,9 +13,8 @@ module AST.Scope
   -- )
   where
 
-import           Control.Arrow (first, second)
+import           Control.Arrow (second)
 import           Control.Monad.State
-import           Control.Monad.Identity
 import           Control.Monad.Catch
 import           Control.Monad.Catch.Pure
 
@@ -23,23 +22,20 @@ import qualified Data.List   as List
 import           Data.Map            (Map)
 import qualified Data.Map    as Map
 import           Data.Maybe          (listToMaybe)
-import           Data.Sum            (Element, Apply, Sum)
 import           Data.Text           (Text)
-import           Data.Either         (fromRight)
 
 import           Duplo.Lattice
 import           Duplo.Pretty
 import           Duplo.Tree
 import           Duplo.Error
 
-import           AST.Parser
+-- import           AST.Parser
 import           AST.Types
--- import           Comment
 import           Parser
 import           Product
 import           Range
 
-import           Debug.Trace
+-- import           Debug.Trace
 
 type CollectM = StateT (Product [FullEnv, [Range]]) Catch
 
@@ -141,6 +137,7 @@ unLetRec = descent leaveBe
     linearize :: Range -> LIGO (Product xs) -> [LIGO (Product xs)] -> LIGO (Product xs)
     linearize r b [x]      = make (modElem @Range (delta r) $ extract x, Let x b)
     linearize r b (x : xs) = make (modElem @Range (delta r) $ extract x, Let x (linearize r b xs))
+    linearize _ _ []       = error "empty Seq"
 
     delta (Range _ f _) (Range s _ t) = Range s f t
 

@@ -4,7 +4,6 @@ module Parser where
 import Control.Arrow
 import Control.Monad.Catch
 import Control.Monad.RWS hiding (Product)
-import Control.Monad.Trans.Maybe
 
 import Data.String.Interpolate (i)
 import Data.Text (Text)
@@ -18,7 +17,7 @@ import ParseTree
 import Range
 import Product
 
-import Debug.Trace
+-- import Dsebug.Trace
 
 {-
   Comment grabber has 2 buffers: 1 and 2.
@@ -40,7 +39,7 @@ data Failure = Failure String
   deriving anyclass (Exception)
 
 instance Scoped (Product [Range, Text]) ParserM RawTree ParseTree where
-  before (r :> _ :> _) (ParseTree ty cs s) = do
+  before (r :> _ :> _) (ParseTree _ cs _) = do
     let (comms, rest) = allComments cs
     let (comms1, _)   = allComments $ reverse rest
     modify $ first  (++ comms)
@@ -50,12 +49,12 @@ instance Scoped (Product [Range, Text]) ParserM RawTree ParseTree where
     tell $ fmap (\t -> (r, Err t)) errs
 
   after _ _ = do
-    modify \(x, y) -> (y, [])
+    modify \(_, y) -> (y, [])
 
 grabComments :: ParserM [Text]
 grabComments = do
   ls <- gets fst
-  modify \(x, y) -> ([], y)
+  modify \(_, y) -> ([], y)
   return ls
 
 allComments :: [RawTree] -> ([Text], [RawTree])
@@ -73,9 +72,10 @@ allErrors = map getBody . filter isUnnamedError
   where
     isUnnamedError :: RawTree -> Bool
     isUnnamedError tree = case only tree of
-      (r :> "" :> _, ParseTree "ERROR" _ _) -> True
+      (_ :> "" :> _, ParseTree "ERROR" _ _) -> True
       _                                     -> False
 
+getBody :: RawTree -> Text
 getBody (gist -> f) = ptSource f
 
 field :: Text -> ParserM RawTree
@@ -90,7 +90,7 @@ fieldOpt name = ask >>= go
       | n == name = return (Just tree)
       | otherwise = go rest
 
-    go [] = return Nothing
+    go _ = return Nothing
 
 fields :: Text -> ParserM [RawTree]
 fields name = ask >>= go
@@ -98,7 +98,7 @@ fields name = ask >>= go
     go (tree@(extract -> _ :> n :> _) : rest) =
       (if n == name then ((tree :) <$>) else id)
         $ go rest
-    go [] = return []
+    go _ = return []
 
 data ShowRange
   = Y | N
@@ -122,11 +122,13 @@ instance
       = ascribeRange (getElem @Range xs) (getElem xs)
       . ascribeComms (getElem xs)
 
+ascribeComms :: [Text] -> Doc -> Doc
 ascribeComms comms
   | null comms = id
   | otherwise  = \d ->
       block $ map (pp . Text.init) comms ++ [d]
 
+ascribeRange :: Pretty p => p -> ShowRange -> Doc -> Doc
 ascribeRange r Y = (pp r $$)
 ascribeRange _ _ = id
 
@@ -142,8 +144,8 @@ boilerplate
   -> ParserM (Info, f RawTree)
 boilerplate f (r :> _, ParseTree ty cs _) = do
   withComments do
-    f <- local (const cs) $ f ty
-    return $ (r :> N :> Nil, f)
+    f' <- local (const cs) $ f ty
+    return $ (r :> N :> Nil, f')
 
 boilerplate'
   :: ((Text, Text) -> ParserM (f RawTree))
@@ -151,8 +153,8 @@ boilerplate'
   -> ParserM (Info, f RawTree)
 boilerplate' f (r :> _, ParseTree ty cs src) = do
   withComments do
-    f <- local (const cs) $ f (ty, src)
-    return $ (r :> N :> Nil, f)
+    f' <- local (const cs) $ f (ty, src)
+    return $ (r :> N :> Nil, f')
 
 fallthrough :: MonadThrow m => m a
 fallthrough = throwM HandlerFailed

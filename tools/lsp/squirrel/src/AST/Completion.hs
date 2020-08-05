@@ -12,11 +12,11 @@ import Duplo.Pretty
 
 import AST.Types
 import AST.Scope
-import AST.Parser
+-- import AST.Parser
 import Range
 import Product
 
-import Debug.Trace
+-- import Debug.Trace
 
 
 complete
@@ -32,13 +32,13 @@ complete
 complete r tree = do
   let l = spineTo (leq r . getElem) tree
   word <- listToMaybe l
-  let scope = getElem (extract word)
-  let cat   = getElem (extract word)
+  let scope   = getElem (extract word)
+  let nameCat = getElem (extract word)
   return
     $ filter (isSubseqOf (ppToText word))
     $ nub
     $ map (ppToText . _sdName)
-    $ filter (fits cat . catFromType)
+    $ filter (fits nameCat . catFromType)
     $ scope
 
 isSubseqOf :: Text -> Text -> Bool

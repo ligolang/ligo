@@ -17,7 +17,7 @@ import AST.Scope
 import Product
 import Range
 
-import Debug.Trace
+-- import Debug.Trace
 
 type CanSearch xs =
   ( Contains [ScopedDecl] xs
