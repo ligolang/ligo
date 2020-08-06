@@ -1943,7 +1943,7 @@ interactive_expr: Begin With
 
 Ill-formed sequence of expressions.
 At this point, one of the following is expected:
-  * sexpression separated by semicolons ';';
+  * expressions separated by semicolons ';';
   * the keyword 'end' if the sequence is empty.
 
 interactive_expr: C_None WILD
@@ -2669,7 +2669,6 @@ Ill-formed record update.
 At this point, if name of the record is fully qualified, then the
 keyword 'with' is expected, followed by field updates (assignments)
 separated by semicolons ';'.
-Note: The syntax here follows that of OCaml.
 
 interactive_expr: LBRACE Ident EQ Bytes SEMI Ident EQ Bytes SEMI With
 ##
@@ -3211,7 +3210,7 @@ interactive_expr: Lang Verbatim With
 ## In state 373, spurious reduction of production expr -> base_cond__open(expr)
 ##
 
-Ill-formed language injection.
+Ill-formed code injection.
 At this point, a closing bracket ']' is expected.
 
 interactive_expr: Lang With
@@ -3224,7 +3223,7 @@ interactive_expr: Lang With
 ## Lang
 ##
 
-Ill-formed language injection.
+Ill-formed code injection.
 At this point, an expression whose value is a verbatim string
 containing the code to inject is expected.
 
@@ -3407,7 +3406,8 @@ interactive_expr: Match Verbatim With WILD COMMA WILD With
 ##
 
 Ill-formed pattern matching.
-At this point, one of the following is expected:
+At this point, if the pattern is complete, one of the following is
+expected:
   * an arrow '->' followed by the right-hand side of the case as an
     expression;
   * a comma ',' followed by another pattern (component), if matching a
@@ -3438,7 +3438,8 @@ interactive_expr: Match Verbatim With WILD With
 ##
 
 Ill-formed pattern matching.
-At this point, one of the following is expected:
+At this point, if the pattern is complete, one of the following is
+expected:
   * an arrow '->' followed by an expression, if the left-hand side of
     the case is complete;
   * a cons operator '::' if matching a non-empty list;
@@ -3478,8 +3479,18 @@ interactive_expr: Verbatim BOOL_OR With
 ## The known suffix of the stack is as follows:
 ## disj_expr_level BOOL_OR
 ##
+interactive_expr: Verbatim Or With
+##
+## Ends in an error in state: 302.
+##
+## bin_op(disj_expr_level,Or,conj_expr_level) -> disj_expr_level Or . conj_expr_level [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Or Let In End Else EOF COMMA COLON BOOL_OR Attr ]
+##
+## The known suffix of the stack is as follows:
+## disj_expr_level Or
+##
 
 Ill-formed Boolean expression.
+At this point, a Boolean expression is expected.
 Hint: To check your understanding of the syntax, try and add
 parentheses around what you think is the expression.
 
@@ -3634,18 +3645,10 @@ interactive_expr: Verbatim NE With
 ## The known suffix of the stack is as follows:
 ## comp_expr_level NE
 ##
-interactive_expr: Verbatim Or With
-##
-## Ends in an error in state: 302.
-##
-## bin_op(disj_expr_level,Or,conj_expr_level) -> disj_expr_level Or . conj_expr_level [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Or Let In End Else EOF COMMA COLON BOOL_OR Attr ]
-##
-## The known suffix of the stack is as follows:
-## disj_expr_level Or
-##
 
 Ill-formed Boolean expression.
-At this point, an expression is expected.
+At this point, an expression is expected as the righ-hand side of the
+comparison.
 Hint: To check your understanding of the syntax, try and add
 parentheses around what you think is the expression.
 
@@ -3823,7 +3826,7 @@ interactive_expr: Verbatim With
 ## In state 373, spurious reduction of production expr -> base_cond__open(expr)
 ##
 
-Ill-formed interactive expression.
+Ill-formed expression.
 At this point, if the expression is complete, the end of file is
 expected.
 
@@ -3925,9 +3928,15 @@ contract: Let Ident With
 ## Ident
 ##
 
-Ill-formed function definition.
-At this point, parameters separated by whitespace are expected as
-irrefutable patterns, for instance identifiers.
+Ill-formed value definition.
+At this point, one of the following is expected:
+   * if defining a function: the parameters as irrefutable patterns
+     (like identifiers) separated by whitespace;
+   * the assignment operator '=' followed by an expression;
+   * if defining a tuple, a comma ',' followed by another component as
+     a pattern;
+   * a colon ':' followed by a type expression annotating the
+     identifier.
 
 contract: Let LBRACE Ident EQ Bytes SEMI Ident EQ Bytes SEMI With
 ##
@@ -4022,7 +4031,7 @@ contract: Let LBRACE With
 ##
 
 Ill-formed record pattern.
-At this point, patterns matching fields are expected, separated by
+At this point, patterns that match fields are expected, separated by
 semicolons ';'.
 
 contract: Let LPAR Constr C_Some With
@@ -4732,7 +4741,11 @@ contract: Type Ident EQ LPAR With
 ## LPAR
 ##
 
-Ill-formed type expression.
+Ill-formed tuple of types or parenthesised type expression.
+At this point, one of the following is expected:
+  * a type expression followed by a closing parenthesis ')';
+  * type expressions separated by commas ',' and followed by a closing
+    parenthesis ')'.
 
 contract: Type Ident EQ String ARROW With
 ##
@@ -4743,6 +4756,12 @@ contract: Type Ident EQ String ARROW With
 ## The known suffix of the stack is as follows:
 ## cartesian ARROW
 ##
+
+Ill-formed functional type.
+At this point, a type other than a sum type or a record is expected.
+Hint: To check your understanding of the syntax, try and add
+parentheses around what you think is the type.
+
 contract: Type Ident EQ Constr Of With
 ##
 ## Ends in an error in state: 6.
@@ -4753,7 +4772,7 @@ contract: Type Ident EQ Constr Of With
 ## Constr Of
 ##
 
-Ill-formed functional type expression.
+Ill-formed type of a data constructor.
 At this point, a type other than a sum type or a record is expected.
 
 contract: Type Ident EQ String TIMES Constr With
