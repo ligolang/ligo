@@ -546,8 +546,8 @@ and compile_instruction : ?next: AST.expression -> CST.instruction -> _ result  
     let (lst, loc) = r_split tuple_expr in
     let%bind lst = bind_map_list compile_expression @@ npseq_to_list lst.inside in
     match lst with
-      hd::[] -> return hd
-    | lst -> return @@ e_tuple ~loc lst
+      hd::[] -> ok hd
+    | lst -> ok @@ e_tuple ~loc lst
   in
   let compile_if_clause : ?next:AST.expression -> CST.if_clause -> _ = fun ?next if_clause ->
     match if_clause with
