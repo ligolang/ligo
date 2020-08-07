@@ -91,6 +91,13 @@ let sha_256_hash pl =
 
 open Ast_imperative.Combinators
 
+let typed_program_to_michelson (program , state) entry_point =
+  ignore state;
+  let%bind mini_c = Compile.Of_typed.compile program in
+  let%bind michelson = Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
+  let%bind michelson = Compile.Of_michelson.build_contract ~disable_typecheck:false michelson in
+  ok michelson
+
 let typed_program_with_imperative_input_to_michelson
     ((program , state): Ast_typed.program * Typesystem.Solver_types.typer_state) (entry_point: string)
     (input: Ast_imperative.expression) : (Stacking.compiled_expression,_) result =

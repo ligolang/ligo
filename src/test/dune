@@ -32,8 +32,10 @@
 
 (alias
   (name ligo-test)
-  (action (run ./test.exe))
+  (action (setenv POSITIVE_CONTRACTS "%{pos}"
+           (run ./test.exe)))
   (deps (glob_files contracts/*)
+        (:pos (glob_files contracts/positive/*))
         (glob_files contracts/negative/*))
 )
 
