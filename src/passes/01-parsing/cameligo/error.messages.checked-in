@@ -3255,33 +3255,6 @@ At this point, one of the following is expected:
   * a colon ':' followed by the type of the calls to the defined
     function.
 
-contract: Let Ident With
-##
-## Ends in an error in state: 377.
-##
-## let_binding -> irrefutable . option(type_annotation) EQ expr [ Type Let In EOF Attr ]
-##
-## The known suffix of the stack is as follows:
-## irrefutable
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 151, spurious reduction of production sub_irrefutable -> Ident
-## In state 137, spurious reduction of production irrefutable -> sub_irrefutable
-##
-
-Ill-formed value definition.
-At this point, one of the following is expected:
-   * if defining a function: the parameters as irrefutable patterns
-     (like identifiers) separated by whitespace;
-   * the assignment operator '=' followed by an expression;
-   * if defining a tuple, a comma ',' followed by another component as
-     a pattern;
-   * a colon ':' followed by a type expression annotating the
-     identifier.
-
 contract: Let LBRACE Ident EQ Bytes SEMI Ident EQ Bytes SEMI With
 ##
 ## Ends in an error in state: 129.
@@ -3655,8 +3628,6 @@ At this point, a type expression is expected.
 Hint: To check your understanding of the syntax, try and add
 parentheses around what you think is the complete type expression.
 
-
-
 contract: Let WILD COMMA With
 ##
 ## Ends in an error in state: 138.
@@ -3686,148 +3657,6 @@ following:
   * a parenthesised pattern,
   * a constant constructor, like "K".
 
-contract: Type Ident EQ String With
-##
-## Ends in an error in state: 607.
-##
-## declarations -> declaration . [ EOF ]
-## declarations -> declaration . declarations [ EOF ]
-##
-## The known suffix of the stack is as follows:
-## declaration
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 29, spurious reduction of production cartesian -> core_type
-## In state 37, spurious reduction of production fun_type -> cartesian
-## In state 28, spurious reduction of production type_expr -> fun_type
-## In state 62, spurious reduction of production type_decl -> Type Ident EQ type_expr
-## In state 603, spurious reduction of production declaration -> type_decl
-##
-contract: Let WILD EQ Bytes Attr With
-##
-## Ends in an error in state: 607.
-##
-## declarations -> declaration . [ EOF ]
-## declarations -> declaration . declarations [ EOF ]
-##
-## The known suffix of the stack is as follows:
-## declaration
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 175, spurious reduction of production seq(Attr) ->
-## In state 176, spurious reduction of production seq(Attr) -> Attr seq(Attr)
-## In state 602, spurious reduction of production let_declaration -> Let let_binding seq(Attr)
-## In state 604, spurious reduction of production declaration -> let_declaration
-##
-contract: Let WILD EQ Bytes With
-##
-## Ends in an error in state: 607.
-##
-## declarations -> declaration . [ EOF ]
-## declarations -> declaration . declarations [ EOF ]
-##
-## The known suffix of the stack is as follows:
-## declaration
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production call_expr_level -> core_expr
-## In state 234, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 221, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 224, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 314, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 304, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 336, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 343, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 350, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 371, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 373, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 374, spurious reduction of production expr -> base_cond__open(expr)
-## In state 380, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
-## In state 601, spurious reduction of production seq(Attr) ->
-## In state 602, spurious reduction of production let_declaration -> Let let_binding seq(Attr)
-## In state 604, spurious reduction of production declaration -> let_declaration
-##
-contract: Let Rec WILD EQ Bytes With
-##
-## Ends in an error in state: 607.
-##
-## declarations -> declaration . [ EOF ]
-## declarations -> declaration . declarations [ EOF ]
-##
-## The known suffix of the stack is as follows:
-## declaration
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production call_expr_level -> core_expr
-## In state 234, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 221, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 224, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 314, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 304, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 336, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 343, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 350, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 371, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 373, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 374, spurious reduction of production expr -> base_cond__open(expr)
-## In state 380, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
-## In state 599, spurious reduction of production seq(Attr) ->
-## In state 600, spurious reduction of production let_declaration -> Let Rec let_binding seq(Attr)
-## In state 604, spurious reduction of production declaration -> let_declaration
-##
-
-Ill-formed value definition.
-At this point, if the value expression is complete, one of the
-following is expected:
-  * a series of attributes separated by whitespace;
-  * a value or type definition, starting respectively with 'let' or
-    'type';
-  * the end of the file (EOF) if the contract is complete.
-
-contract: Let WILD COMMA WILD With
-##
-## Ends in an error in state: 377.
-##
-## let_binding -> irrefutable . option(type_annotation) EQ expr [ Type Let In EOF Attr ]
-##
-## The known suffix of the stack is as follows:
-## irrefutable
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 140, spurious reduction of production nsepseq(sub_irrefutable,COMMA) -> sub_irrefutable
-## In state 145, spurious reduction of production tuple(sub_irrefutable) -> sub_irrefutable COMMA nsepseq(sub_irrefutable,COMMA)
-## In state 136, spurious reduction of production irrefutable -> tuple(sub_irrefutable)
-##
-contract: Let WILD WILD
-##
-## Ends in an error in state: 377.
-##
-## let_binding -> irrefutable . option(type_annotation) EQ expr [ Type Let In EOF Attr ]
-##
-## The known suffix of the stack is as follows:
-## irrefutable
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 137, spurious reduction of production irrefutable -> sub_irrefutable
-##
 contract: Let WILD With
 ##
 ## Ends in an error in state: 377.
@@ -3850,27 +3679,6 @@ is expected:
   * a type annotation for the value being defined;
   * the assignment operator '=' followed by an expression.
 
-contract: Type Ident EQ Constr With
-##
-## Ends in an error in state: 607.
-##
-## declarations -> declaration . [ EOF ]
-## declarations -> declaration . declarations [ EOF ]
-##
-## The known suffix of the stack is as follows:
-## declaration
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 14, spurious reduction of production variant -> Constr
-## In state 17, spurious reduction of production nsepseq(variant,VBAR) -> variant
-## In state 27, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
-## In state 23, spurious reduction of production type_expr -> sum_type
-## In state 62, spurious reduction of production type_decl -> Type Ident EQ type_expr
-## In state 603, spurious reduction of production declaration -> type_decl
-##
 contract: Type Ident EQ Ident VBAR
 ##
 ## Ends in an error in state: 607.
