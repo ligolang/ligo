@@ -52,6 +52,7 @@ data ScopedDecl = ScopedDecl
   , _sdBody    :: Maybe Range
   , _sdType    :: Maybe (Either (LIGO ()) Kind)
   , _sdRefs    :: [Range]
+  , _sdDoc     :: [Text]
   }
   deriving Show via PP ScopedDecl
 
@@ -74,7 +75,7 @@ instance {-# OVERLAPS #-} Pretty FullEnv where
       mergeFE fe = getTag @"vars" @Env fe Prelude.<> getTag @"types" fe
 
 instance Pretty ScopedDecl where
-  pp (ScopedDecl n o _ t refs) = color 3 (pp n) <+> pp o <+> ":" <+> color 4 (maybe "?" (either pp pp) t) <+> "=" <+> pp refs
+  pp (ScopedDecl n o _ t refs doc) = color 3 (pp n) <+> pp o <+> ":" <+> color 4 (maybe "?" (either pp pp) t) <+> "=" <+> pp refs `indent` pp doc
 
 instance Pretty Kind where
   pp _ = "TYPE"
@@ -106,7 +107,7 @@ type Info' = Product [[ScopedDecl], Maybe Category, [Text], Range, ShowRange]
 
 addLocalScopes
   :: forall xs
-  .  (Contains Range xs, Eq (Product xs))
+  .  (Collectable xs, Eq (Product xs))
   => LIGO (Product xs)
   -> LIGO (Product ([ScopedDecl] : Maybe Category : xs))
 addLocalScopes tree =
@@ -246,7 +247,7 @@ updateOnly name r f = go
 
       [] -> (False, [])
 
-enter :: Contains Range xs => Product xs -> CollectM ()
+enter :: Collectable xs => Product xs -> CollectM ()
 enter r = do
   modify $ modElem (getElem @Range r :)
 
@@ -290,8 +291,8 @@ lookupEnv :: Text -> [ScopedDecl] -> Maybe ScopedDecl
 lookupEnv name = listToMaybe . filter ((name ==) . ppToText . _sdName)
 
 -- | Add a type declaration to the current scope.
-defType :: HasRange a => LIGO a -> Kind -> LIGO a -> CollectM ()
-defType name kind body = do
+defType :: HasRange a => LIGO a -> Kind -> LIGO a -> [Text] -> CollectM ()
+defType name kind body doc = do
   define Type
     $ ScopedDecl
       (void name)
@@ -299,6 +300,7 @@ defType name kind body = do
       (Just $ getRange $ extract body)
       (Just (Right kind))
       []
+      doc
 
 -- -- observe :: Pretty i => Pretty res => Text -> i -> res -> res
 -- -- observe msg i res
@@ -312,8 +314,9 @@ def
   => LIGO a
   -> Maybe (LIGO a)
   -> Maybe (LIGO a)
+  -> [Text]
   -> CollectM ()
-def name ty body = do
+def name ty body doc = do
   define Variable
     $ ScopedDecl
       (void name)
@@ -321,55 +324,60 @@ def name ty body = do
       ((getRange . extract) <$> body)
       ((Left . void) <$> ty)
       []
+      doc
 
-instance Contains Range xs => Scoped (Product xs) CollectM (LIGO (Product xs)) Contract where
+type Collectable xs = (Contains Range xs, Contains [Text] xs)
+
+instance Collectable xs => Scoped (Product xs) CollectM (LIGO (Product xs)) Contract where
   before r _ = enter r
   after  _ _ = skip
 
-instance Contains Range xs => Scoped (Product xs) CollectM (LIGO (Product xs)) RawContract where
+instance Collectable xs => Scoped (Product xs) CollectM (LIGO (Product xs)) RawContract where
   before r _ = enter r
   after  _ _ = skip
 
-instance Contains Range xs => Scoped (Product xs) CollectM (LIGO (Product xs)) Binding where
+instance Collectable xs => Scoped (Product xs) CollectM (LIGO (Product xs)) Binding where
   before r = \case
     Function recur name _args ty body -> do
       when recur do
-        def name (Just ty) (Just body)
+        def name (Just ty) (Just body) (getElem r)
       enter r
 
-    TypeDecl ty body -> defType ty Star body
+    TypeDecl ty body -> defType ty Star body (getElem r)
     _ -> enter r
 
-  after _ = \case
-    Irrefutable name    body -> do leave; def name  Nothing  (Just body)
-    Var         name ty body -> do leave; def name (Just ty) (Just body)
-    Const       name ty body -> do leave; def name (Just ty) (Just body)
+  after r = \case
+    Irrefutable name    body -> do leave; def name  Nothing  (Just body) (getElem r)
+    Var         name ty body -> do leave; def name (Just ty) (Just body) (getElem r)
+    Const       name ty body -> do leave; def name (Just ty) (Just body) (getElem r)
+
     Function recur name _args ty body -> do
       leave
       unless recur do
-        def name (Just ty) (Just body)
+        def name (Just ty) (Just body) (getElem r)
+
     _ -> skip
 
-instance Contains Range xs => Scoped (Product xs) CollectM (LIGO (Product xs)) VarDecl where
-  after _ (Decl _ name ty) = def name (Just ty) Nothing
+instance Collectable xs => Scoped (Product xs) CollectM (LIGO (Product xs)) VarDecl where
+  after r (Decl _ name ty) = def name (Just ty) Nothing (getElem r)
 
 instance Scoped a CollectM (LIGO a) Mutable
 instance Scoped a CollectM (LIGO a) Type
 instance Scoped a CollectM (LIGO a) Variant
 instance Scoped a CollectM (LIGO a) TField
 
-instance Contains Range xs => Scoped (Product xs) CollectM (LIGO (Product xs)) Expr where
+instance Collectable xs => Scoped (Product xs) CollectM (LIGO (Product xs)) Expr where
   before r = \case
     Let    {} -> enter r
     Lambda {} -> enter r
     ForLoop k _ _ _ _ -> do
       enter r
-      def k Nothing Nothing
+      def k Nothing Nothing (getElem r)
 
     ForBox k mv _ _ _ -> do
       enter r
-      def k Nothing Nothing
-      maybe skip (\v -> def v Nothing Nothing) mv
+      def k Nothing Nothing (getElem r)
+      maybe skip (\v -> def v Nothing Nothing (getElem r)) mv
 
     _ -> skip
 
@@ -380,7 +388,7 @@ instance Contains Range xs => Scoped (Product xs) CollectM (LIGO (Product xs)) E
     ForBox  {} -> leave
     _ -> skip
 
-instance Contains Range xs => Scoped (Product xs) CollectM (LIGO (Product xs)) Alt where
+instance Collectable xs => Scoped (Product xs) CollectM (LIGO (Product xs)) Alt where
   before r _ = enter r
   after  _ _ = leave
 
@@ -390,9 +398,9 @@ instance Scoped a CollectM (LIGO a) Assignment
 instance Scoped a CollectM (LIGO a) FieldAssignment
 instance Scoped a CollectM (LIGO a) Constant
 
-instance Contains Range xs => Scoped (Product xs) CollectM (LIGO (Product xs)) Pattern where
-  before _ = \case
-    IsVar n -> def n Nothing Nothing
+instance Collectable xs => Scoped (Product xs) CollectM (LIGO (Product xs)) Pattern where
+  before r = \case
+    IsVar n -> def n Nothing Nothing (getElem r)
     _       -> skip
 
 instance Scoped a CollectM (LIGO a) QualifiedName
