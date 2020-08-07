@@ -10,6 +10,40 @@ open CST
 (* END HEADER *)
 %}
 
+(* Reductions on error *)
+
+%on_error_reduce nsepseq(selection,DOT)
+%on_error_reduce call_expr_level
+%on_error_reduce add_expr_level
+%on_error_reduce cons_expr_level
+%on_error_reduce cat_expr_level
+%on_error_reduce disj_expr_level
+%on_error_reduce conj_expr_level
+%on_error_reduce bin_op(conj_expr_level,BOOL_AND,comp_expr_level)
+%on_error_reduce bin_op(disj_expr_level,Or,conj_expr_level)
+%on_error_reduce bin_op(disj_expr_level,BOOL_OR,conj_expr_level)
+%on_error_reduce base_expr(expr)
+%on_error_reduce base_expr(base_cond)
+%on_error_reduce module_fun
+%on_error_reduce core_expr
+%on_error_reduce match_expr(base_cond)
+%on_error_reduce constr_expr
+%on_error_reduce nsepseq(disj_expr_level,COMMA)
+%on_error_reduce seq(core_expr)
+%on_error_reduce bin_op(add_expr_level,MINUS,mult_expr_level)
+%on_error_reduce bin_op(add_expr_level,PLUS,mult_expr_level)
+%on_error_reduce seq(Attr)
+%on_error_reduce constr_pattern
+%on_error_reduce tail
+%on_error_reduce nsepseq(sub_irrefutable,COMMA)
+%on_error_reduce irrefutable
+%on_error_reduce variant
+%on_error_reduce nsepseq(variant,VBAR)
+%on_error_reduce nsepseq(core_type,TIMES)
+%on_error_reduce fun_type
+%on_error_reduce cartesian
+%on_error_reduce sub_irrefutable
+
 (* See [ParToken.mly] for the definition of tokens. *)
 
 (* Entry points *)
@@ -17,8 +51,6 @@ open CST
 %start contract interactive_expr
 %type <CST.t> contract
 %type <CST.expr> interactive_expr
-
-                 (*%on_error_reduce nsepseq(selection,DOT)*)
 
 %%
 
