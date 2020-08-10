@@ -86,10 +86,11 @@ in {
               Rolling release
               Commit SHA: ${CI_COMMIT_SHA}
               Commit Date: ${COMMIT_DATE}
-            '' else ''
-              Rolling release
-              Commit SHA: ${self.lib.commitIdFromGitRepo ../.git}
-            '')
+            '' else
+              if builtins.elem ".git" (builtins.attrNames (builtins.readDir ../.)) then ''
+                Rolling release
+                Commit SHA: ${self.lib.commitIdFromGitRepo ../.git}
+              '' else "Unknown: not built from a git checkout")
           else
             "${CI_COMMIT_TAG}";
           inherit CI_COMMIT_TAG CI_COMMIT_SHA COMMIT_DATE;
