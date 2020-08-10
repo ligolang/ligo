@@ -883,8 +883,8 @@ interactive_expr: Match Verbatim With WILD ARROW Let WILD EQ Bytes With
 ## In state 432, spurious reduction of production seq(Attr) ->
 ##
 
-Ill-formed value definition.
-At this point, if the right-hand side of the definition is a complete
+Ill-formed value declaration.
+At this point, if the right-hand side of the declaration is a complete
 expression, one of the following is expected:
   * a series of attributes;
   * the keyword 'in' followed by an expression.
@@ -975,7 +975,7 @@ contract: Let Rec With
 ## Let Rec
 ##
 
-Ill-formed recursive value definition.
+Ill-formed recursive value declaration.
 At this point, an irrefutable pattern is expected, for instance an
 identifier for the value being defined.
 
@@ -1078,11 +1078,11 @@ contract: Let With
 ## Let
 ##
 
-Ill-formed value definition.
+Ill-formed value declaration.
 At this point, one of the following is expected:
   * an irrefutable pattern, for instance an identifier denoting the
     value being defined.
-  * the 'rec' keyword if the definition is recursive.
+  * the 'rec' keyword if the declaration is recursive.
 
 interactive_expr: Begin If Verbatim Then Match Verbatim Type
 ##
@@ -1255,7 +1255,7 @@ interactive_expr: Begin If Verbatim Then Match Verbatim With WILD ARROW Bytes Wi
 
 Ill-formed pattern matching.
 At this point, if the case is complete, then a vertical bar '|' is
-expected, followed by another case.
+expected, followed by another case starting with a pattern.
 
 interactive_expr: Begin If Verbatim Then If With
 ##
@@ -1640,6 +1640,7 @@ Ill-formed sequence of expressions.
 At this point, one of the following is expected:
   * expressions separated by semicolons ';';
   * the keyword 'end' if the sequence is empty.
+Note: In sequences, the semicolon is a separator, not a terminator.
 
 interactive_expr: C_Some With
 ##
@@ -1651,7 +1652,7 @@ interactive_expr: C_Some With
 ## C_Some
 ##
 
-Ill-formed application of the predefined data constructor 'Some'.
+Ill-formed application to the predefined data constructor 'Some'.
 At this point, its argument is expected as an expression.
 Hint: To check your understanding of the syntax, try and add
 parentheses around what you think is the complete argument.
@@ -1764,7 +1765,6 @@ At this point, one of the following is expected:
   * the name of a record field;
   * the index of a component in a tuple, '0' denoting the first
     component.
-
 
 interactive_expr: Begin Fun With
 ##
@@ -2166,11 +2166,9 @@ interactive_expr: Match Verbatim With WILD ARROW Let WILD EQ Bytes In With
 ## Let let_binding seq(Attr) In
 ##
 
-Ill-formed value definition.
+Ill-formed value declaration.
 At this point, an expression is expected, where the binding is in
 scope.
-
-
 
 interactive_expr: LBRACE Constr DOT Ident With
 ##
@@ -2188,20 +2186,6 @@ following comes after:
   * the name of a record field;
   * the index of a component in a tuple, '0' denoting the first
     component.
-
-interactive_expr: LBRACE Constr With
-##
-## Ends in an error in state: 533.
-##
-## projection -> Constr . DOT Ident DOT nsepseq(selection,DOT) [ With EQ ]
-##
-## The known suffix of the stack is as follows:
-## Constr
-##
-
-Ill-formed selection in a module.
-At this point, the selection operator '.' is expected, followed by the
-name of a value defined in the module.
 
 interactive_expr: LBRACE Ident DOT Ident Verbatim
 ##
@@ -2377,8 +2361,8 @@ interactive_expr: LBRACE Ident With Ident EQ Bytes With
 ##
 
 Ill-formed record update.
-At this point, if the expression assigned to the field is complete,
-one of the following is expected:
+At this point, if the expression assigned to the field (update) is
+complete, one of the following is expected:
   * a semicolon ';' followed by another field assignment;
   * a closing brace '}' if the update is complete.
 
@@ -2406,8 +2390,8 @@ interactive_expr: LBRACE Ident EQ With
 ## Ident EQ
 ##
 
-Ill-formed assignment to a field in a record.
-At this point, the expression to assign is expected.
+Ill-formed record expression.
+At this point, the expression assigned to the field is expected.
 
 interactive_expr: LBRACE Ident WILD
 ##
@@ -2449,7 +2433,7 @@ interactive_expr: LBRACE Ident With Ident DOT Ident With
 
 Ill-formed record update.
 At this point, the assignment operator '=' is expected, followed by an
-expression.
+expression (update).
 
 interactive_expr: LBRACE Ident With Ident EQ Bytes SEMI Ident EQ Bytes SEMI With
 ##
@@ -2488,7 +2472,7 @@ interactive_expr: LBRACE Ident With Ident EQ With
 ##
 
 Ill-formed record update.
-At this point, the new expression to assign is expected.
+At this point, the expression assigned to the field is expected.
 
 interactive_expr: LBRACE Ident With Ident With
 ##
@@ -2519,7 +2503,7 @@ interactive_expr: LBRACE Ident With With
 
 Ill-formed record update.
 At this point, assignments to fields (updates) are expected, separated
-by semicolons ';' and starting with fully qualified field names.
+by semicolons ';' and each starting with fully qualified field names.
 
 interactive_expr: LBRACE With
 ##
@@ -2719,7 +2703,7 @@ At this point, if the expression is complete, one of the following is
 expected:
   * a type annotation starting with a colon ':' and followed by a type
     expression;
-  * a closing parenthesis ')' if no type annotation.
+  * a closing parenthesis ')', in the absence of type annotation.
 
 interactive_expr: LPAR With
 ##
@@ -3019,6 +3003,15 @@ interactive_expr: Verbatim Constr With
 ## The known suffix of the stack is as follows:
 ## Constr
 ##
+interactive_expr: LBRACE Constr With
+##
+## Ends in an error in state: 533.
+##
+## projection -> Constr . DOT Ident DOT nsepseq(selection,DOT) [ With EQ ]
+##
+## The known suffix of the stack is as follows:
+## Constr
+##
 
 Ill-formed selection from a module.
 At this point, the selection operator '.' is expected, followed by the
@@ -3200,7 +3193,7 @@ contract: Let Ident WILD COLON String VBAR
 ## In state 159, spurious reduction of production option(type_annotation) -> type_annotation
 ##
 
-Ill-formed value definition.
+Ill-formed value declaration.
 At this point, if the type annotation is complete, then the assignment
 operator '=' is expected, followed by an expression.
 
@@ -3223,7 +3216,7 @@ contract: Let WILD EQ With
 ## irrefutable option(type_annotation) EQ
 ##
 
-Ill-formed value definition.
+Ill-formed value declaration.
 At this point, an expression is expected.
 Hint: To check your understanding of the syntax, try and add
 parentheses around what you think is the expression.
@@ -3247,7 +3240,7 @@ contract: Let Ident WILD With
 ## sub_irrefutable
 ##
 
-Ill-formed function definition.
+Ill-formed function declaration.
 At this point, one of the following is expected:
   * another parameter as a pattern, for instance an identifier;
   * the assignment operator '=' followed by the function body as an
@@ -3609,7 +3602,7 @@ contract: Let WILD COLON Ident VBAR
 ## In state 159, spurious reduction of production option(type_annotation) -> type_annotation
 ##
 
-Ill-formed value definition.
+Ill-formed value declaration.
 At this point, if the type annotation is complete, the assignment
 operator '=' is expected, followed by an expression.
 
@@ -3673,7 +3666,7 @@ contract: Let WILD With
 ## In state 137, spurious reduction of production irrefutable -> sub_irrefutable
 ##
 
-Ill-formed value definition.
+Ill-formed value declaration.
 At this point, if this last pattern is complete, one of the following
 is expected:
   * a type annotation for the value being defined;
@@ -3777,7 +3770,7 @@ contract: Type Ident EQ LBRACE Ident COLON Constr SEMI Ident COLON Constr SEMI W
 
 Ill-formed record type.
 At this point, one of the following is expected:
-  * more field definitions separated by semicolons ';';
+  * more field declarations separated by semicolons ';';
   * a closing brace '}' if the record type is complete.
 
 contract: Type Ident EQ LBRACE Ident COLON With
@@ -3792,7 +3785,7 @@ contract: Type Ident EQ LBRACE Ident COLON With
 
 Ill-formed record type.
 At this point, a type expression is expected to conclude the field
-definition.
+declaration.
 Hint: To check your understanding of the syntax, try and add
 parentheses around what you think is the complete type expression.
 
@@ -3822,7 +3815,7 @@ contract: Type Ident EQ LBRACE With
 
 Ill-formed record type.
 At this point, field declarations are expected separated by semicolons
-';'.
+';' and concluded by a closing brace '}'.
 
 contract: Type Ident EQ LPAR String COMMA Constr RPAR With
 ##
@@ -3835,7 +3828,8 @@ contract: Type Ident EQ LPAR String COMMA Constr RPAR With
 ##
 
 Ill-formed type expression.
-At this point, a type constructor is expected, for example 'map'.
+At this point, a type constructor with two or more parameters is
+expected, like 'map'.
 
 contract: Type Ident EQ LPAR String COMMA String COMMA With
 ##
@@ -3897,7 +3891,7 @@ contract: Type Ident EQ LPAR String VBAR
 ## In state 28, spurious reduction of production type_expr -> fun_type
 ##
 
-Ill-formed application of a type constructor.
+Ill-formed application to a type constructor.
 At this point, if the argument is complete, one of the
 following is expected:
   * a closing parenthesis ')';
@@ -3946,7 +3940,7 @@ contract: Type Ident EQ Constr Of With
 ## Constr Of
 ##
 
-Ill-formed type of a data constructor.
+Ill-formed variant.
 At this point, a type other than a sum type or a record is expected.
 
 contract: Type Ident EQ String TIMES Constr With
@@ -4009,8 +4003,9 @@ contract: Type Ident EQ Constr VBAR With
 ## variant VBAR
 ##
 
-Ill-formed variant of a sum type.
-At this point, a variant starting with a data constructor is expected.
+Ill-formed variant.
+At this point, a data constructor is expected.
+Note: Data constructors and module names start with a capital letter.
 
 contract: Type Ident EQ With
 ##
@@ -4022,7 +4017,7 @@ contract: Type Ident EQ With
 ## Type Ident EQ
 ##
 
-Ill-formed type definition.
+Ill-formed type declaration.
 At this point, a type expression is expected.
 Hint: To check your understanding of the syntax, try and add
 parentheses around what you think is the complete type expression.
@@ -4037,7 +4032,7 @@ contract: Type Ident With
 ## Type Ident
 ##
 
-Ill-formed type definition.
+Ill-formed type declaration.
 At this point, the assignment operator '=' is expected, followed by a
 type expression.
 
@@ -4051,7 +4046,7 @@ contract: Type With
 ## Type
 ##
 
-Ill-formed type definition.
+Ill-formed type declaration.
 At this point, the name of the type being defined is expected.
 
 contract: With
