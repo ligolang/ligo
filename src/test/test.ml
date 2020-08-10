@@ -22,5 +22,6 @@ let () =
     Time_lock_repeat_tests.main ;
     Pledge_tests.main ;
     Tzip12_tests.main ;
+    Positive_contract_tests.main ;
   ] ;
   ()
