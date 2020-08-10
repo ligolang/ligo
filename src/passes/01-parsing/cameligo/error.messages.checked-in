@@ -1254,7 +1254,7 @@ interactive_expr: Begin If Verbatim Then Match Verbatim With WILD ARROW Bytes Wi
 ##
 
 Ill-formed pattern matching.
-At this point, if the case is complete, then a vertical bar '|' is
+At this point, if the case is complete, a vertical bar '|' is
 expected, followed by another case starting with a pattern.
 
 interactive_expr: Begin If Verbatim Then If With
@@ -3194,7 +3194,7 @@ contract: Let Ident WILD COLON String VBAR
 ##
 
 Ill-formed value declaration.
-At this point, if the type annotation is complete, then the assignment
+At this point, if the type annotation is complete, the assignment
 operator '=' is expected, followed by an expression.
 
 contract: Let Ident WILD EQ With
@@ -3245,8 +3245,7 @@ At this point, one of the following is expected:
   * another parameter as a pattern, for instance an identifier;
   * the assignment operator '=' followed by the function body as an
     expression;
-  * a colon ':' followed by the type of the calls to the defined
-    function.
+  * a colon ':' followed by the type of the returned value.
 
 contract: Let LBRACE Ident EQ Bytes SEMI Ident EQ Bytes SEMI With
 ##
@@ -3641,9 +3640,8 @@ contract: Let WILD COMMA WILD COMMA With
 ##
 
 Ill-formed tuple of patterns.
-At this point, another component is expected as a pattern amongst the
-following:
-  * an identifier,
+At this point, another component is expected as one of the following:
+* an identifier,
   * a wildcard '_',
   * the unit '()',
   * a record pattern,
@@ -3954,7 +3952,7 @@ contract: Type Ident EQ String TIMES Constr With
 ##
 
 Ill-formed selection of a type in a module.
-At this point, the selection operator '.' is expected, followed by a
+At this point, the selection operator '.' is expected, followed by
 the name of a type defined in the module.
 
 contract: Type Ident EQ String TIMES String TIMES With
