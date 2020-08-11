@@ -16,19 +16,12 @@ Version.ml
 /_coverage/
 /_coverage_*/
 *.gyp
-tools/lsp/pascaligo/package.json
-tools/lsp/pascaligo/node_modules
-tools/lsp/pascaligo/log.html
-tools/lsp/pascaligo/src/
-tools/lsp/pascaligo/index.js
-tools/lsp/pascaligo/node_modules
+
+# lsp-related 
+node_modules/
+tools/lsp/squirrel/grammar/*/src
+tools/lsp/squirrel/vendor/**
 .stack-work
-tools/lsp/camligo/package.json
-tools/lsp/camligo/node_modules
-tools/lsp/camligo/log.html
-tools/lsp/camligo/src/
-tools/lsp/camligo/index.js
-tools/lsp/camligo/node_modules
 nix/result
 .idea
 *.iml
