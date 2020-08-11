@@ -7,32 +7,34 @@ type 'selector_output selector_outputs =
   | WasNotSelected
 type new_constraints = type_constraint list
 type new_assignments = c_constructor_simpl list
-type ('old_constraint_type, 'selector_output) selector = 'old_constraint_type selector_input -> structured_dbs -> 'selector_output selector_outputs
-type 'selector_output propagator = structured_dbs -> 'selector_output -> new_constraints * new_assignments
-type ('old_constraint_type , 'selector_output ) propagator_heuristic = {
+type ('old_constraint_type, 'selector_output , 'private_storage) selector = 'old_constraint_type selector_input -> 'private_storage -> structured_dbs -> 'private_storage * 'selector_output selector_outputs
+type ('selector_output , 'private_storage) propagator = 'private_storage -> structured_dbs -> 'selector_output -> 'private_storage * new_constraints * new_assignments
+type ('old_constraint_type , 'selector_output , 'private_storage) propagator_heuristic = {
   (* sub-sub component: lazy selector (don't re-try all selectors every time)
    * For now: just re-try everytime *)
-  selector          : ('old_constraint_type, 'selector_output) selector ;
+  selector          : ('old_constraint_type , 'selector_output , 'private_storage) selector ;
   (* constraint propagation: (buch of constraints) → (new constraints * assignments) *)
-  propagator        : 'selector_output propagator ;
+  propagator        : ('selector_output , 'private_storage) propagator ;
   printer           : Format.formatter -> 'selector_output -> unit ;
   comparator        : 'selector_output -> 'selector_output -> int ;
+  initial_private_storage : 'private_storage;
 }
 
-type ('old_constraint_type , 'selector_output ) propagator_state = {
-  selector          : ('old_constraint_type, 'selector_output) selector ;
-  propagator        : 'selector_output propagator ;
+type ('old_constraint_type , 'selector_output , 'private_storage) propagator_state = {
+  selector          : ('old_constraint_type , 'selector_output , 'private_storage) selector ;
+  propagator        : ('selector_output , 'private_storage) propagator ;
   printer           : Format.formatter -> 'selector_output -> unit ;
   already_selected  : 'selector_output Set.t;
+  private_storage   : 'private_storage;
 }
 
 type ex_propagator_heuristic =
   (* For now only support a single type of input, make this polymorphic as needed. *)
-  | Propagator_heuristic : (type_constraint_simpl, 'selector_output) propagator_heuristic -> ex_propagator_heuristic
+  | Propagator_heuristic : (type_constraint_simpl , 'selector_output , 'private_storage) propagator_heuristic -> ex_propagator_heuristic
 
 type ex_propagator_state =
   (* For now only support a single type of input, make this polymorphic as needed. *)
-  | Propagator_state : (type_constraint_simpl, 'selector_output) propagator_state -> ex_propagator_state
+  | Propagator_state : (type_constraint_simpl , 'selector_output , 'private_storage) propagator_state -> ex_propagator_state
 
 type typer_state = {
   structured_dbs                   : structured_dbs   ;
