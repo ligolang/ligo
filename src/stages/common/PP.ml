@@ -2,14 +2,16 @@ open Types
 open Format
 open PP_helpers
 
-let constructor ppf (c:constructor') : unit =
-  let Constructor c = c in fprintf ppf "%s" c
-
 let label ppf (l:label) : unit =
   let Label l = l in fprintf ppf "%s" l
 
-
 let list_sep_d x = list_sep x (tag " ,@ ")
+
+let record_sep_expr value sep ppf (m : 'a label_map) =
+  let lst = LMap.to_kv_list m in
+  let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
+  let new_pp ppf (k, v) = fprintf ppf "@[<h>%a = %a@]" label k value v in
+  fprintf ppf "%a" (list_sep new_pp sep) lst
 
 let constant ppf : constant' -> unit = function
   | C_INT                   -> fprintf ppf "INT"
@@ -130,10 +132,60 @@ let constant ppf : constant' -> unit = function
   | C_CONVERT_FROM_RIGHT_COMB -> fprintf ppf "CONVERT_FROM_RIGHT_COMB"
   | C_CONVERT_FROM_LEFT_COMB  -> fprintf ppf "CONVERT_FROM_LEFT_COMB"
 
+let operation ppf (o : Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation) : unit =
+  let print_option f ppf o =
+    match o with
+      Some (s) -> fprintf ppf "%a" f s
+    | None -> fprintf ppf "None"
+  in
+    let open Tezos_micheline.Micheline in
+  let rec prim ppf (node : (_,Memory_proto_alpha.Protocol.Alpha_context.Script.prim) node)= match node with
+    | Int (l , i) -> fprintf ppf "Int (%i, %a)" l Z.pp_print i
+    | String (l , s) -> fprintf ppf "String (%i, %s)" l s
+    | Bytes (l, b) -> fprintf ppf "B (%i, %s)" l (Bytes.to_string b)
+    | Prim (l , p , nl, a) -> fprintf ppf "P (%i, %s, %a, %a)" l
+        (Memory_proto_alpha.Protocol.Michelson_v1_primitives.string_of_prim p)
+        (list_sep_d prim) nl
+        (list_sep_d (fun ppf s -> fprintf ppf "%s" s)) a
+    | Seq (l, nl) -> fprintf ppf "S (%i, %a)" l
+        (list_sep_d prim) nl
+  in
+  let l ppf (l: Memory_proto_alpha.Protocol.Alpha_context.Script.lazy_expr) =
+    let oo = Data_encoding.force_decode l in
+    match oo with
+      Some o -> fprintf ppf "%a" prim (Tezos_micheline.Micheline.root o)
+    | None  -> fprintf ppf "Fail decoding"
+  in
+
+  let op ppf (type a) : a Memory_proto_alpha.Protocol.Alpha_context.manager_operation -> unit = function
+    | Reveal (s: Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key.t) -> 
+      fprintf ppf "R %a" Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key.pp s
+    | Transaction {amount; parameters; entrypoint; destination} ->
+      fprintf ppf "T {%a; %a; %s; %a}"
+        Memory_proto_alpha.Protocol.Alpha_context.Tez.pp amount
+        l parameters
+        entrypoint
+        Memory_proto_alpha.Protocol.Alpha_context.Contract.pp destination
+
+    | Origination {delegate; script; credit; preorigination} ->
+      fprintf ppf "O {%a; %a; %a; %a}" 
+        (print_option Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key_hash.pp) delegate
+        l script.code
+        Memory_proto_alpha.Protocol.Alpha_context.Tez.pp credit
+        (print_option Memory_proto_alpha.Protocol.Alpha_context.Contract.pp) preorigination
+        
+    | Delegation so ->
+      fprintf ppf "D %a" (print_option Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key_hash.pp) so
+  in
+  let Internal_operation {source;operation;nonce} = o in
+  fprintf ppf "{source: %s; operation: %a; nonce: %i"
+    (Memory_proto_alpha.Protocol.Alpha_context.Contract.to_b58check source)
+    op operation
+    nonce
+
 let literal ppf (l : literal) =
   match l with
   | Literal_unit -> fprintf ppf "unit"
-  | Literal_void -> fprintf ppf "void"
   | Literal_int z -> fprintf ppf "%a" Z.pp_print z
   | Literal_nat z -> fprintf ppf "+%a" Z.pp_print z
   | Literal_timestamp z -> fprintf ppf "+%a" Z.pp_print z
@@ -141,7 +193,7 @@ let literal ppf (l : literal) =
   | Literal_string s -> fprintf ppf "%a" Ligo_string.pp s
   | Literal_bytes b -> fprintf ppf "0x%a" Hex.pp (Hex.of_bytes b)
   | Literal_address s -> fprintf ppf "@%S" s
-  | Literal_operation _ -> fprintf ppf "Operation(...bytes)"
+  | Literal_operation o -> fprintf ppf "Operation(%a)" operation o
   | Literal_key s -> fprintf ppf "key %s" s
   | Literal_key_hash s -> fprintf ppf "key_hash %s" s
   | Literal_signature s -> fprintf ppf "Signature %s" s
@@ -165,96 +217,24 @@ let s =
     | TC_signature -> "signature"
     | TC_timestamp -> "timestamp"
     | TC_chain_id -> "chain_id"
-    | TC_void -> "void"
 in
 fprintf ppf "%s" s
 
-module Ast_PP_type (PARAMETER : AST_PARAMETER_TYPE) = struct
-  module Agt=Ast_generic_type(PARAMETER)
-  open Agt
-  open Format
-
-  let cmap_sep value sep ppf m =
-    let lst = CMap.to_kv_list m in
-    let lst = List.sort (fun (Constructor a,_) (Constructor b,_) -> String.compare a b) lst in
-    let new_pp ppf (k, {ctor_type;_}) = fprintf ppf "@[<h>%a -> %a@]" constructor k value ctor_type in
-    fprintf ppf "%a" (list_sep new_pp sep) lst
-  let cmap_sep_d x = cmap_sep x (tag " ,@ ")
-
-  let record_sep value sep ppf (m : 'a label_map) =
-    let lst = LMap.to_kv_list m in
-    let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
-    let new_pp ppf (k, {field_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value field_type in
-    fprintf ppf "%a" (list_sep new_pp sep) lst
-
-  let tuple_sep value sep ppf m =
-    assert (Helpers.is_tuple_lmap m);
-    let lst = Helpers.tuple_of_record m in
-    let new_pp ppf (_, {field_type;_}) = fprintf ppf "%a" value field_type in
-    fprintf ppf "%a" (list_sep new_pp sep) lst
-
-  let record_sep_expr value sep ppf (m : 'a label_map) =
-    let lst = LMap.to_kv_list m in
-    let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
-    let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" label k value v in
-    fprintf ppf "%a" (list_sep new_pp sep) lst
-
-  let tuple_sep_expr value sep ppf m =
-    assert (Helpers.is_tuple_lmap m);
-    let lst = Helpers.tuple_of_record m in
-    let new_pp ppf (_,v) = fprintf ppf "%a" value v in
-    fprintf ppf "%a" (list_sep new_pp sep) lst
-
-  (* Prints records which only contain the consecutive fields
-    0..(cardinal-1) as tuples *)
-  let tuple_or_record_sep_t value format_record sep_record format_tuple sep_tuple ppf m =
-    if Helpers.is_tuple_lmap m then
-      fprintf ppf format_tuple (tuple_sep value (tag sep_tuple)) m
-    else
-      fprintf ppf format_record (record_sep value (tag sep_record)) m
-
-  let tuple_or_record_sep_expr value format_record sep_record format_tuple sep_tuple ppf m =
-    if Helpers.is_tuple_lmap m then
-      fprintf ppf format_tuple (tuple_sep_expr value (tag sep_tuple)) m
-    else
-      fprintf ppf format_record (record_sep_expr value (tag sep_record)) m
-
-  let tuple_or_record_sep_expr value = tuple_or_record_sep_expr value "@[<hv 7>record[%a]@]" " ,@ " "@[<hv 2>( %a )@]" " ,@ "
-  let tuple_or_record_sep_type value = tuple_or_record_sep_t value "@[<hv 7>record[%a]@]" " ,@ " "@[<hv 2>( %a )@]" " *@ "
-
-  let rec type_expression' :
-         (formatter -> type_expression -> unit)
-      -> formatter
-      -> type_expression
-      -> unit =
-   fun f ppf te ->
-    match te.type_content with
-    | T_sum m -> fprintf ppf "@[<hv 4>sum[%a]@]" (cmap_sep_d f) m
-    | T_record m -> fprintf ppf "%a" (tuple_or_record_sep_type f) m
-    | T_arrow a -> fprintf ppf "%a -> %a" f a.type1 f a.type2
-    | T_variable tv -> type_variable ppf tv
-    | T_constant tc -> type_constant ppf tc
-    | T_operator to_ -> type_operator f ppf to_
-
-  and type_expression ppf (te : type_expression) : unit =
-    type_expression' type_expression ppf te
-
-  and type_operator : (formatter -> type_expression -> unit) -> formatter -> type_operator * type_expression list -> unit =
-   fun f ppf to_ ->
-    let s = match to_ with
-      TC_option                    , lst -> Format.asprintf "option(%a)"                     (list_sep_d f) lst
-    | TC_list                      , lst -> Format.asprintf "list(%a)"                       (list_sep_d f) lst
-    | TC_set                       , lst -> Format.asprintf "set(%a)"                        (list_sep_d f) lst
-    | TC_map                       , lst -> Format.asprintf "Map (%a)"                       (list_sep_d f) lst
-    | TC_big_map                   , lst -> Format.asprintf "Big Map (%a)"                   (list_sep_d f) lst
-    | TC_map_or_big_map            , lst -> Format.asprintf "Map Or Big Map (%a)"            (list_sep_d f) lst
-    | TC_contract                  , lst -> Format.asprintf "Contract (%a)"                  (list_sep_d f) lst
-    | TC_michelson_pair            , lst -> Format.asprintf "michelson_pair (%a)"            (list_sep_d f) lst                            
-    | TC_michelson_or              , lst -> Format.asprintf "michelson_or (%a)"              (list_sep_d f) lst
-    | TC_michelson_pair_right_comb , lst -> Format.asprintf "michelson_pair_right_comb (%a)" (list_sep_d f) lst
-    | TC_michelson_pair_left_comb  , lst -> Format.asprintf "michelson_pair_left_comb (%a)"  (list_sep_d f) lst
-    | TC_michelson_or_right_comb   , lst -> Format.asprintf "michelson_or_right_comb (%a)"   (list_sep_d f) lst
-    | TC_michelson_or_left_comb    , lst -> Format.asprintf "michelson_or_left_comb (%a)"    (list_sep_d f) lst
-    in
-    fprintf ppf "(type_operator: %s)" s
-end
+and type_operator : formatter -> type_operator' -> unit =
+  fun ppf to_ ->
+  let s = match to_ with
+    TC_option                    -> Format.asprintf "option"                    
+  | TC_list                      -> Format.asprintf "list"                      
+  | TC_set                       -> Format.asprintf "set"                       
+  | TC_map                       -> Format.asprintf "Map"                      
+  | TC_big_map                   -> Format.asprintf "Big Map"                  
+  | TC_map_or_big_map            -> Format.asprintf "Map Or Big Map"           
+  | TC_contract                  -> Format.asprintf "Contract"                 
+  | TC_michelson_pair            -> Format.asprintf "michelson_pair"           
+  | TC_michelson_or              -> Format.asprintf "michelson_or"             
+  | TC_michelson_pair_right_comb -> Format.asprintf "michelson_pair_right_comb"
+  | TC_michelson_pair_left_comb  -> Format.asprintf "michelson_pair_left_comb" 
+  | TC_michelson_or_right_comb   -> Format.asprintf "michelson_or_right_comb"  
+  | TC_michelson_or_left_comb    -> Format.asprintf "michelson_or_left_comb"   
+  in
+  fprintf ppf "%s" s

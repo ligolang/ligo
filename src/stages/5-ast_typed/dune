@@ -1,0 +1,25 @@
+(rule
+  (targets generated_fold.ml generated_map.ml generated_o.ml)
+  ;; TODO: auto-generate the dependencies on the files "(*@ follow *)"-ed by the generator
+  (deps ../adt_generator/generator.raku ast.ml ../common/enums.ml)
+  (action (run perl6 ../adt_generator/generator.raku ast.ml Generated_o generated_o.ml generated_fold.ml generated_map.ml typed))
+  (mode (promote (until-clean) (only *)))
+)
+
+(library
+  (name ast_typed)
+  (public_name ligo.ast_typed)
+  (libraries
+    simple-utils
+    tezos-utils
+    ast_core ; Is that a good idea?
+    stage_common
+    adt_generator
+    UnionFind
+  )
+  (preprocess
+    (pps ppx_let bisect_ppx --conditional)
+  )
+;;  (modules_without_implementation generated_fold_x)
+  (flags (:standard -open Simple_utils))
+)

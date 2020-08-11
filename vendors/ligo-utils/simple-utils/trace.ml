@@ -212,15 +212,12 @@ module Trace_tutorial = struct
 
 end (* end Trace_tutorial. *)
 
-module J = Yojson.Basic
-
-
 (* Annotations should be used in debug mode to aggregate information
    about some value history. Where it was produced, when it was
    modified, etc.  It is currently not being used. *)
 
 type 'a thunk = unit -> 'a
-type annotation = J.t
+type annotation = Yojson.t
 
 (* Even in debug mode, building annotations can be quite
    resource-intensive.  Instead, a thunk is passed, that is computed
@@ -256,6 +253,7 @@ let map f = function
 
 let (>>?)  x f = bind f x
 let (>>|?) x f = map f x
+let (>>) x f = f @@ ok x
 
 (* Used by PPX_let, an OCaml preprocessor.
    What it does is that, when you only care about the case where a result isn't
@@ -324,6 +322,14 @@ let to_option = function
   | Error _ -> None
 
 (**
+  Convert a result to a json, if res in an error, the produces JSON will be
+  empty, otherwise the provided to_json function will be used
+*)
+let to_json to_json = function
+  | Ok (v,_) ->  to_json v
+  | Error _ -> `Null 
+
+(**
    Convert an option to a result, with a given error if the parameter is None.
 *)
 let trace_option error = function
@@ -333,6 +339,7 @@ let trace_option error = function
 let trace_assert_fail_option error = function
     None -> ok ()
     | Some _s -> fail error
+
 
 (** Utilities to interact with other data-structure.  [bind_t] takes
    an ['a result t] and makes a ['a t result] out of it. It "lifts" the
@@ -344,6 +351,10 @@ let trace_assert_fail_option error = function
    [bind_t @@ T.map]. So that you can rewrite the previous example as
    [let%bind lst' = bind_map_list f lst].  Same thing with folds.
  *)
+
+let bind_compose f g x = 
+  let%bind y = g x in
+  f y
 
 let bind_map_option f = function
     None -> ok None
@@ -545,7 +556,8 @@ module Assert = struct
 
   let assert_list_empty err lst =
     assert_true err List.(length lst = 0)
+  
+  let assert_list_same_size err lsta lstb =
+    assert_true err List.(length lsta = length lstb)
 
 end
-
-let json_of_error = J.to_string

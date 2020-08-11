@@ -15,12 +15,25 @@ my $folder_filename      = @*ARGS[3];
 my $mapper_filename      = @*ARGS[4];
 
 my $moduleName = $inputADTfile.subst(/\.ml$/, '').samecase("A_");
+say "\$moduleName is $moduleName";
 my $variant = "_ _variant";
 my $record = "_ _ record";
 sub poly { $^type_name }
 
 my $l = $inputADTfile.IO.lines;
-$l = $l.map(*.subst: /(^\s+|\s+$)/, "");
+# TODO: do the inlining recursively?
+$l = $l.map({
+    given $_ {
+        when /^(\(\*\s+)?(open|include) \s+ (<-blank -[\(]>*) \s* \(\*\@ \s* follow \s* (<-blank -[\*]>*) \s* \*\)\s*$/ {
+            flat ["(* $/[2] followed from $/[3] *)"],
+                 $/[3].IO.lines.list,
+                 ["(* end of $/[2] followed from $/[3] *)"]
+        }
+        default { [$_] }
+    }
+}).flat;
+$l = $l.grep(none /^\(\*\@ \s* ignore \s* \*\)/);
+$l = $l.map(*.subst: /(^\s+|\s+$)/, "", :g);
 $l = $l.list.cache;
 my $statement_re = /^((\(\*\s+)?(open|include)\s|\[\@\@\@warning\s)/;
 my $statements = $l.grep($statement_re);
@@ -94,6 +107,12 @@ $*OUT = open $folder_filename, :w;
     for $statements -> $statement { say "$statement" }
     say "open $moduleName;;";
 
+    say "  (* must be provided by one of the open or include statements: *)";
+    say "  module CheckFolderInputSignature = struct";
+    for $adts.grep({$_<kind> ne $record && $_<kind> ne $variant}).map({$_<kind>}).unique -> $poly
+    { say "    let make__$poly : type a b . (a -> b option) -> a $poly -> b $poly option = make__$poly;;"; }
+    say "  end";
+
     say "";
     say "  include Adt_generator.Generic.BlahBluh";
     say "  type ('in_state, 'out_state , 'adt_info_node_instance_info) _fold_config = \{";
@@ -108,8 +127,24 @@ $*OUT = open $folder_filename, :w;
     say '    };;';
 
     say "";
+    say "  type whatever =";
+    say "  | NoArgument (* supplied to make constructors with no arguments *)";
+    # look for builtins, filtering out the "implicit unit-like fake argument of emtpy constructors" (represented by '')
+    for $adts.map({ $_<ctorsOrFields> })[*;*].grep({$_<isBuiltin> && $_<type> ne ''}).map({$_<type>}).unique -> $builtin
+    { say "  | Whatever_{tc $builtin} of $builtin"; }
+    for $adts.list -> $t
+    { say "  | Whatever_{tc $t<name>} of $t<name>" }
+
+    say "  type make_poly =";
+    # look for built-in polymorphic types
+    for $adts.grep({$_<kind> ne $record && $_<kind> ne $variant}).map({$_<kind>}).unique -> $poly
+    { say "  | Make_{tc $poly} of (whatever $poly -> whatever option)"; }
+
+    say "";
     say "  module Adt_info = Adt_generator.Generic.Adt_info (struct";
     say "    type nonrec ('in_state , 'out_state , 'adt_info_node_instance_info) fold_config = ('in_state , 'out_state , 'adt_info_node_instance_info) _fold_config;;";
+    say "    type nonrec whatever = whatever;;";
+    say "    type nonrec make_poly = make_poly;;";
     say "  end);;";
     say "  include Adt_info;;";
     say "  type ('in_state, 'out_state) fold_config = ('in_state , 'out_state , ('in_state , 'out_state) Adt_info.node_instance_info) _fold_config;;";
@@ -127,14 +162,31 @@ $*OUT = open $folder_filename, :w;
     for $adts.list -> $t
     { for $t<ctorsOrFields>.list -> $c
       { say "  (* info for field or ctor $t<name>.$c<name> *)";
-        say "  let info__$t<name>__$c<name> : Adt_info.ctor_or_field = \{";
-        say "      name = \"$c<name>\";";
-        say "      is_builtin = {$c<isBuiltin> ?? 'true' !! 'false'};";
-        say "      type_ = \"$c<type>\";";
-        say '    };;';
+        if ($t<kind> eq $variant) {
+	    say "  let info__$t<name>__$c<name> : Adt_info.constructor_type = \{";
+	    say "      ctor = \{";
+	    say "        name = \"$c<name>\";";
+	    say "        is_builtin = {$c<isBuiltin> ?? 'true' !! 'false'};";
+	    say "        type_ = \"$c<type>\";";
+	    say "      \};";
+	    if ($c<type> eq '') {
+		# this constructor has no arguments.
+		say "      make_ctor = (function NoArgument -> Some (Whatever_{tc $t<name>} $c<name>) | _ -> None);";
+	    } else {
+		say "      make_ctor = (function Whatever_{tc $c<type>} v -> Some (Whatever_{tc $t<name>} ($c<name> v)) | _ -> None);";
+	    }
+	    say '    };;';
+        } else {
+	    say "  let info__$t<name>__$c<name> : Adt_info.ctor_or_field = \{";
+	    say "        name = \"$c<name>\";";
+	    say "        is_builtin = {$c<isBuiltin> ?? 'true' !! 'false'};";
+	    say "        type_ = \"$c<type>\";";
+	    say '    };;';
+	}
         # say "";
         say "  let continue_info__$t<name>__$c<name> : type in_qstate out_qstate . the_folds -> (in_qstate , out_qstate) fold_config -> {$c<type> || 'unit'} -> (in_qstate, out_qstate) Adt_info.ctor_or_field_instance = fun the_folds visitor x -> \{";
-        say "        cf = info__$t<name>__$c<name>;";
+        my $dotctor = ($t<kind> eq $variant) ?? ".ctor" !! ""; # TODO: give the full constructor info with its "make" function instead of extracting the .ctor part.
+        say "        cf = info__$t<name>__$c<name>$dotctor;";
         say "        cf_continue = (fun state -> the_folds.fold__$t<name>__$c<name> the_folds visitor state x);";
         say "        cf_new_fold = (fun visitor state -> the_folds.fold__$t<name>__$c<name> the_folds visitor state x);";
         say '      };;';
@@ -142,16 +194,40 @@ $*OUT = open $folder_filename, :w;
       }
       say "  (* info for node $t<name> *)";
       say "  let info__$t<name> : Adt_info.node = \{";
-      my $kind = do given $t<kind> {
-          when $record { "Record" }
-          when $variant { "Variant" }
-          default { "Poly \"$_\"" }
+      print "      kind = ";
+      do given $t<kind> {
+          when $record {
+	      say "RecordType \{";
+	      say "        fields = [";
+	      for $t<ctorsOrFields>.list -> $f {
+		  say "          info__$t<name>__$f<name>;";
+	      }
+	      say "        ];";
+	      say "        make_record = (fun r -> match Adt_generator.Common.sorted_bindings r with";
+	      say "        | [";
+	      for $t<ctorsOrFields>.list.sort({$_<name>}) -> $f {
+		  say "          (\"$f<name>\" , Whatever_{tc $f<type>} $f<name>) ;";
+	      }	    
+	      say "          ] -> Some (Whatever_{tc $t<name>} \{";
+	      for $t<ctorsOrFields>.list -> $f { say "          $f<name> ;"; }
+	      say "        \})";
+	      say "        | _ -> None)";
+	      say "      \};"; }
+          when $variant {
+	      say "VariantType \{";
+	      print "        constructors = [ ";
+	      for $t<ctorsOrFields>.list -> $c { print "info__$t<name>__$c<name> ; "; }
+	      say "];";
+	      say "      \};"; }
+          default {
+	      say "PolyType \{";
+	      say "        poly_name = \"$_\";";
+	      print "        make_poly = Make_{tc $_} (fun p -> match make__$_ ";
+	      for $t<ctorsOrFields>.list -> $a { print "(function Whatever_{tc $a<type>} v -> Some v | _ -> None)"; }
+	      say " p with Some p -> Some (Whatever_{tc $t<name>} p) | None -> None);";
+	      say "      \};"; }
       };
-      say "      kind = $kind;";
       say "      declaration_name = \"$t<name>\";";
-      print "      ctors_or_fields = [ ";
-      for $t<ctorsOrFields>.list -> $c { print "info__$t<name>__$c<name> ; "; }
-      say "];";
       say '    };;';
       # say "";
       # TODO: factor out some of the common bits here.
@@ -161,10 +237,10 @@ $*OUT = open $folder_filename, :w;
       do given $t<kind> {
           when $record {
               say '      instance_kind = RecordInstance {';
-              print "      fields = [ ";
+              print "          field_instances = [ ";
               for $t<ctorsOrFields>.list -> $c { print "continue_info__$t<name>__$c<name> the_folds visitor x.$c<name> ; "; }
-              say "      ];";
-              say '  };';
+              say "];";
+              say '        };';
           }
           when $variant {
               say "      instance_kind =";
@@ -174,7 +250,7 @@ $*OUT = open $folder_filename, :w;
               for $t<ctorsOrFields>.list -> $c { say "               | $c<name> { $c<type> ?? 'v ' !! '' }-> continue_info__$t<name>__$c<name> the_folds visitor { $c<type> ?? 'v' !! '()' }"; }
               say "              );";
               print "            variant = [ ";
-              for $t<ctorsOrFields>.list -> $c { print "info__$t<name>__$c<name> ; "; }
+              for $t<ctorsOrFields>.list -> $c { print "info__$t<name>__$c<name>.ctor ; "; } # TODO: give the full constructor info with its "make" function.
               say "];";
               say '          };';
           }
@@ -183,9 +259,7 @@ $*OUT = open $folder_filename, :w;
               say '        PolyInstance {';
               say "            poly = \"$_\";";
               print "            arguments = [";
-              # TODO: sort by c<name> (currently we only have one-argument
-              # polymorphic types so it happens to work but should be fixed.
-              for $t<ctorsOrFields>.list -> $c { print "\"$c<type>\""; }
+              for $t<ctorsOrFields>.list.sort({$_<name>}) -> $c { print "\"$c<type>\""; }
               say "];";
               print "            poly_continue = (fun state -> visitor.$_ visitor (";
               print $t<ctorsOrFields>
@@ -201,10 +275,11 @@ $*OUT = open $folder_filename, :w;
 
     say "";
     say "  (* info for adt $moduleName *)";
-    print "  let whole_adt_info : unit -> Adt_info.adt = fun () -> [ ";
+    say "  let whole_adt_info : unit -> Adt_info.adt = fun () ->";
+    print "  match RedBlackTrees.PolyMap.from_list ~cmp:String.compare [ ";
     for $adts.list -> $t
-    { print "info__$t<name> ; "; }
-    say "];;";
+    { print "\"$t<name>\" , info__$t<name> ; "; }
+    say "] with Some x -> x | None -> failwith \"Internal error: duplicate nodes in ADT info\";;";
 
     # fold functions
     say "";
@@ -300,7 +375,7 @@ $*OUT = open $mapper_filename, :w;
     }
 
     say "";
-    for $adts.grep({$_<kind> ne $record && $_<kind> ne $variant && $typeclasses{$_<kind>}}).unique(:as({$_<ctorsOrFields>, $_<kind>})) -> $t
+    for $adts.grep({$_<kind> ne $record && $_<kind> ne $variant && $typeclasses{$_<kind>}}).unique(:as({$_<ctorsOrFields>, $_<kind>}), :with(&[eqv])) -> $t
     { my $ty = $t<ctorsOrFields>[0]<type>;
       my $typeclass = $typeclasses{$t<kind>};
       say "  val extra_info__{$ty}__$typeclass : $ty extra_info__$typeclass;;"; }
@@ -311,7 +386,7 @@ $*OUT = open $mapper_filename, :w;
     say "  module O : OSig = $oModuleName";
     say "";
     say "  (* must be provided by one of the open or include statements: *)";
-    say "  module CheckInputSignature = struct";
+    say "  module CheckMapperInputSignature = struct";
     for $adts.grep({$_<kind> ne $record && $_<kind> ne $variant}).map({$_<kind>}).unique -> $poly
     { say "    let fold_map__$poly : type a new_a state err .{ $typeclasses{$poly} ?? " new_a extra_info__{$typeclasses{$poly}} ->" !! "" } (state -> a -> (state * new_a, err) monad) -> state -> a $poly -> (state * new_a $poly , err) monad = fold_map__$poly;;"; }
     say "  end";
@@ -500,7 +575,7 @@ $*OUT = open $combinators_filename, :w;
     }
 
     say "";
-    for $adts.grep({$_<kind> ne $record && $_<kind> ne $variant && $typeclasses{$_<kind>}}).unique(:as({$_<ctorsOrFields>, $_<kind>})) -> $t
+    for $adts.grep({$_<kind> ne $record && $_<kind> ne $variant && $typeclasses{$_<kind>}}).unique(:as({$_<ctorsOrFields>, $_<kind>}), :with(&[eqv])) -> $t
     { my $ty = $t<ctorsOrFields>[0]<type>;
       my $typeclass = $typeclasses{$t<kind>};
       say "let extra_info__{$ty}__$typeclass : $ty extra_info__$typeclass = {tc $typeclass}.$ty;;";

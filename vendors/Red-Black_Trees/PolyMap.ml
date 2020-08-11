@@ -31,10 +31,29 @@ let find key map =
 let find_opt key map =
   try Some (find key map) with Not_found -> None
 
+let has_key key map =
+  match find_opt key map with
+    Some _ -> true
+  | None -> false
+
 let update key updater map =
   match updater (find_opt key map) with
   | None -> remove key map
   | Some v -> add key v map
+
+type ('key, 'value) added = {map : ('key, 'value) t; duplicates : ('key * 'value) list; added : ('key * 'value) list}
+let add_list elts map =
+  let aux = fun {map ; duplicates ; added} ((key, value) as kv) ->
+    if has_key key map
+    then {map; duplicates = kv :: duplicates ; added}
+    else {map = add key value map; duplicates; added = kv :: added} in
+  List.fold_left aux {map; duplicates=[]; added = []} elts
+
+let from_list ~cmp elts =
+  match add_list elts (create ~cmp) with
+    { map; duplicates = []; added = _ } -> Some map
+  | _ -> None (* Refuse to create a map from a list with duplicates *)
+
 
 let bindings map =
   RB.fold_dec (fun ~elt ~acc -> elt::acc) ~init:[] map.tree

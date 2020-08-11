@@ -2,8 +2,6 @@ type all =
 [
  | `Main_invalid_syntax_name of string
  | `Main_invalid_extension of string
- | `Main_bad_michelson_parameter of Michelson.michelson
- | `Main_bad_michelson_storage of Michelson.michelson
  | `Main_bad_michelson of Michelson.michelson
  | `Main_gas_exhaustion
  | `Main_unparse_tracer of [ `Tezos_alpha_error of Proto_alpha_utils.Error_monad.error ] list
@@ -21,21 +19,25 @@ type all =
  | `Main_michelson_execution_error of Proto_alpha_utils.Trace.tezos_alpha_error list
 
  | `Main_parser of Parser.Errors.parser_error
+ | `Main_pretty of Parser.Errors.parser_error
  | `Main_self_ast_imperative of Self_ast_imperative.Errors.self_ast_imperative_error
- | `Main_imperative_to_sugar of Imperative_to_sugar.Errors.imperative_to_sugar_error
- | `Main_sugar_to_core of Sugar_to_core.Errors.sugar_to_core_error
- | `Main_cit_pascaligo of Concrete_to_imperative.Errors_pascaligo.abs_error
- | `Main_cit_cameligo of Concrete_to_imperative.Errors_cameligo.abs_error
+ | `Main_purification   of Purification.Errors.purification_error
+ | `Main_depurification of Purification.Errors.purification_error
+ | `Main_desugaring of Desugaring.Errors.desugaring_error
+ | `Main_sugaring   of Desugaring.Errors.desugaring_error
+ | `Main_cit_pascaligo of Tree_abstraction.Pascaligo.Errors.abs_error
+ | `Main_cit_cameligo of Tree_abstraction.Cameligo.Errors.abs_error
+ | `Main_cit_reasonligo of Tree_abstraction.Reasonligo.Errors.abs_error
  | `Main_typer of Typer.Errors.typer_error
  | `Main_interpreter of Interpreter.interpreter_error
  | `Main_self_ast_typed of Self_ast_typed.Errors.self_ast_typed_error
  | `Main_self_mini_c of Self_mini_c.Errors.self_mini_c_error
- | `Main_transpiler of Transpiler.Errors.transpiler_error
- | `Main_compiler of Compiler.Errors.compiler_error
+ | `Main_spilling of Spilling.Errors.spilling_error
+ | `Main_stacking of Stacking.Errors.stacking_error
 
- | `Main_uncompile_michelson of Compiler.Errors.compiler_error
- | `Main_uncompile_mini_c of Transpiler.Errors.transpiler_error
- | `Main_uncompile_typed of Typer.Errors.typer_error
+ | `Main_decompile_michelson of Stacking.Errors.stacking_error
+ | `Main_decompile_mini_c of Spilling.Errors.spilling_error
+ | `Main_decompile_typed of Typer.Errors.typer_error
  | `Main_entrypoint_not_a_function
  | `Main_entrypoint_not_found
  | `Main_invalid_amount of string

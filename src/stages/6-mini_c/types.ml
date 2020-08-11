@@ -1,0 +1,111 @@
+include Stage_common.Types
+
+type 'a annotated = string option * 'a
+
+type type_content =
+  | T_pair of (type_expression annotated * type_expression annotated)
+  | T_or of (type_expression annotated * type_expression annotated)
+  | T_function of (type_expression * type_expression)
+  | T_base of type_base
+  | T_map of (type_expression * type_expression)
+  | T_big_map of (type_expression * type_expression)
+  | T_list of type_expression
+  | T_set of type_expression
+  | T_contract of type_expression
+  | T_option of type_expression
+
+and type_expression = {
+  type_content : type_content;
+  location : Location.t;
+}
+
+and type_base =
+  | TB_unit
+  | TB_bool
+  | TB_string
+  | TB_bytes
+  | TB_nat
+  | TB_int
+  | TB_mutez
+  | TB_operation
+  | TB_address
+  | TB_key
+  | TB_key_hash
+  | TB_chain_id
+  | TB_signature
+  | TB_timestamp
+
+and environment_element = expression_variable * type_expression
+
+and environment = environment_element list
+
+and environment_wrap = {
+  pre_environment : environment ;
+  post_environment : environment ;
+}
+
+and var_name = expression_variable
+and fun_name = expression_variable
+
+type inline = bool
+
+type value =
+  | D_unit
+  | D_bool of bool
+  | D_nat of Z.t
+  | D_timestamp of Z.t
+  | D_mutez of Z.t
+  | D_int of Z.t
+  | D_string of string
+  | D_bytes of bytes
+  | D_pair of value * value
+  | D_left of value
+  | D_right of value
+  | D_some of value
+  | D_none
+  | D_map of (value * value) list
+  | D_big_map of (value * value) list
+  | D_list of value list
+  | D_set of value list
+  (* | `Macro of anon_macro ... The future. *)
+  | D_operation of Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation
+
+and selector = var_name list
+
+and expression_content =
+  | E_literal of value
+  | E_closure of anon_function
+  | E_constant of constant
+  | E_application of (expression * expression)
+  | E_variable of var_name
+  | E_iterator of constant' * ((var_name * type_expression) * expression) * expression
+  | E_fold of (((var_name * type_expression) * expression) * expression * expression)
+  | E_if_bool of (expression * expression * expression)
+  | E_if_none of expression * expression * ((var_name * type_expression) * expression)
+  | E_if_cons of (expression * expression * (((var_name * type_expression) * (var_name * type_expression)) * expression))
+  | E_if_left of expression * ((var_name * type_expression) * expression) * ((var_name * type_expression) * expression)
+  | E_let_in of ((var_name * type_expression) * inline * expression * expression)
+  | E_record_update of (expression * [`Left | `Right] list * expression)
+  | E_raw_michelson of string
+
+and expression = {
+  content : expression_content ;
+  type_expression : type_expression ;
+  location : Location.t;
+}
+
+and constant = {
+  cons_name : constant';
+  arguments : expression list;
+}
+
+and assignment = var_name * inline * expression
+
+and toplevel_statement = assignment * environment_wrap
+
+and anon_function = {
+  binder : expression_variable ;
+  body : expression ;
+}
+
+and program = toplevel_statement list

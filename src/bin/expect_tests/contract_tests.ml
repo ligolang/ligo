@@ -7,19 +7,19 @@ let bad_contract basename =
 
 let%expect_test _ =
   run_ligo_good [ "measure-contract" ; contract "coase.ligo" ; "main" ] ;
-  [%expect {| 1668 bytes |}] ;
+  [%expect {| 1238 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig.ligo" ; "main" ] ;
-  [%expect {| 995 bytes |}] ;
+  [%expect {| 828 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig-v2.ligo" ; "main" ] ;
-  [%expect {| 2512 bytes |}] ;
+  [%expect {| 1907 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "vote.mligo" ; "main" ] ;
-  [%expect {| 582 bytes |}] ;
+  [%expect {| 479 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "issue-184-combs.mligo" ; "main2" ] ;
-  [%expect {| 369 bytes |}] ;
+  [%expect {| 295 bytes |}] ;
 
   run_ligo_good [ "compile-parameter" ; contract "coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ] ;
   [%expect {| (Left (Left 1)) |}] ;
@@ -30,46 +30,42 @@ let%expect_test _ =
   run_ligo_bad [ "compile-storage" ; contract "coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ] ;
   [%expect {|
     ligo: error
-    Provided storage type does not match contract storage type
-    Bad types: expected record[card_patterns -> (type_operator: Map (nat,record[coefficient -> mutez , quantity -> nat])) ,
-                               cards -> (type_operator: Map (nat,record[card_owner -> address , card_pattern -> nat])) ,
-                               next_id -> nat] got sum[Buy_single -> record[card_to_buy -> nat] ,
-                                                       Sell_single -> record[card_to_sell -> nat] ,
-                                                       Transfer_single -> record[card_to_transfer -> nat ,
-                                                                        destination -> address]]
+          Provided storage type does not match contract storage type
+
+          Bad types:
+          expected record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]
+          got sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]
 
 
-    If you're not sure how to fix this error, you can do one of the following:
+          If you're not sure how to fix this error, you can do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/introduction
-    * Ask a question on our Discord: https://discord.gg/9rhYaEt
-    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}] ;
+          * Visit our documentation: https://ligolang.org/docs/intro/introduction
+          * Ask a question on our Discord: https://discord.gg/9rhYaEt
+          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+          * Check the changelog by running 'ligo changelog' |}] ;
 
   run_ligo_bad [ "compile-parameter" ; contract "coase.ligo" ; "main" ; "record cards = (map end : cards) ; card_patterns = (map end : card_patterns) ; next_id = 3n ; end" ] ;
   [%expect {|
     ligo: error
-    Provided parameter type does not match contract parameter type
-    Bad types: expected sum[Buy_single -> record[card_to_buy -> nat] ,
-                            Sell_single -> record[card_to_sell -> nat] ,
-                            Transfer_single -> record[card_to_transfer -> nat ,
-                                                      destination -> address]] got record[card_patterns -> (type_operator: Map (nat,record[coefficient -> mutez , quantity -> nat])) ,
-                                                                        cards -> (type_operator: Map (nat,record[card_owner -> address , card_pattern -> nat])) ,
-                                                                        next_id -> nat]
+          Provided parameter type does not match contract parameter type
+
+          Bad types:
+          expected sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]
+          got record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]
 
 
-    If you're not sure how to fix this error, you can do one of the following:
+          If you're not sure how to fix this error, you can do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/introduction
-    * Ask a question on our Discord: https://discord.gg/9rhYaEt
-    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}] ;
+          * Visit our documentation: https://ligolang.org/docs/intro/introduction
+          * Ask a question on our Discord: https://discord.gg/9rhYaEt
+          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+          * Check the changelog by running 'ligo changelog' |}] ;
 
   ()
 
 let%expect_test _  =
-  run_ligo_good [ "compile-storage" ; contract "timestamp.ligo" ; "main" ; "now" ; "--predecessor-timestamp" ; "2042-01-01T00:00:00Z" ] ;
-  [%expect {| "2042-01-01T00:00:01Z" |}]
+  run_ligo_good [ "compile-storage" ; contract "timestamp.ligo" ; "main" ; "now" ; "--now" ; "2042-01-01T00:00:00Z" ] ;
+  [%expect {| "2042-01-01T00:00:00Z" |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "coase.ligo" ; "main" ] ;
@@ -83,26 +79,11 @@ let%expect_test _ =
           (nat %next_id)) ;
   code { DUP ;
          CDR ;
-         DIG 1 ;
-         DUP ;
-         DUG 2 ;
+         SWAP ;
          CAR ;
          IF_LEFT
-           { DUP ;
-             IF_LEFT
-               { DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
-                 DIG 1 ;
-                 DUP ;
-                 DUG 2 ;
-                 PAIR ;
-                 DUP ;
-                 CAR ;
-                 DIG 1 ;
-                 DUP ;
-                 DUG 2 ;
-                 CDR ;
+           { IF_LEFT
+               { SWAP ;
                  DUP ;
                  CAR ;
                  CAR ;
@@ -110,53 +91,40 @@ let%expect_test _ =
                  DUP ;
                  DUG 3 ;
                  GET ;
-                 IF_NONE
-                   { PUSH string "buy_single: No card pattern." ; FAILWITH }
-                   { DUP ; DIP { DROP } } ;
+                 IF_NONE { PUSH string "buy_single: No card pattern." ; FAILWITH } {} ;
                  PUSH nat 1 ;
-                 DIG 1 ;
+                 SWAP ;
                  DUP ;
                  DUG 2 ;
                  CDR ;
                  ADD ;
-                 DIG 1 ;
+                 SWAP ;
                  DUP ;
                  DUG 2 ;
                  CAR ;
                  MUL ;
                  AMOUNT ;
-                 DIG 1 ;
-                 DUP ;
-                 DUG 2 ;
+                 SWAP ;
                  COMPARE ;
                  GT ;
                  IF { PUSH string "Not enough money" ; FAILWITH } { PUSH unit Unit } ;
-                 DIG 2 ;
+                 DROP ;
                  DUP ;
-                 DUG 3 ;
                  PUSH nat 1 ;
-                 DIG 4 ;
-                 DUP ;
-                 DUG 5 ;
+                 DIG 2 ;
                  CDR ;
                  ADD ;
                  SWAP ;
                  CAR ;
                  PAIR ;
-                 DIG 4 ;
+                 SWAP ;
                  DUP ;
-                 DUG 5 ;
-                 DIG 5 ;
-                 DUP ;
-                 DUG 6 ;
                  CAR ;
                  CAR ;
                  DIG 2 ;
+                 DIG 3 ;
                  DUP ;
-                 DUG 3 ;
-                 DIG 8 ;
-                 DUP ;
-                 DUG 9 ;
+                 DUG 4 ;
                  SWAP ;
                  SOME ;
                  SWAP ;
@@ -167,9 +135,7 @@ let%expect_test _ =
                  DUP ;
                  CAR ;
                  CDR ;
-                 DIG 7 ;
-                 DUP ;
-                 DUG 8 ;
+                 DIG 2 ;
                  SENDER ;
                  PAIR ;
                  DIG 2 ;
@@ -180,12 +146,6 @@ let%expect_test _ =
                  SOME ;
                  SWAP ;
                  UPDATE ;
-                 DIG 1 ;
-                 DUP ;
-                 DUG 2 ;
-                 DIG 1 ;
-                 DUP ;
-                 DUG 2 ;
                  DIP { DUP ; CDR ; SWAP ; CAR ; CAR } ;
                  SWAP ;
                  PAIR ;
@@ -193,30 +153,14 @@ let%expect_test _ =
                  DUP ;
                  PUSH nat 1 ;
                  DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
                  CDR ;
                  ADD ;
                  SWAP ;
                  CAR ;
                  PAIR ;
-                 DUP ;
                  NIL operation ;
-                 PAIR ;
-                 DIP { DROP 12 } }
-               { DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
-                 DIG 1 ;
-                 DUP ;
-                 DUG 2 ;
-                 PAIR ;
-                 DUP ;
-                 CAR ;
-                 DIG 1 ;
-                 DUP ;
-                 DUG 2 ;
-                 CDR ;
+                 PAIR }
+               { SWAP ;
                  DUP ;
                  CAR ;
                  CDR ;
@@ -224,11 +168,9 @@ let%expect_test _ =
                  DUP ;
                  DUG 3 ;
                  GET ;
-                 IF_NONE
-                   { PUSH string "sell_single: No card." ; FAILWITH }
-                   { DUP ; DIP { DROP } } ;
+                 IF_NONE { PUSH string "sell_single: No card." ; FAILWITH } {} ;
                  SENDER ;
-                 DIG 1 ;
+                 SWAP ;
                  DUP ;
                  DUG 2 ;
                  CAR ;
@@ -236,44 +178,35 @@ let%expect_test _ =
                  NEQ ;
                  IF { PUSH string "This card doesn't belong to you" ; FAILWITH }
                     { PUSH unit Unit } ;
-                 DIG 2 ;
+                 DROP ;
+                 SWAP ;
                  DUP ;
-                 DUG 3 ;
+                 DUG 2 ;
                  CAR ;
                  CAR ;
-                 DIG 2 ;
+                 SWAP ;
                  DUP ;
-                 DUG 3 ;
+                 DUG 2 ;
                  CDR ;
                  GET ;
-                 IF_NONE
-                   { PUSH string "sell_single: No card pattern." ; FAILWITH }
-                   { DUP ; DIP { DROP } } ;
+                 IF_NONE { PUSH string "sell_single: No card pattern." ; FAILWITH } {} ;
                  DUP ;
                  PUSH nat 1 ;
                  DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
                  CDR ;
                  SUB ;
                  ABS ;
                  SWAP ;
                  CAR ;
                  PAIR ;
-                 DIG 4 ;
+                 DIG 2 ;
                  DUP ;
-                 DUG 5 ;
-                 DIG 5 ;
-                 DUP ;
-                 DUG 6 ;
                  CAR ;
                  CAR ;
                  DIG 2 ;
                  DUP ;
                  DUG 3 ;
-                 DIG 6 ;
-                 DUP ;
-                 DUG 7 ;
+                 DIG 4 ;
                  CDR ;
                  SWAP ;
                  SOME ;
@@ -282,69 +215,36 @@ let%expect_test _ =
                  DIP { DUP ; CDR ; SWAP ; CAR ; CDR } ;
                  PAIR ;
                  PAIR ;
-                 DUP ;
-                 CAR ;
-                 CDR ;
-                 DIG 7 ;
-                 DUP ;
-                 DUG 8 ;
-                 NONE (pair address nat) ;
                  SWAP ;
-                 UPDATE ;
-                 DIG 2 ;
                  DUP ;
-                 DUG 3 ;
+                 DUG 2 ;
                  CDR ;
-                 DIG 3 ;
-                 DUP ;
-                 DUG 4 ;
+                 DIG 2 ;
                  CAR ;
                  MUL ;
                  SENDER ;
                  CONTRACT unit ;
-                 IF_NONE
-                   { PUSH string "sell_single: No contract." ; FAILWITH }
-                   { DUP ; DIP { DROP } } ;
-                 DUP ;
-                 DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
+                 IF_NONE { PUSH string "sell_single: No contract." ; FAILWITH } {} ;
+                 SWAP ;
                  UNIT ;
                  TRANSFER_TOKENS ;
-                 NIL operation ;
-                 DIG 1 ;
+                 SWAP ;
                  DUP ;
-                 DUG 2 ;
-                 CONS ;
-                 DIG 5 ;
-                 DUP ;
-                 DUG 6 ;
-                 DIG 5 ;
-                 DUP ;
-                 DUG 6 ;
+                 CAR ;
+                 CDR ;
+                 DIG 3 ;
+                 NONE (pair address nat) ;
+                 SWAP ;
+                 UPDATE ;
                  DIP { DUP ; CDR ; SWAP ; CAR ; CAR } ;
                  SWAP ;
                  PAIR ;
                  PAIR ;
-                 DIG 1 ;
-                 DUP ;
-                 DUG 2 ;
-                 PAIR ;
-                 DIP { DROP 14 } } ;
-             DIP { DROP } }
-           { DIG 1 ;
-             DUP ;
-             DUG 2 ;
-             DIG 1 ;
-             DUP ;
-             DUG 2 ;
-             PAIR ;
-             DUP ;
-             CAR ;
-             DIG 1 ;
-             DUP ;
-             DUG 2 ;
-             CDR ;
+                 NIL operation ;
+                 DIG 2 ;
+                 CONS ;
+                 PAIR } }
+           { SWAP ;
              DUP ;
              CAR ;
              CDR ;
@@ -354,11 +254,9 @@ let%expect_test _ =
              DUG 4 ;
              CAR ;
              GET ;
-             IF_NONE
-               { PUSH string "transfer_single: No card." ; FAILWITH }
-               { DUP ; DIP { DROP } } ;
+             IF_NONE { PUSH string "transfer_single: No card." ; FAILWITH } {} ;
              SENDER ;
-             DIG 1 ;
+             SWAP ;
              DUP ;
              DUG 2 ;
              CAR ;
@@ -366,26 +264,16 @@ let%expect_test _ =
              NEQ ;
              IF { PUSH string "This card doesn't belong to you" ; FAILWITH }
                 { PUSH unit Unit } ;
+             DROP ;
              DIG 3 ;
              DUP ;
              DUG 4 ;
-             DIG 3 ;
-             DUP ;
-             DUG 4 ;
-             DIG 3 ;
-             DUP ;
-             DUG 4 ;
-             DIG 7 ;
-             DUP ;
-             DUG 8 ;
              CDR ;
              SWAP ;
              CDR ;
              SWAP ;
              PAIR ;
-             DIG 7 ;
-             DUP ;
-             DUG 8 ;
+             DIG 3 ;
              CAR ;
              SWAP ;
              SOME ;
@@ -396,9 +284,7 @@ let%expect_test _ =
              PAIR ;
              PAIR ;
              NIL operation ;
-             PAIR ;
-             DIP { DROP 7 } } ;
-         DIP { DROP 2 } } } |} ]
+             PAIR } } } |} ]
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "multisig.ligo" ; "main" ] ;
@@ -410,16 +296,14 @@ let%expect_test _ =
     (pair (pair (list %auth key) (nat %counter)) (pair (string %id) (nat %threshold))) ;
   code { DUP ;
          CAR ;
-         DIG 1 ;
-         DUP ;
-         DUG 2 ;
+         SWAP ;
          CDR ;
-         DIG 1 ;
+         SWAP ;
          DUP ;
          DUG 2 ;
          CAR ;
          CDR ;
-         DIG 1 ;
+         SWAP ;
          DUP ;
          DUG 2 ;
          CAR ;
@@ -431,7 +315,7 @@ let%expect_test _ =
          CAR ;
          COMPARE ;
          NEQ ;
-         IF { PUSH string "Counters does not match" ; FAILWITH }
+         IF { DIG 2 ; DROP ; PUSH string "Counters does not match" ; FAILWITH }
             { CHAIN_ID ;
               DIG 2 ;
               DUP ;
@@ -458,15 +342,13 @@ let%expect_test _ =
               CAR ;
               PAIR ;
               DIG 4 ;
-              DUP ;
-              DUG 5 ;
               CDR ;
               ITER { SWAP ;
                      PAIR ;
                      DUP ;
                      CAR ;
                      CDR ;
-                     DIG 1 ;
+                     SWAP ;
                      DUP ;
                      DUG 2 ;
                      CAR ;
@@ -483,10 +365,9 @@ let%expect_test _ =
                      DUG 3 ;
                      PAIR ;
                      DIG 2 ;
-                     DUP ;
-                     DUG 3 ;
                      IF_CONS
                        { DUP ;
+                         DUG 2 ;
                          HASH_KEY ;
                          DIG 4 ;
                          DUP ;
@@ -494,95 +375,68 @@ let%expect_test _ =
                          CAR ;
                          COMPARE ;
                          EQ ;
-                         IF { DIG 7 ;
-                              DUP ;
-                              DUG 8 ;
-                              DIG 4 ;
-                              DUP ;
-                              DUG 5 ;
-                              CDR ;
-                              DIG 2 ;
-                              DUP ;
-                              DUG 3 ;
-                              CHECK_SIGNATURE ;
-                              IF { PUSH nat 1 ;
-                                   DIG 6 ;
-                                   DUP ;
-                                   DUG 7 ;
-                                   ADD ;
-                                   DIG 6 ;
-                                   DUP ;
-                                   DUG 7 ;
-                                   DIG 1 ;
-                                   DUP ;
-                                   DUG 2 ;
-                                   DIP { DROP 2 } }
-                                 { PUSH string "Invalid signature" ; FAILWITH } ;
-                              DIG 6 ;
+                         IF { DIG 6 ;
                               DUP ;
                               DUG 7 ;
-                              DIG 1 ;
-                              DUP ;
-                              DUG 2 ;
-                              DIP { DROP 2 } }
-                            { DIG 5 ; DUP ; DUG 6 } ;
-                         DIG 3 ;
-                         DUP ;
-                         DUG 4 ;
-                         DIG 3 ;
-                         DUP ;
-                         DUG 4 ;
+                              DIG 4 ;
+                              CDR ;
+                              DIG 3 ;
+                              CHECK_SIGNATURE ;
+                              IF { PUSH nat 1 ;
+                                   DIG 3 ;
+                                   DUP ;
+                                   DUG 4 ;
+                                   ADD ;
+                                   DIG 3 ;
+                                   DUP ;
+                                   DUG 4 ;
+                                   SWAP ;
+                                   DIP { DROP } }
+                                 { PUSH string "Invalid signature" ; FAILWITH } ;
+                              DIG 3 ;
+                              SWAP ;
+                              DIP { DROP } }
+                            { SWAP ; DROP ; DIG 2 ; DROP ; DIG 2 } ;
+                         DUG 2 ;
                          SWAP ;
                          CDR ;
                          SWAP ;
                          PAIR ;
-                         DIG 1 ;
-                         DUP ;
-                         DUG 2 ;
-                         SWAP ;
                          CAR ;
-                         PAIR ;
-                         DIP { DROP 3 } }
-                       { DUP } ;
-                     DIG 5 ;
-                     DUP ;
-                     DUG 6 ;
-                     DIG 1 ;
+                         PAIR }
+                       { SWAP ; DROP ; SWAP ; DROP } ;
                      DUP ;
                      DUG 2 ;
                      CAR ;
                      DIP { DUP ; CDR ; SWAP ; CAR ; CDR } ;
                      PAIR ;
                      PAIR ;
-                     DIG 1 ;
-                     DUP ;
-                     DUG 2 ;
+                     SWAP ;
                      CDR ;
                      DIP { DUP ; CDR ; SWAP ; CAR ; CAR } ;
                      SWAP ;
                      PAIR ;
                      PAIR ;
-                     CAR ;
-                     DIP { DROP 6 } } ;
-              DIG 3 ;
+                     CAR } ;
+              SWAP ;
+              DROP ;
+              DIG 2 ;
               DUP ;
-              DUG 4 ;
+              DUG 3 ;
               CDR ;
               CDR ;
-              DIG 1 ;
-              DUP ;
-              DUG 2 ;
+              SWAP ;
               CDR ;
               COMPARE ;
               LT ;
               IF { PUSH string "Not enough signatures passed the check" ; FAILWITH }
-                 { DIG 3 ;
+                 { SWAP ;
+                   DUP ;
+                   DUG 2 ;
+                   PUSH nat 1 ;
+                   DIG 3 ;
                    DUP ;
                    DUG 4 ;
-                   PUSH nat 1 ;
-                   DIG 5 ;
-                   DUP ;
-                   DUG 6 ;
                    CAR ;
                    CDR ;
                    ADD ;
@@ -590,29 +444,19 @@ let%expect_test _ =
                    SWAP ;
                    PAIR ;
                    PAIR ;
-                   DIG 4 ;
+                   DIG 2 ;
                    DUP ;
-                   DUG 5 ;
-                   DIG 1 ;
-                   DUP ;
-                   DUG 2 ;
-                   DIP { DROP 2 } } ;
-              DIG 4 ;
-              DUP ;
-              DUG 5 ;
-              DIG 1 ;
-              DUP ;
-              DUG 2 ;
-              DIP { DROP 4 } } ;
-         DUP ;
+                   DUG 3 ;
+                   SWAP ;
+                   DIP { DROP } } ;
+              DIG 2 ;
+              SWAP ;
+              DIP { DROP } } ;
          UNIT ;
-         DIG 3 ;
-         DUP ;
-         DUG 4 ;
+         DIG 2 ;
          SWAP ;
          EXEC ;
-         PAIR ;
-         DIP { DROP 5 } } } |} ]
+         PAIR } } |} ]
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "multisig-v2.ligo" ; "main" ] ;
@@ -627,21 +471,12 @@ let%expect_test _ =
                 (nat %threshold))) ;
   code { DUP ;
          CDR ;
-         DIG 1 ;
-         DUP ;
-         DUG 2 ;
+         SWAP ;
          CAR ;
          IF_LEFT
-           { DUP ;
-             IF_LEFT
-               { DIG 2 ; DUP ; DUG 3 ; NIL operation ; PAIR ; DIP { DROP } }
-               { DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
-                 DIG 1 ;
-                 DUP ;
-                 DUG 2 ;
-                 PAIR ;
+           { IF_LEFT
+               { DROP ; NIL operation ; PAIR }
+               { PAIR ;
                  DUP ;
                  CDR ;
                  DUP ;
@@ -652,19 +487,18 @@ let%expect_test _ =
                  MEM ;
                  NOT ;
                  IF { PUSH string "Unauthorized address" ; FAILWITH } { PUSH unit Unit } ;
+                 DROP ;
+                 SWAP ;
+                 CAR ;
+                 DUP ;
+                 PACK ;
                  DIG 2 ;
                  DUP ;
                  DUG 3 ;
                  CAR ;
-                 DUP ;
-                 PACK ;
-                 DIG 3 ;
-                 DUP ;
-                 DUG 4 ;
-                 CAR ;
                  CAR ;
                  CDR ;
-                 DIG 1 ;
+                 SWAP ;
                  DUP ;
                  DUG 2 ;
                  SIZE ;
@@ -672,38 +506,32 @@ let%expect_test _ =
                  GT ;
                  IF { PUSH string "Message size exceed maximum limit" ; FAILWITH }
                     { PUSH unit Unit } ;
+                 DROP ;
+                 DIG 2 ;
+                 DUP ;
+                 DUG 3 ;
                  EMPTY_SET address ;
-                 DIG 5 ;
-                 DUP ;
-                 DUG 6 ;
-                 DIG 1 ;
-                 DUP ;
-                 DUG 2 ;
                  PAIR ;
-                 DIG 6 ;
+                 DIG 3 ;
                  DUP ;
-                 DUG 7 ;
+                 DUG 4 ;
                  CAR ;
                  CDR ;
                  CDR ;
-                 DIG 4 ;
+                 DIG 2 ;
                  DUP ;
-                 DUG 5 ;
+                 DUG 3 ;
                  GET ;
                  IF_NONE
-                   { DIG 6 ;
+                   { DIG 3 ;
                      DUP ;
-                     DUG 7 ;
-                     DIG 7 ;
                      DUP ;
-                     DUG 8 ;
+                     DUG 5 ;
                      CDR ;
                      CAR ;
                      CAR ;
                      PUSH nat 1 ;
-                     DIG 9 ;
-                     DUP ;
-                     DUG 10 ;
+                     DIG 6 ;
                      CDR ;
                      CAR ;
                      CAR ;
@@ -723,40 +551,28 @@ let%expect_test _ =
                      PUSH bool True ;
                      SENDER ;
                      UPDATE ;
-                     DIG 2 ;
-                     DUP ;
-                     DUG 3 ;
-                     DIG 2 ;
-                     DUP ;
-                     DUG 3 ;
+                     DUG 2 ;
                      SWAP ;
                      CAR ;
                      PAIR ;
-                     DIG 1 ;
-                     DUP ;
-                     DUG 2 ;
-                     SWAP ;
                      CDR ;
                      SWAP ;
-                     PAIR ;
-                     DIP { DROP 2 } }
+                     PAIR }
                    { DUP ;
                      SENDER ;
                      MEM ;
-                     IF { DIG 7 ; DUP ; DUG 8 }
-                        { DIG 7 ;
+                     IF { DIG 4 }
+                        { DIG 4 ;
                           DUP ;
-                          DUG 8 ;
-                          DIG 8 ;
                           DUP ;
-                          DUG 9 ;
+                          DUG 6 ;
                           CDR ;
                           CAR ;
                           CAR ;
                           PUSH nat 1 ;
-                          DIG 10 ;
+                          DIG 7 ;
                           DUP ;
-                          DUG 11 ;
+                          DUG 8 ;
                           CDR ;
                           CAR ;
                           CAR ;
@@ -772,41 +588,23 @@ let%expect_test _ =
                           PAIR ;
                           SWAP ;
                           PAIR ;
-                          DIG 8 ;
-                          DUP ;
-                          DUG 9 ;
-                          DIG 1 ;
-                          DUP ;
-                          DUG 2 ;
-                          DIP { DROP 2 } } ;
-                     DIG 1 ;
-                     DUP ;
-                     DUG 2 ;
+                          DIG 5 ;
+                          SWAP ;
+                          DIP { DROP } } ;
+                     SWAP ;
                      PUSH bool True ;
                      SENDER ;
                      UPDATE ;
-                     DIG 3 ;
-                     DUP ;
-                     DUG 4 ;
-                     DIG 2 ;
-                     DUP ;
-                     DUG 3 ;
+                     DUG 2 ;
                      SWAP ;
                      CAR ;
                      PAIR ;
-                     DIG 1 ;
-                     DUP ;
-                     DUG 2 ;
-                     SWAP ;
                      CDR ;
                      SWAP ;
-                     PAIR ;
-                     DIP { DROP 3 } } ;
+                     PAIR } ;
                  DUP ;
                  CAR ;
-                 DIG 1 ;
-                 DUP ;
-                 DUG 2 ;
+                 SWAP ;
                  CDR ;
                  DUP ;
                  CDR ;
@@ -815,50 +613,40 @@ let%expect_test _ =
                  SENDER ;
                  GET ;
                  IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
-                 DIG 1 ;
+                 SWAP ;
                  DUP ;
                  DUG 2 ;
                  CAR ;
                  CDR ;
                  CAR ;
-                 DIG 1 ;
-                 DUP ;
-                 DUG 2 ;
+                 SWAP ;
                  COMPARE ;
                  GT ;
                  IF { PUSH string "Maximum number of proposal reached" ; FAILWITH }
                     { PUSH unit Unit } ;
+                 DROP ;
+                 DUP ;
                  NIL operation ;
+                 PAIR ;
+                 SWAP ;
+                 DUP ;
+                 DUG 2 ;
+                 CDR ;
+                 CDR ;
                  DIG 3 ;
                  DUP ;
                  DUG 4 ;
-                 DIG 1 ;
-                 DUP ;
-                 DUG 2 ;
-                 PAIR ;
-                 DIG 4 ;
-                 DUP ;
-                 DUG 5 ;
-                 CDR ;
-                 CDR ;
-                 DIG 6 ;
-                 DUP ;
-                 DUG 7 ;
                  SIZE ;
                  COMPARE ;
                  GE ;
-                 IF { DIG 4 ;
+                 IF { SWAP ;
                       DUP ;
-                      DUG 5 ;
-                      DIG 5 ;
-                      DUP ;
-                      DUG 6 ;
                       CAR ;
                       CDR ;
                       CDR ;
-                      DIG 12 ;
+                      DIG 4 ;
                       DUP ;
-                      DUG 13 ;
+                      DUG 5 ;
                       NONE (set address) ;
                       SWAP ;
                       UPDATE ;
@@ -872,17 +660,13 @@ let%expect_test _ =
                       CDR ;
                       CAR ;
                       CDR ;
-                      DIG 13 ;
-                      DUP ;
-                      DUG 14 ;
+                      DIG 5 ;
                       SWAP ;
                       EXEC ;
-                      DIG 1 ;
+                      SWAP ;
                       DUP ;
                       DUG 2 ;
-                      DIG 13 ;
-                      DUP ;
-                      DUG 14 ;
+                      DIG 5 ;
                       DIG 3 ;
                       DUP ;
                       DUG 4 ;
@@ -898,7 +682,6 @@ let%expect_test _ =
                       SWAP ;
                       PAIR ;
                       DUP ;
-                      DIG 1 ;
                       DUP ;
                       DUG 2 ;
                       CDR ;
@@ -908,22 +691,20 @@ let%expect_test _ =
                              PAIR ;
                              DUP ;
                              CAR ;
-                             DIG 1 ;
+                             SWAP ;
                              DUP ;
                              DUG 2 ;
                              CDR ;
                              CAR ;
-                             DIG 11 ;
+                             DIG 7 ;
                              DUP ;
-                             DUG 12 ;
-                             DIG 1 ;
+                             DUG 8 ;
+                             SWAP ;
                              DUP ;
                              DUG 2 ;
                              MEM ;
-                             IF { DIG 1 ;
+                             IF { SWAP ;
                                   DUP ;
-                                  DUG 2 ;
-                                  DIG 2 ;
                                   DUP ;
                                   DUG 3 ;
                                   CDR ;
@@ -938,8 +719,6 @@ let%expect_test _ =
                                   SUB ;
                                   ABS ;
                                   DIG 3 ;
-                                  DUP ;
-                                  DUG 4 ;
                                   SWAP ;
                                   SOME ;
                                   SWAP ;
@@ -949,71 +728,40 @@ let%expect_test _ =
                                   PAIR ;
                                   SWAP ;
                                   PAIR ;
-                                  DIG 2 ;
-                                  DUP ;
-                                  DUG 3 ;
-                                  DIG 1 ;
-                                  DUP ;
-                                  DUG 2 ;
-                                  DIP { DROP 2 } }
-                                { DIG 1 ; DUP ; DUG 2 } ;
-                             DIG 3 ;
-                             DUP ;
-                             DUG 4 ;
-                             DIG 1 ;
-                             DUP ;
-                             DUG 2 ;
+                                  DIP { DROP } }
+                                { DROP } ;
                              SWAP ;
                              CDR ;
                              SWAP ;
                              PAIR ;
-                             CAR ;
-                             DIP { DROP 4 } } ;
+                             CAR } ;
+                      DIG 5 ;
+                      DROP ;
                       DIG 4 ;
-                      DUP ;
-                      DUG 5 ;
                       DIG 4 ;
-                      DUP ;
-                      DUG 5 ;
                       SWAP ;
                       CAR ;
                       PAIR ;
                       DIG 3 ;
-                      DUP ;
-                      DUG 4 ;
                       SWAP ;
                       CDR ;
                       SWAP ;
                       PAIR ;
                       DIG 2 ;
-                      DUP ;
-                      DUG 3 ;
                       SWAP ;
                       CAR ;
                       PAIR ;
-                      DIG 1 ;
-                      DUP ;
-                      DUG 2 ;
+                      CAR ;
+                      PAIR }
+                    { DIG 4 ;
+                      DROP ;
                       SWAP ;
-                      CAR ;
-                      PAIR ;
-                      DIP { DROP 4 } }
-                    { DUP ;
-                      DIG 5 ;
                       DUP ;
-                      DUG 6 ;
-                      DIG 6 ;
-                      DUP ;
-                      DUG 7 ;
                       CAR ;
                       CDR ;
                       CDR ;
-                      DIG 8 ;
-                      DUP ;
-                      DUG 9 ;
-                      DIG 14 ;
-                      DUP ;
-                      DUG 15 ;
+                      DIG 3 ;
+                      DIG 4 ;
                       SWAP ;
                       SOME ;
                       SWAP ;
@@ -1026,36 +774,20 @@ let%expect_test _ =
                       PAIR ;
                       SWAP ;
                       CAR ;
-                      PAIR } ;
-                 DUP ;
-                 DIP { DROP 17 } } ;
-             DIP { DROP } }
-           { DIG 1 ;
-             DUP ;
-             DUG 2 ;
-             DIG 1 ;
-             DUP ;
-             DUG 2 ;
-             PAIR ;
-             DUP ;
-             CDR ;
-             DIG 1 ;
-             DUP ;
-             DUG 2 ;
-             CAR ;
-             PACK ;
-             DIG 1 ;
+                      PAIR } } }
+           { PACK ;
+             SWAP ;
              DUP ;
              DUG 2 ;
              CAR ;
              CDR ;
              CDR ;
-             DIG 1 ;
+             SWAP ;
              DUP ;
              DUG 2 ;
              GET ;
              IF_NONE
-               { DIG 1 ; DUP ; DUG 2 }
+               { DROP }
                { DUP ;
                  PUSH bool False ;
                  SENDER ;
@@ -1063,24 +795,20 @@ let%expect_test _ =
                  DUP ;
                  SIZE ;
                  DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
                  SIZE ;
                  COMPARE ;
                  NEQ ;
-                 IF { DIG 3 ;
+                 IF { DIG 2 ;
+                      DUP ;
                       DUP ;
                       DUG 4 ;
-                      DIG 4 ;
-                      DUP ;
-                      DUG 5 ;
                       CDR ;
                       CAR ;
                       CAR ;
                       PUSH nat 1 ;
-                      DIG 6 ;
+                      DIG 5 ;
                       DUP ;
-                      DUG 7 ;
+                      DUG 6 ;
                       CDR ;
                       CAR ;
                       CAR ;
@@ -1097,31 +825,33 @@ let%expect_test _ =
                       PAIR ;
                       SWAP ;
                       PAIR ;
-                      DIG 4 ;
+                      DIG 3 ;
                       DUP ;
-                      DUG 5 ;
-                      DIG 1 ;
-                      DUP ;
-                      DUG 2 ;
-                      DIP { DROP 2 } }
-                    { DIG 3 ; DUP ; DUG 4 } ;
-                 PUSH nat 0 ;
-                 DIG 2 ;
+                      DUG 4 ;
+                      SWAP ;
+                      DIP { DROP } }
+                    { DIG 2 ; DUP ; DUG 3 } ;
+                 DIG 3 ;
+                 SWAP ;
                  DUP ;
-                 DUG 3 ;
+                 DUG 2 ;
+                 DIP { DROP } ;
+                 PUSH nat 0 ;
+                 DIG 3 ;
+                 DUP ;
+                 DUG 4 ;
                  SIZE ;
                  COMPARE ;
                  EQ ;
-                 IF { DUP ;
-                      DIG 1 ;
+                 IF { DIG 2 ;
+                      DROP ;
+                      SWAP ;
                       DUP ;
-                      DUG 2 ;
+                      DUP ;
                       CAR ;
                       CDR ;
                       CDR ;
-                      DIG 5 ;
-                      DUP ;
-                      DUG 6 ;
+                      DIG 4 ;
                       NONE (set address) ;
                       SWAP ;
                       UPDATE ;
@@ -1131,29 +861,15 @@ let%expect_test _ =
                       SWAP ;
                       PAIR ;
                       PAIR ;
-                      DIG 1 ;
+                      DIP { DROP } }
+                    { SWAP ;
                       DUP ;
-                      DUG 2 ;
-                      DIG 1 ;
                       DUP ;
-                      DUG 2 ;
-                      DIP { DROP 2 } }
-                    { DUP ;
-                      DIG 1 ;
-                      DUP ;
-                      DUG 2 ;
-                      DIG 2 ;
-                      DUP ;
-                      DUG 3 ;
                       CAR ;
                       CDR ;
                       CDR ;
                       DIG 4 ;
-                      DUP ;
-                      DUG 5 ;
-                      DIG 7 ;
-                      DUP ;
-                      DUG 8 ;
+                      DIG 5 ;
                       SWAP ;
                       SOME ;
                       SWAP ;
@@ -1165,22 +881,9 @@ let%expect_test _ =
                       PAIR ;
                       PAIR ;
                       DIP { DROP } } ;
-                 DIG 5 ;
-                 DUP ;
-                 DUG 6 ;
-                 DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
-                 DIP { DROP } ;
-                 DIG 1 ;
-                 DUP ;
-                 DUG 2 ;
-                 DIP { DROP 5 } } ;
-             DUP ;
+                 DIP { DROP } } ;
              NIL operation ;
-             PAIR ;
-             DIP { DROP 5 } } ;
-         DIP { DROP 2 } } } |} ]
+             PAIR } } } |} ]
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "vote.mligo" ; "main" ] ;
@@ -1195,10 +898,12 @@ let%expect_test _ =
   code { DUP ;
          CAR ;
          IF_LEFT
-           { PUSH nat 0 ;
+           { SWAP ;
+             DROP ;
+             PUSH nat 0 ;
              EMPTY_SET address ;
              PAIR ;
-             DIG 1 ;
+             SWAP ;
              DUP ;
              DUG 2 ;
              CDR ;
@@ -1210,40 +915,29 @@ let%expect_test _ =
              PAIR ;
              PUSH nat 0 ;
              DIG 3 ;
-             DUP ;
-             DUG 4 ;
              CAR ;
              CAR ;
              PAIR ;
              PAIR ;
              PAIR ;
              NIL operation ;
-             PAIR ;
-             DIP { DROP } }
-           { DIG 1 ;
-             DUP ;
-             DUG 2 ;
+             PAIR }
+           { SWAP ;
              CDR ;
-             DIG 1 ;
-             DUP ;
-             DUG 2 ;
+             SWAP ;
              PAIR ;
              DUP ;
              CDR ;
-             NOW ;
              SENDER ;
-             DIG 3 ;
-             DUP ;
-             DUG 4 ;
+             DIG 2 ;
              CAR ;
              IF_LEFT
-               { DIG 3 ;
+               { DROP ;
+                 SWAP ;
                  DUP ;
-                 DUG 4 ;
+                 DUG 2 ;
                  PUSH nat 1 ;
-                 DIG 5 ;
-                 DUP ;
-                 DUG 6 ;
+                 DIG 3 ;
                  CAR ;
                  CAR ;
                  CDR ;
@@ -1252,15 +946,13 @@ let%expect_test _ =
                  SWAP ;
                  PAIR ;
                  PAIR ;
-                 PAIR ;
-                 DIP { DROP } }
-               { DIG 3 ;
+                 PAIR }
+               { DROP ;
+                 SWAP ;
                  DUP ;
-                 DUG 4 ;
+                 DUG 2 ;
                  PUSH nat 1 ;
-                 DIG 5 ;
-                 DUP ;
-                 DUG 6 ;
+                 DIG 3 ;
                  CDR ;
                  CDR ;
                  ADD ;
@@ -1268,17 +960,11 @@ let%expect_test _ =
                  SWAP ;
                  PAIR ;
                  SWAP ;
-                 PAIR ;
-                 DIP { DROP } } ;
+                 PAIR } ;
              DUP ;
-             DIG 1 ;
-             DUP ;
-             DUG 2 ;
              CDR ;
              CAR ;
-             DIG 3 ;
-             DUP ;
-             DUG 4 ;
+             DIG 2 ;
              PUSH bool True ;
              SWAP ;
              UPDATE ;
@@ -1287,22 +973,14 @@ let%expect_test _ =
              SWAP ;
              PAIR ;
              NIL operation ;
-             PAIR ;
-             DIP { DROP 6 } } ;
-         DIP { DROP } } } |}]
+             PAIR } } } |}]
 
 let%expect_test _ =
     run_ligo_good [ "compile-contract" ; contract "implicit.mligo" ; "main" ] ;
     [%expect {|
       { parameter key_hash ;
         storage unit ;
-        code { DUP ;
-               CAR ;
-               IMPLICIT_ACCOUNT ;
-               UNIT ;
-               NIL operation ;
-               PAIR ;
-               DIP { DROP 2 } } } |}]
+        code { DROP ; UNIT ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "amount_lambda.mligo" ; "main" ] ;
@@ -1310,70 +988,62 @@ let%expect_test _ =
   [%expect {|
     { parameter bool ;
       storage (lambda unit mutez) ;
-      code { DUP ;
-             CAR ;
-             IF { AMOUNT ;
-                  DUP ;
-                  LAMBDA
-                    (pair mutez unit)
-                    mutez
-                    { DUP ; CAR ; SWAP ; CDR ; DIG 1 ; DUP ; DUG 2 ; DIP { DROP 2 } } ;
-                  SWAP ;
-                  APPLY ;
-                  DIP { DROP } }
+      code { CAR ;
+             IF { AMOUNT ; LAMBDA (pair mutez unit) mutez { CAR } ; SWAP ; APPLY }
                 { LAMBDA unit mutez { DROP ; AMOUNT } } ;
              NIL operation ;
-             PAIR ;
-             DIP { DROP } } } |}]
+             PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "print-ast-typed" ; contract "sequence.mligo" ; ];
-  [%expect {| const y = lambda (_) return let x = +1 in let _ = let x = +2 in UNIT() in let _ = let x = +23 in UNIT() in let _ = let x = +42 in UNIT() in x |}]
+  [%expect {| const y = lambda (#1) return let x = +1 in let _ = let x = +2 in UNIT() in let _ = let x = +23 in UNIT() in let _ = let x = +42 in UNIT() in x |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_type_operator.ligo" ; "main" ] ;
   [%expect {|
     ligo: error
-    in file "bad_type_operator.ligo", line 4, characters 16-29
-    unrecognized type operator (type_operator: Map (binding))
+          in file "bad_type_operator.ligo", line 4, characters 16-29
+          Wrong number of arguments for type operator: Map
+          expected: 2
+          got: 1
 
 
-    If you're not sure how to fix this error, you can do one of the following:
+          If you're not sure how to fix this error, you can do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/introduction
-    * Ask a question on our Discord: https://discord.gg/9rhYaEt
-    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}]
+          * Visit our documentation: https://ligolang.org/docs/intro/introduction
+          * Ask a question on our Discord: https://discord.gg/9rhYaEt
+          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+          * Check the changelog by running 'ligo changelog' |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_address_format.religo" ; "main" ] ;
   [%expect {|
     ligo: error
-    in file "bad_address_format.religo", line 2, characters 26-48
-    Badly formatted literal: @"KT1badaddr"
+          in file "bad_address_format.religo", line 2, characters 26-48
+          Badly formatted literal: @"KT1badaddr"
 
 
-    If you're not sure how to fix this error, you can do one of the following:
+          If you're not sure how to fix this error, you can do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/introduction
-    * Ask a question on our Discord: https://discord.gg/9rhYaEt
-    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}]
+          * Visit our documentation: https://ligolang.org/docs/intro/introduction
+          * Ask a question on our Discord: https://discord.gg/9rhYaEt
+          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+          * Check the changelog by running 'ligo changelog' |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_timestamp.ligo" ; "main" ] ;
   [%expect {|
     ligo: error
-    in file "bad_timestamp.ligo", line 7, characters 30-44
-    Badly formatted timestamp 'badtimestamp'
+          in file "bad_timestamp.ligo", line 7, characters 30-44
+          Badly formatted timestamp 'badtimestamp'
 
 
-    If you're not sure how to fix this error, you can do one of the following:
+          If you're not sure how to fix this error, you can do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/introduction
-    * Ask a question on our Discord: https://discord.gg/9rhYaEt
-    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}]
+          * Visit our documentation: https://ligolang.org/docs/intro/introduction
+          * Ask a question on our Discord: https://discord.gg/9rhYaEt
+          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+          * Check the changelog by running 'ligo changelog' |}]
 
 let%expect_test _ =
     run_ligo_good [ "dry-run" ; contract "redeclaration.ligo" ; "main" ; "unit" ; "0" ] ;
@@ -1388,7 +1058,8 @@ let%expect_test _ =
   [%expect {|
     { parameter unit ;
       storage unit ;
-      code { PUSH bool True ;
+      code { DROP ;
+             PUSH bool True ;
              IF { PUSH string "This contract always fails" ; FAILWITH }
                 { PUSH string "This contract still always fails" ; FAILWITH } } } |}]
 
@@ -1402,15 +1073,15 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "self_in_lambda.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-    SELF_ADDRESS is only allowed at top-level
+          SELF_ADDRESS is only allowed at top-level
 
 
-    If you're not sure how to fix this error, you can do one of the following:
+          If you're not sure how to fix this error, you can do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/introduction
-    * Ask a question on our Discord: https://discord.gg/9rhYaEt
-    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}]
+          * Visit our documentation: https://ligolang.org/docs/intro/introduction
+          * Ask a question on our Discord: https://discord.gg/9rhYaEt
+          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+          * Check the changelog by running 'ligo changelog' |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile-storage" ; contract "big_map.ligo" ; "main" ; "(big_map1,unit)" ] ;
@@ -1422,23 +1093,23 @@ let%expect_test _ =
   [%expect {|
     { parameter int ;
       storage (pair (map %one key_hash nat) (big_map %two key_hash bool)) ;
-      code { DUP ; CDR ; NIL operation ; PAIR ; DIP { DROP } } } |}]
+      code { CDR ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "long_sum_type_names.ligo" ; "main" ] ;
   [%expect {|
     ligo: error
-    in file "long_sum_type_names.ligo", line 2, character 2 to line 4, character 18
-    Too long constructor 'Incrementttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt'
-    names length are limited to 32 (tezos limitation)
+          in file "long_sum_type_names.ligo", line 2, character 2 to line 4, character 18
+          Too long constructor 'Incrementttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt'
+          names length are limited to 32 (tezos limitation)
 
 
-    If you're not sure how to fix this error, you can do one of the following:
+          If you're not sure how to fix this error, you can do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/introduction
-    * Ask a question on our Discord: https://discord.gg/9rhYaEt
-    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}]
+          * Visit our documentation: https://ligolang.org/docs/intro/introduction
+          * Ask a question on our Discord: https://discord.gg/9rhYaEt
+          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+          * Check the changelog by running 'ligo changelog' |}]
 
 let%expect_test _ =
   run_ligo_good [ "dry-run" ; contract "super-counter.mligo" ; "main" ; "test_param" ; "test_storage" ] ;
@@ -1449,67 +1120,60 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "redundant_constructors.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-    in file "redundant_constructors.mligo", line 7, character 2 to line 9, character 15
-    Redundant constructor:
-    Add
-    - Env:[]	Type env:[union_a -> sum[Add -> int , Remove -> int]
-    bool -> sum[false -> unit , true -> unit]]
+          in file "redundant_constructors.mligo", line 7, character 2 to line 9, character 15
+          Redundant constructor:
+          Add
 
 
-    If you're not sure how to fix this error, you can do one of the following:
+          If you're not sure how to fix this error, you can do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/introduction
-    * Ask a question on our Discord: https://discord.gg/9rhYaEt
-    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}]
+          * Visit our documentation: https://ligolang.org/docs/intro/introduction
+          * Ask a question on our Discord: https://discord.gg/9rhYaEt
+          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+          * Check the changelog by running 'ligo changelog' |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_toplevel.mligo" ; "main" ] ;
   [%expect {|
 ligo: error
-in file "create_contract_toplevel.mligo", line 3, characters 0-3
-Constant declaration 'main'
-in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8
-Free variable 'store' is not allowed in CREATE_CONTRACT lambda
+      in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8
+      Free variable 'store' is not allowed in CREATE_CONTRACT lambda
 
 
-If you're not sure how to fix this error, you can do one of the following:
+      If you're not sure how to fix this error, you can do one of the following:
 
-* Visit our documentation: https://ligolang.org/docs/intro/introduction
-* Ask a question on our Discord: https://discord.gg/9rhYaEt
-* Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-* Check the changelog by running 'ligo changelog' |}] ;
+      * Visit our documentation: https://ligolang.org/docs/intro/introduction
+      * Ask a question on our Discord: https://discord.gg/9rhYaEt
+      * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+      * Check the changelog by running 'ligo changelog' |}] ;
 
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_var.mligo" ; "main" ] ;
   [%expect {|
 ligo: error
-in file "create_contract_var.mligo", line 5, characters 0-3
-Constant declaration 'main'
-in file "create_contract_var.mligo", line 6, character 35 to line 10, character 5
-Free variable 'a' is not allowed in CREATE_CONTRACT lambda
+      in file "create_contract_var.mligo", line 6, character 35 to line 10, character 5
+      Free variable 'a' is not allowed in CREATE_CONTRACT lambda
 
 
-If you're not sure how to fix this error, you can do one of the following:
+      If you're not sure how to fix this error, you can do one of the following:
 
-* Visit our documentation: https://ligolang.org/docs/intro/introduction
-* Ask a question on our Discord: https://discord.gg/9rhYaEt
-* Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-* Check the changelog by running 'ligo changelog' |}] ;
+      * Visit our documentation: https://ligolang.org/docs/intro/introduction
+      * Ask a question on our Discord: https://discord.gg/9rhYaEt
+      * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+      * Check the changelog by running 'ligo changelog' |}] ;
 
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_no_inline.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-    in file "create_contract_no_inline.mligo", line 3, characters 40-46
-    Unbound type variable 'return'
-    - Env:[foo -> int]	Type env:[bool -> sum[false -> unit , true -> unit]]
+          in file "create_contract_no_inline.mligo", line 3, characters 40-46
+          Unbound type variable 'return'
 
 
-    If you're not sure how to fix this error, you can do one of the following:
+          If you're not sure how to fix this error, you can do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/introduction
-    * Ask a question on our Discord: https://discord.gg/9rhYaEt
-    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}] ;
+          * Visit our documentation: https://ligolang.org/docs/intro/introduction
+          * Ask a question on our Discord: https://discord.gg/9rhYaEt
+          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+          * Check the changelog by running 'ligo changelog' |}] ;
 
   run_ligo_good [ "compile-contract" ; contract "create_contract.mligo" ; "main" ] ;
   [%expect {|
@@ -1521,26 +1185,22 @@ If you're not sure how to fix this error, you can do one of the following:
              CREATE_CONTRACT
                { parameter nat ;
                  storage string ;
-                 code { PUSH string "one" ; NIL operation ; PAIR ; DIP { DROP } } } ;
+                 code { DROP ; PUSH string "one" ; NIL operation ; PAIR } } ;
              PAIR ;
-             DIG 1 ;
-             DUP ;
-             DUG 2 ;
+             SWAP ;
              CDR ;
              NIL operation ;
              DIG 2 ;
-             DUP ;
-             DUG 3 ;
              CAR ;
              CONS ;
-             PAIR ;
-             DIP { DROP 2 } } } |}];
+             PAIR } } |}];
 
   run_ligo_good [ "compile-contract" ; contract "tuples_no_annotation.religo" ; "main" ] ;
   [%expect {|
     { parameter int ;        
       storage (pair (pair int string) (pair nat bool)) ;
-      code { PUSH bool False ;
+      code { DROP ;
+             PUSH bool False ;
              PUSH nat 2 ;
              PAIR ;
              PUSH string "2" ;
@@ -1548,86 +1208,76 @@ If you're not sure how to fix this error, you can do one of the following:
              PAIR ;
              PAIR ;
              NIL operation ;
-             PAIR ;
-             DIP { DROP } } } |}]
+             PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "self_type_annotation.ligo" ; "main" ] ;
   [%expect {|
     ligo: error
-    in file "self_type_annotation.ligo", line 8, characters 41-64
-    Bad self type
-    expected (type_operator: Contract (int))
-    got (type_operator: Contract (nat))
+          in file "self_type_annotation.ligo", line 8, characters 41-64
+          Bad self type
+          expected Contract (int)
+          got Contract (nat)
 
 
-    If you're not sure how to fix this error, you can do one of the following:
+          If you're not sure how to fix this error, you can do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/introduction
-    * Ask a question on our Discord: https://discord.gg/9rhYaEt
-    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}] ;
+          * Visit our documentation: https://ligolang.org/docs/intro/introduction
+          * Ask a question on our Discord: https://discord.gg/9rhYaEt
+          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+          * Check the changelog by running 'ligo changelog' |}] ;
 
   run_ligo_good [ "compile-contract" ; contract "self_type_annotation.ligo" ; "main" ] ;
   [%expect {|
-    { parameter nat ;
-      storage int ;
-      code { SELF %default ;
-             DIG 1 ;
-             DUP ;
-             DUG 2 ;
-             CDR ;
-             NIL operation ;
-             PAIR ;
-             DIP { DROP 2 } } } |}]
+    { parameter nat ; storage int ; code { CDR ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-    in file "bad_contract.mligo", line 4, characters 0-3
-    Badly typed contract:
-    unexpected entrypoint type ( nat * int ) -> int
+          in file "bad_contract.mligo", line 4, characters 9-46
+          Badly typed contract:
+          unexpected entrypoint type ( nat * int ) -> int
 
 
-    If you're not sure how to fix this error, you can do one of the following:
+          If you're not sure how to fix this error, you can do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/introduction
-    * Ask a question on our Discord: https://discord.gg/9rhYaEt
-    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}] ;
+          * Visit our documentation: https://ligolang.org/docs/intro/introduction
+          * Ask a question on our Discord: https://discord.gg/9rhYaEt
+          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+          * Check the changelog by running 'ligo changelog' |}] ;
 
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract2.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-    in file "bad_contract2.mligo", line 5, characters 0-3
-    Badly typed contract:
-    expected (type_operator: list(operation)) but got string
+          in file "bad_contract2.mligo", line 5, characters 9-46
+          Badly typed contract:
+          expected list (operation) but got string
 
 
-    If you're not sure how to fix this error, you can do one of the following:
+          If you're not sure how to fix this error, you can do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/introduction
-    * Ask a question on our Discord: https://discord.gg/9rhYaEt
-    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}] ;
+          * Visit our documentation: https://ligolang.org/docs/intro/introduction
+          * Ask a question on our Discord: https://discord.gg/9rhYaEt
+          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+          * Check the changelog by running 'ligo changelog' |}] ;
 
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract3.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-    in file "bad_contract3.mligo", line 5, characters 0-3
-    Badly typed contract main:
-    expected storage type as right member of a pair in the input and output, but got:
-    - int in the input
-    - string in the output
+          in file "bad_contract3.mligo", line 5, characters 9-46
+          Badly typed contract main:
+          expected storage type as right member of a pair in the input and output, but got:
+          - int in the input
+          - string in the output
 
 
-    If you're not sure how to fix this error, you can do one of the following:
+          If you're not sure how to fix this error, you can do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/introduction
-    * Ask a question on our Discord: https://discord.gg/9rhYaEt
-    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}]
+          * Visit our documentation: https://ligolang.org/docs/intro/introduction
+          * Ask a question on our Discord: https://discord.gg/9rhYaEt
+          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+          * Check the changelog by running 'ligo changelog' |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "self_with_entrypoint.ligo" ; "main" ] ;
@@ -1635,131 +1285,120 @@ let%expect_test _ =
     { parameter (or (unit %default) (int %toto)) ;
       storage nat ;
       code { SELF %toto ;
-             DUP ;
              PUSH mutez 300000000 ;
              PUSH int 2 ;
              TRANSFER_TOKENS ;
-             DIG 2 ;
-             DUP ;
-             DUG 3 ;
+             SWAP ;
              CDR ;
              NIL operation ;
              DIG 2 ;
-             DUP ;
-             DUG 3 ;
              CONS ;
-             PAIR ;
-             DIP { DROP 3 } } } |}] ;
+             PAIR } } |}] ;
 
   run_ligo_good [ "compile-contract" ; contract "self_without_entrypoint.ligo" ; "main" ] ;
   [%expect {|
     { parameter int ;
       storage nat ;
       code { SELF %default ;
-             DUP ;
              PUSH mutez 300000000 ;
              PUSH int 2 ;
              TRANSFER_TOKENS ;
-             DIG 2 ;
-             DUP ;
-             DUG 3 ;
+             SWAP ;
              CDR ;
              NIL operation ;
              DIG 2 ;
-             DUP ;
-             DUG 3 ;
              CONS ;
-             PAIR ;
-             DIP { DROP 3 } } } |}] ;
+             PAIR } } |}] ;
 
   run_ligo_bad [ "compile-contract" ; bad_contract "self_bad_entrypoint_format.ligo" ; "main" ] ;
   [%expect {|
     ligo: error
-    in file "self_bad_entrypoint_format.ligo", line 8, characters 52-58
-    Bad entrypoint format 'Toto'
-    We expect '%bar' for entrypoint Bar and '%default' when no entrypoint used
+          in file "self_bad_entrypoint_format.ligo", line 8, characters 52-58
+          Bad entrypoint format 'Toto'
+          We expect '%bar' for entrypoint Bar and '%default' when no entrypoint used
 
 
-    If you're not sure how to fix this error, you can do one of the following:
+          If you're not sure how to fix this error, you can do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/introduction
-    * Ask a question on our Discord: https://discord.gg/9rhYaEt
-    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}];
+          * Visit our documentation: https://ligolang.org/docs/intro/introduction
+          * Ask a question on our Discord: https://discord.gg/9rhYaEt
+          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+          * Check the changelog by running 'ligo changelog' |}];
 
   run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_1.religo"; "main"];
   [%expect {|
     ligo: error
-    in file "nested_bigmap_1.religo", line 1, characters 11-29
-    It looks like you have nested a big map inside another big map, this is not supported
+          in file "nested_bigmap_1.religo", line 1, characters 11-29
+          It looks like you have nested a big map inside another big map, this is not supported
 
 
-    If you're not sure how to fix this error, you can do one of the following:
+          If you're not sure how to fix this error, you can do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/introduction
-    * Ask a question on our Discord: https://discord.gg/9rhYaEt
-    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}];
+          * Visit our documentation: https://ligolang.org/docs/intro/introduction
+          * Ask a question on our Discord: https://discord.gg/9rhYaEt
+          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+          * Check the changelog by running 'ligo changelog' |}];
 
   run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_2.religo"; "main"];
   [%expect {|
     ligo: error
-    in file "nested_bigmap_2.religo", line 2, characters 29-50
-    It looks like you have nested a big map inside another big map, this is not supported
+          in file "nested_bigmap_2.religo", line 2, characters 29-50
+          It looks like you have nested a big map inside another big map, this is not supported
 
 
-    If you're not sure how to fix this error, you can do one of the following:
+          If you're not sure how to fix this error, you can do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/introduction
-    * Ask a question on our Discord: https://discord.gg/9rhYaEt
-    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}];
+          * Visit our documentation: https://ligolang.org/docs/intro/introduction
+          * Ask a question on our Discord: https://discord.gg/9rhYaEt
+          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+          * Check the changelog by running 'ligo changelog' |}];
   
   run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_3.religo"; "main"];
   [%expect {|
     ligo: error
-    in file "nested_bigmap_3.religo", line 1, characters 11-29
-    It looks like you have nested a big map inside another big map, this is not supported
+          in file "nested_bigmap_3.religo", line 1, characters 11-29
+          It looks like you have nested a big map inside another big map, this is not supported
 
 
-    If you're not sure how to fix this error, you can do one of the following:
+          If you're not sure how to fix this error, you can do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/introduction
-    * Ask a question on our Discord: https://discord.gg/9rhYaEt
-    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}];
+          * Visit our documentation: https://ligolang.org/docs/intro/introduction
+          * Ask a question on our Discord: https://discord.gg/9rhYaEt
+          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+          * Check the changelog by running 'ligo changelog' |}];
 
   run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_4.religo"; "main"];
   [%expect {|
     ligo: error
-    in file "nested_bigmap_4.religo", line 2, characters 39-60
-    It looks like you have nested a big map inside another big map, this is not supported
+          in file "nested_bigmap_4.religo", line 2, characters 39-60
+          It looks like you have nested a big map inside another big map, this is not supported
 
 
-    If you're not sure how to fix this error, you can do one of the following:
+          If you're not sure how to fix this error, you can do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/introduction
-    * Ask a question on our Discord: https://discord.gg/9rhYaEt
-    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}];
+          * Visit our documentation: https://ligolang.org/docs/intro/introduction
+          * Ask a question on our Discord: https://discord.gg/9rhYaEt
+          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+          * Check the changelog by running 'ligo changelog' |}];
       
   run_ligo_good ["print-ast"; contract "letin.mligo"];
   [%expect {|
     type storage = (int ,
     int)
     const main : (int ,
-    storage) -> ((TO_list(operation)) ,
+    storage) -> (list (operation) ,
     storage) = lambda (n:Some((int ,
-    storage))) : None return let x = let x = 7 : int in (ADD(x ,
+    storage))) : Some((list (operation) ,
+    storage)) return let x : (int ,
+    int) = let x : int = 7 in (ADD(x ,
     n.0) ,
     ADD(n.1.0 ,
-    n.1.1)) : (int ,
-    int) in (list[] : (TO_list(operation)) ,
+    n.1.1)) in (list[] : list (operation) ,
     x)
     const f0 = lambda (a:Some(string)) : None return true(unit)
     const f1 = lambda (a:Some(string)) : None return true(unit)
     const f2 = lambda (a:Some(string)) : None return true(unit)
-    const letin_nesting = lambda (_:Some(unit)) : None return let s = "test" in let p0 = (f0)@(s) in { ASSERTION(p0);
+    const letin_nesting = lambda (#1:Some(unit)) : None return let s = "test" in let p0 = (f0)@(s) in { ASSERTION(p0);
      let p1 = (f1)@(s) in { ASSERTION(p1);
      let p2 = (f2)@(s) in { ASSERTION(p2);
      s}}}
@@ -1772,14 +1411,13 @@ let%expect_test _ =
   [%expect {|
     type storage = (int ,
     int)
-    const main : (int ,
-    storage) -> ((TO_list(operation)) ,
-    storage) = lambda (n:Some((int ,
-    storage))) : None return let x = let x = 7 : int in (ADD(x ,
+    const main = lambda (n:Some((int ,
+    storage))) : Some((list (operation) ,
+    storage)) return let x : (int ,
+    int) = let x : int = 7 in (ADD(x ,
     n.0) ,
     ADD(n.1.0 ,
-    n.1.1)) : (int ,
-    int) in (list[] : (TO_list(operation)) ,
+    n.1.1)) in (list[] : list (operation) ,
     x)
     const f0 = lambda (a:Some(string)) : None return true(unit)
     const f1 = lambda (a:Some(string)) : None return true(unit)
@@ -1793,4 +1431,17 @@ let%expect_test _ =
     z)
     |}];
 
+  run_ligo_bad ["print-ast-typed"; contract "existential.mligo"];
+  [%expect {|
+    ligo: error
+          Lexical error in file "existential.mligo", line 1, characters 8-9:
+          Unexpected character '\''.
 
+
+
+          If you're not sure how to fix this error, you can do one of the following:
+
+          * Visit our documentation: https://ligolang.org/docs/intro/introduction
+          * Ask a question on our Discord: https://discord.gg/9rhYaEt
+          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+          * Check the changelog by running 'ligo changelog' |}]

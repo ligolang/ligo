@@ -68,6 +68,8 @@ First, download [the package](https://ligolang.org/deb/ligo.deb), and then insta
 sudo apt install ./ligo.deb
 ```
 
-## Release schedule
+## Releases
 
-Important: LIGO is currently being released on a rolling release schedule. This means that you always get the latest development features. You can find our [rolling builds at the CI](https://gitlab.com/ligolang/ligo/pipelines).
+Releases are available at the [releases page of gitlab project](https://gitlab.com/ligolang/ligo/-/releases). All the artifacts are attached there.
+
+If you wish to see the changelog, you can either run `ligo changelog` or go to [this page](./changelog.md). It contains links to corresponding releases, should you wish to download the artifacts.

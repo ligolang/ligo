@@ -448,7 +448,7 @@ let comparable_mligo () : (unit, _) result =
   let%bind () = expect_string_failwith program "uncomp_pair_1" tuple "" in
   let pair = e_pair pair (e_int 3) in
   let%bind () = expect_string_failwith program "uncomp_pair_2" pair "" in *)
-  let comb = e_pair (e_int 3) (e_pair (e_int 1) (e_nat 2)) in 
+  let comb = e_pair (e_int 3) (e_pair (e_int 1) (e_nat 2)) in
   let%bind () = expect_eq program "comb_record" comb (e_bool false) in
   ok ()
 
@@ -1279,9 +1279,6 @@ let loop () : (unit, _) result =
     let expected = e_pair (e_int 6) (e_string "123") in
     expect_eq program "for_collection_map_kv" input expected in
   let%bind () =
-    let expected = (e_string "123") in
-    expect_eq program "for_collection_map_k" input expected in
-  let%bind () =
     let expected = (e_int 0) in
     expect_eq program "for_collection_empty" input expected in
   let%bind () =
@@ -1524,21 +1521,21 @@ let recursion_ligo () : (unit, _) result =
   let%bind _ =
     let make_input = e_pair (e_int 10) (e_int 0) in
     let make_expected = e_int 55 in
-    expect_eq program "sum" make_input make_expected 
+    expect_eq program "sum" make_input make_expected
   in
   let%bind _ =
     let make_input = e_tuple [(e_int 10); (e_int 1); (e_int 1)] in
     let make_expected = e_int 89 in
     expect_eq program "fibo" make_input make_expected
   in ok ()
-  
+
 
 let recursion_mligo () : (unit, _) result =
   let%bind program = mtype_file "./contracts/recursion.mligo" in
   let%bind _ =
     let make_input = e_pair (e_int 10) (e_int 0) in
     let make_expected = e_int 55 in
-    expect_eq program "sum" make_input make_expected 
+    expect_eq program "sum" make_input make_expected
   in
   let%bind _ =
     let make_input = e_tuple [(e_int 10); (e_int 1); (e_int 1)] in
@@ -1551,7 +1548,7 @@ let recursion_religo () : (unit, _) result =
   let%bind _ =
     let make_input = e_pair (e_int 10) (e_int 0) in
     let make_expected = e_int 55 in
-    expect_eq program "sum" make_input make_expected 
+    expect_eq program "sum" make_input make_expected
   in
   let%bind _ =
     let make_input = e_tuple [(e_int 10); (e_int 1); (e_int 1)] in
@@ -1588,34 +1585,34 @@ let counter_religo () : (unit, _) result =
 
 let let_in_mligo () : (unit, _) result =
   let%bind program = mtype_file "./contracts/letin.mligo" in
-  let%bind () = 
+  let%bind () =
     let make_input n = e_pair (e_int n) (e_pair (e_int 3) (e_int 5)) in
     let make_expected n =
       e_pair (e_typed_list [] (t_operation ())) (e_pair (e_int (7+n)) (e_int (3+5)))
-    in 
+    in
     expect_eq_n program "main" make_input make_expected
-  in 
-  let%bind () = 
+  in
+  let%bind () =
     expect_eq program "letin_nesting" (e_unit ()) (e_string "test")
-  in 
-  let%bind () = 
+  in
+  let%bind () =
     expect_eq program "letin_nesting2" (e_int 4) (e_int 9)
-  in 
+  in
   ok ()
 
 let let_in_religo () : (unit, _) result =
   let%bind program = retype_file "./contracts/letin.religo" in
-  let%bind () = 
+  let%bind () =
     let make_input n = e_pair (e_int n) (e_pair (e_int 3) (e_int 5)) in
     let make_expected n =
       e_pair (e_typed_list [] (t_operation ())) (e_pair (e_int (7+n)) (e_int (3+5)))
-    in 
+    in
     expect_eq_n program "main" make_input make_expected
-  in 
-  let%bind () = 
+  in
+  let%bind () =
     expect_eq program "letin_nesting" (e_unit ()) (e_string "test")
-  in 
-  let%bind () = 
+  in
+  let%bind () =
     expect_eq program "letin_nesting2" (e_int 4) (e_int 9)
   in
   ok ()
@@ -2096,9 +2093,9 @@ let get_contract_ligo () : (unit, _) result =
   let%bind () =
     let make_input = fun _n -> e_unit () in
     let make_expected : int -> Ast_core.expression -> (unit, _) result = fun _n result ->
-      let%bind (ops , storage) = trace_option (test_internal __LOC__) @@ Ast_core.get_e_pair result.expression_content in
+      let%bind (ops , storage) = trace_option (test_internal __LOC__) @@ Ast_core.get_e_pair result.content in
       let%bind () =
-        let%bind lst = trace_option (test_internal __LOC__) @@ Ast_core.get_e_list ops.expression_content in
+        let%bind lst = trace_option (test_internal __LOC__) @@ Ast_core.get_e_list ops.content in
         Assert.assert_list_size (test_internal __LOC__) lst 1 in
       let expected_storage = Ast_core.e_unit () in
       trace_option (test_internal __LOC__) @@ Ast_core.Misc.assert_value_eq (expected_storage , storage)
@@ -2384,11 +2381,11 @@ let no_semicolon_religo () : (unit, _) result =
   ok ()
 
 let tuple_list_religo () : (unit, _) result =
-  let%bind _ = retype_file "./contracts/tuple_list.religo" in  
+  let%bind _ = retype_file "./contracts/tuple_list.religo" in
   ok ()
 
 let single_record_expr_religo () : (unit, _) result =
-  let%bind _ = retype_file "./contracts/single_record_item.religo" in  
+  let%bind _ = retype_file "./contracts/single_record_item.religo" in
   ok ()
 
 let loop_bugs_ligo () : (unit, _) result =
@@ -2403,16 +2400,16 @@ let loop_bugs_ligo () : (unit, _) result =
   ok ()
 
 let main = test_suite "Integration (End to End)" [
-    test "bytes unpack" bytes_unpack ;
-    test "bytes unpack (mligo)" bytes_unpack_mligo ;
-    test "bytes unpack (religo)" bytes_unpack_religo ;
-    test "key hash" key_hash ;
-    test "key hash (mligo)" key_hash_mligo ;
-    test "key hash (religo)" key_hash_religo ;
-    test "check signature" check_signature ;
-    test "check signature (mligo)" check_signature_mligo ;
-    test "check signature (religo)" check_signature_religo ;
-    test "chain id" chain_id ;
+    test "chain id" chain_id ;                         (* record *)
+    test "bytes unpack" bytes_unpack ;                 (* record *)
+    test "bytes unpack (mligo)" bytes_unpack_mligo ;   (* record *)
+    test "bytes unpack (religo)" bytes_unpack_religo ; (* record *)
+    test "key hash" key_hash ;                         (* C_access_label *)
+    test "key hash (mligo)" key_hash_mligo ;           (* C_access_label *)
+    test "key hash (religo)" key_hash_religo ;         (* C_access_label *)
+    test "check signature" check_signature ;                 (* C_access_label *)
+    test "check signature (mligo)" check_signature_mligo ;   (* C_access_label *)
+    test "check signature (religo)" check_signature_religo ; (* C_access_label *)
     test "type alias" type_alias ;
     test "function" function_ ;
     test "blockless function" blockless;

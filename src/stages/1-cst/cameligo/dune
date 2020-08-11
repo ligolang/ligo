@@ -1,0 +1,12 @@
+(library
+  (name cst_cameligo)
+  (public_name ligo.cst.cameligo)
+  (libraries
+    ;; Ligo
+    simple-utils
+    ;; Third party
+    hex
+    zarith)
+  (modules CST ParserLog)
+  (preprocess
+    (pps ppx_let bisect_ppx --conditional)))

@@ -221,10 +221,10 @@ let sell () =
     in
     let make_expecter : int -> Ast_core.expression -> (unit,_) result = fun n result ->
       let%bind (ops , storage) = trace_option (test_internal __LOC__) @@
-        Ast_core.get_e_pair result.expression_content in
+        Ast_core.get_e_pair result.content in
       let%bind () =
         let%bind lst = trace_option (test_internal __LOC__) @@
-          Ast_core.get_e_list ops.expression_content in
+          Ast_core.get_e_list ops.content in
           Assert.assert_list_size (test_internal __LOC__) lst 1 in
       let expected_storage =
         let cards = List.hds @@ cards_ez first_owner n in

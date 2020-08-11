@@ -55,7 +55,7 @@ let get_groups md_file =
   evaluate each expression in each programs from the snippets group map
 **)
 let compile_groups filename grp_list =
-  let%bind (_michelsons : Compiler.compiled_expression list list) = bind_map_list
+  let%bind (_michelsons : Stacking.compiled_expression list list) = bind_map_list
     (fun ((s,grp),contents) ->
       trace (test_md_file_tracer filename s grp contents) @@
       let%bind v_syntax   = Compile.Helpers.syntax_to_variant (Syntax_name s) None in
@@ -115,6 +115,7 @@ let md_files = [
   "/gitlab-pages/docs/advanced/timestamps-addresses.md";
   "/gitlab-pages/docs/advanced/inline.md";
   "/gitlab-pages/docs/advanced/interop.md";
+  "/gitlab-pages/docs/advanced/code-injection.md";
   "/gitlab-pages/docs/api/cli-commands.md";
   "/gitlab-pages/docs/api/cheat-sheet.md";
   "/gitlab-pages/docs/reference/toplevel.md";

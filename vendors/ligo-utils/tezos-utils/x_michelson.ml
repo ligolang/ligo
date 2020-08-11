@@ -78,7 +78,7 @@ let i_dug n : michelson = prim ~children:[Int (0 , Z.of_int n)] I_DUG
 let i_unpair = seq [i_dup ; i_car ; dip i_cdr]
 let i_unpiar = seq [i_dup ; i_cdr ; dip i_car]
 
-let i_loop_left body = prim ~children:[seq[body; dip i_drop]] I_LOOP_LEFT
+let i_loop_left body = prim ~children:[seq [body]] I_LOOP_LEFT
 
 let rec strip_annots : michelson -> michelson = function
   | Seq(l, s) -> Seq(l, List.map strip_annots s)
@@ -95,7 +95,7 @@ let get_json (michelson : michelson) =
   let open Micheline_printer in
   let canonical = strip_locations michelson in
   let node = printable string_of_prim canonical in
-  Tezos_data_encoding.(
+  Data_encoding.(
       Json.construct
         (Micheline.erased_encoding ~variant:"???" {comment = None} Data_encoding.string)
         node
@@ -103,17 +103,17 @@ let get_json (michelson : michelson) =
 
 let pp_json ppf (michelson : michelson) =
   let json = get_json michelson in
-  Format.fprintf ppf "%a" Tezos_data_encoding.Json.pp json
+  Format.fprintf ppf "%a" Data_encoding.Json.pp json
 
 let pp_hex ppf (michelson : michelson) =
   let canonical = strip_locations michelson in
-  let bytes = Tezos_data_encoding.Binary_writer.to_bytes_exn Script_repr.expr_encoding canonical in
+  let bytes = Data_encoding.Binary.to_bytes_exn Script_repr.expr_encoding canonical in
   let hex = Hex.of_bytes bytes in
   Format.fprintf ppf "%a" Hex.pp hex
 
 let measure (michelson : michelson) =
   let canonical = strip_locations michelson in
-  let bytes = Tezos_data_encoding.Binary_writer.to_bytes_exn Script_repr.expr_encoding canonical in
+  let bytes = Data_encoding.Binary.to_bytes_exn Script_repr.expr_encoding canonical in
   Bytes.length bytes
 
 type michelson_format = [

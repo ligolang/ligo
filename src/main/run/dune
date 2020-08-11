@@ -5,17 +5,17 @@
     simple-utils
     tezos-utils
     parser
-    concrete_to_imperative
+    tree_abstraction
     self_ast_imperative
-    sugar_to_core
+    desugaring
     ast_core
     typer_new
     typer
     ast_typed
-    transpiler
+    spilling
     mini_c
-    operators
-    compiler
+    predefined
+    stacking
     compile
   )
   (preprocess

@@ -1,4 +1,4 @@
-{ dockerTools, writeShellScriptBin, runCommand, mcpp, bash, coreutils, ligo
+{ dockerTools, writeShellScriptBin, runCommand, bash, ligo
 , name ? "ligo", extraContents ? [ ] }:
 dockerTools.buildLayeredImage {
   inherit name;

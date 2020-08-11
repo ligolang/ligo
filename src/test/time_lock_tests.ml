@@ -29,36 +29,36 @@ open Ast_imperative
 
 let empty_op_list =
   (e_typed_list [] (t_operation ()))
-let empty_message = e_lambda (Var.of_name "arguments")
+let empty_message = e_lambda (Location.wrap @@ Var.of_name "arguments")
   (Some (t_unit ())) (Some (t_list (t_operation ())))
   empty_op_list
 
 let call msg = e_constructor "Call" msg
 let mk_time st =
-  match Memory_proto_alpha.Protocol.Alpha_context.Timestamp.of_notation st with
+  match Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp.of_string st with
   | Some s -> ok s
   | None -> fail @@ test_internal "bad timestamp notation"
-let to_sec t = Tezos_utils.Time.Protocol.to_seconds t
-let storage st = e_timestamp (Int64.to_int @@ to_sec st)
+let to_sec t = Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp.to_zint t
+let storage st = e_timestamp_z (to_sec st)
 
 let early_call () =
   let%bind (program , state) = get_program () in
-  let%bind predecessor_timestamp = mk_time "2000-01-01T00:10:10Z" in
+  let%bind now = mk_time "2000-01-01T00:10:10Z" in
   let%bind lock_time = mk_time "2000-01-01T10:10:10Z" in
   let init_storage = storage lock_time in
   let options =
-    Proto_alpha_utils.Memory_proto_alpha.make_options ~predecessor_timestamp () in
+    Proto_alpha_utils.Memory_proto_alpha.make_options ~now () in
   let exp_failwith = "Contract is still time locked" in
   expect_string_failwith ~options (program, state) "main"
     (e_pair (call empty_message)  init_storage) exp_failwith
 
 let call_on_time () =
   let%bind (program , state) = get_program () in
-  let%bind predecessor_timestamp = mk_time "2000-01-01T10:10:10Z" in
+  let%bind now = mk_time "2000-01-01T10:10:10Z" in
   let%bind lock_time = mk_time "2000-01-01T00:10:10Z" in
   let init_storage = storage lock_time in
   let options =
-    Proto_alpha_utils.Memory_proto_alpha.make_options ~predecessor_timestamp () in
+    Proto_alpha_utils.Memory_proto_alpha.make_options ~now () in
   expect_eq ~options (program, state) "main"
     (e_pair (call empty_message) init_storage) (e_pair empty_op_list init_storage)
 

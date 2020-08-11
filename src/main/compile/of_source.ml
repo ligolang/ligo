@@ -3,16 +3,16 @@ open Helpers
 
 let compile (source_filename:string) syntax : (Ast_imperative.program , _) result =
   let%bind syntax = syntax_to_variant syntax (Some source_filename) in
-  let%bind abstract = parsify syntax source_filename in
+  let%bind abstract = parse_and_abstract syntax source_filename in
   ok abstract
 
 let compile_string (source:string) syntax : (Ast_imperative.program , _) result =
-  let%bind abstract = parsify_string syntax source in
+  let%bind abstract = parse_and_abstract_string syntax source in
   ok abstract
 
 let compile_expression : v_syntax -> string -> (Ast_imperative.expression , _) result =
     fun syntax exp ->
-  parsify_expression syntax exp
+  parse_and_abstract_expression syntax exp
 
 let compile_contract_input : string -> string -> v_syntax -> (Ast_imperative.expression , _) result =
     fun storage parameter syntax ->

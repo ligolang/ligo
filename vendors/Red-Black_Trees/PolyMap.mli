@@ -20,6 +20,13 @@ type ('key, 'value) map = ('key, 'value) t
 
 val create : cmp:('key -> 'key -> int) -> ('key, 'value) t
 
+(* The value of the call [from_list ~cmp elts] is a [Some map] with
+   [cmp] being the comparison over the keys. The map initially
+   contains the bindings listed in [elts]. If the same (w.r.t. [cmp])
+   key occurs twice [elts] then [None] is returned instead to indicate
+   the error. *)
+val from_list : cmp:('key -> 'key -> int) -> ('key * 'value) list -> ('key, 'value) t option
+
 val empty : ('key, 'value) t -> ('key, 'new_value) t
 
 (* Emptiness *)
@@ -50,6 +57,12 @@ val find : 'key -> ('key, 'value) t -> 'value
 
 val find_opt : 'key -> ('key, 'value) t -> 'value option
 
+(* The value of the call [find_opt key map] is [true] if the key
+   [key] is bound to some value in the map [map], and [None]
+   otherwise. *)
+
+val has_key : 'key -> ('key, 'value) t -> bool
+
 (* The value of the call [update key f map] is a map containing all
    the bindings of the map [map], extended by the binding of [key] to
    the value returned by [f], when [f maybe_value] returns
@@ -65,6 +78,18 @@ val update : 'key -> ('value option -> 'value option) -> ('key, 'value) map -> (
    containing the bindings of the map [map], sorted by increasing keys
    (with respect to the total comparison function used to create the
    map). *)
+
+(* The value of the call [add_list kv_list map] is a record of type
+   [('key, 'value) added]. The elements from the [kv_list] are added
+   to the [map] starting from the head of the list. The elements for
+   which the key is already present in the [map] at the point at which
+   they are added are gathered in the [duplicates] list (and the [map]
+   is not updated for these elements, i.e. it keeps the pre-existing
+   version of the value associated to that key). The elements for
+   which the key is not already present in the [map] are added to the
+   [map], and gathered in the [added] list. *)
+type ('key, 'value) added = {map : ('key, 'value) t; duplicates : ('key * 'value) list; added : ('key * 'value) list}
+val add_list : ('key * 'value) list -> ('key, 'value) t -> ('key, 'value) added
 
 val bindings : ('key, 'value) t -> ('key * 'value) list
 

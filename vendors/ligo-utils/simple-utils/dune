@@ -4,9 +4,6 @@
   (libraries
     yojson
     unix
-    str
-  )
+    str)
   (preprocess
-    (pps ppx_let)
-  )
-)
+    (pps ppx_let)))

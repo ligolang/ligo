@@ -5,11 +5,10 @@
     cmdliner
     ligo
   )
-  (modules cli cli_helpers formatter version)
+  (modules cli cli_helpers formatter version changelog)
   (preprocess
-    (pps ppx_let ppx_blob bisect_ppx --conditional)
+    (pps ppx_let bisect_ppx --conditional)
   )
-  (preprocessor_deps (file ../../CHANGELOG.md))
   (flags (:standard -open Simple_utils))
 )
 
@@ -18,7 +17,14 @@
  (action (with-stdout-to
           version.ml
           (run "sh" "-c"
-               "printf 'let version = \"Rolling Release\nCommit SHA1: %s\nCommit Date: %s\"' \"${CI_COMMIT_SHA}\" \"${COMMIT_DATE}\""))))
+               "printf 'let version = \"%s\"' \"${LIGO_VERSION}\""))))
+
+(rule
+ (targets changelog.ml)
+ (deps (env_var CHANGELOG_PATH))
+ (action (with-stdout-to
+          changelog.ml
+          (run "sh" "-c" "printf 'let changelog = {changelog|%s|changelog}' \"$(cat ${CHANGELOG_PATH:-../../gitlab-pages/docs/intro/changelog.md})\""))))
 
 (executable
   (name runligo)
@@ -32,7 +38,7 @@
   (modules runligo)
   (package ligo)
   (preprocess
-    (pps ppx_let ppx_blob bisect_ppx --conditional)
+    (pps ppx_let bisect_ppx --conditional)
   )
   (flags (:standard -open Simple_utils))
 )

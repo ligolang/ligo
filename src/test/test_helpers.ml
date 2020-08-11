@@ -91,15 +91,25 @@ let sha_256_hash pl =
 
 open Ast_imperative.Combinators
 
+let typed_program_to_michelson (program , state) entry_point =
+  ignore state;
+  let%bind mini_c = Compile.Of_typed.compile program in
+  let%bind michelson = Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
+  let%bind michelson = Compile.Of_michelson.build_contract ~disable_typecheck:false michelson in
+  ok michelson
+
 let typed_program_with_imperative_input_to_michelson
     ((program , state): Ast_typed.program * Typesystem.Solver_types.typer_state) (entry_point: string)
-    (input: Ast_imperative.expression) : (Compiler.compiled_expression,_) result =
+    (input: Ast_imperative.expression) : (Stacking.compiled_expression,_) result =
   Printexc.record_backtrace true;
   let env = Ast_typed.program_environment Environment.default program in
   let%bind sugar            = Compile.Of_imperative.compile_expression input in
   let%bind core             = Compile.Of_sugar.compile_expression sugar in
+let () = (if Ast_typed.Debug.debug_new_typer then Printf.printf "\nINPUT = %s\n\n%!" (Format.asprintf "%a" Ast_core.PP.expression core)) in
   let%bind app              = Compile.Of_core.apply entry_point core in
-  let%bind (typed_app,_)    = Compile.Of_core.compile_expression ~env ~state app in
+let () = (if Ast_typed.Debug.debug_new_typer then Format.printf "\n\nSTATE IZ=%a\n\n" Typesystem.Solver_types.pp_typer_state state) in
+  let%bind (typed_app,new_state)    = Compile.Of_core.compile_expression ~env ~state app in
+  let () = Typer.Solver.discard_state new_state in
   let%bind compiled_applied = Compile.Of_typed.compile_expression typed_app in
   let%bind mini_c_prg       = Compile.Of_typed.compile program in
   Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg compiled_applied
@@ -109,7 +119,7 @@ let run_typed_program_with_imperative_input ?options
     (input: Ast_imperative.expression) : (Ast_core.expression, _) result =
   let%bind michelson_program = typed_program_with_imperative_input_to_michelson (program , state) entry_point input in
   let%bind michelson_output  = Ligo.Run.Of_michelson.run_no_failwith ?options michelson_program.expr michelson_program.expr_ty in
-  let%bind res =  Uncompile.uncompile_typed_program_entry_function_result program entry_point (Runned_result.Success michelson_output) in
+  let%bind res =  Decompile.Of_michelson.decompile_typed_program_entry_function_result program entry_point (Runned_result.Success michelson_output) in
   match res with
   | Runned_result.Success exp -> ok exp
   | Runned_result.Fail _ -> fail test_not_expected_to_fail
@@ -152,7 +162,7 @@ let expect_evaluate (program, _state) entry_point expecter =
   let%bind (exp,_)         = trace_option unknown @@ Mini_c.get_entry mini_c entry_point in
   let%bind michelson_value = Ligo.Compile.Of_mini_c.aggregate_and_compile_expression mini_c exp in
   let%bind res_michelson   = Ligo.Run.Of_michelson.run_no_failwith michelson_value.expr michelson_value.expr_ty in
-  let%bind res             = Uncompile.uncompile_typed_program_entry_expression_result program entry_point (Success res_michelson) in
+  let%bind res             = Decompile.Of_michelson.decompile_typed_program_entry_expression_result program entry_point (Success res_michelson) in
   let%bind res' = match res with
   | Runned_result.Success exp -> ok exp
   | Runned_result.Fail _ -> fail test_not_expected_to_fail in

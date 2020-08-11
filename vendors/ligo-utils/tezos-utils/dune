@@ -5,8 +5,8 @@
     tezos-error-monad
     tezos-stdlib-unix
     tezos-memory-proto-alpha
+    data-encoding
     simple-utils
-    michelson-parser
   )
  (flags (:standard -open Simple_utils ))
 )

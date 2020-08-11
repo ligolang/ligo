@@ -1,15 +1,6 @@
-open Trace
 open Display
 
-let error_suggest: string = "\n
-If you're not sure how to fix this error, you can do one of the following:
-
-* Visit our documentation: https://ligolang.org/docs/intro/introduction
-* Ask a question on our Discord: https://discord.gg/9rhYaEt
-* Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-* Check the changelog by running 'ligo changelog'"
-
-let rec error_ppformat' : display_format:string display_format ->
+let rec error_ppformat : display_format:string display_format ->
   Format.formatter -> Types.all -> unit =
   fun ~display_format f a ->
   match display_format with
@@ -17,29 +8,29 @@ let rec error_ppformat' : display_format:string display_format ->
     match a with 
     | `Test_err_tracer (name,err) ->
       Format.fprintf f "@[<hv>Test '%s'@ %a@]"
-        name (error_ppformat' ~display_format) err
+        name (error_ppformat ~display_format) err
     | `Test_run_tracer (ep, err) ->
       Format.fprintf f "@[<hv>Running entrypoint '%s'@ %a@]"
-        ep (error_ppformat' ~display_format) err
+        ep (error_ppformat ~display_format) err
     | `Test_expect_tracer (expected, actual) ->
       Format.fprintf f "@[<hv>Expected:@ %a@ got:@ %a@]"
         Ast_core.PP.expression expected
         Ast_core.PP.expression actual
     | `Test_expect_n_tracer (i,err) ->
       Format.fprintf f "@[<hv>Expect n=%d@ %a@]"
-        i (error_ppformat' ~display_format) err
+        i (error_ppformat ~display_format) err
     | `Test_expect_exp_tracer (e,err) ->
       Format.fprintf f "@[<hv>Expect %a@ %a@]"
         Ast_core.PP.expression e
-        (error_ppformat' ~display_format) err
+        (error_ppformat ~display_format) err
     | `Test_expect_eq_n_tracer (i,err) ->
       Format.fprintf f "@[<hv>Expected eq_n=%d@ %a@]"
-        i (error_ppformat' ~display_format) err
+        i (error_ppformat ~display_format) err
     | `Test_internal t ->
       Format.fprintf f "@[<hv>Internal error:@ %s@]" t
     | `Test_md_file_tracer (md_file,s,grp,prg,err) ->
       Format.fprintf f "@[<hv>Failed to compile %s@ syntax: %s@ group: %s@ program: %s@ %a@]"
-      md_file s grp prg (error_ppformat' ~display_format) err
+      md_file s grp prg (error_ppformat ~display_format) err
     | `Test_bad_code_block arg ->
       Format.fprintf f "@[<hv>Bad code block argument '%s'@ only 'group=NAME' or 'skip' are allowed@]"
         arg
@@ -56,18 +47,6 @@ let rec error_ppformat' : display_format:string display_format ->
         "@[<hv>Invalid extension '%s'@ Hint: Use '.ligo', '.mligo', '.religo' or the --syntax option@]"
         extension
 
-    | `Main_bad_michelson_parameter c ->
-      let s = Format.asprintf
-        "generated Michelson contract failed to typecheck : bad contract parameter type\n\
-        code:\n %a" Michelson.pp c in
-      Format.pp_print_string f s
-
-    | `Main_bad_michelson_storage c ->
-      let s = Format.asprintf
-        "generated Michelson contract failed to typecheck : bad contract storage type\n\
-        code:\n %a" Michelson.pp c in
-      Format.pp_print_string f s
-
     | `Main_bad_michelson c ->
       let s = Format.asprintf
         "generated Michelson contract failed to typecheck : bad contract type\n\
@@ -78,21 +57,20 @@ let rec error_ppformat' : display_format:string display_format ->
 
     | `Main_unparse_tracer _ -> Format.pp_print_string f "could not unparse michelson type"
 
-    | `Main_typecheck_contract_tracer (c,_) ->
-      let s = Format.asprintf
-        "Could not typecheck michelson code:\n %a"
-        Michelson.pp c in
-      Format.pp_print_string f s
-    
+    | `Main_typecheck_contract_tracer (_c,err_l) ->
+      let errs = List.map ( fun e -> match e with `Tezos_alpha_error a -> a) err_l in
+      Format.fprintf f "@[<hv>Compiler bug@ %a@]"
+      (Tezos_client_ligo006_PsCARTHA.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+
     | `Main_typecheck_parameter -> Format.pp_print_string f "Passed parameter does not match the contract type"
 
     | `Main_check_typed_arguments (Simple_utils.Runned_result.Check_parameter, err) ->
       Format.fprintf f "@[<v>Provided parameter type does not match contract parameter type@ %a@]"
-        (error_ppformat' ~display_format) err
+        (error_ppformat ~display_format) err
 
     | `Main_check_typed_arguments (Simple_utils.Runned_result.Check_storage, err) ->
       Format.fprintf f "@[<v>Provided storage type does not match contract storage type@ %a@]"
-        (error_ppformat' ~display_format) err
+        (error_ppformat ~display_format) err
 
     | `Main_unknown_failwith_type ->
       Format.fprintf f "@[<v>Execution failed with an unknown failwith type@]"
@@ -121,30 +99,28 @@ let rec error_ppformat' : display_format:string display_format ->
     | `Main_michelson_execution_error _ -> Format.fprintf f "@[<hv>Error of execution@]"
 
     | `Main_parser e -> Parser.Errors.error_ppformat ~display_format f e
+    | `Main_pretty _e -> () (*no error in this pass*)
     | `Main_self_ast_imperative e -> Self_ast_imperative.Errors.error_ppformat ~display_format f e 
-    | `Main_imperative_to_sugar e -> Imperative_to_sugar.Errors.error_ppformat ~display_format f e
-    | `Main_sugar_to_core _e -> () (*no error in this pass*)
-    | `Main_cit_pascaligo e -> Concrete_to_imperative.Errors_pascaligo.error_ppformat ~display_format f e
-    | `Main_cit_cameligo e -> Concrete_to_imperative.Errors_cameligo.error_ppformat ~display_format f e
+    | `Main_purification e -> Purification.Errors.error_ppformat ~display_format f e
+    | `Main_depurification _e -> () (*no error in this pass*)
+    | `Main_desugaring _e -> () (*no error in this pass*)
+    | `Main_sugaring _e -> () (*no error in this pass*)
+    | `Main_cit_pascaligo e -> Tree_abstraction.Pascaligo.Errors.error_ppformat ~display_format f e
+    | `Main_cit_cameligo e -> Tree_abstraction.Cameligo.Errors.error_ppformat ~display_format f e
+    | `Main_cit_reasonligo e -> Tree_abstraction.Reasonligo.Errors.error_ppformat ~display_format f e
     | `Main_typer e -> Typer.Errors.error_ppformat ~display_format f e
     | `Main_interpreter _ -> () (*no error*)
     | `Main_self_ast_typed e -> Self_ast_typed.Errors.error_ppformat ~display_format f e
     | `Main_self_mini_c e -> Self_mini_c.Errors.error_ppformat ~display_format f e
-    | `Main_transpiler e -> Transpiler.Errors.error_ppformat ~display_format f  e
-    | `Main_compiler e -> Compiler.Errors.error_ppformat ~display_format f e
+    | `Main_spilling e -> Spilling.Errors.error_ppformat ~display_format f  e
+    | `Main_stacking e -> Stacking.Errors.error_ppformat ~display_format f e
 
-    | `Main_uncompile_michelson e -> Compiler.Errors.error_ppformat ~display_format f  e
-    | `Main_uncompile_mini_c e -> Transpiler.Errors.error_ppformat ~display_format f  e
-    | `Main_uncompile_typed e -> Typer.Errors.error_ppformat ~display_format f  e
+    | `Main_decompile_michelson e -> Stacking.Errors.error_ppformat ~display_format f  e
+    | `Main_decompile_mini_c e -> Spilling.Errors.error_ppformat ~display_format f  e
+    | `Main_decompile_typed e -> Typer.Errors.error_ppformat ~display_format f  e
   )
   
-let error_ppformat : display_format:string display_format ->
-  Format.formatter -> Types.all -> unit = fun ~display_format f a ->
-    Format.fprintf f "@[<v>%a@ %s@]"
-      (error_ppformat' ~display_format) a
-      error_suggest
-
-let rec error_jsonformat : Types.all -> J.t = fun a ->
+let rec error_jsonformat : Types.all -> Yojson.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;
@@ -171,16 +147,6 @@ let rec error_jsonformat : Types.all -> J.t = fun a ->
 
   | `Main_invalid_extension _ ->
     json_error ~stage:"command line interpreter" ~content:(`String "bad file extension")
-
-  | `Main_bad_michelson_parameter c ->
-    let code = Format.asprintf "%a" Michelson.pp c in
-    let content = `Assoc [("message", `String "bad contract parameter type") ; ("code", `String code)] in
-    json_error ~stage:"michelson contract build" ~content
-
-  | `Main_bad_michelson_storage c ->
-    let code = Format.asprintf "%a" Michelson.pp c in
-    let content = `Assoc [("message", `String "bad contract storage type") ; ("code", `String code)] in
-    json_error ~stage:"michelson contract build" ~content
 
   | `Main_bad_michelson c ->
     let code = Format.asprintf "%a" Michelson.pp c in
@@ -272,21 +238,25 @@ let rec error_jsonformat : Types.all -> J.t = fun a ->
   | `Main_entrypoint_not_found -> json_error ~stage:"top-level glue" ~content:(`String "Missing entrypoint")
 
   | `Main_parser e -> Parser.Errors.error_jsonformat e
+  | `Main_pretty _ -> `Null (*no error in this pass*)
   | `Main_self_ast_imperative e -> Self_ast_imperative.Errors.error_jsonformat e
-  | `Main_imperative_to_sugar e -> Imperative_to_sugar.Errors.error_jsonformat e
-  | `Main_sugar_to_core _ -> `Null (*no error in this pass*)
-  | `Main_cit_pascaligo e -> Concrete_to_imperative.Errors_pascaligo.error_jsonformat e
-  | `Main_cit_cameligo e -> Concrete_to_imperative.Errors_cameligo.error_jsonformat e
+  | `Main_purification e -> Purification.Errors.error_jsonformat e
+  | `Main_depurification _ -> `Null (*no error in this pass*)
+  | `Main_desugaring _ -> `Null (*no error in this pass*)
+  | `Main_sugaring _ -> `Null (*no error in this pass*)
+  | `Main_cit_pascaligo e -> Tree_abstraction.Pascaligo.Errors.error_jsonformat e
+  | `Main_cit_cameligo e -> Tree_abstraction.Cameligo.Errors.error_jsonformat e
+  | `Main_cit_reasonligo e -> Tree_abstraction.Reasonligo.Errors.error_jsonformat e
   | `Main_typer e -> Typer.Errors.error_jsonformat e
   | `Main_interpreter _ -> `Null (*no error*)
   | `Main_self_ast_typed e -> Self_ast_typed.Errors.error_jsonformat e
-  | `Main_transpiler e -> Transpiler.Errors.error_jsonformat e
+  | `Main_spilling e -> Spilling.Errors.error_jsonformat e
   | `Main_self_mini_c e -> Self_mini_c.Errors.error_jsonformat e
-  | `Main_compiler e -> Compiler.Errors.error_jsonformat e
+  | `Main_stacking e -> Stacking.Errors.error_jsonformat e
   
-  | `Main_uncompile_michelson e -> Compiler.Errors.error_jsonformat e
-  | `Main_uncompile_mini_c e -> Transpiler.Errors.error_jsonformat e
-  | `Main_uncompile_typed e -> Typer.Errors.error_jsonformat e
+  | `Main_decompile_michelson e -> Stacking.Errors.error_jsonformat e
+  | `Main_decompile_mini_c e -> Spilling.Errors.error_jsonformat e
+  | `Main_decompile_typed e -> Typer.Errors.error_jsonformat e
 
 let error_format : _ Display.format = {
   pp = error_ppformat;

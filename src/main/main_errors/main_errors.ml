@@ -5,21 +5,25 @@ type all = Types.all
 (* passes tracers *)
 
 let parser_tracer (e:Parser.Errors.parser_error) : all = `Main_parser e
-let cit_cameligo_tracer (e:Concrete_to_imperative.Errors_cameligo.abs_error) : all = `Main_cit_cameligo e
-let cit_pascaligo_tracer (e:Concrete_to_imperative.Errors_pascaligo.abs_error) : all = `Main_cit_pascaligo e
+let pretty_tracer (e:Parser.Errors.parser_error) : all = `Main_pretty e
+let cit_cameligo_tracer (e:Tree_abstraction.Cameligo.Errors.abs_error) : all = `Main_cit_cameligo e
+let cit_pascaligo_tracer (e:Tree_abstraction.Pascaligo.Errors.abs_error) : all = `Main_cit_pascaligo e
+let cit_reasonligo_tracer (e:Tree_abstraction.Reasonligo.Errors.abs_error) : all = `Main_cit_reasonligo e
 let self_ast_imperative_tracer (e:Self_ast_imperative.Errors.self_ast_imperative_error) : all = `Main_self_ast_imperative e
-let imperative_to_sugar_tracer (e:Imperative_to_sugar.Errors.imperative_to_sugar_error) : all = `Main_imperative_to_sugar e
-let sugar_to_core_tracer (e:Sugar_to_core.Errors.sugar_to_core_error) : all = `Main_sugar_to_core e
+let purification_tracer (e:Purification.Errors.purification_error) : all = `Main_purification e
+let depurification_tracer (e:Purification.Errors.purification_error) : all = `Main_depurification e
+let desugaring_tracer (e:Desugaring.Errors.desugaring_error) : all = `Main_desugaring e
+let sugaring_tracer (e:Desugaring.Errors.desugaring_error) : all = `Main_sugaring e
 let typer_tracer (e:Typer.Errors.typer_error) : all = `Main_typer e
 let self_ast_typed_tracer (e:Self_ast_typed.Errors.self_ast_typed_error) : all = `Main_self_ast_typed e
 let self_mini_c_tracer (e:Self_mini_c.Errors.self_mini_c_error) : all = `Main_self_mini_c e
-let transpiler_tracer (e:Transpiler.Errors.transpiler_error) : all = `Main_transpiler e
-let compiler_tracer (e:Compiler.Errors.compiler_error) : all = `Main_compiler e
+let spilling_tracer (e:Spilling.Errors.spilling_error) : all = `Main_spilling e
+let stacking_tracer (e:Stacking.Errors.stacking_error) : all = `Main_stacking e
 let interpret_tracer (e:Interpreter.interpreter_error) : all = `Main_interpreter e
 
-let uncompile_mini_c : Transpiler.Errors.transpiler_error -> all = fun e -> `Main_uncompile_mini_c e
-let uncompile_typed : Typer.Errors.typer_error -> all = fun e -> `Main_uncompile_typed e
-let uncompile_michelson : Compiler.Errors.compiler_error -> all = fun e -> `Main_uncompile_michelson e
+let decompile_mini_c : Spilling.Errors.spilling_error -> all = fun e -> `Main_decompile_mini_c e
+let decompile_typed : Typer.Errors.typer_error -> all = fun e -> `Main_decompile_typed e
+let decompile_michelson : Stacking.Errors.stacking_error -> all = fun e -> `Main_decompile_michelson e
 
 (* top-level glue (in between passes) *)
 
@@ -36,9 +40,6 @@ let unparse_tracer errs : all = `Main_unparse_tracer errs
 let typecheck_contract_tracer c errs : all = `Main_typecheck_contract_tracer (c,errs)
 let typecheck_parameters_tracer _ : all = `Main_typecheck_parameter
 
-let bad_parameter c : all = `Main_bad_michelson_parameter c
-let bad_storage   c : all = `Main_bad_michelson_storage c
-let bad_contract  c : all = `Main_bad_michelson c
 let gas_exhaustion : all = `Main_gas_exhaustion
 let unknown : all = `Main_unknown
 

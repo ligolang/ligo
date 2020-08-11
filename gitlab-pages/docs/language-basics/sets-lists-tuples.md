@@ -25,7 +25,7 @@ Like records, tuple components can be of arbitrary types.
 
 ### Defining Tuples
 
-Unlike [a record](language-basics/maps-records.md), tuple types do not
+Unlike [a record](maps-records.md), tuple types do not
 have to be defined before they can be used. However below we will give
 them names by *type aliasing*.
 
@@ -110,7 +110,7 @@ of the tuple.
 ### Accessing Components
 
 Accessing the components of a tuple in OCaml is achieved by
-[pattern matching](language-basics/unit-option-pattern-matching.md). LIGO
+[pattern matching](unit-option-pattern-matching.md). LIGO
 currently supports tuple patterns only in the parameters of functions,
 not in pattern matching. However, we can access components by their
 position in their tuple, which cannot be done in OCaml. *Tuple

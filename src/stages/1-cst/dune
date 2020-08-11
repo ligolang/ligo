@@ -1,0 +1,9 @@
+(library
+  (name cst)
+  (public_name ligo.cst)
+  (libraries
+    cst_cameligo
+    cst_pascaligo
+    cst_reasonligo)
+  (preprocess
+    (pps ppx_let bisect_ppx --conditional)))

@@ -15,12 +15,14 @@ type ('old_constraint_type , 'selector_output ) propagator_heuristic = {
   selector          : ('old_constraint_type, 'selector_output) selector ;
   (* constraint propagation: (buch of constraints) → (new constraints * assignments) *)
   propagator        : 'selector_output propagator ;
+  printer           : Format.formatter -> 'selector_output -> unit ;
   comparator        : 'selector_output -> 'selector_output -> int ;
 }
 
 type ('old_constraint_type , 'selector_output ) propagator_state = {
   selector          : ('old_constraint_type, 'selector_output) selector ;
   propagator        : 'selector_output propagator ;
+  printer           : Format.formatter -> 'selector_output -> unit ;
   already_selected  : 'selector_output Set.t;
 }
 
@@ -36,6 +38,38 @@ type typer_state = {
   structured_dbs                   : structured_dbs   ;
   already_selected_and_propagators : ex_propagator_state list ;
 }
+
+open Format
+open PP_helpers
+
+let pp_already_selected = fun printer ppf set ->
+  let lst = (RedBlackTrees.PolySet.elements set) in
+    Format.fprintf ppf "Set [@,@[<hv 2> %a @]@,]" (list_sep printer (fun ppf () -> fprintf ppf " ;@ ")) lst
+
+let pp_ex_propagator_state = fun ppf (Propagator_state { selector ; propagator ; printer ; already_selected }) ->
+  ignore ( selector, propagator );
+  Format.fprintf ppf "{ selector = (* OCaml function *); propagator = (* OCaml function *); already_selected = %a }"
+  (pp_already_selected printer) already_selected
+
+let pp_typer_state = fun ppf ({ structured_dbs; already_selected_and_propagators } : typer_state) ->
+  Format.fprintf ppf "{ structured_dbs = %a ; already_selected_and_propagators = [ %a ] }"
+    Ast_typed.PP_generic.structured_dbs structured_dbs
+    (list_sep pp_ex_propagator_state (fun ppf () -> fprintf ppf " ;@ ")) already_selected_and_propagators
+
+
+let json_already_selected = fun printer ppf set ->
+  let lst = (RedBlackTrees.PolySet.elements set) in
+    Format.fprintf ppf "[ \"Set\" %a ]" (list_sep printer (fun ppf () -> fprintf ppf " , ")) lst
+
+let json_ex_propagator_state = fun ppf (Propagator_state { selector; propagator; printer ; already_selected }) ->
+  ignore (selector,propagator);
+  Format.fprintf ppf "{ \"selector\": \"OCaml function\"; \"propagator\": \"OCaml function\"; \"already_selected\": %a }"
+  (json_already_selected printer) already_selected
+
+let json_typer_state = fun ppf ({ structured_dbs; already_selected_and_propagators } : typer_state) ->
+  Format.fprintf ppf "{ \"structured_dbs\": %a ; \"already_selected_and_propagators\": [ %a ] }"
+    Ast_typed.PP_json.structured_dbs structured_dbs
+    (list_sep json_ex_propagator_state (fun ppf () -> fprintf ppf " , ")) already_selected_and_propagators
 
 (* state+list monad *)
 type ('state, 'elt) state_list_monad = { state: 'state ; list : 'elt list }
