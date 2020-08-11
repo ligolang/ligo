@@ -1,11 +1,12 @@
 { runCommand, writeTextFile, buildEnv, jq, yaml2json, git, mustache-go }:
 let
-  json = runCommand "changelog.json" { buildInputs = [ git jq yaml2json ]; } ''
-    cp -r ${builtins.path { name = "git"; path = ../.git; }} .git
-    cp -r ${../changelog} changelog
-    cp -r ${../scripts} scripts
-    bash ./scripts/changelog-json.sh > $out
-  '';
+  json = if builtins.elem ".git" (builtins.attrNames (builtins.readDir ../.)) then
+    runCommand "changelog.json" { buildInputs = [ git jq yaml2json ]; } ''
+      cp -r ${builtins.path { name = "git"; path = ../.git; }} .git
+      cp -r ${../changelog} changelog
+      cp -r ${../scripts} scripts
+      bash ./scripts/changelog-json.sh > $out
+    '' else builtins.toFile "changelog.json" (builtins.toJSON { changelog = [ { version = "Unknown; This executable was built without .git"; } ]; });
 
   changelog = {
     text = runCommand "changelog-text" { buildInputs = [ mustache-go ]; }
