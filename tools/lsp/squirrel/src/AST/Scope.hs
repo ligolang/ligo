@@ -29,8 +29,7 @@ import           Duplo.Pretty
 import           Duplo.Tree
 import           Duplo.Error
 
--- import           AST.Parser
-import           AST.Types
+import           AST.Skeleton
 import           Parser
 import           Product
 import           Range
@@ -111,11 +110,12 @@ addLocalScopes
   => LIGO (Product xs)
   -> LIGO (Product ([ScopedDecl] : Maybe Category : xs))
 addLocalScopes tree =
-    fmap (\xs -> fullEnvAt envWithREfs (getRange xs) :> xs) tree1
+    fmap (\xs -> fullEnvAt envWithRefs (getRange xs) :> xs) tree1
   where
     tree0       = either (error . show) id $ runCatch $ unLetRec tree
     tree1       = addNameCategories tree0
-    envWithREfs = getEnvTree tree0
+    -- envWithREfs = getEnvTree tree0
+    envWithRefs = undefined
 
 unLetRec
   :: forall xs m
@@ -348,7 +348,7 @@ instance Collectable xs => Scoped (Product xs) CollectM (LIGO (Product xs)) Bind
 
   after r = \case
     Irrefutable name    body -> do leave; def name  Nothing  (Just body) (getElem r)
-    Var         name ty body -> do leave; def name (Just ty) (Just body) (getElem r)
+    Var         name ty body -> do leave; def name       ty  (Just body) (getElem r) -- TODO: may be the source of bugs
     Const       name ty body -> do leave; def name (Just ty) (Just body) (getElem r)
 
     Function recur name _args ty body -> do
@@ -412,4 +412,4 @@ instance Scoped a CollectM (LIGO a) FieldName
 instance Scoped a CollectM (LIGO a) (Err Text)
 instance Scoped a CollectM (LIGO a) Language
 instance Scoped a CollectM (LIGO a) Parameters
-instance Scoped a CollectM (LIGO a) Ctor
+-- instance Scoped a CollectM (LIGO a) Ctor(Contains Range xs, Eq (Product xs), Scoped (Product xs) CollectM (Tree RawLigoList (Product xs)) ReasonExpr)

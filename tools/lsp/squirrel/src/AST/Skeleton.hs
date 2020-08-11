@@ -4,16 +4,15 @@
      The comments for fields in types are the type before it was made untyped.
 -}
 
-module AST.Types where
+module AST.Skeleton where
 
 import Data.Text (Text)
+import Data.Maybe (fromMaybe)
 import qualified Data.Text as Text
 
 import Duplo.Pretty
 import Duplo.Tree
 import Duplo.Error
-
--- import Debug.Trace
 
 -- | The AST for Pascali... wait. It is, em, universal one.
 --
@@ -25,8 +24,15 @@ type RawLigoList =
   [ Name, Path, QualifiedName, Pattern, Constant, FieldAssignment, Assignment
   , MapBinding, LHS, Alt, Expr, TField, Variant, Type, Mutable, VarDecl, Binding
   , RawContract, TypeName, FieldName, Language
-  , Err Text, Parameters, Ctor, Contract
+  , Err Text, Parameters, Ctor, Contract, ReasonExpr
   ]
+
+-- | ReasonLigo specific expressions
+data ReasonExpr it
+  -- TODO: Block may not need Maybe since last expr may be always `return`
+  = Block [it] (Maybe it) -- [Declaration] (Return)
+  deriving (Show) via PP (ReasonExpr it)
+  deriving stock (Functor, Foldable, Traversable)
 
 data Undefined it
   = Undefined Text
@@ -57,10 +63,11 @@ data RawContract it
 
 data Binding it
   = Irrefutable  it it               -- ^ (Pattern) (Expr)
-  | Function     Bool it it it it    -- ^ (Name) Parameters (Type) (Expr)
-  | Var          it it it            -- ^ (Name) (Type) (Expr)
+  | Function     Bool it it it it    -- ^ (Name) (Parameters) (Type) (Expr)
+  | Var          it (Maybe it) it            -- ^ (Name) (Type) (Expr)
   | Const        it it it            -- ^ (Name) (Type) (Expr)
-  | TypeDecl     it it               -- ^ Name Type
+  | TypeDecl     it it               -- ^ (Name) (Type)
+  | Attribute    it                  -- ^ (Name)
   | Include      it
   deriving (Show) via PP (Binding it)
   deriving stock (Functor, Foldable, Traversable)
@@ -118,6 +125,7 @@ data Expr it
   | If        it it it -- (Expr) (Expr) (Expr)
   | Assign    it it -- (LHS) (Expr)
   | List      [it] -- [Expr]
+  | ListAccess it [it] -- (Name) [Indexes]
   | Set       [it] -- [Expr]
   | Tuple     [it] -- [Expr]
   | Annot     it it -- (Expr) (Type)
@@ -132,7 +140,7 @@ data Expr it
   | ForLoop   it it it (Maybe it) it              -- (Name) (Expr) (Expr) (Expr)
   | WhileLoop it it                    -- (Expr) (Expr)
   | Seq       [it]                     -- [Declaration]
-  | Lambda    it it it               -- [VarDecl] (Type) (Expr)
+  | Lambda    it (Maybe it) it               -- [VarDecl] (Maybe (Type)) (Expr)
   | ForBox    it (Maybe it) it it it -- (Name) (Maybe (Name)) Text (Expr) (Expr)
   | MapPatch  it [it] -- (QualifiedName) [MapBinding]
   | SetPatch  it [it] -- (QualifiedName) [Expr]
@@ -162,6 +170,7 @@ data Assignment it
 
 data FieldAssignment it
   = FieldAssignment it it -- (QualifiedName) (Expr)
+  | Spread it -- (Name)
   deriving (Show) via PP (FieldAssignment it)
   deriving stock (Functor, Foldable, Traversable)
 
@@ -180,6 +189,7 @@ data Pattern it
   | IsConstant   it -- (Constant)
   | IsVar        it -- (Name)
   | IsCons       it it -- (Pattern) (Pattern)
+  | IsAnnot      it it -- (Pattern) (Type) -- Semantically `Var`
   | IsWildcard
   | IsList       [it] -- [Pattern]
   | IsTuple      [it] -- [Pattern]
@@ -239,8 +249,10 @@ instance Pretty1 Binding where
   pp1 = \case
     Irrefutable  pat  expr     -> "irref" <+> pat  <+> "=" `indent` expr
     TypeDecl     n    ty       -> "type"  <+> n    <+> "=" `indent` ty
-    Var          name ty value -> "var"   <+> name <+> ":" <+> ty <+> ":=" `indent` value
+    -- TODO
+    Var          name ty value -> "var"   <+> name <+> ":" <+> fromMaybe "<unnanotated>" ty <+> ":=" `indent` value
     Const        name ty body  -> "const" <+> name <+> ":" <+> ty <+>  "=" `indent` body
+    Attribute name -> "[@" <.> name <.> "]"
     Include      fname         -> "#include" <+> fname
 
     Function isRec name params ty body ->
@@ -286,10 +298,18 @@ instance Pretty1 Variant where
     Variant ctor (Just ty) -> "|" <+> ctor <+> "of" `indent` ty
     Variant ctor  _        -> "|" <+> ctor
 
+instance Pretty1 ReasonExpr where
+  pp1 = \case
+    -- TODO: prettify
+    Block decls ret -> "block' {"
+      `indent` block decls
+      <+> (if null decls then "" else ";")
+      `above` maybe "" ("return" `indent`) ret `above` "}"
+
 instance Pretty1 Expr where
   pp1 = \case
     Let       decl body  -> "let" <+> decl `above` body
-    Apply     f xs       -> f <+> xs
+    Apply     f xs       -> "(" <.> f <.> ")" <+> xs
     Constant  constant   -> constant
     Ident     qname      -> qname
     BinOp     l o r      -> parens (l <+> pp o <+> r)
@@ -299,6 +319,7 @@ instance Pretty1 Expr where
     If        b t e      -> fsep ["if" `indent` b, "then" `indent` t, "else" `indent` e]
     Assign    l r        -> l <+> ":=" `indent` r
     List      l          -> "list" <+> list l
+    ListAccess l ids     -> l <.> cat ((("[" <.>) . (<.> "]") . pp) <$> ids)
     Set       l          -> "set"  <+> list l
     Tuple     l          -> tuple l
     Annot     n t        -> parens (n <+> ":" `indent` t)
@@ -314,7 +335,7 @@ instance Pretty1 Expr where
     ForBox    k mv t z b -> "for" <+> k <+> mb ("->" <+>) mv <+> "in" <+> pp t <+> z `indent` b
     WhileLoop f b        -> "while" <+> f `indent` b
     Seq       es         -> "block {" `indent` block es `above` "}"
-    Lambda    ps ty b    -> (("function" `indent` ps) `indent` (":" <+> ty)) `indent` b
+    Lambda    ps ty b    -> (("lam" `indent` ps) `indent` (":" <+> fromMaybe "<unnanotated>" ty)) `indent` "=>" `indent` b
     MapPatch  z bs       -> "patch" `indent` z `above` "with" <+> "map" `indent` list bs
     SetPatch  z bs       -> "patch" `indent` z `above` "with" <+> "set" `indent` list bs
     RecordUpd r up       -> r `indent` "with" <+> "record" `indent` list up
@@ -334,6 +355,7 @@ instance Pretty1 Assignment where
 instance Pretty1 FieldAssignment where
   pp1 = \case
     FieldAssignment      n e -> n <+> "=" `indent` e
+    Spread n -> "..." <+> n
 
 instance Pretty1 Constant where
   pp1 = \case
@@ -354,6 +376,7 @@ instance Pretty1 Pattern where
     IsConstant   z         -> z
     IsVar        name      -> name
     IsCons       h t       -> h <+> ("#" <+> t)
+    IsAnnot      s t       -> "(" <+> s <+> ":" <+> t <+> ")"
     IsWildcard             -> "_"
     IsList       l         -> list l
     IsTuple      t         -> tuple t

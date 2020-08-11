@@ -1,5 +1,5 @@
-
-{-# language StrictData #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
+{-# LANGUAGE StrictData, TupleSections #-}
 
 {- | The input tree from TreeSitter. Doesn't have any pointers to any data
      from actual tree the TS produced and therefore has no usage limitations.
@@ -16,45 +16,43 @@ module ParseTree
 
     -- * Invoke the TreeSitter and get the tree it outputs
   , toParseTree
-  -- , example
+  , mkRawTreePascal
+  , mkRawTreeReason
   )
   where
 
-import Data.ByteString (ByteString)
+import           Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
+import           Data.Map
+import           Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.Encoding as Text
-import Data.Text (Text)
-import Data.Traversable (for)
+import           Data.Traversable (for)
 
-import           TreeSitter.Parser
-import           TreeSitter.Tree hiding (Tree)
+import           Control.Monad ((>=>))
+import           Foreign.C.String (peekCString)
+import           Foreign.Marshal.Alloc (alloca)
+import           Foreign.Marshal.Array (allocaArray)
+import           Foreign.Ptr (Ptr, nullPtr)
+import           Foreign.Storable (peek, peekElemOff, poke)
 import           TreeSitter.Language
 import           TreeSitter.Node
-import           Foreign.C.String (peekCString)
-import           Foreign.Ptr                    ( Ptr
-                                                , nullPtr
-                                                )
-import           Foreign.Marshal.Alloc          ( alloca )
-import           Foreign.Marshal.Array          ( allocaArray )
-import           Foreign.Storable               ( peek
-                                                , peekElemOff
-                                                , poke
-                                                )
-import           Control.Monad ((>=>))
+import           TreeSitter.Parser
+import           TreeSitter.Tree hiding (Tree)
 
-import           System.FilePath                (takeFileName)
+import           System.FilePath (takeFileName)
 
 import           System.IO.Unsafe (unsafePerformIO)
 
-import Duplo.Pretty
-import Duplo.Tree
+import           Duplo.Pretty as PP
+import           Duplo.Tree
 
-import Range
-import Product
-import Debouncer
+import           Debouncer
+import           Product
+import           Range
 
 foreign import ccall unsafe tree_sitter_PascaLigo :: Ptr Language
+foreign import ccall unsafe tree_sitter_ReasonLigo :: Ptr Language
 
 data Source
   = Path       { srcPath :: FilePath }
@@ -73,10 +71,27 @@ type RawInfo = Product [Range, Text]
 instance {-# OVERLAPS #-} Modifies RawInfo where
   ascribe (r :> n :> _) d = color 3 (pp n) <+> pp r `indent` pp d
 
+data TreeKind
+  = Error
+  | Comment
+  | Field Text
+  deriving stock (Eq, Ord)
+
+-- TODO: move and refactor
+instance (Pretty k, Pretty v) => Pretty (Map k v) where
+  pp = pp . fmap snd . toList
+
+instance Pretty TreeKind where
+  pp = \case
+    Error -> "error"
+    Comment -> "comment"
+    Field t -> "field (" PP.<.> pp t PP.<.> ")"
+
 -- | The tree tree-sitter produces.
 data ParseTree self = ParseTree
   { ptName     :: Text         -- ^ Name of the node.
   , ptChildren :: [self]       -- ^ Subtrees.
+  -- , ptChildren :: Map TreeKind self -- ^ Subtrees.
   , ptSource   :: ~Text        -- ^ Range of the node.
   }
   deriving stock (Functor, Foldable, Traversable)
@@ -90,13 +105,20 @@ instance Pretty1 ParseTree where
         (pp forest)
       )
 
+mkRawTreePascal :: Source -> IO RawTree
+mkRawTreePascal = toParseTree tree_sitter_PascaLigo
+
+mkRawTreeReason :: Source -> IO RawTree
+mkRawTreeReason = toParseTree tree_sitter_ReasonLigo
+
 -- | Feed file contents into PascaLIGO grammar recogniser.
-toParseTree :: Source -> IO RawTree
-toParseTree = unsafePerformIO $ debounced inner
+toParseTree :: Ptr Language -> Source -> IO RawTree
+toParseTree language = unsafePerformIO $ debounced inner
   where
     inner fin = do
       parser <- ts_parser_new
-      True   <- ts_parser_set_language parser tree_sitter_PascaLigo
+      -- True   <- ts_parser_set_language parser tree_sitter_PascaLigo
+      True <- ts_parser_set_language parser language
 
       src <- srcToBytestring fin
 
@@ -108,11 +130,11 @@ toParseTree = unsafePerformIO $ debounced inner
         go :: ByteString -> Node -> IO RawTree
         go src node = do
           let count = fromIntegral $ nodeChildCount node
-          allocaArray count \children -> do
-            alloca \tsNodePtr -> do
+          allocaArray count $ \children -> do
+            alloca $ \tsNodePtr -> do
               poke tsNodePtr $ nodeTSNode node
               ts_node_copy_child_nodes tsNodePtr children
-              nodes <- for [0.. count - 1] \i -> do
+              nodes <- for [0.. count - 1] $ \i -> do
                 peekElemOff children i
 
               trees <- for nodes \node' -> do
@@ -148,6 +170,7 @@ toParseTree = unsafePerformIO $ debounced inner
 
               return $ make (range :> "" :> Nil, ParseTree
                 { ptName     = Text.pack ty
+                -- , ptChildren = fromList . fmap (Comment,) $ trees -- TODO
                 , ptChildren = trees
                 , ptSource   = cutOut range src
                 })

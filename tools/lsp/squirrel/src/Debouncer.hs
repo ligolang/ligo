@@ -31,8 +31,8 @@ debounced act = do
     putMVar i i'
     readMVar o >>= either throwM return
 
-test :: IO ([Int] -> IO Int)
-test = debounced \s -> do
+_test :: IO ([Int] -> IO Int)
+_test = debounced \s -> do
   threadDelay 2000000
   unless (odd (length s)) do
     error "even"

@@ -2,22 +2,19 @@
 module AST.Completion where
 
 import Data.Function (on)
+import Data.List (isSubsequenceOf, nubBy)
+import Data.Maybe (listToMaybe)
 import Data.Text (Text)
 import qualified Data.Text as Text
-import Data.Maybe (listToMaybe)
-import Data.List (isSubsequenceOf, nubBy)
 
-import Duplo.Tree
 import Duplo.Lattice
 import Duplo.Pretty
+import Duplo.Tree
 
-import AST.Types
 import AST.Scope
--- import AST.Parser
-import Range
+import AST.Skeleton
 import Product
-
-import Debug.Trace
+import Range
 
 data Completion = Completion
   { cName :: Text

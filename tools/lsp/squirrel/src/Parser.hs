@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 module Parser where
 
@@ -16,8 +17,6 @@ import Duplo.Pretty
 import ParseTree
 import Range
 import Product
-
--- import Dsebug.Trace
 
 {-
   Comment grabber has 2 buffers: 1 and 2.
@@ -49,7 +48,7 @@ instance Scoped (Product [Range, Text]) ParserM RawTree ParseTree where
     tell $ fmap (\t -> (r, Err t)) errs
 
   after _ _ = do
-    modify \(_, y) -> (y, [])
+    modify $ \(_, y) -> (y, [])
 
 grabComments :: ParserM [Text]
 grabComments = do
@@ -109,7 +108,7 @@ instance Pretty ShowRange where
   pp N = "Nah"
 
 type Info    = Product [[Text], Range, ShowRange]
-type PreInfo = Product [Range, ShowRange]
+-- type PreInfo = Product [Range, ShowRange]
 
 instance
   ( Contains Range xs

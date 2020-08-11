@@ -1,14 +1,9 @@
-
-{- | Parser for a contract.
--}
-
-module AST.Parser
-  -- (example, contract, sample)
-  where
+-- | Parser for a PascaLigo contract.
+module AST.Pascaligo.Parser where
 
 import Data.Maybe (isJust)
 
-import AST.Types
+import AST.Skeleton
 
 import Duplo.Error
 import Duplo.Tree
@@ -45,24 +40,24 @@ example = "../../../src/test/contracts/coase.ligo"
 
 sample' :: FilePath -> IO (LIGO Info)
 sample' f
-  =   toParseTree (Path f)
+  =   mkRawTreePascal (Path f)
   >>= runParserM . recognise
   >>= return . fst
 
 source' :: FilePath -> IO ()
 source' f
-  =   toParseTree (Path f)
+  =   mkRawTreePascal (Path f)
   >>= print . pp
 
 sample :: IO ()
 sample
-  =   toParseTree (Path example)
+  =   mkRawTreePascal (Path example)
   >>= runParserM . recognise
   >>= print . pp . fst
 
 source :: IO ()
 source
-  =   toParseTree (Path example)
+  =   mkRawTreePascal (Path example)
   >>= print . pp
 
 recognise :: RawTree -> ParserM (LIGO Info)
@@ -100,7 +95,7 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
         "skip"              -> return Skip
         "case_expr"         -> Case      <$> field  "subject"    <*> fields   "case"
         "case_instr"        -> Case      <$> field  "subject"    <*> fields   "case"
-        "fun_expr"          -> Lambda    <$> field  "parameters" <*> field    "type"  <*> field "body"
+        "fun_expr"          -> Lambda    <$> field  "parameters" <*> fieldOpt    "type"  <*> field "body"
         "for_cycle"         -> ForLoop   <$> field  "name"       <*> field    "begin" <*> field "end" <*> fieldOpt "step" <*> field "body"
         "for_box"           -> ForBox    <$> field  "key"        <*> fieldOpt "value" <*> field "kind"  <*> field "collection" <*> field "body"
         "while_loop"        -> WhileLoop <$> field  "breaker"    <*> field    "body"
@@ -175,7 +170,7 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
       boilerplate \case
         "fun_decl"   -> Function <$> (isJust <$> fieldOpt "recursive") <*> field "name" <*> field "parameters" <*> field "type" <*> field "body"
         "const_decl" -> Const    <$>             field    "name"       <*> field "type" <*> field "value"
-        "var_decl"   -> Var      <$>             field    "name"       <*> field "type" <*> field "value"
+        "var_decl"   -> Var      <$>             field    "name"       <*> fieldOpt "type" <*> field "value"
         "type_decl"  -> TypeDecl <$>             field    "typeName"   <*> field "typeValue"
         "include"    -> Include  <$>             field    "filename"
         _            -> fallthrough

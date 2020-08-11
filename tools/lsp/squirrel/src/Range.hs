@@ -2,10 +2,11 @@
 {- | Continious location inside the source and utilities.
 -}
 
+{-# OPTIONS_GHC -Wno-orphans #-}
+
 module Range
   ( Range(..)
   , HasRange(..)
-  , diffRange
   , cutOut
   , point
   )
@@ -32,10 +33,6 @@ data Range = Range
   }
   deriving (Show) via PP Range
   deriving stock (Ord)
-
--- | TODO: Ugh. Purge it.
-diffRange :: Range -> Range -> Range
-diffRange (Range ws wf f) (Range ps _ _) = Range (max ws ps) wf f
 
 instance Pretty Range where
   pp (Range (ll, lc, _) (rl, rc, _) f) =

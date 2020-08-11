@@ -25,7 +25,6 @@ import           Language.Haskell.LSP.VFS
 import           System.Exit
 import qualified System.Log                            as L
 
-import           Duplo.Pretty
 import           Duplo.Error
 import           Duplo.Tree (collect)
 
@@ -35,6 +34,7 @@ import           Range
 import           Product
 import           AST                                           hiding (def)
 import qualified AST.Find                              as Find
+import           AST.Pascaligo.Parser 
 -- import           Error
 
 main :: IO ()
@@ -219,7 +219,7 @@ loadFromVFS funs uri = do
   Just vf <- Core.getVirtualFileFunc funs $ J.toNormalizedUri uri
   let txt = virtualFileText vf
   let Just fin = J.uriToFilePath uri
-  (tree, _) <- runParserM . recognise =<< toParseTree (Text fin txt)
+  (tree, _) <- runParserM . recognise =<< mkRawTreePascal (Text fin txt)
   return $ addLocalScopes tree
 
 -- loadByURI
@@ -242,7 +242,7 @@ collectErrors
 collectErrors funs uri path version = do
   case path of
     Just fin -> do
-      (tree, errs) <- runParserM . recognise =<< toParseTree (Path fin)
+      (tree, errs) <- runParserM . recognise =<< mkRawTreePascal (Path fin)
       Core.publishDiagnosticsFunc funs 100 uri version
         $ partitionBySource
         $ map errorToDiag (errs <> map (getElem *** void) (collect tree))

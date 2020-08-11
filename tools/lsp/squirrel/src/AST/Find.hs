@@ -5,19 +5,17 @@ import Control.Monad
 
 import Data.Maybe (listToMaybe)
 
-import Duplo.Tree
-import Duplo.Pretty
 import Duplo.Lattice
+import Duplo.Pretty
+import Duplo.Tree
 
 import Data.Text (Text)
 
-import AST.Types
 import AST.Scope
+import AST.Skeleton
 
 import Product
 import Range
-
--- import Debug.Trace
 
 type CanSearch xs =
   ( Contains [ScopedDecl] xs
