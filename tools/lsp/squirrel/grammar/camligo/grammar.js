@@ -7,7 +7,7 @@ let sepBy1 = (sep, rule) =>
 
 let sepBy = (sep, rule) => optional(sepBy1(sep, rule))
 
-let par      = x => seq('(', x, ')')
+let par = x => seq('(', x, ')')
 let brackets = x => seq('[', x, ']')
 
 let ne_injection = (Kind, element) =>
@@ -40,7 +40,7 @@ let injection = (Kind, element) =>
     ),
   )
 
-let tuple  = x => seq(x, ',', x, repeat(seq(',', x)))
+let tuple = x => seq(x, ',', x, repeat(seq(',', x)))
 let list__ = x => brackets(sepBy(';', x))
 
 let nseq = x => seq(x, repeat(x))
@@ -57,7 +57,7 @@ let lop = (l, x, r) => op(l, x, r, l)
 module.exports = grammar({
   name: 'CAMLigo',
 
-  word:   $ => $.Keyword,
+  word: $ => $.Keyword,
   extras: $ => [$.ocaml_comment, $.comment, /\s/],
 
   conflicts: $ => [[$.call, $.if_then_else]],
@@ -65,7 +65,8 @@ module.exports = grammar({
   rules: {
     // debug: $ => $.expr,
 
-    contract: $ => repeat($.declaration),
+    // contract: $ => repeat($.declaration),
+    contract: $ => $.expr,
 
     expr: $ =>
       choice(
@@ -91,9 +92,9 @@ module.exports = grammar({
     disj: $ => prec.left(3, rop($.disj, $.or, $.conj)),
     conj: $ => prec.left(4, rop($.conj, $.and, $.comp)),
     comp: $ => prec.left(5, rop($.comp, $.compare, $.cat)),
-    cat:  $ => prec.left(6, lop($.cons, $.catenate, $.cat)),
+    cat: $ => prec.left(6, lop($.cons, $.catenate, $.cat)),
     cons: $ => prec.right(7, lop($.add, $.consolidate, $.cons)),
-    add:  $ => prec.left(8, rop($.add, $.plus, $.mult)),
+    add: $ => prec.left(8, rop($.add, $.plus, $.mult)),
     mult: $ => prec.left(9, rop($.mult, $.times, $.unary)),
 
     unary: $ =>
@@ -341,9 +342,9 @@ module.exports = grammar({
 
     field_decl: $ =>
       seq(
-       $.field_name,
-       ':',
-       $.type_expr,
+        $.field_name,
+        ':',
+        $.type_expr,
       ),
 
     let_declaration: $ =>
@@ -414,7 +415,7 @@ module.exports = grammar({
         $.pattern,
       ),
 
-    pattern:       $ => sepBy1('::', $.pattern_tuple),
+    pattern: $ => sepBy1('::', $.pattern_tuple),
     pattern_tuple: $ => sepBy1(',', $.construct),
 
     construct: $ =>
@@ -423,7 +424,7 @@ module.exports = grammar({
         $.pattern_term,
       ),
 
- ///////////////////////////////////////////
+    ///////////////////////////////////////////
 
     type_name: $ => $.ident,
     field_name: $ => $.ident,
@@ -448,23 +449,23 @@ module.exports = grammar({
 
     include: $ => seq('#include', $.String),
 
-    String:       $ => /\"(\\.|[^"])*\"/,
-    Int:          $ => /-?([1-9][0-9_]*|0)/,
-    Nat:          $ => /([1-9][0-9_]*|0)n/,
-    Tez:          $ => /([1-9][0-9_]*|0)(\.[0-9_]+)?(tz|tez|mutez)/,
-    Bytes:        $ => /0x[0-9a-fA-F]+/,
-    Name:         $ => /[a-z][a-zA-Z0-9_]*/,
+    String: $ => /\"(\\.|[^"])*\"/,
+    Int: $ => /-?([1-9][0-9_]*|0)/,
+    Nat: $ => /([1-9][0-9_]*|0)n/,
+    Tez: $ => /([1-9][0-9_]*|0)(\.[0-9_]+)?(tz|tez|mutez)/,
+    Bytes: $ => /0x[0-9a-fA-F]+/,
+    Name: $ => /[a-z][a-zA-Z0-9_]*/,
     Name_Capital: $ => /[A-Z][a-zA-Z0-9_]*/,
-    Keyword:      $ => /[A-Za-z][a-z]*/,
+    Keyword: $ => /[A-Za-z][a-z]*/,
 
-    False:        $ => 'False',
-    True:         $ => 'True',
-    Unit:         $ => 'Unit',
-    None:         $ => 'None',
-    Some:         $ => 'Some',
-    skip:         $ => 'skip',
-    rec:          $ => 'rec',
+    False: $ => 'False',
+    True: $ => 'True',
+    Unit: $ => 'Unit',
+    None: $ => 'None',
+    Some: $ => 'Some',
+    skip: $ => 'skip',
+    rec: $ => 'rec',
 
-    attr:         $ => seq('[@@', $.name, ']'),
+    attr: $ => seq('[@@', $.name, ']'),
   }
 });

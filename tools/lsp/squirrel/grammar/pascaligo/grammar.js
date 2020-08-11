@@ -14,7 +14,7 @@ let op = (name, left, right, term) =>
   )
 
 let right_op = (name, left, right) => op(name, left, right, right)
-let left_op  = (name, left, right) => op(name, left, right, left)
+let left_op = (name, left, right) => op(name, left, right, left)
 
 let par = x => seq('(', x, ')')
 let brackets = x => seq('[', x, ']')
@@ -52,7 +52,7 @@ let injection = (Kind, element) =>
 module.exports = grammar({
   name: 'PascaLigo',
 
-  word:   $ => $.Keyword,
+  word: $ => $.Keyword,
   extras: $ => [$.ocaml_comment, $.comment, /\s/],
 
   rules: {
@@ -119,30 +119,30 @@ module.exports = grammar({
 
     michelsonTypeOr: $ =>
       seq(
-       "michelson_or",
-       "(",
-       field("left_type", $._type_expr),
-       ",",
-       field("left_type_name", $.String),
-       ",",
-       field("right_type", $._type_expr),
-       ",",
-       field("right_type_name", $.String),
-       ")",
+        "michelson_or",
+        "(",
+        field("left_type", $._type_expr),
+        ",",
+        field("left_type_name", $.String),
+        ",",
+        field("right_type", $._type_expr),
+        ",",
+        field("right_type_name", $.String),
+        ")",
       ),
 
     michelsonTypeAnd: $ =>
       seq(
-       "michelson_pair",
-       "(",
-       field("left_type", $._type_expr),
-       ",",
-       field("left_type_name", $.String),
-       ",",
-       field("right_type", $._type_expr),
-       ",",
-       field("right_type_name", $.String),
-       ")",
+        "michelson_pair",
+        "(",
+        field("left_type", $._type_expr),
+        ",",
+        field("left_type_name", $.String),
+        ",",
+        field("right_type", $._type_expr),
+        ",",
+        field("right_type_name", $.String),
+        ")",
       ),
 
     invokeBinary: $ =>
@@ -157,10 +157,10 @@ module.exports = grammar({
         par(field("arguments", $._type_expr)),
       ),
 
-    map:     $ => 'map',
+    map: $ => 'map',
     big_map: $ => 'big_map',
-    list:    $ => 'list',
-    set:     $ => 'set',
+    list: $ => 'list',
+    set: $ => 'set',
 
     type_tuple: $ => par(sepBy1(',', field("element", $._type_expr))),
 
@@ -184,7 +184,7 @@ module.exports = grammar({
 
     record_type: $ =>
       choice(
-        seq('record',      sepBy(';', field("field", $.field_decl)), 'end'),
+        seq('record', sepBy(';', field("field", $.field_decl)), 'end'),
         seq('record', '[', sepBy(';', field("field", $.field_decl)), ']'),
       ),
 
@@ -525,22 +525,22 @@ module.exports = grammar({
 
     binop: $ =>
       choice(
-        prec.left (0, seq(field("arg1", $._op_expr),    field("op", 'or'),         field("arg2", $._op_expr))),
-        prec.left (1, seq(field("arg1", $._op_expr),    field("op", 'and'),        field("arg2", $._op_expr))),
-        prec.right(2, seq(field("arg1", $._core_expr), field("op", 'contains'),   field("arg2", $._op_expr))),
-        prec.left (3, seq(field("arg1", $._op_expr),    field("op", $.comparison), field("arg2", $._op_expr))),
-        prec.right(4, seq(field("arg1", $._op_expr),    field("op", '^'),          field("arg2", $._op_expr))),
-        prec.right(5, seq(field("arg1", $._op_expr),    field("op", '#'),          field("arg2", $._op_expr))),
-        prec.left (6, seq(field("arg1", $._op_expr),    field("op", $.adder),      field("arg2", $._op_expr))),
-        prec.left (7, seq(field("arg1", $._op_expr),    field("op", $.multiplier), field("arg2", $._op_expr))),
+        prec.left(0, seq(field("arg1", $._op_expr), field("op", 'or'), field("arg2", $._op_expr))),
+        prec.left(1, seq(field("arg1", $._op_expr), field("op", 'and'), field("arg2", $._op_expr))),
+        prec.right(2, seq(field("arg1", $._core_expr), field("op", 'contains'), field("arg2", $._op_expr))),
+        prec.left(3, seq(field("arg1", $._op_expr), field("op", $.comparison), field("arg2", $._op_expr))),
+        prec.right(4, seq(field("arg1", $._op_expr), field("op", '^'), field("arg2", $._op_expr))),
+        prec.right(5, seq(field("arg1", $._op_expr), field("op", '#'), field("arg2", $._op_expr))),
+        prec.left(6, seq(field("arg1", $._op_expr), field("op", $.adder), field("arg2", $._op_expr))),
+        prec.left(7, seq(field("arg1", $._op_expr), field("op", $.multiplier), field("arg2", $._op_expr))),
       ),
 
     unop: $ => prec.right(8, seq(field("negate", $.negate), field("arg", $._core_expr))),
 
     comparison: $ => choice('<', '<=', '>', '>=', '=', '=/='),
-    adder:      $ => choice('-', '+'),
+    adder: $ => choice('-', '+'),
     multiplier: $ => choice('/', '*', 'mod'),
-    negate:     $ => choice('-', 'not'),
+    negate: $ => choice('-', 'not'),
 
     _core_expr: $ =>
       choice(
@@ -718,8 +718,8 @@ module.exports = grammar({
         field("arguments", $.arguments),
       ),
 
-    tuple_expr: $ => par(sepBy1(',', field("element",  $._expr))),
-    arguments:  $ => par(sepBy(',',  field("argument", $._expr))),
+    tuple_expr: $ => par(sepBy1(',', field("element", $._expr))),
+    arguments: $ => par(sepBy(',', field("argument", $._expr))),
 
     _list_expr: $ => choice($.list_injection, 'nil'),
 
@@ -802,22 +802,22 @@ module.exports = grammar({
 
     include: $ => seq('#include', field("filename", $.String)),
 
-    String:       $ => choice(/\"(\\.|[^"])*\"/, /{\|(\\.|[^\|])*\|}/),
-    Int:          $ => /-?([1-9][0-9_]*|0)/,
-    Nat:          $ => /([1-9][0-9_]*|0)n/,
-    Tez:          $ => /([1-9][0-9_]*|0)(\.[0-9_]+)?(tz|tez|mutez)/,
-    Bytes:        $ => /0x[0-9a-fA-F]+/,
-    FieldName:    $ => /[a-z][a-zA-Z0-9_]*/,
-    TypeName:     $ => /[a-z][a-zA-Z0-9_]*/,
-    Name:         $ => /[a-z][a-zA-Z0-9_]*/,
+    String: $ => choice(/\"(\\.|[^"])*\"/, /{\|(\\.|[^\|])*\|}/),
+    Int: $ => /-?([1-9][0-9_]*|0)/,
+    Nat: $ => /([1-9][0-9_]*|0)n/,
+    Tez: $ => /([1-9][0-9_]*|0)(\.[0-9_]+)?(tz|tez|mutez)/,
+    Bytes: $ => /0x[0-9a-fA-F]+/,
+    FieldName: $ => /[a-z][a-zA-Z0-9_]*/,
+    TypeName: $ => /[a-z][a-zA-Z0-9_]*/,
+    Name: $ => /[a-z][a-zA-Z0-9_]*/,
     Name_Capital: $ => /[A-Z][a-zA-Z0-9_]*/,
-    Keyword:      $ => /[A-Za-z][a-z]*/,
+    Keyword: $ => /[A-Za-z][a-z]*/,
 
-    False:         $ => 'False',
-    True:          $ => 'True',
-    Unit:          $ => 'Unit',
-    None:          $ => 'None',
-    skip:          $ => 'skip',
-    recursive:     $ => 'recursive',
+    False: $ => 'False',
+    True: $ => 'True',
+    Unit: $ => 'Unit',
+    None: $ => 'None',
+    skip: $ => 'skip',
+    recursive: $ => 'recursive',
   }
 });
