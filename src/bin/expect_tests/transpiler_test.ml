@@ -377,7 +377,7 @@ let%expect_test _ =
       ((gen__parameters4: (action_transfer_single, storage))
        : return =>
          switch(gen__parameters4) {
-         | (action: action_transfer_single, s: storage) =>
+         | action: action_transfer_single, s: storage =>
              let cards: cards = s.cards;
              let card: card =
                switch(
@@ -399,14 +399,14 @@ let%expect_test _ =
                let cards =
                  Map.add(card, action.card_to_transfer, cards);
                let s = {...s, {cards: cards }};
-               ([] : list(operation), s)
+               [] : list(operation), s
              end
          });
 
     let sell_single: (action_sell_single, storage) => return =
       ((gen__parameters3: (action_sell_single, storage)): return =>
          switch(gen__parameters3) {
-         | (action: action_sell_single, s: storage) =>
+         | action: action_sell_single, s: storage =>
              let card: card =
                switch(Map.find_opt(action.card_to_sell, s.cards)) {
                | Somecard => card
@@ -463,14 +463,14 @@ let%expect_test _ =
                let op: operation =
                  (Tezos.transaction((unit), (price), (receiver)));
                let operations: list(operation) = [op];
-               (operations, s)
+               operations, s
              end
          });
 
     let buy_single: (action_buy_single, storage) => return =
       ((gen__parameters2: (action_buy_single, storage)): return =>
          switch(gen__parameters2) {
-         | (action: action_buy_single, s: storage) =>
+         | action: action_buy_single, s: storage =>
              let card_pattern: card_pattern =
                switch(
                 Map.find_opt(action.card_to_buy, s.card_patterns)) {
@@ -516,14 +516,14 @@ let%expect_test _ =
                let s =
                  {...s,
                    {next_id: (ADD((s.next_id), (1n))) }};
-               ([] : list(operation), s)
+               [] : list(operation), s
              end
          });
 
     let main: (parameter, storage) => return =
       ((gen__parameters1: (parameter, storage)): return =>
          switch(gen__parameters1) {
-         | (action: parameter, s: storage) =>
+         | action: parameter, s: storage =>
              switch(action) {
              | Buy_single bs => buy_single(bs, s)
              | Sell_single as => sell_single(as, s)
@@ -609,16 +609,16 @@ let%expect_test _ =
     let main: unit => int =
       ((toto: unit): int =>
          let a: ppp =
-           ({
-              y: (10, 11),
-              x: (0, 1)
-            }, {y: (110, 111), x: (100, 101) });
+           {
+              y: 10, 11,
+              x: 0, 1
+            }, {y: 110, 111, x: 100, 101 };
          let a = {...a, {0.x[0]: 2 }};
          a[0].x[0]);
 
     let asymetric_tuple_access: unit => int =
       ((foo: unit): int =>
-         let tuple: (int, (int, (int, int))) = (0, (1, (2, 3)));
+         let tuple: (int, (int, (int, int))) = 0, 1, 2, 3;
          (
           ADD(((
               ADD(((ADD((tuple[0]), (tuple[1][0])))),
@@ -690,34 +690,31 @@ let%expect_test _ =
          transferContentsIteratorAccumulator *
          transferContentsMichelson)
       : transferContentsIteratorAccumulator is
-      case gen__1 of [
-        (accumulator, transferContentsMichelson) ->
-          block {
-            const gen__2 = accumulator;
-            const storage = gen__2.0;
-            const from_ = gen__2.1;
-            const transferContents : transferContents
-            = Layout.convert_from_right_comb
-                (transferContentsMichelson);
-            const tokenOwner : option (tokenOwner)
-            = Map.find_opt (transferContents.token_id, storage);
-            const tokenOwner
-            = case tokenOwner of [
-                Some (tokenOwner) ->
-                  if EQ (tokenOwner, from_)
-                  then tokenOwner
-                  else
-                    (failwith (errorInsufficientBalance)
-                     : tokenOwner)
-              | None ->
-                  (failwith (errorTokenUndefined) : tokenOwner)
-              ];
-            const storage
-            = Map.update
-                (transferContents.token_id,
-                 Some (transferContents.to_), storage)
-          } with (storage, from_)
-      ]
+    block {
+      const accumulator = gen__1.0;
+      const transferContentsMichelson = gen__1.1;
+      const gen__2 = accumulator;
+      const storage = gen__2.0;
+      const from_ = gen__2.1;
+      const transferContents : transferContents
+      = Layout.convert_from_right_comb
+          (transferContentsMichelson);
+      const tokenOwner : option (tokenOwner)
+      = Map.find_opt (transferContents.token_id, storage);
+      const tokenOwner
+      = case tokenOwner of [
+          Some (tokenOwner) ->
+            if EQ (tokenOwner, from_)
+            then tokenOwner
+            else
+              (failwith (errorInsufficientBalance) : tokenOwner)
+        | None -> (failwith (errorTokenUndefined) : tokenOwner)
+        ];
+      const storage
+      = Map.update
+          (transferContents.token_id,
+           Some (transferContents.to_), storage)
+    } with (storage, from_)
 
     function allowOnlyOwnTransfer (const from : tokenOwner)
       : unit is
@@ -727,43 +724,41 @@ let%expect_test _ =
 
     function transferIterator
       (const gen__3 : storage * transferMichelson) : storage is
-      case gen__3 of [
-        (storage, transferMichelson) ->
-          block {
-            const transferAuxiliary2 : transferAuxiliary
-            = Layout.convert_from_right_comb (transferMichelson);
-            const from_ : tokenOwner = transferAuxiliary2.from_;
-            allowOnlyOwnTransfer (from_);
-            const gen__5
-            = List.fold
-                (transferContentsIterator,
-                 transferAuxiliary2.txs, (storage, from_));
-            const storage = gen__5.0;
-            const gen__4 = gen__5.1
-          } with storage
-      ]
+    block {
+      const storage = gen__3.0;
+      const transferMichelson = gen__3.1;
+      const transferAuxiliary2 : transferAuxiliary
+      = Layout.convert_from_right_comb (transferMichelson);
+      const from_ : tokenOwner = transferAuxiliary2.from_;
+      allowOnlyOwnTransfer (from_);
+      const gen__5
+      = List.fold
+          (transferContentsIterator, transferAuxiliary2.txs,
+           (storage, from_));
+      const storage = gen__5.0;
+      const gen__4 = gen__5.1
+    } with storage
 
     function transfer
       (const gen__6 : transferParameter * storage)
       : entrypointReturn is
-      case gen__6 of [
-        (transferParameter, storage) ->
-          block {
-            const storage
-            = List.fold
-                (transferIterator, transferParameter, storage)
-          } with ((list [] : list (operation)), storage)
-      ]
+    block {
+      const transferParameter = gen__6.0;
+      const storage = gen__6.1;
+      const storage
+      = List.fold (transferIterator, transferParameter, storage)
+    } with ((list [] : list (operation)), storage)
 
     function main (const gen__7 : entrypointParameter)
       : entrypointReturn is
-      case gen__7 of [
-        (parameter, storage) ->
-          case parameter of [
-            Transfer (transferParameter) ->
-              transfer (transferParameter, storage)
-          ]
-      ] |}];
+    block {
+      const parameter = gen__7.0;
+      const storage = gen__7.1
+    } with
+        case parameter of [
+          Transfer (transferParameter) ->
+            transfer (transferParameter, storage)
+        ] |}];
   run_ligo_good [ "transpile-contract" ; "../../test/contracts/double_fold_converter.religo" ; "cameligo" ] ;
   [%expect{|
     type tokenId = nat
@@ -812,35 +807,32 @@ let%expect_test _ =
       (fun gen__1 :
            transferContentsIteratorAccumulator *
            transferContentsMichelson ->
-         match gen__1 with
-         accumulator, transferContentsMichelson ->
-             let gen__2 = accumulator in
-             let storage = gen__2.0 in
-             let from_ = gen__2.1 in
-             let transferContents : transferContents =
-               (Layout.convert_from_right_comb
-                  (transferContentsMichelson)) in
-             let tokenOwner : tokenOwner option =
-               (Map.find_opt
-                  (transferContents.token_id)
-                  (storage)) in
-             let tokenOwner =
-               match tokenOwner with
-                 Some tokenOwner ->
-                   if (EQ (tokenOwner) (from_))
-                   then tokenOwner
-                   else
-                     ((failwith (errorInsufficientBalance))
-                      : tokenOwner)
-               | None ->
-                   ((failwith (errorTokenUndefined))
-                    : tokenOwner) in
-             let storage =
-               (Map.update
-                  (transferContents.token_id)
-                  ((Some (transferContents.to_)))
-                  (storage)) in
-             storage, from_)
+         let accumulator = gen__1.0 in
+         let transferContentsMichelson = gen__1.1 in
+         let gen__2 = accumulator in
+         let storage = gen__2.0 in
+         let from_ = gen__2.1 in
+         let transferContents : transferContents =
+           (Layout.convert_from_right_comb
+              (transferContentsMichelson)) in
+         let tokenOwner : tokenOwner option =
+           (Map.find_opt (transferContents.token_id) (storage)) in
+         let tokenOwner =
+           match tokenOwner with
+             Some tokenOwner ->
+               if (EQ (tokenOwner) (from_))
+               then tokenOwner
+               else
+                 ((failwith (errorInsufficientBalance))
+                  : tokenOwner)
+           | None ->
+               ((failwith (errorTokenUndefined)) : tokenOwner) in
+         let storage =
+           (Map.update
+              (transferContents.token_id)
+              ((Some (transferContents.to_)))
+              (storage)) in
+         storage, from_)
 
     let allowOnlyOwnTransfer =
       (fun from : tokenOwner ->
@@ -850,42 +842,41 @@ let%expect_test _ =
 
     let transferIterator =
       (fun gen__3 : storage * transferMichelson ->
-         match gen__3 with
-         storage, transferMichelson ->
-             let transferAuxiliary2 : transferAuxiliary =
-               (Layout.convert_from_right_comb
-                  (transferMichelson)) in
-             let from_ : tokenOwner = transferAuxiliary2.from_ in
-             begin
-               allowOnlyOwnTransfer from_;
-               let gen__5 =
-                 (List.fold
-                    (transferContentsIterator)
-                    (transferAuxiliary2.txs)
-                    (storage, from_)) in
-               let storage = gen__5.0 in
-               let gen__4 = gen__5.1 in
-               storage
-             end)
+         let storage = gen__3.0 in
+         let transferMichelson = gen__3.1 in
+         let transferAuxiliary2 : transferAuxiliary =
+           (Layout.convert_from_right_comb (transferMichelson)) in
+         let from_ : tokenOwner = transferAuxiliary2.from_ in
+         begin
+           allowOnlyOwnTransfer from_;
+           let gen__5 =
+             (List.fold
+                (transferContentsIterator)
+                (transferAuxiliary2.txs)
+                (storage, from_)) in
+           let storage = gen__5.0 in
+           let gen__4 = gen__5.1 in
+           storage
+         end)
 
     let transfer =
       (fun gen__6 : transferParameter * storage ->
-         match gen__6 with
-         transferParameter, storage ->
-             let storage =
-               (List.fold
-                  (transferIterator)
-                  (transferParameter)
-                  (storage)) in
-             ([] : operation list), storage)
+         let transferParameter = gen__6.0 in
+         let storage = gen__6.1 in
+         let storage =
+           (List.fold
+              (transferIterator)
+              (transferParameter)
+              (storage)) in
+         ([] : operation list), storage)
 
     let main =
       (fun gen__7 : entrypointParameter ->
-         match gen__7 with
-         parameter, storage ->
-             match parameter with
-             Transfer transferParameter ->
-                 transfer transferParameter storage) |}];
+         let parameter = gen__7.0 in
+         let storage = gen__7.1 in
+         match parameter with
+         Transfer transferParameter ->
+             transfer transferParameter storage) |}];
   run_ligo_good [ "transpile-contract" ; "../../test/contracts/double_fold_converter.religo" ; "reasonligo" ] ;
   [%expect{|
     type tokenId = nat;
@@ -939,39 +930,35 @@ let%expect_test _ =
       ((gen__1: (transferContentsIteratorAccumulator,
           transferContentsMichelson))
        : transferContentsIteratorAccumulator =>
-         switch(gen__1) {
-         | (accumulator, transferContentsMichelson) =>
-             let gen__2 = accumulator;
-             let storage = gen__2[0];
-             let from_ = gen__2[1];
-             let transferContents: transferContents =
-               (
-                Layout.convert_from_right_comb((transferContentsMichelson)));
-             let tokenOwner: option(tokenOwner) =
-               (
-                Map.find_opt((transferContents.token_id),
-                   (storage)));
-             let tokenOwner =
-               switch(tokenOwner) {
-               | SometokenOwner =>
-                   if ((EQ((tokenOwner), (from_)))) {
-                     tokenOwner
-                   } else {
+         let accumulator = gen__1[0];
+         let transferContentsMichelson = gen__1[1];
+         let gen__2 = accumulator;
+         let storage = gen__2[0];
+         let from_ = gen__2[1];
+         let transferContents: transferContents =
+           (
+            Layout.convert_from_right_comb((transferContentsMichelson)));
+         let tokenOwner: option(tokenOwner) =
+           (Map.find_opt((transferContents.token_id), (storage)));
+         let tokenOwner =
+           switch(tokenOwner) {
+           | SometokenOwner =>
+               if ((EQ((tokenOwner), (from_)))) {
+                 tokenOwner
+               } else {
 
-                     (failwith((errorInsufficientBalance)))
-                      : tokenOwner
-                   }
-               | None =>
-                   (failwith((errorTokenUndefined)))
-                    : tokenOwner
-               };
-             let storage =
-               (
-                Map.update((transferContents.token_id),
-                   ((Some((transferContents.to_)))),
-                   (storage)));
-             (storage, from_)
-         });
+                 (failwith((errorInsufficientBalance)))
+                  : tokenOwner
+               }
+           | None =>
+               (failwith((errorTokenUndefined))) : tokenOwner
+           };
+         let storage =
+           (
+            Map.update((transferContents.token_id),
+               ((Some((transferContents.to_)))),
+               (storage)));
+         storage, from_);
 
     let allowOnlyOwnTransfer =
       ((from: tokenOwner): unit =>
@@ -983,45 +970,41 @@ let%expect_test _ =
 
     let transferIterator =
       ((gen__3: (storage, transferMichelson)): storage =>
-         switch(gen__3) {
-         | (storage, transferMichelson) =>
-             let transferAuxiliary2: transferAuxiliary =
-               (
-                Layout.convert_from_right_comb((transferMichelson)));
-             let from_: tokenOwner = transferAuxiliary2.from_;
-             begin
-               allowOnlyOwnTransfer(from_);
-               let gen__5 =
-                 (
-                  List.fold((transferContentsIterator),
-                     (transferAuxiliary2.txs),
-                     ((storage, from_))));
-               let storage = gen__5[0];
-               let gen__4 = gen__5[1];
-               storage
-             end
-         });
+         let storage = gen__3[0];
+         let transferMichelson = gen__3[1];
+         let transferAuxiliary2: transferAuxiliary =
+           (Layout.convert_from_right_comb((transferMichelson)));
+         let from_: tokenOwner = transferAuxiliary2.from_;
+         begin
+           allowOnlyOwnTransfer(from_);
+           let gen__5 =
+             (
+              List.fold((transferContentsIterator),
+                 (transferAuxiliary2.txs),
+                 (storage, from_)));
+           let storage = gen__5[0];
+           let gen__4 = gen__5[1];
+           storage
+         end);
 
     let transfer =
       ((gen__6: (transferParameter, storage)): entrypointReturn =>
-         switch(gen__6) {
-         | (transferParameter, storage) =>
-             let storage =
-               (
-                List.fold((transferIterator),
-                   (transferParameter),
-                   (storage)));
-             ([] : list(operation), storage)
-         });
+         let transferParameter = gen__6[0];
+         let storage = gen__6[1];
+         let storage =
+           (
+            List.fold((transferIterator),
+               (transferParameter),
+               (storage)));
+         [] : list(operation), storage);
 
     let main =
       ((gen__7: entrypointParameter): entrypointReturn =>
-         switch(gen__7) {
-         | (parameter, storage) =>
-             switch(parameter) {
-             | Transfer transferParameter =>
-                 transfer(transferParameter, storage)
-             }
+         let parameter = gen__7[0];
+         let storage = gen__7[1];
+         switch(parameter) {
+         | Transfer transferParameter =>
+             transfer(transferParameter, storage)
          }); |}]
 
 let%expect_test _ =
@@ -1530,7 +1513,7 @@ let%expect_test _ =
       ((gen__parameters6: (transfer, storage))
        : (list(operation), storage) =>
          switch(gen__parameters6) {
-         | (p: transfer, s: storage) =>
+         | p: transfer, s: storage =>
              let new_allowances: allowances = Big_map.empty;
              let gen__env9 = {
                new_allowances: new_allowances
@@ -1550,7 +1533,7 @@ let%expect_test _ =
 
                  let authorized_value: nat =
                    switch((
-                     Map.find_opt(((Tezos.sender, p.address_from)),
+                     Map.find_opt((Tezos.sender, p.address_from),
                         (s.allowances)))) {
                    | Somevalue => value
                    | None => 0n
@@ -1569,8 +1552,7 @@ let%expect_test _ =
 
                      let new_allowances =
                        (
-                        Map.update(((Tezos.sender,
-                            p.address_from)),
+                        Map.update((Tezos.sender, p.address_from),
                            ((
                             Some(((
                                 abs(((
@@ -1647,12 +1629,12 @@ let%expect_test _ =
                  end
                };
              let new_tokens = gen__env12.new_tokens;
-             ([] : list(operation),
+             [] : list(operation),
               {...s,
                 {
                   allowances: new_allowances,
                   tokens: new_tokens
-                }})
+                }}
          });
 
     let approve
@@ -1660,10 +1642,10 @@ let%expect_test _ =
       ((gen__parameters5: (approve, storage))
        : (list(operation), storage) =>
          switch(gen__parameters5) {
-         | (p: approve, s: storage) =>
+         | p: approve, s: storage =>
              let previous_value: nat =
                switch((
-                 Map.find_opt(((p.spender, Tezos.sender)),
+                 Map.find_opt((p.spender, Tezos.sender),
                     (s.allowances)))) {
                | Somevalue => value
                | None => 0n
@@ -1685,7 +1667,7 @@ let%expect_test _ =
 
                  let new_allowances =
                    (
-                    Map.update(((p.spender, Tezos.sender)),
+                    Map.update((p.spender, Tezos.sender),
                        ((Some((p.value)))),
                        (s.allowances)));
                  let gen__env14 =
@@ -1697,9 +1679,9 @@ let%expect_test _ =
                  end
                };
              let new_allowances = gen__env14.new_allowances;
-             ([] : list(operation),
+             [] : list(operation),
               {...s,
-                {allowances: new_allowances }})
+                {allowances: new_allowances }}
          });
 
     let getAllowance
@@ -1707,10 +1689,10 @@ let%expect_test _ =
       ((gen__parameters4: (getAllowance, storage))
        : (list(operation), storage) =>
          switch(gen__parameters4) {
-         | (p: getAllowance, s: storage) =>
+         | p: getAllowance, s: storage =>
              let value: nat =
                switch((
-                 Map.find_opt(((p.owner, p.spender)),
+                 Map.find_opt((p.owner, p.spender),
                     (s.allowances)))) {
                | Somevalue => value
                | None => 0n
@@ -1720,7 +1702,7 @@ let%expect_test _ =
                 Tezos.transaction((value),
                    (0mutez),
                    (p.callback)));
-             ([op], s)
+             [op], s
          });
 
     let getBalance
@@ -1728,7 +1710,7 @@ let%expect_test _ =
       ((gen__parameters3: (getBalance, storage))
        : (list(operation), storage) =>
          switch(gen__parameters3) {
-         | (p: getBalance, s: storage) =>
+         | p: getBalance, s: storage =>
              let value: nat =
                switch((Map.find_opt((p.owner), (s.tokens)))) {
                | Somevalue => value
@@ -1739,7 +1721,7 @@ let%expect_test _ =
                 Tezos.transaction((value),
                    (0mutez),
                    (p.callback)));
-             ([op], s)
+             [op], s
          });
 
     let getTotalSupply
@@ -1747,21 +1729,21 @@ let%expect_test _ =
       ((gen__parameters2: (getTotalSupply, storage))
        : (list(operation), storage) =>
          switch(gen__parameters2) {
-         | (p: getTotalSupply, s: storage) =>
+         | p: getTotalSupply, s: storage =>
              let total: nat = s.total_amount;
              let op: operation =
                (
                 Tezos.transaction((total),
                    (0mutez),
                    (p.callback)));
-             ([op], s)
+             [op], s
          });
 
     let main: (action, storage) => (list(operation), storage) =
       ((gen__parameters1: (action, storage))
        : (list(operation), storage) =>
          switch(gen__parameters1) {
-         | (a: action, s: storage) =>
+         | a: action, s: storage =>
              switch(a) {
              | Transfer p => transfer(p, s)
              | Approve p => approve(p, s)
@@ -1931,7 +1913,7 @@ let%expect_test _ =
     let main: (parameter, storage) => return =
       ((gen__parameters1: (parameter, storage)): return =>
          switch(gen__parameters1) {
-         | (p: parameter, s: storage) =>
+         | p: parameter, s: storage =>
              begin
                switch(p) {
                | Zero n =>
@@ -1947,7 +1929,7 @@ let%expect_test _ =
                      (failwith(("fail")))
                    }
                };
-               ([] : list(operation), s)
+               [] : list(operation), s
              end
          });
 
@@ -2061,7 +2043,7 @@ let%expect_test _ =
     let rec sum: (int, int) => int =
       ((gen__parameters2: (int, int)): int =>
          switch(gen__parameters2) {
-         | (n: int, acc: int) =>
+         | n: int, acc: int =>
              if ((LT((n), (1)))) {
                acc
              } else {
@@ -2072,7 +2054,7 @@ let%expect_test _ =
     let rec fibo: (int, int, int) => int =
       ((gen__parameters1: (int, int, int)): int =>
          switch(gen__parameters1) {
-         | (n: int, n_1: int, n_0: int) =>
+         | n: int, n_1: int, n_0: int =>
              if ((LT((n), (2)))) {
                n_1
              } else {

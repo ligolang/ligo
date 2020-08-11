@@ -28,3 +28,8 @@ let letin_nesting2 = (x: int) => {
   let z = 3;
   x + y + z
 }
+
+let x = {
+  let (_, (x, _)) = (1n, (2n, 3n));
+  x
+}

@@ -1403,8 +1403,8 @@ let%expect_test _ =
      let p2 = (f2)@(s) in { ASSERTION(p2);
      s}}}
     const letin_nesting2 = lambda (x:Some(int)) : None return let y = 2 in let z = 3 in ADD(ADD(x ,
-    y) ,
-    z)
+    y) , z) const x = let #5 = (+1 , (+2 ,
+    +3)) in let #4 = #5.0 in let #3 = #5.1 in let x = #3.0 in let #2 = #3.1 in x
     |}];
 
   run_ligo_good ["print-ast"; contract "letin.religo"];
@@ -1427,8 +1427,8 @@ let%expect_test _ =
      let p2 = (f2)@(s) in { ASSERTION(p2);
      s}}}
     const letin_nesting2 = lambda (x:Some(int)) : None return let y = 2 in let z = 3 in ADD(ADD(x ,
-    y) ,
-    z)
+    y) , z) const x = let #4 = (+1 , (+2 ,
+    +3)) in let #3 = #4.0 in let #2 = #4.1 in let x = #2.0 in let #1 = #2.1 in x
     |}];
 
   run_ligo_bad ["print-ast-typed"; contract "existential.mligo"];
