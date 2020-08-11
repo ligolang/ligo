@@ -57,6 +57,13 @@ val find : 'key -> ('key, 'value) t -> 'value
 
 val find_opt : 'key -> ('key, 'value) t -> 'value option
 
+(* The value of the call [find_default key make_default_v map] is
+   [value] if the key [key] is bound to [value] in the map [map], and
+   [make_default_v ()] otherwise. In the first case, the
+   [make_default_v] function is not executed *)
+
+val find_default : 'key -> (unit -> 'value) -> ('key, 'value) map -> 'value * ('key, 'value) map
+
 (* The value of the call [find_opt key map] is [true] if the key
    [key] is bound to some value in the map [map], and [None]
    otherwise. *)
