@@ -60,47 +60,47 @@ let rec error_ppformat : display_format:string display_format ->
     match a with
     | `Concrete_cameligo_wrong_pattern (expected_name,actual) ->
       Format.fprintf f
-        "@[<hv>%a@Wrong pattern: expected %s got %s@]"
+        "@[<hv>%a@ Wrong pattern: expected %s got %s@]"
         Location.pp_lift (Raw.pattern_to_region actual)
         (Cst_cameligo.ParserLog.pattern_to_string ~offsets:true ~mode:`Point actual)
         expected_name
     | `Concrete_cameligo_unsupported_let_in expr ->
       Format.fprintf f
-        "@[<hv>%a@Defining functions with \"let ... in\" is not supported yet@]"
+        "@[<hv>%a@ Defining functions with \"let ... in\" is not supported yet@]"
         Location.pp_lift (List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost expr)
     | `Concrete_cameligo_unknown_predefined_type type_name ->
       Format.fprintf f
-        "@[<hv>%a@Unknown predefined type \"%s\"@]"
+        "@[<hv>%a@ Unknown predefined type \"%s\"@]"
         Location.pp_lift type_name.Region.region
         type_name.Region.value
     | `Concrete_cameligo_untyped_fun_param variable ->
       Format.fprintf f
-        "@[<hv>%a@Untyped function parameters are not supported yet@]"
+        "@[<hv>%a@ Untyped function parameters are not supported yet@]"
         Location.pp_lift variable.Region.region
     | `Concrete_cameligo_recursive_fun reg ->
       Format.fprintf f
-        "@[<hv>%a@Untyped recursive functions are not supported yet@]"
+        "@[<hv>%a@ Untyped recursive functions are not supported yet@]"
         Location.pp_lift reg
     | `Concrete_cameligo_unsupported_tuple_pattern p ->
       Format.fprintf f
-        "@[<hv>%a@The following tuple pattern is not supported yet:@\"%s\"@]"
+        "@[<hv>%a@ The following tuple pattern is not supported yet:@\"%s\"@]"
         Location.pp_lift (Raw.pattern_to_region p)
         (Cst_cameligo.ParserLog.pattern_to_string ~offsets:true ~mode:`Point p)
     | `Concrete_cameligo_unsupported_constant_constr p ->
       Format.fprintf f
-        "@[<hv>%a@Constant constructors are not supported yet@]"
+        "@[<hv>%a@ Constant constructors are not supported yet@]"
         Location.pp_lift (Raw.pattern_to_region p)
     | `Concrete_cameligo_unsupported_non_var_pattern p ->
       Format.fprintf f
-        "@[<hv>%a@Non-variable patterns in constructors are not supported yet@]"
+        "@[<hv>%a@ Non-variable patterns in constructors are not supported yet@]"
         Location.pp_lift (Raw.pattern_to_region p)
     | `Concrete_cameligo_unsupported_pattern_type pl ->
       Format.fprintf f
-        "@[<hv>%a@Currently, only booleans, lists, options, and constructors are supported in patterns@]"
+        "@[<hv>%a@ Currently, only booleans, lists, options, and constructors are supported in patterns@]"
         Location.pp_lift (List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost pl)
     | `Concrete_cameligo_unsupported_string_singleton te ->
       Format.fprintf f
-        "@[<hv>%a@Unsupported singleton string type@]"
+        "@[<hv>%a@ Unsupported singleton string type@]"
         Location.pp_lift (Raw.type_expr_to_region te)
     | `Concrete_cameligo_unsupported_deep_list_pattern cons ->
       Format.fprintf f
@@ -112,28 +112,28 @@ let rec error_ppformat : display_format:string display_format ->
         Location.pp_lift @@ tuple.Region.region
     | `Concrete_cameligo_abstraction_tracer (expr,err) ->
       Format.fprintf f
-        "@[<hv>%a@Abstracting expression:@\"%s\"@%a@]"
+        "@[<hv>%a@ Abstracting expression:@\"%s\"@%a@]"
         Location.pp_lift (Raw.expr_to_region expr)
         (Cst_cameligo.ParserLog.expr_to_string ~offsets:true ~mode:`Point expr)
         (error_ppformat ~display_format) err
     | `Concrete_cameligo_abstraction_type_tracer (te,err) ->
       Format.fprintf f
-        "@[<hv>%a@Abstracting type expression:@\"%s\"@%a@]"
+        "@[<hv>%a@ Abstracting type expression:@\"%s\"@%a@]"
         Location.pp_lift (Raw.type_expr_to_region te)
         (Cst_cameligo.ParserLog.type_expr_to_string ~offsets:true ~mode:`Point te)
         (error_ppformat ~display_format) err
     | `Concrete_cameligo_bad_deconstruction expr ->
       Format.fprintf f
-        "@[<hv>%a@Bad tuple deconstruction \"%s\"@]"
+        "@[<hv>%a@ Bad tuple deconstruction \"%s\"@]"
         Location.pp_lift (Raw.expr_to_region expr)
         (Cst_cameligo.ParserLog.expr_to_string ~offsets:true ~mode:`Point expr)
     | `Concrete_cameligo_only_constructors p ->
       Format.fprintf f
-        "@[<hv>%a@Currently, only constructors are supported in patterns@]"
+        "@[<hv>%a@ Currently, only constructors are supported in patterns@]"
         Location.pp_lift (Raw.pattern_to_region p)
     | `Concrete_cameligo_unsupported_sugared_lists wild ->
       Format.fprintf f
-        "@[<hv>%a@Currently, only empty lists and constructors (::) are supported in patterns@]"
+        "@[<hv>%a@ Currently, only empty lists and constructors (::) are supported in patterns@]"
         Location.pp_lift wild
     | `Concrete_cameligo_corner_case desc ->
       Format.fprintf f "Corner case: %s" desc
@@ -141,18 +141,18 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f "Unknown built-in function %s" bi
     | `Concrete_cameligo_michelson_type_wrong (texpr,name) ->
       Format.fprintf f
-        "@[<hv>%a@Argument %s of %s must be a string singleton@]"
+        "@[<hv>%a@ Argument %s of %s must be a string singleton@]"
           Location.pp_lift (Raw.type_expr_to_region texpr)
           (Cst_cameligo.ParserLog.type_expr_to_string ~offsets:true ~mode:`Point texpr)
           name
     | `Concrete_cameligo_michelson_type_wrong_arity (loc,name) ->
       Format.fprintf f
-        "@[<hv>%a@%s does not have the right number of argument@]"
+        "@[<hv>%a@ %s does not have the right number of argument@]"
         Location.pp loc
         name
     | `Concrete_cameligo_program_tracer (decl,err) ->
       Format.fprintf f
-        "@[<hv>%a@Abstracting program@%a@]"
+        "@[<hv>%a@ Abstracting program@%a@]"
         Location.pp_lift (List.fold_left (fun a d -> Region.cover a (Raw.declaration_to_region d)) Region.ghost decl)
         (error_ppformat ~display_format) err
   )
