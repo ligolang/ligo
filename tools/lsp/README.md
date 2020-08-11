@@ -20,8 +20,8 @@ Right now only one parser is linked there; the name of symlink should be changed
 in future.
 
 Server part invokes the TS-parser and then constructs a tree of haskell datatypes
-from the TS-tree. Then it is fed into `AST.Parser` (name will be changed), which
-constructs an universal AST from the tree of the respective language.
+from the TS-tree. Then it is fed into `LIGO.Parser` (name will be changed), which
+constructs an universal LIGO from the tree of the respective language.
 
 Parser uses the root `Parser` module which provides the combinators and monad
 to deal with `ParseTree`, produced from TS output.

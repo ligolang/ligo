@@ -57,10 +57,12 @@ library:
     - src/
 
   include-dirs:
-    - vendor
+    - vendor/pascaligo
+    - vendor/reasonligo
 
   c-sources:
-    - vendor/parser.c
+    - vendor/pascaligo/parser.c
+    - vendor/reasonligo/parser.c
 
 executables:
   squirrel:
@@ -77,4 +79,6 @@ executables:
     source-dirs:
       - app/
 
-    ghc-options: -threaded
+    ghc-options:
+      - -threaded
+      - -Wall
