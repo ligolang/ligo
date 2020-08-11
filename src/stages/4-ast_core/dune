@@ -1,7 +1,19 @@
 (rule
-  (targets generated_fold.ml generated_map.ml generated_o.ml)
-  (deps ../adt_generator/generator.raku ast.ml ../common/enums.ml)
-  (action (run perl6 ../adt_generator/generator.raku ast.ml Generated_o generated_o.ml generated_fold.ml generated_map.ml core))
+  (targets generated_fold.ml)
+  (deps ../adt_generator/Parser.pm ../adt_generator/fold.raku ast.ml ../common/enums.ml)
+  (action (run perl6 -I ../adt_generator/ ../adt_generator/fold.raku ast.ml generated_fold.ml))
+  (mode (promote (until-clean) (only *)))
+)
+(rule
+  (targets generated_o.ml)
+  (deps ../adt_generator/Parser.pm ../adt_generator/combinators.raku ast.ml ../common/enums.ml)
+  (action (run perl6 -I ../adt_generator/ ../adt_generator/combinators.raku ast.ml generated_o.ml))
+  (mode (promote (until-clean) (only *)))
+)
+(rule
+  (targets generated_map.ml)
+  (deps ../adt_generator/Parser.pm ../adt_generator/fold_map.raku ast.ml ../common/enums.ml)
+  (action (run perl6 -I ../adt_generator/ ../adt_generator/fold_map.raku ast.ml Generated_o generated_map.ml))
   (mode (promote (until-clean) (only *)))
 )
 

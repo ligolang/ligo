@@ -1,7 +1,19 @@
 (rule
-  (targets generated_fold.ml generated_map.ml generated_o.ml)
-  (deps ../../../src/stages/adt_generator/generator.raku amodule.ml)
-  (action (run perl6 ../../../src/stages/adt_generator/generator.raku amodule.ml Generated_o generated_o.ml generated_fold.ml generated_map.ml))
+  (targets generated_fold.ml)
+  (deps ../../../src/stages/adt_generator/Parser.pm ../../../src/stages/adt_generator/fold.raku amodule.ml)
+  (action (run perl6 -I ../../../src/stages/adt_generator/ ../../../src/stages/adt_generator/fold.raku amodule.ml generated_fold.ml))
+  (mode (promote (until-clean) (only *)))
+)
+(rule
+  (targets generated_o.ml)
+  (deps ../../../src/stages/adt_generator/Parser.pm ../../../src/stages/adt_generator/combinators.raku amodule.ml)
+  (action (run perl6 -I ../../../src/stages/adt_generator/ ../../../src/stages/adt_generator/combinators.raku amodule.ml generated_o.ml))
+  (mode (promote (until-clean) (only *)))
+)
+(rule
+  (targets generated_map.ml)
+  (deps ../../../src/stages/adt_generator/Parser.pm ../../../src/stages/adt_generator/fold_map.raku amodule.ml)
+  (action (run perl6 -I ../../../src/stages/adt_generator/ ../../../src/stages/adt_generator/fold_map.raku amodule.ml Generated_o generated_map.ml))
   (mode (promote (until-clean) (only *)))
 )
 
