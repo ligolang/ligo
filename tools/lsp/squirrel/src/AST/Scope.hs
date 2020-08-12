@@ -114,8 +114,7 @@ addLocalScopes tree =
   where
     tree0       = either (error . show) id $ runCatch $ unLetRec tree
     tree1       = addNameCategories tree0
-    -- envWithREfs = getEnvTree tree0
-    envWithRefs = undefined
+    envWithRefs = getEnvTree tree0
 
 unLetRec
   :: forall xs m
@@ -412,4 +411,5 @@ instance Scoped a CollectM (LIGO a) FieldName
 instance Scoped a CollectM (LIGO a) (Err Text)
 instance Scoped a CollectM (LIGO a) Language
 instance Scoped a CollectM (LIGO a) Parameters
--- instance Scoped a CollectM (LIGO a) Ctor(Contains Range xs, Eq (Product xs), Scoped (Product xs) CollectM (Tree RawLigoList (Product xs)) ReasonExpr)
+instance Scoped a CollectM (LIGO a) Ctor 
+instance Scoped a CollectM (LIGO a) ReasonExpr
