@@ -11,40 +11,45 @@ function mkOp($, opExpr) {
 
 module.exports = grammar({
   name: 'CameLigo',
-  extras: $ => [$.comment, $.ocaml_comment, /\s/],
+  word: $ => $.Keyword,
+  extras: $ => [$.ocaml_comment, $.comment, /\s/],
 
   rules: {
-
     contract: $ => repeat($._declaration),
 
     _declaration: $ => choice(
       $.let_decl,
-      $.type_decl
+      $.type_decl,
+      $.include,
     ),
 
-    type_annot: $ => seq(
-      ":",
-      field("annotExpr", $.type_expr)
-    ),
+    include: $ => seq('#include', field("filename", $.String)),
+
+    _attribute: $ => /\[@@[a-z]+\]/,
 
     argument: $ => seq(
       "(",
       field("argPattern", $._pattern),
-      field("argAnnot", $.type_annot),
+      ":",
+      field("annotExpr", $.type_expr),
       ")"
     ),
 
     let_decl: $ => seq(
       "let",
       field("binder", $._binder),
-      optional(field("bindAnnot", $.type_annot)),
+      optional(seq(
+        ":",
+        field("annotExpr", $.type_expr)
+      )),
       "=",
-      field("letExpr",$._let_expr)
+      field("letExpr",$._let_expr),
+      repeat(field("attribute", $._attribute))
     ),
 
     _binder: $ => choice(
       field("letBinds", $.let_binds),
-      field("letPat", $.let_pat)
+      field("letPat", $._pattern)
     ),
 
     //========== EXPR ============
@@ -60,14 +65,8 @@ module.exports = grammar({
       repeat(field("bindArgument", $.argument))
     )),
 
-    let_pat: $ => $._pattern,
-
     let_expr1: $ => seq(
-      "let",
-      choice(field("letBinds", $.let_binds), field("letPat", $.let_pat)),
-      optional(field("bindAnnot", $.type_annot)),
-      "=",
-      field("letExpr",$._expr),
+      $.let_decl,
       "in",
       field("innerExpr", $._let_expr)
     ),
@@ -75,7 +74,7 @@ module.exports = grammar({
     // [1;2]
     list_pattern: $ => seq(
       "[",
-      sepBy1(';', field("patternListItem", $._pattern)),
+      sepBy(';', field("patternListItem", $._pattern)),
       "]"
     ),
 
@@ -114,6 +113,10 @@ module.exports = grammar({
     paren_pattern: $ => seq(
       "(",
       field("innerPattern", $._pattern),
+      optional(seq(
+        ":",
+        $.type_expr,
+      )),
       ")"
     ),
 
@@ -142,10 +145,10 @@ module.exports = grammar({
     ),
 
     // f a
-    fun_app: $ => prec.left(20, seq(field("appF", $.sub_expr), field("appArg",$.sub_expr))),
+    fun_app: $ => prec.left(20, seq(field("appF", $._sub_expr), field("appArg",$._sub_expr))),
 
     // a.0
-    index_accessor: $ => prec.right(21, seq(field("exp", $.sub_expr), ".", field("ix", $.sub_expr))),
+    index_accessor: $ => prec.right(21, seq(field("exp", $._sub_expr), ".", field("ix", $._sub_expr))),
 
     // { p with a = b; c = d }
     rec_expr: $ => seq(
@@ -164,14 +167,16 @@ module.exports = grammar({
     ),
 
     // if a then b else c
-    if_expr: $ => seq(
+    if_expr: $ => prec.right(seq(
       "if",
       field("condition", $._expr),
       "then",
-      field("thenBranch", $._expr),
-      "else",
-      field("elseBranch", $._expr)
-    ),
+      field("thenBranch", $._let_expr),
+      optional(seq(
+        "else",
+        field("elseBranch", $._let_expr)
+      ))
+    )),
 
     // match x with ...
     match_expr: $ => prec.right(1,seq(
@@ -186,7 +191,7 @@ module.exports = grammar({
     matching: $ => seq(
       field("pattern", $._pattern),
       "->",
-      field("matchingExpr", $._expr)
+      field("matchingExpr", $._let_expr)
     ),
 
     lambda_expr: $ => seq(
@@ -210,11 +215,11 @@ module.exports = grammar({
 
     _expr: $ => choice(
       $.call,
-      $.sub_expr,
+      $._sub_expr,
       $.tup_expr
     ),
 
-    sub_expr: $ => choice(
+    _sub_expr: $ => choice(
       $.fun_app,
       $.paren_expr,
       $.Name,
@@ -225,13 +230,23 @@ module.exports = grammar({
       $.lambda_expr,
       $.match_expr,
       $.list_expr,
-      $.index_accessor
+      $.index_accessor,
+      $.block_expr,
+    ),
+
+    block_expr: $ => seq(
+      "begin",
+      sepBy(";", field("elem", $._let_expr)),
+      "end",
     ),
 
     paren_expr: $ => seq(
       "(",
-      field("innerExpr", $._expr),
-      optional(field("exprAnnot", $.type_annot)),
+      field("innerExpr", $._let_expr),
+      optional(seq(
+        ":",
+        field("annotExpr", $.type_expr)
+      )),
       ")"
     ),
 
@@ -247,7 +262,7 @@ module.exports = grammar({
         field("argument", $.type_expr),
         seq(
           "(",
-          sepBy1(",", field("argument", $.type_expr)),
+          sepBy1(",", field("argument", choice($.type_expr, $.String))),
           ")"
         )
       ),
@@ -292,6 +307,7 @@ module.exports = grammar({
 
     // Cat of string | Personn of string * string
     type_sum: $ => seq(
+      optional('|'),
       sepBy1('|', field("variant", $.variant)),
     ),
 
@@ -355,19 +371,18 @@ module.exports = grammar({
     True:          $ => 'true',
     Unit:          $ => '()',
 
-    comment: $ => /\/\/[^\n]*\n/,
+    comment: $ => /\/\/(\*\)[^\n]|\*[^\)\n]|[^\*\n])*\n/,
+
     ocaml_comment: $ =>
       seq(
         '(*',
         repeat(choice(
           $.ocaml_comment,
-          /'([^'\\]|\\[\\"'ntbr ]|\\[0-9][0-9][0-9]|\\x[0-9A-Fa-f][0-9A-Fa-f]|\\o[0-3][0-7][0-7])'/,
-          /"([^\\"]|\\(.|\n))*"/,
-          /[A-Za-z_][a-zA-Z0-9_']*/,
-          /[^('"{*A-Za-z_]+/,
-          '(', "'", '*',
+          /[^\*\(]/,
+          /\*[^\)]/,
+          /\([^\*]/,
         )),
-        '*)'
+        /\*+\)/
       ),
   }
 });
