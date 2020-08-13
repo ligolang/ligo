@@ -101,7 +101,7 @@ Let us break down the contract above to make sure we understand each
 bit of the LIGO syntax:
 
 - **`function main`** - definition of the main function, which takes
-  a the parameter of the contract and the storage
+  the parameter of the contract and the storage
 - **`(const parameter : int;  const contractStorage : int)`** -
   parameters passed to the function: the first is called `parameter`
   because it denotes the parameter of a specific invocation of the
