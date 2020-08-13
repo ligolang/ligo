@@ -4,6 +4,8 @@
 open Ast_typed.Misc
 open Ast_typed.Types
 open Typesystem.Solver_types
+open Trace
+open Typer_common.Errors
 
 let selector :  (type_constraint_simpl, output_break_ctor, unit) selector =
   (* find two rules with the shape x = k(var …) and x = k'(var' …) *)
@@ -24,7 +26,7 @@ let selector :  (type_constraint_simpl, output_break_ctor, unit) selector =
   | SC_Typeclass   _                -> () , WasNotSelected
   | SC_Row         _                -> () , WasNotSelected
 
-let propagator : (output_break_ctor , unit) propagator =
+let propagator : (output_break_ctor , unit , typer_error) propagator =
   fun () dbs selected ->
   let () = ignore (dbs) in (* this propagator doesn't need to use the dbs *)
   let a = selected.a_k_var in
@@ -53,7 +55,7 @@ let propagator : (output_break_ctor , unit) propagator =
   else
     let eqs3 = List.map2 (fun aa bb -> c_equation { tsrc = "solver: propagator: break_ctor aa" ; t = P_variable aa} { tsrc = "solver: propagator: break_ctor bb" ; t = P_variable bb} "propagator: break_ctor") a.tv_list b.tv_list in
     let eqs = eq1 :: eqs3 in
-    (() , eqs , []) (* no new assignments *)
+    ok (() , eqs)
 
 let heuristic =
   Propagator_heuristic

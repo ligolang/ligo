@@ -1,10 +1,13 @@
 open Trace
+open Typer_common.Errors
 module Core = Typesystem.Core
 module Map = RedBlackTrees.PolyMap
 module Set = RedBlackTrees.PolySet
 module UF = UnionFind.Poly2
 open Ast_typed.Types
 open Typesystem.Solver_types
+
+type nonrec 'a result = ('a, typer_error) result
 
 (* TODO: move the propagator_heuristics list to a separate module which calls the solver with a bunch of heuristics *)
 let propagator_heuristics =
@@ -16,7 +19,7 @@ let propagator_heuristics =
 let init_propagator_heuristic (Propagator_heuristic { selector ; propagator ; printer ; comparator ; initial_private_storage }) =
   Propagator_state { selector ; propagator ; printer ; already_selected = Set.create ~cmp:comparator ; private_storage = initial_private_storage }
 
-let initial_state : typer_state = {
+let initial_state : _ typer_state = {
     structured_dbs =
       {
         all_constraints          = ([] : type_constraint_simpl list) ;
@@ -35,7 +38,7 @@ let initial_state : typer_state = {
    entirely accidental (dfs/bfs/something in-between). *)
 
 (* sub-component: constraint selector (worklist / dynamic queries) *)
-let select_and_propagate : 'old_input 'selector_output 'private_storage . ('old_input, 'selector_output, 'private_storage) selector -> ('selector_output , 'private_storage) propagator -> 'selector_output poly_set -> 'private_storage -> 'old_input -> structured_dbs -> 'selector_output poly_set * 'private_storage * new_constraints * new_assignments =
+let select_and_propagate : 'old_input 'selector_output 'private_storage . ('old_input, 'selector_output, 'private_storage) selector -> ('selector_output , 'private_storage, typer_error) propagator -> 'selector_output poly_set -> 'private_storage -> 'old_input -> structured_dbs -> ('selector_output poly_set * 'private_storage * new_constraints) result =
   fun selector propagator ->
   fun already_selected private_storage old_type_constraint dbs ->
   (* TODO: thread some state to know which selector outputs were already seen *)
@@ -44,51 +47,46 @@ let select_and_propagate : 'old_input 'selector_output 'private_storage . ('old_
     WasSelected selected_outputs ->
      let Set.{ set = already_selected ; duplicates = _ ; added = selected_outputs } = Set.add_list selected_outputs already_selected in
      (* Call the propagation rule *)
-     let (private_storage, l) = List.fold_map_acc (fun private_storage selected -> let (a, b, c) = propagator private_storage dbs selected in (a, (b, c))) private_storage selected_outputs in
-     let (new_constraints , new_assignments) = List.split l in
-     (* return so that the new constraints are pushed to some kind of work queue and the new assignments stored *)
+     let%bind (private_storage, new_constraints) = bind_fold_map_list (fun private_storage selected -> propagator private_storage dbs selected) private_storage selected_outputs in
+     (* return so that the new constraints are pushed to some kind of work queue *)
 let () =
   (if Ast_typed.Debug.debug_new_typer && false then
    let s str = (fun ppf () -> Format.fprintf ppf str) in
-   Format.printf "propagator produced\nnew_constraints = %a\nnew_assignments = %a\n"
+   Format.printf "propagator produced\nnew_constraints = %a\n"
      (PP_helpers.list_sep (PP_helpers.list_sep Ast_typed.PP_generic.type_constraint (s "\n")) (s "\n"))
-     new_constraints
-     (PP_helpers.list_sep (PP_helpers.list_sep Ast_typed.PP_generic.c_constructor_simpl (s "\n")) (s "\n"))
-     new_assignments)
+     new_constraints)
 in
-     (already_selected , private_storage , List.flatten new_constraints , List.flatten new_assignments)
+     ok (already_selected , private_storage , List.flatten new_constraints)
   | WasNotSelected ->
-     (already_selected, private_storage , [] , [])
+     ok (already_selected, private_storage , [])
 
 let select_and_propagate_one new_constraint (new_states , new_constraints , dbs) (Propagator_state { selector; propagator; printer ; already_selected ; private_storage }) =
   let sel_propag = (select_and_propagate selector propagator) in
-  let (already_selected , private_storage, new_constraints', new_assignments) = sel_propag already_selected private_storage new_constraint dbs in
-  let assignments = List.fold_left (fun acc ({tv;c_tag=_;tv_list=_} as ele) -> Map.update tv (function None -> Some ele | x -> x) acc) dbs.assignments new_assignments in
-  let dbs = { dbs with assignments } in
-  Propagator_state { selector; propagator; printer ; already_selected ; private_storage } :: new_states, new_constraints' @ new_constraints, dbs
+  let%bind (already_selected , private_storage, new_constraints') = sel_propag already_selected private_storage new_constraint dbs in
+  ok @@ (Propagator_state { selector; propagator; printer ; already_selected ; private_storage } :: new_states, new_constraints' @ new_constraints, dbs)
 
 (* Takes a constraint, applies all selector+propagator pairs to it.
    Keeps track of which constraints have already been selected. *)
-let select_and_propagate_all' : ex_propagator_state list -> type_constraint_simpl selector_input -> structured_dbs -> ex_propagator_state list * new_constraints * structured_dbs =
+let select_and_propagate_all' : typer_error ex_propagator_state list -> type_constraint_simpl selector_input -> structured_dbs -> (typer_error ex_propagator_state list * new_constraints * structured_dbs) result =
   fun already_selected_and_propagators new_constraint dbs ->
-  List.fold_left
+  bind_fold_list
     (select_and_propagate_one new_constraint)
     ([], [] , dbs)
     already_selected_and_propagators
 
 (* Takes a list of constraints, applies all selector+propagator pairs
    to each in turn. *)
-let rec select_and_propagate_all : typer_state -> type_constraint selector_input list -> (typer_state,_) result =
+let rec select_and_propagate_all : _ typer_state -> type_constraint selector_input list -> _ typer_state result =
   fun { already_selected_and_propagators ; structured_dbs } new_constraints ->
   match new_constraints with
   | [] -> ok { already_selected_and_propagators ; structured_dbs }
   | new_constraint :: tl ->
      let { state = dbs ; list = modified_constraints } = Normalizer.normalizers new_constraint structured_dbs in
-     let (already_selected_and_propagators , new_constraints' , structured_dbs) =
-       List.fold_left
+     let%bind (already_selected_and_propagators , new_constraints' , structured_dbs) =
+       bind_fold_list
          (fun (already_selected , nc , dbs) c ->
-           let (already_selected , new_constraints' , dbs) = select_and_propagate_all' already_selected c dbs in
-           (already_selected , new_constraints' @ nc , dbs))
+           let%bind (already_selected , new_constraints' , dbs) = select_and_propagate_all' already_selected c dbs in
+           ok (already_selected , new_constraints' @ nc , dbs))
          (already_selected_and_propagators , [] , dbs)
          modified_constraints in
      let new_constraints = new_constraints' @ tl in
@@ -117,6 +115,6 @@ let aggregate_constraints = select_and_propagate_all
 
    Also, we should check at these places that we indeed do not need the
    state any further. Suzanne *)
-let discard_state (_ : typer_state) = ()
+let discard_state (_ : _ typer_state) = ()
 
 let placeholder_for_state_of_new_typer () = initial_state

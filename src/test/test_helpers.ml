@@ -99,7 +99,7 @@ let typed_program_to_michelson (program , state) entry_point =
   ok michelson
 
 let typed_program_with_imperative_input_to_michelson
-    ((program , state): Ast_typed.program * Typesystem.Solver_types.typer_state) (entry_point: string)
+    ((program , state): Ast_typed.program * _ Typesystem.Solver_types.typer_state) (entry_point: string)
     (input: Ast_imperative.expression) : (Stacking.compiled_expression,_) result =
   Printexc.record_backtrace true;
   let env = Ast_typed.program_environment Environment.default program in
@@ -115,7 +115,7 @@ let () = (if Ast_typed.Debug.debug_new_typer then Format.printf "\n\nSTATE IZ=%a
   Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg compiled_applied
 
 let run_typed_program_with_imperative_input ?options
-    ((program , state): Ast_typed.program * Typesystem.Solver_types.typer_state) (entry_point: string)
+    ((program , state): Ast_typed.program * _ Typesystem.Solver_types.typer_state) (entry_point: string)
     (input: Ast_imperative.expression) : (Ast_core.expression, _) result =
   let%bind michelson_program = typed_program_with_imperative_input_to_michelson (program , state) entry_point input in
   let%bind michelson_output  = Ligo.Run.Of_michelson.run_no_failwith ?options michelson_program.expr michelson_program.expr_ty in
@@ -168,7 +168,7 @@ let expect_evaluate (program, _state) entry_point expecter =
   | Runned_result.Fail _ -> fail test_not_expected_to_fail in
   expecter res'
 
-let expect_eq_evaluate ((program , state) : Ast_typed.program * Typesystem.Solver_types.typer_state) entry_point expected =
+let expect_eq_evaluate ((program , state) : Ast_typed.program * _ Typesystem.Solver_types.typer_state) entry_point expected =
   let%bind expected  = expression_to_core expected in
   let expecter = fun result ->
     trace_option (test_expect expected result) @@
