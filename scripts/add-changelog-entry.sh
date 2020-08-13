@@ -5,7 +5,7 @@ ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/.."
 set -euET -o pipefail
 
 usage() {
-    printf "Usage: %s <TYPE> <MERGE_REQUEST> <AUTHOR> <TITLE>" "$0"
+    printf 'Usage: %s <TYPE> <MERGE_REQUEST> <AUTHOR> <TITLE>\n' "$0"
     echo "where"
     echo "  TYPE is one of added, fixed, changed, deprecated, removed, performance, other"
     echo "  MERGE_REQUEST is a merge request ID like !123"
@@ -14,7 +14,7 @@ usage() {
 }
 
 help() {
-    printf '%s: Generate a new changelog entry' "$0"
+    printf '%s: Generate a new changelog entry\n' "$0"
     usage
 }
 
