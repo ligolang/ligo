@@ -1,0 +1,78 @@
+{
+    "name": "ligo-vscode",
+    "description": "LIGO VSCode extension includes syntax highlighting, and a language server for LIGO.",
+    "author": "Serokell",
+    "license": "MIT",
+    "version": "0.1.0",
+    "repository": {
+        "type": "git",
+        "url": "https://gitlab.com/ligolang/ligo"
+    },
+    "publisher": "LigoLang",
+    "categories": [
+        "Programming Languages"
+    ],
+    "keywords": [],
+    "engines": {
+        "vscode": "^1.43.0"
+    },
+    "activationEvents": [
+        "onLanguage:ligo",
+        "onLanguage:mligo",
+        "onLanguage:religo"
+    ],
+    "icon": "logo.png",
+    "main": "./client/out/extension",
+    "contributes": {
+        "languages": [
+            {
+                "id": "ligo",
+                "aliases": ["PascaLIGO"],
+                "extensions": ["ligo"],
+                "configuration": "./syntaxes/ligo.configuration.json"
+            },
+            {
+                "id": "religo",
+                "aliases": ["ReasonLIGO"],
+                "extensions": ["religo"],
+                "configuration": "./syntaxes/religo.configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "ligo",
+                "scopeName": "source.ligo",
+                "path": "./syntaxes/ligo.tmLanguage.json"
+            },
+            {
+                "language": "religo",
+                "scopeName": "source.religo",
+                "path": "./syntaxes/religo.tmLanguage.json"
+            }
+        ],
+        "configuration": {
+            "type": "object",
+            "title": "LIGO LSP Configuration",
+            "properties": {
+                "ligoLanguageServer.maxNumberOfProblems": {
+                    "scope": "resource",
+                    "type": "number",
+                    "default": 100,
+                    "description": "Controls the maximum number of problems produced by the server."
+                }
+            }
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -b",
+        "watch": "tsc -b -w",
+        "postinstall": "cd client && npm install && cd .."
+    },
+    "devDependencies": {
+        "@types/node": "^8.10.52",
+        "tslint": "^5.16.0",
+        "typescript": "next"
+    },
+    "dependencies": {}
+}

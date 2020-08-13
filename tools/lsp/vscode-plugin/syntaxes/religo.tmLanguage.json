@@ -1,0 +1,94 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "religo",
+    "scopeName": "source.religo",
+    "patterns": [
+        { "include": "#controlkeywords" },
+        { "include": "#strings" },
+        { "include": "#comment" },
+        { "include": "#multilineComment" },
+        { "include": "#singlequotes" },
+        { "include": "#type" },
+        { "include": "#typeDeclaration" },
+        { "include": "#otherkeywords" },
+        { "include": "#variableInit" },
+        { "include": "#variableDeclaration" }
+    ],
+    "repository": {
+        "controlkeywords": {
+            "patterns": [{
+                "name": "keyword.control.religo",
+                "match": "\\b(if|then|else|remove|from|None|Some|true|false|skip)\\b"
+            }]
+        },
+        "otherkeywords": {
+            "patterns": [{
+                "name": "keyword.other.religo",
+                "match": "\\b(let|rec|switch|type|sender|source|amount|balance|now)\\b"
+            }]
+        },
+        "strings": {
+            "name": "string.quoted.double.religo",
+            "begin": "\"",
+            "end": "\"",
+            "patterns": [
+                {
+                    "name": "constant.character.escape.religo",
+                    "match": "\\\\."
+                }
+            ]
+        },
+        "singlequotes" : {
+            "name": "string.quoted.single.religo",
+            "begin": "'",
+            "end": "'",
+            "patterns" : []
+        },
+        "comment": {
+            "patterns": [
+                {
+                    "name": "comment.line.double-slash.religo",
+                    "match": "(//.*)"
+                }
+            ]
+        },
+        "multilineComment" : {
+            "name" : "comment.line.double-slash.religo",
+            "begin" : "/\\*",
+            "end" : "\\*/",
+            "patterns" : []
+        },
+        "type" : {
+            "patterns" : [
+                {
+                    "name" : "support.type.religo",
+                    "match": "\\b(bool|int|unit|string|nat|tez|map|timestamp|signature|key|big_map|list|set|record|address|option)\\b"
+                }
+            ]
+        },
+        "typeDeclaration" : {
+            "patterns" : [
+                {
+                    "name" : "support.type.religo",
+                    "match": "(?=type +)\\w+? +(?=\\=)"
+                }
+            ]
+        },
+        "variableInit" : {
+            "patterns" : [
+                {
+                    "name" : "support.variable.religo",
+                    "match": "(?=let +)\\w+(?= +\\:\\=)"
+                }
+            ]
+        },
+        "variableDeclaration" : {
+            "patterns" : [
+                {
+                    "name" : "support.variable.religo",
+                    "match": "\\w+(?= +\\:)"
+                }
+            ]
+        }
+    }
+}

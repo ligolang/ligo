@@ -1,0 +1,103 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "ligo",
+    "patterns": [
+        { "include": "#controlkeywords" },
+        { "include": "#function" },
+        { "include": "#strings" },
+        { "include": "#comment" },
+        { "include": "#multilineComment" },
+        { "include": "#singlequotes" },
+        { "include": "#type" },
+        { "include": "#typeDeclaration" },
+        { "include": "#otherkeywords" },
+        { "include": "#variableInit" },
+        { "include": "#variableDeclaration" }
+    ],
+    "repository": {
+        "controlkeywords": {
+            "patterns": [{
+                "name": "keyword.control.ligo",
+                "match": "\\b(if|while|for|return|nil|remove|from|else|then|None|Some|True|False|Unit|skip)\\b"
+            }]
+        },
+        "otherkeywords": {
+            "patterns": [{
+                "name": "keyword.other.ligo",
+                "match": "\\b(case|with|is|function|var|const|type|end|begin|block|sender|source|amount|balance|now)\\b"
+            }]
+        },
+        "function": {
+            "patterns": [
+                {
+                    "name": "entity.name.function.ligo",
+                    "match": "(?!with\\b)\\b\\w+ ?(?=\\()"
+                }
+            ]
+        },
+        "strings": {
+            "name": "string.quoted.double.ligo",
+            "begin": "\"",
+            "end": "\"",
+            "patterns": [
+                {
+                    "name": "constant.character.escape.ligo",
+                    "match": "\\\\."
+                }
+            ]
+        },
+        "singlequotes" : {
+            "name": "string.quoted.single.ligo",
+            "begin": "\\'",
+            "end": "\\'",
+            "patterns" : []
+        },
+        "comment": {
+            "patterns": [
+                {
+                    "name": "comment.line.double-slash.ligo",
+                    "match": "(//.*)"
+                }
+            ]
+        },
+        "multilineComment" : {
+            "name" : "comment.line.double-slash.ligo",
+            "begin" : "\\(\\*",
+            "end" : "\\*\\)",
+            "patterns" : []
+        },
+        "type" : {
+            "patterns" : [
+                {
+                    "name" : "support.type.ligo",
+                    "match": "\\b(bool|int|unit|string|nat|tez|map|timestamp|signature|key|big_map|list|set|record|address|option)\\b"
+                }
+            ]
+        },
+        "typeDeclaration" : {
+            "patterns" : [
+                {
+                    "name" : "support.type.ligo",
+                    "match": "\\w+ ?(?= is )"
+                }
+            ]
+        },
+        "variableInit" : {
+            "patterns" : [
+                {
+                    "name" : "support.variable.ligo",
+                    "match": "\\w+ ?(?=\\:\\=)"
+                }
+            ]
+        },
+        "variableDeclaration" : {
+            "patterns" : [
+                {
+                    "name" : "support.variable.ligo",
+                    "match": "\\w+ ?(?=\\:)"
+                }
+            ]
+        }
+    },
+    "scopeName": "source.ligo"
+}
