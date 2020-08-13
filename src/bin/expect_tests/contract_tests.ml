@@ -7,13 +7,13 @@ let bad_contract basename =
 
 let%expect_test _ =
   run_ligo_good [ "measure-contract" ; contract "coase.ligo" ; "main" ] ;
-  [%expect {| 1242 bytes |}] ;
+  [%expect {| 1238 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig.ligo" ; "main" ] ;
   [%expect {| 828 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig-v2.ligo" ; "main" ] ;
-  [%expect {| 1925 bytes |}] ;
+  [%expect {| 1907 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "vote.mligo" ; "main" ] ;
   [%expect {| 479 bytes |}] ;
@@ -215,18 +215,11 @@ let%expect_test _ =
                  DIP { DUP ; CDR ; SWAP ; CAR ; CDR } ;
                  PAIR ;
                  PAIR ;
-                 DUP ;
-                 CAR ;
-                 CDR ;
-                 DIG 3 ;
-                 NONE (pair address nat) ;
                  SWAP ;
-                 UPDATE ;
-                 DIG 2 ;
                  DUP ;
-                 DUG 3 ;
+                 DUG 2 ;
                  CDR ;
-                 DIG 3 ;
+                 DIG 2 ;
                  CAR ;
                  MUL ;
                  SENDER ;
@@ -235,15 +228,21 @@ let%expect_test _ =
                  SWAP ;
                  UNIT ;
                  TRANSFER_TOKENS ;
-                 NIL operation ;
                  SWAP ;
-                 CONS ;
-                 DUG 2 ;
+                 DUP ;
+                 CAR ;
+                 CDR ;
+                 DIG 3 ;
+                 NONE (pair address nat) ;
+                 SWAP ;
+                 UPDATE ;
                  DIP { DUP ; CDR ; SWAP ; CAR ; CAR } ;
                  SWAP ;
                  PAIR ;
                  PAIR ;
-                 SWAP ;
+                 NIL operation ;
+                 DIG 2 ;
+                 CONS ;
                  PAIR } }
            { SWAP ;
              DUP ;
@@ -508,11 +507,10 @@ let%expect_test _ =
                  IF { PUSH string "Message size exceed maximum limit" ; FAILWITH }
                     { PUSH unit Unit } ;
                  DROP ;
-                 EMPTY_SET address ;
-                 DIG 3 ;
+                 DIG 2 ;
                  DUP ;
-                 DUG 4 ;
-                 SWAP ;
+                 DUG 3 ;
+                 EMPTY_SET address ;
                  PAIR ;
                  DIG 3 ;
                  DUP ;
@@ -627,11 +625,8 @@ let%expect_test _ =
                  IF { PUSH string "Maximum number of proposal reached" ; FAILWITH }
                     { PUSH unit Unit } ;
                  DROP ;
-                 NIL operation ;
-                 SWAP ;
                  DUP ;
-                 DUG 2 ;
-                 SWAP ;
+                 NIL operation ;
                  PAIR ;
                  SWAP ;
                  DUP ;
@@ -836,22 +831,27 @@ let%expect_test _ =
                       SWAP ;
                       DIP { DROP } }
                     { DIG 2 ; DUP ; DUG 3 } ;
-                 PUSH nat 0 ;
-                 DIG 2 ;
+                 DIG 3 ;
+                 SWAP ;
                  DUP ;
-                 DUG 3 ;
+                 DUG 2 ;
+                 DIP { DROP } ;
+                 PUSH nat 0 ;
+                 DIG 3 ;
+                 DUP ;
+                 DUG 4 ;
                  SIZE ;
                  COMPARE ;
                  EQ ;
-                 IF { SWAP ;
+                 IF { DIG 2 ;
                       DROP ;
+                      SWAP ;
                       DUP ;
                       DUP ;
-                      DUG 2 ;
                       CAR ;
                       CDR ;
                       CDR ;
-                      DIG 3 ;
+                      DIG 4 ;
                       NONE (set address) ;
                       SWAP ;
                       UPDATE ;
@@ -861,15 +861,10 @@ let%expect_test _ =
                       SWAP ;
                       PAIR ;
                       PAIR ;
-                      SWAP ;
-                      DUP ;
-                      DUG 2 ;
-                      SWAP ;
                       DIP { DROP } }
-                    { DUP ;
+                    { SWAP ;
                       DUP ;
                       DUP ;
-                      DUG 3 ;
                       CAR ;
                       CDR ;
                       CDR ;
@@ -886,9 +881,6 @@ let%expect_test _ =
                       PAIR ;
                       PAIR ;
                       DIP { DROP } } ;
-                 DUG 2 ;
-                 DIP { DROP } ;
-                 SWAP ;
                  DIP { DROP } } ;
              NIL operation ;
              PAIR } } } |} ]
@@ -1411,8 +1403,8 @@ let%expect_test _ =
      let p2 = (f2)@(s) in { ASSERTION(p2);
      s}}}
     const letin_nesting2 = lambda (x:Some(int)) : None return let y = 2 in let z = 3 in ADD(ADD(x ,
-    y) ,
-    z)
+    y) , z) const x = let #5 = (+1 , (+2 ,
+    +3)) in let #4 = #5.0 in let #3 = #5.1 in let x = #3.0 in let #2 = #3.1 in x
     |}];
 
   run_ligo_good ["print-ast"; contract "letin.religo"];
@@ -1435,8 +1427,8 @@ let%expect_test _ =
      let p2 = (f2)@(s) in { ASSERTION(p2);
      s}}}
     const letin_nesting2 = lambda (x:Some(int)) : None return let y = 2 in let z = 3 in ADD(ADD(x ,
-    y) ,
-    z)
+    y) , z) const x = let #4 = (+1 , (+2 ,
+    +3)) in let #3 = #4.0 in let #2 = #4.1 in let x = #2.0 in let #1 = #2.1 in x
     |}];
 
   run_ligo_bad ["print-ast-typed"; contract "existential.mligo"];

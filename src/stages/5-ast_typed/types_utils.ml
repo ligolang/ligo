@@ -37,7 +37,10 @@ let fold_map__list : type a state new_a err . (state -> a -> (state * new_a , er
     let%bind state , l = acc in
     let%bind (state , new_element) = f state element in ok (state , new_element :: l) in
   let%bind (state , l) = List.fold_left aux (ok (state , [])) l in
-  ok (state , l)
+  (* fold_left with a list accumulator will produce the results in
+     reverse order, so we apply List.rev to put them back in the right
+     order. *)
+  ok (state , List.rev l)
 
 let fold_map__location_wrap : type a state new_a err . (state -> a -> (state * new_a , err) result) -> state -> a location_wrap -> (state * new_a location_wrap , err) result =
   fun f state { wrap_content ; location } ->
@@ -52,7 +55,10 @@ let fold_map__list_ne : type a state new_a err . (state -> a -> (state * new_a ,
     let%bind (state , new_element) = f state element in
     ok (state , new_element :: l) in
   let%bind (state , l) = List.fold_left aux (ok (state , [])) l in
-  ok (state , (new_first , l))
+  (* fold_left with a list accumulator will produce the results in
+     reverse order, so we apply List.rev to put them back in the right
+     order. *)
+  ok (state , (new_first , List.rev l))
 
 let fold_map__option : type a state new_a err . (state -> a -> (state * new_a , err) result) -> state -> a option -> (state * new_a option , err) result =
   fun f state o ->

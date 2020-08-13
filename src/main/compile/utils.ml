@@ -14,7 +14,7 @@ let to_core f stx =
   let%bind core   = Of_sugar.compile sugar in
   ok @@ core
 
-let type_file f stx form : (Ast_typed.program * Typesystem.Solver_types.typer_state, _) result =
+let type_file f stx form : (Ast_typed.program * _ Typesystem.Solver_types.typer_state, _) result =
   let%bind core        = to_core f stx in
   let%bind typed,state = Of_core.compile form core in
   ok @@ (typed,state)

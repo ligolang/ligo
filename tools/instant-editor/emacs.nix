@@ -29,7 +29,8 @@ let
           merlin
           utop
           ocp-indent
-        ])
+        ]
+        ++ (with ps.melpaStablePackages ; [iedit]))
     }/bin/emacs \
       -l "${init-el}" \
       -q \
