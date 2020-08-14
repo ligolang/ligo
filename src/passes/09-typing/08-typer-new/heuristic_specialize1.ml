@@ -1,6 +1,6 @@
 (* selector / propagation rule for specializing polymorphic types
  * For now: (x = forall y, z) and (x = k'(var' …))
- * produces the new constraint (z[x |-> k'(var' …)])
+ * produces the new constraint (x = z[y |-> fresh_y])
  * where [from |-> to] denotes substitution. *)
 (* ??*)
 
@@ -47,6 +47,7 @@ let propagator : (output_specialize1 , unit, typer_error) propagator =
   let fresh_existential = Core.fresh_type_variable () in
   (* Produce the constraint (b.tv = a.body[a.binder |-> fresh_existential])
      The substitution is obtained by immediately applying the forall. *)
+  (* TODO: this should not use apply, universally-quantified types are *not* type-level functions, even though the substitution is identical on both. *)
   let apply = {
       tsrc = "solver: propagator: specialize1 apply" ;
       t = P_apply { tf   = { tsrc = "solver: propagator: specialize1 tf"   ; t = P_forall a.forall            };
