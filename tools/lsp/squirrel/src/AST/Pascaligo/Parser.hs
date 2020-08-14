@@ -40,24 +40,24 @@ example = "../../../src/test/contracts/coase.ligo"
 
 sample' :: FilePath -> IO (LIGO Info)
 sample' f
-  =   mkRawTreePascal (Path f)
+  =   toParseTree (Path f)
   >>= runParserM . recognise
   >>= return . fst
 
 source' :: FilePath -> IO ()
 source' f
-  =   mkRawTreePascal (Path f)
+  =   toParseTree (Path f)
   >>= print . pp
 
 sample :: IO ()
 sample
-  =   mkRawTreePascal (Path example)
+  =   toParseTree (Path example)
   >>= runParserM . recognise
   >>= print . pp . fst
 
 source :: IO ()
 source
-  =   mkRawTreePascal (Path example)
+  =   toParseTree (Path example)
   >>= print . pp
 
 recognise :: RawTree -> ParserM (LIGO Info)

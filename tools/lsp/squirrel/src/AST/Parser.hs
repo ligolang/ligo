@@ -4,24 +4,19 @@ module AST.Parser
   , parse
   ) where
 
-import Control.Monad.Catch
-
-import System.FilePath
-
 import qualified AST.Pascaligo.Parser as Pascal
 import qualified AST.Reasonligo.Parser as Reason
 import           AST.Skeleton
 
 import ParseTree
 import Parser
-
-data UnsupportedExtension = UnsupportedExtension String
-  deriving stock Show
-  deriving anyclass Exception
+import Extension
 
 parse :: Source -> IO (LIGO Info, [Msg])
 parse src = do
-  case takeExtension $ srcPath src of
-    "religo" -> mkRawTreeReason src >>= runParserM . Reason.recognise
-    "ligo"   -> mkRawTreePascal src >>= runParserM . Pascal.recognise
-    ext      -> throwM $ UnsupportedExtension ext
+  recogniser <- onExt ElimExt
+    { eePascal = Pascal.recognise
+    , eeCaml   = error "TODO: caml recogniser"
+    , eeReason = Reason.recognise
+    } (srcPath src)
+  toParseTree src >>= runParserM . recogniser

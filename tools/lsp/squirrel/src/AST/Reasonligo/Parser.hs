@@ -35,13 +35,13 @@ example = "./contracts/multisig.religo"
 -- example = "./contracts/letin.religo"
 
 raw :: IO ()
-raw = mkRawTreeReason (Path example)
-    >>= print . pp
+raw = toParseTree (Path example)
+  >>= print . pp
 
 sample :: IO ()
-sample = mkRawTreeReason (Path example)
-    >>= runParserM . recognise
-    >>= print . pp . fst
+sample = toParseTree (Path example)
+  >>= runParserM . recognise
+  >>= print . pp . fst
 
 recognise :: RawTree -> ParserM (LIGO Info)
 recognise = descent (\_ -> error . show . pp) $ map usingScope

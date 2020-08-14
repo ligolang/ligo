@@ -5,6 +5,8 @@ import Control.Monad.Catch
 import Control.Monad
 import Control.Concurrent
 
+import System.IO.Unsafe
+
 -- | Ensure the function is run in single thread, w/o overlapping.
 --
 --   If called concurently, everyone will get results of the winner.
@@ -13,8 +15,8 @@ import Control.Concurrent
 --
 --   If function throws an error, will rethrow it in caller thread.
 --
-debounced :: forall s r. (s -> IO r) -> IO (s -> IO r)
-debounced act = do
+debounced :: forall s r. (s -> IO r) -> (s -> IO r)
+debounced act = unsafePerformIO do
   i <- newEmptyMVar
   o <- newEmptyMVar
 
@@ -31,7 +33,7 @@ debounced act = do
     putMVar i i'
     readMVar o >>= either throwM return
 
-_test :: IO ([Int] -> IO Int)
+_test :: [Int] -> IO Int
 _test = debounced \s -> do
   threadDelay 2000000
   unless (odd (length s)) do

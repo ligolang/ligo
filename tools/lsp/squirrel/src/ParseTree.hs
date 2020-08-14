@@ -16,8 +16,6 @@ module ParseTree
 
     -- * Invoke the TreeSitter and get the tree it outputs
   , toParseTree
-  , mkRawTreePascal
-  , mkRawTreeReason
   )
   where
 
@@ -42,17 +40,17 @@ import           TreeSitter.Tree hiding (Tree)
 
 import           System.FilePath (takeFileName)
 
-import           System.IO.Unsafe (unsafePerformIO)
-
 import           Duplo.Pretty as PP
 import           Duplo.Tree
 
+import           Extension
 import           Debouncer
 import           Product
 import           Range
 
 foreign import ccall unsafe tree_sitter_PascaLigo :: Ptr Language
 foreign import ccall unsafe tree_sitter_ReasonLigo :: Ptr Language
+foreign import ccall unsafe tree_sitter_CamlLigo :: Ptr Language
 
 data Source
   = Path       { srcPath :: FilePath }
@@ -105,17 +103,17 @@ instance Pretty1 ParseTree where
         (pp forest)
       )
 
-mkRawTreePascal :: Source -> IO RawTree
-mkRawTreePascal = toParseTree tree_sitter_PascaLigo
-
-mkRawTreeReason :: Source -> IO RawTree
-mkRawTreeReason = toParseTree tree_sitter_ReasonLigo
-
 -- | Feed file contents into PascaLIGO grammar recogniser.
-toParseTree :: Ptr Language -> Source -> IO RawTree
-toParseTree language = unsafePerformIO $ debounced inner
+toParseTree :: Source -> IO RawTree
+toParseTree = debounced inner
   where
     inner fin = do
+      language <- onExt ElimExt
+        { eePascal = tree_sitter_PascaLigo
+        , eeCaml   = tree_sitter_CamlLigo
+        , eeReason = tree_sitter_ReasonLigo
+        } (srcPath fin)
+
       parser <- ts_parser_new
       -- True   <- ts_parser_set_language parser tree_sitter_PascaLigo
       True <- ts_parser_set_language parser language
