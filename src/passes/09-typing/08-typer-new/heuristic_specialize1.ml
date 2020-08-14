@@ -1,6 +1,6 @@
 (* selector / propagation rule for specializing polymorphic types
  * For now: (x = forall y, z) and (x = k'(var' …))
- * produces the new constraint (x = z[x |-> fresh_y])
+ * produces the new constraint (x = z[y |-> fresh_y])
  * where [from |-> to] denotes substitution. *)
 
 module Core = Typesystem.Core
