@@ -37,12 +37,11 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, des
         let%bind type1 = decompile_type_expression type1 in
         let%bind type2 = decompile_type_expression type2 in
         return @@ T_arrow {type1;type2}
-      | O.T_variable type_variable       -> return @@ T_variable (Var.todo_cast type_variable)
+      | O.T_variable type_variable -> return @@ T_variable (Var.todo_cast type_variable)
       | O.T_wildcard -> return @@ T_wildcard
-      | O.T_constant type_constant       -> return @@ T_constant type_constant
-      | O.T_operator { type_operator ; arguments } ->
+      | O.T_constant { type_constant ; arguments } ->
         let%bind lst = bind_map_list decompile_type_expression arguments in
-        return @@ T_operator (type_operator, lst)
+        return @@ T_constant (type_constant, lst)
 
 let rec decompile_expression : O.expression -> (I.expression, desugaring_error) result =
   fun e ->

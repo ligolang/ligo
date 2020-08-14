@@ -8,51 +8,52 @@ let make_e ?(location = Location.generated) expression_content type_expression =
 }
 let make_n_t type_name type_value = { type_name ; type_value }
 
-let t_signature ?loc ?s ()  : type_expression = make_t ?loc (T_constant TC_signature) s
-let t_chain_id ?loc ?s ()   : type_expression = make_t ?loc (T_constant TC_chain_id) s
-let t_string ?loc ?s ()     : type_expression = make_t ?loc (T_constant TC_string) s
-let t_bytes ?loc ?s ()      : type_expression = make_t ?loc (T_constant TC_bytes) s
-let t_key ?loc ?s ()        : type_expression = make_t ?loc (T_constant TC_key) s
-let t_key_hash ?loc ?s ()   : type_expression = make_t ?loc (T_constant TC_key_hash) s
-let t_int ?loc ?s ()        : type_expression = make_t ?loc (T_constant TC_int) s
-let t_address ?loc ?s ()    : type_expression = make_t ?loc (T_constant TC_address) s
-let t_operation ?loc ?s ()  : type_expression = make_t ?loc (T_constant TC_operation) s
-let t_nat ?loc ?s ()        : type_expression = make_t ?loc (T_constant TC_nat) s
-let t_mutez ?loc ?s ()      : type_expression = make_t ?loc (T_constant TC_mutez) s
-let t_timestamp ?loc ?s ()  : type_expression = make_t ?loc (T_constant TC_timestamp) s
-let t_unit ?loc ?s ()       : type_expression = make_t ?loc (T_constant TC_unit) s
-let t_variable t ?loc ?s () : type_expression = make_t ?loc (T_variable t) s
+let t_constant ?loc ?core type_constant arguments  : type_expression = make_t ?loc (T_constant {type_constant; arguments}) core
 
-let t_operator ?loc ?s operator args : type_expression = make_t ?loc (T_operator {operator; args}) s
-let t_option   ?loc ?s o   : type_expression = t_operator ?loc ?s TC_option   [o]
-let t_list     ?loc ?s t   : type_expression = t_operator ?loc ?s TC_list     [t]
-let t_set      ?loc ?s t   : type_expression = t_operator ?loc ?s TC_set      [t]
-let t_contract ?loc ?s t   : type_expression = t_operator ?loc ?s TC_contract [t]
-let t_map            ?loc ?s k v             = t_operator ?loc ?s TC_map             [ k ; v ]
-let t_big_map        ?loc ?s k v             = t_operator ?loc ?s TC_big_map         [ k ; v ]
-let t_map_or_big_map ?loc ?s k v             = t_operator ?loc ?s TC_map_or_big_map  [ k ; v ]
+let t_signature  ?loc ?core () : type_expression = t_constant ?loc ?core TC_signature []
+let t_chain_id   ?loc ?core () : type_expression = t_constant ?loc ?core TC_chain_id []
+let t_string     ?loc ?core () : type_expression = t_constant ?loc ?core TC_string []
+let t_bytes      ?loc ?core () : type_expression = t_constant ?loc ?core TC_bytes []
+let t_key        ?loc ?core () : type_expression = t_constant ?loc ?core TC_key []
+let t_key_hash   ?loc ?core () : type_expression = t_constant ?loc ?core TC_key_hash []
+let t_int        ?loc ?core () : type_expression = t_constant ?loc ?core TC_int []
+let t_address    ?loc ?core () : type_expression = t_constant ?loc ?core TC_address []
+let t_operation  ?loc ?core () : type_expression = t_constant ?loc ?core TC_operation []
+let t_nat        ?loc ?core () : type_expression = t_constant ?loc ?core TC_nat []
+let t_mutez      ?loc ?core () : type_expression = t_constant ?loc ?core TC_mutez []
+let t_timestamp  ?loc ?core () : type_expression = t_constant ?loc ?core TC_timestamp []
+let t_unit       ?loc ?core () : type_expression = t_constant ?loc ?core TC_unit []
+let t_variable t ?loc ?core () : type_expression = make_t ?loc (T_variable t) core
+
+let t_option         ?loc ?core o   : type_expression = t_constant ?loc ?core TC_option   [o]
+let t_list           ?loc ?core t   : type_expression = t_constant ?loc ?core TC_list     [t]
+let t_set            ?loc ?core t   : type_expression = t_constant ?loc ?core TC_set      [t]
+let t_contract       ?loc ?core t   : type_expression = t_constant ?loc ?core TC_contract [t]
+let t_map            ?loc ?core k v : type_expression = t_constant ?loc ?core TC_map             [ k ; v ]
+let t_big_map        ?loc ?core k v : type_expression = t_constant ?loc ?core TC_big_map         [ k ; v ]
+let t_map_or_big_map ?loc ?core k v : type_expression = t_constant ?loc ?core TC_map_or_big_map  [ k ; v ]
 
 
-let t_record m ?loc ?s () : type_expression = make_t ?loc (T_record m) s
+let t_record m ?loc ?core () : type_expression = make_t ?loc (T_record m) core
 let make_t_ez_record ?loc (lst:(string * type_expression) list) : type_expression =
   let lst = List.mapi (fun i (x,y) -> (Label x, {associated_type=y;michelson_annotation=None;decl_pos=i}) ) lst in
   let map = LMap.of_list lst in
   make_t ?loc (T_record map) None
-let ez_t_record lst ?loc ?s () : type_expression =
+let ez_t_record lst ?loc ?core () : type_expression =
   let m = LMap.of_list lst in
-  t_record m ?loc ?s ()
-let t_pair ?loc ?s a b : type_expression =
+  t_record m ?loc ?core ()
+let t_pair ?loc ?core a b : type_expression =
   ez_t_record [
     (Label "0",{associated_type=a;michelson_annotation=None ; decl_pos = 0}) ;
-    (Label "1",{associated_type=b;michelson_annotation=None ; decl_pos = 0}) ] ?loc ?s ()
+    (Label "1",{associated_type=b;michelson_annotation=None ; decl_pos = 0}) ] ?loc ?core ()
 
-let t_sum m ?loc ?s () : type_expression = make_t ?loc (T_sum m) s
-let make_t_ez_sum ?loc ?s (lst:(label * row_element) list) : type_expression =
+let t_sum m ?loc ?core () : type_expression = make_t ?loc (T_sum m) core
+let make_t_ez_sum ?loc ?core (lst:(label * row_element) list) : type_expression =
   let aux prev (k, v) = LMap.add k v prev in
   let map = List.fold_left aux LMap.empty lst in
-  make_t ?loc (T_sum map) s
+  make_t ?loc (T_sum map) core
 
-let t_bool ?loc ?s ()       : type_expression = make_t_ez_sum ?loc ?s
+let t_bool ?loc ?core ()       : type_expression = make_t_ez_sum ?loc ?core
   [(Label "true", {associated_type=t_unit ();michelson_annotation=None;decl_pos=0});(Label "false", {associated_type=t_unit ();michelson_annotation=None;decl_pos=1})]
 
 let t_function param result ?loc ?s () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result}) s
@@ -77,55 +78,55 @@ let get_t_bool (t:type_expression) : unit option = match t.type_content with
   | _ -> None
 
 let get_t_int (t:type_expression) : unit option = match t.type_content with
-  | T_constant (TC_int) -> Some ()
+  | T_constant {type_constant=TC_int; arguments=[]} -> Some ()
   | _ -> None
 
 let get_t_nat (t:type_expression) : unit option = match t.type_content with
-  | T_constant (TC_nat) -> Some ()
+  | T_constant {type_constant=TC_nat; arguments=[]} -> Some ()
   | _ -> None
 
 let get_t_unit (t:type_expression) : unit option = match t.type_content with
-  | T_constant (TC_unit) -> Some ()
+  | T_constant {type_constant=TC_unit; arguments=[]}-> Some ()
   | _ -> None
 
 let get_t_mutez (t:type_expression) : unit option = match t.type_content with
-  | T_constant (TC_mutez) -> Some ()
+  | T_constant {type_constant=TC_mutez; arguments=[]}-> Some ()
   | _ -> None
 
 let get_t_bytes (t:type_expression) : unit option = match t.type_content with
-  | T_constant (TC_bytes) -> Some ()
+  | T_constant {type_constant=TC_bytes; arguments=[]}-> Some ()
   | _ -> None
 
 let get_t_string (t:type_expression) : unit option = match t.type_content with
-  | T_constant (TC_string) -> Some ()
+  | T_constant {type_constant=TC_string; arguments=[]} -> Some ()
   | _ -> None
 
 let get_t_contract (t:type_expression) : type_expression option = match t.type_content with
-  | T_operator {operator=TC_contract; args=[x]} -> Some x
+  | T_constant {type_constant=TC_contract; arguments=[x]} -> Some x
   | _ -> None
 
 let get_t_option (t:type_expression) : type_expression option = match t.type_content with
-  | T_operator {operator=TC_option; args=[o]} -> Some o
+  | T_constant {type_constant=TC_option; arguments=[o]} -> Some o
   | _ -> None
 
 let get_t_list (t:type_expression) : type_expression option = match t.type_content with
-  | T_operator {operator=TC_list; args=[l]} -> Some l
+  | T_constant {type_constant=TC_list; arguments=[l]} -> Some l
   | _ -> None
 
 let get_t_set (t:type_expression) : type_expression option = match t.type_content with
-  | T_operator {operator=TC_set; args=[s]} -> Some s
+  | T_constant {type_constant=TC_set; arguments=[s]} -> Some s
   | _ -> None 
 
 let get_t_key (t:type_expression) : unit option = match t.type_content with
-  | T_constant (TC_key) -> Some ()
+  | T_constant {type_constant=TC_key; arguments=[]} -> Some ()
   | _ -> None 
 
 let get_t_signature (t:type_expression) : unit option = match t.type_content with
-  | T_constant (TC_signature) -> Some ()
+  | T_constant {type_constant=TC_signature; arguments=[]} -> Some ()
   | _ -> None
 
 let get_t_key_hash (t:type_expression) : unit option = match t.type_content with
-  | T_constant (TC_key_hash) -> Some ()
+  | T_constant {type_constant=TC_key_hash; arguments=[]} -> Some ()
   | _ -> None
 
 let tuple_of_record (m: _ LMap.t) =
@@ -172,14 +173,14 @@ let get_t_record (t:type_expression) : row_element label_map option = match t.ty
 
 let get_t_map (t:type_expression) : (type_expression * type_expression) option =
   match t.type_content with
-  | T_operator {operator=TC_map           ; args=[ k ; v ]} -> Some (k, v)
-  | T_operator {operator=TC_map_or_big_map; args=[ k ; v ]} -> Some (k, v)
+  | T_constant {type_constant=TC_map           ; arguments=[ k ; v ]} -> Some (k, v)
+  | T_constant {type_constant=TC_map_or_big_map; arguments=[ k ; v ]} -> Some (k, v)
   | _ -> None
 
 let get_t_big_map (t:type_expression) : (type_expression * type_expression) option =
   match t.type_content with
-  | T_operator {operator=TC_big_map       ; args=[ k ; v ]} -> Some (k, v)
-  | T_operator {operator=TC_map_or_big_map; args=[ k ; v ]} -> Some (k, v)
+  | T_constant {type_constant=TC_big_map       ; arguments=[ k ; v ]} -> Some (k, v)
+  | T_constant {type_constant=TC_map_or_big_map; arguments=[ k ; v ]} -> Some (k, v)
   | _ -> None
 
 let get_t_map_key : type_expression -> type_expression option = fun t ->
@@ -213,7 +214,7 @@ let assert_t_bytes = get_t_bytes
 let assert_t_string = get_t_string
 
 let assert_t_contract (t:type_expression) : unit option = match t.type_content with
-  | T_operator {operator=TC_contract; args=[_]} -> Some ()
+  | T_constant {type_constant=TC_contract; arguments=[_]} -> Some ()
   | _ -> None
 
 let is_t_list t = Option.is_some (get_t_list t)
@@ -227,17 +228,17 @@ let assert_t_list_operation (t : type_expression) : unit option =
   match get_t_list t with
   | Some t' -> (
     match t'.type_content with
-    | T_constant (TC_operation) -> Some ()
+    | T_constant {type_constant=TC_operation; arguments=[]} -> Some ()
     | _ -> None
   )
   | None -> None
 
 let assert_t_int : type_expression -> unit option = fun t -> match t.type_content with
-  | T_constant (TC_int) -> Some ()
+  | T_constant {type_constant=TC_int; arguments=[]} -> Some ()
   | _ -> None
 
 let assert_t_nat : type_expression -> unit option = fun t -> match t.type_content with
-  | T_constant (TC_nat) -> Some ()
+  | T_constant {type_constant=TC_nat; arguments=[]} -> Some ()
   | _ -> None
 
 let assert_t_bool : type_expression -> unit option = fun v -> get_t_bool v

@@ -83,7 +83,7 @@ let error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@ Badly typed contract:@ expected %a but got %a@]"
         Location.pp e.location
-        Ast_typed.PP.type_expression {got with type_content= T_operator {operator=TC_list;args=[{got with type_content=T_constant TC_operation}]}}
+        Ast_typed.PP.type_expression {got with type_content= T_constant {type_constant=TC_list;arguments=[{got with type_content=T_constant {type_constant=TC_operation;arguments=[]}}]}}
         Ast_typed.PP.type_expression got
     | `Self_ast_typed_expected_same_entry (entrypoint,t1,t2,e) ->
       Format.fprintf f
@@ -204,7 +204,7 @@ let error_jsonformat : self_ast_typed_error -> Yojson.t = fun a ->
     let message = `String "badly typed contract" in
     let loc = `String (Format.asprintf "%a" Location.pp e.location) in
     let actual = `String (Format.asprintf "%a"
-      Ast_typed.PP.type_expression {got with type_content= T_operator {operator=TC_list;args=[{got with type_content=T_constant TC_operation}]}}) in
+      Ast_typed.PP.type_expression {got with type_content= T_constant {type_constant=TC_list;arguments=[{got with type_content=T_constant {type_constant=TC_operation;arguments=[]}}]}}) in
     let expected = `String (Format.asprintf "%a" Ast_typed.PP.type_expression got) in
     let content = `Assoc [
        ("message", message);

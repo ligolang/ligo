@@ -3,6 +3,7 @@
 open Ast_typed.Types
 module T = Ast_typed.Types
 
+(* TODO: look for a ppx to create comparison from an ordering *)
 let compare_simple_c_constant = function
   | C_arrow -> (function
       (* N/A -> 1 *)
@@ -96,6 +97,7 @@ let compare_simple_c_row = function
     | C_variant -> 0
     (* N/A -> -1 *))
 
+(* cb is a function to allow lazy evaluation *)
 let (<?) ca cb =
   if ca = 0 then cb () else ca
 let compare_type_variable a b =
@@ -118,6 +120,7 @@ and compare_type_value { tsrc = _ ; t = ta } { tsrc = _ ; t = tb } =
      will often be compared to see if they are the same, regardless of
      where the type comes from .*)
   compare_type_expression_ ta tb
+
 and compare_type_expression_ = function
   | P_forall { binder=a1; constraints=a2; body=a3 } -> (function
       | P_forall { binder=b1; constraints=b2; body=b3 } ->
@@ -154,9 +157,9 @@ and compare_type_expression_ = function
       | P_apply { tf=b1; targ=b2 } -> compare_type_value a1 b1 <? fun () -> compare_type_value a2 b2)
 and compare_type_constraint = fun { c = ca ; reason = ra } { c = cb ; reason = rb } ->
   let c = compare_type_constraint_ ca cb in
-  if c < 0 then -1
-  else if c = 0 then String.compare ra rb
-  else 1
+  if c = 0 then String.compare ra rb
+  else c
+
 and compare_type_constraint_ = function
   | C_equation { aval=a1; bval=a2 } -> (function
       | C_equation { aval=b1; bval=b2 } -> compare_type_value a1 b1 <? fun () -> compare_type_value a2 b2
@@ -180,6 +183,7 @@ let compare_p_forall
 let compare_c_poly_simpl { tv = a1; forall = a2 } { tv = b1; forall = b2 } =
   compare_type_variable a1 b1 <? fun () ->
     compare_p_forall a2 b2
+
 let compare_c_constructor_simpl { reason_constr_simpl = _ ; tv=a1; c_tag=a2; tv_list=a3 } { reason_constr_simpl = _ ; tv=b1; c_tag=b2; tv_list=b3 } =
   (* We do not compare the reasons, as they are only for debugging and
      not part of the type *)

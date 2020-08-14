@@ -84,11 +84,11 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
     return @@ CST.TVar (var)
   | T_wildcard->
     return @@ CST.TWild rg
-  | T_constant const ->
+  | T_constant (const, []) ->
     let const = Predefined.type_constant_to_string const in
     return @@ CST.TVar (wrap const)
-  | T_operator (operator, lst) ->
-    let operator = wrap @@ Predefined.type_operator_to_string operator in
+  | T_constant (type_constant, lst) ->
+    let operator = wrap @@ Predefined.type_constant_to_string type_constant in
     let%bind lst = bind_map_list decompile_type_expr lst in
     let%bind lst = list_to_nsepseq lst in
     let lst : _ CST.par = {lpar=rg;inside=lst;rpar=rg} in

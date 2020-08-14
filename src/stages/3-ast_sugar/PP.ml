@@ -24,24 +24,24 @@ let record_sep_t value sep ppf (m : 'a label_map) =
 let expression_variable ppf (ev : expression_variable) : unit =
   fprintf ppf "%a" Var.pp ev.wrap_content
 
-let rec type_expression' :
-        (formatter -> type_expression -> unit)
-    -> formatter
-    -> type_expression
-    -> unit =
-  fun f ppf te ->
+let list_sep_d_par f ppf lst =
+  match lst with 
+  | [] -> ()
+  | _ -> fprintf ppf " (%a)" (list_sep_d f) lst
+
+let rec type_content : formatter -> type_expression -> unit =
+  fun ppf te ->
   match te.type_content with
-  | T_sum m -> fprintf ppf "@[<hv 4>sum[%a]@]" (lmap_sep_d f) m
-  | T_record m -> fprintf ppf "{%a}" (record_sep_t f (const ";")) m
-  | T_tuple  t -> fprintf ppf "(%a)" (list_sep_d f) t
-  | T_arrow  a -> fprintf ppf "%a -> %a" f a.type1 f a.type2
+  | T_sum m -> fprintf ppf "@[<hv 4>sum[%a]@]" (lmap_sep_d type_expression) m
+  | T_record m -> fprintf ppf "{%a}" (record_sep_t type_expression (const ";")) m
+  | T_tuple  t -> fprintf ppf "(%a)" (list_sep_d type_expression) t
+  | T_arrow  a -> fprintf ppf "%a -> %a" type_expression a.type1 type_expression a.type2
   | T_variable tv -> type_variable ppf tv
   | T_wildcard -> fprintf ppf "_"
-  | T_constant tc -> type_constant ppf tc
-  | T_operator (to_, lst) -> fprintf ppf "%a (%a)" type_operator to_ (list_sep_d type_expression) lst
+  | T_constant (tc, lst) -> fprintf ppf "%a%a" type_constant tc (list_sep_d_par type_expression) lst
 
 and type_expression ppf (te : type_expression) : unit =
-  type_expression' type_expression ppf te
+  fprintf ppf "%a" type_content te
 
 let rec expression ppf (e : expression) =
   expression_content ppf e.expression_content

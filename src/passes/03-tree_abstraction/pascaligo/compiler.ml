@@ -50,47 +50,47 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
       | CST.TString s -> Some s.value
       | _ -> None
     in
-    let ((operator,args), loc) = r_split app in
-    (* this is a bad design, michelson_or and pair should be an operator
+    let ((type_constant,args), loc) = r_split app in
+    (* this is a bad design, michelson_or and pair should be an type_constant
        see AnnotType *)
-    (match operator.value with
+    (match type_constant.value with
       | "michelson_or" ->
         let lst = npseq_to_list args.value.inside in
         (match lst with
         | [a ; b ; c ; d ] -> (
           let%bind b' =
-            trace_option (michelson_type_wrong te operator.value) @@
+            trace_option (michelson_type_wrong te type_constant.value) @@
               get_t_string_singleton_opt b in
           let%bind d' =
-            trace_option (michelson_type_wrong te operator.value) @@
+            trace_option (michelson_type_wrong te type_constant.value) @@
               get_t_string_singleton_opt d in
           let%bind a' = compile_type_expression a in
           let%bind c' = compile_type_expression c in
           return @@ t_michelson_or ~loc a' b' c' d'
           )
-        | _ -> fail @@ michelson_type_wrong_arity loc operator.value)
+        | _ -> fail @@ michelson_type_wrong_arity loc type_constant.value)
       | "michelson_pair" ->
         let lst = npseq_to_list args.value.inside in
         (match lst with
         | [a ; b ; c ; d ] -> (
           let%bind b' =
-            trace_option (michelson_type_wrong te operator.value) @@
+            trace_option (michelson_type_wrong te type_constant.value) @@
               get_t_string_singleton_opt b in
           let%bind d' =
-            trace_option (michelson_type_wrong te operator.value) @@
+            trace_option (michelson_type_wrong te type_constant.value) @@
               get_t_string_singleton_opt d in
           let%bind a' = compile_type_expression a in
           let%bind c' = compile_type_expression c in
           return @@ t_michelson_pair ~loc a' b' c' d'
           )
-        | _ -> fail @@ michelson_type_wrong_arity loc operator.value)
+        | _ -> fail @@ michelson_type_wrong_arity loc type_constant.value)
     | _ ->
-      let%bind operators =
-        trace_option (unknown_predefined_type operator) @@
-        type_operators operator.value in
+      let%bind type_constants =
+        trace_option (unknown_predefined_type type_constant) @@
+        type_constants type_constant.value in
       let lst = npseq_to_list args.value.inside in
       let%bind lst = bind_map_list compile_type_expression lst in
-      return @@ t_operator ~loc operators lst
+      return @@ t_constant ~loc type_constants lst
     )
   | TFun func ->
     let ((input_type,_,output_type), loc) = r_split func in
@@ -104,7 +104,7 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
   | TVar var ->
     let (name,loc) = r_split var in
     (match type_constants name with
-      Some const -> return @@ t_constant ~loc const
+      Some const -> return @@ t_constant ~loc const []
     | None -> return @@ t_variable_ez ~loc name
     )
   | TWild reg ->

@@ -45,20 +45,20 @@ let select_and_propagate : 'old_input 'selector_output 'private_storage . ('old_
   let private_storage , x = selector old_type_constraint private_storage dbs in
   match x with
     WasSelected selected_outputs ->
-     let Set.{ set = already_selected ; duplicates = _ ; added = selected_outputs } = Set.add_list selected_outputs already_selected in
-     (* Call the propagation rule *)
-     let%bind (private_storage, new_constraints) = bind_fold_map_list (fun private_storage selected -> propagator private_storage dbs selected) private_storage selected_outputs in
-     (* return so that the new constraints are pushed to some kind of work queue *)
-let () =
-  (if Ast_typed.Debug.debug_new_typer && false then
-   let s str = (fun ppf () -> Format.fprintf ppf str) in
-   Format.printf "propagator produced\nnew_constraints = %a\n"
-     (PP_helpers.list_sep (PP_helpers.list_sep Ast_typed.PP_generic.type_constraint (s "\n")) (s "\n"))
-     new_constraints)
-in
-     ok (already_selected , private_storage , List.flatten new_constraints)
+    let Set.{ set = already_selected ; duplicates = _ ; added = selected_outputs } = Set.add_list selected_outputs already_selected in
+    (* Call the propagation rule *)
+    let%bind (private_storage, new_constraints) = bind_fold_map_list (fun private_storage selected -> propagator private_storage dbs selected) private_storage selected_outputs in
+    (* return so that the new constraints are pushed to some kind of work queue *)
+    let () =
+      if Ast_typed.Debug.debug_new_typer && false then
+      let s str = (fun ppf () -> Format.fprintf ppf str) in
+      Format.printf "propagator produced\nnew_constraints = %a\n"
+        (PP_helpers.list_sep (PP_helpers.list_sep Ast_typed.PP_generic.type_constraint (s "\n")) (s "\n"))
+        new_constraints
+    in
+    ok (already_selected , private_storage , List.flatten new_constraints)
   | WasNotSelected ->
-     ok (already_selected, private_storage , [])
+    ok (already_selected, private_storage , [])
 
 let select_and_propagate_one new_constraint (new_states , new_constraints , dbs) (Propagator_state { selector; propagator; printer ; already_selected ; private_storage }) =
   let sel_propag = (select_and_propagate selector propagator) in
@@ -89,6 +89,8 @@ let rec select_and_propagate_all : _ typer_state -> type_constraint selector_inp
            ok (already_selected , new_constraints' @ nc , dbs))
          (already_selected_and_propagators , [] , dbs)
          modified_constraints in
+     (* DFS *)
+     (* TODO: find a way to treat the constraints in a more appropriate order *)
      let new_constraints = new_constraints' @ tl in
      select_and_propagate_all { already_selected_and_propagators ; structured_dbs } new_constraints
 

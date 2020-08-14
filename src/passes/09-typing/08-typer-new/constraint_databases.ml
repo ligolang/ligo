@@ -6,9 +6,9 @@ open Ast_typed.Types
    db, to access it modulo unification variable aliases. *)
 let get_constraints_related_to : type_variable -> structured_dbs -> constraints =
   fun variable dbs ->
-    let variable , aliases = UF.get_or_set variable dbs.aliases in
-    let dbs = { dbs with aliases } in
-    match Map.find_opt variable dbs.grouped_by_variable with
+    (* get the class of the variable *)
+    let variable_repr , _ = UF.get_or_set variable dbs.aliases in
+    match Map.find_opt variable_repr dbs.grouped_by_variable with
       Some l -> l
     | None -> {
         constructor = [] ;
@@ -16,6 +16,7 @@ let get_constraints_related_to : type_variable -> structured_dbs -> constraints 
         tc          = [] ;
         row         = [] ;
       }
+
 let add_constraints_related_to : type_variable -> constraints -> structured_dbs -> structured_dbs =
   fun variable c dbs ->
     (* let (variable_repr , _height) , aliases = UF.get_or_set variable dbs.aliases in
@@ -39,34 +40,30 @@ let merge_constraints : type_variable -> type_variable -> structured_dbs -> stru
   fun variable_a variable_b dbs ->
   (* get old representant for variable_a *)
   let variable_repr_a , aliases = UF.get_or_set variable_a dbs.aliases in
-  let dbs = { dbs with aliases } in
   (* get old representant for variable_b *)
-  let variable_repr_b , aliases = UF.get_or_set variable_b dbs.aliases in
-  let dbs = { dbs with aliases } in
+  let variable_repr_b , aliases = UF.get_or_set variable_b aliases in
 
   (* alias variable_a and variable_b together *)
-  let aliases = UF.alias variable_a variable_b dbs.aliases in
+  let aliases = UF.alias variable_a variable_b aliases in
   let dbs = { dbs with aliases } in
 
   (* Replace the two entries in grouped_by_variable by a single one *)
-  (
-    let get_constraints ab =
-      match Map.find_opt ab dbs.grouped_by_variable with
-      | Some x -> x
-      | None -> { constructor = [] ; poly = [] ; tc = [] ; row = [] } in
-    let constraints_a = get_constraints variable_repr_a in
-    let constraints_b = get_constraints variable_repr_b in
-    let all_constraints = {
-        constructor = constraints_a.constructor @ constraints_b.constructor ;
-        poly        = constraints_a.poly        @ constraints_b.poly        ;
-        tc          = constraints_a.tc          @ constraints_b.tc          ;
-        row         = constraints_a.row         @ constraints_b.row         ;
-      } in
-    let grouped_by_variable =
-      Map.add variable_repr_a all_constraints dbs.grouped_by_variable in
-    let dbs = { dbs with grouped_by_variable} in
-    let grouped_by_variable =
-      Map.remove variable_repr_b dbs.grouped_by_variable in
-    let dbs = { dbs with grouped_by_variable} in
-    dbs
-  )
+  let get_constraints ab =
+    match Map.find_opt ab dbs.grouped_by_variable with
+    | Some x -> x
+    | None -> { constructor = [] ; poly = [] ; tc = [] ; row = [] }
+  in
+  let constraints_a = get_constraints variable_repr_a in
+  let constraints_b = get_constraints variable_repr_b in
+  let all_constraints = {
+      constructor = constraints_a.constructor @ constraints_b.constructor ;
+      poly        = constraints_a.poly        @ constraints_b.poly        ;
+      tc          = constraints_a.tc          @ constraints_b.tc          ;
+      row         = constraints_a.row         @ constraints_b.row         ;
+    } in
+  let grouped_by_variable =
+    Map.add variable_repr_a all_constraints dbs.grouped_by_variable in
+  let grouped_by_variable =
+    Map.remove variable_repr_b grouped_by_variable in
+  let dbs = { dbs with grouped_by_variable} in
+  dbs

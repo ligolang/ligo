@@ -1,23 +1,8 @@
 open Types
 open Trace
 
-let type_operator_name = function
-    TC_contract         -> "TC_contract"
-  | TC_option           -> "TC_option"
-  | TC_list             -> "TC_list"
-  | TC_set              -> "TC_set"
-  | TC_map              -> "TC_map"
-  | TC_big_map          -> "TC_big_map"
-  | TC_map_or_big_map   -> "TC_map_or_big_map"
-  | TC_michelson_pair   -> "TC_michelson_pair"
-  | TC_michelson_or     -> "TC_michelson_or"
-  | TC_michelson_pair_right_comb -> "TC_michelson_pair_right_comb"
-  | TC_michelson_pair_left_comb  -> "TC_michelson_pair_left_comb"
-  | TC_michelson_or_right_comb   -> "TC_michelson_or_right_comb"
-  | TC_michelson_or_left_comb    -> "TC_michelson_or_left_comb"
-
 let type_expression'_of_string = fun t ->
-  let aux operator args = T_operator {operator; args} in
+  let aux type_constant arguments = T_constant {type_constant; arguments} in
   match t with
   | "TC_contract" , [x]     -> ok @@ aux TC_contract [ x ]
   | "TC_option"   , [x]     -> ok @@ aux TC_option   [ x ]
@@ -28,38 +13,24 @@ let type_expression'_of_string = fun t ->
   | ("TC_contract" | "TC_option" | "TC_list" | "TC_set" | "TC_map" | "TC_big_map"), _ ->
      failwith "internal error: wrong number of arguments for type operator"
 
-  | "TC_unit"      , [] -> ok @@ T_constant(TC_unit)
-  | "TC_string"    , [] -> ok @@ T_constant(TC_string)
-  | "TC_bytes"     , [] -> ok @@ T_constant(TC_bytes)
-  | "TC_nat"       , [] -> ok @@ T_constant(TC_nat)
-  | "TC_int"       , [] -> ok @@ T_constant(TC_int)
-  | "TC_mutez"     , [] -> ok @@ T_constant(TC_mutez)
-  | "TC_operation" , [] -> ok @@ T_constant(TC_operation)
-  | "TC_address"   , [] -> ok @@ T_constant(TC_address)
-  | "TC_key"       , [] -> ok @@ T_constant(TC_key)
-  | "TC_key_hash"  , [] -> ok @@ T_constant(TC_key_hash)
-  | "TC_chain_id"  , [] -> ok @@ T_constant(TC_chain_id)
-  | "TC_signature" , [] -> ok @@ T_constant(TC_signature)
-  | "TC_timestamp" , [] -> ok @@ T_constant(TC_timestamp)
+  | "TC_unit"      , [] -> ok @@ aux TC_unit []
+  | "TC_string"    , [] -> ok @@ aux TC_string []
+  | "TC_bytes"     , [] -> ok @@ aux TC_bytes []
+  | "TC_nat"       , [] -> ok @@ aux TC_nat []
+  | "TC_int"       , [] -> ok @@ aux TC_int []
+  | "TC_mutez"     , [] -> ok @@ aux TC_mutez []
+  | "TC_operation" , [] -> ok @@ aux TC_operation []
+  | "TC_address"   , [] -> ok @@ aux TC_address []
+  | "TC_key"       , [] -> ok @@ aux TC_key []
+  | "TC_key_hash"  , [] -> ok @@ aux TC_key_hash []
+  | "TC_chain_id"  , [] -> ok @@ aux TC_chain_id []
+  | "TC_signature" , [] -> ok @@ aux TC_signature []
+  | "TC_timestamp" , [] -> ok @@ aux TC_timestamp []
   | _,               [] ->
      failwith "internal error: wrong number of arguments for type constant"
   | _                       ->
      failwith "internal error: unknown type operator"
 
-let string_of_type_operator = function
-  | TC_contract       -> "TC_contract"
-  | TC_option         -> "TC_option"
-  | TC_list           -> "TC_list"
-  | TC_set            -> "TC_set"
-  | TC_map            -> "TC_map"
-  | TC_big_map        -> "TC_big_map"
-  | TC_map_or_big_map -> "TC_map_or_big_map"
-  | TC_michelson_pair   -> "TC_michelson_pair"
-  | TC_michelson_or     -> "TC_michelson_or"
-  | TC_michelson_pair_right_comb -> "TC_michelson_pair_right_comb"
-  | TC_michelson_pair_left_comb  -> "TC_michelson_pair_left_comb"
-  | TC_michelson_or_right_comb   -> "TC_michelson_or_right_comb"
-  | TC_michelson_or_left_comb    -> "TC_michelson_or_left_comb"
 
 let string_of_type_constant = function
   | TC_unit      -> "TC_unit"
@@ -75,12 +46,19 @@ let string_of_type_constant = function
   | TC_chain_id  -> "TC_chain_id"
   | TC_signature -> "TC_signature"
   | TC_timestamp -> "TC_timestamp"
-
-let string_of_type_expression' = function
-  | T_operator {operator; args} -> string_of_type_operator operator,args
-  | T_constant c -> string_of_type_constant c,[]
-  | T_sum _ | T_record _ | T_arrow _ | T_variable _ | T_wildcard ->
-     failwith "not a type operator or constant"
+  | TC_contract       -> "TC_contract"
+  | TC_option         -> "TC_option"
+  | TC_list           -> "TC_list"
+  | TC_set            -> "TC_set"
+  | TC_map            -> "TC_map"
+  | TC_big_map        -> "TC_big_map"
+  | TC_map_or_big_map -> "TC_map_or_big_map"
+  | TC_michelson_pair   -> "TC_michelson_pair"
+  | TC_michelson_or     -> "TC_michelson_or"
+  | TC_michelson_pair_right_comb -> "TC_michelson_pair_right_comb"
+  | TC_michelson_pair_left_comb  -> "TC_michelson_pair_left_comb"
+  | TC_michelson_or_right_comb   -> "TC_michelson_or_right_comb"
+  | TC_michelson_or_left_comb    -> "TC_michelson_or_left_comb"
 
 let bind_lmap (l:_ label_map) =
   let open Trace in

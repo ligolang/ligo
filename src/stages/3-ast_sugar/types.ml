@@ -11,8 +11,7 @@ type type_content =
   | T_arrow of arrow
   | T_variable of type_variable
   | T_wildcard
-  | T_constant of type_constant
-  | T_operator of (type_operator' * type_expression list)
+  | T_constant of (type_constant * type_expression list)
 
 and arrow = {type1: type_expression; type2: type_expression}
 

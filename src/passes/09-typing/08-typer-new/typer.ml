@@ -75,36 +75,41 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
     @@ Environment.get_type_opt (name) e
   | T_wildcard ->
     return @@ T_variable (Var.fresh ())
-  | T_constant cst ->
-    (* TODO: O.constant = I.constant*)
-    return @@ T_constant cst
-  | T_operator {type_operator; arguments} ->
+  | T_constant {type_constant; arguments} ->
+    let assert_constant lst = match lst with
+      [] -> ok () 
+    | _ -> fail @@ type_constant_wrong_number_of_arguments type_constant 0 (List.length lst) t.location
+    in
     let assert_unary lst = match lst with
       [_] -> ok () 
-    | _ -> fail @@ operator_wrong_number_of_arguments type_operator 1 (List.length lst) t.location
+    | _ -> fail @@ type_constant_wrong_number_of_arguments type_constant 1 (List.length lst) t.location
     in
     let get_unary lst = match lst with
       [x] -> ok x
-    | _ -> fail @@ operator_wrong_number_of_arguments type_operator 1 (List.length lst) t.location
+    | _ -> fail @@ type_constant_wrong_number_of_arguments type_constant 1 (List.length lst) t.location
     in
     let assert_binary lst = match lst with
       [_;_] -> ok ()
-    | _ -> fail @@ operator_wrong_number_of_arguments type_operator 2 (List.length lst) t.location
+    | _ -> fail @@ type_constant_wrong_number_of_arguments type_constant 2 (List.length lst) t.location
     in
-    match type_operator with
-      | (TC_set | TC_list | TC_option | TC_contract) as operator->
+    match type_constant with
+      | (TC_unit | TC_string | TC_bytes | TC_nat | TC_int | TC_mutez | TC_operation | TC_address | TC_key | TC_key_hash | TC_chain_id | TC_signature | TC_timestamp) as type_constant ->
+        let%bind () = assert_constant arguments in
+        let%bind arguments = bind_map_list (evaluate_type e) arguments in
+        return @@ T_constant {type_constant; arguments}
+      | (TC_set | TC_list | TC_option | TC_contract) as type_constant ->
         let%bind () = assert_unary arguments in
-        let%bind args = bind_map_list (evaluate_type e) arguments in
-        return @@ T_operator {operator; args}
-      | (TC_map | TC_big_map ) as operator ->
+        let%bind arguments = bind_map_list (evaluate_type e) arguments in
+        return @@ T_constant {type_constant; arguments}
+      | (TC_map | TC_big_map ) as type_constant ->
         let%bind () = assert_binary arguments in
-        let%bind args = bind_map_list (evaluate_type e) arguments in
-        return @@ T_operator {operator; args}
+        let%bind arguments = bind_map_list (evaluate_type e) arguments in
+        return @@ T_constant {type_constant; arguments}
       (* TODO : remove when we have polymorphism *)
       | TC_map_or_big_map ->
         let%bind () = assert_binary arguments in
-        let%bind args = bind_map_list (evaluate_type e) arguments in
-        return @@ T_operator {operator=TC_map_or_big_map; args}
+        let%bind arguments = bind_map_list (evaluate_type e) arguments in
+        return @@ T_constant {type_constant=TC_map_or_big_map; arguments}
       | TC_michelson_pair_right_comb ->
           let%bind c = bind (evaluate_type e) @@ get_unary arguments in
           let%bind lmap = match c.type_content with
@@ -133,7 +138,7 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
             | _ -> fail (michelson_comb_no_variant t.location) in
           let pair = Typer_common.Michelson_type_converter.convert_variant_to_left_comb (Ast_typed.LMap.to_kv_list cmap) in
           return @@ pair
-      | _ -> fail @@ unrecognized_type_op t
+      | _ -> fail @@ unrecognized_type_constant t
 
 and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_state -> I.expression -> (_ O'.typer_state * O.expression, typer_error) result = fun ?tv_opt e state ae ->
   let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
@@ -207,12 +212,12 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
       return_wrapped (e_unit ()) state @@ Wrap.literal (t_unit ())
     )
 
-  | E_constant {cons_name=name; arguments=lst} ->
-    let%bind t = Typer_common.Constant_typers_new.Operators_types.constant_type name in
+  | E_constant {cons_name; arguments=lst} ->
+    let%bind t = Typer_common.Constant_typers_new.Operators_types.constant_type cons_name in
     let%bind state',lst = bind_fold_map_list (type_expression e) state lst in
     let lst_annot = List.map get_type_expression lst in
     let wrapped = Wrap.constant t lst_annot in
-    return_wrapped (E_constant {cons_name=name;arguments=lst}) state' wrapped
+    return_wrapped (E_constant {cons_name;arguments=lst}) state' wrapped
 
   | E_lambda lambda -> 
     let%bind (lambda,state',wrapped) = type_lambda e state lambda in

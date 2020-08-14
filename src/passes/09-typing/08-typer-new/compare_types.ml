@@ -5,12 +5,8 @@ open Typer_common.Errors
 let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : (unit, typer_error) result = match (a.type_content, b.type_content) with
   | T_wildcard , _ -> ok ()
   | _ , T_wildcard -> ok ()
-  | T_constant ca, T_constant cb -> (
-      Assert.assert_true (different_constants ca cb) (ca = cb)
-    )
-  | T_constant _, _ -> fail @@ different_kinds a b
-  | T_operator {operator=opa;args=lsta}, T_operator {operator=opb;args=lstb} -> (
-    let%bind _ = match (opa, opb) with
+  | T_constant {type_constant=ca;arguments=lsta}, T_constant {type_constant=cb;arguments=lstb} -> (
+    let%bind _ = match (ca, cb) with
       | TC_option, TC_option
       | TC_list, TC_list
       | TC_contract, TC_contract
@@ -20,15 +16,17 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
         -> ok @@ () 
       | (TC_option | TC_list | TC_contract | TC_set | TC_map | TC_big_map | TC_michelson_or | TC_michelson_or_left_comb | TC_michelson_or_right_comb | TC_michelson_pair | TC_michelson_pair_left_comb | TC_michelson_pair_right_comb | TC_map_or_big_map ),
         (TC_option | TC_list | TC_contract | TC_set | TC_map | TC_big_map | TC_michelson_or | TC_michelson_or_left_comb | TC_michelson_or_right_comb | TC_michelson_pair | TC_michelson_pair_left_comb | TC_michelson_pair_right_comb | TC_map_or_big_map )
-        -> fail @@ different_operators opa opb
+        -> fail @@ different_constants ca cb
+      | _ -> 
+        Assert.assert_true (different_constants ca cb) (ca = cb)
     in
     if List.length lsta <> List.length lstb then
-      fail @@ different_operator_number_of_arguments opa opb (List.length lsta) (List.length lstb)
+      fail @@ different_type_constant_number_of_arguments ca cb (List.length lsta) (List.length lstb)
     else
-      trace (different_types "arguments to type operators" a b)
+      trace (different_types "arguments to type type_constants" a b)
       @@ bind_list_iter (fun (a,b) -> assert_type_expression_eq (a,b) )(List.combine lsta lstb)
   )
-  | T_operator _, _ -> fail @@ different_kinds a b
+  | T_constant _, _ -> fail @@ different_kinds a b
   | T_sum sa, T_sum sb -> (
       let sa' = LMap.to_kv_list sa in
       let sb' = LMap.to_kv_list sb in

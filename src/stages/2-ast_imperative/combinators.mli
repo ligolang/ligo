@@ -17,7 +17,7 @@ val t_key_hash  : ?loc:Location.t -> unit -> type_expression
 val t_timestamp : ?loc:Location.t -> unit -> type_expression
 val t_signature : ?loc:Location.t -> unit -> type_expression
 val t_list      : ?loc:Location.t -> type_expression -> type_expression
-val t_constant  : ?loc:Location.t -> type_constant -> type_expression
+val t_constant  : ?loc:Location.t -> type_constant -> type_expression list -> type_expression
 val t_variable  : ?loc:Location.t -> type_variable -> type_expression
 val t_variable_ez : ?loc:Location.t -> string -> type_expression
 val t_pair   : ?loc:Location.t -> ( type_expression * type_expression ) -> type_expression
@@ -40,7 +40,6 @@ val t_michelson_pair_left_comb  : ?loc:Location.t -> type_expression -> type_exp
 val t_michelson_or_right_comb   : ?loc:Location.t -> type_expression -> type_expression
 val t_michelson_or_left_comb    : ?loc:Location.t -> type_expression -> type_expression
 
-val t_operator : ?loc:Location.t -> type_operator' -> type_expression list -> type_expression
 val t_set      : ?loc:Location.t -> type_expression -> type_expression
 val t_contract : ?loc:Location.t -> type_expression -> type_expression
 

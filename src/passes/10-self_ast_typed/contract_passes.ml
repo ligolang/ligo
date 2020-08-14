@@ -19,11 +19,11 @@ let check_entrypoint_annotation_format ep (exp: expression) =
 let self_typing : contract_pass_data -> expression -> (bool * contract_pass_data * expression , self_ast_typed_error) result = fun dat e ->
   let bad_self_err () = Errors.bad_self_type
     e.type_expression 
-    {e.type_expression with type_content = T_operator {operator=TC_contract; args=[dat.contract_type.parameter]}}
+    {e.type_expression with type_content = T_constant {type_constant=TC_contract; arguments=[dat.contract_type.parameter]}}
     e.location
   in
   match e.expression_content , e.type_expression with
-  | E_constant {cons_name=C_SELF ; arguments=[entrypoint_exp]}, {type_content = T_operator {operator=TC_contract;args=[t]} ; type_meta=_} ->
+  | E_constant {cons_name=C_SELF ; arguments=[entrypoint_exp]}, {type_content = T_constant {type_constant=TC_contract;arguments=[t]} ; type_meta=_} ->
     let%bind entrypoint = match entrypoint_exp.expression_content with
       | E_literal (Literal_string ep) -> check_entrypoint_annotation_format (Ligo_string.extract ep) entrypoint_exp
       | _ -> fail @@ Errors.entrypoint_annotation_not_literal entrypoint_exp.location in

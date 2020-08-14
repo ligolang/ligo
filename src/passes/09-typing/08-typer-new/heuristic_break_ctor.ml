@@ -17,8 +17,6 @@ let selector :  (type_constraint_simpl, output_break_ctor, unit) selector =
        is symmetric *)
     let other_cs = (Constraint_databases.get_constraints_related_to c.tv dbs).constructor in
     let other_cs = List.filter (fun (o : c_constructor_simpl) -> Var.equal c.tv o.tv) other_cs in
-    (* TODO double-check the conditions in the propagator, we had a
-       bug here because the selector was too permissive. *)
     let cs_pairs = List.map (fun x -> { a_k_var = c ; a_k'_var' = x }) other_cs in
     () , WasSelected cs_pairs
   | SC_Alias       _                -> () , WasNotSelected (* TODO: ??? (beware: symmetry) *)
@@ -44,6 +42,7 @@ let propagator : (output_break_ctor , unit , typer_error) propagator =
            Format.printf "\npropagator_break_ctor\na = %a\nb = %a\n%!" p a p b in
   (* a.c_tag = b.c_tag *)
   if (Solver_should_be_generated.compare_simple_c_constant a.c_tag b.c_tag) <> 0 then
+    (* TODO : use error monad *)
     failwith (Format.asprintf "type error: incompatible types, not same ctor %a vs. %a (compare returns %d)"
                 Solver_should_be_generated.debug_pp_c_constructor_simpl a
                 Solver_should_be_generated.debug_pp_c_constructor_simpl b
@@ -51,6 +50,7 @@ let propagator : (output_break_ctor , unit , typer_error) propagator =
   else
     (* a.tv_list = b.tv_list *)
   if List.length a.tv_list <> List.length b.tv_list then
+    (* TODO : use error monad *)
     failwith "type error: incompatible types, not same length"
   else
     let eqs3 = List.map2 (fun aa bb -> c_equation { tsrc = "solver: propagator: break_ctor aa" ; t = P_variable aa} { tsrc = "solver: propagator: break_ctor bb" ; t = P_variable bb} "propagator: break_ctor") a.tv_list b.tv_list in

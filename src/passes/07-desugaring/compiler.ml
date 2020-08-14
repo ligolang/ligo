@@ -41,13 +41,12 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression , desu
       let%bind type1 = compile_type_expression type1 in
       let%bind type2 = compile_type_expression type2 in
       return @@ T_arrow {type1;type2}
-    | I.T_variable type_variable       -> return @@ T_variable (Var.todo_cast type_variable)
+    | I.T_variable type_variable -> return @@ T_variable (Var.todo_cast type_variable)
     | I.T_wildcard -> return @@ T_wildcard
-    | I.T_constant type_constant       -> return @@ T_constant type_constant
-    | I.T_operator (type_operator, arguments) ->
+    | I.T_constant (type_constant, arguments) ->
       let%bind arguments = bind_map_list compile_type_expression arguments in
-      let type_operator = type_operator in
-      return @@ T_operator {type_operator ; arguments}
+      let type_constant = type_constant in
+      return @@ T_constant {type_constant ; arguments}
 
 let rec compile_expression : I.expression -> (O.expression , desugaring_error) result =
   fun sugar ->

@@ -33,7 +33,6 @@ val ez_t_sum : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> ( string *
 
 val t_function : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> type_expression -> type_expression -> type_expression
 
-val t_operator : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> type_operator' -> type_expression list -> type_expression
 val t_map : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> type_expression -> type_expression -> type_expression
 val t_big_map : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> type_expression -> type_expression -> type_expression
 val t_contract : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> type_expression -> type_expression
