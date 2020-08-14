@@ -50,7 +50,7 @@ import           Range
 
 foreign import ccall unsafe tree_sitter_PascaLigo :: Ptr Language
 foreign import ccall unsafe tree_sitter_ReasonLigo :: Ptr Language
-foreign import ccall unsafe tree_sitter_CamlLigo :: Ptr Language
+foreign import ccall unsafe tree_sitter_CameLigo :: Ptr Language
 
 data Source
   = Path       { srcPath :: FilePath }
@@ -105,70 +105,68 @@ instance Pretty1 ParseTree where
 
 -- | Feed file contents into PascaLIGO grammar recogniser.
 toParseTree :: Source -> IO RawTree
-toParseTree = debounced inner
+toParseTree = unsafeDebounce \fin -> do
+  language <- onExt ElimExt
+    { eePascal = tree_sitter_PascaLigo
+    , eeCaml   = tree_sitter_CameLigo
+    , eeReason = tree_sitter_ReasonLigo
+    } (srcPath fin)
+
+  parser <- ts_parser_new
+  -- True   <- ts_parser_set_language parser tree_sitter_PascaLigo
+  True <- ts_parser_set_language parser language
+
+  src <- srcToBytestring fin
+
+  BS.useAsCStringLen src \(str, len) -> do
+    tree <- ts_parser_parse_string parser nullPtr str len
+    withRootNode tree (peek >=> go fin src)
+
   where
-    inner fin = do
-      language <- onExt ElimExt
-        { eePascal = tree_sitter_PascaLigo
-        , eeCaml   = tree_sitter_CamlLigo
-        , eeReason = tree_sitter_ReasonLigo
-        } (srcPath fin)
+    go :: Source -> ByteString -> Node -> IO RawTree
+    go fin src node = do
+      let count = fromIntegral $ nodeChildCount node
+      allocaArray count $ \children -> do
+        alloca $ \tsNodePtr -> do
+          poke tsNodePtr $ nodeTSNode node
+          ts_node_copy_child_nodes tsNodePtr children
+          nodes <- for [0.. count - 1] $ \i -> do
+            peekElemOff children i
 
-      parser <- ts_parser_new
-      -- True   <- ts_parser_set_language parser tree_sitter_PascaLigo
-      True <- ts_parser_set_language parser language
+          trees <- for nodes \node' -> do
+            (only -> (r :> _, tree :: ParseTree RawTree)) <- go fin src node'
+            field <-
+              if nodeFieldName node' == nullPtr
+              then return ""
+              else peekCString $ nodeFieldName node'
+            return $ make (r :> Text.pack field :> Nil, tree)
 
-      src <- srcToBytestring fin
+          ty <- peekCString $ nodeType node
 
-      BS.useAsCStringLen src \(str, len) -> do
-        tree <- ts_parser_parse_string parser nullPtr str len
-        withRootNode tree (peek >=> go src)
+          let
+            start2D  = nodeStartPoint node
+            finish2D = nodeEndPoint   node
+            i = fromIntegral
 
-      where
-        go :: ByteString -> Node -> IO RawTree
-        go src node = do
-          let count = fromIntegral $ nodeChildCount node
-          allocaArray count $ \children -> do
-            alloca $ \tsNodePtr -> do
-              poke tsNodePtr $ nodeTSNode node
-              ts_node_copy_child_nodes tsNodePtr children
-              nodes <- for [0.. count - 1] $ \i -> do
-                peekElemOff children i
+          let
+            range = Range
+              { rStart  =
+                  ( i $ pointRow    start2D + 1
+                  , i $ pointColumn start2D + 1
+                  , i $ nodeStartByte node
+                  )
 
-              trees <- for nodes \node' -> do
-                (only -> (r :> _, tree :: ParseTree RawTree)) <- go src node'
-                field <-
-                  if nodeFieldName node' == nullPtr
-                  then return ""
-                  else peekCString $ nodeFieldName node'
-                return $ make (r :> Text.pack field :> Nil, tree)
+              , rFinish =
+                  ( i $ pointRow    finish2D + 1
+                  , i $ pointColumn finish2D + 1
+                  , i $ nodeEndByte node
+                  )
+              , rFile = takeFileName $ srcPath fin
+              }
 
-              ty <- peekCString $ nodeType node
-
-              let
-                start2D  = nodeStartPoint node
-                finish2D = nodeEndPoint   node
-                i = fromIntegral
-
-              let
-                range = Range
-                  { rStart  =
-                      ( i $ pointRow    start2D + 1
-                      , i $ pointColumn start2D + 1
-                      , i $ nodeStartByte node
-                      )
-
-                  , rFinish =
-                      ( i $ pointRow    finish2D + 1
-                      , i $ pointColumn finish2D + 1
-                      , i $ nodeEndByte node
-                      )
-                  , rFile = takeFileName $ srcPath fin
-                  }
-
-              return $ make (range :> "" :> Nil, ParseTree
-                { ptName     = Text.pack ty
-                -- , ptChildren = fromList . fmap (Comment,) $ trees -- TODO
-                , ptChildren = trees
-                , ptSource   = cutOut range src
-                })
+          return $ make (range :> "" :> Nil, ParseTree
+            { ptName     = Text.pack ty
+            -- , ptChildren = fromList . fmap (Comment,) $ trees -- TODO
+            , ptChildren = trees
+            , ptSource   = cutOut range src
+            })
