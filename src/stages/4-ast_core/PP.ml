@@ -100,6 +100,11 @@ let tuple_or_record_sep_expr value format_record sep_record format_tuple sep_tup
 let tuple_or_record_sep_expr value = tuple_or_record_sep_expr value "@[<hv 7>record[%a]@]" " ,@ " "@[<hv 2>( %a )@]" " ,@ "
 let tuple_or_record_sep_type value = tuple_or_record_sep_t value "@[<hv 7>record[%a]@]" " ,@ " "@[<hv 2>( %a )@]" " *@ "
 
+let list_sep_d_par f ppf lst =
+  match lst with 
+  | [] -> ()
+  | _ -> fprintf ppf " (%a)" (list_sep_d f) lst
+
 let rec type_content : formatter -> type_expression -> unit =
   fun ppf te ->
   match te.content with
@@ -108,8 +113,7 @@ let rec type_content : formatter -> type_expression -> unit =
   | T_arrow a -> fprintf ppf "%a -> %a" type_expression a.type1 type_expression a.type2
   | T_variable tv -> type_variable ppf tv
   | T_wildcard -> fprintf ppf "_"
-  | T_constant tc -> type_constant ppf tc
-  | T_operator {type_operator=top;arguments} -> fprintf ppf "%a (%a)" type_operator top (list_sep_d type_expression) arguments
+  | T_constant {type_constant=tc;arguments} -> fprintf ppf "%a%a" type_constant tc (list_sep_d_par type_expression) arguments
 
 and type_expression ppf (te : type_expression) : unit =
   fprintf ppf "%a" type_content te

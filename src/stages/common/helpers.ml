@@ -17,7 +17,7 @@ let bind_fold_lmap f init lmap =
   let aux k v acc = 
     acc >>? fun acc ->
     f acc k v in 
-  init >> fold aux lmap 
+  ok init |> fold aux lmap 
  
 let bind_fold_map_lmap f init lmap =
   let open Trace in
@@ -27,7 +27,7 @@ let bind_fold_map_lmap f init lmap =
     let%bind (acc',v') = f acc' k v in
     let prev' = add k v' prev' in
     ok @@ (acc', prev') in
-   (init, empty) >> fold aux lmap
+  ok (init, empty) |> fold aux lmap
 
 let range i j =
   let rec aux i j acc = if i >= j then acc else aux i (j-1) (j-1 :: acc) in

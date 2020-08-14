@@ -16,259 +16,6 @@ type environment = Environment.t
 let cast_var (orig: 'a Var.t Location.wrap) = { orig with wrap_content = Var.todo_cast orig.wrap_content}
 let assert_type_expression_eq = Typer_common.Helpers.assert_type_expression_eq
 
-let convert_type_constant : I.type_constant -> O.type_constant = function
-    | TC_unit -> TC_unit
-    | TC_string -> TC_string
-    | TC_bytes -> TC_bytes
-    | TC_nat -> TC_nat
-    | TC_int -> TC_int
-    | TC_mutez -> TC_mutez
-    | TC_operation -> TC_operation
-    | TC_address -> TC_address
-    | TC_key -> TC_key
-    | TC_key_hash -> TC_key_hash
-    | TC_chain_id -> TC_chain_id
-    | TC_signature -> TC_signature
-    | TC_timestamp -> TC_timestamp
-
-let convert_constant' : I.constant' -> O.constant' = function
-  | C_INT -> C_INT
-  | C_UNIT -> C_UNIT
-  | C_NIL -> C_NIL
-  | C_NOW -> C_NOW
-  | C_IS_NAT -> C_IS_NAT
-  | C_SOME -> C_SOME
-  | C_NONE -> C_NONE
-  | C_ASSERTION -> C_ASSERTION
-  | C_ASSERT_INFERRED -> C_ASSERT_INFERRED
-  | C_FAILWITH -> C_FAILWITH
-  | C_UPDATE -> C_UPDATE
-  (* Loops *)
-  | C_ITER -> C_ITER
-  | C_FOLD_WHILE -> C_FOLD_WHILE
-  | C_FOLD_CONTINUE -> C_FOLD_CONTINUE
-  | C_FOLD_STOP -> C_FOLD_STOP
-  | C_LOOP_LEFT -> C_LOOP_LEFT
-  | C_LOOP_CONTINUE -> C_LOOP_CONTINUE
-  | C_LOOP_STOP -> C_LOOP_STOP
-  | C_FOLD -> C_FOLD
-  (* MATH *)
-  | C_NEG -> C_NEG
-  | C_ABS -> C_ABS
-  | C_ADD -> C_ADD
-  | C_SUB -> C_SUB
-  | C_MUL -> C_MUL
-  | C_EDIV -> C_EDIV
-  | C_DIV -> C_DIV
-  | C_MOD -> C_MOD
-  (* LOGIC *)
-  | C_NOT -> C_NOT
-  | C_AND -> C_AND
-  | C_OR -> C_OR
-  | C_XOR -> C_XOR
-  | C_LSL -> C_LSL
-  | C_LSR -> C_LSR
-  (* COMPARATOR *)
-  | C_EQ -> C_EQ
-  | C_NEQ -> C_NEQ
-  | C_LT -> C_LT
-  | C_GT -> C_GT
-  | C_LE -> C_LE
-  | C_GE -> C_GE
-  (* Bytes/ String *)
-  | C_SIZE -> C_SIZE
-  | C_CONCAT -> C_CONCAT
-  | C_SLICE -> C_SLICE
-  | C_BYTES_PACK -> C_BYTES_PACK
-  | C_BYTES_UNPACK -> C_BYTES_UNPACK
-  | C_CONS -> C_CONS
-  (* Pair *)
-  | C_PAIR -> C_PAIR
-  | C_CAR -> C_CAR
-  | C_CDR -> C_CDR
-  | C_LEFT -> C_LEFT
-  | C_RIGHT -> C_RIGHT
-  (* Set *)
-  | C_SET_EMPTY -> C_SET_EMPTY
-  | C_SET_LITERAL -> C_SET_LITERAL
-  | C_SET_ADD -> C_SET_ADD
-  | C_SET_REMOVE -> C_SET_REMOVE
-  | C_SET_ITER -> C_SET_ITER
-  | C_SET_FOLD -> C_SET_FOLD
-  | C_SET_MEM -> C_SET_MEM
-  (* List *)
-  | C_LIST_EMPTY -> C_LIST_EMPTY
-  | C_LIST_LITERAL -> C_LIST_LITERAL
-  | C_LIST_ITER -> C_LIST_ITER
-  | C_LIST_MAP -> C_LIST_MAP
-  | C_LIST_FOLD -> C_LIST_FOLD
-  (* Maps *)
-  | C_MAP -> C_MAP
-  | C_MAP_EMPTY -> C_MAP_EMPTY
-  | C_MAP_LITERAL -> C_MAP_LITERAL
-  | C_MAP_GET -> C_MAP_GET
-  | C_MAP_GET_FORCE -> C_MAP_GET_FORCE
-  | C_MAP_ADD -> C_MAP_ADD
-  | C_MAP_REMOVE -> C_MAP_REMOVE
-  | C_MAP_UPDATE -> C_MAP_UPDATE
-  | C_MAP_ITER -> C_MAP_ITER
-  | C_MAP_MAP -> C_MAP_MAP
-  | C_MAP_FOLD -> C_MAP_FOLD
-  | C_MAP_MEM -> C_MAP_MEM
-  | C_MAP_FIND -> C_MAP_FIND
-  | C_MAP_FIND_OPT -> C_MAP_FIND_OPT
-  (* Big Maps *)
-  | C_BIG_MAP -> C_BIG_MAP
-  | C_BIG_MAP_EMPTY -> C_BIG_MAP_EMPTY
-  | C_BIG_MAP_LITERAL -> C_BIG_MAP_LITERAL
-  (* Crypto *)
-  | C_SHA256 -> C_SHA256
-  | C_SHA512 -> C_SHA512
-  | C_BLAKE2b -> C_BLAKE2b
-  | C_HASH -> C_HASH
-  | C_HASH_KEY -> C_HASH_KEY
-  | C_CHECK_SIGNATURE -> C_CHECK_SIGNATURE
-  | C_CHAIN_ID -> C_CHAIN_ID
-  (* Blockchain *)
-  | C_CALL -> C_CALL
-  | C_CONTRACT -> C_CONTRACT
-  | C_CONTRACT_OPT -> C_CONTRACT_OPT
-  | C_CONTRACT_ENTRYPOINT -> C_CONTRACT_ENTRYPOINT
-  | C_CONTRACT_ENTRYPOINT_OPT -> C_CONTRACT_ENTRYPOINT_OPT
-  | C_AMOUNT -> C_AMOUNT
-  | C_BALANCE -> C_BALANCE
-  | C_SOURCE -> C_SOURCE
-  | C_SENDER -> C_SENDER
-  | C_ADDRESS -> C_ADDRESS
-  | C_SELF -> C_SELF
-  | C_SELF_ADDRESS -> C_SELF_ADDRESS
-  | C_IMPLICIT_ACCOUNT -> C_IMPLICIT_ACCOUNT
-  | C_SET_DELEGATE -> C_SET_DELEGATE
-  | C_CREATE_CONTRACT -> C_CREATE_CONTRACT
-  | C_CONVERT_TO_LEFT_COMB -> C_CONVERT_TO_LEFT_COMB
-  | C_CONVERT_TO_RIGHT_COMB -> C_CONVERT_TO_RIGHT_COMB
-  | C_CONVERT_FROM_LEFT_COMB -> C_CONVERT_FROM_LEFT_COMB
-  | C_CONVERT_FROM_RIGHT_COMB -> C_CONVERT_FROM_RIGHT_COMB
-
-let unconvert_constant' : O.constant' -> I.constant' = function
-  | C_INT -> C_INT
-  | C_UNIT -> C_UNIT
-  | C_NIL -> C_NIL
-  | C_NOW -> C_NOW
-  | C_IS_NAT -> C_IS_NAT
-  | C_SOME -> C_SOME
-  | C_NONE -> C_NONE
-  | C_ASSERTION -> C_ASSERTION
-  | C_ASSERT_INFERRED -> C_ASSERT_INFERRED
-  | C_FAILWITH -> C_FAILWITH
-  | C_UPDATE -> C_UPDATE
-  (* Loops *)
-  | C_ITER -> C_ITER
-  | C_FOLD_WHILE -> C_FOLD_WHILE
-  | C_FOLD_CONTINUE -> C_FOLD_CONTINUE
-  | C_FOLD_STOP -> C_FOLD_STOP
-  | C_LOOP_LEFT -> C_LOOP_LEFT
-  | C_LOOP_CONTINUE -> C_LOOP_CONTINUE
-  | C_LOOP_STOP -> C_LOOP_STOP
-  | C_FOLD -> C_FOLD
-  (* MATH *)
-  | C_NEG -> C_NEG
-  | C_ABS -> C_ABS
-  | C_ADD -> C_ADD
-  | C_SUB -> C_SUB
-  | C_MUL -> C_MUL
-  | C_EDIV -> C_EDIV
-  | C_DIV -> C_DIV
-  | C_MOD -> C_MOD
-  (* LOGIC *)
-  | C_NOT -> C_NOT
-  | C_AND -> C_AND
-  | C_OR -> C_OR
-  | C_XOR -> C_XOR
-  | C_LSL -> C_LSL
-  | C_LSR -> C_LSR
-  (* COMPARATOR *)
-  | C_EQ -> C_EQ
-  | C_NEQ -> C_NEQ
-  | C_LT -> C_LT
-  | C_GT -> C_GT
-  | C_LE -> C_LE
-  | C_GE -> C_GE
-  (* Bytes/ String *)
-  | C_SIZE -> C_SIZE
-  | C_CONCAT -> C_CONCAT
-  | C_SLICE -> C_SLICE
-  | C_BYTES_PACK -> C_BYTES_PACK
-  | C_BYTES_UNPACK -> C_BYTES_UNPACK
-  | C_CONS -> C_CONS
-  (* Pair *)
-  | C_PAIR -> C_PAIR
-  | C_CAR -> C_CAR
-  | C_CDR -> C_CDR
-  | C_LEFT -> C_LEFT
-  | C_RIGHT -> C_RIGHT
-  (* Set *)
-  | C_SET_EMPTY -> C_SET_EMPTY
-  | C_SET_LITERAL -> C_SET_LITERAL
-  | C_SET_ADD -> C_SET_ADD
-  | C_SET_REMOVE -> C_SET_REMOVE
-  | C_SET_ITER -> C_SET_ITER
-  | C_SET_FOLD -> C_SET_FOLD
-  | C_SET_MEM -> C_SET_MEM
-  (* List *)
-  | C_LIST_EMPTY -> C_LIST_EMPTY
-  | C_LIST_LITERAL -> C_LIST_LITERAL
-  | C_LIST_ITER -> C_LIST_ITER
-  | C_LIST_MAP -> C_LIST_MAP
-  | C_LIST_FOLD -> C_LIST_FOLD
-  (* Maps *)
-  | C_MAP -> C_MAP
-  | C_MAP_EMPTY -> C_MAP_EMPTY
-  | C_MAP_LITERAL -> C_MAP_LITERAL
-  | C_MAP_GET -> C_MAP_GET
-  | C_MAP_GET_FORCE -> C_MAP_GET_FORCE
-  | C_MAP_ADD -> C_MAP_ADD
-  | C_MAP_REMOVE -> C_MAP_REMOVE
-  | C_MAP_UPDATE -> C_MAP_UPDATE
-  | C_MAP_ITER -> C_MAP_ITER
-  | C_MAP_MAP -> C_MAP_MAP
-  | C_MAP_FOLD -> C_MAP_FOLD
-  | C_MAP_MEM -> C_MAP_MEM
-  | C_MAP_FIND -> C_MAP_FIND
-  | C_MAP_FIND_OPT -> C_MAP_FIND_OPT
-  (* Big Maps *)
-  | C_BIG_MAP -> C_BIG_MAP
-  | C_BIG_MAP_EMPTY -> C_BIG_MAP_EMPTY
-  | C_BIG_MAP_LITERAL -> C_BIG_MAP_LITERAL
-  (* Crypto *)
-  | C_SHA256 -> C_SHA256
-  | C_SHA512 -> C_SHA512
-  | C_BLAKE2b -> C_BLAKE2b
-  | C_HASH -> C_HASH
-  | C_HASH_KEY -> C_HASH_KEY
-  | C_CHECK_SIGNATURE -> C_CHECK_SIGNATURE
-  | C_CHAIN_ID -> C_CHAIN_ID
-  (* Blockchain *)
-  | C_CALL -> C_CALL
-  | C_CONTRACT -> C_CONTRACT
-  | C_CONTRACT_OPT -> C_CONTRACT_OPT
-  | C_CONTRACT_ENTRYPOINT -> C_CONTRACT_ENTRYPOINT
-  | C_CONTRACT_ENTRYPOINT_OPT -> C_CONTRACT_ENTRYPOINT_OPT
-  | C_AMOUNT -> C_AMOUNT
-  | C_BALANCE -> C_BALANCE
-  | C_SOURCE -> C_SOURCE
-  | C_SENDER -> C_SENDER
-  | C_ADDRESS -> C_ADDRESS
-  | C_SELF -> C_SELF
-  | C_SELF_ADDRESS -> C_SELF_ADDRESS
-  | C_IMPLICIT_ACCOUNT -> C_IMPLICIT_ACCOUNT
-  | C_SET_DELEGATE -> C_SET_DELEGATE
-  | C_CREATE_CONTRACT -> C_CREATE_CONTRACT
-  | C_CONVERT_TO_LEFT_COMB -> C_CONVERT_TO_LEFT_COMB
-  | C_CONVERT_TO_RIGHT_COMB -> C_CONVERT_TO_RIGHT_COMB
-  | C_CONVERT_FROM_LEFT_COMB -> C_CONVERT_FROM_LEFT_COMB
-  | C_CONVERT_FROM_RIGHT_COMB -> C_CONVERT_FROM_RIGHT_COMB
-
 let rec type_program (p:I.program) : (O.program * _ O'.typer_state, typer_error) result =
   let aux (e, acc:(environment * O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
     let%bind ed' = (bind_map_location (type_declaration e (Solver.placeholder_for_state_of_new_typer ()))) d in
@@ -384,35 +131,41 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
       ok tv
   | T_wildcard ->
     return @@ T_wildcard
-  | T_constant cst ->
-      return (T_constant (convert_type_constant cst))
-  | T_operator {type_operator; arguments} ->
+  | T_constant {type_constant; arguments} ->
+    let assert_constant lst = match lst with
+      [] -> ok () 
+    | _ -> fail @@ type_constant_wrong_number_of_arguments type_constant 0 (List.length lst) t.location
+    in
     let assert_unary lst = match lst with
       [_] -> ok () 
-    | _ -> fail @@ operator_wrong_number_of_arguments type_operator 1 (List.length lst) t.location
+    | _ -> fail @@ type_constant_wrong_number_of_arguments type_constant 1 (List.length lst) t.location
     in
     let get_unary lst = match lst with
       [x] -> ok x
-    | _ -> fail @@ operator_wrong_number_of_arguments type_operator 1 (List.length lst) t.location
+    | _ -> fail @@ type_constant_wrong_number_of_arguments type_constant 1 (List.length lst) t.location
     in
     let assert_binary lst = match lst with
       [_;_] -> ok ()
-    | _ -> fail @@ operator_wrong_number_of_arguments type_operator 2 (List.length lst) t.location
+    | _ -> fail @@ type_constant_wrong_number_of_arguments type_constant 2 (List.length lst) t.location
     in
-    match type_operator with
-      | (TC_set | TC_list | TC_option | TC_contract) as operator->
+    match type_constant with
+      | (TC_unit | TC_string | TC_bytes | TC_nat | TC_int | TC_mutez | TC_operation | TC_address | TC_key | TC_key_hash | TC_chain_id | TC_signature | TC_timestamp) as type_constant ->
+        let%bind () = assert_constant arguments in
+        let%bind arguments = bind_map_list (evaluate_type e) arguments in
+        return @@ T_constant {type_constant; arguments}
+      | (TC_set | TC_list | TC_option | TC_contract) as type_constant ->
         let%bind () = assert_unary arguments in
-        let%bind args = bind_map_list (evaluate_type e) arguments in
-        return @@ T_operator {operator; args}
-      | (TC_map | TC_big_map ) as operator ->
+        let%bind arguments = bind_map_list (evaluate_type e) arguments in
+        return @@ T_constant {type_constant; arguments}
+      | (TC_map | TC_big_map ) as type_constant ->
         let%bind () = assert_binary arguments in
-        let%bind args = bind_map_list (evaluate_type e) arguments in
-        return @@ T_operator {operator; args}
+        let%bind arguments = bind_map_list (evaluate_type e) arguments in
+        return @@ T_constant {type_constant; arguments}
       (* TODO : remove when we have polymorphism *)
       | TC_map_or_big_map ->
         let%bind () = assert_binary arguments in
-        let%bind args = bind_map_list (evaluate_type e) arguments in
-        return @@ T_operator {operator=TC_map_or_big_map; args}
+        let%bind arguments = bind_map_list (evaluate_type e) arguments in
+        return @@ T_constant {type_constant=TC_map_or_big_map; arguments}
       | TC_michelson_pair_right_comb ->
           let%bind c = bind (evaluate_type e) @@ get_unary arguments in
           let%bind lmap = match c.type_content with
@@ -441,7 +194,7 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
             | _ -> fail (michelson_comb_no_variant t.location) in
           let pair = Typer_common.Michelson_type_converter.convert_variant_to_left_comb (Ast_typed.LMap.to_kv_list cmap) in
           return @@ pair
-      | _ -> fail @@ unrecognized_type_op t
+      | _ -> fail @@ unrecognized_type_constant t
 
 and type_expression : environment -> _ O'.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * _ O'.typer_state, typer_error) result
   = fun e _placeholder_for_state_of_new_typer ?tv_opt ae ->
@@ -571,8 +324,8 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let tv_col = get_type_expression v_col   in (* this is the type of the collection  *)
       let tv_out = get_type_expression v_initr in (* this is the output type of the lambda*)
       let%bind input_type = match tv_col.type_content with
-        | O.T_operator {operator=TC_list | TC_set; args=[t] } -> ok @@ make_t_ez_record (("0",tv_out)::[("1",t)])
-        | O.T_operator {operator=TC_map  | TC_big_map; args=[k;v]} -> ok @@ make_t_ez_record (("0",tv_out)::[("1",make_t_ez_record [("0",k);("1",v)])])
+        | O.T_constant {type_constant=TC_list | TC_set; arguments=[t] } -> ok @@ make_t_ez_record (("0",tv_out)::[("1",t)])
+        | O.T_constant {type_constant=TC_map  | TC_big_map; arguments=[k;v]} -> ok @@ make_t_ez_record (("0",tv_out)::[("1",make_t_ez_record [("0",k);("1",v)])])
         | _ -> fail @@ bad_collect_loop tv_col ae.location in
       let e' = Environment.add_ez_binder lname input_type e in
       let%bind body = type_expression' ?tv_opt:(Some tv_out) e' result in
@@ -744,7 +497,6 @@ and type_lambda e {
 
 
 and type_constant (name:I.constant') (lst:O.type_expression list) (tv_opt:O.type_expression option) : (O.constant' * O.type_expression , typer_error) result =
-  let name = convert_constant' name in
   let%bind typer = Typer_common.Constant_typers.constant_typers name in
   let%bind tv = typer lst tv_opt in
   ok (name, tv)
@@ -783,7 +535,7 @@ let rec untype_expression (e:O.expression) : (I.expression , typer_error) result
       return (e_literal l)
   | E_constant {cons_name;arguments} ->
       let%bind lst' = bind_map_list untype_expression arguments in
-      return (e_constant (unconvert_constant' cons_name) lst')
+      return (e_constant cons_name lst')
   | E_variable n ->
       let n = cast_var n in
       return (e_variable (n))

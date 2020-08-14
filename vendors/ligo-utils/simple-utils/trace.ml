@@ -253,7 +253,6 @@ let map f = function
 
 let (>>?)  x f = bind f x
 let (>>|?) x f = map f x
-let (>>) x f = f @@ ok x
 
 (* Used by PPX_let, an OCaml preprocessor.
    What it does is that, when you only care about the case where a result isn't

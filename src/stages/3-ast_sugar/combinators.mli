@@ -41,7 +41,6 @@ val ez_t_sum : ?loc:Location.t -> ( string * row_element ) list -> type_expressi
 
 val t_function : ?loc:Location.t -> type_expression -> type_expression -> type_expression
 
-val t_operator : ?loc:Location.t -> type_operator' -> type_expression list -> type_expression
 val t_map : ?loc:Location.t -> type_expression -> type_expression -> type_expression
 val t_big_map : ?loc:Location.t -> type_expression -> type_expression -> type_expression
 val t_contract : ?loc:Location.t -> type_expression -> type_expression

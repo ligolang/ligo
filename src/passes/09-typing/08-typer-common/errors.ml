@@ -12,7 +12,7 @@ type typer_error = [
   | `Typer_match_redundant_case of Ast_core.matching_expr * Location.t
   | `Typer_unbound_constructor of Ast_typed.Environment.t * Ast_core.label * Location.t
   | `Typer_redundant_constructor of Ast_typed.Environment.t * Ast_core.label * Location.t
-  | `Typer_operator_wrong_number_of_arguments of Ast_core.type_operator' * int * int * Location.t
+  | `Typer_type_constant_wrong_number_of_arguments of Ast_core.type_constant * int * int * Location.t
   | `Typer_michelson_or_no_annotation of Ast_core.label * Location.t
   | `Typer_match_tuple_wrong_arity of Ast_typed.type_expression_list * Ast_core.expression_variable list * Location.t
   | `Typer_program_tracer of Ast_core.program * typer_error
@@ -68,12 +68,11 @@ type typer_error = [
   | `Typer_comparator_composed of Ast_typed.type_expression
   | `Typer_constant_decl_tracer of Ast_core.expression_variable * Ast_core.expression * Ast_typed.type_expression option * typer_error
   | `Typer_match_variant_tracer of Ast_core.matching_expr * typer_error
-  | `Typer_unrecognized_type_operator of Ast_core.type_expression
+  | `Typer_unrecognized_type_constant of Ast_core.type_expression
   | `Typer_expected_ascription of Ast_core.expression
   | `Typer_different_kinds of Ast_typed.type_expression * Ast_typed.type_expression
   | `Typer_different_constants of Ast_typed.type_constant * Ast_typed.type_constant
-  | `Typer_different_operators of Ast_typed.type_operator' * Ast_typed.type_operator'
-  | `Typer_operator_number_of_arguments of Ast_typed.type_operator' * Ast_typed.type_operator' * int * int
+  | `Typer_type_constant_number_of_arguments of Ast_typed.type_constant * Ast_typed.type_constant * int * int
   | `Typer_different_record_props of
     Ast_typed.type_expression * Ast_typed.type_expression * Ast_typed.te_lmap * Ast_typed.te_lmap * string * string
   | `Typer_different_kind_record_tuple of
@@ -100,7 +99,7 @@ let unbound_variable (e:Ast_typed.Environment.t) (v:Ast_typed.expression_variabl
 let match_missing_case (m:Ast_core.matching_expr) (loc:Location.t) = `Typer_match_missing_case (m,loc)
 let match_redundant_case (m:Ast_core.matching_expr) (loc:Location.t) = `Typer_match_redundant_case (m,loc)
 let unbound_constructor (e:Ast_typed.Environment.t) (c:Ast_core.label) (loc:Location.t) = `Typer_unbound_constructor (e,c,loc)
-let operator_wrong_number_of_arguments (op:Ast_core.type_operator') (expected:int) (actual:int) loc = `Typer_operator_wrong_number_of_arguments (op,expected,actual,loc)
+let type_constant_wrong_number_of_arguments (op:Ast_core.type_constant) (expected:int) (actual:int) loc = `Typer_type_constant_wrong_number_of_arguments (op,expected,actual,loc)
 let redundant_constructor (e:Ast_typed.Environment.t) (c:Ast_core.label) (loc:Location.t) = `Typer_redundant_constructor (e,c,loc)
 let michelson_or (c:Ast_core.label) (loc:Location.t) = `Typer_michelson_or_no_annotation (c,loc)
 let match_tuple_wrong_arity (expected: Ast_typed.type_expression_list) (actual:Ast_core.expression_variable list) (loc:Location.t) =
@@ -164,7 +163,7 @@ let wrong_converter (t:Ast_typed.type_expression) = `Typer_converter t
 let uncomparable_types (a:Ast_typed.type_expression) (b:Ast_typed.type_expression) =
   `Typer_uncomparable_types (a,b)
 let comparator_composed (a:Ast_typed.type_expression) = `Typer_comparator_composed a
-let unrecognized_type_op (e:Ast_core.type_expression) = `Typer_unrecognized_type_operator e
+let unrecognized_type_constant (e:Ast_core.type_expression) = `Typer_unrecognized_type_constant e
 
 (* new typer errors *)
 let constant_declaration_tracer (name: Ast_core.expression_variable) (ae:Ast_core.expression) (expected: Ast_typed.type_expression option) (err:typer_error) =
@@ -173,8 +172,7 @@ let in_match_variant_tracer (ae:Ast_core.matching_expr) (err:typer_error) =
   `Typer_match_variant_tracer (ae,err)
 let different_kinds a b = `Typer_different_kinds (a,b)
 let different_constants a b = `Typer_different_constants (a,b)
-let different_operators a b = `Typer_different_operators (a,b)
-let different_operator_number_of_arguments opa opb lena lenb = `Typer_operator_number_of_arguments (opa, opb, lena, lenb)
+let different_type_constant_number_of_arguments opa opb lena lenb = `Typer_type_constant_number_of_arguments (opa, opb, lena, lenb)
 let different_props_in_record a b ra rb ka kb = `Typer_different_record_props (a,b,ra,rb,ka,kb)
 let different_kind_record_tuple a b ra rb = `Typer_different_kind_record_tuple (a,b,ra,rb)
 let different_size_records_tuples a b ra rb = `Typer_different_size_records_tuples (a,b,ra,rb)
@@ -233,11 +231,11 @@ let rec error_ppformat : display_format:string display_format ->
         "@[<hv>%a@ Redundant constructor:@ %a@]"
         Location.pp loc
         Ast_core.PP.label c
-    | `Typer_operator_wrong_number_of_arguments (op,e,a,loc) ->
+    | `Typer_type_constant_wrong_number_of_arguments (op,e,a,loc) ->
       Format.fprintf f
-        "@[<hv>%a@ Wrong number of arguments for type operator: %a@ expected: %i@ got: %i@]"
+        "@[<hv>%a@ Wrong number of arguments for type constant: %a@ expected: %i@ got: %i@]"
         Location.pp loc
-        Ast_core.PP.type_operator op
+        Ast_core.PP.type_constant op
         e a
     | `Typer_michelson_or_no_annotation (c,loc) ->
       Format.fprintf f
@@ -371,9 +369,9 @@ let rec error_ppformat : display_format:string display_format ->
     | `Typer_match_variant_tracer (_ae,err) ->
       Format.fprintf f
         "%a" (error_ppformat ~display_format) err
-    | `Typer_unrecognized_type_operator e ->
+    | `Typer_unrecognized_type_constant e ->
       Format.fprintf f
-        "@[<hv>%a@ unrecognized type operator %a@]"
+        "@[<hv>%a@ unrecognized type constant %a@]"
         Location.pp e.location
         Ast_core.PP.type_expression e
     | `Typer_expected_ascription t ->
@@ -392,18 +390,12 @@ let rec error_ppformat : display_format:string display_format ->
         Expected these two constant type constructors to be the same, but they're different@ %a@ %a@]"
         Ast_typed.PP.type_constant a
         Ast_typed.PP.type_constant b
-    | `Typer_different_operators (a,b) ->
-      Format.fprintf f
-        "@[<hv> different type constructors.@ \
-        Expected these two n-ary type constructors to be the same, but they're different@ %a@ %a@]"
-        Ast_typed.PP.type_operator a
-        Ast_typed.PP.type_operator b
-    | `Typer_operator_number_of_arguments (opa, _opb, lena, lenb) ->
+    | `Typer_type_constant_number_of_arguments (opa, _opb, lena, lenb) ->
       Format.fprintf f
         "@[<hv> different number of arguments to type constructors.@ \
         Expected these two n-ary type constructors to be the same, but they have different number\
         of arguments (both use the %s type constructor, but they have %d and %d arguments, respectively)@]"
-        (Ast_typed.Helpers.type_operator_name opa) lena lenb
+        (Ast_typed.Helpers.string_of_type_constant opa) lena lenb
     | `Typer_different_record_props (_a,_b,ra,rb,_ka,_kb) ->
       let names = if Ast_typed.Helpers.is_tuple_lmap ra &&Ast_typed.Helpers.is_tuple_lmap rb
         then "tuples" else "records" in
@@ -702,14 +694,14 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
       ("env", `String env);
     ] in
     json_error ~stage ~content
-  | `Typer_operator_wrong_number_of_arguments (op, e, a, loc) ->
-    let message = `String "Wrong number of arguments for type operator" in
+  | `Typer_type_constant_wrong_number_of_arguments (op, e, a, loc) ->
+    let message = `String "Wrong number of arguments for type constant" in
     let loc = Format.asprintf "%a" Location.pp loc in
-    let op  = Format.asprintf "%a" Ast_core.PP.type_operator op in
+    let op  = Format.asprintf "%a" Ast_core.PP.type_constant op in
     let content = `Assoc [
       ("message", message);
       ("location", `String loc);
-      ("operator", `String op);
+      ("type_constant", `String op);
       ("expected", `Int e);
       ("actuel", `Int a);
     ] in
@@ -1275,8 +1267,8 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
       ("children", error_jsonformat err) ;
     ] in
     json_error ~stage ~content
-  | `Typer_unrecognized_type_operator e ->
-    let message = `String "unrecognized type operator" in
+  | `Typer_unrecognized_type_constant e ->
+    let message = `String "unrecognized type constant" in
     let value = `String (Format.asprintf "%a" Ast_core.PP.type_expression e) in
     let content = `Assoc [
       ("message", message) ;
@@ -1314,24 +1306,13 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
       ("b", b) ;
     ] in
     json_error ~stage ~content
-  | `Typer_different_operators (a,b) ->
-    let message = `String "different type constructors.\
-      Expected these two n-ary type constructors to be the same, but they're different" in
-    let a = `String (Format.asprintf "%a" Ast_typed.PP.type_operator a) in
-    let b = `String (Format.asprintf "%a" Ast_typed.PP.type_operator b) in
-    let content = `Assoc [
-      ("message", message) ;
-      ("a", a) ;
-      ("b", b) ;
-    ] in
-    json_error ~stage ~content
-  | `Typer_operator_number_of_arguments (opa, opb, lena, lenb) ->
+  | `Typer_type_constant_number_of_arguments (opa, opb, lena, lenb) ->
     let message = `String "different number of arguments to type constructors.\ 
       Expected these two n-ary type constructors to be the same, but they have different number\ 
       of arguments" in
-    let a = `String (Format.asprintf "%a" Ast_typed.PP.type_operator opa) in
-    let b = `String (Format.asprintf "%a" Ast_typed.PP.type_operator opb) in
-    let op = `String (Ast_typed.Helpers.type_operator_name opa) in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.type_constant opa) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.type_constant opb) in
+    let op = `String (Ast_typed.Helpers.string_of_type_constant opa) in
     let len_a = `Int lena in
     let len_b = `Int lenb in
     let content = `Assoc [

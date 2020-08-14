@@ -244,7 +244,6 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_express
     let%bind type1' = self type1 in
     let%bind type2' = self type2 in
     return @@ (T_arrow {type1=type1' ; type2=type2'})
-  | T_operator _
   | T_variable _ | T_wildcard | T_constant _ -> ok te'
 
 and map_cases : 'err exp_mapper -> matching_expr -> (matching_expr, 'err) result = fun f m ->

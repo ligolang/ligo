@@ -34,8 +34,8 @@ and declaration =
 and field_label_map = row_element label_map
 and type_expression_list = type_expression list
 
-and content_type_operator = {
-    type_operator : type_operator' ;
+and content_type_constant = {
+    type_constant : type_constant ;
     arguments : type_expression_list ;
   }
 and type_content =
@@ -45,8 +45,7 @@ and type_content =
   | T_variable of type_variable
   (* TODO: remove this when we remove the old typer *)
   | T_wildcard
-  | T_constant of type_constant
-  | T_operator of content_type_operator
+  | T_constant of content_type_constant
 
 and arrow = {
     type1: type_expression ;

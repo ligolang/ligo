@@ -144,8 +144,7 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression,Errors
       return @@ T_arrow {type1;type2}
     | I.T_variable type_variable -> return @@ T_variable type_variable 
     | I.T_wildcard               -> return @@ T_wildcard
-    | I.T_constant type_constant -> return @@ T_constant type_constant
-    | I.T_operator (TC_michelson_or, [l;r]) ->
+    | I.T_constant (TC_michelson_or, [l;r]) ->
       let%bind (l, l_ann) = trace_option (Errors.corner_case "not an annotated type") @@ I.get_t_annoted l in
       let%bind (r, r_ann) = trace_option (Errors.corner_case "not an annotated type") @@ I.get_t_annoted r in
       let%bind (l,r) = bind_map_pair compile_type_expression (l,r) in
@@ -154,7 +153,7 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression,Errors
         (O.Label "M_right", {associated_type = r ; michelson_annotation = Some r_ann ; decl_pos = 1}); ]
       in
       return @@ O.T_sum (O.LMap.of_list sum)
-    | I.T_operator (TC_michelson_pair, [l;r]) ->
+    | I.T_constant (TC_michelson_pair, [l;r]) ->
       let%bind (l, l_ann) = trace_option (Errors.corner_case "not an annotated type") @@ I.get_t_annoted l in
       let%bind (r, r_ann) = trace_option (Errors.corner_case "not an annotated type") @@ I.get_t_annoted r in
       let%bind (l,r) = bind_map_pair compile_type_expression (l,r) in
@@ -163,9 +162,9 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression,Errors
         (O.Label "1", {associated_type = r ; michelson_annotation = Some r_ann ; decl_pos = 0}); ]
       in
       return @@ O.T_record (O.LMap.of_list sum)
-    | I.T_operator (type_operator, lst) ->
+    | I.T_constant (type_constant, lst) ->
       let%bind lst = bind_map_list compile_type_expression lst in
-      return @@ T_operator (type_operator, lst)
+      return @@ T_constant (type_constant, lst)
     | I.T_annoted (ty, _) -> compile_type_expression ty
 
 let rec compile_expression : I.expression -> (O.expression , _) result =

@@ -45,7 +45,17 @@ module Tree_abstraction = struct
     | "key_hash"  -> Some TC_key_hash
     | "signature" -> Some TC_signature
     | "timestamp" -> Some TC_timestamp
-    | _           -> None
+    | "list"                      -> Some (TC_list)
+    | "option"                    -> Some (TC_option)
+    | "set"                       -> Some (TC_set)
+    | "map"                       -> Some (TC_map)
+    | "big_map"                   -> Some (TC_big_map)
+    | "contract"                  -> Some (TC_contract)
+    | "michelson_pair_right_comb" -> Some (TC_michelson_pair_right_comb)
+    | "michelson_pair_left_comb"  -> Some (TC_michelson_pair_left_comb)
+    | "michelson_or_right_comb"   -> Some (TC_michelson_or_right_comb)
+    | "michelson_or_left_comb"    -> Some (TC_michelson_or_left_comb)
+    | _                           -> None
 
   let type_constant_to_string tc = 
     match tc with
@@ -62,24 +72,7 @@ module Tree_abstraction = struct
     | TC_key_hash  -> "key_hash"  
     | TC_signature -> "signature" 
     | TC_timestamp -> "timestamp" 
-
-  let type_operators s =
-    match s with
-      "list"                      -> Some (TC_list)
-    | "option"                    -> Some (TC_option)
-    | "set"                       -> Some (TC_set)
-    | "map"                       -> Some (TC_map)
-    | "big_map"                   -> Some (TC_big_map)
-    | "contract"                  -> Some (TC_contract)
-    | "michelson_pair_right_comb" -> Some (TC_michelson_pair_right_comb)
-    | "michelson_pair_left_comb"  -> Some (TC_michelson_pair_left_comb)
-    | "michelson_or_right_comb"   -> Some (TC_michelson_or_right_comb)
-    | "michelson_or_left_comb"    -> Some (TC_michelson_or_left_comb)
-    | _                           -> None
-
-  let type_operator_to_string s =
-    match s with
-      TC_list -> "list"                      
+    | TC_list -> "list"                      
     | TC_option -> "option"                    
     | TC_set -> "set"                       
     | TC_map -> "map"                       
@@ -92,7 +85,7 @@ module Tree_abstraction = struct
     | TC_michelson_or_right_comb -> "michelson_or_right_comb"   
     | TC_michelson_or_left_comb -> "michelson_or_left_comb"    
     | TC_map_or_big_map -> "map_or_big_map"
-    
+
 
   let pseudo_modules = function
     | "Tezos.chain_id"           -> Some C_CHAIN_ID
@@ -460,9 +453,7 @@ module Tree_abstraction = struct
     | _ as c            -> pseudo_module_to_string c
 
     let type_constants = type_constants
-    let type_operators = type_operators
     let type_constant_to_string = type_constant_to_string
-    let type_operator_to_string = type_operator_to_string
   end
 
   module Cameligo = struct
@@ -582,9 +573,7 @@ module Tree_abstraction = struct
     | _ as c -> pseudo_module_to_string c
 
     let type_constants = type_constants
-    let type_operators = type_operators
     let type_constant_to_string = type_constant_to_string
-    let type_operator_to_string = type_operator_to_string
   end
 
   module Reasonligo = struct
@@ -704,9 +693,7 @@ module Tree_abstraction = struct
     | _ as c -> pseudo_module_to_string c
 
     let type_constants = type_constants
-    let type_operators = type_operators
     let type_constant_to_string = type_constant_to_string
-    let type_operator_to_string = type_operator_to_string
   end
 end
 

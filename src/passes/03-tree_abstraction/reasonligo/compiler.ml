@@ -93,10 +93,10 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
     | _ ->
       let%bind operators =
         trace_option (unknown_predefined_type operator) @@
-        type_operators operator.value in
+        type_constants operator.value in
       let lst = npseq_to_list args.value.inside in
       let%bind lst = bind_map_list compile_type_expression lst in
-      return @@ t_operator ~loc operators lst
+      return @@ t_constant ~loc operators lst
     )
   | TFun func ->
     let ((input_type,_,output_type), loc) = r_split func in
@@ -110,7 +110,7 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
   | TVar var ->
     let (name,loc) = r_split var in
     (match type_constants name with
-      Some const -> return @@ t_constant ~loc const
+      Some const -> return @@ t_constant ~loc const []
     | None -> return @@ t_variable_ez ~loc name
     )
   | TWild reg ->

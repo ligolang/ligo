@@ -36,10 +36,9 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, Err
       return @@ T_arrow {type1;type2}
     | O.T_variable type_variable -> return @@ T_variable type_variable 
     | O.T_wildcard               -> return @@ T_wildcard
-    | O.T_constant type_constant -> return @@ T_constant type_constant
-    | O.T_operator (type_operator, lst) ->
+    | O.T_constant (type_constant, lst) ->
       let%bind lst = bind_map_list decompile_type_expression lst in
-      return @@ T_operator (type_operator, lst)
+      return @@ T_constant (type_constant, lst)
 
 let rec decompile_expression : O.expression -> (I.expression, Errors.purification_error) result =
   fun e ->

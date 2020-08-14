@@ -6,14 +6,14 @@ type contract_pass_data = Contract_passes.contract_pass_data
 
 let rec check_no_nested_bigmap is_in_bigmap e = 
   match e.type_content with
-  | T_operator {operator=TC_big_map; _} when is_in_bigmap  -> 
+  | T_constant {type_constant=TC_big_map; _} when is_in_bigmap  -> 
     fail @@ nested_bigmap e.location
-  | T_operator {operator=TC_big_map|TC_map_or_big_map; args=[k ; v]} ->
+  | T_constant {type_constant=TC_big_map|TC_map_or_big_map; arguments=[k ; v]} ->
     let%bind _ = check_no_nested_bigmap false k in
     let%bind _ = check_no_nested_bigmap true  v in
     ok ()
-  | T_operator {args;_} ->
-    let%bind _ = bind_map_list (check_no_nested_bigmap is_in_bigmap) args in
+  | T_constant {arguments;_} ->
+    let%bind _ = bind_map_list (check_no_nested_bigmap is_in_bigmap) arguments in
     ok ()
   | T_sum s -> 
     let es = List.map (fun {associated_type;_} -> associated_type) (LMap.to_list s) in
@@ -28,8 +28,7 @@ let rec check_no_nested_bigmap is_in_bigmap e =
     let%bind _ = check_no_nested_bigmap false type2 in
     ok ()
   | T_variable _
-  | T_wildcard
-  | T_constant _ -> 
+  | T_wildcard -> 
     ok ()
 
 let self_typing : contract_pass_data -> expression -> (bool * contract_pass_data * expression , self_ast_typed_error) result = fun dat el ->

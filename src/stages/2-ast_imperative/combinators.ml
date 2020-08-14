@@ -5,22 +5,23 @@ module SMap = Map.String
 
 let make_t ?(loc = Location.generated) type_content = {type_content; location=loc}
 
+let t_constant ?loc constant lst  : type_expression = make_t ?loc @@ T_constant (constant, lst)
+
 let t_bool ?loc ()        : type_expression = make_t ?loc @@ T_variable (Stage_common.Constant.t_bool)
-let t_string ?loc ()      : type_expression = make_t ?loc @@ T_constant (TC_string)
-let t_bytes ?loc ()       : type_expression = make_t ?loc @@ T_constant (TC_bytes)
-let t_int ?loc ()         : type_expression = make_t ?loc @@ T_constant (TC_int)
-let t_operation ?loc ()   : type_expression = make_t ?loc @@ T_constant (TC_operation)
-let t_nat ?loc ()         : type_expression = make_t ?loc @@ T_constant (TC_nat)
-let t_tez ?loc ()         : type_expression = make_t ?loc @@ T_constant (TC_mutez)
-let t_unit ?loc ()        : type_expression = make_t ?loc @@ T_constant (TC_unit)
-let t_address ?loc ()     : type_expression = make_t ?loc @@ T_constant (TC_address)
-let t_signature ?loc ()   : type_expression = make_t ?loc @@ T_constant (TC_signature)
-let t_key ?loc ()         : type_expression = make_t ?loc @@ T_constant (TC_key)
-let t_key_hash ?loc ()    : type_expression = make_t ?loc @@ T_constant (TC_key_hash)
-let t_timestamp ?loc ()   : type_expression = make_t ?loc @@ T_constant (TC_timestamp)
-let t_option ?loc o       : type_expression = make_t ?loc @@ T_operator (TC_option, [o])
-let t_list ?loc t         : type_expression = make_t ?loc @@ T_operator (TC_list, [t])
-let t_constant ?loc c     : type_expression = make_t ?loc @@ T_constant c
+let t_string ?loc ()      : type_expression = t_constant ?loc TC_string []
+let t_bytes ?loc ()       : type_expression = t_constant ?loc TC_bytes []
+let t_int ?loc ()         : type_expression = t_constant ?loc TC_int []
+let t_operation ?loc ()   : type_expression = t_constant ?loc TC_operation []
+let t_nat ?loc ()         : type_expression = t_constant ?loc TC_nat []
+let t_tez ?loc ()         : type_expression = t_constant ?loc TC_mutez []
+let t_unit ?loc ()        : type_expression = t_constant ?loc TC_unit []
+let t_address ?loc ()     : type_expression = t_constant ?loc TC_address []
+let t_signature ?loc ()   : type_expression = t_constant ?loc TC_signature []
+let t_key ?loc ()         : type_expression = t_constant ?loc TC_key []
+let t_key_hash ?loc ()    : type_expression = t_constant ?loc TC_key_hash []
+let t_timestamp ?loc ()   : type_expression = t_constant ?loc TC_timestamp []
+let t_option ?loc o       : type_expression = t_constant ?loc TC_option [o]
+let t_list ?loc t         : type_expression = t_constant ?loc TC_list [t]
 let t_variable ?loc n     : type_expression = make_t ?loc @@ T_variable n
 let t_variable_ez ?loc n  : type_expression = t_variable ?loc @@ Var.of_name n
 
@@ -39,20 +40,19 @@ let t_sum_ez ?loc (lst:(string * type_expression) list) : type_expression =
   let (map,_) = List.fold_left aux (LMap.empty,0) lst in
   t_sum ?loc (map: row_element label_map)
 
-let t_operator ?loc op lst: type_expression = make_t ?loc @@ T_operator (op, lst)
 let t_annoted ?loc ty str : type_expression = make_t ?loc @@ T_annoted (ty, str)
 
-let t_function ?loc type1 type2           : type_expression = make_t ?loc @@ T_arrow {type1; type2}
-let t_map ?loc key value                  : type_expression = make_t ?loc @@ T_operator (TC_map ,[key; value])
-let t_big_map ?loc key value              : type_expression = make_t ?loc @@ T_operator (TC_big_map, [key; value])
-let t_set ?loc key                        : type_expression = make_t ?loc @@ T_operator (TC_set, [key])
-let t_contract ?loc contract              : type_expression = make_t ?loc @@ T_operator (TC_contract, [contract])
-let t_michelson_or ?loc l l_ann r r_ann   : type_expression = make_t ?loc @@ T_operator (TC_michelson_or, [t_annoted l l_ann; t_annoted r r_ann])
-let t_michelson_pair ?loc l l_ann r r_ann : type_expression = make_t ?loc @@ T_operator (TC_michelson_pair, [t_annoted l l_ann; t_annoted r r_ann])
-let t_michelson_pair_right_comb ?loc c    : type_expression = make_t ?loc @@ T_operator (TC_michelson_pair_right_comb, [c]) 
-let t_michelson_pair_left_comb ?loc c     : type_expression = make_t ?loc @@ T_operator (TC_michelson_pair_left_comb, [c]) 
-let t_michelson_or_right_comb ?loc c      : type_expression = make_t ?loc @@ T_operator (TC_michelson_or_right_comb, [c]) 
-let t_michelson_or_left_comb ?loc c       : type_expression = make_t ?loc @@ T_operator (TC_michelson_or_left_comb, [c]) 
+let t_function ?loc type1 type2  : type_expression = make_t ?loc @@ T_arrow {type1; type2}
+let t_map ?loc key value                  : type_expression = t_constant ?loc TC_map [key; value]
+let t_big_map ?loc key value              : type_expression = t_constant ?loc TC_big_map [key; value]
+let t_set ?loc key                        : type_expression = t_constant ?loc TC_set [key]
+let t_contract ?loc contract              : type_expression = t_constant ?loc TC_contract [contract]
+let t_michelson_or ?loc l l_ann r r_ann   : type_expression = t_constant ?loc TC_michelson_or [t_annoted l l_ann; t_annoted r r_ann]
+let t_michelson_pair ?loc l l_ann r r_ann : type_expression = t_constant ?loc TC_michelson_pair [t_annoted l l_ann; t_annoted r r_ann]
+let t_michelson_pair_right_comb ?loc c    : type_expression = t_constant ?loc TC_michelson_pair_right_comb [c]
+let t_michelson_pair_left_comb ?loc c     : type_expression = t_constant ?loc TC_michelson_pair_left_comb [c]
+let t_michelson_or_right_comb ?loc c      : type_expression = t_constant ?loc TC_michelson_or_right_comb [c]
+let t_michelson_or_left_comb ?loc c       : type_expression = t_constant ?loc TC_michelson_or_left_comb [c]
 
 let get_t_annoted = fun te ->
   match te.type_content with

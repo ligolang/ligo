@@ -1003,7 +1003,7 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "bad_type_operator.ligo", line 4, characters 16-29
-          Wrong number of arguments for type operator: Map
+          Wrong number of arguments for type constant: Map
           expected: 2
           got: 1
 
