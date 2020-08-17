@@ -28,12 +28,13 @@ open Ast_imperative
 
 let empty_op_list = 
   (e_typed_list [] (t_operation ()))
-let empty_message = e_lambda (Location.wrap @@ Var.of_name "arguments")
-  (Some (t_bytes ())) (Some (t_list (t_operation ())))
-  empty_op_list
-let empty_message2 = e_lambda (Location.wrap @@ Var.of_name "arguments")
-  (Some (t_bytes ())) (Some (t_list (t_operation ())))
- ( e_let_in ((Location.wrap @@ Var.of_name "foo"),Some (t_unit ())) false (e_unit ()) empty_op_list)
+let empty_message = e_lambda (Location.wrap @@ Var.of_name "arguments", t_bytes ()) 
+  @@ e_annotation empty_op_list (t_list (t_operation ()))
+
+let empty_message2 = e_lambda (Location.wrap @@ Var.of_name "arguments", t_bytes ())
+ @@ e_annotation
+ ( e_let_in (Location.wrap @@ Var.of_name "foo",t_unit ()) false (e_unit ()) empty_op_list)
+  @@ t_list @@ t_operation ()
 
 let send_param msg = e_constructor "Send" msg
 let withdraw_param = e_constructor "Withdraw" empty_message

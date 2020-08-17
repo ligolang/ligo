@@ -1383,52 +1383,55 @@ let%expect_test _ =
       
   run_ligo_good ["print-ast"; contract "letin.mligo"];
   [%expect {|
-    type storage = (int ,
-    int)
-    const main : (int ,
-    storage) -> (list (operation) ,
-    storage) = lambda (n:Some((int ,
-    storage))) : Some((list (operation) ,
-    storage)) return let x : (int ,
-    int) = let x : int = 7 in (ADD(x ,
-    n.0) ,
-    ADD(n.1.0 ,
-    n.1.1)) in (list[] : list (operation) ,
-    x)
-    const f0 = lambda (a:Some(string)) : None return true(unit)
-    const f1 = lambda (a:Some(string)) : None return true(unit)
-    const f2 = lambda (a:Some(string)) : None return true(unit)
-    const letin_nesting = lambda (#1:Some(unit)) : None return let s = "test" in let p0 = (f0)@(s) in { ASSERTION(p0);
-     let p1 = (f1)@(s) in { ASSERTION(p1);
-     let p2 = (f2)@(s) in { ASSERTION(p2);
-     s}}}
-    const letin_nesting2 = lambda (x:Some(int)) : None return let y = 2 in let z = 3 in ADD(ADD(x ,
-    y) , z) const x = let #5 = (+1 , (+2 ,
-    +3)) in let #4 = #5.0 in let #3 = #5.1 in let x = #3.0 in let #2 = #3.1 in x
+type storage = (int ,
+int)
+const (main : (int ,
+storage) -> (list (operation) ,
+storage)) = lambda (n:(int ,
+storage)) return {let (x : (int ,
+int)) = let (x : int) = 7 in (ADD(x ,
+n.0) ,
+ADD(n.1.0 ,
+n.1.1)) in ({list[] : list (operation)} ,
+x) : (list (operation) ,
+storage)}
+const (f0 : _) = lambda (a:string) return true(unit)
+const (f1 : _) = lambda (a:string) return true(unit)
+const (f2 : _) = lambda (a:string) return true(unit)
+const (letin_nesting : _) = lambda (#1:unit) return let (s : _) = "test" in let (p0 : _) = (f0)@(s) in { ASSERTION(p0);
+ let (p1 : _) = (f1)@(s) in { ASSERTION(p1);
+ let (p2 : _) = (f2)@(s) in { ASSERTION(p2);
+ s}}}
+const (letin_nesting2 : _) = lambda (x:int) return let (y : _) = 2 in let (z : _) = 3 in ADD(ADD(x ,
+y) , z) const (x : _) = let (#5 : _) = (+1 , (+2 ,
++3)) in let (#4 : _) = #5.0 in let (#3 : (_ ,
+_)) = #5.1 in let (x : _) = #3.0 in let (#2 : _) = #3.1 in x
     |}];
 
   run_ligo_good ["print-ast"; contract "letin.religo"];
   [%expect {|
-    type storage = (int ,
-    int)
-    const main = lambda (n:Some((int ,
-    storage))) : Some((list (operation) ,
-    storage)) return let x : (int ,
-    int) = let x : int = 7 in (ADD(x ,
-    n.0) ,
-    ADD(n.1.0 ,
-    n.1.1)) in (list[] : list (operation) ,
-    x)
-    const f0 = lambda (a:Some(string)) : None return true(unit)
-    const f1 = lambda (a:Some(string)) : None return true(unit)
-    const f2 = lambda (a:Some(string)) : None return true(unit)
-    const letin_nesting = lambda (_:Some(unit)) : None return let s = "test" in let p0 = (f0)@(s) in { ASSERTION(p0);
-     let p1 = (f1)@(s) in { ASSERTION(p1);
-     let p2 = (f2)@(s) in { ASSERTION(p2);
-     s}}}
-    const letin_nesting2 = lambda (x:Some(int)) : None return let y = 2 in let z = 3 in ADD(ADD(x ,
-    y) , z) const x = let #4 = (+1 , (+2 ,
-    +3)) in let #3 = #4.0 in let #2 = #4.1 in let x = #2.0 in let #1 = #2.1 in x
+type storage = (int ,
+int)
+const (main : _) = lambda (n:(int ,
+storage)) return {let (x : (int ,
+int)) = {let (x : int) = {7 : int} in (ADD(x ,
+n.0) ,
+ADD(n.1.0 ,
+n.1.1)) : (int ,
+int)} in ({list[] : list (operation)} ,
+x) : (list (operation) ,
+storage)}
+const (f0 : _) = lambda (a:string) return true(unit)
+const (f1 : _) = lambda (a:string) return true(unit)
+const (f2 : _) = lambda (a:string) return true(unit)
+const (letin_nesting : _) = lambda (_:unit) return let (s : _) = "test" in let (p0 : _) = (f0)@(s) in { ASSERTION(p0);
+ let (p1 : _) = (f1)@(s) in { ASSERTION(p1);
+ let (p2 : _) = (f2)@(s) in { ASSERTION(p2);
+ s}}}
+const (letin_nesting2 : _) = lambda (x:int) return let (y : _) = 2 in let (z : _) = 3 in ADD(ADD(x ,
+y) , z) const (x : _) = let (#4 : _) = (+1 , (+2 ,
++3)) in let (#3 : _) = #4.0 in let (#2 : (_ ,
+_)) = #4.1 in let (x : _) = #2.0 in let (#1 : _) = #2.1 in x
     |}];
 
   run_ligo_bad ["print-ast-typed"; contract "existential.mligo"];

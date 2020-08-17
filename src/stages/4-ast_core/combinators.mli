@@ -66,7 +66,7 @@ val e_constructor     : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> string
 val e_matching        : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> expression -> matching_expr -> expression
 val e_record_accessor : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> expression -> label -> expression
 val e_variable        : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> expression_variable -> expression
-val e_let_in          : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> ( expression_variable * type_expression option ) -> bool -> expression -> expression -> expression
+val e_let_in          : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> binder -> bool -> expression -> expression -> expression
 val e_raw_code        : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> string -> expression -> expression
 val e_annotation      : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> expression -> type_expression -> expression
 val e_application     : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> expression -> expression -> expression
@@ -76,7 +76,7 @@ val make_option_typed : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> expres
 
 val e_typed_none      : ?loc:Location.t -> type_expression -> expression
 
-val e_lambda        : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> expression_variable -> type_expression option -> type_expression option -> expression -> expression
+val e_lambda        : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> binder -> expression -> expression
 val e_recursive     : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> expression_variable -> type_expression -> lambda -> expression
 val e_record        : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> expression label_map-> expression
 val e_record_update : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> expression -> label -> expression -> expression

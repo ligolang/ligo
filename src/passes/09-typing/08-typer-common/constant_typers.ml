@@ -27,16 +27,15 @@ open Ast_typed
   Various helpers are defined bellow.
 *)
 
+let need_real_type tv = trace_option not_annotated @@ 
+match tv.type_content with T_wildcard -> None | _ -> Some tv
 
-let none = typer_0 "NONE" @@ fun tv_opt ->
-  match tv_opt with
-  | None -> fail not_annotated
-  | Some t -> ok t
 
-let set_empty = typer_0 "SET_EMPTY" @@ fun tv_opt ->
-  match tv_opt with
-  | None -> fail not_annotated
-  | Some t -> ok t
+let none = typer_0 "NONE" @@ fun tv ->
+  need_real_type tv
+
+let set_empty = typer_0 "SET_EMPTY" @@ fun tv ->
+  need_real_type tv
 
 let sub = typer_2 "SUB" @@ fun a b ->
   if (eq_1 a (t_int ()) || eq_1 a (t_nat ()))
@@ -60,19 +59,15 @@ let map_remove : typer = typer_2 "MAP_REMOVE" @@ fun k m ->
   let%bind () = assert_eq src k in
   ok m
 
-let map_empty = typer_0 "MAP_EMPTY" @@ fun tv_opt ->
-  match tv_opt with
-  | None -> fail not_annotated
-  | Some t -> 
-    let%bind (src, dst) = trace_option (expected_map t) @@ get_t_map t in
-    ok @@ t_map src dst
+let map_empty = typer_0 "MAP_EMPTY" @@ fun tv ->
+  let%bind tv = need_real_type tv in
+  let%bind (src, dst) = trace_option (expected_map tv) @@ get_t_map tv in
+  ok @@ t_map src dst
 
-let big_map_empty = typer_0 "BIG_MAP_EMPTY" @@ fun tv_opt ->
-  match tv_opt with
-  | None -> fail not_annotated
-  | Some t -> 
-    let%bind (src, dst) = trace_option (expected_big_map t) @@ get_t_big_map t in
-    ok @@ t_big_map src dst
+let big_map_empty = typer_0 "BIG_MAP_EMPTY" @@ fun tv ->
+  let%bind tv = need_real_type tv in
+  let%bind (src, dst) = trace_option (expected_big_map tv) @@ get_t_big_map tv in
+  ok @@ t_big_map src dst
 
 let map_add : typer = typer_3 "MAP_ADD" @@ fun k v m ->
   let%bind (src , dst) = bind_map_or (
@@ -170,8 +165,8 @@ let failwith_ = typer_1_opt "FAILWITH" @@ fun t opt ->
           [t_int()] ;
         ]
         [t] in
-  let default = t_unit () in
-  ok @@ Simple_utils.Option.unopt ~default opt
+  ok @@ match opt.type_content with
+    T_wildcard -> t_unit () | _ -> opt
 
 let int : typer = typer_1 "INT" @@ fun t ->
   let%bind () = trace_option (expected_nat t) @@ assert_t_nat t in
@@ -180,9 +175,9 @@ let int : typer = typer_1 "INT" @@ fun t ->
 let bytes_pack : typer = typer_1 "PACK" @@ fun _t ->
   ok @@ t_bytes ()
 
-let bytes_unpack = typer_1_opt "UNPACK" @@ fun input output_opt ->
+let bytes_unpack = typer_1_opt "UNPACK" @@ fun input output ->
   let%bind () = trace_option (expected_bytes input) @@ assert_t_bytes input in
-  trace_option not_annotated @@ output_opt
+  need_real_type output
 
 let hash256 = typer_1 "SHA256" @@ fun t ->
   let%bind () = trace_option (expected_bytes t) @@ assert_t_bytes t in
@@ -225,11 +220,9 @@ let address = typer_1 "ADDRESS" @@ fun c ->
 let self_address = typer_0 "SELF_ADDRESS" @@ fun _ ->
   ok @@ t_address ()
 
-let self = typer_1_opt "SELF" @@ fun entrypoint_as_string tv_opt ->
+let self = typer_1_opt "SELF" @@ fun entrypoint_as_string tv ->
   let%bind () = trace_option (expected_string entrypoint_as_string) @@ assert_t_string entrypoint_as_string in
-  match tv_opt with
-  | None -> fail not_annotated
-  | Some t -> ok @@ t
+  need_real_type tv
 
 let implicit_account = typer_1 "IMPLICIT_ACCOUNT" @@ fun key_hash ->
   let%bind () = trace_option (expected_key_hash key_hash) @@ assert_t_key_hash key_hash in
@@ -255,36 +248,36 @@ let create_contract = typer_4 "CREATE_CONTRACT" @@ fun f kh_opt amount init_stor
   let%bind () = trace_option (expected_key_hash delegate) @@ assert_t_key_hash delegate in
   ok @@ t_pair (t_operation ()) (t_address ())
 
-let get_contract = typer_1_opt "CONTRACT" @@ fun addr_tv tv_opt ->
+let get_contract = typer_1_opt "CONTRACT" @@ fun addr_tv tv ->
   let t_addr = t_address () in
   let%bind () = assert_eq addr_tv t_addr in
-  let%bind tv = trace_option not_annotated tv_opt in
+  let%bind tv = need_real_type tv in
   let%bind tv' = trace_option (expected_contract tv) @@ get_t_contract tv in
   ok @@ t_contract tv'
 
-let get_contract_opt = typer_1_opt "CONTRACT OPT" @@ fun addr_tv tv_opt ->
+let get_contract_opt = typer_1_opt "CONTRACT OPT" @@ fun addr_tv tv ->
   let t_addr = t_address () in
   let%bind () = assert_eq addr_tv t_addr in
-  let%bind tv = trace_option not_annotated tv_opt in
+  let%bind tv = need_real_type tv in
   let%bind tv = trace_option (expected_option tv) @@ get_t_option tv in
   let%bind tv' = trace_option (expected_contract tv) @@ get_t_contract tv in
   ok @@ t_option (t_contract tv')
 
-let get_entrypoint = typer_2_opt "CONTRACT_ENTRYPOINT" @@ fun entry_tv addr_tv tv_opt ->
+let get_entrypoint = typer_2_opt "CONTRACT_ENTRYPOINT" @@ fun entry_tv addr_tv tv ->
   let t_string = t_string () in
   let t_addr = t_address () in
   let%bind () = assert_eq entry_tv t_string in
   let%bind () = assert_eq addr_tv t_addr in
-  let%bind tv = trace_option not_annotated tv_opt in
+  let%bind tv = need_real_type tv in
   let%bind tv' = trace_option (expected_contract tv) @@ get_t_contract tv in
   ok @@ t_contract tv'
 
-let get_entrypoint_opt = typer_2_opt "CONTRACT_ENTRYPOINT_OPT" @@ fun entry_tv addr_tv tv_opt ->
+let get_entrypoint_opt = typer_2_opt "CONTRACT_ENTRYPOINT_OPT" @@ fun entry_tv addr_tv tv ->
   let t_string = t_string () in
   let t_addr = t_address () in
   let%bind () = assert_eq entry_tv t_string in
   let%bind () = assert_eq addr_tv t_addr in
-  let%bind tv = trace_option not_annotated tv_opt in
+  let%bind tv = need_real_type tv in
   let%bind tv = trace_option (expected_option tv) @@ get_t_option tv in
   let%bind tv' = trace_option (expected_contract tv) @@ get_t_contract tv in
   ok @@ t_option (t_contract tv' )
@@ -422,10 +415,8 @@ let set_iter = typer_2 "SET_ITER" @@ fun body set ->
   let%bind () = assert_eq key arg in
   ok (t_unit ())
 
-let list_empty = typer_0 "LIST_EMPTY" @@ fun tv_opt ->
-  match tv_opt with
-  | None -> fail not_annotated
-  | Some t -> ok t
+let list_empty = typer_0 "LIST_EMPTY" @@ fun tv ->
+  need_real_type tv
 
 let list_iter = typer_2 "LIST_ITER" @@ fun body lst ->
   let%bind (arg , res) = trace_option (expected_function body) @@ get_t_function body in
@@ -597,8 +588,8 @@ let convert_to_left_comb = typer_1 "CONVERT_TO_LEFT_COMB" @@ fun t ->
       ok {t with type_content = michelson_or}
     | _ -> fail @@ wrong_converter t
 
-let convert_from_right_comb = typer_1_opt "CONVERT_FROM_RIGHT_COMB" @@ fun t opt ->
-  let%bind dst_t = trace_option not_annotated opt in
+let convert_from_right_comb = typer_1_opt "CONVERT_FROM_RIGHT_COMB" @@ fun t tv ->
+  let%bind dst_t = need_real_type tv in
   match t.type_content with
     | T_record src_lmap ->
       let%bind dst_lmap = trace_option (expected_record dst_t) @@ get_t_record dst_t in
@@ -610,8 +601,8 @@ let convert_from_right_comb = typer_1_opt "CONVERT_FROM_RIGHT_COMB" @@ fun t opt
       ok {t with type_content = variant}
     | _ -> fail @@ wrong_converter t
 
-let convert_from_left_comb = typer_1_opt "CONVERT_FROM_LEFT_COMB" @@ fun t opt ->
-  let%bind dst_t = trace_option not_annotated opt in
+let convert_from_left_comb = typer_1_opt "CONVERT_FROM_LEFT_COMB" @@ fun t tv ->
+  let%bind dst_t = need_real_type tv in
   match t.type_content with
     | T_record src_lmap ->
       let%bind dst_lmap = trace_option (expected_record dst_t) @@ get_t_record dst_t in
@@ -647,12 +638,12 @@ let rec pair_comparator : string -> typer = fun s -> typer_2 s @@ fun a b ->
     trace_option (comparator_composed a) @@
     get_t_pair a in
   let%bind (b_k, b_v) = trace_option (expected_pair b) @@ get_t_pair b in
-  let%bind _ = simple_comparator s [a_k;b_k] None
+  let%bind _ = simple_comparator s [a_k;b_k] @@ t_wildcard ()
   in
-  comparator s [a_v;b_v] None
+  comparator s [a_v;b_v] @@ t_wildcard ()
     
 and comparator : string -> typer = fun s -> typer_2 s @@ fun a b ->
-  bind_or (pair_comparator s [a;b] None, simple_comparator s [a;b] None)
+  bind_or (pair_comparator s [a;b] @@ t_wildcard (), simple_comparator s [a;b] @@ t_wildcard ())
 
 let constant_typers c : (typer , typer_error) result = match c with
   | C_INT                 -> ok @@ int ;

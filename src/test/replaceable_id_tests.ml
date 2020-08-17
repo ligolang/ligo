@@ -28,9 +28,9 @@ open Ast_imperative
 
 let empty_op_list = 
   (e_typed_list [] (t_operation ()))
-let empty_message = e_lambda (Location.wrap @@ Var.of_name "arguments")
-  (Some (t_unit ())) (Some (t_list (t_operation ())))
-  empty_op_list
+let empty_message = e_lambda (Location.wrap @@ Var.of_name "arguments",t_unit ()) 
+  @@ e_annotation empty_op_list (t_list (t_operation ()))
+
 
 let storage id = e_address @@ addr id 
 let entry_change_addr id = e_constructor "Change_address"

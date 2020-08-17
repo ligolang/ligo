@@ -71,12 +71,10 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
       let%bind lambda = compile_lambda lambda in
       return @@ O.E_recursive {fun_name;fun_type;lambda}
     | I.E_let_in {let_binder;inline;rhs;let_result} ->
-      let (binder,ty_opt) = let_binder in
-      let binder = cast_var binder in
-      let%bind ascr = bind_map_option compile_type_expression ty_opt in
+      let%bind let_binder = compile_binder let_binder in
       let%bind rhs = compile_expression rhs in
       let%bind let_result = compile_expression let_result in
-      return @@ O.E_let_in {let_binder= {binder;ascr} ;inline;rhs;let_result}
+      return @@ O.E_let_in {let_binder;inline;rhs;let_result}
     | I.E_raw_code {language;code} ->
       let%bind code = compile_expression code in
       return @@ O.E_raw_code {language;code} 
@@ -186,7 +184,7 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
     | I.E_sequence {expr1; expr2} ->
       let%bind expr1 = compile_expression expr1 in
       let%bind expr2 = compile_expression expr2 in
-      let let_binder : O.let_binder = {binder = Location.wrap @@ Var.of_name "_" ; ascr = Some (O.t_unit ())} in
+      let let_binder : O.binder = {var = Location.wrap @@ Var.of_name "_" ; ty = O.t_unit ()} in
       return @@ O.E_let_in {let_binder; rhs=expr1;let_result=expr2; inline=false}
     | I.E_skip -> ok @@ O.e_unit ~loc:sugar.location ~sugar ()
     | I.E_tuple t ->
@@ -197,13 +195,16 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
       let m = O.LMap.of_list lst in
       return @@ O.E_record m
 
+and compile_binder : _ I.binder -> (O.binder, _) result = fun (var, ty) ->
+  let var = cast_var var in
+  let%bind ty = compile_type_expression ty in
+  ok @@ ({var;ty}: O.binder)
+
 and compile_lambda : I.lambda -> (O.lambda , desugaring_error) result =
-  fun {binder;input_type;output_type;result}->
-    let binder = cast_var binder in
-    let%bind input_type = bind_map_option compile_type_expression input_type in
-    let%bind output_type = bind_map_option compile_type_expression output_type in
+  fun {binder;result}->
+    let%bind binder = compile_binder binder in
     let%bind result = compile_expression result in
-    ok @@ O.{binder;input_type;output_type;result}
+    ok @@ O.{binder;result}
 and compile_matching : I.expression -> O.expression -> I.matching_expr -> (O.expression, desugaring_error) result =
   fun sugar e m -> 
   let loc = sugar.location in
@@ -229,56 +230,40 @@ and compile_matching : I.expression -> O.expression -> I.matching_expr -> (O.exp
       ) lst 
       in
       ok @@ O.e_matching ~loc ~sugar e @@ O.Match_variant lst
-    | I.Match_record (fields,associated_types, expr) ->
-      let combine fields associated_types =
-        match associated_types with
-          Some ft -> List.combine fields @@ List.map (fun x -> Some x) ft
-        | None    -> List.map (fun x -> (x, None)) fields
-      in
+    | I.Match_record (binders, expr) ->
       let%bind next   = compile_expression expr in
-      let%bind associated_types = bind_map_option (bind_map_list compile_type_expression) associated_types in
-      let aux ((index,expr) : int * _ ) ((I.Label field,(ev,topt)): (I.label * (I.expression_variable * O.type_expression option))) =
-        let ev = cast_var ev in
-        let f = fun expr' -> O.e_let_in ~sugar (ev,topt) false (O.e_record_accessor ~sugar e (O.Label field)) expr' in
-        (index+1, fun expr' -> expr (f expr'))
+      let aux ((index,expr) : int * _ ) (((I.Label field),ev,te): (I.label * I.expression_variable * I.type_expression)) =
+        let%bind binders = compile_binder (ev,te) in
+        let f = O.e_let_in ~sugar binders false (O.e_record_accessor ~sugar e (O.Label field)) in
+        ok @@ (index + 1, fun e -> expr @@ f e) 
       in
-      let (_,header) = List.fold_left aux (0, fun e -> e) @@
-        List.map (fun ((a,b),c) -> (a,(b,c))) @@
-        combine fields associated_types
+      let%bind (_,expr) = bind_fold_list aux (0, fun e -> e) @@ binders
       in
-      ok @@ header next
-    | I.Match_tuple (fields,associated_types, expr) ->
-      let combine fields associated_types =
-        match associated_types with
-          Some ft -> List.combine fields @@ List.map (fun x -> Some x) ft
-        | None    -> List.map (fun x -> (x, None)) fields
+      ok @@ expr next
+    | I.Match_tuple (binders, expr) ->
+      let%bind next = compile_expression expr in
+      let aux ((index,expr) : int * _ ) binder = 
+        let%bind binder = compile_binder binder in
+        let f = O.e_let_in ~sugar binder false (O.e_record_accessor ~sugar e (Label (string_of_int index))) in
+        ok @@ (index + 1, fun e -> expr @@ f e) 
       in
-      let%bind next   = compile_expression expr in
-      let%bind associated_types = bind_map_option (bind_map_list compile_type_expression) associated_types in
-      let aux ((index,expr) : int * _ ) ((ev,topt): I.expression_variable * O.type_expression option) =
-        let ev = cast_var ev in
-        let f = fun expr' -> O.e_let_in ~sugar (ev,topt) false (O.e_record_accessor ~sugar e (Label (string_of_int index))) expr' in
-        (index+1, fun expr' -> expr (f expr'))
+      let%bind (_,expr) = bind_fold_list aux (0, fun e -> e) @@ binders
       in
-      let (_,header) = List.fold_left aux (0, fun e -> e) @@
-        combine fields associated_types
-      in
-      ok @@ header next
-    | I.Match_variable (a, ty_opt, expr) ->
-      let a = cast_var a in
-      let%bind ty_opt = bind_map_option compile_type_expression ty_opt in
+      ok @@ expr next
+    | I.Match_variable (binder, expr) ->
+      let%bind binder = compile_binder binder in
       let%bind expr = compile_expression expr in
-      ok @@ O.e_let_in ~sugar (a,ty_opt) false e expr
+      ok @@ O.e_let_in ~sugar binder false e expr
  
 let compile_declaration : I.declaration Location.wrap -> _ =
   fun {wrap_content=declaration;location} ->
   let return decl = ok @@ Location.wrap ~loc:location decl in
   match declaration with 
-  | I.Declaration_constant (binder, te_opt, inline, expr) ->
-    let binder = cast_var binder in
+  | I.Declaration_constant (var, ty, inline, expr) ->
+    let var = cast_var var in
     let%bind expr = compile_expression expr in
-    let%bind type_opt = bind_map_option compile_type_expression te_opt in
-    return @@ O.Declaration_constant {binder; type_opt; attr={inline}; expr}
+    let%bind ty = compile_type_expression ty in
+    return @@ O.Declaration_constant {binder={var;ty}; attr={inline}; expr}
   | I.Declaration_type (type_binder, type_expr) ->
     let type_binder = Var.todo_cast type_binder in
     let%bind type_expr = compile_type_expression type_expr in

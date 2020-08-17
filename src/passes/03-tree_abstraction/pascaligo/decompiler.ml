@@ -504,9 +504,9 @@ and decompile_if_clause : AST.expression -> (CST.if_clause, _) result = fun e ->
     let clause = nelist_to_npseq clause, Some rg in
     ok @@ CST.ClauseBlock (ShortBlock (wrap @@ braces @@ clause))
 
-and decompile_to_data_decl : (AST.expression_variable * AST.type_expression option) -> AST.expression -> bool -> (CST.data_decl, _) result = fun (name,ty_opt) expr inline ->
+and decompile_to_data_decl : (AST.expression_variable * AST.type_expression) -> AST.expression -> bool -> (CST.data_decl, _) result = fun (name,ty_opt) expr inline ->
   let name = decompile_variable name.wrap_content in
-  let%bind const_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) ty_opt in
+  let%bind const_type = bind_compose (ok <@ prefix_colon) decompile_type_expr ty_opt in
   let attributes : CST.attr_decl option = match inline with
     true -> Some (wrap @@ ne_inject (NEInjAttr rg) @@ (wrap @@ "inline",[]))
   | false -> None
@@ -523,7 +523,7 @@ and decompile_to_data_decl : (AST.expression_variable * AST.type_expression opti
     ok @@ CST.LocalFun (wrap fun_decl)
   | _ ->
     let%bind init = decompile_expression expr in
-    let const_decl : CST.const_decl = {kwd_const=rg;name;const_type;equal=rg;init;terminator=Some rg; attributes} in
+    let const_decl : CST.const_decl = {kwd_const=rg;name;const_type=Some const_type;equal=rg;init;terminator=Some rg; attributes} in
     let data_decl  : CST.data_decl  =  LocalConst (wrap const_decl) in
     ok @@ data_decl
 
@@ -558,27 +558,31 @@ and decompile_to_selection : AST.access -> (CST.selection, _) result = fun acces
     failwith @@ Format.asprintf
     "Can't decompile access_map to selection"
 
-and decompile_lambda : AST.lambda -> _ = fun {binder;input_type;output_type;result} ->
-    let var = decompile_variable binder.wrap_content in
-    let%bind param_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) input_type in
-    let param_const : CST.param_const = {kwd_const=rg;var;param_type} in
+and decompile_lambda : AST.lambda -> _ = fun {binder;result} ->
+    let var = decompile_variable @@ (fst binder).wrap_content in
+    let%bind param_type = (bind_compose (ok <@ prefix_colon) decompile_type_expr) @@ snd binder in
+    let param_const : CST.param_const = {kwd_const=rg;var;param_type=Some param_type} in
     let param_decl : CST.param_decl = ParamConst (wrap param_const) in
     let param = nelist_to_npseq (param_decl, []) in
     let param : CST.parameters = wrap @@ par param in
-    let%bind ret_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) output_type in
+    let%bind result,ret_type = match result.expression_content with 
+      AST.E_ascription {anno_expr; type_annotation} -> 
+      let%bind ret_type = bind_compose (ok <@ prefix_colon) decompile_type_expr type_annotation in
+      ok @@ (anno_expr, Some ret_type)
+    | _ -> ok (result,None) in
     let%bind return = decompile_expression result in
     ok @@ (param,ret_type,return)
 
 and decompile_matching_expr : type a.(AST.expr ->(a,_) result) -> AST.matching_expr -> ((a CST.case_clause Region.reg, Region.t) Simple_utils.Utils.nsepseq Region.reg,_) result =
 fun f m ->
   let%bind cases = match m with
-    Match_variable (var, _ty_opt, expr) ->
-    let pattern : CST.pattern = PVar (decompile_variable var.wrap_content) in
+    Match_variable (binder, expr) ->
+    let pattern : CST.pattern = PVar (decompile_variable (fst binder).wrap_content) in
     let%bind rhs = f expr in
     let case : _ CST.case_clause = {pattern; arrow=rg; rhs}in
     ok @@ [wrap case]
-  | Match_tuple (lst, _ty_opt, expr) ->
-    let aux (var:AST.expression_variable) = CST.PVar (decompile_variable var.wrap_content) in
+  | Match_tuple (lst, expr) ->
+    let aux ((var:AST.expression_variable),_ty) = CST.PVar (decompile_variable var.wrap_content) in
     let%bind tuple = list_to_nsepseq @@ List.map aux lst in
     let pattern : CST.pattern = PTuple (wrap @@ par @@ tuple) in
     let%bind rhs = f expr in
@@ -649,9 +653,9 @@ let decompile_declaration : AST.declaration Location.wrap -> (CST.declaration, _
       let fun_decl : CST.fun_decl = {kwd_recursive=Some rg;kwd_function=rg;fun_name;param;ret_type;kwd_is=rg;return;terminator=Some rg;attributes} in
       ok @@ CST.FunDecl (wrap fun_decl)
     | _ ->
-      let%bind const_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) ty_opt in
+      let%bind const_type = bind_compose (ok <@ prefix_colon) decompile_type_expr ty_opt in
       let%bind init = decompile_expression expr in
-      let const_decl : CST.const_decl = {kwd_const=rg;name;const_type;equal=rg;init;terminator=Some rg; attributes} in
+      let const_decl : CST.const_decl = {kwd_const=rg;name;const_type=Some const_type;equal=rg;init;terminator=Some rg; attributes} in
       ok @@ CST.ConstDecl (wrap const_decl)
 
 let decompile_program : AST.program -> (CST.ast, _) result = fun prg ->

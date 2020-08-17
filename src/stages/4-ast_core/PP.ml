@@ -143,13 +143,10 @@ and expression_content ppf (ec : expression_content) =
       fprintf ppf "@[%a.%a@]" expression ra.record label ra.path
   | E_record_update {record; path; update} ->
       fprintf ppf "@[{ %a@;<1 2>with@;<1 2>{ %a = %a } }@]" expression record label path expression update
-  | E_lambda {binder; input_type; output_type; result} ->
-      fprintf ppf "@[lambda (%a:%a) : %a@ return@ %a@]"
-        expression_variable binder
-        (PP_helpers.option type_expression)
-        input_type
-        (PP_helpers.option type_expression)
-        output_type expression result
+  | E_lambda {binder=binder'; result} ->
+      fprintf ppf "@[lambda %a @ return@ %a@]"
+        binder binder'
+        expression result
   | E_recursive { fun_name; fun_type; lambda} ->
       fprintf ppf "rec (%a:%a => %a )" 
         expression_variable fun_name 
@@ -159,20 +156,15 @@ and expression_content ppf (ec : expression_content) =
       fprintf ppf "@[match %a with@ %a@]" expression matchee (matching expression)
         cases
   | E_let_in { let_binder ;rhs ; let_result; inline } ->    
-    fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]" option_type_name let_binder expression rhs option_inline inline expression let_result
+    fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]" binder let_binder expression rhs option_inline inline expression let_result
   | E_raw_code {language; code} ->
       fprintf ppf "[%%%s %a]" language expression code
   | E_ascription {anno_expr; type_annotation} ->
       fprintf ppf "%a : %a" expression anno_expr type_expression
         type_annotation
 
-and option_type_name ppf
-    ({binder; ascr} : let_binder) =
-  match ascr with
-  | None ->
-      fprintf ppf "%a" expression_variable binder
-  | Some ty ->
-      fprintf ppf "%a : %a" expression_variable binder type_expression ty
+and binder ppf ({var; ty} : binder) =
+    fprintf ppf "(%a : %a)" expression_variable var type_expression ty
 
 and assoc_expression ppf : expression * expression -> unit =
  fun (a, b) -> fprintf ppf "@[<2>%a ->@;<1 2>%a@]" expression a expression b
@@ -222,9 +214,10 @@ let declaration ppf (d : declaration) =
   match d with
   | Declaration_type {type_binder ; type_expr} ->
       fprintf ppf "@[<2>type %a =@ %a@]" type_variable type_binder type_expression type_expr
-  | Declaration_constant {binder ; type_opt ; attr ; expr} ->
-      fprintf ppf "@[<2>const %a =@ %a%a@]" option_type_name {binder; ascr = type_opt} expression
-        expr
+  | Declaration_constant {binder=binder'; attr ; expr} ->
+      fprintf ppf "@[<2>const %a =@ %a%a@]"
+        binder binder'
+        expression expr
         option_inline attr.inline
 
 let program ppf (p : program) =

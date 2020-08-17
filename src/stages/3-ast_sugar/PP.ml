@@ -72,13 +72,10 @@ and expression_content ppf (ec : expression_content) =
       fprintf ppf "list[%a]" (list_sep_d expression) lst
   | E_set lst ->
       fprintf ppf "set[%a]" (list_sep_d expression) lst
-  | E_lambda {binder; input_type; output_type; result} ->
-      fprintf ppf "lambda (%a:%a) : %a return %a" 
-        expression_variable binder
-        (PP_helpers.option type_expression)
-        input_type
-        (PP_helpers.option type_expression)
-        output_type expression result
+  | E_lambda {binder=binder'; result} ->
+      fprintf ppf "lambda %a return %a" 
+        binder binder'
+        expression result
   | E_recursive { fun_name; fun_type; lambda} ->
       fprintf ppf "rec (%a:%a => %a )" 
         expression_variable fun_name 
@@ -89,7 +86,7 @@ and expression_content ppf (ec : expression_content) =
         cases
   | E_let_in { let_binder ; rhs ; let_result; inline; mut} ->    
       fprintf ppf "let %a%a = %a%a in %a" 
-        option_type_name let_binder 
+        binder let_binder 
         option_mut mut
         expression rhs 
         option_inline inline 
@@ -110,19 +107,13 @@ and expression_content ppf (ec : expression_content) =
   | E_tuple t ->
       fprintf ppf "(%a)" (list_sep_d expression) t
 
+and binder ppf (a,b) = fprintf ppf "(%a,%a)" expression_variable a type_expression b
+
 and accessor ppf a =
   match a with
     | Access_tuple i  -> fprintf ppf "%a" Z.pp_print i
     | Access_record s -> fprintf ppf "%s" s
     | Access_map e    -> fprintf ppf "%a" expression e
-
-and option_type_name ppf
-    ((n, ty_opt) : expression_variable * type_expression option) =
-  match ty_opt with
-  | None ->
-      fprintf ppf "%a" expression_variable n
-  | Some ty ->
-      fprintf ppf "%a : %a" expression_variable n type_expression ty
 
 and assoc_expression ppf : expr * expr -> unit =
  fun (a, b) -> fprintf ppf "%a -> %a" expression a expression b
@@ -142,12 +133,12 @@ and matching : (formatter -> expression -> unit) -> formatter -> matching_expr -
         fprintf ppf "| Nil -> %a @.| %a :: %a -> %a" f match_nil expression_variable hd expression_variable tl f match_cons
     | Match_option {match_none ; match_some = (some, match_some)} ->
         fprintf ppf "| None -> %a @.| Some %a -> %a" f match_none expression_variable some f match_some
-    | Match_tuple (lst, _,b) ->
-        fprintf ppf "(%a) -> %a" (list_sep_d expression_variable) lst f b
-    | Match_record (lst, _,b) ->
-        fprintf ppf "{%a} -> %a" (list_sep_d (fun ppf (a,b) -> fprintf ppf "%a = %a" label a expression_variable b)) lst f b
-    | Match_variable (a, _,b) ->
-        fprintf ppf "%a -> %a" expression_variable a f b
+    | Match_tuple (lst,b) ->
+        fprintf ppf "(%a) -> %a" (list_sep_d binder) lst f b
+    | Match_record (lst,b) ->
+        fprintf ppf "{%a} -> %a" (list_sep_d (fun ppf (a,b,_) -> fprintf ppf "%a = %a" label a expression_variable b)) lst f b
+    | Match_variable (a,b) ->
+        fprintf ppf "%a -> %a" binder a f b
 
 (* Shows the type expected for the matched value *)
 and matching_type ppf m = match m with
@@ -184,7 +175,7 @@ let declaration ppf (d : declaration) =
   | Declaration_type (type_name, te) ->
       fprintf ppf "type %a = %a" type_variable type_name type_expression te
   | Declaration_constant (name, ty_opt, i, expr) ->
-      fprintf ppf "const %a = %a%a" option_type_name (name, ty_opt) expression
+      fprintf ppf "const %a = %a%a" binder (name, ty_opt) expression
         expr
         option_inline i
 
