@@ -6,9 +6,9 @@ let assert_type_expression_eq ((tv',tv):type_expression * type_expression) : (un
   trace_option (assert_equal tv' tv) @@
     assert_type_expression_eq (tv' , tv)
 
-type typer = type_expression list -> type_expression option -> (type_expression, typer_error) result
+type typer = type_expression list -> type_expression -> (type_expression, typer_error) result
 
-let typer_0 : string -> (type_expression option -> (type_expression, typer_error) result) -> typer = fun s f lst tv_opt ->
+let typer_0 : string -> (type_expression -> (type_expression, typer_error) result) -> typer = fun s f lst tv_opt ->
   match lst with
   | [] -> (
     let%bind tv' = f tv_opt in
@@ -24,7 +24,7 @@ let typer_1 : string -> (type_expression -> (type_expression, typer_error) resul
     )
   | _ -> fail @@ wrong_param_number s 1 lst
 
-let typer_1_opt : string -> (type_expression -> type_expression option -> (type_expression , typer_error) result) -> typer = fun s f lst tv_opt ->
+let typer_1_opt : string -> (type_expression -> type_expression -> (type_expression , typer_error) result) -> typer = fun s f lst tv_opt ->
   match lst with
   | [ a ] -> (
       let%bind tv' = f a tv_opt in
@@ -40,7 +40,7 @@ let typer_2 : string -> (type_expression -> type_expression -> (type_expression,
     )
   | _ -> fail @@ wrong_param_number s 2 lst
 
-let typer_2_opt : string -> (type_expression -> type_expression -> type_expression option -> (type_expression, typer_error) result) -> typer = fun s f lst tv_opt ->
+let typer_2_opt : string -> (type_expression -> type_expression -> type_expression -> (type_expression, typer_error) result) -> typer = fun s f lst tv_opt ->
   match lst with
   | [ a ; b ] -> (
       let%bind tv' = f a b tv_opt in

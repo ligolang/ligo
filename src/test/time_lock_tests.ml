@@ -29,9 +29,9 @@ open Ast_imperative
 
 let empty_op_list =
   (e_typed_list [] (t_operation ()))
-let empty_message = e_lambda (Location.wrap @@ Var.of_name "arguments")
-  (Some (t_unit ())) (Some (t_list (t_operation ())))
-  empty_op_list
+let empty_message = e_lambda (Location.wrap @@ Var.of_name "arguments",t_unit ()) 
+  @@ e_annotation empty_op_list (t_list (t_operation ()))
+
 
 let call msg = e_constructor "Call" msg
 let mk_time st =

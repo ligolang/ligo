@@ -39,7 +39,7 @@ let list_declarations (program : Ast_core.program) : string list =
       let open Location in
       let open Ast_core in
       match el.wrap_content with
-      | Declaration_constant {binder;_} -> (Var.to_name binder.wrap_content)::prev
+      | Declaration_constant {binder;_} -> (Var.to_name binder.var.wrap_content)::prev
       | _ -> prev) 
     [] program
 

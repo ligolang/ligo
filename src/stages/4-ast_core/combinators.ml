@@ -86,10 +86,10 @@ let e_map_add    ?loc ?sugar k v old  : expression = make_e ?loc ?sugar @@ E_con
 let e_constant    ?loc ?sugar name lst                             = make_e ?loc ?sugar @@ E_constant {cons_name=name ; arguments = lst}
 let e_variable    ?loc ?sugar v                                    = make_e ?loc ?sugar @@ E_variable v
 let e_application ?loc ?sugar a b                                  = make_e ?loc ?sugar @@ E_application {lamb=a ; args=b}
-let e_lambda      ?loc ?sugar binder input_type output_type result = make_e ?loc ?sugar @@ E_lambda {binder; input_type; output_type; result ;  }
+let e_lambda      ?loc ?sugar binder result                        = make_e ?loc ?sugar @@ E_lambda {binder; result ;  }
 let e_recursive   ?loc ?sugar fun_name fun_type lambda             = make_e ?loc ?sugar @@ E_recursive {fun_name; fun_type; lambda}
-let e_let_in      ?loc ?sugar (binder, ascr) inline rhs let_result = make_e ?loc ?sugar @@
-  E_let_in { let_binder = {binder ; ascr} ; rhs ; let_result; inline }
+let e_let_in      ?loc ?sugar let_binder inline rhs let_result     = make_e ?loc ?sugar @@
+  E_let_in { let_binder ; rhs ; let_result; inline }
 let e_raw_code    ?loc ?sugar language code                        = make_e ?loc ?sugar @@ E_raw_code {language; code}
 
 let e_constructor ?loc ?sugar s a : expression = make_e ?loc ?sugar @@ E_constructor { constructor = Label s; element = a}

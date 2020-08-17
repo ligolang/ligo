@@ -32,7 +32,7 @@ and declaration =
    *   an optional type annotation
    *   a boolean indicating whether it should be inlined
    *   an expression *)
-  | Declaration_constant of (expression_variable * type_expression option * bool * expression)
+  | Declaration_constant of (expression_variable * type_expression * bool * expression)
 
 (* | Macro_declaration of macro_declaration *)
 and expression = {expression_content: expression_content; location: Location.t}
@@ -81,11 +81,10 @@ and application = {
   args: expression ;
   }
 
-and lambda =
-  { binder: expression_variable
-  ; input_type: type_expression option
-  ; output_type: type_expression option
-  ; result: expression }
+and lambda = {
+  binder: (expression_variable, type_expression) binder; 
+  result: expression 
+  }
 
 and recursive = {
   fun_name :  expression_variable;
@@ -94,10 +93,10 @@ and recursive = {
 }
 
 and let_in =
-  { let_binder: expression_variable * type_expression option
-  ; rhs: expression
-  ; let_result: expression
-  ; inline: bool }
+  { let_binder: (expression_variable, type_expression) binder ;
+    rhs: expression ;
+    let_result: expression ;
+    inline: bool }
 
 and raw_code = { 
   language : string ;
@@ -121,9 +120,9 @@ and matching_expr =
       match_none : expression ;
       match_some : expression_variable * expression ;
     }
-  | Match_tuple of expression_variable list * type_expression list option * expression
-  | Match_record of (label * expression_variable) list * type_expression list option * expression
-  | Match_variable of expression_variable * type_expression option * expression
+  | Match_tuple of (expression_variable * type_expression) list  * expression
+  | Match_record of (label * expression_variable * type_expression) list * expression
+  | Match_variable of (expression_variable * type_expression ) * expression
 
 and matching =
   { matchee: expression

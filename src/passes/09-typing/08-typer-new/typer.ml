@@ -28,15 +28,15 @@ let rec type_declaration env state : I.declaration -> (environment * _ O'.typer_
     let%bind type_expr = evaluate_type env type_expr in
     let env' = Environment.add_type (type_binder) type_expr env in
     ok (env', state , O.Declaration_type {type_binder; type_expr})
-  | Declaration_constant {binder; type_opt; attr; expr} -> (
+  | Declaration_constant {binder={var;ty}; attr; expr} -> (
     (*
       Determine the type of the expression and add it to the environment
     *)
-    let%bind tv_opt = bind_map_option (evaluate_type env) type_opt in
+    let%bind tv_opt = evaluate_type env ty in
     let%bind (state', expr) =
-      trace (constant_declaration_tracer binder expr tv_opt) @@
-      type_expression env state ?tv_opt expr in
-    let binder = Location.map Var.todo_cast binder in
+      trace (constant_declaration_tracer var expr @@ Some tv_opt) @@
+      type_expression env state ~tv_opt expr in
+    let binder = Location.map Var.todo_cast var in
     let post_env = Environment.add_ez_declaration binder expr env in
     ok (post_env, state' , O.Declaration_constant { binder ; expr ; inline=attr.inline})
     )
@@ -146,7 +146,7 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
   let module L = Logger.Stateful() in
   let return : _ -> _ O'.typer_state -> _ -> _ (* return of type_expression *) = fun expr state constraints type_name ->
     let%bind new_state = aggregate_constraints state constraints in
-    let tv = t_variable type_name () in
+    let tv = t_variable type_name in
     let location = ae.location in
     let expr' = make_e ~location expr tv in
     ok @@ (new_state, expr') in
@@ -295,10 +295,9 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
 
   (* Advanced *)
   | E_let_in {let_binder ; rhs ; let_result; inline} ->
-    let%bind rhs_tv_opt = bind_map_option (evaluate_type e) (let_binder.ascr) in
-    (* TODO in abstractor : the binder annotation should just be an annotation node *)
+    let%bind rhs_tv_opt = (evaluate_type e) (let_binder.ty) in
     let%bind (state', rhs) = type_expression e state rhs in
-    let let_binder = cast_var let_binder.binder in 
+    let let_binder = cast_var let_binder.var in 
     let e' = Environment.add_ez_declaration let_binder rhs e in
     let%bind (state'', let_result) = type_expression e' state' let_result in
     let wrapped =
@@ -331,19 +330,15 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
 
 and type_lambda e state {
       binder ;
-      input_type ;
-      output_type ;
       result ;
     } =
-      let binder = cast_var binder in
-      let%bind input_type'  = bind_map_option (evaluate_type e) input_type in
-      let%bind output_type' = bind_map_option (evaluate_type e) output_type in
-
-      let fresh : O.type_expression = t_variable (Wrap.fresh_binder ()) () in
+      let%bind input_type  = (evaluate_type e) binder.ty in
+      let binder = cast_var binder.var in
+      let fresh : O.type_expression = t_variable (Wrap.fresh_binder ()) in
       let e' = Environment.add_ez_binder (binder) fresh e in
 
       let%bind (state', result) = type_expression e' state result in
-      let wrapped = Wrap.lambda fresh input_type' output_type' result.type_expression in
+      let wrapped = Wrap.lambda fresh input_type result.type_expression in
       ok (({binder;result}:O.lambda),state',wrapped)
 
 (* TODO: Rewrite this entire function *)
@@ -484,7 +479,7 @@ let type_and_subst
       let O.{ tv ; c_tag ; tv_list } = assignment in
       let () = ignore tv (* I think there is an issue where the tv is stored twice (as a key and in the element itself) *) in
       let%bind (expr : O.type_content) = trace_option (corner_case "wrong constant tag") @@
-        Typesystem.Core.type_expression'_of_simple_c_constant (c_tag , (List.map (fun s -> O.t_variable s ()) tv_list)) in
+        Typesystem.Core.type_expression'_of_simple_c_constant (c_tag , (List.map (fun s -> O.t_variable s) tv_list)) in
       let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "SUBST %a (%a is %a)\n" Var.pp variable Var.pp root Ast_typed.PP_generic.type_content expr) in
       ok @@ expr
     in

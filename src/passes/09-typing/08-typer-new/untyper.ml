@@ -77,11 +77,12 @@ let rec untype_expression (e:O.expression) : (I.expression, typer_error) result 
     let%bind cases   = untype_matching untype_expression cases in
     return @@ E_matching {matchee;cases}
   | E_let_in {let_binder; rhs;let_result; inline} ->
-    let%bind tv         = untype_type_value rhs.type_expression in
+    let var = Location.map Var.todo_cast let_binder in
+    let%bind ty         = untype_type_value rhs.type_expression in
     let%bind rhs        = untype_expression rhs in
     let%bind let_result = untype_expression let_result in
-    let binder=Location.map Var.todo_cast let_binder in
-    return @@ E_let_in {let_binder={binder;ascr=Some tv}; rhs; let_result; inline}
+    let let_binder = {var; ty} in
+    return @@ E_let_in {let_binder; rhs; let_result; inline}
   | E_raw_code {language; code} ->
     let%bind code = untype_expression code in
     return @@ E_raw_code {language; code}
@@ -91,12 +92,14 @@ let rec untype_expression (e:O.expression) : (I.expression, typer_error) result 
     let fun_name = Location.map Var.todo_cast fun_name in
     return @@ E_recursive {fun_name; fun_type; lambda}
 
+
 and untype_lambda ty {binder; result} : (I.lambda, typer_error) result =
     let%bind io = trace_option (corner_case "This has to be a lambda") @@ get_t_function ty in
-    let%bind (input_type , output_type) = bind_map_pair untype_type_value io in
+    let%bind (ty , output_type) = bind_map_pair untype_type_value io in
+    let var = Location.map Var.todo_cast binder in
     let%bind result = untype_expression result in
-    let binder = Location.map Var.todo_cast binder in
-    ok ({binder;input_type = Some input_type; output_type = Some output_type; result}: I.lambda)
+    let result = I.e_annotation result output_type in
+    ok ({binder={var;ty}; result}: I.lambda)
 
 (*
   Tranform a Ast_typed matching into an ast_core matching

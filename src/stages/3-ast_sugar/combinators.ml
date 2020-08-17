@@ -29,6 +29,7 @@ let t_timestamp ?loc ()   : type_expression = type_constant ?loc TC_timestamp []
 let t_option ?loc o       : type_expression = type_constant ?loc TC_option [o]
 let t_list ?loc t         : type_expression = type_constant ?loc TC_list [t]
 let t_variable ?loc n     : type_expression = make_t ?loc @@ T_variable (Var.of_name n)
+let t_wildcard ?loc ()    : type_expression = make_t ?loc @@ T_wildcard
 let t_record_ez ?loc lst =
   let lst = List.map (fun (k, v) -> (Label k, v)) lst in
   let m = LMap.of_list lst in
@@ -89,7 +90,7 @@ let e_none ?loc () : expression = make_e ?loc @@ E_constant {cons_name = C_NONE;
 let e_constant ?loc name lst = make_e ?loc @@ E_constant {cons_name=name ; arguments = lst}
 let e_variable ?loc v = make_e ?loc @@ E_variable v
 let e_application ?loc a b = make_e ?loc @@ E_application {lamb=a ; args=b}
-let e_lambda ?loc binder input_type output_type result : expression = make_e ?loc @@ E_lambda {binder; input_type; output_type; result}
+let e_lambda ?loc binder result : expression = make_e ?loc @@ E_lambda {binder; result}
 let e_recursive ?loc fun_name fun_type lambda = make_e ?loc @@ E_recursive {fun_name; fun_type; lambda}
 let e_let_in ?loc (binder, ascr) mut inline rhs let_result = make_e ?loc @@ E_let_in { let_binder = (binder, ascr) ; rhs ; let_result; inline; mut }
 let e_raw_code ?loc language code = make_e ?loc @@ E_raw_code {language; code}

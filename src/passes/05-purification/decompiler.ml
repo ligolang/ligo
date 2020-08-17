@@ -61,11 +61,10 @@ let rec decompile_expression : O.expression -> (I.expression, Errors.purificatio
     let%bind lambda = decompile_lambda lambda in
     return @@ I.E_recursive {fun_name;fun_type;lambda}
   | O.E_let_in {let_binder;inline;rhs;let_result} ->
-    let (binder,ty_opt) = let_binder in
-    let%bind ty_opt = bind_map_option decompile_type_expression ty_opt in
+    let%bind let_binder = decompile_binder let_binder in
     let%bind rhs = decompile_expression rhs in
     let%bind let_result = decompile_expression let_result in
-    return @@ I.E_let_in {let_binder=(binder,ty_opt);inline;rhs;let_result}
+    return @@ I.E_let_in {let_binder;inline;rhs;let_result}
   | O.E_raw_code {language;code} ->
     let%bind code  = decompile_expression code in
     return @@ I.E_raw_code {language;code} 
@@ -130,6 +129,10 @@ let rec decompile_expression : O.expression -> (I.expression, Errors.purificatio
     return @@ I.E_sequence {expr1; expr2}
   | O.E_skip -> return @@ I.E_skip
 
+and decompile_binder : _ -> _  result = fun (var,ty) ->
+    let%bind ty = decompile_type_expression ty in
+    ok (var,ty)
+
 and decompile_path : O.access list -> (I.access list, Errors.purification_error) result =
   fun path -> let aux a = match a with
     | O.Access_record s -> ok @@ I.Access_record s
@@ -141,11 +144,10 @@ and decompile_path : O.access list -> (I.access list, Errors.purification_error)
   bind_map_list aux path
 
 and decompile_lambda : O.lambda -> (I.lambda, Errors.purification_error) result =
-  fun {binder;input_type;output_type;result}->
-    let%bind input_type = bind_map_option decompile_type_expression input_type in
-    let%bind output_type = bind_map_option decompile_type_expression output_type in
+  fun {binder; result}->
+    let%bind binder = decompile_binder binder in
     let%bind result = decompile_expression result in
-    ok @@ I.{binder;input_type;output_type;result}
+    ok @@ I.{binder;result}
 and decompile_matching : O.matching_expr -> (I.matching_expr, Errors.purification_error) result =
   fun m -> 
   match m with 
@@ -167,26 +169,29 @@ and decompile_matching : O.matching_expr -> (I.matching_expr, Errors.purificatio
       ) lst 
       in
       ok @@ I.Match_variant lst
-    | O.Match_record (lst,ty_opt,expr) ->
+    | O.Match_record (lst,expr) ->
       let%bind expr = decompile_expression expr in
-      let%bind ty_opt = bind_map_option (bind_map_list decompile_type_expression) ty_opt in
-      ok @@ I.Match_record (lst,ty_opt,expr)
-    | O.Match_tuple (lst,ty_opt,expr) ->
+      let aux (a,b,c) = 
+        let%bind (b,c) = decompile_binder (b,c) in
+        ok @@ (a,b,c) in
+      let%bind lst = bind_map_list aux lst in
+      ok @@ I.Match_record (lst,expr)
+    | O.Match_tuple (lst,expr) ->
       let%bind expr = decompile_expression expr in
-      let%bind ty_opt = bind_map_option (bind_map_list decompile_type_expression) ty_opt in
-      ok @@ I.Match_tuple (lst,ty_opt,expr)
-    | O.Match_variable (lst,ty_opt,expr) ->
+      let%bind lst = bind_map_list decompile_binder lst in
+      ok @@ I.Match_tuple (lst,expr)
+    | O.Match_variable (binder,expr) ->
       let%bind expr = decompile_expression expr in
-      let%bind ty_opt = bind_map_option decompile_type_expression ty_opt in
-      ok @@ I.Match_variable (lst,ty_opt,expr)
+      let%bind binder = decompile_binder binder in
+      ok @@ I.Match_variable (binder,expr)
 
 let decompile_declaration : O.declaration Location.wrap -> _ result = fun {wrap_content=declaration;location} ->
   let return decl = ok @@ Location.wrap ~loc:location decl in
   match declaration with 
-  | O.Declaration_constant (n, te_opt, inline, expr) ->
+  | O.Declaration_constant (n, te, inline, expr) ->
     let%bind expr = decompile_expression expr in
-    let%bind te_opt = bind_map_option decompile_type_expression te_opt in
-    return @@ I.Declaration_constant (n, te_opt, inline, expr)
+    let%bind te   = decompile_type_expression te in
+    return @@ I.Declaration_constant (n, te, inline, expr)
   | O.Declaration_type (n, te) ->
     let%bind te = decompile_type_expression te in
     return @@ I.Declaration_type (n,te)

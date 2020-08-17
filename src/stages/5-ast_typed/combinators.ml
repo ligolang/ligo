@@ -10,20 +10,21 @@ let make_n_t type_name type_value = { type_name ; type_value }
 
 let t_constant ?loc ?core type_constant arguments  : type_expression = make_t ?loc (T_constant {type_constant; arguments}) core
 
-let t_signature  ?loc ?core () : type_expression = t_constant ?loc ?core TC_signature []
-let t_chain_id   ?loc ?core () : type_expression = t_constant ?loc ?core TC_chain_id []
-let t_string     ?loc ?core () : type_expression = t_constant ?loc ?core TC_string []
-let t_bytes      ?loc ?core () : type_expression = t_constant ?loc ?core TC_bytes []
-let t_key        ?loc ?core () : type_expression = t_constant ?loc ?core TC_key []
-let t_key_hash   ?loc ?core () : type_expression = t_constant ?loc ?core TC_key_hash []
-let t_int        ?loc ?core () : type_expression = t_constant ?loc ?core TC_int []
-let t_address    ?loc ?core () : type_expression = t_constant ?loc ?core TC_address []
-let t_operation  ?loc ?core () : type_expression = t_constant ?loc ?core TC_operation []
-let t_nat        ?loc ?core () : type_expression = t_constant ?loc ?core TC_nat []
-let t_mutez      ?loc ?core () : type_expression = t_constant ?loc ?core TC_mutez []
-let t_timestamp  ?loc ?core () : type_expression = t_constant ?loc ?core TC_timestamp []
-let t_unit       ?loc ?core () : type_expression = t_constant ?loc ?core TC_unit []
-let t_variable t ?loc ?core () : type_expression = make_t ?loc (T_variable t) core
+let t_signature ?loc ?core () : type_expression = t_constant ?loc ?core TC_signature []
+let t_chain_id  ?loc ?core () : type_expression = t_constant ?loc ?core TC_chain_id []
+let t_string    ?loc ?core () : type_expression = t_constant ?loc ?core TC_string []
+let t_bytes     ?loc ?core () : type_expression = t_constant ?loc ?core TC_bytes []
+let t_key       ?loc ?core () : type_expression = t_constant ?loc ?core TC_key []
+let t_key_hash  ?loc ?core () : type_expression = t_constant ?loc ?core TC_key_hash []
+let t_int       ?loc ?core () : type_expression = t_constant ?loc ?core TC_int []
+let t_address   ?loc ?core () : type_expression = t_constant ?loc ?core TC_address []
+let t_operation ?loc ?core () : type_expression = t_constant ?loc ?core TC_operation []
+let t_nat       ?loc ?core () : type_expression = t_constant ?loc ?core TC_nat []
+let t_mutez     ?loc ?core () : type_expression = t_constant ?loc ?core TC_mutez []
+let t_timestamp ?loc ?core () : type_expression = t_constant ?loc ?core TC_timestamp []
+let t_unit      ?loc ?core () : type_expression = t_constant ?loc ?core TC_unit []
+let t_variable  ?loc ?core t  : type_expression = make_t ?loc (T_variable t) core
+let t_wildcard  ?loc ?core () : type_expression = make_t ?loc (T_wildcard) core
 
 let t_option         ?loc ?core o   : type_expression = t_constant ?loc ?core TC_option   [o]
 let t_list           ?loc ?core t   : type_expression = t_constant ?loc ?core TC_list     [t]
