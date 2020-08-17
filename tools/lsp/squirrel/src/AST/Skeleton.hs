@@ -63,9 +63,9 @@ data RawContract it
 
 data Binding it
   = Irrefutable  it it               -- ^ (Pattern) (Expr)
-  | Function     Bool it it it it    -- ^ (Name) (Parameters) (Type) (Expr)
+  | Function     Bool it [it] (Maybe it) it    -- ^ (Name) (Parameters) (Type) (Expr)
   | Var          it (Maybe it) it            -- ^ (Name) (Type) (Expr)
-  | Const        it it it            -- ^ (Name) (Type) (Expr)
+  | Const        it (Maybe it) it            -- ^ (Name) (Type) (Expr)
   | TypeDecl     it it               -- ^ (Name) (Type)
   | Attribute    it                  -- ^ (Name)
   | Include      it
@@ -95,7 +95,7 @@ data Type it
   | TVar      it       -- ^ (Name)
   | TSum      [it]     -- ^ [Variant]
   | TProduct  [it]     -- ^ [Type]
-  | TApply    it it  -- (Name) [Type]
+  | TApply    it [it]  -- (Name) [Type]
   | TTuple    [it]
   | TOr       it it it it
   | TAnd      it it it it
@@ -122,7 +122,7 @@ data Expr it
   | UnOp      it it -- (Expr)
   | Op        Text
   | Record    [it] -- [Assignment]
-  | If        it it it -- (Expr) (Expr) (Expr)
+  | If        it it (Maybe it) -- (Expr) (Expr) (Expr)
   | Assign    it it -- (LHS) (Expr)
   | List      [it] -- [Expr]
   | ListAccess it [it] -- (Name) [Indexes]
@@ -140,7 +140,7 @@ data Expr it
   | ForLoop   it it it (Maybe it) it              -- (Name) (Expr) (Expr) (Expr)
   | WhileLoop it it                    -- (Expr) (Expr)
   | Seq       [it]                     -- [Declaration]
-  | Lambda    it (Maybe it) it               -- [VarDecl] (Maybe (Type)) (Expr)
+  | Lambda    [it] (Maybe it) it               -- [VarDecl] (Maybe (Type)) (Expr)
   | ForBox    it (Maybe it) it it it -- (Name) (Maybe (Name)) Text (Expr) (Expr)
   | MapPatch  it [it] -- (QualifiedName) [MapBinding]
   | SetPatch  it [it] -- (QualifiedName) [Expr]
@@ -251,7 +251,7 @@ instance Pretty1 Binding where
     TypeDecl     n    ty       -> "type"  <+> n    <+> "=" `indent` ty
     -- TODO
     Var          name ty value -> "var"   <+> name <+> ":" <+> fromMaybe "<unnanotated>" ty <+> ":=" `indent` value
-    Const        name ty body  -> "const" <+> name <+> ":" <+> ty <+>  "=" `indent` body
+    Const        name ty body  -> "const" <+> name <+> ":" <+> pp ty <+>  "=" `indent` body
     Attribute name -> "[@" <.> name <.> "]"
     Include      fname         -> "#include" <+> fname
 
@@ -262,9 +262,9 @@ instance Pretty1 Binding where
           <+> "function"
           <+> name
           )
-          `indent` params
+          `indent` pp params
         )
-        `indent` (":" <+> ty `above` "is")
+        `indent` (":" <+> pp ty `above` "is")
       )
       `indent` body
 
@@ -288,7 +288,7 @@ instance Pretty1 Type where
     TVar      name      -> name
     TSum      variants  -> block variants
     TProduct  elements  -> train " *" elements
-    TApply    f xs      -> f <+> xs
+    TApply    f xs      -> f <+> tuple xs
     TTuple    xs        -> tuple xs
     TOr       l n r m   -> "michelson_or"   <+> tuple [l, n, r, m]
     TAnd      l n r m   -> "michelson_pair" <+> tuple [l, n, r, m]
@@ -309,14 +309,14 @@ instance Pretty1 ReasonExpr where
 instance Pretty1 Expr where
   pp1 = \case
     Let       decl body  -> "let" <+> decl `above` body
-    Apply     f xs       -> "(" <.> f <.> ")" <+> xs
+    Apply     f xs       -> "(" <.> f <.> ")" `indent` xs
     Constant  constant   -> constant
     Ident     qname      -> qname
     BinOp     l o r      -> parens (l <+> pp o <+> r)
     UnOp        o r      -> parens (pp o <+> r)
     Op          o        -> pp o
     Record    az         -> "record" <+> list az
-    If        b t e      -> fsep ["if" `indent` b, "then" `indent` t, "else" `indent` e]
+    If        b t e      -> fsep ["if" `indent` b, "then" `indent` t, "else" `indent` pp e]
     Assign    l r        -> l <+> ":=" `indent` r
     List      l          -> "list" <+> list l
     ListAccess l ids     -> l <.> cat ((("[" <.>) . (<.> "]") . pp) <$> ids)
@@ -335,7 +335,7 @@ instance Pretty1 Expr where
     ForBox    k mv t z b -> "for" <+> k <+> mb ("->" <+>) mv <+> "in" <+> pp t <+> z `indent` b
     WhileLoop f b        -> "while" <+> f `indent` b
     Seq       es         -> "block {" `indent` block es `above` "}"
-    Lambda    ps ty b    -> (("lam" `indent` ps) `indent` (":" <+> fromMaybe "<unnanotated>" ty)) `indent` "=>" `indent` b
+    Lambda    ps ty b    -> (("lam" `indent` pp ps) `indent` (":" <+> fromMaybe "<unnanotated>" ty)) `indent` "=>" `indent` b
     MapPatch  z bs       -> "patch" `indent` z `above` "with" <+> "map" `indent` list bs
     SetPatch  z bs       -> "patch" `indent` z `above` "with" <+> "set" `indent` list bs
     RecordUpd r up       -> r `indent` "with" <+> "record" `indent` list up
@@ -380,7 +380,6 @@ instance Pretty1 Pattern where
     IsWildcard             -> "_"
     IsList       l         -> list l
     IsTuple      t         -> tuple t
-
 
 instance Pretty1 Name where
   pp1 = \case

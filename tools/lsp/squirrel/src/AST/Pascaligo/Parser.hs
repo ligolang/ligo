@@ -37,11 +37,11 @@ import ParseTree
 -- example = "../../../src/test/contracts/chain_id.ligo"
 -- example = "../../../src/test/contracts/closure-3.ligo"
 
-sample' :: FilePath -> IO (LIGO Info)
-sample' f
-  =   toParseTree (Path f)
-  >>= runParserM . recognise
-  >>= return . fst
+-- sample' :: FilePath -> IO (LIGO Info)
+-- sample' f
+--   =   toParseTree (Path f)
+--   >>= runParserM . recognise
+--   >>= return . fst
 
 source' :: FilePath -> IO ()
 source' f
@@ -83,8 +83,8 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
         "clause_block"      -> Seq       <$> fields "statement"
         "list_expr"         -> List      <$> fields "element"
         "annot_expr"        -> Annot     <$> field  "subject"   <*> field "type"
-        "conditional"       -> If        <$> field  "selector"  <*> field "then" <*> field "else"
-        "cond_expr"         -> If        <$> field  "selector"  <*> field "then" <*> field "else"
+        "conditional"       -> If        <$> field  "selector"  <*> field "then" <*> fieldOpt "else"
+        "cond_expr"         -> If        <$> field  "selector"  <*> field "then" <*> fieldOpt "else"
         "assignment"        -> Assign    <$> field  "LHS"       <*> field "RHS"
         "attr_decl"         -> Attrs     <$> fields "attribute"
         "record_expr"       -> Record    <$> fields "assignment"
@@ -94,7 +94,7 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
         "skip"              -> return Skip
         "case_expr"         -> Case      <$> field  "subject"    <*> fields   "case"
         "case_instr"        -> Case      <$> field  "subject"    <*> fields   "case"
-        "fun_expr"          -> Lambda    <$> field  "parameters" <*> fieldOpt    "type"  <*> field "body"
+        "fun_expr"          -> Lambda    <$> fields "parameters" <*> fieldOpt    "type"  <*> field "body"
         "for_cycle"         -> ForLoop   <$> field  "name"       <*> field    "begin" <*> field "end" <*> fieldOpt "step" <*> field "body"
         "for_box"           -> ForBox    <$> field  "key"        <*> fieldOpt "value" <*> field "kind"  <*> field "collection" <*> field "body"
         "while_loop"        -> WhileLoop <$> field  "breaker"    <*> field    "body"
@@ -167,8 +167,8 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
     -- Declaration
   , Descent do
       boilerplate \case
-        "fun_decl"   -> Function <$> (isJust <$> fieldOpt "recursive") <*> field "name" <*> field "parameters" <*> field "type" <*> field "body"
-        "const_decl" -> Const    <$>             field    "name"       <*> field "type" <*> field "value"
+        "fun_decl"   -> Function <$> flag "recursive" <*> field "name" <*> fields "parameters" <*> fieldOpt "type" <*> field "body"
+        "const_decl" -> Const    <$>             field    "name"       <*> fieldOpt "type" <*> field "value"
         "var_decl"   -> Var      <$>             field    "name"       <*> fieldOpt "type" <*> field "value"
         "type_decl"  -> TypeDecl <$>             field    "typeName"   <*> field "typeValue"
         "include"    -> Include  <$>             field    "filename"
@@ -206,8 +206,8 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
       boilerplate \case
         "fun_type"         -> TArrow   <$> field  "domain"     <*> field "codomain"
         "cartesian"        -> TProduct <$> fields "element"
-        "invokeBinary"     -> TApply   <$> field  "typeConstr" <*> field "arguments"
-        "invokeUnary"      -> TApply   <$> field  "typeConstr" <*> field "arguments"
+        "invokeBinary"     -> TApply   <$> field  "typeConstr" <*> fields "arguments"
+        "invokeUnary"      -> TApply   <$> field  "typeConstr" <*> fields "arguments"
         "type_tuple"       -> TTuple   <$> fields "element"
         "record_type"      -> TRecord  <$> fields "field"
         "sum_type"         -> TSum     <$> fields "variant"

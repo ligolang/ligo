@@ -12,11 +12,11 @@ import           Parser
 import           ParseTree
 import           Product
 
-example :: FilePath
+-- example :: FilePath
 -- example = "../../../src/test/contracts/counter.religo"
 -- example = "./contracts/variant.religo"
 -- example = "./contracts/amount.religo"
-example = "./contracts/multisig.religo"
+-- example = "./contracts/multisig.religo"
 -- example = "../../../src/test/contracts/FA1.2.religo"
 -- example = "../../../src/test/contracts/multisig.religo"
 -- example = "../../../src/test/contracts/lambda.religo"
@@ -34,14 +34,14 @@ example = "./contracts/multisig.religo"
 -- example = "./contracts/arithmetic.religo"
 -- example = "./contracts/letin.religo"
 
-raw :: IO ()
-raw = toParseTree (Path example)
-  >>= print . pp
+-- raw :: IO ()
+-- raw = toParseTree (Path example)
+--   >>= print . pp
 
-sample :: IO ()
-sample = toParseTree (Path example)
-  >>= runParserM . recognise
-  >>= print . pp . fst
+-- sample :: IO ()
+-- sample = toParseTree (Path example)
+--   >>= runParserM . recognise
+--   >>= print . pp . fst
 
 recognise :: RawTree -> ParserM (LIGO Info)
 recognise = descent (\_ -> error . show . pp) $ map usingScope
@@ -71,12 +71,12 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
         "list_expr"         -> List      <$> fields "element"
         "list_access"         -> ListAccess <$> field "name" <*> fields "indexes"
         "annot_expr"        -> Annot     <$> field  "subject"   <*> field "type"
-        "conditional"       -> If        <$> field  "selector"  <*> field "then" <*> field "else"
+        "conditional"       -> If        <$> field  "selector"  <*> field "then" <*> fieldOpt "else"
         "record_expr"       -> Record    <$> fields "assignment"
         "tuple_expr"        -> Tuple     <$> fields "element"
 
         "switch_instr"        -> Case      <$> field  "subject"    <*> fields   "case"
-        "lambda"          -> Lambda    <$> field  "arguments" <*> fieldOpt    "lambda_type"  <*> field "lambda_body"
+        "lambda"          -> Lambda    <$> fields  "arguments" <*> fieldOpt    "lambda_type"  <*> field "lambda_body"
         _                   -> fallthrough
 
     -- Pattern
@@ -175,7 +175,7 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
       boilerplate $ \case
         "fun_type"         -> TArrow   <$> field  "domain"     <*> field "codomain"
         -- TODO: maybe only one argument of parameter list is considered
-        "type_application"      -> TApply   <$> field  "functor" <*> field "parameter"
+        "type_application"      -> TApply   <$> field  "functor" <*> fields "parameter"
         "type_tuple"       -> TTuple   <$> fields "element"
         "record_type"      -> TRecord  <$> fields "field"
         "sum_type"         -> TSum     <$> fields "variant"

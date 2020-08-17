@@ -1,11 +1,13 @@
 let sepBy1 = (sep, p) => seq(p, repeat(seq(sep, p)))
 let sepBy  = (sep, p) => optional(sepBy1(sep, p))
 
+let some = x => seq(x, repeat(x))
+
 function mkOp($, opExpr) {
   return seq(
-    field("arg1", $._expr),
+    field("left", $._expr),
     field("op", opExpr),
-    field("arg2", $._expr)
+    field("right", $._expr)
   );
 }
 
@@ -15,10 +17,11 @@ module.exports = grammar({
   extras: $ => [$.ocaml_comment, $.comment, /\s/],
 
   rules: {
-    contract: $ => repeat($._declaration),
+    contract: $ => repeat(field("declaration", $._declaration)),
 
     _declaration: $ => choice(
       $.let_decl,
+      $.fun_decl,
       $.type_decl,
       $.include,
     ),
@@ -30,21 +33,31 @@ module.exports = grammar({
 
     _attribute: $ => /\[@@[a-z]+\]/,
 
-    let_decl: $ => seq(
+    fun_decl: $ => seq(
       "let",
-      field("name", $._binder),
+      optional(field("recursive", "rec")),
+      field("name", $.Name),
+      some(field("arg", $._paren_pattern)),
       optional(seq(
         ":",
-        field("type", $.type_expr)
+        field("type", $._type_expr)
       )),
       "=",
       field("body",$._program),
       repeat(field("attribute", $._attribute))
     ),
 
-    _binder: $ => choice(
-      $.func_header,
-      $._pattern
+    let_decl: $ => seq(
+      "let",
+      optional(field("recursive", "rec")),
+      field("name", $._pattern),
+      optional(seq(
+        ":",
+        field("type", $._type_expr)
+      )),
+      "=",
+      field("body",$._program),
+      repeat(field("attribute", $._attribute))
     ),
 
     //========== EXPR ============
@@ -54,42 +67,36 @@ module.exports = grammar({
       $._expr
     ),
 
-    func_header: $ => prec(1, seq(
-      optional(field("recursive", "rec")),
-      field("name", $.Name),
-      repeat(field("arg", $.paren_pattern))
-    )),
-
     let_expr1: $ => seq(
-      $.let_decl,
+      field("decl", $.let_decl),
       "in",
-      field("innerExpr", $._program)
+      field("body", $._program)
     ),
 
     // [1;2]
     list_pattern: $ => seq(
       "[",
-      sepBy(';', field("patternListItem", $._pattern)),
+      sepBy(';', field("item", $._pattern)),
       "]"
     ),
 
     // a :: b
     list_con_pattern: $ => prec.right(9, seq(
-      field("patX", $._pattern),
+      field("x", $._pattern),
       "::",
-      field("patXs", $._pattern)
+      field("xs", $._pattern)
     )),
 
     // a, b, c
     tup_pattern: $ => prec.right(8,seq(
-      field("tuplePatternItem", $._pattern),
+      field("item", $._pattern),
       ",",
-      sepBy1(",", field("tuplePatternItem", $._pattern))
+      sepBy1(",", field("item", $._pattern))
     )),
 
     _pattern: $ => choice(
       $.Name,
-      $.paren_pattern,
+      $._paren_pattern,
       $.con_pattern,
       $._literal,
       $.list_pattern,
@@ -100,65 +107,90 @@ module.exports = grammar({
 
     con_pattern: $ => prec(10,
       seq(
-        field("conPattern", $.data_con),
-        optional(field("conArgPattern",$._pattern))
+        field("ctor", $.data_con),
+        optional(field("args",$._pattern))
       )
     ),
 
-    paren_pattern: $ => seq(
-      "(",
-      field("innerPattern", $._pattern),
-      optional(seq(
+    _paren_pattern: $ => choice(
+      $.annot_pattern,
+      $.paren_pattern,
+    ),
+
+    paren_pattern: $ =>
+      seq(
+        "(",
+        field("pat", $._pattern),
+        ")"
+      ),
+
+    annot_pattern: $ =>
+      seq(
+        "(",
+        field("pat", $._pattern),
         ":",
-        $.type_expr,
-      )),
-      ")"
-    ),
+        field("type", $._type_expr),
+        ")"
+      ),
 
-    call: $ => choice(
+    _call: $ => choice(
       $.unary_op_app,
-      $._mod_op_app,
-      $._mul_op_app,
-      $._add_op_app,
-      $._list_con_op_app,
-      $._string_cat_op_app,
-      $._bool_op_app,
-      $._comp_op_app
+      $.binary_op_app,
     ),
 
-    _mod_op_app: $ => prec.left(16, mkOp($, "mod")),
-    _mul_op_app: $ => prec.left(15, mkOp($, choice("/", "*"))),
-    _add_op_app: $ => prec.left(14, mkOp($, choice("-", "+"))),
-    _list_con_op_app: $ => prec.right(13, mkOp($, "::")),
-    _string_cat_op_app: $ => prec.right(12, mkOp($, "^")),
-    _bool_op_app: $ => prec.left(11, mkOp($, choice("&&", "||"))),
-    _comp_op_app: $ => prec.left(10, mkOp($, choice("=", "<>", "==", "<", "<=", ">", ">="))),
+    binary_op_app: $ => choice(
+      prec.left(16, mkOp($, "mod")),
+      prec.left(15, mkOp($, choice("/", "*"))),
+      prec.left(14, mkOp($, choice("-", "+"))),
+      prec.right(13, mkOp($, "::")),
+      prec.right(12, mkOp($, "^")),
+      prec.left(11, mkOp($, choice("&&", "||"))),
+      prec.left(10, mkOp($, choice("=", "<>", "==", "<", "<=", ">", ">="))),
+    ),
 
     // - a
-    unary_op_app: $ => prec(19, choice(
-       seq(field("unaryOp", "-"), field("arg", $._expr))),
-    ),
+    unary_op_app: $ => prec(19, seq(
+      field("negate", "-"),
+      field("arg", $._expr)
+    )),
 
     // f a
-    fun_app: $ => prec.left(20, seq(field("appF", $._sub_expr), field("appArg",$._sub_expr))),
+    fun_app: $ => prec.left(20, seq(
+      field("f", $._sub_expr),
+      field("x", $._sub_expr)
+    )),
 
     // a.0
-    index_accessor: $ => prec.right(21, seq(field("exp", $._sub_expr), ".", field("ix", $._sub_expr))),
+    index_accessor: $ => prec.right(21, seq(
+      field("box", $._sub_expr),
+      ".",
+      field("field", $._sub_expr)
+    )),
+
+    // { p with a = b; c = d }
+    rec_literal: $ => seq(
+      "{",
+      field("field", $.rec_assignment),
+      repeat(seq(";", field("field", $.rec_assignment))),
+      optional(";"),
+      "}"
+    ),
 
     // { p with a = b; c = d }
     rec_expr: $ => seq(
       "{",
-      optional(seq(field("updateTarget", $.Name), "with")),
-      field("assignment", $.rec_assignment),
-      repeat(seq(";", field("assignment", $.rec_assignment))),
+      field("subject", $.Name),
+      "with",
+      field("field", $.rec_assignment),
+      repeat(seq(";", field("field", $.rec_assignment))),
       optional(";"),
       "}"
     ),
     // a = b;
     rec_assignment: $ => seq(
-      field("assignmentLabel", $._expr),
+      field("field", $._expr),
       "=",
-      field("assignmentExpr", $._expr),
+      field("value", $._expr),
     ),
 
     // if a then b else c
@@ -166,32 +198,32 @@ module.exports = grammar({
       "if",
       field("condition", $._expr),
       "then",
-      field("thenBranch", $._program),
+      field("then", $._program),
       optional(seq(
         "else",
-        field("elseBranch", $._program)
+        field("else", $._program)
       ))
     )),
 
     // match x with ...
     match_expr: $ => prec.right(1,seq(
       "match",
-      field("matchTarget", $._expr),
+      field("subject", $._expr),
       "with",
       optional('|'),
-      sepBy('|', field("matching", $.matching))
+      sepBy('|', field("alt", $.matching))
     )),
 
     // Dog as x -> f x
     matching: $ => seq(
       field("pattern", $._pattern),
       "->",
-      field("matchingExpr", $._program)
+      field("body", $._program)
     ),
 
     lambda_expr: $ => seq(
       "fun",
-      repeat1(field("arg", $.paren_pattern)),
+      repeat1(field("arg", $._paren_pattern)),
       "->",
       field("body", $._expr)
     ),
@@ -203,13 +235,15 @@ module.exports = grammar({
     ),
 
     tup_expr: $ => prec.right(9,seq(
-      field("fst", $._expr),
-      ",",
-      field("snd", $._expr),
+      field("x", $._expr),
+      some(seq(
+        ",",
+        field("x", $._expr),
+      )),
     )),
 
     _expr: $ => choice(
-      $.call,
+      $._call,
       $._sub_expr,
       $.tup_expr
     ),
@@ -217,10 +251,12 @@ module.exports = grammar({
     _sub_expr: $ => choice(
       $.fun_app,
       $.paren_expr,
+      $.annot_expr,
       $.Name,
       $.Name_Capital,
       $._literal,
       $.rec_expr,
+      $.rec_literal,
       $.if_expr,
       $.lambda_expr,
       $.match_expr,
@@ -231,20 +267,23 @@ module.exports = grammar({
 
     block_expr: $ => seq(
       "begin",
-      sepBy(";", field("elem", $._program)),
+      sepBy(";", field("item", $._program)),
       "end",
     ),
 
     paren_expr: $ => seq(
       "(",
-      field("innerExpr", $._program),
-      optional(seq(
-        ":",
-        field("annotExpr", $.type_expr)
-      )),
+      field("expr", $._program),
       ")"
     ),
 
+    annot_expr: $ => seq(
+      "(",
+      field("expr", $._program),
+      ":",
+      field("type", $._type_expr),
+      ")",
+    ),
 
     //========== TYPE_EXPR ============
     // t, test, string, integer
@@ -254,41 +293,40 @@ module.exports = grammar({
     // a t, (a, b) t
     type_app: $ => prec(10,seq(
       choice(
-        field("argument", $.type_expr),
-        seq(
-          "(",
-          sepBy1(",", field("argument", choice($.type_expr, $.String))),
-          ")"
-        )
+        field("x", $._type_expr),
+        field("x", $.type_tuple),
       ),
-      field("typeAppCon", $.type_con)
+      field("f", $.type_con)
     )),
+
+    type_tuple: $ => seq(
+      "(",
+      sepBy1(",", field("x", choice($._type_expr, $.String))),
+      ")"
+    ),
+
     // string * integer
     type_product: $ => prec.right(5, seq(
-      field("fst", $.type_expr),
-      "*",
-      field("snd", $.type_expr)
+      field("x", $._type_expr),
+      some(seq(
+        "*",
+        field("x", $._type_expr)
+      ))
     )),
 
     // int -> string
     type_fun: $ => prec.right(8, seq(
-      field("domain", $.type_expr),
+      field("domain", $._type_expr),
       "->",
-      field("codomain", $.type_expr)
+      field("codomain", $._type_expr)
     )),
 
-    type_expr: $ => choice(
+    _type_expr: $ => choice(
       $.type_fun,
       $.type_product,
       $.type_app,
       $.type_con,
-      $.paren_type_expr,
-    ),
-
-    paren_type_expr: $ => seq(
-      "(",
-      field("innerTypeExpr", $.type_expr),
-      ")"
+      $.type_tuple,
     ),
 
     // Cat of string, Person of string * string
@@ -296,7 +334,7 @@ module.exports = grammar({
       field("constructor", $.data_con),
       optional(seq(
         "of",
-        field("constructor_data", $.type_expr)
+        field("type", $._type_expr)
       ))
     ),
 
@@ -310,34 +348,30 @@ module.exports = grammar({
     _label: $ => $.FieldName,
 
     type_rec_field: $ => seq(
-      field("recLabel", $._label),
+      field("field", $._label),
       ":",
-      field("labelType", $.type_expr)
+      field("type", $._type_expr)
     ),
 
     // { field1 : a; field2 : b }
     type_rec: $ => seq(
       "{",
-      sepBy(";", field("recField", $.type_rec_field)),
+      sepBy(";", field("field", $.type_rec_field)),
       optional(";"),
       "}"
     ),
 
-    type_def_body: $ => choice(
+    _type_def_body: $ => choice(
       $.type_sum,
-      $.type_expr,
+      $._type_expr,
       $.type_rec
-    ),
-
-    type_def: $ => seq(
-      field("typeName", $.type_con),
-      "=",
-      field("typeValue", $.type_def_body)
     ),
 
     type_decl: $ => seq(
       "type",
-      field("typeDef", $.type_def)
+      field("name", $.type_con),
+      "=",
+      field("type", $._type_def_body)
     ),
 
     _literal: $ => choice(

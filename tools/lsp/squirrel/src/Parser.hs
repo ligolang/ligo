@@ -6,6 +6,7 @@ import Control.Arrow
 import Control.Monad.Catch
 import Control.Monad.RWS hiding (Product)
 
+import Data.Functor
 import Data.String.Interpolate (i)
 import Data.Text (Text)
 import qualified Data.Text as Text
@@ -76,6 +77,9 @@ allErrors = map getBody . filter isUnnamedError
 
 getBody :: RawTree -> Text
 getBody (gist -> f) = ptSource f
+
+flag :: Text -> ParserM Bool
+flag name = fieldOpt name <&> maybe False (const True)
 
 field :: Text -> ParserM RawTree
 field name =

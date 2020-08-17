@@ -339,7 +339,7 @@ instance Collectable xs => Scoped (Product xs) CollectM (LIGO (Product xs)) Bind
   before r = \case
     Function recur name _args ty body -> do
       when recur do
-        def name (Just ty) (Just body) (getElem r)
+        def name ty (Just body) (getElem r)
       enter r
 
     TypeDecl ty body -> defType ty Star body (getElem r)
@@ -347,13 +347,13 @@ instance Collectable xs => Scoped (Product xs) CollectM (LIGO (Product xs)) Bind
 
   after r = \case
     Irrefutable name    body -> do leave; def name  Nothing  (Just body) (getElem r)
-    Var         name ty body -> do leave; def name       ty  (Just body) (getElem r) -- TODO: may be the source of bugs
-    Const       name ty body -> do leave; def name (Just ty) (Just body) (getElem r)
+    Var         name ty body -> do leave; def name ty (Just body) (getElem r) -- TODO: may be the source of bugs
+    Const       name ty body -> do leave; def name ty (Just body) (getElem r)
 
     Function recur name _args ty body -> do
       leave
       unless recur do
-        def name (Just ty) (Just body) (getElem r)
+        def name ty (Just body) (getElem r)
 
     _ -> skip
 
@@ -411,5 +411,5 @@ instance Scoped a CollectM (LIGO a) FieldName
 instance Scoped a CollectM (LIGO a) (Err Text)
 instance Scoped a CollectM (LIGO a) Language
 instance Scoped a CollectM (LIGO a) Parameters
-instance Scoped a CollectM (LIGO a) Ctor 
+instance Scoped a CollectM (LIGO a) Ctor
 instance Scoped a CollectM (LIGO a) ReasonExpr
