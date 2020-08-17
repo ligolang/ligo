@@ -11,7 +11,7 @@ function mkOp($, opExpr) {
 
 module.exports = grammar({
   name: 'CameLigo',
-  word: $ => $.Keyword,
+  word:   $ => $.Keyword,
   extras: $ => [$.ocaml_comment, $.comment, /\s/],
 
   rules: {
@@ -23,52 +23,47 @@ module.exports = grammar({
       $.include,
     ),
 
-    include: $ => seq('#include', field("filename", $.String)),
+    include: $ => seq(
+      '#include',
+      field("filename", $.String)
+    ),
 
     _attribute: $ => /\[@@[a-z]+\]/,
 
-    argument: $ => seq(
-      "(",
-      field("argPattern", $._pattern),
-      ":",
-      field("annotExpr", $.type_expr),
-      ")"
-    ),
-
     let_decl: $ => seq(
       "let",
-      field("binder", $._binder),
+      field("name", $._binder),
       optional(seq(
         ":",
-        field("annotExpr", $.type_expr)
+        field("type", $.type_expr)
       )),
       "=",
-      field("letExpr",$._let_expr),
+      field("body",$._program),
       repeat(field("attribute", $._attribute))
     ),
 
     _binder: $ => choice(
-      field("letBinds", $.let_binds),
-      field("letPat", $._pattern)
+      $.func_header,
+      $._pattern
     ),
 
     //========== EXPR ============
 
-    _let_expr: $ => choice(
+    _program: $ => choice(
       $.let_expr1,
       $._expr
     ),
 
-    let_binds: $ => prec(1, seq(
+    func_header: $ => prec(1, seq(
       optional(field("recursive", "rec")),
-      field("bindName", $.Name),
-      repeat(field("bindArgument", $.argument))
+      field("name", $.Name),
+      repeat(field("arg", $.paren_pattern))
     )),
 
     let_expr1: $ => seq(
       $.let_decl,
       "in",
-      field("innerExpr", $._let_expr)
+      field("innerExpr", $._program)
     ),
 
     // [1;2]
@@ -171,10 +166,10 @@ module.exports = grammar({
       "if",
       field("condition", $._expr),
       "then",
-      field("thenBranch", $._let_expr),
+      field("thenBranch", $._program),
       optional(seq(
         "else",
-        field("elseBranch", $._let_expr)
+        field("elseBranch", $._program)
       ))
     )),
 
@@ -191,12 +186,12 @@ module.exports = grammar({
     matching: $ => seq(
       field("pattern", $._pattern),
       "->",
-      field("matchingExpr", $._let_expr)
+      field("matchingExpr", $._program)
     ),
 
     lambda_expr: $ => seq(
       "fun",
-      repeat1(field("arg", $.argument)),
+      repeat1(field("arg", $.paren_pattern)),
       "->",
       field("body", $._expr)
     ),
@@ -236,13 +231,13 @@ module.exports = grammar({
 
     block_expr: $ => seq(
       "begin",
-      sepBy(";", field("elem", $._let_expr)),
+      sepBy(";", field("elem", $._program)),
       "end",
     ),
 
     paren_expr: $ => seq(
       "(",
-      field("innerExpr", $._let_expr),
+      field("innerExpr", $._program),
       optional(seq(
         ":",
         field("annotExpr", $.type_expr)

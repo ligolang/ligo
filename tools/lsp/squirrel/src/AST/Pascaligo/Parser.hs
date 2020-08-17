@@ -15,7 +15,7 @@ import ParseTree
 
 -- import Debug.Trace
 
-example :: FilePath
+-- example :: FilePath
 -- example = "../../../src/test/contracts/arithmetic.ligo"
 -- example = "../../../src/test/contracts/address.ligo"
 -- example = "../../../src/test/contracts/annotation.ligo"
@@ -36,7 +36,6 @@ example :: FilePath
 -- example = "../../../src/test/contracts/bytes_arithmetic.ligo"
 -- example = "../../../src/test/contracts/chain_id.ligo"
 -- example = "../../../src/test/contracts/closure-3.ligo"
-example = "../../../src/test/contracts/coase.ligo"
 
 sample' :: FilePath -> IO (LIGO Info)
 sample' f
@@ -49,16 +48,16 @@ source' f
   =   toParseTree (Path f)
   >>= print . pp
 
-sample :: IO ()
-sample
-  =   toParseTree (Path example)
-  >>= runParserM . recognise
-  >>= print . pp . fst
+-- sample :: IO ()
+-- sample
+--   =   toParseTree (Path example)
+--   >>= runParserM . recognise
+--   >>= print . pp . fst
 
-source :: IO ()
-source
-  =   toParseTree (Path example)
-  >>= print . pp
+-- source :: IO ()
+-- source
+--   =   toParseTree (Path example)
+--   >>= print . pp
 
 recognise :: RawTree -> ParserM (LIGO Info)
 recognise = descent (\_ -> error . show . pp) $ map usingScope

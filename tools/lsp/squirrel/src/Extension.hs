@@ -23,9 +23,9 @@ data UnsupportedExtension = UnsupportedExtension String
 getExt :: MonadThrow m => FilePath -> m Ext
 getExt path = do
   case takeExtension path of
-    "religo" -> return Reason
-    "ligo"   -> return Pascal
-    "mligo"  -> return Caml
+    ".religo" -> return Reason
+    ".ligo"   -> return Pascal
+    ".mligo"  -> return Caml
     ext      -> throwM $ UnsupportedExtension ext
 
 onExt :: ElimExt a -> FilePath -> IO a

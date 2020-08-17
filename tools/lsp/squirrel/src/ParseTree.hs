@@ -113,10 +113,8 @@ toParseTree = unsafeDebounce \fin -> do
     } (srcPath fin)
 
   parser <- ts_parser_new
-  -- True   <- ts_parser_set_language parser tree_sitter_PascaLigo
-  True <- ts_parser_set_language parser language
-
-  src <- srcToBytestring fin
+  True   <- ts_parser_set_language parser language
+  src    <- srcToBytestring fin
 
   BS.useAsCStringLen src \(str, len) -> do
     tree <- ts_parser_parse_string parser nullPtr str len
@@ -136,7 +134,7 @@ toParseTree = unsafeDebounce \fin -> do
           trees <- for nodes \node' -> do
             (only -> (r :> _, tree :: ParseTree RawTree)) <- go fin src node'
             field <-
-              if nodeFieldName node' == nullPtr
+              if   nodeFieldName node' == nullPtr
               then return ""
               else peekCString $ nodeFieldName node'
             return $ make (r :> Text.pack field :> Nil, tree)
@@ -146,7 +144,7 @@ toParseTree = unsafeDebounce \fin -> do
           let
             start2D  = nodeStartPoint node
             finish2D = nodeEndPoint   node
-            i = fromIntegral
+            i        = fromIntegral
 
           let
             range = Range
@@ -166,7 +164,6 @@ toParseTree = unsafeDebounce \fin -> do
 
           return $ make (range :> "" :> Nil, ParseTree
             { ptName     = Text.pack ty
-            -- , ptChildren = fromList . fmap (Comment,) $ trees -- TODO
             , ptChildren = trees
             , ptSource   = cutOut range src
             })
