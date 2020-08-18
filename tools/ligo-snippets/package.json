@@ -44,6 +44,7 @@
     "prism-react-renderer": "^1.1.1",
     "prismjs": "^1.20.0",
     "react-codejar": "^1.0.1",
+    "react-spinners-kit": "^1.9.1",
     "yaml": "^1.9.2"
   }
 }

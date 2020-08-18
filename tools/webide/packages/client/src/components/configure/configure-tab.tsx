@@ -33,10 +33,12 @@ const Container = styled.div<{ visible?: boolean }>`
   transition: transform 0.2s ease-in;
 
   ${props =>
-    props.visible &&
+    props.visible ?
     css`
       transform: translateX(0px);
-    `}
+    ` : css`
+      visibility: hidden;
+    `} 
 `;
 
 const CommonActionsGroup = styled.div`

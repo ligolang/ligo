@@ -6,6 +6,7 @@ import { AppState } from '../../redux/app';
 import { ResultState } from '../../redux/result';
 import { OutputToolbarComponent } from './output-toolbar';
 import { copyOutput, downloadOutput } from './utils';
+import { CombSpinner } from 'react-spinners-kit';
 
 const Container = styled.div<{ visible?: boolean }>`
   display: flex;
@@ -22,9 +23,12 @@ const Output = styled.div`
 
 const Pre = styled.pre`
   margin: 0;
+  width: -webkit-fill-available;
 `;
 
+
 export const CompileOutputPane = () => {
+  var parse = require('shell-quote').parse;
   const output = useSelector<AppState, ResultState['output']>(
     state => state.result.output
   );

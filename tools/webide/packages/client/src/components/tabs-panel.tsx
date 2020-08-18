@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import styled, { css } from 'styled-components';
 
 import { ConfigureTabComponent } from './configure/configure-tab';
-import { OutputTab } from './output/output-tab';
 
 const Container = styled.div`
   flex: 1;
@@ -14,6 +13,7 @@ const Header = styled.div`
   display: flex;
   border-bottom: 5px solid var(--blue_trans1);
   min-height: 2.5em;
+  margin-left: 15px;
 `;
 
 const Label = styled.span`
@@ -41,7 +41,8 @@ const Underline = styled.div<{ selectedTab: number }>`
   background-color: var(--orange);
   height: 5px;
   margin-bottom: -5px;
-  width: calc(100% / 2);
+  margin-left: 15px;
+  width: 100%;
   transition: transform 0.2s ease-in;
 
   ${props =>
@@ -51,7 +52,7 @@ const Underline = styled.div<{ selectedTab: number }>`
 `;
 
 const Content = styled.div`
-  position: relative;
+
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -59,8 +60,7 @@ const Content = styled.div`
 
 export const TabsPanelComponent = () => {
   const TABS = [
-    { index: 0, label: 'Configure', id: 'configure-tab' },
-    { index: 1, label: 'Output', id: 'output-tab' }
+    { index: 0, label: 'Configure', id: 'configure-tab' }
   ];
 
   const [selectedTab, selectTab] = useState(TABS[0]);
@@ -72,26 +72,26 @@ export const TabsPanelComponent = () => {
           <Tab
             key={tab.id}
             id={tab.id}
-            selected={selectedTab.index === tab.index}
+            selected={true}
           >
             <Label onClick={() => selectTab(tab)}>{tab.label}</Label>
           </Tab>
         ))}
       </Header>
-      <Underline selectedTab={selectedTab.index}></Underline>
+      <Underline selectedTab={0}></Underline>
       <Content>
         <ConfigureTabComponent
-          selected={selectedTab.index === 0}
+          selected={true}
           onRun={() => {
             selectTab(TABS[1]);
           }}
         ></ConfigureTabComponent>
-        <OutputTab
+        {/* <OutputTab
           selected={selectedTab.index === 1}
           onCancel={() => {
             selectTab(TABS[0]);
           }}
-        ></OutputTab>
+        ></OutputTab> */}
       </Content>
     </Container>
   );

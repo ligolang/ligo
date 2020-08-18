@@ -35,6 +35,7 @@ const Button = styled.a`
     background-color: var(--blue);
     color: rgb(255, 255, 255);
     transform: scale(1.2);
+    text-decoration: none;
   }
 `;
 

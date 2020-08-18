@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
+import { compressToEncodedURIComponent } from 'lz-string';
 
 import { AppState } from '../../redux/app';
 import { ResultState } from '../../redux/result';
@@ -28,9 +29,12 @@ export const OutputToolbarComponent = (props: {
   onCopy?: () => void;
   onDownload?: () => void;
 }) => {
-  const output = useSelector<AppState, ResultState['output']>(
+  // const output = compressToEncodedURIComponent(useSelector<AppState, ResultState['output']>(
+  //   state => state.result.output
+  // ));
+  const output = (useSelector<AppState, ResultState['output']>(
     state => state.result.output
-  );
+  ));
 
   return (
     <Toolbar>
@@ -48,9 +52,10 @@ export const OutputToolbarComponent = (props: {
           <Link
             target="_blank"
             rel="noopener noreferrer"
-            href={`https://try-michelson.tzalpha.net/?source=${encodeURIComponent(
-              output
-            )}`}
+            // href={`https://try-michelson.tzalpha.net/?source=${encodeURIComponent(
+            //   output
+            // )}`}
+            href={`https://try-michelson.tzalpha.net/?${output}`}
           >
             View in Try-Michelson IDE
           </Link>

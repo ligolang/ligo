@@ -13,23 +13,32 @@ import { Loading } from './loading';
 import { OutputPane } from './output-pane';
 
 const Container = styled.div<{ visible?: boolean }>`
-  position: absolute;
+ 
   box-sizing: border-box;
-  width: 100%;
+  width: -webkit-fill-available;
   height: 100%;
+  minHeight: "50px";
+  overflow-x: hidden; 
+  overflow-y: auto; 
+  border: 1px solid grey;
+  background-color: rgba(220,220,220, 1);
 
   font-family: Menlo, Monaco, 'Courier New', monospace;
   display: flex;
   flex-direction: column;
 
-  transform: translateX(100%);
+ 
   transition: transform 0.2s ease-in;
 
   ${props =>
-    props.visible &&
+    props.visible ?
     css`
       transform: translateX(0px);
-    `}
+    `
+    : css`
+    visibility: hidden;
+    transform: translateX(0px);
+  `}
 `;
 
 export const OutputTab = (props: {

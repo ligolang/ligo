@@ -36,7 +36,7 @@ export const DryRunPaneComponent = () => {
         <Label htmlFor="parameters">Parameters</Label>
         <Textarea
           id="parameters"
-          rows={9}
+          rows={5}
           value={parameters}
           onChange={ev =>
             dispatch({ ...new ChangeParametersAction(ev.target.value) })
@@ -47,7 +47,7 @@ export const DryRunPaneComponent = () => {
         <Label htmlFor="storage">Storage</Label>
         <Textarea
           id="storage"
-          rows={9}
+          rows={5}
           value={storage}
           onChange={ev =>
             dispatch({ ...new ChangeStorageAction(ev.target.value) })
