@@ -40,7 +40,6 @@ let unparse_tracer errs : all = `Main_unparse_tracer errs
 let typecheck_contract_tracer c errs : all = `Main_typecheck_contract_tracer (c,errs)
 let typecheck_parameters_tracer _ : all = `Main_typecheck_parameter
 
-let gas_exhaustion : all = `Main_gas_exhaustion
 let unknown : all = `Main_unknown
 
 let unknown_failwith_type : all = `Main_unknown_failwith_type
@@ -53,8 +52,10 @@ let parsing_input_tracer err : all = `Main_parse_michelson_input err
 let parsing_code_tracer err : all = `Main_parse_michelson_code err
 let error_of_execution_tracer err : all = `Main_michelson_execution_error err
 
+let invalid_balance s : all = `Main_invalid_balance s
 let invalid_amount s : all = `Main_invalid_amount s
-let invalid_address s : all = `Main_invalid_address s
+let invalid_source s : all = `Main_invalid_source s
+let invalid_sender s : all = `Main_invalid_sender s
 let invalid_timestamp s : all = `Main_invalid_timestamp s
 
 (* test errors *)

@@ -4,7 +4,6 @@ type spilling_error = [
   | `Spilling_corner_case of string * string
   | `Spilling_no_type_variable of Ast_typed.type_variable
   | `Spilling_unsupported_pattern_matching of Location.t
-  | `Spilling_unsupported_iterator of Location.t
   | `Spilling_unsupported_recursive_function of Ast_typed.expression_variable
   | `Spilling_tracer of Location.t * spilling_error
   | `Spilling_wrong_mini_c_value of Ast_typed.type_expression * Mini_c.value
@@ -17,17 +16,13 @@ let translation_tracer loc err = `Spilling_tracer (loc , err)
 
 let corner_case ~loc desc = `Spilling_corner_case (loc, desc)
 let corner_case_message () =
-  "we don't have a good error message for this case. we are
-   striving find ways to better report them and find the use-cases that generate
-   them. please report this to the developers."
+  "Sorry, we don't have a proper error message for this error. Please report \
+  this use case so we can improve on this."
 
 let no_type_variable name = `Spilling_no_type_variable name
 
 let unsupported_tuple_pattern_matching location =
   `Spilling_unsupported_pattern_matching location
-
-let unsupported_iterator location =
-  `Spilling_unsupported_iterator location
 
 let unsupported_recursive_function expression_variable =
   `Spilling_unsupported_recursive_function expression_variable
@@ -46,32 +41,30 @@ let rec error_ppformat : display_format:string display_format ->
     match a with
     | `Spilling_tracer (loc,err) ->
       Format.fprintf f
-        "@[<hv>%a@Translating expression@%a@]"
+        "@[<hv>%a@.Translating expression@.%a@]"
         Location.pp loc
         (error_ppformat ~display_format) err
     | `Spilling_corner_case (loc,desc) ->
       let s = Format.asprintf "%s\n corner case: %s\n%s" loc desc (corner_case_message ()) in
       Format.pp_print_string f s
     | `Spilling_no_type_variable tv ->
-      let s = Format.asprintf "unbound type variables can't be transpiled : %a" Var.pp tv in
+      let s = Format.asprintf "Type \"%a\" not found." Var.pp tv in
       Format.pp_print_string f s
     | `Spilling_unsupported_pattern_matching loc ->
-      let s = Format.asprintf "%a\n unsupported pattern-matching: tuple patterns aren't supported yet" Location.pp loc in
-      Format.pp_print_string f s
-    | `Spilling_unsupported_iterator loc ->
-      let s = Format.asprintf "%a\n unsupported iterator: only lambda are supported as iterators" Location.pp loc in
+      let s = Format.asprintf "%a@.Invalid pattern matching.@Tuple patterns are not (yet) supported." Location.pp loc in
       Format.pp_print_string f s
     | `Spilling_unsupported_recursive_function var ->
-      let s = Format.asprintf "Recursive functions with only one variable are supported : %a"
+      let s = Format.asprintf "%a@.Invalid recursive function \"%a\".@.A recursive function can only have one argument."
+        Location.pp var.location
         Ast_typed.PP.expression_variable var in
       Format.pp_print_string f s
     | `Spilling_wrong_mini_c_value (expected , actual) ->
-      let s = Format.asprintf "illed typed intermediary value: expected %a got %a"
+      let s = Format.asprintf "Invalid type.@.Expected \"%a\", but got \"%a\"."
         Ast_typed.PP.type_expression expected 
         Mini_c.PP.value actual in
       Format.pp_print_string f s
     | `Spilling_bad_decompile bad ->
-      let s = Format.asprintf "can not untranspile %a"
+      let s = Format.asprintf "Cannot untranspile: %a"
         Mini_c.PP.value bad in
       Format.pp_print_string f s
   )
@@ -111,13 +104,6 @@ let rec error_jsonformat : spilling_error -> Yojson.t = fun a ->
     let content = `Assoc [
       ("location", `String loc');
       ("message", `String "unsupported tuple in pattern-matching"); ]
-    in
-    json_error ~stage ~content
-  | `Spilling_unsupported_iterator loc ->
-    let loc' = Format.asprintf "%a" Location.pp loc in
-    let content = `Assoc [
-      ("location", `String loc');
-      ("message", `String "unsupported iterator"); ]
     in
     json_error ~stage ~content
   | `Spilling_unsupported_recursive_function var ->

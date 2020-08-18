@@ -19,11 +19,11 @@ let error_ppformat : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
-    | `Self_mini_c_bad_self_address cst ->
-      let s = Format.asprintf "%a is only allowed at top-level" Stage_common.PP.constant cst in
+    | `Self_mini_c_bad_self_address _cst ->
+      let s = Format.asprintf "\"Tezos.self_address\" must be used directly and cannot be used via another function."  in
       Format.pp_print_string f s ;
-    | `Self_mini_c_not_a_function -> Format.fprintf f "getting function has failed"
-    | `Self_mini_c_aggregation -> Format.fprintf f "could not aggregate"
+    | `Self_mini_c_not_a_function -> Format.fprintf f "Invalid type for entrypoint.@.An entrypoint must of type \"parameter * storage -> operations list * storage\"."
+    | `Self_mini_c_aggregation -> Format.fprintf f "Invalid type for entrypoint.@.An entrypoint must of type \"parameter * storage -> operations list * storage\"."
   )
 
 let error_jsonformat : self_mini_c_error -> Yojson.t = fun a ->

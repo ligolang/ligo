@@ -25,7 +25,8 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "bad_michelson_or.mligo", line 6, characters 12-27
-          michelson_or contructor M_right must be annotated with a sum type
+          Incorrect usage of type "michelson_or".
+          The contructor "M_right" must be annotated with a variant type.
 
 
           If you're not sure how to fix this error, you can do one of the following:

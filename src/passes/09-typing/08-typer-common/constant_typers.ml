@@ -27,15 +27,15 @@ open Ast_typed
   Various helpers are defined bellow.
 *)
 
-let need_real_type tv = trace_option not_annotated @@ 
+let need_real_type tv loc = trace_option (not_annotated loc) @@ 
 match tv.type_content with T_wildcard -> None | _ -> Some tv
 
 
-let none = typer_0 "NONE" @@ fun tv ->
-  need_real_type tv
+let none = typer_0 "NONE" @@ fun tv l ->
+  need_real_type tv l
 
-let set_empty = typer_0 "SET_EMPTY" @@ fun tv ->
-  need_real_type tv
+let set_empty = typer_0 "SET_EMPTY" @@ fun tv l ->
+  need_real_type tv l
 
 let sub = typer_2 "SUB" @@ fun a b ->
   if (eq_1 a (t_int ()) || eq_1 a (t_nat ()))
@@ -59,13 +59,13 @@ let map_remove : typer = typer_2 "MAP_REMOVE" @@ fun k m ->
   let%bind () = assert_eq src k in
   ok m
 
-let map_empty = typer_0 "MAP_EMPTY" @@ fun tv ->
-  let%bind tv = need_real_type tv in
+let map_empty = typer_0 "MAP_EMPTY" @@ fun tv l ->
+  let%bind tv = need_real_type tv l in
   let%bind (src, dst) = trace_option (expected_map tv) @@ get_t_map tv in
   ok @@ t_map src dst
 
-let big_map_empty = typer_0 "BIG_MAP_EMPTY" @@ fun tv ->
-  let%bind tv = need_real_type tv in
+let big_map_empty = typer_0 "BIG_MAP_EMPTY" @@ fun tv l ->
+  let%bind tv = need_real_type tv l in
   let%bind (src, dst) = trace_option (expected_big_map tv) @@ get_t_big_map tv in
   ok @@ t_big_map src dst
 
@@ -177,7 +177,7 @@ let bytes_pack : typer = typer_1 "PACK" @@ fun _t ->
 
 let bytes_unpack = typer_1_opt "UNPACK" @@ fun input output ->
   let%bind () = trace_option (expected_bytes input) @@ assert_t_bytes input in
-  need_real_type output
+  need_real_type output input.location
 
 let hash256 = typer_1 "SHA256" @@ fun t ->
   let%bind () = trace_option (expected_bytes t) @@ assert_t_bytes t in
@@ -217,12 +217,12 @@ let address = typer_1 "ADDRESS" @@ fun c ->
   let%bind () = trace_option (expected_contract c) @@ assert_t_contract c in
   ok @@ t_address ()
 
-let self_address = typer_0 "SELF_ADDRESS" @@ fun _ ->
+let self_address = typer_0 "SELF_ADDRESS" @@ fun _ _ ->
   ok @@ t_address ()
 
 let self = typer_1_opt "SELF" @@ fun entrypoint_as_string tv ->
   let%bind () = trace_option (expected_string entrypoint_as_string) @@ assert_t_string entrypoint_as_string in
-  need_real_type tv
+  need_real_type tv entrypoint_as_string.location
 
 let implicit_account = typer_1 "IMPLICIT_ACCOUNT" @@ fun key_hash ->
   let%bind () = trace_option (expected_key_hash key_hash) @@ assert_t_key_hash key_hash in
@@ -251,14 +251,14 @@ let create_contract = typer_4 "CREATE_CONTRACT" @@ fun f kh_opt amount init_stor
 let get_contract = typer_1_opt "CONTRACT" @@ fun addr_tv tv ->
   let t_addr = t_address () in
   let%bind () = assert_eq addr_tv t_addr in
-  let%bind tv = need_real_type tv in
+  let%bind tv = need_real_type tv addr_tv.location in
   let%bind tv' = trace_option (expected_contract tv) @@ get_t_contract tv in
   ok @@ t_contract tv'
 
 let get_contract_opt = typer_1_opt "CONTRACT OPT" @@ fun addr_tv tv ->
   let t_addr = t_address () in
   let%bind () = assert_eq addr_tv t_addr in
-  let%bind tv = need_real_type tv in
+  let%bind tv = need_real_type tv addr_tv.location in
   let%bind tv = trace_option (expected_option tv) @@ get_t_option tv in
   let%bind tv' = trace_option (expected_contract tv) @@ get_t_contract tv in
   ok @@ t_option (t_contract tv')
@@ -268,7 +268,7 @@ let get_entrypoint = typer_2_opt "CONTRACT_ENTRYPOINT" @@ fun entry_tv addr_tv t
   let t_addr = t_address () in
   let%bind () = assert_eq entry_tv t_string in
   let%bind () = assert_eq addr_tv t_addr in
-  let%bind tv = need_real_type tv in
+  let%bind tv = need_real_type tv entry_tv.location in
   let%bind tv' = trace_option (expected_contract tv) @@ get_t_contract tv in
   ok @@ t_contract tv'
 
@@ -277,7 +277,7 @@ let get_entrypoint_opt = typer_2_opt "CONTRACT_ENTRYPOINT_OPT" @@ fun entry_tv a
   let t_addr = t_address () in
   let%bind () = assert_eq entry_tv t_string in
   let%bind () = assert_eq addr_tv t_addr in
-  let%bind tv = need_real_type tv in
+  let%bind tv = need_real_type tv entry_tv.location in
   let%bind tv = trace_option (expected_option tv) @@ get_t_option tv in
   let%bind tv' = trace_option (expected_contract tv) @@ get_t_contract tv in
   ok @@ t_option (t_contract tv' )
@@ -415,8 +415,8 @@ let set_iter = typer_2 "SET_ITER" @@ fun body set ->
   let%bind () = assert_eq key arg in
   ok (t_unit ())
 
-let list_empty = typer_0 "LIST_EMPTY" @@ fun tv ->
-  need_real_type tv
+let list_empty = typer_0 "LIST_EMPTY" @@ fun tv l ->
+  need_real_type tv l
 
 let list_iter = typer_2 "LIST_ITER" @@ fun body lst ->
   let%bind (arg , res) = trace_option (expected_function body) @@ get_t_function body in
@@ -435,17 +435,15 @@ let list_fold = typer_3 "LIST_FOLD" @@ fun body lst init ->
   let%bind (arg , res) = trace_option (expected_function body) @@ get_t_function body in
   let%bind (prec , cur) = trace_option (expected_pair arg) @@ get_t_pair arg in
   let%bind key = trace_option (expected_list lst) @@ get_t_list lst in
-  trace bad_list_fold_tracer @@
-    let%bind () = assert_eq key cur in
-    let%bind () = assert_eq prec res in
-    let%bind () = assert_eq res init in
-    ok res
+  let%bind () = assert_eq key cur in
+  let%bind () = assert_eq prec res in
+  let%bind () = assert_eq res init in
+  ok res
 
 let set_fold = typer_3 "SET_FOLD" @@ fun body lst init ->
   let%bind (arg , res) = trace_option (expected_function body) @@ get_t_function body in
   let%bind (prec , cur) = trace_option (expected_pair arg) @@ get_t_pair arg in
   let%bind key = trace_option (expected_set lst) @@ get_t_set lst in
-  trace bad_set_fold_tracer @@
   let%bind () = assert_eq key cur in
   let%bind () = assert_eq prec res in
   let%bind () = assert_eq res init in
@@ -456,7 +454,6 @@ let map_fold = typer_3 "MAP_FOLD" @@ fun body map init ->
   let%bind (prec , cur) = trace_option (expected_pair arg) @@ get_t_pair arg in
   let%bind (key , value) = trace_option (expected_map map) @@ get_t_map map in
   let kv = t_pair key value in
-  trace bad_map_fold_tracer @@
   let%bind () = assert_eq kv cur in
   let%bind () = assert_eq prec res in
   let%bind () = assert_eq res init in
@@ -589,7 +586,7 @@ let convert_to_left_comb = typer_1 "CONVERT_TO_LEFT_COMB" @@ fun t ->
     | _ -> fail @@ wrong_converter t
 
 let convert_from_right_comb = typer_1_opt "CONVERT_FROM_RIGHT_COMB" @@ fun t tv ->
-  let%bind dst_t = need_real_type tv in
+  let%bind dst_t = need_real_type tv t.location in
   match t.type_content with
     | T_record src_lmap ->
       let%bind dst_lmap = trace_option (expected_record dst_t) @@ get_t_record dst_t in
@@ -602,7 +599,7 @@ let convert_from_right_comb = typer_1_opt "CONVERT_FROM_RIGHT_COMB" @@ fun t tv 
     | _ -> fail @@ wrong_converter t
 
 let convert_from_left_comb = typer_1_opt "CONVERT_FROM_LEFT_COMB" @@ fun t tv ->
-  let%bind dst_t = need_real_type tv in
+  let%bind dst_t = need_real_type tv t.location in
   match t.type_content with
     | T_record src_lmap ->
       let%bind dst_lmap = trace_option (expected_record dst_t) @@ get_t_record dst_t in
@@ -645,13 +642,13 @@ let rec pair_comparator : string -> typer = fun s -> typer_2 s @@ fun a b ->
 and comparator : string -> typer = fun s -> typer_2 s @@ fun a b ->
   bind_or (pair_comparator s [a;b] @@ t_wildcard (), simple_comparator s [a;b] @@ t_wildcard ())
 
-let constant_typers c : (typer , typer_error) result = match c with
+let constant_typers c loc : (typer , typer_error) result = match c with
   | C_INT                 -> ok @@ int ;
-  | C_UNIT                -> ok @@ unit ;
-  | C_NOW                 -> ok @@ now ;
+  | C_UNIT                -> ok @@ unit loc;
+  | C_NOW                 -> ok @@ now loc;
   | C_IS_NAT              -> ok @@ is_nat ;
   | C_SOME                -> ok @@ some ;
-  | C_NONE                -> ok @@ none ;
+  | C_NONE                -> ok @@ none loc ;
   | C_ASSERTION           -> ok @@ assertion ;
   | C_FAILWITH            -> ok @@ failwith_ ;
   (* LOOPS *)
@@ -688,7 +685,7 @@ let constant_typers c : (typer , typer_error) result = match c with
   | C_BYTES_PACK          -> ok @@ bytes_pack ;
   | C_BYTES_UNPACK        -> ok @@ bytes_unpack ;
   (* SET  *)
-  | C_SET_EMPTY           -> ok @@ set_empty ;
+  | C_SET_EMPTY           -> ok @@ set_empty loc;
   | C_SET_ADD             -> ok @@ set_add ;
   | C_SET_REMOVE          -> ok @@ set_remove ;
   | C_SET_ITER            -> ok @@ set_iter ;
@@ -697,13 +694,13 @@ let constant_typers c : (typer , typer_error) result = match c with
 
   (* LIST *)
   | C_CONS                -> ok @@ cons ;
-  | C_LIST_EMPTY          -> ok @@ list_empty ;
+  | C_LIST_EMPTY          -> ok @@ list_empty loc;
   | C_LIST_ITER           -> ok @@ list_iter ;
   | C_LIST_MAP            -> ok @@ list_map ;
   | C_LIST_FOLD           -> ok @@ list_fold ;
   (* MAP *)
-  | C_MAP_EMPTY           -> ok @@ map_empty ;
-  | C_BIG_MAP_EMPTY       -> ok @@ big_map_empty ;
+  | C_MAP_EMPTY           -> ok @@ map_empty loc;
+  | C_BIG_MAP_EMPTY       -> ok @@ big_map_empty loc;
   | C_MAP_ADD             -> ok @@ map_add ;
   | C_MAP_REMOVE          -> ok @@ map_remove ;
   | C_MAP_UPDATE          -> ok @@ map_update ;
@@ -720,20 +717,20 @@ let constant_typers c : (typer , typer_error) result = match c with
   | C_BLAKE2b             -> ok @@ blake2b ;
   | C_HASH_KEY            -> ok @@ hash_key ;
   | C_CHECK_SIGNATURE     -> ok @@ check_signature ;
-  | C_CHAIN_ID            -> ok @@ chain_id ;
+  | C_CHAIN_ID            -> ok @@ chain_id loc;
   (*BLOCKCHAIN *)
   | C_CONTRACT            -> ok @@ get_contract ;
   | C_CONTRACT_OPT        -> ok @@ get_contract_opt ;
   | C_CONTRACT_ENTRYPOINT -> ok @@ get_entrypoint ;
   | C_CONTRACT_ENTRYPOINT_OPT -> ok @@ get_entrypoint_opt ;
-  | C_AMOUNT              -> ok @@ amount ;
-  | C_BALANCE             -> ok @@ balance ;
+  | C_AMOUNT              -> ok @@ amount loc;
+  | C_BALANCE             -> ok @@ balance loc;
   | C_CALL                -> ok @@ transaction ;
-  | C_SENDER              -> ok @@ sender ;
-  | C_SOURCE              -> ok @@ source ;
-  | C_ADDRESS             -> ok @@ address ;
+  | C_SENDER              -> ok @@ sender loc;
+  | C_SOURCE              -> ok @@ source loc;
+  | C_ADDRESS             -> ok @@ address;
   | C_SELF                -> ok @@ self;
-  | C_SELF_ADDRESS        -> ok @@ self_address;
+  | C_SELF_ADDRESS        -> ok @@ self_address loc;
   | C_IMPLICIT_ACCOUNT    -> ok @@ implicit_account;
   | C_SET_DELEGATE        -> ok @@ set_delegate ;
   | C_CREATE_CONTRACT     -> ok @@ create_contract ;

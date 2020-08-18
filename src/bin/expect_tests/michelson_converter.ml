@@ -10,7 +10,8 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "michelson_converter_no_annotation.mligo", line 4, characters 9-39
-          Can't retrieve type declaration order in the converted record, you need to annotate it
+          Incorrect argument provided to Layout.convert_to_(left|right)_comb.
+          The given argument must be annotated with the type of the value.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -24,7 +25,8 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "michelson_converter_short_record.mligo", line 1, characters 10-23
-          Converted record must have at least two elements
+          Incorrect argument provided to Layout.convert_to_(left|right)_comb.
+          The record must have at least two elements.
 
 
           If you're not sure how to fix this error, you can do one of the following:

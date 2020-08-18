@@ -9,7 +9,9 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "", line 0, characters 0-33
-          Badly formatted literal: Signature thisisnotasignature
+          Ill-formed literal "Signature thisisnotasignature".
+          In the case of an address, a string is expected prefixed by either tz1, tz2, tz3 or KT1 and followed by a Base58 encoded hash and terminated by a 4-byte checksum.
+          In the case of a key_hash, signature, or key a Base58 encoded hash is expected.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -28,7 +30,9 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "", line 0, characters 0-27
-          Badly formatted literal: key thisisnotapublickey
+          Ill-formed literal "key thisisnotapublickey".
+          In the case of an address, a string is expected prefixed by either tz1, tz2, tz3 or KT1 and followed by a Base58 encoded hash and terminated by a 4-byte checksum.
+          In the case of a key_hash, signature, or key a Base58 encoded hash is expected.
 
 
           If you're not sure how to fix this error, you can do one of the following:

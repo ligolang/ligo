@@ -395,7 +395,7 @@ fun cases ->
         return @@ Var.of_name var.value
     | PPar par ->
         aux par.value.inside 
-    | _ -> fail @@ unsupported_non_var_pattern pattern
+    | _ -> fail @@ unsupported_pattern_type [pattern]
     in aux pattern
   in
   let compile_list_pattern (cases : (CST.pattern * _) list) =
@@ -449,7 +449,7 @@ fun cases ->
     let binder = (var, t_wildcard ~loc ()) in
     return @@ AST.Match_variable (binder, expr)
   | (PTuple tuple, _expr), [] ->
-    fail @@ unsupported_tuple_pattern @@ CST.PTuple tuple
+    fail @@ unsupported_pattern_type @@ [CST.PTuple tuple]
   | (PList _, _), _ ->
     let%bind (match_nil,match_cons) = compile_list_pattern @@ List.Ne.to_list cases in
     return @@ AST.Match_list {match_nil;match_cons}
@@ -492,7 +492,7 @@ and compile_let_binding ?kwd_rec attributes binding =
     let%bind expr = match kwd_rec with
       Some reg ->
         let%bind fun_type = trace_option (untyped_recursive_fun reg) @@ lhs_type in
-        let%bind lambda = trace_option (corner_case "recursion on non function") @@ get_e_lambda expr.expression_content in
+        let%bind lambda = trace_option (recursion_on_non_function expr.location) @@ get_e_lambda expr.expression_content in
         ok @@ e_recursive ~loc:(Location.lift reg) fun_binder fun_type lambda
     | None   ->
         ok @@ expr
