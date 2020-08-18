@@ -8,10 +8,10 @@ let assert_type_expression_eq ((tv',tv):type_expression * type_expression) : (un
 
 type typer = type_expression list -> type_expression -> (type_expression, typer_error) result
 
-let typer_0 : string -> (type_expression -> (type_expression, typer_error) result) -> typer = fun s f lst tv_opt ->
+let typer_0 : string -> (type_expression -> Location.t -> (type_expression, typer_error) result) -> Location.t -> typer = fun s f l lst tv_opt ->
   match lst with
   | [] -> (
-    let%bind tv' = f tv_opt in
+    let%bind tv' = f tv_opt l in
     ok (tv')
   )
   | _ -> fail @@ wrong_param_number s 0 lst
@@ -81,7 +81,7 @@ let typer_6 : string
     )
   | _ -> fail @@ wrong_param_number s 6 lst
 
-let constant' name cst = typer_0 name (fun _ -> ok cst)
+let constant' name cst = typer_0 name (fun _ _ -> ok cst)
 let eq_1 a cst = type_expression_eq (a , cst)
 let eq_2 (a , b) cst = type_expression_eq (a , cst) && type_expression_eq (b , cst)
 

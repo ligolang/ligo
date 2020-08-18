@@ -405,9 +405,9 @@ and type_match : environment -> _ O'.typer_state -> O.type_expression -> I.match
           Assert.assert_true (corner_case "match case") (List.mem c match_cases)
         in
         let%bind () =
-          trace_strong (match_missing_case i loc) @@
+          trace_strong (match_missing_case variant_cases match_cases loc) @@
           bind_iter_list test_case variant_cases in
-        let%bind () = Assert.assert_true (match_redundant_case i loc) @@
+        let%bind () = Assert.assert_true (match_extra_case variant_cases match_cases loc) @@
           List.(length variant_cases = length match_cases) in
         ok ()
       in

@@ -30,11 +30,12 @@ let%expect_test _ =
   run_ligo_bad [ "compile-storage" ; contract "coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ] ;
   [%expect {|
     ligo: error
-          Provided storage type does not match contract storage type
+          Invalid command line argument.
+          The provided storage does not have the correct type for the contract.
 
-          Bad types:
-          expected record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]
-          got sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]
+          Invalid type(s).
+          Expected: "record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]", but got: "
+          sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]".
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -47,11 +48,12 @@ let%expect_test _ =
   run_ligo_bad [ "compile-parameter" ; contract "coase.ligo" ; "main" ; "record cards = (map end : cards) ; card_patterns = (map end : card_patterns) ; next_id = 3n ; end" ] ;
   [%expect {|
     ligo: error
-          Provided parameter type does not match contract parameter type
+          Invalid command line argument.
+          The provided parameter does not have the correct type for the given entrypoint.
 
-          Bad types:
-          expected sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]
-          got record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]
+          Invalid type(s).
+          Expected: "sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]", but got: "
+          record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]".
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1020,7 +1022,9 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "bad_address_format.religo", line 2, characters 26-48
-          Badly formatted literal: @"KT1badaddr"
+          Ill-formed literal "@"KT1badaddr"".
+          In the case of an address, a string is expected prefixed by either tz1, tz2, tz3 or KT1 and followed by a Base58 encoded hash and terminated by a 4-byte checksum.
+          In the case of a key_hash, signature, or key a Base58 encoded hash is expected.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1035,7 +1039,8 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "bad_timestamp.ligo", line 7, characters 30-44
-          Badly formatted timestamp 'badtimestamp'
+          Ill-formed timestamp "badtimestamp".
+          At this point, a string with a RFC3339 notation or the number of seconds since Epoch is expected.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1073,7 +1078,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "self_in_lambda.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-          SELF_ADDRESS is only allowed at top-level
+          "Tezos.self_address" must be used directly and cannot be used via another function.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1100,8 +1105,8 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "long_sum_type_names.ligo", line 2, character 2 to line 4, character 18
-          Too long constructor 'Incrementttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt'
-          names length are limited to 32 (tezos limitation)
+          Ill-formed data constructor "Incrementttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt".
+          Data constructors have a maximum length of 32 characters, which is a limitation imposed by annotations in Tezos.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1118,11 +1123,11 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "redundant_constructors.mligo" ; "main" ] ;
-  [%expect {|
+  [%expect{|
     ligo: error
           in file "redundant_constructors.mligo", line 7, character 2 to line 9, character 15
-          Redundant constructor:
-          Add
+          Invalid variant.
+          Constructor "Add" already exists as part of another variant.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1165,7 +1170,7 @@ ligo: error
   [%expect {|
     ligo: error
           in file "create_contract_no_inline.mligo", line 3, characters 40-46
-          Unbound type variable 'return'
+          Type "return" not found.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1215,9 +1220,9 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "self_type_annotation.ligo", line 8, characters 41-64
-          Bad self type
-          expected Contract (int)
-          got Contract (nat)
+          Invalid type annotation.
+          "Contract (nat)" was given, but "Contract (int)" was expected.
+          Note that "Tezos.self" refers to this contract, so the parameters should be the same.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1236,8 +1241,8 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "bad_contract.mligo", line 4, characters 9-46
-          Badly typed contract:
-          unexpected entrypoint type ( nat * int ) -> int
+          Invalid type for entrypoint "main".
+          An entrypoint must of type "parameter * storage -> operations list * storage".
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1251,8 +1256,8 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "bad_contract2.mligo", line 5, characters 9-46
-          Badly typed contract:
-          expected list (operation) but got string
+          Invalid type for entrypoint "main".
+          An entrypoint must of type "parameter * storage -> operations list * storage".
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1266,10 +1271,8 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "bad_contract3.mligo", line 5, characters 9-46
-          Badly typed contract main:
-          expected storage type as right member of a pair in the input and output, but got:
-          - int in the input
-          - string in the output
+          Invalid type for entrypoint "main".
+          The storage type "int" of the function parameter must be the same as the storage type "string" of the return value.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1314,8 +1317,10 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "self_bad_entrypoint_format.ligo", line 8, characters 52-58
-          Bad entrypoint format 'Toto'
-          We expect '%bar' for entrypoint Bar and '%default' when no entrypoint used
+          Invalid entrypoint "Toto".
+          One of the following patterns is expected:
+            * "%bar" is expected for entrypoint "Bar"
+            * "%default" when no entrypoint is used.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1329,7 +1334,8 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "nested_bigmap_1.religo", line 1, characters 11-29
-          It looks like you have nested a big map inside another big map, this is not supported
+          Invalid big map nesting.
+          A big map cannot be nested inside another big map.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1343,7 +1349,8 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "nested_bigmap_2.religo", line 2, characters 29-50
-          It looks like you have nested a big map inside another big map, this is not supported
+          Invalid big map nesting.
+          A big map cannot be nested inside another big map.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1357,7 +1364,8 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "nested_bigmap_3.religo", line 1, characters 11-29
-          It looks like you have nested a big map inside another big map, this is not supported
+          Invalid big map nesting.
+          A big map cannot be nested inside another big map.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1371,7 +1379,8 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "nested_bigmap_4.religo", line 2, characters 39-60
-          It looks like you have nested a big map inside another big map, this is not supported
+          Invalid big map nesting.
+          A big map cannot be nested inside another big map.
 
 
           If you're not sure how to fix this error, you can do one of the following:

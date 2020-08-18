@@ -20,10 +20,10 @@ let make_dry_run_options (opts : dry_run_options) : (options , _) result =
   let open Proto_alpha_utils.Memory_proto_alpha in
   let open Protocol.Alpha_context in
   let%bind balance = match Tez.of_string opts.balance with
-    | None -> fail @@ Errors.invalid_amount opts.balance
+    | None -> fail @@ Errors.invalid_balance opts.balance
     | Some balance -> ok balance in
   let%bind amount = match Tez.of_string opts.amount with
-    | None -> fail @@ Errors.invalid_amount opts.balance
+    | None -> fail @@ Errors.invalid_amount opts.amount
     | Some amount -> ok amount in
   let%bind sender =
     match opts.sender with
@@ -31,7 +31,7 @@ let make_dry_run_options (opts : dry_run_options) : (options , _) result =
     | Some sender ->
       let%bind sender =
         trace_alpha_tzresult
-          (fun _ -> Errors.invalid_address sender)
+          (fun _ -> Errors.invalid_sender sender)
           (Contract.of_b58check sender) in
       ok (Some sender) in
   let%bind source =
@@ -40,7 +40,7 @@ let make_dry_run_options (opts : dry_run_options) : (options , _) result =
     | Some source ->
       let%bind source =
         trace_alpha_tzresult
-          (fun _ -> Errors.invalid_address source)
+          (fun _ -> Errors.invalid_source source)
           (Contract.of_b58check source) in
       ok (Some source) in
   let%bind now =

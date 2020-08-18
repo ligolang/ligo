@@ -8,7 +8,6 @@ type union_b =
 | Remove of nat
 | Config of nat
 
-
 let foo (a : union_a) =
   match a with
   |Add a -> unit

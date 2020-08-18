@@ -423,7 +423,7 @@ fun compiler cases ->
       PVar var ->
         let (var, _) = r_split var in
         return @@ Var.of_name var
-    | _ -> fail @@ unsupported_non_var_pattern pattern
+    | _ -> fail @@ unsupported_pattern_type pattern
   in
   let compile_list_pattern (cases : (CST.pattern * _) list) =
     match cases with
@@ -491,7 +491,7 @@ fun compiler cases ->
     let binder = (var,t_wildcard ~loc ()) in
     return @@ AST.Match_variable (binder, expr)
   | (PTuple tuple, _expr), [] ->
-    fail @@ unsupported_tuple_pattern @@ CST.PTuple tuple
+    fail @@ unsupported_pattern_type @@ CST.PTuple tuple
   | (PList _, _), _ ->
     let%bind (match_nil,match_cons) = compile_list_pattern @@ List.Ne.to_list cases in
     return @@ AST.Match_list {match_nil;match_cons}
