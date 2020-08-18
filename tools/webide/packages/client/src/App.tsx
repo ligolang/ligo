@@ -46,7 +46,7 @@ const App: React.FC = () => {
         <FloatButtonComponent
           tooltip="Ask a question"
           text="?"
-          href="https://discord.gg/9rhYaEt"
+          href="https://t.me/LigoLang"
         ></FloatButtonComponent>
       </FeedbackContainer>
       <TooltipContainer></TooltipContainer>
