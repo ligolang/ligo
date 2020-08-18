@@ -67,9 +67,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   match (a.type_content, b.type_content) with
   | T_wildcard, _ -> Some ()
   | _, T_wildcard -> Some ()
-  | T_constant ca, T_constant cb -> assert_eq ca cb
-  | T_constant _, _ -> None
-  | T_operator {operator=opa;args=la}, T_operator {operator=opb;args=lb} -> (
+  | T_constant {type_constant=ca;arguments=la}, T_constant {type_constant=cb;arguments=lb} -> (
     let aux = fun lsta lstb ->
       if List.length lsta <> List.length lstb then None
       else
@@ -78,7 +76,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
             match acc with | None -> None | Some () -> assert_type_expression_eq (a,b))
           (Some ())
           (List.combine lsta lstb) in
-    match (opa, opb) with
+    match (ca, cb) with
       | TC_option, TC_option
       | TC_list, TC_list
       | TC_contract, TC_contract
@@ -88,10 +86,10 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
         aux la lb
       | (TC_option | TC_list | TC_contract | TC_set | TC_map | TC_big_map | TC_map_or_big_map | TC_michelson_pair|TC_michelson_or|TC_michelson_pair_right_comb | TC_michelson_pair_left_comb|TC_michelson_or_right_comb| TC_michelson_or_left_comb ),
         (TC_option | TC_list | TC_contract | TC_set | TC_map | TC_big_map | TC_map_or_big_map | TC_michelson_pair|TC_michelson_or|TC_michelson_pair_right_comb | TC_michelson_pair_left_comb|TC_michelson_or_right_comb| TC_michelson_or_left_comb )
-
         -> None
+      | _ -> assert_eq ca cb
   )
-  | T_operator _, _ -> None
+  | T_constant _, _ -> None
   | T_sum sa, T_sum sb -> (
       let sa' = LMap.to_kv_list sa in
       let sb' = LMap.to_kv_list sb in

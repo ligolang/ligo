@@ -55,7 +55,7 @@ module Make (Lexer : Lexer.S)
                        and type expr  = AST.expr
                        and type token = Lexer.token)
             (ParErr : sig val message : int -> string end)
-            (ParserLog : Printer with type ast  = AST.t
+            (ParserLog : Printer with type ast = AST.t
                                  and type expr = AST.expr)
             (SubIO: SubIO) :
   sig

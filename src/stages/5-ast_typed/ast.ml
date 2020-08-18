@@ -20,8 +20,7 @@ and type_content =
   | T_variable of type_variable
   (* TODO: remove this when we remove the old typer *)
   | T_wildcard
-  | T_constant of type_constant
-  | T_operator of type_operator
+  | T_constant of type_operator
 
 and arrow = {
     type1: type_expression;
@@ -30,8 +29,8 @@ and arrow = {
 
 and te_list = type_expression list
 and type_operator = {
-    operator : type_operator';
-    args     : te_list;
+    type_constant : type_constant;
+    arguments     : te_list;
   }
 
 and annot_option = string option

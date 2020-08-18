@@ -31,38 +31,38 @@ let error_ppformat : display_format:string display_format ->
     match a with
     | `Self_ast_imperative_long_constructor (c,e) ->
       Format.fprintf f
-        "@[<hv>%a@ Too long constructor '%s'@ names length are limited to 32 (tezos limitation)@]"
+        "@[<hv>%a@ Ill-formed data constructor \"%s\".@.Data constructors have a maximum length of 32 characters, which is a limitation imposed by annotations in Tezos. @]"
         Location.pp e.location
         c
     | `Self_ast_imperative_bad_timestamp (t,e) ->
       Format.fprintf f
-        "@[<hv>%a@ Badly formatted timestamp '%s'@]"
+        "@[<hv>%a@ Ill-formed timestamp \"%s\".@.At this point, a string with a RFC3339 notation or the number of seconds since Epoch is expected. @]"
         Location.pp e.location
         t
     | `Self_ast_imperative_bad_format_literal (e,_errs) ->
       Format.fprintf f
-        "@[<hv>%a@ Badly formatted literal: %a@]"
+        "@[<hv>%a@ Ill-formed literal \"%a\".@.In the case of an address, a string is expected prefixed by either tz1, tz2, tz3 or KT1 and followed by a Base58 encoded hash and terminated by a 4-byte checksum.@.In the case of a key_hash, signature, or key a Base58 encoded hash is expected. @]"
         Location.pp e.location
         Ast_imperative.PP.expression e
     | `Self_ast_imperative_bad_empty_arity (c, e) ->
       Format.fprintf f
-        "@[<hv>%a@ Wrong arity:@%a expects no parameter@]"
+        "@[<hv>%a@ Ill-formed \"%a\" expression.@.No functions arguments are expected. @]"
         Location.pp e.location PP.constant c
     | `Self_ast_imperative_bad_single_arity (c, e) ->
       Format.fprintf f
-        "@[<hv>%a@ Wrong arity:@%a expects one parameter@]"
+        "@[<hv>%a@ Ill-formed \"%a\" expression@.One function argument is expected. @]"
         Location.pp e.location PP.constant c
     | `Self_ast_imperative_bad_map_param_type (c,e) ->
       Format.fprintf f
-        "@[<hv>%a@ Wrong arity:@%a expects a list of pair parameter@]"
+        "@[<hv>%a@ Ill-formed \"%a\" expression.@.A list of pair parameters is expected.@]"
         Location.pp e.location PP.constant c
     | `Self_ast_imperative_bad_set_param_type (c,e) ->
       Format.fprintf f
-        "@[<hv>%a@ Wrong arity:@%a expects a list of pair parameter@]"
+        "@[<hv>%a@ Ill-formed \"%a\" expression.@.A list of pair parameters is expected.@]"
         Location.pp e.location PP.constant c
     | `Self_ast_imperative_bad_convertion_bytes e ->
       Format.fprintf f
-        "@[<hv>%a@ Bad bytes literal (conversion went wrong)@]"
+        "@[<hv>%a@ Ill-formed bytes literal.@.Example of a valid bytes literal: \"ff7a7aff\". @]"
         Location.pp e.location
   )
 

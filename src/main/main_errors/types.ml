@@ -2,8 +2,6 @@ type all =
 [
  | `Main_invalid_syntax_name of string
  | `Main_invalid_extension of string
- | `Main_bad_michelson of Michelson.michelson
- | `Main_gas_exhaustion
  | `Main_unparse_tracer of [ `Tezos_alpha_error of Proto_alpha_utils.Error_monad.error ] list
  | `Main_typecheck_contract_tracer of Michelson.michelson * [ `Tezos_alpha_error of Proto_alpha_utils.Error_monad.error ] list
  | `Main_typecheck_parameter
@@ -40,8 +38,10 @@ type all =
  | `Main_decompile_typed of Typer.Errors.typer_error
  | `Main_entrypoint_not_a_function
  | `Main_entrypoint_not_found
+ | `Main_invalid_balance of string
  | `Main_invalid_amount of string
- | `Main_invalid_address of string
+ | `Main_invalid_sender of string
+ | `Main_invalid_source of string
  | `Main_invalid_timestamp of string
 
  | `Test_err_tracer of string * all

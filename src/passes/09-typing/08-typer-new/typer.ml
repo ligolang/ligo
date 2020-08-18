@@ -22,21 +22,21 @@ let cast_var (orig: 'a Var.t Location.wrap) = { orig with wrap_content = Var.tod
 (*
   Extract pairs of (name,type) in the declaration and add it to the environment
 *)
-let rec type_declaration env state : I.declaration -> (environment * O'.typer_state * O.declaration, typer_error) result = function
+let rec type_declaration env state : I.declaration -> (environment * _ O'.typer_state * O.declaration, typer_error) result = function
   | Declaration_type {type_binder; type_expr} ->
     let type_binder = Var.todo_cast type_binder in
     let%bind type_expr = evaluate_type env type_expr in
     let env' = Environment.add_type (type_binder) type_expr env in
     ok (env', state , O.Declaration_type {type_binder; type_expr})
-  | Declaration_constant {binder; type_opt; attr; expr} -> (
+  | Declaration_constant {binder={var;ty}; attr; expr} -> (
     (*
       Determine the type of the expression and add it to the environment
     *)
-    let%bind tv_opt = bind_map_option (evaluate_type env) type_opt in
+    let%bind tv_opt = evaluate_type env ty in
     let%bind (state', expr) =
-      trace (constant_declaration_tracer binder expr tv_opt) @@
-      type_expression env state ?tv_opt expr in
-    let binder = Location.map Var.todo_cast binder in
+      trace (constant_declaration_tracer var expr @@ Some tv_opt) @@
+      type_expression env state ~tv_opt expr in
+    let binder = Location.map Var.todo_cast var in
     let post_env = Environment.add_ez_declaration binder expr env in
     ok (post_env, state' , O.Declaration_constant { binder ; expr ; inline=attr.inline})
     )
@@ -75,36 +75,41 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
     @@ Environment.get_type_opt (name) e
   | T_wildcard ->
     return @@ T_variable (Var.fresh ())
-  | T_constant cst ->
-    (* TODO: O.constant = I.constant*)
-    return @@ T_constant cst
-  | T_operator {type_operator; arguments} ->
+  | T_constant {type_constant; arguments} ->
+    let assert_constant lst = match lst with
+      [] -> ok () 
+    | _ -> fail @@ type_constant_wrong_number_of_arguments type_constant 0 (List.length lst) t.location
+    in
     let assert_unary lst = match lst with
       [_] -> ok () 
-    | _ -> fail @@ operator_wrong_number_of_arguments type_operator 1 (List.length lst) t.location
+    | _ -> fail @@ type_constant_wrong_number_of_arguments type_constant 1 (List.length lst) t.location
     in
     let get_unary lst = match lst with
       [x] -> ok x
-    | _ -> fail @@ operator_wrong_number_of_arguments type_operator 1 (List.length lst) t.location
+    | _ -> fail @@ type_constant_wrong_number_of_arguments type_constant 1 (List.length lst) t.location
     in
     let assert_binary lst = match lst with
       [_;_] -> ok ()
-    | _ -> fail @@ operator_wrong_number_of_arguments type_operator 2 (List.length lst) t.location
+    | _ -> fail @@ type_constant_wrong_number_of_arguments type_constant 2 (List.length lst) t.location
     in
-    match type_operator with
-      | (TC_set | TC_list | TC_option | TC_contract) as operator->
+    match type_constant with
+      | (TC_unit | TC_string | TC_bytes | TC_nat | TC_int | TC_mutez | TC_operation | TC_address | TC_key | TC_key_hash | TC_chain_id | TC_signature | TC_timestamp) as type_constant ->
+        let%bind () = assert_constant arguments in
+        let%bind arguments = bind_map_list (evaluate_type e) arguments in
+        return @@ T_constant {type_constant; arguments}
+      | (TC_set | TC_list | TC_option | TC_contract) as type_constant ->
         let%bind () = assert_unary arguments in
-        let%bind args = bind_map_list (evaluate_type e) arguments in
-        return @@ T_operator {operator; args}
-      | (TC_map | TC_big_map ) as operator ->
+        let%bind arguments = bind_map_list (evaluate_type e) arguments in
+        return @@ T_constant {type_constant; arguments}
+      | (TC_map | TC_big_map ) as type_constant ->
         let%bind () = assert_binary arguments in
-        let%bind args = bind_map_list (evaluate_type e) arguments in
-        return @@ T_operator {operator; args}
+        let%bind arguments = bind_map_list (evaluate_type e) arguments in
+        return @@ T_constant {type_constant; arguments}
       (* TODO : remove when we have polymorphism *)
       | TC_map_or_big_map ->
         let%bind () = assert_binary arguments in
-        let%bind args = bind_map_list (evaluate_type e) arguments in
-        return @@ T_operator {operator=TC_map_or_big_map; args}
+        let%bind arguments = bind_map_list (evaluate_type e) arguments in
+        return @@ T_constant {type_constant=TC_map_or_big_map; arguments}
       | TC_michelson_pair_right_comb ->
           let%bind c = bind (evaluate_type e) @@ get_unary arguments in
           let%bind lmap = match c.type_content with
@@ -133,15 +138,15 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
             | _ -> fail (michelson_comb_no_variant t.location) in
           let pair = Typer_common.Michelson_type_converter.convert_variant_to_left_comb (Ast_typed.LMap.to_kv_list cmap) in
           return @@ pair
-      | _ -> fail @@ unrecognized_type_op t
+      | _ -> fail @@ unrecognized_type_constant t
 
-and type_expression : ?tv_opt:O.type_expression -> environment -> O'.typer_state -> I.expression -> (O'.typer_state * O.expression, typer_error) result = fun ?tv_opt e state ae ->
+and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_state -> I.expression -> (_ O'.typer_state * O.expression, typer_error) result = fun ?tv_opt e state ae ->
   let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
   let open Solver in
   let module L = Logger.Stateful() in
-  let return : _ -> O'.typer_state -> _ -> _ (* return of type_expression *) = fun expr state constraints type_name ->
+  let return : _ -> _ O'.typer_state -> _ -> _ (* return of type_expression *) = fun expr state constraints type_name ->
     let%bind new_state = aggregate_constraints state constraints in
-    let tv = t_variable type_name () in
+    let tv = t_variable type_name in
     let location = ae.location in
     let expr' = make_e ~location expr tv in
     ok @@ (new_state, expr') in
@@ -207,12 +212,12 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> O'.typer_state
       return_wrapped (e_unit ()) state @@ Wrap.literal (t_unit ())
     )
 
-  | E_constant {cons_name=name; arguments=lst} ->
-    let%bind t = Typer_common.Constant_typers_new.Operators_types.constant_type name in
+  | E_constant {cons_name; arguments=lst} ->
+    let%bind t = Typer_common.Constant_typers_new.Operators_types.constant_type cons_name in
     let%bind state',lst = bind_fold_map_list (type_expression e) state lst in
     let lst_annot = List.map get_type_expression lst in
     let wrapped = Wrap.constant t lst_annot in
-    return_wrapped (E_constant {cons_name=name;arguments=lst}) state' wrapped
+    return_wrapped (E_constant {cons_name;arguments=lst}) state' wrapped
 
   | E_lambda lambda -> 
     let%bind (lambda,state',wrapped) = type_lambda e state lambda in
@@ -290,10 +295,9 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> O'.typer_state
 
   (* Advanced *)
   | E_let_in {let_binder ; rhs ; let_result; inline} ->
-    let%bind rhs_tv_opt = bind_map_option (evaluate_type e) (let_binder.ascr) in
-    (* TODO in abstractor : the binder annotation should just be an annotation node *)
+    let%bind rhs_tv_opt = (evaluate_type e) (let_binder.ty) in
     let%bind (state', rhs) = type_expression e state rhs in
-    let let_binder = cast_var let_binder.binder in 
+    let let_binder = cast_var let_binder.var in 
     let e' = Environment.add_ez_declaration let_binder rhs e in
     let%bind (state'', let_result) = type_expression e' state' let_result in
     let wrapped =
@@ -326,23 +330,19 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> O'.typer_state
 
 and type_lambda e state {
       binder ;
-      input_type ;
-      output_type ;
       result ;
     } =
-      let binder = cast_var binder in
-      let%bind input_type'  = bind_map_option (evaluate_type e) input_type in
-      let%bind output_type' = bind_map_option (evaluate_type e) output_type in
-
-      let fresh : O.type_expression = t_variable (Wrap.fresh_binder ()) () in
+      let%bind input_type  = (evaluate_type e) binder.ty in
+      let binder = cast_var binder.var in
+      let fresh : O.type_expression = t_variable (Wrap.fresh_binder ()) in
       let e' = Environment.add_ez_binder (binder) fresh e in
 
       let%bind (state', result) = type_expression e' state result in
-      let wrapped = Wrap.lambda fresh input_type' output_type' result.type_expression in
+      let wrapped = Wrap.lambda fresh input_type result.type_expression in
       ok (({binder;result}:O.lambda),state',wrapped)
 
 (* TODO: Rewrite this entire function *)
-and type_match : environment -> O'.typer_state -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> (O'.typer_state * O.matching_expr, typer_error) result =
+and type_match : environment -> _ O'.typer_state -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> (_ O'.typer_state * O.matching_expr, typer_error) result =
   fun e state t i _ae loc ->
   let return state m = ok @@ (state, m) in
   match i with
@@ -405,9 +405,9 @@ and type_match : environment -> O'.typer_state -> O.type_expression -> I.matchin
           Assert.assert_true (corner_case "match case") (List.mem c match_cases)
         in
         let%bind () =
-          trace_strong (match_missing_case i loc) @@
+          trace_strong (match_missing_case variant_cases match_cases loc) @@
           bind_iter_list test_case variant_cases in
-        let%bind () = Assert.assert_true (match_redundant_case i loc) @@
+        let%bind () = Assert.assert_true (match_extra_case variant_cases match_cases loc) @@
           List.(length variant_cases = length match_cases) in
         ok ()
       in
@@ -427,8 +427,8 @@ and type_match : environment -> O'.typer_state -> O.type_expression -> I.matchin
       return state'' @@ O.Match_variant {cases ; tv=variant }
 
 (* Apply type_declaration on every node of the AST_core from the root p *)
-let type_program_returns_env ((env, state, p) : environment * O'.typer_state * I.program) : (environment * O'.typer_state * O.program, Typer_common.Errors.typer_error) result =
-  let aux ((e : environment), (s : O'.typer_state) , (ds : O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
+let type_program_returns_env ((env, state, p) : environment * _ O'.typer_state * I.program) : (environment * _ O'.typer_state * O.program, Typer_common.Errors.typer_error) result =
+  let aux ((e : environment), (s : _ O'.typer_state) , (ds : O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
     let%bind (e' , s' , d') = type_declaration e s (Location.unwrap d) in
     (* TODO: Move this filter to the spiller *)
     let ds' = match d' with
@@ -443,7 +443,7 @@ let type_program_returns_env ((env, state, p) : environment * O'.typer_state * I
   let declarations = List.rev declarations in (* Common hack to have O(1) append: prepend and then reverse *)
   ok (env', state', declarations)
 
-let print_env_state_node (node_printer : Format.formatter -> 'a -> unit) ((env,state,node) : environment * O'.typer_state * 'a) =
+let print_env_state_node (node_printer : Format.formatter -> 'a -> unit) ((env,state,node) : environment * _ O'.typer_state * 'a) =
   ignore node; (* TODO *)
   Printf.printf "%s" @@
     Format.asprintf "{ \"ENV\": %a,\n\"STATE\": %a,\n\"NODE\": %a\n},\n"
@@ -454,10 +454,10 @@ let print_env_state_node (node_printer : Format.formatter -> 'a -> unit) ((env,s
 let type_and_subst
       (in_printer : Format.formatter -> 'a -> unit)
       (out_printer : Format.formatter -> 'b -> unit)
-      (env_state_node : environment * O'.typer_state * 'a)
+      (env_state_node : environment * _ O'.typer_state * 'a)
       (apply_substs : ('b , Typer_common.Errors.typer_error) Typesystem.Misc.Substitution.Pattern.w)
-      (types_and_returns_env : (environment * O'.typer_state * 'a) -> (environment * O'.typer_state * 'b , typer_error) Trace.result)
-    : ('b * O'.typer_state , typer_error) result =
+      (types_and_returns_env : (environment * _ O'.typer_state * 'a) -> (environment * _ O'.typer_state * 'b , typer_error) Trace.result)
+    : ('b * _ O'.typer_state , typer_error) result =
   let () = (if Ast_typed.Debug.json_new_typer then Printf.printf "%!\n###############################START_OF_JSON\n[%!") in
   let () = (if Ast_typed.Debug.debug_new_typer then Printf.printf "\nTODO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA Print env_state_node here.\n\n") in
   let () = (if Ast_typed.Debug.debug_new_typer || Ast_typed.Debug.json_new_typer then print_env_state_node in_printer env_state_node) in
@@ -479,7 +479,7 @@ let type_and_subst
       let O.{ tv ; c_tag ; tv_list } = assignment in
       let () = ignore tv (* I think there is an issue where the tv is stored twice (as a key and in the element itself) *) in
       let%bind (expr : O.type_content) = trace_option (corner_case "wrong constant tag") @@
-        Typesystem.Core.type_expression'_of_simple_c_constant (c_tag , (List.map (fun s -> O.t_variable s ()) tv_list)) in
+        Typesystem.Core.type_expression'_of_simple_c_constant (c_tag , (List.map (fun s -> O.t_variable s) tv_list)) in
       let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "SUBST %a (%a is %a)\n" Var.pp variable Var.pp root Ast_typed.PP_generic.type_content expr) in
       ok @@ expr
     in
@@ -492,18 +492,18 @@ let type_and_subst
   let () = ignore env in        (* TODO: shouldn't we use the `env` somewhere? *)
   ok (node, state)
 
-let type_program (p : I.program) : (O.program * O'.typer_state, typer_error) result =
+let type_program (p : I.program) : (O.program * _ O'.typer_state, typer_error) result =
   let empty_env = DEnv.default in
   let empty_state = Solver.initial_state in
   type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.program\"") Ast_typed.PP_json.program (empty_env , empty_state , p) Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_env
 
 (* Change the signature of type_expression for compatibility with type_and_subst *)
-let type_expression_returns_env : (environment * O'.typer_state * I.expression) -> (environment * O'.typer_state * O.expression, typer_error) result =
+let type_expression_returns_env : (environment * _ O'.typer_state * I.expression) -> (environment * _ O'.typer_state * O.expression, typer_error) result =
   fun (env, state, e) ->
   let%bind (state, e) = type_expression env state e in
   ok (env, state, e)
 
-let type_expression_subst (env : environment) (state : O'.typer_state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.expression * O'.typer_state , typer_error) result =
+let type_expression_subst (env : environment) (state : _ O'.typer_state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.expression * _ O'.typer_state , typer_error) result =
   let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
   type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.expression\"") Ast_typed.PP_json.expression (env , state , e) Typesystem.Misc.Substitution.Pattern.s_expression type_expression_returns_env
 
@@ -511,13 +511,13 @@ let untype_type_expression  = Untyper.untype_type_expression
 let untype_expression       = Untyper.untype_expression
 
 (* These aliases are just here for quick navigation during debug, and can safely be removed later *)
-let [@warning "-32"] (*rec*) type_declaration _env _state : I.declaration -> (environment * O'.typer_state * O.declaration, typer_error) result = type_declaration _env _state
-and [@warning "-32"] type_match : environment -> O'.typer_state -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> (O'.typer_state * O.matching_expr, typer_error) result = type_match
+let [@warning "-32"] (*rec*) type_declaration _env _state : I.declaration -> (environment * _ O'.typer_state * O.declaration, typer_error) result = type_declaration _env _state
+and [@warning "-32"] type_match : environment -> _ O'.typer_state -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> (_ O'.typer_state * O.matching_expr, typer_error) result = type_match
 and [@warning "-32"] evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, typer_error) result = evaluate_type e t
-and [@warning "-32"] type_expression : ?tv_opt:O.type_expression -> environment -> O'.typer_state -> I.expression -> (O'.typer_state * O.expression, typer_error) result = type_expression
+and [@warning "-32"] type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_state -> I.expression -> (_ O'.typer_state * O.expression, typer_error) result = type_expression
 and [@warning "-32"] type_lambda e state lam = type_lambda e state lam
-let [@warning "-32"] type_program_returns_env ((env, state, p) : environment * O'.typer_state * I.program) : (environment * O'.typer_state * O.program, typer_error) result = type_program_returns_env (env, state, p)
-let [@warning "-32"] type_and_subst (in_printer : (Format.formatter -> 'a -> unit)) (out_printer : (Format.formatter -> 'b -> unit)) (env_state_node : environment * O'.typer_state * 'a) (apply_substs : ('b,typer_error) Typesystem.Misc.Substitution.Pattern.w) (types_and_returns_env : (environment * O'.typer_state * 'a) -> (environment * O'.typer_state * 'b, typer_error) result) : ('b * O'.typer_state, typer_error) result = type_and_subst in_printer out_printer env_state_node apply_substs types_and_returns_env
-let [@warning "-32"] type_program (p : I.program) : (O.program * O'.typer_state, typer_error) result = type_program p
-let [@warning "-32"] type_expression_returns_env : (environment * O'.typer_state * I.expression) -> (environment * O'.typer_state * O.expression, typer_error) Trace.result = type_expression_returns_env
-let [@warning "-32"] type_expression_subst (env : environment) (state : O'.typer_state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.expression * O'.typer_state, typer_error) result = type_expression_subst env state ?tv_opt e
+let [@warning "-32"] type_program_returns_env ((env, state, p) : environment * _ O'.typer_state * I.program) : (environment * _ O'.typer_state * O.program, typer_error) result = type_program_returns_env (env, state, p)
+let [@warning "-32"] type_and_subst (in_printer : (Format.formatter -> 'a -> unit)) (out_printer : (Format.formatter -> 'b -> unit)) (env_state_node : environment * _ O'.typer_state * 'a) (apply_substs : ('b,typer_error) Typesystem.Misc.Substitution.Pattern.w) (types_and_returns_env : (environment * _ O'.typer_state * 'a) -> (environment * _ O'.typer_state * 'b, typer_error) result) : ('b * _ O'.typer_state, typer_error) result = type_and_subst in_printer out_printer env_state_node apply_substs types_and_returns_env
+let [@warning "-32"] type_program (p : I.program) : (O.program * _ O'.typer_state, typer_error) result = type_program p
+let [@warning "-32"] type_expression_returns_env : (environment * _ O'.typer_state * I.expression) -> (environment * _ O'.typer_state * O.expression, typer_error) Trace.result = type_expression_returns_env
+let [@warning "-32"] type_expression_subst (env : environment) (state : _ O'.typer_state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.expression * _ O'.typer_state, typer_error) result = type_expression_subst env state ?tv_opt e

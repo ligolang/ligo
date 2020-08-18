@@ -142,43 +142,43 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
   | t when (compare t (t_bool ()).type_content) = 0-> return (T_base TB_bool)
   | T_variable (name) -> fail @@ no_type_variable @@ name
   | T_wildcard        -> failwith "trying to compile wildcard"
-  | T_constant (TC_int)       -> return (T_base TB_int)
-  | T_constant (TC_nat)       -> return (T_base TB_nat)
-  | T_constant (TC_mutez)     -> return (T_base TB_mutez)
-  | T_constant (TC_string)    -> return (T_base TB_string)
-  | T_constant (TC_bytes)     -> return (T_base TB_bytes)
-  | T_constant (TC_address)   -> return (T_base TB_address)
-  | T_constant (TC_timestamp) -> return (T_base TB_timestamp)
-  | T_constant (TC_unit)      -> return (T_base TB_unit)
-  | T_constant (TC_operation) -> return (T_base TB_operation)
-  | T_constant (TC_signature) -> return (T_base TB_signature)
-  | T_constant (TC_key)       -> return (T_base TB_key)
-  | T_constant (TC_key_hash)  -> return (T_base TB_key_hash)
-  | T_constant (TC_chain_id)  -> return (T_base TB_chain_id)
-  | T_operator {operator=TC_contract; args=[x]} ->
+  | T_constant {type_constant=TC_int      ; arguments=[]} -> return (T_base TB_int)
+  | T_constant {type_constant=TC_nat      ; arguments=[]} -> return (T_base TB_nat)
+  | T_constant {type_constant=TC_mutez    ; arguments=[]} -> return (T_base TB_mutez)
+  | T_constant {type_constant=TC_string   ; arguments=[]} -> return (T_base TB_string)
+  | T_constant {type_constant=TC_bytes    ; arguments=[]} -> return (T_base TB_bytes)
+  | T_constant {type_constant=TC_address  ; arguments=[]} -> return (T_base TB_address)
+  | T_constant {type_constant=TC_timestamp; arguments=[]} -> return (T_base TB_timestamp)
+  | T_constant {type_constant=TC_unit     ; arguments=[]} -> return (T_base TB_unit)
+  | T_constant {type_constant=TC_operation; arguments=[]} -> return (T_base TB_operation)
+  | T_constant {type_constant=TC_signature; arguments=[]} -> return (T_base TB_signature)
+  | T_constant {type_constant=TC_key      ; arguments=[]} -> return (T_base TB_key)
+  | T_constant {type_constant=TC_key_hash ; arguments=[]} -> return (T_base TB_key_hash)
+  | T_constant {type_constant=TC_chain_id ; arguments=[]} -> return (T_base TB_chain_id)
+  | T_constant {type_constant=TC_contract ; arguments=[x]} ->
       let%bind x' = compile_type x in
       return (T_contract x')
-  | T_operator {operator=TC_map; args=[k;v]} ->
+  | T_constant {type_constant=TC_map; arguments=[k;v]} ->
       let%bind kv' = bind_map_pair compile_type (k, v) in
       return (T_map kv')
-  | T_operator {operator=TC_big_map; args=[k;v]} ->
+  | T_constant {type_constant=TC_big_map; arguments=[k;v]} ->
       let%bind kv' = bind_map_pair compile_type (k, v) in
       return (T_big_map kv')
-  | T_operator {operator=TC_map_or_big_map; _} ->
+  | T_constant {type_constant=TC_map_or_big_map; _} ->
       fail @@ corner_case ~loc:"spilling" "TC_map_or_big_map should have been resolved before spilling"
-  | T_operator {operator=TC_list; args=[t]} ->
+  | T_constant {type_constant=TC_list; arguments=[t]} ->
       let%bind t' = compile_type t in
       return (T_list t')
-  | T_operator {operator=TC_set; args=[t]} ->
+  | T_constant {type_constant=TC_set; arguments=[t]} ->
       let%bind t' = compile_type t in
       return (T_set t')
-  | T_operator {operator=TC_option; args=[o]} ->
+  | T_constant {type_constant=TC_option; arguments=[o]} ->
       let%bind o' = compile_type o in
       return (T_option o')
-  | T_operator {operator=TC_michelson_pair|TC_michelson_or|TC_michelson_pair_right_comb| TC_michelson_pair_left_comb|TC_michelson_or_right_comb| TC_michelson_or_left_comb; _} ->
+  | T_constant {type_constant=TC_michelson_pair|TC_michelson_or|TC_michelson_pair_right_comb| TC_michelson_pair_left_comb|TC_michelson_or_right_comb| TC_michelson_or_left_comb; _} ->
       fail @@ corner_case ~loc:"spilling" "These types should have been resolved before spilling"
-  | T_operator {operator=(TC_contract|TC_option|TC_list|TC_set|TC_map|TC_big_map); _} ->
-      fail @@ corner_case ~loc:"spilling" "Type operator with invalid arguments (wrong number or wrong kinds)"
+  | T_constant _ ->
+      fail @@ corner_case ~loc:"spilling" "Type constant with invalid arguments (wrong number or wrong kinds)"
   | T_sum m when Ast_typed.Helpers.is_michelson_or m ->
       let node = Append_tree.of_list @@ kv_list_of_lmap m in
       let aux a b : (type_expression annotated , spilling_error) result =

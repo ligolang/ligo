@@ -10,13 +10,16 @@ type attribute = {
 } 
 type program_loc = declaration location_wrap
 and program = program_loc list
+and binder = { 
+  var : expression_variable ;
+  ty : type_expression ;
+  }
 and declaration_type = {
     type_binder : type_variable ;
     type_expr : type_expression ;
   }
 and declaration_constant = {
-    binder : expression_variable ;
-    type_opt : type_expression_option ;
+    binder : binder;
     attr : attribute ;
     expr : expression ;
   }
@@ -28,14 +31,13 @@ and declaration =
    *   a boolean indicating whether it should be inlined
    *   an expression *)
   | Declaration_constant of declaration_constant
-
 (* | Macro_declaration of macro_declaration *)
 
 and field_label_map = row_element label_map
 and type_expression_list = type_expression list
 
-and content_type_operator = {
-    type_operator : type_operator' ;
+and content_type_constant = {
+    type_constant : type_constant ;
     arguments : type_expression_list ;
   }
 and type_content =
@@ -45,8 +47,7 @@ and type_content =
   | T_variable of type_variable
   (* TODO: remove this when we remove the old typer *)
   | T_wildcard
-  | T_constant of type_constant
-  | T_operator of content_type_operator
+  | T_constant of content_type_constant
 
 and arrow = {
     type1: type_expression ;
@@ -98,12 +99,9 @@ and application = {
     args: expression ;
   }
 
-and type_expression_option = type_expression option
 
 and lambda = {
-    binder: expression_variable ;
-    input_type: type_expression_option ;
-    output_type: type_expression_option ;
+    binder: binder ;
     result: expression ;
   }
 
@@ -113,12 +111,8 @@ and recursive = {
     lambda : lambda ;
   }
  
-and let_binder = {
-    binder : expression_variable ;
-    ascr : type_expression_option ;
-  }
 and let_in = {
-    let_binder: let_binder ;
+    let_binder: binder ;
     rhs: expression ;
     let_result: expression ;
     inline: bool ;

@@ -12,11 +12,9 @@ type stacking_error = [
 let stage = "stacking"
 let unstacking_stage = "unstacking_stage"
 let corner_case_msg () = 
-  "we don't have a good error message for this case. we are
-  striving find ways to better report them and find the use-cases that generate
-  them. please report this to the developers."
+  "Sorry, we don't have a proper error message for this error. Please report \
+   this use case so we can improve on this."
 
-let get_env var env = `Stacking_get_environment (var , env)
 let corner_case ~loc  message = `Stacking_corner_case (loc,message)
 let contract_entrypoint_must_be_literal ~loc = `Stacking_contract_entrypoint loc
 let bad_iterator cst = `Stacking_bad_iterator cst
@@ -34,7 +32,7 @@ let error_ppformat : display_format:string display_format ->
   | Human_readable | Dev -> (
     match a with
     | `Stacking_corner_case (loc,msg) ->
-      let s = Format.asprintf "stacking corner case at %s : %s\n %s"
+      let s = Format.asprintf "Stacking corner case at %s : %s.\n%s"
         loc msg (corner_case_msg ()) in
       Format.pp_print_string f s ;
     | `Stacking_contract_entrypoint loc ->
@@ -45,13 +43,13 @@ let error_ppformat : display_format:string display_format ->
        let s = Format.asprintf "bad iterator: iter %a" Mini_c.PP.constant cst in
       Format.pp_print_string f s ;
     | `Stacking_not_comparable_base tb ->
-      let s = Format.asprintf "not a comparable type: %a" Mini_c.PP.type_constant tb in
+      let s = Format.asprintf "Invalid comparable value \"%a\".@.Only the following types can be compared here: address, bool, bytes, int, key_hash, mutez, nat, string, and timestamp." Mini_c.PP.type_constant tb in
       Format.pp_print_string f s ;
     | `Stacking_not_comparable t ->
-      let s = Format.asprintf "not a comparable type: %a" Mini_c.PP.type_variable t in
+      let s = Format.asprintf "Invalid comparable value \"%a\".@.The following types can be compared here: address, bool, bytes, int, key_hash, mutez, nat, string, and timestamp.@.These types can be composed in a record or tuple." Mini_c.PP.type_variable t in
       Format.pp_print_string f s ;
     | `Stacking_not_comparable_pair_struct ->
-      let s = "pair does not have a comparable structure. (hint: use (a,(b,c)) instead of (a,b,c))" in
+      let s = "Invalid comparable value. When using a tuple of with more than 2 components, structure the tuple like this: \"(a, (b, c))\". " in
       Format.pp_print_string f s;
   )
 

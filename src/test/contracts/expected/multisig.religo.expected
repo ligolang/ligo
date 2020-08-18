@@ -43,7 +43,7 @@ let check_message = ((param, s): (check_message_pt, storage))
       let keys: authorized_keys = s.auth;
       let aux = ((vk, pkh_sig): ((nat, authorized_keys),
          (key_hash, signature))): (nat, authorized_keys) => {
-        let (valid, keys) = vk;
+        let valid, keys = vk;
         switch(keys) {
         | [] => vk
         | [key, ...keys] =>
@@ -62,7 +62,7 @@ let check_message = ((param, s): (check_message_pt, storage))
             }
         }
       };
-      let (valid, keys) = 
+      let valid, keys = 
         List.fold(aux, param.signatures, (valid, keys));
       if (valid < s.threshold) {
       

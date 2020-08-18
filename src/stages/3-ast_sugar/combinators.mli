@@ -27,6 +27,7 @@ val t_option    : type_expression -> type_expression
 *)
 val t_list      : ?loc:Location.t -> type_expression -> type_expression
 val t_variable  : ?loc:Location.t -> string -> type_expression
+val t_wildcard  : ?loc:Location.t -> unit -> type_expression
 (*
 val t_record    : te_map -> type_expression
 *)
@@ -41,7 +42,6 @@ val ez_t_sum : ?loc:Location.t -> ( string * row_element ) list -> type_expressi
 
 val t_function : ?loc:Location.t -> type_expression -> type_expression -> type_expression
 
-val t_operator : ?loc:Location.t -> type_operator' -> type_expression list -> type_expression
 val t_map : ?loc:Location.t -> type_expression -> type_expression -> type_expression
 val t_big_map : ?loc:Location.t -> type_expression -> type_expression -> type_expression
 val t_contract : ?loc:Location.t -> type_expression -> type_expression
@@ -72,10 +72,10 @@ val e_variable : ?loc:Location.t -> expression_variable -> expression
 val e_constructor : ?loc:Location.t -> label -> expression -> expression
 val e_constant : ?loc:Location.t -> constant' -> expression list -> expression
 
-val e_lambda : ?loc:Location.t -> expression_variable -> type_expression option -> type_expression option -> expression -> expression
+val e_lambda : ?loc:Location.t -> (expression_variable , type_expression) binder -> expression -> expression
 val e_application : ?loc:Location.t -> expression -> expression -> expression
 val e_recursive : ?loc:Location.t -> expression_variable -> type_expression -> lambda -> expression
-val e_let_in : ?loc:Location.t -> ( expression_variable * type_expression option ) -> bool -> bool -> expression -> expression -> expression
+val e_let_in : ?loc:Location.t -> ( expression_variable * type_expression ) -> bool -> bool -> expression -> expression -> expression
 val e_raw_code : ?loc:Location.t -> string -> expression -> expression
 
 val e_record   : ?loc:Location.t -> expr label_map -> expression

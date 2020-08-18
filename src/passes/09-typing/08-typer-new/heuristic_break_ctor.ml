@@ -4,10 +4,12 @@
 open Ast_typed.Misc
 open Ast_typed.Types
 open Typesystem.Solver_types
+open Trace
+open Typer_common.Errors
 
-let selector :  (type_constraint_simpl, output_break_ctor) selector =
+let selector :  (type_constraint_simpl, output_break_ctor, unit) selector =
   (* find two rules with the shape x = k(var …) and x = k'(var' …) *)
-  fun type_constraint_simpl dbs ->
+  fun type_constraint_simpl () dbs ->
   match type_constraint_simpl with
     SC_Constructor c ->
     (* finding other constraints related to the same type variable and
@@ -15,17 +17,15 @@ let selector :  (type_constraint_simpl, output_break_ctor) selector =
        is symmetric *)
     let other_cs = (Constraint_databases.get_constraints_related_to c.tv dbs).constructor in
     let other_cs = List.filter (fun (o : c_constructor_simpl) -> Var.equal c.tv o.tv) other_cs in
-    (* TODO double-check the conditions in the propagator, we had a
-       bug here because the selector was too permissive. *)
     let cs_pairs = List.map (fun x -> { a_k_var = c ; a_k'_var' = x }) other_cs in
-    WasSelected cs_pairs
-  | SC_Alias       _                -> WasNotSelected (* TODO: ??? (beware: symmetry) *)
-  | SC_Poly        _                -> WasNotSelected (* TODO: ??? (beware: symmetry) *)
-  | SC_Typeclass   _                -> WasNotSelected
-  | SC_Row         _                -> WasNotSelected
+    () , WasSelected cs_pairs
+  | SC_Alias       _                -> () , WasNotSelected (* TODO: ??? (beware: symmetry) *)
+  | SC_Poly        _                -> () , WasNotSelected (* TODO: ??? (beware: symmetry) *)
+  | SC_Typeclass   _                -> () , WasNotSelected
+  | SC_Row         _                -> () , WasNotSelected
 
-let propagator : output_break_ctor propagator =
-  fun dbs selected ->
+let propagator : (output_break_ctor , unit , typer_error) propagator =
+  fun () dbs selected ->
   let () = ignore (dbs) in (* this propagator doesn't need to use the dbs *)
   let a = selected.a_k_var in
   let b = selected.a_k'_var' in
@@ -42,6 +42,7 @@ let propagator : output_break_ctor propagator =
            Format.printf "\npropagator_break_ctor\na = %a\nb = %a\n%!" p a p b in
   (* a.c_tag = b.c_tag *)
   if (Solver_should_be_generated.compare_simple_c_constant a.c_tag b.c_tag) <> 0 then
+    (* TODO : use error monad *)
     failwith (Format.asprintf "type error: incompatible types, not same ctor %a vs. %a (compare returns %d)"
                 Solver_should_be_generated.debug_pp_c_constructor_simpl a
                 Solver_should_be_generated.debug_pp_c_constructor_simpl b
@@ -49,11 +50,12 @@ let propagator : output_break_ctor propagator =
   else
     (* a.tv_list = b.tv_list *)
   if List.length a.tv_list <> List.length b.tv_list then
+    (* TODO : use error monad *)
     failwith "type error: incompatible types, not same length"
   else
     let eqs3 = List.map2 (fun aa bb -> c_equation { tsrc = "solver: propagator: break_ctor aa" ; t = P_variable aa} { tsrc = "solver: propagator: break_ctor bb" ; t = P_variable bb} "propagator: break_ctor") a.tv_list b.tv_list in
     let eqs = eq1 :: eqs3 in
-    (eqs , []) (* no new assignments *)
+    ok (() , eqs)
 
 let heuristic =
   Propagator_heuristic
@@ -61,5 +63,6 @@ let heuristic =
       selector ;
       propagator ;
       printer = Ast_typed.PP_generic.output_break_ctor ; (* TODO: use an accessor that can get the printer for PP_generic or PP_json alike *)
-      comparator = Solver_should_be_generated.compare_output_break_ctor
+      comparator = Solver_should_be_generated.compare_output_break_ctor ;
+      initial_private_storage = () ;
     }

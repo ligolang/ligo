@@ -7,13 +7,13 @@ let bad_contract basename =
 
 let%expect_test _ =
   run_ligo_good [ "measure-contract" ; contract "coase.ligo" ; "main" ] ;
-  [%expect {| 1242 bytes |}] ;
+  [%expect {| 1238 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig.ligo" ; "main" ] ;
   [%expect {| 828 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig-v2.ligo" ; "main" ] ;
-  [%expect {| 1925 bytes |}] ;
+  [%expect {| 1907 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "vote.mligo" ; "main" ] ;
   [%expect {| 479 bytes |}] ;
@@ -30,11 +30,12 @@ let%expect_test _ =
   run_ligo_bad [ "compile-storage" ; contract "coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ] ;
   [%expect {|
     ligo: error
-          Provided storage type does not match contract storage type
+          Invalid command line argument.
+          The provided storage does not have the correct type for the contract.
 
-          Bad types:
-          expected record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]
-          got sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]
+          Invalid type(s).
+          Expected: "record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]", but got: "
+          sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]".
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -47,11 +48,12 @@ let%expect_test _ =
   run_ligo_bad [ "compile-parameter" ; contract "coase.ligo" ; "main" ; "record cards = (map end : cards) ; card_patterns = (map end : card_patterns) ; next_id = 3n ; end" ] ;
   [%expect {|
     ligo: error
-          Provided parameter type does not match contract parameter type
+          Invalid command line argument.
+          The provided parameter does not have the correct type for the given entrypoint.
 
-          Bad types:
-          expected sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]
-          got record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]
+          Invalid type(s).
+          Expected: "sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]", but got: "
+          record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]".
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -215,18 +217,11 @@ let%expect_test _ =
                  DIP { DUP ; CDR ; SWAP ; CAR ; CDR } ;
                  PAIR ;
                  PAIR ;
-                 DUP ;
-                 CAR ;
-                 CDR ;
-                 DIG 3 ;
-                 NONE (pair address nat) ;
                  SWAP ;
-                 UPDATE ;
-                 DIG 2 ;
                  DUP ;
-                 DUG 3 ;
+                 DUG 2 ;
                  CDR ;
-                 DIG 3 ;
+                 DIG 2 ;
                  CAR ;
                  MUL ;
                  SENDER ;
@@ -235,15 +230,21 @@ let%expect_test _ =
                  SWAP ;
                  UNIT ;
                  TRANSFER_TOKENS ;
-                 NIL operation ;
                  SWAP ;
-                 CONS ;
-                 DUG 2 ;
+                 DUP ;
+                 CAR ;
+                 CDR ;
+                 DIG 3 ;
+                 NONE (pair address nat) ;
+                 SWAP ;
+                 UPDATE ;
                  DIP { DUP ; CDR ; SWAP ; CAR ; CAR } ;
                  SWAP ;
                  PAIR ;
                  PAIR ;
-                 SWAP ;
+                 NIL operation ;
+                 DIG 2 ;
+                 CONS ;
                  PAIR } }
            { SWAP ;
              DUP ;
@@ -508,11 +509,10 @@ let%expect_test _ =
                  IF { PUSH string "Message size exceed maximum limit" ; FAILWITH }
                     { PUSH unit Unit } ;
                  DROP ;
-                 EMPTY_SET address ;
-                 DIG 3 ;
+                 DIG 2 ;
                  DUP ;
-                 DUG 4 ;
-                 SWAP ;
+                 DUG 3 ;
+                 EMPTY_SET address ;
                  PAIR ;
                  DIG 3 ;
                  DUP ;
@@ -627,11 +627,8 @@ let%expect_test _ =
                  IF { PUSH string "Maximum number of proposal reached" ; FAILWITH }
                     { PUSH unit Unit } ;
                  DROP ;
-                 NIL operation ;
-                 SWAP ;
                  DUP ;
-                 DUG 2 ;
-                 SWAP ;
+                 NIL operation ;
                  PAIR ;
                  SWAP ;
                  DUP ;
@@ -836,22 +833,27 @@ let%expect_test _ =
                       SWAP ;
                       DIP { DROP } }
                     { DIG 2 ; DUP ; DUG 3 } ;
-                 PUSH nat 0 ;
-                 DIG 2 ;
+                 DIG 3 ;
+                 SWAP ;
                  DUP ;
-                 DUG 3 ;
+                 DUG 2 ;
+                 DIP { DROP } ;
+                 PUSH nat 0 ;
+                 DIG 3 ;
+                 DUP ;
+                 DUG 4 ;
                  SIZE ;
                  COMPARE ;
                  EQ ;
-                 IF { SWAP ;
+                 IF { DIG 2 ;
                       DROP ;
+                      SWAP ;
                       DUP ;
                       DUP ;
-                      DUG 2 ;
                       CAR ;
                       CDR ;
                       CDR ;
-                      DIG 3 ;
+                      DIG 4 ;
                       NONE (set address) ;
                       SWAP ;
                       UPDATE ;
@@ -861,15 +863,10 @@ let%expect_test _ =
                       SWAP ;
                       PAIR ;
                       PAIR ;
-                      SWAP ;
-                      DUP ;
-                      DUG 2 ;
-                      SWAP ;
                       DIP { DROP } }
-                    { DUP ;
+                    { SWAP ;
                       DUP ;
                       DUP ;
-                      DUG 3 ;
                       CAR ;
                       CDR ;
                       CDR ;
@@ -886,9 +883,6 @@ let%expect_test _ =
                       PAIR ;
                       PAIR ;
                       DIP { DROP } } ;
-                 DUG 2 ;
-                 DIP { DROP } ;
-                 SWAP ;
                  DIP { DROP } } ;
              NIL operation ;
              PAIR } } } |} ]
@@ -1011,7 +1005,7 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "bad_type_operator.ligo", line 4, characters 16-29
-          Wrong number of arguments for type operator: Map
+          Wrong number of arguments for type constant: Map
           expected: 2
           got: 1
 
@@ -1028,7 +1022,9 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "bad_address_format.religo", line 2, characters 26-48
-          Badly formatted literal: @"KT1badaddr"
+          Ill-formed literal "@"KT1badaddr"".
+          In the case of an address, a string is expected prefixed by either tz1, tz2, tz3 or KT1 and followed by a Base58 encoded hash and terminated by a 4-byte checksum.
+          In the case of a key_hash, signature, or key a Base58 encoded hash is expected.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1043,7 +1039,8 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "bad_timestamp.ligo", line 7, characters 30-44
-          Badly formatted timestamp 'badtimestamp'
+          Ill-formed timestamp "badtimestamp".
+          At this point, a string with a RFC3339 notation or the number of seconds since Epoch is expected.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1081,7 +1078,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "self_in_lambda.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-          SELF_ADDRESS is only allowed at top-level
+          "Tezos.self_address" must be used directly and cannot be used via another function.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1108,8 +1105,8 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "long_sum_type_names.ligo", line 2, character 2 to line 4, character 18
-          Too long constructor 'Incrementttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt'
-          names length are limited to 32 (tezos limitation)
+          Ill-formed data constructor "Incrementttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt".
+          Data constructors have a maximum length of 32 characters, which is a limitation imposed by annotations in Tezos.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1126,11 +1123,11 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "redundant_constructors.mligo" ; "main" ] ;
-  [%expect {|
+  [%expect{|
     ligo: error
           in file "redundant_constructors.mligo", line 7, character 2 to line 9, character 15
-          Redundant constructor:
-          Add
+          Invalid variant.
+          Constructor "Add" already exists as part of another variant.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1173,7 +1170,7 @@ ligo: error
   [%expect {|
     ligo: error
           in file "create_contract_no_inline.mligo", line 3, characters 40-46
-          Unbound type variable 'return'
+          Type "return" not found.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1223,9 +1220,9 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "self_type_annotation.ligo", line 8, characters 41-64
-          Bad self type
-          expected Contract (int)
-          got Contract (nat)
+          Invalid type annotation.
+          "Contract (nat)" was given, but "Contract (int)" was expected.
+          Note that "Tezos.self" refers to this contract, so the parameters should be the same.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1244,8 +1241,8 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "bad_contract.mligo", line 4, characters 9-46
-          Badly typed contract:
-          unexpected entrypoint type ( nat * int ) -> int
+          Invalid type for entrypoint "main".
+          An entrypoint must of type "parameter * storage -> operations list * storage".
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1259,8 +1256,8 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "bad_contract2.mligo", line 5, characters 9-46
-          Badly typed contract:
-          expected list (operation) but got string
+          Invalid type for entrypoint "main".
+          An entrypoint must of type "parameter * storage -> operations list * storage".
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1274,10 +1271,8 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "bad_contract3.mligo", line 5, characters 9-46
-          Badly typed contract main:
-          expected storage type as right member of a pair in the input and output, but got:
-          - int in the input
-          - string in the output
+          Invalid type for entrypoint "main".
+          The storage type "int" of the function parameter must be the same as the storage type "string" of the return value.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1322,8 +1317,10 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "self_bad_entrypoint_format.ligo", line 8, characters 52-58
-          Bad entrypoint format 'Toto'
-          We expect '%bar' for entrypoint Bar and '%default' when no entrypoint used
+          Invalid entrypoint "Toto".
+          One of the following patterns is expected:
+            * "%bar" is expected for entrypoint "Bar"
+            * "%default" when no entrypoint is used.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1337,7 +1334,8 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "nested_bigmap_1.religo", line 1, characters 11-29
-          It looks like you have nested a big map inside another big map, this is not supported
+          Invalid big map nesting.
+          A big map cannot be nested inside another big map.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1351,7 +1349,8 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "nested_bigmap_2.religo", line 2, characters 29-50
-          It looks like you have nested a big map inside another big map, this is not supported
+          Invalid big map nesting.
+          A big map cannot be nested inside another big map.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1365,7 +1364,8 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "nested_bigmap_3.religo", line 1, characters 11-29
-          It looks like you have nested a big map inside another big map, this is not supported
+          Invalid big map nesting.
+          A big map cannot be nested inside another big map.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1379,7 +1379,8 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           in file "nested_bigmap_4.religo", line 2, characters 39-60
-          It looks like you have nested a big map inside another big map, this is not supported
+          Invalid big map nesting.
+          A big map cannot be nested inside another big map.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -1391,52 +1392,55 @@ let%expect_test _ =
       
   run_ligo_good ["print-ast"; contract "letin.mligo"];
   [%expect {|
-    type storage = (int ,
-    int)
-    const main : (int ,
-    storage) -> (list (operation) ,
-    storage) = lambda (n:Some((int ,
-    storage))) : Some((list (operation) ,
-    storage)) return let x : (int ,
-    int) = let x : int = 7 in (ADD(x ,
-    n.0) ,
-    ADD(n.1.0 ,
-    n.1.1)) in (list[] : list (operation) ,
-    x)
-    const f0 = lambda (a:Some(string)) : None return true(unit)
-    const f1 = lambda (a:Some(string)) : None return true(unit)
-    const f2 = lambda (a:Some(string)) : None return true(unit)
-    const letin_nesting = lambda (#1:Some(unit)) : None return let s = "test" in let p0 = (f0)@(s) in { ASSERTION(p0);
-     let p1 = (f1)@(s) in { ASSERTION(p1);
-     let p2 = (f2)@(s) in { ASSERTION(p2);
-     s}}}
-    const letin_nesting2 = lambda (x:Some(int)) : None return let y = 2 in let z = 3 in ADD(ADD(x ,
-    y) ,
-    z)
+type storage = (int ,
+int)
+const (main : (int ,
+storage) -> (list (operation) ,
+storage)) = lambda (n:(int ,
+storage)) return {let (x : (int ,
+int)) = let (x : int) = 7 in (ADD(x ,
+n.0) ,
+ADD(n.1.0 ,
+n.1.1)) in ({list[] : list (operation)} ,
+x) : (list (operation) ,
+storage)}
+const (f0 : _) = lambda (a:string) return true(unit)
+const (f1 : _) = lambda (a:string) return true(unit)
+const (f2 : _) = lambda (a:string) return true(unit)
+const (letin_nesting : _) = lambda (#1:unit) return let (s : _) = "test" in let (p0 : _) = (f0)@(s) in { ASSERTION(p0);
+ let (p1 : _) = (f1)@(s) in { ASSERTION(p1);
+ let (p2 : _) = (f2)@(s) in { ASSERTION(p2);
+ s}}}
+const (letin_nesting2 : _) = lambda (x:int) return let (y : _) = 2 in let (z : _) = 3 in ADD(ADD(x ,
+y) , z) const (x : _) = let (#5 : _) = (+1 , (+2 ,
++3)) in let (#4 : _) = #5.0 in let (#3 : (_ ,
+_)) = #5.1 in let (x : _) = #3.0 in let (#2 : _) = #3.1 in x
     |}];
 
   run_ligo_good ["print-ast"; contract "letin.religo"];
   [%expect {|
-    type storage = (int ,
-    int)
-    const main = lambda (n:Some((int ,
-    storage))) : Some((list (operation) ,
-    storage)) return let x : (int ,
-    int) = let x : int = 7 in (ADD(x ,
-    n.0) ,
-    ADD(n.1.0 ,
-    n.1.1)) in (list[] : list (operation) ,
-    x)
-    const f0 = lambda (a:Some(string)) : None return true(unit)
-    const f1 = lambda (a:Some(string)) : None return true(unit)
-    const f2 = lambda (a:Some(string)) : None return true(unit)
-    const letin_nesting = lambda (_:Some(unit)) : None return let s = "test" in let p0 = (f0)@(s) in { ASSERTION(p0);
-     let p1 = (f1)@(s) in { ASSERTION(p1);
-     let p2 = (f2)@(s) in { ASSERTION(p2);
-     s}}}
-    const letin_nesting2 = lambda (x:Some(int)) : None return let y = 2 in let z = 3 in ADD(ADD(x ,
-    y) ,
-    z)
+type storage = (int ,
+int)
+const (main : _) = lambda (n:(int ,
+storage)) return {let (x : (int ,
+int)) = {let (x : int) = {7 : int} in (ADD(x ,
+n.0) ,
+ADD(n.1.0 ,
+n.1.1)) : (int ,
+int)} in ({list[] : list (operation)} ,
+x) : (list (operation) ,
+storage)}
+const (f0 : _) = lambda (a:string) return true(unit)
+const (f1 : _) = lambda (a:string) return true(unit)
+const (f2 : _) = lambda (a:string) return true(unit)
+const (letin_nesting : _) = lambda (_:unit) return let (s : _) = "test" in let (p0 : _) = (f0)@(s) in { ASSERTION(p0);
+ let (p1 : _) = (f1)@(s) in { ASSERTION(p1);
+ let (p2 : _) = (f2)@(s) in { ASSERTION(p2);
+ s}}}
+const (letin_nesting2 : _) = lambda (x:int) return let (y : _) = 2 in let (z : _) = 3 in ADD(ADD(x ,
+y) , z) const (x : _) = let (#4 : _) = (+1 , (+2 ,
++3)) in let (#3 : _) = #4.0 in let (#2 : (_ ,
+_)) = #4.1 in let (x : _) = #2.0 in let (#1 : _) = #2.1 in x
     |}];
 
   run_ligo_bad ["print-ast-typed"; contract "existential.mligo"];

@@ -37,12 +37,11 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, des
         let%bind type1 = decompile_type_expression type1 in
         let%bind type2 = decompile_type_expression type2 in
         return @@ T_arrow {type1;type2}
-      | O.T_variable type_variable       -> return @@ T_variable (Var.todo_cast type_variable)
+      | O.T_variable type_variable -> return @@ T_variable (Var.todo_cast type_variable)
       | O.T_wildcard -> return @@ T_wildcard
-      | O.T_constant type_constant       -> return @@ T_constant type_constant
-      | O.T_operator { type_operator ; arguments } ->
+      | O.T_constant { type_constant ; arguments } ->
         let%bind lst = bind_map_list decompile_type_expression arguments in
-        return @@ T_operator (type_operator, lst)
+        return @@ T_constant (type_constant, lst)
 
 let rec decompile_expression : O.expression -> (I.expression, desugaring_error) result =
   fun e ->
@@ -68,18 +67,11 @@ let rec decompile_expression : O.expression -> (I.expression, desugaring_error) 
       let%bind fun_type = decompile_type_expression fun_type in
       let%bind lambda = decompile_lambda lambda in
       return @@ I.E_recursive {fun_name;fun_type;lambda}
-    | O.E_let_in {let_binder = {binder; ascr};inline=false;rhs=expr1;let_result=expr2}
-      when Var.equal binder.wrap_content (Var.of_name "_")
-           && Stdlib.(=) ascr (Some (O.t_unit ())) ->
-      let%bind expr1 = decompile_expression expr1 in
-      let%bind expr2 = decompile_expression expr2 in
-      return @@ I.E_sequence {expr1;expr2}
-    | O.E_let_in {let_binder = { binder ; ascr } ;inline;rhs;let_result} ->
-      let binder = cast_var binder in
-      let%bind ty_opt = bind_map_option decompile_type_expression ascr in
+    | O.E_let_in {let_binder ;inline;rhs;let_result} ->
+      let%bind let_binder = decompile_binder let_binder in
       let%bind rhs = decompile_expression rhs in
       let%bind let_result = decompile_expression let_result in
-      return @@ I.E_let_in {let_binder=(binder,ty_opt);mut=false;inline;rhs;let_result}
+      return @@ I.E_let_in {let_binder;mut=false;inline;rhs;let_result}
     | O.E_raw_code {language;code} ->
       let%bind code = decompile_expression code in
       return @@ I.E_raw_code {language;code} 
@@ -113,13 +105,16 @@ let rec decompile_expression : O.expression -> (I.expression, desugaring_error) 
       let%bind type_annotation = decompile_type_expression type_annotation in
       return @@ I.E_ascription {anno_expr; type_annotation}
 
+and decompile_binder : O.binder -> _ result = fun {var; ty} ->
+  let var = cast_var var in
+  let%bind ty = decompile_type_expression ty in
+  ok (var,ty)
+
 and decompile_lambda : O.lambda -> (I.lambda, desugaring_error) result =
-  fun {binder;input_type;output_type;result}->
-    let binder = cast_var binder in
-    let%bind input_type = bind_map_option decompile_type_expression input_type in
-    let%bind output_type = bind_map_option decompile_type_expression output_type in
+  fun {binder;result}->
+    let%bind binder = decompile_binder binder in
     let%bind result = decompile_expression result in
-    ok @@ I.{binder;input_type;output_type;result}
+    ok @@ I.{binder;result}
 and decompile_matching : O.matching_expr -> (I.matching_expr, desugaring_error) result =
   fun m -> 
   match m with 
@@ -146,11 +141,10 @@ and decompile_matching : O.matching_expr -> (I.matching_expr, desugaring_error) 
 let decompile_declaration : O.declaration Location.wrap -> _ result = fun {wrap_content=declaration;location} ->
   let return decl = ok @@ Location.wrap ~loc:location decl in
   match declaration with 
-  | O.Declaration_constant {binder ; type_opt ; attr={inline}; expr} ->
-    let binder = cast_var binder in
+  | O.Declaration_constant {binder ; attr={inline}; expr} ->
+    let%bind (binder,ty) = decompile_binder binder in
     let%bind expr = decompile_expression expr in
-    let%bind te_opt = bind_map_option decompile_type_expression type_opt in
-    return @@ I.Declaration_constant (binder, te_opt, inline, expr)
+    return @@ I.Declaration_constant (binder, ty, inline, expr)
   | O.Declaration_type {type_binder ; type_expr} ->
     let type_binder = Var.todo_cast type_binder in
     let%bind te = decompile_type_expression type_expr in

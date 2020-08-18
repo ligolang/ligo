@@ -203,38 +203,32 @@ let type_variable ppf (t : type_variable) : unit = fprintf ppf "%a" Var.pp t
 
 and type_constant ppf (tc : type_constant) : unit =
 let s =
-    match tc with
-    | TC_unit -> "unit"
-    | TC_string -> "string"
-    | TC_bytes -> "bytes"
-    | TC_nat -> "nat"
-    | TC_int -> "int"
-    | TC_mutez -> "mutez"
-    | TC_operation -> "operation"
-    | TC_address -> "address"
-    | TC_key -> "key"
-    | TC_key_hash -> "key_hash"
-    | TC_signature -> "signature"
-    | TC_timestamp -> "timestamp"
-    | TC_chain_id -> "chain_id"
+  match tc with
+  | TC_unit                      -> "unit"
+  | TC_string                    -> "string"
+  | TC_bytes                     -> "bytes"
+  | TC_nat                       -> "nat"
+  | TC_int                       -> "int"
+  | TC_mutez                     -> "mutez"
+  | TC_operation                 -> "operation"
+  | TC_address                   -> "address"
+  | TC_key                       -> "key"
+  | TC_key_hash                  -> "key_hash"
+  | TC_signature                 -> "signature"
+  | TC_timestamp                 -> "timestamp"
+  | TC_chain_id                  -> "chain_id"
+  | TC_option                    -> "option"                    
+  | TC_list                      -> "list"                      
+  | TC_set                       -> "set"                       
+  | TC_map                       -> "Map"                      
+  | TC_big_map                   -> "Big Map"                  
+  | TC_map_or_big_map            -> "Map Or Big Map"           
+  | TC_contract                  -> "Contract"                 
+  | TC_michelson_pair            -> "michelson_pair"           
+  | TC_michelson_or              -> "michelson_or"             
+  | TC_michelson_pair_right_comb -> "michelson_pair_right_comb"
+  | TC_michelson_pair_left_comb  -> "michelson_pair_left_comb" 
+  | TC_michelson_or_right_comb   -> "michelson_or_right_comb"  
+  | TC_michelson_or_left_comb    -> "michelson_or_left_comb"   
 in
 fprintf ppf "%s" s
-
-and type_operator : formatter -> type_operator' -> unit =
-  fun ppf to_ ->
-  let s = match to_ with
-    TC_option                    -> Format.asprintf "option"                    
-  | TC_list                      -> Format.asprintf "list"                      
-  | TC_set                       -> Format.asprintf "set"                       
-  | TC_map                       -> Format.asprintf "Map"                      
-  | TC_big_map                   -> Format.asprintf "Big Map"                  
-  | TC_map_or_big_map            -> Format.asprintf "Map Or Big Map"           
-  | TC_contract                  -> Format.asprintf "Contract"                 
-  | TC_michelson_pair            -> Format.asprintf "michelson_pair"           
-  | TC_michelson_or              -> Format.asprintf "michelson_or"             
-  | TC_michelson_pair_right_comb -> Format.asprintf "michelson_pair_right_comb"
-  | TC_michelson_pair_left_comb  -> Format.asprintf "michelson_pair_left_comb" 
-  | TC_michelson_or_right_comb   -> Format.asprintf "michelson_or_right_comb"  
-  | TC_michelson_or_left_comb    -> Format.asprintf "michelson_or_left_comb"   
-  in
-  fprintf ppf "%s" s

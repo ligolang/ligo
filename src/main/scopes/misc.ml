@@ -36,17 +36,17 @@ let make_v_def_from_core : with_types:bool -> string -> string -> ('a Var.t) -> 
                 otherwise nothing will be typed if an error occurs later in the file *)
     make_v_def ~with_types name t range body_range
 
-let make_v_def_option_type : with_types:bool -> string -> string -> ('a Var.t) -> Ast_core.type_expression option -> Location.t -> Location.t -> def =
+let make_v_def_option_type : with_types:bool -> string -> string -> ('a Var.t) -> Ast_core.type_expression -> Location.t -> Location.t -> def =
   fun ~with_types source_file syntax name maybe_typed range body_range ->
     let name = get_binder_name name in
-    match maybe_typed with
-    | Some t ->
+    match maybe_typed.content with
+    | T_wildcard -> make_v_def ~with_types name None range body_range
+    | _ ->
       let t' = to_option @@
         let%bind typed_prg,_ = Compile.Utils.type_file source_file syntax Env in
         let env = Ast_typed.program_environment Environment.default typed_prg in
-        Compile.Of_core.evaluate_type env t in
+        Compile.Of_core.evaluate_type env maybe_typed in
       make_v_def ~with_types name t' range body_range
-    | None -> make_v_def ~with_types name None range body_range
 
 let make_v_def_ppx_type : 
   with_types:bool -> string -> string -> ('a Var.t) -> (Ast_typed.type_expression -> Ast_typed.type_expression) ->

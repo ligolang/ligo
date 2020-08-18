@@ -17,91 +17,87 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
           get_bool v in
         return (e_bool b)
       )
-  | T_constant type_constant -> (
-    match type_constant with
-    | TC_unit -> (
+  | T_constant {type_constant;arguments} -> (
+    match type_constant,arguments with
+    | TC_unit, [] -> (
         let%bind () =
           trace_option (wrong_mini_c_value t v) @@
           get_unit v in
         return (E_literal Literal_unit)
       )
-    | TC_int -> (
+    | TC_int, [] -> (
         let%bind n =
           trace_option (wrong_mini_c_value t v) @@
           get_int v in
         return (E_literal (Literal_int n))
       )
-    | TC_nat -> (
+    | TC_nat, [] -> (
         let%bind n =
           trace_option (wrong_mini_c_value t v) @@
           get_nat v in
         return (E_literal (Literal_nat n))
       )
-    | TC_timestamp -> (
+    | TC_timestamp, [] -> (
         let%bind n =
           trace_option (wrong_mini_c_value t v) @@
           get_timestamp v in
         return (E_literal (Literal_timestamp n))
       )
-    | TC_mutez -> (
+    | TC_mutez, [] -> (
         let%bind n =
           trace_option (wrong_mini_c_value t v) @@
           get_mutez v in
         return (E_literal (Literal_mutez n))
       )
-    | TC_string -> (
+    | TC_string, [] -> (
         let%bind n =
           trace_option (wrong_mini_c_value t v) @@
           get_string v in
         let n = Ligo_string.Standard n in
         return (E_literal (Literal_string n))
       )
-    | TC_bytes -> (
+    | TC_bytes, [] -> (
         let%bind n =
           trace_option (wrong_mini_c_value t v) @@
           get_bytes v in
         return (E_literal (Literal_bytes n))
       )
-    | TC_address -> (
-
+    | TC_address, [] -> (
         let%bind n =
           trace_option (wrong_mini_c_value t v) @@
           get_string v in
         return (E_literal (Literal_address n))
       )
-    | TC_operation -> (
+    | TC_operation, [] -> (
         let%bind op =
           trace_option (wrong_mini_c_value t v) @@
           get_operation v in
         return (E_literal (Literal_operation op))
       )
-    |  TC_key -> (
+    |  TC_key, [] -> (
         let%bind n =
           trace_option (wrong_mini_c_value t v) @@
           get_string v in
         return (E_literal (Literal_key n))
       )
-    |  TC_key_hash -> (
+    |  TC_key_hash, [] -> (
         let%bind n =
           trace_option (wrong_mini_c_value t v) @@
           get_string v in
         return (E_literal (Literal_key_hash n))
       )
-    | TC_chain_id -> (
+    | TC_chain_id, [] -> (
       let%bind n =
         trace_option (wrong_mini_c_value t v) @@
         get_string v in
       return (E_literal (Literal_chain_id n))
     )
-    |  TC_signature -> (
+    |  TC_signature, [] -> (
       let%bind n =
         trace_option (wrong_mini_c_value t v) @@
         get_string v in
       return (E_literal (Literal_signature n))
     )
-  )
-  | T_operator {operator;args} -> (
-    match operator,args with
     | TC_option, [o] -> (
         let%bind opt =
           trace_option (wrong_mini_c_value t v) @@
@@ -177,7 +173,7 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
     | (TC_michelson_pair|TC_michelson_or|TC_michelson_pair_right_comb|TC_michelson_pair_left_comb|TC_michelson_or_right_comb| TC_michelson_or_left_comb), _ -> 
       fail @@ corner_case ~loc:"unspiller" "Michelson_combs t should not be present in mini-c"
     | _ -> 
-      fail @@ corner_case ~loc:"unspiller" "Wrong number of args or wrong kinds for the type operator"
+      fail @@ corner_case ~loc:"unspiller" "Wrong number of args or wrong kinds for the type constant"
   )
   | T_sum m ->
       let lst = List.map (fun (k,{associated_type;_}) -> (k,associated_type)) @@ kv_list_of_lmap m in

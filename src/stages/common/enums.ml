@@ -14,8 +14,6 @@ type type_constant =
   | TC_chain_id
   | TC_signature
   | TC_timestamp
-
-type type_operator' =
   | TC_contract
   | TC_option
   | TC_list
