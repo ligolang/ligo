@@ -98,22 +98,16 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
 
   , Descent do
       boilerplate $ \case
-        "fun_decl" -> Function <$> flag "recursive" <*> field "name" <*> fields "arg" <*> fieldOpt "type" <*> field "body"
-        "let_decl" -> Const    <$>                      field "name"                  <*> fieldOpt "type" <*> field "body"
-        "include"  -> Include  <$> field "filename"
+        "fun_decl"  -> Function <$> flag "recursive" <*> field "name" <*> fields "arg" <*> fieldOpt "type" <*> field "body"
+        "let_decl"  -> Const    <$>                      field "name"                  <*> fieldOpt "type" <*> field "body"
+        "include"   -> Include  <$>                      field "filename"
+        "type_decl" -> TypeDecl <$> field "name" <*> field "type"
         _ -> fallthrough
 
   , Descent do
       boilerplate $ \case
         "let_expr1" -> Let <$> field "decl" <*> field "body"
         _ -> fallthrough
-
-  -- -- ReasonExpr
-  -- , Descent do
-  --     boilerplate $ \case
-  --       "bracket_block" -> Block <$> fields "statement" <*> fieldOpt "return"
-  --       _ -> fallthrough
-
 
   --   -- Expr
   , Descent do
@@ -130,15 +124,8 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
         "paren_expr"        -> Tuple      <$> fields "expr"
         "block_expr"        -> Seq        <$> fields "item"
         "annot_expr"        -> Annot      <$> field  "expr"      <*> field "type"
-        "binary_op_app"     -> BinOp     <$> field  "left"      <*> field "op"   <*> field "right"
-        "unary_op_app"      -> UnOp      <$> field  "negate"    <*> field "arg"
-  --       "lambda_call" -> Apply <$> field "lambda" <*> field "arguments" -- TODO: maybe a separate apply?
-  --       "arguments"         -> Tuple     <$> fields "argument"
-  --       "constructor_call" -> Apply <$> field "constructor" <*> field "parameters"
-  --       "list_access"         -> ListAccess <$> field "name" <*> fields "indexes"
-  --       "conditional"       -> If        <$> field  "selector"  <*> field "then" <*> field "else"
-
-  --       "switch_instr"        -> Case      <$> field  "subject"    <*> fields   "case"
+        "binary_op_app"     -> BinOp      <$> field  "left"      <*> field "op"    <*> field "right"
+        "unary_op_app"      -> UnOp       <$> field  "negate"    <*> field "arg"
         _                   -> fallthrough
 
     -- Pattern
@@ -165,38 +152,26 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
         "rec_assignment" -> FieldAssignment <$> field "field" <*> field "value"
         _                -> fallthrough
 
-  --   -- MapBinding
-  -- , Descent do
-  --     boilerplate $ \case
-  --       "binding" -> MapBinding <$> field "key" <*> field "value"
-  --       _         -> fallthrough
-
   , Descent do
       boilerplate' $ \case
-        ("+", _) -> return $ Op "+"
-        ("-", _) -> return $ Op "-"
-        ("mod", _) -> return $ Op "mod"
-        ("/", _) -> return $ Op "/"
-        ("*", _) -> return $ Op "*"
-        ("^", _) -> return $ Op "^"
-        ("::", _) -> return $ Op "::"
-        (">", _) -> return $ Op ">"
-        ("<", _) -> return $ Op "<"
-        (">=", _) -> return $ Op ">="
-        ("<=", _) -> return $ Op "<="
-        ("=", _) -> return $ Op "=="
-        ("!=", _) -> return $ Op "!="
-        ("<>", _) -> return $ Op "!="
-        ("||", _) -> return $ Op "||"
-        ("&&", _) -> return $ Op "&&"
+        ("+", _)      -> return $ Op "+"
+        ("-", _)      -> return $ Op "-"
+        ("mod", _)    -> return $ Op "mod"
+        ("/", _)      -> return $ Op "/"
+        ("*", _)      -> return $ Op "*"
+        ("^", _)      -> return $ Op "^"
+        ("::", _)     -> return $ Op "::"
+        (">", _)      -> return $ Op ">"
+        ("<", _)      -> return $ Op "<"
+        (">=", _)     -> return $ Op ">="
+        ("<=", _)     -> return $ Op "<="
+        ("=", _)      -> return $ Op "=="
+        ("!=", _)     -> return $ Op "!="
+        ("<>", _)     -> return $ Op "!="
+        ("||", _)     -> return $ Op "||"
+        ("&&", _)     -> return $ Op "&&"
         ("negate", n) -> return $ Op n
         _         -> fallthrough
-
-  -- , Descent do
-  --     boilerplate $ \case
-  --       "module_qualified"    -> QualifiedName <$> field "module"    <*> fields "method"
-  --       "struct_qualified"    -> QualifiedName <$> field "struct" <*> fields "method"
-  --       _                 -> fallthrough
 
     -- Literal
   , Descent do
@@ -208,33 +183,10 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
         ("Tez",    i) -> return $ Tez i
         _             -> fallthrough
 
-    -- Declaration
-  , Descent do
-      boilerplate $ \case
-        -- TODO: Current `Let` in ast is untyped
-        -- "let_declaration"   -> Var      <$>             field    "binding"       <*> fieldOpt "let_type" <*> field "let_value"
-        "type_decl"  -> TypeDecl <$> field "name" <*> field "type"
-        -- "attr_decl" -> Attribute <$> field "name"
-        _            -> fallthrough
-
-  --   -- Parameters
-  -- , Descent do
-  --     boilerplate $ \case
-  --       "parameters" -> Parameters <$> fields "parameter"
-  --       _            -> fallthrough
-
-  --   -- VarDecl
-  -- , Descent do
-  --     boilerplate $ \case
-  --       "param_decl" -> Decl <$> field "access" <*> field "name" <*> field "type"
-  --       _            -> fallthrough
-
     -- Name
   , Descent do
       boilerplate' $ \case
         ("Name", n) -> return $ Name n
-        -- ("and", _)  -> return $ Name "and"
-  --       ("or", _)   -> return $ Name "or"
         _           -> fallthrough
 
     -- FieldName
@@ -246,8 +198,8 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
     -- Type
   , Descent do
       boilerplate $ \case
-        "type_fun"           -> TArrow   <$> field  "domain"     <*> field "codomain"
-        "type_app"           -> TApply   <$> field  "f" <*> fields "x"
+        "type_fun"           -> TArrow   <$> field  "domain" <*> field "codomain"
+        "type_app"           -> TApply   <$> field  "f"      <*> fields "x"
         "type_product"       -> TProduct <$> fields "x"
         "type_tuple"         -> TTuple   <$> fields "x"
         "type_rec"           -> TRecord  <$> fields "field"
@@ -277,13 +229,9 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
       boilerplate' $ \case
         ("Name_Capital", name) -> return $ Ctor name
         ("data_con",     name) -> return $ Ctor name
-        -- ("Some", _)            -> return $ Ctor "Some"
-  --       ("None", _)            -> return $ Ctor "None"
-  --       ("Bool", b)            -> return $ Ctor b
         ("False", _)           -> return $ Ctor "False"
         ("True", _)            -> return $ Ctor "True"
         ("Unit", _)            -> return $ Ctor "Unit"
-  --       ("Nil", _)             -> return $ Ctor "Nil"
         _                      -> fallthrough
 
   -- Err

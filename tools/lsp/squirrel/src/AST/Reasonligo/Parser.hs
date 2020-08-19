@@ -174,12 +174,11 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
   , Descent do
       boilerplate $ \case
         "fun_type"         -> TArrow   <$> field  "domain"     <*> field "codomain"
-        -- TODO: maybe only one argument of parameter list is considered
-        "type_application"      -> TApply   <$> field  "functor" <*> fields "parameter"
+        "type_application" -> TApply   <$> field  "functor" <*> fields "parameter"
         "type_tuple"       -> TTuple   <$> fields "element"
         "record_type"      -> TRecord  <$> fields "field"
         "sum_type"         -> TSum     <$> fields "variant"
-        _                 -> fallthrough
+        _                  -> fallthrough
 
     -- Variant
   , Descent do
