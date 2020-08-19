@@ -289,9 +289,9 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     (* todo : make it in common with let function *)
     let (func, loc) = r_split func in
     let ({binders; lhs_type; body} : CST.fun_expr) = func in
-    let%bind lhs_type = bind_map_option (compile_type_expression <@ snd) lhs_type in
     let%bind () = has_annotation (fst binders) in
     let%bind () = bind_list_iter has_annotation (snd binders) in
+    let%bind lhs_type = bind_map_option (compile_type_expression <@ snd) lhs_type in    
     let%bind (binder,exprs),lst = bind_map_ne_list compile_parameter binders in
     let%bind body = compile_expression body in
     let rec aux lst =

@@ -13,6 +13,7 @@ type abs_error = [
   | `Concrete_reasonligo_michelson_type_wrong of Raw.type_expr * string
   | `Concrete_reasonligo_michelson_type_wrong_arity of Location.t * string
   | `Concrete_reasonligo_recursion_on_non_function of Location.t
+  | `Concrete_reasonligo_missing_funarg_annotation of Raw.variable
   ]
 
 let unknown_predefined_type name = `Concrete_reasonligo_unknown_predefined_type name
@@ -23,6 +24,7 @@ let unsupported_string_singleton te = `Concrete_reasonligo_unsupported_string_si
 let recursion_on_non_function reg = `Concrete_reasonligo_recursion_on_non_function reg
 let michelson_type_wrong texpr name = `Concrete_reasonligo_michelson_type_wrong (texpr,name)
 let michelson_type_wrong_arity loc name = `Concrete_reasonligo_michelson_type_wrong_arity (loc,name)
+let missing_funarg_annotation v = `Concrete_reasonligo_missing_funarg_annotation v
 
 let error_ppformat : display_format:string display_format ->
   Format.formatter -> abs_error -> unit =
@@ -73,6 +75,11 @@ Other forms of pattern matching are not (yet) supported. @]"
         "@[<hv>%a@.Invalid \"%s\" type.@.An even number of 2 or more arguments is expected, where each odd item is a type annotated by the following string. @]"
         Location.pp loc
         name
+    | `Concrete_reasonligo_missing_funarg_annotation v ->
+      Format.fprintf f
+        "@[<hv>%a@.Missing a type annotation for argument \"%s\". @]"
+          Location.pp_lift v.region
+          v.value
   )
 
 
@@ -140,6 +147,13 @@ let error_jsonformat : abs_error -> Yojson.t = fun a ->
   | `Concrete_reasonligo_michelson_type_wrong_arity (loc,name) ->
     let message = Format.asprintf "%s does not have the right number of argument" name in
     let loc = Format.asprintf "%a" Location.pp loc in
+    let content = `Assoc [
+      ("message", `String message );
+      ("location", `String loc); ] in
+    json_error ~stage ~content
+  | `Concrete_reasonligo_missing_funarg_annotation v ->
+    let message = Format.asprintf "Missing type annotation for argument \"%s\"" v.value in
+    let loc = Format.asprintf "%a" Location.pp_lift v.region in
     let content = `Assoc [
       ("message", `String message );
       ("location", `String loc); ] in
