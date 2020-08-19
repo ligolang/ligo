@@ -77,10 +77,11 @@ export class GenerateDeployScriptAction extends CancellableAction {
         });
 
         if (this.isCancelled()) {
-          return;
+          return; 
         }
 
-        const title = slugify(editor.title).toLowerCase() || 'untitled';
+        //const title = slugify(editor.title).toLowerCase() || 'untitled';
+        const title = slugify(editor.title, {remove: /[*+~.()'"!]/g, lower: true})
         const output = `tezos-client \\
   originate \\
   contract \\

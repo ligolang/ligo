@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PrismJS from 'prismjs';
 import { ReactCodeJar } from "react-codejar";
 import axios from 'axios';
 import YAML from 'yaml';
-
-require('ligo-snippets-css/css/ligo-prism.css')
+import './ligo-prism.css';
+import { PushSpinner } from 'react-spinners-kit';
 
 const { Prism } = require("prism-react-renderer");
 
@@ -85,6 +85,7 @@ async function openInIde(editorParams, snippetCode) {
     window.open(`${webIdeUrl}/p/${hash}`, "_blank");
 }
 
+
 function parseEditorConfigs(data) {
     const CONFIG_REGEX = /\(\*_\*([^]*?)\*_\*\)\s*/;
     const match = data.code.match(CONFIG_REGEX);
@@ -136,7 +137,7 @@ function parseEditorConfigs(data) {
     }
 }
 
-function getTheme(data) {
+function getTheme(data, showOutput) {
     let theme = {
         editorStyle: {
             borderRadius: "25px 25px 25px 0",
@@ -164,7 +165,37 @@ function getTheme(data) {
             textAlign: "right",
             background: "#0F60CF",
             borderRadius: "0 0 0 25px"
+        },
+        outputContainer: {
+            boxSizing: "border-box",
+            width: "-webkit-fill-available",
+            height: "250px",
+            overflowY: "auto",
+            border: "1px solid grey",
+            borderRadius: "0 0 0 25px",
+            backgroundColor: "rgba(220,220,220, 0.2)",
+            display: "none",
+            textAlign: "center"
+        },
+        outputTab: {
+            fontFamily: "'Source Code Pro', monospace",
+            fontSize: "14px",
+            fontWeight: "400",
+            margin: "1em",
+            marginLeft: "3em",
+            flex: 1,
+            display: "flex",
+            whiteSpace: "pre-line",
+            textAlign: "left"
+        },
+        loadingTab: {
+            display: "inline-block",
+            marginTop: "1em"
         }
+    }
+
+    if(showOutput) {
+        theme.outputContainer.display = "block";
     }
 
     if (data.height != "") {
@@ -198,10 +229,38 @@ function getLanguageHighlight(language) {
 }
 
 export const LigoSnippet = (props) => {
+    
     const data = props.data
-    const editorParams = parseEditorConfigs(data)
-    let theme = getTheme(data)
-    const [snippetCode, onUpdate] = React.useState(editorParams.editor.code);
+    const editorParams = parseEditorConfigs(data);
+
+    const [snippetCode, onUpdate] = useState(editorParams.editor.code);
+    const [output, setOutput] = useState("");
+    const [theme, setTheme] = useState(getTheme(data, false));
+    const [loading, setLoading] = useState(false);
+
+    async function compileCode(snippetCode) {
+        setOutput(""); setLoading(true);
+        setTheme(getTheme(data, true));
+        const entrypoint = "main", syntax = snippetCode.editor.language, code = snippetCode.editor.code;
+        let response;
+        if(data.api && data.api != "") {
+            response = await axios.post(data.api, {
+                syntax,
+                code,
+                entrypoint  
+            });
+        } else {
+            response = await axios.post('https://cors-anywhere.herokuapp.com/https://ide.ligolang.org/api/compile-contract', {
+                syntax,
+                code,
+                entrypoint  
+            });
+        }
+        
+        const output = await response.data;
+        setOutput(JSON.stringify(output).replace(/\\n/g, "\n"));
+        setLoading(false);
+    }
 
     const highlight = editor => {
         const text = editor.textContent;
@@ -217,8 +276,15 @@ export const LigoSnippet = (props) => {
         <div>
             <ReactCodeJar style={theme.editorStyle} code={snippetCode} onUpdate={onUpdate} highlight={highlight} />
             <div style={theme.buttonContainer}>
-                <button style={theme.buttonStyle} onClick={() => openInIde(editorParams, snippetCode)} title="Open in Ligo Web IDE">I D E ↵ </button>
+                <button style={theme.buttonStyle} className={ data.compile ? '' : 'hidden' } onClick={() => compileCode(editorParams, snippetCode)} title="Compile">Compile</button>
+                <button style={theme.buttonStyle} onClick={() => openInIde(snippetCode)} title="Open in Ligo Web IDE">I D E ↵ </button>
+                <div style={theme.outputContainer}>
+                    <div style={theme.loadingTab}><PushSpinner size={50} loading={loading} color="#fedace" /></div>
+                    <div style={theme.outputTab}>
+                    {output}
+                </div></div>
             </div>
+            
         </div>
     );
 }
