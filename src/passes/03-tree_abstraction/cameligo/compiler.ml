@@ -466,11 +466,20 @@ and compile_let_binding ?kwd_rec attributes binding =
   let attr = compile_attribute_declaration attributes in
   let%bind lhs_type = bind_map_option (compile_type_expression <@ snd) lhs_type in
   let%bind expr = compile_expression let_rhs in
+  let rec has_annotation = function 
+  | CST.PVar v -> fail (missing_funarg_annotation v)
+  | CST.PPar { value = { inside ; _ }; _ } -> has_annotation inside
+  | CST.PTuple { value ; _ } ->
+    let l = Utils.nsepseq_to_list value in 
+    bind_list_iter has_annotation l
+  | _ -> ok ()
+  in
   let rec aux = function
   | CST.PPar par, [] ->
     let par, _ = r_split par in
     aux (par.inside, [])
   | PVar name, args -> (*function *)
+    let%bind () = bind_list_iter has_annotation args in
     let%bind args = bind_map_list compile_parameter args in
     let fun_binder = compile_variable name in
     let rec aux lst =
