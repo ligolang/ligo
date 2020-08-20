@@ -33,6 +33,7 @@ import           Range
 import           Product
 import           AST                                           hiding (def)
 import qualified AST.Find                              as Find
+import Data.Maybe (fromMaybe)
 -- import           Error
 
 main :: IO ()
@@ -92,6 +93,8 @@ lspHandlers rin = def
   , Core.responseHandler                          = Just $ responseHandlerCb rin
   , Core.codeActionHandler                        = Just $ passHandler rin ReqCodeAction
   , Core.executeCommandHandler                    = Just $ passHandler rin ReqExecuteCommand
+  , Core.completionHandler                        = Just $ passHandler rin ReqCompletion
+  , Core.completionResolveHandler                 = Just $ passHandler rin ReqCompletionItemResolve
   }
 
 passHandler :: TChan FromClientMessage -> (a -> FromClientMessage) -> Core.Handler a
@@ -183,6 +186,21 @@ eventLoop funs chan = do
               respondWith funs req RspFindReferences $ J.List locations
             Nothing -> do
               respondWith funs req RspFindReferences $ J.List []
+
+      ReqCompletion req -> do
+        stopDyingAlready funs req $ do 
+          U.logs $ "got completion request: " <> show req
+          let uri = req ^. J.params . J.textDocument . J.uri
+          let pos = posToRange $ req ^. J.params . J.position
+          tree <- loadFromVFS funs uri
+          let completions = fmap toCompletionItem . fromMaybe [] $ complete pos tree
+          respondWith funs req RspCompletion . J.Completions . J.List $ completions
+
+      -- Additional callback executed after completion was made, currently no-op
+      ReqCompletionItemResolve req -> do
+        stopDyingAlready funs req $ do 
+          U.logs $ "got completion resolve request: " <> show req
+          respondWith funs req RspCompletionItemResolve (req ^. J.params)
 
       _ -> U.logs "unknown msg"
 

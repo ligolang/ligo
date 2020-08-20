@@ -1,5 +1,8 @@
+{-# LANGUAGE RecordWildCards #-}
 
 module AST.Completion where
+
+import Language.Haskell.LSP.Types (CompletionDoc (..), CompletionItem (..), CompletionItemKind (..))
 
 import Data.Function (on)
 import Data.List (isSubsequenceOf, nubBy)
@@ -44,6 +47,29 @@ complete r tree = do
     $ map asCompletion
     $ filter (fits nameCat . catFromType)
     $ scope
+
+toCompletionItem :: Completion -> CompletionItem
+toCompletionItem c@Completion{..} = CompletionItem
+  { _label = cName
+  , _kind = Just $ CiFunction -- TODO
+  , _detail = Just $ ":: " <> cType -- TODO: more elaborate info
+  , _documentation = Just $ mkDoc c
+  , _deprecated = Nothing
+  , _preselect = Nothing
+  , _sortText = Nothing
+  , _filterText = Nothing
+  , _insertTextFormat = Nothing
+  , _textEdit = Nothing
+  , _insertText = Nothing
+  , _additionalTextEdits = Nothing
+  , _commitCharacters = Nothing
+  , _command = Nothing
+  , _xdata = Nothing
+  }
+
+mkDoc :: Completion -> CompletionDoc
+mkDoc Completion {..} = CompletionDocString $
+  cName <> " is of type " <> cType <> ". " <> cDoc
 
 asCompletion :: ScopedDecl -> Completion
 asCompletion sd = Completion

@@ -65,6 +65,9 @@ library:
     - vendor/reasonligo/parser.c
     - vendor/camligo/parser.c
 
+  dependencies:
+    - haskell-lsp-types
+
 executables:
   squirrel:
     dependencies:
