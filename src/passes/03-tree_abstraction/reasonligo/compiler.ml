@@ -289,11 +289,15 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     (* todo : make it in common with let function *)
     let (func, loc) = r_split func in
     let ({binders; lhs_type; body} : CST.fun_expr) = func in
+    let%bind () = has_annotation binders in
     let%bind ((binder,ty_opt),exprs) = compile_parameter binders in
+    
+    (* let%bind () = bind_list_iter has_annotation (snd binders) in     *)
     let%bind body = compile_expression body in
     let aux (binder, ty_opt,attr,rhs) expr = e_let_in (binder, ty_opt) attr rhs expr in
     let expr = List.fold_right aux exprs body  in
     let%bind lhs_type = bind_map_option (compile_type_expression <@ snd) lhs_type in
+    
     let expr = 
       match lhs_type with 
         Some ty -> e_annotation ~loc expr ty
@@ -444,6 +448,14 @@ fun cases ->
     return @@ AST.Match_variant (List.combine constrs lst)
   | _ -> fail @@ unsupported_pattern_type @@ List.hd @@ List.map fst @@ List.Ne.to_list cases
 
+and has_annotation = function 
+| CST.PVar v -> fail (missing_funarg_annotation v)
+| CST.PPar { value = { inside ; _ }; _ } -> has_annotation inside
+| CST.PTuple { value ; _ } ->
+  let l = Utils.nsepseq_to_list value in 
+  bind_list_iter has_annotation l
+| _ -> ok ()
+  
 and compile_let_binding ?kwd_rec attributes binding =
   let return lst = ok lst in
   let return_1 a = return [a] in

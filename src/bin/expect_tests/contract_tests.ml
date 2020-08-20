@@ -1456,4 +1456,30 @@ _)) = #4.1 in let (x : _) = #2.0 in let (#1 : _) = #2.1 in x
           * Visit our documentation: https://ligolang.org/docs/intro/introduction
           * Ask a question on our Discord: https://discord.gg/9rhYaEt
           * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}]
+          * Check the changelog by running 'ligo changelog' |}];
+  run_ligo_bad ["print-ast-typed"; bad_contract "missing_funarg_annotation.mligo"];
+  [%expect {|
+    ligo: error
+          in file "missing_funarg_annotation.mligo", line 2, characters 6-7
+          Missing a type annotation for argument "b".
+
+
+          If you're not sure how to fix this error, you can do one of the following:
+
+          * Visit our documentation: https://ligolang.org/docs/intro/introduction
+          * Ask a question on our Discord: https://discord.gg/9rhYaEt
+          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+          * Check the changelog by running 'ligo changelog' |}];
+  run_ligo_bad ["print-ast-typed"; bad_contract "missing_funarg_annotation.religo"];
+  [%expect {|
+    ligo: error
+          in file "missing_funarg_annotation.religo", line 2, characters 8-9
+          Missing a type annotation for argument "b".
+
+
+          If you're not sure how to fix this error, you can do one of the following:
+
+          * Visit our documentation: https://ligolang.org/docs/intro/introduction
+          * Ask a question on our Discord: https://discord.gg/9rhYaEt
+          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+          * Check the changelog by running 'ligo changelog' |}];
