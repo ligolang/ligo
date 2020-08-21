@@ -95,7 +95,7 @@ module.exports = grammar({
     )),
 
     _pattern: $ => choice(
-      $.Name,
+      $.var_pattern,
       $._paren_pattern,
       $.con_pattern,
       $._literal,
@@ -103,6 +103,10 @@ module.exports = grammar({
       $.list_con_pattern,
       $.tup_pattern,
       "_"
+    ),
+
+    var_pattern: $ => seq(
+      field("var", $.Name)
     ),
 
     con_pattern: $ => prec(10,

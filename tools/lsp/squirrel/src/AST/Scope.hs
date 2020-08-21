@@ -74,7 +74,7 @@ instance {-# OVERLAPS #-} Pretty FullEnv where
       mergeFE fe = getTag @"vars" @Env fe Prelude.<> getTag @"types" fe
 
 instance Pretty ScopedDecl where
-  pp (ScopedDecl n o _ t refs doc) = color 3 (pp n) <+> pp o <+> ":" <+> color 4 (maybe "?" (either pp pp) t) <+> "=" <+> pp refs `indent` pp doc
+  pp (ScopedDecl n o _ t refs doc) = color 3 (pp n) <+> pp o <+> ":" <+> maybe "?" (either pp pp) t <+> "=" <+> pp refs `indent` pp doc
 
 instance Pretty Kind where
   pp _ = "TYPE"

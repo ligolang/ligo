@@ -26,6 +26,7 @@ import           System.Exit
 import qualified System.Log                            as L
 
 import           Duplo.Error
+import           Duplo.Pretty
 import           Duplo.Tree (collect)
 
 import           Range

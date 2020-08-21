@@ -66,7 +66,7 @@ example :: FilePath
 -- example = "../../../src/test/contracts/lambda2.mligo"
 -- example = "../../../src/test/contracts/loop.mligo"
 -- example = "../../../src/test/contracts/let_in_multi_bind.mligo"
-example = "../../../src/test/contracts/list.mligo"
+example = "../../../src/test/contracts/fibo2.mligo"
 
 raw :: IO ()
 raw = toParseTree (Path example)
@@ -137,6 +137,7 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
         "con_pattern"      -> IsConstr <$> field  "ctor" <*> fieldOpt "args"
         "annot_pattern"    -> IsAnnot  <$> field  "pat"  <*> field "type"
         "paren_pattern"    -> IsTuple  <$> fields "pat"
+        "var_pattern"      -> IsVar    <$> field  "var"
         "_"                -> pure IsWildcard
         _                  -> fallthrough
 

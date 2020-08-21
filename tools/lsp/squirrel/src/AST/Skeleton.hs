@@ -228,6 +228,12 @@ newtype FieldName it = FieldName Text
   deriving (Show) via PP (TypeName it)
   deriving stock   (Functor, Foldable, Traversable)
 
+sexpr :: Text -> [Doc] -> Doc
+sexpr header items = "(" <.> pp header `indent` foldr above empty items <.> ")"
+
+sop :: Doc -> Text -> [Doc] -> Doc
+sop a op b = "(" <.> a `indent` pp op `indent` foldr above empty b <.> ")"
+
 instance Pretty1 Language where
   pp1 = \case
     Language _ p -> p
@@ -238,43 +244,38 @@ instance Pretty1 Undefined where
 
 instance Pretty1 Contract where
   pp1 = \case
-    ContractEnd -> "(* end *)"
-    ContractCons x xs -> x $$ " " $$ xs
+    ContractEnd -> "(endtract)"
+    ContractCons x xs -> sexpr "constract" [x, xs]
 
 instance Pretty1 RawContract where
   pp1 = \case
-    RawContract xs -> "(* begin *)" `indent` sparseBlock xs `above` "(* end *)"
+    RawContract xs -> sexpr "contract" xs
 
 instance Pretty1 Binding where
   pp1 = \case
-    Irrefutable  pat  expr     -> "irref" <+> pat  <+> "=" `indent` expr
-    TypeDecl     n    ty       -> "type"  <+> n    <+> "=" `indent` ty
-    -- TODO
-    Var          name ty value -> "var"   <+> name <+> ":" <+> fromMaybe "<unnanotated>" ty <+> ":=" `indent` value
-    Const        name ty body  -> "const" <+> name <+> ":" <+> pp ty <+>  "=" `indent` body
-    Attribute name -> "[@" <.> name <.> "]"
-    Include      fname         -> "#include" <+> fname
+    Irrefutable  pat  expr     -> sexpr "irref" [pat, expr]
+    TypeDecl     n    ty       -> sexpr "type"  [n, ty]
+    Var          name ty value -> sexpr "var"   [name, pp ty, value]
+    Const        name ty body  -> sexpr "const" [name, pp ty, body]
+    Attribute    name          -> sexpr "attr"  [name]
+    Include      fname         -> sexpr "#include" [fname]
 
     Function isRec name params ty body ->
-      (
-        (
-          (   (if isRec then "recursive" else empty)
-          <+> "function"
-          <+> name
-          )
-          `indent` pp params
-        )
-        `indent` (":" <+> pp ty `above` "is")
-      )
-      `indent` body
+      sexpr "fun" $ concat
+        [ ["rec" | isRec]
+        , [name]
+        , params
+        , [":", pp ty]
+        , ["=", body]
+        ]
 
 instance Pretty1 Parameters where
   pp1 = \case
-    Parameters them -> tuple them
+    Parameters them -> sexpr "params" them
 
 instance Pretty1 VarDecl where
   pp1 = \case
-    Decl mutability name ty -> mutability <+> name <+> ":" `indent` ty
+    Decl mutability name ty -> sexpr "decl" [mutability, name, ty]
 
 instance Pretty1 Mutable where
   pp1 = \case
@@ -283,79 +284,74 @@ instance Pretty1 Mutable where
 
 instance Pretty1 Type where
   pp1 = \case
-    TArrow    dom codom -> parens (dom `indent` "->" <+> codom)
-    TRecord   fields    -> "record [" `indent` block fields `above` "]"
+    TArrow    dom codom -> sop dom "->" [codom]
+    TRecord   fields    -> sexpr "RECORD" fields
     TVar      name      -> name
-    TSum      variants  -> block variants
-    TProduct  elements  -> train " *" elements
-    TApply    f xs      -> f <+> tuple xs
-    TTuple    xs        -> tuple xs
-    TOr       l n r m   -> "michelson_or"   <+> tuple [l, n, r, m]
-    TAnd      l n r m   -> "michelson_pair" <+> tuple [l, n, r, m]
+    TSum      variants  -> sexpr "SUM" variants
+    TProduct  elements  -> sexpr "PROD" elements
+    TApply    f xs      -> sop f "$" xs
+    TTuple    xs        -> sexpr "TUPLE" xs
+    TOr       l n r m   -> sexpr "OR"   [l, n, r, m]
+    TAnd      l n r m   -> sexpr "AND" [l, n, r, m]
 
 instance Pretty1 Variant where
   pp1 = \case
-    Variant ctor (Just ty) -> "|" <+> ctor <+> "of" `indent` ty
-    Variant ctor  _        -> "|" <+> ctor
+    Variant ctor ty -> sexpr "ctor" [ctor, pp ty]
 
 instance Pretty1 ReasonExpr where
   pp1 = \case
-    -- TODO: prettify
-    Block decls ret -> "block' {"
-      `indent` block decls
-      <+> (if null decls then "" else ";")
-      `above` maybe "" ("return" `indent`) ret `above` "}"
+    Block decls ret -> sexpr "block" $ decls ++ [pp ret]
 
 instance Pretty1 Expr where
   pp1 = \case
-    Let       decl body  -> "let" <+> decl `above` body
-    Apply     f xs       -> "(" <.> f <.> ")" `indent` xs
+    Let       decl body  -> sexpr "let" [decl, body]
+    Apply     f xs       -> sexpr "apply" [f, xs]
     Constant  constant   -> constant
     Ident     qname      -> qname
-    BinOp     l o r      -> parens (l <+> pp o <+> r)
-    UnOp        o r      -> parens (pp o <+> r)
+    BinOp     l o r      -> sop l (ppToText o) [r]
+    UnOp        o r      -> sexpr (ppToText o) [r]
     Op          o        -> pp o
-    Record    az         -> "record" <+> list az
-    If        b t e      -> fsep ["if" `indent` b, "then" `indent` t, "else" `indent` pp e]
-    Assign    l r        -> l <+> ":=" `indent` r
-    List      l          -> "list" <+> list l
-    ListAccess l ids     -> l <.> cat ((("[" <.>) . (<.> "]") . pp) <$> ids)
-    Set       l          -> "set"  <+> list l
-    Tuple     l          -> tuple l
-    Annot     n t        -> parens (n <+> ":" `indent` t)
-    Attrs     ts         -> "attributes" <+> list ts
-    BigMap    bs         -> "big_map"    <+> list bs
-    Map       bs         ->  "map"       <+> list bs
-    MapRemove k m        -> "remove" `indent` k `above` "from" <+> "map" `indent` m
-    SetRemove k s        -> "remove" `indent` k `above` "from" <+> "set" `indent` s
-    Indexing  a j        -> a <.> list [j]
-    Case      s az       -> "case" <+> s <+> "of" `indent` block az
+    Record    az         -> sexpr "record" az
+    If        b t e      -> sexpr "if" [b, t, pp e]
+    Assign    l r        -> sop l ":=" [r]
+    List      l          -> sexpr "list" l
+    ListAccess l ids     -> sexpr "get" (l : ids)
+    Set       l          -> sexpr "set" l
+    Tuple     l          -> sexpr "tuple" l
+    Annot     n t        -> sop n ":" [t]
+    Attrs     ts         -> sexpr "attrs" ts
+    BigMap    bs         -> sexpr "big_map" bs
+    Map       bs         -> sexpr "map" bs
+    MapRemove k m        -> sexpr "remove_map" [k, m]
+    SetRemove k s        -> sexpr "remove_set" [k, s]
+    Indexing  a j        -> sexpr "index" [a, j]
+    Case      s az       -> sexpr "case" (s : az)
     Skip                 -> "skip"
-    ForLoop   j s f d b  -> "for" <+> j <+> ":=" <+> s <+> "to" <+> f <+> mb ("step" <+>) d `indent` b
-    ForBox    k mv t z b -> "for" <+> k <+> mb ("->" <+>) mv <+> "in" <+> pp t <+> z `indent` b
-    WhileLoop f b        -> "while" <+> f `indent` b
-    Seq       es         -> "block {" `indent` block es `above` "}"
-    Lambda    ps ty b    -> (("lam" `indent` pp ps) `indent` (":" <+> fromMaybe "<unnanotated>" ty)) `indent` "=>" `indent` b
-    MapPatch  z bs       -> "patch" `indent` z `above` "with" <+> "map" `indent` list bs
-    SetPatch  z bs       -> "patch" `indent` z `above` "with" <+> "set" `indent` list bs
-    RecordUpd r up       -> r `indent` "with" <+> "record" `indent` list up
+    ForLoop   j s f d b  -> sexpr "for" [j, s, f, pp d, b]
+    ForBox    k mv t z b -> sexpr "for_box" [k, pp mv, pp t, z, b]
+    WhileLoop f b        -> sexpr "while" [f, b]
+    Seq       es         -> sexpr "seq" es
+    Lambda    ps ty b    -> sexpr "lam" $ concat [ps, [":", pp ty], ["=>", b]]
+    MapPatch  z bs       -> sexpr "patch" (z : bs)
+    SetPatch  z bs       -> sexpr "patch_set" (z : bs)
+    RecordUpd r up       -> sexpr "update" (r : up)
 
 instance Pretty1 Alt where
   pp1 = \case
-    Alt p b -> "|" <+> p <+> "->" `indent` b
+    Alt p b -> sexpr "alt" [p, b]
 
 instance Pretty1 MapBinding where
   pp1 = \case
-    MapBinding k v -> k <+> "->" `indent` v
+    MapBinding k v -> sexpr "bind" [k, v]
 
 instance Pretty1 Assignment where
   pp1 = \case
-    Assignment      n e -> n <+> "=" `indent` e
+    Assignment n e -> sexpr "assign" [n, e]
 
 instance Pretty1 FieldAssignment where
   pp1 = \case
-    FieldAssignment      n e -> n <+> "=" `indent` e
-    Spread n -> "..." <+> n
+    FieldAssignment n e -> sexpr ".=" [n, e]
+    Spread n -> sexpr "..." [n]
 
 instance Pretty1 Constant where
   pp1 = \case
@@ -368,34 +364,34 @@ instance Pretty1 Constant where
 
 instance Pretty1 QualifiedName where
   pp1 = \case
-    QualifiedName src path -> src <.> sepByDot path
+    QualifiedName src path -> sexpr "." (src : path)
 
 instance Pretty1 Pattern where
   pp1 = \case
-    IsConstr     ctor arg  -> ctor <+> maybe empty id arg
-    IsConstant   z         -> z
-    IsVar        name      -> name
-    IsCons       h t       -> h <+> ("#" <+> t)
-    IsAnnot      s t       -> "(" <+> s <+> ":" <+> t <+> ")"
-    IsWildcard             -> "_"
-    IsList       l         -> list l
-    IsTuple      t         -> tuple t
+    IsConstr     ctor arg  -> sexpr "ctor?" [ctor, pp arg]
+    IsConstant   z         -> sexpr "is?" [z]
+    IsVar        name      -> sexpr "?" [name]
+    IsCons       h t       -> sop h "::?" [t]
+    IsAnnot      s t       -> sexpr "type?" [s, t]
+    IsWildcard             -> "_?"
+    IsList       l         -> sexpr "list?" l
+    IsTuple      t         -> sexpr "tuple?" t
 
 instance Pretty1 Name where
   pp1 = \case
-    Name         raw -> pp raw
+    Name         raw -> color 2 $ pp raw
 
 instance Pretty1 TypeName where
   pp1 = \case
-    TypeName     raw -> pp raw
+    TypeName     raw -> color 3 $ pp raw
 
 instance Pretty1 FieldName where
   pp1 = \case
-    FieldName    raw -> pp raw
+    FieldName    raw -> color 4 $ pp raw
 
 instance Pretty1 Ctor where
   pp1 = \case
-    Ctor         raw -> pp raw
+    Ctor         raw -> color 5 $ pp raw
 
 instance Pretty1 Path where
   pp1 = \case
