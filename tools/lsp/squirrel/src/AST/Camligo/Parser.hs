@@ -112,7 +112,7 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
   --   -- Expr
   , Descent do
       boilerplate $ \case
-        "fun_app"           -> Apply      <$> field  "f"         <*> field "x"
+        "fun_app"           -> Apply      <$> field  "f"         <*> fields "x"
         "index_accessor"    -> ListAccess <$> field  "box"       <*> fields "field"
         "rec_expr"          -> RecordUpd  <$> field  "subject"   <*> fields "field"
         "rec_literal"       -> Record     <$> fields "field"

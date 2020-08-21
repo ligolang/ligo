@@ -358,7 +358,7 @@ instance Collectable xs => Scoped (Product xs) CollectM (LIGO (Product xs)) Bind
     _ -> skip
 
 instance Collectable xs => Scoped (Product xs) CollectM (LIGO (Product xs)) VarDecl where
-  after r (Decl _ name ty) = def name (Just ty) Nothing (getElem r)
+  after r (Decl _ name ty) = def name ty Nothing (getElem r)
 
 instance Scoped a CollectM (LIGO a) Mutable
 instance Scoped a CollectM (LIGO a) Type

@@ -78,7 +78,7 @@ data Parameters it
   deriving stock (Functor, Foldable, Traversable)
 
 data VarDecl it
-  = Decl         it it it  -- ^ (Mutable) (Name) (Type)
+  = Decl         it it (Maybe it)  -- ^ (Mutable) (Name) (Type)
   deriving (Show) via PP (VarDecl it)
   deriving stock (Functor, Foldable, Traversable)
 
@@ -95,7 +95,8 @@ data Type it
   | TVar      it       -- ^ (Name)
   | TSum      [it]     -- ^ [Variant]
   | TProduct  [it]     -- ^ [Type]
-  | TApply    it [it]  -- (Name) [Type]
+  | TApply    it [it]  -- ^ (Name) [Type]
+  | TString   Text     -- ^ (TString)
   | TTuple    [it]
   | TOr       it it it it
   | TAnd      it it it it
@@ -115,7 +116,7 @@ data TField it
 -- | TODO: break onto smaller types? Literals -> Constant; mapOps; mmove Annots to Decls.
 data Expr it
   = Let       it it   -- Declaration Expr
-  | Apply     it it -- (Expr) [Expr]
+  | Apply     it [it] -- (Expr) [Expr]
   | Constant  it -- (Constant)
   | Ident     it -- (QualifiedName)
   | BinOp     it it it -- (Expr) Text (Expr)
@@ -191,6 +192,7 @@ data Pattern it
   | IsCons       it it -- (Pattern) (Pattern)
   | IsAnnot      it it -- (Pattern) (Type) -- Semantically `Var`
   | IsWildcard
+  | IsSpread     it   -- (Name)
   | IsList       [it] -- [Pattern]
   | IsTuple      [it] -- [Pattern]
   deriving (Show) via PP (Pattern it)
@@ -275,7 +277,7 @@ instance Pretty1 Parameters where
 
 instance Pretty1 VarDecl where
   pp1 = \case
-    Decl mutability name ty -> sexpr "decl" [mutability, name, ty]
+    Decl mutability name ty -> sexpr "decl" [mutability, name, pp ty]
 
 instance Pretty1 Mutable where
   pp1 = \case
@@ -290,6 +292,7 @@ instance Pretty1 Type where
     TSum      variants  -> sexpr "SUM" variants
     TProduct  elements  -> sexpr "PROD" elements
     TApply    f xs      -> sop f "$" xs
+    TString   t         -> pp t
     TTuple    xs        -> sexpr "TUPLE" xs
     TOr       l n r m   -> sexpr "OR"   [l, n, r, m]
     TAnd      l n r m   -> sexpr "AND" [l, n, r, m]
@@ -305,7 +308,7 @@ instance Pretty1 ReasonExpr where
 instance Pretty1 Expr where
   pp1 = \case
     Let       decl body  -> sexpr "let" [decl, body]
-    Apply     f xs       -> sexpr "apply" [f, xs]
+    Apply     f xs       -> sexpr "apply" (f : xs)
     Constant  constant   -> constant
     Ident     qname      -> qname
     BinOp     l o r      -> sop l (ppToText o) [r]
@@ -374,6 +377,7 @@ instance Pretty1 Pattern where
     IsCons       h t       -> sop h "::?" [t]
     IsAnnot      s t       -> sexpr "type?" [s, t]
     IsWildcard             -> "_?"
+    IsSpread     n         -> "..." <.> pp n
     IsList       l         -> sexpr "list?" l
     IsTuple      t         -> sexpr "tuple?" t
 

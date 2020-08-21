@@ -17,6 +17,9 @@ import           Product
 -- example = "./contracts/variant.religo"
 -- example = "./contracts/amount.religo"
 -- example = "./contracts/multisig.religo"
+-- example = "./contracts/arithmetic.religo"
+-- example = "./contracts/lambda.religo"
+-- example = "./contracts/id.religo"
 -- example = "../../../src/test/contracts/FA1.2.religo"
 -- example = "../../../src/test/contracts/multisig.religo"
 -- example = "../../../src/test/contracts/lambda.religo"
@@ -32,14 +35,11 @@ import           Product
 -- example = "./contracts/attributes.religo"
 -- example = "./contracts/lambda.religo"
 -- example = "./contracts/arithmetic.religo"
--- example = "./contracts/letin.religo"
+-- example = "./contracts/FA2.religo"
 
--- raw :: IO ()
--- raw = toParseTree (Path example)
---   >>= print . pp
-
--- sample :: IO ()
--- sample = toParseTree (Path example)
+-- sample''' :: IO ()
+-- sample'''
+--   =   toParseTree (Path example)
 --   >>= runParserM . recognise
 --   >>= print . pp . fst
 
@@ -51,50 +51,46 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
         "contract" -> RawContract <$> fields "declaration"
         _ -> fallthrough
 
-  -- ReasonExpr
-  , Descent do
-      boilerplate $ \case
-        "bracket_block" -> Block <$> fields "statement" <*> fieldOpt "return"
-        _ -> fallthrough
-
-
     -- Expr
   , Descent do
       boilerplate $ \case
-        "fun_call"          -> Apply     <$> field  "f"         <*> field "arguments"
-        "lambda_call" -> Apply <$> field "lambda" <*> field "arguments" -- TODO: maybe a separate apply?
-        "arguments"         -> Tuple     <$> fields "argument"
-        "unary_call"       -> UnOp      <$> field  "negate"    <*> field "arg"
-        "binary_call"             -> BinOp     <$> field  "left"      <*> field "op"   <*> field "right"
-        "constructor_call" -> Apply <$> field "constructor" <*> field "parameters"
-        "block"             -> Seq       <$> fields "statement"
-        "list_expr"         -> List      <$> fields "element"
-        "list_access"         -> ListAccess <$> field "name" <*> fields "indexes"
-        "annot_expr"        -> Annot     <$> field  "subject"   <*> field "type"
-        "conditional"       -> If        <$> field  "selector"  <*> field "then" <*> fieldOpt "else"
-        "record_expr"       -> Record    <$> fields "assignment"
-        "tuple_expr"        -> Tuple     <$> fields "element"
-
-        "switch_instr"        -> Case      <$> field  "subject"    <*> fields   "case"
-        "lambda"          -> Lambda    <$> fields  "arguments" <*> fieldOpt    "lambda_type"  <*> field "lambda_body"
-        _                   -> fallthrough
+        "unary_call"  -> UnOp       <$> field  "negate"    <*> field "arg"
+        "binary_call" -> BinOp      <$> field  "left"      <*> field "op"        <*> field "right"
+        "Some_call"   -> Apply      <$> field  "some"      <*> fields "argument"
+        "apply"       -> Apply      <$> field  "function"  <*> fields "argument"
+        "block"       -> Seq        <$> fields "statement"
+        "list"        -> List       <$> fields "element"
+        "indexing"    -> ListAccess <$> field  "box"       <*> fields "index"
+        "annot_expr"  -> Annot      <$> field  "subject"   <*> field "type"
+        "if"          -> If         <$> field  "selector"  <*> field "then"      <*> fieldOpt "else"
+        -- TODO: possible support for multiple spreads
+        "record"      -> Record     <$> fields "assignment"
+        "tuple"       -> Tuple      <$> fields "item"
+        "switch"      -> Case       <$> field  "subject"   <*> fields   "alt"
+        "lambda"      -> Lambda     <$> fields "argument"  <*> fieldOpt "type"   <*> field "body"
+        _             -> fallthrough
 
     -- Pattern
   , Descent do
       boilerplate $ \case
-        "constr_pattern" -> IsConstr <$> field  "constr" <*> fieldOpt "arguments"
-        "tuple_pattern"       -> IsTuple  <$> fields "element"
-        "cons_pattern"        -> IsCons   <$> field  "head"   <*> field "tail"
-        "annot_pattern"       -> IsAnnot <$> field "subject" <*> field "type"
-        _                     -> fallthrough
+        "tuple_pattern"          -> IsTuple  <$> fields "pattern"
+        "annot_pattern"          -> IsAnnot <$> field "subject" <*> field "type"
+        "list_pattern"           -> IsList <$> fields "pattern"
+        "var_pattern"            -> IsVar <$> field "var"
+        "wildcard"               -> return IsWildcard
+        "nullary_constr_pattern" -> IsConstr <$> field "constructor" <*> return Nothing
+        "unary_constr_pattern"   -> IsConstr <$> field "constructor" <*> fieldOpt "arg"
+        "spread_pattern"         -> IsSpread <$> field "expr"
+        _                        -> fallthrough
 
     -- Alt
   , Descent do
       boilerplate $ \case
-        "alt"  -> Alt <$> field "pattern" <*> field  "body"
+        "alt"  -> Alt <$> field "pattern" <*> field "expr"
         _                   -> fallthrough
 
     -- Record fields
+    -- TODO: capture and record
   , Descent do
       boilerplate $ \case
         "record_field"      -> FieldAssignment <$> field "name" <*> field "value"
@@ -127,8 +123,8 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
 
   , Descent do
       boilerplate $ \case
-        "module_qualified"    -> QualifiedName <$> field "module"    <*> fields "method"
-        "struct_qualified"    -> QualifiedName <$> field "struct" <*> fields "method"
+        "qualified_name"    -> QualifiedName <$> field "expr" <*> fields "name"
+        "lhs" -> QualifiedName <$> field "callee" <*> fields "name"
         _                 -> fallthrough
 
     -- Literal
@@ -144,22 +140,10 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
     -- Declaration
   , Descent do
       boilerplate $ \case
-        -- TODO: Current `Let` in ast is untyped
-        "let_declaration"   -> Var      <$>             field    "binding"       <*> fieldOpt "let_type" <*> field "let_value"
+        -- TODO: We forget "rec" field in let
+        "let_declaration"   -> Var      <$>             field    "binding"       <*> fieldOpt "type" <*> field "value"
         "type_decl"  -> TypeDecl <$>             field    "type_name"   <*> field "type_value"
         "attr_decl" -> Attribute <$> field "name"
-        _            -> fallthrough
-
-    -- Parameters
-  , Descent do
-      boilerplate $ \case
-        "parameters" -> Parameters <$> fields "parameter"
-        _            -> fallthrough
-
-    -- VarDecl
-  , Descent do
-      boilerplate $ \case
-        "param_decl" -> Decl <$> field "access" <*> field "name" <*> field "type"
         _            -> fallthrough
 
     -- Name
@@ -174,11 +158,18 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
   , Descent do
       boilerplate $ \case
         "fun_type"         -> TArrow   <$> field  "domain"     <*> field "codomain"
-        "type_application" -> TApply   <$> field  "functor" <*> fields "parameter"
+        "type_application" -> TApply   <$> field  "functor" <*> fields "argument"
         "type_tuple"       -> TTuple   <$> fields "element"
         "record_type"      -> TRecord  <$> fields "field"
         "sum_type"         -> TSum     <$> fields "variant"
         _                  -> fallthrough
+
+   -- Michelson pair types
+  , Descent do
+      boilerplate' $ \case
+        ("type_string", i) -> return $ TString i
+        _                  -> fallthrough
+
 
     -- Variant
   , Descent do

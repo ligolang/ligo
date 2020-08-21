@@ -71,11 +71,11 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
   , Descent do
       boilerplate \case
         "let_expr"          -> Let       <$> field  "locals"    <*> field "body"
-        "fun_call"          -> Apply     <$> field  "f"         <*> field "arguments"
-        "par_call"          -> Apply     <$> field  "f"         <*> field "arguments"
-        "projection_call"   -> Apply     <$> field  "f"         <*> field "arguments"
-        "Some_call"         -> Apply     <$> field  "constr"    <*> field "arguments"
-        "constr_call"       -> Apply     <$> field  "constr"    <*> field "arguments"
+        "fun_call"          -> Apply     <$> field  "f"         <*> fields "arguments"
+        "par_call"          -> Apply     <$> field  "f"         <*> fields "arguments"
+        "projection_call"   -> Apply     <$> field  "f"         <*> fields "arguments"
+        "Some_call"         -> Apply     <$> field  "constr"    <*> fields "arguments"
+        "constr_call"       -> Apply     <$> field  "constr"    <*> fields "arguments"
         "arguments"         -> Tuple     <$> fields "argument"
         "unop"              -> UnOp      <$> field  "negate"    <*> field "arg"
         "binop"             -> BinOp     <$> field  "arg1"      <*> field "op"   <*> field "arg2"
@@ -183,7 +183,7 @@ recognise = descent (\_ -> error . show . pp) $ map usingScope
     -- VarDecl
   , Descent do
       boilerplate \case
-        "param_decl" -> Decl <$> field "access" <*> field "name" <*> field "type"
+        "param_decl" -> Decl <$> field "access" <*> field "name" <*> fieldOpt "type"
         _            -> fallthrough
 
     -- Mutable

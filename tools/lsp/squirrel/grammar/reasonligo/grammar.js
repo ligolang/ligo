@@ -1,6 +1,4 @@
 const PREC = {
-
-  CALL: 300000000,
   OR: 0,
   AND: 1,
   COMPARE: 3,
@@ -9,13 +7,9 @@ const PREC = {
   MINUS: 6,
   MUL: 7,
   DIV: 7,
-
   ATTR: 1,
   TYPE: 101,
   LET: 100,
-  EXPR: 100000000,
-  CONSTR: 100000,
-  LAM: 1000,
 };
 
 const OPS = [
@@ -58,367 +52,25 @@ module.exports = grammar({
   name: 'ReasonLigo',
 
   word: $ => $.Keyword,
-  extras: $ => [$.oneline_comment, $.block_comment, /\s/],
+  extras: $ => [$.oneline_comment, $.block_comment, /\s/, $.attr],
 
-  conflicts: $ => [
-    [$._fun_type, $.type_application],
-    [$._pattern, $.tuple_pattern],
-    [$._expr], // TODO: left-precendence is used for tuple_expr, right for nested `let`s
-    [$._exprf],
-
-    [$.tuple_expr, $.parameters],
-    [$.record_field, $._accessor], // TODO
-    [$.variant], // TODO: some alien stuff
-    [$.sum_type], // TODO: fix in `let_declaration`.
-    [$.bracket_block], // TODO: same as $.lambda_body
-    [$.type_decl],
-    [$.lambda],
-    [$._instruction, $._expr], // switch_instr
-    [$._functional_block, $.bracket_block], // TODO: remove
-    [$.list_access], // TODO: remove
-    [$.list_access, $._ident], // TODO
-    [$.record_field, $._ident], // TODO
-    [$._core_pattern, $._expr], //TODO: remove as soon as possible
-    [$.lambda_call], // TODO: remove
-    [$.lambda_call, $.binary_call],
-    [$._expr, $.bracket_block], // TODO
-    [$.lambda_call, $.parameters], // TODO
-    [$["-"], $.negate], // unary vs binary calls
-
-    [$.parameters, $.annot_expr], // TODO
-    [$.type_tuple, $._core_type],
-
-    [$._pattern, $.annot_pattern], // TODO: constr (pat) case
-    [$.annot_expr, $._type_annotation],
-    [$.annot_expr, $.lambda_call],
-    [$.annot_expr, $._functional_block],
-
-    // TODO: those are produced in conflicts of `fun_call` and `expr` in bracket blocks
-    [$.annot_expr, $._exprf],
-    [$.lambda_call, $._exprf],
-    [$.bracket_block, $._exprf],
-    [$._functional_block, $._exprf],
-    [$.tuple_expr, $._exprf],
-    [$._annot_fun_call, $._exprf],
-  ],
+  conflicts: $ =>
+    [[$._expr_term, $._pattern]
+      , [$._expr_term, $.var_pattern]
+      , [$.Name, $.TypeName]
+      , [$._expr_term, $.module_name]
+      , [$.annot_pattern, $.let_declaration]
+      , [$.lambda, $.tuple_pattern]
+      , [$._expr_term, $.nullary_constr_pattern]
+      , [$.list, $.list_pattern]
+      , [$._expr_term, $.lhs]
+      , [$._field_name, $.lhs]
+      , [$._expr_term, $.capture]
+      , [$.type_string, $._literal]
+    ],
 
   rules: {
-    contract: $ => sepBy(optional(';'), field("declaration", $._declaration)),
-
-    _expr: $ =>
-      prec(PREC.EXPR,
-        seq(
-          choice(
-            $.lambda_call,
-            $.tuple_expr,
-            $._literal,
-            // $.fun_call,
-            $.constructor_call,
-            $.unary_call,
-            $.binary_call,
-            $.annot_expr,
-            $.list_expr,
-            $.record_expr,
-            $._ref,
-            $._ident,
-            $.switch_instr,
-          ),
-        ),
-      ),
-
-    // TODO: workaround to move `fun_call` out of `expr` needed in bracket blocks
-    _exprf: $ => choice($.fun_call, $._expr),
-
-    _annot_expr: $ =>
-      par($.annot_expr),
-
-    annot_expr: $ =>
-      seq(
-        field("subject", $._expr),
-        ':',
-        field("type", $._type_expr),
-      ),
-
-    // TODO: same as tuple_pattern
-    // TODO: to annotate expression we do not need to enclose it in brackets
-    // TODO: possible ((a : p) : q, b)
-    tuple_expr: $ =>
-      par(sepBy1(',',
-        seq(
-          field("element", choice(
-            $.annot_expr,
-            $.fun_call,
-            $._expr,
-          )),
-        )
-      )),
-
-    constructor_call: $ =>
-      prec(PREC.CONSTR,
-        seq(
-          field("constructor",
-            choice(
-              $._constr,
-              $.module_qualified,
-            ),
-          ),
-          field("parameters", $.parameters),
-        ),
-      ),
-
-    lambda_call: $ =>
-      seq(
-        par(field("lambda", $.lambda)),
-        repeat1(
-          choice(
-            field("arguments", $._expr),
-            par(field("arguments", $.lambda))
-          )
-        ), // TODO: workaround to move lambda out of expr
-      ),
-
-    fun_call: $ =>
-      prec.right(PREC.CALL,
-        seq(
-          field("f", $.Name), // TODO: may be qualified
-          field("arguments", $.parameters),
-        )
-      ),
-
-    binary_call: $ => choice(
-      ...OPS
-        .map(([op, precendence]) =>
-          prec.left(precendence, seq(
-            field("left", $._exprf),
-            field("op", $[op]),
-            field("right", $._exprf),
-          ))
-        )
-    ),
-
-    // Workaround to make operators to be instructions as well
-    // so that they won't be stripped when naming them as fields
-    ...OPS.reduce(
-      (acc, [e, _]) => ({ ...acc, [e]: $ => seq(e) }), {}
-    ),
-
-    unary_call: $ => prec.right(8,
-      seq(
-        field("negate", $.negate),
-        field("arg", $._exprf)
-      )
-    ),
-
-    negate: $ => choice('-', '!'),
-
-    // TODO: refactor
-    call: $ =>
-      prec.left(1,
-        choice(
-          seq($.call, par($._expr)),
-          par($._expr),
-        ),
-      ),
-
-    switch_instr: $ =>
-      prec.left(0, // TODO
-        seq(
-          'switch',
-          choice(
-            field('subject', $.Name),
-            par(field('subject', $._exprf)),
-          ),
-          block(seq(
-            optional('|'),
-            sepBy1('|', field('case', $.alt)),
-          )),
-        ),
-      ),
-
-    // TODO: it may parse expr with ';' attached to the end
-    alt: $ =>
-      seq(
-        field("pattern", $._pattern),
-        '=>',
-        field("body", $._functional_block),
-        optional(';'),
-      ),
-
-
-    _literal: $ =>
-      choice(
-        $.Nat,
-        $.Int,
-        $.Bool,
-        $.Tez,
-        $.String,
-        $.Bytes,
-        $.Unit,
-        $.Nil,
-        $.wildcard,
-      ),
-
-    record_expr: $ =>
-      seq(
-        block(seq(
-          sepBy1(',', field("assignment", choice(
-            $.spread,
-            $.record_field,
-          ))),
-          optional($._ident), // TODO: not need to be here
-        ))
-      ),
-
-    spread: $ => seq(
-      '...',
-      field("name", $._ident), // TODO: may be possible expression
-    ),
-
-    record_field: $ =>
-      seq(
-        field("name", sepBy1('.', $.Name)),
-        ':',
-        field("value", $._expr),
-      ),
-
-    _statement: $ => choice(
-      $._instruction,
-    ),
-
-    _instruction: $ =>
-      prec(PREC.EXPR, choice(
-        $.conditional,
-        $.switch_instr,
-        $.let_declaration,
-      )),
-
-    lambda: $ =>
-      seq(
-        field("lambda_head", seq(
-          field("arguments", $.parameters),
-          optional(seq(":",
-            field("lambda_type",
-              choice($._core_type, $.type_tuple),
-            ),
-          ))
-        )),
-        '=>',
-        field("lambda_body", $._functional_block)
-      ),
-
-    parameters: $ =>
-      par(
-        sepBy(',', field("parameter", seq(
-          choice($._exprf, $.lambda), // TODO: workaround to move lambda our of expr
-          optional($._type_annotation), // TODO: move it somewhere
-        )))
-      ),
-
-    _pattern: $ =>
-      choice(
-        $.cons_pattern,
-        $.annot_pattern,
-        $._core_pattern,
-      ),
-
-    cons_pattern: $ =>
-      brackets(
-        seq(
-          field("head", $._core_pattern),
-          ',',
-          field("tail", choice(
-            $.spread,
-            $._pattern,
-          )),
-        )
-      ),
-
-    annot_pattern: $ =>
-      par(
-        seq(
-          field("subject", $._core_pattern),
-          ':',
-          field("type", $._type_expr),
-        )
-      ),
-
-    _core_pattern: $ =>
-      prec.right(PREC.CONSTR,
-        seq(
-          choice(
-            $.constr_pattern,
-            $.tuple_pattern,
-            $._literal,
-            $.Name,
-          ),
-        )
-      ),
-
-    tuple_pattern: $ =>
-      par(tuple(field("element", $._pattern))),
-
-    constr_pattern: $ =>
-      prec.right(PREC.CONSTR, // TODO: left precendence fails
-        seq(
-          field("constr", $._constr),
-          optional(
-            opar(
-              field("arguments", $._pattern)
-            ),
-          )),
-      ),
-
-    list_expr: $ => brackets(
-      sepBy(',', field("element", choice(
-        $.spread,
-        $._expr,
-      )))
-    ),
-
-
-    conditional: $ =>
-      prec.left(PREC.LET,
-        seq(
-          'if',
-          par(field("selector", $._expr)),
-          field("then", $.bracket_block),
-          optional(seq(
-            'else',
-            field("else", $.bracket_block),
-          )),
-        ),
-      ),
-
-    _ref: $ =>
-      choice(
-        $.module_qualified,
-        $.struct_qualified,
-        $._constr,
-        $.list_access,
-      ),
-
-    module_qualified: $ =>
-      seq(
-        field("module", $._constr),
-        nseq(seq('.', field("method", $.Name))), // TODO: capital letters
-      ),
-
-    // TODO: may be the same as `list_access`
-    struct_qualified: $ =>
-      seq(
-        field("struct", $.Name),
-        nseq(seq('.', field("method", $._accessor))),
-      ),
-
-    _accessor: $ => choice($.Name, $.Int),
-
-    list_access: $ =>
-      // prec.left(8,
-      seq(
-        field("name", $.Name),
-        repeat1(brackets(field("indexes", $.Int))),
-        // ),
-      ),
+    contract: $ => sepBy1(optional(';'), field("declaration", $._declaration)),
 
     _declaration: $ =>
       field("declaration",
@@ -426,16 +78,211 @@ module.exports = grammar({
           $.type_decl,
           $.let_declaration,
           $.include,
-          $.attr_decl,
         )
       ),
 
-    attr_decl: $ =>
-      prec.left(PREC.ATTR,
-        nseq(brackets(
-          seq('@', field("name", $.Name))
-        ))
+    //// EXPRESSIONS ///////////////////////////////////////////////////////////
+
+    let_declaration: $ => prec.left(PREC.LET, seq(
+      'let',
+      optional(field("rec", $.rec)),
+      sepBy1(',', field("binding", $._pattern)),
+      optional(seq(
+        ':',
+        field("type", $._type_expr)
+      )),
+      '=',
+      field("value", $._expr),
+    )),
+
+    var_pattern: $ => field("var", $.Name),
+
+    fun_type: $ =>
+      prec.right(8,
+        seq(
+          field("domain", $._type_expr),
+          '=>',
+          field("codomain", $._type_expr),
+        ),
       ),
+
+    module_TypeName: $ =>
+      seq(
+        $.module_name,
+        '.',
+        $.TypeName,
+      ),
+
+    _expr: $ => choice(
+      $.lambda,
+      $.indexing,
+      $.binary_call,
+      $.unary_call,
+      $._expr_term,
+      $.apply,
+      $.Some_call,
+    ),
+
+    Some_call: $ => prec.right(10, seq(
+      field("some", $.Some),
+      field("argument", $._expr),
+    )),
+
+    apply: $ => prec.left(20, seq(
+      field("function", $._expr),
+      par(sepBy(',', field("argument", $._expr))),
+    )),
+
+    _expr_term: $ => choice(
+      $.block,
+      $.tuple,
+      $.list,
+      $._literal,
+      $.Name,
+      $.Name_Capital,
+      $.qualified_name,
+      $.if,
+      $.switch,
+      $.record,
+    ),
+
+    record: $ => block(
+      seq(
+        // TODO: possible multiple spreads
+        optional(seq(field("spread", $.spread), ',')),
+        sepBy(',', field("assignment", $._record_field)),
+      ),
+    ),
+
+    _record_field: $ => choice(
+      $.record_field,
+      $.capture,
+    ),
+
+    capture: $ => $.Name,
+
+    record_field: $ => seq(
+      field("name", $.lhs),
+      ':',
+      field("value", $._expr),
+    ),
+
+    lhs: $ => seq(
+      optional(seq(field("name", $.Name), '.')),
+      field("callee", $.Name),
+    ),
+
+    list: $ => brackets(
+      sepBy(',', field("element", $._spread_expr)),
+    ),
+
+    _spread_expr: $ => choice(
+      $._expr,
+      $.spread,
+    ),
+
+    spread: $ => seq(
+      '...',
+      $._expr,
+    ),
+
+    if: $ => seq(
+      'if',
+      field("selector", $._expr),
+      field("then", $.block),
+      optional(seq(
+        'else',
+        field('else', $.block),
+      ))
+    ),
+
+    switch: $ => seq(
+      'switch',
+      field("subject", $._expr_term),
+      block(seq(
+        optional('|'),
+        sepBy('|', field("alt", $.alt)),
+      ))
+    ),
+
+    alt: $ => seq(
+      field("pattern", $._pattern),
+      '=>',
+      field("expr", $._expr),
+      optional(';'),
+    ),
+
+    qualified_name: $ => seq(
+      field("expr", $._expr),
+      '.',
+      field("name", $.Name),
+    ),
+
+    binary_call: $ => choice(
+      ...OPS
+        .map(([op, precendence]) =>
+          prec.right(precendence, seq(
+            field("left", $._expr),
+            field("op", $[op]),
+            field("right", $._expr),
+          ))
+        )
+    ),
+
+    // Workaround to make operators to be statements as well
+    // so that they won't be stripped when naming them as fields
+    ...OPS.reduce(
+      (acc, [e, _]) => ({ ...acc, [e]: $ => seq(e) }), {}
+    ),
+
+    unary_call: $ => prec.right(8, seq(field("negate", $.negate), field("arg", $._expr_term))),
+
+    negate: $ => choice('-', '!'),
+
+    indexing: $ => prec.right(12, seq(
+      field("box", $._expr),
+      brackets(
+        field("index", $._expr),
+      )
+    )),
+
+    block: $ => prec(1, block(
+      seq(
+        sepBy(';', field("statement", $._statement)),
+        optional(';'),
+      )
+    )),
+
+    _statement: $ => prec(1, choice(
+      $.let_declaration,
+      $._expr,
+    )),
+
+    tuple: $ =>
+      par(sepBy1(',', field("item", $._annot_expr))),
+
+    _annot_expr: $ => choice(
+      $.annot_expr,
+      $._expr,
+    ),
+
+    annot_expr: $ => seq(
+      field("subject", $._expr),
+      ':',
+      field("type", $._type_expr),
+    ),
+
+    lambda: $ => prec.right(12, seq(
+      par(sepBy(',', field("argument", $._pattern))),
+      optional(seq(
+        ':',
+        field("type", $._type_expr),
+      )),
+      '=>',
+      field("body", $._expr),
+    )),
+
+    //// TYPES /////////////////////////////////////////////////////////////////
 
     type_decl: $ =>
       seq(
@@ -447,45 +294,59 @@ module.exports = grammar({
 
     _type_expr: $ =>
       choice(
-        $._fun_type,
-        $.sum_type,
-        $.record_type,
-      ),
-
-    _fun_type: $ =>
-      choice(
         $.fun_type,
         $._core_type,
         $.type_tuple,
+        $.sum_type,
+        $.record_type,
+        $.type_string,
       ),
 
+    michelson_tuple: $ => seq(
+      '(',
+      $._type_expr,
+      ',',
+      $.String,
+      ',',
+      $._type_expr,
+      ',',
+      $.String,
+      ')',
+    ),
+
     fun_type: $ =>
-      seq(
-        field("domain", choice($._core_type, $.type_tuple)),
-        '=>',
-        field("codomain", $._fun_type),
+      prec.right(8,
+        seq(
+          field("domain", $._type_expr),
+          '=>',
+          field("codomain", $._type_expr),
+        ),
       ),
 
     _core_type: $ =>
       choice(
         $.type_application,
         $.TypeName,
-        $.type_string,
-        $.module_TypeName,
+        // $.module_TypeName,
       ),
 
     module_TypeName: $ =>
       seq(
-        $.module_name,
+        field("module", $.module_name),
         '.',
-        $.TypeName,
+        field("type", $.TypeName),
       ),
 
     type_application: $ =>
       seq(
         field("functor", $._core_type),
-        par(sepBy(',', field("parameter", $._type_expr))),
+        field("arguments", $._type_arguments),
       ),
+
+    _type_arguments: $ => choice(
+      // $.michelson_tuple,
+      par(sepBy(',', field("argument", $._type_expr))),
+    ),
 
     type_string: $ => $.String,
 
@@ -493,23 +354,23 @@ module.exports = grammar({
       par(sepBy1(',', field("element", $._type_expr))),
 
     sum_type: $ =>
-      seq(
-        optional('|'),
-        sepBy1('|', field("variant", $.variant)),
+      prec.left(8,
+        seq(
+          optional('|'),
+          sepBy1('|', field("variant", $.variant)),
+        ),
       ),
 
     variant: $ =>
-      seq(
-        field("constructor", $._constr),
-        optional(par(field("arguments", $._fun_type))),
+      prec.left(8,
+        seq(
+          field("constructor", $.Name_Capital),
+          optional(par(field("arguments", $._type_expr))),
+        ),
       ),
 
     record_type: $ =>
-      seq(
-        '{',
-        sepBy(',', field("field", $.field_decl)),
-        '}',
-      ),
+      block(sepBy(',', field("field", $.field_decl))),
 
     field_decl: $ =>
       seq(
@@ -518,115 +379,75 @@ module.exports = grammar({
         field("field_type", $._type_expr),
       ),
 
-    te: $ => choice(
-      $.lambda,
-      $._expr,
+    //// PATTERNS //////////////////////////////////////////////////////////////
+
+    _pattern: $ =>
+      choice(
+        $.tuple_pattern,
+        $._literal,
+        $.var_pattern,
+        $.annot_pattern,
+        $.wildcard,
+        $.unary_constr_pattern,
+        $.nullary_constr_pattern,
+        $.list_pattern,
+      ),
+
+    nullary_constr_pattern: $ => seq(
+      field("constructor", $.Name_Capital),
     ),
 
-    _functional_block: $ =>
-      choice(
-        $._statement,
-        $._expr,
-        $.fun_call,
-        $.bracket_block,
-      ),
+    unary_constr_pattern: $ => prec(1, seq(
+      field("constructor", $.Name_Capital),
+      field("arg", $._pattern),
+    )),
 
-    _annot_fun_call: $ => // Workaround used only in bracket blocks
-      par(seq(
-        $.fun_call,
-        ':',
-        $._type_expr,
-      )),
-
-    bracket_block: $ =>
-      prec.right(1000000, // TODO: precendence
-        block(
-          choice(
-            seq(
-              sepBy(';', field("statement", choice(
-                $.constructor_call,
-                seq(
-                  optional($.attr_decl),
-                  $._statement,
-                ),
-                $.fun_call,
-                // $._expr, // TODO: use only `fun_call` from there, somewhat fails if called directly
-              ))),
-              optional(seq(
-                opar(
-                  field("return",
-                    choice(
-                      $._expr,
-                      seq( // TODO: maybe not all returned function calls need to be annotated
-                        $.fun_call,
-                        ':',
-                        $._type_expr, // TODO: maybe we'll need to annotate fields here, but so far we just return multiple 'return's
-                      )
-                    )
-                  )
-                ),
-                optional(';'),
-              ))),
-            $.bracket_block,
-          ), // TODO conflict: _group bracket_block
-        )
-      ),
-
-    let_declaration: $ =>
-      prec.left(PREC.LET,
-        seq(
-          'let',
-          optional($.rec),
-          field("binding", choice(
-            sepBy1(',', $._core_pattern),
-          )),
-          optional(seq(':', field("type", $._type_expr))),
-          '=',
-          field("let_value",
-            choice(
-              $.lambda,
-              $._functional_block,
-            ),
-          ),
-        )
-      ),
-
-    _type_annotation: $ =>
-      seq(
-        ':',
-        field("type", $._type_expr)
-      ),
-
-    pattern_term: $ =>
-      choice(
-        $.Name,
-        $.pattern_grouped,
-      ),
-
-    pattern_grouped: $ =>
-      seq(
+    constr_pattern: $ => seq(
+      field("ctor", $.Name_Capital),
+      optional(seq(
         '(',
-        $._core_pattern,
-        optional($._type_annotation),
+        sepBy(',', field("arg", $._pattern)),
         ')',
-      ),
+      )),
+    ),
 
-    pattern_list: $ => list__($._pattern),
-    pattern_constant: $ =>
+    annot_pattern: $ => seq(
+      field("subject", $._pattern),
+      ':',
+      field("type", $._type_expr),
+    ),
+
+    tuple_pattern: $ => prec(13, par(
+      sepBy1(',', field("pattern", $._pattern)),
+    )),
+
+    list_pattern: $ => brackets(
+      sepBy(',', field("pattern", $._spread_pattern)),
+    ),
+
+    _spread_pattern: $ => choice(
+      $.spread_pattern,
+      $._pattern,
+    ),
+
+    spread_pattern: $ => seq(
+      '...',
+      field("expr", $._pattern),
+    ),
+
+    _literal: $ =>
       choice(
         $.Nat,
+        $.Int,
+        $.Bool,
+        $.Tez,
         $.String,
         $.Bytes,
-        $.Int,
+        $.Unit,
+        $.Nil,
+        $.None,
       ),
 
-    pattern_tuple: $ => sepBy1(',', $._construct),
-
-    _construct: $ =>
-      choice(
-        seq($._constr, nseq($.pattern_term)),
-        par($.pattern_term),
-      ),
 
     ///////////////////////////////////////////
 
@@ -635,8 +456,6 @@ module.exports = grammar({
     struct_name: $ => $.Name,
     var: $ => $.Name,
     module_name: $ => $.Name_Capital,
-    _constr: $ => $.Name_Capital,
-    // TODO: remove
     _ident: $ => $.Name,
 
     comment: $ => choice(
@@ -676,7 +495,8 @@ module.exports = grammar({
     skip: $ => 'skip',
     rec: $ => 'rec',
     wildcard: $ => '_',
+    rec: $ => 'rec',
 
-    attr: $ => seq('[@@', $.Name, ']'),
+    attr: $ => seq('[@', $.Name, ']'),
   }
 });
