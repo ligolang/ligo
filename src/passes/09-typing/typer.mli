@@ -17,4 +17,4 @@ val type_expression_subst : environment -> Errors.typer_error O'.typer_state -> 
 val untype_expression : O.expression -> (I.expression , Errors.typer_error) result
 val evaluate_type : environment -> O.ast_core_type_expression -> (O.type_expression, Errors.typer_error) result
 
-val assert_type_expression_eq : O.type_expression * O.type_expression -> (unit, Errors.typer_error) result
+val assert_type_expression_eq : Location.t -> O.type_expression * O.type_expression -> (unit, Errors.typer_error) result

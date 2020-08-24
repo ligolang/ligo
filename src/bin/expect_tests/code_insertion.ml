@@ -29,7 +29,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_michelson_insertion_2.ligo" ; "main" ] ;
   [%expect{|
     ligo: error
-          in file "bad_michelson_insertion_2.ligo", line 5, characters 32-40
+          in file "bad_michelson_insertion_2.ligo", line 5, characters 34-40
           Invalid type(s).
           Expected: "nat", but got: "( nat * nat )".
 

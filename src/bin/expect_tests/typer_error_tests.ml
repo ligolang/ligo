@@ -110,7 +110,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_3.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-          in file "error_typer_3.mligo", line 3, characters 34-53
+          in file "error_typer_3.mligo", line 3, characters 36-44
           Invalid type(s).
           Expected: "( int * string * sum[false -> unit , true -> unit] )", but got: "
           ( int * string )".
@@ -126,7 +126,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_4.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-          in file "error_typer_4.mligo", line 4, characters 17-56
+          in file "error_typer_4.mligo", line 4, characters 18-48
           Invalid type(s).
           Expected: "record[a -> int , c -> sum[false -> unit , true -> unit] , d -> string]", but got: "
           record[a -> int , b -> string , c -> sum[false -> unit , true -> unit]]".
@@ -156,7 +156,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_6.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-          in file "error_typer_6.mligo", line 1, characters 30-64
+          in file "error_typer_6.mligo", line 1, characters 31-45
           Invalid type(s).
           Expected: "Map (int , string)", but got: "Map (int ,
           sum[false -> unit , true -> unit])".
