@@ -15,7 +15,7 @@ import ParseTree
 
 -- import Debug.Trace
 
-example :: FilePath
+-- example :: FilePath
 -- example = "../../../src/test/contracts/address.mligo"
 -- example = "../../../src/test/contracts/amount_lambda.mligo"
 -- example = "../../../src/test/contracts/attributes.mligo"

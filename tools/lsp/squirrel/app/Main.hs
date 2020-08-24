@@ -232,22 +232,27 @@ loadFromVFS
   -> J.Uri
   -> IO (LIGO Info')
 loadFromVFS funs uri = do
-  Just vf <- Core.getVirtualFileFunc funs $ J.toNormalizedUri uri
-  let txt = virtualFileText vf
-  let Just fin = J.uriToFilePath uri
-  (tree, _) <- parse (Text fin txt)
-  return $ addLocalScopes tree
+  Core.getVirtualFileFunc funs
+    (J.toNormalizedUri uri)
+    >>= \case
+      Just vf -> do
+        let txt = virtualFileText vf
+        let Just fin = J.uriToFilePath uri
+        (tree, _) <- parse (Text fin txt)
+        return $ addLocalScopes tree
+      Nothing -> do
+        loadByURI uri
 
--- loadByURI
---   :: J.Uri
---   -> IO (LIGO Info')
--- loadByURI uri = do
---   case J.uriToFilePath uri of
---     Just fin -> do
---       (tree, _) <- runParserM . recognise =<< toParseTree (Path fin)
---       return $ addLocalScopes tree
---     Nothing -> do
---       error $ "uriToFilePath " ++ show uri ++ " has failed. We all are doomed."
+loadByURI
+  :: J.Uri
+  -> IO (LIGO Info')
+loadByURI uri = do
+  case J.uriToFilePath uri of
+    Just fin -> do
+      (tree, _) <- parse (Path fin)
+      return $ addLocalScopes tree
+    Nothing -> do
+      error $ "uriToFilePath " ++ show uri ++ " has failed. We all are doomed."
 
 collectErrors
   :: Core.LspFuncs ()
