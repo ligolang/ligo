@@ -37,7 +37,7 @@ let none = typer_0 "NONE" @@ fun tv l ->
 let set_empty = typer_0 "SET_EMPTY" @@ fun tv l ->
   need_real_type tv l
 
-let sub = typer_2 "SUB" @@ fun a b ->
+let sub loc = typer_2 "SUB" @@ fun a b ->
   if (eq_1 a (t_int ()) || eq_1 a (t_nat ()))
   && (eq_1 b (t_int ()) || eq_1 b (t_nat ()))
   then ok @@ t_int () else
@@ -47,7 +47,7 @@ let sub = typer_2 "SUB" @@ fun a b ->
   then ok @@ t_timestamp () else
   if (eq_2 (a , b) (t_mutez ()))
   then ok @@ t_mutez () else
-    fail bad_substraction
+    fail (bad_subtraction loc)
 
 let some = typer_1 "SOME" @@ fun a -> ok @@ t_option a
 
@@ -659,7 +659,7 @@ let constant_typers c loc : (typer , typer_error) result = match c with
   | C_NEG                 -> ok @@ neg ;
   | C_ABS                 -> ok @@ abs ;
   | C_ADD                 -> ok @@ add ;
-  | C_SUB                 -> ok @@ sub ;
+  | C_SUB                 -> ok @@ sub loc ;
   | C_MUL                 -> ok @@ times ;
   | C_EDIV                -> ok @@ ediv ;
   | C_DIV                 -> ok @@ div ;

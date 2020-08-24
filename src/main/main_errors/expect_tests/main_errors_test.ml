@@ -779,8 +779,9 @@ let%expect_test "typer" =
   [%expect {|
     in file "a dummy file name", line 20, characters 0-10
     Can't infer the type of this value, please add a type annotation.|}] ;
-  error `Typer_bad_substraction ;
+  error (`Typer_bad_substraction location_t);
   [%expect {|
+    in file "a dummy file name", line 20, characters 0-10
     Invalid subtraction.
     The following forms of subtractions are possible:
       * timestamp - int = timestamp

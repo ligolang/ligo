@@ -52,7 +52,7 @@ type typer_error = [
   | `Typer_expected_bool of Ast_typed.type_expression
   | `Typer_not_matching of Ast_typed.type_expression * Ast_typed.type_expression
   | `Typer_not_annotated of Location.t
-  | `Typer_bad_substraction
+  | `Typer_bad_substraction of Location.t
   | `Typer_wrong_size of Ast_typed.type_expression
   | `Typer_wrong_neg of Ast_typed.type_expression
   | `Typer_wrong_not of Ast_typed.type_expression
@@ -124,7 +124,7 @@ let expected_bool (t:Ast_typed.type_expression) = `Typer_expected_bool t
 let expected_ascription (t:Ast_core.expression) = `Typer_expected_ascription t
 let not_matching (t1:Ast_typed.type_expression) (t2:Ast_typed.type_expression) = `Typer_not_matching (t1,t2)
 let not_annotated (loc: Location.t) = `Typer_not_annotated loc
-let bad_substraction = `Typer_bad_substraction
+let bad_subtraction (loc:Location.t) = `Typer_bad_substraction loc
 let wrong_size (t:Ast_typed.type_expression) = `Typer_wrong_size t
 let wrong_neg (t:Ast_typed.type_expression) = `Typer_wrong_neg t
 let wrong_not (t:Ast_typed.type_expression) = `Typer_wrong_not t
@@ -303,13 +303,14 @@ let rec error_ppformat : display_format:string display_format ->
     | `Typer_not_annotated l ->
       Format.fprintf f "@[<hv>%a@.Can't infer the type of this value, please add a type annotation.@]"
       Location.pp l
-    | `Typer_bad_substraction ->
-      Format.fprintf f "@[<hv>Invalid subtraction.
+    | `Typer_bad_substraction loc ->
+      Format.fprintf f "@[<hv>%a@.Invalid subtraction.
 The following forms of subtractions are possible:
   * timestamp - int = timestamp
   * timestamp - timestamp = int
   * int/nat - int/nat = int 
   * mutez/tez - mutez/tez = mutez.@]"
+    Location.pp loc
     | `Typer_wrong_size t ->
       Format.fprintf f
         "@[<hv>%a@.Incorrect value applied.@.A value with one of the following types is expected: map, list, string, byte or set. @]"
@@ -1049,10 +1050,11 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
       ("message", message);
     ] in
     json_error ~stage ~content
-  | `Typer_bad_substraction ->
+  | `Typer_bad_substraction loc ->
     let message = `String "bad substraction, bad parameters" in
     let content = `Assoc [
       ("message", message);
+      ("location", Location.pp_json loc)
     ] in
     json_error ~stage ~content
   | `Typer_wrong_size t ->
