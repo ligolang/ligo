@@ -383,11 +383,11 @@ instance Pretty1 Pattern where
 
 instance Pretty1 Name where
   pp1 = \case
-    Name         raw -> color 2 $ pp raw
+    Name         raw -> pp raw
 
 instance Pretty1 TypeName where
   pp1 = \case
-    TypeName     raw -> color 3 $ pp raw
+    TypeName     raw -> pp raw
 
 instance Pretty1 FieldName where
   pp1 = \case

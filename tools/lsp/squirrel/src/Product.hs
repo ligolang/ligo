@@ -55,9 +55,6 @@ instance Eq (Product '[]) where
 instance (Eq x, Eq (Product xs)) => Eq (Product (x : xs)) where
   x :> xs == y :> ys = and [x == y, xs == ys]
 
--- instance Modifies (Product xs) where
---   ascribe _ = id
-
 class PrettyProd xs where
   ppProd :: Product xs -> Doc
 

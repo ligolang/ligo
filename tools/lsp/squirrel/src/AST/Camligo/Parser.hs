@@ -68,13 +68,13 @@ example :: FilePath
 -- example = "../../../src/test/contracts/let_in_multi_bind.mligo"
 example = "../../../src/test/contracts/fibo2.mligo"
 
-raw :: IO ()
-raw = toParseTree (Path example)
-  >>= print . pp
+-- raw :: IO ()
+-- raw = toParseTree (Path example)
+--   >>= print . pp
 
-raw' :: FilePath -> IO ()
-raw' example = toParseTree (Path example)
-  >>= print . pp
+-- raw' :: FilePath -> IO ()
+-- raw' example = toParseTree (Path example)
+--   >>= print . pp
 
 sample :: IO ()
 sample
@@ -89,7 +89,7 @@ sample' example
   >>= print . pp . fst
 
 recognise :: RawTree -> ParserM (LIGO Info)
-recognise = descent (\_ -> error . show . pp) $ map usingScope
+recognise = descent (error "Reasonligo.recognise") $ map usingScope
   [ -- Contract
     Descent do
       boilerplate $ \case

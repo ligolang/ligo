@@ -17,7 +17,9 @@ import           Control.Arrow (second)
 import           Control.Monad.State
 import           Control.Monad.Catch
 import           Control.Monad.Catch.Pure
+import           Control.Monad.Writer (WriterT, execWriterT, tell)
 
+import           Data.Monoid (First(getFirst))
 import qualified Data.List   as List
 import           Data.Map            (Map)
 import qualified Data.Map    as Map
@@ -46,7 +48,7 @@ data Category = Variable | Type
 
 -- | The type/value declaration.
 data ScopedDecl = ScopedDecl
-  { _sdName    :: LIGO ()
+  { _sdName    :: Text
   , _sdOrigin  :: Range
   , _sdBody    :: Maybe Range
   , _sdType    :: Maybe (Either (LIGO ()) Kind)
@@ -97,12 +99,6 @@ ofCategory Type     ScopedDecl { _sdType = Just (Right Star) } = True
 ofCategory _        _                                          = False
 
 type Info' = Product [[ScopedDecl], Maybe Category, [Text], Range, ShowRange]
-
--- instance Modifies (Product '[[ScopedDecl], Maybe Category, [Text], Range, a]) where
---   ascribe (ds :> _ :> _ :> r :> _) d =
---     color 3 (fsep (map (pp . _sdName) ds))
---     $$ pp r
---     $$ d
 
 addLocalScopes
   :: forall xs
@@ -290,16 +286,18 @@ lookupEnv :: Text -> [ScopedDecl] -> Maybe ScopedDecl
 lookupEnv name = listToMaybe . filter ((name ==) . ppToText . _sdName)
 
 -- | Add a type declaration to the current scope.
-defType :: HasRange a => LIGO a -> Kind -> LIGO a -> [Text] -> CollectM ()
-defType name kind body doc = do
+defType :: Collectable xs => LIGO (Product xs) -> Kind -> LIGO (Product xs) -> [Text] -> CollectM ()
+defType name' kind body doc = do
   define Type
     $ ScopedDecl
-      (void name)
-      (getRange $ extract name)
+      name
+      r
       (Just $ getRange $ extract body)
       (Just (Right kind))
       []
       doc
+  where
+    (r, name) = getTypeName name'
 
 -- -- observe :: Pretty i => Pretty res => Text -> i -> res -> res
 -- -- observe msg i res
@@ -309,23 +307,79 @@ defType name kind body doc = do
 
 -- | Add a value declaration to the current scope.
 def
-  :: HasRange a
-  => LIGO a
-  -> Maybe (LIGO a)
-  -> Maybe (LIGO a)
+  :: Collectable xs
+  => LIGO (Product xs)
+  -> Maybe (LIGO (Product xs))
+  -> Maybe (LIGO (Product xs))
   -> [Text]
   -> CollectM ()
-def name ty body doc = do
+def name' ty body doc = do
   define Variable
     $ ScopedDecl
-      (void name)
-      (getRange $ extract name)
+      name
+      r
       ((getRange . extract) <$> body)
       ((Left . void) <$> ty)
       []
       doc
+  where
+    (r, name) = getName name'
 
-type Collectable xs = (Contains Range xs, Contains [Text] xs)
+select
+  :: ( Lattice  (Product info)
+     , Contains  ShowRange info
+     , Contains  Range info
+     , Modifies (Product info)
+     , Eq (Product info)
+     )
+  => Text
+  -> [Visit RawLigoList (Product info) (WriterT [LIGO (Product info)] Catch)]
+  -> LIGO (Product info)
+  -> (Range, Text)
+select what handlers t
+  = maybe
+      (error . show $ "Tree does not contain a" <+> pp what <.> ":" <+> pp t <+> pp (getRange $ extract t))
+      (\t -> (getElem $ extract t, ppToText t))
+  $ either (const Nothing) listToMaybe
+  $ runCatch
+  $ execWriterT
+  $ visit handlers
+    t
+
+getName
+  :: ( Lattice  (Product info)
+     , Contains  ShowRange info
+     , Contains  Range info
+     , Modifies (Product info)
+     , Eq (Product info)
+     )
+  => LIGO (Product info)
+  -> (Range, Text)
+getName = select "name"
+  [ Visit \(r, Name t) -> do
+      tell [make (r, Name t)]
+  ]
+
+getTypeName
+  :: ( Lattice  (Product info)
+     , Contains  ShowRange info
+     , Contains  Range info
+     , Modifies (Product info)
+     , Eq (Product info)
+     )
+  => LIGO (Product info)
+  -> (Range, Text)
+getTypeName = select "type name"
+  [ Visit \(r, TypeName t) -> do
+      tell [make (r, TypeName t)]
+  ]
+
+type Collectable xs =
+  ( Contains Range xs
+  , Contains [Text] xs
+  , Contains ShowRange xs
+  , Eq (Product xs)
+  )
 
 instance Collectable xs => Scoped (Product xs) CollectM (LIGO (Product xs)) Contract where
   before r _ = enter r

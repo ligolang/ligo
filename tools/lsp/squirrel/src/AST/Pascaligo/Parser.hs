@@ -43,10 +43,10 @@ import ParseTree
 --   >>= runParserM . recognise
 --   >>= return . fst
 
-source' :: FilePath -> IO ()
-source' f
-  =   toParseTree (Path f)
-  >>= print . pp
+-- source' :: FilePath -> IO ()
+-- source' f
+--   =   toParseTree (Path f)
+--   >>= print . pp
 
 -- sample :: IO ()
 -- sample
@@ -60,7 +60,7 @@ source' f
 --   >>= print . pp
 
 recognise :: RawTree -> ParserM (LIGO Info)
-recognise = descent (\_ -> error . show . pp) $ map usingScope
+recognise = descent (error "Reasonligo.recognise") $ map usingScope
   [ -- Contract
     Descent do
       boilerplate \case

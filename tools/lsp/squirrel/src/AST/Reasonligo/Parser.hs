@@ -44,7 +44,7 @@ import           Product
 --   >>= print . pp . fst
 
 recognise :: RawTree -> ParserM (LIGO Info)
-recognise = descent (\_ -> error . show . pp) $ map usingScope
+recognise = descent (error "Reasonligo.recognise") $ map usingScope
   [ -- Contract
     Descent do
       boilerplate $ \case
