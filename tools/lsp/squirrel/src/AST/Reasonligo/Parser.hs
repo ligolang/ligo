@@ -37,12 +37,6 @@ import           Product
 -- example = "./contracts/arithmetic.religo"
 -- example = "./contracts/FA2.religo"
 
--- sample''' :: IO ()
--- sample'''
---   =   toParseTree (Path example)
---   >>= runParserM . recognise
---   >>= print . pp . fst
-
 recognise :: RawTree -> ParserM (LIGO Info)
 recognise = descent (error "Reasonligo.recognise") $ map usingScope
   [ -- Contract
@@ -63,7 +57,6 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
         "indexing"    -> ListAccess <$> field  "box"       <*> fields "index"
         "annot_expr"  -> Annot      <$> field  "subject"   <*> field "type"
         "if"          -> If         <$> field  "selector"  <*> field "then"      <*> fieldOpt "else"
-        -- TODO: possible support for multiple spreads
         "record"      -> Record     <$> fields "assignment"
         "tuple"       -> Tuple      <$> fields "item"
         "switch"      -> Case       <$> field  "subject"   <*> fields   "alt"
@@ -73,10 +66,10 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
     -- Pattern
   , Descent do
       boilerplate $ \case
-        "tuple_pattern"          -> IsTuple  <$> fields "pattern"
+        "tuple_pattern"          -> IsTuple <$> fields "pattern"
         "annot_pattern"          -> IsAnnot <$> field "subject" <*> field "type"
-        "list_pattern"           -> IsList <$> fields "pattern"
-        "var_pattern"            -> IsVar <$> field "var"
+        "list_pattern"           -> IsList  <$> fields "pattern"
+        "var_pattern"            -> IsVar   <$> field "var"
         "wildcard"               -> return IsWildcard
         "nullary_constr_pattern" -> IsConstr <$> field "constructor" <*> return Nothing
         "unary_constr_pattern"   -> IsConstr <$> field "constructor" <*> fieldOpt "arg"
@@ -95,7 +88,7 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
       boilerplate $ \case
         "record_field"      -> FieldAssignment <$> field "name" <*> field "value"
         "spread" -> Spread <$> field "name"
-        _                  -> fallthrough
+        _                   -> fallthrough
 
     -- MapBinding
   , Descent do

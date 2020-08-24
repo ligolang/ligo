@@ -66,27 +66,7 @@ example :: FilePath
 -- example = "../../../src/test/contracts/lambda2.mligo"
 -- example = "../../../src/test/contracts/loop.mligo"
 -- example = "../../../src/test/contracts/let_in_multi_bind.mligo"
-example = "../../../src/test/contracts/fibo2.mligo"
-
--- raw :: IO ()
--- raw = toParseTree (Path example)
---   >>= print . pp
-
--- raw' :: FilePath -> IO ()
--- raw' example = toParseTree (Path example)
---   >>= print . pp
-
-sample :: IO ()
-sample
-  =   toParseTree (Path example)
-  >>= runParserM . recognise
-  >>= print . pp . fst
-
-sample' :: FilePath -> IO ()
-sample' example
-  =   toParseTree (Path example)
-  >>= runParserM . recognise
-  >>= print . pp . fst
+-- example = "../../../src/test/contracts/fibo2.mligo"
 
 recognise :: RawTree -> ParserM (LIGO Info)
 recognise = descent (error "Reasonligo.recognise") $ map usingScope

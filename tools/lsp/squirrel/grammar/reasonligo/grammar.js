@@ -159,7 +159,7 @@ module.exports = grammar({
       $.capture,
     ),
 
-    capture: $ => $.Name,
+    capture: $ => field("name", $.Name),
 
     record_field: $ => seq(
       field("name", $.lhs),
@@ -183,7 +183,7 @@ module.exports = grammar({
 
     spread: $ => seq(
       '...',
-      $._expr,
+      field("name", $._expr),
     ),
 
     if: $ => seq(
@@ -304,13 +304,13 @@ module.exports = grammar({
 
     michelson_tuple: $ => seq(
       '(',
-      $._type_expr,
+      field("arg1", $._type_expr),
       ',',
-      $.String,
+      field("label1", $.String),
       ',',
-      $._type_expr,
+      field("arg2", $._type_expr),
       ',',
-      $.String,
+      field("label2", $.String),
       ')',
     ),
 

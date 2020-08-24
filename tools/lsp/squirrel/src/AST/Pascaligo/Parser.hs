@@ -37,28 +37,6 @@ import ParseTree
 -- example = "../../../src/test/contracts/chain_id.ligo"
 -- example = "../../../src/test/contracts/closure-3.ligo"
 
--- sample' :: FilePath -> IO (LIGO Info)
--- sample' f
---   =   toParseTree (Path f)
---   >>= runParserM . recognise
---   >>= return . fst
-
--- source' :: FilePath -> IO ()
--- source' f
---   =   toParseTree (Path f)
---   >>= print . pp
-
--- sample :: IO ()
--- sample
---   =   toParseTree (Path example)
---   >>= runParserM . recognise
---   >>= print . pp . fst
-
--- source :: IO ()
--- source
---   =   toParseTree (Path example)
---   >>= print . pp
-
 recognise :: RawTree -> ParserM (LIGO Info)
 recognise = descent (error "Reasonligo.recognise") $ map usingScope
   [ -- Contract
