@@ -57,8 +57,8 @@ mainLoop = do
             return Nothing
         }
 
-    Core.setupLogger (Just "log.txt") [] L.INFO
-    CTRL.run callbacks (lspHandlers chan) lspOptions (Just "log.txt")
+    Core.setupLogger Nothing [] L.EMERGENCY
+    CTRL.run callbacks (lspHandlers chan) lspOptions Nothing
   `catches`
     [ Handler \(e :: SomeException) -> do
         print e
@@ -91,8 +91,8 @@ lspHandlers rin = def
   , Core.didCloseTextDocumentNotificationHandler  = Just $ passHandler rin NotDidCloseTextDocument
   , Core.cancelNotificationHandler                = Just $ passHandler rin NotCancelRequestFromClient
   , Core.responseHandler                          = Just $ responseHandlerCb rin
-  , Core.codeActionHandler                        = Just $ passHandler rin ReqCodeAction
-  , Core.executeCommandHandler                    = Just $ passHandler rin ReqExecuteCommand
+  -- , Core.codeActionHandler                        = Just $ passHandler rin ReqCodeAction
+  -- , Core.executeCommandHandler                    = Just $ passHandler rin ReqExecuteCommand
   , Core.completionHandler                        = Just $ passHandler rin ReqCompletion
   , Core.completionResolveHandler                 = Just $ passHandler rin ReqCompletionItemResolve
   }
