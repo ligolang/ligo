@@ -1,4 +1,5 @@
 open Simple_utils.Display
+
 module Raw = Cst.Cameligo
 module Parser = Parser.Cameligo
 
@@ -177,11 +178,11 @@ let error_jsonformat : abs_error -> Yojson.t = fun a ->
       ("message", `String message );
       ("location", `String loc); ] in
     json_error ~stage ~content
-  | `Concrete_cameligo_funarg_tuple_type_mismatch _->
-    let message = Format.asprintf "TODO" in
-    (* let loc = Format.asprintf "%a" Location.pp_lift v.region in *)
+  | `Concrete_cameligo_funarg_tuple_type_mismatch (r, _, _) ->
+    let message = Format.asprintf "The tuple does not match the type." in
+    let loc = Format.asprintf "%a" Location.pp_lift r in
     let content = `Assoc [
       ("message", `String message );
-      (* ("location", `String loc);  *)
+      ("location", `String loc); 
     ] in
     json_error ~stage ~content

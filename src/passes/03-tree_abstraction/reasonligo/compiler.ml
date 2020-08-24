@@ -289,10 +289,8 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     (* todo : make it in common with let function *)
     let (func, loc) = r_split func in
     let ({binders; lhs_type; body} : CST.fun_expr) = func in
-    let%bind () = has_annotation binders in
-    let%bind ((binder,ty_opt),exprs) = compile_parameter binders in
-    
-    (* let%bind () = bind_list_iter has_annotation (snd binders) in     *)
+    let%bind () = check_annotation binders in
+    let%bind ((binder,ty_opt),exprs) = compile_parameter binders in    
     let%bind body = compile_expression body in
     let aux (binder, ty_opt,attr,rhs) expr = e_let_in (binder, ty_opt) attr rhs expr in
     let expr = List.fold_right aux exprs body  in
@@ -448,12 +446,33 @@ fun cases ->
     return @@ AST.Match_variant (List.combine constrs lst)
   | _ -> fail @@ unsupported_pattern_type @@ List.hd @@ List.map fst @@ List.Ne.to_list cases
 
-and has_annotation = function 
+and unepar = function 
+| CST.PPar { value = { inside; _ }; _ } -> unepar inside
+| _ as v -> v
+
+and untpar = function 
+| CST.TPar { value = { inside; _ }; _ } -> untpar inside
+| _ as v -> v
+
+and check_annotation = function 
 | CST.PVar v -> fail (missing_funarg_annotation v)
-| CST.PPar { value = { inside ; _ }; _ } -> has_annotation inside
+| CST.PPar { value = { inside ; _ }; _ } -> check_annotation inside
 | CST.PTuple { value ; _ } ->
   let l = Utils.nsepseq_to_list value in 
-  bind_list_iter has_annotation l
+  bind_list_iter check_annotation l
+| CST.PTyped { value = { pattern; type_expr; _ }; _ } -> (
+  let (pattern: CST.pattern) = unepar pattern in
+  let (type_expr: CST.type_expr) = untpar type_expr in
+  match pattern, type_expr with 
+  | PTuple { value = pval; region }, TProd { value = tval; _ } -> (
+    let no_of_tuple_components = List.length (Utils.nsepseq_to_list pval) in
+    let no_of_tuple_type_components = List.length (Utils.nsepseq_to_list tval) in
+    if (no_of_tuple_components <> no_of_tuple_type_components) then 
+      fail (funarg_tuple_type_mismatch region pattern type_expr)
+    else 
+      ok ())
+  | _ -> ok ()
+  )
 | _ -> ok ()
   
 and compile_let_binding ?kwd_rec attributes binding =
