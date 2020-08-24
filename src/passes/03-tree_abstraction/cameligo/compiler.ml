@@ -461,12 +461,33 @@ fun cases ->
     return @@ AST.Match_variant (List.combine constrs lst)
   | _ -> fail @@ unsupported_pattern_type @@ List.map fst @@ List.Ne.to_list cases
 
+and unepar = function 
+| CST.PPar { value = { inside; _ }; _ } -> unepar inside
+| _ as v -> v
+
+and untpar = function 
+| CST.TPar { value = { inside; _ }; _ } -> untpar inside
+| _ as v -> v
+
 and has_annotation = function 
 | CST.PVar v -> fail (missing_funarg_annotation v)
 | CST.PPar { value = { inside ; _ }; _ } -> has_annotation inside
 | CST.PTuple { value ; _ } ->
   let l = Utils.nsepseq_to_list value in 
   bind_list_iter has_annotation l
+| CST.PTyped { value = { pattern; type_expr; _ }; _ } -> (
+  let (pattern: CST.pattern) = unepar pattern in
+  let (type_expr: CST.type_expr) = untpar type_expr in
+  match pattern, type_expr with 
+  | PTuple { value = pval; region }, TProd { value = tval; _ } -> (
+    let no_of_tuple_components = List.length (Utils.nsepseq_to_list pval) in
+    let no_of_tuple_type_components = List.length (Utils.nsepseq_to_list tval) in
+    if (no_of_tuple_components <> no_of_tuple_type_components) then 
+      fail (funarg_tuple_type_mismatch region pattern type_expr)
+    else 
+      ok ())
+  | _ -> ok ()
+)
 | _ -> ok ()
 
 and compile_let_binding ?kwd_rec attributes binding =

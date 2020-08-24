@@ -1,6 +1,6 @@
 open Simple_utils.Display
-
 module Raw = Cst.Cameligo
+module Parser = Parser.Cameligo
 
 let stage = "abstracter"
 
@@ -14,6 +14,7 @@ type abs_error = [
   | `Concrete_cameligo_michelson_type_wrong_arity of Location.t * string
   | `Concrete_cameligo_recursion_on_non_function of Location.t
   | `Concrete_cameligo_missing_funarg_annotation of Raw.variable
+  | `Concrete_cameligo_funarg_tuple_type_mismatch of Region.t * Raw.pattern * Raw.type_expr
   ]
 
 let unknown_predefined_type name = `Concrete_cameligo_unknown_predefined_type name
@@ -25,6 +26,7 @@ let recursion_on_non_function reg = `Concrete_cameligo_recursion_on_non_function
 let michelson_type_wrong texpr name = `Concrete_cameligo_michelson_type_wrong (texpr,name)
 let michelson_type_wrong_arity loc name = `Concrete_cameligo_michelson_type_wrong_arity (loc,name)
 let missing_funarg_annotation v = `Concrete_cameligo_missing_funarg_annotation v
+let funarg_tuple_type_mismatch r p t = `Concrete_cameligo_funarg_tuple_type_mismatch (r, p, t)
 
 let error_ppformat : display_format:string display_format ->
   Format.formatter -> abs_error -> unit =
@@ -80,6 +82,23 @@ Other forms of pattern matching are not (yet) supported. @]"
         "@[<hv>%a@.Missing a type annotation for argument \"%s\". @]"
           Location.pp_lift v.region
           v.value
+    | `Concrete_cameligo_funarg_tuple_type_mismatch (region, pattern, texpr) -> (
+      let p = Parser.pretty_print_pattern pattern in
+      let t = Parser.pretty_print_type_expr texpr in
+      match p, t with 
+      | Ok (p, _), Ok (t, _) ->
+        let p = Buffer.contents p in
+        let t = Buffer.contents t in
+        Format.fprintf f
+          "@[<hv>%a@.The tuple \"%s\" does not match the type \"%s\". @]"
+          Location.pp_lift region
+          p
+          t
+      | _ ->
+        Format.fprintf f
+          "@[<hv>%a@.The tuple does not match the type. @]"
+          Location.pp_lift region
+    )
   )
 
 
@@ -157,4 +176,12 @@ let error_jsonformat : abs_error -> Yojson.t = fun a ->
     let content = `Assoc [
       ("message", `String message );
       ("location", `String loc); ] in
+    json_error ~stage ~content
+  | `Concrete_cameligo_funarg_tuple_type_mismatch _->
+    let message = Format.asprintf "TODO" in
+    (* let loc = Format.asprintf "%a" Location.pp_lift v.region in *)
+    let content = `Assoc [
+      ("message", `String message );
+      (* ("location", `String loc);  *)
+    ] in
     json_error ~stage ~content
