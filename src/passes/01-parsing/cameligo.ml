@@ -171,3 +171,23 @@ let pretty_print_expression cst =
     | Some c -> c in
   let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
   in Trace.ok buffer
+
+let pretty_print_pattern pattern =
+  let doc    = Pretty.pp_pattern pattern in
+  let buffer = Buffer.create 131 in
+  let width  =
+    match Terminal_size.get_columns () with
+      None -> 60
+    | Some c -> c in
+  let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
+  in Trace.ok buffer
+
+let pretty_print_type_expr type_expr =
+  let doc    = Pretty.pp_type_expr type_expr in
+  let buffer = Buffer.create 131 in
+  let width  =
+    match Terminal_size.get_columns () with
+      None -> 60
+    | Some c -> c in
+  let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
+  in Trace.ok buffer

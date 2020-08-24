@@ -1483,3 +1483,29 @@ _)) = #4.1 in let (x : _) = #2.0 in let (#1 : _) = #2.1 in x
           * Ask a question on our Discord: https://discord.gg/9rhYaEt
           * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
           * Check the changelog by running 'ligo changelog' |}];
+  run_ligo_bad ["print-ast-typed"; bad_contract "funarg_tuple_wrong.mligo"];
+  [%expect {|
+    ligo: error
+          in file "funarg_tuple_wrong.mligo", line 1, characters 7-14
+          The tuple "b, c, d" does not match the type "int * int".
+
+
+          If you're not sure how to fix this error, you can do one of the following:
+
+          * Visit our documentation: https://ligolang.org/docs/intro/introduction
+          * Ask a question on our Discord: https://discord.gg/9rhYaEt
+          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+          * Check the changelog by running 'ligo changelog' |}];
+  run_ligo_bad ["print-ast-typed"; bad_contract "funarg_tuple_wrong.religo"];
+  [%expect {|
+    ligo: error
+          in file "funarg_tuple_wrong.religo", line 1, characters 10-17
+          The tuple "b, c, d" does not match the type "(int, int)".
+
+
+          If you're not sure how to fix this error, you can do one of the following:
+
+          * Visit our documentation: https://ligolang.org/docs/intro/introduction
+          * Ask a question on our Discord: https://discord.gg/9rhYaEt
+          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+          * Check the changelog by running 'ligo changelog' |}];
