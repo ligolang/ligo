@@ -115,6 +115,7 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
         "nil"                 -> return $ IsList []
         "list_pattern"        -> IsList   <$> fields "element"
         "cons_pattern"        -> IsCons   <$> field  "head"   <*> field "tail"
+        "var_pattern"         -> IsVar    <$> field  "name"
         _                     -> fallthrough
 
     -- Alt

@@ -733,7 +733,7 @@ module.exports = grammar({
 
     _core_pattern: $ =>
       choice(
-        $.Name,
+        $.var_pattern,
         '_',
         $.Int,
         $.Nat,
@@ -742,6 +742,8 @@ module.exports = grammar({
         $.tuple_pattern,
         $._constr_pattern,
       ),
+
+    var_pattern: $ => field("name", $.Name),
 
     _list_pattern: $ =>
       choice(

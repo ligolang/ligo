@@ -188,7 +188,7 @@ eventLoop funs chan = do
               respondWith funs req RspFindReferences $ J.List []
 
       ReqCompletion req -> do
-        stopDyingAlready funs req $ do 
+        stopDyingAlready funs req $ do
           U.logs $ "got completion request: " <> show req
           let uri = req ^. J.params . J.textDocument . J.uri
           let pos = posToRange $ req ^. J.params . J.position
@@ -198,7 +198,7 @@ eventLoop funs chan = do
 
       -- Additional callback executed after completion was made, currently no-op
       ReqCompletionItemResolve req -> do
-        stopDyingAlready funs req $ do 
+        stopDyingAlready funs req $ do
           U.logs $ "got completion resolve request: " <> show req
           respondWith funs req RspCompletionItemResolve (req ^. J.params)
 
