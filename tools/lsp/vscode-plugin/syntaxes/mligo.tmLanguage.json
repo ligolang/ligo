@@ -1,0 +1,252 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "mligo",
+    "patterns": [
+        { "include": "#string" },
+        { "include": "#single-quotes" },
+        { "include": "#comment" },
+        { "include": "#list-cons" },
+        { "include": "#let-binding" },
+        { "include": "#lambda" },
+        { "include": "#type-definition" },
+        { "include": "#type-annotation" },
+        { "include": "#control-keywords" },
+        { "include": "#other-keywords" },
+        { "include": "#numeric-literals" },
+        { "include": "#operators" },
+        { "include": "#function-application" },
+        { "include": "#identifiers" }
+    ],
+    "repository": {
+        "let-binding": {
+            "begin": "\\b(let)\\b",
+            "end": "(\\=)",
+            "beginCaptures": {
+                "1": { "name": "keyword.other.let-binding.mligo" }
+            },
+            "endCaptures": {
+                "1": { "name": "keyword.operator.eq.mligo"}
+            },
+            "patterns": [
+                { "include": "#comment" },
+                { "include": "#let-rec" },
+                { "include": "#let-function" },
+                { "include": "#let-constant" }
+            ]
+        },
+
+        "let-rec": {
+            "match": "\\b(rec)\\b",
+            "name": "keyword.other.recursive.mligo"
+        },
+
+        "let-function": {
+            "begin": "([a-zA-Z_]\\w*)?\\b(?=\\s*\\()",
+            "beginCaptures": {
+                "1": { "name": "entity.name.function.mligo" }
+            },
+            "end": "(?=\\=)",
+            "patterns": [
+                { "include": "#comment" },
+                { "include": "#parenthesized-definition" },
+                { "include": "#type-annotation" }
+            ]
+        },
+
+        "parenthesized-definition": {
+            "begin": "\\(",
+            "beginCaptures": {
+                "1": { "name": "keyword.operator.parenthesis.mligo" }
+            },
+            "end": "\\)",
+            "endCaptures": {
+                "1": { "name": "keyword.operator.parenthesis.mligo" }
+            },
+            "patterns": [
+                { "include": "#comment" },
+                { "include": "#names-tuple" },
+                { "include": "#type-annotation" }
+            ]
+        },
+
+        "names-tuple": {
+            "begin": "(?<=\\()",
+            "end": "(?=:)",
+            "patterns": [
+                { "include": "#comment" },
+                { "include": "#names-tuple-name" }
+            ]
+        },
+
+        "names-tuple-name": {
+            "match": "(?:([a-zA-Z_]\\w*)(?=\\s*[,:]))+",
+            "name": "support.variable.parameter.mligo"
+        },
+
+        "type-annotation": {
+            "begin": "(:)\\s*",
+            "beginCaptures": {
+                "1": { "name": "keyword.operator.type.mligo" }
+            },
+            "end": "(?:[;|]|(?=[)=}])|$)",
+            "patterns": [
+                { "include": "#comment" },
+                { "include": "#type-expression" }
+            ]
+        },
+
+        "type-expression": {
+            "patterns": [
+                {
+                    "begin": "\\(",
+                    "end": "\\)",
+                    "patterns": [
+                        { "include": "#comment" },
+                        { "include": "#type-expression" }
+                    ]
+                },
+                {
+                    "match": "([^=()|;}]*)",
+                    "captures": {
+                        "1": { "name": "entity.name.type.mligo" }
+                    }
+                }
+            ]
+        },
+
+        "let-constant": {
+            "begin": "([a-zA-Z_]\\w*)\\b(?!\\s*\\()",
+            "beginCaptures": {
+                "1": { "name": "support.variable.mligo" }
+            },
+            "end": "(?=\\=)",
+            "patterns": [
+                { "include": "#comment" },
+                { "include": "#type-annotation" }
+            ]
+        },
+
+        "lambda": {
+            "begin": "\\b(fun)\\b",
+            "beginCaptures": {
+                "1": { "name": "keyword.other.lambda.mligo" }
+            },
+            "end": "(->)",
+            "endCaptures": {
+                "1": { "name": "keyword.operator.lambda.mligo"}
+            },
+            "patterns": [
+                { "include": "#comment" },
+                { "include": "#parenthesized-definition" }
+            ]
+        },
+
+        "type-definition": {
+            "begin": "\\b(type)\\s+([a-zA-Z_]\\w*)\\b",
+            "beginCaptures": {
+                "1": { "name": "keyword.other.typedef.mligo" },
+                "2": { "name": "entity.name.type.mligo" }
+            },
+            "end": "(?=(?:\\blet\\b|\\btype\\b))",
+            "patterns": [
+                { "include": "#comment" },
+                { "include": "#struct-type" },
+                { "include": "#sum-type" }
+            ]
+        },
+
+        "struct-type": {
+            "begin": "\\{",
+            "end": "\\}",
+            "patterns": [
+                { "include": "#comment" },
+                { "include": "#names-tuple-name" },
+                { "include": "#type-annotation" }
+            ]
+        },
+
+        "sum-type": {
+            "begin": "\\b([a-zA-Z_]\\w*)\\s+(of)",
+            "beginCaptures": {
+                "1": { "name": "entity.name.function.mligo" },
+                "2": { "name": "keyword.other.of.mligo" }
+            },
+            "end": "(\\||\\blet\\b|\\btype\\b)",
+            "patterns": [
+                { "include": "#type-expression" }
+            ]
+        },
+
+        "string": {
+            "name": "string.quoted.double.mligo",
+            "begin": "\"",
+            "end": "\"",
+            "patterns": [{
+                    "name": "constant.character.escape.mligo",
+                    "match": "\\\\."
+            }]
+        },
+        "single-quotes" : {
+            "name": "string.quoted.single.mligo",
+            "begin": "\\'",
+            "end": "\\'",
+            "patterns" : []
+        },
+
+
+        "comment": {
+            "patterns": [
+                {
+                    "name": "comment.line.double-slash.mligo",
+                    "match": "(//.*)"
+                },
+                {
+                    "name" : "comment.line.double-slash.mligo",
+                    "begin" : "\\(\\*",
+                    "end" : "\\*\\)",
+                    "patterns" : []
+                }
+            ]
+        },
+
+        "list-cons": {
+            "match": "::",
+            "name": "keyword.operator.cons.mligo"
+        },
+
+        "control-keywords": {
+            "name": "keyword.control.mligo",
+            "match": "\\b(match|with|if|then|else|assert|failwith)\\b"
+        },
+
+        "other-keywords": {
+            "name": "keyword.other.mligo",
+            "match": "\\b(in|begin|end)\\b"
+        },
+
+        "numeric-literals": {
+            "name": "constant.numeric.mligo",
+            "match": "\\b\\d+"
+        },
+
+        "operators": {
+            "name": "keyword.operator.other.mligo",
+            "match": "([-+*/])"
+        },
+
+        "function-application": {
+            "comment": "We need a negative lookahead here because instead of matching the first rule, TM picks the _longest match_. Without the lookahead, this rule conflicts with #let-binding and #control-keywords.",
+            "match": "(?<=(?:match|with|if|then|else|assert|in|begin|failwith) |->|^|[|=\\.(])\\s*((?!(?:match|with|if|then|else|assert|in|begin|end|let|type|fun|failwith)\\b)[a-zA-Z_]\\w*)\\s+(?=(\\d|[\\[('\"]|[a-zA-Z_]\\w*))",
+            "captures": {
+                "1": { "name": "entity.name.function" }
+            }
+        },
+        "identifiers": {
+            "match": "\\b([a-zA-Z_]\\w*)\\b",
+            "captures": {
+                "1": { "name": "entity.name.variable" }
+            }
+        }
+    },
+    "scopeName": "source.mligo"
+}

@@ -32,6 +32,12 @@
                 "configuration": "./syntaxes/ligo.configuration.json"
             },
             {
+                "id": "mligo",
+                "aliases": ["CameLIGO"],
+                "extensions": ["mligo"],
+                "configuration": "./syntaxes/mligo.configuration.json"
+            },
+            {
                 "id": "religo",
                 "aliases": ["ReasonLIGO"],
                 "extensions": ["religo"],
@@ -43,6 +49,11 @@
                 "language": "ligo",
                 "scopeName": "source.ligo",
                 "path": "./syntaxes/ligo.tmLanguage.json"
+            },
+            {
+                "language": "mligo",
+                "scopeName": "source.mligo",
+                "path": "./syntaxes/mligo.tmLanguage.json"
             },
             {
                 "language": "religo",
