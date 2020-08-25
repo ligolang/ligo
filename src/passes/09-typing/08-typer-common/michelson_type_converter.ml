@@ -87,7 +87,7 @@ let rec from_right_comb_pair (l:row_element label_map) (size:int) : (row_element
   match l' , size with
   | [ (_,l) ; (_,r) ] , 2 -> ok [ l ; r ]
   | [ (_,l) ; (_,{associated_type=tr;_}) ], _ ->
-    let%bind comb_lmap = trace_option (expected_record tr) @@ get_t_record tr in
+    let%bind comb_lmap = trace_option (expected_record Location.generated tr) @@ get_t_record tr in
     let%bind next = from_right_comb_pair comb_lmap (size-1) in
     ok (l :: next)
   | _ -> fail (corner_case "Could not convert michelson_pair_right_comb pair to a record")
@@ -97,7 +97,7 @@ let rec from_left_comb_pair (l:row_element label_map) (size:int) : (row_element 
   match l' , size with
   | [ (_,l) ; (_,r) ] , 2 -> ok [ l ; r ]
   | [ (_,{associated_type=tl;_}) ; (_,r) ], _ ->
-    let%bind comb_lmap = trace_option (expected_record tl) @@ get_t_record tl in
+    let%bind comb_lmap = trace_option (expected_record Location.generated tl) @@ get_t_record tl in
     let%bind next = from_left_comb_pair comb_lmap (size-1) in
     ok (List.append next [r])
   | _ -> fail (corner_case "Could not convert michelson_pair_left_comb pair to a record")
@@ -107,7 +107,7 @@ let rec from_right_comb_variant (l:row_element label_map) (size:int) : (row_elem
   match l' , size with
   | [ (_,l) ; (_,r) ] , 2 -> ok [ l ; r ]
   | [ (_,l) ; (_,{associated_type=tr;_}) ], _ ->
-    let%bind comb_cmap = trace_option (expected_variant tr) @@ get_t_sum tr in
+    let%bind comb_cmap = trace_option (expected_variant Location.generated tr) @@ get_t_sum tr in
     let%bind next = from_right_comb_variant comb_cmap (size-1) in
     ok (l :: next)
   | _ -> fail (corner_case "Could not convert michelson_or right comb to a variant")
@@ -117,7 +117,7 @@ let rec from_left_comb_variant (l:row_element label_map) (size:int) : (row_eleme
   match l' , size with
   | [ (_,l) ; (_,r) ] , 2 -> ok [ l ; r ]
   | [ (_,{associated_type=tl;_}) ; (_,r) ], _ ->
-    let%bind comb_cmap = trace_option (expected_variant tl) @@ get_t_sum tl in
+    let%bind comb_cmap = trace_option (expected_variant Location.generated tl) @@ get_t_sum tl in
     let%bind next = from_left_comb_variant comb_cmap (size-1) in
     ok (List.append next [r])
   | _ -> fail (corner_case "Could not convert michelson_or left comb to a record")

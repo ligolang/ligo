@@ -24,7 +24,7 @@ let%expect_test _ =
   run_ligo_bad [ "interpret" ; "--init-file="^(bad_contract "michelson_converter_short_record.mligo") ; "l1"] ;
   [%expect {|
     ligo: error
-          in file "michelson_converter_short_record.mligo", line 1, characters 10-23
+          in file "michelson_converter_short_record.mligo", line 4, characters 9-44
           Incorrect argument provided to Layout.convert_to_(left|right)_comb.
           The record must have at least two elements.
 

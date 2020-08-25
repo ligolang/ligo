@@ -207,7 +207,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
     let%bind () =
       match tv_opt with
       | None -> ok ()
-      | Some tv' -> assert_type_expression_eq (tv' , tv) in
+      | Some tv' -> assert_type_expression_eq ae.location (tv' , tv) in
     let location = ae.location in
     ok @@ make_e ~location expr tv in
   trace (expression_tracer ae) @@
@@ -263,7 +263,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let%bind () =
         match tv_opt with
         | None -> ok ()
-        | Some tv' -> assert_type_expression_eq (tv' , ae.type_expression) in
+        | Some tv' -> assert_type_expression_eq ae.location (tv' , ae.type_expression) in
       ok(ae)
   | E_constructor {constructor = Label s ; element} when String.equal s "M_left" || String.equal s "M_right" -> (
     let%bind t = trace_option (michelson_or (Label s) ae.location) @@ tv_opt in 
@@ -271,7 +271,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
     ( match t.type_content with
       | T_sum c ->
         let {associated_type ; _} : O.row_element = O.LMap.find (Label s) c in
-        let%bind () = assert_type_expression_eq (expr'.type_expression, associated_type) in
+        let%bind () = assert_type_expression_eq expr'.location (expr'.type_expression, associated_type) in
         return (E_constructor {constructor = Label s; element=expr'}) t
       | _ -> fail (michelson_or (Label s) ae.location)
     )
@@ -281,7 +281,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let%bind (c_tv, sum_tv) = trace_option (unbound_constructor e constructor ae.location) @@
         Environment.get_constructor constructor e in
       let%bind expr' = type_expression' e element in
-      let%bind _assert = assert_type_expression_eq (expr'.type_expression, c_tv) in
+      let%bind _assert = assert_type_expression_eq expr'.location (expr'.type_expression, c_tv) in
       return (E_constructor {constructor; element=expr'}) sum_tv
   (* Record *)
   | E_record m ->
@@ -301,7 +301,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       )
       | _ -> failwith "Update an expression which is not a record"
     in
-    let%bind () = assert_type_expression_eq (tv, get_type_expression update) in
+    let%bind () = assert_type_expression_eq update.location (tv, get_type_expression update) in
     return (E_record_update {record; path; update}) wrapped
   (* Data-structure *)
   | E_lambda lambda -> 
@@ -414,7 +414,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let%bind args' = type_expression' e args in
       let%bind tv = match lamb'.type_expression.type_content with
         | T_arrow {type1;type2} ->
-            let%bind _ = assert_type_expression_eq (type1, args'.type_expression) in
+            let%bind _ = assert_type_expression_eq args'.location (type1, args'.type_expression) in
             ok type2
         | _ ->
           fail @@ type_error_approximate
@@ -433,11 +433,11 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
           | Match_option { match_none ; match_some = {opt=_ ; body ; tv=_ } } -> [ match_none ; body ]
           | Match_variant {cases; tv=_} -> List.map (fun (c : O.matching_content_case) -> c.body) cases in
         List.map get_type_expression @@ aux m' in
-      let aux prec cur =
+      let aux prec (cur:O.type_expression) =
         let%bind () =
           match prec with
           | None -> ok ()
-          | Some cur' -> assert_type_expression_eq (cur , cur') in
+          | Some cur' -> assert_type_expression_eq cur.location (cur , cur') in
         ok (Some cur) in
       let%bind tv_opt = bind_fold_list aux None tvs in
       let tv = Option.unopt_exn tv_opt in
@@ -476,7 +476,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
     let%bind () =
       match tv_opt with
       | None -> ok ()
-      | Some tv' -> assert_type_expression_eq (tv' , type_annotation) in
+      | Some tv' -> assert_type_expression_eq anno_expr.location (tv' , type_annotation) in
     ok {expr' with type_expression=type_annotation}
 
 and type_lambda e {
