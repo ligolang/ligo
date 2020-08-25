@@ -7,13 +7,16 @@
 module Range
   ( Range(..)
   , HasRange(..)
+  , toLSPRange
   , cutOut
   , point
   )
   where
 
-import qualified Data.ByteString as BS
+import qualified Language.Haskell.LSP.Types as LSP (Position (..), Range (..))
+
 import Data.ByteString (ByteString)
+import qualified Data.ByteString as BS
 import Data.Text (Text)
 import Data.Text.Encoding
 
@@ -53,6 +56,16 @@ instance HasRange Range where
 
 instance Contains Range xs => HasRange (Product xs) where
   getRange = getElem
+
+-- | Convert `squirrel` range to `haskell-lsp` range.
+toLSPRange :: Range -> LSP.Range
+toLSPRange Range
+  { rStart  = (rsl, rsc, _)
+  , rFinish = (rfl, rfc, _)
+  } = LSP.Range
+  { LSP._start = LSP.Position { LSP._line = rsl, LSP._character = rsc }
+  , LSP._end   = LSP.Position { LSP._line = rfl, LSP._character = rfc }
+  }
 
 -- | Extract textual representation of given range.
 cutOut :: Range -> ByteString -> Text
