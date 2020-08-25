@@ -243,6 +243,7 @@ let assert_t_nat : type_expression -> unit option = fun t -> match t.type_conten
   | _ -> None
 
 let assert_t_bool : type_expression -> unit option = fun v -> get_t_bool v
+let assert_t_option : type_expression -> unit option = fun v -> Option.map (fun _ -> ()) @@ get_t_option v
 let assert_t_unit : type_expression -> unit option = fun v -> get_t_unit v
 
 let e_record map : expression_content = E_record map

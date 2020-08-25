@@ -59,6 +59,7 @@ module Operators_types = struct
   let t_abs          = tuple1 int --> nat
   let t_cons         = forall "a" @@ fun a -> tuple2 a (list a) --> list a
   let t_assertion    = tuple1 bool --> unit
+  let t_assert_some  = forall "a" @@ fun a -> tuple1 (option a) --> unit
   let t_times        = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_timargs a b c] => tuple2 a b --> c (* TYPECLASS *)
   let t_ediv         = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_edivargs a b c] => tuple2 a b --> c (* TYPECLASS *)
   let t_div          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_divargs a b c] => tuple2 a b --> c (* TYPECLASS *)
@@ -99,6 +100,7 @@ module Operators_types = struct
     | C_SOME                -> ok @@ t_some ;
     | C_NONE                -> ok @@ t_none ;
     | C_ASSERTION           -> ok @@ t_assertion ;
+    | C_ASSERT_SOME         -> ok @@ t_assert_some ;
     | C_FAILWITH            -> ok @@ t_failwith ;
     (* LOOPS *)
     | C_FOLD_WHILE          -> ok @@ t_fold_while ;
@@ -179,4 +181,3 @@ module Operators_types = struct
     | C_SET_DELEGATE        -> ok @@ t_set_delegate ;
     | c                     -> fail (corner_case (Format.asprintf "Typer not implemented for constant %a" Ast_typed.PP.constant c))
 end
-

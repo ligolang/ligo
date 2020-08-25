@@ -52,6 +52,7 @@ type constant' =
   | C_SOME
   | C_NONE
   | C_ASSERTION
+  | C_ASSERT_SOME
   | C_ASSERT_INFERRED
   | C_FAILWITH
   | C_UPDATE

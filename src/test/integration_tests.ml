@@ -1506,6 +1506,8 @@ let assert_mligo () : (unit, _) result =
   let make_expected = e_pair (e_typed_list [] (t_operation())) (e_unit ()) in
   let%bind _ = expect_fail program "main" (make_input false) in
   let%bind _ = expect_eq program "main" (make_input true) make_expected in
+  let%bind _ = expect_fail program "some" (e_none ()) in
+  let%bind _ = expect_eq program "some" (e_some (e_unit ())) (e_unit ()) in
   ok ()
 
 let assert_religo () : (unit, _) result =

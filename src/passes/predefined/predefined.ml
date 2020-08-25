@@ -409,6 +409,7 @@ module Tree_abstraction = struct
     (* Others *)
 
     | "assert"          -> Some C_ASSERTION
+    | "assert_some"     -> Some C_ASSERT_SOME
     | "size"            -> Some C_SIZE (* Deprecated *)
     
     | "Layout.convert_to_right_comb" -> Some C_CONVERT_TO_RIGHT_COMB
@@ -445,7 +446,8 @@ module Tree_abstraction = struct
 
     (*->  Others *)
 
-    | C_ASSERTION -> "assert"
+    | C_ASSERTION   -> "assert"
+    | C_ASSERT_SOME -> "assert_some"
     
     | C_CONVERT_TO_RIGHT_COMB -> "Layout.convert_to_right_comb"
     | C_CONVERT_TO_LEFT_COMB  -> "Layout.convert_to_left_comb"
@@ -535,7 +537,8 @@ module Tree_abstraction = struct
 
     (* Others *)
 
-    | "assert" -> Some C_ASSERTION
+    | "assert"       -> Some C_ASSERTION
+    | "assert_some"  -> Some C_ASSERT_SOME
 
     | _ as c -> pseudo_modules c
 
@@ -568,7 +571,8 @@ module Tree_abstraction = struct
 
     (* Others *)
 
-    | C_ASSERTION -> "assert"
+    | C_ASSERTION   -> "assert"
+    | C_ASSERT_SOME -> "assert_some"
 
     | _ as c -> pseudo_module_to_string c
 
@@ -655,7 +659,8 @@ module Tree_abstraction = struct
 
     (* Others *)
 
-    | "assert" -> Some C_ASSERTION
+    | "assert"      -> Some C_ASSERTION
+    | "assert_some" -> Some C_ASSERT_SOME
 
     | _ as c -> pseudo_modules c
 
@@ -688,7 +693,8 @@ module Tree_abstraction = struct
 
     (* Others *)
 
-    | C_ASSERTION -> "assert"
+    | C_ASSERTION   -> "assert"
+    | C_ASSERT_SOME -> "assert_some"
 
     | _ as c -> pseudo_module_to_string c
 
@@ -718,69 +724,70 @@ module Stacking = struct
 
   let get_operators c : predicate option =
   match c with
-    | C_ADD             -> Some ( simple_binary @@ prim I_ADD)
-    | C_SUB             -> Some ( simple_binary @@ prim I_SUB)
-    | C_MUL             -> Some ( simple_binary @@ prim I_MUL)
-    | C_EDIV            -> Some ( simple_binary @@ prim I_EDIV)
-    | C_DIV             -> Some ( simple_binary @@ seq [prim I_EDIV ; i_assert_some_msg (i_push_string "DIV by 0") ; i_car])
-    | C_MOD             -> Some ( simple_binary @@ seq [prim I_EDIV ; i_assert_some_msg (i_push_string "MOD by 0") ; i_cdr])
-    | C_NEG             -> Some ( simple_unary @@ prim I_NEG)
-    | C_OR              -> Some ( simple_binary @@ prim I_OR)
-    | C_AND             -> Some ( simple_binary @@ prim I_AND)
-    | C_XOR             -> Some ( simple_binary @@ prim I_XOR)
-    | C_LSL             -> Some ( simple_binary @@ prim I_LSL)
-    | C_LSR             -> Some ( simple_binary @@ prim I_LSR)
-    | C_NOT             -> Some ( simple_unary @@ prim I_NOT)
-    | C_PAIR            -> Some ( simple_binary @@ prim I_PAIR)
-    | C_CAR             -> Some ( simple_unary @@ prim I_CAR)
-    | C_CDR             -> Some ( simple_unary @@ prim I_CDR)
-    | C_EQ              -> Some ( simple_binary @@ seq [prim I_COMPARE ; prim I_EQ])
-    | C_NEQ             -> Some ( simple_binary @@ seq [prim I_COMPARE ; prim I_NEQ])
-    | C_LT              -> Some ( simple_binary @@ seq [prim I_COMPARE ; prim I_LT])
-    | C_LE              -> Some ( simple_binary @@ seq [prim I_COMPARE ; prim I_LE])
-    | C_GT              -> Some ( simple_binary @@ seq [prim I_COMPARE ; prim I_GT])
-    | C_GE              -> Some ( simple_binary @@ seq [prim I_COMPARE ; prim I_GE])
-    | C_UPDATE          -> Some ( simple_ternary @@ prim I_UPDATE)
-    | C_SOME            -> Some ( simple_unary  @@ prim I_SOME)
-    | C_MAP_FIND        -> Some ( simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "MAP FIND")])
-    | C_MAP_MEM         -> Some ( simple_binary @@ prim I_MEM)
-    | C_MAP_FIND_OPT    -> Some ( simple_binary @@ prim I_GET)
-    | C_MAP_ADD         -> Some ( simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE])
-    | C_MAP_UPDATE      -> Some ( simple_ternary @@ prim I_UPDATE)
-    | C_FOLD_WHILE      -> Some ( simple_binary @@ seq [i_swap ; (i_push (prim T_bool) (prim D_True));prim ~children:[seq [dip i_dup; i_exec; i_unpair]] I_LOOP ;i_swap ; i_drop])
-    | C_FOLD_CONTINUE   -> Some ( simple_unary @@ seq [(i_push (prim T_bool) (prim D_True)); i_pair])
-    | C_FOLD_STOP       -> Some ( simple_unary @@ seq [(i_push (prim T_bool) (prim D_False)); i_pair])
-    | C_SIZE            -> Some ( simple_unary @@ prim I_SIZE)
-    | C_FAILWITH        -> Some ( simple_unary @@ prim I_FAILWITH)
-    | C_ASSERT_INFERRED -> Some ( simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit]))
-    | C_ASSERTION       -> Some ( simple_unary @@ i_if (seq [i_push_unit]) (seq [i_push_string "failed assertion" ; i_failwith]))
-    | C_INT             -> Some ( simple_unary @@ prim I_INT)
-    | C_ABS             -> Some ( simple_unary @@ prim I_ABS)
-    | C_IS_NAT          -> Some ( simple_unary @@ prim I_ISNAT)
-    | C_CONS            -> Some ( simple_binary @@ prim I_CONS)
-    | C_UNIT            -> Some ( simple_constant @@ prim I_UNIT)
-    | C_BALANCE         -> Some ( simple_constant @@ prim I_BALANCE)
-    | C_AMOUNT          -> Some ( simple_constant @@ prim I_AMOUNT)
-    | C_ADDRESS         -> Some ( simple_unary @@ prim I_ADDRESS)
-    | C_SELF_ADDRESS    -> Some ( simple_constant @@ seq [prim I_SELF; prim I_ADDRESS])
-    | C_IMPLICIT_ACCOUNT -> Some ( simple_unary @@ prim I_IMPLICIT_ACCOUNT)
-    | C_SET_DELEGATE    -> Some ( simple_unary @@ prim I_SET_DELEGATE)
-    | C_NOW             -> Some ( simple_constant @@ prim I_NOW)
-    | C_CALL            -> Some ( simple_ternary @@ prim I_TRANSFER_TOKENS)
-    | C_SOURCE          -> Some ( simple_constant @@ prim I_SOURCE)
-    | C_SENDER          -> Some ( simple_constant @@ prim I_SENDER)
-    | C_SET_MEM         -> Some ( simple_binary @@ prim I_MEM)
-    | C_SET_ADD         -> Some ( simple_binary @@ seq [dip (i_push (prim T_bool) (prim D_True)) ; prim I_UPDATE])
-    | C_SET_REMOVE      -> Some ( simple_binary @@ seq [dip (i_push (prim T_bool) (prim D_False)) ; prim I_UPDATE])
-    | C_SLICE           -> Some ( simple_ternary @@ seq [prim I_SLICE ; i_assert_some_msg (i_push_string "SLICE")])
-    | C_SHA256          -> Some ( simple_unary @@ prim I_SHA256)
-    | C_SHA512          -> Some ( simple_unary @@ prim I_SHA512)
-    | C_BLAKE2b         -> Some ( simple_unary @@ prim I_BLAKE2B)
-    | C_CHECK_SIGNATURE -> Some ( simple_ternary @@ prim I_CHECK_SIGNATURE)
-    | C_HASH_KEY        -> Some ( simple_unary @@ prim I_HASH_KEY)
-    | C_BYTES_PACK      -> Some ( simple_unary @@ prim I_PACK)
-    | C_CONCAT          -> Some ( simple_binary @@ prim I_CONCAT)
-    | C_CHAIN_ID        -> Some ( simple_constant @@ prim I_CHAIN_ID)
-    | _                 -> None
+    | C_ADD               -> Some ( simple_binary @@ prim I_ADD)
+    | C_SUB               -> Some ( simple_binary @@ prim I_SUB)
+    | C_MUL               -> Some ( simple_binary @@ prim I_MUL)
+    | C_EDIV              -> Some ( simple_binary @@ prim I_EDIV)
+    | C_DIV               -> Some ( simple_binary @@ seq [prim I_EDIV ; i_assert_some_msg (i_push_string "DIV by 0") ; i_car])
+    | C_MOD               -> Some ( simple_binary @@ seq [prim I_EDIV ; i_assert_some_msg (i_push_string "MOD by 0") ; i_cdr])
+    | C_NEG               -> Some ( simple_unary @@ prim I_NEG)
+    | C_OR                -> Some ( simple_binary @@ prim I_OR)
+    | C_AND               -> Some ( simple_binary @@ prim I_AND)
+    | C_XOR               -> Some ( simple_binary @@ prim I_XOR)
+    | C_LSL               -> Some ( simple_binary @@ prim I_LSL)
+    | C_LSR               -> Some ( simple_binary @@ prim I_LSR)
+    | C_NOT               -> Some ( simple_unary @@ prim I_NOT)
+    | C_PAIR              -> Some ( simple_binary @@ prim I_PAIR)
+    | C_CAR               -> Some ( simple_unary @@ prim I_CAR)
+    | C_CDR               -> Some ( simple_unary @@ prim I_CDR)
+    | C_EQ                -> Some ( simple_binary @@ seq [prim I_COMPARE ; prim I_EQ])
+    | C_NEQ               -> Some ( simple_binary @@ seq [prim I_COMPARE ; prim I_NEQ])
+    | C_LT                -> Some ( simple_binary @@ seq [prim I_COMPARE ; prim I_LT])
+    | C_LE                -> Some ( simple_binary @@ seq [prim I_COMPARE ; prim I_LE])
+    | C_GT                -> Some ( simple_binary @@ seq [prim I_COMPARE ; prim I_GT])
+    | C_GE                -> Some ( simple_binary @@ seq [prim I_COMPARE ; prim I_GE])
+    | C_UPDATE            -> Some ( simple_ternary @@ prim I_UPDATE)
+    | C_SOME              -> Some ( simple_unary  @@ prim I_SOME)
+    | C_MAP_FIND          -> Some ( simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "MAP FIND")])
+    | C_MAP_MEM           -> Some ( simple_binary @@ prim I_MEM)
+    | C_MAP_FIND_OPT      -> Some ( simple_binary @@ prim I_GET)
+    | C_MAP_ADD           -> Some ( simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE])
+    | C_MAP_UPDATE        -> Some ( simple_ternary @@ prim I_UPDATE)
+    | C_FOLD_WHILE        -> Some ( simple_binary @@ seq [i_swap ; (i_push (prim T_bool) (prim D_True));prim ~children:[seq [dip i_dup; i_exec; i_unpair]] I_LOOP ;i_swap ; i_drop])
+    | C_FOLD_CONTINUE     -> Some ( simple_unary @@ seq [(i_push (prim T_bool) (prim D_True)); i_pair])
+    | C_FOLD_STOP         -> Some ( simple_unary @@ seq [(i_push (prim T_bool) (prim D_False)); i_pair])
+    | C_SIZE              -> Some ( simple_unary @@ prim I_SIZE)
+    | C_FAILWITH          -> Some ( simple_unary @@ prim I_FAILWITH)
+    | C_ASSERT_SOME       -> Some ( simple_unary @@ i_assert_some)
+    | C_ASSERT_INFERRED   -> Some ( simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit]))
+    | C_ASSERTION         -> Some ( simple_unary @@ i_if (seq [i_push_unit]) (seq [i_push_string "failed assertion" ; i_failwith]))
+    | C_INT               -> Some ( simple_unary @@ prim I_INT)
+    | C_ABS               -> Some ( simple_unary @@ prim I_ABS)
+    | C_IS_NAT            -> Some ( simple_unary @@ prim I_ISNAT)
+    | C_CONS              -> Some ( simple_binary @@ prim I_CONS)
+    | C_UNIT              -> Some ( simple_constant @@ prim I_UNIT)
+    | C_BALANCE           -> Some ( simple_constant @@ prim I_BALANCE)
+    | C_AMOUNT            -> Some ( simple_constant @@ prim I_AMOUNT)
+    | C_ADDRESS           -> Some ( simple_unary @@ prim I_ADDRESS)
+    | C_SELF_ADDRESS      -> Some ( simple_constant @@ seq [prim I_SELF; prim I_ADDRESS])
+    | C_IMPLICIT_ACCOUNT  -> Some ( simple_unary @@ prim I_IMPLICIT_ACCOUNT)
+    | C_SET_DELEGATE      -> Some ( simple_unary @@ prim I_SET_DELEGATE)
+    | C_NOW               -> Some ( simple_constant @@ prim I_NOW)
+    | C_CALL              -> Some ( simple_ternary @@ prim I_TRANSFER_TOKENS)
+    | C_SOURCE            -> Some ( simple_constant @@ prim I_SOURCE)
+    | C_SENDER            -> Some ( simple_constant @@ prim I_SENDER)
+    | C_SET_MEM           -> Some ( simple_binary @@ prim I_MEM)
+    | C_SET_ADD           -> Some ( simple_binary @@ seq [dip (i_push (prim T_bool) (prim D_True)) ; prim I_UPDATE])
+    | C_SET_REMOVE        -> Some ( simple_binary @@ seq [dip (i_push (prim T_bool) (prim D_False)) ; prim I_UPDATE])
+    | C_SLICE             -> Some ( simple_ternary @@ seq [prim I_SLICE ; i_assert_some_msg (i_push_string "SLICE")])
+    | C_SHA256            -> Some ( simple_unary @@ prim I_SHA256)
+    | C_SHA512            -> Some ( simple_unary @@ prim I_SHA512)
+    | C_BLAKE2b           -> Some ( simple_unary @@ prim I_BLAKE2B)
+    | C_CHECK_SIGNATURE   -> Some ( simple_ternary @@ prim I_CHECK_SIGNATURE)
+    | C_HASH_KEY          -> Some ( simple_unary @@ prim I_HASH_KEY)
+    | C_BYTES_PACK        -> Some ( simple_unary @@ prim I_PACK)
+    | C_CONCAT            -> Some ( simple_binary @@ prim I_CONCAT)
+    | C_CHAIN_ID          -> Some ( simple_constant @@ prim I_CHAIN_ID)
+    | _                   -> None
 
 end

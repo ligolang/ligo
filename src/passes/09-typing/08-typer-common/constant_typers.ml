@@ -303,6 +303,10 @@ let assertion loc = typer_1 loc "ASSERT" @@ fun loc a ->
   let%bind () = trace_option (expected_bool loc a) @@ assert_t_bool a in
   ok @@ t_unit ()
 
+let assert_some loc = typer_1 loc "ASSERT_SOME" @@ fun loc a ->
+  let%bind () = trace_option (expected_option loc a) @@ assert_t_option a in
+  ok @@ t_unit ()
+
 let times loc = typer_2 loc "TIMES" @@ fun loc a b ->
   if eq_2 (a , b) (t_nat ())
   then ok @@ t_nat () else
@@ -650,6 +654,7 @@ let constant_typers c loc : (typer , typer_error) result = match c with
   | C_SOME                -> ok @@ some loc ;
   | C_NONE                -> ok @@ none loc ;
   | C_ASSERTION           -> ok @@ assertion loc ;
+  | C_ASSERT_SOME         -> ok @@ assert_some loc ;
   | C_FAILWITH            -> ok @@ failwith_ loc ;
   (* LOOPS *)
   | C_FOLD_WHILE          -> ok @@ fold_while loc ;

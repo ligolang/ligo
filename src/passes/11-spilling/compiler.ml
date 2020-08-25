@@ -25,6 +25,7 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_SOME -> C_SOME
   | C_NONE -> C_NONE
   | C_ASSERTION -> C_ASSERTION
+  | C_ASSERT_SOME -> C_ASSERT_SOME
   | C_ASSERT_INFERRED -> C_ASSERT_INFERRED
   | C_FAILWITH -> C_FAILWITH
   | C_UPDATE -> C_UPDATE

@@ -156,6 +156,7 @@ and constant ppf : constant' -> unit = function
   | C_SOME                  -> fprintf ppf "SOME"
   | C_NONE                  -> fprintf ppf "NONE"
   | C_ASSERTION             -> fprintf ppf "ASSERTION"
+  | C_ASSERT_SOME           -> fprintf ppf "ASSERT_SOME"
   | C_ASSERT_INFERRED       -> fprintf ppf "ASSERT_INFERRED"
   | C_FAILWITH              -> fprintf ppf "FAILWITH"
   | C_UPDATE                -> fprintf ppf "UPDATE"
