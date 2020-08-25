@@ -1,5 +1,5 @@
 
-module AST.Find where
+module AST.Capabilities.Find where
 
 import Control.Monad
 

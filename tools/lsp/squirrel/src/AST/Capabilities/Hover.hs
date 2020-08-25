@@ -13,7 +13,7 @@ import AST.Skeleton
 import Duplo.Pretty
 import Product
 import Range
-import Data.Text (intercalate)
+import Data.Text (pack, intercalate)
 
 hoverDecl
   :: CanSearch xs
@@ -32,7 +32,7 @@ mkContents ScopedDecl
   { _sdType   = ppToText -> _sdType
   , _sdName   = ppToText -> _sdName
   , _sdDoc    = ppToText -> _sdDoc
-  , _sdOrigin = ppToText -> _sdOrigin
+  , _sdOrigin = pack . show -> _sdOrigin
   -- TODO: more documentation
   } = LSP.HoverContents $ LSP.MarkupContent
   { _kind = LSP.MkMarkdown

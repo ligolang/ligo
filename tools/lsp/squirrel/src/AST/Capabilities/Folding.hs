@@ -2,7 +2,7 @@
 
 -- | Code folding utilities
 
-module AST.Folding where
+module AST.Capabilities.Folding where
 
 import qualified Language.Haskell.LSP.Types as J
 

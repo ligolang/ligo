@@ -1,6 +1,4 @@
-{-# LANGUAGE RecordWildCards #-}
-
-module AST.Completion where
+module AST.Capabilities.Completion where
 
 import Language.Haskell.LSP.Types (CompletionDoc (..), CompletionItem (..), CompletionItemKind (..))
 
@@ -49,7 +47,11 @@ complete r tree = do
     $ scope
 
 toCompletionItem :: Completion -> CompletionItem
-toCompletionItem c@Completion{..} = CompletionItem
+toCompletionItem c@Completion
+  { cName = cName
+  , cType = cType
+  , cDoc  = _cDoc
+  } = CompletionItem
   { _label = cName
   , _kind = Just $ CiFunction -- TODO
   , _detail = Just $ ":: " <> cType -- TODO: more elaborate info
@@ -68,7 +70,11 @@ toCompletionItem c@Completion{..} = CompletionItem
   }
 
 mkDoc :: Completion -> CompletionDoc
-mkDoc Completion {..} = CompletionDocString $
+mkDoc Completion
+  { cName = cName
+  , cType = cType
+  , cDoc  = cDoc
+  } = CompletionDocString $
   cName <> " is of type " <> cType <> ". " <> cDoc
 
 asCompletion :: ScopedDecl -> Completion
