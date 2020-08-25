@@ -55,6 +55,7 @@ let is_pure_constant : constant' -> bool =
   | C_ADD | C_SUB |C_MUL|C_DIV|C_MOD | C_LSL | C_LSR 
   (* impure: *)
   | C_ASSERTION
+  | C_ASSERT_SOME
   | C_ASSERT_INFERRED
   | C_MAP_FIND
   | C_FOLD_WHILE

@@ -80,6 +80,7 @@ val assert_t_list_operation : type_expression -> unit option
 val assert_t_int : type_expression -> unit option
 val assert_t_nat : type_expression -> unit option
 val assert_t_bool : type_expression -> unit option
+val assert_t_option : type_expression -> unit option
 val assert_t_unit : type_expression -> unit option
 val assert_t_contract : type_expression -> unit option
 val assert_t_bytes : type_expression -> unit option
