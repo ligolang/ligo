@@ -76,6 +76,8 @@ executables:
       - interpolate
       - lens
       - ligo-squirrel
+      - directory
+      - unix
       - stm
 
     main: Main.hs
