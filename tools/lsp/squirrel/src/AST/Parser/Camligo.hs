@@ -1,5 +1,5 @@
 
-module AST.Camligo.Parser where
+module AST.Parser.Camligo where
 
 -- import Data.Maybe (isJust)
 
@@ -79,7 +79,7 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
   , Descent do
       boilerplate $ \case
         "fun_decl"  -> Function <$> flag "recursive" <*> field "name" <*> fields "arg" <*> fieldOpt "type" <*> field "body"
-        "let_decl"  -> Const    <$>                      field "name"                  <*> fieldOpt "type" <*> field "body"
+        "let_decl"  -> Const    <$>                      field "name"                  <*> fieldOpt "type" <*> fieldOpt "body"
         "include"   -> Include  <$>                      field "filename"
         "type_decl" -> TypeDecl <$> field "name" <*> field "type"
         _ -> fallthrough
@@ -169,6 +169,12 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
       boilerplate' $ \case
         ("Name", n) -> return $ Name n
         _           -> fallthrough
+
+    -- NameDecl
+  , Descent do
+      boilerplate' $ \case
+        ("NameDecl", n) -> return $ NameDecl n
+        _               -> fallthrough
 
     -- FieldName
   , Descent do

@@ -1,5 +1,5 @@
 -- | Parser for a PascaLigo contract.
-module AST.Pascaligo.Parser where
+module AST.Parser.Pascaligo where
 
 import Data.Maybe (isJust)
 
@@ -147,8 +147,8 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
   , Descent do
       boilerplate \case
         "fun_decl"   -> Function <$> flag "recursive" <*> field "name" <*> fields "parameters" <*> fieldOpt "type" <*> field "body"
-        "const_decl" -> Const    <$>             field    "name"       <*> fieldOpt "type" <*> field "value"
-        "var_decl"   -> Var      <$>             field    "name"       <*> fieldOpt "type" <*> field "value"
+        "const_decl" -> Const    <$>             field    "name"       <*> fieldOpt "type" <*> fieldOpt "value"
+        "var_decl"   -> Var      <$>             field    "name"       <*> fieldOpt "type" <*> fieldOpt "value"
         "type_decl"  -> TypeDecl <$>             field    "typeName"   <*> field "typeValue"
         "include"    -> Include  <$>             field    "filename"
         _            -> fallthrough
@@ -162,15 +162,15 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
     -- VarDecl
   , Descent do
       boilerplate \case
-        "param_decl" -> Decl <$> field "access" <*> field "name" <*> fieldOpt "type"
+        "param_decl" -> Var <$> field "name" <*> fieldOpt "type" <*> pure Nothing
         _            -> fallthrough
 
-    -- Mutable
-  , Descent do
-      boilerplate \case
-        "const" -> return Immutable
-        "var"   -> return Mutable
-        _       -> fallthrough
+  --   -- Mutable
+  -- , Descent do
+  --     boilerplate \case
+  --       "const" -> return Immutable
+  --       "var"   -> return Mutable
+  --       _       -> fallthrough
 
     -- Name
   , Descent do
@@ -179,6 +179,12 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
         ("and", _)  -> return $ Name "and"
         ("or", _)   -> return $ Name "or"
         _           -> fallthrough
+
+    -- NameDecl
+  , Descent do
+      boilerplate' $ \case
+        ("NameDecl", n) -> return $ NameDecl n
+        _               -> fallthrough
 
     -- Type
   , Descent do

@@ -30,6 +30,7 @@ default-extensions:
   - DeriveTraversable
   - DerivingStrategies
   - DerivingVia
+  - DuplicateRecordFields
   - FlexibleContexts
   - FlexibleInstances
   - FunctionalDependencies
@@ -38,6 +39,7 @@ default-extensions:
   - LambdaCase
   - MagicHash
   - MultiParamTypeClasses
+  - MultiWayIf
   - NamedFieldPuns
   - OverloadedStrings
   - QuasiQuotes
@@ -69,7 +71,7 @@ library:
     - haskell-lsp-types
     - aeson
     - process
-    - lens 
+    - lens
     - lens-aeson
     - bytestring
     - unordered-containers

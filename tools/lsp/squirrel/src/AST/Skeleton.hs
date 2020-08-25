@@ -14,25 +14,22 @@ import Duplo.Pretty
 import Duplo.Tree
 import Duplo.Error
 
+import Product
+
 -- | The AST for Pascali... wait. It is, em, universal one.
 --
 --   TODO: Rename; add stuff if CamlLIGO/ReasonLIGO needs something.
 --
-type LIGO = Tree RawLigoList
+type LIGO        = Tree RawLigoList
+type LIGO'    xs = LIGO (Product xs)
+type Tree' fs xs = Tree fs (Product xs)
 
 type RawLigoList =
   [ Name, Path, QualifiedName, Pattern, Constant, FieldAssignment, Assignment
-  , MapBinding, LHS, Alt, Expr, TField, Variant, Type, Mutable, VarDecl, Binding
+  , MapBinding, LHS, Alt, Expr, TField, Variant, Type, Binding
   , RawContract, TypeName, FieldName, Language
-  , Err Text, Parameters, Ctor, Contract, ReasonExpr
+  , Err Text, Parameters, Ctor, Contract, NameDecl
   ]
-
--- | ReasonLigo specific expressions
-data ReasonExpr it
-  -- TODO: Block may not need Maybe since last expr may be always `return`
-  = Block [it] (Maybe it) -- [Declaration] (Return)
-  deriving (Show) via PP (ReasonExpr it)
-  deriving stock (Functor, Foldable, Traversable)
 
 data Undefined it
   = Undefined Text
@@ -64,8 +61,8 @@ data RawContract it
 data Binding it
   = Irrefutable  it it               -- ^ (Pattern) (Expr)
   | Function     Bool it [it] (Maybe it) it    -- ^ (Name) (Parameters) (Type) (Expr)
-  | Var          it (Maybe it) it            -- ^ (Name) (Type) (Expr)
-  | Const        it (Maybe it) it            -- ^ (Name) (Type) (Expr)
+  | Var          it (Maybe it) (Maybe it)            -- ^ (Name) (Type) (Expr)
+  | Const        it (Maybe it) (Maybe it)            -- ^ (Name) (Type) (Expr)
   | TypeDecl     it it               -- ^ (Name) (Type)
   | Attribute    it                  -- ^ (Name)
   | Include      it
@@ -76,18 +73,6 @@ data Parameters it
   = Parameters [it]
   deriving (Show) via PP (Parameters it)
   deriving stock (Functor, Foldable, Traversable)
-
-data VarDecl it
-  = Decl         it it (Maybe it)  -- ^ (Mutable) (Name) (Type)
-  deriving (Show) via PP (VarDecl it)
-  deriving stock (Functor, Foldable, Traversable)
-
-data Mutable it
-  = Mutable
-  | Immutable
-  deriving (Show) via PP (Mutable it)
-  deriving stock (Functor, Foldable, Traversable)
-
 
 data Type it
   = TArrow    it it    -- ^ (Type) (Type)
@@ -141,6 +126,7 @@ data Expr it
   | ForLoop   it it it (Maybe it) it              -- (Name) (Expr) (Expr) (Expr)
   | WhileLoop it it                    -- (Expr) (Expr)
   | Seq       [it]                     -- [Declaration]
+  | Block     [it]                     -- [Declaration]
   | Lambda    [it] (Maybe it) it               -- [VarDecl] (Maybe (Type)) (Expr)
   | ForBox    it (Maybe it) it it it -- (Name) (Maybe (Name)) Text (Expr) (Expr)
   | MapPatch  it [it] -- (QualifiedName) [MapBinding]
@@ -218,6 +204,12 @@ newtype Name it = Name
   deriving (Show) via PP (Name it)
   deriving stock (Functor, Foldable, Traversable)
 
+newtype NameDecl it = NameDecl
+  { _raw     :: Text
+  }
+  deriving (Show) via PP (NameDecl it)
+  deriving stock (Functor, Foldable, Traversable)
+
 newtype TypeName it = TypeName Text
   deriving (Show) via PP (TypeName it)
   deriving stock   (Functor, Foldable, Traversable)
@@ -257,8 +249,8 @@ instance Pretty1 Binding where
   pp1 = \case
     Irrefutable  pat  expr     -> sexpr "irref" [pat, expr]
     TypeDecl     n    ty       -> sexpr "type"  [n, ty]
-    Var          name ty value -> sexpr "var"   [name, pp ty, value]
-    Const        name ty body  -> sexpr "const" [name, pp ty, body]
+    Var          name ty value -> sexpr "var"   [name, pp ty, pp value]
+    Const        name ty body  -> sexpr "const" [name, pp ty, pp body]
     Attribute    name          -> sexpr "attr"  [name]
     Include      fname         -> sexpr "#include" [fname]
 
@@ -274,15 +266,6 @@ instance Pretty1 Binding where
 instance Pretty1 Parameters where
   pp1 = \case
     Parameters them -> sexpr "params" them
-
-instance Pretty1 VarDecl where
-  pp1 = \case
-    Decl mutability name ty -> sexpr "decl" [mutability, name, pp ty]
-
-instance Pretty1 Mutable where
-  pp1 = \case
-    Mutable          -> "var"
-    Immutable        -> "const"
 
 instance Pretty1 Type where
   pp1 = \case
@@ -301,13 +284,9 @@ instance Pretty1 Variant where
   pp1 = \case
     Variant ctor ty -> sexpr "ctor" [ctor, pp ty]
 
-instance Pretty1 ReasonExpr where
-  pp1 = \case
-    Block decls ret -> sexpr "block" $ decls ++ [pp ret]
-
 instance Pretty1 Expr where
   pp1 = \case
-    Let       decl body  -> sexpr "let" [decl, body]
+    Let       decl body  -> "(let" `indent` decl `above` body <.> ")"
     Apply     f xs       -> sexpr "apply" (f : xs)
     Constant  constant   -> constant
     Ident     qname      -> qname
@@ -334,6 +313,7 @@ instance Pretty1 Expr where
     ForBox    k mv t z b -> sexpr "for_box" [k, pp mv, pp t, z, b]
     WhileLoop f b        -> sexpr "while" [f, b]
     Seq       es         -> sexpr "seq" es
+    Block     es         -> sexpr "block" es
     Lambda    ps ty b    -> sexpr "lam" $ concat [ps, [":", pp ty], ["=>", b]]
     MapPatch  z bs       -> sexpr "patch" (z : bs)
     SetPatch  z bs       -> sexpr "patch_set" (z : bs)
@@ -384,6 +364,10 @@ instance Pretty1 Pattern where
 instance Pretty1 Name where
   pp1 = \case
     Name         raw -> pp raw
+
+instance Pretty1 NameDecl where
+  pp1 = \case
+    NameDecl     raw -> "'" <> pp raw
 
 instance Pretty1 TypeName where
   pp1 = \case

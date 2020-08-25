@@ -9,6 +9,8 @@ module Range
   , HasRange(..)
   , toLSPRange
   , cutOut
+  , excluding
+  , merged
   , point
   )
   where
@@ -22,6 +24,7 @@ import Data.Text.Encoding
 
 import Duplo.Lattice
 import Duplo.Pretty
+import Duplo.Tree
 
 import Product
 
@@ -40,12 +43,12 @@ data Range = Range
 instance Pretty Range where
   pp (Range (ll, lc, _) (rl, rc, _) f) =
     color 2 do
-      brackets do
-        text f <.> ":"
-          <.> int ll <.> ":"
-          <.> int lc <.> "-"
-          <.> int rl <.> ":"
-          <.> int rc
+      text f <.> color 7 ":" <.>
+        color 2 do
+          int ll <.> ":"
+            <.> int lc <.> "-"
+            <.> int rl <.> ":"
+            <.> int rc
 
 -- | Ability to get range out of something.
 class HasRange a where
@@ -68,6 +71,9 @@ toLSPRange Range
   , LSP._end   = LSP.Position { LSP._line = rfl - 1, LSP._character = rfc }
   }
 
+instance (Contains Range xs, Apply Functor fs) => HasRange (Tree fs (Product xs)) where
+  getRange = getElem . extract
+
 -- | Extract textual representation of given range.
 cutOut :: Range -> ByteString -> Text
 cutOut (Range (_, _, s) (_, _, f) _) bs =
@@ -75,6 +81,12 @@ cutOut (Range (_, _, s) (_, _, f) _) bs =
     $ BS.take (f - s)
     $ BS.drop  s
       bs
+
+excluding :: Range -> Range -> Range
+excluding (Range _ s _) (Range _ f t) = Range s f t
+
+merged :: Range -> Range -> Range
+merged (Range s _ _) (Range _ f t) = Range s f t
 
 instance Lattice Range where
   Range (ll1, lc1, _) (ll2, lc2, _) _
