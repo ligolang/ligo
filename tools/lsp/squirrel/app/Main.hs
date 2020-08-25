@@ -30,7 +30,6 @@ import Duplo.Pretty
 import Duplo.Tree (collect)
 
 import AST hiding (def)
-import qualified AST.Find as Find
 import Data.Maybe (fromMaybe)
 import Extension
 import Parser
@@ -90,20 +89,21 @@ lspOptions = def
 lspHandlers :: TChan FromClientMessage -> Core.Handlers
 lspHandlers rin =
   def
-    { Core.initializedHandler = Just $ passHandler rin NotInitialized,
-      Core.definitionHandler = Just $ passHandler rin ReqDefinition,
-      Core.referencesHandler = Just $ passHandler rin ReqFindReferences,
-      Core.didOpenTextDocumentNotificationHandler = Just $ passHandler rin NotDidOpenTextDocument,
-      Core.didSaveTextDocumentNotificationHandler = Just $ passHandler rin NotDidSaveTextDocument,
-      Core.didChangeTextDocumentNotificationHandler = Just $ passHandler rin NotDidChangeTextDocument,
-      Core.didCloseTextDocumentNotificationHandler = Just $ passHandler rin NotDidCloseTextDocument,
-      Core.cancelNotificationHandler = Just $ passHandler rin NotCancelRequestFromClient,
-      Core.responseHandler = Just $ responseHandlerCb rin,
+    { Core.initializedHandler = Just $ passHandler rin NotInitialized
+    , Core.definitionHandler = Just $ passHandler rin ReqDefinition
+    , Core.referencesHandler = Just $ passHandler rin ReqFindReferences
+    , Core.didOpenTextDocumentNotificationHandler = Just $ passHandler rin NotDidOpenTextDocument
+    , Core.didSaveTextDocumentNotificationHandler = Just $ passHandler rin NotDidSaveTextDocument
+    , Core.didChangeTextDocumentNotificationHandler = Just $ passHandler rin NotDidChangeTextDocument
+    , Core.didCloseTextDocumentNotificationHandler = Just $ passHandler rin NotDidCloseTextDocument
+    , Core.cancelNotificationHandler = Just $ passHandler rin NotCancelRequestFromClient
+    , Core.responseHandler = Just $ responseHandlerCb rin
       -- , Core.codeActionHandler                        = Just $ passHandler rin ReqCodeAction
       -- , Core.executeCommandHandler                    = Just $ passHandler rin ReqExecuteCommand
-      Core.completionHandler = Just $ passHandler rin ReqCompletion,
+    , Core.completionHandler = Just $ passHandler rin ReqCompletion
       -- , Core.completionResolveHandler                 = Just $ passHandler rin ReqCompletionItemResolve
-      Core.foldingRangeHandler = Just $ passHandler rin ReqFoldingRange
+    , Core.foldingRangeHandler = Just $ passHandler rin ReqFoldingRange
+    , Core.hoverHandler = Just $ passHandler rin ReqHover
     }
 
 passHandler :: TChan FromClientMessage -> (a -> FromClientMessage) -> Core.Handler a
@@ -177,7 +177,7 @@ eventLoop funs chan = do
           let uri = req^.J.params.J.textDocument.J.uri
           let pos = posToRange $ req^.J.params.J.position
           tree <- loadFromVFS funs uri
-          case Find.definitionOf pos tree of
+          case definitionOf pos tree of
             Just defPos -> do
               respondWith funs req RspDefinition $ J.MultiLoc [J.Location uri $ rangeToLoc defPos]
             Nothing -> do
@@ -188,12 +188,13 @@ eventLoop funs chan = do
           let uri = req^.J.params.J.textDocument.J.uri
           let pos = posToRange $ req^.J.params.J.position
           tree <- loadFromVFS funs uri
-          case Find.referencesOf pos tree of
+          case referencesOf pos tree of
             Just refs -> do
               let locations = J.Location uri . rangeToLoc <$> refs
               respondWith funs req RspFindReferences $ J.List locations
             Nothing -> do
               respondWith funs req RspFindReferences $ J.List []
+
       ReqCompletion req -> do
         stopDyingAlready funs req $ do
           U.logs $ "got completion request: " <> show req
@@ -222,6 +223,16 @@ eventLoop funs chan = do
                   . fmap toFoldingRange
           actions <- foldingAST tree
           handler actions
+
+      ReqHover req -> do
+        stopDyingAlready funs req do
+          let uri = req ^. J.params . J.textDocument . J.uri
+          let pos = posToRange $ req ^. J.params . J.position
+          tree <- loadFromVFS funs uri
+          let response =
+                RspHover $ Core.makeResponseMessage req (hoverDecl pos tree)
+          Core.sendFunc funs response
+
       _ -> U.logs "unknown msg"
 
 respondWith
