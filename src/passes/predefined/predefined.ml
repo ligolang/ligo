@@ -421,11 +421,12 @@ module Tree_abstraction = struct
     (* Tezos module (ex-Michelson) *)
     | C_FAILWITH -> "failwith"
 
-    | C_IS_NAT -> "is_nat"
-    | C_INT    -> "int"
-    | C_ABS    -> "abs"
-    | C_EDIV   -> "ediv"
-    | C_UNIT   -> "unit"
+    | C_IS_NAT     -> "is_nat"
+    | C_INT        -> "int"
+    | C_ABS        -> "abs"
+    | C_EDIV       -> "ediv"
+    | C_UNIT       -> "unit"
+    | C_LIST_EMPTY -> "nil"
 
     | C_NEG  -> "NEG"
     | C_ADD  -> "ADD"
@@ -546,11 +547,12 @@ module Tree_abstraction = struct
     (* Tezos (ex-Michelson, ex-Current, ex-Operation) *)
     | C_FAILWITH -> "failwith"
     
-    | C_IS_NAT -> "is_nat"
-    | C_INT    -> "int"
-    | C_ABS    -> "abs"
-    | C_EDIV   -> "ediv"
-    | C_UNIT   -> "unit"
+    | C_IS_NAT     -> "is_nat"
+    | C_INT        -> "int"
+    | C_ABS        -> "abs"
+    | C_EDIV       -> "ediv"
+    | C_UNIT       -> "unit"
+    | C_LIST_EMPTY -> "[]"
 
     | C_NEG  -> "NEG"
     | C_ADD  -> "ADD"
@@ -668,11 +670,12 @@ module Tree_abstraction = struct
     (* Tezos (ex-Michelson, ex-Current, ex-Operation) *)
     | C_FAILWITH -> "failwith"
     
-    | C_IS_NAT -> "is_nat"
-    | C_INT    -> "int"
-    | C_ABS    -> "abs"
-    | C_EDIV   -> "ediv"
-    | C_UNIT   -> "unit"
+    | C_IS_NAT     -> "is_nat"
+    | C_INT        -> "int"
+    | C_ABS        -> "abs"
+    | C_EDIV       -> "ediv"
+    | C_UNIT       -> "unit"
+    | C_LIST_EMPTY -> "[]"
 
     | C_NEG  -> "NEG"
     | C_ADD  -> "ADD"
