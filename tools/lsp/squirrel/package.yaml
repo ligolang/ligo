@@ -1,6 +1,7 @@
 name: ligo-squirrel
 
 dependencies:
+  - async
   - base
   - bytestring
   - containers
@@ -10,9 +11,11 @@ dependencies:
   - fastsum
   - filepath
   - ghc-prim
+  - hashable
   - interpolate
   - mtl
   - pretty
+  - sorted-list
   - text
   - transformers
   - tree-sitter
@@ -44,6 +47,7 @@ default-extensions:
   - OverloadedStrings
   - QuantifiedConstraints
   - QuasiQuotes
+  - RankNTypes
   - ScopedTypeVariables
   - StandaloneDeriving
   - TemplateHaskell
@@ -92,6 +96,7 @@ executables:
       - directory
       - unix
       - stm
+      - ttrie
 
     source-dirs:
       - app/ligo-squirrel

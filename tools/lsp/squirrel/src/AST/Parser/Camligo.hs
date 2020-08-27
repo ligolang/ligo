@@ -7,7 +7,6 @@ import AST.Skeleton
 
 import Duplo.Error
 import Duplo.Tree
-import Duplo.Pretty
 
 import Product
 import Parser

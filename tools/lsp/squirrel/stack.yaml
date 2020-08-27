@@ -6,22 +6,22 @@
 resolver: lts-16.5
 
 packages:
-  - .
+- .
 
 extra-deps:
-  - tree-sitter-0.9.0.0@sha256:4fd054b0a9651df9335c5fa0ffed723924dc4dcf7f2521c031323088ca719b05,3411
-  - semantic-source-0.0.2.0@sha256:eac962ed1150d8647e703bc78369ecc4c1912db018e111f4ead8a62ae1a85542,2368
-  - lingo-0.3.2.0@sha256:80b9ded65f2ddc0272a2872d9c3fc43c37934accae076d3e547dfc6c6b6e16d3,1899
-  - semilattices-0.0.0.4@sha256:333707e460923711d1edbdd02ebe1c3957d4e0808eab9886747b52ee3e443639,1909
-  - fastsum-0.1.1.1
-  - git: https://github.com/serokell/duplo.git
-    commit: cbcfafb025385a120e81e6f5e37498fa3a78abfc
-  - git: https://github.com/serokell/haskell-lsp.git
-    commit: 3d6662c2d174cd5ac463d728d55defea69f282f7
-  - git: https://github.com/serokell/haskell-lsp.git
-    commit: 3d6662c2d174cd5ac463d728d55defea69f282f7
-    subdirs:
-      - haskell-lsp-types
+- tree-sitter-0.9.0.0@sha256:4fd054b0a9651df9335c5fa0ffed723924dc4dcf7f2521c031323088ca719b05,3411
+- semantic-source-0.0.2.0@sha256:eac962ed1150d8647e703bc78369ecc4c1912db018e111f4ead8a62ae1a85542,2368
+- lingo-0.3.2.0@sha256:80b9ded65f2ddc0272a2872d9c3fc43c37934accae076d3e547dfc6c6b6e16d3,1899
+- semilattices-0.0.0.4@sha256:333707e460923711d1edbdd02ebe1c3957d4e0808eab9886747b52ee3e443639,1909
+- fastsum-0.1.1.1
+- git: https://github.com/serokell/duplo.git
+  commit: cbcfafb025385a120e81e6f5e37498fa3a78abfc
+- git: https://github.com/serokell/haskell-lsp.git
+  commit: 3d6662c2d174cd5ac463d728d55defea69f282f7
+- git: https://github.com/serokell/haskell-lsp.git
+  commit: 3d6662c2d174cd5ac463d728d55defea69f282f7
+  subdirs:
+  - haskell-lsp-types
 
 nix:
   packages: [zlib]

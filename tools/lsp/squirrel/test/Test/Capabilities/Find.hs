@@ -144,12 +144,12 @@ invariants =
     , driDef = Just (interval 6 5 12)
     , driRefs = []
     }
-  , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "recursion.religo"
-    , driDesc = "sum"
-    , driDef = Just (interval 1 9 12)
-    , driRefs = [interval 2 29 32]
-    }
+  -- , DefinitionReferenceInvariant
+  --   { driFile = contractsDir </> "recursion.religo"
+  --   , driDesc = "sum"
+  --   , driDef = Just (interval 1 9 12)
+  --   , driRefs = [interval 2 29 32]
+  --   }
   ]
 
 unit_findDefinitionAndGoToReferencesCorrespondence :: Assertion

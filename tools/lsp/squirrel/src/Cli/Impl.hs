@@ -26,12 +26,12 @@ import Data.Text (Text, pack)
 import Data.Text.Encoding (encodeUtf8)
 import Duplo.Pretty (PP (PP), Pretty (..), text, (<+>), (<.>))
 import System.Exit (ExitCode (..))
-import System.IO (hFlush, hPutStrLn, stderr, stdout)
 import System.Process (readProcessWithExitCode)
 
 import AST.Scope.Common
 import Cli.Json
 import Cli.Types
+import qualified Log
 -- import Control.Monad.Reader (MonadIO)
 
 ----------------------------------------------------------------------------
@@ -87,11 +87,13 @@ callLigo
   :: HasLigoClient m => [String] -> m String
 callLigo args = do
   LigoClientEnv {..} <- getLigoClientEnv
+  Log.debug "CLI" $ "Running: " <> show _lceClientPath <> " " <> L.intercalate " " args
   liftIO $ readProcessWithExitCode' _lceClientPath args "" >>= \case
-    (ExitSuccess, output, _) -> pure output
+    (ExitSuccess, output, errOutput) -> return output
     (ExitFailure errCode, pack -> output, pack -> errOutput) ->
       throwM $ UnexpectedClientFailure errCode output errOutput
 
+-- output <$ logOutput output errOutput
 
 -- | Variant of @readProcessWithExitCode@ that prints a better error in case of
 -- an exception in the inner @readProcessWithExitCode@ call.
@@ -107,7 +109,7 @@ readProcessWithExitCode' fp args inp =
   where
     handler :: IOException -> IO (ExitCode, String, String)
     handler e = do
-      hPutStrLn stderr errorMsg
+      Log.err "CLI" errorMsg
       throwIO e
 
     errorMsg =

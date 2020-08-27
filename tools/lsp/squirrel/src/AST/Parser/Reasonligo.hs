@@ -2,11 +2,10 @@
 
 module AST.Parser.Reasonligo where
 
-import           Duplo.Error
-import           Duplo.Pretty
-import           Duplo.Tree
-
 import           AST.Skeleton
+
+import           Duplo.Error
+import           Duplo.Tree
 
 import           Parser
 import           ParseTree
