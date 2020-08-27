@@ -70,7 +70,7 @@ let rec untype_expression (e:O.expression) : (I.expression, typer_error) result 
     return @@ E_record_accessor {record; path}
   | E_record_update {record; path; update} ->
     let%bind record = untype_expression record in
-    let%bind update = untype_expression update in 
+    let%bind update = untype_expression update in
     return @@ E_record_update {record; path; update}
   | E_matching {matchee;cases} ->
     let%bind matchee = untype_expression matchee in
