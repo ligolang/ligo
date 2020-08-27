@@ -3,6 +3,8 @@
 
 module Region = Simple_utils.Region
 
+open Preprocessor
+
 let highlight msg = Printf.eprintf "\027[31m%s\027[0m%!" msg
 
 let options = EvalOpt.read ".ligo" (* No comments allowed *)
