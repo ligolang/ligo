@@ -8,7 +8,7 @@ usage() {
     printf 'Usage: %s <TYPE> <MERGE_REQUEST> <AUTHOR> <TITLE>\n' "$0"
     echo "where"
     echo "  TYPE is one of added, fixed, changed, deprecated, removed, performance, other"
-    echo "  MERGE_REQUEST is a merge request ID like !123"
+    echo "  MERGE_REQUEST is a merge request ID like 123"
     echo "  AUTHOR is your name"
     echo "  TITLE is a concise one-line description of your changes."
 }
@@ -26,6 +26,12 @@ fi
 
 if [[ $# -ne 4 ]]; then
     echo "Wrong number of arguments: expected 4, got $#"
+    usage
+    exit 1
+fi
+
+if ! [ "1$2" -eq "1$2" ] 2>/dev/null; then
+    echo "MERGE_REQUEST should be a number, but $2 is not a number"
     usage
     exit 1
 fi
