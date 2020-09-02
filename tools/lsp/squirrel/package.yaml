@@ -67,6 +67,12 @@ library:
 
   dependencies:
     - haskell-lsp-types
+    - aeson
+    - process
+    - lens 
+    - lens-aeson
+    - bytestring
+    - unordered-containers
 
 executables:
   squirrel:
@@ -75,6 +81,7 @@ executables:
       - hslogger
       - interpolate
       - lens
+      - lens-aeson
       - ligo-squirrel
       - directory
       - unix
