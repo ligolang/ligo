@@ -5,43 +5,8 @@ module I = Ast_core
 module O = Ast_typed
 open O.Combinators
 
-let untype_type_value (t:O.type_expression) : (I.type_expression, typer_error) result =
-  match t.type_meta with
-  | Some s -> ok s
-  | _ -> fail @@ corner_case "trying to untype generated type"
-
 (*
-  Tranform a Ast_typed type_expression into an ast_core type_expression
-*)
-let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer_error) result =
-  let return t = ok @@ I.make_t t in
-  match t.type_content with
-  | O.T_sum x ->
-    let aux ({associated_type ; michelson_annotation ; decl_pos} : O.row_element) =
-      let%bind associated_type = untype_type_expression associated_type in
-      let v' = ({associated_type ; michelson_annotation ; decl_pos} : I.row_element) in
-      ok @@ v' in
-    let%bind x' = Stage_common.Helpers.bind_map_lmap aux x in
-    return @@ I.T_sum x'
-  | O.T_record x ->
-    let aux ({associated_type ; michelson_annotation ; decl_pos} : O.row_element) =
-      let%bind associated_type = untype_type_expression associated_type in
-      let v' = ({associated_type ; michelson_annotation ; decl_pos} : I.row_element) in
-      ok @@ v' in
-    let%bind x' = Stage_common.Helpers.bind_map_lmap aux x in
-    return @@ I.T_record x'
-  | O.T_variable name -> return @@ I.T_variable (Var.todo_cast name)
-  | O.T_wildcard -> return @@ I.T_wildcard
-  | O.T_arrow {type1;type2} ->
-    let%bind type1 = untype_type_expression type1 in
-    let%bind type2 = untype_type_expression type2 in
-    return @@ I.T_arrow {type1;type2}
-  | O.T_constant {type_constant;arguments} ->
-    let%bind arguments = bind_map_list untype_type_expression arguments in
-    return @@ I.T_constant {type_constant;arguments}
-
-(*
-  Tranform a Ast_typed expression into an ast_core expression
+  Transform a Ast_typed expression into an ast_core expression
 *)
 let rec untype_expression (e:O.expression) : (I.expression, typer_error) result =
   let open I in
@@ -78,7 +43,7 @@ let rec untype_expression (e:O.expression) : (I.expression, typer_error) result 
     return @@ E_matching {matchee;cases}
   | E_let_in {let_binder; rhs;let_result; inline} ->
     let var = Location.map Var.todo_cast let_binder in
-    let%bind ty         = untype_type_value rhs.type_expression in
+    let%bind ty         = Typer_common.Untyper.untype_type_expression rhs.type_expression in
     let%bind rhs        = untype_expression rhs in
     let%bind let_result = untype_expression let_result in
     let let_binder = {var; ty} in
@@ -88,21 +53,21 @@ let rec untype_expression (e:O.expression) : (I.expression, typer_error) result 
     return @@ E_raw_code {language; code}
   | E_recursive {fun_name; fun_type; lambda} ->
     let%bind lambda = untype_lambda fun_type lambda in
-    let%bind fun_type = untype_type_expression fun_type in
+    let%bind fun_type = Typer_common.Untyper.untype_type_expression fun_type in
     let fun_name = Location.map Var.todo_cast fun_name in
     return @@ E_recursive {fun_name; fun_type; lambda}
 
 
 and untype_lambda ty {binder; result} : (I.lambda, typer_error) result =
     let%bind io = trace_option (corner_case "This has to be a lambda") @@ get_t_function ty in
-    let%bind (ty , output_type) = bind_map_pair untype_type_value io in
+    let%bind (ty , output_type) = bind_map_pair Typer_common.Untyper.untype_type_expression io in
     let var = Location.map Var.todo_cast binder in
     let%bind result = untype_expression result in
     let result = I.e_annotation result output_type in
     ok ({binder={var;ty}; result}: I.lambda)
 
 (*
-  Tranform a Ast_typed matching into an ast_core matching
+  Transform a Ast_typed matching into an ast_core matching
 *)
 and untype_matching : (O.expression -> (I.expression, typer_error) result) -> O.matching_expr -> (I.matching_expr, typer_error) result = fun f m ->
   let open I in
