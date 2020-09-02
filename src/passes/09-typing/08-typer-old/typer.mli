@@ -21,7 +21,6 @@ val untype_type_value : O.type_value -> (I.type_expression) result
 val untype_literal : O.literal -> I.literal result
 *)
 val untype_expression : O.expression -> (I.expression , typer_error) result
-val untype_type_expression : O.type_expression -> (I.type_expression , typer_error) result
 (*
 val untype_matching : ('o -> 'i result) -> 'o O.matching -> ('i I.matching) result
 *)

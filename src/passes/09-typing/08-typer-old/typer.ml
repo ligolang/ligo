@@ -497,11 +497,6 @@ and type_constant (name:I.constant') (loc: Location.t) (lst:O.type_expression li
   let%bind tv = typer lst tv_opt in
   ok (name, tv)
 
-let untype_type_expression (t:O.type_expression) : (I.type_expression , typer_error) result =
-  match t.type_meta with
-  | Some s -> ok s
-  | _ -> fail @@ corner_case "Trying to untype generated type"
-
 let untype_literal (l:O.literal) : (I.literal , typer_error) result =
   let open I in
   match l with
@@ -542,7 +537,8 @@ let rec untype_expression (e:O.expression) : (I.expression , typer_error) result
   | E_lambda {binder ; result} -> (
       let binder = cast_var binder in
       let io = get_t_function_exn ty in
-      let%bind (input_type , output_type) = bind_map_pair untype_type_expression io in
+      let%bind (input_type , output_type) =
+        bind_map_pair Typer_common.Untyper.untype_type_expression io in
       let%bind result = untype_expression result in
       let result = I.e_annotation result output_type in
       return (e_lambda {var=binder;ty=input_type} result)
@@ -569,7 +565,7 @@ let rec untype_expression (e:O.expression) : (I.expression , typer_error) result
       return (e_matching ae' m')
   | E_let_in {let_binder;rhs;let_result; inline} ->
       let var = cast_var let_binder in
-      let%bind ty = untype_type_expression rhs.type_expression in
+      let%bind ty = Typer_common.Untyper.untype_type_expression rhs.type_expression in
       let%bind rhs = untype_expression rhs in
       let%bind result = untype_expression let_result in
       return (e_let_in {var;ty} inline rhs result)
@@ -578,7 +574,7 @@ let rec untype_expression (e:O.expression) : (I.expression , typer_error) result
       return (e_raw_code language code)
   | E_recursive {fun_name;fun_type; lambda} ->
       let fun_name = cast_var fun_name in
-      let%bind fun_type = untype_type_expression fun_type in
+      let%bind fun_type = Typer_common.Untyper.untype_type_expression fun_type in
       let%bind unty_expr= untype_expression_content ty @@ E_lambda lambda in
       let lambda = match unty_expr.content with I.E_lambda l -> l | _ -> failwith "impossible case" in
       return @@ e_recursive fun_name fun_type lambda

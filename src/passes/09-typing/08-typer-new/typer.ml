@@ -507,7 +507,6 @@ let type_expression_subst (env : environment) (state : _ O'.typer_state) ?(tv_op
   let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
   type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.expression\"") Ast_typed.PP_json.expression (env , state , e) Typesystem.Misc.Substitution.Pattern.s_expression type_expression_returns_env
 
-let untype_type_expression  = Untyper.untype_type_expression
 let untype_expression       = Untyper.untype_expression
 
 (* These aliases are just here for quick navigation during debug, and can safely be removed later *)
