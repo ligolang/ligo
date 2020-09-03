@@ -1,13 +1,16 @@
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DeriveGeneric, RecordWildCards #-}
 
 -- | The definition of type as is represented in ligo JSON output
 module Cli.Json
-  ( LigoTypeFull (..)
+  ( LigoScope (..)
+  , LigoTypeFull (..)
   , LigoTypeContent (..)
   , LigoTypeContentInner (..)
   , LigoRecordField (..)
-  , LigoLocation (..)
+  , LigoRange (..)
+  , convertLigoRange
+  , toScopedDecl
+  , prepareField
   )
 where
 
@@ -15,12 +18,25 @@ import Data.Aeson
 import Data.Char (isUpper, toLower)
 import Data.Foldable (asum, toList)
 import qualified Data.HashMap.Strict as HM
+import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import GHC.Generics
+
+import AST.Scope
+import Range
 
 ----------------------------------------------------------------------------
 -- Types
 ----------------------------------------------------------------------------
+
+data LigoScope = LigoScope
+  { _lsName :: Text
+  , _lsRange :: LigoRange
+  , _lsBodyRange :: LigoRange
+  , _lsT :: LigoTypeFull
+  , _lsReferences :: Value
+  }
+  deriving stock (Generic, Show)
 
 -- | Whole ligo type.
 -- ```
@@ -28,15 +44,15 @@ import GHC.Generics
 -- ```
 data LigoTypeFull = LigoTypeFull
   { -- | Location of the definition.
-    ltLocation :: LigoLocation
+    _ltLocation :: LigoRange
   , -- | *Some* meta constructors (e.g. `Some`).
-    ltTypeMeta :: Value
+    _ltTypeMeta :: Value
   , -- | We parse it by a chunks of 2, each odd element of array is a name for
     -- even element which is `LigoTypeContentInner`.
     -- ```
     -- { "type_content": [ <name>, LigoTypeContentInner ] }
     -- ```
-    ltTypeContent :: [LigoTypeContent]
+    _ltTypeContent :: [LigoTypeContent]
   }
   deriving stock (Generic, Show)
 
@@ -45,8 +61,8 @@ data LigoTypeFull = LigoTypeFull
 -- { "type_content": LigoTypeContent }
 -- ```
 data LigoTypeContent = LigoTypeContent
-  { ltcName :: Text
-  , ltcContentInner :: LigoTypeContentInner
+  { _ltcName :: Text
+  , _ltcContentInner :: LigoTypeContentInner
   }
   deriving stock (Generic, Show)
 
@@ -57,15 +73,15 @@ data LigoTypeContent = LigoTypeContent
 data LigoTypeContentInner
   = -- | Type call represented by the list of arguments and its constructor.
     LTCConst
-      { ltciArguments :: [Text]
-      , ltciTypeConst :: Value
+      { _ltciArguments :: [Text]
+      , _ltciTypeConst :: Value
       }
   | -- | Record type.
     LTCRecord (HM.HashMap Text LigoRecordField) -- TODO: continue
   | -- | Arrow type, note that the order of its arguments is reversed.
     LTCArrow -- "type2" -> "type1"
-      { ltcType2 :: LigoTypeFull
-      , ltcType1 :: LigoTypeFull
+      { _ltciType2 :: LigoTypeFull
+      , _ltciType1 :: LigoTypeFull
       }
   deriving stock (Generic, Show)
 
@@ -76,27 +92,27 @@ data LigoTypeContentInner
 data LigoRecordField = LigoRecordField
   { -- | Declaration position (don't ask me I too don't know what actual
     -- position is this since from all the example it's somewhat always 0).
-    lrfDeclPos :: Int
+    _lrfDeclPos :: Int
   , -- | How the value is represented in michelson, currently ignored
     -- during parsing.
-    lrfMichelsonAnnotation :: Value
+    _lrfMichelsonAnnotation :: Value
   , -- | The type itself.
-    lrfAssociatedType :: LigoTypeFull
+    _lrfAssociatedType :: LigoTypeFull
   }
   deriving stock (Generic, Show)
 
 -- | Location of type definition.
 -- ```
--- { "location": LigoLocation }
+-- { "location": LigoRange }
 -- ```
-data LigoLocation
+data LigoRange
   = Virtual Text
-  | LigoLocation
-      { llFile :: FilePath
-      , llFromRow :: Int
-      , llFromCol :: Int
-      , llToRow :: Int
-      , llToCol :: Int
+  | LigoRange
+      { _lrFile :: FilePath
+      , _lrFromRow :: Int
+      , _lrFromCol :: Int
+      , _lrToRow :: Int
+      , _lrToCol :: Int
       }
   deriving stock (Generic, Show)
 
@@ -104,20 +120,26 @@ data LigoLocation
 -- Instances
 ----------------------------------------------------------------------------
 
+instance FromJSON LigoScope where
+  parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = prepareField 2}
+
+instance ToJSON LigoScope where
+  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 2}
+
 -- TODO: We trust ligo compiler output for printing even number
 -- of array elements.
 instance FromJSON LigoTypeFull where
   parseJSON = withObject "type_full" $ \o -> do
-    ltLocation <- o .: "location"
+    _ltLocation <- o .: "location"
     type_content <- o .: "type_content"
-    ltTypeContent <-
+    _ltTypeContent <-
       withArray "type_content" (mapM proceed . group 2 . toList) type_content
-    ltTypeMeta <- o .: "type_meta"
+    _ltTypeMeta <- o .: "type_meta"
     return $ LigoTypeFull {..}
     where
       proceed [name, value] = do
-        ltcName <- parseJSON @Text name
-        ltcContentInner <- parseJSON @LigoTypeContentInner value
+        _ltcName <- parseJSON @Text name
+        _ltcContentInner <- parseJSON @LigoTypeContentInner value
         return $ LigoTypeContent {..}
       proceed _ = error "number of type content elements is not even and cannot be grouped"
 
@@ -147,20 +169,20 @@ instance FromJSON LigoRecordField where
 instance ToJSON LigoRecordField where
   toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
 
-instance FromJSON LigoLocation where
+instance FromJSON LigoRange where
   parseJSON = withObject "location" $ \o ->
     asum
       [ Virtual <$> o .: "virtual"
       , do
-          llFile <- o .: "file"
-          llFromRow <- o .: "from_row"
-          llFromCol <- o .: "from_col"
-          llToRow <- o .: "to_row"
-          llToCol <- o .: "to_col"
-          return $ LigoLocation {..}
+          _lrFile <- o .: "file"
+          _lrFromRow <- o .: "from_row"
+          _lrFromCol <- o .: "from_col"
+          _lrToRow <- o .: "to_row"
+          _lrToCol <- o .: "to_col"
+          return $ LigoRange {..}
       ]
 
-instance ToJSON LigoLocation where
+instance ToJSON LigoRange where
   toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 2}
 
 ----------------------------------------------------------------------------
@@ -169,10 +191,10 @@ instance ToJSON LigoLocation where
 
 -- | Helper function that converts qualified field to its JSON counterpart.
 --
--- >>> prepareField 2 "llFooBar"
+-- >>> prepareField 2 "__llFooBar"
 -- "foo_bar"
 prepareField :: Int -> String -> String
-prepareField dropAmount = Prelude.drop (dropAmount + 1) . concatMap process
+prepareField dropAmount = Prelude.drop (dropAmount + 2) . concatMap process
   where
     process c
       | isUpper c = "_" <> [toLower c]
@@ -187,3 +209,34 @@ group _ [] = []
 group n l
   | n > 0 = (take n l) : (group n (drop n l))
   | otherwise = error "Negative or zero n"
+
+-- | Converts ligo ranges to our internal ones.
+-- >>> convertLigoRange (LigoRange "test.ligo" 1 2 3 4)
+-- [32m[test.ligo:1:2-3:4][0m
+convertLigoRange :: LigoRange -> Maybe Range
+convertLigoRange (Virtual _) = Nothing
+convertLigoRange LigoRange {..} =
+  Just
+    Range
+      { rStart = (_lrFromRow, _lrFromCol, 0)
+      , rFinish = (_lrToRow, _lrToCol, 0)
+      , rFile = _lrFile
+      }
+
+-- | Converts ligo scope to our internal one.
+-- TODO: convert `LigoTypeFull` to `LIGO ()`
+toScopedDecl :: LigoScope -> ScopedDecl
+toScopedDecl
+  LigoScope
+    { _lsName = _sdName
+    , _lsRange = (fromMaybe (error "no origin range") . convertLigoRange -> _sdOrigin)
+    , _lsBodyRange = (convertLigoRange -> _sdBody)
+    } =
+    ScopedDecl
+      { _sdName
+      , _sdOrigin
+      , _sdBody
+      , _sdType = Nothing
+      , _sdRefs = []
+      , _sdDoc = []
+      }
