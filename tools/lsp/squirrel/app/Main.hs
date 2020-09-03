@@ -32,8 +32,15 @@ import Duplo.Tree (collect)
 import AST hiding (def)
 import qualified AST.Find as Find
 import Data.Maybe (fromMaybe)
+import Extension
+import Parser
 import Product
 import Range
+
+import System.Directory
+import System.FilePath
+import System.Posix.Files
+
 -- import           Error
 
 main :: IO ()
@@ -282,6 +289,31 @@ collectErrors funs uri path version = do
         $ map errorToDiag (errs <> map (getElem *** void) (collect tree))
 
     Nothing -> error "TODO: implement URI file loading"
+
+data ParsedContract = ParsedContract
+  { cPath :: FilePath
+  , cTree :: LIGO Info
+  , cErr  :: [Msg]
+  }
+
+-- | Parse whole directory for ligo contracts and collect the results.
+-- This ignores every other file which is not a contract.
+parseContracts :: FilePath -> IO [ParsedContract]
+parseContracts top = let
+  exclude p = p /= "." && p /= ".." in do
+  ds <- getDirectoryContents top
+  contracts <- forM (filter exclude ds) $ \d -> do
+    let p = top </> d
+    s <- getFileStatus p
+    if isDirectory s
+      then parseContracts p
+      else do
+        putStrLn $ "parsing: " ++ show p
+        contract <- try @UnsupportedExtension $ parse (Path p)
+        case contract of
+          Right (tree, errs) -> return $ [ParsedContract p tree errs]
+          Left _ -> return []
+  return (concat contracts)
 
 errorToDiag :: (Range, Err Text a) -> J.Diagnostic
 errorToDiag (getRange -> (Range (sl, sc, _) (el, ec, _) _), Err what) =
