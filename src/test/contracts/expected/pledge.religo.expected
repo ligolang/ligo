@@ -12,7 +12,7 @@ let donate = ((p, s): (unit, storage))
 let distribute = ((p, s): ((unit => list(operation)),
    storage)): (list(operation), storage) => {
   if (Tezos.sender == s) {
-    (p(()), s)
+    (p(), s)
   } else {
   
     (

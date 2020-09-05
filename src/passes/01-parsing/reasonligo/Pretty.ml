@@ -107,8 +107,8 @@ and pp_plist = function
 and pp_list_comp e = group (pp_injection pp_pattern e)
 
 and pp_cons {value; _} =
-  let patt1, _, patt2 = value in
-  string "[" ^^ (pp_pattern patt1 ^^ string ", ") ^^ group ( break 0 ^^ string "..." ^^ pp_pattern patt2) ^^ string "]"
+  let {lpattern;rpattern;_} = value in
+  string "[" ^^ (pp_pattern lpattern ^^ string ", ") ^^ group ( break 0 ^^ string "..." ^^ pp_pattern rpattern) ^^ string "]"
 
 and pp_ptuple {value; _} =
   let head, tail = value in
@@ -179,10 +179,10 @@ and pp_cond_expr {value; _} =
   let {test; ifso; ifnot; _} = value in
   let if_then =
     string "if" ^^ string " (" ^^ pp_expr test ^^ string ")" ^^ string " {" ^^ break 0
-    ^^ group (nest 2 (break 2 ^^ pp_expr ifso)) ^^ hardline ^^ string "}" in
+    ^^ group (nest 2 (break 2 ^^ pp_expr (fst ifso.inside))) ^^ hardline ^^ string "}" in
   match ifnot with
     None -> if_then
-  | Some (_,ifnot) ->
+  | Some (_,{inside=(ifnot,_);_}) ->
     if_then
     ^^ string " else" ^^ string " {" ^^ break 0 ^^ group (nest 2 (break 2 ^^ pp_expr ifnot)) ^^ hardline ^^ string "}"
 
@@ -238,8 +238,8 @@ and pp_string_expr = function
 | Verbatim e -> pp_verbatim e
 
 and pp_list_expr = function
-| ECons {value = {arg1; arg2; _}; _ } ->
-  string "[" ^^ pp_expr arg1 ^^ string "," ^^ break 1 ^^ string "..." ^^ pp_expr arg2 ^^ string "]"
+| ECons {value = {lexpr; rexpr; _}; _ } ->
+  string "[" ^^ pp_expr lexpr ^^ string "," ^^ break 1 ^^ string "..." ^^ pp_expr rexpr ^^ string "]"
 | EListComp e -> group (pp_injection pp_expr e)
 
 and pp_injection :
@@ -255,7 +255,6 @@ and pp_injection :
         string opening ^^ nest 1 elements ^^ string closing
 
 and pp_compound = function
-  BeginEnd (_, _) -> ("begin","end")
 | Braces   (_, _) -> ("{","}")
 | Brackets (_, _) -> ("[","]")
 
@@ -332,7 +331,10 @@ and pp_path = function
 
 and pp_call_expr {value; _} =
   let lambda, arguments = value in
-  let arguments = Utils.nseq_to_list arguments in
+  let arguments =
+    match arguments with
+    | Unit _ -> []
+    | Multiple xs -> Utils.nsepseq_to_list xs.value.inside in
   let arguments = string "(" ^^ group (separate_map (string "," ^^ break 0 ^^ string " ") pp_expr arguments) ^^ string ")" in
   group (break 0 ^^ pp_expr lambda ^^ nest 2 arguments)
 
@@ -398,7 +400,7 @@ and pp_type_expr = function
 | TString s -> pp_string s
 
 and pp_cartesian {value; _} =
-  let head, tail = value in
+  let head, tail = value.inside in
   let rec app = function
     []  -> empty
   | [e] -> group (break 1 ^^ pp_type_expr e)

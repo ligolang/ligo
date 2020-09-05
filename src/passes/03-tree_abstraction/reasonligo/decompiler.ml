@@ -28,7 +28,6 @@ let ne_inject compound a = CST.{compound;ne_elements=a;terminator=Some(rg)}
 let prefix_colon a = (rg, a)
 let braces = Some (CST.Braces (rg,rg))
 let brackets = Some (CST.Brackets (rg,rg))
-let beginEnd = Some (CST.BeginEnd (rg,rg))
 
 (* Decompiler *)
 
@@ -72,7 +71,8 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
     return @@ CST.TRecord (wrap @@ ne_inject (braces) record)
   | T_tuple tuple ->
     let%bind tuple = bind_map_list decompile_type_expr tuple in
-    let%bind tuple = list_to_nsepseq @@ tuple in
+    let%bind tuple = list_to_nsepseq tuple in
+    let tuple = CST.{lpar=rg; inside=tuple; rpar=rg} in
     return @@ CST.TProd (wrap tuple)
   | T_arrow {type1;type2} ->
     let%bind type1 = decompile_type_expr type1 in
@@ -131,7 +131,10 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     (match arguments with
       [] -> return_expr @@ expr
     | _ ->
-      let%bind arguments = map List.Ne.of_list @@
+       let%bind arguments =
+        map (fun xs -> CST.Multiple (wrap (par xs))) @@
+        map (fun (hd,tl) -> hd,List.map (fun x -> rg,x) tl) @@
+        map List.Ne.of_list @@
         map (List.map (fun x -> CST.EPar (wrap @@ par @@ x))) @@
         bind_map_list decompile_expression arguments in
       let const = wrap (expr, arguments) in
@@ -178,7 +181,10 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     )
   | E_application {lamb;args} ->
     let%bind lamb = decompile_expression lamb in
-    let%bind args = map List.Ne.of_list @@
+    let%bind args =
+      map (fun xs -> CST.Multiple (wrap (par xs))) @@
+      map (fun (hd,tl) -> hd,List.map (fun x -> rg,x) tl) @@
+      map List.Ne.of_list @@
       bind (bind_map_list decompile_expression) @@
       get_e_tuple args
     in
@@ -197,7 +203,7 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     let binding : CST.let_binding = {binders;lhs_type=Some lhs_type;eq=rg;let_rhs} in
     let%bind body = decompile_expression let_result in
     let attributes = decompile_attributes inline in
-    let lin : CST.let_in = {kwd_let=rg;kwd_rec=None;binding;kwd_in=rg;body;attributes} in
+    let lin : CST.let_in = {kwd_let=rg;kwd_rec=None;binding;semi=rg;body;attributes} in
     return_expr @@ CST.ELetIn (wrap lin)
   | E_raw_code {language; code} ->
     let language = wrap @@ wrap @@ language in
@@ -232,7 +238,7 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
       Access_map e :: [] ->
       let%bind map = decompile_expression record in
       let%bind e = decompile_expression e in
-      let arg = e,[map] in
+      let arg = CST.Multiple (wrap (par (e,[rg,map]))) in
       return_expr @@ CST.ECall( wrap (CST.EVar (wrap "Map.find_opt"), arg))
     | Access_map e :: lst ->
       let path = List.rev lst in
@@ -240,7 +246,7 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
       let%bind struct_name = map (decompile_variable) @@ get_e_variable record in
       let proj : CST.projection = {struct_name;selector=rg;field_path} in
       let%bind e = decompile_expression e in
-      let arg = e,[CST.EProj (wrap proj)] in
+      let arg =  CST.Multiple (wrap (par (e,[rg, CST.EProj (wrap proj)]))) in
       return_expr @@ CST.ECall( wrap (CST.EVar (wrap "Map.find_opt"), arg))
     | _ ->
       let%bind field_path = bind list_to_nsepseq @@ bind_map_list decompile_to_selection path in
@@ -264,7 +270,7 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     let field_assign : CST.field_path_assignment = {field_path;assignment=rg;field_expr} in
     let updates = updates.value.ne_elements in
     let updates = wrap @@ ne_inject braces @@ npseq_cons (wrap @@ field_assign) updates in
-    let update : CST.update = {lbrace=rg;record;kwd_with=rg;updates;rbrace=rg} in
+    let update : CST.update = {lbrace=rg;record;ellipsis=rg;comma=rg;updates;rbrace=rg} in
     return_expr @@ CST.EUpdate (wrap @@ update)
   | E_update {record; path; update} ->
     let%bind record = map (decompile_variable) @@ get_e_variable record in
@@ -278,18 +284,18 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
         let field_path = CST.Name (wrap name) in
         let update : CST.field_path_assignment = {field_path;assignment=rg;field_expr} in
         let updates = wrap @@ ne_inject braces @@ (wrap update,[]) in
-        let update : CST.update = {lbrace=rg;record;kwd_with=rg;updates;rbrace=rg} in
+        let update : CST.update = {lbrace=rg;record;ellipsis=rg;comma=rg;updates;rbrace=rg} in
         return_expr @@ CST.EUpdate (wrap update)
       | Access_tuple i ->
         let record : CST.path = Name record in
         let field_path = CST.Name (wrap @@ Z.to_string i) in
         let update : CST.field_path_assignment = {field_path;assignment=rg;field_expr} in
         let updates = wrap @@ ne_inject braces @@ (wrap update,[]) in
-        let update : CST.update = {lbrace=rg;record;kwd_with=rg;updates;rbrace=rg} in
+        let update : CST.update = {lbrace=rg;record;ellipsis=rg;comma=rg;updates;rbrace=rg} in
         return_expr @@ CST.EUpdate (wrap update)
       | Access_map e ->
         let%bind e = decompile_expression e in
-        let arg = field_expr,[e; CST.EVar record] in
+        let arg = CST.Multiple (wrap (par (field_expr,[rg,e; rg,CST.EVar record]))) in
         return_expr @@ CST.ECall (wrap (CST.EVar (wrap "Map.add"), arg))
       )
     | _ ->
@@ -306,7 +312,7 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
         let field_path : CST.projection = {struct_name; selector=rg;field_path} in
         let field_path = CST.EProj (wrap @@ field_path) in
         let%bind e = decompile_expression e in
-        let arg = field_expr, [e; field_path] in
+        let arg = CST.Multiple (wrap (par (field_expr, [rg,e; rg,field_path]))) in
         return_expr @@ CST.ECall (wrap (CST.EVar (wrap "Map.add"),arg))
       | _ ->
         let%bind field_path = bind_map_list decompile_to_selection field_path in
@@ -316,7 +322,7 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
         let record : CST.path = Name record in
         let update : CST.field_path_assignment = {field_path;assignment=rg;field_expr} in
         let updates = wrap @@ ne_inject braces @@ (wrap update,[]) in
-        let update : CST.update = {lbrace=rg;record;kwd_with=rg;updates;rbrace=rg} in
+        let update : CST.update = {lbrace=rg;record;ellipsis=rg;comma=rg;updates;rbrace=rg} in
         return_expr @@ CST.EUpdate (wrap update)
       )
     )
@@ -327,14 +333,16 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
   | E_cond {condition;then_clause;else_clause} ->
     let%bind test  = decompile_expression condition in
     let%bind ifso  = decompile_expression then_clause in
+    let ifso = CST.{lbrace=rg; inside=(ifso,None); rbrace=rg} in
     let%bind ifnot = decompile_expression else_clause in
+    let ifnot = CST.{lbrace=rg; inside=(ifnot,None); rbrace=rg} in
     let ifnot = Some(rg,ifnot) in
-    let cond : CST.cond_expr = {kwd_if=rg;test;kwd_then=rg;ifso;ifnot} in
+    let cond : CST.cond_expr = {kwd_if=rg;test;ifso;ifnot} in
     return_expr @@ CST.ECond (wrap cond)
   | E_sequence {expr1;expr2} ->
     let%bind expr1 = decompile_expression expr1 in
     let%bind expr2 = decompile_expression expr2 in
-    return_expr @@ CST.ESeq (wrap @@ inject beginEnd @@ list_to_sepseq [expr1; expr2])
+    return_expr @@ CST.ESeq (wrap @@ inject braces @@ list_to_sepseq [expr1; expr2])
   | E_tuple tuple ->
     let%bind tuple = bind_map_list decompile_expression tuple in
     let%bind tuple = list_to_nsepseq tuple in
@@ -345,9 +353,10 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     let map = List.map aux map in
     (match map with
       [] -> return_expr @@ CST.EVar (wrap "Big_map.empty")
-    | _  ->
-      let var = CST.EVar (wrap "Map.literal") in
-      return_expr @@ CST.ECall (wrap @@ (var, List.Ne.of_list @@ map))
+    | hd::tl  ->
+       let var = CST.EVar (wrap "Map.literal") in
+       let args = CST.Multiple (wrap (par (hd,List.map (fun x -> rg,x) tl))) in
+      return_expr @@ CST.ECall (wrap @@ (var, args))
     )
   | E_big_map big_map ->
     let%bind big_map = bind_map_list (bind_map_pair decompile_expression) big_map in
@@ -355,9 +364,10 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     let big_map = List.map aux big_map in
     (match big_map with
       [] -> return_expr @@ CST.EVar (wrap "Big_map.empty")
-    | _  ->
+    | hd::tl  ->
       let var = CST.EVar (wrap "Big_map.literal") in
-      return_expr @@ CST.ECall (wrap @@ (var, List.Ne.of_list @@ big_map))
+      let args = CST.Multiple (wrap (par (hd,List.map (fun x -> rg,x) tl))) in
+      return_expr @@ CST.ECall (wrap @@ (var, args))
     )
   | E_list lst ->
     let%bind lst = bind_map_list decompile_expression lst in
@@ -365,9 +375,10 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     return_expr @@ CST.EList (EListComp (wrap @@ inject brackets @@ lst))
   | E_set set ->
     let%bind set = bind_map_list decompile_expression set in
-    let set = List.Ne.of_list @@ set in
+    let hd,tl = List.Ne.of_list @@ set in
     let var = CST.EVar (wrap "Set.literal") in
-    return_expr @@ CST.ECall (wrap @@ (var,set))
+    let args = CST.Multiple (wrap (par (hd,List.map (fun x -> rg,x) tl))) in
+    return_expr @@ CST.ECall (wrap @@ (var,args))
     (* We should avoid to generate skip instruction*)
   | E_skip -> return_expr @@ CST.EUnit (wrap (rg,rg))
   | E_assign _
@@ -397,8 +408,8 @@ and decompile_to_selection : AST.access -> (CST.selection, _) result = fun acces
 and decompile_lambda : AST.lambda -> _ = fun {binder;result} ->
     let%bind param_decl = pattern_type binder in
     let param = CST.PPar (wrap @@ par @@ param_decl) in
-    let%bind result,ret_type = match result.expression_content with 
-      AST.E_ascription {anno_expr; type_annotation} -> 
+    let%bind result,ret_type = match result.expression_content with
+      AST.E_ascription {anno_expr; type_annotation} ->
       let%bind ret_type = bind_compose (ok <@ prefix_colon) decompile_type_expr type_annotation in
       ok @@ (anno_expr, Some ret_type)
     | _ -> ok (result,None) in
@@ -415,31 +426,34 @@ fun m ->
     Match_variable (binder, expr) ->
     let%bind pattern = pattern_type binder in
     let%bind rhs = decompile_expression expr in
-    let case : _ CST.case_clause = {pattern; arrow=rg; rhs}in
+    let case : _ CST.case_clause = {pattern; arrow=rg; rhs; terminator=None}in
     ok @@ [wrap case]
   | Match_tuple (lst, expr) ->
     let%bind tuple = bind list_to_nsepseq @@ bind_map_list pattern_type lst in
     let pattern : CST.pattern = PTuple (wrap @@ tuple) in
     let%bind rhs = decompile_expression expr in
-    let case : _ CST.case_clause = {pattern; arrow=rg; rhs}in
+    let case : _ CST.case_clause = {pattern; arrow=rg; rhs; terminator=None}in
     ok @@ [wrap case]
   | Match_record _ -> failwith "match_record not availiable yet"
   | Match_option {match_none;match_some}->
     let%bind rhs = decompile_expression match_none in
-    let none_case : _ CST.case_clause = {pattern=PConstr (PNone rg);arrow=rg; rhs} in
+    let none_case : _ CST.case_clause = {pattern=PConstr (PNone rg);arrow=rg; rhs; terminator=None} in
     let%bind rhs = decompile_expression @@ snd match_some in
     let var = CST.PVar (decompile_variable @@ (fst match_some).wrap_content)in
-    let some_case : _ CST.case_clause = {pattern=PConstr (PSomeApp (wrap (rg,var)));arrow=rg; rhs} in
+    let some_case : _ CST.case_clause =
+      {pattern=PConstr (PSomeApp (wrap (rg,var)));arrow=rg; rhs; terminator=None} in
     ok @@ [wrap some_case;wrap none_case]
   | Match_list {match_nil; match_cons} ->
     let (hd,tl,expr) = match_cons in
-    let hd = CST.PVar (decompile_variable hd.wrap_content) in
-    let tl = CST.PVar (decompile_variable tl.wrap_content) in
-    let cons = (hd,rg,tl) in
+    let lpattern = CST.PVar (decompile_variable hd.wrap_content) in
+    let rpattern = CST.PVar (decompile_variable tl.wrap_content) in
+    let cons = CST.{lbracket=rg;lpattern;comma=rg;ellipsis=rg;rpattern;rbracket=rg} in
     let%bind rhs = decompile_expression @@ expr in
-    let cons_case : _ CST.case_clause = {pattern=PList (PCons (wrap cons));arrow=rg; rhs} in
+    let cons_case : _ CST.case_clause =
+      {pattern=PList (PCons (wrap cons));arrow=rg; rhs; terminator=None} in
     let%bind rhs = decompile_expression @@ match_nil in
-    let nil_case : _ CST.case_clause = {pattern=PList (PListComp (wrap @@ inject brackets None));arrow=rg; rhs} in
+    let nil_case : _ CST.case_clause =
+      {pattern=PList (PListComp (wrap @@ inject brackets None));arrow=rg; rhs; terminator=None} in
     ok @@ [wrap cons_case; wrap nil_case]
   | Match_variant lst ->
     let aux ((c,(v:AST.expression_variable)),e) =
@@ -449,7 +463,7 @@ fun m ->
       let tuple = var in
       let pattern : CST.pattern = PConstr (PConstrApp (wrap (constr, Some tuple))) in
       let%bind rhs = decompile_expression e in
-      let case : _ CST.case_clause = {pattern;arrow=rg;rhs} in
+      let case : _ CST.case_clause = {pattern;arrow=rg;rhs; terminator=None} in
       ok @@ wrap case
     in
     bind_map_list aux lst

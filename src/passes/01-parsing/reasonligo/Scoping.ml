@@ -116,8 +116,8 @@ and vars_of_plist env = function
   PListComp {value; _} ->
     Utils.sepseq_foldl vars_of_pattern env value.elements
 | PCons {value; _} ->
-    let head, _, tail = value in
-    List.fold_left vars_of_pattern env [head; tail]
+    let {lpattern;rpattern;_} = value in
+    List.fold_left vars_of_pattern env [lpattern; rpattern]
 
 let check_linearity = vars_of_pattern VarSet.empty
 

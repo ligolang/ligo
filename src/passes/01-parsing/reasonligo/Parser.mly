@@ -68,7 +68,7 @@ sep_or_term_list(item,sep):
 par(X):
   "(" X ")" {
     let region = cover $1 $3
-    and value  = {lpar=$1; inside=$2; rpar=$3}
+    and value  = ({lpar=$1; inside=$2; rpar=$3} : _ par)
     in {region; value} }
 
 (* Sequences
@@ -168,8 +168,8 @@ fun_type:
 
 cartesian:
   core_type { $1 }
-| "(" tuple (core_type) ")" {
-    TProd {region = cover $1 $3; value = $2}
+| par(tuple (core_type)) {
+    TProd $1
   }
 
 type_args:
@@ -302,8 +302,15 @@ pattern:
     let start  = pattern_to_region $2 in
     let stop   = pattern_to_region $5 in
     let region = cover start stop in
-    let cons   = {value=$2,$3,$5; region}
-    in PList (PCons cons)
+    let value  =
+      { lbracket = $1;
+	lpattern = $2;
+	comma    = $3;
+	ellipsis = $4;
+	rpattern = $5;
+	rbracket = $6
+      }
+    in PList (PCons {value;region})
   }
 | tuple(sub_pattern) {
     let hd, tl = $1 in
@@ -401,8 +408,8 @@ type_expr_simple:
     | None -> TVar $1
   }
 | par(type_expr_simple){ TPar $1}
-| "(" tuple(type_expr_simple) ")" {
-    TProd {region = cover $1 $3; value=$2}
+| par(tuple(type_expr_simple)) {
+    TProd $1
   }
 | "(" type_expr_simple "=>" type_expr_simple ")" {
     TPar {
@@ -515,7 +522,7 @@ fun_expr(right_expr):
           arg_to_pattern e
       | EVar _ as e ->
           arg_to_pattern e
-      | e -> 
+      | e ->
       let open! SyntaxError
             in raise (Error (WrongFunctionArguments e))
     in
@@ -545,8 +552,7 @@ if_then(right_expr):
     let region   = cover $1 $6 in
     let value    = {kwd_if   = $1;
                     test     = $2;
-                    kwd_then = $3;
-                    ifso     = $4;
+                    ifso     = {lbrace=$3; inside=($4,$5); rbrace=$6};
                     ifnot    = None}
     in ECond {region; value} }
 
@@ -556,9 +562,8 @@ if_then_else(right_expr):
     let region = cover $1 $11 in
     let value  = {kwd_if   = $1;
                   test     = $2;
-                  kwd_then = $3;
-                  ifso     = $4;
-                  ifnot    = Some ($6,$9)}
+                  ifso     = {lbrace=$3; inside=($4,$5); rbrace=$6};
+                  ifnot    = Some ($7,{lbrace=$8; inside=($9,$10); rbrace=$11})}
     in ECond {region; value} }
 
 base_if_then_else__open(x):
@@ -593,7 +598,7 @@ switch_expr_:
 cases(right_expr):
   nseq(case_clause(right_expr)) {
     let hd, tl = $1 in
-    let nseq = hd, List.map (fun f -> expr_to_region f.value.rhs, f) tl in
+    let nseq = snd hd, tl in
     {
       region = nsepseq_to_region (fun x -> x.region) nseq;
       value  = nseq }
@@ -605,8 +610,8 @@ case_clause(right_expr):
     let start  = pattern_to_region $2
     and stop   = expr_to_region $4 in
     let region = cover start stop
-    and value  = {pattern=$2; arrow=$3; rhs=$4}
-    in {region; value} }
+    and value  = {pattern=$2; arrow=$3; rhs=$4; terminator=$5 }
+    in $1,{region; value} }
 
 let_expr(right_expr):
   seq(Attr) "let" ioption("rec") let_binding ";" right_expr {
@@ -614,11 +619,11 @@ let_expr(right_expr):
     let kwd_let = $2 in
     let kwd_rec = $3 in
     let binding = $4 in
-    let kwd_in  = $5 in
+    let semi    = $5 in
     let body    = $6 in
     let stop    = expr_to_region $6 in
     let region  = cover $2 stop
-    and value   = {kwd_let; kwd_rec; binding; kwd_in; body; attributes}
+    and value   = {kwd_let; kwd_rec; binding; semi; body; attributes}
     in ELetIn {region; value} }
 
 disj_expr_level:
@@ -627,7 +632,7 @@ disj_expr_level:
 | par(tuple(disj_expr_level)) type_annotation_simple? {
     let region = nsepseq_to_region expr_to_region $1.value.inside in
     let tuple  = ETuple {value=$1.value.inside; region} in
-    let par = 
+    let par =
       EPar {$1 with value = {$1.value with inside = tuple}} in
     match $2 with
       Some (colon, typ) ->
@@ -733,19 +738,17 @@ constr_expr:
     EConstr (EConstrApp {$1 with value=$1, None}) }
 
 call_expr:
-  core_expr "(" nsepseq(expr, ",") ")" {
+  core_expr par(nsepseq(expr, ",")) {
     let start  = expr_to_region $1 in
-    let stop   = $4 in
-    let region = cover start stop in
-    let hd, tl = $3 in
-    let tl     = List.map snd tl in
-    ECall {region; value = $1,(hd,tl)}
+    let stop   = $2 in
+    let region = cover start stop.region in
+    ECall {region; value = $1,Multiple $2}
   }
 | core_expr unit {
     let start  = expr_to_region $1 in
     let stop   = $2.region in
     let region = cover start stop
-    and value  = $1, (EUnit $2, [])
+    and value  = $1, Unit $2
     in ECall {region; value} }
 
 common_expr:
@@ -781,7 +784,7 @@ list_or_spread:
   }
 | "[" expr "," "..." expr "]" {
     let region = cover $1 $6
-    and value  = {arg1=$2; op=$4; arg2=$5}
+    and value : cons_expr = {lbracket=$1; lexpr=$2; comma=$3; ellipsis=$4; rexpr=$5; rbracket=$6}
     in EList (ECons {region; value})
   }
 | "[" expr? "]" {
@@ -859,12 +862,13 @@ update_record:
     let ne_elements, terminator = $5 in
     let value = {
       lbrace   = $1;
+      ellipsis = $2;
       record   = $3;
-      kwd_with = $4;
+      comma    = $4;
       updates  = {value = {compound = None;
-                           ne_elements;
-                           terminator};
-                  region = cover $4 $6};
+                          ne_elements;
+                          terminator};
+                 region = cover $4 $6};
       rbrace   = $6}
     in {region; value} }
 
@@ -897,7 +901,7 @@ exprs:
       in
       let sequence = ESeq {
         value = {
-          compound   = None; 
+          compound   = None;
           elements   = Some val_;
           terminator = snd c};
         region = sequence_region
