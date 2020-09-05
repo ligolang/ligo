@@ -396,7 +396,7 @@ let transfer_single
                 (failwith(("transfer_single: No card.")))
                  : card
             };
-          begin
+          {
             if ((NEQ((card.card_owner), (Tezos.sender)))) {
 
               (failwith(("This card doesn't belong to you")))
@@ -410,7 +410,7 @@ let transfer_single
               Map.add(card, action.card_to_transfer, cards);
             let s: _ = {...s, {cards: cards }};
             [] : list(operation), s
-          end
+          }
           : return
      });
 
@@ -425,7 +425,7 @@ let sell_single: (action_sell_single, storage) => return =
             | None =>
                 (failwith(("sell_single: No card."))) : card
             };
-          begin
+          {
             if ((NEQ((card.card_owner), (Tezos.sender)))) {
 
               (failwith(("This card doesn't belong to you")))
@@ -481,7 +481,7 @@ let sell_single: (action_sell_single, storage) => return =
                Tezos.transaction((unit), (price), (receiver)));
             let operations: list(operation) = [op];
             operations, s
-          end
+          }
           : return
      });
 
@@ -502,7 +502,7 @@ let buy_single: (action_buy_single, storage) => return =
             (
              TIMES((card_pattern.coefficient),
                 ((ADD((card_pattern.quantity), (1n))))));
-          begin
+          {
             if ((GT((price), (Tezos.amount)))) {
               (failwith(("Not enough money")))
             } else {
@@ -538,7 +538,7 @@ let buy_single: (action_buy_single, storage) => return =
               {...s,
                 {next_id: (ADD((s.next_id), (1n))) }};
             [] : list(operation), s
-          end
+          }
           : return
      });
 
@@ -1010,7 +1010,7 @@ let transferIterator: _ =
         : transferAuxiliary;
      let from_: tokenOwner =
        transferAuxiliary2.from_ : tokenOwner;
-     begin
+     {
        allowOnlyOwnTransfer(from_);
        let gen__5: _ =
          (
@@ -1020,7 +1020,7 @@ let transferIterator: _ =
        let storage: _ = gen__5[0];
        let gen__4: _ = gen__5[1];
        storage
-     end);
+     });
 
 let transfer: _ =
   ((gen__6: (transferParameter, storage)): entrypointReturn =>
@@ -1573,10 +1573,10 @@ let transfer
               let gen__env9: _ =
                 {...gen__env9,
                   {new_allowances: new_allowances }};
-              begin
+              {
                 ();
                 gen__env9
-              end
+              }
             } else {
 
               let authorized_value: nat =
@@ -1592,10 +1592,10 @@ let transfer
               let gen__env8: _ =
                 if ((LT((authorized_value), (p.value)))) {
 
-                  begin
+                  {
                     (failwith(("Not Enough Allowance")));
                     gen__env8
-                  end
+                  }
                 } else {
 
                   let new_allowances: _ =
@@ -1611,20 +1611,20 @@ let transfer
                   let gen__env8: _ =
                     {...gen__env8,
                       {new_allowances: new_allowances }};
-                  begin
+                  {
                     ();
                     gen__env8
-                  end
+                  }
                 };
               let new_allowances: _ =
                 gen__env8.new_allowances;
               let gen__env9: _ =
                 {...gen__env9,
                   {new_allowances: new_allowances }};
-              begin
+              {
                 ();
                 gen__env9
-              end
+              }
             };
           let new_allowances: _ = gen__env9.new_allowances;
           let sender_balance: nat =
@@ -1640,10 +1640,10 @@ let transfer
           let gen__env12: _ =
             if ((LT((sender_balance), (p.value)))) {
 
-              begin
+              {
                 (failwith(("Not Enough Balance")));
                 gen__env12
-              end
+              }
             } else {
 
               let new_tokens: _ =
@@ -1673,10 +1673,10 @@ let transfer
               let gen__env12: _ =
                 {...gen__env12,
                   {new_tokens: new_tokens }};
-              begin
+              {
                 ();
                 gen__env12
-              end
+              }
             };
           let new_tokens: _ = gen__env12.new_tokens;
           [] : list(operation),
@@ -1709,10 +1709,10 @@ let approve
              AND(((GT((previous_value), (0n)))),
                 ((GT((p.value), (0n))))))) {
 
-              begin
+              {
                 (failwith(("Unsafe Allowance Change")));
                 gen__env14
-              end
+              }
             } else {
 
               let new_allowances: _ =
@@ -1723,10 +1723,10 @@ let approve
               let gen__env14: _ =
                 {...gen__env14,
                   {new_allowances: new_allowances }};
-              begin
+              {
                 ();
                 gen__env14
-              end
+              }
             };
           let new_allowances: _ = gen__env14.new_allowances;
           [] : list(operation),
@@ -1966,7 +1966,7 @@ let main: (parameter, storage) => return =
   ((gen__parameters1: (parameter, storage)) =>
      switch(gen__parameters1) {
      | p: parameter, s: storage =>
-         begin
+         {
             switch(p) {
             | Zero n =>
                 if ((GT((n), (0n)))) {
@@ -1982,7 +1982,7 @@ let main: (parameter, storage) => return =
                 }
             };
             [] : list(operation), s
-          end
+          }
           : return
      });
 
@@ -2005,37 +2005,37 @@ let foobar: int => int =
 
              let i: _ = 20;
              let gen__env5: _ = {...gen__env5, {i: i }};
-             begin
+             {
                (failwith(("who knows")));
                let i: _ = 30;
                let gen__env5: _ = {...gen__env5, {i: i }};
-               begin
+               {
                  ();
                  gen__env5
-               end
-             end
+               }
+             }
            } else {
 
-             begin
+             {
                ();
                gen__env5
-             end
+             }
            };
          let i: _ = gen__env5.i;
          let gen__env7: _ = {...gen__env7, {i: i }};
-         begin
+         {
            ();
            gen__env7
-         end
+         }
        } else {
 
-         begin
+         {
            switch(p) {
            | Zero n => (failwith((42n)))
            | Pos n => ()
            };
            gen__env7
-         end
+         }
        };
      let i: _ = gen__env7.i;
      switch(p) {
@@ -2044,14 +2044,14 @@ let foobar: int => int =
      });
 
 let failer: int => int =
-  ((p: int): int => begin
+  ((p: int): int => {
      if ((EQ((p), (1)))) {
        (failwith((42)))
      } else {
        ()
      };
      p
-   end); |}]
+   }); |}]
 
 let%expect_test _ =
   run_ligo_good [ "transpile-contract" ; "../../test/contracts/recursion.ligo" ; "pascaligo" ] ;

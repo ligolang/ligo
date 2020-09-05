@@ -28,13 +28,10 @@ type 'a reg = 'a Region.reg
 
 type lexeme = string
 
-(* Keywords of OCaml *)
+(* Keywords of Reason *)
 
-type keyword    = Region.t
 type kwd_and    = Region.t
-type kwd_begin  = Region.t
 type kwd_else   = Region.t
-type kwd_end    = Region.t
 type kwd_false  = Region.t
 type kwd_fun    = Region.t
 type kwd_rec    = Region.t
@@ -49,8 +46,6 @@ type kwd_or     = Region.t
 type kwd_then   = Region.t
 type kwd_true   = Region.t
 type kwd_type   = Region.t
-type kwd_with   = Region.t
-type kwd_let_entry = Region.t
 
 (* Data constructors *)
 
@@ -59,11 +54,11 @@ type c_Some  = Region.t
 
 (* Symbols *)
 
-type arrow    = Region.t  (* "->" *)
-type cons     = Region.t  (* "::" *)
-type cat      = Region.t  (* "^"  *)
-type append   = Region.t  (* "@"  *)
-type dot      = Region.t  (* "."  *)
+type arrow    = Region.t  (* "=>"  *)
+type cat      = Region.t  (* "++"  *)
+type dot      = Region.t  (* "."   *)
+type ellipsis = Region.t  (* "..." *)
+type equal    = Region.t  (* "="   *)
 
 (* Arithmetic operators *)
 
@@ -79,12 +74,12 @@ type bool_and = Region.t  (* "&&" *)
 
 (* Comparisons *)
 
-type equal = Region.t  (* "="  *)
-type neq   = Region.t  (* "<>" *)
-type lt    = Region.t  (* "<"  *)
-type gt    = Region.t  (* ">"  *)
-type leq   = Region.t  (* "=<" *)
-type geq   = Region.t  (* ">=" *)
+type equal_cmp = Region.t  (* "=="  *)
+type neq       = Region.t  (* "!=" *)
+type lt        = Region.t  (* "<"  *)
+type gt        = Region.t  (* ">"  *)
+type leq       = Region.t  (* "<=" *)
+type geq       = Region.t  (* ">=" *)
 
 (* Compounds *)
 
@@ -121,6 +116,12 @@ type constr      = string reg
 type attribute   = string reg
 
 (* Parentheses *)
+
+type 'a braced = {
+  lbrace : lbrace;
+  inside : 'a;
+  rbrace : rbrace
+}
 
 type 'a par = {
   lpar   : lpar;
@@ -177,7 +178,7 @@ and type_expr =
 | TWild   of wild
 | TString of lexeme reg
 
-and cartesian = (type_expr, times) nsepseq reg
+and cartesian = (type_expr, comma) nsepseq par reg
 
 and variant = {
   constr : constr;
@@ -217,7 +218,16 @@ and constr_pattern =
 
 and list_pattern =
   PListComp of pattern injection reg
-| PCons     of (pattern * cons * pattern) reg
+| PCons     of cons_pattern reg
+
+and cons_pattern =
+  { lbracket : lbracket;
+    lpattern : pattern;
+    comma    : comma;
+    ellipsis : ellipsis;
+    rpattern : pattern;
+    rbracket : rbracket;
+  }
 
 and typed_pattern = {
   pattern   : pattern;
@@ -244,7 +254,7 @@ and expr =
 | EProj    of projection reg
 | EUpdate  of update reg
 | EVar     of variable
-| ECall    of (expr * expr nseq) reg
+| ECall    of (expr * arguments) reg
 | EBytes   of (string * Hex.t) reg
 | EUnit    of the_unit reg
 | ETuple   of (expr, comma) nsepseq reg
@@ -253,6 +263,10 @@ and expr =
 | EFun     of fun_expr reg
 | ESeq     of expr injection reg
 | ECodeInj of code_inj reg
+
+and arguments =
+  Multiple of (expr,comma) nsepseq par reg
+| Unit     of the_unit reg
 
 and annot_expr = expr * colon * type_expr
 
@@ -269,14 +283,22 @@ and 'a ne_injection = {
 }
 
 and compound =
-  BeginEnd of kwd_begin * kwd_end
 | Braces   of lbrace * rbrace
 | Brackets of lbracket * rbracket
 
 and list_expr =
-  ECons     of cons bin_op reg
+  ECons     of cons_expr reg
 | EListComp of expr injection reg
-  (*| Append of (expr * append * expr) reg*)
+(*| Append of (expr * append * expr) reg*)
+
+and cons_expr =
+  { lbracket : lbracket;
+    lexpr    : expr;
+    comma    : comma;
+    ellipsis : ellipsis;
+    rexpr    : expr;
+    rbracket : rbracket;
+  }
 
 and string_expr =
   Cat      of cat bin_op reg
@@ -322,12 +344,12 @@ and 'a un_op = {
 }
 
 and comp_expr =
-  Lt    of lt    bin_op reg
-| Leq   of leq   bin_op reg
-| Gt    of gt    bin_op reg
-| Geq   of geq   bin_op reg
-| Equal of equal bin_op reg
-| Neq   of neq   bin_op reg
+  Lt    of lt        bin_op reg
+| Leq   of leq       bin_op reg
+| Gt    of gt        bin_op reg
+| Geq   of geq       bin_op reg
+| Equal of equal_cmp bin_op reg
+| Neq   of neq       bin_op reg
 
 and record = field_assign reg ne_injection
 
@@ -343,21 +365,22 @@ and selection =
 
 and field_assign = {
   field_name : field_name;
-  assignment : equal;
+  assignment : colon;
   field_expr : expr
 }
 
 and update = {
   lbrace   : lbrace;
+  ellipsis : ellipsis;
   record   : path;
-  kwd_with : kwd_with;
+  comma    : comma;
   updates  : field_path_assignment reg ne_injection reg;
   rbrace   : rbrace
 }
 
 and field_path_assignment = {
   field_path : path;
-  assignment : equal;
+  assignment : colon;
   field_expr : expr
 }
 
@@ -368,22 +391,23 @@ and path =
 and 'a case = {
   kwd_switch : kwd_switch;
   expr      : expr;
-  lbrace    : kwd_with;
+  lbrace    : lbrace;
   cases     : ('a case_clause reg, vbar) nsepseq reg;
   rbrace : rbrace
 }
 
 and 'a case_clause = {
-  pattern : pattern;
-  arrow   : arrow;
-  rhs     : 'a
+  pattern    : pattern;
+  arrow      : arrow;
+  rhs        : 'a;
+  terminator : comma option
 }
 
 and let_in = {
   kwd_let    : kwd_let;
   kwd_rec    : kwd_rec option;
   binding    : let_binding;
-  kwd_in     : kwd_in;
+  semi       : semi;
   body       : expr;
   attributes : attributes
 }
@@ -398,9 +422,8 @@ and fun_expr = {
 and cond_expr = {
   kwd_if   : kwd_if;
   test     : expr;
-  kwd_then : kwd_then;
-  ifso     : expr;
-  ifnot    : (kwd_else * expr) option;
+  ifso     : (expr * semi option) braced;
+  ifnot    : (kwd_else * (expr * semi option) braced) option;
 }
 
 (* Code injection.  Note how the field [language] wraps a region in
