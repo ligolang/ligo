@@ -2,19 +2,20 @@
 module Cli.Types
   ( LigoClient
   , LigoClientEnv (..)
-  , HasLigoClientEnv (..)
-  , HasLigoClient
+  , HasLigoClient(..)
   )
 where
 
-import Control.Lens (Lens')
-import Control.Monad.Catch.Pure (MonadThrow)
+import Control.Lens (Lens', (^.))
+import Control.Monad.Catch (MonadCatch)
 import Control.Monad.IO.Class (MonadIO)
-import Control.Monad.Reader.Class (MonadReader)
-import Control.Monad.Trans.Reader (ReaderT)
+import Control.Monad.Reader (ReaderT, MonadReader, asks)
 
--- | Type of the client itself.
-type LigoClient = ReaderT LigoClientEnv IO
+import Data.Default (Default(..))
+
+import Product
+
+type LigoClient = ReaderT (Product '[LigoClientEnv]) IO
 
 -- | Environment passed throughout the ligo interaction
 data LigoClientEnv = LigoClientEnv
@@ -25,7 +26,15 @@ data LigoClientEnv = LigoClientEnv
   }
   deriving stock (Show)
 
-class HasLigoClientEnv env where
-  ligoClientEnvL :: Lens' env LigoClientEnv
+class (Monad m, MonadIO m, MonadCatch m) => HasLigoClient m where
+  getLigoClientEnv :: m LigoClientEnv
 
-type HasLigoClient env m = (HasLigoClientEnv env, MonadReader env m, MonadIO m, MonadThrow m)
+instance
+  Contains LigoClientEnv env
+    =>
+  HasLigoClient (ReaderT (Product env) IO)
+    where
+      getLigoClientEnv = asks (getElem @LigoClientEnv @env)
+
+instance Default LigoClientEnv where
+  def = LigoClientEnv "/bin/ligo" False

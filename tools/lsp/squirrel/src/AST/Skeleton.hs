@@ -20,13 +20,13 @@ import Product
 --
 --   TODO: Rename; add stuff if CamlLIGO/ReasonLIGO needs something.
 --
-type LIGO        = Tree RawLigoList
-type LIGO'    xs = LIGO (Product xs)
+-- type LIGO        = Tree RawLigoList
+type LIGO     xs = Tree RawLigoList (Product xs)
 type Tree' fs xs = Tree fs (Product xs)
 
 type RawLigoList =
-  [ Name, Path, QualifiedName, Pattern, Constant, FieldAssignment, Assignment
-  , MapBinding, LHS, Alt, Expr, TField, Variant, Type, Binding
+  [ Name, Path, QualifiedName, Pattern, Constant, FieldAssignment
+  , MapBinding, Alt, Expr, TField, Variant, Type, Binding
   , RawContract, TypeName, FieldName, Language
   , Err Text, Parameters, Ctor, Contract, NameDecl
   ]
@@ -140,20 +140,20 @@ data Alt it
   deriving (Show) via PP (Alt it)
   deriving stock (Functor, Foldable, Traversable)
 
-data LHS it
-  = LHS it (Maybe it) -- (QualifiedName) (Maybe (Expr))
-  deriving (Show) via PP (LHS it)
-  deriving stock (Functor, Foldable, Traversable)
+-- data LHS it
+--   = LHS it (Maybe it) -- (QualifiedName) (Maybe (Expr))
+--   deriving (Show) via PP (LHS it)
+--   deriving stock (Functor, Foldable, Traversable)
 
 data MapBinding it
   = MapBinding it it -- (Expr) (Expr)
   deriving (Show) via PP (MapBinding it)
   deriving stock (Functor, Foldable, Traversable)
 
-data Assignment it
-  = Assignment it it -- (Name) (Expr)
-  deriving (Show) via PP (Assignment it)
-  deriving stock (Functor, Foldable, Traversable)
+-- data Assignment it
+--   = Assignment it it -- (Name) (Expr)
+--   deriving (Show) via PP (Assignment it)
+--   deriving stock (Functor, Foldable, Traversable)
 
 data FieldAssignment it
   = FieldAssignment it it -- (QualifiedName) (Expr)
@@ -327,9 +327,9 @@ instance Pretty1 MapBinding where
   pp1 = \case
     MapBinding k v -> sexpr "bind" [k, v]
 
-instance Pretty1 Assignment where
-  pp1 = \case
-    Assignment n e -> sexpr "assign" [n, e]
+-- instance Pretty1 Assignment where
+--   pp1 = \case
+--     Assignment n e -> sexpr "assign" [n, e]
 
 instance Pretty1 FieldAssignment where
   pp1 = \case
@@ -390,6 +390,6 @@ instance Pretty1 TField where
   pp1 = \case
     TField      n t -> n <.> ":" `indent` t
 
-instance Pretty1 LHS where
-  pp1 = \case
-    LHS    qn mi -> qn <.> foldMap brackets mi
+-- instance Pretty1 LHS where
+--   pp1 = \case
+--     LHS    qn mi -> qn <.> foldMap brackets mi

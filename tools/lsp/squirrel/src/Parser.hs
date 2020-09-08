@@ -111,8 +111,10 @@ instance Pretty ShowRange where
   pp Y = "Yau"
   pp N = "Nah"
 
-type Info    = Product [[Text], Range, ShowRange]
--- type PreInfo = Product [Range, ShowRange]
+newtype CodeSource = CodeSource { unCodeSource :: Text }
+  deriving newtype (Eq, Ord, Show, Pretty)
+
+type Info = [[Text], Range, ShowRange, CodeSource]
 
 instance
   ( Contains Range xs
@@ -124,6 +126,9 @@ instance
     ascribe xs
       = ascribeRange (getElem @Range xs) (getElem xs)
       . ascribeComms (getElem xs)
+
+fillInfo :: Functor f => f (Product xs) -> f (Product ([Text] : Range : ShowRange : xs))
+fillInfo = fmap \it -> [] :> point (-1) (-1) :> N :> it
 
 ascribeComms :: [Text] -> Doc -> Doc
 ascribeComms comms
@@ -144,20 +149,20 @@ withComments act = do
 boilerplate
   :: (Text -> ParserM (f RawTree))
   -> (RawInfo, ParseTree RawTree)
-  -> ParserM (Info, f RawTree)
-boilerplate f (r :> _, ParseTree ty cs _) = do
+  -> ParserM (Product Info, f RawTree)
+boilerplate f (r :> _, ParseTree ty cs src) = do
   withComments do
     f' <- local (const cs) $ f ty
-    return $ (r :> N :> Nil, f')
+    return $ (r :> N :> CodeSource src :> Nil, f')
 
 boilerplate'
   :: ((Text, Text) -> ParserM (f RawTree))
   -> (RawInfo, ParseTree RawTree)
-  -> ParserM (Info, f RawTree)
+  -> ParserM (Product Info, f RawTree)
 boilerplate' f (r :> _, ParseTree ty cs src) = do
   withComments do
     f' <- local (const cs) $ f (ty, src)
-    return $ (r :> N :> Nil, f')
+    return $ (r :> N :> CodeSource src :> Nil, f')
 
 fallthrough :: MonadThrow m => m a
 fallthrough = throwM HandlerFailed

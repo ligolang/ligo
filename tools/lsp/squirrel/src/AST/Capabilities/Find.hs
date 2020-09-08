@@ -30,7 +30,7 @@ type CanSearch xs =
 findScopedDecl
   :: CanSearch xs
   => Range
-  -> LIGO (Product xs)
+  -> LIGO xs
   -> Maybe ScopedDecl
 findScopedDecl pos tree = do
   pt <- listToMaybe $ spineTo (\i -> pos `leq` getElem i) tree
@@ -44,7 +44,7 @@ findScopedDecl pos tree = do
 definitionOf
   :: CanSearch xs
   => Range
-  -> LIGO (Product xs)
+  -> LIGO xs
   -> Maybe Range
 definitionOf pos tree =
   _sdOrigin <$> findScopedDecl pos tree
@@ -52,15 +52,15 @@ definitionOf pos tree =
 typeOf
   :: CanSearch xs
   => Range
-  -> LIGO (Product xs)
-  -> Maybe (Either (LIGO ()) Kind)
+  -> LIGO xs
+  -> Maybe TypeOrKind
 typeOf pos tree =
   _sdType =<< findScopedDecl pos tree
 
 implementationOf
   :: CanSearch xs
   => Range
-  -> LIGO (Product xs)
+  -> LIGO xs
   -> Maybe Range
 implementationOf pos tree =
   _sdBody =<< findScopedDecl pos tree
@@ -68,7 +68,7 @@ implementationOf pos tree =
 referencesOf
   :: CanSearch xs
   => Range
-  -> LIGO (Product xs)
+  -> LIGO xs
   -> Maybe [Range]
 referencesOf pos tree =
   _sdRefs <$> findScopedDecl pos tree

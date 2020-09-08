@@ -3,10 +3,12 @@ import Control.Arrow
 import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Exception as E
-import Control.Lens
+import Control.Lens ((^.), (&), _Just, (%~), to)
 import Control.Monad
+import Control.Monad.Reader (runReaderT, liftIO)
 
 import Data.Default
+import Data.Functor ((<&>))
 import Data.Maybe (fromMaybe, maybeToList)
 import Data.String (fromString)
 import Data.String.Interpolate (i)
@@ -33,6 +35,7 @@ import Duplo.Pretty
 import Duplo.Tree (collect)
 
 import AST hiding (def)
+import Cli
 import qualified AST.Capabilities as Ligo
 import qualified Config
 import Extension
@@ -181,7 +184,7 @@ eventLoop funs chan = do
         stopDyingAlready funs req do
           let uri = req^.J.params.J.textDocument.J.uri
           let pos = fromLspPosition $ req^.J.params.J.position
-          tree <- loadFromVFS funs uri
+          tree <- loadFromVFS funs uri `runOnDefaultClientT` def
           case definitionOf pos tree of
             Just defPos -> do
               respondWith funs req RspDefinition $
@@ -193,7 +196,7 @@ eventLoop funs chan = do
         stopDyingAlready funs req do
           let uri = req^.J.params.J.textDocument.J.uri
           let pos = fromLspPosition $ req^.J.params.J.position
-          tree <- loadFromVFS funs uri
+          tree <- loadFromVFS funs uri `runOnDefaultClientT` def
           case referencesOf pos tree of
             Just refs -> do
               let locations = J.Location uri . toLspRange <$> refs
@@ -206,7 +209,7 @@ eventLoop funs chan = do
           U.logs $ "got completion request: " <> show req
           let uri = req ^. J.params . J.textDocument . J.uri
           let pos = fromLspPosition $ req ^. J.params . J.position
-          tree <- loadFromVFS funs uri
+          tree <- loadFromVFS funs uri `runOnDefaultClientT` def
           let completions = fmap toCompletionItem . fromMaybe [] $ complete pos tree
           respondWith funs req RspCompletion . J.Completions . J.List $ completions
 
@@ -219,7 +222,7 @@ eventLoop funs chan = do
       ReqFoldingRange req -> do
         stopDyingAlready funs req $ do
           let uri = req ^. J.params . J.textDocument . J.uri
-          tree <- loadFromVFS funs uri
+          tree <- loadFromVFS funs uri `runOnDefaultClientT` def
           let response =
                 RspFoldingRange
                   . Core.makeResponseMessage req
@@ -235,7 +238,7 @@ eventLoop funs chan = do
         stopDyingAlready funs req $ do
           let uri = req ^. J.params . J.textDocument . J.uri
           let positions = req ^. J.params . J.positions
-          tree <- loadFromVFS funs uri
+          tree <- loadFromVFS funs uri `runOnDefaultClientT` def
           let results = map (findSelectionRange tree) positions
               response = (RspSelectionRange
                            (Core.makeResponseMessage req (J.List results)))
@@ -245,14 +248,14 @@ eventLoop funs chan = do
         stopDyingAlready funs req do
           let uri = req ^. J.params . J.textDocument . J.uri
           let pos = fromLspPosition $ req ^. J.params . J.position
-          tree <- loadFromVFS funs uri
+          tree <- loadFromVFS funs uri `runOnDefaultClientT` def
           let response =
                 RspHover $ Core.makeResponseMessage req (hoverDecl pos tree)
           Core.sendFunc funs response
 
       ReqDocumentSymbols req -> do
         let uri = req ^. J.params . J.textDocument . J.uri
-        tree <- loadFromVFS funs uri
+        tree <- loadFromVFS funs uri `runOnDefaultClientT` def
         result <- extractDocumentSymbols uri tree
         respondWith funs req RspDocumentSymbols (J.DSSymbolInformation $ J.List result)
 
@@ -260,7 +263,7 @@ eventLoop funs chan = do
         let uri = req ^. J.params . J.textDocument . J.uri
         let pos = fromLspPosition $ req ^. J.params . J.position
         let newName = req ^. J.params . J.newName
-        tree <- loadFromVFS funs uri
+        tree <- loadFromVFS funs uri `runOnDefaultClientT` def
         let
           allReferences :: Maybe [Range]
           allReferences = referencesOf pos tree <> fmap (\x -> [x]) (definitionOf pos tree)
@@ -282,6 +285,9 @@ eventLoop funs chan = do
 
       _ -> U.logs "unknown msg"
 
+runOnDefaultClientT :: LigoClient a -> LigoClientEnv -> IO a
+runOnDefaultClientT act e = act `runReaderT` (e :> Nil)
+
 respondWith
   :: Core.LspFuncs Config.Config
   -> J.RequestMessage J.ClientMethod req rsp
@@ -297,29 +303,32 @@ stopDyingAlready funs req = flip catch \(e :: SomeException) -> do
     $ "this happened: " ++ show e
 
 loadFromVFS
-  :: Core.LspFuncs Config.Config
+  :: HasLigoClient m
+  => Core.LspFuncs Config.Config
   -> J.Uri
-  -> IO (LIGO Info')
+  -> m (LIGO Info')
 loadFromVFS funs uri = do
-  Core.getVirtualFileFunc funs
-    (J.toNormalizedUri uri)
-    >>= \case
-      Just vf -> do
-        let txt = virtualFileText vf
-        let Just fin = J.uriToFilePath uri
-        (tree, _) <- parse (Text fin txt)
-        return $ addLocalScopes tree
-      Nothing -> do
-        loadByURI uri
+  mvf <- liftIO do
+    Core.getVirtualFileFunc funs
+      (J.toNormalizedUri uri)
+  case mvf of
+    Just vf -> do
+      let txt = virtualFileText vf
+      let Just fin = J.uriToFilePath uri
+      (tree, _) <- parseWithScopes @Standard (Text fin txt)
+      return tree
+    Nothing -> do
+      loadByURI uri
 
 loadByURI
-  :: J.Uri
-  -> IO (LIGO Info')
+  :: HasLigoClient m
+  => J.Uri
+  -> m (LIGO Info')
 loadByURI uri = do
   case J.uriToFilePath uri of
     Just fin -> do
-      (tree, _) <- parse (Path fin)
-      return $ addLocalScopes tree
+      (tree, _) <- parseWithScopes @Standard (Path fin)
+      return tree
     Nothing -> do
       error $ "uriToFilePath " ++ show uri ++ " has failed. We all are doomed."
 
