@@ -20,8 +20,8 @@ const Container = styled.div<{ visible?: boolean }>`
   minHeight: "50px";
   overflow-x: hidden; 
   overflow-y: auto; 
-  border: 1px solid grey;
-  background-color: rgba(220,220,220, 1);
+  border-top: 0.3rem solid var(--orange);
+  background-color: var(--orange_trans);
 
   font-family: Menlo, Monaco, 'Courier New', monospace;
   display: flex;
