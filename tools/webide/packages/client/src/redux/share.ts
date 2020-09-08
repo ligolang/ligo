@@ -26,6 +26,11 @@ import {
   ChangeEntrypointAction as ChangeEvaluateValueEntrypointAction,
 } from './evaluate-value';
 import { ActionType as ExamplesActionType, ChangeSelectedAction as ChangeSelectedExampleAction } from './examples';
+import {
+  ActionType as GenerateDeployActionType,
+  ChangeEntrypointAction as ChangeGenerateDeployEntrypointAction,
+  ChangeStorageAction as ChangeGenerateDeployStorageAction,
+} from './generate-deploy-script';
 
 export enum ActionType {
   ChangeShareLink = 'share-change-link'
@@ -49,6 +54,8 @@ type Action =
   | ChangeMichelsonFormatAction
   | ChangeDeployEntrypointAction
   | ChangeDeployStorageAction
+  | ChangeGenerateDeployEntrypointAction
+  | ChangeGenerateDeployStorageAction
   | UseTezBridgeAction
   | ChangeDryRunEntrypointAction
   | ChangeDryRunParametersAction
@@ -71,6 +78,8 @@ export default (state = DEFAULT_STATE, action: Action): ShareState => {
     case CompileActionType.ChangeEntrypoint:
     case DeployActionType.ChangeEntrypoint:
     case DeployActionType.ChangeStorage:
+    case GenerateDeployActionType.ChangeEntrypoint:
+    case GenerateDeployActionType.ChangeStorage:
     case DryRunActionType.ChangeEntrypoint:
     case DryRunActionType.ChangeParameters:
     case DryRunActionType.ChangeStorage:

@@ -82,7 +82,8 @@ export async function share({
   dryRun,
   deploy,
   evaluateValue,
-  evaluateFunction
+  evaluateFunction,
+  generateDeployScript
 }: Partial<AppState>) {
   const params = {
     editor,
@@ -90,7 +91,8 @@ export async function share({
     dryRun,
     deploy,
     evaluateValue,
-    evaluateFunction
+    evaluateFunction,
+    generateDeployScript
   };
 
   // We don't want to store the following configuration
