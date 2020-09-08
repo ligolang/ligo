@@ -33,6 +33,13 @@ interface ShareBody {
     entrypoint: string;
     parameters: string;
   };
+  generateDeployScript: {
+    tool: string;
+    entrypoint: string;
+    storage: string;
+    originationAccount: string;
+    burnCap: number;
+  };
 }
 
 const validateRequest = (body: any): { value: ShareBody; error?: any } => {
@@ -65,6 +72,13 @@ const validateRequest = (body: any): { value: ShareBody; error?: any } => {
       evaluateFunction: joi.object({
         entrypoint: joi.string().allow(''),
         parameters: joi.any().allow('')
+      }),
+      generateDeployScript: joi.object({
+        tool: joi.string().allow(''),
+        entrypoint: joi.string().allow(''),
+        storage: joi.any().allow(''),
+        originationAccount: joi.string().allow(''),
+        burnCap: joi.number().allow('')
       })
     })
     .validate(body);
