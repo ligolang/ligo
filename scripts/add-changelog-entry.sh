@@ -7,7 +7,7 @@ set -euET -o pipefail
 usage() {
     printf 'Usage: %s <TYPE> <MERGE_REQUEST> <AUTHOR> <TITLE>\n' "$0"
     echo "where"
-    echo "  TYPE is one of added, fixed, changed, deprecated, removed, performance, other"
+    echo "  TYPE is one of added, fixed, changed, deprecated, removed, performance, internal, other"
     echo "  MERGE_REQUEST is a merge request ID like 123"
     echo "  AUTHOR is your name"
     echo "  TITLE is a concise one-line description of your changes."
@@ -42,7 +42,7 @@ if command -v nix-shell > /dev/null && [[ -z "${IN_NIX_SHELL-}" ]]; then
 fi
 
 case "$1" in
-    added|fixed|changed|deprecated|removed|performance|other) TYPE="$1" ;;
+    added|fixed|changed|deprecated|removed|performance|internal|other) TYPE="$1" ;;
     *) echo "Wrong TYPE"; usage; exit 1
 esac
 
