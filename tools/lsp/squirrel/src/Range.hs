@@ -58,13 +58,14 @@ instance Contains Range xs => HasRange (Product xs) where
   getRange = getElem
 
 -- | Convert `squirrel` range to `haskell-lsp` range.
+-- Note that we consider the first line to be at position 1.
 toLSPRange :: Range -> LSP.Range
 toLSPRange Range
   { rStart  = (rsl, rsc, _)
   , rFinish = (rfl, rfc, _)
   } = LSP.Range
-  { LSP._start = LSP.Position { LSP._line = rsl, LSP._character = rsc }
-  , LSP._end   = LSP.Position { LSP._line = rfl, LSP._character = rfc }
+  { LSP._start = LSP.Position { LSP._line = rsl - 1, LSP._character = rsc }
+  , LSP._end   = LSP.Position { LSP._line = rfl - 1, LSP._character = rfc }
   }
 
 -- | Extract textual representation of given range.

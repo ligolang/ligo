@@ -104,6 +104,7 @@ lspHandlers rin =
       -- , Core.completionResolveHandler                 = Just $ passHandler rin ReqCompletionItemResolve
     , Core.foldingRangeHandler = Just $ passHandler rin ReqFoldingRange
     , Core.hoverHandler = Just $ passHandler rin ReqHover
+    , Core.documentSymbolHandler = Just $ passHandler rin ReqDocumentSymbols
     }
 
 passHandler :: TChan FromClientMessage -> (a -> FromClientMessage) -> Core.Handler a
@@ -209,6 +210,7 @@ eventLoop funs chan = do
         stopDyingAlready funs req $ do
           U.logs $ "got completion resolve request: " <> show req
           respondWith funs req RspCompletionItemResolve (req ^. J.params)
+
       ReqFoldingRange req -> do
         stopDyingAlready funs req $ do
           let uri = req ^. J.params . J.textDocument . J.uri
@@ -232,6 +234,12 @@ eventLoop funs chan = do
           let response =
                 RspHover $ Core.makeResponseMessage req (hoverDecl pos tree)
           Core.sendFunc funs response
+
+      ReqDocumentSymbols req -> do
+        let uri = req ^. J.params . J.textDocument . J.uri
+        tree <- loadFromVFS funs uri
+        result <- extractDocumentSymbols uri tree
+        respondWith funs req RspDocumentSymbols (J.DSSymbolInformation $ J.List result)
 
       _ -> U.logs "unknown msg"
 
