@@ -38,6 +38,11 @@ let%expect_test "main" =
     {|
       Invalid syntax option: 'foo'.
       Use 'pascaligo', 'cameligo', or 'reasonligo'.|}] ;
+    human_readable_error (`Main_invalid_dialect_name "foo") ;
+  [%expect
+    {|
+      Invalid dialect option: 'foo'.
+      Use 'verbose' or 'terse'.|}] ;
   human_readable_error (`Main_invalid_extension "foo") ;
   [%expect
     {|
@@ -457,7 +462,7 @@ let%expect_test "main_cit_reasonligo" =
     {|
       in file "a dummy file name", line 20, characters 0-10
       Missing a type annotation for argument "dog".|}]
-    
+
 
 let%expect_test "typer" =
   let open Ast_typed in

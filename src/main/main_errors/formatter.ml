@@ -41,6 +41,10 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>Invalid syntax option: '%s'. @.Use 'pascaligo', 'cameligo', or 'reasonligo'. @]"
           syntax
+    | `Main_invalid_dialect_name syntax ->
+      Format.fprintf f
+        "@[<hv>Invalid dialect option: '%s'. @.Use 'verbose' or 'terse'. @]"
+          syntax
 
     | `Main_invalid_extension extension ->
       Format.fprintf f
@@ -159,6 +163,8 @@ let rec error_jsonformat : Types.all -> Yojson.t = fun a ->
   (* Top-level errors *)
   | `Main_invalid_syntax_name _ ->
     json_error ~stage:"command line interpreter" ~content:(`String "bad syntax name")
+  | `Main_invalid_dialect_name _ ->
+    json_error ~stage:"command line interpreter" ~content:(`String "bad dialect name")
 
   | `Main_invalid_extension _ ->
     json_error ~stage:"command line interpreter" ~content:(`String "bad file extension")
