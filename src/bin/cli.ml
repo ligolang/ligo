@@ -41,6 +41,14 @@ let syntax =
     info ~docv ~doc ["syntax" ; "s"] in
   value @@ opt string "auto" info
 
+let dialect =
+  let open Arg in
+  let info =
+    let docv = "PASCALIGO_DIALECT" in
+    let doc = "$(docv) is the pascaligo dialect that will be used. Currently supported dialects are \"terse\" and \"verbose\". By default the dialect is \"terse\"." in
+    info ~docv ~doc ["dialect" ; "d"] in
+  value @@ opt string "terse" info
+
 let req_syntax n =
   let open Arg in
   let info =
@@ -218,7 +226,7 @@ let print_ast =
   let doc = "Subcommand: Print the AST.\n Warning: Intended for development of LIGO and can break at any time." in
   (Term.ret term, Term.info ~doc cmdname)
 
- 
+
 let print_ast_sugar =
   let f source_file syntax display_format brief =
     return_result ~display_format ~brief (Ast_sugar.Formatter.program_format) @@
@@ -237,7 +245,7 @@ let print_ast_core =
   let term = Term.(const f $ source_file 0 $ syntax $ display_format $ brief) in
   let cmdname = "print-ast-core" in
   let doc = "Subcommand: Print the AST.\n Warning: Intended for development of LIGO and can break at any time." in
-  (Term.ret term, Term.info ~doc cmdname) 
+  (Term.ret term, Term.info ~doc cmdname)
 
 let print_ast_typed =
   let f source_file syntax display_format brief =
@@ -472,25 +480,28 @@ let list_declarations =
   (Term.ret term , Term.info ~doc cmdname)
 
 let transpile_contract =
-  let f source_file new_syntax syntax display_format brief =
+  let f source_file new_syntax syntax new_dialect display_format brief =
     return_result ~display_format ~brief (Parser.Formatter.ppx_format) @@
       let%bind core       = Compile.Utils.to_core source_file syntax in
       let%bind sugar      = Decompile.Of_core.decompile core in
       let%bind imperative = Decompile.Of_sugar.decompile sugar in
-      let%bind buffer     = Decompile.Of_imperative.decompile imperative (Syntax_name new_syntax) in
+      let dialect         = Decompile.Helpers.Dialect_name new_dialect in
+      let%bind buffer     =
+        Decompile.Of_imperative.decompile ~dialect imperative (Syntax_name new_syntax) in
       ok @@ buffer
   in
   let term =
-    Term.(const f $ source_file 0 $ req_syntax 1 $ syntax $ display_format $ brief) in
+    Term.(const f $ source_file 0 $ req_syntax 1 $ syntax $ dialect $ display_format $ brief) in
   let cmdname = "transpile-contract" in
   let doc = "Subcommand: Transpile a contract to another syntax." in
   (Term.ret term , Term.info ~doc cmdname)
 
 let transpile_expression =
-  let f expression new_syntax syntax display_format brief =
+  let f expression new_syntax syntax new_dialect display_format brief =
     return_result ~display_format ~brief (Parser.Formatter.ppx_format) @@
       let%bind v_syntax   = Helpers.syntax_to_variant (Syntax_name syntax) None in
-      let%bind n_syntax   = Decompile.Helpers.syntax_to_variant (Syntax_name new_syntax) None in
+      let      dialect    = Decompile.Helpers.Dialect_name new_dialect in
+      let%bind n_syntax   = Decompile.Helpers.syntax_to_variant ~dialect (Syntax_name new_syntax) None in
       let%bind imperative = Compile.Of_source.compile_expression v_syntax expression in
       let%bind sugar      = Compile.Of_imperative.compile_expression imperative in
       let%bind core       = Compile.Of_sugar.compile_expression sugar in
@@ -500,7 +511,7 @@ let transpile_expression =
       ok @@ buffer
   in
   let term =
-    Term.(const f $ expression "" 1  $ req_syntax 2 $ req_syntax 0 $ display_format $ brief) in
+    Term.(const f $ expression "" 1  $ req_syntax 2 $ req_syntax 0 $ dialect $ display_format $ brief) in
   let cmdname = "transpile-expression" in
   let doc = "Subcommand: Transpile an expression to another syntax." in
   (Term.ret term , Term.info ~doc cmdname)

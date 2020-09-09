@@ -4,6 +4,8 @@ module CST = Cst.Pascaligo
 module AST = Ast_imperative
 module Errors = Errors
 
+module Decompiler = Decompiler
+
 open Trace
 
 (** Convert a concrete PascaLIGO expression CST to the imperative
@@ -14,6 +16,6 @@ val compile_expression : CST.expr -> (AST.expr, Errors.abs_error) result
     AST used by the compiler. *)
 val compile_program : CST.ast -> (AST.program, Errors.abs_error) result
 
-val decompile_expression : AST.expr -> (CST.expr, _) result
+val decompile_expression : ?dialect:Decompiler.dialect -> AST.expr -> (CST.expr, _) result
 
-val decompile_program : AST.program -> (CST.ast, _) result
+val decompile_program : ?dialect:Decompiler.dialect -> AST.program -> (CST.ast, _) result

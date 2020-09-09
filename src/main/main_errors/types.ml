@@ -1,6 +1,7 @@
 type all = 
 [
  | `Main_invalid_syntax_name of string
+ | `Main_invalid_dialect_name of string
  | `Main_invalid_extension of string
  | `Main_unparse_tracer of [ `Tezos_alpha_error of Proto_alpha_utils.Error_monad.error ] list
  | `Main_typecheck_contract_tracer of Michelson.michelson * [ `Tezos_alpha_error of Proto_alpha_utils.Error_monad.error ] list
