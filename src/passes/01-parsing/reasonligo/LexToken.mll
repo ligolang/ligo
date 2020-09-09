@@ -500,9 +500,46 @@ let mk_lang lang region = Lang Region.{value=lang; region}
 let is_string = function String _ -> true | _ -> false
 let is_bytes  = function Bytes  _ -> true | _ -> false
 let is_int    = function Int    _ -> true | _ -> false
-let is_ident  = function Ident  _ -> true | _ -> false
+(*let is_ident  = function Ident  _ -> true | _ -> false*)
 let is_eof    = function EOF    _ -> true | _ -> false
 let is_minus  = function MINUS  _ -> true | _ -> false
+
+let is_sym = function
+  CAT _
+| MINUS _
+| PLUS _
+| SLASH _
+| TIMES _
+| LPAR _
+| RPAR _
+| LBRACKET _
+| RBRACKET _
+| LBRACE _
+| RBRACE _
+| COMMA _
+| SEMI _
+| VBAR _
+| COLON _
+| DOT _
+| ELLIPSIS _
+| ARROW _
+| WILD _
+| EQ _
+| EQEQ _
+| NE _
+| LT _
+| GT _
+| LE _
+| GE _
+| BOOL_OR _
+| BOOL_AND _
+| NOT _ -> true
+| _ -> false
+
+let is_hexa = function
+  Constr Region.{value="A"|"a"|"B"|"b"|"C"|"c"
+                 |"D"|"d"|"E"|"e"|"F"|"f"; _} -> true
+| _ -> false
 
 (* Errors *)
 
@@ -532,6 +569,7 @@ let format_error ?(offsets=true) mode Region.{region; value} ~file =
 
 let fail region value = raise (Error Region.{region; value})
 
+(*
 let check_right_context token next_token buffer : unit =
   let pos    = (to_region token)#stop in
   let region = Region.make ~start:pos ~stop:pos in
@@ -556,12 +594,39 @@ let check_right_context token next_token buffer : unit =
                    else ()
               else
                 if   is_bytes token
-                then if   is_string next || is_ident next
-                     then fail region Missing_break
-                     else if   is_int next
-                          then fail region Odd_lengthed_bytes
-                          else ()
+                then if   is_int next || is_hexa next
+                     then fail region Odd_lengthed_bytes
+                     else fail region Missing_break
                 else ()
+        | _::_ -> ()
+                 *)
+
+let check_right_context token next_token buffer : unit =
+  let pos    = (to_region token)#stop in
+  let region = Region.make ~start:pos ~stop:pos in
+  match next_token buffer with
+    None -> ()
+  | Some (markup, next) ->
+      if   is_minus token && is_bytes next
+      then let region =
+             Region.cover (to_region token) (to_region next)
+           in fail region Negative_byte_sequence
+      else
+        match markup with
+          [] ->
+            if   is_int token || is_string token
+            then if   is_sym next || is_eof next
+                 then ()
+                 else fail region Missing_break
+            else
+              if   is_bytes token
+              then if   is_int next || is_hexa next
+                   then fail region Odd_lengthed_bytes
+                   else
+                     if   is_sym next || is_eof next
+                     then ()
+                     else fail region Missing_break
+              else ()
         | _::_ -> ()
 
 (* END TRAILER *)
