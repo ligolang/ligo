@@ -5,7 +5,13 @@ export enum ActionType {
   ChangeLanguage = 'editor-change-language',
   ChangeCode = 'editor-change-code',
   ChangeDirty = 'editor-change-dirty',
-  ChangeTitle = 'editor-change-title'
+  ChangeTitle = 'editor-change-title',
+  ChangeCursorPosition = 'editor-change-cursor-position'
+}
+
+export interface CursorPosition {
+  lineNumber: Number;
+  column: Number;
 }
 
 export interface EditorState {
@@ -13,6 +19,7 @@ export interface EditorState {
   code: string;
   title: string;
   dirty: boolean;
+  cursorPosition: CursorPosition | null;
 }
 
 export class ChangeLanguageAction {
@@ -35,18 +42,25 @@ export class ChangeTitleAction {
   constructor(public payload: EditorState['title']) {}
 }
 
+export class ChangeCursorPositionAction {
+  public readonly type = ActionType.ChangeCursorPosition;
+  constructor(public payload: EditorState['cursorPosition']) {}
+}
+
 type Action =
   | ChangeCodeAction
   | ChangeLanguageAction
   | ChangeDirtyAction
   | ChangeTitleAction
-  | ChangeSelectedExampleAction;
+  | ChangeSelectedExampleAction
+  | ChangeCursorPositionAction;
 
 const DEFAULT_STATE: EditorState = {
   language: Language.CameLigo,
   code: '',
   title: '',
-  dirty: false
+  dirty: false,
+  cursorPosition: null
 };
 
 export default (state = DEFAULT_STATE, action: Action): EditorState => {
@@ -77,6 +91,11 @@ export default (state = DEFAULT_STATE, action: Action): EditorState => {
       return {
         ...state,
         title: action.payload
+      };
+    case ActionType.ChangeCursorPosition:
+      return {
+        ...state,
+        cursorPosition: action.payload
       };
     default:
       return state;

@@ -4,7 +4,7 @@ import { useDispatch, useStore } from 'react-redux';
 import styled from 'styled-components';
 
 import { AppState } from '../../redux/app';
-import { ChangeCodeAction, ChangeDirtyAction } from '../../redux/editor';
+import { ChangeCodeAction, ChangeDirtyAction, ChangeCursorPositionAction } from '../../redux/editor';
 import { ClearSelectedAction } from '../../redux/examples';
 
 const Container = styled.div`
@@ -55,6 +55,10 @@ export const MonacoComponent = () => {
     });
 
     let shouldDispatchCodeChangedAction = true;
+
+    editor.onDidChangeCursorPosition (() => {
+      dispatch({ ...new ChangeCursorPositionAction(editor.getPosition()) });
+    })
 
     const { dispose } = editor.onDidChangeModelContent(() => {
       if (shouldDispatchCodeChangedAction) {

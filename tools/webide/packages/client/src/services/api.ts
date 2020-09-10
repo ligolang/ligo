@@ -102,6 +102,9 @@ export async function share({
   if (params.deploy) {
     delete params.deploy.useTezBridge;
   }
+  if (params.editor?.cursorPosition) {
+    delete params.editor.cursorPosition;
+  }
 
   const response = await axios.post('/api/share', params);
   return response.data;
