@@ -28,6 +28,7 @@
     "react-resize-panel": "^0.3.5",
     "react-scripts": "3.4.3",
     "react-spinners-kit": "^1.9.1",
+    "react-split-pane": "^0.1.92",
     "redux": "^4.0.5",
     "redux-devtools": "^3.6.1",
     "redux-thunk": "^2.3.0",

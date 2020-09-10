@@ -9,20 +9,20 @@ const Container = styled.div<{ visible?: boolean }>`
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: auto;
 `;
 
 const Output = styled.div`
   flex: 1;
-  padding: 0.5em 0.5em 0 0.5em;
+  padding: 0.5em 0.5em 0.5em 0.5em;
   display: flex;
   flex-direction: column;
-  overflow: auto;
 `;
 
 const Pre = styled.pre`
   padding: 0.5em;
   margin: 0 -0.5em;
-  overflow: scroll;
+  overflow: hidden;
   height: 100%;
   width: -webkit-fill-available;
 `;

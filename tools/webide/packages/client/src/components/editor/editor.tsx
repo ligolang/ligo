@@ -33,6 +33,13 @@ const StyledEditableTitleComponent = styled(EditableTitleComponent)`
   margin-left: 20px;
 `;
 
+const SelectLanguage = styled(Select)`
+
+  &:hover {
+    background: var(--blue_trans1);
+  }
+`;
+
 export const EditorComponent = () => {
   const dispatch = useDispatch();
   const title = useSelector<AppState, string>(state => state.editor.title);
@@ -54,7 +61,7 @@ export const EditorComponent = () => {
           ></StyledEditableTitleComponent>
         </LeftActions>
         <LeftActions >
-          <Select
+          <SelectLanguage
             id="syntax-select"
             value={language}
             onChange={language => {
@@ -64,7 +71,7 @@ export const EditorComponent = () => {
             <Option value={Language.PascaLigo}>PascaLIGO</Option>
             <Option value={Language.CameLigo}>CameLIGO</Option>
             <Option value={Language.ReasonLIGO}>ReasonLIGO</Option>
-          </Select>
+          </SelectLanguage>
         </LeftActions>
       </Header>
       <MonacoComponent ></MonacoComponent>
