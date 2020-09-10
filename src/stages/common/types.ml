@@ -10,3 +10,7 @@ type 'a label_map = 'a LMap.t
 and ('a,'b) binder = ('a * 'b)
 include Enums
 include Enums_utils
+
+let const_name = function
+  | Deprecated {const;_} -> const
+  | Const      const     -> const

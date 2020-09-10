@@ -162,3 +162,12 @@ type constant' =
   | C_CONVERT_TO_RIGHT_COMB
   | C_CONVERT_FROM_LEFT_COMB
   | C_CONVERT_FROM_RIGHT_COMB
+
+type deprecated = {
+    name : string ;
+    const : constant' ;
+  }
+
+type rich_constant =
+  | Deprecated of deprecated
+  | Const of constant'

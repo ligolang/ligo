@@ -51,20 +51,20 @@ val make_e : ?loc:Location.t -> expression_content -> expression
 
 val e_literal : ?loc:Location.t -> literal -> expression
 val e_unit : ?loc:Location.t -> unit -> expression
-val e_int_z : ?loc:Location.t -> Z.t -> expression 
+val e_int_z : ?loc:Location.t -> Z.t -> expression
 val e_nat_z : ?loc:Location.t -> Z.t -> expression
 val e_timestamp_z : ?loc:Location.t -> Z.t -> expression
-val e_int : ?loc:Location.t -> int -> expression 
+val e_int : ?loc:Location.t -> int -> expression
 val e_nat : ?loc:Location.t -> int -> expression
 val e_timestamp : ?loc:Location.t -> int -> expression
 val e_bool : ?loc:Location.t -> bool -> expression
 val e_string : ?loc:Location.t -> string -> expression
 val e_verbatim : ?loc:Location.t -> string -> expression
-val e_address : ?loc:Location.t -> string -> expression 
-val e_signature : ?loc:Location.t -> string -> expression 
-val e_key : ?loc:Location.t -> string -> expression 
-val e_key_hash : ?loc:Location.t -> string -> expression 
-val e_chain_id : ?loc:Location.t -> string -> expression 
+val e_address : ?loc:Location.t -> string -> expression
+val e_signature : ?loc:Location.t -> string -> expression
+val e_key : ?loc:Location.t -> string -> expression
+val e_key_hash : ?loc:Location.t -> string -> expression
+val e_chain_id : ?loc:Location.t -> string -> expression
 val e_mutez_z : ?loc:Location.t -> Z.t -> expression
 val e_mutez : ?loc:Location.t -> int -> expression
 val e_true  : ?loc:Location.t -> unit -> expression
@@ -75,13 +75,13 @@ val e_bytes_hex : ?loc:Location.t -> Hex.t -> expression
 val e_bytes_raw : ?loc:Location.t -> bytes -> expression
 val e_bytes_string : ?loc:Location.t -> string -> expression
 
-val e_binop    : ?loc:Location.t -> constant' -> expression -> expression -> expression
+val e_binop    : ?loc:Location.t -> rich_constant -> expression -> expression -> expression
 val e_some : ?loc:Location.t -> expression -> expression
 val e_none : ?loc:Location.t -> unit -> expression
 val e_string_cat : ?loc:Location.t -> expression -> expression -> expression
 val e_map_add : ?loc:Location.t -> expression -> expression ->  expression -> expression
 
-val e_constant : ?loc:Location.t -> constant' -> expression list -> expression
+val e_constant : ?loc:Location.t -> rich_constant -> expression list -> expression
 val e_variable : ?loc:Location.t -> expression_variable -> expression
 val e_variable_ez : ?loc:Location.t -> string -> expression
 val e_application : ?loc:Location.t -> expression -> expression -> expression
@@ -154,4 +154,4 @@ val get_e_ascription : expression_content -> ascription option
 val extract_pair : expression -> (expression * expression) option
 val extract_list : expression -> expression list option
 val extract_record : expression -> (label * expression) list option
-val extract_map : expression -> (expression * expression) list option 
+val extract_map : expression -> (expression * expression) list option

@@ -8,9 +8,9 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, Err
   fun te ->
   let return te = ok @@ I.make_t te in
   match te.type_content with
-    | O.T_sum sum -> 
+    | O.T_sum sum ->
       (* This type sum could be a michelson_or as well, we could use is_michelson_or *)
-      let%bind sum = 
+      let%bind sum =
         Stage_common.Helpers.bind_map_lmap (fun v ->
           let {associated_type;decl_pos} : O.row_element = v in
           let%bind v = decompile_type_expression associated_type in
@@ -18,8 +18,8 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, Err
         ) sum
       in
       return @@ I.T_sum sum
-    | O.T_record record -> 
-      let%bind record = 
+    | O.T_record record ->
+      let%bind record =
         Stage_common.Helpers.bind_map_lmap (fun v ->
           let {associated_type;decl_pos} : O.row_element = v in
           let%bind v = decompile_type_expression associated_type in
@@ -34,7 +34,7 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, Err
       let%bind type1 = decompile_type_expression type1 in
       let%bind type2 = decompile_type_expression type2 in
       return @@ T_arrow {type1;type2}
-    | O.T_variable type_variable -> return @@ T_variable type_variable 
+    | O.T_variable type_variable -> return @@ T_variable type_variable
     | O.T_wildcard               -> return @@ T_wildcard
     | O.T_constant (type_constant, lst) ->
       let%bind lst = bind_map_list decompile_type_expression lst in
@@ -43,13 +43,14 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, Err
 let rec decompile_expression : O.expression -> (I.expression, Errors.purification_error) result =
   fun e ->
   let return expr = ok @@ I.make_e ~loc:e.location expr in
-  match e.expression_content with 
+  match e.expression_content with
     O.E_literal lit -> return @@ I.E_literal lit
-  | O.E_constant {cons_name;arguments} -> 
+  | O.E_constant {cons_name;arguments} ->
+     let cons_name = Stage_common.Enums.Const cons_name in
     let%bind arguments = bind_map_list decompile_expression arguments in
     return @@ I.E_constant {cons_name;arguments}
   | O.E_variable name     -> return @@ I.E_variable name
-  | O.E_application {lamb; args} -> 
+  | O.E_application {lamb; args} ->
     let%bind lamb = decompile_expression lamb in
     let%bind args = decompile_expression args in
     return @@ I.E_application {lamb; args}
@@ -67,7 +68,7 @@ let rec decompile_expression : O.expression -> (I.expression, Errors.purificatio
     return @@ I.E_let_in {let_binder;inline;rhs;let_result}
   | O.E_raw_code {language;code} ->
     let%bind code  = decompile_expression code in
-    return @@ I.E_raw_code {language;code} 
+    return @@ I.E_raw_code {language;code}
   | O.E_constructor {constructor;element} ->
     let%bind element = decompile_expression element in
     return @@ I.E_constructor {constructor;element}
@@ -77,7 +78,7 @@ let rec decompile_expression : O.expression -> (I.expression, Errors.purificatio
     return @@ I.E_matching {matchee;cases}
   | O.E_record record ->
     let record = I.LMap.to_kv_list record in
-    let%bind record = 
+    let%bind record =
       bind_map_list (fun (k,v) ->
         let%bind v = decompile_expression v in
         ok @@ (k,v)
@@ -113,7 +114,7 @@ let rec decompile_expression : O.expression -> (I.expression, Errors.purificatio
     return @@ I.E_list lst
   | O.E_set set ->
     let%bind set = bind_map_list decompile_expression set in
-    return @@ I.E_set set 
+    return @@ I.E_set set
   | O.E_ascription {anno_expr; type_annotation} ->
     let%bind anno_expr = decompile_expression anno_expr in
     let%bind type_annotation = decompile_type_expression type_annotation in
@@ -149,8 +150,8 @@ and decompile_lambda : O.lambda -> (I.lambda, Errors.purification_error) result 
     let%bind result = decompile_expression result in
     ok @@ I.{binder;result}
 and decompile_matching : O.matching_expr -> (I.matching_expr, Errors.purification_error) result =
-  fun m -> 
-  match m with 
+  fun m ->
+  match m with
     | O.Match_list {match_nil;match_cons} ->
       let%bind match_nil = decompile_expression match_nil in
       let (hd,tl,expr) = match_cons in
@@ -166,12 +167,12 @@ and decompile_matching : O.matching_expr -> (I.matching_expr, Errors.purificatio
         fun ((c,n),expr) ->
           let%bind expr = decompile_expression expr in
           ok @@ ((c,n),expr)
-      ) lst 
+      ) lst
       in
       ok @@ I.Match_variant lst
     | O.Match_record (lst,expr) ->
       let%bind expr = decompile_expression expr in
-      let aux (a,b,c) = 
+      let aux (a,b,c) =
         let%bind (b,c) = decompile_binder (b,c) in
         ok @@ (a,b,c) in
       let%bind lst = bind_map_list aux lst in
@@ -187,7 +188,7 @@ and decompile_matching : O.matching_expr -> (I.matching_expr, Errors.purificatio
 
 let decompile_declaration : O.declaration Location.wrap -> _ result = fun {wrap_content=declaration;location} ->
   let return decl = ok @@ Location.wrap ~loc:location decl in
-  match declaration with 
+  match declaration with
   | O.Declaration_constant (n, te, inline, expr) ->
     let%bind expr = decompile_expression expr in
     let%bind te   = decompile_type_expression te in

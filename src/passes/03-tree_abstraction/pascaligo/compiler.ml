@@ -146,12 +146,12 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     let (op, loc) = r_split op in
     let%bind a = compile_expression op.arg1 in
     let%bind b = compile_expression op.arg2 in
-    return @@ e_constant ~loc op_type [a; b]
+    return @@ e_constant ~loc (Const op_type) [a; b]
   in
   let compile_un_op (op_type : AST.constant') (op : _ CST.un_op CST.reg) =
     let (op, loc) = r_split op in
     let%bind arg = compile_expression op.arg in
-    return @@ e_constant ~loc op_type [arg]
+    return @@ e_constant ~loc (Const op_type) [arg]
   in
   match e with
     EVar var ->
@@ -174,7 +174,7 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
       let (op,loc) = r_split c in
       let%bind a = compile_expression op.arg1 in
       let%bind b = compile_expression op.arg2 in
-      return @@ e_constant ~loc C_CONCAT [a;b]
+      return @@ e_constant ~loc (Const C_CONCAT) [a;b]
     | String str ->
       let (str, loc) = r_split str in
       return @@ e_string ~loc str
@@ -338,7 +338,7 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
       let (cons, loc) = r_split cons in
       let%bind a  = compile_expression cons.arg1 in
       let%bind b  = compile_expression cons.arg2 in
-      return @@ e_constant ~loc C_CONS [a; b]
+      return @@ e_constant ~loc (Const C_CONS) [a; b]
     | EListComp lc ->
       let (lc,loc) = r_split lc in
       let lst =
@@ -366,7 +366,7 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
       let (sm, loc) = r_split sm in
       let%bind set  = compile_expression sm.set in
       let%bind elem = compile_expression sm.element in
-      return @@ e_constant ~loc C_SET_MEM [elem;set]
+      return @@ e_constant ~loc (Const C_SET_MEM) [elem;set]
   )
   | EMap map -> (
     match map with
@@ -529,9 +529,9 @@ and compile_param_decl (param : CST.param_decl) =
     return (var, param_type)
 
 and compile_instruction : ?next: AST.expression -> CST.instruction -> _ result  = fun ?next instruction ->
-  let return expr = match next with 
+  let return expr = match next with
     Some e -> ok @@ e_sequence expr e
-  | None -> ok @@ expr 
+  | None -> ok @@ expr
   in
   let compile_tuple_expression (tuple_expr : CST.tuple_expr) =
     let (lst, loc) = r_split tuple_expr in
@@ -618,7 +618,7 @@ and compile_instruction : ?next: AST.expression -> CST.instruction -> _ result  
       let (key, loc) = r_split el.var in
       let key' = Location.wrap ?loc:(Some loc) @@ Var.of_name key in
       let value = Option.map
-        (fun x -> 
+        (fun x ->
           let (v,loc) = r_split (snd x) in
           Location.wrap ?loc:(Some loc) @@ Var.of_name v)
         el.bind_to in
@@ -685,7 +685,7 @@ and compile_instruction : ?next: AST.expression -> CST.instruction -> _ result  
     let updates = npseq_to_list updates.ne_elements in
     let aux set (update: CST.expr) =
       let%bind key = compile_expression update in
-      ok @@ e_constant ~loc C_SET_ADD [key; set]
+      ok @@ e_constant ~loc (Const C_SET_ADD) [key; set]
     in
     let%bind new_map = bind_fold_list aux set updates in
     return @@ e_assign_ez ~loc var path @@ new_map
@@ -694,13 +694,13 @@ and compile_instruction : ?next: AST.expression -> CST.instruction -> _ result  
     let%bind (map, var, path) = compile_path mr.map in
     let%bind key = compile_expression mr.key in
     return @@ e_assign_ez ~loc var path @@
-      e_constant ~loc C_MAP_REMOVE [key;map]
+      e_constant ~loc (Const C_MAP_REMOVE) [key;map]
   | SetRemove sr ->
     let (sr, loc) = r_split sr in
     let%bind (set, var, path)  = compile_path sr.set in
     let%bind ele  = compile_expression sr.element in
     return @@ e_assign_ez ~loc var path @@
-      e_constant ~loc C_SET_REMOVE [ele;set]
+      e_constant ~loc (Const C_SET_REMOVE) [ele;set]
 
 and compile_data_declaration : next:AST.expression -> ?attr:CST.attr_decl -> CST.data_decl -> _ = fun ~next ?attr data_decl ->
   let return loc name type_ init =
@@ -760,7 +760,7 @@ and compile_fun_decl ({kwd_recursive; fun_name; param; ret_type; return=r; attri
   let%bind ret_type = bind_map_option (compile_type_expression <@ snd) ret_type in
   let%bind param = compile_parameters param in
   let%bind result= compile_expression r in
-  let result = match ret_type with 
+  let result = match ret_type with
     Some ty -> e_annotation ~loc result ty
   | None -> result
   in
