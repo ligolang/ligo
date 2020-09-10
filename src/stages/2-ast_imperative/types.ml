@@ -16,7 +16,7 @@ type type_content =
 
 and arrow = {type1: type_expression; type2: type_expression}
 
-and row_element = {associated_type : type_expression ; decl_pos : int} 
+and row_element = {associated_type : type_expression ; decl_pos : int}
 
 and michelson_prct_annotation = string
 
@@ -62,7 +62,7 @@ and expression_content =
   | E_skip
   | E_tuple of expression list
   (* Data Structures *)
-  | E_map of (expression * expression) list 
+  | E_map of (expression * expression) list
   | E_big_map of (expression * expression) list
   | E_list of expression list
   | E_set of expression list
@@ -73,17 +73,17 @@ and expression_content =
   | E_while of while_loop
 
 and constant =
-  { cons_name: constant' (* this is at the end because it is huge *)
+  { cons_name: rich_constant (* this is at the end because it is huge *)
   ; arguments: expression list }
 
 and application = {
-  lamb: expression ; 
+  lamb: expression ;
   args: expression ;
   }
 
 and lambda = {
-  binder: (expression_variable, type_expression) binder; 
-  result: expression 
+  binder: (expression_variable, type_expression) binder;
+  result: expression
   }
 
 and recursive = {
@@ -98,7 +98,7 @@ and let_in =
     let_result: expression ;
     inline: bool }
 
-and raw_code = { 
+and raw_code = {
   language : string ;
   code : expression ;
   }
@@ -168,7 +168,7 @@ and for_each = {
   body : expression;
 }
 
-and collect_type = 
+and collect_type =
  | Map
  | Set
  | List

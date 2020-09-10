@@ -19,7 +19,7 @@ let get_program f st =
         ok program
       )
 
-let compile_main f s () = 
+let compile_main f s () =
   let%bind typed_prg,_   = get_program f s () in
   let%bind mini_c_prg    = Ligo.Compile.Of_typed.compile typed_prg in
   let%bind michelson_prg = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
@@ -30,7 +30,7 @@ let compile_main f s () =
 
 open Ast_imperative
 
- 	
+
 let (sender , contract) =
   let open Proto_alpha_utils.Memory_proto_alpha in
   let id = List.nth dummy_environment.identities 0 in
@@ -46,7 +46,7 @@ let external_contract =
 let from_  = e_address @@ addr 5
 let to_    = e_address @@ addr 2
 let sender = e_address @@ sender
-let external_contract = e_annotation (e_constant C_IMPLICIT_ACCOUNT [e_key_hash external_contract]) (t_contract (t_nat ()))
+let external_contract = e_annotation (e_constant (Const C_IMPLICIT_ACCOUNT) [e_key_hash external_contract]) (t_contract (t_nat ()))
 
 let transfer f s () =
   let%bind (program , state) = get_program f s () in
@@ -54,7 +54,7 @@ let transfer f s () =
     ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 100); (to_, e_nat 100)]);
     ("allowances", e_big_map [(e_pair sender from_, e_nat 100)]);
     ("total_amount",e_nat 300);
-  ] in 
+  ] in
   let parameter = e_record_ez [("address_from", from_);("address_to",to_); ("value",e_nat 10)] in
   let new_storage = e_record_ez [
     ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 90); (to_, e_nat 110)]);
@@ -72,7 +72,7 @@ let transfer_not_e_allowance f s () =
     ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 100); (to_, e_nat 100)]);
     ("allowances", e_big_map [(e_pair sender from_, e_nat 0)]);
     ("total_amount",e_nat 300);
-  ] in 
+  ] in
   let parameter = e_record_ez [("address_from", from_);("address_to",to_); ("value",e_nat 10)] in
   let input = e_pair parameter storage in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options () in
@@ -85,7 +85,7 @@ let transfer_not_e_balance f s () =
     ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 0); (to_, e_nat 100)]);
     ("allowances", e_big_map [(e_pair sender from_, e_nat 100)]);
     ("total_amount",e_nat 300);
-  ] in 
+  ] in
   let parameter = e_record_ez [("address_from", from_);("address_to",to_); ("value",e_nat 10)] in
   let input = e_pair parameter storage in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options () in
@@ -98,7 +98,7 @@ let approve f s () =
     ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 100); (to_, e_nat 100)]);
     ("allowances", e_big_map [(e_pair from_ sender, e_nat 0)]);
     ("total_amount",e_nat 300);
-  ] in 
+  ] in
   let parameter = e_record_ez [("spender", from_);("value",e_nat 100)] in
   let new_storage = e_record_ez [
     ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 100); (to_, e_nat 100)]);
@@ -116,7 +116,7 @@ let approve_unsafe f s () =
     ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 100); (to_, e_nat 100)]);
     ("allowances", e_big_map [(e_pair from_ sender, e_nat 100)]);
     ("total_amount",e_nat 300);
-  ] in 
+  ] in
   let parameter = e_record_ez [("spender", from_);("value",e_nat 100)] in
   let input = e_pair parameter storage in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options () in
@@ -129,7 +129,7 @@ let get_allowance f s () =
     ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 100); (to_, e_nat 100)]);
     ("allowances", e_big_map [(e_pair from_ sender, e_nat 100)]);
     ("total_amount",e_nat 300);
-  ] in 
+  ] in
   let parameter = e_record_ez [("owner", from_);("spender",sender); ("callback", external_contract)] in
   let input = e_pair parameter storage in
   let expected = e_pair (e_typed_list [] (t_operation ())) storage in
@@ -142,7 +142,7 @@ let get_balance f s () =
     ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 100); (to_, e_nat 100)]);
     ("allowances", e_big_map [(e_pair from_ sender, e_nat 100)]);
     ("total_amount",e_nat 300);
-  ] in 
+  ] in
   let parameter = e_record_ez [("owner", from_);("callback", external_contract)] in
   let input = e_pair parameter storage in
   let expected = e_pair (e_typed_list [] (t_operation ())) storage in
@@ -155,7 +155,7 @@ let get_total_supply f s () =
     ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 100); (to_, e_nat 100)]);
     ("allowances", e_big_map [(e_pair from_ sender, e_nat 100)]);
     ("total_amount",e_nat 300);
-  ] in 
+  ] in
   let parameter = e_record_ez [("callback", external_contract)] in
   let input = e_pair parameter storage in
   let expected = e_pair (e_typed_list [] (t_operation ())) storage in
@@ -167,7 +167,7 @@ let main = test_suite "tzip-12" [
   test "transfer (not enough allowance)"   (transfer_not_e_allowance file_FA12 "pascaligo");
   test "transfer (not enough balance)"     (transfer_not_e_balance   file_FA12 "pascaligo");
   test "approve"                           (approve                  file_FA12 "pascaligo");
-  test "approve (unsafe allowance change)" (approve_unsafe           file_FA12 "pascaligo"); 
+  test "approve (unsafe allowance change)" (approve_unsafe           file_FA12 "pascaligo");
   (* test "getAllowance"                      (get_allowance            file_FA12 "pascaligo");
   test "getBalance"                        (get_balance              file_FA12 "pascaligo");
   test "getTotalSupply"                    (get_total_supply         file_FA12 "pascaligo"); waiting for a dummy_contract with type nat contractt*)
@@ -175,7 +175,7 @@ let main = test_suite "tzip-12" [
   test "transfer (not enough allowance)"   (transfer_not_e_allowance mfile_FA12 "cameligo");
   test "transfer (not enough balance)"     (transfer_not_e_balance   mfile_FA12 "cameligo");
   test "approve"                           (approve                  mfile_FA12 "cameligo");
-  test "approve (unsafe allowance change)" (approve_unsafe           mfile_FA12 "cameligo"); 
+  test "approve (unsafe allowance change)" (approve_unsafe           mfile_FA12 "cameligo");
   (* test "getAllowance"                      (get_allowance            mfile_FA12 "cameligo");
   test "getBalance"                        (get_balance              mfile_FA12 "cameligo");
   test "getTotalSupply"                    (get_total_supply         mfile_FA12 "cameligo"); waiting for a dummy_contract with type nat contractt*)
@@ -183,7 +183,7 @@ let main = test_suite "tzip-12" [
   test "transfer (not enough allowance)"   (transfer_not_e_allowance refile_FA12 "reasonligo");
   test "transfer (not enough balance)"     (transfer_not_e_balance   refile_FA12 "reasonligo");
   test "approve"                           (approve                  refile_FA12 "reasonligo");
-  test "approve (unsafe allowance change)" (approve_unsafe           refile_FA12 "reasonligo"); 
+  test "approve (unsafe allowance change)" (approve_unsafe           refile_FA12 "reasonligo");
   (* test "getAllowance"                      (get_allowance            refile_FA12 "reasonligo");
   test "getBalance"                        (get_balance              refile_FA12 "reasonligo");
   test "getTotalSupply"                    (get_total_supply         refile_FA12 "reasonligo"); waiting for a dummy_contract with type nat contractt*)

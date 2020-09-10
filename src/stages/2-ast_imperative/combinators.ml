@@ -93,10 +93,10 @@ let e_bytes_hex_ez ?loc b : expression option =
 let e_bytes_raw ?loc (b: bytes) : expression = make_e ?loc @@ E_literal (Literal_bytes b)
 let e_bytes_hex ?loc b : expression = e_bytes_raw ?loc @@ Hex.to_bytes b
 let e_bytes_string ?loc (s: string) : expression = e_bytes_hex ?loc @@ Hex.of_string s
-let e_some ?loc s  : expression = make_e ?loc @@ E_constant {cons_name = C_SOME; arguments = [s]}
-let e_none ?loc () : expression = make_e ?loc @@ E_constant {cons_name = C_NONE; arguments = []}
-let e_string_cat ?loc sl sr : expression = make_e ?loc @@ E_constant {cons_name = C_CONCAT; arguments = [sl ; sr ]}
-let e_map_add ?loc k v old  : expression = make_e ?loc @@ E_constant {cons_name = C_MAP_ADD; arguments = [k ; v ; old]}
+let e_some ?loc s  : expression = make_e ?loc @@ E_constant {cons_name = Const C_SOME; arguments = [s]}
+let e_none ?loc () : expression = make_e ?loc @@ E_constant {cons_name = Const C_NONE; arguments = []}
+let e_string_cat ?loc sl sr : expression = make_e ?loc @@ E_constant {cons_name = Const C_CONCAT; arguments = [sl ; sr ]}
+let e_map_add ?loc k v old  : expression = make_e ?loc @@ E_constant {cons_name = Const C_MAP_ADD; arguments = [k ; v ; old]}
 let e_binop ?loc name a b  = make_e ?loc @@ E_constant {cons_name = name ; arguments = [a ; b]}
 
 let e_constant ?loc name lst = make_e ?loc @@ E_constant {cons_name=name ; arguments = lst}
@@ -171,7 +171,7 @@ let e_typed_none ?loc t_opt =
 
 let e_typed_list ?loc lst t = e_annotation ?loc (e_list lst) (t_list t)
 let e_typed_list_literal ?loc lst t =
-  e_annotation ?loc (e_constant C_LIST_LITERAL lst) (t_list t)
+  e_annotation ?loc (e_constant (Const C_LIST_LITERAL) lst) (t_list t)
 
 let e_typed_map ?loc lst k v = e_annotation ?loc (e_map lst) (t_map k v)
 let e_typed_big_map ?loc lst k v = e_annotation ?loc (e_big_map lst) (t_big_map k v)
@@ -181,7 +181,7 @@ let e_typed_set ?loc lst k = e_annotation ?loc (e_set lst) (t_set k)
 
 
 
-let e_assign ?loc variable access_path expression = make_e ?loc @@ E_assign {variable;access_path;expression} 
+let e_assign ?loc variable access_path expression = make_e ?loc @@ E_assign {variable;access_path;expression}
 let e_assign_ez ?loc variable access_path expression = e_assign ?loc (Location.wrap ?loc @@ Var.of_name variable) access_path expression
 
 

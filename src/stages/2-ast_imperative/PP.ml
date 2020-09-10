@@ -24,7 +24,7 @@ let expression_variable ppf (ev : expression_variable) : unit =
   fprintf ppf "%a" Var.pp ev.wrap_content
 
 let list_sep_d_par f ppf lst =
-  match lst with 
+  match lst with
   | [] -> ()
   | _ -> fprintf ppf " (%a)" (list_sep_d f) lst
 
@@ -56,7 +56,7 @@ and expression_content ppf (ec : expression_content) =
   | E_constructor c ->
       fprintf ppf "%a(%a)" label c.constructor expression c.element
   | E_constant c ->
-      fprintf ppf "%a(%a)" constant c.cons_name (list_sep_d expression)
+      fprintf ppf "%a(%a)" constant (const_name c.cons_name) (list_sep_d expression)
         c.arguments
   | E_record m ->
       fprintf ppf "{%a}" (record_sep_expr expression (const ";")) m
@@ -73,7 +73,7 @@ and expression_content ppf (ec : expression_content) =
   | E_set lst ->
       fprintf ppf "set[%a]" (list_sep_d expression) lst
   | E_lambda {binder=(var,ty); result} ->
-      fprintf ppf "lambda (%a:%a) return %a" 
+      fprintf ppf "lambda (%a:%a) return %a"
         expression_variable  var
         type_expression ty
         expression result
@@ -82,11 +82,11 @@ and expression_content ppf (ec : expression_content) =
         expression matchee (matching expression)
         cases
   | E_recursive { fun_name; fun_type; lambda} ->
-      fprintf ppf "rec (%a:%a => %a )" 
-        expression_variable fun_name 
+      fprintf ppf "rec (%a:%a => %a )"
+        expression_variable fun_name
         type_expression fun_type
         expression_content (E_lambda lambda)
-  | E_let_in { let_binder ; rhs ; let_result; inline } ->    
+  | E_let_in { let_binder ; rhs ; let_result; inline } ->
       fprintf ppf "let %a = %a%a in %a" binder let_binder expression rhs option_inline inline expression let_result
   | E_raw_code {language; code} ->
       fprintf ppf "[%%%s %a]" language expression code
@@ -105,19 +105,19 @@ and expression_content ppf (ec : expression_content) =
   | E_tuple t ->
       fprintf ppf "(%a)" (list_sep_d expression) t
   | E_assign {variable; access_path; expression=e} ->
-      fprintf ppf "%a%a := %a" 
+      fprintf ppf "%a%a := %a"
         expression_variable variable
         (list_sep accessor (const ".")) access_path
         expression e
   | E_for {binder; start; final; increment; body} ->
-      fprintf ppf "for %a from %a to %a by %a do %a" 
+      fprintf ppf "for %a from %a to %a by %a do %a"
         expression_variable binder
-        expression start 
-        expression final 
+        expression start
+        expression final
         expression increment
         expression body
   | E_for_each {binder; collection; body; _} ->
-      fprintf ppf "for each %a in %a do %a" 
+      fprintf ppf "for each %a in %a do %a"
         option_map binder
         expression collection
         expression body
@@ -125,7 +125,7 @@ and expression_content ppf (ec : expression_content) =
       fprintf ppf "while %a do %a"
         expression condition
         expression body
-    
+
 and accessor ppf a =
   match a with
     | Access_tuple i  -> fprintf ppf "%a" Z.pp_print i
@@ -135,7 +135,7 @@ and accessor ppf a =
 and option_map ppf (k,v_opt) =
   match v_opt with
   | None -> fprintf ppf "%a" expression_variable k
-  | Some v -> fprintf ppf "%a -> %a" expression_variable k expression_variable v 
+  | Some v -> fprintf ppf "%a -> %a" expression_variable k expression_variable v
 
 and assoc_expression ppf : expr * expr -> unit =
  fun (a, b) -> fprintf ppf "%a -> %a" expression a expression b
@@ -182,14 +182,14 @@ and matching_type ppf m = match m with
 and matching_variant_case_type ppf ((c,n),_a) =
   fprintf ppf "| %a %a" label c expression_variable n
 
-and option_mut ppf mut = 
-  if mut then 
+and option_mut ppf mut =
+  if mut then
     fprintf ppf "[@mut]"
   else
     fprintf ppf ""
 
-and option_inline ppf inline = 
-  if inline then 
+and option_inline ppf inline =
+  if inline then
     fprintf ppf "[@inline]"
   else
     fprintf ppf ""
@@ -199,8 +199,8 @@ let declaration ppf (d : declaration) =
   | Declaration_type (type_name, te) ->
       fprintf ppf "type %a = %a" type_variable type_name type_expression te
   | Declaration_constant (name, ty_opt, i, expr) ->
-      fprintf ppf "const %a = %a%a" 
-        binder (name, ty_opt) 
+      fprintf ppf "const %a = %a%a"
+        binder (name, ty_opt)
         expression expr
         option_inline i
 

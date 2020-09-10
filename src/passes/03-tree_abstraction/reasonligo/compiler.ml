@@ -151,12 +151,12 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     let (op, loc) = r_split op in
     let%bind a = compile_expression op.arg1 in
     let%bind b = compile_expression op.arg2 in
-    return @@ e_constant ~loc op_type [a; b]
+    return @@ e_constant ~loc (Const op_type) [a; b]
   in
   let compile_un_op (op_type : AST.constant') (op : _ CST.un_op CST.reg) =
     let (op, loc) = r_split op in
     let%bind arg = compile_expression op.arg in
-    return @@ e_constant ~loc op_type [arg]
+    return @@ e_constant ~loc (Const op_type) [arg]
   in
   match e with
     EVar var ->
@@ -179,7 +179,7 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
       let (op,loc) = r_split c in
       let%bind a = compile_expression op.arg1 in
       let%bind b = compile_expression op.arg2 in
-      return @@ e_constant ~loc C_CONCAT [a;b]
+      return @@ e_constant ~loc (Const C_CONCAT) [a;b]
     | String str ->
       let (str, loc) = r_split str in
       return @@ e_string ~loc str
@@ -350,7 +350,7 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
       let (cons, loc) = r_split cons in
       let%bind a  = compile_expression cons.lexpr in
       let%bind b  = compile_expression cons.rexpr in
-      return @@ e_constant ~loc C_CONS [a; b]
+      return @@ e_constant ~loc (Const C_CONS) [a; b]
     | EListComp lc ->
       let (lc,loc) = r_split lc in
       let lst =
