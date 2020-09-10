@@ -60,10 +60,18 @@ const RunButton = styled.div`
 
   color: white;
   background-color: var(--orange);
+
+  &:hover {
+    box-shadow: 1px 3px 10px 0px rgba(153, 153, 153, 0.4);
+  }
 `;
 
 const SelectCommand = styled(Select)`
   flex: 2;
+
+  &:hover {
+    box-shadow: 1px 3px 10px 0px rgba(153, 153, 153, 0.4);
+  }
 `;
 
 function createAction(command: Command) {

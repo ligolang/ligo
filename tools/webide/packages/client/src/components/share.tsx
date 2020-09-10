@@ -34,12 +34,11 @@ const Button = styled.div<{ clicked?: boolean }>`
   height: 1.5em;
   border-radius: 50%;
 
-  background-color: #aaa;
-  color: var(--blue_opaque1);
+  background-color: white;
+  color: #aaa;
 
   &:hover {
-    background-color: white;
-    color: var(--blue);
+    background-color: var(--blue_trans1);
     opacity: 1;
   }
 
@@ -47,7 +46,7 @@ const Button = styled.div<{ clicked?: boolean }>`
     props.clicked &&
     css`
       background-color: white;
-      color: var(--blue);
+      color: #aaa;
       opacity: 1;
     `}
 `;

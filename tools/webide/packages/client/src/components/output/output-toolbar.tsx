@@ -35,7 +35,6 @@ export const OutputToolbarComponent = (props: {
   const output = (useSelector<AppState, ResultState['output']>(
     state => state.result.output
   ));
-
   return (
     <Toolbar>
       <Item onClick={() => props.onCopy && props.onCopy()}>
@@ -52,10 +51,9 @@ export const OutputToolbarComponent = (props: {
           <Link
             target="_blank"
             rel="noopener noreferrer"
-            // href={`https://try-michelson.tzalpha.net/?source=${encodeURIComponent(
-            //   output
-            // )}`}
-            href={`https://try-michelson.tzalpha.net/?${output}`}
+             href={`https://try-michelson.com/?source=${encodeURIComponent(
+               output
+             )}`}
           >
             View in Try-Michelson IDE
           </Link>

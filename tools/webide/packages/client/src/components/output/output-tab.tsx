@@ -13,7 +13,7 @@ import { Loading } from './loading';
 import { OutputPane } from './output-pane';
 
 const Container = styled.div<{ visible?: boolean }>`
- 
+  z-index: 2;
   box-sizing: border-box;
   width: -webkit-fill-available;
   height: 100%;
@@ -45,6 +45,7 @@ export const OutputTab = (props: {
   selected?: boolean;
   onCancel?: () => void;
 }) => {
+  let visible = props.selected;
   const command = useSelector<AppState, ResultState['command']>(
     state => state.result.command
   );
@@ -54,6 +55,10 @@ export const OutputTab = (props: {
   const output = useSelector<AppState, ResultState['output']>(
     state => state.result.output
   );
+
+  if( loading || output ) {
+    visible = true
+  }
 
   const renderResult = () => {
     if (loading) {
@@ -71,5 +76,5 @@ export const OutputTab = (props: {
     return <OutputPane></OutputPane>;
   };
 
-  return <Container visible={props.selected}>{renderResult()}</Container>;
+  return <Container visible={visible}>{renderResult()}</Container>;
 };

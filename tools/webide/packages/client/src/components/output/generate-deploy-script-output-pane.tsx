@@ -17,7 +17,7 @@ const Output = styled.div`
   flex: 1;
   padding: 0.5em;
   display: flex;
-  overflow: auto;
+  overflow: hidden;
 `;
 
 const Pre = styled.pre`

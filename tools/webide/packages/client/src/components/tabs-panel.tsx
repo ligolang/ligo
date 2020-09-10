@@ -17,16 +17,11 @@ const Header = styled.div`
 `;
 
 const Label = styled.span`
-  cursor: pointer;
   user-select: none;
   flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
-
-  &:hover {
-    color: var(--orange);
-  }
 `;
 
 const Tab = styled.div<{ selected?: boolean }>`

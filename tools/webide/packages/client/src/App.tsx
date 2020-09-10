@@ -2,7 +2,8 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import styled from 'styled-components';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import ResizePanel from "react-resize-panel";
+import SplitPane from 'react-split-pane';
+import './index.css'
 
 import { EditorComponent } from './components/editor/editor';
 import { Examples } from './components/examples';
@@ -51,6 +52,13 @@ const App: React.FC = () => {
 
   return (
     <Provider store={store}>
+      <SplitPane split="horizontal" defaultSize="75%" >
+      <div style={{
+          position: "absolute",
+          height: "100%",
+          right: "0",
+          bottom: "0",
+          left: "0"}}>
       <HeaderComponent></HeaderComponent>
       <Container className="container-fluid">
         <div className="row" style={{width: "100%"}}>
@@ -59,18 +67,20 @@ const App: React.FC = () => {
         <div className="col-sm-12 col-md-3 order-md-3"><TabsPanelComponent /></div>
         </div>
       </Container>
-      <ResizePanel direction="n" style={{
-          height: 200,
-          position: "sticky",
+      </div>
+      <div style={{
+          position: "relative",
+          height: "100%",
           right: "0",
           bottom: "0",
           left: "0",
-          overflow: "auto",
+          overflow: "hidden",
           padding: "0"}}>
         <InsideDiv>
-            <OutputTab selected={true} />
+            <OutputTab selected={false} />
           </InsideDiv>
-      </ResizePanel>
+      </div>
+      </SplitPane>
       <FeedbackContainer>
         <FloatButtonComponent
           tooltip="Report an issue"
