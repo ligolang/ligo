@@ -40,12 +40,31 @@ const SelectLanguage = styled(Select)`
   }
 `;
 
+const CursorPosition = styled.div`
+  text-align: right;
+  padding: 5px 10px;
+  height: 30px;
+  background: var(--blue_trans1);
+`;
+
+
 export const EditorComponent = () => {
   const dispatch = useDispatch();
   const title = useSelector<AppState, string>(state => state.editor.title);
   const language = useSelector<AppState, EditorState['language']>(
     state => state.editor.language
   );
+
+  const cursorPosition = useSelector<AppState, EditorState['cursorPosition']>(
+    state => state.editor.cursorPosition
+  );
+  
+  const getCursorPosition = () => {
+    if(cursorPosition) {
+      return `Line ${cursorPosition.lineNumber}, Column ${cursorPosition.column}`
+    }
+  }
+  
 
   return (
     <Container>
@@ -75,6 +94,7 @@ export const EditorComponent = () => {
         </LeftActions>
       </Header>
       <MonacoComponent ></MonacoComponent>
+      <CursorPosition>{getCursorPosition()}</CursorPosition>
     </Container>
   );
 };
