@@ -335,13 +335,13 @@ function buy_taco (const taco_kind_index : nat; var taco_shop_storage : taco_sho
 In order to make Pedro's taco shop profitable, he needs to stop giving
 away tacos for free. When a contract is invoked via a transaction, an
 amount of tezzies to be sent can be specified as well. This amount is
-accessible within LIGO as `amount`.
+accessible within LIGO as `Tezos.amount`.
 
 To make sure we get paid, we will:
 
 - calculate a `current_purchase_price` based on the
   [equation specified earlier](tezos-taco-shop-smart-contract.md#calculating-the-current-purchase-price)
-- check if the sent `amount` matches the `current_purchase_price`:
+- check if the sent amount matches the `current_purchase_price`:
   - if not, then our contract will fail (`failwith`)
   - otherwise, stock for the given `taco_kind` will be decreased and
     the payment accepted
@@ -370,7 +370,7 @@ function buy_taco (const taco_kind_index : nat ; var taco_shop_storage : taco_sh
      const current_purchase_price : tez =
        taco_kind.max_price / taco_kind.current_stock;
 
-    if amount =/= current_purchase_price then
+    if Tezos.amount =/= current_purchase_price then
       // We won't sell tacos if the amount is not correct
       failwith ("Sorry, the taco you are trying to purchase has a different price");
     else skip;
@@ -383,7 +383,7 @@ function buy_taco (const taco_kind_index : nat ; var taco_shop_storage : taco_sh
   } with ((nil : list (operation)), taco_shop_storage)
 ```
 
-In order to test the `amount` sent, we will use the `--amount` option
+In order to test the amount sent, we will use the `--amount` option
 of `dry-run`:
 
 ```zsh
@@ -425,11 +425,11 @@ following line, depending on your preference.
 **Without tips**
 
 ```pascaligo skip
-if amount =/= current_purchase_price then
+if Tezos.amount =/= current_purchase_price then
 ```
 
 **With tips**
 
 ```pascaligo skip
-if amount >= current_purchase_price then
+if Tezos.amount >= current_purchase_price then
 ```
