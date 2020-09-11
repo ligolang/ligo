@@ -41,6 +41,8 @@ depends: [
   "tezos-protocol-environment"
   "tezos-protocol-ligo006-PsCARTHA"
   "tezos-client-ligo006-PsCARTHA"
+  "tezos-protocol-ligo007-PsDELPH1"
+  "tezos-client-ligo007-PsDELPH1"
   "simple-utils"
   "tezos-utils"
 ]
