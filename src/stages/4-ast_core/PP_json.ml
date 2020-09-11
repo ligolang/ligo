@@ -29,7 +29,6 @@ module M = struct
       z                         = (fun _visitor NoState i               -> `String (asprintf "%a" Z.pp_print i) ) ;
       ligo_string               = (fun _visitor NoState s               -> `String (asprintf "%s" (match s with Standard s -> s | Verbatim s -> s)) ) ;
       bytes                     = (fun _visitor NoState bytes           -> `String (Bytes.to_string bytes)) ;
-      packed_internal_operation = (fun _visitor NoState _op             -> `String "Operation(...bytes)") ;
       expression_variable       = (fun _visitor NoState ev              -> `Assoc ["exp-var", `String (asprintf "%a" Var.pp ev.wrap_content)] ) ;
       location                  = (fun _visitor NoState loc             -> Location.pp_json loc) ;
       label                     = (fun _visitor NoState (Label lbl)     -> `Assoc ["label" , `String lbl] ) ;

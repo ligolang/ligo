@@ -6,7 +6,6 @@
     ast_imperative
     ast_sugar
     self_ast_sugar
-    proto-alpha-utils
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)

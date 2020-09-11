@@ -1,10 +1,7 @@
 open Tezos_micheline
 open Micheline
 
-open Memory_proto_alpha.Protocol
-include Michelson_v1_primitives
-
-type michelson = (int, prim) node
+type michelson = (int, string) node
 type t = michelson
 
 let prim ?(annot=[]) ?(children=[]) p : michelson =
@@ -19,66 +16,66 @@ let seq s : michelson = Seq (0, s)
 
 let contract parameter storage code =
   seq [
-    prim ~children:[parameter] K_parameter ;
-    prim ~children:[storage] K_storage ;
-    prim ~children:[code] K_code ;
+    prim ~children:[parameter] "parameter" ;
+    prim ~children:[storage] "storage" ;
+    prim ~children:[code] "code" ;
   ]
 
 let int n : michelson = Int (0, n)
 let string s : michelson = String (0, s)
 let bytes s : michelson = Bytes (0, s)
 
-let t_unit = prim T_unit
-let t_string = prim T_string
-let t_pair a b = prim ~children:[a;b] T_pair
-let t_lambda a b = prim ~children:[a;b] T_lambda
+let t_unit = prim "unit"
+let t_string = prim "string"
+let t_pair a b = prim ~children:[a;b] "pair"
+let t_lambda a b = prim ~children:[a;b] "lambda"
 
-let d_unit = prim D_Unit
-let d_pair a b = prim ~children:[a;b] D_Pair
+let d_unit = prim "Unit"
+let d_pair a b = prim ~children:[a;b] "Pair"
 
-let i_dup = prim I_DUP
-let i_car = prim I_CAR
-let i_cdr = prim I_CDR
-let i_pair = prim I_PAIR
-let i_swap = prim I_SWAP
+let i_dup = prim "DUP"
+let i_car = prim "CAR"
+let i_cdr = prim "CDR"
+let i_pair = prim "PAIR"
+let i_swap = prim "SWAP"
 let i_piar = seq [ i_swap ; i_pair ]
-let i_push ty code = prim ~children:[ty;code] I_PUSH
+let i_push ty code = prim ~children:[ty;code] "PUSH"
 let i_push_unit = i_push t_unit d_unit
 let i_push_string str = i_push t_string (string str)
 
-let i_apply = prim I_APPLY
+let i_apply = prim "APPLY"
 
-let i_comment s : michelson = seq [ i_push_string s ; prim I_DROP ]
+let i_comment s : michelson = seq [ i_push_string s ; prim "DROP" ]
 
-let i_none ty = prim ~children:[ty] I_NONE
-let i_nil ty = prim ~children:[ty] I_NIL
-let i_empty_set ty = prim ~children:[ty] I_EMPTY_SET
-let i_iter body = prim ~children:[body] I_ITER
-let i_map body = prim ~children:[body] I_MAP
-let i_some = prim I_SOME
-let i_lambda arg ret body = prim ~children:[arg;ret;body] I_LAMBDA
-let i_empty_map src dst = prim ~children:[src;dst] I_EMPTY_MAP
-let i_empty_big_map src dst = prim ~children:[src;dst] I_EMPTY_BIG_MAP
-let i_drop = prim I_DROP
-let i_dropn n = prim I_DROP ~children:[int (Z.of_int n)]
-let i_exec = prim I_EXEC
+let i_none ty = prim ~children:[ty] "NONE"
+let i_nil ty = prim ~children:[ty] "NIL"
+let i_empty_set ty = prim ~children:[ty] "EMPTY_SET"
+let i_iter body = prim ~children:[body] "ITER"
+let i_map body = prim ~children:[body] "MAP"
+let i_some = prim "SOME"
+let i_lambda arg ret body = prim ~children:[arg;ret;body] "LAMBDA"
+let i_empty_map src dst = prim ~children:[src;dst] "EMPTY_MAP"
+let i_empty_big_map src dst = prim ~children:[src;dst] "EMPTY_BIG_MAP"
+let i_drop = prim "DROP"
+let i_dropn n = prim "DROP" ~children:[int (Z.of_int n)]
+let i_exec = prim "EXEC"
 
-let i_if a b = prim ~children:[seq [a] ; seq[b]] I_IF
-let i_if_none a b = prim ~children:[seq [a] ; seq[b]] I_IF_NONE
-let i_if_cons a b = prim ~children:[seq [a] ; seq[b]] I_IF_CONS
-let i_if_left a b = prim ~children:[seq [a] ; seq[b]] I_IF_LEFT
-let i_failwith = prim I_FAILWITH
+let i_if a b = prim ~children:[seq [a] ; seq[b]] "IF"
+let i_if_none a b = prim ~children:[seq [a] ; seq[b]] "IF_NONE"
+let i_if_cons a b = prim ~children:[seq [a] ; seq[b]] "IF_CONS"
+let i_if_left a b = prim ~children:[seq [a] ; seq[b]] "IF_LEFT"
+let i_failwith = prim "FAILWITH"
 let i_assert_some = i_if_none (seq [i_push_string "ASSERT_SOME" ; i_failwith]) (seq [])
 let i_assert_some_msg msg = i_if_none (seq [msg ; i_failwith]) (seq [])
 
-let dip code : michelson = prim ~children:[seq [code]] I_DIP
-let dipn n code = prim ~children:[Int (0 , Z.of_int n) ; seq [code]] I_DIP
-let i_dig n : michelson = prim ~children:[Int (0 , Z.of_int n)] I_DIG
-let i_dug n : michelson = prim ~children:[Int (0 , Z.of_int n)] I_DUG
+let dip code : michelson = prim ~children:[seq [code]] "DIP"
+let dipn n code = prim ~children:[Int (0 , Z.of_int n) ; seq [code]] "DIP"
+let i_dig n : michelson = prim ~children:[Int (0 , Z.of_int n)] "DIG"
+let i_dug n : michelson = prim ~children:[Int (0 , Z.of_int n)] "DUG"
 let i_unpair = seq [i_dup ; i_car ; dip i_cdr]
 let i_unpiar = seq [i_dup ; i_cdr ; dip i_car]
 
-let i_loop_left body = prim ~children:[seq [body]] I_LOOP_LEFT
+let i_loop_left body = prim ~children:[seq [body]] "LOOP_LEFT"
 
 let rec strip_annots : michelson -> michelson = function
   | Seq(l, s) -> Seq(l, List.map strip_annots s)
@@ -88,13 +85,13 @@ let rec strip_annots : michelson -> michelson = function
 let pp ppf (michelson:michelson) =
   let open Micheline_printer in
   let canonical = strip_locations michelson in
-  let node = printable string_of_prim canonical in
+  let node = printable (fun s -> s) canonical in
   print_expr ppf node
 
 let get_json (michelson : michelson) =
   let open Micheline_printer in
   let canonical = strip_locations michelson in
-  let node = printable string_of_prim canonical in
+  let node = printable (fun s -> s) canonical in
   Data_encoding.(
       Json.construct
         (Micheline.erased_encoding ~variant:"???" {comment = None} Data_encoding.string)
@@ -104,50 +101,3 @@ let get_json (michelson : michelson) =
 let pp_json ppf (michelson : michelson) =
   let json = get_json michelson in
   Format.fprintf ppf "%a" Data_encoding.Json.pp json
-
-let pp_hex ppf (michelson : michelson) =
-  let canonical = strip_locations michelson in
-  let bytes = Data_encoding.Binary.to_bytes_exn Script_repr.expr_encoding canonical in
-  let hex = Hex.of_bytes bytes in
-  Format.fprintf ppf "%a" Hex.pp hex
-
-let measure (michelson : michelson) =
-  let canonical = strip_locations michelson in
-  let bytes = Data_encoding.Binary.to_bytes_exn Script_repr.expr_encoding canonical in
-  Bytes.length bytes
-
-type michelson_format = [
-  | `Text
-  | `Json
-  | `Hex
-]
-
-let michelson_ppformat michelson_format ~display_format f (a,_) =
-  let mich_pp = fun michelson_format ->  match michelson_format with
-    | `Text -> pp
-    | `Json -> pp_json
-    | `Hex -> pp_hex in
-  match display_format with
-  | Display.Human_readable | Dev -> (
-     let m = Format.asprintf "%a\n" (mich_pp michelson_format) a in
-     Format.pp_print_string f m
-  )
-
-let michelson_jsonformat michelson_format (a,_) : Display.json = match michelson_format with
-  | `Text ->
-    let code_as_str = Format.asprintf "%a" pp a in
-    `Assoc [("text_code" , `String code_as_str)]
-  | `Hex -> 
-    let code_as_hex = Format.asprintf "%a" pp_hex a in
-    `Assoc [("hex_code" , `String code_as_hex)]
-  | `Json ->
-    (* Ideally , would like to do that :
-    Michelson.get_json a *)
-    let code_as_str = Format.asprintf "%a" pp_json a in
-    `Assoc [("json_code" , `String code_as_str)]
-
-
-let michelson_format : michelson_format -> 'a Display.format = fun mf -> {
-  pp = michelson_ppformat mf;
-  to_json = michelson_jsonformat mf;
-}

@@ -4,9 +4,10 @@ type stacking_error = [
   | `Stacking_corner_case of string * string
   | `Stacking_contract_entrypoint of string
   | `Stacking_bad_iterator of Mini_c.constant'
-  | `Stacking_not_comparable_base of Mini_c.type_base
-  | `Stacking_not_comparable of Mini_c.type_expression
   | `Stacking_not_comparable_pair_struct
+  | `Stacking_could_not_tokenize_michelson of string
+  | `Stacking_could_not_parse_michelson of string
+  | `Stacking_untranspilable of Michelson.t * Michelson.t
 ]
 
 let stage = "stacking"
@@ -18,12 +19,12 @@ let corner_case_msg () =
 let corner_case ~loc  message = `Stacking_corner_case (loc,message)
 let contract_entrypoint_must_be_literal ~loc = `Stacking_contract_entrypoint loc
 let bad_iterator cst = `Stacking_bad_iterator cst
-let not_comparable_base tb = `Stacking_not_comparable_base tb
-let not_comparable t = `Stacking_not_comparable t
 let not_comparable_pair_struct = `Stacking_not_comparable_pair_struct
 let unrecognized_data errs = `Stacking_unparsing_unrecognized_data errs
-let untranspilable m_data m_type = `Stacking_untranspilable (m_data, m_type)
+let untranspilable m_type m_data = `Stacking_untranspilable (m_type, m_data)
 let bad_constant_arity c = `Stacking_bad_constant_arity c
+let could_not_tokenize_michelson c = `Stacking_could_not_tokenize_michelson c
+let could_not_parse_michelson c = `Stacking_could_not_parse_michelson c
 
 let error_ppformat : display_format:string display_format ->
   Format.formatter -> stacking_error -> unit =
@@ -42,15 +43,17 @@ let error_ppformat : display_format:string display_format ->
     | `Stacking_bad_iterator cst ->
        let s = Format.asprintf "bad iterator: iter %a" Mini_c.PP.constant cst in
       Format.pp_print_string f s ;
-    | `Stacking_not_comparable_base tb ->
-      let s = Format.asprintf "Invalid comparable value \"%a\".@.Only the following types can be compared here: address, bool, bytes, int, key_hash, mutez, nat, string, and timestamp." Mini_c.PP.type_constant tb in
-      Format.pp_print_string f s ;
-    | `Stacking_not_comparable t ->
-      let s = Format.asprintf "Invalid comparable value \"%a\".@.The following types can be compared here: address, bool, bytes, int, key_hash, mutez, nat, string, and timestamp.@.These types can be composed in a record or tuple." Mini_c.PP.type_variable t in
-      Format.pp_print_string f s ;
     | `Stacking_not_comparable_pair_struct ->
       let s = "Invalid comparable value. When using a tuple of with more than 2 components, structure the tuple like this: \"(a, (b, c))\". " in
       Format.pp_print_string f s;
+    | `Stacking_could_not_tokenize_michelson code ->
+      Format.fprintf f "Could not tokenize raw Michelson: %s" code
+    | `Stacking_could_not_parse_michelson code ->
+      Format.fprintf f "Could not parse raw Michelson: %s" code
+    | `Stacking_untranspilable (ty, value) ->
+      Format.fprintf f "Could not untranspile Michelson value: %a %a"
+        Michelson.pp ty
+        Michelson.pp value
   )
 
 let error_jsonformat : stacking_error -> Yojson.t = fun a ->
@@ -78,23 +81,25 @@ let error_jsonformat : stacking_error -> Yojson.t = fun a ->
        ("iterator", `String s); ]
     in
     json_error ~stage ~content
-  | `Stacking_not_comparable_base tb ->
-    let s = Format.asprintf "%a" Mini_c.PP.type_constant tb in
-    let content = `Assoc [
-       ("message", `String "not a comparable type");
-       ("type", `String s); ]
-    in
-    json_error ~stage ~content
-  | `Stacking_not_comparable t ->
-    let s = Format.asprintf "%a" Mini_c.PP.type_variable t in
-    let content = `Assoc [
-       ("message", `String "not a comparable type");
-       ("type", `String s); ]
-    in
-    json_error ~stage ~content
   | `Stacking_not_comparable_pair_struct ->
     let content = `Assoc [
        ("message", `String "pair does not have a comparable structure");
        ("hint", `String "use (a,(b,c)) instead of (a,b,c)"); ]
     in
+    json_error ~stage ~content
+  | `Stacking_could_not_tokenize_michelson code ->
+    let content =
+      `Assoc [("message", `String "Could not tokenize raw Michelson");
+              ("code", `String code)] in
+    json_error ~stage ~content
+  | `Stacking_could_not_parse_michelson code ->
+    let content =
+      `Assoc [("message", `String "Could not parse raw Michelson");
+              ("code", `String code)] in
+    json_error ~stage ~content
+  | `Stacking_untranspilable (ty, value) ->
+    let content =
+      `Assoc [("message", `String "Could not untranspile Michelson value");
+              ("type", `String (Format.asprintf "%a" Michelson.pp ty));
+              ("value", `String (Format.asprintf "%a" Michelson.pp value))] in
     json_error ~stage ~content

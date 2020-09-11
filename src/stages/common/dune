@@ -3,7 +3,8 @@
   (public_name ligo.stage_common)
   (libraries
     simple-utils
-    tezos-utils
+    zarith
+    hex
   )
   (inline_tests)
   (preprocess

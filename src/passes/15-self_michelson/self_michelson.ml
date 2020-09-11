@@ -14,151 +14,114 @@ include Helpers
    which removes n items from the stack and uses them to push 1 item,
    without effects other than gas consumption. It must never fail. *)
 
-let arity : prim -> int option = function
+let arity : string -> int option = function
  (* stack things *)
- | I_DIP -> None
- | I_DROP -> None
- | I_DUP -> None
- | I_SWAP -> None
- | I_DIG -> None
- | I_DUG -> None
+ | "DIP" -> None
+ | "DROP" -> None
+ | "DUP" -> None
+ | "SWAP" -> None
+ | "DIG" -> None
+ | "DUG" -> None
  (* control *)
- | I_FAILWITH -> None
- | I_EXEC -> None
- | I_IF -> None
- | I_IF_CONS -> None
- | I_IF_LEFT -> None
- | I_IF_NONE -> None
- | I_LOOP -> None
- | I_MAP -> None
- | I_ITER -> None
- | I_LOOP_LEFT -> None
+ | "FAILWITH" -> None
+ | "EXEC" -> None
+ | "IF" -> None
+ | "IF_CONS" -> None
+ | "IF_LEFT" -> None
+ | "IF_NONE" -> None
+ | "LOOP" -> None
+ | "MAP" -> None
+ | "ITER" -> None
+ | "LOOP_LEFT" -> None
  (* internal ops *)
- | I_CREATE_ACCOUNT -> None
- | I_CREATE_CONTRACT -> None
- | I_TRANSFER_TOKENS -> None
- | I_SET_DELEGATE -> None
+ | "CREATE_ACCOUNT" -> None
+ | "CREATE_CONTRACT" -> None
+ | "TRANSFER_TOKENS" -> None
+ | "SET_DELEGATE" -> None
  (* tez arithmetic (can fail) *)
- | I_ADD -> None
- | I_MUL -> None
- | I_SUB -> None (* can fail for tez *)
+ | "ADD" -> None
+ | "MUL" -> None
+ | "SUB" -> None (* can fail for tez *)
  (* etc *)
- | I_CONCAT -> None (* sometimes 1, sometimes 2 :( *)
- | I_CAST -> None
- | I_RENAME -> None
+ | "CONCAT" -> None (* sometimes 1, sometimes 2 :( *)
+ | "CAST" -> None
+ | "RENAME" -> None
  (* stuff *)
- | I_PACK -> Some 1
- | I_UNPACK -> Some 1
- | I_BLAKE2B -> Some 1
- | I_SHA256 -> Some 1
- | I_SHA512 -> Some 1
- | I_ABS -> Some 1
- | I_AMOUNT -> Some 0
- | I_AND -> Some 2
- | I_BALANCE -> Some 0
- | I_CAR -> Some 1
- | I_CDR -> Some 1
- | I_CHECK_SIGNATURE -> Some 3
- | I_COMPARE -> Some 2
- | I_CONS -> Some 2
- | I_IMPLICIT_ACCOUNT -> Some 1
- | I_EDIV -> Some 2
- | I_EMPTY_MAP -> Some 0
- | I_EMPTY_SET -> Some 0
- | I_EQ -> Some 1
- | I_GE -> Some 1
- | I_GET -> Some 2
- | I_GT -> Some 1
- | I_HASH_KEY -> Some 1
- | I_INT -> Some 1
- | I_LAMBDA -> Some 0
- | I_LE -> Some 1
- | I_LEFT -> Some 1
- | I_LSL -> Some 1
- | I_LSR -> Some 1
- | I_LT -> Some 1
- | I_MEM -> Some 2
- | I_NEG -> Some 1
- | I_NEQ -> Some 1
- | I_NIL -> Some 0
- | I_NONE -> Some 0
- | I_NOT -> Some 1
- | I_NOW -> Some 0
- | I_OR -> Some 2
- | I_PAIR -> Some 2
- | I_PUSH -> Some 0
- | I_RIGHT -> Some 1
- | I_SIZE -> Some 1
- | I_SOME -> Some 1
- | I_SOURCE -> Some 0
- | I_SENDER -> Some 0
- | I_SELF -> Some 0
- | I_SLICE -> Some 3
- | I_STEPS_TO_QUOTA -> Some 0
- | I_UNIT -> Some 0
- | I_UPDATE -> Some 3
- | I_XOR -> Some 2
- | I_ADDRESS -> Some 1
- | I_CONTRACT -> Some 1
- | I_ISNAT -> Some 1
- | I_CHAIN_ID -> Some 0
- | I_EMPTY_BIG_MAP -> Some 0
- | I_APPLY -> Some 2
+ | "PACK" -> Some 1
+ | "UNPACK" -> Some 1
+ | "BLAKE2B" -> Some 1
+ | "SHA256" -> Some 1
+ | "SHA512" -> Some 1
+ | "ABS" -> Some 1
+ | "AMOUNT" -> Some 0
+ | "AND" -> Some 2
+ | "BALANCE" -> Some 0
+ | "CAR" -> Some 1
+ | "CDR" -> Some 1
+ | "CHECK_SIGNATURE" -> Some 3
+ | "COMPARE" -> Some 2
+ | "CONS" -> Some 2
+ | "IMPLICIT_ACCOUNT" -> Some 1
+ | "EDIV" -> Some 2
+ | "EMPTY_MAP" -> Some 0
+ | "EMPTY_SET" -> Some 0
+ | "EQ" -> Some 1
+ | "GE" -> Some 1
+ | "GET" -> Some 2
+ | "GT" -> Some 1
+ | "HASH_KEY" -> Some 1
+ | "INT" -> Some 1
+ | "LAMBDA" -> Some 0
+ | "LE" -> Some 1
+ | "LEFT" -> Some 1
+ | "LSL" -> Some 1
+ | "LSR" -> Some 1
+ | "LT" -> Some 1
+ | "MEM" -> Some 2
+ | "NEG" -> Some 1
+ | "NEQ" -> Some 1
+ | "NIL" -> Some 0
+ | "NONE" -> Some 0
+ | "NOT" -> Some 1
+ | "NOW" -> Some 0
+ | "OR" -> Some 2
+ | "PAIR" -> Some 2
+ | "PUSH" -> Some 0
+ | "RIGHT" -> Some 1
+ | "SIZE" -> Some 1
+ | "SOME" -> Some 1
+ | "SOURCE" -> Some 0
+ | "SENDER" -> Some 0
+ | "SELF" -> Some 0
+ | "SLICE" -> Some 3
+ | "STEPS_TO_QUOTA" -> Some 0
+ | "UNIT" -> Some 0
+ | "UPDATE" -> Some 3
+ | "XOR" -> Some 2
+ | "ADDRESS" -> Some 1
+ | "CONTRACT" -> Some 1
+ | "ISNAT" -> Some 1
+ | "CHAIN_ID" -> Some 0
+ | "EMPTY_BIG_MAP" -> Some 0
+ | "APPLY" -> Some 2
+ | _ -> None
 
- (* not instructions *)
- | K_parameter
- | K_storage
- | K_code
- | D_False
- | D_Elt
- | D_Left
- | D_None
- | D_Pair
- | D_Right
- | D_Some
- | D_True
- | D_Unit
- | T_bool
- | T_contract
- | T_int
- | T_key
- | T_key_hash
- | T_lambda
- | T_list
- | T_map
- | T_big_map
- | T_nat
- | T_option
- | T_or
- | T_pair
- | T_set
- | T_signature
- | T_string
- | T_bytes
- | T_mutez
- | T_timestamp
- | T_unit
- | T_operation
- | T_address
- | T_chain_id
-   -> None
-
-let is_nullary_op (p : prim) : bool =
+let is_nullary_op (p : string) : bool =
   match arity p with
   | Some 0 -> true
   | _ -> false
 
-let is_unary_op (p : prim) : bool =
+let is_unary_op (p : string) : bool =
   match arity p with
   | Some 1 -> true
   | _ -> false
 
-let is_binary_op (p : prim) : bool =
+let is_binary_op (p : string) : bool =
   match arity p with
   | Some 2 -> true
   | _ -> false
 
-let is_ternary_op (p : prim) : bool =
+let is_ternary_op (p : string) : bool =
   match arity p with
   | Some 3 -> true
   | _ -> false
@@ -173,9 +136,9 @@ let rec use_lambda_instr : michelson -> michelson =
   match x with
   | Seq (l, args) ->
     Seq (l, List.map use_lambda_instr args)
-  | Prim (_, I_PUSH, [Prim (_, T_lambda, [arg; ret], _); code], _) ->
+  | Prim (_, "PUSH", [Prim (_, "lambda", [arg; ret], _); code], _) ->
     i_lambda arg ret code
-  | Prim (_, I_PUSH, _, _) ->
+  | Prim (_, "PUSH", _, _) ->
     x (* possibly missing some nested lambdas *)
   | Prim (l, p, args, annot) ->
     Prim (l, p, List.map use_lambda_instr args, annot)
@@ -191,7 +154,7 @@ let rec flatten_seqs : michelson -> michelson =
      let args = List.concat @@ List.map (fun x -> unseq (flatten_seqs x)) args in
      Seq (l, args)
   (* Should not flatten literal seq data in PUSH. Ugh... *)
-  | Prim (_, I_PUSH, _, _) -> x
+  | Prim (_, "PUSH", _, _) -> x
   | Prim (l, p, args, annot) -> Prim (l, p, List.map flatten_seqs args, annot)
   | _ -> x
 
@@ -293,35 +256,35 @@ let rec iterate_optimizer (f : michelson -> bool * michelson) : michelson -> mic
 
 let opt_drop2 : peep2 = function
   (* nullary_op ; DROP  ↦  *)
-  | Prim (_, p, _, _), Prim (_, I_DROP, [], _) when is_nullary_op p -> Some []
+  | Prim (_, p, _, _), Prim (_, "DROP", [], _) when is_nullary_op p -> Some []
   (* DUP ; DROP  ↦  *)
-  | Prim (_, I_DUP, _, _), Prim (_, I_DROP, [], _) -> Some []
+  | Prim (_, "DUP", _, _), Prim (_, "DROP", [], _) -> Some []
   (* unary_op ; DROP  ↦  DROP *)
-  | Prim (_, p, _, _), Prim (_, I_DROP, [], _) when is_unary_op p -> Some [i_drop]
+  | Prim (_, p, _, _), Prim (_, "DROP", [], _) when is_unary_op p -> Some [i_drop]
   (* binary_op ; DROP  ↦  DROP ; DROP *)
-  | Prim (_, p, _, _), Prim (_, I_DROP, [], _) when is_binary_op p -> Some [i_drop; i_drop]
+  | Prim (_, p, _, _), Prim (_, "DROP", [], _) when is_binary_op p -> Some [i_drop; i_drop]
   (* ternary_op ; DROP  ↦  DROP ; DROP ; DROP *)
-  | Prim (_, p, _, _), Prim (_, I_DROP, [], _) when is_ternary_op p -> Some [i_drop; i_drop; i_drop]
+  | Prim (_, p, _, _), Prim (_, "DROP", [], _) when is_ternary_op p -> Some [i_drop; i_drop; i_drop]
   | _ -> None
 
 let opt_drop4 : peep4 = function
   (* DUP; unary_op; SWAP; DROP  ↦  unary_op *)
-  | Prim (_, I_DUP, _, _),
+  | Prim (_, "DUP", _, _),
     (Prim (_, p, _, _) as unary_op),
-    Prim (_, I_SWAP, _, _),
-    Prim (_, I_DROP, [], _)
+    Prim (_, "SWAP", _, _),
+    Prim (_, "DROP", [], _)
     when is_unary_op p ->
     Some [unary_op]
   | _ -> None
 
 let opt_dip1 : peep1 = function
   (* DIP {}  ↦  *)
-  | Prim (_, I_DIP, [Seq (_, [])], _) -> Some []
+  | Prim (_, "DIP", [Seq (_, [])], _) -> Some []
   (* DIP { nullary_op }  ↦  nullary_op ; SWAP *)
-  | Prim (_, I_DIP, [Seq (_, [(Prim (_, p, _, _) as push)])], _) when is_nullary_op p ->
+  | Prim (_, "DIP", [Seq (_, [(Prim (_, p, _, _) as push)])], _) when is_nullary_op p ->
      Some [push ; i_swap]
   (* DIP { unary_op }  ↦  SWAP ; unary_op ; SWAP *)
-  | Prim (_, I_DIP, [Seq (_, [(Prim (_, p, _, _) as unary_op)])], _) when is_unary_op p ->
+  | Prim (_, "DIP", [Seq (_, [(Prim (_, p, _, _) as unary_op)])], _) when is_unary_op p ->
      Some [i_swap ; unary_op ; i_swap]
   | _ -> None
 
@@ -329,19 +292,19 @@ let opt_dip2 : peep2 = function
   (* combine adjacent dips, shaving a seq and enabling further
      optimization inside the DIP: *)
   (* DIP { code1 } ; DIP { code2 }  ↦  DIP { code1 ; code2 } *)
-  | Prim (_, I_DIP, [Seq (_, code1)], _), Prim (_, I_DIP, [Seq (_, code2)], _) ->
-     Some [Prim (0, I_DIP, [Seq (0, code1 @ code2)], [])]
+  | Prim (_, "DIP", [Seq (_, code1)], _), Prim (_, "DIP", [Seq (_, code2)], _) ->
+     Some [Prim (0, "DIP", [Seq (0, code1 @ code2)], [])]
   (* DIP { code } ; DROP  ↦  DROP ; code *)
-  | Prim (_, I_DIP, [Seq (_, code)], _), (Prim (_, I_DROP, [], _) as drop) ->
+  | Prim (_, "DIP", [Seq (_, code)], _), (Prim (_, "DROP", [], _) as drop) ->
      Some (drop :: code)
   (* nullary_op ; DIP { code }  ↦  code ; nullary_op *)
-  | (Prim (_, p, _, _) as nullary_op), Prim (_, I_DIP, [Seq (_, code)], _) when is_nullary_op p ->
+  | (Prim (_, p, _, _) as nullary_op), Prim (_, "DIP", [Seq (_, code)], _) when is_nullary_op p ->
      Some (code @ [nullary_op])
   (* DIP { code } ; unary_op  ↦  unary_op ; DIP { code } *)
-  | (Prim (_, I_DIP, [Seq _], _) as dip), (Prim (_, p, _, _) as unary_op) when is_unary_op p ->
+  | (Prim (_, "DIP", [Seq _], _) as dip), (Prim (_, p, _, _) as unary_op) when is_unary_op p ->
      Some [unary_op; dip]
   (* unary_op ; DIP { code }  ↦  DIP { code } ; unary_op *)
-  (* | (Prim (_, p, _, _) as unary_op), (Prim (_, I_DIP, [Seq _], _) as dip) when is_unary_op p ->
+  (* | (Prim (_, p, _, _) as unary_op), (Prim (_, "DIP", [Seq _], _) as dip) when is_unary_op p ->
    *    Some [dip; unary_op] *)
   | _ -> None
 
@@ -349,31 +312,31 @@ let opt_dip3 : peep3 = function
   (* replace UNPAIR/UNPIAR with a smaller version *)
   (* TODO probably better to implement optimal UNPAIR in the compiler *)
   (* DUP ; CAR ; DIP { CDR }  ↦  DUP ; CDR ; SWAP ; CAR *)
-  | Prim (_, I_DUP, _, _),
-    (Prim (_, (I_CAR | I_CDR), _, _) as proj1),
-    Prim (_, I_DIP, [Seq (_, [(Prim (_, (I_CAR | I_CDR), _, _) as proj2)])], _) ->
+  | Prim (_, "DUP", _, _),
+    (Prim (_, ("CAR" | "CDR"), _, _) as proj1),
+    Prim (_, "DIP", [Seq (_, [(Prim (_, ("CAR" | "CDR"), _, _) as proj2)])], _) ->
      Some [ i_dup ; proj2 ; i_swap ; proj1 ]
   | _ -> None
 
 let opt_swap2 : peep2 = function
   (* SWAP ; SWAP  ↦  *)
-  | Prim (_, I_SWAP, _, _), Prim (_, I_SWAP, _, _) ->
+  | Prim (_, "SWAP", _, _), Prim (_, "SWAP", _, _) ->
      Some []
   (* DUP ; SWAP  ↦  DUP *)
-  | Prim (_, I_DUP, _, _), Prim (_, I_SWAP, _, _) ->
+  | Prim (_, "DUP", _, _), Prim (_, "SWAP", _, _) ->
      Some [i_dup]
   (* SWAP ; ADD  ↦  ADD *)
   (* etc *)
-  | Prim (_, I_SWAP, _, _), (Prim (_, (I_ADD | I_OR | I_AND | I_XOR), _, _) as comm_op) ->
+  | Prim (_, "SWAP", _, _), (Prim (_, ("ADD" | "OR" | "AND" | "XOR"), _, _) as comm_op) ->
      Some [comm_op]
   | _ -> None
 
 (* for inserted Michelson lambdas *)
 let opt_beta3 : peep3 = function
   (* PUSH (lambda ...) code ; SWAP ; EXEC  ↦  f *)
-  | Prim (_, I_PUSH, [Prim(_, T_lambda, _, _); code], _),
-    Prim (_, I_SWAP, _, _),
-    Prim (_, I_EXEC, _, _) ->
+  | Prim (_, "PUSH", [Prim(_, "lambda", _, _); code], _),
+    Prim (_, "SWAP", _, _),
+    Prim (_, "EXEC", _, _) ->
       (match flatten_seqs code with
        | Seq (_, code) -> Some code
        | _ -> None)
@@ -381,52 +344,52 @@ let opt_beta3 : peep3 = function
 
 let opt_beta5 : peep5 = function
   (* PAIR ; DUP ; CDR ; SWAP ; CAR  ↦  *)
-  | Prim (_, I_PAIR, _, _),
-    Prim (_, I_DUP, _, _),
-    Prim (_, I_CDR, _, _),
-    Prim (_, I_SWAP, _, _),
-    Prim (_, I_CAR, _, _) ->
+  | Prim (_, "PAIR", _, _),
+    Prim (_, "DUP", _, _),
+    Prim (_, "CDR", _, _),
+    Prim (_, "SWAP", _, _),
+    Prim (_, "CAR", _, _) ->
     Some []
   (* PAIR ; DUP ; CAR ; SWAP ; CDR  ↦  SWAP *)
-  | Prim (_, I_PAIR, _, _),
-    Prim (_, I_DUP, _, _),
-    Prim (_, I_CAR, _, _),
-    Prim (_, I_SWAP, _, _),
-    Prim (_, I_CDR, _, _) ->
-    Some [Prim(-1, I_SWAP, [], [])]
+  | Prim (_, "PAIR", _, _),
+    Prim (_, "DUP", _, _),
+    Prim (_, "CAR", _, _),
+    Prim (_, "SWAP", _, _),
+    Prim (_, "CDR", _, _) ->
+    Some [Prim(-1, "SWAP", [], [])]
   | _ -> None
 
 let opt_digdug1 : peep1 = function
   (* DUG/DIG 0  ↦   *)
-  | Prim (_, (I_DIG|I_DUG), [Int (_, n)], _) when Z.equal n Z.zero ->
+  | Prim (_, ("DIG"|"DUG"), [Int (_, n)], _) when Z.equal n Z.zero ->
      Some []
   (* DUG/DIG 1  ↦  SWAP *)
-  | Prim (_, (I_DIG|I_DUG), [Int (_, n)], _) when Z.equal n Z.one ->
+  | Prim (_, ("DIG"|"DUG"), [Int (_, n)], _) when Z.equal n Z.one ->
      Some [i_swap]
   | _ -> None
 
 let opt_digdug2 : peep2 = function
   (* DIG k ; DUG k  ↦   *)
-  | (Prim (_, I_DIG, [Int (_, k1)], _), Prim (_, I_DUG, [Int (_, k2)], _)) when Z.equal k1 k2 ->
+  | (Prim (_, "DIG", [Int (_, k1)], _), Prim (_, "DUG", [Int (_, k2)], _)) when Z.equal k1 k2 ->
      Some []
   (* DUG k ; DIG k  ↦   *)
-  | (Prim (_, I_DUG, [Int (_, k1)], _), Prim (_, I_DIG, [Int (_, k2)], _)) when Z.equal k1 k2 ->
+  | (Prim (_, "DUG", [Int (_, k1)], _), Prim (_, "DIG", [Int (_, k2)], _)) when Z.equal k1 k2 ->
      Some []
   (* DIG 2 ; DIG 2  ↦  DUG 2 *)
-  | (Prim (_, I_DIG, [Int (_, k1)], _), Prim (_, I_DIG, [Int (_, k2)], _)) when Z.equal k1 k2 && Z.equal k1 (Z.of_int 2) ->
-     Some [Prim (-1, I_DUG, [Int (-1, Z.of_int 2)], [])]
+  | (Prim (_, "DIG", [Int (_, k1)], _), Prim (_, "DIG", [Int (_, k2)], _)) when Z.equal k1 k2 && Z.equal k1 (Z.of_int 2) ->
+     Some [Prim (-1, "DUG", [Int (-1, Z.of_int 2)], [])]
   (* DUG 2 ; DUG 2  ↦  DIG 2 *)
-  | (Prim (_, I_DUG, [Int (_, k1)], _), Prim (_, I_DUG, [Int (_, k2)], _)) when Z.equal k1 k2 && Z.equal k1 (Z.of_int 2) ->
-     Some [Prim (-1, I_DIG, [Int (-1, Z.of_int 2)], [])]
+  | (Prim (_, "DUG", [Int (_, k1)], _), Prim (_, "DUG", [Int (_, k2)], _)) when Z.equal k1 k2 && Z.equal k1 (Z.of_int 2) ->
+     Some [Prim (-1, "DIG", [Int (-1, Z.of_int 2)], [])]
   | _ -> None
 
 let opt_digdug3 : peep3 = function
   (* DIG 3 ; DIG 3 ; DIG 3  ↦  DUG 3 *)
-  | (Prim (_, I_DIG, [Int (_, k1)], _), Prim (_, I_DIG, [Int (_, k2)], _), Prim (_, I_DIG, [Int (_, k3)], _)) when Z.equal k1 k2 && Z.equal k2 k3 && Z.equal k1 (Z.of_int 3) ->
-     Some [Prim (-1, I_DUG, [Int (-1, Z.of_int 3)], [])]
+  | (Prim (_, "DIG", [Int (_, k1)], _), Prim (_, "DIG", [Int (_, k2)], _), Prim (_, "DIG", [Int (_, k3)], _)) when Z.equal k1 k2 && Z.equal k2 k3 && Z.equal k1 (Z.of_int 3) ->
+     Some [Prim (-1, "DUG", [Int (-1, Z.of_int 3)], [])]
   (* DUG 3 ; DUG 3 ; DUG 3  ↦  DIG 3 *)
-  | (Prim (_, I_DUG, [Int (_, k1)], _), Prim (_, I_DUG, [Int (_, k2)], _), Prim (_, I_DUG, [Int (_, k3)], _)) when Z.equal k1 k2 && Z.equal k2 k3 && Z.equal k1 (Z.of_int 3) ->
-     Some [Prim (-1, I_DIG, [Int (-1, Z.of_int 3)], [])]
+  | (Prim (_, "DUG", [Int (_, k1)], _), Prim (_, "DUG", [Int (_, k2)], _), Prim (_, "DUG", [Int (_, k3)], _)) when Z.equal k1 k2 && Z.equal k2 k3 && Z.equal k1 (Z.of_int 3) ->
+     Some [Prim (-1, "DIG", [Int (-1, Z.of_int 3)], [])]
   | _ -> None
 
 (* This "optimization" deletes dead code produced by the compiler
@@ -439,11 +402,11 @@ let rec is_failing : michelson -> bool =
   | Seq (_, []) -> false
   | Seq (_, [arg]) -> is_failing arg
   | Seq (l, _ :: args) -> is_failing (Seq (l, args))
-  | Prim (_, I_FAILWITH, _, _) -> true
-  | Prim (_, I_IF, [bt; bf], _)
-  | Prim (_, I_IF_CONS, [bt; bf], _)
-  | Prim (_, I_IF_LEFT, [bt; bf], _)
-  | Prim (_, I_IF_NONE, [bt; bf], _) ->
+  | Prim (_, "FAILWITH", _, _) -> true
+  | Prim (_, "IF", [bt; bf], _)
+  | Prim (_, "IF_CONS", [bt; bf], _)
+  | Prim (_, "IF_LEFT", [bt; bf], _)
+  | Prim (_, "IF_NONE", [bt; bf], _) ->
     is_failing bt && is_failing bf
   (* Note: the body of ITER, LOOP, LOOP_LEFT _can_ be
      failing. However, the loop will _not_ be failing, because the
@@ -470,10 +433,10 @@ let rec opt_tail_fail : michelson -> michelson =
 let%expect_test _ =
   let seq args = Seq(-1, args) in
   let prim p args = Prim(-1, p, args, []) in
-  let code = seq [ prim I_IF_LEFT [ seq [ prim I_FAILWITH [] ; prim I_DROP [] ]
-                                  ; seq [ prim I_FAILWITH [] ; prim I_DROP [] ]
+  let code = seq [ prim "IF_LEFT" [ seq [ prim "FAILWITH" [] ; prim "DROP" [] ]
+                                  ; seq [ prim "FAILWITH" [] ; prim "DROP" [] ]
                                   ]
-                 ; prim I_DROP []
+                 ; prim "DROP" []
                  ] in
   let code = opt_tail_fail code in
   Format.printf "%a" Tezos_utils.Michelson.pp code ;
@@ -482,13 +445,13 @@ let%expect_test _ =
 let rec opt_combine_drops (x : michelson) : michelson =
   let rec combine : michelson list -> michelson list = function
     | [] -> []
-    | Prim (_, I_DROP, [], []) :: xs ->
+    | Prim (_, "DROP", [], []) :: xs ->
       let xs' = combine xs in
       begin match xs' with
-      | [] -> [Prim (-1, I_DROP, [], [])]
-      | Prim (_, I_DROP, [], []) :: xs' -> Prim (-1, I_DROP, [Int (-1, Z.of_int 2)], []) :: xs'
-      | Prim (_, I_DROP, [Int (_, n)], []) :: xs' -> Prim (-1, I_DROP, [Int (-1, Z.of_int (1 + Z.to_int n))], []) :: xs'
-      | x' :: xs' -> Prim (-1, I_DROP, [], []) :: x' :: xs'
+      | [] -> [Prim (-1, "DROP", [], [])]
+      | Prim (_, "DROP", [], []) :: xs' -> Prim (-1, "DROP", [Int (-1, Z.of_int 2)], []) :: xs'
+      | Prim (_, "DROP", [Int (_, n)], []) :: xs' -> Prim (-1, "DROP", [Int (-1, Z.of_int (1 + Z.to_int n))], []) :: xs'
+      | x' :: xs' -> Prim (-1, "DROP", [], []) :: x' :: xs'
       end
     | x :: xs -> x :: combine xs in
   match x with
@@ -499,16 +462,16 @@ let rec opt_combine_drops (x : michelson) : michelson =
 
 (* number of type arguments for (some) prims, where we will strip
    annots *)
-let prim_type_args : prim -> int option = function
-  | I_NONE -> Some 1
-  | I_NIL -> Some 1
-  | I_EMPTY_SET -> Some 1
-  | I_EMPTY_MAP -> Some 2
-  | I_EMPTY_BIG_MAP -> Some 2
-  | I_LAMBDA -> Some 2
-  | I_PUSH -> Some 1
-  (* _not_ I_CONTRACT! annot is important there *)
-  (* but could include I_SELF, maybe? *)
+let prim_type_args : string -> int option = function
+  | "NONE" -> Some 1
+  | "NIL" -> Some 1
+  | "EMPTY_SET" -> Some 1
+  | "EMPTY_MAP" -> Some 2
+  | "EMPTY_BIG_MAP" -> Some 2
+  | "LAMBDA" -> Some 2
+  | "PUSH" -> Some 1
+  (* _not_ "CONTRACT"! annot is important there *)
+  (* but could include "SELF", maybe? *)
   | _ -> None
 
 (* returns (List.firstn n xs, List.skipn n xs) as in Coq (OCaml stdlib

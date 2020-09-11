@@ -33,12 +33,12 @@ let invalid_syntax syntax : all = `Main_invalid_syntax_name syntax
 let entrypoint_not_a_function : all = `Main_entrypoint_not_a_function
 let entrypoint_not_found : all = `Main_entrypoint_not_found
 
-(* Michelson execution errors *)
+(* Michelson errors *)
 
 let arguments_check_tracer ps err : all = `Main_check_typed_arguments (ps, err)
 let unparse_tracer errs : all = `Main_unparse_tracer errs
 let typecheck_contract_tracer c errs : all = `Main_typecheck_contract_tracer (c,errs)
-let typecheck_parameters_tracer _ : all = `Main_typecheck_parameter
+let could_not_serialize errs : all = `Main_could_not_serialize errs
 
 let unknown : all = `Main_unknown
 

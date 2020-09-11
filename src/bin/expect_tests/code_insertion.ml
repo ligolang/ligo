@@ -46,4 +46,4 @@ let%expect_test _ =
   [%expect{|
     { parameter nat ;
       storage nat ;
-      code { DUP ; CDR ; SWAP ; CAR ; ADD ; NIL operation ; PAIR } } |}]
+      code { UNPAIR ; ADD ; NIL operation ; PAIR } } |}]

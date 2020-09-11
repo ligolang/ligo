@@ -22,7 +22,6 @@
   (public_name ligo.ast_typed)
   (libraries
     simple-utils
-    tezos-utils
     ast_core ; Is that a good idea?
     stage_common
     adt_generator

@@ -68,7 +68,7 @@ type value =
   | D_list of value list
   | D_set of value list
   (* | `Macro of anon_macro ... The future. *)
-  | D_operation of Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation
+  | D_operation of bytes
 
 and selector = var_name list
 

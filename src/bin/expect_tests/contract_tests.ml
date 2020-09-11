@@ -1021,10 +1021,12 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_address_format.religo" ; "main" ] ;
   [%expect {|
     ligo: error
-          in file "bad_address_format.religo", line 2, characters 26-48
-          Ill-formed literal "@"KT1badaddr"".
-          In the case of an address, a string is expected prefixed by either tz1, tz2, tz3 or KT1 and followed by a Base58 encoded hash and terminated by a 4-byte checksum.
-          In the case of a key_hash, signature, or key a Base58 encoded hash is expected.
+          Error(s) occurred while type checking the contract:
+          Ill typed contract:
+            1: { parameter int ;
+            2:   storage address ;
+            3:   code { DROP /* [] */ ; PUSH address "KT1badaddr" ; NIL operation ; PAIR } }
+          Invalid contract notation "KT1badaddr"
 
 
           If you're not sure how to fix this error, you can do one of the following:

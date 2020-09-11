@@ -1,7 +1,7 @@
 include Simple_utils.Trace
 
 module AE = Memory_proto_alpha.Alpha_environment
-module TP = Tezos_base__TzPervasives
+module TP = Tezos_error_monad.Error_monad
 
 type tezos_alpha_error =  [`Tezos_alpha_error of TP.error]
 
@@ -26,5 +26,5 @@ let trace_tzresult :
   | Ok x -> ok x
   | Error errs -> fail @@ tracer (List.map of_tz_error errs)
 
-let trace_tzresult_lwt err (x:_ TP.Error_monad.tzresult Lwt.t) : _ result =
+let trace_tzresult_lwt err (x:_ TP.tzresult Lwt.t) : _ result =
   trace_tzresult err @@ Lwt_main.run x

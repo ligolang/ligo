@@ -133,57 +133,6 @@ let constant ppf : constant' -> unit = function
   | C_CONVERT_FROM_RIGHT_COMB -> fprintf ppf "CONVERT_FROM_RIGHT_COMB"
   | C_CONVERT_FROM_LEFT_COMB  -> fprintf ppf "CONVERT_FROM_LEFT_COMB"
 
-let operation ppf (o : Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation) : unit =
-  let print_option f ppf o =
-    match o with
-      Some (s) -> fprintf ppf "%a" f s
-    | None -> fprintf ppf "None"
-  in
-    let open Tezos_micheline.Micheline in
-  let rec prim ppf (node : (_,Memory_proto_alpha.Protocol.Alpha_context.Script.prim) node)= match node with
-    | Int (l , i) -> fprintf ppf "Int (%i, %a)" l Z.pp_print i
-    | String (l , s) -> fprintf ppf "String (%i, %s)" l s
-    | Bytes (l, b) -> fprintf ppf "B (%i, %s)" l (Bytes.to_string b)
-    | Prim (l , p , nl, a) -> fprintf ppf "P (%i, %s, %a, %a)" l
-        (Memory_proto_alpha.Protocol.Michelson_v1_primitives.string_of_prim p)
-        (list_sep_d prim) nl
-        (list_sep_d (fun ppf s -> fprintf ppf "%s" s)) a
-    | Seq (l, nl) -> fprintf ppf "S (%i, %a)" l
-        (list_sep_d prim) nl
-  in
-  let l ppf (l: Memory_proto_alpha.Protocol.Alpha_context.Script.lazy_expr) =
-    let oo = Data_encoding.force_decode l in
-    match oo with
-      Some o -> fprintf ppf "%a" prim (Tezos_micheline.Micheline.root o)
-    | None  -> fprintf ppf "Fail decoding"
-  in
-
-  let op ppf (type a) : a Memory_proto_alpha.Protocol.Alpha_context.manager_operation -> unit = function
-    | Reveal (s: Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key.t) -> 
-      fprintf ppf "R %a" Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key.pp s
-    | Transaction {amount; parameters; entrypoint; destination} ->
-      fprintf ppf "T {%a; %a; %s; %a}"
-        Memory_proto_alpha.Protocol.Alpha_context.Tez.pp amount
-        l parameters
-        entrypoint
-        Memory_proto_alpha.Protocol.Alpha_context.Contract.pp destination
-
-    | Origination {delegate; script; credit; preorigination} ->
-      fprintf ppf "O {%a; %a; %a; %a}" 
-        (print_option Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key_hash.pp) delegate
-        l script.code
-        Memory_proto_alpha.Protocol.Alpha_context.Tez.pp credit
-        (print_option Memory_proto_alpha.Protocol.Alpha_context.Contract.pp) preorigination
-        
-    | Delegation so ->
-      fprintf ppf "D %a" (print_option Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key_hash.pp) so
-  in
-  let Internal_operation {source;operation;nonce} = o in
-  fprintf ppf "{source: %s; operation: %a; nonce: %i"
-    (Memory_proto_alpha.Protocol.Alpha_context.Contract.to_b58check source)
-    op operation
-    nonce
-
 let literal ppf (l : literal) =
   match l with
   | Literal_unit -> fprintf ppf "unit"
@@ -194,7 +143,7 @@ let literal ppf (l : literal) =
   | Literal_string s -> fprintf ppf "%a" Ligo_string.pp s
   | Literal_bytes b -> fprintf ppf "0x%a" Hex.pp (Hex.of_bytes b)
   | Literal_address s -> fprintf ppf "@%S" s
-  | Literal_operation o -> fprintf ppf "Operation(%a)" operation o
+  | Literal_operation o -> fprintf ppf "Operation(0x%a)" Hex.pp (Hex.of_bytes o)
   | Literal_key s -> fprintf ppf "key %s" s
   | Literal_key_hash s -> fprintf ppf "key_hash %s" s
   | Literal_signature s -> fprintf ppf "Signature %s" s

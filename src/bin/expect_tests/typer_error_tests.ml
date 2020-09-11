@@ -211,7 +211,10 @@ let%expect_test _ =
   run_ligo_bad [ "interpret" ; "Set.literal [ (1,2,3) ; (2,3,4) ]" ; "--syntax=cameligo" ] ;
   [%expect {|
     ligo: error
-          Invalid comparable value. When using a tuple of with more than 2 components, structure the tuple like this: "(a, (b, c))".
+          Error(s) occurred while parsing the Michelson input:
+          At (unshown) location 1, comparable type expected.Type
+                                                              pair (pair int int) int
+                                                            is not comparable.
 
 
           If you're not sure how to fix this error, you can do one of the following:
