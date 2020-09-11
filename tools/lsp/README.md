@@ -21,7 +21,7 @@ in future.
 
 Server part invokes the TS-parser and then constructs a tree of haskell datatypes
 from the TS-tree. Then it is fed into `LIGO.Parser` (name will be changed), which
-constructs an universal LIGO from the tree of the respective language.
+constructs a universal LIGO from the tree of the respective language.
 
 Parser uses the root `Parser` module which provides the combinators and monad
 to deal with `ParseTree`, produced from TS output.
@@ -40,7 +40,7 @@ which is a specialised custom `traverse`.
 It is also possible to get the zipper-like chain of trees, covering some node,
 in ascending order - using `spineTo` function. If you have already pinned
 the scopes, you can just take first one and pull the scope out of it. Unless
-it is an `Error` node. We probably need th error nodes to be `Functor`s
+it is an `Error` node. We probably need error nodes to be `Functor`s
 as well as any other structures used to build the tree.
 
 On top of all that is an event loop for handling messages from some lsp-client.

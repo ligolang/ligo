@@ -1,0 +1,5 @@
+(contract
+  (fun
+    main
+    (params (decl const i (PROD int)))
+    : (PROD (option $ (PROD nat))) = (apply is_nat (tuple i))))

@@ -347,6 +347,7 @@ errorToDiag (getRange -> (Range (sl, sc, _) (el, ec, _) _), Err what) =
     Nothing
     (Just "ligo-lsp")
     (Text.pack [i|Expected #{what}|])
+    Nothing
     (Just $ J.List[])
   where
     begin = J.Position (sl - 1) (sc - 1)

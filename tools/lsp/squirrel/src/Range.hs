@@ -12,6 +12,7 @@ module Range
   , excluding
   , merged
   , point
+  , interval
   )
   where
 
@@ -30,6 +31,11 @@ import Product
 
 point :: Int -> Int -> Range
 point l c = Range (l, c, 0) (l, c, 0) ""
+
+-- | Construct a range spanning a single line `line` from a column
+-- `colSt` (inclusively) to `colFin` (exclusively).
+interval :: Int -> Int -> Int -> Range
+interval line colSt colFin = Range (line, colSt, 0) (line, colFin, 0) ""
 
 -- | A continious location in text.
 data Range = Range

@@ -61,6 +61,7 @@ library:
   include-dirs:
     - vendor/pascaligo
     - vendor/reasonligo
+    - vendor/camligo
 
   c-sources:
     - vendor/pascaligo/parser.c
@@ -96,4 +97,32 @@ executables:
 
     ghc-options:
       - -threaded
-      - -Wall
+
+  vet:
+    main: vet.hs
+
+    source-dirs:
+      - app/
+
+    dependencies:
+      - ligo-squirrel
+      - optparse-applicative
+      - with-utf8
+
+tests:
+  squirrel-test:
+    main: Driver.hs
+
+    source-dirs:
+      - test/
+
+    dependencies:
+      - HUnit
+      - directory
+      - filepath
+      - hspec-expectations
+      - ligo-squirrel
+      - tasty
+      - tasty-discover
+      - tasty-hspec
+      - tasty-hunit
