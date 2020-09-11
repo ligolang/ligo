@@ -4,14 +4,13 @@ open Co_de_bruijn
 open Co_de_bruijn.Util
 
 open Michelson
-open Memory_proto_alpha.Protocol.Script_ir_translator
 
 (*
 module Contract_types = Meta_michelson.Types
 module Stack = Meta_michelson.Stack
 *)
 type compiled_expression = {
-  expr_ty : ex_ty ;
+  expr_ty : michelson ;
   expr : michelson ;
 }
 

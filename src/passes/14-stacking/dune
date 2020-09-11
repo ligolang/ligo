@@ -3,7 +3,6 @@
   (public_name ligo.stacking)
   (libraries
     simple-utils
-    proto-alpha-utils
     tezos-utils
     co_de_bruijn
     predefined

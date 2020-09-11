@@ -13,7 +13,6 @@ type ast_core_type_expression = S.type_expression
 
 
 type 'a list_ne = 'a List.Ne.t
-type packed_internal_operation = Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation
 type location = Location.t
 type inline = bool
 

@@ -50,7 +50,7 @@ val get_t_left : type_expression -> type_expression option
 val get_t_right : type_expression -> type_expression option
 val get_t_contract : type_expression -> type_expression option
 val get_t_operation : type_expression -> type_expression option
-val get_operation : value -> Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation option
+val get_operation : value -> bytes option
 
 val t_int      : ?loc:Location.t -> unit -> type_expression 
 val t_unit     : ?loc:Location.t -> unit -> type_expression 

@@ -50,41 +50,23 @@ let%expect_test "main" =
   Use '.ligo' for PascaLIGO, '.mligo' for CameLIGO, '.religo' for ReasonLIGO, or the --syntax option.|}] ;
   human_readable_error
     (`Main_unparse_tracer
-      [`Tezos_alpha_error Proto_alpha_utils.Error_monad.Timeout]) ;
+      [`Tezos_alpha_error Tezos_error_monad.Error_monad.Timeout]) ;
   [%expect {|
     Error(s) occurred while translating to Michelson:
     The request has timed out|}] ;
   human_readable_error
     (`Main_typecheck_contract_tracer
       ( Michelson.t_unit,
-        [`Tezos_alpha_error Proto_alpha_utils.Error_monad.Canceled] )) ;
+        [`Tezos_alpha_error Tezos_error_monad.Error_monad.Canceled] )) ;
   [%expect {|
   Error(s) occurred while type checking the contract:
   The promise was unexpectedly canceled
   |}] ;
-  human_readable_error `Main_typecheck_parameter ;
+  human_readable_error
+    (`Main_could_not_serialize [`Tezos_alpha_error Tezos_error_monad.Error_monad.Canceled]) ;
   [%expect {|
-    Invalid command line argument.
-    It appears that the provided parameter or storage does not have the correct type.|}] ;
-  human_readable_error
-    (`Main_check_typed_arguments
-      (Simple_utils.Runned_result.Check_parameter, `Main_typecheck_parameter)) ;
-  [%expect
-    {|
-  Invalid command line argument.
-  The provided parameter does not have the correct type for the given entrypoint.
-  Invalid command line argument.
-  It appears that the provided parameter or storage does not have the correct type.|}] ;
-  human_readable_error
-    (`Main_check_typed_arguments
-      (Simple_utils.Runned_result.Check_storage, `Main_typecheck_parameter)) ;
-  [%expect
-    {|
-  Invalid command line argument.
-  The provided storage does not have the correct type for the contract.
-  Invalid command line argument.
-  It appears that the provided parameter or storage does not have the correct type.
-  |}] ;
+    Error(s) occurred while serializing Michelson code:
+    The promise was unexpectedly canceled|}] ;
   human_readable_error `Main_unknown_failwith_type ;
   [%expect {|The contract failed to dry run, and returned an unsupported failwith type. Only int, string, and bytes are supported as failwith types for dry-run.|}] ;
   human_readable_error `Main_unknown ;
@@ -124,25 +106,25 @@ let%expect_test "main_execution_failed" =
   [%expect {|An error occurred while evaluating an expression: bar|}]
 
 let%expect_test _ =
-  human_readable_error (`Main_unparse_michelson_result [`Tezos_alpha_error Proto_alpha_utils.Error_monad.Timeout; `Tezos_alpha_error Proto_alpha_utils.Error_monad.Canceled]) ;
+  human_readable_error (`Main_unparse_michelson_result [`Tezos_alpha_error Tezos_error_monad.Error_monad.Timeout; `Tezos_alpha_error Tezos_error_monad.Error_monad.Canceled]) ;
   [%expect {|
   Error(s) occurred while unparsing the Michelson result:
   The request has timed out
   The promise was unexpectedly canceled
   |}] ;
-  human_readable_error (`Main_parse_michelson_input [`Tezos_alpha_error Proto_alpha_utils.Error_monad.Timeout; `Tezos_alpha_error Proto_alpha_utils.Error_monad.Canceled]) ;
+  human_readable_error (`Main_parse_michelson_input [`Tezos_alpha_error Tezos_error_monad.Error_monad.Timeout; `Tezos_alpha_error Tezos_error_monad.Error_monad.Canceled]) ;
   [%expect {|
   Error(s) occurred while parsing the Michelson input:
   The request has timed out
   The promise was unexpectedly canceled
   |}] ;
-  human_readable_error (`Main_parse_michelson_code [`Tezos_alpha_error Proto_alpha_utils.Error_monad.Timeout; `Tezos_alpha_error Proto_alpha_utils.Error_monad.Canceled]) ;
+  human_readable_error (`Main_parse_michelson_code [`Tezos_alpha_error Tezos_error_monad.Error_monad.Timeout; `Tezos_alpha_error Tezos_error_monad.Error_monad.Canceled]) ;
   [%expect {|
   Error(s) occurred while checking the contract:
   The request has timed out
   The promise was unexpectedly canceled
   |}] ;
-  human_readable_error (`Main_michelson_execution_error [`Tezos_alpha_error Proto_alpha_utils.Error_monad.Timeout; `Tezos_alpha_error Proto_alpha_utils.Error_monad.Canceled]) ;
+  human_readable_error (`Main_michelson_execution_error [`Tezos_alpha_error Tezos_error_monad.Error_monad.Timeout; `Tezos_alpha_error Tezos_error_monad.Error_monad.Canceled]) ;
   [%expect {|
   Error(s) occurred while executing the contract:
   The request has timed out
@@ -198,7 +180,7 @@ let%expect_test "self_ast_imperative" =
   Ill-formed timestamp "bar".
   At this point, a string with a RFC3339 notation or the number of seconds since Epoch is expected.
   |}] ;
-  error (`Self_ast_imperative_bad_format_literal (expression, [])) ;
+  error (`Self_ast_imperative_bad_format_literal expression) ;
   [%expect
     {|
   in file "a dummy file name", line 20, characters 0-10
@@ -1071,10 +1053,6 @@ let%expect_test "stacking" =
   [%expect {|contract entrypoint must be given as a literal string: xxx |}] ;
   error (`Stacking_bad_iterator C_INT) ;
   [%expect {|bad iterator: iter INT |}] ;
-  error (`Stacking_not_comparable_base TB_nat) ;
-  [%expect {|
-    Invalid comparable value "nat".
-    Only the following types can be compared here: address, bool, bytes, int, key_hash, mutez, nat, string, and timestamp. |}] ;
   error `Stacking_not_comparable_pair_struct ;
   [%expect
     {|Invalid comparable value. When using a tuple of with more than 2 components, structure the tuple like this: "(a, (b, c))". |}]

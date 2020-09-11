@@ -1,21 +1,23 @@
+type tezos_alpha_error =  [`Tezos_alpha_error of Tezos_error_monad.Error_monad.error]
+
 type all = 
 [
  | `Main_invalid_syntax_name of string
  | `Main_invalid_dialect_name of string
  | `Main_invalid_extension of string
- | `Main_unparse_tracer of [ `Tezos_alpha_error of Proto_alpha_utils.Error_monad.error ] list
- | `Main_typecheck_contract_tracer of Michelson.michelson * [ `Tezos_alpha_error of Proto_alpha_utils.Error_monad.error ] list
- | `Main_typecheck_parameter
+ | `Main_unparse_tracer of tezos_alpha_error list
+ | `Main_typecheck_contract_tracer of Michelson.michelson * tezos_alpha_error list
+ | `Main_could_not_serialize of tezos_alpha_error list
  | `Main_check_typed_arguments of Simple_utils.Runned_result.check_type * all
  | `Main_unknown_failwith_type
  | `Main_unknown
  | `Main_execution_failed of Runned_result.failwith
- | `Main_unparse_michelson_result of Proto_alpha_utils.Trace.tezos_alpha_error list
- | `Main_parse_payload of Proto_alpha_utils.Trace.tezos_alpha_error list
- | `Main_pack_payload of Proto_alpha_utils.Trace.tezos_alpha_error list
- | `Main_parse_michelson_input of Proto_alpha_utils.Trace.tezos_alpha_error list
- | `Main_parse_michelson_code of Proto_alpha_utils.Trace.tezos_alpha_error list
- | `Main_michelson_execution_error of Proto_alpha_utils.Trace.tezos_alpha_error list
+ | `Main_unparse_michelson_result of tezos_alpha_error list
+ | `Main_parse_payload of tezos_alpha_error list
+ | `Main_pack_payload of tezos_alpha_error list
+ | `Main_parse_michelson_input of tezos_alpha_error list
+ | `Main_parse_michelson_code of tezos_alpha_error list
+ | `Main_michelson_execution_error of tezos_alpha_error list
 
  | `Main_parser of Parser.Errors.parser_error
  | `Main_pretty of Parser.Errors.parser_error

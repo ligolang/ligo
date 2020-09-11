@@ -27,7 +27,7 @@ and constant_val =
   | C_key of string
   | C_key_hash of string
   | C_chain_id of string
-  | C_operation of Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation
+  | C_operation of bytes
 
 and value =
   | V_Func_val of (expression_variable * Ast_typed.expression * env)

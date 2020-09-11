@@ -62,7 +62,11 @@ let op_list =
        Contract.of_b58check "tz1PpDGHRXFQq3sYDuH8EpLWzPm5PFpe1sLE" 
     in
     ok @@ Transaction {amount=Tez.zero; parameters; entrypoint; destination} in
-  ok @@ (e_typed_list [e_literal (Literal_operation (Internal_operation {source;operation;nonce=0}))] (t_operation ()))
+  let opbytes =
+    Data_encoding.Binary.to_bytes_exn
+      Operation.internal_operation_encoding
+      (Internal_operation {source; operation; nonce=0}) in
+  ok @@ (e_typed_list [e_literal (Literal_operation opbytes)] (t_operation ()))
 let empty_payload = e_unit ()
 
 let chain_id_zero = e_chain_id @@ Tezos_crypto.Base58.simple_encode

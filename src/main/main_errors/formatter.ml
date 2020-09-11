@@ -61,9 +61,10 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f "@[<hv>Error(s) occurred while type checking the contract:@.%a@]"
       (Tezos_client_ligo006_PsCARTHA.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
-    | `Main_typecheck_parameter -> 
-      (* TODO: show the Michelson types. *)
-      Format.fprintf f "@[<hv>Invalid command line argument. @.It appears that the provided parameter or storage does not have the correct type. @]"
+    | `Main_could_not_serialize errs ->
+      let errs = List.map ( fun e -> match e with `Tezos_alpha_error a -> a) errs in
+      Format.fprintf f "@[<hv>Error(s) occurred while serializing Michelson code:@.%a @]"
+      (Tezos_client_ligo006_PsCARTHA.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_check_typed_arguments (Simple_utils.Runned_result.Check_parameter, err) ->
       Format.fprintf f "@[<hv>Invalid command line argument. @.The provided parameter does not have the correct type for the given entrypoint.@ %a@]"
@@ -180,9 +181,9 @@ let rec error_jsonformat : Types.all -> Yojson.t = fun a ->
       ("code",    `String code) ; ] in
     json_error ~stage:"michelson contract build" ~content
 
-  | `Main_typecheck_parameter ->
-    let content = `Assoc [("message", `String "Passed parameter does not match the contract type")] in
-    json_error ~stage:"michelson contract build" ~content
+  | `Main_could_not_serialize _errs ->
+    let content = `Assoc [("message", `String "Could not serialize michelson code")] in
+    json_error ~stage:"michelson serialization" ~content
   
   | `Main_check_typed_arguments (Simple_utils.Runned_result.Check_parameter, err) ->
     let content = `Assoc [

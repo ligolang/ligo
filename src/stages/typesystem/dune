@@ -3,7 +3,6 @@
   (public_name ligo.typesystem)
   (libraries
     simple-utils
-    tezos-utils
     ast_typed
     mini_c
   )

@@ -6,7 +6,7 @@ let stage = "self_ast_imperative"
 type self_ast_imperative_error = [
   | `Self_ast_imperative_long_constructor of (string * type_expression)
   | `Self_ast_imperative_bad_timestamp of (string * expression)
-  | `Self_ast_imperative_bad_format_literal of (expression * Proto_alpha_utils.Trace.tezos_alpha_error list)
+  | `Self_ast_imperative_bad_format_literal of expression
   | `Self_ast_imperative_bad_empty_arity of (constant' * expression)
   | `Self_ast_imperative_bad_single_arity of (constant' * expression)
   | `Self_ast_imperative_bad_map_param_type of (constant' * expression)
@@ -16,7 +16,7 @@ type self_ast_imperative_error = [
 
 let too_long_constructor c e = `Self_ast_imperative_long_constructor (c,e)
 let bad_timestamp t e = `Self_ast_imperative_bad_timestamp (t,e)
-let bad_format e errs = `Self_ast_imperative_bad_format_literal (e,errs)
+let bad_format e = `Self_ast_imperative_bad_format_literal e
 let bad_empty_arity c e = `Self_ast_imperative_bad_empty_arity (c,e)
 let bad_single_arity c e = `Self_ast_imperative_bad_single_arity (c,e)
 let bad_map_param_type c e = `Self_ast_imperative_bad_map_param_type (c,e)
@@ -39,7 +39,7 @@ let error_ppformat : display_format:string display_format ->
         "@[<hv>%a@ Ill-formed timestamp \"%s\".@.At this point, a string with a RFC3339 notation or the number of seconds since Epoch is expected. @]"
         Location.pp e.location
         t
-    | `Self_ast_imperative_bad_format_literal (e,_errs) ->
+    | `Self_ast_imperative_bad_format_literal e ->
       Format.fprintf f
         "@[<hv>%a@ Ill-formed literal \"%a\".@.In the case of an address, a string is expected prefixed by either tz1, tz2, tz3 or KT1 and followed by a Base58 encoded hash and terminated by a 4-byte checksum.@.In the case of a key_hash, signature, or key a Base58 encoded hash is expected. @]"
         Location.pp e.location
@@ -92,7 +92,7 @@ let error_jsonformat : self_ast_imperative_error -> Yojson.t = fun a ->
       ("value", `String t)
     ] in
     json_error ~stage ~content
-  | `Self_ast_imperative_bad_format_literal (e,_errs) ->
+  | `Self_ast_imperative_bad_format_literal e ->
     let message = `String "badly formatted literal" in
     let loc = `String (Format.asprintf "%a" Location.pp e.location) in
     let content = `Assoc [

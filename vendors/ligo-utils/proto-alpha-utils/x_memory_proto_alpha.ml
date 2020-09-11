@@ -152,12 +152,27 @@ let ty_eq (type a b)
   alpha_wrap (Script_ir_translator.ty_eq tezos_context a b) >>? fun (Eq, _) ->
   ok Eq
 
+(* should not need lwt *)
+let prims_of_strings michelson =
+  let (michelson, errs) =
+    Tezos_client_ligo006_PsCARTHA.Michelson_v1_macros.expand_rec michelson in
+  match errs with
+  | _ :: _ ->
+    Lwt.return (Error errs)
+  | [] ->
+  Lwt.return
+    (alpha_wrap
+       (Michelson_v1_primitives.prims_of_strings
+          (Tezos_micheline.Micheline.strip_locations michelson))) >>=? fun michelson ->
+  return (Tezos_micheline.Micheline.root michelson)
+
 let parse_michelson (type aft)
     ?(tezos_context = dummy_environment.tezos_context)
     ?(top_level = Lambda) (michelson:Michelson.t)
     ?type_logger
     (bef:'a Script_typed_ir.stack_ty) (aft:aft Script_typed_ir.stack_ty)
   =
+  prims_of_strings michelson >>=? fun michelson ->
   parse_instr
     ?type_logger
     top_level tezos_context
@@ -178,6 +193,7 @@ let parse_michelson_fail (type aft)
     ?type_logger
     (bef:'a Script_typed_ir.stack_ty) (aft:aft Script_typed_ir.stack_ty)
   =
+  prims_of_strings michelson >>=? fun michelson ->
   parse_instr
     ?type_logger
     top_level tezos_context
@@ -206,18 +222,23 @@ let parse_michelson_ty
   Lwt.return @@ parse_ty tezos_context ~allow_big_map ~allow_operation michelson ~legacy:false ~allow_contract >>=?? fun (ty, _) ->
   return ty
 
+let strings_of_prims michelson =
+  let michelson = Tezos_micheline.Micheline.strip_locations michelson in
+  let michelson = Michelson_v1_primitives.strings_of_prims michelson in
+  Tezos_micheline.Micheline.root michelson
+
 let unparse_michelson_data
     ?(tezos_context = dummy_environment.tezos_context)
     ty value : Michelson.t tzresult Lwt.t =
   unparse_data tezos_context
     Readable ty value >>=?? fun (michelson, _) ->
-  return michelson
+  return (strings_of_prims michelson)
 
 let unparse_michelson_ty
     ?(tezos_context = dummy_environment.tezos_context)
     ty : Michelson.t tzresult Lwt.t =
   Script_ir_translator.unparse_ty tezos_context ty >>=?? fun (michelson, _) ->
-  return michelson
+  return (strings_of_prims michelson)
 
 type options = {
   tezos_context: Alpha_context.t ;
@@ -319,3 +340,11 @@ let pack (data_ty: 'a ty) (data: 'a) : bytes tzresult Lwt.t =
   pack_data dummy_environment.tezos_context data_ty data >>=?? fun (packed,_) -> return packed
 
 let strings_of_prims = Michelson_v1_primitives.strings_of_prims
+
+let to_hex : Michelson.t -> Hex.t = fun michelson ->
+  let michelson =
+    X_error_monad.force_lwt ~msg:"Internal error: could not serialize Michelson"
+      (prims_of_strings michelson) in
+  let canonical = Tezos_micheline.Micheline.strip_locations michelson in
+  let bytes = Data_encoding.Binary.to_bytes_exn Script_repr.expr_encoding canonical in
+  Hex.of_bytes bytes

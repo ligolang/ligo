@@ -22,7 +22,6 @@
   (public_name ligo.ast_core)
   (libraries
     simple-utils
-    tezos-utils
     stage_common
     ast_sugar
     adt_generator

@@ -5,6 +5,7 @@
     main_errors
     simple-utils
     tezos-utils
+    proto-alpha-utils
     parser
     tree_abstraction
     ast_imperative

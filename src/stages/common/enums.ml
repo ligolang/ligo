@@ -41,7 +41,7 @@ type literal =
   | Literal_key of string
   | Literal_key_hash of string
   | Literal_chain_id of string
-  | Literal_operation of packed_internal_operation
+  | Literal_operation of bytes
 
 type constant' =
   | C_INT

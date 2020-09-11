@@ -1,134 +1,114 @@
 open Errors
 open Mini_c.Types
-open Proto_alpha_utils.Memory_proto_alpha
-open X
-open Proto_alpha_utils.Trace
-open Protocol
-open Script_typed_ir
+open Tezos_micheline.Micheline
+open Trace
 
-let rec decompile_value (Ex_typed_value (ty, value)) : (value , stacking_error) result =
+let rec decompile_value ty value : (value , stacking_error) result =
   match (ty, value) with
-  | Pair_t ((a_ty, _, _), (b_ty, _, _), _ , _), (a, b) -> (
-      let%bind a = decompile_value @@ Ex_typed_value(a_ty, a) in
-      let%bind b = decompile_value @@ Ex_typed_value(b_ty, b) in
+  | Prim (_, "pair", [a_ty; b_ty], _), Prim (_, "Pair", [a; b], _) -> (
+      let%bind a = decompile_value a_ty a in
+      let%bind b = decompile_value b_ty b in
       ok @@ D_pair(a, b)
     )
-  | Union_t ((a_ty, _), _, _ , _), L a -> (
-      let%bind a = decompile_value @@ Ex_typed_value(a_ty, a) in
+  | Prim (_, "or", [a_ty; _], _), Prim (_, "Left", [a], _) -> (
+      let%bind a = decompile_value a_ty a in
       ok @@ D_left a
     )
-  | Union_t (_, (b_ty, _), _ , _), R b -> (
-      let%bind b = decompile_value @@ Ex_typed_value(b_ty, b) in
+  | Prim (_, "or", [_; b_ty], _), Prim (_, "Right", [b], _) -> (
+      let%bind b = decompile_value b_ty b in
       ok @@ D_right b
     )
-  | (Int_t _), n ->
-      let n = Alpha_context.Script_int.to_zint n in
+  | Prim (_, "int", [], _), Int (_, n) ->
       ok @@ D_int n
-  | (Nat_t _), n ->
-      let n = Alpha_context.Script_int.to_zint n in
+  | Prim (_, "nat", [], _), Int (_, n) ->
       ok @@ D_nat n
-  | (Chain_id_t _), id ->
+  | Prim (_, "chain_id", [], _), Bytes (_, id) ->
+    let id = Tezos_base.TzPervasives.Chain_id.of_bytes_exn id in
     let str = Tezos_crypto.Base58.simple_encode
       (Tezos_base__TzPervasives.Chain_id.b58check_encoding)
       id in
     ok @@ D_string str
-  | (Key_hash_t _ ), n ->
-    ok @@ D_string (Signature.Public_key_hash.to_b58check n)
-  | (Key_t _ ), n ->
-    ok @@ D_string (Signature.Public_key.to_b58check n)
-  | (Signature_t _ ), n ->
-    ok @@ D_string (Signature.to_b58check n)
-  | (Timestamp_t _), n ->
-      let n = Alpha_context.Script_timestamp.to_zint n in
+  | Prim (_, "key_hash", [], _), String (_, n) ->
+    ok @@ D_string n
+  | Prim (_, "key", [], _), String (_, n) ->
+    ok @@ D_string n
+  | Prim (_, "signature", [], _), String (_, n) ->
+    ok @@ D_string n
+  | Prim (_, "timestamp", [], _), Int (_, n) ->
       ok @@ D_timestamp n
-  | (Mutez_t _), n ->
-      let%bind n =
-        generic_try (corner_case ~loc:__LOC__ "too big to fit an int") @@
-        (fun () -> Z.of_int64 @@ Alpha_context.Tez.to_mutez n) in
+  | Prim (_, "timestamp", [], _), String (_, n) ->
+      let open Tezos_base.TzPervasives.Time.Protocol in
+      let n = Z.of_int64 (to_seconds (of_notation_exn n)) in
+      ok @@ D_timestamp n
+  | Prim (_, "mutez", [], _), Int (_, n) ->
       ok @@ D_mutez n
-  | (Bool_t _), b ->
-      ok @@ D_bool b
-  | (String_t _), s ->
+  | Prim (_, "bool", [], _), Prim (_, "True", [], _) ->
+      ok @@ D_bool true
+  | Prim (_, "bool", [], _), Prim (_, "False", [], _) ->
+      ok @@ D_bool false
+  | Prim (_, "string", [], _), String (_, s) ->
       ok @@ D_string s
-  | (Bytes_t _), b ->
+  | Prim (_, "bytes", [], _), Bytes (_, b) ->
       ok @@ D_bytes b
-  | (Address_t _), (s , _) ->
-      ok @@ D_string (Alpha_context.Contract.to_b58check s)
-  | (Unit_t _), () ->
+  | Prim (_, "address", [], _), String (_, s) ->
+      ok @@ D_string s
+  | Prim (_, "unit", [], _), Prim (_, "Unit", [], _) ->
       ok @@ D_unit
-  | (Option_t _), None ->
+  | Prim (_, "option", [_], _), Prim (_, "None", [], _) ->
       ok @@ D_none
-  | (Option_t (o_ty, _, _)), Some s ->
-      let%bind s' = decompile_value @@ Ex_typed_value (o_ty, s) in
+  | Prim (_, "option", [o_ty], _), Prim (_, "Some", [s], _) ->
+      let%bind s' = decompile_value o_ty s in
       ok @@ D_some s'
-  | (Map_t (k_cty, v_ty, _ , _)), m ->
-      let k_ty = X.ty_of_comparable_ty k_cty in
-      let lst =
-        let aux k v acc = (k, v) :: acc in
-        let lst = Script_ir_translator.map_fold aux m [] in
-        List.rev lst in
+  | Prim (_, "map", [k_ty; v_ty], _), Seq (_, lst) ->
       let%bind lst' =
-        let aux (k, v) =
-          let%bind k' = decompile_value (Ex_typed_value (k_ty, k)) in
-          let%bind v' = decompile_value (Ex_typed_value (v_ty, v)) in
-          ok (k', v')
+        let aux elt =
+          match elt with
+          | Prim (_, "Elt", [k; v], _) ->
+            let%bind k' = decompile_value k_ty k in
+            let%bind v' = decompile_value v_ty v in
+            ok (k', v')
+          | _ ->
+            fail (untranspilable ty value)
         in
         bind_map_list aux lst
       in
       ok @@ D_map lst'
-  | (Big_map_t (k_cty, v_ty, _)), m ->
-      let k_ty = X.ty_of_comparable_ty k_cty in
-      let lst =
-        let aux k v acc = (k, v) :: acc in
-        let lst = Script_ir_translator.map_fold aux m.diff [] in
-        List.rev lst in
+  | Prim (_, "big_map", [k_ty; v_ty], _), Seq (_, lst) ->
       let%bind lst' =
-        let aux orig (k, v) =
-          let%bind k' = decompile_value (Ex_typed_value (k_ty, k)) in
-          let orig_rem = List.remove_assoc k' orig in
-          match v with
-          | Some vadd ->
-            let%bind v' = decompile_value (Ex_typed_value (v_ty, vadd)) in
-            if (List.mem_assoc k' orig) then ok @@ (k', v')::orig_rem
-            else ok @@ (k', v')::orig
-          | None -> ok orig_rem in
-        bind_fold_list aux [] lst in
-      ok @@ D_big_map lst'
-  | (List_t (ty, _ , _)), lst ->
-      let%bind lst' =
-        let aux = fun t -> decompile_value (Ex_typed_value (ty, t)) in
+        let aux elt =
+          match elt with
+          | Prim (_, "Elt", [k; v], _) ->
+            let%bind k' = decompile_value k_ty k in
+            let%bind v' = decompile_value v_ty v in
+            ok (k', v')
+          | _ ->
+            fail (untranspilable ty value)
+        in
         bind_map_list aux lst
       in
+      ok @@ D_big_map lst'
+  | Prim (_, "list", [ty], _), Seq (_, lst) ->
+      let%bind lst' =
+        bind_map_list (decompile_value ty) lst
+      in
       ok @@ D_list lst'
-  | (Set_t (ty, _)), (module S) -> (
-      let lst = S.OPS.elements S.boxed in
+  | Prim (_, "set", [ty], _), Seq (_, lst) -> (
       let lst' =
         let aux acc cur = cur :: acc in
         let lst = List.fold_left aux lst [] in
         List.rev lst in
       let%bind lst'' =
-        let aux = fun t -> decompile_value (Ex_typed_value (ty_of_comparable_ty ty, t)) in
+        let aux = fun t -> decompile_value ty t in
         bind_map_list aux lst'
       in
       ok @@ D_set lst''
     )
-  | (Operation_t _) , (op , _) ->
+  | Prim (_, "operation", [], _), Bytes (_, op) -> (
       ok @@ D_operation op
-  | (Lambda_t _ as ty) , _ ->
-      let%bind m_ty = trace_strong (corner_case ~loc:"TODO" "TODO") @@
-        trace_tzresult_lwt unrecognized_data @@
-        Proto_alpha_utils.Memory_proto_alpha.unparse_michelson_ty ty in
+    )
+  | Prim (_, "lambda", [_; _], _) as ty, Seq (_, _) ->
       let pp_lambda =
-        Format.asprintf "[lambda of type: %a ]" Michelson.pp m_ty in
+        Format.asprintf "[lambda of type: %a ]" Michelson.pp ty in
         ok @@ D_string pp_lambda
   | ty, v ->
-      let%bind error = trace_strong (corner_case ~loc:"TODO" "TODO") @@
-        let%bind m_data =
-          trace_tzresult_lwt unrecognized_data @@
-          Proto_alpha_utils.Memory_proto_alpha.unparse_michelson_data ty v in
-        let%bind m_ty =
-          trace_tzresult_lwt unrecognized_data @@
-          Proto_alpha_utils.Memory_proto_alpha.unparse_michelson_ty ty in
-        fail (untranspilable m_data m_ty)
-      in
-      fail error
+      fail (untranspilable ty v)

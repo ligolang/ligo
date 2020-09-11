@@ -5,7 +5,6 @@
     simple-utils
     ast_sugar
     ast_core
-    proto-alpha-utils
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)

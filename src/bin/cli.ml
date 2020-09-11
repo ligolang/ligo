@@ -174,7 +174,7 @@ module Run = Ligo.Run.Of_michelson
 
 let compile_file =
   let f source_file entry_point syntax display_format disable_typecheck michelson_format output_file brief =
-    return_result ~output_file ~brief ~display_format (Tezos_utils.Michelson.michelson_format michelson_format) @@
+    return_result ~output_file ~brief ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
       let%bind typed,_    = Compile.Utils.type_file source_file syntax (Contract entry_point) in
       let%bind mini_c     = Compile.Of_typed.compile typed in
       let%bind michelson  = Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
@@ -276,11 +276,9 @@ let print_mini_c =
 
 let measure_contract =
   let f source_file entry_point syntax display_format brief =
-    let value =
+    return_result ~display_format ~brief Formatter.contract_size_format @@
       let%bind contract   = Compile.Utils.compile_file source_file syntax entry_point in
-      ok @@ Tezos_utils.Michelson.measure contract in
-    let format = Display.bind_format Formatter.contract_size_format Main.Formatter.error_format in
-    toplevel ~display_format ~brief (Display.Displayable { value ; format }) value
+      Compile.Of_michelson.measure contract
   in
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ display_format $ brief) in
@@ -290,7 +288,7 @@ let measure_contract =
 
 let compile_parameter =
   let f source_file entry_point expression syntax amount balance sender source now display_format michelson_format output_file brief =
-    return_result ~output_file ~display_format ~brief (Tezos_utils.Michelson.michelson_format michelson_format) @@
+    return_result ~output_file ~display_format ~brief (Formatter.Michelson_formatter.michelson_format michelson_format) @@
       let%bind typed_prg,state = Compile.Utils.type_file source_file syntax (Contract entry_point) in
       let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
       let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
@@ -303,7 +301,6 @@ let compile_parameter =
       let%bind mini_c_param     = Compile.Of_typed.compile_expression typed_param in
       let%bind compiled_param   = Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg mini_c_param in
       let%bind ()               = Compile.Of_typed.assert_equal_contract_type Check_parameter entry_point typed_prg typed_param in
-      let%bind ()               = Compile.Of_michelson.assert_equal_contract_type Check_parameter michelson_prg compiled_param in
       let%bind options          = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
       Run.evaluate_expression ~options compiled_param.expr compiled_param.expr_ty
     in
@@ -351,7 +348,7 @@ let temp_ligo_interpreter =
 
 let compile_storage =
   let f source_file entry_point expression syntax amount balance sender source now display_format michelson_format output_file brief =
-    return_result ~output_file ~display_format ~brief (Tezos_utils.Michelson.michelson_format michelson_format) @@
+    return_result ~output_file ~display_format ~brief (Formatter.Michelson_formatter.michelson_format michelson_format) @@
       let%bind typed_prg,state = Compile.Utils.type_file source_file syntax (Contract entry_point) in
       let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
       let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
@@ -364,7 +361,6 @@ let compile_storage =
       let%bind mini_c_param     = Compile.Of_typed.compile_expression typed_param in
       let%bind compiled_param   = Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg mini_c_param in
       let%bind ()               = Compile.Of_typed.assert_equal_contract_type Check_storage entry_point typed_prg typed_param in
-      let%bind ()               = Compile.Of_michelson.assert_equal_contract_type Check_storage michelson_prg compiled_param in
       let%bind options          = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
       Run.evaluate_expression ~options compiled_param.expr compiled_param.expr_ty in
   let term =
@@ -443,7 +439,7 @@ let evaluate_value =
 
 let compile_expression =
   let f expression syntax display_format michelson_format brief =
-    return_result ~display_format ~brief (Tezos_utils.Michelson.michelson_format michelson_format) @@
+    return_result ~display_format ~brief (Formatter.Michelson_formatter.michelson_format michelson_format) @@
       let env = Environment.default in
       let state = Typer.Solver.initial_state in
       let%bind compiled_exp  = Compile.Utils.compile_expression None syntax expression env state in

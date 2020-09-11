@@ -16,7 +16,6 @@ module M = struct
     | Label' of string
     | Ligo_string of ligo_string
     | Location of location
-    | Operation of packed_internal_operation
     | Str of string
     | Type_expression of ast_core_type_expression
     | Unit of unit
@@ -53,7 +52,6 @@ module M = struct
       ligo_string               = (fun _visitor _state str             -> Ligo_string str) ;
       bytes                     = (fun _visitor _state bytes           -> Bytes bytes) ;
       unit                      = (fun _visitor _state ()              -> Unit ()) ;
-      packed_internal_operation = (fun _visitor _state op              -> Operation op) ;
       expression_variable       = (fun _visitor _state ev              -> Expression_variable ev) ;
       location                  = (fun _visitor _state loc             -> Location loc) ;
       label                     = (fun _visitor _state (Label lbl)     -> Label' lbl) ;
@@ -107,7 +105,7 @@ module M = struct
     | Label'              _ ->  8
     | Ligo_string         _ ->  9
     | Location            _ -> 10
-    | Operation           _ -> 11
+    (* | Operation        _ -> 11 *)
     | Str                 _ -> 12
     | Type_expression     _ -> 13
     | Unit                _ -> 14
@@ -143,7 +141,6 @@ module M = struct
     | (Label' a, Label' b)                           -> String.compare a b
     | (Ligo_string a, Ligo_string b)                 -> Simple_utils.Ligo_string.compare a b
     | (Location a, Location b)                       -> Location.compare a b
-    | (Operation a, Operation b)                     -> Stdlib.compare a b (* TODO: is there a proper comparison function defined for packed_internal_operation ? *)
     | (Str a, Str b)                                 -> String.compare a b
     | (Type_expression a, Type_expression b)         -> Stdlib.compare a b (* TODO: is there a proper comparison function defined for ast_core_type_expression ? *)
     | (Unit (), Unit ())                             -> 0
@@ -156,8 +153,8 @@ module M = struct
     | (Set a, Set b)                                 -> List.compare ~compare:compare_lz_t a b
     | (TypeVariableMap a, TypeVariableMap b)         -> List.compare ~compare:compare_tvmap_entry a b
 
-    | ((EmptyCtor | Record _ | VariantConstructor _ | Bool _ | Bytes _ | Constructor' _ | Expression_variable _ | Int _ | Label' _ | Ligo_string _ | Location _ | Operation _ | Str _ | Type_expression _ | Unit _ | Var _ | Z _ | List _ | Location_wrap _ | LMap _ | UnionFind _ | Set _ | TypeVariableMap _) as a),
-      ((EmptyCtor | Record _ | VariantConstructor _ | Bool _ | Bytes _ | Constructor' _ | Expression_variable _ | Int _ | Label' _ | Ligo_string _ | Location _ | Operation _ | Str _ | Type_expression _ | Unit _ | Var _ | Z _ | List _ | Location_wrap _ | LMap _ | UnionFind _ | Set _ | TypeVariableMap _) as b) ->
+    | ((EmptyCtor | Record _ | VariantConstructor _ | Bool _ | Bytes _ | Constructor' _ | Expression_variable _ | Int _ | Label' _ | Ligo_string _ | Location _ | Str _ | Type_expression _ | Unit _ | Var _ | Z _ | List _ | Location_wrap _ | LMap _ | UnionFind _ | Set _ | TypeVariableMap _) as a),
+      ((EmptyCtor | Record _ | VariantConstructor _ | Bool _ | Bytes _ | Constructor' _ | Expression_variable _ | Int _ | Label' _ | Ligo_string _ | Location _ | Str _ | Type_expression _ | Unit _ | Var _ | Z _ | List _ | Location_wrap _ | LMap _ | UnionFind _ | Set _ | TypeVariableMap _) as b) ->
        Int.compare (tag a) (tag b)
 
 

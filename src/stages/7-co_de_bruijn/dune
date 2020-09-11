@@ -3,7 +3,6 @@
   (public_name ligo.co_de_bruijn)
   (libraries
     simple-utils
-    tezos-utils
     stage_common
     mini_c
   )

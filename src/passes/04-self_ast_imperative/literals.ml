@@ -1,39 +1,34 @@
 open Errors
 open Ast_imperative
 open Trace
-open Proto_alpha_utils
 
 let peephole_expression : expression -> (expression , self_ast_imperative_error) result = fun e ->
   let return expression_content = ok { e with expression_content } in
   match e.expression_content with
   | E_literal (Literal_key_hash s) as l -> (
     let open Tezos_crypto in
-    let%bind (_pkh:Crypto.Signature.public_key_hash) =
-      Trace.trace_tzresult (bad_format e) @@
-      Signature.Public_key_hash.of_b58check s in
-    return l
+    match Signature.Public_key_hash.of_b58check_opt s with
+    | None -> fail (bad_format e)
+    | Some _ ->
+      return l
     )
-  | E_literal (Literal_address s) as l -> (
-    let open Memory_proto_alpha in
-    let%bind (_contract:Protocol.Alpha_context.Contract.t) =
-      Trace.trace_alpha_tzresult (bad_format e) @@
-      Protocol.Alpha_context.Contract.of_b58check s in
+  | E_literal (Literal_address _) as l -> (
     return l
     )
   | E_literal (Literal_signature s) as l -> (
     let open Tezos_crypto in
-    let%bind (_sig:Crypto.Signature.t) =
-      Trace.trace_tzresult (bad_format e) @@
-        Signature.of_b58check s in
-    return l
-  )
+    match Signature.of_b58check_opt s with
+    | None -> fail (bad_format e)
+    | Some _ ->
+      return l
+    )
   | E_literal (Literal_key s) as l -> (
     let open Tezos_crypto in
-    let%bind (_k:Crypto.Signature.public_key) =
-      Trace.trace_tzresult (bad_format e) @@
-        Signature.Public_key.of_b58check s in
-    return l
-  )
+    match Signature.Public_key.of_b58check_opt s with
+    | None -> fail (bad_format e)
+    | Some _ ->
+      return l
+    )
   | E_constant {cons_name=cst; arguments=lst} as e_const ->
      let cst = const_name cst in
      begin match cst with

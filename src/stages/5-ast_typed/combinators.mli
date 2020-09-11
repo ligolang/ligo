@@ -105,7 +105,7 @@ val e_signature : string -> expression_content
 val e_key : string -> expression_content
 val e_key_hash : string -> expression_content
 val e_chain_id : string -> expression_content
-val e_operation : Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation -> expression_content
+val e_operation : bytes -> expression_content
 val e_lambda : lambda -> expression_content
 val e_pair : expression -> expression -> expression_content
 val e_application : expression -> expression -> expression_content
