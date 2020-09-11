@@ -1,0 +1,18 @@
+(library
+ (name tezos_client_ligo007_PsDELPH1)
+ (public_name tezos-client-ligo007-PsDELPH1)
+ (libraries tezos-base
+            tezos-protocol-ligo007-PsDELPH1
+            tezos-client-base
+            tezos-protocol-ligo007-PsDELPH1-parameters)
+ (library_flags (:standard -linkall))
+ (flags (:standard -open Tezos_base__TzPervasives
+                   -open Tezos_shell_services
+                   -open Tezos_client_base
+                   -open Tezos_protocol_ligo007_PsDELPH1
+                   -open Tezos_rpc)))
+
+(alias
+ (name runtest_lint)
+ (deps (glob_files *.ml{,i}))
+ (action (run %{lib:tezos-tooling:lint.sh} %{deps})))

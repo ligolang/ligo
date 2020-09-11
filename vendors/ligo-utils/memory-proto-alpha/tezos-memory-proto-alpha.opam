@@ -11,6 +11,7 @@ depends: [
   "dune"
   "tezos-protocol-environment"
   "tezos-protocol-ligo006-PsCARTHA"
+  "tezos-protocol-ligo007-PsDELPH1"
 ]
 build: [
   ["dune" "build" "-p" name]
