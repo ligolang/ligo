@@ -15,11 +15,6 @@ let
           rm vendor/*/*
           ( cd ${grammars}; for i in *; do cp $i/parser.c $NIX_BUILD_TOP/*/vendor/$i; done )
         '';
-        configureFlags = with pkgs;
-          lib.optionals linux-static [
-            "--ghc-option=-optl=-L${zlib.static}/lib"
-            "--ghc-option=-optl=-L${nixpkgs.pkgsStatic.numactl}/lib"
-          ];
       };
     }];
   };
