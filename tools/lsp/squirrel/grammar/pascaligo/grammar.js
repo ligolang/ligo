@@ -363,13 +363,11 @@ module.exports = grammar({
       choice(
         $._instruction,
         $.clause_block,
+        $.block,
       ),
 
     clause_block: $ =>
-      choice(
-        field("block", $.block),
-        seq('{', sepBy1(';', field("statement", $._statement)), '}')
-      ),
+      seq('{', sepBy1(';', field("statement", $._statement)), '}'),
 
     block: $ =>
       choice(
