@@ -21,7 +21,7 @@ let toplevel : ?output_file:string option -> brief:bool -> display_format:ex_dis
       match t with
       | Human_readable -> convert ~display_format:t disp ;
       | Dev -> convert ~display_format:t disp ;
-      | Json -> Yojson.to_string @@ convert ~display_format:t disp
+      | Json -> Yojson.Safe.to_string @@ convert ~display_format:t disp
     in
     match value with
     | Ok _ ->

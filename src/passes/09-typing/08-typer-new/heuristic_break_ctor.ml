@@ -38,7 +38,7 @@ let propagator : (output_break_ctor , unit , typer_error) propagator =
   (* a.tv = b.tv *)
   let eq1 = c_equation { tsrc = "solver: propagator: break_ctor a" ; t = P_variable a.tv} { tsrc = "solver: propagator: break_ctor b" ; t = P_variable b.tv} "propagator: break_ctor" in
   let () = if Ast_typed.Debug.debug_new_typer then
-           let p = Ast_typed.PP_generic.c_constructor_simpl in
+           let p = Ast_typed.PP.c_constructor_simpl in
            Format.printf "\npropagator_break_ctor\na = %a\nb = %a\n%!" p a p b in
   (* a.c_tag = b.c_tag *)
   if (Solver_should_be_generated.compare_simple_c_constant a.c_tag b.c_tag) <> 0 then
@@ -62,7 +62,7 @@ let heuristic =
     {
       selector ;
       propagator ;
-      printer = Ast_typed.PP_generic.output_break_ctor ; (* TODO: use an accessor that can get the printer for PP_generic or PP_json alike *)
+      printer = Ast_typed.PP.output_break_ctor ; (* TODO: use an accessor that can get the printer for PP or PP_json alike *)
       comparator = Solver_should_be_generated.compare_output_break_ctor ;
       initial_private_storage = () ;
     }

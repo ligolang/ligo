@@ -55,7 +55,7 @@ let pp_ex_propagator_state = fun ppf (Propagator_state { selector ; propagator ;
 
 let pp_typer_state = fun ppf ({ structured_dbs; already_selected_and_propagators } : _ typer_state) ->
   Format.fprintf ppf "{ structured_dbs = %a ; already_selected_and_propagators = [ %a ] }"
-    Ast_typed.PP_generic.structured_dbs structured_dbs
+    Ast_typed.PP.structured_dbs structured_dbs
     (list_sep pp_ex_propagator_state (fun ppf () -> fprintf ppf " ;@ ")) already_selected_and_propagators
 
 
@@ -70,7 +70,7 @@ let json_ex_propagator_state = fun ppf (Propagator_state { selector; propagator;
 
 let json_typer_state = fun ppf ({ structured_dbs; already_selected_and_propagators } : _ typer_state) ->
   Format.fprintf ppf "{ \"structured_dbs\": %a ; \"already_selected_and_propagators\": [ %a ] }"
-    Ast_typed.PP_json.structured_dbs structured_dbs
+    Yojson.Safe.pp (Ast_typed.Yojson.structured_dbs structured_dbs)
     (list_sep json_ex_propagator_state (fun ppf () -> fprintf ppf " , ")) already_selected_and_propagators
 
 (* state+list monad *)
@@ -80,4 +80,3 @@ let lift f =
   fun { state ; list } ->
     let (new_state , new_lists) = List.fold_map_acc f state list in
     { state = new_state ; list = List.flatten new_lists }
-

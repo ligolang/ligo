@@ -17,10 +17,10 @@ module Substitution = struct
     let rec rec_yes = true
     and s_environment_element_definition ~substs = function
       | T.ED_binder -> ok @@ T.ED_binder
-      | T.ED_declaration T.{expr ; free_variables} ->
-        let%bind expr = s_expression ~substs expr in
+      | T.ED_declaration T.{expression ; free_variables} ->
+        let%bind expression = s_expression ~substs expression in
         let%bind free_variables = bind_map_list (s_variable ~substs) free_variables in
-        ok @@ T.ED_declaration {expr ; free_variables}
+        ok @@ T.ED_declaration {expression ; free_variables}
     and s_expr_environment : (T.expression_environment,_) w = fun ~substs env ->
       bind_map_list (fun T.{expr_var=variable ; env_elt={ type_value; source_environment; definition }} ->
           let%bind type_value = s_type_expression ~substs type_value in
@@ -94,9 +94,9 @@ module Substitution = struct
          (* TODO: when we have generalized operators, we might need to subst the operator name itself? *)
          ok @@ Ast_core.T_constant {type_constant;arguments}
 
-    and s_abstr_type_expression : (Ast_core.type_expression,_) w = fun ~substs {content;sugar;location} ->
-      let%bind content = s_abstr_type_content ~substs content in
-      ok @@ (Ast_core.{content;sugar;location} : Ast_core.type_expression)
+    and s_abstr_type_expression : (Ast_core.type_expression,_) w = fun ~substs {type_content;sugar;location} ->
+      let%bind type_content = s_abstr_type_content ~substs type_content in
+      ok @@ (Ast_core.{type_content;sugar;location} : Ast_core.type_expression)
 
     and s_type_expression : (T.type_expression,_) w = fun ~substs { type_content; location; type_meta } ->
       let%bind type_content = s_type_content ~substs type_content in

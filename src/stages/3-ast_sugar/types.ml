@@ -21,9 +21,9 @@ and type_expression = {type_content: type_content; location: Location.t}
 
 
 type program = declaration Location.wrap list
+
 and declaration =
   | Declaration_type of (type_variable * type_expression)
-
   (* A Declaration_constant is described by
    *   a name
    *   an optional type annotation
@@ -102,9 +102,9 @@ and accessor = {record: expression; path: access list}
 and update   = {record: expression; path: access list ; update: expression}
 
 and access =
-  | Access_tuple of Z.t
+  | Access_tuple of z
   | Access_record of string
-  | Access_map of expr
+  | Access_map of expression
 
 and matching_expr =
   | Match_variant of ((label * expression_variable) * expression) list
@@ -132,29 +132,8 @@ and conditional = {
   then_clause : expression ;
   else_clause : expression ;
 }
+
 and sequence = {
   expr1: expression ;
   expr2: expression ;
   }
-
-and environment_element_definition =
-  | ED_binder
-  | ED_declaration of (expression * free_variables)
-
-and free_variables = expression_variable list
-
-and environment_element =
-  { type_value: type_expression
-  ; source_environment: environment
-  ; definition: environment_element_definition }
-
-and expr_environment = (expression_variable * environment_element) list
-
-and type_environment = (type_variable * type_expression) list
-
-(* SUBST ??? *)
-and environment = expr_environment * type_environment
-
-and expr = expression
-
-and texpr = type_expression

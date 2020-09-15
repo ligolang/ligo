@@ -478,7 +478,7 @@ The following forms of subtractions are possible:
         Location.pp loc
   )
 
-let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
+let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;
@@ -741,10 +741,10 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
     let expected = `String (Format.asprintf "%a" Ast_typed.PP.type_expression expected) in
     let actual = `String (Format.asprintf "%a" Ast_typed.PP.type_expression actual) in
     let content = `Assoc [
-      ("location", Location.pp_json loc);
-      ("message", message);
+      ("location", Location.to_yojson loc);
+      ("message" , message);
       ("expected", expected);
-      ("actual", actual);
+      ("actual"  , actual);
     ] in
     json_error ~stage ~content
   | `Typer_corner_case desc ->
@@ -783,7 +783,7 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
     let message = `String "expected a record" in
     let value = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t) in
     let content = `Assoc [
-      ("location", Location.pp_json loc);
+      ("location", Location.to_yojson loc);
       ("message", message);
       ("value", value);
     ] in
@@ -793,7 +793,7 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
     let value = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t) in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
+      ("location", Location.to_yojson loc);
       ("value", value);
     ] in
     json_error ~stage ~content
@@ -802,7 +802,7 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
     let value = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t) in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
+      ("location", Location.to_yojson loc);
       ("value", value);
     ] in
     json_error ~stage ~content
@@ -811,7 +811,7 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
     let value = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t) in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
+      ("location", Location.to_yojson loc);
       ("value", value);
     ] in
     json_error ~stage ~content
@@ -820,7 +820,7 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
     let value = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t) in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
+      ("location", Location.to_yojson loc);
       ("value", value);
     ] in
     json_error ~stage ~content
@@ -829,7 +829,7 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
     let value = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t) in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
+      ("location", Location.to_yojson loc);
       ("value", value);
     ] in
     json_error ~stage ~content
@@ -838,7 +838,7 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
     let value = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t) in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
+      ("location", Location.to_yojson loc);
       ("value", value);
     ] in
     json_error ~stage ~content
@@ -846,8 +846,8 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
     let message = `String "expected string" in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
-      ("value", Ast_typed.PP_json.Yojson.type_expression t);
+      ("location", Location.to_yojson loc);
+      ("value", Ast_typed.Yojson.type_expression t);
     ] in
     json_error ~stage ~content
   | `Typer_expected_key_hash (loc,t) ->
@@ -855,7 +855,7 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
     let value = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t) in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
+      ("location", Location.to_yojson loc);
       ("value", value);
     ] in
     json_error ~stage ~content
@@ -863,16 +863,16 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
     let message = `String "expected mutez" in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
-      ("value", Ast_typed.PP_json.Yojson.type_expression t);
+      ("location", Location.to_yojson loc);
+      ("value", Ast_typed.Yojson.type_expression t);
     ] in
     json_error ~stage ~content
   | `Typer_expected_op_list (loc,t) ->
     let message = `String "expected operation lists" in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
-      ("value", Ast_typed.PP_json.Yojson.type_expression t);
+      ("location", Location.to_yojson loc);
+      ("value", Ast_typed.Yojson.type_expression t);
     ] in
     json_error ~stage ~content
   | `Typer_wrong_param_number (loc,name,expected,actual) ->
@@ -882,7 +882,7 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
     let actual = `Int (List.length actual) in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
+      ("location", Location.to_yojson loc);
       ("value", value);
       ("actual", actual);
       ("expected", expected);
@@ -893,7 +893,7 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
     let value = `String (Format.asprintf "%a" Ast_typed.PP.type_expression e) in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
+      ("location", Location.to_yojson loc);
       ("value", value);
     ] in
     json_error ~stage ~content
@@ -901,73 +901,73 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
     let message = `String "expected a pair" in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
-      ("value", Ast_typed.PP_json.Yojson.type_expression e);
+      ("location", Location.to_yojson loc);
+      ("value", Ast_typed.Yojson.type_expression e);
     ] in
     json_error ~stage ~content
   | `Typer_expected_list (loc,e) ->
     let message = `String "expected a list" in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
-      ("value", Ast_typed.PP_json.Yojson.type_expression e);
+      ("location", Location.to_yojson loc);
+      ("value", Ast_typed.Yojson.type_expression e);
     ] in
     json_error ~stage ~content
   | `Typer_expected_set (loc,e) ->
     let message = `String "expected a set" in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
-      ("value", Ast_typed.PP_json.Yojson.type_expression e);
+      ("location", Location.to_yojson loc);
+      ("value", Ast_typed.Yojson.type_expression e);
     ] in
     json_error ~stage ~content
   | `Typer_expected_map (loc,e) ->
     let message = `String "expected a map" in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
-      ("value", Ast_typed.PP_json.Yojson.type_expression e);
+      ("location", Location.to_yojson loc);
+      ("value", Ast_typed.Yojson.type_expression e);
     ] in
     json_error ~stage ~content
   | `Typer_expected_big_map (loc,e) ->
     let message = `String "expected a big map" in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
-      ("value", Ast_typed.PP_json.Yojson.type_expression e);
+      ("location", Location.to_yojson loc);
+      ("value", Ast_typed.Yojson.type_expression e);
     ] in
     json_error ~stage ~content
   | `Typer_expected_option (loc,e) ->
     let message = `String "expected an option" in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
-      ("value", Ast_typed.PP_json.Yojson.type_expression e);
+      ("location", Location.to_yojson loc);
+      ("value", Ast_typed.Yojson.type_expression e);
     ] in
     json_error ~stage ~content
   | `Typer_expected_int (loc,e) ->
     let message = `String "expected an int" in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
-      ("value", Ast_typed.PP_json.Yojson.type_expression e);
+      ("location", Location.to_yojson loc);
+      ("value", Ast_typed.Yojson.type_expression e);
     ] in
     json_error ~stage ~content
   | `Typer_expected_bool (loc,e) ->
     let message = `String "expected a bool" in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
-      ("value", Ast_typed.PP_json.Yojson.type_expression e);
+      ("location", Location.to_yojson loc);
+      ("value", Ast_typed.Yojson.type_expression e);
     ] in
     json_error ~stage ~content
   | `Typer_not_matching (loc,t1,t2) ->
     let message = `String "types not matching" in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
-      ("value_1", Ast_typed.PP_json.Yojson.type_expression t1);
-      ("value_2", Ast_typed.PP_json.Yojson.type_expression t2);
+      ("location", Location.to_yojson loc);
+      ("value_1", Ast_typed.Yojson.type_expression t1);
+      ("value_2", Ast_typed.Yojson.type_expression t2);
     ] in
     json_error ~stage ~content
   | `Typer_not_annotated _ ->
@@ -980,31 +980,31 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
     let message = `String "bad substraction, bad parameters" in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc)
+      ("location", Location.to_yojson loc);
     ] in
     json_error ~stage ~content
   | `Typer_wrong_size (loc,t) ->
     let message = `String "should be of type map, list, string, byte or set" in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
-      ("value", Ast_typed.PP_json.Yojson.type_expression t);
+      ("location", Location.to_yojson loc);
+      ("value", Ast_typed.Yojson.type_expression t);
     ] in
     json_error ~stage ~content
   | `Typer_wrong_neg (loc,t) ->
     let message = `String "should be of type nat or int" in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
-      ("value", Ast_typed.PP_json.Yojson.type_expression t);
+      ("location", Location.to_yojson loc);
+      ("value", Ast_typed.Yojson.type_expression t);
     ] in
     json_error ~stage ~content
   | `Typer_wrong_not (loc,t) ->
     let message = `String "should be of type bool, nat or int" in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
-      ("value", Ast_typed.PP_json.Yojson.type_expression t);
+      ("location", Location.to_yojson loc);
+      ("value", Ast_typed.Yojson.type_expression t);
     ] in
     json_error ~stage ~content
   | `Typer_typeclass_error (loc,exps,acts) ->
@@ -1016,7 +1016,7 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
     let actual = `String (Format.asprintf "%a" (list_sep Ast_typed.PP.type_expression (const " or ")) acts) in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
+      ("location", Location.to_yojson loc);
       ("expected", expected);
       ("actual", actual);
     ] in
@@ -1035,7 +1035,7 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
     let t2 = `String (Format.asprintf "%a" Ast_typed.PP.type_expression b) in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
+      ("location", Location.to_yojson loc);
       ("type_1", t1);
       ("type_2", t2);
     ] in
@@ -1044,7 +1044,7 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
     let message = `String "Only composed types of not more than two element are allowed to be compared" in
     let content = `Assoc [
       ("message", message);
-      ("location", Location.pp_json loc);
+      ("location", Location.to_yojson loc);
     ] in
     json_error ~stage ~content
   | `Typer_constant_decl_tracer (name,ae,expected,err) ->

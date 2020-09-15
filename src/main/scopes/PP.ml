@@ -15,41 +15,41 @@ let definitions : Format.formatter -> def_map -> unit = fun f dm ->
   let pp_def f = List.iter (fun (k,v) -> Format.fprintf f "(%s -> %s) %a@ " k (get_def_name v) Location.pp (get_range v)) in
   Format.fprintf f "@[<v>Variable definitions:@ %aType definitions:@ %a@]" pp_def variables pp_def types
 
-let def_to_json : def -> Yojson.t = function
+let def_to_yojson : def -> Yojson.Safe.t = function
   | Variable { name ; range ; body_range ; t ; references=_ } ->
     `Assoc [
       ("name", `String name);
-      ("range", Location.pp_json range);
-      ("body_range", Location.pp_json body_range);
-      ("t", match t with None -> `Null | Some t -> Ast_typed.PP_json.Yojson.type_expression t );
+      ("range", Location.to_yojson range);
+      ("body_range", Location.to_yojson body_range);
+      ("t", match t with None -> `Null | Some t -> Ast_typed.Yojson.type_expression t );
       ("references", `Null);
     ]
   | Type { name ; range ; body_range ; content=_ } ->
     `Assoc [
       ("name", `String name);
-      ("range", Location.pp_json range);
-      ("body_range", Location.pp_json body_range);
+      ("range", Location.to_yojson range);
+      ("body_range", Location.to_yojson body_range);
       ("content", `String "TODO" );
     ]
 
-let defs_json d : Yojson.t =
+let defs_json d : Yojson.Safe.t =
   let get_defs d = 
     let (v,tv) = List.partition (fun (_,def) -> match def with Variable _ -> true | Type _ -> false) (Def_map.to_kv_list d) in
     [ 
-      ("variables", `Assoc (List.map (fun (def_id,def) -> (def_id,def_to_json def)) v));
-      ("types", `Assoc (List.map (fun (def_id,def) -> (def_id,def_to_json def)) tv))
+      ("variables", `Assoc (List.map (fun (def_id,def) -> (def_id,def_to_yojson def)) v));
+      ("types", `Assoc (List.map (fun (def_id,def) -> (def_id,def_to_yojson def)) tv))
     ]
   in
   `Assoc (get_defs d)
 
-let scopes_json s : Yojson.t = `List (
+let scopes_json s : Yojson.Safe.t = `List (
   List.map
     (fun scope ->
       let sd = Def_map.to_kv_list scope.env in
       let (variables,types) = List.partition (fun (_,def) -> match def with Type _ -> false | Variable _ -> true) sd in
       let v = List.map (fun (k,_) -> `String k) variables in
       let t = List.map (fun (k,_) -> `String k) types in
-      (`Assoc [("range", Location.pp_json scope.range) ; ("expression_environment", `List v) ; ("type_environment", `List t)])
+      (`Assoc [("range", Location.to_yojson scope.range) ; ("expression_environment", `List v) ; ("type_environment", `List t)])
     )
     s
   )

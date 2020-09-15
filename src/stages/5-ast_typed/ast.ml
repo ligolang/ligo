@@ -132,8 +132,8 @@ and expression = {
   }
 
 and map_kv = {
-    k : expression ;
-    v : expression ;
+    key : expression ;
+    value : expression ;
   }
 
 and look_up = {
@@ -142,7 +142,6 @@ and look_up = {
   }
 
 and expression_label_map = expression label_map
-and map_kv_list = map_kv list
 and expression_list = expression list
 
 and expression_content =
@@ -175,8 +174,6 @@ and application = {
 
 and lambda =  {
     binder: expression_variable ;
-    (* input_type: type_expression option ; *)
-    (* output_type: type_expression option ; *)
     result: expression ;
   }
 
@@ -190,13 +187,13 @@ and let_in = {
 and raw_code = {
   language : string;
   code : expression;
-}
+  }
 
 and recursive = {
   fun_name : expression_variable;
   fun_type : type_expression;
   lambda : lambda;
-}
+  }
 
 and constructor = {
     constructor: label;
@@ -229,7 +226,7 @@ and environment_element_definition =
   | ED_declaration of environment_element_definition_declaration
 
 and environment_element_definition_declaration = {
-    expr: expression ;
+    expression: expression ;
     free_variables: free_variables ;
   }
 
@@ -253,12 +250,12 @@ and type_environment = type_environment_binding list
 and type_environment_binding = {
     type_variable: type_variable ;
     type_: type_expression ;
-}
+  }
 
 and environment = {
   expression_environment: expression_environment ;
   type_environment: type_environment ;
-}
+  }
 
 and named_type_content = {
     type_name : type_variable;
@@ -267,12 +264,13 @@ and named_type_content = {
 
 
 
-
-
 (* Solver types *)
 
 (* typevariable: to_string = (fun s -> Format.asprintf "%a" Var.pp s) *)
 type unionfind = type_variable poly_unionfind
+let unionfind_to_yojson _ = `String "type_varianle unionfind"
+(* TODO : use error monad *)
+let unionfind_of_yojson _ = Error ("can't parse unionfind")
 
 (* core *)
 
@@ -314,12 +312,13 @@ type type_value_ =
 and type_value = {
   tsrc : string;
   t : type_value_ ;
-}
+  }
 
 and p_apply = {
     tf : type_value ;
     targ : type_value ;
-}
+  }
+
 and p_ctor_args = type_value list
 and p_constant = {
     p_ctor_tag : constant_tag ;
@@ -330,9 +329,10 @@ and tv_lmap = type_value label_map
 and p_row = {
     p_row_tag  : row_tag ;
     p_row_args : tv_lmap ;
-}
+  }
  
 and p_constraints = type_constraint list
+
 and p_forall = {
   binder      : type_variable ;
   constraints : p_constraints ;
@@ -366,7 +366,6 @@ and c_access_label = {
     accessor : label ;
     c_access_label_tvar : type_variable ;
   }
-
 and type_constraint = {
   reason : string ;
   c : type_constraint_ ;

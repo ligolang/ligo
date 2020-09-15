@@ -11,7 +11,7 @@ let make_element_binder = fun t s -> make_element t s ED_binder
 
 let make_element_declaration = fun s (expr : expression) ->
   let free_variables = Misc.Free_variables.(expression empty expr) in
-  make_element (get_type_expression expr) s (ED_declaration {expr ; free_variables})
+  make_element (get_type_expression expr) s (ED_declaration {expression=expr ; free_variables})
 
 let empty : t = { expression_environment = [] ; type_environment = [] }
 

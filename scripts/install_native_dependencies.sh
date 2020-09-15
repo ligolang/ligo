@@ -7,7 +7,6 @@ if [ $ID = arch ]
 then
     pacman -Sy
     sudo pacman -S --noconfirm \
-        rakudo \
         libevdev \
         perl \
         pkg-config \
@@ -22,7 +21,6 @@ then
 else
     apt-get update -qq
     apt-get -y -qq install \
-        perl6 \
         libev-dev \
         perl \
         pkg-config \

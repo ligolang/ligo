@@ -1,4 +1,4 @@
-type json = Yojson.t
+type json = Yojson.Safe.t
 
 type 'a display_format =
   | Human_readable : string display_format
@@ -43,4 +43,3 @@ let bind_format :
       | Error e -> error_format.to_json e
       | Ok v -> value_format.to_json v in
     { pp ; to_json }
-

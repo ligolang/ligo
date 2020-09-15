@@ -7,17 +7,24 @@ type string_option = string option
 
 type attribute = {
   inline: bool ;
-} 
+}
+
+let location_of_yojson loc = Location.of_yojson loc
+let location_to_yojson loc = Location.to_yojson loc
+
 type program_loc = declaration location_wrap
 and program = program_loc list
+
 and binder = { 
   var : expression_variable ;
   ty : type_expression ;
   }
+
 and declaration_type = {
     type_binder : type_variable ;
     type_expr : type_expression ;
   }
+
 and declaration_constant = {
     binder : binder;
     attr : attribute ;
@@ -31,6 +38,7 @@ and declaration =
    *   a boolean indicating whether it should be inlined
    *   an expression *)
   | Declaration_constant of declaration_constant
+
 (* | Macro_declaration of macro_declaration *)
 
 and field_label_map = row_element label_map
@@ -60,7 +68,7 @@ and row_element = {
   }
 
 and type_expression = {
-  content  : type_content ;
+  type_content  : type_content ;
   sugar    : sugar_type_expression_option ;
   location : location ;
   }
@@ -89,6 +97,7 @@ and expression_content =
   | E_ascription of ascription
 
 and expression_list = expression list
+
 and constant = {
     cons_name: constant' ;
     arguments: expression_list ;
@@ -159,6 +168,7 @@ and match_variant = {
     proj : expression_variable ;
     body : expression ;
   }
+
 and match_variant_list = match_variant list
 and matching_expr =
   | Match_list of match_list
@@ -174,37 +184,3 @@ and ascription = {
     anno_expr: expression ;
     type_annotation: type_expression ;
   }
-
-and env_def_declaration = {
-  expr : expression ;
-  free_variables : free_variables ;
-}
-and environment_element_definition =
-  | ED_binder
-  | ED_declaration of env_def_declaration
-
-and free_variables = expression_variable list
-
-and environment_element = {
-    type_value: type_expression ;
-    source_environment: environment ;
-    definition: environment_element_definition ;
-  }
-
-and expr_env_binding = {
-    binder : expression_variable ;
-    element : environment_element ;
-  }
-
-and expr_environment = expr_env_binding list
-
-and type_env_binding = {
-    binder : type_variable ;
-    element : type_expression ;
-}
-and type_environment = type_env_binding list
-
-and environment = {
-  expr_environment : expr_environment ;
-  type_environment : type_environment ;
-}

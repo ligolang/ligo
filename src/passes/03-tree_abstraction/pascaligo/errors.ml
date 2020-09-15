@@ -83,7 +83,7 @@ Other patterns in case clauses are not (yet) supported. @]"
   )
 
 
-let error_jsonformat : abs_error -> Yojson.t = fun a ->
+let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;

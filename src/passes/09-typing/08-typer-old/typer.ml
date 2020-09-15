@@ -97,7 +97,7 @@ and type_match : (environment -> I.expression -> (O.expression , typer_error) re
 
 and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, typer_error) result =
   let return tv' = ok (make_t ~loc:t.location tv' (Some t)) in
-  match t.content with
+  match t.type_content with
   | T_arrow {type1;type2} ->
       let%bind type1 = evaluate_type e type1 in
       let%bind type2 = evaluate_type e type2 in

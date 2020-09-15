@@ -47,7 +47,7 @@ let rec type_declaration env state : I.declaration -> (environment * _ O'.typer_
 *)
 and evaluate_type : environment -> I.type_expression -> (O.type_expression, typer_error) result = fun e t ->
   let return tv' = ok (make_t ~loc:t.location tv' (Some t)) in
-  match t.content with
+  match t.type_content with
   | T_arrow {type1;type2} ->
     let%bind type1 = evaluate_type e type1 in
     let%bind type2 = evaluate_type e type2 in
@@ -447,7 +447,7 @@ let print_env_state_node (node_printer : Format.formatter -> 'a -> unit) ((env,s
   ignore node; (* TODO *)
   Printf.printf "%s" @@
     Format.asprintf "{ \"ENV\": %a,\n\"STATE\": %a,\n\"NODE\": %a\n},\n"
-      Ast_typed.PP_json.environment env
+      Yojson.Safe.pp (Ast_typed.Yojson.environment env)
       Typesystem.Solver_types.json_typer_state state
       node_printer node
 
@@ -480,7 +480,7 @@ let type_and_subst
       let () = ignore tv (* I think there is an issue where the tv is stored twice (as a key and in the element itself) *) in
       let%bind (expr : O.type_content) = trace_option (corner_case "wrong constant tag") @@
         Typesystem.Core.type_expression'_of_simple_c_constant (c_tag , (List.map (fun s -> O.t_variable s) tv_list)) in
-      let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "SUBST %a (%a is %a)\n" Var.pp variable Var.pp root Ast_typed.PP_generic.type_content expr) in
+      let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "SUBST %a (%a is %a)\n" Var.pp variable Var.pp root Ast_typed.PP.type_content expr) in
       ok @@ expr
     in
     apply_substs ~substs node
@@ -495,7 +495,7 @@ let type_and_subst
 let type_program (p : I.program) : (O.program * _ O'.typer_state, typer_error) result =
   let empty_env = DEnv.default in
   let empty_state = Solver.initial_state in
-  type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.program\"") Ast_typed.PP_json.program (empty_env , empty_state , p) Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_env
+  type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.program\"") (fun ppf p -> Format.fprintf ppf "%a" Yojson.Safe.pp (Ast_typed.Yojson.program p)) (empty_env , empty_state , p) Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_env
 
 (* Change the signature of type_expression for compatibility with type_and_subst *)
 let type_expression_returns_env : (environment * _ O'.typer_state * I.expression) -> (environment * _ O'.typer_state * O.expression, typer_error) result =
@@ -505,7 +505,7 @@ let type_expression_returns_env : (environment * _ O'.typer_state * I.expression
 
 let type_expression_subst (env : environment) (state : _ O'.typer_state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.expression * _ O'.typer_state , typer_error) result =
   let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
-  type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.expression\"") Ast_typed.PP_json.expression (env , state , e) Typesystem.Misc.Substitution.Pattern.s_expression type_expression_returns_env
+  type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.expression\"") (fun ppf p -> Format.fprintf ppf "%a" Yojson.Safe.pp (Ast_typed.Yojson.expression p)) (env , state , e) Typesystem.Misc.Substitution.Pattern.s_expression type_expression_returns_env
 
 let untype_expression       = Untyper.untype_expression
 

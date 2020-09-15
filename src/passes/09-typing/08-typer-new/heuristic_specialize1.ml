@@ -53,7 +53,7 @@ let propagator : (output_specialize1 , unit, typer_error) propagator =
       t = P_apply { tf   = { tsrc = "solver: propagator: specialize1 tf"   ; t = P_forall a.forall            };
                     targ = { tsrc = "solver: propagator: specialize1 targ" ; t = P_variable fresh_existential }} } in
   let (reduced, new_constraints) = Typelang.check_applied @@ Typelang.type_level_eval apply in
-  (if Ast_typed.Debug.debug_new_typer then Format.printf "apply = %a\nb = %a\nreduced = %a\nnew_constraints = [\n%a\n]\n" Ast_typed.PP_generic.type_value apply Ast_typed.PP_generic.c_constructor_simpl b Ast_typed.PP_generic.type_value reduced (PP_helpers.list_sep Ast_typed.PP_generic.type_constraint (fun ppf () -> Format.fprintf ppf " ;\n")) new_constraints);
+  (if Ast_typed.Debug.debug_new_typer then Format.printf "apply = %a\nb = %a\nreduced = %a\nnew_constraints = [\n%a\n]\n" Ast_typed.PP.type_value apply Ast_typed.PP.c_constructor_simpl b Ast_typed.PP.type_value reduced (PP_helpers.list_sep Ast_typed.PP.type_constraint (fun ppf () -> Format.fprintf ppf " ;\n")) new_constraints);
   let eq1 = c_equation { tsrc = "solver: propagator: specialize1 eq1" ; t = P_variable b.tv } reduced "propagator: specialize1" in
   let eqs = eq1 :: new_constraints in
   ok ((), eqs)
@@ -63,7 +63,7 @@ let heuristic =
     {
       selector ;
       propagator ;
-      printer = Ast_typed.PP_generic.output_specialize1 ;
+      printer = Ast_typed.PP.output_specialize1 ;
       comparator = Solver_should_be_generated.compare_output_specialize1 ;
       initial_private_storage = () ;
     }
