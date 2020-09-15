@@ -26,7 +26,7 @@ export class CompileAction extends CancellableAction {
         }
 
         dispatch({
-          ...new ChangeOutputAction(michelsonCode.result, Command.Compile)
+          ...new ChangeOutputAction(michelsonCode.result, Command.Compile, false)
         });
       } catch (ex) {
         if (this.isCancelled()) {
@@ -35,7 +35,8 @@ export class CompileAction extends CancellableAction {
         dispatch({
           ...new ChangeOutputAction(
             `Error: ${getErrorMessage(ex)}`,
-            Command.Compile
+            Command.Compile,
+            true
           )
         });
       }

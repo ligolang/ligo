@@ -97,7 +97,7 @@ export class DeployAction extends CancellableAction {
           ...new ChangeContractAction(contract.address, Command.Deploy)
         });
         dispatch({
-          ...new ChangeOutputAction(contract.storage, Command.Deploy)
+          ...new ChangeOutputAction(contract.storage, Command.Deploy, false)
         });
       } catch (ex) {
         if (this.isCancelled()) {
@@ -109,7 +109,8 @@ export class DeployAction extends CancellableAction {
         dispatch({
           ...new ChangeOutputAction(
             `Error: ${getErrorMessage(ex)}`,
-            Command.Deploy
+            Command.Deploy,
+            true
           )
         });
       }

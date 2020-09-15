@@ -62,7 +62,7 @@ const RunButton = styled.div`
   background-color: var(--orange);
 
   &:hover {
-    box-shadow: 1px 3px 10px 0px rgba(153, 153, 153, 0.4);
+    box-shadow: var(--box-shadow);
   }
 `;
 
@@ -70,7 +70,7 @@ const SelectCommand = styled(Select)`
   flex: 2;
 
   &:hover {
-    box-shadow: 1px 3px 10px 0px rgba(153, 153, 153, 0.4);
+    box-shadow: var(--box-shadow);
   }
 `;
 

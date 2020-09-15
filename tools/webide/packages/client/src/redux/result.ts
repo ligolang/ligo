@@ -9,13 +9,15 @@ export interface ResultState {
   command: Command;
   output: string;
   contract: string;
+  error: boolean;
 }
 
 export class ChangeOutputAction {
   public readonly type = ActionType.ChangeOutput;
   constructor(
     public output: ResultState['output'],
-    public command: ResultState['command']
+    public command: ResultState['command'],
+    public error: ResultState['error'] 
   ) {}
 }
 
@@ -32,7 +34,8 @@ type Action = ChangeOutputAction | ChangeContractAction;
 const DEFAULT_STATE: ResultState = {
   command: Command.Compile,
   output: '',
-  contract: ''
+  contract: '',
+  error: false
 };
 
 export default (state = DEFAULT_STATE, action: Action): ResultState => {
@@ -41,7 +44,8 @@ export default (state = DEFAULT_STATE, action: Action): ResultState => {
       return {
         ...state,
         output: action.output,
-        command: action.command
+        command: action.command,
+        error: action.error
       };
     case ActionType.ChangeContract:
       return {

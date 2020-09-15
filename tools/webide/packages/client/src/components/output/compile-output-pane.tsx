@@ -6,7 +6,6 @@ import { AppState } from '../../redux/app';
 import { ResultState } from '../../redux/result';
 import { OutputToolbarComponent } from './output-toolbar';
 import { copyOutput, downloadOutput } from './utils';
-import { CombSpinner } from 'react-spinners-kit';
 
 const Container = styled.div<{ visible?: boolean }>`
   display: flex;

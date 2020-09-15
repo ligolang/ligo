@@ -10,6 +10,7 @@ const Container = styled.div`
 `;
 
 const Button = styled.a`
+  z-index: 1000;
   margin: 0.1em;
   width: 1.5em;
   height: 1.5em;
