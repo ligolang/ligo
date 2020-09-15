@@ -6,6 +6,7 @@ const Container = styled.div`
   align-items: center;
   padding: 0.2em 0.5em;
   z-index: 3;
+  background-color: var(--blue_trans1);
 `;
 
 export const Group = styled.div`

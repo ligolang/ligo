@@ -11,39 +11,24 @@ const Container = styled.div`
 
 const Header = styled.div`
   display: flex;
-  border-bottom: 5px solid var(--blue_trans1);
   min-height: 2.5em;
   margin-left: 15px;
+  align-self: left;
+  font-weight: 600;
 `;
 
 const Label = styled.span`
   user-select: none;
   flex: 1;
   display: flex;
-  justify-content: center;
   align-items: center;
+  cursor: 
 `;
 
 const Tab = styled.div<{ selected?: boolean }>`
   flex: 1;
   display: flex;
   flex-direction: column;
-`;
-
-const Underline = styled.div<{ selectedTab: number }>`
-  position: relative;
-  top: -5px;
-  background-color: var(--orange);
-  height: 5px;
-  margin-bottom: -5px;
-  margin-left: 15px;
-  width: 100%;
-  transition: transform 0.2s ease-in;
-
-  ${props =>
-    css`
-      transform: translateX(calc(${props.selectedTab} * 100%));
-    `}
 `;
 
 const Content = styled.div`
@@ -73,7 +58,6 @@ export const TabsPanelComponent = () => {
           </Tab>
         ))}
       </Header>
-      <Underline selectedTab={0}></Underline>
       <Content>
         <ConfigureTabComponent
           selected={true}

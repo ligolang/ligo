@@ -35,14 +35,14 @@ const Label = styled.div<{ visible?: boolean }>`
   padding-left: 0.5em;
 
   :hover {
-    position: absolute;
     background-color: white;
     border-radius: var(--border_radius);
-    height: 2em;
 
     border: none;
     outline: none;
-    width: 15em;
+    width: auto;
+    margin-right: 0.5em;
+    padding-right: 0.5em;
   }
 
   ${props =>

@@ -6,6 +6,7 @@ import { AppState } from '../../redux/app';
 import { LoadingState } from '../../redux/loading';
 import { ResultState } from '../../redux/result';
 import { Command } from '../../redux/types';
+import { Statusbar } from '../statusBar';
 import { CompileOutputPane } from './compile-output-pane';
 import { DeployOutputPane } from './deploy-output-pane';
 import { GenerateDeployScriptOutputPane } from './generate-deploy-script-output-pane';
@@ -20,8 +21,7 @@ const Container = styled.div<{ visible?: boolean }>`
   minHeight: "50px";
   overflow-x: hidden; 
   overflow-y: auto; 
-  border-top: 0.3rem solid var(--orange);
-  background-color: var(--orange_trans);
+  background-color: white;
 
   font-family: Menlo, Monaco, 'Courier New', monospace;
   display: flex;
@@ -60,20 +60,24 @@ export const OutputTab = (props: {
     visible = true
   }
 
+  const error = useSelector<AppState, ResultState['error']>(
+    state => state.result.error
+  );
+  
   const renderResult = () => {
     if (loading) {
-      return <Loading onCancel={props.onCancel}></Loading>;
+      return <><Statusbar error={false} /><Loading onCancel={props.onCancel}></Loading></>;
     } else if (!output) {
       return <></>;
     } else if (command === Command.Compile) {
       return <CompileOutputPane></CompileOutputPane>;
     } else if (command === Command.Deploy) {
-      return <DeployOutputPane></DeployOutputPane>;
+      return <><Statusbar error={error} /><DeployOutputPane></DeployOutputPane></>;
     } else if (command === Command.GenerateDeployScript) {
       return <GenerateDeployScriptOutputPane></GenerateDeployScriptOutputPane>;
     }
 
-    return <OutputPane></OutputPane>;
+    return <><Statusbar error={error}/><OutputPane></OutputPane></>;
   };
 
   return <Container visible={visible}>{renderResult()}</Container>;

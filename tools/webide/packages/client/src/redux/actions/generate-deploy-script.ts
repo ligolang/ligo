@@ -93,7 +93,7 @@ export class GenerateDeployScriptAction extends CancellableAction {
   --burn-cap ${estimate.burnFeeMutez / 1000000}`;
 
         dispatch({
-          ...new ChangeOutputAction(output, Command.GenerateDeployScript)
+          ...new ChangeOutputAction(output, Command.GenerateDeployScript, false)
         });
       } catch (ex) {
         if (this.isCancelled()) {
@@ -102,7 +102,8 @@ export class GenerateDeployScriptAction extends CancellableAction {
         dispatch({
           ...new ChangeOutputAction(
             `Error: ${getErrorMessage(ex)}`,
-            Command.GenerateDeployScript
+            Command.GenerateDeployScript,
+            true
           )
         });
       }

@@ -26,7 +26,7 @@ export class DryRunAction extends CancellableAction {
         if (this.isCancelled()) {
           return;
         }
-        dispatch({ ...new ChangeOutputAction(result.output, Command.DryRun) });
+        dispatch({ ...new ChangeOutputAction(result.output, Command.DryRun, false) });
       } catch (ex) {
         if (this.isCancelled()) {
           return;
@@ -34,7 +34,8 @@ export class DryRunAction extends CancellableAction {
         dispatch({
           ...new ChangeOutputAction(
             `Error: ${getErrorMessage(ex)}`,
-            Command.DryRun
+            Command.DryRun,
+            true
           )
         });
       }

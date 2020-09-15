@@ -30,7 +30,7 @@ export class EvaluateValueAction extends CancellableAction {
         }
 
         dispatch({
-          ...new ChangeOutputAction(result.code, Command.EvaluateValue)
+          ...new ChangeOutputAction(result.code, Command.EvaluateValue, false)
         });
       } catch (ex) {
         if (this.isCancelled()) {
@@ -39,7 +39,8 @@ export class EvaluateValueAction extends CancellableAction {
         dispatch({
           ...new ChangeOutputAction(
             `Error: ${getErrorMessage(ex)}`,
-            Command.EvaluateValue
+            Command.EvaluateValue,
+            true
           )
         });
       }
