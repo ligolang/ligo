@@ -20,7 +20,7 @@ let error_ppformat : display_format:string display_format ->
         s
   )
 
-let error_jsonformat : purification_error -> Yojson.t = fun a ->
+let error_jsonformat : purification_error -> Yojson.Safe.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;

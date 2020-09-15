@@ -103,7 +103,7 @@ Other forms of pattern matching are not (yet) supported. @]"
   )
 
 
-let error_jsonformat : abs_error -> Yojson.t = fun a ->
+let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;

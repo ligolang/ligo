@@ -126,6 +126,41 @@ let make ~byte ~point_num ~point_bol =
           sprintf "%i:%i" self#line horizontal
 end
 
+
+let position_to_yojson x =
+  `Assoc
+    ["pos_fname", `String x.Lexing.pos_fname;
+      "pos_lnum", `Int x.Lexing.pos_lnum;
+      "pos_bol", `Int x.Lexing.pos_bol;
+      "pos_cnum", `Int x.Lexing.pos_cnum]
+
+let position_of_yojson x =
+  match x with
+  | `Assoc
+    ["pos_fname", `String pos_fname;
+      "pos_lnum", `Int pos_lnum;
+      "pos_bol", `Int pos_bol;
+      "pos_cnum", `Int pos_cnum] ->
+      Ok (Lexing.{pos_fname; pos_lnum; pos_bol; pos_cnum})
+  | _ ->
+      Utils.error_yojson_format "{pos_fname: string, pos_lnum: int, pos_bol: int, pos_cnum: int}"
+
+let to_yojson x =
+  `Assoc
+    ["byte", position_to_yojson x#byte;
+      "point_num", `Int (x#point_num);
+      "point_bol", `Int (x#point_bol)
+    ]
+
+let of_yojson x =
+  match x with
+  | `Assoc ["byte", byte;
+            "point_num", `Int point_num;
+            "point_bol", `Int point_bol] ->
+      Stdlib.Result.map (fun byte -> make ~byte ~point_num ~point_bol) (position_of_yojson byte)
+  | _ ->
+      Utils.error_yojson_format "{byte: Lexing.position, point_num: int, point_bol: int}\nwhere Lexing.position is {pos_fname: string, pos_lnum: int, pos_bol: int, pos_cnum: int}"
+
 let from_byte byte =
   let point_num = byte.Lexing.pos_cnum
   and point_bol = byte.Lexing.pos_bol

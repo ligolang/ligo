@@ -53,7 +53,7 @@ let select_and_propagate : 'old_input 'selector_output 'private_storage . ('old_
       if Ast_typed.Debug.debug_new_typer && false then
       let s str = (fun ppf () -> Format.fprintf ppf str) in
       Format.printf "propagator produced\nnew_constraints = %a\n"
-        (PP_helpers.list_sep (PP_helpers.list_sep Ast_typed.PP_generic.type_constraint (s "\n")) (s "\n"))
+        (PP_helpers.list_sep (PP_helpers.list_sep Ast_typed.PP.type_constraint (s "\n")) (s "\n"))
         new_constraints
     in
     ok (already_selected , private_storage , List.flatten new_constraints)

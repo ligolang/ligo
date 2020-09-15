@@ -48,7 +48,7 @@ let error_ppformat : display_format:string display_format ->
       Format.pp_print_string f s ;
   )
 
-let error_jsonformat : parser_error -> Yojson.t = fun a ->
+let error_jsonformat : parser_error -> Yojson.Safe.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;

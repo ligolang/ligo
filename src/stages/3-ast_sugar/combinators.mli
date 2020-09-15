@@ -78,7 +78,7 @@ val e_recursive : ?loc:Location.t -> expression_variable -> type_expression -> l
 val e_let_in : ?loc:Location.t -> ( expression_variable * type_expression ) -> bool -> bool -> expression -> expression -> expression
 val e_raw_code : ?loc:Location.t -> string -> expression -> expression
 
-val e_record   : ?loc:Location.t -> expr label_map -> expression
+val e_record   : ?loc:Location.t -> expression label_map -> expression
 val e_accessor : ?loc:Location.t -> expression -> access list -> expression
 val e_update   : ?loc:Location.t -> expression -> access list -> expression -> expression
 
@@ -91,10 +91,10 @@ val e_cond: ?loc:Location.t -> expression -> expression -> expression -> express
 val e_sequence : ?loc:Location.t -> expression -> expression -> expression
 val e_skip : ?loc:Location.t -> unit -> expression
 
-val e_list : ?loc:Location.t -> expression list -> expression
-val e_set : ?loc:Location.t -> expression list -> expression
-val e_map : ?loc:Location.t -> ( expression * expression ) list -> expression
-val e_big_map : ?loc:Location.t -> ( expr * expr ) list -> expression
+val e_list    : ?loc:Location.t -> expression list -> expression
+val e_set     : ?loc:Location.t -> expression list -> expression
+val e_map     : ?loc:Location.t -> ( expression * expression ) list -> expression
+val e_big_map : ?loc:Location.t -> ( expression * expression ) list -> expression
 
 val e_matching : ?loc:Location.t -> expression -> matching_expr -> expression
 

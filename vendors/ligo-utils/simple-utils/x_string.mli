@@ -10,3 +10,6 @@ type t =
 val compare : ?compare:(string->string->int) -> t -> t -> int
 val pp : Format.formatter -> t -> unit
 val extract : t -> string
+
+val to_yojson : t -> Yojson.Safe.t
+val of_yojson : Yojson.Safe.t -> (t,string) result

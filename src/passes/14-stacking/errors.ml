@@ -56,7 +56,7 @@ let error_ppformat : display_format:string display_format ->
         Michelson.pp value
   )
 
-let error_jsonformat : stacking_error -> Yojson.t = fun a ->
+let error_jsonformat : stacking_error -> Yojson.Safe.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;

@@ -143,11 +143,11 @@ let rec map_expression : 'err exp_mapper -> expression -> (expression , 'err) re
   | E_literal _ | E_variable _ | E_raw_code _ as e' -> return e'
 
 and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_expression , 'err) result =
-    fun f ({content ; sugar; location } as te) ->
+    fun f ({type_content ; sugar; location } as te) ->
   let self = map_type_expression f in
   let%bind te' = f te in
-  let return content = ok @@ ({ content; sugar; location}: type_expression) in
-  match content with
+  let return type_content = ok @@ ({ type_content; sugar; location}: type_expression) in
+  match type_content with
   | T_sum temap ->
     let%bind temap' = bind_map_lmap_t self temap in
     return @@ (T_sum temap')

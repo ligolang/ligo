@@ -81,7 +81,7 @@ and type_constraint_simpl : type_constraint -> type_constraint_simpl list =
     let fresh_vars = List.map (fun _ -> Core.fresh_type_variable ()) args in
     let fresh_eqns = List.map (fun (v,t) -> c_equation { tsrc = "solver: normalizer: split_constant" ; t = P_variable v } t "normalizer: split_constant") (List.combine fresh_vars args) in
     let recur = List.map type_constraint_simpl fresh_eqns in
-    [SC_Constructor {tv=a;c_tag;tv_list=fresh_vars;reason_constr_simpl=Format.asprintf "normalizer: split constant %a = %a (%a)" Var.pp a Ast_typed.PP_generic.constant_tag c_tag (PP_helpers.list_sep Ast_typed.PP_generic.type_value (fun ppf () -> Format.fprintf ppf ", ")) args}] @ List.flatten recur in
+    [SC_Constructor {tv=a;c_tag;tv_list=fresh_vars;reason_constr_simpl=Format.asprintf "normalizer: split constant %a = %a (%a)" Var.pp a Ast_typed.PP.constant_tag c_tag (PP_helpers.list_sep Ast_typed.PP.type_value (fun ppf () -> Format.fprintf ppf ", ")) args}] @ List.flatten recur in
   let split_row a r_tag args = 
     let aux const _ v =
       let var = Core.fresh_type_variable () in
@@ -90,7 +90,7 @@ and type_constraint_simpl : type_constraint -> type_constraint_simpl list =
     in
     let fresh_eqns, fresh_vars = LMap.fold_map aux [] args in
     let recur = List.map type_constraint_simpl fresh_eqns in
-    [SC_Row {tv=a;r_tag;tv_map=fresh_vars;reason_row_simpl=Format.asprintf "normalizer: split constant %a = %a (%a)" Var.pp a Ast_typed.PP_generic.row_tag r_tag (Ast_typed.PP.record_sep Ast_typed.PP_generic.type_value (fun ppf () -> Format.fprintf ppf ", ")) args}] @ List.flatten recur in
+    [SC_Row {tv=a;r_tag;tv_map=fresh_vars;reason_row_simpl=Format.asprintf "normalizer: split constant %a = %a (%a)" Var.pp a Ast_typed.PP.row_tag r_tag (Ast_typed.PP.record_sep Ast_typed.PP.type_value (fun ppf () -> Format.fprintf ppf ", ")) args}] @ List.flatten recur in
   let gather_forall a forall = [SC_Poly { tv=a; forall ; reason_poly_simpl="normalizer: gather_forall"}] in
   let gather_alias a b = [SC_Alias { a ; b ; reason_alias_simpl="normalizer: gather_alias"}] in
   let reduce_type_app a b =

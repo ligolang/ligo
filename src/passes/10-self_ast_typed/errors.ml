@@ -104,7 +104,7 @@ One of the following patterns is expected:
         Location.pp loc
   )
 
-let error_jsonformat : self_ast_typed_error -> Yojson.t = fun a ->
+let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;

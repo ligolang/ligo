@@ -5,6 +5,7 @@
     simple-utils
     zarith
     hex
+    tezos-utils
   )
   (inline_tests)
   (preprocess

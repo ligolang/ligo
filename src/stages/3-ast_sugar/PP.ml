@@ -115,10 +115,10 @@ and accessor ppf a =
     | Access_record s -> fprintf ppf "%s" s
     | Access_map e    -> fprintf ppf "%a" expression e
 
-and assoc_expression ppf : expr * expr -> unit =
+and assoc_expression ppf : expression * expression -> unit =
  fun (a, b) -> fprintf ppf "%a -> %a" expression a expression b
 
-and single_record_patch ppf ((p, expr) : label * expr) =
+and single_record_patch ppf ((p, expr) : label * expression) =
   fprintf ppf "%a <- %a" label p expression expr
 
 and matching_variant_case : type a . (_ -> a -> unit) -> _ -> (label * expression_variable) * a -> unit =

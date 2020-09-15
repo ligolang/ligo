@@ -1,22 +1,3 @@
-(rule
-  (targets generated_fold.ml)
-  (deps ../adt_generator/Parser.pm ../adt_generator/fold.raku ast.ml ../common/enums.ml)
-  (action (run perl6 -I ../adt_generator/ ../adt_generator/fold.raku ast.ml generated_fold.ml))
-  (mode (promote (until-clean) (only *)))
-)
-(rule
-  (targets generated_o.ml)
-  (deps ../adt_generator/Parser.pm ../adt_generator/combinators.raku ast.ml ../common/enums.ml)
-  (action (run perl6 -I ../adt_generator/ ../adt_generator/combinators.raku ast.ml generated_o.ml))
-  (mode (promote (until-clean) (only *)))
-)
-(rule
-  (targets generated_map.ml)
-  (deps ../adt_generator/Parser.pm ../adt_generator/fold_map.raku ast.ml ../common/enums.ml)
-  (action (run perl6 -I ../adt_generator/ ../adt_generator/fold_map.raku ast.ml Generated_o generated_map.ml))
-  (mode (promote (until-clean) (only *)))
-)
-
 (library
   (name ast_typed)
   (public_name ligo.ast_typed)
@@ -24,7 +5,6 @@
     simple-utils
     ast_core ; Is that a good idea?
     stage_common
-    adt_generator
     UnionFind
   )
   (preprocess

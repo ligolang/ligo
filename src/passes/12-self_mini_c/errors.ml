@@ -26,7 +26,7 @@ let error_ppformat : display_format:string display_format ->
     | `Self_mini_c_aggregation -> Format.fprintf f "Invalid type for entrypoint.@.An entrypoint must of type \"parameter * storage -> operations list * storage\"."
   )
 
-let error_jsonformat : self_mini_c_error -> Yojson.t = fun a ->
+let error_jsonformat : self_mini_c_error -> Yojson.Safe.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;

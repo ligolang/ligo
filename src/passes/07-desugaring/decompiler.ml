@@ -12,7 +12,7 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, des
   match te.sugar with 
     Some te -> ok @@ te
   | None ->
-    match te.content with
+    match te.type_content with
       | O.T_sum sum -> 
         let%bind sum = 
           Stage_common.Helpers.bind_map_lmap (fun v ->

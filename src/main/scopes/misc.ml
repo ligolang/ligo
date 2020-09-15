@@ -39,7 +39,7 @@ let make_v_def_from_core : with_types:bool -> string -> string -> ('a Var.t) -> 
 let make_v_def_option_type : with_types:bool -> string -> string -> ('a Var.t) -> Ast_core.type_expression -> Location.t -> Location.t -> def =
   fun ~with_types source_file syntax name maybe_typed range body_range ->
     let name = get_binder_name name in
-    match maybe_typed.content with
+    match maybe_typed.type_content with
     | T_wildcard -> make_v_def ~with_types name None range body_range
     | _ ->
       let t' = to_option @@

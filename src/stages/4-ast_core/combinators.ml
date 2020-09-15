@@ -3,7 +3,7 @@ module Option = Simple_utils.Option
 
 module SMap = Map.String
 
-let make_t ?(loc = Location.generated) ?sugar content = ({content; sugar; location=loc}: type_expression)
+let make_t ?(loc = Location.generated) ?sugar type_content = ({type_content; sugar; location=loc}: type_expression)
 
 let tuple_to_record lst =
   let aux (i,acc) el = (i+1,(string_of_int i, el)::acc) in

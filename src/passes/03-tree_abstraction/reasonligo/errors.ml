@@ -61,7 +61,10 @@ Other forms of pattern matching are not (yet) supported. @]"
         Location.pp_lift (Raw.type_expr_to_region te)
     | `Concrete_reasonligo_unsupported_deep_list_pattern cons ->
       Format.fprintf f
-        "@[<hv>%a@.Invalid pattern matching. @.At this point, one of the following is expected: 
+        "@[<hv>%a@.Invalid ation.pp_lift @@ block.region
+  )
+
+pattern matching. @.At this point, one of the following is expected: 
   * an empty list pattern \"[]\";
   * a cons list pattern \"head :: tail\".@]"
         Location.pp_lift @@ Raw.pattern_to_region cons
@@ -103,7 +106,7 @@ Other forms of pattern matching are not (yet) supported. @]"
   )
 
 
-let error_jsonformat : abs_error -> Yojson.t = fun a ->
+let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;

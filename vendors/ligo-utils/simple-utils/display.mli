@@ -1,4 +1,4 @@
-type json = Yojson.t
+type json = Yojson.Safe.t
 
 type 'a display_format =
   | Human_readable : string display_format

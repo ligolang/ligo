@@ -169,9 +169,9 @@ and for_each = {
 }
 
 and collect_type =
- | Map
- | Set
- | List
+  | Map
+  | Set
+  | List
 
 and while_loop = {
   condition : expression;

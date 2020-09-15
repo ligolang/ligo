@@ -140,7 +140,7 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_decompile_typed e -> Typer.Errors.error_ppformat ~display_format f  e
   )
   
-let rec error_jsonformat : Types.all -> Yojson.t = fun a ->
+let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;

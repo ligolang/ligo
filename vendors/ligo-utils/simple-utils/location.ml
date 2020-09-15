@@ -12,22 +12,26 @@ type t =
   | File of Region.t (* file_location *)
   | Virtual of virtual_location
 
+let to_yojson = function
+  | File reg  -> `List [`String "File"; Region.to_yojson reg]
+  | Virtual v -> `List [`String "Virtual"; `String v]
+let of_yojson = function
+  | `List [`String "File"; reg] ->
+    let reg = Region.of_yojson reg in
+    (match reg with
+    | Ok reg -> Ok (File reg)
+    | _ ->
+      Utils.error_yojson_format "File Region.t"
+    )
+  | `List [`String "Virtual"; `String v] ->
+    Ok (Virtual v)
+  | _ ->
+    Utils.error_yojson_format "File Region.t | Virtual String"
+
 let pp = fun ppf t ->
   match t with
   | Virtual _s -> Format.fprintf ppf ""
   | File f -> Format.fprintf ppf "%s" (f#to_string `Point)
-
-let pp_json = fun t ->
-  match t with
-  | Virtual s -> `Assoc ["virtual" , `String s]
-  | File f ->
-    `Assoc [
-      ("file", `String f#file) ;
-      ("from_row", `Int f#start#line) ;
-      ("from_col", `Int (f#start#column `Point)) ;
-      ("to_row", `Int f#stop#line) ;
-      ("to_col", `Int (f#stop#column `Point)) ;
-    ]
 
 let compare a b = match a,b with
   | (File a, File b) -> Region.compare a b
@@ -52,6 +56,22 @@ type 'a wrap = {
   wrap_content : 'a ;
   location : t ;
 }
+
+let wrap_to_yojson f {wrap_content;location} = 
+  `Assoc [("wrap_content", f wrap_content); ("location",to_yojson location)]
+let wrap_of_yojson f = function
+  | `Assoc [("wrap_content", wrap_content); ("location",location)] ->
+    let wrap_content = f wrap_content in
+    let location = of_yojson location in
+    (match (wrap_content,location) with
+    | Ok wrap_content, Ok location ->
+      Ok {wrap_content;location}
+    | _ ->
+     Utils.error_yojson_format "{wrap_content: 'a; location: location}"
+     )
+  | _ -> 
+     Utils.error_yojson_format "{wrap_content: 'a; location: location}"
+
 
 let compare_wrap ~compare:compare_content { wrap_content = wca ; location = la } { wrap_content = wcb ; location = lb } =
   match compare_content wca wcb with

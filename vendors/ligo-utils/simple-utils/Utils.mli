@@ -75,6 +75,9 @@ val trace : string -> out_channel option -> unit
 
 val highlight : string -> unit
 
+(* When failing to parse a specifed JSON format *)
+val error_yojson_format : string -> ('a,string) result
+	
 (* Working with optional values *)
 
 module Option :
