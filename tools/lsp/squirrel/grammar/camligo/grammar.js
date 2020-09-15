@@ -229,7 +229,7 @@ module.exports = grammar({
       "fun",
       repeat1(field("arg", $._paren_pattern)),
       "->",
-      field("body", $._expr)
+      field("body", $._program)
     ),
 
     list_expr: $ => seq(
