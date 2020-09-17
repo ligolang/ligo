@@ -3,6 +3,9 @@
 -- | The definition of type as is represented in ligo JSON output
 module Cli.Json
   ( LigoScope (..)
+  , LigoDefinitions (..)
+  , LigoDefinitionsInner (..)
+  , LigoDefinitionScope (..)
   , LigoTypeFull (..)
   , LigoTypeContent (..)
   , LigoTypeContentInner (..)
@@ -29,12 +32,40 @@ import Range
 -- Types
 ----------------------------------------------------------------------------
 
+-- | Whole ligo `get-scope` output
+data LigoDefinitions = LigoDefinitions
+  { _ldDefinitions :: LigoDefinitionsInner
+  , _ldScopes :: [LigoScope]
+  }
+  deriving stock (Generic, Show)
+
+-- | First part under `"variables"` constraint
+data LigoDefinitionsInner = LigoDefinitionsInner
+  { _ldiVariables :: HM.HashMap Text LigoDefinitionScope
+  }
+  deriving stock (Generic, Show)
+
+-- | Scope that goes as a member of the list under `"scopes"` constraint
+-- ```
+-- { "scopes" : [LigoScope] }
+-- ```
 data LigoScope = LigoScope
-  { _lsName :: Text
-  , _lsRange :: LigoRange
-  , _lsBodyRange :: LigoRange
-  , _lsT :: LigoTypeFull
-  , _lsReferences :: Value
+  { _lsRange :: LigoRange
+  , _lsExpressionEnvironment :: [Text]
+  , _lsTypeEnvironment :: Value -- TODO: currently ligo always outputs an empty list
+  }
+  deriving stock (Generic, Show)
+
+-- | Definition declaration that goes from `"definitions"` constraint
+-- ```
+-- { "definitions" { a#n : LigoDefinitionScope } }
+-- ```
+data LigoDefinitionScope = LigoDefinitionScope
+  { _ldsName :: Text
+  , _ldsRange :: LigoRange
+  , _ldsBodyRange :: LigoRange
+  , _ldsT :: Maybe LigoTypeFull
+  , _ldsReferences :: Value
   }
   deriving stock (Generic, Show)
 
@@ -120,11 +151,29 @@ data LigoRange
 -- Instances
 ----------------------------------------------------------------------------
 
+instance FromJSON LigoDefinitions where
+  parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = prepareField 2}
+
+instance ToJSON LigoDefinitions where
+  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 2}
+
+instance FromJSON LigoDefinitionsInner where
+  parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = prepareField 3}
+
+instance ToJSON LigoDefinitionsInner where
+  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
+
 instance FromJSON LigoScope where
   parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = prepareField 2}
 
 instance ToJSON LigoScope where
   toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 2}
+
+instance FromJSON LigoDefinitionScope where
+  parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = prepareField 3}
+
+instance ToJSON LigoDefinitionScope where
+  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
 
 -- TODO: We trust ligo compiler output for printing even number
 -- of array elements.
@@ -225,12 +274,12 @@ convertLigoRange LigoRange {..} =
 
 -- | Converts ligo scope to our internal one.
 -- TODO: convert `LigoTypeFull` to `LIGO ()`
-toScopedDecl :: LigoScope -> ScopedDecl
+toScopedDecl :: LigoDefinitionScope -> ScopedDecl
 toScopedDecl
-  LigoScope
-    { _lsName = _sdName
-    , _lsRange = (fromMaybe (error "no origin range") . convertLigoRange -> _sdOrigin)
-    , _lsBodyRange = (convertLigoRange -> _sdBody)
+  LigoDefinitionScope
+    { _ldsName = _sdName
+    , _ldsRange = (fromMaybe (error "no origin range") . convertLigoRange -> _sdOrigin)
+    , _ldsBodyRange = (convertLigoRange -> _sdBody)
     } =
     ScopedDecl
       { _sdName
