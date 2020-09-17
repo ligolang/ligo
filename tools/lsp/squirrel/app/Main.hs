@@ -36,6 +36,9 @@ import Parser
 import Product
 import Range
 
+import qualified Config
+import qualified Data.Text as T
+import qualified Language.Haskell.LSP.Types
 import System.Directory
 import System.FilePath
 import System.Posix.Files
@@ -56,8 +59,8 @@ mainLoop = do
 
     let
       callbacks = Core.InitializeCallbacks
-        { Core.onInitialConfiguration = const $ Right ()
-        , Core.onConfigurationChange = const $ Right ()
+        { Core.onInitialConfiguration = Config.getInitialConfig
+        , Core.onConfigurationChange = Config.getConfigFromNotification
         , Core.onStartup = \lFuns -> do
             _ <- forkIO $ eventLoop lFuns chan
             return Nothing
@@ -115,13 +118,13 @@ responseHandlerCb :: TChan FromClientMessage -> Core.Handler J.BareResponseMessa
 responseHandlerCb _rin resp = do
   U.logs $ "******** got ResponseMessage, ignoring:" ++ show resp
 
-send :: Core.LspFuncs () -> FromServerMessage -> IO ()
+send :: Core.LspFuncs Config.Config -> FromServerMessage -> IO ()
 send = Core.sendFunc
 
-nextID :: Core.LspFuncs () -> IO J.LspId
+nextID :: Core.LspFuncs Config.Config -> IO J.LspId
 nextID = Core.getNextReqId
 
-eventLoop :: Core.LspFuncs () -> TChan FromClientMessage -> IO ()
+eventLoop :: Core.LspFuncs Config.Config -> TChan FromClientMessage -> IO ()
 eventLoop funs chan = do
   forever do
     msg <- atomically (readTChan chan)
@@ -244,14 +247,14 @@ eventLoop funs chan = do
       _ -> U.logs "unknown msg"
 
 respondWith
-  :: Core.LspFuncs ()
+  :: Core.LspFuncs Config.Config
   -> J.RequestMessage J.ClientMethod req rsp
   -> (J.ResponseMessage rsp -> FromServerMessage)
   -> rsp
   -> IO ()
 respondWith funs req wrap rsp = Core.sendFunc funs $ wrap $ Core.makeResponseMessage req rsp
 
-stopDyingAlready :: Core.LspFuncs () -> J.RequestMessage m a b -> IO () -> IO ()
+stopDyingAlready :: Core.LspFuncs Config.Config -> J.RequestMessage m a b -> IO () -> IO ()
 stopDyingAlready funs req = flip catch \(e :: SomeException) -> do
   Core.sendErrorResponseS (Core.sendFunc funs) (req^.J.id.to J.responseId) J.InternalError
     $ fromString
@@ -267,7 +270,7 @@ rangeToLoc (Range (a, b, _) (c, d, _) _) =
     (J.Position (c - 1) (d - 1))
 
 loadFromVFS
-  :: Core.LspFuncs ()
+  :: Core.LspFuncs Config.Config
   -> J.Uri
   -> IO (LIGO Info')
 loadFromVFS funs uri = do
@@ -294,7 +297,7 @@ loadByURI uri = do
       error $ "uriToFilePath " ++ show uri ++ " has failed. We all are doomed."
 
 collectErrors
-  :: Core.LspFuncs ()
+  :: Core.LspFuncs Config.Config
   -> J.NormalizedUri
   -> Maybe FilePath
   -> Maybe Int
