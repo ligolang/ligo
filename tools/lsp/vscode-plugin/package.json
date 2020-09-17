@@ -90,7 +90,6 @@
         "vscode:prepublish": "npm run compile",
         "compile": "tsc -b",
         "watch": "tsc -b -w",
-        "postinstall": "cd client && npm install && cd ..",
         "package": "vsce package"
     },
     "dependencies": {
