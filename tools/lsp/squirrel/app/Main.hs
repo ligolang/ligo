@@ -7,7 +7,7 @@ import Control.Lens
 import Control.Monad
 
 import Data.Default
--- import           Data.Foldable
+import Data.Maybe (fromMaybe)
 import Data.String (fromString)
 import Data.String.Interpolate (i)
 import Data.Text (Text)
@@ -23,25 +23,21 @@ import qualified Language.Haskell.LSP.Utility as U
 import Language.Haskell.LSP.VFS
 
 import System.Exit
+import System.Directory
+import System.FilePath
 import qualified System.Log as L
+import System.Posix.Files
 
 import Duplo.Error
 import Duplo.Pretty
 import Duplo.Tree (collect)
 
 import AST hiding (def)
-import Data.Maybe (fromMaybe)
+import qualified Config
 import Extension
 import Parser
 import Product
 import Range
-
-import qualified Config
-import qualified Data.Text as T
-import qualified Language.Haskell.LSP.Types
-import System.Directory
-import System.FilePath
-import System.Posix.Files
 
 -- import           Error
 
