@@ -8,16 +8,18 @@ let compile_contract : expression -> (Stacking.compiled_expression , _) result =
   let%bind e = trace self_mini_c_tracer @@ Self_mini_c.contract_check e in
   let%bind (input_ty , _) = trace self_mini_c_tracer @@ Self_mini_c.get_t_function e.type_expression in
   let%bind body = trace self_mini_c_tracer @@ Self_mini_c. get_function e in
-  let%bind body = trace stacking_tracer @@ Stacking.Program.translate_function_body body [] input_ty in
+  let body = Scoping.translate_closed_function body input_ty in
+  let%bind body = trace stacking_tracer @@ Stacking.Program.translate_function_body body [] [] in
   let expr = Self_michelson.optimize body in
-  let%bind expr_ty = trace stacking_tracer @@ Stacking.Type.Ty.type_ e.type_expression in
+  let%bind expr_ty = trace stacking_tracer @@ Stacking.Type.type_ e.type_expression in
   ok ({ expr_ty ; expr } : Stacking.Program.compiled_expression)
 
 let compile_expression : expression -> (compiled_expression, _) result = fun e ->
   trace stacking_tracer @@
-  let%bind expr = Stacking.Program.translate_expression e Stacking.Environment.empty in
+  let (expr, _) = Scoping.translate_expression e [] in
+  let%bind expr = Stacking.Program.translate_expression expr [] [] in
   let expr = Self_michelson.optimize expr in
-  let%bind expr_ty = Type.Ty.type_ e.type_expression in
+  let%bind expr_ty = Stacking.Type.type_ e.type_expression in
   ok ({ expr_ty ; expr } : Program.compiled_expression)
 
 let aggregate_and_compile : program -> form_t -> (Stacking.compiled_expression, _) result = fun program form ->

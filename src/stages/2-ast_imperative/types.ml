@@ -5,20 +5,18 @@ module Location = Simple_utils.Location
 include Stage_common.Types
 
 type type_content =
-  | T_sum of ctor_content constructor_map
-  | T_record of field_content label_map
+  | T_sum of row_element label_map
+  | T_record of row_element label_map
   | T_tuple  of type_expression list
   | T_arrow of arrow
   | T_variable of type_variable
-  | T_constant of type_constant
-  | T_operator of (type_operator * type_expression list)
+  | T_wildcard
+  | T_constant of (type_constant * type_expression list)
   | T_annoted  of (type_expression * string)
 
 and arrow = {type1: type_expression; type2: type_expression}
 
-and field_content = {field_type : type_expression ; field_decl_pos : int} 
-
-and ctor_content = {ctor_type : type_expression ; ctor_decl_pos : int} 
+and row_element = {associated_type : type_expression ; decl_pos : int}
 
 and michelson_prct_annotation = string
 
@@ -34,7 +32,7 @@ and declaration =
    *   an optional type annotation
    *   a boolean indicating whether it should be inlined
    *   an expression *)
-  | Declaration_constant of (expression_variable * type_expression option * bool * expression)
+  | Declaration_constant of (expression_variable * type_expression * bool * expression)
 
 (* | Macro_declaration of macro_declaration *)
 and expression = {expression_content: expression_content; location: Location.t}
@@ -64,7 +62,7 @@ and expression_content =
   | E_skip
   | E_tuple of expression list
   (* Data Structures *)
-  | E_map of (expression * expression) list 
+  | E_map of (expression * expression) list
   | E_big_map of (expression * expression) list
   | E_list of expression list
   | E_set of expression list
@@ -75,19 +73,18 @@ and expression_content =
   | E_while of while_loop
 
 and constant =
-  { cons_name: constant' (* this is at the end because it is huge *)
+  { cons_name: rich_constant (* this is at the end because it is huge *)
   ; arguments: expression list }
 
 and application = {
-  lamb: expression ; 
+  lamb: expression ;
   args: expression ;
   }
 
-and lambda =
-  { binder: expression_variable
-  ; input_type: type_expression option
-  ; output_type: type_expression option
-  ; result: expression }
+and lambda = {
+  binder: (expression_variable, type_expression) binder;
+  result: expression
+  }
 
 and recursive = {
   fun_name :  expression_variable;
@@ -96,17 +93,17 @@ and recursive = {
 }
 
 and let_in =
-  { let_binder: expression_variable * type_expression option
-  ; rhs: expression
-  ; let_result: expression
-  ; inline: bool }
+  { let_binder: (expression_variable, type_expression) binder ;
+    rhs: expression ;
+    let_result: expression ;
+    inline: bool }
 
-and raw_code = { 
+and raw_code = {
   language : string ;
   code : expression ;
   }
 
-and constructor = {constructor: constructor'; element: expression}
+and constructor = {constructor: label; element: expression}
 
 and accessor = {record: expression; path: access list}
 and update   = {record: expression; path: access list; update: expression}
@@ -114,7 +111,7 @@ and update   = {record: expression; path: access list; update: expression}
 
 
 and matching_expr =
-  | Match_variant of ((constructor' * expression_variable) * expression) list
+  | Match_variant of ((label * expression_variable) * expression) list
   | Match_list of {
       match_nil  : expression ;
       match_cons : expression_variable * expression_variable * expression ;
@@ -123,9 +120,9 @@ and matching_expr =
       match_none : expression ;
       match_some : expression_variable * expression ;
     }
-  | Match_tuple of expression_variable list * type_expression list option * expression
-  | Match_record of (label * expression_variable) list * type_expression list option * expression
-  | Match_variable of expression_variable * type_expression option * expression
+  | Match_tuple of (expression_variable * type_expression) list  * expression
+  | Match_record of (label * expression_variable * type_expression) list * expression
+  | Match_variable of (expression_variable * type_expression ) * expression
 
 and matching =
   { matchee: expression
@@ -171,10 +168,10 @@ and for_each = {
   body : expression;
 }
 
-and collect_type = 
- | Map
- | Set
- | List
+and collect_type =
+  | Map
+  | Set
+  | List
 
 and while_loop = {
   condition : expression;

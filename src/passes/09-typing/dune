@@ -8,6 +8,7 @@
     ast_typed
     typer_old
     typer_new
+    typer_common
     predefined
   )
   (preprocess

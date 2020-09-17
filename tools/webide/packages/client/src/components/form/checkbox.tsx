@@ -13,6 +13,10 @@ const Container = styled.div`
   background: var(--blue_trans2);
 
   cursor: pointer;
+
+  &:hover {
+    background: var(--blue_trans1);
+  }
 `;
 
 const CheckIcon = ({ visible, ...props }: { visible: boolean }) => (

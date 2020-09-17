@@ -9,8 +9,6 @@ let type_constraint_ : _ -> type_constraint_simpl -> unit = fun ppf ->
     let ct = match c_tag with
       | C_arrow        -> "arrow"
       | C_option       -> "option"
-      | C_record       -> failwith "record"
-      | C_variant      -> failwith "variant"
       | C_map          -> "map"
       | C_big_map      -> "big_map"
       | C_list         -> "list"
@@ -34,6 +32,12 @@ let type_constraint_ : _ -> type_constraint_simpl -> unit = fun ppf ->
   |SC_Alias       { a; b } -> fprintf ppf "Alias %a %a" Var.pp a Var.pp b
   |SC_Poly        _ -> fprintf ppf "Poly"
   |SC_Typeclass   _ -> fprintf ppf "TC"
+  |SC_Row { tv; r_tag; tv_map=_ } ->
+    let r = match r_tag with
+      | C_record       -> "record"
+      | C_variant      -> "variant"
+    in
+    fprintf ppf "ROW %a %s()" Var.pp tv r
 
 let type_constraint : _ -> type_constraint_simpl -> unit = fun ppf c ->
   fprintf ppf "%a (reason: %s)" type_constraint_ c (reason_simpl c)
@@ -48,10 +52,10 @@ let structured_dbs : _ -> structured_dbs -> unit = fun ppf structured_dbs ->
   let { all_constraints = a ; aliases = b ; _ } = structured_dbs in
   fprintf ppf "STRUCTURED_DBS\n %a\n %a" all_constraints a aliases b
 
-let already_selected_and_propagators : _ -> ex_propagator_state list -> unit = fun ppf already_selected ->
+let already_selected_and_propagators : _ -> _ ex_propagator_state list -> unit = fun ppf already_selected ->
   let _ = already_selected in
   fprintf ppf "ALREADY_SELECTED"
 
-let state : _ -> typer_state -> unit = fun ppf state ->
+let state : _ -> _ typer_state -> unit = fun ppf state ->
   let { structured_dbs=a ; already_selected_and_propagators =b } = state in
   fprintf ppf "STATE %a %a" structured_dbs a already_selected_and_propagators b

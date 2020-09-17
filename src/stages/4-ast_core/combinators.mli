@@ -22,18 +22,17 @@ val t_variable  : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> string 
 (*
 val t_record    : te_map -> type_expression
 *)
-val t_pair   : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> ( field_content * field_content ) -> type_expression
-val t_tuple  : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> field_content list -> type_expression
+val t_pair   : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> ( row_element * row_element ) -> type_expression
+val t_tuple  : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> row_element list -> type_expression
 
-val t_record    : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> field_content Map.String.t -> type_expression
-val t_record_ez : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> (string * field_content) list -> type_expression
+val t_record    : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> row_element Map.String.t -> type_expression
+val t_record_ez : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> (string * row_element) list -> type_expression
 
-val t_sum    : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> Types.ctor_content Map.String.t -> type_expression
-val ez_t_sum : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> ( string * Types.ctor_content ) list -> type_expression
+val t_sum    : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> Types.row_element Map.String.t -> type_expression
+val ez_t_sum : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> ( string * Types.row_element ) list -> type_expression
 
 val t_function : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> type_expression -> type_expression -> type_expression
 
-val t_operator : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> type_operator -> type_expression list -> type_expression
 val t_map : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> type_expression -> type_expression -> type_expression
 val t_big_map : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> type_expression -> type_expression -> type_expression
 val t_contract : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> type_expression -> type_expression
@@ -67,7 +66,7 @@ val e_constructor     : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> string
 val e_matching        : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> expression -> matching_expr -> expression
 val e_record_accessor : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> expression -> label -> expression
 val e_variable        : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> expression_variable -> expression
-val e_let_in          : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> ( expression_variable * type_expression option ) -> bool -> expression -> expression -> expression
+val e_let_in          : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> binder -> bool -> expression -> expression -> expression
 val e_raw_code        : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> string -> expression -> expression
 val e_annotation      : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> expression -> type_expression -> expression
 val e_application     : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> expression -> expression -> expression
@@ -77,9 +76,9 @@ val make_option_typed : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> expres
 
 val e_typed_none      : ?loc:Location.t -> type_expression -> expression
 
-val e_lambda        : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> expression_variable -> type_expression option -> type_expression option -> expression -> expression
+val e_lambda        : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> binder -> expression -> expression
 val e_recursive     : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> expression_variable -> type_expression -> lambda -> expression
-val e_record        : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> expr label_map-> expression
+val e_record        : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> expression label_map-> expression
 val e_record_update : ?loc:Location.t -> ?sugar:Ast_sugar.expression -> expression -> label -> expression -> expression
 
 val assert_e_record_accessor : expression_content -> unit option

@@ -8,8 +8,8 @@ type taco_shop_storage is map (nat, taco_supply)
 
 type return is list (operation) * taco_shop_storage
 
-const ownerAddress : address = "tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV"
-const donationAddress : address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx"
+const ownerAddress : address = ("tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV" : address)
+const donationAddress : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)
 
 function buy_taco (const taco_kind_index : nat; var taco_shop_storage : taco_shop_storage) : return is
   block {
@@ -23,7 +23,7 @@ function buy_taco (const taco_kind_index : nat; var taco_shop_storage : taco_sho
     const current_purchase_price : tez =
       taco_kind.max_price / taco_kind.current_stock;
 
-    if amount =/= current_purchase_price then
+    if Tezos.amount =/= current_purchase_price then
       // We won't sell tacos if the amount is not correct
       failwith ("Sorry, the taco you are trying to purchase has a different price");
     else skip;
@@ -34,21 +34,21 @@ function buy_taco (const taco_kind_index : nat; var taco_shop_storage : taco_sho
     // Update the storage with the refreshed taco_kind
     taco_shop_storage[taco_kind_index] := taco_kind;
 
-    const receiver : contract (unit) = 
-      case (Tezos.get_contract_opt (ownerAddress): option(contract (unit))) of 
+    const receiver : contract (unit) =
+      case (Tezos.get_contract_opt (ownerAddress): option(contract (unit))) of
         Some (contract) -> contract
       | None -> (failwith ("Not a contract") : contract (unit))
       end;
-    const donationReceiver : contract (unit) = 
-      case (Tezos.get_contract_opt (donationAddress): option(contract (unit))) of 
+    const donationReceiver : contract (unit) =
+      case (Tezos.get_contract_opt (donationAddress): option(contract (unit))) of
         Some (contract) -> contract
       | None  -> (failwith ("Not a contract") : contract (unit))
       end;
 
-    const donationAmount : tez = amount / 10n;
+    const donationAmount : tez = Tezos.amount / 10n;
 
     const operations : list (operation) = list [
-      Tezos.transaction (unit, amount - donationAmount, receiver);
+      Tezos.transaction (unit, Tezos.amount - donationAmount, receiver);
       Tezos.transaction (unit, donationAmount, donationReceiver);
     ]
   } with (operations, taco_shop_storage)

@@ -29,7 +29,7 @@ export class EvaluateFunctionAction extends CancellableAction {
           return;
         }
         dispatch({
-          ...new ChangeOutputAction(result.output, Command.EvaluateFunction)
+          ...new ChangeOutputAction(result.output, Command.EvaluateFunction, false)
         });
       } catch (ex) {
         if (this.isCancelled()) {
@@ -38,7 +38,8 @@ export class EvaluateFunctionAction extends CancellableAction {
         dispatch({
           ...new ChangeOutputAction(
             `Error: ${getErrorMessage(ex)}`,
-            Command.EvaluateFunction
+            Command.EvaluateFunction,
+            true
           )
         });
       }

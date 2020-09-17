@@ -149,3 +149,20 @@ let cover r1 r2 =
        else if   lt r1 r2
             then make ~start:r1#start ~stop:r2#stop
             else make ~start:r2#start ~stop:r1#stop
+
+let to_yojson f =
+  `Assoc [
+      ("start", Pos.to_yojson f#start) ;
+      ("stop",  Pos.to_yojson f#stop) ;
+    ]
+
+let of_yojson = fun t ->
+  match t with
+  | `Assoc [
+       ("start", start) ;
+       ("stop", stop)] ->
+     begin match Pos.of_yojson start, Pos.of_yojson stop with
+     | Ok start, Ok stop -> Ok (make ~start ~stop)
+     | (Error _ as e), _ | _, (Error _ as e) -> e end
+  | _ ->
+     Utils.error_yojson_format "{start: Pos.t, stop: Pos.t}"

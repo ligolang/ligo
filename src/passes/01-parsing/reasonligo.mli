@@ -1,7 +1,7 @@
 (** This file provides an interface to the ReasonLIGO parser. *)
 
 open Trace
-module CST = Cst.Cameligo
+module CST = Cst.Reasonligo
 
 (** Open a ReasonLIGO filename given by string and convert into an
     abstract syntax tree. *)
@@ -28,3 +28,7 @@ val pretty_print_from_source : string -> (Buffer.t , Errors.parser_error) result
 val pretty_print : CST.t -> (Buffer.t, _) result
 
 val pretty_print_expression : CST.expr -> (Buffer.t, _) result
+
+val pretty_print_pattern: CST.pattern -> (Buffer.t, _) result
+
+val pretty_print_type_expr: CST.type_expr -> (Buffer.t, _) result

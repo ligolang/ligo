@@ -10,12 +10,13 @@ let rec take n = function
   | _ when n = 0 -> []
   | hd :: tl -> hd :: take (n - 1) tl
 
-let map ?(acc = []) f lst =
+let map f lst =
+  (* Use a tail-recursive function and `List.rev` to avoid a stack overflow with long lists. *)
   let rec aux acc f = function
     | [] -> acc
     | hd :: tl -> aux (f hd :: acc) f tl
   in
-  aux acc f (List.rev lst)
+  List.rev (aux [] f lst)
 
 let fold_map_right : type acc ele ret . (acc -> ele -> (acc * ret)) -> acc -> ele list -> ret list =
   fun f acc lst ->
@@ -79,6 +80,9 @@ let range n =
     else aux ((n-1) :: acc) (n-1)
   in
   aux [] n
+
+let repeat n x =
+  List.map (fun _ -> x) (range n)
 
 let find_map f lst =
   let rec aux = function
@@ -179,7 +183,7 @@ let rec assoc_opt ?compare:cmp x =
   | (a,b)::l -> if compare a x = 0 then Some b else assoc_opt ~compare x l
 
 let rec compare ?compare:cmp a b =
-  let cmp = unopt ~default:Pervasives.compare cmp in
+  let cmp = unopt ~default:Stdlib.compare cmp in
   match a,b with
     [], [] -> 0
   | [], _::_ -> -1
@@ -194,6 +198,7 @@ module Ne = struct
 
   type 'a t = 'a * 'a list
 
+  let split ((hd,tl): _ t) = let (a,b) = hd and (la,lb) = List.split tl in (a,la),(b,lb)
   let of_list lst = List.hd lst, List.tl lst
   let to_list (hd, tl : _ t) = hd :: tl
   let singleton hd : 'a t = hd , []

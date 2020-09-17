@@ -4,7 +4,8 @@
   (libraries
     simple-utils
     ast_imperative
-    proto-alpha-utils
+    tezos-crypto
+    tezos-base
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)

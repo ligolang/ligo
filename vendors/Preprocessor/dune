@@ -41,8 +41,9 @@
 
 (executable
   (name E_LexerMain)
-  (modules E_LexerMain)
-  (libraries Preproc)
+  (modules 
+    E_LexerMain)
+  (libraries Preprocessor)
   (preprocess
     (pps bisect_ppx --conditional)))
 
@@ -51,7 +52,8 @@
 
 (executable
   (name E_ParserMain)
-  (modules E_ParserMain)
-  (libraries Preproc)
+  (modules 
+    E_ParserMain)
+  (libraries Preprocessor)
   (preprocess
     (pps bisect_ppx --conditional)))

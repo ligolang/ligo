@@ -1,7 +1,7 @@
-module CST         = Cst.Cameligo
+module CST         = Cst.Reasonligo
 module LexToken    = Lexer_reasonligo.LexToken
 module Lexer       = Lexer_shared.Lexer.Make (LexToken)
-module Scoping     = Parser_cameligo.Scoping
+module Scoping     = Parser_reasonligo.Scoping
 module Region      = Simple_utils.Region
 module ParErr      = Parser_reasonligo.ParErr
 module SyntaxError = Parser_reasonligo.SyntaxError
@@ -65,7 +65,7 @@ module ParserLog =
   struct
     type ast  = CST.t
     type expr = CST.expr
-    include Cst_cameligo.ParserLog
+    include Cst_reasonligo.ParserLog
   end
 
 module Unit =
@@ -166,6 +166,26 @@ let pretty_print_from_source source =
 
 let pretty_print_expression cst =
   let doc    = Pretty.pp_expr cst in
+  let buffer = Buffer.create 131 in
+  let width  =
+    match Terminal_size.get_columns () with
+      None -> 60
+    | Some c -> c in
+  let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
+  in Trace.ok buffer
+
+let pretty_print_pattern pattern =
+  let doc    = Pretty.pp_pattern pattern in
+  let buffer = Buffer.create 131 in
+  let width  =
+    match Terminal_size.get_columns () with
+      None -> 60
+    | Some c -> c in
+  let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
+  in Trace.ok buffer
+
+let pretty_print_type_expr type_expr =
+  let doc    = Pretty.pp_type_expr type_expr in
   let buffer = Buffer.create 131 in
   let width  =
     match Terminal_size.get_columns () with

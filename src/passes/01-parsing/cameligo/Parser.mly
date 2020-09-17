@@ -10,6 +10,40 @@ open CST
 (* END HEADER *)
 %}
 
+(* Reductions on error *)
+
+%on_error_reduce nsepseq(selection,DOT)
+%on_error_reduce call_expr_level
+%on_error_reduce add_expr_level
+%on_error_reduce cons_expr_level
+%on_error_reduce cat_expr_level
+%on_error_reduce disj_expr_level
+%on_error_reduce conj_expr_level
+%on_error_reduce bin_op(conj_expr_level,BOOL_AND,comp_expr_level)
+%on_error_reduce bin_op(disj_expr_level,Or,conj_expr_level)
+%on_error_reduce bin_op(disj_expr_level,BOOL_OR,conj_expr_level)
+%on_error_reduce base_expr(expr)
+%on_error_reduce base_expr(base_cond)
+%on_error_reduce module_fun
+%on_error_reduce core_expr
+%on_error_reduce match_expr(base_cond)
+%on_error_reduce constr_expr
+%on_error_reduce nsepseq(disj_expr_level,COMMA)
+%on_error_reduce seq(core_expr)
+%on_error_reduce bin_op(add_expr_level,MINUS,mult_expr_level)
+%on_error_reduce bin_op(add_expr_level,PLUS,mult_expr_level)
+%on_error_reduce seq(Attr)
+%on_error_reduce constr_pattern
+%on_error_reduce tail
+%on_error_reduce nsepseq(sub_irrefutable,COMMA)
+%on_error_reduce irrefutable
+%on_error_reduce variant
+%on_error_reduce nsepseq(variant,VBAR)
+%on_error_reduce nsepseq(core_type,TIMES)
+%on_error_reduce fun_type
+%on_error_reduce cartesian
+%on_error_reduce sub_irrefutable
+
 (* See [ParToken.mly] for the definition of tokens. *)
 
 (* Entry points *)
@@ -79,10 +113,10 @@ nsepseq(item,sep):
 
 (* Helpers *)
 
-%inline type_name   : "<ident>"  { $1 }
-%inline field_name  : "<ident>"  { $1 }
-%inline struct_name : "<ident>"  { $1 }
-%inline module_name : "<constr>" { $1 }
+%inline type_name        : "<ident>"  { $1 }
+%inline field_name       : "<ident>"  { $1 }
+%inline struct_name      : "<ident>"  { $1 }
+%inline module_name      : "<constr>" { $1 }
 
 (* Non-empty comma-separated values (at least two values) *)
 
@@ -148,6 +182,7 @@ cartesian:
 
 core_type:
   type_name      {    TVar $1 }
+| "_"            {  TWild  $1 }
 | par(type_expr) {    TPar $1 }
 | "<string>"     { TString $1 }
 | module_name "." type_name {
@@ -234,7 +269,7 @@ type_annotation:
 (* Patterns *)
 
 irrefutable:
-  sub_irrefutable { $1 }
+  sub_irrefutable        { $1 }
 | tuple(sub_irrefutable) {
     let region = nsepseq_to_region pattern_to_region $1
     in PTuple {region; value=$1} }
@@ -289,8 +324,6 @@ core_pattern:
 | "<string>"                                   {           PString $1 }
 | "<verbatim>"                                 {         PVerbatim $1 }
 | unit                                         {             PUnit $1 }
-| "false"                                      {            PFalse $1 }
-| "true"                                       {             PTrue $1 }
 | par(ptuple)                                  {              PPar $1 }
 | list__(tail)                                 { PList (PListComp $1) }
 | constr_pattern                               {           PConstr $1 }
@@ -319,6 +352,8 @@ constr_pattern:
     and value  = $1,$2
     in PSomeApp {region; value}
   }
+| "false" { PFalse $1 }
+| "true"  {  PTrue $1 }
 | "<constr>" {
     PConstrApp {$1 with value=$1,None}
   }
@@ -646,7 +681,7 @@ update_record:
       rbrace   = $5}
     in {region; value} }
 
-field_path_assignment :
+field_path_assignment:
   path "=" expr {
     let region = cover (path_to_region $1) (expr_to_region $3)
     and value  = {field_path=$1; assignment=$2; field_expr=$3}
@@ -658,7 +693,7 @@ field_assignment:
     and value  = {field_name=$1; assignment=$2; field_expr=$3}
     in {region; value} }
 
-path :
+path:
  "<ident>"   { Name $1 }
 | projection { Path $1 }
 
@@ -684,19 +719,19 @@ last_expr:
 
 let_in_sequence:
   "let" ioption("rec") let_binding seq(Attr) "in" series  {
-    let seq       = $6 in
-    let stop      = nsepseq_to_region expr_to_region seq in
-    let region    = cover $1 stop in
-    let compound  = None in
-    let elements  = Some seq in
-    let value     = {compound; elements; terminator=None} in
-    let body      = ESeq {region; value} in
-    let value     = {kwd_let    = $1;
-                     kwd_rec    = $2;
-                     binding    = $3;
-                     attributes = $4;
-                     kwd_in     = $5;
-                     body}
+    let seq      = $6 in
+    let stop     = nsepseq_to_region expr_to_region seq in
+    let region   = cover $1 stop in
+    let compound = None in
+    let elements = Some seq in
+    let value    = {compound; elements; terminator=None} in
+    let body     = ESeq {region; value} in
+    let value    = {kwd_let    = $1;
+                    kwd_rec    = $2;
+                    binding    = $3;
+                    attributes = $4;
+                    kwd_in     = $5;
+                    body}
     in ELetIn {region; value} }
 
 seq_expr:

@@ -448,7 +448,7 @@ let comparable_mligo () : (unit, _) result =
   let%bind () = expect_string_failwith program "uncomp_pair_1" tuple "" in
   let pair = e_pair pair (e_int 3) in
   let%bind () = expect_string_failwith program "uncomp_pair_2" pair "" in *)
-  let comb = e_pair (e_int 3) (e_pair (e_int 1) (e_nat 2)) in 
+  let comb = e_pair (e_int 3) (e_pair (e_int 1) (e_nat 2)) in
   let%bind () = expect_eq program "comb_record" comb (e_bool false) in
   ok ()
 
@@ -1279,9 +1279,6 @@ let loop () : (unit, _) result =
     let expected = e_pair (e_int 6) (e_string "123") in
     expect_eq program "for_collection_map_kv" input expected in
   let%bind () =
-    let expected = (e_string "123") in
-    expect_eq program "for_collection_map_k" input expected in
-  let%bind () =
     let expected = (e_int 0) in
     expect_eq program "for_collection_empty" input expected in
   let%bind () =
@@ -1509,6 +1506,8 @@ let assert_mligo () : (unit, _) result =
   let make_expected = e_pair (e_typed_list [] (t_operation())) (e_unit ()) in
   let%bind _ = expect_fail program "main" (make_input false) in
   let%bind _ = expect_eq program "main" (make_input true) make_expected in
+  let%bind _ = expect_fail program "some" (e_none ()) in
+  let%bind _ = expect_eq program "some" (e_some (e_unit ())) (e_unit ()) in
   ok ()
 
 let assert_religo () : (unit, _) result =
@@ -1524,21 +1523,21 @@ let recursion_ligo () : (unit, _) result =
   let%bind _ =
     let make_input = e_pair (e_int 10) (e_int 0) in
     let make_expected = e_int 55 in
-    expect_eq program "sum" make_input make_expected 
+    expect_eq program "sum" make_input make_expected
   in
   let%bind _ =
     let make_input = e_tuple [(e_int 10); (e_int 1); (e_int 1)] in
     let make_expected = e_int 89 in
     expect_eq program "fibo" make_input make_expected
   in ok ()
-  
+
 
 let recursion_mligo () : (unit, _) result =
   let%bind program = mtype_file "./contracts/recursion.mligo" in
   let%bind _ =
     let make_input = e_pair (e_int 10) (e_int 0) in
     let make_expected = e_int 55 in
-    expect_eq program "sum" make_input make_expected 
+    expect_eq program "sum" make_input make_expected
   in
   let%bind _ =
     let make_input = e_tuple [(e_int 10); (e_int 1); (e_int 1)] in
@@ -1551,7 +1550,7 @@ let recursion_religo () : (unit, _) result =
   let%bind _ =
     let make_input = e_pair (e_int 10) (e_int 0) in
     let make_expected = e_int 55 in
-    expect_eq program "sum" make_input make_expected 
+    expect_eq program "sum" make_input make_expected
   in
   let%bind _ =
     let make_input = e_tuple [(e_int 10); (e_int 1); (e_int 1)] in
@@ -1588,34 +1587,34 @@ let counter_religo () : (unit, _) result =
 
 let let_in_mligo () : (unit, _) result =
   let%bind program = mtype_file "./contracts/letin.mligo" in
-  let%bind () = 
+  let%bind () =
     let make_input n = e_pair (e_int n) (e_pair (e_int 3) (e_int 5)) in
     let make_expected n =
       e_pair (e_typed_list [] (t_operation ())) (e_pair (e_int (7+n)) (e_int (3+5)))
-    in 
+    in
     expect_eq_n program "main" make_input make_expected
-  in 
-  let%bind () = 
+  in
+  let%bind () =
     expect_eq program "letin_nesting" (e_unit ()) (e_string "test")
-  in 
-  let%bind () = 
+  in
+  let%bind () =
     expect_eq program "letin_nesting2" (e_int 4) (e_int 9)
-  in 
+  in
   ok ()
 
 let let_in_religo () : (unit, _) result =
   let%bind program = retype_file "./contracts/letin.religo" in
-  let%bind () = 
+  let%bind () =
     let make_input n = e_pair (e_int n) (e_pair (e_int 3) (e_int 5)) in
     let make_expected n =
       e_pair (e_typed_list [] (t_operation ())) (e_pair (e_int (7+n)) (e_int (3+5)))
-    in 
+    in
     expect_eq_n program "main" make_input make_expected
-  in 
-  let%bind () = 
+  in
+  let%bind () =
     expect_eq program "letin_nesting" (e_unit ()) (e_string "test")
-  in 
-  let%bind () = 
+  in
+  let%bind () =
     expect_eq program "letin_nesting2" (e_int 4) (e_int 9)
   in
   ok ()
@@ -2384,11 +2383,11 @@ let no_semicolon_religo () : (unit, _) result =
   ok ()
 
 let tuple_list_religo () : (unit, _) result =
-  let%bind _ = retype_file "./contracts/tuple_list.religo" in  
+  let%bind _ = retype_file "./contracts/tuple_list.religo" in
   ok ()
 
 let single_record_expr_religo () : (unit, _) result =
-  let%bind _ = retype_file "./contracts/single_record_item.religo" in  
+  let%bind _ = retype_file "./contracts/single_record_item.religo" in
   ok ()
 
 let loop_bugs_ligo () : (unit, _) result =

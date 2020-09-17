@@ -115,6 +115,7 @@ let md_files = [
   "/gitlab-pages/docs/advanced/timestamps-addresses.md";
   "/gitlab-pages/docs/advanced/inline.md";
   "/gitlab-pages/docs/advanced/interop.md";
+  "/gitlab-pages/docs/advanced/code-injection.md";
   "/gitlab-pages/docs/api/cli-commands.md";
   "/gitlab-pages/docs/api/cheat-sheet.md";
   "/gitlab-pages/docs/reference/toplevel.md";

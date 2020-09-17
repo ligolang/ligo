@@ -24,7 +24,7 @@ let rec fold_expression : ('a,'err) folder -> 'a -> expression -> ('a, 'err) res
   let self = fold_expression f in 
   let%bind init' = f init e in
   match e.content with
-  | E_variable _ | E_skip | E_make_none _
+  | E_variable _
   | E_raw_michelson _
   | E_literal _ -> ok init'
   | E_constant (c) -> (
@@ -47,10 +47,6 @@ let rec fold_expression : ('a,'err) folder -> 'a -> expression -> ('a, 'err) res
       let%bind res = bind_fold_triple self init' (body,col,init) in
       ok res
   )
-  | E_while eb -> (
-      let%bind res = bind_fold_pair self init' eb in
-      ok res
-  ) 
   | E_if_bool cab -> (
       let%bind res = bind_fold_triple self init' cab in
       ok res
@@ -71,10 +67,6 @@ let rec fold_expression : ('a,'err) folder -> 'a -> expression -> ('a, 'err) res
       let%bind res = bind_fold_pair self init' (expr,body) in
       ok res
   )
-  | E_sequence ab -> (
-      let%bind res = bind_fold_pair self init' ab in
-      ok res
-  )
   | E_record_update (r, _, e) -> (
       let%bind res = self init' r in
       let%bind res = self res e in
@@ -88,7 +80,7 @@ let rec map_expression : 'err mapper -> expression -> (expression, 'err) result 
   let%bind e' = f e in
   let return content = ok { e' with content } in
   match e'.content with
-  | E_variable _ | E_literal _ | E_skip | E_make_none _ | E_raw_michelson _
+  | E_variable _ | E_literal _ | E_raw_michelson _
     as em -> return em
   | E_constant (c) -> (
       let%bind lst = bind_map_list self c.arguments in
@@ -110,10 +102,6 @@ let rec map_expression : 'err mapper -> expression -> (expression, 'err) result 
       let%bind (body',col',init') = bind_map_triple self (body,col,init) in
       return @@ E_fold (((name , tv) , body') , col', init')
   )
-  | E_while eb -> (
-      let%bind eb' = bind_map_pair self eb in
-      return @@ E_while eb'
-  ) 
   | E_if_bool cab -> (
       let%bind cab' = bind_map_triple self cab in
       return @@ E_if_bool cab'
@@ -133,10 +121,6 @@ let rec map_expression : 'err mapper -> expression -> (expression, 'err) result 
   | E_let_in ((v , tv) , inline, expr , body) -> (
       let%bind (expr',body') = bind_map_pair self (expr,body) in
       return @@ E_let_in ((v , tv) , inline , expr' , body')
-  )
-  | E_sequence ab -> (
-      let%bind ab' = bind_map_pair self ab in
-      return @@ E_sequence ab'
   )
   | E_record_update (r, l, e) -> (
       let%bind r = self r in

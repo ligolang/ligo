@@ -20,7 +20,7 @@ function buy_taco (const taco_kind_index : nat ; var taco_shop_storage : taco_sh
      const current_purchase_price : tez =
        taco_kind.max_price / taco_kind.current_stock;
 
-    if amount =/= current_purchase_price then
+    if Tezos.amount =/= current_purchase_price then
       // We won't sell tacos if the amount is not correct
       failwith ("Sorry, the taco you are trying to purchase has a different price");
     else skip;

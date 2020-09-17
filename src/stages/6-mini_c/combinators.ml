@@ -171,7 +171,6 @@ let t_union    ?loc x y : type_expression = Expression.make_t ?loc @@ T_or ( x ,
 
 let e_int  ?loc expr    : expression = Expression.make_tpl ?loc (expr, t_int ())
 let e_unit ?loc ()      : expression = Expression.make_tpl ?loc (E_literal D_unit, t_unit ())
-let e_skip ?loc ()      : expression = Expression.make_tpl ?loc (E_skip, t_unit ())
 let e_var_int ?loc name : expression = e_int ?loc (E_variable name)
 let e_let_in ?loc v tv inline expr body : expression = Expression.(make_tpl ?loc(
     E_let_in ((v , tv) , inline, expr , body) ,
@@ -186,8 +185,6 @@ let e_var ?loc vname t: expression = Expression.(make_tpl ?loc(
     t
   ))
 
-
-let ez_e_sequence ?loc a b : expression = Expression.(make_tpl (E_sequence (make_tpl ?loc (a , t_unit ()) , b) , get_type b))
 
 let d_unit : value = D_unit
 

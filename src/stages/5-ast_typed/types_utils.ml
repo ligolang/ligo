@@ -1,90 +1,25 @@
 module S = Ast_core
 open Simple_utils.Trace
+open Simple_utils.Function
+include Stage_common.Types
 
-(* include Stage_common.Types *)
-(* type expression_
- * and expression_variable = expression_ Var.t
- * type type_
- * and type_variable = type_ Var.t *)
-type expression_ = Stage_common.Types.expression_
-type expression_variable = Stage_common.Types.expression_variable
-type type_ = Stage_common.Types.type_
-type type_variable = Stage_common.Types.type_variable
+type 'a location_wrap = 'a Location.wrap
+
+type expression_
+and expression_variable = expression_ Var.t location_wrap
+type type_
+and type_variable = type_ Var.t
 type z = Z.t
-type ligo_string = Stage_common.Types.ligo_string
-
-type constructor' =
-| Constructor of string
-type label =
-| Label of string
-
-module CMap = Map.Make( struct type t = constructor' let compare (Constructor a) (Constructor b) = compare a b end)
-module LMap = Map.Make( struct type t = label let compare (Label a) (Label b) = String.compare a b end)
-
-type 'a label_map = 'a LMap.t
-type 'a constructor_map = 'a CMap.t
 type ast_core_type_expression = S.type_expression
 
 
-type 'a location_wrap = 'a Location.wrap
 type 'a list_ne = 'a List.Ne.t
-type packed_internal_operation = Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation
 type location = Location.t
 type inline = bool
 
 type 'a extra_info__comparable = {
   compare : 'a -> 'a -> int ;
 }
-
-let fold_map__constructor_map : type a new_a state err. (state -> a -> (state * new_a, err) result) -> state -> a constructor_map -> (state * new_a constructor_map, err) result =
-  fun f state m ->
-  let aux k v acc =
-    let%bind (state , m) = acc in
-    let%bind (state , new_v) = f state v in
-    ok (state , CMap.add k new_v m) in
-  let%bind (state , m) = CMap.fold aux m (ok (state, CMap.empty)) in
-  ok (state , m)
-
-let fold_map__label_map : type a state new_a err . (state -> a -> (state * new_a , err) result) -> state -> a label_map -> (state * new_a label_map , err) result =
-  fun f state m ->
-  let aux k v acc =
-    let%bind (state , m) = acc in
-    let%bind (state , new_v) = f state v in
-    ok (state , LMap.add k new_v m) in
-  let%bind (state , m) = LMap.fold aux m (ok (state, LMap.empty)) in
-  ok (state , m)
-
-let fold_map__list : type a state new_a err . (state -> a -> (state * new_a , err) result) -> state -> a list -> (state * new_a list , err) result =
-  fun f state l ->
-  let aux acc element =
-    let%bind state , l = acc in
-    let%bind (state , new_element) = f state element in ok (state , new_element :: l) in
-  let%bind (state , l) = List.fold_left aux (ok (state , [])) l in
-  ok (state , l)
-
-let fold_map__location_wrap : type a state new_a err . (state -> a -> (state * new_a , err) result) -> state -> a location_wrap -> (state * new_a location_wrap , err) result =
-  fun f state { wrap_content ; location } ->
-  let%bind ( state , wrap_content ) = f state wrap_content in
-  ok (state , ({ wrap_content ; location } : new_a location_wrap))
-
-let fold_map__list_ne : type a state new_a err . (state -> a -> (state * new_a , err) result) -> state -> a list_ne -> (state * new_a list_ne , err) result =
-  fun f state (first , l) ->
-  let%bind (state , new_first) = f state first in
-  let aux acc element =
-    let%bind state , l = acc in
-    let%bind (state , new_element) = f state element in
-    ok (state , new_element :: l) in
-  let%bind (state , l) = List.fold_left aux (ok (state , [])) l in
-  ok (state , (new_first , l))
-
-let fold_map__option : type a state new_a err . (state -> a -> (state * new_a , err) result) -> state -> a option -> (state * new_a option , err) result =
-  fun f state o ->
-  match o with
-  | None -> ok (state, None)
-  | Some v -> let%bind state, v = f state v in ok (state, Some v)
-
-
-
 
 
 (* Solver types *)
@@ -94,6 +29,13 @@ type 'a poly_unionfind = 'a UnionFind.Poly2.t
 (* typevariable: to_string = (fun s -> Format.asprintf "%a" Var.pp s) *)
 (* representant for an equivalence class of type variables *)
 type 'v typeVariableMap = (type_variable, 'v) RedBlackTrees.PolyMap.t
+let typeVariableMap_to_yojson f tvmap = 
+  bindings_to_yojson type_variable_to_yojson f @@ RedBlackTrees.PolyMap.bindings tvmap
+
+let typeVariableMap_of_yojson f tvmap =
+  Stdlib.Result.bind (bindings_of_yojson type_variable_of_yojson f tvmap) 
+    (Stdlib.Option.to_result ~none:"Map with duplicates" <@ RedBlackTrees.PolyMap.from_list ~cmp:compare)
+
 
 type 'a poly_set = 'a RedBlackTrees.PolySet.t
 
@@ -134,9 +76,9 @@ let fold_map__poly_set : type a state new_a err . new_a extra_info__comparable -
    It just swaps the error monad with the option monad, and uses unit
    as the type for the state and for "errors". *)
 let fold_map_to_make fold_map = fun f v ->
-  match fold_map (fun () x -> match f x with Some x' -> ok ((), x') | None -> Pervasives.Error ()) () v with
-    Pervasives.Ok (((), v'), _) -> Some v'
-  | Pervasives.Error () -> None
+  match fold_map (fun () x -> match f x with Some x' -> ok ((), x') | None -> Stdlib.Error ()) () v with
+    Stdlib.Ok (((), v'), _) -> Some v'
+  | Stdlib.Error () -> None
 
 (* This can't be done automatically, because the auto-generated
    comparison functions make use of the fold, the fold supplies to
@@ -147,13 +89,3 @@ let fold_map_to_make fold_map = fun f v ->
    Instead of writing the following functions, we could just write the
    get_typeclass_compare functions for poly_unionfind and poly_set,
    but the resulting code wouldn't be much clearer. *)
-let make__constructor_map f v = fold_map_to_make fold_map__constructor_map f v
-let make__label_map f v = fold_map_to_make fold_map__label_map f v
-let make__list f v = fold_map_to_make fold_map__list f v
-let make__location_wrap f v = fold_map_to_make fold_map__location_wrap f v
-let make__list_ne f v = fold_map_to_make fold_map__list_ne f v
-let make__option f v = fold_map_to_make fold_map__option f v
-let make__poly_unionfind f v = fold_map_to_make (fold_map__poly_unionfind { compare = failwith "TODO" (*UnionFind.Poly2.get_compare v*) }) f v
-let make__PolyMap f v = fold_map_to_make fold_map__PolyMap f v
-let make__typeVariableMap f v = fold_map_to_make fold_map__typeVariableMap f v
-let make__poly_set f v = fold_map_to_make (fold_map__poly_set { compare = failwith "TODO" (*PolySet.get_compare v*) }) f v

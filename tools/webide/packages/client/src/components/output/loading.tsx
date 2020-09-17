@@ -59,7 +59,7 @@ export const Loading = (props: { onCancel?: () => void }) => {
 
   return (
     <Container ref={containerRef}>
-      <PushSpinner size={spinnerSize} color="#fedace" />
+      <PushSpinner size={spinnerSize} color="#fa6f41" />
       <Message>{loading.message}</Message>
       <Cancel
         onClick={() => {

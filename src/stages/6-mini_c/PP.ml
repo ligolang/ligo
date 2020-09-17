@@ -45,7 +45,6 @@ and type_constant ppf (tb:type_base) : unit =
     | TB_signature -> "signature"
     | TB_timestamp -> "timestamp"
     | TB_chain_id  -> "chain_id"
-    | TB_void      -> "void"
     in
   fprintf ppf "%s" s
 
@@ -92,14 +91,12 @@ and expression ppf (e:expression) =
   fprintf ppf "%a" expression_content e.content
 
 and expression_content ppf (e:expression_content) = match e with
-  | E_skip -> fprintf ppf "skip"
   | E_closure x -> function_ ppf x
   | E_variable v -> fprintf ppf "%a" Var.pp v.wrap_content
   | E_application(a, b) -> fprintf ppf "@[(%a)@(%a)@]" expression a expression b
 
   | E_constant c -> fprintf ppf "@[%a@[<hv 1>(%a)@]@]" constant c.cons_name (list_sep_d expression) c.arguments
   | E_literal v -> fprintf ppf "@[L(%a)@]" value v
-  | E_make_none _ -> fprintf ppf "none"
   | E_if_bool (c, a, b) ->
     fprintf ppf
       "@[match %a with@ @[<hv>| True ->@;<1 2>%a@ | False ->@;<1 2>%a@]@]"
@@ -115,7 +112,6 @@ and expression_content ppf (e:expression_content) = match e with
       fprintf ppf
         "@[match %a with@ @[<hv>| Left %a ->@;<1 2>%a@ | Right %a ->@;<1 2>%a@]@]"
         expression c Var.pp name_l.wrap_content expression l Var.pp name_r.wrap_content expression r
-  | E_sequence (a , b) -> fprintf ppf "@[%a ;; %a@]" expression a expression b
   | E_let_in ((name , _) , inline, expr , body) ->
       fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]" Var.pp name.wrap_content expression expr option_inline inline expression body
   | E_iterator (b , ((name , _) , body) , expr) ->
@@ -125,8 +121,6 @@ and expression_content ppf (e:expression_content) = match e with
 
   | E_record_update (r, path,update) ->
       fprintf ppf "@[{ %a@;<1 2>with@;<1 2>{ %a = %a } }@]" expression r (list_sep lr (const ".")) path expression update
-  | E_while (e , b) ->
-      fprintf ppf "@[while %a do %a@]" expression e expression b
   | E_raw_michelson code ->
       fprintf ppf "%s" code 
 
@@ -162,6 +156,7 @@ and constant ppf : constant' -> unit = function
   | C_SOME                  -> fprintf ppf "SOME"
   | C_NONE                  -> fprintf ppf "NONE"
   | C_ASSERTION             -> fprintf ppf "ASSERTION"
+  | C_ASSERT_SOME           -> fprintf ppf "ASSERT_SOME"
   | C_ASSERT_INFERRED       -> fprintf ppf "ASSERT_INFERRED"
   | C_FAILWITH              -> fprintf ppf "FAILWITH"
   | C_UPDATE                -> fprintf ppf "UPDATE"

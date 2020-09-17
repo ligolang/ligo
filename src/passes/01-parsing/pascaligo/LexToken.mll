@@ -557,9 +557,43 @@ let mk_lang lang region = Lang Region.{value=lang; region}
 let is_string = function String _ -> true | _ -> false
 let is_bytes  = function Bytes _  -> true | _ -> false
 let is_int    = function Int _    -> true | _ -> false
-let is_ident  = function Ident _  -> true | _ -> false
+(*let is_ident  = function Ident _  -> true | _ -> false*)
 let is_eof    = function EOF _    -> true | _ -> false
 let is_minus  = function MINUS _  -> true | _ -> false
+
+let is_sym = function
+  SEMI _
+| COMMA _
+| LPAR _
+| RPAR _
+| LBRACE _
+| RBRACE _
+| LBRACKET _
+| RBRACKET _
+| CONS _
+| VBAR _
+| ARROW _
+| ASS _
+| EQ _
+| COLON _
+| LT _
+| LE _
+| GT _
+| GE _
+| NE _
+| PLUS _
+| MINUS _
+| SLASH _
+| TIMES _
+| DOT _
+| WILD _
+| CAT _ -> true
+| _ -> false
+
+let is_hexa = function
+  Constr Region.{value="A"|"a"|"B"|"b"|"C"|"c"
+                 |"D"|"d"|"E"|"e"|"F"|"f"; _} -> true
+| _ -> false
 
 (* Errors *)
 
@@ -602,23 +636,19 @@ let check_right_context token next_token buffer : unit =
       else
         match markup with
           [] ->
-            if   is_int token
-            then if   is_string next || is_ident next
-                 then fail region Missing_break
-                 else ()
+            if   is_int token || is_string token
+            then if   is_sym next || is_eof next
+                 then ()
+                 else fail region Missing_break
             else
-              if   is_string token
-              then if   is_int next || is_bytes next || is_ident next
-                   then fail region Missing_break
-                   else ()
-              else
-                if   is_bytes token
-                then if   is_string next || is_ident next
-                     then fail region Missing_break
-                     else if   is_int next
-                          then fail region Odd_lengthed_bytes
-                          else ()
-                else ()
+              if   is_bytes token
+              then if   is_int next || is_hexa next
+                   then fail region Odd_lengthed_bytes
+                   else
+                     if   is_sym next || is_eof next
+                     then ()
+                     else fail region Missing_break
+              else ()
         | _::_ -> ()
 
 (* END TRAILER *)

@@ -163,6 +163,7 @@ and print_type_expr state = function
 | TFun    type_fun    -> print_type_fun    state type_fun
 | TPar    par_type    -> print_par_type    state par_type
 | TVar    type_var    -> print_var         state type_var
+| TWild   wild        -> print_token state wild " "
 | TString str         -> print_string      state str
 
 and print_type_annot state (colon, type_expr) =
@@ -999,6 +1000,9 @@ and pp_type_expr state = function
 | TString s ->
     pp_node   state "TString";
     pp_string (state#pad 1 0) s
+| TWild wild ->
+    pp_node  state "TWild";
+    pp_loc_node state "TWild" wild
 
 and pp_cartesian state {value; _} =
   let apply len rank =

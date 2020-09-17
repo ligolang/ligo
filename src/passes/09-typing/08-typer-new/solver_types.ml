@@ -1,6 +1,8 @@
 open Ast_typed.Types
 
 type 'old_constraint_type selector_input = 'old_constraint_type (* some info about the constraint just added, so that we know what to look for *)
+
+(* So you remade option ? *)
 type 'selector_output selector_outputs =
     WasSelected of 'selector_output list
   | WasNotSelected

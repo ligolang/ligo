@@ -33,12 +33,38 @@ const StyledEditableTitleComponent = styled(EditableTitleComponent)`
   margin-left: 20px;
 `;
 
+const SelectLanguage = styled(Select)`
+
+  &:hover {
+    background: var(--blue_trans1);
+  }
+`;
+
+const CursorPosition = styled.div`
+  text-align: right;
+  padding: 5px 10px;
+  height: 30px;
+  background: var(--blue_trans1);
+`;
+
+
 export const EditorComponent = () => {
   const dispatch = useDispatch();
   const title = useSelector<AppState, string>(state => state.editor.title);
   const language = useSelector<AppState, EditorState['language']>(
     state => state.editor.language
   );
+
+  const cursorPosition = useSelector<AppState, EditorState['cursorPosition']>(
+    state => state.editor.cursorPosition
+  );
+  
+  const getCursorPosition = () => {
+    if(cursorPosition) {
+      return `Line ${cursorPosition.lineNumber}, Column ${cursorPosition.column}`
+    }
+  }
+  
 
   return (
     <Container>
@@ -53,19 +79,22 @@ export const EditorComponent = () => {
             }}
           ></StyledEditableTitleComponent>
         </LeftActions>
-        <Select
-          id="syntax-select"
-          value={language}
-          onChange={language => {
-            dispatch({ ...new ChangeLanguageAction(language) });
-          }}
-        >
-          <Option value={Language.PascaLigo}>PascaLIGO</Option>
-          <Option value={Language.CameLigo}>CameLIGO</Option>
-          <Option value={Language.ReasonLIGO}>ReasonLIGO</Option>
-        </Select>
+        <LeftActions >
+          <SelectLanguage
+            id="syntax-select"
+            value={language}
+            onChange={language => {
+              dispatch({ ...new ChangeLanguageAction(language) });
+            }}
+          >
+            <Option value={Language.PascaLigo}>PascaLIGO</Option>
+            <Option value={Language.CameLigo}>CameLIGO</Option>
+            <Option value={Language.ReasonLIGO}>ReasonLIGO</Option>
+          </SelectLanguage>
+        </LeftActions>
       </Header>
-      <MonacoComponent></MonacoComponent>
+      <MonacoComponent ></MonacoComponent>
+      <CursorPosition>{getCursorPosition()}</CursorPosition>
     </Container>
   );
 };

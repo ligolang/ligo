@@ -1,24 +1,23 @@
+type tezos_alpha_error =  [`Tezos_alpha_error of Tezos_error_monad.Error_monad.error]
+
 type all = 
 [
  | `Main_invalid_syntax_name of string
+ | `Main_invalid_dialect_name of string
  | `Main_invalid_extension of string
- | `Main_bad_michelson_parameter of Michelson.michelson
- | `Main_bad_michelson_storage of Michelson.michelson
- | `Main_bad_michelson of Michelson.michelson
- | `Main_gas_exhaustion
- | `Main_unparse_tracer of [ `Tezos_alpha_error of Proto_alpha_utils.Error_monad.error ] list
- | `Main_typecheck_contract_tracer of Michelson.michelson * [ `Tezos_alpha_error of Proto_alpha_utils.Error_monad.error ] list
- | `Main_typecheck_parameter
+ | `Main_unparse_tracer of tezos_alpha_error list
+ | `Main_typecheck_contract_tracer of Michelson.michelson * tezos_alpha_error list
+ | `Main_could_not_serialize of tezos_alpha_error list
  | `Main_check_typed_arguments of Simple_utils.Runned_result.check_type * all
  | `Main_unknown_failwith_type
  | `Main_unknown
  | `Main_execution_failed of Runned_result.failwith
- | `Main_unparse_michelson_result of Proto_alpha_utils.Trace.tezos_alpha_error list
- | `Main_parse_payload of Proto_alpha_utils.Trace.tezos_alpha_error list
- | `Main_pack_payload of Proto_alpha_utils.Trace.tezos_alpha_error list
- | `Main_parse_michelson_input of Proto_alpha_utils.Trace.tezos_alpha_error list
- | `Main_parse_michelson_code of Proto_alpha_utils.Trace.tezos_alpha_error list
- | `Main_michelson_execution_error of Proto_alpha_utils.Trace.tezos_alpha_error list
+ | `Main_unparse_michelson_result of tezos_alpha_error list
+ | `Main_parse_payload of tezos_alpha_error list
+ | `Main_pack_payload of tezos_alpha_error list
+ | `Main_parse_michelson_input of tezos_alpha_error list
+ | `Main_parse_michelson_code of tezos_alpha_error list
+ | `Main_michelson_execution_error of tezos_alpha_error list
 
  | `Main_parser of Parser.Errors.parser_error
  | `Main_pretty of Parser.Errors.parser_error
@@ -29,6 +28,7 @@ type all =
  | `Main_sugaring   of Desugaring.Errors.desugaring_error
  | `Main_cit_pascaligo of Tree_abstraction.Pascaligo.Errors.abs_error
  | `Main_cit_cameligo of Tree_abstraction.Cameligo.Errors.abs_error
+ | `Main_cit_reasonligo of Tree_abstraction.Reasonligo.Errors.abs_error
  | `Main_typer of Typer.Errors.typer_error
  | `Main_interpreter of Interpreter.interpreter_error
  | `Main_self_ast_typed of Self_ast_typed.Errors.self_ast_typed_error
@@ -41,8 +41,10 @@ type all =
  | `Main_decompile_typed of Typer.Errors.typer_error
  | `Main_entrypoint_not_a_function
  | `Main_entrypoint_not_found
+ | `Main_invalid_balance of string
  | `Main_invalid_amount of string
- | `Main_invalid_address of string
+ | `Main_invalid_sender of string
+ | `Main_invalid_source of string
  | `Main_invalid_timestamp of string
 
  | `Test_err_tracer of string * all

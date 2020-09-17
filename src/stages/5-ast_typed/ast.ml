@@ -1,6 +1,7 @@
 [@@@warning "-30"]
 
 open Types_utils
+include Stage_common.Enums (*@ follow ../common/enums.ml *)
 
 (* pseudo-typeclasses: interfaces that must be provided for arguments
    of the givent polymmorphic types. For now, only one typeclass can
@@ -9,51 +10,35 @@ open Types_utils
 (*@ typeclass poly_unionfind comparable *)
 (*@ typeclass poly_set       comparable *)
 
-type type_constant =
-    | TC_unit
-    | TC_string
-    | TC_bytes
-    | TC_nat
-    | TC_int
-    | TC_mutez
-    | TC_operation
-    | TC_address
-    | TC_key
-    | TC_key_hash
-    | TC_chain_id
-    | TC_signature
-    | TC_timestamp
-    | TC_void
-
-type te_cmap = ctor_content constructor_map
-and te_lmap = field_content label_map
+type te_lmap = row_element label_map
 and type_meta = ast_core_type_expression option
 
 and type_content =
-  | T_sum of te_cmap
+  | T_sum of te_lmap
   | T_record of te_lmap
   | T_arrow of arrow
   | T_variable of type_variable
-  | T_constant of type_constant
-  | T_operator of type_operator
+  (* TODO: remove this when we remove the old typer *)
+  | T_wildcard
+  | T_constant of type_operator
 
 and arrow = {
     type1: type_expression;
     type2: type_expression;
   }
 
+and te_list = type_expression list
+and type_operator = {
+    type_constant : type_constant;
+    arguments     : te_list;
+  }
+
 and annot_option = string option
 
-and ctor_content = {
-    ctor_type : type_expression;
+and row_element = {
+    associated_type : type_expression;
     michelson_annotation : annot_option;
-    ctor_decl_pos : int;
-}
-
-and field_content = {
-    field_type : type_expression;
-    michelson_annotation : annot_option;
-    field_decl_pos : int;
+    decl_pos : int;
 }
 
 and type_map_args = {
@@ -66,37 +51,11 @@ and michelson_or_args = {
     r : type_expression;
   }
 
-and type_operator =
-  | TC_contract of type_expression
-  | TC_option of type_expression
-  | TC_list of type_expression
-  | TC_set of type_expression
-  | TC_map of type_map_args
-  | TC_big_map of type_map_args
-  | TC_map_or_big_map of type_map_args
-
 and type_expression = {
     type_content: type_content;
     type_meta: type_meta;
     location: location;
   }
-
-type literal =
-  | Literal_unit
-  | Literal_int of z
-  | Literal_nat of z
-  | Literal_timestamp of z
-  | Literal_mutez of z
-  | Literal_string of ligo_string
-  | Literal_bytes of bytes
-  | Literal_address of string
-  | Literal_signature of string
-  | Literal_key of string
-  | Literal_key_hash of string
-  | Literal_chain_id of string
-  | Literal_void
-  | Literal_operation of packed_internal_operation
-
 
 and matching_content_cons = {
     hd : expression_variable;
@@ -125,7 +84,7 @@ and expression_variable_list = expression_variable list
 and type_expression_list = type_expression list
 
 and matching_content_case = {
-    constructor : constructor' ;
+    constructor : label ;
     pattern : expression_variable ;
     body : expression ;
   }
@@ -141,125 +100,6 @@ and matching_expr =
   | Match_list    of matching_content_list
   | Match_option  of matching_content_option
   | Match_variant of matching_content_variant
-
-and constant' =
-  | C_INT
-  | C_UNIT
-  | C_NIL
-  | C_NOW
-  | C_IS_NAT
-  | C_SOME
-  | C_NONE
-  | C_ASSERTION
-  | C_ASSERT_INFERRED
-  | C_FAILWITH
-  | C_UPDATE
-  (* Loops *)
-  | C_ITER
-  | C_FOLD_WHILE
-  | C_FOLD_CONTINUE
-  | C_FOLD_STOP
-  | C_LOOP_LEFT
-  | C_LOOP_CONTINUE
-  | C_LOOP_STOP
-  | C_FOLD
-  (* MATH *)
-  | C_NEG
-  | C_ABS
-  | C_ADD
-  | C_SUB
-  | C_MUL
-  | C_EDIV
-  | C_DIV
-  | C_MOD
-  (* LOGIC *)
-  | C_NOT
-  | C_AND
-  | C_OR
-  | C_XOR
-  | C_LSL
-  | C_LSR
-  (* COMPARATOR *)
-  | C_EQ
-  | C_NEQ
-  | C_LT
-  | C_GT
-  | C_LE
-  | C_GE
-  (* Bytes/ String *)
-  | C_SIZE
-  | C_CONCAT
-  | C_SLICE
-  | C_BYTES_PACK
-  | C_BYTES_UNPACK
-  | C_CONS
-  (* Pair *)
-  | C_PAIR
-  | C_CAR
-  | C_CDR
-  | C_LEFT
-  | C_RIGHT
-  (* Set *)
-  | C_SET_EMPTY
-  | C_SET_LITERAL
-  | C_SET_ADD
-  | C_SET_REMOVE
-  | C_SET_ITER
-  | C_SET_FOLD
-  | C_SET_MEM
-  (* List *)
-  | C_LIST_EMPTY
-  | C_LIST_LITERAL
-  | C_LIST_ITER
-  | C_LIST_MAP
-  | C_LIST_FOLD
-  (* Maps *)
-  | C_MAP
-  | C_MAP_EMPTY
-  | C_MAP_LITERAL
-  | C_MAP_GET
-  | C_MAP_GET_FORCE
-  | C_MAP_ADD
-  | C_MAP_REMOVE
-  | C_MAP_UPDATE
-  | C_MAP_ITER
-  | C_MAP_MAP
-  | C_MAP_FOLD
-  | C_MAP_MEM
-  | C_MAP_FIND
-  | C_MAP_FIND_OPT
-  (* Big Maps *)
-  | C_BIG_MAP
-  | C_BIG_MAP_EMPTY
-  | C_BIG_MAP_LITERAL
-  (* Crypto *)
-  | C_SHA256
-  | C_SHA512
-  | C_BLAKE2b
-  | C_HASH
-  | C_HASH_KEY
-  | C_CHECK_SIGNATURE
-  | C_CHAIN_ID
-  (* Blockchain *)
-  | C_CALL
-  | C_CONTRACT
-  | C_CONTRACT_OPT
-  | C_CONTRACT_ENTRYPOINT
-  | C_CONTRACT_ENTRYPOINT_OPT
-  | C_AMOUNT
-  | C_BALANCE
-  | C_SOURCE
-  | C_SENDER
-  | C_ADDRESS
-  | C_SELF
-  | C_SELF_ADDRESS
-  | C_IMPLICIT_ACCOUNT
-  | C_SET_DELEGATE
-  | C_CREATE_CONTRACT
-  | C_CONVERT_TO_LEFT_COMB
-  | C_CONVERT_TO_RIGHT_COMB
-  | C_CONVERT_FROM_LEFT_COMB
-  | C_CONVERT_FROM_RIGHT_COMB
 
 and declaration_loc = declaration location_wrap
 
@@ -292,8 +132,8 @@ and expression = {
   }
 
 and map_kv = {
-    k : expression ;
-    v : expression ;
+    key : expression ;
+    value : expression ;
   }
 
 and look_up = {
@@ -302,7 +142,6 @@ and look_up = {
   }
 
 and expression_label_map = expression label_map
-and map_kv_list = map_kv list
 and expression_list = expression list
 
 and expression_content =
@@ -335,8 +174,6 @@ and application = {
 
 and lambda =  {
     binder: expression_variable ;
-    (* input_type: type_expression option ; *)
-    (* output_type: type_expression option ; *)
     result: expression ;
   }
 
@@ -350,16 +187,16 @@ and let_in = {
 and raw_code = {
   language : string;
   code : expression;
-}
+  }
 
 and recursive = {
   fun_name : expression_variable;
   fun_type : type_expression;
   lambda : lambda;
-}
+  }
 
 and constructor = {
-    constructor: constructor';
+    constructor: label;
     element: expression ;
   }
 
@@ -389,7 +226,7 @@ and environment_element_definition =
   | ED_declaration of environment_element_definition_declaration
 
 and environment_element_definition_declaration = {
-    expr: expression ;
+    expression: expression ;
     free_variables: free_variables ;
   }
 
@@ -413,12 +250,12 @@ and type_environment = type_environment_binding list
 and type_environment_binding = {
     type_variable: type_variable ;
     type_: type_expression ;
-}
+  }
 
 and environment = {
   expression_environment: expression_environment ;
   type_environment: type_environment ;
-}
+  }
 
 and named_type_content = {
     type_name : type_variable;
@@ -427,12 +264,13 @@ and named_type_content = {
 
 
 
-
-
 (* Solver types *)
 
 (* typevariable: to_string = (fun s -> Format.asprintf "%a" Var.pp s) *)
 type unionfind = type_variable poly_unionfind
+let unionfind_to_yojson _ = `String "type_varianle unionfind"
+(* TODO : use error monad *)
+let unionfind_of_yojson _ = Error ("can't parse unionfind")
 
 (* core *)
 
@@ -440,8 +278,6 @@ type unionfind = type_variable poly_unionfind
 type constant_tag =
   | C_arrow     (* * -> * -> *    isn't this wrong? *)
   | C_option    (* * -> * *)
-  | C_record    (* ( label , * ) … -> * *)
-  | C_variant   (* ( label , * ) … -> * *)
   | C_map       (* * -> * -> * *)
   | C_big_map   (* * -> * -> * *)
   | C_list      (* * -> * *)
@@ -461,27 +297,42 @@ type constant_tag =
   | C_contract  (* * -> * *)
   | C_chain_id  (* * *)
 
+type row_tag =
+  | C_record    (* ( label , * ) … -> * *)
+  | C_variant   (* ( label , * ) … -> * *)
+
 (* TODO: rename to type_expression or something similar (it includes variables, and unevaluated functions + applications *)
 type type_value_ =
   | P_forall       of p_forall
   | P_variable     of type_variable
   | P_constant     of p_constant
   | P_apply        of p_apply
+  | P_row          of p_row
+
 and type_value = {
   tsrc : string;
   t : type_value_ ;
-}
+  }
 
 and p_apply = {
     tf : type_value ;
     targ : type_value ;
-}
+  }
+
 and p_ctor_args = type_value list
 and p_constant = {
     p_ctor_tag : constant_tag ;
     p_ctor_args : p_ctor_args ;
   }
+
+and tv_lmap = type_value label_map
+and p_row = {
+    p_row_tag  : row_tag ;
+    p_row_args : tv_lmap ;
+  }
+ 
 and p_constraints = type_constraint list
+
 and p_forall = {
   binder      : type_variable ;
   constraints : p_constraints ;
@@ -515,7 +366,6 @@ and c_access_label = {
     accessor : label ;
     c_access_label_tvar : type_variable ;
   }
-
 and type_constraint = {
   reason : string ;
   c : type_constraint_ ;
@@ -551,18 +401,27 @@ and structured_dbs = {
 and c_constructor_simpl_list = c_constructor_simpl list
 and c_poly_simpl_list        = c_poly_simpl        list
 and c_typeclass_simpl_list   = c_typeclass_simpl   list
+and c_row_simpl_list         = c_row_simpl         list
 and constraints = {
   (* If implemented in a language with decent sets, these should be sets not lists. *)
   constructor : c_constructor_simpl_list ; (* List of ('a = constructor(args…)) constraints *)
   poly        : c_poly_simpl_list        ; (* List of ('a = forall 'b, some_type) constraints *)
   tc          : c_typeclass_simpl_list   ; (* List of (typeclass(args…)) constraints *)
+  row         : c_row_simpl_list         ; (* List of ('a = row (args..)) constraints *)
 }
 and type_variable_list = type_variable list
+and type_variable_lmap = type_variable label_map
 and c_constructor_simpl = {
   reason_constr_simpl : string ;
   tv : type_variable;
   c_tag : constant_tag;
   tv_list : type_variable_list;
+}
+and c_row_simpl = {
+  reason_row_simpl : string ;
+  tv : type_variable;
+  r_tag : row_tag;
+  tv_map : type_variable_lmap;
 }
 and c_const_e = {
     c_const_e_tv : type_variable ;
@@ -587,6 +446,7 @@ and type_constraint_simpl =
   | SC_Alias       of c_alias                         (* α = β *)
   | SC_Poly        of c_poly_simpl                    (* α = forall β, δ where δ can be a more complex type *)
   | SC_Typeclass   of c_typeclass_simpl               (* TC(α, …) *)
+  | SC_Row         of c_row_simpl                     (* α = row(l -> β, …) *)
 
 and c_alias = {
     reason_alias_simpl : string ;

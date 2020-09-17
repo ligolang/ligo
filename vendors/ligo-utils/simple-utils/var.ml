@@ -1,7 +1,35 @@
+(* Serializer/Derserializer *)
+
 type 'a t = {
   name : string ;
   counter : int option ;
 }
+
+let to_yojson f =
+  match f.counter with
+    Some i ->
+    `Assoc [
+        ("name", `String f.name) ;
+        ("counter",  `Int i) ;
+      ]
+  | None ->
+    `Assoc [
+        ("name", `String f.name) ;
+      ]
+
+let of_yojson = fun t ->
+  match t with
+  | `Assoc [
+      ("name", `String name) ;
+      ("counter", `Int i)] ->
+      Ok {name; counter = Some i}
+  | `Assoc [
+      ("name", `String name)] ->
+      Ok {name; counter = None}
+  | _ ->
+     Utils.error_yojson_format "{name: string; counter: int option}"
+
+(* A synonym *)
 
 let pp ppf v =
   match v.counter with
@@ -54,3 +82,5 @@ let is_generated var =
   match var.counter with
   | None -> false
   | Some _ -> true
+
+let todo_cast : 'a 'b . 'a t -> 'b t = fun { name ; counter } -> { name ; counter }

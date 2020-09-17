@@ -22,7 +22,6 @@ echo "Installing dependencies.."
 if [ -n "`uname -a | grep -i arch`" ]
 then
     sudo pacman -Sy --noconfirm \
-        rakudo \
         make \
         m4 \
         patch \

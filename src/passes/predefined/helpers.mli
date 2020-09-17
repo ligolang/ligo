@@ -17,4 +17,5 @@ module Stacking : sig
   val simple_pentary : t -> predicate
   val simple_hexary : t -> predicate
 
+  val unpredicate : predicate -> michelson
 end

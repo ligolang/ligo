@@ -8,6 +8,7 @@ import { AppState } from '../../redux/app';
 import { ResultState } from '../../redux/result';
 import { Item, Toolbar } from '../toolbar';
 import { Tooltip } from '../tooltip';
+import { Statusbar } from '../statusBar';
 
 const Divider = styled.div`
   display: block;
@@ -28,34 +29,51 @@ export const OutputToolbarComponent = (props: {
   onCopy?: () => void;
   onDownload?: () => void;
 }) => {
-  const output = useSelector<AppState, ResultState['output']>(
+  // const output = compressToEncodedURIComponent(useSelector<AppState, ResultState['output']>(
+  //   state => state.result.output
+  // ));
+  const output = (useSelector<AppState, ResultState['output']>(
     state => state.result.output
+  ));
+
+  const error = useSelector<AppState, ResultState['error']>(
+    state => state.result.error
   );
 
-  return (
-    <Toolbar>
-      <Item onClick={() => props.onCopy && props.onCopy()}>
-        <FontAwesomeIcon icon={faCopy}></FontAwesomeIcon>
-        <Tooltip>Copy</Tooltip>
-      </Item>
-      <Item onClick={() => props.onDownload && props.onDownload()}>
-        <FontAwesomeIcon icon={faDownload}></FontAwesomeIcon>
-        <Tooltip>Download</Tooltip>
-      </Item>
-      {props.showTryMichelson && <Divider></Divider>}
-      {props.showTryMichelson && (
-        <Item>
-          <Link
-            target="_blank"
-            rel="noopener noreferrer"
-            href={`https://try-michelson.tzalpha.net/?source=${encodeURIComponent(
-              output
-            )}`}
-          >
-            View in Try-Michelson IDE
-          </Link>
-        </Item>
-      )}
-    </Toolbar>
-  );
+  const renderResult = () => {
+    if(!error) {
+      return (
+        <Toolbar>
+          <Item onClick={() => props.onCopy && props.onCopy()}>
+            <FontAwesomeIcon icon={faCopy}></FontAwesomeIcon>
+            <Tooltip>Copy</Tooltip>
+          </Item>
+          <Item onClick={() => props.onDownload && props.onDownload()}>
+            <FontAwesomeIcon icon={faDownload}></FontAwesomeIcon>
+            <Tooltip>Download</Tooltip>
+          </Item>
+          {props.showTryMichelson && <Divider></Divider>}
+          {props.showTryMichelson && (
+            <Item>
+              <Link
+                target="_blank"
+                rel="noopener noreferrer"
+                href={`https://try-michelson.com/?source=${encodeURIComponent(
+                  output
+                )}`}
+              >
+                View in Try-Michelson IDE
+              </Link>
+            </Item>
+          )}
+        </Toolbar>
+      );
+    }
+    else {
+      return (
+        <><Statusbar error={error} /></>
+      );
+    }
+  };
+  return <div>{renderResult()}</div>;
 };

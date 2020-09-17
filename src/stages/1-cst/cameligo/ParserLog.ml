@@ -26,12 +26,16 @@ let mk_state ~offsets ~mode ~buffer =
     val pad_node    = ""
     method pad_node = pad_node
 
-    (** The method [pad] updates the current padding, which is
-        comprised of two components: the padding to reach the new node
-        (space before reaching a subtree, then a vertical bar for it)
-        and the padding for the new node itself (Is it the last child
-        of its parent?).
-     *)
+    (* The method [pad] updates the current padding, which is
+       comprised of two components: the padding to reach the new node
+       (space before reaching a subtree, then a vertical bar for it)
+       and the padding for the new node itself (Is it the last child
+       of its parent?).
+
+       A child node that is not the last satisfies [rank < arity] and
+       the last child satisfies [rank = arity], where the rank of the
+       first child is 0. *)
+
     method pad arity rank =
       {< pad_path =
            pad_node ^ (if rank = arity-1 then "`-- " else "|-- ");
@@ -43,7 +47,7 @@ let mk_state ~offsets ~mode ~buffer =
 let compact state (region: Region.t) =
   region#compact ~offsets:state#offsets state#mode
 
-(** {1 Printing the tokens with their source regions} *)
+(* Printing the tokens with their source regions *)
 
 let print_nsepseq :
   state -> string -> (state -> 'a -> unit) ->
@@ -159,6 +163,7 @@ and print_type_expr state = function
 | TApp app        -> print_type_app state app
 | TPar par        -> print_type_par state par
 | TVar var        -> print_var state var
+| TWild wild      -> print_token state wild " "
 | TFun t          -> print_fun_type state t
 | TString s       -> print_string state s
 
@@ -301,8 +306,6 @@ and print_pattern state = function
 | PTyped t ->
     print_typed_pattern state t
 | PUnit p -> print_unit state p
-| PFalse kwd_false -> print_token state kwd_false "false"
-| PTrue kwd_true -> print_token state kwd_true "true"
 
 and print_list_pattern state = function
   PListComp p -> print_injection state print_pattern p
@@ -331,6 +334,8 @@ and print_field_pattern state {value; _} =
 and print_constr_pattern state = function
   PNone p      -> print_none_pattern state p
 | PSomeApp p   -> print_some_app_pattern state p
+| PFalse kwd_false -> print_token state kwd_false "false"
+| PTrue kwd_true -> print_token state kwd_true "true"
 | PConstrApp p -> print_constr_app_pattern state p
 
 and print_none_pattern state value =
@@ -592,18 +597,16 @@ and print_fun_expr state {value; _} =
   in print_expr state body
 
 and print_conditional state {value; _} =
-  let {kwd_if; test; kwd_then;
-       ifso; ifnot} = value in
-  print_token state ghost "(";
-  print_token state kwd_if "if";
-  print_expr  state test;
-  print_token state kwd_then "then";
-  print_expr  state ifso;
-  print_option state 
-    (fun state (kwd_else,ifnot) -> 
+  let {kwd_if; test; kwd_then; ifso; ifnot} = value in
+  print_token  state ghost "(";
+  print_token  state kwd_if "if";
+  print_expr   state test;
+  print_token  state kwd_then "then";
+  print_expr   state ifso;
+  print_option state
+    (fun state (kwd_else,ifnot) ->
       print_token state kwd_else "else";
-      print_expr state ifnot;
-    ) ifnot;
+      print_expr  state ifnot) ifnot;
   print_token state ghost ")"
 
 (* Conversion to string *)
@@ -623,7 +626,7 @@ let expr_to_string ~offsets ~mode =
 let type_expr_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_type_expr
 
-(** {1 Pretty-printing the AST} *)
+(* Pretty-printing the CST*)
 
 let pp_ident state {value=name; region} =
   let reg  = compact state region in
@@ -655,14 +658,12 @@ let rec pp_cst state {decl; _} =
   List.iteri (List.length decls |> apply) decls
 
 and pp_declaration state = function
-  Let {value = (_, kwd_rec, let_binding, attr); region} ->
-    pp_loc_node    state "Let" region;
+  Let {value =(_, kwd_rec, let_binding, attr); region} ->
+    pp_loc_node state "Let" region;
     (match kwd_rec with
-    | None -> ()
-    | Some (_) -> pp_node (state#pad 0 0) "rec"
-    );
-    pp_let_binding state let_binding attr;
-
+       None -> ()
+     | Some (_) -> pp_node (state#pad 0 0) "rec"); (* Hack *)
+    pp_let_binding state let_binding attr
 | TypeDecl {value; region} ->
     pp_loc_node  state "TypeDecl" region;
     pp_type_decl state value
@@ -733,10 +734,6 @@ and pp_pattern state = function
     pp_verbatim (state#pad 1 0) v
 | PUnit {region; _} ->
     pp_loc_node state "PUnit" region
-| PFalse region ->
-    pp_loc_node state "PFalse" region
-| PTrue region ->
-    pp_loc_node state "PTrue" region
 | PList plist ->
     pp_node state "PList";
     pp_list_pattern (state#pad 1 0) plist
@@ -809,6 +806,10 @@ and pp_constr_pattern state = function
 | PSomeApp {value=_,param; region} ->
     pp_loc_node state "PSomeApp" region;
     pp_pattern  (state#pad 1 0) param
+| PFalse region ->
+    pp_loc_node state "PFalse" region
+| PTrue region ->
+    pp_loc_node state "PTrue" region
 | PConstrApp {value; region} ->
     pp_loc_node state "PConstrApp" region;
     pp_constr_app_pattern (state#pad 1 0) value
@@ -1118,17 +1119,18 @@ and pp_annotated state annot =
   pp_type_expr (state#pad 2 1) t_expr
 
 and pp_cond_expr state (cond: cond_expr) =
+  let arity = if cond.ifnot = None then 2 else 3 in
   let () =
-    let state = state#pad 3 0 in
+    let state = state#pad arity 0 in
     pp_node state "<condition>";
     pp_expr (state#pad 1 0) cond.test in
   let () =
-    let state = state#pad 3 1 in
+    let state = state#pad arity 1 in
     pp_node state "<true>";
     pp_expr (state#pad 1 0) cond.ifso in
   let () = match cond.ifnot with
     Some (_, ifnot) ->
-    let state = state#pad 3 2 in
+    let state = state#pad arity 2 in
     pp_node state "<false>";
     pp_expr (state#pad 1 0) ifnot
   | None -> ()
@@ -1182,6 +1184,9 @@ and pp_type_expr state = function
 | TVar v ->
     pp_node  state "TVar";
     pp_ident (state#pad 1 0) v
+| TWild wild ->
+    pp_node  state "TWild";
+    pp_loc_node state "TWild" wild
 | TString s ->
     pp_node   state "TString";
     pp_string (state#pad 1 0) s

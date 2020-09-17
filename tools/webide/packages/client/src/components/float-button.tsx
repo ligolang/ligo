@@ -10,6 +10,7 @@ const Container = styled.div`
 `;
 
 const Button = styled.a`
+  z-index: 1000;
   margin: 0.1em;
   width: 1.5em;
   height: 1.5em;
@@ -35,6 +36,7 @@ const Button = styled.a`
     background-color: var(--blue);
     color: rgb(255, 255, 255);
     transform: scale(1.2);
+    text-decoration: none;
   }
 `;
 

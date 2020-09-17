@@ -16,6 +16,8 @@
    this confusion should not arise for us.  *)
 
 type 'a t
+val to_yojson : 'a t -> Yojson.Safe.t
+val of_yojson : Yojson.Safe.t -> ('a t, string) Result.result
 
 val equal : 'a t -> 'a t -> bool
 val compare : 'a t -> 'a t -> int
@@ -47,3 +49,5 @@ val reset_counter : unit -> unit
 val debug : 'a t -> string
 
 val is_generated : 'a t -> bool
+
+val todo_cast : 'a t -> 'b t

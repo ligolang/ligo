@@ -17,14 +17,17 @@ const Output = styled.div`
   flex: 1;
   padding: 0.5em;
   display: flex;
-  overflow: scroll;
+  overflow: hidden;
 `;
 
 const Pre = styled.pre`
   margin: 0;
+  width: -webkit-fill-available;
 `;
 
+
 export const CompileOutputPane = () => {
+  var parse = require('shell-quote').parse;
   const output = useSelector<AppState, ResultState['output']>(
     state => state.result.output
   );

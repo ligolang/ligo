@@ -14,12 +14,12 @@ depends: [
   "bisect_ppx" {dev & >= "2.0.0"}
   "ppx_let"
   "ppx_deriving"
+  "ppx_deriving_yojson"
   "ppx_expect"
-  "ppx_blob"
   "tezos-utils"
   "proto-alpha-utils"
   "yojson"
-  "alcotest" { with-test }
+  "alcotest" { with-test & >= "1.0" & < "1.1" }
   "getopt"
   "terminal_size"
   "pprint"

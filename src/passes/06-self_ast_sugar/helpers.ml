@@ -2,18 +2,11 @@ open Ast_sugar
 open Trace
 open Stage_common.Helpers
 
-let bind_map_cmap f map = bind_cmap (
-  CMap.map 
-    (fun ({ctor_type;_} as ctor) -> 
-      let%bind ctor' = f ctor_type in
-      ok {ctor with ctor_type = ctor'}) 
-    map)
-
 let bind_map_lmap_t f map = bind_lmap (
   LMap.map 
-    (fun ({field_type;_} as field) -> 
-      let%bind field' = f field_type in
-      ok {field with field_type = field'}) 
+    (fun ({associated_type;_} as field) -> 
+      let%bind field' = f associated_type in
+      ok {field with associated_type = field'}) 
     map)
 
 type ('a , 'err) folder = 'a -> expression -> ('a , 'err) result
@@ -35,7 +28,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a, 'err) re
       let%bind res = bind_fold_pair self init' ab in
       ok res
     )
-  | E_lambda { binder = _ ; input_type = _ ; output_type = _ ; result = e }
+  | E_lambda { binder = _ ; result = e }
   | E_ascription {anno_expr=e; _} | E_constructor {element=e} -> (
       let%bind res = self init' e in
       ok res
@@ -50,7 +43,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a, 'err) re
       let%bind res = fold_expression self init'' expr in
       ok res
     in
-    let%bind res = bind_fold_lmap aux (ok init') m in
+    let%bind res = bind_fold_lmap aux init' m in
     ok res
   )
   | E_update {record;path;update} -> (
@@ -117,15 +110,15 @@ and fold_cases : ('a, 'err) folder -> 'a -> matching_expr -> ('a, 'err) result =
       let%bind res = fold_expression f res some in
       ok res
     )
-  | Match_record (_, _, e) -> (
+  | Match_record (_, e) -> (
       let%bind res = fold_expression f init e in
       ok res
     )
-  | Match_tuple (_, _, e) -> (
+  | Match_tuple (_, e) -> (
       let%bind res = fold_expression f init e in
       ok res
     )
-  | Match_variable (_, _, e) -> (
+  | Match_variable (_, e) -> (
       let%bind res = fold_expression f init e in
       ok res
     )
@@ -206,9 +199,9 @@ let rec map_expression : 'err exp_mapper -> expression -> (expression, 'err) res
       let%bind let_result = self let_result in
       return @@ E_let_in { let_binder ; mut; rhs ; let_result; inline }
     )
-  | E_lambda { binder ; input_type ; output_type ; result } -> (
+  | E_lambda { binder ; result } -> (
       let%bind result = self result in
-      return @@ E_lambda { binder ; input_type ; output_type ; result }
+      return @@ E_lambda { binder ; result }
     )
   | E_recursive { fun_name; fun_type; lambda} ->
       let%bind result = self lambda.result in
@@ -239,7 +232,7 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_express
   let return type_content = ok { type_content; location=te.location } in
   match te'.type_content with
   | T_sum temap ->
-    let%bind temap' = bind_map_cmap self temap in
+    let%bind temap' = bind_map_lmap_t self temap in
     return @@ (T_sum temap')
   | T_record temap ->
     let%bind temap' = bind_map_lmap_t self temap in
@@ -251,8 +244,7 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_express
     let%bind type1' = self type1 in
     let%bind type2' = self type2 in
     return @@ (T_arrow {type1=type1' ; type2=type2'})
-  | T_operator _
-  | T_variable _ | T_constant _ -> ok te'
+  | T_variable _ | T_wildcard | T_constant _ -> ok te'
 
 and map_cases : 'err exp_mapper -> matching_expr -> (matching_expr, 'err) result = fun f m ->
   match m with
@@ -274,17 +266,17 @@ and map_cases : 'err exp_mapper -> matching_expr -> (matching_expr, 'err) result
       let%bind some = map_expression f some in
       ok @@ Match_option { match_none ; match_some = (name , some) }
     )
-  | Match_record (names, ty_opt, e) -> (
+  | Match_record (names, e) -> (
       let%bind e' = map_expression f e in
-      ok @@ Match_record (names, ty_opt, e')
+      ok @@ Match_record (names, e')
     )
-  | Match_tuple (names, ty_opt, e) -> (
+  | Match_tuple (names, e) -> (
       let%bind e' = map_expression f e in
-      ok @@ Match_tuple (names, ty_opt, e')
+      ok @@ Match_tuple (names, e')
     )
-  | Match_variable (name, ty_opt, e) -> (
+  | Match_variable (name, e) -> (
       let%bind e' = map_expression f e in
-      ok @@ Match_variable (name, ty_opt, e')
+      ok @@ Match_variable (name, e')
     )
 
 and map_program : 'err abs_mapper -> program -> (program, 'err) result = fun m p ->
@@ -382,9 +374,9 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> ('a 
       let%bind (res,let_result) = self res let_result in
       ok (res, return @@ E_let_in { let_binder ; mut; rhs ; let_result ; inline })
     )
-  | E_lambda { binder ; input_type ; output_type ; result } -> (
+  | E_lambda { binder ; result } -> (
       let%bind (res,result) = self init' result in
-      ok ( res, return @@ E_lambda { binder ; input_type ; output_type ; result })
+      ok ( res, return @@ E_lambda { binder ; result })
     )
   | E_recursive { fun_name; fun_type; lambda} ->
       let%bind (res, result) = self init' lambda.result in
@@ -425,15 +417,15 @@ and fold_map_cases : ('a,'err) fold_mapper -> 'a -> matching_expr -> ('a * match
       let%bind (init, some) = fold_map_expression f init some in
       ok @@ (init, Match_option { match_none ; match_some = (name , some) })
     )
-  | Match_record (names, ty_opt, e) -> (
+  | Match_record (names, e) -> (
       let%bind (init, e') = fold_map_expression f init e in
-      ok @@ (init, Match_record (names, ty_opt, e'))
+      ok @@ (init, Match_record (names, e'))
     )
-  | Match_tuple (names, ty_opt, e) -> (
+  | Match_tuple (names, e) -> (
       let%bind (init, e') = fold_map_expression f init e in
-      ok @@ (init, Match_tuple (names, ty_opt, e'))
+      ok @@ (init, Match_tuple (names, e'))
     )
-  | Match_variable (name, ty_opt, e) -> (
+  | Match_variable (name, e) -> (
       let%bind (init, e') = fold_map_expression f init e in
-      ok @@ (init, Match_variable (name, ty_opt, e'))
+      ok @@ (init, Match_variable (name, e'))
     )

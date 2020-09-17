@@ -166,3 +166,9 @@ let trace text = function
 (* Printing a string in red to standard error *)
 
 let highlight msg = Printf.eprintf "\027[31m%s\027[0m%!" msg
+
+(* When failing to parse a specifed JSON format *)
+let error_yojson_format format =
+  Error ("Invalid JSON value.
+          An object with the following specification is expected:"
+         ^ format)

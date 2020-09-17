@@ -5,10 +5,8 @@
 
 module Region = Simple_utils.Region
 open Region
-module CST = Cst.Cameligo
+module CST = Cst.Reasonligo
 open! CST
-
-let (<@) f g x = f (g x)
 
 (*
   Convert a nsepseq to a chain of TFun's.
@@ -16,15 +14,6 @@ let (<@) f g x = f (g x)
   Necessary to handle cases like:
   [type foo = (int, int) => int;]
 *)
-
-let rec curry hd = function
-  (sep, item)::rest ->
-    let stop   = nsepseq_to_region type_expr_to_region (hd, rest)
-    and start  = type_expr_to_region hd in
-    let region = cover start stop
-    and value  = hd, sep, curry item rest
-    in TFun {value; region}
-| [] -> hd
 
 let wild_error e =
   match e with
@@ -41,8 +30,8 @@ let wild_error e =
 (* Entry points *)
 
 %start contract interactive_expr
-%type <Cst.Cameligo.t> contract
-%type <Cst.Cameligo.expr> interactive_expr
+%type <Cst.Reasonligo.t> contract
+%type <Cst.Reasonligo.expr> interactive_expr
 
 (* Solves a shift/reduce problem that happens with records and
    sequences. To elaborate: [sequence_or_record_in]
@@ -79,7 +68,7 @@ sep_or_term_list(item,sep):
 par(X):
   "(" X ")" {
     let region = cover $1 $3
-    and value  = {lpar=$1; inside=$2; rpar=$3}
+    and value  = ({lpar=$1; inside=$2; rpar=$3} : _ par)
     in {region; value} }
 
 (* Sequences
@@ -151,8 +140,8 @@ declarations:
 | declaration declarations { Utils.nseq_cons $1 $2              }
 
 declaration:
-| type_decl ";"?           { TypeDecl $1 }
-| let_declaration ";"?     { Let      $1 }
+| type_decl ";"?           { TypeDecl  $1 }
+| let_declaration ";"?     { ConstDecl $1 }
 
 (* Type declarations *)
 
@@ -170,21 +159,18 @@ type_expr:
   fun_type | sum_type | record_type { $1 }
 
 fun_type:
-  type_name "=>" fun_type {
-    let region = cover $1.region (type_expr_to_region $3)
-    in TFun {region; value = TVar $1, $2, $3}
+  cartesian { $1 }
+| cartesian "=>" fun_type {
+    let start  = type_expr_to_region $1
+    and stop   = type_expr_to_region $3 in
+    let region = cover start stop in
+    TFun {region; value=$1,$2,$3} }
+
+cartesian:
+  core_type { $1 }
+| par(tuple (core_type)) {
+    TProd $1
   }
-| "(" fun_type ")" "=>" fun_type {
-    let region = cover $1 (type_expr_to_region $5)
-    in TFun {region; value = $2,$4,$5}
-  }
-| "(" tuple(fun_type) ")" "=>" fun_type {
-    let hd, rest = $2 in curry hd (rest @ [($4,$5)])
-  }
-| "(" tuple(fun_type) ")" {
-    TProd {region = cover $1 $3; value = $2}
-  }
-| core_type { $1 }
 
 type_args:
   tuple(fun_type) {     $1 }
@@ -192,8 +178,9 @@ type_args:
 
 core_type:
   type_name      {    TVar $1 }
+| "_"            {   TWild $1 }
+| par(type_expr) {    TPar $1 }
 | "<string>"     { TString $1 }
-| par(fun_type)  {    TPar $1 }
 | module_name "." type_name {
     let module_name = $1.value in
     let type_name   = $3.value in
@@ -258,35 +245,22 @@ let_declaration:
     in {region; value} }
 
 let_binding:
-  "<ident>" type_annotation? "=" expr {
+  let_pattern_simple type_annotation? "=" expr {
     wild_error $4;
-    Scoping.check_reserved_name $1;
-    {binders = PVar $1, []; lhs_type=$2; eq=$3; let_rhs=$4}
+    {binders = $1; lhs_type=$2; eq=$3; let_rhs=$4}
   }
-| "_" type_annotation? "=" expr {
-    wild_error $4;
-    {binders = PWild $1, []; lhs_type=$2; eq=$3; let_rhs=$4}
-  }
-| unit type_annotation? "=" expr {
-    wild_error $4;
-    {binders = PUnit $1, []; lhs_type=$2; eq=$3; let_rhs=$4}
-  }
-| record_pattern type_annotation? "=" expr {
-    wild_error $4;
-    Scoping.check_pattern (PRecord $1);
-    {binders = PRecord $1, []; lhs_type=$2; eq=$3; let_rhs=$4}
-  }
-| par(closed_irrefutable) type_annotation? "=" expr {
-    wild_error $4;
-    Scoping.check_pattern $1.value.inside;
-    {binders = $1.value.inside, []; lhs_type=$2; eq=$3; let_rhs=$4}
-  }
-| tuple(sub_irrefutable) type_annotation? "=" expr {
-    wild_error $4;
+
+let_pattern_simple :
+  Ident                       {                Scoping.check_reserved_name $1; PVar $1 }
+| "_"                         {                                               PWild $1 }
+| unit                        {                                               PUnit $1 }
+| record_pattern              {         Scoping.check_pattern (PRecord $1); PRecord $1 }
+| par (closed_irrefutable)    { Scoping.check_pattern $1.value.inside; $1.value.inside }
+| tuple (sub_irrefutable)     {
     Utils.nsepseq_iter Scoping.check_pattern $1;
     let region  = nsepseq_to_region pattern_to_region $1 in
-    let binders = PTuple {value=$1; region}, [] in
-    {binders; lhs_type=$2; eq=$3; let_rhs=$4} }
+    PTuple {value=$1; region}
+}
 
 type_annotation:
   ":" type_expr { $1,$2 }
@@ -328,8 +302,15 @@ pattern:
     let start  = pattern_to_region $2 in
     let stop   = pattern_to_region $5 in
     let region = cover start stop in
-    let cons   = {value=$2,$3,$5; region}
-    in PList (PCons cons)
+    let value  =
+      { lbracket = $1;
+	lpattern = $2;
+	comma    = $3;
+	ellipsis = $4;
+	rpattern = $5;
+	rbracket = $6
+      }
+    in PList (PCons {value;region})
   }
 | tuple(sub_pattern) {
     let hd, tl = $1 in
@@ -349,8 +330,6 @@ core_pattern:
 | "<int>"                                              {      PInt $1 }
 | "<nat>"                                              {      PNat $1 }
 | "<bytes>"                                            {    PBytes $1 }
-| "true"                                               {     PTrue $1 }
-| "false"                                              {    PFalse $1 }
 | "<string>"                                           {   PString $1 }
 | "<verbatim>"                                         { PVerbatim $1 }
 | par(ptuple)                                          {      PPar $1 }
@@ -383,6 +362,8 @@ constr_pattern:
     and value  = $1, $2 in
     PSomeApp {region; value}
   }
+| "true"  {  PTrue $1 }
+| "false" { PFalse $1 }
 | "<constr>" sub_pattern {
     let region = cover $1.region (pattern_to_region $2)
     in PConstrApp {region; value = $1, Some $2}
@@ -426,8 +407,9 @@ type_expr_simple:
         in TApp {region; value}
     | None -> TVar $1
   }
-| "(" nsepseq(type_expr_simple, ",") ")" {
-    TProd {region = cover $1 $3; value=$2}
+| par(type_expr_simple){ TPar $1}
+| par(tuple(type_expr_simple)) {
+    TProd $1
   }
 | "(" type_expr_simple "=>" type_expr_simple ")" {
     TPar {
@@ -446,10 +428,10 @@ type_expr_simple:
 type_annotation_simple:
   ":" type_expr_simple { $1,$2 }
 
+
 fun_expr(right_expr):
   disj_expr_level "=>" right_expr {
-    let arrow, body = $2, $3
-    and kwd_fun     = ghost in
+    let arrow, body = $2, $3 in
     let start       = expr_to_region $1
     and stop        = expr_to_region body in
     let region      = cover start stop in
@@ -465,14 +447,7 @@ fun_expr(right_expr):
     | EAnnot {region; value = {inside = EVar v, colon, typ; _}} ->
         Scoping.check_reserved_name v;
         let value = {pattern = PVar v; colon; type_expr = typ} in
-        PPar {
-          value = {
-            lpar = Region.ghost;
-            rpar = Region.ghost;
-            inside = PTyped {region; value}
-          };
-          region
-        }
+        PTyped {region; value}
     | EPar p ->
         let value =
           {p.value with inside = arg_to_pattern p.value.inside}
@@ -482,90 +457,73 @@ fun_expr(right_expr):
         PTuple { value = Utils.nsepseq_map arg_to_pattern value; region}
     | EAnnot {region; value = {inside = t, colon, typ; _}} ->
         let value = { pattern = arg_to_pattern t; colon; type_expr = typ} in
-        PPar {
-          value = {
-            lpar = Region.ghost;
-            rpar = Region.ghost;
-            inside = PTyped {region; value}
-          };
-          region
-        }
+        PTyped {region; value}
     | e ->
         let open! SyntaxError in
         raise (Error (WrongFunctionArguments e)) in
     let fun_args_to_pattern = function
       EAnnot {
         value = {
-          inside = ETuple {value=fun_args; _}, _, _;
+          inside = ETuple _ as e, _, _;
           _};
         _} ->
         (*  ((foo:x, bar) : type)  *)
-        let bindings =
-          List.map (arg_to_pattern <@ snd) (snd fun_args)
-        in arg_to_pattern (fst fun_args), bindings
+        arg_to_pattern e
       | EAnnot {
           value = {
-            inside = EPar {value = {inside=fun_arg; _}; _}, _, _;
+            inside = EPar _ as e, _, _;
             _};
           _} ->
           (* ((foo:x, bar) : type) *)
-         (arg_to_pattern fun_arg, [])
+         arg_to_pattern e
+      (*function as argument *)
       | EPar {value = {inside = EFun {
           value = {
-              binders = PPar {
-                value = {
-                  inside = PTyped { value = { pattern; colon; type_expr }; region = fun_region };
-                  _
-                };
-                _
-              }, [];
+              binders = PTyped { value = { pattern; colon; type_expr }; region = fun_region };
               arrow;
               body;
               _
           };
           _
-        }; _ }; region} ->
-
+        }; lpar;rpar; }; region} ->
         let expr_to_type = function
         | EVar v -> TVar v
         | e -> let open! SyntaxError
             in raise (Error (WrongFunctionArguments e))
         in
         let type_expr = (
-          match type_expr with
-          | TProd {value; _} ->
-            let (hd, rest) = value in
-            let rest = rest @ [(arrow, expr_to_type body)]
-            in curry hd rest
-          | e ->
             TFun {
-              value = e, arrow, expr_to_type body;
+              value = type_expr, arrow, expr_to_type body;
               region = fun_region
             }
         )
         in
-        PTyped {
-          value = {
-            pattern;
-            colon;
-            type_expr
+        PPar {value = {inside =
+          PTyped {
+            value = {
+              pattern;
+              colon;
+              type_expr
+            };
+            region;
+          };
+          lpar;
+          rpar;
           };
           region;
-        }, []
-      | EPar {value = {inside = fun_arg; _ }; _} ->
-          arg_to_pattern fun_arg, []
+        }
+      | EPar _ as e ->
+          arg_to_pattern e
       | EAnnot _ as e ->
-          arg_to_pattern e, []
-      | ETuple {value = fun_args; _} ->
-          let bindings =
-            List.map (arg_to_pattern <@ snd) (snd fun_args) in
-          List.iter Scoping.check_pattern bindings;
-          arg_to_pattern (fst fun_args), bindings
+          arg_to_pattern e
+      | ETuple _ as e ->
+          arg_to_pattern e
       | EUnit _ as e ->
-          arg_to_pattern e, []
+          arg_to_pattern e
       | EVar _ as e ->
-          arg_to_pattern e, []
-      | e -> let open! SyntaxError
+          arg_to_pattern e
+      | e ->
+      let open! SyntaxError
             in raise (Error (WrongFunctionArguments e))
     in
     let binders = fun_args_to_pattern $1 in
@@ -573,13 +531,12 @@ fun_expr(right_expr):
       EAnnot {value = {inside = _ , _, t; _}; region = r} -> Some (r,t)
       | _ -> None
     in
-    let f = {kwd_fun;
-             binders;
+    let value = {binders;
              lhs_type;
              arrow;
              body
             }
-    in EFun {region; value=f} }
+    in EFun {region; value} }
 
 base_expr:
   disj_expr_level | fun_expr(expr) { $1 }
@@ -595,8 +552,7 @@ if_then(right_expr):
     let region   = cover $1 $6 in
     let value    = {kwd_if   = $1;
                     test     = $2;
-                    kwd_then = $3;
-                    ifso     = $4;
+                    ifso     = {lbrace=$3; inside=($4,$5); rbrace=$6};
                     ifnot    = None}
     in ECond {region; value} }
 
@@ -606,9 +562,8 @@ if_then_else(right_expr):
     let region = cover $1 $11 in
     let value  = {kwd_if   = $1;
                   test     = $2;
-                  kwd_then = $3;
-                  ifso     = $4;
-                  ifnot    = Some ($6,$9)}
+                  ifso     = {lbrace=$3; inside=($4,$5); rbrace=$6};
+                  ifnot    = Some ($7,{lbrace=$8; inside=($9,$10); rbrace=$11})}
     in ECond {region; value} }
 
 base_if_then_else__open(x):
@@ -627,15 +582,13 @@ switch_expr(right_expr):
     let start = $1
     and stop = $5 in
     let region = cover start stop
-    and cases = {
-      region = nsepseq_to_region (fun x -> x.region) $4;
-      value  = $4} in
+    and cases = $4 in
     let value = {
-      kwd_match = $1;
+      kwd_switch = $1;
       expr      = $2;
-      lead_vbar = None;
-      kwd_with  = ghost;
-      cases}
+      lbrace    = $3;
+      cases;
+      rbrace  = $5 }
     in ECase {region; value} }
 
 switch_expr_:
@@ -645,7 +598,11 @@ switch_expr_:
 cases(right_expr):
   nseq(case_clause(right_expr)) {
     let hd, tl = $1 in
-    hd, List.map (fun f -> expr_to_region f.value.rhs, f) tl }
+    let nseq = snd hd, tl in
+    {
+      region = nsepseq_to_region (fun x -> x.region) nseq;
+      value  = nseq }
+  }
 
 case_clause(right_expr):
   "|" pattern "=>" right_expr ";"? {
@@ -653,8 +610,8 @@ case_clause(right_expr):
     let start  = pattern_to_region $2
     and stop   = expr_to_region $4 in
     let region = cover start stop
-    and value  = {pattern=$2; arrow=$3; rhs=$4}
-    in {region; value} }
+    and value  = {pattern=$2; arrow=$3; rhs=$4; terminator=$5 }
+    in $1,{region; value} }
 
 let_expr(right_expr):
   seq(Attr) "let" ioption("rec") let_binding ";" right_expr {
@@ -662,11 +619,11 @@ let_expr(right_expr):
     let kwd_let = $2 in
     let kwd_rec = $3 in
     let binding = $4 in
-    let kwd_in  = $5 in
+    let semi    = $5 in
     let body    = $6 in
     let stop    = expr_to_region $6 in
     let region  = cover $2 stop
-    and value   = {kwd_let; kwd_rec; binding; kwd_in; body; attributes}
+    and value   = {kwd_let; kwd_rec; binding; semi; body; attributes}
     in ELetIn {region; value} }
 
 disj_expr_level:
@@ -675,15 +632,15 @@ disj_expr_level:
 | par(tuple(disj_expr_level)) type_annotation_simple? {
     let region = nsepseq_to_region expr_to_region $1.value.inside in
     let tuple  = ETuple {value=$1.value.inside; region} in
-    let region =
-      match $2 with
-        Some (_,s) -> cover $1.region (type_expr_to_region s)
-      |       None -> region in
+    let par =
+      EPar {$1 with value = {$1.value with inside = tuple}} in
     match $2 with
       Some (colon, typ) ->
-        let value = {$1.value with inside = tuple,colon,typ}
+        let region = cover $1.region (type_expr_to_region typ)
+        and value = {$1.value with inside = par,colon,typ}
         in EAnnot {region; value}
-    | None -> tuple }
+    | None -> par
+    }
 
 bin_op(arg1,op,arg2):
   arg1 op arg2 {
@@ -781,19 +738,17 @@ constr_expr:
     EConstr (EConstrApp {$1 with value=$1, None}) }
 
 call_expr:
-  core_expr "(" nsepseq(expr, ",") ")" {
+  core_expr par(nsepseq(expr, ",")) {
     let start  = expr_to_region $1 in
-    let stop   = $4 in
-    let region = cover start stop in
-    let hd, tl = $3 in
-    let tl     = List.map snd tl in
-    ECall {region; value = $1,(hd,tl)}
+    let stop   = $2 in
+    let region = cover start stop.region in
+    ECall {region; value = $1,Multiple $2}
   }
 | core_expr unit {
     let start  = expr_to_region $1 in
     let stop   = $2.region in
     let region = cover start stop
-    and value  = $1, (EUnit $2, [])
+    and value  = $1, Unit $2
     in ECall {region; value} }
 
 common_expr:
@@ -829,7 +784,7 @@ list_or_spread:
   }
 | "[" expr "," "..." expr "]" {
     let region = cover $1 $6
-    and value  = {arg1=$2; op=$4; arg2=$5}
+    and value : cons_expr = {lbracket=$1; lexpr=$2; comma=$3; ellipsis=$4; rexpr=$5; rbracket=$6}
     in EList (ECons {region; value})
   }
 | "[" expr? "]" {
@@ -907,12 +862,13 @@ update_record:
     let ne_elements, terminator = $5 in
     let value = {
       lbrace   = $1;
+      ellipsis = $2;
       record   = $3;
-      kwd_with = $4;
+      comma    = $4;
       updates  = {value = {compound = None;
-                           ne_elements;
-                           terminator};
-                  region = cover $4 $6};
+                          ne_elements;
+                          terminator};
+                 region = cover $4 $6};
       rbrace   = $6}
     in {region; value} }
 
@@ -945,7 +901,7 @@ exprs:
       in
       let sequence = ESeq {
         value = {
-          compound   = None; 
+          compound   = None;
           elements   = Some val_;
           terminator = snd c};
         region = sequence_region

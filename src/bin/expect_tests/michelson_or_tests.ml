@@ -18,22 +18,15 @@ let%expect_test _ =
   [%expect {|
     { parameter unit ;
       storage (or (int %three) (or %four (int %one) (nat %two))) ;
-      code { PUSH int 1 ;
-             LEFT nat ;
-             RIGHT int ;
-             DUP ;
-             NIL operation ;
-             PAIR ;
-             DIP { DROP 2 } } } |}]
+      code { DROP ; PUSH int 1 ; LEFT nat ; RIGHT int ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_michelson_or.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-          in file "bad_michelson_or.mligo", line 5, characters 0-3
-          Constant declaration 'main'
           in file "bad_michelson_or.mligo", line 6, characters 12-27
-          michelson_or contructor M_right must be annotated with a sum type
+          Incorrect usage of type "michelson_or".
+          The contructor "M_right" must be annotated with a variant type.
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -48,10 +41,5 @@ let%expect_test _ =
   [%expect {|
     { parameter unit ;
       storage (or (int %three) (or (int %one) (nat %two))) ;
-      code { PUSH int 1 ;
-             LEFT nat ;
-             RIGHT int ;
-             DUP ;
-             NIL operation ;
-             PAIR ;
-             DIP { DROP 2 } } } |}]
+      code { DROP ; PUSH int 1 ; LEFT nat ; RIGHT int ; NIL operation ; PAIR } } |}]
+

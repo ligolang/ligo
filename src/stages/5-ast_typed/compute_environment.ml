@@ -77,7 +77,7 @@ and cases : environment -> matching_expr -> matching_expr = fun env cs ->
     let match_cons =
       let mc = c.match_cons in
       let env_hd = Environment.add_ez_binder mc.hd mc.tv env in
-      let env_tl = Environment.add_ez_binder mc.tl (Combinators.t_list mc.tv ()) env_hd in
+      let env_tl = Environment.add_ez_binder mc.tl (Combinators.t_list mc.tv) env_hd in
       let body = self ~env':env_tl mc.body in
       { mc with body }
     in
@@ -99,10 +99,10 @@ and cases : environment -> matching_expr -> matching_expr = fun env cs ->
       let aux (c : matching_content_case) =
         let case =
           try (
-            CMap.find c.constructor variant_type
+            LMap.find c.constructor variant_type
           ) with _ -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
         in
-        let env' = Environment.add_ez_binder c.pattern case.ctor_type env in
+        let env' = Environment.add_ez_binder c.pattern case.associated_type env in
         let body = self ~env' c.body in
         { c with body }
       in

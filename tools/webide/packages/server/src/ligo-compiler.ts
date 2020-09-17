@@ -7,7 +7,7 @@ import { logger } from './logger';
 const { spawn } = require('child_process');
 const dataDir = process.env['DATA_DIR'] || path.join(__dirname, 'tmp');
 
-const JOB_TIMEOUT = 10000;
+const JOB_TIMEOUT = 50000;
 
 export class CompilerError extends Error {
   constructor(message: string) {

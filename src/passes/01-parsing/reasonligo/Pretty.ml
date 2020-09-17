@@ -1,6 +1,6 @@
 [@@@warning "-42"]
 
-module CST = Cst.Cameligo
+module CST = Cst.Reasonligo
 open CST
 module Region = Simple_utils.Region
 open! Region
@@ -12,10 +12,10 @@ let rec print ast =
   separate_map (hardline ^^ hardline) app (Utils.nseq_to_list ast.decl)
 
 and pp_declaration = function
-  Let decl -> pp_let_decl decl
-| TypeDecl decl -> pp_type_decl decl
+  ConstDecl decl -> pp_const_decl decl
+| TypeDecl  decl -> pp_type_decl decl
 
-and pp_let_decl = function
+and pp_const_decl = function
 | {value = (_,rec_opt, binding, attr); _} ->
   let let_str =
     match rec_opt with
@@ -39,8 +39,7 @@ and pp_verbatim s = string "{|" ^^ pp_ident s ^^ string "|}"
 
 and pp_let_binding let_ (binding : let_binding) =
   let {binders; lhs_type; let_rhs; _} = binding in
-  let patterns = Utils.nseq_to_list binders in
-  let patterns = group (separate_map (break 0) pp_pattern patterns) in
+  let patterns = group (pp_pattern binders) in
   let lhs =
     string let_ ^^
       match lhs_type with
@@ -58,8 +57,6 @@ and pp_let_binding let_ (binding : let_binding) =
 and pp_pattern = function
   PConstr p -> pp_pconstr p
 | PUnit   _ -> string "()"
-| PFalse  _ -> string "false"
-| PTrue   _ -> string "true"
 | PVar    v -> pp_ident v
 | PInt    i -> pp_int i
 | PNat    n -> pp_nat n
@@ -76,6 +73,8 @@ and pp_pattern = function
 and pp_pconstr = function
   PNone      _ -> string "None"
 | PSomeApp   p -> pp_patt_some p
+| PFalse  _ -> string "false"
+| PTrue   _ -> string "true"
 | PConstrApp a -> pp_patt_c_app a
 
 and pp_patt_c_app {value; _} =
@@ -99,10 +98,7 @@ and pp_bytes {value; _} =
   string ("0x" ^ Hex.show (snd value))
 
 and pp_ppar {value; _} =
-  if value.lpar = Region.ghost then
-    nest 1 (pp_pattern value.inside)
-  else
-    string "(" ^^ nest 1 (pp_pattern value.inside) ^^ string ")"
+  string "(" ^^ nest 1 (pp_pattern value.inside) ^^ string ")"
 
 and pp_plist = function
   PListComp cmp -> pp_list_comp cmp
@@ -111,8 +107,8 @@ and pp_plist = function
 and pp_list_comp e = group (pp_injection pp_pattern e)
 
 and pp_cons {value; _} =
-  let patt1, _, patt2 = value in
-  string "[" ^^ (pp_pattern patt1 ^^ string ", ") ^^ group ( break 0 ^^ string "..." ^^ pp_pattern patt2) ^^ string "]"
+  let {lpattern;rpattern;_} = value in
+  string "[" ^^ (pp_pattern lpattern ^^ string ", ") ^^ group ( break 0 ^^ string "..." ^^ pp_pattern rpattern) ^^ string "]"
 
 and pp_ptuple {value; _} =
   let head, tail = value in
@@ -122,8 +118,8 @@ and pp_ptuple {value; _} =
   | p::items ->
       group (break 1 ^^ pp_pattern p ^^ string ",") ^^ app items
   in if tail = []
-     then string "(" ^^ nest 1 (pp_pattern head) ^^ string ")"
-     else string "(" ^^ nest 1 (pp_pattern head ^^ string "," ^^ app (List.map snd tail)) ^^ string ")"
+     then nest 1 (pp_pattern head)
+     else nest 1 (pp_pattern head ^^ string "," ^^ app (List.map snd tail))
 
 and pp_precord fields = pp_ne_injection pp_field_pattern fields
 
@@ -183,10 +179,10 @@ and pp_cond_expr {value; _} =
   let {test; ifso; ifnot; _} = value in
   let if_then =
     string "if" ^^ string " (" ^^ pp_expr test ^^ string ")" ^^ string " {" ^^ break 0
-    ^^ group (nest 2 (break 2 ^^ pp_expr ifso)) ^^ hardline ^^ string "}" in
+    ^^ group (nest 2 (break 2 ^^ pp_expr (fst ifso.inside))) ^^ hardline ^^ string "}" in
   match ifnot with
     None -> if_then
-  | Some (_,ifnot) ->
+  | Some (_,{inside=(ifnot,_);_}) ->
     if_then
     ^^ string " else" ^^ string " {" ^^ break 0 ^^ group (nest 2 (break 2 ^^ pp_expr ifnot)) ^^ hardline ^^ string "}"
 
@@ -242,8 +238,8 @@ and pp_string_expr = function
 | Verbatim e -> pp_verbatim e
 
 and pp_list_expr = function
-| ECons {value = {arg1; arg2; _}; _ } ->
-  string "[" ^^ pp_expr arg1 ^^ string "," ^^ break 1 ^^ string "..." ^^ pp_expr arg2 ^^ string "]"
+| ECons {value = {lexpr; rexpr; _}; _ } ->
+  string "[" ^^ pp_expr lexpr ^^ string "," ^^ break 1 ^^ string "..." ^^ pp_expr rexpr ^^ string "]"
 | EListComp e -> group (pp_injection pp_expr e)
 
 and pp_injection :
@@ -259,7 +255,6 @@ and pp_injection :
         string opening ^^ nest 1 elements ^^ string closing
 
 and pp_compound = function
-  BeginEnd (_, _) -> ("begin","end")
 | Braces   (_, _) -> ("{","}")
 | Brackets (_, _) -> ("[","]")
 
@@ -336,7 +331,10 @@ and pp_path = function
 
 and pp_call_expr {value; _} =
   let lambda, arguments = value in
-  let arguments = Utils.nseq_to_list arguments in
+  let arguments =
+    match arguments with
+    | Unit _ -> []
+    | Multiple xs -> Utils.nsepseq_to_list xs.value.inside in
   let arguments = string "(" ^^ group (separate_map (string "," ^^ break 0 ^^ string " ") pp_expr arguments) ^^ string ")" in
   group (break 0 ^^ pp_expr lambda ^^ nest 2 arguments)
 
@@ -348,8 +346,8 @@ and pp_tuple_expr {value; _} =
   | e::items ->
       group (break 1 ^^ pp_expr e ^^ string ",") ^^ app items
   in if tail = []
-     then string "(" ^^ nest 1 (pp_expr head) ^^ string ")"
-     else string "(" ^^ nest 1 (pp_expr head ^^ string "," ^^ app (List.map snd tail)) ^^ string ")"
+     then nest 1 (pp_expr head)
+     else nest 1 (pp_expr head ^^ string "," ^^ app (List.map snd tail))
 
 and pp_par_expr {value; _} =
   string "(" ^^ nest 1 (pp_expr value.inside ^^ string ")")
@@ -367,8 +365,7 @@ and pp_let_in {value; _} =
 
 and pp_fun {value; _} =
   let {binders; lhs_type; body; _} = value in
-  let patterns = Utils.nseq_to_list binders in
-  let binders = group (separate_map (string "," ^^ break 0 ^^ string " ") pp_pattern patterns)
+  let binders = pp_pattern binders
   and annot   =
     match lhs_type with
       None -> empty
@@ -376,9 +373,8 @@ and pp_fun {value; _} =
         group (break 0 ^^ string ": " ^^ nest 2 (pp_type_expr e))
   in
   match body with
-  | ESeq _ -> string "(" ^^ nest 1 binders ^^ string ")" ^^ annot ^^ string " => " ^^ pp_expr body
-  | _ -> (prefix 2 0 (string "(" ^^ nest 1 binders ^^ string ")" ^^ annot
-     ^^ string " => ") (pp_expr body))
+  | ESeq _ -> nest 1 binders ^^ annot ^^ string " => " ^^ pp_expr body
+  | _ -> (prefix 2 0 (nest 1 binders ^^ annot ^^ string " => ") (pp_expr body))
 
 and pp_seq {value; _} =
   let {compound; elements; _} = value in
@@ -400,10 +396,11 @@ and pp_type_expr = function
 | TFun t    -> pp_fun_type t
 | TPar t    -> pp_type_par t
 | TVar t    -> pp_ident t
+| TWild   _ -> string "_"
 | TString s -> pp_string s
 
 and pp_cartesian {value; _} =
-  let head, tail = value in
+  let head, tail = value.inside in
   let rec app = function
     []  -> empty
   | [e] -> group (break 1 ^^ pp_type_expr e)
@@ -468,10 +465,7 @@ and pp_fun_args {value; _} =
 
 and pp_fun_type {value; _} =
   let lhs, _, rhs = value in
-  match lhs, rhs with
-  | _, TFun tf -> string "(" ^^ pp_type_expr lhs ^^ string ", " ^^ pp_fun_args tf
-  | TVar _ , _ -> group (pp_type_expr lhs ^^ string " =>" ^/^ pp_type_expr rhs)
-  | _ -> group (string "(" ^^ nest 1 (pp_type_expr lhs) ^^ string ")" ^^ string " =>" ^/^ pp_type_expr rhs)
+  group ( nest 1 (pp_type_expr lhs) ^^ string " =>" ^/^ pp_type_expr rhs)
 
 and pp_type_par {value; _} =
   string "(" ^^ nest 1 (pp_type_expr value.inside ^^ string ")")

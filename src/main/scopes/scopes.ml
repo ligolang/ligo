@@ -11,7 +11,7 @@ let scopes : with_types:bool -> string -> string -> ((def_map * scopes), Main_er
 
   let rec find_scopes' = fun (i,all_defs,env,scopes,lastloc) (e : Ast_core.expression) ->
     match e.content with
-    | E_let_in { let_binder = ({wrap_content=fn;location=fn_loc},_) ; rhs ; let_result } -> (
+    | E_let_in { let_binder = {var = {wrap_content=fn;location=fn_loc};_} ; rhs ; let_result } -> (
       let (i,all_defs,_, scopes) = find_scopes' (i,all_defs,env,scopes,e.location) rhs in
       let (i,env) = add_shadowing_def (i,fn) (make_v_def_from_core fn rhs fn_loc rhs.location) env in
       let all_defs = merge_defs env all_defs in
@@ -21,19 +21,19 @@ let scopes : with_types:bool -> string -> string -> ((def_map * scopes), Main_er
       (* Note:
           It is not entirely true that 'fun_name' is in 'result' scope; because only tail calls are allowed
       *)
-      let def = make_v_def_option_type fn (Some fun_type) fn_loc result.location in
+      let def = make_v_def_option_type fn fun_type fn_loc result.location in
       let (i,env) = add_shadowing_def (i,fn) def env in
       find_scopes' (i,all_defs,env,scopes,result.location) result
     )
-    | E_lambda { binder={wrap_content=fun_name;location=fn_loc} ; input_type ; output_type = _ ; result } -> (
-      let (i,env) = add_shadowing_def (i,fun_name) (make_v_def_option_type fun_name input_type fn_loc result.location) env in
+    | E_lambda { binder={var={wrap_content=fun_name;location=fn_loc} ; ty }; result } -> (
+      let (i,env) = add_shadowing_def (i,fun_name) (make_v_def_option_type fun_name ty fn_loc result.location) env in
       let all_defs = merge_defs env all_defs in
       find_scopes' (i,all_defs,env,scopes,result.location) result
     )
     | E_matching {matchee; cases} -> (
       let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,matchee.location) matchee in
       match cases with
-      | Match_list { match_nil ; match_cons = ({wrap_content=hd;location=hd_loc} , {wrap_content=tl;location=tl_loc} , match_cons) } -> (
+      | Match_list { match_nil ; match_cons = { hd = {wrap_content=hd;location=hd_loc} ; tl = {wrap_content=tl;location=tl_loc} ; body }} -> (
         let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,match_nil.location) match_nil in
         let all_defs = merge_defs env all_defs in
 
@@ -46,30 +46,30 @@ let scopes : with_types:bool -> string -> string -> ((def_map * scopes), Main_er
         let (i,env) = add_shadowing_def (i,hd) hd_def env in
         let (i,env) = add_shadowing_def (i,tl) tl_def env in
 
-        let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,match_cons.location) match_cons in
+        let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,body.location) body in
         let all_defs = merge_defs env all_defs in
         (i,all_defs,env,scopes)
       )
-      | Match_option { match_none ; match_some = ({wrap_content=some;location=some_loc} , match_some) } -> (
+      | Match_option { match_none ; match_some = {opt={wrap_content=some;location=some_loc} ; body } } -> (
         let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,match_none.location) match_none in
         let all_defs = merge_defs env all_defs in
 
         let tl_def = make_v_def_from_core some matchee some_loc some_loc in
         let (i,env) = add_shadowing_def (i,some) tl_def env in
 
-        let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,match_some.location) match_some in
+        let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,body.location) body in
         let all_defs = merge_defs env all_defs in
         (i,all_defs,env,scopes)
       )
       | Match_variant lst -> (
-        let aux = fun (i,all_defs,scopes) ((c,(proj:Ast_core.expression_variable)),(match_variant:Ast_core.expression)) ->
+        let aux = fun (i,all_defs,scopes) ({constructor;proj;body}:Ast_core.match_variant) ->
           let proj_f = fun (t:Ast_typed.type_expression) -> match Ast_typed.get_t_sum t with
-            | Some t -> (Ast_typed.CMap.find (Ast_typed.Environment.convert_constructor' c) t).ctor_type
+            | Some t -> (Ast_typed.LMap.find constructor t).associated_type
             | None -> failwith "Could not get the inner type of a constructor" in
 
           let proj_def = make_v_def_ppx_type proj.wrap_content proj_f matchee proj.location proj.location in
           let (i,env) = add_shadowing_def (i,proj.wrap_content) proj_def env in
-          let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,match_variant.location) match_variant in
+          let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,body.location) body in
           let all_defs = merge_defs env all_defs in
           (i,all_defs,scopes)
         in
@@ -116,16 +116,16 @@ let scopes : with_types:bool -> string -> string -> ((def_map * scopes), Main_er
 
   let aux = fun (i,top_def_map,inner_def_map,scopes) (x : Ast_core.declaration Location.wrap) ->
     match x.wrap_content with
-    | Declaration_constant ({wrap_content=v;location=v_loc} , _o , _i, e) ->
-      let (i,new_inner_def_map,scopes) = find_scopes (i,top_def_map,scopes,x.location) e in
+    | Declaration_constant {binder={var={wrap_content=v;location=v_loc};_ }; expr ;_ } ->
+      let (i,new_inner_def_map,scopes) = find_scopes (i,top_def_map,scopes,x.location) expr in
       let inner_def_map = merge_defs new_inner_def_map inner_def_map in
-      let def = make_v_def_from_core v e v_loc e.location in
+      let def = make_v_def_from_core v expr v_loc expr.location in
       let (i,top_def_map) = add_shadowing_def (i,v) def top_def_map in
       ( i, top_def_map, inner_def_map, scopes )
 
-    | Declaration_type (tv, te) ->
-      let def = make_t_def (get_binder_name tv) x te in
-      let (i,top_def_map) = add_shadowing_def (i,tv) def top_def_map in
+    | Declaration_type {type_binder; type_expr} ->
+      let def = make_t_def (get_binder_name type_binder) x type_expr in
+      let (i,top_def_map) = add_shadowing_def (i,type_binder) def top_def_map in
       ( i, top_def_map, inner_def_map, scopes )
 
   in
