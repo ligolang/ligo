@@ -4,9 +4,9 @@ module AST.Parser
   , parse
   ) where
 
-import qualified AST.Pascaligo.Parser as Pascal
-import qualified AST.Reasonligo.Parser as Reason
-import qualified AST.Camligo.Parser as CAML
+import qualified AST.Parser.Pascaligo as Pascal
+import qualified AST.Parser.Reasonligo as Reason
+import qualified AST.Parser.Camligo as CAML
 import           AST.Skeleton
 
 import ParseTree

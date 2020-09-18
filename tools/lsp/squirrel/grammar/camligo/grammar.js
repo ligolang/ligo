@@ -36,7 +36,7 @@ module.exports = grammar({
     fun_decl: $ => seq(
       "let",
       optional(field("recursive", "rec")),
-      field("name", $.Name),
+      field("name", $.NameDecl),
       some(field("arg", $._paren_pattern)),
       optional(seq(
         ":",
@@ -106,7 +106,7 @@ module.exports = grammar({
     ),
 
     var_pattern: $ => seq(
-      field("var", $.Name)
+      field("var", $.NameDecl)
     ),
 
     con_pattern: $ => prec(10,
@@ -396,6 +396,7 @@ module.exports = grammar({
     Bytes:        $ => /0x[0-9a-fA-F]+/,
     Name:         $ => /[a-z][a-zA-Z0-9_]*/,
     TypeName:     $ => /[a-z][a-zA-Z0-9_]*/,
+    NameDecl:     $ => /[a-z][a-zA-Z0-9_]*/,
     FieldName:    $ => /[a-z][a-zA-Z0-9_]*/,
     Name_Capital: $ => /[A-Z][a-zA-Z0-9_]*/,
     Keyword:      $ => /[A-Za-z][a-z]*/,

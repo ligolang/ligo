@@ -1,6 +1,6 @@
 -- | Parser for ReasonLigo contract
 
-module AST.Reasonligo.Parser where
+module AST.Parser.Reasonligo where
 
 import           Duplo.Error
 import           Duplo.Pretty
@@ -134,7 +134,7 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
   , Descent do
       boilerplate $ \case
         -- TODO: We forget "rec" field in let
-        "let_declaration"   -> Var      <$>             field    "binding"       <*> fieldOpt "type" <*> field "value"
+        "let_declaration"   -> Const    <$>             field    "binding"       <*> fieldOpt "type" <*> fieldOpt "value"
         "type_decl"  -> TypeDecl <$>             field    "type_name"   <*> field "type_value"
         "attr_decl" -> Attribute <$> field "name"
         _            -> fallthrough
@@ -146,6 +146,12 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
         ("and", _)  -> return $ Name "and"
         ("or", _)   -> return $ Name "or"
         _           -> fallthrough
+
+    -- NameDecl
+  , Descent do
+      boilerplate' $ \case
+        ("NameDecl", n) -> return $ NameDecl n
+        _               -> fallthrough
 
     -- Type
   , Descent do
@@ -181,6 +187,12 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
       boilerplate' $ \case
         ("TypeName", name) -> return $ TypeName name
         _                  -> fallthrough
+
+    -- FieldName
+  , Descent do
+      boilerplate' $ \case
+        ("FieldName", name) -> return $ FieldName name
+        _                   -> fallthrough
 
     -- Ctor
   , Descent do

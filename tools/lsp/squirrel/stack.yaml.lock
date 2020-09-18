@@ -39,17 +39,6 @@ packages:
       sha256: 1c89d4034e6d06e15ff0ec421a95206c030ddc2d35b9eee7f0a02aa30c6051c1
   original:
     hackage: fastsum-0.1.1.1
-- completed:
-    name: duplo
-    version: 0.0.0
-    git: https://github.com/serokell/duplo.git
-    pantry-tree:
-      size: 557
-      sha256: b00e0db1d2c3c0db58e90a69415f6cdc4d416ff6e50789f2de841fc60e2f2ffb
-    commit: 60983e6e1fd21eba57af83da7d541fe555678cc8
-  original:
-    git: https://github.com/serokell/duplo.git
-    commit: 60983e6e1fd21eba57af83da7d541fe555678cc8
 snapshots:
 - completed:
     size: 493124

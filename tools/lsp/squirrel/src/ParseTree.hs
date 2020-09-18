@@ -22,6 +22,7 @@ module ParseTree
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
 import           Data.Map
+import           Data.String (IsString (..))
 import           Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.Encoding as Text
@@ -57,6 +58,9 @@ data Source
   | Text       { srcPath :: FilePath, srcText :: Text }
   | ByteString { srcPath :: FilePath, srcBS   :: ByteString }
 
+instance IsString Source where
+  fromString = Path
+
 srcToBytestring :: Source -> IO ByteString
 srcToBytestring = \case
   Path       p   -> BS.readFile p
@@ -67,7 +71,7 @@ type RawTree = Tree '[ParseTree] RawInfo
 type RawInfo = Product [Range, Text]
 
 -- instance {-# OVERLAPS #-} Modifies RawInfo where
---   ascribe (r :> n :> _) d = color 3 (pp n) <+> pp r `indent` pp d
+--   ascribe (r :> n :> _) d = color 3 (pp n) `indent` pp d
 
 data TreeKind
   = Error
@@ -89,7 +93,6 @@ instance Pretty TreeKind where
 data ParseTree self = ParseTree
   { ptName     :: Text         -- ^ Name of the node.
   , ptChildren :: [self]       -- ^ Subtrees.
-  -- , ptChildren :: Map TreeKind self -- ^ Subtrees.
   , ptSource   :: ~Text        -- ^ Range of the node.
   }
   deriving stock (Functor, Foldable, Traversable)

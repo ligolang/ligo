@@ -19,26 +19,28 @@ import           Control.Monad.Catch
 import           Control.Monad.Catch.Pure
 import           Control.Monad.Writer (WriterT, execWriterT, tell)
 
-import           Data.Monoid (First(getFirst))
+import           Data.Monoid         (First (..))
 import qualified Data.List   as List
 import           Data.Map            (Map)
 import qualified Data.Map    as Map
-import           Data.Maybe          (listToMaybe)
+import           Data.Maybe          (listToMaybe, maybeToList)
 import           Data.Text           (Text)
+import           Data.Foldable       (toList, for_)
 
 import           Duplo.Lattice
 import           Duplo.Pretty
-import           Duplo.Tree
+import           Duplo.Tree hiding (loop)
 import           Duplo.Error
 
 import           AST.Skeleton
+import           AST.Parser
 import           Parser
 import           Product
 import           Range
 
--- import           Debug.Trace
+import           Debug.Trace
 
-type CollectM = StateT (Product [FullEnv, [Range]]) Catch
+-- type CollectM = StateT (Product [FullEnv, [Range], Maybe ScopedDecl]) Catch
 
 type FullEnv = Product ["vars" := Env, "types" := Env]
 type Env     = Map Range [ScopedDecl]
@@ -76,7 +78,8 @@ instance {-# OVERLAPS #-} Pretty FullEnv where
       mergeFE fe = getTag @"vars" @Env fe Prelude.<> getTag @"types" fe
 
 instance Pretty ScopedDecl where
-  pp (ScopedDecl n o _ t refs doc) = color 3 (pp n) <+> pp o <+> ":" <+> maybe "?" (either pp pp) t <+> "=" <+> pp refs `indent` pp doc
+  pp (ScopedDecl n o _ t refs doc) =
+    sexpr "decl" [pp n, pp o, pp t, pp refs, pp doc]
 
 instance Pretty Kind where
   pp _ = "TYPE"
@@ -100,230 +103,337 @@ ofCategory _        _                                          = False
 
 type Info' = Product [[ScopedDecl], Maybe Category, [Text], Range, ShowRange]
 
-addLocalScopes
-  :: forall xs
-  .  (Collectable xs, Eq (Product xs))
-  => LIGO (Product xs)
-  -> LIGO (Product ([ScopedDecl] : Maybe Category : xs))
-addLocalScopes tree =
-    fmap (\xs -> fullEnvAt envWithRefs (getRange xs) :> xs) tree1
-  where
-    tree0       = either (error . show) id $ runCatch $ unLetRec tree
-    tree1       = addNameCategories tree0
-    envWithRefs = getEnvTree tree0
+newtype ScopeForest = ScopeForest
+  { unScopeForest :: [Tree '[[]] ScopeInfo]
+  }
 
-unLetRec
-  :: forall xs m
-  .  ( MonadCatch m
-     , Contains Range xs
-     , Eq (Product xs)
-     )
-  => LIGO (Product xs)
-  -> m (LIGO (Product xs))
-unLetRec = descent leaveBe
-  [ Descent
-      \case
-        (r, Let (layer -> Just (Seq xs)) b) -> maybe (throwM HandlerFailed) return $ convert (getElem r) b xs
-        _                                   -> fallthrough
-  ]
-  where
-    convert :: Range -> LIGO (Product xs) -> [LIGO (Product xs)] -> Maybe (Product xs, Expr (LIGO (Product xs)))
-    convert r b = match @Expr . linearize r b
+type ScopeInfo = Product [[ScopedDecl], Range]
 
-    linearize :: Range -> LIGO (Product xs) -> [LIGO (Product xs)] -> LIGO (Product xs)
-    linearize r b [x]      = make (modElem @Range (delta r) $ extract x, Let x b)
-    linearize r b (x : xs) = make (modElem @Range (delta r) $ extract x, Let x (linearize r b xs))
-    linearize _ _ []       = error "empty Seq"
+withScopeForest f (ScopeForest sf) = ScopeForest (f sf)
 
-    delta (Range _ f _) (Range s _ t) = Range s f t
+instance {-# OVERLAPPABLE #-} Pretty x => Show x where
+  show = show . pp
 
-addNameCategories
-  :: (Contains Range xs, Eq (Product xs))
-  => LIGO (Product xs)
-  -> LIGO (Product (Maybe Category : xs))
-addNameCategories tree = evalCollectM do
-  descent (changeInfo (Nothing :>))
-    [ Descent
-        \(r, Name t) -> do
-        modify $ modElem $ getRange r `addRef` (Variable, t)
-        return $ (Just Variable :> r, Name t)
+instance Pretty ScopeForest where
+  pp (ScopeForest sf) = go sf
+    where
+      go = sexpr "list" . map go'
+      go' :: Tree' '[[]] '[[ScopedDecl], Range] -> Doc
+      go' (only -> (decls :> r :> Nil, list)) =
+        sexpr "scope" ([pp r] ++ map pp decls ++ [go list | not $ null list])
 
-    , Descent
-        \(r, TypeName t) -> do
-        modify $ modElem $ getRange r `addRef` (Type, t)
-        return $ (Just Type :> r, TypeName t)
-    ]
-    tree
-
-getEnvTree
-  :: ( Apply (Scoped b CollectM (Tree fs b)) fs
-     , Apply Foldable fs
-     , Apply Functor fs
-     , Apply Traversable fs
-     , Lattice b
-     , HasRange b
-     , Element Name fs
-     , Element TypeName fs
-     )
-  => Tree fs b
-  -> FullEnv
-getEnvTree tree = envWithREfs
-  where
-    envWithREfs = execCollectM' env do
-      descent leaveBe
-        [ Descent \(r, Name t) -> do
-            modify $ modElem $ getRange r `addRef` (Variable, t)
-            return (r, Name t)
-
-        , Descent \(r, TypeName t) -> do
-            modify $ modElem $ getRange r `addRef` (Type, t)
-            return (r, TypeName t)
-        ]
-        tree
-
-    env
-      = execCollectM
-      $ descent (usingScope' leaveBe) [] tree
-
-fullEnvAt :: FullEnv -> Range -> [ScopedDecl]
-fullEnvAt fe r
-  = envAt (getTag @"types" fe) r
-  `mappend` envAt (getTag @"vars" fe) r
-
-envAt :: Env -> Range -> [ScopedDecl]
-envAt env pos =
-    Map.elems scopes
-  where
-    ranges = List.sortBy partOrder $ filter isCovering $ Map.keys env
-    scopes = Map.unions $ (map.foldMap) toScopeMap $ map (env Map.!) ranges
-
-    isCovering = (pos `leq`)
-    toScopeMap sd@ScopedDecl {_sdName} = Map.singleton (ppToText _sdName) sd
-
-addRef :: Range -> (Category, Text) -> FullEnv -> FullEnv
-addRef r (categ, n) env =
-  with categ env \slice ->
-    Map.union
-      (go slice $ range slice)
-      slice
-  where
-    go slice (r' : rest) =
-      let decls = slice Map.! r'
-      in
-        case updateOnly n r addRefToDecl decls of
-          (True,  decls') -> Map.singleton r' decls'
-          (False, decls') -> Map.insert    r' decls' (go slice rest)
-    go _ [] = Map.empty
-
-    range slice
-      = List.sortBy partOrder
-      $ filter (r `leq`)
-      $ Map.keys slice
-
-    addRefToDecl sd = sd
-      { _sdRefs = r : _sdRefs sd
-      }
-
-updateOnly
-  :: Text
-  -> Range
-  -> (ScopedDecl -> ScopedDecl)
-  -> [ScopedDecl]
-  -> (Bool, [ScopedDecl])
-updateOnly name r f = go
-  where
-    go = \case
-      d : ds
-        | ppToText (_sdName d) == name ->
-          if r == _sdOrigin d
-          then         (True,   d : ds)
-          else         (True, f d : ds)
-        | otherwise -> second (d :) (go ds)
-
-      [] -> (False, [])
-
-enter :: Collectable xs => Product xs -> CollectM ()
-enter r = do
-  modify $ modElem (getElem @Range r :)
-
-define :: Category -> ScopedDecl -> CollectM ()
-define categ sd = do
-  r <- gets (head . getElem @[Range])
-  modify
-    $ modElem @FullEnv \env ->
-        with categ env
-        $ Map.insertWith (++) r [sd]
-
-leave :: CollectM ()
-leave = modify $ modElem @[Range] tail
-
--- | Run the computation with scope starting from empty scope.
-execCollectM :: CollectM a -> FullEnv
-execCollectM = execCollectM' emptyEnv
-
-execCollectM' :: FullEnv -> CollectM a -> FullEnv
-execCollectM' env action
-  = getElem
-  $ either (error . show) id
-  $ runCatch
-  $ execStateT action
-  $ env :> [] :> Nil
-
--- | Run the computation with scope starting from empty scope.
-evalCollectM :: CollectM a -> a
-evalCollectM  = evalCollectM' emptyEnv
-
--- | Run the computation with scope starting from empty scope.
-evalCollectM' :: FullEnv -> CollectM a -> a
-evalCollectM' env action
+addLocalScopes :: LIGO Info -> LIGO Info'
+addLocalScopes tree
   = either (error . show) id
   $ runCatch
-  $ evalStateT action
-  $ env :> [] :> Nil
+  $ descent @Info @Info' @RawLigoList @RawLigoList defaultHandler
+      [ Descent \(i, Name t) -> do
+          let env = envAtPoint (getRange i) forest
+          return (env :> Just Variable :> i, Name t)
 
--- | Search for a name inside a local scope.
+      , Descent \(i, NameDecl t) -> do
+          let env = envAtPoint (getRange i) forest
+          return (env :> Just Variable :> i, NameDecl t)
+
+      , Descent \(i, TypeName t) -> do
+          let env = envAtPoint (getRange i) forest
+          return (env :> Just Type :> i, Name t)
+      ]
+      tree
+  where
+    defaultHandler f (i :< fs) = do
+      fs' <- traverse f fs
+      let env = envAtPoint (getRange i) forest
+      return ((env :> Nothing :> i) :< fs')
+
+    forest = getEnv tree
+
 lookupEnv :: Text -> [ScopedDecl] -> Maybe ScopedDecl
-lookupEnv name = listToMaybe . filter ((name ==) . ppToText . _sdName)
+lookupEnv name = getFirst . foldMap \decl ->
+  First do
+    guard (_sdName decl == name)
+    return decl
 
--- | Add a type declaration to the current scope.
-defType :: Collectable xs => LIGO (Product xs) -> Kind -> LIGO (Product xs) -> [Text] -> CollectM ()
-defType name' kind body doc = do
-  define Type
-    $ ScopedDecl
-      name
-      r
-      (Just $ getRange $ extract body)
-      (Just (Right kind))
-      []
-      doc
+envAtPoint :: Range -> ScopeForest -> [ScopedDecl]
+envAtPoint r (ScopeForest sf) = do
+  tree  <- sf
+  reverse $ spine (leq r . getRange) tree
   where
-    (r, name) = getTypeName name'
+    spine isR (only -> (i, trees)) = if
+      | isR i     -> getElem @[ScopedDecl] i <> foldMap (spine isR) trees
+      | otherwise -> []
 
--- -- observe :: Pretty i => Pretty res => Text -> i -> res -> res
--- -- observe msg i res
--- --   = traceShow (pp msg, "INPUT", pp i)
--- --   $ traceShow (pp msg, "OUTPUT", pp res)
--- --   $ res
-
--- | Add a value declaration to the current scope.
-def
-  :: Collectable xs
-  => LIGO (Product xs)
-  -> Maybe (LIGO (Product xs))
-  -> Maybe (LIGO (Product xs))
-  -> [Text]
-  -> CollectM ()
-def name' ty body doc = do
-  define Variable
-    $ ScopedDecl
-      name
-      r
-      ((getRange . extract) <$> body)
-      ((Left . void) <$> ty)
-      []
-      doc
+addReferences :: LIGO Info -> ScopeForest -> ScopeForest
+addReferences ligo = execState $ loopM_ addRef ligo
   where
-    (r, name) = getName name'
+    addRef = \case
+      (match -> Just (r, Name n)) -> do
+        modify
+          $ withScopeForest
+          $ map
+          $ findAndUpdateFrom (leq (getRange r) . getRange)
+          $ traverseElem @[ScopedDecl]
+          $ walkScopeName r n
+
+      (match -> Just (r, TypeName n)) -> do
+        modify
+          $ withScopeForest
+          $ map
+          $ findAndUpdateFrom (leq (getRange r) . getRange)
+          $ traverseElem @[ScopedDecl]
+          $ walkScopeTypeName r n
+
+      _ -> do
+        return ()
+
+    walkScopeName r n (decl : rest) = if
+      | _sdName decl == n
+      , maybe True isLeft (_sdType decl)
+        -> Just $ decl { _sdRefs = getRange r : _sdRefs decl } : rest
+
+      | otherwise -> (decl :) <$> walkScopeName r n rest
+
+    walkScopeName r n [] = Nothing
+
+    walkScopeTypeName r n (decl : rest) = if
+      | _sdName decl == n
+      , maybe True (not . isLeft) (_sdType decl)
+        -> Just $ decl { _sdRefs = getRange r : _sdRefs decl } : rest
+
+      | otherwise -> (decl :) <$> walkScopeTypeName r n rest
+
+    walkScopeTypeName r n [] = Nothing
+
+ignoreFailure :: (a -> Maybe a) -> (a -> Maybe a)
+ignoreFailure f a = maybe (Just a) Just (f a)
+
+isLeft Left {} = True
+isLeft _       = False
+
+getEnv :: LIGO Info -> ScopeForest
+getEnv tree
+  = addReferences tree
+  $ ScopeForest
+  $ compressScopeTree . pure
+  $ extractScopeTree
+  $ prepareTree
+    tree
+
+prepareTree
+  = assignDecls
+  . unSeq
+  . unLetRec
+
+loop go = aux
+  where
+    aux (r :< fs) = go $ r :< fmap aux fs
+
+loopM_ :: (Monad m, Foldable f) => (Cofree f a -> m ()) -> (Cofree f a -> m ())
+loopM_ go = aux
+  where
+    aux (r :< fs) = do
+      for_ fs aux
+      go $ r :< fs
+
+-- funsToLambdas
+--   :: ( Contains  Range     xs
+--      , Contains [Text]     xs
+--      , Contains  ShowRange xs
+--      , Eq (Product xs)
+--      )
+--   => LIGO' xs
+--   -> LIGO' xs
+-- funsToLambdas = loop go
+--   where
+--     go = \case
+--       (match -> Just (r, Let (match -> Just (r', Function _ n a ty b)) body)) -> do
+
+
+unLetRec
+  :: ( Contains  Range     xs
+     , Contains [Text]     xs
+     , Contains  ShowRange xs
+     , Eq (Product xs)
+     )
+  => LIGO' xs
+  -> LIGO' xs
+unLetRec = loop go
+  where
+    go = \case
+      (match -> Just (r, expr)) -> do
+        case expr of
+          Let (match -> Just (r', Seq decls)) body -> do
+            foldr reLet body decls
+          _ -> make (r, expr)
+
+      -- TODO: somehow append Unit to the end
+      (match -> Just (r, RawContract decls)) -> do
+        case reverse decls of
+          lst : (reverse -> ini) -> do
+            foldr reLet lst ini
+
+      it -> it
+
+unSeq
+  :: ( Contains  Range     xs
+     , Contains [Text]     xs
+     , Contains  ShowRange xs
+     , Eq (Product xs)
+     )
+  => LIGO' xs
+  -> LIGO' xs
+unSeq = loop go
+  where
+    go = \case
+      (match -> Just (r, Seq decls)) -> do
+        case reverse decls of
+          lst : (reverse -> ini) -> do
+            foldr reLet lst ini
+
+      it -> it
+
+reLet decl body = make (r', Let decl body)
+  where
+    r' = putElem (getRange decl `merged` getRange body)
+        $ extract body
+
+assignDecls
+  :: ( Contains  Range     xs
+     , Contains [Text]     xs
+     , Contains  ShowRange xs
+     , Eq (Product xs)
+     , Pretty (Product xs)
+     )
+  => LIGO' xs
+  -> LIGO' ([ScopedDecl] : Bool : Range : xs)
+assignDecls = loop go . fmap (\r -> [] :> False :> getRange r :> r)
+  where
+    go = \case
+      (match -> Just (r, Let decl body)) -> do
+        let imm = getImmediateDecls decl
+        let r' :< body' = body
+        let l' :< decl' = decl
+        let r'' = putElem (getRange body) $ putElem True $ modElem (imm <>) r'
+        let l'' = putElem (getRange decl) $ putElem True l'
+        make (r, Let (l'' :< decl') (r'' :< body'))
+
+      (match -> Just (r, Lambda args ty body)) -> do
+        let imms = getImmediateDecls =<< args
+        let r' :< body' = body
+        let r'' = putElem True $ modElem (imms <>) r'
+        make (r, Lambda args ty (r'' :< body'))
+
+      (match -> Just (r, Alt pat body)) -> do
+        let imms = getImmediateDecls pat
+        let r' :< body' = body
+        let r'' = putElem True $ modElem (imms <>) r'
+        make (r, Alt pat (r'' :< body'))
+
+      (match -> Just (r, Function True n a ty b)) -> do
+        let imms = getImmediateDecls =<< a
+        let
+          f = ScopedDecl
+            { _sdName   = ppToText n
+            , _sdOrigin = getRange n
+            , _sdBody   = Just $ getRange b
+            , _sdType   = (Left . void) <$> ty
+            , _sdRefs   = []
+            , _sdDoc    = getElem r
+            }
+        let r'   = putElem True $ modElem ((f : imms) <>) r
+        make (r', Function True n a ty b)
+
+      (match -> Just (r, Function False n a ty b)) -> do
+        let imms = getImmediateDecls =<< a
+        let r' :< body = b
+        let r'' = putElem True $ modElem (imms <>) r'
+        let r''' = putElem True r
+        make (r''', Function False n a ty (r'' :< body))
+
+      it -> it
+
+extractScopeTree
+  :: LIGO' ([ScopedDecl] : Bool : Range : xs)
+  -> Tree' '[[]] '[[ScopedDecl], Bool, Range]
+extractScopeTree = go
+  where
+    go
+      :: LIGO' ([ScopedDecl] : Bool : Range : xs)
+      -> Tree' '[[]] '[[ScopedDecl], Bool, Range]
+    go ((decls :> visible :> r :> _) :< fs) = do
+      let fs'  = toList fs
+      let fs'' = map go fs'
+      make (decls :> visible :> r :> Nil, fs'')
+
+compressScopeTree
+  :: [Tree' '[[]] '[[ScopedDecl], Bool, Range]]
+  -> [Tree' '[[]] '[[ScopedDecl], Range]]
+compressScopeTree = (go =<<)
+  where
+    go
+      :: Tree' '[[]] '[[ScopedDecl], Bool, Range]
+      -> [Tree' '[[]] '[[ScopedDecl], Range]]
+    go (only -> (decls :> False :> r :> Nil, list)) =
+      list >>= go
+
+    go (only -> (decls :> True :> r :> Nil, list)) = do
+      let list' = list >>= go
+      [ make (decls :> r :> Nil, list')
+       | not (null decls) || not (null list')
+       ]
+
+getImmediateDecls
+  :: ( Contains  Range     xs
+     , Contains [Text]     xs
+     , Contains  ShowRange xs
+     , Eq (Product xs)
+     )
+  => LIGO' xs
+  -> [ScopedDecl]
+getImmediateDecls = \case
+  (match -> Just (r, pat)) -> do
+    case pat of
+      IsVar v -> do
+        let (r', name) = getName v
+        [ScopedDecl name r' Nothing Nothing [] (getElem r)]
+
+      IsTuple xs -> getImmediateDecls =<< xs
+      IsList  xs -> getImmediateDecls =<< xs
+      IsSpread s -> getImmediateDecls s
+      IsWildcard -> []
+      IsAnnot x t -> getImmediateDecls x
+      IsCons h t -> getImmediateDecls h <> getImmediateDecls t
+      IsConstant _ -> []
+      IsConstr _ xs -> getImmediateDecls =<< maybeToList xs
+
+  (match -> Just (r, pat)) -> do
+    case pat of
+      Irrefutable  irr _ -> getImmediateDecls irr
+      Function     _ f _ t b -> do
+        let (r', name) = getName f
+        [ScopedDecl name r' (Just $ getRange b) (Left . void <$> t) [] (getElem r)]
+
+      Var v t b -> do
+        let (r', name) = getName v
+        [ScopedDecl name r' (getRange <$> b) (Left . void <$> t) [] (getElem r)]
+
+      Const c t b -> do
+        let (r', name) = getName c
+        [ScopedDecl name r' (getRange <$> b) (Left . void <$> t) [] (getElem r)]
+
+      TypeDecl t b -> do
+        let (r', name) = getTypeName t
+        [ScopedDecl name r' (Just $ getRange b) kind [] (getElem r)]
+
+      Attribute _ -> []
+      Include _ -> []
+
+  (match -> Just (r, Parameters ps)) -> do
+    ps >>= getImmediateDecls
+
+  _ -> []
+
+kind = Just $ Right Star
 
 select
   :: ( Lattice  (Product info)
@@ -356,7 +466,7 @@ getName
   => LIGO (Product info)
   -> (Range, Text)
 getName = select "name"
-  [ Visit \(r, Name t) -> do
+  [ Visit \(r, NameDecl t) -> do
       tell [make (r, Name t)]
   ]
 
@@ -373,97 +483,3 @@ getTypeName = select "type name"
   [ Visit \(r, TypeName t) -> do
       tell [make (r, TypeName t)]
   ]
-
-type Collectable xs =
-  ( Contains Range xs
-  , Contains [Text] xs
-  , Contains ShowRange xs
-  , Eq (Product xs)
-  )
-
-instance Collectable xs => Scoped (Product xs) CollectM (LIGO (Product xs)) Contract where
-  before r _ = enter r
-  after  _ _ = skip
-
-instance Collectable xs => Scoped (Product xs) CollectM (LIGO (Product xs)) RawContract where
-  before r _ = enter r
-  after  _ _ = skip
-
-instance Collectable xs => Scoped (Product xs) CollectM (LIGO (Product xs)) Binding where
-  before r = \case
-    Function recur name _args ty body -> do
-      when recur do
-        def name ty (Just body) (getElem r)
-      enter r
-
-    TypeDecl ty body -> defType ty Star body (getElem r)
-    _ -> enter r
-
-  after r = \case
-    Irrefutable name    body -> do leave; def name  Nothing  (Just body) (getElem r)
-    Var         name ty body -> do leave; def name ty (Just body) (getElem r) -- TODO: may be the source of bugs
-    Const       name ty body -> do leave; def name ty (Just body) (getElem r)
-
-    Function recur name _args ty body -> do
-      leave
-      unless recur do
-        def name ty (Just body) (getElem r)
-
-    _ -> skip
-
-instance Collectable xs => Scoped (Product xs) CollectM (LIGO (Product xs)) VarDecl where
-  after r (Decl _ name ty) = def name ty Nothing (getElem r)
-
-instance Scoped a CollectM (LIGO a) Mutable
-instance Scoped a CollectM (LIGO a) Type
-instance Scoped a CollectM (LIGO a) Variant
-instance Scoped a CollectM (LIGO a) TField
-
-instance Collectable xs => Scoped (Product xs) CollectM (LIGO (Product xs)) Expr where
-  before r = \case
-    Let    {} -> enter r
-    Lambda {} -> enter r
-    ForLoop k _ _ _ _ -> do
-      enter r
-      def k Nothing Nothing (getElem r)
-
-    ForBox k mv _ _ _ -> do
-      enter r
-      def k Nothing Nothing (getElem r)
-      maybe skip (\v -> def v Nothing Nothing (getElem r)) mv
-
-    _ -> skip
-
-  after _ = \case
-    Let     {} -> leave
-    Lambda  {} -> leave
-    ForLoop {} -> leave
-    ForBox  {} -> leave
-    _ -> skip
-
-instance Collectable xs => Scoped (Product xs) CollectM (LIGO (Product xs)) Alt where
-  before r _ = enter r
-  after  _ _ = leave
-
-instance Scoped a CollectM (LIGO a) LHS
-instance Scoped a CollectM (LIGO a) MapBinding
-instance Scoped a CollectM (LIGO a) Assignment
-instance Scoped a CollectM (LIGO a) FieldAssignment
-instance Scoped a CollectM (LIGO a) Constant
-
-instance Collectable xs => Scoped (Product xs) CollectM (LIGO (Product xs)) Pattern where
-  before r = \case
-    IsVar n -> def n Nothing Nothing (getElem r)
-    _       -> skip
-
-instance Scoped a CollectM (LIGO a) QualifiedName
-instance Scoped a CollectM (LIGO a) Path
-instance Scoped a CollectM (LIGO a) Name
-instance Scoped a CollectM (LIGO a) TypeName
-instance Scoped a CollectM (LIGO a) FieldName
-
-instance Scoped a CollectM (LIGO a) (Err Text)
-instance Scoped a CollectM (LIGO a) Language
-instance Scoped a CollectM (LIGO a) Parameters
-instance Scoped a CollectM (LIGO a) Ctor
-instance Scoped a CollectM (LIGO a) ReasonExpr

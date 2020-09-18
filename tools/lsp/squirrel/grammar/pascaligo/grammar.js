@@ -211,7 +211,7 @@ module.exports = grammar({
         seq(
           field("recursive", optional($.recursive)),
           'function',
-          field("name", $.Name),
+          field("name", $.NameDecl),
           field("parameters", $.parameters),
           ':',
           field("type", $._type_expr),
@@ -238,7 +238,7 @@ module.exports = grammar({
     param_decl: $ =>
       seq(
         field("access", $._access),
-        field("name", $.Name),
+        field("name", $.NameDecl),
         ':',
         field("type", $._param_type),
       ),
@@ -264,7 +264,7 @@ module.exports = grammar({
     const_decl: $ =>
       seq(
         'const',
-        field("name", $.Name),
+        field("name", $.NameDecl),
         ':',
         field("type", $._type_expr),
         '=',
@@ -274,7 +274,7 @@ module.exports = grammar({
     var_decl: $ =>
       seq(
         'var',
-        field("name", $.Name),
+        field("name", $.NameDecl),
         ':',
         field("type", $._type_expr),
         ':=',
@@ -741,7 +741,7 @@ module.exports = grammar({
         $._constr_pattern,
       ),
 
-    var_pattern: $ => field("name", $.Name),
+    var_pattern: $ => field("name", $.NameDecl),
 
     _list_pattern: $ =>
       choice(
@@ -810,6 +810,7 @@ module.exports = grammar({
     FieldName: $ => /[a-z][a-zA-Z0-9_]*/,
     TypeName: $ => /[a-z][a-zA-Z0-9_]*/,
     Name: $ => /[a-z][a-zA-Z0-9_]*/,
+    NameDecl: $ => /[a-z][a-zA-Z0-9_]*/,
     Name_Capital: $ => /[A-Z][a-zA-Z0-9_]*/,
     Keyword: $ => /[A-Za-z][a-z]*/,
 
