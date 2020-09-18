@@ -7,9 +7,10 @@
 
 /* eslint-disable jsx-a11y/no-noninteractive-tabindex */
 
-import React, { useEffect, useState, useRef } from 'react';
-import classnames from 'classnames';
-import Highlight, { defaultProps } from 'prism-react-renderer';
+import React, {useEffect, useState, useRef} from 'react';
+import clsx from 'clsx';
+import Highlight, {defaultProps} from 'prism-react-renderer';
+import copy from 'copy-text-to-clipboard';
 
 import Prism from 'prism-react-renderer/prism';
 
@@ -83,11 +84,11 @@ Prism.languages = {
 };
 
 import defaultTheme from 'prism-react-renderer/themes/palenight';
-import Clipboard from 'clipboard';
 import rangeParser from 'parse-numeric-range';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import useThemeContext from '@theme/hooks/useThemeContext';
-import { LigoSnippet } from '@ligolang/ligo-snippets'
+import type {Props} from '@theme/CodeBlock';
+import {LigoSnippet} from '@ligolang/ligo-snippets'
 
 import styles from './styles.module.css';
 
@@ -161,8 +162,11 @@ const highlightDirectiveRegex = (lang) => {
 };
 const codeBlockTitleRegex = /title=".*"/;
 
-export default ({ children, className: languageClassName, metastring }) => {
-
+export default ({
+  children,
+  className: languageClassName,
+  metastring,
+}: Props): JSX.Element => {
   const {
     siteConfig: {
       themeConfig: {prism = {}},
@@ -182,9 +186,8 @@ export default ({ children, className: languageClassName, metastring }) => {
     setMounted(true);
   }, []);
 
-  const target = useRef(null);
   const button = useRef(null);
-  let highlightLines = [];
+  let highlightLines: number[] = [];
   let codeBlockTitle = '';
 
   const {isDarkTheme} = useThemeContext();
@@ -193,34 +196,22 @@ export default ({ children, className: languageClassName, metastring }) => {
   const prismTheme = isDarkTheme ? darkModeTheme : lightModeTheme;
 
   if (metastring && highlightLinesRangeRegex.test(metastring)) {
-    const highlightLinesRange = metastring.match(highlightLinesRangeRegex)[1];
+    // Tested above
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const highlightLinesRange = metastring.match(highlightLinesRangeRegex)![1];
     highlightLines = rangeParser
       .parse(highlightLinesRange)
       .filter((n) => n > 0);
   }
 
   if (metastring && codeBlockTitleRegex.test(metastring)) {
+    // Tested above
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     codeBlockTitle = metastring
-      .match(codeBlockTitleRegex)[0]
+      .match(codeBlockTitleRegex)![0]
       .split('title=')[1]
       .replace(/"+/g, '');
   }
-
-  useEffect(() => {
-    let clipboard;
-
-    if (button.current) {
-      clipboard = new Clipboard(button.current, {
-        target: () => target.current,
-      });
-    }
-
-    return () => {
-      if (clipboard) {
-        clipboard.destroy();
-      }
-    };
-  }, [button.current, target.current]);
 
   let language =
     languageClassName && languageClassName.replace(/language-/, '');
@@ -246,7 +237,10 @@ export default ({ children, className: languageClassName, metastring }) => {
       if (match !== null) {
         const directive = match
           .slice(1)
-          .reduce((final, item) => final || item, undefined);
+          .reduce(
+            (final: string | undefined, item) => final || item,
+            undefined,
+          );
         switch (directive) {
           case 'highlight-next-line':
             range += `${lineNumber},`;
@@ -274,7 +268,7 @@ export default ({ children, className: languageClassName, metastring }) => {
   }
 
   const handleCopyCode = () => {
-    window.getSelection().empty();
+    copy(code);
     setShowCopied(true);
 
     setTimeout(() => setShowCopied(false), 2000);
@@ -311,9 +305,10 @@ export default ({ children, className: languageClassName, metastring }) => {
   return (
     <Highlight
       {...defaultProps}
-      key={mounted}
+      key={String(mounted)}
       theme={prismTheme}
       code={code}
+      // @ts-expect-error: prism-react-renderer doesn't export Language type
       language={language}>
       {({className, style, tokens, getLineProps, getTokenProps}) => (
         <>
@@ -327,18 +322,18 @@ export default ({ children, className: languageClassName, metastring }) => {
               ref={button}
               type="button"
               aria-label="Copy code to clipboard"
-              className={classnames(styles.copyButton, {
+              className={clsx(styles.copyButton, {
                 [styles.copyButtonWithTitle]: codeBlockTitle,
               })}
               onClick={handleCopyCode}>
               {showCopied ? 'Copied' : 'Copy'}
             </button>
             <div
-              tabIndex="0"
-              className={classnames(className, styles.codeBlock, {
+              tabIndex={0}
+              className={clsx(className, styles.codeBlock, {
                 [styles.codeBlockWithTitle]: codeBlockTitle,
               })}>
-              <div ref={target} className={styles.codeBlockLines} style={style}>
+              <div className={styles.codeBlockLines} style={style}>
                 {tokens.map((line, i) => {
                   if (line.length === 1 && line[0].content === '') {
                     line[0].content = '\n'; // eslint-disable-line no-param-reassign

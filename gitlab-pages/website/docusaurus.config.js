@@ -155,7 +155,7 @@ const siteConfig = {
         src: 'img/logo.svg',
         srcDark: 'img/logo-night.svg'
       },
-      links: [
+      items: [
         { href: 'https://ide.ligolang.org/', label: 'Try Online', position: 'left', target: '_self' },
         { to: 'docs/intro/installation', label: 'Install', position: 'left' },
         { to: 'docs/intro/introduction', label: 'Docs', position: 'left' },
