@@ -2,9 +2,15 @@
 module Cli.Types
   ( LigoClient
   , LigoClientEnv (..)
+  , HasLigoClientEnv (..)
+  , HasLigoClient
   )
 where
 
+import Control.Lens (Lens')
+import Control.Monad.Catch.Pure (MonadThrow)
+import Control.Monad.IO.Class (MonadIO)
+import Control.Monad.Reader.Class (MonadReader)
 import Control.Monad.Trans.Reader (ReaderT)
 
 -- | Type of the client itself.
@@ -18,3 +24,8 @@ data LigoClientEnv = LigoClientEnv
     _lceVerbose :: Bool
   }
   deriving stock (Show)
+
+class HasLigoClientEnv env where
+  ligoClientEnvL :: Lens' env LigoClientEnv
+
+type HasLigoClient env m = (HasLigoClientEnv env, MonadReader env m, MonadIO m, MonadThrow m)

@@ -22,8 +22,8 @@ import qualified Language.Haskell.LSP.Types.Lens as J
 import qualified Language.Haskell.LSP.Utility as U
 import Language.Haskell.LSP.VFS
 
-import System.Exit
 import System.Directory
+import System.Exit
 import System.FilePath
 import qualified System.Log as L
 import System.Posix.Files
@@ -33,6 +33,7 @@ import Duplo.Pretty
 import Duplo.Tree (collect)
 
 import AST hiding (def)
+import qualified Cli.Capabilities as Ligo
 import qualified Config
 import Extension
 import Parser
@@ -160,6 +161,7 @@ eventLoop funs chan = do
           (J.toNormalizedUri doc)
           (J.uriToFilePath doc)
           (Just ver)
+
       NotDidChangeTextDocument notif -> do
         let
           doc = notif
@@ -304,9 +306,12 @@ collectErrors funs uri path version = do
       (tree, errs) <- parse (Path fin)
       Core.publishDiagnosticsFunc funs 100 uri version
         $ partitionBySource
-        $ map errorToDiag (errs <> map (getElem *** void) (collect tree))
+        $ map errorToDiag (errs <> collectTreeErrors tree)
 
     Nothing -> error "TODO: implement URI file loading"
+
+collectTreeErrors :: LIGO Info -> [Msg]
+collectTreeErrors = map (getElem *** void) . collect
 
 data ParsedContract = ParsedContract
   { cPath :: FilePath
@@ -329,7 +334,8 @@ parseContracts top = let
         putStrLn $ "parsing: " ++ show p
         contract <- try @UnsupportedExtension $ parse (Path p)
         case contract of
-          Right (tree, errs) -> return $ [ParsedContract p tree errs]
+          Right (tree, errs) ->
+            return $ [ParsedContract p tree (errs <> collectTreeErrors tree)]
           Left _ -> return []
   return (concat contracts)
 
