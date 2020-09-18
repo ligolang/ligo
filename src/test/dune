@@ -15,14 +15,14 @@
   (flags (:standard -w +1..62-4-9-44-40-42-48@39@33 -open Simple_utils ))
 )
 
-(alias
-  (name doc-test)
+(rule
+  (alias doc-test)
   (action (run ./doc_test.exe))
   (deps (source_tree ../../gitlab-pages/docs))
 )
 
-(alias
-  (name parser-negative-tests)
+(rule
+  (alias parser-negative-tests)
   (action (run ./parser_negative_tests.exe))
   (deps
     ../passes/01-parsing/pascaligo/all.ligo
@@ -30,8 +30,8 @@
     ../passes/01-parsing/reasonligo/all.religo
   ))
 
-(alias
-  (name ligo-test)
+(rule
+  (alias ligo-test)
   (action (setenv POSITIVE_CONTRACTS "%{pos}"
            (run ./test.exe)))
   (deps (glob_files contracts/*)
@@ -44,8 +44,8 @@
   (deps (alias ligo-test) (alias doc-test) (alias parser-negative-tests))
 )
 
-(alias
-  (name manual-test)
+(rule
+  (alias manual-test)
   (action (run ./manual_test.exe))
   (deps (glob_files contracts/*))
 )
