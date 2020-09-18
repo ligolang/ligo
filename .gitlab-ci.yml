@@ -29,7 +29,7 @@ version_scheduled_job:
     - nix
   before_script:
     - find "$CI_PROJECT_DIR" -path "$CI_PROJECT_DIR/.git" -prune -o "(" -type d -a -not -perm -u=w ")" -exec chmod --verbose u+w {} ";"
-    - nix-env -f channel:nixos-unstable -iA gnutar gitMinimal
+    # - nix-env -f channel:nixos-unstable -iA gnutar gitMinimal
     - export COMMIT_DATE="$(git show --no-patch --format=%ci)"
 
 # The binary produced is useless by itself
@@ -276,3 +276,16 @@ pages-attempt:
   only:
     - merge_requests
     - /^.*-run-dev$/
+
+vscode-extension:
+  extends: .nix
+  only:
+    - merge_requests
+    - dev
+    - /^.*-run-dev$/
+  script:
+    - nix-build tools/lsp -A ligo-vscode-extension
+    - cp -Lr --no-preserve=mode,ownership,timestamps result/*.vsix ligo-extension.vsix
+  artifacts:
+    paths:
+      - ligo-extension.vsix

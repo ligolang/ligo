@@ -41,7 +41,7 @@ type action =
 |	GetTotalSupply ( getTotalSupply )
 
 let transfer = ((p,s) : (transfer, storage)) : (list (operation), storage) => {
-   let new_allowances =
+   let new_allowances =   
 		if (Tezos.sender == p.address_from) { s.allowances; }
 		else {
 			let authorized_value = switch (Big_map.find_opt ((Tezos.sender,p.address_from), s.allowances)) {
@@ -105,7 +105,7 @@ let getTotalSupply = ((p,s) : (getTotalSupply, storage)) : (list (operation), st
 };
 
 
-let main = ((a,s): (action, storage)) =>
+let main = ((a,s): (action, storage)) =>  
  	switch a {
    |	Transfer p => transfer ((p,s))
 	|	Approve  p => approve ((p,s))

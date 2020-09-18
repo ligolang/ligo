@@ -14,7 +14,7 @@
     ],
     "keywords": [],
     "engines": {
-        "vscode": "^1.43.0"
+        "vscode": "^1.47.0"
     },
     "activationEvents": [
         "onLanguage:ligo",
@@ -27,20 +27,32 @@
         "languages": [
             {
                 "id": "ligo",
-                "aliases": ["PascaLIGO"],
-                "extensions": ["ligo"],
+                "aliases": [
+                    "PascaLIGO"
+                ],
+                "extensions": [
+                    "ligo"
+                ],
                 "configuration": "./syntaxes/ligo.configuration.json"
             },
             {
                 "id": "mligo",
-                "aliases": ["CameLIGO"],
-                "extensions": ["mligo"],
+                "aliases": [
+                    "CameLIGO"
+                ],
+                "extensions": [
+                    "mligo"
+                ],
                 "configuration": "./syntaxes/mligo.configuration.json"
             },
             {
                 "id": "religo",
-                "aliases": ["ReasonLIGO"],
-                "extensions": ["religo"],
+                "aliases": [
+                    "ReasonLIGO"
+                ],
+                "extensions": [
+                    "religo"
+                ],
                 "configuration": "./syntaxes/religo.configuration.json"
             }
         ],
@@ -78,12 +90,16 @@
         "vscode:prepublish": "npm run compile",
         "compile": "tsc -b",
         "watch": "tsc -b -w",
-        "postinstall": "cd client && npm install && cd .."
+        "package": "vsce package"
+    },
+    "dependencies": {
+        "vscode-languageclient": "^4.1.4"
     },
     "devDependencies": {
+        "@types/vscode": "^1.47.0",
         "@types/node": "^8.10.52",
         "tslint": "^5.16.0",
-        "typescript": "next"
-    },
-    "dependencies": {}
+        "typescript": "next",
+        "vsce": "^1.79.5"
+    }
 }
