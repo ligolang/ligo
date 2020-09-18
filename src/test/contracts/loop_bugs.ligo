@@ -16,5 +16,5 @@ function shadowing_assigned_in_body (var nee : unit) : string is block {
     var st : string := "ta";
     st := st ^ x;
   }
-} with st ^ 1
+} with st
 (* should be "toto" ??? *)

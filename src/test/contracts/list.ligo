@@ -31,5 +31,3 @@ function map_op (const s : list (int)) : list (int) is
   block {
     function increment (const i : int) : int is i+1
   } with List.map (increment, s)
-
-const fb2 : foobar = 144 # fb

@@ -54,7 +54,7 @@ function insert (const h : heap ; const e : heap_elt) : heap is
       parent := i/2n;
       largest := i;
       if parent >= 1n then {
-        if heap_elt_lt (get_force (parent,h), get_force(i,h)) then {
+        if heap_elt_lt (get_force (parent,h), get_force(i,h))) then {
           largest := parent;
           const tmp : heap_elt = get_force (i,h);
           h[i] := get_force(parent, h);
@@ -99,6 +99,5 @@ function pop (const h : heap) : heap * heap_elt * nat is
             h[left] := tmp
           } else skip
         } else skip
-    };
-    while False block { skip; }
-  } with (h, result, c)
+    }
+   } with (h, result, c)
