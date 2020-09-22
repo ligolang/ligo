@@ -33,7 +33,7 @@ import Duplo.Pretty
 import Duplo.Tree (collect)
 
 import AST hiding (def)
-import qualified Cli.Capabilities as Ligo
+import qualified AST.Capabilities as Ligo
 import qualified Config
 import Extension
 import Parser
