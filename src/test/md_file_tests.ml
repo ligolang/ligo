@@ -62,7 +62,7 @@ let compile_groups filename grp_list =
       let%bind imperative = Compile.Of_source.compile_string contents v_syntax in
       let%bind sugar      = Ligo.Compile.Of_imperative.compile imperative in
       let%bind core       = Ligo.Compile.Of_sugar.compile sugar in
-      let%bind typed,_    = Compile.Of_core.compile Env core in
+      let%bind typed,_,_  = Compile.Of_core.compile Env core in
       let%bind mini_c     = Compile.Of_typed.compile typed in
       bind_map_list
         (fun ((_, _, exp),_) -> Compile.Of_mini_c.aggregate_and_compile_expression mini_c exp)

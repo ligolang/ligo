@@ -33,12 +33,12 @@ let rec type_declaration env state : I.declaration -> (environment * _ O'.typer_
       Determine the type of the expression and add it to the environment
     *)
     let%bind tv_opt = evaluate_type env ty in
-    let%bind (state', expr) =
+    let%bind e, state, expr =
       trace (constant_declaration_tracer var expr @@ Some tv_opt) @@
       type_expression env state ~tv_opt expr in
     let binder = Location.map Var.todo_cast var in
-    let post_env = Environment.add_ez_declaration binder expr env in
-    ok (post_env, state' , O.Declaration_constant { binder ; expr ; inline=attr.inline})
+    let post_env = Environment.add_ez_declaration binder expr e in
+    ok (post_env, state , O.Declaration_constant { binder ; expr ; inline=attr.inline})
     )
 
 (*
@@ -140,17 +140,17 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
           return @@ pair
       | _ -> fail @@ unrecognized_type_constant t
 
-and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_state -> I.expression -> (_ O'.typer_state * O.expression, typer_error) result = fun ?tv_opt e state ae ->
+and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_state -> I.expression -> (environment * _ O'.typer_state * O.expression, typer_error) result = fun ?tv_opt e state ae ->
   let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
   let open Solver in
   let module L = Logger.Stateful() in
-  let return : _ -> _ O'.typer_state -> _ -> _ (* return of type_expression *) = fun expr state constraints type_name ->
+  let return : _ -> _ -> _ O'.typer_state -> _ -> _ (* return of type_expression *) = fun expr e state constraints type_name ->
     let%bind new_state = aggregate_constraints state constraints in
     let tv = t_variable type_name in
     let location = ae.location in
     let expr' = make_e ~location expr tv in
-    ok @@ (new_state, expr') in
-  let return_wrapped expr state (constraints , expr_type) = return expr state constraints expr_type in
+    ok @@ (e,new_state, expr') in
+  let return_wrapped expr e state (constraints , expr_type) = return expr e state constraints expr_type in
   trace (expression_tracer ae) @@
   match ae.content with
 
@@ -169,81 +169,86 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
       @@ Environment.get_opt name e in
     let (constraints , expr_type) = Wrap.variable tv'.type_value in
     let expr' = e_variable name in
-    return expr' state constraints expr_type
+    return expr' e state constraints expr_type
   )
 
   | E_literal (Literal_string s) -> (
-      return_wrapped (e_string s) state @@ Wrap.literal (t_string ())
+      return_wrapped (e_string s) e state @@ Wrap.literal (t_string ())
     )
   | E_literal (Literal_signature s) -> (
-      return_wrapped (e_signature s) state @@ Wrap.literal (t_signature ())
+      return_wrapped (e_signature s) e state @@ Wrap.literal (t_signature ())
     )
   | E_literal (Literal_key s) -> (
-      return_wrapped (e_key s) state @@ Wrap.literal (t_key ())
+      return_wrapped (e_key s) e state @@ Wrap.literal (t_key ())
     )
   | E_literal (Literal_key_hash s) -> (
-      return_wrapped (e_key_hash s) state @@ Wrap.literal (t_key_hash ())
+      return_wrapped (e_key_hash s) e state @@ Wrap.literal (t_key_hash ())
     )
   | E_literal (Literal_chain_id s) -> (
-      return_wrapped (e_chain_id s) state @@ Wrap.literal (t_chain_id ())
+      return_wrapped (e_chain_id s) e state @@ Wrap.literal (t_chain_id ())
     )
   | E_literal (Literal_bytes b) -> (
-      return_wrapped (e_bytes b) state @@ Wrap.literal (t_bytes ())
+      return_wrapped (e_bytes b) e state @@ Wrap.literal (t_bytes ())
     )
   | E_literal (Literal_int i) -> (
-      return_wrapped (e_int i) state @@ Wrap.literal (t_int ())
+      return_wrapped (e_int i) e state @@ Wrap.literal (t_int ())
     )
   | E_literal (Literal_nat n) -> (
-      return_wrapped (e_nat n) state @@ Wrap.literal (t_nat ())
+      return_wrapped (e_nat n) e state @@ Wrap.literal (t_nat ())
     )
   | E_literal (Literal_mutez t) -> (
-      return_wrapped (e_mutez t) state @@ Wrap.literal (t_mutez ())
+      return_wrapped (e_mutez t) e state @@ Wrap.literal (t_mutez ())
     )
   | E_literal (Literal_address a) -> (
-      return_wrapped (e_address a) state @@ Wrap.literal (t_address ())
+      return_wrapped (e_address a) e state @@ Wrap.literal (t_address ())
     )
   | E_literal (Literal_timestamp t) -> (
-      return_wrapped (e_timestamp t) state @@ Wrap.literal (t_timestamp ())
+      return_wrapped (e_timestamp t) e state @@ Wrap.literal (t_timestamp ())
     )
   | E_literal (Literal_operation o) -> (
-      return_wrapped (e_operation o) state @@ Wrap.literal (t_operation ())
+      return_wrapped (e_operation o) e state @@ Wrap.literal (t_operation ())
     )
   | E_literal (Literal_unit) -> (
-      return_wrapped (e_unit ()) state @@ Wrap.literal (t_unit ())
+      return_wrapped (e_unit ()) e state @@ Wrap.literal (t_unit ())
     )
 
   | E_constant {cons_name; arguments=lst} ->
     let%bind t = Typer_common.Constant_typers_new.Operators_types.constant_type cons_name in
-    let%bind state',lst = bind_fold_map_list (type_expression e) state lst in
+    let%bind (e,state),lst = bind_fold_map_list 
+      (fun (e,state) l ->
+        let%bind e,state,l = type_expression e state l in
+        ok ((e,state),l)
+      ) (e,state) lst
+    in
     let lst_annot = List.map get_type_expression lst in
     let wrapped = Wrap.constant t lst_annot in
-    return_wrapped (E_constant {cons_name;arguments=lst}) state' wrapped
+    return_wrapped (E_constant {cons_name;arguments=lst}) e state wrapped
 
   | E_lambda lambda -> 
-    let%bind (lambda,state',wrapped) = type_lambda e state lambda in
-    return_wrapped (E_lambda lambda) state' wrapped
+    let%bind lambda,e,state,wrapped = type_lambda e state lambda in
+    return_wrapped (E_lambda lambda) e state wrapped
 
   | E_application {lamb;args} ->
-    let%bind (state' , lamb)  = type_expression e state lamb in
-    let%bind (state'', args) = type_expression e state' args in
+    let%bind e,state , lamb = type_expression e state lamb in
+    let%bind e,state, args = type_expression e state args in
     let wrapped = Wrap.application lamb.type_expression args.type_expression in
-    return_wrapped (E_application {lamb;args}) state'' wrapped
+    return_wrapped (E_application {lamb;args}) e state wrapped
 
   (* Sum *)
   | E_constructor {constructor;element} ->
     (* Check that the constructor is from an existing variant *)
     let%bind (c_tv, sum_tv) = trace_option (unbound_constructor e constructor ae.location) @@
       Environment.get_constructor constructor e in
-    let%bind (state', element) = type_expression e state element in
+    let%bind (e,state, element) = type_expression e state element in
     (* Check that the element in the variant as the proper type *)
     (* TODO: infer the variant or the type of the element *)
     let%bind _assert = assert_type_expression_eq (element.type_expression, c_tv) in
     let wrapped = Wrap.constructor element.type_expression c_tv sum_tv in
-    return_wrapped (E_constructor {constructor; element}) state' wrapped
+    return_wrapped (E_constructor {constructor; element}) e state wrapped
 
   | E_matching {matchee;cases} -> (
-      let%bind (state'  , ex') = type_expression e state matchee in
-      let%bind (state'' , m' ) = type_match e state' ex'.type_expression cases ae ae.location in
+      let%bind e,state  , ex' = type_expression e state matchee in
+      let%bind e,state , m'  = type_match e state ex'.type_expression cases ae ae.location in
       let tvs =
         let aux (cur : O.matching_expr) =
           match cur with
@@ -257,26 +262,29 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
       *)
       (* ?TODO?: Check that the type of the matching has the variant type corresponding to the case *)
       let wrapped = Wrap.matching tvs in
-      return_wrapped (O.E_matching {matchee=ex';cases=m'}) state'' wrapped
+      return_wrapped (O.E_matching {matchee=ex';cases=m'}) e state wrapped
     )
 
   (* Record *)
   | E_record m ->
-    let aux state _ expr = type_expression e state expr in
-    let%bind (state', m') = Stage_common.Helpers.bind_fold_map_lmap aux state m in
+    let aux (e,state) _ expr = 
+      let%bind e,state, expr = type_expression e state expr in
+      ok ((e,state), expr)
+    in
+    let%bind (e,state), m' = Stage_common.Helpers.bind_fold_map_lmap aux (e,state) m in
     (* Do we need row_element for AST_typed ? *)
     let wrapped = Wrap.record (O.LMap.map (fun e -> ({associated_type = get_type_expression e ; michelson_annotation = None ; decl_pos = 0}: O.row_element)) m') in
-    return_wrapped (E_record m') state' wrapped
+    return_wrapped (E_record m') e state wrapped
 
   | E_record_accessor {record;path} -> (
-      let%bind (state', base') = type_expression e state record in
-      let wrapped = Wrap.access_label ~base:base'.type_expression ~label:path in
-      return_wrapped (E_record_accessor {record=base';path}) state' wrapped
+      let%bind (e, state, base) = type_expression e state record in
+      let wrapped = Wrap.access_label ~base:base.type_expression ~label:path in
+      return_wrapped (E_record_accessor {record=base;path}) e state wrapped
     )
 
   | E_record_update {record; path; update} ->
-    let%bind (state, record) = type_expression e state record in
-    let%bind (state, update) = type_expression e state update in
+    let%bind e, state, record = type_expression e state record in
+    let%bind e, state, update = type_expression e state update in
     let wrapped = get_type_expression record in
     let%bind (wrapped,tv) = 
       match wrapped.type_content with 
@@ -291,42 +299,42 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
     (* Check that the expression type is compatible with the field type *)
     let%bind () = assert_type_expression_eq (tv, get_type_expression update) in
     (* TODO: wrap.record_update *)
-    return_wrapped (E_record_update {record; path; update}) state (Wrap.record wrapped)
+    return_wrapped (E_record_update {record; path; update}) e state (Wrap.record wrapped)
 
   (* Advanced *)
   | E_let_in {let_binder ; rhs ; let_result; inline} ->
     let%bind rhs_tv_opt = (evaluate_type e) (let_binder.ty) in
-    let%bind (state', rhs) = type_expression e state rhs in
+    let%bind e, state, rhs = type_expression e state rhs in
     let let_binder = cast_var let_binder.var in 
-    let e' = Environment.add_ez_declaration let_binder rhs e in
-    let%bind (state'', let_result) = type_expression e' state' let_result in
+    let e = Environment.add_ez_declaration let_binder rhs e in
+    let%bind e, state, let_result = type_expression e state let_result in
     let wrapped =
       Wrap.let_in rhs.type_expression rhs_tv_opt let_result.type_expression in
-    return_wrapped (E_let_in {let_binder; rhs; let_result; inline}) state'' wrapped
+    return_wrapped (E_let_in {let_binder; rhs; let_result; inline}) e state wrapped
 
   | E_recursive {fun_name;fun_type;lambda} ->
     (* Add the function name to the environment before evaluating the lambda*)
     let fun_name = cast_var fun_name in
     let%bind fun_type = evaluate_type e fun_type in
     let e = Environment.add_ez_binder fun_name fun_type e in
-    let%bind (lambda,state,_) = type_lambda e state lambda in
+    let%bind lambda,e,state,_ = type_lambda e state lambda in
     let wrapped = Wrap.recursive fun_type in
-    return_wrapped (E_recursive {fun_name;fun_type;lambda}) state wrapped
+    return_wrapped (E_recursive {fun_name;fun_type;lambda}) e state wrapped
 
   | E_raw_code {language ; code} ->
     (* The code is a string with an annotation*)
-    let%bind state',code = type_expression e state code in
+    let%bind e,state,code = type_expression e state code in
     let wrapped = Wrap.raw_code code.type_expression in
-    return_wrapped (E_raw_code {language; code}) state' wrapped
+    return_wrapped (E_raw_code {language; code}) e state wrapped
   | E_ascription {anno_expr;type_annotation} ->
     let%bind tv = evaluate_type e type_annotation in
-    let%bind (state', expr') = type_expression e state anno_expr in
+    let%bind e, state, expr' = type_expression e state anno_expr in
     let wrapped = Wrap.annotation expr'.type_expression tv
     (* TODO: we're probably discarding too much by using expr'.expression.
        Previously: {expr' with type_annotation = the_explicit_type_annotation}
        but then this case is not like the others and doesn't call return_wrapped,
        which might do some necessary work *)
-    in return_wrapped expr'.expression_content state' wrapped
+    in return_wrapped expr'.expression_content e state wrapped
 
 and type_lambda e state {
       binder ;
@@ -335,41 +343,41 @@ and type_lambda e state {
       let%bind input_type  = (evaluate_type e) binder.ty in
       let binder = cast_var binder.var in
       let fresh : O.type_expression = t_variable (Wrap.fresh_binder ()) in
-      let e' = Environment.add_ez_binder (binder) fresh e in
+      let e = Environment.add_ez_binder (binder) fresh e in
 
-      let%bind (state', result) = type_expression e' state result in
+      let%bind e, state, result = type_expression e state result in
       let wrapped = Wrap.lambda fresh input_type result.type_expression in
-      ok (({binder;result}:O.lambda),state',wrapped)
+      ok (({binder;result}:O.lambda),e,state,wrapped)
 
 (* TODO: Rewrite this entire function *)
-and type_match : environment -> _ O'.typer_state -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> (_ O'.typer_state * O.matching_expr, typer_error) result =
+and type_match : environment -> _ O'.typer_state -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> (environment * _ O'.typer_state * O.matching_expr, typer_error) result =
   fun e state t i _ae loc ->
-  let return state m = ok @@ (state, m) in
+  let return e state m = ok @@ (e,state, m) in
   match i with
     | Match_option {match_none ; match_some} ->
       let%bind tv =
         trace_option (match_error ~expected:i ~actual:t loc)
         @@ get_t_option t in
-      let%bind (state', match_none) = type_expression e state match_none in
+      let%bind (e,state, match_none) = type_expression e state match_none in
       let {opt; body}:I.match_some = match_some in
       let opt = cast_var opt in
       (* Add the binder just for typing the case *)
-      let e' = Environment.add_ez_binder opt tv e in
-      let%bind (state'', body) = type_expression e' state' body in
-      return state'' @@ O.Match_option {match_none ; match_some = { opt; body; tv}}
+      let e = Environment.add_ez_binder opt tv e in
+      let%bind (e,state, body) = type_expression e state body in
+      return e state @@ O.Match_option {match_none ; match_some = { opt; body; tv}}
     | Match_list {match_nil ; match_cons} ->
       let%bind t_elt =
         trace_option (match_error ~expected:i ~actual:t loc)
         @@ get_t_list t in
-      let%bind (state', match_nil) = type_expression e state match_nil in
+      let%bind e, state, match_nil = type_expression e state match_nil in
       let {hd; tl; body} : I.match_cons = match_cons in
       let hd = cast_var hd in
       let tl = cast_var tl in
       (* Add the binder just for typing the case *)
-      let e' = Environment.add_ez_binder hd t_elt e in
-      let e' = Environment.add_ez_binder tl t e' in
-      let%bind (state'', body) = type_expression e' state' body in
-      return state'' @@ O.Match_list {match_nil ; match_cons = {hd; tl; body;tv=t}}
+      let e = Environment.add_ez_binder hd t_elt e in
+      let e = Environment.add_ez_binder tl t e in
+      let%bind e, state, body = type_expression e state body in
+      return e state @@ O.Match_list {match_nil ; match_cons = {hd; tl; body;tv=t}}
     | Match_variant lst ->
       (* Compile the expression in the matching and check for type equality*)
       let%bind variant_opt =
@@ -412,36 +420,36 @@ and type_match : environment -> _ O'.typer_state -> O.type_expression -> I.match
         ok ()
       in
       (* Convert constructors *)
-      let%bind (state'' , cases) =
-        let aux state ({constructor; proj; body}: I.match_variant) =
+      let%bind (e, state), cases =
+        let aux (e,state) ({constructor; proj; body}: I.match_variant) =
           let%bind (constructor_type , _) =
             trace_option (unbound_constructor e constructor loc) @@
             Environment.get_constructor constructor e in
           let pattern = cast_var proj in
-          let e' = Environment.add_ez_binder pattern constructor_type e in
-          let%bind (state', body) = type_expression e' state body in
+          let e = Environment.add_ez_binder pattern constructor_type e in
+          let%bind e, state, body = type_expression e state body in
           let constructor = constructor in
-          ok (state' , ({constructor ; pattern ; body} : O.matching_content_case))
+          ok ((e, state) , ({constructor ; pattern ; body} : O.matching_content_case))
         in
-        bind_fold_map_list aux state lst in
-      return state'' @@ O.Match_variant {cases ; tv=variant }
+        bind_fold_map_list aux (e,state) lst in
+      return e state @@ O.Match_variant {cases ; tv=variant }
 
 (* Apply type_declaration on every node of the AST_core from the root p *)
 let type_program_returns_env ((env, state, p) : environment * _ O'.typer_state * I.program) : (environment * _ O'.typer_state * O.program, Typer_common.Errors.typer_error) result =
   let aux ((e : environment), (s : _ O'.typer_state) , (ds : O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
-    let%bind (e' , s' , d') = type_declaration e s (Location.unwrap d) in
+    let%bind (e , s' , d') = type_declaration e s (Location.unwrap d) in
     (* TODO: Move this filter to the spiller *)
     let ds' = match d' with
       | O.Declaration_type _ -> ds
       | _ -> Location.wrap ~loc:(Location.get_location d) d' :: ds
     in
-    ok (e' , s' , ds')
+    ok (e , s' , ds')
   in
-  let%bind (env' , state' , declarations) =
+  let%bind (env' , state , declarations) =
     trace (program_error_tracer p) @@
     bind_fold_list aux (env , state , []) p in
   let declarations = List.rev declarations in (* Common hack to have O(1) append: prepend and then reverse *)
-  ok (env', state', declarations)
+  ok (env', state, declarations)
 
 let print_env_state_node (node_printer : Format.formatter -> 'a -> unit) ((env,state,node) : environment * _ O'.typer_state * 'a) =
   ignore node; (* TODO *)
@@ -497,26 +505,19 @@ let type_program (p : I.program) : (O.program * _ O'.typer_state, typer_error) r
   let empty_state = Solver.initial_state in
   type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.program\"") (fun ppf p -> Format.fprintf ppf "%a" Yojson.Safe.pp (Ast_typed.Yojson.program p)) (empty_env , empty_state , p) Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_env
 
-(* Change the signature of type_expression for compatibility with type_and_subst *)
-let type_expression_returns_env : (environment * _ O'.typer_state * I.expression) -> (environment * _ O'.typer_state * O.expression, typer_error) result =
-  fun (env, state, e) ->
-  let%bind (state, e) = type_expression env state e in
-  ok (env, state, e)
-
 let type_expression_subst (env : environment) (state : _ O'.typer_state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.expression * _ O'.typer_state , typer_error) result =
   let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
-  type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.expression\"") (fun ppf p -> Format.fprintf ppf "%a" Yojson.Safe.pp (Ast_typed.Yojson.expression p)) (env , state , e) Typesystem.Misc.Substitution.Pattern.s_expression type_expression_returns_env
+  type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.expression\"") (fun ppf p -> Format.fprintf ppf "%a" Yojson.Safe.pp (Ast_typed.Yojson.expression p)) (env , state , e) Typesystem.Misc.Substitution.Pattern.s_expression (fun (a,b,c) -> type_expression a b c)
 
 let untype_expression       = Untyper.untype_expression
 
 (* These aliases are just here for quick navigation during debug, and can safely be removed later *)
 let [@warning "-32"] (*rec*) type_declaration _env _state : I.declaration -> (environment * _ O'.typer_state * O.declaration, typer_error) result = type_declaration _env _state
-and [@warning "-32"] type_match : environment -> _ O'.typer_state -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> (_ O'.typer_state * O.matching_expr, typer_error) result = type_match
+and [@warning "-32"] type_match : environment -> _ O'.typer_state -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> (environment * _ O'.typer_state * O.matching_expr, typer_error) result = type_match
 and [@warning "-32"] evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, typer_error) result = evaluate_type e t
-and [@warning "-32"] type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_state -> I.expression -> (_ O'.typer_state * O.expression, typer_error) result = type_expression
+and [@warning "-32"] type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_state -> I.expression -> (environment * _ O'.typer_state * O.expression, typer_error) result = type_expression
 and [@warning "-32"] type_lambda e state lam = type_lambda e state lam
 let [@warning "-32"] type_program_returns_env ((env, state, p) : environment * _ O'.typer_state * I.program) : (environment * _ O'.typer_state * O.program, typer_error) result = type_program_returns_env (env, state, p)
 let [@warning "-32"] type_and_subst (in_printer : (Format.formatter -> 'a -> unit)) (out_printer : (Format.formatter -> 'b -> unit)) (env_state_node : environment * _ O'.typer_state * 'a) (apply_substs : ('b,typer_error) Typesystem.Misc.Substitution.Pattern.w) (types_and_returns_env : (environment * _ O'.typer_state * 'a) -> (environment * _ O'.typer_state * 'b, typer_error) result) : ('b * _ O'.typer_state, typer_error) result = type_and_subst in_printer out_printer env_state_node apply_substs types_and_returns_env
 let [@warning "-32"] type_program (p : I.program) : (O.program * _ O'.typer_state, typer_error) result = type_program p
-let [@warning "-32"] type_expression_returns_env : (environment * _ O'.typer_state * I.expression) -> (environment * _ O'.typer_state * O.expression, typer_error) Trace.result = type_expression_returns_env
 let [@warning "-32"] type_expression_subst (env : environment) (state : _ O'.typer_state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.expression * _ O'.typer_state, typer_error) result = type_expression_subst env state ?tv_opt e

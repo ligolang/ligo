@@ -27,8 +27,7 @@ let make_v_def_from_core : with_types:bool -> string -> string -> ('a Var.t) -> 
   fun ~with_types source_file syntax name exp range body_range ->
     let name = get_binder_name name in
     let t = to_option @@
-      let%bind typed_prg,state = Compile.Utils.type_file source_file syntax Env in
-      let env = Ast_typed.program_environment Environment.default typed_prg in
+      let%bind _,env,state = Compile.Utils.type_file source_file syntax Env in
       let%bind (e,_) = Compile.Of_core.compile_expression ~env ~state exp in
       ok e.type_expression
     in
@@ -43,8 +42,7 @@ let make_v_def_option_type : with_types:bool -> string -> string -> ('a Var.t) -
     | T_wildcard -> make_v_def ~with_types name None range body_range
     | _ ->
       let t' = to_option @@
-        let%bind typed_prg,_ = Compile.Utils.type_file source_file syntax Env in
-        let env = Ast_typed.program_environment Environment.default typed_prg in
+        let%bind _,env,_ = Compile.Utils.type_file source_file syntax Env in
         Compile.Of_core.evaluate_type env maybe_typed in
       make_v_def ~with_types name t' range body_range
 
@@ -54,8 +52,7 @@ let make_v_def_ppx_type :
   fun ~with_types source_file syntax name f exp range body_range ->
     let name = get_binder_name name in
     let t = to_option @@
-      let%bind typed_prg,state = Compile.Utils.type_file source_file syntax Env in
-      let env = Ast_typed.program_environment Environment.default typed_prg in
+      let%bind _,env,state = Compile.Utils.type_file source_file syntax Env in
       let%bind (e,_) = Compile.Of_core.compile_expression ~env ~state exp in
       let v = f e.type_expression in ok v
     in

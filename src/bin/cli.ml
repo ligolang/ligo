@@ -176,7 +176,7 @@ module Run = Ligo.Run.Of_michelson
 let compile_file =
   let f source_file entry_point syntax display_format disable_typecheck michelson_format output_file =
     return_result ~input:(Display.File source_file) ~output_file ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
-      let%bind typed,_    = Compile.Utils.type_file source_file syntax (Contract entry_point) in
+      let%bind typed,_,_  = Compile.Utils.type_file source_file syntax (Contract entry_point) in
       let%bind mini_c     = Compile.Of_typed.compile typed in
       let%bind michelson  = Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
       Compile.Of_michelson.build_contract ~disable_typecheck michelson
@@ -251,7 +251,7 @@ let print_ast_core =
 let print_ast_typed =
   let f source_file syntax display_format =
     return_result ~input:(Display.File source_file) ~display_format (Ast_typed.Formatter.program_format) @@
-      let%bind typed,_    = Compile.Utils.type_file source_file syntax Env in
+      let%bind typed,_,_  = Compile.Utils.type_file source_file syntax Env in
       ok typed
   in
   let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
@@ -262,7 +262,7 @@ let print_ast_typed =
 let print_mini_c =
   let f source_file syntax display_format optimize =
     return_result ~input:(Display.File source_file) ~display_format (Mini_c.Formatter.program_format) @@
-      let%bind typed,_    = Compile.Utils.type_file source_file syntax Env in
+      let%bind typed,_,_  = Compile.Utils.type_file source_file syntax Env in
       let%bind mini_c     = Compile.Of_typed.compile typed in
       match optimize with
         | None -> ok @@ Mini_c.Formatter.Raw mini_c
@@ -290,10 +290,9 @@ let measure_contract =
 let compile_parameter =
   let f source_file entry_point expression syntax amount balance sender source now display_format michelson_format output_file =
     return_result ~input:(Display.File source_file) ~output_file ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
-      let%bind typed_prg,state = Compile.Utils.type_file source_file syntax (Contract entry_point) in
+      let%bind typed_prg,env,state = Compile.Utils.type_file source_file syntax (Contract entry_point) in
       let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
       let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
-      let      env             = Ast_typed.program_environment Environment.default typed_prg in
       let%bind (_contract: Tezos_utils.Michelson.michelson) =
         (* fails if the given entry point is not a valid contract *)
         Compile.Of_michelson.build_contract michelson_prg in
@@ -316,9 +315,8 @@ let interpret =
     return_result ~input:(match init_file with | Some s -> Display.File s | None -> Display.Code expression) ~display_format (Decompile.Formatter.expression_format) @@
       let%bind (decl_list,state,env) = match init_file with
         | Some init_file ->
-          let%bind typed_prg,state = Compile.Utils.type_file init_file syntax Env in
+          let%bind typed_prg,env,state = Compile.Utils.type_file init_file syntax Env in
           let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
-          let      env             = Ast_typed.program_environment Environment.default typed_prg in
           ok (mini_c_prg,state,env)
         | None -> ok ([],Typer.Solver.initial_state,Environment.default) in
 
@@ -338,7 +336,7 @@ let interpret =
 let temp_ligo_interpreter =
   let f source_file syntax display_format =
     return_result ~input:(Display.File source_file) ~display_format (Ligo_interpreter.Formatter.program_format) @@
-      let%bind typed,_    = Compile.Utils.type_file source_file syntax Env in
+      let%bind typed,_,_  = Compile.Utils.type_file source_file syntax Env in
       Compile.Of_typed.some_interpret typed
   in
   let term =
@@ -350,10 +348,9 @@ let temp_ligo_interpreter =
 let compile_storage =
   let f source_file entry_point expression syntax amount balance sender source now display_format michelson_format output_file =
     return_result ~input:(Display.File source_file) ~output_file ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
-      let%bind typed_prg,state = Compile.Utils.type_file source_file syntax (Contract entry_point) in
-      let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
-      let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
-      let      env             = Ast_typed.program_environment Environment.default typed_prg in
+      let%bind typed_prg,env,state = Compile.Utils.type_file source_file syntax (Contract entry_point) in
+      let%bind mini_c_prg          = Compile.Of_typed.compile typed_prg in
+      let%bind michelson_prg       = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
       let%bind (_contract: Tezos_utils.Michelson.michelson) =
         (* fails if the given entry point is not a valid contract *)
         Compile.Of_michelson.build_contract michelson_prg in
@@ -373,8 +370,7 @@ let compile_storage =
 let dry_run =
   let f source_file entry_point storage input amount balance sender source now syntax display_format =
     return_result ~input:(Display.File source_file) ~display_format (Decompile.Formatter.expression_format) @@
-      let%bind typed_prg,state = Compile.Utils.type_file source_file syntax (Contract entry_point) in
-      let      env             = Ast_typed.program_environment Environment.default typed_prg in
+      let%bind typed_prg,env,state = Compile.Utils.type_file source_file syntax (Contract entry_point) in
       let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
       let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
       let%bind (_contract: Tezos_utils.Michelson.michelson) =
@@ -397,8 +393,7 @@ let dry_run =
 let run_function =
   let f source_file entry_point parameter amount balance sender source now syntax display_format =
     return_result ~input:(Display.File source_file) ~display_format (Decompile.Formatter.expression_format) @@
-      let%bind typed_prg,state = Compile.Utils.type_file source_file syntax Env in
-      let      env             = Ast_typed.program_environment Environment.default typed_prg in
+      let%bind typed_prg,env,state = Compile.Utils.type_file source_file syntax Env in
       let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
 
 
@@ -424,12 +419,12 @@ let run_function =
 let evaluate_value =
   let f source_file entry_point amount balance sender source now syntax display_format =
     return_result ~input:(Display.File source_file) ~display_format Decompile.Formatter.expression_format @@
-      let%bind typed_prg,_ = Compile.Utils.type_file source_file syntax Env in
-      let%bind mini_c      = Compile.Of_typed.compile typed_prg in
-      let%bind (exp,_)     = trace_option Main_errors.entrypoint_not_found @@ Mini_c.get_entry mini_c entry_point in
-      let%bind compiled    = Compile.Of_mini_c.aggregate_and_compile_expression mini_c exp in
-      let%bind options     = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
-      let%bind runres      = Run.run_expression ~options compiled.expr compiled.expr_ty in
+      let%bind typed_prg,_,_ = Compile.Utils.type_file source_file syntax Env in
+      let%bind mini_c        = Compile.Of_typed.compile typed_prg in
+      let%bind (exp,_)       = trace_option Main_errors.entrypoint_not_found @@ Mini_c.get_entry mini_c entry_point in
+      let%bind compiled      = Compile.Of_mini_c.aggregate_and_compile_expression mini_c exp in
+      let%bind options       = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
+      let%bind runres        = Run.run_expression ~options compiled.expr compiled.expr_ty in
       Decompile.Of_michelson.decompile_typed_program_entry_expression_result typed_prg entry_point runres
     in
   let term =

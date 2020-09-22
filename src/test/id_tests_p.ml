@@ -3,22 +3,19 @@ open Test_helpers
 open Ast_imperative
 
 
-let type_file f =
-  let%bind typed,state = Ligo.Compile.Utils.type_file f "pascaligo" (Contract "main") in
-  ok (typed,state)
 
 let get_program =
   let s = ref None in
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-        let%bind program = type_file "./contracts/id.ligo" in
+        let%bind program = Ligo.Compile.Utils.type_file "./contracts/id.ligo" "pascaligo" (Contract "main") in
         s := Some program ;
         ok program
       )
 
 let compile_main () =
-  let%bind typed_prg,_     = get_program () in
+  let%bind typed_prg,_,_   = get_program () in
   let%bind mini_c_prg      = Ligo.Compile.Of_typed.compile typed_prg in
   let%bind michelson_prg   = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
   let%bind (_contract: Tezos_utils.Michelson.michelson) =
@@ -33,7 +30,7 @@ let (first_owner , first_contract) =
   Protocol.Alpha_context.Contract.to_b58check kt , kt
 
 let buy_id () =
-  let%bind program, state = get_program () in
+  let%bind program, env, state = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -64,7 +61,7 @@ let buy_id () =
                                  ("name_price", e_mutez 1000000) ;
                                  ("skip_price", e_mutez 1000000) ; ]
   in
-  let%bind () = expect_eq ~options (program, state) "buy" 
+  let%bind () = expect_eq ~options (program, env, state) "buy" 
       (e_pair param storage) 
       (e_pair (e_list []) new_storage)
   in ok ()

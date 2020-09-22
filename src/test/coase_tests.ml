@@ -4,22 +4,19 @@ open Trace
 open Test_helpers
 open Main_errors
 
-let type_file f =
-  let%bind typed,state = Ligo.Compile.Utils.type_file f "pascaligo" (Contract "main") in
-  ok @@ (typed,state)
 
 let get_program =
   let s = ref None in
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-        let%bind (program , state) = type_file "./contracts/coase.ligo" in
-        s := Some (program , state) ;
-        ok (program , state)
+        let%bind program  = Ligo.Compile.Utils.type_file "./contracts/coase.ligo" "pascaligo" (Contract "main") in
+        s := Some program;
+        ok program
       )
 
 let compile_main () = 
-  let%bind (typed_prg, state) = get_program () in
+  let%bind typed_prg, _env, state = get_program () in
   let () = Typer.Solver.discard_state state in
   let%bind mini_c_prg         = Ligo.Compile.Of_typed.compile typed_prg in
   let%bind michelson_prg      = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
