@@ -170,7 +170,7 @@ let t_pair     ?loc x y : type_expression = Expression.make_t ?loc @@ T_pair ( x
 let t_union    ?loc x y : type_expression = Expression.make_t ?loc @@ T_or ( x , y )
 
 let e_int  ?loc expr    : expression = Expression.make_tpl ?loc (expr, t_int ())
-let e_unit ?loc ()      : expression = Expression.make_tpl ?loc (E_literal D_unit, t_unit ())
+let e_unit ?loc ()      : expression = Expression.make_tpl ?loc (E_constant { cons_name = C_UNIT ; arguments = [] }, t_unit ())
 let e_var_int ?loc name : expression = e_int ?loc (E_variable name)
 let e_let_in ?loc v tv inline expr body : expression = Expression.(make_tpl ?loc(
     E_let_in ((v , tv) , inline, expr , body) ,

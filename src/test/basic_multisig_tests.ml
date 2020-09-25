@@ -69,9 +69,8 @@ let op_list =
   ok @@ (e_typed_list [e_literal (Literal_operation opbytes)] (t_operation ()))
 let empty_payload = e_unit ()
 
-let chain_id_zero = e_chain_id @@ Tezos_crypto.Base58.simple_encode
-  Tezos_base__TzPervasives.Chain_id.b58check_encoding
-  Tezos_base__TzPervasives.Chain_id.zero
+let chain_id_zero =
+  e_bytes_raw (Tezos_crypto.Chain_id.to_bytes Tezos_base__TzPervasives.Chain_id.zero)
 
 (* sign the message 'msg' with 'keys', if 'is_valid'=false the providid signature will be incorrect *)
 let params counter payload keys is_validl f s = 

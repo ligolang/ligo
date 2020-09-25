@@ -86,6 +86,8 @@ let constant' = function
   | C_PAIR               -> `List [`String "C_PAIR"; `Null ]
   | C_CAR                -> `List [`String "C_CAR"; `Null ]
   | C_CDR                -> `List [`String "C_CDR"; `Null ]
+  | C_TRUE               -> `List [`String "C_TRUE"; `Null ]
+  | C_FALSE              -> `List [`String "C_FALSE"; `Null ]
   | C_LEFT               -> `List [`String "C_LEFT"; `Null ]
   | C_RIGHT              -> `List [`String "C_RIGHT"; `Null ]
   (* Set *)

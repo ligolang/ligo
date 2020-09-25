@@ -45,12 +45,12 @@ let init_storage threshold counter pkeys =
 
 let empty_op_list = 
   (e_typed_list [] (t_operation ()))
+
 let empty_message = e_lambda (Location.wrap @@ Var.of_name "arguments",t_unit ()) 
   @@ e_annotation empty_op_list (t_list (t_operation ()))
 
-let chain_id_zero = e_chain_id @@ Tezos_crypto.Base58.simple_encode
-  Tezos_base__TzPervasives.Chain_id.b58check_encoding
-  Tezos_base__TzPervasives.Chain_id.zero
+let chain_id_zero =
+  e_bytes_raw (Tezos_crypto.Chain_id.to_bytes Tezos_base__TzPervasives.Chain_id.zero)
 
 (* sign the message 'msg' with 'keys', if 'is_valid'=false the providid signature will be incorrect *)
 let params counter msg keys is_validl f s = 

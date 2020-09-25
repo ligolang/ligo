@@ -772,6 +772,8 @@ module Stacking = struct
     | C_PAIR              -> Some ( simple_binary @@ prim "PAIR")
     | C_CAR               -> Some ( simple_unary @@ prim "CAR")
     | C_CDR               -> Some ( simple_unary @@ prim "CDR")
+    | C_TRUE              -> Some ( simple_constant @@ i_push (prim "bool") (prim "True"))
+    | C_FALSE             -> Some ( simple_constant @@ i_push (prim "bool") (prim "False"))
     | C_EQ                -> Some ( simple_binary @@ seq [prim "COMPARE" ; prim "EQ"])
     | C_NEQ               -> Some ( simple_binary @@ seq [prim "COMPARE" ; prim "NEQ"])
     | C_LT                -> Some ( simple_binary @@ seq [prim "COMPARE" ; prim "LT"])

@@ -96,7 +96,7 @@ and expression_content ppf (e:expression_content) = match e with
   | E_application(a, b) -> fprintf ppf "@[(%a)@(%a)@]" expression a expression b
 
   | E_constant c -> fprintf ppf "@[%a@[<hv 1>(%a)@]@]" constant c.cons_name (list_sep_d expression) c.arguments
-  | E_literal v -> fprintf ppf "@[L(%a)@]" value v
+  | E_literal v -> fprintf ppf "@[L(%a)@]" Stage_common.PP.literal v
   | E_if_bool (c, a, b) ->
     fprintf ppf
       "@[match %a with@ @[<hv>| True ->@;<1 2>%a@ | False ->@;<1 2>%a@]@]"
@@ -203,6 +203,8 @@ and constant ppf : constant' -> unit = function
   | C_CDR                   -> fprintf ppf "CDR"
   | C_LEFT                  -> fprintf ppf "LEFT"
   | C_RIGHT                 -> fprintf ppf "RIGHT"
+  | C_TRUE                  -> fprintf ppf "TRUE"
+  | C_FALSE                 -> fprintf ppf "FALSE"
   | C_LSL                   -> fprintf ppf "LSL"
   | C_LSR                   -> fprintf ppf "LSR"
   (* Set *)
