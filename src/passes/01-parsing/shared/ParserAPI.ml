@@ -99,28 +99,10 @@ module Make (IO: IO)
 
     exception Point of error
 
-    let format_error ?(offsets=true) mode (msg, valid_opt, invalid) =
+    let format_error ?(offsets=true) _mode (msg, _valid_opt, invalid) =
+      ignore(offsets);
       let invalid_region = Lexer.Token.to_region invalid in
-      let header =
-        "Parse error " ^ invalid_region#to_string ~offsets mode in
-      let trailer =
-        match valid_opt with
-          None ->
-            if Lexer.Token.is_eof invalid then ""
-            else let invalid_lexeme = Lexer.Token.to_lexeme invalid in
-                 Printf.sprintf ", at \"%s\"" invalid_lexeme
-        | Some valid ->
-            let valid_lexeme = Lexer.Token.to_lexeme valid in
-            if Lexer.Token.is_eof invalid then
-              Printf.sprintf ", after \"%s\"" valid_lexeme
-            else
-              let invalid_lexeme = Lexer.Token.to_lexeme invalid in
-              Printf.sprintf " at \"%s\", after \"%s\""
-                             invalid_lexeme valid_lexeme in
-      let header = header ^ trailer in
-      let msg =
-        header ^ (if msg = "" then ".\n" else ":\n" ^ msg)
-      in Region.{value=msg; region=invalid_region}
+      Region.{value=msg; region=invalid_region}
 
     let failure get_win checkpoint =
       let message = ParErr.message (state checkpoint) in

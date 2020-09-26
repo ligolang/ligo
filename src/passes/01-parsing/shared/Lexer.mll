@@ -165,10 +165,10 @@ module Make (Token : TOKEN) : (S with module Token = Token) =
 
     exception Error of error Region.reg
 
-    let format_error ?(offsets=true) mode Region.{region; value} ~file =
-      let msg = error_to_string value
-      and reg = region#to_string ~file ~offsets mode in
-      let value = sprintf "Lexical error %s:\n%s\n" reg msg
+    let format_error ?(offsets=true) _mode Region.{region; value} ~file =
+      ignore (offsets);
+      ignore(file);
+      let value = error_to_string value
       in Region.{value; region}
 
     let fail region value = raise (Error Region.{region; value})
@@ -431,7 +431,7 @@ and scan state = parse
     let flags, state = scan_flags state [] lexbuf in
     let           () = ignore flags in
     let line         = int_of_string line
-    and file         = Filename.basename file in
+    and file         = file in
     let pos          = state#pos#set ~file ~line ~offset:0 in
     let state        = state#set_pos pos in
     scan state lexbuf }
@@ -524,7 +524,7 @@ and scan_verbatim thread state = parse
              let flags, state = scan_flags state [] lexbuf in
              let           () = ignore flags in
              let line         = int_of_string line
-             and file         = Filename.basename file in
+             and file         = file in
              let pos          = state#pos#set ~file ~line ~offset:0 in
              let state        = state#set_pos pos in
              scan_verbatim thread state lexbuf }

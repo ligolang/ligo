@@ -12,8 +12,7 @@ type error = Invalid_character of char
 
 val error_to_string : error -> string
 
-val format :
-  ?offsets:bool -> error Region.reg -> file:bool -> string Region.reg
+val format : error Region.reg -> string Region.reg
 
 (* Lexing boolean expressions (may raise [Error]) *)
 

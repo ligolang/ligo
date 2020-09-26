@@ -24,46 +24,42 @@ let bad_set_param_type c e = `Self_ast_imperative_bad_set_param_type (c,e)
 let bad_conversion_bytes e = `Self_ast_imperative_bad_convertion_bytes e
 
 let error_ppformat : display_format:string display_format ->
-  Format.formatter -> self_ast_imperative_error -> unit =
-  fun ~display_format f a ->
+  self_ast_imperative_error -> Location.t * string =
+  fun ~display_format a ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
     | `Self_ast_imperative_long_constructor (c,e) ->
-      Format.fprintf f
-        "@[<hv>%a@ Ill-formed data constructor \"%s\".@.Data constructors have a maximum length of 32 characters, which is a limitation imposed by annotations in Tezos. @]"
-        Location.pp e.location
-        c
+      (e.location, Format.asprintf
+        "@[<hv>Ill-formed data constructor \"%s\".@.Data constructors have a maximum length of 32 characters, which is a limitation imposed by annotations in Tezos. @]"
+        c)
     | `Self_ast_imperative_bad_timestamp (t,e) ->
-      Format.fprintf f
-        "@[<hv>%a@ Ill-formed timestamp \"%s\".@.At this point, a string with a RFC3339 notation or the number of seconds since Epoch is expected. @]"
-        Location.pp e.location
-        t
+    (e.location, Format.asprintf
+        "@[<hv>Ill-formed timestamp \"%s\".@.At this point, a string with a RFC3339 notation or the number of seconds since Epoch is expected. @]"
+        t)
     | `Self_ast_imperative_bad_format_literal e ->
-      Format.fprintf f
-        "@[<hv>%a@ Ill-formed literal \"%a\".@.In the case of an address, a string is expected prefixed by either tz1, tz2, tz3 or KT1 and followed by a Base58 encoded hash and terminated by a 4-byte checksum.@.In the case of a key_hash, signature, or key a Base58 encoded hash is expected. @]"
-        Location.pp e.location
-        Ast_imperative.PP.expression e
+      (e.location, Format.asprintf
+        "@[<hv>Ill-formed literal \"%a\".@.In the case of an address, a string is expected prefixed by either tz1, tz2, tz3 or KT1 and followed by a Base58 encoded hash and terminated by a 4-byte checksum.@.In the case of a key_hash, signature, or key a Base58 encoded hash is expected. @]" 
+       Ast_imperative.PP.expression e)
     | `Self_ast_imperative_bad_empty_arity (c, e) ->
-      Format.fprintf f
-        "@[<hv>%a@ Ill-formed \"%a\" expression.@.No functions arguments are expected. @]"
-        Location.pp e.location PP.constant c
+      (e.location, Format.asprintf
+        "@[<hv>Ill-formed \"%a\" expression.@.No functions arguments are expected. @]"
+        PP.constant c)
     | `Self_ast_imperative_bad_single_arity (c, e) ->
-      Format.fprintf f
-        "@[<hv>%a@ Ill-formed \"%a\" expression@.One function argument is expected. @]"
-        Location.pp e.location PP.constant c
+      (e.location, Format.asprintf
+        "@[<hv>Ill-formed \"%a\" expression@.One function argument is expected. @]"
+        PP.constant c)
     | `Self_ast_imperative_bad_map_param_type (c,e) ->
-      Format.fprintf f
-        "@[<hv>%a@ Ill-formed \"%a\" expression.@.A list of pair parameters is expected.@]"
-        Location.pp e.location PP.constant c
+      (e.location, Format.asprintf
+        "@[<hv>Ill-formed \"%a\" expression.@.A list of pair parameters is expected.@]"
+        PP.constant c)
     | `Self_ast_imperative_bad_set_param_type (c,e) ->
-      Format.fprintf f
-        "@[<hv>%a@ Ill-formed \"%a\" expression.@.A list of pair parameters is expected.@]"
-        Location.pp e.location PP.constant c
+      (e.location, Format.asprintf
+        "@[<hv>Ill-formed \"%a\" expression.@.A list of pair parameters is expected.@]"
+        PP.constant c)
     | `Self_ast_imperative_bad_convertion_bytes e ->
-      Format.fprintf f
-        "@[<hv>%a@ Ill-formed bytes literal.@.Example of a valid bytes literal: \"ff7a7aff\". @]"
-        Location.pp e.location
+      (e.location, Format.asprintf
+        "@[<hv>Ill-formed bytes literal.@.Example of a valid bytes literal: \"ff7a7aff\". @]")
   )
 
 let error_jsonformat : self_ast_imperative_error -> json = fun a ->

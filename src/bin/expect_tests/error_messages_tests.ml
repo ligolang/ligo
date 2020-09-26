@@ -3,36 +3,21 @@ open Cli_expect
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/gitlab_111.religo" ; "main" ] ;
   [%expect {|
-    ligo: error
-          Parse error in file "gitlab_111.religo", line 2, characters 0-3 at "let", after "=":
-          This is an incorrect let binding.
-          -
-          Examples of correct let bindings:
-          let a: int = 4;
-          let (a: int, b: int) = (1, 2);
-          let func = (a: int, b: int) => a + b;
+    [1mFile "../../test/contracts/negative/gitlab_111.religo", line 2, characters 0-3:[0m
+      1 | let a =
+      2 | [1m[31mlet[0m b = 2;
 
-
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |} ] ;
+    [1m[31mError[0m: This is an incorrect let binding.
+    -
+    Examples of correct let bindings:
+    let a: int = 4;
+    let (a: int, b: int) = (1, 2);
+    let func = (a: int, b: int) => a + b; |} ] ;
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/missing_rpar.religo" ; "main" ] ;
   [%expect {|
-    ligo: error
-          Parse error in file "missing_rpar.religo", line 5, characters 0-3 at "let", after "m":
-          Missing `)`.
-
-
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |} ] ;
+    [1mFile "../../test/contracts/negative/missing_rpar.religo", line 5, characters 0-3:[0m
+      4 |
+      5 | [1m[31mlet[0m z = 4;
+    [1m[31mError[0m: Missing `)`. |} ] ;
 

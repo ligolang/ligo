@@ -3,201 +3,125 @@ open Cli_expect
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_function_annotation_1.mligo"; "main"];
   [%expect {|
-    ligo: error
-          in file "error_function_annotation_1.mligo", line 1, characters 26-27
-          Invalid type(s).
-          Expected: "unit", but got: "int".
+    [1mFile "../../test/contracts/negative/error_function_annotation_1.mligo", line 1, characters 26-27:[0m
+      1 | let main (a:int) : unit = [1m[31ma[0m
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}];
+    [1m[31mError[0m: Invalid type(s).
+    Expected: "unit", but got: "int". |}];
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_function_annotation_2.mligo"; "f"];
   [%expect {|
-    ligo: error
-          in file "error_function_annotation_2.mligo", line 1, characters 14-43
-          Invalid type(s).
-          Expected: "int", but got: "( int * int ) -> int".
+    [1mFile "../../test/contracts/negative/error_function_annotation_2.mligo", line 1, characters 14-43:[0m
+      1 | let f : int = [1m[31mfun (x, y : int*int) -> x + y[0m
+      2 | let g (x, y : int * int) : int = f (x, y)
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}];
+    [1m[31mError[0m: Invalid type(s).
+    Expected: "int", but got: "( int * int ) -> int". |}];
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_function_annotation_3.mligo"; "f"];
   [%expect {|
-    ligo: error
-
-          Invalid type(s).
-          Expected: "( list (operation) * sum[Add -> int , Sub -> int] )", but got: "
-          sum[Add -> int , Sub -> int]".
-
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}];
+    Invalid type(s).
+    Expected: "( list (operation) * sum[Add -> int , Sub -> int] )", but got: "
+    sum[Add -> int , Sub -> int]". |}];
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_no_tail_recursive_function.mligo"; "f"];
   [%expect {|
-    ligo: error
-          in file "error_no_tail_recursive_function.mligo", line 2, characters 14-21
-          Recursive call not in tail position.
-          The value of a recursive call must be immediately returned by the defined function.
+    [1mFile "../../test/contracts/negative/error_no_tail_recursive_function.mligo", line 2, characters 14-21:[0m
+      1 | let rec unvalid (n:int):int =
+      2 |     let res = [1m[31munvalid[0m (n) in
+      3 |     res + 1
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}];
+    [1m[31mError[0m: Recursive call not in tail position.
+    The value of a recursive call must be immediately returned by the defined function. |}];
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_type.ligo" ; "main" ] ;
   [%expect {|
-    ligo: error
-          in file "error_type.ligo", line 3, characters 18-28
-          Invalid arguments.
-          Expected an argument of type (nat, nat) or (int, int) or (mutez, mutez) or (nat, int) or (int, nat) or (timestamp, int) or (int, timestamp), but got an argument of type int, string.
+    [1mFile "../../test/contracts/negative/error_type.ligo", line 3, characters 18-28:[0m
+      2 |
+      3 | const foo : nat = [1m[31m42 + "bar"[0m
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |} ] ;
+    [1m[31mError[0m: Invalid arguments.
+    Expected an argument of type (nat, nat) or (int, int) or (mutez, mutez) or (nat, int) or (int, nat) or (timestamp, int) or (int, timestamp), but got an argument of type int, string. |} ] ;
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_1.mligo" ; "main" ] ;
   [%expect {|
-    ligo: error
-          in file "error_typer_1.mligo", line 3, characters 19-27
-          Invalid type(s).
-          Expected: "string", but got: "int".
+    [1mFile "../../test/contracts/negative/error_typer_1.mligo", line 3, characters 19-27:[0m
+      2 |
+      3 | let foo : string = [1m[31m42 + 127[0m
+      4 |
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |} ] ;
+    [1m[31mError[0m: Invalid type(s).
+    Expected: "string", but got: "int". |} ] ;
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_2.mligo" ; "main" ] ;
   [%expect {|
-    ligo: error
-          in file "error_typer_2.mligo", line 3, characters 24-39
-          Invalid type(s).
-          Expected: "list (string)", but got: "option (int)".
+    [1mFile "../../test/contracts/negative/error_typer_2.mligo", line 3, characters 24-39:[0m
+      2 |
+      3 | let foo : string list = [1m[31mSome (42 + 127)[0m
+      4 |
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |} ] ;
+    [1m[31mError[0m: Invalid type(s).
+    Expected: "list (string)", but got: "option (int)". |} ] ;
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_3.mligo" ; "main" ] ;
   [%expect {|
-    ligo: error
-          in file "error_typer_3.mligo", line 3, characters 36-44
-          Invalid type(s).
-          Expected: "( int * string * sum[false -> unit , true -> unit] )", but got: "
-          ( int * string )".
+    [1mFile "../../test/contracts/negative/error_typer_3.mligo", line 3, characters 36-44:[0m
+      2 |
+      3 | let foo : (int * string * bool) = (([1m[31m1, "foo"[0m) : toto)
+      4 |
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |} ] ;
+    [1m[31mError[0m: Invalid type(s).
+    Expected: "( int * string * sum[false -> unit , true -> unit] )", but got: "
+    ( int * string )". |} ] ;
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_4.mligo" ; "main" ] ;
   [%expect {|
-    ligo: error
-          in file "error_typer_4.mligo", line 4, characters 18-48
-          Invalid type(s).
-          Expected: "record[a -> int , c -> sum[false -> unit , true -> unit] , d -> string]", but got: "
-          record[a -> int , b -> string , c -> sum[false -> unit , true -> unit]]".
+    [1mFile "../../test/contracts/negative/error_typer_4.mligo", line 4, characters 18-48:[0m
+      3 |
+      4 | let foo : tata = ([1m[31m{a = 1 ; b = "foo" ; c = true}[0m : toto)
+      5 |
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |} ] ;
+    [1m[31mError[0m: Invalid type(s).
+    Expected: "record[a -> int , c -> sum[false -> unit , true -> unit] , d -> string]", but got: "
+    record[a -> int , b -> string , c -> sum[false -> unit , true -> unit]]". |} ] ;
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_5.mligo" ; "main" ] ;
   [%expect {|
-    ligo: error
-          in file "error_typer_5.mligo", line 1, characters 10-17
-          Type "boolean" not found.
+    [1mFile "../../test/contracts/negative/error_typer_5.mligo", line 1, characters 10-17:[0m
+      1 | let foo : [1m[31mboolean[0m = 3
+      2 |
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |} ] ;
+    [1m[31mError[0m: Type "boolean" not found. |} ] ;
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_6.mligo" ; "main" ] ;
   [%expect {|
-    ligo: error
-          in file "error_typer_6.mligo", line 1, characters 31-45
-          Invalid type(s).
-          Expected: "Map (int , string)", but got: "Map (int ,
-          sum[false -> unit , true -> unit])".
+    [1mFile "../../test/contracts/negative/error_typer_6.mligo", line 1, characters 31-45:[0m
+      1 | let foo : (int, string) map = ([1m[31mMap.literal [][0m : (int, bool) map)
+      2 | let main (p:int) (storage : int) =
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |} ] ;
+    [1m[31mError[0m: Invalid type(s).
+    Expected: "Map (int , string)", but got: "Map (int ,
+    sum[false -> unit , true -> unit])". |} ] ;
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_7.mligo" ; "main" ] ;
   [%expect {|
-    ligo: error
-          in file "error_typer_7.mligo", line 4, characters 18-48
-          Invalid type(s).
-          Expected: "record[a -> int , b -> string]", but got: "record[a -> int , b -> string , c -> sum[false -> unit , true -> unit]]".
+    [1mFile "../../test/contracts/negative/error_typer_7.mligo", line 4, characters 18-48:[0m
+      3 |
+      4 | let foo : tata = ([1m[31m{a = 1 ; b = "foo" ; c = true}[0m : toto)
+      5 |
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |} ] ;
+    [1m[31mError[0m: Invalid type(s).
+    Expected: "record[a -> int , b -> string]", but got: "record[a -> int , b -> string , c -> sum[false -> unit , true -> unit]]". |} ] ;
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/id.mligo" ; "main" ] ;
   [%expect {|
-    ligo: error
-          in file "id.mligo", line 45, characters 4-51
-          Incorrect argument.
-          Expected an option, but got an argument of type "record[controller -> address , owner -> address , profile -> bytes]".
+    [1mFile "../../test/contracts/negative/id.mligo", line 45, characters 4-51:[0m
+     44 |   let updated_identities: (id, id_details) big_map =
+     45 |     [1m[31mBig_map.update new_id new_id_details identities[0m
+     46 |   in
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}]
+    [1m[31mError[0m: Incorrect argument.
+    Expected an option, but got an argument of type "record[controller -> address , owner -> address , profile -> bytes]". |}]
 
 (* 
   This test is here to ensure compatibility with comparable pairs introduced in carthage
@@ -210,64 +134,37 @@ let%expect_test _ =
 
   run_ligo_bad [ "interpret" ; "Set.literal [ (1,2,3) ; (2,3,4) ]" ; "--syntax=cameligo" ] ;
   [%expect {|
-    ligo: error
-          Error(s) occurred while parsing the Michelson input:
-          At (unshown) location 1, comparable type expected.Type
-                                                              pair (pair int int) int
-                                                            is not comparable.
-
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}]
+    Error(s) occurred while parsing the Michelson input:
+    At (unshown) location 1, comparable type expected.Type
+                                                        pair (pair int int) int
+                                                      is not comparable. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/failwith_wrong_type.ligo" ; "main" ] ;
   [%expect {|
-    ligo: error
-          in file "failwith_wrong_type.ligo", line 2, characters 19-46
-          Invalid arguments.
-          Expected an argument of type (string) or (nat) or (int), but got an argument of type list (int).
+    [1mFile "../../test/contracts/negative/failwith_wrong_type.ligo", line 2, characters 19-46:[0m
+      1 |
+      2 | const bad : unit = [1m[31mfailwith((nil : list(int)))[0m
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}]
+    [1m[31mError[0m: Invalid arguments.
+    Expected an argument of type (string) or (nat) or (int), but got an argument of type list (int). |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/compare_sum_types.ligo" ; "main" ] ;
   [%expect {|
-    ligo: error
-          in file "compare_sum_types.ligo", line 4, characters 29-36
-          Invalid arguments.
-          These types cannot be compared: "sum[Bar -> unit , Foo -> unit]" and "
-          sum[Bar -> unit , Foo -> unit]".
+    [1mFile "../../test/contracts/negative/compare_sum_types.ligo", line 4, characters 29-36:[0m
+      3 | function main (const p : foo; const s : bool) : list(operation) * bool is
+      4 |   ((nil : list (operation)), [1m[31mp = Foo[0m)
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}]
+    [1m[31mError[0m: Invalid arguments.
+    These types cannot be compared: "sum[Bar -> unit , Foo -> unit]" and "
+    sum[Bar -> unit , Foo -> unit]". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/invalid_field_record_update.mligo" ; "main" ] ;
   [%expect {|
-    ligo: error
-          in file "invalid_field_record_update.mligo", line 4, characters 50-54
-          Invalid record field "nofield" in record "{ storage with { nofield = 2048 } }".
+    [1mFile "../../test/contracts/negative/invalid_field_record_update.mligo", line 4, characters 50-54:[0m
+      3 | let main (p:int) (storage : abc) =
+      4 |   (([] : operation list) , { storage with nofield=[1m[31m2048[0m} )
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}]
+    [1m[31mError[0m: Invalid record field "nofield" in record "{ storage with { nofield = 2048 } }". |}]

@@ -38,70 +38,59 @@ let expected_pair_in loc = `Self_ast_typed_pair_in loc
 let expected_pair_out loc = `Self_ast_typed_pair_out loc
 
 let error_ppformat : display_format:string display_format ->
-  Format.formatter -> self_ast_typed_error -> unit =
-  fun ~display_format f a ->
+  self_ast_typed_error -> Location.t * string =
+  fun ~display_format a ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
     | `Self_ast_typed_rec_call (_name,loc) ->
-      Format.fprintf f
-        "@[<hv>%a@.Recursive call not in tail position. @.The value of a recursive call must be immediately returned by the defined function. @]"
-        Location.pp loc
+      (loc, Format.asprintf
+        "@[<hv>Recursive call not in tail position. @.The value of a recursive call must be immediately returned by the defined function. @]")
     | `Self_ast_typed_bad_self_type (expected,got,loc) ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid type annotation.@.\"%a\" was given, but \"%a\" was expected.@.Note that \"Tezos.self\" refers to this contract, so the parameters should be the same. @]"
-        Location.pp loc
+      (loc, Format.asprintf
+        "@[<hv>Invalid type annotation.@.\"%a\" was given, but \"%a\" was expected.@.Note that \"Tezos.self\" refers to this contract, so the parameters should be the same. @]"
         Ast_typed.PP.type_expression got 
-        Ast_typed.PP.type_expression expected
+        Ast_typed.PP.type_expression expected)
     | `Self_ast_typed_format_entrypoint_ann (ep,loc) ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid entrypoint \"%s\".
+      (loc, Format.asprintf
+        "@[<hv>Invalid entrypoint \"%s\".
 One of the following patterns is expected: 
   * \"%%bar\" is expected for entrypoint \"Bar\"
   * \"%%default\" when no entrypoint is used."
-        Location.pp loc
-        ep
+        ep)
     | `Self_ast_typed_entrypoint_ann_not_literal loc ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid entrypoint value.@.The entrypoint value must be a string literal. @]"
-        Location.pp loc
+      (loc, Format.asprintf
+        "@[<hv>Invalid entrypoint value.@.The entrypoint value must be a string literal. @]")
     | `Self_ast_typed_unmatched_entrypoint loc ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid entrypoint value.@.The entrypoint value does not match a constructor of the contract parameter. @]"
-        Location.pp loc
+      (loc, Format.asprintf
+        "@[<hv>Invalid entrypoint value.@.The entrypoint value does not match a constructor of the contract parameter. @]")
     | `Self_ast_typed_nested_big_map loc ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid big map nesting.@.A big map cannot be nested inside another big map. @]"
-        Location.pp loc
+      (loc, Format.asprintf
+        "@[<hv>Invalid big map nesting.@.A big map cannot be nested inside another big map. @]")
     | `Self_ast_typed_corner_case desc ->
-      Format.fprintf f
+      (Location.dummy, Format.asprintf
         "@[<hv>Internal error: %s @]"
-        desc
+        desc)
     | `Self_ast_typed_contract_io (entrypoint, e) ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid type for entrypoint \"%s\".@.An entrypoint must of type \"parameter * storage -> operations list * storage\". @]"
-        Location.pp e.location
-        entrypoint
+      (e.location, Format.asprintf
+        "@[<hv>Invalid type for entrypoint \"%s\".@.An entrypoint must of type \"parameter * storage -> operations list * storage\". @]"
+        entrypoint)
     | `Self_ast_typed_contract_list_ops (entrypoint, _got, e) ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid type for entrypoint \"%s\".@.An entrypoint must of type \"parameter * storage -> operations list * storage\". @]"
-        Location.pp e.location
-        entrypoint
+      (e.location, Format.asprintf
+        "@[<hv>Invalid type for entrypoint \"%s\".@.An entrypoint must of type \"parameter * storage -> operations list * storage\". @]"
+        entrypoint)
     | `Self_ast_typed_expected_same_entry (entrypoint,t1,t2,e) ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid type for entrypoint \"%s\".@.The storage type \"%a\" of the function parameter must be the same as the storage type \"%a\" of the return value.@]"
-        Location.pp e.location
+      (e.location, Format.asprintf
+        "@[<hv>Invalid type for entrypoint \"%s\".@.The storage type \"%a\" of the function parameter must be the same as the storage type \"%a\" of the return value.@]"
         entrypoint
         Ast_typed.PP.type_expression t1
-        Ast_typed.PP.type_expression t2
+        Ast_typed.PP.type_expression t2)
     | `Self_ast_typed_pair_in loc ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid entrypoint.@.Expected a tuple as argument.@]"
-        Location.pp loc
+      (loc, Format.asprintf
+        "@[<hv>Invalid entrypoint.@.Expected a tuple as argument.@]")
     | `Self_ast_typed_pair_out loc ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid entrypoint.@.Expected a tuple of operations and storage as return value.@]"
-        Location.pp loc
+      (loc, Format.asprintf
+        "@[<hv>Invalid entrypoint.@.Expected a tuple of operations and storage as return value.@]")
   )
 
 let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->

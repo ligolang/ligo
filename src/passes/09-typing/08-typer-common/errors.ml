@@ -144,29 +144,25 @@ let in_match_variant_tracer (ae:Ast_core.matching_expr) (err:typer_error) =
 let different_types a b = `Typer_different_types (a,b)
 
 let rec error_ppformat : display_format:string display_format ->
-  Format.formatter -> typer_error -> unit =
-  fun ~display_format f a ->
+  typer_error -> Location.t * string =
+  fun ~display_format a ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
     | `Typer_michelson_comb_no_record loc ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid usage of type \"michelson_pair\".@.The \"michelson_pair\" type expects a record type as argument. @]"
-        Location.pp loc
+      (loc, Format.asprintf
+        "@[<hv>Invalid usage of type \"michelson_pair\".@.The \"michelson_pair\" type expects a record type as argument. @]")
     | `Typer_michelson_comb_no_variant loc ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid usage of type \"michelson_or\".@.The \"michelson_or\" type expects a variant type as argument. @]"
-        Location.pp loc
+      (loc, Format.asprintf
+        "@[<hv>Invalid usage of type \"michelson_or\".@.The \"michelson_or\" type expects a variant type as argument. @]")
     | `Typer_unbound_type_variable (_env,tv,loc) ->
-      Format.fprintf f
-        "@[<hv>%a@.Type \"%a\" not found. @]"
-        Location.pp loc
-        Ast_typed.PP.type_variable tv
+      (loc, Format.asprintf
+        "@[<hv>Type \"%a\" not found. @]"
+        Ast_typed.PP.type_variable tv)
     | `Typer_unbound_variable (_env,v,loc) ->
-      Format.fprintf f
-        "@[<hv>%a@.Variable \"%a\" not found. @]"
-        Location.pp loc
-        Ast_typed.PP.expression_variable v
+      (loc, Format.asprintf
+        "@[<hv>Variable \"%a\" not found. @]"
+        Ast_typed.PP.expression_variable v)
     | `Typer_match_missing_case (m, v, loc) ->
       let missing = List.fold_left (fun all o -> 
         match List.find_opt (fun f -> f = o) v with 
@@ -176,10 +172,9 @@ let rec error_ppformat : display_format:string display_format ->
           o :: all
       ) [] m in
       let missing = String.concat ", " missing in
-      Format.fprintf f
-        "@[<hv>%a@.Pattern matching is not exhaustive.@.Cases that are missing: %s. @]"
-        Location.pp loc
-        missing
+      (loc, Format.asprintf
+        "@[<hv>Pattern matching is not exhaustive.@.Cases that are missing: %s. @]"
+        missing)
     | `Typer_match_extra_case (m, v,loc) ->
       let open Ast_core in
       let rec extra (processed: string list) (redundant: string list) (unknown: string list) = function
@@ -194,288 +189,235 @@ let rec error_ppformat : display_format:string display_format ->
       | [] -> (List.rev redundant, List.rev unknown)
       in
       let (redundant, unknown) = extra [] [] [] v in   
-      Format.fprintf f "@[<hv>%a@.Pattern matching over too many cases.@]"
-        Location.pp loc;
-      if List.length redundant > 0 then (
+      let result = Format.asprintf "@[<hv>Pattern matching over too many cases.@]" in
+      let result = if List.length redundant > 0 then (
         let redundant = String.concat ", " redundant in
-        Format.fprintf f
+        result ^ Format.asprintf
           "@[<hv>@.These case(s) are duplicate:@.%s@]"          
           redundant
-      );
-      if List.length unknown > 0 then (
+      ) else result in
+      let result = if List.length unknown > 0 then (
         let unknown = String.concat ", " unknown in
-        Format.fprintf f
+        result ^ Format.asprintf
           "@[<hv>@.These case(s) don't belong to the variant:@.%s@]"
           unknown
-      );
-      Format.fprintf f
-          "@[<hv>@.Please remove the extra cases. @]"
+      ) else result in
+      (loc, result ^ Format.asprintf
+          "@[<hv>@.Please remove the extra cases. @]")
     | `Typer_unbound_constructor (_env,c,loc) ->
-      Format.fprintf f
-        "@[<hv>%a@.Constructor \"%a\" not found. @]"
-        Location.pp loc
-        Ast_core.PP.label c
+      (loc, Format.asprintf
+        "@[<hv>Constructor \"%a\" not found. @]"
+        Ast_core.PP.label c)
     | `Typer_redundant_constructor (_env,c,loc) ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid variant.@.Constructor \"%a\" already exists as part of another variant. @]"
-        Location.pp loc
-        Ast_core.PP.label c    
+      (loc, Format.asprintf
+        "@[<hv>Invalid variant.@.Constructor \"%a\" already exists as part of another variant. @]"
+        Ast_core.PP.label c)
     | `Typer_type_constant_wrong_number_of_arguments (op,e,a,loc) ->
-      Format.fprintf f
-        "@[<hv>%a@ Wrong number of arguments for type constant: %a@ expected: %i@ got: %i@]"
-        Location.pp loc
+      (loc, Format.asprintf
+        "@[<hv>Wrong number of arguments for type constant: %a@ expected: %i@ got: %i@]"
         Ast_core.PP.type_constant op
-        e a
+        e a)
     | `Typer_michelson_or_no_annotation (c,loc) ->
-      Format.fprintf f
-        "@[<hv>%a@.Incorrect usage of type \"michelson_or\".@.The contructor \"%a\" must be annotated with a variant type. @]"
-        Location.pp loc
-        Ast_core.PP.label c
+      (loc, Format.asprintf
+        "@[<hv>Incorrect usage of type \"michelson_or\".@.The contructor \"%a\" must be annotated with a variant type. @]"
+        Ast_core.PP.label c)
     | `Typer_program_tracer (_program,err) ->
-      Format.fprintf f
-        "%a"
         (error_ppformat ~display_format) err
     | `Typer_constant_declaration_tracer (_,_,_,err) ->
-      error_ppformat ~display_format f err
+      error_ppformat ~display_format err
     | `Typer_match_error (expected,actual,loc) ->
-      Format.fprintf f
-        "@[<hv>%a@.Pattern matching over an expression of an incorrect type.@.Type \"%a\" was expected, but got type \"%a\". @]"
-        Location.pp loc
+      (loc, Format.asprintf
+        "@[<hv>Pattern matching over an expression of an incorrect type.@.Type \"%a\" was expected, but got type \"%a\". @]"
         Ast_core.PP.matching_type expected
-        Ast_typed.PP.type_expression actual
+        Ast_typed.PP.type_expression actual)
     | `Typer_needs_annotation (exp,case) ->
-      Format.fprintf f
-        "@[<hv>%a@.Missing type annotation.@.'%s' needs to be annotated with a type.@]"
-        Location.pp exp.location
-        case
+      (exp.location, Format.asprintf
+        "@[<hv>Missing type annotation.@.'%s' needs to be annotated with a type.@]"
+        case)
     | `Typer_fvs_in_create_contract_lambda (e,fvar) ->
-      Format.fprintf f
-        "@[<hv>%a@.Free variable '%a' is not allowed in CREATE_CONTRACT lambda@]"
-        Location.pp e.location
-        Ast_typed.PP.expression_variable fvar
+      (e.location, Format.asprintf
+        "@[<hv>Free variable '%a' is not allowed in CREATE_CONTRACT lambda@]"
+        Ast_typed.PP.expression_variable fvar)
     | `Typer_create_contract_lambda (_cst,e) ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid usage of Tezos.create_contract.@.The first argument must be an inline function. @]"
-        Location.pp e.location
+      (e.location, Format.asprintf
+        "@[<hv>Invalid usage of Tezos.create_contract.@.The first argument must be an inline function. @]")
     | `Typer_should_be_a_function_type (actual,e) ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid type.@.Expected a function type, but got \"%a\". @]"
-        Location.pp e.location
-        Ast_typed.PP.type_expression actual
+      (e.location, Format.asprintf
+        "@[<hv>Invalid type.@.Expected a function type, but got \"%a\". @]"
+        Ast_typed.PP.type_expression actual)
     | `Typer_bad_record_access (field,ae,_t,loc) ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid record field \"%a\" in record \"%a\". @]"
-        Location.pp loc
+      (loc, Format.asprintf
+        "@[<hv>Invalid record field \"%a\" in record \"%a\". @]"
         Ast_core.PP.label field
-        Ast_core.PP.expression ae
+        Ast_core.PP.expression ae)
     | `Typer_corner_case desc ->
-      Format.fprintf f
+      (Location.dummy, Format.asprintf
         "@[<hv>A type system corner case occurred:@.%s@]"
-        desc
+        desc)
     | `Typer_bad_collect_loop (t,loc) ->
-      Format.fprintf f
-        "@[<hv>%a@.Bounded loop over a value with an incorrect type.@.Expected a value with type: \"list\", \"set\" or \"map\", but got a value of type \"%a\". @]"
-        Location.pp loc
-        Ast_typed.PP.type_expression t
+      (loc, Format.asprintf
+        "@[<hv>Bounded loop over a value with an incorrect type.@.Expected a value with type: \"list\", \"set\" or \"map\", but got a value of type \"%a\". @]"
+        Ast_typed.PP.type_expression t)
     | `Typer_too_small_record loc ->
-      Format.fprintf f
-        "@[<hv>%a@.Incorrect argument provided to Layout.convert_to_(left|right)_comb.@.The record must have at least two elements. @]"
-        Location.pp loc
-    | `Typer_expression_tracer (_,err) -> error_ppformat ~display_format f err
-    | `Typer_record_access_tracer (_,err) -> error_ppformat ~display_format f err
+      (loc, Format.asprintf
+        "@[<hv>Incorrect argument provided to Layout.convert_to_(left|right)_comb.@.The record must have at least two elements. @]")
+    | `Typer_expression_tracer (_,err) -> error_ppformat ~display_format err
+    | `Typer_record_access_tracer (_,err) -> error_ppformat ~display_format err
     | `Typer_not_annotated l ->
-      Format.fprintf f "@[<hv>%a@.Can't infer the type of this value, please add a type annotation.@]"
-      Location.pp l
+      (l, Format.asprintf "@[<hv>Can't infer the type of this value, please add a type annotation.@]")
     | `Typer_bad_substraction loc ->
-      Format.fprintf f "@[<hv>%a@.Invalid subtraction.
+      (loc, Format.asprintf "@[<hv>Invalid subtraction.
 The following forms of subtractions are possible:
   * timestamp - int = timestamp
   * timestamp - timestamp = int
   * int/nat - int/nat = int 
-  * mutez/tez - mutez/tez = mutez.@]"
-    Location.pp loc
+  * mutez/tez - mutez/tez = mutez.@]")
     | `Typer_wrong_size (loc,_t) ->
-      Format.fprintf f
-        "@[<hv>%a@.Incorrect value applied.@.A value with one of the following types is expected: map, list, string, byte or set. @]"
-      Location.pp loc
+      (loc, Format.asprintf
+        "@[<hv>Incorrect value applied.@.A value with one of the following types is expected: map, list, string, byte or set. @]")
     | `Typer_wrong_neg (loc,t) ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid value used for negation.@.Expected a value of type nat or int, but got %a. @]"
-      Location.pp loc
-      Ast_typed.PP.type_expression t
+      (loc, Format.asprintf
+        "@[<hv>Invalid value used for negation.@.Expected a value of type nat or int, but got %a. @]"
+      Ast_typed.PP.type_expression t)
     | `Typer_wrong_not (loc,t) ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid value used for not operation.@.Expected a value of type Boolean, nat or int, but got %a. @]"
-      Location.pp loc
-      Ast_typed.PP.type_expression t
+      (loc, Format.asprintf
+        "@[<hv>Invalid value used for not operation.@.Expected a value of type Boolean, nat or int, but got %a. @]"
+      Ast_typed.PP.type_expression t)
     | `Typer_converter t ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid usage of a Michelson converter.@.Converters can only be used on records or variants, but got %a. @]"
-      Location.pp t.location
-      Ast_typed.PP.type_expression t
+      (t.location, Format.asprintf
+        "@[<hv>Invalid usage of a Michelson converter.@.Converters can only be used on records or variants, but got %a. @]"
+      Ast_typed.PP.type_expression t)
     | `Typer_comparator_composed (loc,_a) ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid arguments.@.Only composed types of not more than two element are allowed to be compared. @]"
-      Location.pp loc
+      (loc, Format.asprintf
+        "@[<hv>Invalid arguments.@.Only composed types of not more than two element are allowed to be compared. @]")
     | `Typer_constant_decl_tracer (_name,_ae,_expected,err) ->
-      Format.fprintf f
-        "%a" (error_ppformat ~display_format) err
+      (error_ppformat ~display_format) err
     | `Typer_match_variant_tracer (_ae,err) ->
-      Format.fprintf f
-        "%a" (error_ppformat ~display_format) err
+      (error_ppformat ~display_format) err
     | `Typer_unrecognized_type_constant e ->
-      Format.fprintf f
-        "@[<hv>%a@.Unrecognized type constant %a. @]"
-        Location.pp e.location
-        Ast_core.PP.type_expression e
+      (e.location, Format.asprintf
+        "@[<hv>Unrecognized type constant %a. @]"
+        Ast_core.PP.type_expression e)
     | `Typer_expected_ascription t ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid argument.@.At this point a block of code is expected, but got \"%a\". @]"
-        Location.pp t.location
-        Ast_core.PP.expression t
+      (t.location, Format.asprintf
+        "@[<hv>Invalid argument.@.At this point a block of code is expected, but got \"%a\". @]"
+        Ast_core.PP.expression t)
     | `Typer_different_types (a, b) ->
-        Format.fprintf f
-          "@[<hv>%a@.This expression has type %a, but an expression was expected of type %a.@]"
-          Location.pp b.location
+        (b.location, Format.asprintf
+          "@[<hv>This expression has type %a, but an expression was expected of type %a.@]"
           Ast_typed.PP.type_expression b
-          Ast_typed.PP.type_expression a      
+          Ast_typed.PP.type_expression a)
     | `Typer_assert_equal (loc, expected,actual) ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid type(s).@.Expected: \"%a\", but got: \"%a\". @]"
-        Location.pp loc
+      (loc, Format.asprintf
+        "@[<hv>Invalid type(s).@.Expected: \"%a\", but got: \"%a\". @]"
         Ast_typed.PP.type_expression expected 
-        Ast_typed.PP.type_expression actual
+        Ast_typed.PP.type_expression actual)
     | `Typer_expected_record (loc,t) ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid argument.@.Expected a record, but got an argument of type \"%a\". @]"
-        Location.pp loc
-        Ast_typed.PP.type_expression t
+      (loc, Format.asprintf
+        "@[<hv>Invalid argument.@.Expected a record, but got an argument of type \"%a\". @]"
+        Ast_typed.PP.type_expression t)
     | `Typer_expected_variant (loc,t) ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid argument.@.Expected a variant, but got an argument of type \"%a\". @]"
-        Location.pp loc
-        Ast_typed.PP.type_expression t
+      (loc, Format.asprintf
+        "@[<hv>Invalid argument.@.Expected a variant, but got an argument of type \"%a\". @]"
+        Ast_typed.PP.type_expression t)
     | `Typer_wrong_param_number (loc,name,expected,actual) ->
-      Format.fprintf f
-        "@[<hv>%a@.Function \"%s\" called with wrong number of arguments.@.Expected %d arguments, got %d arguments. @]"
-        Location.pp loc
+      (loc, Format.asprintf
+        "@[<hv>Function \"%s\" called with wrong number of arguments.@.Expected %d arguments, got %d arguments. @]"
         name
-        expected (List.length actual)
+        expected (List.length actual))
     | `Typer_expected_function (loc,e) ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid argument.@.Expected a function, but got an argument of type \"%a\". @]"
-        Location.pp loc
-        Ast_typed.PP.type_expression e
+      (loc, Format.asprintf
+        "@[<hv>Invalid argument.@.Expected a function, but got an argument of type \"%a\". @]"
+        Ast_typed.PP.type_expression e)
     | `Typer_expected_pair (loc,e) ->
-      Format.fprintf f
-        "@[<hv>%a@.Incorrect argument.@.Expected a tuple, but got an argument of type \"%a\". @]"
-        Location.pp loc
-        Ast_typed.PP.type_expression e
+      (loc, Format.asprintf
+        "@[<hv>Incorrect argument.@.Expected a tuple, but got an argument of type \"%a\". @]"
+        Ast_typed.PP.type_expression e)
     | `Typer_expected_list (loc,e) ->
-      Format.fprintf f
-        "@[<hv>%a@.Incorrect argument.@.Expected a list, but got an argument of type \"%a\". @]"
-        Location.pp loc
-        Ast_typed.PP.type_expression e
+      (loc, Format.asprintf
+        "@[<hv>Incorrect argument.@.Expected a list, but got an argument of type \"%a\". @]"
+        Ast_typed.PP.type_expression e)
     | `Typer_expected_set (loc,e) ->
-      Format.fprintf f
-        "@[<hv>%a@.Incorrect argument.@.Expected a set, but got an argument of type \"%a\". @]"
-        Location.pp loc
-        Ast_typed.PP.type_expression e
+      (loc, Format.asprintf
+        "@[<hv>Incorrect argument.@.Expected a set, but got an argument of type \"%a\". @]"
+        Ast_typed.PP.type_expression e)
     | `Typer_expected_map (loc,e) ->
-      Format.fprintf f
-        "@[<hv>%a@.Incorrect argument.@.Expected a map, but got an argument of type \"%a\". @]"
-        Location.pp loc
-        Ast_typed.PP.type_expression e
+      (loc, Format.asprintf
+        "@[<hv>Incorrect argument.@.Expected a map, but got an argument of type \"%a\". @]"
+        Ast_typed.PP.type_expression e)
     | `Typer_expected_big_map (loc,e) ->
-      Format.fprintf f
-        "@[<hv>%a@.Incorrect argument.@.Expected a big_map, but got an argument of type \"%a\". @]"
-        Location.pp loc
-        Ast_typed.PP.type_expression e
+      (loc, Format.asprintf
+        "@[<hv>Incorrect argument.@.Expected a big_map, but got an argument of type \"%a\". @]"
+        Ast_typed.PP.type_expression e)
     | `Typer_expected_option (loc,e) ->
-      Format.fprintf f
-        "@[<hv>%a@.Incorrect argument.@.Expected an option, but got an argument of type \"%a\". @]"
-        Location.pp loc
-        Ast_typed.PP.type_expression e
+      (loc, Format.asprintf
+        "@[<hv>Incorrect argument.@.Expected an option, but got an argument of type \"%a\". @]"
+        Ast_typed.PP.type_expression e)
     | `Typer_expected_nat (loc,t) ->
-      Format.fprintf f
-        "@[<hv>%a@.Incorrect argument.@.Expected a nat, but got an argument of type \"%a\". @]"
-        Location.pp loc
-        Ast_typed.PP.type_expression t
+      (loc, Format.asprintf
+        "@[<hv>Incorrect argument.@.Expected a nat, but got an argument of type \"%a\". @]"
+        Ast_typed.PP.type_expression t)
     | `Typer_expected_bytes (loc,t) ->
-      Format.fprintf f
-        "@[<hv>%a@.Incorrect argument.@.Expected bytes, but got an argument of type \"%a\". @]"
-        Location.pp loc
-        Ast_typed.PP.type_expression t
+      (loc, Format.asprintf
+        "@[<hv>Incorrect argument.@.Expected bytes, but got an argument of type \"%a\". @]"
+        Ast_typed.PP.type_expression t)
     | `Typer_expected_key (loc,t) ->
-      Format.fprintf f
-        "@[<hv>%a@.Incorrect argument.@.Expected a key, but got an argument of type \"%a\". @]"
-        Location.pp loc
-        Ast_typed.PP.type_expression t
+      (loc, Format.asprintf
+        "@[<hv>Incorrect argument.@.Expected a key, but got an argument of type \"%a\". @]"
+        Ast_typed.PP.type_expression t)
     | `Typer_expected_signature (loc,t) ->
-      Format.fprintf f
-        "@[<hv>%a@.Incorrect argument.@.Expected a signature, but got an argument of type \"%a\". @]"
-        Location.pp loc
-        Ast_typed.PP.type_expression t
+      (loc, Format.asprintf
+        "@[<hv>Incorrect argument.@.Expected a signature, but got an argument of type \"%a\". @]"
+        Ast_typed.PP.type_expression t)
     | `Typer_expected_contract (loc,t) ->
-      Format.fprintf f
-        "@[<hv>%a@.Incorrect argument.@.Expected a contract, but got an argument of type \"%a\". @]"
-        Location.pp loc
-        Ast_typed.PP.type_expression t
+      (loc, Format.asprintf
+        "@[<hv>Incorrect argument.@.Expected a contract, but got an argument of type \"%a\". @]"
+        Ast_typed.PP.type_expression t)
     | `Typer_expected_string (loc,t) ->
-      Format.fprintf f
-        "@[<hv>%a@.Incorrect argument.@.Expected a string, but got an argument of type \"%a\". @]"
-        Location.pp loc
-        Ast_typed.PP.type_expression t
+      (loc, Format.asprintf
+        "@[<hv>Incorrect argument.@.Expected a string, but got an argument of type \"%a\". @]"
+        Ast_typed.PP.type_expression t)
     | `Typer_expected_key_hash (loc,t) ->
-      Format.fprintf f
-        "@[<hv>%a@.Incorrect argument.@.Expected a key hash, but got an argument of type \"%a\". @]"
-        Location.pp loc
-        Ast_typed.PP.type_expression t
+      (loc, Format.asprintf
+        "@[<hv>Incorrect argument.@.Expected a key hash, but got an argument of type \"%a\". @]"
+        Ast_typed.PP.type_expression t)
     | `Typer_expected_mutez (loc,t) ->
-      Format.fprintf f
-        "@[<hv>%a@.Incorrect argument.@.Expected a mutez, but got an argument of type \"%a\". @]"
-        Location.pp loc
-        Ast_typed.PP.type_expression t
+      (loc, Format.asprintf
+        "@[<hv>Incorrect argument.@.Expected a mutez, but got an argument of type \"%a\". @]"
+        Ast_typed.PP.type_expression t)
     | `Typer_expected_op_list (loc,t) ->
-      Format.fprintf f
-        "@[<hv>%a@.Incorrect argument.@.Expected a list of operations, but got an argument of type \"%a\". @]"
-        Location.pp loc
-        Ast_typed.PP.type_expression t
+      (loc, Format.asprintf
+        "@[<hv>Incorrect argument.@.Expected a list of operations, but got an argument of type \"%a\". @]"
+        Ast_typed.PP.type_expression t)
     | `Typer_expected_int (loc,t) ->
-      Format.fprintf f
-        "@[<hv>%a@.Incorrect argument.@.Expected an int, but got an argument of type \"%a\". @]"
-        Location.pp loc
-        Ast_typed.PP.type_expression t
+      (loc, Format.asprintf
+        "@[<hv>Incorrect argument.@.Expected an int, but got an argument of type \"%a\". @]"
+        Ast_typed.PP.type_expression t)
     | `Typer_expected_bool (loc,t) ->
-      Format.fprintf f
-        "@[<hv>%a@.Incorrect argument.@.Expected a boolean, but got an argument of type \"%a\". @]"
-        Location.pp loc
-        Ast_typed.PP.type_expression t
+      (loc, Format.asprintf
+        "@[<hv>Incorrect argument.@.Expected a boolean, but got an argument of type \"%a\". @]"
+        Ast_typed.PP.type_expression t)
     | `Typer_not_matching (loc,t1,t2) ->
-      Format.fprintf f
-        "@[<hv>%a@.These types are not matching:@ - %a@ - %a@]"
-        Location.pp loc
+      (loc, Format.asprintf
+        "@[<hv>These types are not matching:@ - %a@ - %a@]"
         Ast_typed.PP.type_expression t1
-        Ast_typed.PP.type_expression t2
+        Ast_typed.PP.type_expression t2)
     | `Typer_uncomparable_types (loc,a,b) ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid arguments.@.These types cannot be compared: \"%a\" and \"%a\". @]"
-      Location.pp loc
+      (loc, Format.asprintf
+        "@[<hv>Invalid arguments.@.These types cannot be compared: \"%a\" and \"%a\". @]"
       Ast_typed.PP.type_expression a
-      Ast_typed.PP.type_expression b
+      Ast_typed.PP.type_expression b)
     | `Typer_typeclass_error (loc,exps,acts) ->
       let open Simple_utils.PP_helpers in
       let printl printer ppf args =
         Format.fprintf ppf "(%a)" (list_sep printer (const ", ")) args in
-      Format.fprintf f
-        "@[<hv>%a@.Invalid arguments.@.Expected an argument of type %a, but got an argument of type %a. @]"
-        Location.pp loc
+      (loc, Format.asprintf
+        "@[<hv>Invalid arguments.@.Expected an argument of type %a, but got an argument of type %a. @]"
         (list_sep (printl Ast_typed.PP.type_expression) (const " or ")) exps
-        (list_sep Ast_typed.PP.type_expression (const ", ")) acts
+        (list_sep Ast_typed.PP.type_expression (const ", ")) acts)
     | `Typer_declaration_order_record loc ->
-      Format.fprintf f
-        "@[<hv>%a@.Incorrect argument provided to Layout.convert_to_(left|right)_comb.@.The given argument must be annotated with the type of the value. @]"
-        Location.pp loc
+      (loc, Format.asprintf
+        "@[<hv>Incorrect argument provided to Layout.convert_to_(left|right)_comb.@.The given argument must be annotated with the type of the value. @]")
   )
 
 let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->

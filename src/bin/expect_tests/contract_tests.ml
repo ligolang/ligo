@@ -29,39 +29,29 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-storage" ; contract "coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ] ;
   [%expect {|
-    ligo: error
-          Invalid command line argument.
-          The provided storage does not have the correct type for the contract.
-          in file "coase.ligo", line 124, characters 9-13
-          Invalid type(s).
-          Expected: "record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]", but got: "
-          sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]".
+    [1mFile "../../test/contracts/coase.ligo", line 124, characters 9-13:[0m
+    123 |
+    124 | function [1m[31mmain[0m (const action : parameter; const s : storage) : return is
+    125 |   case action of
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}] ;
+    [1m[31mError[0m: Invalid command line argument.
+    The provided storage does not have the correct type for the contract.
+    Invalid type(s).
+    Expected: "record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]", but got: "
+    sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]". |}] ;
 
   run_ligo_bad [ "compile-parameter" ; contract "coase.ligo" ; "main" ; "record cards = (map end : cards) ; card_patterns = (map end : card_patterns) ; next_id = 3n ; end" ] ;
   [%expect {|
-    ligo: error
-          Invalid command line argument.
-          The provided parameter does not have the correct type for the given entrypoint.
-          in file "coase.ligo", line 124, characters 9-13
-          Invalid type(s).
-          Expected: "sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]", but got: "
-          record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]".
+    [1mFile "../../test/contracts/coase.ligo", line 124, characters 9-13:[0m
+    123 |
+    124 | function [1m[31mmain[0m (const action : parameter; const s : storage) : return is
+    125 |   case action of
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}] ;
+    [1m[31mError[0m: Invalid command line argument.
+    The provided parameter does not have the correct type for the given entrypoint.
+    Invalid type(s).
+    Expected: "sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]", but got: "
+    record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]". |}] ;
 
   ()
 
@@ -1003,54 +993,33 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_type_operator.ligo" ; "main" ] ;
   [%expect {|
-    ligo: error
-          in file "bad_type_operator.ligo", line 4, characters 16-29
-          Wrong number of arguments for type constant: Map
-          expected: 2
-          got: 1
+    [1mFile "../../test/contracts/bad_type_operator.ligo", line 4, characters 16-29:[0m
+      3 | type binding is nat * nat
+      4 | type storage is [1m[31mmap (binding)[0m
+      5 |
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}]
+    [1m[31mError[0m: Wrong number of arguments for type constant: Map expected: 2 got: 1 |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_address_format.religo" ; "main" ] ;
   [%expect {|
-    ligo: error
-          Error(s) occurred while type checking the contract:
-          Ill typed contract:
-            1: { parameter int ;
-            2:   storage address ;
-            3:   code { DROP /* [] */ ; PUSH address "KT1badaddr" ; NIL operation ; PAIR } }
-          Invalid contract notation "KT1badaddr"
-
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}]
+    Error(s) occurred while type checking the contract:
+    Ill typed contract:
+      1: { parameter int ;
+      2:   storage address ;
+      3:   code { DROP /* [] */ ; PUSH address "KT1badaddr" ; NIL operation ; PAIR } }
+    Invalid contract notation "KT1badaddr" |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_timestamp.ligo" ; "main" ] ;
   [%expect {|
-    ligo: error
-          in file "bad_timestamp.ligo", line 7, characters 30-44
-          Ill-formed timestamp "badtimestamp".
-          At this point, a string with a RFC3339 notation or the number of seconds since Epoch is expected.
+    [1mFile "../../test/contracts/bad_timestamp.ligo", line 7, characters 30-44:[0m
+      6 |   block {
+      7 |     var stamp : timestamp := ([1m[31m"badtimestamp"[0m : timestamp)
+      8 |   }
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}]
+    [1m[31mError[0m: Ill-formed timestamp "badtimestamp".
+    At this point, a string with a RFC3339 notation or the number of seconds since Epoch is expected. |}]
 
 let%expect_test _ =
     run_ligo_good [ "dry-run" ; contract "redeclaration.ligo" ; "main" ; "unit" ; "0" ] ;
@@ -1079,16 +1048,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "self_in_lambda.mligo" ; "main" ] ;
   [%expect {|
-    ligo: error
-          "Tezos.self_address" must be used directly and cannot be used via another function.
-
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}]
+    "Tezos.self_address" must be used directly and cannot be used via another function. |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile-storage" ; contract "big_map.ligo" ; "main" ; "(big_map1,unit)" ] ;
@@ -1105,18 +1065,15 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "long_sum_type_names.ligo" ; "main" ] ;
   [%expect {|
-    ligo: error
-          in file "long_sum_type_names.ligo", line 2, character 2 to line 4, character 18
-          Ill-formed data constructor "Incrementttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt".
-          Data constructors have a maximum length of 32 characters, which is a limitation imposed by annotations in Tezos.
+    [1mFile "../../test/contracts/negative/long_sum_type_names.ligo", line 2, character 2 to line 4, character 18:[0m
+      1 | type action is
+      2 | | [1m[31mIncrementttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt of int[0m
+      3 | [1m[31m// | Increment of int
+    [0m  4 | [1m[31m| Decrement of int[0m
+      5 |
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}]
+    [1m[31mError[0m: Ill-formed data constructor "Incrementttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt".
+    Data constructors have a maximum length of 32 characters, which is a limitation imposed by annotations in Tezos. |}]
 
 let%expect_test _ =
   run_ligo_good [ "dry-run" ; contract "super-counter.mligo" ; "main" ; "test_param" ; "test_storage" ] ;
@@ -1126,61 +1083,51 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "redundant_constructors.mligo" ; "main" ] ;
   [%expect{|
-    ligo: error
-          in file "redundant_constructors.mligo", line 7, character 2 to line 9, character 15
-          Invalid variant.
-          Constructor "Add" already exists as part of another variant.
+    [1mFile "../../test/contracts/negative/redundant_constructors.mligo", line 7, character 2 to line 9, character 15:[0m
+      6 | type union_b =
+      7 | | [1m[31mAdd of nat[0m
+      8 | [1m[31m| Remove of nat
+    [0m  9 | [1m[31m| Config of nat[0m
+     10 |
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}]
+    [1m[31mError[0m: Invalid variant.
+    Constructor "Add" already exists as part of another variant. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_toplevel.mligo" ; "main" ] ;
   [%expect {|
-ligo: error
-      in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8
-      Free variable 'store' is not allowed in CREATE_CONTRACT lambda
+[1mFile "../../test/contracts/negative/create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8:[0m
+  3 | let main (action, store : string * string) : return =
+  4 |   let toto : operation * address = [1m[31mTezos.create_contract[0m
+  5 | [1m[31m    (fun (p, s : nat * string) -> (([] : operation list), store))
+[0m  6 | [1m[31m    (None: key_hash option)
+[0m  7 | [1m[31m    300tz
+[0m  8 | [1m[31m    "un"[0m
+  9 |   in
 
-
-      If you're not sure how to fix this error, you can do one of the following:
-
-      * Visit our documentation: https://ligolang.org/docs/intro/introduction
-      * Ask a question on our Discord: https://discord.gg/9rhYaEt
-      * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-      * Check the changelog by running 'ligo changelog' |}] ;
+[1m[31mError[0m: Free variable 'store' is not allowed in CREATE_CONTRACT lambda |}] ;
 
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_var.mligo" ; "main" ] ;
   [%expect {|
-ligo: error
-      in file "create_contract_var.mligo", line 6, character 35 to line 10, character 5
-      Free variable 'a' is not allowed in CREATE_CONTRACT lambda
+[1mFile "../../test/contracts/negative/create_contract_var.mligo", line 6, character 35 to line 10, character 5:[0m
+  5 | let main (action, store : string * string) : return =
+  6 |   let toto : operation * address = [1m[31mTezos.create_contract[0m
+  7 | [1m[31m    (fun (p, s : nat * int) -> (([] : operation list), a))
+[0m  8 | [1m[31m    (None: key_hash option)
+[0m  9 | [1m[31m    300tz
+[0m 10 | [1m[31m    1[0m
+ 11 |   in
 
-
-      If you're not sure how to fix this error, you can do one of the following:
-
-      * Visit our documentation: https://ligolang.org/docs/intro/introduction
-      * Ask a question on our Discord: https://discord.gg/9rhYaEt
-      * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-      * Check the changelog by running 'ligo changelog' |}] ;
+[1m[31mError[0m: Free variable 'a' is not allowed in CREATE_CONTRACT lambda |}] ;
 
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_no_inline.mligo" ; "main" ] ;
   [%expect {|
-    ligo: error
-          in file "create_contract_no_inline.mligo", line 3, characters 40-46
-          Type "return" not found.
+    [1mFile "../../test/contracts/negative/create_contract_no_inline.mligo", line 3, characters 40-46:[0m
+      2 |
+      3 | let dummy_contract (p, s : nat * int) : [1m[31mreturn[0m =
+      4 |  (([] : operation list), foo)
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}] ;
+    [1m[31mError[0m: Type "return" not found. |}] ;
 
   run_ligo_good [ "compile-contract" ; contract "create_contract.mligo" ; "main" ] ;
   [%expect {|
@@ -1220,19 +1167,14 @@ ligo: error
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "self_type_annotation.ligo" ; "main" ] ;
   [%expect {|
-    ligo: error
-          in file "self_type_annotation.ligo", line 8, characters 41-64
-          Invalid type annotation.
-          "Contract (nat)" was given, but "Contract (int)" was expected.
-          Note that "Tezos.self" refers to this contract, so the parameters should be the same.
+    [1mFile "../../test/contracts/negative/self_type_annotation.ligo", line 8, characters 41-64:[0m
+      7 |   block {
+      8 |     const self_contract: contract(int) = [1m[31mTezos.self ("%default")[0m;
+      9 |   }
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}] ;
+    [1m[31mError[0m: Invalid type annotation.
+    "Contract (nat)" was given, but "Contract (int)" was expected.
+    Note that "Tezos.self" refers to this contract, so the parameters should be the same. |}] ;
 
   run_ligo_good [ "compile-contract" ; contract "self_type_annotation.ligo" ; "main" ] ;
   [%expect {|
@@ -1241,48 +1183,33 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract.mligo" ; "main" ] ;
   [%expect {|
-    ligo: error
-          in file "bad_contract.mligo", line 4, characters 9-46
-          Invalid type for entrypoint "main".
-          An entrypoint must of type "parameter * storage -> operations list * storage".
+    [1mFile "../../test/contracts/negative/bad_contract.mligo", line 4, characters 9-46:[0m
+      3 |
+      4 | let main [1m[31m(action, store : parameter * storage)[0m : storage =
+      5 |   store + 1
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}] ;
+    [1m[31mError[0m: Invalid type for entrypoint "main".
+    An entrypoint must of type "parameter * storage -> operations list * storage". |}] ;
 
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract2.mligo" ; "main" ] ;
   [%expect {|
-    ligo: error
-          in file "bad_contract2.mligo", line 5, characters 9-46
-          Invalid type for entrypoint "main".
-          An entrypoint must of type "parameter * storage -> operations list * storage".
+    [1mFile "../../test/contracts/negative/bad_contract2.mligo", line 5, characters 9-46:[0m
+      4 |
+      5 | let main [1m[31m(action, store : parameter * storage)[0m : return =
+      6 |   ("bad",store + 1)
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}] ;
+    [1m[31mError[0m: Invalid type for entrypoint "main".
+    An entrypoint must of type "parameter * storage -> operations list * storage". |}] ;
 
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract3.mligo" ; "main" ] ;
   [%expect {|
-    ligo: error
-          in file "bad_contract3.mligo", line 5, characters 9-46
-          Invalid type for entrypoint "main".
-          The storage type "int" of the function parameter must be the same as the storage type "string" of the return value.
+    [1mFile "../../test/contracts/negative/bad_contract3.mligo", line 5, characters 9-46:[0m
+      4 |
+      5 | let main [1m[31m(action, store : parameter * storage)[0m : return =
+      6 |   (([]: operation list),"bad")
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}]
+    [1m[31mError[0m: Invalid type for entrypoint "main".
+    The storage type "int" of the function parameter must be the same as the storage type "string" of the return value. |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "self_with_entrypoint.ligo" ; "main" ] ;
@@ -1317,80 +1244,53 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; bad_contract "self_bad_entrypoint_format.ligo" ; "main" ] ;
   [%expect {|
-    ligo: error
-          in file "self_bad_entrypoint_format.ligo", line 8, characters 52-58
-          Invalid entrypoint "Toto".
-          One of the following patterns is expected:
-            * "%bar" is expected for entrypoint "Bar"
-            * "%default" when no entrypoint is used.
+    [1mFile "../../test/contracts/negative/self_bad_entrypoint_format.ligo", line 8, characters 52-58:[0m
+      7 |   block {
+      8 |     const self_contract: contract(int) = Tezos.self([1m[31m"Toto"[0m) ;
+      9 |     const op : operation = Tezos.transaction (2, 300tz, self_contract) ;
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}];
+    [1m[31mError[0m: Invalid entrypoint "Toto".
+    One of the following patterns is expected:
+      * "%bar" is expected for entrypoint "Bar"
+      * "%default" when no entrypoint is used. |}];
 
   run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_1.religo"; "main"];
   [%expect {|
-    ligo: error
-          in file "nested_bigmap_1.religo", line 1, characters 11-29
-          Invalid big map nesting.
-          A big map cannot be nested inside another big map.
+    [1mFile "../../test/contracts/negative/nested_bigmap_1.religo", line 1, characters 11-29:[0m
+      1 | type bar = [1m[31mbig_map (nat, int)[0m;
+      2 |
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}];
+    [1m[31mError[0m: Invalid big map nesting.
+    A big map cannot be nested inside another big map. |}];
 
   run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_2.religo"; "main"];
   [%expect {|
-    ligo: error
-          in file "nested_bigmap_2.religo", line 2, characters 29-50
-          Invalid big map nesting.
-          A big map cannot be nested inside another big map.
+    [1mFile "../../test/contracts/negative/nested_bigmap_2.religo", line 2, characters 29-50:[0m
+      1 | /* this should result in an error as nested big_maps are not supported: */
+      2 | type storage = big_map (nat, [1m[31mbig_map (int, string)[0m);
+      3 |
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}];
+    [1m[31mError[0m: Invalid big map nesting.
+    A big map cannot be nested inside another big map. |}];
   
   run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_3.religo"; "main"];
   [%expect {|
-    ligo: error
-          in file "nested_bigmap_3.religo", line 1, characters 11-29
-          Invalid big map nesting.
-          A big map cannot be nested inside another big map.
+    [1mFile "../../test/contracts/negative/nested_bigmap_3.religo", line 1, characters 11-29:[0m
+      1 | type bar = [1m[31mbig_map (nat, int)[0m;
+      2 |
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}];
+    [1m[31mError[0m: Invalid big map nesting.
+    A big map cannot be nested inside another big map. |}];
 
   run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_4.religo"; "main"];
   [%expect {|
-    ligo: error
-          in file "nested_bigmap_4.religo", line 2, characters 39-60
-          Invalid big map nesting.
-          A big map cannot be nested inside another big map.
+    [1mFile "../../test/contracts/negative/nested_bigmap_4.religo", line 2, characters 39-60:[0m
+      1 | /* this should result in an error as nested big_maps are not supported: */
+      2 | type storage = map (int, big_map (nat, [1m[31mbig_map (int, string)[0m));
+      3 |
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}];
+    [1m[31mError[0m: Invalid big map nesting.
+    A big map cannot be nested inside another big map. |}];
       
   run_ligo_good ["print-ast"; contract "letin.mligo"];
   [%expect {|
@@ -1447,67 +1347,38 @@ _)) = #4.1 in let (x : _) = #2.0 in let (#1 : _) = #2.1 in x
 
   run_ligo_bad ["print-ast-typed"; contract "existential.mligo"];
   [%expect {|
-    ligo: error
-          Lexical error in file "existential.mligo", line 1, characters 8-9:
-          Unexpected character '\''.
+    [1mFile "../../test/contracts/existential.mligo", line 1, characters 8-9:[0m
+      1 | let a : [1m[31m'[0ma = 2
+      2 | let b : _ ->'b = fun _ -> 2
 
-
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}];
+    [1m[31mError[0m: Unexpected character '\''. |}];
   run_ligo_bad ["print-ast-typed"; bad_contract "missing_funarg_annotation.mligo"];
   [%expect {|
-    ligo: error
-          in file "missing_funarg_annotation.mligo", line 2, characters 6-7
-          Missing a type annotation for argument "b".
+    [1mFile "../../test/contracts/negative/missing_funarg_annotation.mligo", line 2, characters 6-7:[0m
+      1 | (* these should give a missing type annotation error *)
+      2 | let a [1m[31mb[0m = b
+      3 | let a (b,c) = b
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}];
+    [1m[31mError[0m: Missing a type annotation for argument "b". |}];
   run_ligo_bad ["print-ast-typed"; bad_contract "missing_funarg_annotation.religo"];
   [%expect {|
-    ligo: error
-          in file "missing_funarg_annotation.religo", line 2, characters 8-9
-          Missing a type annotation for argument "b".
+    [1mFile "../../test/contracts/negative/missing_funarg_annotation.religo", line 2, characters 8-9:[0m
+      1 | /* these should give a missing type annotation error */
+      2 | let a = [1m[31mb[0m => b
+      3 | let a = (b,c) => b
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}];
+    [1m[31mError[0m: Missing a type annotation for argument "b". |}];
   run_ligo_bad ["print-ast-typed"; bad_contract "funarg_tuple_wrong.mligo"];
   [%expect {|
-    ligo: error
-          in file "funarg_tuple_wrong.mligo", line 1, characters 7-14
-          The tuple "b, c, d" does not match the type "int * int".
+    [1mFile "../../test/contracts/negative/funarg_tuple_wrong.mligo", line 1, characters 7-14:[0m
+      1 | let a ([1m[31mb, c, d[0m: int * int) = d
+      2 | let a (((b, c, d)): ((((int))) * int)) = d
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}];
+    [1m[31mError[0m: The tuple "b, c, d" does not match the type "int * int". |}];
   run_ligo_bad ["print-ast-typed"; bad_contract "funarg_tuple_wrong.religo"];
   [%expect {|
-    ligo: error
-          in file "funarg_tuple_wrong.religo", line 1, characters 10-17
-          The tuple "b, c, d" does not match the type "(int, int)".
+    [1mFile "../../test/contracts/negative/funarg_tuple_wrong.religo", line 1, characters 10-17:[0m
+      1 | let a = (([1m[31mb, c, d[0m): (int, int)) => d
+      2 | let a = (((b, c, d)): ((((int))), int)) => d
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}];
+    [1m[31mError[0m: The tuple "b, c, d" does not match the type "(int, int)". |}];

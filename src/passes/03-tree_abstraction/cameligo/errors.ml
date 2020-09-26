@@ -30,59 +30,51 @@ let missing_funarg_annotation v = `Concrete_cameligo_missing_funarg_annotation v
 let funarg_tuple_type_mismatch r p t = `Concrete_cameligo_funarg_tuple_type_mismatch (r, p, t)
 
 let error_ppformat : display_format:string display_format ->
-  Format.formatter -> abs_error -> unit =
-  fun ~display_format f a ->
+  abs_error -> Location.t * string =
+  fun ~display_format a ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
     | `Concrete_cameligo_unknown_predefined_type type_name ->
-      Format.fprintf f
-        "@[<hv>%a@.Unknown type \"%s\". @]"
-        Location.pp_lift type_name.Region.region
-        type_name.Region.value
+      (Location.lift type_name.Region.region, Format.asprintf
+        "@[<hv>Unknown type \"%s\". @]"
+        type_name.Region.value)
     | `Concrete_cameligo_recursive_fun reg ->
-      Format.fprintf f
-      "@[<hv>%a@.Invalid function declaration.@.Recursive functions are required to have a type annotation (for now). @]"
-        Location.pp_lift reg
+      (Location.lift reg, Format.asprintf
+      "@[<hv>Invalid function declaration.@.Recursive functions are required to have a type annotation (for now). @]")
     | `Concrete_cameligo_unsupported_pattern_type pl ->
-      Format.fprintf f
-      "@[<hv>%a@.Invalid pattern matching.
+      (Location.lift (List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost pl), Format.asprintf
+      "@[<hv>Invalid pattern matching.
 If this is pattern matching over Booleans, then \"true\" or \"false\" is expected.
 If this is pattern matching on a list, then one of the following is expected:
   * an empty list pattern \"[]\";
   * a cons list pattern \"head#tail\".
 If this is pattern matching over variants, then a constructor of a variant is expected.
       
-Other forms of pattern matching are not (yet) supported. @]"
-        Location.pp_lift (List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost pl)
+Other forms of pattern matching are not (yet) supported. @]")
     | `Concrete_cameligo_unsupported_string_singleton te ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid type. @.It's not possible to assign a string to a type. @]"
-        Location.pp_lift (Raw.type_expr_to_region te)
+      (Location.lift (Raw.type_expr_to_region te), Format.asprintf
+        "@[<hv>Invalid type. @.It's not possible to assign a string to a type. @]")
     | `Concrete_cameligo_unsupported_deep_list_pattern cons ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid pattern matching. @.At this point, one of the following is expected: 
+      (Location.lift (Raw.pattern_to_region cons), Format.asprintf
+        "@[<hv>Invalid pattern matching. @.At this point, one of the following is expected: 
   * an empty list pattern \"[]\";
-  * a cons list pattern \"head :: tail\".@]"
-        Location.pp_lift @@ Raw.pattern_to_region cons
+  * a cons list pattern \"head :: tail\".@]")
     | `Concrete_cameligo_recursion_on_non_function reg ->
-      Format.fprintf f "@[<hv>%a@.Invalid let declaration.@.Only functions can be recursive. @]"
-      Location.pp reg
+      (reg, Format.asprintf "@[<hv>Invalid let declaration.@.Only functions can be recursive. @]")
     | `Concrete_cameligo_michelson_type_wrong (texpr,name) ->
-      Format.fprintf f
-       "@[<hv>%a@.Invalid \"%s\" type.@.At this point, an annotation, in the form of a string, is expected for the preceding type. @]"
-          Location.pp_lift (Raw.type_expr_to_region texpr)
-          name
+      (Location.lift (Raw.type_expr_to_region texpr), Format.asprintf
+       "@[<hv>Invalid \"%s\" type.@.At this point, an annotation, in the form of a string, is expected for the preceding type. @]"
+          name)
     | `Concrete_cameligo_michelson_type_wrong_arity (loc,name) ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid \"%s\" type.@.An even number of 2 or more arguments is expected, where each odd item is a type annotated by the following string. @]"
-        Location.pp loc
-        name
+      (loc,
+      Format.asprintf
+        "@[<hv>Invalid \"%s\" type.@.An even number of 2 or more arguments is expected, where each odd item is a type annotated by the following string. @]"
+        name)
     | `Concrete_cameligo_missing_funarg_annotation v ->
-      Format.fprintf f
-        "@[<hv>%a@.Missing a type annotation for argument \"%s\". @]"
-          Location.pp_lift v.region
-          v.value
+      (Location.lift v.region, Format.asprintf
+        "@[<hv>Missing a type annotation for argument \"%s\". @]"
+          v.value)
     | `Concrete_cameligo_funarg_tuple_type_mismatch (region, pattern, texpr) -> (
       let p = Parser.pretty_print_pattern pattern in
       let t = Parser.pretty_print_type_expr texpr in
@@ -90,15 +82,13 @@ Other forms of pattern matching are not (yet) supported. @]"
       | Ok (p, _), Ok (t, _) ->
         let p = Buffer.contents p in
         let t = Buffer.contents t in
-        Format.fprintf f
-          "@[<hv>%a@.The tuple \"%s\" does not match the type \"%s\". @]"
-          Location.pp_lift region
+        (Location.lift region, Format.asprintf
+          "@[<hv>The tuple \"%s\" does not match the type \"%s\". @]"
           p
-          t
+          t)
       | _ ->
-        Format.fprintf f
-          "@[<hv>%a@.The tuple does not match the type. @]"
-          Location.pp_lift region
+        (Location.lift region, Format.asprintf
+          "@[<hv>The tuple does not match the type. @]")
     )
   )
 

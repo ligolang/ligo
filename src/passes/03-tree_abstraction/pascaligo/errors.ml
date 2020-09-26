@@ -27,59 +27,50 @@ let michelson_type_wrong_arity loc name = `Concrete_pascaligo_michelson_type_wro
 let block_start_with_attribute block = `Concrete_pascaligo_block_attribute block
 
 let error_ppformat : display_format:string display_format ->
-  Format.formatter -> abs_error -> unit =
-  fun ~display_format f a ->
+  abs_error -> Location.t * string =
+  fun ~display_format a ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
     | `Concrete_pascaligo_unknown_predefined_type type_name ->
-      Format.fprintf f
-        "@[<hv>%a@.Unknown type \"%s\". @]"
-        Location.pp_lift type_name.Region.region
-        type_name.Region.value
+      (Location.lift type_name.Region.region, Format.asprintf
+        "@[<hv>Unknown type \"%s\". @]"
+        type_name.Region.value)
     | `Concrete_pascaligo_unsupported_pattern_type pl ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid case pattern.
+      (Location.lift @@ Raw.pattern_to_region pl, Format.asprintf
+        "@[<hv>Invalid case pattern.
 If this is a case over Booleans, then \"true\" or \"false\" is expected.
 If this is a case on a list, then one of the following is expected:
   * an empty list pattern \"[]\";
   * a cons list pattern \"head#tail\".
 If this is a case over variants, then a constructor of a variant is expected.
 
-Other patterns in case clauses are not (yet) supported. @]"
-        Location.pp_lift @@ Raw.pattern_to_region pl
+Other patterns in case clauses are not (yet) supported. @]")
     | `Concrete_pascaligo_unsupported_string_singleton te ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid type. @.It's not possible to assign a string to a type. @]"
-        Location.pp_lift (Raw.type_expr_to_region te)
+      (Location.lift (Raw.type_expr_to_region te), Format.asprintf
+        "@[<hv>Invalid type. @.It's not possible to assign a string to a type. @]")
     | `Concrete_pascaligo_unsupported_deep_list_pattern cons ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid list pattern in a case clause. @.At this point, one of the following is expected: 
+      (Location.lift @@ Raw.pattern_to_region cons, Format.asprintf
+        "@[<hv>Invalid list pattern in a case clause. @.At this point, one of the following is expected: 
   * an empty list pattern \"nil\";
-  * a cons list pattern \"head#tail\".@]"
-        Location.pp_lift @@ Raw.pattern_to_region cons
+  * a cons list pattern \"head#tail\".@]")
     | `Concrete_pascaligo_unsupported_deep_tuple_pattern tuple ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid constructor in a case clause.@.Currently, nested constructor arguments (tuples) are not supported in case clauses.@]"
-        Location.pp_lift @@ tuple.Region.region
+      (Location.lift tuple.Region.region, Format.asprintf
+        "@[<hv>Invalid constructor in a case clause.@.Currently, nested constructor arguments (tuples) are not supported in case clauses.@]")
     | `Concrete_pascaligo_michelson_type_wrong (texpr,name) ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid \"%s\" type.@.At this point, an annotation, in the form of a string, is expected for the preceding type. @]"
-          Location.pp_lift (Raw.type_expr_to_region texpr)
-          name          
+      (Location.lift (Raw.type_expr_to_region texpr), Format.asprintf
+        "@[<hv>Invalid \"%s\" type.@.At this point, an annotation, in the form of a string, is expected for the preceding type. @]"
+          name)
     | `Concrete_pascaligo_michelson_type_wrong_arity (loc,name) ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid \"%s\" type.@.An even number of 2 or more arguments is expected, where each odd item is a type annotated by the following string. @]"
-        Location.pp loc
-        name
+      (loc, Format.asprintf
+        "@[<hv>Invalid \"%s\" type.@.An even number of 2 or more arguments is expected, where each odd item is a type annotated by the following string. @]"
+        name)
     | `Concrete_pascaligo_recursive_fun loc ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid function declaration.@.Recursive functions are required to have a type annotation (for now). @]"
-        Location.pp loc
+      (loc, Format.asprintf
+        "@[<hv>Invalid function declaration.@.Recursive functions are required to have a type annotation (for now). @]")
     | `Concrete_pascaligo_block_attribute block ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid attribute declaration.@.Attributes have to follow the declaration it is attached to. @]"
-        Location.pp_lift @@ block.region
+      (Location.lift  @@ block.region, Format.asprintf
+        "@[<hv>Invalid attribute declaration.@.Attributes have to follow the declaration it is attached to. @]")
   )
 
 
