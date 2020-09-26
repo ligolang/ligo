@@ -10,7 +10,7 @@ Code navigation
 - [x] Jump to definition
 - [x] Find references
 - [x] Folding range
-- [ ] Selection range
+- [x] Selection range
 - [ ] Jump to type definition
 - [ ] Document symbols
 - [ ] Workspace symbols

@@ -86,7 +86,7 @@ extractDocumentSymbols uri tree = execWriterT . visit handlers $ tree
               , _deprecated = Nothing
               , _kind = kind
               , _containerName = matchContainerName kind
-              , _location = J.Location uri $ toLSPRange range
+              , _location = J.Location uri $ toLspRange range
               }
           ]
 
@@ -105,7 +105,7 @@ extractDocumentSymbols uri tree = execWriterT . visit handlers $ tree
               , _deprecated = Nothing
               , _kind = kind
               , _containerName = matchContainerName kind
-              , _location = J.Location uri $ toLSPRange range
+              , _location = J.Location uri $ toLspRange range
               }
           ]
 

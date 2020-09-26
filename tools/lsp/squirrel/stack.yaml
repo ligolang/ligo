@@ -16,6 +16,12 @@ extra-deps:
   - fastsum-0.1.1.1
   - git: https://github.com/serokell/duplo.git
     commit: cbcfafb025385a120e81e6f5e37498fa3a78abfc
+  - git: https://github.com/serokell/haskell-lsp.git
+    commit: 3d6662c2d174cd5ac463d728d55defea69f282f7
+  - git: https://github.com/serokell/haskell-lsp.git
+    commit: 3d6662c2d174cd5ac463d728d55defea69f282f7
+    subdirs:
+      - haskell-lsp-types
 
 nix:
   packages: [zlib]

@@ -24,11 +24,11 @@ hoverDecl at tree = do
   decl <- findScopedDecl at tree
   Just $ LSP.Hover
     { _contents = mkContents decl
-    , _range = Just $ toLSPRange at
+    , _range = Just $ toLspRange at
     }
 
 mkContents :: ScopedDecl -> LSP.HoverContents
-mkContents ScopedDecl 
+mkContents ScopedDecl
   { _sdType   = ppToText -> _sdType
   , _sdName   = ppToText -> _sdName
   , _sdDoc    = ppToText -> _sdDoc
