@@ -57,11 +57,4 @@ let%expect_test _ =
     aux_simple |} ];
 
   run_ligo_bad [ "compile-storage" ; "../../test/contracts/coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ; "--brief" ] ;
-  [%expect {|
-    ligo: error
-          Invalid command line argument.
-          The provided storage does not have the correct type for the contract.
-          in file "coase.ligo", line 124, characters 9-13
-          Invalid type(s).
-          Expected: "record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]", but got: "
-          sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]". |}] ;
+  [%expect {| |}] ;

@@ -8,33 +8,21 @@ let bad_contract basename =
 let%expect_test _ =
   run_ligo_bad [ "interpret" ; "--init-file="^(bad_contract "michelson_converter_no_annotation.mligo") ; "l4"] ;
   [%expect {|
-    ligo: error
-          in file "michelson_converter_no_annotation.mligo", line 4, characters 9-39
-          Incorrect argument provided to Layout.convert_to_(left|right)_comb.
-          The given argument must be annotated with the type of the value.
+    [1mFile "../../test/contracts/negative/michelson_converter_no_annotation.mligo", line 4, characters 9-39:[0m
+      3 |
+      4 | let l4 = [1m[31mLayout.convert_to_left_comb v4[0m
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}] ;
+    [1m[31mError[0m: Incorrect argument provided to Layout.convert_to_(left|right)_comb.
+    The given argument must be annotated with the type of the value. |}] ;
 
   run_ligo_bad [ "interpret" ; "--init-file="^(bad_contract "michelson_converter_short_record.mligo") ; "l1"] ;
   [%expect {|
-    ligo: error
-          in file "michelson_converter_short_record.mligo", line 4, characters 9-44
-          Incorrect argument provided to Layout.convert_to_(left|right)_comb.
-          The record must have at least two elements.
+    [1mFile "../../test/contracts/negative/michelson_converter_short_record.mligo", line 4, characters 9-44:[0m
+      3 |
+      4 | let l1 = [1m[31mLayout.convert_to_left_comb (v1:t1)[0m
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}]
+    [1m[31mError[0m: Incorrect argument provided to Layout.convert_to_(left|right)_comb.
+    The record must have at least two elements. |}]
 
 let%expect_test _ =
   run_ligo_good [ "interpret" ; "--init-file="^(contract "michelson_converter_pair.mligo") ; "r3"] ;

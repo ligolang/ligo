@@ -33,11 +33,9 @@ let error_to_string = function
     Invalid_character c ->
       sprintf "Invalid character '%c' (%d)." c (Char.code c)
 
-let format ?(offsets=true) Region.{region; value} ~file =
-  let msg   = error_to_string value
-  and reg   = region#to_string ~file ~offsets `Byte in
-  let value = sprintf "Preprocessing error %s:\n%s\n" reg msg
-  in Region.{value; region}
+let format Region.{region; value} =
+  let value = error_to_string value in 
+  Region.{value; region}
 
 exception Error of error Region.reg
 

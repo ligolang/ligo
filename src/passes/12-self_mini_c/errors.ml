@@ -14,16 +14,16 @@ let not_a_function = `Self_mini_c_not_a_function
 let could_not_aggregate_entry = `Self_mini_c_aggregation
 
 let error_ppformat : display_format:string display_format ->
-  Format.formatter -> self_mini_c_error -> unit =
-  fun ~display_format f a ->
+  self_mini_c_error -> Location.t * string =
+  fun ~display_format a ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
     | `Self_mini_c_bad_self_address _cst ->
       let s = Format.asprintf "\"Tezos.self_address\" must be used directly and cannot be used via another function."  in
-      Format.pp_print_string f s ;
-    | `Self_mini_c_not_a_function -> Format.fprintf f "Invalid type for entrypoint.@.An entrypoint must of type \"parameter * storage -> operations list * storage\"."
-    | `Self_mini_c_aggregation -> Format.fprintf f "Invalid type for entrypoint.@.An entrypoint must of type \"parameter * storage -> operations list * storage\"."
+      (Location.dummy, s)
+    | `Self_mini_c_not_a_function -> (Location.dummy, Format.asprintf "Invalid type for entrypoint.@.An entrypoint must of type \"parameter * storage -> operations list * storage\".")
+    | `Self_mini_c_aggregation -> (Location.dummy, Format.asprintf "Invalid type for entrypoint.@.An entrypoint must of type \"parameter * storage -> operations list * storage\".")
   )
 
 let error_jsonformat : self_mini_c_error -> Yojson.Safe.t = fun a ->

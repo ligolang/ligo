@@ -34,7 +34,7 @@ module Make (IO: IO) (Lexer: Lexer.S) =
             if SSet.mem "preproc" IO.options#verbose then
               Printf.printf "%s\n%!" (Buffer.contents pp_buffer);
             let formatted =
-              Preproc.format ~offsets:IO.options#offsets ~file:true err
+              Preproc.format err
             in Stdlib.Error formatted
         | Stdlib.Ok pp_buffer ->
            (* Running the lexer on the preprocessed input *)
@@ -104,7 +104,7 @@ module Make (IO: IO) (Lexer: Lexer.S) =
             if SSet.mem "preproc" IO.options#verbose then
               Printf.printf "%s\n%!" (Buffer.contents pp_buffer);
             let formatted =
-              Preproc.format ~offsets:IO.options#offsets ~file:true err
+              Preproc.format err
             in Stdlib.Error formatted
         | Stdlib.Ok pp_buffer ->
             let preproc_str = Buffer.contents pp_buffer in

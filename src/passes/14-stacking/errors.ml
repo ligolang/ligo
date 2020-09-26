@@ -27,33 +27,33 @@ let could_not_tokenize_michelson c = `Stacking_could_not_tokenize_michelson c
 let could_not_parse_michelson c = `Stacking_could_not_parse_michelson c
 
 let error_ppformat : display_format:string display_format ->
-  Format.formatter -> stacking_error -> unit =
-  fun ~display_format f a ->
+  stacking_error -> Location.t * string =
+  fun ~display_format a ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
     | `Stacking_corner_case (loc,msg) ->
       let s = Format.asprintf "Stacking corner case at %s : %s.\n%s"
         loc msg (corner_case_msg ()) in
-      Format.pp_print_string f s ;
+      (Location.dummy, s);
     | `Stacking_contract_entrypoint loc ->
       let s = Format.asprintf "contract entrypoint must be given as a literal string: %s"
         loc in
-      Format.pp_print_string f s ;
+      (Location.dummy, s);
     | `Stacking_bad_iterator cst ->
        let s = Format.asprintf "bad iterator: iter %a" Mini_c.PP.constant cst in
-      Format.pp_print_string f s ;
+      (Location.dummy, s);
     | `Stacking_not_comparable_pair_struct ->
       let s = "Invalid comparable value. When using a tuple of with more than 2 components, structure the tuple like this: \"(a, (b, c))\". " in
-      Format.pp_print_string f s;
+      (Location.dummy, s);
     | `Stacking_could_not_tokenize_michelson code ->
-      Format.fprintf f "Could not tokenize raw Michelson: %s" code
+      (Location.dummy, Format.asprintf "Could not tokenize raw Michelson: %s" code)
     | `Stacking_could_not_parse_michelson code ->
-      Format.fprintf f "Could not parse raw Michelson: %s" code
+      (Location.dummy, Format.asprintf "Could not parse raw Michelson: %s" code)
     | `Stacking_untranspilable (ty, value) ->
-      Format.fprintf f "Could not untranspile Michelson value: %a %a"
+      (Location.dummy, Format.asprintf "Could not untranspile Michelson value: %a %a"
         Michelson.pp ty
-        Michelson.pp value
+        Michelson.pp value)
   )
 
 let error_jsonformat : stacking_error -> Yojson.Safe.t = fun a ->

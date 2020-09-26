@@ -233,9 +233,7 @@ module Make (Lexer: Lexer.S)
               if SSet.mem "preproc" options#verbose then
                 Printf.printf "%s\n%!" (Buffer.contents pp_buffer);
               let formatted =
-                Preproc.format ~offsets:options#offsets
-                               ~file:(file <> "")
-                               err
+                Preproc.format err
               in close (); Stdlib.Error formatted
           | Stdlib.Ok buffer ->
              (* Lexing and parsing the preprocessed input source *)
@@ -303,9 +301,7 @@ module Make (Lexer: Lexer.S)
           Stdlib.Ok _ as ok  -> ok
         | Error (_, err) ->
             let formatted =
-              Preproc.format ~offsets:options#offsets
-                             ~file:true
-                             err
+              Preproc.format err
             in close_in cin; Stdlib.Error formatted
       with Sys_error error ->
              flush_all (); Stdlib.Error (Region.wrap_ghost error)
