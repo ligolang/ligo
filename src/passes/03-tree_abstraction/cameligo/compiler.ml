@@ -4,13 +4,15 @@ open Function
 
 module CST = Cst.Cameligo
 module AST = Ast_imperative
-(* TODO: move 1-parser/shared/Utils.ml{i} to Simple_utils/ *)
 
 open AST
 
 let nseq_to_list (hd, tl) = hd :: tl
+
 let npseq_to_list (hd, tl) = hd :: (List.map snd tl)
+
 let npseq_to_ne_list (hd, tl) = hd, (List.map snd tl)
+
 let pseq_to_list = function
   | None -> []
   | Some lst -> npseq_to_list lst
@@ -21,31 +23,37 @@ open Predefined.Tree_abstraction.Cameligo
 let r_split = Location.r_split
 
 let compile_variable var = Location.map Var.of_name @@ Location.lift_region var
+let compile_attributes attributes : string list =
+  List.map (fst <@ r_split) attributes
 
 let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
   let return te = ok @@ te in
   match te with
     TSum sum ->
-    let (nsepseq, loc) = r_split sum in
-    let lst = npseq_to_list nsepseq in
-    let aux (variant : CST.variant CST.reg) =
-      let (v, _) = r_split variant in
-      let%bind type_expr = bind_map_option (compile_type_expression <@ snd) v.arg in
-      let type_expr = Option.unopt ~default:(t_unit ()) type_expr in
-      ok @@ (v.constr.value,type_expr)
-    in
-    let%bind sum = bind_map_list aux lst in
-    return @@ t_sum_ez ~loc sum
+      let sum_type, loc = r_split sum in
+      let {variants; attributes; _} : CST.sum_type = sum_type in
+      let lst = npseq_to_list variants in
+      let attr = compile_attributes attributes in
+      let aux (variant : CST.variant CST.reg) =
+        let v, _ = r_split variant in
+        let%bind type_expr =
+          bind_map_option (compile_type_expression <@ snd) v.arg in
+        let type_expr = Option.unopt ~default:(t_unit ()) type_expr in
+        let variant_attr = List.map (fun x -> x.Region.value) v.attributes in
+        ok @@ (v.constr.value, type_expr, variant_attr) in
+      let%bind sum = bind_map_list aux lst
+      in return @@ t_sum_ez_attr ~loc ~attr sum
   | TRecord record ->
-    let (nsepseq, loc) = r_split record in
-    let lst = npseq_to_list nsepseq.ne_elements in
-    let aux (field : CST.field_decl CST.reg) =
-      let (f, _) = r_split field in
-      let%bind type_expr = compile_type_expression f.field_type in
-      return @@ (f.field_name.value,type_expr)
-    in
-    let%bind record = bind_map_list aux lst in
-    return @@ t_record_ez ~loc record
+      let injection, loc = r_split record in
+      let attr = compile_attributes injection.attributes in
+      let lst = npseq_to_list injection.ne_elements in
+      let aux (field : CST.field_decl CST.reg) =
+        let f, _ = r_split field in
+        let%bind type_expr = compile_type_expression f.field_type in
+        let field_attr = List.map (fun x -> x.Region.value) f.attributes
+        in return @@ (f.field_name.value, type_expr, field_attr) in
+      let%bind fields = bind_map_list aux lst in
+      return @@ t_record_ez_attr ~loc ~attr fields
   | TProd prod ->
     let (nsepseq, loc) = r_split prod in
     let lst = npseq_to_list nsepseq in
@@ -107,15 +115,14 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
     let (par, _) = r_split par in
     let type_expr = par.inside in
     compile_type_expression type_expr
+
   | TVar var ->
     let (name,loc) = r_split var in
     (match type_constants name with
       Some const -> return @@ t_constant ~loc const []
     | None -> return @@ t_variable_ez ~loc name
     )
-  | TWild reg ->
-    let loc = Location.lift reg in
-    return @@ make_t ~loc @@ T_wildcard
+  | TWild _ -> failwith "unsupported TWild"
   | TString _s -> fail @@ unsupported_string_singleton te
 
 let compile_selection (selection : CST.selection) =
@@ -292,30 +299,22 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     let%bind () = check_annotation (fst binders) in
     let%bind () = bind_list_iter check_annotation (snd binders) in
     let%bind lhs_type = bind_map_option (compile_type_expression <@ snd) lhs_type in
-    let%bind (binder,exprs),lst = bind_map_ne_list compile_parameter binders in
+    let%bind ((binder,ty_opt),exprs),lst = bind_map_ne_list compile_parameter binders in
     let%bind body = compile_expression body in
     let rec aux lst =
       match lst with
         [] -> body,lhs_type
-      | (binder,exprs):: lst ->
+      | ((args,ty_opt),exprs):: lst ->
         let expr,lhs_type = aux lst in
         let aux expr (binder, ty_opt ,attr,rhs) = e_let_in (binder,ty_opt) attr rhs expr in
         let expr = List.fold_left aux expr exprs in
-        let expr = (match lhs_type with
-          Some ty -> e_annotation ~loc expr ty
-        | None    -> expr
-        ) in
-        e_lambda ~loc binder expr,
-        Option.map (t_function ~loc @@ snd binder) @@ lhs_type
+        e_lambda ~loc args ty_opt lhs_type expr,
+        Option.map (Utils.uncurry @@ t_function ~loc) @@ Option.bind_pair (ty_opt,lhs_type)
     in
     let expr,lhs_type = aux lst in
     let aux (binder, ty_opt,attr,rhs) expr = e_let_in (binder, ty_opt) attr rhs expr in
     let expr = List.fold_right aux exprs expr  in
-    return @@ e_lambda ~loc binder @@
-      (match lhs_type with
-        Some ty -> e_annotation ~loc expr ty
-      | None    -> expr
-      )
+    return @@ e_lambda ~loc binder ty_opt lhs_type expr
   | EConstr (ESomeApp some) ->
     let ((_, arg), loc) = r_split some in
     let%bind args = compile_tuple_expression @@ List.Ne.singleton arg in
@@ -447,9 +446,8 @@ fun cases ->
   match cases with
   | (PVar var, expr), [] ->
     let (var, loc) = r_split var in
-    let var = Location.wrap ~loc @@ Var.of_name var in
-    let binder = (var, t_wildcard ~loc ()) in
-    return @@ AST.Match_variable (binder, expr)
+    let var = Location.wrap ?loc:(Some loc) @@ Var.of_name var in
+    return @@ AST.Match_variable (var, None, expr)
   | (PTuple tuple, _expr), [] ->
     fail @@ unsupported_pattern_type @@ [CST.PTuple tuple]
   | (PList _, _), _ ->
@@ -494,7 +492,7 @@ and compile_let_binding ?kwd_rec attributes binding =
   let return lst = ok lst in
   let return_1 a = return [a] in
   let ({binders; lhs_type; let_rhs; _} : CST.let_binding) = binding in
-  let attr = compile_attribute_declaration attributes in
+  let attributes = compile_attributes attributes in
   let%bind lhs_type = bind_map_option (compile_type_expression <@ snd) lhs_type in
   let%bind expr = compile_expression let_rhs in
   let rec aux = function
@@ -508,16 +506,13 @@ and compile_let_binding ?kwd_rec attributes binding =
     let rec aux lst =
       match lst with
         [] -> expr,lhs_type
-      | (binder,exprs):: lst ->
-        let loc = Location.get_location @@ fst binder in
+      | ((args,ty_opt),exprs):: lst ->
+        let loc = Location.get_location args in
         let expr,lhs_type = aux lst in
         let aux expr (binder, ty_opt ,attr,rhs) = e_let_in (binder,ty_opt) attr rhs expr in
         let expr = List.fold_left aux expr exprs in
-        let expr = match lhs_type with
-          Some ty -> e_annotation ~loc expr ty
-        | None -> expr in
-        e_lambda ~loc binder expr,
-        Option.map (t_function ~loc @@ snd binder) @@ lhs_type
+        e_lambda ~loc args ty_opt lhs_type expr,
+        Option.map (Utils.uncurry @@ t_function ~loc) @@ Option.bind_pair (ty_opt,lhs_type)
     in
     let expr,lhs_type = aux args in
     (* This handle the recursion *)
@@ -529,8 +524,7 @@ and compile_let_binding ?kwd_rec attributes binding =
     | None   ->
         ok @@ expr
     in
-    let lhs_type = Option.unopt ~default:(t_wildcard ()) lhs_type in
-    return_1 @@ (fun_binder,lhs_type, attr, expr)
+    return_1 @@ (fun_binder,lhs_type, attributes, expr)
   | PTuple tuple, [] -> (* Tuple destructuring *)
     let (tuple, loc) = r_split tuple in
     let%bind lst = bind_map_ne_list compile_parameter @@ npseq_to_ne_list tuple in
@@ -538,14 +532,17 @@ and compile_let_binding ?kwd_rec attributes binding =
     let exprs = List.flatten @@ List.Ne.to_list exprs in
     let var = Location.wrap ~loc @@ Var.fresh () in
     let body = e_variable var in
-    let aux i (var, ty_opt) = Z.add i Z.one, (var,ty_opt, attr, e_accessor body @@ [Access_tuple i]) in
-    return @@ (var,t_wildcard (), false, expr) :: (List.fold_map aux Z.zero @@ List.Ne.to_list lst) @ exprs
+    let aux i (var, ty_opt) =
+      Z.add i Z.one, (var, ty_opt, attributes,
+                      e_accessor body @@ [Access_tuple i]) in
+    return @@ (var,None, [], expr) ::
+               (List.fold_map aux Z.zero @@ List.Ne.to_list lst) @ exprs
   | _ -> fail @@ unsupported_pattern_type @@ nseq_to_list binders
   in aux binders
 
-and compile_parameter : CST.pattern -> _ result = fun pattern ->
+and compile_parameter : CST.pattern -> _ result =
+  fun pattern ->
   let return ?ty loc exprs var =
-    let ty = Option.unopt ~default:(t_wildcard ()) ty in
     ok ((Location.wrap ~loc var, ty), exprs) in
   match pattern with
     PConstr _ -> fail @@ unsupported_pattern_type [pattern]
@@ -561,23 +558,29 @@ and compile_parameter : CST.pattern -> _ result = fun pattern ->
   | PTuple tuple ->
     let (tuple, loc) = r_split tuple in
     let%bind lst = bind_map_ne_list compile_parameter @@ npseq_to_ne_list tuple in
-    let (binder,exprs) = List.Ne.split lst in
-    let var, ty, expr = match binder with
-      (var, ty), [] ->
-      Location.unwrap var, ty, []
+    let (lst,exprs) = List.Ne.split lst in
+    let (vars,ty_opt) = List.Ne.split lst in
+    let ty = match ty_opt with
+      | ty, [] -> ty
+      | ty, lst ->
+        Option.map (t_tuple ~loc) @@ Option.bind_list @@ ty::lst
+    in
+    let var, expr = match vars with
+      var, [] ->
+      Location.unwrap var, []
     | var, lst ->
       let binder = Var.fresh () in
-      let aux i (var,ty) = Z.add i Z.one, (var,ty, false, e_accessor (e_variable @@ Location.wrap ~loc binder) @@ [Access_tuple i]) in
-      binder,
-      t_tuple ~loc @@ snd var::(List.map snd lst),
-      List.fold_map aux Z.zero @@ var :: lst
-    in
+      let aux i var =
+        Z.add i Z.one, (var,None, [],
+                        e_accessor (e_variable @@ Location.wrap ~loc binder)
+                        @@ [Access_tuple i]) in
+      binder, List.fold_map aux Z.zero @@ var :: lst  in
     let exprs = List.flatten @@ expr :: List.Ne.to_list exprs in
-    return ~ty loc exprs @@ var
+    return ?ty loc exprs @@ var
   | PPar par ->
     let (par,loc) = r_split par in
     let%bind ((var,ty), expr) = compile_parameter par.inside in
-    return ~ty loc expr @@ Location.unwrap var
+    return ?ty loc expr @@ Location.unwrap var
   | PRecord _ -> fail @@ unsupported_pattern_type [pattern]
   | PTyped tp ->
     let (tp, loc) = r_split tp in
@@ -586,14 +589,6 @@ and compile_parameter : CST.pattern -> _ result = fun pattern ->
     let%bind ((var, _), exprs) = compile_parameter pattern in
     return ~ty loc exprs @@ Location.unwrap var
   | _ -> fail @@ unsupported_pattern_type [pattern]
-
-
-and compile_attribute_declaration = fun lst ->
-  let lst = List.map (fst <@ r_split) lst in
-  let inline = List.filter (String.equal "inline") lst in
-  match inline with
-    [] -> false
-  | _  -> true
 
 let compile_declaration : CST.declaration -> _ = fun decl ->
   let return reg decl =

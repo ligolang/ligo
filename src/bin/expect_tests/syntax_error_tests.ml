@@ -7,8 +7,7 @@ let%expect_test _ =
       1 | type foo is bar [1m[31m-[0m 42
 
     [1m[31mError[0m: Ill-formed declaration.
-    At this point, if the contract is not complete, you can write another
-    declaration. |} ] ;
+    At this point, if the declaration is complete, another is possible. |} ] ;
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_function_arguments.religo" ; "main" ] ;
   [%expect {|

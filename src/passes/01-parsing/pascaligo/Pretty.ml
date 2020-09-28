@@ -34,16 +34,13 @@ and pp_declaration = function
   TypeDecl  d -> pp_type_decl  d
 | ConstDecl d -> pp_const_decl d
 | FunDecl   d -> pp_fun_decl   d
-| AttrDecl  d -> pp_attr_decl  d
-
-and pp_attr_decl decl = pp_ne_injection pp_string decl
 
 and pp_const_decl {value; _} =
   let {name; const_type; init; attributes; _} = value in
-  let attr  = match attributes with
-                None -> empty
-              | Some a -> hardline ^^ pp_attr_decl a in
+  let attr  = pp_attributes attributes in
   let start = string ("const " ^ name.value) in
+  let start = if attributes = [] then start
+              else pp_attributes attributes ^/^ start in
   let start =
     match const_type with
       None -> start
@@ -51,7 +48,6 @@ and pp_const_decl {value; _} =
         group (start ^/^ nest 2 (string ": " ^^ pp_type_expr e)) in
   start
   ^^ group (break 1 ^^ nest 2 (string "= " ^^ pp_expr init))
-  ^^ attr
 
 (* Type declarations *)
 
@@ -62,14 +58,32 @@ and pp_type_decl decl =
 
 and pp_type_expr = function
   TProd t   -> pp_cartesian t
-| TSum t    -> pp_variants t
-| TRecord t -> pp_fields t
+| TSum t    -> pp_sum_type t
+| TRecord t -> pp_record_type t
 | TApp t    -> pp_type_app t
 | TFun t    -> pp_fun_type t
 | TPar t    -> pp_type_par t
 | TVar t    -> pp_ident t
 | TWild   _ -> string "_"
 | TString s -> pp_string s
+
+and pp_sum_type {value; _} =
+  let {variants; attributes; _} = value in
+  let head, tail = variants in
+  let head = pp_variant head in
+  let padding_flat =
+    if attributes = [] then empty else string "| " in
+  let padding_non_flat =
+    if attributes = [] then blank 2 else string "| " in
+  let head =
+    if tail = [] then head
+    else ifflat (padding_flat ^^ head) (padding_non_flat ^^ head) in
+  let rest = List.map snd tail in
+  let app variant =
+    group (break 1 ^^ string "| " ^^ pp_variant variant) in
+  let whole = head ^^ concat_map app rest in
+  if attributes = [] then whole
+  else pp_attributes attributes ^/^ whole
 
 and pp_cartesian {value; _} =
   let head, tail = value in
@@ -90,17 +104,26 @@ and pp_variants {value; _} =
   in head ^^ concat_map app rest
 
 and pp_variant {value; _} =
-  let {constr; arg} = value in
+  let {constr; arg; attributes=attr} = value in
+  let pre = if attr = [] then pp_ident constr
+            else group (pp_attributes attr ^/^ pp_ident constr) in
   match arg with
-    None -> pp_ident constr
-  | Some (_, e) ->
-      prefix 4 1 (pp_ident constr ^^ string " of") (pp_type_expr e)
+    None -> pre
+  | Some (_,e) -> prefix 4 1 (pre ^^ string " of") (pp_type_expr e)
 
-and pp_fields fields = pp_ne_injection pp_field_decl fields
+and pp_attributes = function
+    [] -> empty
+| attr ->
+   let make s = string "[@" ^^ string s.value ^^ string "]"
+   in separate_map (break 0) make attr
+
+and pp_record_type fields = group (pp_ne_injection pp_field_decl fields)
 
 and pp_field_decl {value; _} =
-  let {field_name; field_type; _} = value in
-  let name   = pp_ident field_name in
+  let {field_name; field_type; attributes; _} = value in
+  let attr = pp_attributes attributes in
+  let name = if attributes = [] then pp_ident field_name
+             else attr ^/^ pp_ident field_name in
   let t_expr = pp_type_expr field_type
   in prefix 2 1 (name ^^ string " :") t_expr
 
@@ -149,7 +172,9 @@ and pp_fun_decl {value; _} =
   let start =
     match kwd_recursive with
         None -> string "function"
-    | Some _ -> string "recursive" ^/^ string "function" in
+      | Some _ -> string "recursive" ^/^ string "function" in
+  let start = if attributes = [] then start
+              else pp_attributes attributes ^/^ start in
   let start = start ^^ group (break 1 ^^ nest 2 (pp_ident fun_name))
   and parameters = pp_par pp_parameters param
   and t_annot_is =
@@ -164,14 +189,9 @@ and pp_fun_decl {value; _} =
     match return with
       EBlock _ -> group (break 1 ^^ expr)
     | _ -> group (nest 2 (break 1 ^^ expr))
-  and attr =
-    match attributes with
-      None -> empty
-    | Some a -> hardline ^^ pp_attr_decl a in
-  prefix 2 1 start parameters
-  ^^ t_annot_is
-  ^^ body
-  ^^ attr
+in prefix 2 1 start parameters
+   ^^ t_annot_is
+   ^^ body
 
 and pp_parameters p = pp_nsepseq ";" pp_param_decl p
 
@@ -205,7 +225,6 @@ and pp_statements s = pp_nsepseq ";" pp_statement s
 and pp_statement = function
   Instr s -> pp_instruction s
 | Data  s -> pp_data_decl   s
-| Attr  s -> pp_attr_decl   s
 
 and pp_data_decl = function
   LocalConst d -> pp_const_decl d
@@ -585,16 +604,18 @@ and pp_injection_kwd = function
 and pp_ne_injection :
   'a.('a -> document) -> 'a ne_injection reg -> document =
   fun printer {value; _} ->
-    let {kind; ne_elements; _} = value in
+    let {kind; ne_elements; attributes; _} = value in
     let elements = pp_nsepseq ";" printer ne_elements in
     let kwd      = pp_ne_injection_kwd kind in
-    group (string (kwd ^ " [")
-           ^^ group (nest 2 (break 0 ^^ elements ))
-           ^^ break 0 ^^ string "]")
+    let inj      = group (string (kwd ^ " [")
+                          ^^ group (nest 2 (break 0 ^^ elements ))
+                          ^^ break 0 ^^ string "]") in
+    let inj      = if attributes = [] then inj
+                   else pp_attributes attributes ^/^ inj
+    in inj
 
 and pp_ne_injection_kwd = function
-  NEInjAttr   _ -> "attributes"
-| NEInjSet    _ -> "set"
+  NEInjSet    _ -> "set"
 | NEInjMap    _ -> "map"
 | NEInjRecord _ -> "record"
 

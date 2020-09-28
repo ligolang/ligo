@@ -1,3 +1,5 @@
+type attributes = string list
+
 type expression_
 and expression_variable = expression_ Var.t Location.wrap
 let expression_variable_to_yojson var = Location.wrap_to_yojson (Var.to_yojson) var
@@ -16,9 +18,6 @@ let label_of_yojson = function
 
 module LMap = Map.Make( struct type t = label let compare (Label a) (Label b) = String.compare a b end)
 type 'a label_map = 'a LMap.t
-
-and ('a,'b) binder = ('a * 'b)
-
 
 include Enums
 include Enums_utils
@@ -54,8 +53,8 @@ let label_map_of_yojson row_elem_of_yojson m =
 let binder_to_yojson f g (a,b) = `List [f a; g b]
 let binder_of_yojson f g json = match json with
   | `List [a;b] -> (
-    match f a with 
-      Ok a -> 
+    match f a with
+      Ok a ->
       ( match g b with
           Ok b -> Ok (a,b)
         | Error e -> Error e)

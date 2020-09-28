@@ -107,8 +107,8 @@ let compare_label (a:label) (b:label) =
   let Label b = b in
   String.compare a b
 let compare_lmap f ma mb =
-  let la = LMap.to_kv_list ma in
-  let lb = LMap.to_kv_list mb in
+  let la = LMap.to_kv_list_rev ma in
+  let lb = LMap.to_kv_list_rev mb in
   let f  = fun (xa,ya) (xb, yb) ->
     compare_label xa xb <? fun () -> f ya yb 
   in

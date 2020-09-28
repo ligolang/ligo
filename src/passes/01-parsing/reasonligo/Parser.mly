@@ -68,7 +68,7 @@ sep_or_term_list(item,sep):
 par(X):
   "(" X ")" {
     let region = cover $1 $3
-    and value  = ({lpar=$1; inside=$2; rpar=$3} : _ par)
+    and value  = ({lpar=$1; inside=$2; rpar=$3} : _ CST.par)
     in {region; value} }
 
 (* Sequences
@@ -193,45 +193,78 @@ core_type:
    in TApp {region; value = $1,$2} }
 
 sum_type:
-  ioption("|") nsepseq(variant,"|") {
-    Scoping.check_variants (Utils.nsepseq_to_list $2);
-    let region = nsepseq_to_region (fun x -> x.region) $2
-    in TSum {region; value=$2} }
+  nsepseq(variant,"|") {
+    Scoping.check_variants (Utils.nsepseq_to_list $1);
+    let region = nsepseq_to_region (fun x -> x.region) $1 in
+    let value  = {variants=$1; attributes=[]; lead_vbar=None}
+    in TSum {region; value}
+  }
+| seq("[@attr]") "|" nsepseq(variant,"|") {
+    Scoping.check_variants (Utils.nsepseq_to_list $3);
+    let region = nsepseq_to_region (fun x -> x.region) $3 in
+    let value  = {variants=$3; attributes=$1; lead_vbar = Some $2}
+    in TSum {region; value} }
 
 variant:
-  "<constr>" { {$1 with value={constr=$1; arg=None}} }
+  nseq("[@attr]") "<constr>" {
+    let attr   = Utils.nseq_to_list $1 in
+    let region = cover (fst $1).region $2.region
+    and value  = {constr=$2; arg=None; attributes=attr}
+    in {region; value}
+  }
+| "<constr>" {
+    {$1 with value = {constr=$1; arg=None; attributes=[]}}
+  }
 | "<constr>" "(" fun_type ")" {
     let region = cover $1.region $4
-    and value  = {constr=$1; arg = Some (ghost,$3)}
+    and value  = {constr=$1; arg = Some (ghost,$3); attributes=[]}
+    in {region; value}
+  }
+| nseq("[@attr]") "<constr>" "(" fun_type ")" {
+    let attr   = Utils.nseq_to_list $1 in
+    let region = cover (fst $1).region $5
+    and value  = {constr=$2; arg = Some (ghost,$4); attributes=attr}
     in {region; value} }
 
 record_type:
-  "{" sep_or_term_list(field_decl,",") "}" {
-    let ne_elements, terminator = $2 in
+  seq("[@attr]") "{" sep_or_term_list(field_decl,",") "}" {
+    let ne_elements, terminator = $3 in
     let () = Utils.nsepseq_to_list ne_elements
              |> Scoping.check_fields in
-    let region = cover $1 $3
-    and value  = {compound = Some(Braces ($1,$3)); ne_elements; terminator}
+    let region = cover $2 $4
+    and value  = {
+      compound = Some (Braces ($2,$4));
+      ne_elements;
+      terminator;
+      attributes=$1}
     in TRecord {region; value} }
 
 type_expr_field:
   core_type | sum_type | record_type { $1 }
 
 field_decl:
-  field_name {
-    let value = {field_name=$1; colon=ghost; field_type = TVar $1}
-    in {$1 with value}
+  seq("[@attr]") field_name {
+    let value = {
+      field_name=$2;
+      colon=ghost;
+      field_type = TVar $2;
+      attributes=$1}
+    in {$2 with value}
   }
-| field_name ":" type_expr_field {
-    let stop   = type_expr_to_region $3 in
-    let region = cover $1.region stop
-    and value  = {field_name=$1; colon=$2; field_type=$3}
+| seq("[@attr]") field_name ":" type_expr_field {
+    let stop   = type_expr_to_region $4 in
+    let region = cover $2.region stop
+    and value  = {
+      field_name=$2;
+      colon=$3;
+      field_type=$4;
+      attributes=$1}
     in {region; value} }
 
 (* Top-level definitions *)
 
 let_declaration:
-  seq(Attr) "let" ioption("rec") let_binding {
+  seq("[@attr]") "let" ioption("rec") let_binding {
     let attributes = $1 in
     let kwd_let    = $2 in
     let kwd_rec    = $3 in
@@ -251,11 +284,13 @@ let_binding:
   }
 
 let_pattern_simple :
-  Ident                       {                Scoping.check_reserved_name $1; PVar $1 }
-| "_"                         {                                               PWild $1 }
-| unit                        {                                               PUnit $1 }
-| record_pattern              {         Scoping.check_pattern (PRecord $1); PRecord $1 }
-| par (closed_irrefutable)    { Scoping.check_pattern $1.value.inside; $1.value.inside }
+  Ident                       { Scoping.check_reserved_name $1; PVar $1 }
+| "_"                         {                                PWild $1 }
+| unit                        {                                PUnit $1 }
+| record_pattern              { Scoping.check_pattern (PRecord $1);
+                                PRecord $1 }
+| par (closed_irrefutable)    { Scoping.check_pattern $1.value.inside;
+                                $1.value.inside }
 | tuple (sub_irrefutable)     {
     Utils.nsepseq_iter Scoping.check_pattern $1;
     let region  = nsepseq_to_region pattern_to_region $1 in
@@ -304,12 +339,11 @@ pattern:
     let region = cover start stop in
     let value  =
       { lbracket = $1;
-	lpattern = $2;
-	comma    = $3;
-	ellipsis = $4;
-	rpattern = $5;
-	rbracket = $6
-      }
+        lpattern = $2;
+        comma    = $3;
+        ellipsis = $4;
+        rpattern = $5;
+        rbracket = $6}
     in PList (PCons {value;region})
   }
 | tuple(sub_pattern) {
@@ -343,7 +377,8 @@ record_pattern:
     let region = cover $1 $3 in
     let value  = {compound = Some (Braces ($1,$3));
                   ne_elements;
-                  terminator}
+                  terminator;
+                  attributes=[]}
     in {region; value} }
 
 field_pattern:
@@ -592,17 +627,15 @@ switch_expr(right_expr):
     in ECase {region; value} }
 
 switch_expr_:
-  par(expr)   { $1.value.inside }
-| core_expr_2 {              $1 }
+  par(expr)   { ($1.value : _ CST.par).inside }
+| core_expr_2 { $1 }
 
 cases(right_expr):
   nseq(case_clause(right_expr)) {
     let hd, tl = $1 in
     let nseq = snd hd, tl in
-    {
-      region = nsepseq_to_region (fun x -> x.region) nseq;
-      value  = nseq }
-  }
+    {region = nsepseq_to_region (fun x -> x.region) nseq;
+     value  = nseq} }
 
 case_clause(right_expr):
   "|" pattern "=>" right_expr ";"? {
@@ -614,7 +647,7 @@ case_clause(right_expr):
     in $1,{region; value} }
 
 let_expr(right_expr):
-  seq(Attr) "let" ioption("rec") let_binding ";" right_expr {
+  seq("[@attr]") "let" ioption("rec") let_binding ";" right_expr {
     let attributes = $1 in
     let kwd_let = $2 in
     let kwd_rec = $3 in
@@ -801,7 +834,7 @@ core_expr:
   common_expr
 | list_or_spread      {         $1 }
 | sequence            {    ESeq $1 }
-| record              { ERecord $1 }
+| record_expr         { ERecord $1 }
 | par(expr)           {    EPar $1 }
 
 module_field:
@@ -867,7 +900,8 @@ update_record:
       comma    = $4;
       updates  = {value = {compound = None;
                           ne_elements;
-                          terminator};
+                          terminator;
+                          attributes=[]};
                  region = cover $4 $6};
       rbrace   = $6}
     in {region; value} }
@@ -941,18 +975,24 @@ sequence:
     let region   = cover $1 $3
     in {region; value} }
 
-record:
+record_expr:
   "{" field_assignment more_field_assignments? "}" {
     let compound = Some (Braces ($1,$4)) in
     let region   = cover $1 $4 in
-
     match $3 with
     | Some (comma, elts) ->
         let ne_elements = Utils.nsepseq_cons $2 comma elts in
-        { value = {compound; ne_elements; terminator = None}; region }
+        let value = {compound;
+                     ne_elements;
+                     terminator=None;
+                     attributes=[]}
+        in {value; region}
     | None ->
-        let ne_elements = ($2,[]) in
-        { value = {compound; ne_elements; terminator = None}; region }
+       let value = {compound;
+                    ne_elements = ($2,[]);
+                    terminator=None;
+                    attributes=[]}
+       in {value; region}
   }
 | "{" field_name more_field_assignments "}" {
     let value = {
@@ -964,7 +1004,11 @@ record:
     let ne_elements = Utils.nsepseq_cons field_name comma elts in
     let compound = Some (Braces ($1,$4)) in
     let region   = cover $1 $4 in
-    {value = {compound; ne_elements; terminator = None}; region} }
+    let value = {compound;
+                 ne_elements;
+                 terminator=None;
+                 attributes=[]}
+    in {value; region} }
 
 field_assignment_punning:
   (* This can only happen with multiple fields -

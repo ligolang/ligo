@@ -725,6 +725,157 @@ let make_abstract_record = (z: string, y: int, x: string, w: bool, v: int) : tes
 
 </Syntax>
 
+## Layout type annotation attribute
+
+Attribute `layout` on record and variant type declarations allows you to inform LIGO that types and value must be compiled to a given layout.
+Right combed and balanced tree layouts are supported, they must be annotated respectively with `comb` and `tree`.
+
+
+### Syntax
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=type_layout_attr
+
+type comb_record is [@layout:comb] record [
+  a : int ;
+  b : string ;
+  c : nat ;
+]
+
+type comb_variant is [@layout:comb]
+  | Foo of int
+  | Bar of string
+  | Baz of nat
+
+type tree_record is [@layout:tree] record [
+  foo : int ;
+  bar : string ;
+  baz : nat ;
+]
+
+type tree_variant is [@layout:tree]
+  | A of int
+  | B of string
+  | C of nat
+```
+</Syntax>
+
+<Syntax syntax="cameligo">
+
+```cameligo group=type_layout_attr
+type comb_record = [@layout:comb] {
+  a : int ;
+  b : string ;
+  c : nat ;
+}
+
+type comb_variant = [@layout:comb]
+  | Foo of int
+  | Bar of string
+  | Baz of nat
+
+type tree_record = [@layout:tree] {
+  foo : int ;
+  bar : string ;
+  baz : nat ;
+}
+
+type tree_variant = [@layout:tree]
+  | A of int
+  | B of string
+  | C of nat
+```
+
+</Syntax>
+
+<Syntax syntax="reasonligo">
+
+```reasonligo group=type_layout_attr
+type comb_record = [@layout:comb] {
+  a : int ,
+  b : string ,
+  c : nat ,
+}
+
+type comb_variant = [@layout:comb]
+  | Foo (int)
+  | Bar (string)
+  | Baz (nat)
+
+type tree_record = [@layout:tree] {
+  foo : int ,
+  bar : string ,
+  baz : nat ,
+}
+
+type tree_variant = [@layout:tree]
+  | A (int)
+  | B (string)
+  | C (nat)
+```
+
+</Syntax>
+
+## Field annot attribute
+
+
+Attribute `annot` on variant and record type declarations controls michelson field annotation.
+
+### Syntax
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=type_annot_attr
+type annot_record is record [
+  [@annot:aa] a : int ;
+  [@annot:bb] b : string ;
+  [@annot:cc] c : nat ;
+]
+
+type annot_variant is
+  | [@annot:one] Foo of int
+  | [@annot:two] Bar of string
+  | [@annot:three] Baz of nat
+```
+
+</Syntax>
+
+<Syntax syntax="cameligo">
+
+```cameligo group=type_annot_attr
+type annot_record = {
+  [@annot:aa] a : int ;
+  [@annot:bb] b : string ;
+  [@annot:cc] c : nat ;
+}
+
+type annot_variant =
+  | [@annot:one] Foo of int
+  | [@annot:two] Bar of string
+  | [@annot:three] Baz of nat
+```
+
+</Syntax>
+
+<Syntax syntax="reasonligo">
+
+```reasonligo group=type_annot_attr
+type annot_record = {
+  [@annot:aa] a : int ,
+  [@annot:bb] b : string ,
+  [@annot:cc] c : nat ,
+}
+
+type annot_variant =
+  | [@annot:one] Foo (int)
+  | [@annot:two] Bar (string)
+  | [@annot:three] Baz (nat)
+```
+
+</Syntax>
+
 ## Amendment
 With the upcoming 007 amendment to Tezos this will change though, and also 
 `pair`'s can be ordered differently.
+

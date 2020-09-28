@@ -38,20 +38,52 @@ let add_ez_binder : expression_variable -> type_expression -> t -> t = fun k v e
 let add_ez_declaration : expression_variable -> expression -> t -> t = fun k ae e ->
   add_expr k (make_element_declaration e ae) e
 
-let add_ez_sum_type ?(env = empty) ?(type_name = Var.of_name "a_sum_type") (lst : (label * row_element) list) =
-  add_type type_name (make_t_ez_sum lst) env
-
 let get_constructor : label -> t -> (type_expression * type_expression) option = fun k x -> (* Left is the constructor, right is the sum type *)
-    let aux = fun {type_variable=_ ; type_} ->
-      match type_.type_content with
-      | T_sum m ->
-        (match LMap.find_opt k m with
-           Some {associated_type ; _} -> Some (associated_type , type_)
-         | None -> None)
-      | _ -> None
-    in
-    List.find_map aux (get_type_environment x)
+  let aux = fun {type_variable=_ ; type_} ->
+    match type_.type_content with
+    | T_sum m ->
+      (match LMap.find_opt k m.content with
+          Some {associated_type ; _} -> Some (associated_type , type_)
+        | None -> None)
+    | _ -> None
+  in
+  List.find_map aux (get_type_environment x)
 
+let get_record : _ label_map -> t -> rows option = fun lmap e ->
+  let aux = fun {type_variable=_ ; type_} ->
+    match type_.type_content with
+    | T_record m -> Option.(
+      let lst_kv = LMap.to_kv_list lmap in
+      let lst_kv' = LMap.to_kv_list m.content in
+      map (fun () -> m) @@ Misc.assert_list_eq (
+        fun (ka,va) (kb,vb) ->
+          let Label ka = ka in
+          let Label kb = kb in
+          Misc.assert_eq ka kb >>= fun () ->
+          Misc.assert_type_expression_eq (va.associated_type, vb.associated_type)
+      ) lst_kv lst_kv'
+    )
+    | _ -> None
+  in
+  List.find_map aux (get_type_environment e)
+
+let get_sum : _ label_map -> t -> rows option = fun lmap e ->
+  let aux = fun {type_variable=_ ; type_} ->
+    match type_.type_content with
+    | T_sum m -> Option.(
+      let lst_kv = LMap.to_kv_list lmap in
+      let lst_kv' = LMap.to_kv_list m.content in
+      map (fun () -> m) @@ Misc.assert_list_eq (
+        fun (ka,va) (kb,vb) ->
+          let Label ka = ka in
+          let Label kb = kb in
+          Misc.assert_eq ka kb >>= fun () ->
+          Misc.assert_type_expression_eq (va.associated_type, vb.associated_type)
+      ) lst_kv lst_kv'
+    )
+    | _ -> None
+  in
+  List.find_map aux (get_type_environment e)
 
 module PP = struct
   open Format

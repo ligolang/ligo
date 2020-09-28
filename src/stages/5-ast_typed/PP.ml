@@ -10,7 +10,7 @@ let lmap_sep value sep ppf m =
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
 let record_sep value sep ppf (m : 'a label_map) =
-  let lst = LMap.to_kv_list m in
+  let lst = LMap.to_kv_list_rev m in
   let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
   let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" label k value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst
@@ -22,7 +22,7 @@ let tuple_sep value sep ppf m =
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
 let record_sep_t value sep ppf (m : 'a label_map) =
-  let lst = LMap.to_kv_list m in
+  let lst = LMap.to_kv_list_rev m in
   let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
   let new_pp ppf (k, {associated_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value associated_type in
   fprintf ppf "%a" (list_sep new_pp sep) lst
@@ -63,12 +63,19 @@ let list_sep_d_par f ppf lst =
 let rec type_content : formatter -> type_content -> unit =
   fun ppf tc ->
   match tc with
-  | T_sum m -> fprintf ppf "@[<h>sum[%a]@]" (lmap_sep_d type_expression) (LMap.to_kv_list @@ LMap.map (fun {associated_type;_} -> associated_type) m)
-  | T_record m -> fprintf ppf "%a" (tuple_or_record_sep_type type_expression) m
+  | T_sum m -> fprintf ppf "@[<h>sum[%a]@]" (lmap_sep_d type_expression) (LMap.to_kv_list_rev @@ LMap.map (fun {associated_type;_} -> associated_type) m.content)
+  | T_record m -> fprintf ppf "%a" record m
   | T_arrow a -> fprintf ppf "@[<h>%a ->@ %a@]" type_expression a.type1 type_expression a.type2
   | T_variable tv -> type_variable ppf tv
-  | T_wildcard -> fprintf ppf "_"
   | T_constant {type_constant=tc;arguments} -> fprintf ppf "%a%a" type_constant tc (list_sep_d_par type_expression) arguments
+
+and record ppf {content; layout=_} =
+  fprintf ppf "%a" 
+    (tuple_or_record_sep_type type_expression) content
+
+and option_layout ppf l = match l with
+  | Some l -> fprintf ppf "[layout:%a]" layout l
+  | None   -> fprintf ppf "" 
 
 and type_expression ppf (te : type_expression) : unit =
   fprintf ppf "%a" type_content te.type_content
@@ -259,7 +266,7 @@ and p_row ppf {p_row_tag; p_row_args} =
               p_row_args : %a
               @]@,}"
     row_tag p_row_tag
-    (lmap_sep_d type_value) @@ LMap.to_kv_list p_row_args
+    (lmap_sep_d type_value) @@ LMap.to_kv_list_rev p_row_args
 
 and type_value_ ppf = function
   P_forall   fa -> fprintf ppf "%a" p_forall fa
@@ -328,7 +335,7 @@ let c_row_simpl ppf ({reason_row_simpl; tv; r_tag; tv_map}) =
     reason_row_simpl
     type_variable tv
     row_tag r_tag
-    (lmap_sep_d type_variable) @@ LMap.to_kv_list tv_map
+    (lmap_sep_d type_variable) @@ LMap.to_kv_list_rev tv_map
 
 let type_constraint_simpl ppf (tc: type_constraint_simpl) = match tc with
   | SC_Constructor c -> fprintf ppf "SC_Constructor (%a)" c_constructor_simpl c

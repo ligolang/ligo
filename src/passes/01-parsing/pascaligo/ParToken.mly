@@ -14,6 +14,7 @@ module LexToken = Lexer_pascaligo.LexToken
 %token    <(LexToken.lexeme * Z.t) Region.reg> Mutez    "<mutez>"
 %token            <LexToken.lexeme Region.reg> Ident    "<ident>"
 %token            <LexToken.lexeme Region.reg> Constr   "<constr>"
+%token                     <string Region.reg> Attr     "[@attr]"
 %token <LexToken.lexeme Region.reg Region.reg> Lang     "<lang>"
 
   (* Symbols *)
@@ -48,7 +49,6 @@ module LexToken = Lexer_pascaligo.LexToken
   (* Keywords *)
 
 %token <Region.t> And         "and"
-%token <Region.t> Attributes  "attributes"
 %token <Region.t> Begin       "begin"
 %token <Region.t> BigMap      "big_map"
 %token <Region.t> Block       "block"

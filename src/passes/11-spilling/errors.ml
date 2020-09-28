@@ -10,6 +10,8 @@ type spilling_error = [
   | `Spilling_bad_decompile of Mini_c.value
   ]
 
+type 'a spilling_result = ('a , spilling_error) Trace.result
+
 let stage = "spilling"
 
 let translation_tracer loc err = `Spilling_tracer (loc , err)

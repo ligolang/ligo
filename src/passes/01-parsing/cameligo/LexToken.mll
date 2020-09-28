@@ -510,11 +510,7 @@ let mk_constr lexeme region =
 
 (* Attributes *)
 
-type attr_err = Invalid_attribute
-
-let mk_attr header lexeme region =
-  if header = "[@" then Error Invalid_attribute
-  else Ok (Attr Region.{value=lexeme; region})
+let mk_attr lexeme region = Attr Region.{value=lexeme; region}
 
 (* Language injection *)
 
@@ -650,6 +646,111 @@ let check_right_context token next_token buffer : unit =
                      else fail region Missing_break
               else ()
         | _::_ -> ()
+
+
+(* Unlexing the tokens *)
+
+let gen_sym prefix =
+  let count = ref 0 in
+  fun () -> incr count;
+         prefix ^ string_of_int !count
+
+let id_sym   = gen_sym "id"
+and ctor_sym = gen_sym "C"
+
+let concrete = function
+  (* Identifiers, labels, numbers and strings *)
+
+  "Ident"   -> id_sym ()
+| "Constr"  -> ctor_sym ()
+| "Int"      -> "1"
+| "Nat"      -> "1n"
+| "Mutez"    -> "1mutez"
+| "String"   -> "\"a string\""
+| "Verbatim" -> "{|verbatim|}"
+| "Bytes"    -> "0xAA"
+| "Attr"     -> "[@attr]"
+| "Lang"     -> "[%Michelson {UNPAIR}]"
+
+  (* Symbols *)
+
+| "ARROW" ->   "->"
+| "CONS"  ->   "::"
+| "CAT"   ->   "^"
+
+  (* Arithmetics *)
+
+| "MINUS"   -> "-"
+| "PLUS"    -> "+"
+| "SLASH"   -> "/"
+| "TIMES"   -> "*"
+
+  (* Compounds *)
+
+| "LPAR"     -> "("
+| "RPAR"     -> ")"
+| "LBRACKET" -> "["
+| "RBRACKET" -> "]"
+| "LBRACE"   -> "{"
+| "RBRACE"   -> "}"
+
+  (* Separators *)
+
+| "COMMA" -> ","
+| "SEMI"  -> ";"
+| "VBAR"  -> "|"
+| "COLON" -> ":"
+| "DOT"   -> "."
+
+  (* Wildcard *)
+
+| "WILD" -> "_"
+
+  (* Comparisons *)
+
+| "EQ" -> "="
+| "NE" -> "<>"
+| "LT" -> "<"
+| "GT" -> ">"
+| "LE" -> "<="
+| "GE" -> ">="
+
+| "BOOL_OR"  -> "||"
+| "BOOL_AND" -> "&&"
+
+  (* Keywords *)
+
+| "Begin" -> "begin"
+| "Else"  -> "else"
+| "End"   -> "end"
+| "False" -> "false"
+| "Fun"   -> "fun"
+| "Rec"   -> "rec"
+| "If"    -> "if"
+| "In"    -> "in"
+| "Let"   -> "let"
+| "Match" -> "match"
+| "Mod"   -> "mod"
+| "Not"   -> "not"
+| "Of"    -> "of"
+| "Or"    -> "or"
+| "Then"  -> "then"
+| "True"  -> "true"
+| "Type"  -> "type"
+| "With"  -> "with"
+
+  (* Data constructors *)
+
+| "C_None"  -> "None"
+| "C_Some"  -> "Some"
+
+  (* Virtual tokens *)
+
+| "EOF" -> ""
+
+  (* This case should not happen! *)
+
+| _  -> "\\Unknown" (* Backslash meant to trigger an error *)
 
 (* END TRAILER *)
 }

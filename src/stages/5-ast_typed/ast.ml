@@ -14,13 +14,16 @@ type te_lmap = row_element label_map
 and type_meta = ast_core_type_expression option
 
 and type_content =
-  | T_sum of te_lmap
-  | T_record of te_lmap
+  | T_sum of rows
+  | T_record of rows
   | T_arrow of arrow
   | T_variable of type_variable
-  (* TODO: remove this when we remove the old typer *)
-  | T_wildcard
   | T_constant of type_operator
+
+and rows = {
+  content : row_element label_map;
+  layout : layout ;
+}
 
 and arrow = {
     type1: type_expression;

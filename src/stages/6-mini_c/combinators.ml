@@ -185,6 +185,8 @@ let e_var ?loc vname t: expression = Expression.(make_tpl ?loc(
     t
   ))
 
+let ec_pair a b : expression_content = 
+  E_constant {cons_name=C_PAIR;arguments=[a; b]}
 
 let d_unit : value = D_unit
 

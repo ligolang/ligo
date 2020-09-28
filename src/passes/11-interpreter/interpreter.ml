@@ -300,7 +300,7 @@ and eval : Ast_typed.expression -> env -> (value , _) result
         (fun (label,(v:Ast_typed.expression)) ->
           let%bind v' = eval v env in
           ok (label,v'))
-        (LMap.to_kv_list recmap) in
+        (LMap.to_kv_list_rev recmap) in
       ok @@ V_Record (LMap.of_list lv')
     | E_record_accessor { record ; path} -> (
       let%bind record' = eval record env in

@@ -18,6 +18,10 @@ let bind_fold_lmap f init lmap =
     acc >>? fun acc ->
     f acc k v in 
   ok init |> fold aux lmap 
+let bind_iter_lmap f lmap =
+  let aux () k v = f k v in
+  bind_fold_lmap aux () lmap
+
  
 let bind_fold_map_lmap f init lmap =
   let open Trace in
@@ -56,10 +60,10 @@ let list_of_record_or_tuple (m: _ LMap.t) =
   if (is_tuple_lmap m) then
     List.map snd @@ tuple_of_record m
   else
-    List.rev @@ LMap.to_list m
+    List.rev @@ LMap.to_list_rev m
 
 let kv_list_of_record_or_tuple (m: _ LMap.t) =
   if (is_tuple_lmap m) then
     tuple_of_record m
   else
-    List.rev @@ LMap.to_kv_list m
+    List.rev @@ LMap.to_kv_list_rev m

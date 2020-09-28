@@ -6,15 +6,6 @@ let bad_contract basename =
   "../../test/contracts/negative/" ^ basename
 
 let%expect_test _ =
-  run_ligo_bad [ "interpret" ; "--init-file="^(bad_contract "michelson_converter_no_annotation.mligo") ; "l4"] ;
-  [%expect {|
-    [1mFile "../../test/contracts/negative/michelson_converter_no_annotation.mligo", line 4, characters 9-39:[0m
-      3 |
-      4 | let l4 = [1m[31mLayout.convert_to_left_comb v4[0m
-
-    [1m[31mError[0m: Incorrect argument provided to Layout.convert_to_(left|right)_comb.
-    The given argument must be annotated with the type of the value. |}] ;
-
   run_ligo_bad [ "interpret" ; "--init-file="^(bad_contract "michelson_converter_short_record.mligo") ; "l1"] ;
   [%expect {|
     [1mFile "../../test/contracts/negative/michelson_converter_short_record.mligo", line 4, characters 9-44:[0m
@@ -134,12 +125,8 @@ let%expect_test _ =
         (or (pair %option1 (string %bar) (nat %baz)) (pair %option2 (string %bar) (nat %baz))) ;
       storage nat ;
       code { CAR ;
-             IF_LEFT
-               { LEFT (pair (string %bar) (nat %baz)) }
-               { RIGHT (pair (string %bar) (nat %baz)) } ;
-             IF_LEFT
-               { LEFT (pair (string %bar) (nat %baz)) }
-               { RIGHT (pair (string %bar) (nat %baz)) } ;
+             IF_LEFT { LEFT (pair string nat) } { RIGHT (pair string nat) } ;
+             IF_LEFT { LEFT (pair string nat) } { RIGHT (pair string nat) } ;
              IF_LEFT { CDR ; NIL operation ; PAIR } { CDR ; NIL operation ; PAIR } } } |}]
 
 let%expect_test _ =

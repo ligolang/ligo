@@ -261,7 +261,6 @@ type ident_err = Reserved_name
 type   nat_err = Invalid_natural
                | Non_canonical_zero_nat
 type   sym_err = Invalid_symbol
-type  attr_err = Invalid_attribute
 type   kwd_err = Invalid_keyword
 
 (* LEXIS *)
@@ -486,10 +485,7 @@ let mk_constr lexeme region = mk_constr' lexeme region lexicon
 
 (* Attributes *)
 
-let mk_attr header lexeme region =
-  if header = "[@" then
-    Ok (Attr Region.{value=lexeme; region})
-  else Error Invalid_attribute
+let mk_attr lexeme region = Attr Region.{value=lexeme; region}
 
 (* Language injection *)
 
@@ -628,6 +624,108 @@ let check_right_context token next_token buffer : unit =
                      else fail region Missing_break
               else ()
         | _::_ -> ()
+
+
+(* Unlexing the tokens *)
+
+let gen_sym prefix =
+  let count = ref 0 in
+  fun () -> incr count;
+         prefix ^ string_of_int !count
+
+let id_sym   = gen_sym "id"
+and ctor_sym = gen_sym "C"
+
+let concrete = function
+  (* Identifiers, labels, numbers and strings *)
+
+  "Ident"   -> id_sym ()
+| "Constr"  -> ctor_sym ()
+| "Int"      -> "1"
+| "Nat"      -> "1n"
+| "Mutez"    -> "1mutez"
+| "String"   -> "\"a string\""
+| "Verbatim" -> "{|verbatim|}"
+| "Bytes"    -> "0xAA"
+| "Attr"     -> "[@attr]"
+| "Lang"     -> "[%Michelson {UNPAIR}]"
+
+  (* Symbols *)
+
+| "CAT" -> "++"
+
+  (* Arithmetics *)
+
+| "MINUS"   -> "-"
+| "PLUS"    -> "+"
+| "SLASH"   -> "/"
+| "TIMES"   -> "*"
+
+  (* Compounds *)
+
+| "LPAR"     -> "("
+| "RPAR"     -> ")"
+| "LBRACKET" -> "["
+| "RBRACKET" -> "]"
+| "LBRACE"   -> "{"
+| "RBRACE"   -> "}"
+
+  (* Separators *)
+
+| "COMMA"    -> ","
+| "SEMI"     -> ";"
+| "VBAR"     -> "|"
+| "COLON"    -> ":"
+| "DOT"      -> "."
+| "ELLIPSIS" -> "..."
+| "ARROW"    -> "=>"
+
+  (* Wildcard *)
+
+| "WILD" ->     "_"
+
+  (* Comparisons *)
+
+| "EQ"   -> "="
+| "EQEQ" -> "=="
+| "NE"   -> "!="
+| "LT"   -> "<"
+| "GT"   -> ">"
+| "LE"   -> "<="
+| "GE"   -> ">="
+
+  (* Logic *)
+
+| "BOOL_OR"  -> "||"
+| "BOOL_AND" -> "&&"
+| "NOT"      -> "!"
+
+  (* Keywords *)
+
+| "Else"    -> "else"
+| "False"   -> "false"
+| "If"      -> "if"
+| "Let"     -> "let"
+| "Mod"     -> "mod"
+| "Or"      -> "or"
+| "Rec"     -> "rec"
+| "Switch"  -> "switch"
+| "True"    -> "true"
+| "Type"    -> "type"
+
+  (* Data constructors *)
+
+| "C_None"  -> "None"
+| "C_Some"  -> "Some"
+
+  (* Virtual tokens *)
+
+| "EOF" -> ""
+
+  (* This case should not happen! *)
+
+| _  -> "\\Unknown" (* Backslash meant to trigger an error *)
+
 
 (* END TRAILER *)
 }

@@ -39,7 +39,7 @@ let rec check_recursive_call : expression_variable -> bool -> expression -> (uni
     let%bind _ = check_recursive_call_in_matching n final_path cases in
     ok ()
   | E_record elm -> 
-    let es = LMap.to_list elm in
+    let es = LMap.to_list_rev elm in
     let%bind _ = bind_map_list (check_recursive_call n false) es in
     ok ()
   | E_record_accessor {record;_} ->

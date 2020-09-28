@@ -47,7 +47,7 @@ module TestExpressions = struct
 
   let lambda () : (unit, _) result =
     test_expression
-      I.(e_lambda {var=Location.wrap @@ Var.of_name "x"; ty= t_int ()} (e_annotation (e_var "x") (t_int ())))
+      I.(e_lambda (Location.wrap @@ Var.of_name "x") (Some (t_int ())) (Some (t_int ())) (e_var "x"))
       O.(t_function (t_int ()) (t_int ()) ())
 
   let tuple () : (unit, _) result =
@@ -56,13 +56,14 @@ module TestExpressions = struct
       O.(make_t_ez_record [("0",t_int ()); ("1",t_string ())])
 
   let constructor () : (unit, _) result =
-    let variant_foo_bar : (label * Typed.row_element) list = [
-        (Label "foo", {associated_type = Typed.t_int ()    ; michelson_annotation = None ; decl_pos = 0});
-        (Label "bar", {associated_type = Typed.t_string () ; michelson_annotation = None ; decl_pos = 1}) ]
-    in test_expression
-      ~env:(E.add_ez_sum_type variant_foo_bar)
+    let variant_foo_bar = Ast_typed.t_sum_ez [
+        ("foo", Typed.t_int () );
+        ("bar", Typed.t_string () ); ]
+    in
+    test_expression
+      ~env:(E.add_type (Var.of_name "test_t") variant_foo_bar E.empty)
       I.(e_constructor "foo" (e_int (Z.of_int 32)))
-      O.(make_t_ez_sum variant_foo_bar)
+      variant_foo_bar
 
   let record () : (unit, _) result =
     test_expression

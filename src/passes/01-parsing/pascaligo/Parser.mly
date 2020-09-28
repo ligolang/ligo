@@ -10,7 +10,11 @@ open Simple_utils.Region
 module CST = Cst.Pascaligo
 open CST
 
-(* Utility *)
+(* Utilities *)
+
+let first_region = function
+  [] -> None
+| x::_ -> Some x.Region.region
 
 let mk_comp f arg1 op arg2 =
   let start  = expr_to_region arg1
@@ -37,63 +41,59 @@ let mk_arith f arg1 op arg2 =
 %type <CST.t> contract
 %type <CST.expr> interactive_expr
 
-%on_error_reduce
-  nsepseq(case_clause(expr),VBAR)
-  nsepseq(core_pattern,SEMI)
-  seq(__anonymous_0(core_pattern,SEMI))
-  pattern
-  nsepseq(core_pattern,CONS)
-  nsepseq(case_clause(if_clause),VBAR)
-  lhs
-  map_lookup
-  nsepseq(statement,SEMI)
-  seq(__anonymous_0(statement,SEMI))
-  nsepseq(core_pattern,COMMA)
-  constr_pattern
-  core_expr
-  module_fun
-  nsepseq(param_decl,SEMI)
-  nsepseq(selection,DOT)
-  nsepseq(field_path_assignment,SEMI)
-  seq(__anonymous_0(field_path_assignment,SEMI))
-  nsepseq(binding,SEMI)
-  seq(__anonymous_0(binding,SEMI))
-  nsepseq(field_assignment,SEMI)
-  seq(__anonymous_0(field_assignment,SEMI))
-  nsepseq(expr,SEMI)
-  seq(__anonymous_0(expr,SEMI))
-  add_expr
-  unary_expr
-  nsepseq(String,SEMI)
-  seq(__anonymous_0(String,SEMI))
-  const_decl
-  open_const_decl
-  fun_decl
-  variant
-  core_type
-  nsepseq(field_decl,SEMI)
-  seq(__anonymous_0(field_decl,SEMI))
-  nsepseq(core_type,TIMES)
-  type_decl
-  cartesian
-  fun_type
-  cons_expr
-  cat_expr
-  set_membership
-  disj_expr
-  nsepseq(variant,VBAR)
-  core_pattern
-  nsepseq(type_expr,COMMA)
-  expr
-  nsepseq(expr,COMMA)
-  option(SEMI)
-  option(VBAR)
-%on_error_reduce
-   projection
-%on_error_reduce
-   option(arguments)
-%on_error_reduce
-   path
+%on_error_reduce nseq(__anonymous_0(field_decl,SEMI))
+%on_error_reduce nseq(__anonymous_0(field_path_assignment,SEMI))
+%on_error_reduce nseq(__anonymous_0(binding,SEMI))
+%on_error_reduce nseq(__anonymous_0(field_assignment,SEMI))
+%on_error_reduce nseq(__anonymous_0(core_pattern,SEMI))
+%on_error_reduce nseq(__anonymous_0(expr,SEMI))
+%on_error_reduce nsepseq(field_assignment,SEMI)
+%on_error_reduce nseq(__anonymous_0(statement,SEMI))
+%on_error_reduce nseq(Attr)
+%on_error_reduce nsepseq(case_clause(expr),VBAR)
+%on_error_reduce nsepseq(core_pattern,SEMI)
+%on_error_reduce pattern
+%on_error_reduce nsepseq(core_pattern,CONS)
+%on_error_reduce nsepseq(case_clause(if_clause),VBAR)
+%on_error_reduce lhs
+%on_error_reduce map_lookup
+%on_error_reduce nsepseq(statement,SEMI)
+%on_error_reduce nsepseq(core_pattern,COMMA)
+%on_error_reduce constr_pattern
+%on_error_reduce core_expr
+%on_error_reduce module_fun
+%on_error_reduce nsepseq(param_decl,SEMI)
+%on_error_reduce nsepseq(selection,DOT)
+%on_error_reduce nsepseq(field_path_assignment,SEMI)
+%on_error_reduce nsepseq(binding,SEMI)
+%on_error_reduce nsepseq(expr,SEMI)
+%on_error_reduce add_expr
+%on_error_reduce unary_expr
+%on_error_reduce const_decl
+%on_error_reduce open_const_decl
+%on_error_reduce fun_decl
+%on_error_reduce variant
+%on_error_reduce core_type
+%on_error_reduce nsepseq(field_decl,SEMI)
+%on_error_reduce nsepseq(core_type,TIMES)
+%on_error_reduce type_decl
+%on_error_reduce cartesian
+%on_error_reduce fun_type
+%on_error_reduce cons_expr
+%on_error_reduce cat_expr
+%on_error_reduce set_membership
+%on_error_reduce disj_expr
+%on_error_reduce nsepseq(variant,VBAR)
+%on_error_reduce core_pattern
+%on_error_reduce nsepseq(type_expr,COMMA)
+%on_error_reduce expr
+%on_error_reduce nsepseq(expr,COMMA)
+%on_error_reduce option(SEMI)
+%on_error_reduce option(VBAR)
+%on_error_reduce projection
+%on_error_reduce option(arguments)
+%on_error_reduce path
+
 %%
 
 (* RULES *)
@@ -152,14 +152,15 @@ brackets(X):
 
 (* Possibly empty sequence of items *)
 
-seq(X):
-  (**)     {     [] }
-| X seq(X) { $1::$2 }
+%inline seq(X):
+  (**)    { [] }
+| nseq(X) { let hd,tl = $1 in hd::tl }
 
 (* Non-empty sequence of items *)
 
 nseq(X):
-  X seq(X) { $1,$2 }
+  X         { $1, [] }
+| X nseq(X) { let hd,tl = $2 in $1, hd::tl }
 
 (* Non-empty separated sequence of items *)
 
@@ -191,16 +192,6 @@ declaration:
   type_decl  {  TypeDecl $1 }
 | const_decl { ConstDecl $1 }
 | fun_decl   {   FunDecl $1 }
-| attr_decl  {  AttrDecl $1 }
-
-(* Attribute declarations *)
-
-attr_decl:
-  open_attr_decl ";"? { $1 }
-
-open_attr_decl:
-  ne_injection("attributes","<string>") {
-    $1 (fun region -> NEInjAttr region) }
 
 (* Type declarations *)
 
@@ -278,49 +269,83 @@ type_tuple:
   par(nsepseq(type_expr,",")) { $1 }
 
 sum_type:
-  "|"? nsepseq(variant,"|") {
-    Scoping.check_variants (Utils.nsepseq_to_list $2);
-    let region = nsepseq_to_region (fun x -> x.region) $2
-    in TSum {region; value=$2} }
+  nsepseq(variant,"|") {
+    Scoping.check_variants (Utils.nsepseq_to_list $1);
+    let region = nsepseq_to_region (fun x -> x.region) $1 in
+    let value  = {variants=$1; attributes=[]; lead_vbar=None}
+    in TSum {region; value}
+  }
+| seq("[@attr]") "|" nsepseq(variant,"|") {
+    Scoping.check_variants (Utils.nsepseq_to_list $3);
+    let region = nsepseq_to_region (fun x -> x.region) $3 in
+    let value  = {variants=$3; attributes=$1; lead_vbar = Some $2}
+    in TSum {region; value} }
 
 variant:
-  "<constr>" { {$1 with value = {constr=$1; arg=None}} }
+  nseq("[@attr]") "<constr>" {
+    let region  = cover (fst $1).region $2.region in
+    let value = {constr=$2; arg=None; attributes=Utils.nseq_to_list $1}
+    in {region; value}
+  }
+| "<constr>" {
+    {$1 with value = {constr=$1; arg=None; attributes=[]}}
+  }
+| nseq("[@attr]") "<constr>" "of" fun_type {
+    let stop   = type_expr_to_region $4 in
+    let region = cover (fst $1).region stop
+    and value  = {constr=$2;
+                  arg = Some ($3,$4);
+                  attributes=Utils.nseq_to_list $1}
+    in {region; value}
+  }
 | "<constr>" "of" fun_type {
-    let region = cover $1.region (type_expr_to_region $3)
-    and value  = {constr=$1; arg = Some ($2,$3)}
+    let stop   = type_expr_to_region $3 in
+    let region = cover $1.region stop
+    and value  = {constr=$1;
+                  arg = Some ($2,$3);
+                  attributes=[]}
     in {region; value} }
 
 record_type:
-  "record" sep_or_term_list(field_decl,";") "end" {
-    let ne_elements, terminator = $2 in
-    let () = Utils.nsepseq_to_list ne_elements
-             |> Scoping.check_fields in
-    let region = cover $1 $3
-    and value  = {kind      = NEInjRecord $1;
-                  enclosing = End $3;
-                  ne_elements;
-                  terminator}
+  seq("[@attr]") "record" sep_or_term_list(field_decl,";") "end" {
+    let fields, terminator = $3 in
+    let () = Utils.nsepseq_to_list fields |> Scoping.check_fields in
+    let region =
+      match first_region $1 with
+        None -> cover $2 $4
+      | Some start -> cover start $4
+    and value  = {kind        = NEInjRecord $2;
+                  enclosing   = End $4;
+                  ne_elements = fields;
+                  terminator;
+                 attributes=$1}
     in TRecord {region; value}
   }
-| "record" "[" sep_or_term_list(field_decl,";") "]" {
-   let ne_elements, terminator = $3 in
-   let region = cover $1 $4
-   and value  = {kind      = NEInjRecord $1;
-                 enclosing = Brackets ($2,$4);
-                 ne_elements;
-                 terminator}
-   in TRecord {region; value} }
+| seq("[@attr]") "record" "[" sep_or_term_list(field_decl,";") "]" {
+    let fields, terminator = $4 in
+    let () = Utils.nsepseq_to_list fields |> Scoping.check_fields in
+    let region =
+      match first_region $1 with
+        None -> cover $2 $5
+      | Some start -> cover start $5
+    and value  = {kind      = NEInjRecord $2;
+                  enclosing = Brackets ($3,$5);
+                  ne_elements = fields;
+                  terminator;
+                  attributes=$1}
+    in TRecord {region; value} }
 
 field_decl:
-  field_name ":" type_expr {
-    let stop   = type_expr_to_region $3 in
-    let region = cover $1.region stop
-    and value  = {field_name=$1; colon=$2; field_type=$3}
+  seq("[@attr]") field_name ":" type_expr {
+    let stop   = type_expr_to_region $4 in
+    let region = match first_region $1 with
+                   None -> cover $2.region stop
+                 | Some start -> cover start stop
+    and value  = {attributes=$1; field_name=$2; colon=$3; field_type=$4}
     in {region; value} }
 
-
 fun_expr:
-  "function" parameters type_annot? "is" expr {
+  "function" parameters ioption(type_annot) "is" expr {
     let stop   = expr_to_region $5 in
     let region = cover $1 stop
     and value  = {kwd_function = $1;
@@ -333,19 +358,24 @@ fun_expr:
 (* Function declarations *)
 
 open_fun_decl:
-  ioption("recursive") "function" fun_name parameters type_annot? "is" expr {
-    Scoping.check_reserved_name $3;
-    let stop   = expr_to_region $7 in
-    let region = cover $2 stop
-    and value  = {kwd_recursive= $1;
-                  kwd_function = $2;
-                  fun_name     = $3;
-                  param        = $4;
-                  ret_type     = $5;
-                  kwd_is       = $6;
-                  return       = $7;
+  seq("[@attr]") ioption("recursive") "function" fun_name parameters
+  ioption(type_annot) "is" expr {
+    Scoping.check_reserved_name $4;
+    let stop   = expr_to_region $8 in
+    let region = match first_region $1 with
+                   Some start -> cover start stop
+                 | None -> match $2 with
+                             Some start -> cover start stop
+                           | None -> cover $3 stop
+    and value  = {kwd_recursive= $2;
+                  kwd_function = $3;
+                  fun_name     = $4;
+                  param        = $5;
+                  ret_type     = $6;
+                  kwd_is       = $7;
+                  return       = $8;
                   terminator   = None;
-                  attributes   = None}
+                  attributes   = $1}
     in {region; value} }
 
 fun_decl:
@@ -404,7 +434,6 @@ block:
 statement:
   instruction     { Instr $1 }
 | open_data_decl  { Data  $1 }
-| open_attr_decl  { Attr  $1 }
 
 open_data_decl:
   open_const_decl { LocalConst $1 }
@@ -412,16 +441,18 @@ open_data_decl:
 | open_fun_decl   { LocalFun   $1 }
 
 open_const_decl:
-  "const" unqualified_decl("=") {
-    let name, const_type, equal, init, stop = $2 in
-    let region = cover $1 stop
-    and value  = {kwd_const = $1;
+  seq("[@attr]") "const" unqualified_decl("=") {
+    let name, const_type, equal, init, stop = $3 in
+    let region= match first_region $1 with
+                  None -> cover $2 stop
+                | Some start -> cover start stop
+    and value  = {kwd_const=$2;
                   name;
                   const_type;
                   equal;
                   init;
-                  terminator = None;
-                  attributes = None}
+                  terminator=None;
+                  attributes=$1}
     in {region; value} }
 
 open_var_decl:
@@ -437,7 +468,7 @@ open_var_decl:
     in {region; value} }
 
 unqualified_decl(OP):
-  var type_annot? OP expr {
+  var ioption(type_annot) OP expr {
     Scoping.check_reserved_name $1;
     let region = expr_to_region $4
     in $1, $2, $3, $4, region }
@@ -547,7 +578,8 @@ ne_injection(Kind,element):
       and value  = {kind      = mk_kwd $1;
                     enclosing = End $3;
                     ne_elements;
-                    terminator}
+                    terminator;
+                    attributes = []}
       in {region; value}
   }
 | Kind "[" sep_or_term_list(element,";") "]" {
@@ -557,7 +589,8 @@ ne_injection(Kind,element):
       and value = {kind      = mk_kwd $1;
                    enclosing = Brackets ($2,$4);
                    ne_elements;
-                   terminator}
+                   terminator;
+                   attributes = []}
       in {region; value} }
 
 binding:
@@ -693,7 +726,7 @@ for_loop:
                   block      = $8}
     in For (ForCollect {region; value})
   }
-| "for" var ":=" expr "to" expr step_clause? block {
+| "for" var ":=" expr "to" expr ioption(step_clause) block {
     Scoping.check_reserved_name $2;
     let region = cover $1 $8.region in
     let value  = {kwd_for = $1;

@@ -22,7 +22,7 @@ To force inlining you can use the inline attribute.
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function fst(const p : nat * nat) : nat is p.0; attributes ["inline"] ;
+[@inline] function fst(const p : nat * nat) : nat is p.0;
 
 function main(const p : nat * nat; const s : nat * nat) : list(operation) * (nat * nat) is
   ((list end : list(operation)), (fst(p.0,p.1), fst(s.1,s.0)))
@@ -32,7 +32,7 @@ function main(const p : nat * nat; const s : nat * nat) : list(operation) * (nat
 <Syntax syntax="cameligo">
 
 ```cameligo
-let fst (p: (nat * nat)) : nat = p.0 [@@inline]
+let fst (p: (nat * nat)) : nat = p.0 [@inline]
 
 let main (p : (nat * nat)) (s : (nat * nat)) : (operation list * (nat * nat)) =
     (([]: operation list), (fst (p.0, p.1), fst (s.1, s.0)))

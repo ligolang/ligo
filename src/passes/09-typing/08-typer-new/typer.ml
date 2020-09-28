@@ -28,17 +28,17 @@ let rec type_declaration env state : I.declaration -> (environment * _ O'.typer_
     let%bind type_expr = evaluate_type env type_expr in
     let env' = Environment.add_type (type_binder) type_expr env in
     ok (env', state , O.Declaration_type {type_binder; type_expr})
-  | Declaration_constant {binder={var;ty}; attr; expr} -> (
+  | Declaration_constant {binder; type_opt; attr; expr} -> (
     (*
       Determine the type of the expression and add it to the environment
     *)
-    let%bind tv_opt = evaluate_type env ty in
-    let%bind e, state, expr =
-      trace (constant_declaration_tracer var expr @@ Some tv_opt) @@
-      type_expression env state ~tv_opt expr in
-    let binder = Location.map Var.todo_cast var in
+    let%bind tv_opt = bind_map_option (evaluate_type env) type_opt in
+    let%bind e, state', expr =
+      trace (constant_declaration_tracer binder expr tv_opt) @@
+      type_expression env state ?tv_opt expr in
+    let binder = Location.map Var.todo_cast binder in
     let post_env = Environment.add_ez_declaration binder expr e in
-    ok (post_env, state , O.Declaration_constant { binder ; expr ; inline=attr.inline})
+    ok (post_env, state' , O.Declaration_constant { binder ; expr ; inline=attr.inline})
     )
 
 (*
@@ -52,29 +52,31 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
     let%bind type1 = evaluate_type e type1 in
     let%bind type2 = evaluate_type e type2 in
     return (T_arrow {type1;type2})
-  | T_sum m ->
+  | T_sum {fields ; layout} ->
     let aux v =
       let {associated_type ; michelson_annotation ; decl_pos} : I.row_element = v in
       let%bind associated_type = evaluate_type e associated_type in
       ok @@ ({associated_type ; michelson_annotation ; decl_pos}:O.row_element)
     in
-    let%bind m = Stage_common.Helpers.bind_map_lmap aux m in
-    return (T_sum m)
-  | T_record m ->
+    let%bind fields = Stage_common.Helpers.bind_map_lmap aux fields in
+    let layout = Option.unopt ~default:default_layout layout in
+    return (T_sum {content=fields ; layout=layout})
+  | T_record {fields ; layout} ->
     let aux v =
       let {associated_type ; michelson_annotation ; decl_pos} : I.row_element = v in
       let%bind associated_type = evaluate_type e associated_type in
       ok @@ ({associated_type ; michelson_annotation ; decl_pos}:O.row_element)
     in
-    let%bind m = Stage_common.Helpers.bind_map_lmap aux m in
-    return (T_record m)
+    let%bind lmap = Stage_common.Helpers.bind_map_lmap aux fields in
+    let%bind () = trace_assert_fail_option (record_redefined_error t.location) @@
+      Environment.get_record lmap e in
+    let layout = Option.unopt ~default:default_layout layout in
+    return (T_record {content = lmap;layout})
   | T_variable name ->
     (* Check that the variable is in the environment *)
     let name : O.type_variable = Var.todo_cast name in
     trace_option (unbound_type_variable e name t.location)
     @@ Environment.get_type_opt (name) e
-  | T_wildcard ->
-    return @@ T_variable (Var.fresh ())
   | T_constant {type_constant; arguments} ->
     let assert_constant lst = match lst with
       [] -> ok () 
@@ -113,30 +115,30 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
       | TC_michelson_pair_right_comb ->
           let%bind c = bind (evaluate_type e) @@ get_unary arguments in
           let%bind lmap = match c.type_content with
-            | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap)) -> ok lmap
+            | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap.content)) -> ok lmap
             | _ -> fail (michelson_comb_no_record t.location) in
-          let record = Typer_common.Michelson_type_converter.convert_pair_to_right_comb (Ast_typed.LMap.to_kv_list lmap) in
+          let record = Typer_common.Michelson_type_converter.convert_pair_to_right_comb (Ast_typed.LMap.to_kv_list_rev lmap.content) in
           return @@ record
       | TC_michelson_pair_left_comb ->
           let%bind c = bind (evaluate_type e) @@ get_unary arguments in
           let%bind lmap = match c.type_content with
-            | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap)) -> ok lmap
+            | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap.content)) -> ok lmap
             | _ -> fail (michelson_comb_no_record t.location) in
-          let record = Typer_common.Michelson_type_converter.convert_pair_to_left_comb (Ast_typed.LMap.to_kv_list lmap) in
+          let record = Typer_common.Michelson_type_converter.convert_pair_to_left_comb (Ast_typed.LMap.to_kv_list_rev lmap.content) in
           return @@ record
       | TC_michelson_or_right_comb ->
           let%bind c = bind (evaluate_type e) @@ get_unary arguments in
           let%bind cmap = match c.type_content with
-            | T_sum cmap -> ok cmap
+            | T_sum cmap -> ok cmap.content
             | _ -> fail (michelson_comb_no_variant t.location) in
-          let pair = Typer_common.Michelson_type_converter.convert_variant_to_right_comb (Ast_typed.LMap.to_kv_list cmap) in
+          let pair = Typer_common.Michelson_type_converter.convert_variant_to_right_comb (Ast_typed.LMap.to_kv_list_rev cmap) in
           return @@ pair
       | TC_michelson_or_left_comb ->
           let%bind c = bind (evaluate_type e) @@ get_unary arguments in
           let%bind cmap = match c.type_content with
-            | T_sum cmap -> ok cmap
+            | T_sum cmap -> ok cmap.content
             | _ -> fail (michelson_comb_no_variant t.location) in
-          let pair = Typer_common.Michelson_type_converter.convert_variant_to_left_comb (Ast_typed.LMap.to_kv_list cmap) in
+          let pair = Typer_common.Michelson_type_converter.convert_variant_to_left_comb (Ast_typed.LMap.to_kv_list_rev cmap) in
           return @@ pair
       | _ -> fail @@ unrecognized_type_constant t
 
@@ -146,7 +148,7 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
   let module L = Logger.Stateful() in
   let return : _ -> _ -> _ O'.typer_state -> _ -> _ (* return of type_expression *) = fun expr e state constraints type_name ->
     let%bind new_state = aggregate_constraints state constraints in
-    let tv = t_variable type_name in
+    let tv = t_variable type_name () in
     let location = ae.location in
     let expr' = make_e ~location expr tv in
     ok @@ (e,new_state, expr') in
@@ -271,10 +273,15 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
       let%bind e,state, expr = type_expression e state expr in
       ok ((e,state), expr)
     in
-    let%bind (e,state), m' = Stage_common.Helpers.bind_fold_map_lmap aux (e,state) m in
+    let%bind (e,state'), m' = Stage_common.Helpers.bind_fold_map_lmap aux (e,state) m in
     (* Do we need row_element for AST_typed ? *)
-    let wrapped = Wrap.record (O.LMap.map (fun e -> ({associated_type = get_type_expression e ; michelson_annotation = None ; decl_pos = 0}: O.row_element)) m') in
-    return_wrapped (E_record m') e state wrapped
+    let lmap = O.LMap.map (fun e -> ({associated_type = get_type_expression e ; michelson_annotation = None ; decl_pos = 0}: O.row_element)) m' in
+    let record_type = match Environment.get_record lmap e with
+      | None -> O.{content=lmap;layout=default_layout}
+      | Some r -> r
+    in
+    let wrapped = Wrap.record record_type in
+    return_wrapped (E_record m') e state' wrapped
 
   | E_record_accessor {record;path} -> (
       let%bind (e, state, base) = type_expression e state record in
@@ -288,9 +295,9 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
     let wrapped = get_type_expression record in
     let%bind (wrapped,tv) = 
       match wrapped.type_content with 
-      | T_record record -> (
+      | T_record ({content;_} as record) -> (
           let%bind {associated_type;_} = trace_option (bad_record_access path ae wrapped update.location) @@
-            O.LMap.find_opt path record in
+            O.LMap.find_opt path content in
           ok (record, associated_type)
       )
       (* TODO: write a real error *)
@@ -303,9 +310,9 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
 
   (* Advanced *)
   | E_let_in {let_binder ; rhs ; let_result; inline} ->
-    let%bind rhs_tv_opt = (evaluate_type e) (let_binder.ty) in
+    let%bind rhs_tv_opt = bind_map_option (evaluate_type e) (let_binder.ascr) in
     let%bind e, state, rhs = type_expression e state rhs in
-    let let_binder = cast_var let_binder.var in 
+    let let_binder = cast_var let_binder.binder in 
     let e = Environment.add_ez_declaration let_binder rhs e in
     let%bind e, state, let_result = type_expression e state let_result in
     let wrapped =
@@ -338,16 +345,20 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
 
 and type_lambda e state {
       binder ;
+      input_type ;
+      output_type ;
       result ;
     } =
-      let%bind input_type  = (evaluate_type e) binder.ty in
-      let binder = cast_var binder.var in
-      let fresh : O.type_expression = t_variable (Wrap.fresh_binder ()) in
-      let e = Environment.add_ez_binder (binder) fresh e in
+      let binder = cast_var binder in
+      let%bind input_type'  = bind_map_option (evaluate_type e) input_type in
+      let%bind output_type' = bind_map_option (evaluate_type e) output_type in
 
-      let%bind e, state, result = type_expression e state result in
-      let wrapped = Wrap.lambda fresh input_type result.type_expression in
-      ok (({binder;result}:O.lambda),e,state,wrapped)
+      let fresh : O.type_expression = t_variable (Wrap.fresh_binder ()) () in
+      let e' = Environment.add_ez_binder (binder) fresh e in
+
+      let%bind (e, state', result) = type_expression e' state result in
+      let wrapped = Wrap.lambda fresh input_type' output_type' result.type_expression in
+      ok (({binder;result}:O.lambda),e,state',wrapped)
 
 (* TODO: Rewrite this entire function *)
 and type_match : environment -> _ O'.typer_state -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> (environment * _ O'.typer_state * O.matching_expr, typer_error) result =
@@ -407,7 +418,7 @@ and type_match : environment -> _ O'.typer_state -> O.type_expression -> I.match
         let%bind variant_cases' =
           trace_option (match_error ~expected:i ~actual:t loc)
           @@ Ast_typed.Combinators.get_t_sum variant in
-        let variant_cases = List.map fst @@ O.LMap.to_kv_list variant_cases' in
+        let variant_cases = List.map fst @@ O.LMap.to_kv_list_rev variant_cases'.content in
         let match_cases = List.map (fun ({constructor;_} : I.match_variant) -> constructor) lst in
         let test_case = fun c ->
           Assert.assert_true (corner_case "match case") (List.mem c match_cases)
@@ -487,7 +498,7 @@ let type_and_subst
       let O.{ tv ; c_tag ; tv_list } = assignment in
       let () = ignore tv (* I think there is an issue where the tv is stored twice (as a key and in the element itself) *) in
       let%bind (expr : O.type_content) = trace_option (corner_case "wrong constant tag") @@
-        Typesystem.Core.type_expression'_of_simple_c_constant (c_tag , (List.map (fun s -> O.t_variable s) tv_list)) in
+        Typesystem.Core.type_expression'_of_simple_c_constant (c_tag , (List.map (fun s -> O.t_variable s ()) tv_list)) in
       let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "SUBST %a (%a is %a)\n" Var.pp variable Var.pp root Ast_typed.PP.type_content expr) in
       ok @@ expr
     in

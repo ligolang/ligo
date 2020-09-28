@@ -8,7 +8,6 @@ let%expect_test _ =
       2 | [1m[31mlet[0m b = 2;
 
     [1m[31mError[0m: This is an incorrect let binding.
-    -
     Examples of correct let bindings:
     let a: int = 4;
     let (a: int, b: int) = (1, 2);
@@ -19,5 +18,5 @@ let%expect_test _ =
     [1mFile "../../test/contracts/negative/missing_rpar.religo", line 5, characters 0-3:[0m
       4 |
       5 | [1m[31mlet[0m z = 4;
-    [1m[31mError[0m: Missing `)`. |} ] ;
+    [1m[31mError[0m: 273: Syntax error. |} ] ;
 

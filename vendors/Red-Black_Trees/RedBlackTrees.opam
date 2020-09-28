@@ -2,11 +2,11 @@ opam-version : "2.0"
 version      : "1.0"
 maintainer   : "rinderknecht@free.fr"
 authors      : [ "Christian Rinderknecht" ]
-homepage     : "https://gitlab.com/rinderknecht/Red-Black_Trees"
-bug-reports  : "https://gitlab.com/rinderknecht/Red-Black_Trees/issues"
-dev-repo     : "git+https://gitlab.com/rinderknecht/Red-Black_Trees.git"
+homepage     : "https://github.com/rinderknecht/Red-Black_Trees"
+bug-reports  : "https://github.com/rinderknecht/Red-Black_Trees/issues"
+dev-repo     : "git+https://github.com/rinderknecht/Red-Black_Trees.git"
 license      : "MIT"
-
+synopsis     : "Implementation of RB trees in OCaml"
 depends      : [ "dune" ]
 
 build        : [
@@ -14,5 +14,5 @@ build        : [
                ]
 
 url {
-  src: "https://gitlab.com/rinderknecht/Red-Black_Trees/-/archive/98b11312810d979ee1b0dacee6900228574e41e7/Red-Black_Trees.tar.gz"
+  src: "https://github.com/rinderknecht/Red-Black_Trees/"
 }
