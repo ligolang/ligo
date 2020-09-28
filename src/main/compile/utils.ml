@@ -14,18 +14,18 @@ let to_core f stx =
   let%bind core   = Of_sugar.compile sugar in
   ok @@ core
 
-let type_file f stx form : (Ast_typed.program * _ Typesystem.Solver_types.typer_state, _) result =
+let type_file f stx form : (Ast_typed.program * Ast_typed.environment * _ Typesystem.Solver_types.typer_state, _) result =
   let%bind core        = to_core f stx in
-  let%bind typed,state = Of_core.compile form core in
-  ok @@ (typed,state)
+  let%bind typed,e,state = Of_core.compile form core in
+  ok @@ (typed,e,state)
 
 let to_mini_c f stx env =
-  let%bind typed, _ = type_file f stx env in
+  let%bind typed,_,_  = type_file f stx env in
   let%bind mini_c     = Of_typed.compile typed in
   ok @@ mini_c
 
 let compile_file f stx ep : (Michelson.michelson, _) result =
-  let%bind typed, _ = type_file f stx @@ Contract ep in
+  let%bind typed,_,_  = type_file f stx @@ Contract ep in
   let%bind mini_c     = Of_typed.compile typed in
   let%bind michelson  = Of_mini_c.aggregate_and_compile_contract mini_c ep in
   let%bind contract   = Of_michelson.build_contract michelson in

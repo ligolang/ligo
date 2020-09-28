@@ -6,7 +6,6 @@ module O = Ast_typed
 module O' = Typesystem.Solver_types
 open O.Combinators
 
-module DEnv = Environment
 module Environment = O.Environment
 
 module Solver = Typer_new.Solver
@@ -16,17 +15,17 @@ type environment = Environment.t
 let cast_var (orig: 'a Var.t Location.wrap) = { orig with wrap_content = Var.todo_cast orig.wrap_content}
 let assert_type_expression_eq = Typer_common.Helpers.assert_type_expression_eq
 
-let rec type_program (p:I.program) : (O.program * _ O'.typer_state, typer_error) result =
+let rec type_program (e:environment) (p:I.program) : (environment * O.program * _ O'.typer_state, typer_error) result =
   let aux (e, acc:(environment * O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
     let%bind ed' = (bind_map_location (type_declaration e (Solver.placeholder_for_state_of_new_typer ()))) d in
     let loc : 'a . 'a Location.wrap -> _ -> _ = fun x v -> Location.wrap ~loc:x.location v in
     let (e', _placeholder_for_state_of_new_typer , d') = Location.unwrap ed' in
     ok (e', loc ed' d' :: acc)
   in
-  let%bind (_, lst) =
+  let%bind (e, lst) =
     trace (program_error_tracer p) @@
-    bind_fold_list aux (DEnv.default, []) p in
-  ok @@ (List.rev lst , (Solver.placeholder_for_state_of_new_typer ()))
+    bind_fold_list aux (e, []) p in
+  ok @@ (e,List.rev lst , (Solver.placeholder_for_state_of_new_typer ()))
 
 
 and type_declaration env (_placeholder_for_state_of_new_typer : _ O'.typer_state) : I.declaration -> (environment * _ O'.typer_state * O.declaration, typer_error) result = function

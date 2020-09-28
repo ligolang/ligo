@@ -12,7 +12,7 @@ module Solver = Typer_new.Solver
 
 type environment = Environment.t
 
-val type_program : I.program -> (O.program * Errors.typer_error O'.typer_state, Errors.typer_error) result
+val type_program : environment -> I.program -> (environment * O.program * Errors.typer_error O'.typer_state, Errors.typer_error) result
 val type_expression_subst : environment -> Errors.typer_error O'.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * Errors.typer_error O'.typer_state , Errors.typer_error) result
 val untype_expression : O.expression -> (I.expression , Errors.typer_error) result
 val untype_program : O.program -> (I.program, Errors.typer_error) result
