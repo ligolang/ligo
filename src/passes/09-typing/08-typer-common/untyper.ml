@@ -10,22 +10,22 @@ module O = Ast_typed
 let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer_error) result =
   let return t = ok @@ I.make_t t in
   match t.type_content with
-  | O.T_sum x ->
+  | O.T_sum {content ; layout} ->
      let aux ({associated_type ; michelson_annotation ; decl_pos} : O.row_element) =
        let%bind associated_type = untype_type_expression associated_type in
        let v' = ({associated_type ; michelson_annotation ; decl_pos} : I.row_element) in
        ok @@ v' in
-     let%bind x' = Stage_common.Helpers.bind_map_lmap aux x in
-     return @@ I.T_sum x'
-  | O.T_record x ->
-     let aux ({associated_type ; michelson_annotation ; decl_pos} : O.row_element) =
-       let%bind associated_type = untype_type_expression associated_type in
-       let v' = ({associated_type ; michelson_annotation ; decl_pos} : I.row_element) in
-       ok @@ v' in
-     let%bind x' = Stage_common.Helpers.bind_map_lmap aux x in
-     return @@ I.T_record x'
+     let%bind x' = Stage_common.Helpers.bind_map_lmap aux content in
+     return @@ I.T_sum { fields = x' ; layout = Some layout }
+  | O.T_record {content;layout} -> (
+    let aux ({associated_type ; michelson_annotation ; decl_pos} : O.row_element) =
+      let%bind associated_type = untype_type_expression associated_type in
+      let v' = ({associated_type ; michelson_annotation ; decl_pos} : I.row_element) in
+      ok @@ v' in
+    let%bind x' = Stage_common.Helpers.bind_map_lmap aux content in
+    return @@ I.T_record {fields = x' ; layout = Some layout}
+  )
   | O.T_variable name -> return @@ I.T_variable (Var.todo_cast name)
-  | O.T_wildcard -> return @@ I.T_wildcard
   | O.T_arrow {type1;type2} ->
      let%bind type1 = untype_type_expression type1 in
      let%bind type2 = untype_type_expression type2 in
@@ -38,10 +38,10 @@ let untype_declaration_constant untype_expression O.{binder;expr;inline} =
   let attr = I.{inline} in
   let%bind ty = untype_type_expression expr.type_expression in
   let var = Location.map Var.todo_cast binder in
-  let binder = I.{var; ty} in
+  let binder = var in
   let%bind expr = untype_expression expr in
   let expr = I.e_annotation expr ty in
-  ok @@ I.{binder;attr;expr}
+  ok @@ I.{binder;attr;expr;type_opt=Some(ty)}
 
 let untype_declaration_type O.{type_binder; type_expr} =
   let%bind type_expr = untype_type_expression type_expr in

@@ -647,6 +647,7 @@ let%expect_test "typer" =
   [%expect
     {|
       [1mFile "a dummy file name", line 20, characters 0-10:[0m
+      [1mFile "a dummy file name", line 20, characters 0-10:[0m
       Incorrect argument provided to Layout.convert_to_(left|right)_comb.
       The given argument must be annotated with the type of the value.|}] ;
   error (`Typer_too_small_record location_t) ;

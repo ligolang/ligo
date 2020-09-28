@@ -30,7 +30,7 @@ let self_typing : contract_pass_data -> expression -> (bool * contract_pass_data
     let%bind entrypoint_t = match dat.contract_type.parameter.type_content with
       | T_sum cmap ->
         let%bind {associated_type;_} = trace_option (Errors.unmatched_entrypoint entrypoint_exp.location) @@
-          LMap.find_opt (Label entrypoint) cmap in
+          LMap.find_opt (Label entrypoint) cmap.content in
         ok associated_type
       | t -> ok {dat.contract_type.parameter with type_content = t} in
     let%bind () =

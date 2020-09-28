@@ -5,17 +5,27 @@ module Location = Simple_utils.Location
 include Stage_common.Types
 
 type type_content =
-  | T_sum of row_element label_map
-  | T_record of row_element label_map
+  | T_sum of rows
+  | T_record of rows
   | T_tuple  of type_expression list
   | T_arrow of arrow
   | T_variable of type_variable
-  | T_wildcard
   | T_constant of (type_constant * type_expression list)
+
+and attributes = string list
+
+and rows = {
+  fields     : row_element label_map;
+  attributes : attributes
+  }
 
 and arrow = {type1: type_expression; type2: type_expression}
 
-and row_element = {associated_type : type_expression ; michelson_annotation : string option ; decl_pos : int}
+and row_element = {
+  associated_type : type_expression;
+  attributes      : attributes;
+  decl_pos        : int
+  }
 
 and type_expression = {type_content: type_content; location: Location.t}
 
@@ -29,7 +39,7 @@ and declaration =
    *   an optional type annotation
    *   a boolean indicating whether it should be inlined
    *   an expression *)
-  | Declaration_constant of (expression_variable * type_expression * bool * expression)
+  | Declaration_constant of (expression_variable * type_expression option * attributes * expression)
 
 (* | Macro_declaration of macro_declaration *)
 and expression = {expression_content: expression_content; location: Location.t}
@@ -59,7 +69,7 @@ and expression_content =
   | E_skip
   | E_tuple of expression list
   (* Data Structures *)
-  | E_map of (expression * expression) list 
+  | E_map of (expression * expression) list
   | E_big_map of (expression * expression) list
   | E_list of expression list
   | E_set of expression list
@@ -69,14 +79,15 @@ and constant =
   ; arguments: expression list }
 
 and application = {
-  lamb: expression ; 
+  lamb: expression ;
   args: expression ;
   }
 
-and lambda = {
-  binder: (expression_variable, type_expression) binder; 
-  result: expression 
-  }
+and lambda =
+  { binder: expression_variable
+  ; input_type: type_expression option
+  ; output_type: type_expression option
+  ; result: expression }
 
 and recursive = {
   fun_name :  expression_variable;
@@ -85,14 +96,14 @@ and recursive = {
 }
 
 and let_in = { 
-  let_binder: (expression_variable, type_expression) binder ;
+  let_binder: expression_variable * type_expression option ;
   rhs: expression ;
   let_result: expression ;
-  inline: bool ;
+  attributes : attributes ;
   mut: bool;
   }
 
-and raw_code = { 
+and raw_code = {
   language : string ;
   code : expression ;
   }
@@ -116,9 +127,9 @@ and matching_expr =
       match_none : expression ;
       match_some : expression_variable * expression ;
     }
-  | Match_tuple of (expression_variable * type_expression) list  * expression
-  | Match_record of (label * expression_variable * type_expression) list * expression
-  | Match_variable of (expression_variable * type_expression ) * expression
+  | Match_tuple of expression_variable list * type_expression list option * expression
+  | Match_record of (label * expression_variable) list * type_expression list option * expression
+  | Match_variable of expression_variable * type_expression option * expression
 
 and matching =
   { matchee: expression

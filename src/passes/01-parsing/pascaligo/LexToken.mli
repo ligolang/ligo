@@ -39,14 +39,15 @@ type attribute = {
 type t =
   (* Literals *)
 
-  String   of lexeme Region.reg
-| Verbatim of lexeme Region.reg
-| Bytes    of (lexeme * Hex.t) Region.reg
+| Ident    of lexeme Region.reg
+| Constr   of lexeme Region.reg
 | Int      of (lexeme * Z.t) Region.reg
 | Nat      of (lexeme * Z.t) Region.reg
 | Mutez    of (lexeme * Z.t) Region.reg
-| Ident    of lexeme Region.reg
-| Constr   of lexeme Region.reg
+| String   of lexeme Region.reg
+| Verbatim of lexeme Region.reg
+| Bytes    of (lexeme * Hex.t) Region.reg
+| Attr     of string Region.reg
 | Lang     of lexeme Region.reg Region.reg
 
   (* Symbols *)
@@ -81,7 +82,6 @@ type t =
   (* Keywords *)
 
 | And        of Region.t  (* "and"        *)
-| Attributes of Region.t  (* "attributes" *)
 | Begin      of Region.t  (* "begin"      *)
 | BigMap     of Region.t  (* "big_map"    *)
 | Block      of Region.t  (* "block"      *)
@@ -151,7 +151,6 @@ type ident_err = Reserved_name
 type   nat_err = Invalid_natural
                | Non_canonical_zero_nat
 type   sym_err = Invalid_symbol
-type attr_err  = Invalid_attribute
 type   kwd_err = Invalid_keyword
 
 val mk_int      : lexeme -> Region.t -> (token,   int_err) result
@@ -164,7 +163,7 @@ val mk_string   : lexeme -> Region.t -> token
 val mk_verbatim : lexeme -> Region.t -> token
 val mk_bytes    : lexeme -> Region.t -> token
 val mk_constr   : lexeme -> Region.t -> token
-val mk_attr     : string -> lexeme -> Region.t -> (token, attr_err) result
+val mk_attr     : lexeme -> Region.t -> token
 val mk_lang     : lexeme Region.reg -> Region.t -> token
 val eof         : Region.t -> token
 
@@ -189,3 +188,9 @@ val check_right_context :
   (Lexing.lexbuf -> (Markup.t list * token) option) ->
   Lexing.lexbuf ->
   unit
+
+(* Unlexing the tokens: from strings containing the textual
+   representation of tokens to lexemes. For example, [concrete "SEMI"
+   = ";"]. *)
+
+val concrete : string -> string

@@ -1,14 +1,14 @@
-open Errors
 open Ast_typed
+open Errors
 open Trace
 
 let assert_type_expression_eq (loc:Location.t) ((tv',tv):type_expression * type_expression) : (unit,typer_error) result = 
   trace_option (assert_equal loc tv' tv) @@
     assert_type_expression_eq (tv' , tv)
 
-type typer = type_expression list -> type_expression -> (type_expression, typer_error) result
+type typer = type_expression list -> type_expression option -> (type_expression, typer_error) result
 
-let typer_0 : Location.t -> string -> (Location.t -> type_expression -> (type_expression, typer_error) result) -> typer = fun l s f lst tv_opt ->
+let typer_0 : Location.t -> string -> (Location.t -> type_expression option -> (type_expression, typer_error) result) -> typer = fun l s f lst tv_opt ->
   match lst with
   | [] -> (
     let%bind tv' = f l tv_opt in
@@ -24,7 +24,7 @@ let typer_1 : Location.t -> string -> (Location.t -> type_expression -> (type_ex
     )
   | _ -> fail @@ wrong_param_number l s 1 lst
 
-let typer_1_opt : Location.t -> string -> (Location.t -> type_expression -> type_expression -> (type_expression , typer_error) result) -> typer = fun l s f lst tv_opt ->
+let typer_1_opt : Location.t -> string -> (Location.t -> type_expression -> type_expression option -> (type_expression , typer_error) result) -> typer = fun l s f lst tv_opt ->
   match lst with
   | [ a ] -> (
       let%bind tv' = f l a tv_opt in
@@ -40,7 +40,7 @@ let typer_2 : Location.t -> string -> (Location.t -> type_expression -> type_exp
     )
   | _ -> fail @@ wrong_param_number l s 2 lst
 
-let typer_2_opt : Location.t -> string -> (Location.t -> type_expression -> type_expression -> type_expression -> (type_expression, typer_error) result) -> typer = fun l s f lst tv_opt ->
+let typer_2_opt : Location.t -> string -> (Location.t -> type_expression -> type_expression -> type_expression option -> (type_expression, typer_error) result) -> typer = fun l s f lst tv_opt ->
   match lst with
   | [ a ; b ] -> (
       let%bind tv' = f l a b tv_opt in

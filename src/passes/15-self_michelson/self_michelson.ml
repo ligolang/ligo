@@ -470,6 +470,8 @@ let prim_type_args : string -> int option = function
   | "EMPTY_BIG_MAP" -> Some 2
   | "LAMBDA" -> Some 2
   | "PUSH" -> Some 1
+  | "LEFT" -> Some 1
+  | "RIGHT" -> Some 1
   (* _not_ "CONTRACT"! annot is important there *)
   (* but could include "SELF", maybe? *)
   | _ -> None

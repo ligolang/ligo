@@ -31,7 +31,7 @@ module Captured_variables = struct
       ok @@ unions lst'
     | E_constructor {element;_} -> self element
     | E_record m ->
-      let%bind lst' = bind_map_list self @@ LMap.to_list m in
+      let%bind lst' = bind_map_list self @@ LMap.to_list_rev m in
       ok @@ unions lst'
     | E_record_accessor {record;_} -> self record
     | E_record_update {record;update;_} -> 

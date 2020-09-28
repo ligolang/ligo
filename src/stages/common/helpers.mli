@@ -15,10 +15,9 @@ val bind_map_lmap :
 val bind_fold_map_lmap : 
   ('a -> label -> 'b -> ('a * 'c, 'd) result) -> 'a ->
   'b label_map -> ('a * 'c label_map, 'd) result
-(* val bind_map_cmap :
-  ('a -> ('b * 'c list, 'd) result) ->
-  'a Types.constructor_map ->
-  ('b Types.constructor_map * 'c list, 'd) result *)
+val bind_iter_lmap :
+  (label -> 'a -> (unit , 'c) result) ->
+  'a label_map -> (unit , 'c) result
 
 val is_tuple_lmap : 'a Types.label_map -> bool
 

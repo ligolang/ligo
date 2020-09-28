@@ -28,23 +28,23 @@ let t_timestamp ?loc ?sugar () : type_expression = type_constant ?loc ?sugar TC_
 let t_option    ?loc ?sugar o  : type_expression = type_constant ?loc ?sugar TC_option [o]
 let t_list      ?loc ?sugar t  : type_expression = type_constant ?loc ?sugar TC_list [t]
 let t_variable  ?loc ?sugar n  : type_expression = make_t ?loc ?sugar @@ T_variable (Var.of_name n)
-let t_record_ez ?loc ?sugar lst =
+let t_record_ez ?loc ?sugar ?layout lst =
   let lst = List.map (fun (k, v) -> (Label k, v)) lst in
   let m = LMap.of_list lst in
-  make_t ?loc ?sugar @@ T_record m
+  make_t ?loc ?sugar @@ T_record { layout ; fields = m }
 let t_record ?loc ?sugar m  : type_expression =
-  let lst = Map.String.to_kv_list m in
+  let lst = SMap.to_kv_list_rev m in
   t_record_ez ?loc ?sugar lst
 
 let t_pair  ?loc ?sugar (a , b) : type_expression = t_record_ez ?loc ?sugar [("0",a) ; ("1",b)]
 let t_tuple ?loc ?sugar lst     : type_expression = t_record_ez ?loc ?sugar (tuple_to_record lst)
 
-let ez_t_sum ?loc ?sugar (lst:(string * row_element) list) : type_expression =
-  let aux prev (k, v) = LMap.add (Label k) v prev in
-  let map = List.fold_left aux LMap.empty lst in
-  make_t ?loc ?sugar @@ T_sum map
+let ez_t_sum ?loc ?sugar ?layout (lst:(string * row_element) list) : type_expression =
+  let lst = List.map (fun (k, v) -> (Label k, v)) lst in
+  let m = LMap.of_list lst in
+  make_t ?loc ?sugar @@ T_sum { layout ; fields = m }
 let t_sum ?loc ?sugar m : type_expression =
-  let lst = Map.String.to_kv_list m in
+  let lst = SMap.to_kv_list_rev m in
   ez_t_sum ?loc ?sugar lst
 
 let t_function ?loc ?sugar type1 type2  : type_expression = make_t ?loc ?sugar @@ T_arrow {type1; type2}
@@ -86,10 +86,10 @@ let e_map_add    ?loc ?sugar k v old  : expression = make_e ?loc ?sugar @@ E_con
 let e_constant    ?loc ?sugar name lst                             = make_e ?loc ?sugar @@ E_constant {cons_name=name ; arguments = lst}
 let e_variable    ?loc ?sugar v                                    = make_e ?loc ?sugar @@ E_variable v
 let e_application ?loc ?sugar a b                                  = make_e ?loc ?sugar @@ E_application {lamb=a ; args=b}
-let e_lambda      ?loc ?sugar binder result                        = make_e ?loc ?sugar @@ E_lambda {binder; result ;  }
+let e_lambda      ?loc ?sugar binder input_type output_type result = make_e ?loc ?sugar @@ E_lambda {binder; input_type; output_type; result ;  }
 let e_recursive   ?loc ?sugar fun_name fun_type lambda             = make_e ?loc ?sugar @@ E_recursive {fun_name; fun_type; lambda}
-let e_let_in      ?loc ?sugar let_binder inline rhs let_result     = make_e ?loc ?sugar @@
-  E_let_in { let_binder ; rhs ; let_result; inline }
+let e_let_in      ?loc ?sugar (binder, ascr) inline rhs let_result = make_e ?loc ?sugar @@
+  E_let_in { let_binder = {binder ; ascr} ; rhs ; let_result; inline }
 let e_raw_code    ?loc ?sugar language code                        = make_e ?loc ?sugar @@ E_raw_code {language; code}
 
 let e_constructor ?loc ?sugar s a : expression = make_e ?loc ?sugar @@ E_constructor { constructor = Label s; element = a}
@@ -127,7 +127,7 @@ let assert_e_record_accessor = fun t ->
 let get_e_pair = fun t ->
   match t with
   | E_record r -> ( 
-  let lst = LMap.to_kv_list r in
+  let lst = LMap.to_kv_list_rev r in
     match lst with 
     | [(Label "O",a);(Label "1",b)]
     | [(Label "1",b);(Label "0",a)] -> 
@@ -164,7 +164,7 @@ let get_e_ascription = fun a ->
 let extract_pair : expression -> (expression * expression) option = fun e ->
   match e.content with
   | E_record r -> ( 
-  let lst = LMap.to_kv_list r in
+  let lst = LMap.to_kv_list_rev r in
     match lst with 
     | [(Label "O",a);(Label "1",b)]
     | [(Label "1",b);(Label "0",a)] -> 
@@ -175,7 +175,7 @@ let extract_pair : expression -> (expression * expression) option = fun e ->
 
 let extract_record : expression -> (label * expression) list option = fun e ->
   match e.content with
-  | E_record lst -> Some (LMap.to_kv_list lst)
+  | E_record lst -> Some (LMap.to_kv_list_rev lst)
   | _ -> None
 
 let extract_map : expression -> (expression * expression) list option = fun e ->

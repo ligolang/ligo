@@ -1,5 +1,9 @@
 open Enums_utils
 
+type layout =
+  | L_comb
+  | L_tree
+
 type type_constant =
   | TC_unit
   | TC_string

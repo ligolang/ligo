@@ -4,6 +4,7 @@ open Simple_utils.Display
 let stage = "typer"
 
 type typer_error = [
+  | `Typer_missing_funarg_annotation of Ast_typed.expression_variable
   | `Typer_michelson_comb_no_record of Location.t
   | `Typer_michelson_comb_no_variant of Location.t
   | `Typer_unbound_type_variable of Ast_typed.Environment.t * Ast_typed.type_variable * Location.t
@@ -65,8 +66,11 @@ type typer_error = [
   | `Typer_unrecognized_type_constant of Ast_core.type_expression
   | `Typer_expected_ascription of Ast_core.expression
   | `Typer_different_types of Ast_typed.type_expression * Ast_typed.type_expression
+  | `Typer_record_redefined_error of Location.t
 ]
 
+let missing_funarg_annotation v = `Typer_missing_funarg_annotation v
+let record_redefined_error (loc:Location.t) = `Typer_record_redefined_error loc
 let michelson_comb_no_record (loc:Location.t) = `Typer_michelson_comb_no_record loc
 let michelson_comb_no_variant (loc:Location.t) = `Typer_michelson_comb_no_variant loc
 let unbound_type_variable (e:Ast_typed.Environment.t) (tv:Ast_typed.type_variable) (loc:Location.t) = `Typer_unbound_type_variable (e,tv,loc)
@@ -149,6 +153,11 @@ let rec error_ppformat : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
+    | `Typer_missing_funarg_annotation v ->
+      (v.location , Format.asprintf
+        "@[<hv>%a@.Missing a type annotation for argument \"%a\".@]"
+          Location.pp v.location
+          Ast_typed.PP.expression_variable v)
     | `Typer_michelson_comb_no_record loc ->
       (loc, Format.asprintf
         "@[<hv>Invalid usage of type \"michelson_pair\".@.The \"michelson_pair\" type expects a record type as argument. @]")
@@ -417,7 +426,12 @@ The following forms of subtractions are possible:
         (list_sep Ast_typed.PP.type_expression (const ", ")) acts)
     | `Typer_declaration_order_record loc ->
       (loc, Format.asprintf
-        "@[<hv>Incorrect argument provided to Layout.convert_to_(left|right)_comb.@.The given argument must be annotated with the type of the value. @]")
+        "@[<hv>%a@.Incorrect argument provided to Layout.convert_to_(left|right)_comb.@.The given argument must be annotated with the type of the value. @]"
+        Location.pp loc)
+    | `Typer_record_redefined_error loc ->
+      (loc, Format.asprintf
+        "@[<hv>%a@.Redefined record. @]"
+        Location.pp loc)
   )
 
 let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
@@ -428,6 +442,13 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("content",  content )]
   in
   match a with
+  | `Typer_missing_funarg_annotation v ->
+    let message = Format.asprintf "Missing type annotation for argument" in
+    let content = `Assoc [
+      ("value", Stage_common.Types.expression_variable_to_yojson v );
+      ("message", `String message );
+      ("location", Location.to_yojson v.location); ] in
+    json_error ~stage ~content
   | `Typer_michelson_comb_no_record loc ->
     let message = `String "michelson pair comb can only be used on a record type" in
     let loc = Format.asprintf "%a" Location.pp loc in
@@ -1040,5 +1061,12 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("message", message) ;
       ("a", a) ;
       ("b", b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_record_redefined_error loc ->
+    let message = `String "Redefined record" in
+    let content = `Assoc [
+      ("message", message) ;
+      ("location", Location.to_yojson loc) ;
     ] in
     json_error ~stage ~content

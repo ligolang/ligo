@@ -51,6 +51,6 @@ let pair_sep value sep ppf (a, b) =
 
 let smap_sep value sep ppf m =
   let module SMap = X_map.String in
-  let lst = SMap.to_kv_list m in
+  let lst = SMap.to_kv_list_rev m in
   let new_pp ppf (k, v) = fprintf ppf "%s -> %a" k value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst

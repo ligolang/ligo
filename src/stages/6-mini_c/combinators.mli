@@ -76,4 +76,5 @@ val d_unit : value
 val environment_wrap : environment -> environment -> environment_wrap
 val id_environment_wrap : environment -> environment_wrap
 val e_var : ?loc:Location.t -> var_name -> type_expression -> expression
+val ec_pair : expression -> expression -> expression_content
 val e_application : ?loc:Location.t -> expression -> type_expression -> expression -> expression

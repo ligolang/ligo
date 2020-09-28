@@ -14,6 +14,7 @@ module Var = Var
 module Ligo_string = X_string
 module Display = Display
 module Runned_result = Runned_result
+module Yojson_helpers = Yojson_helpers
 
 (* Originally by Christian Rinderknecht *)
 

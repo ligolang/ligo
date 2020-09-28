@@ -24,22 +24,29 @@ let t_option ?loc o       : type_expression = t_constant ?loc TC_option [o]
 let t_list ?loc t         : type_expression = t_constant ?loc TC_list [t]
 let t_variable ?loc n     : type_expression = make_t ?loc @@ T_variable n
 let t_variable_ez ?loc n  : type_expression = t_variable ?loc @@ Var.of_name n
-let t_wildcard ?loc ()    : type_expression = make_t ?loc @@ T_wildcard
 
 let t_record ?loc record  : type_expression = make_t ?loc @@ T_record record
-let t_record_ez ?loc lst =
-  let lst = List.mapi (fun i (k, v) -> (Label k, {associated_type=v;decl_pos=i})) lst in
-  let record = LMap.of_list lst in
-  t_record ?loc (record:row_element label_map)
+let t_record_ez_attr ?loc ?(attr=[]) lst =
+  let aux i (name, t_expr, attributes) =
+    (Label name, {associated_type=t_expr; decl_pos=i; attributes}) in
+  let lst = List.mapi aux lst in
+  let fields : row_element label_map = LMap.of_list lst
+  in t_record ?loc {fields; attributes=attr}
+let t_record_ez ?loc ?attr lst =
+  let aux (a,b) = a,b,[] in
+  let lst' = List.map aux lst in
+  t_record_ez_attr ?loc ?attr lst'
 
 let t_tuple ?loc lst    : type_expression = make_t ?loc @@ T_tuple lst
 let t_pair ?loc (a , b) : type_expression = t_tuple ?loc [a; b]
 
 let t_sum ?loc sum : type_expression = make_t ?loc @@ T_sum sum
-let t_sum_ez ?loc (lst:(string * type_expression) list) : type_expression =
-  let aux (prev,i) (k, v) = (LMap.add (Label k) {associated_type=v;decl_pos=i} prev, i+1) in
-  let (map,_) = List.fold_left aux (LMap.empty,0) lst in
-  t_sum ?loc (map: row_element label_map)
+let t_sum_ez_attr ?loc ?(attr=[]) lst =
+  let aux i (name, t_expr, attributes) =
+    (Label name, {associated_type=t_expr; decl_pos=i; attributes}) in
+  let lst = List.mapi aux lst in
+  let fields : row_element label_map = LMap.of_list lst
+  in t_sum ?loc {fields; attributes=attr}
 
 let t_annoted ?loc ty str : type_expression = make_t ?loc @@ T_annoted (ty, str)
 
@@ -103,11 +110,15 @@ let e_constant ?loc name lst = make_e ?loc @@ E_constant {cons_name=name ; argum
 let e_variable ?loc v = make_e ?loc @@ E_variable v
 let e_variable_ez ?loc v = e_variable ?loc @@ Location.wrap ?loc (Var.of_name v)
 let e_application ?loc a b = make_e ?loc @@ E_application {lamb=a ; args=b}
-let e_lambda ?loc binder result : expression = make_e ?loc @@ E_lambda {binder; result}
+let e_lambda ?loc binder input_type output_type result : expression = make_e ?loc @@ E_lambda {binder; input_type; output_type; result}
 let e_recursive ?loc fun_name fun_type lambda = make_e ?loc @@ E_recursive {fun_name; fun_type; lambda}
+
 (* let e_recursive_ez ?loc fun_name fun_type lambda = e_recursive ?loc (Var.of_name fun_name) fun_type lambda *)
-let e_let_in ?loc let_binder inline rhs let_result = make_e ?loc @@ E_let_in { let_binder; rhs ; let_result; inline }
+
+let e_let_in ?loc let_binder attributes rhs let_result =
+  make_e ?loc @@ E_let_in {let_binder; rhs; let_result; attributes}
 (* let e_let_in_ez ?loc binder ascr inline rhs let_result = e_let_in ?loc (Var.of_name binder, ascr) inline rhs let_result *)
+
 let e_raw_code ?loc language code = make_e ?loc @@ E_raw_code {language; code}
 
 let e_constructor ?loc s a : expression = make_e ?loc @@ E_constructor { constructor = Label s; element = a}
@@ -142,9 +153,9 @@ let e_for_each ?loc binder collection collection_type body = make_e ?loc @@ E_fo
 let e_bool ?loc   b : expression = e_constructor ?loc (string_of_bool b) (e_unit ())
 
 let e_matching_variant ?loc a lst = e_matching ?loc a @@ Match_variant lst
-let e_matching_record   ?loc m lst expr = e_matching ?loc m @@ Match_record   (lst, expr)
-let e_matching_tuple    ?loc m lst expr = e_matching ?loc m @@ Match_tuple    (lst, expr)
-let e_matching_variable ?loc m var expr = e_matching ?loc m @@ Match_variable (var, expr)
+let e_matching_record   ?loc m lst ty_opt expr = e_matching ?loc m @@ Match_record   (lst,ty_opt, expr)
+let e_matching_tuple    ?loc m lst ty_opt expr = e_matching ?loc m @@ Match_tuple    (lst,ty_opt, expr)
+let e_matching_variable ?loc m var ty_opt expr = e_matching ?loc m @@ Match_variable (var,ty_opt, expr)
 
 (* let e_matching_tuple_ez ?loc m lst ty_opt expr =
   let lst = List.map Var.of_name lst in
@@ -215,11 +226,6 @@ let get_e_lambda = fun e ->
     E_lambda e -> Some e
   | _ -> None
 
-let get_e_ascription = fun e ->
-  match e with
-    E_ascription e -> Some e
-  | _ -> None
-
 (* Same as get_e_pair *)
 let extract_pair : expression -> (expression * expression) option = fun e ->
   match e.expression_content with
@@ -233,7 +239,7 @@ let extract_list : expression -> expression list option = fun e ->
 
 let extract_record : expression -> (label * expression) list option = fun e ->
   match e.expression_content with
-  | E_record lst -> Some (LMap.to_kv_list lst)
+  | E_record lst -> Some (LMap.to_kv_list_rev lst)
   | _ -> None
 
 let extract_map : expression -> (expression * expression) list option = fun e ->

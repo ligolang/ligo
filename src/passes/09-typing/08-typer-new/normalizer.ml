@@ -39,7 +39,7 @@ let normalizer_grouped_by_variable : (type_constraint_simpl , type_constraint_si
   in
   let dbs = match new_constraint with
       SC_Constructor ({tv ; c_tag = _ ; tv_list} as c) -> store_constraint (tv :: tv_list)             {constructor = [c] ; poly = []  ; tc = [] ; row = []}
-    | SC_Row         ({tv ; r_tag = _ ; tv_map } as c) -> store_constraint (tv :: LMap.to_list tv_map) {constructor = []  ; poly = []  ; tc = [] ; row = [c]}
+    | SC_Row         ({tv ; r_tag = _ ; tv_map } as c) -> store_constraint (tv :: LMap.to_list_rev tv_map) {constructor = []  ; poly = []  ; tc = [] ; row = [c]}
     | SC_Typeclass   ({tc = _ ; args}            as c) -> store_constraint args                        {constructor = []  ; poly = []  ; tc = [c]; row = []}
     | SC_Poly        ({tv; forall = _}           as c) -> store_constraint [tv]                        {constructor = []  ; poly = [c] ; tc = [] ; row = []}
     | SC_Alias { a; b } -> Constraint_databases.merge_constraints a b dbs

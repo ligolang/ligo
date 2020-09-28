@@ -13,32 +13,35 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, des
     Some te -> ok @@ te
   | None ->
     match te.type_content with
-      | O.T_sum sum -> 
-        let%bind sum = 
+      | O.T_sum {fields;layout} -> 
+        let%bind fields = 
           Stage_common.Helpers.bind_map_lmap (fun v ->
             let {associated_type;michelson_annotation;decl_pos} : O.row_element = v in
             let%bind associated_type = decompile_type_expression associated_type in
-            let v' : I.row_element = {associated_type;michelson_annotation;decl_pos} in
+            let attributes = match michelson_annotation with | Some a -> [a] | None -> [] in
+            let v' : I.row_element = {associated_type;attributes;decl_pos} in
             ok @@ v'
-          ) sum
+          ) fields
         in
-        return @@ I.T_sum sum
-      | O.T_record record -> 
-        let%bind record = 
+        let attributes = match layout with Some l -> [("layout:"^(Format.asprintf "%a" O.PP.layout l))] | None -> [] in
+        return @@ I.T_sum {fields ; attributes}
+      | O.T_record {fields;layout} -> 
+        let%bind fields = 
           Stage_common.Helpers.bind_map_lmap (fun v ->
             let {associated_type;michelson_annotation;decl_pos} : O.row_element = v in
             let%bind associated_type = decompile_type_expression associated_type in
-            let v' : I.row_element = {associated_type ; michelson_annotation=michelson_annotation ; decl_pos} in
+            let attributes = match michelson_annotation with | Some a -> [a] | None -> [] in
+            let v' : I.row_element = {associated_type ; attributes ; decl_pos} in
             ok @@ v'
-          ) record
+          ) fields
         in
-        return @@ I.T_record record
+        let attributes = match layout with Some l -> [("layout:"^(Format.asprintf "%a" O.PP.layout l))] | None -> [] in
+        return @@ I.T_record { fields ; attributes }
       | O.T_arrow {type1;type2} ->
         let%bind type1 = decompile_type_expression type1 in
         let%bind type2 = decompile_type_expression type2 in
         return @@ T_arrow {type1;type2}
       | O.T_variable type_variable -> return @@ T_variable (Var.todo_cast type_variable)
-      | O.T_wildcard -> return @@ T_wildcard
       | O.T_constant { type_constant ; arguments } ->
         let%bind lst = bind_map_list decompile_type_expression arguments in
         return @@ T_constant (type_constant, lst)
@@ -67,11 +70,19 @@ let rec decompile_expression : O.expression -> (I.expression, desugaring_error) 
       let%bind fun_type = decompile_type_expression fun_type in
       let%bind lambda = decompile_lambda lambda in
       return @@ I.E_recursive {fun_name;fun_type;lambda}
-    | O.E_let_in {let_binder ;inline;rhs;let_result} ->
-      let%bind let_binder = decompile_binder let_binder in
+    | O.E_let_in {let_binder = {binder; ascr};inline=false;rhs=expr1;let_result=expr2}
+      when Var.equal binder.wrap_content (Var.of_name "_")
+           && Stdlib.(=) ascr (Some (O.t_unit ())) ->
+      let%bind expr1 = decompile_expression expr1 in
+      let%bind expr2 = decompile_expression expr2 in
+      return @@ I.E_sequence {expr1;expr2}
+    | O.E_let_in {let_binder = { binder ; ascr } ;inline;rhs;let_result} ->
+      let binder = cast_var binder in
+      let%bind ty_opt = bind_map_option decompile_type_expression ascr in
       let%bind rhs = decompile_expression rhs in
       let%bind let_result = decompile_expression let_result in
-      return @@ I.E_let_in {let_binder;mut=false;inline;rhs;let_result}
+      let attributes = if inline then ["inline"] else [] in
+      return @@ I.E_let_in {let_binder=(binder,ty_opt);mut=false;attributes;rhs;let_result}
     | O.E_raw_code {language;code} ->
       let%bind code = decompile_expression code in
       return @@ I.E_raw_code {language;code} 
@@ -83,7 +94,7 @@ let rec decompile_expression : O.expression -> (I.expression, desugaring_error) 
       let%bind cases   = decompile_matching cases in
       return @@ I.E_matching {matchee;cases}
     | O.E_record record ->
-      let record = O.LMap.to_kv_list record in
+      let record = O.LMap.to_kv_list_rev record in
       let%bind record = 
         bind_map_list (fun (O.Label k,v) ->
           let%bind v = decompile_expression v in
@@ -105,16 +116,13 @@ let rec decompile_expression : O.expression -> (I.expression, desugaring_error) 
       let%bind type_annotation = decompile_type_expression type_annotation in
       return @@ I.E_ascription {anno_expr; type_annotation}
 
-and decompile_binder : O.binder -> _ result = fun {var; ty} ->
-  let var = cast_var var in
-  let%bind ty = decompile_type_expression ty in
-  ok (var,ty)
-
 and decompile_lambda : O.lambda -> (I.lambda, desugaring_error) result =
-  fun {binder;result}->
-    let%bind binder = decompile_binder binder in
+  fun {binder;input_type;output_type;result}->
+    let binder = cast_var binder in
+    let%bind input_type = bind_map_option decompile_type_expression input_type in
+    let%bind output_type = bind_map_option decompile_type_expression output_type in
     let%bind result = decompile_expression result in
-    ok @@ I.{binder;result}
+    ok @@ I.{binder;input_type;output_type;result}
 and decompile_matching : O.matching_expr -> (I.matching_expr, desugaring_error) result =
   fun m -> 
   match m with 
@@ -141,10 +149,12 @@ and decompile_matching : O.matching_expr -> (I.matching_expr, desugaring_error) 
 let decompile_declaration : O.declaration Location.wrap -> _ result = fun {wrap_content=declaration;location} ->
   let return decl = ok @@ Location.wrap ~loc:location decl in
   match declaration with 
-  | O.Declaration_constant {binder ; attr={inline}; expr} ->
-    let%bind (binder,ty) = decompile_binder binder in
+  | O.Declaration_constant {binder ; type_opt ; attr={inline}; expr} ->
+    let binder = cast_var binder in
     let%bind expr = decompile_expression expr in
-    return @@ I.Declaration_constant (binder, ty, inline, expr)
+    let%bind te_opt = bind_map_option decompile_type_expression type_opt in
+    let attributes = if inline then ["inline"] else [] in
+    return @@ I.Declaration_constant (binder, te_opt, attributes, expr)
   | O.Declaration_type {type_binder ; type_expr} ->
     let type_binder = Var.todo_cast type_binder in
     let%bind te = decompile_type_expression type_expr in

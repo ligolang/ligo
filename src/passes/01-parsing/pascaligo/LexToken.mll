@@ -23,14 +23,15 @@ type attribute = {
 type t =
   (* Literals *)
 
-  String   of lexeme Region.reg
-| Verbatim of lexeme Region.reg
-| Bytes    of (lexeme * Hex.t) Region.reg
+| Ident    of lexeme Region.reg
+| Constr   of lexeme Region.reg
 | Int      of (lexeme * Z.t) Region.reg
 | Nat      of (lexeme * Z.t) Region.reg
 | Mutez    of (lexeme * Z.t) Region.reg
-| Ident    of lexeme Region.reg
-| Constr   of lexeme Region.reg
+| String   of lexeme Region.reg
+| Verbatim of lexeme Region.reg
+| Bytes    of (lexeme * Hex.t) Region.reg
+| Attr     of string Region.reg
 | Lang     of lexeme Region.reg Region.reg
 
   (* Symbols *)
@@ -65,7 +66,6 @@ type t =
   (* Keywords *)
 
 | And        of Region.t  (* "and"        *)
-| Attributes of Region.t  (* "attributes" *)
 | Begin      of Region.t  (* "begin"      *)
 | BigMap     of Region.t  (* "big_map"    *)
 | Block      of Region.t  (* "block"      *)
@@ -144,6 +144,9 @@ let proj_token = function
     region, sprintf "Constr %S" value
 | Lang Region.{region; value} ->
     region, sprintf "Lang %S" (value.Region.value)
+| Attr Region.{region; value} ->
+   region, sprintf "Attr %S" value
+
 
   (* Symbols *)
 
@@ -177,7 +180,6 @@ let proj_token = function
   (* Keywords *)
 
 | And        region -> region, "And"
-| Attributes region -> region, "Attributes"
 | Begin      region -> region, "Begin"
 | BigMap     region -> region, "BigMap"
 | Block      region -> region, "Block"
@@ -238,6 +240,7 @@ let to_lexeme = function
 | Ident id
 | Constr id  -> id.Region.value
 | Lang lang  -> Region.(lang.value.value)
+| Attr a     -> a.Region.value
 
   (* Symbols *)
 
@@ -271,7 +274,6 @@ let to_lexeme = function
   (* Keywords *)
 
 | And        _ -> "and"
-| Attributes _ -> "attributes"
 | Begin      _ -> "begin"
 | BigMap     _ -> "big_map"
 | Block      _ -> "block"
@@ -332,7 +334,6 @@ let to_region token = proj_token token |> fst
 
 let keywords = [
   (fun reg -> And        reg);
-  (fun reg -> Attributes reg);
   (fun reg -> Begin      reg);
   (fun reg -> BigMap     reg);
   (fun reg -> Block      reg);
@@ -544,9 +545,7 @@ let mk_constr lexeme region =
 
 (* Attributes *)
 
-type attr_err = Invalid_attribute
-
-let mk_attr _ _ _ = Error Invalid_attribute
+let mk_attr lexeme region = Attr Region.{value=lexeme; region}
 
 (* Language injection *)
 
@@ -650,6 +649,113 @@ let check_right_context token next_token buffer : unit =
                      else fail region Missing_break
               else ()
         | _::_ -> ()
+
+(* Unlexing the tokens *)
+
+let gen_sym prefix =
+  let count = ref 0 in
+  fun () -> incr count;
+         prefix ^ string_of_int !count
+
+let id_sym   = gen_sym "id"
+and ctor_sym = gen_sym "C"
+
+let concrete = function
+  (* Literals *)
+
+| "Ident"    -> id_sym ()
+| "Constr"   -> ctor_sym ()
+| "Int"      -> "1"
+| "Nat"      -> "1n"
+| "Mutez"    -> "1mutez"
+| "String"   -> "\"a string\""
+| "Verbatim" -> "{|verbatim|}"
+| "Bytes"    -> "0xAA"
+| "Attr"     -> "[@attr]"
+| "Lang"     -> "[%Michelson {UNPAIR}]"
+
+  (* Symbols *)
+
+| "SEMI"     -> ";"
+| "COMMA"    -> ","
+| "LPAR"     -> "("
+| "RPAR"     -> ")"
+| "LBRACE"   -> "{"
+| "RBRACE"   -> "}"
+| "LBRACKET" -> "["
+| "RBRACKET" -> "]"
+| "CONS"     -> "#"
+| "VBAR"     -> "|"
+| "ARROW"    -> "->"
+| "ASS"      -> ":="
+| "EQ"       -> "="
+| "COLON"    -> ":"
+| "LT"       -> "<"
+| "LE"       -> "<="
+| "GT"       -> ">"
+| "GE"       -> ">="
+| "NE"       -> "=/="
+| "PLUS"     -> "+"
+| "MINUS"    -> "-"
+| "SLASH"    -> "/"
+| "TIMES"    -> "*"
+| "DOT"      -> "."
+| "WILD"     -> "_"
+| "CAT"      -> "^"
+
+  (* Keywords *)
+
+| "And"       -> "and"
+| "Begin"     -> "begin"
+| "BigMap"    -> "big_map"
+| "Block"     ->  "block"
+| "Case"      -> "case"
+| "Const"     -> "const"
+| "Contains"  -> "contains"
+| "Else"      -> "else"
+| "End"       -> "end"
+| "False"     -> "False"
+| "For"       -> "for"
+| "From"      -> "from"
+| "Function"  -> "function"
+| "Recursive" -> "recursive"
+| "If"        -> "if"
+| "In"        -> "in"
+| "Is"        -> "is"
+| "List"      -> "list"
+| "Map"       -> "map"
+| "Mod"       -> "mod"
+| "Nil"       -> "nil"
+| "Not"       -> "not"
+| "Of"        -> "of"
+| "Or"        -> "or"
+| "Patch"     -> "patch"
+| "Record"    -> "record"
+| "Remove"    -> "remove"
+| "Set"       -> "set"
+| "Skip"      -> "skip"
+| "Step"      -> "step"
+| "Then"      -> "then"
+| "To"        -> "to"
+| "True"      -> "True"
+| "Type"      -> "type"
+| "Unit"      -> "Unit"
+| "Var"       -> "var"
+| "While"     -> "while"
+| "With"      -> "with"
+
+  (* Data constructors *)
+
+| "C_None"    -> "None"
+| "C_Some"    -> "Some"
+
+  (* Virtual tokens *)
+
+| "EOF" -> ""
+
+  (* This case should not happen! *)
+
+| _  -> "\\Unknown" (* Backslash meant to trigger an error *)
 
 (* END TRAILER *)
 }

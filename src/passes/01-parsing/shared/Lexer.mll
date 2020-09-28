@@ -29,7 +29,6 @@ module type TOKEN =
     type   nat_err = Invalid_natural
                    | Non_canonical_zero_nat
     type   sym_err = Invalid_symbol
-    type  attr_err = Invalid_attribute
 
     (* Injections *)
 
@@ -42,7 +41,7 @@ module type TOKEN =
     val mk_verbatim : lexeme -> Region.t -> token
     val mk_bytes    : lexeme -> Region.t -> token
     val mk_constr   : lexeme -> Region.t -> token
-    val mk_attr     : string -> lexeme -> Region.t -> (token, attr_err) result
+    val mk_attr     : lexeme -> Region.t -> token
     val mk_lang     : lexeme Region.reg -> Region.t -> token
     val eof         : Region.t -> token
 
@@ -121,7 +120,6 @@ module Make (Token : TOKEN) : (S with module Token = Token) =
     | Reserved_name of string
     | Invalid_symbol
     | Invalid_natural
-    | Invalid_attribute
 
     let sprintf = Printf.sprintf
 
@@ -160,8 +158,6 @@ module Make (Token : TOKEN) : (S with module Token = Token) =
          Hint: Check the LIGO syntax you use."
     | Invalid_natural ->
         "Invalid natural number."
-    | Invalid_attribute ->
-        "Invalid attribute."
 
     exception Error of error Region.reg
 
@@ -262,12 +258,10 @@ module Make (Token : TOKEN) : (S with module Token = Token) =
         Ok token -> state#enqueue token
       | Error Token.Reserved_name -> fail region (Reserved_name lexeme)
 
-    let mk_attr header attr state buffer =
+    let mk_attr attr state buffer =
       let region, _, state = state#sync buffer in
-      match Token.mk_attr header attr region with
-        Ok token -> state#enqueue token
-      | Error Token.Invalid_attribute ->
-          fail region Invalid_attribute
+      let token = Token.mk_attr attr region
+      in state#enqueue token
 
     let mk_constr state buffer =
       let region, lexeme, state = state#sync buffer in
@@ -312,7 +306,7 @@ let capital    = ['A'-'Z']
 let letter     = small | capital
 let ident      = small (letter | '_' | digit)*
 let constr     = capital (letter | '_' | digit)*
-let attr       = ident | constr
+let attr       = letter (letter | '_' | ':' | digit)*
 let hexa_digit = digit | ['A'-'F' 'a'-'f']
 let byte       = hexa_digit hexa_digit
 let byte_seq   = byte | byte (byte | '_')* byte
@@ -396,8 +390,7 @@ and scan state = parse
 | natural                { mk_int          state lexbuf }
 | symbol                 { mk_sym          state lexbuf }
 | eof                    { mk_eof          state lexbuf }
-| "[@"  (attr as a) "]"  { mk_attr "[@"  a state lexbuf }
-| "[@@" (attr as a) "]"  { mk_attr "[@@" a state lexbuf }
+| "[@"  (attr as a) "]"  { mk_attr       a state lexbuf }
 | "[%"  (attr as l)      { mk_lang       l state lexbuf }
 
   (* Management of #include preprocessing directives

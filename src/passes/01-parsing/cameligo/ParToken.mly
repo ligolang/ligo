@@ -14,7 +14,7 @@ module LexToken = Lexer_cameligo.LexToken
 %token             <(string * Z.t) Region.reg> Mutez    "<mutez>"
 %token                     <string Region.reg> Ident    "<ident>"
 %token                     <string Region.reg> Constr   "<constr>"
-%token                     <string Region.reg> Attr     "<attr>"
+%token                     <string Region.reg> Attr    "[@attr]"
 %token <LexToken.lexeme Region.reg Region.reg> Lang     "<lang>"
 
   (* Symbols *)

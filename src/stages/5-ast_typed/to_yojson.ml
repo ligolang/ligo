@@ -182,6 +182,10 @@ let label_map f lmap =
   in
   `Assoc lst'
 
+let layout = function
+  | L_comb -> `List [ `String "L_comb"; `Null ]
+  | L_tree -> `List [ `String "L_tree"; `Null ]
+
 
 let rec type_expression {type_content=tc;type_meta;location} =
   `Assoc [
@@ -191,13 +195,17 @@ let rec type_expression {type_content=tc;type_meta;location} =
   ]
 
 and type_content = function
-  | T_sum      t -> `List [ `String "t_sum"; label_map row_element t]
-  | T_record   t -> `List [ `String "t_record"; label_map row_element t]
+  | T_sum      t -> `List [ `String "t_sum"; rows t]
+  | T_record   t -> `List [ `String "t_record"; rows t]
   | T_arrow    t -> `List [ `String "t_arrow"; arrow t]
   | T_variable t -> `List [ `String "t_variable"; type_variable_to_yojson t]
   | T_constant t -> `List [ `String "t_constant"; type_operator t]
-  | T_wildcard   -> `List [ `String "t_wildcard"; `Null]
 
+and rows {content; layout = l } =
+  `Assoc [
+    ("content", label_map row_element content);
+    ("layout", layout l);
+  ]
 and row_element {associated_type; michelson_annotation; decl_pos} =
   `Assoc [
     ("associated_type", type_expression associated_type);

@@ -25,10 +25,15 @@ let get_exp_as_string filename =
     List.rev !lines ;;
 
 let assert_syntax_error sdata () =
-  let%bind _l = bind_iter_list
-    (fun entry -> Assert.assert_fail (test_internal __LOC__) @@ sdata.parser entry)
-    (get_exp_as_string sdata.erroneous_source_file) in
-  ok ()
+  let aux entry =
+    Format.printf "Entry : <%s>%!\n" entry ;
+    let result = sdata.parser entry in
+    Format.printf "Parsed%!\n" ;
+    Assert.assert_fail (test_internal __LOC__) result
+  in
+  let exps = get_exp_as_string sdata.erroneous_source_file in
+  bind_iter_list aux exps
+
 
 let () =
   Printexc.record_backtrace true ;

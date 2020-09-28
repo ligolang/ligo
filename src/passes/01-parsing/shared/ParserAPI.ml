@@ -79,12 +79,16 @@ module Make (IO: IO)
     |                   _ -> assert false
 
     (* The call [state checkpoint] extracts the number of the current
-       state out of a parser checkpoint. *)
+       state out of a parser checkpoint. The case [None] denotes the
+       case of an error state with an empty LR stack: Menhir does not
+       know how to determine that state. Until this is fixed, we
+       return [None] and a generic error message (see function
+       [message] below.) *)
 
-    let state checkpoint : int =
+    let state checkpoint : int option =
       match Lazy.force (stack checkpoint) with
-        S.Nil -> 0 (* WARNING: Hack. The first state should be 0. *)
-      | S.Cons (I.Element (s,_,_,_),_) -> I.number s
+        S.Nil -> None
+      | S.Cons (I.Element (s,_,_,_),_) -> Some (I.number s)
 
     (* The parser has successfully produced a semantic value. *)
 
@@ -104,12 +108,22 @@ module Make (IO: IO)
       let invalid_region = Lexer.Token.to_region invalid in
       Region.{value=msg; region=invalid_region}
 
+    (* From error states to error messages *)
+
+    let message checkpoint =
+      match state checkpoint with
+        None -> "Syntax error." (* Menhir bug. See [state] above. *)
+      | Some state ->
+         match ParErr.message state with
+           (* Default error message *)
+           "<YOUR SYNTAX ERROR MESSAGE HERE>\n" ->
+             string_of_int state ^ ": Syntax error."
+         | msg -> msg
+           (* A build error but we work around it: *)
+         | exception Not_found -> "Syntax error."
+
     let failure get_win checkpoint =
-      let message = ParErr.message (state checkpoint) in
-      let message =
-        if message = "<YOUR SYNTAX ERROR MESSAGE HERE>\n" then
-          (string_of_int (state checkpoint)) ^ ": <syntax error>"
-        else message in
+      let message = message checkpoint in
       match get_win () with
         LexerLib.Nil -> assert false
       | LexerLib.One invalid ->

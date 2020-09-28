@@ -189,12 +189,11 @@ let rec type_expression {type_content=tc;sugar=_;location} =
   ]
 
 and type_content = function
-  | T_sum      t -> `List [ `String "t_sum"; label_map row_element t]
-  | T_record   t -> `List [ `String "t_record"; label_map row_element t]
+  | T_sum      t -> `List [ `String "t_sum"; label_map row_element t.fields]
+  | T_record   t -> `List [ `String "t_record"; label_map row_element t.fields]
   | T_arrow    t -> `List [ `String "t_arrow"; arrow t]
   | T_variable t -> `List [ `String "t_variable"; type_variable_to_yojson t]
   | T_constant t -> `List [ `String "t_constant"; type_operator t]
-  | T_wildcard   -> `List [ `String "t_wildcard"; `Null]
 
 and row_element {associated_type; michelson_annotation; decl_pos} =
   `Assoc [
@@ -215,11 +214,7 @@ and type_operator {type_constant=tc; arguments} =
     ("arguments", list type_expression arguments)
   ]
 
-let binder {var;ty} = 
-  `Assoc [
-    ("var", expression_variable_to_yojson var);
-    ("ty", type_expression ty);
-  ]
+let binder var =  expression_variable_to_yojson var
 
 let rec expression {content=ec;sugar;location} =
   `Assoc [
@@ -259,7 +254,7 @@ and application {lamb;args} =
     ("args", expression args);
   ]
 
-and lambda {binder=b;result} =
+and lambda {binder=b;result;input_type=_;output_type=_} =
   `Assoc [
     ("binder", binder b);
     ("result", expression result);
@@ -274,7 +269,7 @@ and recursive {fun_name;fun_type;lambda=l} =
 
 and let_in {let_binder;rhs;let_result;inline} =
   `Assoc [
-    ("let_binder", binder let_binder);
+    ("let_binder", binder let_binder.binder);
     ("rhs", expression rhs);
     ("let_result", expression let_result);
     ("inline", `Bool inline);
@@ -363,7 +358,7 @@ let declaration_type {type_binder;type_expr} =
     ("type_expr", type_expression type_expr);
   ]
 
-let declaration_constant {binder=b;expr; attr} =
+let declaration_constant {binder=b;expr;attr;type_opt=_} =
   `Assoc [
     ("binder",binder b);
     ("expr", expression expr);

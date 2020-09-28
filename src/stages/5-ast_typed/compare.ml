@@ -11,8 +11,8 @@ let compare_tvmap_entry compare (tva, va) (tvb, vb) = cmp2 Var.compare tva tvb c
 let bool a b = (Stdlib.compare : bool -> bool -> int) a b
 let label (Label a) (Label b) = String.compare a b
 let label_map ~compare lma lmb =
-  let ra = LMap.to_kv_list lma in
-  let rb = LMap.to_kv_list lmb in
+  let ra = LMap.to_kv_list_rev lma in
+  let rb = LMap.to_kv_list_rev lmb in
   let aux (la,a) (lb,b) =
     cmp2 label la lb compare a b in
   List.compare ~compare:aux ra rb
@@ -22,6 +22,12 @@ let typeVariableMap compare a b = List.compare ~compare:(compare_tvmap_entry com
 let type_variable = Var.compare
 let expression_variable = Location.compare_wrap ~compare:Var.compare
 
+let layout_tag = function
+  | L_comb -> 1
+  | L_tree -> 2
+
+let layout a b = Int.compare (layout_tag a) (layout_tag b)
+
 let type_expression_tag ty_expr =
   match ty_expr.type_content with
     T_variable _ -> 1
@@ -29,21 +35,23 @@ let type_expression_tag ty_expr =
   | T_sum      _ -> 3
   | T_record   _ -> 4
   | T_arrow    _ -> 5
-  (* TODO: remove this when we remove the old typer *)
-  | T_wildcard   -> 6
 
 let rec type_expression a b =
   match a.type_content,b.type_content with
     T_variable a, T_variable b -> type_variable a b
   | T_constant a, T_constant b -> type_operator a b
-  | T_sum      a, T_sum      b -> label_map ~compare:row a b
-  | T_record   a, T_record   b -> label_map ~compare:row a b
+  | T_sum      a, T_sum      b -> rows a b
+  | T_record   a, T_record   b -> rows a b
   | T_arrow    a, T_arrow    b -> arrow a b
-  | T_wildcard, _ -> 0
-  | _, T_wildcard -> 0
-  | (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _),
-    (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _) ->
+  | (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ ),
+    (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ ) ->
     Int.compare (type_expression_tag a) (type_expression_tag b)
+
+
+and rows {content=ca; layout=la} {content=cb; layout=lb} =
+  cmp2
+    (label_map ~compare:row) ca cb
+    layout la lb
 
 and type_operator {type_constant=tca;arguments=la} {type_constant=tcb;arguments=lb} =
   cmp2

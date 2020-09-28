@@ -12,17 +12,16 @@ let fresh_binder () = Core.fresh_type_variable ()
 
 let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun te ->
   match te.type_content with
-  | T_sum kvmap ->
+  | T_sum {content=kvmap ; layout=_} ->
     let tmap = T.LMap.map (fun ({associated_type;_}:T.row_element) -> associated_type) kvmap in
     p_row C_variant @@ T.LMap.map type_expression_to_type_value tmap
-  | T_record kvmap ->
+  | T_record {content=kvmap;layout=_} ->
     let tmap = T.LMap.map (fun ({associated_type;_}:T.row_element) -> associated_type) kvmap in
     p_row C_record @@ T.LMap.map type_expression_to_type_value tmap
   | T_arrow {type1;type2} ->
     p_constant C_arrow @@ List.map type_expression_to_type_value [ type1 ; type2 ]
 
   | T_variable (type_name) -> { tsrc = "wrap: from source code maybe?" ; t = P_variable type_name }
-  | T_wildcard -> { tsrc = "wrap: from source code" ; t = P_variable (Var.fresh ()) }
   | T_constant {type_constant; arguments} ->
     let (csttag, args) = Option.unopt_exn @@ (* This will be removed later *)
       T.(match type_constant,arguments with
@@ -80,20 +79,29 @@ let constant : O.type_value -> T.type_expression list -> (constraints * T.type_v
 (* TODO : change type of lambda *)
 let lambda
     : T.type_expression ->
-      T.type_expression ->
+      T.type_expression option ->
+      T.type_expression option ->
       T.type_expression ->
       (constraints * T.type_variable) =
-  fun fresh input result ->
+  fun fresh arg output result ->
   let whole_expr = Core.fresh_type_variable () in
-  let unification_input = T.{ tsrc = "wrap: lambda: arg" ; t = P_variable (Core.fresh_type_variable ()) } in
+  let unification_arg = T.{ tsrc = "wrap: lambda: arg" ; t = P_variable (Core.fresh_type_variable ()) } in
+  let unification_output = T.{ tsrc = "wrap: lambda: whole" ; t = P_variable (Core.fresh_type_variable ()) } in
   let result' = type_expression_to_type_value result in
+  let arg'  = match arg with
+      None -> []
+    | Some arg -> [c_equation unification_arg (type_expression_to_type_value arg) "wrap: lambda: arg annot"] in
+  let output'  = match output with
+      None -> []
+    | Some output -> [c_equation unification_output (type_expression_to_type_value output) "wrap: lambda: output annot"]
+  in 
     [
-      c_equation unification_input (type_expression_to_type_value input) "wrap: lambda: arg annot";
-      c_equation (type_expression_to_type_value fresh) unification_input "wrap: lambda: arg" ;
+      c_equation unification_output result' "wrap: lambda: result" ;
+      c_equation (type_expression_to_type_value fresh) unification_arg "wrap: lambda: arg" ;
       c_equation ({ tsrc = "wrap: lambda: whole" ; t = P_variable whole_expr })
-                 (p_constant C_arrow ([unification_input ; result']))
+                 (p_constant C_arrow ([unification_arg ; unification_output]))
                  "wrap: lambda: arrow (whole)"
-    ], whole_expr
+    ] @ arg' @ output' , whole_expr
 
 let application : T.type_expression -> T.type_expression -> (constraints * T.type_variable) =
   fun f arg ->
@@ -123,8 +131,8 @@ let matching : T.type_expression list -> (constraints * T.type_variable) =
   let cs = List.map (fun e -> c_equation { tsrc = "wrap: matching: case" ; t = P_variable whole_expr } e "wrap: matching: case (whole)") type_expressions
   in cs, whole_expr
 
-let record : T.row_element T.label_map -> (constraints * T.type_variable) = fun fields ->
-  let record_type = type_expression_to_type_value (T.t_record fields ()) in
+let record : T.rows -> (constraints * T.type_variable) = fun {content;layout} ->
+  let record_type = type_expression_to_type_value (T.t_record ~layout content) in
   let whole_expr = Core.fresh_type_variable () in
   [c_equation { tsrc = "wrap: record: whole" ; t = P_variable whole_expr } record_type "wrap: record: whole"] , whole_expr
 
@@ -133,14 +141,16 @@ let access_label ~(base : T.type_expression) ~(label : O.accessor) : (constraint
   let expr_type = Core.fresh_type_variable () in
   [{ c = C_access_label { c_access_label_tval = base' ; accessor = label ; c_access_label_tvar = expr_type } ; reason = "wrap: access_label" }] , expr_type
 
-let let_in : T.type_expression -> T.type_expression -> T.type_expression -> (constraints * T.type_variable) =
-  fun rhs rhs_tv result ->
+let let_in : T.type_expression -> T.type_expression option -> T.type_expression -> (constraints * T.type_variable) =
+  fun rhs rhs_tv_opt result ->
   let rhs'        = type_expression_to_type_value rhs in
   let result'     = type_expression_to_type_value result in
-  let rhs_tv' = [c_equation rhs' (type_expression_to_type_value rhs_tv) "wrap: let_in: rhs"] in
+  let rhs_tv_opt' = match rhs_tv_opt with
+      None -> []
+    | Some annot -> [c_equation rhs' (type_expression_to_type_value annot) "wrap: let_in: rhs"] in
   let whole_expr = Core.fresh_type_variable () in
     c_equation result' { tsrc = "wrap: let_in: whole" ; t = P_variable whole_expr } "wrap: let_in: result (whole)"
-  :: rhs_tv', whole_expr
+  :: rhs_tv_opt', whole_expr
 
 let recursive : T.type_expression -> (constraints * T.type_variable) =
   fun fun_type ->

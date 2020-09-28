@@ -154,13 +154,12 @@ type t = {
 
 and ast = t
 
+and attributes = attribute list
+
 and declaration =
   TypeDecl  of type_decl  reg
 | ConstDecl of const_decl reg
 | FunDecl   of fun_decl   reg
-| AttrDecl  of attr_decl
-
-and attr_decl = string reg ne_injection reg
 
 and const_decl = {
   kwd_const  : kwd_const;
@@ -169,7 +168,7 @@ and const_decl = {
   equal      : equal;
   init       : expr;
   terminator : semi option;
-  attributes : attr_decl option
+  attributes : attributes
 }
 
 (* Type declarations *)
@@ -184,7 +183,7 @@ and type_decl = {
 
 and type_expr =
   TProd   of cartesian
-| TSum    of (variant reg, vbar) nsepseq reg
+| TSum    of sum_type reg
 | TRecord of field_decl reg ne_injection reg
 | TApp    of (type_constr * type_tuple) reg
 | TFun    of (type_expr * arrow * type_expr) reg
@@ -193,17 +192,25 @@ and type_expr =
 | TWild   of wild
 | TString of lexeme reg
 
-and cartesian = (type_expr, times) nsepseq reg
-
-and variant = {
-  constr : constr;
-  arg    : (kwd_of * type_expr) option
+and sum_type = {
+  lead_vbar  : vbar option;
+  variants   : (variant reg, vbar) nsepseq;
+  attributes : attributes
 }
 
 and field_decl = {
   field_name : field_name;
   colon      : colon;
-  field_type : type_expr
+  field_type : type_expr;
+  attributes : attributes
+}
+
+and cartesian = (type_expr, times) nsepseq reg
+
+and variant = {
+  constr     : constr;
+  arg        : (kwd_of * type_expr) option;
+  attributes : attributes
 }
 
 and type_tuple = (type_expr, comma) nsepseq par reg
@@ -227,7 +234,7 @@ and fun_decl = {
   kwd_is        : kwd_is;
   return        : expr;
   terminator    : semi option;
-  attributes    : attr_decl option
+  attributes    : attributes
 }
 
 and block_with = {
@@ -269,7 +276,6 @@ and statements = (statement, semi) nsepseq
 and statement =
   Instr of instruction
 | Data  of data_decl
-| Attr  of attr_decl
 
 and data_decl =
   LocalConst of const_decl reg
@@ -611,12 +617,12 @@ and 'a ne_injection = {
   kind        : ne_injection_kwd;
   enclosing   : enclosing;
   ne_elements : ('a, semi) nsepseq;
-  terminator  : semi option
+  terminator  : semi option;
+  attributes  : attributes
 }
 
 and ne_injection_kwd =
-  NEInjAttr   of keyword
-| NEInjSet    of keyword
+  NEInjSet    of keyword
 | NEInjMap    of keyword
 | NEInjRecord of keyword
 
@@ -813,8 +819,7 @@ let pattern_to_region = function
 let declaration_to_region = function
   TypeDecl {region;_}
 | ConstDecl {region;_}
-| FunDecl {region;_}
-| AttrDecl {region;_} -> region
+| FunDecl {region;_} -> region
 
 let lhs_to_region : lhs -> Region.t = function
   Path path -> path_to_region path
@@ -823,6 +828,3 @@ let lhs_to_region : lhs -> Region.t = function
 let selection_to_region = function
   FieldName {region; _}
 | Component {region; _} -> region
-
-let map_ne_injection f ne_injection =
-  { ne_injection with ne_elements = nsepseq_map f ne_injection.ne_elements }

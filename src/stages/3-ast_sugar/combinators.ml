@@ -5,7 +5,7 @@ module SMap = Map.String
 
 let make_t ?(loc = Location.generated) type_content = {type_content; location=loc}
 
-  
+
 let tuple_to_record lst =
   let aux (i,acc) el = (i+1,(string_of_int i, el)::acc) in
   let (_, lst ) = List.fold_left aux (0,[]) lst in
@@ -29,26 +29,25 @@ let t_timestamp ?loc ()   : type_expression = type_constant ?loc TC_timestamp []
 let t_option ?loc o       : type_expression = type_constant ?loc TC_option [o]
 let t_list ?loc t         : type_expression = type_constant ?loc TC_list [t]
 let t_variable ?loc n     : type_expression = make_t ?loc @@ T_variable (Var.of_name n)
-let t_wildcard ?loc ()    : type_expression = make_t ?loc @@ T_wildcard
 let t_record_ez ?loc lst =
   let lst = List.map (fun (k, v) -> (Label k, v)) lst in
-  let m = LMap.of_list lst in
-  make_t ?loc @@ T_record m
+  let fields = LMap.of_list lst in
+  make_t ?loc @@ T_record {fields ; attributes=[]}
 let t_record ?loc m  : type_expression =
-  let lst = Map.String.to_kv_list m in
+  let lst = SMap.to_kv_list_rev m in
   t_record_ez ?loc lst
 
 let t_pair ?loc (a , b) : type_expression = t_record_ez ?loc [
-  ("0",{associated_type=a ; michelson_annotation=None ; decl_pos=0}) ;
-  ("1",{associated_type=b ; michelson_annotation=None ; decl_pos=0})]
+                                                          ("0",{associated_type=a ; attributes=[] (* TODO *); decl_pos=0}) ;
+                                                          ("1",{associated_type=b ; attributes=[] (* TODO *); decl_pos=0})]
 let t_tuple ?loc lst    : type_expression = t_record_ez ?loc (tuple_to_record lst)
 
 let ez_t_sum ?loc (lst:((string * row_element) list)) : type_expression =
-  let aux prev (k, v) = LMap.add (Label k) v prev in
-  let map = List.fold_left aux LMap.empty lst in
-  make_t ?loc @@ T_sum map
+  let lst = List.map (fun (k, v) -> (Label k, v)) lst in
+  let fields = LMap.of_list lst in
+  make_t ?loc @@ T_sum {fields ; attributes=[]}
 let t_sum ?loc m : type_expression =
-  let lst = Map.String.to_kv_list m in
+  let lst = SMap.to_kv_list_rev m in
   ez_t_sum ?loc lst
 
 let t_function ?loc type1 type2  : type_expression = make_t ?loc @@ T_arrow {type1; type2}
@@ -90,9 +89,9 @@ let e_none ?loc () : expression = make_e ?loc @@ E_constant {cons_name = C_NONE;
 let e_constant ?loc name lst = make_e ?loc @@ E_constant {cons_name=name ; arguments = lst}
 let e_variable ?loc v = make_e ?loc @@ E_variable v
 let e_application ?loc a b = make_e ?loc @@ E_application {lamb=a ; args=b}
-let e_lambda ?loc binder result : expression = make_e ?loc @@ E_lambda {binder; result}
+let e_lambda ?loc binder input_type output_type result : expression = make_e ?loc @@ E_lambda {binder; input_type; output_type; result}
 let e_recursive ?loc fun_name fun_type lambda = make_e ?loc @@ E_recursive {fun_name; fun_type; lambda}
-let e_let_in ?loc (binder, ascr) mut inline rhs let_result = make_e ?loc @@ E_let_in { let_binder = (binder, ascr) ; rhs ; let_result; inline; mut }
+let e_let_in ?loc (binder, ascr) mut attributes rhs let_result = make_e ?loc @@ E_let_in { let_binder = (binder, ascr) ; rhs ; let_result; attributes; mut }
 let e_raw_code ?loc language code = make_e ?loc @@ E_raw_code {language; code}
 
 let e_constructor ?loc s a : expression = make_e ?loc @@ E_constructor { constructor = s; element = a}
@@ -151,7 +150,7 @@ let assert_e_accessor = fun t ->
 let get_e_pair = fun t ->
   match t with
   | E_tuple [a ; b] -> Some (a , b)
-  | _ -> None 
+  | _ -> None
 
 let get_e_list = fun t ->
   match t with
@@ -176,7 +175,7 @@ let extract_list : expression -> (expression list) option = fun e ->
 
 let extract_record : expression -> ((label * expression) list) option = fun e ->
   match e.expression_content with
-  | E_record lst -> Some (LMap.to_kv_list lst)
+  | E_record lst -> Some (LMap.to_kv_list_rev lst)
   | _ -> None
 
 let extract_map : expression -> ((expression * expression) list) option = fun e ->

@@ -34,3 +34,8 @@ val p_row_ez   : row_tag      -> (string * type_value) list -> type_value
 val c_equation : type_value -> type_value -> string -> type_constraint
 
 val reason_simpl : type_constraint_simpl -> string
+
+val layout_eq : layout -> layout -> bool
+
+val assert_eq : 'a -> 'a -> unit option
+val assert_list_eq : ('a -> 'a -> unit option) -> 'a list -> 'a list -> unit option
