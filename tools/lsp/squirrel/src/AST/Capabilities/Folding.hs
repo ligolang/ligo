@@ -47,10 +47,10 @@ toFoldingRange Range
   { rStart  = (_startLine, Just -> _startCharacter, _)
   , rFinish = (_endLine, Just -> _endCharacter, _)
   } = J.FoldingRange
-  { _startLine
-  , _startCharacter
-  , _endLine
-  , _endCharacter
+  { _startLine = _startLine - 1
+  , _startCharacter = pred <$> _startCharacter
+  , _endLine = _endLine - 1
+  , _endCharacter = pred <$> _endCharacter
   , _kind = Just J.FoldingRangeRegion
   }
 
