@@ -32,6 +32,14 @@ foldingAST = execWriterT . visit handlers
           (getElem @Range -> r, TypeDecl {}) -> tell [r]
           -- TODO: include blocks?
           _ -> pure ()
+      , Visit @Expr $ \case
+          (getElem @Range -> r, If {}) -> tell [r]
+          (getElem @Range -> r, Case {}) -> tell [r]
+          (getElem @Range -> r, Seq {}) -> tell [r]
+          (getElem @Range -> r, Lambda {}) -> tell [r]
+          (getElem @Range -> r, ForLoop {}) -> tell [r]
+          (getElem @Range -> r, ForBox {}) -> tell [r]
+          _ -> pure ()
       ]
 
 toFoldingRange :: Range -> J.FoldingRange
