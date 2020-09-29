@@ -7,7 +7,7 @@ import Control.Lens
 import Control.Monad
 
 import Data.Default
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, maybeToList)
 import Data.String (fromString)
 import Data.String.Interpolate (i)
 import Data.Text (Text)
@@ -105,6 +105,8 @@ lspHandlers rin =
     , Core.foldingRangeHandler = Just $ passHandler rin ReqFoldingRange
     , Core.hoverHandler = Just $ passHandler rin ReqHover
     , Core.documentSymbolHandler = Just $ passHandler rin ReqDocumentSymbols
+    , Core.renameHandler = Just $ passHandler rin ReqRename
+    -- , Core.prepareRenameHandler = Just $ passHandler rin ReqPrepareRename -- TODO: call ligo compiller on rename request
     }
 
 passHandler :: TChan FromClientMessage -> (a -> FromClientMessage) -> Core.Handler a
@@ -241,6 +243,30 @@ eventLoop funs chan = do
         tree <- loadFromVFS funs uri
         result <- extractDocumentSymbols uri tree
         respondWith funs req RspDocumentSymbols (J.DSSymbolInformation $ J.List result)
+
+      ReqRename req -> do
+        let uri = req ^. J.params . J.textDocument . J.uri
+        let pos = posToRange $ req ^. J.params . J.position
+        let newName = req ^. J.params . J.newName
+        tree <- loadFromVFS funs uri
+        let
+          allReferences :: Maybe [Range]
+          allReferences = referencesOf pos tree <> fmap (\x -> [x]) (definitionOf pos tree)
+          textEdits :: Maybe [J.TextEdit]
+          textEdits = allReferences & _Just . traverse %~ \x -> J.TextEdit (rangeToLoc x) newName
+          workspaceEdit :: Maybe (J.List J.TextDocumentEdit)
+          workspaceEdit = textEdits <&> \edits -> J.List
+            [ J.TextDocumentEdit
+                { _textDocument = J.VersionedTextDocumentIdentifier uri Nothing
+                , _edits = J.List edits
+                }
+            ]
+          response = RspRename $ Core.makeResponseMessage req
+            J.WorkspaceEdit
+              { _changes = Nothing -- TODO: change this once we set up proper module system integration
+              , _documentChanges = workspaceEdit
+              }
+        Core.sendFunc funs response
 
       _ -> U.logs "unknown msg"
 
