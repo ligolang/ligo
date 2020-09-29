@@ -1,0 +1,12 @@
+(contract
+  (fun
+    main
+    (params (var a (PROD bool)) (var b (PROD bool)))
+    :
+    (PROD int)
+    =
+    (let
+      (seq
+        (var result (PROD int) 27)
+        (if (a = b) (result := 999) (result := 1)))
+    result)))

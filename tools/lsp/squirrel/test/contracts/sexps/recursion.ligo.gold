@@ -1,0 +1,17 @@
+(contract
+  (fun
+    rec
+    sum
+    (params (decl const n (PROD int)) (decl const acc (PROD int)))
+    :
+    (PROD int)
+    = (if (n < 1) acc (apply sum (tuple (n - 1) (acc + n)))))
+  (fun
+    rec
+    fibo
+    (params
+      (decl const n (PROD int))
+      (decl const n_1 (PROD int)) (decl const n_0 (PROD int)))
+    :
+    (PROD int)
+    = (if (n < 2) n_1 (apply fibo (tuple (n - 1) (n_1 + n_0) n_1)))))
