@@ -14,8 +14,8 @@
         { "include": "#other-keywords" },
         { "include": "#numeric-literals" },
         { "include": "#operators" },
-        { "include": "#function-application" },
-        { "include": "#identifiers" }
+        { "include": "#identifier-constructor" },
+        { "include": "#identifier-lower" }
     ],
     "repository": {
         "let-binding": {
@@ -167,7 +167,7 @@
         },
 
         "sum-type": {
-            "begin": "\\b([a-zA-Z_]\\w*)\\s+(of)",
+            "begin": "\\b([a-zA-Z_]\\w*)\\s+(of)?",
             "beginCaptures": {
                 "1": { "name": "entity.name.function.mligo" },
                 "2": { "name": "keyword.other.of.mligo" }
@@ -235,18 +235,17 @@
             "match": "([-+*/])"
         },
 
-        "function-application": {
-            "comment": "We need a negative lookahead here because instead of matching the first rule, TM picks the _longest match_. Without the lookahead, this rule conflicts with #let-binding and #control-keywords.",
-            "match": "(?<=(?:match|with|if|then|else|assert|in|begin|failwith) |->|^|[|=\\.(])\\s*((?!(?:match|with|if|then|else|assert|in|begin|end|let|type|fun|failwith)\\b)[a-zA-Z_]\\w*)\\s+(?=(\\d|[\\[('\"]|[a-zA-Z_]\\w*))",
+        "identifier-lower": {
+            "match": "\\b([a-z_]\\w*)\\b",
             "captures": {
-                "1": { "name": "entity.name.function" }
+                "1": { "name": "entity.name.variable.mligo" }
             }
         },
 
-        "identifiers": {
-            "match": "\\b([a-zA-Z_]\\w*)\\b",
+        "identifier-constructor": {
+            "match": "\\b([A-Z]\\w*)\\b",
             "captures": {
-                "1": { "name": "entity.name.variable" }
+                "1": { "name": "entity.name.function.constructor.mligo" }
             }
         },
 
