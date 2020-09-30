@@ -48,13 +48,11 @@ data Range = Range
 
 instance Pretty Range where
   pp (Range (ll, lc, _) (rl, rc, _) f) =
-    color 2 do
-      text f <.> color 7 ":" <.>
-        color 2 do
-          int ll <.> ":"
-            <.> int lc <.> "-"
-            <.> int rl <.> ":"
-            <.> int rc
+    text f <.> ":"
+    <.> int ll <.> ":"
+    <.> int lc <.> "-"
+    <.> int rl <.> ":"
+    <.> int rc
 
 -- | Ability to get range out of something.
 class HasRange a where

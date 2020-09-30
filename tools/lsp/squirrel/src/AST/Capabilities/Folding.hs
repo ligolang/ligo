@@ -32,6 +32,14 @@ foldingAST = execWriterT . visit handlers
           (getElem @Range -> r, TypeDecl {}) -> tell [r]
           -- TODO: include blocks?
           _ -> pure ()
+      , Visit @Expr $ \case
+          (getElem @Range -> r, If {}) -> tell [r]
+          (getElem @Range -> r, Case {}) -> tell [r]
+          (getElem @Range -> r, Seq {}) -> tell [r]
+          (getElem @Range -> r, Lambda {}) -> tell [r]
+          (getElem @Range -> r, ForLoop {}) -> tell [r]
+          (getElem @Range -> r, ForBox {}) -> tell [r]
+          _ -> pure ()
       ]
 
 toFoldingRange :: Range -> J.FoldingRange
@@ -39,10 +47,10 @@ toFoldingRange Range
   { rStart  = (_startLine, Just -> _startCharacter, _)
   , rFinish = (_endLine, Just -> _endCharacter, _)
   } = J.FoldingRange
-  { _startLine
-  , _startCharacter
-  , _endLine
-  , _endCharacter
+  { _startLine = _startLine - 1
+  , _startCharacter = pred <$> _startCharacter
+  , _endLine = _endLine - 1
+  , _endCharacter = pred <$> _endCharacter
   , _kind = Just J.FoldingRangeRegion
   }
 
