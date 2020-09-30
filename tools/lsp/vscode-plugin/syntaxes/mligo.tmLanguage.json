@@ -217,12 +217,12 @@
 
         "control-keywords": {
             "name": "keyword.control.mligo",
-            "match": "\\b(match|with|if|then|else|assert|failwith)\\b"
+            "match": "\\b(match|with|if|then|else|assert|failwith|begin|end)\\b"
         },
 
         "other-keywords": {
             "name": "keyword.other.mligo",
-            "match": "\\b(in|begin|end)\\b"
+            "match": "\\b(in)\\b"
         },
 
         "numeric-literals": {

@@ -160,12 +160,12 @@
 
         "control-keywords": {
             "name": "keyword.control.ligo",
-            "match": "\\b(case|of|if|then|else|for|to|skip|assert|failwith)\\b"
+            "match": "\\b(case|of|if|then|else|for|to|skip|assert|failwith|begin|end)\\b"
         },
 
         "other-keywords": {
             "name": "keyword.other.ligo",
-            "match": "\\b(block|with|begin|end|record)\\b"
+            "match": "\\b(block|with|record)\\b"
         },
 
         "numeric-literals": {
