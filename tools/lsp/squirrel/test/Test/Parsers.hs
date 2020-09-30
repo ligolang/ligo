@@ -15,6 +15,8 @@ import Test.HUnit (Assertion)
 import AST (parse)
 import ParseTree (Source (Path))
 
+import Test.Util (readContract)
+
 contractsDir :: FilePath
 contractsDir = "../../../src/test/contracts"
 
@@ -58,7 +60,7 @@ unit_badContracts = getBadContracts >>= mapM_ (checkFile False)
 
 checkFile :: HasCallStack => Bool -> FilePath -> Expectation
 checkFile shouldBeOkay path = do
-  res <- try @HandlerFailed (parse (Path path))
+  res <- try @HandlerFailed (readContract path)
   case (shouldBeOkay, res) of
     (True, Left err) -> expectationFailure $
       "Parsing failed, but it shouldn't have." <>

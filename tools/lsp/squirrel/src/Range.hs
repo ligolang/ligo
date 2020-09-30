@@ -5,14 +5,15 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module Range
-  ( Range(..)
-  , HasRange(..)
-  , toLSPRange
+  ( HasRange(..)
+  , Range(..)
   , cutOut
   , excluding
+  , fromLspPosition
   , merged
   , point
   , interval
+  , toLspRange
   )
   where
 
@@ -66,14 +67,17 @@ instance Contains Range xs => HasRange (Product xs) where
 
 -- | Convert `squirrel` range to `haskell-lsp` range.
 -- Note that we consider the first line to be at position 1.
-toLSPRange :: Range -> LSP.Range
-toLSPRange Range
+toLspRange :: Range -> LSP.Range
+toLspRange Range
   { rStart  = (rsl, rsc, _)
   , rFinish = (rfl, rfc, _)
   } = LSP.Range
-  { LSP._start = LSP.Position { LSP._line = rsl - 1, LSP._character = rsc }
-  , LSP._end   = LSP.Position { LSP._line = rfl - 1, LSP._character = rfc }
+  { LSP._start = LSP.Position{ LSP._line = rsl - 1, LSP._character = rsc - 1 }
+  , LSP._end   = LSP.Position{ LSP._line = rfl - 1, LSP._character = rfc - 1 }
   }
+
+fromLspPosition :: LSP.Position -> Range
+fromLspPosition (LSP.Position l c) = point (l + 1) (c + 1)
 
 instance (Contains Range xs, Apply Functor fs) => HasRange (Tree fs (Product xs)) where
   getRange = getElem . extract

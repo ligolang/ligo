@@ -103,6 +103,7 @@ lspHandlers rin =
     , Core.completionHandler = Just $ passHandler rin ReqCompletion
       -- , Core.completionResolveHandler                 = Just $ passHandler rin ReqCompletionItemResolve
     , Core.foldingRangeHandler = Just $ passHandler rin ReqFoldingRange
+    , Core.selectionRangeHandler = Just $ passHandler rin ReqSelectionRange
     , Core.hoverHandler = Just $ passHandler rin ReqHover
     , Core.documentSymbolHandler = Just $ passHandler rin ReqDocumentSymbols
     , Core.renameHandler = Just $ passHandler rin ReqRename
@@ -179,22 +180,23 @@ eventLoop funs chan = do
       ReqDefinition req -> do
         stopDyingAlready funs req do
           let uri = req^.J.params.J.textDocument.J.uri
-          let pos = posToRange $ req^.J.params.J.position
+          let pos = fromLspPosition $ req^.J.params.J.position
           tree <- loadFromVFS funs uri
           case definitionOf pos tree of
             Just defPos -> do
-              respondWith funs req RspDefinition $ J.MultiLoc [J.Location uri $ rangeToLoc defPos]
+              respondWith funs req RspDefinition $
+                J.MultiLoc [J.Location uri $ toLspRange defPos]
             Nothing -> do
               respondWith funs req RspDefinition $ J.MultiLoc []
 
       ReqFindReferences req -> do
         stopDyingAlready funs req do
           let uri = req^.J.params.J.textDocument.J.uri
-          let pos = posToRange $ req^.J.params.J.position
+          let pos = fromLspPosition $ req^.J.params.J.position
           tree <- loadFromVFS funs uri
           case referencesOf pos tree of
             Just refs -> do
-              let locations = J.Location uri . rangeToLoc <$> refs
+              let locations = J.Location uri . toLspRange <$> refs
               respondWith funs req RspFindReferences $ J.List locations
             Nothing -> do
               respondWith funs req RspFindReferences $ J.List []
@@ -203,7 +205,7 @@ eventLoop funs chan = do
         stopDyingAlready funs req $ do
           U.logs $ "got completion request: " <> show req
           let uri = req ^. J.params . J.textDocument . J.uri
-          let pos = posToRange $ req ^. J.params . J.position
+          let pos = fromLspPosition $ req ^. J.params . J.position
           tree <- loadFromVFS funs uri
           let completions = fmap toCompletionItem . fromMaybe [] $ complete pos tree
           respondWith funs req RspCompletion . J.Completions . J.List $ completions
@@ -229,10 +231,20 @@ eventLoop funs chan = do
           actions <- foldingAST tree
           handler actions
 
+      ReqSelectionRange req -> do
+        stopDyingAlready funs req $ do
+          let uri = req ^. J.params . J.textDocument . J.uri
+          let positions = req ^. J.params . J.positions
+          tree <- loadFromVFS funs uri
+          let results = map (findSelectionRange tree) positions
+              response = (RspSelectionRange
+                           (Core.makeResponseMessage req (J.List results)))
+          Core.sendFunc funs response
+
       ReqHover req -> do
         stopDyingAlready funs req do
           let uri = req ^. J.params . J.textDocument . J.uri
-          let pos = posToRange $ req ^. J.params . J.position
+          let pos = fromLspPosition $ req ^. J.params . J.position
           tree <- loadFromVFS funs uri
           let response =
                 RspHover $ Core.makeResponseMessage req (hoverDecl pos tree)
@@ -283,15 +295,6 @@ stopDyingAlready funs req = flip catch \(e :: SomeException) -> do
   Core.sendErrorResponseS (Core.sendFunc funs) (req^.J.id.to J.responseId) J.InternalError
     $ fromString
     $ "this happened: " ++ show e
-
-posToRange :: J.Position -> Range
-posToRange (J.Position l c) = Range (l + 1, c + 1, 0) (l + 1, c + 1, 0) ""
-
-rangeToLoc :: Range -> J.Range
-rangeToLoc (Range (a, b, _) (c, d, _) _) =
-  J.Range
-    (J.Position (a - 1) (b - 1))
-    (J.Position (c - 1) (d - 1))
 
 loadFromVFS
   :: Core.LspFuncs Config.Config
