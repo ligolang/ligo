@@ -83,7 +83,7 @@ let rec to_left_comb_variant' first l new_map =
 let to_left_comb_variant = to_left_comb_variant' true
 
 let rec from_right_comb_pair (l:row_element label_map) (size:int) : (row_element list , typer_error) result =
-  let l' = List.rev @@ LMap.to_kv_list_rev l in
+  let l' = LMap.to_kv_list l in
   match l' , size with
   | [ (_,l) ; (_,r) ] , 2 -> ok [ l ; r ]
   | [ (_,l) ; (_,{associated_type=tr;_}) ], _ ->
@@ -93,7 +93,7 @@ let rec from_right_comb_pair (l:row_element label_map) (size:int) : (row_element
   | _ -> fail (corner_case "Could not convert michelson_pair_right_comb pair to a record")
 
 let rec from_left_comb_pair (l:row_element label_map) (size:int) : (row_element list , typer_error) result =
-  let l' = List.rev @@ LMap.to_kv_list_rev l in
+  let l' = LMap.to_kv_list l in
   match l' , size with
   | [ (_,l) ; (_,r) ] , 2 -> ok [ l ; r ]
   | [ (_,{associated_type=tl;_}) ; (_,r) ], _ ->
@@ -103,7 +103,7 @@ let rec from_left_comb_pair (l:row_element label_map) (size:int) : (row_element 
   | _ -> fail (corner_case "Could not convert michelson_pair_left_comb pair to a record")
 
 let rec from_right_comb_variant (l:row_element label_map) (size:int) : (row_element list , typer_error) result =
-  let l' = List.rev @@ LMap.to_kv_list_rev l in
+  let l' = LMap.to_kv_list l in
   match l' , size with
   | [ (_,l) ; (_,r) ] , 2 -> ok [ l ; r ]
   | [ (_,l) ; (_,{associated_type=tr;_}) ], _ ->
@@ -113,7 +113,7 @@ let rec from_right_comb_variant (l:row_element label_map) (size:int) : (row_elem
   | _ -> fail (corner_case "Could not convert michelson_or right comb to a variant")
 
 let rec from_left_comb_variant (l:row_element label_map) (size:int) : (row_element list , typer_error) result =
-  let l' = List.rev @@ LMap.to_kv_list_rev l in
+  let l' = LMap.to_kv_list l in
   match l' , size with
   | [ (_,l) ; (_,r) ] , 2 -> ok [ l ; r ]
   | [ (_,{associated_type=tl;_}) ; (_,r) ], _ ->

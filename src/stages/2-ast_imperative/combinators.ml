@@ -239,7 +239,7 @@ let extract_list : expression -> expression list option = fun e ->
 
 let extract_record : expression -> (label * expression) list option = fun e ->
   match e.expression_content with
-  | E_record lst -> Some (LMap.to_kv_list_rev lst)
+  | E_record lst -> Some (LMap.to_kv_list lst)
   | _ -> None
 
 let extract_map : expression -> (expression * expression) list option = fun e ->

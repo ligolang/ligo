@@ -7,7 +7,7 @@ module Formatter = Formatter
 let scopes : with_types:bool -> string -> string -> ((def_map * scopes), Main_errors.all) result = fun ~with_types source_file syntax ->
   let make_v_def_from_core = make_v_def_from_core ~with_types source_file syntax in
   let make_v_def_option_type = make_v_def_option_type ~with_types source_file syntax in
-  let make_v_def_ppx_type = make_v_def_ppx_type ~with_types source_file syntax in 
+  let make_v_def_ppx_type = make_v_def_ppx_type ~with_types source_file syntax in
 
   let rec find_scopes' = fun (i,all_defs,env,scopes,lastloc) (e : Ast_core.expression) ->
     match e.content with
@@ -78,11 +78,11 @@ let scopes : with_types:bool -> string -> string -> ((def_map * scopes), Main_er
       )
     )
     | E_record emap -> (
-      let aux = fun (i,all_defs,scopes) (exp:Ast_core.expression) -> 
+      let aux = fun (i,all_defs,scopes) (exp:Ast_core.expression) ->
         let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,exp.location) exp in
         (i,all_defs,scopes)
       in
-      let (i,all_defs,scopes) = List.fold_left aux (i,all_defs,scopes) (Ast_core.LMap.to_list_rev emap) in
+      let (i,all_defs,scopes) = List.fold_left aux (i,all_defs,scopes) (Ast_core.LMap.to_list emap) in
       (i,all_defs,env,scopes)
     )
     | E_record_update { record ; update ; _ } -> (
@@ -91,7 +91,7 @@ let scopes : with_types:bool -> string -> string -> ((def_map * scopes), Main_er
       find_scopes' (i,all_defs,env,scopes,update.location) update
     )
     | E_constant { arguments ; _ } -> (
-      let aux = fun (i,all_defs,scopes) (exp:Ast_core.expression) -> 
+      let aux = fun (i,all_defs,scopes) (exp:Ast_core.expression) ->
         let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,exp.location) exp in
         (i,all_defs,scopes)
       in
@@ -111,7 +111,7 @@ let scopes : with_types:bool -> string -> string -> ((def_map * scopes), Main_er
     )
   in
   let find_scopes (i,top_lvl_defs,scopes,loc) e =
-    let (i,defs,_,scopes) = find_scopes' (i,top_lvl_defs,top_lvl_defs,scopes,loc) e in 
+    let (i,defs,_,scopes) = find_scopes' (i,top_lvl_defs,top_lvl_defs,scopes,loc) e in
     (i,defs,scopes) in
 
   let aux = fun (i,top_def_map,inner_def_map,scopes) (x : Ast_core.declaration Location.wrap) ->

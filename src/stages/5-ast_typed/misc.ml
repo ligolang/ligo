@@ -24,7 +24,7 @@ module Free_variables = struct
       )
     | E_application {lamb;args} -> unions @@ List.map self [ lamb ; args ]
     | E_constructor {element;_} -> self element
-    | E_record m -> unions @@ List.map self @@ LMap.to_list_rev m
+    | E_record m -> unions @@ List.map self @@ LMap.to_list m
     | E_record_accessor {record;_} -> self record
     | E_record_update {record; update;_} -> union (self record) @@ self update
     | E_matching {matchee; cases;_} -> union (self matchee) (matching_expression b cases)
@@ -83,7 +83,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
       if List.length lsta <> List.length lstb then None
       else
         List.fold_left
-          (fun acc (a,b) -> 
+          (fun acc (a,b) ->
             match acc with | None -> None | Some () -> assert_type_expression_eq (a,b))
           (Some ())
           (List.combine lsta lstb) in
@@ -186,7 +186,7 @@ let rec assert_value_eq (a, b: (expression*expression)) : unit option =
   | E_literal a, E_literal b ->
       assert_literal_eq (a, b)
   | E_constant {cons_name=ca;arguments=lsta}, E_constant {cons_name=cb;arguments=lstb} when ca = cb -> (
-    assert_same_size lsta lstb >>= fun _ -> 
+    assert_same_size lsta lstb >>= fun _ ->
     List.fold_left (fun acc p -> match acc with | None -> None | Some () -> assert_value_eq p) (Some ()) (List.combine lsta lstb)
   )
   | E_constant _, E_constant _ -> None
@@ -203,7 +203,7 @@ let rec assert_value_eq (a, b: (expression*expression)) : unit option =
         | _              -> None
       in
       let all = LMap.merge aux sma smb in
-      if    ((LMap.cardinal all) = (LMap.cardinal sma)) 
+      if    ((LMap.cardinal all) = (LMap.cardinal sma))
          || ((LMap.cardinal all) = (LMap.cardinal smb)) then
         Some ()
       else None

@@ -7,7 +7,7 @@ include Stage_common.PP
 
 (* TODO: move to common *)
 let lmap_sep value sep ppf m =
-  let lst = LMap.to_kv_list_rev m in
+  let lst = LMap.to_kv_list m in
   let lst = List.sort (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
   let new_pp ppf (k, {associated_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value associated_type in
   fprintf ppf "%a" (list_sep new_pp sep) lst
@@ -22,7 +22,7 @@ let attributes_1 (attr: string list) : string =
 
 
 let record_sep_t value sep ppf (m : 'a label_map) =
-  let lst = LMap.to_kv_list_rev m in
+  let lst = LMap.to_kv_list m in
   let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
   let new_pp ppf (k, {associated_type; attributes; _}) =
     let attr = attributes_2 attributes in
@@ -41,7 +41,7 @@ let rec type_content : formatter -> type_expression -> unit =
   fun ppf te ->
   match te.type_content with
   | T_sum m ->
-    let s ppf = fprintf ppf "@[<hv 4>sum[%a]@]" (lmap_sep_d type_expression) in 
+    let s ppf = fprintf ppf "@[<hv 4>sum[%a]@]" (lmap_sep_d type_expression) in
     if m.attributes = [] then
       fprintf ppf "%a" s m.fields
     else
@@ -96,10 +96,9 @@ and expression_content ppf (ec : expression_content) =
   | E_lambda {binder; input_type; output_type; result} ->
       fprintf ppf "lambda (%a:%a) : %a return %a"
         expression_variable binder
-        (PP_helpers.option type_expression)
-        input_type
-        (PP_helpers.option type_expression)
-        output_type expression result
+        (PP_helpers.option type_expression) input_type
+        (PP_helpers.option type_expression) output_type
+        expression result
   | E_matching {matchee; cases; _} ->
       fprintf ppf "match %a with %a"
         expression matchee (matching expression)

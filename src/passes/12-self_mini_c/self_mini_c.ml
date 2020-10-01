@@ -52,7 +52,7 @@ let is_pure_constant : constant' -> bool =
     -> true
   (* unfortunately impure: *)
   | C_BALANCE | C_AMOUNT | C_NOW | C_SOURCE | C_SENDER | C_CHAIN_ID
-  | C_ADD | C_SUB |C_MUL|C_DIV|C_MOD | C_LSL | C_LSR 
+  | C_ADD | C_SUB |C_MUL|C_DIV|C_MOD | C_LSL | C_LSR
   (* impure: *)
   | C_ASSERTION
   | C_ASSERT_SOME

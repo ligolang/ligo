@@ -37,7 +37,6 @@ and pp_declaration = function
 
 and pp_const_decl {value; _} =
   let {name; const_type; init; attributes; _} = value in
-  let attr  = pp_attributes attributes in
   let start = string ("const " ^ name.value) in
   let start = if attributes = [] then start
               else pp_attributes attributes ^/^ start in

@@ -1,4 +1,5 @@
 open Types
+open Yojson_helpers
 
 type json = Yojson.Safe.t
 
@@ -223,7 +224,7 @@ let rec expression {content=ec;sugar;location} =
     ("location", Location.to_yojson location);
   ]
 
-and expression_content = function 
+and expression_content = function
   (* Base *)
   | E_literal     e -> `List [ `String "E_literal"; literal e ]
   | E_constant    e -> `List [ `String "E_constant"; constant e ]
@@ -315,7 +316,7 @@ and ascription {anno_expr; type_annotation} =
   ]
 
 and matching_expr = function
-  | Match_list    {match_nil;match_cons} -> `List [ `String "Match_list";    
+  | Match_list    {match_nil;match_cons} -> `List [ `String "Match_list";
     `Assoc [
       ("match_nil", expression match_nil);
       ("match_cons", matching_cons match_cons);
@@ -347,7 +348,7 @@ and matching_content_case {constructor; proj; body} =
     ("body", expression body);
   ]
 
-let attribute ({inline}:attribute) = 
+let attribute ({inline}:attribute) =
   `Assoc [
     ("inline", `Bool inline);
   ]
@@ -358,13 +359,14 @@ let declaration_type {type_binder;type_expr} =
     ("type_expr", type_expression type_expr);
   ]
 
-let declaration_constant {binder=b;expr;attr;type_opt=_} =
+let declaration_constant {binder=b;expr;attr;type_opt} =
   `Assoc [
     ("binder",binder b);
     ("expr", expression expr);
     ("attribute", attribute attr);
+    ("type_opt", yojson_opt type_expression type_opt)
   ]
-let declaration = function 
+let declaration = function
   | Declaration_type     dt -> `List [ `String "Declaration_type"; declaration_type dt]
   | Declaration_constant dc -> `List [ `String "Declaration_constant"; declaration_constant dc]
 

@@ -8,7 +8,7 @@ include Stage_common.PP
 let type_variable ppf (t : type_variable) : unit = fprintf ppf "%a" Var.pp t
 
   let record_sep value sep ppf (m : 'a label_map) =
-    let lst = LMap.to_kv_list_rev m in
+    let lst = LMap.to_kv_list m in
     let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
     let pp_atttr ppf s = match s with None -> fprintf ppf "" | Some s -> fprintf ppf "%s" s in
     let new_pp ppf (k, {associated_type;michelson_annotation;_}) = fprintf ppf "@[<h>%a -> %a [%a] @]" label k value associated_type pp_atttr michelson_annotation in
@@ -22,7 +22,7 @@ let type_variable ppf (t : type_variable) : unit = fprintf ppf "%a" Var.pp t
     fprintf ppf "%a" (list_sep new_pp sep) lst
 
   let record_sep_expr value sep ppf (m : 'a label_map) =
-    let lst = LMap.to_kv_list_rev m in
+    let lst = LMap.to_kv_list m in
     let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
     let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" label k value v in
     fprintf ppf "%a" (list_sep new_pp sep) lst
@@ -51,7 +51,7 @@ let tuple_or_record_sep_expr value = tuple_or_record_sep_expr value "@[<hv 7>rec
 let tuple_or_record_sep_type value = tuple_or_record_sep_t value "@[<hv 7>record[%a]@]" " ,@ " "@[<hv 2>( %a )@]" " *@ "
 
 let list_sep_d_par f ppf lst =
-  match lst with 
+  match lst with
   | [] -> ()
   | _ -> fprintf ppf " (%a)" (list_sep_d f) lst
 
@@ -100,14 +100,14 @@ and expression_content ppf (ec : expression_content) =
         (PP_helpers.option type_expression)
         output_type expression result
   | E_recursive { fun_name; fun_type; lambda} ->
-      fprintf ppf "rec (%a:%a => %a )" 
-        expression_variable fun_name 
+      fprintf ppf "rec (%a:%a => %a )"
+        expression_variable fun_name
         type_expression fun_type
         expression_content (E_lambda lambda)
   | E_matching {matchee; cases; _} ->
       fprintf ppf "@[match %a with@ %a@]" expression matchee (matching expression)
         cases
-  | E_let_in { let_binder ;rhs ; let_result; inline } ->    
+  | E_let_in { let_binder ;rhs ; let_result; inline } ->
     fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]" option_type_name let_binder expression rhs option_inline inline expression let_result
   | E_raw_code {language; code} ->
       fprintf ppf "[%%%s %a]" language expression code
@@ -139,7 +139,7 @@ and matching : (formatter -> expression -> unit) -> formatter -> matching_expr -
         fprintf ppf "@[<hv>%a@]" (list_sep (matching_variant_case f) (tag "@ ")) lst
     | Match_list {match_nil ; match_cons = {hd; tl; body}} ->
         fprintf ppf "@[<hv>| Nil ->@;<1 2>%a@ | %a :: %a ->@;<1 2>%a@]"
-          f match_nil expression_variable hd expression_variable tl f body 
+          f match_nil expression_variable hd expression_variable tl f body
     | Match_option {match_none ; match_some = {opt; body}} ->
         fprintf ppf "@[<hv>| None ->@;<1 2>%a@ | Some %a ->@;<1 2>%a@]" f match_none expression_variable opt f body
 
@@ -155,14 +155,14 @@ and matching_type ppf m = match m with
 and matching_variant_case_type ppf {constructor=c ; proj ; body=_ } =
   fprintf ppf "| %a %a" label c expression_variable proj
 
-and option_mut ppf mut = 
-  if mut then 
+and option_mut ppf mut =
+  if mut then
     fprintf ppf "[@@mut]"
   else
     fprintf ppf ""
 
-and option_inline ppf inline = 
-  if inline then 
+and option_inline ppf inline =
+  if inline then
     fprintf ppf "[@@inline]"
   else
     fprintf ppf ""

@@ -38,8 +38,8 @@ let rec check_recursive_call : expression_variable -> bool -> expression -> (uni
     let%bind _ = check_recursive_call n false matchee in
     let%bind _ = check_recursive_call_in_matching n final_path cases in
     ok ()
-  | E_record elm -> 
-    let es = LMap.to_list_rev elm in
+  | E_record elm ->
+    let es = LMap.to_list elm in
     let%bind _ = bind_map_list (check_recursive_call n false) es in
     ok ()
   | E_record_accessor {record;_} ->
@@ -67,7 +67,7 @@ and check_recursive_call_in_matching = fun n final_path c ->
     in
     let%bind _ = bind_map_list aux cases in
     ok ()
-    
+
 
 let peephole_expression : expression -> (expression, self_ast_typed_error) result = fun e ->
   let return expression_content = ok { e with expression_content } in

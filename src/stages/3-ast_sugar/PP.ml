@@ -7,7 +7,7 @@ include Stage_common.PP
 
 (* TODO: move to common *)
 let lmap_sep value sep ppf m =
-  let lst = LMap.to_kv_list_rev m in
+  let lst = LMap.to_kv_list m in
   let lst = List.sort (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
   let new_pp ppf (k, {associated_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value associated_type in
   fprintf ppf "%a" (list_sep new_pp sep) lst
@@ -15,7 +15,7 @@ let lmap_sep value sep ppf m =
 let lmap_sep_d x = lmap_sep x (tag " ,@ ")
 
 let record_sep_t value sep ppf (m : 'a label_map) =
-  let lst = LMap.to_kv_list_rev m in
+  let lst = LMap.to_kv_list m in
   let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
   let new_pp ppf (k, {associated_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value associated_type in
   fprintf ppf "%a" (list_sep new_pp sep) lst
@@ -72,7 +72,7 @@ and expression_content ppf (ec : expression_content) =
   | E_set lst ->
       fprintf ppf "set[%a]" (list_sep_d expression) lst
   | E_lambda {binder; input_type; output_type; result} ->
-      fprintf ppf "lambda (%a:%a) : %a return %a" 
+      fprintf ppf "lambda (%a:%a) : %a return %a"
         expression_variable binder
         (PP_helpers.option type_expression)
         input_type
@@ -86,9 +86,9 @@ and expression_content ppf (ec : expression_content) =
   | E_matching {matchee; cases; _} ->
       fprintf ppf "match %a with %a" expression matchee (matching expression)
         cases
-  | E_let_in { let_binder ; rhs ; let_result; attributes=attr; mut} ->    
-      fprintf ppf "let %a%a = %a%a in %a" 
-        option_type_name let_binder 
+  | E_let_in { let_binder ; rhs ; let_result; attributes=attr; mut} ->
+      fprintf ppf "let %a%a = %a%a in %a"
+        option_type_name let_binder
         option_mut mut
         expression rhs
         attributes attr

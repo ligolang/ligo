@@ -353,15 +353,15 @@ and pp_tuple_expr {value; _} =
 and pp_par_expr e = pp_par pp_expr e
 
 and pp_let_in {value; _} =
-  let {binding; kwd_rec; body; attributes; _} = value in
+  let {binding; kwd_rec; body; attributes=attr; _} = value in
   let let_str =
     match kwd_rec with
-        None -> "let "
-    | Some _ -> "let rec " in
-  let binding = pp_let_binding binding
-  and attr    = pp_attributes attributes
-  in attr ^^ string let_str ^^ binding ^^ string " in"
-     ^^ hardline ^^ group (pp_expr body)
+        None -> string "let "
+    | Some _ -> string "let rec " in
+  let let_str = if attr = [] then let_str
+                else pp_attributes attr ^/^ let_str
+  in let_str ^^ pp_let_binding binding
+     ^^ string " in" ^^ hardline ^^ group (pp_expr body)
 
 and pp_fun {value; _} =
   let {binders; lhs_type; body; _} = value in
