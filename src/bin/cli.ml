@@ -434,15 +434,22 @@ let evaluate_value =
   (Term.ret term , Term.info ~doc cmdname)
 
 let compile_expression =
-  let f expression syntax display_format michelson_format =
+  let f expression syntax init_file display_format michelson_format =
     return_result ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
-      let env = Environment.default in
-      let state = Typer.Solver.initial_state in
-      let%bind compiled_exp  = Compile.Utils.compile_expression None syntax expression env state in
+      let%bind (decl_list,state,env) = match init_file with
+        | Some init_file ->
+          let%bind typed_prg,env,state = Compile.Utils.type_file init_file syntax Env in
+          let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
+          ok (mini_c_prg,state,env)
+        | None -> ok ([],Typer.Solver.initial_state,Environment.default) in
+
+      let%bind (typed_exp,_)  = Compile.Utils.type_expression init_file syntax expression env state in
+      let%bind mini_c_exp     = Compile.Of_typed.compile_expression typed_exp in
+      let%bind compiled_exp   = Compile.Of_mini_c.aggregate_and_compile_expression decl_list mini_c_exp in
       Run.evaluate_expression compiled_exp.expr compiled_exp.expr_ty
     in
   let term =
-    Term.(const f $ expression "" 1 $ req_syntax 0 $ display_format $ michelson_code_format) in
+    Term.(const f $ expression "" 1 $ req_syntax 0 $ init_file $ display_format $ michelson_code_format) in
   let cmdname = "compile-expression" in
   let doc = "Subcommand: Compile to a michelson value." in
   (Term.ret term , Term.info ~doc cmdname)

@@ -643,6 +643,10 @@ let%expect_test _ =
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
                `plain' whenever the TERM env var is `dumb' or undefined.
 
+           --init-file=INIT_FILE
+               INIT_FILE is the path to smart contract file to be used for
+               context initialization.
+
            --michelson-format=MICHELSON_FORMAT (absent=text)
                MICHELSON_FORMAT is the format that will be used by
                compile-contract for the resulting Michelson. Available formats
