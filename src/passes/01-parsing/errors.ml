@@ -27,19 +27,26 @@ let wild_pattern_msg =
 
 
 let error_ppformat : display_format:string display_format ->
-  parser_error -> Location.t * string =
-  fun ~display_format a ->
+  Format.formatter -> parser_error -> unit =
+  fun ~display_format f a ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
     | `Parser_generic reg ->
-      (Location.lift reg.Region.region, reg.Region.value)
+      Snippet.pp_lift f reg.Region.region;
+      Format.pp_print_string f reg.Region.value ;
+
     | `Parser_wrong_function_arguments expr ->
-      let s = Format.asprintf "%s" wrong_function_msg in
-      (Location.lift @@ CST.expr_to_region expr, s)
+      let loc = Format.asprintf "%a"
+        Snippet.pp_lift @@ CST.expr_to_region expr in
+      let s = Format.asprintf "%s\n%s" loc wrong_function_msg in
+      Format.pp_print_string f s ;
+
     | `Parser_invalid_wild expr ->
-      let s = Format.asprintf "%s" wild_pattern_msg in
-      (Location.lift @@ CST.expr_to_region expr, s) ;
+      let loc = Format.asprintf "%a"
+        Snippet.pp_lift @@ CST.expr_to_region expr in
+      let s = Format.asprintf "%s\n%s" loc wild_pattern_msg in
+      Format.pp_print_string f s ;
   )
 
 let error_jsonformat : parser_error -> Yojson.Safe.t = fun a ->

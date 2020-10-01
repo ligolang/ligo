@@ -84,13 +84,10 @@ module Make (Lexer: Lexer.S) : (S with module Lexer = Lexer) =
                 then Stdlib.Ok ()
                 else iter ()
             | exception Lexer.Token.Error error ->
-                let msg =
-                  Lexer.Token.format_error
-                    ~offsets mode ~file:true error
+                let msg = Lexer.Token.format_error error
                 in Stdlib.Error msg
             | exception Lexer.Error error ->
-                let msg =
-                  Lexer.format_error ~offsets mode ~file:true error
+                let msg = Lexer.format_error error
                 in Stdlib.Error msg in
             let result = iter ()
             in close_all (); result

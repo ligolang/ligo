@@ -11,14 +11,14 @@ let return_bad v = (
   `Error (false, "")
 )
 
-let toplevel : input:input_type -> ?output_file:string option -> display_format:ex_display_format -> displayable -> ('value, Main_errors.Types.all) result -> unit Term.ret =
-  fun ~input ?(output_file=None) ~display_format disp value ->
+let toplevel : ?output_file:string option -> display_format:ex_display_format -> displayable -> ('value, Main_errors.Types.all) result -> unit Term.ret =
+  fun ?(output_file=None) ~display_format disp value ->
     let (Ex_display_format t) = display_format in
     let as_str : string =
       match t with
-      | Human_readable -> convert ~display_format:t input disp ;
-      | Dev -> convert ~display_format:t input disp ;
-      | Json -> Yojson.Safe.to_string @@ convert ~display_format:t input disp
+      | Human_readable -> convert ~display_format:t disp ;
+      | Dev -> convert ~display_format:t disp ;
+      | Json -> Yojson.Safe.to_string @@ convert ~display_format:t disp
     in
     match value with
     | Ok _ ->
@@ -29,7 +29,7 @@ let toplevel : input:input_type -> ?output_file:string option -> display_format:
       return_good @@ (Format.fprintf fmt "%s\n" as_str ; Format.pp_print_flush fmt ())
     | Error _ -> return_bad as_str
 
-let return_result : input:input_type -> ?output_file:string option -> display_format:ex_display_format -> 'value format -> ('value, Main_errors.Types.all) result -> unit Term.ret =
-  fun ~input ?(output_file=None) ~display_format value_format value ->
+let return_result : ?output_file:string option -> display_format:ex_display_format -> 'value format -> ('value, Main_errors.Types.all) result -> unit Term.ret =
+  fun ?(output_file=None) ~display_format value_format value ->
     let format = bind_format value_format Main.Formatter.error_format in
-    toplevel ~input ~output_file ~display_format (Displayable {value ; format}) value
+    toplevel ~output_file ~display_format (Displayable {value ; format}) value

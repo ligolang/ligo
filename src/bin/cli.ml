@@ -175,7 +175,7 @@ module Run = Ligo.Run.Of_michelson
 
 let compile_file =
   let f source_file entry_point syntax display_format disable_typecheck michelson_format output_file =
-    return_result ~input:(Display.File source_file) ~output_file ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
+    return_result ~output_file ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
       let%bind typed,_,_  = Compile.Utils.type_file source_file syntax (Contract entry_point) in
       let%bind mini_c     = Compile.Of_typed.compile typed in
       let%bind michelson  = Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
@@ -189,7 +189,7 @@ let compile_file =
 
 let preprocess =
   let f source_file syntax display_format =
-    return_result ~input:(Display.File source_file) ~display_format (Parser.Formatter.ppx_format) @@
+    return_result ~display_format (Parser.Formatter.ppx_format) @@
       Compile.Of_source.preprocess source_file (Syntax_name syntax)
   in
   let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
@@ -199,7 +199,7 @@ let preprocess =
 
 let pretty_print =
   let f source_file syntax display_format =
-    return_result ~input:(Display.File source_file) ~display_format (Parser.Formatter.ppx_format) @@
+    return_result ~display_format (Parser.Formatter.ppx_format) @@
         Compile.Of_source.pretty_print source_file (Syntax_name syntax)
   in
   let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
@@ -209,7 +209,7 @@ let pretty_print =
 
 let print_cst =
   let f source_file syntax display_format =
-    return_result ~input:(Display.File source_file) ~display_format (Parser.Formatter.ppx_format) @@
+    return_result ~display_format (Parser.Formatter.ppx_format) @@
       Compile.Of_source.pretty_print_cst source_file (Syntax_name syntax)
   in
   let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
@@ -219,7 +219,7 @@ let print_cst =
 
 let print_ast =
   let f source_file syntax display_format =
-    return_result ~input:(Display.File source_file) ~display_format (Ast_imperative.Formatter.program_format) @@
+    return_result ~display_format (Ast_imperative.Formatter.program_format) @@
       Compile.Utils.to_imperatve source_file syntax
   in
   let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
@@ -230,7 +230,7 @@ let print_ast =
 
 let print_ast_sugar =
   let f source_file syntax display_format =
-    return_result ~input:(Display.File source_file) ~display_format (Ast_sugar.Formatter.program_format) @@
+    return_result ~display_format (Ast_sugar.Formatter.program_format) @@
       Compile.Utils.to_sugar source_file syntax
   in
   let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
@@ -240,7 +240,7 @@ let print_ast_sugar =
 
 let print_ast_core =
   let f source_file syntax display_format =
-    return_result ~input:(Display.File source_file) ~display_format (Ast_core.Formatter.program_format) @@
+    return_result ~display_format (Ast_core.Formatter.program_format) @@
       Compile.Utils.to_core source_file syntax
   in
   let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
@@ -250,7 +250,7 @@ let print_ast_core =
 
 let print_ast_typed =
   let f source_file syntax display_format =
-    return_result ~input:(Display.File source_file) ~display_format (Ast_typed.Formatter.program_format) @@
+    return_result ~display_format (Ast_typed.Formatter.program_format) @@
       let%bind typed,_,_  = Compile.Utils.type_file source_file syntax Env in
       ok typed
   in
@@ -261,7 +261,7 @@ let print_ast_typed =
 
 let print_mini_c =
   let f source_file syntax display_format optimize =
-    return_result ~input:(Display.File source_file) ~display_format (Mini_c.Formatter.program_format) @@
+    return_result ~display_format (Mini_c.Formatter.program_format) @@
       let%bind typed,_,_  = Compile.Utils.type_file source_file syntax Env in
       let%bind mini_c     = Compile.Of_typed.compile typed in
       match optimize with
@@ -277,7 +277,7 @@ let print_mini_c =
 
 let measure_contract =
   let f source_file entry_point syntax display_format =
-    return_result ~input:(Display.File source_file) ~display_format Formatter.contract_size_format @@
+    return_result ~display_format Formatter.contract_size_format @@
       let%bind contract   = Compile.Utils.compile_file source_file syntax entry_point in
       Compile.Of_michelson.measure contract
   in
@@ -289,7 +289,7 @@ let measure_contract =
 
 let compile_parameter =
   let f source_file entry_point expression syntax amount balance sender source now display_format michelson_format output_file =
-    return_result ~input:(Display.File source_file) ~output_file ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
+    return_result ~output_file ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
       let%bind typed_prg,env,state = Compile.Utils.type_file source_file syntax (Contract entry_point) in
       let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
       let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
@@ -312,7 +312,7 @@ let compile_parameter =
 
 let interpret =
   let f expression init_file syntax amount balance sender source now display_format =
-    return_result ~input:(match init_file with | Some s -> Display.File s | None -> Display.Code expression) ~display_format (Decompile.Formatter.expression_format) @@
+    return_result ~display_format (Decompile.Formatter.expression_format) @@
       let%bind (decl_list,state,env) = match init_file with
         | Some init_file ->
           let%bind typed_prg,env,state = Compile.Utils.type_file init_file syntax Env in
@@ -335,7 +335,7 @@ let interpret =
 
 let temp_ligo_interpreter =
   let f source_file syntax display_format =
-    return_result ~input:(Display.File source_file) ~display_format (Ligo_interpreter.Formatter.program_format) @@
+    return_result ~display_format (Ligo_interpreter.Formatter.program_format) @@
       let%bind typed,_,_  = Compile.Utils.type_file source_file syntax Env in
       Compile.Of_typed.some_interpret typed
   in
@@ -347,7 +347,7 @@ let temp_ligo_interpreter =
 
 let compile_storage =
   let f source_file entry_point expression syntax amount balance sender source now display_format michelson_format output_file =
-    return_result ~input:(Display.File source_file) ~output_file ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
+    return_result ~output_file ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
       let%bind typed_prg,env,state = Compile.Utils.type_file source_file syntax (Contract entry_point) in
       let%bind mini_c_prg          = Compile.Of_typed.compile typed_prg in
       let%bind michelson_prg       = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
@@ -369,7 +369,7 @@ let compile_storage =
 
 let dry_run =
   let f source_file entry_point storage input amount balance sender source now syntax display_format =
-    return_result ~input:(Display.File source_file) ~display_format (Decompile.Formatter.expression_format) @@
+    return_result ~display_format (Decompile.Formatter.expression_format) @@
       let%bind typed_prg,env,state = Compile.Utils.type_file source_file syntax (Contract entry_point) in
       let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
       let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
@@ -392,7 +392,7 @@ let dry_run =
 
 let run_function =
   let f source_file entry_point parameter amount balance sender source now syntax display_format =
-    return_result ~input:(Display.File source_file) ~display_format (Decompile.Formatter.expression_format) @@
+    return_result ~display_format (Decompile.Formatter.expression_format) @@
       let%bind typed_prg,env,state = Compile.Utils.type_file source_file syntax Env in
       let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
 
@@ -418,7 +418,7 @@ let run_function =
 
 let evaluate_value =
   let f source_file entry_point amount balance sender source now syntax display_format =
-    return_result ~input:(Display.File source_file) ~display_format Decompile.Formatter.expression_format @@
+    return_result ~display_format Decompile.Formatter.expression_format @@
       let%bind typed_prg,_,_ = Compile.Utils.type_file source_file syntax Env in
       let%bind mini_c        = Compile.Of_typed.compile typed_prg in
       let%bind (exp,_)       = trace_option Main_errors.entrypoint_not_found @@ Mini_c.get_entry mini_c entry_point in
@@ -435,7 +435,7 @@ let evaluate_value =
 
 let compile_expression =
   let f expression syntax display_format michelson_format =
-    return_result ~input:(Display.Code expression) ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
+    return_result ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
       let env = Environment.default in
       let state = Typer.Solver.initial_state in
       let%bind compiled_exp  = Compile.Utils.compile_expression None syntax expression env state in
@@ -451,7 +451,7 @@ let dump_changelog =
   let f display_format =
     let value = Changelog.changelog in
     let format = Formatter.changelog_format in
-    toplevel ~input:(Display.None) ~display_format (Display.Displayable {value ; format}) (ok value) in
+    toplevel ~display_format (Display.Displayable {value ; format}) (ok value) in
   let term =
     Term.(const f $ display_format) in
   let cmdname = "changelog" in
@@ -460,7 +460,7 @@ let dump_changelog =
 
 let list_declarations =
   let f source_file syntax display_format =
-    return_result ~input:(Display.File source_file) ~display_format Formatter.declarations_format @@
+    return_result ~display_format Formatter.declarations_format @@
         let%bind core_prg     = Compile.Utils.to_core source_file syntax in
         let declarations = Compile.Of_core.list_declarations core_prg in
         ok (source_file, declarations)
@@ -473,7 +473,7 @@ let list_declarations =
 
 let transpile_contract =
   let f source_file new_syntax syntax new_dialect display_format =
-    return_result ~input:(Display.File source_file) ~display_format (Parser.Formatter.ppx_format) @@
+    return_result ~display_format (Parser.Formatter.ppx_format) @@
       let%bind core       = Compile.Utils.to_core source_file syntax in
       let%bind sugar      = Decompile.Of_core.decompile core in
       let%bind imperative = Decompile.Of_sugar.decompile sugar in
@@ -490,7 +490,7 @@ let transpile_contract =
 
 let transpile_expression =
   let f expression new_syntax syntax new_dialect display_format =
-    return_result ~input:(Display.Code expression) ~display_format (Parser.Formatter.ppx_format) @@
+    return_result ~display_format (Parser.Formatter.ppx_format) @@
       let%bind v_syntax   = Helpers.syntax_to_variant (Syntax_name syntax) None in
       let      dialect    = Decompile.Helpers.Dialect_name new_dialect in
       let%bind n_syntax   = Decompile.Helpers.syntax_to_variant ~dialect (Syntax_name new_syntax) None in
@@ -511,7 +511,7 @@ let transpile_expression =
 
 let get_scope =
   let f source_file syntax display_format with_types =
-    return_result ~input:(Display.File source_file) ~display_format Ligo.Scopes.Formatter.scope_format @@
+    return_result ~display_format Ligo.Scopes.Formatter.scope_format @@
     Ligo.Scopes.scopes ~with_types source_file syntax
   in
   let term =

@@ -5,14 +5,17 @@ let contract basename =
 let bad_contract basename =
   "../../test/contracts/negative/" ^ basename
 
+(* avoid pretty printing *)
+let () = Unix.putenv "TERM" "dumb"
+
 let%expect_test _ =
   run_ligo_bad [ "interpret" ; "--init-file="^(bad_contract "michelson_converter_short_record.mligo") ; "l1"] ;
   [%expect {|
-    [1mFile "../../test/contracts/negative/michelson_converter_short_record.mligo", line 4, characters 9-44:[0m
+    in file "../../test/contracts/negative/michelson_converter_short_record.mligo", line 4, characters 9-44
       3 |
-      4 | let l1 = [1m[31mLayout.convert_to_left_comb (v1:t1)[0m
+      4 | let l1 = Layout.convert_to_left_comb (v1:t1)
 
-    [1m[31mError[0m: Incorrect argument provided to Layout.convert_to_(left|right)_comb.
+    Incorrect argument provided to Layout.convert_to_(left|right)_comb.
     The record must have at least two elements. |}]
 
 let%expect_test _ =

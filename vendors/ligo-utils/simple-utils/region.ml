@@ -89,12 +89,12 @@ let make ~(start: Pos.t) ~(stop: Pos.t) =
           if offsets then stop#offset mode else stop#column mode in
         let info =
           if   file
-          then sprintf "\027[1mFile \"%s\", line %i, %s"
+          then sprintf "in file \"%s\", line %i, %s"
                  (String.escaped start#file) start#line horizontal
           else sprintf "at line %i, %s" start#line horizontal
         in if   stop#line = start#line
-           then sprintf "%ss %i-%i:\027[0m" info start_offset stop_offset
-           else sprintf "%s %i to line %i, %s %i:\027[0m"
+          then sprintf "%ss %i-%i" info start_offset stop_offset
+          else sprintf "%s %i to line %i, %s %i"
                   info start_offset stop#line horizontal stop_offset
 
       method compact ?(file=true) ?(offsets=true) mode =

@@ -103,10 +103,10 @@ module Make (IO: IO)
 
     exception Point of error
 
-    let format_error ?(offsets=true) _mode (msg, _valid_opt, invalid) =
-      ignore(offsets);
+    let format_error (msg, _valid_opt, invalid) =
       let invalid_region = Lexer.Token.to_region invalid in
       Region.{value=msg; region=invalid_region}
+
 
     (* From error states to error messages *)
 

@@ -9,16 +9,15 @@ type purification_error = [
 let corner_case s = `purification_corner_case s
 
 let error_ppformat : display_format:string display_format ->
-  purification_error -> Location.t * string =
-  fun ~display_format a ->
+  Format.formatter -> purification_error -> unit =
+  fun ~display_format f a ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
     | `purification_corner_case s ->
-      (Location.dummy, 
-      Format.asprintf
+      Format.fprintf f
         "@[<hv>Corner case: %s@]"
-        s)
+        s
   )
 
 let error_jsonformat : purification_error -> Yojson.Safe.t = fun a ->

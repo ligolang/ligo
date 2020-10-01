@@ -63,9 +63,7 @@ module type TOKEN =
 
     exception Error of error Region.reg
 
-    val format_error :
-      ?offsets:bool -> [`Byte | `Point] ->
-      error Region.reg -> file:bool -> string Region.reg
+    val format_error : error Region.reg -> string Region.reg
 
     val check_right_context :
       token ->
@@ -95,9 +93,7 @@ module type S =
 
     exception Error of error Region.reg
 
-    val format_error :
-      ?offsets:bool -> [`Byte | `Point] ->
-      error Region.reg -> file:bool -> string Region.reg
+    val format_error : error Region.reg -> string Region.reg
   end
 
 module Make (Token : TOKEN) : (S with module Token = Token) =
@@ -161,9 +157,7 @@ module Make (Token : TOKEN) : (S with module Token = Token) =
 
     exception Error of error Region.reg
 
-    let format_error ?(offsets=true) _mode Region.{region; value} ~file =
-      ignore (offsets);
-      ignore(file);
+    let format_error Region.{region; value} =
       let value = error_to_string value
       in Region.{value; region}
 

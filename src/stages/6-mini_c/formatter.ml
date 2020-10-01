@@ -7,23 +7,12 @@ type optim =
   | Optimized of expression
   | Raw of program
 
-let program_ppformat ~display_format (p,_) =
+let program_ppformat ~display_format f (p,_) =
   match display_format with
   | Human_readable | Dev -> ( match p with
-    | Optimized e -> (
-      let buffer = Buffer.create 100 in
-      let formatter = Format.formatter_of_buffer buffer in
-      PP.expression formatter e;
-      Format.pp_print_flush formatter ();
-      (Location.dummy, Buffer.contents buffer)
-    )
-    | Raw e ->
-      let buffer = Buffer.create 100 in
-      let formatter = Format.formatter_of_buffer buffer in
-      PP.program formatter e;
-      Format.pp_print_flush formatter ();
-      (Location.dummy, Buffer.contents buffer)
-    )
+    | Optimized e -> PP.expression f e
+    | Raw e -> PP.program f e
+  )
 
 let program_jsonformat (p,_) : json =
   let s = ( match p with

@@ -8,9 +8,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad ["interpret" ; "(\"thisisnotasignature\":signature)" ; "--syntax=pascaligo"] ;
   [%expect {|
-      1 | [1m[31m("thisisnotasignature":signature)[0m
-
-    [1m[31mError[0m: Ill-formed literal "Signature thisisnotasignature".
+     Ill-formed literal "Signature thisisnotasignature".
     In the case of an address, a string is expected prefixed by either tz1, tz2, tz3 or KT1 and followed by a Base58 encoded hash and terminated by a 4-byte checksum.
     In the case of a key_hash, signature, or key a Base58 encoded hash is expected. |}]
 
@@ -22,8 +20,6 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad ["interpret" ; "(\"thisisnotapublickey\":key)" ; "--syntax=pascaligo"] ;
   [%expect {|
-      1 | [1m[31m("thisisnotapublickey":key)[0m
-
-    [1m[31mError[0m: Ill-formed literal "key thisisnotapublickey".
+     Ill-formed literal "key thisisnotapublickey".
     In the case of an address, a string is expected prefixed by either tz1, tz2, tz3 or KT1 and followed by a Base58 encoded hash and terminated by a 4-byte checksum.
     In the case of a key_hash, signature, or key a Base58 encoded hash is expected. |}]

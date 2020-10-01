@@ -557,11 +557,10 @@ let error_to_string = function
 
 exception Error of error Region.reg
 
-let format_error ?(offsets=true) _mode Region.{region; value} ~file =
-  ignore (offsets);
-  ignore(file);
+let format_error Region.{region; value} =
   let value = error_to_string value
   in Region.{value; region}
+
 
 let fail region value = raise (Error Region.{region; value})
 

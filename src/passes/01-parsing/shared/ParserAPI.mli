@@ -89,5 +89,5 @@ module Make (IO: IO)
     val incr_expr     : Lexer.token LexerLib.instance -> Parser.expr
 
     val format_error :
-      ?offsets:bool -> [`Point | `Byte] -> error -> string Region.reg
+      error -> string Region.reg
   end
