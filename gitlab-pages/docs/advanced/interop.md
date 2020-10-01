@@ -47,148 +47,234 @@ works not with
 
 :::info
 In the case of annotated entrypoints - the annotated `or` tree directly under 
-`parameter` in a contract - you should annotations, as otherwise it would 
-become unclear which entrypoint you are referring to.
+`parameter` in a contract - you should use annotations, as otherwise it's 
+unclear which entrypoint you are referring to.
 :::
 
-## Entrypoints and annotations
-It's possible for a contract to have multiple entrypoints, which translates in 
-LIGO to a `parameter` with a variant type as shown here:
+## Default LIGO output
+By default LIGO translates its datatypes into a alphabetically left balanced 
+tree. So, for example:
+<Syntax syntax="pascaligo">
+
+```pascaligo group=orig
+type animal is
+| Elephant
+| Dog
+| Cat
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=orig
+type animal =
+| Elephant
+| Dog
+| Cat
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=orig
+type animal = 
+| Elephant
+| Dog
+| Cat
+```
+
+</Syntax>
+
+will translate to:
+
+```michelson
+(or 
+  (or 
+    (unit %cat) 
+    (unit %dog)
+  )
+  (unit %elephant) 
+)
+```
+
+## Right combed tree output
+If you want to change the data representation in Michelson to a location 
+retaining right combed tree, like this:
+
+```
+  (or 
+    (unit %elephant) 
+    (or (unit %dog) 
+        (unit %cat)
+    )
+  )
+```
+
+you can use the `layout:comb` attribute:
 
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-type storage is int
-
-type parameter is 
- | Left of int
- | Right of int
-
-function main (const p: parameter; const x: storage): (list(operation) * storage) is
-  ((nil: list(operation)), case p of
-  | Left(i) -> x - i
-  | Right(i) -> x + i
-  end)
+type animal is
+[@layout:comb]
+| Elephant
+| Dog
+| Cat
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
-type storage = int
-
-type parameter = 
- | Left of int
- | Right of int
-
-let main ((p, x): (parameter * storage)): (operation list * storage) = 
-  (([]: operation list), (match p with
-  | Left i -> x - i
-  | Right i -> x + i
-  ))
-
+type animal =
+[@layout:comb]
+| Elephant
+| Dog
+| Cat
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```reasonligo
-type storage = int
-
-type parameter = 
- | Left(int)
- | Right(int)
-
-let main = ((p, x): (parameter, storage)): (list(operation), storage) => {
-  ([]: list(operation), (switch(p) {
-  | Left(i) => x - i
-  | Right(i) => x + i
-  }))
-};
-
+type animal =
+[@layout:comb] 
+| Elephant
+| Dog
+| Cat
 ```
 
 </Syntax>
 
-This contract can be called by another contract, like this one:
-
+The `layout:comb` attribute can also be used on record types:
 
 <Syntax syntax="pascaligo">
 
-```pascaligo group=get_entrypoint_opt
-type storage is int
+```pascaligo
+type artist is [@layout:comb] record [
+  genre: string;
+  since: timestamp;
+  name: string;
+]
+```
 
-type parameter is int
+</Syntax>
+<Syntax syntax="cameligo">
 
-type x is Left of int
+```cameligo
+type artist =  
+[@layout:comb]
+{
+  genre: string;
+  since: timestamp;
+  name: string;
+}
+```
 
-function main (const p: parameter; const s: storage): (list(operation) * storage) is block {
-  const contract: contract(x) = 
-    case (Tezos.get_entrypoint_opt("%left", ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx":address)): option(contract(x))) of 
-    | Some (c) -> c
-    | None -> (failwith("not a correct contract") : contract(x))
-    end;
+</Syntax>
+<Syntax syntax="reasonligo">
 
-  const result: (list(operation) * storage) = ((list [Tezos.transaction(Left(2), 2mutez, contract)]: list(operation)), s)
-} with result
+```reasonligo
+type artist =  
+[@layout:comb]
+{
+  genre: string,
+  since: timestamp,
+  name: string
+}
 ```
 
 </Syntax>
 
 
+## Different Michelson annotations
+If the Michelson annotation should be different from the LIGO representation, 
+the `annot:<string>` attribute can be used. For example:
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=annot
+type animal is
+| [@annot:memory] Elephant
+| [@annot:face] Dog
+| [@annot:fish] Cat
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo group=get_entrypoint_opt
-type storage = int
+```cameligo group=annot
+type animal =
+| [@annot:memory] Elephant
+| [@annot:face] Dog
+| [@annot:fish] Cat
+```
 
-type parameter = int
+</Syntax>
+<Syntax syntax="reasonligo">
 
-type x = Left of int
+```reasonligo group=annot
+type animal = 
+| [@annot:memory] Elephant
+| [@annot:face] Dog
+| [@annot:fish] Cat
+```
 
-let main (p, s: parameter * storage): operation list * storage = (
-  let contract: x contract = 
-    match ((Tezos.get_entrypoint_opt "%left" ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)): x contract option) with
-    | Some c -> c
-    | None -> (failwith "contract does not match": x contract)
-  in  
-  (([
-    Tezos.transaction (Left 2) 2mutez contract;
-  ]: operation list), s)
+</Syntax>
+
+will result into:
+
+```michelson
+(or 
+  (or 
+    (unit %fish) 
+    (unit %face)
+  ) 
+  (unit %memory)
 )
 ```
 
-</Syntax>
+The `annot:<string>` attribute can also be used on record field annotations:
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=annot
+type artist is record [
+  [@annot:style] genre: string;
+  [@annot:from] since: timestamp;
+  [@annot:performer] name: string;
+]
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=annot
+type artist = {
+  [@annot:style] genre: string;
+  [@annot:from] since: timestamp;
+  [@annot:performer] name: string;
+}
+```
+
+</Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo group=get_entrypoint_opt
-type storage = int;
-
-type parameter = int;
-
-type x = Left(int);
-
-let main = ((p, s): (parameter, storage)): (list(operation), storage) => {
-  let contract: contract(x) = 
-    switch (Tezos.get_entrypoint_opt("%left", ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)): option(contract(x))) {
-      | Some c => c
-      | None => (failwith ("contract does not match"): contract(x))
-    };
-  ([
-    Tezos.transaction(Left(2), 2mutez, contract)
-  ]: list(operation), s);
-};
+```reasonligo group=annot
+type artist = {
+  [@annot:style] genre: string,
+  [@annot:from] since: timestamp,
+  [@annot:performer] name: string
+}
 ```
 
 </Syntax>
 
-Notice how we directly use the `%left` entrypoint without mentioning the 
-`%right` entrypoint. This is done with the help of annotations. Without 
-annotations it wouldn't be clear what our `int` would be referring to.
+If the `layout:comb` and `annot:<string>` attributes are not adequate enough
+for your use case, LIGO has more advanced advanced interop features which we 
+will we discuss next. 
 
-This currently only works for `or`'s or variant types in LIGO.
-
-## Interop with Michelson
+## Advanced interop with Michelson
 To interop with existing Michelson code or for compatibility with certain 
 development tooling, LIGO has two special interop types: `michelson_or` and 
 `michelson_pair`. These types give the flexibility to model the exact Michelson
@@ -297,11 +383,11 @@ let x: z_or = (M_right (y_1) : z_or)
 
 ## Helper functions
 Converting between different LIGO types and data structures can happen in two 
-ways. The first way is to use the provided layout conversion functions, and the 
+ways. The first way is to use the provided layout conversion functions, and the
 second way is to handle the layout conversion manually. 
 
 :::info
-In both cases it will increase the size of the smart contract and the 
+In all cases it will increase the size of the smart contract and the 
 conversion will happen when running the smart contract.
 :::
 
@@ -725,155 +811,142 @@ let make_abstract_record = (z: string, y: int, x: string, w: bool, v: int) : tes
 
 </Syntax>
 
-## Layout type annotation attribute
-
-Attribute `layout` on record and variant type declarations allows you to inform LIGO that types and value must be compiled to a given layout.
-Right combed and balanced tree layouts are supported, they must be annotated respectively with `comb` and `tree`.
-
-
-### Syntax
+## Entrypoints and annotations
+It's possible for a contract to have multiple entrypoints, which translates in 
+LIGO to a `parameter` with a variant type as shown here:
 
 <Syntax syntax="pascaligo">
 
-```pascaligo group=type_layout_attr
+```pascaligo
+type storage is int
 
-type comb_record is [@layout:comb] record [
-  a : int ;
-  b : string ;
-  c : nat ;
-]
+type parameter is 
+ | Left of int
+ | Right of int
 
-type comb_variant is [@layout:comb]
-  | Foo of int
-  | Bar of string
-  | Baz of nat
-
-type tree_record is [@layout:tree] record [
-  foo : int ;
-  bar : string ;
-  baz : nat ;
-]
-
-type tree_variant is [@layout:tree]
-  | A of int
-  | B of string
-  | C of nat
+function main (const p: parameter; const x: storage): (list(operation) * storage) is
+  ((nil: list(operation)), case p of
+  | Left(i) -> x - i
+  | Right(i) -> x + i
+  end)
 ```
+
 </Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo
+type storage = int
+
+type parameter = 
+ | Left of int
+ | Right of int
+
+let main ((p, x): (parameter * storage)): (operation list * storage) = 
+  (([]: operation list), (match p with
+  | Left i -> x - i
+  | Right i -> x + i
+  ))
+
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo
+type storage = int
+
+type parameter = 
+ | Left(int)
+ | Right(int)
+
+let main = ((p, x): (parameter, storage)): (list(operation), storage) => {
+  ([]: list(operation), (switch(p) {
+  | Left(i) => x - i
+  | Right(i) => x + i
+  }))
+};
+
+```
+
+</Syntax>
+
+This contract can be called by another contract, like this one:
+
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=get_entrypoint_opt
+type storage is int
+
+type parameter is int
+
+type x is Left of int
+
+function main (const p: parameter; const s: storage): (list(operation) * storage) is block {
+  const contract: contract(x) = 
+    case (Tezos.get_entrypoint_opt("%left", ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx":address)): option(contract(x))) of 
+    | Some (c) -> c
+    | None -> (failwith("not a correct contract") : contract(x))
+    end;
+
+  const result: (list(operation) * storage) = ((list [Tezos.transaction(Left(2), 2mutez, contract)]: list(operation)), s)
+} with result
+```
+
+</Syntax>
+
 
 <Syntax syntax="cameligo">
 
-```cameligo group=type_layout_attr
-type comb_record = [@layout:comb] {
-  a : int ;
-  b : string ;
-  c : nat ;
-}
+```cameligo group=get_entrypoint_opt
+type storage = int
 
-type comb_variant = [@layout:comb]
-  | Foo of int
-  | Bar of string
-  | Baz of nat
+type parameter = int
 
-type tree_record = [@layout:tree] {
-  foo : int ;
-  bar : string ;
-  baz : nat ;
-}
+type x = Left of int
 
-type tree_variant = [@layout:tree]
-  | A of int
-  | B of string
-  | C of nat
+let main (p, s: parameter * storage): operation list * storage = (
+  let contract: x contract = 
+    match ((Tezos.get_entrypoint_opt "%left" ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)): x contract option) with
+    | Some c -> c
+    | None -> (failwith "contract does not match": x contract)
+  in  
+  (([
+    Tezos.transaction (Left 2) 2mutez contract;
+  ]: operation list), s)
+)
 ```
 
 </Syntax>
 
 <Syntax syntax="reasonligo">
 
-```reasonligo group=type_layout_attr
-type comb_record = [@layout:comb] {
-  a : int ,
-  b : string ,
-  c : nat ,
-}
+```reasonligo group=get_entrypoint_opt
+type storage = int;
 
-type comb_variant = [@layout:comb]
-  | Foo (int)
-  | Bar (string)
-  | Baz (nat)
+type parameter = int;
 
-type tree_record = [@layout:tree] {
-  foo : int ,
-  bar : string ,
-  baz : nat ,
-}
+type x = Left(int);
 
-type tree_variant = [@layout:tree]
-  | A (int)
-  | B (string)
-  | C (nat)
+let main = ((p, s): (parameter, storage)): (list(operation), storage) => {
+  let contract: contract(x) = 
+    switch (Tezos.get_entrypoint_opt("%left", ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)): option(contract(x))) {
+      | Some c => c
+      | None => (failwith ("contract does not match"): contract(x))
+    };
+  ([
+    Tezos.transaction(Left(2), 2mutez, contract)
+  ]: list(operation), s);
+};
 ```
 
 </Syntax>
 
-## Field annot attribute
+Notice how we directly use the `%left` entrypoint without mentioning the 
+`%right` entrypoint. This is done with the help of annotations. Without 
+annotations it wouldn't be clear what our `int` would be referring to.
 
-
-Attribute `annot` on variant and record type declarations controls michelson field annotation.
-
-### Syntax
-
-<Syntax syntax="pascaligo">
-
-```pascaligo group=type_annot_attr
-type annot_record is record [
-  [@annot:aa] a : int ;
-  [@annot:bb] b : string ;
-  [@annot:cc] c : nat ;
-]
-
-type annot_variant is
-  | [@annot:one] Foo of int
-  | [@annot:two] Bar of string
-  | [@annot:three] Baz of nat
-```
-
-</Syntax>
-
-<Syntax syntax="cameligo">
-
-```cameligo group=type_annot_attr
-type annot_record = {
-  [@annot:aa] a : int ;
-  [@annot:bb] b : string ;
-  [@annot:cc] c : nat ;
-}
-
-type annot_variant =
-  | [@annot:one] Foo of int
-  | [@annot:two] Bar of string
-  | [@annot:three] Baz of nat
-```
-
-</Syntax>
-
-<Syntax syntax="reasonligo">
-
-```reasonligo group=type_annot_attr
-type annot_record = {
-  [@annot:aa] a : int ,
-  [@annot:bb] b : string ,
-  [@annot:cc] c : nat ,
-}
-
-type annot_variant =
-  | [@annot:one] Foo (int)
-  | [@annot:two] Bar (string)
-  | [@annot:three] Baz (nat)
-```
-
-</Syntax>
+This currently only works for `or`'s or variant types in LIGO.
 
 ## Amendment
 With the upcoming 007 amendment to Tezos this will change though, and also 
