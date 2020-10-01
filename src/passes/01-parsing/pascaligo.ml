@@ -76,8 +76,7 @@ let apply parser =
   let local_fail error =
     Trace.fail
     @@ Errors.generic
-    @@ Unit.format_error ~offsets:SubIO.options#offsets
-                        SubIO.options#mode error in
+    @@ Unit.format_error error in
   match parser () with
     Stdlib.Ok semantic_value -> Trace.ok semantic_value
 

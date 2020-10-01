@@ -30,53 +30,59 @@ let missing_funarg_annotation v = `Concrete_reasonligo_missing_funarg_annotation
 let funarg_tuple_type_mismatch r p t = `Concrete_reasonligo_funarg_tuple_type_mismatch (r, p, t)
 
 let error_ppformat : display_format:string display_format ->
-  abs_error -> Location.t * string =
-  fun ~display_format a ->
+  Format.formatter -> abs_error -> unit =
+  fun ~display_format f a ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
     | `Concrete_reasonligo_unknown_predefined_type type_name ->
-      (Location.lift type_name.Region.region, Format.asprintf
-        "@[<hv>Unknown type \"%s\". @]"
-        type_name.Region.value)
+      Format.fprintf f
+        "@[<hv>%a@.Unknown type \"%s\". @]"
+        Snippet.pp_lift type_name.Region.region
+        type_name.Region.value
     | `Concrete_reasonligo_recursive_fun reg ->
-      (Location.lift reg,
-      Format.asprintf
-      "@[<hv>Invalid function declaration.@.Recursive functions are required to have a type annotation (for now). @]")
+      Format.fprintf f
+        "@[<hv>%a@.Invalid function declaration.@.Recursive functions are required to have a type annotation (for now). @]"
+        Snippet.pp_lift reg
     | `Concrete_reasonligo_unsupported_pattern_type pl ->
-      (Location.lift ((fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost pl),
-      Format.asprintf
-      "@[<hv>Invalid pattern matching.
+      Format.fprintf f
+        "@[<hv>%a@.Invalid pattern matching.
 If this is pattern matching over Booleans, then \"true\" or \"false\" is expected.
 If this is pattern matching on a list, then one of the following is expected:
   * an empty list pattern \"[]\";
   * a cons list pattern \"[head, ...tail]\".
 If this is pattern matching over variants, then a constructor of a variant is expected.
       
-Other forms of pattern matching are not (yet) supported. @]")
+Other forms of pattern matching are not (yet) supported. @]"
+        Snippet.pp_lift ((fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost pl)
     | `Concrete_reasonligo_unsupported_string_singleton te ->
-      (Location.lift (Raw.type_expr_to_region te),
-      Format.asprintf
-        "@[<hv>Invalid type. @.It's not possible to assign a string to a type. @]")
+      Format.fprintf f
+        "@[<hv>%a@.Invalid type. @.It's not possible to assign a string to a type. @]"
+        Snippet.pp_lift (Raw.type_expr_to_region te)
     | `Concrete_reasonligo_unsupported_deep_list_pattern cons ->
-      (Location.lift @@ Raw.pattern_to_region cons, Format.asprintf
-      "@[<hv>Invalid pattern matching. @.At this point, one of the following is expected:
+      Format.fprintf f
+        "@[<hv>%a@.Invalid pattern matching. @.At this point, one of the following is expected:
   * an empty list pattern \"[]\";
-  * a cons list pattern \"head :: tail\".@]")
+  * a cons list pattern \"head :: tail\".@]"
+        Snippet.pp_lift @@ Raw.pattern_to_region cons
     | `Concrete_reasonligo_recursion_on_non_function reg ->
-      (reg, Format.asprintf "@[<hv>Invalid let declaration.@.Only functions can be recursive. @]")
+      Format.fprintf f "@[<hv>%a@.Invalid let declaration.@.Only functions can be recursive. @]"
+        Snippet.pp reg
     | `Concrete_reasonligo_michelson_type_wrong (texpr,name) ->
-      (Location.lift (Raw.type_expr_to_region texpr), Format.asprintf
-       "@[<hv>Invalid \"%s\" type.@.At this point, an annotation, in the form of a string, is expected for the preceding type. @]"
-          name)
+      Format.fprintf f
+       "@[<hv>%a@.Invalid \"%s\" type.@.At this point, an annotation, in the form of a string, is expected for the preceding type. @]"
+          Snippet.pp_lift (Raw.type_expr_to_region texpr)
+          name
     | `Concrete_reasonligo_michelson_type_wrong_arity (loc,name) ->
-      (loc, Format.asprintf
-        "@[<hv>Invalid \"%s\" type.@.An even number of 2 or more arguments is expected, where each odd item is a type annotated by the following string. @]"
-        name)
+      Format.fprintf f
+        "@[<hv>%a@.Invalid \"%s\" type.@.An even number of 2 or more arguments is expected, where each odd item is a type annotated by the following string. @]"
+        Snippet.pp loc
+        name
     | `Concrete_reasonligo_missing_funarg_annotation v ->
-      (Location.lift v.region, Format.asprintf
-        "@[<hv>Missing a type annotation for argument \"%s\". @]"
-          v.value)
+      Format.fprintf f
+        "@[<hv>%a@.Missing a type annotation for argument \"%s\". @]"
+          Snippet.pp_lift v.region
+          v.value
     | `Concrete_reasonligo_funarg_tuple_type_mismatch (region, pattern, texpr) -> (
       let p = Parser.pretty_print_pattern pattern in
       let t = Parser.pretty_print_type_expr texpr in
@@ -84,15 +90,15 @@ Other forms of pattern matching are not (yet) supported. @]")
       | Ok (p, _), Ok (t, _) ->
         let p = Buffer.contents p in
         let t = Buffer.contents t in
-        (Location.lift region,
-        Format.asprintf
-          "@[<hv>The tuple \"%s\" does not match the type \"%s\". @]"
+        Format.fprintf f
+          "@[<hv>%a@.The tuple \"%s\" does not match the type \"%s\". @]"
+          Snippet.pp_lift region
           p
-          t)
+          t
       | _ ->
-        (Location.lift region,
-        Format.asprintf
-          "@[<hv>The tuple does not match the type. @]")
+        Format.fprintf f
+          "@[<hv>%a@.The tuple does not match the type. @]"
+          Snippet.pp_lift region
     )
   )
 

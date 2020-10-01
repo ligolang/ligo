@@ -68,7 +68,7 @@ module Make (Lexer : Lexer.S)
     type error   = message * valid option * invalid
 
     val format_error :
-      ?offsets:bool -> [`Byte | `Point] -> error -> string Region.reg
+      error -> string Region.reg
 
     val short_error :
       ?offsets:bool -> [`Point | `Byte] -> message -> Region.t -> string

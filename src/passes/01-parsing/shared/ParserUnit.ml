@@ -171,27 +171,18 @@ module Make (Lexer: Lexer.S)
       (* Lexing errors *)
 
       | exception Lexer.Error err ->
-          let file =
-            lexer_inst.LexerLib.buffer.Lexing.lex_curr_p.Lexing.pos_fname in
-          let error = Lexer.format_error
-                        ~offsets:SubIO.options#offsets
-                        SubIO.options#mode err ~file:(file <> "")
+          let error = Lexer.format_error err
           in Stdlib.Error error
 
       | exception Lexer.Token.Error err ->
-          let file =
-            lexer_inst.LexerLib.buffer.Lexing.lex_curr_p.Lexing.pos_fname in
-          let error = Lexer.Token.format_error
-                        ~offsets:SubIO.options#offsets
-                        SubIO.options#mode err ~file:(file <> "")
+          let error = Lexer.Token.format_error err
           in Stdlib.Error error
 
       (* Incremental API of Menhir *)
 
       | exception Front.Point point ->
           let error =
-            Front.format_error ~offsets:SubIO.options#offsets
-                               SubIO.options#mode point
+            Front.format_error point
           in Stdlib.Error error
 
       (* Monolithic API of Menhir *)
@@ -205,8 +196,7 @@ module Make (Lexer: Lexer.S)
             | LexerLib.Two (invalid, valid) -> invalid, Some valid in
             let point = "", valid_opt, invalid in
             let error =
-              Front.format_error ~offsets:SubIO.options#offsets
-                                 SubIO.options#mode point
+              Front.format_error point
             in Stdlib.Error error
 
        (* I/O errors *)
@@ -233,7 +223,9 @@ module Make (Lexer: Lexer.S)
               if SSet.mem "preproc" options#verbose then
                 Printf.printf "%s\n%!" (Buffer.contents pp_buffer);
               let formatted =
-                Preproc.format err
+                Preproc.format ~offsets:options#offsets
+                               ~file:(file <> "")
+                               err
               in close (); Stdlib.Error formatted
           | Stdlib.Ok buffer ->
              (* Lexing and parsing the preprocessed input source *)
@@ -301,7 +293,9 @@ module Make (Lexer: Lexer.S)
           Stdlib.Ok _ as ok  -> ok
         | Error (_, err) ->
             let formatted =
-              Preproc.format err
+              Preproc.format ~offsets:options#offsets
+                             ~file:true
+                             err
             in close_in cin; Stdlib.Error formatted
       with Sys_error error ->
              flush_all (); Stdlib.Error (Region.wrap_ghost error)

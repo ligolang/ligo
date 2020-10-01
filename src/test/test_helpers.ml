@@ -8,7 +8,7 @@ type test =
 
 let test_format : 'a Simple_utils.Display.format = {
   (* do not display anything if test succeed *)
-  pp = (fun ~display_format _ -> ignore display_format; (Location.dummy, "")) ;
+  pp = (fun ~display_format _ _ -> ignore display_format; ()) ;
   to_json = (fun _ -> (`Null:Display.json)) ;
 }
 
@@ -19,7 +19,7 @@ let wrap_test name f =
   in
   let format = Display.bind_format test_format Main.Formatter.error_format in
   let disp = Simple_utils.Display.Displayable {value=result ; format} in
-  let s = Simple_utils.Display.convert ~display_format:(Human_readable) None disp in
+  let s = Simple_utils.Display.convert ~display_format:(Human_readable) disp in
   match result with
   | Ok ((), annotations) -> ignore annotations; ()
   | Error _ ->

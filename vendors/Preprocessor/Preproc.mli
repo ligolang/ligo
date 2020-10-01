@@ -35,7 +35,8 @@ type error =
 | Unterminated_comment of string
 | Unterminated_inclusion
 
-val format : error Region.reg -> string Region.reg
+val format :
+  ?offsets:bool -> error Region.reg -> file:bool -> string Region.reg
 
 (* Preprocessing a lexing buffer *)
 

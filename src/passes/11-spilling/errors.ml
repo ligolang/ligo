@@ -36,38 +36,39 @@ let bad_decompile bad_type =
   `Spilling_bad_decompile bad_type
 
 let rec error_ppformat : display_format:string display_format ->
-  spilling_error -> Location.t * string =
-  fun ~display_format a ->
+  Format.formatter -> spilling_error -> unit =
+  fun ~display_format f a ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
     | `Spilling_tracer (loc, err) ->
-      let (_, msg) = error_ppformat ~display_format err in
-      (loc, Format.asprintf
-        "@[<hv>Translating expression@.%s@]"
-        msg)
+      Format.fprintf f
+      "@[<hv>%a@.Translating expression@.%a@]"
+      Snippet.pp loc
+      (error_ppformat ~display_format) err
     | `Spilling_corner_case (loc,desc) ->
       let s = Format.asprintf "%s\n corner case: %s\n%s" loc desc (corner_case_message ()) in
-      (Location.dummy, s)
+      Format.pp_print_string f s
     | `Spilling_no_type_variable tv ->
       let s = Format.asprintf "Type \"%a\" not found." Var.pp tv in
-      (Location.dummy, s)
+      Format.pp_print_string f s
     | `Spilling_unsupported_pattern_matching loc ->
-      let s = Format.asprintf "Invalid pattern matching.@Tuple patterns are not (yet) supported." in
-      (loc, s)
+      let s = Format.asprintf "%a@.Invalid pattern matching.@Tuple patterns are not (yet) supported." Snippet.pp loc in
+      Format.pp_print_string f s
     | `Spilling_unsupported_recursive_function var ->
-      let s = Format.asprintf "Invalid recursive function \"%a\".@.A recursive function can only have one argument."
+      let s = Format.asprintf "%a@.Invalid recursive function \"%a\".@.A recursive function can only have one argument."
+        Snippet.pp var.location
         Ast_typed.PP.expression_variable var in
-      (var.location, s)
+      Format.pp_print_string f s
     | `Spilling_wrong_mini_c_value (expected , actual) ->
       let s = Format.asprintf "Invalid type.@.Expected \"%a\", but got \"%a\"."
         Ast_typed.PP.type_expression expected 
         Mini_c.PP.value actual in
-      (Location.dummy, s)
+      Format.pp_print_string f s
     | `Spilling_bad_decompile bad ->
       let s = Format.asprintf "Cannot untranspile: %a"
         Mini_c.PP.value bad in
-      (Location.dummy, s)
+      Format.pp_print_string f s
   )
 
 let rec error_jsonformat : spilling_error -> Yojson.Safe.t = fun a ->

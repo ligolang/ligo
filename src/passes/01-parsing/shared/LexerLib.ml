@@ -310,12 +310,7 @@ type open_err = File_opening of string
 
 let lexbuf_from_input = function
   String s ->
-    let lexbuf = Lexing.from_string s in
-    let () =
-      let open Lexing in
-      lexbuf.lex_curr_p <- {lexbuf.lex_curr_p with pos_fname=" "}
-    in 
-    Ok (lexbuf, fun () -> ())
+    Ok (Lexing.from_string s, fun () -> ())
 | Channel chan ->
     let close () = close_in chan in
     Ok (Lexing.from_channel chan, close)

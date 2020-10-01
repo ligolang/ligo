@@ -34,7 +34,7 @@ module Make (IO: IO) (Lexer: Lexer.S) =
             if SSet.mem "preproc" IO.options#verbose then
               Printf.printf "%s\n%!" (Buffer.contents pp_buffer);
             let formatted =
-              Preproc.format err
+              Preproc.format ~offsets:IO.options#offsets ~file:true err
             in Stdlib.Error formatted
         | Stdlib.Ok pp_buffer ->
            (* Running the lexer on the preprocessed input *)
@@ -56,23 +56,11 @@ module Make (IO: IO) (Lexer: Lexer.S) =
                       then Stdlib.Ok (List.rev tokens)
                       else read_tokens (token::tokens)
                   | exception Lexer.Token.Error error ->
-                      let file =
-                        match IO.options#input with
-                          None | Some "-" -> false
-                        |         Some _  -> true in
-                      let msg =
-                        Lexer.Token.format_error
-                          ~offsets:IO.options#offsets
-                          IO.options#mode ~file error
+                      let msg = Lexer.Token.format_error error
                       in Stdlib.Error msg
                   | exception Lexer.Error error ->
-                      let file =
-                        match IO.options#input with
-                          None | Some "-" -> false
-                        |         Some _  -> true in
                       let msg =
-                        Lexer.format_error ~offsets:IO.options#offsets
-                                           IO.options#mode ~file error
+                        Lexer.format_error error
                       in Stdlib.Error msg in
                 let result = read_tokens []
                 in close_all (); result
@@ -104,7 +92,7 @@ module Make (IO: IO) (Lexer: Lexer.S) =
             if SSet.mem "preproc" IO.options#verbose then
               Printf.printf "%s\n%!" (Buffer.contents pp_buffer);
             let formatted =
-              Preproc.format err
+              Preproc.format ~offsets:IO.options#offsets ~file:true err
             in Stdlib.Error formatted
         | Stdlib.Ok pp_buffer ->
             let preproc_str = Buffer.contents pp_buffer in

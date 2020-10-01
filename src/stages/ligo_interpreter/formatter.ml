@@ -1,9 +1,9 @@
 open Display
 
-let program_ppformat ~display_format (program_as_string,_) =
+let program_ppformat ~display_format f (program_as_string,_) =
   match display_format with
   | Human_readable | Dev ->
-    (Location.dummy, program_as_string)
+    Format.pp_print_string f program_as_string
 
 let program_jsonformat (program_as_string,_) : json =
   let s = Format.asprintf "%s" program_as_string in

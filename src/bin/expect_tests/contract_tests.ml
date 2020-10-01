@@ -5,6 +5,9 @@ let contract basename =
 let bad_contract basename =
   "../../test/contracts/negative/" ^ basename
 
+(* avoid pretty printing *)
+let () = Unix.putenv "TERM" "dumb"
+
 let%expect_test _ =
   run_ligo_good [ "measure-contract" ; contract "coase.ligo" ; "main" ] ;
   [%expect {| 1238 bytes |}] ;
@@ -29,26 +32,26 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-storage" ; contract "coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ] ;
   [%expect {|
-    [1mFile "../../test/contracts/coase.ligo", line 124, characters 9-13:[0m
+    Invalid command line argument.
+    The provided storage does not have the correct type for the contract.
+    in file "../../test/contracts/coase.ligo", line 124, characters 9-13
     123 |
-    124 | function [1m[31mmain[0m (const action : parameter; const s : storage) : return is
+    124 | function main (const action : parameter; const s : storage) : return is
     125 |   case action of
 
-    [1m[31mError[0m: Invalid command line argument.
-    The provided storage does not have the correct type for the contract.
     Invalid type(s).
     Expected: "record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]", but got: "
     sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]". |}] ;
 
   run_ligo_bad [ "compile-parameter" ; contract "coase.ligo" ; "main" ; "record cards = (map end : cards) ; card_patterns = (map end : card_patterns) ; next_id = 3n ; end" ] ;
   [%expect {|
-    [1mFile "../../test/contracts/coase.ligo", line 124, characters 9-13:[0m
+    Invalid command line argument.
+    The provided parameter does not have the correct type for the given entrypoint.
+    in file "../../test/contracts/coase.ligo", line 124, characters 9-13
     123 |
-    124 | function [1m[31mmain[0m (const action : parameter; const s : storage) : return is
+    124 | function main (const action : parameter; const s : storage) : return is
     125 |   case action of
 
-    [1m[31mError[0m: Invalid command line argument.
-    The provided parameter does not have the correct type for the given entrypoint.
     Invalid type(s).
     Expected: "sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]", but got: "
     record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]". |}] ;
@@ -993,12 +996,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_type_operator.ligo" ; "main" ] ;
   [%expect {|
-    [1mFile "../../test/contracts/bad_type_operator.ligo", line 4, characters 16-29:[0m
+    in file "../../test/contracts/bad_type_operator.ligo", line 4, characters 16-29
       3 | type binding is nat * nat
-      4 | type storage is [1m[31mmap (binding)[0m
+      4 | type storage is map (binding)
       5 |
-
-    [1m[31mError[0m: Wrong number of arguments for type constant: Map expected: 2 got: 1 |}]
+     Wrong number of arguments for type constant: Map expected: 2
+    got: 1 |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_address_format.religo" ; "main" ] ;
@@ -1013,12 +1016,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_timestamp.ligo" ; "main" ] ;
   [%expect {|
-    [1mFile "../../test/contracts/bad_timestamp.ligo", line 7, characters 30-44:[0m
+    in file "../../test/contracts/bad_timestamp.ligo", line 7, characters 30-44
       6 |   block {
-      7 |     var stamp : timestamp := ([1m[31m"badtimestamp"[0m : timestamp)
+      7 |     var stamp : timestamp := ("badtimestamp" : timestamp)
       8 |   }
 
-    [1m[31mError[0m: Ill-formed timestamp "badtimestamp".
+    Ill-formed timestamp "badtimestamp".
     At this point, a string with a RFC3339 notation or the number of seconds since Epoch is expected. |}]
 
 let%expect_test _ =
@@ -1065,14 +1068,14 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "long_sum_type_names.ligo" ; "main" ] ;
   [%expect {|
-    [1mFile "../../test/contracts/negative/long_sum_type_names.ligo", line 2, character 2 to line 4, character 18:[0m
+    in file "../../test/contracts/negative/long_sum_type_names.ligo", line 2, character 2 to line 4, character 18
       1 | type action is
-      2 | | [1m[31mIncrementttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt of int[0m
-      3 | [1m[31m// | Increment of int
-    [0m  4 | [1m[31m| Decrement of int[0m
+      2 | | Incrementttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt of int
+      3 | // | Increment of int
+      4 | | Decrement of int
       5 |
 
-    [1m[31mError[0m: Ill-formed data constructor "Incrementttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt".
+    Ill-formed data constructor "Incrementttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt".
     Data constructors have a maximum length of 32 characters, which is a limitation imposed by annotations in Tezos. |}]
 
 let%expect_test _ =
@@ -1083,51 +1086,51 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "redundant_constructors.mligo" ; "main" ] ;
   [%expect{|
-    [1mFile "../../test/contracts/negative/redundant_constructors.mligo", line 7, character 2 to line 9, character 15:[0m
+    in file "../../test/contracts/negative/redundant_constructors.mligo", line 7, character 2 to line 9, character 15
       6 | type union_b =
-      7 | | [1m[31mAdd of nat[0m
-      8 | [1m[31m| Remove of nat
-    [0m  9 | [1m[31m| Config of nat[0m
+      7 | | Add of nat
+      8 | | Remove of nat
+      9 | | Config of nat
      10 |
 
-    [1m[31mError[0m: Invalid variant.
+    Invalid variant.
     Constructor "Add" already exists as part of another variant. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_toplevel.mligo" ; "main" ] ;
   [%expect {|
-[1mFile "../../test/contracts/negative/create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8:[0m
+in file "../../test/contracts/negative/create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8
   3 | let main (action, store : string * string) : return =
-  4 |   let toto : operation * address = [1m[31mTezos.create_contract[0m
-  5 | [1m[31m    (fun (p, s : nat * string) -> (([] : operation list), store))
-[0m  6 | [1m[31m    (None: key_hash option)
-[0m  7 | [1m[31m    300tz
-[0m  8 | [1m[31m    "un"[0m
+  4 |   let toto : operation * address = Tezos.create_contract
+  5 |     (fun (p, s : nat * string) -> (([] : operation list), store))
+  6 |     (None: key_hash option)
+  7 |     300tz
+  8 |     "un"
   9 |   in
 
-[1m[31mError[0m: Free variable 'store' is not allowed in CREATE_CONTRACT lambda |}] ;
+Free variable 'store' is not allowed in CREATE_CONTRACT lambda |}] ;
 
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_var.mligo" ; "main" ] ;
   [%expect {|
-[1mFile "../../test/contracts/negative/create_contract_var.mligo", line 6, character 35 to line 10, character 5:[0m
+in file "../../test/contracts/negative/create_contract_var.mligo", line 6, character 35 to line 10, character 5
   5 | let main (action, store : string * string) : return =
-  6 |   let toto : operation * address = [1m[31mTezos.create_contract[0m
-  7 | [1m[31m    (fun (p, s : nat * int) -> (([] : operation list), a))
-[0m  8 | [1m[31m    (None: key_hash option)
-[0m  9 | [1m[31m    300tz
-[0m 10 | [1m[31m    1[0m
+  6 |   let toto : operation * address = Tezos.create_contract
+  7 |     (fun (p, s : nat * int) -> (([] : operation list), a))
+  8 |     (None: key_hash option)
+  9 |     300tz
+ 10 |     1
  11 |   in
 
-[1m[31mError[0m: Free variable 'a' is not allowed in CREATE_CONTRACT lambda |}] ;
+Free variable 'a' is not allowed in CREATE_CONTRACT lambda |}] ;
 
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_no_inline.mligo" ; "main" ] ;
   [%expect {|
-    [1mFile "../../test/contracts/negative/create_contract_no_inline.mligo", line 3, characters 40-46:[0m
+    in file "../../test/contracts/negative/create_contract_no_inline.mligo", line 3, characters 40-46
       2 |
-      3 | let dummy_contract (p, s : nat * int) : [1m[31mreturn[0m =
+      3 | let dummy_contract (p, s : nat * int) : return =
       4 |  (([] : operation list), foo)
 
-    [1m[31mError[0m: Type "return" not found. |}] ;
+    Type "return" not found. |}] ;
 
   run_ligo_good [ "compile-contract" ; contract "create_contract.mligo" ; "main" ] ;
   [%expect {|
@@ -1167,12 +1170,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "self_type_annotation.ligo" ; "main" ] ;
   [%expect {|
-    [1mFile "../../test/contracts/negative/self_type_annotation.ligo", line 8, characters 41-64:[0m
+    in file "../../test/contracts/negative/self_type_annotation.ligo", line 8, characters 41-64
       7 |   block {
-      8 |     const self_contract: contract(int) = [1m[31mTezos.self ("%default")[0m;
+      8 |     const self_contract: contract(int) = Tezos.self ("%default");
       9 |   }
 
-    [1m[31mError[0m: Invalid type annotation.
+    Invalid type annotation.
     "Contract (nat)" was given, but "Contract (int)" was expected.
     Note that "Tezos.self" refers to this contract, so the parameters should be the same. |}] ;
 
@@ -1183,32 +1186,32 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract.mligo" ; "main" ] ;
   [%expect {|
-    [1mFile "../../test/contracts/negative/bad_contract.mligo", line 4, characters 9-46:[0m
+    in file "../../test/contracts/negative/bad_contract.mligo", line 4, characters 9-46
       3 |
-      4 | let main [1m[31m(action, store : parameter * storage)[0m : storage =
+      4 | let main (action, store : parameter * storage) : storage =
       5 |   store + 1
 
-    [1m[31mError[0m: Invalid type for entrypoint "main".
+    Invalid type for entrypoint "main".
     An entrypoint must of type "parameter * storage -> operations list * storage". |}] ;
 
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract2.mligo" ; "main" ] ;
   [%expect {|
-    [1mFile "../../test/contracts/negative/bad_contract2.mligo", line 5, characters 9-46:[0m
+    in file "../../test/contracts/negative/bad_contract2.mligo", line 5, characters 9-46
       4 |
-      5 | let main [1m[31m(action, store : parameter * storage)[0m : return =
+      5 | let main (action, store : parameter * storage) : return =
       6 |   ("bad",store + 1)
 
-    [1m[31mError[0m: Invalid type for entrypoint "main".
+    Invalid type for entrypoint "main".
     An entrypoint must of type "parameter * storage -> operations list * storage". |}] ;
 
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract3.mligo" ; "main" ] ;
   [%expect {|
-    [1mFile "../../test/contracts/negative/bad_contract3.mligo", line 5, characters 9-46:[0m
+    in file "../../test/contracts/negative/bad_contract3.mligo", line 5, characters 9-46
       4 |
-      5 | let main [1m[31m(action, store : parameter * storage)[0m : return =
+      5 | let main (action, store : parameter * storage) : return =
       6 |   (([]: operation list),"bad")
 
-    [1m[31mError[0m: Invalid type for entrypoint "main".
+    Invalid type for entrypoint "main".
     The storage type "int" of the function parameter must be the same as the storage type "string" of the return value. |}]
 
 let%expect_test _ =
@@ -1244,52 +1247,52 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; bad_contract "self_bad_entrypoint_format.ligo" ; "main" ] ;
   [%expect {|
-    [1mFile "../../test/contracts/negative/self_bad_entrypoint_format.ligo", line 8, characters 52-58:[0m
+    in file "../../test/contracts/negative/self_bad_entrypoint_format.ligo", line 8, characters 52-58
       7 |   block {
-      8 |     const self_contract: contract(int) = Tezos.self([1m[31m"Toto"[0m) ;
+      8 |     const self_contract: contract(int) = Tezos.self("Toto") ;
       9 |     const op : operation = Tezos.transaction (2, 300tz, self_contract) ;
 
-    [1m[31mError[0m: Invalid entrypoint "Toto".
+    Invalid entrypoint "Toto".
     One of the following patterns is expected:
       * "%bar" is expected for entrypoint "Bar"
       * "%default" when no entrypoint is used. |}];
 
   run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_1.religo"; "main"];
   [%expect {|
-    [1mFile "../../test/contracts/negative/nested_bigmap_1.religo", line 1, characters 11-29:[0m
-      1 | type bar = [1m[31mbig_map (nat, int)[0m;
+    in file "../../test/contracts/negative/nested_bigmap_1.religo", line 1, characters 11-29
+      1 | type bar = big_map (nat, int);
       2 |
 
-    [1m[31mError[0m: Invalid big map nesting.
+    Invalid big map nesting.
     A big map cannot be nested inside another big map. |}];
 
   run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_2.religo"; "main"];
   [%expect {|
-    [1mFile "../../test/contracts/negative/nested_bigmap_2.religo", line 2, characters 29-50:[0m
+    in file "../../test/contracts/negative/nested_bigmap_2.religo", line 2, characters 29-50
       1 | /* this should result in an error as nested big_maps are not supported: */
-      2 | type storage = big_map (nat, [1m[31mbig_map (int, string)[0m);
+      2 | type storage = big_map (nat, big_map (int, string));
       3 |
 
-    [1m[31mError[0m: Invalid big map nesting.
+    Invalid big map nesting.
     A big map cannot be nested inside another big map. |}];
   
   run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_3.religo"; "main"];
   [%expect {|
-    [1mFile "../../test/contracts/negative/nested_bigmap_3.religo", line 1, characters 11-29:[0m
-      1 | type bar = [1m[31mbig_map (nat, int)[0m;
+    in file "../../test/contracts/negative/nested_bigmap_3.religo", line 1, characters 11-29
+      1 | type bar = big_map (nat, int);
       2 |
 
-    [1m[31mError[0m: Invalid big map nesting.
+    Invalid big map nesting.
     A big map cannot be nested inside another big map. |}];
 
   run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_4.religo"; "main"];
   [%expect {|
-    [1mFile "../../test/contracts/negative/nested_bigmap_4.religo", line 2, characters 39-60:[0m
+    in file "../../test/contracts/negative/nested_bigmap_4.religo", line 2, characters 39-60
       1 | /* this should result in an error as nested big_maps are not supported: */
-      2 | type storage = map (int, big_map (nat, [1m[31mbig_map (int, string)[0m));
+      2 | type storage = map (int, big_map (nat, big_map (int, string)));
       3 |
 
-    [1m[31mError[0m: Invalid big map nesting.
+    Invalid big map nesting.
     A big map cannot be nested inside another big map. |}];
       
   run_ligo_good ["print-ast"; contract "letin.mligo"];
@@ -1344,35 +1347,33 @@ let%expect_test _ =
 
   run_ligo_bad ["print-ast-typed"; contract "existential.mligo"];
   [%expect {|
-    [1mFile "../../test/contracts/existential.mligo", line 1, characters 8-9:[0m
-      1 | let a : [1m[31m'[0ma = 2
+    in file "../../test/contracts/existential.mligo", line 1, characters 8-9
+      1 | let a : 'a = 2
       2 | let b : _ ->'b = fun _ -> 2
-
-    [1m[31mError[0m: Unexpected character '\''. |}];
+    Unexpected character '\''. |}];
   run_ligo_bad ["print-ast-typed"; bad_contract "missing_funarg_annotation.mligo"];
   [%expect {|
-    [1mFile "../../test/contracts/negative/missing_funarg_annotation.mligo", line 2, characters 6-7:[0m
+    in file "../../test/contracts/negative/missing_funarg_annotation.mligo", line 2, characters 6-7
       1 | (* these should give a missing type annotation error *)
-      2 | let a [1m[31mb[0m = b
+      2 | let a b = b
       3 | let a (b,c) = b
 
-    [1m[31mError[0m: Missing a type annotation for argument "b". |}];
+    Missing a type annotation for argument "b". |}];
   run_ligo_bad ["print-ast-typed"; bad_contract "missing_funarg_annotation.religo"];
   [%expect {|
-    [1mFile "../../test/contracts/negative/missing_funarg_annotation.religo", line 2, characters 8-9:[0m
-      1 | /* these should give a missing type annotation error */
-      2 | let a = [1m[31mb[0m => b
-      3 | let a = (b,c) => b
+in file "../../test/contracts/negative/missing_funarg_annotation.religo", line 2, characters 8-9
+  1 | /* these should give a missing type annotation error */
+  2 | let a = b => b
+  3 | let a = (b,c) => b
 
-    [1m[31mError[0m: [1mFile "../../test/contracts/negative/missing_funarg_annotation.religo", line 2, characters 8-9:[0m
-    Missing a type annotation for argument "b". |}];
+Missing a type annotation for argument "b". |}];
   run_ligo_bad ["print-ast-typed"; bad_contract "funarg_tuple_wrong.mligo"];
   [%expect {|
-    [1mFile "../../test/contracts/negative/funarg_tuple_wrong.mligo", line 1, characters 7-14:[0m
-      1 | let a ([1m[31mb, c, d[0m: int * int) = d
+    in file "../../test/contracts/negative/funarg_tuple_wrong.mligo", line 1, characters 7-14
+      1 | let a (b, c, d: int * int) = d
       2 | let a (((b, c, d)): ((((int))) * int)) = d
 
-    [1m[31mError[0m: The tuple "b, c, d" does not match the type "int * int". |}];
+    The tuple "b, c, d" does not match the type "int * int". |}];
   run_ligo_bad ["print-ast-typed"; bad_contract "funarg_tuple_wrong.religo"];
   [%expect {|
     Invalid record field "2" in record "#1.2". |}];
