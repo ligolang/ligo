@@ -57,7 +57,7 @@ and type_match : (environment -> I.expression -> (O.expression , typer_error) re
       ok (O.Match_option {match_none ; match_some = {opt; body; tv}})
   | Match_list {match_nil ; match_cons = {hd ; tl ; body}} ->
       let hd = cast_var hd in
-      let tl = cast_var tl in  
+      let tl = cast_var tl in
       let%bind t_elt =
         trace_option (match_error ~expected:i ~actual:t loc)
         @@ get_t_list t in
@@ -114,7 +114,7 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
       let aux ({associated_type;michelson_annotation;decl_pos} : I.row_element) =
         let%bind associated_type = evaluate_type e associated_type in
         ok @@ ({associated_type;michelson_annotation;decl_pos} : O.row_element)
-      in  
+      in
       Stage_common.Helpers.bind_map_lmap aux m.fields
     in
     let sum : O.rows  = match Environment.get_sum lmap e with
@@ -147,11 +147,11 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
       ok tv
   | T_constant {type_constant; arguments} ->
     let assert_constant lst = match lst with
-      [] -> ok () 
+      [] -> ok ()
     | _ -> fail @@ type_constant_wrong_number_of_arguments type_constant 0 (List.length lst) t.location
     in
     let assert_unary lst = match lst with
-      [_] -> ok () 
+      [_] -> ok ()
     | _ -> fail @@ type_constant_wrong_number_of_arguments type_constant 1 (List.length lst) t.location
     in
     let get_unary lst = match lst with
@@ -280,7 +280,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
         | Some tv' -> assert_type_expression_eq ae.location (tv' , ae.type_expression) in
       ok(ae)
   | E_constructor {constructor = Label s ; element} when String.equal s "M_left" || String.equal s "M_right" -> (
-    let%bind t = trace_option (michelson_or (Label s) ae.location) @@ tv_opt in 
+    let%bind t = trace_option (michelson_or (Label s) ae.location) @@ tv_opt in
     let%bind expr' = type_expression' e element in
     ( match t.type_content with
       | T_sum c ->
@@ -322,17 +322,17 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
     let%bind () = assert_type_expression_eq update.location (tv, get_type_expression update) in
     return (E_record_update {record; path; update}) wrapped
   (* Data-structure *)
-  | E_lambda lambda -> 
+  | E_lambda lambda ->
    let%bind (lambda, lambda_type) = type_lambda e lambda in
    return (E_lambda lambda ) lambda_type
   | E_constant {cons_name=( C_LIST_FOLD | C_MAP_FOLD | C_SET_FOLD) as opname ;
                 arguments=[
                     ( { content = (I.E_lambda { binder = lname ;
-                                                   input_type = None ; 
-                                                   output_type = None ; 
+                                                   input_type = None ;
+                                                   output_type = None ;
                                                    result }) ;
                         location = _ }) as _lambda ;
-                    collect ; 
+                    collect ;
                     init_record ;
                   ]} ->
       (* this special case is here to force annotation of the untyped lambda
@@ -357,12 +357,12 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
   | E_constant {cons_name=C_FOLD_WHILE as opname;
                 arguments = [
                     ( { content = (I.E_lambda { binder = lname ;
-                                                   input_type = None ; 
-                                                   output_type = None ; 
+                                                   input_type = None ;
+                                                   output_type = None ;
                                                    result }) ;
                         location = _ }) as _lambda ;
                     init_record ;
-                ]} -> 
+                ]} ->
       let%bind v_initr = type_expression' e init_record in
       let tv_out = get_type_expression v_initr in
       let input_type  = tv_out in
@@ -392,15 +392,15 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
   | E_constant {cons_name=C_SET_ADD|C_CONS as cst;arguments=[key;set]} ->
       let%bind key' =  type_expression' e key in
       let tv_key = get_type_expression key' in
-      let tv = match tv_opt with 
-          Some tv -> tv 
-        | None -> match cst with 
+      let tv = match tv_opt with
+          Some tv -> tv
+        | None -> match cst with
             C_SET_ADD -> t_set tv_key
           | C_CONS -> t_list tv_key
           | _ -> failwith "Only C_SET_ADD and C_CONS are possible because those were the two cases matched above"
       in
       let%bind set' =  type_expression' e ~tv_opt:tv set in
-      let tv_set = get_type_expression set' in 
+      let tv_set = get_type_expression set' in
       let tv_lst = [tv_key;tv_set] in
       let%bind (name', tv) = type_constant cst ae.location tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=[key';set']}) tv
@@ -409,12 +409,12 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let%bind val' = type_expression' e value in
       let tv_key = get_type_expression key' in
       let tv_val = get_type_expression val' in
-      let tv = match tv_opt with 
-          Some tv -> tv 
+      let tv = match tv_opt with
+          Some tv -> tv
         | None -> t_map_or_big_map tv_key tv_val
       in
       let%bind map' =  type_expression' e ~tv_opt:tv map in
-      let tv_map = get_type_expression map' in 
+      let tv_map = get_type_expression map' in
       let tv_lst = [tv_key;tv_val;tv_map] in
       let%bind (name', tv) = type_constant cst ae.location tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=[key';val';map']}) tv
@@ -499,7 +499,7 @@ and type_lambda e {
       input_type ;
       output_type ;
       result ;
-    } = 
+    } =
       let%bind input_type =
         bind_map_option (evaluate_type e) input_type in
       let%bind output_type =
@@ -569,16 +569,15 @@ let rec untype_expression (e:O.expression) : (I.expression , typer_error) result
       let Label n = constructor in
       return (e_constructor n p')
   | E_record r ->
-    let r = O.LMap.to_kv_list_rev r in
-    let%bind r' = bind_map_list (fun (Label k,e) -> let%bind e = untype_expression e in ok (I.Label k,e)) r in
-    return (e_record @@ LMap.of_list r')
+    let%bind r' = Helpers.bind_map_lmap untype_expression r in
+    return (e_record r')
   | E_record_accessor {record; path} ->
       let%bind r' = untype_expression record in
       let Label s = path in
       return (e_record_accessor r' (Label s))
   | E_record_update {record=r; path=Label l; update=e} ->
     let%bind r' = untype_expression r in
-    let%bind e = untype_expression e in 
+    let%bind e = untype_expression e in
     return (e_record_update r' (I.Label l) e)
   | E_matching {matchee;cases} ->
       let%bind ae' = untype_expression matchee in

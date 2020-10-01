@@ -157,7 +157,7 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression,Errors
       let%bind (r, r_ann) = trace_option (Errors.corner_case "not an annotated type") @@ I.get_t_annoted r in
       let%bind (l,r) = bind_map_pair compile_type_expression (l,r) in
       let sum : (O.label * O.row_element) list = [
-        (O.Label "0" , {associated_type = l ; attributes = [ "annot:"^l_ann ] ; decl_pos = 0});
+        (O.Label "0", {associated_type = l ; attributes = [ "annot:"^l_ann ] ; decl_pos = 0});
         (O.Label "1", {associated_type = r ; attributes = [ "annot:"^r_ann ] ; decl_pos = 0}); ]
       in
       return @@ O.T_record { fields = (O.LMap.of_list sum) ; attributes = [] }
@@ -266,7 +266,7 @@ and compile_expression' : I.expression -> (O.expression option -> O.expression, 
         let return_expr = fun expr ->
           O.e_let_in (env,None) false [] (store_mutable_variable free_vars) @@
           O.e_let_in (env,None) false [] cond_expr @@
-          expr 
+          expr
         in
         ok @@ restore_mutable_variable return_expr free_vars env
       else
@@ -288,7 +288,7 @@ and compile_expression' : I.expression -> (O.expression option -> O.expression, 
       let rhs = match access_path with
         [] -> expression
       | _  -> O.e_update ~loc (O.e_variable ~loc variable) access_path expression in
-      ok @@ fun expr -> (match expr with 
+      ok @@ fun expr -> (match expr with
        | None -> O.e_let_in ~loc (variable,None) true [] rhs (O.e_skip ())
        | Some e -> O.e_let_in ~loc (variable, None) true [] rhs e
       )
@@ -343,7 +343,7 @@ and compile_matching : I.matching -> Location.t -> (O.expression option -> O.exp
         let return_expr = fun expr ->
           O.e_let_in (env,None) false [] (store_mutable_variable free_vars) @@
           O.e_let_in (env,None) false [] match_expr @@
-          expr 
+          expr
         in
         ok @@ restore_mutable_variable return_expr free_vars env
       else
@@ -363,7 +363,7 @@ and compile_matching : I.matching -> Location.t -> (O.expression option -> O.exp
         let return_expr = fun expr ->
           O.e_let_in (env,None) false [] (store_mutable_variable free_vars) @@
           O.e_let_in (env,None) false [] match_expr @@
-          expr 
+          expr
         in
         ok @@ restore_mutable_variable return_expr free_vars env
       else
@@ -387,7 +387,7 @@ and compile_matching : I.matching -> Location.t -> (O.expression option -> O.exp
         let return_expr = fun expr ->
           O.e_let_in (env,None) false [] (store_mutable_variable free_vars) @@
           O.e_let_in (env,None) false [] match_expr @@
-          expr 
+          expr
         in
         ok @@ restore_mutable_variable return_expr free_vars env
       )
@@ -403,7 +403,7 @@ and compile_matching : I.matching -> Location.t -> (O.expression option -> O.exp
       let%bind expr = compile_expression expr in
       let%bind ty_opt = bind_map_option compile_type_expression ty_opt in
       return @@ O.e_matching ~loc matchee @@ O.Match_variable (lst,ty_opt,expr)
- 
+
 and compile_while I.{condition;body} =
   let env_rec = Location.wrap @@ Var.fresh ~name:"env_rec" () in
   let binder  = Location.wrap @@ Var.fresh ~name:"binder"  () in
@@ -424,13 +424,13 @@ and compile_while I.{condition;body} =
   let restore = fun expr -> List.fold_right aux captured_name_list expr in
   let continue_expr = O.e_constant C_FOLD_CONTINUE [for_body] in
   let stop_expr = O.e_constant C_FOLD_STOP [O.e_variable binder] in
-  let aux_func = 
-    O.e_lambda binder None None @@ 
+  let aux_func =
+    O.e_lambda binder None None @@
     restore @@
     O.e_cond cond continue_expr stop_expr in
   let loop = O.e_constant C_FOLD_WHILE [aux_func; O.e_variable env_rec] in
   let let_binder = (env_rec,None) in
-  let return_expr = fun expr -> 
+  let return_expr = fun expr ->
     O.e_let_in let_binder false [] init_rec @@
     O.e_let_in let_binder false [] loop @@
     O.e_let_in let_binder false [] (O.e_accessor (O.e_variable env_rec) [Access_tuple Z.zero]) @@
@@ -446,7 +446,7 @@ and compile_for I.{binder;start;final;increment;body} =
   let%bind cond = compile_expression cond in
   let%bind step = compile_expression increment in
   let continue_expr = O.e_constant C_FOLD_CONTINUE [(O.e_variable env_rec)] in
-  let ctrl = 
+  let ctrl =
     O.e_let_in (binder,Some (O.t_int ())) false [] (O.e_constant C_ADD [ O.e_variable binder ; step ]) @@
     O.e_let_in (env_rec, None) false [] (O.e_update (O.e_variable env_rec) [Access_tuple Z.one] @@ O.e_variable binder)@@
     continue_expr
@@ -465,7 +465,7 @@ and compile_for I.{binder;start;final;increment;body} =
 
   (*Prep the lambda for the fold*)
   let stop_expr = O.e_constant C_FOLD_STOP [O.e_variable env_rec] in
-  let aux_func = O.e_lambda env_rec None None @@ 
+  let aux_func = O.e_lambda env_rec None None @@
                  O.e_let_in (binder,Some (O.t_int ())) false [] (O.e_accessor (O.e_variable env_rec) [Access_tuple Z.one]) @@
                  O.e_cond cond (restore for_body) (stop_expr) in
 
@@ -475,7 +475,7 @@ and compile_for I.{binder;start;final;increment;body} =
 
   let%bind start = compile_expression start in
   let let_binder = (env_rec,None) in
-  let return_expr = fun expr -> 
+  let return_expr = fun expr ->
     O.e_let_in (binder, Some (O.t_int ())) false [] start @@
     O.e_let_in let_binder false [] init_rec @@
     O.e_let_in let_binder false [] loop @@
@@ -504,10 +504,10 @@ and compile_for_each I.{binder;collection;collection_type; body} =
   in
   let restore = fun expr -> List.fold_right aux free_vars expr in
   let restore = match collection_type with
-    | Map -> (match snd binder with 
-      | Some v -> fun expr -> restore (O.e_let_in (fst binder, None) false [] (O.e_accessor (O.e_variable args) [Access_tuple Z.one; Access_tuple Z.zero]) 
+    | Map -> (match snd binder with
+      | Some v -> fun expr -> restore (O.e_let_in (fst binder, None) false [] (O.e_accessor (O.e_variable args) [Access_tuple Z.one; Access_tuple Z.zero])
                                     (O.e_let_in (v, None) false [] (O.e_accessor (O.e_variable args) [Access_tuple Z.one; Access_tuple Z.one]) expr))
-      | None -> fun expr -> restore (O.e_let_in (fst binder, None) false [] (O.e_accessor (O.e_variable args) [Access_tuple Z.one; Access_tuple Z.zero]) expr) 
+      | None -> fun expr -> restore (O.e_let_in (fst binder, None) false [] (O.e_accessor (O.e_variable args) [Access_tuple Z.one; Access_tuple Z.zero]) expr)
     )
     | _ -> fun expr -> restore (O.e_let_in (fst binder, None) false [] (O.e_accessor (O.e_variable args) [Access_tuple Z.one]) expr)
   in
@@ -515,7 +515,7 @@ and compile_for_each I.{binder;collection;collection_type; body} =
   let%bind op_name = match collection_type with
    | Map -> ok @@ O.C_MAP_FOLD | Set -> ok @@ O.C_SET_FOLD | List -> ok @@ O.C_LIST_FOLD
   in
-  let fold = fun expr -> 
+  let fold = fun expr ->
     O.e_let_in (env_rec,None) false [] (O.e_constant op_name [lambda; collect ; init_record]) expr
   in
   ok @@ restore_mutable_variable fold free_vars env_rec
@@ -523,7 +523,7 @@ and compile_for_each I.{binder;collection;collection_type; body} =
 let compile_declaration : I.declaration Location.wrap -> _ =
   fun {wrap_content=declaration;location} ->
   let return decl = ok @@ Location.wrap ~loc:location decl in
-  match declaration with 
+  match declaration with
   | I.Declaration_constant (n, te_opt, inline, expr) ->
     let%bind expr = compile_expression expr in
     let%bind te_opt = bind_map_option compile_type_expression te_opt in

@@ -31,10 +31,10 @@ module Captured_variables = struct
       ok @@ unions lst'
     | E_constructor {element;_} -> self element
     | E_record m ->
-      let%bind lst' = bind_map_list self @@ LMap.to_list_rev m in
+      let%bind lst' = bind_map_list self @@ LMap.to_list m in
       ok @@ unions lst'
     | E_record_accessor {record;_} -> self record
-    | E_record_update {record;update;_} -> 
+    | E_record_update {record;update;_} ->
       let%bind r = self record in
       let%bind e = self update in
       ok @@ union r e
@@ -46,7 +46,7 @@ module Captured_variables = struct
       let b' = union (singleton li.let_binder) b in
       expression b' li.let_result
     | E_raw_code _ -> ok empty
-    | E_recursive r -> 
+    | E_recursive r ->
       let b' = union (singleton r.fun_name) b in
       expression_content b' @@ E_lambda r.lambda
 

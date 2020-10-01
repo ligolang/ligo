@@ -6,7 +6,7 @@ let%expect_test _ =
     type card_pattern_id is nat
 
     type card_pattern is
-      record [quantity : nat; coefficient : tez]
+      record [coefficient : tez; quantity : nat]
 
     type card_patterns is map (card_pattern_id, card_pattern)
 
@@ -14,17 +14,17 @@ let%expect_test _ =
 
     type card is
       record [
-        card_pattern : card_pattern_id;
-        card_owner : address
+        card_owner : address;
+        card_pattern : card_pattern_id
       ]
 
     type cards is map (card_id, card)
 
     type storage is
       record [
-        next_id : nat;
+        card_patterns : card_patterns;
         cards : cards;
-        card_patterns : card_patterns
+        next_id : nat
       ]
 
     type return is list (operation) * storage
@@ -35,12 +35,12 @@ let%expect_test _ =
     type action_sell_single is record [card_to_sell : card_id]
 
     type action_transfer_single is
-      record [destination : address; card_to_transfer : card_id]
+      record [card_to_transfer : card_id; destination : address]
 
     type parameter is
-        Transfer_single of action_transfer_single
+        Buy_single of action_buy_single
       | Sell_single of action_sell_single
-      | Buy_single of action_buy_single
+      | Transfer_single of action_transfer_single
 
     function transfer_single
       (const gen__parameters1 : action_transfer_single * storage) is
@@ -141,8 +141,8 @@ let%expect_test _ =
             const cards : cards = s.cards;
             cards [s.next_id] :=
               record [
-                card_pattern = action.card_to_buy;
-                card_owner = Tezos.sender
+                card_owner = Tezos.sender;
+                card_pattern = action.card_to_buy
               ];
             s.cards := cards;
             s.next_id := ADD (s.next_id, 1n)
@@ -162,21 +162,21 @@ let%expect_test _ =
   [%expect {|
     type card_pattern_id = nat
 
-    type card_pattern = {quantity : nat; coefficient : tez}
+    type card_pattern = {coefficient : tez; quantity : nat}
 
     type card_patterns = (card_pattern_id, card_pattern) map
 
     type card_id = nat
 
     type card =
-      {card_pattern : card_pattern_id; card_owner : address}
+      {card_owner : address; card_pattern : card_pattern_id}
 
     type cards = (card_id, card) map
 
     type storage =
-      {next_id : nat;
+      {card_patterns : card_patterns;
        cards : cards;
-       card_patterns : card_patterns}
+       next_id : nat}
 
     type return = operation list * storage
 
@@ -185,12 +185,12 @@ let%expect_test _ =
     type action_sell_single = {card_to_sell : card_id}
 
     type action_transfer_single =
-      {destination : address; card_to_transfer : card_id}
+      {card_to_transfer : card_id; destination : address}
 
     type parameter =
-      Transfer_single of action_transfer_single
+      Buy_single of action_buy_single
     | Sell_single of action_sell_single
-    | Buy_single of action_buy_single
+    | Transfer_single of action_transfer_single
 
     let transfer_single
     : action_transfer_single * storage -> return =
@@ -314,8 +314,8 @@ let%expect_test _ =
                let cards : cards = s.cards in
                let cards =
                  Map.add
-                   {card_pattern = action.card_to_buy;
-                    card_owner = Tezos.sender}
+                   {card_owner = Tezos.sender;
+                    card_pattern = action.card_to_buy}
                    s.next_id
                    cards in
                let s = {s with {cards = cards}} in
@@ -337,20 +337,20 @@ let%expect_test _ =
   [%expect {|
 type card_pattern_id = nat;
 
-type card_pattern = {quantity: nat, coefficient: tez };
+type card_pattern = {coefficient: tez, quantity: nat };
 
 type card_patterns = map(card_pattern_id, card_pattern);
 
 type card_id = nat;
 
 type card = {
-  card_pattern: card_pattern_id,
-  card_owner: address
+  card_owner: address,
+  card_pattern: card_pattern_id
 };
 
 type cards = map(card_id, card);
 
-type storage = {next_id: nat, cards, card_patterns };
+type storage = {card_patterns, cards, next_id: nat };
 
 type return = (list(operation), storage);
 
@@ -359,14 +359,14 @@ type action_buy_single = {card_to_buy: card_pattern_id };
 type action_sell_single = {card_to_sell: card_id };
 
 type action_transfer_single = {
-  destination: address,
-  card_to_transfer: card_id
+  card_to_transfer: card_id,
+  destination: address
 };
 
 type parameter =
-  Transfer_single(action_transfer_single)
+  Buy_single(action_buy_single)
 | Sell_single(action_sell_single)
-| Buy_single(action_buy_single);
+| Transfer_single(action_transfer_single);
 
 let transfer_single
 : (action_transfer_single, storage) => return =
@@ -503,8 +503,8 @@ let buy_single: (action_buy_single, storage) => return =
            let cards =
 
              Map.add({
-                 card_pattern: action.card_to_buy,
-                 card_owner: Tezos.sender
+                 card_owner: Tezos.sender,
+                 card_pattern: action.card_to_buy
                },
                 s.next_id,
                 cards);
@@ -532,15 +532,15 @@ let%expect_test _ =
   [%expect{|
     type pii is int * int
 
-    type ppi is record [y : pii; x : pii]
+    type ppi is record [x : pii; y : pii]
 
     type ppp is ppi * ppi
 
     function main (const toto : unit) is
     block {
       const a : ppp
-      = (record [y = (10, 11); x = (0, 1)],
-         record [y = (110, 111); x = (100, 101)]);
+      = (record [x = (0, 1); y = (10, 11)],
+         record [x = (100, 101); y = (110, 111)]);
       a.0.x.0 := 2
     } with a.0.x.0
 
@@ -567,14 +567,14 @@ let%expect_test _ =
   [%expect{|
     type pii = int * int
 
-    type ppi = {y : pii; x : pii}
+    type ppi = {x : pii; y : pii}
 
     type ppp = ppi * ppi
 
     let main : unit -> int =
       (fun toto : unit ->
          let a : ppp =
-           {y = 10, 11; x = 0, 1}, {y = 110, 111; x = 100, 101} in
+           {x = 0, 1; y = 10, 11}, {x = 100, 101; y = 110, 111} in
          let a = {a with {0.x.0 = 2}} in
          a.0.x.0)
 
@@ -597,7 +597,7 @@ let%expect_test _ =
   [%expect{|
 type pii = (int, int);
 
-type ppi = {y: pii, x: pii };
+type ppi = {x: pii, y: pii };
 
 type ppp = (ppi, ppi);
 
@@ -605,9 +605,9 @@ let main: unit => int =
   ((toto: unit): int =>
      let a: ppp =
        {
-          y: 10, 11,
-          x: 0, 1
-        }, {y: 110, 111, x: 100, 101 };
+          x: 0, 1,
+          y: 10, 11
+        }, {x: 100, 101, y: 110, 111 };
      let a = {...a, {0.x[0]: 2 }};
      a[0].x[0]);
 
@@ -641,21 +641,21 @@ type tokenAmount is nat
 
 type transferContents is
   record [
-    token_id : tokenId;
+    amount : tokenAmount;
     to_ : tokenOwner;
-    amount : tokenAmount
+    token_id : tokenId
   ]
 
 type transfer is
-  record [txs : list (transferContents); from_ : tokenOwner]
+  record [from_ : tokenOwner; txs : list (transferContents)]
 
 type transferContentsMichelson is
   michelson_pair_right_comb (transferContents)
 
 type transferAuxiliary is
   record [
-    txs : list (transferContentsMichelson);
-    from_ : tokenOwner
+    from_ : tokenOwner;
+    txs : list (transferContentsMichelson)
   ]
 
 type transferMichelson is
@@ -759,18 +759,18 @@ type tokenOwner = address
 type tokenAmount = nat
 
 type transferContents =
-  {token_id : tokenId;
+  {amount : tokenAmount;
    to_ : tokenOwner;
-   amount : tokenAmount}
+   token_id : tokenId}
 
 type transfer =
-  {txs : transferContents list; from_ : tokenOwner}
+  {from_ : tokenOwner; txs : transferContents list}
 
 type transferContentsMichelson =
   transferContents michelson_pair_right_comb
 
 type transferAuxiliary =
-  {txs : transferContentsMichelson list; from_ : tokenOwner}
+  {from_ : tokenOwner; txs : transferContentsMichelson list}
 
 type transferMichelson =
   transferAuxiliary michelson_pair_right_comb
@@ -877,22 +877,22 @@ type tokenOwner = address;
 type tokenAmount = nat;
 
 type transferContents = {
-  token_id: tokenId,
+  amount: tokenAmount,
   to_: tokenOwner,
-  amount: tokenAmount
+  token_id: tokenId
 };
 
 type transfer = {
-  txs: list(transferContents),
-  from_: tokenOwner
+  from_: tokenOwner,
+  txs: list(transferContents)
 };
 
 type transferContentsMichelson = michelson_pair_right_comb
   (transferContents);
 
 type transferAuxiliary = {
-  txs: list(transferContentsMichelson),
-  from_: tokenOwner
+  from_: tokenOwner,
+  txs: list(transferContentsMichelson)
 };
 
 type transferMichelson = michelson_pair_right_comb
@@ -1007,36 +1007,36 @@ let%expect_test _ =
 
     type storage is
       record [
-        total_amount : nat;
+        allowances : allowances;
         tokens : tokens;
-        allowances : allowances
+        total_amount : nat
       ]
 
     type transfer is
       record [
-        value : nat;
+        address_from : address;
         address_to : address;
-        address_from : address
+        value : nat
       ]
 
-    type approve is record [value : nat; spender : address]
+    type approve is record [spender : address; value : nat]
 
     type getAllowance is
       record [
-        spender : address;
+        callback : contract (nat);
         owner : address;
-        callback : contract (nat)
+        spender : address
       ]
 
     type getBalance is
-      record [owner : address; callback : contract (nat)]
+      record [callback : contract (nat); owner : address]
 
     type getTotalSupply is record [callback : contract (nat)]
 
     type action is
-        Transfer of transfer | GetTotalSupply of getTotalSupply
-      | GetBalance of getBalance | GetAllowance of getAllowance
-      | Approve of approve
+        Approve of approve | GetAllowance of getAllowance
+      | GetBalance of getBalance
+      | GetTotalSupply of getTotalSupply | Transfer of transfer
 
     function transfer
       (const gen__parameters1 : transfer * storage) is
@@ -1236,30 +1236,30 @@ let%expect_test _ =
     type allowances = (address * address, nat) big_map
 
     type storage =
-      {total_amount : nat;
+      {allowances : allowances;
        tokens : tokens;
-       allowances : allowances}
+       total_amount : nat}
 
     type transfer =
-      {value : nat;
+      {address_from : address;
        address_to : address;
-       address_from : address}
+       value : nat}
 
-    type approve = {value : nat; spender : address}
+    type approve = {spender : address; value : nat}
 
     type getAllowance =
-      {spender : address;
+      {callback : nat contract;
        owner : address;
-       callback : nat contract}
+       spender : address}
 
-    type getBalance = {owner : address; callback : nat contract}
+    type getBalance = {callback : nat contract; owner : address}
 
     type getTotalSupply = {callback : nat contract}
 
     type action =
-      Transfer of transfer | GetTotalSupply of getTotalSupply
-    | GetBalance of getBalance | GetAllowance of getAllowance
-    | Approve of approve
+      Approve of approve | GetAllowance of getAllowance
+    | GetBalance of getBalance
+    | GetTotalSupply of getTotalSupply | Transfer of transfer
 
     let transfer
     : transfer * storage -> operation list * storage =
@@ -1466,32 +1466,32 @@ type tokens = big_map(address, nat);
 
 type allowances = big_map((address, address), nat);
 
-type storage = {total_amount: nat, tokens, allowances };
+type storage = {allowances, tokens, total_amount: nat };
 
 type transfer = {
-  value: nat,
+  address_from: address,
   address_to: address,
-  address_from: address
+  value: nat
 };
 
-type approve = {value: nat, spender: address };
+type approve = {spender: address, value: nat };
 
 type getAllowance = {
-  spender: address,
+  callback: contract(nat),
   owner: address,
-  callback: contract(nat)
+  spender: address
 };
 
-type getBalance = {owner: address, callback: contract(nat) };
+type getBalance = {callback: contract(nat), owner: address };
 
 type getTotalSupply = {callback: contract(nat) };
 
 type action =
-  Transfer(transfer)
-| GetTotalSupply(getTotalSupply)
-| GetBalance(getBalance)
+  Approve(approve)
 | GetAllowance(getAllowance)
-| Approve(approve);
+| GetBalance(getBalance)
+| GetTotalSupply(getTotalSupply)
+| Transfer(transfer);
 
 let transfer
 : (transfer, storage) => (list(operation), storage) =
@@ -1741,7 +1741,7 @@ let main: (action, storage) => (list(operation), storage) =
 let%expect_test _ =
   run_ligo_good [ "transpile-contract" ; "../../test/contracts/failwith.ligo" ; "pascaligo" ] ;
   [%expect {|
-    type parameter is Zero of nat | Pos of nat
+    type parameter is Pos of nat | Zero of nat
 
     type storage is unit
 
@@ -1810,7 +1810,7 @@ let%expect_test _ =
     } with p |}];
   run_ligo_good [ "transpile-contract" ; "../../test/contracts/failwith.ligo" ; "cameligo" ] ;
   [%expect {|
-    type parameter = Zero of nat | Pos of nat
+    type parameter = Pos of nat | Zero of nat
 
     type storage = unit
 
@@ -1888,7 +1888,7 @@ let%expect_test _ =
          end) |}];
   run_ligo_good [ "transpile-contract" ; "../../test/contracts/failwith.ligo" ; "reasonligo" ] ;
   [%expect {|
-type parameter = Zero(nat) | Pos(nat);
+type parameter = Pos(nat) | Zero(nat);
 
 type storage = unit;
 

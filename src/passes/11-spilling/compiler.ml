@@ -273,7 +273,6 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
       Layout.record_to_pairs compile_expression return record_t m
     )
   | E_record_accessor {record; path} ->
-      (*TODO *)
       let%bind ty' = compile_type (get_type_expression record) in
       let%bind ty_record =
         trace_option (corner_case ~loc:__LOC__ "not a record") @@
@@ -290,7 +289,6 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
       let%bind expr = bind_fold_list aux record' path in
       ok expr
   | E_record_update {record; path; update} -> 
-      (*TODO *)
       let rec aux res (r,p,up) =
         let ty = get_type_expression r in
         let%bind ty_lmap =

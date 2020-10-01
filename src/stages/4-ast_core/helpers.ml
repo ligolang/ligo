@@ -29,7 +29,7 @@ let get_pair m =
   | _ -> None
 
 let tuple_of_record (m: _ LMap.t) =
-  let aux i = 
+  let aux i =
     let label = Label (string_of_int i) in
     let opt = LMap.find_opt (label) m in
     Option.bind (fun opt -> Some ((label,opt),i+1)) opt
@@ -40,10 +40,10 @@ let list_of_record_or_tuple (m: _ LMap.t) =
   if (is_tuple_lmap m) then
     List.map snd @@ tuple_of_record m
   else
-    List.rev @@ LMap.to_list_rev m
+    LMap.to_list m
 
 let kv_list_of_record_or_tuple (m: _ LMap.t) =
   if (is_tuple_lmap m) then
     tuple_of_record m
   else
-    List.rev @@ LMap.to_kv_list_rev m
+    LMap.to_kv_list m

@@ -34,13 +34,13 @@ let rec descend_types s lmap i =
   if i > 0 then
     let {associated_type;_} = LMap.find (Label s) lmap in
     match associated_type.type_content with
-      | T_sum {content ; layout=_ } -> associated_type::(descend_types s content (i-1)) 
+      | T_sum {content ; layout=_ } -> associated_type::(descend_types s content (i-1))
       | _ -> []
   else []
 
 let rec to_left_comb_record' first prev l conv_map =
   match l with
-  | [] -> conv_map 
+  | [] -> conv_map
   | (label_l, {associated_type=t_l}) :: (label_r, {associated_type=t_r})::tl when first ->
     let exp_l = accessor prev label_l t_l in
     let exp_r = accessor prev label_r t_r in
@@ -88,7 +88,7 @@ let rec left_comb_variant_combination' (i:int) (e:expression) (dst_lmap:row_elem
       (comb (associated_type,Label "M_right") combs_t) :: left_comb_variant_combination' (i+1) e dst_lmap tl )
 let left_comb_variant_combination a b c = List.rev @@ left_comb_variant_combination' 0 a b (List.rev c)
 
-let make_row t = 
+let make_row t =
  {
     associated_type = t;
     michelson_annotation = None ;
@@ -115,7 +115,7 @@ let rec to_right_comb_record
     LMap.add (Label "1") (make_e (E_record lmap) ty) conv_map', int_t
 
 let rec from_right_comb_record
-    (prev:expression) 
+    (prev:expression)
     (src_lmap: row_element label_map)
     (dst_kvl:(label * row_element) list)
     (conv_map:expression label_map) : expression label_map =
@@ -132,7 +132,7 @@ let rec from_right_comb_record
   | [] -> conv_map
 
 let rec from_left_comb_record
-    (prev:expression) 
+    (prev:expression)
     (src_lmap: row_element label_map)
     (dst_kvl:(label * row_element) list)
     (conv_map:expression label_map) : expression label_map =

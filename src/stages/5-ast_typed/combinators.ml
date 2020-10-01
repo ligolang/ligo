@@ -23,7 +23,7 @@ let t_nat        ?loc ?core () : type_expression = t_constant ?loc ?core TC_nat 
 let t_mutez      ?loc ?core () : type_expression = t_constant ?loc ?core TC_mutez []
 let t_timestamp  ?loc ?core () : type_expression = t_constant ?loc ?core TC_timestamp []
 let t_unit       ?loc ?core () : type_expression = t_constant ?loc ?core TC_unit []
-let t_variable t ?loc ?core () : type_expression = make_t ?loc (T_variable t) core
+let t_variable   ?loc ?core t  : type_expression = make_t ?loc (T_variable t) core
 
 let t_option         ?loc ?core o   : type_expression = t_constant ?loc ?core TC_option   [o]
 let t_list           ?loc ?core t   : type_expression = t_constant ?loc ?core TC_list     [t]
@@ -49,11 +49,11 @@ let t_pair ?loc ?core a b : type_expression =
     (Label "0",{associated_type=a;michelson_annotation=None ; decl_pos = 0}) ;
     (Label "1",{associated_type=b;michelson_annotation=None ; decl_pos = 0}) ]
 
-let t_sum ?loc ?core ~layout content () : type_expression = make_t ?loc (T_sum {content;layout}) core
+let t_sum ?loc ?core ~layout content : type_expression = make_t ?loc (T_sum {content;layout}) core
 let t_sum_ez ?loc ?core ?(layout=default_layout) (lst:(string * type_expression) list) : type_expression =
   let lst = List.mapi (fun i (x,y) -> (Label x, {associated_type=y;michelson_annotation=None;decl_pos=i}) ) lst in
   let map = LMap.of_list lst in
-  t_sum ?loc ?core ~layout map ()
+  t_sum ?loc ?core ~layout map
 
 let t_bool ?loc ?core ()       : type_expression = t_sum_ez ?loc ?core
   [("true", t_unit ());("false", t_unit ())]
@@ -117,11 +117,11 @@ let get_t_list (t:type_expression) : type_expression option = match t.type_conte
 
 let get_t_set (t:type_expression) : type_expression option = match t.type_content with
   | T_constant {type_constant=TC_set; arguments=[s]} -> Some s
-  | _ -> None 
+  | _ -> None
 
 let get_t_key (t:type_expression) : unit option = match t.type_content with
   | T_constant {type_constant=TC_key; arguments=[]} -> Some ()
-  | _ -> None 
+  | _ -> None
 
 let get_t_signature (t:type_expression) : unit option = match t.type_content with
   | T_constant {type_constant=TC_signature; arguments=[]} -> Some ()
@@ -132,7 +132,7 @@ let get_t_key_hash (t:type_expression) : unit option = match t.type_content with
   | _ -> None
 
 let tuple_of_record (m: _ LMap.t) =
-  let aux i = 
+  let aux i =
     let opt = LMap.find_opt (Label (string_of_int i)) m in
     Option.bind (fun opt -> Some (opt,i+1)) opt
   in
@@ -313,7 +313,7 @@ let get_a_string (t:expression) =
   | E_literal (Literal_string s) -> Some (Ligo_string.extract s)
   | _ -> None
 
-let get_a_verbatim (t:expression) = 
+let get_a_verbatim (t:expression) =
   match t.expression_content with
     E_literal (Literal_string (Verbatim v)) -> Some v
   | _ -> None
@@ -326,8 +326,8 @@ let get_a_unit (t:expression) =
 let get_a_bool (t:expression) =
   match t.expression_content with
   | E_constructor {constructor=Label name;element}
-    when (String.equal name "true" || String.equal name "false") 
-    && element.expression_content = e_unit () -> 
+    when (String.equal name "true" || String.equal name "false")
+    && element.expression_content = e_unit () ->
       Some (bool_of_string name)
   | _ -> None
 

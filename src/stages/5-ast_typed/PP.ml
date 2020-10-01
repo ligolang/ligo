@@ -10,7 +10,7 @@ let lmap_sep value sep ppf m =
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
 let record_sep value sep ppf (m : 'a label_map) =
-  let lst = LMap.to_kv_list_rev m in
+  let lst = LMap.to_kv_list m in
   let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
   let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" label k value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst
@@ -22,7 +22,7 @@ let tuple_sep value sep ppf m =
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
 let record_sep_t value sep ppf (m : 'a label_map) =
-  let lst = LMap.to_kv_list_rev m in
+  let lst = LMap.to_kv_list m in
   let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
   let new_pp ppf (k, {associated_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value associated_type in
   fprintf ppf "%a" (list_sep new_pp sep) lst
@@ -56,26 +56,22 @@ let type_variable ppf (t : type_variable) : unit = fprintf ppf "%a" Var.pp t
 open Format
 
 let list_sep_d_par f ppf lst =
-  match lst with 
+  match lst with
   | [] -> ()
   | _ -> fprintf ppf " (%a)" (list_sep_d f) lst
 
 let rec type_content : formatter -> type_content -> unit =
   fun ppf tc ->
   match tc with
-  | T_sum m -> fprintf ppf "@[<h>sum[%a]@]" (lmap_sep_d type_expression) (LMap.to_kv_list_rev @@ LMap.map (fun {associated_type;_} -> associated_type) m.content)
+  | T_sum m -> fprintf ppf "@[<h>sum[%a]@]" (lmap_sep_d type_expression) (LMap.to_kv_list @@ LMap.map (fun {associated_type;_} -> associated_type) m.content)
   | T_record m -> fprintf ppf "%a" record m
   | T_arrow a -> fprintf ppf "@[<h>%a ->@ %a@]" type_expression a.type1 type_expression a.type2
   | T_variable tv -> type_variable ppf tv
   | T_constant {type_constant=tc;arguments} -> fprintf ppf "%a%a" type_constant tc (list_sep_d_par type_expression) arguments
 
 and record ppf {content; layout=_} =
-  fprintf ppf "%a" 
+  fprintf ppf "%a"
     (tuple_or_record_sep_type type_expression) content
-
-and option_layout ppf l = match l with
-  | Some l -> fprintf ppf "[layout:%a]" layout l
-  | None   -> fprintf ppf "" 
 
 and type_expression ppf (te : type_expression) : unit =
   fprintf ppf "%a" type_content te.type_content
@@ -117,8 +113,8 @@ and expression_content ppf (ec: expression_content) =
   | E_raw_code {language; code} ->
       fprintf ppf "[%%%s %a]" language expression code
   | E_recursive { fun_name;fun_type; lambda} ->
-      fprintf ppf "rec (%a:%a => %a )" 
-        expression_variable fun_name 
+      fprintf ppf "rec (%a:%a => %a )"
+        expression_variable fun_name
         type_expression fun_type
         expression_content (E_lambda lambda)
 
@@ -129,8 +125,8 @@ and single_record_patch ppf ((p, expr) : label * expression) =
   fprintf ppf "%a <- %a" label p expression expr
 
 
-and option_inline ppf inline = 
-  if inline then 
+and option_inline ppf inline =
+  if inline then
     fprintf ppf "[@inline]"
   else
     fprintf ppf ""
@@ -142,7 +138,7 @@ and matching_variant_case : (_ -> expression -> unit) -> _ -> matching_content_c
 and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit = fun f ppf m -> match m with
   | Match_variant {cases ; tv=_} ->
       fprintf ppf "%a" (list_sep (matching_variant_case f) (tag "@.")) cases
-  | Match_list {match_nil ; match_cons = {hd; tl; body; tv=_}} -> 
+  | Match_list {match_nil ; match_cons = {hd; tl; body; tv=_}} ->
       fprintf ppf "| Nil -> %a @.| %a :: %a -> %a" f match_nil expression_variable hd expression_variable tl f body
   | Match_option {match_none ; match_some = {opt; body; tv=_}} ->
       fprintf ppf "| None -> %a @.| Some %a -> %a" f match_none expression_variable opt f body
@@ -198,7 +194,7 @@ let row_tag ppf = function
     C_record -> fprintf ppf "C_record"
   | C_variant -> fprintf ppf "C_variant"
 
-let rec c_equation ppf {aval; bval} = 
+let rec c_equation ppf {aval; bval} =
   fprintf ppf "{@,@[<hv 2>
               aval : %a ;@
               bval : %a
@@ -206,7 +202,7 @@ let rec c_equation ppf {aval; bval} =
     type_value aval
     type_value bval
 
-and c_typeclass ppf {tc_args; typeclass=tc} = 
+and c_typeclass ppf {tc_args; typeclass=tc} =
   fprintf ppf "{@,@[<hv 2>
               tc_args : %a ;@
               typeclass : %a
@@ -214,7 +210,7 @@ and c_typeclass ppf {tc_args; typeclass=tc} =
     (list_sep_d type_value) tc_args
     typeclass tc
 
-and c_access_label ppf {c_access_label_tval; accessor; c_access_label_tvar} = 
+and c_access_label ppf {c_access_label_tval; accessor; c_access_label_tvar} =
   fprintf ppf "{@,@[<hv 2>
               c_access_label_tval : %a ;@
               accessor : %a ;@
@@ -226,7 +222,7 @@ and c_access_label ppf {c_access_label_tval; accessor; c_access_label_tvar} =
 
 
 
-and type_constraint_ ppf = function 
+and type_constraint_ ppf = function
   C_equation     eq -> fprintf ppf "%a" c_equation eq
 | C_typeclass    tc -> fprintf ppf "%a" c_typeclass tc
 | C_access_label al -> fprintf ppf "%a" c_access_label al
@@ -252,7 +248,7 @@ and p_constant ppf {p_ctor_tag; p_ctor_args} =
     constant_tag p_ctor_tag
     (list_sep_d type_value) p_ctor_args
 
-and p_apply ppf {tf; targ} = 
+and p_apply ppf {tf; targ} =
   fprintf ppf "{@,@[<hv 2>
               tf : %a ;@
               targ : %a
@@ -260,13 +256,13 @@ and p_apply ppf {tf; targ} =
     type_value tf
     type_value targ
 
-and p_row ppf {p_row_tag; p_row_args} = 
+and p_row ppf {p_row_tag; p_row_args} =
   fprintf ppf "{@,@[<hv 2>
               p_row_tag : %a ;@
               p_row_args : %a
               @]@,}"
     row_tag p_row_tag
-    (lmap_sep_d type_value) @@ LMap.to_kv_list_rev p_row_args
+    (lmap_sep_d type_value) @@ LMap.to_kv_list p_row_args
 
 and type_value_ ppf = function
   P_forall   fa -> fprintf ppf "%a" p_forall fa
@@ -282,8 +278,8 @@ and type_value ppf {tsrc; t} =
     tsrc
     type_value_ t
 
-and typeclass ppf tc = fprintf ppf "%a" (list_sep_d (list_sep_d type_value)) tc 
-let c_constructor_simpl ppf ({reason_constr_simpl;tv;c_tag;tv_list} : c_constructor_simpl) = 
+and typeclass ppf tc = fprintf ppf "%a" (list_sep_d (list_sep_d type_value)) tc
+let c_constructor_simpl ppf ({reason_constr_simpl;tv;c_tag;tv_list} : c_constructor_simpl) =
   fprintf ppf "{@,@[<hv 2>
               reason_constr_simpl : %s ;@
               tv : %a ;@
@@ -335,7 +331,7 @@ let c_row_simpl ppf ({reason_row_simpl; tv; r_tag; tv_map}) =
     reason_row_simpl
     type_variable tv
     row_tag r_tag
-    (lmap_sep_d type_variable) @@ LMap.to_kv_list_rev tv_map
+    (lmap_sep_d type_variable) @@ LMap.to_kv_list tv_map
 
 let type_constraint_simpl ppf (tc: type_constraint_simpl) = match tc with
   | SC_Constructor c -> fprintf ppf "SC_Constructor (%a)" c_constructor_simpl c

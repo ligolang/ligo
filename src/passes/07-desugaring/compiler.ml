@@ -278,13 +278,12 @@ and compile_matching : I.expression -> O.expression -> I.matching_expr -> (O.exp
       in
       let%bind next   = compile_expression expr in
       let%bind associated_types = bind_map_option (bind_map_list compile_type_expression) associated_types in
-      let aux ((index,expr) : int * _ ) ((I.Label field,(ev,topt)): (I.label * (I.expression_variable * O.type_expression option))) =
+      let aux ((index,expr) : int * _ ) (((I.Label field,ev),topt): ((I.label * I.expression_variable ) * O.type_expression option)) =
         let ev = cast_var ev in
         let f = fun expr' -> O.e_let_in ~sugar (ev,topt) false (O.e_record_accessor ~sugar e (O.Label field)) expr' in
         (index+1, fun expr' -> expr (f expr'))
       in
       let (_,header) = List.fold_left aux (0, fun e -> e) @@
-        List.map (fun ((a,b),c) -> (a,(b,c))) @@
         combine fields associated_types
       in
       ok @@ header next

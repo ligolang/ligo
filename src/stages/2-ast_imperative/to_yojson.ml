@@ -221,10 +221,10 @@ and type_content = function
 
 and row_element {associated_type; attributes=attr; decl_pos} =
   `Assoc [
-     ("associated_type", type_expression associated_type);
-     ("attributes", attributes attr);
-     ("decl_pos", `Int decl_pos);
-   ]
+    ("associated_type", type_expression associated_type);
+    ("attributes", attributes attr);
+    ("decl_pos", `Int decl_pos);
+  ]
 
 and arrow {type1;type2} =
   `Assoc [

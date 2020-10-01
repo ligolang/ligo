@@ -14,7 +14,7 @@ module Map = RedBlackTrees.PolyMap
 (* TODO : find a better name for fonction that are called "type_something".
 They are not typing per say, just add a type variable to all expression and make the appropriate constraints *)
 
-let assert_type_expression_eq ((tv',tv):O.type_expression * O.type_expression) : (unit,typer_error) result = 
+let assert_type_expression_eq ((tv',tv):O.type_expression * O.type_expression) : (unit,typer_error) result =
   Compare_types.assert_type_expression_eq (tv' , tv)
 
 let cast_var (orig: 'a Var.t Location.wrap) = { orig with wrap_content = Var.todo_cast orig.wrap_content}
@@ -58,20 +58,22 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
       let%bind associated_type = evaluate_type e associated_type in
       ok @@ ({associated_type ; michelson_annotation ; decl_pos}:O.row_element)
     in
-    let%bind fields = Stage_common.Helpers.bind_map_lmap aux fields in
+    let%bind content = Stage_common.Helpers.bind_map_lmap aux fields in
+    let%bind () = trace_assert_fail_option (variant_redefined_error t.location) @@
+      Environment.get_sum content e in
     let layout = Option.unopt ~default:default_layout layout in
-    return (T_sum {content=fields ; layout=layout})
+    return (T_sum {content ; layout})
   | T_record {fields ; layout} ->
     let aux v =
       let {associated_type ; michelson_annotation ; decl_pos} : I.row_element = v in
       let%bind associated_type = evaluate_type e associated_type in
       ok @@ ({associated_type ; michelson_annotation ; decl_pos}:O.row_element)
     in
-    let%bind lmap = Stage_common.Helpers.bind_map_lmap aux fields in
+    let%bind content = Stage_common.Helpers.bind_map_lmap aux fields in
     let%bind () = trace_assert_fail_option (record_redefined_error t.location) @@
-      Environment.get_record lmap e in
+      Environment.get_record content e in
     let layout = Option.unopt ~default:default_layout layout in
-    return (T_record {content = lmap;layout})
+    return (T_record {content ; layout})
   | T_variable name ->
     (* Check that the variable is in the environment *)
     let name : O.type_variable = Var.todo_cast name in
@@ -79,11 +81,11 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
     @@ Environment.get_type_opt (name) e
   | T_constant {type_constant; arguments} ->
     let assert_constant lst = match lst with
-      [] -> ok () 
+      [] -> ok ()
     | _ -> fail @@ type_constant_wrong_number_of_arguments type_constant 0 (List.length lst) t.location
     in
     let assert_unary lst = match lst with
-      [_] -> ok () 
+      [_] -> ok ()
     | _ -> fail @@ type_constant_wrong_number_of_arguments type_constant 1 (List.length lst) t.location
     in
     let get_unary lst = match lst with
@@ -148,7 +150,7 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
   let module L = Logger.Stateful() in
   let return : _ -> _ -> _ O'.typer_state -> _ -> _ (* return of type_expression *) = fun expr e state constraints type_name ->
     let%bind new_state = aggregate_constraints state constraints in
-    let tv = t_variable type_name () in
+    let tv = t_variable type_name in
     let location = ae.location in
     let expr' = make_e ~location expr tv in
     ok @@ (e,new_state, expr') in
@@ -216,7 +218,7 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
 
   | E_constant {cons_name; arguments=lst} ->
     let%bind t = Typer_common.Constant_typers_new.Operators_types.constant_type cons_name in
-    let%bind (e,state),lst = bind_fold_map_list 
+    let%bind (e,state),lst = bind_fold_map_list
       (fun (e,state) l ->
         let%bind e,state,l = type_expression e state l in
         ok ((e,state),l)
@@ -226,7 +228,7 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
     let wrapped = Wrap.constant t lst_annot in
     return_wrapped (E_constant {cons_name;arguments=lst}) e state wrapped
 
-  | E_lambda lambda -> 
+  | E_lambda lambda ->
     let%bind lambda,e,state,wrapped = type_lambda e state lambda in
     return_wrapped (E_lambda lambda) e state wrapped
 
@@ -269,7 +271,7 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
 
   (* Record *)
   | E_record m ->
-    let aux (e,state) _ expr = 
+    let aux (e,state) _ expr =
       let%bind e,state, expr = type_expression e state expr in
       ok ((e,state), expr)
     in
@@ -293,8 +295,8 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
     let%bind e, state, record = type_expression e state record in
     let%bind e, state, update = type_expression e state update in
     let wrapped = get_type_expression record in
-    let%bind (wrapped,tv) = 
-      match wrapped.type_content with 
+    let%bind (wrapped,tv) =
+      match wrapped.type_content with
       | T_record ({content;_} as record) -> (
           let%bind {associated_type;_} = trace_option (bad_record_access path ae wrapped update.location) @@
             O.LMap.find_opt path content in
@@ -312,7 +314,7 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
   | E_let_in {let_binder ; rhs ; let_result; inline} ->
     let%bind rhs_tv_opt = bind_map_option (evaluate_type e) (let_binder.ascr) in
     let%bind e, state, rhs = type_expression e state rhs in
-    let let_binder = cast_var let_binder.binder in 
+    let let_binder = cast_var let_binder.binder in
     let e = Environment.add_ez_declaration let_binder rhs e in
     let%bind e, state, let_result = type_expression e state let_result in
     let wrapped =
@@ -353,7 +355,7 @@ and type_lambda e state {
       let%bind input_type'  = bind_map_option (evaluate_type e) input_type in
       let%bind output_type' = bind_map_option (evaluate_type e) output_type in
 
-      let fresh : O.type_expression = t_variable (Wrap.fresh_binder ()) () in
+      let fresh : O.type_expression = t_variable (Wrap.fresh_binder ()) in
       let e' = Environment.add_ez_binder (binder) fresh e in
 
       let%bind (e, state', result) = type_expression e' state result in
@@ -498,7 +500,7 @@ let type_and_subst
       let O.{ tv ; c_tag ; tv_list } = assignment in
       let () = ignore tv (* I think there is an issue where the tv is stored twice (as a key and in the element itself) *) in
       let%bind (expr : O.type_content) = trace_option (corner_case "wrong constant tag") @@
-        Typesystem.Core.type_expression'_of_simple_c_constant (c_tag , (List.map (fun s -> O.t_variable s ()) tv_list)) in
+        Typesystem.Core.type_expression'_of_simple_c_constant (c_tag , (List.map O.t_variable tv_list)) in
       let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "SUBST %a (%a is %a)\n" Var.pp variable Var.pp root Ast_typed.PP.type_content expr) in
       ok @@ expr
     in

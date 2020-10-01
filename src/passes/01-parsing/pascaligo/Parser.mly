@@ -278,7 +278,7 @@ sum_type:
 | seq("[@attr]") "|" nsepseq(variant,"|") {
     Scoping.check_variants (Utils.nsepseq_to_list $3);
     let region = nsepseq_to_region (fun x -> x.region) $3 in
-    let value  = {variants=$3; attributes=$1; lead_vbar = Some $2}
+    let value  = {attributes=$1; lead_vbar = Some $2; variants=$3}
     in TSum {region; value} }
 
 variant:
@@ -367,15 +367,15 @@ open_fun_decl:
                  | None -> match $2 with
                              Some start -> cover start stop
                            | None -> cover $3 stop
-    and value  = {kwd_recursive= $2;
+    and value  = {attributes   = $1;
+                  kwd_recursive= $2;
                   kwd_function = $3;
                   fun_name     = $4;
                   param        = $5;
                   ret_type     = $6;
                   kwd_is       = $7;
                   return       = $8;
-                  terminator   = None;
-                  attributes   = $1}
+                  terminator   = None}
     in {region; value} }
 
 fun_decl:
@@ -446,13 +446,13 @@ open_const_decl:
     let region= match first_region $1 with
                   None -> cover $2 stop
                 | Some start -> cover start stop
-    and value  = {kwd_const=$2;
+    and value  = {attributes=$1;
+                  kwd_const=$2;
                   name;
                   const_type;
                   equal;
                   init;
-                  terminator=None;
-                  attributes=$1}
+                  terminator=None}
     in {region; value} }
 
 open_var_decl:

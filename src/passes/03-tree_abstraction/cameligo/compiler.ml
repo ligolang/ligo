@@ -39,7 +39,7 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
         let%bind type_expr =
           bind_map_option (compile_type_expression <@ snd) v.arg in
         let type_expr = Option.unopt ~default:(t_unit ()) type_expr in
-        let variant_attr = List.map (fun x -> x.Region.value) v.attributes in
+        let variant_attr = compile_attributes v.attributes in
         ok @@ (v.constr.value, type_expr, variant_attr) in
       let%bind sum = bind_map_list aux lst
       in return @@ t_sum_ez_attr ~loc ~attr sum
@@ -408,8 +408,8 @@ fun cases ->
       let hd_loc = Location.lift @@ Raw.pattern_to_region hd in
       let tl_loc = Location.lift @@ Raw.pattern_to_region hd in
       let%bind (hd,tl) = bind_map_pair compile_simple_pattern (hd,tl) in
-      let hd = Location.wrap ?loc:(Some hd_loc) hd in
-      let tl = Location.wrap ?loc:(Some tl_loc) tl in
+      let hd = Location.wrap ~loc:hd_loc hd in
+      let tl = Location.wrap ~loc:tl_loc tl in
       let match_cons = (hd,tl,econs) in
         return (match_nil,match_cons)
     | _ -> fail @@ unsupported_deep_list_patterns @@ fst @@ List.hd cases
@@ -429,7 +429,7 @@ fun cases ->
         let (constr, patterns) = constr in
         let (constr, _) = r_split constr in
         let%bind pattern = bind_map_option compile_simple_pattern patterns in
-        let pattern = Location.wrap ?loc:(Some pattern_loc) @@ Option.unopt ~default:(Var.of_name "_") pattern in
+        let pattern = Location.wrap ~loc:pattern_loc @@ Option.unopt ~default:(Var.of_name "_") pattern in
         return (Label constr, pattern)
       | PFalse _ -> return (Label "false", Location.wrap @@ Var.of_name "_")
       | PTrue  _ -> return (Label "true", Location.wrap @@ Var.of_name "_")
@@ -446,7 +446,7 @@ fun cases ->
   match cases with
   | (PVar var, expr), [] ->
     let (var, loc) = r_split var in
-    let var = Location.wrap ?loc:(Some loc) @@ Var.of_name var in
+    let var = Location.wrap ~loc @@ Var.of_name var in
     return @@ AST.Match_variable (var, None, expr)
   | (PTuple tuple, _expr), [] ->
     fail @@ unsupported_pattern_type @@ [CST.PTuple tuple]

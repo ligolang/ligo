@@ -63,13 +63,13 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
   let return te = ok @@ te in
   match te.type_content with
     T_sum { attributes ; fields } ->
-    let lst = AST.LMap.to_kv_list_rev fields in
+    let lst = AST.LMap.to_kv_list fields in
     let aux (AST.Label c, AST.{associated_type;attributes}) =
       let constr = wrap c in
       let%bind arg = decompile_type_expr associated_type in
       let arg = Some (ghost, arg) in
-      let attributes = List.map wrap attributes in
-      let variant : CST.variant = {constr;arg;attributes} in
+      let attributes = decompile_attributes attributes in
+      let variant : CST.variant = {constr; arg; attributes} in
       ok @@ wrap variant
     in
     let%bind variants = bind_map_list aux lst in
@@ -79,14 +79,14 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
     let sum : CST.sum_type = { lead_vbar ; variants ; attributes} in
     return @@ CST.TSum (wrap sum)
   | T_record {fields; attributes} ->
-     let record = AST.LMap.to_kv_list_rev fields in
+     let record = AST.LMap.to_kv_list fields in
      let aux (AST.Label c, AST.{associated_type; attributes; _}) =
        let field_name = wrap c in
        let colon = ghost in
        let%bind field_type = decompile_type_expr associated_type in
-       let attributes = List.map wrap attributes in
+       let attributes = decompile_attributes attributes in
        let field : CST.field_decl =
-         {field_name;colon;field_type; attributes} in
+         {field_name; colon; field_type; attributes} in
        ok @@ wrap field in
      let%bind record = bind_map_list aux record in
      let%bind record = list_to_nsepseq record in
@@ -245,7 +245,7 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     let cases : _ CST.case = {kwd_switch=ghost;expr;lbrace=ghost;cases;rbrace=ghost} in
     return_expr @@ CST.ECase (wrap cases)
   | E_record record  ->
-    let record = AST.LMap.to_kv_list_rev record in
+    let record = AST.LMap.to_kv_list record in
     let aux (AST.Label str, expr) =
       let field_name = wrap str in
       let%bind field_expr = decompile_expression expr in

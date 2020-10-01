@@ -4,16 +4,19 @@ open Function
 
 module CST = Cst.Reasonligo
 module AST = Ast_imperative
-(* TODO: move 1-parser/shared/Utils.ml{i} to Simple_utils/ *)
 
 open AST
 
 let nseq_to_list (hd, tl) = hd :: tl
+
 let npseq_to_list (hd, tl) = hd :: (List.map snd tl)
+
 let npseq_to_ne_list (hd, tl) = hd, (List.map snd tl)
+
 let pseq_to_list = function
   | None -> []
   | Some lst -> npseq_to_list lst
+
 let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 
 open Predefined.Tree_abstraction.Cameligo
@@ -21,7 +24,6 @@ open Predefined.Tree_abstraction.Cameligo
 let r_split = Location.r_split
 
 let compile_variable var = Location.map Var.of_name @@ Location.lift_region var
-
 let compile_attributes attributes : string list =
   List.map (fst <@ r_split) attributes
 
@@ -39,20 +41,19 @@ let rec compile_type_expression : CST.type_expr -> _ result =
         let%bind type_expr =
           bind_map_option (compile_type_expression <@ snd) v.arg in
         let type_expr = Option.unopt ~default:(t_unit ()) type_expr in
-        let variant_attr = List.map (fun x -> x.Region.value) v.attributes in
+        let variant_attr = compile_attributes v.attributes in
         ok @@ (v.constr.value, type_expr, variant_attr) in
       let%bind sum = bind_map_list aux lst
       in return @@ t_sum_ez_attr ~loc ~attr sum
   | TRecord record ->
     let injection, loc = r_split record in
-    let attributes =
-      List.map (fun (el: _ CST.reg) -> el.value) injection.attributes in
+    let attributes = compile_attributes injection.attributes in
     let lst = npseq_to_list injection.ne_elements in
     let aux (field : CST.field_decl CST.reg) =
       let f, _ = r_split field in
       let%bind type_expr =
         compile_type_expression f.field_type in
-      let field_attr = List.map (fun x -> x.Region.value) f.attributes in
+      let field_attr = compile_attributes f.attributes in
       return @@ (f.field_name.value, type_expr, field_attr) in
     let%bind fields = bind_map_list aux lst in
     return @@ t_record_ez_attr ~loc ~attr:attributes fields
@@ -408,8 +409,8 @@ fun cases ->
       let hd_loc = Location.lift @@ Raw.pattern_to_region lpattern in
       let tl_loc = Location.lift @@ Raw.pattern_to_region rpattern in
       let%bind (hd,tl) = bind_map_pair compile_simple_pattern (lpattern,rpattern) in
-      let hd = Location.wrap ?loc:(Some hd_loc) hd in
-      let tl = Location.wrap ?loc:(Some tl_loc) tl in
+      let hd = Location.wrap ~loc:hd_loc hd in
+      let tl = Location.wrap ~loc:tl_loc tl in
       let match_cons = (hd,tl,econs) in
         return (match_nil,match_cons)
     | _ -> fail @@ unsupported_deep_list_patterns @@ fst @@ List.hd cases
@@ -429,7 +430,7 @@ fun cases ->
         let (constr, patterns) = constr in
         let (constr, _) = r_split constr in
         let%bind pattern = bind_map_option compile_simple_pattern patterns in
-        let pattern = Location.wrap ?loc:(Some pattern_loc) @@ Option.unopt ~default:(Var.of_name "_") pattern in
+        let pattern = Location.wrap ~loc:pattern_loc @@ Option.unopt ~default:(Var.of_name "_") pattern in
         return (Label constr, pattern)
       | PFalse _ -> return (Label "false", Location.wrap @@ Var.of_name "_")
       | PTrue  _ -> return (Label "true", Location.wrap @@ Var.of_name "_")
@@ -446,7 +447,7 @@ fun cases ->
   match cases with
   | (PVar var, expr), [] ->
     let (var, loc) = r_split var in
-    let var = Location.wrap ?loc:(Some loc) @@ Var.of_name var in
+    let var = Location.wrap ~loc @@ Var.of_name var in
     return @@ AST.Match_variable (var, None, expr)
   | (PTuple tuple, _expr), [] ->
     fail @@ unsupported_pattern_type @@ CST.PTuple tuple
@@ -492,7 +493,7 @@ and compile_let_binding ?kwd_rec attributes binding =
   let return lst = ok lst in
   let return_1 a = return [a] in
   let ({binders; lhs_type; let_rhs; _} : CST.let_binding) = binding in
-  let attributes = compile_attribute_declaration attributes in
+  let attributes = compile_attributes attributes in
   let%bind lhs_type =
     bind_map_option (compile_type_expression <@ snd) lhs_type in
   let%bind expr = compile_expression let_rhs in
@@ -573,10 +574,6 @@ and compile_parameter : CST.pattern -> _ result = fun pattern ->
     let%bind ((var, _), exprs) = compile_parameter pattern in
     return ~ty loc exprs @@ Location.unwrap var
   | _ -> fail @@ unsupported_pattern_type pattern
-
-
-and compile_attribute_declaration =
-  fun lst -> List.map (fst <@ r_split) lst
 
 let compile_declaration : CST.declaration -> _ = fun decl ->
   let return reg decl =

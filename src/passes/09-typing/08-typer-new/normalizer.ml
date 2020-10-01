@@ -39,7 +39,7 @@ let normalizer_grouped_by_variable : (type_constraint_simpl , type_constraint_si
   in
   let dbs = match new_constraint with
       SC_Constructor ({tv ; c_tag = _ ; tv_list} as c) -> store_constraint (tv :: tv_list)             {constructor = [c] ; poly = []  ; tc = [] ; row = []}
-    | SC_Row         ({tv ; r_tag = _ ; tv_map } as c) -> store_constraint (tv :: LMap.to_list_rev tv_map) {constructor = []  ; poly = []  ; tc = [] ; row = [c]}
+    | SC_Row         ({tv ; r_tag = _ ; tv_map } as c) -> store_constraint (tv :: LMap.to_list tv_map) {constructor = []  ; poly = []  ; tc = [] ; row = [c]}
     | SC_Typeclass   ({tc = _ ; args}            as c) -> store_constraint args                        {constructor = []  ; poly = []  ; tc = [c]; row = []}
     | SC_Poly        ({tv; forall = _}           as c) -> store_constraint [tv]                        {constructor = []  ; poly = [c] ; tc = [] ; row = []}
     | SC_Alias { a; b } -> Constraint_databases.merge_constraints a b dbs
@@ -82,7 +82,7 @@ and type_constraint_simpl : type_constraint -> type_constraint_simpl list =
     let fresh_eqns = List.map (fun (v,t) -> c_equation { tsrc = "solver: normalizer: split_constant" ; t = P_variable v } t "normalizer: split_constant") (List.combine fresh_vars args) in
     let recur = List.map type_constraint_simpl fresh_eqns in
     [SC_Constructor {tv=a;c_tag;tv_list=fresh_vars;reason_constr_simpl=Format.asprintf "normalizer: split constant %a = %a (%a)" Var.pp a Ast_typed.PP.constant_tag c_tag (PP_helpers.list_sep Ast_typed.PP.type_value (fun ppf () -> Format.fprintf ppf ", ")) args}] @ List.flatten recur in
-  let split_row a r_tag args = 
+  let split_row a r_tag args =
     let aux const _ v =
       let var = Core.fresh_type_variable () in
       let v   = c_equation { tsrc = "solver: normalizer: split_row" ; t = P_variable var } v "normalizer: split_row" in

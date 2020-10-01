@@ -26,18 +26,18 @@ module Make(Ord : Map.OrderedType) : S with type key = Ord.t = struct
   let to_kv_list_rev (t: 'a t) : (key * 'a) list =
     let aux k v prev = (k, v) :: prev in
     fold aux t []
-  
+
   let to_list l = List.rev @@ to_list_rev l
   let to_kv_list l = List.rev @@ to_kv_list_rev l
-  
+
   let add_bindings (kvl:(key * 'a) list) (m:'a t) =
     let aux prev (k, v) = add k v prev in
     List.fold_left aux m kvl
 
   let fold_map f acc map =
-    let aux k v (acc,map) = 
+    let aux k v (acc,map) =
       let acc,v = f acc k v in
-      acc, add k v map 
+      acc, add k v map
     in
     fold aux map (acc,empty)
 end

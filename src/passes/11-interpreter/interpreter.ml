@@ -121,7 +121,7 @@ let rec apply_operator : Ast_typed.constant' -> value list -> (value, interprete
     | ( C_CONCAT , [ V_Ct (C_bytes a' ) ; V_Ct (C_bytes b' ) ] ) -> return_ct @@ C_bytes  (Bytes.cat a' b')
     | ( C_OR     , [ V_Ct (C_bool a'  ) ; V_Ct (C_bool b'  ) ] ) -> return_ct @@ C_bool   (a' || b')
     | ( C_AND    , [ V_Ct (C_bool a'  ) ; V_Ct (C_bool b'  ) ] ) -> return_ct @@ C_bool   (a' && b')
-    | ( C_XOR    , [ V_Ct (C_bool a'  ) ; V_Ct (C_bool b'  ) ] ) -> return_ct @@ C_bool   ( (a' || b') && (not (a' && b')) ) 
+    | ( C_XOR    , [ V_Ct (C_bool a'  ) ; V_Ct (C_bool b'  ) ] ) -> return_ct @@ C_bool   ( (a' || b') && (not (a' && b')) )
     | ( C_LIST_EMPTY, []) -> ok @@ V_List ([])
     | ( C_LIST_MAP , [ V_Func_val (arg_name, body, env) ; V_List (elts) ] ) ->
       let%bind elts' = bind_map_list
@@ -184,7 +184,7 @@ let rec apply_operator : Ast_typed.constant' -> value list -> (value, interprete
     | ( C_MAP_MEM , [ k ; V_Map kvs ] ) -> ok @@ v_bool (List.mem_assoc k kvs)
     | ( C_MAP_ADD , [ k ; v ; V_Map kvs as vmap] ) ->
       if (List.mem_assoc k kvs) then ok vmap
-      else ok (V_Map ((k,v)::kvs)) 
+      else ok (V_Map ((k,v)::kvs))
     | ( C_MAP_REMOVE , [ k ; V_Map kvs] ) -> ok @@ V_Map (List.remove_assoc k kvs)
     | ( C_MAP_UPDATE , [ k ; V_Construct (option,v) ; V_Map kvs] ) -> (match option with
       | "Some" -> ok @@ V_Map ((k,v)::(List.remove_assoc k kvs))

@@ -126,20 +126,20 @@ let assert_e_record_accessor = fun t ->
 
 let get_e_pair = fun t ->
   match t with
-  | E_record r -> ( 
+  | E_record r -> (
   let lst = LMap.to_kv_list_rev r in
-    match lst with 
+    match lst with
     | [(Label "O",a);(Label "1",b)]
-    | [(Label "1",b);(Label "0",a)] -> 
+    | [(Label "1",b);(Label "0",a)] ->
         Some (a , b)
     | _ -> None
     )
   | _ -> None
 
 let get_e_list = fun t ->
-  let rec aux t = 
+  let rec aux t =
     match t with
-      E_constant {cons_name=C_CONS;arguments=[key;lst]} -> 
+      E_constant {cons_name=C_CONS;arguments=[key;lst]} ->
         let lst = aux lst.content in
         (Some key)::(lst)
     | E_constant {cons_name=C_LIST_EMPTY;arguments=[]} ->
@@ -156,18 +156,18 @@ let get_e_tuple = fun t ->
   | _ -> None
 
 let get_e_ascription = fun a ->
-  match a with 
+  match a with
   | E_ascription {anno_expr; type_annotation} -> Some (anno_expr,type_annotation)
   | _ -> None
 
 (* Same as get_e_pair *)
 let extract_pair : expression -> (expression * expression) option = fun e ->
   match e.content with
-  | E_record r -> ( 
+  | E_record r -> (
   let lst = LMap.to_kv_list_rev r in
-    match lst with 
+    match lst with
     | [(Label "O",a);(Label "1",b)]
-    | [(Label "1",b);(Label "0",a)] -> 
+    | [(Label "1",b);(Label "0",a)] ->
       Some (a , b)
     | _ -> None
     )
@@ -175,15 +175,15 @@ let extract_pair : expression -> (expression * expression) option = fun e ->
 
 let extract_record : expression -> (label * expression) list option = fun e ->
   match e.content with
-  | E_record lst -> Some (LMap.to_kv_list_rev lst)
+  | E_record lst -> Some (LMap.to_kv_list lst)
   | _ -> None
 
 let extract_map : expression -> (expression * expression) list option = fun e ->
   let rec aux e =
     match e.content with
-      E_constant {cons_name=C_UPDATE|C_MAP_ADD; arguments=[k;v;map]} -> 
+      E_constant {cons_name=C_UPDATE|C_MAP_ADD; arguments=[k;v;map]} ->
         let map = aux map in
-        (Some (k,v))::map 
+        (Some (k,v))::map
     | E_constant {cons_name=C_MAP_EMPTY|C_BIG_MAP_EMPTY; arguments=[]} -> []
     | _ -> [None]
   in
