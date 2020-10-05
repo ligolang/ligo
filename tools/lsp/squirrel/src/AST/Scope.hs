@@ -13,16 +13,18 @@ module AST.Scope
   -- )
   where
 
-import           Control.Arrow (second)
+import           Control.Arrow (second, (&&&))
 import           Control.Monad.State
 import           Control.Monad.Catch
 import           Control.Monad.Catch.Pure
-import           Control.Monad.Writer (WriterT, execWriterT, tell)
+import           Control.Monad.Writer (WriterT, Writer, runWriter, execWriterT, tell)
 
 import           Data.Monoid         (First (..))
 import qualified Data.List   as List
 import           Data.Map            (Map)
 import qualified Data.Map    as Map
+import           Data.Set            (Set)
+import qualified Data.Set    as Set
 import           Data.Maybe          (listToMaybe, maybeToList)
 import           Data.Text           (Text)
 import           Data.Foldable       (toList, for_)
@@ -103,24 +105,43 @@ ofCategory _        _                                          = False
 
 type Info' = Product [[ScopedDecl], Maybe Category, [Text], Range, ShowRange]
 
-newtype ScopeForest = ScopeForest
-  { unScopeForest :: [Tree '[[]] ScopeInfo]
+data ScopeForest = ScopeForest
+  { sfScopes :: [Tree' '[[]] ScopeInfo]
+  , sfDecls  :: Map DeclRef ScopedDecl
   }
+  deriving Show via PP ScopeForest
 
-type ScopeInfo = Product [[ScopedDecl], Range]
+type ScopeInfo = [Set DeclRef, Range]
 
-withScopeForest f (ScopeForest sf) = ScopeForest (f sf)
+data DeclRef = DeclRef
+  { drName  :: Text
+  , drRange :: Range
+  }
+  deriving Show via PP DeclRef
+  deriving stock (Eq, Ord)
+
+instance Pretty DeclRef where
+  pp (DeclRef n r) = pp n <.> "@" <.> pp r
+
+withScopeForest
+  :: (  ([Tree' '[[]] ScopeInfo], Map DeclRef ScopedDecl)
+     -> ([Tree' '[[]] ScopeInfo], Map DeclRef ScopedDecl)
+     )
+  -> ScopeForest -> ScopeForest
+withScopeForest f (ScopeForest ss ds) = uncurry ScopeForest (f (ss, ds))
 
 instance {-# OVERLAPPABLE #-} Pretty x => Show x where
   show = show . pp
 
 instance Pretty ScopeForest where
-  pp (ScopeForest sf) = go sf
+  pp (ScopeForest sf ds) = go sf `above` decls' ds
     where
       go = sexpr "list" . map go'
-      go' :: Tree' '[[]] '[[ScopedDecl], Range] -> Doc
+      go' :: Tree' '[[]] ScopeInfo -> Doc
       go' (only -> (decls :> r :> Nil, list)) =
-        sexpr "scope" ([pp r] ++ map pp decls ++ [go list | not $ null list])
+        sexpr "scope" ([pp r] ++ map pp (Set.toList decls) ++ [go list | not $ null list])
+
+      decls' ds = sexpr "decls" (map pp $ Map.toList ds)
 
 addLocalScopes :: LIGO Info -> LIGO Info'
 addLocalScopes tree
@@ -155,54 +176,43 @@ lookupEnv name = getFirst . foldMap \decl ->
     return decl
 
 envAtPoint :: Range -> ScopeForest -> [ScopedDecl]
-envAtPoint r (ScopeForest sf) = do
-  tree  <- sf
-  reverse $ spine (leq r . getRange) tree
-  where
-    spine isR (only -> (i, trees)) = if
-      | isR i     -> getElem @[ScopedDecl] i <> foldMap (spine isR) trees
-      | otherwise -> []
+envAtPoint r (ScopeForest sf ds) = do
+  let sp = sf >>= spine r >>= Set.toList
+  map (ds Map.!) sp
+
+spine :: Range -> Tree' '[[]] ScopeInfo -> [Set DeclRef]
+spine r (only -> (i, trees)) = if
+  | leq r (getRange i) -> foldMap (spine r) trees <> [getElem @(Set DeclRef) i]
+  | otherwise -> []
 
 addReferences :: LIGO Info -> ScopeForest -> ScopeForest
 addReferences ligo = execState $ loopM_ addRef ligo
   where
+    addRef :: LIGO Info -> State ScopeForest ()
     addRef = \case
-      (match -> Just (r, Name n)) -> do
-        modify
-          $ withScopeForest
-          $ map
-          $ findAndUpdateFrom (leq (getRange r) . getRange)
-          $ traverseElem @[ScopedDecl]
-          $ walkScopeName r n
+      (match -> Just (r, Name     n)) -> addThisRef Variable (getRange r) n
+      (match -> Just (r, NameDecl n)) -> addThisRef Variable (getRange r) n
+      (match -> Just (r, TypeName n)) -> addThisRef Type     (getRange r) n
+      _                               -> return ()
 
-      (match -> Just (r, TypeName n)) -> do
-        modify
-          $ withScopeForest
-          $ map
-          $ findAndUpdateFrom (leq (getRange r) . getRange)
-          $ traverseElem @[ScopedDecl]
-          $ walkScopeTypeName r n
+    addThisRef cat r n = do
+      modify
+        $ withScopeForest \(sf, ds) ->
+          flip runState ds do
+            let frameSet = Set.toList =<< spine r =<< sf
+            walkScope cat r n frameSet
+            return sf
 
-      _ -> do
-        return ()
+    walkScope _    _ _ [] = return ()
+    walkScope sort r n (declref : rest) = do
+      decl <- gets (Map.! declref)
+      if ofCategory sort decl && (n == _sdName decl || r == _sdOrigin decl)
+      then do
+        modify $ Map.adjust (addRefToDecl r) declref
+      else do
+        walkScope sort r n rest
 
-    walkScopeName r n (decl : rest) = if
-      | _sdName decl == n
-      , maybe True isLeft (_sdType decl)
-        -> Just $ decl { _sdRefs = getRange r : _sdRefs decl } : rest
-
-      | otherwise -> (decl :) <$> walkScopeName r n rest
-
-    walkScopeName r n [] = Nothing
-
-    walkScopeTypeName r n (decl : rest) = if
-      | _sdName decl == n
-      , maybe True (not . isLeft) (_sdType decl)
-        -> Just $ decl { _sdRefs = getRange r : _sdRefs decl } : rest
-
-      | otherwise -> (decl :) <$> walkScopeTypeName r n rest
-
-    walkScopeTypeName r n [] = Nothing
+    addRefToDecl r sd = sd { _sdRefs = r : _sdRefs sd }
 
 ignoreFailure :: (a -> Maybe a) -> (a -> Maybe a)
 ignoreFailure f a = maybe (Just a) Just (f a)
@@ -213,12 +223,15 @@ isLeft _       = False
 getEnv :: LIGO Info -> ScopeForest
 getEnv tree
   = addReferences tree
-  $ ScopeForest
+  $ extractScopeForest
   $ compressScopeTree . pure
   $ extractScopeTree
   $ prepareTree
     tree
 
+prepareTree
+  :: LIGO Info
+  -> LIGO' '[[ScopedDecl], Bool, Range, [Text], Range, ShowRange]
 prepareTree
   = assignDecls
   . unSeq
@@ -234,20 +247,6 @@ loopM_ go = aux
     aux (r :< fs) = do
       for_ fs aux
       go $ r :< fs
-
--- funsToLambdas
---   :: ( Contains  Range     xs
---      , Contains [Text]     xs
---      , Contains  ShowRange xs
---      , Eq (Product xs)
---      )
---   => LIGO' xs
---   -> LIGO' xs
--- funsToLambdas = loop go
---   where
---     go = \case
---       (match -> Just (r, Let (match -> Just (r', Function _ n a ty b)) body)) -> do
-
 
 unLetRec
   :: ( Contains  Range     xs
@@ -350,6 +349,11 @@ assignDecls = loop go . fmap (\r -> [] :> False :> getRange r :> r)
         let r''' = putElem True r
         make (r''', Function False n a ty (r'' :< body))
 
+      it@(match -> Just (r, NameDecl n)) -> do
+        let imms = getImmediateDecls it
+        let r'   = putElem True $ modElem (imms <>) r
+        make (r', NameDecl n)
+
       it -> it
 
 extractScopeTree
@@ -381,6 +385,23 @@ compressScopeTree = (go =<<)
       [ make (decls :> r :> Nil, list')
        | not (null decls) || not (null list')
        ]
+
+extractScopeForest
+  :: [Tree' '[[]] '[[ScopedDecl], Range]]
+  -> ScopeForest
+extractScopeForest = uncurry ScopeForest . runWriter . mapM go
+  where
+    go
+      :: Tree' '[[]] '[[ScopedDecl], Range]
+      -> Writer (Map DeclRef ScopedDecl) (Tree' '[[]] ScopeInfo)
+    go (only -> (decls :> r :> Nil, ts)) = do
+      let uName sd = DeclRef (ppToText (_sdName sd)) (_sdOrigin sd)
+      let extract = Map.fromList $ map (uName &&& id) decls
+      tell extract
+      let refs    = Map.keysSet extract
+      let r'      = refs :> r :> Nil
+      ts' <- mapM go ts
+      return $ make (r', ts')
 
 getImmediateDecls
   :: ( Contains  Range     xs
@@ -430,6 +451,9 @@ getImmediateDecls = \case
 
   (match -> Just (r, Parameters ps)) -> do
     ps >>= getImmediateDecls
+
+  (match -> Just (r, NameDecl n)) -> do
+    [ScopedDecl n (getRange r) Nothing Nothing [] (getElem r)]
 
   _ -> []
 

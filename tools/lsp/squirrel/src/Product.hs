@@ -84,3 +84,6 @@ instance Pretty (Product '[]) where
 
 instance PrettyProd xs => Pretty (Product xs) where
   pp = braces . ppProd
+
+instance (Pretty a, Pretty b) => Pretty (a, b) where
+  pp (a, b) = pp a <.> ":" `indent` pp b
