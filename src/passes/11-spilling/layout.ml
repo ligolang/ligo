@@ -7,7 +7,7 @@ open Trace
 
 let annotation_or_label annot label = Option.unopt ~default:label (Helpers.remove_empty_annotation annot)
 
-let t_sum ?(layout = L_tree) return compile_type m =
+let t_sum ~layout return compile_type m =
   let open AST.Helpers in
   let lst = kv_list_of_t_sum ~layout m in
   match layout with
@@ -50,7 +50,7 @@ let t_sum ?(layout = L_tree) return compile_type m =
     ok t
   )
 
-let t_record_to_pairs ?(layout = L_tree) return compile_type m =
+let t_record_to_pairs ~layout return compile_type m =
   let open AST.Helpers in
   let is_tuple_lmap = is_tuple_lmap m in
   let lst = kv_list_of_t_record_or_tuple ~layout m in
@@ -96,7 +96,7 @@ let t_record_to_pairs ?(layout = L_tree) return compile_type m =
       ok t
     )
 
-let record_access_to_lr ?(layout = L_tree) ty m_ty index =
+let record_access_to_lr ~layout ty m_ty index =
   let open AST.Helpers in
   let lst = kv_list_of_t_record_or_tuple ~layout m_ty in
   match layout with
@@ -147,7 +147,8 @@ let record_access_to_lr ?(layout = L_tree) ty m_ty index =
         fun () -> List.find_index (fun (label , _) -> label = index) lst
       in
       let last = (index + 1 = List.length lst) in
-      aux index ty last
+      let%bind lst = aux index ty last in
+      ok (List.rev lst)
     )
   
 let record_to_pairs compile_expression (return:?tv:_ -> _) record_t record : Mini_c.expression spilling_result =

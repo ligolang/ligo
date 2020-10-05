@@ -40,3 +40,6 @@ let main_comb_three (action, store : parameter * comb_three ) : op_list * comb_t
 
 let main_comb_five (action, store : parameter * comb_five ) : op_list * comb_five =
   ([] : operation list), store
+
+let r : comb_five = { one = 1 ; two = "" ; three = true ; four = 1n ; five = 2 }
+let accesses = r.one , r.two , r.three , r.four , r.five

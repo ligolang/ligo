@@ -9,7 +9,7 @@ let%expect_test _ =
   [%expect {|
              { parameter unit ;
                storage (pair (int %anbfoo) (string %anabar)) ;
-               code { CDR ; DUP ; CDR ; SWAP ; CAR ; PAIR ; NIL operation ; PAIR } } |}];
+               code { CDR ; DUP ; CAR ; SWAP ; CDR ; SWAP ; PAIR ; NIL operation ; PAIR } } |}];
   run_ligo_good [ "compile-contract" ; contract "annotated_michelson_record_comb.mligo" ; "main_comb_three" ] ;
   [%expect {|
              { parameter unit ;
@@ -80,3 +80,8 @@ let%expect_test _ =
   [%expect {|
              ( LIST_EMPTY() ,
                record[five -> 1 , four -> +2 , one -> 1 , three -> true(unit) , two -> ""] ) |}]
+
+let%expect_test _ =
+  run_ligo_good [ "interpret" ; "--init-file="^(contract "annotated_michelson_record_comb.mligo") ; "accesses " ] ;
+  [%expect {|
+             ( 1 , "" , true(unit) , +1 , 2 ) |}]

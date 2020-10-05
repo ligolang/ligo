@@ -274,10 +274,9 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
     )
   | E_record_accessor {record; path} ->
       let%bind ty' = compile_type (get_type_expression record) in
-      let%bind ty_record =
-        trace_option (corner_case ~loc:__LOC__ "not a record") @@
+      let%bind {content ; layout} = trace_option (corner_case ~loc:__LOC__ "not a record") @@
         get_t_record (get_type_expression record) in
-      let%bind path = Layout.record_access_to_lr ty' ty_record.content path in
+      let%bind path = Layout.record_access_to_lr ~layout ty' content path in
       let aux = fun pred (ty, lr) ->
         let c = match lr with
           | `Left  -> C_CAR
@@ -291,13 +290,13 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
   | E_record_update {record; path; update} -> 
       let rec aux res (r,p,up) =
         let ty = get_type_expression r in
-        let%bind ty_lmap =
+        let%bind {content;layout} =
           trace_option (corner_case ~loc:__LOC__ "not a record") @@
           get_t_record (ty) in
         let%bind ty' = compile_type (ty) in 
         let%bind p' = 
           trace_strong (corner_case ~loc:__LOC__ "record access") @@
-          Layout.record_access_to_lr ty' ty_lmap.content p in
+          Layout.record_access_to_lr ~layout ty' content p in
         let res' = res @ p' in
         match (up:AST.expression).expression_content with
         | AST.E_record_update {record=record'; path=path'; update=update'} -> (
