@@ -17,11 +17,10 @@ import Test.HUnit (Assertion)
 import Text.Printf (printf)
 
 import AST.Capabilities.Find (definitionOf, referencesOf)
-import AST.Scope (addLocalScopes)
 import Range (Range (..), interval)
 
 import Test.Capabilities.Util (contractsDir)
-import Test.Util (readContract)
+import Test.Util (readContractWithScopes)
 
 -- | Represents an invariant relation between references and a
 -- definition of some LIGO entity (a variable, a type etc).
@@ -50,7 +49,7 @@ data DefinitionReferenceInvariant = DefinitionReferenceInvariant
 checkDefinitionReferenceInvariant
   :: HasCallStack => DefinitionReferenceInvariant -> Assertion
 checkDefinitionReferenceInvariant DefinitionReferenceInvariant{..} = do
-  tree <- addLocalScopes <$> readContract driFile
+  tree <- readContractWithScopes driFile
   case driDef of
     Nothing -> do
       for_ driRefs' $ \mention -> do
@@ -61,7 +60,7 @@ checkDefinitionReferenceInvariant DefinitionReferenceInvariant{..} = do
         case referencesOf mention tree of
           Nothing -> expectationFailure $
             printf "References of '%s' from '%s' are not found." driDesc driFile
-          Just actualRefs -> actualRefs `shouldMatchList` driRefs'
+          Just actualRefs -> actualRefs `shouldMatchList` expectedDef : driRefs'
   where
     -- a tree parser labels ranges with files, so we should too to
     -- preserve equality
@@ -76,14 +75,14 @@ label filepath r = r{ rFile = filename }
 -- entity in the given file.
 checkIfDefinition :: FilePath -> Range -> Range -> Assertion
 checkIfDefinition filepath (label filepath -> expectedDef) mention = do
-  tree <- addLocalScopes <$> readContract filepath
+  tree <- readContractWithScopes filepath
   definitionOf mention tree `shouldBe` Just expectedDef
 
 -- | Check if the given range corresponds to a reference of the given
 -- entity in the given file.
 checkIfReference :: FilePath -> Range -> Range -> Assertion
 checkIfReference filepath (label filepath -> expectedRef) mention = do
-  tree <- addLocalScopes <$> readContract filepath
+  tree <- readContractWithScopes filepath
   case referencesOf mention tree of
     Nothing -> expectationFailure $
       printf "References in range '%s' from '%s' are not found."
