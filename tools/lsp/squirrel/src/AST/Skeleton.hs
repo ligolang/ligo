@@ -367,7 +367,7 @@ instance Pretty1 Name where
 
 instance Pretty1 NameDecl where
   pp1 = \case
-    NameDecl     raw -> "'" <> pp raw
+    NameDecl     raw -> pp raw
 
 instance Pretty1 TypeName where
   pp1 = \case
