@@ -24,7 +24,7 @@ let source_file n =
     let docv = "SOURCE_FILE" in
     let doc = "$(docv) is the path to the smart contract file." in
     info ~docv ~doc [] in
-  required @@ pos n (some string) None info
+  required @@ pos n (some non_dir_file) None info
 
 let entry_point n =
   let open Arg in
@@ -40,6 +40,13 @@ let expression purpose n =
   let doc = "$(docv) is the expression that will be compiled." in
   let info = info ~docv ~doc [] in
   required @@ pos n (some string) None info
+
+let libraries =
+  let open Arg in
+  let docv = "LIBRARY" in
+  let doc = "$(docv) is a path to a directory containing included files" in
+  let info = info ~docv ~doc ["lib" ; "l"] in
+  value @@ opt_all string [] info
 
 let syntax =
   let open Arg in
@@ -212,7 +219,7 @@ let print_cst =
     return_result ~display_format (Parser.Formatter.ppx_format) @@
       Compile.Of_source.pretty_print_cst source_file (Syntax_name syntax)
   in
-  let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
+  let term = Term.(const f $ source_file 0  $ syntax $ display_format) in
   let cmdname = "print-cst" in
   let doc = "Subcommand: Print the CST.\nWarning: Intended for development of LIGO and can break at any time." in
   (Term.ret term, Term.info ~doc cmdname)
@@ -220,7 +227,7 @@ let print_cst =
 let print_ast =
   let f source_file syntax display_format =
     return_result ~display_format (Ast_imperative.Formatter.program_format) @@
-      Compile.Utils.to_imperatve source_file syntax
+      Compile.Utils.to_imperative source_file syntax
   in
   let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
   let cmdname = "print-ast" in
@@ -233,7 +240,7 @@ let print_ast_sugar =
     return_result ~display_format (Ast_sugar.Formatter.program_format) @@
       Compile.Utils.to_sugar source_file syntax
   in
-  let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
+  let term = Term.(const f $ source_file 0  $ syntax $ display_format) in
   let cmdname = "print-ast-sugar" in
   let doc = "Subcommand: Print the AST.\n Warning: Intended for development of LIGO and can break at any time." in
   (Term.ret term, Term.info ~doc cmdname)
@@ -243,7 +250,7 @@ let print_ast_core =
     return_result ~display_format (Ast_core.Formatter.program_format) @@
       Compile.Utils.to_core source_file syntax
   in
-  let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
+  let term = Term.(const f $ source_file 0  $ syntax $ display_format) in
   let cmdname = "print-ast-core" in
   let doc = "Subcommand: Print the AST.\n Warning: Intended for development of LIGO and can break at any time." in
   (Term.ret term, Term.info ~doc cmdname)
@@ -254,7 +261,7 @@ let print_ast_typed =
       let%bind typed,_,_  = Compile.Utils.type_file source_file syntax Env in
       ok typed
   in
-  let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
+  let term = Term.(const f $ source_file 0  $ syntax $ display_format) in
   let cmdname = "print-ast-typed" in
   let doc = "Subcommand: Print the typed AST.\n Warning: Intended for development of LIGO and can break at any time." in
   (Term.ret term, Term.info ~doc cmdname)
@@ -270,7 +277,7 @@ let print_mini_c =
           let%bind o = Compile.Of_mini_c.aggregate_contract mini_c entry_point in
           ok @@ Mini_c.Formatter.Optimized o
   in
-  let term = Term.(const f $ source_file 0 $ syntax $ display_format $ optimize) in
+  let term = Term.(const f $ source_file 0  $ syntax $ display_format $ optimize) in
   let cmdname = "print-mini-c" in
   let doc = "Subcommand: Print Mini-C. Warning: Intended for development of LIGO and can break at any time." in
   (Term.ret term, Term.info ~doc cmdname)
@@ -282,7 +289,7 @@ let measure_contract =
       Compile.Of_michelson.measure contract
   in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ display_format) in
+    Term.(const f $ source_file 0 $ entry_point 1  $ syntax $ display_format) in
   let cmdname = "measure-contract" in
   let doc = "Subcommand: Measure a contract's compiled size in bytes." in
   (Term.ret term , Term.info ~doc cmdname)
@@ -305,7 +312,7 @@ let compile_parameter =
       Run.evaluate_expression ~options compiled_param.expr compiled_param.expr_ty
     in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ syntax $ amount $ balance $ sender $ source $ now $ display_format $ michelson_code_format $ output_file) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2  $ syntax $ amount $ balance $ sender $ source $ now $ display_format $ michelson_code_format $ output_file) in
   let cmdname = "compile-parameter" in
   let doc = "Subcommand: Compile parameters to a Michelson expression. The resulting Michelson expression can be passed as an argument in a transaction which calls a contract." in
   (Term.ret term , Term.info ~doc cmdname)
@@ -340,7 +347,7 @@ let temp_ligo_interpreter =
       Compile.Of_typed.some_interpret typed
   in
   let term =
-    Term.(const f $ source_file 0 $ syntax $ display_format) in
+    Term.(const f $ source_file 0  $ syntax $ display_format) in
   let cmdname = "ligo-interpret" in
   let doc = "Subcommand: (temporary / dev only) uses LIGO interpret." in
   (Term.ret term , Term.info ~doc cmdname)
@@ -362,7 +369,7 @@ let compile_storage =
       let%bind options          = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
       Run.evaluate_expression ~options compiled_param.expr compiled_param.expr_ty in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ expression "STORAGE" 2 $ syntax $ amount $ balance $ sender $ source $ now $ display_format $ michelson_code_format $ output_file) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ expression "STORAGE" 2  $ syntax $ amount $ balance $ sender $ source $ now $ display_format $ michelson_code_format $ output_file) in
   let cmdname = "compile-storage" in
   let doc = "Subcommand: Compile an initial storage in ligo syntax to a Michelson expression. The resulting Michelson expression can be passed as an argument in a transaction which originates a contract." in
   (Term.ret term , Term.info ~doc cmdname)
@@ -385,7 +392,7 @@ let dry_run =
       Decompile.Of_michelson.decompile_typed_program_entry_function_result typed_prg entry_point runres
     in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ expression "STORAGE" 3 $ amount $ balance $ sender $ source $ now $ syntax $ display_format) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ expression "STORAGE" 3 $ amount $ balance $ sender $ source $ now  $ syntax $ display_format) in
   let cmdname = "dry-run" in
   let doc = "Subcommand: Run a smart-contract with the given storage and input." in
   (Term.ret term , Term.info ~doc cmdname)
@@ -411,7 +418,7 @@ let run_function =
       Decompile.Of_michelson.decompile_typed_program_entry_function_result typed_prg entry_point runres
     in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ amount $ balance $ sender $ source $ now $ syntax $ display_format) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ amount $ balance $ sender $ source $ now  $ syntax $ display_format) in
   let cmdname = "run-function" in
   let doc = "Subcommand: Run a function with the given parameter." in
   (Term.ret term , Term.info ~doc cmdname)
@@ -428,7 +435,7 @@ let evaluate_value =
       Decompile.Of_michelson.decompile_typed_program_entry_expression_result typed_prg entry_point runres
     in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ amount $ balance $ sender $ source $ now $ syntax $ display_format) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ amount $ balance $ sender $ source $ now  $ syntax $ display_format) in
   let cmdname = "evaluate-value" in
   let doc = "Subcommand: Evaluate a given definition." in
   (Term.ret term , Term.info ~doc cmdname)
@@ -473,7 +480,7 @@ let list_declarations =
         ok (source_file, declarations)
   in
   let term =
-    Term.(const f $ source_file 0 $ syntax $ display_format) in
+    Term.(const f $ source_file 0  $ syntax $ display_format) in
   let cmdname = "list-declarations" in
   let doc = "Subcommand: List all the top-level declarations." in
   (Term.ret term , Term.info ~doc cmdname)
@@ -490,7 +497,7 @@ let transpile_contract =
       ok @@ buffer
   in
   let term =
-    Term.(const f $ source_file 0 $ req_syntax 1 $ syntax $ dialect $ display_format) in
+    Term.(const f $ source_file 0 $ req_syntax 1  $ syntax $ dialect $ display_format) in
   let cmdname = "transpile-contract" in
   let doc = "Subcommand: Transpile a contract to another syntax." in
   (Term.ret term , Term.info ~doc cmdname)
@@ -517,12 +524,14 @@ let transpile_expression =
 
 
 let get_scope =
-  let f source_file syntax display_format with_types =
+  let f source_file syntax libs display_format with_types =
     return_result ~display_format Ligo.Scopes.Formatter.scope_format @@
-    Ligo.Scopes.scopes ~with_types source_file syntax
+      let%bind core_prg = Compile.Utils.to_core ~libs source_file syntax in
+      let%bind _,env,state = Compile.Of_core.compile Env core_prg in
+      Ligo.Scopes.scopes ~with_types env state core_prg
   in
   let term =
-    Term.(const f $ source_file 0 $ syntax $ display_format $ with_types) in
+    Term.(const f $ source_file 0  $ syntax $ libraries $ display_format $ with_types) in
   let cmdname = "get-scope" in
   let doc = "Subcommand: Return the JSON encoded environment for a given file." in
   (Term.ret term , Term.info ~doc cmdname)

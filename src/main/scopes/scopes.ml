@@ -4,10 +4,12 @@ open Misc
 
 module Formatter = Formatter
 
-let scopes : with_types:bool -> string -> string -> ((def_map * scopes), Main_errors.all) result = fun ~with_types source_file syntax ->
-  let make_v_def_from_core = make_v_def_from_core ~with_types source_file syntax in
-  let make_v_def_option_type = make_v_def_option_type ~with_types source_file syntax in
-  let make_v_def_ppx_type = make_v_def_ppx_type ~with_types source_file syntax in
+type tstate = Typer_common.Errors.typer_error Typer.O'.typer_state
+type tenv = Ast_typed.environment
+let scopes : with_types:bool -> tenv -> tstate -> Ast_core.program -> ((def_map * scopes), Main_errors.all) result = fun ~with_types env state core_prg ->
+  let make_v_def_from_core = make_v_def_from_core ~with_types env state in
+  let make_v_def_option_type = make_v_def_option_type ~with_types env state in
+  let make_v_def_ppx_type = make_v_def_ppx_type ~with_types env state in 
 
   let rec find_scopes' = fun (i,all_defs,env,scopes,lastloc) (e : Ast_core.expression) ->
     match e.content with
@@ -130,7 +132,6 @@ let scopes : with_types:bool -> string -> string -> ((def_map * scopes), Main_er
 
   in
 
-  let%bind (core_prg : Ast_core.program) = Compile.Utils.to_core source_file syntax in
   let (_,top_d,inner_d,s) = List.fold_left aux (0, Def_map.empty ,Def_map.empty, []) core_prg in
   let d = Def_map.union (fun _ outter _ -> Some outter) top_d inner_d in
   ok (d,s)

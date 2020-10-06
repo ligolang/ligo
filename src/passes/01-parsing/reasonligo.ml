@@ -41,8 +41,8 @@ module SubIO =
            method pretty  = false
          end
 
-    let make =
-      EvalOpt.make ~libs:options#libs
+    let make ~libs =
+      EvalOpt.make ~libs
                    ~verbose:options#verbose
                    ~offsets:options#offsets
                    ?block:options#block
@@ -131,19 +131,23 @@ let apply parser =
 
 (* Parsing a contract in a file *)
 
-let parse_file source = apply (fun () -> Unit.contract_in_file source)
+let parse_file libs source = apply (fun () -> Unit.contract_in_file libs source)
 
 (* Parsing a contract in a string *)
 
-let parse_string source = apply (fun () -> Unit.contract_in_string source)
+let parse_program_string libs source = apply (fun () -> Unit.contract_in_string libs source)
+
+(* Parsing a contract from standard input *)
+
+let parse_program_stdin libs () = apply (fun () -> Unit.contract_in_stdin libs ())
 
 (* Parsing an expression in a string *)
 
-let parse_expression source = apply (fun () -> Unit.expr_in_string source)
+let parse_expression libs source = apply (fun () -> Unit.expr_in_string libs source)
 
 (* Preprocessing a contract in a file *)
 
-let preprocess source = apply (fun () -> Unit.preprocess source)
+let preprocess libs source = apply (fun () -> Unit.preprocess libs source)
 
 (* Pretty-print a file (after parsing it). *)
 let pretty_print cst =
@@ -156,8 +160,8 @@ let pretty_print cst =
   let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
   in Trace.ok buffer
 
-let pretty_print_from_source source =
-  match parse_file source with
+let pretty_print_from_source libs source =
+  match parse_file libs source with
     Stdlib.Error _ as e -> e
   | Ok cst ->
     pretty_print @@ fst cst
