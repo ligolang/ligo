@@ -26,7 +26,7 @@ module type SubIO =
     >
 
     val options : options
-    val make : input:string option -> expr:bool -> EvalOpt.options
+    val make : libs:string list -> input:string option -> expr:bool -> EvalOpt.options
   end
 
 (* Signature for the printers *)
@@ -76,20 +76,20 @@ module Make (Lexer : Lexer.S)
     (* Parsers *)
 
     val contract_in_file :
-      string -> (AST.t, message Region.reg) Stdlib.result
+      string list -> string -> (AST.t, message Region.reg) Stdlib.result
 
     val contract_in_string :
-      string -> (AST.t, message Region.reg) Stdlib.result
+      string list -> string -> (AST.t, message Region.reg) Stdlib.result
 
     val contract_in_stdin :
-      unit -> (AST.t, message Region.reg) Stdlib.result
+      string list -> unit -> (AST.t, message Region.reg) Stdlib.result
 
     val expr_in_string :
-      string -> (AST.expr, message Region.reg) Stdlib.result
+      string list -> string -> (AST.expr, message Region.reg) Stdlib.result
 
     val expr_in_stdin :
-      unit -> (AST.expr, message Region.reg) Stdlib.result
+      string list -> unit -> (AST.expr, message Region.reg) Stdlib.result
 
     val preprocess :
-      string -> (Buffer.t, message Region.reg) Stdlib.result
+      string list -> string -> (Buffer.t, message Region.reg) Stdlib.result
   end

@@ -1,4 +1,4 @@
-#include "./letin.mligo"
+#include "letin.mligo"
 
 let x = 1
 

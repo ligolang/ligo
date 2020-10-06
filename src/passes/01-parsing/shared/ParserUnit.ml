@@ -28,7 +28,7 @@ module type SubIO =
     >
 
     val options : options
-    val make : input:string option -> expr:bool -> EvalOpt.options
+    val make : libs: string list -> input:string option -> expr:bool -> EvalOpt.options
   end
 
 module type Printer =
@@ -207,6 +207,7 @@ module Make (Lexer: Lexer.S)
     (* Preprocessing the input source *)
 
     let preproc options lexbuf =
+      (**)
       Preproc.lex (options :> Preprocessor.EvalOpt.options) lexbuf
 
     (* Parsing a contract *)
@@ -250,38 +251,39 @@ module Make (Lexer: Lexer.S)
 
     (* Parsing a contract in a file *)
 
-    let contract_in_file (source : string) =
-      let options = SubIO.make ~input:(Some source) ~expr:false
+    let contract_in_file (libs:string list) (source : string) =
+      let options = SubIO.make ~libs ~input:(Some source) ~expr:false
       in gen_parser options (LexerLib.File source) parse_contract
 
     (* Parsing a contract in a string *)
 
-    let contract_in_string (source : string) =
-      let options = SubIO.make ~input:None ~expr:false in
+    let contract_in_string (libs:string list) (source : string) =
+      let options = SubIO.make ~libs ~input:None ~expr:false in
       gen_parser options (LexerLib.String source) parse_contract
 
     (* Parsing a contract in stdin *)
 
-    let contract_in_stdin () =
-      let options = SubIO.make ~input:None ~expr:false in
+    let contract_in_stdin (libs:string list) () =
+      let options = SubIO.make ~libs ~input:None ~expr:false in
+      (* let options : EvalOpt.options = { options with libs } in *)
       gen_parser options (LexerLib.Channel stdin) parse_contract
 
     (* Parsing an expression in a string *)
 
-    let expr_in_string (source : string) =
-      let options = SubIO.make ~input:None ~expr:true in
+    let expr_in_string (libs:string list) (source : string) =
+      let options = SubIO.make ~libs ~input:None ~expr:true in
       gen_parser options (LexerLib.String source) parse_expr
 
     (* Parsing an expression in stdin *)
 
-    let expr_in_stdin () =
-      let options = SubIO.make ~input:None ~expr:true in
+    let expr_in_stdin (libs:string list) () =
+      let options = SubIO.make ~libs ~input:None ~expr:true in
       gen_parser options (LexerLib.Channel stdin) parse_expr
 
     (* Preprocess only *)
 
-    let preprocess (source : string) =
-      let options = SubIO.make ~input:(Some source) ~expr:false in
+    let preprocess (libs:string list) (source : string) =
+      let options = SubIO.make ~libs ~input:(Some source) ~expr:false in
       try
         let cin     = open_in source in
         let lexbuf  = Lexing.from_channel cin in
