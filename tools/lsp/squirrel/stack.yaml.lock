@@ -42,26 +42,26 @@ packages:
 - completed:
     name: haskell-lsp
     version: 0.22.0.0
-    git: https://github.com/grepcake/haskell-lsp.git
+    git: https://github.com/serokell/haskell-lsp.git
     pantry-tree:
       size: 6165
       sha256: 2ee3cf3593c598f072fb518aad2bbc5f209e121447c4dd161a7a285c764d7c23
     commit: 3d6662c2d174cd5ac463d728d55defea69f282f7
   original:
-    git: https://github.com/grepcake/haskell-lsp.git
+    git: https://github.com/serokell/haskell-lsp.git
     commit: 3d6662c2d174cd5ac463d728d55defea69f282f7
 - completed:
     subdir: haskell-lsp-types
     name: haskell-lsp-types
     version: 0.22.0.0
-    git: https://github.com/grepcake/haskell-lsp.git
+    git: https://github.com/serokell/haskell-lsp.git
     pantry-tree:
       size: 2670
       sha256: f37bf786cf608aff12ec3f0ddd9eb8e263a1f572711ea10ef272b07d4cf971fd
     commit: 3d6662c2d174cd5ac463d728d55defea69f282f7
   original:
     subdir: haskell-lsp-types
-    git: https://github.com/grepcake/haskell-lsp.git
+    git: https://github.com/serokell/haskell-lsp.git
     commit: 3d6662c2d174cd5ac463d728d55defea69f282f7
 snapshots:
 - completed:

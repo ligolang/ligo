@@ -67,6 +67,7 @@ toCompletionItem c@Completion
   , _commitCharacters = Nothing
   , _command = Nothing
   , _xdata = Nothing
+  , _tags = Nothing
   }
 
 mkDoc :: Completion -> CompletionDoc

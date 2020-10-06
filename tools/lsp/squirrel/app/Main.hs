@@ -258,14 +258,14 @@ eventLoop funs chan = do
 
       ReqRename req -> do
         let uri = req ^. J.params . J.textDocument . J.uri
-        let pos = posToRange $ req ^. J.params . J.position
+        let pos = fromLspPosition $ req ^. J.params . J.position
         let newName = req ^. J.params . J.newName
         tree <- loadFromVFS funs uri
         let
           allReferences :: Maybe [Range]
           allReferences = referencesOf pos tree <> fmap (\x -> [x]) (definitionOf pos tree)
           textEdits :: Maybe [J.TextEdit]
-          textEdits = allReferences & _Just . traverse %~ \x -> J.TextEdit (rangeToLoc x) newName
+          textEdits = allReferences & _Just . traverse %~ \x -> J.TextEdit (toLspRange x) newName
           workspaceEdit :: Maybe (J.List J.TextDocumentEdit)
           workspaceEdit = textEdits <&> \edits -> J.List
             [ J.TextDocumentEdit
