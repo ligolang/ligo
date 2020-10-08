@@ -1,4 +1,3 @@
-
 import Control.Arrow
 import Control.Concurrent
 import Control.Concurrent.STM
