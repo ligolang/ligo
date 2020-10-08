@@ -32,7 +32,7 @@ complete
      , Contains (Maybe Category) xs
      )
   => Range
-  -> LIGO (Product xs)
+  -> LIGO xs
   -> Maybe [Completion]
 complete r tree = do
   let l = spineTo (leq r . getElem) tree
@@ -95,4 +95,4 @@ fits  Nothing _  = True
 fits (Just c) c' = c == c'
 
 catFromType :: ScopedDecl -> Category
-catFromType = maybe Variable (either (const Variable) (const Type)) . _sdType
+catFromType = maybe Variable (elimIsTypeOrKind (const Variable) (const Type)) . _sdType

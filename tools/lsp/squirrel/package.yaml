@@ -42,6 +42,7 @@ default-extensions:
   - MultiWayIf
   - NamedFieldPuns
   - OverloadedStrings
+  - QuantifiedConstraints
   - QuasiQuotes
   - ScopedTypeVariables
   - StandaloneDeriving

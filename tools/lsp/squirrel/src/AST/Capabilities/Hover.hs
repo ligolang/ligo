@@ -18,7 +18,7 @@ import Data.Text (pack, intercalate)
 hoverDecl
   :: CanSearch xs
   => Range
-  -> LIGO (Product xs)
+  -> LIGO xs
   -> Maybe LSP.Hover
 hoverDecl at tree = do
   decl <- findScopedDecl at tree

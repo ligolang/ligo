@@ -247,12 +247,5 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
   , Descent do
       \(r :> _, ParseTree _ _ text') -> do
         withComments do
-          return (r :> N :> Nil, Err text')
-
-  , Descent do
-      \case
-        (r :> _, ParseTree "ERROR" _ text') -> do
-          return ([] :> r :> Y :> Nil, Err text')
-
-        _ -> fallthrough
+          return (r :> N :> CodeSource text' :> Nil, Err text')
   ]

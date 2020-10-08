@@ -25,7 +25,7 @@ import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import GHC.Generics
 
-import AST.Scope
+import AST.Scope.Common
 import Range
 
 ----------------------------------------------------------------------------

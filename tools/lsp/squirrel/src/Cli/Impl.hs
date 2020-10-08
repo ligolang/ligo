@@ -29,7 +29,7 @@ import System.Exit (ExitCode (..))
 import System.IO (hFlush, hPutStrLn, stderr, stdout)
 import System.Process (readProcessWithExitCode)
 
-import AST.Scope
+import AST.Scope.Common
 import Cli.Json
 import Cli.Types
 -- import Control.Monad.Reader (MonadIO)
@@ -84,9 +84,9 @@ instance Pretty LigoError where
 
 -- | Call ligo binary.
 callLigo
-  :: HasLigoClient env m => [String] -> m String
+  :: HasLigoClient m => [String] -> m String
 callLigo args = do
-  LigoClientEnv {..} <- view ligoClientEnvL
+  LigoClientEnv {..} <- getLigoClientEnv
   liftIO $ logDebug $ "Running: " <> show _lceClientPath <> " " <> L.intercalate " " args
   liftIO $ readProcessWithExitCode' _lceClientPath args "" >>= \case
     (ExitSuccess, output, errOutput) ->
@@ -186,7 +186,7 @@ readProcessWithExitCode' fp args inp =
 -- Execute ligo binary itself
 
 getLigoDefinitions
-  :: HasLigoClient env m
+  :: HasLigoClient m
   => FilePath
   -> m LigoDefinitions
 getLigoDefinitions contractPath = do

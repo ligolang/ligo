@@ -19,7 +19,7 @@ import Range (Range, fromLspPosition, getRange, toLspRange)
 -- correspond to AST nodes.
 findCoveringRanges
   :: (Contains Range xs, Eq (Product xs))
-  => LIGO (Product xs) -> Range -> [Range]
+  => LIGO xs -> Range -> [Range]
 findCoveringRanges tree position = map getRange coveringTrees
   where
     coveringTrees = spineTo (leq position . getElem) tree
@@ -30,7 +30,7 @@ findCoveringRanges tree position = map getRange coveringTrees
 -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_selectionRange.
 findSelectionRange
   :: (Contains Range xs, Eq (Product xs))
-  => LIGO (Product xs) -> J.Position -> J.SelectionRange
+  => LIGO xs -> J.Position -> J.SelectionRange
 findSelectionRange tree (fromLspPosition -> startingRange)
   = findCoveringRanges tree startingRange
   & makeSelectionRange
