@@ -1,10 +1,10 @@
-{ buildNpmPackage, squirrel }:
+{ buildNpmPackage, ligo-squirrel }:
 buildNpmPackage {
   src = ./.;
 
   npmBuild = ''
     mkdir bin
-    cp ${squirrel}/bin/squirrel ./bin/squirrel
+    cp ${ligo-squirrel}/bin/ligo-squirrel ./bin/ligo-squirrel
     npm run compile
     npm run package
   '';

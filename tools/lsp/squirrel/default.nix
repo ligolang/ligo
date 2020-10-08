@@ -4,4 +4,4 @@
 
 { platform ? "linux-static" }:
 
-(import ./squirrel.nix { ${platform} = true; }).components.exes.squirrel
+(import ./ligo-squirrel.nix { ${platform} = true; }).components.exes.ligo-squirrel

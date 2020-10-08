@@ -17,7 +17,7 @@ let client: LanguageClient;
 
 export function activate(context: ExtensionContext) {
     let serverOptions: ServerOptions = {
-       command: `${context.extensionPath}/bin/squirrel`
+       command: `${context.extensionPath}/bin/ligo-squirrel`
     };
 
     // Options to control the language client

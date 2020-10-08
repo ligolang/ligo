@@ -79,7 +79,9 @@ library:
     - unordered-containers
 
 executables:
-  squirrel:
+  ligo-squirrel:
+    main: Main.hs
+
     dependencies:
       - haskell-lsp
       - hslogger
@@ -91,19 +93,17 @@ executables:
       - unix
       - stm
 
-    main: Main.hs
-
     source-dirs:
-      - app/
+      - app/ligo-squirrel
 
     ghc-options:
       - -threaded
 
-  vet:
-    main: vet.hs
+  ligo-vet:
+    main: Main.hs
 
     source-dirs:
-      - app/
+      - app/ligo-vet
 
     dependencies:
       - ligo-squirrel
