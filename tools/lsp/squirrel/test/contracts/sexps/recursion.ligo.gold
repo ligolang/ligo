@@ -2,7 +2,7 @@
   (fun
     rec
     sum
-    (params (decl const n (PROD int)) (decl const acc (PROD int)))
+    (params (var n (PROD int)) (var acc (PROD int)))
     :
     (PROD int)
     = (if (n < 1) acc (apply sum (tuple (n - 1) (acc + n)))))
@@ -10,8 +10,7 @@
     rec
     fibo
     (params
-      (decl const n (PROD int))
-      (decl const n_1 (PROD int)) (decl const n_0 (PROD int)))
+      (var n (PROD int)) (var n_1 (PROD int)) (var n_0 (PROD int)))
     :
     (PROD int)
     = (if (n < 2) n_1 (apply fibo (tuple (n - 1) (n_1 + n_0) n_1)))))

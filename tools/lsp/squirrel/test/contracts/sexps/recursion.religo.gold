@@ -1,5 +1,5 @@
 (contract
-  (var
+  (const
     (? sum)
     (lam
       (type? (tuple? (? n) (? acc)) (TUPLE int int))
@@ -9,7 +9,7 @@
       (if
         (tuple (n < 1))
         (seq acc) (seq (apply sum (tuple (n - 1) (acc + n)))))))
-  (var
+  (const
     (? fibo)
     (lam
       (type? (tuple? (? n) (? n_1) (? n_0)) (TUPLE int int int))
