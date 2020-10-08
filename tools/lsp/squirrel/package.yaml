@@ -57,7 +57,7 @@ default-extensions:
   - UndecidableInstances
   - ViewPatterns
 
-ghc-options: -freverse-errors -Wall
+ghc-options: -freverse-errors -Wall -Werror
 
 library:
   source-dirs:
@@ -101,11 +101,12 @@ executables:
     source-dirs:
       - app/ligo-squirrel
 
-    ghc-options:
-      - -threaded
+    ghc-options: -threaded -Werror
 
   ligo-vet:
     main: Main.hs
+
+    other-modules: []
 
     source-dirs:
       - app/ligo-vet

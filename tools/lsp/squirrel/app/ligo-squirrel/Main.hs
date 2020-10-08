@@ -1,11 +1,11 @@
-import Control.Arrow
+
 import Control.Concurrent
 import Control.Concurrent.Async
 import Control.Concurrent.STM
 import Control.Lens hiding ((:>))
 import Control.Monad
 import Control.Monad.Catch
-import Control.Monad.Reader (liftIO, runReaderT)
+import Control.Monad.IO.Class (liftIO)
 
 import Data.Default
 import Data.Maybe (fromMaybe)
@@ -21,9 +21,7 @@ import qualified Language.Haskell.LSP.Utility as U
 import System.Exit
 import qualified System.Log as L
 
-import AST hiding (def)
-import Cli
-import qualified AST.Capabilities as Ligo
+import AST
 import qualified ASTMap
 import qualified Config
 import Product
@@ -34,7 +32,7 @@ import qualified Log
 
 main :: IO ()
 main = do
-  Log.enableDebug Log.ERROR
+  Log.setLogLevel Log.ERROR
   exit =<< mainLoop
 
 mainLoop :: IO Int

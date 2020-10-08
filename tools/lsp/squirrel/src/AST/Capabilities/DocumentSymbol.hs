@@ -77,14 +77,14 @@ extractDocumentSymbols uri tree = execWriterT . visit handlers $ tree
       -> J.SymbolKind
       -> (ScopedDecl -> Maybe Text)
       -> WriterT [SymbolInformation] m ()
-    tellScopedDecl range kind mkName =
+    tellScopedDecl range kind' mkName =
       withScopedDecl range $ \sd@ScopedDecl{..} ->
         tell
           [ SymbolInformation
               { _name = fromMaybe _sdName (mkName sd)
               , _deprecated = Nothing
-              , _kind = kind
-              , _containerName = matchContainerName kind
+              , _kind = kind'
+              , _containerName = matchContainerName kind'
               , _location = J.Location uri $ toLspRange range
               }
           ]
@@ -97,13 +97,13 @@ extractDocumentSymbols uri tree = execWriterT . visit handlers $ tree
       -> J.SymbolKind
       -> Text
       -> WriterT [SymbolInformation] m ()
-    tellSymbolInfo range kind name =
+    tellSymbolInfo range kind' name =
         tell
           [ SymbolInformation
               { _name = name
               , _deprecated = Nothing
-              , _kind = kind
-              , _containerName = matchContainerName kind
+              , _kind = kind'
+              , _containerName = matchContainerName kind'
               , _location = J.Location uri $ toLspRange range
               }
           ]

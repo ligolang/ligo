@@ -10,14 +10,14 @@ import Data.String.Interpolate (i)
 
 import System.IO.Unsafe
 
-import System.IO (hFlush, hPutStrLn, stderr, stdout)
+import System.IO (hFlush, hPutStrLn, stderr)
 
-data Level = DEBUG | ERROR deriving (Eq, Ord)
+data Level = DEBUG | ERROR | CRASH deriving (Eq, Ord)
 
 {-# NOINLINE logLevel #-}
 logLevel :: IORef Level
 logLevel = unsafePerformIO do
-  newIORef ERROR
+  newIORef CRASH
 
 {-# NOINLINE logLock #-}
 logLock :: MVar ()
@@ -37,8 +37,8 @@ err sys msg = liftIO do
   synchronized do
     hPutStrLn stderr $ "ERROR (" <> sys <> "): " <> msg
 
-enableDebug :: MonadIO m => Level -> m ()
-enableDebug level = liftIO do
+setLogLevel :: MonadIO m => Level -> m ()
+setLogLevel level = liftIO do
   writeIORef logLevel level
   return ()
 
@@ -47,11 +47,3 @@ synchronized action = bracket_
   do liftIO $ takeMVar logLock
   do liftIO $ putMVar  logLock ()
   action
-
--- -- | Helper that outputs message to stdout and stderr immediately.
--- output :: String -> String -> IO ()
--- output msg err = do
---   hPutStrLn stdout $ "OUTOUT(stdout): " ++ msg
---   hFlush stdout
---   hPutStrLn stderr $ "OUTOUT(stderr): " ++ err
---   hFlush stderr

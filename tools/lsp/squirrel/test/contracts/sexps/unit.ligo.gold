@@ -1,1 +1,1 @@
-(contract (const u (PROD unit) unit))
+vet: thread blocked indefinitely in an MVar operation

@@ -48,7 +48,7 @@ import           Debouncer
 import           Extension
 import           Product
 import           Range
-import           Log
+import qualified Log
 
 foreign import ccall unsafe tree_sitter_PascaLigo  :: Ptr Language
 foreign import ccall unsafe tree_sitter_ReasonLigo :: Ptr Language
@@ -113,7 +113,7 @@ instance Pretty1 ParseTree where
 -- | Feed file contents into PascaLIGO grammar recogniser.
 toParseTree :: Source -> IO RawTree
 toParseTree = unsafeDebounce \fin -> do
-  Log.debug "TS" [i|Reading #{fin}|]
+  Log.debug "TS" [Log.i|Reading #{fin}|]
   language <- onExt ElimExt
     { eePascal = tree_sitter_PascaLigo
     , eeCaml   = tree_sitter_CameLigo
@@ -124,7 +124,7 @@ toParseTree = unsafeDebounce \fin -> do
     src <- srcToBytestring fin
     res <- withParseTree parser src \tree -> do
       withRootNode tree (peek >=> go fin src)
-    Log.debug "TS" [i|Done reading #{fin}|]
+    Log.debug "TS" [Log.i|Done reading #{fin}|]
     return res
 
   where

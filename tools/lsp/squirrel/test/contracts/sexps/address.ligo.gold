@@ -1,14 +1,14 @@
 (contract
   (fun
-    main
-    (params (var p (PROD key_hash)))
+    'main
+    (params (var 'p (PROD key_hash)))
     :
     (PROD address)
     =
     (let
       (seq
         (const
-          c
+          'c
           (PROD (contract $ (PROD unit)))
           (apply (. Tezos implicit_account) (tuple p))))
     (apply (. Tezos address) (tuple c)))))
