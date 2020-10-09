@@ -23,21 +23,20 @@ module Cli.Json
   )
 where
 
-import Data.Aeson
+import Control.Applicative (Alternative ((<|>)), liftA2)
+import Data.Aeson.Types hiding (Error)
 import Data.Char (isUpper, toLower)
 import Data.Foldable (asum, toList)
 import qualified Data.HashMap.Strict as HM
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
+import Duplo.Pretty
 import GHC.Generics
 
 import AST.Scope.Common
-import Data.Aeson.Types
-import Range
-import Control.Applicative (liftA2, Alternative((<|>)))
-import Duplo.Pretty
+import AST.Skeleton (Error (..))
 import Parser (Msg)
-import Duplo.Error
+import Range
 
 ----------------------------------------------------------------------------
 -- Types
@@ -360,7 +359,7 @@ fromLigoErrorToMsg LigoError
       { _lecMessage = err
       , _lecLocation = fromLigoRangeOrDef -> at
       }
-  } = (at, Err err)
+  } = (at, Error (err :: Text) [])
 
 -- | Helper function that converts qualified field to its JSON counterpart.
 --

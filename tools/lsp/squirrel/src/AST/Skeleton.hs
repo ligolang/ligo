@@ -8,7 +8,6 @@ module AST.Skeleton where
 
 import Data.Text (Text)
 
-import Duplo.Error
 import Duplo.Tree
 
 import Product
@@ -25,7 +24,7 @@ type RawLigoList =
   [ Name, Path, QualifiedName, Pattern, Constant, FieldAssignment
   , MapBinding, Alt, Expr, TField, Variant, Type, Binding
   , RawContract, TypeName, FieldName
-  , Err Text, Parameters, Ctor, Contract, NameDecl
+  , Error, Parameters, Ctor, Contract, NameDecl
   ]
 
 data Undefined it
@@ -68,7 +67,7 @@ data Type it
   | TProduct  [it]     -- ^ [Type]
   | TApply    it it  -- ^ (Name) (Type)
   | TString   Text     -- ^ (TString)
-  | TArgs     [it]     -- ^ [Type] 
+  | TArgs     [it]     -- ^ [Type]
   | TOr       it it it it
   | TAnd      it it it it
   deriving stock (Functor, Foldable, Traversable)
@@ -173,10 +172,13 @@ newtype NameDecl it = NameDecl
   deriving stock (Functor, Foldable, Traversable)
 
 newtype TypeName it = TypeName Text
-  deriving stock   (Functor, Foldable, Traversable)
+  deriving stock (Functor, Foldable, Traversable)
 
 newtype Ctor it = Ctor Text
-  deriving stock   (Functor, Foldable, Traversable)
+  deriving stock (Functor, Foldable, Traversable)
 
 newtype FieldName it = FieldName Text
-  deriving stock   (Functor, Foldable, Traversable)
+  deriving stock (Functor, Foldable, Traversable)
+
+data Error it = Error Text [it]
+  deriving stock (Functor, Foldable, Traversable)

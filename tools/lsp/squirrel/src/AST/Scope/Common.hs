@@ -24,8 +24,6 @@ import ParseTree
 import Product
 import Range
 
--- import           Debug.Trace
-
 class HasLigoClient m => HasScopeForest impl m where
   scopeForest :: Source -> LIGO Info -> m ScopeForest
 

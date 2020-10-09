@@ -76,6 +76,7 @@ deriving via PP (NameDecl it) instance Pretty it => Show (NameDecl it)
 deriving via PP (TypeName it) instance Pretty it => Show (TypeName it)
 deriving via PP (Ctor it) instance Pretty it => Show (Ctor it)
 deriving via PP (FieldName it) instance Pretty it => Show (FieldName it)
+deriving via PP (Error it) instance Pretty it => Show (Error it)
 
 instance
     ( Apply (LPP1 d) layers
@@ -303,6 +304,10 @@ instance Pretty1 Path where
 instance Pretty1 TField where
   pp1 = \case
     TField      n t -> n <.> ":" `indent` t
+
+instance Pretty1 Error where
+  pp1 = \case
+    Error       src children -> sexpr ("ERROR: " <> src) (map pp children)
 
 ----------------------------------------------------------------------------
 -- Common

@@ -2,18 +2,13 @@
 
 module AST.Parser.Camligo where
 
--- import Data.Maybe (isJust)
-
 import AST.Skeleton
 
-import Duplo.Error
 import Duplo.Tree
 
-import Parser
 import ParseTree
+import Parser
 import Product
-
--- import Debug.Trace
 
 -- example :: FilePath
 -- example = "../../../src/test/contracts/address.mligo"
@@ -223,8 +218,7 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
 
   -- Err
   , Descent do
-      \(r :> _, ParseTree _ _ msg) -> do
+      \(r :> _, ParseTree _ children source) -> do
         withComments do
-          return (r :> N :> CodeSource msg :> Nil, Err msg)
+          return (r :> N :> CodeSource source :> Nil, Error source children)
   ]
-

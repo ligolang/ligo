@@ -3,14 +3,11 @@ module AST.Parser.Pascaligo where
 
 import AST.Skeleton
 
-import Duplo.Error
 import Duplo.Tree
 
 import Parser
 import ParseTree
 import Product (Product ((:>), Nil))
-
--- import Debug.Trace
 
 -- example :: FilePath
 -- example = "../../../src/test/contracts/arithmetic.ligo"
@@ -241,7 +238,7 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
 
     -- Err
   , Descent do
-      \(r :> _, ParseTree _ _ text') -> do
+      \(r :> _, ParseTree _ children source) -> do
         withComments do
-          return (r :> N :> CodeSource text' :> Nil, Err text')
+          return (r :> N :> CodeSource source :> Nil, Error source children)
   ]

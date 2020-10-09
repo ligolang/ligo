@@ -27,7 +27,6 @@ import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, asks, liftIO, runRea
 import qualified Data.Map as Map
 import qualified Data.SortedList as List
 import Data.String.Interpolate (i)
-import Data.Text (Text)
 import qualified Data.Text as Text
 
 import qualified Language.Haskell.LSP.Core as Core
@@ -40,7 +39,6 @@ import Language.Haskell.LSP.VFS
 -- import           System.Directory (getDirectoryContents, doesDirectoryExist)
 -- import           System.FilePath
 
-import Duplo.Error
 import Duplo.Tree (collect)
 
 import AST
@@ -155,8 +153,8 @@ collectErrors fetcher uri version = do
     $ map errorToDiag
     $ errs <> collectTreeErrors tree
 
-errorToDiag :: (Range, Err Text a) -> J.Diagnostic
-errorToDiag (getRange -> (Range (sl, sc, _) (el, ec, _) _), Err what) =
+errorToDiag :: (Range, Error a) -> J.Diagnostic
+errorToDiag (getRange -> (Range (sl, sc, _) (el, ec, _) _), Error what _) =
   J.Diagnostic
     (J.Range begin end)
     (Just J.DsError)

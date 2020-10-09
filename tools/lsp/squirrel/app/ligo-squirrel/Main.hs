@@ -74,6 +74,8 @@ lspOptions :: Core.Options
 lspOptions = def
   { Core.textDocumentSync       = Just syncOptions
   , Core.executeCommandCommands = Just ["lsp-hello-command"]
+  , Core.signatureHelpTriggerCharacters = Just ['(', ' ']
+  , Core.signatureHelpRetriggerCharacters = Just [',']
   }
 
 lspHandlers :: TChan FromClientMessage -> Core.Handlers
@@ -92,6 +94,7 @@ lspHandlers rin =
       -- , Core.executeCommandHandler                    = Just $ passHandler rin ReqExecuteCommand
     , Core.completionHandler = Just $ passHandler rin ReqCompletion
       -- , Core.completionResolveHandler                 = Just $ passHandler rin ReqCompletionItemResolve
+    , Core.signatureHelpHandler = Just $ passHandler rin ReqSignatureHelp
     , Core.foldingRangeHandler = Just $ passHandler rin ReqFoldingRange
     , Core.selectionRangeHandler = Just $ passHandler rin ReqSelectionRange
     , Core.hoverHandler = Just $ passHandler rin ReqHover
@@ -131,6 +134,7 @@ eventLoop funs chan = do
           ReqFindReferences        req   -> handleFindReferencesRequest        req
           ReqCompletion            req   -> handleCompletionRequest            req
           ReqDocumentSymbols       req   -> handleDocumentSymbolsRequest       req
+          ReqSignatureHelp         req   -> handleSignatureHelpRequest         req
           ReqFoldingRange          req   -> handleFoldingRangeRequest          req
           ReqSelectionRange        req   -> handleSelectionRangeRequest        req
           ReqHover                 req   -> handleHoverRequest                 req
@@ -219,6 +223,14 @@ handleCompletionItemResolveRequest :: J.CompletionItemResolveRequest -> RIO ()
 handleCompletionItemResolveRequest req = do
     RIO.log $ "got completion resolve request: " <> show req
     RIO.respondWith req RspCompletionItemResolve (req ^. J.params)
+
+handleSignatureHelpRequest :: J.SignatureHelpRequest -> RIO ()
+handleSignatureHelpRequest req = do
+  let uri = req ^. J.params . J.textDocument . J.uri
+  let position = req ^. J.params . J.position & fromLspPosition
+  (tree, _) <- RIO.fetch (J.toNormalizedUri uri)
+  let signatureHelp = getSignatureHelp tree position
+  RIO.respondWith req RspSignatureHelp signatureHelp
 
 handleFoldingRangeRequest :: J.FoldingRangeRequest -> RIO ()
 handleFoldingRangeRequest req = do

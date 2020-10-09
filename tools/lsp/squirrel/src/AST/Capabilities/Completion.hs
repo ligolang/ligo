@@ -86,9 +86,7 @@ asCompletion sd = Completion
   }
 
 isSubseqOf :: Text -> Text -> Bool
-isSubseqOf l r =
-  -- traceShow (l, r, isSubsequenceOf (Text.unpack l) (Text.unpack r)) $
-  isSubsequenceOf (Text.unpack l) (Text.unpack r)
+isSubseqOf l r = isSubsequenceOf (Text.unpack l) (Text.unpack r)
 
 fits :: Maybe Category -> Category -> Bool
 fits  Nothing _  = True

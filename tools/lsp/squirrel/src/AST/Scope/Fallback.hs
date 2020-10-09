@@ -65,7 +65,7 @@ getEnv :: LIGO Info -> ScopeForest
 getEnv tree
   = addReferences tree
   $ extractScopeForest
-  $ compressScopeTree . pure
+  $ compressScopeTree
   $ extractScopeTree
   $ prepareTree
     tree
@@ -112,7 +112,6 @@ unLetRec = loop go
         case reverse decls of
           lst : (reverse -> ini) -> do
             foldr reLet lst ini
-
           [] -> make (r, RawContract [])
 
       it -> it
@@ -132,7 +131,6 @@ unSeq = loop go
         case reverse decls of
           lst : (reverse -> ini) -> do
             foldr reLet lst ini
-
           [] -> make (r, Seq [])
 
       it -> it
@@ -190,7 +188,7 @@ assignDecls = loop go . fmap (\r -> [] :> False :> getRange r :> r)
             { _sdName   = ppToText n
             , _sdOrigin = getRange n
             , _sdBody   = Just $ getRange b
-            , _sdType   = (IsType . void') <$> ty
+            , _sdType   = IsType . void' <$> ty
             , _sdRefs   = []
             , _sdDoc    = getElem r
             }
@@ -229,21 +227,22 @@ extractScopeTree = go
       let fs'' = map go fs'
       make (decls :> visible :> r :> Nil, fs'')
 
+-- 'Bool' in the node list denotes whether this part of a tree is a scope
 compressScopeTree
-  :: [Tree' '[[]] '[[ScopedDecl], Bool, Range]]
+  :: Tree' '[[]] '[[ScopedDecl], Bool, Range]
   -> [Tree' '[[]] '[[ScopedDecl], Range]]
-compressScopeTree = (go =<<)
+compressScopeTree = go
   where
     go
       :: Tree' '[[]] '[[ScopedDecl], Bool, Range]
-      -> [Tree' '[[]] '[[ScopedDecl], Range]]
-    go (only -> (_ :> False :> _ :> Nil, list')) =
-      list' >>= go
+      -> [Tree' '[[]] '[[ScopedDecl], Range]] -- True means, что участок дерева является scope'ом
+    go (only -> (_ :> False :> _ :> Nil, rest)) =
+      rest >>= go
 
-    go (only -> (decls :> True :> r :> Nil, list')) = do
-      let list'' = list' >>= go
-      [ make (decls :> r :> Nil, list'')
-       | not (null decls) || not (null list'')
+    go (only -> (decls :> True :> r :> Nil, rest)) = do
+      let rest' = rest >>= go
+      [ make (decls :> r :> Nil, rest')
+       | not (null decls) || not (null rest')
        ]
 
     go _ = error "compressScopeTree: impossible"
