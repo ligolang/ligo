@@ -87,28 +87,11 @@ callLigo
   :: HasLigoClient m => [String] -> m String
 callLigo args = do
   LigoClientEnv {..} <- getLigoClientEnv
-  liftIO $ logDebug $ "Running: " <> show _lceClientPath <> " " <> L.intercalate " " args
   liftIO $ readProcessWithExitCode' _lceClientPath args "" >>= \case
-    (ExitSuccess, output, errOutput) ->
-      output <$ logOutput output errOutput
+    (ExitSuccess, output, _) -> pure output
     (ExitFailure errCode, pack -> output, pack -> errOutput) ->
       throwM $ UnexpectedClientFailure errCode output errOutput
 
--- output <$ logOutput output errOutput
-
--- | Helper that outputs debug message to stderr immediately.
-logDebug :: String -> IO ()
-logDebug msg = do
-  hPutStrLn stderr msg
-  hFlush stdout
-
--- | Helper that outputs message to stdout and stderr immediately.
-logOutput :: String -> String -> IO ()
-logOutput msg err = do
-  hPutStrLn stdout msg
-  hFlush stdout
-  hPutStrLn stderr err
-  hFlush stderr
 
 -- | Variant of @readProcessWithExitCode@ that prints a better error in case of
 -- an exception in the inner @readProcessWithExitCode@ call.

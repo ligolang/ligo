@@ -6,12 +6,11 @@ module Cli.Types
   )
 where
 
-import Control.Lens (Lens', (^.))
 import Control.Monad.Catch (MonadCatch)
 import Control.Monad.IO.Class (MonadIO)
-import Control.Monad.Reader (ReaderT, MonadReader, asks)
+import Control.Monad.Reader (ReaderT, asks)
 
-import Data.Default (Default(..))
+import Data.Default (Default (..))
 
 import Product
 
@@ -36,5 +35,8 @@ instance
     where
       getLigoClientEnv = asks (getElem @LigoClientEnv @env)
 
+instance HasLigoClient IO where
+  getLigoClientEnv = pure def
+
 instance Default LigoClientEnv where
-  def = LigoClientEnv "/bin/ligo" False
+  def = LigoClientEnv "ligo" False
