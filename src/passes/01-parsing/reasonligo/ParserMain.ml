@@ -49,8 +49,8 @@ module SubIO =
         method pretty  = IO.options#pretty
       end
 
-    let make =
-      EvalOpt.make ~libs:options#libs
+    let make ~libs =
+      EvalOpt.make ~libs
                    ~verbose:options#verbose
                    ~offsets:options#offsets
                    ?block:options#block
@@ -101,5 +101,5 @@ let wrap = function
 
 let () =
   match IO.options#input with
-    None -> Unit.contract_in_stdin () |> wrap
-  | Some file_path -> Unit.contract_in_file file_path |> wrap
+    None -> Unit.contract_in_stdin [] () |> wrap
+  | Some file_path -> Unit.contract_in_file [] file_path |> wrap

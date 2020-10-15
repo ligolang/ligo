@@ -24,16 +24,16 @@
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "nixpkgs": {
-        "branch": "nixos-unstable",
+        "branch": "master",
         "description": "Pinned Nixpkgs tree (master follows nixos-unstable-small, only tags have stable history)",
         "homepage": "",
-        "owner": "nixos",
-        "repo": "nixpkgs-channels",
-        "rev": "3320a06049fc259e87a2bd98f4cd42f15f746b96",
-        "sha256": "1g5l186d5xh187vdcpfsz1ff8s749949c1pclvzfkylpar09ldkl",
+        "owner": "ligolang",
+        "repo": "nixpkgs",
+        "rev": "9bf2844ab784c0d739f9726015f7d6d2b6edc524",
+        "sha256": "10ffwvd5cx7n74fliy6fi7rz1n739wv8cdsxapfvcj76vvspbksg",
         "type": "tarball",
-        "url": "https://github.com/nixos/nixpkgs-channels/archive/3320a06049fc259e87a2bd98f4cd42f15f746b96.tar.gz",
-        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+        "url": "https://gitlab.com/ligolang/nixpkgs/repository/archive.tar.gz?ref=9bf2844ab784c0d739f9726015f7d6d2b6edc524",
+        "url_template": "https://gitlab.com/<owner>/<repo>/repository/archive.tar.gz?ref=<rev>"
     },
     "node-sass-bin": {
         "sha256": "0dl91l414na44h090cgghd06q0j2whlj9h98im2qb9823glq7xff",

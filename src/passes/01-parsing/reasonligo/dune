@@ -163,8 +163,8 @@
            ParToken.mly
            Parser.mly))))
 
-(alias
-  (name runtest)
+(rule
+  (alias runtest)
   (deps error.messages error.messages.new)
   (action
     (run menhir
