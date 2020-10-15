@@ -4,6 +4,7 @@ open Errors
 module Append_tree = Tree.Append
 open! Mini_c
 open Trace
+open Function
 
 let annotation_or_label annot label = Option.unopt ~default:label (Helpers.remove_empty_annotation annot)
 
@@ -14,12 +15,10 @@ let t_sum ~layout return compile_type m =
   | L_tree -> (
     let node = Append_tree.of_list lst in
     let aux a b : (type_expression annotated, spilling_error) result =
-      let%bind a = a in
-      let%bind b = b in
       let%bind t = return @@ T_or (a, b) in
       ok (None, t)
     in
-    let%bind m' = Append_tree.fold_ne
+    let%bind m' = Append_tree.bind_fold_ne
       (fun (Label label, ({associated_type;michelson_annotation}: AST.row_element)) ->
           let label = String.uncapitalize_ascii label in
           let%bind a = compile_type associated_type in
@@ -34,20 +33,19 @@ let t_sum ~layout return compile_type m =
       let l = String.uncapitalize_ascii l in
       let%bind t = compile_type x.associated_type in
       let annot_opt = Some (annotation_or_label x.michelson_annotation l) in
-      ok (t , annot_opt)
+      ok (annot_opt,t)
     in
-    let rec lst_fold = function
+    let rec lst_fold_right = function
       | [] -> fail (corner_case ~loc:__LOC__ "t_record empty")
       | [ x ] -> aux x
       | hd :: tl -> (
-          let%bind (hd_t , hd_annot_opt) = aux hd in
-          let%bind (tl_t , tl_annot_opt) = lst_fold tl in
-          let%bind t = return @@ T_or ((hd_annot_opt , hd_t) , (tl_annot_opt , tl_t)) in
-          ok (t , None)
+          let%bind hd = aux hd in
+          let%bind tl = lst_fold_right tl in
+          let%bind t = return @@ T_or (hd, tl) in
+          ok (None,t)
         )
     in
-    let%bind (t , _ ) = lst_fold lst in
-    ok t
+      map snd @@ lst_fold_right lst
   )
 
 let t_record_to_pairs ~layout return compile_type m =
@@ -58,12 +56,10 @@ let t_record_to_pairs ~layout return compile_type m =
   | L_tree -> (
       let node = Append_tree.of_list lst in
       let aux a b : (type_expression annotated, spilling_error) result =
-        let%bind a = a in
-        let%bind b = b in
         let%bind t = return @@ T_pair (a, b) in
         ok (None, t)
       in
-      let%bind m' = Append_tree.fold_ne
+      let%bind m' = Append_tree.bind_fold_ne
           (fun (Label label, ({associated_type;michelson_annotation}: AST.row_element)) ->
              let%bind a = compile_type associated_type in
              ok ((if is_tuple_lmap then
@@ -80,20 +76,19 @@ let t_record_to_pairs ~layout return compile_type m =
       let aux (Label l , (x : _ row_element_mini_c)) =
         let%bind t = compile_type x.associated_type in
         let annot_opt = Some (annotation_or_label x.michelson_annotation l) in
-        ok (t , annot_opt)
+        ok (annot_opt,t)
       in
-      let rec lst_fold = function
+      let rec lst_fold_right = function
         | [] -> fail (corner_case ~loc:__LOC__ "t_record empty")
         | [ x ] -> aux x
         | hd :: tl -> (
-            let%bind (hd_t , hd_annot_opt) = aux hd in
-            let%bind (tl_t , tl_annot_opt) = lst_fold tl in
-            let%bind t = return @@ T_pair ((hd_annot_opt , hd_t) , (tl_annot_opt , tl_t)) in
-            ok (t , None)
+          let%bind hd = aux hd in
+          let%bind tl = lst_fold_right tl in
+          let%bind t = return @@ T_pair (hd, tl) in
+            ok (None, t)
           )
       in
-      let%bind (t , _ ) = lst_fold lst in
-      ok t
+      map snd @@ lst_fold_right lst
     )
 
 let record_access_to_lr ~layout ty m_ty index =
@@ -103,24 +98,20 @@ let record_access_to_lr ~layout ty m_ty index =
   | L_tree -> (
       let node_tv = Append_tree.of_list lst in
       let%bind path =
-        let aux (i , _) = i = index in
         trace_option (corner_case ~loc:__LOC__ "record access leaf") @@
-        Append_tree.exists_path aux node_tv
+        Append_tree.exists_path_to index node_tv
       in
       let lr_path = List.map (fun b -> if b then `Right else `Left) path in
-      let%bind (_ , lst) =
         let aux = fun (ty , acc) cur ->
           let%bind (a , b) =
             trace_option (corner_case ~loc:__LOC__ "record access pair") @@
             Mini_c.get_t_pair ty
           in
           match cur with
-          | `Left -> ok (a , acc @ [(a , `Left)])
-          | `Right -> ok (b , acc @ [(b , `Right)] )
+          | `Left  -> ok (a , (a , `Left)  :: acc)
+          | `Right -> ok (b , (b , `Right) :: acc )
         in
-        bind_fold_list aux (ty , []) lr_path
-      in
-      ok lst
+        map (List.rev <@ snd) @@ bind_fold_list aux (ty , []) lr_path
     )
   | L_comb -> (
       let rec aux n ty last =
@@ -139,7 +130,7 @@ let record_access_to_lr ~layout ty m_ty index =
               Mini_c.get_t_pair ty
             in
             let%bind prec = aux (n - 1) b last in
-            ok (prec @ [(b , `Right)])
+            ok ((b , `Right)::prec)
           )
       in
       let%bind index =
@@ -147,8 +138,7 @@ let record_access_to_lr ~layout ty m_ty index =
         fun () -> List.find_index (fun (label , _) -> label = index) lst
       in
       let last = (index + 1 = List.length lst) in
-      let%bind lst = aux index ty last in
-      ok (List.rev lst)
+      aux index ty last
     )
 
 let record_to_pairs compile_expression (return:?tv:_ -> _) record_t record : Mini_c.expression spilling_result =
@@ -158,26 +148,18 @@ let record_to_pairs compile_expression (return:?tv:_ -> _) record_t record : Min
   | L_tree -> (
     let node = Append_tree.of_list lst in
     let aux a b : (expression , spilling_error) result =
-      let%bind a = a in
-      let%bind b = b in
       let a_ty = Combinators.Expression.get_type a in
       let b_ty = Combinators.Expression.get_type b in
       let tv   = Combinators.Expression.make_t @@ T_pair ((None, a_ty) , (None, b_ty)) in
       return ~tv @@ ec_pair a b
     in
     trace_strong (corner_case ~loc:__LOC__ "record build") @@
-    Append_tree.fold_ne (compile_expression) aux node
+    Append_tree.bind_fold_ne (compile_expression) aux node
   )
   | L_comb -> (
       let rec aux = function
         | [] -> fail (corner_case ~loc:__LOC__ "record build")
         | [x] -> compile_expression x
-        | [ a ; b ] -> (
-            let%bind a' = compile_expression a in
-            let%bind b' = compile_expression b in
-            let tv = t_pair (None,a'.type_expression) (None,b'.type_expression) in
-            return ~tv (ec_pair a' b')
-          )
         | hd::tl -> (
             let%bind hd' = compile_expression hd in
             let%bind tl' = aux tl in
@@ -194,9 +176,8 @@ let constructor_to_lr ~(layout) ty m_ty index =
   | L_tree -> (
       let node_tv = Append_tree.of_list lst in
       let%bind path =
-        let aux (i , _) = i = index in
         trace_option (corner_case ~loc:__LOC__ "constructor leaf") @@
-        Append_tree.exists_path aux node_tv
+        Append_tree.exists_path_to index node_tv
       in
       let lr_path = List.map (fun b -> if b then `Right else `Left) path in
       let%bind (_ , lst) =
@@ -206,12 +187,12 @@ let constructor_to_lr ~(layout) ty m_ty index =
             Mini_c.get_t_or ty
           in
           match cur with
-          | `Left -> ok (a , acc @ [(ty , `Left)])
-          | `Right -> ok (b , acc @ [(ty , `Right)] )
+          | `Left  -> ok (a , (ty , `Left)  :: acc)
+          | `Right -> ok (b , (ty , `Right) :: acc )
         in
         bind_fold_list aux (ty , []) lr_path
       in
-      ok @@ List.rev lst
+      ok @@ lst
     )
   | L_comb -> (
     let%bind index =
@@ -229,10 +210,10 @@ let constructor_to_lr ~(layout) ty m_ty index =
             Mini_c.get_t_or ty
           in
           let%bind prec = aux (n - 1) b in
-          ok (prec @ [(ty , `Right)])
+          ok ((ty , `Right)::prec)
         )
     in
-    aux index ty
+    map List.rev @@ aux index ty
     )
 
 type variant_tree = [
@@ -274,12 +255,6 @@ let match_variant_to_tree ~layout ~compile_type content : variant_pair spilling_
         | [(k , ty)] -> (
             let%bind t = compile_type ty in
             ok (`Leaf k , t)
-          )
-        | [ (ka , ta) ; (kb , tb) ] -> (
-            let%bind ta' = compile_type ta in
-            let%bind tb' = compile_type tb in
-            let tv = Mini_c.t_union (None, ta') (None, tb') in
-            ok (`Node ((`Leaf ka , ta') , (`Leaf kb , tb')) , tv)
           )
         | (khd , thd)::tl -> (
             let%bind thd' = compile_type thd in
