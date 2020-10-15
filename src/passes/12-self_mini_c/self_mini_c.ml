@@ -12,7 +12,7 @@ let get_entry l n = trace_option could_not_aggregate_entry @@ Mini_c.get_entry l
 let map_expression :
   (expression -> expression) -> (expression -> expression) =
   fun f e ->
-  match Helpers.map_expression (fun e -> ok (f e)) e with
+  match to_stdlib_result @@ Helpers.map_expression (fun e -> ok (f e)) e with
   | Ok (e, _) -> e
   | Error _ -> assert false (* impossible *)
 

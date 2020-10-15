@@ -20,7 +20,7 @@ let wrap_test name f =
   let format = Display.bind_format test_format Main.Formatter.error_format in
   let disp = Simple_utils.Display.Displayable {value=result ; format} in
   let s = Simple_utils.Display.convert ~display_format:(Human_readable) disp in
-  match result with
+  match to_stdlib_result result with
   | Ok ((), annotations) -> ignore annotations; ()
   | Error _ ->
     Format.printf "%s\n%!" s ;
@@ -42,7 +42,7 @@ let expression_to_core expression =
 
 open Ast_imperative
 
-let pack_payload (program:Ast_typed.program) (payload:expression) : (bytes,_) result =
+let pack_payload (program:Ast_typed.program_fully_typed) (payload:expression) : (bytes,_) result =
   let%bind code =
     let env = Ast_typed.program_environment Environment.default program in
 
@@ -57,7 +57,7 @@ let pack_payload (program:Ast_typed.program) (payload:expression) : (bytes,_) re
     Ligo.Run.Of_michelson.evaluate_expression code.expr code.expr_ty in
   Ligo.Run.Of_michelson.pack_payload payload payload_ty
 
-let sign_message (program:Ast_typed.program) (payload : expression) sk : (string,_) result =
+let sign_message (program:Ast_typed.program_fully_typed) (payload : expression) sk : (string,_) result =
   let open Tezos_crypto in
   let%bind packed_payload = pack_payload program payload in
   let signed_data = Signature.sign sk packed_payload in
@@ -100,7 +100,7 @@ let typed_program_to_michelson (program, env, state) entry_point =
   ok michelson
 
 let typed_program_with_imperative_input_to_michelson
-    ((program , env, state): Ast_typed.program * Ast_typed.environment * _ Typesystem.Solver_types.typer_state) (entry_point: string)
+    ((program , env, state): Ast_typed.program_fully_typed * Ast_typed.environment * _ Typesystem.Solver_types.typer_state) (entry_point: string)
     (input: Ast_imperative.expression) : (Stacking.compiled_expression,_) result =
   Printexc.record_backtrace true;
   let%bind sugar            = Compile.Of_imperative.compile_expression input in
@@ -115,7 +115,7 @@ let () = (if Ast_typed.Debug.debug_new_typer then Format.printf "\n\nSTATE IZ=%a
   Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg compiled_applied
 
 let run_typed_program_with_imperative_input ?options
-    ((program, env, state): Ast_typed.program * Ast_typed.environment * _ Typesystem.Solver_types.typer_state) (entry_point: string)
+    ((program, env, state): Ast_typed.program_fully_typed * Ast_typed.environment * _ Typesystem.Solver_types.typer_state) (entry_point: string)
     (input: Ast_imperative.expression) : (Ast_core.expression, _) result =
   let%bind michelson_program = typed_program_with_imperative_input_to_michelson (program, env, state) entry_point input in
   let%bind michelson_output  = Ligo.Run.Of_michelson.run_no_failwith ?options michelson_program.expr michelson_program.expr_ty in
@@ -168,7 +168,7 @@ let expect_evaluate (program, _env, _state) entry_point expecter =
   | Runned_result.Fail _ -> fail test_not_expected_to_fail in
   expecter res'
 
-let expect_eq_evaluate ((program , env, state) : Ast_typed.program * Ast_typed.environment * _ Typesystem.Solver_types.typer_state) entry_point expected =
+let expect_eq_evaluate ((program , env, state) : Ast_typed.program_fully_typed * Ast_typed.environment * _ Typesystem.Solver_types.typer_state) entry_point expected =
   let%bind expected  = expression_to_core expected in
   let expecter = fun result ->
     trace_option (test_expect expected result) @@

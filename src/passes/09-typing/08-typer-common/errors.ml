@@ -1,6 +1,5 @@
 open Simple_utils.Display
 
-
 let stage = "typer"
 
 type typer_error = [
@@ -68,6 +67,10 @@ type typer_error = [
   | `Typer_different_types of Ast_typed.type_expression * Ast_typed.type_expression
   | `Typer_variant_redefined_error of Location.t
   | `Typer_record_redefined_error of Location.t
+  | `Typer_constant_tag_number_of_arguments of string * Ast_typed.constant_tag * Ast_typed.constant_tag * int * int
+  | `Typer_typeclass_not_a_rectangular_matrix
+  | `Typer_could_not_remove
+  | `Typer_internal_error of string * string
 ]
 
 let missing_funarg_annotation v = `Typer_missing_funarg_annotation v
@@ -148,6 +151,10 @@ let constant_declaration_tracer (name: Ast_core.expression_variable) (ae:Ast_cor
 let in_match_variant_tracer (ae:Ast_core.matching_expr) (err:typer_error) =
   `Typer_match_variant_tracer (ae,err)
 let different_types a b = `Typer_different_types (a,b)
+let different_constant_tag_number_of_arguments loc opa opb lena lenb : typer_error = `Typer_constant_tag_number_of_arguments (loc, opa, opb, lena, lenb)
+let typeclass_not_a_rectangular_matrix = `Typer_typeclass_not_a_rectangular_matrix
+let internal_error (loc : string) (msg : string) : typer_error = `Typer_internal_error (loc, msg)
+let could_not_remove : typer_error = `Typer_could_not_remove
 
 let rec error_ppformat : display_format:string display_format ->
   Format.formatter -> typer_error -> unit =
@@ -495,6 +502,17 @@ The following forms of subtractions are possible:
       Format.fprintf f
         "@[<hv>%a@.Redefined record. @]"
         Snippet.pp loc
+    | `Typer_constant_tag_number_of_arguments (loc, opa, _opb, lena, lenb) ->
+      Format.fprintf f
+        "@[<hv> different number of arguments to type constructors.@ \
+        Expected these two n-ary type constructors to be the same, but they have different number\
+        of arguments (both use the %s type constructor, but they have %d and %d arguments, respectively)@ \
+        Thrown by compiler at %s@]"
+        (Format.asprintf "%a" Ast_typed.PP.constant_tag opa) lena lenb loc
+    | `Typer_typeclass_not_a_rectangular_matrix ->
+      Format.fprintf f "@[<hv>internal error: typeclass is not represented as a rectangular matrix with one column per argument@]"
+    | `Typer_internal_error (loc, msg) -> Format.fprintf f "internal error at %s: %s" loc msg
+    | `Typer_could_not_remove -> Format.fprintf f "Heuristic requested removal of a constraint that cannot be removed"
   )
 
 let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
@@ -1137,6 +1155,44 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     let message = `String "Redefined record" in
     let content = `Assoc [
       ("message", message) ;
-      ("location", Location.to_yojson loc) ;
+      ("location", Location.to_yojson loc)
+    ] in
+    json_error ~stage ~content
+  | `Typer_constant_tag_number_of_arguments (loc, opa, opb, lena, lenb) ->
+    let message = `String "different number of arguments to type constructors.\ 
+      Expected these two n-ary type constructors to be the same, but they have different number\ 
+      of arguments" in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.constant_tag opa) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.constant_tag opb) in
+    let op = `String (Format.asprintf "%a" Ast_typed.PP.constant_tag opa) in
+    let len_a = `Int lena in
+    let len_b = `Int lenb in
+    let loc = `String loc in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+      ("op", op) ;
+      ("len_a", len_a) ;
+      ("len_b", len_b) ;
+      ("thrown by compiler at", loc) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_typeclass_not_a_rectangular_matrix ->
+    let message = `String "internal error: typeclass is not represented as a rectangular matrix with one column per argument" in
+    let content = `Assoc [
+      ("message", message);
+    ] in
+    json_error ~stage ~content
+  | `Typer_internal_error (loc, msg) ->
+    let message = `String (Format.sprintf "internal error at %s: %s" loc msg) in
+    let content = `Assoc [
+      ("message", message);
+    ] in
+    json_error ~stage ~content
+  | `Typer_could_not_remove ->
+    let message = `String (Format.sprintf "Heuristic requested removal of a constraint that cannot be removed" ) in
+    let content = `Assoc [
+      ("message", message);
     ] in
     json_error ~stage ~content

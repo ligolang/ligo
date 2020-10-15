@@ -3,12 +3,9 @@ open Ast_typed.Types
 module Set = RedBlackTrees.PolySet
 
 type 'old_constraint_type selector_input = 'old_constraint_type (* some info about the constraint just added, so that we know what to look for *)
-type 'selector_output selector_outputs =
-    WasSelected of 'selector_output list
-  | WasNotSelected
-type new_constraints = type_constraint list
+type 'selector_output selector_outputs = 'selector_output list
 type ('old_constraint_type, 'selector_output , 'private_storage) selector = 'old_constraint_type selector_input -> 'private_storage -> structured_dbs -> 'private_storage * 'selector_output selector_outputs
-type ('selector_output , 'private_storage, 'errors) propagator = 'private_storage -> structured_dbs -> 'selector_output -> ('private_storage * new_constraints, 'errors) result
+type ('selector_output , 'private_storage, 'errors) propagator = 'private_storage -> structured_dbs -> 'selector_output -> ('private_storage * updates, 'errors) result
 type ('old_constraint_type , 'selector_output , 'private_storage, 'errors) propagator_heuristic = {
   (* sub-sub component: lazy selector (don't re-try all selectors every time)
    * For now: just re-try everytime *)

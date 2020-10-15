@@ -1,10 +1,10 @@
 open Display
 
-let ppx_ppformat ~display_format f (buf,_) =
+let ppx_ppformat ~display_format f buf =
   match display_format with
   | Human_readable | Dev -> Format.fprintf f "%s" (Buffer.contents buf)
 
-let ppx_jsonformat (buf,_) : json =
+let ppx_jsonformat buf : json =
   let s = Format.asprintf "%s" (Buffer.contents buf) in
   `String s
 

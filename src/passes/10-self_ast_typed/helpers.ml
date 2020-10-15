@@ -146,7 +146,7 @@ and map_cases : self_ast_typed_error mapper -> matching_expr -> (matching_expr ,
       ok @@ Match_variant {cases ; tv}
     )
 
-and map_program : self_ast_typed_error mapper -> program -> (program, self_ast_typed_error) result = fun m p ->
+and map_program : self_ast_typed_error mapper -> program_fully_typed -> (program_fully_typed, self_ast_typed_error) result = fun m (Program_Fully_Typed p) ->
   let aux = fun (x : declaration) ->
     match x with
     | Declaration_constant {binder; expr ; inline} -> (
@@ -155,7 +155,8 @@ and map_program : self_ast_typed_error mapper -> program -> (program, self_ast_t
     )
     | Declaration_type t -> ok (Declaration_type t)
   in
-  bind_map_list (bind_map_location aux) p
+  let%bind p = bind_map_list (bind_map_location aux) p in
+  ok @@ Program_Fully_Typed p
 
 type ('a , 'err) fold_mapper = 'a -> expression -> (bool * 'a * expression , 'err) result
 let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> ('a * expression , 'err) result = fun f a e ->
@@ -233,7 +234,7 @@ and fold_map_cases : ('a , self_ast_typed_error) fold_mapper -> 'a -> matching_e
       ok @@ (init, Match_variant {cases ; tv})
     )
 
-and fold_map_program : ('a, self_ast_typed_error) fold_mapper -> 'a -> program -> ('a * program , self_ast_typed_error) result = fun m init p ->
+and fold_map_program : ('a, self_ast_typed_error) fold_mapper -> 'a -> program_fully_typed -> ('a * program_fully_typed , self_ast_typed_error) result = fun m init (Program_Fully_Typed p) ->
   let aux = fun (acc,acc_prg) (x : declaration Location.wrap) ->
     match Location.unwrap x with
     | Declaration_constant {binder ; expr ; inline} -> (
@@ -246,14 +247,15 @@ and fold_map_program : ('a, self_ast_typed_error) fold_mapper -> 'a -> program -
         ok (acc, List.append acc_prg [{x with wrap_content}])
       )
   in
-  bind_fold_list aux (init,[]) p
+  let%bind (a,p) = bind_fold_list aux (init,[]) p in
+  ok (a, Program_Fully_Typed p)
 
 type contract_type = {
   parameter : Ast_typed.type_expression ;
   storage : Ast_typed.type_expression ;
 }
 
-let fetch_contract_type : string -> program -> (contract_type, self_ast_typed_error) result = fun main_fname program ->
+let fetch_contract_type : string -> program_fully_typed -> (contract_type, self_ast_typed_error) result = fun main_fname (Program_Fully_Typed program) ->
   let aux declt = match Location.unwrap declt with
     | Declaration_constant ({ binder ; expr=_ ; inline=_ } as p) ->
        if Var.equal binder.wrap_content (Var.of_name main_fname)

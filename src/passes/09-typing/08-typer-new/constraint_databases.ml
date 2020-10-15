@@ -1,6 +1,7 @@
 module Map = RedBlackTrees.PolyMap
 module UF = UnionFind.Poly2
 open Ast_typed.Types
+open Trace
 
 (* Light wrapper for API for grouped_by_variable in the structured
    db, to access it modulo unification variable aliases. *)
@@ -19,8 +20,6 @@ let get_constraints_related_to : type_variable -> structured_dbs -> constraints 
 
 let add_constraints_related_to : type_variable -> constraints -> structured_dbs -> structured_dbs =
   fun variable c dbs ->
-    (* let (variable_repr , _height) , aliases = UF.get_or_set variable dbs.aliases in
-       let dbs = { dbs with aliases } in *)
     let variable_repr , aliases = UF.get_or_set variable dbs.aliases in
     let dbs = { dbs with aliases } in
     let grouped_by_variable = Map.update variable_repr (function
@@ -35,6 +34,73 @@ let add_constraints_related_to : type_variable -> constraints -> structured_dbs 
     in
     let dbs = { dbs with grouped_by_variable } in
     dbs
+
+exception CouldNotRemove
+exception NestedFailure of string
+
+let rm_constraints_related_to : type_variable -> constraints -> structured_dbs -> (structured_dbs, _) result =
+  fun variable c dbs ->
+    let variable_repr , aliases = UF.get_or_set variable dbs.aliases in
+    let dbs = { dbs with aliases } in
+    (* TODO: remove the empty set if a variable is not associated with
+       any constraint after this removal. *)
+    let rm_typeclass_simpl : c_typeclass_simpl list -> c_typeclass_simpl list -> c_typeclass_simpl list =
+      fun x c ->
+        (* TODO: use a set, not a list. *)
+        List.fold_left (fun x' ci ->
+            try
+              List.remove_element
+                ~compare:(fun a b ->
+                    try
+                      Ast_typed.Compare.constraint_identifier a.id_typeclass_simpl b.id_typeclass_simpl
+                    with
+                      Failure msg -> raise (NestedFailure msg))
+                ci
+                x'
+            with
+              Failure _msg -> raise CouldNotRemove
+            | NestedFailure msg -> raise (Failure msg))
+          x
+          c in
+    let%bind grouped_by_variable =
+      match
+        Map.update variable_repr (function
+              None -> raise CouldNotRemove (* Some c *)
+            | Some (x : constraints) -> Some {
+                constructor = (assert (List.length c.constructor = 0) (* Only removal of typeclass_simpl implemented for now (the others don't have constraint ids yet) *); x.constructor) ;
+                poly        = (assert (List.length c.poly        = 0) (* Only removal of typeclass_simpl implemented for now (the others don't have constraint ids yet) *); x.poly       ) ;
+                tc          = rm_typeclass_simpl x.tc c.tc         ;
+                row         = (assert (List.length c.row         = 0) (* Only removal of typeclass_simpl implemented for now (the others don't have constraint ids yet) *); x.row        ) ;
+              })
+          dbs.grouped_by_variable
+      with
+        exception CouldNotRemove -> fail Typer_common.Errors.could_not_remove
+      | result -> ok result
+    in
+    let dbs = { dbs with grouped_by_variable } in
+    ok dbs
+
+let register_by_constraint_identifier : c_typeclass_simpl -> structured_dbs -> structured_dbs =
+  fun c dbs ->
+  { dbs with by_constraint_identifier = Map.add c.id_typeclass_simpl c dbs.by_constraint_identifier }
+
+open Heuristic_tc_fundep_utils
+
+let register_typeclasses_constrained_by : c_typeclass_simpl -> structured_dbs -> structured_dbs =
+  fun c dbs ->
+  let tc = tc_to_constraint_identifier c in
+  let aux' = function
+      Some set -> Some (Set.add tc set)
+    | None -> Some (Set.add tc (Set.create ~cmp:Ast_typed.Compare.constraint_identifier)) in
+  let aux typeclasses_constrained_by tv =
+    Map.update tv aux' typeclasses_constrained_by in
+  let typeclasses_constrained_by =
+    List.fold_left
+      aux
+      dbs.typeclasses_constrained_by
+      (List.rev (constraint_identifier_to_tc dbs tc).args) in
+  { dbs with typeclasses_constrained_by }
+
 
 let merge_constraints : type_variable -> type_variable -> structured_dbs -> structured_dbs =
   fun variable_a variable_b dbs ->

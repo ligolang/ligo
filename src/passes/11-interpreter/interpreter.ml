@@ -371,8 +371,8 @@ and eval : Ast_typed.expression -> env -> (value , _) result
       ok @@ V_Func_rec (fun_name, lambda.binder, lambda.result, env)
     | E_raw_code _ -> failwith "Can't evaluate a raw code insertion"
 
-let eval : Ast_typed.program -> (string , _) result =
-  fun prg ->
+let eval : Ast_typed.program_fully_typed -> (string , _) result =
+  fun (Program_Fully_Typed prg) ->
   let aux  (pp,top_env) el =
     match Location.unwrap el with
     | Ast_typed.Declaration_constant {binder; expr ; inline=_ ; _} ->

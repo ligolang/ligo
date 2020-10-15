@@ -26,8 +26,10 @@ let rec error_ppformat : display_format:string display_format ->
     | `Test_expect_eq_n_tracer (i,err) ->
       Format.fprintf f "@[<hv>Expected eq_n=%d@ %a@]"
         i (error_ppformat ~display_format) err
-    | `Test_internal t ->
-      Format.fprintf f "@[<hv>Internal error:@ %s@]" t
+    | `Test_internal loc ->
+      Format.fprintf f "@[<hv>Internal error:@ %s@]" loc
+    | `Test_internal_msg (loc, msg) ->
+      Format.fprintf f "@[<hv>Internal error:@ %s@ %s@]" loc msg
     | `Test_md_file_tracer (md_file,s,grp,prg,err) ->
       Format.fprintf f "@[<hv>Failed to compile %s@ syntax: %s@ group: %s@ program: %s@ %a@]"
         md_file s grp prg (error_ppformat ~display_format) err
@@ -156,6 +158,7 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Test_expect_exp_tracer _
   | `Test_expect_eq_n_tracer _
   | `Test_internal _
+  | `Test_internal_msg _
   | `Test_md_file_tracer _
   | `Test_bad_code_block _
   | `Test_expected_to_fail

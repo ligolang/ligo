@@ -189,6 +189,8 @@ let compare_c_constructor_simpl { reason_constr_simpl = _ ; tv=a1; c_tag=a2; tv_
      not part of the type *)
   compare_type_variable a1 b1 <? fun () -> compare_simple_c_constant a2 b2  <? fun () -> List.compare ~compare:compare_type_variable a3 b3
 
+let compare_c_constructor_simpl_list = List.compare ~compare:compare_c_constructor_simpl
+
 (* TODO: use Ast_typed.Compare_generic.output_specialize1 etc. but don't compare the reasons *)
 let compare_output_specialize1 { poly = a1; a_k_var = a2 } { poly = b1; a_k_var = b2 } =
   compare_c_poly_simpl a1 b1 <? fun () ->
@@ -204,6 +206,14 @@ let compare_c_typeclass_simpl
     { reason_typeclass_simpl = _ ; tc = a1 ; args = a2 }
     { reason_typeclass_simpl = _ ; tc = b1 ; args = b2 } =
   compare_typeclass a1 b1 <? fun () -> compare_c_typeclass_simpl_args a2 b2
+
+let compare_refined_typeclass { original=a1; refined=r1; vars=a2 } { original=b1; refined=r2; vars=b2 } =
+  compare_c_typeclass_simpl a1 b1 <? fun () ->
+  compare_c_typeclass_simpl r1 r2 <? fun () ->
+    List.compare ~compare:compare_type_variable (PolySet.elements a2) (PolySet.elements b2)
+
+let compare_output_tc_fundep { tc=a1; c=a2 } { tc=b1; c=b2 } =
+  compare_refined_typeclass a1 b1 <? fun () -> compare_c_constructor_simpl a2 b2
 
 (* Using a pretty-printer from the PP.ml module creates a dependency
    loop, so the one that we need temporarily for debugging purposes

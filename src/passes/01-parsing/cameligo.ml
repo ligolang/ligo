@@ -160,8 +160,8 @@ let pretty_print cst =
   in Trace.ok buffer
 
 let pretty_print_from_source libs source =
-  match parse_file libs source with
-    Stdlib.Error _ as e -> e
+  match Trace.to_stdlib_result @@ parse_file libs source with
+    Stdlib.Error e -> Trace.fail e
   | Ok cst ->
     pretty_print @@ fst cst
 

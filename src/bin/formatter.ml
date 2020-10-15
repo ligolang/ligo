@@ -1,12 +1,12 @@
 open Display
 
-let declarations_ppformat ~display_format f ((source_file,decls),_) =
+let declarations_ppformat ~display_format f (source_file,decls) =
   match display_format with
   | Human_readable | Dev ->
     Format.fprintf f "%s declarations:\n" source_file ;
     List.iter (fun decl -> Format.fprintf f "%s\n" decl) decls
 
-let declarations_jsonformat ((source_file,decls),_) : json =
+let declarations_jsonformat (source_file,decls) : json =
   let json_decl = List.map (fun decl -> `String decl) decls in
   `Assoc [ ("source_file", `String source_file) ; ("declarations", `List json_decl) ]
 
@@ -28,12 +28,12 @@ let changelog_format : 'a format = {
   to_json = changelog_jsonformat;
 }
 
-let contract_size_ppformat ~display_format f (contract_size,_) =
+let contract_size_ppformat ~display_format f contract_size =
   match display_format with
   | Human_readable | Dev ->
     Format.fprintf f "%d bytes" contract_size
 
-let contract_size_jsonformat (contract_size,_) : json =
+let contract_size_jsonformat contract_size : json =
   `Int contract_size
 
 let contract_size_format : 'a format = {
@@ -54,7 +54,7 @@ module Michelson_formatter = struct
     | `Hex
   ]
 
-  let michelson_ppformat michelson_format ~display_format f (a,_) =
+  let michelson_ppformat michelson_format ~display_format f a =
     let mich_pp = fun michelson_format ->  match michelson_format with
       | `Text -> pp
       | `Json -> pp_json
@@ -65,7 +65,7 @@ module Michelson_formatter = struct
        Format.pp_print_string f m
     )
 
-  let michelson_jsonformat michelson_format (a,_) : Display.json = match michelson_format with
+  let michelson_jsonformat michelson_format a : Display.json = match michelson_format with
     | `Text ->
       let code_as_str = Format.asprintf "%a" pp a in
       `Assoc [("text_code" , `String code_as_str)]

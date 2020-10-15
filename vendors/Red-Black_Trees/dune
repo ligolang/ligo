@@ -2,5 +2,5 @@
   (name RedBlackTrees)
   (public_name RedBlackTrees)
   (wrapped false)
-  (modules PolyMap PolySet RedBlack RedBlackTrees) ; PolyMapMain PolySetMain RedBlackMain
+  (modules PolyMap PolyBiMap PolySet RedBlack RedBlackTrees) ; PolyMapMain PolySetMain RedBlackMain
 )

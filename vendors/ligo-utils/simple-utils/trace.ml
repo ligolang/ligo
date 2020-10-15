@@ -6,6 +6,7 @@
 *)
 
 module Trace_tutorial = struct
+  [@warning "-32"]
   (* The trace monad is fairly similar to the predefined [option]
      type. It is an instance of the predefined [result] type. *)
 
@@ -232,6 +233,8 @@ type nonrec ('value, 'error) result = ('value * annotation_thunk list, 'error) r
 let ok x = Ok (x, [])
 
 let fail err = Error err
+
+let to_stdlib_result : ('value, 'error) result -> ('value * annotation_thunk list, 'error) Stdlib.result = fun x -> x
 
 (* Monadic operators *)
 

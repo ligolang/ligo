@@ -3,13 +3,13 @@ open Ast_typed
 open Spilling
 open Main_errors
 
-let compile : Ast_typed.program -> (Mini_c.program, _) result = fun p ->
+let compile : Ast_typed.program_fully_typed -> (Mini_c.program, _) result = fun p ->
   trace spilling_tracer @@ compile_program p
 
 let compile_expression : expression -> (Mini_c.expression, _) result = fun e ->
   trace spilling_tracer @@ compile_expression e
 
-let assert_equal_contract_type : Simple_utils.Runned_result.check_type -> string -> Ast_typed.program -> Ast_typed.expression -> (unit , _) result =
+let assert_equal_contract_type : Simple_utils.Runned_result.check_type -> string -> Ast_typed.program_fully_typed -> Ast_typed.expression -> (unit , _) result =
     fun c entry contract param ->
   let%bind entry_point = trace_option entrypoint_not_found (Ast_typed.get_entry contract entry) in
   trace (arguments_check_tracer c) (

@@ -18,11 +18,11 @@ let selector :  (type_constraint_simpl, output_break_ctor, unit) selector =
     let other_cs = (Constraint_databases.get_constraints_related_to c.tv dbs).constructor in
     let other_cs = List.filter (fun (o : c_constructor_simpl) -> Var.equal c.tv o.tv) other_cs in
     let cs_pairs = List.map (fun x -> { a_k_var = c ; a_k'_var' = x }) other_cs in
-    () , WasSelected cs_pairs
-  | SC_Alias       _                -> () , WasNotSelected (* TODO: ??? (beware: symmetry) *)
-  | SC_Poly        _                -> () , WasNotSelected (* TODO: ??? (beware: symmetry) *)
-  | SC_Typeclass   _                -> () , WasNotSelected
-  | SC_Row         _                -> () , WasNotSelected
+    () , cs_pairs
+  | SC_Alias       _                -> () , [] (* TODO: ??? (beware: symmetry) *)
+  | SC_Poly        _                -> () , [] (* TODO: ??? (beware: symmetry) *)
+  | SC_Typeclass   _                -> () , []
+  | SC_Row         _                -> () , []
 
 let propagator : (output_break_ctor , unit , typer_error) propagator =
   fun () dbs selected ->
@@ -48,14 +48,17 @@ let propagator : (output_break_ctor , unit , typer_error) propagator =
                 Solver_should_be_generated.debug_pp_c_constructor_simpl b
                 (Solver_should_be_generated.compare_simple_c_constant a.c_tag b.c_tag))
   else
-    (* a.tv_list = b.tv_list *)
-  if List.length a.tv_list <> List.length b.tv_list then
-    (* TODO : use error monad *)
-    failwith "type error: incompatible types, not same length"
-  else
-    let eqs3 = List.map2 (fun aa bb -> c_equation { tsrc = "solver: propagator: break_ctor aa" ; t = P_variable aa} { tsrc = "solver: propagator: break_ctor bb" ; t = P_variable bb} "propagator: break_ctor") a.tv_list b.tv_list in
+    (* Produce constraint a.tv_list = b.tv_list *)
+    let%bind eqs3 = List.map2 (fun aa bb -> c_equation { tsrc = "solver: propagator: break_ctor aa" ; t = P_variable aa} { tsrc = "solver: propagator: break_ctor bb" ; t = P_variable bb} "propagator: break_ctor") a.tv_list b.tv_list
+        ~ok ~fail:(fun _ _ -> fail @@ different_constant_tag_number_of_arguments __LOC__ a.c_tag b.c_tag (List.length a.tv_list) (List.length b.tv_list)) in
     let eqs = eq1 :: eqs3 in
-    ok (() , eqs)
+    ok (() , [
+        {
+          remove_constraints = [];
+          add_constraints = eqs;
+          justification = "no removal so no justification needed"
+        }
+      ])
 
 let heuristic =
   Propagator_heuristic

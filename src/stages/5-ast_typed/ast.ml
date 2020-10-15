@@ -1,4 +1,4 @@
-[@@@warning "-30"]
+[@@@warning "-30-32"]
 
 open Simple_utils.Function
 include Stage_common.Types
@@ -95,7 +95,11 @@ and matching_expr =
 
 and declaration_loc = declaration location_wrap
 
-and program = declaration_loc list
+and program_ = declaration_loc list
+
+and program_with_unification_vars = Program_With_Unification_Vars of program_
+
+and program_fully_typed = Program_Fully_Typed of program_
 
 (* A Declaration_constant is described by
  *   a name + a type-annotated expression
@@ -325,6 +329,7 @@ and p_apply = {
   }
 
 and p_ctor_args = type_value list
+and p_ctor_args_list = p_ctor_args list
 and p_constant = {
     p_ctor_tag : constant_tag ;
     p_ctor_args : p_ctor_args ;
@@ -388,19 +393,42 @@ and typeclass = tc_allowed list
 
 (* end core *)
 
-type c_constructor_simpl_typeVariableMap = c_constructor_simpl typeVariableMap
+type constraint_identifier =
+| ConstraintIdentifier of int64
+type 'v constraint_identifierMap = (constraint_identifier, 'v) RedBlackTrees.PolyMap.t
+
+type refined_typeclass = {
+  refined : c_typeclass_simpl ;
+  original : c_typeclass_simpl ;
+  vars : type_variable_set ;
+}
+
+and type_variable_set = type_variable poly_set
+and refined_typeclass_constraint_identifierMap = refined_typeclass constraint_identifierMap
+
+and constraint_identifier_set = constraint_identifier RedBlackTrees.PolySet.t
+and constraint_identifier_set_map = constraint_identifier_set typeVariableMap
+
+and c_constructor_simpl_typeVariableMap = c_constructor_simpl typeVariableMap
 and constraints_typeVariableMap = constraints typeVariableMap
+and c_typeclass_simpl_constraint_identifierMap = c_typeclass_simpl constraint_identifierMap
+and constraint_identifier_c_typeclass_simplMap = (c_typeclass_simpl, constraint_identifier) RedBlackTrees.PolyMap.t
 and type_constraint_simpl_list = type_constraint_simpl list
 and structured_dbs = {
-  all_constraints          : type_constraint_simpl_list ;
-  aliases                  : unionfind ;
+  all_constraints            : type_constraint_simpl_list ;
+  aliases                    : unionfind ;
   (* assignments (passive data structure). *)
-  (*   Now                 : just a map from unification vars to types (pb: what about partial types?) *)
+  (*   Now                   : just a map from unification vars to types (pb: what about partial types?) *)
   (*   maybe just local assignments (allow only vars as children of pair(α,β)) *)
-  (* TODO                  : the rhs of the map should not repeat the variable name. *)
-  assignments              : c_constructor_simpl_typeVariableMap ;
-  grouped_by_variable      : constraints_typeVariableMap ; (* map from (unionfind) variables to constraints containing them *)
-  cycle_detection_toposort : unit ;                        (* example of structured db that we'll add later *)
+  (* TODO                    : the rhs of the map should not repeat the variable name. *)
+  assignments                : c_constructor_simpl_typeVariableMap ;
+  grouped_by_variable        : constraints_typeVariableMap ; (* map from (unionfind) variables to constraints containing them *)
+  cycle_detection_toposort   : unit ;                        (* example of structured db that we'll add later *)
+  (* TODO: later have all constraints get an identtifier, not just typeclass constraints. *)
+  by_constraint_identifier   : c_typeclass_simpl_constraint_identifierMap ;
+  refined_typeclasses        : refined_typeclass_constraint_identifierMap ;
+  refined_typeclasses_back   : constraint_identifier_c_typeclass_simplMap ;
+  typeclasses_constrained_by : constraint_identifier_set_map ;
 }
 
 and c_constructor_simpl_list = c_constructor_simpl list
@@ -418,12 +446,17 @@ and type_variable_list = type_variable list
 and type_variable_lmap = type_variable label_map
 and c_constructor_simpl = {
   reason_constr_simpl : string ;
+  (* If false, the constraint can be deleted without compromising the correctness of the typechecker: it might be a constraint used for bookkeeping which helps with inference, but its removal does not risk causing an ill-typed program to be accepted. If true, this constraint might (or might not) be necessary for correctness. It is always safe to use "true" for correctness. Use "false" only when being sure it is safe to remove that constraint. *)
+  is_mandatory_constraint : bool ;
   tv : type_variable;
   c_tag : constant_tag;
+  (* Types wih no arguments like int, string etc. have an empty tv_list *)
   tv_list : type_variable_list;
 }
 and c_row_simpl = {
   reason_row_simpl : string ;
+  (* see description above in c_constructor_simpl *)
+  is_mandatory_constraint : bool ;
   tv : type_variable;
   r_tag : row_tag;
   tv_map : type_variable_lmap;
@@ -438,11 +471,16 @@ and c_equation_e = {
   }
 and c_typeclass_simpl = {
   reason_typeclass_simpl : string ;
+  (* see description above in c_constructor_simpl *)
+  is_mandatory_constraint : bool ;
+  id_typeclass_simpl     : constraint_identifier ;
   tc   : typeclass          ;
   args : type_variable_list ;
 }
 and c_poly_simpl = {
   reason_poly_simpl : string ;
+  (* see description above in c_constructor_simpl *)
+  is_mandatory_constraint : bool ;
   tv     : type_variable ;
   forall : p_forall      ;
 }
@@ -453,8 +491,15 @@ and type_constraint_simpl =
   | SC_Typeclass   of c_typeclass_simpl               (* TC(α, …) *)
   | SC_Row         of c_row_simpl                     (* α = row(l -> β, …) *)
 
+and deduce_and_clean_result = {
+  deduced : c_constructor_simpl_list ;
+  cleaned : c_typeclass_simpl ;
+}
+
 and c_alias = {
     reason_alias_simpl : string ;
+    (* see description above in c_constructor_simpl *)
+    is_mandatory_constraint : bool ;
     a : type_variable ;
     b : type_variable ;
   }
@@ -475,6 +520,11 @@ type output_specialize1 = {
     a_k_var : c_constructor_simpl ;
   }
 
+type output_tc_fundep = {
+    tc : refined_typeclass ;
+    c : c_constructor_simpl ;
+  }
+
 type m_break_ctor__already_selected = output_break_ctor poly_set
 type m_specialize1__already_selected = output_specialize1 poly_set
 
@@ -482,3 +532,12 @@ type already_selected = {
   break_ctor  : m_break_ctor__already_selected  ;
   specialize1 : m_specialize1__already_selected ;
 }
+
+type type_constraint_list = type_constraint list
+type update = {
+  remove_constraints : type_constraint_simpl_list ;
+  add_constraints : type_constraint_list ;
+  justification : string ;
+}
+type updates = update list
+type updates_list = updates list
