@@ -17,6 +17,6 @@ module PP : sig
   open Format
 
   val list_sep_scope : (formatter -> 'a -> unit) -> formatter -> 'a list -> unit
-  val environment : formatter -> environment -> unit 
+  val environment : formatter -> environment -> unit
 
 end

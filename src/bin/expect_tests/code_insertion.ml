@@ -22,16 +22,9 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_michelson_insertion_2.ligo" ; "main" ] ;
   [%expect{xxx|
-    in file "../../test/contracts/negative/bad_michelson_insertion_2.ligo", line 5, characters 34-40
-      4 |   const f : (nat -> nat -> nat)= [%Michelson ({| ADD |} : nat -> nat -> nat)];
-      5 | } with ((nil: list(operation)), f (p, s))
+in file "../../test/contracts/negative/bad_michelson_insertion_2.ligo", line 5, characters 34-40
+  4 |   const f : (nat -> nat -> nat)= [%Michelson ({| ADD |} : nat -> nat -> nat)];
+  5 | } with ((nil: list(operation)), f (p, s))
 
-    Invalid type(s).
-    Expected: "nat", but got: "( nat * nat )". |xxx}]
-
-let%expect_test _ =
-  run_ligo_good [ "compile-contract" ; bad_contract "bad_michelson_insertion_3.ligo" ; "main" ] ;
-  [%expect{|
-    { parameter nat ;
-      storage nat ;
-      code { UNPAIR ; ADD ; NIL operation ; PAIR } } |}]
+Invalid type(s).
+Expected: "nat", but got: "( nat * nat )". |xxx}]

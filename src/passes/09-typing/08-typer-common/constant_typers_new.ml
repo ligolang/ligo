@@ -179,5 +179,5 @@ module Operators_types = struct
     | C_SELF_ADDRESS        -> ok @@ t_self_address;
     | C_IMPLICIT_ACCOUNT    -> ok @@ t_implicit_account;
     | C_SET_DELEGATE        -> ok @@ t_set_delegate ;
-    | c                     -> fail (corner_case (Format.asprintf "Typer not implemented for constant %a" Ast_typed.PP.constant c))
+    | c                     -> fail (corner_case (Format.asprintf "Typer not implemented for constant %a" Ast_typed.PP.constant' c))
 end

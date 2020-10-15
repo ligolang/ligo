@@ -1,7 +1,7 @@
 open Trace
 open Test_helpers
 
-let type_file f = 
+let type_file f =
   Ligo.Compile.Utils.type_file f "pascaligo" (Contract "main")
 
 let get_program =
@@ -14,8 +14,8 @@ let get_program =
         ok program
       )
 
-let compile_main () = 
-  let%bind typed_prg,_,_ = get_program () in 
+let compile_main () =
+  let%bind typed_prg,_,_ = get_program () in
   let%bind mini_c_prg    = Ligo.Compile.Of_typed.compile typed_prg in
   let%bind michelson_prg = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
   let%bind (_contract: Tezos_utils.Michelson.michelson) =
@@ -25,14 +25,14 @@ let compile_main () =
 
 open Ast_imperative
 
-let empty_op_list = 
+let empty_op_list =
   (e_typed_list [] (t_operation ()))
-let empty_message = e_lambda (Location.wrap @@ Var.of_name "arguments")
-  (Some (t_bytes ())) (Some (t_list (t_operation ())))
+let empty_message = e_lambda_ez (Location.wrap @@ Var.of_name "arguments")
+  ~ascr:(t_bytes ()) (Some (t_list (t_operation ())))
   empty_op_list
-let empty_message2 = e_lambda (Location.wrap @@ Var.of_name "arguments")
-  (Some (t_bytes ())) (Some (t_list (t_operation ())))
- ( e_let_in ((Location.wrap @@ Var.of_name "foo"),Some (t_unit ())) [] (e_unit ()) empty_op_list)
+let empty_message2 = e_lambda_ez (Location.wrap @@ Var.of_name "arguments")
+  ~ascr:(t_bytes ()) (Some (t_list (t_operation ())))
+ ( e_let_in_ez (Location.wrap @@ Var.of_name "foo") ~ascr:(t_unit ()) [] (e_unit ()) empty_op_list)
 
 let send_param msg = e_constructor "Send" msg
 let withdraw_param = e_constructor "Withdraw" empty_message
@@ -40,7 +40,7 @@ let withdraw_param = e_constructor "Withdraw" empty_message
 type st_type = {
   state_hash : bytes ;
   threshold:int ;
-  max_proposal:int ; 
+  max_proposal:int ;
   max_msg_size:int ;
   id_counter_list: (int * int) list ;
   msg_store_list: (expression * expression) list ;
@@ -136,7 +136,7 @@ let send_never_accounted () =
   let init_storage' = {
     threshold = 2 ; max_proposal = 1 ;  max_msg_size = 15 ; state_hash = Bytes.empty ;
     id_counter_list = [1,0 ; 2,0] ;
-    msg_store_list = [] 
+    msg_store_list = []
   } in
   let init_storage = storage init_storage' in
   let final_storage = storage { init_storage' with

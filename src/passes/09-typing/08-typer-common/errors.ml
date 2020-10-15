@@ -179,10 +179,10 @@ let rec error_ppformat : display_format:string display_format ->
         Snippet.pp loc
         Ast_typed.PP.expression_variable v
     | `Typer_match_missing_case (m, v, loc) ->
-      let missing = List.fold_left (fun all o -> 
-        match List.find_opt (fun f -> f = o) v with 
+      let missing = List.fold_left (fun all o ->
+        match List.find_opt (fun f -> f = o) v with
         | Some _ -> all
-        | None -> 
+        | None ->
           let (Label o) = o in
           o :: all
       ) [] m in
@@ -197,20 +197,20 @@ let rec error_ppformat : display_format:string display_format ->
       | Label l :: remaining -> (
         match (List.find_opt (fun f -> f = Label l) m)  with
         | Some _ -> (
-          match (List.find_opt (fun f -> f = l) processed) with 
+          match (List.find_opt (fun f -> f = l) processed) with
           | Some _ -> extra processed (l :: redundant) unknown remaining
           | None -> extra (l :: processed) redundant unknown remaining
         )
         | None -> extra processed redundant (l :: unknown) remaining)
       | [] -> (List.rev redundant, List.rev unknown)
       in
-      let (redundant, unknown) = extra [] [] [] v in   
+      let (redundant, unknown) = extra [] [] [] v in
       Format.fprintf f "@[<hv>%a@.Pattern matching over too many cases.@]"
         Snippet.pp loc;
       if List.length redundant > 0 then (
         let redundant = String.concat ", " redundant in
         Format.fprintf f
-          "@[<hv>@.These case(s) are duplicate:@.%s@]"          
+          "@[<hv>@.These case(s) are duplicate:@.%s@]"
           redundant
       );
       if List.length unknown > 0 then (
@@ -302,7 +302,7 @@ let rec error_ppformat : display_format:string display_format ->
 The following forms of subtractions are possible:
   * timestamp - int = timestamp
   * timestamp - timestamp = int
-  * int/nat - int/nat = int 
+  * int/nat - int/nat = int
   * mutez/tez - mutez/tez = mutez.@]"
         Snippet.pp loc
     | `Typer_wrong_size (loc,_t) ->
@@ -354,7 +354,7 @@ The following forms of subtractions are possible:
       Format.fprintf f
         "@[<hv>%a@.Invalid type(s).@.Expected: \"%a\", but got: \"%a\". @]"
         Snippet.pp loc
-        Ast_typed.PP.type_expression expected 
+        Ast_typed.PP.type_expression expected
         Ast_typed.PP.type_expression actual
     | `Typer_expected_record (loc,t) ->
       Format.fprintf f
@@ -553,15 +553,15 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     ] in
     json_error ~stage ~content
   | `Typer_match_missing_case (m, v, loc) ->
-    let missing = List.fold_left (fun all o -> 
-      match List.find_opt (fun f -> f = o) v with 
+    let missing = List.fold_left (fun all o ->
+      match List.find_opt (fun f -> f = o) v with
       | Some _ -> all
-      | None -> 
+      | None ->
         let (Label o) = o in
         `String o :: all
     ) [] m in
     let message = `String "Missing match case" in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in    
+    let loc = `String (Format.asprintf "%a" Location.pp loc) in
     let content = `Assoc [
       ("message", message);
       ("location", loc);
@@ -574,14 +574,14 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     | Label l :: remaining -> (
       match (List.find_opt (fun f -> f = Label l) m)  with
       | Some _ -> (
-        match (List.find_opt (fun f -> f = l) processed) with 
+        match (List.find_opt (fun f -> f = l) processed) with
         | Some _ -> extra processed (`String l :: redundant) unknown remaining
         | None -> extra (l :: processed) redundant unknown remaining
       )
       | None -> extra processed redundant (`String l :: unknown) remaining)
     | [] -> (List.rev redundant, List.rev unknown)
     in
-    let (redundant, unknown) = extra [] [] [] v in   
+    let (redundant, unknown) = extra [] [] [] v in
     let message = `String "Redundant case in match cases" in
     let loc = `String (Format.asprintf "%a" Location.pp loc) in
     let content = `Assoc [
@@ -709,7 +709,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     ] in
     json_error ~stage ~content
   | `Typer_create_contract_lambda (cst,e) ->
-    let message = `String (Format.asprintf "First argument of %a must be inlined using a lambda" Ast_core.PP.constant cst) in
+    let message = `String (Format.asprintf "First argument of %a must be inlined using a lambda" Ast_core.PP.constant' cst) in
     let loc = `String (Format.asprintf "%a" Location.pp e.location) in
     let expression = `String (Format.asprintf "%a" Ast_core.PP.expression e) in
     let content = `Assoc [
@@ -1049,7 +1049,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Typer_converter t ->
     let message = `String "converters can only be used on records or variants" in
-    let value = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t) in 
+    let value = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t) in
     let content = `Assoc [
       ("message", message);
       ("value", value);
@@ -1116,7 +1116,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     ] in
     json_error ~stage ~content
   | `Typer_different_types (a,b) ->
-    let message = `String ("Types are different.\ 
+    let message = `String ("Types are different.\
       Expected these two types to be the same, but they're different") in
     let a = `String (Format.asprintf "%a" Ast_typed.PP.type_expression a) in
     let b = `String (Format.asprintf "%a" Ast_typed.PP.type_expression b) in

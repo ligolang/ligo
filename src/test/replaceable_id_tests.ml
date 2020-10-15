@@ -13,8 +13,8 @@ let get_program =
         ok program
       )
 
-let compile_main () = 
-  let%bind typed_prg,_,_   = get_program () in 
+let compile_main () =
+  let%bind typed_prg,_,_   = get_program () in
   let%bind mini_c_prg      = Ligo.Compile.Of_typed.compile typed_prg in
   let%bind michelson_prg   = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
   let%bind (_contract: Tezos_utils.Michelson.michelson) =
@@ -24,13 +24,13 @@ let compile_main () =
 
 open Ast_imperative
 
-let empty_op_list = 
+let empty_op_list =
   (e_typed_list [] (t_operation ()))
-let empty_message = e_lambda (Location.wrap @@ Var.of_name "arguments")
-  (Some (t_unit ())) (Some (t_list (t_operation ())))
+let empty_message = e_lambda_ez (Location.wrap @@ Var.of_name "arguments")
+  ~ascr:(t_unit ()) (Some (t_list (t_operation ())))
   empty_op_list
 
-let storage id = e_address @@ addr id 
+let storage id = e_address @@ addr id
 let entry_change_addr id = e_constructor "Change_address"
   @@ e_address @@ addr @@ id
 let entry_pass_message = e_constructor "Pass_message"

@@ -30,7 +30,7 @@ let t_sum ~layout return compile_type m =
   )
   | L_comb -> (
     (* Right combs *)
-    let aux (Label l , x) =
+    let aux (Label l , (x : _ row_element_mini_c )) =
       let l = String.uncapitalize_ascii l in
       let%bind t = compile_type x.associated_type in
       let annot_opt = Some (annotation_or_label x.michelson_annotation l) in
@@ -66,8 +66,8 @@ let t_record_to_pairs ~layout return compile_type m =
       let%bind m' = Append_tree.fold_ne
           (fun (Label label, ({associated_type;michelson_annotation}: AST.row_element)) ->
              let%bind a = compile_type associated_type in
-             ok ((if is_tuple_lmap then 
-                    None 
+             ok ((if is_tuple_lmap then
+                    None
                   else
                     Some (annotation_or_label michelson_annotation label)),
                  a)
@@ -77,7 +77,7 @@ let t_record_to_pairs ~layout return compile_type m =
     )
   | L_comb -> (
       (* Right combs *)
-      let aux (Label l , x) =
+      let aux (Label l , (x : _ row_element_mini_c)) =
         let%bind t = compile_type x.associated_type in
         let annot_opt = Some (annotation_or_label x.michelson_annotation l) in
         ok (t , annot_opt)
@@ -150,7 +150,7 @@ let record_access_to_lr ~layout ty m_ty index =
       let%bind lst = aux index ty last in
       ok (List.rev lst)
     )
-  
+
 let record_to_pairs compile_expression (return:?tv:_ -> _) record_t record : Mini_c.expression spilling_result =
   let open AST.Helpers in
   let lst = kv_list_of_record_or_tuple ~layout:record_t.layout record_t.content record in
@@ -288,7 +288,7 @@ let match_variant_to_tree ~layout ~compile_type content : variant_pair spilling_
             let left = `Leaf khd , thd' in
             ok (`Node (left , (tl' , ttl)) , tv')
           ) in
-      let lst = List.map (fun (k,{associated_type;_}) -> (k,associated_type)) @@ Ast_typed.Helpers.kv_list_of_t_sum ~layout content in
+      let lst = List.map (fun (k,({associated_type;_} : _ row_element_mini_c)) -> (k,associated_type)) @@ Ast_typed.Helpers.kv_list_of_t_sum ~layout content in
       let%bind vp = aux lst in
       ok vp
     )
@@ -320,7 +320,7 @@ let extract_record ~(layout:layout) (v : value) (lst : (AST.label * AST.type_exp
           let%bind a' = aux [sa, ta] va in
           let%bind b' = aux [sb, tb] vb in
           ok (a' @ b')
-      | (shd,thd)::tl, D_pair (va,vb) -> 
+      | (shd,thd)::tl, D_pair (va,vb) ->
         let%bind tl' = aux tl vb in
         ok ((shd,(va,thd))::tl')
       | _ -> fail @@ corner_case ~loc:__LOC__ "bad record path"

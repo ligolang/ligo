@@ -28,15 +28,15 @@ let rec type_declaration env state : I.declaration -> (environment * _ O'.typer_
     let%bind type_expr = evaluate_type env type_expr in
     let env' = Environment.add_type (type_binder) type_expr env in
     ok (env', state , O.Declaration_type {type_binder; type_expr})
-  | Declaration_constant {binder; type_opt; attr; expr} -> (
+  | Declaration_constant {binder; attr; expr} -> (
     (*
       Determine the type of the expression and add it to the environment
     *)
-    let%bind tv_opt = bind_map_option (evaluate_type env) type_opt in
+    let%bind tv_opt = bind_map_option (evaluate_type env) binder.ascr in
     let%bind e, state', expr =
-      trace (constant_declaration_tracer binder expr tv_opt) @@
+      trace (constant_declaration_tracer binder.var expr tv_opt) @@
       type_expression env state ?tv_opt expr in
-    let binder = Location.map Var.todo_cast binder in
+    let binder = Location.map Var.todo_cast binder.var in
     let post_env = Environment.add_ez_declaration binder expr e in
     ok (post_env, state' , O.Declaration_constant { binder ; expr ; inline=attr.inline})
     )
@@ -54,9 +54,9 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
     return (T_arrow {type1;type2})
   | T_sum {fields ; layout} ->
     let aux v =
-      let {associated_type ; michelson_annotation ; decl_pos} : I.row_element = v in
+      let {associated_type ; michelson_annotation ; decl_pos} : _ I.row_element_mini_c = v in
       let%bind associated_type = evaluate_type e associated_type in
-      ok @@ ({associated_type ; michelson_annotation ; decl_pos}:O.row_element)
+      ok @@ ({associated_type ; michelson_annotation ; decl_pos}:_ O.row_element_mini_c)
     in
     let%bind content = Stage_common.Helpers.bind_map_lmap aux fields in
     let%bind () = trace_assert_fail_option (variant_redefined_error t.location) @@
@@ -65,9 +65,9 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
     return (T_sum {content ; layout})
   | T_record {fields ; layout} ->
     let aux v =
-      let {associated_type ; michelson_annotation ; decl_pos} : I.row_element = v in
+      let {associated_type ; michelson_annotation ; decl_pos} : _ I.row_element_mini_c = v in
       let%bind associated_type = evaluate_type e associated_type in
-      ok @@ ({associated_type ; michelson_annotation ; decl_pos}:O.row_element)
+      ok @@ ({associated_type ; michelson_annotation ; decl_pos}:_ O.row_element_mini_c)
     in
     let%bind content = Stage_common.Helpers.bind_map_lmap aux fields in
     let%bind () = trace_assert_fail_option (record_redefined_error t.location) @@
@@ -314,7 +314,7 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
   | E_let_in {let_binder ; rhs ; let_result; inline} ->
     let%bind rhs_tv_opt = bind_map_option (evaluate_type e) (let_binder.ascr) in
     let%bind e, state, rhs = type_expression e state rhs in
-    let let_binder = cast_var let_binder.binder in
+    let let_binder = cast_var let_binder.var in
     let e = Environment.add_ez_declaration let_binder rhs e in
     let%bind e, state, let_result = type_expression e state let_result in
     let wrapped =
@@ -347,13 +347,12 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
 
 and type_lambda e state {
       binder ;
-      input_type ;
       output_type ;
       result ;
     } =
-      let binder = cast_var binder in
-      let%bind input_type'  = bind_map_option (evaluate_type e) input_type in
+      let%bind input_type'  = bind_map_option (evaluate_type e) binder.ascr in
       let%bind output_type' = bind_map_option (evaluate_type e) output_type in
+      let binder = cast_var binder.var in
 
       let fresh : O.type_expression = t_variable (Wrap.fresh_binder ()) in
       let e' = Environment.add_ez_binder (binder) fresh e in

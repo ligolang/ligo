@@ -1,0 +1,179 @@
+open Types
+open Trace
+open Function
+
+(* Types level *)
+
+let type_operator : ('acc -> 'a -> ('acc, _) result) -> 'acc -> 'a type_operator -> ('acc, _) result
+= fun g acc {type_constant=_;arguments} ->
+  let%bind acc = bind_fold_list g acc arguments in
+  ok @@ acc
+
+let rows : ('acc -> 'a -> ('acc,_) result) -> 'acc -> 'a rows -> ('acc,_) result
+= fun g acc {fields;attributes=_} ->
+  Helpers.bind_fold_lmap
+  (fun acc _ {associated_type;attributes=_;decl_pos=_} ->
+    g acc associated_type
+  ) acc fields
+
+let arrow : ('acc -> 'a -> ('acc,_) result) -> 'acc -> 'a arrow -> ('acc,_) result
+= fun g acc {type1;type2} ->
+  let%bind acc = g acc type1 in
+  let%bind acc = g acc type2 in
+  ok @@ acc
+
+(* Expression level *)
+
+let constant : ('acc -> 'a ->  ('acc,_) result) -> 'acc -> 'a constant -> ('acc,_) result
+= fun f acc {cons_name=_;arguments} ->
+  let%bind acc = bind_fold_list f acc arguments in
+  ok @@ acc
+
+let constructor : ('acc -> 'a -> ('acc,_) result) -> 'acc -> 'a constructor -> ('acc,_) result
+= fun f acc {constructor=_;element} ->
+  let%bind acc = f acc element in
+  ok @@ acc
+
+let application : ('acc -> 'a -> ('acc,_) result) -> 'acc -> 'a application -> ('acc,_) result
+= fun f acc {lamb;args} ->
+  let%bind acc = f acc lamb in
+  let%bind acc = f acc args in
+  ok @@ acc
+
+let option f acc = map (Option.unopt ~default:acc) <@ bind_map_option (f acc)
+
+let binder : ('acc -> 'a -> ('acc, _) result) -> 'acc -> 'a binder -> ('acc, _) result
+= fun f acc {var=_; ascr} ->
+  let%bind acc = option f acc ascr in
+  ok @@ acc
+
+let let_in : ('acc -> 'a -> ('acc, _) result) -> ('acc -> 'c -> ('acc, _) result) -> 'acc -> ('a,'c) let_in -> ('acc , _) result
+= fun f g acc { let_binder; rhs ; let_result; attributes=_} ->
+  let%bind acc = binder g acc let_binder in
+  let%bind acc = f acc rhs in
+  let%bind acc = f acc let_result in
+  ok @@ acc
+
+let lambda : ('acc -> 'a -> ('acc, _) result) -> ('acc -> 'c -> ('acc, _) result) -> 'acc -> ('a,'c) lambda -> ('acc , _) result
+= fun f g acc {binder=b;output_type;result}->
+  let%bind acc = binder g acc b in
+  let%bind acc = option g acc output_type in
+  let%bind acc = f acc result in
+  ok @@ acc
+
+let path : ('acc -> 'a -> ('acc,_) result) -> 'acc -> 'a access list -> ('acc, _) result
+= fun f acc path ->
+  let aux acc a = match a with
+    | Access_record _ -> ok @@ acc
+    | Access_tuple  _ -> ok @@ acc
+    | Access_map e ->
+      let%bind acc = f acc e in
+      ok @@ acc
+  in
+  bind_fold_list aux acc path
+
+let record : ('acc -> 'a -> ('acc,_) result) -> 'acc -> 'a label_map -> ('acc,_) result
+= fun f acc record ->
+  Helpers.bind_fold_lmap (
+    fun acc _ a -> f acc a
+  ) acc record
+
+let tuple : ('acc -> 'a -> ('acc,_) result) -> 'acc -> 'a list -> ('acc,_) result
+= fun f acc record ->
+  bind_fold_list f acc record
+
+let recursive : ('acc -> 'a -> ('acc,_) result) -> ('acc -> 'c -> ('acc,_) result) -> 'acc -> ('a,'c) recursive -> ('acc, _) result
+= fun f g acc {fun_name=_;fun_type;lambda=l} ->
+  let%bind acc = g acc fun_type in
+  let%bind acc = lambda f g acc l in
+  ok @@ acc
+
+let accessor : ('acc -> 'a -> ('b,_) result) -> 'acc -> 'a accessor -> ('acc, _) result
+= fun f acc {record;path=p} ->
+  let%bind acc = f acc record in
+  let%bind acc = path f acc p in
+  ok @@ acc
+
+let record_accessor : ('acc -> 'a -> ('b,_) result) -> 'acc -> 'a record_accessor -> ('acc, _) result
+= fun f acc {record;path=_} ->
+  let%bind acc = f acc record in
+  ok @@ acc
+
+let update : ('acc -> 'a -> ('acc,_) result) -> 'acc -> 'a update -> ('acc, _) result
+= fun f acc {record;path=p;update} ->
+  let%bind acc = f acc record in
+  let%bind acc = path f acc p in
+  let%bind acc = f acc update in
+  ok @@ acc
+
+let record_update : ('acc -> 'a -> ('acc,_) result) -> 'acc -> 'a record_update -> ('acc, _) result
+= fun f acc {record;path=_;update} ->
+  let%bind acc = f acc record in
+  let%bind acc = f acc update in
+  ok @@ acc
+
+let sequence : ('acc -> 'a -> ('acc,_) result) -> 'acc -> 'a sequence -> ('acc, _) result
+= fun f acc {expr1;expr2} ->
+  let%bind acc = f acc expr1 in
+  let%bind acc = f acc expr2 in
+  ok @@ acc
+
+let ascription : ('acc -> 'a -> ('acc,_) result) -> ('acc -> 'c -> ('acc,_) result) -> 'acc -> ('a,'c) ascription -> ('acc, _) result
+= fun f g acc {anno_expr; type_annotation} ->
+  let%bind acc = f acc anno_expr in
+  let%bind acc = g acc type_annotation in
+  ok @@ acc
+
+let raw_code : ('acc -> 'a -> ('acc,_) result) -> 'acc -> 'a raw_code -> ('acc, _) result
+= fun f acc {language=_;code} ->
+  let%bind acc = f acc code in
+  ok @@ acc
+
+let conditional : ('acc -> 'a -> ('acc,_) result) -> 'acc -> 'a conditional -> ('acc, _) result
+= fun f acc {condition;then_clause;else_clause} ->
+  let%bind acc = f acc condition in
+  let%bind acc = f acc then_clause in
+  let%bind acc = f acc else_clause in
+  ok @@ acc
+
+let assign : ('acc -> 'a -> ('b,_) result) -> 'acc -> 'a assign -> ('acc, _) result
+= fun f acc {variable=_; access_path; expression} ->
+  let%bind acc = path f acc access_path in
+  let%bind acc = f acc expression in
+  ok @@ acc
+
+let for_ : ('acc -> 'a -> ('b,_) result) -> 'acc -> 'a for_ -> ('acc, _) result
+= fun f acc {binder=_;start;final;incr;f_body} ->
+  let%bind acc = f acc start in
+  let%bind acc = f acc final in
+  let%bind acc = f acc incr in
+  let%bind acc = f acc f_body in
+  ok @@ acc
+
+let for_each : ('acc -> 'a -> ('b,_) result) -> 'acc -> 'a for_each -> ('acc, _) result
+= fun f acc {fe_binder=_;collection;collection_type=_;fe_body} ->
+  let%bind acc = f acc collection in
+  let%bind acc = f acc fe_body in
+  ok @@ acc
+
+let while_loop : ('acc -> 'a -> ('b,_) result) -> 'acc -> 'a while_loop -> ('acc, _) result
+= fun f acc {cond; body} ->
+  let%bind acc = f acc cond in
+  let%bind acc = f acc body in
+  ok @@ acc
+
+(* Declaration *)
+let declaration_type : ('acc -> 'a -> ('acc, _) result) -> 'acc -> 'a declaration_type -> ('acc, _) result
+= fun g acc {type_binder=_; type_expr} ->
+  let%bind acc = g acc type_expr in
+  ok @@ acc
+
+let declaration_constant : ('acc -> 'a -> ('acc,_) result) -> ('acc -> 'b -> ('acc,_) result) -> 'acc -> ('a,'c) declaration_constant -> ('acc, _) result
+= fun f g acc {binder=b; attr=_; expr} ->
+  let%bind acc = binder g acc b in
+  let%bind acc = f acc expr     in
+  ok @@ acc
+
+let program : ('acc -> 'a -> ('acc,_) result) -> 'acc -> 'a list -> ('acc, _) result
+= fun d acc prg ->
+  bind_fold_list d acc prg

@@ -123,7 +123,7 @@ let%expect_test _ =
     Incorrect argument.
     Expected an option, but got an argument of type "record[controller -> address , owner -> address , profile -> bytes]". |}]
 
-(* 
+(*
   This test is here to ensure compatibility with comparable pairs introduced in carthage
   note that only "comb pairs" are allowed to be compared (would be beter if any pair would be comparable ?)
 *)

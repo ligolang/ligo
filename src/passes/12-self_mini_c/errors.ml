@@ -35,7 +35,7 @@ let error_jsonformat : self_mini_c_error -> Yojson.Safe.t = fun a ->
   in
   match a with
   | `Self_mini_c_bad_self_address cst ->
-    let msg = Format.asprintf "%a is only allowed at top-level" Stage_common.PP.constant cst in
+    let msg = Format.asprintf "%a is only allowed at top-level" Stage_common.PP.constant' cst in
     let content = `Assoc [
       ("message", `String msg); ]
     in

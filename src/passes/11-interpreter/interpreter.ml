@@ -211,7 +211,7 @@ let rec apply_operator : Ast_typed.constant' -> value list -> (value, interprete
     | ( C_SET_MEM    , [ v ; V_Set (elts) ] ) -> ok @@ v_bool (List.mem v elts)
     | ( C_SET_REMOVE , [ v ; V_Set (elts) ] ) -> ok @@ V_Set (List.filter (fun el -> not (el = v)) elts)
     | _ ->
-      let () = Format.printf "%a\n" Ast_typed.PP.constant c in
+      let () = Format.printf "%a\n" Ast_typed.PP.constant' c in
       let () = List.iter ( fun e -> Format.printf "%s\n" (Ligo_interpreter.PP.pp_value e)) operands in
       failwith "Unsupported constant op"
   )

@@ -280,27 +280,27 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
       let aux = fun pred (ty, lr) ->
         let c = match lr with
           | `Left  -> C_CAR
-          | `Right -> C_CDR 
+          | `Right -> C_CDR
         in
-        return ~tv:ty @@ E_constant {cons_name=c;arguments=[pred]} 
+        return ~tv:ty @@ E_constant {cons_name=c;arguments=[pred]}
       in
       let%bind record' = compile_expression record in
       let%bind expr = bind_fold_list aux record' path in
       ok expr
-  | E_record_update {record; path; update} -> 
+  | E_record_update {record; path; update} ->
       let rec aux res (r,p,up) =
         let ty = get_type_expression r in
         let%bind {content;layout} =
           trace_option (corner_case ~loc:__LOC__ "not a record") @@
           get_t_record (ty) in
-        let%bind ty' = compile_type (ty) in 
-        let%bind p' = 
+        let%bind ty' = compile_type (ty) in
+        let%bind p' =
           trace_strong (corner_case ~loc:__LOC__ "record access") @@
           Layout.record_access_to_lr ~layout ty' content p in
         let res' = res @ p' in
         match (up:AST.expression).expression_content with
         | AST.E_record_update {record=record'; path=path'; update=update'} -> (
-          match record'.expression_content with 
+          match record'.expression_content with
             | AST.E_record_accessor {record;path} ->
               if (AST.Misc.equal_variables record r && path = p) then
                 aux res' (record',path',update')
@@ -431,7 +431,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
             )
       )
   )
-  | E_raw_code { language; code} -> 
+  | E_raw_code { language; code} ->
     let backend = "Michelson" in
     let%bind () =
       Assert.assert_true
@@ -449,42 +449,42 @@ and compile_lambda l (input_type , output_type) =
   let%bind input = compile_type input_type in
   let%bind output = compile_type output_type in
   let tv = Combinators.t_function input output in
-  let binder = Location.map Var.todo_cast binder in 
+  let binder = Location.map Var.todo_cast binder in
   let closure = E_closure { binder; body = result'} in
   ok @@ Combinators.Expression.make_tpl ~loc:result.location (closure , tv)
 
 and compile_recursive {fun_name; fun_type; lambda} =
   let rec map_lambda : AST.expression_variable -> type_expression -> AST.expression -> (expression * expression_variable list , spilling_error) result = fun fun_name loop_type e ->
-    match e.expression_content with 
+    match e.expression_content with
       E_lambda {binder;result} ->
         let binder = Location.map Var.todo_cast binder in
         let%bind (body,l) = map_lambda fun_name loop_type result in
         ok @@ (Expression.make ~loc:e.location (E_closure {binder;body}) loop_type, binder::l)
-      | _  -> 
+      | _  ->
         let%bind res = replace_callback fun_name loop_type false e in
         ok @@ (res, [])
 
   and replace_callback : AST.expression_variable -> type_expression -> bool -> AST.expression -> (expression , spilling_error) result = fun fun_name loop_type shadowed e ->
     match e.expression_content with
-      E_let_in li -> 
-        let shadowed = shadowed || Var.equal li.let_binder.wrap_content fun_name.wrap_content in 
+      E_let_in li ->
+        let shadowed = shadowed || Var.equal li.let_binder.wrap_content fun_name.wrap_content in
         let%bind let_result = replace_callback fun_name loop_type shadowed li.let_result in
         let%bind rhs = compile_expression li.rhs in
         let%bind ty  = compile_type e.type_expression in
         ok @@ e_let_in (Location.map Var.todo_cast li.let_binder) ty li.inline rhs let_result |
-      E_matching m -> 
+      E_matching m ->
         let%bind ty = compile_type e.type_expression in
         matching fun_name loop_type shadowed m ty |
       E_application {lamb;args} -> (
         match lamb.expression_content,shadowed with
-        E_variable name, false when Var.equal fun_name.wrap_content name.wrap_content -> 
+        E_variable name, false when Var.equal fun_name.wrap_content name.wrap_content ->
           let%bind expr = compile_expression args in
           ok @@ Expression.make (E_constant {cons_name=C_LOOP_CONTINUE;arguments=[expr]}) loop_type |
-        _ -> 
+        _ ->
           let%bind expr = compile_expression e in
           ok @@ Expression.make (E_constant {cons_name=C_LOOP_STOP;arguments=[expr]}) loop_type
       ) |
-      _ -> 
+      _ ->
         let%bind expr = compile_expression e in
         ok @@ Expression.make (E_constant {cons_name=C_LOOP_STOP;arguments=[expr]}) loop_type
 

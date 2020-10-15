@@ -47,19 +47,19 @@ let error_ppformat : display_format:string display_format ->
     | `Self_ast_imperative_bad_empty_arity (c, e) ->
       Format.fprintf f
         "@[<hv>%a@ Ill-formed \"%a\" expression.@.No functions arguments are expected. @]"
-        Snippet.pp e.location PP.constant c
+        Snippet.pp e.location PP.constant' c
     | `Self_ast_imperative_bad_single_arity (c, e) ->
       Format.fprintf f
         "@[<hv>%a@ Ill-formed \"%a\" expression@.One function argument is expected. @]"
-        Snippet.pp e.location PP.constant c
+        Snippet.pp e.location PP.constant' c
     | `Self_ast_imperative_bad_map_param_type (c,e) ->
       Format.fprintf f
         "@[<hv>%a@ Ill-formed \"%a\" expression.@.A list of pair parameters is expected.@]"
-        Snippet.pp e.location PP.constant c
+        Snippet.pp e.location PP.constant' c
     | `Self_ast_imperative_bad_set_param_type (c,e) ->
       Format.fprintf f
         "@[<hv>%a@ Ill-formed \"%a\" expression.@.A list of pair parameters is expected.@]"
-        Snippet.pp e.location PP.constant c
+        Snippet.pp e.location PP.constant' c
     | `Self_ast_imperative_bad_convertion_bytes e ->
       Format.fprintf f
         "@[<hv>%a@ Ill-formed bytes literal.@.Example of a valid bytes literal: \"ff7a7aff\". @]"
@@ -103,7 +103,7 @@ let error_jsonformat : self_ast_imperative_error -> json = fun a ->
   | `Self_ast_imperative_bad_empty_arity (c, e) ->
     let message = `String "constant expects no parameters" in
     let loc = `String (Format.asprintf "%a" Location.pp e.location) in
-    let value = `String (Format.asprintf "%a" PP.constant c) in
+    let value = `String (Format.asprintf "%a" PP.constant' c) in
     let content = `Assoc [
       ("message", message);
       ("location", loc);
@@ -113,7 +113,7 @@ let error_jsonformat : self_ast_imperative_error -> json = fun a ->
   | `Self_ast_imperative_bad_single_arity (c, e) ->
     let message = `String "constant expects one parameters" in
     let loc = `String (Format.asprintf "%a" Location.pp e.location) in
-    let value = `String (Format.asprintf "%a" PP.constant c) in
+    let value = `String (Format.asprintf "%a" PP.constant' c) in
     let content = `Assoc [
       ("message", message);
       ("location", loc);
@@ -123,7 +123,7 @@ let error_jsonformat : self_ast_imperative_error -> json = fun a ->
   | `Self_ast_imperative_bad_map_param_type (c,e) ->
     let message = `String "constant expects a list of pair as parameter" in
     let loc = `String (Format.asprintf "%a" Location.pp e.location) in
-    let value = `String (Format.asprintf "%a" PP.constant c) in
+    let value = `String (Format.asprintf "%a" PP.constant' c) in
     let content = `Assoc [
       ("message", message);
       ("location", loc);
@@ -133,7 +133,7 @@ let error_jsonformat : self_ast_imperative_error -> json = fun a ->
   | `Self_ast_imperative_bad_set_param_type (c,e) ->
     let message = `String "constant expects a list as parameter" in
     let loc = `String (Format.asprintf "%a" Location.pp e.location) in
-    let value = `String (Format.asprintf "%a" PP.constant c) in
+    let value = `String (Format.asprintf "%a" PP.constant' c) in
     let content = `Assoc [
       ("message", message);
       ("location", loc);

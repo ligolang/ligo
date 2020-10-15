@@ -306,7 +306,7 @@ module Tree_abstraction = struct
     | C_SOME -> "Some"
     | C_NONE -> "None"
 
-    | _ as c -> failwith @@ Format.asprintf "Constant not handled : %a" Stage_common.PP.constant c
+    | _ as c -> failwith @@ Format.asprintf "Constant not handled : %a" Stage_common.PP.constant' c
 
 
   module Pascaligo = struct

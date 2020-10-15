@@ -5,7 +5,7 @@ open Ast_typed.Helpers
 
 type ('a ,'err) folder = 'a -> expression -> ('a , 'err) result
 let rec fold_expression : ('a , self_ast_typed_error) folder -> 'a -> expression -> ('a , self_ast_typed_error) result = fun f init e ->
-  let self = fold_expression f in 
+  let self = fold_expression f in
   let%bind init' = f init e in
   match e.expression_content with
   | E_literal _ | E_variable _ | E_raw_code _ -> ok init'
@@ -40,7 +40,7 @@ let rec fold_expression : ('a , self_ast_typed_error) folder -> 'a -> expression
   | E_record_update {record;update} -> (
     let%bind res = self init' record in
     let%bind res = fold_expression self res update in
-    ok res 
+    ok res
   )
   | E_record_accessor {record} -> (
      let%bind res = self init' record in

@@ -13,7 +13,7 @@ let scopes : with_types:bool -> tenv -> tstate -> Ast_core.program -> ((def_map 
 
   let rec find_scopes' = fun (i,all_defs,env,scopes,lastloc) (e : Ast_core.expression) ->
     match e.content with
-    | E_let_in { let_binder = {binder = {wrap_content=fn;location=fn_loc};_} ; rhs ; let_result } -> (
+    | E_let_in { let_binder = {var = {wrap_content=fn;location=fn_loc};_} ; rhs ; let_result } -> (
       let (i,all_defs,_, scopes) = find_scopes' (i,all_defs,env,scopes,e.location) rhs in
       let (i,env) = add_shadowing_def (i,fn) (make_v_def_from_core fn rhs fn_loc rhs.location) env in
       let all_defs = merge_defs env all_defs in
@@ -27,7 +27,7 @@ let scopes : with_types:bool -> tenv -> tstate -> Ast_core.program -> ((def_map 
       let (i,env) = add_shadowing_def (i,fn) def env in
       find_scopes' (i,all_defs,env,scopes,result.location) result
     )
-    | E_lambda { binder={wrap_content=fun_name;location=fn_loc} ; input_type ; output_type = _ ; result } -> (
+    | E_lambda { binder={var={wrap_content=fun_name;location=fn_loc};ascr=input_type} ; output_type = _ ; result } -> (
       let (i,env) = add_shadowing_def (i,fun_name) (make_v_def_option_type fun_name input_type fn_loc result.location) env in
       let all_defs = merge_defs env all_defs in
       find_scopes' (i,all_defs,env,scopes,result.location) result
@@ -118,7 +118,7 @@ let scopes : with_types:bool -> tenv -> tstate -> Ast_core.program -> ((def_map 
 
   let aux = fun (i,top_def_map,inner_def_map,scopes) (x : Ast_core.declaration Location.wrap) ->
     match x.wrap_content with
-    | Declaration_constant {binder={wrap_content=v;location=v_loc} ; expr ;_ } ->
+    | Declaration_constant {binder={var={wrap_content=v;location=v_loc};_} ; expr ;_ } ->
       let (i,new_inner_def_map,scopes) = find_scopes (i,top_def_map,scopes,x.location) expr in
       let inner_def_map = merge_defs new_inner_def_map inner_def_map in
       let def = make_v_def_from_core v expr v_loc expr.location in

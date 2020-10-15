@@ -1143,7 +1143,8 @@ let%expect_test "spilling" =
   error (`Spilling_wrong_mini_c_value (type_expression, value)) ;
   [%expect {|
     Invalid type.
-    Expected "foo", but got "None". |}] ;
+    Expected "foo",
+    but got "None". |}] ;
   error (`Spilling_bad_decompile value) ;
   [%expect {|Cannot untranspile: None |}]
 

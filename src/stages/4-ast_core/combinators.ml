@@ -86,18 +86,19 @@ let e_map_add    ?loc ?sugar k v old  : expression = make_e ?loc ?sugar @@ E_con
 let e_constant    ?loc ?sugar name lst                             = make_e ?loc ?sugar @@ E_constant {cons_name=name ; arguments = lst}
 let e_variable    ?loc ?sugar v                                    = make_e ?loc ?sugar @@ E_variable v
 let e_application ?loc ?sugar a b                                  = make_e ?loc ?sugar @@ E_application {lamb=a ; args=b}
-let e_lambda      ?loc ?sugar binder input_type output_type result = make_e ?loc ?sugar @@ E_lambda {binder; input_type; output_type; result ;  }
+let e_lambda      ?loc ?sugar binder output_type result            = make_e ?loc ?sugar @@ E_lambda {binder; output_type; result ;  }
+let e_lambda_ez   ?loc ?sugar var ?ascr output_type result         = e_lambda ?loc ?sugar {var;ascr} output_type result
 let e_recursive   ?loc ?sugar fun_name fun_type lambda             = make_e ?loc ?sugar @@ E_recursive {fun_name; fun_type; lambda}
-let e_let_in      ?loc ?sugar (binder, ascr) inline rhs let_result = make_e ?loc ?sugar @@
-  E_let_in { let_binder = {binder ; ascr} ; rhs ; let_result; inline }
+let e_let_in      ?loc ?sugar let_binder inline rhs let_result     = make_e ?loc ?sugar @@ E_let_in { let_binder ; rhs ; let_result; inline }
+let e_let_in_ez   ?loc ?sugar var ?ascr  inline rhs let_result     = e_let_in ?loc ?sugar {var;ascr} inline rhs let_result
 let e_raw_code    ?loc ?sugar language code                        = make_e ?loc ?sugar @@ E_raw_code {language; code}
 
 let e_constructor ?loc ?sugar s a : expression = make_e ?loc ?sugar @@ E_constructor { constructor = Label s; element = a}
 let e_matching    ?loc ?sugar a b : expression = make_e ?loc ?sugar @@ E_matching {matchee=a;cases=b}
 
 let e_record          ?loc ?sugar map = make_e ?loc ?sugar @@ E_record map
-let e_record_accessor ?loc ?sugar a b = make_e ?loc ?sugar @@ E_record_accessor {record = a; path = b}
-let e_record_update   ?loc ?sugar record path update = make_e ?loc ?sugar @@ E_record_update {record; path; update}
+let e_record_accessor ?loc ?sugar record path        = make_e ?loc ?sugar @@ E_record_accessor ({record; path} : _ record_accessor)
+let e_record_update   ?loc ?sugar record path update = make_e ?loc ?sugar @@ E_record_update ({record; path; update} : _ record_update)
 
 let e_annotation ?loc ?sugar anno_expr ty = make_e ?loc ?sugar @@ E_ascription {anno_expr; type_annotation = ty}
 

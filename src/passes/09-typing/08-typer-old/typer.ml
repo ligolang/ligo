@@ -34,12 +34,12 @@ and type_declaration env (_placeholder_for_state_of_new_typer : _ O'.typer_state
       let%bind tv = evaluate_type env type_expr in
       let env' = Environment.add_type type_binder tv env in
       ok (env', (Solver.placeholder_for_state_of_new_typer ()) , (O.Declaration_type { type_binder ; type_expr = tv } ))
-  | Declaration_constant {binder ; type_opt ; attr={inline} ; expr} -> (
-      let%bind tv'_opt = bind_map_option (evaluate_type env) type_opt in
+  | Declaration_constant {binder  ; attr={inline} ; expr} -> (
+      let%bind tv'_opt = bind_map_option (evaluate_type env) binder.ascr in
       let%bind expr =
-        trace (constant_declaration_error_tracer binder expr tv'_opt) @@
+        trace (constant_declaration_error_tracer binder.var expr tv'_opt) @@
         type_expression' ?tv_opt:tv'_opt env expr in
-      let binder : O.expression_variable = cast_var binder in
+      let binder : O.expression_variable = cast_var binder.var in
       let post_env = Environment.add_ez_declaration binder expr env in
       ok (post_env, (Solver.placeholder_for_state_of_new_typer ()) , (O.Declaration_constant { binder ; expr ; inline}))
     )
@@ -327,8 +327,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
    return (E_lambda lambda ) lambda_type
   | E_constant {cons_name=( C_LIST_FOLD | C_MAP_FOLD | C_SET_FOLD) as opname ;
                 arguments=[
-                    ( { content = (I.E_lambda { binder = lname ;
-                                                   input_type = None ;
+                    ( { content = (I.E_lambda { binder = {var=lname ; ascr = None};
                                                    output_type = None ;
                                                    result }) ;
                         location = _ }) as _lambda ;
@@ -356,8 +355,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       return (E_constant {cons_name=opname';arguments=lst'}) tv
   | E_constant {cons_name=C_FOLD_WHILE as opname;
                 arguments = [
-                    ( { content = (I.E_lambda { binder = lname ;
-                                                   input_type = None ;
+                    ( { content = (I.E_lambda { binder = {var=lname ; ascr = None};
                                                    output_type = None ;
                                                    result }) ;
                         location = _ }) as _lambda ;
@@ -458,10 +456,10 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let tv = Option.unopt_exn tv_opt in
       return (O.E_matching {matchee=ex'; cases=m'}) tv
     )
-  | E_let_in {let_binder = {binder ; ascr} ; rhs ; let_result; inline} ->
+  | E_let_in {let_binder = {var ; ascr} ; rhs ; let_result; inline} ->
     let%bind rhs_tv_opt = bind_map_option (evaluate_type e) ascr in
     let%bind rhs = type_expression' ?tv_opt:rhs_tv_opt e rhs in
-    let binder = cast_var binder in
+    let binder = cast_var var in
     let e' = Environment.add_ez_declaration binder rhs e in
     let%bind let_result = type_expression' e' let_result in
     return (E_let_in {let_binder = binder; rhs; let_result; inline}) let_result.type_expression
@@ -496,16 +494,15 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
 
 and type_lambda e {
       binder ;
-      input_type ;
       output_type ;
       result ;
     } =
       let%bind input_type =
-        bind_map_option (evaluate_type e) input_type in
+        bind_map_option (evaluate_type e) binder.ascr in
       let%bind output_type =
         bind_map_option (evaluate_type e) output_type
       in
-      let binder = cast_var binder in
+      let binder = cast_var binder.var in
       let%bind input_type = trace_option (missing_funarg_annotation binder) input_type in
       let e' = Environment.add_ez_binder binder input_type e in
       let%bind body = type_expression' ?tv_opt:output_type e' result in
@@ -562,7 +559,7 @@ let rec untype_expression (e:O.expression) : (I.expression , typer_error) result
       let%bind (input_type , output_type) =
         bind_map_pair Typer_common.Untyper.untype_type_expression io in
       let%bind result = untype_expression result in
-      return (e_lambda (binder) (Some input_type) (Some output_type) result)
+      return (e_lambda {var=binder;ascr=Some input_type} (Some output_type) result)
     )
   | E_constructor {constructor; element} ->
       let%bind p' = untype_expression element in
@@ -588,7 +585,7 @@ let rec untype_expression (e:O.expression) : (I.expression , typer_error) result
       let%bind tv = Typer_common.Untyper.untype_type_expression rhs.type_expression in
       let%bind rhs = untype_expression rhs in
       let%bind result = untype_expression let_result in
-      return (e_let_in (let_binder , (Some tv)) inline rhs result)
+      return (e_let_in {var=let_binder ; ascr=(Some tv)} inline rhs result)
   | E_raw_code {language; code} ->
       let%bind code = untype_expression code in
       return (e_raw_code language code)
