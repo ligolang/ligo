@@ -32,29 +32,29 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-storage" ; contract "coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ] ;
   [%expect {|
-    Invalid command line argument.
-    The provided storage does not have the correct type for the contract.
-    in file "../../test/contracts/coase.ligo", line 124, characters 9-13
-    123 |
-    124 | function main (const action : parameter; const s : storage) : return is
-    125 |   case action of
+Invalid command line argument.
+The provided storage does not have the correct type for the contract.
+in file "../../test/contracts/coase.ligo", line 124, characters 9-13
+123 |
+124 | function main (const action : parameter; const s : storage) : return is
+125 |   case action of
 
-    Invalid type(s).
-    Expected: "record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]", but got: "
-    sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]". |}] ;
+Invalid type(s).
+Expected: "record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]", but got: "
+sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]". |}] ;
 
   run_ligo_bad [ "compile-parameter" ; contract "coase.ligo" ; "main" ; "record cards = (map end : cards) ; card_patterns = (map end : card_patterns) ; next_id = 3n ; end" ] ;
   [%expect {|
-    Invalid command line argument.
-    The provided parameter does not have the correct type for the given entrypoint.
-    in file "../../test/contracts/coase.ligo", line 124, characters 9-13
-    123 |
-    124 | function main (const action : parameter; const s : storage) : return is
-    125 |   case action of
+Invalid command line argument.
+The provided parameter does not have the correct type for the given entrypoint.
+in file "../../test/contracts/coase.ligo", line 124, characters 9-13
+123 |
+124 | function main (const action : parameter; const s : storage) : return is
+125 |   case action of
 
-    Invalid type(s).
-    Expected: "sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]", but got: "
-    record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]". |}] ;
+Invalid type(s).
+Expected: "sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]", but got: "
+record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]". |}] ;
 
   ()
 
@@ -1154,7 +1154,7 @@ Free variable 'a' is not allowed in CREATE_CONTRACT lambda |}] ;
 
   run_ligo_good [ "compile-contract" ; contract "tuples_no_annotation.religo" ; "main" ] ;
   [%expect {|
-    { parameter int ;        
+    { parameter int ;
       storage (pair (pair int string) (pair nat bool)) ;
       code { DROP ;
              PUSH bool False ;
@@ -1275,7 +1275,7 @@ let%expect_test _ =
 
     Invalid big map nesting.
     A big map cannot be nested inside another big map. |}];
-  
+
   run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_3.religo"; "main"];
   [%expect {|
     in file "../../test/contracts/negative/nested_bigmap_3.religo", line 1, characters 11-29
@@ -1294,55 +1294,52 @@ let%expect_test _ =
 
     Invalid big map nesting.
     A big map cannot be nested inside another big map. |}];
-      
+
   run_ligo_good ["print-ast"; contract "letin.mligo"];
   [%expect {|
-    type storage = (int ,
-    int)
-    const main : (int ,
-    storage) -> (list (operation) ,
-    storage) = lambda (n:Some((int ,
-    storage))) : Some((list (operation) ,
-    storage)) return let x : (int ,
-    int) = let x : int = 7 in (ADD(x ,
-    n.0) ,
-    ADD(n.1.0 ,
-    n.1.1)) in (list[] : list (operation) ,
-    x)
-    const f0 = lambda (a:Some(string)) : None return true(unit)
-    const f1 = lambda (a:Some(string)) : None return true(unit)
-    const f2 = lambda (a:Some(string)) : None return true(unit)
-    const letin_nesting = lambda (#1:Some(unit)) : None return let s = "test" in let p0 = (f0)@(s) in { ASSERTION(p0);
-     let p1 = (f1)@(s) in { ASSERTION(p1);
-     let p2 = (f2)@(s) in { ASSERTION(p2);
-     s}}}
-    const letin_nesting2 = lambda (x:Some(int)) : None return let y = 2 in let z = 3 in ADD(ADD(x ,
-    y) , z) const x = let #5 = (+1 , (+2 ,
-    +3)) in let #4 = #5.0 in let #3 = #5.1 in let x = #3.0 in let #2 = #3.1 in x
+type storage = (int , int)
+const main : (int , storage) -> (list (operation) , storage) =
+  lambda (n : (int , storage)) : (list (operation) ,
+  storage) return let x : (int , int) =
+                    let x : int = 7 in (ADD(x , n.0) , ADD(n.1.0 , n.1.1)) in
+                  (list[] : list (operation) , x)
+const f0 = lambda (a : string) return true(unit)
+const f1 = lambda (a : string) return true(unit)
+const f2 = lambda (a : string) return true(unit)
+const letin_nesting =
+  lambda (#1 : unit) return let s = "test" in
+                            let p0 = (f0)@(s) in { ASSERTION(p0);
+ let p1 = (f1)@(s) in { ASSERTION(p1);
+ let p2 = (f2)@(s) in { ASSERTION(p2);
+ s}}}
+const letin_nesting2 =
+  lambda (x : int) return let y = 2 in let z = 3 in ADD(ADD(x , y) , z)
+const x =
+  let #5 = (+1 , (+2 , +3)) in
+  let #4 = #5.0 in let #3 = #5.1 in let x = #3.0 in let #2 = #3.1 in x
     |}];
 
   run_ligo_good ["print-ast"; contract "letin.religo"];
   [%expect {|
-    type storage = (int ,
-    int)
-    const main = lambda (n:Some((int ,
-    storage))) : Some((list (operation) ,
-    storage)) return let x : (int ,
-    int) = let x : int = 7 in (ADD(x ,
-    n.0) ,
-    ADD(n.1.0 ,
-    n.1.1)) in (list[] : list (operation) ,
-    x)
-    const f0 = lambda (a:Some(string)) : None return true(unit)
-    const f1 = lambda (a:Some(string)) : None return true(unit)
-    const f2 = lambda (a:Some(string)) : None return true(unit)
-    const letin_nesting = lambda (_:Some(unit)) : None return let s = "test" in let p0 = (f0)@(s) in { ASSERTION(p0);
-     let p1 = (f1)@(s) in { ASSERTION(p1);
-     let p2 = (f2)@(s) in { ASSERTION(p2);
-     s}}}
-    const letin_nesting2 = lambda (x:Some(int)) : None return let y = 2 in let z = 3 in ADD(ADD(x ,
-    y) , z) const x = let #4 = (+1 , (+2 ,
-    +3)) in let #3 = #4.0 in let #2 = #4.1 in let x = #2.0 in let #1 = #2.1 in x
+type storage = (int , int)
+const main = lambda (n : (int , storage)) : (list (operation) ,
+  storage) return let x : (int , int) =
+                    let x : int = 7 in (ADD(x , n.0) , ADD(n.1.0 , n.1.1)) in
+                  (list[] : list (operation) , x)
+const f0 = lambda (a : string) return true(unit)
+const f1 = lambda (a : string) return true(unit)
+const f2 = lambda (a : string) return true(unit)
+const letin_nesting =
+  lambda (_ : unit) return let s = "test" in
+                           let p0 = (f0)@(s) in { ASSERTION(p0);
+ let p1 = (f1)@(s) in { ASSERTION(p1);
+ let p2 = (f2)@(s) in { ASSERTION(p2);
+ s}}}
+const letin_nesting2 =
+  lambda (x : int) return let y = 2 in let z = 3 in ADD(ADD(x , y) , z)
+const x =
+  let #4 = (+1 , (+2 , +3)) in
+  let #3 = #4.0 in let #2 = #4.1 in let x = #2.0 in let #1 = #2.1 in x
     |}];
 
   run_ligo_bad ["print-ast-typed"; contract "existential.mligo"];

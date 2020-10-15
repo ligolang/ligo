@@ -105,15 +105,15 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
   | T_variable var ->
     let var = decompile_variable var in
     return @@ CST.TVar (var)
-  | T_constant (const, []) ->
-    let const = Predefined.type_constant_to_string const in
+  | T_constant {type_constant; arguments=[]} ->
+    let const = Predefined.type_constant_to_string type_constant in
     return @@ CST.TVar (wrap const)
-  | T_constant (type_constant, lst) ->
-    let operator = wrap @@ Predefined.type_constant_to_string type_constant in
-    let%bind lst = bind_map_list decompile_type_expr lst in
+  | T_constant {type_constant; arguments} ->
+    let type_constant = wrap @@ Predefined.type_constant_to_string type_constant in
+    let%bind lst = bind_map_list decompile_type_expr arguments in
     let%bind lst = list_to_nsepseq lst in
     let lst : _ CST.par = {lpar=ghost;inside=lst;rpar=ghost} in
-    return @@ CST.TApp (wrap (operator,wrap lst))
+    return @@ CST.TApp (wrap (type_constant,wrap lst))
   | T_annoted _annot ->
     failwith "let's work on it later"
 
@@ -135,13 +135,11 @@ let get_e_tuple : AST.expression -> _ result = fun expr ->
     Format.asprintf "%a should be a tuple expression"
     AST.PP.expression expr
 
-let pattern_type var ty_opt =
-  let var = CST.PVar (decompile_variable var) in
-  match ty_opt with
-    Some s ->
-      let%bind type_expr = decompile_type_expr s in
-      ok @@ CST.PTyped (wrap @@ CST.{pattern=var;colon=ghost;type_expr})
-  | None -> ok @@ var
+let pattern_type ({var;ascr}: _ AST.binder) =
+  let var = CST.PVar (decompile_variable var.wrap_content) in
+  let%bind type_expr = bind_map_option decompile_type_expr ascr in
+  let type_expr = Option.unopt ~default:(CST.TWild ghost) type_expr in
+  ok @@ CST.PTyped (wrap @@ CST.{pattern=var;colon=ghost;type_expr})
 
 let rec decompile_expression : AST.expression -> _ result = fun expr ->
   let return_expr expr = ok @@ expr in
@@ -219,10 +217,10 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     return_expr_with_par @@ CST.EFun (wrap @@ fun_expr)
   | E_recursive _ ->
     failwith "corner case : annonymous recursive function"
-  | E_let_in {let_binder;rhs;let_result;attributes} ->
-    let var = CST.PVar (decompile_variable @@ (fst let_binder).wrap_content) in
+  | E_let_in {let_binder={var;ascr};rhs;let_result;attributes} ->
+    let var = CST.PVar (decompile_variable @@ var.wrap_content) in
     let binders = var in
-    let%bind lhs_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) @@ snd let_binder in
+    let%bind lhs_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) ascr in
     let%bind let_rhs = decompile_expression rhs in
     let binding : CST.let_binding = {binders;lhs_type;eq=ghost;let_rhs} in
     let%bind body = decompile_expression let_result in
@@ -413,7 +411,7 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     failwith @@ Format.asprintf "Decompiling a imperative construct to CameLIGO %a"
     AST.PP.expression expr
 
-and decompile_to_path : AST.expression_variable -> AST.access list -> (CST.path, _) result = fun var access ->
+and decompile_to_path : AST.expression_variable -> _ AST.access list -> (CST.path, _) result = fun var access ->
   let struct_name = decompile_variable var.wrap_content in
   match access with
     [] -> ok @@ CST.Name struct_name
@@ -422,7 +420,7 @@ and decompile_to_path : AST.expression_variable -> AST.access list -> (CST.path,
     let path : CST.projection = {struct_name;selector=ghost;field_path} in
     ok @@ (CST.Path (wrap @@ path) : CST.path)
 
-and decompile_to_selection : AST.access -> (CST.selection, _) result = fun access ->
+and decompile_to_selection : _ AST.access -> (CST.selection, _) result = fun access ->
   match access with
     Access_tuple index -> ok @@ CST.Component (wrap @@ ("",index))
   | Access_record str  -> ok @@ CST.FieldName (wrap str)
@@ -430,8 +428,9 @@ and decompile_to_selection : AST.access -> (CST.selection, _) result = fun acces
     failwith @@ Format.asprintf
     "Can't decompile access_map to selection"
 
-and decompile_lambda : AST.lambda -> _ = fun {binder;input_type;output_type;result} ->
-    let%bind param_decl = pattern_type binder.wrap_content input_type in
+and decompile_lambda : (AST.expr, AST.ty_expr) AST.lambda -> _ =
+  fun {binder;output_type;result} ->
+    let%bind param_decl = pattern_type binder in
     let param = CST.PPar (wrap @@ par @@ param_decl) in
     let%bind ret_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) output_type in
     let%bind return = decompile_expression result in
@@ -440,24 +439,13 @@ and decompile_lambda : AST.lambda -> _ = fun {binder;input_type;output_type;resu
 and decompile_matching_cases : AST.matching_expr -> ((CST.expr CST.case_clause Region.reg, Region.t) Simple_utils.Utils.nsepseq Region.reg,_) result =
 fun m ->
   let%bind cases = match m with
-    Match_variable (var, ty_opt, expr) ->
-    let%bind pattern = pattern_type var.wrap_content ty_opt in
+    Match_variable (var, expr) ->
+    let%bind pattern = pattern_type var in
     let%bind rhs = decompile_expression expr in
     let case : _ CST.case_clause = {pattern; arrow=ghost; rhs; terminator=None}in
     ok @@ [wrap case]
-  | Match_tuple (lst, ty_opt, expr) ->
-    let%bind tuple = match ty_opt with
-      Some ty_lst ->
-      let aux (var, ty) =
-        let pattern = CST.PVar (decompile_variable var) in
-        let%bind type_expr = decompile_type_expr ty in
-        ok @@ CST.PTyped (wrap @@ CST.{pattern;colon=ghost;type_expr})
-      in
-      bind list_to_nsepseq @@ bind_map_list aux @@ List.combine (List.map (fun (e:AST.expression_variable) -> e.wrap_content) lst) ty_lst
-    | None ->
-      let aux (var:AST.expression_variable) = CST.PVar (decompile_variable var.wrap_content) in
-      list_to_nsepseq @@ List.map aux lst
-    in
+  | Match_tuple (lst, expr) ->
+    let%bind tuple = bind list_to_nsepseq @@ bind_map_list pattern_type lst in
     let pattern : CST.pattern = PTuple (wrap @@ tuple) in
     let%bind rhs = decompile_expression expr in
     let case : _ CST.case_clause = {pattern; arrow=ghost; rhs; terminator=None}in
@@ -501,29 +489,27 @@ let decompile_declaration : AST.declaration Location.wrap -> (CST.declaration, _
   let decl = Location.unwrap decl in
   let wrap value = ({value;region=Region.ghost} : _ Region.reg) in
   match decl with
-    Declaration_type (name, te) ->
-    let name = decompile_variable name in
-    let%bind type_expr = decompile_type_expr te in
+    Declaration_type {type_binder;type_expr} ->
+    let name = decompile_variable type_binder in
+    let%bind type_expr = decompile_type_expr type_expr in
     ok @@ CST.TypeDecl (wrap (CST.{kwd_type=ghost; name; eq=ghost; type_expr}))
-  | Declaration_constant (var, ty_opt, attr, expr) ->
+  | Declaration_constant {binder;attr;expr}->
     let attributes : CST.attributes = decompile_attributes attr in
-    let var = CST.PVar (decompile_variable var.wrap_content) in
+    let var = CST.PVar (decompile_variable binder.var.wrap_content) in
     let binders = var in
+    let%bind lhs_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) binder.ascr in
     match expr.expression_content with
       E_lambda lambda ->
-      let%bind lhs_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) ty_opt in
       let%bind let_rhs = decompile_expression @@ AST.make_e @@ AST.E_lambda lambda in
       let let_binding : CST.let_binding = {binders;lhs_type;eq=ghost;let_rhs} in
       let let_decl = wrap (ghost,None,let_binding,attributes) in
       ok @@ CST.ConstDecl let_decl
     | E_recursive {lambda; _} ->
-      let%bind lhs_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) ty_opt in
       let%bind let_rhs = decompile_expression @@ AST.make_e @@ AST.E_lambda lambda in
       let let_binding : CST.let_binding = {binders;lhs_type;eq=ghost;let_rhs} in
       let let_decl = wrap (ghost,Some ghost,let_binding,attributes) in
       ok @@ CST.ConstDecl let_decl
     | _ ->
-      let%bind lhs_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) ty_opt in
       let%bind let_rhs = decompile_expression expr in
       let let_binding : CST.let_binding = {binders;lhs_type;eq=ghost;let_rhs} in
       let let_decl = wrap (ghost,None,let_binding,attributes) in

@@ -119,17 +119,17 @@ and lambda ({binder=ba;result=ra}) ({binder=bb;result=rb}) =
   cmp2 expression_variable ba bb expression ra rb
 
 and recursive ({fun_name=fna;fun_type=fta;lambda=la}) {fun_name=fnb;fun_type=ftb;lambda=lb} =
-  cmp3 
+  cmp3
     expression_variable fna fnb
     type_expression     fta ftb
     lambda               la  lb
 
-and let_in {let_binder=ba;rhs=ra;let_result=la;inline=ia} {let_binder=bb;rhs=rb;let_result=lb;inline=ib} =
+and let_in {let_binder=ba;rhs=ra;let_result=la;inline=aa} {let_binder=bb;rhs=rb;let_result=lb;inline=ab} =
   cmp4
     expression_variable ba bb
     expression ra rb
     expression la lb
-    bool ia ib
+    bool  aa ab
 
 and raw_code {language=la;code=ca} {language=lb;code=cb} =
   cmp2
@@ -223,7 +223,7 @@ let declaration_type {type_binder=tba;type_expr=tea} {type_binder=tbb;type_expr=
     type_variable tba tbb
     type_expression tea teb
 
-let declaration a b = 
+let declaration a b =
   match (a,b) with
     Declaration_constant a, Declaration_constant b -> declaration_constant a b
   | Declaration_type     a, Declaration_type     b -> declaration_type a b
@@ -241,7 +241,7 @@ let type_environment_binding {type_variable=va;type_=ta} {type_variable=vb;type_
     type_variable va vb
     type_expression ta tb
 
-let type_environment = List.compare ~compare:type_environment_binding 
+let type_environment = List.compare ~compare:type_environment_binding
 
 let environment_element_definition_declaration {expression=ea;free_variables=fa} {expression=eb;free_variables=fb} =
   cmp2
@@ -279,7 +279,7 @@ let named_type_content {type_name=tna;type_value=tva} {type_name=tnb;type_value=
 
 (* Solver types *)
 
-let unionfind a b = 
+let unionfind a b =
   let a = UnionFind.Poly2.partitions a in
   let b = UnionFind.Poly2.partitions b in
   List.compare ~compare:(List.compare ~compare:type_variable) a b

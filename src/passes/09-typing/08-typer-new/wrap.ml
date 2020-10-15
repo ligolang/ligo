@@ -94,7 +94,7 @@ let lambda
   let output'  = match output with
       None -> []
     | Some output -> [c_equation unification_output (type_expression_to_type_value output) "wrap: lambda: output annot"]
-  in 
+  in
     [
       c_equation unification_output result' "wrap: lambda: result" ;
       c_equation (type_expression_to_type_value fresh) unification_arg "wrap: lambda: arg" ;
@@ -161,7 +161,7 @@ let recursive : T.type_expression -> (constraints * T.type_variable) =
   ], whole_expr
 
 let raw_code : T.type_expression -> (constraints * T.type_variable) =
-  fun type_anno -> 
+  fun type_anno ->
   let type_anno = type_expression_to_type_value type_anno in
   let whole_expr = Core.fresh_type_variable () in
   [

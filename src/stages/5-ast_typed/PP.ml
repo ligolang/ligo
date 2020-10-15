@@ -63,11 +63,11 @@ let list_sep_d_par f ppf lst =
 let rec type_content : formatter -> type_content -> unit =
   fun ppf tc ->
   match tc with
-  | T_sum m -> fprintf ppf "@[<h>sum[%a]@]" (lmap_sep_d type_expression) (LMap.to_kv_list @@ LMap.map (fun {associated_type;_} -> associated_type) m.content)
+  | T_variable tv -> type_variable                 ppf tv
+  | T_constant tc -> type_operator type_expression ppf tc
+  | T_sum m -> fprintf ppf "@[<h>sum[%a]@]" (lmap_sep_d type_expression) (LMap.to_kv_list_rev @@ LMap.map (fun {associated_type;_} -> associated_type) m.content)
   | T_record m -> fprintf ppf "%a" record m
-  | T_arrow a -> fprintf ppf "@[<h>%a ->@ %a@]" type_expression a.type1 type_expression a.type2
-  | T_variable tv -> type_variable ppf tv
-  | T_constant {type_constant=tc;arguments} -> fprintf ppf "%a%a" type_constant tc (list_sep_d_par type_expression) arguments
+  | T_arrow     a -> arrow         type_expression ppf a
 
 and record ppf {content; layout=_} =
   fprintf ppf "%a"
@@ -94,7 +94,7 @@ and expression_content ppf (ec: expression_content) =
   | E_constructor c ->
       fprintf ppf "%a(%a)" label c.constructor expression c.element
   | E_constant c ->
-      fprintf ppf "%a(%a)" constant c.cons_name (list_sep_d expression)
+      fprintf ppf "%a(%a)" constant' c.cons_name (list_sep_d expression)
         c.arguments
   | E_record m ->
       fprintf ppf "%a" (tuple_or_record_sep_expr expression) m
@@ -117,12 +117,6 @@ and expression_content ppf (ec: expression_content) =
         expression_variable fun_name
         type_expression fun_type
         expression_content (E_lambda lambda)
-
-and assoc_expression ppf : map_kv -> unit =
- fun {key ; value} -> fprintf ppf "%a -> %a" expression key expression value
-
-and single_record_patch ppf ((p, expr) : label * expression) =
-  fprintf ppf "%a <- %a" label p expression expr
 
 
 and option_inline ppf inline =

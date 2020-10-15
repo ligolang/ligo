@@ -54,7 +54,7 @@ let rec to_left_comb_record' first prev l conv_map =
     to_left_comb_record' first prev tl conv_map'
 let to_left_comb_record = to_left_comb_record' true
 
-let rec right_comb_variant_combination' (i:int) (e:expression) (dst_lmap:row_element label_map) (src_kvl:(label * row_element) list) : expression list =
+let rec right_comb_variant_combination' (i:int) (e:expression) (dst_lmap:_ row_element_mini_c label_map) (src_kvl:(label * ty_expr row_element_mini_c) list) : expression list =
   let intermediary_types i =  if i = 0 then [] else e.type_expression::(descend_types "M_right" dst_lmap i) in
   let rec comb (ctor_type,outer) l =
     match l with
@@ -71,7 +71,7 @@ let rec right_comb_variant_combination' (i:int) (e:expression) (dst_lmap:row_ele
       (comb (associated_type,Label "M_left") combs_t) :: right_comb_variant_combination' (i+1) e dst_lmap tl )
 let right_comb_variant_combination = right_comb_variant_combination' 0
 
-let rec left_comb_variant_combination' (i:int) (e:expression) (dst_lmap:row_element label_map) (src_kvl:(label * row_element) list) : expression list =
+let rec left_comb_variant_combination' (i:int) (e:expression) (dst_lmap:ty_expr row_element_mini_c label_map) (src_kvl:(label * ty_expr row_element_mini_c) list) : expression list =
   let intermediary_types i =  if i = 0 then [] else e.type_expression::(descend_types "M_left" dst_lmap i) in
   let rec comb (ctor_type,outer) l =
     match l with
@@ -116,8 +116,8 @@ let rec to_right_comb_record
 
 let rec from_right_comb_record
     (prev:expression)
-    (src_lmap: row_element label_map)
-    (dst_kvl:(label * row_element) list)
+    (src_lmap:ty_expr row_element_mini_c label_map)
+    (dst_kvl:(label * ty_expr row_element_mini_c) list)
     (conv_map:expression label_map) : expression label_map =
   match dst_kvl with
   | (label , {associated_type;_}) :: (_::_ as tl) ->
@@ -133,8 +133,8 @@ let rec from_right_comb_record
 
 let rec from_left_comb_record
     (prev:expression)
-    (src_lmap: row_element label_map)
-    (dst_kvl:(label * row_element) list)
+    (src_lmap:ty_expr row_element_mini_c label_map)
+    (dst_kvl:(label * ty_expr row_element_mini_c) list)
     (conv_map:expression label_map) : expression label_map =
   match dst_kvl with
   | (label , {associated_type;_}) :: (_::_ as tl) ->

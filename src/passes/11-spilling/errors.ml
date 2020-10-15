@@ -61,7 +61,7 @@ let rec error_ppformat : display_format:string display_format ->
         Ast_typed.PP.expression_variable var in
       Format.pp_print_string f s
     | `Spilling_wrong_mini_c_value (expected , actual) ->
-      let s = Format.asprintf "Invalid type.@.Expected \"%a\", but got \"%a\"."
+      let s = Format.asprintf "Invalid type.@.Expected \"%a\",@.but got \"%a\"."
         Ast_typed.PP.type_expression expected 
         Mini_c.PP.value actual in
       Format.pp_print_string f s

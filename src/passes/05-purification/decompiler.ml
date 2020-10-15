@@ -3,149 +3,109 @@ module Errors = Errors
 module I = Ast_imperative
 module O = Ast_sugar
 open Trace
+open Stage_common.Maps
 
 let rec decompile_type_expression : O.type_expression -> (I.type_expression, Errors.purification_error) result =
   fun te ->
+  let self = decompile_type_expression in
   let return te = ok @@ I.make_t te in
   match te.type_content with
-    | O.T_sum {fields ; attributes } ->
-      (* This type sum could be a michelson_or as well, we could use is_michelson_or *)
-      let%bind fields =
-        Stage_common.Helpers.bind_map_lmap (fun v ->
-          let {associated_type;attributes;decl_pos} : O.row_element = v in
-          let%bind v = decompile_type_expression associated_type in
-          ok @@ ({associated_type=v;attributes;decl_pos}:I.row_element)
-        ) fields
-      in
-      return @@ I.T_sum {fields ; attributes}
-    | O.T_record {fields ; attributes} ->
-      let%bind fields =
-        Stage_common.Helpers.bind_map_lmap (fun v ->
-          let {associated_type;attributes;decl_pos} : O.row_element = v in
-          let%bind v = decompile_type_expression associated_type in
-          ok @@ ({associated_type=v;attributes;decl_pos}:I.row_element)
-        ) fields
-      in
-      return @@ I.T_record {fields ; attributes}
-    | O.T_tuple tuple ->
-      let%bind tuple = bind_map_list decompile_type_expression tuple in
-      return @@ I.T_tuple tuple
-    | O.T_arrow {type1;type2} ->
-      let%bind type1 = decompile_type_expression type1 in
-      let%bind type2 = decompile_type_expression type2 in
-      return @@ T_arrow {type1;type2}
     | O.T_variable type_variable -> return @@ T_variable type_variable
-    | O.T_constant (type_constant, lst) ->
-      let%bind lst = bind_map_list decompile_type_expression lst in
-      return @@ T_constant (type_constant, lst)
+    | O.T_constant tc ->
+      let%bind tc = type_operator self tc in
+      return @@ I.T_constant tc
+    | O.T_sum sum->
+      (* This type sum could be a michelson_or as well, we could use is_michelson_or *)
+      let%bind sum = rows self sum in
+      return @@ I.T_sum sum
+    | O.T_record record ->
+      let%bind record = rows self record in
+      return @@ I.T_record record
+    | O.T_tuple tuple ->
+      let%bind tuple = bind_map_list self tuple in
+      return @@ I.T_tuple tuple
+    | O.T_arrow arr ->
+      let%bind arr = arrow self arr in
+      return @@ T_arrow arr
 
 let rec decompile_expression : O.expression -> (I.expression, Errors.purification_error) result =
   fun e ->
+  let self      = decompile_expression in
+  let self_type = decompile_type_expression in
   let return expr = ok @@ I.make_e ~loc:e.location expr in
   match e.expression_content with
     O.E_literal lit -> return @@ I.E_literal lit
+  | O.E_variable name     -> return @@ I.E_variable name
   | O.E_constant {cons_name;arguments} ->
      let cons_name = Stage_common.Enums.Const cons_name in
     let%bind arguments = bind_map_list decompile_expression arguments in
     return @@ I.E_constant {cons_name;arguments}
-  | O.E_variable name     -> return @@ I.E_variable name
-  | O.E_application {lamb; args} ->
-    let%bind lamb = decompile_expression lamb in
-    let%bind args = decompile_expression args in
-    return @@ I.E_application {lamb; args}
-  | O.E_lambda lambda ->
-    let%bind lambda = decompile_lambda lambda in
-    return @@ I.E_lambda lambda
-  | O.E_recursive {fun_name;fun_type;lambda} ->
-    let%bind fun_type = decompile_type_expression fun_type in
-    let%bind lambda = decompile_lambda lambda in
-    return @@ I.E_recursive {fun_name;fun_type;lambda}
+  | O.E_application app ->
+    let%bind app = application self app in
+    return @@ I.E_application app
+  | O.E_lambda lamb ->
+    let%bind lamb = lambda self self_type lamb in
+    return @@ I.E_lambda lamb
+  | O.E_recursive recs ->
+    let%bind recs = recursive self self_type recs in
+    return @@ I.E_recursive recs
   | O.E_let_in {let_binder;attributes;rhs;let_result} ->
-    let (binder,ty_opt) = let_binder in
-    let%bind ty_opt = bind_map_option decompile_type_expression ty_opt in
+    let {var;ascr} : _ O.binder = let_binder in
+    let%bind ascr = bind_map_option decompile_type_expression ascr in
     let%bind rhs = decompile_expression rhs in
     let%bind let_result = decompile_expression let_result in
-    return @@ I.E_let_in {let_binder=(binder,ty_opt);attributes;rhs;let_result}
+    return @@ I.E_let_in {let_binder={var;ascr};attributes;rhs;let_result}
   | O.E_raw_code {language;code} ->
-    let%bind code  = decompile_expression code in
+    let%bind code  = self code in
     return @@ I.E_raw_code {language;code}
   | O.E_constructor {constructor;element} ->
-    let%bind element = decompile_expression element in
+    let%bind element = self element in
     return @@ I.E_constructor {constructor;element}
   | O.E_matching {matchee; cases} ->
-    let%bind matchee = decompile_expression matchee in
+    let%bind matchee = self matchee in
     let%bind cases   = decompile_matching cases in
     return @@ I.E_matching {matchee;cases}
-  | O.E_record record ->
-    let record = I.LMap.to_kv_list_rev record in
-    let%bind record =
-      bind_map_list (fun (k,v) ->
-        let%bind v = decompile_expression v in
-        ok @@ (k,v)
-      ) record
-    in
-    return @@ I.E_record (O.LMap.of_list record)
-  | O.E_accessor {record;path} ->
-    let%bind record = decompile_expression record in
-    let%bind path = decompile_path path in
-    return @@ I.E_accessor {record;path}
-  | O.E_update {record;path;update} ->
-    let%bind record = decompile_expression record in
-    let%bind path = decompile_path path in
-    let%bind update = decompile_expression update in
-    return @@ I.E_update {record;path;update}
+  | O.E_record recd ->
+    let%bind recd = record self recd in
+    return @@ I.E_record recd
+  | O.E_accessor acc ->
+    let%bind acc = accessor self acc in
+    return @@ I.E_accessor acc
+  | O.E_update up ->
+    let%bind up = update self up in
+    return @@ I.E_update up
   | O.E_tuple tuple ->
-    let%bind tuple = bind_map_list decompile_expression tuple in
+    let%bind tuple = bind_map_list self tuple in
     return @@ I.E_tuple tuple
+  | O.E_ascription ascr ->
+    let%bind ascr = ascription self self_type ascr in
+    return @@ I.E_ascription ascr
+  | O.E_cond cond ->
+    let%bind cond = conditional self cond in
+    return @@ I.E_cond cond
+  | O.E_sequence seq ->
+    let%bind seq = sequence self seq in
+    return @@ I.E_sequence seq
+  | O.E_skip -> return @@ I.E_skip
   | O.E_map map ->
     let%bind map = bind_map_list (
-      bind_map_pair decompile_expression
+      bind_map_pair self
     ) map
     in
     return @@ I.E_map map
   | O.E_big_map big_map ->
     let%bind big_map = bind_map_list (
-      bind_map_pair decompile_expression
+      bind_map_pair self
     ) big_map
     in
     return @@ I.E_big_map big_map
   | O.E_list lst ->
-    let%bind lst = bind_map_list decompile_expression lst in
+    let%bind lst = bind_map_list self lst in
     return @@ I.E_list lst
   | O.E_set set ->
-    let%bind set = bind_map_list decompile_expression set in
+    let%bind set = bind_map_list self set in
     return @@ I.E_set set
-  | O.E_ascription {anno_expr; type_annotation} ->
-    let%bind anno_expr = decompile_expression anno_expr in
-    let%bind type_annotation = decompile_type_expression type_annotation in
-    return @@ I.E_ascription {anno_expr; type_annotation}
-  | O.E_cond {condition;then_clause;else_clause} ->
-    let%bind condition   = decompile_expression condition in
-    let%bind then_clause = decompile_expression then_clause in
-    let%bind else_clause = decompile_expression else_clause in
-    return @@ I.E_cond {condition; then_clause; else_clause}
-  | O.E_sequence {expr1; expr2} ->
-    let%bind expr1 = decompile_expression expr1 in
-    let%bind expr2 = decompile_expression expr2 in
-    return @@ I.E_sequence {expr1; expr2}
-  | O.E_skip -> return @@ I.E_skip
 
-and decompile_path : O.access list -> (I.access list, Errors.purification_error) result =
-  fun path -> let aux a = match a with
-    | O.Access_record s -> ok @@ I.Access_record s
-    | O.Access_tuple  i -> ok @@ I.Access_tuple  i
-    | O.Access_map e ->
-      let%bind e = decompile_expression e in
-      ok @@ I.Access_map e
-  in
-  bind_map_list aux path
-
-and decompile_lambda : O.lambda -> (I.lambda, Errors.purification_error) result =
-  fun {binder;input_type;output_type;result}->
-    let%bind input_type = bind_map_option decompile_type_expression input_type in
-    let%bind output_type = bind_map_option decompile_type_expression output_type in
-    let%bind result = decompile_expression result in
-    ok @@ I.{binder;input_type;output_type;result}
 and decompile_matching : O.matching_expr -> (I.matching_expr, Errors.purification_error) result =
   fun m ->
   match m with
@@ -167,29 +127,32 @@ and decompile_matching : O.matching_expr -> (I.matching_expr, Errors.purificatio
       ) lst
       in
       ok @@ I.Match_variant lst
-    | O.Match_record (lst,ty_opt,expr) ->
+    | O.Match_record (lst,expr) ->
       let%bind expr = decompile_expression expr in
-      let%bind ty_opt = bind_map_option (bind_map_list decompile_type_expression) ty_opt in
-      ok @@ I.Match_record (lst,ty_opt,expr)
-    | O.Match_tuple (lst,ty_opt,expr) ->
+      let aux (a,b) =
+        let%bind b = binder decompile_type_expression b in
+        ok @@ (a,b) in
+      let%bind lst = bind_map_list aux lst in
+      ok @@ I.Match_record (lst,expr)
+    | O.Match_tuple (lst,expr) ->
       let%bind expr = decompile_expression expr in
-      let%bind ty_opt = bind_map_option (bind_map_list decompile_type_expression) ty_opt in
-      ok @@ I.Match_tuple (lst,ty_opt,expr)
-    | O.Match_variable (lst,ty_opt,expr) ->
+      let%bind lst = bind_map_list (binder decompile_type_expression) lst in
+      ok @@ I.Match_tuple (lst,expr)
+    | O.Match_variable (b,expr) ->
       let%bind expr = decompile_expression expr in
-      let%bind ty_opt = bind_map_option decompile_type_expression ty_opt in
-      ok @@ I.Match_variable (lst,ty_opt,expr)
+      let%bind binder = binder decompile_type_expression b in
+      ok @@ I.Match_variable (binder,expr)
 
 let decompile_declaration : O.declaration Location.wrap -> _ result = fun {wrap_content=declaration;location} ->
   let return decl = ok @@ Location.wrap ~loc:location decl in
-  match declaration with 
-  | O.Declaration_constant (n, te_opt, inline, expr) ->
-    let%bind expr = decompile_expression expr in
-    let%bind te_opt = bind_map_option decompile_type_expression te_opt in
-    return @@ I.Declaration_constant (n, te_opt, inline, expr)
-  | O.Declaration_type (n, te) ->
-    let%bind te = decompile_type_expression te in
-    return @@ I.Declaration_type (n,te)
+  match declaration with
+  | O.Declaration_type dt ->
+    let%bind dt = declaration_type decompile_type_expression dt in
+    return @@ I.Declaration_type dt
+  | O.Declaration_constant dc ->
+    let%bind dc = declaration_constant decompile_expression decompile_type_expression dc in
+    return @@ I.Declaration_constant dc
+
 
 let decompile_program : O.program -> (I.program, Errors.purification_error) result = fun prg ->
-  bind_map_list decompile_declaration prg
+  program decompile_declaration prg

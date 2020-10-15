@@ -29,14 +29,6 @@ let record_sep_t value sep ppf (m : 'a label_map) =
     fprintf ppf "@[<h>%a -> %a %s@]" label k value associated_type attr
   in fprintf ppf "%a" (list_sep new_pp sep) lst
 
-let expression_variable ppf (ev : expression_variable) : unit =
-  fprintf ppf "%a" Var.pp ev.wrap_content
-
-let list_sep_d_par f ppf lst =
-  match lst with
-  | [] -> ()
-  | _ -> fprintf ppf " (%a)" (list_sep_d f) lst
-
 let rec type_content : formatter -> type_expression -> unit =
   fun ppf te ->
   match te.type_content with
@@ -55,123 +47,51 @@ let rec type_content : formatter -> type_expression -> unit =
       let attr : string = attributes_1 m.attributes in
       fprintf ppf "({%a} %s)" r m.fields attr
 
-  | T_tuple  t -> fprintf ppf "(%a)" (list_sep_d type_expression) t
-  | T_arrow  a -> fprintf ppf "%a -> %a" type_expression a.type1 type_expression a.type2
   | T_variable tv -> type_variable ppf tv
-  | T_constant (tc, lst) -> fprintf ppf "%a%a" type_constant tc (list_sep_d_par type_expression) lst
+  | T_constant tc -> type_operator type_expression ppf tc
+  | T_tuple     t -> type_tuple    type_expression ppf t
+  | T_arrow     a -> arrow         type_expression ppf a
   | T_annoted (ty, str) -> fprintf ppf "(%a%%%s)" type_expression ty str
 
 and type_expression ppf (te : type_expression) : unit =
   fprintf ppf "%a" type_content te
 
 let rec expression ppf (e : expression) =
-  expression_content ppf e.expression_content
+  fprintf ppf "%a" expression_content e.expression_content
 and expression_content ppf (ec : expression_content) =
   match ec with
-  | E_literal l ->
-      fprintf ppf "%a" literal l
-  | E_variable n ->
-      fprintf ppf "%a" expression_variable n
-  | E_application {lamb;args} ->
-      fprintf ppf "(%a)@(%a)" expression lamb expression args
-  | E_constructor c ->
-      fprintf ppf "%a(%a)" label c.constructor expression c.element
+  | E_literal     l -> literal                ppf l
+  | E_variable    n -> expression_variable    ppf n
+  | E_application a -> application expression ppf a
+  | E_constructor c -> constructor expression ppf c
   | E_constant c ->
-      fprintf ppf "%a(%a)" constant (const_name c.cons_name) (list_sep_d expression)
-        c.arguments
-  | E_record m ->
-      fprintf ppf "{%a}" (record_sep_expr expression (const ";")) m
-  | E_accessor {record;path} ->
-      fprintf ppf "%a.%a" expression record (list_sep accessor (const ".")) path
-  | E_update {record; path; update} ->
-      fprintf ppf "{ %a with %a = %a }" expression record (list_sep accessor (const ".")) path expression update
-  | E_map m ->
-      fprintf ppf "map[%a]" (list_sep_d assoc_expression) m
-  | E_big_map m ->
-      fprintf ppf "big_map[%a]" (list_sep_d assoc_expression) m
-  | E_list lst ->
-      fprintf ppf "list[%a]" (list_sep_d expression) lst
-  | E_set lst ->
-      fprintf ppf "set[%a]" (list_sep_d expression) lst
-  | E_lambda {binder; input_type; output_type; result} ->
-      fprintf ppf "lambda (%a:%a) : %a return %a"
-        expression_variable binder
-        (PP_helpers.option type_expression) input_type
-        (PP_helpers.option type_expression) output_type
-        expression result
+      fprintf ppf "%a(%a)"
+        constant' (const_name c.cons_name)
+        (list_sep_d expression) c.arguments
+  | E_record      r -> record      expression ppf r
+  | E_tuple       t -> tuple       expression ppf t
+  | E_accessor    a -> accessor    expression ppf a
+  | E_update      u -> update      expression ppf u
+  | E_lambda      l -> lambda      expression type_expression ppf l
   | E_matching {matchee; cases; _} ->
       fprintf ppf "match %a with %a"
         expression matchee (matching expression)
         cases
-  | E_recursive { fun_name; fun_type; lambda} ->
-      fprintf ppf "rec (%a:%a => %a )"
-        expression_variable fun_name
-        type_expression fun_type
-        expression_content (E_lambda lambda)
-  | E_let_in {let_binder; rhs; let_result; attributes=attr} ->
-      fprintf ppf "let %a = %a%a in %a" option_type_name let_binder expression rhs attributes attr expression let_result
-  | E_raw_code {language; code} ->
-      fprintf ppf "[%%%s %a]" language expression code
-  | E_ascription {anno_expr; type_annotation} ->
-      fprintf ppf "%a : %a" expression anno_expr type_expression
-        type_annotation
-  | E_cond {condition; then_clause; else_clause} ->
-      fprintf ppf "if %a then %a else %a"
-        expression condition
-        expression then_clause
-        expression else_clause
-  | E_sequence {expr1;expr2} ->
-      fprintf ppf "{ %a; @. %a}" expression expr1 expression expr2
-  | E_skip ->
-      fprintf ppf "skip"
-  | E_tuple t ->
-      fprintf ppf "(%a)" (list_sep_d expression) t
-  | E_assign {variable; access_path; expression=e} ->
-      fprintf ppf "%a%a := %a"
-        expression_variable variable
-        (list_sep accessor (const ".")) access_path
-        expression e
-  | E_for {binder; start; final; increment; body} ->
-      fprintf ppf "for %a from %a to %a by %a do %a"
-        expression_variable binder
-        expression start
-        expression final
-        expression increment
-        expression body
-  | E_for_each {binder; collection; body; _} ->
-      fprintf ppf "for each %a in %a do %a"
-        option_map binder
-        expression collection
-        expression body
-  | E_while {condition; body} ->
-      fprintf ppf "while %a do %a"
-        expression condition
-        expression body
-
-and accessor ppf a =
-  match a with
-    | Access_tuple i  -> fprintf ppf "%a" Z.pp_print i
-    | Access_record s -> fprintf ppf "%s" s
-    | Access_map e    -> fprintf ppf "%a" expression e
-
-and option_map ppf (k,v_opt) =
-  match v_opt with
-  | None -> fprintf ppf "%a" expression_variable k
-  | Some v -> fprintf ppf "%a -> %a" expression_variable k expression_variable v
-
-and option_type_name ppf
-    ((n, ty_opt) : expression_variable * type_expression option) =
-  match ty_opt with
-  | None ->
-      fprintf ppf "%a" expression_variable n
-  | Some ty ->
-      fprintf ppf "%a : %a" expression_variable n type_expression ty
-
-and assoc_expression ppf : expr * expr -> unit =
- fun (a, b) -> fprintf ppf "%a -> %a" expression a expression b
-
-and single_record_patch ppf ((p, expr) : label * expr) =
-  fprintf ppf "%a <- %a" label p expression expr
+  | E_recursive  r -> recursive expression type_expression ppf r
+  | E_let_in    li -> let_in expression type_expression ppf li
+  | E_raw_code   r -> raw_code expression ppf r
+  | E_ascription a -> ascription expression type_expression ppf a
+  | E_cond       c -> cond       expression ppf c
+  | E_sequence   s -> sequence   expression ppf s
+  | E_skip         -> skip                  ppf ()
+  | E_map        m -> map        expression ppf m
+  | E_big_map    m -> big_map    expression ppf m
+  | E_list       l -> lst        expression ppf l
+  | E_set        s -> set        expression ppf s
+  | E_assign     a -> assign     expression ppf a
+  | E_for        f -> for_       expression ppf f
+  | E_for_each   f -> for_each   expression ppf f
+  | E_while      w -> while_     expression ppf w
 
 and matching_variant_case : type a . (_ -> a -> unit) -> _ -> (label * expression_variable) * a -> unit =
   fun f ppf ((c,n),a) ->
@@ -185,12 +105,13 @@ and matching : (formatter -> expression -> unit) -> formatter -> matching_expr -
         fprintf ppf "| Nil -> %a @.| %a :: %a -> %a" f match_nil expression_variable hd expression_variable tl f match_cons
     | Match_option {match_none ; match_some = (some, match_some)} ->
         fprintf ppf "| None -> %a @.| Some %a -> %a" f match_none expression_variable some f match_some
-    | Match_tuple (lst, _,b) ->
-        fprintf ppf "(%a) -> %a" (list_sep_d expression_variable) lst f b
-    | Match_record (lst, _,b) ->
-        fprintf ppf "{%a} -> %a" (list_sep_d (fun ppf (a,b) -> fprintf ppf "%a = %a" label a expression_variable b)) lst f b
-    | Match_variable (a, _,b) ->
-        fprintf ppf "%a -> %a" expression_variable a f b
+    | Match_tuple (lst,b) ->
+        fprintf ppf "(%a) -> %a" (list_sep_d (binder type_expression)) lst f b
+    | Match_record (lst,b) ->
+        fprintf ppf "{%a} -> %a" (list_sep_d (fun ppf (a,b) -> fprintf ppf "%a = %a" label a (binder type_expression) b)) lst f b
+    | Match_variable (a,b) ->
+        fprintf ppf "%a -> %a" (binder type_expression) a f b
+
 
 (* Shows the type expected for the matched value *)
 and matching_type ppf m = match m with
@@ -217,15 +138,7 @@ and attributes ppf attributes =
 
 let declaration ppf (d : declaration) =
   match d with
-  | Declaration_type (type_name, te) ->
-      fprintf ppf "type %a = %a" type_variable type_name type_expression te
-  | Declaration_constant (name, ty_opt, attr, expr) ->
-      fprintf ppf "const %a = %a%a"
-        option_type_name (name, ty_opt)
-        expression expr
-        attributes attr
+  | Declaration_type     dt -> declaration_type                type_expression ppf dt
+  | Declaration_constant dc -> declaration_constant expression type_expression ppf dc
 
-let program ppf (p : program) =
-  fprintf ppf "@[<v>%a@]"
-    (list_sep declaration (tag "@;"))
-    (List.map Location.unwrap p)
+let program ppf (p : program) = program declaration ppf p

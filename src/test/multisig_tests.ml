@@ -16,7 +16,7 @@ let get_program f st =
         ok program
       )
 
-let compile_main f s () = 
+let compile_main f s () =
   let%bind typed_prg,_,_ = get_program f s () in
   let%bind mini_c_prg    = Ligo.Compile.Of_typed.compile typed_prg in
   let%bind michelson_prg = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
@@ -31,7 +31,7 @@ let init_storage threshold counter pkeys =
   let keys = List.map
     (fun el ->
       let (_,pk_str,_) = str_keys el in
-      e_key @@ pk_str) 
+      e_key @@ pk_str)
     pkeys in
   e_record_ez [
     ("id" , e_string "MULTISIG" ) ;
@@ -40,31 +40,31 @@ let init_storage threshold counter pkeys =
     ("auth" , e_typed_list keys (t_key ())) ;
   ]
 
-let empty_op_list = 
+let empty_op_list =
   (e_typed_list [] (t_operation ()))
 
-(* let empty_message = e_lambda (Location.wrap @@ Var.of_name "arguments",t_unit ()) 
+(* let empty_message = e_lambda (Location.wrap @@ Var.of_name "arguments",t_unit ())
   @@ e_annotation empty_op_list (t_list (t_operation ()))
 
 let chain_id_zero =
   e_bytes_raw (Tezos_crypto.Chain_id.to_bytes Tezos_base__TzPervasives.Chain_id.zero) *)
-let empty_message = e_lambda (Location.wrap @@ Var.of_name "arguments")
-  (Some (t_unit ())) (Some (t_list (t_operation ())))
+let empty_message = e_lambda_ez (Location.wrap @@ Var.of_name "arguments")
+  ~ascr:(t_unit ()) (Some (t_list (t_operation ())))
   empty_op_list
 let chain_id_zero = e_chain_id @@ Tezos_crypto.Base58.simple_encode
   Tezos_base__TzPervasives.Chain_id.b58check_encoding
   Tezos_base__TzPervasives.Chain_id.zero
 
 (* sign the message 'msg' with 'keys', if 'is_valid'=false the providid signature will be incorrect *)
-let params counter msg keys is_validl f s = 
+let params counter msg keys is_validl f s =
   let%bind program,_,_ = get_program f s () in
   let aux = fun acc (key,is_valid) ->
     let (_,_pk,sk) = key in
     let (pkh,_,_) = str_keys key in
     let payload = e_tuple
-      [ msg ; 
-        e_nat counter ; 
-        e_string (if is_valid then "MULTISIG" else "XX") ; 
+      [ msg ;
+        e_nat counter ;
+        e_string (if is_valid then "MULTISIG" else "XX") ;
         chain_id_zero ] in
     let%bind signature = sign_message program payload sk in
     ok @@ (e_pair (e_key_hash pkh) (e_signature signature))::acc in

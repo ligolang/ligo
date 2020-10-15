@@ -12,18 +12,18 @@ let field_checks kvl loc =
     (not all_undefined) in
   ok ()
 
-let annotate_field (field:row_element) (ann:string) : row_element =
+let annotate_field (field: ty_expr row_element_mini_c) (ann:string) : ty_expr row_element_mini_c =
   {field with michelson_annotation=Some ann}
 
 
-let comb_pair (t:type_content) : row_element =
+let comb_pair (t:type_content) : ty_expr row_element_mini_c =
   let associated_type = {
     type_content = t ;
     type_meta = None ;
     location = Location.generated ; } in
   {associated_type ; michelson_annotation = Some "" ; decl_pos = 0}
 
-let comb_ctor (t:type_content) : row_element =
+let comb_ctor (t:type_content) : ty_expr row_element_mini_c =
   let associated_type = {
     type_content = t ;
     type_meta = None ;
@@ -130,14 +130,14 @@ let convert_pair_to_left_comb l =
   let l' = List.sort (fun (_,{decl_pos=a;_}) (_,{decl_pos=b;_}) -> Int.compare a b) l in
   T_record {content=(to_left_comb_pair l' LMap.empty);layout=default_layout}
 
-let convert_pair_from_right_comb (src: row_element label_map) (dst: row_element label_map) : (type_content , typer_error) result =
+let convert_pair_from_right_comb (src:ty_expr row_element_mini_c label_map) (dst:ty_expr row_element_mini_c label_map) : (type_content , typer_error) result =
   let%bind fields = from_right_comb_pair src (LMap.cardinal dst) in
   let labels = List.map (fun (l,_) -> l) @@
     List.sort (fun (_,{decl_pos=a;_}) (_,{decl_pos=b;_}) -> Int.compare a b ) @@
     LMap.to_kv_list_rev dst in
   ok @@ T_record {content=(LMap.of_list @@ List.combine labels fields);layout=default_layout}
 
-let convert_pair_from_left_comb (src: row_element label_map) (dst: row_element label_map) : (type_content , typer_error) result =
+let convert_pair_from_left_comb (src:ty_expr row_element_mini_c label_map) (dst:ty_expr row_element_mini_c label_map) : (type_content , typer_error) result =
   let%bind fields = from_left_comb_pair src (LMap.cardinal dst) in
   let labels = List.map (fun (l,_) -> l) @@
     List.sort (fun (_,{decl_pos=a;_}) (_,{decl_pos=b;_}) -> Int.compare a b ) @@
@@ -152,14 +152,14 @@ let convert_variant_to_left_comb l =
   let l' = List.sort (fun (_,{decl_pos=a;_}) (_,{decl_pos=b;_}) -> Int.compare a b) l in
   T_sum { content = to_left_comb_variant l' LMap.empty ; layout = default_layout }
 
-let convert_variant_from_right_comb (src: row_element label_map) (dst: row_element label_map) : (type_content , typer_error) result =
+let convert_variant_from_right_comb (src:ty_expr row_element_mini_c label_map) (dst:ty_expr row_element_mini_c label_map) : (type_content , typer_error) result =
   let%bind ctors = from_right_comb_variant src (LMap.cardinal dst) in
   let ctors_name = List.map (fun (l,_) -> l) @@
     List.sort (fun (_,{decl_pos=a;_}) (_,{decl_pos=b;_}) -> Int.compare a b ) @@
     LMap.to_kv_list_rev dst in
   ok @@ (T_sum { content = LMap.of_list @@ List.combine ctors_name ctors ; layout = default_layout })
 
-let convert_variant_from_left_comb (src: row_element label_map) (dst: row_element label_map) : (type_content , typer_error) result =
+let convert_variant_from_left_comb (src:ty_expr row_element_mini_c label_map) (dst:ty_expr row_element_mini_c label_map) : (type_content , typer_error) result =
   let%bind ctors = from_left_comb_variant src (LMap.cardinal dst) in
   let ctors_name = List.map (fun (l,_) -> l) @@
     List.sort (fun (_,{decl_pos=a;_}) (_,{decl_pos=b;_}) -> Int.compare a b ) @@

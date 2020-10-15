@@ -1,5 +1,6 @@
 open Trace
 open Errors
+open Stage_common.Maps
 
 module I = Ast_core
 module O = Ast_typed
@@ -8,6 +9,7 @@ module O = Ast_typed
   Transform a Ast_typed type_expression into an ast_core type_expression
  *)
 let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer_error) result =
+  let self = untype_type_expression in
   let return t = ok @@ I.make_t t in
   match t.type_content with
   | O.T_sum {content ; layout} ->
@@ -26,22 +28,21 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer
     return @@ I.T_record {fields = x' ; layout = Some layout}
   )
   | O.T_variable name -> return @@ I.T_variable (Var.todo_cast name)
-  | O.T_arrow {type1;type2} ->
-     let%bind type1 = untype_type_expression type1 in
-     let%bind type2 = untype_type_expression type2 in
-     return @@ I.T_arrow {type1;type2}
+  | O.T_arrow arr ->
+    let%bind arr = arrow self arr in
+    return @@ T_arrow arr
   | O.T_constant {type_constant;arguments} ->
      let%bind arguments = bind_map_list untype_type_expression arguments in
-     return @@ I.T_constant {type_constant;arguments}
+     return @@ I.T_constant {type_constant; arguments}
 
 let untype_declaration_constant untype_expression O.{binder;expr;inline} =
   let attr = I.{inline} in
   let%bind ty = untype_type_expression expr.type_expression in
   let var = Location.map Var.todo_cast binder in
-  let binder = var in
+  let binder = ({var;ascr= Some ty}: _ I.binder) in
   let%bind expr = untype_expression expr in
   let expr = I.e_annotation expr ty in
-  ok @@ I.{binder;attr;expr;type_opt=Some(ty)}
+  ok @@ I.{binder;attr;expr;}
 
 let untype_declaration_type O.{type_binder; type_expr} =
   let%bind type_expr = untype_type_expression type_expr in

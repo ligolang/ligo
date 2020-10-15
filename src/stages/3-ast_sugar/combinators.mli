@@ -31,13 +31,13 @@ val t_variable  : ?loc:Location.t -> string -> type_expression
 val t_record    : te_map -> type_expression
 *)
 val t_pair   : ?loc:Location.t -> ( type_expression * type_expression ) -> type_expression
-val t_tuple  : ?loc:Location.t -> row_element list -> type_expression
+val t_tuple  : ?loc:Location.t -> ty_expr row_element list -> type_expression
 
-val t_record    : ?loc:Location.t -> row_element Map.String.t -> type_expression
-val t_record_ez : ?loc:Location.t -> (string * row_element) list -> type_expression
+val t_record    : ?loc:Location.t -> ty_expr row_element Map.String.t -> type_expression
+val t_record_ez : ?loc:Location.t -> (string * ty_expr row_element) list -> type_expression
 
-val t_sum    : ?loc:Location.t -> row_element Map.String.t -> type_expression
-val ez_t_sum : ?loc:Location.t -> ( string * row_element ) list -> type_expression
+val t_sum    : ?loc:Location.t -> ty_expr row_element Map.String.t -> type_expression
+val t_sum_ez : ?loc:Location.t -> ( string * ty_expr row_element ) list -> type_expression
 
 val t_function : ?loc:Location.t -> type_expression -> type_expression -> type_expression
 
@@ -49,16 +49,16 @@ val t_set      : ?loc:Location.t -> type_expression -> type_expression
 val make_e : ?loc:Location.t -> expression_content -> expression
 val e_literal : ?loc:Location.t -> literal -> expression
 val e_unit : ?loc:Location.t -> unit -> expression
-val e_int : ?loc:Location.t -> Z.t -> expression 
+val e_int : ?loc:Location.t -> Z.t -> expression
 val e_nat : ?loc:Location.t -> Z.t -> expression
 val e_timestamp : ?loc:Location.t -> Z.t -> expression
 val e_bool : ?loc:Location.t -> bool -> expression
 val e_string : ?loc:Location.t -> ligo_string -> expression
-val e_address : ?loc:Location.t -> string -> expression 
-val e_signature : ?loc:Location.t -> string -> expression 
-val e_key : ?loc:Location.t -> string -> expression 
-val e_key_hash : ?loc:Location.t -> string -> expression 
-val e_chain_id : ?loc:Location.t -> string -> expression 
+val e_address : ?loc:Location.t -> string -> expression
+val e_signature : ?loc:Location.t -> string -> expression
+val e_key : ?loc:Location.t -> string -> expression
+val e_key_hash : ?loc:Location.t -> string -> expression
+val e_chain_id : ?loc:Location.t -> string -> expression
 val e_mutez : ?loc:Location.t -> Z.t -> expression
 val e'_bytes : string -> expression_content
 val e_bytes_hex : ?loc:Location.t -> string -> expression
@@ -71,15 +71,17 @@ val e_variable : ?loc:Location.t -> expression_variable -> expression
 val e_constructor : ?loc:Location.t -> label -> expression -> expression
 val e_constant : ?loc:Location.t -> constant' -> expression list -> expression
 
-val e_lambda : ?loc:Location.t -> expression_variable -> type_expression option -> type_expression option -> expression -> expression
+val e_lambda    : ?loc:Location.t -> ty_expr binder -> ty_expr option -> expression -> expression
+val e_lambda_ez : ?loc:Location.t -> expression_variable -> ?ascr:ty_expr -> ty_expr option -> expression -> expression
 val e_application : ?loc:Location.t -> expression -> expression -> expression
-val e_recursive : ?loc:Location.t -> expression_variable -> type_expression -> lambda -> expression
-val e_let_in : ?loc:Location.t -> ( expression_variable * type_expression option ) -> bool -> attributes -> expression -> expression -> expression
+val e_recursive : ?loc:Location.t -> expression_variable -> type_expression -> (expr, ty_expr) lambda -> expression
+val e_let_in   : ?loc:Location.t -> ty_expr binder -> bool -> attributes -> expression -> expression -> expression
+val e_let_in_ez: ?loc:Location.t -> expression_variable -> ?ascr:ty_expr -> bool -> attributes -> expression -> expression -> expression
 val e_raw_code : ?loc:Location.t -> string -> expression -> expression
 
 val e_record   : ?loc:Location.t -> expression label_map -> expression
-val e_accessor : ?loc:Location.t -> expression -> access list -> expression
-val e_update   : ?loc:Location.t -> expression -> access list -> expression -> expression
+val e_accessor : ?loc:Location.t -> expression -> expr access list -> expression
+val e_update   : ?loc:Location.t -> expression -> expr access list -> expression -> expression
 
 val e_annotation : ?loc:Location.t -> expression -> type_expression -> expression
 

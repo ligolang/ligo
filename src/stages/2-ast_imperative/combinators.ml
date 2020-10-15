@@ -5,7 +5,7 @@ module SMap = Map.String
 
 let make_t ?(loc = Location.generated) type_content = {type_content; location=loc}
 
-let t_constant ?loc constant lst  : type_expression = make_t ?loc @@ T_constant (constant, lst)
+let t_constant ?loc type_constant arguments  : type_expression = make_t ?loc @@ T_constant {type_constant; arguments}
 
 let t_bool ?loc ()        : type_expression = make_t ?loc @@ T_variable (Stage_common.Constant.t_bool)
 let t_string ?loc ()      : type_expression = t_constant ?loc TC_string []
@@ -30,7 +30,7 @@ let t_record_ez_attr ?loc ?(attr=[]) lst =
   let aux i (name, t_expr, attributes) =
     (Label name, {associated_type=t_expr; decl_pos=i; attributes}) in
   let lst = List.mapi aux lst in
-  let fields : row_element label_map = LMap.of_list lst
+  let fields : ty_expr row_element label_map = LMap.of_list lst
   in t_record ?loc {fields; attributes=attr}
 let t_record_ez ?loc ?attr lst =
   let aux (a,b) = a,b,[] in
@@ -45,7 +45,7 @@ let t_sum_ez_attr ?loc ?(attr=[]) lst =
   let aux i (name, t_expr, attributes) =
     (Label name, {associated_type=t_expr; decl_pos=i; attributes}) in
   let lst = List.mapi aux lst in
-  let fields : row_element label_map = LMap.of_list lst
+  let fields : ty_expr row_element label_map = LMap.of_list lst
   in t_sum ?loc {fields; attributes=attr}
 
 let t_annoted ?loc ty str : type_expression = make_t ?loc @@ T_annoted (ty, str)
@@ -106,17 +106,17 @@ let e_string_cat ?loc sl sr : expression = make_e ?loc @@ E_constant {cons_name 
 let e_map_add ?loc k v old  : expression = make_e ?loc @@ E_constant {cons_name = Const C_MAP_ADD; arguments = [k ; v ; old]}
 let e_binop ?loc name a b  = make_e ?loc @@ E_constant {cons_name = name ; arguments = [a ; b]}
 
-let e_constant ?loc name lst = make_e ?loc @@ E_constant {cons_name=name ; arguments = lst}
-let e_variable ?loc v = make_e ?loc @@ E_variable v
+let e_constant    ?loc name lst = make_e ?loc @@ E_constant {cons_name=name ; arguments = lst}
+let e_variable    ?loc v = make_e ?loc @@ E_variable v
 let e_variable_ez ?loc v = e_variable ?loc @@ Location.wrap ?loc (Var.of_name v)
 let e_application ?loc a b = make_e ?loc @@ E_application {lamb=a ; args=b}
-let e_lambda ?loc binder input_type output_type result : expression = make_e ?loc @@ E_lambda {binder; input_type; output_type; result}
+let e_lambda    ?loc binder output_type result : expression = make_e ?loc @@ E_lambda {binder; output_type; result}
+let e_lambda_ez ?loc var ?ascr output_type result : expression = e_lambda ?loc {var;ascr} output_type result
 let e_recursive ?loc fun_name fun_type lambda = make_e ?loc @@ E_recursive {fun_name; fun_type; lambda}
 
 (* let e_recursive_ez ?loc fun_name fun_type lambda = e_recursive ?loc (Var.of_name fun_name) fun_type lambda *)
-
-let e_let_in ?loc let_binder attributes rhs let_result =
-  make_e ?loc @@ E_let_in {let_binder; rhs; let_result; attributes}
+let e_let_in    ?loc let_binder attributes rhs let_result = make_e ?loc @@ E_let_in { let_binder; rhs ; let_result; attributes }
+let e_let_in_ez ?loc var ?ascr attributes rhs let_result = make_e ?loc @@ E_let_in { let_binder={var;ascr}; rhs ; let_result; attributes }
 (* let e_let_in_ez ?loc binder ascr inline rhs let_result = e_let_in ?loc (Var.of_name binder, ascr) inline rhs let_result *)
 
 let e_raw_code ?loc language code = make_e ?loc @@ E_raw_code {language; code}
@@ -143,9 +143,9 @@ let e_set ?loc lst : expression = make_e ?loc @@ E_set lst
 let e_map ?loc lst : expression = make_e ?loc @@ E_map lst
 let e_big_map ?loc lst : expression = make_e ?loc @@ E_big_map lst
 
-let e_while ?loc condition body = make_e ?loc @@ E_while {condition; body}
-let e_for ?loc binder start final increment body = make_e ?loc @@ E_for {binder;start;final;increment;body}
-let e_for_each ?loc binder collection collection_type body = make_e ?loc @@ E_for_each {binder;collection;collection_type;body}
+let e_while ?loc cond body = make_e ?loc @@ E_while {cond; body}
+let e_for ?loc binder start final incr f_body = make_e ?loc @@ E_for {binder;start;final;incr;f_body}
+let e_for_each ?loc fe_binder collection collection_type fe_body = make_e ?loc @@ E_for_each {fe_binder;collection;collection_type;fe_body}
 
 (* let e_for_ez ?loc binder start final increment body = e_for ?loc (Var.of_name binder) start final increment body *)
 (* let e_for_each_ez ?loc (b,bo) collection collection_type body = e_for_each ?loc (Var.of_name b, Option.map Var.of_name bo) collection collection_type body *)
@@ -153,9 +153,9 @@ let e_for_each ?loc binder collection collection_type body = make_e ?loc @@ E_fo
 let e_bool ?loc   b : expression = e_constructor ?loc (string_of_bool b) (e_unit ())
 
 let e_matching_variant ?loc a lst = e_matching ?loc a @@ Match_variant lst
-let e_matching_record   ?loc m lst ty_opt expr = e_matching ?loc m @@ Match_record   (lst,ty_opt, expr)
-let e_matching_tuple    ?loc m lst ty_opt expr = e_matching ?loc m @@ Match_tuple    (lst,ty_opt, expr)
-let e_matching_variable ?loc m var ty_opt expr = e_matching ?loc m @@ Match_variable (var,ty_opt, expr)
+let e_matching_record   ?loc m lst expr = e_matching ?loc m @@ Match_record   (lst, expr)
+let e_matching_tuple    ?loc m lst expr = e_matching ?loc m @@ Match_tuple    (lst, expr)
+let e_matching_variable ?loc m var expr = e_matching ?loc m @@ Match_variable (var, expr)
 
 (* let e_matching_tuple_ez ?loc m lst ty_opt expr =
   let lst = List.map Var.of_name lst in

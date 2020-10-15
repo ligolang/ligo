@@ -14,7 +14,7 @@ let get_program =
         ok program
       )
 
-let compile_main () = 
+let compile_main () =
   let%bind typed_prg,_,_   =  type_file "./contracts/time-lock.ligo" in
   let%bind mini_c_prg      = Ligo.Compile.Of_typed.compile typed_prg in
   let%bind michelson_prg   = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
@@ -27,8 +27,8 @@ open Ast_imperative
 
 let empty_op_list =
   (e_typed_list [] (t_operation ()))
-let empty_message = e_lambda (Location.wrap @@ Var.of_name "arguments")
-  (Some (t_unit ())) (Some (t_list (t_operation ())))
+let empty_message = e_lambda_ez (Location.wrap @@ Var.of_name "arguments")
+  ~ascr:(t_unit ()) (Some (t_list (t_operation ())))
   empty_op_list
 
 let call msg = e_constructor "Call" msg

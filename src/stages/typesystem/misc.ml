@@ -43,7 +43,7 @@ module Substitution = struct
     and s_label : (T.label,_) w = fun ~substs l ->
       let () = ignore @@ substs in
       ok l
-    
+
     and s_build_in : (T.constant',_) w = fun ~substs b ->
       let () = ignore @@ substs in
       ok b
@@ -94,7 +94,7 @@ module Substitution = struct
              (s_abstr_type_expression ~substs)
              arguments in
          (* TODO: when we have generalized operators, we might need to subst the operator name itself? *)
-         ok @@ Ast_core.T_constant {type_constant;arguments}
+         ok @@ Ast_core.T_constant {type_constant; arguments}
 
     and s_abstr_type_expression : (Ast_core.type_expression,_) w = fun ~substs {type_content;sugar;location} ->
       let%bind type_content = s_abstr_type_content ~substs type_content in
@@ -147,11 +147,11 @@ module Substitution = struct
         let%bind binder = s_variable ~substs binder in
         let%bind result = s_expression ~substs result in
         ok @@ T.E_lambda { binder; result }
-      | T.E_let_in          { let_binder; rhs; let_result; inline } ->
+      | T.E_let_in          { let_binder; rhs; let_result; inline} ->
         let%bind let_binder = s_variable ~substs let_binder in
         let%bind rhs = s_expression ~substs rhs in
         let%bind let_result = s_expression ~substs let_result in
-        ok @@ T.E_let_in { let_binder; rhs; let_result; inline }
+        ok @@ T.E_let_in { let_binder; rhs; let_result; inline}
       | T.E_raw_code {language; code} ->
         let%bind code = s_expression ~substs code in
         ok @@ T.E_raw_code {language; code}
@@ -201,7 +201,7 @@ module Substitution = struct
       | Declaration_type t -> ok (Ast_typed.Declaration_type t)
 
     and s_declaration_wrap : (T.declaration Location.wrap,_) w = fun ~substs d ->
-      Trace.bind_map_location (s_declaration ~substs) d    
+      Trace.bind_map_location (s_declaration ~substs) d
 
     (* Replace the type variable ~v with ~expr everywhere within the
        program ~p. TODO: issues with scoping/shadowing. *)
