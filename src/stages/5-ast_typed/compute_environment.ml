@@ -111,7 +111,7 @@ and cases : environment -> matching_expr -> matching_expr = fun env cs ->
     return @@ Match_variant { c with cases }
   )
 
-let program : environment -> program -> environment * program = fun init_env prog ->
+let program : environment -> program_fully_typed -> environment * program_fully_typed = fun init_env (Program_Fully_Typed prog) ->
   (*
       BAD
       We take the old type environment and add it to the current value environment
@@ -134,4 +134,4 @@ let program : environment -> program -> environment * program = fun init_env pro
     )
   in
   let (last_env , rev_decls) = List.fold_left aux (init_env , []) prog in
-  (last_env , List.rev rev_decls)
+  (last_env , Program_Fully_Typed (List.rev rev_decls))

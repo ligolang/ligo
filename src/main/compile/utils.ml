@@ -14,7 +14,7 @@ let to_core ?(libs=[]) f stx =
   let%bind core   = Of_sugar.compile sugar in
   ok @@ core
 
-let type_file ?(libs=[]) f stx form : (Ast_typed.program * Ast_typed.environment * _ Typesystem.Solver_types.typer_state, _) result =
+let type_file ?(libs=[]) f stx form : (Ast_typed.program_fully_typed * Ast_typed.environment * _ Typesystem.Solver_types.typer_state, _) result =
   let%bind core        = to_core ~libs f stx in
   let%bind typed,e,state = Of_core.compile form core in
   ok @@ (typed,e,state)

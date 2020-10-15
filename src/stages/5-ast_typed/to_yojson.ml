@@ -377,7 +377,8 @@ let declaration = function
   | Declaration_type     dt -> `List [ `String "Declaration_type"; declaration_type dt]
   | Declaration_constant dc -> `List [ `String "Declaration_constant"; declaration_constant dc]
 
-let program = list (Location.wrap_to_yojson declaration)
+let program_with_unification_vars (Program_With_Unification_Vars p) = list (Location.wrap_to_yojson declaration) p
+let program_fully_typed (Program_Fully_Typed p) = list (Location.wrap_to_yojson declaration) p
 
 
 (* Environment *)
@@ -517,37 +518,39 @@ and p_row {p_row_tag;p_row_args} =
     ("p_row_args", label_map type_value p_row_args);
   ]
 
-let c_constructor_simpl {reason_constr_simpl;tv;c_tag;tv_list} =
+let c_constructor_simpl {is_mandatory_constraint;reason_constr_simpl;tv;c_tag;tv_list} =
   `Assoc [
+        ("is_mandatory_constraint", `Bool is_mandatory_constraint);
     ("reason_constr_simpl", `String reason_constr_simpl);
     ("tv", type_variable_to_yojson tv);
     ("c_tag", constant_tag c_tag);
     ("tv_list", list type_variable_to_yojson tv_list)
   ]
 
-let c_alias {reason_alias_simpl; a; b} =
-  `Assoc [
+let c_alias {is_mandatory_constraint;reason_alias_simpl; a; b} =
+  `Assoc [        ("is_mandatory_constraint", `Bool is_mandatory_constraint);
     ("reason_alias_simpl", `String reason_alias_simpl);
     ("a", type_variable_to_yojson a);
     ("b", type_variable_to_yojson b);
   ]
 
-let c_poly_simpl {reason_poly_simpl; tv; forall} =
-  `Assoc [
+let c_poly_simpl {is_mandatory_constraint;reason_poly_simpl; tv; forall} =
+  `Assoc [        ("is_mandatory_constraint", `Bool is_mandatory_constraint);
     ("reason_poly_simpl", `String reason_poly_simpl);
     ("tv", type_variable_to_yojson tv);
     ("forall", p_forall forall)
   ]
 
-let c_typeclass_simpl {reason_typeclass_simpl;tc;args} =
-  `Assoc [
+let c_typeclass_simpl {is_mandatory_constraint;id_typeclass_simpl=ConstraintIdentifier ci;reason_typeclass_simpl;tc;args} =
+  `Assoc [        ("is_mandatory_constraint", `Bool is_mandatory_constraint);
+    ("id_typeclass_simpl", `String (Format.sprintf "%Li" ci));
     ("reason_typeclass_simpl", `String reason_typeclass_simpl);
     ("tc", typeclass tc);
     ("args", list type_variable_to_yojson args)
   ]
 
-let c_row_simpl {reason_row_simpl; tv;r_tag;tv_map} =
-  `Assoc [
+let c_row_simpl {is_mandatory_constraint;reason_row_simpl; tv;r_tag;tv_map} =
+  `Assoc [        ("is_mandatory_constraint", `Bool is_mandatory_constraint);
     ("reason_row_simpl", `String reason_row_simpl);
     ("tv", type_variable_to_yojson tv);
     ("r_tag", row_tag r_tag);
@@ -559,7 +562,6 @@ let type_constraint_simpl = function
   | SC_Poly        c -> `List [`String "SC_Poly"; c_poly_simpl c]
   | SC_Typeclass   c -> `List [`String "SC_Typclass"; c_typeclass_simpl c]
   | SC_Row         c -> `List [`String "SC_Row"; c_row_simpl c]
-
 
 let poly_unionfind f p =
   let lst = (UnionFind.Poly2.partitions p) in
@@ -574,6 +576,41 @@ let typeVariableMap f tvmap =
     `Assoc [ Format.asprintf "%a" Var.pp k , f v ] in
   let lst' = List.map aux lst in
   `Assoc ["typeVariableMap",  `List lst']
+let ciMap f tvmap =
+  let lst = List.sort (fun (ConstraintIdentifier a, _) (ConstraintIdentifier b, _) -> Int64.compare a b) (RedBlackTrees.PolyMap.bindings tvmap) in
+  let aux (ConstraintIdentifier k, v) =
+    `Assoc [ Format.asprintf "%Li" k , f v ] in
+  let lst' = List.map aux lst in
+  `Assoc ["typeVariableMap",  `List lst']
+let jmap (fk : _ -> json) (fv : _ -> json)  tvmap : json =
+  let lst = RedBlackTrees.PolyMap.bindings tvmap in
+  let aux (k, v) =
+    `List [ fk k ; fv v ] in
+  let lst' = List.map aux lst in
+  `Assoc ["typeVariableMap",  `List lst']
+let constraint_identifier_set s =
+  let lst = List.sort (fun (ConstraintIdentifier a) (ConstraintIdentifier b) -> Int64.compare a b) (RedBlackTrees.PolySet.elements s) in
+  let aux (ConstraintIdentifier ci) =
+    `String (Format.asprintf "ConstraintIdentifier %Li" ci) in
+  let lst' = List.map aux lst in
+  `Assoc ["constraintIdentifierSet",  `List lst']
+let type_variable_set s =
+  let lst = List.sort Var.compare (RedBlackTrees.PolySet.elements s) in
+  let aux v =
+    `String (Format.asprintf "%a" Var.pp v) in
+  let lst' = List.map aux lst in
+  `Assoc ["typeVariableSet",  `List lst']
+let refined_typeclass ({ original; refined; vars } : refined_typeclass) : json =
+  `Assoc [
+    "original", c_typeclass_simpl original;
+    "refined", c_typeclass_simpl refined;
+    "vars", type_variable_set vars
+  ]
+
+let constraint_identifier (ConstraintIdentifier ci : constraint_identifier) : json =
+  `Assoc [
+    "ConstraintIdentifier", `String (Format.asprintf "%Li" ci);
+  ]
 
 let constraints {constructor; poly; tc; row} =
   `Assoc [
@@ -582,8 +619,12 @@ let constraints {constructor; poly; tc; row} =
     ("tc", list c_typeclass_simpl tc);
     ("row", list c_row_simpl row);
   ]
-let structured_dbs {all_constraints;aliases;assignments;grouped_by_variable;cycle_detection_toposort=_} =
+let structured_dbs {refined_typeclasses;refined_typeclasses_back;typeclasses_constrained_by;by_constraint_identifier;all_constraints;aliases;assignments;grouped_by_variable;cycle_detection_toposort=_} =
   `Assoc [
+    ("refined_typeclasses", jmap constraint_identifier refined_typeclass refined_typeclasses);
+    ("refined_typeclasses", jmap c_typeclass_simpl constraint_identifier refined_typeclasses_back);
+    ("typeclasses_constrained_by", typeVariableMap constraint_identifier_set typeclasses_constrained_by);
+    ("by_constraint_identifier", ciMap c_typeclass_simpl by_constraint_identifier); 
     ("all_constrants", list type_constraint_simpl all_constraints);
     ("aliases", unionfind aliases);
     ("assignments", typeVariableMap c_constructor_simpl assignments);

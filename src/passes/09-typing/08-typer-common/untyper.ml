@@ -57,6 +57,7 @@ let untype_declaration untype_expression = function
      let%bind dt = untype_declaration_type dt in
      ok @@ I.Declaration_type dt
 
-let untype_program untype_expression : O.program -> (I.program, _) result =
+let untype_program untype_expression : O.program_fully_typed -> (I.program, _) result =
+  fun (O.Program_Fully_Typed p) ->
   let untype_declaration = untype_declaration untype_expression in
-  bind_map_list (bind_map_location untype_declaration)
+  bind_map_list (bind_map_location untype_declaration) p

@@ -205,8 +205,9 @@ module Substitution = struct
 
     (* Replace the type variable ~v with ~expr everywhere within the
        program ~p. TODO: issues with scoping/shadowing. *)
-    and s_program : (Ast_typed.program,_) w = fun ~substs p ->
-      Trace.bind_map_list (s_declaration_wrap ~substs) p
+    and s_program : (Ast_typed.program_with_unification_vars,_) w = fun ~substs (Ast_typed.Program_With_Unification_Vars p) ->
+      let%bind p = Trace.bind_map_list (s_declaration_wrap ~substs) p in
+      ok @@ Ast_typed.Program_With_Unification_Vars p
 
     (*
        Computes `P[v := expr]`.
@@ -266,7 +267,7 @@ module Substitution = struct
     and typeclass ~tc ~substs =
       List.map (List.map (fun tv -> type_value ~tv ~substs)) tc
 
-    let program = s_program
+    (* let program = s_program *)
 
     (* Performs beta-reduction at the root of the type *)
     let eval_beta_root ~(tv : type_value) =

@@ -101,7 +101,7 @@ and environment_closure c =
 
 let%expect_test _ =
   let wrap a = {type_content = a; location = Location.dummy} in
-  (match environment_closure [wrap (T_base TB_nat); wrap (T_base TB_int); wrap (T_base TB_timestamp)] with
+  (match to_stdlib_result @@ environment_closure [wrap (T_base TB_nat); wrap (T_base TB_int); wrap (T_base TB_timestamp)] with
    | Error _ -> Format.printf "ERROR"
    | Ok (t, _) ->
      Format.printf "%a" Michelson.pp t);

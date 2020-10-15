@@ -227,7 +227,7 @@ let merge_annotation (a:type_expression option) (b:type_expression option) asser
       | _, None -> Some a
       | _, Some _ -> Some b
 
-let get_entry (lst : program) (name : string) : expression option =
+let get_entry (Program_Fully_Typed lst : program_fully_typed) (name : string) : expression option =
   let aux x =
     match Location.unwrap x with
     | Declaration_constant { binder ; expr ; inline=_ } -> (
@@ -266,10 +266,22 @@ let p_row_ez (p_row_tag : row_tag) (p_row_args : (string * type_value) list ) =
 
 let c_equation aval bval reason = { c = C_equation { aval ; bval }; reason }
 
-let reason_simpl : type_constraint_simpl -> string = function
+let reason_simpl_ : type_constraint_simpl -> string = function
   | SC_Constructor { reason_constr_simpl=reason; _ }
   | SC_Row { reason_row_simpl=reason; _ }
   | SC_Alias { reason_alias_simpl=reason; _ }
   | SC_Poly { reason_poly_simpl=reason; _ }
   | SC_Typeclass { reason_typeclass_simpl=reason; _ }
   -> reason
+
+let reason_simpl : type_constraint_simpl -> string = fun c -> reason_simpl_ c
+
+let is_mandatory_constraint_ : type_constraint_simpl -> bool = function
+  | SC_Constructor { is_mandatory_constraint; _ }
+  | SC_Row { is_mandatory_constraint; _ }
+  | SC_Alias { is_mandatory_constraint; _ }
+  | SC_Poly { is_mandatory_constraint; _ }
+  | SC_Typeclass { is_mandatory_constraint; _ }
+  -> is_mandatory_constraint
+
+let is_mandatory_constraint : type_constraint_simpl -> bool = fun c -> is_mandatory_constraint_ c

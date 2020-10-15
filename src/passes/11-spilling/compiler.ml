@@ -570,7 +570,7 @@ let compile_declaration env (d:AST.declaration) : (toplevel_statement option , s
       ok @@ Some ((binder, inline, expression), environment_wrap env env')
   | _ -> ok None
 
-let compile_program (lst : AST.program) : (program , spilling_error) result =
+let compile_program ((AST.Program_Fully_Typed lst) : AST.program_fully_typed) : (program , spilling_error) result =
   let aux (prev:(toplevel_statement list * Environment.t , spilling_error) result) cur =
     let%bind (hds, env) = prev in
     match%bind compile_declaration env cur with

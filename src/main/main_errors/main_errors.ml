@@ -67,6 +67,7 @@ let test_expect_n_tracer i err : all = `Test_expect_n_tracer (i,err)
 let test_expect_exp_tracer e err : all = `Test_expect_exp_tracer (e,err)
 let test_expect_eq_n_tracer i err : all = `Test_expect_eq_n_tracer (i,err)
 let test_internal loc : all = `Test_internal loc
+let test_internal_msg loc msg : all = `Test_internal_msg (loc, msg)
 let test_md_file_tracer md_file s group prg err : all = `Test_md_file_tracer (md_file,s,group,prg,err) 
 let test_code_block_arg arg : all = `Test_bad_code_block arg
 let test_expected_to_fail : all = `Test_expected_to_fail

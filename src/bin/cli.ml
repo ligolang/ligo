@@ -257,7 +257,7 @@ let print_ast_core =
 
 let print_ast_typed =
   let f source_file syntax display_format =
-    return_result ~display_format (Ast_typed.Formatter.program_format) @@
+    return_result ~display_format (Ast_typed.Formatter.program_format_fully_typed) @@
       let%bind typed,_,_  = Compile.Utils.type_file source_file syntax Env in
       ok typed
   in

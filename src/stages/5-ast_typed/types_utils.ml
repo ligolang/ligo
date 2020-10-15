@@ -8,7 +8,6 @@ type type_
 and type_variable = type_ Var.t
 type z = Z.t
 
-
 type 'a list_ne = 'a List.Ne.t
 type inline = bool
 

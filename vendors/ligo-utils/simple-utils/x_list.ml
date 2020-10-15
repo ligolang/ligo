@@ -10,6 +10,8 @@ let rec take n = function
   | _ when n = 0 -> []
   | hd :: tl -> hd :: take (n - 1) tl
 
+let split3 l = List.fold_left (fun (la, lb, lc) (a, b, c) -> (a :: la , b :: lb, c :: lc)) ([],[],[]) l
+
 let map f lst =
   (* Use a tail-recursive function and `List.rev` to avoid a stack overflow with long lists. *)
   let rec aux acc f = function
@@ -17,6 +19,15 @@ let map f lst =
     | hd :: tl -> aux (f hd :: acc) f tl
   in
   List.rev (aux [] f lst)
+
+let map2 f lst_a lst_b ~ok ~fail =
+  let rec aux acc f lst_a lst_b =
+    match lst_a, lst_b with
+    | ([] , []) -> ok @@ List.rev @@ acc
+    | (hd_a :: tl_a , hd_b :: tl_b) -> aux (f hd_a hd_b :: acc) f tl_a tl_b
+    | (la , lb) -> fail la lb
+  in
+  aux [] f lst_a lst_b
 
 let fold_map_right : type acc ele ret . (acc -> ele -> (acc * ret)) -> acc -> ele list -> ret list =
   fun f acc lst ->
@@ -190,9 +201,8 @@ let rec compare ?compare:cmp a b =
   | _::_, [] -> 1
   | ha::ta, hb::tb ->
      (match cmp ha hb with
-        0 -> compare ta tb
+        0 -> compare ~compare:cmp ta tb
       | c -> c)
-
 
 module Ne = struct
 

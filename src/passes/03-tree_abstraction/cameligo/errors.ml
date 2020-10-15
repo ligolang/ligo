@@ -86,7 +86,7 @@ Other forms of pattern matching are not (yet) supported. @]"
     | `Concrete_cameligo_funarg_tuple_type_mismatch (region, pattern, texpr) -> (
       let p = Parser.pretty_print_pattern pattern in
       let t = Parser.pretty_print_type_expr texpr in
-      match p, t with 
+      match Trace.(to_stdlib_result p, to_stdlib_result t) with 
       | Ok (p, _), Ok (t, _) ->
         let p = Buffer.contents p in
         let t = Buffer.contents t in
