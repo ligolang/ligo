@@ -627,15 +627,15 @@ switch_expr(right_expr):
     in ECase {region; value} }
 
 switch_expr_:
-  par(expr)   { ($1.value : _ CST.par).inside }
-| core_expr_2 { $1 }
+  par(expr)   { ($1.value: _ par).inside }
+| core_expr_2 {                       $1 }
 
 cases(right_expr):
   nseq(case_clause(right_expr)) {
     let hd, tl = $1 in
-    let nseq = snd hd, tl in
-    {region = nsepseq_to_region (fun x -> x.region) nseq;
-     value  = nseq} }
+    let nseq = snd hd, tl in {
+      region = nsepseq_to_region (fun x -> x.region) nseq;
+      value  = nseq} }
 
 case_clause(right_expr):
   "|" pattern "=>" right_expr ";"? {

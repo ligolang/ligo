@@ -1,0 +1,27 @@
+[%michelson {| #include "tata.ml" |}]
+
+#import  "titi.ml" "Titi"
+
+include Titi
+open Titi
+
+type expr = Titi.expr
+let expr = Titi.expr
+
+let tata = "toto"
+
+------------
+
+
+
+let tata = #import "titi.ml" "toto"
+
+------------
+
+(
+let tata = 1
+,
+[("titi.ml","toto")]
+)
+
+CLI (file list, (deps) list)

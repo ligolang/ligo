@@ -9,7 +9,7 @@ _build/*
 /Parser.mli
 /Parser.ml
 /Lexer.ml
-/LexToken.ml
+/Token.ml
 /Tests
 error.messages
 error.messages.new

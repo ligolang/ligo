@@ -1,21 +1,21 @@
 %{
-module LexToken = Lexer_pascaligo.LexToken
+module Token = Lexer_pascaligo.Token
 %}
 
-(* Tokens (mirroring thise defined in module LexToken) *)
+(* Tokens (mirroring thise defined in module Token) *)
 
   (* Literals *)
 
-%token            <LexToken.lexeme Region.reg> String   "<string>"
-%token            <LexToken.lexeme Region.reg> Verbatim "<verbatim>"
-%token  <(LexToken.lexeme * Hex.t) Region.reg> Bytes    "<bytes>"
-%token    <(LexToken.lexeme * Z.t) Region.reg> Int      "<int>"
-%token    <(LexToken.lexeme * Z.t) Region.reg> Nat      "<nat>"
-%token    <(LexToken.lexeme * Z.t) Region.reg> Mutez    "<mutez>"
-%token            <LexToken.lexeme Region.reg> Ident    "<ident>"
-%token            <LexToken.lexeme Region.reg> Constr   "<constr>"
-%token                     <string Region.reg> Attr     "[@attr]"
-%token <LexToken.lexeme Region.reg Region.reg> Lang     "<lang>"
+%token            <Token.lexeme Region.reg> String   "<string>"
+%token            <Token.lexeme Region.reg> Verbatim "<verbatim>"
+%token  <(Token.lexeme * Hex.t) Region.reg> Bytes    "<bytes>"
+%token    <(Token.lexeme * Z.t) Region.reg> Int      "<int>"
+%token    <(Token.lexeme * Z.t) Region.reg> Nat      "<nat>"
+%token    <(Token.lexeme * Z.t) Region.reg> Mutez    "<mutez>"
+%token            <Token.lexeme Region.reg> Ident    "<ident>"
+%token            <Token.lexeme Region.reg> Constr   "<constr>"
+%token                  <string Region.reg> Attr     "[@attr]"
+%token <Token.lexeme Region.reg Region.reg> Lang     "<lang>"
 
   (* Symbols *)
 

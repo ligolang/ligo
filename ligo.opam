@@ -23,6 +23,8 @@ depends: [
   "getopt"
   "terminal_size"
   "pprint"
+  "ParserLib"
+  "LexerLib"
   "UnionFind"
   "RedBlackTrees"
   # work around upstream in-place update

@@ -2,7 +2,7 @@
 *~
 *.merlin
 cache/*
-Version.ml
+version.ml
 /result
 /result-*
 /_opam/

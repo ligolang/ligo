@@ -4,12 +4,12 @@ _build/*
 .merlin
 */.merlin
 *.install
-/Version.ml
+/version.ml
 /dune-project
 /Parser.mli
 /Parser.ml
 /Lexer.ml
-/LexToken.ml
+/Token.ml
 /Tests
 error.messages
 error.messages.new

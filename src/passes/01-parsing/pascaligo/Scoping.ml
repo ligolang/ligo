@@ -6,21 +6,55 @@
 
 module Region = Simple_utils.Region
 module CST    = Cst.Pascaligo
-
-(* Errors *)
-
-type t =
-  Reserved_name       of CST.variable
-| Duplicate_parameter of CST.variable
-| Duplicate_variant   of CST.variable
-| Non_linear_pattern  of CST.variable
-| Duplicate_field     of CST.variable
-
-type error = t
-
-exception Error of t
+module Token  = Lexer_pascaligo.Token
 
 open Region
+
+type window = <
+  last_token : Token.t option;
+  current_token : Token.t
+>
+
+let mk_window var =
+  object
+    method last_token    = None; (* To keep it simple *)
+    method current_token = Token.Ident var
+  end
+
+exception Error of string * window
+
+let raise_reserved_name var : 'a =
+  let msg =
+    Printf.sprintf
+      "Reserved name %S.\nHint: Change the name.\n" var.value
+  in raise (Error (msg, mk_window var))
+
+let raise_duplicate_variant var : 'a =
+  let msg =
+    Printf.sprintf
+      "Duplicate constructor %S in this sum type declaration.\n\
+       Hint: Change the constructor.\n" var.value
+  in raise (Error (msg, mk_window var))
+
+let raise_non_linear_pattern var : 'a =
+  let msg =
+    Printf.sprintf
+      "Repeated variable %S in this pattern.\n\
+       Hint: Change the name.\n" var.value
+  in raise (Error (msg, mk_window var))
+
+let raise_duplicate_field_name var : 'a =
+  let msg =
+    Printf.sprintf
+      "Duplicate field name %S in this record declaration.\n\
+       Hint: Change the name.\n" var.value
+  in raise (Error (msg, mk_window var))
+
+let raise_duplicate_parameter var : 'a =
+  let msg =
+    Printf.sprintf
+      "Duplicate parameter %S.\nHint: Change the name.\n" var.value
+  in raise (Error (msg, mk_window var))
 
 (* Useful modules *)
 
@@ -97,12 +131,12 @@ let check_reserved_names vars =
   let inter = VarSet.filter is_reserved vars in
   if not (VarSet.is_empty inter) then
     let clash = VarSet.choose inter in
-    raise (Error (Reserved_name clash))
+    raise_reserved_name clash
   else vars
 
 let check_reserved_name var =
   if SSet.mem var.value reserved then
-    raise (Error (Reserved_name var))
+    raise_reserved_name var
 
 (* Checking the linearity of patterns *)
 
@@ -115,7 +149,7 @@ let rec vars_of_pattern env = function
 | PTuple t -> vars_of_ptuple env t.value
 | PVar var ->
     if VarSet.mem var env then
-      raise (Error (Non_linear_pattern var))
+      raise_non_linear_pattern var
     else VarSet.add var env
 
 and vars_of_pconstr env = function
@@ -155,7 +189,7 @@ let check_pattern p =
 let check_variants variants =
   let add acc {value; _} =
     if VarSet.mem value.constr acc then
-      raise (Error (Duplicate_variant value.constr))
+      raise_duplicate_variant value.constr
     else VarSet.add value.constr acc in
   let variants =
     List.fold_left add VarSet.empty variants
@@ -168,12 +202,12 @@ let check_parameters params =
     ParamConst {value; _} ->
       check_reserved_name value.var;
       if VarSet.mem value.var acc then
-        raise (Error (Duplicate_parameter value.var))
+        raise_duplicate_parameter value.var
       else VarSet.add value.var acc
   | ParamVar {value; _} ->
       check_reserved_name value.var;
       if VarSet.mem value.var acc then
-        raise (Error (Duplicate_parameter value.var))
+        raise_duplicate_parameter value.var
       else VarSet.add value.var acc in
   let params =
     List.fold_left add VarSet.empty params
@@ -185,7 +219,7 @@ let check_fields (fields : CST.field_decl Region.reg list) =
   let add acc (field : CST.field_decl Region.reg) =
       let name = field.value.field_name in
       if VarSet.mem name acc then
-        raise (Error (Duplicate_field name))
+        raise_duplicate_field_name name
       else VarSet.add name acc in
   let fields =
     List.fold_left add VarSet.empty fields

@@ -1,0 +1,15 @@
+opam-version : "2.0"
+name         : "ParserLib"
+version      : "1.0"
+synopsis     : "A library for UTF-8 aware, Menhir-based parsers"
+description  : "A wrapper that exposes the monolithic and incremental API of Menhir."
+maintainer   : "rinderknecht@free.fr"
+authors      : "Christian Rinderknecht"
+license      : "MIT"
+homepage     : "https://gitlab.com/ligolang/ParserLib"
+bug-reports  : "https://gitlab.com/ligolang/Parser/issues"
+depends      : ["dune" "base" "ocaml" "simple-utils" "bisect_ppx"
+                "menhir" "getopt"]
+build        : [
+                [ "dune" "build" "-p" name "-j" jobs ]
+               ]

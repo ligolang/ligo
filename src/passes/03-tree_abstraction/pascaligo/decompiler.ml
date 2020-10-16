@@ -166,7 +166,7 @@ type eos =
 | Expression
 | Statements
 
-type state = Cst_pascaligo.ParserLog.state
+type state = Cst_pascaligo.Printer.state
 
 let statements_of_expression : CST.expr -> CST.statement List.Ne.t option = fun stat ->
   match stat with

@@ -2,27 +2,15 @@ $HOME/git/OCaml-build/Makefile
 
 ../shared/Lexer.mli
 ../shared/Lexer.mll
-../shared/LexerLib.ml
-../shared/EvalOpt.ml
-../shared/EvalOpt.mli
-../shared/LexerLog.mli
-../shared/LexerLog.ml
-../shared/Markup.ml
-../shared/Markup.mli
-../shared/ParserAPI.mli
-../shared/ParserAPI.ml
-../shared/LexerUnit.mli
-../shared/LexerUnit.ml
-../shared/ParserUnit.mli
-../shared/ParserUnit.ml
+../shared/LexerMainGen.ml
+../shared/ParserMainGen.ml
 
-./Stubs/Lexer_shared.ml
 ./Stubs/Lexer_reasonligo.ml
-./Stubs/Parser_shared.ml
 ./Stubs/Parser_reasonligo.ml
 ./Stubs/Cst.ml
 ./Stubs/Cst_reasonligo.ml
+./Stubs/Shared.ml
 
 $HOME/git/ligo/src/stages/1-cst/reasonligo/CST.ml
-$HOME/git/ligo/src/stages/1-cst/reasonligo/ParserLog.mli
-$HOME/git/ligo/src/stages/1-cst/reasonligo/ParserLog.ml
+$HOME/git/ligo/src/stages/1-cst/reasonligo/Printer.mli
+$HOME/git/ligo/src/stages/1-cst/reasonligo/Printer.ml

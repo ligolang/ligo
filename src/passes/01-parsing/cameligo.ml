@@ -1,196 +1,119 @@
-module CST      = Cst.Cameligo
-module LexToken = Lexer_cameligo.LexToken
-module Lexer    = Lexer_shared.Lexer.Make (LexToken)
-module Scoping  = Parser_cameligo.Scoping
-module Region   = Simple_utils.Region
-module ParErr   = Parser_cameligo.ParErr
-module SSet     = Set.Make (String)
-module Pretty   = Parser_cameligo.Pretty
-module EvalOpt  = Lexer_shared.EvalOpt
+(* This file provides an interface to the CameLIGO parser. *)
 
-(* Mock IOs TODO: Fill them with CLI options *)
+(* Vendor dependencies *)
 
-module SubIO =
+module Trace = Simple_utils.Trace
+
+(* Internal dependencies on CameLIGO *)
+
+module File      = Lexer_cameligo.File
+module Comments  = Lexer_cameligo.Comments
+module Token     = Lexer_cameligo.Token
+module Scoping   = Parser_cameligo.Scoping
+module ParErr    = Parser_cameligo.ParErr
+(*module Printer   = Cst_cameligo.Printer*)
+
+module MakeParser = Shared.Common.MakeParser
+module MkParser   = MakeParser (File) (Comments) (Token) (Scoping) (ParErr)
+
+module CST = Cst.Cameligo
+
+(* Parser for contracts *)
+
+module ContractParser_Menhir =
   struct
-    type options = <
-      libs    : string list;
-      verbose : SSet.t;
-      offsets : bool;
-      block   : EvalOpt.block_comment option;
-      line    : EvalOpt.line_comment option;
-      ext     : string;   (* ".mligo" *)
-      mode    : [`Byte | `Point];
-      cmd     : EvalOpt.command;
-      mono    : bool;
-      pretty  : bool
-    >
-
-    let options : options =
-      let block = EvalOpt.mk_block ~opening:"(*" ~closing:"*)"
-      in object
-           method libs    = []
-           method verbose = SSet.empty
-           method offsets = true
-           method block   = Some block
-           method line    = Some "//"
-           method ext     = ".mligo"
-           method mode    = `Point
-           method cmd     = EvalOpt.Quiet
-           method mono    = false
-           method pretty  = false
-         end
-
-    let make ~libs =
-      EvalOpt.make ~libs
-                   ~verbose:options#verbose
-                   ~offsets:options#offsets
-                   ?block:options#block
-                   ?line:options#line
-                   ~ext:options#ext
-                   ~mode:options#mode
-                   ~cmd:options#cmd
-                   ~mono:options#mono
-                   ~pretty:options#mono
-  end
-
-module Parser =
-  struct
-    type ast  = CST.t
-    type expr = CST.expr
     include Parser_cameligo.Parser
+    type tree = CST.t
+
+    let main = contract
+
+    module Incremental =
+      struct
+        let main = Incremental.contract
+      end
   end
 
-module ParserLog =
+module ContractParser = MkParser (ContractParser_Menhir)
+
+(* Parser for expressions *)
+
+module ExprParser_Menhir =
   struct
-    type ast  = CST.t
-    type expr = CST.expr
-    include Cst_cameligo.ParserLog
+    include Parser_cameligo.Parser
+    type tree = CST.expr
+
+    let main = interactive_expr
+
+    module Incremental =
+      struct
+        let main = Incremental.interactive_expr
+      end
   end
 
-module Unit =
-  ParserUnit.Make (Lexer)(CST)(Parser)(ParErr)(ParserLog)(SubIO)
+module ExprParser = MkParser (ExprParser_Menhir)
 
-let apply parser =
-  let local_fail error =
-    Trace.fail
-    @@ Errors.generic
-    @@ Unit.format_error error in
-  match parser () with
-    Stdlib.Ok semantic_value -> Trace.ok semantic_value
+(* Results and errors *)
 
-  (* Lexing and parsing errors *)
+type error = Errors.parse_error
 
-  | Stdlib.Error error -> Trace.fail @@ Errors.generic error
-  (* System errors *)
+type cst    = (CST.t , error) Trace.result
+type expr   = (CST.expr, error) Trace.result
+type buffer = (Buffer.t , error) Trace.result
 
-  | exception Sys_error msg ->
-      Trace.fail @@ Errors.generic (Region.wrap_ghost msg)
-  (* Scoping errors *)
+let fail msg = Trace.fail @@ Errors.generic msg
+type file_path = string
+type dirs      = file_path list (* For #include directives *)
 
-  | exception Scoping.Error (Scoping.Reserved_name name) ->
-      let token =
-        Lexer.Token.mk_ident name.Region.value name.Region.region in
-      (match token with
-         Stdlib.Error LexToken.Reserved_name ->
-           Trace.fail @@ Errors.generic @@ Region.wrap_ghost "Reserved name."
-       | Ok invalid ->
-          local_fail
-            ("Reserved name.\nHint: Change the name.\n", None, invalid))
+(* Calling the parsers *)
 
-  | exception Scoping.Error (Scoping.Duplicate_variant name) ->
-      let token =
-        Lexer.Token.mk_constr name.Region.value name.Region.region
-      in local_fail
-           ("Duplicate constructor in this sum type declaration.\n\
-             Hint: Change the constructor.\n", None, token)
+let apply = function
+  Stdlib.Error msg -> fail msg
+| Stdlib.Ok thunk ->
+    match thunk () with
+      Stdlib.Ok tree -> Trace.ok tree
+    | Stdlib.Error msg -> fail msg
 
-  | exception Scoping.Error (Scoping.Non_linear_pattern var) ->
-      let token =
-        Lexer.Token.mk_ident var.Region.value var.Region.region in
-      (match token with
-         Stdlib.Error LexToken.Reserved_name ->
-           Trace.fail @@ Errors.generic @@ Region.wrap_ghost "Reserved name."
-       | Ok invalid ->
-           local_fail ("Repeated variable in this pattern.\n\
-                        Hint: Change the name.\n",
-                       None, invalid))
+(* Parsing contracts *)
 
-  | exception Scoping.Error (Scoping.Duplicate_field name) ->
-      let token =
-        Lexer.Token.mk_ident name.Region.value name.Region.region in
-      (match token with
-         Stdlib.Error LexToken.Reserved_name ->
-           Trace.fail @@ Errors.generic @@ Region.wrap_ghost "Reserved name."
-       | Ok invalid ->
-           local_fail
-             ("Duplicate field name in this record declaration.\n\
-               Hint: Change the name.\n",
-              None, invalid))
+let parse_file dirs file_path =
+  ContractParser.parse_file dirs file_path |> apply
 
-(* Parsing a contract in a file *)
+let parse_program_string dirs string =
+  ContractParser.parse_string dirs string |> apply
 
-let parse_file libs source = apply (fun () -> Unit.contract_in_file libs source)
+let parse_program_stdin dirs () =
+  ContractParser.parse_channel dirs stdin |> apply
 
-(* Parsing a contract in a string *)
+(* Parsing expressions *)
 
-let parse_program_string libs source = apply (fun () -> Unit.contract_in_string libs source)
+let parse_expression dirs string =
+  ExprParser.parse_string dirs string |> apply
 
-(* Parsing a contract from standard input *)
+(* Preprocessing *)
 
-let parse_program_stdin libs () = apply (fun () -> Unit.contract_in_stdin libs ())
+module MkPreproc = Shared.Common.MakePreproc
 
-(* Parsing an expression in a string *)
+let preprocess dirs file_path =
+  let module Preproc = MkPreproc (File) (Comments)
+  in match Preproc.preprocess dirs file_path with
+       Stdlib.Error msg -> fail msg
+     | Ok buffer -> Trace.ok buffer
 
-let parse_expression libs source = apply (fun () -> Unit.expr_in_string libs source)
+(* Calling the pretty-printers *)
 
-(* Preprocessing a contract in a file *)
+module Pretty    = Parser_cameligo.Pretty
+module MkPretty  = Shared.Common.MakePretty
+module AllPretty = MkPretty (CST) (Pretty)
 
-let preprocess libs source = apply (fun () -> Unit.preprocess libs source)
+let pretty_print            = AllPretty.print_cst
+let pretty_print_expression = AllPretty.print_expr
+let pretty_print_type_expr  = AllPretty.print_type_expr
+let pretty_print_pattern    = AllPretty.print_pattern
 
-(* Pretty-print a file (after parsing it). *)
-
-let pretty_print cst =
-  let doc    = Pretty.print cst in
-  let buffer = Buffer.create 131 in
-  let width  =
-    match Terminal_size.get_columns () with
-      None -> 60
-    | Some c -> c in
-  let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
-  in Trace.ok buffer
-
-let pretty_print_from_source libs source =
-  match Trace.to_stdlib_result @@ parse_file libs source with
-    Stdlib.Error e -> Trace.fail e
-  | Ok cst ->
-    pretty_print @@ fst cst
-
-let pretty_print_expression cst =
-  let doc    = Pretty.pp_expr cst in
-  let buffer = Buffer.create 131 in
-  let width  =
-    match Terminal_size.get_columns () with
-      None -> 60
-    | Some c -> c in
-  let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
-  in Trace.ok buffer
-
-let pretty_print_pattern pattern =
-  let doc    = Pretty.pp_pattern pattern in
-  let buffer = Buffer.create 131 in
-  let width  =
-    match Terminal_size.get_columns () with
-      None -> 60
-    | Some c -> c in
-  let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
-  in Trace.ok buffer
-
-let pretty_print_type_expr type_expr =
-  let doc    = Pretty.pp_type_expr type_expr in
-  let buffer = Buffer.create 131 in
-  let width  =
-    match Terminal_size.get_columns () with
-      None -> 60
-    | Some c -> c in
-  let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
-  in Trace.ok buffer
+let pretty_print_from_source dirs file_path =
+  match ContractParser.parse_file dirs file_path with
+    Stdlib.Error msg -> fail msg
+  | Ok thunk ->
+      match thunk () with
+        Stdlib.Ok tree -> Trace.ok @@ pretty_print @@ tree
+      | Stdlib.Error msg -> fail msg

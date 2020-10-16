@@ -1995,8 +1995,7 @@ let%expect_test _ =
           else sum (SUB (n, 1), ADD (acc, n))
       ]
 
-    recursive
-    function fibo
+    recursive function fibo
       (const gen__parameters2 : int * int * int) is
       case gen__parameters2 of [
         (n, n_1, n_0) ->

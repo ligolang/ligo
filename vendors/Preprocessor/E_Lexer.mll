@@ -30,8 +30,8 @@ let string_of_token = function
 type error = Invalid_character of char
 
 let error_to_string = function
-    Invalid_character c ->
-      sprintf "Invalid character '%c' (%d)." c (Char.code c)
+  Invalid_character c ->
+    sprintf "Invalid character '%c' (%d)." c (Char.code c)
 
 let format ?(offsets=true) Region.{region; value} ~file =
   let msg   = error_to_string value
@@ -39,14 +39,18 @@ let format ?(offsets=true) Region.{region; value} ~file =
   let value = sprintf "Preprocessing error %s:\n%s\n" reg msg
   in Region.{value; region}
 
-exception Error of error Region.reg
+exception Error of string Region.reg
+
+let stop value region =
+  let error =
+    format ~offsets:true ~file:true Region.{region; value}
+  in raise (Error error)
 
 let mk_reg buffer =
-  let start  = Lexing.lexeme_start_p buffer |> Pos.from_byte
-  and stop   = Lexing.lexeme_end_p buffer |> Pos.from_byte
+  let start = Lexing.lexeme_start_p buffer |> Pos.from_byte
+  and stop  = Lexing.lexeme_end_p   buffer |> Pos.from_byte
   in Region.make ~start ~stop
 
-let stop value region = raise (Error Region.{region; value})
 let fail error buffer = stop error (mk_reg buffer)
 
 (* END OF HEADER *)

@@ -1,1 +1,1 @@
---table --explain --external-tokens LexToken --base Parser ParToken.mly
+--table --explain --external-tokens Token --base Parser ParToken.mly

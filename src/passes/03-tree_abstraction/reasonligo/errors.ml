@@ -52,7 +52,7 @@ If this is pattern matching on a list, then one of the following is expected:
   * an empty list pattern \"[]\";
   * a cons list pattern \"[head, ...tail]\".
 If this is pattern matching over variants, then a constructor of a variant is expected.
-      
+
 Other forms of pattern matching are not (yet) supported. @]"
         Snippet.pp_lift ((fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost pl)
     | `Concrete_reasonligo_unsupported_string_singleton te ->
@@ -84,21 +84,14 @@ Other forms of pattern matching are not (yet) supported. @]"
           Snippet.pp_lift v.region
           v.value
     | `Concrete_reasonligo_funarg_tuple_type_mismatch (region, pattern, texpr) -> (
-      let p = Parser.pretty_print_pattern pattern in
-      let t = Parser.pretty_print_type_expr texpr in
-      match Trace.(to_stdlib_result p, to_stdlib_result t) with 
-      | Ok (p, _), Ok (t, _) ->
-        let p = Buffer.contents p in
-        let t = Buffer.contents t in
-        Format.fprintf f
-          "@[<hv>%a@.The tuple \"%s\" does not match the type \"%s\". @]"
-          Snippet.pp_lift region
-          p
-          t
-      | _ ->
-        Format.fprintf f
-          "@[<hv>%a@.The tuple does not match the type. @]"
-          Snippet.pp_lift region
+      let p = Parser.pretty_print_pattern pattern |> Buffer.contents in
+      let t = Parser.pretty_print_type_expr texpr |> Buffer.contents in
+      Format.fprintf
+        f
+        "@[<hv>%a@.The tuple \"%s\" does not match the type \"%s\". @]"
+        Snippet.pp_lift region
+        p
+        t
     )
   )
 
@@ -158,7 +151,7 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Concrete_reasonligo_michelson_type_wrong (texpr,name) ->
     let message = Format.asprintf "Argument %s of %s must be a string singleton"
-        (Cst_reasonligo.ParserLog.type_expr_to_string ~offsets:true ~mode:`Point texpr) name in
+        (Cst_reasonligo.Printer.type_expr_to_string ~offsets:true ~mode:`Point texpr) name in
     let loc = Format.asprintf "%a" Location.pp_lift (Raw.type_expr_to_region texpr) in
     let content = `Assoc [
       ("message", `String message );
@@ -183,6 +176,6 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
     let loc = Format.asprintf "%a" Location.pp_lift r in
     let content = `Assoc [
       ("message", `String message );
-      ("location", `String loc); 
+      ("location", `String loc);
     ] in
     json_error ~stage ~content
