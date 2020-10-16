@@ -472,15 +472,18 @@ and pp_type_tuple {value; _} =
 
 and pp_type_constr ctor = string ctor.value
 
-and pp_fun_args {value; _} =
-  let lhs, _, rhs = value in
-  match rhs with
-  | TFun tf -> group (pp_type_expr lhs ^^ string ", " ^^ pp_fun_args tf)
-  | _ -> group (pp_type_expr lhs ^^ string ")" ^^ string " =>" ^/^ pp_type_expr rhs)
-
 and pp_fun_type {value; _} =
   let lhs, _, rhs = value in
   group ( nest 1 (pp_type_expr lhs) ^^ string " =>" ^/^ pp_type_expr rhs)
 
 and pp_type_par {value; _} =
   string "(" ^^ nest 1 (pp_type_expr value.inside ^^ string ")")
+
+let print_type_expr = pp_type_expr
+let print_pattern   = pp_pattern
+let print_expr      = pp_expr
+
+type cst        = Cst.Reasonligo.t
+type expr       = Cst.Reasonligo.expr
+type type_expr  = Cst.Reasonligo.type_expr
+type pattern    = Cst.Reasonligo.pattern

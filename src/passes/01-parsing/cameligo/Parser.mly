@@ -9,6 +9,7 @@ open CST
 
 (* Utilities *)
 
+
 let first_region = function
   [] -> None
 | x::_ -> Some x.Region.region

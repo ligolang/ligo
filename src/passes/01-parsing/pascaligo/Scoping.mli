@@ -1,22 +1,15 @@
 (* This module exports checks on scoping, called from the parser. *)
 
-(* Dependencies *)
-
 module Region = Simple_utils.Region
 module CST    = Cst.Pascaligo
+module Token  = Lexer_pascaligo.Token
 
-(* Errors *)
+type window = <
+  last_token    : Token.t option;
+  current_token : Token.t
+>
 
-type t =
-  Reserved_name       of CST.variable
-| Duplicate_parameter of CST.variable
-| Duplicate_variant   of CST.variable
-| Non_linear_pattern  of CST.variable
-| Duplicate_field     of CST.variable
-
-type error = t
-
-exception Error of t
+exception Error of string * window
 
 val check_reserved_name : CST.variable -> unit
 val check_pattern       : CST.pattern -> unit

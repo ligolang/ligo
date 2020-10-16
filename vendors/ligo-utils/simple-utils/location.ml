@@ -41,12 +41,8 @@ let compare a b = match a,b with
 
 
 let make (start_pos:Lexing.position) (end_pos:Lexing.position) : t =
-  (* TODO: give correct unicode offsets (the random number is here so
-     that searching for wrong souce locations appearing in messages
-     will quickly lead here *)
-  File (Region.make
-          ~start:(Pos.make ~byte:start_pos ~point_num:(-1897000) ~point_bol:(-1897000))
-          ~stop:(Pos.make ~byte:end_pos ~point_num:(-1897000) ~point_bol:(-1897000)))
+  File (Region.make ~start:(Pos.from_byte start_pos)
+                    ~stop:(Pos.from_byte end_pos))
 
 let virtual_location s = Virtual s
 let dummy = virtual_location "dummy"

@@ -1,11 +1,11 @@
 (* Converting the textual representation of tokens produced by Menhir
    into concrete syntax *)
 
-module LexToken = Lexer_cameligo.LexToken
+(* Unlexing a sentence *)
 
 let unlex (sentence: string) : Buffer.t =
   let tokens  = Str.split (Str.regexp " ") sentence in
-  let lexemes = List.map LexToken.concrete tokens in
+  let lexemes = List.map Lexer_cameligo.Token.concrete tokens in
   let buffer  = Buffer.create 31 in
   let rec trans = function
       [] -> ()

@@ -8,7 +8,8 @@
 module Trace_tutorial = struct
   [@warning "-32"]
   (* The trace monad is fairly similar to the predefined [option]
-     type. It is an instance of the predefined [result] type. *)
+     type. It is an instance of the predefined [Stdlib.result]
+     type. *)
 
   type annotation = string
   type      error = string
@@ -16,17 +17,17 @@ module Trace_tutorial = struct
   (* The type ['a result] is used by the trace monad to both model an
      expected value of type ['a] or the failure to obtain it, instead
      of working directly with ['a] values and handling separately
-     errors, for example by means of exceptions. (See the type [('a,'b)
-     result] in the module [Pervasives] of the OCaml system for a
-     comparable approach to error handling.)
+     errors, for example by means of exceptions. (See the type
+     [('a,'b) Stdlib.result] of the OCaml system for a comparable
+     approach to error handling.)
 
      The type ['a result] carries either a value of type ['a], with a
      list of annotations (information about past successful
      computations), or it is a list of errors accumulated so far.
      The former case is denoted by the data constructor [Ok], and the
-     second by [Error]. *)
+     latter by [Error]. *)
 
-  type nonrec 'a result = ('a * annotation list, error list) result
+  type nonrec 'a result = ('a * annotation list, error list) Stdlib.result
   (*
   = Ok of 'a * annotation list
   | Error of error list
@@ -41,9 +42,9 @@ module Trace_tutorial = struct
     else Ok (a/b, [])
 
   (* The function [divide_three] shows that when composing two
-     functions, if the first call fails, the error is passed along
-     and the second call is not evaluated. (A pattern called
-     "error-passing style"). *)
+     functions, if the first call fails, the error is propagated and
+     the second call is not evaluated -- A pattern called
+     "error-passing style". *)
 
   let divide_three a b c =
     match divide_trace a b with
@@ -52,7 +53,7 @@ module Trace_tutorial = struct
 
   (* The function [divide_three_annot] shows that when composing two
      functions, if both calls are successful, the lists of
-     annotations are joined. *)
+     annotations are appended. *)
 
   let divide_three_annot a b c =
     match divide_trace a b with
@@ -69,11 +70,11 @@ module Trace_tutorial = struct
       result] (not ['a]).
 
         * If the current result is an error, then [bind]
-        returns that same error without calling [f];
+          returns that same error without calling [f];
 
         * otherwise [bind] unwraps the [Ok] of the current result
           and calls [f] on it:
-            * That call itself may return an error;}
+            * that call itself may return an error;
             * if not, [bind] combines the annotations and returns the
               last result. *)
   let bind (f: 'a -> 'b result) : 'a result -> 'b result =
@@ -258,17 +259,22 @@ let (>>?)  x f = bind f x
 let (>>|?) x f = map f x
 
 (* Used by PPX_let, an OCaml preprocessor.
-   What it does is that, when you only care about the case where a result isn't
-   an error, instead of writing:
+
+   What it does is that, when you only care about the case where a
+   result isn't an error, instead of writing:
+
    [
    (* Stuff that might return an error *) >>? fun ok_value ->
    (* Stuff being done on the result *)
    ]
+
    You can write:
+
    [
-   let%bind ok_value = (* Stuff that might return an error *) in
-   (* Stuff being done on the result *)
+   let%bind ok_value = (* Stuff that might return an error *)
+   in (* Stuff being done on the result *)
    ]
+
    This is much more typical of OCaml. This makes the code more
    readable, easy to write and refactor. It is used pervasively in
    LIGO. *)
@@ -312,9 +318,7 @@ let trace_r err_thunk_may_fail = function
            this should use some catenable lists. *)
        Error (errors_while_generating_error)
 
-(**
-   Check if there is no error. Useful for tests.
-*)
+(* Check if there is no error. Useful for tests. *)
 let to_bool = function
   | Ok _ -> true
   | Error _ -> false
@@ -323,27 +327,27 @@ let to_option = function
   | Ok (o, annotations) -> ignore annotations; Some o
   | Error _ -> None
 
-(**
-  Convert a result to a json, if res in an error, the produces JSON will be
-  empty, otherwise the provided to_json function will be used
-*)
+(* Convert a result to a json, if res in an error, the produces JSON
+   will be empty, otherwise the provided to_json function will be
+   used *)
+
 let to_json to_json = function
   | Ok (v,_) ->  to_json v
-  | Error _ -> `Null 
+  | Error _ -> `Null
 
-(**
-   Convert an option to a result, with a given error if the parameter is None.
-*)
+(* Convert an option to a result, with a given error if the parameter
+   is None. *)
+
 let trace_option error = function
-    None -> fail error
-    | Some s -> ok s
+  None -> fail error
+| Some s -> ok s
 
 let trace_assert_fail_option error = function
-    None -> ok ()
-    | Some _s -> fail error
+   None -> ok ()
+ | Some _s -> fail error
 
 
-(** Utilities to interact with other data-structure.  [bind_t] takes
+(* Utilities to interact with other data-structure.  [bind_t] takes
    an ['a result t] and makes a ['a t result] out of it. It "lifts" the
    error out of the type.  The most common context is when mapping a
    given type. For instance, if you use a function that can fail in
@@ -354,7 +358,7 @@ let trace_assert_fail_option error = function
    [let%bind lst' = bind_map_list f lst].  Same thing with folds.
  *)
 
-let bind_compose f g x = 
+let bind_compose f g x =
   let%bind y = g x in
   f y
 
@@ -510,40 +514,38 @@ let bind_map_triple f (a, b, c) = bind_and3 (f a, f b, f c)
 
 let bind_list_cons v lst = lst >>? fun lst -> ok (v::lst)
 
-let rec bind_chain : ('a -> ('a,_) result) list -> 'a -> ('a,_) result = fun fs x ->
+let rec bind_chain : ('a -> ('a,_) result) list -> 'a -> ('a,_) result =
+  fun fs x ->
   match fs with
   | [] -> ok x
-  | hd :: tl -> (
-      let aux : 'a -> ('a,_) result = fun x -> bind (bind_chain tl) (hd x) in
-      bind aux (ok x)
-    )
+  | hd :: tl ->
+    let aux : 'a -> ('a,_) result = fun x -> bind (bind_chain tl) (hd x)
+    in bind aux (ok x)
 
-let rec bind_chain_ignore_acc : ('a -> ('b * 'a, _) result) list -> 'a -> ('a,_) result = fun fs x ->
+let rec bind_chain_ignore_acc :
+          ('a -> ('b * 'a, _) result) list -> 'a -> ('a,_) result =
+  fun fs x ->
   match fs with
   | [] -> ok x
-  | hd :: tl -> (
+  | hd :: tl ->
       let aux : 'a -> ('a,_) result = fun x ->
         hd x >>? fun (_,aa) ->
         bind (bind_chain_ignore_acc tl) (ok aa) in
       bind aux (ok x)
-    )
 
-(**
-   Wraps a call that might trigger an exception in a result.
-*)
+(* Wraps a call that might trigger an exception in a result. *)
+
 let generic_try err f = try ok @@ f () with _ -> fail err
 
-(**
-   Same, but with a handler that generates an error based on the exception,
-   rather than a fixed error.
-*)
+(* Same, but with a handler that generates an error based on the
+   exception, rather than a fixed error. *)
+
 let specific_try handler f =
   try ok @@ f () with exn -> fail (handler exn)
 
-(**
-   Assertion module.
-   (* Would make sense to move it outside Trace. *)
-*)
+(* Assertion module.
+   TODO: Would make sense to move it outside Trace. *)
+
 module Assert = struct
   let assert_fail err = function
     Ok _ -> fail err
@@ -558,8 +560,7 @@ module Assert = struct
 
   let assert_list_empty err lst =
     assert_true err List.(length lst = 0)
-  
+
   let assert_list_same_size err lsta lstb =
     assert_true err List.(length lsta = length lstb)
-
 end

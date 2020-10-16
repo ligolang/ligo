@@ -466,3 +466,12 @@ and pp_fun_type {value; _} =
   group (pp_type_expr lhs ^^ string " ->" ^/^ pp_type_expr rhs)
 
 and pp_type_par t = pp_par pp_type_expr t
+
+let print_type_expr = pp_type_expr
+let print_pattern   = pp_pattern
+let print_expr      = pp_expr
+
+type cst        = Cst.Cameligo.t
+type expr       = Cst.Cameligo.expr
+type type_expr  = Cst.Cameligo.type_expr
+type pattern    = Cst.Cameligo.pattern

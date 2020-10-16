@@ -1,4 +1,4 @@
-open LexToken
+open Token
 
 let semi = parser [< 'SEMI _ >] -> ()
 let vbar = parser [< 'VBAR _ >] -> ()

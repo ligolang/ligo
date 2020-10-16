@@ -1,30 +1,14 @@
 (* Driver for the PascaLIGO lexer *)
 
-(* Dependencies *)
+module Comments = Lexer_pascaligo.Comments
+module File     = Lexer_pascaligo.File
+module Token    = Lexer_pascaligo.Token
 
-module Region    = Simple_utils.Region
-module EvalOpt   = Lexer_shared.EvalOpt
-module Lexer     = Lexer_shared.Lexer
-module LexerUnit = Lexer_shared.LexerUnit
-module LexToken  = Lexer_pascaligo.LexToken
+module Preproc_CLI = Preprocessor.CLI.Make (Comments)
+module Lexer_CLI   = LexerLib.CLI.Make (Preproc_CLI)
 
-(* Input/Output *)
+module MainGen = Shared.LexerMainGen
+module Main    = MainGen.Make (Comments) (File) (Token) (Lexer_CLI)
 
-module IO =
-  struct
-    let options =
-      let open EvalOpt in
-      let block = mk_block ~opening:"(*" ~closing:"*)"
-      in read ~block ~line:"//" ".ligo"
-  end
-
-(* Instantiating the standalone lexer *)
-
-module M = LexerUnit.Make (IO) (Lexer.Make (LexToken))
-
-(* Tracing all tokens in the source *)
-
-let () =
-  match M.trace () with
-    Stdlib.Ok () -> ()
-  | Error Region.{value; _} -> Printf.eprintf "\027[31m%s\027[0m%!" value
+let () = Main.check_cli ()
+let () = Main.scan_all ()

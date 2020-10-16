@@ -1,4 +1,4 @@
-open Display
+open Simple_utils.Display
 
 let ppx_ppformat ~display_format f buf =
   match display_format with

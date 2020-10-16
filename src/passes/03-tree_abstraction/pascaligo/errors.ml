@@ -54,7 +54,7 @@ Other patterns in case clauses are not (yet) supported. @]"
         Snippet.pp_lift (Raw.type_expr_to_region te)
     | `Concrete_pascaligo_unsupported_deep_list_pattern cons ->
       Format.fprintf f
-        "@[<hv>%a@.Invalid list pattern in a case clause. @.At this point, one of the following is expected: 
+        "@[<hv>%a@.Invalid list pattern in a case clause. @.At this point, one of the following is expected:
   * an empty list pattern \"nil\";
   * a cons list pattern \"head#tail\".@]"
         Snippet.pp_lift @@ Raw.pattern_to_region cons
@@ -138,7 +138,7 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Concrete_pascaligo_michelson_type_wrong (texpr,name) ->
     let message = Format.asprintf "Argument %s of %s must be a string singleton"
-        (Cst_pascaligo.ParserLog.type_expr_to_string ~offsets:true ~mode:`Point texpr) name in
+        (Cst_pascaligo.Printer.type_expr_to_string ~offsets:true ~mode:`Point texpr) name in
     let loc = Format.asprintf "%a" Location.pp_lift (Raw.type_expr_to_region texpr) in
     let content = `Assoc [
       ("message", `String message );

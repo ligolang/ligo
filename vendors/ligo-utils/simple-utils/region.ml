@@ -89,7 +89,7 @@ let make ~(start: Pos.t) ~(stop: Pos.t) =
           if offsets then stop#offset mode else stop#column mode in
         let info =
           if   file
-          then sprintf "in file \"%s\", line %i, %s"
+          then sprintf "in file %S, line %i, %s"
                  (String.escaped start#file) start#line horizontal
           else sprintf "at line %i, %s" start#line horizontal
         in if   stop#line = start#line
@@ -100,7 +100,9 @@ let make ~(start: Pos.t) ~(stop: Pos.t) =
       method compact ?(file=true) ?(offsets=true) mode =
         if start#is_ghost || stop#is_ghost then "ghost"
         else
-          let prefix    = if file then start#file ^ ":" else ""
+          let prefix    = if file then
+                            Filename.basename start#file ^ ":"
+                          else ""
           and start_str = start#compact ~file:false ~offsets mode
           and stop_str  = stop#compact ~file:false ~offsets mode in
           if start#file = stop#file then

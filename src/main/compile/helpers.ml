@@ -15,7 +15,7 @@ let syntax_to_variant (Syntax_name syntax) source =
   | ("pascaligo" | "PascaLIGO"),   _ -> ok PascaLIGO
   | ("cameligo" | "CameLIGO"),     _ -> ok CameLIGO
   | ("reasonligo" | "ReasonLIGO"), _ -> ok ReasonLIGO
-  | _ -> fail (invalid_syntax syntax) 
+  | _ -> fail (invalid_syntax syntax)
 
 
 let parse_and_abstract_pascaligo libs source =
@@ -120,33 +120,33 @@ let pretty_print_pascaligo_cst libs source =
   let%bind ast = trace parser_tracer @@ Parser.Pascaligo.parse_file libs source in
   let buffer = Buffer.create 59 in
   let state =
-    Cst_pascaligo.ParserLog.mk_state
+    Cst_pascaligo.Printer.mk_state
       ~offsets:true
       ~mode:`Byte
       ~buffer in
-  Cst_pascaligo.ParserLog.pp_cst state ast;
+  Cst_pascaligo.Printer.pp_cst state ast;
   ok buffer
 
 let pretty_print_cameligo_cst libs source =
   let%bind ast = trace parser_tracer @@ Parser.Cameligo.parse_file libs source in
   let buffer = Buffer.create 59 in
   let state = (* TODO: Should flow from the CLI *)
-    Cst_cameligo.ParserLog.mk_state
+    Cst_cameligo.Printer.mk_state
       ~offsets:true
       ~mode:`Point
       ~buffer in
-  Cst_cameligo.ParserLog.pp_cst state ast;
+  Cst_cameligo.Printer.pp_cst state ast;
   ok buffer
 
 let pretty_print_reasonligo_cst libs source =
   let%bind ast = trace parser_tracer @@ Parser.Reasonligo.parse_file libs source in
   let buffer = Buffer.create 59 in
   let state = (* TODO: Should flow from the CLI *)
-    Cst_reasonligo.ParserLog.mk_state
+    Cst_reasonligo.Printer.mk_state
       ~offsets:true
       ~mode:`Point
       ~buffer in
-  Cst_reasonligo.ParserLog.pp_cst state ast;
+  Cst_reasonligo.Printer.pp_cst state ast;
   ok buffer
 
 let pretty_print_cst ?(libs=[]) syntax source =

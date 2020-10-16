@@ -1,1 +1,3 @@
-module LexToken = LexToken
+module Comments = Comments
+module File     = File
+module Token    = Token

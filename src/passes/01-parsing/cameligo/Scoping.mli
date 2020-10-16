@@ -1,17 +1,15 @@
 (* This module exports checks on scoping, called from the parser. *)
 
 module Region = Simple_utils.Region
-module CST = Cst.Cameligo
+module CST    = Cst.Cameligo
+module Token  = Lexer_cameligo.Token
 
-type t =
-  Reserved_name       of CST.variable
-| Duplicate_variant   of CST.variable
-| Non_linear_pattern  of CST.variable
-| Duplicate_field     of CST.variable
+type window = <
+  last_token    : Token.t option;
+  current_token : Token.t
+>
 
-type error = t
-
-exception Error of t
+exception Error of string * window
 
 val check_reserved_name : CST.variable -> unit
 val check_pattern       : CST.pattern -> unit

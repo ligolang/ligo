@@ -12,10 +12,5 @@ The following preprocessing directives are supported
   * #region
   * #undef
 
-Note: Because it is meant for LIGO, there is no error raised for
-invalid preprocessing directives, as the symbol `#` is valid in
-PascaLIGO (cons operator for lists). Also, the preprocessor may report an error on some weird but valid PascaLIGO contracts, like
-
-const include : list (int) = list [1]
-const l : list (int) = 0
-# include
+Note: There is no error raised for invalid preprocessing directives
+(they are simply ignored).

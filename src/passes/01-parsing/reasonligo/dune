@@ -1,50 +1,65 @@
 ;; --------------------------------------------------------------------
+;; PREPROCESSING
+
+(executable
+  (name PreprocMain)
+  (libraries
+     ;; LIGO
+     lexer_reasonligo
+     ;; Vendors
+     Preprocessor)
+  (modules PreprocMain)
+  (preprocess
+    (pps bisect_ppx --conditional)))
+
+;; --------------------------------------------------------------------
 ;; LEXING
 
-;; Build of the lexer
+;; Build of the lexer for ReasonLIGO
 
-(ocamllex LexToken)
+(ocamllex Token)
 
-;; Build of the lexer as a library
+;; Build of the ReasonLIGO lexer as a library
 
 (library
   (name lexer_reasonligo)
   (public_name ligo.lexer.reasonligo)
-  (modules LexToken)
+  (modules Token Comments File)
   (libraries
-    ;; Ligo
-    lexer_shared
+    ;; LIGO
+    Shared
     ;; Third party
+    str
     hex)
   (preprocess
     (pps bisect_ppx --conditional)))
 
-;; Build of a standalone lexer
+;; Build of a standalone lexer for ReasonLIGO
 
 (executable
   (name LexerMain)
   (libraries
-    ;; Ligo
-    lexer_shared
+    ;; LIGO
+    Shared
     lexer_reasonligo
     ;; Third party
-    hex)
-  (modules LexerMain)
+    str)
+  (modules Version LexerMain)
   (preprocess
     (pps bisect_ppx --conditional)))
 
 ;; --------------------------------------------------------------------
 ;; PARSING
 
-;; Build of the parser
+;; Build of the parser for ReasonLIGO
 
 (menhir
   (merge_into Parser)
   (modules ParToken Parser)
   (flags -la 1 --table --strict --explain
-         --external-tokens Lexer_reasonligo.LexToken))
+         --external-tokens Lexer_reasonligo.Token))
 
-;; Build of the parser as a library
+;; Build of the ReasonLIGO parser as a library
 
 (library
   (name parser_reasonligo)
@@ -52,9 +67,8 @@
   (modules
     SyntaxError Scoping Parser ParErr Pretty)
   (libraries
-    ;; Ligo
+    ;; LIGO
     lexer_reasonligo
-    parser_shared
     cst
     ;; Vendors
     simple-utils
@@ -73,21 +87,20 @@
 (executable
   (name Unlexer)
   (libraries
-   ;; Ligo
-   lexer_reasonligo
-   ;; Third party
-   str)
+    ;; LIGO
+    lexer_reasonligo
+    ;; Third party
+    str)
   (modules Unlexer)
   (preprocess
     (pps bisect_ppx --conditional)))
 
-;; Local build of a standalone parser
+;; Local build of a standalone parser for ReasonLIGO
 
 (executable
   (name ParserMain)
   (libraries
-    ;; Ligo
-    parser_shared
+    ;; LIGO
     parser_reasonligo
     cst
     ;; Third party
@@ -100,8 +113,8 @@
 
 (rule
   (targets Parser.msg)
-  (deps (:script_messages ../../../../vendors/ligo-utils/simple-utils/messages.sh) Parser.mly LexToken.mli ParToken.mly)
-  (action (run %{script_messages} --lex-tokens=LexToken.mli --par-tokens=ParToken.mly Parser.mly)))
+  (deps (:script_messages ../../../../vendors/ligo-utils/simple-utils/messages.sh) Parser.mly Token.mll ParToken.mly)
+  (action (run %{script_messages} --lex-tokens=Token.mli --par-tokens=ParToken.mly Parser.mly)))
 
 (rule
  (targets Parser_msg.ml)
@@ -111,7 +124,7 @@
    (bash
      "menhir \
        --compile-errors Parser.msg \
-       --external-tokens LexToken \
+       --external-tokens Token \
        --base Parser \
        ParToken.mly \
        Parser.mly"))))
@@ -120,9 +133,9 @@
 
 (rule
   (targets all.religo)
-  (deps (:script_cover ../../../../vendors/ligo-utils/simple-utils/cover.sh) Parser.mly LexToken.mli ParToken.mly Parser.msg Unlexer.exe)
+  (deps (:script_cover ../../../../vendors/ligo-utils/simple-utils/cover.sh) Parser.mly Token.mll ParToken.mly Parser.msg Unlexer.exe)
   (action (run %{script_cover}
-               --lex-tokens=LexToken.mli
+               --lex-tokens=Token.mli
                --par-tokens=ParToken.mly
                --ext=religo
                --unlexer=./Unlexer.exe
@@ -135,7 +148,7 @@
 (rule
  (targets error.messages)
  (mode (promote (until-clean) (only *)))
- (deps Parser.mly ParToken.mly error.messages.checked-in LexToken.mli)
+ (deps Parser.mly ParToken.mly error.messages.checked-in Token.mll)
  (action
   (with-stdout-to %{targets}
   (run menhir
@@ -143,7 +156,7 @@
        --update-errors error.messages.checked-in
        --table
        --strict
-       --external-tokens LexToken.mli
+       --external-tokens Token
        --base Parser.mly
        ParToken.mly
        Parser.mly))))
@@ -158,7 +171,7 @@
            --list-errors
            --table
            --strict
-           --external-tokens LexToken.mli
+           --external-tokens Token
            --base Parser.mly
            ParToken.mly
            Parser.mly))))
@@ -171,7 +184,7 @@
          --unused-tokens
          --table
          --strict
-         --external-tokens LexToken.mli
+         --external-tokens Token
          --base Parser.mly
          ParToken.mly
          Parser.mly
@@ -181,15 +194,25 @@
 (rule
  (targets ParErr.ml)
  (mode (promote (until-clean) (only *)))
- (deps Parser.mly ParToken.mly error.messages.checked-in LexToken.mli)
+ (deps Parser.mly ParToken.mly error.messages.checked-in Token.mll)
  (action
   (with-stdout-to %{targets}
   (run menhir
        --unused-tokens
        --table
        --strict
-       --external-tokens LexToken.mli
+       --external-tokens Token
        --base Parser.mly
        ParToken.mly
        Parser.mly
        --compile-errors error.messages.checked-in))))
+
+;; --------------------------------------------------------------------
+;; Build of the version source (for the user, as a CLI option)
+
+(rule
+ (targets version.ml)
+ (action (with-stdout-to
+          version.ml
+          (run "sh" "-c"
+               "printf 'let version = \"%s\"' \"${LIGO_VERSION}\""))))

@@ -199,8 +199,8 @@ if test ! -e "$messages"; then
 if test ! -e "$parser"; then
   fatal_error "Parser specification \"$parser\" not found."; fi
 
-if test ! -e "$lex_tokens"; then
-  fatal_error "Lexical tokens specification \"$lex_tokens\" not found."; fi
+#if test ! -e "$lex_tokens"; then
+#  fatal_error "Lexical tokens specification \"$lex_tokens\" not found."; fi
 
 if test ! -e "$par_tokens"; then
   fatal_error "Syntactical tokens specification \"$par_tokens\" not found."; fi

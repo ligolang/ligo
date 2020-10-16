@@ -4,18 +4,51 @@
 
 module Region = Simple_utils.Region
 module CST    = Cst.Reasonligo
-
-type t =
-  Reserved_name      of CST.variable
-| Duplicate_variant  of CST.variable
-| Non_linear_pattern of CST.variable
-| Duplicate_field    of CST.variable
-
-type error = t
-
-exception Error of t
+module Token  = Lexer_reasonligo.Token
 
 open Region
+
+type window = <
+  last_token : Token.t option;
+  current_token : Token.t
+>
+
+let mk_window var =
+  object
+    method last_token    = None; (* To keep it simple *)
+    method current_token = Token.Ident var
+  end
+
+exception Error of string * window
+
+let raise_reserved_name var : 'a =
+  let msg =
+    Printf.sprintf
+      "Reserved name %S.\nHint: Change the name.\n" var.value
+  in raise (Error (msg, mk_window var))
+
+let raise_duplicate_variant var : 'a =
+  let msg =
+    Printf.sprintf
+      "Duplicate constructor %S in this sum type declaration.\n\
+       Hint: Change the constructor.\n" var.value
+  in raise (Error (msg, mk_window var))
+
+
+let raise_non_linear_pattern var : 'a =
+  let msg =
+    Printf.sprintf
+      "Repeated variable %S in this pattern.\n\
+       Hint: Change the name.\n" var.value
+  in raise (Error (msg, mk_window var))
+
+
+let raise_duplicate_field_name var : 'a =
+  let msg =
+    Printf.sprintf
+      "Duplicate field name %S in this record declaration.\n\
+       Hint: Change the name.\n" var.value
+  in raise (Error (msg, mk_window var))
 
 (* Useful modules *)
 
@@ -65,12 +98,12 @@ let check_reserved_names vars =
   let inter = VarSet.filter is_reserved vars in
   if not (VarSet.is_empty inter) then
     let clash = VarSet.choose inter in
-    raise (Error (Reserved_name clash))
+    raise_reserved_name clash
   else vars
 
 let check_reserved_name var =
   if SSet.mem var.value reserved then
-    raise (Error (Reserved_name var))
+    raise_reserved_name var
 
 (* Checking the linearity of patterns *)
 
@@ -84,7 +117,7 @@ let rec vars_of_pattern env = function
 | PWild _ -> env
 | PVar var ->
     if VarSet.mem var env then
-      raise (Error (Non_linear_pattern var))
+      raise_non_linear_pattern var
     else VarSet.add var env
 | PList l -> vars_of_plist env l
 | PTuple t -> Utils.nsepseq_foldl vars_of_pattern env t.value
@@ -98,7 +131,7 @@ and vars_of_fields env fields =
 and vars_of_field_pattern env field =
   let var = field.value.field_name in
   if VarSet.mem var env then
-    raise (Error (Non_linear_pattern var))
+    raise_non_linear_pattern var
   else
     let p = field.value.pattern
     in vars_of_pattern (VarSet.add var env) p
@@ -131,7 +164,7 @@ let check_pattern p =
 let check_variants variants =
   let add acc {value; _} =
     if VarSet.mem value.constr acc then
-      raise (Error (Duplicate_variant value.constr))
+      raise_duplicate_variant value.constr
     else VarSet.add value.constr acc in
   let variants =
     List.fold_left add VarSet.empty variants
@@ -141,9 +174,9 @@ let check_variants variants =
 
 let check_fields fields =
   let add acc {value; _} =
-    if VarSet.mem (value: field_decl).field_name acc then
-      raise (Error (Duplicate_field value.field_name))
-    else VarSet.add value.field_name acc in
-  let fields =
-    List.fold_left add VarSet.empty fields
-  in ignore fields
+    let field_name = (value: field_decl).field_name in
+    if VarSet.mem field_name acc then
+      raise_duplicate_field_name value.field_name
+    else
+      VarSet.add value.field_name acc
+  in ignore (List.fold_left add VarSet.empty fields)

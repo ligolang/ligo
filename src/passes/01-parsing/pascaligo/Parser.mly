@@ -1,4 +1,5 @@
 (* Menhir specification of the parsing of PascaLIGO *)
+
 %{
 (* START HEADER *)
 
@@ -49,7 +50,6 @@ let mk_arith f arg1 op arg2 =
 %on_error_reduce nseq(__anonymous_0(expr,SEMI))
 %on_error_reduce nsepseq(field_assignment,SEMI)
 %on_error_reduce nseq(__anonymous_0(statement,SEMI))
-%on_error_reduce nseq(Attr)
 %on_error_reduce nsepseq(case_clause(expr),VBAR)
 %on_error_reduce nsepseq(core_pattern,SEMI)
 %on_error_reduce pattern
@@ -93,6 +93,7 @@ let mk_arith f arg1 op arg2 =
 %on_error_reduce projection
 %on_error_reduce option(arguments)
 %on_error_reduce path
+%on_error_reduce nseq(Attr)
 
 %%
 

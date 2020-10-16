@@ -107,9 +107,9 @@ let () =
     if Utils.String.Set.mem "ast" options.verbose
     then let buffer = Buffer.create 131
          in begin
-              ParserLog.offsets := options.offsets;
-              ParserLog.mode    := options.mode;
-              ParserLog.print_tokens buffer ast;
+              Printer.offsets := options.offsets;
+              Printer.mode    := options.mode;
+              Printer.print_tokens buffer ast;
               Buffer.output_buffer stdout buffer
          end
   with

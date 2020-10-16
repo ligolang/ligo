@@ -1,6 +1,6 @@
-[@@@warning "-42"]
-[@@@warning "-27"]
-[@@@warning "-26"]
+(* A pretty printer for PascaLIGO *)
+
+[@@@warning "-42-27-26"]
 
 module CST = Cst.Pascaligo
 open CST
@@ -16,14 +16,11 @@ let pp_brackets : ('a -> document) -> 'a brackets reg -> document =
   fun printer {value; _} ->
     string "[" ^^ nest 1 (printer value.inside ^^ string "]")
 
+(*
 let pp_braces : ('a -> document) -> 'a braces reg -> document =
   fun printer {value; _} ->
     string "{" ^^ nest 1 (printer value.inside ^^ string "}")
-
-let pp_option : ('a -> document) -> 'a option -> document =
-  fun printer -> function
-    None -> empty
-  | Some opt -> printer opt
+ *)
 
 let rec print ast =
   let app decl = group (pp_declaration decl) in
@@ -82,7 +79,7 @@ and pp_sum_type {value; _} =
     group (break 1 ^^ string "| " ^^ pp_variant variant) in
   let whole = head ^^ concat_map app rest in
   if attributes = [] then whole
-  else pp_attributes attributes ^/^ whole
+  else group (pp_attributes attributes ^/^ whole)
 
 and pp_cartesian {value; _} =
   let head, tail = value in
@@ -92,15 +89,6 @@ and pp_cartesian {value; _} =
   | e::items ->
       group (break 1 ^^ pp_type_expr e ^^ string " *") ^^ app items
   in pp_type_expr head ^^ string " *" ^^ app (List.map snd tail)
-
-and pp_variants {value; _} =
-  let head, tail = value in
-  let head = pp_variant head in
-  let head = if tail = [] then head
-             else ifflat head (string "  " ^^ head) in
-  let rest = List.map snd tail in
-  let app variant = group (break 1 ^^ string "| " ^^ pp_variant variant)
-  in head ^^ concat_map app rest
 
 and pp_variant {value; _} =
   let {constr; arg; attributes=attr} = value in
@@ -124,7 +112,7 @@ and pp_field_decl {value; _} =
   let name = if attributes = [] then pp_ident field_name
              else attr ^/^ pp_ident field_name in
   let t_expr = pp_type_expr field_type
-  in prefix 2 1 (name ^^ string " :") t_expr
+  in prefix 2 1 (group (name ^^ string " :")) t_expr
 
 and pp_fun_type {value; _} =
   let lhs, _, rhs = value in
@@ -174,7 +162,7 @@ and pp_fun_decl {value; _} =
       | Some _ -> string "recursive" ^/^ string "function" in
   let start = if attributes = [] then start
               else pp_attributes attributes ^/^ start in
-  let start = start ^^ group (break 1 ^^ nest 2 (pp_ident fun_name))
+  let start = group (start ^^ group (break 1 ^^ nest 2 (pp_ident fun_name)))
   and parameters = pp_par pp_parameters param
   and t_annot_is =
     match ret_type with
@@ -610,7 +598,7 @@ and pp_ne_injection :
                           ^^ group (nest 2 (break 0 ^^ elements ))
                           ^^ break 0 ^^ string "]") in
     let inj      = if attributes = [] then inj
-                   else pp_attributes attributes ^/^ inj
+                   else group (pp_attributes attributes ^/^ inj)
     in inj
 
 and pp_ne_injection_kwd = function
@@ -689,3 +677,12 @@ and pp_ppar_cons {value; _} =
   let patt1, _, patt2 = value.inside in
   let comp = prefix 2 1 (pp_pattern patt1 ^^ string " ::") (pp_pattern patt2)
   in string "(" ^^ nest 1 (comp ^^ string ")")
+
+let print_type_expr = pp_type_expr
+let print_pattern   = pp_pattern
+let print_expr      = pp_expr
+
+type cst        = Cst.Pascaligo.t
+type expr       = Cst.Pascaligo.expr
+type type_expr  = Cst.Pascaligo.type_expr
+type pattern    = Cst.Pascaligo.pattern
