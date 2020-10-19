@@ -9,12 +9,9 @@ import Data.List (isSuffixOf)
 import Duplo (HandlerFailed (..))
 import System.Directory (listDirectory)
 import System.FilePath ((</>))
-import Test.Hspec.Expectations (Expectation, HasCallStack, expectationFailure)
 import Test.HUnit (Assertion)
 
-import AST (parse)
-import ParseTree (Source (Path))
-
+import Test.FixedExpectations (Expectation, HasCallStack, expectationFailure)
 import Test.Util (readContract)
 
 contractsDir :: FilePath

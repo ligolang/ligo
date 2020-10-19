@@ -4,13 +4,13 @@ module Test.Capabilities.SelectionRange
 
 import Data.Function ((&))
 import System.FilePath ((</>))
-import Test.Hspec.Expectations (shouldBe)
 import Test.HUnit (Assertion)
 
 import AST.Capabilities.SelectionRange (findCoveringRanges)
 import Range (Range (..), point)
 
 import Test.Capabilities.Util (contractsDir)
+import Test.FixedExpectations (shouldBe)
 import Test.Util (readContract)
 
 data SimpleRange = SimpleRange (Int, Int) (Int, Int)

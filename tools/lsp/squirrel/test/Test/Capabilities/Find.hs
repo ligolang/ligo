@@ -9,10 +9,8 @@ module Test.Capabilities.Find
   ) where
 
 import Data.Foldable (for_)
-import System.FilePath ((</>))
-import System.FilePath (takeFileName)
-import Test.Hspec.Expectations
-  (HasCallStack, expectationFailure, shouldBe, shouldContain, shouldMatchList)
+import System.FilePath (takeFileName, (</>))
+
 import Test.HUnit (Assertion)
 import Text.Printf (printf)
 
@@ -20,6 +18,8 @@ import AST.Capabilities.Find (definitionOf, referencesOf)
 import Range (Range (..), interval)
 
 import Test.Capabilities.Util (contractsDir)
+import Test.FixedExpectations
+  (HasCallStack, expectationFailure, shouldBe, shouldContain, shouldMatchList)
 import Test.Util (readContractWithScopes)
 
 -- | Represents an invariant relation between references and a
