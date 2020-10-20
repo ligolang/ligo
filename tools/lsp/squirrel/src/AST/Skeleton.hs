@@ -7,7 +7,6 @@
 module AST.Skeleton where
 
 import Data.Text (Text)
-import Data.Maybe (fromMaybe)
 import qualified Data.Text as Text
 
 import Duplo.Pretty
@@ -375,11 +374,11 @@ instance Pretty1 TypeName where
 
 instance Pretty1 FieldName where
   pp1 = \case
-    FieldName    raw -> color 4 $ pp raw
+    FieldName    raw -> pp raw
 
 instance Pretty1 Ctor where
   pp1 = \case
-    Ctor         raw -> color 5 $ pp raw
+    Ctor         raw -> pp raw
 
 instance Pretty1 Path where
   pp1 = \case

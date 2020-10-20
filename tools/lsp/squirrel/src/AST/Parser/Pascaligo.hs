@@ -1,13 +1,10 @@
 -- | Parser for a PascaLigo contract.
 module AST.Parser.Pascaligo where
 
-import Data.Maybe (isJust)
-
 import AST.Skeleton
 
 import Duplo.Error
 import Duplo.Tree
-import Duplo.Pretty
 
 import Product
 import Parser

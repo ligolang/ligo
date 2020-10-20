@@ -7,7 +7,6 @@ import Control.Monad.Writer.Strict
 import Data.Maybe (fromMaybe)
 import Data.Text
 import Duplo (match)
-import Duplo.Pretty
 import Duplo.Tree (Visit (Visit), visit)
 import Language.Haskell.LSP.Types (SymbolInformation (..))
 import qualified Language.Haskell.LSP.Types as J

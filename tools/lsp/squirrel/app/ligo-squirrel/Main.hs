@@ -1,61 +1,45 @@
 import Control.Arrow
 import Control.Concurrent
+import Control.Concurrent.Async
 import Control.Concurrent.STM
-import Control.Exception as E
-import Control.Lens ((^.), (&), _Just, (%~), to)
+import Control.Lens hiding ((:>))
 import Control.Monad
-import Control.Monad.Reader (runReaderT, liftIO)
+import Control.Monad.Catch
+import Control.Monad.Reader (liftIO, runReaderT)
 
 import Data.Default
-import Data.Functor ((<&>))
-import Data.Maybe (fromMaybe, maybeToList)
-import Data.String (fromString)
+import Data.Maybe (fromMaybe)
 import Data.String.Interpolate (i)
-import Data.Text (Text)
-import qualified Data.Text as Text
 
 import qualified Language.Haskell.LSP.Control as CTRL
 import qualified Language.Haskell.LSP.Core as Core
-import Language.Haskell.LSP.Diagnostics
 import Language.Haskell.LSP.Messages as Msg
 import qualified Language.Haskell.LSP.Types as J
 import qualified Language.Haskell.LSP.Types.Lens as J
 import qualified Language.Haskell.LSP.Utility as U
-import Language.Haskell.LSP.VFS
 
-import System.Directory
 import System.Exit
-import System.FilePath
 import qualified System.Log as L
-import System.Posix.Files
-
-import Duplo.Error
-import Duplo.Pretty
-import Duplo.Tree (collect)
 
 import AST hiding (def)
 import Cli
 import qualified AST.Capabilities as Ligo
+import qualified ASTMap
 import qualified Config
-import Extension
-import Parser
 import Product
+import RIO (RIO)
+import qualified RIO
 import Range
-
--- import           Error
+import qualified Log
 
 main :: IO ()
 main = do
-  -- return ()
-  -- for_ [1.. 100] \_ -> do
-  --   print . length . show . pp =<< sample' "../../../src/test/recognises/loop.ligo"
-  errCode <- mainLoop
-  exit errCode
+  Log.enableDebug Log.ERROR
+  exit =<< mainLoop
 
 mainLoop :: IO Int
 mainLoop = do
     chan <- atomically newTChan :: IO (TChan FromClientMessage)
-
     let
       callbacks = Core.InitializeCallbacks
         { Core.onInitialConfiguration = Config.getInitialConfig
@@ -69,7 +53,7 @@ mainLoop = do
     CTRL.run callbacks (lspHandlers chan) lspOptions Nothing
   `catches`
     [ Handler \(e :: SomeException) -> do
-        print e
+        Log.err "INIT" (show e)
         return 1
     ]
 
@@ -120,272 +104,174 @@ responseHandlerCb :: TChan FromClientMessage -> Core.Handler J.BareResponseMessa
 responseHandlerCb _rin resp = do
   U.logs $ "******** got ResponseMessage, ignoring:" ++ show resp
 
-send :: Core.LspFuncs Config.Config -> FromServerMessage -> IO ()
-send = Core.sendFunc
-
-nextID :: Core.LspFuncs Config.Config -> IO J.LspId
-nextID = Core.getNextReqId
-
 eventLoop :: Core.LspFuncs Config.Config -> TChan FromClientMessage -> IO ()
 eventLoop funs chan = do
+  astMap <- ASTMap.empty $ RIO.load . J.fromNormalizedUri
   forever do
-    msg <- atomically (readTChan chan)
+    msg <- atomically do
+      readTChan chan
 
-    U.logs [i|Client: ${msg}|]
+    Log.debug "LOOP" [i|START message: #{take 50 $ show msg}|]
 
-    case msg of
-      RspFromClient {} -> do
-        return ()
+    async do
+      RIO.run (astMap :> funs :> def :> Nil) do
+        case msg of
+          RspFromClient            {}    -> return ()
+          NotInitialized           notif -> handleInitialized                  notif
+          NotDidOpenTextDocument   notif -> handleDidOpenTextDocument          notif
+          NotDidChangeTextDocument notif -> handleDidChangeTextDocument        notif
+          ReqDefinition            req   -> handleDefinitionRequest            req
+          ReqFindReferences        req   -> handleFindReferencesRequest        req
+          ReqCompletion            req   -> handleCompletionRequest            req
+          ReqDocumentSymbols       req   -> handleDocumentSymbolsRequest       req
+          ReqFoldingRange          req   -> handleFoldingRangeRequest          req
+          ReqSelectionRange        req   -> handleSelecttionRangeRequest       req
+          ReqHover                 req   -> handleHoverRequest                 req
+          ReqRename                req   -> handleRenameRequest                req
 
-      NotInitialized _notif -> do
-        let
-          registration = J.Registration
-            "lsp-haskell-registered"
-            J.WorkspaceExecuteCommand
-            Nothing
-          registrations = J.RegistrationParams $ J.List [registration]
+          -- Additional callback executed after completion was made, currently no-op
+          ReqCompletionItemResolve req   -> handleCompletionItemResolveRequest req
 
-        rid <- nextID funs
-        send funs
-          $ ReqRegisterCapability
-          $ fmServerRegisterCapabilityRequest rid registrations
+          _ -> liftIO do
+            Log.err "LOOP" "unknown msg"
 
-      NotDidOpenTextDocument notif -> do
-        let
-          doc = notif
-            ^.J.params
-             .J.textDocument
-             .J.uri
+      Log.debug "LOOP" [i|DONE message: #{take 50 $ show msg}|]
 
-          ver = notif
-            ^.J.params
-             .J.textDocument
-             .J.version
 
-        collectErrors funs
-          (J.toNormalizedUri doc)
-          (J.uriToFilePath doc)
-          (Just ver)
+handleInitialized :: J.InitializedNotification -> RIO ()
+handleInitialized _notif = do
+  let
+    registration = J.Registration
+      "lsp-haskell-registered"
+      J.WorkspaceExecuteCommand
+      Nothing
+    registrations = J.RegistrationParams $ J.List [registration]
 
-      NotDidChangeTextDocument notif -> do
-        let
-          doc = notif
-            ^.J.params
-             .J.textDocument
-             .J.uri
+  rid <- RIO.freshID
+  RIO.respond
+    $ ReqRegisterCapability
+    $ fmServerRegisterCapabilityRequest rid registrations
 
-        collectErrors funs
-          (J.toNormalizedUri doc)
-          (J.uriToFilePath doc)
-          (Just 0)
+handleDidOpenTextDocument :: J.DidOpenTextDocumentNotification -> RIO ()
+handleDidOpenTextDocument notif = do
+  let doc = notif^.J.params.J.textDocument.J.uri
+  let ver = notif^.J.params.J.textDocument.J.version
+  RIO.collectErrors RIO.forceFetch (J.toNormalizedUri doc) (Just ver)
 
-      ReqDefinition req -> do
-        stopDyingAlready funs req do
-          let uri = req^.J.params.J.textDocument.J.uri
-          let pos = fromLspPosition $ req^.J.params.J.position
-          tree <- loadFromVFS funs uri
-          case definitionOf pos tree of
-            Just defPos -> do
-              respondWith funs req RspDefinition $
-                J.MultiLoc [J.Location uri $ toLspRange defPos]
-            Nothing -> do
-              respondWith funs req RspDefinition $ J.MultiLoc []
+handleDidChangeTextDocument :: J.DidChangeTextDocumentNotification -> RIO ()
+handleDidChangeTextDocument notif = do
+  let doc = notif^.J.params.J.textDocument.J.uri
+  RIO.collectErrors RIO.forceFetch (J.toNormalizedUri doc) (Just 0)
 
-      ReqFindReferences req -> do
-        stopDyingAlready funs req do
-          let uri = req^.J.params.J.textDocument.J.uri
-          let pos = fromLspPosition $ req^.J.params.J.position
-          tree <- loadFromVFS funs uri
-          case referencesOf pos tree of
-            Just refs -> do
-              let locations = J.Location uri . toLspRange <$> refs
-              respondWith funs req RspFindReferences $ J.List locations
-            Nothing -> do
-              respondWith funs req RspFindReferences $ J.List []
+handleDefinitionRequest :: J.DefinitionRequest -> RIO ()
+handleDefinitionRequest req = do
+  RIO.stopDyingAlready req do
+    let uri = req^.J.params.J.textDocument.J.uri
+    let pos = fromLspPosition $ req^.J.params.J.position
+    (tree, _) <- RIO.fetch $ J.toNormalizedUri uri
+    case AST.definitionOf pos tree of
+      Just defPos -> RIO.respondWith req RspDefinition $ J.MultiLoc [J.Location uri $ toLspRange defPos]
+      Nothing     -> RIO.respondWith req RspDefinition $ J.MultiLoc []
 
-      ReqCompletion req -> do
-        stopDyingAlready funs req $ do
-          U.logs $ "got completion request: " <> show req
-          let uri = req ^. J.params . J.textDocument . J.uri
-          let pos = fromLspPosition $ req ^. J.params . J.position
-          tree <- loadFromVFS funs uri
-          let completions = fmap toCompletionItem . fromMaybe [] $ complete pos tree
-          respondWith funs req RspCompletion . J.Completions . J.List $ completions
+handleFindReferencesRequest :: J.ReferencesRequest -> RIO ()
+handleFindReferencesRequest req = do
+  RIO.stopDyingAlready req do
+    let uri  = req^.J.params.J.textDocument.J.uri
+    let nuri = J.toNormalizedUri uri
+    let pos  = fromLspPosition $ req^.J.params.J.position
+    (tree, _) <- RIO.fetch nuri
+    case AST.referencesOf pos tree of
+      Just refs -> do
+        let locations = J.Location uri . toLspRange <$> refs
+        RIO.respondWith req RspFindReferences $ J.List locations
+      Nothing -> do
+        RIO.respondWith req RspFindReferences $ J.List []
 
-      -- Additional callback executed after completion was made, currently no-op
-      ReqCompletionItemResolve req -> do
-        stopDyingAlready funs req $ do
-          U.logs $ "got completion resolve request: " <> show req
-          respondWith funs req RspCompletionItemResolve (req ^. J.params)
+handleCompletionRequest :: J.CompletionRequest -> RIO ()
+handleCompletionRequest req = do
+  RIO.stopDyingAlready req $ do
+    RIO.log $ "got completion request: " <> show req
+    let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
+    let pos = fromLspPosition $ req ^. J.params . J.position
+    (tree, _) <- RIO.fetch uri
+    let completions = fmap toCompletionItem . fromMaybe [] $ complete pos tree
+    RIO.respondWith req RspCompletion . J.Completions . J.List $ completions
 
-      ReqFoldingRange req -> do
-        stopDyingAlready funs req $ do
-          let uri = req ^. J.params . J.textDocument . J.uri
-          tree <- loadFromVFS funs uri
-          let response =
-                RspFoldingRange
-                  . Core.makeResponseMessage req
-                  . J.List
-              handler =
-                Core.sendFunc funs
-                  . response
-                  . fmap toFoldingRange
-          actions <- foldingAST tree
-          handler actions
+handleCompletionItemResolveRequest :: J.CompletionItemResolveRequest -> RIO ()
+handleCompletionItemResolveRequest req = do
+  RIO.stopDyingAlready req $ do
+    RIO.log $ "got completion resolve request: " <> show req
+    RIO.respondWith req RspCompletionItemResolve (req ^. J.params)
 
-      ReqSelectionRange req -> do
-        stopDyingAlready funs req $ do
-          let uri = req ^. J.params . J.textDocument . J.uri
-          let positions = req ^. J.params . J.positions
-          tree <- loadFromVFS funs uri
-          let results = map (findSelectionRange tree) positions
-              response = (RspSelectionRange
-                           (Core.makeResponseMessage req (J.List results)))
-          Core.sendFunc funs response
+handleFoldingRangeRequest :: J.FoldingRangeRequest -> RIO ()
+handleFoldingRangeRequest req = do
+  RIO.stopDyingAlready req $ do
+    let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
+    (tree, _) <- RIO.fetch uri
+    actions <- foldingAST tree
+    RIO.liftLsp \funs -> do
+      Core.sendFunc funs
+        $ RspFoldingRange
+        $ Core.makeResponseMessage req
+        $ J.List
+        $ fmap toFoldingRange
+        $ actions
 
-      ReqHover req -> do
-        stopDyingAlready funs req do
-          let uri = req ^. J.params . J.textDocument . J.uri
-          let pos = fromLspPosition $ req ^. J.params . J.position
-          tree <- loadFromVFS funs uri
-          let response =
-                RspHover $ Core.makeResponseMessage req (hoverDecl pos tree)
-          Core.sendFunc funs response
+handleSelecttionRangeRequest :: J.SelectionRangeRequest -> RIO ()
+handleSelecttionRangeRequest req = do
+  RIO.stopDyingAlready req $ do
+    let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
+    let positions = req ^. J.params . J.positions
+    (tree, _) <- RIO.fetch uri
+    let results = map (findSelectionRange tree) positions
+        response = (RspSelectionRange
+                      (Core.makeResponseMessage req (J.List results)))
+    RIO.liftLsp \funs -> do
+      Core.sendFunc funs response
 
-      ReqDocumentSymbols req -> do
-        let uri = req ^. J.params . J.textDocument . J.uri
-        tree <- loadFromVFS funs uri
-        result <- extractDocumentSymbols uri tree
-        respondWith funs req RspDocumentSymbols (J.DSSymbolInformation $ J.List result)
+handleDocumentSymbolsRequest :: J.DocumentSymbolRequest -> RIO ()
+handleDocumentSymbolsRequest req = do
+  RIO.stopDyingAlready req $ do
+    let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
+    (tree, _) <- RIO.fetch uri
+    result <- extractDocumentSymbols (J.fromNormalizedUri uri) tree
+    RIO.respondWith req RspDocumentSymbols (J.DSSymbolInformation $ J.List result)
 
-      ReqRename req -> do
-        let uri = req ^. J.params . J.textDocument . J.uri
-        let pos = fromLspPosition $ req ^. J.params . J.position
-        let newName = req ^. J.params . J.newName
-        tree <- loadFromVFS funs uri
-        let
-          allReferences :: Maybe [Range]
-          allReferences = referencesOf pos tree <> fmap (\x -> [x]) (definitionOf pos tree)
-          textEdits :: Maybe [J.TextEdit]
-          textEdits = allReferences & _Just . traverse %~ \x -> J.TextEdit (toLspRange x) newName
-          workspaceEdit :: Maybe (J.List J.TextDocumentEdit)
-          workspaceEdit = textEdits <&> \edits -> J.List
-            [ J.TextDocumentEdit
-                { _textDocument = J.VersionedTextDocumentIdentifier uri Nothing
-                , _edits = J.List edits
-                }
-            ]
-          response = RspRename $ Core.makeResponseMessage req
-            J.WorkspaceEdit
-              { _changes = Nothing -- TODO: change this once we set up proper module system integration
-              , _documentChanges = workspaceEdit
-              }
-        Core.sendFunc funs response
+handleHoverRequest :: J.HoverRequest -> RIO ()
+handleHoverRequest req = do
+  RIO.stopDyingAlready req $ do
+    let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
+    (tree, _) <- RIO.fetch uri
+    let pos = fromLspPosition $ req ^. J.params . J.position
+    RIO.respondWith req RspHover (hoverDecl pos tree)
 
-      _ -> U.logs "unknown msg"
-
-respondWith
-  :: Core.LspFuncs Config.Config
-  -> J.RequestMessage J.ClientMethod req rsp
-  -> (J.ResponseMessage rsp -> FromServerMessage)
-  -> rsp
-  -> IO ()
-respondWith funs req wrap rsp = Core.sendFunc funs $ wrap $ Core.makeResponseMessage req rsp
-
-stopDyingAlready :: Core.LspFuncs Config.Config -> J.RequestMessage m a b -> IO () -> IO ()
-stopDyingAlready funs req = flip catch \(e :: SomeException) -> do
-  Core.sendErrorResponseS (Core.sendFunc funs) (req^.J.id.to J.responseId) J.InternalError
-    $ fromString
-    $ "this happened: " ++ show e
-
-loadFromVFS
-  :: HasLigoClient m
-  => Core.LspFuncs Config.Config
-  -> J.Uri
-  -> m (LIGO Info')
-loadFromVFS funs uri = do
-  mvf <- liftIO do
-    Core.getVirtualFileFunc funs
-      (J.toNormalizedUri uri)
-  case mvf of
-    Just vf -> do
-      let txt = virtualFileText vf
-      let Just fin = J.uriToFilePath uri
-      (tree, _) <- parseWithScopes @Standard (Text fin txt)
-      return tree
-    Nothing -> do
-      loadByURI uri
-
-loadByURI
-  :: HasLigoClient m
-  => J.Uri
-  -> m (LIGO Info')
-loadByURI uri = do
-  case J.uriToFilePath uri of
-    Just fin -> do
-      (tree, _) <- parseWithScopes @Standard (Path fin)
-      return tree
-    Nothing -> do
-      error $ "uriToFilePath " ++ show uri ++ " has failed. We all are doomed."
-
-collectErrors
-  :: Core.LspFuncs Config.Config
-  -> J.NormalizedUri
-  -> Maybe FilePath
-  -> Maybe Int
-  -> IO ()
-collectErrors funs uri path version = do
-  case path of
-    Just fin -> do
-      (tree, errs) <- parse (Path fin)
-      Core.publishDiagnosticsFunc funs 100 uri version
-        $ partitionBySource
-        $ map errorToDiag (errs <> collectTreeErrors tree)
-
-    Nothing -> error "TODO: implement URI file loading"
-
-collectTreeErrors :: LIGO Info -> [Msg]
-collectTreeErrors = map (getElem *** void) . collect
-
-data ParsedContract = ParsedContract
-  { cPath :: FilePath
-  , cTree :: LIGO Info
-  , cErr  :: [Msg]
-  }
-
--- | Parse whole directory for ligo contracts and collect the results.
--- This ignores every other file which is not a contract.
-parseContracts :: FilePath -> IO [ParsedContract]
-parseContracts top = let
-  exclude p = p /= "." && p /= ".." in do
-  ds <- getDirectoryContents top
-  contracts <- forM (filter exclude ds) $ \d -> do
-    let p = top </> d
-    s <- getFileStatus p
-    if isDirectory s
-      then parseContracts p
-      else do
-        putStrLn $ "parsing: " ++ show p
-        contract <- try @UnsupportedExtension $ parse (Path p)
-        case contract of
-          Right (tree, errs) ->
-            return $ [ParsedContract p tree (errs <> collectTreeErrors tree)]
-          Left _ -> return []
-  return (concat contracts)
-
-errorToDiag :: (Range, Err Text a) -> J.Diagnostic
-errorToDiag (getRange -> (Range (sl, sc, _) (el, ec, _) _), Err what) =
-  J.Diagnostic
-    (J.Range begin end)
-    (Just J.DsError)
-    Nothing
-    (Just "ligo-lsp")
-    (Text.pack [i|Expected #{what}|])
-    Nothing
-    (Just $ J.List[])
-  where
-    begin = J.Position (sl - 1) (sc - 1)
-    end   = J.Position (el - 1) (ec - 1)
+handleRenameRequest :: J.RenameRequest -> RIO ()
+handleRenameRequest req = do
+  RIO.stopDyingAlready req $ do
+    let uri  = req ^. J.params . J.textDocument . J.uri
+    let nuri = J.toNormalizedUri uri
+    let pos  = fromLspPosition $ req ^. J.params . J.position
+    let newName = req ^. J.params . J.newName
+    (tree, _) <- RIO.fetch nuri
+    let
+      allReferences :: Maybe [Range]
+      allReferences = referencesOf pos tree <> fmap (\x -> [x]) (definitionOf pos tree)
+      textEdits :: Maybe [J.TextEdit]
+      textEdits = allReferences & _Just . traverse %~ \x -> J.TextEdit (toLspRange x) newName
+      workspaceEdit :: Maybe (J.List J.TextDocumentEdit)
+      workspaceEdit = textEdits <&> \edits -> J.List
+        [ J.TextDocumentEdit
+            { _textDocument = J.VersionedTextDocumentIdentifier uri Nothing
+            , _edits = J.List edits
+            }
+        ]
+      response = RspRename $ Core.makeResponseMessage req
+        J.WorkspaceEdit
+          { _changes = Nothing -- TODO: change this once we set up proper module system integration
+          , _documentChanges = workspaceEdit
+          }
+    RIO.liftLsp \funs -> do
+      Core.sendFunc funs response
 
 exit :: Int -> IO ()
 exit 0 = exitSuccess

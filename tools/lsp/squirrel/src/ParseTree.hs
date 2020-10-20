@@ -44,14 +44,15 @@ import           System.FilePath (takeFileName)
 import           Duplo.Pretty as PP
 import           Duplo.Tree
 
-import           Extension
 import           Debouncer
+import           Extension
 import           Product
 import           Range
+import           Log
 
-foreign import ccall unsafe tree_sitter_PascaLigo :: Ptr Language
+foreign import ccall unsafe tree_sitter_PascaLigo  :: Ptr Language
 foreign import ccall unsafe tree_sitter_ReasonLigo :: Ptr Language
-foreign import ccall unsafe tree_sitter_CameLigo :: Ptr Language
+foreign import ccall unsafe tree_sitter_CameLigo   :: Ptr Language
 
 data Source
   = Path       { srcPath :: FilePath }
@@ -60,6 +61,9 @@ data Source
 
 instance IsString Source where
   fromString = Path
+
+instance Show Source where
+  show = show . srcPath
 
 srcToBytestring :: Source -> IO ByteString
 srcToBytestring = \case
@@ -109,19 +113,19 @@ instance Pretty1 ParseTree where
 -- | Feed file contents into PascaLIGO grammar recogniser.
 toParseTree :: Source -> IO RawTree
 toParseTree = unsafeDebounce \fin -> do
+  Log.debug "TS" [i|Reading #{fin}|]
   language <- onExt ElimExt
     { eePascal = tree_sitter_PascaLigo
     , eeCaml   = tree_sitter_CameLigo
     , eeReason = tree_sitter_ReasonLigo
     } (srcPath fin)
 
-  parser <- ts_parser_new
-  True   <- ts_parser_set_language parser language
-  src    <- srcToBytestring fin
-
-  BS.useAsCStringLen src \(str, len) -> do
-    tree <- ts_parser_parse_string parser nullPtr str len
-    withRootNode tree (peek >=> go fin src)
+  withParser language \parser -> do
+    src <- srcToBytestring fin
+    res <- withParseTree parser src \tree -> do
+      withRootNode tree (peek >=> go fin src)
+    Log.debug "TS" [i|Done reading #{fin}|]
+    return res
 
   where
     go :: Source -> ByteString -> Node -> IO RawTree
@@ -165,8 +169,11 @@ toParseTree = unsafeDebounce \fin -> do
               , rFile = takeFileName $ srcPath fin
               }
 
-          return $ make (range :> "" :> Nil, ParseTree
-            { ptName     = Text.pack ty
-            , ptChildren = trees
-            , ptSource   = cutOut range src
-            })
+          return $ make
+            ( range :> "" :> Nil
+            , ParseTree
+              { ptName     = Text.pack ty
+              , ptChildren = trees
+              , ptSource   = cutOut range src
+              }
+            )
