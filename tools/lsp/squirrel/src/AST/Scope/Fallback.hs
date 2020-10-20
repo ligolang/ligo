@@ -291,7 +291,6 @@ getImmediateDecls = \case
 
   (match -> Just (r, pat)) -> do
     case pat of
-      Irrefutable  irr _ -> getImmediateDecls irr
       Function     _ f _ t b -> do
         let (r', name) = getName f
         [ScopedDecl name r' (Just $ getRange b) (IsType . void' <$> t) [] (getElem r)]
@@ -303,6 +302,10 @@ getImmediateDecls = \case
       Const c t b -> do
         let (r', name) = getName c
         [ScopedDecl name r' (getRange <$> b) (IsType . void' <$> t) [] (getElem r)]
+
+      Parameter n t -> do
+        let (r', name) = getName n
+        [ScopedDecl name r' Nothing (IsType . void' <$> Just t) [] (getElem r)]
 
       TypeDecl t b -> do
         let (r', name) = getTypeName t

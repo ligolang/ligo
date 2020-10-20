@@ -6,9 +6,9 @@ import AST.Skeleton
 import Duplo.Error
 import Duplo.Tree
 
-import Product
 import Parser
 import ParseTree
+import Product (Product ((:>), Nil))
 
 -- import Debug.Trace
 
@@ -159,7 +159,7 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
     -- VarDecl
   , Descent do
       boilerplate \case
-        "param_decl" -> Var <$> field "name" <*> fieldOpt "type" <*> pure Nothing
+        "param_decl" -> Parameter <$> field "name" <*> field "type"
         _            -> fallthrough
 
   --   -- Mutable
@@ -188,11 +188,12 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
       boilerplate \case
         "fun_type"         -> TArrow   <$> field  "domain"     <*> field "codomain"
         "cartesian"        -> TProduct <$> fields "element"
-        "invokeBinary"     -> TApply   <$> field  "typeConstr" <*> fields "arguments"
-        "invokeUnary"      -> TApply   <$> field  "typeConstr" <*> fields "arguments"
-        "type_tuple"       -> TTuple   <$> fields "element"
+        "invokeBinary"     -> TApply   <$> field  "typeConstr" <*> field "arguments"
+        "invokeUnary"      -> TApply   <$> field  "typeConstr" <*> field "arguments"
+        "type_tuple"       -> TProduct <$> fields "element"
         "record_type"      -> TRecord  <$> fields "field"
         "sum_type"         -> TSum     <$> fields "variant"
+        "type_arguments"   -> TArgs    <$> fields "argument"
         "michelsonTypeOr"  -> TOr      <$> field "left_type" <*> field "left_type_name" <*> field "right_type" <*> field "right_type_name"
         "michelsonTypeAnd" -> TAnd     <$> field "left_type" <*> field "left_type_name" <*> field "right_type" <*> field "right_type_name"
         _                 -> fallthrough
@@ -225,8 +226,6 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
   , Descent do
       boilerplate' \case
         ("Name_Capital", name) -> return $ Ctor name
-        ("Some", _)            -> return $ Ctor "Some"
-        ("Some_pattern", _)    -> return $ Ctor "Some"
         ("None", _)            -> return $ Ctor "None"
         ("True", _)            -> return $ Ctor "True"
         ("False", _)           -> return $ Ctor "False"

@@ -81,31 +81,49 @@ module.exports = grammar({
       ),
 
     _type_expr: $ =>
-      choice(
-        $._fun_type,
-        $.sum_type,
-        $.record_type,
+      prec.right(10,
+        choice(
+          $._fun_type,
+          $.sum_type,
+          $.record_type,
+        ),
       ),
 
     _fun_type: $ =>
-      choice(
-        $.fun_type,
-        $.cartesian
+      prec.right(10,
+        choice(
+          $.fun_type,
+          $._core_type,
+          $.cartesian,
+        ),
       ),
 
     fun_type: $ =>
-      seq(
-        field("domain", $.cartesian),
-        '->',
-        field("codomain", $._fun_type),
+      prec.right(10,
+        seq(
+          field("domain", $._fun_type),
+          '->',
+          field("codomain", $._fun_type),
+        ),
       ),
 
+
     cartesian: $ =>
-      sepBy1('*',
-        choice(
-          field("element", $._core_type),
-          par(field("element", $._type_expr)),
+      prec.right(10, choice(
+        seq(
+          choice(
+            field("element", $._core_type),
+            par(field("element", $._type_expr)),
+          ),
+          '*',
+          sepBy1('*',
+            choice(
+              field("element", $._core_type),
+              par(field("element", $._type_expr)),
+            ),
+          ),
         ),
+      ),
       ),
 
     _core_type: $ =>
@@ -145,16 +163,18 @@ module.exports = grammar({
         ")",
       ),
 
+    type_arguments: $ => par(sepBy(',', field("argument", $._type_expr))),
+
     invokeBinary: $ =>
       seq(
         field("typeConstr", choice('map', 'big_map')),
-        field("arguments", $.type_tuple),
+        field("arguments", $.type_arguments),
       ),
 
     invokeUnary: $ =>
       seq(
         field("typeConstr", choice('list', 'set', 'option', 'contract')),
-        par(field("arguments", $._type_expr)),
+        field("arguments", $.type_arguments),
       ),
 
     map: $ => 'map',
@@ -214,7 +234,10 @@ module.exports = grammar({
           field("name", $.NameDecl),
           field("parameters", $.parameters),
           ':',
-          field("type", $._type_expr),
+          choice(
+            field("type", $._type_expr),
+            par(field("type", $._type_expr)),
+          ),
           'is',
           field("body", $._let_expr),
         ),
@@ -562,7 +585,6 @@ module.exports = grammar({
         $.record_expr,
         $.update_record,
         $._constr_use,
-        $.Some_call,
       ),
 
     _constr_use: $ =>
@@ -766,15 +788,8 @@ module.exports = grammar({
       $.False,
       $.True,
       $.None,
-      $.Some_pattern,
       $.user_constr_pattern,
     ),
-
-    Some_pattern: $ =>
-      seq(
-        field("constr", 'Some'),
-        par(field("arg", $._pattern)),
-      ),
 
     user_constr_pattern: $ =>
       seq(
