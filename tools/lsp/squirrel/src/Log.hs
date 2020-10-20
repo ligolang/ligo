@@ -14,10 +14,12 @@ import System.IO (hFlush, hPutStrLn, stderr, stdout)
 
 data Level = DEBUG | ERROR deriving (Eq, Ord)
 
+{-# NOINLINE logLevel #-}
 logLevel :: IORef Level
 logLevel = unsafePerformIO do
   newIORef ERROR
 
+{-# NOINLINE logLock #-}
 logLock :: MVar ()
 logLock = unsafePerformIO do
   newMVar ()
