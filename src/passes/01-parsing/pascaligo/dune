@@ -144,11 +144,6 @@
                --dir=.
                --concatenate Parser.mly)))
 
-(rule
- (target Unlexe.exe)
- (deps Unlexer.ml)
- (action (run ocamlfind ocamlopt Unlexer.ml)))
-
 ;; Error messages
 
 (rule
