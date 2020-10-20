@@ -1,6 +1,6 @@
 module Test.Parsers
-  ( unit_okayContracts
-  , unit_badContracts
+  ( test_okayContracts
+  , test_badContracts
   ) where
 
 import Control.Exception (try)
@@ -9,7 +9,8 @@ import Data.List (isSuffixOf)
 import Duplo (HandlerFailed (..))
 import System.Directory (listDirectory)
 import System.FilePath ((</>))
-import Test.HUnit (Assertion)
+import Test.Tasty (TestTree, testGroup)
+import Test.Tasty.HUnit (testCase)
 
 import Test.FixedExpectations (Expectation, HasCallStack, expectationFailure)
 import Test.Util (readContract)
@@ -49,11 +50,19 @@ getBadContracts :: IO [FilePath]
 getBadContracts =
   foldMap getBadContractsWithExtension [".ligo", ".mligo", "religo"]
 
-unit_okayContracts :: Assertion
-unit_okayContracts = getOkayContracts >>= mapM_ (checkFile True)
+test_okayContracts :: IO TestTree
+test_okayContracts
+  = testGroup "Parsers should parse these contracts" <$> testCases
+  where
+    testCases = map makeTestCase <$> getOkayContracts
+    makeTestCase contractPath = testCase contractPath (checkFile True contractPath)
 
-unit_badContracts :: Assertion
-unit_badContracts = getBadContracts >>= mapM_ (checkFile False)
+test_badContracts :: IO TestTree
+test_badContracts
+  = testGroup "Parsers should not parse these contracts" <$> testCases
+  where
+    testCases = map makeTestCase <$> getBadContracts
+    makeTestCase contractPath = testCase contractPath (checkFile False contractPath)
 
 checkFile :: HasCallStack => Bool -> FilePath -> Expectation
 checkFile shouldBeOkay path = do
