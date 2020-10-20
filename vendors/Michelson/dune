@@ -18,13 +18,6 @@
   (preprocess
     (pps bisect_ppx --conditional)))
 
-(executable
-  (name LexerMain)
-  (modules LexerMain)
-  (libraries Michelson)
-  (preprocess
-    (pps bisect_ppx --conditional)))
-
 ;; Build of the version source (for the user, as a CLI option)
 
 (rule
