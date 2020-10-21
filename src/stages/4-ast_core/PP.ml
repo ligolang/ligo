@@ -44,11 +44,11 @@ let rec type_expression ppf (te : type_expression) : unit =
 and type_content : formatter -> type_expression -> unit =
   fun ppf te ->
   match te.type_content with
-  | T_variable tv -> type_variable                 ppf tv
-  | T_constant tc -> type_operator type_expression ppf tc
+  | T_variable tv -> type_variable ppf tv
   | T_sum       m -> fprintf ppf "@[<hv 4>sum[%a]@]" (variant_sep_d type_expression) m.fields
   | T_record    m -> fprintf ppf "%a" (tuple_or_record_sep_type type_expression) m.fields
   | T_arrow     a -> arrow         type_expression ppf a
+  | T_app       a -> type_app type_expression ppf a
 
 
 let rec expression ppf (e : expression) =

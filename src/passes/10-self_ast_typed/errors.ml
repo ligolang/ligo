@@ -205,7 +205,7 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
     let message = `String "badly typed contract" in
     let loc = `String (Format.asprintf "%a" Location.pp e.location) in
     let actual = `String (Format.asprintf "%a"
-      Ast_typed.PP.type_expression {got with type_content= T_constant {type_constant=TC_list;arguments=[{got with type_content=T_constant {type_constant=TC_operation;arguments=[]}}]}}) in
+      Ast_typed.PP.type_expression {got with type_content= T_constant {language="Michelson";injection=Ligo_string.verbatim Stage_common.Constant.list_name;parameters=[{got with type_content=(Ast_typed.t_operation ()).type_content}]}}) in
     let expected = `String (Format.asprintf "%a" Ast_typed.PP.type_expression got) in
     let content = `Assoc [
        ("message", message);

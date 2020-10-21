@@ -52,11 +52,6 @@ module Substitution = struct
       let () = ignore @@ substs in
       ok c
 
-    and s_type_name_constant : (T.type_constant,_) w = fun ~substs type_name ->
-      (* TODO: we don't need to subst anything, right? *)
-      let () = ignore @@ substs in
-      ok @@ type_name
-
     and s_type_content : (T.type_content,_) w = fun ~substs -> function
         | T.T_sum rows ->
            let aux T.{ associated_type; michelson_annotation ; decl_pos } =
@@ -76,9 +71,9 @@ module Substitution = struct
              | Some expr -> s_type_content ~substs expr (* TODO: is it the right thing to recursively examine this? We mustn't go into an infinite loop. *)
              | None -> ok @@ T.T_variable variable
            end
-        | T.T_constant {type_constant;arguments} ->
-          let%bind arguments = bind_map_list (s_type_expression ~substs) arguments in
-          ok @@ T.T_constant {type_constant;arguments}
+        | T.T_constant {language;injection;parameters} ->
+          let%bind parameters = bind_map_list (s_type_expression ~substs) parameters in
+          ok @@ T.T_constant {language;injection;parameters}
         | T.T_arrow { type1; type2 } ->
            let%bind type1 = s_type_expression ~substs type1 in
            let%bind type2 = s_type_expression ~substs type2 in
@@ -89,13 +84,12 @@ module Substitution = struct
       | Ast_core.T_record _ -> failwith "TODO: subst: unimplemented case s_type_expression record"
       | Ast_core.T_arrow _ -> failwith "TODO: subst: unimplemented case s_type_expression arrow"
       | Ast_core.T_variable _ -> failwith "TODO: subst: unimplemented case s_type_expression variable"
-      | Ast_core.T_constant {type_constant;arguments} ->
-         let%bind arguments = bind_map_list
-             (s_abstr_type_expression ~substs)
-             arguments in
-         (* TODO: when we have generalized operators, we might need to subst the operator name itself? *)
-         ok @@ Ast_core.T_constant {type_constant; arguments}
-
+      | Ast_core.T_app {type_operator;arguments} ->
+        let%bind arguments = bind_map_list
+          (s_abstr_type_expression ~substs)
+          arguments in
+        (* TODO: when we have generalized operators, we might need to subst the operator name itself? *)
+        ok @@ Ast_core.T_app {type_operator ; arguments}
     and s_abstr_type_expression : (Ast_core.type_expression,_) w = fun ~substs {type_content;sugar;location} ->
       let%bind type_content = s_abstr_type_content ~substs type_content in
       ok @@ (Ast_core.{type_content;sugar;location} : Ast_core.type_expression)

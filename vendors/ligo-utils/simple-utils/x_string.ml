@@ -2,6 +2,9 @@ type t =
   Standard of string
 | Verbatim of string
 
+let standard : string -> t = fun s -> Standard s
+let verbatim : string -> t = fun s -> Verbatim s
+
 let pp ppf = function
     Standard s -> Format.fprintf ppf "%S" s
   | Verbatim v -> Format.fprintf ppf "{|%s|}" v
@@ -15,7 +18,7 @@ let of_yojson = function
   | _ -> 
     Utils.error_yojson_format "Standard string | Verbatim string"
 
-let compare ?(compare=compare) a b = match a,b with
+let compare ?(compare=String.compare) a b = match a,b with
     (Standard a, Standard b) -> compare a b
   | (Standard _, Verbatim _) -> -1
   | (Verbatim _, Standard _) -> 1

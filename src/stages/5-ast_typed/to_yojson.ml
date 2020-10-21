@@ -2,34 +2,6 @@ open Types
 
 type json = Yojson.Safe.t
 
-let type_constant = function
-  | TC_unit                      -> `List [ `String "TC_unit"; `Null]
-  | TC_string                    -> `List [ `String "TC_string"; `Null]
-  | TC_bytes                     -> `List [ `String "TC_bytes"; `Null]
-  | TC_nat                       -> `List [ `String "TC_nat"; `Null]
-  | TC_int                       -> `List [ `String "TC_int"; `Null]
-  | TC_mutez                     -> `List [ `String "TC_mutez"; `Null]
-  | TC_operation                 -> `List [ `String "TC_operation"; `Null]
-  | TC_address                   -> `List [ `String "TC_address"; `Null]
-  | TC_key                       -> `List [ `String "TC_key"; `Null]
-  | TC_key_hash                  -> `List [ `String "TC_key_hash"; `Null]
-  | TC_chain_id                  -> `List [ `String "TC_chain_id"; `Null]
-  | TC_signature                 -> `List [ `String "TC_signature"; `Null]
-  | TC_timestamp                 -> `List [ `String "TC_timestamp"; `Null]
-  | TC_contract                  -> `List [ `String "TC_contract"; `Null]
-  | TC_option                    -> `List [ `String "TC_option"; `Null]
-  | TC_list                      -> `List [ `String "TC_list"; `Null]
-  | TC_set                       -> `List [ `String "TC_set"; `Null]
-  | TC_map                       -> `List [ `String "TC_map"; `Null]
-  | TC_big_map                   -> `List [ `String "TC_big_map"; `Null]
-  | TC_map_or_big_map            -> `List [ `String "TC_map_or_big_map"; `Null]
-  | TC_michelson_pair            -> `List [ `String "TC_michelson_pair"; `Null]
-  | TC_michelson_or              -> `List [ `String "TC_michelson_or"; `Null]
-  | TC_michelson_pair_right_comb -> `List [ `String "TC_michelson_pair_right_comb"; `Null]
-  | TC_michelson_pair_left_comb  -> `List [ `String "TC_michelson_pair_left_comb"; `Null]
-  | TC_michelson_or_right_comb   -> `List [ `String "TC_michelson_or_right_comb"; `Null]
-  | TC_michelson_or_left_comb    -> `List [ `String "TC_michelson_or_left_comb"; `Null]
-
 let constant' = function
   | C_INT                -> `List [`String "C_INT"; `Null ]
   | C_UNIT               -> `List [`String "C_UNIT"; `Null ]
@@ -195,11 +167,18 @@ let rec type_expression {type_content=tc;type_meta;location} =
   ]
 
 and type_content = function
+  | T_variable t -> `List [ `String "t_variable"; type_variable_to_yojson t]
   | T_sum      t -> `List [ `String "t_sum"; rows t]
   | T_record   t -> `List [ `String "t_record"; rows t]
   | T_arrow    t -> `List [ `String "t_arrow"; arrow t]
-  | T_variable t -> `List [ `String "t_variable"; type_variable_to_yojson t]
-  | T_constant t -> `List [ `String "t_constant"; type_operator t]
+  | T_constant t -> `List [ `String "t_constant"; type_injection t]
+
+and type_injection {language;injection;parameters} =
+  `Assoc [
+    ("language", `String language);
+    ("injection", `String (Ligo_string.extract injection));
+    ("parameters", list type_expression parameters)
+  ]
 
 and rows {content; layout = l } =
   `Assoc [
@@ -217,12 +196,6 @@ and arrow {type1;type2} =
   `Assoc [
     ("type1", type_expression type1);
     ("type2", type_expression type2);
-  ]
-
-and type_operator {type_constant=tc; arguments} =
-  `Assoc [
-    ("type_constant", type_constant tc);
-    ("arguments", list type_expression arguments)
   ]
 
 let rec expression {expression_content=ec;location;type_expression=te} =

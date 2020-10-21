@@ -40,7 +40,7 @@ in file "../../test/contracts/coase.ligo", line 124, characters 9-13
 125 |   case action of
 
 Invalid type(s).
-Expected: "record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]", but got: "
+Expected: "record[card_patterns -> map (nat , record[coefficient -> tez , quantity -> nat]) , cards -> map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]", but got: "
 sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]". |}] ;
 
   run_ligo_bad [ "compile-parameter" ; contract "coase.ligo" ; "main" ; "record cards = (map end : cards) ; card_patterns = (map end : card_patterns) ; next_id = 3n ; end" ] ;
@@ -54,7 +54,7 @@ in file "../../test/contracts/coase.ligo", line 124, characters 9-13
 
 Invalid type(s).
 Expected: "sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]", but got: "
-record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]". |}] ;
+record[card_patterns -> map (nat , record[coefficient -> tez , quantity -> nat]) , cards -> map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]". |}] ;
 
   ()
 
@@ -1000,7 +1000,7 @@ let%expect_test _ =
       3 | type binding is nat * nat
       4 | type storage is map (binding)
       5 |
-     Wrong number of arguments for type constant: Map expected: 2
+     Wrong number of arguments for type constant: map expected: 2
     got: 1 |}]
 
 let%expect_test _ =
@@ -1176,7 +1176,7 @@ let%expect_test _ =
       9 |   }
 
     Invalid type annotation.
-    "Contract (nat)" was given, but "Contract (int)" was expected.
+    "contract (nat)" was given, but "contract (int)" was expected.
     Note that "Tezos.self" refers to this contract, so the parameters should be the same. |}] ;
 
   run_ligo_good [ "compile-contract" ; contract "self_type_annotation.ligo" ; "main" ] ;
@@ -1287,7 +1287,7 @@ let%expect_test _ =
 
   run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_4.religo"; "main"];
   [%expect {|
-    in file "../../test/contracts/negative/nested_bigmap_4.religo", line 2, characters 39-60
+    in file "../../test/contracts/negative/nested_bigmap_4.religo", line 2, characters 25-61
       1 | /* this should result in an error as nested big_maps are not supported: */
       2 | type storage = map (int, big_map (nat, big_map (int, string)));
       3 |

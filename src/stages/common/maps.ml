@@ -3,10 +3,10 @@ open Trace
 
 (* Types level *)
 
-let type_operator : ('a -> ('b, _) result) -> 'a type_operator -> ('b type_operator, _) result
-= fun g {type_constant;arguments} ->
+let type_app : ('a -> ('b, _) result) -> 'a type_app -> ('b type_app, _) result
+= fun g {type_operator;arguments} ->
   let%bind arguments = bind_map_list g arguments in
-  ok @@ {type_constant; arguments}
+  ok @@ {type_operator; arguments}
 
 let rows : ('a -> ('b,_) result) -> 'a rows -> ('b rows,_) result
 = fun g {fields; attributes} ->

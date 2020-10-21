@@ -4,8 +4,8 @@ open Function
 
 (* Types level *)
 
-let type_operator : ('acc -> 'a -> ('acc, _) result) -> 'acc -> 'a type_operator -> ('acc, _) result
-= fun g acc {type_constant=_;arguments} ->
+let type_app : ('acc -> 'a -> ('acc, _) result) -> 'acc -> 'a type_app -> ('acc, _) result
+= fun g acc {type_operator=_;arguments} ->
   let%bind acc = bind_fold_list g acc arguments in
   ok @@ acc
 

@@ -4,6 +4,7 @@ module Errors = Errors
 open Errors
 open Mini_c
 open Trace
+open Stage_common.Constant
 
 let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spilling_error) result =
   let open! AST in
@@ -15,88 +16,92 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
           get_bool v in
         return (e_bool b)
       )
-  | T_constant {type_constant;arguments} -> (
-    match type_constant,arguments with
-    | TC_unit, [] -> (
+  | T_constant { language; injection; parameters } -> (
+    let%bind () = Assert.assert_true
+      (corner_case ~loc:__LOC__ ("unsupported language "^language))
+      (String.equal language Stage_common.Backends.michelson)
+    in
+    match (Ligo_string.extract injection,parameters) with
+    | (i, []) when String.equal i unit_name -> (
         let%bind () =
           trace_option (wrong_mini_c_value t v) @@
           get_unit v in
         return (E_literal Literal_unit)
       )
-    | TC_int, [] -> (
+    | (i, []) when String.equal i int_name -> (
         let%bind n =
           trace_option (wrong_mini_c_value t v) @@
           get_int v in
         return (E_literal (Literal_int n))
       )
-    | TC_nat, [] -> (
+    | (i, []) when String.equal i nat_name -> (
         let%bind n =
           trace_option (wrong_mini_c_value t v) @@
           get_nat v in
         return (E_literal (Literal_nat n))
       )
-    | TC_timestamp, [] -> (
+    | (i, []) when String.equal i timestamp_name -> (
         let%bind n =
           trace_option (wrong_mini_c_value t v) @@
           get_timestamp v in
         return (E_literal (Literal_timestamp n))
       )
-    | TC_mutez, [] -> (
+    | (i, []) when String.equal i tez_name -> (
         let%bind n =
           trace_option (wrong_mini_c_value t v) @@
           get_mutez v in
         return (E_literal (Literal_mutez n))
       )
-    | TC_string, [] -> (
+    | (i, []) when String.equal i string_name -> (
         let%bind n =
           trace_option (wrong_mini_c_value t v) @@
           get_string v in
         let n = Ligo_string.Standard n in
         return (E_literal (Literal_string n))
       )
-    | TC_bytes, [] -> (
+    | (i, []) when String.equal i bytes_name -> (
         let%bind n =
           trace_option (wrong_mini_c_value t v) @@
           get_bytes v in
         return (E_literal (Literal_bytes n))
       )
-    | TC_address, [] -> (
+    | (i, []) when String.equal i address_name -> (
         let%bind n =
           trace_option (wrong_mini_c_value t v) @@
           get_string v in
         return (E_literal (Literal_address n))
       )
-    | TC_operation, [] -> (
+    | (i, []) when String.equal i operation_name -> (
         let%bind op =
           trace_option (wrong_mini_c_value t v) @@
           get_operation v in
         return (E_literal (Literal_operation op))
       )
-    |  TC_key, [] -> (
+    |  (i, []) when String.equal i key_name -> (
         let%bind n =
           trace_option (wrong_mini_c_value t v) @@
           get_string v in
         return (E_literal (Literal_key n))
       )
-    |  TC_key_hash, [] -> (
+    |  (i, []) when String.equal i key_hash_name -> (
         let%bind n =
           trace_option (wrong_mini_c_value t v) @@
           get_string v in
         return (E_literal (Literal_key_hash n))
       )
-    | TC_chain_id, [] -> (
+    | (i, []) when String.equal i chain_id_name -> (
       let%bind n =
         trace_option (wrong_mini_c_value t v) @@
         get_string v in
       return (E_literal (Literal_chain_id n))
     )
-    |  TC_signature, [] -> (
+    |  (i, []) when String.equal i signature_name -> (
       let%bind n =
         trace_option (wrong_mini_c_value t v) @@
         get_string v in
       return (E_literal (Literal_signature n))
     )
-    | TC_option, [o] -> (
+    | (i, [o]) when String.equal i option_name -> (
         let%bind opt =
           trace_option (wrong_mini_c_value t v) @@
           get_option v in
@@ -106,7 +111,7 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
             let%bind s' = decompile s o in
             ok (e_a_some s')
       )
-    | TC_map, [k_ty;v_ty] -> (
+    | (i, [k_ty;v_ty]) when String.equal i map_name -> (
         let%bind map =
           trace_option (wrong_mini_c_value t v) @@
           get_map v in
@@ -123,7 +128,7 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
         let%bind init = return @@ E_constant {cons_name=C_MAP_EMPTY;arguments=[]} in
         bind_fold_right_list aux init map'
       )
-    | TC_big_map, [k_ty; v_ty] -> (
+    | (i, [k_ty; v_ty]) when String.equal i big_map_name -> (
         let%bind big_map =
           trace_option (wrong_mini_c_value t v) @@
           get_big_map v in
@@ -140,8 +145,8 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
         let%bind init = return @@ E_constant {cons_name=C_BIG_MAP_EMPTY;arguments=[]} in
         bind_fold_right_list aux init big_map'
       )
-    | TC_map_or_big_map, _ -> fail @@ corner_case ~loc:"unspiller" "TC_map_or_big_map t should not be present in mini-c"
-    | TC_list, [ty] -> (
+    | (i, _) when String.equal i map_or_big_map_name -> fail @@ corner_case ~loc:"unspiller" "TC_map_or_big_map t should not be present in mini-c"
+    | (i, [ty]) when String.equal i list_name -> (
         let%bind lst =
           trace_option (wrong_mini_c_value t v) @@
           get_list v in
@@ -153,7 +158,7 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
         let%bind init  = return @@ E_constant {cons_name=C_LIST_EMPTY;arguments=[]} in
         bind_fold_right_list aux init lst'
       )
-    | TC_set, [ty] -> (
+    | (i, [ty]) when String.equal i set_name -> (
         let%bind lst =
           trace_option (wrong_mini_c_value t v) @@
           get_set v in
@@ -166,9 +171,9 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
         let%bind init = return @@ E_constant {cons_name=C_SET_EMPTY;arguments=[]} in
         bind_fold_list aux init lst'
       )
-    | TC_contract, _ ->
+    | (i, _) when String.equal i contract_name ->
       fail @@ bad_decompile v
-    | (TC_michelson_pair|TC_michelson_or|TC_michelson_pair_right_comb|TC_michelson_pair_left_comb|TC_michelson_or_right_comb| TC_michelson_or_left_comb), _ -> 
+    | (i,_) when List.exists (fun el ->String.equal i el) [michelson_pair_name ; michelson_or_name; michelson_pair_left_comb_name ; michelson_pair_right_comb_name ; michelson_or_left_comb_name ; michelson_or_right_comb_name ] ->
       fail @@ corner_case ~loc:"unspiller" "Michelson_combs t should not be present in mini-c"
     | _ -> 
       fail @@ corner_case ~loc:"unspiller" "Wrong number of args or wrong kinds for the type constant"

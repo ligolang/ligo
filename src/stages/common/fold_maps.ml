@@ -3,10 +3,10 @@ open Trace
 
 (* Types level *)
 
-let type_operator : ('acc -> 'a -> ('acc * 'b, _) result) -> 'acc -> 'a type_operator -> ('acc * 'b type_operator, _) result
-= fun g acc {type_constant;arguments} ->
+let type_app : ('acc -> 'a -> ('acc * 'b, _) result) -> 'acc -> 'a type_app -> ('acc *  'a type_app, _) result
+= fun g acc {type_operator;arguments} ->
   let%bind acc,arguments = bind_fold_map_list g acc arguments in
-  ok @@ (acc,{type_constant; arguments})
+  ok @@ (acc,{type_operator; arguments})
 
 let rows : ('acc -> 'a -> ('acc * 'b,_) result) -> 'acc -> 'a rows -> ('acc * 'b rows,_) result
 = fun g acc {fields;attributes} ->

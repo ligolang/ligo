@@ -1,35 +1,5 @@
 open Stage_common.Enums
 
-let type_constant_tag = function
-  | TC_unit                      ->  1
-  | TC_string                    ->  2
-  | TC_bytes                     ->  3
-  | TC_nat                       ->  4
-  | TC_int                       ->  5
-  | TC_mutez                     ->  6
-  | TC_operation                 ->  7
-  | TC_address                   ->  8
-  | TC_key                       ->  9
-  | TC_key_hash                  -> 10
-  | TC_chain_id                  -> 11
-  | TC_signature                 -> 12
-  | TC_timestamp                 -> 13
-  | TC_contract                  -> 14
-  | TC_option                    -> 15
-  | TC_list                      -> 16
-  | TC_set                       -> 17
-  | TC_map                       -> 18
-  | TC_big_map                   -> 19
-  | TC_map_or_big_map            -> 20
-  | TC_michelson_pair            -> 21
-  | TC_michelson_or              -> 22
-  | TC_michelson_pair_right_comb -> 23
-  | TC_michelson_pair_left_comb  -> 24
-  | TC_michelson_or_right_comb   -> 25
-  | TC_michelson_or_left_comb    -> 26
-
-let type_constant a b = Int.compare (type_constant_tag a) (type_constant_tag b)
-
 let constant'_tag = function
   | C_INT                     ->   1
   | C_UNIT                    ->   2

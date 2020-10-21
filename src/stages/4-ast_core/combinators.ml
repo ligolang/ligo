@@ -2,6 +2,7 @@ open Types
 module Option = Simple_utils.Option
 
 module SMap = Map.String
+open Stage_common.Constant
 
 let make_t ?(loc = Location.generated) ?sugar type_content = ({type_content; sugar; location=loc}: type_expression)
 
@@ -10,24 +11,25 @@ let tuple_to_record lst =
   let (_, lst ) = List.fold_left aux (0,[]) lst in
   lst
 
-let type_constant ?loc ?sugar type_constant arguments  : type_expression = make_t ?loc ?sugar @@ T_constant {type_constant; arguments}
+let t_variable ?loc ?sugar variable : type_expression = make_t ?loc ?sugar @@ T_variable variable
+let t_app ?loc ?sugar type_operator arguments : type_expression = make_t ?loc ?sugar @@ T_app {type_operator ; arguments}
 
-let t_bool      ?loc ?sugar () : type_expression = make_t ?loc ?sugar @@ T_variable (Var.of_name "bool")
-let t_string    ?loc ?sugar () : type_expression = type_constant ?loc ?sugar TC_string []
-let t_bytes     ?loc ?sugar () : type_expression = type_constant ?loc ?sugar TC_bytes []
-let t_int       ?loc ?sugar () : type_expression = type_constant ?loc ?sugar TC_int []
-let t_operation ?loc ?sugar () : type_expression = type_constant ?loc ?sugar TC_operation []
-let t_nat       ?loc ?sugar () : type_expression = type_constant ?loc ?sugar TC_nat []
-let t_tez       ?loc ?sugar () : type_expression = type_constant ?loc ?sugar TC_mutez []
-let t_unit      ?loc ?sugar () : type_expression = type_constant ?loc ?sugar TC_unit []
-let t_address   ?loc ?sugar () : type_expression = type_constant ?loc ?sugar TC_address []
-let t_signature ?loc ?sugar () : type_expression = type_constant ?loc ?sugar TC_signature []
-let t_key       ?loc ?sugar () : type_expression = type_constant ?loc ?sugar TC_key []
-let t_key_hash  ?loc ?sugar () : type_expression = type_constant ?loc ?sugar TC_key_hash []
-let t_timestamp ?loc ?sugar () : type_expression = type_constant ?loc ?sugar TC_timestamp []
-let t_option    ?loc ?sugar o  : type_expression = type_constant ?loc ?sugar TC_option [o]
-let t_list      ?loc ?sugar t  : type_expression = type_constant ?loc ?sugar TC_list [t]
-let t_variable  ?loc ?sugar n  : type_expression = make_t ?loc ?sugar @@ T_variable (Var.of_name n)
+
+let t_bool      ?loc ?sugar () : type_expression = t_variable ?loc ?sugar v_bool
+let t_string    ?loc ?sugar () : type_expression = t_variable ?loc ?sugar v_string
+let t_bytes     ?loc ?sugar () : type_expression = t_variable ?loc ?sugar v_bytes
+let t_int       ?loc ?sugar () : type_expression = t_variable ?loc ?sugar v_int
+let t_operation ?loc ?sugar () : type_expression = t_variable ?loc ?sugar v_operation
+let t_nat       ?loc ?sugar () : type_expression = t_variable ?loc ?sugar v_nat
+let t_tez       ?loc ?sugar () : type_expression = t_variable ?loc ?sugar v_tez
+let t_unit      ?loc ?sugar () : type_expression = t_variable ?loc ?sugar v_unit
+let t_address   ?loc ?sugar () : type_expression = t_variable ?loc ?sugar v_address
+let t_signature ?loc ?sugar () : type_expression = t_variable ?loc ?sugar v_signature
+let t_key       ?loc ?sugar () : type_expression = t_variable ?loc ?sugar v_key
+let t_key_hash  ?loc ?sugar () : type_expression = t_variable ?loc ?sugar v_key_hash
+let t_timestamp ?loc ?sugar () : type_expression = t_variable ?loc ?sugar v_timestamp
+let t_option    ?loc ?sugar o  : type_expression = t_app ?loc ?sugar v_option [o]
+let t_list      ?loc ?sugar t  : type_expression = t_app ?loc ?sugar v_list [t]
 let t_record_ez ?loc ?sugar ?layout lst =
   let lst = List.map (fun (k, v) -> (Label k, v)) lst in
   let m = LMap.of_list lst in
@@ -48,10 +50,10 @@ let t_sum ?loc ?sugar m : type_expression =
   ez_t_sum ?loc ?sugar lst
 
 let t_function ?loc ?sugar type1 type2  : type_expression = make_t ?loc ?sugar @@ T_arrow {type1; type2}
-let t_map      ?loc ?sugar key value : type_expression = type_constant ?loc ?sugar TC_map [key ; value]
-let t_big_map  ?loc ?sugar key value : type_expression = type_constant ?loc ?sugar TC_big_map [key ; value]
-let t_set      ?loc ?sugar t         : type_expression = type_constant ?loc ?sugar TC_set [t]
-let t_contract ?loc ?sugar t         : type_expression = type_constant ?loc ?sugar TC_contract [t]
+let t_map      ?loc ?sugar key value : type_expression = t_app ?loc ?sugar (v_map) [key ; value]
+let t_big_map  ?loc ?sugar key value : type_expression = t_app ?loc ?sugar (v_big_map) [key ; value]
+let t_set      ?loc ?sugar t         : type_expression = t_app ?loc ?sugar (v_set) [t]
+let t_contract ?loc ?sugar t         : type_expression = t_app ?loc ?sugar (v_contract) [t]
 
 let make_e ?(loc = Location.generated) ?sugar content = {content; sugar; location=loc }
 

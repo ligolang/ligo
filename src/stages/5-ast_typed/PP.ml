@@ -64,10 +64,14 @@ let rec type_content : formatter -> type_content -> unit =
   fun ppf tc ->
   match tc with
   | T_variable tv -> type_variable                 ppf tv
-  | T_constant tc -> type_operator type_expression ppf tc
+  | T_constant tc -> type_injection ppf tc
   | T_sum m -> fprintf ppf "@[<h>sum[%a]@]" (lmap_sep_d type_expression) (LMap.to_kv_list_rev @@ LMap.map (fun {associated_type;_} -> associated_type) m.content)
   | T_record m -> fprintf ppf "%a" record m
   | T_arrow     a -> arrow         type_expression ppf a
+
+and type_injection ppf {language;injection;parameters} =
+  ignore language;
+  fprintf ppf "%s%a" (Ligo_string.extract injection) (list_sep_d_par type_expression) parameters
 
 and record ppf {content; layout=_} =
   fprintf ppf "%a"

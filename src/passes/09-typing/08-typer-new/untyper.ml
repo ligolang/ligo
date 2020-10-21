@@ -37,9 +37,10 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer
   | O.T_arrow arr ->
     let%bind arr = arrow self arr in
     return @@ I.T_arrow arr
-  | O.T_constant {type_constant;arguments} ->
-    let%bind arguments = bind_map_list self arguments in
-    return @@ I.T_constant {type_constant;arguments}
+  | O.T_constant {language=_;injection;parameters} ->
+    let%bind arguments = bind_map_list self parameters in
+    let type_operator = Var.of_name (Ligo_string.extract injection) in
+    return @@ I.T_app {type_operator;arguments}
 
 (*
   Transform a Ast_typed expression into an ast_core expression

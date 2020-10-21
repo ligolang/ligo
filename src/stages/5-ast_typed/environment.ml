@@ -25,6 +25,9 @@ let map_type_environment : _ -> t -> t = fun f { expression_environment ; type_e
 let add_expr : expression_variable -> element -> t -> t = fun expr_var env_elt -> map_expr_environment (fun x -> {expr_var ; env_elt} :: x)
 let add_type : type_variable -> type_expression -> t -> t = fun type_variable type_ -> map_type_environment (fun x -> { type_variable ; type_ } :: x)
 (* TODO: generate : these are now messy, clean them up. *)
+
+let of_list_type : (type_variable * type_expression) list -> t = fun tvlist -> List.fold_left (fun acc (t,v) -> add_type t v acc) empty tvlist 
+
 let get_opt : expression_variable -> t -> element option = fun k x ->
   Option.bind (fun {expr_var=_ ; env_elt} -> Some env_elt) @@
     List.find_opt (fun {expr_var ; env_elt=_} -> Var.equal expr_var.wrap_content k.wrap_content) (get_expr_environment x)

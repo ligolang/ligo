@@ -120,18 +120,15 @@ let rec decompile_type_expr : dialect -> AST.type_expression -> _ result = fun d
     let%bind type2 = decompile_type_expr dialect type2 in
     let arrow = (type1, ghost, type2) in
     return @@ CST.TFun (wrap arrow)
-  | T_variable var ->
-    let var = decompile_variable var in
-    return @@ CST.TVar (var)
-  | T_constant {type_constant; arguments=[]} ->
-    let const = Predefined.type_constant_to_string type_constant in
-    return @@ CST.TVar (wrap const)
-  | T_constant {type_constant; arguments} ->
-    let type_constant = wrap @@ Predefined.type_constant_to_string type_constant in
+  | T_variable variable ->
+    let v = decompile_variable variable in
+    return @@ CST.TVar v
+  | T_app {type_operator; arguments} ->
+    let v = decompile_variable type_operator in
     let%bind lst = bind_map_list (decompile_type_expr dialect) arguments in
     let%bind lst = list_to_nsepseq lst in
     let lst : _ CST.par = {lpar=ghost;inside=lst;rpar=ghost} in
-    return @@ CST.TApp (wrap (type_constant,wrap lst))
+    return @@ CST.TApp (wrap (v,wrap lst))
   | T_annoted _annot ->
     failwith "let's work on it later"
 

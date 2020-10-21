@@ -27,13 +27,15 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer
     let%bind x' = Stage_common.Helpers.bind_map_lmap aux content in
     return @@ I.T_record {fields = x' ; layout = Some layout}
   )
-  | O.T_variable name -> return @@ I.T_variable (Var.todo_cast name)
   | O.T_arrow arr ->
     let%bind arr = arrow self arr in
     return @@ T_arrow arr
-  | O.T_constant {type_constant;arguments} ->
-     let%bind arguments = bind_map_list untype_type_expression arguments in
-     return @@ I.T_constant {type_constant; arguments}
+  | O.T_constant {language;injection;parameters} ->
+    ignore language ;
+    let%bind arguments = bind_map_list untype_type_expression parameters in
+    let type_operator = Var.of_name (Ligo_string.extract injection) in
+    return @@ I.T_app {type_operator;arguments}
+  | O.T_variable name -> return @@ I.T_variable (Var.todo_cast name)
 
 let untype_declaration_constant untype_expression O.{binder;expr;inline} =
   let attr = I.{inline} in

@@ -50,9 +50,9 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression , desu
   let return tc = ok @@ O.make_t ~loc:te.location ~sugar:te tc in
   match te.type_content with
     | I.T_variable type_variable -> return @@ T_variable (Var.todo_cast type_variable)
-    | I.T_constant {type_constant; arguments} ->
-      let%bind arguments = bind_map_list self arguments in
-      return @@ T_constant {type_constant; arguments}
+    | I.T_app a ->
+      let%bind a' = type_app compile_type_expression a in
+      return @@ T_app a'
     | I.T_sum {fields ; attributes} ->
       let%bind fields =
         Stage_common.Helpers.bind_map_lmap (fun v ->

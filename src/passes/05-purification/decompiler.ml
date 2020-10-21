@@ -11,9 +11,9 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, Err
   let return te = ok @@ I.make_t te in
   match te.type_content with
     | O.T_variable type_variable -> return @@ T_variable type_variable
-    | O.T_constant tc ->
-      let%bind tc = type_operator self tc in
-      return @@ I.T_constant tc
+    | O.T_app tc ->
+      let%bind tc = type_app self tc in
+      return @@ I.T_app tc
     | O.T_sum sum->
       (* This type sum could be a michelson_or as well, we could use is_michelson_or *)
       let%bind sum = rows self sum in

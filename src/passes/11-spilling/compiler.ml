@@ -140,46 +140,48 @@ let compile_constant' : AST.constant' -> constant' = function
 let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error) result =
   let return tc = ok @@ Expression.make_t ~loc:t.location @@ tc in
   match t.type_content with
-  | T_variable (name) when Var.equal name Ast_typed.Constant.t_bool -> return (T_base TB_bool)
-  | t when (compare t (t_bool ()).type_content) = 0-> return (T_base TB_bool)
   | T_variable (name) -> fail @@ no_type_variable @@ name
-  | T_constant {type_constant=TC_int      ; arguments=[]} -> return (T_base TB_int)
-  | T_constant {type_constant=TC_nat      ; arguments=[]} -> return (T_base TB_nat)
-  | T_constant {type_constant=TC_mutez    ; arguments=[]} -> return (T_base TB_mutez)
-  | T_constant {type_constant=TC_string   ; arguments=[]} -> return (T_base TB_string)
-  | T_constant {type_constant=TC_bytes    ; arguments=[]} -> return (T_base TB_bytes)
-  | T_constant {type_constant=TC_address  ; arguments=[]} -> return (T_base TB_address)
-  | T_constant {type_constant=TC_timestamp; arguments=[]} -> return (T_base TB_timestamp)
-  | T_constant {type_constant=TC_unit     ; arguments=[]} -> return (T_base TB_unit)
-  | T_constant {type_constant=TC_operation; arguments=[]} -> return (T_base TB_operation)
-  | T_constant {type_constant=TC_signature; arguments=[]} -> return (T_base TB_signature)
-  | T_constant {type_constant=TC_key      ; arguments=[]} -> return (T_base TB_key)
-  | T_constant {type_constant=TC_key_hash ; arguments=[]} -> return (T_base TB_key_hash)
-  | T_constant {type_constant=TC_chain_id ; arguments=[]} -> return (T_base TB_chain_id)
-  | T_constant {type_constant=TC_contract ; arguments=[x]} ->
+  | t when (compare t (t_bool ()).type_content) = 0-> return (T_base TB_bool)
+  | T_constant {language ; injection ; parameters} -> (
+    let open Stage_common.Constant in
+    let%bind () = Assert.assert_true (corner_case ~loc:__LOC__ "unsupported language") @@ String.equal language Stage_common.Backends.michelson in
+    match Ligo_string.extract injection , parameters with
+    | (i, []) when String.equal i bool_name -> return (T_base TB_bool)
+    | (i, []) when String.equal i unit_name -> return (T_base TB_unit)
+    | (i, []) when String.equal i int_name -> return (T_base TB_int)
+    | (i, []) when String.equal i nat_name -> return (T_base TB_nat)
+    | (i, []) when String.equal i timestamp_name -> return (T_base TB_timestamp)
+    | (i, []) when String.equal i tez_name -> return (T_base TB_mutez)
+    | (i, []) when String.equal i string_name -> return (T_base TB_string)
+    | (i, []) when String.equal i bytes_name -> return (T_base TB_bytes)
+    | (i, []) when String.equal i address_name -> return (T_base TB_address)
+    | (i, []) when String.equal i operation_name -> return (T_base TB_operation)
+    | (i, []) when String.equal i key_name -> return (T_base TB_key)
+    | (i, []) when String.equal i key_hash_name -> return (T_base TB_key_hash)
+    | (i, []) when String.equal i chain_id_name -> return (T_base TB_chain_id)
+    | (i, []) when String.equal i signature_name -> return (T_base TB_signature)
+    | (i, [x]) when String.equal i contract_name ->
       let%bind x' = compile_type x in
       return (T_contract x')
-  | T_constant {type_constant=TC_map; arguments=[k;v]} ->
-      let%bind kv' = bind_map_pair compile_type (k, v) in
-      return (T_map kv')
-  | T_constant {type_constant=TC_big_map; arguments=[k;v]} ->
-      let%bind kv' = bind_map_pair compile_type (k, v) in
-      return (T_big_map kv')
-  | T_constant {type_constant=TC_map_or_big_map; _} ->
-      fail @@ corner_case ~loc:"spilling" "TC_map_or_big_map should have been resolved before spilling"
-  | T_constant {type_constant=TC_list; arguments=[t]} ->
-      let%bind t' = compile_type t in
-      return (T_list t')
-  | T_constant {type_constant=TC_set; arguments=[t]} ->
-      let%bind t' = compile_type t in
-      return (T_set t')
-  | T_constant {type_constant=TC_option; arguments=[o]} ->
+    | (i, [o]) when String.equal i option_name ->
       let%bind o' = compile_type o in
       return (T_option o')
-  | T_constant {type_constant=TC_michelson_pair|TC_michelson_or|TC_michelson_pair_right_comb| TC_michelson_pair_left_comb|TC_michelson_or_right_comb| TC_michelson_or_left_comb; _} ->
-      fail @@ corner_case ~loc:"spilling" "These types should have been resolved before spilling"
-  | T_constant _ ->
-      fail @@ corner_case ~loc:"spilling" "Type constant with invalid arguments (wrong number or wrong kinds)"
+    | (i, [k;v]) when String.equal i map_name ->
+      let%bind kv' = bind_map_pair compile_type (k, v) in
+      return (T_map kv')
+    | (i, [k; v]) when String.equal i big_map_name ->
+      let%bind kv' = bind_map_pair compile_type (k, v) in
+      return (T_big_map kv')
+    | (i, _) when String.equal i map_or_big_map_name ->
+      fail @@ corner_case ~loc:"spilling" "TC_map_or_big_map should have been resolved before spilling"
+    | (i, [t]) when String.equal i list_name ->
+      let%bind t' = compile_type t in
+      return (T_list t')
+    | (i, [t]) when String.equal i set_name -> 
+      let%bind t' = compile_type t in
+      return (T_set t')
+    | _ -> fail @@ corner_case ~loc:__LOC__ "wrong constant"
+  )
   | T_sum { content = m ; layout } -> (
     let open Ast_typed.Helpers in
     match is_michelson_or m with
@@ -215,7 +217,7 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
       let%bind param' = compile_type type1 in
       let%bind result' = compile_type type2 in
       return @@ (T_function (param',result'))
-    )
+  )
 
 let rec compile_literal : AST.literal -> value = fun l -> match l with
   | Literal_int n -> D_int n

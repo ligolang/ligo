@@ -33,29 +33,29 @@ let fresh_type_variable : ?name:string -> unit -> type_variable = fun ?name () -
   fresh_name
 
 let type_expression'_of_simple_c_constant : constant_tag * type_expression list -> Ast_typed.type_content option = fun (c, l) ->
-  let aux type_constant arguments = Some (Ast_typed.T_constant {type_constant;arguments}) in
+  let return (x:type_expression) = Some x.type_content in
   match c, l with
-  | C_contract  , [x]     -> aux TC_contract [x]
-  | C_option    , [x]     -> aux TC_option [x]
-  | C_list      , [x]     -> aux TC_list [x]
-  | C_set       , [x]     -> aux TC_set [x]
-  | C_map       , [k ; v] -> aux TC_map [k;v]
-  | C_big_map   , [k ; v] -> aux TC_big_map [k;v]
+  | C_contract  , [x]     -> return (Ast_typed.t_contract x)
+  | C_option    , [x]     -> return (Ast_typed.t_option x)
+  | C_list      , [x]     -> return (Ast_typed.t_list x)
+  | C_set       , [x]     -> return (Ast_typed.t_set x)
+  | C_map       , [k ; v] -> return (Ast_typed.t_map k v)
+  | C_big_map   , [k ; v] -> return (Ast_typed.t_big_map k v)
   | C_arrow     , [x ; y] -> Some (Ast_typed.T_arrow {type1=x ; type2=y}) (* For now, the arrow type constructor is special *)
   | (C_contract | C_option | C_list | C_set | C_map | C_big_map | C_arrow ), _ -> None
 
-  | C_unit      , [] -> aux TC_unit []
-  | C_string    , [] -> aux TC_string []
-  | C_bytes     , [] -> aux TC_bytes []
-  | C_nat       , [] -> aux TC_nat []
-  | C_int       , [] -> aux TC_int []
-  | C_mutez     , [] -> aux TC_mutez []
-  | C_operation , [] -> aux TC_operation []
-  | C_address   , [] -> aux TC_address []
-  | C_key       , [] -> aux TC_key []
-  | C_key_hash  , [] -> aux TC_key_hash []
-  | C_chain_id  , [] -> aux TC_chain_id []
-  | C_signature , [] -> aux TC_signature []
-  | C_timestamp , [] -> aux TC_timestamp []
+  | C_unit      , [] -> return (Ast_typed.t_unit ())
+  | C_string    , [] -> return (Ast_typed.t_string ())
+  | C_bytes     , [] -> return (Ast_typed.t_bytes ())
+  | C_nat       , [] -> return (Ast_typed.t_nat ())
+  | C_int       , [] -> return (Ast_typed.t_int ())
+  | C_mutez     , [] -> return (Ast_typed.t_mutez ())
+  | C_operation , [] -> return (Ast_typed.t_operation ())
+  | C_address   , [] -> return (Ast_typed.t_address ())
+  | C_key       , [] -> return (Ast_typed.t_key ())
+  | C_key_hash  , [] -> return (Ast_typed.t_key_hash ())
+  | C_chain_id  , [] -> return (Ast_typed.t_chain_id ())
+  | C_signature , [] -> return (Ast_typed.t_signature ())
+  | C_timestamp , [] -> return (Ast_typed.t_timestamp ())
   | (C_unit | C_string | C_bytes | C_nat | C_int | C_mutez | C_operation | C_address | C_key | C_key_hash | C_chain_id | C_signature | C_timestamp), _::_ ->
       None

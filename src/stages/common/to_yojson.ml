@@ -3,34 +3,6 @@ open Yojson_helpers
 
 type json = Yojson.Safe.t
 
-let type_constant = function
-  | TC_unit                      -> `List [ `String "TC_unit"; `Null]
-  | TC_string                    -> `List [ `String "TC_string"; `Null]
-  | TC_bytes                     -> `List [ `String "TC_bytes"; `Null]
-  | TC_nat                       -> `List [ `String "TC_nat"; `Null]
-  | TC_int                       -> `List [ `String "TC_int"; `Null]
-  | TC_mutez                     -> `List [ `String "TC_mutez"; `Null]
-  | TC_operation                 -> `List [ `String "TC_operation"; `Null]
-  | TC_address                   -> `List [ `String "TC_address"; `Null]
-  | TC_key                       -> `List [ `String "TC_key"; `Null]
-  | TC_key_hash                  -> `List [ `String "TC_key_hash"; `Null]
-  | TC_chain_id                  -> `List [ `String "TC_chain_id"; `Null]
-  | TC_signature                 -> `List [ `String "TC_signature"; `Null]
-  | TC_timestamp                 -> `List [ `String "TC_timestamp"; `Null]
-  | TC_contract                  -> `List [ `String "TC_contract"; `Null]
-  | TC_option                    -> `List [ `String "TC_option"; `Null]
-  | TC_list                      -> `List [ `String "TC_list"; `Null]
-  | TC_set                       -> `List [ `String "TC_set"; `Null]
-  | TC_map                       -> `List [ `String "TC_map"; `Null]
-  | TC_big_map                   -> `List [ `String "TC_big_map"; `Null]
-  | TC_map_or_big_map            -> `List [ `String "TC_map_or_big_map"; `Null]
-  | TC_michelson_pair            -> `List [ `String "TC_michelson_pair"; `Null]
-  | TC_michelson_or              -> `List [ `String "TC_michelson_or"; `Null]
-  | TC_michelson_pair_right_comb -> `List [ `String "TC_michelson_pair_right_comb"; `Null]
-  | TC_michelson_pair_left_comb  -> `List [ `String "TC_michelson_pair_left_comb"; `Null]
-  | TC_michelson_or_right_comb   -> `List [ `String "TC_michelson_or_right_comb"; `Null]
-  | TC_michelson_or_left_comb    -> `List [ `String "TC_michelson_or_left_comb"; `Null]
-
 let constant' = function
   | C_INT                -> `List [`String "C_INT"; `Null ]
   | C_UNIT               -> `List [`String "C_UNIT"; `Null ]
@@ -201,18 +173,17 @@ let row_element g {associated_type; michelson_annotation; decl_pos} =
     ("decl_pos", `Int decl_pos);
   ]
 
+let t_app f {type_operator ; arguments } =
+  `Assoc [
+    ("type_operator", type_variable_to_yojson type_operator) ;
+    ("arguments", (list f arguments))
+  ]
+
 let arrow type_expression {type1;type2} =
   `Assoc [
     ("type1", type_expression type1);
     ("type2", type_expression type2);
   ]
-
-let type_operator type_expression {type_constant=tc; arguments} =
-  `Assoc [
-    ("type_constant", type_constant tc);
-    ("arguments", list type_expression arguments)
-  ]
-
 
 let constant expression {cons_name;arguments} =
   `Assoc [
