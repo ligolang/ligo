@@ -5,6 +5,7 @@
     simple-utils
     typesystem
     ast_core
+    predefined
     ast_typed
   )
   (preprocess

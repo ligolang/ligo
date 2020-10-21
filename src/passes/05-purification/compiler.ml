@@ -131,7 +131,7 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression,Errors
       let%bind arr = arrow self arr in
       return @@ T_arrow arr
     | I.T_variable type_variable -> return @@ T_variable type_variable
-    | I.T_constant {type_constant=TC_michelson_or; arguments=[l;r]} ->
+    | I.T_app {type_operator;arguments=[l;r]} when Var.equal Stage_common.Constant.v_michelson_or type_operator ->
       let%bind (l, l_ann) = trace_option (Errors.corner_case "not an annotated type") @@ I.get_t_annoted l in
       let%bind (r, r_ann) = trace_option (Errors.corner_case "not an annotated type") @@ I.get_t_annoted r in
       let%bind (l,r) = bind_map_pair compile_type_expression (l,r) in
@@ -140,7 +140,7 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression,Errors
         (O.Label "M_right", {associated_type = r ; attributes = [ "annot:"^r_ann ] ; decl_pos = 1}); ]
       in
       return @@ O.T_sum { fields = O.LMap.of_list sum ; attributes = [] }
-    | I.T_constant {type_constant=TC_michelson_pair; arguments=[l;r]} ->
+    | I.T_app {type_operator;arguments=[l;r]} when Var.equal Stage_common.Constant.v_michelson_pair type_operator ->
       let%bind (l, l_ann) = trace_option (Errors.corner_case "not an annotated type") @@ I.get_t_annoted l in
       let%bind (r, r_ann) = trace_option (Errors.corner_case "not an annotated type") @@ I.get_t_annoted r in
       let%bind (l,r) = bind_map_pair compile_type_expression (l,r) in
@@ -149,9 +149,9 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression,Errors
         (O.Label "1", {associated_type = r ; attributes = [ "annot:"^r_ann ] ; decl_pos = 0}); ]
       in
       return @@ O.T_record { fields = (O.LMap.of_list sum) ; attributes = [] }
-    | I.T_constant tc ->
-      let%bind tc = type_operator self tc in
-      return @@ T_constant tc
+    | I.T_app c ->
+      let%bind c = type_app self c in
+      return @@ T_app c
     | I.T_annoted (ty, _) -> self ty
 
 let rec compile_expression : I.expression -> (O.expression , _) result =

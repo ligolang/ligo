@@ -24,7 +24,6 @@ let label_of_yojson = function
 module LMap = Map.Make( struct type t = label let compare (Label a) (Label b) = String.compare a b end)
 type 'a label_map = 'a LMap.t
 
-
 let const_name = function
   | Deprecated {const;_} -> const
   | Const      const     -> const
@@ -37,6 +36,11 @@ type 'ty_expr row_element_mini_c = {
   michelson_annotation : string option ;
   decl_pos : int ;
   }
+
+type 'ty_exp type_app = {
+  type_operator : type_variable ;
+  arguments : 'ty_exp list ;
+}
 
 type 'ty_expr row_element = {
   associated_type      : 'ty_expr ;
@@ -53,11 +57,6 @@ type 'ty_exp rows = {
 type 'ty_exp arrow = {
   type1: 'ty_exp ;
   type2: 'ty_exp ;
-  }
-
-type 'ty_exp type_operator = {
-    type_constant : type_constant ;
-    arguments     : 'ty_exp list ;
   }
 
 (* Expression level types *)

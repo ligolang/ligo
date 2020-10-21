@@ -142,76 +142,58 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
     in
     return @@ T_record record
   )
-  | T_variable name ->
-      let name = Var.todo_cast name in
-      let%bind tv =
-        trace_option (unbound_type_variable e name t.location)
-        @@ Environment.get_type_opt (Var.todo_cast name) e in
-      ok tv
-  | T_constant {type_constant; arguments} ->
-    let assert_constant lst = match lst with
-      [] -> ok ()
-    | _ -> fail @@ type_constant_wrong_number_of_arguments type_constant 0 (List.length lst) t.location
-    in
-    let assert_unary lst = match lst with
-      [_] -> ok ()
-    | _ -> fail @@ type_constant_wrong_number_of_arguments type_constant 1 (List.length lst) t.location
-    in
-    let get_unary lst = match lst with
-      [x] -> ok x
-    | _ -> fail @@ type_constant_wrong_number_of_arguments type_constant 1 (List.length lst) t.location
-    in
-    let assert_binary lst = match lst with
-      [_;_] -> ok ()
-    | _ -> fail @@ type_constant_wrong_number_of_arguments type_constant 2 (List.length lst) t.location
-    in
-    match type_constant with
-      | (TC_unit | TC_string | TC_bytes | TC_nat | TC_int | TC_mutez | TC_operation | TC_address | TC_key | TC_key_hash | TC_chain_id | TC_signature | TC_timestamp) as type_constant ->
-        let%bind () = assert_constant arguments in
-        let%bind arguments = bind_map_list (evaluate_type e) arguments in
-        return @@ T_constant {type_constant; arguments}
-      | (TC_set | TC_list | TC_option | TC_contract) as type_constant ->
-        let%bind () = assert_unary arguments in
-        let%bind arguments = bind_map_list (evaluate_type e) arguments in
-        return @@ T_constant {type_constant; arguments}
-      | (TC_map | TC_big_map ) as type_constant ->
-        let%bind () = assert_binary arguments in
-        let%bind arguments = bind_map_list (evaluate_type e) arguments in
-        return @@ T_constant {type_constant; arguments}
-      (* TODO : remove when we have polymorphism *)
-      | TC_map_or_big_map ->
-        let%bind () = assert_binary arguments in
-        let%bind arguments = bind_map_list (evaluate_type e) arguments in
-        return @@ T_constant {type_constant=TC_map_or_big_map; arguments}
-      | TC_michelson_pair_right_comb ->
-          let%bind c = bind (evaluate_type e) @@ get_unary arguments in
-          let%bind lmap = match c.type_content with
+  | T_variable variable ->
+    (* Check that the variable is in the environment *)
+    let name : O.type_variable = Var.todo_cast variable in
+    trace_option (unbound_type_variable e name t.location)
+      @@ Environment.get_type_opt (name) e
+  | T_app {type_operator;arguments} -> (
+    let name : O.type_variable = Var.todo_cast type_operator in
+    let%bind v = trace_option (unbound_type_variable e name t.location) @@
+      Environment.get_type_opt name e in
+    let aux : O.type_injection -> (O.type_expression, typer_error) result = fun inj -> 
+      (*handles converters*)
+      let open Stage_common.Constant in
+      let {language=_ ; injection ; parameters} : O.type_injection = inj in
+      match Ligo_string.extract injection, parameters with
+      | (i, [t]) when String.equal i michelson_pair_right_comb_name ->
+        let%bind lmap = match t.type_content with
             | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap.content)) -> ok lmap
             | _ -> fail (michelson_comb_no_record t.location) in
-          let record = Typer_common.Michelson_type_converter.convert_pair_to_right_comb (Ast_typed.LMap.to_kv_list_rev lmap.content) in
-          return @@ record
-      | TC_michelson_pair_left_comb ->
-          let%bind c = bind (evaluate_type e) @@ get_unary arguments in
-          let%bind lmap = match c.type_content with
+        let record = Typer_common.Michelson_type_converter.convert_pair_to_right_comb (Ast_typed.LMap.to_kv_list_rev lmap.content) in
+        return @@ record
+      | (i, [t]) when String.equal i  michelson_pair_left_comb_name ->
+          let%bind lmap = match t.type_content with
             | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap.content)) -> ok lmap
             | _ -> fail (michelson_comb_no_record t.location) in
           let record = Typer_common.Michelson_type_converter.convert_pair_to_left_comb (Ast_typed.LMap.to_kv_list_rev lmap.content) in
           return @@ record
-      | TC_michelson_or_right_comb ->
-          let%bind c = bind (evaluate_type e) @@ get_unary arguments in
-          let%bind cmap = match c.type_content with
+      | (i, [t]) when String.equal i michelson_or_right_comb_name ->
+        let%bind cmap = match t.type_content with
             | T_sum cmap -> ok cmap.content
             | _ -> fail (michelson_comb_no_variant t.location) in
           let pair = Typer_common.Michelson_type_converter.convert_variant_to_right_comb (Ast_typed.LMap.to_kv_list_rev cmap) in
           return @@ pair
-      | TC_michelson_or_left_comb ->
-          let%bind c = bind (evaluate_type e) @@ get_unary arguments in
-          let%bind cmap = match c.type_content with
+      | (i, [t]) when String.equal i michelson_or_left_comb_name ->
+        let%bind cmap = match t.type_content with
             | T_sum cmap -> ok cmap.content
             | _ -> fail (michelson_comb_no_variant t.location) in
           let pair = Typer_common.Michelson_type_converter.convert_variant_to_left_comb (Ast_typed.LMap.to_kv_list_rev cmap) in
-          return @@ pair
-      | _ -> fail @@ unrecognized_type_constant t
+          return @@ pair 
+      | _ -> return (T_constant inj)
+    in
+    match get_param_inj v with
+    | Some (language,injection,parameters) ->
+      let arg_env = List.length parameters in
+      let arg_actual = List.length arguments in
+      let%bind parameters =
+        if arg_env <> arg_actual then fail @@ type_constant_wrong_number_of_arguments type_operator arg_env arg_actual t.location
+        else bind_map_list (evaluate_type e) arguments
+      in
+      let inj : O.type_injection = {language ; injection ; parameters } in
+      aux inj
+    | None -> failwith "variable with parameters is not an injection"
+  )
 
 and type_expression : environment -> _ O'.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * _ O'.typer_state, typer_error) result
   = fun e _placeholder_for_state_of_new_typer ?tv_opt ae ->
@@ -337,6 +319,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
                     collect ;
                     init_record ;
                   ]} ->
+      let open Stage_common.Constant in
       (* this special case is here to force annotation of the untyped lambda
          generated by pascaligo's for_collect loop *)
       let lname = cast_var lname in
@@ -344,8 +327,14 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let tv_col = get_type_expression v_col   in (* this is the type of the collection  *)
       let tv_out = get_type_expression v_initr in (* this is the output type of the lambda*)
       let%bind input_type = match tv_col.type_content with
-        | O.T_constant {type_constant=TC_list | TC_set; arguments=[t] } -> ok @@ make_t_ez_record (("0",tv_out)::[("1",t)])
-        | O.T_constant {type_constant=TC_map  | TC_big_map; arguments=[k;v]} -> ok @@ make_t_ez_record (("0",tv_out)::[("1",make_t_ez_record [("0",k);("1",v)])])
+        | O.T_constant {language=_ ; injection ; parameters=[t]}
+            when String.equal (Ligo_string.extract injection) list_name
+              || String.equal (Ligo_string.extract injection) set_name ->
+          ok @@ make_t_ez_record (("0",tv_out)::[("1",t)])
+        | O.T_constant {language=_ ; injection ; parameters=[k;v]}
+          when String.equal (Ligo_string.extract injection) map_name
+            || String.equal (Ligo_string.extract injection) big_map_name ->
+          ok @@ make_t_ez_record (("0",tv_out)::[("1",make_t_ez_record [("0",k);("1",v)])])
         | _ -> fail @@ bad_collect_loop tv_col ae.location in
       let e' = Environment.add_ez_binder lname input_type e in
       let%bind body = type_expression' ?tv_opt:(Some tv_out) e' result in

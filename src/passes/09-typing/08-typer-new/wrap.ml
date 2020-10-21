@@ -12,6 +12,7 @@ let fresh_binder () = Core.fresh_type_variable ()
 
 let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun te ->
   match te.type_content with
+  | T_variable (type_name) -> { tsrc = "wrap: from source code maybe?" ; t = P_variable type_name }
   | T_sum {content=kvmap ; layout=_} ->
     let tmap = T.LMap.map (fun ({associated_type;_}:T.row_element) -> associated_type) kvmap in
     p_row C_variant @@ T.LMap.map type_expression_to_type_value tmap
@@ -20,35 +21,35 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
     p_row C_record @@ T.LMap.map type_expression_to_type_value tmap
   | T_arrow {type1;type2} ->
     p_constant C_arrow @@ List.map type_expression_to_type_value [ type1 ; type2 ]
-
-  | T_variable (type_name) -> { tsrc = "wrap: from source code maybe?" ; t = P_variable type_name }
-  | T_constant {type_constant; arguments} ->
+  | T_constant {language=_;injection;parameters} -> (
+    let open Stage_common.Constant in
     let (csttag, args) = Option.unopt_exn @@ (* This will be removed later *)
-      T.(match type_constant,arguments with
-        | TC_unit          , []         -> Some (C_unit , [])
-        | TC_string        , []         -> Some (C_string , [])
-        | TC_nat           , []         -> Some (C_nat , [])
-        | TC_mutez         , []         -> Some (C_mutez , [])
-        | TC_timestamp     , []         -> Some (C_timestamp , [])
-        | TC_int           , []         -> Some (C_int , [])
-        | TC_address       , []         -> Some (C_address , [])
-        | TC_bytes         , []         -> Some (C_bytes , [])
-        | TC_key_hash      , []         -> Some (C_key_hash , [])
-        | TC_key           , []         -> Some (C_key , [])
-        | TC_signature     , []         -> Some (C_signature , [])
-        | TC_operation     , []         -> Some (C_operation , [])
-        | TC_chain_id      , []         -> failwith "TODO : figure out what to do with chain_id; ask Tom Jack"
-        | TC_option        , [o]        -> Some (C_option, [o])
-        | TC_set           , [s]        -> Some (C_set, [s])
-        | TC_map           , [ k ; v ]  -> Some (C_map, [k;v])
-        | TC_big_map       , [ k ; v ]  -> Some (C_big_map, [k;v])
-        | TC_map_or_big_map, [ k ; v ]  -> Some (C_map, [k;v])
-        | TC_list          , [l]        -> Some (C_list, [l])
-        | TC_contract      , [c]        -> Some (C_contract, [c])
-        | _ -> None
+    T.(match (Ligo_string.extract injection , parameters) with
+      | ( s , [] ) when String.equal s unit_name -> Some (C_unit , [])
+      | ( s , [] ) when String.equal s string_name-> Some (C_string , [])
+      | ( s , [] ) when String.equal s nat_name-> Some (C_nat , [])
+      | ( s , [] ) when String.equal s tez_name-> Some (C_mutez , [])
+      | ( s , [] ) when String.equal s timestamp_name-> Some (C_timestamp , [])
+      | ( s , [] ) when String.equal s int_name-> Some (C_int , [])
+      | ( s , [] ) when String.equal s address_name-> Some (C_address , [])
+      | ( s , [] ) when String.equal s bytes_name-> Some (C_bytes , [])
+      | ( s , [] ) when String.equal s key_hash_name-> Some (C_key_hash , [])
+      | ( s , [] ) when String.equal s key_name-> Some (C_key , [])
+      | ( s , [] ) when String.equal s signature_name-> Some (C_signature , [])
+      | ( s , [] ) when String.equal s operation_name-> Some (C_operation , [])
+      | ( s , [] ) when String.equal s chain_id_name-> failwith "TODO : figure out what to do with chain_id; ask Tom Jack"
+      | ( s , [o] ) when String.equal s option_name -> Some (C_option, [o])
+      | ( s , [p] ) when String.equal s set_name -> Some (C_set, [p])
+      | ( s , [ k ; v ]) when String.equal s map_name -> Some (C_map, [k;v])
+      | ( s , [ k ; v ]) when String.equal s big_map_name -> Some (C_big_map, [k;v])
+      | ( s , [ k ; v ]) when String.equal s map_or_big_map_name -> Some (C_map, [k;v])
+      | ( s , [l] ) when String.equal s list_name -> Some (C_list, [l])
+      | ( s , [c] ) when String.equal s contract_name -> Some (C_contract, [c])
+      | ( _ , _ ) -> None
       )
     in
     p_constant csttag @@ List.map type_expression_to_type_value args
+  )
 
 let variable : T.type_expression -> (constraints * T.type_variable) = fun expr ->
   let pattern = type_expression_to_type_value expr in

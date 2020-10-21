@@ -41,7 +41,7 @@ let%expect_test _ =
       3 | const foo : nat = 42 + "bar"
 
     Invalid arguments.
-    Expected an argument of type (nat, nat) or (int, int) or (mutez, mutez) or (nat, int) or (int, nat) or (timestamp, int) or (int, timestamp), but got an argument of type int, string. |} ] ;
+    Expected an argument of type (nat, nat) or (int, int) or (tez, tez) or (nat, int) or (int, nat) or (timestamp, int) or (int, timestamp), but got an argument of type int, string. |} ] ;
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_1.mligo" ; "main" ] ;
   [%expect {|
@@ -100,7 +100,7 @@ let%expect_test _ =
       2 | let main (p:int) (storage : int) =
 
     Invalid type(s).
-    Expected: "Map (int , string)", but got: "Map (int ,
+    Expected: "map (int , string)", but got: "map (int ,
     sum[false -> unit , true -> unit])". |} ] ;
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_7.mligo" ; "main" ] ;

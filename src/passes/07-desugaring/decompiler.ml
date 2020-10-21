@@ -16,9 +16,9 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, des
   | None ->
     match te.type_content with
       | O.T_variable type_variable -> return @@ T_variable (Var.todo_cast type_variable)
-      | O.T_constant tc ->
-        let%bind tc = type_operator self tc in
-        return @@ T_constant tc
+      | O.T_app tc ->
+        let%bind tc = type_app self tc in
+        return @@ T_app tc
       | O.T_sum {fields;layout} ->
         let%bind fields =
           Stage_common.Helpers.bind_map_lmap (fun v ->

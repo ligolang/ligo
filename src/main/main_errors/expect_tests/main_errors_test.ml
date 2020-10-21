@@ -350,12 +350,6 @@ let%expect_test "main_cit_cameligo" =
   let pvar = PVar variable in
   let type_expr = TVar {value= "dog"; region= default_region1} in
   let location_t = File default_location in
-  error (`Concrete_cameligo_unknown_predefined_type variable) ;
-  [%expect
-    {|
-      in file "a dummy file name", line 20, characters 5-5
-
-      Unknown type "dog".|}] ;
   error (`Concrete_cameligo_recursive_fun default_region1) ;
   [%expect
     {|

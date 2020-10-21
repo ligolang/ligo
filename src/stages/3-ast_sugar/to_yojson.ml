@@ -9,7 +9,6 @@ let rec type_expression {type_content=tc;location} =
 
 and type_content = function
   | T_variable t -> `List [ `String "t_variable"; type_variable_to_yojson t]
-  | T_constant t -> `List [ `String "t_constant"; type_operator type_expression t]
   | T_sum      t -> `List [ `String "t_sum";
                             label_map row_element t.fields;
                             attributes t.attributes]
@@ -18,6 +17,7 @@ and type_content = function
                             attributes t.attributes]
   | T_tuple    t -> `List [ `String "t_tuple";  list type_expression t]
   | T_arrow    t -> `List [ `String "t_arrow"; arrow type_expression t]
+  | T_app      t -> `List [ `String "t_app"; t_app type_expression t]
 
 and row_element {associated_type; attributes=attr; decl_pos} =
   `Assoc [

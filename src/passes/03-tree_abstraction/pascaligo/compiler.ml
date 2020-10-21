@@ -92,12 +92,10 @@ let rec compile_type_expression : CST.type_expr ->_ result =
           )
         | _ -> fail @@ michelson_type_wrong_arity loc type_constant.value)
     | _ ->
-      let%bind type_constants =
-        trace_option (unknown_predefined_type type_constant) @@
-        type_constants type_constant.value in
+      let operator = Var.of_name type_constant.value in
       let lst = npseq_to_list args.value.inside in
       let%bind lst = bind_map_list compile_type_expression lst in
-      return @@ t_constant ~loc type_constants lst
+      return @@ t_app ~loc operator lst
     )
   | TFun func ->
     let ((input_type,_,output_type), loc) = r_split func in
@@ -110,10 +108,8 @@ let rec compile_type_expression : CST.type_expr ->_ result =
     compile_type_expression type_expr
   | TVar var ->
     let (name,loc) = r_split var in
-    (match type_constants name with
-      Some const -> return @@ t_constant ~loc const []
-    | None -> return @@ t_variable_ez ~loc name
-    )
+    let v = Var.of_name name in
+    return @@ t_variable ~loc v
   | TWild _reg -> failwith "unsupported TWild"
   | TString _s -> fail @@ unsupported_string_singleton te
 

@@ -33,11 +33,11 @@ let rec type_content : formatter -> type_expression -> unit =
   fun ppf te ->
   match te.type_content with
   | T_variable tv -> type_variable ppf tv
-  | T_constant tc -> type_operator type_expression ppf tc
   | T_sum      sm -> sum           type_expression ppf sm.fields
   | T_record   rd -> type_record   type_expression ppf rd.fields
   | T_tuple     t -> type_tuple    type_expression ppf t
   | T_arrow     a -> arrow         type_expression ppf a
+  | T_app     app -> type_app      type_expression ppf app
 
 and type_expression ppf (te : type_expression) : unit =
   fprintf ppf "%a" type_content te

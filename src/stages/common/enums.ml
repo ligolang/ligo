@@ -17,34 +17,6 @@ type layout =
   | L_comb
   | L_tree
 
-type type_constant =
-  | TC_unit
-  | TC_string
-  | TC_bytes
-  | TC_nat
-  | TC_int
-  | TC_mutez
-  | TC_operation
-  | TC_address
-  | TC_key
-  | TC_key_hash
-  | TC_chain_id
-  | TC_signature
-  | TC_timestamp
-  | TC_contract
-  | TC_option
-  | TC_list
-  | TC_set
-  | TC_map
-  | TC_big_map
-  | TC_map_or_big_map
-  | TC_michelson_pair
-  | TC_michelson_or
-  | TC_michelson_pair_right_comb
-  | TC_michelson_pair_left_comb
-  | TC_michelson_or_right_comb
-  | TC_michelson_or_left_comb
-
 type literal =
   | Literal_unit
   | Literal_int of z

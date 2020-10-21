@@ -6,11 +6,11 @@ include Stage_common.Types
 
 type type_content =
   | T_variable of type_variable
-  | T_constant of ty_expr type_operator
   | T_sum      of ty_expr rows
   | T_record   of ty_expr rows
-  | T_tuple    of ty_expr  list
+  | T_tuple    of ty_expr list
   | T_arrow    of ty_expr arrow
+  | T_app      of ty_expr type_app
 
 and type_expression = {type_content: type_content; location: Location.t}
 and ty_expr = type_expression

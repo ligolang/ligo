@@ -63,7 +63,7 @@ let rec constant_tag (ct : constant_tag) =
 and type_expression a b =
   match a.type_content,b.type_content with
     T_variable a, T_variable b -> type_variable a b
-  | T_constant a, T_constant b -> type_operator a b
+  | T_constant a, T_constant b -> injection a b
   | T_sum      a, T_sum      b -> rows a b
   | T_record   a, T_record   b -> rows a b
   | T_arrow    a, T_arrow    b -> arrow a b
@@ -71,16 +71,16 @@ and type_expression a b =
     (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ ) ->
     Int.compare (type_expression_tag a) (type_expression_tag b)
 
+and injection {language=la ; injection=ia ; parameters=pa} {language=lb ; injection=ib ; parameters=pb} =
+  cmp3
+    String.compare la lb
+    Ligo_string.compare ia ib
+    (List.compare ~compare:type_expression) pa pb
 
 and rows {content=ca; layout=la} {content=cb; layout=lb} =
   cmp2
     (label_map ~compare:row) ca cb
     layout la lb
-
-and type_operator {type_constant=tca;arguments=la} {type_constant=tcb;arguments=lb} =
-  cmp2
-    type_constant tca tcb
-    (List.compare ~compare:type_expression) la lb
 
 and constraint_identifier (ConstraintIdentifier a) (ConstraintIdentifier b) =
   cmp2

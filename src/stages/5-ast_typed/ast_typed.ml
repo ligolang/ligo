@@ -6,7 +6,6 @@ module Formatter = Formatter
 module Combinators = struct
   include Combinators
 end
-module Constant = Constant
 module Misc = struct
   include Misc
   include Misc_smart

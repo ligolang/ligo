@@ -75,30 +75,24 @@ let layout_eq a b = match (a,b) with
   | L_tree, L_tree -> true
   | _ -> false
 
+let constant_compare ia ib =
+  let open Stage_common.Constant in
+  let ia' = Ligo_string.extract ia in
+  let ib' = Ligo_string.extract ib in
+  match ia',ib' with
+  | a,b when (String.equal a map_name || String.equal a map_or_big_map_name) && (String.equal b map_name || String.equal b map_or_big_map_name) -> 0
+  | a,b when (String.equal a big_map_name || String.equal a map_or_big_map_name) && (String.equal b big_map_name || String.equal b map_or_big_map_name) -> 0
+  | _ -> Ligo_string.compare ia ib
+
 let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : unit option =
   let open Option in
   match (a.type_content, b.type_content) with
-  | T_constant {type_constant=ca;arguments=la}, T_constant {type_constant=cb;arguments=lb} -> (
-    let aux = fun lsta lstb ->
-      if List.length lsta <> List.length lstb then None
-      else
-        List.fold_left
-          (fun acc (a,b) ->
-            match acc with | None -> None | Some () -> assert_type_expression_eq (a,b))
-          (Some ())
-          (List.combine lsta lstb) in
-    match (ca, cb) with
-      | TC_option, TC_option
-      | TC_list, TC_list
-      | TC_contract, TC_contract
-      | TC_set, TC_set
-      | (TC_map | TC_map_or_big_map) , (TC_map | TC_map_or_big_map)
-      | (TC_big_map | TC_map_or_big_map ), (TC_big_map | TC_map_or_big_map) ->
-        aux la lb
-      | (TC_option | TC_list | TC_contract | TC_set | TC_map | TC_big_map | TC_map_or_big_map | TC_michelson_pair|TC_michelson_or|TC_michelson_pair_right_comb | TC_michelson_pair_left_comb|TC_michelson_or_right_comb| TC_michelson_or_left_comb ),
-        (TC_option | TC_list | TC_contract | TC_set | TC_map | TC_big_map | TC_map_or_big_map | TC_michelson_pair|TC_michelson_or|TC_michelson_pair_right_comb | TC_michelson_pair_left_comb|TC_michelson_or_right_comb| TC_michelson_or_left_comb )
-        -> None
-      | _ -> assert_eq ca cb
+  | T_constant {language=la;injection=ia;parameters=lsta}, T_constant {language=lb;injection=ib;parameters=lstb} -> (
+    if (String.equal la lb) && (constant_compare ia ib = 0) then (
+      assert_same_size lsta lstb >>= fun _ ->
+        List.fold_left (fun acc p -> match acc with | None -> None | Some () -> assert_type_expression_eq p) (Some ()) (List.combine lsta lstb)
+    ) else 
+      None
   )
   | T_constant _, _ -> None
   | T_sum sa, T_sum sb -> (

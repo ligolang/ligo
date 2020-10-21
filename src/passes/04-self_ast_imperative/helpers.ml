@@ -194,7 +194,10 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_express
   | T_annoted (ty, str) ->
     let%bind ty = self ty in
     return @@ T_annoted (ty, str)
-  | T_variable _ | T_constant _ -> ok te'
+  | T_app {type_operator;arguments} ->
+    let%bind arguments = bind_map_list self arguments in
+    return @@ T_app {type_operator;arguments}
+  | T_variable _ -> ok te'
 
 and map_cases : 'err exp_mapper -> matching_expr -> (matching_expr , _) result = fun f m ->
   match m with

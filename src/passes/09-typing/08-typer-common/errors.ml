@@ -12,7 +12,7 @@ type typer_error = [
   | `Typer_match_extra_case of Ast_core.label list * Ast_core.label list * Location.t
   | `Typer_unbound_constructor of Ast_typed.Environment.t * Ast_core.label * Location.t
   | `Typer_redundant_constructor of Ast_typed.Environment.t * Ast_core.label * Location.t
-  | `Typer_type_constant_wrong_number_of_arguments of Ast_core.type_constant * int * int * Location.t
+  | `Typer_type_constant_wrong_number_of_arguments of Ast_core.type_variable* int * int * Location.t
   | `Typer_michelson_or_no_annotation of Ast_core.label * Location.t
   | `Typer_program_tracer of Ast_core.program * typer_error
   | `Typer_constant_declaration_tracer of Ast_core.expression_variable * Ast_core.expression * (Ast_typed.type_expression option) * typer_error
@@ -83,7 +83,7 @@ let unbound_variable (e:Ast_typed.Environment.t) (v:Ast_typed.expression_variabl
 let match_missing_case (m:Ast_core.label list) (v:Ast_core.label list) (loc:Location.t) = `Typer_match_missing_case (m, v, loc)
 let match_extra_case (m:Ast_core.label list) (v:Ast_core.label list) (loc:Location.t) = `Typer_match_extra_case (m, v, loc)
 let unbound_constructor (e:Ast_typed.Environment.t) (c:Ast_core.label) (loc:Location.t) = `Typer_unbound_constructor (e,c,loc)
-let type_constant_wrong_number_of_arguments (op:Ast_core.type_constant) (expected:int) (actual:int) loc = `Typer_type_constant_wrong_number_of_arguments (op,expected,actual,loc)
+let type_constant_wrong_number_of_arguments (op:Ast_core.type_variable) (expected:int) (actual:int) loc = `Typer_type_constant_wrong_number_of_arguments (op,expected,actual,loc)
 let redundant_constructor (e:Ast_typed.Environment.t) (c:Ast_core.label) (loc:Location.t) = `Typer_redundant_constructor (e,c,loc)
 let michelson_or (c:Ast_core.label) (loc:Location.t) = `Typer_michelson_or_no_annotation (c,loc)
 let program_error_tracer (p:Ast_core.program) (err:typer_error) = `Typer_program_tracer (p,err)
@@ -242,7 +242,7 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@ Wrong number of arguments for type constant: %a@ expected: %i@ got: %i@]"
         Snippet.pp loc
-        Ast_core.PP.type_constant op
+        Ast_core.PP.type_variable op
         e a
     | `Typer_michelson_or_no_annotation (c,loc) ->
       Format.fprintf f
@@ -636,7 +636,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
   | `Typer_type_constant_wrong_number_of_arguments (op, e, a, loc) ->
     let message = `String "Wrong number of arguments for type constant" in
     let loc = Format.asprintf "%a" Location.pp loc in
-    let op  = Format.asprintf "%a" Ast_core.PP.type_constant op in
+    let op  = Format.asprintf "%a" Ast_core.PP.type_variable op in
     let content = `Assoc [
       ("message", message);
       ("location", `String loc);

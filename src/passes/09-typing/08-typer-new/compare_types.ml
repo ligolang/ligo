@@ -3,21 +3,9 @@ open Trace
 open Typer_common.Errors
 
 let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : (unit, typer_error) result = match (a.type_content, b.type_content) with
-  | T_constant {type_constant=ca;arguments=lsta}, T_constant {type_constant=cb;arguments=lstb} -> (
-    let%bind _ = match (ca, cb) with
-      | TC_option, TC_option
-      | TC_list, TC_list
-      | TC_contract, TC_contract
-      | TC_set, TC_set 
-      | (TC_map | TC_map_or_big_map), (TC_map | TC_map_or_big_map)
-      | (TC_big_map | TC_map_or_big_map), (TC_big_map | TC_map_or_big_map)
-        -> ok @@ () 
-      | (TC_option | TC_list | TC_contract | TC_set | TC_map | TC_big_map | TC_michelson_or | TC_michelson_or_left_comb | TC_michelson_or_right_comb | TC_michelson_pair | TC_michelson_pair_left_comb | TC_michelson_pair_right_comb | TC_map_or_big_map ),
-        (TC_option | TC_list | TC_contract | TC_set | TC_map | TC_big_map | TC_michelson_or | TC_michelson_or_left_comb | TC_michelson_or_right_comb | TC_michelson_pair | TC_michelson_pair_left_comb | TC_michelson_pair_right_comb | TC_map_or_big_map )
-        -> fail @@ different_types a b
-      | _ -> 
-        Assert.assert_true (different_types a b) (ca = cb)
-    in
+  | T_constant {language=la;injection=ia;parameters=lsta}, T_constant {language=lb;injection=ib;parameters=lstb} -> (
+    let%bind () = Assert.assert_true (different_types a b) (String.equal la lb) in
+    let%bind () = Assert.assert_true (different_types a b) (Ligo_string.compare ia ib = 0) in
     if List.length lsta <> List.length lstb then
       fail @@ different_types a b
     else

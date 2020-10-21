@@ -1,19 +1,22 @@
 open Errors
 open Ast_typed
 open Trace
+open Stage_common.Constant
 
 type contract_pass_data = Contract_passes.contract_pass_data
 
+let extract = Ligo_string.extract
+
 let rec check_no_nested_bigmap is_in_bigmap e =
   match e.type_content with
-  | T_constant {type_constant=TC_big_map; _} when is_in_bigmap  ->
+  | T_constant {injection; _} when (String.equal (extract injection) big_map_name) && is_in_bigmap ->
     fail @@ nested_bigmap e.location
-  | T_constant {type_constant=TC_big_map|TC_map_or_big_map; arguments=[k ; v]} ->
+  | T_constant {injection; parameters=[k ; v];_} when String.equal (extract injection) big_map_name || String.equal (extract injection) map_name ->
     let%bind _ = check_no_nested_bigmap false k in
     let%bind _ = check_no_nested_bigmap true  v in
     ok ()
-  | T_constant {arguments;_} ->
-    let%bind _ = bind_map_list (check_no_nested_bigmap is_in_bigmap) arguments in
+  | T_constant {parameters;_} ->
+    let%bind _ = bind_map_list (check_no_nested_bigmap is_in_bigmap) parameters in
     ok ()
   | T_sum s ->
     let es = List.map (fun {associated_type;_} -> associated_type) (LMap.to_list s.content) in

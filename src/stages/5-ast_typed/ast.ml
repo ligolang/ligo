@@ -16,10 +16,17 @@ and type_meta = ast_core_type_expression option
 
 and type_content =
   | T_variable of type_variable
-  | T_constant of ty_expr type_operator
+  | T_constant of type_injection
   | T_sum      of rows
   | T_record   of rows
   | T_arrow    of ty_expr arrow
+
+and type_injection = {
+  language : string ;
+  injection : Ligo_string.t ;
+  (* kind (?) *)
+  parameters : ty_expr list ;
+}
 
 and rows = {
   content : row_element label_map;

@@ -3,9 +3,7 @@ module Tree_abstraction : sig
 
   module type Constant = sig
     val constants      : string -> rich_constant option
-    val type_constants : string -> type_constant option
     val constant_to_string      : rich_constant -> string
-    val type_constant_to_string : type_constant -> string
   end
 
   module Pascaligo : Constant

@@ -60,7 +60,7 @@ let map  k v      = p_constant C_map       [k; v]
 let unit          = p_constant C_unit      []
 let list   t      = p_constant C_list      [t]
 let set    t      = p_constant C_set       [t]
-let bool          = { tsrc = "built-in type" ; t = P_variable Ast_typed.Constant.t_bool }
+let bool          = { tsrc = "built-in type" ; t = P_variable Stage_common.Constant.v_bool }
 let string        = p_constant C_string    []
 let nat           = p_constant C_nat       []
 let mutez         = p_constant C_mutez     []

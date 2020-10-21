@@ -36,10 +36,10 @@ and declaration =
 
 and type_content =
   | T_variable of type_variable
-  | T_constant of ty_expr type_operator
   | T_sum      of rows
   | T_record   of rows
   | T_arrow    of ty_expr arrow
+  | T_app      of ty_expr type_app
 
 and rows = { fields : row_element label_map ; layout : layout option }
 

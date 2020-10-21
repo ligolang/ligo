@@ -116,11 +116,11 @@ let rec map_expression : 'err exp_mapper -> expression -> (expression , 'err) re
   | E_literal _ | E_variable _ | E_raw_code _ as e' -> return e'
 
 and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_expression , 'err) result =
-    fun f ({type_content ; sugar; location } as te) ->
+    fun f te ->
   let self = map_type_expression f in
   let%bind te' = f te in
-  let return type_content = ok @@ ({ type_content; sugar; location}: type_expression) in
-  match type_content with
+  let return type_content = ok { type_content; location=te.location ; sugar = te.sugar } in
+  match te'.type_content with
   | T_sum { fields ; layout } ->
     let%bind fields = bind_map_lmap_t self fields in
     return @@ (T_sum { fields ; layout })
@@ -130,7 +130,11 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_express
   | T_arrow arr ->
     let%bind arr = Maps.arrow self arr in
     return @@ T_arrow arr
-  | T_variable _ | T_constant _ -> ok te'
+  | T_app a ->
+    let%bind a' = Maps.type_app self a in
+    return @@ T_app a'
+  | T_variable _ -> ok te'
+  
 
 and map_cases : 'err exp_mapper -> matching_expr -> (matching_expr , 'err) result = fun f m ->
   match m with

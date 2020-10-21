@@ -2,6 +2,7 @@ open Types
 module Option = Simple_utils.Option
 
 module SMap = Map.String
+open Stage_common.Constant
 
 let make_t ?(loc = Location.generated) type_content = {type_content; location=loc}
 
@@ -11,24 +12,24 @@ let tuple_to_record lst =
   let (_, lst ) = List.fold_left aux (0,[]) lst in
   lst
 
-let t_constant ?loc type_constant arguments  : type_expression = make_t ?loc @@ T_constant {type_constant; arguments}
+let t_variable ?loc variable : type_expression = make_t ?loc @@ T_variable variable
+let t_app ?loc type_operator arguments : type_expression = make_t ?loc @@ T_app {type_operator ; arguments}
 
-let t_bool ?loc ()        : type_expression = make_t ?loc @@ T_variable (Stage_common.Constant.t_bool)
-let t_string ?loc ()      : type_expression = t_constant ?loc TC_string []
-let t_bytes ?loc ()       : type_expression = t_constant ?loc TC_bytes []
-let t_int ?loc ()         : type_expression = t_constant ?loc TC_int []
-let t_operation ?loc ()   : type_expression = t_constant ?loc TC_operation []
-let t_nat ?loc ()         : type_expression = t_constant ?loc TC_nat []
-let t_tez ?loc ()         : type_expression = t_constant ?loc TC_mutez []
-let t_unit ?loc ()        : type_expression = t_constant ?loc TC_unit []
-let t_address ?loc ()     : type_expression = t_constant ?loc TC_address []
-let t_signature ?loc ()   : type_expression = t_constant ?loc TC_signature []
-let t_key ?loc ()         : type_expression = t_constant ?loc TC_key []
-let t_key_hash ?loc ()    : type_expression = t_constant ?loc TC_key_hash []
-let t_timestamp ?loc ()   : type_expression = t_constant ?loc TC_timestamp []
-let t_option ?loc o       : type_expression = t_constant ?loc TC_option [o]
-let t_list ?loc t         : type_expression = t_constant ?loc TC_list [t]
-let t_variable ?loc n     : type_expression = make_t ?loc @@ T_variable (Var.of_name n)
+let t_bool ?loc ()        : type_expression = t_variable ?loc v_bool
+let t_string ?loc ()      : type_expression = t_variable ?loc v_string
+let t_bytes ?loc ()       : type_expression = t_variable ?loc v_bytes
+let t_int ?loc ()         : type_expression = t_variable ?loc v_int
+let t_operation ?loc ()   : type_expression = t_variable ?loc v_operation
+let t_nat ?loc ()         : type_expression = t_variable ?loc v_nat
+let t_tez ?loc ()         : type_expression = t_variable ?loc v_tez
+let t_unit ?loc ()        : type_expression = t_variable ?loc v_unit
+let t_address ?loc ()     : type_expression = t_variable ?loc v_address
+let t_signature ?loc ()   : type_expression = t_variable ?loc v_signature
+let t_key ?loc ()         : type_expression = t_variable ?loc v_key
+let t_key_hash ?loc ()    : type_expression = t_variable ?loc v_key_hash
+let t_timestamp ?loc ()   : type_expression = t_variable ?loc v_timestamp
+let t_option ?loc o       : type_expression = t_app ?loc v_option [o]
+let t_list ?loc t         : type_expression = t_app ?loc v_list [t]
 let t_record_ez ?loc lst =
   let lst = List.map (fun (k, v) -> (Label k, v)) lst in
   let fields = LMap.of_list lst in
@@ -51,10 +52,10 @@ let t_sum ?loc m : type_expression =
   t_sum_ez ?loc lst
 
 let t_function ?loc type1 type2  : type_expression = make_t ?loc @@ T_arrow {type1; type2}
-let t_map ?loc key value                  : type_expression = t_constant ?loc TC_map [key; value]
-let t_big_map ?loc key value              : type_expression = t_constant ?loc TC_big_map [key; value]
-let t_set ?loc key                        : type_expression = t_constant ?loc TC_set [key]
-let t_contract ?loc contract              : type_expression = t_constant ?loc TC_contract [contract]
+let t_map ?loc key value                  : type_expression = t_app ?loc v_map [key; value]
+let t_big_map ?loc key value              : type_expression = t_app ?loc v_big_map [key; value]
+let t_set ?loc key                        : type_expression = t_app ?loc v_set [key]
+let t_contract ?loc contract              : type_expression = t_app ?loc v_contract [contract]
 
 
 let make_e ?(loc = Location.generated) expression_content =

@@ -9,10 +9,10 @@ let rec type_expression {type_content=tc;sugar=_;location} =
 
 and type_content = function
   | T_variable t -> `List [ `String "t_variable"; type_variable_to_yojson t]
-  | T_constant t -> `List [ `String "t_constant"; type_operator type_expression t]
   | T_sum      t -> `List [ `String "t_sum";      label_map (row_element type_expression) t.fields]
   | T_record   t -> `List [ `String "t_record";   label_map (row_element type_expression) t.fields]
   | T_arrow    t -> `List [ `String "t_arrow";    arrow type_expression t]
+  | T_app      t -> `List [ `String "t_app";      t_app type_expression t]
 
 let rec expression {content=ec;sugar;location} =
   `Assoc [
