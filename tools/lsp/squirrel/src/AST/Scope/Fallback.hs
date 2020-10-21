@@ -1,17 +1,13 @@
 
 module AST.Scope.Fallback where
 
-import           Control.Arrow (second, (&&&))
+import           Control.Arrow ((&&&))
 import           Control.Monad.State
-import           Control.Monad.Catch
 import           Control.Monad.Catch.Pure
 import           Control.Monad.Writer (WriterT, Writer, execWriterT, runWriter, tell)
 
-import           Data.Monoid         (First (..))
-import qualified Data.List   as List
 import           Data.Map            (Map)
 import qualified Data.Map    as Map
-import           Data.Set            (Set)
 import qualified Data.Set    as Set
 import           Data.Maybe          (listToMaybe, maybeToList)
 import           Data.Text           (Text)
@@ -20,7 +16,6 @@ import           Data.Foldable       (toList, for_)
 import           Duplo.Lattice
 import           Duplo.Pretty
 import           Duplo.Tree hiding (loop)
-import           Duplo.Error
 
 import           AST.Skeleton
 import           Cli.Types
@@ -28,7 +23,7 @@ import           Parser
 import           Product
 import           Range
 
-import           Debug.Trace
+-- import           Debug.Trace
 
 import           AST.Scope.Common
 
@@ -47,12 +42,12 @@ addReferences ligo = execState $ loopM_ addRef ligo
       (match -> Just (r, TypeName n)) -> addThisRef Type     (getRange r) n
       _                               -> return ()
 
-    addThisRef cat r n = do
+    addThisRef cat' r n = do
       modify
         $ withScopeForest \(sf, ds) ->
           flip runState ds do
             let frameSet = Set.toList =<< spine r =<< sf
-            walkScope cat r n frameSet
+            walkScope cat' r n frameSet
             return sf
 
     walkScope _    _ _ [] = return ()
@@ -68,9 +63,6 @@ addReferences ligo = execState $ loopM_ addRef ligo
 
 ignoreFailure :: (a -> Maybe a) -> (a -> Maybe a)
 ignoreFailure f a = maybe (Just a) Just (f a)
-
-isLeft Left {} = True
-isLeft _       = False
 
 getEnv :: LIGO Info -> ScopeForest
 getEnv tree
@@ -89,6 +81,7 @@ prepareTree
   . unSeq
   . unLetRec
 
+loop :: Functor f => (Cofree f a -> Cofree f a) -> Cofree f a -> Cofree f a
 loop go = aux
   where
     aux (r :< fs) = go $ r :< fmap aux fs
@@ -113,7 +106,7 @@ unLetRec = loop go
     go = \case
       (match -> Just (r, expr)) -> do
         case expr of
-          Let (match -> Just (r', Seq decls)) body -> do
+          Let (match -> Just (_, Seq decls)) body -> do
             foldr reLet body decls
           _ -> make (r, expr)
 
@@ -122,6 +115,8 @@ unLetRec = loop go
         case reverse decls of
           lst : (reverse -> ini) -> do
             foldr reLet lst ini
+
+          [] -> make (r, RawContract [])
 
       it -> it
 
@@ -141,8 +136,19 @@ unSeq = loop go
           lst : (reverse -> ini) -> do
             foldr reLet lst ini
 
+          [] -> make (r, Seq [])
+
       it -> it
 
+reLet
+  :: ( Contains Range xs
+     , Apply Functor fs
+     , Eq (Product xs)
+     , Element Expr fs
+     )
+  => Cofree (Sum fs) (Product xs)
+  -> Cofree (Sum fs) (Product xs)
+  -> Tree fs (Product xs)
 reLet decl body = make (r', Let decl body)
   where
     r' = putElem (getRange decl `merged` getRange body)
@@ -229,14 +235,16 @@ compressScopeTree = (go =<<)
     go
       :: Tree' '[[]] '[[ScopedDecl], Bool, Range]
       -> [Tree' '[[]] '[[ScopedDecl], Range]]
-    go (only -> (decls :> False :> r :> Nil, list)) =
-      list >>= go
+    go (only -> (_ :> False :> _ :> Nil, list')) =
+      list' >>= go
 
-    go (only -> (decls :> True :> r :> Nil, list)) = do
-      let list' = list >>= go
-      [ make (decls :> r :> Nil, list')
-       | not (null decls) || not (null list')
+    go (only -> (decls :> True :> r :> Nil, list')) = do
+      let list'' = list' >>= go
+      [ make (decls :> r :> Nil, list'')
+       | not (null decls) || not (null list'')
        ]
+
+    go _ = error "compressScopeTree: impossible"
 
 extractScopeForest
   :: [Tree' '[[]] '[[ScopedDecl], Range]]
@@ -247,13 +255,15 @@ extractScopeForest = uncurry ScopeForest . runWriter . mapM go
       :: Tree' '[[]] '[[ScopedDecl], Range]
       -> Writer (Map DeclRef ScopedDecl) (Tree' '[[]] ScopeInfo)
     go (only -> (decls :> r :> Nil, ts)) = do
-      let uName sd = DeclRef (ppToText (_sdName sd)) (_sdOrigin sd)
-      let extract = Map.fromList $ map (uName &&& id) decls
-      tell extract
-      let refs    = Map.keysSet extract
+      let uName sd  = DeclRef (ppToText (_sdName sd)) (_sdOrigin sd)
+      let extracted = Map.fromList $ map (uName &&& id) decls
+      tell extracted
+      let refs    = Map.keysSet extracted
       let r'      = refs :> r :> Nil
       ts' <- mapM go ts
       return $ make (r', ts')
+
+    go _ = error "extractScopeForest: impossible"
 
 getImmediateDecls
   :: ( Contains  Range     xs
@@ -270,14 +280,14 @@ getImmediateDecls = \case
         let (r', name) = getName v
         [ScopedDecl name r' Nothing Nothing [] (getElem r)]
 
-      IsTuple xs -> getImmediateDecls =<< xs
-      IsList  xs -> getImmediateDecls =<< xs
-      IsSpread s -> getImmediateDecls s
-      IsWildcard -> []
-      IsAnnot x t -> getImmediateDecls x
-      IsCons h t -> getImmediateDecls h <> getImmediateDecls t
-      IsConstant _ -> []
-      IsConstr _ xs -> getImmediateDecls =<< maybeToList xs
+      IsTuple    xs   -> getImmediateDecls =<< xs
+      IsList     xs   -> getImmediateDecls =<< xs
+      IsSpread   s    -> getImmediateDecls s
+      IsWildcard      -> []
+      IsAnnot    x _  -> getImmediateDecls x
+      IsCons     h t  -> getImmediateDecls h <> getImmediateDecls t
+      IsConstant _    -> []
+      IsConstr   _ xs -> getImmediateDecls =<< maybeToList xs
 
   (match -> Just (r, pat)) -> do
     case pat of
@@ -301,7 +311,7 @@ getImmediateDecls = \case
       Attribute _ -> []
       Include _ -> []
 
-  (match -> Just (r, Parameters ps)) -> do
+  (match -> Just (_, Parameters ps)) -> do
     ps >>= getImmediateDecls
 
   (match -> Just (r, NameDecl n)) -> do
@@ -309,6 +319,7 @@ getImmediateDecls = \case
 
   _ -> []
 
+kind :: Maybe TypeOrKind
 kind = Just $ IsKind Star
 
 select
@@ -325,7 +336,7 @@ select
 select what handlers t
   = maybe
       (error . show $ "Tree does not contain a" <+> pp what <.> ":" <+> pp t <+> pp (getRange $ extract t))
-      (\t -> (getElem $ extract t, ppToText t))
+      (getElem . extract &&& ppToText)
   $ either (const Nothing) listToMaybe
   $ runCatch
   $ execWriterT

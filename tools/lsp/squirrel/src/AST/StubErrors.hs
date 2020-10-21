@@ -1,15 +1,15 @@
 
 module AST.StubErrors where
 
-import Data.Functor ((<&>))
-import Data.Text (Text)
+-- import Data.Functor ((<&>))
+-- import Data.Text (Text)
 
-import Duplo.Tree
-import Duplo.Error
-import Duplo.Lattice
-import Duplo.Pretty
+-- import Duplo.Tree
+-- import Duplo.Error
+-- import Duplo.Lattice
+-- import Duplo.Pretty
 
-import AST.Skeleton
+-- import AST.Skeleton
 
 -- stubErrors :: forall xs. (Lattice xs, Modifies xs) => xs -> LIGO xs -> LIGO xs
 -- stubErrors stub = go transform

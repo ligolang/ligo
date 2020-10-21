@@ -11,7 +11,6 @@ import AST.Scope
 import AST.Skeleton
 
 import Duplo.Pretty
-import Product
 import Range
 import Data.Text (pack, intercalate)
 

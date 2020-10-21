@@ -1,3 +1,6 @@
+
+{-# OPTIONS_GHC -Wno-orphans #-}
+
 {-|
   The heterogeneous list.
 -}

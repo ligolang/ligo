@@ -14,21 +14,21 @@ module Cli.Impl
   ) where
 
 import Control.Exception (Exception (..), IOException, catch, throwIO)
-import Control.Lens hiding ((<.>))
+-- import Control.Lens hiding ((<.>))
 import Control.Monad.Catch (MonadThrow (throwM))
 import Control.Monad.IO.Class (MonadIO (liftIO))
-import Data.Aeson (Value, eitherDecodeStrict')
-import Data.Aeson.Lens (AsJSON (_JSON), AsPrimitive (_String), key, members)
-import qualified Data.ByteString.Lazy.Char8 as C8
-import qualified Data.HashMap.Strict as HM
+import Data.Aeson (eitherDecodeStrict')
+-- import Data.Aeson.Lens (AsJSON (_JSON), AsPrimitive (_String), key, members)
+-- import qualified Data.ByteString.Lazy.Char8 as C8
+-- import qualified Data.HashMap.Strict as HM
 import qualified Data.List as L
 import Data.Text (Text, pack)
 import Data.Text.Encoding (encodeUtf8)
-import Duplo.Pretty (PP (PP), Pretty (..), text, (<+>), (<.>))
+import Duplo.Pretty (PP (PP), Pretty (..), (<+>), (<.>))
 import System.Exit (ExitCode (..))
 import System.Process (readProcessWithExitCode)
 
-import AST.Scope.Common
+-- import AST.Scope.Common
 import Cli.Json
 import Cli.Types
 import qualified Log
@@ -89,7 +89,7 @@ callLigo args = do
   LigoClientEnv {..} <- getLigoClientEnv
   Log.debug "CLI" $ "Running: " <> show _lceClientPath <> " " <> L.intercalate " " args
   liftIO $ readProcessWithExitCode' _lceClientPath args "" >>= \case
-    (ExitSuccess, output, errOutput) -> return output
+    (ExitSuccess, output, _errOutput) -> return output
     (ExitFailure errCode, pack -> output, pack -> errOutput) ->
       throwM $ UnexpectedClientFailure errCode output errOutput
 

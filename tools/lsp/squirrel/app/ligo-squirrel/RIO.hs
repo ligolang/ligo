@@ -41,13 +41,13 @@ import qualified Language.Haskell.LSP.Types            as J
 import qualified Language.Haskell.LSP.Types.Lens       as J
 import qualified Language.Haskell.LSP.Utility          as U
 
-import           System.Directory (getDirectoryContents, doesDirectoryExist)
-import           System.FilePath
+-- import           System.Directory (getDirectoryContents, doesDirectoryExist)
+-- import           System.FilePath
 
 import           Duplo.Error
 import           Duplo.Tree (collect)
 
-import           AST                                           hiding (def)
+import           AST
 import qualified ASTMap
 import           Cli
 import qualified Config
@@ -69,7 +69,7 @@ type RioEnv =
      ]
 
 newtype RIO a = RIO
-  { unRio :: ReaderT RioEnv IO a
+  { _unRio :: ReaderT RioEnv IO a
   }
   deriving newtype
     ( Functor
@@ -200,8 +200,9 @@ errorToDiag (getRange -> (Range (sl, sc, _) (el, ec, _) _), Err what) =
 collectTreeErrors :: LIGO Info' -> [Msg]
 collectTreeErrors = map (getElem *** void) . collect
 
-data ParsedContract = ParsedContract
-  { cPath :: FilePath
-  , cTree :: LIGO Info'
-  , cErr  :: [Msg]
-  }
+-- TODO: uncomment when it will be used
+-- data ParsedContract = ParsedContract
+--   { cPath :: FilePath
+--   , cTree :: LIGO Info'
+--   , cErr  :: [Msg]
+--   }
