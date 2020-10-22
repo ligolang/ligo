@@ -8,11 +8,7 @@ let
   nix-npm-buildpackage = pkgs.callPackage sources.nix-npm-buildpackage { };
 
   pkgs = import sources.nixpkgs {
-    overlays = [ ocaml-overlay nodejs-overlay ]
-    # This is done here to prevent the need for bootstrap nixpkgs
-      ++ (if builtins.currentSystem == "x86_64-darwin"
-          then [ mac-overlay ]
-          else [ ]);
+    overlays = [ ocaml-overlay nodejs-overlay ];
   };
 
   # Takes $pkg/ligo and creates a new package with $pkg/bin/ligo

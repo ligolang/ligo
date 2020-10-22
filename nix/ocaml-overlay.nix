@@ -13,6 +13,10 @@ let
       sources = import "${sources.tezos-packaging}/nix/nix/sources.nix";
     };
 
+  fixHardeningWarning = pkg: if pkg.stdenv.isDarwin then pkg.overrideAttrs (_: {
+    hardeningDisable = [ "strictoverflow" ];
+  }) else pkg;
+
   inherit (import sources."gitignore.nix" { inherit (self) lib; })
     gitignoreSource;
   # Remove list of directories or files from source (to stop unneeded rebuilds)
@@ -23,10 +27,8 @@ let
       src = gitignoreSource ../.;
     });
 in {
-  ocamlPackages = self.ocaml-ng.ocamlPackages_4_09.overrideScope'
+  ocamlPackages = (self.extend ocaml-overlay).ocamlPackages.overrideScope'
     (builtins.foldl' self.lib.composeExtensions (_: _: { }) [
-      # opam-repository is updated manually with `niv update`
-      (oself: osuper: (ocaml-overlay self super).ocamlPackages)
       (opam-nix.callOPAMPackage (filterOut [
         ".git"
         ".gitlab-ci.yml"
@@ -46,7 +48,6 @@ in {
         xmldiff = osuper.xmldiff.overrideAttrs (_: { src = sources.xmldiff; });
         getopt = osuper.getopt.overrideAttrs (_: { configurePhase = "true"; });
         # Force certain versions
-        cohttp-lwt = osuper.cohttp-lwt.versions."2.4.0";
         ocaml-migrate-parsetree =
           osuper.ocaml-migrate-parsetree.versions."1.4.0";
         ppx_tools_versioned = osuper.ppx_tools_versioned.versions."5.2.3";
@@ -54,6 +55,8 @@ in {
           src = builtins.fetchTarball
             "https://github.com/aantron/bisect_ppx/archive/02dfb10188033a26d07d23480c2bc44a3a670357.tar.gz";
         });
+
+        hacl = fixHardeningWarning osuper.hacl;
 
         proto-alpha-utils = osuper.proto-alpha-utils.overrideAttrs (oa: rec {
           buildInputs = oa.buildInputs
