@@ -29,6 +29,7 @@ let decompile_michelson : Stacking.Errors.stacking_error -> all = fun e -> `Main
 
 let syntax_auto_detection extension : all = `Main_invalid_extension extension
 let invalid_syntax syntax : all = `Main_invalid_syntax_name syntax
+let invalid_protocol_version possible actual = `Main_invalid_protocol_version (possible,actual)
 
 let entrypoint_not_a_function : all = `Main_entrypoint_not_a_function
 let entrypoint_not_found : all = `Main_entrypoint_not_found

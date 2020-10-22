@@ -20,8 +20,10 @@ let int () : (unit, _) result =
   let%bind () = trace_option (test_internal __LOC__) @@ assert_type_expression_eq (post.type_expression, t_int ()) in
   ok ()
 
+let init_env = Environment.default Environment.Protocols.current
+
 module TestExpressions = struct
-  let test_expression ?(env = Environment.default)
+  let test_expression ?(env = init_env)
                       ?(state = Typer.Solver.initial_state)
                       (expr : expression)
                       (test_expected_ty : Typed.type_expression) =

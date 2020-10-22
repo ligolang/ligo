@@ -9,10 +9,11 @@ let get_program =
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-        let%bind program = retype_file "./contracts/pledge.religo" in
-        s := Some program ;
-        ok program
-      )
+      let init_env = Environment.default Environment.Protocols.current in
+      let%bind program = retype_file ~init_env "./contracts/pledge.religo" in
+      s := Some program ;
+      ok program
+    )
 
 let compile_main () =
   let%bind typed_prg,_,_  = get_program () in

@@ -8,10 +8,11 @@ let get_program =
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-        let%bind program = Ligo.Compile.Utils.type_file "./contracts/vote.mligo" "cameligo" (Contract "main") in
-        s := Some program ;
-        ok program
-      )
+      let init_env = Environment.default Environment.Protocols.current in
+      let%bind program = Ligo.Compile.Utils.type_file ~init_env "./contracts/vote.mligo" "cameligo" (Contract "main") in
+      s := Some program ;
+      ok program
+    )
 
 open Ast_imperative
 

@@ -5,6 +5,7 @@ type all =
  | `Main_invalid_syntax_name of string
  | `Main_invalid_dialect_name of string
  | `Main_invalid_extension of string
+ | `Main_invalid_protocol_version of string list *  string
  | `Main_unparse_tracer of tezos_alpha_error list
  | `Main_typecheck_contract_tracer of Michelson.michelson * tezos_alpha_error list
  | `Main_could_not_serialize of tezos_alpha_error list

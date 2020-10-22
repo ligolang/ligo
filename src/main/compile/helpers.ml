@@ -4,6 +4,13 @@ open Main_errors
 type s_syntax = Syntax_name of string
 type v_syntax = PascaLIGO | CameLIGO | ReasonLIGO
 
+let protocol_to_variant : string -> (Environment.Protocols.t, all) result = fun s ->
+  trace_option (invalid_protocol_version Environment.Protocols.protocols_str s) @@ Environment.Protocols.protocols_to_variant s
+
+let get_initial_env  : string -> (Ast_typed.environment, all) result = fun protocol_as_str ->
+  let%bind protocol = protocol_to_variant protocol_as_str in
+  ok @@ Environment.default protocol
+
 let syntax_to_variant (Syntax_name syntax) source =
   match syntax, source with
     "auto", Some sf ->

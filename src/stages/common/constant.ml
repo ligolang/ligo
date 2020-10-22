@@ -27,6 +27,14 @@ let michelson_pair_left_comb_name = "michelson_pair_left_comb"
 let michelson_or_right_comb_name = "michelson_or_right_comb"
 let michelson_or_left_comb_name = "michelson_or_left_comb"
 let map_or_big_map_name = "map_or_big_map"
+let baker_hash_name = "baker_hash"
+let pvss_key_name = "pvss_key"
+let sapling_transaction_name = "sapling_transaction"
+let sapling_state_name = "sapling_state"
+let baker_operation_name = "baker_operation"
+let bls12_381_g1_name = "bls12_381_g1"
+let bls12_381_g2_name = "bls12_381_g2"
+let bls12_381_fr_name = "bls12_381_fr"
 
 let v_bool : type_variable = Var.of_name bool_name
 let v_string : type_variable = Var.of_name string_name
@@ -55,33 +63,11 @@ let v_michelson_pair_left_comb  : type_variable = Var.of_name michelson_pair_lef
 let v_michelson_or_right_comb  : type_variable = Var.of_name michelson_or_right_comb_name
 let v_michelson_or_left_comb  : type_variable = Var.of_name michelson_or_left_comb_name
 let v_map_or_big_map : type_variable = Var.of_name map_or_big_map_name
-
-(* temp solution for PP's*)
-let type_name_lst = [
-bool_name ;
-string_name ;
-bytes_name ;
-int_name ;
-operation_name ;
-nat_name ;
-tez_name ;
-unit_name ;
-address_name ;
-signature_name ;
-key_name ;
-key_hash_name ;
-timestamp_name ;
-chain_id_name ;
-option_name ;
-list_name ;
-map_name ;
-big_map_name ;
-set_name ;
-contract_name ;
-michelson_or_name ;
-michelson_pair_name ;
-michelson_pair_right_comb_name ;
-michelson_pair_left_comb_name ;
-michelson_or_right_comb_name ;
-michelson_or_left_comb_name ;
-]
+let v_baker_hash : type_variable = Var.of_name baker_hash_name
+let v_pvss_key : type_variable = Var.of_name pvss_key_name
+let v_sapling_trasaction : type_variable = Var.of_name sapling_transaction_name
+let v_sapling_state : type_variable = Var.of_name sapling_state_name
+let v_baker_operation : type_variable = Var.of_name baker_operation_name
+let v_bls12_381_g1 : type_variable = Var.of_name bls12_381_g1_name
+let v_bls12_381_g2 : type_variable = Var.of_name bls12_381_g2_name
+let v_bls12_381_fr : type_variable = Var.of_name  bls12_381_fr_name
