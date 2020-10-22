@@ -6,47 +6,21 @@ title: Installation
 There are currently three ways to get started with LIGO. You can choose to use a Docker image, a static Linux binary or to install packages for your Debian Linux distribution.
 
 ## Dockerized installation (recommended)
+If you've [installed 🐳 Docker](https://docs.docker.com/install/), you can run the latest [LIGO release 0.2.1](./changelog.md):
 
-> 🐳 You can find instructions on how to install Docker [here](https://docs.docker.com/install/).
+> `docker run ligolang/ligo:0.2.1`
 
-It's easiest to use LIGO through one of its Docker images. You have two options:
-* Use our installation script to set up a globally available `ligo`
-executable (see below). This manages the Docker bits for you. 
-* Use the Docker image available at [Docker Hub](https://hub.docker.com/r/ligolang/ligo).
-This lets you run multiple versions and keep your installation(s) self-contained but requires more familiarity with Docker.
+Or if you want the development version:
 
-Sources for the image can be found on [GitLab](https://gitlab.com/ligolang/ligo/blob/master/docker/Dockerfile).
-If this is your first time using Docker, you probably want to set up a global `ligo` executable as shown below.
+> `docker run ligolang/ligo:next`
 
-### Setting up a globally available `ligo` executable
-
-<!--
-> You can install additional LIGO versions by replacing `next` with the desired version number
--->
-
-Get the latest pre-release:
-
-```zsh
-# next (pre-release)
-curl https://gitlab.com/ligolang/ligo/raw/dev/scripts/installer.sh | bash -s "next"
-```
-<!--
-```
-# e.g. 1.0.0 (stable)
-curl https://gitlab.com/ligolang/ligo/raw/master/scripts/installer.sh | bash -s "1.0.0"
-```
--->
-
-**Verify your LIGO installation by running:**
-```zsh
-ligo --help
-```
+Or run one of the older versions found on [DockerHub](https://hub.docker.com/r/ligolang/ligo/tags).
 
 ## Static Linux binary
 
 The `ligo` executable is statically linked. It should run on most modern Linux distributions.
 
-To use it, get it [here](https://ligolang.org/bin/linux/ligo), make it executable, you're done!
+To use it, get it [here](https://ligolang.org/bin/linux/ligo), make it executable, and you're done!
 
 ```zsh
 wget https://ligolang.org/bin/linux/ligo

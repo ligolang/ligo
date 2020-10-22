@@ -135,6 +135,12 @@ const siteConfig = {
         },
         theme: {
           customCss: require.resolve('./static/css/custom.css'),
+        },
+        versions: {
+          current: {
+            label: `dunnox`,
+          },
+        
         }
       }
     ]
@@ -156,6 +162,7 @@ const siteConfig = {
         srcDark: 'img/logo-night.svg'
       },
       items: [
+        { type: 'docsVersionDropdown', position: 'left'},
         { href: 'https://ide.ligolang.org/', label: 'Try Online', position: 'left', target: '_self' },
         { to: 'docs/intro/installation', label: 'Install', position: 'left' },
         { to: 'docs/intro/introduction', label: 'Docs', position: 'left' },
