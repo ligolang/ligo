@@ -10,13 +10,15 @@ let get_program =
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-        let%bind program = type_file "./contracts/timelock_repeat.mligo" in
-        s := Some program ;
-        ok program
-      )
+      let init_env = Environment.default Environment.Protocols.current in
+      let%bind program = type_file ~init_env "./contracts/timelock_repeat.mligo" in
+      s := Some program ;
+      ok program
+    )
 
 let compile_main () =
-  let%bind typed_prg,_,_   = type_file "./contracts/timelock_repeat.mligo" in
+  let init_env = Environment.default Environment.Protocols.current in
+  let%bind typed_prg,_,_   = type_file ~init_env "./contracts/timelock_repeat.mligo" in
   let%bind mini_c_prg      = Ligo.Compile.Of_typed.compile typed_prg in
   let%bind michelson_prg   = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
   let%bind (_contract: Tezos_utils.Michelson.michelson) =

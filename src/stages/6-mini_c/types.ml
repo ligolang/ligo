@@ -34,6 +34,14 @@ and type_base =
   | TB_chain_id
   | TB_signature
   | TB_timestamp
+  | TB_baker_hash
+  | TB_pvss_key
+  | TB_sapling_transaction
+  | TB_sapling_state
+  | TB_baker_operation
+  | TB_bls12_381_g1
+  | TB_bls12_381_g2
+  | TB_bls12_381_fr
 
 and environment_element = expression_variable * type_expression
 

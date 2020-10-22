@@ -45,6 +45,14 @@ and type_constant ppf (tb:type_base) : unit =
     | TB_signature -> "signature"
     | TB_timestamp -> "timestamp"
     | TB_chain_id  -> "chain_id"
+    | TB_baker_hash          -> "baker_hash"
+    | TB_pvss_key            -> "pvss_key"
+    | TB_sapling_transaction -> "sapling_transaction"
+    | TB_sapling_state       -> "sapling_state"
+    | TB_baker_operation     -> "baker_operation"
+    | TB_bls12_381_g1        -> "bls12_381_g1"
+    | TB_bls12_381_g2        -> "bls12_381_g2"
+    | TB_bls12_381_fr        -> "bls12_381_fr"
     in
   fprintf ppf "%s" s
 

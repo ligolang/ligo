@@ -16,10 +16,11 @@ let positive_contract_tests =
   List.filter (fun path -> not (ends_with ".md" path)) |>
   List.map
     (fun path ->
-       let run () =
-         let%bind prog = Ligo.Compile.Utils.type_file path "auto" Env in
-         let%bind _michelson = typed_program_to_michelson prog "main" in
-         ok () in
-       test ("src/test/"^path) run)
+      let run () =
+        let init_env = Environment.default Environment.Protocols.current in
+        let%bind prog = Ligo.Compile.Utils.type_file ~init_env path "auto" Env in
+        let%bind _michelson = typed_program_to_michelson prog "main" in
+        ok () in
+        test ("src/test/"^path) run)
 
 let main = test_suite "Positive contracts" positive_contract_tests

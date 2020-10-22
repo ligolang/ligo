@@ -10,10 +10,11 @@ let get_program =
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-        let%bind program  = Ligo.Compile.Utils.type_file "./contracts/coase.ligo" "pascaligo" (Contract "main") in
-        s := Some program;
-        ok program
-      )
+      let init_env = Environment.default Environment.Protocols.current in
+      let%bind program  = Ligo.Compile.Utils.type_file ~init_env "./contracts/coase.ligo" "pascaligo" (Contract "main") in
+      s := Some program;
+      ok program
+    )
 
 let compile_main () = 
   let%bind typed_prg, _env, state = get_program () in

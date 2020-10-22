@@ -20,6 +20,14 @@ let base_type : type_base -> (O.michelson , stacking_error) result =
   | TB_key -> ok @@ O.prim "key"
   | TB_key_hash -> ok @@ O.prim "key_hash"
   | TB_chain_id -> ok @@ O.prim "chain_id"
+  | TB_baker_hash -> ok @@ O.prim "baker_hash"
+  | TB_pvss_key -> ok @@ O.prim "pvss_key"
+  | TB_sapling_transaction -> ok @@ O.prim "sapling_transaction"
+  | TB_sapling_state -> ok @@ O.prim "sapling_state"
+  | TB_baker_operation -> ok @@ O.prim "baker_operation"
+  | TB_bls12_381_g1 -> ok @@ O.prim "bls12_381_g1"
+  | TB_bls12_381_g2 -> ok @@ O.prim "bls12_381_g2"
+  | TB_bls12_381_fr -> ok @@ O.prim "bls12_381_fr"
 
 let rec type_ : type_expression -> (O.michelson , stacking_error) result =
   fun te -> match te.type_content with

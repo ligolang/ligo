@@ -44,7 +44,7 @@ open Ast_imperative
 
 let pack_payload (program:Ast_typed.program_fully_typed) (payload:expression) : (bytes,_) result =
   let%bind code =
-    let env = Ast_typed.program_environment Environment.default program in
+    let env = Ast_typed.program_environment (Environment.default Environment.Protocols.current) program in
 
     let%bind sugar     = Compile.Of_imperative.compile_expression payload in
     let%bind core      = Compile.Of_sugar.compile_expression sugar in

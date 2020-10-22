@@ -56,5 +56,7 @@ let%expect_test _ =
     counter_simple
     aux_simple |} ];
 
-  run_ligo_bad [ "compile-storage" ; "../../test/contracts/coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ; "--brief" ] ;
-  [%expect {| |}] ;
+  run_ligo_bad [ "interpret" ; "1" ; "--syntax=cameligo" ; "--protocol=do_not_exist" ] ;
+  [%expect {|
+    Invalid protocol version 'do_not_exist'. Available versions: carthage ,
+    dalphanet |}] ;

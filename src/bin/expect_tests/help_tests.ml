@@ -268,6 +268,11 @@ let%expect_test _ =
                OUTPUT_FILE if used, prints the output into the specified file
                instead of stdout
 
+           -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
+               PROTOCOL_VERSION will decide protocol's types/values pre-loaded
+               into the LIGO environment (carthage , dalphanet). By default, the
+               current protocol (carthage) will be used
+
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
@@ -332,6 +337,11 @@ let%expect_test _ =
            --output-file=OUTPUT_FILE, --output=OUTPUT_FILE
                OUTPUT_FILE if used, prints the output into the specified file
                instead of stdout
+
+           -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
+               PROTOCOL_VERSION will decide protocol's types/values pre-loaded
+               into the LIGO environment (carthage , dalphanet). By default, the
+               current protocol (carthage) will be used
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
@@ -407,6 +417,11 @@ let%expect_test _ =
                OUTPUT_FILE if used, prints the output into the specified file
                instead of stdout
 
+           -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
+               PROTOCOL_VERSION will decide protocol's types/values pre-loaded
+               into the LIGO environment (carthage , dalphanet). By default, the
+               current protocol (carthage) will be used
+
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
@@ -473,6 +488,11 @@ let%expect_test _ =
                NOW is the NOW value the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
 
+           -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
+               PROTOCOL_VERSION will decide protocol's types/values pre-loaded
+               into the LIGO environment (carthage , dalphanet). By default, the
+               current protocol (carthage) will be used
+
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
@@ -536,6 +556,11 @@ let%expect_test _ =
                NOW is the NOW value the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
 
+           -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
+               PROTOCOL_VERSION will decide protocol's types/values pre-loaded
+               into the LIGO environment (carthage , dalphanet). By default, the
+               current protocol (carthage) will be used
+
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
@@ -594,6 +619,11 @@ let%expect_test _ =
                NOW is the NOW value the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
 
+           -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
+               PROTOCOL_VERSION will decide protocol's types/values pre-loaded
+               into the LIGO environment (carthage , dalphanet). By default, the
+               current protocol (carthage) will be used
+
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
@@ -651,6 +681,11 @@ let%expect_test _ =
                MICHELSON_FORMAT is the format that will be used by
                compile-contract for the resulting Michelson. Available formats
                are 'text' (default), 'json' and 'hex'.
+
+           -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
+               PROTOCOL_VERSION will decide protocol's types/values pre-loaded
+               into the LIGO environment (carthage , dalphanet). By default, the
+               current protocol (carthage) will be used
 
            --version
                Show version information. |} ] ;
