@@ -58,11 +58,12 @@ type error = Errors.parse_error
 
 type cst    = (CST.t , error) Trace.result
 type expr   = (CST.expr, error) Trace.result
-type buffer = (Buffer.t , error) Trace.result
+type buffer = (Buffer.t, error) Trace.result
 
 let fail msg = Trace.fail @@ Errors.generic msg
 type file_path = string
 type dirs      = file_path list (* For #include directives *)
+type c_unit    = Buffer.t
 
 (* Calling the parsers *)
 
@@ -75,29 +76,16 @@ let apply = function
 
 (* Parsing contracts *)
 
-let parse_file dirs file_path =
-  ContractParser.parse_file dirs file_path |> apply
+let parse_file dirs c_unit file_path =
+  ContractParser.parse_file dirs c_unit file_path |> apply
 
 let parse_program_string dirs string =
   ContractParser.parse_string dirs string |> apply
-
-let parse_program_stdin dirs () =
-  ContractParser.parse_channel dirs stdin |> apply
 
 (* Parsing expressions *)
 
 let parse_expression dirs string =
   ExprParser.parse_string dirs string |> apply
-
-(* Preprocessing *)
-
-module MkPreproc = Shared.Common.MakePreproc
-
-let preprocess dirs file_path =
-  let module Preproc = MkPreproc (File) (Comments)
-  in match Preproc.preprocess dirs file_path with
-       Stdlib.Error msg -> fail msg
-     | Ok buffer -> Trace.ok buffer
 
 (* Calling the pretty-printers *)
 
@@ -110,8 +98,8 @@ let pretty_print_expression = AllPretty.print_expr
 let pretty_print_type_expr  = AllPretty.print_type_expr
 let pretty_print_pattern    = AllPretty.print_pattern
 
-let pretty_print_from_source dirs file_path =
-  match ContractParser.parse_file dirs file_path with
+let pretty_print_from_source dirs c_unit file_path =
+  match ContractParser.parse_file dirs c_unit file_path with
     Stdlib.Error msg -> fail msg
   | Ok thunk ->
       match thunk () with

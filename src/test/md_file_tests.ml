@@ -60,7 +60,8 @@ let compile_groups filename grp_list =
       trace (test_md_file_tracer filename s grp contents) @@
       let init_env = Environment.default Environment.Protocols.current in
       let%bind v_syntax   = Compile.Helpers.syntax_to_variant (Syntax_name s) None in
-      let%bind imperative = Compile.Of_source.compile_string contents v_syntax in
+      let%bind c_unit,_   = Compile.Of_source.compile_string v_syntax contents in
+      let%bind imperative = Compile.Of_c_unit.compile c_unit filename (Syntax_name s) in
       let%bind sugar      = Ligo.Compile.Of_imperative.compile imperative in
       let%bind core       = Ligo.Compile.Of_sugar.compile sugar in
       let%bind typed,_,_  = Compile.Of_core.compile ~init_env Env core in

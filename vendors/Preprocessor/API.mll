@@ -59,12 +59,16 @@ type trace = cond list
      * the field [chans] is a list of opened input channels
        (#include);
      * the field [incl] is the file system's path to the the
-       current input file. *)
+       current input file;
+     * the field [imp] is a list of (filename,module)
+       (#import);
+     *)
 
 type line_comment  = string (* Opening of a line comment *)
 type block_comment = <opening : string; closing : string>
 
 type file_path = string
+type module_name = string
 
 type config = <
   block   : block_comment option;
@@ -81,7 +85,8 @@ type state = {
   trace  : trace;
   out    : Buffer.t;
   chans  : in_channel list;
-  incl   : file_path list
+  incl   : file_path list;
+  imp    : (file_path * module_name) list;
 }
 
 (* Directories *)
@@ -306,6 +311,7 @@ let directives = [
   "error";
   "if";
   "include";
+  "import";
   "region";
   "undef"
 ]
@@ -522,6 +528,17 @@ rule scan state = parse
           let ()     = print state (sprintf "\n# %i %S 2" (line+1) path)
           in scan state lexbuf
         else scan state lexbuf
+    | "import" ->
+        let reg, imp_file, imp_name = scan_import state lexbuf in
+        if state.mode = Copy then
+          let path = mk_path state in
+          let imp_path =
+            match find path imp_file state.config#dirs with
+              Some p -> fst p
+            | None -> fail state reg (File_not_found imp_file) in
+          let state  = {state with imp = (imp_path,imp_name)::state.imp}
+          in scan state lexbuf
+        else scan state lexbuf
     | "if" ->
         let mode  = expr state lexbuf in
         let mode  = if state.mode = Copy then mode else Skip in
@@ -713,6 +730,32 @@ and in_inclusion opening acc len state = parse
 | eof    { fail state opening Unterminated_string             }
 | _ as c { in_inclusion opening (c::acc) (len+1) state lexbuf }
 
+(* Imported filaname with module *)
+
+and scan_import state = parse
+  blank+   { scan_import state lexbuf                       }
+| '"'      { in_import (mk_reg lexbuf) [] 0 state lexbuf    }
+| nl | eof { stop state lexbuf       Unterminated_inclusion }
+
+and in_import opening acc len state = parse
+  '"'    { let imp_path = mk_str len acc
+           in scan_module opening imp_path state lexbuf    }
+| nl     { stop state lexbuf Newline_in_string             }
+| eof    { fail state opening Unterminated_string          }
+| _ as c { in_import opening (c::acc) (len+1) state lexbuf }
+
+and scan_module opening imp_path state = parse
+  blank+   { scan_module opening imp_path state lexbuf      }
+| '"'      { in_module opening imp_path [] 0 state lexbuf   }
+| nl | eof { stop state lexbuf       Unterminated_inclusion }
+
+and in_module opening imp_path acc len state = parse
+  '"'    { let closing = mk_reg lexbuf
+           in Region.cover opening closing, imp_path, mk_str len acc }
+| nl     { stop state lexbuf Newline_in_string                       }
+| eof    { fail state opening Unterminated_string                    }
+| _ as c { in_module opening imp_path (c::acc) (len+1) state lexbuf  }
+
 (* Strings *)
 
 and in_string opening state = parse
@@ -740,7 +783,7 @@ and preproc state = parse
 type message = string Region.reg
 
 type preprocessed =
-  (Buffer.t, Buffer.t option * message) Stdlib.result
+  (Buffer.t * (file_path * module_name) list, Buffer.t option * message) Stdlib.result
 
 type 'src preprocessor = config -> 'src -> preprocessed
 
@@ -753,12 +796,13 @@ let from_lexbuf config buffer =
     trace = [];
     out   = Buffer.create 80;
     chans = [];
-    incl  = [Filename.dirname path]
+    incl  = [Filename.dirname path];
+    imp    = [];
   } in
   match preproc state buffer with
     state ->
       List.iter close_in state.chans;
-      Stdlib.Ok state.out
+      Stdlib.Ok (state.out,state.imp)
   | exception Error (buffer, msg) ->
       Stdlib.Error (Some buffer, msg)
 

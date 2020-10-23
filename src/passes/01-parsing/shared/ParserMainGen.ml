@@ -130,7 +130,7 @@ module Make (Comments : Comments.S)
       if Lexer_CLI.preproc then
         match Preproc.preprocess () with
           Stdlib.Error _ -> ()
-        | Stdlib.Ok buffer ->
+        | Stdlib.Ok (buffer, _deps) ->
             if Preproc_CLI.show_pp then
               Printf.printf "%s%!" (Buffer.contents buffer)
             else ();
