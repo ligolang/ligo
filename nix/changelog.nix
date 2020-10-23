@@ -21,8 +21,9 @@ let
       } > $out/changelog.md";
   };
 
-  release-notes-json = builtins.toFile "release-notes.json" (builtins.toJSON
-  (builtins.elemAt (builtins.fromJSON (builtins.readFile json)).changelog 0));
+  release-notes-json = runCommand "release-notes.json" { buildInputs = [ jq ]; } ''
+    jq '.changelog[0]' ${json} > "$out"
+  '';
 
   release-notes = {
     text = runCommand "release-notes-text" { buildInputs = [ mustache-go ]; }
