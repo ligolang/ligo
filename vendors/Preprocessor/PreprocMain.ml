@@ -17,6 +17,6 @@ let () = Preproc.check_cli ()
 
 let () =
   match Preproc.preprocess () with
-    Stdlib.Ok buffer ->
+    Stdlib.Ok (buffer, _) ->
       Printf.printf "%s%!" (Buffer.contents buffer)
   | _ -> ()

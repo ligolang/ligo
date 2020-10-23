@@ -52,7 +52,7 @@ module Make (CLI : CLI.S) =
         | Some path -> API.from_file config path in
       let () =
         match preprocessed with
-          Stdlib.Ok buffer ->
+          Stdlib.Ok (buffer, _) ->
             if CLI.show_pp then
               Printf.printf "%s\n%!" (Buffer.contents buffer)
         | Error (Some buffer, Region.{value; _}) ->

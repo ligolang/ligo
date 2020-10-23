@@ -14,8 +14,8 @@ let main =
       `P "https://discord.gg/9rhYaEt";
       `S "OPEN AN ISSUE";
       `P "https://gitlab.com/ligolang/ligo/issues/new"
-      ] 
-    in  
+      ]
+    in
     (Term.(ret (const (`Help (`Auto, None)))), Term.info "ligo" ~version ~man)
 
 let source_file n =
@@ -209,7 +209,7 @@ let compile_file =
 let preprocess =
   let f source_file syntax display_format =
     return_result ~display_format (Parser.Formatter.ppx_format) @@
-      Compile.Of_source.preprocess source_file (Syntax_name syntax)
+      map fst @@ Compile.Of_source.compile source_file (Syntax_name syntax)
   in
   let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
   let cmdname = "preprocess" in
@@ -219,7 +219,7 @@ let preprocess =
 let pretty_print =
   let f source_file syntax display_format =
     return_result ~display_format (Parser.Formatter.ppx_format) @@
-        Compile.Of_source.pretty_print source_file (Syntax_name syntax)
+        Compile.Utils.pretty_print source_file syntax
   in
   let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
   let cmdname = "pretty-print" in
@@ -229,7 +229,7 @@ let pretty_print =
 let print_cst =
   let f source_file syntax display_format =
     return_result ~display_format (Parser.Formatter.ppx_format) @@
-      Compile.Of_source.pretty_print_cst source_file (Syntax_name syntax)
+      Compile.Utils.pretty_print_cst source_file syntax
   in
   let term = Term.(const f $ source_file 0  $ syntax $ display_format) in
   let cmdname = "print-cst" in
@@ -239,7 +239,8 @@ let print_cst =
 let print_ast =
   let f source_file syntax display_format =
     return_result ~display_format (Ast_imperative.Formatter.program_format) @@
-      Compile.Utils.to_imperative source_file syntax
+      let%bind c_unit,_ = Compile.Utils.to_c_unit source_file syntax in
+      Compile.Utils.to_imperative c_unit source_file syntax
   in
   let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
   let cmdname = "print-ast" in
@@ -250,7 +251,8 @@ let print_ast =
 let print_ast_sugar =
   let f source_file syntax display_format =
     return_result ~display_format (Ast_sugar.Formatter.program_format) @@
-      Compile.Utils.to_sugar source_file syntax
+      let%bind c_unit,_ = Compile.Utils.to_c_unit source_file syntax in
+      Compile.Utils.to_sugar c_unit source_file syntax
   in
   let term = Term.(const f $ source_file 0  $ syntax $ display_format) in
   let cmdname = "print-ast-sugar" in
@@ -260,7 +262,8 @@ let print_ast_sugar =
 let print_ast_core =
   let f source_file syntax display_format =
     return_result ~display_format (Ast_core.Formatter.program_format) @@
-      Compile.Utils.to_core source_file syntax
+      let%bind c_unit,_ = Compile.Utils.to_c_unit source_file syntax in
+      Compile.Utils.to_core c_unit source_file syntax
   in
   let term = Term.(const f $ source_file 0  $ syntax $ display_format) in
   let cmdname = "print-ast-core" in
@@ -426,7 +429,8 @@ let run_function =
 
 
       let%bind v_syntax         = Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
-      let%bind imperative_param = Compile.Of_source.compile_expression v_syntax parameter in
+      let%bind c_unit_param,_   = Compile.Of_source.compile_string v_syntax parameter in
+      let%bind imperative_param = Compile.Of_c_unit.compile_expression v_syntax c_unit_param in
       let%bind sugar_param      = Compile.Of_imperative.compile_expression imperative_param in
       let%bind core_param       = Compile.Of_sugar.compile_expression sugar_param in
       let%bind app              = Compile.Of_core.apply entry_point core_param in
@@ -498,7 +502,8 @@ let dump_changelog =
 let list_declarations =
   let f source_file syntax display_format =
     return_result ~display_format Formatter.declarations_format @@
-        let%bind core_prg     = Compile.Utils.to_core source_file syntax in
+        let%bind c_unit,_     = Compile.Utils.to_c_unit source_file syntax in
+        let%bind core_prg     = Compile.Utils.to_core c_unit source_file syntax in
         let declarations = Compile.Of_core.list_declarations core_prg in
         ok (source_file, declarations)
   in
@@ -511,7 +516,8 @@ let list_declarations =
 let transpile_contract =
   let f source_file new_syntax syntax new_dialect display_format =
     return_result ~display_format (Parser.Formatter.ppx_format) @@
-      let%bind core       = Compile.Utils.to_core source_file syntax in
+      let%bind c_unit,_   = Compile.Utils.to_c_unit source_file syntax in
+      let%bind core       = Compile.Utils.to_core c_unit source_file syntax in
       let%bind sugar      = Decompile.Of_core.decompile core in
       let%bind imperative = Decompile.Of_sugar.decompile sugar in
       let dialect         = Decompile.Helpers.Dialect_name new_dialect in
@@ -531,7 +537,8 @@ let transpile_expression =
       let%bind v_syntax   = Helpers.syntax_to_variant (Syntax_name syntax) None in
       let      dialect    = Decompile.Helpers.Dialect_name new_dialect in
       let%bind n_syntax   = Decompile.Helpers.syntax_to_variant ~dialect (Syntax_name new_syntax) None in
-      let%bind imperative = Compile.Of_source.compile_expression v_syntax expression in
+      let%bind c_unit_expr,_ = Compile.Of_source.compile_string v_syntax expression in
+      let%bind imperative = Compile.Of_c_unit.compile_expression v_syntax c_unit_expr in
       let%bind sugar      = Compile.Of_imperative.compile_expression imperative in
       let%bind core       = Compile.Of_sugar.compile_expression sugar in
       let%bind sugar      = Decompile.Of_core.decompile_expression core in
@@ -550,7 +557,8 @@ let get_scope =
   let f source_file syntax protocol_version libs display_format with_types =
     return_result ~display_format Ligo.Scopes.Formatter.scope_format @@
       let%bind init_env   = Helpers.get_initial_env protocol_version in
-      let%bind core_prg = Compile.Utils.to_core ~libs source_file syntax in
+      let%bind c_unit, _ = Compile.Utils.to_c_unit ~libs source_file syntax in
+      let%bind core_prg = Compile.Utils.to_core ~libs c_unit source_file syntax in
       let%bind _,env,state = Compile.Of_core.compile  ~init_env Env core_prg in
       Ligo.Scopes.scopes ~with_types env state core_prg
   in
@@ -560,7 +568,7 @@ let get_scope =
   let doc = "Subcommand: Return the JSON encoded environment for a given file." in
   (Term.ret term , Term.info ~doc cmdname)
 
-let buffer = Buffer.create 100 
+let buffer = Buffer.create 100
 
 let run ?argv () =
   let err = Format.formatter_of_buffer buffer in

@@ -1,0 +1,15 @@
+(library
+  (name preproc)
+  (public_name ligo.preproc)
+  (libraries
+    ;; Vendors
+    simple-utils
+    tezos-utils
+    ;; LIGO
+    lexer_pascaligo
+    lexer_cameligo
+    lexer_reasonligo)
+  (modules_without_implementation
+    Comments File)
+  (preprocess
+    (pps ppx_let bisect_ppx --conditional)))

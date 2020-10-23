@@ -3,6 +3,7 @@
   (public_name ligo.main_errors)
   (libraries
     simple-utils
+    preproc
     parser
     tree_abstraction
     self_ast_imperative

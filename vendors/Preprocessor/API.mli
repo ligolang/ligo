@@ -33,6 +33,7 @@ module Region = Simple_utils.Region
    Vim). *)
 
 type file_path = string
+type module_name = string
 
 type line_comment  = string (* Opening of a line comment *)
 type block_comment = <opening : string; closing : string>
@@ -52,7 +53,7 @@ type config = <
 type message = string Region.reg
 
 type preprocessed =
-  (Buffer.t, Buffer.t option * message) Stdlib.result
+  (Buffer.t * (file_path * module_name) list, Buffer.t option * message) Stdlib.result
 
 type 'src preprocessor = config -> 'src -> preprocessed
 

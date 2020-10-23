@@ -5,7 +5,7 @@ let rec error_ppformat : display_format:string display_format ->
   fun ~display_format f a ->
   match display_format with
   | Human_readable | Dev -> (
-    match a with 
+    match a with
     | `Test_err_tracer (name,err) ->
       Format.fprintf f "@[<hv>Test '%s'@ %a@]"
         name (error_ppformat ~display_format) err
@@ -57,7 +57,7 @@ let rec error_ppformat : display_format:string display_format ->
         "@[<hv>Invalid file extension '%s'. @.Use '.ligo' for PascaLIGO, '.mligo' for CameLIGO, '.religo' for ReasonLIGO, or the --syntax option.@]"
         extension
 
-    | `Main_unparse_tracer errs -> 
+    | `Main_unparse_tracer errs ->
       let errs = List.map ( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[Error(s) occurred while translating to Michelson:@.%a@]"
       (Tezos_client_ligo006_PsCARTHA.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
@@ -102,31 +102,32 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_invalid_sender a -> Format.fprintf f "@[<hv>Invalid command line option \"--sender\". @.The provided sender address \"%s\" is invalid. A valid Tezos address is a string prefixed by either tz1, tz2, tz3 or KT1 and followed by a Base58 encoded hash and terminated by a 4-byte checksum.@]" a
     | `Main_invalid_timestamp t -> Format.fprintf f "@[<hv>Invalid command line option \"--now\". @.The provided now \"%s\" is invalid. It should use RFC3339 notation in a string, or the number of seconds since Epoch.@]" t
 
-    | `Main_unparse_michelson_result errs -> 
+    | `Main_unparse_michelson_result errs ->
       let errs = List.map ( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while unparsing the Michelson result:@.%a @]"
       (Tezos_client_ligo006_PsCARTHA.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_parse_payload _ -> Format.fprintf f "@[<hv>Error parsing message. @]" (* internal testing *)
-    | `Main_pack_payload _ -> Format.fprintf f "@[<hv>Error packing message. @]" (* internal testing *)  
-    | `Main_parse_michelson_input errs -> 
+    | `Main_pack_payload _ -> Format.fprintf f "@[<hv>Error packing message. @]" (* internal testing *)
+    | `Main_parse_michelson_input errs ->
       let errs = List.map ( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while parsing the Michelson input:@.%a @]"
       (Tezos_client_ligo006_PsCARTHA.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
-    | `Main_parse_michelson_code errs -> 
+    | `Main_parse_michelson_code errs ->
       let errs = List.map ( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while checking the contract:@.%a @]"
         (Tezos_client_ligo006_PsCARTHA.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
-    | `Main_michelson_execution_error errs -> 
+    | `Main_michelson_execution_error errs ->
       let errs = List.map ( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while executing the contract:@.%a @]"
       (Tezos_client_ligo006_PsCARTHA.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
+    | `Main_preproc e -> Preproc.Errors.error_ppformat ~display_format f e
     | `Main_parser e -> Parser.Errors.error_ppformat ~display_format f e
     | `Main_pretty _e -> () (*no error in this pass*)
-    | `Main_self_ast_imperative e -> Self_ast_imperative.Errors.error_ppformat ~display_format f e 
+    | `Main_self_ast_imperative e -> Self_ast_imperative.Errors.error_ppformat ~display_format f e
     | `Main_purification e -> Purification.Errors.error_ppformat ~display_format f e
     | `Main_depurification _e -> () (*no error in this pass*)
     | `Main_desugaring _e -> () (*no error in this pass*)
@@ -146,7 +147,7 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_decompile_typed e -> Typer.Errors.error_ppformat ~display_format f  e
 
   )
-  
+
 let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
@@ -182,8 +183,8 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Main_unparse_tracer _ ->
     let content = `Assoc [("message", `String "could not unparse michelson type")] in
     json_error ~stage:"michelson contract build" ~content
-  
-  | `Main_typecheck_contract_tracer (c,_) -> 
+
+  | `Main_typecheck_contract_tracer (c,_) ->
     let code = Format.asprintf "%a" Michelson.pp c in
     let content = `Assoc [
       ("message", `String "Could not typecheck michelson code") ;
@@ -193,7 +194,7 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Main_could_not_serialize _errs ->
     let content = `Assoc [("message", `String "Could not serialize michelson code")] in
     json_error ~stage:"michelson serialization" ~content
-  
+
   | `Main_check_typed_arguments (Simple_utils.Runned_result.Check_parameter, err) ->
     let content = `Assoc [
       ("message", `String "Passed parameter does not match the contract type");
@@ -269,6 +270,7 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Main_entrypoint_not_a_function -> json_error ~stage:"top-level glue" ~content:(`String "given entrypoint is not a function")
   | `Main_entrypoint_not_found -> json_error ~stage:"top-level glue" ~content:(`String "Missing entrypoint")
 
+  | `Main_preproc e -> Preproc.Errors.error_jsonformat e
   | `Main_parser e -> Parser.Errors.error_jsonformat e
   | `Main_pretty _ -> `Null (*no error in this pass*)
   | `Main_self_ast_imperative e -> Self_ast_imperative.Errors.error_jsonformat e
@@ -285,7 +287,7 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Main_spilling e -> Spilling.Errors.error_jsonformat e
   | `Main_self_mini_c e -> Self_mini_c.Errors.error_jsonformat e
   | `Main_stacking e -> Stacking.Errors.error_jsonformat e
-  
+
   | `Main_decompile_michelson e -> Stacking.Errors.error_jsonformat e
   | `Main_decompile_mini_c e -> Spilling.Errors.error_jsonformat e
   | `Main_decompile_typed e -> Typer.Errors.error_jsonformat e

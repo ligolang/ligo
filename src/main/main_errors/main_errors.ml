@@ -4,6 +4,7 @@ type all = Types.all
 
 (* passes tracers *)
 
+let preproc_tracer (e:Preproc.Errors.preproc_error) : all = `Main_preproc e
 let parser_tracer (e:Parser.Errors.parse_error) : all = `Main_parser e
 let pretty_tracer (e:Parser.Errors.parse_error) : all = `Main_pretty e
 let cit_cameligo_tracer (e:Tree_abstraction.Cameligo.Errors.abs_error) : all = `Main_cit_cameligo e

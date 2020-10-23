@@ -104,7 +104,7 @@ module Make (Comments : Comments.S)
       if CLI.preproc then
         match Preproc.preprocess () with
           Stdlib.Error _ -> ()
-        | Ok buffer ->
+        | Ok (buffer, _deps) ->
             let string = Buffer.contents buffer in
             let lexbuf = Lexing.from_string string
             and all_from_lexbuf = Scan.all_from_lexbuf config in
