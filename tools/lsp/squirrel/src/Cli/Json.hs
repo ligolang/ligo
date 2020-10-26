@@ -2,7 +2,9 @@
 
 -- | The definition of type as is represented in ligo JSON output
 module Cli.Json
-  ( LigoScope (..)
+  ( LigoError (..)
+  , LigoErrorContent (..)
+  , LigoScope (..)
   , LigoDefinitions (..)
   , LigoDefinitionsInner (..)
   , LigoDefinitionScope (..)
@@ -11,7 +13,11 @@ module Cli.Json
   , LigoTypeContentInner (..)
   , LigoRecordField (..)
   , LigoRange (..)
-  , convertLigoRange
+  , LigoRangeInner (..)
+  , LigoByte (..)
+  , mbFromLigoRange
+  , fromLigoRangeOrDef
+  , fromLigoErrorToMsg
   , toScopedDecl
   , prepareField
   )
@@ -26,11 +32,31 @@ import Data.Text (Text)
 import GHC.Generics
 
 import AST.Scope.Common
+import Data.Aeson.Types
 import Range
+import Control.Applicative (liftA2, Alternative((<|>)))
+import Duplo.Pretty 
+import Parser (Msg)
+import Duplo.Error
 
 ----------------------------------------------------------------------------
 -- Types
 ----------------------------------------------------------------------------
+
+-- | Node representing ligo error with additional meta
+data LigoError = LigoError 
+  { _leStatus :: Text 
+  , _leStage :: Text 
+  , _leContent :: LigoErrorContent
+  }
+  deriving stock (Generic, Show)
+
+-- | An actual ligo error
+data LigoErrorContent = LigoErrorContent
+  { _lecMessage :: Text
+  , _lecLocation :: LigoRange
+  }
+  deriving stock (Generic, Show)
 
 -- | Whole ligo `get-scope` output
 data LigoDefinitions = LigoDefinitions
@@ -50,9 +76,14 @@ data LigoDefinitionsInner = LigoDefinitionsInner
 -- { "scopes" : [LigoScope] }
 -- ```
 data LigoScope = LigoScope
-  { _lsRange :: LigoRange
+  { -- | We parse it by a chunks of 2, each odd element of array is a name for
+    -- the corresponding element which is `LigoRangeInner`.
+    -- ```
+    -- { "range": [ "<scope>", LigoRangeInner ] }
+    -- ```
+    _lsRange :: LigoRange
   , _lsExpressionEnvironment :: [Text]
-  , _lsTypeEnvironment :: Value -- TODO: currently ligo always outputs an empty list
+  , _lsTypeEnvironment :: Value -- TODO: currently ligo always outputs an empty list, upd: not
   }
   deriving stock (Generic, Show)
 
@@ -132,24 +163,60 @@ data LigoRecordField = LigoRecordField
   }
   deriving stock (Generic, Show)
 
--- | Location of type definition.
+-- | Location of definition.
 -- ```
 -- { "location": LigoRange }
 -- ```
 data LigoRange
   = Virtual Text
   | LigoRange
-      { _lrFile :: FilePath
-      , _lrFromRow :: Int
-      , _lrFromCol :: Int
-      , _lrToRow :: Int
-      , _lrToCol :: Int
+      { _lrStart :: LigoRangeInner
+      , _lrStop :: LigoRangeInner
       }
+  deriving stock (Generic, Show)
+
+-- | Insides of ligo location.
+-- ```
+-- { ["start" | "stop"]: LigoRangeInner }
+-- ```
+data LigoRangeInner = LigoRangeInner
+  { _lriByte :: LigoByte
+  , _lriPointNum :: Int
+  , _lriPointBol :: Int
+  }
+  deriving stock (Generic, Show)
+
+-- | Byte representation of ligo location.
+-- ```
+-- { "byte": LigoByte }
+-- ```
+data LigoByte = LigoByte
+  { _lbPosFname :: FilePath
+  , _lbPosLnum :: Int
+  , _lbPosBol :: Int
+  , _lbPosCnum :: Int
+  }
   deriving stock (Generic, Show)
 
 ----------------------------------------------------------------------------
 -- Instances
 ----------------------------------------------------------------------------
+
+instance FromJSON LigoError where
+  parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = prepareField 2}
+
+instance ToJSON LigoError where
+  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 2}
+
+instance FromJSON LigoErrorContent where
+  parseJSON = withObject "error_content" $ \o -> do 
+    _lecMessage <- o .: "message"
+    _lecLocation <- parseLigoRange "location_error_inner_range" =<< o .: "location"
+    return $ LigoErrorContent {..}
+
+-- TODO: malformed
+instance ToJSON LigoErrorContent where
+  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
 
 instance FromJSON LigoDefinitions where
   parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = prepareField 2}
@@ -164,14 +231,26 @@ instance ToJSON LigoDefinitionsInner where
   toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
 
 instance FromJSON LigoScope where
-  parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = prepareField 2}
+  parseJSON = withObject "scope" $ \o -> do
+    _lsRange <- parseLigoRange "scope_range" =<< o .: "range"
+    _lsTypeEnvironment <- o .: "type_environment"
+    _lsExpressionEnvironment <- o .: "expression_environment"
+    return $ LigoScope {..}
 
+-- TODO: malformed
 instance ToJSON LigoScope where
   toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 2}
 
 instance FromJSON LigoDefinitionScope where
-  parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = prepareField 3}
+  parseJSON = withObject "scope" $ \o -> do
+    _ldsName <- o .: "name"
+    _ldsRange <- parseLigoRange "scope_range" =<< o .: "range"
+    _ldsBodyRange <- parseLigoRange "scope_body_range" =<< o .: "body_range"
+    _ldsT <- o .:? "t"
+    _ldsReferences <- o .: "references"
+    return $ LigoDefinitionScope {..}
 
+-- TODO: malformed
 instance ToJSON LigoDefinitionScope where
   toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
 
@@ -179,7 +258,7 @@ instance ToJSON LigoDefinitionScope where
 -- of array elements.
 instance FromJSON LigoTypeFull where
   parseJSON = withObject "type_full" $ \o -> do
-    _ltLocation <- o .: "location"
+    _ltLocation <- parseLigoRange "location_range" =<< o .: "location"
     type_content <- o .: "type_content"
     _ltTypeContent <-
       withArray "type_content" (mapM proceed . group 2 . toList) type_content
@@ -219,24 +298,69 @@ instance ToJSON LigoRecordField where
   toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
 
 instance FromJSON LigoRange where
-  parseJSON = withObject "location" $ \o ->
-    asum
-      [ Virtual <$> o .: "virtual"
-      , do
-          _lrFile <- o .: "file"
-          _lrFromRow <- o .: "from_row"
-          _lrFromCol <- o .: "from_col"
-          _lrToRow <- o .: "to_row"
-          _lrToCol <- o .: "to_col"
-          return $ LigoRange {..}
-      ]
+  parseJSON = liftA2 (<|>) parseAsString parseAsObject
+    where 
+      parseAsString (String o) = return $ Virtual o
+      parseAsString _ = fail "failed to parse as string"
+      parseAsObject = withObject "range" $ \o -> do
+        _lrStart <- o .: "start"
+        _lrStop <- o .: "stop"
+        return $ LigoRange {..}
+    
 
 instance ToJSON LigoRange where
   toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 2}
 
+instance FromJSON LigoRangeInner where
+  parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = prepareField 3}
+
+instance ToJSON LigoRangeInner where
+  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
+
+instance FromJSON LigoByte where
+  parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = prepareField 2}
+
+instance ToJSON LigoByte where
+  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 2}
+
+-- | Construct a parser for ligo ranges that are represented in pairs 
+-- ```
+-- [ "name", <LigoRange> ]
+-- ```
+parseLigoRange :: String -> Value -> Parser LigoRange
+parseLigoRange = flip withArray (safeExtract . group 2 . toList)
+  where
+    safeExtract :: [[Value]] -> Parser LigoRange
+    safeExtract ([_, value]:_) = parseJSON @LigoRange value
+    safeExtract _ = error "number of range elements in array is not even and cannot be grouped"
+
+----------------------------------------------------------------------------
+-- Pretty
+----------------------------------------------------------------------------
+
+instance Pretty LigoError where 
+  pp (LigoError _ stage (LigoErrorContent msg loc)) = mconcat 
+    [ text "Error in ", text $ show stage
+    , text "\n\nat: ", fromLigoRange loc
+    , text "\n\n" <> pp msg
+    ]
+    where 
+      fromLigoRange r@(LigoRange _ _) = 
+        "[" <> pp (fromMaybe (error "impossible") (mbFromLigoRange r)) <> "]"
+      fromLigoRange (Virtual _) = text "virtual"
+
 ----------------------------------------------------------------------------
 -- Helpers
 ----------------------------------------------------------------------------
+
+-- | Convert ligo error to its corresponding internal representation.
+fromLigoErrorToMsg :: LigoError -> Msg
+fromLigoErrorToMsg LigoError 
+  { _leContent = LigoErrorContent 
+      { _lecMessage = err
+      , _lecLocation = fromLigoRangeOrDef -> at
+      }
+  } = (at, Err err)
 
 -- | Helper function that converts qualified field to its JSON counterpart.
 --
@@ -260,17 +384,32 @@ group n l
   | otherwise = error "Negative or zero n"
 
 -- | Converts ligo ranges to our internal ones.
--- >>> convertLigoRange (LigoRange "test.ligo" 1 2 3 4)
--- [32m[test.ligo:1:2-3:4][0m
-convertLigoRange :: LigoRange -> Maybe Range
-convertLigoRange (Virtual _) = Nothing
-convertLigoRange LigoRange {..} =
-  Just
-    Range
-      { rStart = (_lrFromRow, _lrFromCol, 0)
-      , rFinish = (_lrToRow, _lrToCol, 0)
-      , rFile = _lrFile
+-- Note: ligo team allows for start file of a range be different from end file.
+-- Either if this intentional or not we throw an error if they are so.
+-- >>> :{ 
+-- mbFromLigoRange 
+--   (LigoRange 
+--     (LigoRangeInner (LigoByte "contracts/test.ligo" 2 undefined undefined) 3 6)
+--     (LigoRangeInner (LigoByte "contracts/test.ligo" 5 undefined undefined) 11 12)     
+--   )
+-- :}
+-- contracts/test.ligo:2:3-5:1
+mbFromLigoRange :: LigoRange -> Maybe Range
+mbFromLigoRange (Virtual _) = Nothing
+mbFromLigoRange 
+  (LigoRange 
+    (LigoRangeInner (LigoByte { _lbPosLnum = startLine, _lbPosFname = startFilePath }) startCNum startBol)
+    (LigoRangeInner (LigoByte { _lbPosLnum = endLine, _lbPosFname = endFilePath }) endCNum endBol)
+  ) 
+  | startFilePath /= endFilePath = error "start file of a range does not equal to it's end file"
+  | otherwise = Just $ Range 
+      { rStart = (startLine, abs (startCNum - startBol), 0)
+      , rFinish = (endLine, abs (endCNum - endBol), 0)
+      , rFile = startFilePath
       }
+
+fromLigoRangeOrDef :: LigoRange -> Range
+fromLigoRangeOrDef = fromMaybe (point (-1) (-1)) . mbFromLigoRange
 
 -- | Converts ligo scope to our internal one.
 -- TODO: convert `LigoTypeFull` to `LIGO ()`
@@ -278,8 +417,8 @@ toScopedDecl :: LigoDefinitionScope -> ScopedDecl
 toScopedDecl
   LigoDefinitionScope
     { _ldsName = _sdName
-    , _ldsRange = (fromMaybe (error "no origin range") . convertLigoRange -> _sdOrigin)
-    , _ldsBodyRange = (convertLigoRange -> _sdBody)
+    , _ldsRange = (fromMaybe (error "no origin range") . mbFromLigoRange -> _sdOrigin)
+    , _ldsBodyRange = (mbFromLigoRange -> _sdBody)
     } =
     ScopedDecl
       { _sdName
