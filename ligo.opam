@@ -9,8 +9,8 @@ dev-repo: "git+https://gitlab.com/ligolang/tezos.git"
 license: "MIT"
 depends: [
   "ocamlfind" { build }
-  "dune" { build & >= "2.5" & < "2.6" }
-  "menhir" { = "20190626" }
+  "dune" { build & >= "2.7.1" & < "2.9" }
+  "menhir" { = "20200624" }
   "bisect_ppx" {dev & >= "2.0.0"}
   "ppx_let"
   "ppx_deriving"
