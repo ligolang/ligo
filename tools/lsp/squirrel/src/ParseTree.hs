@@ -17,39 +17,40 @@ module ParseTree
     -- * Invoke the TreeSitter and get the tree it outputs
   , toParseTree
   , srcToBytestring
+  , srcToText
   )
   where
 
-import           Data.ByteString (ByteString)
+import Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
-import           Data.Map
-import           Data.String (IsString (..))
-import           Data.Text (Text)
+import Data.Map
+import Data.String (IsString (..))
+import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.Encoding as Text
-import           Data.Traversable (for)
+import Data.Traversable (for)
 
-import           Control.Monad ((>=>))
-import           Foreign.C.String (peekCString)
-import           Foreign.Marshal.Alloc (alloca)
-import           Foreign.Marshal.Array (allocaArray)
-import           Foreign.Ptr (Ptr, nullPtr)
-import           Foreign.Storable (peek, peekElemOff, poke)
-import           TreeSitter.Language
-import           TreeSitter.Node
-import           TreeSitter.Parser
-import           TreeSitter.Tree hiding (Tree)
+import Control.Monad ((>=>))
+import Foreign.C.String (peekCString)
+import Foreign.Marshal.Alloc (alloca)
+import Foreign.Marshal.Array (allocaArray)
+import Foreign.Ptr (Ptr, nullPtr)
+import Foreign.Storable (peek, peekElemOff, poke)
+import TreeSitter.Language
+import TreeSitter.Node
+import TreeSitter.Parser
+import TreeSitter.Tree hiding (Tree)
 
-import           System.FilePath (takeFileName)
+import System.FilePath (takeFileName)
 
-import           Duplo.Pretty as PP
-import           Duplo.Tree
+import Duplo.Pretty as PP
+import Duplo.Tree
 
-import           Debouncer
-import           Extension
-import           Product
-import           Range
+import Debouncer
+import Extension
 import qualified Log
+import Product
+import Range
 
 foreign import ccall unsafe tree_sitter_PascaLigo  :: Ptr Language
 foreign import ccall unsafe tree_sitter_ReasonLigo :: Ptr Language
@@ -71,6 +72,12 @@ srcToBytestring = \case
   Path       p   -> BS.readFile p
   Text       _ t -> return $ Text.encodeUtf8 t
   ByteString _ s -> return s
+
+srcToText :: Source -> IO Text
+srcToText = \case
+  Path       p   -> readFile p >>= return . Text.pack
+  Text       _ t -> return t
+  ByteString _ s -> return $ Text.decodeUtf8 $ s
 
 type RawTree = Tree '[ParseTree] RawInfo
 type RawInfo = Product [Range, Text]

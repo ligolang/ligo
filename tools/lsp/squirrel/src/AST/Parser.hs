@@ -6,11 +6,10 @@ module AST.Parser
   , parseWithScopes'
   ) where
 
-import Control.Lens ( (&), (.~), element )
+import Control.Lens ((&), (.~), element)
 import Control.Monad.IO.Class (liftIO)
 import Control.Exception (try)
 import Control.Monad.Catch (MonadThrow(throwM))
-import qualified Data.ByteString.Lazy.Char8 as S8L
 import qualified Data.List as List
 
 import qualified AST.Parser.Pascaligo as Pascal
@@ -21,11 +20,10 @@ import           AST.Scope
 
 import Duplo (Lattice(leq))
 
-import ParseTree
+import ParseTree (toParseTree, Source(..))
 import Parser
 import Extension
 import Cli (LigoBinaryCallError(DecodedExpectedClientFailure), LigoBinaryCallError, fromLigoErrorToMsg)
-import Cli.Types
 
 parse :: Source -> IO (LIGO Info, [Msg])
 parse src = do
@@ -49,15 +47,13 @@ parseWithScopes src = do
   (ast, msg) <- liftIO do
     toParseTree src >>= runParserM . recogniser
 
-  contractCode <- liftIO $ S8L.readFile (srcPath src)
-
-  ast' <- addLocalScopes @impl (RawContractCode contractCode) ast
+  ast' <- addLocalScopes @impl src ast
   return (ast', msg)
 
 -- | Parse with both compiler and fallback parsers.
-parseWithScopes' :: forall m. 
-  ( HasScopeForest FromCompiler m 
-  , HasScopeForest Fallback m 
+parseWithScopes' :: forall m.
+  ( HasScopeForest FromCompiler m
+  , HasScopeForest Fallback m
   ) => Source -> m (LIGO Info', [Msg])
 parseWithScopes' src = do
   recogniser <- liftIO do
@@ -70,26 +66,24 @@ parseWithScopes' src = do
   (ast, msg) <- liftIO do
     toParseTree src >>= runParserM . recogniser
 
-  contractCode <- liftIO $ srcToBytestring src
+  ligoAst <- liftIO $ try @LigoBinaryCallError
+    $ addLocalScopes @FromCompiler src ast 
 
-  ligoAst <- liftIO $ try @LigoBinaryCallError 
-    $ addLocalScopes @FromCompiler (RawContractCode $ S8L.fromStrict contractCode) ast
-  
-  case ligoAst of 
-    Right ast' -> 
+  case ligoAst of
+    Right ast' ->
       return (ast', msg)
-    Left (DecodedExpectedClientFailure err) -> do 
-      fbAst <- addLocalScopes @Fallback (RawContractCode $ S8L.fromStrict contractCode) ast
-      -- We are either rewriting fallback errors with ligo message found at the 
+    Left (DecodedExpectedClientFailure err) -> do
+      fbAst <- addLocalScopes @Fallback src ast
+      -- We are either rewriting fallback errors with ligo message found at the
       -- same local scope or appending it to the end.
       -- TODO: global scope errors are not collecting
       return (fbAst, msg `rewriteAt` fromLigoErrorToMsg err)
       -- return (fbAst, msg <> [fromLigoErrorToMsg err])
     Left err -> throwM err
 
-  where 
+  where
     -- | Rewrite error message at the most local scope or append it to the end.
     rewriteAt :: [Msg] -> Msg -> [Msg]
     rewriteAt at what@(from, _) = maybe (at <> [what]) (\(i, _) -> at & element i .~ what) el
-      where 
+      where
         el = List.find ((from `leq`) . fst . snd) (zip [0..] at)

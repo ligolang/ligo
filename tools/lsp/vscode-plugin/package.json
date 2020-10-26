@@ -82,6 +82,12 @@
                     "type": "number",
                     "default": 100,
                     "description": "Controls the maximum number of problems produced by the server."
+                },
+                "ligoLanguageServer.ligoBinaryPath": {
+                    "scope": "resource",
+                    "type": "string",
+                    "default": "ligo",
+                    "description": "Path to the ligo binary, default one is extracted from $PATH variable."
                 }
             }
         }

@@ -3,30 +3,31 @@
 
 module AST.Scope.Common where
 
-import           Control.Monad.State
+import Control.Monad.State
 
-import           Data.Monoid         (First (..))
-import           Data.Map            (Map)
-import qualified Data.Map    as Map
-import           Data.Set            (Set)
-import qualified Data.Set    as Set
-import           Data.Text           (Text)
+import Data.Map (Map)
+import qualified Data.Map as Map
+import Data.Monoid (First (..))
+import Data.Set (Set)
+import qualified Data.Set as Set
+import Data.Text (Text)
 
-import           Duplo.Lattice
-import           Duplo.Pretty
-import           Duplo.Tree hiding (loop)
+import Duplo.Lattice
+import Duplo.Pretty
+import Duplo.Tree hiding (loop)
 
-import           AST.Skeleton
-import           Cli.Types
-import           Parser
-import           Product
-import           Range
-import           AST.Pretty
+import AST.Pretty
+import AST.Skeleton
+import Cli.Types
+import Parser
+import ParseTree
+import Product
+import Range
 
 -- import           Debug.Trace
 
 class HasLigoClient m => HasScopeForest impl m where
-  scopeForest :: RawContractCode -> LIGO Info -> m ScopeForest
+  scopeForest :: Source -> LIGO Info -> m ScopeForest
 
 instance {-# OVERLAPPABLE #-} Pretty x => Show x where
   show = show . pp
@@ -175,9 +176,9 @@ spine r (only -> (i, trees)) = if
   | leq r (getRange i) -> foldMap (spine r) trees <> [getElem @(Set DeclRef) i]
   | otherwise -> []
 
-addLocalScopes :: forall impl m. HasScopeForest impl m => RawContractCode -> LIGO Info -> m (LIGO Info')
-addLocalScopes fname tree = do
-  forest <- scopeForest @impl fname tree
+addLocalScopes :: forall impl m. HasScopeForest impl m => Source -> LIGO Info -> m (LIGO Info')
+addLocalScopes src tree = do
+  forest <- scopeForest @impl src tree
 
   let
     defaultHandler f (i :< fs) = do

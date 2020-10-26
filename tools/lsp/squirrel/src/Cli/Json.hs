@@ -35,7 +35,7 @@ import AST.Scope.Common
 import Data.Aeson.Types
 import Range
 import Control.Applicative (liftA2, Alternative((<|>)))
-import Duplo.Pretty 
+import Duplo.Pretty
 import Parser (Msg)
 import Duplo.Error
 
@@ -44,9 +44,9 @@ import Duplo.Error
 ----------------------------------------------------------------------------
 
 -- | Node representing ligo error with additional meta
-data LigoError = LigoError 
-  { _leStatus :: Text 
-  , _leStage :: Text 
+data LigoError = LigoError
+  { _leStatus :: Text
+  , _leStage :: Text
   , _leContent :: LigoErrorContent
   }
   deriving stock (Generic, Show)
@@ -83,7 +83,7 @@ data LigoScope = LigoScope
     -- ```
     _lsRange :: LigoRange
   , _lsExpressionEnvironment :: [Text]
-  , _lsTypeEnvironment :: Value -- TODO: currently ligo always outputs an empty list, upd: not
+  , _lsTypeEnvironment :: Value
   }
   deriving stock (Generic, Show)
 
@@ -209,7 +209,7 @@ instance ToJSON LigoError where
   toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 2}
 
 instance FromJSON LigoErrorContent where
-  parseJSON = withObject "error_content" $ \o -> do 
+  parseJSON = withObject "error_content" $ \o -> do
     _lecMessage <- o .: "message"
     _lecLocation <- parseLigoRange "location_error_inner_range" =<< o .: "location"
     return $ LigoErrorContent {..}
@@ -299,14 +299,14 @@ instance ToJSON LigoRecordField where
 
 instance FromJSON LigoRange where
   parseJSON = liftA2 (<|>) parseAsString parseAsObject
-    where 
+    where
       parseAsString (String o) = return $ Virtual o
       parseAsString _ = fail "failed to parse as string"
       parseAsObject = withObject "range" $ \o -> do
         _lrStart <- o .: "start"
         _lrStop <- o .: "stop"
         return $ LigoRange {..}
-    
+
 
 instance ToJSON LigoRange where
   toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 2}
@@ -323,7 +323,7 @@ instance FromJSON LigoByte where
 instance ToJSON LigoByte where
   toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 2}
 
--- | Construct a parser for ligo ranges that are represented in pairs 
+-- | Construct a parser for ligo ranges that are represented in pairs
 -- ```
 -- [ "name", <LigoRange> ]
 -- ```
@@ -338,14 +338,14 @@ parseLigoRange = flip withArray (safeExtract . group 2 . toList)
 -- Pretty
 ----------------------------------------------------------------------------
 
-instance Pretty LigoError where 
-  pp (LigoError _ stage (LigoErrorContent msg loc)) = mconcat 
+instance Pretty LigoError where
+  pp (LigoError _ stage (LigoErrorContent msg loc)) = mconcat
     [ text "Error in ", text $ show stage
     , text "\n\nat: ", fromLigoRange loc
     , text "\n\n" <> pp msg
     ]
-    where 
-      fromLigoRange r@(LigoRange _ _) = 
+    where
+      fromLigoRange r@(LigoRange _ _) =
         "[" <> pp (fromMaybe (error "impossible") (mbFromLigoRange r)) <> "]"
       fromLigoRange (Virtual _) = text "virtual"
 
@@ -355,8 +355,8 @@ instance Pretty LigoError where
 
 -- | Convert ligo error to its corresponding internal representation.
 fromLigoErrorToMsg :: LigoError -> Msg
-fromLigoErrorToMsg LigoError 
-  { _leContent = LigoErrorContent 
+fromLigoErrorToMsg LigoError
+  { _leContent = LigoErrorContent
       { _lecMessage = err
       , _lecLocation = fromLigoRangeOrDef -> at
       }
@@ -386,23 +386,23 @@ group n l
 -- | Converts ligo ranges to our internal ones.
 -- Note: ligo team allows for start file of a range be different from end file.
 -- Either if this intentional or not we throw an error if they are so.
--- >>> :{ 
--- mbFromLigoRange 
---   (LigoRange 
+-- >>> :{
+-- mbFromLigoRange
+--   (LigoRange
 --     (LigoRangeInner (LigoByte "contracts/test.ligo" 2 undefined undefined) 3 6)
---     (LigoRangeInner (LigoByte "contracts/test.ligo" 5 undefined undefined) 11 12)     
+--     (LigoRangeInner (LigoByte "contracts/test.ligo" 5 undefined undefined) 11 12)
 --   )
 -- :}
 -- contracts/test.ligo:2:3-5:1
 mbFromLigoRange :: LigoRange -> Maybe Range
 mbFromLigoRange (Virtual _) = Nothing
-mbFromLigoRange 
-  (LigoRange 
+mbFromLigoRange
+  (LigoRange
     (LigoRangeInner (LigoByte { _lbPosLnum = startLine, _lbPosFname = startFilePath }) startCNum startBol)
     (LigoRangeInner (LigoByte { _lbPosLnum = endLine, _lbPosFname = endFilePath }) endCNum endBol)
-  ) 
+  )
   | startFilePath /= endFilePath = error "start file of a range does not equal to it's end file"
-  | otherwise = Just $ Range 
+  | otherwise = Just $ Range
       { rStart = (startLine, abs (startCNum - startBol), 0)
       , rFinish = (endLine, abs (endCNum - endBol), 0)
       , rFile = startFilePath

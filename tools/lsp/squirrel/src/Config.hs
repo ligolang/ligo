@@ -12,6 +12,7 @@ import Data.Aeson
 import Data.Default
 import qualified Data.Text as T
 import Language.Haskell.LSP.Types
+import Cli (LigoClientEnv (..))
 
 ----------------------------------------------------------------------------
 -- Handlers
@@ -49,7 +50,7 @@ data Config =
 
 instance Default Config where
   def = Config
-    { _cLigoBinaryPath = _cLigoBinaryPath def -- ^ Extract ligo binary from $PATH
+    { _cLigoBinaryPath = _lceClientPath def -- Extract ligo binary from $PATH
     , _cMaxNumberOfProblems = 100
     }
 

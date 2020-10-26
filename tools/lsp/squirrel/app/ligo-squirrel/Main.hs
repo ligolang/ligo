@@ -6,8 +6,8 @@ import Control.Exception.Safe (handleAny)
 import Control.Lens hiding ((:>))
 import Control.Monad
 import Control.Monad.Catch
-import Control.Monad.Reader (asks)
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Reader (asks)
 
 import Data.Default
 import Data.Maybe (fromMaybe)
@@ -27,13 +27,14 @@ import qualified System.Log as L
 
 import AST
 import qualified ASTMap
+import Cli.Types
 import qualified Config
-import Language.LSP.Util (MessageDescription(..), describeFromClientMessage)
+import Language.LSP.Util (MessageDescription (..), describeFromClientMessage)
+import qualified Log
 import Product
+import Range
 import RIO (RIO)
 import qualified RIO
-import Range
-import qualified Log
 
 main :: IO ()
 main = do
@@ -119,8 +120,8 @@ eventLoop funs chan = do
 
     async $ handleAny (sendErrorResponse msg) $ do
       -- TODO: client freezes when trying to extract LigoEnv from extension
-      -- RIO.run (astMap :> funs :> def { _lceClientPath } :> Nil) do
-      RIO.run (astMap :> funs :> def :> Nil) do
+      RIO.run (astMap :> funs :> def { _lceClientPath } :> Nil) do
+      -- RIO.run (astMap :> funs :> def :> Nil) do
         case msg of
           RspFromClient            {}    -> return ()
           NotInitialized           notif -> handleInitialized                  notif
@@ -131,7 +132,7 @@ eventLoop funs chan = do
           ReqCompletion            req   -> handleCompletionRequest            req
           ReqDocumentSymbols       req   -> handleDocumentSymbolsRequest       req
           ReqFoldingRange          req   -> handleFoldingRangeRequest          req
-          ReqSelectionRange        req   -> handleSelecttionRangeRequest       req
+          ReqSelectionRange        req   -> handleSelectionRangeRequest        req
           ReqHover                 req   -> handleHoverRequest                 req
           ReqRename                req   -> handleRenameRequest                req
 
@@ -197,7 +198,7 @@ handleFindReferencesRequest req = do
     let uri  = req^.J.params.J.textDocument.J.uri
     let nuri = J.toNormalizedUri uri
     let pos  = fromLspPosition $ req^.J.params.J.position
-    (tree, _) <- RIO.forceFetch nuri
+    (tree, _) <- RIO.fetch nuri
     case AST.referencesOf pos tree of
       Just refs -> do
         let locations = J.Location uri . toLspRange <$> refs
@@ -232,8 +233,8 @@ handleFoldingRangeRequest req = do
         $ fmap toFoldingRange
         $ actions
 
-handleSelecttionRangeRequest :: J.SelectionRangeRequest -> RIO ()
-handleSelecttionRangeRequest req = do
+handleSelectionRangeRequest :: J.SelectionRangeRequest -> RIO ()
+handleSelectionRangeRequest req = do
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
     let positions = req ^. J.params . J.positions
     (tree, _) <- RIO.fetch uri

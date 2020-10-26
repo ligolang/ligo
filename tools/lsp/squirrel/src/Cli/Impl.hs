@@ -11,26 +11,28 @@ module Cli.Impl
   , runLigoClient
   ) where
 
-import Control.Monad.Catch (Exception (..), MonadThrow (throwM))
-import Control.Exception (throwIO, IOException, try, catch)
+import Control.Exception.Safe (Exception (..), SomeException, catchAny, throwIO)
+-- import Control.Lens hiding ((<.>))
+import Control.Exception (try)
+import Control.Monad
+import Control.Monad.Catch (MonadThrow (throwM))
+import Control.Monad.Reader
 import Data.Aeson (eitherDecodeStrict')
+-- import Data.Aeson
+import Data.Aeson.Types (FromJSON)
 import qualified Data.ByteString.Lazy.Char8 as S8L
-import qualified Data.ByteString.Char8 as S8
-import qualified Data.ByteString as S
-import Data.Text (Text, pack)
-import Data.Text.Encoding (decodeUtf8, encodeUtf8)
+import Data.Text (Text, pack, unpack)
+import Data.Text.Encoding (encodeUtf8)
 import Duplo.Pretty (PP (PP), Pretty (..), text, (<+>), (<.>))
 import System.Exit (ExitCode (..))
-import System.Process 
-import Data.Aeson.Types (FromJSON)
-import Control.Monad
-import Control.Monad.Reader
+import System.Process
 
 import Cli.Json
 import Cli.Types
-import qualified Log
-import Product 
 import Log (i)
+import qualified Log
+import ParseTree (Source (..), srcToText)
+import Product
 
 ----------------------------------------------------------------------------
 -- Errors
@@ -46,7 +48,7 @@ data LigoBinaryCallError
 
   | -- | Catch expected ligo failure to be able to restore from it.
     ExpectedClientFailure
-      Text -- ^ stdout 
+      Text -- ^ stdout
       Text -- ^ stderr
 
   | -- | Expected ligo failure decoded from its JSON output.
@@ -63,7 +65,7 @@ data LigoBinaryCallError
       Text
   | -- | Parse error occured during ligo stderr JSON decoding.
     LigoErrorNodeParseError
-      Text 
+      Text
   deriving (Show) via PP LigoBinaryCallError
 
 instance Exception LigoBinaryCallError where
@@ -75,11 +77,11 @@ instance Pretty LigoBinaryCallError where
       "ligo binary unexpectedly failed with error code" <+> pp errCode
         <+> ".\nStdout:\n" <.> pp output <.> "\nStderr:\n" <.> pp errOutput
     ExpectedClientFailure output errOutput ->
-      "ligo binary failed as expected with\nStdout:\n" <.> pp output 
-      <.> "\nStderr:\n" <.> pp errOutput 
-    DecodedExpectedClientFailure err -> 
-      "ligo binary produced expected error which we successfully decoded as:\n" <.> text (show err) 
-    LigoErrorNodeParseError err -> 
+      "ligo binary failed as expected with\nStdout:\n" <.> pp output
+      <.> "\nStderr:\n" <.> pp errOutput
+    DecodedExpectedClientFailure err ->
+      "ligo binary produced expected error which we successfully decoded as:\n" <.> text (show err)
+    LigoErrorNodeParseError err ->
       "ligo binary produced error JSON which we consider malformed:\n" <.> pp err
     DefinitionParseError err ->
       "ligo binary produced output which we consider malformed:\n" <.> pp err
@@ -92,39 +94,45 @@ runLigoClient :: r -> ReaderT r m a -> m a
 runLigoClient = flip runReaderT
 
 -- | Call ligo binary and return stdin and stderr accordingly.
-callLigo 
-  :: HasLigoClient m => [String] -> m (Text, Text)
-callLigo args = do 
+callLigo
+  :: HasLigoClient m => [String] -> Source -> m (Text, Text)
+callLigo args con = do
   LigoClientEnv {..} <- getLigoClientEnv
-  liftIO $ readProcessWithExitCode' _lceClientPath args "" >>= \case
-    (ExitSuccess, output, errOutput) -> pure (pack output, pack errOutput)
-    (ExitFailure errCode, pack -> output, pack -> errOutput) ->
-      throwM $ UnexpectedClientFailure errCode output errOutput
-
--- | Call ligo binary and pass raw contract to its stdin and return 
--- stdin and stderr accordingly.
-callLigoWith
-  :: HasLigoClient m => [String] -> RawContractCode -> m (Text, Text)
-callLigoWith args (RawContractCode con) = do
-  env@LigoClientEnv {..} <- getLigoClientEnv
-  liftIO $ do 
-    Log.debug "LIGO" [i|Running ligo on #{env} with #{args}|]
-    (Just ligoIn, Just ligoOut, Just ligoErr, ligoProc) <- 
-      createProcess (proc _lceClientPath args) 
-        { std_out = CreatePipe
-        , std_in  = CreatePipe 
-        , std_err = CreatePipe
-        }
-    S.hPut ligoIn $ S8L.toStrict con
-    res <- S.hGetContents ligoOut 
-    le <- S.hGetContents ligoErr
-    ec <- waitForProcess ligoProc
-    unless (ec == ExitSuccess) $ do 
-      throwM $ ExpectedClientFailure (decodeUtf8 res) (decodeUtf8 le)
+  liftIO $ do
+    raw <- srcToText con
+    (ec, lo, le) <- readProcessWithExitCode' _lceClientPath args (unpack raw)
+    unless (ec == ExitSuccess) $ do
+      throwM $ ExpectedClientFailure (pack lo) (pack le)
     unless (le == mempty) $ do
-      throwM $ UnexpectedClientFailure 0 (decodeUtf8 res) (decodeUtf8 le) 
-    Log.debug "LIGO" [i|Successfully exited with stdout:\n#{S8.unpack res}\nand stderr:\n#{S8.unpack le}|]
-    return (decodeUtf8 res, decodeUtf8 le)
+      throwM $ UnexpectedClientFailure 0 (pack lo) (pack le)
+    Log.debug "LIGO" [i|Successfully exited with stdout:\n#{lo}\nand stderr:\n#{le}|]
+    return (pack lo, pack le)
+
+-- | Call ligo binary and pass raw contract to its stdin and return
+-- stdin and stderr accordingly.
+-- callLigoWith
+--   :: HasLigoClient m => [String] -> Source -> m (Text, Text)
+-- callLigoWith args con = do
+--   env@LigoClientEnv {..} <- getLigoClientEnv
+--   liftIO $ do
+--     Log.debug "LIGO" [i|Running ligo on #{env} with #{args}|]
+--     (Just ligoIn, Just ligoOut, Just ligoErr, ligoProc) <-
+--       createProcess (proc _lceClientPath args)
+--         { std_out = CreatePipe
+--         , std_in  = CreatePipe
+--         , std_err = CreatePipe
+--         }
+--     raw <- srcToBytestring con
+--     S.hPut ligoIn raw
+--     res <- S.hGetContents ligoOut
+--     le <- S.hGetContents ligoErr
+--     ec <- waitForProcess ligoProc
+--     unless (ec == ExitSuccess) $ do
+--       throwM $ ExpectedClientFailure (decodeUtf8 res) (decodeUtf8 le)
+--     unless (le == mempty) $ do
+--       throwM $ UnexpectedClientFailure 0 (decodeUtf8 res) (decodeUtf8 le)
+--     Log.debug "LIGO" [i|Successfully exited with stdout:\n#{S8.unpack res}\nand stderr:\n#{S8.unpack le}|]
+--     return (decodeUtf8 res, decodeUtf8 le)
 
 -- | Variant of @readProcessWithExitCode@ that prints a better error in case of
 -- an exception in the inner @readProcessWithExitCode@ call.
@@ -201,48 +209,48 @@ parseLigoOutput contractPath = do
 -- Execute ligo binary itself
 
 -- | Get ligo definitions from a contract by calling ligo binary.
-getLigoDefinitionsFrom 
-  :: HasLigoClient m 
+getLigoDefinitionsFrom
+  :: HasLigoClient m
   => FilePath
   -> m (LigoDefinitions, Text)
-getLigoDefinitionsFrom contractPath = do 
-  contents <- liftIO $ S8L.readFile contractPath 
-  getLigoDefinitions $ RawContractCode contents
+getLigoDefinitionsFrom contractPath = do
+  contents <- liftIO $ S8L.readFile contractPath
+  getLigoDefinitions $ ByteString contractPath (S8L.toStrict contents)
 
 -- | Get ligo definitions from raw contract.
 getLigoDefinitions
   :: HasLigoClient m
-  => RawContractCode
+  => Source
   -> m (LigoDefinitions, Text)
 getLigoDefinitions contract = do
   env <- getLigoClientEnv
   Log.debug "LIGO.PARSE" [i|parsing the following contract:\n #{contract}|]
-  mbOut <- liftIO . try @LigoBinaryCallError . runLigoClient (env :> Nil) $ 
-    callLigoWith ["get-scope", "--format=json", "--with-types", "--syntax=pascaligo", "/dev/stdin"] contract
-  case mbOut of 
+  mbOut <- liftIO . try @LigoBinaryCallError . runLigoClient (env :> Nil) $
+    callLigo ["get-scope", "--format=json", "--with-types", "--syntax=pascaligo", "/dev/stdin"] contract
+  case mbOut of
     Right (output, errs) -> do
       Log.debug "LIGO.PARSE" [i|Successfully called ligo with #{output}|]
       case eitherDecodeStrict' @LigoDefinitions . encodeUtf8 $ output of
-        Left err -> do 
+        Left err -> do
           Log.debug "LIGO.PARSE" [i|Unable to parse ligo definitions with: #{err}|]
           throwM $ DefinitionParseError (pack err)
         Right definitions -> return (definitions, errs)
 
-    -- A middleware for processing `ExpectedClientFailure` error needed to pass it multiple levels up 
+    -- A middleware for processing `ExpectedClientFailure` error needed to pass it multiple levels up
     -- allowing us from restoring from expected ligo errors.
     Left (ExpectedClientFailure _ ligoStdErr) -> do
       -- otherwise call ligo with `compile-contract` to extract more readable error message
-      Log.debug "LIGO.PARSE" [i|decoding ligo error|] 
-      case eitherDecodeStrict' @LigoError . encodeUtf8 $ ligoStdErr of 
-        Left err -> do 
+      Log.debug "LIGO.PARSE" [i|decoding ligo error|]
+      case eitherDecodeStrict' @LigoError . encodeUtf8 $ ligoStdErr of
+        Left err -> do
           Log.debug "LIGO.PARSE" [i|ligo error decoding failure #{err}|]
           throwM $ LigoErrorNodeParseError (pack err)
-        Right decodedError -> do 
+        Right decodedError -> do
           Log.debug "LIGO.PARSE" [i|ligo error decoding successfull with:\n#{decodedError}|]
-          throwM $ DecodedExpectedClientFailure decodedError 
+          throwM $ DecodedExpectedClientFailure decodedError
 
     -- All other errors remain untouched
-    Left err -> throwM err 
+    Left err -> throwM err
 
 -- | Extract a list of types in scopes from aeson @Value@ for some specific declaration under "name" field.
 -- extractLigoTypesFrom :: Text -> Value -> [(Text, LigoTypeFull)]
