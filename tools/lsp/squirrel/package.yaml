@@ -64,14 +64,14 @@ library:
     - src/
 
   include-dirs:
-    - vendor/pascaligo
-    - vendor/reasonligo
-    - vendor/camligo
+    - grammar/pascaligo
+    - grammar/reasonligo
+    - grammar/camligo
 
   c-sources:
-    - vendor/pascaligo/parser.c
-    - vendor/reasonligo/parser.c
-    - vendor/camligo/parser.c
+    - grammar/pascaligo/src/parser.c
+    - grammar/reasonligo/src/parser.c
+    - grammar/camligo/src/parser.c
 
   dependencies:
     - haskell-lsp-types

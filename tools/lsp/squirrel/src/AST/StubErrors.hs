@@ -10,8 +10,16 @@ module AST.StubErrors where
 -- import Duplo.Pretty
 
 -- import AST.Skeleton
+-- import Product
 
--- stubErrors :: forall xs. (Lattice xs, Modifies xs) => xs -> LIGO xs -> LIGO xs
+-- stubErrors
+--   :: forall xs
+--   .  ( Lattice  (Product xs)
+--      , Modifies (Product xs)
+--      )
+--   => Product xs
+--   -> LIGO xs
+--   -> LIGO xs
 -- stubErrors stub = go transform
 --   where
 --     go f (a :< fs) = f (a :< fmap (go f) fs)
@@ -33,8 +41,8 @@ module AST.StubErrors where
 --           (body    ? unit)
 --         )
 
---       Var      name ty value -> name ! make (r, Var      name (ty <&> (? unitTy)) (value ? unit))
---       Const    name ty value -> name ! make (r, Const    name (ty <&> (? unitTy)) (value ? unit))
+--       Var      name ty value -> name ! make (r, Var      name (ty <&> (? unitTy)) (value <&> (? unit)))
+--       Const    name ty value -> name ! make (r, Const    name (ty <&> (? unitTy)) (value <&> (? unit)))
 --       TypeDecl name ty       -> name ! make (r, TypeDecl name (ty ? unitTy))
 
 --       Attribute attr -> attr ! tree

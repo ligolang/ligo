@@ -12,8 +12,6 @@ let
     modules = [{
       packages.ligo-squirrel = {
         preBuild = ''
-          rm vendor/*/*
-          ( cd ${grammars}; for i in *; do cp $i/parser.c $NIX_BUILD_TOP/*/vendor/$i; done )
         '';
       };
     }];
