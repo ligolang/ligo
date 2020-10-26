@@ -49,7 +49,7 @@ data Config =
 
 instance Default Config where
   def = Config
-    { _cLigoBinaryPath = "ligo" -- ^ Extract ligo binary from $PATH
+    { _cLigoBinaryPath = _cLigoBinaryPath def -- ^ Extract ligo binary from $PATH
     , _cMaxNumberOfProblems = 100
     }
 

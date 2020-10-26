@@ -41,7 +41,7 @@ import qualified Language.Haskell.LSP.Utility          as U
 -- import           System.FilePath
 
 import           Duplo.Error
-import           Duplo.Tree (collect)
+import           Duplo.Tree   (collect)
 
 import           AST
 import           ASTMap (ASTMap)
@@ -98,10 +98,10 @@ respond msg = do
   funs <- asks getElem
   liftIO $ send funs msg
 
-diagnostic :: Int -> J.NormalizedUri -> J.TextDocumentVersion -> DiagnosticsBySource -> RIO ()
+diagnostic :: Int -> J.NormalizedUri -> J.TextDocumentVersion -> [J.Diagnostic] -> RIO ()
 diagnostic n nuri ver diags = do
   funs <- asks $ getElem @(Core.LspFuncs Config.Config)
-  let diags' = diags <> emptyDiags
+  let diags' = partitionBySource diags <> emptyDiags
   Log.debug "LOOP.DIAG" [i|Diags #{diags'}|]
   liftIO $ Core.publishDiagnosticsFunc funs n nuri ver diags'
 
@@ -140,7 +140,9 @@ load
   -> RIO (LIGO Info', [Msg])
 load uri = do
   src <- preload uri
-  parseWithScopes @Standard src
+  ligoEnv <- asks $ getElem @LigoClientEnv
+  Log.debug "LOAD" [i|running with env #{ligoEnv}|]
+  parseWithScopes' src
 
 collectErrors
   :: (J.NormalizedUri -> RIO (LIGO Info', [Msg]))
@@ -150,7 +152,6 @@ collectErrors
 collectErrors fetcher uri version = do
   (tree, errs) <- fetcher uri
   diagnostic 100 uri version
-    $ partitionBySource
     $ map errorToDiag
     $ errs <> collectTreeErrors tree
 
@@ -161,7 +162,7 @@ errorToDiag (getRange -> (Range (sl, sc, _) (el, ec, _) _), Err what) =
     (Just J.DsError)
     Nothing
     (Just "ligo-lsp")
-    (Text.pack [i|Expected #{what}|])
+    (Text.pack [i|Parse error: Unexpected #{what}|])
     (Just $ J.List[])
     Nothing
   where
@@ -181,7 +182,6 @@ errorToDiag (getRange -> (Range (sl, sc, _) (el, ec, _) _), Err what) =
 --     if yes
 --       then parseContracts p
 --       else do
---         -- Log.debug "Parse.Tree" $ "parsing: " ++ show p
 --         contract <- RIO.forceFetch (J.toNormalizedUri p)
 --         case contract of
 --           Right (tree, errs) ->

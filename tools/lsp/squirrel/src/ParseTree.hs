@@ -16,6 +16,7 @@ module ParseTree
 
     -- * Invoke the TreeSitter and get the tree it outputs
   , toParseTree
+  , srcToBytestring
   )
   where
 

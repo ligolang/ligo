@@ -26,7 +26,7 @@ import           AST.Pretty
 -- import           Debug.Trace
 
 class HasLigoClient m => HasScopeForest impl m where
-  scopeForest :: FilePath -> LIGO Info -> m ScopeForest
+  scopeForest :: RawContractCode -> LIGO Info -> m ScopeForest
 
 instance {-# OVERLAPPABLE #-} Pretty x => Show x where
   show = show . pp
@@ -175,7 +175,7 @@ spine r (only -> (i, trees)) = if
   | leq r (getRange i) -> foldMap (spine r) trees <> [getElem @(Set DeclRef) i]
   | otherwise -> []
 
-addLocalScopes :: forall impl m. HasScopeForest impl m => FilePath -> LIGO Info -> m (LIGO Info')
+addLocalScopes :: forall impl m. HasScopeForest impl m => RawContractCode -> LIGO Info -> m (LIGO Info')
 addLocalScopes fname tree = do
   forest <- scopeForest @impl fname tree
 

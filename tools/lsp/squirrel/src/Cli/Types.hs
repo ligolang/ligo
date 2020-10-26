@@ -3,16 +3,22 @@ module Cli.Types
   ( LigoClient
   , LigoClientEnv (..)
   , HasLigoClient(..)
+  , RawContractCode(..)
   )
 where
 
 import Control.Monad.Catch (MonadCatch)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Reader (ReaderT, asks)
+import qualified Data.ByteString.Lazy.Char8 as S8L
 
 import Data.Default (Default (..))
 
 import Product
+
+newtype RawContractCode = RawContractCode
+  { unRawContract :: S8L.ByteString
+  } deriving stock Show
 
 type LigoClient = ReaderT (Product '[LigoClientEnv]) IO
 
@@ -20,8 +26,6 @@ type LigoClient = ReaderT (Product '[LigoClientEnv]) IO
 data LigoClientEnv = LigoClientEnv
   { -- | Ligo binary path
     _lceClientPath :: FilePath
-  , -- | Whether we need to print logs from ligo
-    _lceVerbose :: Bool
   }
   deriving stock (Show)
 
@@ -39,4 +43,4 @@ instance HasLigoClient IO where
   getLigoClientEnv = pure def
 
 instance Default LigoClientEnv where
-  def = LigoClientEnv "ligo" False
+  def = LigoClientEnv "ligo"

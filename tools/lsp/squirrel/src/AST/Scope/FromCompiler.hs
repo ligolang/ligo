@@ -4,11 +4,11 @@ module AST.Scope.FromCompiler where
 import Control.Category ((>>>))
 import Data.Function (on)
 import Data.HashMap.Strict ((!))
-import Data.Maybe
 import Data.Map (Map)
-import qualified Data.Map    as Map
-import Duplo.Tree (make, Cofree (..), inject, only)
+import qualified Data.Map as Map
+import Data.Maybe
 import Duplo.Lattice
+import Duplo.Tree (Cofree (..), inject, make, only)
 
 import AST.Scope.Common
 import AST.Skeleton (TypeName (..))
@@ -20,7 +20,7 @@ data FromCompiler
 
 instance HasLigoClient m => HasScopeForest FromCompiler m where
   scopeForest ast _ = do
-    defs <- getLigoDefinitions ast
+    (defs, _) <- getLigoDefinitions ast
     return $ fromCompiler defs
 
 -- | Extract `ScopeForest` from LIGO scope dump.
@@ -45,11 +45,8 @@ fromCompiler (LigoDefinitions decls scopes) =
     fromLigoDecl (LigoDefinitionScope n orig bodyR ty _) = do
       let r = fromLigoRangeOrDef orig
       ( DeclRef n r
-       , ScopedDecl n r (convertLigoRange bodyR) (fromLigoTy <$> ty) [] []
+       , ScopedDecl n r (mbFromLigoRange bodyR) (fromLigoTy <$> ty) [] []
        )
-
-    fromLigoRangeOrDef :: LigoRange -> Range
-    fromLigoRangeOrDef = maybe (point (-1) (-1)) id . convertLigoRange
 
     -- I cannot comprehend what does the stuff in Cli.Json means, neither
     -- can I run it.

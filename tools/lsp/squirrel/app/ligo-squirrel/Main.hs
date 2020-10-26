@@ -110,13 +110,16 @@ responseHandlerCb _rin resp = do
 eventLoop :: Core.LspFuncs Config.Config -> TChan FromClientMessage -> IO ()
 eventLoop funs chan = do
   astMap <- ASTMap.empty $ RIO.load . J.fromNormalizedUri
+  Just (Config.Config { _cLigoBinaryPath = _lceClientPath }) <- Core.config funs
   forever do
     msg <- atomically do
       readTChan chan
 
-    Log.debug "LOOP" [i|START message: #{take 50 $ show msg}|]
+    Log.debug "LOOP" [i|START message: #{show msg}|]
 
     async $ handleAny (sendErrorResponse msg) $ do
+      -- TODO: client freezes when trying to extract LigoEnv from extension
+      -- RIO.run (astMap :> funs :> def { _lceClientPath } :> Nil) do
       RIO.run (astMap :> funs :> def :> Nil) do
         case msg of
           RspFromClient            {}    -> return ()
@@ -194,7 +197,7 @@ handleFindReferencesRequest req = do
     let uri  = req^.J.params.J.textDocument.J.uri
     let nuri = J.toNormalizedUri uri
     let pos  = fromLspPosition $ req^.J.params.J.position
-    (tree, _) <- RIO.fetch nuri
+    (tree, _) <- RIO.forceFetch nuri
     case AST.referencesOf pos tree of
       Just refs -> do
         let locations = J.Location uri . toLspRange <$> refs
