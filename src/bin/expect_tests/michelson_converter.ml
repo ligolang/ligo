@@ -155,8 +155,7 @@ let%expect_test _ =
                     DUG 2 ;
                     COMPARE ;
                     NEQ ;
-                    IF { PUSH string "NOT_OWNER" ; FAILWITH } { PUSH unit Unit } ;
-                    DROP ;
+                    IF { PUSH string "NOT_OWNER" ; FAILWITH } {} ;
                     DIG 2 ;
                     CAR ;
                     PAIR ;
@@ -199,8 +198,7 @@ let%expect_test _ =
                                DUG 2 ;
                                COMPARE ;
                                EQ ;
-                               IF {} { DROP ; PUSH string "INSUFFICIENT_BALANCE" ; FAILWITH } } ;
-                           DROP ;
+                               IF { DROP } { DROP ; PUSH string "INSUFFICIENT_BALANCE" ; FAILWITH } } ;
                            SWAP ;
                            DUG 2 ;
                            DUP ;

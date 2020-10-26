@@ -10,13 +10,13 @@ let () = Unix.putenv "TERM" "dumb"
 
 let%expect_test _ =
   run_ligo_good [ "measure-contract" ; contract "coase.ligo" ; "main" ] ;
-  [%expect {| 1238 bytes |}] ;
+  [%expect {| 1214 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig.ligo" ; "main" ] ;
   [%expect {| 828 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig-v2.ligo" ; "main" ] ;
-  [%expect {| 1907 bytes |}] ;
+  [%expect {| 1883 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "vote.mligo" ; "main" ] ;
   [%expect {| 479 bytes |}] ;
@@ -102,8 +102,7 @@ let%expect_test _ =
                  SWAP ;
                  COMPARE ;
                  GT ;
-                 IF { PUSH string "Not enough money" ; FAILWITH } { PUSH unit Unit } ;
-                 DROP ;
+                 IF { PUSH string "Not enough money" ; FAILWITH } {} ;
                  DUP ;
                  PUSH nat 1 ;
                  DIG 2 ;
@@ -171,9 +170,7 @@ let%expect_test _ =
                  CAR ;
                  COMPARE ;
                  NEQ ;
-                 IF { PUSH string "This card doesn't belong to you" ; FAILWITH }
-                    { PUSH unit Unit } ;
-                 DROP ;
+                 IF { PUSH string "This card doesn't belong to you" ; FAILWITH } {} ;
                  SWAP ;
                  DUP ;
                  DUG 2 ;
@@ -257,9 +254,7 @@ let%expect_test _ =
              CAR ;
              COMPARE ;
              NEQ ;
-             IF { PUSH string "This card doesn't belong to you" ; FAILWITH }
-                { PUSH unit Unit } ;
-             DROP ;
+             IF { PUSH string "This card doesn't belong to you" ; FAILWITH } {} ;
              DIG 3 ;
              DUP ;
              DUG 4 ;
@@ -481,8 +476,7 @@ let%expect_test _ =
                  SENDER ;
                  MEM ;
                  NOT ;
-                 IF { PUSH string "Unauthorized address" ; FAILWITH } { PUSH unit Unit } ;
-                 DROP ;
+                 IF { PUSH string "Unauthorized address" ; FAILWITH } {} ;
                  SWAP ;
                  CAR ;
                  DUP ;
@@ -499,9 +493,7 @@ let%expect_test _ =
                  SIZE ;
                  COMPARE ;
                  GT ;
-                 IF { PUSH string "Message size exceed maximum limit" ; FAILWITH }
-                    { PUSH unit Unit } ;
-                 DROP ;
+                 IF { PUSH string "Message size exceed maximum limit" ; FAILWITH } {} ;
                  DIG 2 ;
                  DUP ;
                  DUG 3 ;
@@ -617,9 +609,7 @@ let%expect_test _ =
                  SWAP ;
                  COMPARE ;
                  GT ;
-                 IF { PUSH string "Maximum number of proposal reached" ; FAILWITH }
-                    { PUSH unit Unit } ;
-                 DROP ;
+                 IF { PUSH string "Maximum number of proposal reached" ; FAILWITH } {} ;
                  DUP ;
                  NIL operation ;
                  PAIR ;

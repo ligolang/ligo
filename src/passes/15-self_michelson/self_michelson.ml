@@ -254,6 +254,30 @@ let rec iterate_optimizer (f : michelson -> bool * michelson) : michelson -> mic
   then iterate_optimizer f x
   else x
 
+let rec is_failing : michelson -> bool =
+  function
+  | Seq (_, []) -> false
+  | Seq (_, [arg]) -> is_failing arg
+  | Seq (l, _ :: args) -> is_failing (Seq (l, args))
+  | Prim (_, "FAILWITH", _, _) -> true
+  | Prim (_, "IF", [bt; bf], _)
+  | Prim (_, "IF_CONS", [bt; bf], _)
+  | Prim (_, "IF_LEFT", [bt; bf], _)
+  | Prim (_, "IF_NONE", [bt; bf], _) ->
+    is_failing bt && is_failing bf
+  (* Note: the body of ITER, LOOP, LOOP_LEFT _can_ be
+     failing. However, the loop will _not_ be failing, because the
+     body might never be executed. The body of MAP _cannot_ be
+     failing. *)
+  | _ -> false
+
+let is_cond : string -> bool = function
+  | "IF"
+  | "IF_NONE"
+  | "IF_CONS"
+  | "IF_LEFT" -> true
+  | _ -> false
+
 let opt_drop2 : peep2 = function
   (* nullary_op ; DROP  ↦  *)
   | Prim (_, p, _, _), Prim (_, "DROP", [], _) when is_nullary_op p -> Some []
@@ -265,6 +289,14 @@ let opt_drop2 : peep2 = function
   | Prim (_, p, _, _), Prim (_, "DROP", [], _) when is_binary_op p -> Some [i_drop; i_drop]
   (* ternary_op ; DROP  ↦  DROP ; DROP ; DROP *)
   | Prim (_, p, _, _), Prim (_, "DROP", [], _) when is_ternary_op p -> Some [i_drop; i_drop; i_drop]
+  (* IF { ... ; FAILWITH } { ... } ; DROP  ↦  IF { ... ; FAILWITH } { ... ; DROP } *)
+  | Prim (l1, p, [bt; Seq (l2, bf)], annot1), (Prim (_, "DROP", [], _) as drop)
+    when is_cond p && is_failing bt ->
+    Some [Prim (l1, p, [bt; Seq (l2, bf @ [drop])], annot1)]
+  (* IF { ... } { ... ; FAILWITH } ; DROP  ↦  IF { ... ; DROP } { ... ; FAILWITH } *)
+  | Prim (l1, p, [Seq (l2, bt); bf], annot1), (Prim (_, "DROP", [], _) as drop)
+    when is_cond p && is_failing bf ->
+    Some [Prim (l1, p, [Seq (l2, bt @ [drop]); bf], annot1)]
   | _ -> None
 
 let opt_drop4 : peep4 = function
@@ -397,23 +429,6 @@ let opt_digdug3 : peep3 = function
    thwarting the intent of the Michelson tail fail restriction -- the
    LIGO _user_ might accidentally write dead code immediately after a
    failure, and we will simply erase it. *)
-let rec is_failing : michelson -> bool =
-  function
-  | Seq (_, []) -> false
-  | Seq (_, [arg]) -> is_failing arg
-  | Seq (l, _ :: args) -> is_failing (Seq (l, args))
-  | Prim (_, "FAILWITH", _, _) -> true
-  | Prim (_, "IF", [bt; bf], _)
-  | Prim (_, "IF_CONS", [bt; bf], _)
-  | Prim (_, "IF_LEFT", [bt; bf], _)
-  | Prim (_, "IF_NONE", [bt; bf], _) ->
-    is_failing bt && is_failing bf
-  (* Note: the body of ITER, LOOP, LOOP_LEFT _can_ be
-     failing. However, the loop will _not_ be failing, because the
-     body might never be executed. The body of MAP _cannot_ be
-     failing. *)
-  | _ -> false
-
 let rec opt_tail_fail : michelson -> michelson =
   function
   | Seq (l, args) ->
