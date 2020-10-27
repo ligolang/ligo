@@ -12,6 +12,8 @@ let
     modules = [{
       packages.ligo-squirrel = {
         preBuild = ''
+          rm -rf grammar
+          cp -r ${grammars} grammar
         '';
       };
     }];
