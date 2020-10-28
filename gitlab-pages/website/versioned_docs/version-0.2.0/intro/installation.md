@@ -7,9 +7,9 @@ There are currently three ways to get started with LIGO. You can choose to use a
 
 ## Dockerized installation (recommended)
 
-If you've [installed 🐳 Docker](https://docs.docker.com/install/), you can run the latest [LIGO release 0.2.1](./changelog.md):
+If you've [installed 🐳 Docker](https://docs.docker.com/install/), you can run the latest [LIGO release 0.3.0](./changelog.md):
 
-> `docker run ligolang/ligo:0.2.1`
+> `docker run ligolang/ligo:0.3.0`
 
 Or if you want the development version:
 
@@ -47,4 +47,4 @@ sudo apt install ./ligo.deb
 
 Releases are available at the [releases page of gitlab project](https://gitlab.com/ligolang/ligo/-/releases). All the artifacts are attached there.
 
-If you wish to see the changelog, you can either run `ligo changelog` or go to [this page](./changelog.md). It contains links to corresponding releases, should you wish to download the artifacts.
+If you wish to see the changelog, you can either run `ligo changelog` or go to [this page](https://ligolang.org/docs/next/intro/changelog). It contains links to corresponding releases, should you wish to download the artifacts.
