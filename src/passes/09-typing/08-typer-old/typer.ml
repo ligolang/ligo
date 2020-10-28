@@ -138,15 +138,15 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
     | None ->
       let layout = Option.unopt ~default:default_layout m.layout in
       {content=lmap;layout}
-    | Some r ->  r
+    | Some (_,r) ->  r
     in
     return @@ T_record record
   )
   | T_variable variable ->
     (* Check that the variable is in the environment *)
     let name : O.type_variable = Var.todo_cast variable in
-    trace_option (unbound_type_variable e name t.location)
-      @@ Environment.get_type_opt (name) e
+    trace_option (unbound_type_variable e name t.location) @@
+      Environment.get_type_opt (name) e
   | T_app {type_operator;arguments} -> (
     let name : O.type_variable = Var.todo_cast type_operator in
     let%bind v = trace_option (unbound_type_variable e name t.location) @@
@@ -288,7 +288,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let lmap = O.LMap.map (fun e -> ({associated_type = get_type_expression e; michelson_annotation = None; decl_pos=0}:O.row_element)) m' in
       let record_type = match Environment.get_record lmap e with
         | None -> t_record ~layout:default_layout lmap
-        | Some r -> make_t  (T_record r) None
+        | Some (orig_var,r) -> make_t_orig_var (T_record r) None orig_var
       in
       return (E_record m') record_type
   | E_record_update {record; path; update} ->

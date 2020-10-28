@@ -11,25 +11,39 @@ let scopes : Format.formatter -> scopes -> unit = fun f s ->
 
 let definitions : Format.formatter -> def_map -> unit = fun f dm ->
   let kvl = Def_map.to_kv_list dm in
+  let pp_types ppf d = match d with
+    | Variable v -> (
+        match v.t with
+        | Core t -> Format.fprintf ppf "|core: %a |" Ast_core.PP.type_expression t
+        | Resolved t -> Format.fprintf ppf "|resolved: %a |" Ast_typed.PP.type_expression t
+        | Unresolved -> Format.fprintf ppf "|unresolved|"
+    )
+    | Type t -> Format.fprintf ppf ": %a" Ast_core.PP.type_expression t.content
+  in
   let (variables,types) = List.partition (fun (_,def) -> match def with Type _ -> false | Variable _ -> true) kvl in
-  let pp_def f = List.iter (fun (k,v) -> Format.fprintf f "(%s -> %s) %a@ " k (get_def_name v) Location.pp (get_range v)) in
+  let pp_def f = List.iter (fun (k,v) -> Format.fprintf f "(%s -> %s) %a %a@ " k (get_def_name v) pp_types v Location.pp (get_range v)) in
   Format.fprintf f "@[<v>Variable definitions:@ %aType definitions:@ %a@]" pp_def variables pp_def types
 
 let def_to_yojson : def -> Yojson.Safe.t = function
   | Variable { name ; range ; body_range ; t ; references=_ } ->
+    let type_case_to_yojson t = match t with
+      | Core t -> `Assoc [ "core" , Ast_core.Yojson.type_expression t ]
+      | Resolved t -> `Assoc [ "resolved" , Ast_typed.Yojson.type_expression t ]
+      | Unresolved -> `Assoc [ "unresolved" , `Null ]
+    in
     `Assoc [
       ("name", `String name);
       ("range", Location.to_yojson range);
       ("body_range", Location.to_yojson body_range);
-      ("t", match t with None -> `Null | Some t -> Ast_typed.Yojson.type_expression t );
+      ("t", type_case_to_yojson t );
       ("references", `Null);
     ]
-  | Type { name ; range ; body_range ; content=_ } ->
+  | Type { name ; range ; body_range ; content } ->
     `Assoc [
       ("name", `String name);
       ("range", Location.to_yojson range);
       ("body_range", Location.to_yojson body_range);
-      ("content", `String "TODO" );
+      ("content", Ast_core.Yojson.type_expression content );
     ]
 
 let defs_json d : Yojson.Safe.t =

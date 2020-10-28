@@ -3,6 +3,7 @@ open Ast_typed
 open Trace
 open Ast_typed.Helpers
 
+type ('a ,'err) decl_folder = 'a -> declaration -> ('a, 'err) result
 type ('a ,'err) folder = 'a -> expression -> ('a , 'err) result
 let rec fold_expression : ('a , self_ast_typed_error) folder -> 'a -> expression -> ('a , self_ast_typed_error) result = fun f init e ->
   let self = fold_expression f in
@@ -250,6 +251,16 @@ and fold_map_program : ('a, self_ast_typed_error) fold_mapper -> 'a -> program_f
   let%bind (a,p) = bind_fold_list aux (init,[]) p in
   ok (a, Program_Fully_Typed p)
 
+and fold_program_decl : ('a, self_ast_typed_error) folder -> ('a, self_ast_typed_error) decl_folder -> 'a -> program_fully_typed -> ('a, self_ast_typed_error) result = fun m m_decl init (Program_Fully_Typed p) ->
+  let aux = fun acc (x : declaration Location.wrap) ->
+      match Location.unwrap x with
+      | Declaration_constant {binder=_ ; expr ; inline=_} as d ->
+        let%bind acc = m_decl acc d in  
+        fold_expression m acc expr
+      | Declaration_type _t -> ok acc
+    in
+    bind_fold_list aux (init) p
+
 type contract_type = {
   parameter : Ast_typed.type_expression ;
   storage : Ast_typed.type_expression ;
@@ -279,7 +290,12 @@ let fetch_contract_type : string -> program_fully_typed -> (contract_type, self_
                        Ast_typed.assert_t_list_operation listop in
        let%bind () = trace_option (expected_same main_fname storage storage' expr) @@
                        Ast_typed.assert_type_expression_eq (storage,storage') in
-       (* TODO: on storage/parameter : assert_storable, assert_passable ? *)
+       (* TODO: on storage/parameter : a| Some (typed_prg,_,_) ->
+        let b = extract_variable_types typed_prg in
+        let () = Format.printf "\n EXTRACT \n" in
+        let () = List.iter (fun (v,te) -> Format.printf "%a  --  %a\n" Ast_typed.PP.expression_variable v Ast_typed.PP.type_expression te) b in
+        let () = Format.printf "length : %d\n" (List.length b) in
+      ssert_storable, assert_passable ? *)
        ok { parameter ; storage }
     |  _ -> fail @@ bad_contract_io main_fname expr
   )

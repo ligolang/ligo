@@ -11,7 +11,7 @@ val of_list_type : (type_variable * type_expression) list -> t
 val get_opt : expression_variable -> t -> element option
 val get_type_opt : type_variable -> t -> type_expression option
 val get_constructor : label -> t -> (type_expression * type_expression) option
-val get_record : row_element label_map -> t -> rows option
+val get_record : row_element label_map -> t -> (type_variable option * rows) option
 val get_sum : row_element label_map -> t -> rows option
 
 module PP : sig

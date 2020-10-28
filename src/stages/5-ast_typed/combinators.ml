@@ -2,7 +2,8 @@ open Types
 module S = Ast_core
 open Stage_common.Constant
 
-let make_t ?(loc = Location.generated) type_content core = {type_content; location=loc; type_meta = core}
+let make_t_orig_var ?(loc = Location.generated) type_content core orig_var = {type_content; location=loc; type_meta = core ; orig_var}
+let make_t ?(loc = Location.generated) type_content core = {type_content; location=loc; type_meta = core ; orig_var = None}
 let make_e ?(location = Location.generated) expression_content type_expression = {
   expression_content ;
   type_expression ;

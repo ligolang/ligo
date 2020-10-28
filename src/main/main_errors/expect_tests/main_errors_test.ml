@@ -494,11 +494,13 @@ let%expect_test "typer" =
   let type_expression : Ast_typed.type_expression =
     { type_content= T_variable (Var.of_name "foo");
       type_meta= None;
+      orig_var = None ;
       location= File default_location }
   in
   let type_expression2 : Ast_typed.type_expression =
     { type_content= T_variable (Var.of_name "bar");
       type_meta= None;
+      orig_var = None ;
       location= File default_location }
   in
   let ast_core_matching_expr : Ast_core.matching_expr =
@@ -978,12 +980,14 @@ let%expect_test "self_ast_typed" =
   let location_t = File default_location in
   let type_expression : Ast_typed.type_expression =
     { type_content= T_variable (Var.of_name "foo");
-      type_meta= None;
+      type_meta= None ;
+      orig_var = None ;
       location= File default_location }
   in
   let type_expression2 : Ast_typed.type_expression =
     { type_content= T_variable (Var.of_name "bar");
-      type_meta= None;
+      type_meta= None ;
+      orig_var = None ;
       location= File default_location }
   in
   let expression_content = E_literal Literal_unit in
@@ -1101,7 +1105,8 @@ let%expect_test "spilling" =
   let expression_variable = Location.wrap (Var.of_name "bar") in
   let type_expression : Ast_typed.type_expression =
     { type_content= T_variable (Var.of_name "foo");
-      type_meta= None;
+      type_meta= None ;
+      orig_var = None ;
       location= File default_location }
   in
   let value = Mini_c.D_none in
