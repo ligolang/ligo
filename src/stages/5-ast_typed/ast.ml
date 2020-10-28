@@ -52,6 +52,7 @@ and michelson_or_args = {
 and type_expression = {
     type_content: type_content;
     type_meta: type_meta;
+    orig_var: type_variable option ;
     location: location;
   }
 and ty_expr = type_expression

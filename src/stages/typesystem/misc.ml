@@ -97,7 +97,7 @@ module Substitution = struct
     and s_type_expression : (T.type_expression,_) w = fun ~substs { type_content; location; type_meta } ->
       let%bind type_content = s_type_content ~substs type_content in
       let%bind type_meta = bind_map_option (s_abstr_type_expression ~substs) type_meta in
-      ok @@ T.{ type_content; location; type_meta}
+      ok @@ T.{ type_content; location; type_meta ; orig_var = None}
     and s_literal : (T.literal,_) w = fun ~substs -> function
       | T.Literal_unit ->
         let () = ignore @@ substs in

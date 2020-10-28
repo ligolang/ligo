@@ -1,5 +1,6 @@
 open Trace
 module Errors = Errors
+module Helpers = Helpers
 
 let all_passes = [
   Tail_recursion.peephole_expression ;

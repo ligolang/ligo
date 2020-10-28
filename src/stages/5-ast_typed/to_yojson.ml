@@ -159,11 +159,12 @@ let layout = function
   | L_tree -> `List [ `String "L_tree"; `Null ]
 
 
-let rec type_expression {type_content=tc;type_meta;location} =
+let rec type_expression {type_content=tc;type_meta;location;orig_var} =
   `Assoc [
     ("type_content", type_content tc);
     ("type_meta", option Ast_core.Yojson.type_expression type_meta);
     ("location", Location.to_yojson location);
+    ("orig_var", option type_variable_to_yojson orig_var);
   ]
 
 and type_content = function

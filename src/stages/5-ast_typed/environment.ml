@@ -23,7 +23,7 @@ let map_expr_environment : _ -> t -> t = fun f { expression_environment ; type_e
 let map_type_environment : _ -> t -> t = fun f { expression_environment ; type_environment } -> { expression_environment ; type_environment = f type_environment }
 
 let add_expr : expression_variable -> element -> t -> t = fun expr_var env_elt -> map_expr_environment (fun x -> {expr_var ; env_elt} :: x)
-let add_type : type_variable -> type_expression -> t -> t = fun type_variable type_ -> map_type_environment (fun x -> { type_variable ; type_ } :: x)
+let add_type : type_variable -> type_expression -> t -> t = fun type_variable type_ -> map_type_environment (fun x -> { type_variable ; type_ = { type_ with orig_var = Some type_variable } } :: x)
 (* TODO: generate : these are now messy, clean them up. *)
 
 let of_list_type : (type_variable * type_expression) list -> t = fun tvlist -> List.fold_left (fun acc (t,v) -> add_type t v acc) empty tvlist 
@@ -52,19 +52,20 @@ let get_constructor : label -> t -> (type_expression * type_expression) option =
   in
   List.find_map aux (get_type_environment x)
 
-let get_record : _ label_map -> t -> rows option = fun lmap e ->
+let get_record : _ label_map -> t -> (type_variable option * rows) option = fun lmap e ->
   let aux = fun {type_variable=_ ; type_} ->
     match type_.type_content with
     | T_record m -> Option.(
       let lst_kv  = LMap.to_kv_list_rev lmap in
       let lst_kv' = LMap.to_kv_list_rev m.content in
-      map (fun () -> m) @@ Misc.assert_list_eq (
-        fun (ka,va) (kb,vb) ->
+      let m = map (fun () -> m) @@ Misc.assert_list_eq
+        ( fun (ka,va) (kb,vb) ->
           let Label ka = ka in
           let Label kb = kb in
           Misc.assert_eq ka kb >>= fun () ->
           Misc.assert_type_expression_eq (va.associated_type, vb.associated_type)
-      ) lst_kv lst_kv'
+        ) lst_kv lst_kv' in
+      map (fun m -> (type_.orig_var,m)) @@ m
     )
     | _ -> None
   in
@@ -95,19 +96,19 @@ module PP = struct
 
   let list_sep_scope x = list_sep x (const " | ")
 
-  let environment_element = fun ppf {expr_var ; env_elt} ->
-    fprintf ppf "%a -> %a" PP.expression_variable expr_var PP.type_expression env_elt.type_value
+  let rec environment_element = fun ppf {expr_var ; env_elt} ->
+    fprintf ppf "%a -> %a \n %a" PP.expression_variable expr_var PP.type_expression env_elt.type_value environment env_elt.source_environment
 
-  let type_environment_element = fun ppf {type_variable ; type_} ->
+  and type_environment_element = fun ppf {type_variable ; type_} ->
     fprintf ppf "%a -> %a" PP.type_variable type_variable PP.type_expression type_
 
-  let expr_environment : _ -> expression_environment -> unit = fun ppf lst ->
+  and expr_environment : _ -> expression_environment -> unit = fun ppf lst ->
     fprintf ppf "Env:[%a]" (list_sep environment_element (tag "@,")) lst
 
-  let type_environment = fun ppf lst ->
+  and type_environment = fun ppf lst ->
     fprintf ppf "Type env:[%a]" (list_sep type_environment_element (tag "@,")) lst
 
-  let environment : _ -> environment -> unit = fun ppf e ->
+  and environment : _ -> environment -> unit = fun ppf e ->
     fprintf ppf "- %a\t%a"
       expr_environment (get_expr_environment e)
       type_environment (get_type_environment e)

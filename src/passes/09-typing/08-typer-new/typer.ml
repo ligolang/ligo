@@ -262,7 +262,7 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
     let lmap = O.LMap.map (fun e -> ({associated_type = get_type_expression e ; michelson_annotation = None ; decl_pos = 0}: O.row_element)) m' in
     let record_type = match Environment.get_record lmap e with
       | None -> O.{content=lmap;layout=default_layout}
-      | Some r -> r
+      | Some (_,r) -> r
     in
     let wrapped = Wrap.record record_type in
     return_wrapped (E_record m') e state' wrapped

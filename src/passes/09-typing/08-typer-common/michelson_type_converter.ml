@@ -20,13 +20,16 @@ let comb_pair (t:type_content) : ty_expr row_element_mini_c =
   let associated_type = {
     type_content = t ;
     type_meta = None ;
-    location = Location.generated ; } in
+    orig_var = None ;
+    location = Location.generated ; }
+  in
   {associated_type ; michelson_annotation = Some "" ; decl_pos = 0}
 
 let comb_ctor (t:type_content) : ty_expr row_element_mini_c =
   let associated_type = {
     type_content = t ;
     type_meta = None ;
+    orig_var = None ;
     location = Location.generated ; } in
   {associated_type ; michelson_annotation = Some "" ; decl_pos = 0}
 

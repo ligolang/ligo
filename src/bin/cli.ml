@@ -559,8 +559,7 @@ let get_scope =
       let%bind init_env   = Helpers.get_initial_env protocol_version in
       let%bind c_unit, _ = Compile.Utils.to_c_unit ~libs source_file syntax in
       let%bind core_prg = Compile.Utils.to_core ~libs c_unit source_file syntax in
-      let%bind _,env,state = Compile.Of_core.compile  ~init_env Env core_prg in
-      Ligo.Scopes.scopes ~with_types env state core_prg
+      Ligo.Scopes.scopes ~with_types init_env core_prg
   in
   let term =
     Term.(const f $ source_file 0  $ syntax $ protocol_version $ libraries $ display_format $ with_types) in
