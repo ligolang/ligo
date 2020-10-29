@@ -1,7 +1,18 @@
-# SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+# SPDX-FileCopyrightText: 2020 Serokell <https://serokell.io>
 #
 # SPDX-License-Identifier: MPL-2.0
 
-{ platform ? "linux-static" }:
-
-(import ./ligo-squirrel.nix { ${platform} = true; }).components.exes.ligo-squirrel
+{ haskell-nix, grammars, tree }:
+let
+  project = haskell-nix.stackProject {
+    src = haskell-nix.haskellLib.cleanGit { src = ./.; };
+    modules = [{
+      packages.ligo-squirrel = {
+        preBuild = ''
+          rm -rf grammar
+          cp -r ${grammars} grammar
+        '';
+      };
+    }];
+  };
+in project.ligo-squirrel
