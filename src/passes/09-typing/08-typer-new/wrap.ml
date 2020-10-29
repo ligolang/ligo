@@ -37,7 +37,7 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
       | ( s , [] ) when String.equal s key_name-> Some (C_key , [])
       | ( s , [] ) when String.equal s signature_name-> Some (C_signature , [])
       | ( s , [] ) when String.equal s operation_name-> Some (C_operation , [])
-      | ( s , [] ) when String.equal s chain_id_name-> failwith "TODO : figure out what to do with chain_id; ask Tom Jack"
+      | ( s , [] ) when String.equal s chain_id_name-> Some (C_chain_id , [])
       | ( s , [o] ) when String.equal s option_name -> Some (C_option, [o])
       | ( s , [p] ) when String.equal s set_name -> Some (C_set, [p])
       | ( s , [ k ; v ]) when String.equal s map_name -> Some (C_map, [k;v])
