@@ -67,6 +67,9 @@ library:
     - grammar/pascaligo
     - grammar/reasonligo
     - grammar/camligo
+    - grammar/pascaligo/src
+    - grammar/reasonligo/src
+    - grammar/camligo/src
 
   c-sources:
     - grammar/pascaligo/src/parser.c
