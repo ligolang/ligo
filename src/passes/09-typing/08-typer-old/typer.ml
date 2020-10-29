@@ -15,7 +15,7 @@ type environment = Environment.t
 let cast_var (orig: 'a Var.t Location.wrap) = { orig with wrap_content = Var.todo_cast orig.wrap_content}
 let assert_type_expression_eq = Typer_common.Helpers.assert_type_expression_eq
 
-let rec type_program (e:environment) (p:I.program) : (environment * O.program_fully_typed * _ O'.typer_state, typer_error) result =
+let rec type_program ~init_env (p:I.program) : (environment * O.program_fully_typed * _ O'.typer_state, typer_error) result =
   let aux (e, acc:(environment * O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
     let%bind ed' = (bind_map_location (type_declaration e (Solver.placeholder_for_state_of_new_typer ()))) d in
     let loc : 'a . 'a Location.wrap -> _ -> _ = fun x v -> Location.wrap ~loc:x.location v in
@@ -24,7 +24,7 @@ let rec type_program (e:environment) (p:I.program) : (environment * O.program_fu
   in
   let%bind (e, lst) =
     trace (program_error_tracer p) @@
-    bind_fold_list aux (e, []) p in
+    bind_fold_list aux (init_env, []) p in
   let p = List.rev lst in
   (* the typer currently in use doesn't use unification variables, so there is no need to check for their absence. *)
   let p = O.Program_Fully_Typed p in

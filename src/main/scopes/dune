@@ -8,6 +8,7 @@
     self_ast_core
     typer
     ast_typed
+    compiler_options
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)

@@ -5,8 +5,8 @@ type form =
   | Contract of string
   | Env
 
-let compile ~(init_env:Ast_typed.environment) (cform: form) (program : Ast_core.program) : (Ast_typed.program_fully_typed * Ast_typed.environment * _ Typesystem.Solver_types.typer_state , _) result =
-  let%bind (e, prog_typed , state) = trace typer_tracer @@ Typer.type_program init_env program in
+let compile ~(typer_switch : Ast_typed.typer_switch) ~(init_env:Ast_typed.environment) (cform: form) (program : Ast_core.program) : (Ast_typed.program_fully_typed * Ast_typed.environment * _ Typesystem.Solver_types.typer_state , _) result =
+  let%bind (e, prog_typed , state) = trace typer_tracer @@ Typer.type_program typer_switch ~init_env program in
   let () = Typer.Solver.discard_state state in
   let%bind applied = trace self_ast_typed_tracer @@
     let%bind selfed = Self_ast_typed.all_program prog_typed in
@@ -15,9 +15,9 @@ let compile ~(init_env:Ast_typed.environment) (cform: form) (program : Ast_core.
     | Env -> ok selfed in
   ok @@ (applied, e, state)
 
-let compile_expression ?(env = Ast_typed.Environment.empty) ~(state : _ Typesystem.Solver_types.typer_state) (e : Ast_core.expression)
+let compile_expression ~(typer_switch : Ast_typed.typer_switch) ~(env : Ast_typed.environment) ~(state : _ Typesystem.Solver_types.typer_state) (e : Ast_core.expression)
     : (Ast_typed.expression * _ Typesystem.Solver_types.typer_state , _) result =
-  let%bind (ae_typed,state) = trace typer_tracer @@ Typer.type_expression_subst env state e in
+  let%bind (ae_typed,state) = trace typer_tracer @@ Typer.type_expression_subst typer_switch env state e in
   let%bind ae_typed' = trace self_ast_typed_tracer @@ Self_ast_typed.all_expression ae_typed in
   ok @@ (ae_typed',state)
 
@@ -43,4 +43,4 @@ let list_declarations (program : Ast_core.program) : string list =
       | _ -> prev)
     [] program
 
-let evaluate_type (env : Ast_typed.Environment.t) (t: Ast_core.type_expression) = trace typer_tracer @@ Typer.evaluate_type env t
+let evaluate_type ~(typer_switch : Ast_typed.typer_switch) (env : Ast_typed.Environment.t) (t: Ast_core.type_expression) = trace typer_tracer @@ Typer.evaluate_type typer_switch env t

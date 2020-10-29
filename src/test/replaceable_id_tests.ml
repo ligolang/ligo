@@ -8,8 +8,8 @@ let get_program =
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-      let init_env = Environment.default Environment.Protocols.current in
-      let%bind program = type_file ~init_env "./contracts/replaceable_id.ligo" in
+      let options = Compiler_options.make () in
+      let%bind program = type_file ~options "./contracts/replaceable_id.ligo" in
       s := Some program ;
       ok program
     )

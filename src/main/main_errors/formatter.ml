@@ -52,6 +52,10 @@ let rec error_ppformat : display_format:string display_format ->
       "@[<hv>Invalid protocol version '%s'. Available versions: %a"
         actual
         (Simple_utils.PP_helpers.list_sep_d Format.pp_print_string) possible
+    | `Main_invalid_typer_switch actual ->
+      Format.fprintf f
+      "@[<hv>Invalid typer switch '%s'. Available: 'new' 'old'"
+        actual
     | `Main_invalid_extension extension ->
       Format.fprintf f
         "@[<hv>Invalid file extension '%s'. @.Use '.ligo' for PascaLIGO, '.mligo' for CameLIGO, '.religo' for ReasonLIGO, or the --syntax option.@]"
@@ -177,6 +181,8 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
     json_error ~stage:"command line interpreter" ~content:(`String "bad dialect name")
   | `Main_invalid_protocol_version _ ->
     json_error ~stage:"command line interpreter" ~content:(`String "bad protocol version")
+  | `Main_invalid_typer_switch _ ->
+    json_error ~stage:"command line interpreter" ~content:(`String "bad typer switch")
   | `Main_invalid_extension _ ->
     json_error ~stage:"command line interpreter" ~content:(`String "bad file extension")
 
