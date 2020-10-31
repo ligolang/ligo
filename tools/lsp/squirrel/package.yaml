@@ -96,7 +96,7 @@ executables:
       - directory
       - unix
       - stm
-      - ttrie
+      - stm-containers
 
     source-dirs:
       - app/ligo-squirrel

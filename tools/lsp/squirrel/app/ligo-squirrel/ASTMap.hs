@@ -1,15 +1,13 @@
 
 module ASTMap where
 
-import Control.Concurrent.STM
-import Control.Concurrent.STM.Map (Map)
+import Control.Concurrent.STM (atomically)
+import StmContainers.Map (Map)
+import qualified StmContainers.Map as Map
 import Control.Monad.Reader
-
 import Data.Hashable (Hashable)
 
-import Product
-
-import qualified Control.Concurrent.STM.Map as Map
+import Product (Contains, Product, getElem)
 
 data T k v m = ASTMap
   { amStore :: Map k v
@@ -27,7 +25,7 @@ reload
 reload k = do
   tmap <- asks getElem
   v <- amLoad tmap k
-  liftIO $ atomically $ Map.insert k v $ amStore tmap
+  liftIO $ atomically $ Map.insert v k $ amStore tmap
   return v
 
 fetch
@@ -41,10 +39,10 @@ fetch
   => k -> m v
 fetch k = do
   tmap <- asks getElem
-  mv <- liftIO $ atomically $ Map.phantomLookup k $ amStore (tmap :: T k v m)
+  mv <- liftIO $ atomically $ Map.lookup k $ amStore (tmap :: T k v m)
   maybe (reload k) return mv
 
 empty :: forall k v m. (k -> m v) -> IO (T k v m)
 empty amLoad = do
-  amStore <- atomically Map.empty
+  amStore <- atomically Map.new
   return ASTMap { amStore, amLoad }
