@@ -106,7 +106,7 @@ executables:
     source-dirs:
       - app/ligo-squirrel
 
-    ghc-options: -threaded -Werror
+    ghc-options: -threaded
 
   ligo-vet:
     main: Main.hs

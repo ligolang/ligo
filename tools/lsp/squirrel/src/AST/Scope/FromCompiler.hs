@@ -45,7 +45,7 @@ fromCompiler (LigoDefinitions decls scopes) =
     fromLigoDecl (LigoDefinitionScope n orig bodyR ty _) = do
       let r = fromLigoRangeOrDef orig
       ( DeclRef n r
-       , ScopedDecl n r (mbFromLigoRange bodyR) (fromLigoTy <$> ty) [] []
+       , ScopedDecl n r (mbFromLigoRange bodyR) (fromLigoTy <$> ty) [] [] Nothing -- TODO LIGO-90
        )
 
     -- I cannot comprehend what does the stuff in Cli.Json means, neither

@@ -1,4 +1,3 @@
-
 module AST.Parser
   ( Source(..)
   , parse

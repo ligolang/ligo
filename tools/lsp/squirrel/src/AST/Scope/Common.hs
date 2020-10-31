@@ -1,4 +1,3 @@
-
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module AST.Scope.Common where
@@ -44,8 +43,15 @@ data ScopedDecl = ScopedDecl
   , _sdType    :: Maybe TypeOrKind
   , _sdRefs    :: [Range]
   , _sdDoc     :: [Text]
+  , _sdParams  :: Maybe [Parameter]
   }
   deriving Show via PP ScopedDecl
+
+newtype Parameter = Parameter
+  { parOrigin :: Range
+  }
+  deriving stock Show
+  deriving newtype Pretty
 
 data TypeOrKind
   = IsType (LIGO '[])
@@ -82,8 +88,8 @@ instance {-# OVERLAPS #-} Pretty FullEnv where
       mergeFE fe = getTag @"vars" @Env fe Prelude.<> getTag @"types" fe
 
 instance Pretty ScopedDecl where
-  pp (ScopedDecl n o _ t refs doc) =
-    sexpr "decl" [pp n, pp o, pp t, pp refs, pp doc]
+  pp (ScopedDecl n o _ t refs doc params) =
+    sexpr "decl" [pp n, pp o, pp t, pp params, pp refs, pp doc]
 
 instance Pretty TypeOrKind where
   pp (IsType ty) = pp $ fillInfo ty

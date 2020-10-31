@@ -1,9 +1,7 @@
-type heap is map (nat, heap_elt)
+function bar (const i : int) : int is i + 1
 
-function bar (const h : heap) : heap_elt is get_force (1n, h)
-
-function pop (const h : heap) : heap * heap_elt * nat is
+function foo (const i : int) : int is
   block {
-    const result : heap_elt = bar ()
-    var c : nat := 0n;
-  } with (h, result, c)
+    const c : int = bar()
+    var d := c - 1
+  } with d

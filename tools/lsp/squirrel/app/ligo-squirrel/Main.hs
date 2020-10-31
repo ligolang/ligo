@@ -31,6 +31,7 @@ import Cli.Types
 import qualified Config
 import Language.LSP.Util (MessageDescription (..), describeFromClientMessage)
 import qualified Log
+import ParseTree (srcToBytestring)
 import Product
 import Range
 import RIO (RIO)
@@ -229,7 +230,9 @@ handleSignatureHelpRequest req = do
   let uri = req ^. J.params . J.textDocument . J.uri
   let position = req ^. J.params . J.position & fromLspPosition
   (tree, _) <- RIO.fetch (J.toNormalizedUri uri)
-  let signatureHelp = getSignatureHelp tree position
+  source <- RIO.preload uri
+  contents <- liftIO (srcToBytestring source)
+  let signatureHelp = runSigHelpM tree contents (getSignatureHelp position)
   RIO.respondWith req RspSignatureHelp signatureHelp
 
 handleFoldingRangeRequest :: J.FoldingRangeRequest -> RIO ()

@@ -16,6 +16,8 @@ module ParseTree
 
     -- * Invoke the TreeSitter and get the tree it outputs
   , toParseTree
+
+    -- * Read file contents from its source
   , srcToBytestring
   , srcToText
   )

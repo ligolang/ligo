@@ -37,7 +37,7 @@ module.exports = grammar({
       "let",
       optional(field("recursive", "rec")),
       field("name", $.NameDecl),
-      some(field("arg", $._paren_pattern)),
+      some(field("arg", $.annot_pattern)),
       optional(seq(
         ":",
         field("type", $._type_expr)
@@ -227,7 +227,7 @@ module.exports = grammar({
 
     lambda_expr: $ => seq(
       "fun",
-      repeat1(field("arg", $._paren_pattern)),
+      repeat1(field("arg", $.annot_pattern)),
       "->",
       field("body", $._program)
     ),
@@ -348,9 +348,9 @@ module.exports = grammar({
       sepBy1('|', field("variant", $.variant)),
     ),
 
-    // field : string * int
     _label: $ => $.FieldName,
 
+    // field : string * int
     type_rec_field: $ => seq(
       field("field", $._label),
       ":",

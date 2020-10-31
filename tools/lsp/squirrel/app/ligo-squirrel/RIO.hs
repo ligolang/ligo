@@ -11,6 +11,7 @@ module RIO
   , respondWith
   , log
   , liftLsp
+  , preload
   ) where
 
 {- TODO: break this module into file loading, diagnostics, haskell-lsp wrappers

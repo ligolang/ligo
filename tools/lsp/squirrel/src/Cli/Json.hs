@@ -426,4 +426,5 @@ toScopedDecl
       , _sdType = Nothing
       , _sdRefs = []
       , _sdDoc = []
+      , _sdParams = Nothing -- TODO LIGO-90
       }
