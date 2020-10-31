@@ -48,6 +48,7 @@ import           Duplo.Error
 import           Duplo.Tree (collect)
 
 import           AST
+import           ASTMap (ASTMap)
 import qualified ASTMap
 import           Cli
 import qualified Config
@@ -63,7 +64,7 @@ nextID = Core.getNextReqId
 
 type RioEnv =
   Product
-    '[ ASTMap.T J.NormalizedUri (LIGO Info', [Msg]) RIO
+    '[ ASTMap J.NormalizedUri (LIGO Info', [Msg]) RIO
      , Core.LspFuncs Config.Config
      , LigoClientEnv
      ]
