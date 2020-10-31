@@ -554,7 +554,7 @@ a:hover {
   list-style-type: none;
 }
 
-#homePage #intro #callToAction ul li {
+#homePage #intro #callToAction ul li a{
   cursor: pointer;
   font-weight: normal;
   font-size: 2em;
@@ -562,20 +562,18 @@ a:hover {
   padding: 30px 50px;
 }
 
-#homePage #intro #callToAction ul li + li {
-  margin-top: 1.8em;
+#homePage #intro #callToAction ul li.secondary a{
+  margin-top: 3.4em;
 }
 
-#homePage #intro #callToAction ul li:hover {
+#homePage #intro #callToAction ul li.primary a:hover {
   color: white;
-}
-
-#homePage #intro #callToAction ul li.primary:hover {
   background-color: var(--ifm-color-primary);
   border-left: 4px solid var(--ifm-color-primary);
 }
 
-#homePage #intro #callToAction ul li.secondary:hover {
+#homePage #intro #callToAction ul li.secondary a:hover {
+  color: white;
   background-color: var(--secondary-brand-color);
   border-left: 4px solid var(--secondary-brand-color);
 }
@@ -583,6 +581,7 @@ a:hover {
 #homePage #intro #callToAction ul li a {
   color: inherit;
   text-decoration: none;
+  display: flex;
 }
 
 #homePage #intro #preview  {
@@ -948,7 +947,7 @@ a:hover {
     min-width: 260px;
   }
 
-  #homePage #intro #callToAction ul li + li {
+  #homePage #intro #callToAction ul li.secondary a {
     margin-top: 0;
   }
 
