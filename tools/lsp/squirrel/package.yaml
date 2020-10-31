@@ -19,6 +19,7 @@ dependencies:
   - text
   - transformers
   - tree-sitter
+  - unliftio
 
 default-extensions:
   - AllowAmbiguousTypes
@@ -51,6 +52,7 @@ default-extensions:
   - ScopedTypeVariables
   - StandaloneDeriving
   - TemplateHaskell
+  - TupleSections
   - TypeApplications
   - TypeFamilies
   - TypeOperators
@@ -87,6 +89,8 @@ executables:
     main: Main.hs
 
     dependencies:
+      - clock
+      - focus
       - haskell-lsp
       - hslogger
       - interpolate
