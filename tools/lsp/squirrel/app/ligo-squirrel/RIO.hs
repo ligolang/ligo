@@ -91,8 +91,8 @@ liftLsp f = do
   liftIO . f =<< asks getElem
 
 fetch, forceFetch :: J.NormalizedUri -> RIO (LIGO Info', [Msg])
-fetch = ASTMap.fetch
-forceFetch = ASTMap.reload
+fetch uri = asks getElem >>= ASTMap.fetch uri
+forceFetch uri = asks getElem >>= ASTMap.reload uri
 
 respond :: Msg.FromServerMessage -> RIO ()
 respond msg = do
