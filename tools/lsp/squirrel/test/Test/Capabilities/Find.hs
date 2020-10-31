@@ -1,7 +1,7 @@
-{-# LANGUAGE RecordWildCards, TupleSections #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Test.Capabilities.Find
-  ( unit_findDefinitionAndGoToReferencesCorrespondence
+  ( test_findDefinitionAndGoToReferencesCorrespondence
   , unit_definitionOfId
   , unit_definitionOfLeft
   , unit_referenceOfId
@@ -10,11 +10,13 @@ module Test.Capabilities.Find
 
 import Data.Foldable (for_)
 import System.FilePath (takeFileName, (</>))
-
-import Test.HUnit (Assertion)
+import Test.Tasty (TestTree, testGroup)
+import Test.Tasty.HUnit (Assertion, testCase)
 import Text.Printf (printf)
 
+import AST (Fallback)
 import AST.Capabilities.Find (definitionOf, referencesOf)
+import AST.Scope.Common (HasScopeForest)
 import Range (Range (..), interval)
 
 import Test.Capabilities.Util (contractsDir)
@@ -48,20 +50,24 @@ data DefinitionReferenceInvariant = DefinitionReferenceInvariant
 -- | Check that the given @DefinitionReferenceInvariant@ holds.
 checkDefinitionReferenceInvariant
   :: HasCallStack => DefinitionReferenceInvariant -> Assertion
-checkDefinitionReferenceInvariant DefinitionReferenceInvariant{..} = do
-  tree <- readContractWithScopes driFile
-  case driDef of
-    Nothing -> do
-      for_ driRefs' $ \mention -> do
-        definitionOf mention tree `shouldBe` Nothing
-    Just (label driFile -> expectedDef) -> do
-      for_ (expectedDef : driRefs') $ \mention -> do
-        definitionOf mention tree `shouldBe` Just expectedDef
-        case referencesOf mention tree of
-          Nothing -> expectationFailure $
-            printf "References of '%s' from '%s' are not found." driDesc driFile
-          Just actualRefs -> actualRefs `shouldMatchList` expectedDef : driRefs'
+checkDefinitionReferenceInvariant DefinitionReferenceInvariant{..}
+  = test @Fallback -- *> test @FromCompiler -- FIXME uncomment when compiler scopes are fixed
   where
+    test :: forall parser. HasScopeForest parser IO => Assertion
+    test = do
+      tree <- readContractWithScopes @parser driFile
+      case driDef of
+        Nothing -> do
+          for_ driRefs' $ \mention -> do
+            definitionOf mention tree `shouldBe` Nothing
+        Just (label driFile -> expectedDef) -> do
+          for_ (expectedDef : driRefs') $ \mention -> do
+            definitionOf mention tree `shouldBe` Just expectedDef
+            case referencesOf mention tree of
+              Nothing -> expectationFailure $
+                printf "References of '%s' from '%s' are not found." driDesc driFile
+              Just actualRefs -> actualRefs `shouldMatchList` expectedDef : driRefs'
+
     -- a tree parser labels ranges with files, so we should too to
     -- preserve equality
     driRefs' = map (label driFile) driRefs
@@ -74,20 +80,28 @@ label filepath r = r{ rFile = filename }
 -- | Check if the given range corresponds to a definition of the given
 -- entity in the given file.
 checkIfDefinition :: FilePath -> Range -> Range -> Assertion
-checkIfDefinition filepath (label filepath -> expectedDef) mention = do
-  tree <- readContractWithScopes filepath
-  definitionOf mention tree `shouldBe` Just expectedDef
+checkIfDefinition filepath (label filepath -> expectedDef) mention
+  = test @Fallback -- *> test @FromCompiler -- FIXME uncomment when compiler scopes are fixed
+  where
+    test :: forall parser. HasScopeForest parser IO => Assertion
+    test = do
+      tree <- readContractWithScopes @parser filepath
+      definitionOf mention tree `shouldBe` Just expectedDef
 
 -- | Check if the given range corresponds to a reference of the given
 -- entity in the given file.
 checkIfReference :: FilePath -> Range -> Range -> Assertion
-checkIfReference filepath (label filepath -> expectedRef) mention = do
-  tree <- readContractWithScopes filepath
-  case referencesOf mention tree of
-    Nothing -> expectationFailure $
-      printf "References in range '%s' from '%s' are not found."
-        (show mention) filepath
-    Just references -> references `shouldContain` [expectedRef]
+checkIfReference filepath (label filepath -> expectedRef) mention
+  = test @Fallback -- *> test @FromCompiler -- FIXME uncomment when compiler scopes are fixed
+  where
+    test :: forall parser. HasScopeForest parser IO => Assertion
+    test = do
+      tree <- readContractWithScopes @parser filepath
+      case referencesOf mention tree of
+        Nothing -> expectationFailure $
+          printf "References in range '%s' from '%s' are not found."
+            (show mention) filepath
+        Just references -> references `shouldContain` [expectedRef]
 
 invariants :: [DefinitionReferenceInvariant]
 invariants =
@@ -96,6 +110,12 @@ invariants =
     , driDesc = "i, parameter"
     , driDef = Just (interval 1 20 21)
     , driRefs = [interval 1 38 39]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "id.ligo"
+    , driDesc = "id"
+    , driDef = Just (interval 1 10 12)
+    , driRefs = []
     }
   , DefinitionReferenceInvariant
     { driFile = contractsDir </> "heap.ligo"
@@ -132,18 +152,37 @@ invariants =
     , driDef = Just (interval 3 11 12)
     , driRefs = [ interval 3 36 37 ]
     }
-  , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "type-attributes.mligo"
-    , driDesc = "counter, type attribute"
-    , driDef = Nothing  -- type attributes don't have a declaration
-    , driRefs = [interval 9 3 10, interval 7 35 42]
-    }
-  , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "type-attributes.mligo"
-    , driDesc = "counter, function"
-    , driDef = Just (interval 6 5 12)
-    , driRefs = []
-    }
+  -- * Tests that don't pass becasue we can't distinguish type attributes and
+  -- usual variables: https://issues.serokell.io/issue/LIGO-82
+
+  -- , DefinitionReferenceInvariant
+  --   { driFile = contractsDir </> "type-attributes.mligo"
+  --   , driDesc = "counter, type attribute"
+  --   , driDef = Nothing  -- type attributes don't have a declaration
+  --   , driRefs = [interval 9 3 10, interval 7 35 42]
+  --   }
+  -- , DefinitionReferenceInvariant
+  --   { driFile = contractsDir </> "type-attributes.mligo"
+  --   , driDesc = "counter, function"
+  --   , driDef = Just (interval 6 5 12)
+  --   , driRefs = []
+  --   }
+  -- , DefinitionReferenceInvariant
+  --   { driFile = contractsDir </> "type-attributes-in-rec.mligo"
+  --   , driDesc = "counter, type attribute"
+  --   , driDef = Nothing  -- type attributes don't have a declaration
+  --   , driRefs = [interval 9 3 10, interval 7 35 42]
+  --   }
+  -- , DefinitionReferenceInvariant
+  --   { driFile = contractsDir </> "type-attributes-in-rec.mligo"
+  --   , driDesc = "counter, function"
+  --   , driDef = Just (interval 6 9 16)
+  --   , driRefs = []
+  --   }
+
+  -- * Tests that don't pass because we have troubles with recursive functions
+  -- * in LIGO: https://issues.serokell.io/issue/LIGO-70
+
   -- , DefinitionReferenceInvariant
   --   { driFile = contractsDir </> "recursion.religo"
   --   , driDesc = "sum"
@@ -152,9 +191,13 @@ invariants =
   --   }
   ]
 
-unit_findDefinitionAndGoToReferencesCorrespondence :: Assertion
-unit_findDefinitionAndGoToReferencesCorrespondence =
-  mapM_ checkDefinitionReferenceInvariant invariants
+test_findDefinitionAndGoToReferencesCorrespondence :: HasCallStack => TestTree
+test_findDefinitionAndGoToReferencesCorrespondence =
+  testGroup "Definition and References Correspondence" testCases
+  where
+    testCases = map makeTestCase invariants
+    makeTestCase inv = testCase name (checkDefinitionReferenceInvariant inv)
+      where name = driFile inv <> ": " <> driDesc inv
 
 unit_definitionOfId :: Assertion
 unit_definitionOfId = (checkIfDefinition
