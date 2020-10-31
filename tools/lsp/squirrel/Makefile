@@ -11,7 +11,8 @@ FORCE:
 grammar: ; $(MAKE) -C $@
 
 clean:
-	$(RM) vendor/*
+	$(RM) -r grammar/*/src
+	$(RM) grammar/*/binding.gyp
 	stack clean
 
 build: grammar
