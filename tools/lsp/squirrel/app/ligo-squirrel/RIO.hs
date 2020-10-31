@@ -21,10 +21,10 @@ module RIO
 import           Prelude hiding (log)
 
 import           Control.Arrow
+import           Control.Exception.Safe                        (MonadCatch, MonadThrow, handleAny)
 import           Control.Lens                                  ((^.), to)
 import           Control.Monad
 import           Control.Monad.Reader                          (ReaderT, liftIO, asks, MonadIO, MonadReader, runReaderT)
-import           Control.Monad.Catch
 
 import qualified Data.Map                              as Map
 import qualified Data.Text                             as Text
@@ -125,12 +125,11 @@ respondWith
 respondWith req wrap rsp = respond $ wrap $ Core.makeResponseMessage req rsp
 
 stopDyingAlready :: J.RequestMessage m a b -> RIO () -> RIO ()
-stopDyingAlready req = flip catch \(e :: SomeException) -> (do
+stopDyingAlready req = handleAny $ \e ->
   liftLsp \funs -> do
     Core.sendErrorResponseS (Core.sendFunc funs) (req^.J.id.to J.responseId) J.InternalError
       $ fromString
       $ "this happened: " ++ show e
- :: RIO ())
 
 preload
   :: J.Uri

@@ -3,7 +3,7 @@ module Test.Parsers
   , test_badContracts
   ) where
 
-import Control.Exception (try)
+import Control.Exception.Safe (try)
 import Data.Functor ((<&>))
 import Data.List (isSuffixOf)
 import Duplo (HandlerFailed (..))
@@ -66,9 +66,9 @@ test_badContracts
 
 checkFile :: HasCallStack => Bool -> FilePath -> Expectation
 checkFile shouldBeOkay path = do
-  res <- try @HandlerFailed (readContract path)
+  res <- try (readContract path)
   case (shouldBeOkay, res) of
-    (True, Left err) -> expectationFailure $
+    (True, Left (err :: HandlerFailed)) -> expectationFailure $
       "Parsing failed, but it shouldn't have." <>
       "File: " <> path <> ". Error: " <> show err <> "."
     (False, Right _) -> expectationFailure $

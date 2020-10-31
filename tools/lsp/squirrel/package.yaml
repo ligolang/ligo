@@ -15,6 +15,7 @@ dependencies:
   - interpolate
   - mtl
   - pretty
+  - safe-exceptions
   - sorted-list
   - text
   - transformers

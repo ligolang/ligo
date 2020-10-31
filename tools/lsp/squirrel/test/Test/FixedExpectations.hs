@@ -7,7 +7,7 @@ module Test.FixedExpectations
   , shouldMatchList
   ) where
 
-import Control.Exception (catch, throw)
+import Control.Exception.Safe (catch, impureThrow)
 import Test.Hspec.Expectations (Expectation, HasCallStack)
 import qualified Test.Hspec.Expectations as H
   (expectationFailure, shouldBe, shouldContain, shouldMatchList)
@@ -33,4 +33,4 @@ toTastyFailure (H.HUnitFailure loc s)
   = HUnitFailure loc (H.formatFailureReason s)
 
 tastify :: Expectation -> Expectation
-tastify action = action `catch` (throw . toTastyFailure)
+tastify action = action `catch` (impureThrow . toTastyFailure)

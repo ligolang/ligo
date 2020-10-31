@@ -13,7 +13,7 @@ module Cli.Impl
   -- , parseScopedDecls
   ) where
 
-import Control.Exception (Exception (..), IOException, catch, throwIO)
+import Control.Exception.Safe (Exception (..), SomeException, catchAny, throwIO)
 -- import Control.Lens hiding ((<.>))
 import Control.Monad.Catch (MonadThrow (throwM))
 import Control.Monad.IO.Class (MonadIO (liftIO))
@@ -103,11 +103,9 @@ readProcessWithExitCode'
   -> String
   -> IO (ExitCode, String, String)
 readProcessWithExitCode' fp args inp =
-  catch
-    (readProcessWithExitCode fp args inp)
-    handler
+    readProcessWithExitCode fp args inp `catchAny` handler
   where
-    handler :: IOException -> IO (ExitCode, String, String)
+    handler :: SomeException -> IO (ExitCode, String, String)
     handler e = do
       Log.err "CLI" errorMsg
       throwIO e
