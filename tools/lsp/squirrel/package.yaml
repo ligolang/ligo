@@ -64,9 +64,6 @@ library:
     - src/
 
   include-dirs:
-    - grammar/pascaligo
-    - grammar/reasonligo
-    - grammar/camligo
     - grammar/pascaligo/src
     - grammar/reasonligo/src
     - grammar/camligo/src
