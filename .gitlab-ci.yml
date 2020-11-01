@@ -284,7 +284,7 @@ vscode-extension:
     - dev
     - /^.*-run-dev$/
   script:
-    - nix-build tools/lsp -A ligo-vscode-extension
+    - nix-build tools/lsp -A packages.x86_64-linux.vscode-extension
     - cp -Lr --no-preserve=mode,ownership,timestamps result/*.vsix ligo-extension.vsix
   artifacts:
     paths:
