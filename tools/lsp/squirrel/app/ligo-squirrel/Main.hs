@@ -2,6 +2,7 @@
 import Control.Concurrent
 import Control.Concurrent.Async
 import Control.Concurrent.STM
+import Control.Exception.Safe (handleAny)
 import Control.Lens hiding ((:>))
 import Control.Monad
 import Control.Monad.Catch
@@ -10,6 +11,7 @@ import Control.Monad.IO.Class (liftIO)
 import Data.Default
 import Data.Maybe (fromMaybe)
 import Data.String.Interpolate (i)
+import qualified Data.Text as T
 
 import qualified Language.Haskell.LSP.Control as CTRL
 import qualified Language.Haskell.LSP.Core as Core
@@ -18,12 +20,14 @@ import qualified Language.Haskell.LSP.Types as J
 import qualified Language.Haskell.LSP.Types.Lens as J
 import qualified Language.Haskell.LSP.Utility as U
 
+
 import System.Exit
 import qualified System.Log as L
 
 import AST
 import qualified ASTMap
 import qualified Config
+import Language.LSP.Util (MessageDescription(..), describeFromClientMessage)
 import Product
 import RIO (RIO)
 import qualified RIO
@@ -111,7 +115,7 @@ eventLoop funs chan = do
 
     Log.debug "LOOP" [i|START message: #{take 50 $ show msg}|]
 
-    async do
+    async $ handleAny (sendErrorResponse msg) $ do
       RIO.run (astMap :> funs :> def :> Nil) do
         case msg of
           RspFromClient            {}    -> return ()
@@ -131,9 +135,21 @@ eventLoop funs chan = do
           ReqCompletionItemResolve req   -> handleCompletionItemResolveRequest req
 
           _ -> liftIO do
-            Log.err "LOOP" "unknown msg"
+            Log.err "LOOP" $ "unknown msg: " <> show (describeFromClientMessage msg)
 
       Log.debug "LOOP" [i|DONE message: #{take 50 $ show msg}|]
+ where
+  sendErrorResponse :: FromClientMessage -> SomeException -> IO ()
+  sendErrorResponse msg e = case describeFromClientMessage msg of
+    MessageRequest _ reqId ->
+      Core.sendErrorResponseS (Core.sendFunc funs) (J.responseId reqId)
+        J.InternalError (T.pack $ displayException e)
+    MessageResponse method respId ->
+      Core.sendErrorShowS (Core.sendFunc funs) $
+        "Error processing response `" <> method <> "` #" <> (T.pack $ show respId) <> "."
+    MessageNotification method ->
+      Core.sendErrorShowS (Core.sendFunc funs) $
+        "Error processing `" <> method <> "`."
 
 
 handleInitialized :: J.InitializedNotification -> RIO ()
@@ -163,7 +179,6 @@ handleDidChangeTextDocument notif = do
 
 handleDefinitionRequest :: J.DefinitionRequest -> RIO ()
 handleDefinitionRequest req = do
-  RIO.stopDyingAlready req do
     let uri = req^.J.params.J.textDocument.J.uri
     let pos = fromLspPosition $ req^.J.params.J.position
     (tree, _) <- RIO.fetch $ J.toNormalizedUri uri
@@ -173,7 +188,6 @@ handleDefinitionRequest req = do
 
 handleFindReferencesRequest :: J.ReferencesRequest -> RIO ()
 handleFindReferencesRequest req = do
-  RIO.stopDyingAlready req do
     let uri  = req^.J.params.J.textDocument.J.uri
     let nuri = J.toNormalizedUri uri
     let pos  = fromLspPosition $ req^.J.params.J.position
@@ -187,7 +201,6 @@ handleFindReferencesRequest req = do
 
 handleCompletionRequest :: J.CompletionRequest -> RIO ()
 handleCompletionRequest req = do
-  RIO.stopDyingAlready req $ do
     RIO.log $ "got completion request: " <> show req
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
     let pos = fromLspPosition $ req ^. J.params . J.position
@@ -197,13 +210,11 @@ handleCompletionRequest req = do
 
 handleCompletionItemResolveRequest :: J.CompletionItemResolveRequest -> RIO ()
 handleCompletionItemResolveRequest req = do
-  RIO.stopDyingAlready req $ do
     RIO.log $ "got completion resolve request: " <> show req
     RIO.respondWith req RspCompletionItemResolve (req ^. J.params)
 
 handleFoldingRangeRequest :: J.FoldingRangeRequest -> RIO ()
 handleFoldingRangeRequest req = do
-  RIO.stopDyingAlready req $ do
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
     (tree, _) <- RIO.fetch uri
     actions <- foldingAST tree
@@ -217,7 +228,6 @@ handleFoldingRangeRequest req = do
 
 handleSelecttionRangeRequest :: J.SelectionRangeRequest -> RIO ()
 handleSelecttionRangeRequest req = do
-  RIO.stopDyingAlready req $ do
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
     let positions = req ^. J.params . J.positions
     (tree, _) <- RIO.fetch uri
@@ -229,7 +239,6 @@ handleSelecttionRangeRequest req = do
 
 handleDocumentSymbolsRequest :: J.DocumentSymbolRequest -> RIO ()
 handleDocumentSymbolsRequest req = do
-  RIO.stopDyingAlready req $ do
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
     (tree, _) <- RIO.fetch uri
     result <- extractDocumentSymbols (J.fromNormalizedUri uri) tree
@@ -237,7 +246,6 @@ handleDocumentSymbolsRequest req = do
 
 handleHoverRequest :: J.HoverRequest -> RIO ()
 handleHoverRequest req = do
-  RIO.stopDyingAlready req $ do
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
     (tree, _) <- RIO.fetch uri
     let pos = fromLspPosition $ req ^. J.params . J.position
@@ -245,7 +253,6 @@ handleHoverRequest req = do
 
 handleRenameRequest :: J.RenameRequest -> RIO ()
 handleRenameRequest req = do
-  RIO.stopDyingAlready req $ do
     let uri  = req ^. J.params . J.textDocument . J.uri
     let nuri = J.toNormalizedUri uri
     let pos  = fromLspPosition $ req ^. J.params . J.position

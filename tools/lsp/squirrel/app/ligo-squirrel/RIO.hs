@@ -8,7 +8,6 @@ module RIO
   , collectErrors
   , forceFetch
   , fetch
-  , stopDyingAlready
   , respondWith
   , log
   , liftLsp
@@ -21,15 +20,13 @@ module RIO
 import           Prelude hiding (log)
 
 import           Control.Arrow
-import           Control.Exception.Safe                        (MonadCatch, MonadThrow, handleAny)
-import           Control.Lens                                  ((^.), to)
+import           Control.Exception.Safe                        (MonadCatch, MonadThrow)
 import           Control.Monad
 import           Control.Monad.Reader                          (ReaderT, liftIO, asks, MonadIO, MonadReader, runReaderT)
 
 import qualified Data.Map                              as Map
 import qualified Data.Text                             as Text
 import           Data.Text                                     (Text)
-import           Data.String                                   (fromString)
 import qualified Data.SortedList                       as List
 import           Data.String.Interpolate                       (i)
 
@@ -38,7 +35,6 @@ import           Language.Haskell.LSP.Messages         as Msg
 import           Language.Haskell.LSP.VFS
 import qualified Language.Haskell.LSP.Core             as Core
 import qualified Language.Haskell.LSP.Types            as J
-import qualified Language.Haskell.LSP.Types.Lens       as J
 import qualified Language.Haskell.LSP.Utility          as U
 
 -- import           System.Directory (getDirectoryContents, doesDirectoryExist)
@@ -123,13 +119,6 @@ respondWith
   -> rsp
   -> RIO ()
 respondWith req wrap rsp = respond $ wrap $ Core.makeResponseMessage req rsp
-
-stopDyingAlready :: J.RequestMessage m a b -> RIO () -> RIO ()
-stopDyingAlready req = handleAny $ \e ->
-  liftLsp \funs -> do
-    Core.sendErrorResponseS (Core.sendFunc funs) (req^.J.id.to J.responseId) J.InternalError
-      $ fromString
-      $ "this happened: " ++ show e
 
 preload
   :: J.Uri
