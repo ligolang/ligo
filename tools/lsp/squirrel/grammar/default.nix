@@ -10,8 +10,8 @@ stdenv.mkDerivation {
   installPhase = ''
     for i in */src/parser.c; do
       langname=$(dirname $(dirname $i))
-      mkdir -p $out/$langname
-      cp $i $out/$langname/parser.c
+      mkdir -p $out/$langname/src
+      cp $i $out/$langname/src/parser.c
     done
   '';
 }
