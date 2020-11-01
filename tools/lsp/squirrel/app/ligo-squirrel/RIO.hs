@@ -48,6 +48,7 @@ import           Duplo.Error
 import           Duplo.Tree (collect)
 
 import           AST
+import           ASTMap (ASTMap)
 import qualified ASTMap
 import           Cli
 import qualified Config
@@ -63,7 +64,7 @@ nextID = Core.getNextReqId
 
 type RioEnv =
   Product
-    '[ ASTMap.T J.NormalizedUri (LIGO Info', [Msg]) RIO
+    '[ ASTMap J.NormalizedUri (LIGO Info', [Msg]) RIO
      , Core.LspFuncs Config.Config
      , LigoClientEnv
      ]
@@ -90,8 +91,11 @@ liftLsp f = do
   liftIO . f =<< asks getElem
 
 fetch, forceFetch :: J.NormalizedUri -> RIO (LIGO Info', [Msg])
-fetch = ASTMap.fetch
-forceFetch = ASTMap.reload
+fetch uri = asks getElem >>= ASTMap.fetchCurrent uri
+forceFetch uri = do
+  tmap <- asks getElem
+  ASTMap.invalidate uri tmap
+  ASTMap.fetchCurrent uri tmap
 
 respond :: Msg.FromServerMessage -> RIO ()
 respond msg = do

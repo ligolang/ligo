@@ -5,6 +5,7 @@ import Control.Concurrent.STM
 import Control.Lens hiding ((:>))
 import Control.Monad
 import Control.Monad.Catch
+import Control.Monad.Reader (asks)
 import Control.Monad.IO.Class (liftIO)
 
 import Data.Default
@@ -158,8 +159,10 @@ handleDidOpenTextDocument notif = do
 
 handleDidChangeTextDocument :: J.DidChangeTextDocumentNotification -> RIO ()
 handleDidChangeTextDocument notif = do
-  let doc = notif^.J.params.J.textDocument.J.uri
-  RIO.collectErrors RIO.forceFetch (J.toNormalizedUri doc) (Just 0)
+  tmap <- asks getElem
+  let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
+  ASTMap.invalidate uri tmap
+  RIO.collectErrors (flip ASTMap.fetchBundled tmap) uri (Just 0)
 
 handleDefinitionRequest :: J.DefinitionRequest -> RIO ()
 handleDefinitionRequest req = do
