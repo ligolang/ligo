@@ -1,3 +1,4 @@
+-- TODO: recogniser does not recognize maps and bigmaps properly
 
 module AST.Parser.Camligo where
 
@@ -8,9 +9,9 @@ import AST.Skeleton
 import Duplo.Error
 import Duplo.Tree
 
-import Product
 import Parser
 import ParseTree
+import Product
 
 -- import Debug.Trace
 
@@ -185,9 +186,9 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
   , Descent do
       boilerplate $ \case
         "type_fun"           -> TArrow   <$> field  "domain" <*> field "codomain"
-        "type_app"           -> TApply   <$> field  "f"      <*> fields "x"
+        "type_app"           -> TApply   <$> field  "f"      <*> field "x"
         "type_product"       -> TProduct <$> fields "x"
-        "type_tuple"         -> TTuple   <$> fields "x"
+        "type_tuple"         -> TProduct <$> fields "x"
         "type_rec"           -> TRecord  <$> fields "field"
         "type_sum"           -> TSum     <$> fields "variant"
         _                 -> fallthrough

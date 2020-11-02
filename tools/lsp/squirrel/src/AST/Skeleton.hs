@@ -7,11 +7,9 @@
 module AST.Skeleton where
 
 import Data.Text (Text)
-import qualified Data.Text as Text
 
-import Duplo.Pretty
-import Duplo.Tree
 import Duplo.Error
+import Duplo.Tree
 
 import Product
 
@@ -26,51 +24,40 @@ type Tree' fs xs = Tree fs (Product xs)
 type RawLigoList =
   [ Name, Path, QualifiedName, Pattern, Constant, FieldAssignment
   , MapBinding, Alt, Expr, TField, Variant, Type, Binding
-  , RawContract, TypeName, FieldName, Language
+  , RawContract, TypeName, FieldName
   , Err Text, Parameters, Ctor, Contract, NameDecl
   ]
 
 data Undefined it
   = Undefined Text
-  deriving (Show) via PP (Undefined it)
-  deriving stock (Functor, Foldable, Traversable)
-
-data Language it
-  = Language Lang it
-  deriving (Show) via PP (Language it)
   deriving stock (Functor, Foldable, Traversable)
 
 data Lang
   = Pascal
   | Caml
   | Reason
-  -- deriving (Show) via PP Lang
 
 data Contract it
   = ContractEnd
   | ContractCons it it -- ^ Declaration
-  deriving (Show) via PP (Contract it)
   deriving stock (Functor, Foldable, Traversable)
 
 data RawContract it
   = RawContract [it] -- ^ Declaration
-  deriving (Show) via PP (RawContract it)
   deriving stock (Functor, Foldable, Traversable)
 
 data Binding it
-  = Irrefutable  it it               -- ^ (Pattern) (Expr)
-  | Function     Bool it [it] (Maybe it) it    -- ^ (Name) (Parameters) (Type) (Expr)
+  = Function     Bool it [it] (Maybe it) it    -- ^ (Name) (Parameters) (Type) (Expr)
+  | Parameter    it it               -- ^ (Name)
   | Var          it (Maybe it) (Maybe it)            -- ^ (Name) (Type) (Expr)
   | Const        it (Maybe it) (Maybe it)            -- ^ (Name) (Type) (Expr)
   | TypeDecl     it it               -- ^ (Name) (Type)
   | Attribute    it                  -- ^ (Name)
   | Include      it
-  deriving (Show) via PP (Binding it)
   deriving stock (Functor, Foldable, Traversable)
 
 data Parameters it
   = Parameters [it]
-  deriving (Show) via PP (Parameters it)
   deriving stock (Functor, Foldable, Traversable)
 
 data Type it
@@ -79,22 +66,19 @@ data Type it
   | TVar      it       -- ^ (Name)
   | TSum      [it]     -- ^ [Variant]
   | TProduct  [it]     -- ^ [Type]
-  | TApply    it [it]  -- ^ (Name) [Type]
+  | TApply    it it  -- ^ (Name) (Type)
   | TString   Text     -- ^ (TString)
-  | TTuple    [it]
+  | TArgs     [it]     -- ^ [Type] 
   | TOr       it it it it
   | TAnd      it it it it
-  deriving (Show) via PP (Type it)
   deriving stock (Functor, Foldable, Traversable)
 
 data Variant it
   = Variant it (Maybe it)  -- (Name) (Maybe (Type))
-  deriving (Show) via PP (Variant it)
   deriving stock (Functor, Foldable, Traversable)
 
 data TField it
   = TField it it  -- (Name) (Type)
-  deriving (Show) via PP (TField it)
   deriving stock (Functor, Foldable, Traversable)
 
 -- | TODO: break onto smaller types? Literals -> Constant; mapOps; mmove Annots to Decls.
@@ -119,7 +103,6 @@ data Expr it
   | Map       [it] -- [MapBinding]
   | MapRemove it it -- (Expr) (QualifiedName)
   | SetRemove it it -- (Expr) (QualifiedName)
-  | Indexing  it it -- (QualifiedName) (Expr)
   | Case      it [it]                  -- (Expr) [Alt]
   | Skip
   | ForLoop   it it it (Maybe it) it              -- (Name) (Expr) (Expr) (Expr)
@@ -131,33 +114,19 @@ data Expr it
   | MapPatch  it [it] -- (QualifiedName) [MapBinding]
   | SetPatch  it [it] -- (QualifiedName) [Expr]
   | RecordUpd it [it] -- (QualifiedName) [FieldAssignment]
-  deriving (Show) via PP (Expr it)
   deriving stock (Functor, Foldable, Traversable)
 
 data Alt it
   = Alt it it -- (Pattern) (Expr)
-  deriving (Show) via PP (Alt it)
   deriving stock (Functor, Foldable, Traversable)
-
--- data LHS it
---   = LHS it (Maybe it) -- (QualifiedName) (Maybe (Expr))
---   deriving (Show) via PP (LHS it)
---   deriving stock (Functor, Foldable, Traversable)
 
 data MapBinding it
   = MapBinding it it -- (Expr) (Expr)
-  deriving (Show) via PP (MapBinding it)
   deriving stock (Functor, Foldable, Traversable)
-
--- data Assignment it
---   = Assignment it it -- (Name) (Expr)
---   deriving (Show) via PP (Assignment it)
---   deriving stock (Functor, Foldable, Traversable)
 
 data FieldAssignment it
   = FieldAssignment it it -- (QualifiedName) (Expr)
   | Spread it -- (Name)
-  deriving (Show) via PP (FieldAssignment it)
   deriving stock (Functor, Foldable, Traversable)
 
 data Constant it
@@ -167,7 +136,6 @@ data Constant it
   | Float   Text
   | Bytes   Text
   | Tez     Text
-  deriving (Show) via PP (Constant it)
   deriving stock (Functor, Foldable, Traversable)
 
 data Pattern it
@@ -180,7 +148,6 @@ data Pattern it
   | IsSpread     it   -- (Name)
   | IsList       [it] -- [Pattern]
   | IsTuple      [it] -- [Pattern]
-  deriving (Show) via PP (Pattern it)
   deriving stock (Functor, Foldable, Traversable)
 
 data QualifiedName it
@@ -188,207 +155,28 @@ data QualifiedName it
     { qnSource ::  it -- Name
     , qnPath   :: [it] -- [Path]
     }
-  deriving (Show) via PP (QualifiedName it)
   deriving stock (Functor, Foldable, Traversable)
 
 data Path it
   = At it -- (Name)
   | Ix Text
-  deriving (Show) via PP (Path it)
   deriving stock (Functor, Foldable, Traversable)
 
 newtype Name it = Name
   { _raw     :: Text
   }
-  deriving (Show) via PP (Name it)
   deriving stock (Functor, Foldable, Traversable)
 
 newtype NameDecl it = NameDecl
   { _raw     :: Text
   }
-  deriving (Show) via PP (NameDecl it)
   deriving stock (Functor, Foldable, Traversable)
 
 newtype TypeName it = TypeName Text
-  deriving (Show) via PP (TypeName it)
   deriving stock   (Functor, Foldable, Traversable)
 
 newtype Ctor it = Ctor Text
-  deriving (Show) via PP (Ctor it)
   deriving stock   (Functor, Foldable, Traversable)
 
 newtype FieldName it = FieldName Text
-  deriving (Show) via PP (TypeName it)
   deriving stock   (Functor, Foldable, Traversable)
-
-sexpr :: Text -> [Doc] -> Doc
-sexpr header items = "(" <.> pp header `indent` foldr above empty items <.> ")"
-
-sop :: Doc -> Text -> [Doc] -> Doc
-sop a op b = "(" <.> a `indent` pp op `indent` foldr above empty b <.> ")"
-
-instance Pretty1 Language where
-  pp1 = \case
-    Language _ p -> p
-
-instance Pretty1 Undefined where
-  pp1 = \case
-    Undefined mess -> "{{{" <.> pp (Text.take 20 mess) <.> "}}}"
-
-instance Pretty1 Contract where
-  pp1 = \case
-    ContractEnd -> "(endtract)"
-    ContractCons x xs -> sexpr "constract" [x, xs]
-
-instance Pretty1 RawContract where
-  pp1 = \case
-    RawContract xs -> sexpr "contract" xs
-
-instance Pretty1 Binding where
-  pp1 = \case
-    Irrefutable  pat  expr     -> sexpr "irref" [pat, expr]
-    TypeDecl     n    ty       -> sexpr "type"  [n, ty]
-    Var          name ty value -> sexpr "var"   [name, pp ty, pp value]
-    Const        name ty body  -> sexpr "const" [name, pp ty, pp body]
-    Attribute    name          -> sexpr "attr"  [name]
-    Include      fname         -> sexpr "#include" [fname]
-
-    Function isRec name params ty body ->
-      sexpr "fun" $ concat
-        [ ["rec" | isRec]
-        , [name]
-        , params
-        , [":", pp ty]
-        , ["=", body]
-        ]
-
-instance Pretty1 Parameters where
-  pp1 = \case
-    Parameters them -> sexpr "params" them
-
-instance Pretty1 Type where
-  pp1 = \case
-    TArrow    dom codom -> sop dom "->" [codom]
-    TRecord   fields    -> sexpr "RECORD" fields
-    TVar      name      -> name
-    TSum      variants  -> sexpr "SUM" variants
-    TProduct  elements  -> sexpr "PROD" elements
-    TApply    f xs      -> sop f "$" xs
-    TString   t         -> pp t
-    TTuple    xs        -> sexpr "TUPLE" xs
-    TOr       l n r m   -> sexpr "OR"   [l, n, r, m]
-    TAnd      l n r m   -> sexpr "AND" [l, n, r, m]
-
-instance Pretty1 Variant where
-  pp1 = \case
-    Variant ctor ty -> sexpr "ctor" [ctor, pp ty]
-
-instance Pretty1 Expr where
-  pp1 = \case
-    Let       decl body  -> "(let" `indent` decl `above` body <.> ")"
-    Apply     f xs       -> sexpr "apply" (f : xs)
-    Constant  constant   -> constant
-    Ident     qname      -> qname
-    BinOp     l o r      -> sop l (ppToText o) [r]
-    UnOp        o r      -> sexpr (ppToText o) [r]
-    Op          o        -> pp o
-    Record    az         -> sexpr "record" az
-    If        b t e      -> sexpr "if" [b, t, pp e]
-    Assign    l r        -> sop l ":=" [r]
-    List      l          -> sexpr "list" l
-    ListAccess l ids     -> sexpr "get" (l : ids)
-    Set       l          -> sexpr "set" l
-    Tuple     l          -> sexpr "tuple" l
-    Annot     n t        -> sop n ":" [t]
-    Attrs     ts         -> sexpr "attrs" ts
-    BigMap    bs         -> sexpr "big_map" bs
-    Map       bs         -> sexpr "map" bs
-    MapRemove k m        -> sexpr "remove_map" [k, m]
-    SetRemove k s        -> sexpr "remove_set" [k, s]
-    Indexing  a j        -> sexpr "index" [a, j]
-    Case      s az       -> sexpr "case" (s : az)
-    Skip                 -> "skip"
-    ForLoop   j s f d b  -> sexpr "for" [j, s, f, pp d, b]
-    ForBox    k mv t z b -> sexpr "for_box" [k, pp mv, pp t, z, b]
-    WhileLoop f b        -> sexpr "while" [f, b]
-    Seq       es         -> sexpr "seq" es
-    Block     es         -> sexpr "block" es
-    Lambda    ps ty b    -> sexpr "lam" $ concat [ps, [":", pp ty], ["=>", b]]
-    MapPatch  z bs       -> sexpr "patch" (z : bs)
-    SetPatch  z bs       -> sexpr "patch_set" (z : bs)
-    RecordUpd r up       -> sexpr "update" (r : up)
-
-instance Pretty1 Alt where
-  pp1 = \case
-    Alt p b -> sexpr "alt" [p, b]
-
-instance Pretty1 MapBinding where
-  pp1 = \case
-    MapBinding k v -> sexpr "bind" [k, v]
-
--- instance Pretty1 Assignment where
---   pp1 = \case
---     Assignment n e -> sexpr "assign" [n, e]
-
-instance Pretty1 FieldAssignment where
-  pp1 = \case
-    FieldAssignment n e -> sexpr ".=" [n, e]
-    Spread n -> sexpr "..." [n]
-
-instance Pretty1 Constant where
-  pp1 = \case
-    Int           z   -> pp z
-    Nat           z   -> pp z
-    String        z   -> pp z
-    Float         z   -> pp z
-    Bytes         z   -> pp z
-    Tez           z   -> pp z
-
-instance Pretty1 QualifiedName where
-  pp1 = \case
-    QualifiedName src path -> sexpr "." (src : path)
-
-instance Pretty1 Pattern where
-  pp1 = \case
-    IsConstr     ctor arg  -> sexpr "ctor?" [ctor, pp arg]
-    IsConstant   z         -> sexpr "is?" [z]
-    IsVar        name      -> sexpr "?" [name]
-    IsCons       h t       -> sop h "::?" [t]
-    IsAnnot      s t       -> sexpr "type?" [s, t]
-    IsWildcard             -> "_?"
-    IsSpread     n         -> "..." <.> pp n
-    IsList       l         -> sexpr "list?" l
-    IsTuple      t         -> sexpr "tuple?" t
-
-instance Pretty1 Name where
-  pp1 = \case
-    Name         raw -> pp raw
-
-instance Pretty1 NameDecl where
-  pp1 = \case
-    NameDecl     raw -> pp raw
-
-instance Pretty1 TypeName where
-  pp1 = \case
-    TypeName     raw -> pp raw
-
-instance Pretty1 FieldName where
-  pp1 = \case
-    FieldName    raw -> pp raw
-
-instance Pretty1 Ctor where
-  pp1 = \case
-    Ctor         raw -> pp raw
-
-instance Pretty1 Path where
-  pp1 = \case
-    At n -> n
-    Ix j -> pp j
-
-instance Pretty1 TField where
-  pp1 = \case
-    TField      n t -> n <.> ":" `indent` t
-
--- instance Pretty1 LHS where
---   pp1 = \case
---     LHS    qn mi -> qn <.> foldMap brackets mi

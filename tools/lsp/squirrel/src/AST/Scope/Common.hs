@@ -21,6 +21,7 @@ import           Cli.Types
 import           Parser
 import           Product
 import           Range
+import           AST.Pretty
 
 -- import           Debug.Trace
 
