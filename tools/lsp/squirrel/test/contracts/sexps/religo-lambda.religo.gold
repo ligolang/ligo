@@ -1,0 +1,2 @@
+(contract
+  (const (? 'bar) (lam (type? (? 'i) int) : int => (i + 1))))
