@@ -1,7 +1,7 @@
 open Trace
 open Errors
-open Stage_common.Types
-open Co_de_bruijn
+open! Stage_common.Types
+open! Co_de_bruijn
 open Michelson
 open Predefined.Stacking
 
@@ -133,7 +133,7 @@ let rec get_operator : constant' -> type_expression -> expression args -> (predi
             prim ~children:[r_ty] "CONTRACT" ;
             i_assert_some_msg (i_push_string "bad address for get_contract") ;
           ]
-      | C_CONTRACT_OPT -> 
+      | C_CONTRACT_OPT ->
           let%bind tc = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  Mini_c.get_t_option ty in
           let%bind r = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@  Mini_c.get_t_contract tc in
           let%bind r_ty = Compiler_type.type_ r in

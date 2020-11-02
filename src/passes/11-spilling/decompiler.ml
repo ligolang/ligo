@@ -175,16 +175,16 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
       fail @@ bad_decompile v
     | (i,_) when List.exists (fun el ->String.equal i el) [michelson_pair_name ; michelson_or_name; michelson_pair_left_comb_name ; michelson_pair_right_comb_name ; michelson_or_left_comb_name ; michelson_or_right_comb_name ] ->
       fail @@ corner_case ~loc:"unspiller" "Michelson_combs t should not be present in mini-c"
-    | _ -> 
+    | _ ->
       fail @@ corner_case ~loc:"unspiller" "Wrong number of args or wrong kinds for the type constant"
   )
   | T_sum {layout ; content} ->
-      let lst = List.map (fun (k,{associated_type;_}) -> (k,associated_type)) @@ Ast_typed.Helpers.kv_list_of_t_sum ~layout content in
+      let lst = List.map (fun (k,({associated_type;_} : _ row_element_mini_c)) -> (k,associated_type)) @@ Ast_typed.Helpers.kv_list_of_t_sum ~layout content in
       let%bind (constructor, v, tv) = Layout.extract_constructor ~layout v lst in
       let%bind sub = decompile v tv in
       return (E_constructor {constructor;element=sub})
   | T_record {layout ; content } ->
-      let lst = List.map (fun (k,{associated_type;_}) -> (k,associated_type)) @@ Ast_typed.Helpers.kv_list_of_t_record_or_tuple ~layout content in
+      let lst = List.map (fun (k,({associated_type;_} : _ row_element_mini_c)) -> (k,associated_type)) @@ Ast_typed.Helpers.kv_list_of_t_record_or_tuple ~layout content in
       let%bind lst = Layout.extract_record ~layout v lst in
       let%bind lst = bind_list
         @@ List.map (fun (x, (y, z)) -> let%bind yz = decompile y z in ok (x, yz)) lst in

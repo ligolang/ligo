@@ -5,7 +5,7 @@ open Stage_common
 
 let bind_map_lmap_t f map = bind_lmap (
   LMap.map
-    (fun ({associated_type;_} as field) ->
+    (fun ({associated_type;_} as field : _ row_element) ->
       let%bind field' = f associated_type in
       ok {field with associated_type = field'})
     map)
