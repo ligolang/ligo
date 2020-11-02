@@ -19,3 +19,5 @@ module Debug = Stage_common.Debug
 
 let program_environment env program = fst (Compute_environment.program env program)
 module Compare = struct include Compare end
+
+type typer_switch = Old | New

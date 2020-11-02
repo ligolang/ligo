@@ -12,8 +12,7 @@ let get_program f st =
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-      let init_env = Environment.default Environment.Protocols.current in
-      let%bind program = type_file ~init_env f st in
+      let%bind program = type_file ~options f st in
       s := Some program ;
       ok program
     )

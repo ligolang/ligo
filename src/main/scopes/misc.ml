@@ -7,7 +7,6 @@ type tenv = Ast_typed.environment
 let var_equal : Ast_typed.expression_variable -> Ast_typed.expression_variable -> bool = fun v1 v2 ->
   Var.equal v1.wrap_content v2.wrap_content
 
-
 (* type t_bindings = (Ast_typed.expression_variable * Ast_typed.type_expression) list *)
 let extract_variable_types :
   bindings_map -> Ast_typed.program_fully_typed -> bindings_map =

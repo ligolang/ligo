@@ -5,12 +5,15 @@ open Misc
 module Formatter = Formatter
 
 type tstate = Typer_common.Errors.typer_error Typer.O'.typer_state
-type tenv = Ast_typed.environment
 type sub_program = { program : Ast_core.program  ; bindings : bindings_map }
 
-let scopes : with_types:bool -> Ast_typed.environment -> Ast_core.program -> ((def_map * scopes), Main_errors.all) result = fun ~with_types init_env core_prg ->
+let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.program -> ((def_map * scopes), Main_errors.all) result = fun ~with_types ~options core_prg ->
   let make_v_def_from_core = make_v_def_from_core ~with_types  in
   let make_v_def_option_type = make_v_def_option_type ~with_types in
+  let compile =
+    let { init_env ; typer_switch ; _ } : Compiler_options.t = options in
+    Compile.Of_core.compile ~ typer_switch ~init_env Env
+  in
 
   let rec find_scopes' = fun (i,all_defs,env,scopes,lastloc) (bindings:bindings_map) (e : Ast_core.expression) ->
     match e.content with
@@ -106,7 +109,7 @@ let scopes : with_types:bool -> Ast_typed.environment -> Ast_core.program -> ((d
 
   let aux = fun (i,top_def_map,inner_def_map,scopes,sub_prg) (x : Ast_core.declaration Location.wrap) ->
     let program = List.append sub_prg.program [x] in
-    let typed_prg = if with_types then Trace.to_option @@ Compile.Of_core.compile ~init_env Env program else None in
+    let typed_prg = if with_types then Trace.to_option @@ compile program else None in
     let bindings = match typed_prg with
       | Some (typed_prg,_,_) -> extract_variable_types sub_prg.bindings typed_prg
       | None -> sub_prg.bindings

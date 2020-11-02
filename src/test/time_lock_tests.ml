@@ -3,8 +3,7 @@ open Main_errors
 open Test_helpers
 
 let type_file f =
-  let init_env = Environment.default Environment.Protocols.current in
-  Ligo.Compile.Utils.type_file  ~init_env f "pascaligo" (Contract "main")
+  Ligo.Compile.Utils.type_file  ~options f "pascaligo" (Contract "main")
 
 let get_program =
   let s = ref None in

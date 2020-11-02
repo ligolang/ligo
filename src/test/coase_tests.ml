@@ -10,8 +10,8 @@ let get_program =
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-      let init_env = Environment.default Environment.Protocols.current in
-      let%bind program  = Ligo.Compile.Utils.type_file ~init_env "./contracts/coase.ligo" "pascaligo" (Contract "main") in
+      let options = Compiler_options.make () in
+      let%bind program  = Ligo.Compile.Utils.type_file ~options "./contracts/coase.ligo" "pascaligo" (Contract "main") in
       s := Some program;
       ok program
     )

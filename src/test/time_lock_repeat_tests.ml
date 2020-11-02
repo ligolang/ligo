@@ -4,21 +4,20 @@ open Ast_imperative
 open Main_errors
 
 let type_file f = Ligo.Compile.Utils.type_file f "cameligo" (Contract "main")
+let options = Compiler_options.make ()
 
 let get_program =
   let s = ref None in
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-      let init_env = Environment.default Environment.Protocols.current in
-      let%bind program = type_file ~init_env "./contracts/timelock_repeat.mligo" in
+      let%bind program = type_file ~options "./contracts/timelock_repeat.mligo" in
       s := Some program ;
       ok program
     )
 
 let compile_main () =
-  let init_env = Environment.default Environment.Protocols.current in
-  let%bind typed_prg,_,_   = type_file ~init_env "./contracts/timelock_repeat.mligo" in
+  let%bind typed_prg,_,_   = type_file ~options "./contracts/timelock_repeat.mligo" in
   let%bind mini_c_prg      = Ligo.Compile.Of_typed.compile typed_prg in
   let%bind michelson_prg   = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
   let%bind (_contract: Tezos_utils.Michelson.michelson) =

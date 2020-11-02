@@ -279,6 +279,9 @@ let%expect_test _ =
                the syntax is guessed from the extension (.ligo, .mligo, .religo
                respectively).
 
+           --typer=TYPER_SWITCH (absent=old)
+               TYPER_SWITCH is the typer to be used ('new' or 'old')
+
            --version
                Show version information. |} ] ;
 
@@ -356,6 +359,9 @@ let%expect_test _ =
            --source=SOURCE
                SOURCE is the source the Michelson interpreter transaction will
                use.
+
+           --typer=TYPER_SWITCH (absent=old)
+               TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
                Show version information. |} ] ;
@@ -436,6 +442,9 @@ let%expect_test _ =
                SOURCE is the source the Michelson interpreter transaction will
                use.
 
+           --typer=TYPER_SWITCH (absent=old)
+               TYPER_SWITCH is the typer to be used ('new' or 'old')
+
            --version
                Show version information. |} ] ;
 
@@ -507,6 +516,9 @@ let%expect_test _ =
                SOURCE is the source the Michelson interpreter transaction will
                use.
 
+           --typer=TYPER_SWITCH (absent=old)
+               TYPER_SWITCH is the typer to be used ('new' or 'old')
+
            --version
                Show version information. |} ] ;
 
@@ -575,6 +587,9 @@ let%expect_test _ =
                SOURCE is the source the Michelson interpreter transaction will
                use.
 
+           --typer=TYPER_SWITCH (absent=old)
+               TYPER_SWITCH is the typer to be used ('new' or 'old')
+
            --version
                Show version information. |} ] ;
 
@@ -638,6 +653,9 @@ let%expect_test _ =
                SOURCE is the source the Michelson interpreter transaction will
                use.
 
+           --typer=TYPER_SWITCH (absent=old)
+               TYPER_SWITCH is the typer to be used ('new' or 'old')
+
            --version
                Show version information. |} ] ;
 
@@ -686,6 +704,9 @@ let%expect_test _ =
                PROTOCOL_VERSION will decide protocol's types/values pre-loaded
                into the LIGO environment (carthage , dalphanet). By default, the
                current protocol (carthage) will be used
+
+           --typer=TYPER_SWITCH (absent=old)
+               TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
                Show version information. |} ] ;
