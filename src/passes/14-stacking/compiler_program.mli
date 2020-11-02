@@ -1,6 +1,6 @@
 open Errors
 open Trace
-open Co_de_bruijn
+open! Co_de_bruijn
 open Co_de_bruijn.Util
 
 open Michelson
