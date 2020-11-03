@@ -131,6 +131,8 @@ val ty_eq :
   'tb Script_typed_ir.ty ->
   (('ta Script_typed_ir.ty, 'tb Script_typed_ir.ty) eq * context) tzresult
 
+val wrap_compare : ('a -> 'b -> int) -> 'a -> 'b -> int
+
 val compare_comparable : 'a Script_typed_ir.comparable_ty -> 'a -> 'a -> int
 
 val parse_data :

@@ -657,6 +657,49 @@ and comparator : Location.t -> string -> typer = fun loc s -> typer_2 loc s @@ f
   bind_or (pair_comparator loc s [a;b] None, simple_comparator loc s [a;b] None)
 
 
+let test_originate loc = typer_2 loc "TEST_ORIGINATE" @@ fun f init_storage  ->
+  let%bind (args , ret) = trace_option (expected_function loc f) @@ get_t_function f in
+  let%bind (_param,storage_in) = trace_option (expected_pair loc args) @@ get_t_pair args in
+  let%bind (oplist,storage_out) = trace_option (expected_pair loc ret) @@ get_t_pair ret in
+  let%bind () = trace_option (expected_op_list loc oplist) @@ assert_t_list_operation oplist in
+  let%bind () = assert_eq loc storage_in init_storage in
+  let%bind () = assert_eq loc storage_in storage_out in
+  ok (t_address ())
+
+let test_set_now loc = typer_1 loc "TEST_SET_NOW" @@ fun time ->
+  let%bind () = assert_eq loc time (t_timestamp ()) in
+  ok (t_unit ())
+
+let test_set_source loc = typer_1 loc "TEST_SET_SOURCE" @@ fun s ->
+  let%bind () = assert_eq loc s (t_address ()) in
+  ok (t_unit ())
+
+let test_set_balance loc = typer_2 loc "TEST_SET_BALANCE" @@ fun addr b ->
+  let%bind () = assert_eq loc addr (t_address ()) in
+  let%bind () = assert_eq loc b (t_mutez ()) in
+  ok (t_unit ())
+
+let test_external_call loc = typer_3 loc "TEST_EXTERNAL_CALL" @@ fun addr _p amt  ->
+  let%bind () = assert_eq loc addr (t_address ()) in
+  let%bind () = assert_eq loc amt (t_mutez ()) in
+  ok (t_unit ())
+
+let test_get_storage loc = typer_1_opt loc "TEST_GET_STORAGE" @@ fun addr opt ->
+  let%bind () = assert_eq loc addr (t_address ()) in
+  trace_option (not_annotated loc) @@ opt
+
+let test_get_balance loc = typer_1 loc "TEST_GET_BALANCE" @@ fun addr ->
+  let%bind () = assert_eq loc addr (t_address ()) in
+  ok (t_mutez ())
+
+let test_assert_failure loc = typer_1 loc "TEST_ASSERT_FAILURE" @@ fun f ->
+  let%bind (input , output) = trace_option (expected_function loc f) @@ get_t_function f in
+  let%bind () = assert_eq loc input (t_unit ()) in
+  ignore output;
+  ok (t_bool ())
+
+let test_log loc = typer_1 loc "TEST_LOG" @@ fun _ -> ok @@ t_unit ()
+
 let constant_typers loc c : (typer , typer_error) result = match c with
   | C_INT                 -> ok @@ int loc ;
   | C_UNIT                -> ok @@ unit loc ;
@@ -739,19 +782,28 @@ let constant_typers loc c : (typer , typer_error) result = match c with
   | C_CONTRACT_OPT        -> ok @@ get_contract_opt loc ;
   | C_CONTRACT_ENTRYPOINT -> ok @@ get_entrypoint loc ;
   | C_CONTRACT_ENTRYPOINT_OPT -> ok @@ get_entrypoint_opt loc ;
-  | C_AMOUNT              -> ok @@ amount loc;
-  | C_BALANCE             -> ok @@ balance loc;
+  | C_AMOUNT              -> ok @@ amount loc ;
+  | C_BALANCE             -> ok @@ balance loc ;
   | C_CALL                -> ok @@ transaction loc ;
-  | C_SENDER              -> ok @@ sender loc;
-  | C_SOURCE              -> ok @@ source loc;
-  | C_ADDRESS             -> ok @@ address loc;
-  | C_SELF                -> ok @@ self loc;
-  | C_SELF_ADDRESS        -> ok @@ self_address loc;
-  | C_IMPLICIT_ACCOUNT    -> ok @@ implicit_account loc;
+  | C_SENDER              -> ok @@ sender loc ;
+  | C_SOURCE              -> ok @@ source loc ;
+  | C_ADDRESS             -> ok @@ address loc ;
+  | C_SELF                -> ok @@ self loc ;
+  | C_SELF_ADDRESS        -> ok @@ self_address loc ;
+  | C_IMPLICIT_ACCOUNT    -> ok @@ implicit_account loc ;
   | C_SET_DELEGATE        -> ok @@ set_delegate loc ;
   | C_CREATE_CONTRACT     -> ok @@ create_contract loc ;
   | C_CONVERT_TO_RIGHT_COMB -> ok @@ convert_to_right_comb loc ;
   | C_CONVERT_TO_LEFT_COMB  -> ok @@ convert_to_left_comb loc ;
   | C_CONVERT_FROM_RIGHT_COMB -> ok @@ convert_from_right_comb loc ;
   | C_CONVERT_FROM_LEFT_COMB  -> ok @@ convert_from_left_comb loc ;
-  | _                     -> fail (corner_case "typer not implemented for constant")
+  | C_TEST_ORIGINATE -> ok @@ test_originate loc ;
+  | C_TEST_SET_NOW -> ok @@ test_set_now loc ;
+  | C_TEST_SET_SOURCE -> ok @@ test_set_source loc ;
+  | C_TEST_SET_BALANCE -> ok @@ test_set_balance loc ;
+  | C_TEST_EXTERNAL_CALL -> ok @@ test_external_call loc ;
+  | C_TEST_GET_STORAGE -> ok @@ test_get_storage loc ;
+  | C_TEST_GET_BALANCE -> ok @@ test_get_balance loc ;
+  | C_TEST_ASSERT_FAILURE -> ok @@ test_assert_failure loc ;
+  | C_TEST_LOG -> ok @@ test_log loc ;
+  | _ as cst -> fail (corner_case @@ Format.asprintf "typer not implemented for constant %a" PP.constant' cst)

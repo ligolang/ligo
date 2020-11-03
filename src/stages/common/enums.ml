@@ -153,6 +153,16 @@ type constant' =
   | C_CONVERT_TO_RIGHT_COMB
   | C_CONVERT_FROM_LEFT_COMB
   | C_CONVERT_FROM_RIGHT_COMB
+  (* Tests - ligo interpreter only *)
+  | C_TEST_ORIGINATE
+  | C_TEST_GET_STORAGE
+  | C_TEST_GET_BALANCE
+  | C_TEST_SET_NOW
+  | C_TEST_SET_SOURCE
+  | C_TEST_SET_BALANCE
+  | C_TEST_EXTERNAL_CALL
+  | C_TEST_ASSERT_FAILURE
+  | C_TEST_LOG
 
 type deprecated = {
     name : string ;

@@ -27,4 +27,4 @@ let assert_equal_contract_type : Simple_utils.Runned_result.check_type -> string
     | _ -> fail @@ entrypoint_not_a_function
   )
 
-let some_interpret x = trace interpret_tracer @@ Interpreter.eval x
+let some_interpret ~options x test_entry = trace interpret_tracer @@ Interpreter.eval_test ~options x test_entry

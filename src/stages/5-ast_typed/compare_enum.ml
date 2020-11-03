@@ -122,6 +122,15 @@ let constant'_tag = function
   (* and more *)
   | C_TRUE                    -> 107
   | C_FALSE                   -> 108
+  | C_TEST_ORIGINATE          -> 109
+  | C_TEST_SET_NOW            -> 110
+  | C_TEST_SET_SOURCE         -> 111
+  | C_TEST_SET_BALANCE        -> 123
+  | C_TEST_EXTERNAL_CALL      -> 124
+  | C_TEST_GET_STORAGE        -> 125
+  | C_TEST_GET_BALANCE        -> 126
+  | C_TEST_ASSERT_FAILURE     -> 127
+  | C_TEST_LOG                -> 128
 
 let constant' a b = Int.compare (constant'_tag a) (constant'_tag b)
 

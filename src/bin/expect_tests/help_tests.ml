@@ -56,9 +56,6 @@ let%expect_test _ =
                Subcommand: Interpret the expression in the context initialized by
                the provided source file.
 
-           ligo-interpret
-               Subcommand: (temporary / dev only) uses LIGO interpret.
-
            list-declarations
                Subcommand: List all the top-level declarations.
 
@@ -98,6 +95,9 @@ let%expect_test _ =
 
            run-function
                Subcommand: Run a function with the given parameter.
+
+           test
+               Subcommand: Test a contract with the LIGO interpreter (BETA).
 
            transpile-contract
                Subcommand: Transpile a contract to another syntax.
@@ -168,9 +168,6 @@ let%expect_test _ =
                Subcommand: Interpret the expression in the context initialized by
                the provided source file.
 
-           ligo-interpret
-               Subcommand: (temporary / dev only) uses LIGO interpret.
-
            list-declarations
                Subcommand: List all the top-level declarations.
 
@@ -210,6 +207,9 @@ let%expect_test _ =
 
            run-function
                Subcommand: Run a function with the given parameter.
+
+           test
+               Subcommand: Test a contract with the LIGO interpreter (BETA).
 
            transpile-contract
                Subcommand: Transpile a contract to another syntax.
