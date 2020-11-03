@@ -336,6 +336,10 @@ let ediv loc = typer_2 loc "EDIV" @@ fun a b ->
   then ok @@ t_option (t_pair (t_nat ()) (t_nat ()) ) else
   if eq_2 (a , b) (t_int ())
   then ok @@ t_option (t_pair (t_int ()) (t_nat ()) ) else
+  if eq_1 a (t_nat ()) && eq_1 b (t_int ())
+  then ok @@ t_option (t_pair (t_int ()) (t_nat ()) ) else
+  if eq_1 a (t_int ()) && eq_1 b (t_nat ())
+  then ok @@ t_option (t_pair (t_int ()) (t_nat ()) ) else
   if eq_1 a (t_mutez ()) && eq_1 b (t_mutez ())
   then ok @@ t_option (t_pair (t_nat ()) (t_mutez ()) ) else
   if eq_1 a (t_mutez ()) && eq_1 b (t_nat ())
@@ -344,6 +348,8 @@ let ediv loc = typer_2 loc "EDIV" @@ fun a b ->
               [
                 [t_nat();t_nat()] ;
                 [t_int();t_int()] ;
+                [t_nat();t_int()] ;
+                [t_int();t_nat()] ;
                 [t_mutez();t_nat()] ;
                 [t_mutez();t_mutez()] ;
               ]
