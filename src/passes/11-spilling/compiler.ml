@@ -136,6 +136,16 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_CONVERT_TO_RIGHT_COMB -> C_CONVERT_TO_RIGHT_COMB
   | C_CONVERT_FROM_LEFT_COMB -> C_CONVERT_FROM_LEFT_COMB
   | C_CONVERT_FROM_RIGHT_COMB -> C_CONVERT_FROM_RIGHT_COMB
+  | (   C_TEST_ORIGINATE
+      | C_TEST_SET_NOW
+      | C_TEST_SET_SOURCE
+      | C_TEST_SET_BALANCE 
+      | C_TEST_EXTERNAL_CALL
+      | C_TEST_GET_STORAGE
+      | C_TEST_GET_BALANCE
+      | C_TEST_ASSERT_FAILURE
+      | C_TEST_LOG ) as c ->
+    failwith (Format.asprintf "%a is only available for LIGO interpreter" PP.constant c)
 
 let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error) result =
   let return tc = ok @@ Expression.make_t ~loc:t.location @@ tc in

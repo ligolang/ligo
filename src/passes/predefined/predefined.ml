@@ -141,6 +141,18 @@ module Tree_abstraction = struct
     | "Layout.convert_from_right_comb" -> some_const C_CONVERT_FROM_RIGHT_COMB
     | "Layout.convert_from_left_comb" -> some_const C_CONVERT_FROM_LEFT_COMB
 
+    (* Testing module *)
+
+    | "Test.originate" -> some_const C_TEST_ORIGINATE
+    | "Test.set_now" -> some_const C_TEST_SET_NOW
+    | "Test.set_source" -> some_const C_TEST_SET_SOURCE
+    | "Test.set_balance" -> some_const C_TEST_SET_BALANCE
+    | "Test.external_call" -> some_const C_TEST_EXTERNAL_CALL
+    | "Test.get_storage" -> some_const C_TEST_GET_STORAGE
+    | "Test.get_balance" -> some_const C_TEST_GET_BALANCE
+    | "Test.assert_failure" -> some_const C_TEST_ASSERT_FAILURE
+    | "Test.log" -> some_const C_TEST_LOG
+
     | _ -> None
 
 

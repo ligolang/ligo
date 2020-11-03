@@ -179,7 +179,7 @@ let begin_construction ~chain_id ~predecessor_context:ctxt
   >>=? fun (mode, ctxt) -> return {mode; chain_id; ctxt; op_count = 0}
 
 let apply_operation ({mode; chain_id; ctxt; op_count; _} as data)
-    (operation : Alpha_context.packed_operation) =
+    (operation : Alpha_context.packed_operation) : (validation_state * operation_receipt) tzresult Lwt.t =
   match mode with
   | Partial_application _
     when not

@@ -10,6 +10,10 @@ let unopt ~default x = match x with
 let unopt_exn x = match x with
   | None -> raise Not_found
   | Some x -> x
+let unopt_failwith str x = match x with
+  | None -> failwith str
+  | Some x -> x
+
 
 (* Base Tranformers *)
 let bind f = function

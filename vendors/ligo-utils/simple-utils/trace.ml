@@ -241,10 +241,7 @@ let to_stdlib_result : ('value, 'error) result -> ('value * annotation_thunk lis
 
 let bind f = function
   Error _ as e -> e
-| Ok (x, ann) ->
-    match f x with
-      Ok (x', ann') -> Ok (x', ann' @ ann)
-    | Error _ as e' -> ignore ann; e'
+| Ok (x, _) -> f x (* TODO: annotations are ignored, remove that from the error type*)
 
 let map f = function
   Ok (x, annotations) -> Ok (f x, annotations)

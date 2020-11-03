@@ -124,6 +124,16 @@ let constant' = function
   | C_CONVERT_TO_RIGHT_COMB    -> `List [`String "C_CONVERT_TO_RIGHT_COMB"; `Null ]
   | C_CONVERT_FROM_LEFT_COMB   -> `List [`String "C_CONVERT_FROM_LEFT_COMB"; `Null ]
   | C_CONVERT_FROM_RIGHT_COMB  -> `List [`String "C_CONVERT_FROM_RIGHT_COMB"; `Null ]
+  | C_TEST_ORIGINATE           -> `List [`String "TEST_ORIGINATE"; `Null ]
+  | C_TEST_SET_NOW             -> `List [`String "TEST_SET_NOW"; `Null ]
+  | C_TEST_SET_SOURCE          -> `List [`String "TEST_SET_SOURCE"; `Null ]
+  | C_TEST_SET_BALANCE         -> `List [`String "TEST_SET_BALANCE"; `Null ]
+  | C_TEST_EXTERNAL_CALL       -> `List [`String "TEST_EXTERNAL_CALL"; `Null ]
+  | C_TEST_GET_STORAGE         -> `List [`String "TEST_GET_STORAGE"; `Null ]
+  | C_TEST_GET_BALANCE         -> `List [`String "TEST_GET_BALANCE"; `Null ]
+  | C_TEST_ASSERT_FAILURE      -> `List [`String "TEST_ASSERT_FAILURE"; `Null ]
+  | C_TEST_LOG                 -> `List [`String "TEST_LOG"; `Null ]
+
 
 let literal = function
   | Literal_unit        -> `List [`String "Literal_unit"; `Null ]

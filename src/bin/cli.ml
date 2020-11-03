@@ -34,6 +34,14 @@ let entry_point n =
     info ~docv ~doc [] in
   required @@ pos n (some string) (Some "main") info
 
+let test_entry n =
+  let open Arg in
+  let info =
+    let docv = "TEST_ENTRY" in
+    let doc = "$(docv) is top-level variable which will be evaluated as the result of your test." in
+    info ~docv ~doc [] in
+  required @@ pos n (some string) None info
+
 let expression purpose n =
   let open Arg in
   let docv = purpose ^ "_EXPRESSION" in
@@ -384,21 +392,6 @@ let interpret =
   let doc = "Subcommand: Interpret the expression in the context initialized by the provided source file." in
   (Term.ret term , Term.info ~doc cmdname)
 
-let temp_ligo_interpreter =
-  let f source_file syntax typer_switch protocol_version display_format =
-    return_result ~display_format (Ligo_interpreter.Formatter.program_format) @@
-      let%bind init_env   = Helpers.get_initial_env protocol_version in
-      let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
-      let options = Compiler_options.make ~typer_switch ~init_env () in
-      let%bind typed,_,_  = Compile.Utils.type_file ~options source_file syntax Env in
-      Compile.Of_typed.some_interpret typed
-  in
-  let term =
-    Term.(const f $ source_file 0  $ syntax $ typer_switch $ protocol_version $ display_format) in
-  let cmdname = "ligo-interpret" in
-  let doc = "Subcommand: (temporary / dev only) uses LIGO interpret." in
-  (Term.ret term , Term.info ~doc cmdname)
-
 let compile_storage =
   let f source_file entry_point expression syntax typer_switch protocol_version amount balance sender source now display_format michelson_format output_file =
     return_result ~output_file ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
@@ -607,12 +600,29 @@ let get_scope =
   let doc = "Subcommand: Return the JSON encoded environment for a given file." in
   (Term.ret term , Term.info ~doc cmdname)
 
-let buffer = Buffer.create 100
+let test =
+  let f source_file test_entry syntax typer_switch protocol_version amount balance sender source now display_format =
+    return_result ~display_format (Ligo_interpreter.Formatter.test_format) @@
+      let%bind init_env   = Helpers.get_initial_env protocol_version in
+      let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
+      let options = Compiler_options.make ~typer_switch ~init_env () in
+      let%bind typed,_,_    = Compile.Utils.type_file ~options source_file syntax Env in
+      let%bind options    = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
+      Compile.Of_typed.some_interpret ~options typed test_entry
+  in
+  let term =
+    Term.(const f $ source_file 0 $ test_entry 1 $ syntax $ typer_switch $ protocol_version $ amount $ balance $ sender $ source $ now $ display_format) in
+  let cmdname = "test" in
+  let doc = "Subcommand: Test a contract with the LIGO interpreter (BETA)." in
+  (Term.ret term , Term.info ~doc cmdname)
+
+let buffer = Buffer.create 100 
+
 
 let run ?argv () =
   let err = Format.formatter_of_buffer buffer in
   Term.eval_choice ~err ?argv main [
-    temp_ligo_interpreter ;
+    test ;
     compile_file ;
     measure_contract ;
     compile_parameter ;

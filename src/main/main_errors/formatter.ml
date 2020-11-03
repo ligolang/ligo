@@ -140,7 +140,7 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_cit_cameligo e -> Tree_abstraction.Cameligo.Errors.error_ppformat ~display_format f e
     | `Main_cit_reasonligo e -> Tree_abstraction.Reasonligo.Errors.error_ppformat ~display_format f e
     | `Main_typer e -> Typer.Errors.error_ppformat ~display_format f e
-    | `Main_interpreter _ -> () (*no error*)
+    | `Main_interpreter e -> Interpreter.Errors.error_ppformat ~display_format f e
     | `Main_self_ast_typed e -> Self_ast_typed.Errors.error_ppformat ~display_format f e
     | `Main_self_mini_c e -> Self_mini_c.Errors.error_ppformat ~display_format f e
     | `Main_spilling e -> Spilling.Errors.error_ppformat ~display_format f  e
