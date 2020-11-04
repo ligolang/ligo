@@ -146,16 +146,16 @@ function HomePage() {
         <div id="intro" className="centered">
           <div id="callToAction">
             <ul>
-            <a href="https://ide.ligolang.org">
               <li className="primary">
-                Try Online
+                <a href="https://ide.ligolang.org">
+                  Try Online
+                </a>
               </li>
-            </a>
-            <a href={useBaseUrl('/docs/intro/installation')}>
               <li className="secondary">
-                Install
+                <a href={useBaseUrl('/docs/intro/installation')}>
+                  Install
+                </a>
               </li>
-            </a>
           </ul>
         </div>
         <div id="preview">
