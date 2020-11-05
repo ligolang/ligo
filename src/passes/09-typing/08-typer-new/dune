@@ -10,6 +10,7 @@
     UnionFind
     environment
     typer_common
+    database_plugins
   )
   (preprocess
     (pps ppx_let)

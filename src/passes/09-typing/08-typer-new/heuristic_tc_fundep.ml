@@ -19,69 +19,60 @@ open Ast_typed.Types
 open Typesystem.Solver_types
 open Trace
 open Typer_common.Errors
+open Ast_typed.Reasons
 module Map = RedBlackTrees.PolyMap
 module BiMap = RedBlackTrees.PolyBiMap
 module Set = RedBlackTrees.PolySet
 module UF = UnionFind.Poly2
+module ReprMap = UnionFind.ReprMap
+open Database_plugins.All_plugins
 
 open Heuristic_tc_fundep_utils
+
+type selector_output = output_tc_fundep
 
 (* ***********************************************************************
  * Selector
  * *********************************************************************** *)
 
-let get_or_add_refined_typeclass : structured_dbs -> private_storage -> c_typeclass_simpl -> (private_storage * refined_typeclass) =
-  fun dbs () tcs ->
+let get_refined_typeclass : _ indexes -> c_typeclass_simpl -> refined_typeclass =
+  fun indexes tcs ->
   let open Heuristic_tc_fundep_utils in
   let tc = tc_to_constraint_identifier tcs in
-  match Map.find_opt tc dbs.refined_typeclasses with
-    Some x -> (), x
+  match RefinedTypeclasses.find_opt tc indexes#refined_typeclasses with
+    Some x -> x
   | None -> failwith "internal error: couldn't find refined version of the typeclass constraint"
 
-let is_variable_constrained_by_typeclass : structured_dbs -> type_variable -> refined_typeclass -> bool =
-  fun dbs var refined_typeclass ->
-  (* This won't work because the Set.mem function doesn't take into account the unification of two variables *)
-  (* Set.mem var refined_typeclass *)
-  List.exists
-    (fun a ->
-       Var.equal
-         (UF.repr a dbs.aliases)
-         (UF.repr var dbs.aliases))
-  @@ Set.elements refined_typeclass.vars
-
-(* Find typeclass constraints in the dbs which constrain c.tv
-   This is useful for the typeclass constraints which do not exist yet in the private_storage. *)
-let selector_by_ctor_in_db : private_storage -> structured_dbs -> c_constructor_simpl -> (private_storage * output_tc_fundep selector_outputs) =
-  fun private_storage dbs c ->
-  let typeclasses = (Constraint_databases.get_constraints_related_to c.tv dbs).tc in  
-  let typeclasses = List.fold_map (get_or_add_refined_typeclass dbs) private_storage typeclasses in
-  let typeclasses = List.filter (is_variable_constrained_by_typeclass dbs c.tv) typeclasses in
+(* Find typeclass constraints in the dbs which constrain c.tv *)
+let selector_by_ctor_in_typeclasses : _ indexes -> c_constructor_simpl -> (output_tc_fundep selector_outputs) =
+  fun indexes c ->
+  let typeclasses = (TypeclassesConstraining.get_typeclasses_constraining c.tv indexes#typeclasses_constraining) in
+  let typeclasses = (List.map Option.unopt_exn
+                       (List.map (fun x -> ByConstraintIdentifier.find_opt x indexes#by_constraint_identifier)
+                          (PolySet.elements typeclasses))) in
+  let typeclasses = List.map (get_refined_typeclass indexes) typeclasses in
   let cs_pairs_db = List.map (fun tc -> { tc ; c }) typeclasses in
-  private_storage, cs_pairs_db
+  cs_pairs_db
 
-(* Find typeclass constraints in the private_storage which constrain c.tv *)
-let selector_by_ctor_in_private_storage : private_storage -> structured_dbs -> c_constructor_simpl -> (private_storage * output_tc_fundep selector_outputs) =
-  fun private_storage dbs c ->
-  let refined_typeclasses = List.map snd @@ Map.bindings dbs.refined_typeclasses in
-  let typeclasses =
-    List.filter
-      (is_variable_constrained_by_typeclass dbs c.tv)
-      refined_typeclasses in
+(* Find typeclass constraints elsewhere??? (not private_storage anymore) which constrain c.tv *)
+let selector_by_ctor_in_refined_typeclasses : _ indexes -> c_constructor_simpl -> (output_tc_fundep selector_outputs) =
+  fun indexes c ->
+  let typeclasses = RefinedTypeclasses.values indexes#refined_typeclasses in
   let cs_pairs_db = List.map (fun tc -> { tc ; c }) typeclasses in
-  private_storage, cs_pairs_db
+  cs_pairs_db
 
-let selector_by_ctor : private_storage -> structured_dbs -> c_constructor_simpl -> (private_storage * output_tc_fundep selector_outputs) =
-  fun private_storage dbs c ->
-  let private_storage, cs_pairs_in_db = selector_by_ctor_in_db private_storage dbs c in
-  let private_storage, cs_pairs_in_private_storage = selector_by_ctor_in_private_storage private_storage dbs c in
-  private_storage, cs_pairs_in_db @ cs_pairs_in_private_storage
+let selector_by_ctor : _ indexes -> c_constructor_simpl -> (output_tc_fundep selector_outputs) =
+  fun indexes c ->
+  let cs_pairs_in_db = selector_by_ctor_in_typeclasses indexes c in
+  let cs_pairs_in_private_storage = selector_by_ctor_in_refined_typeclasses indexes c in
+  cs_pairs_in_db @ cs_pairs_in_private_storage
 
 (* Find constructor constraints α = κ(β …) where α is one of the
    variables constrained by the (refined version of the) typeclass
    constraint tcs. *)
-let selector_by_tc : private_storage -> structured_dbs -> c_typeclass_simpl -> (private_storage * output_tc_fundep selector_outputs) =
-  fun private_storage dbs tcs ->
-  let private_storage, tc = get_or_add_refined_typeclass dbs private_storage tcs in
+let selector_by_tc : _ indexes -> c_typeclass_simpl -> (output_tc_fundep selector_outputs) =
+  fun indexes tcs ->
+  let tc = get_refined_typeclass indexes tcs in
   (* TODO: this won't detect already-existing constructor
      constraints that would apply to future versions of the refined
      typeclass. *)
@@ -91,26 +82,56 @@ let selector_by_tc : private_storage -> structured_dbs -> c_typeclass_simpl -> (
        node at a time, we only need the top-level assignment for
        that variable, e.g. α = κ(βᵢ, …). We can therefore look
        directly in the assignments. *)
-    match PolyMap.find_opt tv dbs.assignments with
+    match Assignments.find_opt tv indexes#assignments with
       Some c -> [({ tc ; c } : output_tc_fundep)]
     | None   -> [] in
-  private_storage, (List.flatten @@ List.map aux tc.refined.args)
+  List.flatten @@ List.map aux tc.refined.args
 
-let selector : (type_constraint_simpl , output_tc_fundep , private_storage) selector =
-  fun type_constraint_simpl private_storage dbs ->
+let selector : type_constraint_simpl -> _ indexes -> selector_output list =
+  fun type_constraint_simpl indexes ->
   match type_constraint_simpl with
-    SC_Constructor c  -> selector_by_ctor private_storage dbs c
-  | SC_Row r          -> ignore r; failwith "TODO: call selector_by_ctor private_storage dbs r"
-  | SC_Alias       _  -> private_storage, [] (* TODO: ? *)
-  | SC_Poly        _  -> private_storage, [] (* TODO: ? *)
-  | SC_Typeclass   tc -> selector_by_tc private_storage dbs tc
+    SC_Constructor c  -> selector_by_ctor indexes c
+  | SC_Row r          -> ignore r; failwith "TODO: call selector_by_ctor indexes r"
+  | SC_Alias       _  -> [] (* TODO: ? *)
+  | SC_Poly        _  -> [] (* TODO: ? *)
+  | SC_Typeclass   tc -> selector_by_tc indexes tc
+
+(* When (αᵢ, …) ∈ { (τ, …) , … } and β = κ(δ …) are in the db,
+   aliasing α and β should check if they are non-empty, and in that
+   case produce a selector_output for all pairs. This will involve a
+   lookup to see if α is constrained by a typeclass
+   (typeclasses_constraining indexer). Add to this the logic for
+   refined_typeclass vs. typeclass. *)
+
+let alias_selector : type_variable -> type_variable -> _ indexes -> selector_output list =
+  fun a b indexes ->
+  let a_tcs = (TypeclassesConstraining.get_typeclasses_constraining a indexes#typeclasses_constraining) in
+  let a_tcs = (List.map Option.unopt_exn
+                 (List.map (fun x -> ByConstraintIdentifier.find_opt x indexes#by_constraint_identifier)
+                    (PolySet.elements a_tcs))) in
+  let a_ctors = (GroupedByVariable.get_constraints_by_lhs a indexes#grouped_by_variable).constructor in
+  let b_tcs = (TypeclassesConstraining.get_typeclasses_constraining b indexes#typeclasses_constraining) in
+  let b_tcs = (List.map Option.unopt_exn
+                 (List.map (fun x -> ByConstraintIdentifier.find_opt x indexes#by_constraint_identifier)
+                    (PolySet.elements b_tcs))) in
+  let b_ctors = (GroupedByVariable.get_constraints_by_lhs b indexes#grouped_by_variable).constructor in
+  List.flatten @@
+  List.map
+    (fun tc ->
+       let tc = get_refined_typeclass indexes tc in
+       List.map
+         (fun ctor ->
+            { tc ; c = ctor })
+         (a_ctors @ b_ctors))
+    (a_tcs @ b_tcs)
+
 
 (* ***********************************************************************
  * Propagator
  * *********************************************************************** *)
 
 let restrict_one (c : c_constructor_simpl) (allowed : type_value) =
-  match c, allowed.t with
+  match c, allowed.wrap_content with
   | { reason_constr_simpl=_; tv=_; c_tag; tv_list }, P_constant { p_ctor_tag; p_ctor_args } ->
     if Ast_typed.Compare.constant_tag c_tag p_ctor_tag = 0
     then if List.compare_lengths tv_list p_ctor_args = 0
@@ -133,7 +154,7 @@ let restrict (({ reason_constr_simpl = _; tv = _; c_tag = _; tv_list } as c) : c
      variables passed to the type constructor *)
   let args = splice (fun _arg -> tv_list) index tcs.args in
   let id_typeclass_simpl = tcs.id_typeclass_simpl in
-  { reason_typeclass_simpl = tcs.reason_typeclass_simpl; is_mandatory_constraint = tcs.is_mandatory_constraint; id_typeclass_simpl ; tc ; args }
+  { reason_typeclass_simpl = tcs.reason_typeclass_simpl; original_id = tcs.original_id; is_mandatory_constraint = tcs.is_mandatory_constraint; id_typeclass_simpl ; tc ; args }
 
 (* input:
      x ? [ map3( nat , unit , float ) ; map3( bytes , mutez , float ) ]
@@ -178,6 +199,7 @@ let replace_var_and_possibilities_1 ((x : type_variable) , (possibilities_for_x 
              arguments for the constructor associated with %a"
             Ast_typed.PP.type_variable x;
         is_mandatory_constraint = false;
+        original_id = None;     (* TODO this and the is_mandatory_constraint are not actually used, should use a different type without these fields. *)
         id_typeclass_simpl = ConstraintIdentifier (-1L) ; (* TODO: this and the reason_typeclass_simpl should simply not be used here *)
         args = fresh_vars ;
         tc = arguments_of_constructors ;
@@ -228,11 +250,11 @@ let deduce_and_clean : c_typeclass_simpl -> (deduce_and_clean_result, _) result 
          deduced:
          [ x         = map3  ( fresh_x_1 , fresh_x_2 , fresh_x_3 ) ;
            fresh_x_3 = float (                                   ) ; ] *)
-  let%bind cleaned = transpose_back (tcs.reason_typeclass_simpl, tcs.is_mandatory_constraint) tcs.id_typeclass_simpl vars_and_possibilities in
+  let%bind cleaned = transpose_back (tcs.reason_typeclass_simpl, tcs.original_id, tcs.is_mandatory_constraint) tcs.id_typeclass_simpl vars_and_possibilities in
   ok { deduced ; cleaned }
 
-let propagator : (output_tc_fundep, private_storage , typer_error) propagator =
-  fun private_storage _dbs selected ->
+let propagator : (output_tc_fundep, typer_error) propagator =
+  fun selected ->
   (* The selector is expected to provide constraints with the shape (α
      = κ(β, …)) and to update the private storage to keep track of the
      refined typeclass *)
@@ -247,45 +269,45 @@ let propagator : (output_tc_fundep, private_storage , typer_error) propagator =
      around. Hopefully this can be sorted out so that we don't need a
      dummy value for the srcloc and maybe even so that we don't need a
      conversion (one may dream). *)
+  let tc_args = List.map (fun x -> wrap (Todo "no idea") @@ P_variable x) cleaned.refined.args in
   let cleaned : type_constraint = {
-    reason = cleaned.refined.reason_typeclass_simpl;
-    c = C_typeclass {
-        tc_args = (List.map (fun x -> { tsrc = "no idea"; t = P_variable x }) cleaned.refined.args);
+      reason = cleaned.refined.reason_typeclass_simpl;
+      c = C_typeclass {
+        tc_args ;
         typeclass = cleaned.refined.tc;
+        original_id = Some selected.tc.original;
       }
-  } in
+    }
+  in
   let aux (x : c_constructor_simpl) : type_constraint = {
     reason = "inferred: only possible type for that variable in the typeclass";
     c = C_equation {
-        aval = { tsrc = "?" ;
-                 t    = P_variable x.tv };
-        bval = { tsrc = "? generated" ;
-                 t    = P_constant { p_ctor_tag  = x.c_tag ;
-                                     p_ctor_args =
-                                       List.map
-                                         (fun v -> { tsrc = "? probably generated" ;
-                                                     t    = P_variable v})
-                                         x.tv_list ; } } } } in
+      aval = wrap (Todo "?") @@ P_variable x.tv ;
+      bval = wrap (Todo "? generated") @@ 
+              P_constant {
+                p_ctor_tag  = x.c_tag ;
+                p_ctor_args = List.map
+                  (fun v -> wrap (Todo "? probably generated") @@ P_variable v)
+                  x.tv_list ; 
+              }
+      }
+    }
+  in
   let deduced : type_constraint list = List.map aux deduced in
-  ok (private_storage, [
+  ok [
       {
         remove_constraints = [SC_Typeclass selected.tc.refined];
         add_constraints = cleaned :: deduced;
-        justification = "no removal so no justification needed"
+        proof_trace = Axiom (HandWaved "cut with the following (cleaned => removed_typeclass) to show that the removal does not lose info, (removed_typeclass => selected.c => cleaned) to show that the cleaned vesion does not introduce unwanted constraints.")
       }
-    ])
+    ]
 
 (* ***********************************************************************
  * Heuristic
  * *********************************************************************** *)
 
-let heuristic =
-  Propagator_heuristic
-    {
-      selector ;
-      propagator ;
-      printer = Ast_typed.PP.output_tc_fundep ;
-      comparator = Solver_should_be_generated.compare_output_tc_fundep ;
-      initial_private_storage = () ;
-    }
+let printer = Ast_typed.PP.output_tc_fundep
+let printer_json = Ast_typed.Yojson.output_tc_fundep
+let comparator = Solver_should_be_generated.compare_output_tc_fundep
 
+let heuristic = Heuristic_plugin { selector; alias_selector; propagator; printer; printer_json; comparator }

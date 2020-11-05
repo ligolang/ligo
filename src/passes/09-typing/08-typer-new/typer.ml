@@ -1,14 +1,13 @@
 open Trace
 module I = Ast_core
 module O = Ast_typed
-module O' = Typesystem.Solver_types
+module O' = Solver
 open O.Combinators
 module Environment = O.Environment
 module Solver = Solver
 type environment = Environment.t
 module Errors = Typer_common.Errors
 open Errors
-module Map = RedBlackTrees.PolyMap
 
 (* TODO : find a better name for fonction that are called "type_something".
 They are not typing per say, just add a type variable to all expression and make the appropriate constraints *)
@@ -128,10 +127,9 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
 
 and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_state -> I.expression -> (environment * _ O'.typer_state * O.expression, typer_error) result = fun ?tv_opt e state ae ->
   let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
-  let open Solver in
   let module L = Logger.Stateful() in
   let return : _ -> _ -> _ O'.typer_state -> _ -> _ (* return of type_expression *) = fun expr e state constraints type_name ->
-    let%bind new_state = aggregate_constraints state constraints in
+    let%bind new_state = Solver.main state constraints in
     let tv = t_constant (Var.to_name type_name) [] in
     let location = ae.location in
     let expr' = make_e ~location expr tv in
@@ -428,8 +426,20 @@ and type_match : environment -> _ O'.typer_state -> O.type_expression -> I.match
         bind_fold_map_list aux (e,state) lst in
       return e state @@ O.Match_variant {cases ; tv=variant }
 
-let check_has_no_unification_vars (O.Program_With_Unification_Vars p) =
-  let rec ec where : O.expression_content -> _ = function
+module Check : sig
+  val check_expression_has_no_unification_vars : O.expression -> (unit, 'a) Simple_utils.Trace.result
+    
+  val check_has_no_unification_vars : O.program_with_unification_vars -> (O.program_fully_typed, 'a) Simple_utils.Trace.result
+end = struct
+  let rec expression : O.expression -> _ = function ({ expression_content; location=_; type_expression } as e) ->
+    let where () = Format.asprintf "expression %a which was assigned the type %a.\nHere is the annotated expression following inference:\n%a"
+        O.PP.expression_content expression_content
+        O.PP.type_expression type_expression
+        O.PP_annotated.expression e
+    in
+    let%bind () = ec where expression_content in
+    te where type_expression
+  and ec where : O.expression_content -> _ = function
       O.E_literal (O.Literal_unit)|O.E_literal (O.Literal_int _)|O.E_literal
         (O.Literal_nat _)|O.E_literal (O.Literal_timestamp _)|O.E_literal
         (O.Literal_mutez _)|O.E_literal (O.Literal_string _)|O.E_literal
@@ -441,7 +451,7 @@ let check_has_no_unification_vars (O.Program_With_Unification_Vars p) =
     | O.E_variable        _ -> ok ()
     | O.E_application     { lamb; args } -> let%bind () = expression lamb in expression args
     | O.E_lambda          { binder=_; result } -> expression result
-    | O.E_recursive       { fun_name=_; fun_type; lambda={ binder=_; result } } -> let%bind () = te where fun_type in expression result
+    | O.E_recursive       { fun_name=_; fun_type; lambda={ binder=_; result } } -> let%bind () = expression result in te where fun_type
     | O.E_let_in          { let_binder=_; rhs; let_result; inline=_ } -> let%bind () = expression rhs in expression let_result
     | O.E_raw_code        { language=_; code } -> expression code
     | O.E_constructor     { constructor=_; element } -> expression element
@@ -472,21 +482,31 @@ let check_has_no_unification_vars (O.Program_With_Unification_Vars p) =
     | O.T_arrow    { type1; type2 } ->
       let%bind () = te where type1 in
       te where type2
-    | O.T_variable tv -> failwith (Format.asprintf "Unbound type variable %a cann't be generalized (LIGO does not support generalization of variables in user code for now). You can try to annotate the expression. The type variable occurred in the %s" Var.pp tv (where ()))
-    | O.T_constant { language=_ ; injection = _; parameters } ->
+    | O.T_variable tv -> failwith (Format.asprintf "Unassigned type variable %a cann't be generalized (LIGO does not support generalization of variables in user code for now). You can try to annotate the expression. The type variable occurred in the %s" Var.pp tv (where ()))
+    | O.T_constant { parameters ; _ } ->
       bind_fold_list (fun () texpr -> te where texpr) () parameters
   and te where : O.type_expression -> _ = function { type_content; type_meta=_; location=_ } -> tc where type_content
-  and expression : O.expression -> _ = function { expression_content; location=_; type_expression } ->
-    let where () = Format.asprintf "expression %a which was assigned the type %a" O.PP.expression_content expression_content O.PP.type_expression type_expression in
-    let%bind () = ec where expression_content in
-    te where type_expression in
-  let decl : O.declaration -> _ = fun d -> match d with
-      O.Declaration_constant { binder=_; expr; inline=_ } -> expression expr
-    | O.Declaration_type { type_binder=_; type_expr } ->
-      let where () = Format.asprintf "type declaration %a" O.PP.declaration d in
-      te where type_expr in
-  let%bind () = bind_fold_list (fun () Location.{wrap_content;location=_} -> decl wrap_content) () p in
-  ok @@ O.Program_Fully_Typed p
+
+  let check_expression_has_no_unification_vars (expr : O.expression) =
+    let print_checked p =
+      Format.printf "{ \"CHECKING_EXPR\": %s\n},\n"
+        (Yojson.Safe.to_string (O.Yojson.expression p)) in
+    let () = (if Ast_typed.Debug.debug_new_typer || Ast_typed.Debug.json_new_typer then print_checked expr) in
+    expression expr
+
+  let check_has_no_unification_vars ((O.Program_With_Unification_Vars p) as pp) =
+    let print_checked p =
+      Format.printf "{ \"CHECKING\": %s\n},\n"
+        (Yojson.Safe.to_string (O.Yojson.program_with_unification_vars p)) in
+    let () = (if Ast_typed.Debug.debug_new_typer || Ast_typed.Debug.json_new_typer then print_checked pp) in
+    let decl : O.declaration -> _ = fun d -> match d with
+        O.Declaration_constant { binder=_; expr; inline=_ } -> check_expression_has_no_unification_vars expr
+      | O.Declaration_type { type_binder=_; type_expr } ->
+        let where () = Format.asprintf "type declaration %a" O.PP.declaration d in
+        te where type_expr in
+    let%bind () = bind_fold_list (fun () Location.{wrap_content;location=_} -> decl wrap_content) () p in
+    ok @@ O.Program_Fully_Typed p
+end
 
 (* Apply type_declaration on every node of the AST_core from the root p *)
 let type_program_returns_env ((env, state, p) : environment * _ O'.typer_state * I.program) : (environment * _ O'.typer_state * O.program_with_unification_vars, Typer_common.Errors.typer_error) result =
@@ -508,9 +528,9 @@ let type_program_returns_env ((env, state, p) : environment * _ O'.typer_state *
 let print_env_state_node (node_printer : Format.formatter -> 'a -> unit) ((env,state,node) : environment * _ O'.typer_state * 'a) =
   ignore node; (* TODO *)
   Printf.printf "%s" @@
-    Format.asprintf "{ \"ENV\": %a,\n\"STATE\": %a,\n\"NODE\": %a\n},\n"
-      Yojson.Safe.pp (Ast_typed.Yojson.environment env)
-      Typesystem.Solver_types.json_typer_state state
+    Format.asprintf "{ \"ENV\": %s,\n\"STATE\": %s,\n\"NODE\": %a\n},\n"
+      (Yojson.Safe.to_string (Ast_typed.Yojson.environment env))
+      (Yojson.Safe.to_string (Solver.json_typer_state state))
       node_printer node
 
 let type_and_subst
@@ -521,48 +541,56 @@ let type_and_subst
       (types_and_returns_env : (environment * _ O'.typer_state * 'a) -> (environment * _ O'.typer_state * 'b , typer_error) Trace.result)
     : ('b * _ O'.typer_state , typer_error) result =
   let () = (if Ast_typed.Debug.json_new_typer then Printf.printf "%!\n###############################START_OF_JSON\n[%!") in
-  let () = (if Ast_typed.Debug.debug_new_typer then Printf.printf "\nTODO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA Print env_state_node here.\n\n") in
+  let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "\nTODO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA Print env_state_node here.\n\n") in
   let () = (if Ast_typed.Debug.debug_new_typer || Ast_typed.Debug.json_new_typer then print_env_state_node in_printer env_state_node) in
   let%bind (env, state, node) = types_and_returns_env env_state_node in
   let subst_all =
-    let aliases = state.structured_dbs.aliases in
-    let assignments = state.structured_dbs.assignments in
+    let aliases = state.aliases in
+    let assignments = state.plugin_states#assignments in
     let substs : variable: O.type_variable -> _ = fun ~variable ->
       to_option @@
-      let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "TRY   %a\n" Var.pp variable) in
+      let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "Looking up var  %a\n" Var.pp variable) in
       let%bind root =
         trace_option (corner_case (Format.asprintf "can't find alias root of variable %a" Var.pp variable)) @@
           (* TODO: after upgrading UnionFind, this will be an option, not an exception. *)
           try Some (Solver.UF.repr variable aliases) with Not_found -> None in
-      let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "TRYR  %a (%a)\n" Var.pp variable Var.pp root) in
+      let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "Looking up var  %a (its root is %a)\n" Var.pp variable Var.pp root) in
       let%bind assignment =
         trace_option (corner_case (Format.asprintf "can't find assignment for root %a" Var.pp root)) @@
-          (Map.find_opt root assignments) in
+          (Database_plugins.All_plugins.Assignments.find_opt root assignments) in
       let O.{ tv ; c_tag ; tv_list } = assignment in
       let () = ignore tv (* I think there is an issue where the tv is stored twice (as a key and in the element itself) *) in
       let%bind (expr : O.type_content) = trace_option (corner_case "wrong constant tag") @@
         Typesystem.Core.type_expression'_of_simple_c_constant (c_tag , (List.map O.t_variable tv_list)) in
-      let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "SUBST %a (%a is %a)\n" Var.pp variable Var.pp root Ast_typed.PP.type_content expr) in
+      let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "Substituing var %a (%a is %a)\n" Var.pp variable Var.pp root Ast_typed.PP.type_content expr) in
       ok @@ expr
     in
     apply_substs ~substs node
   in
   let%bind node = subst_all in
-  let () = (if Ast_typed.Debug.debug_new_typer then Printf.printf "\nTODO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA Print env,state,node here again.\n\n") in
+  let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "\nTODO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA Print env,state,node here again.\n\n") in
   let () = (if Ast_typed.Debug.debug_new_typer || Ast_typed.Debug.json_new_typer then print_env_state_node out_printer (env, state, node)) in
-  let () = (if Ast_typed.Debug.json_new_typer then Printf.printf "%!\"end of JSON\"],\n###############################END_OF_JSON\n%!") in
   let () = ignore env in        (* TODO: shouldn't we use the `env` somewhere? *)
   ok (node, state)
 
 let type_program ~init_env (p : I.program) : (O.program_fully_typed * _ O'.typer_state, typer_error) result =
   let empty_state = Solver.initial_state in
-  let%bind (p, state) = type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.program\"") (fun ppf p -> Format.fprintf ppf "%a" Yojson.Safe.pp (Ast_typed.Yojson.program_with_unification_vars p)) (init_env , empty_state , p) Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_env in
-  let%bind p = check_has_no_unification_vars p in
+  let%bind (p, state) = type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.program\"") (fun ppf p -> Format.fprintf ppf "%s" (Yojson.Safe.to_string (Ast_typed.Yojson.program_with_unification_vars p))) (init_env , empty_state , p) Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_env in
+  let%bind p = Check.check_has_no_unification_vars p in
+  let () = (if Ast_typed.Debug.json_new_typer then Printf.printf "%!\"end of JSON\"],\n###############################END_OF_JSON\n%!") in
   ok (p, state)
 
 let type_expression_subst (env : environment) (state : _ O'.typer_state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.expression * _ O'.typer_state , typer_error) result =
   let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
-  type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.expression\"") (fun ppf p -> Format.fprintf ppf "%a" Yojson.Safe.pp (Ast_typed.Yojson.expression p)) (env , state , e) Typesystem.Misc.Substitution.Pattern.s_expression (fun (a,b,c) -> type_expression a b c)
+  let%bind (expr, state) = type_and_subst
+      (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.expression\"")
+      (fun ppf p -> Format.fprintf ppf "%s" (Yojson.Safe.to_string (Ast_typed.Yojson.expression p)))
+      (env , state , e)
+      Typesystem.Misc.Substitution.Pattern.s_expression
+      (fun (a,b,c) -> type_expression a b c) in
+  let%bind () = Check.check_expression_has_no_unification_vars expr in
+  let () = (if Ast_typed.Debug.json_new_typer then Printf.printf "%!\"end of JSON\"],\n###############################END_OF_JSON\n%!") in
+  ok (expr, state)
 
 let untype_expression       = Untyper.untype_expression
 

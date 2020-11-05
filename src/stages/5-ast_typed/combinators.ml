@@ -1,4 +1,4 @@
-open Types
+open Ast
 module S = Ast_core
 open Stage_common.Constant
 

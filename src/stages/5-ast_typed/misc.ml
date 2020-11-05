@@ -1,4 +1,4 @@
-open Types
+open Ast
 
 module Free_variables = struct
 
@@ -238,21 +238,19 @@ let equal_variables a b : bool =
   | E_variable a, E_variable b -> Var.equal a.wrap_content b.wrap_content
   |  _, _ -> false
 
-let p_constant (p_ctor_tag : constant_tag) (p_ctor_args : p_ctor_args) = {
-  tsrc = "misc.ml/p_constant" ;
-  t = P_constant {
+let p_constant (p_ctor_tag : constant_tag) (p_ctor_args : p_ctor_args) =
+  Reasons.wrap Builtin_type @@
+    P_constant {
       p_ctor_tag : constant_tag ;
       p_ctor_args : p_ctor_args ;
     }
-}
 
-let p_row (p_row_tag : row_tag) (p_row_args : tv_lmap ) = {
-  tsrc = "misc.ml/p_constant" ;
-  t = P_row {
+let p_row (p_row_tag : row_tag) (p_row_args : tv_lmap ) =
+  Reasons.wrap Builtin_type @@
+    P_row {
       p_row_tag ;
       p_row_args ;
     }
-}
 
 let p_row_ez (p_row_tag : row_tag) (p_row_args : (string * type_value) list ) =
   let p_row_args = LMap.of_list @@ List.map (fun (x,y) -> Label x,y) p_row_args in

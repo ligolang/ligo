@@ -1,10 +1,11 @@
-open Types
+open Ast
 open Compare_enum
 
 let cmp2 f a1 b1 g a2 b2 = match f a1 b1 with 0 -> g a2 b2 | c -> c
 let cmp3 f a1 b1 g a2 b2 h a3 b3 = match f a1 b1 with 0 -> (match g a2 b2 with 0 -> h a3 b3 | c -> c) | c -> c
 let cmp4 f a1 b1 g a2 b2 h a3 b3 i a4 b4 = match f a1 b1 with 0 -> (match g a2 b2 with 0 -> (match h a3 b3 with 0 -> i a4 b4 | c -> c) | c -> c) | c -> c
 let cmp5 f a1 b1 g a2 b2 h a3 b3 i a4 b4 j a5 b5 = match f a1 b1 with 0 -> (match g a2 b2 with 0 -> (match h a3 b3 with 0 -> (match i a4 b4 with 0 -> j a5 b5 | c -> c) | c -> c) | c -> c) | c -> c
+let cmp6 f a1 b1 g a2 b2 h a3 b3 i a4 b4 j a5 b5 k a6 b6 = match f a1 b1 with 0 -> (match g a2 b2 with 0 -> (match h a3 b3 with 0 -> (match i a4 b4 with 0 -> (match j a5 b5 with 0 -> k a6 b6 | c -> c) | c -> c) | c -> c) | c -> c) | c -> c
 
 let compare_lmap_entry  compare (Label na, va) (Label nb, vb) = cmp2 String.compare na nb compare va vb
 let compare_tvmap_entry compare (tva, va) (tvb, vb) = cmp2 Var.compare tva tvb compare va vb
@@ -86,6 +87,9 @@ and constraint_identifier (ConstraintIdentifier a) (ConstraintIdentifier b) =
   cmp2
     Int64.compare a b
     (List.compare ~compare:type_expression) [] []
+
+and constraint_identifier_set (a : constraint_identifier PolySet.t) (b : constraint_identifier PolySet.t) : int =
+  List.compare ~compare:constraint_identifier (PolySet.elements a)  (PolySet.elements b)
 
 and row {associated_type=aa;michelson_annotation=ma;decl_pos=da} {associated_type=ab;michelson_annotation=mb;decl_pos=db} =
   cmp3
@@ -343,10 +347,8 @@ let rec type_value_ a b = match (a,b) with
 | P_row      a, P_row      b -> p_row a b
 | a, b -> Int.compare (type_value_tag a) (type_value_tag b)
 
-and type_value {tsrc=sa;t=ta} {tsrc=sb;t=tb} =
-  cmp2
-    String.compare sa sb
-    type_value_ ta tb
+and type_value : type_value_ location_wrap -> type_value_ location_wrap -> int = fun ta tb ->
+    type_value_ ta.wrap_content tb.wrap_content
 
 and p_constraints c = List.compare ~compare:type_constraint c
 
@@ -389,10 +391,11 @@ and c_equation {aval=a1;bval=b1} {aval=a2;bval=b2} =
 
 and tc_args a = List.compare ~compare:type_value a
 
-and c_typeclass {tc_args=ta;typeclass=ca} {tc_args=tb;typeclass=cb} =
-  cmp2
+and c_typeclass {tc_args=ta;typeclass=ca; original_id=x} {tc_args=tb;typeclass=cb; original_id =y} =
+  cmp3
     tc_args ta tb
     typeclass ca cb
+    (Option.compare (constraint_identifier ))x y
 
 and c_access_label 
       {c_access_label_tval=val1;accessor=a1;c_access_label_tvar=var1}
@@ -427,11 +430,12 @@ let c_poly_simpl {reason_poly_simpl=ra;is_mandatory_constraint=imca;tv=tva;foral
     type_variable  tva tvb
     p_forall       fa  fb
 
-let c_typeclass_simpl {reason_typeclass_simpl=ra;is_mandatory_constraint=imca;id_typeclass_simpl=ida;tc=ta;args=la} {reason_typeclass_simpl=rb;is_mandatory_constraint=imcb;id_typeclass_simpl=idb;tc=tb;args=lb} =
-  cmp5
+let c_typeclass_simpl {reason_typeclass_simpl=ra;is_mandatory_constraint=imca;id_typeclass_simpl=ida;original_id=oia;tc=ta;args=la} {reason_typeclass_simpl=rb;is_mandatory_constraint=imcb;id_typeclass_simpl=idb;original_id=oib;tc=tb;args=lb} =
+  cmp6
     String.compare ra rb
     Bool.compare imca imcb
     constraint_identifier ida idb
+    (Option.compare constraint_identifier) oia oib
     (List.compare ~compare:tc_allowed) ta tb
     (List.compare ~compare:type_variable) la lb
 
@@ -450,7 +454,9 @@ let type_constraint_simpl_tag = function
   | SC_Typeclass   _ -> 4
   | SC_Row         _ -> 5
 
-let type_constraint_simpl a b = match (a,b) with
+let type_constraint_simpl a b =
+  let _ = failwith "src/stages/5-ast_typed/compare.ml type_constraint_simpl should get a comparator for the type variables within" in
+  match (a,b) with
   SC_Constructor ca, SC_Constructor cb -> c_constructor_simpl ca cb
 | SC_Alias       aa, SC_Alias       ab -> c_alias aa ab
 | SC_Poly        pa, SC_Poly        pb -> c_poly_simpl pa pb

@@ -1,4 +1,4 @@
-open Types
+open Ast
 
 let bind_lmap (l:_ label_map) =
   let open Trace in

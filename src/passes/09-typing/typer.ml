@@ -1,6 +1,7 @@
+let force_new_typer () = String.equal (match Sys.getenv_opt "LIGO_FORCE_NEW_TYPER" with Some e -> e | None -> "false") "true"
 module I = Ast_core
 module O = Ast_typed
-module O' = Typesystem.Solver_types
+module O' = Typer_new.Solver
 module Errors = Typer_common.Errors
 
 module Environment = O.Environment
@@ -9,7 +10,7 @@ module Solver = Typer_new.Solver (* Both the old typer and the new typer use the
 
 type environment = Environment.t
 
-let is_new s = match s with O.New -> true | O.Old -> false
+let is_new s = if force_new_typer () then true else match s with O.New -> true | O.Old -> false
 
 (* let type_program = if use_new_typer then Typer_new.type_program else Typer_old.type_program *)
 let type_program typer_switch = if is_new typer_switch then Typer_new.type_program else Typer_old.type_program

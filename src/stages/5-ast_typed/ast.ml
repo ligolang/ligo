@@ -268,26 +268,14 @@ and named_type_content = {
 
 
 
-(* Solver types *)
+(* Solver types
 
-type 'a poly_unionfind = 'a UnionFind.Poly2.t
-type 'a poly_set = 'a RedBlackTrees.PolySet.t
-
-(* typevariable: to_string = (fun s -> Format.asprintf "%a" Var.pp s) *)
-(* representant for an equivalence class of type variables *)
-type 'v typeVariableMap = (type_variable, 'v) RedBlackTrees.PolyMap.t
-let typeVariableMap_to_yojson f tvmap =
-  bindings_to_yojson type_variable_to_yojson f @@ RedBlackTrees.PolyMap.bindings tvmap
-
-let typeVariableMap_of_yojson f tvmap =
-  Stdlib.Result.bind (Stage_common.Of_yojson.bindings type_variable_of_yojson f tvmap)
-    (Stdlib.Option.to_result ~none:"Map with duplicates" <@ RedBlackTrees.PolyMap.from_list ~cmp:compare)
-
-(* typevariable: to_string = (fun s -> Format.asprintf "%a" Var.pp s) *)
-type unionfind = type_variable poly_unionfind
-let unionfind_to_yojson _ = `String "type_varianle unionfind"
-(* TODO : use error monad *)
-let unionfind_of_yojson _ = Error ("can't parse unionfind")
+   The solver types are not actually part of the AST,
+   so they could be moved to a separate file, but doing so would
+   require updating every use of the Ast_typed.Types module to also
+   include the solver types (a lot of work). Also, there is a lot of
+   semi-duplication between the AST and the solver, so it's best to
+   keep the two together until that gets refactored. *)
 
 (* core *)
 
@@ -323,13 +311,10 @@ type type_value_ =
   | P_forall       of p_forall
   | P_variable     of type_variable
   | P_constant     of p_constant
-  | P_apply        of p_apply
+  | P_apply        of p_apply   (* TODO: remove this until it is usead (for now waiting on a kinding system and appropriate evaluation heuristics similar to eval_beta_root in src/stages/typesystem/misc.ml) *)
   | P_row          of p_row
 
-and type_value = {
-  tsrc : string;
-  t : type_value_ ;
-  }
+and type_value = type_value_ location_wrap
 
 and p_apply = {
     tf : type_value ;
@@ -375,8 +360,11 @@ and c_equation = {
   bval : type_value ;
 }
 and tc_args = type_value list
+and constraint_identifier =
+| ConstraintIdentifier of int64
 and c_typeclass = {
   tc_args : tc_args ;
+  original_id : constraint_identifier option ;
   typeclass : typeclass ;
 }
 and c_access_label = {
@@ -401,13 +389,30 @@ and typeclass = tc_allowed list
 
 (* end core *)
 
-type constraint_identifier =
-| ConstraintIdentifier of int64
+type 'a poly_unionfind = 'a UnionFind.Poly2.t
+type 'a poly_set = 'a RedBlackTrees.PolySet.t
+
+(* typevariable: to_string = (fun s -> Format.asprintf "%a" Var.pp s) *)
+(* representant for an equivalence class of type variables *)
+type 'v typeVariableMap = (type_variable, 'v) RedBlackTrees.PolyMap.t
+let typeVariableMap_to_yojson f tvmap =
+  bindings_to_yojson type_variable_to_yojson f @@ RedBlackTrees.PolyMap.bindings tvmap
+
+let typeVariableMap_of_yojson f tvmap =
+  Stdlib.Result.bind (Stage_common.Of_yojson.bindings type_variable_of_yojson f tvmap)
+    (Stdlib.Option.to_result ~none:"Map with duplicates" <@ RedBlackTrees.PolyMap.from_list ~cmp:compare)
+
+(* typevariable: to_string = (fun s -> Format.asprintf "%a" Var.pp s) *)
+type unionfind = type_variable poly_unionfind
+let unionfind_to_yojson _ = `String "type_varianle unionfind"
+(* TODO : use error monad *)
+let unionfind_of_yojson _ = Error ("can't parse unionfind")
+
 type 'v constraint_identifierMap = (constraint_identifier, 'v) RedBlackTrees.PolyMap.t
 
 type refined_typeclass = {
   refined : c_typeclass_simpl ;
-  original : c_typeclass_simpl ;
+  original : constraint_identifier ; (* TODO: remove this field, it's duplicated in refined.original_id *)
   vars : type_variable_set ;
 }
 
@@ -420,24 +425,8 @@ and constraint_identifier_set_map = constraint_identifier_set typeVariableMap
 and c_constructor_simpl_typeVariableMap = c_constructor_simpl typeVariableMap
 and constraints_typeVariableMap = constraints typeVariableMap
 and c_typeclass_simpl_constraint_identifierMap = c_typeclass_simpl constraint_identifierMap
-and constraint_identifier_c_typeclass_simplMap = (c_typeclass_simpl, constraint_identifier) RedBlackTrees.PolyMap.t
+and constraint_identifier_constraint_identifierMap = (constraint_identifier, constraint_identifier) RedBlackTrees.PolyMap.t
 and type_constraint_simpl_list = type_constraint_simpl list
-and structured_dbs = {
-  all_constraints            : type_constraint_simpl_list ;
-  aliases                    : unionfind ;
-  (* assignments (passive data structure). *)
-  (*   Now                   : just a map from unification vars to types (pb: what about partial types?) *)
-  (*   maybe just local assignments (allow only vars as children of pair(α,β)) *)
-  (* TODO                    : the rhs of the map should not repeat the variable name. *)
-  assignments                : c_constructor_simpl_typeVariableMap ;
-  grouped_by_variable        : constraints_typeVariableMap ; (* map from (unionfind) variables to constraints containing them *)
-  cycle_detection_toposort   : unit ;                        (* example of structured db that we'll add later *)
-  (* TODO: later have all constraints get an identtifier, not just typeclass constraints. *)
-  by_constraint_identifier   : c_typeclass_simpl_constraint_identifierMap ;
-  refined_typeclasses        : refined_typeclass_constraint_identifierMap ;
-  refined_typeclasses_back   : constraint_identifier_c_typeclass_simplMap ;
-  typeclasses_constrained_by : constraint_identifier_set_map ;
-}
 
 and c_constructor_simpl_list = c_constructor_simpl list
 and c_poly_simpl_list        = c_poly_simpl        list
@@ -447,7 +436,7 @@ and constraints = {
   (* If implemented in a language with decent sets, these should be sets not lists. *)
   constructor : c_constructor_simpl_list ; (* List of ('a = constructor(args…)) constraints *)
   poly        : c_poly_simpl_list        ; (* List of ('a = forall 'b, some_type) constraints *)
-  tc          : c_typeclass_simpl_list   ; (* List of (typeclass(args…)) constraints *)
+  (* tc          : c_typeclass_simpl_list   ; (\* List of (typeclass(args…)) constraints *\) *)
   row         : c_row_simpl_list         ; (* List of ('a = row (args..)) constraints *)
 }
 and type_variable_list = type_variable list
@@ -482,6 +471,7 @@ and c_typeclass_simpl = {
   (* see description above in c_constructor_simpl *)
   is_mandatory_constraint : bool ;
   id_typeclass_simpl     : constraint_identifier ;
+  original_id : constraint_identifier option ; (* Pointer to the original typeclass, if this one is a refinement of it *)
   tc   : typeclass          ;
   args : type_variable_list ;
 }
@@ -542,10 +532,20 @@ type already_selected = {
 }
 
 type type_constraint_list = type_constraint list
+
+(* For now all our "axioms" are just human-readable justifications
+   used within the compiler to explain why an operation is valid. In
+   the future, we can have proper signatures for the axioms *)
+type axiom = HandWaved of string
+
+type proof_trace =
+  | Axiom of axiom
+  (* | … future extension: allow for proof traces *)
+
 type update = {
   remove_constraints : type_constraint_simpl_list ;
   add_constraints : type_constraint_list ;
-  justification : string ;
+  proof_trace : proof_trace ;
 }
 type updates = update list
 type updates_list = updates list

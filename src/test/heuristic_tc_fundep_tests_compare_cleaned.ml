@@ -129,8 +129,8 @@ and type_value_ : type_value_ cmp = fun expected actual ->
     assert (match different with None -> true | _ -> false); different
 
 and type_value : type_value cmp = fun expected actual ->
-  let { tsrc=_; t=a1 } = expected in
-  let { tsrc=_; t=b1 } = actual in
+  let { location=_; wrap_content=a1 } : type_value = expected in
+  let { location=_; wrap_content=b1 } : type_value = actual in
   type_value_ a1 b1
 
 and type_variable_list : type_variable_list cmp = fun expected actual ->

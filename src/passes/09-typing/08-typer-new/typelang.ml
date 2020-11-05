@@ -12,7 +12,7 @@ let type_level_eval : type_value -> type_value * type_constraint list =
     now, only some simple cases like applications of `forall`
     <polymorphic types are allowed. *)
 let check_applied ((reduced, _new_constraints) as x) =
-  let () = match reduced with
-      { tsrc = _ ; t = P_apply _ } -> failwith "internal error: shouldn't happen" (* failwith "could not reduce type-level application. Arbitrary type-level applications are not supported for now." *)
+  let () = match (reduced: type_value) with
+      { location = _ ; wrap_content = P_apply _ } -> failwith "internal error: shouldn't happen" (* failwith "could not reduce type-level application. Arbitrary type-level applications are not supported for now." *)
     | _ -> ()
   in x

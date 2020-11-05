@@ -1097,10 +1097,10 @@ let%expect_test "self_mini_c" =
     An entrypoint must of type "parameter * storage -> operations list * storage". |}]
 
 let%expect_test "spilling" =
-  let error e = human_readable_error (`Main_spilling e) in
+  let error (e:Spilling.Errors.spilling_error) = human_readable_error (`Main_spilling e) in
   let open Ast_typed in
   let open Location in
-  let type_variable = Var.of_name "foo" in
+  let type_variable : Ast_typed.type_variable = Var.of_name "foo" in
   let location_t = File default_location in
   let expression_variable = Location.wrap (Var.of_name "bar") in
   let type_expression : Ast_typed.type_expression =
@@ -1117,35 +1117,33 @@ let%expect_test "spilling" =
      corner case: bar
     Sorry, we don't have a proper error message for this error. Please report this use case so we can improve on this. |}] ;
   error (`Spilling_no_type_variable type_variable) ;
-  [%expect {|Type "foo" not found. |}] ;
+  [%expect{| Type "foo" not found (should not happen and be caught earlier). |}] ;
   error (`Spilling_unsupported_pattern_matching location_t) ;
-  [%expect
-    {|
+  [%expect{|
     in file "a dummy file name", line 20, characters 5-5
 
     Invalid pattern matching.@Tuple patterns are not (yet) supported. |}] ;
   error (`Spilling_unsupported_recursive_function expression_variable) ;
-  [%expect {|
+  [%expect{|
     Invalid recursive function "bar".
     A recursive function can only have one argument. |}] ;
   error
     (`Spilling_tracer
       (location_t, `Spilling_unsupported_recursive_function expression_variable)) ;
-  [%expect
-    {|
-      in file "a dummy file name", line 20, characters 5-5
+  [%expect{|
+    in file "a dummy file name", line 20, characters 5-5
 
-      Translating expression
+    Translating expression
 
-      Invalid recursive function "bar".
-      A recursive function can only have one argument. |}] ;
+    Invalid recursive function "bar".
+    A recursive function can only have one argument. |}] ;
   error (`Spilling_wrong_mini_c_value (type_expression, value)) ;
-  [%expect {|
+  [%expect{|
     Invalid type.
     Expected "foo",
     but got "None". |}] ;
   error (`Spilling_bad_decompile value) ;
-  [%expect {|Cannot untranspile: None |}]
+  [%expect{| Cannot untranspile: None |}]
 
 let%expect_test "stacking" =
   let open Mini_c in

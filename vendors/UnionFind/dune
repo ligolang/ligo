@@ -3,5 +3,5 @@
   (public_name UnionFind)
   (wrapped true)
   (libraries RedBlackTrees)
-  (modules Partition0 Partition1 Partition2 Partition3 Partition UnionFind Poly2)
+  (modules Partition0 Partition1 Partition2 Partition3 Partition UnionFind Poly2 ReprMap ReprSet)
   (modules_without_implementation Partition))

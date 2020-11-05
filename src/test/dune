@@ -1,7 +1,7 @@
 (ocamllex md)
 
 (executables
-  (names test doc_test parser_negative_tests)
+  (names test doc_test parser_negative_tests mydebugplease)
   (libraries
     simple-utils
     ligo

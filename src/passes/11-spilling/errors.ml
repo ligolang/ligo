@@ -50,7 +50,7 @@ let rec error_ppformat : display_format:string display_format ->
       let s = Format.asprintf "%s\n corner case: %s\n%s" loc desc (corner_case_message ()) in
       Format.pp_print_string f s
     | `Spilling_no_type_variable tv ->
-      let s = Format.asprintf "Type \"%a\" not found." Var.pp tv in
+      let s = Format.asprintf "Type \"%a\" not found (should not happen and be caught earlier)." Var.pp tv in
       Format.pp_print_string f s
     | `Spilling_unsupported_pattern_matching loc ->
       let s = Format.asprintf "%a@.Invalid pattern matching.@Tuple patterns are not (yet) supported." Snippet.pp loc in

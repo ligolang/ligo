@@ -3,7 +3,7 @@ open Trace
 
 module I = Ast_core
 module O = Ast_typed
-module O' = Typesystem.Solver_types
+module O' = Typer_new.Solver              (* needs an instance of the solver now *)
 
 module Environment = O.Environment
 

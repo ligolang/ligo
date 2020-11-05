@@ -12,7 +12,7 @@ let fresh_binder () = Core.fresh_type_variable ()
 
 let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun te ->
   match te.type_content with
-  | T_variable (type_name) -> { tsrc = "wrap: from source code maybe?" ; t = P_variable type_name }
+  | T_variable tv -> T.Reasons.wrap (Todo "wrap: from source code maybe?") @@ T.P_variable tv
   | T_sum {content=kvmap ; layout=_} ->
     let tmap = T.LMap.map (fun ({associated_type;_}:T.row_element) -> associated_type) kvmap in
     p_row C_variant @@ T.LMap.map type_expression_to_type_value tmap
@@ -54,12 +54,14 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
 let variable : T.type_expression -> (constraints * T.type_variable) = fun expr ->
   let pattern = type_expression_to_type_value expr in
   let type_name = Core.fresh_type_variable () in
-  [{ c = C_equation { aval = { tsrc = "wrap: variable: whole" ; t = P_variable type_name } ; bval = pattern } ; reason = "wrap: variable" }] , type_name
+  let aval = T.Reasons.(wrap (Todo "wrap: variable: whole") (T.P_variable type_name)) in 
+  [{ c = C_equation { aval ; bval = pattern } ; reason = "wrap: variable" }] , type_name
 
 let literal : T.type_expression -> (constraints * T.type_variable) = fun t ->
   let pattern = type_expression_to_type_value t in
   let type_name = Core.fresh_type_variable () in
-  [{ c = C_equation { aval = { tsrc = "wrap: literal: whole" ; t = P_variable type_name } ; bval = pattern } ; reason = "wrap: literal" }] , type_name
+  let aval = T.Reasons.(wrap (Todo "wrap: literal: whole") (T.P_variable type_name)) in 
+  [{ c = C_equation { aval ; bval = pattern } ; reason = "wrap: literal" }] , type_name
 
 (* TODO : move to common *)
 let lmap_of_tuple lst =
@@ -74,7 +76,7 @@ let constant : O.type_value -> T.type_expression list -> (constraints * T.type_v
   let args'      = lmap_of_tuple @@ List.map type_expression_to_type_value args in
   let args_tuple = p_row C_record args' in
   [
-      c_equation f (p_constant C_arrow ([args_tuple ; { tsrc = "wrap: lambda: whole" ; t = P_variable whole_expr }])) "wrap: constant: as declared for built-in"
+      c_equation f (p_constant C_arrow ([args_tuple ; (T.Reasons.wrap (Todo "wrap: lambda: whole") (T.P_variable whole_expr))])) "wrap: constant: as declared for built-in"
   ] , whole_expr
 
 (* TODO : change type of lambda *)
@@ -86,8 +88,8 @@ let lambda
       (constraints * T.type_variable) =
   fun fresh arg output result ->
   let whole_expr = Core.fresh_type_variable () in
-  let unification_arg = T.{ tsrc = "wrap: lambda: arg" ; t = P_variable (Core.fresh_type_variable ()) } in
-  let unification_output = T.{ tsrc = "wrap: lambda: whole" ; t = P_variable (Core.fresh_type_variable ()) } in
+  let unification_arg = T.( Reasons.wrap (Todo "wrap: lambda: arg") @@ P_variable (Core.fresh_type_variable ()) ) in
+  let unification_output = T.( Reasons.wrap  (Todo "wrap: lambda: whole") @@ P_variable (Core.fresh_type_variable ()) ) in
   let result' = type_expression_to_type_value result in
   let arg'  = match arg with
       None -> []
@@ -99,7 +101,7 @@ let lambda
     [
       c_equation unification_output result' "wrap: lambda: result" ;
       c_equation (type_expression_to_type_value fresh) unification_arg "wrap: lambda: arg" ;
-      c_equation ({ tsrc = "wrap: lambda: whole" ; t = P_variable whole_expr })
+      c_equation ((T.Reasons.wrap (Todo "wrap: lambda: whole") @@ T.P_variable whole_expr ))
                  (p_constant C_arrow ([unification_arg ; unification_output]))
                  "wrap: lambda: arrow (whole)"
     ] @ arg' @ output' , whole_expr
@@ -110,7 +112,7 @@ let application : T.type_expression -> T.type_expression -> (constraints * T.typ
   let f'   = type_expression_to_type_value f in
   let arg' = type_expression_to_type_value arg in
   [
-      c_equation f' (p_constant C_arrow [arg' ; { tsrc = "wrap: application: whole" ; t = P_variable whole_expr }]) "wrap: application: f" ;
+    c_equation f' (p_constant C_arrow [arg' ; T.Reasons.wrap (Todo "wrap: application: whole") @@ T.P_variable whole_expr ]) "wrap: application: f" ;
   ] , whole_expr
 
 let constructor : T.type_expression -> T.type_expression -> T.type_expression -> (constraints * T.type_variable) = fun t_arg c_arg sum ->
@@ -119,7 +121,7 @@ let constructor : T.type_expression -> T.type_expression -> T.type_expression ->
   let sum = type_expression_to_type_value sum in
   let whole_expr = Core.fresh_type_variable () in
   [
-    c_equation { tsrc = "wrap: constructor: whole" ; t = P_variable whole_expr } sum "wrap: constructor: whole" ;
+    c_equation ( T.Reasons.wrap (Todo "wrap: constructor: whole") @@ T.P_variable whole_expr ) sum "wrap: constructor: whole" ;
     c_equation t_arg c_arg "wrap: construcotr: arg" ;
   ] , whole_expr
 
@@ -129,13 +131,13 @@ let matching : T.type_expression list -> (constraints * T.type_variable) =
   fun es ->
   let whole_expr = Core.fresh_type_variable () in
   let type_expressions = (List.map type_expression_to_type_value es) in
-  let cs = List.map (fun e -> c_equation { tsrc = "wrap: matching: case" ; t = P_variable whole_expr } e "wrap: matching: case (whole)") type_expressions
+  let cs = List.map (fun e -> c_equation (T.Reasons.wrap (Todo "wrap: matching: case") @@ T.P_variable whole_expr) e "wrap: matching: case (whole)") type_expressions
   in cs, whole_expr
 
 let record : T.rows -> (constraints * T.type_variable) = fun {content;layout} ->
   let record_type = type_expression_to_type_value (T.t_record ~layout content) in
   let whole_expr = Core.fresh_type_variable () in
-  [c_equation { tsrc = "wrap: record: whole" ; t = P_variable whole_expr } record_type "wrap: record: whole"] , whole_expr
+  [c_equation (T.Reasons.wrap (Todo "wrap: record: whole") @@ T.P_variable whole_expr) record_type "wrap: record: whole"] , whole_expr
 
 let access_label ~(base : T.type_expression) ~(label : O.accessor) : (constraints * T.type_variable) =
   let base' = type_expression_to_type_value base in
@@ -150,7 +152,7 @@ let let_in : T.type_expression -> T.type_expression option -> T.type_expression 
       None -> []
     | Some annot -> [c_equation rhs' (type_expression_to_type_value annot) "wrap: let_in: rhs"] in
   let whole_expr = Core.fresh_type_variable () in
-    c_equation result' { tsrc = "wrap: let_in: whole" ; t = P_variable whole_expr } "wrap: let_in: result (whole)"
+    c_equation result' (T.Reasons.wrap (Todo "wrap: let_in: whole") @@ T.P_variable whole_expr) "wrap: let_in: result (whole)"
   :: rhs_tv_opt', whole_expr
 
 let recursive : T.type_expression -> (constraints * T.type_variable) =
@@ -158,7 +160,7 @@ let recursive : T.type_expression -> (constraints * T.type_variable) =
   let fun_type = type_expression_to_type_value fun_type in
   let whole_expr = Core.fresh_type_variable () in
   [
-      c_equation fun_type ({ tsrc = "wrap: recursive: whole" ; t = P_variable whole_expr }) "wrap: recursive: fun_type (whole)" ;
+    c_equation fun_type (T.Reasons.wrap (Todo "wrap: recursive: whole") @@ T.P_variable whole_expr) "wrap: recursive: fun_type (whole)" ;
   ], whole_expr
 
 let raw_code : T.type_expression -> (constraints * T.type_variable) =
@@ -166,7 +168,7 @@ let raw_code : T.type_expression -> (constraints * T.type_variable) =
   let type_anno = type_expression_to_type_value type_anno in
   let whole_expr = Core.fresh_type_variable () in
   [
-      c_equation type_anno  ({ tsrc = "wrap: raw_code: whole"; t = P_variable whole_expr }) "wrap: raw_code: type_anno (whole)" ;
+    c_equation type_anno  (T.Reasons.wrap (Todo "wrap: raw_code: whole") @@ T.P_variable whole_expr) "wrap: raw_code: type_anno (whole)" ;
   ], whole_expr
 
 let annotation : T.type_expression -> T.type_expression -> (constraints * T.type_variable) =
@@ -175,6 +177,6 @@ let annotation : T.type_expression -> T.type_expression -> (constraints * T.type
   let annot' = type_expression_to_type_value annot in
   let whole_expr = Core.fresh_type_variable () in
   [
-      c_equation e' annot' "wrap: annotation: expr type must eq annot" ;
-      c_equation e' { tsrc = "wrap: annotation: whole" ; t = P_variable whole_expr } "wrap: annotation: whole" ;
+    c_equation e' annot' "wrap: annotation: expr type must eq annot" ;
+    c_equation e' (T.Reasons.wrap (Todo "wrap: annotation: whole") @@ T.P_variable whole_expr) "wrap: annotation: whole" ;
   ] , whole_expr

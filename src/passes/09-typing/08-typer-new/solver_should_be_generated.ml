@@ -115,7 +115,8 @@ let compare_lmap f ma mb =
   List.compare ~compare:f la lb
 
 let rec compare_typeclass a b = List.compare ~compare:(List.compare ~compare:compare_type_value) a b
-and compare_type_value { tsrc = _ ; t = ta } { tsrc = _ ; t = tb } =
+and compare_type_value : type_value -> type_value -> int =
+  fun { location = _ ; wrap_content = ta } { location = _ ; wrap_content = tb } ->
   (* Note: this comparison ignores the tsrc, the idea is that types
      will often be compared to see if they are the same, regardless of
      where the type comes from .*)
@@ -207,8 +208,8 @@ let compare_c_typeclass_simpl
     { reason_typeclass_simpl = _ ; tc = b1 ; args = b2 } =
   compare_typeclass a1 b1 <? fun () -> compare_c_typeclass_simpl_args a2 b2
 
-let compare_refined_typeclass { original=a1; refined=r1; vars=a2 } { original=b1; refined=r2; vars=b2 } =
-  compare_c_typeclass_simpl a1 b1 <? fun () ->
+let compare_refined_typeclass { original=ConstraintIdentifier a1; refined=r1; vars=a2 } { original=ConstraintIdentifier b1; refined=r2; vars=b2 } =
+  Int64.compare a1 b1 <? fun () ->
   compare_c_typeclass_simpl r1 r2 <? fun () ->
     List.compare ~compare:compare_type_variable (PolySet.elements a2) (PolySet.elements b2)
 

@@ -13,7 +13,7 @@ let int () : (unit, _) result =
   let open Typer in
   let e = Environment.empty in
   let state = Typer.Solver.initial_state in
-  let%bind (post , new_state) = trace typer_tracer @@ type_expression_subst typer_switch e state pre in
+  let%bind (post , new_state) = trace typer_tracer @@ type_expression_subst (typer_switch ()) e state pre in
   let () = Typer.Solver.discard_state new_state in
   let open! Typed in
   let open Combinators in
@@ -30,7 +30,7 @@ module TestExpressions = struct
     let pre = expr in
     let open Typer in
     let open! Typed in
-    let%bind (post , new_state) = trace typer_tracer @@ type_expression_subst typer_switch env state pre in
+    let%bind (post , new_state) = trace typer_tracer @@ type_expression_subst (typer_switch ()) env state pre in
     let () = Typer.Solver.discard_state new_state in
     let%bind () = trace_option (test_internal __LOC__) @@ assert_type_expression_eq (post.type_expression, test_expected_ty) in
     ok ()
@@ -77,15 +77,19 @@ end
 (* TODO: deep types (e.g. record of record)
    TODO: negative tests (expected type error) *)
 
-let main = test_suite "Typer (from core AST)" [
-    test "int" int ;
-    test "unit"        TestExpressions.unit ;
-    test "int2"        TestExpressions.int ;
-    test "bool"        TestExpressions.bool ;
-    test "string"      TestExpressions.string ;
-    test "bytes"       TestExpressions.bytes ;
-    test "tuple"       TestExpressions.tuple ;
-    test "constructor" TestExpressions.constructor ;
-    test "record"      TestExpressions.record ;
-    test "lambda"      TestExpressions.lambda ;
+let test enabled_for_typer_not_currently_in_use name f = enabled_for_typer_not_currently_in_use, test name f
+let no = false
+let y = true
+let main = test_suite "Typer (from core AST)"
+    @@ (fun lst -> List.map snd @@ match typer_switch () with Ast_typed.New -> List.filter fst lst | _ -> lst) @@ [
+    test y "int" int ;
+    test y "unit"        TestExpressions.unit ;
+    test y "int2"        TestExpressions.int ;
+    test no "bool"        TestExpressions.bool ; (* needs variants *)
+    test y "string"      TestExpressions.string ;
+    test y "bytes"       TestExpressions.bytes ;    
+    test no "tuple"       TestExpressions.tuple ;
+    test no "constructor" TestExpressions.constructor ;
+    test no "record"      TestExpressions.record ;
+    test y "lambda"      TestExpressions.lambda ;
   ]

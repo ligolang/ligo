@@ -2,13 +2,15 @@ open Trace
 
 module I = Ast_core
 module O = Ast_typed
-module O' = Typesystem.Solver_types
+module O' = Typer_new.Solver              (* needs an instance of the solver now *)
 module Environment = O.Environment
 module Errors = Typer_common.Errors
 
 module Solver = Typer_new.Solver
 
 type environment = Environment.t
+
+val force_new_typer : unit -> bool
 
 val type_program : O.typer_switch -> init_env:environment -> I.program -> (environment * O.program_fully_typed * Errors.typer_error O'.typer_state, Errors.typer_error) result
 val type_expression_subst : O.typer_switch -> environment -> Errors.typer_error O'.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * Errors.typer_error O'.typer_state , Errors.typer_error) result

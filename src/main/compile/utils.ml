@@ -20,7 +20,7 @@ let to_core ~options c_unit f stx =
   let%bind core   = Of_sugar.compile sugar in
   ok @@ core
 
-let type_file ~options f stx form : (Ast_typed.program_fully_typed * Ast_typed.environment * _ Typesystem.Solver_types.typer_state, _) result =
+let type_file ~options f stx form : (Ast_typed.program_fully_typed * Ast_typed.environment * _ Typer.Solver.typer_state, _) result =
   let {init_env ; typer_switch ; _} : Compiler_options.t = options in
   let%bind c_unit,_      = to_c_unit ~options f stx in
   let%bind core          = to_core ~options c_unit f stx in

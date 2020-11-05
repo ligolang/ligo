@@ -7,13 +7,25 @@ open Typer_common.Errors
 module Map = RedBlackTrees.PolyMap
 module Set = RedBlackTrees.PolySet
 
+open Database_plugins.All_plugins
+type 'a indexes = <
+    assignments              : type_variable Assignments.t ;
+    grouped_by_variable      : type_variable GroupedByVariable.t ;
+    refined_typeclasses      : type_variable RefinedTypeclasses.t ;
+    typeclasses_constraining : type_variable TypeclassesConstraining.t ;
+    by_constraint_identifier : type_variable ByConstraintIdentifier.t ;
+    ..                          (* TODO: remove this it breaks type safety below *)
+> as 'a
+
 let set_of_vars l = (Set.add_list l (Set.create ~cmp:Var.compare)).set
 
 let make_refined_typeclass refined ~original : refined_typeclass = { refined; original ; vars = set_of_vars refined.args }
 
-let constraint_identifier_to_tc (dbs : structured_dbs) (ci : constraint_identifier) =
+let constraint_identifier_to_tc (dbs : _ indexes) (ci : constraint_identifier) =
   (* TODO: this can fail: catch the exception and throw an error *)
-  RedBlackTrees.PolyMap.find ci dbs.by_constraint_identifier 
+  match ByConstraintIdentifier.find_opt ci dbs#by_constraint_identifier with
+    Some x -> x
+  | None -> failwith "TODO: internal error : do something"
 
 let tc_to_constraint_identifier : c_typeclass_simpl -> constraint_identifier =
   fun tc -> tc.id_typeclass_simpl
@@ -31,9 +43,6 @@ type private_storage = unit
  *   typeclasses_constrained_by : constraint_identifier_set_map ;
  * } *)
 
-let constraint_identifier_to_tc (dbs : structured_dbs) (ci : constraint_identifier) =
-  (* TODO: this can fail: catch the exception and throw an error *)
-  RedBlackTrees.PolyMap.find ci dbs.by_constraint_identifier 
 let tc_to_constraint_identifier : c_typeclass_simpl -> constraint_identifier =
   fun tc -> tc.id_typeclass_simpl
 
@@ -100,7 +109,7 @@ let transpose : c_typeclass_simpl -> ((type_variable * type_value list) list, _)
                           [map(unit,nat) ; string ; ] ;
                           [map(int,int)  ; unit   ; ] ; ]) *)
 let transpose_back : _ -> _ -> (type_variable * type_value list) list -> (c_typeclass_simpl, _) result =
-  fun (reason_typeclass_simpl, is_mandatory_constraint) id_typeclass_simpl tcs ->
+  fun (reason_typeclass_simpl, original_id, is_mandatory_constraint) id_typeclass_simpl tcs ->
   let%bind tc =
     match tcs with
     | [] -> ok []
@@ -115,7 +124,7 @@ let transpose_back : _ -> _ -> (type_variable * type_value list) list -> (c_type
   in
   let args = List.map fst tcs in
   check_typeclass_rectangular @@
-  { reason_typeclass_simpl; is_mandatory_constraint; id_typeclass_simpl; tc; args }
+  { reason_typeclass_simpl; original_id; is_mandatory_constraint; id_typeclass_simpl; tc; args }
 
 type 'a all_equal = Empty | All_equal_to of 'a | Different
 let all_equal cmp = function
@@ -124,7 +133,7 @@ let all_equal cmp = function
  
 
 let get_tag_and_args_of_constant (tv : type_value) =
-  match tv.t with
+  match tv.wrap_content with
   | P_constant { p_ctor_tag; p_ctor_args } -> ok (p_ctor_tag, p_ctor_args)
   | P_row { p_row_tag; p_row_args } -> ignore (p_row_tag, p_row_args); failwith "TODO: return p_row_tag, p_row_args similarly to P_constant"
   | P_forall _ ->

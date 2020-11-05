@@ -1,5 +1,5 @@
 [@@@coverage exclude_file]
-open Types
+open Ast
 open Format
 open PP_helpers
 include Stage_common.PP
@@ -228,13 +228,15 @@ let rec c_equation ppf {aval; bval} =
     type_value aval
     type_value bval
 
-and c_typeclass ppf {tc_args; typeclass=tc} =
+and c_typeclass ppf {tc_args; typeclass=tc;original_id} =
   fprintf ppf "{@,@[<hv 2>
               tc_args : %a ;@
-              typeclass : %a
+              typeclass : %a original_id:%s
               @]@,}"
     (list_sep_d type_value) tc_args
     typeclass tc
+    (match     original_id with Some (ConstraintIdentifier
+        x) -> Int64.to_string x | None ->"null")
 
 and c_access_label ppf {c_access_label_tval; accessor; c_access_label_tvar} =
   fprintf ppf "{@,@[<hv 2>
@@ -296,13 +298,13 @@ and type_value_ ppf = function
 | P_constant c  -> fprintf ppf "%a" p_constant c
 | P_apply   app -> fprintf ppf "%a" p_apply app
 | P_row       r -> fprintf ppf "%a" p_row r
-and type_value ppf {tsrc; t} =
+and type_value ppf t =
   fprintf ppf "{@,@[<hv 2>
-              tsrc : %s ;@
               t : %a
+              loc : %a ;@
               @]@,}"
-    tsrc
-    type_value_ t
+    Location.pp t.location
+    type_value_ t.wrap_content
 
 and typeclass ppf tc = fprintf ppf "%a" (list_sep_d (list_sep_d type_value)) tc
 let c_constructor_simpl ppf ({is_mandatory_constraint;reason_constr_simpl;tv;c_tag;tv_list} : c_constructor_simpl) =
@@ -343,25 +345,29 @@ is_mandatory_constraint : %b ; @
     type_variable tv
     p_forall forall
 
-let c_typeclass_simpl ppf ({is_mandatory_constraint;id_typeclass_simpl = ConstraintIdentifier ci; reason_typeclass_simpl; tc; args}) =
+let c_typeclass_simpl ppf ({is_mandatory_constraint;id_typeclass_simpl = ConstraintIdentifier ci; reason_typeclass_simpl; original_id; tc; args}) =
   fprintf ppf "{@,@[<hv 2>
                 is_mandatory_constraint : %b; @
               id_typeclass_simpl : %Li; @
+                 original_id : %s ; @
               reason_typeclass_simpl : %s; @
               tc : %a ;@
               args : %a
               @]@,}"
     is_mandatory_constraint
     ci
+    (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null" )
     reason_typeclass_simpl
     typeclass tc
     (list_sep_d type_variable) args
+let constraint_identifier ppf (ConstraintIdentifier ci) =
+  fprintf ppf "ConstraintIdentifier %Li" ci
 
-let c_typeclass_simplMap = fun f ppf tvmap   ->
+let constraint_identifierMap = fun f ppf tvmap   ->
       let lst = RedBlackTrees.PolyMap.bindings tvmap in
       let aux ppf (k, v) =
-        fprintf ppf "(%a, %a)" c_typeclass_simpl k f v in
-      fprintf ppf "typeVariableMap [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
+        fprintf ppf "(%a, %a)" constraint_identifier k f v in
+      fprintf ppf "constraint_identifierMap [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
 
 let c_row_simpl ppf ({is_mandatory_constraint;reason_row_simpl; tv; r_tag; tv_map}) =
   fprintf ppf "{@,@[<hv 2>
@@ -384,7 +390,7 @@ let type_constraint_simpl ppf (tc: type_constraint_simpl) = match tc with
   | SC_Typeclass   t -> fprintf ppf "SC_Typeclass (%a)" c_typeclass_simpl t
   | SC_Row         r -> fprintf ppf "SC_Row (%a)" c_row_simpl r
 
-let constraints ppf ({constructor; poly; tc; row}: constraints) =
+let constraints ppf ({constructor; poly; (* tc; *) row}: constraints) =
   fprintf ppf "{@,@[<hv 2>
               constructor : %a ;@
               poly : %a ;@
@@ -393,28 +399,28 @@ let constraints ppf ({constructor; poly; tc; row}: constraints) =
               @]@,}"
     (list_sep_d c_constructor_simpl) constructor
     (list_sep_d c_poly_simpl) poly
-    (list_sep_d c_typeclass_simpl) tc
+    (* (list_sep_d c_typeclass_simpl) tc *)
     (list_sep_d c_row_simpl) row
 let constraint_identifier ppf (ConstraintIdentifier ci) =
   fprintf ppf "ConstraintIdentifier %Li" ci
-let refined_typeclass ppf ({ refined; original; vars } : refined_typeclass) =
-  fprintf ppf "{@,@[<hv 2> refined : %a ; original : %a ;@ vars : %a @]@,}"
+let refined_typeclass ppf ({ refined; original=ConstraintIdentifier x; vars } : refined_typeclass) =
+  fprintf ppf "{@,@[<hv 2> refined : %a ; original : %Li ;@ vars : %a @]@,}"
     c_typeclass_simpl refined
-    c_typeclass_simpl original
+    x
     typeVariableSet vars
 
 
-let structured_dbs ppf ({refined_typeclasses;refined_typeclasses_back;typeclasses_constrained_by;by_constraint_identifier;all_constraints;aliases;assignments;grouped_by_variable;cycle_detection_toposort} : structured_dbs) =
-  fprintf ppf "{@,@[<hv 2> refined_typeclasses : %a ;@ refined_typeclasses_back : %a ;@ typeclasses_constrained_by : %a ;@ by_constraint_identifier : %a ;@ all_constraints : %a ;@ aliases : %a ;@ assignments : %a;@ gouped_by_variable : %a;@ cycle_detection_toposort : %a @]@,}"
-    (identifierMap refined_typeclass) refined_typeclasses
-    (c_typeclass_simplMap constraint_identifier) refined_typeclasses_back
-    (typeVariableMap constraint_identifier_set) typeclasses_constrained_by
-    (identifierMap c_typeclass_simpl) by_constraint_identifier
-    (list_sep_d type_constraint_simpl) all_constraints
-    (poly_unionfind type_variable) aliases
-    (typeVariableMap c_constructor_simpl) assignments
-    (typeVariableMap constraints) grouped_by_variable
-    (fun _ppf _ -> ()) cycle_detection_toposort
+(* let structured_dbs ppf ({refined_typeclasses;refined_typeclasses_back;typeclasses_constrained_by;by_constraint_identifier;all_constraints;aliases;assignments;grouped_by_variable;cycle_detection_toposort} : structured_dbs) =
+ *   fprintf ppf "{@,@[<hv 2> refined_typeclasses : %a ;@ refined_typeclasses_back : %a ;@ typeclasses_constrained_by : %a ;@ by_constraint_identifier : %a ;@ all_constraints : %a ;@ aliases : %a ;@ assignments : %a;@ gouped_by_variable : %a;@ cycle_detection_toposort : %a @]@,}"
+ *     (identifierMap refined_typeclass) refined_typeclasses
+ *     (constraint_identifierMap constraint_identifier) refined_typeclasses_back
+ *     (typeVariableMap constraint_identifier_set) typeclasses_constrained_by
+ *     (identifierMap c_typeclass_simpl) by_constraint_identifier
+ *     (list_sep_d type_constraint_simpl) all_constraints
+ *     (poly_unionfind type_variable) aliases
+ *     (typeVariableMap c_constructor_simpl) assignments
+ *     (typeVariableMap constraints) grouped_by_variable
+ *     (fun _ppf _ -> ()) cycle_detection_toposort *)
 
 let output_break_ctor ppf ({a_k_var;a_k'_var'}) =
   fprintf ppf "{@,@[<hv 2>
@@ -433,7 +439,7 @@ let output_specialize1 ppf ({poly;a_k_var}) =
     c_constructor_simpl a_k_var
 let output_tc_fundep ppd (t : output_tc_fundep) =
   let lst = t.tc in
-  let a = t.c in fprintf ppd "{tc:{refined:%a original:%a vars:%a};a:%a}" c_typeclass_simpl lst.refined c_typeclass_simpl lst.original (list_sep_d (fun x _ ->fprintf x "," ) ) ( (fun x ->( List.map (fun y-> Format.asprintf "%a" Var.pp y) @@ ( RedBlackTrees.PolySet.elements x))) lst.vars) c_constructor_simpl a
+  let a = t.c in fprintf ppd "{tc:{refined:%a original:%Li vars:%a};a:%a}" c_typeclass_simpl lst.refined (match lst.original with ConstraintIdentifier a -> a) (list_sep_d (fun x _ ->fprintf x "," ) ) ( (fun x ->( List.map (fun y-> Format.asprintf "%a" Var.pp y) @@ ( RedBlackTrees.PolySet.elements x))) lst.vars) c_constructor_simpl a
 
 let deduce_and_clean_result ppf {deduced;cleaned} =
   fprintf ppf "{@,@[<hv 2>
@@ -443,14 +449,19 @@ let deduce_and_clean_result ppf {deduced;cleaned} =
     (list c_constructor_simpl) deduced
     c_typeclass_simpl cleaned
 
-let update ppf {remove_constraints;add_constraints;justification} =
+let axiom ppf = function |HandWaved s -> fprintf ppf "HandWaved %s" s
+
+let proof_trace ppf = function
+  Axiom a -> fprintf ppf "Axiom %a" axiom a
+
+let update ppf {remove_constraints;add_constraints;proof_trace=x} =
   fprintf ppf "{@,@[<hv 2>
               remove_constraints : %a ;@
               add_constraints : %a ;@
-              justification : %s
+              proof_trace : %a
               @]@,}"
     (list type_constraint_simpl) remove_constraints
     (list type_constraint) add_constraints
-    justification
+    proof_trace x
 
 let updates_list ppf = fprintf ppf "%a" (list (list update))

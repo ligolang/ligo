@@ -1,25 +1,26 @@
 open Ast_typed.Types
 open Core
 open Ast_typed.Misc
+open Ast_typed.Reasons
 
 let tc description type_vars allowed_list : type_constraint = {
-    c = C_typeclass {tc_args = type_vars ;typeclass = allowed_list} ;
+    c = C_typeclass {tc_args = type_vars ; original_id = None ; typeclass = allowed_list} ;
     reason = "typeclass for operator: " ^ description
   }
 
 let forall binder f =
   let () = ignore binder in
   let freshvar = fresh_type_variable () in
-  let body = f { tsrc = "shorthands.ml/forall" ; t = P_variable freshvar } in
-  { tsrc = "shorthands.ml/forall" ;
-    t = P_forall { binder = freshvar ; constraints = [] ; body } }
+  let var = wrap Forall @@ P_variable freshvar in
+  let body = f var in
+  wrap Forall @@ P_forall { binder = freshvar ; constraints = [] ; body }
 
 let forall_tc binder f =
   let () = ignore binder in
   let freshvar = fresh_type_variable () in
-  let (tc, ty) = f { tsrc = "shorthands.ml/forall_tc" ; t = P_variable freshvar } in
-  { tsrc = "shorthands.ml/forall_tc" ;
-    t = P_forall { binder = freshvar ; constraints = tc ; body = ty } }
+  let var = wrap Forall_TC @@ P_variable freshvar in
+  let (tc, ty) = f var in
+  wrap Forall_TC @@ P_forall { binder = freshvar ; constraints = tc ; body = ty }
 
 (* chained forall *)
 let forall2 a b f =
@@ -60,7 +61,7 @@ let map  k v      = p_constant C_map       [k; v]
 let unit          = p_constant C_unit      []
 let list   t      = p_constant C_list      [t]
 let set    t      = p_constant C_set       [t]
-let bool          = { tsrc = "built-in type" ; t = P_variable Stage_common.Constant.v_bool }
+let bool          = wrap Builtin_type @@ P_variable Stage_common.Constant.v_bool
 let string        = p_constant C_string    []
 let nat           = p_constant C_nat       []
 let mutez         = p_constant C_mutez     []

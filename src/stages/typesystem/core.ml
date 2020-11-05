@@ -1,3 +1,4 @@
+(* TODO: remove these and use the proper qualification where needed *)
 type    unionfind             =    Ast_typed.unionfind
 type    constant_tag          =    Ast_typed.constant_tag
 type    accessor              =    Ast_typed.label
@@ -13,7 +14,6 @@ type    c_access_label        =    Ast_typed.c_access_label
 type    type_constraint       =    Ast_typed.type_constraint
 type    typeclass             =    Ast_typed.typeclass
 type 'a typeVariableMap       = 'a Ast_typed.typeVariableMap
-type    structured_dbs        =    Ast_typed.structured_dbs
 type    constraints           =    Ast_typed.constraints
 type    c_constructor_simpl   =    Ast_typed.c_constructor_simpl
 type    c_const_e             =    Ast_typed.c_const_e
@@ -21,7 +21,7 @@ type    c_equation_e          =    Ast_typed.c_equation_e
 type    c_typeclass_simpl     =    Ast_typed.c_typeclass_simpl
 type    c_poly_simpl          =    Ast_typed.c_poly_simpl
 type    type_constraint_simpl =    Ast_typed.type_constraint_simpl
-type    'errors state         =    'errors Solver_types.typer_state
+(* type    'errors state         =    'errors Solver_types.typer_state *)
 
 type type_variable = Ast_typed.type_variable
 type type_expression = Ast_typed.type_expression
@@ -29,7 +29,7 @@ type type_expression = Ast_typed.type_expression
 (* generate a new type variable and gave it an id *)
 let fresh_type_variable : ?name:string -> unit -> type_variable = fun ?name () ->
   let fresh_name = Var.fresh ?name () in
-  let () = (if Ast_typed.Debug.debug_new_typer && false then Printf.printf "Generated variable %s\n%!%s\n%!" (Var.debug fresh_name) (Printexc.get_backtrace ())) in
+  let () = (if Ast_typed.Debug.debug_new_typer && false then Printf.fprintf stderr "Generated variable %s\n%!%s\n%!" (Var.debug fresh_name) (Printexc.get_backtrace ())) in
   fresh_name
 
 let type_expression'_of_simple_c_constant : constant_tag * type_expression list -> Ast_typed.type_content option = fun (c, l) ->

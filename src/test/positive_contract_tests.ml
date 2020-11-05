@@ -12,7 +12,7 @@ let ends_with suffix str =
 (* test that everything in src/test/contracts/positive typechecks and
    compiles (assuming entry point "main") *)
 let positive_contract_tests =
-  String.split_on_char ' ' (Sys.getenv "POSITIVE_CONTRACTS") |>
+  String.split_on_char ' ' (match Sys.getenv_opt "POSITIVE_CONTRACTS" with Some e -> e | None -> "") |>
   List.filter (fun path -> not (ends_with ".md" path)) |>
   List.map
     (fun path ->

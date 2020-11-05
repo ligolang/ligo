@@ -1,5 +1,5 @@
 open Ast_typed
-open Typesystem.Solver_types
+(* open Typesystem.Solver_types *)
 open Format
 module UF = UnionFind.Poly2
 
@@ -45,17 +45,17 @@ let type_constraint : _ -> type_constraint_simpl -> unit = fun ppf c ->
 let all_constraints ppf ac =
   fprintf ppf "[%a]" (pp_print_list ~pp_sep:(fun ppf () -> fprintf ppf ";\n") type_constraint) ac
 
-let aliases ppf (al : unionfind) =
-  fprintf ppf "ALIASES %a" UF.print al
+let aliases ppf (_al : unionfind) =
+  fprintf ppf "ALIASES [DEBUG:temporarily disabled to debug union-find]" (* fprintf ppf "ALIASES %a" UF.print al *)
 
-let structured_dbs : _ -> structured_dbs -> unit = fun ppf structured_dbs ->
-  let { all_constraints = a ; aliases = b ; _ } = structured_dbs in
-  fprintf ppf "STRUCTURED_DBS\n %a\n %a" all_constraints a aliases b
+(* let structured_dbs : _ -> structured_dbs -> unit = fun ppf structured_dbs ->
+ *   let { all_constraints = a ; aliases = b ; _ } = structured_dbs in
+ *   fprintf ppf "STRUCTURED_DBS\n %a\n %a" all_constraints a aliases b *)
 
-let already_selected_and_propagators : _ -> _ ex_propagator_state list -> unit = fun ppf already_selected ->
-  let _ = already_selected in
-  fprintf ppf "ALREADY_SELECTED"
+(* let already_selected_and_propagators : _ -> _ ex_propagator_state list -> unit = fun ppf already_selected ->
+ *   let _ = already_selected in
+ *   fprintf ppf "ALREADY_SELECTED" *)
 
-let state : _ -> _ typer_state -> unit = fun ppf state ->
-  let { structured_dbs=a ; already_selected_and_propagators =b } = state in
-  fprintf ppf "STATE %a %a" structured_dbs a already_selected_and_propagators b
+(* let state : _ -> _ typer_state -> unit = fun ppf state ->
+ *   let { structured_dbs=a ; already_selected_and_propagators =b } = state in
+ *   fprintf ppf "STATE %a %a" structured_dbs a already_selected_and_propagators b *)

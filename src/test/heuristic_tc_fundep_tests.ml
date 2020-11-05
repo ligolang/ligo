@@ -3,13 +3,14 @@ open Main_errors
 
 module Core = Typesystem.Core
 open Ast_typed.Types
+open Ast_typed.Reasons
 (* open Typesystem.Solver_types *)
 open Trace
 (* open Typer_common.Errors *)
 module Map = RedBlackTrees.PolyMap
 module Set = RedBlackTrees.PolySet
 
-let mk p_ctor_tag p_ctor_args = { tsrc = "unit test"; t = P_constant { p_ctor_tag ; p_ctor_args ; } ; }
+let mk p_ctor_tag p_ctor_args =  (wrap (Todo "unit test") @@ P_constant { p_ctor_tag ; p_ctor_args ; })
 (* A bunch of arbitrary types (they only need to be distrinct type constructors without arguments, feel free to replace the contents if/when some of these types move to the stdlib and aren't built-in anymore). *)
 let (int, unit, nat, string, bytes, mutez) = (mk C_int [], mk C_unit [], mk C_nat [], mk C_string [], mk C_bytes [], mk C_mutez [])
 (* An arbitrary two-argument type constructor (this only needs to be a type constructor with two arguments, feel free to replace). *)
@@ -33,8 +34,8 @@ let test''
   let%bind e =
     trace typer_tracer @@
     let info = { reason_constr_simpl = "unit test" ; is_mandatory_constraint = true; tv ; c_tag ; tv_list } in
-    let tc =  { reason_typeclass_simpl = "unit test"; is_mandatory_constraint = false; id_typeclass_simpl = ConstraintIdentifier 42L ; args ; tc } in
-    let expected =  { reason_typeclass_simpl = "unit test" ; is_mandatory_constraint = false; id_typeclass_simpl = ConstraintIdentifier 42L ; args = expected_args ; tc = expected_tc } in
+    let tc =  { reason_typeclass_simpl = "unit test"; original_id = None; is_mandatory_constraint = false; id_typeclass_simpl = ConstraintIdentifier 42L ; args ; tc } in
+    let expected =  { reason_typeclass_simpl = "unit test" ; original_id = None; is_mandatory_constraint = false; id_typeclass_simpl = ConstraintIdentifier 42L ; args = expected_args ; tc = expected_tc } in
     (* TODO: use an error not an assert *)
     (* Format.printf "\n\nActual: %a\n\n" Ast_typed.PP_generic.c_typeclass_simpl (restrict info tc);
      * Format.printf "\n\nExpected %a\n\n" Ast_typed.PP_generic.c_typeclass_simpl expected; *)
@@ -87,8 +88,8 @@ let test'
   test name @@ fun () ->
   let%bind e =
     trace typer_tracer @@
-    let input_tc =  { reason_typeclass_simpl = "unit test" ; is_mandatory_constraint = false ; id_typeclass_simpl = ConstraintIdentifier 42L ; args ; tc } in
-    let expected_tc =  { reason_typeclass_simpl = "unit test" ; is_mandatory_constraint = false ; id_typeclass_simpl = ConstraintIdentifier 42L ; args = expected_args ; tc = expected_tc } in
+    let input_tc =  { reason_typeclass_simpl = "unit test" ; original_id = None; is_mandatory_constraint = false ; id_typeclass_simpl = ConstraintIdentifier 42L ; args ; tc } in
+    let expected_tc =  { reason_typeclass_simpl = "unit test" ; original_id = None; is_mandatory_constraint = false ; id_typeclass_simpl = ConstraintIdentifier 42L ; args = expected_args ; tc = expected_tc } in
     let expected_inferred = List.map
         (fun (tv , c_tag , tv_list) -> {reason_constr_simpl = "unit test" ; is_mandatory_constraint = false ; tv ; c_tag ; tv_list})
         expected_inferred in

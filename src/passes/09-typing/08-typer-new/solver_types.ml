@@ -8,8 +8,8 @@ type 'selector_output selector_outputs =
   | WasNotSelected
 type new_constraints = type_constraint list
 type new_assignments = c_constructor_simpl list
-type ('old_constraint_type, 'selector_output) selector = 'old_constraint_type selector_input -> structured_dbs -> 'selector_output selector_outputs
-type 'selector_output propagator = 'selector_output -> structured_dbs -> new_constraints * new_assignments
+(* type ('old_constraint_type, 'selector_output) selector = 'old_constraint_type selector_input -> structured_dbs -> 'selector_output selector_outputs *)
+(* type 'selector_output propagator = 'selector_output -> structured_dbs -> new_constraints * new_assignments *)
 
 (* state+list monad *)
 type ('state, 'elt) state_list_monad = { state: 'state ; list : 'elt list }

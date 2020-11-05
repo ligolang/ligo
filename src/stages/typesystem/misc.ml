@@ -206,22 +206,23 @@ module Substitution = struct
     (*
        Computes `P[v := expr]`.
     *)
-    and type_value ~tv ~substs =
+    and type_value : tv:type_value -> substs:T.type_ Var.t * type_value -> type_value = fun ~tv ~substs ->
+      let open T.Reasons in
       let self tv = type_value ~tv ~substs in
       let (v, expr) = substs in
-      match (tv : type_value).t with
+      match tv.wrap_content with
       | P_variable v' when Var.equal v' v -> expr
       | P_variable _ -> tv
       | P_constant {p_ctor_tag=x ; p_ctor_args=lst} -> (
           let lst' = List.map self lst in
-          { tsrc = "?TODO1?" ; t = P_constant {p_ctor_tag=x ; p_ctor_args=lst'} }
+          wrap (Todo "1") @@ T.P_constant {p_ctor_tag=x ; p_ctor_args=lst'}
         )
       | P_apply { tf; targ } -> (
-          { tsrc = "?TODO2?" ; t = P_apply { tf = self tf ; targ = self targ } }
+          T.Reasons.(wrap (Todo "2") @@ T.P_apply { tf = self tf ; targ = self targ})
         )
       | P_row {p_row_tag; p_row_args} ->
         let p_row_args = T.LMap.map self p_row_args in
-        { tsrc = "?TODO3?" ; t = P_row {p_row_tag ; p_row_args}}
+        wrap (Todo "3") @@ T.P_row {p_row_tag ; p_row_args}
       | P_forall p -> (
           let aux c = constraint_ ~c ~substs in
           let constraints = List.map aux p.constraints in
@@ -230,12 +231,12 @@ module Substitution = struct
                we don't substitute inside the body. This should be
                handled in a more elegant manner once we have a proper
                environment and scopes. *)
-            { tsrc = "?TODO4?" ; t = P_forall { p with constraints } }
+            wrap (Todo "4") @@ T.P_forall { p with constraints }
           ) else (
             (* The variable v is still visible within the forall, so
                substitute also within the body *)
             let body = self p.body in
-            { tsrc = "?TODO5?" ; t = P_forall { p with constraints ; body } }
+            wrap (Todo "5") @@ T.P_forall { p with constraints ; body }
           )
         )
 
@@ -248,10 +249,10 @@ module Substitution = struct
         let aux tv = type_value ~tv ~substs in
           C_equation { aval = aux aval ; bval = aux bval }
         )
-      | C_typeclass { tc_args; typeclass=tc } -> (
+      | C_typeclass { tc_args; original_id; typeclass=tc } -> (
           let tc_args = List.map (fun tv -> type_value ~tv ~substs) tc_args in
           let tc = typeclass ~tc ~substs in
-          C_typeclass {tc_args ; typeclass=tc}
+          C_typeclass {tc_args ; original_id; typeclass=tc}
         )
       | C_access_label { c_access_label_tval; accessor; c_access_label_tvar } -> (
           let c_access_label_tval = type_value ~tv:c_access_label_tval ~substs in
@@ -265,8 +266,8 @@ module Substitution = struct
 
     (* Performs beta-reduction at the root of the type *)
     let eval_beta_root ~(tv : type_value) =
-      match tv.t with
-        P_apply {tf = { tsrc = _ ; t = P_forall { binder; constraints; body } }; targ} ->
+      match tv.wrap_content with
+      | P_apply {tf = { location = _ ; wrap_content = P_forall { binder; constraints; body } }; targ} ->
         let constraints = List.map (fun c -> constraint_ ~c ~substs:(mk_substs ~v:binder ~expr:targ)) constraints in
         (* TODO: indicate in the result's tsrc that it was obtained via beta-reduction of the original type *)
         (type_value ~tv:body ~substs:(mk_substs ~v:binder ~expr:targ) , constraints)
