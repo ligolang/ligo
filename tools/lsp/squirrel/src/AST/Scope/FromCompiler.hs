@@ -8,10 +8,10 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Maybe
 import Duplo.Lattice
-import Duplo.Tree (Cofree (..), inject, make, only)
+import Duplo.Tree (make, only)
 
 import AST.Scope.Common
-import AST.Skeleton (Lang, SomeLIGO (..), TypeName (..))
+import AST.Skeleton (Lang, SomeLIGO (..))
 import Cli
 import Product
 import Range
@@ -45,17 +45,17 @@ fromCompiler dialect (LigoDefinitions decls scopes) =
     fromLigoDecl (LigoDefinitionScope n orig bodyR ty _) = do
       let r = fromLigoRangeOrDef orig
       ( DeclRef n r
-       , (ScopedDecl
+       , ScopedDecl
            n r (mbFromLigoRange bodyR)
            (fromLigoTy <$> ty) [] []
-           Nothing dialect) -- TODO LIGO-90
+           Nothing dialect -- TODO LIGO-90
        )
 
     -- I cannot comprehend what does the stuff in Cli.Json means, neither
     -- can I run it.
     --
     fromLigoTy :: LigoTypeFull -> TypeOrKind
-    fromLigoTy _ = IsType $ Nil :< inject (TypeName "something")
+    fromLigoTy = IsType . fmap (const Nil) . fromLigoTypeFull
 
     -- Find a place for a scope inside a ScopeForest.
     --
