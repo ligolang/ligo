@@ -4,7 +4,7 @@ buildNpmPackage {
 
   npmBuild = ''
     mkdir bin
-    cp ${ligo-squirrel}/bin/ligo-squirrel ./bin/ligo-squirrel
+    cp -Lr ${ligo-squirrel}/* .
     npm run compile
     npm run package
   '';

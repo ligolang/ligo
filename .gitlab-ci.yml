@@ -305,7 +305,7 @@ vscode-extension:
     - tooling
     - /^.*-run-dev$/
   script:
-    - nix-build tools/lsp -A packages.x86_64-linux.vscode-extension
+    - nix-build tools/lsp -A packages.x86_64-linux.vscode-extension-native
     - cp -Lr --no-preserve=mode,ownership,timestamps result/*.vsix ligo-extension-x86_64-linux.vsix
   artifacts:
     expose_as: "LSP vscode extension for x86_64-linux"
@@ -322,7 +322,7 @@ vscode-extension-darwin:
     - tooling
     - /^.*-run-dev$/
   script:
-    - nix-build tools/lsp -A packages.x86_64-darwin.vscode-extension
+    - nix-build tools/lsp -A packages.x86_64-darwin.vscode-extension-native
     - cp -LR result/*.vsix ligo-extension-x86_64-darwin.vsix
   artifacts:
     expose_as: "LSP vscode extension for x86_64-darwin"
