@@ -74,8 +74,8 @@ let arity : string -> int option = function
  | "LAMBDA" -> Some 0
  | "LE" -> Some 1
  | "LEFT" -> Some 1
- | "LSL" -> Some 1
- | "LSR" -> Some 1
+ | "LSL" -> Some 2
+ | "LSR" -> Some 2
  | "LT" -> Some 1
  | "MEM" -> Some 2
  | "NEG" -> Some 1
