@@ -6,9 +6,10 @@
 
 steps:
   - simple_align:
-      cases: false
-      top_level_patterns: false
-      records: false
+      cases: never
+      top_level_patterns: never
+      records: never
+      multi_way_if: never
   - imports:
       align: none
       list_align: after_alias
