@@ -18,13 +18,13 @@ import Duplo.Tree hiding (loop)
 import AST.Pretty
 import AST.Skeleton
 import Cli.Types
-import Parser
 import ParseTree
+import Parser
 import Product
 import Range
 
 class HasLigoClient m => HasScopeForest impl m where
-  scopeForest :: Source -> LIGO Info -> m ScopeForest
+  scopeForest :: Source -> SomeLIGO Info -> m ScopeForest
 
 instance {-# OVERLAPPABLE #-} Pretty x => Show x where
   show = show . pp
@@ -48,7 +48,7 @@ data ScopedDecl = ScopedDecl
   deriving Show via PP ScopedDecl
 
 newtype Parameter = Parameter
-  { parOrigin :: Range
+  { parPresentation :: Text
   }
   deriving stock Show
   deriving newtype Pretty
@@ -180,7 +180,9 @@ spine r (only -> (i, trees)) = if
   | leq r (getRange i) -> foldMap (spine r) trees <> [getElem @(Set DeclRef) i]
   | otherwise -> []
 
-addLocalScopes :: forall impl m. HasScopeForest impl m => Source -> LIGO Info -> m (LIGO Info')
+addLocalScopes
+  :: forall impl m. HasScopeForest impl m
+  => Source -> SomeLIGO Info -> m (SomeLIGO Info')
 addLocalScopes src tree = do
   forest <- scopeForest @impl src tree
 
@@ -190,7 +192,8 @@ addLocalScopes src tree = do
       let env = envAtPoint (getRange i) forest
       return ((env :> Nothing :> i) :< fs')
 
-  descent @(Product Info) @(Product Info') @RawLigoList @RawLigoList defaultHandler
+  withNestedLIGO tree $
+    descent @(Product Info) @(Product Info') @RawLigoList @RawLigoList defaultHandler
     [ Descent \(i, Name t) -> do
         let env = envAtPoint (getRange i) forest
         return (env :> Just Variable :> i, Name t)
@@ -203,4 +206,3 @@ addLocalScopes src tree = do
         let env = envAtPoint (getRange i) forest
         return (env :> Just Type :> i, TypeName t)
     ]
-    tree

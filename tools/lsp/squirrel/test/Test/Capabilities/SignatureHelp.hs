@@ -2,15 +2,13 @@ module Test.Capabilities.SignatureHelp
   ( test_simpleFunctionCall
   ) where
 
-import qualified Data.ByteString as BS (readFile)
 import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion, testCase)
 
 import AST (Fallback)
 import AST.Capabilities.SignatureHelp
-  (ParameterInformation (..), SignatureInformation (..), findSignatures, makeSignatureLabel,
-  runSigHelpM)
+  (ParameterInformation (..), SignatureInformation (..), findSignatures, makeSignatureLabel)
 import AST.Scope.Common (HasScopeForest)
 import Extension (ElimExt (..), onExt)
 import Range (Range, point)
@@ -58,7 +56,7 @@ test_simpleFunctionCall
       parameterLabel <- flip onExt filename ElimExt
         { eePascal = "(const i : int)"
         , eeCaml = "(i : int)"
-        , eeReason = "i : int"
+        , eeReason = "(i : int)"
         }
       let parameter = ParameterInformation
             { _label = parameterLabel
@@ -67,8 +65,7 @@ test_simpleFunctionCall
 
       let filepath = contractsDir </> "function-call" </> filename
       tree <- readContractWithScopes @parser filepath
-      contents <- BS.readFile filepath
-      let results = runSigHelpM tree contents (findSignatures position)
+      let results = findSignatures tree position
       results `shouldBe` [ SignatureInformation
                            { _label = makeSignatureLabel "bar" [parameterLabel]
                            , _documentation = Just ""

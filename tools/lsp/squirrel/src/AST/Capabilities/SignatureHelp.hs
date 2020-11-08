@@ -6,16 +6,12 @@ module AST.Capabilities.SignatureHelp
   , findSignatures
   , getSignatureHelp
   , makeSignatureLabel
-  , runSigHelpM
   ) where
 
 import qualified Language.Haskell.LSP.Types as LSP
   (List (..), ParameterInformation (..), SignatureHelp (..), SignatureInformation (..))
 
 import Control.Monad (void)
-import Control.Monad.Reader (Reader, asks, runReader)
-import Control.Monad.Trans.Maybe (MaybeT (..), runMaybeT)
-import Data.ByteString (ByteString)
 import Data.Foldable (asum)
 import Data.Maybe (maybeToList)
 import Data.Text (Text)
@@ -25,26 +21,21 @@ import Duplo.Pretty (fsep, pp, ppToText)
 import Duplo.Tree (match, spineTo)
 
 import AST.Capabilities.Find (CanSearch)
-import AST.Scope (ScopedDecl (..))
-import AST.Scope.Common (Category (Variable), Parameter (..), lookupEnv, ofCategory)
+import AST.Scope (Parameter (..), ScopedDecl (..))
+import AST.Scope.Common (Category (Variable), lookupEnv, ofCategory)
 import AST.Skeleton (Expr (Apply), LIGO)
 import Product (Product, getElem)
-import Range (Range, cutOut)
-
--- | Embed 'Maybe' actions into 'MaybeT m'
-liftMaybe :: Applicative m => Maybe a -> MaybeT m a
-liftMaybe = MaybeT . pure
+import Range (Range)
 
 -- | Find a 'ScopedDecl' of a function that is applied at the given position.
 findNestingFunction
-  :: CanSearch xs => Range -> MaybeT (SigHelpM xs) ScopedDecl
-findNestingFunction position = do
-  tree <- asks sheTree
-  liftMaybe $ do
-    let covers = spineTo (leq position . getElem) tree
-    (callInfo, fName) <- asum (map extractFunctionCall covers)
-    let termEnv = filter (ofCategory Variable) (getElem callInfo)
-    lookupEnv fName termEnv
+  :: CanSearch xs => LIGO xs -> Range -> Maybe ScopedDecl
+findNestingFunction tree position = do
+  (callInfo, fName) <- asum (map extractFunctionCall covers)
+  let termEnv = filter (ofCategory Variable) (getElem callInfo)
+  lookupEnv fName termEnv
+  where
+    covers = spineTo (leq position . getElem) tree
 
 -- | If the given tree is a function application, extract it's information
 -- characteristics and the function's name.
@@ -58,14 +49,13 @@ extractFunctionCall tree = do
 -- is what will represent the function, its documentation comments and its
 -- parameters (if present, they must be a part of the label). Parameters might
 -- be highlighted by the editor.
-findSignatures :: CanSearch xs => Range -> SigHelpM xs [LSP.SignatureInformation]
-findSignatures position = maybeToList <$> runMaybeT do
-  ScopedDecl{..} <- findNestingFunction position
-  params <- liftMaybe _sdParams
-  contents <- asks sheContents
-  let paramOrigins = map parOrigin params
-      label = makeSignatureLabel _sdName paramLabels
-      paramLabels = map (`cutOut` contents) paramOrigins
+findSignatures
+  :: CanSearch xs => LIGO xs -> Range -> [LSP.SignatureInformation]
+findSignatures tree position = maybeToList do
+  ScopedDecl{..} <- findNestingFunction tree position
+  params <- _sdParams
+  let label = makeSignatureLabel _sdName paramLabels
+      paramLabels = map parPresentation params
   pure LSP.SignatureInformation
     { _label = label
     , _documentation = Just (ppToText (fsep (map pp _sdDoc)))
@@ -86,25 +76,10 @@ toLspParameter name = LSP.ParameterInformation name Nothing
 -- 'SignatureHelp'.
 --
 -- See 'findSignatures'.
-getSignatureHelp :: CanSearch xs => Range -> SigHelpM xs LSP.SignatureHelp
-getSignatureHelp position = do
-  signatures <- findSignatures position
-  pure LSP.SignatureHelp
-    { _signatures = LSP.List signatures
-    , _activeSignature = Just 0
-    , _activeParameter = Nothing
-    }
-
--- | A context for signature help implementation which contains a tree and
--- contents of the contract we are operating upon.
-data SigHelpEnv xs = SigHelpEnv
-  { sheTree :: LIGO xs
-  , sheContents :: ByteString
+getSignatureHelp
+  :: CanSearch xs => LIGO xs -> Range -> LSP.SignatureHelp
+getSignatureHelp tree position = LSP.SignatureHelp
+  { _signatures = LSP.List (findSignatures tree position)
+  , _activeSignature = Just 0
+  , _activeParameter = Nothing
   }
-
-type SigHelpM xs = Reader (SigHelpEnv xs)
-
--- | Perform 'SigHelpM' action with a tree and contents of the contract the
--- action operates upon.
-runSigHelpM :: LIGO xs -> ByteString -> SigHelpM xs a -> a
-runSigHelpM tree contents = flip runReader (SigHelpEnv tree contents)

@@ -5,13 +5,14 @@ module AST.Scope.Fallback where
 import Control.Arrow ((&&&))
 import Control.Lens ((%~), (&))
 import Control.Monad.Catch.Pure
+import Control.Monad.Reader (Reader, ask, runReader)
 import Control.Monad.State
 import Control.Monad.Writer (Writer, WriterT, execWriterT, runWriter, tell)
 
 import Data.Foldable (for_, toList)
 import Data.Map (Map)
 import qualified Data.Map as Map
-import Data.Maybe (listToMaybe, maybeToList)
+import Data.Maybe (listToMaybe)
 import qualified Data.Set as Set
 import Data.Text (Text)
 
@@ -19,21 +20,24 @@ import Duplo.Lattice
 import Duplo.Pretty
 import Duplo.Tree hiding (loop)
 
+import AST.Pretty (TotalLPP, docToText, lppDialect)
+import AST.Scope.Common
 import AST.Skeleton
 import Cli.Types
 import Parser
 import Product
 import Range
-
-import AST.Scope.Common
+import Util (foldMapM)
 
 data Fallback
 
 instance HasLigoClient m => HasScopeForest Fallback m where
-  scopeForest _ = return . getEnv
+  scopeForest _ (SomeLIGO dialect ligo) = pure (runReader (getEnv ligo) dialect)
+
+type ScopeM = Reader Lang
 
 addReferences :: LIGO Info -> ScopeForest -> ScopeForest
-addReferences ligo = execState (loopM_ addRef ligo)
+addReferences ligo = execState $ loopM_ addRef ligo
   where
     addRef :: LIGO Info -> State ScopeForest ()
     addRef = \case
@@ -61,17 +65,17 @@ addReferences ligo = execState (loopM_ addRef ligo)
 
     addRefToDecl r sd = sd { _sdRefs = r : _sdRefs sd }
 
-getEnv :: LIGO Info -> ScopeForest
+getEnv :: LIGO Info -> ScopeM ScopeForest
 getEnv tree
   = addReferences tree
-  $ extractScopeForest
-  $ compressScopeTree
-  $ extractScopeTree
-  $ prepareTree tree
+  <$> extractScopeForest
+  <$> compressScopeTree
+  <$> extractScopeTree
+  <$> prepareTree tree
 
 prepareTree
   :: LIGO Info
-  -> LIGO '[[ScopedDecl], Bool, Range, [Text], Range, ShowRange, CodeSource]
+  -> ScopeM (LIGO '[[ScopedDecl], Bool, Range, [Text], Range, ShowRange, CodeSource])
 prepareTree
   = assignDecls
   . unSeq
@@ -88,6 +92,13 @@ loopM_ go = aux
     aux (r :< fs) = do
       for_ fs aux
       go $ r :< fs
+
+loopM
+  :: (Monad m, Traversable f)
+  => (Cofree f a -> m (Cofree f a)) -> (Cofree f a -> m (Cofree f a))
+loopM go = aux
+  where
+    aux (r :< fs) = go =<< ((r :<) <$> traverse aux fs)
 
 unLetRec
   :: ( Contains  Range     xs
@@ -156,62 +167,58 @@ assignDecls
      , Pretty (Product xs)
      )
   => LIGO xs
-  -> LIGO ([ScopedDecl] : Bool : Range : xs)
-assignDecls = loop go . fmap (\r -> [] :> False :> getRange r :> r)
+  -> ScopeM (LIGO ([ScopedDecl] : Bool : Range : xs))
+assignDecls = loopM go . fmap (\r -> [] :> False :> getRange r :> r)
   where
     go = \case
       (match -> Just (r, Let decl body)) -> do
-        let imm = getImmediateDecls decl
+        imm <- getImmediateDecls decl
         let r' :< body' = body
         let l' :< decl' = decl
         let r'' = putElem (getRange body) $ putElem True $ modElem (imm <>) r'
         let l'' = putElem (getRange decl) $ putElem True l'
-        make (r, Let (l'' :< decl') (r'' :< body'))
+        pure (make (r, Let (l'' :< decl') (r'' :< body')))
 
       (match -> Just (r, Lambda args ty body)) -> do
-        let imms = getImmediateDecls =<< args
+        imms <- foldMapM getImmediateDecls args
         let r' :< body' = body
         let r'' = putElem True $ modElem (imms <>) r'
-        make (r, Lambda args ty (r'' :< body'))
+        pure (make (r, Lambda args ty (r'' :< body')))
 
       (match -> Just (r, Alt pat body)) -> do
-        let imms = getImmediateDecls pat
+        imms <- getImmediateDecls pat
         let r' :< body' = body
         let r'' = putElem True $ modElem (imms <>) r'
-        make (r, Alt pat (r'' :< body'))
+        pure (make (r, Alt pat (r'' :< body')))
 
       (match -> Just (r, BFunction True n params ty b)) -> do
-        let imms = getImmediateDecls =<< params
-        let fDecl = functionScopedDecl (getElem r) n params ty b
+        imms <- foldMapM getImmediateDecls params
+        fDecl <- functionScopedDecl (getElem r) n params ty b
         let r' = putElem True $ modElem ((fDecl : imms) <>) r
-        make (r', BFunction True n params ty b)
+        pure (make (r', BFunction True n params ty b))
 
       (match -> Just (r, BFunction False n params ty b)) -> do
-        let imms = getImmediateDecls =<< params
-        let fDecl = functionScopedDecl (getElem r) n params ty b
+        imms <- foldMapM getImmediateDecls params
+        fDecl <- functionScopedDecl (getElem r) n params ty b
         let r' = putElem True (modElem (fDecl :) r)
         let b' = b & _extract %~ (putElem True . modElem (imms <>))
-        make (r', BFunction False n params ty b')
+        pure (make (r', BFunction False n params ty b'))
 
       (match -> Just (r, node@BVar{})) -> markAsScope r node
       (match -> Just (r, node@BConst{})) -> markAsScope r node
       (match -> Just (r, node@BParameter{})) -> markAsScope r node
       (match -> Just (r, node@IsVar{})) -> markAsScope r node
+      (match -> Just (r, node@BTypeDecl{})) -> markAsScope r node
 
-      it@(match -> Just (r, TypeDecl n ty)) -> do
-        let imms = getImmediateDecls it
-        let r'   = putElem True $ modElem (imms <>) r
-        make (r', TypeDecl n ty)
+      it -> pure it
 
-      it -> it
-
-    markAsScope range node =
-      let imms = getImmediateDecls (make (range, node))
-          range' = putElem True (modElem (imms <>) range)
-      in make (range', node)
+    markAsScope range node = do
+      imms <- getImmediateDecls (make (range, node))
+      let range' = putElem True (modElem (imms <>) range)
+      pure (make (range', node))
 
 functionScopedDecl
-  :: ( HasRange param
+  :: ( TotalLPP param
      , HasRange body
      , Eq (Product nameInfo)
      , Modifies (Product nameInfo)
@@ -223,16 +230,19 @@ functionScopedDecl
   -> [param]
   -> Maybe (LIGO whatever)
   -> body
-  -> ScopedDecl
-functionScopedDecl docs nameNode params typ body = ScopedDecl
-  { _sdName   = name
-  , _sdOrigin = origin
-  , _sdBody   = Just $ getRange body
-  , _sdType   = IsType . void' <$> typ
-  , _sdRefs   = []
-  , _sdDoc    = docs
-  , _sdParams = Just (map (Parameter . getRange) params)
-  }
+  -> ScopeM ScopedDecl
+functionScopedDecl docs nameNode paramNodes typ body = do
+  dialect <- ask
+  let params = map (Parameter . docToText . lppDialect dialect) paramNodes
+  pure $ ScopedDecl
+    { _sdName   = name
+    , _sdOrigin = origin
+    , _sdBody   = Just $ getRange body
+    , _sdType   = IsType . void' <$> typ
+    , _sdRefs   = []
+    , _sdDoc    = docs
+    , _sdParams = Just params
+    }
   where
     (origin, name) = getName nameNode
 
@@ -295,53 +305,53 @@ getImmediateDecls
      , Eq (Product xs)
      )
   => LIGO xs
-  -> [ScopedDecl]
+  -> ScopeM [ScopedDecl]
 getImmediateDecls = \case
   (match -> Just (r, pat)) -> do
     case pat of
       IsVar v -> do
         let (r', name) = getName v
-        [ScopedDecl name r' Nothing Nothing [] (getElem r) Nothing]
+        pure [ScopedDecl name r' Nothing Nothing [] (getElem r) Nothing]
 
-      IsTuple    xs   -> getImmediateDecls =<< xs
-      IsList     xs   -> getImmediateDecls =<< xs
+      IsTuple    xs   -> foldMapM getImmediateDecls xs
+      IsList     xs   -> foldMapM getImmediateDecls xs
       IsSpread   s    -> getImmediateDecls s
-      IsWildcard      -> []
+      IsWildcard      -> pure []
       IsAnnot    x _  -> getImmediateDecls x
-      IsCons     h t  -> getImmediateDecls h <> getImmediateDecls t
-      IsConstant _    -> []
-      IsConstr   _ xs -> getImmediateDecls =<< maybeToList xs
+      IsCons     h t  -> (<>) <$> getImmediateDecls h <*> getImmediateDecls t
+      IsConstant _    -> pure []
+      IsConstr   _ xs -> foldMapM getImmediateDecls xs
 
   (match -> Just (r, pat)) -> do
     case pat of
-      BFunction _ f params t b -> [functionScopedDecl (getElem r) f params t b]
+      BFunction _ f params t b -> pure <$> functionScopedDecl (getElem r) f params t b
 
       BVar v t b -> do
         let (r', name) = getName v
-        [ScopedDecl name r' (getRange <$> b) (IsType . void' <$> t) [] (getElem r) Nothing]
+        pure [ScopedDecl name r' (getRange <$> b) (IsType . void' <$> t) [] (getElem r) Nothing]
 
       BConst name typ (Just (layer -> Just (Lambda params _ body))) ->
-        [functionScopedDecl (getElem r) name params typ body]
+        pure <$> functionScopedDecl (getElem r) name params typ body
 
       BConst c t b -> do
         let (r', name) = getName c
-        [ScopedDecl name r' (getRange <$> b) (IsType . void' <$> t) [] (getElem r) Nothing]
+        pure [ScopedDecl name r' (getRange <$> b) (IsType . void' <$> t) [] (getElem r) Nothing]
 
       BParameter n t -> do
         let (r', name) = getName n
-        [ScopedDecl name r' Nothing (IsType . void' <$> Just t) [] (getElem r) Nothing]
+        pure [ScopedDecl name r' Nothing (IsType . void' <$> Just t) [] (getElem r) Nothing]
 
       BTypeDecl t b -> do
         let (r', name) = getTypeName t
-        [ScopedDecl name r' (Just $ getRange b) kind [] (getElem r) Nothing]
+        pure [ScopedDecl name r' (Just $ getRange b) kind [] (getElem r) Nothing]
 
-      BAttribute _ -> []
-      BInclude _ -> []
+      BAttribute _ -> pure []
+      BInclude _ -> pure []
 
   (match -> Just (_, Parameters ps)) -> do
-    ps >>= getImmediateDecls
+    foldMapM getImmediateDecls ps
 
-  _ -> []
+  _ -> pure []
 
 kind :: Maybe TypeOrKind
 kind = Just $ IsKind Star

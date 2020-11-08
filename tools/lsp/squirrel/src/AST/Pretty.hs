@@ -6,13 +6,13 @@
 module AST.Pretty where
 
 import Data.Sum
-import qualified Data.Text as Text
+import Data.Text (Text)
+import qualified Data.Text as Text (pack, take)
 
 import AST.Skeleton
 
 import Data.Maybe (isJust)
 import Duplo (Cofree ((:<)), Layers)
-import Duplo.Error (Err (Err))
 import Duplo.Pretty
   (Doc, Modifies (..), PP (PP), Pretty (..), Pretty1 (..), above, brackets, color, empty, fsep,
   indent, parens, ppToText, punctuate, ($+$), (<+>), (<.>))
@@ -31,7 +31,7 @@ class
     lpp = pp
 
 instance LPP dialect () where
-instance LPP dialect Text.Text where
+instance LPP dialect Text where
 instance LPP dialect Doc where
 
 class
@@ -96,8 +96,8 @@ instance
   where
   lpp (d :< f) = ascribe d $ lpp1 @d $ lpp @d <$> f
 
-instance LPP d msg => LPP1 d (Err msg) where
-  lpp1 (Err msg) = lpp @d msg
+instance LPP1 d Error where
+  lpp1 (Error msg _) = lpp @d msg
 
 -- class LPPProd (dialect :: Lang) xs where
 --   lppProd :: Product xs -> Doc
@@ -121,10 +121,10 @@ instance LPP d msg => LPP1 d (Err msg) where
 -- Helpers
 ----------------------------------------------------------------------------
 
-sexpr :: Text.Text -> [Doc] -> Doc
+sexpr :: Text -> [Doc] -> Doc
 sexpr header items = "(" <.> pp header `indent` foldr above empty items <.> ")"
 
-sop :: Doc -> Text.Text -> [Doc] -> Doc
+sop :: Doc -> Text -> [Doc] -> Doc
 sop a op b = "(" <.> a `indent` pp op `indent` foldr above empty b <.> ")"
 
 blockWith :: forall dialect p . LPP dialect p => (Doc -> Doc) -> [p] -> Doc
@@ -687,3 +687,14 @@ instance LPP1 'Caml Pattern where
 instance LPP1 'Caml TField where
   lpp1 = \case
     TField      n t -> n <.> ":" `indent` t
+
+type TotalLPP expr = (LPP 'Pascal expr, LPP 'Caml expr, LPP 'Reason expr)
+
+lppDialect :: TotalLPP expr => Lang -> expr -> Doc
+lppDialect dialect = case dialect of
+  Pascal -> lpp @'Pascal
+  Caml -> lpp @'Caml
+  Reason -> lpp @'Reason
+
+docToText :: Doc -> Text
+docToText = Text.pack . show

@@ -31,8 +31,11 @@ import Product (Product (Nil, (:>)))
 -- example = "../../../src/test/contracts/chain_id.ligo"
 -- example = "../../../src/test/contracts/closure-3.ligo"
 
-recognise :: RawTree -> ParserM (LIGO Info)
-recognise = descent (error "Reasonligo.recognise") $ map usingScope
+recognise :: SomeRawTree -> ParserM (SomeLIGO Info)
+recognise (SomeRawTree dialect rawTree)
+  = fmap (SomeLIGO dialect)
+  $ flip (descent (error "Pascaligo.recognise")) rawTree
+  $ map usingScope
   [ -- Contract
     Descent do
       boilerplate \case

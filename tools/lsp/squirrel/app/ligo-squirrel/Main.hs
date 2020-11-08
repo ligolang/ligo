@@ -22,20 +22,18 @@ import qualified Language.Haskell.LSP.Types.Lens as J
 import qualified Language.Haskell.LSP.Utility as U
 
 
-import System.Exit
-import qualified System.Log as L
-
 import AST
 import qualified ASTMap
 import Cli.Types
 import qualified Config
 import Language.LSP.Util (MessageDescription (..), describeFromClientMessage)
 import qualified Log
-import ParseTree (srcToBytestring)
 import Product
-import Range
 import RIO (RIO)
 import qualified RIO
+import Range
+import System.Exit
+import qualified System.Log as L
 
 main :: IO ()
 main = do
@@ -230,9 +228,7 @@ handleSignatureHelpRequest req = do
   let uri = req ^. J.params . J.textDocument . J.uri
   let position = req ^. J.params . J.position & fromLspPosition
   (tree, _) <- RIO.fetch (J.toNormalizedUri uri)
-  source <- RIO.preload uri
-  contents <- liftIO (srcToBytestring source)
-  let signatureHelp = runSigHelpM tree contents (getSignatureHelp position)
+  let signatureHelp = getSignatureHelp tree position
   RIO.respondWith req RspSignatureHelp signatureHelp
 
 handleFoldingRangeRequest :: J.FoldingRangeRequest -> RIO ()

@@ -1,14 +1,15 @@
-
-module Extension where
+module Extension
+  ( ElimExt (..)
+  , Lang (..)
+  , UnsupportedExtension (..)
+  , getExt
+  , onExt
+  ) where
 
 import Control.Monad.Catch
-
 import System.FilePath
 
-data Ext
-  = Pascal
-  | Caml
-  | Reason
+import AST.Skeleton (Lang (..))
 
 data ElimExt a = ElimExt
   { eePascal :: a
@@ -20,7 +21,7 @@ data UnsupportedExtension = UnsupportedExtension String
   deriving stock Show
   deriving anyclass Exception
 
-getExt :: MonadThrow m => FilePath -> m Ext
+getExt :: MonadThrow m => FilePath -> m Lang
 getExt path = do
   case takeExtension path of
     ".religo" -> return Reason

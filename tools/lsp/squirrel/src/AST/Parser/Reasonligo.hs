@@ -35,8 +35,11 @@ import Product
 -- example = "./contracts/arithmetic.religo"
 -- example = "./contracts/FA2.religo"
 
-recognise :: RawTree -> ParserM (LIGO Info)
-recognise = descent (error "Reasonligo.recognise") $ map usingScope
+recognise :: SomeRawTree -> ParserM (SomeLIGO Info)
+recognise (SomeRawTree dialect rawTree)
+  = fmap (SomeLIGO dialect)
+  $ flip (descent (error "Reasonligo.recognise")) rawTree
+  $ map usingScope
   [ -- Contract
     Descent do
       boilerplate $ \case

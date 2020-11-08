@@ -10,9 +10,10 @@
 module ParseTree
   ( -- * Tree/Forest
     ParseTree(..)
-  , Source(..)
-  , RawTree
   , RawInfo
+  , RawTree
+  , SomeRawTree(..)
+  , Source(..)
 
     -- * Invoke the TreeSitter and get the tree it outputs
   , toParseTree
@@ -81,6 +82,10 @@ srcToText = \case
   Text       _ t -> return t
   ByteString _ s -> return $ Text.decodeUtf8 $ s
 
+data SomeRawTree where
+  SomeRawTree
+    :: Lang -> RawTree -> SomeRawTree
+
 type RawTree = Tree '[ParseTree] RawInfo
 type RawInfo = Product [Range, Text]
 
@@ -121,16 +126,16 @@ instance Pretty1 ParseTree where
       )
 
 -- | Feed file contents into PascaLIGO grammar recogniser.
-toParseTree :: Source -> IO RawTree
+toParseTree :: Source -> IO SomeRawTree
 toParseTree = unsafeDebounce \fin -> do
   Log.debug "TS" [Log.i|Reading #{fin}|]
-  language <- onExt ElimExt
-    { eePascal = tree_sitter_PascaLigo
-    , eeCaml   = tree_sitter_CameLigo
-    , eeReason = tree_sitter_ReasonLigo
+  (language, dialect) <- onExt ElimExt
+    { eePascal = (tree_sitter_PascaLigo, Pascal)
+    , eeCaml   = (tree_sitter_CameLigo, Caml)
+    , eeReason = (tree_sitter_ReasonLigo, Reason)
     } (srcPath fin)
 
-  withParser language \parser -> do
+  SomeRawTree dialect <$> withParser language \parser -> do
     src <- srcToBytestring fin
     res <- withParseTree parser src \tree -> do
       withRootNode tree (peek >=> go fin src)

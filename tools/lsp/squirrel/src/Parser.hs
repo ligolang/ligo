@@ -4,22 +4,22 @@
 module Parser where
 
 import Control.Arrow
-import Data.Maybe (mapMaybe)
 import Control.Monad.Catch
 import Control.Monad.RWS hiding (Product)
+import Data.Maybe (mapMaybe)
 
 import Data.Functor
 import Data.String.Interpolate (i)
 import Data.Text (Text)
 import qualified Data.Text as Text
 
-import Duplo.Tree
 import Duplo.Pretty
+import Duplo.Tree
 
-import ParseTree
-import Range
 import AST.Skeleton (Error (..))
+import ParseTree
 import Product
+import Range
 
 {-
   Comment grabber has 2 buffers: 1 and 2.

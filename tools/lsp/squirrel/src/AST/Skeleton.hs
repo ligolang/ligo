@@ -1,4 +1,3 @@
-
 {- | The AST and auxillary types along with their pretty-printers.
 
      The comments for fields in types are the type before it was made untyped.
@@ -6,18 +5,32 @@
 
 module AST.Skeleton where
 
+import Control.Lens.Lens (Lens, lens)
 import Data.Text (Text)
 
 import Duplo.Tree
 
 import Product
 
+data SomeLIGO xs where
+  SomeLIGO :: Lang -> LIGO xs -> SomeLIGO xs
+
+nestedLIGO :: Lens (SomeLIGO xs) (SomeLIGO xs') (LIGO xs) (LIGO xs')
+nestedLIGO = lens getLIGO setLIGO
+  where
+    getLIGO (SomeLIGO _ ligo) = ligo
+    setLIGO (SomeLIGO d _) ligo = SomeLIGO d ligo
+
+withNestedLIGO
+  :: Functor f => SomeLIGO xs -> (LIGO xs -> f (LIGO xs')) -> f (SomeLIGO xs')
+withNestedLIGO = flip nestedLIGO
+
 -- | The AST for Pascali... wait. It is, em, universal one.
 --
 --   TODO: Rename; add stuff if CamlLIGO/ReasonLIGO needs something.
 --
 -- type LIGO        = Tree RawLigoList
-type LIGO     xs = Tree RawLigoList (Product xs)
+type LIGO xs = Tree RawLigoList (Product xs)
 type Tree' fs xs = Tree fs (Product xs)
 
 type RawLigoList =
