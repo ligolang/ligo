@@ -1,74 +1,135 @@
+{-# LANGUAGE RecordWildCards #-}
+
 module Test.Capabilities.SignatureHelp
   ( test_simpleFunctionCall
   ) where
 
+import Data.Text (Text)
 import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion, testCase)
 
 import AST (Fallback)
 import AST.Capabilities.SignatureHelp
-  (ParameterInformation (..), SignatureInformation (..), findSignatures, makeSignatureLabel)
+  (SignatureInformation (..), findSignature, makeSignatureLabel, toLspParameter)
 import AST.Scope.Common (HasScopeForest)
-import Extension (ElimExt (..), onExt)
+import Extension (getExt)
 import Range (Range, point)
 
 import Test.Capabilities.Util (contractsDir)
 import Test.FixedExpectations (shouldBe)
 import Test.Util (readContractWithScopes)
 
+data TestInfo = TestInfo
+  { tiContract :: String
+  , tiCursor :: Range
+  , tiFunction :: Text
+  , tiParameters :: [Text]
+  , tiActiveParamNo :: Int
+  }
+
+casesInfo :: [TestInfo]
+casesInfo =
+  [ TestInfo
+    { tiContract = "all-okay.ligo"
+    , tiCursor = point 3 44
+    , tiFunction = "bar"
+    , tiParameters = ["const i : int"]
+    , tiActiveParamNo = 0
+    }
+  , TestInfo
+    { tiContract = "no-params.ligo"
+    , tiCursor = point 3 44
+    , tiFunction = "bar"
+    , tiParameters = ["const i : int"]
+    , tiActiveParamNo = 0
+    }
+  , TestInfo
+    { tiContract = "unclosed-paren.ligo"
+    , tiCursor = point 3 44
+    , tiFunction = "bar"
+    , tiParameters = ["const i : int"]
+    , tiActiveParamNo = 0
+    }
+  , TestInfo
+    { tiContract = "no-semicolon-in-block-after-var-decl.ligo"
+    , tiCursor = point 5 24
+    , tiFunction = "bar"
+    , tiParameters = ["const i : int"]
+    , tiActiveParamNo = 0
+    }
+  , TestInfo
+    { tiContract = "no-semicolon-in-block-after-const-decl.ligo"
+    , tiCursor = point 5 24
+    , tiFunction = "bar"
+    , tiParameters = ["const i : int"]
+    , tiActiveParamNo = 0
+    }
+  , TestInfo
+    { tiContract = "active-parameter-is-2nd.ligo"
+    , tiCursor = point 3 47
+    , tiFunction = "bar"
+    , tiParameters = ["const a : int", "const b : int"]
+    , tiActiveParamNo = 1
+    }
+
+  , TestInfo
+    { tiContract = "all-okay.mligo"
+    , tiCursor = point 3 32
+    , tiFunction = "bar"
+    , tiParameters = ["(i : int)"]
+    , tiActiveParamNo = 0
+    }
+  , TestInfo
+    { tiContract = "no-params.mligo"
+    , tiCursor = point 3 32
+    , tiFunction = "bar"
+    , tiParameters = ["(i : int)"]
+    , tiActiveParamNo = 0
+    }
+
+  , TestInfo
+    { tiContract = "all-okay.religo"
+    , tiCursor = point 3 35
+    , tiFunction = "bar"
+    , tiParameters = ["(i : int)"]
+    , tiActiveParamNo = 0
+    }
+  , TestInfo
+    { tiContract = "no-params.religo"
+    , tiCursor = point 3 35
+    , tiFunction = "bar"
+    , tiParameters = ["(i : int)"]
+    , tiActiveParamNo = 0
+    }
+  ]
+
 test_simpleFunctionCall :: TestTree
 test_simpleFunctionCall
   = testGroup "Signature Help on a simple function call"
     [fallbackGroup] -- TODO maybe add FromCompiler scopes testing
   where
-    functionCallContracts =
-      -- pascaligo
-      [ ("all-okay.ligo", point 3 44)
-      , ("no-params.ligo", point 3 44)
-      , ("unclosed-paren.ligo", point 3 44)
-      , ("no-semicolon-in-block-after-var-decl.ligo", point 5 24)
-      , ("no-semicolon-in-block-after-const-decl.ligo", point 5 24)
-
-      -- camligo
-      , ("all-okay.mligo", point 3 32)
-      , ("no-params.mligo", point 3 32)
-
-      -- reasonligo
-      , ("all-okay.religo", point 3 35)
-      , ("no-params.religo", point 3 35)
-      ]
-
     fallbackGroup = testGroup "Fallback scopes" (testCases @Fallback)
 
     testCases :: forall parser. HasScopeForest parser IO => [TestTree]
-    testCases = map (uncurry (makeTestCase @parser)) functionCallContracts
+    testCases = map (makeTestCase @parser) casesInfo
 
     makeTestCase
-      :: forall parser. HasScopeForest parser IO => String -> Range -> TestTree
-    makeTestCase filename = testCase filename . makeTest @parser filename
+      :: forall parser. HasScopeForest parser IO => TestInfo -> TestTree
+    makeTestCase info = testCase (tiContract info) (makeTest @parser info)
 
     makeTest
-      :: forall parser. HasScopeForest parser IO
-      => FilePath -> Range -> Assertion
-    makeTest filename position = do
-
-      parameterLabel <- flip onExt filename ElimExt
-        { eePascal = "(const i : int)"
-        , eeCaml = "(i : int)"
-        , eeReason = "(i : int)"
-        }
-      let parameter = ParameterInformation
-            { _label = parameterLabel
-            , _documentation = Nothing
-            }
-
-      let filepath = contractsDir </> "function-call" </> filename
+      :: forall parser. HasScopeForest parser IO => TestInfo -> Assertion
+    makeTest TestInfo{..} = do
+      let filepath = contractsDir </> "signature-help" </> tiContract
       tree <- readContractWithScopes @parser filepath
-      let results = findSignatures tree position
-      results `shouldBe` [ SignatureInformation
-                           { _label = makeSignatureLabel "bar" [parameterLabel]
-                           , _documentation = Just ""
-                           , _parameters = Just [parameter]
-                           }
-                         ]
+      dialect <- getExt filepath
+      let result = findSignature tree tiCursor
+      result `shouldBe`
+        Just ( SignatureInformation
+               { _label = makeSignatureLabel dialect tiFunction tiParameters
+               , _documentation = Just ""
+               , _parameters = Just (map toLspParameter tiParameters)
+               }
+             , tiActiveParamNo
+             )

@@ -11,7 +11,7 @@ import Duplo.Lattice
 import Duplo.Tree (Cofree (..), inject, make, only)
 
 import AST.Scope.Common
-import AST.Skeleton (TypeName (..))
+import AST.Skeleton (Lang, SomeLIGO (..), TypeName (..))
 import Cli
 import Product
 import Range
@@ -19,14 +19,14 @@ import Range
 data FromCompiler
 
 instance HasLigoClient m => HasScopeForest FromCompiler m where
-  scopeForest ast _ = do
+  scopeForest ast (SomeLIGO dialect _) = do
     (defs, _) <- getLigoDefinitions ast
-    return $ fromCompiler defs
+    return $ fromCompiler dialect defs
 
 -- | Extract `ScopeForest` from LIGO scope dump.
 --
-fromCompiler :: LigoDefinitions -> ScopeForest
-fromCompiler (LigoDefinitions decls scopes) =
+fromCompiler :: Lang -> LigoDefinitions -> ScopeForest
+fromCompiler dialect (LigoDefinitions decls scopes) =
     foldr (buildTree decls) (ScopeForest [] Map.empty) scopes
   where
     -- For a new scope to be injected, grab its range and decl and start
@@ -45,7 +45,10 @@ fromCompiler (LigoDefinitions decls scopes) =
     fromLigoDecl (LigoDefinitionScope n orig bodyR ty _) = do
       let r = fromLigoRangeOrDef orig
       ( DeclRef n r
-       , ScopedDecl n r (mbFromLigoRange bodyR) (fromLigoTy <$> ty) [] [] Nothing -- TODO LIGO-90
+       , (ScopedDecl
+           n r (mbFromLigoRange bodyR)
+           (fromLigoTy <$> ty) [] []
+           Nothing dialect) -- TODO LIGO-90
        )
 
     -- I cannot comprehend what does the stuff in Cli.Json means, neither

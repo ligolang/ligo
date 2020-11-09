@@ -44,6 +44,7 @@ data ScopedDecl = ScopedDecl
   , _sdRefs    :: [Range]
   , _sdDoc     :: [Text]
   , _sdParams  :: Maybe [Parameter]
+  , _sdDialect :: Lang
   }
   deriving Show via PP ScopedDecl
 
@@ -88,7 +89,7 @@ instance {-# OVERLAPS #-} Pretty FullEnv where
       mergeFE fe = getTag @"vars" @Env fe Prelude.<> getTag @"types" fe
 
 instance Pretty ScopedDecl where
-  pp (ScopedDecl n o _ t refs doc params) =
+  pp (ScopedDecl n o _ t refs doc params _) =
     sexpr "decl" [pp n, pp o, pp t, pp params, pp refs, pp doc]
 
 instance Pretty TypeOrKind where

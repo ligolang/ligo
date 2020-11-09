@@ -228,23 +228,77 @@ functionScopedDecl
   => [Text]
   -> LIGO nameInfo
   -> [param]
-  -> Maybe (LIGO whatever)
+  -> Maybe (LIGO typ)
   -> body
   -> ScopeM ScopedDecl
 functionScopedDecl docs nameNode paramNodes typ body = do
   dialect <- ask
   let params = map (Parameter . docToText . lppDialect dialect) paramNodes
   pure $ ScopedDecl
-    { _sdName   = name
+    { _sdName = name
     , _sdOrigin = origin
-    , _sdBody   = Just $ getRange body
-    , _sdType   = IsType . void' <$> typ
-    , _sdRefs   = []
-    , _sdDoc    = docs
+    , _sdBody = Just $ getRange body
+    , _sdType = IsType . void' <$> typ
+    , _sdRefs = []
+    , _sdDoc = docs
     , _sdParams = Just params
+    , _sdDialect = dialect
     }
   where
     (origin, name) = getName nameNode
+
+valueScopedDecl
+  :: ( HasRange body
+     , Eq (Product nameInfo)
+     , Modifies (Product nameInfo)
+     , Contains Range nameInfo
+     , Contains ShowRange nameInfo
+     )
+  => [Text]
+  -> LIGO nameInfo
+  -> Maybe (LIGO typ)
+  -> Maybe body
+  -> ScopeM ScopedDecl
+valueScopedDecl docs nameNode typ body = do
+  dialect <- ask
+  pure $ ScopedDecl
+    { _sdName = name
+    , _sdOrigin = origin
+    , _sdBody = getRange <$> body
+    , _sdType = IsType . void' <$> typ
+    , _sdRefs = []
+    , _sdDoc = docs
+    , _sdParams = Nothing
+    , _sdDialect = dialect
+    }
+  where
+    (origin, name) = getName nameNode
+
+typeScopedDecl
+  :: ( HasRange body
+     , Eq (Product nameInfo)
+     , Modifies (Product nameInfo)
+     , Contains Range nameInfo
+     , Contains ShowRange nameInfo)
+  => [Text] -> LIGO nameInfo -> body -> ScopeM ScopedDecl
+typeScopedDecl docs nameNode body = do
+  dialect <- ask
+  pure $ ScopedDecl
+    { _sdName = name
+    , _sdOrigin = origin
+    , _sdBody = Just (getRange body)
+    , _sdType = kind
+    , _sdRefs = []
+    , _sdDoc = docs
+    , _sdParams = Nothing
+    , _sdDialect = dialect
+    }
+  where
+    (origin, name) = getTypeName nameNode
+
+-- | Wraps a value into a list. Like 'pure' but perhaps with a more clear intent.
+singleton :: a -> [a]
+singleton x = [x]
 
 extractScopeTree
   :: LIGO ([ScopedDecl] : Bool : Range : xs)
@@ -309,9 +363,8 @@ getImmediateDecls
 getImmediateDecls = \case
   (match -> Just (r, pat)) -> do
     case pat of
-      IsVar v -> do
-        let (r', name) = getName v
-        pure [ScopedDecl name r' Nothing Nothing [] (getElem r) Nothing]
+      IsVar v ->
+        singleton <$> valueScopedDecl (getElem r) v Nothing (Nothing @Range)
 
       IsTuple    xs   -> foldMapM getImmediateDecls xs
       IsList     xs   -> foldMapM getImmediateDecls xs
@@ -324,32 +377,23 @@ getImmediateDecls = \case
 
   (match -> Just (r, pat)) -> do
     case pat of
-      BFunction _ f params t b -> pure <$> functionScopedDecl (getElem r) f params t b
+      BFunction _ f params t b ->
+        singleton <$> functionScopedDecl (getElem r) f params t b
 
-      BVar v t b -> do
-        let (r', name) = getName v
-        pure [ScopedDecl name r' (getRange <$> b) (IsType . void' <$> t) [] (getElem r) Nothing]
+      BVar v t b -> singleton <$> valueScopedDecl (getElem r) v t b
 
       BConst name typ (Just (layer -> Just (Lambda params _ body))) ->
-        pure <$> functionScopedDecl (getElem r) name params typ body
+        singleton <$> functionScopedDecl (getElem r) name params typ body
 
-      BConst c t b -> do
-        let (r', name) = getName c
-        pure [ScopedDecl name r' (getRange <$> b) (IsType . void' <$> t) [] (getElem r) Nothing]
+      BConst c t b -> singleton <$> valueScopedDecl (getElem r) c t b
 
-      BParameter n t -> do
-        let (r', name) = getName n
-        pure [ScopedDecl name r' Nothing (IsType . void' <$> Just t) [] (getElem r) Nothing]
+      BParameter n t
+        -> singleton <$> valueScopedDecl (getElem r) n (Just t) (Nothing @Range)
 
-      BTypeDecl t b -> do
-        let (r', name) = getTypeName t
-        pure [ScopedDecl name r' (Just $ getRange b) kind [] (getElem r) Nothing]
+      BTypeDecl t b -> singleton <$> typeScopedDecl (getElem r) t b
 
       BAttribute _ -> pure []
       BInclude _ -> pure []
-
-  (match -> Just (_, Parameters ps)) -> do
-    foldMapM getImmediateDecls ps
 
   _ -> pure []
 

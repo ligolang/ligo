@@ -58,7 +58,6 @@ deriving via PP (Undefined it) instance Pretty it => Show (Undefined it)
 deriving via PP (Contract it) instance Pretty it => Show (Contract it)
 deriving via PP (RawContract it) instance Pretty it => Show (RawContract it)
 deriving via PP (Binding it) instance Pretty it => Show (Binding it)
-deriving via PP (Parameters it) instance Pretty it => Show (Parameters it)
 deriving via PP (Type it) instance Pretty it => Show (Type it)
 deriving via PP (Variant it) instance Pretty it => Show (Variant it)
 deriving via PP (TField it) instance Pretty it => Show (TField it)
@@ -180,10 +179,6 @@ instance Pretty1 Binding where
         , [":", pp ty]
         , ["=", body]
         ]
-
-instance Pretty1 Parameters where
-  pp1 = \case
-    Parameters them -> sexpr "params" them
 
 instance Pretty1 Type where
   pp1 = \case
@@ -352,12 +347,6 @@ instance LPP1 d Path where
 
 -- instances needed to pass instance resolution during compilation
 
-instance LPP1 'Reason Parameters where
-  lpp1 = error "unexpected `Parameters` node"
-
-instance LPP1 'Caml Parameters where
-  lpp1 = error "unexpected `Parameters` node"
-
 instance LPP1 'Caml MapBinding where
   lpp1 = error "unexpected `MapBinding` node"
 
@@ -371,7 +360,7 @@ instance LPP1 'Pascal Type where
     TArrow    dom codom -> dom <+> "->" <+> codom
     TRecord   fields    -> "record [" `above` blockWith (<.> ";") fields `above` "]"
     TProduct  [element] -> element
-    TProduct  elements  -> parens $ train "*" elements
+    TProduct  elements  -> parens $ train " *" elements
     TSum      (x:xs)    -> x <.> blockWith ("|"<.>) xs
     TSum      []        -> error "looks like you've been given malformed AST" -- never called
     -- TApply    f [x]      -> f <.> x
@@ -491,10 +480,6 @@ instance LPP1 'Pascal MapBinding where
   lpp1 = \case
     MapBinding k v -> lpp k <+> "->" <+> lpp v
 
-instance LPP1 'Pascal Parameters where
-  lpp1 = \case
-    Parameters them -> parens $ train ";" them
-
 ----------------------------------------------------------------------------
 -- Reason
 ----------------------------------------------------------------------------
@@ -598,7 +583,7 @@ instance LPP1 'Caml Type where
     TVar      name      -> name
     TArrow    dom codom -> dom <+> "->" <+> codom
     TRecord   fields    -> "{" `indent` blockWith (<.> ";") fields `above` "}"
-    TProduct  elements  -> tuple elements
+    TProduct  elements  -> train " *" elements
     TSum      (x:xs)    -> x <.> blockWith ("| "<.>) xs
     TSum      []        -> error "malformed TSum type" -- never called
     TApply    f xs      -> f <+> lpp xs
@@ -680,7 +665,7 @@ instance LPP1 'Caml Pattern where
     IsWildcard             -> "_"
     IsSpread     n         -> "..." <.> lpp n
     IsList       l         -> list l
-    IsTuple      t         -> tuple t
+    IsTuple      t         -> train "," t
     IsCons       h t       -> h <+> "::" <+> t
     pat                    -> error "unexpected `Pattern` node failed with:" <+> pp pat
 

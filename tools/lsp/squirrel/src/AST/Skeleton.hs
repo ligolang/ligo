@@ -37,7 +37,7 @@ type RawLigoList =
   [ Name, Path, QualifiedName, Pattern, Constant, FieldAssignment
   , MapBinding, Alt, Expr, TField, Variant, Type, Binding
   , RawContract, TypeName, FieldName
-  , Error, Parameters, Ctor, Contract, NameDecl
+  , Error, Ctor, Contract, NameDecl
   ]
 
 data Undefined it
@@ -69,10 +69,6 @@ data Binding it
   deriving stock (Functor, Foldable, Traversable)
 
 type IsRec = Bool
-
-data Parameters it
-  = Parameters [it]
-  deriving stock (Functor, Foldable, Traversable)
 
 data Type it
   = TArrow    it it    -- ^ (Type) (Type)

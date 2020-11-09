@@ -3,19 +3,22 @@
 module AST.Capabilities.SignatureHelp
   ( LSP.ParameterInformation (..)
   , LSP.SignatureInformation (..)
-  , findSignatures
+  , findSignature
   , getSignatureHelp
   , makeSignatureLabel
+  , toLspParameter
   ) where
 
 import qualified Language.Haskell.LSP.Types as LSP
   (List (..), ParameterInformation (..), SignatureHelp (..), SignatureInformation (..))
 
+import Control.Lens (_1, _2, _Just, (^..), (^?))
 import Control.Monad (void)
 import Data.Foldable (asum)
-import Data.Maybe (maybeToList)
+import Data.List (findIndex)
+import Data.Maybe (fromMaybe)
 import Data.Text (Text)
-import qualified Data.Text as Text (intercalate)
+import qualified Data.Text as Text (intercalate, unwords)
 import Duplo.Lattice (leq)
 import Duplo.Pretty (fsep, pp, ppToText)
 import Duplo.Tree (match, spineTo)
@@ -23,49 +26,58 @@ import Duplo.Tree (match, spineTo)
 import AST.Capabilities.Find (CanSearch)
 import AST.Scope (Parameter (..), ScopedDecl (..))
 import AST.Scope.Common (Category (Variable), lookupEnv, ofCategory)
-import AST.Skeleton (Expr (Apply), LIGO)
-import Product (Product, getElem)
-import Range (Range)
+import AST.Skeleton (Expr (Apply), LIGO, Lang (..))
+import Product (Contains, Product, getElem)
+import Range (Range (..), getRange)
 
--- | Find a 'ScopedDecl' of a function that is applied at the given position.
+-- | Find a 'ScopedDecl' of a function that is applied at the given position and the active
+-- parameter number (zero if no parameters).
 findNestingFunction
-  :: CanSearch xs => LIGO xs -> Range -> Maybe ScopedDecl
+  :: CanSearch xs => LIGO xs -> Range -> Maybe (ScopedDecl, Int)
 findNestingFunction tree position = do
-  (callInfo, fName) <- asum (map extractFunctionCall covers)
+  (callInfo, fName, paramRanges) <- asum (map extractFunctionCall covers)
   let termEnv = filter (ofCategory Variable) (getElem callInfo)
-  lookupEnv fName termEnv
+  decl <- lookupEnv fName termEnv
+  pure (decl, activeParamNo paramRanges)
   where
     covers = spineTo (leq position . getElem) tree
+    activeParamNo paramRanges
+      = fromMaybe 0 (findIndex (`notToTheLeftOf` position) paramRanges)
+    Range _ finish _ `notToTheLeftOf` Range start _ _ = finish >= start
 
 -- | If the given tree is a function application, extract it's information
--- characteristics and the function's name.
-extractFunctionCall :: LIGO xs -> Maybe (Product xs, Text)
+-- characteristics, the function's name and applied parameters' ranges.
+extractFunctionCall
+  :: Contains Range xs => LIGO xs -> Maybe (Product xs, Text, [Range])
 extractFunctionCall tree = do
-  (i, Apply name _) <- match tree
-  pure (i, ppToText (void name))
+  (i, Apply name params) <- match tree
+  pure (i, ppToText (void name), map getRange params)
 
 -- | Find all function signatures (one in this implementation) that could be
 -- applied at the given position. A function signature includes its label which
 -- is what will represent the function, its documentation comments and its
 -- parameters (if present, they must be a part of the label). Parameters might
 -- be highlighted by the editor.
-findSignatures
-  :: CanSearch xs => LIGO xs -> Range -> [LSP.SignatureInformation]
-findSignatures tree position = maybeToList do
-  ScopedDecl{..} <- findNestingFunction tree position
+findSignature
+  :: CanSearch xs => LIGO xs -> Range -> Maybe (LSP.SignatureInformation, Int)
+findSignature tree position = do
+  (ScopedDecl{..}, activeNo) <- findNestingFunction tree position
   params <- _sdParams
-  let label = makeSignatureLabel _sdName paramLabels
+  let label = makeSignatureLabel _sdDialect _sdName paramLabels
       paramLabels = map parPresentation params
-  pure LSP.SignatureInformation
-    { _label = label
-    , _documentation = Just (ppToText (fsep (map pp _sdDoc)))
-    , _parameters = Just (map toLspParameter paramLabels)
-    }
+  let sigInfo = LSP.SignatureInformation
+        { _label = label
+        , _documentation = Just (ppToText (fsep (map pp _sdDoc)))
+        , _parameters = Just (map toLspParameter paramLabels)
+        }
+  pure (sigInfo, activeNo)
 
--- | Make a function signature label by a function name and its parameters.
-makeSignatureLabel :: Text -> [Text] -> Text
-makeSignatureLabel name params
-  = name <> " (" <> Text.intercalate ", "  params <> ")"
+-- | Make a function signature label by a dialect, a function name and its parameters.
+makeSignatureLabel :: Lang -> Text -> [Text] -> Text
+makeSignatureLabel Pascal name params
+  = "function " <> name <> " (" <> Text.intercalate "; " params <> ")"
+makeSignatureLabel _ name params
+  = "let " <> name <> " " <> Text.unwords params
 
 -- | Make a 'ParameterInformation' by a parameter's name. For now, we don't
 -- support parameter docs.
@@ -79,7 +91,9 @@ toLspParameter name = LSP.ParameterInformation name Nothing
 getSignatureHelp
   :: CanSearch xs => LIGO xs -> Range -> LSP.SignatureHelp
 getSignatureHelp tree position = LSP.SignatureHelp
-  { _signatures = LSP.List (findSignatures tree position)
+  { _signatures = LSP.List (sigResult ^.. _Just . _1)
   , _activeSignature = Just 0
-  , _activeParameter = Nothing
+  , _activeParameter = sigResult ^? _Just . _2
   }
+  where
+    sigResult = findSignature tree position

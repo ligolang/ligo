@@ -46,11 +46,11 @@ recognise (SomeRawTree dialect rawTree)
   , Descent do
       boilerplate \case
         "let_expr"          -> Let       <$> field  "locals"    <*> field "body"
-        "fun_call"          -> Apply     <$> field  "f"         <*> fields "arguments"
-        "par_call"          -> Apply     <$> field  "f"         <*> fields "arguments"
-        "projection_call"   -> Apply     <$> field  "f"         <*> fields "arguments"
-        "Some_call"         -> Apply     <$> field  "constr"    <*> fields "arguments"
-        "constr_call"       -> Apply     <$> field  "constr"    <*> fields "arguments"
+        "fun_call"          -> Apply     <$> field  "f"         <*> fields "argument"
+        "par_call"          -> Apply     <$> field  "f"         <*> fields "argument"
+        "projection_call"   -> Apply     <$> field  "f"         <*> fields "argument"
+        "Some_call"         -> Apply     <$> field  "constr"    <*> fields "argument"
+        "constr_call"       -> Apply     <$> field  "constr"    <*> fields "argument"
         "arguments"         -> Tuple     <$> fields "argument"
         "unop"              -> UnOp      <$> field  "negate"    <*> field "arg"
         "binop"             -> BinOp     <$> field  "arg1"      <*> field "op"   <*> field "arg2"
@@ -69,7 +69,7 @@ recognise (SomeRawTree dialect rawTree)
         "skip"              -> return Skip
         "case_expr"         -> Case      <$> field  "subject"    <*> fields   "case"
         "case_instr"        -> Case      <$> field  "subject"    <*> fields   "case"
-        "fun_expr"          -> Lambda    <$> fields "parameters" <*> fieldOpt    "type"  <*> field "body"
+        "fun_expr"          -> Lambda    <$> fields "parameter"  <*> fieldOpt    "type"  <*> field "body"
         "for_cycle"         -> ForLoop   <$> field  "name"       <*> field    "begin" <*> field "end" <*> fieldOpt "step" <*> field "body"
         "for_box"           -> ForBox    <$> field  "key"        <*> fieldOpt "value" <*> field "kind"  <*> field "collection" <*> field "body"
         "while_loop"        -> WhileLoop <$> field  "breaker"    <*> field    "body"
@@ -143,17 +143,11 @@ recognise (SomeRawTree dialect rawTree)
     -- Declaration
   , Descent do
       boilerplate \case
-        "fun_decl"   -> BFunction <$> flag "recursive" <*> field "name" <*> fields "parameters" <*> fieldOpt "type" <*> field "body"
+        "fun_decl"   -> BFunction <$> flag "recursive" <*> field "name" <*> fields "parameter" <*> fieldOpt "type" <*> field "body"
         "const_decl" -> BConst    <$>             field    "name"       <*> fieldOpt "type" <*> fieldOpt "value"
         "var_decl"   -> BVar      <$>             field    "name"       <*> fieldOpt "type" <*> fieldOpt "value"
         "type_decl"  -> BTypeDecl <$>             field    "typeName"   <*> field "typeValue"
         "include"    -> BInclude  <$>             field    "filename"
-        _            -> fallthrough
-
-    -- Parameters
-  , Descent do
-      boilerplate \case
-        "parameters" -> Parameters <$> fields "parameter"
         _            -> fallthrough
 
     -- VarDecl

@@ -18,7 +18,6 @@ module Cli.Json
   , mbFromLigoRange
   , fromLigoRangeOrDef
   , fromLigoErrorToMsg
-  , toScopedDecl
   , prepareField
   )
 where
@@ -33,7 +32,6 @@ import Data.Text (Text)
 import Duplo.Pretty
 import GHC.Generics
 
-import AST.Scope.Common
 import AST.Skeleton (Error (..))
 import Parser (Msg)
 import Range
@@ -410,21 +408,22 @@ mbFromLigoRange
 fromLigoRangeOrDef :: LigoRange -> Range
 fromLigoRangeOrDef = fromMaybe (point (-1) (-1)) . mbFromLigoRange
 
--- | Converts ligo scope to our internal one.
--- TODO: convert `LigoTypeFull` to `LIGO ()`
-toScopedDecl :: LigoDefinitionScope -> ScopedDecl
-toScopedDecl
-  LigoDefinitionScope
-    { _ldsName = _sdName
-    , _ldsRange = (fromMaybe (error "no origin range") . mbFromLigoRange -> _sdOrigin)
-    , _ldsBodyRange = (mbFromLigoRange -> _sdBody)
-    } =
-    ScopedDecl
-      { _sdName
-      , _sdOrigin
-      , _sdBody
-      , _sdType = Nothing
-      , _sdRefs = []
-      , _sdDoc = []
-      , _sdParams = Nothing -- TODO LIGO-90
-      }
+-- Uncomment when needed
+-- -- | Converts ligo scope to our internal one.
+-- -- TODO: convert `LigoTypeFull` to `LIGO ()`
+-- toScopedDecl :: LigoDefinitionScope -> ScopedDecl
+-- toScopedDecl
+--   LigoDefinitionScope
+--     { _ldsName = _sdName
+--     , _ldsRange = (fromMaybe (error "no origin range") . mbFromLigoRange -> _sdOrigin)
+--     , _ldsBodyRange = (mbFromLigoRange -> _sdBody)
+--     } =
+--     ScopedDecl
+--       { _sdName
+--       , _sdOrigin
+--       , _sdBody
+--       , _sdType = Nothing
+--       , _sdRefs = []
+--       , _sdDoc = []
+--       , _sdParams = Nothing -- TODO LIGO-90
+--       }

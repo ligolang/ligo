@@ -1,5 +1,4 @@
 (contract
   (fun
     main
-    (params (parameter i int))
-    : (option $ (TARGS nat)) = (apply is_nat (tuple i))))
+    (parameter i int) : (option $ (TARGS nat)) = (apply is_nat i)))
