@@ -1,4 +1,4 @@
-import { Tezos } from '@taquito/taquito';
+import { TezosToolkit } from '@taquito/taquito';
 import { TezBridgeWallet } from '@taquito/tezbridge-wallet';
 import { Dispatch } from 'redux';
 
@@ -10,8 +10,8 @@ import { ChangeContractAction, ChangeOutputAction } from '../result';
 import { Command } from '../types';
 import { CancellableAction } from './cancellable';
 
+const Tezos = new TezosToolkit('https://api.tez.ie/rpc/carthagenet');
 Tezos.setProvider({
-  rpc: 'https://api.tez.ie/rpc/carthagenet',
   wallet: new TezBridgeWallet()
 });
 
