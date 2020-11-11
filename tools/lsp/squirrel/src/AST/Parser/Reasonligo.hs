@@ -2,14 +2,14 @@
 
 module AST.Parser.Reasonligo where
 
-import           AST.Skeleton
+import AST.Skeleton
 
-import           Duplo.Error
-import           Duplo.Tree
+import Duplo.Error
+import Duplo.Tree
 
-import           Parser
-import           ParseTree
-import           Product
+import ParseTree
+import Parser
+import Product
 
 -- example :: FilePath
 -- example = "../../../src/test/contracts/counter.religo"

@@ -17,40 +17,40 @@ module RIO
          and other parts when it grows too big.
 -}
 
-import           Prelude hiding (log)
+import Prelude hiding (log)
 
-import           Control.Arrow
-import           Control.Exception.Safe                        (MonadCatch, MonadThrow)
-import           Control.Monad
-import           Control.Monad.Reader                          (ReaderT, liftIO, asks, MonadIO, MonadReader, runReaderT)
+import Control.Arrow
+import Control.Exception.Safe (MonadCatch, MonadThrow)
+import Control.Monad
+import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, asks, liftIO, runReaderT)
 
-import qualified Data.Map                              as Map
-import qualified Data.Text                             as Text
-import           Data.Text                                     (Text)
-import qualified Data.SortedList                       as List
-import           Data.String.Interpolate                       (i)
+import qualified Data.Map as Map
+import qualified Data.SortedList as List
+import Data.String.Interpolate (i)
+import Data.Text (Text)
+import qualified Data.Text as Text
 
-import           Language.Haskell.LSP.Diagnostics
-import           Language.Haskell.LSP.Messages         as Msg
-import           Language.Haskell.LSP.VFS
-import qualified Language.Haskell.LSP.Core             as Core
-import qualified Language.Haskell.LSP.Types            as J
-import qualified Language.Haskell.LSP.Utility          as U
+import qualified Language.Haskell.LSP.Core as Core
+import Language.Haskell.LSP.Diagnostics
+import Language.Haskell.LSP.Messages as Msg
+import qualified Language.Haskell.LSP.Types as J
+import qualified Language.Haskell.LSP.Utility as U
+import Language.Haskell.LSP.VFS
 
 -- import           System.Directory (getDirectoryContents, doesDirectoryExist)
 -- import           System.FilePath
 
-import           Duplo.Error
-import           Duplo.Tree   (collect)
+import Duplo.Error
+import Duplo.Tree (collect)
 
-import           AST
-import           ASTMap (ASTMap)
+import AST
+import ASTMap (ASTMap)
 import qualified ASTMap
-import           Cli
+import Cli
 import qualified Config
 import qualified Log
-import           Product
-import           Range
+import Product
+import Range
 
 send :: Core.LspFuncs Config.Config -> FromServerMessage -> IO ()
 send = Core.sendFunc

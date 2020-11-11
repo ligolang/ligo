@@ -1,31 +1,28 @@
-
 module AST.Scope.Fallback where
 
-import           Control.Arrow ((&&&))
-import           Control.Monad.State
-import           Control.Monad.Catch.Pure
-import           Control.Monad.Writer (WriterT, Writer, execWriterT, runWriter, tell)
+import Control.Arrow ((&&&))
+import Control.Monad.Catch.Pure
+import Control.Monad.State
+import Control.Monad.Writer (Writer, WriterT, execWriterT, runWriter, tell)
 
-import           Data.Map            (Map)
-import qualified Data.Map    as Map
-import qualified Data.Set    as Set
-import           Data.Maybe          (listToMaybe, maybeToList)
-import           Data.Text           (Text)
-import           Data.Foldable       (toList, for_)
+import Data.Foldable (for_, toList)
+import Data.Map (Map)
+import qualified Data.Map as Map
+import Data.Maybe (listToMaybe, maybeToList)
+import qualified Data.Set as Set
+import Data.Text (Text)
 
-import           Duplo.Lattice
-import           Duplo.Pretty
-import           Duplo.Tree hiding (loop)
+import Duplo.Lattice
+import Duplo.Pretty
+import Duplo.Tree hiding (loop)
 
-import           AST.Skeleton
-import           Cli.Types
-import           Parser
-import           Product
-import           Range
+import AST.Skeleton
+import Cli.Types
+import Parser
+import Product
+import Range
 
--- import           Debug.Trace
-
-import           AST.Scope.Common
+import AST.Scope.Common
 
 data Fallback
 
