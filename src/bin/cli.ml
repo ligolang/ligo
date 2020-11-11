@@ -349,7 +349,7 @@ let compile_parameter =
       let%bind typed_prg,env,state = Compile.Utils.type_file ~options source_file syntax (Contract entry_point) in
       let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
       let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
-      let%bind (_contract: Tezos_utils.Michelson.michelson) =
+      let%bind _contract =
         (* fails if the given entry point is not a valid contract *)
         Compile.Of_michelson.build_contract michelson_prg in
 
@@ -401,7 +401,7 @@ let compile_storage =
       let%bind typed_prg,env,state = Compile.Utils.type_file ~options source_file syntax (Contract entry_point) in
       let%bind mini_c_prg          = Compile.Of_typed.compile typed_prg in
       let%bind michelson_prg       = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
-      let%bind (_contract: Tezos_utils.Michelson.michelson) =
+      let%bind _contract =
         (* fails if the given entry point is not a valid contract *)
         Compile.Of_michelson.build_contract michelson_prg in
 
@@ -426,7 +426,7 @@ let dry_run =
       let%bind typed_prg,env,state = Compile.Utils.type_file ~options source_file syntax (Contract entry_point) in
       let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
       let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
-      let%bind (_contract: Tezos_utils.Michelson.michelson) =
+      let%bind _contract =
         (* fails if the given entry point is not a valid contract *)
         Compile.Of_michelson.build_contract michelson_prg in
 

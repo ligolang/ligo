@@ -8,7 +8,7 @@ type all =
  | `Main_invalid_protocol_version of string list *  string
  | `Main_invalid_typer_switch of string
  | `Main_unparse_tracer of tezos_alpha_error list
- | `Main_typecheck_contract_tracer of Michelson.michelson * tezos_alpha_error list
+ | `Main_typecheck_contract_tracer of int Michelson.michelson * tezos_alpha_error list
  | `Main_could_not_serialize of tezos_alpha_error list
  | `Main_check_typed_arguments of Simple_utils.Runned_result.check_type * all
  | `Main_unknown_failwith_type

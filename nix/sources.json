@@ -29,10 +29,10 @@
         "homepage": "",
         "owner": "ligolang",
         "repo": "nixpkgs",
-        "rev": "9bf2844ab784c0d739f9726015f7d6d2b6edc524",
-        "sha256": "10ffwvd5cx7n74fliy6fi7rz1n739wv8cdsxapfvcj76vvspbksg",
+        "rev": "7f50e4b4311f1489bc73ee8470ab797c271d04b1",
+        "sha256": "1qjx9dpx4v9cfvnj1d9bk0bzr1rmadsx8f6snsf9ldqi8509i7f0",
         "type": "tarball",
-        "url": "https://gitlab.com/ligolang/nixpkgs/repository/archive.tar.gz?ref=9bf2844ab784c0d739f9726015f7d6d2b6edc524",
+        "url": "https://gitlab.com/ligolang/nixpkgs/repository/archive.tar.gz?ref=7f50e4b4311f1489bc73ee8470ab797c271d04b1",
         "url_template": "https://gitlab.com/<owner>/<repo>/repository/archive.tar.gz?ref=<rev>"
     },
     "node-sass-bin": {

@@ -93,8 +93,7 @@ and expression_content =
   | E_if_cons of (expression * expression * (((var_name * type_expression) * (var_name * type_expression)) * expression))
   | E_if_left of expression * ((var_name * type_expression) * expression) * ((var_name * type_expression) * expression)
   | E_let_in of ((var_name * type_expression) * inline * expression * expression)
-  | E_record_update of (expression * [`Left | `Right] list * expression)
-  | E_raw_michelson of string
+  | E_raw_michelson of (Location.t, string) Tezos_micheline.Micheline.node list
 
 and expression = {
   content : expression_content ;

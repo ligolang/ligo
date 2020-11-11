@@ -237,6 +237,14 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
       return @@ (T_function (param',result'))
   )
 
+(* probably should use result monad for conformity? but these errors
+   are supposed to be impossible *)
+let internal_error loc msg =
+  failwith
+    (Format.asprintf
+       "@[<v>Internal error, please report this as a bug@ %s@ %s@ @]"
+       loc msg)
+
 let rec compile_literal : AST.literal -> value = fun l -> match l with
   | Literal_int n -> D_int n
   | Literal_nat n -> D_nat n
@@ -255,7 +263,6 @@ let rec compile_literal : AST.literal -> value = fun l -> match l with
 and compile_expression (ae:AST.expression) : (expression , spilling_error) result =
   let%bind tv = compile_type ae.type_expression in
   let return ?(tv = tv) expr = ok @@ Combinators.Expression.make_tpl ~loc:ae.location (expr, tv) in
-  trace (translation_tracer ae.location) @@
   match ae.expression_content with
   | E_let_in {let_binder; rhs; let_result; inline} ->
     let%bind rhs' = compile_expression rhs in
@@ -308,7 +315,11 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
       let%bind expr = bind_fold_list aux record' path in
       ok expr
   | E_record_update {record; path; update} ->
-      let rec aux res (r,p,up) =
+    (* Compile record update to simple constructors &
+       projections. This will be optimized to some degree by eta
+       contraction in a later pass. *)
+
+    let rec aux res (r,p,up) =
         let ty = get_type_expression r in
         let%bind {content;layout} =
           trace_option (corner_case ~loc:__LOC__ "not a record") @@
@@ -333,7 +344,41 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
       let path = List.map snd path in
       let%bind update = compile_expression update in
       let%bind record = compile_expression record in
-      return @@ E_record_update (record, path, update)
+      let record_var = Var.fresh () in
+      let car (e : expression) : expression =
+        match e.type_expression.type_content with
+        | T_pair ((_, a), _) ->
+          { e with
+            content = E_constant { cons_name = C_CAR ; arguments = [e] } ;
+            type_expression = a }
+        | _ -> internal_error __LOC__ "record did not have pair type" in
+      let cdr (e : expression) : expression =
+        match e.type_expression.type_content with
+        | T_pair (_, (_, b)) ->
+          { e with
+            content = E_constant { cons_name = C_CDR ; arguments = [e] } ;
+            type_expression = b }
+        | _ -> internal_error __LOC__ "record did not have pair type" in
+      let rec build_record_update record path =
+        match path with
+        | [] -> update
+        | `Left :: path ->
+          { record with
+            content = E_constant { cons_name = C_PAIR ;
+                                   arguments = [ build_record_update (car record) path;
+                                                 cdr record ] } }
+        | `Right :: path ->
+          { record with
+            content = E_constant { cons_name = C_PAIR ;
+                                   arguments = [ car record;
+                                                 build_record_update (cdr record) path ] } } in
+      return
+        (E_let_in ((Location.wrap record_var, record.type_expression),
+                   false,
+                   record,
+                   build_record_update
+                     (e_var (Location.wrap record_var) record.type_expression)
+                     path))
   | E_constant {cons_name=name; arguments=lst} -> (
       let iterator_generator iterator_name =
         let expression_to_iterator_body (f : AST.expression) =
@@ -461,7 +506,24 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
     let type_anno  = get_type_expression code in
     let%bind type_anno' = compile_type type_anno in
     let%bind code = trace_option (corner_case ~loc:__LOC__ "could not get a string") @@ get_a_string code in
-    return ~tv:type_anno' @@ E_raw_michelson code
+    let open Tezos_micheline in
+    let orig_code = code in
+    let (code, errs) = Micheline_parser.tokenize code in
+    match errs with
+    | _ :: _ -> fail (could_not_parse_raw_michelson ae.location orig_code)
+    | [] ->
+      let (code, errs) = Micheline_parser.parse_expression code in
+      match errs with
+      | _ :: _ -> fail (could_not_parse_raw_michelson ae.location orig_code)
+      | [] ->
+        let code = Micheline.strip_locations code in
+        (* hmm *)
+        let code = Micheline.inject_locations (fun _ -> Location.generated) code in
+        match code with
+        | Seq (_, code) ->
+          return ~tv:type_anno' @@ E_raw_michelson code
+        | _ ->
+          fail (raw_michelson_must_be_seq ae.location code)
 
 and compile_lambda l (input_type , output_type) =
   let { binder ; result } : AST.lambda = l in

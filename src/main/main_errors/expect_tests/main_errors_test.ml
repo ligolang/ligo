@@ -56,7 +56,8 @@ let%expect_test "main" =
     The request has timed out|}] ;
   human_readable_error
     (`Main_typecheck_contract_tracer
-      ( Michelson.t_unit,
+      ( let open Tezos_micheline.Micheline in
+        root (strip_locations Michelson.t_unit),
         [`Tezos_alpha_error Tezos_error_monad.Error_monad.Canceled] )) ;
   [%expect {|
   Error(s) occurred while type checking the contract:
@@ -1125,16 +1126,6 @@ let%expect_test "spilling" =
     Invalid pattern matching.@Tuple patterns are not (yet) supported. |}] ;
   error (`Spilling_unsupported_recursive_function expression_variable) ;
   [%expect{|
-    Invalid recursive function "bar".
-    A recursive function can only have one argument. |}] ;
-  error
-    (`Spilling_tracer
-      (location_t, `Spilling_unsupported_recursive_function expression_variable)) ;
-  [%expect{|
-    in file "a dummy file name", line 20, characters 5-5
-
-    Translating expression
-
     Invalid recursive function "bar".
     A recursive function can only have one argument. |}] ;
   error (`Spilling_wrong_mini_c_value (type_expression, value)) ;

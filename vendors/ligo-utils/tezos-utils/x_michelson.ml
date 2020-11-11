@@ -1,18 +1,25 @@
 open Tezos_micheline
 open Micheline
 
-type michelson = (int, string) node
-type t = michelson
+type 'l michelson = ('l, string) node
+type 'l t = 'l michelson
 
-let prim ?(annot=[]) ?(children=[]) p : michelson =
-  Prim (0, p, children, annot)
+let prim ?(annot=[]) ?(children=[]) p : unit michelson =
+  Prim ((), p, children, annot)
 
 let annotate annot = function
   | Prim (l, p, c, []) -> Prim (l, p, c, [annot])
   | _ -> raise (Failure "annotate")
 
-let seq s : michelson = Seq (0, s)
+let seq s : unit michelson = Seq ((), s)
 
+
+let get_loc : 'l michelson -> 'l = function
+  | Prim (l, _, _, _) -> l
+  | Seq (l, _) -> l
+  | Int (l, _) -> l
+  | String (l, _) -> l
+  | Bytes (l, _) -> l
 
 let contract parameter storage code =
   seq [
@@ -21,9 +28,9 @@ let contract parameter storage code =
     prim ~children:[code] "code" ;
   ]
 
-let int n : michelson = Int (0, n)
-let string s : michelson = String (0, s)
-let bytes s : michelson = Bytes (0, s)
+let int n : unit michelson = Int ((), n)
+let string s : unit michelson = String ((), s)
+let bytes s : unit michelson = Bytes ((), s)
 
 let t_unit = prim "unit"
 let t_string = prim "string"
@@ -45,7 +52,7 @@ let i_push_string str = i_push t_string (string str)
 
 let i_apply = prim "APPLY"
 
-let i_comment s : michelson = seq [ i_push_string s ; prim "DROP" ]
+let i_comment s = seq [ i_push_string s ; prim "DROP" ]
 
 let i_none ty = prim ~children:[ty] "NONE"
 let i_nil ty = prim ~children:[ty] "NIL"
@@ -68,27 +75,27 @@ let i_failwith = prim "FAILWITH"
 let i_assert_some = i_if_none (seq [i_push_string "ASSERT_SOME" ; i_failwith]) (seq [])
 let i_assert_some_msg msg = i_if_none (seq [msg ; i_failwith]) (seq [])
 
-let dip code : michelson = prim ~children:[seq [code]] "DIP"
-let dipn n code = prim ~children:[Int (0 , Z.of_int n) ; seq [code]] "DIP"
-let i_dig n : michelson = prim ~children:[Int (0 , Z.of_int n)] "DIG"
-let i_dug n : michelson = prim ~children:[Int (0 , Z.of_int n)] "DUG"
+let dip code = prim ~children:[seq [code]] "DIP"
+let dipn n code = prim ~children:[Int (() , Z.of_int n) ; seq [code]] "DIP"
+let i_dig n = prim ~children:[Int (() , Z.of_int n)] "DIG"
+let i_dug n = prim ~children:[Int (() , Z.of_int n)] "DUG"
 let i_unpair = seq [i_dup ; i_car ; dip i_cdr]
 let i_unpiar = seq [i_dup ; i_cdr ; dip i_car]
 
 let i_loop_left body = prim ~children:[seq [body]] "LOOP_LEFT"
 
-let rec strip_annots : michelson -> michelson = function
+let rec strip_annots = function
   | Seq(l, s) -> Seq(l, List.map strip_annots s)
   | Prim (l, p, lst, _) -> Prim (l, p, List.map strip_annots lst, [])
   | x -> x
 
-let pp ppf (michelson:michelson) =
+let pp ppf michelson =
   let open Micheline_printer in
   let canonical = strip_locations michelson in
   let node = printable (fun s -> s) canonical in
   print_expr ppf node
 
-let get_json (michelson : michelson) =
+let get_json michelson =
   let open Micheline_printer in
   let canonical = strip_locations michelson in
   let node = printable (fun s -> s) canonical in
@@ -98,6 +105,6 @@ let get_json (michelson : michelson) =
         node
     )
 
-let pp_json ppf (michelson : michelson) =
+let pp_json ppf michelson =
   let json = get_json michelson in
   Format.fprintf ppf "%a" Data_encoding.Json.pp json

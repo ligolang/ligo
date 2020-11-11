@@ -9,7 +9,7 @@ let%expect_test _ =
   [%expect {|
              { parameter unit ;
                storage (pair (int %anbfoo) (string %anabar)) ;
-               code { CDR ; DUP ; CAR ; SWAP ; CDR ; SWAP ; PAIR ; NIL operation ; PAIR } } |}];
+               code { CDR ; NIL operation ; PAIR } } |}];
   run_ligo_good [ "compile-contract" ; contract "annotated_michelson_record_comb.mligo" ; "main_comb_three" ] ;
   [%expect {|
              { parameter unit ;
@@ -48,7 +48,7 @@ let%expect_test _ =
   [%expect {|
              { parameter unit ;
                storage (pair (string %anbar) (int %anfoo)) ;
-               code { CDR ; DUP ; CDR ; SWAP ; CAR ; PAIR ; NIL operation ; PAIR } } |}];
+               code { CDR ; NIL operation ; PAIR } } |}];
   run_ligo_good [ "compile-contract" ; contract "annotated_michelson_record_tree.mligo" ; "main_comb_three" ] ;
   [%expect {|
              { parameter unit ;

@@ -3,7 +3,9 @@ open Mini_c.Types
 open Tezos_micheline.Micheline
 open Trace
 
-let rec decompile_value ty value : (value , stacking_error) result =
+let rec decompile_value :
+  ('l, string) node -> ('l, string) node -> (value , stacking_error) result =
+  fun ty value ->
   match (ty, value) with
   | Prim (_, "pair", [a_ty; b_ty], _), Prim (_, "Pair", [a; b], _) -> (
       let%bind a = decompile_value a_ty a in
@@ -68,6 +70,8 @@ let rec decompile_value ty value : (value , stacking_error) result =
             let%bind v' = decompile_value v_ty v in
             ok (k', v')
           | _ ->
+            let ty = root (strip_locations ty) in
+            let value = root (strip_locations value) in
             fail (untranspilable ty value)
         in
         bind_map_list aux lst
@@ -82,6 +86,8 @@ let rec decompile_value ty value : (value , stacking_error) result =
             let%bind v' = decompile_value v_ty v in
             ok (k', v')
           | _ ->
+            let ty = root (strip_locations ty) in
+            let value = root (strip_locations value) in
             fail (untranspilable ty value)
         in
         bind_map_list aux lst

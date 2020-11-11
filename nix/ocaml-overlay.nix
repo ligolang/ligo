@@ -103,7 +103,7 @@ in {
           buildInputs = oa.buildInputs
             ++ [ oself.UnionFind oself.Preprocessor ];
           nativeBuildInputs = oa.nativeBuildInputs
-            ++ [ self.buildPackages.rakudo ];
+            ++ [ self.buildPackages.coq ];
         });
 
         # LIGO test suite; output empty on purpose
@@ -120,7 +120,7 @@ in {
           outputs = [ "out" ];
           buildPhase = "dune runtest";
           nativeBuildInputs = oa.nativeBuildInputs
-            ++ [ self.buildPackages.rakudo ];
+            ++ [ self.buildPackages.coq ];
           installPhase = "mkdir $out";
           buildInputs = oa.buildInputs ++ oa.checkInputs;
         });
@@ -132,7 +132,7 @@ in {
           outputs = [ "out" ];
           buildPhase = "dune build @doc";
           nativeBuildInputs = oa.nativeBuildInputs
-            ++ [ self.buildPackages.rakudo ];
+            ++ [ self.buildPackages.coq ];
           installPhase =
             "mkdir $out; cp -r _build/default/_doc/_html/ $out/doc";
         });
@@ -140,7 +140,7 @@ in {
         ligo-coverage = oself.ligo-tests.overrideAttrs (oa: {
           name = "ligo-coverage";
           nativeBuildInputs = oa.nativeBuildInputs
-            ++ [ self.buildPackages.rakudo ];
+            ++ [ self.buildPackages.coq ];
           buildPhase = ''
             # Needed for coverage and nothing else
             mkdir -p $out/share/coverage
@@ -162,4 +162,5 @@ in {
         });
       })
     ]);
+  coq = (self.coq_8_12.override { buildIde = false; csdp = null; });
 }

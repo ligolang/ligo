@@ -126,18 +126,18 @@ let is_ternary_op (p : string) : bool =
   | Some 3 -> true
   | _ -> false
 
-let unseq : michelson -> michelson list = function
+let unseq : _ michelson -> _ michelson list = function
   | Seq (_, args) -> args
   | x -> [x]
 
 (* Replace `PUSH (lambda a b) {}` with `LAMBDA a b {}` *)
-let rec use_lambda_instr : michelson -> michelson =
+let rec use_lambda_instr : _ michelson -> _ michelson =
   fun x ->
   match x with
   | Seq (l, args) ->
     Seq (l, List.map use_lambda_instr args)
-  | Prim (_, "PUSH", [Prim (_, "lambda", [arg; ret], _); code], _) ->
-    i_lambda arg ret code
+  | Prim (l, "PUSH", [Prim (_, "lambda", [arg; ret], _); code], _) ->
+    Prim (l, "LAMBDA", [arg; ret; code], [])
   | Prim (_, "PUSH", _, _) ->
     x (* possibly missing some nested lambdas *)
   | Prim (l, p, args, annot) ->
@@ -147,7 +147,7 @@ let rec use_lambda_instr : michelson -> michelson =
 (* This flattens nested seqs. {} is erased, { { code1 } ; { code2 } }
    becomes { code1 ; code2 }, etc. This is important because each seq
    costs 5 bytes, for the "Seq" tag and a 4 byte length. *)
-let rec flatten_seqs : michelson -> michelson =
+let rec flatten_seqs : _ michelson -> _ michelson =
   fun x ->
   match x with
   | Seq (l, args) ->
@@ -158,13 +158,13 @@ let rec flatten_seqs : michelson -> michelson =
   | Prim (l, p, args, annot) -> Prim (l, p, List.map flatten_seqs args, annot)
   | _ -> x
 
-type peep1 = michelson -> michelson list option
-type peep2 = michelson * michelson -> michelson list option
-type peep3 = michelson * michelson * michelson -> michelson list option
-type peep4 = michelson * michelson * michelson * michelson -> michelson list option
-type peep5 = michelson * michelson * michelson * michelson * michelson -> michelson list option
+type 'l peep1 = 'l michelson -> 'l michelson list option
+type 'l peep2 = 'l michelson * 'l michelson -> 'l michelson list option
+type 'l peep3 = 'l michelson * 'l michelson * 'l michelson -> 'l michelson list option
+type 'l peep4 = 'l michelson * 'l michelson * 'l michelson * 'l michelson -> 'l michelson list option
+type 'l peep5 = 'l michelson * 'l michelson * 'l michelson * 'l michelson * 'l michelson -> 'l michelson list option
 
-let rec peep1 (f : peep1) : michelson list -> bool * michelson list = function
+let rec peep1 (f : 'l peep1) : 'l michelson list -> bool * 'l michelson list = function
   | [] -> (false, [])
   | x1 :: xs ->
      match f x1 with
@@ -173,7 +173,7 @@ let rec peep1 (f : peep1) : michelson list -> bool * michelson list = function
      | None -> let (changed, xs) = peep1 f xs in
                (changed, x1 :: xs)
 
-let rec peep2 (f : peep2) : michelson list -> bool * michelson list = function
+let rec peep2 (f : 'l peep2) : 'l michelson list -> bool * 'l michelson list = function
   | [] -> (false, [])
   | [x] -> (false, [x])
   | x1 :: x2 :: xs ->
@@ -183,7 +183,7 @@ let rec peep2 (f : peep2) : michelson list -> bool * michelson list = function
      | None -> let (changed, xs') = peep2 f (x2 :: xs) in
                (changed, x1 :: xs')
 
-let rec peep3 (f : peep3) : michelson list -> bool * michelson list = function
+let rec peep3 (f : 'l peep3) : 'l michelson list -> bool * 'l michelson list = function
   | [] -> (false, [])
   | [x] -> (false, [x])
   | [x ; y] -> (false, [x ; y])
@@ -194,7 +194,7 @@ let rec peep3 (f : peep3) : michelson list -> bool * michelson list = function
      | None -> let (changed, xs') = peep3 f (x2 :: x3 :: xs) in
                (changed, x1 :: xs')
 
-let rec peep4 (f : peep4) : michelson list -> bool * michelson list = function
+let rec peep4 (f : 'l peep4) : 'l michelson list -> bool * 'l michelson list = function
   | [] -> (false, [])
   | [x] -> (false, [x])
   | [x ; y] -> (false, [x ; y])
@@ -206,7 +206,7 @@ let rec peep4 (f : peep4) : michelson list -> bool * michelson list = function
      | None -> let (changed, xs') = peep4 f (x2 :: x3 :: x4 :: xs) in
                (changed, x1 :: xs')
 
-let rec peep5 (f : peep5) : michelson list -> bool * michelson list = function
+let rec peep5 (f : 'l peep5) : 'l michelson list -> bool * 'l michelson list = function
   | [] -> (false, [])
   | [x] -> (false, [x])
   | [x ; y] -> (false, [x ; y])
@@ -220,7 +220,7 @@ let rec peep5 (f : peep5) : michelson list -> bool * michelson list = function
                (changed, x1 :: xs')
 
 (* apply f to all seqs *)
-let rec peephole (f : michelson list -> bool * michelson list) : michelson -> bool * michelson =
+let rec peephole (f : 'l michelson list -> bool * 'l michelson list) : 'l michelson -> bool * 'l michelson =
   let peep_args ~seq args =
     let (changed, args) = if seq
                           then f args
@@ -239,7 +239,7 @@ let rec peephole (f : michelson list -> bool * michelson list) : michelson -> bo
   | x -> (false, x)
 
 (* apply the optimizers in order *)
-let rec sequence_optimizers (fs : (michelson -> bool * michelson) list) : michelson -> bool * michelson =
+let rec sequence_optimizers (fs : ('l michelson -> bool * 'l michelson) list) : 'l michelson -> bool * 'l michelson =
   match fs with
   | [] -> fun x -> (false, x)
   | f :: fs -> fun x -> let (changed1, x) = f x in
@@ -247,14 +247,14 @@ let rec sequence_optimizers (fs : (michelson -> bool * michelson) list) : michel
                         (changed1 || changed2, x)
 
 (* take the fixed point of an optimizer (!) *)
-let rec iterate_optimizer (f : michelson -> bool * michelson) : michelson -> michelson =
+let rec iterate_optimizer (f : 'l michelson -> bool * 'l michelson) : 'l michelson -> 'l michelson =
   fun x ->
   let (changed, x) = f x in
   if changed
   then iterate_optimizer f x
   else x
 
-let rec is_failing : michelson -> bool =
+let rec is_failing : _ michelson -> bool =
   function
   | Seq (_, []) -> false
   | Seq (_, [arg]) -> is_failing arg
@@ -278,17 +278,17 @@ let is_cond : string -> bool = function
   | "IF_LEFT" -> true
   | _ -> false
 
-let opt_drop2 : peep2 = function
+let opt_drop2 : _ peep2 = function
   (* nullary_op ; DROP  ↦  *)
   | Prim (_, p, _, _), Prim (_, "DROP", [], _) when is_nullary_op p -> Some []
   (* DUP ; DROP  ↦  *)
   | Prim (_, "DUP", _, _), Prim (_, "DROP", [], _) -> Some []
   (* unary_op ; DROP  ↦  DROP *)
-  | Prim (_, p, _, _), Prim (_, "DROP", [], _) when is_unary_op p -> Some [i_drop]
+  | Prim (_, p, _, _), (Prim (_, "DROP", [], _) as drop) when is_unary_op p -> Some [drop]
   (* binary_op ; DROP  ↦  DROP ; DROP *)
-  | Prim (_, p, _, _), Prim (_, "DROP", [], _) when is_binary_op p -> Some [i_drop; i_drop]
+  | Prim (_, p, _, _), (Prim (_, "DROP", [], _) as drop) when is_binary_op p -> Some [drop; drop]
   (* ternary_op ; DROP  ↦  DROP ; DROP ; DROP *)
-  | Prim (_, p, _, _), Prim (_, "DROP", [], _) when is_ternary_op p -> Some [i_drop; i_drop; i_drop]
+  | Prim (_, p, _, _), (Prim (_, "DROP", [], _) as drop) when is_ternary_op p -> Some [drop; drop; drop]
   (* IF { ... ; FAILWITH } { ... } ; DROP  ↦  IF { ... ; FAILWITH } { ... ; DROP } *)
   | Prim (l1, p, [bt; Seq (l2, bf)], annot1), (Prim (_, "DROP", [], _) as drop)
     when is_cond p && is_failing bt ->
@@ -299,7 +299,7 @@ let opt_drop2 : peep2 = function
     Some [Prim (l1, p, [Seq (l2, bt @ [drop]); bf], annot1)]
   | _ -> None
 
-let opt_drop4 : peep4 = function
+let opt_drop4 : _ peep4 = function
   (* DUP; unary_op; SWAP; DROP  ↦  unary_op *)
   | Prim (_, "DUP", _, _),
     (Prim (_, p, _, _) as unary_op),
@@ -309,23 +309,23 @@ let opt_drop4 : peep4 = function
     Some [unary_op]
   | _ -> None
 
-let opt_dip1 : peep1 = function
+let opt_dip1 : _ peep1 = function
   (* DIP {}  ↦  *)
   | Prim (_, "DIP", [Seq (_, [])], _) -> Some []
   (* DIP { nullary_op }  ↦  nullary_op ; SWAP *)
-  | Prim (_, "DIP", [Seq (_, [(Prim (_, p, _, _) as push)])], _) when is_nullary_op p ->
-     Some [push ; i_swap]
+  | Prim (l, "DIP", [Seq (_, [(Prim (_, p, _, _) as push)])], _) when is_nullary_op p ->
+     Some [push ; Prim (l, "SWAP", [], [])]
   (* DIP { unary_op }  ↦  SWAP ; unary_op ; SWAP *)
-  | Prim (_, "DIP", [Seq (_, [(Prim (_, p, _, _) as unary_op)])], _) when is_unary_op p ->
-     Some [i_swap ; unary_op ; i_swap]
+  | Prim (l, "DIP", [Seq (_, [(Prim (_, p, _, _) as unary_op)])], _) when is_unary_op p ->
+     Some [Prim (l, "SWAP", [], []) ; unary_op ; Prim (l, "SWAP", [], [])]
   | _ -> None
 
-let opt_dip2 : peep2 = function
+let opt_dip2 : _ peep2 = function
   (* combine adjacent dips, shaving a seq and enabling further
      optimization inside the DIP: *)
   (* DIP { code1 } ; DIP { code2 }  ↦  DIP { code1 ; code2 } *)
-  | Prim (_, "DIP", [Seq (_, code1)], _), Prim (_, "DIP", [Seq (_, code2)], _) ->
-     Some [Prim (0, "DIP", [Seq (0, code1 @ code2)], [])]
+  | Prim (l1, "DIP", [Seq (l2, code1)], _), Prim (_, "DIP", [Seq (_, code2)], _) ->
+     Some [Prim (l1, "DIP", [Seq (l2, code1 @ code2)], [])]
   (* DIP { code } ; DROP  ↦  DROP ; code *)
   | Prim (_, "DIP", [Seq (_, code)], _), (Prim (_, "DROP", [], _) as drop) ->
      Some (drop :: code)
@@ -340,23 +340,26 @@ let opt_dip2 : peep2 = function
    *    Some [dip; unary_op] *)
   | _ -> None
 
-let opt_dip3 : peep3 = function
+let opt_dip3 : _ peep3 = function
   (* replace UNPAIR/UNPIAR with a smaller version *)
   (* TODO probably better to implement optimal UNPAIR in the compiler *)
   (* DUP ; CAR ; DIP { CDR }  ↦  DUP ; CDR ; SWAP ; CAR *)
   | Prim (_, "DUP", _, _),
     (Prim (_, ("CAR" | "CDR"), _, _) as proj1),
-    Prim (_, "DIP", [Seq (_, [(Prim (_, ("CAR" | "CDR"), _, _) as proj2)])], _) ->
-     Some [ i_dup ; proj2 ; i_swap ; proj1 ]
+    Prim (l, "DIP", [Seq (_, [(Prim (_, ("CAR" | "CDR"), _, _) as proj2)])], _) ->
+     Some [ Prim (l, "DUP", [], []) ;
+            proj2 ;
+            Prim (l, "SWAP", [], []) ;
+            proj1 ]
   | _ -> None
 
-let opt_swap2 : peep2 = function
+let opt_swap2 : _ peep2 = function
   (* SWAP ; SWAP  ↦  *)
   | Prim (_, "SWAP", _, _), Prim (_, "SWAP", _, _) ->
      Some []
   (* DUP ; SWAP  ↦  DUP *)
-  | Prim (_, "DUP", _, _), Prim (_, "SWAP", _, _) ->
-     Some [i_dup]
+  | (Prim (_, "DUP", _, _) as dup), Prim (_, "SWAP", _, _) ->
+     Some [dup]
   (* SWAP ; ADD  ↦  ADD *)
   (* etc *)
   | Prim (_, "SWAP", _, _), (Prim (_, ("ADD" | "OR" | "AND" | "XOR"), _, _) as comm_op) ->
@@ -364,7 +367,7 @@ let opt_swap2 : peep2 = function
   | _ -> None
 
 (* for inserted Michelson lambdas *)
-let opt_beta3 : peep3 = function
+let opt_beta3 : _ peep3 = function
   (* PUSH (lambda ...) code ; SWAP ; EXEC  ↦  f *)
   | Prim (_, "PUSH", [Prim(_, "lambda", _, _); code], _),
     Prim (_, "SWAP", _, _),
@@ -374,7 +377,7 @@ let opt_beta3 : peep3 = function
        | _ -> None)
   | _ -> None
 
-let opt_beta5 : peep5 = function
+let opt_beta5 : _ peep5 = function
   (* PAIR ; DUP ; CDR ; SWAP ; CAR  ↦  *)
   | Prim (_, "PAIR", _, _),
     Prim (_, "DUP", _, _),
@@ -383,24 +386,24 @@ let opt_beta5 : peep5 = function
     Prim (_, "CAR", _, _) ->
     Some []
   (* PAIR ; DUP ; CAR ; SWAP ; CDR  ↦  SWAP *)
-  | Prim (_, "PAIR", _, _),
+  | Prim (l, "PAIR", _, _),
     Prim (_, "DUP", _, _),
     Prim (_, "CAR", _, _),
     Prim (_, "SWAP", _, _),
     Prim (_, "CDR", _, _) ->
-    Some [Prim(-1, "SWAP", [], [])]
+    Some [Prim(l, "SWAP", [], [])]
   | _ -> None
 
-let opt_digdug1 : peep1 = function
+let opt_digdug1 : _ peep1 = function
   (* DUG/DIG 0  ↦   *)
   | Prim (_, ("DIG"|"DUG"), [Int (_, n)], _) when Z.equal n Z.zero ->
      Some []
   (* DUG/DIG 1  ↦  SWAP *)
-  | Prim (_, ("DIG"|"DUG"), [Int (_, n)], _) when Z.equal n Z.one ->
-     Some [i_swap]
+  | Prim (l, ("DIG"|"DUG"), [Int (_, n)], _) when Z.equal n Z.one ->
+     Some [Prim (l, "SWAP", [], [])]
   | _ -> None
 
-let opt_digdug2 : peep2 = function
+let opt_digdug2 : _ peep2 = function
   (* DIG k ; DUG k  ↦   *)
   | (Prim (_, "DIG", [Int (_, k1)], _), Prim (_, "DUG", [Int (_, k2)], _)) when Z.equal k1 k2 ->
      Some []
@@ -408,20 +411,20 @@ let opt_digdug2 : peep2 = function
   | (Prim (_, "DUG", [Int (_, k1)], _), Prim (_, "DIG", [Int (_, k2)], _)) when Z.equal k1 k2 ->
      Some []
   (* DIG 2 ; DIG 2  ↦  DUG 2 *)
-  | (Prim (_, "DIG", [Int (_, k1)], _), Prim (_, "DIG", [Int (_, k2)], _)) when Z.equal k1 k2 && Z.equal k1 (Z.of_int 2) ->
-     Some [Prim (-1, "DUG", [Int (-1, Z.of_int 2)], [])]
+  | (Prim (l1, "DIG", [Int (l2, k1)], _), Prim (_, "DIG", [Int (_, k2)], _)) when Z.equal k1 k2 && Z.equal k1 (Z.of_int 2) ->
+     Some [Prim (l1, "DUG", [Int (l2, Z.of_int 2)], [])]
   (* DUG 2 ; DUG 2  ↦  DIG 2 *)
-  | (Prim (_, "DUG", [Int (_, k1)], _), Prim (_, "DUG", [Int (_, k2)], _)) when Z.equal k1 k2 && Z.equal k1 (Z.of_int 2) ->
-     Some [Prim (-1, "DIG", [Int (-1, Z.of_int 2)], [])]
+  | (Prim (l1, "DUG", [Int (l2, k1)], _), Prim (_, "DUG", [Int (_, k2)], _)) when Z.equal k1 k2 && Z.equal k1 (Z.of_int 2) ->
+     Some [Prim (l1, "DIG", [Int (l2, Z.of_int 2)], [])]
   | _ -> None
 
-let opt_digdug3 : peep3 = function
+let opt_digdug3 : _ peep3 = function
   (* DIG 3 ; DIG 3 ; DIG 3  ↦  DUG 3 *)
-  | (Prim (_, "DIG", [Int (_, k1)], _), Prim (_, "DIG", [Int (_, k2)], _), Prim (_, "DIG", [Int (_, k3)], _)) when Z.equal k1 k2 && Z.equal k2 k3 && Z.equal k1 (Z.of_int 3) ->
-     Some [Prim (-1, "DUG", [Int (-1, Z.of_int 3)], [])]
+  | (Prim (l1, "DIG", [Int (l2, k1)], _), Prim (_, "DIG", [Int (_, k2)], _), Prim (_, "DIG", [Int (_, k3)], _)) when Z.equal k1 k2 && Z.equal k2 k3 && Z.equal k1 (Z.of_int 3) ->
+     Some [Prim (l1, "DUG", [Int (l2, Z.of_int 3)], [])]
   (* DUG 3 ; DUG 3 ; DUG 3  ↦  DIG 3 *)
-  | (Prim (_, "DUG", [Int (_, k1)], _), Prim (_, "DUG", [Int (_, k2)], _), Prim (_, "DUG", [Int (_, k3)], _)) when Z.equal k1 k2 && Z.equal k2 k3 && Z.equal k1 (Z.of_int 3) ->
-     Some [Prim (-1, "DIG", [Int (-1, Z.of_int 3)], [])]
+  | (Prim (l1, "DUG", [Int (l2, k1)], _), Prim (_, "DUG", [Int (_, k2)], _), Prim (_, "DUG", [Int (_, k3)], _)) when Z.equal k1 k2 && Z.equal k2 k3 && Z.equal k1 (Z.of_int 3) ->
+     Some [Prim (l1, "DIG", [Int (l2, Z.of_int 3)], [])]
   | _ -> None
 
 (* This "optimization" deletes dead code produced by the compiler
@@ -429,7 +432,7 @@ let opt_digdug3 : peep3 = function
    thwarting the intent of the Michelson tail fail restriction -- the
    LIGO _user_ might accidentally write dead code immediately after a
    failure, and we will simply erase it. *)
-let rec opt_tail_fail : michelson -> michelson =
+let rec opt_tail_fail : _ michelson -> _ michelson =
   function
   | Seq (l, args) ->
      let rec aux args =
@@ -457,16 +460,16 @@ let%expect_test _ =
   Format.printf "%a" Tezos_utils.Michelson.pp code ;
   [%expect {| { IF_LEFT { FAILWITH } { FAILWITH } } |}]
 
-let rec opt_combine_drops (x : michelson) : michelson =
-  let rec combine : michelson list -> michelson list = function
+let rec opt_combine_drops (x : 'l michelson) : 'l michelson =
+  let rec combine : _ michelson list -> _ michelson list = function
     | [] -> []
-    | Prim (_, "DROP", [], []) :: xs ->
+    | Prim (l, "DROP", [], []) :: xs ->
       let xs' = combine xs in
       begin match xs' with
-      | [] -> [Prim (-1, "DROP", [], [])]
-      | Prim (_, "DROP", [], []) :: xs' -> Prim (-1, "DROP", [Int (-1, Z.of_int 2)], []) :: xs'
-      | Prim (_, "DROP", [Int (_, n)], []) :: xs' -> Prim (-1, "DROP", [Int (-1, Z.of_int (1 + Z.to_int n))], []) :: xs'
-      | x' :: xs' -> Prim (-1, "DROP", [], []) :: x' :: xs'
+      | [] -> [Prim (l, "DROP", [], [])]
+      | Prim (_, "DROP", [], []) :: xs' -> Prim (l, "DROP", [Int (l, Z.of_int 2)], []) :: xs'
+      | Prim (_, "DROP", [Int (_, n)], []) :: xs' -> Prim (l, "DROP", [Int (l, Z.of_int (1 + Z.to_int n))], []) :: xs'
+      | x' :: xs' -> Prim (l, "DROP", [], []) :: x' :: xs'
       end
     | x :: xs -> x :: combine xs in
   match x with
@@ -507,7 +510,7 @@ let split_at (n : int) (xs : 'a list) : 'a list * 'a list =
   (List.rev bef, aft)
 
 (* strip annots from type arguments in some instructions *)
-let rec opt_strip_annots (x : michelson) : michelson =
+let rec opt_strip_annots (x : _ michelson) : _ michelson =
   match x with
   | Seq (l, args) ->
     let args = List.map opt_strip_annots args in
@@ -528,7 +531,7 @@ let rec opt_strip_annots (x : michelson) : michelson =
     end
   | x -> x
 
-let optimize : michelson -> michelson =
+let optimize : 'l. 'l michelson -> 'l michelson =
   fun x ->
   let x = flatten_seqs x in
   let x = opt_tail_fail x in

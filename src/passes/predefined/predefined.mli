@@ -15,32 +15,7 @@ module Tree_abstraction : sig
 end
 
 module Stacking : sig
-  (*
-  include Helpers.Stacking
-  *)
-  open Tezos_utils.Michelson
-  open Mini_c
-
-  type predicate =
-    | Constant of michelson
-    | Unary of michelson
-    | Binary of michelson
-    | Ternary of michelson
-    | Tetrary of michelson
-    | Pentary of michelson
-    | Hexary of michelson
+  include module type of Helpers.Stacking
+  open Stage_common.Types
   val get_operators : constant' -> predicate option
-  val simple_constant : t -> predicate
-  val simple_unary : t -> predicate
-  val simple_binary : t -> predicate
-  val simple_ternary : t -> predicate
-  val simple_tetrary : t -> predicate
-  val simple_pentary : t -> predicate
-  val simple_hexary : t -> predicate
-
-  val unpredicate : predicate -> michelson
-
-(*
-  val predicates : predicate Map.String.t
-*)
 end

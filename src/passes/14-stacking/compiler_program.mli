@@ -1,20 +1,16 @@
-open Errors
-open Trace
-open! Co_de_bruijn
-open Co_de_bruijn.Util
+open Stage_common.Types
 
-open Michelson
+open Tezos_micheline.Micheline
 
-(*
-module Contract_types = Meta_michelson.Types
-module Stack = Meta_michelson.Stack
-*)
 type compiled_expression = {
-  expr_ty : michelson ;
-  expr : michelson ;
+  expr_ty : (Location.t, string) node ;
+  expr : (Location.t, string) node ;
 }
 
+open Ligo_coq_ocaml
+open Co_de_bruijn
+open Ligo
 
-val translate_expression : expression -> environment -> splitting -> (michelson, stacking_error) result
+val compile_expr: (Location.t, string) node list -> splitting -> (Location.t, constant', literal) expr -> (Location.t, string) node
 
-val translate_function_body : expression bind -> environment -> splitting -> (michelson, stacking_error) result
+val compile_function_body : (Location.t, constant', literal) binds -> (Location.t, string) node

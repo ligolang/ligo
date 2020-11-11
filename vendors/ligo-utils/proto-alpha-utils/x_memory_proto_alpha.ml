@@ -168,7 +168,7 @@ let prims_of_strings michelson =
 
 let parse_michelson (type aft)
     ?(tezos_context = dummy_environment.tezos_context)
-    ?(top_level = Lambda) (michelson:Michelson.t)
+    ?(top_level = Lambda) michelson
     ?type_logger
     (bef:'a Script_typed_ir.stack_ty) (aft:aft Script_typed_ir.stack_ty)
   =
@@ -189,7 +189,7 @@ let parse_michelson (type aft)
 
 let parse_michelson_fail (type aft)
     ?(tezos_context = dummy_environment.tezos_context)
-    ?(top_level = Lambda) (michelson:Michelson.t)
+    ?(top_level = Lambda) michelson
     ?type_logger
     (bef:'a Script_typed_ir.stack_ty) (aft:aft Script_typed_ir.stack_ty)
   =
@@ -229,14 +229,14 @@ let strings_of_prims michelson =
 
 let unparse_michelson_data
     ?(tezos_context = dummy_environment.tezos_context)
-    ty value : Michelson.t tzresult Lwt.t =
+    ty value =
   unparse_data tezos_context
     Readable ty value >>=?? fun (michelson, _) ->
   return (strings_of_prims michelson)
 
 let unparse_michelson_ty
     ?(tezos_context = dummy_environment.tezos_context)
-    ty : Michelson.t tzresult Lwt.t =
+    ty =
   Script_ir_translator.unparse_ty tezos_context ty >>=?? fun (michelson, _) ->
   return (strings_of_prims michelson)
 
@@ -341,7 +341,7 @@ let pack (data_ty: 'a ty) (data: 'a) : bytes tzresult Lwt.t =
 
 let strings_of_prims = Michelson_v1_primitives.strings_of_prims
 
-let to_hex : Michelson.t -> Hex.t = fun michelson ->
+let to_hex = fun michelson ->
   let michelson =
     X_error_monad.force_lwt ~msg:"Internal error: could not serialize Michelson"
       (prims_of_strings michelson) in

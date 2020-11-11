@@ -5,16 +5,15 @@ type spilling_error = [
   | `Spilling_no_type_variable of Ast_typed.type_variable
   | `Spilling_unsupported_pattern_matching of Location.t
   | `Spilling_unsupported_recursive_function of Ast_typed.expression_variable
-  | `Spilling_tracer of Location.t * spilling_error
   | `Spilling_wrong_mini_c_value of Ast_typed.type_expression * Mini_c.value
   | `Spilling_bad_decompile of Mini_c.value
+  | `Spilling_could_not_parse_raw_michelson of Location.t * string
+  | `Spilling_raw_michelson_must_be_seq of Location.t * (Location.t, string) Tezos_micheline.Micheline.node
   ]
 
 type 'a spilling_result = ('a , spilling_error) Trace.result
 
 let stage = "spilling"
-
-let translation_tracer loc err = `Spilling_tracer (loc , err)
 
 let corner_case ~loc desc = `Spilling_corner_case (loc, desc)
 let corner_case_message () =
@@ -35,17 +34,18 @@ let wrong_mini_c_value expected actual =
 let bad_decompile bad_type =
   `Spilling_bad_decompile bad_type
 
-let rec error_ppformat : display_format:string display_format ->
+let could_not_parse_raw_michelson loc code =
+  `Spilling_could_not_parse_raw_michelson (loc, code)
+
+let raw_michelson_must_be_seq loc code =
+  `Spilling_raw_michelson_must_be_seq (loc, code)
+
+let error_ppformat : display_format:string display_format ->
   Format.formatter -> spilling_error -> unit =
   fun ~display_format f a ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
-    | `Spilling_tracer (loc, err) ->
-      Format.fprintf f
-      "@[<hv>%a@.Translating expression@.%a@]"
-      Snippet.pp loc
-      (error_ppformat ~display_format) err
     | `Spilling_corner_case (loc,desc) ->
       let s = Format.asprintf "%s\n corner case: %s\n%s" loc desc (corner_case_message ()) in
       Format.pp_print_string f s
@@ -69,9 +69,20 @@ let rec error_ppformat : display_format:string display_format ->
       let s = Format.asprintf "Cannot untranspile: %a"
         Mini_c.PP.value bad in
       Format.pp_print_string f s
+    | `Spilling_could_not_parse_raw_michelson (loc, code) ->
+      Format.fprintf f "@[<hv>%a@.Could not parse raw Michelson:@.\"%s\".@]"
+        Snippet.pp loc
+        code
+    | `Spilling_raw_michelson_must_be_seq (loc, code) ->
+      let open Tezos_micheline.Micheline in
+      let open Tezos_micheline.Micheline_printer in
+      Format.fprintf f "@[<hv>%a@.Raw Michelson must be seq (with curly braces {}), got: %a.@]"
+        Snippet.pp loc
+        print_expr
+        (printable (fun s -> s) (strip_locations code))
   )
 
-let rec error_jsonformat : spilling_error -> Yojson.Safe.t = fun a ->
+let error_jsonformat : spilling_error -> Yojson.Safe.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;
@@ -79,14 +90,6 @@ let rec error_jsonformat : spilling_error -> Yojson.Safe.t = fun a ->
       ("content",  content )]
   in
   match a with
-  | `Spilling_tracer (loc, err) ->
-    let loc' = Format.asprintf "%a" Location.pp loc in
-    let children = error_jsonformat err in
-    let content = `Assoc [
-      ("location", `String loc');
-      ("children", children) ]
-    in
-    json_error ~stage ~content
   | `Spilling_corner_case (loc, desc) ->
     let content = `Assoc [
       ("location", `String loc);
@@ -129,5 +132,27 @@ let rec error_jsonformat : spilling_error -> Yojson.Safe.t = fun a ->
     let content = `Assoc [
       ("message", `String "untranspiling bad value");
       ("value", `String var'); ]
+    in
+    json_error ~stage ~content
+  | `Spilling_could_not_parse_raw_michelson (loc, code) ->
+    let loc' = Format.asprintf "%a" Location.pp loc in
+    let content = `Assoc [
+      ("location", `String loc');
+      ("message", `String "Could not parse raw Michelson");
+      ("code", `String code); ]
+    in
+    json_error ~stage ~content
+  | `Spilling_raw_michelson_must_be_seq (loc, code) ->
+    let loc' = Format.asprintf "%a" Location.pp loc in
+    let open Tezos_micheline.Micheline in
+    let open Tezos_micheline.Micheline_printer in
+    let code =
+      Format.asprintf "Raw Michelson must be seq (with curly braces {}), got: %a"
+        print_expr
+        (printable (fun s -> s) (strip_locations code)) in
+    let content = `Assoc [
+      ("location", `String loc');
+      ("message", `String "Raw Michelson must be seq (with curly braces {})");
+      ("code", `String code); ]
     in
     json_error ~stage ~content

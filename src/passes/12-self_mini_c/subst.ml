@@ -80,10 +80,6 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let e1 = replace e1 in
     let e2 = replace e2 in
     return @@ E_let_in ((v, tv), inline, e1, e2)
-  | E_record_update (r, p, e) ->
-    let r = replace r in
-    let e = replace e in
-    return @@ E_record_update (r, p, e)
   | E_raw_michelson _ -> e
 
 (**
@@ -173,11 +169,6 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
   | E_if_bool cab -> (
       let cab' = Tuple.map3 self cab in
       return @@ E_if_bool cab'
-  )
-  | E_record_update (r, p, e) -> (
-    let r' = self r in
-    let e' = self e in
-    return @@ E_record_update(r', p, e')
   )
 
 let%expect_test _ =

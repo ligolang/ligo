@@ -5,8 +5,6 @@ open Format
 
 let list_sep_d x = list_sep x (tag " ,@ ")
 
-let lr = fun ppf -> function `Left -> fprintf ppf "L" | `Right -> fprintf ppf "R"
-
 let rec type_variable ppf : type_expression -> _ = fun te -> match te.type_content with
   | T_or(a, b) -> fprintf ppf "@[(%a) |@ (%a)@]" annotated a annotated b
   | T_pair(a, b) -> fprintf ppf "@[(%a) &@ (%a)@]" annotated a annotated b
@@ -127,10 +125,12 @@ and expression_content ppf (e:expression_content) = match e with
   | E_fold (((name , _) , body) , collection , initial) ->
       fprintf ppf "@[fold %a on %a with %a do ( %a )@]" expression collection expression initial Var.pp name.wrap_content expression body
 
-  | E_record_update (r, path,update) ->
-      fprintf ppf "@[{ %a@;<1 2>with@;<1 2>{ %a = %a } }@]" expression r (list_sep lr (const ".")) path expression update
   | E_raw_michelson code ->
-      fprintf ppf "%s" code 
+      let open Tezos_micheline in
+      let code = Micheline.Seq (Location.generated, code) in
+      let code = Micheline.strip_locations code in
+      let code = Micheline_printer.printable (fun prim -> prim) code in
+      fprintf ppf "%a" Micheline_printer.print_expr code
 
 and expression_with_type : _ -> expression -> _  = fun ppf e ->
   fprintf ppf "%a : %a"

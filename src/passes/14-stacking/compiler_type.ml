@@ -4,7 +4,7 @@ open Mini_c.Types
 
 module O = Tezos_utils.Michelson
 
-let base_type : type_base -> (O.michelson , stacking_error) result =
+let base_type : type_base -> (_ O.michelson , stacking_error) result =
   function
   | TB_unit -> ok @@ O.prim "unit"
   | TB_bool -> ok @@ O.prim "bool"
@@ -29,7 +29,7 @@ let base_type : type_base -> (O.michelson , stacking_error) result =
   | TB_bls12_381_g2 -> ok @@ O.prim "bls12_381_g2"
   | TB_bls12_381_fr -> ok @@ O.prim "bls12_381_fr"
 
-let rec type_ : type_expression -> (O.michelson , stacking_error) result =
+let rec type_ : type_expression -> (_ O.michelson , stacking_error) result =
   fun te -> match te.type_content with
   | T_base b -> base_type b
   | T_pair (t, t') -> (
@@ -65,7 +65,7 @@ let rec type_ : type_expression -> (O.michelson , stacking_error) result =
       let%bind ret = type_ ret in
       ok @@ O.prim ~children:[arg;ret] "lambda"
 
-and annotated : type_expression annotated -> (O.michelson , stacking_error) result =
+and annotated : type_expression annotated -> (_ O.michelson , stacking_error) result =
   function
   | (Some ann, o) ->
      let%bind o' = type_ o in
