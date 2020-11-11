@@ -44,48 +44,51 @@ let error_ppformat :
       unit =
   fun ~display_format f a ->
   match display_format with
-    Human_readable | Dev -> (
-      match a with
-        `Parser_generic reg ->
-           Snippet.pp_lift f reg.Region.region;
-           Format.pp_print_string f reg.Region.value
-      | `Parser_wrong_function_arguments expr ->
-           let loc = Format.asprintf "%a"
-             Snippet.pp_lift @@ CST.expr_to_region expr in
-           let s = Format.asprintf "%s\n%s" loc wrong_function_msg
-           in Format.pp_print_string f s
-      | `Parser_invalid_wild expr ->
-           let loc = Format.asprintf "%a"
-             Snippet.pp_lift @@ CST.expr_to_region expr in
-           let s = Format.asprintf "%s\n%s" loc wild_pattern_msg
-           in Format.pp_print_string f s)
+  | Human_readable | Dev -> (
+    match a with
+    | `Parser_generic {value; region} ->
+      Snippet.pp_lift f region;
+      Format.pp_print_string f value
+
+    | `Parser_wrong_function_arguments expr ->
+      let loc = Format.asprintf "%a"
+        Snippet.pp_lift @@ CST.expr_to_region expr in
+      let s = Format.asprintf "%s\n%s" loc wrong_function_msg in
+      Format.pp_print_string f s ;
+
+    | `Parser_invalid_wild expr ->
+      let loc = Format.asprintf "%a"
+        Snippet.pp_lift @@ CST.expr_to_region expr in
+      let s = Format.asprintf "%s\n%s" loc wild_pattern_msg in
+      Format.pp_print_string f s ;
+  )
 
 let error_jsonformat : parse_error -> Yojson.Safe.t =
   fun error ->
   let json_error ~stage ~content =
     `Assoc [
-      ("status", `String "error");
-      ("stage",  `String stage);
-      ("content", content )] in
+      ("status", `String "error") ;
+      ("stage", `String stage) ;
+      ("content",  content )]
+  in
   match error with
-    `Parser_generic reg ->
-       let loc =
-         Format.asprintf "%a" Location.pp_lift @@ reg.Region.region in
+    `Parser_generic {value; region} ->
+       let loc = Location.lift @@ region in
        let content = `Assoc [
-         ("message",  `String reg.Region.value);
-         ("location", `String loc)]
+         ("message",  `String value);
+         ("location", Location.to_yojson loc)]
     in json_error ~stage ~content
   | `Parser_wrong_function_arguments expr ->
-       let loc = Format.asprintf "%a" Location.pp_lift @@
-                   CST.expr_to_region expr in
-       let content = `Assoc [
-         ("message", `String wrong_function_msg);
-         ("location", `String loc)]
-       in json_error ~stage ~content
+    let loc = Location.lift @@ CST.expr_to_region expr in
+    let content = `Assoc [
+      ("message", `String wrong_function_msg);
+      ("location", Location.to_yojson loc); ]
+    in
+    json_error ~stage ~content
   | `Parser_invalid_wild expr ->
-       let loc =
-         Format.asprintf "%a" Location.pp_lift @@ CST.expr_to_region expr in
-       let content = `Assoc [
-         ("message", `String wild_pattern_msg);
-         ("location", `String loc); ]
-       in json_error ~stage ~content
+    let loc = Location.lift @@ CST.expr_to_region expr in
+    let content = `Assoc [
+      ("message", `String wild_pattern_msg);
+      ("location", Location.to_yojson loc); ]
+    in
+    json_error ~stage ~content
