@@ -181,7 +181,7 @@ assignDecls = loop go . fmap (\r -> [] :> False :> getRange r :> r)
         let r'' = putElem True $ modElem (imms <>) r'
         make (r, Alt pat (r'' :< body'))
 
-      (match -> Just (r, Function True n a ty b)) -> do
+      (match -> Just (r, BFunction True n a ty b)) -> do
         let imms = getImmediateDecls =<< a
         let
           f = ScopedDecl
@@ -193,14 +193,14 @@ assignDecls = loop go . fmap (\r -> [] :> False :> getRange r :> r)
             , _sdDoc    = getElem r
             }
         let r'   = putElem True $ modElem ((f : imms) <>) r
-        make (r', Function True n a ty b)
+        make (r', BFunction True n a ty b)
 
-      (match -> Just (r, Function False n a ty b)) -> do
+      (match -> Just (r, BFunction False n a ty b)) -> do
         let imms = getImmediateDecls =<< a
         let r' :< body = b
         let r'' = putElem True $ modElem (imms <>) r'
         let r''' = putElem True r
-        make (r''', Function False n a ty (r'' :< body))
+        make (r''', BFunction False n a ty (r'' :< body))
 
       it@(match -> Just (r, NameDecl n)) -> do
         let imms = getImmediateDecls it
@@ -292,28 +292,28 @@ getImmediateDecls = \case
 
   (match -> Just (r, pat)) -> do
     case pat of
-      Function     _ f _ t b -> do
+      BFunction     _ f _ t b -> do
         let (r', name) = getName f
         [ScopedDecl name r' (Just $ getRange b) (IsType . void' <$> t) [] (getElem r)]
 
-      Var v t b -> do
+      BVar v t b -> do
         let (r', name) = getName v
         [ScopedDecl name r' (getRange <$> b) (IsType . void' <$> t) [] (getElem r)]
 
-      Const c t b -> do
+      BConst c t b -> do
         let (r', name) = getName c
         [ScopedDecl name r' (getRange <$> b) (IsType . void' <$> t) [] (getElem r)]
 
-      Parameter n t -> do
+      BParameter n t -> do
         let (r', name) = getName n
         [ScopedDecl name r' Nothing (IsType . void' <$> Just t) [] (getElem r)]
 
-      TypeDecl t b -> do
+      BTypeDecl t b -> do
         let (r', name) = getTypeName t
         [ScopedDecl name r' (Just $ getRange b) kind [] (getElem r)]
 
-      Attribute _ -> []
-      Include _ -> []
+      BAttribute _ -> []
+      BInclude _ -> []
 
   (match -> Just (_, Parameters ps)) -> do
     ps >>= getImmediateDecls

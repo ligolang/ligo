@@ -73,10 +73,10 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
 
   , Descent do
       boilerplate $ \case
-        "fun_decl"  -> Function <$> flag "recursive" <*> field "name" <*> fields "arg" <*> fieldOpt "type" <*> field "body"
-        "let_decl"  -> Const    <$>                      field "name"                  <*> fieldOpt "type" <*> fieldOpt "body"
-        "include"   -> Include  <$>                      field "filename"
-        "type_decl" -> TypeDecl <$> field "name" <*> field "type"
+        "fun_decl"  -> BFunction <$> flag "recursive" <*> field "name" <*> fields "arg" <*> fieldOpt "type" <*> field "body"
+        "let_decl"  -> BConst    <$>                      field "name"                  <*> fieldOpt "type" <*> fieldOpt "body"
+        "include"   -> BInclude  <$>                      field "filename"
+        "type_decl" -> BTypeDecl <$> field "name" <*> field "type"
         _ -> fallthrough
 
   , Descent do

@@ -5,9 +5,9 @@ import AST.Skeleton
 
 import Duplo.Tree
 
-import Parser
 import ParseTree
-import Product (Product ((:>), Nil))
+import Parser
+import Product (Product (Nil, (:>)))
 
 -- example :: FilePath
 -- example = "../../../src/test/contracts/arithmetic.ligo"
@@ -140,11 +140,11 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
     -- Declaration
   , Descent do
       boilerplate \case
-        "fun_decl"   -> Function <$> flag "recursive" <*> field "name" <*> fields "parameters" <*> fieldOpt "type" <*> field "body"
-        "const_decl" -> Const    <$>             field    "name"       <*> fieldOpt "type" <*> fieldOpt "value"
-        "var_decl"   -> Var      <$>             field    "name"       <*> fieldOpt "type" <*> fieldOpt "value"
-        "type_decl"  -> TypeDecl <$>             field    "typeName"   <*> field "typeValue"
-        "include"    -> Include  <$>             field    "filename"
+        "fun_decl"   -> BFunction <$> flag "recursive" <*> field "name" <*> fields "parameters" <*> fieldOpt "type" <*> field "body"
+        "const_decl" -> BConst    <$>             field    "name"       <*> fieldOpt "type" <*> fieldOpt "value"
+        "var_decl"   -> BVar      <$>             field    "name"       <*> fieldOpt "type" <*> fieldOpt "value"
+        "type_decl"  -> BTypeDecl <$>             field    "typeName"   <*> field "typeValue"
+        "include"    -> BInclude  <$>             field    "filename"
         _            -> fallthrough
 
     -- Parameters
@@ -156,7 +156,7 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
     -- VarDecl
   , Descent do
       boilerplate \case
-        "param_decl" -> Parameter <$> field "name" <*> field "type"
+        "param_decl" -> BParameter <$> field "name" <*> field "type"
         _            -> fallthrough
 
   --   -- Mutable

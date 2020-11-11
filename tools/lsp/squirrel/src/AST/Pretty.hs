@@ -12,7 +12,6 @@ import AST.Skeleton
 
 import Data.Maybe (isJust)
 import Duplo (Cofree ((:<)), Layers)
-import Duplo.Error (Err)
 import Duplo.Error (Err (Err))
 import Duplo.Pretty
   (Doc, Modifies (..), PP (PP), Pretty (..), Pretty1 (..), above, brackets, color, empty, fsep,
@@ -166,14 +165,14 @@ instance Pretty1 RawContract where
 
 instance Pretty1 Binding where
   pp1 = \case
-    TypeDecl     n    ty       -> sexpr "type"  [n, ty]
-    Parameter    n    ty       -> sexpr "parameter"  [n, ty]
-    Var          name ty value -> sexpr "var"   [name, pp ty, pp value]
-    Const        name ty body  -> sexpr "const" [name, pp ty, pp body]
-    Attribute    name          -> sexpr "attr"  [name]
-    Include      fname         -> sexpr "#include" [fname]
+    BTypeDecl     n    ty       -> sexpr "type"  [n, ty]
+    BParameter    n    ty       -> sexpr "parameter"  [n, ty]
+    BVar          name ty value -> sexpr "var"   [name, pp ty, pp value]
+    BConst        name ty body  -> sexpr "const" [name, pp ty, pp body]
+    BAttribute    name          -> sexpr "attr"  [name]
+    BInclude      fname         -> sexpr "#include" [fname]
 
-    Function isRec name params ty body ->
+    BFunction isRec name params ty body ->
       sexpr "fun" $ concat
         [ ["rec" | isRec]
         , [name]
@@ -385,14 +384,14 @@ instance LPP1 'Pascal Type where
 
 instance LPP1 'Pascal Binding where
   lpp1 = \case
-    TypeDecl     n    ty       -> "type" <+> n <+> "is" <+> lpp ty
-    Var          name ty value -> "var" <+> name <+> ":" <+> lpp ty <+> ":=" <+> lpp value
-    Const        name ty body  -> "const" <+> name <+> ":" <+> lpp ty <+> "=" <+> lpp body
-    Attribute    name          -> brackets ("@" <.> name)
-    Include      fname         -> "#include" <+> pp fname
-    Parameter    n t           -> "const" <+> n <+> ":" <+> lpp t
+    BTypeDecl     n    ty       -> "type" <+> n <+> "is" <+> lpp ty
+    BVar          name ty value -> "var" <+> name <+> ":" <+> lpp ty <+> ":=" <+> lpp value
+    BConst        name ty body  -> "const" <+> name <+> ":" <+> lpp ty <+> "=" <+> lpp body
+    BAttribute    name          -> brackets ("@" <.> name)
+    BInclude      fname         -> "#include" <+> pp fname
+    BParameter    n t           -> "const" <+> n <+> ":" <+> lpp t
 
-    Function _ name params ty body ->
+    BFunction _ name params ty body ->
       foldr (<+>) empty $ concat
         [ ["function"]
         , [name]
@@ -516,11 +515,11 @@ instance LPP1 'Reason Type where
 
 instance LPP1 'Reason Binding where
   lpp1 = \case
-    TypeDecl     n    ty       -> "type" <+> n <+> "=" <+> lpp ty
-    Const        name ty body  -> foldr (<+>) empty
+    BTypeDecl     n    ty       -> "type" <+> n <+> "=" <+> lpp ty
+    BConst        name ty body  -> foldr (<+>) empty
       [ "let", name, if isJust ty then ":" <+> lpp ty else "", "=", lpp body, ";" ] -- TODO: maybe append ";" to *all* the expressions in the contract
-    Attribute    name          -> brackets ("@" <.> name)
-    Include      fname         -> "#include" <+> pp fname
+    BAttribute    name          -> brackets ("@" <.> name)
+    BInclude      fname         -> "#include" <+> pp fname
     node                       -> error "unexpected `Binding` node failed with: " <+> pp node
 
 instance LPP1 'Reason Variant where
@@ -610,11 +609,11 @@ instance LPP1 'Caml Type where
 
 instance LPP1 'Caml Binding where
   lpp1 = \case
-    TypeDecl     n    ty       -> "type" <+> n <+> "=" <+> lpp ty
-    Const        name ty body  -> "let" <+> name <+> ":" <+> lpp ty <+> lpp body
-    Include      fname         -> "#include" <+> pp fname
+    BTypeDecl     n    ty       -> "type" <+> n <+> "=" <+> lpp ty
+    BConst        name ty body  -> "let" <+> name <+> ":" <+> lpp ty <+> lpp body
+    BInclude      fname         -> "#include" <+> pp fname
 
-    Function isRec name params ty body ->
+    BFunction isRec name params ty body ->
       foldr (<+>) empty $ concat
         [ ["let"]
         , ["rec" | isRec]

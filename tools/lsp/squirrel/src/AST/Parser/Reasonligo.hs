@@ -132,10 +132,10 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
   , Descent do
       boilerplate $ \case
         -- TODO: We forget "rec" field in let
-        "let_declaration"   -> Const    <$>             field    "binding"       <*> fieldOpt "type" <*> fieldOpt "value"
-        "type_decl"  -> TypeDecl <$>             field    "type_name"   <*> field "type_value"
-        "attr_decl" -> Attribute <$> field "name"
-        _            -> fallthrough
+        "let_declaration" -> BConst <$> field "binding" <*> fieldOpt "type" <*> fieldOpt "value"
+        "type_decl" -> BTypeDecl <$> field "type_name" <*> field "type_value"
+        "attr_decl" -> BAttribute <$> field "name"
+        _ -> fallthrough
 
     -- Name
   , Descent do

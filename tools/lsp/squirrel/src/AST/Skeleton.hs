@@ -46,14 +46,16 @@ data RawContract it
   deriving stock (Functor, Foldable, Traversable)
 
 data Binding it
-  = Function     Bool it [it] (Maybe it) it    -- ^ (Name) (Parameters) (Type) (Expr)
-  | Parameter    it it               -- ^ (Name)
-  | Var          it (Maybe it) (Maybe it)            -- ^ (Name) (Type) (Expr)
-  | Const        it (Maybe it) (Maybe it)            -- ^ (Name) (Type) (Expr)
-  | TypeDecl     it it               -- ^ (Name) (Type)
-  | Attribute    it                  -- ^ (Name)
-  | Include      it
+  = BFunction     IsRec it [it] (Maybe it) it -- ^ (Name) (Parameters) (Type) (Expr)
+  | BParameter it it -- ^ (Name) (Type)
+  | BVar          it (Maybe it) (Maybe it) -- ^ (Name) (Type) (Expr)
+  | BConst        it (Maybe it) (Maybe it) -- ^ (Name) (Type) (Expr)
+  | BTypeDecl     it it -- ^ (Name) (Type)
+  | BAttribute    it -- ^ (Name)
+  | BInclude      it
   deriving stock (Functor, Foldable, Traversable)
+
+type IsRec = Bool
 
 data Parameters it
   = Parameters [it]
