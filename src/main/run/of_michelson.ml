@@ -52,7 +52,7 @@ let make_dry_run_options (opts : dry_run_options) : (options , _) result =
         | None -> fail @@ Errors.invalid_timestamp st in
   ok @@ make_options ?now:now ~amount ~balance ?sender ?source ()
 
-let ex_value_ty_to_michelson (v : ex_typed_value) : (Michelson.t * Michelson.t , _) result =
+let ex_value_ty_to_michelson (v : ex_typed_value) : (_ Michelson.t * _ Michelson.t , _) result =
   let (Ex_typed_value (ty , value)) = v in
   let%bind ty' =
     Trace.trace_tzresult_lwt Errors.unparsing_michelson_tracer @@
@@ -62,7 +62,7 @@ let ex_value_ty_to_michelson (v : ex_typed_value) : (Michelson.t * Michelson.t ,
     Memory_proto_alpha.unparse_michelson_data ty value in
   ok (ty', value')
 
-let pack_payload (payload:Michelson.t) ty =
+let pack_payload (payload : _ Michelson.t) ty =
   let%bind ty =
     Trace.trace_tzresult_lwt Errors.parsing_payload_tracer @@
     Memory_proto_alpha.prims_of_strings ty in
@@ -80,12 +80,12 @@ let pack_payload (payload:Michelson.t) ty =
     Memory_proto_alpha.pack ty payload in
   ok @@ data
 
-let fetch_lambda_types (contract_ty : Michelson.t) =
+let fetch_lambda_types (contract_ty : _ Michelson.t) =
   match contract_ty with
   | Prim (_, "lambda", [in_ty; out_ty], _) -> ok (in_ty, out_ty)
   | _ -> fail Errors.unknown (*TODO*)
 
-let run_contract ?options (exp:Michelson.t) (exp_type:Michelson.t) (input_michelson:Michelson.t) =
+let run_contract ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) (input_michelson : _ Michelson.t) =
   let open! Tezos_raw_protocol_ligo006_PsCARTHA in
   let%bind (input_ty, output_ty) = fetch_lambda_types exp_type in
   let%bind input_ty =
@@ -130,7 +130,7 @@ let run_contract ?options (exp:Michelson.t) (exp_type:Michelson.t) (input_michel
     | Bytes (_, s)   -> ok @@ Fail (Failwith_bytes s)
     | _              -> fail @@ Errors.unknown_failwith_type )
 
-let run_expression ?options (exp:Michelson.t) (exp_type:Michelson.t) =
+let run_expression ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) =
   let open! Tezos_raw_protocol_ligo006_PsCARTHA in
   let%bind exp_type =
     Trace.trace_tzresult_lwt Errors.parsing_input_tracer @@
@@ -159,13 +159,13 @@ let run_expression ?options (exp:Michelson.t) (exp_type:Michelson.t) =
     | Bytes (_, s)   -> ok @@ Fail (Failwith_bytes s)
     | _              -> fail @@ Errors.unknown_failwith_type )
 
-let run_failwith ?options (exp:Michelson.t) (exp_type:Michelson.t) : (failwith , _) result =
+let run_failwith ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) : (failwith , _) result =
   let%bind expr = run_expression ?options exp exp_type in
   match expr with
   | Success _  -> fail Errors.unknown (* TODO : simple_fail "an error of execution was expected" *)
   | Fail res -> ok res
 
-let run_no_failwith ?options (exp:Michelson.t) (exp_type:Michelson.t) =
+let run_no_failwith ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) =
   let%bind expr = run_expression ?options exp exp_type in
   match expr with
   | Success tval  -> ok tval

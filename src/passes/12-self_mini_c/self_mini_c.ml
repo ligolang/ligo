@@ -119,8 +119,6 @@ let rec is_pure : expression -> bool = fun e ->
 
   | E_constant (c)
     -> is_pure_constant c.cons_name && List.for_all is_pure c.arguments
-  | E_record_update (e, _,up)
-    -> is_pure e && is_pure up
 
   (* I'm not sure about these. Maybe can be tested better? *)
   | E_application _

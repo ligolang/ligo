@@ -4,7 +4,7 @@
   (libraries
     simple-utils
     tezos-utils
-    co_de_bruijn
+    ligo_coq_ocaml
     predefined
     self_michelson
   )

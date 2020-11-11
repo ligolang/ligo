@@ -3,28 +3,26 @@ module Stacking = struct
   open Tezos_utils.Michelson
 
   type predicate =
-    | Constant of michelson
-    | Unary of michelson
-    | Binary of michelson
-    | Ternary of michelson
-    | Tetrary of michelson
-    | Pentary of michelson
-    | Hexary of michelson
-  let simple_constant c = Constant c
-  let simple_unary c = Unary c
-  let simple_binary c = Binary c
-  let simple_ternary c = Ternary c
-  let simple_tetrary c = Tetrary c
-  let simple_pentary c = Pentary c
-  let simple_hexary c = Hexary c
+    | Simple of unit michelson
+    | Special of ((string -> unit michelson) -> unit michelson)
 
-  let unpredicate =
-    function
-    | Constant code -> code
-    | Unary code -> code
-    | Binary code -> code
-    | Ternary code -> code
-    | Tetrary code -> code
-    | Pentary code -> code
-    | Hexary code -> code
+  (* TODO why did these exist? *)
+  let simple_constant c = Simple c
+  let simple_unary c = Simple c
+  let simple_binary c = Simple c
+  let simple_ternary c = Simple c
+  let simple_tetrary c = Simple c
+  let simple_pentary c = Simple c
+  let simple_hexary c = Simple c
+
+  (* A special operator which just applies type arguments to a
+     Michelson prim. *)
+  let trivial_special prim = Special (fun with_args -> with_args prim)
+  (* A more special operator which might apply type (or script)
+     arguments to some part of its output. *)
+  let special c = Special c
+
+  let unpredicate apply_args = function
+    | Simple code -> code
+    | Special code -> code apply_args
 end

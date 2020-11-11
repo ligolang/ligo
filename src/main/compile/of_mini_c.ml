@@ -2,24 +2,31 @@ open Main_errors
 open Mini_c
 open Proto_alpha_utils
 open Trace
-open Stacking
+open! Stacking
+open Tezos_micheline
+
+let dummy_locations : 'l 'p. ('l, 'p) Micheline.node -> (Location.t, 'p) Micheline.node =
+  fun e ->
+  Micheline.(inject_locations (fun _ -> Location.dummy) (strip_locations e))
 
 let compile_contract : expression -> (Stacking.compiled_expression , _) result = fun e ->
   let%bind e = trace self_mini_c_tracer @@ Self_mini_c.contract_check e in
   let%bind (input_ty , _) = trace self_mini_c_tracer @@ Self_mini_c.get_t_function e.type_expression in
   let%bind body = trace self_mini_c_tracer @@ Self_mini_c. get_function e in
   let body = Scoping.translate_closed_function body input_ty in
-  let%bind body = trace stacking_tracer @@ Stacking.Program.translate_function_body body [] [] in
+  let body = Stacking.Program.compile_function_body body in
   let expr = Self_michelson.optimize body in
   let%bind expr_ty = trace stacking_tracer @@ Stacking.Type.type_ e.type_expression in
+  let expr_ty = dummy_locations expr_ty in
   ok ({ expr_ty ; expr } : Stacking.Program.compiled_expression)
 
 let compile_expression : expression -> (compiled_expression, _) result = fun e ->
   trace stacking_tracer @@
   let (expr, _) = Scoping.translate_expression e [] in
-  let%bind expr = Stacking.Program.translate_expression expr [] [] in
+  let expr = Stacking.Program.compile_expr [] [] expr in
   let expr = Self_michelson.optimize expr in
   let%bind expr_ty = Stacking.Type.type_ e.type_expression in
+  let expr_ty = dummy_locations expr_ty in
   ok ({ expr_ty ; expr } : Program.compiled_expression)
 
 let aggregate_and_compile : program -> form_t -> (Stacking.compiled_expression, _) result = fun program form ->

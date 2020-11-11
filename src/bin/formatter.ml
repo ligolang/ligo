@@ -44,7 +44,7 @@ let contract_size_format : 'a format = {
 module Michelson_formatter = struct
   open Tezos_utils.Michelson
 
-  let pp_hex ppf (michelson : michelson) =
+  let pp_hex ppf michelson =
     let hex = Proto_alpha_utils.Memory_proto_alpha.to_hex michelson in
     Format.fprintf ppf "%a" Hex.pp hex
 

@@ -40,7 +40,10 @@ let entrypoint_not_found : all = `Main_entrypoint_not_found
 
 let arguments_check_tracer ps err : all = `Main_check_typed_arguments (ps, err)
 let unparse_tracer errs : all = `Main_unparse_tracer errs
-let typecheck_contract_tracer c errs : all = `Main_typecheck_contract_tracer (c,errs)
+let typecheck_contract_tracer c errs : all =
+  let open Tezos_micheline.Micheline in
+  let c = root (strip_locations c) in
+  `Main_typecheck_contract_tracer (c,errs)
 let could_not_serialize errs : all = `Main_could_not_serialize errs
 
 let unknown : all = `Main_unknown

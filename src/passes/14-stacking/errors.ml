@@ -7,7 +7,7 @@ type stacking_error = [
   | `Stacking_not_comparable_pair_struct
   | `Stacking_could_not_tokenize_michelson of string
   | `Stacking_could_not_parse_michelson of string
-  | `Stacking_untranspilable of Michelson.t * Michelson.t
+  | `Stacking_untranspilable of int Michelson.t * int Michelson.t
 ]
 
 let stage = "stacking"
@@ -21,7 +21,11 @@ let contract_entrypoint_must_be_literal ~loc = `Stacking_contract_entrypoint loc
 let bad_iterator cst = `Stacking_bad_iterator cst
 let not_comparable_pair_struct = `Stacking_not_comparable_pair_struct
 let unrecognized_data errs = `Stacking_unparsing_unrecognized_data errs
-let untranspilable m_type m_data = `Stacking_untranspilable (m_type, m_data)
+let untranspilable m_type m_data =
+  let open Tezos_micheline.Micheline in
+  let m_type = root (strip_locations m_type) in
+  let m_data = root (strip_locations m_data) in
+  `Stacking_untranspilable (m_type, m_data)
 let bad_constant_arity c = `Stacking_bad_constant_arity c
 let could_not_tokenize_michelson c = `Stacking_could_not_tokenize_michelson c
 let could_not_parse_michelson c = `Stacking_could_not_parse_michelson c

@@ -54,7 +54,7 @@ let pack_payload (program:Ast_typed.program_fully_typed) (payload:expression) : 
     let%bind mini_c = Compile.Of_typed.compile_expression typed in
     Compile.Of_mini_c.compile_expression mini_c in
   let payload_ty = code.expr_ty in
-  let%bind (payload: Tezos_utils.Michelson.michelson) =
+  let%bind (payload : _ Tezos_utils.Michelson.michelson) =
     Ligo.Run.Of_michelson.evaluate_expression code.expr code.expr_ty in
   Ligo.Run.Of_michelson.pack_payload payload payload_ty
 

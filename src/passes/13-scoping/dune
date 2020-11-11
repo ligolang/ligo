@@ -4,8 +4,8 @@
   (libraries
     simple-utils
     mini_c
-    co_de_bruijn
     predefined
+    ligo_coq_ocaml
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)

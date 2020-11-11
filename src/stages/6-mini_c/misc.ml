@@ -53,7 +53,6 @@ module Free_variables = struct
       unions [ self expr ;
                expression (union (singleton v) b) body ;
              ]
-    | E_record_update (r, _,e) -> union (self r) (self e)
     | E_raw_michelson _ -> empty
 
   and var_name : bindings -> var_name -> bindings = fun b n ->

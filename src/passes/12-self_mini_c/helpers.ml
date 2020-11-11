@@ -67,11 +67,6 @@ let rec fold_expression : ('a,'err) folder -> 'a -> expression -> ('a, 'err) res
       let%bind res = bind_fold_pair self init' (expr,body) in
       ok res
   )
-  | E_record_update (r, _, e) -> (
-      let%bind res = self init' r in
-      let%bind res = self res e in
-      ok res
-  )
 
 type 'err mapper = expression -> (expression,'err) result
 
@@ -121,11 +116,6 @@ let rec map_expression : 'err mapper -> expression -> (expression, 'err) result 
   | E_let_in ((v , tv) , inline, expr , body) -> (
       let%bind (expr',body') = bind_map_pair self (expr,body) in
       return @@ E_let_in ((v , tv) , inline , expr' , body')
-  )
-  | E_record_update (r, l, e) -> (
-      let%bind r = self r in
-      let%bind e = self e in
-      return @@ E_record_update(r, l, e)
   )
 
 let map_sub_level_expression : 'err mapper -> expression -> (expression , 'err) result = fun f e ->

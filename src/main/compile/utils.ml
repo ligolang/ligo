@@ -32,7 +32,7 @@ let to_mini_c ~options f stx env =
   let%bind mini_c     = Of_typed.compile typed in
   ok @@ mini_c
 
-let compile_file ~options f stx ep : (Michelson.michelson, _) result =
+let compile_file ~options f stx ep =
   let%bind typed,_,_  = type_file ~options f stx @@ Contract ep in
   let%bind mini_c     = Of_typed.compile typed in
   let%bind michelson  = Of_mini_c.aggregate_and_compile_contract mini_c ep in
