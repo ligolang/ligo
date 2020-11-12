@@ -55,6 +55,7 @@ in {
           src = builtins.fetchTarball
             "https://github.com/aantron/bisect_ppx/archive/02dfb10188033a26d07d23480c2bc44a3a670357.tar.gz";
         });
+        coq = null;
 
         hacl = fixHardeningWarning osuper.hacl;
 
