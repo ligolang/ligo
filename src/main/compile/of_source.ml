@@ -6,14 +6,21 @@ type module_name = string
 
 type c_unit = Buffer.t * (file_path * module_name) list
 
-let compile ?(libs=[]) (source_filename:string) syntax : (c_unit , _) result =
-  let%bind syntax   = syntax_to_variant syntax (Some source_filename) in
-  preprocess_file ~libs syntax source_filename
+(* we should have on for filename with syntax_opt and one in case of no file *)
+let extract_meta syntax file_name =
+  let%bind syntax   = syntax_to_variant (Syntax_name syntax) (Some file_name) in
+  ok @@ {syntax}
 
+let make_meta syntax file_name_opt =
+  let%bind syntax   = syntax_to_variant (Syntax_name syntax) file_name_opt in
+  ok @@ {syntax}
 
-let compile_string ?(libs=[]) syntax source : (c_unit , _) result =
-  preprocess_string ~libs syntax source
+let compile ~options ~meta (source_filename:string) : (c_unit , _) result =
+  preprocess_file ~options ~meta source_filename
 
-let compile_contract_input : ?libs: string list -> string -> string -> v_syntax -> (c_unit * c_unit , _) result =
-    fun ?(libs=[]) storage parameter syntax ->
-  bind_map_pair (compile_string ~libs syntax) (storage,parameter)
+let compile_string ~options ~meta source : (c_unit , _) result =
+  preprocess_string ~options ~meta source
+
+let compile_contract_input : options:Compiler_options.t -> meta:meta -> string -> string -> (c_unit * c_unit , _) result =
+    fun ~options ~meta storage parameter ->
+  bind_map_pair (compile_string ~options ~meta) (storage,parameter)

@@ -7,6 +7,6 @@ module Preproc     = MainGen.Make (Preproc_CLI)
 
 let () =
   match Preproc.preprocess () with
-    Stdlib.Ok buffer ->
-      Printf.printf "%s%!" (Buffer.contents (fst buffer))
+    Stdlib.Ok (buffer,_) ->
+      Printf.printf "%s%!" (Buffer.contents buffer)
   | _ -> ()

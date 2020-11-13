@@ -5,13 +5,13 @@ let return_good v = `Ok v
 let return_bad v = (
   if v.[String.length v - 1] = '\n' then
     Format.eprintf "%s" v
-  else 
+  else
     Format.eprintf "%s\n" v;
   Format.pp_print_flush Format.err_formatter ();
   `Error (false, "")
 )
 
-let toplevel : ?output_file:string option -> display_format:ex_display_format -> displayable -> ('value, Main_errors.Types.all) Trace.result -> unit Term.ret =
+let toplevel : ?output_file:string option -> display_format:ex_display_format -> displayable -> ('value, _) Trace.result -> unit Term.ret =
   fun ?(output_file=None) ~display_format disp value ->
     let (Ex_display_format t) = display_format in
     let as_str : string =
@@ -29,7 +29,7 @@ let toplevel : ?output_file:string option -> display_format:ex_display_format ->
       return_good @@ (Format.fprintf fmt "%s\n" as_str ; Format.pp_print_flush fmt ())
     | Error _ -> return_bad as_str
 
-let return_result : ?output_file:string option -> display_format:ex_display_format -> 'value format -> ('value, Main_errors.Types.all) Trace.result -> unit Term.ret =
+let return_result : ?output_file:string option -> display_format:ex_display_format -> 'value format -> ('value, Build.Errors.build_error) Trace.result -> unit Term.ret =
   fun ?(output_file=None) ~display_format value_format value ->
-    let format = bind_format value_format Main.Formatter.error_format in
+    let format = bind_format value_format Build.Errors.error_format in
     toplevel ~output_file ~display_format (Displayable {value ; format}) value

@@ -89,6 +89,10 @@ let%expect_test _ =
                Subcommand: Print the CST. Warning: Intended for development of
                LIGO and can break at any time.
 
+           print-graph
+               Subcommand: Print the dependency graph. Warning: Intended for
+               development of LIGO and can break at any time.
+
            print-mini-c
                Subcommand: Print Mini-C. Warning: Intended for development of
                LIGO and can break at any time.
@@ -200,6 +204,10 @@ let%expect_test _ =
            print-cst
                Subcommand: Print the CST. Warning: Intended for development of
                LIGO and can break at any time.
+
+           print-graph
+               Subcommand: Print the dependency graph. Warning: Intended for
+               development of LIGO and can break at any time.
 
            print-mini-c
                Subcommand: Print Mini-C. Warning: Intended for development of
