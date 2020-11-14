@@ -129,6 +129,7 @@ tests:
       - test/
 
     dependencies:
+      - template-haskell
       - HUnit
       - directory
       - filepath

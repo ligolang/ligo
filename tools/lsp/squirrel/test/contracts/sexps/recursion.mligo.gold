@@ -1,8 +1,8 @@
 (contract
   (fun
     rec
-    'sum
-    (type? (tuple? (tuple? (? 'n) (? 'acc))) (PROD int int))
+    sum
+    (type? (tuple? (tuple? (? n) (? acc))) (PROD int int))
     :
     int
     =
@@ -11,9 +11,9 @@
       acc (apply sum (tuple (tuple (apply n -1) (acc + n))))))
   (fun
     rec
-    'fibo
+    fibo
     (type?
-      (tuple? (tuple? (? 'n) (tuple? (? 'n_1) (? 'n_0))))
+      (tuple? (tuple? (? n) (tuple? (? n_1) (? n_0))))
       (PROD int (PROD int int)))
     :
     int

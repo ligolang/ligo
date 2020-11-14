@@ -6,13 +6,20 @@
 let
   project = haskell-nix.stackProject {
     src = haskell-nix.haskellLib.cleanGit { src = ./.; };
-    modules = [{
-      packages.ligo-squirrel = {
-        preBuild = ''
-          rm -rf grammar
-          cp -r ${grammars} grammar
-        '';
-      };
-    }];
+    modules = [
+      ({ config, ... }: {
+        packages.ligo-squirrel = {
+          preBuild = ''
+            rm -rf grammar
+            cp -r ${grammars} grammar
+          '';
+          # Thanks, I Hate It.
+          components.tests.squirrel-test = {
+            preBuild = "export CONTRACTS_DIR=${../../../src/test/contracts}";
+            build-tools = [ config.hsPkgs.tasty-discover ];
+          };
+        };
+      })
+    ];
   };
 in project.ligo-squirrel

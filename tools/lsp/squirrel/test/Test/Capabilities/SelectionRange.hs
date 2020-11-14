@@ -25,7 +25,8 @@ unit_selectionRangeInsideCase = do
   let position = point 16 8
       results = findCoveringRanges tree position
               & map simplify
-  results `shouldBe` [ SimpleRange (16, 8) (16, 16)
+  results `shouldBe` [ SimpleRange (16, 8) (16, 12)
+                     , SimpleRange (16, 8) (16, 16)
                      , SimpleRange (16, 8) (16, 21)
                      , SimpleRange (15, 6) (18, 9)
                      , SimpleRange (14, 4) (18, 9)

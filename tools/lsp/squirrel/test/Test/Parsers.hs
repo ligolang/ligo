@@ -3,12 +3,16 @@ module Test.Parsers
   , test_badContracts
   ) where
 
-import Control.Exception.Safe (try)
+import Control.Exception.Safe (catch, throwIO, try)
+import Control.Monad.IO.Class (liftIO)
 import Data.Functor ((<&>))
 import Data.List (isSuffixOf)
 import Duplo (HandlerFailed (..))
+import Language.Haskell.TH.Syntax (liftString)
 import System.Directory (listDirectory)
+import System.Environment (getEnv)
 import System.FilePath ((</>))
+import System.IO.Error (isDoesNotExistError)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
 
@@ -16,7 +20,16 @@ import Test.FixedExpectations (Expectation, HasCallStack, expectationFailure)
 import Test.Util (readContract)
 
 contractsDir :: FilePath
-contractsDir = "../../../src/test/contracts"
+contractsDir =
+  $(
+    let
+      getDir :: IO FilePath
+      getDir = getEnv "CONTRACTS_DIR" `catch` \e ->
+        if isDoesNotExistError e
+        then pure "../../../src/test/contracts"
+        else throwIO e
+    in liftIO getDir >>= liftString
+  )
 
 okayContractsDirs :: [FilePath]
 okayContractsDirs = contractsDir : map (contractsDir </>) rest
