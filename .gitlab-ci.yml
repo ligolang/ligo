@@ -277,6 +277,25 @@ pages-attempt:
     - merge_requests
     - /^.*-run-dev$/
 
+vscode-extension-tests:
+  extends: .nix
+  only:
+    - merge_requests
+    - dev
+    - /^.*-run-dev$/
+  script:
+    - nix-build tools/lsp -A checks.x86_64-linux.squirrel-test
+
+vscode-extension-sexp-tests:
+  extends: .nix
+  only:
+    - merge_requests
+    - dev
+    - /^.*-run-dev$/
+  script:
+    - nix-build tools/lsp -A checks.x86_64-linux.squirrel-sexp-test
+
+
 vscode-extension:
   extends: .nix
   only:

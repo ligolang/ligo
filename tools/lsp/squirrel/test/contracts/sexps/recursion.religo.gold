@@ -1,8 +1,8 @@
 (contract
   (const
-    (? 'sum)
+    (? sum)
     (lam
-      (type? (tuple? (? 'n) (? 'acc)) (TUPLE int int))
+      (type? (tuple? (? n) (? acc)) (PROD int int))
       :
       int
       =>
@@ -10,9 +10,9 @@
         (tuple (n < 1))
         (seq acc) (seq (apply sum (tuple (n - 1) (acc + n)))))))
   (const
-    (? 'fibo)
+    (? fibo)
     (lam
-      (type? (tuple? (? 'n) (? 'n_1) (? 'n_0)) (TUPLE int int int))
+      (type? (tuple? (? n) (? n_1) (? n_0)) (PROD int int int))
       :
       int
       =>

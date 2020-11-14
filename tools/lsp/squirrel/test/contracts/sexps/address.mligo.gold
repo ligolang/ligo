@@ -1,10 +1,10 @@
 (contract
   (fun
-    'main
-    (type? (? 'p) key_hash)
+    main
+    (type? (? p) key_hash)
     :
     =
     (let
       (const
-        (? 'c) (contract $ unit) (apply (get Tezos implicit_account) p))
+        (? c) (contract $ unit) (apply (get Tezos implicit_account) p))
     (apply (get Tezos address) c))))

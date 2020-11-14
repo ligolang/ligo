@@ -56,14 +56,24 @@
 
         squirrel-static = pkgs.pkgsCross.musl64.callPackage ./squirrel { };
 
-        squirrel-windows = pkgs.pkgsCross.mingwW64.callPackage ./squirrel { };
+        squirrel-sexp-test = pkgs.stdenv.mkDerivation {
+          name = "squirrel-sexp-test";
+          src = ./squirrel;
+          buildInputs = [ pkgs.bats squirrel.components.exes.ligo-vet ];
+          doCheck = true;
+          phases = [ "unpackPhase" "checkPhase" ];
+          checkPhase = ''
+            bats ./scripts
+            touch $out
+          '';
+        };
 
         exes =
           builtins.mapAttrs (_: project: project.components.exes.ligo-squirrel)
           ({
             inherit squirrel;
           } // (if system != "x86_64-darwin" then {
-            inherit squirrel-static squirrel-windows;
+            inherit squirrel-static;
           } else
             { }));
 
@@ -72,6 +82,10 @@
         };
       in {
         packages = exes // { inherit vscode-extension; };
+        checks = {
+          inherit squirrel-sexp-test;
+          inherit (squirrel.checks) squirrel-test;
+        };
         defaultPackage = self.packages.${system}.vscode-extension;
         # For debug/development reasons only
         legacyPackages = pkgs;

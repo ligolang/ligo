@@ -8,7 +8,7 @@ contracts_dir="./test/contracts"
         # sed to remove colors, see
         # https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
         temp_file="${test_file}.temp"
-        vet print-sexp --contract $test_file 2>&1 \
+        ligo-vet print-sexp --contract $test_file 2>&1 \
             | sed 's/\[[[:digit:];]*m//g' > "$temp_file"
         diff "$temp_file" "$gold_file" \
              --ignore-matching-lines="#.*" \

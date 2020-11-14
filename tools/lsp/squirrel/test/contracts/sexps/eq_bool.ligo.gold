@@ -1,12 +1,11 @@
 (contract
   (fun
-    'main
-    (params (var 'a (PROD bool)) (var 'b (PROD bool)))
+    main
+    (params (parameter a bool) (parameter b bool))
     :
-    (PROD int)
+    int
     =
     (let
       (seq
-        (var 'result (PROD int) 27)
-        (if (a = b) (result := 999) (result := 1)))
+        (var result int 27) (if (a = b) (result := 999) (result := 1)))
     result)))

@@ -1,8 +1,15 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module Test.Parsers
   ( test_okayContracts
   , test_badContracts
   ) where
 
+import Data.Maybe (fromMaybe)
+import Language.Haskell.TH.Syntax (liftString)
+import System.Environment (getEnv)
+import Control.Applicative (optional)
+import Control.Monad.IO.Class (liftIO)
 import Control.Exception.Safe (try)
 import Data.Functor ((<&>))
 import Data.List (isSuffixOf)
@@ -16,7 +23,9 @@ import Test.FixedExpectations (Expectation, HasCallStack, expectationFailure)
 import Test.Util (readContract)
 
 contractsDir :: FilePath
-contractsDir = "../../../src/test/contracts"
+contractsDir = $(liftIO (optional (getEnv "CONTRACTS_DIR")
+                         >>= pure . fromMaybe "../../../src/test/contracts")
+                  >>= liftString)
 
 okayContractsDirs :: [FilePath]
 okayContractsDirs = contractsDir : map (contractsDir </>) rest
