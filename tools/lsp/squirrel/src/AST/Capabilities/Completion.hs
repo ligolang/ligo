@@ -14,12 +14,14 @@ import Duplo.Lattice
 import Duplo.Pretty
 import Duplo.Tree
 
-import AST.Capabilities.Find (TypeDefinitionRes (..), findNodeAtPoint, typeDefinitionOf)
+import AST.Capabilities.Find
+  (TypeDefinitionRes (..), dereferenceTspec, findNodeAtPoint, typeDefinitionOf)
 import AST.Pretty (PPableLIGO, docToText)
 import AST.Scope
 import AST.Scope.ScopedDecl
-  (Accessor, DeclarationSpecifics (..), Scope, ScopedDecl (..), TypeField (..), _RecordType,
-  _TypeSpec, accessField, lppDeclCategory, lppLigoLike, sdSpec, tdsInit)
+  (Accessor, DeclarationSpecifics (..), Scope, ScopedDecl (..), TypeDeclSpecifics (..),
+  TypeField (..), _RecordType, _TypeSpec, accessField, lppDeclCategory, lppLigoLike, sdSpec,
+  tdsInit)
 import AST.Skeleton
 import Product
 import Range
@@ -56,7 +58,7 @@ getPossibleCompletions
 getPossibleCompletions scope level pos tree = asum completers
   where
     completers =
-      [ completeField pos tree
+      [ completeField scope pos tree
       , completeFromScope scope level
       ]
 
@@ -68,18 +70,18 @@ parseAccessor node = case reads (Text.unpack textValue) of
     textValue = ppToText node
 
 completeField
-  :: CompletionLIGO xs => Range -> SomeLIGO xs -> Maybe [Completion]
+  :: CompletionLIGO xs => Scope -> Range -> SomeLIGO xs -> Maybe [Completion]
 completeField = completeFieldTypeAware
 
 completeFieldTypeAware
-  :: CompletionLIGO xs => Range -> SomeLIGO xs -> Maybe [Completion]
-completeFieldTypeAware pos tree@(SomeLIGO dialect nested) = do
+  :: CompletionLIGO xs => Scope -> Range -> SomeLIGO xs -> Maybe [Completion]
+completeFieldTypeAware scope pos tree@(SomeLIGO dialect nested) = do
   QualifiedName{ qnSource, qnPath } <- asum (map layer covers)
   (finished, _unfinished) <- unconsFromEnd qnPath
   -- ^ throwing away the last field, because it's the field we are trying to complete
   let accessors = map parseAccessor finished
   firstTspec <- toTspec (typeDefinitionOf (getRange qnSource) tree)
-  finalTspec <- foldM accessField firstTspec accessors
+  finalTspec <- foldM accessAndDereference firstTspec accessors
   finalFields <- finalTspec ^? tdsInit . _RecordType
   pure (map mkCompletion finalFields)
   where
@@ -88,6 +90,10 @@ completeFieldTypeAware pos tree@(SomeLIGO dialect nested) = do
     toTspec TypeNotFound = Nothing
     toTspec (TypeDeclared decl) = decl ^? sdSpec . _TypeSpec
     toTspec (TypeInlined tspec) = Just tspec
+
+    accessAndDereference :: TypeDeclSpecifics -> Accessor -> Maybe TypeDeclSpecifics
+    accessAndDereference tspec accessor =
+      dereferenceTspec scope <$> accessField tspec accessor
 
     mkCompletion field = Completion
       { cName = _tfName field

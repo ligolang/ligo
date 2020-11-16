@@ -7,7 +7,7 @@ module Test.Util
 import AST (parse)
 import AST.Parser (Source (Path), parseWithScopes)
 import AST.Scope.Common (HasScopeForest, Info')
-import AST.Skeleton (LIGO, SomeLIGO)
+import AST.Skeleton (SomeLIGO)
 import Parser (Info, Msg)
 
 readContract :: FilePath -> IO (SomeLIGO Info)

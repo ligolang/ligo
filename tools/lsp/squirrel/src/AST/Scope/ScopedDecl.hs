@@ -71,32 +71,37 @@ data TypeDeclSpecifics = TypeDeclSpecifics
   { _tdsInitRange :: Range
   , _tdsInit :: Type
   }
+  deriving stock (Eq, Show)
 
 data Type
   = RecordType [TypeField]
   | VariantType [TypeConstructor]
   | TupleType [TypeDeclSpecifics]
   | AliasType Text
+  deriving stock (Eq, Show)
 
 data TypeField = TypeField
   { _tfName :: Text
   , _tfTspec :: TypeDeclSpecifics
   }
+  deriving stock (Eq, Show)
 
 data TypeConstructor = TypeConstructor
   { _tcName :: Text
   }
+  deriving stock (Eq, Show)
 
 data ValueDeclSpecifics = ValueDeclSpecifics
   { _vdsInitRange :: Maybe Range
   , _vdsParams :: Maybe [Parameter] -- if there are any, it's a function
   , _vdsTspec :: Maybe TypeDeclSpecifics
   }
+  deriving stock (Eq, Show)
 
 newtype Parameter = Parameter
   { parPresentation :: Text
   }
-  deriving stock Show
+  deriving stock (Eq, Show)
   deriving newtype Pretty
 
 instance Eq ScopedDecl where

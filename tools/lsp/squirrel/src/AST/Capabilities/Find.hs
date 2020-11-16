@@ -11,7 +11,7 @@ import Duplo.Tree
 import AST.Scope (Level (..), lookupEnv, ofLevel)
 import AST.Scope.ScopedDecl
   (DeclarationSpecifics (..), Scope, ScopedDecl (..), Type (..), TypeDeclSpecifics (..),
-  ValueDeclSpecifics (..), _TypeSpec, _ValueSpec, extractRefName, sdSpec, tdsInit, vdsTspec)
+  ValueDeclSpecifics (..), _TypeSpec, _ValueSpec, extractRefName, sdSpec, vdsTspec)
 import AST.Skeleton (LIGO, SomeLIGO, nestedLIGO)
 
 import Product
@@ -91,10 +91,10 @@ typeDefinitionAt pos tree = case typeDefinitionOf pos tree of
 -- aliased type. Otherwise, leave it be.
 --
 -- If the aliased name is undeclared, leave the type be.
-dereferenceType :: Scope -> Type -> Type
-dereferenceType scope typ = fromMaybe typ $ do
-  refDecl <- findTypeRefDeclaration scope typ
-  refDecl ^? sdSpec . _TypeSpec . tdsInit
+dereferenceTspec :: Scope -> TypeDeclSpecifics -> TypeDeclSpecifics
+dereferenceTspec scope tspec = fromMaybe tspec $ do
+  refDecl <- findTypeRefDeclaration scope (_tdsInit tspec)
+  refDecl ^? sdSpec . _TypeSpec
 
 implementationOf
   :: CanSearch xs
