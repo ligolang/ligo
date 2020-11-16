@@ -20,7 +20,7 @@ import Range (Range, point)
 import Test.Capabilities.Util (contractsDir)
 import Test.FixedExpectations (shouldBe)
 import Test.Util (readContractWithScopes)
-import Test.Util.LigoEnv ({- instance HasLigoClient IO -})
+import Test.Util.LigoEnv ()
 
 data TestInfo = TestInfo
   { tiContract :: String
@@ -30,8 +30,8 @@ data TestInfo = TestInfo
   , tiActiveParamNo :: Int
   }
 
-casesInfo :: [TestInfo]
-casesInfo =
+caseInfos :: [TestInfo]
+caseInfos =
   [ TestInfo
     { tiContract = "all-okay.ligo"
     , tiCursor = point 3 44
@@ -114,7 +114,7 @@ test_simpleFunctionCall
     fallbackGroup = testGroup "Fallback scopes" (testCases @Fallback)
 
     testCases :: forall parser. HasScopeForest parser IO => [TestTree]
-    testCases = map (makeTestCase @parser) casesInfo
+    testCases = map (makeTestCase @parser) caseInfos
 
     makeTestCase
       :: forall parser. HasScopeForest parser IO => TestInfo -> TestTree
