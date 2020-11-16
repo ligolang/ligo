@@ -14,7 +14,7 @@ interface DeployBody {
   storage: string;
 }
 
-const Tezos = new TezosToolkit('https://api.tez.ie/rpc/carthagenet');
+const Tezos = new TezosToolkit('https://api.tez.ie/rpc/delphinet');
 
 const validateRequest = (body: any): { value: DeployBody; error?: any } => {
   return joi
