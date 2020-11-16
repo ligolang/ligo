@@ -91,7 +91,6 @@ recognise (SomeRawTree dialect rawTree)
   , Descent do
       boilerplate $ \case
         "fun_app"           -> Apply      <$> field  "f"         <*> fields "x"
-        "index_accessor"    -> ListAccess <$> field  "box"       <*> fields "field"
         "rec_expr"          -> RecordUpd  <$> field  "subject"   <*> fields "field"
         "rec_literal"       -> Record     <$> fields "field"
         "if_expr"           -> If         <$> field  "condition" <*> field "then"  <*> fieldOpt "else"
@@ -105,6 +104,13 @@ recognise (SomeRawTree dialect rawTree)
         "binary_op_app"     -> BinOp      <$> field  "left"      <*> field "op"    <*> field "right"
         "unary_op_app"      -> UnOp       <$> field  "negate"    <*> field "arg"
         _                   -> fallthrough
+
+    -- QualifiedName
+  , Descent do
+      boilerplate $ \case
+        "data_projection" -> QualifiedName <$> field "box" <*> fields "selector"
+        _ -> fallthrough
+
 
     -- Pattern
   , Descent do
