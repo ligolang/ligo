@@ -77,6 +77,8 @@ let constant' = function
   | C_LIST_ITER          -> `List [`String "C_LIST_ITER"; `Null ]
   | C_LIST_MAP           -> `List [`String "C_LIST_MAP"; `Null ]
   | C_LIST_FOLD          -> `List [`String "C_LIST_FOLD"; `Null ]
+  | C_LIST_HEAD_OPT      -> `List [`String "C_LIST_HEAD_OPT"; `Null ]
+  | C_LIST_TAIL_OPT      -> `List [`String "C_LIST_TAIL_OPT"; `Null ]
   (* Maps *)
   | C_MAP                -> `List [`String "C_MAP"; `Null ]
   | C_MAP_EMPTY          -> `List [`String "C_MAP_EMPTY"; `Null ]

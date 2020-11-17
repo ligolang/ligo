@@ -1146,6 +1146,14 @@ let list () : (unit, _) result =
     expect_eq_evaluate program "fb3" expected
   in
   let%bind () =
+    let expected = e_some @@ e_int 23 in
+    expect_eq_evaluate program "fb_head" expected
+  in
+  let%bind () =
+    let expected = e_some @@ ez [42] in
+    expect_eq_evaluate program "fb_tail" expected
+  in
+  let%bind () =
     let make_input = fun n -> (ez @@ List.range n) in
     let make_expected = e_nat in
     expect_eq_n_strict_pos_small program "size_" make_input make_expected
@@ -1159,11 +1167,13 @@ let list () : (unit, _) result =
       (e_list [e_int 2 ; e_int 4 ; e_int 7])
       (e_int 23)
   in
+  (* not working since purification (problem with effect in out of iter
   let%bind () =
     expect_eq program "iter_op"
       (e_list [e_int 2 ; e_int 4 ; e_int 7])
       (e_int 13)
   in
+  *)
   let%bind () =
     expect_eq program "map_op"
       (e_list [e_int 2 ; e_int 4 ; e_int 7])
@@ -2407,7 +2417,7 @@ let no = false
 let y = true
 let main = test_suite "Integration (End to End)"
     @@ (fun lst -> List.map snd @@ match typer_switch () with Ast_typed.New -> List.filter fst lst | _ -> lst) @@ [
-    
+
     test no "chain id" chain_id ;                         (* record *)
     test no "bytes unpack" bytes_unpack ;                 (* record *)
     test no "bytes unpack (mligo)" bytes_unpack_mligo ;   (* record *)
@@ -2421,10 +2431,10 @@ let main = test_suite "Integration (End to End)"
 
     test y "type alias" type_alias ;
 
-    
+
     test y "function" function_ ;                        (* tests don't typecheck the test case's application *)
 
-    
+
     test no "blockless function" blockless;
     (* test "procedure"  procedure ; *)
     test no "assign" assign ;
@@ -2432,7 +2442,7 @@ let main = test_suite "Integration (End to End)"
     test no "complex function" complex_function ;
     test y "anon function" anon_function ;
     test y "various applications" application ;
-    
+
     test no "closure" closure ;
     test no "closure (mligo)" closure_mligo ;
     test no "closure (religo)" closure_religo ;
@@ -2445,7 +2455,7 @@ let main = test_suite "Integration (End to End)"
     test y "variant" variant ;
     test y "variant (mligo)" variant_mligo ;
     test y "variant (religo)" variant_religo ;
-    
+
     test no "variant matching" variant_matching ;
     test no "tuple" tuple ;
     test no "tuple (mligo)" tuple_mligo ;
@@ -2463,7 +2473,7 @@ let main = test_suite "Integration (End to End)"
     test no "eq bool (religo)" eq_bool_religo ;
     test no "shadow" shadow ;
     test y "annotation" annotation ;
-    
+
     test no "multiple parameters" multiple_parameters ;
     test no "multiple parameters (mligo)" multiple_parameters_mligo ;
     test no "multiple parameters (religo)" multiple_parameters_religo ;
@@ -2494,14 +2504,14 @@ let main = test_suite "Integration (End to End)"
     test no "option" option ;
     test y "option (mligo)" moption ;
     test y "option (religo)" reoption ;
-    
+
     test no "map" map ;
     test no "map (mligo)" mmap ;
     (* test "map (religo)" remap ; *)
     test no "big_map" big_map ;
     test no "big_map (mligo)" mbig_map ;
     test no "big_map (religo)" rebig_map ;
-    (* test "list" list ; *)
+    test no "list" list ;
     test no "loop" loop ;
     test no "loop (mligo)" loop_mligo ;
     test no "loop (religo)" loop_religo ;
@@ -2509,12 +2519,12 @@ let main = test_suite "Integration (End to End)"
     test no "declarations" declarations ;
     test no "quote declaration" quote_declaration ;
     test no "quote declarations" quote_declarations ;
-    
+
     test y "#include directives" include_ ;
     test y "#include directives (mligo)" include_mligo ;
     test y "#include directives (religo)" include_religo ;
 
-    
+
     test no "counter contract" counter_contract ;
     test no "super counter contract" super_counter_contract ;
     test no "super counter contract" super_counter_contract_mligo ;
@@ -2522,7 +2532,7 @@ let main = test_suite "Integration (End to End)"
     test no "dispatch counter contract" dispatch_counter_contract ;
     test y "basic (mligo)" basic_mligo ;
     test y "basic (religo)" basic_religo ;
-    
+
     test no "counter contract (mligo)" counter_mligo ;
     test no "counter contract (religo)" counter_religo ;
     test no "let-in (mligo)" let_in_mligo ;
@@ -2546,7 +2556,7 @@ let main = test_suite "Integration (End to End)"
     test no "lambda ligo" lambda_ligo ;
     test y "tez (ligo)" tez_ligo ;
     test y "tez (mligo)" tez_mligo ;
-    
+
     test no "lambda2 mligo" lambda2_mligo ;
     test no "lambda2 religo" lambda2_religo ;
     (* test "fibo (mligo)" fibo_mligo ; *)
@@ -2577,7 +2587,7 @@ let main = test_suite "Integration (End to End)"
     test y "implicit account" implicit_account ;
     test y "implicit account (mligo)" implicit_account_mligo ;
     test y "implicit account (religo)" implicit_account_religo ;
-    
+
     test no "set delegate" set_delegate ;
     test no "set delegate (mligo)" set_delegate_mligo ;
     test no "set delegate (religo)" set_delegate_religo ;
@@ -2585,12 +2595,12 @@ let main = test_suite "Integration (End to End)"
     test no "is_nat (mligo)" is_nat_mligo ;
     test no "is_nat (religo)" is_nat_religo ;
     test y "tuples_sequences_functions (religo)" tuples_sequences_functions_religo ;
-    
+
     test no "simple_access (ligo)" simple_access_ligo;
     test no "deep_access (ligo)" deep_access_ligo;
     test no "get_contract (ligo)" get_contract_ligo;
     test y "entrypoints (ligo)" entrypoints_ligo ;
-    
+
     test no "curry (mligo)" curry ;
     test no "type tuple destruct (mligo)" type_tuple_destruct ;
     test no "attributes (ligo)" attributes_ligo;

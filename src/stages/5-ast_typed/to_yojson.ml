@@ -76,6 +76,8 @@ let constant' = function
   | C_LIST_ITER          -> `List [`String "C_LIST_ITER"; `Null ]
   | C_LIST_MAP           -> `List [`String "C_LIST_MAP"; `Null ]
   | C_LIST_FOLD          -> `List [`String "C_LIST_FOLD"; `Null ]
+  | C_LIST_HEAD_OPT      -> `List [`String "C_HEAD_OPT"; `Null ]
+  | C_LIST_TAIL_OPT      -> `List [`String "C_TAIL_OPT"; `Null ]
   (* Maps *)
   | C_MAP                -> `List [`String "C_MAP"; `Null ]
   | C_MAP_EMPTY          -> `List [`String "C_MAP_EMPTY"; `Null ]
@@ -613,7 +615,7 @@ let constraints {constructor; poly; (* tc; *) row} =
  *     ("refined_typeclasses", jmap constraint_identifier refined_typeclass refined_typeclasses);
  *     ("refined_typeclasses", jmap constraint_identifier constraint_identifier refined_typeclasses_back);
  *     ("typeclasses_constrained_by", typeVariableMap constraint_identifier_set typeclasses_constrained_by);
- *     ("by_constraint_identifier", ciMap c_typeclass_simpl by_constraint_identifier); 
+ *     ("by_constraint_identifier", ciMap c_typeclass_simpl by_constraint_identifier);
  *     ("all_constrants", list type_constraint_simpl all_constraints);
  *     ("aliases", unionfind aliases);
  *     ("assignments", typeVariableMap c_constructor_simpl assignments);
@@ -638,4 +640,3 @@ let output_tc_fundep (t : output_tc_fundep) =
           ("original",`String(Format.asprintf "%Li" (match lst.original with ConstraintIdentifier x -> x)));
           ("vars",list Var.to_yojson ( RedBlackTrees.PolySet.elements lst.vars))])
       ;("a",c_constructor_simpl a)]
-

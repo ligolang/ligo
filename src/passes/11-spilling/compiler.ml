@@ -89,6 +89,8 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_LIST_ITER -> C_LIST_ITER
   | C_LIST_MAP -> C_LIST_MAP
   | C_LIST_FOLD -> C_LIST_FOLD
+  | C_LIST_HEAD_OPT -> C_LIST_HEAD_OPT
+  | C_LIST_TAIL_OPT -> C_LIST_TAIL_OPT
   (* Maps *)
   | C_MAP -> C_MAP
   | C_MAP_EMPTY -> C_MAP_EMPTY
@@ -139,7 +141,7 @@ let compile_constant' : AST.constant' -> constant' = function
   | (   C_TEST_ORIGINATE
       | C_TEST_SET_NOW
       | C_TEST_SET_SOURCE
-      | C_TEST_SET_BALANCE 
+      | C_TEST_SET_BALANCE
       | C_TEST_EXTERNAL_CALL
       | C_TEST_GET_STORAGE
       | C_TEST_GET_BALANCE
@@ -195,7 +197,7 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
     | (i, [t]) when String.equal i list_name ->
       let%bind t' = compile_type t in
       return (T_list t')
-    | (i, [t]) when String.equal i set_name -> 
+    | (i, [t]) when String.equal i set_name ->
       let%bind t' = compile_type t in
       return (T_set t')
     | _ -> fail @@ corner_case ~loc:__LOC__ "wrong constant"
