@@ -64,7 +64,7 @@ let full_name : full_name = ("Alice", "Johnson");
 ### Destructuring
 
 If we want to get the first and last name of the `full_name` type, we can use
-destructuring. Destructuring a tuple allows you to give names to the elements 
+destructuring. Destructuring a tuple allows you to give names to the elements
 inside the tuple.
 
 ```cameligo group=tuple
@@ -78,7 +78,7 @@ let first_name ((first_name, _): full_name) = first_name
 let alice = first_name full_name
 ```
 
-Notice that we use the underscore to indicate that we ignore the last element 
+Notice that we use the underscore to indicate that we ignore the last element
 of the tuple.
 
 </Syntax>
@@ -87,7 +87,7 @@ of the tuple.
 ### Destructuring
 
 If we want to get the first and last name of the `full_name` type, we can use
-destructuring. Destructuring a tuple allows you to give names to the elements 
+destructuring. Destructuring a tuple allows you to give names to the elements
 inside the tuple.
 
 ```reasonligo group=tuple
@@ -101,7 +101,7 @@ let first_name = ((first_name, _): full_name) => first_name
 let alice = first_name(full_name)
 ```
 
-Notice that we use the underscore to indicate that we ignore the last element 
+Notice that we use the underscore to indicate that we ignore the last element
 of the tuple.
 
 </Syntax>
@@ -227,6 +227,36 @@ let larger_list : list (int) = [5, ...my_list]; // [5,1,2,2]
 
 </Syntax>
 
+### Accessing list element
+
+You cannot access element directly in list but you can access the first element, the head or the rest of the list, the tail.
+The two function to access those are `List.head_opt` and `List.tail_opt`
+
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=lists
+const head : option (int) = List.head_opt (my_list) // 1
+const tail : option (list(int)) = List.tail_opt (my_list) // [2;2]
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=lists
+let head : int option = List.head_opt my_list // 1
+let tail : int list option = List.tail_opt my_list // [2;2]
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=lists
+let head : option (int) = List.head_opt (my_list); // 1
+let tail : option (list (int)) = List.tail_opt (my_list); // [2,2]
+```
+
+</Syntax>
 
 ### Functional Iteration over Lists
 
@@ -774,4 +804,3 @@ let sum_of_elements : int = Set.fold (sum, my_set, 0);
 ```
 
 </Syntax>
-

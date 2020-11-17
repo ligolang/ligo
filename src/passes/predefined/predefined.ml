@@ -10,7 +10,7 @@
 module Tree_abstraction = struct
 
   open Ast_imperative
-  
+
   module type Constant = sig
     val constants      : string -> rich_constant option
     val constant_to_string      : rich_constant -> string
@@ -76,11 +76,13 @@ module Tree_abstraction = struct
 
     (* List module *)
 
-    | "List.length" -> some_const C_SIZE
-    | "List.size"   -> some_const C_SIZE
-    | "List.iter"   -> some_const C_LIST_ITER
-    | "List.map"    -> some_const C_LIST_MAP
-    | "List.fold"   -> some_const C_LIST_FOLD
+    | "List.length"   -> some_const C_SIZE
+    | "List.size"     -> some_const C_SIZE
+    | "List.iter"     -> some_const C_LIST_ITER
+    | "List.map"      -> some_const C_LIST_MAP
+    | "List.fold"     -> some_const C_LIST_FOLD
+    | "List.head_opt" -> some_const C_LIST_HEAD_OPT
+    | "List.tail_opt" -> some_const C_LIST_TAIL_OPT
 
     (* Set module *)
 
@@ -777,6 +779,8 @@ module Stacking = struct
     | C_LOOP_CONTINUE -> Some (trivial_special "LEFT")
     | C_LOOP_STOP -> Some (trivial_special "RIGHT")
     | C_LIST_EMPTY -> Some (trivial_special "NIL")
+    | C_LIST_HEAD_OPT     -> Some ( special @@ fun with_args -> i_if_cons (seq [i_swap; i_drop; i_some]) (with_args "NONE") )
+    | C_LIST_TAIL_OPT     -> Some ( special @@ fun with_args -> i_if_cons (seq [i_drop; i_some])       (with_args "NONE") )
     | C_SET_EMPTY -> Some (trivial_special "EMPTY_SET")
     | C_MAP_EMPTY -> Some (trivial_special "EMPTY_MAP")
     | C_BIG_MAP_EMPTY -> Some (trivial_special "EMPTY_BIG_MAP")

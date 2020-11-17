@@ -70,27 +70,29 @@ module Operators_types = struct
   let t_set_remove   = forall "a" @@ fun a -> tuple2 a (set a) --> set a
   let t_not          = tuple1 bool --> bool
 
-  let t_continuation = forall "a" @@ fun a -> tuple2 bool a --> pair bool a
-  let t_fold_while   = forall "a" @@ fun a -> tuple2 (a --> pair bool a) a --> a
-  let t_neg          = tuple1 int --> int
-  let t_and          = tuple2 bool bool --> bool
-  let t_or           = tuple2 bool bool --> bool
-  let t_xor          = tuple2 bool bool --> bool
-  let t_lsl          = tuple2 nat nat --> nat
-  let t_lsr          = tuple2 nat nat --> nat
-  let t_comp         = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple2 a a --> bool
-  let t_concat       = forall_tc "a" @@ fun a -> [tc_concatable a] => tuple2 a a --> a
-  let t_set_empty    = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple0 --> set a
-  let t_set_iter     = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple2 (a --> unit) (set a) --> unit
+  let t_continuation  = forall "a" @@ fun a -> tuple2 bool a --> pair bool a
+  let t_fold_while    = forall "a" @@ fun a -> tuple2 (a --> pair bool a) a --> a
+  let t_neg           = tuple1 int --> int
+  let t_and           = tuple2 bool bool --> bool
+  let t_or            = tuple2 bool bool --> bool
+  let t_xor           = tuple2 bool bool --> bool
+  let t_lsl           = tuple2 nat nat --> nat
+  let t_lsr           = tuple2 nat nat --> nat
+  let t_comp          = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple2 a a --> bool
+  let t_concat        = forall_tc "a" @@ fun a -> [tc_concatable a] => tuple2 a a --> a
+  let t_set_empty     = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple0 --> set a
+  let t_set_iter      = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple2 (a --> unit) (set a) --> unit
   (* TODO: check that the implementation has this type *)
-  let t_set_fold     = forall2_tc "a" "b" @@ fun a b -> [tc_comparable b] => tuple3 (pair a b --> a) (set b) a --> a
-  let t_list_iter    = forall "a" @@ fun a -> tuple2 (a --> unit) (list a) --> unit
-  let t_list_map     = forall "a" @@ fun a -> tuple2 (a --> a) (list a) --> (list a)
+  let t_set_fold      = forall2_tc "a" "b" @@ fun a b -> [tc_comparable b] => tuple3 (pair a b --> a) (set b) a --> a
+  let t_list_iter     = forall "a" @@ fun a -> tuple2 (a --> unit) (list a) --> unit
+  let t_list_map      = forall2 "a" "b" @@ fun a b -> tuple2 (a --> b) (list a) --> (list b)
   (* TODO: check that the implementation has this type *)
-  let t_list_fold    = forall2 "a" "b" @@ fun a b -> tuple3 (pair a b --> a) (list b) a --> a
-  let t_self_address = tuple0 --> address
+  let t_list_fold     = forall2 "a" "b" @@ fun a b -> tuple3 (pair a b --> a) (list b) a --> a
+  let t_list_head_opt = forall "a" @@ fun a -> (list a) --> (option a)
+  let t_list_tail_opt = forall "a" @@ fun a -> (list a) --> (option (list a))
+  let t_self_address  = tuple0 --> address
   let t_implicit_account = forall_tc "a" @@ fun a -> [tc_storable a] => tuple1 key_hash --> contract a
-  let t_set_delegate = tuple1 (option key_hash) --> operation
+  let t_set_delegate  = tuple1 (option key_hash) --> operation
 
   let constant_type : constant' -> (Typesystem.Core.type_value, typer_error) result = function
     | C_INT                 -> ok @@ t_int ;
@@ -148,6 +150,8 @@ module Operators_types = struct
     | C_LIST_ITER           -> ok @@ t_list_iter ;
     | C_LIST_MAP            -> ok @@ t_list_map ;
     | C_LIST_FOLD           -> ok @@ t_list_fold ;
+    | C_LIST_HEAD_OPT       -> ok @@ t_list_head_opt ;
+    | C_LIST_TAIL_OPT       -> ok @@ t_list_tail_opt ;
 
     (* MAP *)
     | C_MAP_ADD             -> ok @@ t_map_add ;

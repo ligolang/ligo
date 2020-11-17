@@ -130,6 +130,8 @@ let constant' ppf : constant' -> unit = function
   | C_LIST_ITER             -> fprintf ppf "LIST_ITER"
   | C_LIST_MAP              -> fprintf ppf "LIST_MAP"
   | C_LIST_FOLD             -> fprintf ppf "LIST_FOLD"
+  | C_LIST_HEAD_OPT         -> fprintf ppf "LIST_HEAD_OPT"
+  | C_LIST_TAIL_OPT         -> fprintf ppf "LIST_TAIL_OPT"
   (* Maps *)
   | C_MAP                   -> fprintf ppf "MAP"
   | C_MAP_EMPTY             -> fprintf ppf "MAP_EMPTY"

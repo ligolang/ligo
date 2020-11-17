@@ -28,7 +28,7 @@ and environment ppf (x:environment) =
   fprintf ppf "Env[%a]" (list_sep_d environment_element) x
 
 and type_constant ppf (tb:type_base) : unit =
-  let s = match tb with 
+  let s = match tb with
     | TB_unit      -> "unit"
     | TB_string    -> "string"
     | TB_bytes     -> "bytes"
@@ -88,7 +88,7 @@ and type_expression ppf : type_expression -> unit = fun te -> match te.type_cont
   | T_list e -> fprintf ppf "List (%a)" type_expression e
   | T_set e -> fprintf ppf "Set (%a)" type_expression e
   | T_contract c -> fprintf ppf "Contract (%a)" type_expression c
-  | T_option c -> fprintf ppf "Option (%a)" type_expression c 
+  | T_option c -> fprintf ppf "Option (%a)" type_expression c
 
 and value_assoc ppf : (value * value) -> unit = fun (a, b) ->
   fprintf ppf "%a -> %a" value a value b
@@ -142,8 +142,8 @@ and function_ ppf ({binder ; body}:anon_function) =
     Var.pp binder.wrap_content
     expression body
 
-and option_inline ppf inline = 
-  if inline then 
+and option_inline ppf inline =
+  if inline then
     fprintf ppf "[@@inline]"
   else
     fprintf ppf ""
@@ -229,6 +229,8 @@ and constant ppf : constant' -> unit = function
   | C_LIST_ITER             -> fprintf ppf "LIST_ITER"
   | C_LIST_MAP              -> fprintf ppf "LIST_MAP"
   | C_LIST_FOLD             -> fprintf ppf "LIST_FOLD"
+  | C_LIST_HEAD_OPT         -> fprintf ppf "LIST_HEAD_OPT"
+  | C_LIST_TAIL_OPT         -> fprintf ppf "LIST_TAIL_OPT"
   (* Maps *)
   | C_MAP                   -> fprintf ppf "MAP"
   | C_MAP_EMPTY             -> fprintf ppf "MAP_EMPTY"

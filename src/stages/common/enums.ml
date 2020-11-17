@@ -106,6 +106,8 @@ type constant' =
   | C_LIST_ITER
   | C_LIST_MAP
   | C_LIST_FOLD
+  | C_LIST_HEAD_OPT
+  | C_LIST_TAIL_OPT
   (* Maps *)
   | C_MAP
   | C_MAP_EMPTY

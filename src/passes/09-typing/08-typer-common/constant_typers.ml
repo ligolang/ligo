@@ -64,14 +64,14 @@ let map_remove loc : typer = typer_2 loc "MAP_REMOVE" @@ fun k m ->
 let map_empty loc = typer_0 loc "MAP_EMPTY" @@ fun tv_opt ->
   match tv_opt with
   | None -> fail (not_annotated loc)
-  | Some t -> 
+  | Some t ->
     let%bind (src, dst) = trace_option (expected_map loc t) @@ get_t_map t in
     ok @@ t_map src dst
 
 let big_map_empty loc = typer_0 loc "BIG_MAP_EMPTY" @@ fun tv_opt ->
   match tv_opt with
   | None -> fail (not_annotated loc)
-  | Some t -> 
+  | Some t ->
     let%bind (src, dst) = trace_option (expected_big_map loc t) @@ get_t_big_map t in
     ok @@ t_big_map src dst
 
@@ -460,6 +460,14 @@ let list_fold loc = typer_3 loc "LIST_FOLD" @@ fun body lst init ->
   let%bind () = assert_eq loc res init in
   ok res
 
+let list_head_opt loc = typer_1 loc "LIST_HEAD_OPT" @@ fun lst ->
+  let%bind key = trace_option (expected_list loc lst) @@ get_t_list lst in
+  ok @@ t_option ~loc key
+
+let list_tail_opt loc = typer_1 loc "LIST_TAIL_OPT" @@ fun lst ->
+  let%bind key = trace_option (expected_list loc lst) @@ get_t_list lst in
+  ok @@ t_option ~loc @@ t_list ~loc key
+
 let set_fold loc = typer_3 loc "SET_FOLD" @@ fun body lst init ->
   let%bind (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
   let%bind (prec , cur) = trace_option (expected_pair loc arg) @@ get_t_pair arg in
@@ -651,7 +659,7 @@ let rec pair_comparator : Location.t -> string -> typer = fun loc s -> typer_2 l
   let%bind () =
     Assert.assert_true (uncomparable_types loc a b) @@ eq_1 a b
   in
-  let%bind (a_k, a_v) = 
+  let%bind (a_k, a_v) =
     trace_option (comparator_composed loc a) @@
     get_t_pair a in
   let%bind (b_k, b_v) = trace_option (expected_pair loc b) @@ get_t_pair b in
@@ -763,6 +771,8 @@ let constant_typers loc c : (typer , typer_error) result = match c with
   | C_LIST_ITER           -> ok @@ list_iter loc ;
   | C_LIST_MAP            -> ok @@ list_map loc ;
   | C_LIST_FOLD           -> ok @@ list_fold loc ;
+  | C_LIST_HEAD_OPT       -> ok @@ list_head_opt loc;
+  | C_LIST_TAIL_OPT       -> ok @@ list_tail_opt loc;
   (* MAP *)
   | C_MAP_EMPTY           -> ok @@ map_empty loc;
   | C_BIG_MAP_EMPTY       -> ok @@ big_map_empty loc;
