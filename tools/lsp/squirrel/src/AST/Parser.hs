@@ -19,10 +19,12 @@ import AST.Skeleton
 
 import Duplo (Lattice (leq))
 
-import Cli (LigoBinaryCallError (DecodedExpectedClientFailure), fromLigoErrorToMsg)
+import Cli
+  (LigoBinaryCallError (DecodedExpectedClientFailure, LigoErrorNodeParseError), fromLigoErrorToMsg)
 import Extension
 import ParseTree (Source (..), toParseTree)
 import Parser
+import Range
 
 parse :: Source -> IO (LIGO Info, [Msg])
 parse src = do
@@ -79,6 +81,10 @@ parseWithScopes' src = do
       -- TODO: global scope errors are not collecting
       return (fbAst ^. nestedLIGO, msg `rewriteAt` fromLigoErrorToMsg err)
       -- return (fbAst, msg <> [fromLigoErrorToMsg err])
+    Left (LigoErrorNodeParseError err) -> do
+      -- Print all other ligo errors at [1;1]
+      fbAst <- addLocalScopes @Fallback src ast
+      return (fbAst ^. nestedLIGO, msg <> [(point (-1) (-1), Error err [])])
     Left err -> throwM err
 
   where

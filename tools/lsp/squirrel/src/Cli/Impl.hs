@@ -25,6 +25,7 @@ import System.Process
 
 import Cli.Json
 import Cli.Types
+import Extension
 import Log (i)
 import qualified Log
 import ParseTree (Source (..), srcToText)
@@ -198,8 +199,14 @@ getLigoDefinitions
   -> m (LigoDefinitions, Text)
 getLigoDefinitions contract = do
   Log.debug "LIGO.PARSE" [i|parsing the following contract:\n #{contract}|]
+  ext <- getExt (srcPath contract)
+  let
+    syntax = case ext of
+      Reason -> "reasonligo"
+      Pascal -> "pascaligo"
+      Caml   -> "cameligo"
   mbOut <- try $
-    callLigo ["get-scope", "--format=json", "--with-types", "--syntax=pascaligo", "/dev/stdin"] contract
+    callLigo ["get-scope", "--format=json", "--with-types", "--syntax=" <> syntax, "/dev/stdin"] contract
   case mbOut of
     Right (output, errs) -> do
       Log.debug "LIGO.PARSE" [i|Successfully called ligo with #{output}|]
