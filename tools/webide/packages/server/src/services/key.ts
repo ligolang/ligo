@@ -1,6 +1,6 @@
 import fetch from 'node-fetch';
 
-const URL = 'https://api.tez.ie/keys/carthagenet/';
+const URL = 'https://api.tez.ie/keys/delphinet/';
 const AUTHORIZATION_HEADER = 'Bearer ligo-ide';
 
 export async function fetchRandomPrivateKey(): Promise<string> {
@@ -8,6 +8,5 @@ export async function fetchRandomPrivateKey(): Promise<string> {
     method: 'POST',
     headers: { Authorization: AUTHORIZATION_HEADER }
   });
-
   return response.text();
 }

@@ -10,7 +10,7 @@ import { ChangeContractAction, ChangeOutputAction } from '../result';
 import { Command } from '../types';
 import { CancellableAction } from './cancellable';
 
-const Tezos = new TezosToolkit('https://api.tez.ie/rpc/carthagenet');
+const Tezos = new TezosToolkit('https://api.tez.ie/rpc/delphinet');
 Tezos.setProvider({
   wallet: new TezBridgeWallet()
 });
@@ -57,7 +57,7 @@ export class DeployAction extends CancellableAction {
     }
 
     dispatch({
-      ...new UpdateLoadingAction('Deploying to carthage network...')
+      ...new UpdateLoadingAction('Deploying to delphinet network...')
     });
     return {
       address: (await op.contract()).address,
@@ -67,7 +67,7 @@ export class DeployAction extends CancellableAction {
 
   async deployOnServerSide(dispatch: Dispatch, getState: () => AppState) {
     dispatch({
-      ...new UpdateLoadingAction('Deploying to carthage network...')
+      ...new UpdateLoadingAction('Deploying to delphinet network...')
     });
 
     const { editor: editorState, deploy: deployState } = getState();
