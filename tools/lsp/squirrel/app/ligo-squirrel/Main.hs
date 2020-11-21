@@ -266,10 +266,8 @@ handleRenameRequest req = do
     let newName = req ^. J.params . J.newName
     (tree, _) <- RIO.fetch nuri
     let
-      allReferences :: Maybe [Range]
-      allReferences = referencesOf pos tree <> fmap (\x -> [x]) (definitionOf pos tree)
-      textEdits :: Maybe [J.TextEdit]
-      textEdits = allReferences & _Just . traverse %~ \x -> J.TextEdit (toLspRange x) newName
+      textEdits = renameDeclarationAt pos tree newName
+
       workspaceEdit :: Maybe (J.List J.TextDocumentEdit)
       workspaceEdit = textEdits <&> \edits -> J.List
         [ J.TextDocumentEdit
