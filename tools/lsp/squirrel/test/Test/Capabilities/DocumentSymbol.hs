@@ -1,5 +1,6 @@
 module Test.Capabilities.DocumentSymbol
   ( unit_document_symbols_example_heap
+  , unit_document_symbols_example_access
   ) where
 
 import Control.Lens ((^.))
@@ -40,4 +41,13 @@ unit_document_symbols_example_heap = do
     , ("pop_", SkFunction, (22, 9), (22, 13))
     , ("insert", SkFunction, (46, 9), (46, 15))
     , ("pop", SkFunction, (66, 9), (66, 12))
+    ]
+
+unit_document_symbols_example_access :: Assertion
+unit_document_symbols_example_access = do
+  tree <- readContractWithScopes @Fallback (contractsDir </> "access.ligo")
+  symbols <- extractDocumentSymbols (Uri "<test>") tree
+  map simplify symbols `shouldBe`
+    [ ("const owner", SkConstant , (2, 6), (2, 11))
+    , ("main", SkFunction, (4,9), (4,13))
     ]
