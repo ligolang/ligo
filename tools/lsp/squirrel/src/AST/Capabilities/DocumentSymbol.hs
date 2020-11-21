@@ -49,6 +49,10 @@ extractDocumentSymbols uri tree = execWriterT . visit handlers $ tree
               J.SkTypeParameter
               (\_ -> Nothing)
 
+{- FIXME: Showing constants and variables does not make a lot of sence,
+ - if we do not test the symbols properly.
+ -
+ -
           (_, Const (match @NameDecl -> Just (getElem @Range -> r, _)) _ _) ->
             tellScopedDecl
               r
@@ -60,6 +64,7 @@ extractDocumentSymbols uri tree = execWriterT . visit handlers $ tree
               r
               J.SkVariable
               (\ScopedDecl {_sdName} -> Just ("var " <> _sdName))
+-}
 
           _ -> pure ()
       ]
