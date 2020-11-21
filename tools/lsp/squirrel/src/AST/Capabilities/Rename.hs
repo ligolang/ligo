@@ -1,28 +1,32 @@
 -- | Rename request implementation.
 module AST.Capabilities.Rename
-  ( renameDeclarationAt
+  ( RenameDeclarationResult (..)
+  , renameDeclarationAt
   ) where
 
-import Control.Lens ((%~), _Just)
-import Data.Function ((&))
 import Data.Text (Text)
 import qualified Language.Haskell.LSP.Types as J
 
-import AST.Capabilities.Find (CanSearch, referencesOf)
+import AST.Capabilities.Find (CanSearch, findScopedDecl)
+import AST.Scope (ScopedDecl (ScopedDecl, _sdRefs))
 import AST.Skeleton (LIGO)
 import Range (Range, toLspRange)
+
+
+-- | Result of trying to rename declaration.
+data RenameDeclarationResult = Ok [J.TextEdit] | NotFound
+  deriving (Eq, Show)
 
 
 -- | Rename the declaration at the given position.
 -- The position is given as a range, becuase that is how we do it, haha :/.
 renameDeclarationAt
   :: CanSearch xs
-  => Range -> LIGO xs -> Text -> Maybe [J.TextEdit]
+  => Range -> LIGO xs -> Text -> RenameDeclarationResult
 renameDeclarationAt pos tree newName =
-    allReferences & _Just . traverse %~ \x -> J.TextEdit (toLspRange x) newName
-  where
-    allReferences :: Maybe [Range]
-    {- XXX: referencesOf returns the declaration itself too.
-    allReferences = referencesOf pos tree <> fmap (\x -> [x]) (definitionOf pos tree)
-    -}
-    allReferences = referencesOf pos tree
+    case findScopedDecl pos tree of
+      Nothing -> NotFound
+      Just ScopedDecl{_sdRefs} -> Ok $
+        -- XXX: _sdRefs includes the declaration itself too,
+        -- so we do not add _sdOrigin.
+        map (\r -> J.TextEdit (toLspRange r) newName) _sdRefs
