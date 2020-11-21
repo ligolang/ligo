@@ -14,12 +14,12 @@ import Data.Maybe (fromMaybe)
 import Data.String.Interpolate (i)
 import qualified Data.Text as T
 
-import qualified Language.Haskell.LSP.Control as CTRL
-import qualified Language.Haskell.LSP.Core as Core
-import Language.Haskell.LSP.Messages as Msg
-import qualified Language.Haskell.LSP.Types as J
-import qualified Language.Haskell.LSP.Types.Lens as J
-import qualified Language.Haskell.LSP.Utility as U
+import qualified Language.LSP.Control as CTRL
+import qualified Language.LSP.Core as Core
+import Language.LSP.Messages as Msg
+import qualified Language.LSP.Types as J
+import qualified Language.LSP.Types.Lens as J
+import qualified Language.LSP.Utility as U
 
 
 import System.Exit

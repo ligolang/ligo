@@ -11,7 +11,7 @@ module Config
 import Data.Aeson
 import Data.Default
 import qualified Data.Text as T
-import Language.Haskell.LSP.Types
+import Language.LSP.Types
 import Cli (LigoClientEnv (..))
 
 ----------------------------------------------------------------------------

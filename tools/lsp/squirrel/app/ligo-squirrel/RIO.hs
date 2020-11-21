@@ -30,12 +30,12 @@ import           Data.Text                                     (Text)
 import qualified Data.SortedList                       as List
 import           Data.String.Interpolate                       (i)
 
-import           Language.Haskell.LSP.Diagnostics
-import           Language.Haskell.LSP.Messages         as Msg
-import           Language.Haskell.LSP.VFS
-import qualified Language.Haskell.LSP.Core             as Core
-import qualified Language.Haskell.LSP.Types            as J
-import qualified Language.Haskell.LSP.Utility          as U
+import           Language.LSP.Diagnostics
+import           Language.LSP.Messages         as Msg
+import           Language.LSP.VFS
+import qualified Language.LSP.Core             as Core
+import qualified Language.LSP.Types            as J
+import qualified Language.LSP.Utility          as U
 
 -- import           System.Directory (getDirectoryContents, doesDirectoryExist)
 -- import           System.FilePath

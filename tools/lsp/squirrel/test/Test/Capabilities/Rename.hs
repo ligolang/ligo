@@ -3,7 +3,7 @@ module Test.Capabilities.Rename
   , unit_rename_param
   ) where
 
-import qualified Language.Haskell.LSP.Types as J
+import qualified Language.LSP.Types as J
 import System.FilePath ((</>))
 import Test.HUnit (Assertion)
 

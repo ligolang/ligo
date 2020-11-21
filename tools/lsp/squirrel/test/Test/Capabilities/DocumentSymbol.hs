@@ -5,8 +5,8 @@ module Test.Capabilities.DocumentSymbol
 
 import Control.Lens ((^.))
 import Data.Text (Text)
-import Language.Haskell.LSP.Types (Location (Location, _range), SymbolInformation (SymbolInformation, _kind, _location, _name), SymbolKind (..), Uri (Uri))
-import Language.Haskell.LSP.Types.Lens (character, end, line, start)
+import Language.LSP.Types (Location (Location, _range), SymbolInformation (SymbolInformation, _kind, _location, _name), SymbolKind (..), Uri (Uri))
+import Language.LSP.Types.Lens (character, end, line, start)
 import System.FilePath ((</>))
 
 import Test.HUnit (Assertion)

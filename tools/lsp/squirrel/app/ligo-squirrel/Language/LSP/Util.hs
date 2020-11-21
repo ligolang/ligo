@@ -7,9 +7,9 @@ module Language.LSP.Util
 import Control.Lens ((^.))
 import Data.Text (Text, pack)
 import qualified GHC.Generics as G
-import qualified Language.Haskell.LSP.Messages as J
-import qualified Language.Haskell.LSP.Types  as J
-import qualified Language.Haskell.LSP.Types.Lens as J
+import qualified Language.LSP.Messages as J
+import qualified Language.LSP.Types  as J
+import qualified Language.LSP.Types.Lens as J
 
 
 -- | A short description of a message.
