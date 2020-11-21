@@ -197,6 +197,6 @@ addLocalScopes src tree = do
 
     , Descent \(i, TypeName t) -> do
         let env = envAtPoint (getRange i) forest
-        return (env :> Just Type :> i, Name t)
+        return (env :> Just Type :> i, TypeName t)
     ]
     tree

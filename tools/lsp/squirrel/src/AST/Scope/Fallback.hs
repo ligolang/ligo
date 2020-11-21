@@ -212,6 +212,11 @@ assignDecls = loop go . fmap (\r -> [] :> False :> getRange r :> r)
         let r'   = putElem True $ modElem (imms <>) r
         make (r', NameDecl n)
 
+      it@(match -> Just (r, TypeDecl n ty)) -> do
+        let imms = getImmediateDecls it
+        let r'   = putElem True $ modElem (imms <>) r
+        make (r', TypeDecl n ty)
+
       it -> it
 
 extractScopeTree

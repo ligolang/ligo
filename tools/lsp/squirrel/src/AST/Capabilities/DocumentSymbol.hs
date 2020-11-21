@@ -16,6 +16,8 @@ import AST.Scope
 import AST.Skeleton
 import Product
 import Range
+
+
 -- | Extract document symbols for some specific parsed ligo contract which
 -- is realisable by @haskell-lsp@ client.
 extractDocumentSymbols
@@ -28,7 +30,7 @@ extractDocumentSymbols uri tree = execWriterT . visit handlers $ tree
   where
     handlers =
       [ Visit @Binding $ \case
-          (_, Function _ (match @Name -> Just (getElem @Range -> r, _)) _ _ _)->
+          (_, Function _ (match @NameDecl -> Just (getElem @Range -> r, _)) _ _ _)->
             tellScopedDecl
               r
               J.SkFunction
@@ -47,13 +49,13 @@ extractDocumentSymbols uri tree = execWriterT . visit handlers $ tree
               J.SkTypeParameter
               (\_ -> Nothing)
 
-          (_, Const (match @Name -> Just (getElem @Range -> r, _)) _ _) ->
+          (_, Const (match @NameDecl -> Just (getElem @Range -> r, _)) _ _) ->
             tellScopedDecl
               r
               J.SkConstant
               (\ScopedDecl {_sdName} -> Just ("const " <> _sdName))
 
-          (_, Var (match @Name -> Just (getElem @Range -> r, _)) _ _) ->
+          (_, Var (match @NameDecl -> Just (getElem @Range -> r, _)) _ _) ->
             tellScopedDecl
               r
               J.SkVariable

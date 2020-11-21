@@ -133,7 +133,9 @@ tests:
       - HUnit
       - directory
       - filepath
+      - haskell-lsp-types
       - hspec-expectations
+      - lens
       - ligo-squirrel
       - tasty
       - tasty-discover
