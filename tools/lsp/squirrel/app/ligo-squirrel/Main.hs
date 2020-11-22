@@ -1,11 +1,5 @@
-
-import Control.Concurrent
-import Control.Concurrent.Async
-import Control.Concurrent.STM
-import Control.Exception.Safe (handleAny)
+import Control.Exception.Safe (MonadCatch, catchAny, displayException)
 import Control.Lens hiding ((:>))
-import Control.Monad
-import Control.Monad.Catch
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks)
 
@@ -14,12 +8,9 @@ import Data.Maybe (fromMaybe)
 import Data.String.Interpolate (i)
 import qualified Data.Text as T
 
-import qualified Language.LSP.Control as CTRL
-import qualified Language.LSP.Core as Core
-import Language.LSP.Messages as Msg
+import qualified Language.LSP.Server as S
 import qualified Language.LSP.Types as J
 import qualified Language.LSP.Types.Lens as J
-import qualified Language.LSP.Utility as U
 
 
 import System.Exit
@@ -27,14 +18,14 @@ import qualified System.Log as L
 
 import AST
 import qualified ASTMap
-import Cli.Types
 import qualified Config
-import Language.LSP.Util (MessageDescription (..), describeFromClientMessage)
+import Language.LSP.Util (sendError)
 import qualified Log
 import Product
 import Range
-import RIO (RIO)
+import RIO (RIO, RioEnv)
 import qualified RIO
+
 
 main :: IO ()
 main = do
@@ -43,158 +34,117 @@ main = do
 
 mainLoop :: IO Int
 mainLoop = do
-    chan <- atomically newTChan :: IO (TChan FromClientMessage)
     let
-      callbacks = Core.InitializeCallbacks
-        { Core.onInitialConfiguration = Config.getInitialConfig
-        , Core.onConfigurationChange = Config.getConfigFromNotification
-        , Core.onStartup = \lFuns -> do
-            _ <- forkIO $ eventLoop lFuns chan
-            return Nothing
+      serverDefinition = S.ServerDefinition
+        { S.onConfigurationChange = pure . Config.getConfigFromNotification
+        , S.doInitialize = \lcEnv _msg -> Right . (lcEnv, ) <$> initialize
+        , S.staticHandlers = catchExceptions handlers
+        , S.interpretHandler = \envs -> S.Iso (RIO.run envs) liftIO
+        , S.options = lspOptions
         }
 
-    Core.setupLogger Nothing [] L.EMERGENCY
-    CTRL.run callbacks (lspHandlers chan) lspOptions Nothing
-  `catches`
-    [ Handler \(e :: SomeException) -> do
-        Log.err "INIT" (show e)
-        return 1
-    ]
+    S.setupLogger Nothing [] L.EMERGENCY
+    S.runServer serverDefinition
+  where
+    syncOptions :: J.TextDocumentSyncOptions
+    syncOptions = J.TextDocumentSyncOptions
+      { J._openClose         = Just True
+      , J._change            = Just J.TdSyncIncremental
+      , J._willSave          = Just False
+      , J._willSaveWaitUntil = Just False
+      , J._save              = Just $ J.InR $ J.SaveOptions $ Just False
+      }
 
-syncOptions :: J.TextDocumentSyncOptions
-syncOptions = J.TextDocumentSyncOptions
-  { J._openClose         = Just True
-  , J._change            = Just J.TdSyncIncremental
-  , J._willSave          = Just False
-  , J._willSaveWaitUntil = Just False
-  , J._save              = Just $ J.SaveOptions $ Just False
-  }
-
-lspOptions :: Core.Options
-lspOptions = def
-  { Core.textDocumentSync       = Just syncOptions
-  , Core.executeCommandCommands = Just ["lsp-hello-command"]
-  }
-
-lspHandlers :: TChan FromClientMessage -> Core.Handlers
-lspHandlers rin =
-  def
-    { Core.initializedHandler = Just $ passHandler rin NotInitialized
-    , Core.definitionHandler = Just $ passHandler rin ReqDefinition
-    , Core.referencesHandler = Just $ passHandler rin ReqFindReferences
-    , Core.didOpenTextDocumentNotificationHandler = Just $ passHandler rin NotDidOpenTextDocument
-    , Core.didSaveTextDocumentNotificationHandler = Just $ passHandler rin NotDidSaveTextDocument
-    , Core.didChangeTextDocumentNotificationHandler = Just $ passHandler rin NotDidChangeTextDocument
-    , Core.didCloseTextDocumentNotificationHandler = Just $ passHandler rin NotDidCloseTextDocument
-    , Core.cancelNotificationHandler = Just $ passHandler rin NotCancelRequestFromClient
-    , Core.responseHandler = Just $ responseHandlerCb rin
-      -- , Core.codeActionHandler                        = Just $ passHandler rin ReqCodeAction
-      -- , Core.executeCommandHandler                    = Just $ passHandler rin ReqExecuteCommand
-    , Core.completionHandler = Just $ passHandler rin ReqCompletion
-      -- , Core.completionResolveHandler                 = Just $ passHandler rin ReqCompletionItemResolve
-    , Core.foldingRangeHandler = Just $ passHandler rin ReqFoldingRange
-    , Core.selectionRangeHandler = Just $ passHandler rin ReqSelectionRange
-    , Core.hoverHandler = Just $ passHandler rin ReqHover
-    , Core.documentSymbolHandler = Just $ passHandler rin ReqDocumentSymbols
-    , Core.renameHandler = Just $ passHandler rin ReqRename
-    -- , Core.prepareRenameHandler = Just $ passHandler rin ReqPrepareRename -- TODO: call ligo compiller on rename request
-    }
-
-passHandler :: TChan FromClientMessage -> (a -> FromClientMessage) -> Core.Handler a
-passHandler rin c notification = do
-  atomically $ writeTChan rin (c notification)
-
-responseHandlerCb :: TChan FromClientMessage -> Core.Handler J.BareResponseMessage
-responseHandlerCb _rin resp = do
-  U.logs $ "******** got ResponseMessage, ignoring:" ++ show resp
-
-eventLoop :: Core.LspFuncs Config.Config -> TChan FromClientMessage -> IO ()
-eventLoop funs chan = do
-  astMap <- ASTMap.empty $ RIO.load . J.fromNormalizedUri
-  Just (Config.Config { _cLigoBinaryPath = _lceClientPath }) <- Core.config funs
-  forever do
-    msg <- atomically do
-      readTChan chan
-
-    Log.debug "LOOP" [i|START message: #{show msg}|]
-
-    async $ handleAny (sendErrorResponse msg) $ do
-      -- TODO: client freezes when trying to extract LigoEnv from extension
-      RIO.run (astMap :> funs :> def { _lceClientPath } :> Nil) do
-      -- RIO.run (astMap :> funs :> def :> Nil) do
-        case msg of
-          RspFromClient            {}    -> return ()
-          NotInitialized           notif -> handleInitialized                  notif
-          NotDidOpenTextDocument   notif -> handleDidOpenTextDocument          notif
-          NotDidChangeTextDocument notif -> handleDidChangeTextDocument        notif
-          ReqDefinition            req   -> handleDefinitionRequest            req
-          ReqFindReferences        req   -> handleFindReferencesRequest        req
-          ReqCompletion            req   -> handleCompletionRequest            req
-          ReqDocumentSymbols       req   -> handleDocumentSymbolsRequest       req
-          ReqFoldingRange          req   -> handleFoldingRangeRequest          req
-          ReqSelectionRange        req   -> handleSelectionRangeRequest        req
-          ReqHover                 req   -> handleHoverRequest                 req
-          ReqRename                req   -> handleRenameRequest                req
-
-          -- Additional callback executed after completion was made, currently no-op
-          ReqCompletionItemResolve req   -> handleCompletionItemResolveRequest req
-
-          _ -> liftIO do
-            Log.err "LOOP" $ "unknown msg: " <> show (describeFromClientMessage msg)
-
-      Log.debug "LOOP" [i|DONE message: #{take 50 $ show msg}|]
- where
-  sendErrorResponse :: FromClientMessage -> SomeException -> IO ()
-  sendErrorResponse msg e = case describeFromClientMessage msg of
-    MessageRequest _ reqId ->
-      Core.sendErrorResponseS (Core.sendFunc funs) (J.responseId reqId)
-        J.InternalError (T.pack $ displayException e)
-    MessageResponse method respId ->
-      Core.sendErrorShowS (Core.sendFunc funs) $
-        "Error processing response `" <> method <> "` #" <> (T.pack $ show respId) <> "."
-    MessageNotification method ->
-      Core.sendErrorShowS (Core.sendFunc funs) $
-        "Error processing `" <> method <> "`."
+    lspOptions :: S.Options
+    lspOptions = def
+      { S.textDocumentSync       = Just syncOptions
+      , S.executeCommandCommands = Just ["lsp-hello-command"]
+      }
 
 
-handleInitialized :: J.InitializedNotification -> RIO ()
-handleInitialized _notif = do
-  let
-    registration = J.Registration
-      "lsp-haskell-registered"
-      J.WorkspaceExecuteCommand
-      Nothing
-    registrations = J.RegistrationParams $ J.List [registration]
+    -- | Handle all uncaught exceptions.
+    catchExceptions
+      :: forall m config. (MonadCatch m, S.MonadLsp config m)
+      => S.Handlers m -> S.Handlers m
+    catchExceptions = S.mapHandlers wrapReq wrapNotif
+      where
+        wrapReq
+          :: forall (meth :: J.Method 'J.FromClient 'J.Request).
+             S.Handler m meth -> S.Handler m meth
+        wrapReq handler msg@J.RequestMessage{_method} resp =
+          handler msg resp `catchAny` \e -> do
+            Log.err "Uncaught" $ "Handling `" <> show _method <> "`: " <> displayException e
+            resp . Left $ J.ResponseError J.InternalError (T.pack $ displayException e) Nothing
 
-  rid <- RIO.freshID
-  RIO.respond
-    $ ReqRegisterCapability
-    $ fmServerRegisterCapabilityRequest rid registrations
+        wrapNotif
+          :: forall (meth :: J.Method 'J.FromClient 'J.Notification).
+             S.Handler m meth -> S.Handler m meth
+        wrapNotif handler msg@J.NotificationMessage{_method} =
+          handler msg `catchAny` \e -> do
+            Log.err "Uncaught" $ "Handling `" <> show _method <> "`: " <> displayException e
+            sendError . T.pack $ "Error handling `" <> show _method <> "` (see logs)."
 
-handleDidOpenTextDocument :: J.DidOpenTextDocumentNotification -> RIO ()
+
+initialize :: IO RioEnv
+initialize = do
+    astMap <- ASTMap.empty $ RIO.load . J.fromNormalizedUri
+    pure (astMap :> Nil)
+
+handlers :: S.Handlers RIO
+handlers = mconcat
+  [ S.notificationHandler J.SInitialized (\_msg -> pure ())
+
+  , S.notificationHandler J.STextDocumentDidOpen handleDidOpenTextDocument
+  , S.notificationHandler J.STextDocumentDidChange handleDidChangeTextDocument
+
+  , S.requestHandler J.STextDocumentDefinition handleDefinitionRequest
+  , S.requestHandler J.STextDocumentReferences handleFindReferencesRequest
+  , S.requestHandler J.STextDocumentCompletion handleCompletionRequest
+  --, S.requestHandler J.SCompletionItemResolve handleCompletionItemResolveRequest
+  , S.requestHandler J.STextDocumentFoldingRange handleFoldingRangeRequest
+  , S.requestHandler J.STextDocumentSelectionRange handleSelectionRangeRequest
+  , S.requestHandler J.STextDocumentDocumentSymbol handleDocumentSymbolsRequest
+  , S.requestHandler J.STextDocumentHover handleHoverRequest
+  , S.requestHandler J.STextDocumentRename handleRenameRequest
+  --, S.requestHandler J.STextDocumentPrepareRename _
+
+  --, S.notificationHandler J.SCancelRequest _
+  --, S.requestHandler J.STextDocumentCodeAction _
+  --, S.requestHandler J.SWorkspaceExecuteCommand _
+  ]
+
+
+handleDidOpenTextDocument :: S.Handler RIO 'J.TextDocumentDidOpen
 handleDidOpenTextDocument notif = do
   let doc = notif^.J.params.J.textDocument.J.uri
   let ver = notif^.J.params.J.textDocument.J.version
   RIO.collectErrors RIO.forceFetch (J.toNormalizedUri doc) (Just ver)
 
-handleDidChangeTextDocument :: J.DidChangeTextDocumentNotification -> RIO ()
+handleDidChangeTextDocument :: S.Handler RIO 'J.TextDocumentDidChange
 handleDidChangeTextDocument notif = do
   tmap <- asks getElem
   let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
   ASTMap.invalidate uri tmap
   RIO.collectErrors (flip ASTMap.fetchBundled tmap) uri (Just 0)
 
-handleDefinitionRequest :: J.DefinitionRequest -> RIO ()
-handleDefinitionRequest req = do
-    let uri = req^.J.params.J.textDocument.J.uri
-    let pos = fromLspPosition $ req^.J.params.J.position
+handleDefinitionRequest :: S.Handler RIO 'J.TextDocumentDefinition
+handleDefinitionRequest req respond = do
+    -- XXX: They forgot lenses for DefinitionParams :/
+    {-
+    let uri = req^.J.textDocument.J.uri
+    let pos = fromLspPosition $ req^.J.position
+    -}
+    let
+      J.DefinitionParams{_textDocument, _position} = req ^. J.params
+      uri = _textDocument ^. J.uri
+      pos = fromLspPosition _position
     (tree, _) <- RIO.fetch $ J.toNormalizedUri uri
     case AST.definitionOf pos tree of
-      Just defPos -> RIO.respondWith req RspDefinition $ J.MultiLoc [J.Location uri $ toLspRange defPos]
-      Nothing     -> RIO.respondWith req RspDefinition $ J.MultiLoc []
+      Just defPos -> respond . Right . J.InR . J.InL . J.List $ [J.Location uri $ toLspRange defPos]
+      Nothing     -> respond . Right . J.InR . J.InL . J.List $ []
 
-handleFindReferencesRequest :: J.ReferencesRequest -> RIO ()
-handleFindReferencesRequest req = do
+handleFindReferencesRequest :: S.Handler RIO 'J.TextDocumentReferences
+handleFindReferencesRequest req respond = do
     let uri  = req^.J.params.J.textDocument.J.uri
     let nuri = J.toNormalizedUri uri
     let pos  = fromLspPosition $ req^.J.params.J.position
@@ -202,64 +152,66 @@ handleFindReferencesRequest req = do
     case AST.referencesOf pos tree of
       Just refs -> do
         let locations = J.Location uri . toLspRange <$> refs
-        RIO.respondWith req RspFindReferences $ J.List locations
+        respond . Right . J.List $ locations
       Nothing -> do
-        RIO.respondWith req RspFindReferences $ J.List []
+        respond . Right . J.List $ []
 
-handleCompletionRequest :: J.CompletionRequest -> RIO ()
-handleCompletionRequest req = do
-    RIO.log $ "got completion request: " <> show req
+handleCompletionRequest :: S.Handler RIO 'J.TextDocumentCompletion
+handleCompletionRequest req respond = do
+    Log.debug "Completion" [i|Request: #{show req}|]
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
     let pos = fromLspPosition $ req ^. J.params . J.position
     (tree, _) <- RIO.fetch uri
     let completions = fmap toCompletionItem . fromMaybe [] $ complete pos tree
-    RIO.respondWith req RspCompletion . J.Completions . J.List $ completions
+    respond . Right . J.InL . J.List $ completions
 
-handleCompletionItemResolveRequest :: J.CompletionItemResolveRequest -> RIO ()
-handleCompletionItemResolveRequest req = do
-    RIO.log $ "got completion resolve request: " <> show req
-    RIO.respondWith req RspCompletionItemResolve (req ^. J.params)
+{-
+handleCompletionItemResolveRequest :: S.Handler RIO 'J.CompletionItemResolve
+handleCompletionItemResolveRequest req respond = do
+    Log.debug "Completion resolve" [i|Request: #{show req}|]
+    respond . Right $  req ^. J.params
+-}
 
-handleFoldingRangeRequest :: J.FoldingRangeRequest -> RIO ()
-handleFoldingRangeRequest req = do
+handleFoldingRangeRequest :: S.Handler RIO 'J.TextDocumentFoldingRange
+handleFoldingRangeRequest req respond = do
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
     (tree, _) <- RIO.fetch uri
     actions <- foldingAST tree
-    RIO.liftLsp \funs -> do
-      Core.sendFunc funs
-        $ RspFoldingRange
-        $ Core.makeResponseMessage req
-        $ J.List
+    respond . Right . J.List
         $ fmap toFoldingRange
         $ actions
 
-handleSelectionRangeRequest :: J.SelectionRangeRequest -> RIO ()
-handleSelectionRangeRequest req = do
+handleSelectionRangeRequest :: S.Handler RIO 'J.TextDocumentSelectionRange
+handleSelectionRangeRequest req respond = do
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
-    let positions = req ^. J.params . J.positions
+    let positions = req ^. J.params . J.positions ^.. folded
     (tree, _) <- RIO.fetch uri
     let results = map (findSelectionRange tree) positions
-        response = (RspSelectionRange
-                      (Core.makeResponseMessage req (J.List results)))
-    RIO.liftLsp \funs -> do
-      Core.sendFunc funs response
+    respond . Right . J.List $ results
 
-handleDocumentSymbolsRequest :: J.DocumentSymbolRequest -> RIO ()
-handleDocumentSymbolsRequest req = do
+handleDocumentSymbolsRequest :: S.Handler RIO 'J.TextDocumentDocumentSymbol
+handleDocumentSymbolsRequest req respond = do
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
     (tree, _) <- RIO.fetch uri
     result <- extractDocumentSymbols (J.fromNormalizedUri uri) tree
-    RIO.respondWith req RspDocumentSymbols (J.DSSymbolInformation $ J.List result)
+    respond . Right . J.InR . J.List $ result
 
-handleHoverRequest :: J.HoverRequest -> RIO ()
-handleHoverRequest req = do
+handleHoverRequest :: S.Handler RIO 'J.TextDocumentHover
+handleHoverRequest req respond = do
+    -- XXX: They forgot lenses for  HoverParams :/
+    {-
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
-    (tree, _) <- RIO.fetch uri
     let pos = fromLspPosition $ req ^. J.params . J.position
-    RIO.respondWith req RspHover (hoverDecl pos tree)
+    -}
+    let
+      J.HoverParams{_textDocument, _position} = req ^. J.params
+      uri = _textDocument ^. J.uri . to J.toNormalizedUri
+      pos = fromLspPosition _position
+    (tree, _) <- RIO.fetch uri
+    respond . Right $ hoverDecl pos tree
 
-handleRenameRequest :: J.RenameRequest -> RIO ()
-handleRenameRequest req = do
+handleRenameRequest :: S.Handler RIO 'J.TextDocumentRename
+handleRenameRequest req respond = do
     let uri  = req ^. J.params . J.textDocument . J.uri
     let nuri = J.toNormalizedUri uri
     let pos  = fromLspPosition $ req ^. J.params . J.position
@@ -267,11 +219,11 @@ handleRenameRequest req = do
 
     (tree, _) <- RIO.fetch nuri
 
-    RIO.liftLsp $ \funs -> case renameDeclarationAt pos tree newName of
+    case renameDeclarationAt pos tree newName of
       NotFound -> do
         Log.debug "Rename" [i|Declaration not found for: #{show req}|]
-        Core.sendErrorResponseS (Core.sendFunc funs) (req ^. J.id . to J.responseId)
-          J.InvalidRequest "Cannot rename this"
+        respond . Left $
+          J.ResponseError J.InvalidRequest "Cannot rename this" Nothing
       Ok edits ->
         let
           -- TODO: change this once we set up proper module system integration
@@ -282,12 +234,12 @@ handleRenameRequest req = do
                 }
             ]
 
-          response = RspRename $ Core.makeResponseMessage req
+          response =
             J.WorkspaceEdit
               { _changes = Nothing
               , _documentChanges = Just documentChanges
               }
-        in Core.sendFunc funs response
+        in respond . Right $ response
 
 exit :: Int -> IO ()
 exit 0 = exitSuccess

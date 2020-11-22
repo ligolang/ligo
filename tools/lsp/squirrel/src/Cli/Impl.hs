@@ -8,12 +8,11 @@ module Cli.Impl
   , parseLigoDefinitions
   , parseLigoOutput
   , getLigoDefinitionsFrom
-  , runLigoClient
   ) where
 
 import Control.Exception.Safe (Exception (..), SomeException, catchAny, throwIO)
 -- import Control.Lens hiding ((<.>))
-import Control.Exception (try)
+import Control.Exception.Safe (try)
 import Control.Monad
 import Control.Monad.Catch (MonadThrow (throwM))
 import Control.Monad.Reader
@@ -32,7 +31,6 @@ import Cli.Types
 import Log (i)
 import qualified Log
 import ParseTree (Source (..), srcToText)
-import Product
 
 ----------------------------------------------------------------------------
 -- Errors
@@ -89,9 +87,6 @@ instance Pretty LigoBinaryCallError where
 ----------------------------------------------------------------------------
 -- Execution
 ----------------------------------------------------------------------------
-
-runLigoClient :: r -> ReaderT r m a -> m a
-runLigoClient = flip runReaderT
 
 -- | Call ligo binary and return stdin and stderr accordingly.
 callLigo
@@ -223,9 +218,8 @@ getLigoDefinitions
   => Source
   -> m (LigoDefinitions, Text)
 getLigoDefinitions contract = do
-  env <- getLigoClientEnv
   Log.debug "LIGO.PARSE" [i|parsing the following contract:\n #{contract}|]
-  mbOut <- liftIO . try @LigoBinaryCallError . runLigoClient (env :> Nil) $
+  mbOut <- try $
     callLigo ["get-scope", "--format=json", "--with-types", "--syntax=pascaligo", "/dev/stdin"] contract
   case mbOut of
     Right (output, errs) -> do

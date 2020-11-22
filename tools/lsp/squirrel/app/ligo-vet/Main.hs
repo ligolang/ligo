@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-# LANGUAGE RecordWildCards #-}
 
 import Control.Arrow (first)
@@ -10,6 +11,7 @@ import Options.Applicative
   short, strOption, switch)
 
 import AST (Fallback, parse, parseWithScopes)
+import Cli.Types (HasLigoClient (..))
 import ParseTree (Source (Path))
 
 data Command = PrintSexp PrintSexpOptions
@@ -67,3 +69,9 @@ main = withUtf8 $ do
         putStrLn "The following errors have been encountered: "
         for_ messages $ \(range, err) -> do
           putStrLn (render (pp range <> ": " <> pp err))
+
+-- FIXME: HACK
+-- We should be able to call `parseWithScopes @Fallback` without the need
+-- for a ligo compiler.
+instance HasLigoClient IO where
+  getLigoClientEnv = error "One does not need ligo for Fallback scopes"

@@ -17,6 +17,7 @@ import AST.Scope (Fallback)
 import Test.Capabilities.Util (contractsDir)
 import Test.FixedExpectations (shouldBe)
 import Test.Util (readContractWithScopes)
+import Test.Util.LigoEnv ({- instance HasLigoClient IO -})
 
 
 type SimpleSymInfo = (Text, SymbolKind, (Int, Int), (Int, Int))

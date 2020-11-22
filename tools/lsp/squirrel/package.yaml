@@ -83,6 +83,7 @@ library:
     - lens
     - lens-aeson
     - bytestring
+    - unliftio-core
     - unordered-containers
 
 executables:
@@ -102,6 +103,7 @@ executables:
       - unix
       - stm
       - stm-containers
+      - unliftio-core
 
     source-dirs:
       - app/ligo-squirrel

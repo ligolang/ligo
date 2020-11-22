@@ -14,6 +14,7 @@ import Range (point)
 import Test.Capabilities.Util (contractsDir)
 import Test.FixedExpectations (shouldBe)
 import Test.Util (readContractWithScopes)
+import Test.Util.LigoEnv ({- instance HasLigoClient IO -})
 
 
 unit_rename_id :: Assertion
