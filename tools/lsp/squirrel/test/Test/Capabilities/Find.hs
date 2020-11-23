@@ -180,9 +180,24 @@ invariants =
   --   , driRefs = []
   --   }
 
-  -- * Tests that don't pass because we have troubles with recursive functions
-  -- * in LIGO: https://issues.serokell.io/issue/LIGO-70
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "recursion.ligo"
+    , driDesc = "sum"
+    , driDef = Just (interval 1 20 23)
+    , driRefs = [interval 2 26 29]
+    }
 
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "recursion.mligo"
+    , driDesc = "sum"
+    , driDef = Just (interval 1 9 12)
+    , driRefs = [interval 2 30 33]
+    }
+
+
+  -- * Does not pass because we have troubles with recursive functions
+  -- * in ReasonLIGO: https://issues.serokell.io/issue/LIGO-70
+  --
   -- , DefinitionReferenceInvariant
   --   { driFile = contractsDir </> "recursion.religo"
   --   , driDesc = "sum"
