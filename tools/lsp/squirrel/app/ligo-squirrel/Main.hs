@@ -96,6 +96,7 @@ handlers = mconcat
 
   , S.notificationHandler J.STextDocumentDidOpen handleDidOpenTextDocument
   , S.notificationHandler J.STextDocumentDidChange handleDidChangeTextDocument
+  , S.notificationHandler J.STextDocumentDidSave (\_msg -> pure ())
 
   , S.requestHandler J.STextDocumentDefinition handleDefinitionRequest
   , S.requestHandler J.STextDocumentReferences handleFindReferencesRequest
