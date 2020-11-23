@@ -8,7 +8,7 @@ module AST.Parser
 
 import Control.Lens ((&), (.~), element)
 import Control.Monad.IO.Class (liftIO)
-import Control.Exception (try)
+import Control.Exception.Safe (try)
 import Control.Monad.Catch (MonadThrow(throwM))
 import qualified Data.List as List
 
@@ -23,7 +23,7 @@ import Duplo (Lattice(leq))
 import ParseTree (toParseTree, Source(..))
 import Parser
 import Extension
-import Cli (LigoBinaryCallError(DecodedExpectedClientFailure), LigoBinaryCallError, fromLigoErrorToMsg)
+import Cli (LigoBinaryCallError(DecodedExpectedClientFailure), fromLigoErrorToMsg)
 
 parse :: Source -> IO (LIGO Info, [Msg])
 parse src = do
@@ -66,8 +66,7 @@ parseWithScopes' src = do
   (ast, msg) <- liftIO do
     toParseTree src >>= runParserM . recogniser
 
-  ligoAst <- liftIO $ try @LigoBinaryCallError
-    $ addLocalScopes @FromCompiler src ast 
+  ligoAst <- try $ addLocalScopes @FromCompiler src ast
 
   case ligoAst of
     Right ast' ->

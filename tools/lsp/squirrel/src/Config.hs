@@ -5,13 +5,12 @@
 module Config
   ( Config(..)
   , getConfigFromNotification
-  , getInitialConfig
   ) where
 
-import Data.Aeson
-import Data.Default
+import Data.Aeson ((.=), (.:), (.:?), (.!=), FromJSON (parseJSON), Result (Error, Success), ToJSON (toJSON), Value, fromJSON, object, withObject)
+import Data.Default (Default (def))
 import qualified Data.Text as T
-import Language.Haskell.LSP.Types
+
 import Cli (LigoClientEnv (..))
 
 ----------------------------------------------------------------------------
@@ -20,22 +19,11 @@ import Cli (LigoClientEnv (..))
 
 -- | Given a DidChangeConfigurationNotification message, this function returns the parsed
 -- Config object if possible.
-getConfigFromNotification :: DidChangeConfigurationNotification -> Either T.Text Config
-getConfigFromNotification NotificationMessage { _params = DidChangeConfigurationParams p } =
+getConfigFromNotification :: Value -> Either T.Text Config
+getConfigFromNotification p =
   case fromJSON p of
     Success c -> Right c
     Error err -> Left $ T.pack err
-
--- | Given an InitializeRequest message, this function returns the parsed
--- Config object if possible. Otherwise, it returns the default configuration.
-getInitialConfig :: InitializeRequest -> Either T.Text Config
-getInitialConfig
-  RequestMessage { _params = InitializeParams { _initializationOptions = Nothing }} = Right def
-getInitialConfig
-  RequestMessage { _params = InitializeParams { _initializationOptions = Just opts }} =
-    case fromJSON opts of
-      Success c -> Right c
-      Error err -> Left $ T.pack err
 
 ----------------------------------------------------------------------------
 -- Types

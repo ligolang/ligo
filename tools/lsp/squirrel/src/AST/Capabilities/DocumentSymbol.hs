@@ -7,8 +7,8 @@ import Control.Monad.Writer.Strict
 import Data.Maybe (fromMaybe)
 import Data.Text
 import Duplo (match)
-import Language.Haskell.LSP.Types (SymbolInformation (..))
-import qualified Language.Haskell.LSP.Types as J
+import Language.LSP.Types (SymbolInformation (..))
+import qualified Language.LSP.Types as J
 
 import AST.Capabilities.Find
 import AST.Scope

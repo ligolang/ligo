@@ -17,7 +17,7 @@ module Range
   )
   where
 
-import qualified Language.Haskell.LSP.Types as LSP (Position (..), Range (..))
+import qualified Language.LSP.Types as LSP (Position (..), Range (..))
 
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as BS

@@ -5,7 +5,7 @@ module AST.Capabilities.Rename
   ) where
 
 import Data.Text (Text)
-import qualified Language.Haskell.LSP.Types as J
+import qualified Language.LSP.Types as J
 
 import AST.Capabilities.Find (CanSearch, findScopedDecl)
 import AST.Scope (ScopedDecl (ScopedDecl, _sdRefs))
