@@ -7,7 +7,6 @@ import Control.Monad.Writer.Strict
 import Data.Maybe (fromMaybe)
 import Data.Text
 import Duplo (match)
-import Duplo.Tree (Visit (Visit), visit)
 import Language.Haskell.LSP.Types (SymbolInformation (..))
 import qualified Language.Haskell.LSP.Types as J
 
@@ -16,6 +15,8 @@ import AST.Scope
 import AST.Skeleton
 import Product
 import Range
+
+
 -- | Extract document symbols for some specific parsed ligo contract which
 -- is realisable by @haskell-lsp@ client.
 extractDocumentSymbols
@@ -24,43 +25,51 @@ extractDocumentSymbols
   => J.Uri
   -> LIGO Info'
   -> m [SymbolInformation]
-extractDocumentSymbols uri tree = execWriterT . visit handlers $ tree
+extractDocumentSymbols uri tree = execWriterT $ collectFromContract tree
   where
-    handlers =
-      [ Visit @Binding $ \case
-          (_, Function _ (match @Name -> Just (getElem @Range -> r, _)) _ _ _)->
+    collectFromContract :: LIGO Info' -> WriterT [SymbolInformation] m ()
+    collectFromContract (match @RawContract -> Just (_, RawContract decls))
+      = mapM_ collectDecl decls
+    collectFromContract (match @Contract-> Just (_, ContractCons contr contrs))
+      = collectFromContract contr *> collectFromContract contrs
+    collectFromContract _
+      = pure ()
+
+    collectDecl :: LIGO Info' -> WriterT [SymbolInformation] m ()
+    collectDecl (match @Binding -> Just (_, binding)) = case binding of
+          (Function _ (match @NameDecl -> Just (getElem @Range -> r, _)) _ _ _)->
             tellScopedDecl
               r
               J.SkFunction
               (\_ -> Nothing)
 
           -- TODO: currently we do not count imports as declarations in scopes
-          (_, Include (match @Constant -> Just (getElem @Range -> r, _))) ->
+          (Include (match @Constant -> Just (getElem @Range -> r, _))) ->
             tellSymbolInfo
               r
               J.SkNamespace
               ("some import at " <> pack (show r))
 
-          (_, TypeDecl (match @TypeName -> Just (getElem @Range -> r, _)) _) ->
+          (TypeDecl (match @TypeName -> Just (getElem @Range -> r, _)) _) ->
             tellScopedDecl
               r
               J.SkTypeParameter
               (\_ -> Nothing)
 
-          (_, Const (match @Name -> Just (getElem @Range -> r, _)) _ _) ->
+          (Const (match @NameDecl -> Just (getElem @Range -> r, _)) _ _) ->
             tellScopedDecl
               r
               J.SkConstant
               (\ScopedDecl {_sdName} -> Just ("const " <> _sdName))
 
-          (_, Var (match @Name -> Just (getElem @Range -> r, _)) _ _) ->
+          (Var (match @NameDecl -> Just (getElem @Range -> r, _)) _ _) ->
             tellScopedDecl
               r
               J.SkVariable
               (\ScopedDecl {_sdName} -> Just ("var " <> _sdName))
 
           _ -> pure ()
-      ]
+    collectDecl _ = pure ()
 
     -- | Tries to find scoped declaration and apply continuation to it or
     -- ignore the declaration if not found.
