@@ -264,26 +264,30 @@ handleRenameRequest req = do
     let nuri = J.toNormalizedUri uri
     let pos  = fromLspPosition $ req ^. J.params . J.position
     let newName = req ^. J.params . J.newName
+
     (tree, _) <- RIO.fetch nuri
-    let
-      allReferences :: Maybe [Range]
-      allReferences = referencesOf pos tree <> fmap (\x -> [x]) (definitionOf pos tree)
-      textEdits :: Maybe [J.TextEdit]
-      textEdits = allReferences & _Just . traverse %~ \x -> J.TextEdit (toLspRange x) newName
-      workspaceEdit :: Maybe (J.List J.TextDocumentEdit)
-      workspaceEdit = textEdits <&> \edits -> J.List
-        [ J.TextDocumentEdit
-            { _textDocument = J.VersionedTextDocumentIdentifier uri Nothing
-            , _edits = J.List edits
-            }
-        ]
-      response = RspRename $ Core.makeResponseMessage req
-        J.WorkspaceEdit
-          { _changes = Nothing -- TODO: change this once we set up proper module system integration
-          , _documentChanges = workspaceEdit
-          }
-    RIO.liftLsp \funs -> do
-      Core.sendFunc funs response
+
+    RIO.liftLsp $ \funs -> case renameDeclarationAt pos tree newName of
+      NotFound -> do
+        Log.debug "Rename" [i|Declaration not found for: #{show req}|]
+        Core.sendErrorResponseS (Core.sendFunc funs) (req ^. J.id . to J.responseId)
+          J.InvalidRequest "Cannot rename this"
+      Ok edits ->
+        let
+          -- TODO: change this once we set up proper module system integration
+          documentChanges = J.List
+            [ J.TextDocumentEdit
+                { _textDocument = J.VersionedTextDocumentIdentifier uri Nothing
+                , _edits = J.List edits
+                }
+            ]
+
+          response = RspRename $ Core.makeResponseMessage req
+            J.WorkspaceEdit
+              { _changes = Nothing
+              , _documentChanges = Just documentChanges
+              }
+        in Core.sendFunc funs response
 
 exit :: Int -> IO ()
 exit 0 = exitSuccess
