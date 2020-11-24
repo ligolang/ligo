@@ -2,18 +2,13 @@
 
 module AST.Parser.Camligo where
 
--- import Data.Maybe (isJust)
-
 import AST.Skeleton
 
-import Duplo.Error
 import Duplo.Tree
 
-import Parser
 import ParseTree
+import Parser
 import Product
-
--- import Debug.Trace
 
 -- example :: FilePath
 -- example = "../../../src/test/contracts/address.mligo"
@@ -68,8 +63,11 @@ import Product
 -- example = "../../../src/test/contracts/let_in_multi_bind.mligo"
 -- example = "../../../src/test/contracts/fibo2.mligo"
 
-recognise :: RawTree -> ParserM (LIGO Info)
-recognise = descent (error "Reasonligo.recognise") $ map usingScope
+recognise :: SomeRawTree -> ParserM (SomeLIGO Info)
+recognise (SomeRawTree dialect rawTree)
+  = fmap (SomeLIGO dialect)
+  $ flip (descent (error "Camligo.recognise")) rawTree
+  $ map usingScope
   [ -- Contract
     Descent do
       boilerplate $ \case
@@ -78,10 +76,10 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
 
   , Descent do
       boilerplate $ \case
-        "fun_decl"  -> Function <$> flag "recursive" <*> field "name" <*> fields "arg" <*> fieldOpt "type" <*> field "body"
-        "let_decl"  -> Const    <$>                      field "name"                  <*> fieldOpt "type" <*> fieldOpt "body"
-        "include"   -> Include  <$>                      field "filename"
-        "type_decl" -> TypeDecl <$> field "name" <*> field "type"
+        "fun_decl"  -> BFunction <$> flag "recursive" <*> field "name" <*> fields "arg" <*> fieldOpt "type" <*> field "body"
+        "let_decl"  -> BConst    <$>                      field "name"                  <*> fieldOpt "type" <*> fieldOpt "body"
+        "include"   -> BInclude  <$>                      field "filename"
+        "type_decl" -> BTypeDecl <$> field "name" <*> field "type"
         _ -> fallthrough
 
   , Descent do
@@ -223,8 +221,7 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
 
   -- Err
   , Descent do
-      \(r :> _, ParseTree _ _ msg) -> do
+      \(r :> _, ParseTree _ children source) -> do
         withComments do
-          return (r :> N :> CodeSource msg :> Nil, Err msg)
+          return (r :> N :> CodeSource source :> Nil, Error source children)
   ]
-

@@ -54,6 +54,7 @@ module.exports = grammar({
 
   word: $ => $.Keyword,
   extras: $ => [$.ocaml_comment, $.comment, /\s/],
+  inline: $ => [$.parameters, $.arguments],
 
   rules: {
     Start: $ => sepBy(optional(';'), field("declaration", $._declaration)),
@@ -219,7 +220,7 @@ module.exports = grammar({
       seq(
         field("recursive", optional($.recursive)),
         'function',
-        field("parameters", $.parameters),
+        $.parameters,
         ':',
         field("type", $._type_expr),
         'is',
@@ -232,7 +233,7 @@ module.exports = grammar({
           field("recursive", optional($.recursive)),
           'function',
           field("name", $.NameDecl),
-          field("parameters", $.parameters),
+          $.parameters,
           ':',
           choice(
             field("type", $._type_expr),
@@ -596,13 +597,13 @@ module.exports = grammar({
     constr_call: $ =>
       seq(
         field("constr", $.constr),
-        field("arguments", $.arguments)
+        $.arguments
       ),
 
     Some_call: $ =>
       seq(
         field("constr", 'Some'),
-        field("arguments", $.arguments),
+        $.arguments,
       ),
 
     _fun_call_or_par_or_projection: $ =>
@@ -616,12 +617,12 @@ module.exports = grammar({
     par_call: $ =>
       prec.right(1, seq(
         par(field("f", $._expr)),
-        field("arguments", $.arguments),
+        $.arguments,
       )),
 
     projection_call: $ => prec(1, seq(
       field("f", $._projection),
-      field("arguments", $.arguments),
+      $.arguments,
     )),
 
     annot_expr: $ =>
@@ -735,7 +736,7 @@ module.exports = grammar({
     fun_call: $ =>
       seq(
         field("f", choice($.Name, $.module_field)),
-        field("arguments", $.arguments),
+        $.arguments,
       ),
 
     tuple_expr: $ => par(sepBy1(',', field("element", $._expr))),

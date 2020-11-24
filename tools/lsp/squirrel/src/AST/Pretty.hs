@@ -6,14 +6,13 @@
 module AST.Pretty where
 
 import Data.Sum
-import qualified Data.Text as Text
+import Data.Text (Text)
+import qualified Data.Text as Text (pack, take)
 
 import AST.Skeleton
 
 import Data.Maybe (isJust)
 import Duplo (Cofree ((:<)), Layers)
-import Duplo.Error (Err)
-import Duplo.Error (Err (Err))
 import Duplo.Pretty
   (Doc, Modifies (..), PP (PP), Pretty (..), Pretty1 (..), above, brackets, color, empty, fsep,
   indent, parens, ppToText, punctuate, ($+$), (<+>), (<.>))
@@ -32,7 +31,7 @@ class
     lpp = pp
 
 instance LPP dialect () where
-instance LPP dialect Text.Text where
+instance LPP dialect Text where
 instance LPP dialect Doc where
 
 class
@@ -59,7 +58,6 @@ deriving via PP (Undefined it) instance Pretty it => Show (Undefined it)
 deriving via PP (Contract it) instance Pretty it => Show (Contract it)
 deriving via PP (RawContract it) instance Pretty it => Show (RawContract it)
 deriving via PP (Binding it) instance Pretty it => Show (Binding it)
-deriving via PP (Parameters it) instance Pretty it => Show (Parameters it)
 deriving via PP (Type it) instance Pretty it => Show (Type it)
 deriving via PP (Variant it) instance Pretty it => Show (Variant it)
 deriving via PP (TField it) instance Pretty it => Show (TField it)
@@ -76,6 +74,7 @@ deriving via PP (NameDecl it) instance Pretty it => Show (NameDecl it)
 deriving via PP (TypeName it) instance Pretty it => Show (TypeName it)
 deriving via PP (Ctor it) instance Pretty it => Show (Ctor it)
 deriving via PP (FieldName it) instance Pretty it => Show (FieldName it)
+deriving via PP (Error it) instance Pretty it => Show (Error it)
 
 instance
     ( Apply (LPP1 d) layers
@@ -96,8 +95,8 @@ instance
   where
   lpp (d :< f) = ascribe d $ lpp1 @d $ lpp @d <$> f
 
-instance LPP d msg => LPP1 d (Err msg) where
-  lpp1 (Err msg) = lpp @d msg
+instance LPP1 d Error where
+  lpp1 (Error msg _) = lpp @d msg
 
 -- class LPPProd (dialect :: Lang) xs where
 --   lppProd :: Product xs -> Doc
@@ -121,10 +120,10 @@ instance LPP d msg => LPP1 d (Err msg) where
 -- Helpers
 ----------------------------------------------------------------------------
 
-sexpr :: Text.Text -> [Doc] -> Doc
+sexpr :: Text -> [Doc] -> Doc
 sexpr header items = "(" <.> pp header `indent` foldr above empty items <.> ")"
 
-sop :: Doc -> Text.Text -> [Doc] -> Doc
+sop :: Doc -> Text -> [Doc] -> Doc
 sop a op b = "(" <.> a `indent` pp op `indent` foldr above empty b <.> ")"
 
 blockWith :: forall dialect p . LPP dialect p => (Doc -> Doc) -> [p] -> Doc
@@ -165,14 +164,14 @@ instance Pretty1 RawContract where
 
 instance Pretty1 Binding where
   pp1 = \case
-    TypeDecl     n    ty       -> sexpr "type"  [n, ty]
-    Parameter    n    ty       -> sexpr "parameter"  [n, ty]
-    Var          name ty value -> sexpr "var"   [name, pp ty, pp value]
-    Const        name ty body  -> sexpr "const" [name, pp ty, pp body]
-    Attribute    name          -> sexpr "attr"  [name]
-    Include      fname         -> sexpr "#include" [fname]
+    BTypeDecl     n    ty       -> sexpr "type"  [n, ty]
+    BParameter    n    ty       -> sexpr "parameter"  [n, ty]
+    BVar          name ty value -> sexpr "var"   [name, pp ty, pp value]
+    BConst        name ty body  -> sexpr "const" [name, pp ty, pp body]
+    BAttribute    name          -> sexpr "attr"  [name]
+    BInclude      fname         -> sexpr "#include" [fname]
 
-    Function isRec name params ty body ->
+    BFunction isRec name params ty body ->
       sexpr "fun" $ concat
         [ ["rec" | isRec]
         , [name]
@@ -180,10 +179,6 @@ instance Pretty1 Binding where
         , [":", pp ty]
         , ["=", body]
         ]
-
-instance Pretty1 Parameters where
-  pp1 = \case
-    Parameters them -> sexpr "params" them
 
 instance Pretty1 Type where
   pp1 = \case
@@ -304,6 +299,10 @@ instance Pretty1 TField where
   pp1 = \case
     TField      n t -> n <.> ":" `indent` t
 
+instance Pretty1 Error where
+  pp1 = \case
+    Error       src children -> sexpr ("ERROR: " <> src) (map pp children)
+
 ----------------------------------------------------------------------------
 -- Common
 ----------------------------------------------------------------------------
@@ -348,12 +347,6 @@ instance LPP1 d Path where
 
 -- instances needed to pass instance resolution during compilation
 
-instance LPP1 'Reason Parameters where
-  lpp1 = error "unexpected `Parameters` node"
-
-instance LPP1 'Caml Parameters where
-  lpp1 = error "unexpected `Parameters` node"
-
 instance LPP1 'Caml MapBinding where
   lpp1 = error "unexpected `MapBinding` node"
 
@@ -367,7 +360,7 @@ instance LPP1 'Pascal Type where
     TArrow    dom codom -> dom <+> "->" <+> codom
     TRecord   fields    -> "record [" `above` blockWith (<.> ";") fields `above` "]"
     TProduct  [element] -> element
-    TProduct  elements  -> parens $ train "*" elements
+    TProduct  elements  -> parens $ train " *" elements
     TSum      (x:xs)    -> x <.> blockWith ("|"<.>) xs
     TSum      []        -> error "looks like you've been given malformed AST" -- never called
     -- TApply    f [x]      -> f <.> x
@@ -380,14 +373,14 @@ instance LPP1 'Pascal Type where
 
 instance LPP1 'Pascal Binding where
   lpp1 = \case
-    TypeDecl     n    ty       -> "type" <+> n <+> "is" <+> lpp ty
-    Var          name ty value -> "var" <+> name <+> ":" <+> lpp ty <+> ":=" <+> lpp value
-    Const        name ty body  -> "const" <+> name <+> ":" <+> lpp ty <+> "=" <+> lpp body
-    Attribute    name          -> brackets ("@" <.> name)
-    Include      fname         -> "#include" <+> pp fname
-    Parameter    n t           -> "const" <+> n <+> ":" <+> lpp t
+    BTypeDecl     n    ty       -> "type" <+> n <+> "is" <+> lpp ty
+    BVar          name ty value -> "var" <+> name <+> ":" <+> lpp ty <+> ":=" <+> lpp value
+    BConst        name ty body  -> "const" <+> name <+> ":" <+> lpp ty <+> "=" <+> lpp body
+    BAttribute    name          -> brackets ("@" <.> name)
+    BInclude      fname         -> "#include" <+> pp fname
+    BParameter    n t           -> "const" <+> n <+> ":" <+> lpp t
 
-    Function _ name params ty body ->
+    BFunction _ name params ty body ->
       foldr (<+>) empty $ concat
         [ ["function"]
         , [name]
@@ -487,10 +480,6 @@ instance LPP1 'Pascal MapBinding where
   lpp1 = \case
     MapBinding k v -> lpp k <+> "->" <+> lpp v
 
-instance LPP1 'Pascal Parameters where
-  lpp1 = \case
-    Parameters them -> parens $ train ";" them
-
 ----------------------------------------------------------------------------
 -- Reason
 ----------------------------------------------------------------------------
@@ -511,11 +500,11 @@ instance LPP1 'Reason Type where
 
 instance LPP1 'Reason Binding where
   lpp1 = \case
-    TypeDecl     n    ty       -> "type" <+> n <+> "=" <+> lpp ty
-    Const        name ty body  -> foldr (<+>) empty
+    BTypeDecl     n    ty       -> "type" <+> n <+> "=" <+> lpp ty
+    BConst        name ty body  -> foldr (<+>) empty
       [ "let", name, if isJust ty then ":" <+> lpp ty else "", "=", lpp body, ";" ] -- TODO: maybe append ";" to *all* the expressions in the contract
-    Attribute    name          -> brackets ("@" <.> name)
-    Include      fname         -> "#include" <+> pp fname
+    BAttribute    name          -> brackets ("@" <.> name)
+    BInclude      fname         -> "#include" <+> pp fname
     node                       -> error "unexpected `Binding` node failed with: " <+> pp node
 
 instance LPP1 'Reason Variant where
@@ -594,7 +583,7 @@ instance LPP1 'Caml Type where
     TVar      name      -> name
     TArrow    dom codom -> dom <+> "->" <+> codom
     TRecord   fields    -> "{" `indent` blockWith (<.> ";") fields `above` "}"
-    TProduct  elements  -> tuple elements
+    TProduct  elements  -> train " *" elements
     TSum      (x:xs)    -> x <.> blockWith ("| "<.>) xs
     TSum      []        -> error "malformed TSum type" -- never called
     TApply    f xs      -> f <+> lpp xs
@@ -605,11 +594,11 @@ instance LPP1 'Caml Type where
 
 instance LPP1 'Caml Binding where
   lpp1 = \case
-    TypeDecl     n    ty       -> "type" <+> n <+> "=" <+> lpp ty
-    Const        name ty body  -> "let" <+> name <+> ":" <+> lpp ty <+> lpp body
-    Include      fname         -> "#include" <+> pp fname
+    BTypeDecl     n    ty       -> "type" <+> n <+> "=" <+> lpp ty
+    BConst        name ty body  -> "let" <+> name <+> ":" <+> lpp ty <+> lpp body
+    BInclude      fname         -> "#include" <+> pp fname
 
-    Function isRec name params ty body ->
+    BFunction isRec name params ty body ->
       foldr (<+>) empty $ concat
         [ ["let"]
         , ["rec" | isRec]
@@ -676,10 +665,21 @@ instance LPP1 'Caml Pattern where
     IsWildcard             -> "_"
     IsSpread     n         -> "..." <.> lpp n
     IsList       l         -> list l
-    IsTuple      t         -> tuple t
+    IsTuple      t         -> train "," t
     IsCons       h t       -> h <+> "::" <+> t
     pat                    -> error "unexpected `Pattern` node failed with:" <+> pp pat
 
 instance LPP1 'Caml TField where
   lpp1 = \case
     TField      n t -> n <.> ":" `indent` t
+
+type TotalLPP expr = (LPP 'Pascal expr, LPP 'Caml expr, LPP 'Reason expr)
+
+lppDialect :: TotalLPP expr => Lang -> expr -> Doc
+lppDialect dialect = case dialect of
+  Pascal -> lpp @'Pascal
+  Caml -> lpp @'Caml
+  Reason -> lpp @'Reason
+
+docToText :: Doc -> Text
+docToText = Text.pack . show

@@ -1,4 +1,3 @@
-
 module AST.Capabilities.Find where
 
 import Control.Monad

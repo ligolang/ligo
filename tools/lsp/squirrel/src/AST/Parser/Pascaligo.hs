@@ -3,14 +3,11 @@ module AST.Parser.Pascaligo where
 
 import AST.Skeleton
 
-import Duplo.Error
 import Duplo.Tree
 
-import Parser
 import ParseTree
-import Product (Product ((:>), Nil))
-
--- import Debug.Trace
+import Parser
+import Product (Product (Nil, (:>)))
 
 -- example :: FilePath
 -- example = "../../../src/test/contracts/arithmetic.ligo"
@@ -34,8 +31,11 @@ import Product (Product ((:>), Nil))
 -- example = "../../../src/test/contracts/chain_id.ligo"
 -- example = "../../../src/test/contracts/closure-3.ligo"
 
-recognise :: RawTree -> ParserM (LIGO Info)
-recognise = descent (error "Reasonligo.recognise") $ map usingScope
+recognise :: SomeRawTree -> ParserM (SomeLIGO Info)
+recognise (SomeRawTree dialect rawTree)
+  = fmap (SomeLIGO dialect)
+  $ flip (descent (error "Pascaligo.recognise")) rawTree
+  $ map usingScope
   [ -- Contract
     Descent do
       boilerplate \case
@@ -46,11 +46,11 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
   , Descent do
       boilerplate \case
         "let_expr"          -> Let       <$> field  "locals"    <*> field "body"
-        "fun_call"          -> Apply     <$> field  "f"         <*> fields "arguments"
-        "par_call"          -> Apply     <$> field  "f"         <*> fields "arguments"
-        "projection_call"   -> Apply     <$> field  "f"         <*> fields "arguments"
-        "Some_call"         -> Apply     <$> field  "constr"    <*> fields "arguments"
-        "constr_call"       -> Apply     <$> field  "constr"    <*> fields "arguments"
+        "fun_call"          -> Apply     <$> field  "f"         <*> fields "argument"
+        "par_call"          -> Apply     <$> field  "f"         <*> fields "argument"
+        "projection_call"   -> Apply     <$> field  "f"         <*> fields "argument"
+        "Some_call"         -> Apply     <$> field  "constr"    <*> fields "argument"
+        "constr_call"       -> Apply     <$> field  "constr"    <*> fields "argument"
         "arguments"         -> Tuple     <$> fields "argument"
         "unop"              -> UnOp      <$> field  "negate"    <*> field "arg"
         "binop"             -> BinOp     <$> field  "arg1"      <*> field "op"   <*> field "arg2"
@@ -69,7 +69,7 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
         "skip"              -> return Skip
         "case_expr"         -> Case      <$> field  "subject"    <*> fields   "case"
         "case_instr"        -> Case      <$> field  "subject"    <*> fields   "case"
-        "fun_expr"          -> Lambda    <$> fields "parameters" <*> fieldOpt    "type"  <*> field "body"
+        "fun_expr"          -> Lambda    <$> fields "parameter"  <*> fieldOpt    "type"  <*> field "body"
         "for_cycle"         -> ForLoop   <$> field  "name"       <*> field    "begin" <*> field "end" <*> fieldOpt "step" <*> field "body"
         "for_box"           -> ForBox    <$> field  "key"        <*> fieldOpt "value" <*> field "kind"  <*> field "collection" <*> field "body"
         "while_loop"        -> WhileLoop <$> field  "breaker"    <*> field    "body"
@@ -143,23 +143,17 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
     -- Declaration
   , Descent do
       boilerplate \case
-        "fun_decl"   -> Function <$> flag "recursive" <*> field "name" <*> fields "parameters" <*> fieldOpt "type" <*> field "body"
-        "const_decl" -> Const    <$>             field    "name"       <*> fieldOpt "type" <*> fieldOpt "value"
-        "var_decl"   -> Var      <$>             field    "name"       <*> fieldOpt "type" <*> fieldOpt "value"
-        "type_decl"  -> TypeDecl <$>             field    "typeName"   <*> field "typeValue"
-        "include"    -> Include  <$>             field    "filename"
-        _            -> fallthrough
-
-    -- Parameters
-  , Descent do
-      boilerplate \case
-        "parameters" -> Parameters <$> fields "parameter"
+        "fun_decl"   -> BFunction <$> flag "recursive" <*> field "name" <*> fields "parameter" <*> fieldOpt "type" <*> field "body"
+        "const_decl" -> BConst    <$>             field    "name"       <*> fieldOpt "type" <*> fieldOpt "value"
+        "var_decl"   -> BVar      <$>             field    "name"       <*> fieldOpt "type" <*> fieldOpt "value"
+        "type_decl"  -> BTypeDecl <$>             field    "typeName"   <*> field "typeValue"
+        "include"    -> BInclude  <$>             field    "filename"
         _            -> fallthrough
 
     -- VarDecl
   , Descent do
       boilerplate \case
-        "param_decl" -> Parameter <$> field "name" <*> field "type"
+        "param_decl" -> BParameter <$> field "name" <*> field "type"
         _            -> fallthrough
 
   --   -- Mutable
@@ -241,7 +235,7 @@ recognise = descent (error "Reasonligo.recognise") $ map usingScope
 
     -- Err
   , Descent do
-      \(r :> _, ParseTree _ _ text') -> do
+      \(r :> _, ParseTree _ children source) -> do
         withComments do
-          return (r :> N :> CodeSource text' :> Nil, Err text')
+          return (r :> N :> CodeSource source :> Nil, Error source children)
   ]

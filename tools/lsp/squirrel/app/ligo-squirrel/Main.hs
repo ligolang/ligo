@@ -13,18 +13,17 @@ import qualified Language.LSP.Types as J
 import qualified Language.LSP.Types.Lens as J
 
 
-import System.Exit
-import qualified System.Log as L
-
 import AST
 import qualified ASTMap
 import qualified Config
 import Language.LSP.Util (sendError)
 import qualified Log
 import Product
-import Range
 import RIO (RIO, RioEnv)
 import qualified RIO
+import Range
+import System.Exit
+import qualified System.Log as L
 
 
 main :: IO ()
@@ -59,6 +58,8 @@ mainLoop = do
     lspOptions = def
       { S.textDocumentSync       = Just syncOptions
       , S.executeCommandCommands = Just ["lsp-hello-command"]
+      , S.signatureHelpTriggerCharacters = Just ['(', ' ']
+      , S.signatureHelpRetriggerCharacters = Just [',']
       }
 
 
@@ -102,6 +103,7 @@ handlers = mconcat
   , S.requestHandler J.STextDocumentReferences handleFindReferencesRequest
   , S.requestHandler J.STextDocumentCompletion handleCompletionRequest
   --, S.requestHandler J.SCompletionItemResolve handleCompletionItemResolveRequest
+  , S.requestHandler J.STextDocumentSignatureHelp handleSignatureHelpRequest
   , S.requestHandler J.STextDocumentFoldingRange handleFoldingRangeRequest
   , S.requestHandler J.STextDocumentSelectionRange handleSelectionRangeRequest
   , S.requestHandler J.STextDocumentDocumentSymbol handleDocumentSymbolsRequest
@@ -172,6 +174,21 @@ handleCompletionItemResolveRequest req respond = do
     Log.debug "Completion resolve" [i|Request: #{show req}|]
     respond . Right $  req ^. J.params
 -}
+
+handleSignatureHelpRequest :: S.Handler RIO 'J.TextDocumentSignatureHelp
+handleSignatureHelpRequest req respond = do
+  -- XXX: They forgot lenses for  SignatureHelpParams :/
+  {-
+  let uri = req ^. J.params . J.textDocument . J.uri
+  let position = req ^. J.params . J.position & fromLspPosition
+  -}
+  let
+    J.SignatureHelpParams{_textDocument, _position} = req ^. J.params
+    uri = _textDocument ^. J.uri
+    position = fromLspPosition _position
+  (tree, _) <- RIO.fetch (J.toNormalizedUri uri)
+  let signatureHelp = getSignatureHelp tree position
+  respond . Right $ signatureHelp
 
 handleFoldingRangeRequest :: S.Handler RIO 'J.TextDocumentFoldingRange
 handleFoldingRangeRequest req respond = do

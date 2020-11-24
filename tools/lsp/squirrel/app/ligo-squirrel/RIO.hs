@@ -15,21 +15,19 @@ module RIO
          and other parts when it grows too big.
 -}
 
-import           Prelude hiding (log)
+import Prelude hiding (log)
 
-import           Control.Arrow
-import           Control.Exception.Safe                        (MonadCatch, MonadThrow)
-import           Control.Monad
-
+import Control.Arrow
+import Control.Exception.Safe (MonadCatch, MonadThrow)
+import Control.Monad
 import Control.Monad.IO.Unlift (MonadUnliftIO)
-import Control.Monad.Reader (ReaderT, asks, MonadIO, MonadReader, runReaderT)
+import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, asks, runReaderT)
 import Data.Default (def)
 
-import qualified Data.Map                              as Map
-import qualified Data.Text                             as Text
-import           Data.Text                                     (Text)
-import qualified Data.SortedList                       as List
-import           Data.String.Interpolate                       (i)
+import qualified Data.Map as Map
+import qualified Data.SortedList as List
+import Data.String.Interpolate (i)
+import qualified Data.Text as Text
 
 import qualified Language.LSP.Diagnostics as D
 import qualified Language.LSP.Server as J
@@ -39,18 +37,16 @@ import qualified Language.LSP.VFS as V
 -- import           System.Directory (getDirectoryContents, doesDirectoryExist)
 -- import           System.FilePath
 
-import           Duplo.Error
-import           Duplo.Tree   (collect)
+import Duplo.Tree (collect)
 
-import Config (Config (..))
-
-import           AST
-import           ASTMap (ASTMap)
+import AST
+import ASTMap (ASTMap)
 import qualified ASTMap
-import           Cli
+import Cli
+import Config (Config (..))
 import qualified Log
-import           Product
-import           Range
+import Product
+import Range
 
 
 type RioEnv =
@@ -131,8 +127,8 @@ collectErrors fetcher uri version = do
     $ map errorToDiag
     $ errs <> collectTreeErrors tree
 
-errorToDiag :: (Range, Err Text a) -> J.Diagnostic
-errorToDiag (getRange -> (Range (sl, sc, _) (el, ec, _) _), Err what) =
+errorToDiag :: (Range, Error a) -> J.Diagnostic
+errorToDiag (getRange -> (Range (sl, sc, _) (el, ec, _) _), Error what _) =
   J.Diagnostic
     (J.Range begin end)
     (Just J.DsError)

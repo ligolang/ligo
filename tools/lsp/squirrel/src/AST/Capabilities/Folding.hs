@@ -28,8 +28,8 @@ foldingAST = execWriterT . visit handlers
   where
     handlers =
       [ Visit @Binding $ \case
-          (getElem @Range -> r, Function {}) -> tell [r]
-          (getElem @Range -> r, TypeDecl {}) -> tell [r]
+          (getElem @Range -> r, BFunction {}) -> tell [r]
+          (getElem @Range -> r, BTypeDecl {}) -> tell [r]
           -- TODO: include blocks?
           _ -> pure ()
       , Visit @Expr $ \case
@@ -53,4 +53,3 @@ toFoldingRange Range
   , _endCharacter = pred <$> _endCharacter
   , _kind = Just J.FoldingRangeRegion
   }
-

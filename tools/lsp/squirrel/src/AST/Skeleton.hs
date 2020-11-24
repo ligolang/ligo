@@ -1,4 +1,3 @@
-
 {- | The AST and auxillary types along with their pretty-printers.
 
      The comments for fields in types are the type before it was made untyped.
@@ -6,26 +5,39 @@
 
 module AST.Skeleton where
 
+import Control.Lens.Lens (Lens, lens)
 import Data.Text (Text)
 
-import Duplo.Error
 import Duplo.Tree
 
 import Product
+
+data SomeLIGO xs where
+  SomeLIGO :: Lang -> LIGO xs -> SomeLIGO xs
+
+nestedLIGO :: Lens (SomeLIGO xs) (SomeLIGO xs') (LIGO xs) (LIGO xs')
+nestedLIGO = lens getLIGO setLIGO
+  where
+    getLIGO (SomeLIGO _ ligo) = ligo
+    setLIGO (SomeLIGO d _) ligo = SomeLIGO d ligo
+
+withNestedLIGO
+  :: Functor f => SomeLIGO xs -> (LIGO xs -> f (LIGO xs')) -> f (SomeLIGO xs')
+withNestedLIGO = flip nestedLIGO
 
 -- | The AST for Pascali... wait. It is, em, universal one.
 --
 --   TODO: Rename; add stuff if CamlLIGO/ReasonLIGO needs something.
 --
 -- type LIGO        = Tree RawLigoList
-type LIGO     xs = Tree RawLigoList (Product xs)
+type LIGO xs = Tree RawLigoList (Product xs)
 type Tree' fs xs = Tree fs (Product xs)
 
 type RawLigoList =
   [ Name, Path, QualifiedName, Pattern, Constant, FieldAssignment
   , MapBinding, Alt, Expr, TField, Variant, Type, Binding
   , RawContract, TypeName, FieldName
-  , Err Text, Parameters, Ctor, Contract, NameDecl
+  , Error, Ctor, Contract, NameDecl
   ]
 
 data Undefined it
@@ -47,18 +59,16 @@ data RawContract it
   deriving stock (Functor, Foldable, Traversable)
 
 data Binding it
-  = Function     Bool it [it] (Maybe it) it    -- ^ (Name) (Parameters) (Type) (Expr)
-  | Parameter    it it               -- ^ (Name)
-  | Var          it (Maybe it) (Maybe it)            -- ^ (Name) (Type) (Expr)
-  | Const        it (Maybe it) (Maybe it)            -- ^ (Name) (Type) (Expr)
-  | TypeDecl     it it               -- ^ (Name) (Type)
-  | Attribute    it                  -- ^ (Name)
-  | Include      it
+  = BFunction     IsRec it [it] (Maybe it) it -- ^ (Name) (Parameters) (Type) (Expr)
+  | BParameter it it -- ^ (Name) (Type)
+  | BVar          it (Maybe it) (Maybe it) -- ^ (Name) (Type) (Expr)
+  | BConst        it (Maybe it) (Maybe it) -- ^ (Name) (Type) (Expr)
+  | BTypeDecl     it it -- ^ (Name) (Type)
+  | BAttribute    it -- ^ (Name)
+  | BInclude      it
   deriving stock (Functor, Foldable, Traversable)
 
-data Parameters it
-  = Parameters [it]
-  deriving stock (Functor, Foldable, Traversable)
+type IsRec = Bool
 
 data Type it
   = TArrow    it it    -- ^ (Type) (Type)
@@ -68,7 +78,7 @@ data Type it
   | TProduct  [it]     -- ^ [Type]
   | TApply    it it  -- ^ (Name) (Type)
   | TString   Text     -- ^ (TString)
-  | TArgs     [it]     -- ^ [Type] 
+  | TArgs     [it]     -- ^ [Type]
   | TOr       it it it it
   | TAnd      it it it it
   deriving stock (Functor, Foldable, Traversable)
@@ -173,10 +183,13 @@ newtype NameDecl it = NameDecl
   deriving stock (Functor, Foldable, Traversable)
 
 newtype TypeName it = TypeName Text
-  deriving stock   (Functor, Foldable, Traversable)
+  deriving stock (Functor, Foldable, Traversable)
 
 newtype Ctor it = Ctor Text
-  deriving stock   (Functor, Foldable, Traversable)
+  deriving stock (Functor, Foldable, Traversable)
 
 newtype FieldName it = FieldName Text
-  deriving stock   (Functor, Foldable, Traversable)
+  deriving stock (Functor, Foldable, Traversable)
+
+data Error it = Error Text [it]
+  deriving stock (Functor, Foldable, Traversable)

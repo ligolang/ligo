@@ -1,4 +1,3 @@
-
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module AST.Scope.Common where
@@ -19,15 +18,13 @@ import Duplo.Tree hiding (loop)
 import AST.Pretty
 import AST.Skeleton
 import Cli.Types
-import Parser
 import ParseTree
+import Parser
 import Product
 import Range
 
--- import           Debug.Trace
-
 class HasLigoClient m => HasScopeForest impl m where
-  scopeForest :: Source -> LIGO Info -> m ScopeForest
+  scopeForest :: Source -> SomeLIGO Info -> m ScopeForest
 
 instance {-# OVERLAPPABLE #-} Pretty x => Show x where
   show = show . pp
@@ -46,8 +43,16 @@ data ScopedDecl = ScopedDecl
   , _sdType    :: Maybe TypeOrKind
   , _sdRefs    :: [Range]
   , _sdDoc     :: [Text]
+  , _sdParams  :: Maybe [Parameter]
+  , _sdDialect :: Lang
   }
   deriving Show via PP ScopedDecl
+
+newtype Parameter = Parameter
+  { parPresentation :: Text
+  }
+  deriving stock Show
+  deriving newtype Pretty
 
 data TypeOrKind
   = IsType (LIGO '[])
@@ -84,8 +89,8 @@ instance {-# OVERLAPS #-} Pretty FullEnv where
       mergeFE fe = getTag @"vars" @Env fe Prelude.<> getTag @"types" fe
 
 instance Pretty ScopedDecl where
-  pp (ScopedDecl n o _ t refs doc) =
-    sexpr "decl" [pp n, pp o, pp t, pp refs, pp doc]
+  pp (ScopedDecl n o _ t refs doc params _) =
+    sexpr "decl" [pp n, pp o, pp t, pp params, pp refs, pp doc]
 
 instance Pretty TypeOrKind where
   pp (IsType ty) = pp $ fillInfo ty
@@ -176,7 +181,9 @@ spine r (only -> (i, trees)) = if
   | leq r (getRange i) -> foldMap (spine r) trees <> [getElem @(Set DeclRef) i]
   | otherwise -> []
 
-addLocalScopes :: forall impl m. HasScopeForest impl m => Source -> LIGO Info -> m (LIGO Info')
+addLocalScopes
+  :: forall impl m. HasScopeForest impl m
+  => Source -> SomeLIGO Info -> m (SomeLIGO Info')
 addLocalScopes src tree = do
   forest <- scopeForest @impl src tree
 
@@ -186,7 +193,8 @@ addLocalScopes src tree = do
       let env = envAtPoint (getRange i) forest
       return ((env :> Nothing :> i) :< fs')
 
-  descent @(Product Info) @(Product Info') @RawLigoList @RawLigoList defaultHandler
+  withNestedLIGO tree $
+    descent @(Product Info) @(Product Info') @RawLigoList @RawLigoList defaultHandler
     [ Descent \(i, Name t) -> do
         let env = envAtPoint (getRange i) forest
         return (env :> Just Variable :> i, Name t)
@@ -199,4 +207,3 @@ addLocalScopes src tree = do
         let env = envAtPoint (getRange i) forest
         return (env :> Just Type :> i, TypeName t)
     ]
-    tree

@@ -1,14 +1,12 @@
 (contract
   (fun
     main
-    (params (parameter p key_hash))
+    (parameter p key_hash)
     :
     address
     =
     (let
       (seq
         (const
-          c
-          (contract $ (TARGS unit))
-          (apply (. Tezos implicit_account) (tuple p))))
-    (apply (. Tezos address) (tuple c)))))
+          c (contract $ (TARGS unit)) (apply (. Tezos implicit_account) p)))
+    (apply (. Tezos address) c))))

@@ -52,7 +52,7 @@ data DefinitionReferenceInvariant = DefinitionReferenceInvariant
 checkDefinitionReferenceInvariant
   :: HasCallStack => DefinitionReferenceInvariant -> Assertion
 checkDefinitionReferenceInvariant DefinitionReferenceInvariant{..}
-  = test @Fallback -- *> test @FromCompiler -- FIXME uncomment when compiler scopes are fixed
+  = test @Fallback -- *> test @FromCompiler -- TODO uncomment when compiler scopes are fixed
   where
     test :: forall parser. HasScopeForest parser IO => Assertion
     test = do
@@ -82,7 +82,7 @@ label filepath r = r{ rFile = filename }
 -- entity in the given file.
 checkIfDefinition :: FilePath -> Range -> Range -> Assertion
 checkIfDefinition filepath (label filepath -> expectedDef) mention
-  = test @Fallback -- *> test @FromCompiler -- FIXME uncomment when compiler scopes are fixed
+  = test @Fallback -- *> test @FromCompiler -- TODO uncomment when compiler scopes are fixed
   where
     test :: forall parser. HasScopeForest parser IO => Assertion
     test = do
@@ -93,7 +93,7 @@ checkIfDefinition filepath (label filepath -> expectedDef) mention
 -- entity in the given file.
 checkIfReference :: FilePath -> Range -> Range -> Assertion
 checkIfReference filepath (label filepath -> expectedRef) mention
-  = test @Fallback -- *> test @FromCompiler -- FIXME uncomment when compiler scopes are fixed
+  = test @Fallback -- *> test @FromCompiler -- TODO uncomment when compiler scopes are fixed
   where
     test :: forall parser. HasScopeForest parser IO => Assertion
     test = do

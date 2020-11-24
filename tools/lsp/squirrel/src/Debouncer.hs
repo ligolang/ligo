@@ -1,4 +1,3 @@
-
 module Debouncer (unsafeDebounce) where
 
 import Control.Monad.Catch

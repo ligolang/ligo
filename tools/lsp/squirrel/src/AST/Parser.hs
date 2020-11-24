@@ -1,4 +1,3 @@
-
 module AST.Parser
   ( Source(..)
   , parse
@@ -6,24 +5,24 @@ module AST.Parser
   , parseWithScopes'
   ) where
 
-import Control.Lens ((&), (.~), element)
-import Control.Monad.IO.Class (liftIO)
 import Control.Exception.Safe (try)
-import Control.Monad.Catch (MonadThrow(throwM))
+import Control.Lens (_1, element, view, (%~), (&), (.~), (<&>), (^.))
+import Control.Monad.Catch (MonadThrow (throwM))
+import Control.Monad.IO.Class (liftIO)
 import qualified Data.List as List
 
+import qualified AST.Parser.Camligo as CAML
 import qualified AST.Parser.Pascaligo as Pascal
 import qualified AST.Parser.Reasonligo as Reason
-import qualified AST.Parser.Camligo as CAML
-import           AST.Skeleton
-import           AST.Scope
+import AST.Scope
+import AST.Skeleton
 
-import Duplo (Lattice(leq))
+import Duplo (Lattice (leq))
 
-import ParseTree (toParseTree, Source(..))
-import Parser
+import Cli (LigoBinaryCallError (DecodedExpectedClientFailure), fromLigoErrorToMsg)
 import Extension
-import Cli (LigoBinaryCallError(DecodedExpectedClientFailure), fromLigoErrorToMsg)
+import ParseTree (Source (..), toParseTree)
+import Parser
 
 parse :: Source -> IO (LIGO Info, [Msg])
 parse src = do
@@ -32,7 +31,9 @@ parse src = do
     , eeCaml   = CAML.recognise
     , eeReason = Reason.recognise
     } (srcPath src)
-  toParseTree src >>= runParserM . recogniser
+  toParseTree src
+    >>= (runParserM . recogniser)
+    <&> (_1 %~ view nestedLIGO)
 
 -- | Parse with arbitrary parser.
 parseWithScopes :: forall impl m. HasScopeForest impl m => Source -> m (LIGO Info', [Msg])
@@ -48,7 +49,7 @@ parseWithScopes src = do
     toParseTree src >>= runParserM . recogniser
 
   ast' <- addLocalScopes @impl src ast
-  return (ast', msg)
+  return (ast' ^. nestedLIGO, msg)
 
 -- | Parse with both compiler and fallback parsers.
 parseWithScopes' :: forall m.
@@ -70,13 +71,13 @@ parseWithScopes' src = do
 
   case ligoAst of
     Right ast' ->
-      return (ast', msg)
+      return (ast' ^. nestedLIGO, msg)
     Left (DecodedExpectedClientFailure err) -> do
       fbAst <- addLocalScopes @Fallback src ast
       -- We are either rewriting fallback errors with ligo message found at the
       -- same local scope or appending it to the end.
       -- TODO: global scope errors are not collecting
-      return (fbAst, msg `rewriteAt` fromLigoErrorToMsg err)
+      return (fbAst ^. nestedLIGO, msg `rewriteAt` fromLigoErrorToMsg err)
       -- return (fbAst, msg <> [fromLigoErrorToMsg err])
     Left err -> throwM err
 

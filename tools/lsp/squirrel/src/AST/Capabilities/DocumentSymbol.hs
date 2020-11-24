@@ -37,32 +37,32 @@ extractDocumentSymbols uri tree = execWriterT $ collectFromContract tree
 
     collectDecl :: LIGO Info' -> WriterT [SymbolInformation] m ()
     collectDecl (match @Binding -> Just (_, binding)) = case binding of
-          (Function _ (match @NameDecl -> Just (getElem @Range -> r, _)) _ _ _)->
+          (BFunction _ (match @NameDecl -> Just (getElem @Range -> r, _)) _ _ _)->
             tellScopedDecl
               r
               J.SkFunction
               (\_ -> Nothing)
 
           -- TODO: currently we do not count imports as declarations in scopes
-          (Include (match @Constant -> Just (getElem @Range -> r, _))) ->
+          (BInclude (match @Constant -> Just (getElem @Range -> r, _))) ->
             tellSymbolInfo
               r
               J.SkNamespace
               ("some import at " <> pack (show r))
 
-          (TypeDecl (match @TypeName -> Just (getElem @Range -> r, _)) _) ->
+          (BTypeDecl (match @TypeName -> Just (getElem @Range -> r, _)) _) ->
             tellScopedDecl
               r
               J.SkTypeParameter
               (\_ -> Nothing)
 
-          (Const (match @NameDecl -> Just (getElem @Range -> r, _)) _ _) ->
+          (BConst (match @NameDecl -> Just (getElem @Range -> r, _)) _ _) ->
             tellScopedDecl
               r
               J.SkConstant
               (\ScopedDecl {_sdName} -> Just ("const " <> _sdName))
 
-          (Var (match @NameDecl -> Just (getElem @Range -> r, _)) _ _) ->
+          (BVar (match @NameDecl -> Just (getElem @Range -> r, _)) _ _) ->
             tellScopedDecl
               r
               J.SkVariable

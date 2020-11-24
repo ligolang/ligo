@@ -18,26 +18,23 @@ module Cli.Json
   , mbFromLigoRange
   , fromLigoRangeOrDef
   , fromLigoErrorToMsg
-  , toScopedDecl
   , prepareField
   )
 where
 
-import Data.Aeson
+import Control.Applicative (Alternative ((<|>)), liftA2)
+import Data.Aeson.Types hiding (Error)
 import Data.Char (isUpper, toLower)
 import Data.Foldable (asum, toList)
 import qualified Data.HashMap.Strict as HM
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
+import Duplo.Pretty
 import GHC.Generics
 
-import AST.Scope.Common
-import Data.Aeson.Types
-import Range
-import Control.Applicative (liftA2, Alternative((<|>)))
-import Duplo.Pretty
+import AST.Skeleton (Error (..))
 import Parser (Msg)
-import Duplo.Error
+import Range
 
 ----------------------------------------------------------------------------
 -- Types
@@ -360,7 +357,7 @@ fromLigoErrorToMsg LigoError
       { _lecMessage = err
       , _lecLocation = fromLigoRangeOrDef -> at
       }
-  } = (at, Err err)
+  } = (at, Error (err :: Text) [])
 
 -- | Helper function that converts qualified field to its JSON counterpart.
 --
@@ -411,20 +408,22 @@ mbFromLigoRange
 fromLigoRangeOrDef :: LigoRange -> Range
 fromLigoRangeOrDef = fromMaybe (point (-1) (-1)) . mbFromLigoRange
 
--- | Converts ligo scope to our internal one.
--- TODO: convert `LigoTypeFull` to `LIGO ()`
-toScopedDecl :: LigoDefinitionScope -> ScopedDecl
-toScopedDecl
-  LigoDefinitionScope
-    { _ldsName = _sdName
-    , _ldsRange = (fromMaybe (error "no origin range") . mbFromLigoRange -> _sdOrigin)
-    , _ldsBodyRange = (mbFromLigoRange -> _sdBody)
-    } =
-    ScopedDecl
-      { _sdName
-      , _sdOrigin
-      , _sdBody
-      , _sdType = Nothing
-      , _sdRefs = []
-      , _sdDoc = []
-      }
+-- Uncomment when needed
+-- -- | Converts ligo scope to our internal one.
+-- -- TODO: convert `LigoTypeFull` to `LIGO ()`
+-- toScopedDecl :: LigoDefinitionScope -> ScopedDecl
+-- toScopedDecl
+--   LigoDefinitionScope
+--     { _ldsName = _sdName
+--     , _ldsRange = (fromMaybe (error "no origin range") . mbFromLigoRange -> _sdOrigin)
+--     , _ldsBodyRange = (mbFromLigoRange -> _sdBody)
+--     } =
+--     ScopedDecl
+--       { _sdName
+--       , _sdOrigin
+--       , _sdBody
+--       , _sdType = Nothing
+--       , _sdRefs = []
+--       , _sdDoc = []
+--       , _sdParams = Nothing -- TODO LIGO-90
+--       }

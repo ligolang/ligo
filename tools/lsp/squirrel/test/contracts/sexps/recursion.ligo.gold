@@ -2,12 +2,13 @@
   (fun
     rec
     sum
-    (params (parameter n int) (parameter acc int))
-    : int = (if (n < 1) acc (apply sum (tuple (n - 1) (acc + n)))))
+    (parameter n int)
+    (parameter acc int)
+    : int = (if (n < 1) acc (apply sum (n - 1) (acc + n))))
   (fun
     rec
     fibo
-    (params (parameter n int) (parameter n_1 int) (parameter n_0 int))
-    :
-    int
-    = (if (n < 2) n_1 (apply fibo (tuple (n - 1) (n_1 + n_0) n_1)))))
+    (parameter n int)
+    (parameter n_1 int)
+    (parameter n_0 int)
+    : int = (if (n < 2) n_1 (apply fibo (n - 1) (n_1 + n_0) n_1))))

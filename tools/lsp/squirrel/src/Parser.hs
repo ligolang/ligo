@@ -1,3 +1,4 @@
+{-# LANGUAGE TupleSections #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module Parser where
@@ -5,19 +6,20 @@ module Parser where
 import Control.Arrow
 import Control.Monad.Catch
 import Control.Monad.RWS hiding (Product)
+import Data.Maybe (mapMaybe)
 
 import Data.Functor
 import Data.String.Interpolate (i)
 import Data.Text (Text)
 import qualified Data.Text as Text
 
-import Duplo.Tree
-import Duplo.Error
 import Duplo.Pretty
+import Duplo.Tree
 
+import AST.Skeleton (Error (..))
 import ParseTree
-import Range
 import Product
+import Range
 
 {-
   Comment grabber has 2 buffers: 1 and 2.
@@ -31,7 +33,7 @@ import Product
 runParserM :: ParserM a -> IO (a, [Msg])
 runParserM p = (\(a, _, errs) -> (a, errs)) <$> runRWST p [] ([], [])
 
-type Msg      = (Range, Err Text ())
+type Msg      = (Range, Error ())
 type ParserM  = RWST [RawTree] [Msg] ([Text], [Text]) IO
 
 data Failure = Failure String
@@ -45,8 +47,8 @@ instance Scoped (Product [Range, Text]) ParserM RawTree ParseTree where
     modify $ first  (++ comms)
     modify $ second (++ reverse comms1)
 
-    let errs = allErrors   cs
-    tell $ fmap (\t -> (r, Err t)) errs
+    let errs = allErrors cs
+    tell (map (r,) errs)
 
   after _ _ = do
     modify $ \(_, y) -> (y, [])
@@ -67,13 +69,14 @@ allComments = first (map getBody . filter isComment) . break isMeaningful
     isComment :: RawTree -> Bool
     isComment (gist -> ParseTree ty _ _) = "comment" `Text.isSuffixOf` ty
 
-allErrors :: [RawTree] -> [Text]
-allErrors = map getBody . filter isUnnamedError
+allErrors :: [RawTree] -> [Error ()]
+allErrors = mapMaybe extractUnnamedError
   where
-    isUnnamedError :: RawTree -> Bool
-    isUnnamedError tree = case only tree of
-      (_ :> "" :> _, ParseTree "ERROR" _ _) -> True
-      _                                     -> False
+    extractUnnamedError :: RawTree -> Maybe (Error ())
+    extractUnnamedError tree = case only tree of
+      (_ :> "" :> _, ParseTree "ERROR" children _)
+        -> Just (void (Error (getBody tree) children))
+      _ -> Nothing
 
 getBody :: RawTree -> Text
 getBody (gist -> f) = ptSource f
@@ -98,10 +101,16 @@ fieldOpt name = ask >>= go
 fields :: Text -> ParserM [RawTree]
 fields name = ask >>= go
   where
-    go (tree@(extract -> _ :> n :> _) : rest) =
-      (if n == name then ((tree :) <$>) else id)
-        $ go rest
+    go (tree : rest)
+      | _ :> n :> _ <- extract tree, n == name = (tree :) <$> go rest
+      | errorAtTheTop tree = (tree :) <$> go rest
+      | otherwise = go rest
+
     go _ = return []
+
+    errorAtTheTop :: RawTree -> Bool
+    errorAtTheTop (match -> Just (_, ParseTree "ERROR" _ _)) = True
+    errorAtTheTop _ = False
 
 data ShowRange
   = Y | N
@@ -153,7 +162,7 @@ boilerplate
 boilerplate f (r :> _, ParseTree ty cs src) = do
   withComments do
     f' <- local (const cs) $ f ty
-    return $ (r :> N :> CodeSource src :> Nil, f')
+    return (r :> N :> CodeSource src :> Nil, f')
 
 boilerplate'
   :: ((Text, Text) -> ParserM (f RawTree))
@@ -162,7 +171,7 @@ boilerplate'
 boilerplate' f (r :> _, ParseTree ty cs src) = do
   withComments do
     f' <- local (const cs) $ f (ty, src)
-    return $ (r :> N :> CodeSource src :> Nil, f')
+    return (r :> N :> CodeSource src :> Nil, f')
 
 fallthrough :: MonadThrow m => m a
 fallthrough = throwM HandlerFailed
