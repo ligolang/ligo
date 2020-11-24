@@ -5,7 +5,7 @@ module AST.Parser
   , parseWithScopes'
   ) where
 
-import Control.Exception (try)
+import Control.Exception.Safe (try)
 import Control.Lens (_1, element, view, (%~), (&), (.~), (<&>), (^.))
 import Control.Monad.Catch (MonadThrow (throwM))
 import Control.Monad.IO.Class (liftIO)
@@ -67,8 +67,7 @@ parseWithScopes' src = do
   (ast, msg) <- liftIO do
     toParseTree src >>= runParserM . recogniser
 
-  ligoAst <- liftIO $ try @LigoBinaryCallError
-    $ addLocalScopes @FromCompiler src ast
+  ligoAst <- try $ addLocalScopes @FromCompiler src ast
 
   case ligoAst of
     Right ast' ->

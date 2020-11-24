@@ -5,6 +5,55 @@
 
 packages:
 - completed:
+    hackage: lsp-1.0.0.0@sha256:31fc5d7d0548031f6e065fff893d1ae4b71d15cee70e6768bb73ab631ddffddd,5727
+    pantry-tree:
+      size: 1397
+      sha256: 391c18420115ba6dfea52d634c64e1d7c465b17bfbd33808cd90bfc35d69267b
+  original:
+    hackage: lsp-1.0.0.0
+- completed:
+    hackage: lsp-types-1.0.0.0@sha256:dfe637cc9376b03275eb2c557516d20d20eb0a736757fb5f30e551b91a540671,4311
+    pantry-tree:
+      size: 3953
+      sha256: 67e3f6b98b6ccebe5441a43ff642777c86671cefb726f5be4929c93c6848f804
+  original:
+    hackage: lsp-types-1.0.0.0
+- completed:
+    hackage: dependent-map-0.4.0.0@sha256:ca2b131046f4340a1c35d138c5a003fe4a5be96b14efc26291ed35fd08c62221,1657
+    pantry-tree:
+      size: 551
+      sha256: 5defa30010904d2ad05a036f3eaf83793506717c93cbeb599f40db1a3632cfc5
+  original:
+    hackage: dependent-map-0.4.0.0
+- completed:
+    hackage: dependent-sum-0.7.1.0@sha256:5599aa89637db434431b1dd3fa7c34bc3d565ee44f0519bfbc877be1927c2531,2068
+    pantry-tree:
+      size: 290
+      sha256: 9cbfb32b5a8a782b7a1c941803fd517633cb699159b851c1d82267a9e9391b50
+  original:
+    hackage: dependent-sum-0.7.1.0
+- completed:
+    hackage: dependent-sum-template-0.1.0.3@sha256:0bbbacdfbd3abf2a15aaf0cf2c27e5bdd159b519441fec39e1e6f2f54424adde,1682
+    pantry-tree:
+      size: 436
+      sha256: 32eeadeb991a290a1da41ce7e995dee7d38ebba3bd3e53ea8074c32c086701fd
+  original:
+    hackage: dependent-sum-template-0.1.0.3
+- completed:
+    hackage: constraints-extras-0.3.0.2@sha256:013b8d0392582c6ca068e226718a4fe8be8e22321cc0634f6115505bf377ad26,1853
+    pantry-tree:
+      size: 594
+      sha256: 3ce1012bfb02e4d7def9df19ce80b8cd2b472c691b25b181d9960638673fecd1
+  original:
+    hackage: constraints-extras-0.3.0.2
+- completed:
+    hackage: unliftio-core-0.2.0.1@sha256:9b3e44ea9aacacbfc35b3b54015af450091916ac3618a41868ebf6546977659a,1082
+    pantry-tree:
+      size: 328
+      sha256: e81c5a1e82ec2cd68cbbbec9cd60567363abe02257fa1370a906f6754b6818b8
+  original:
+    hackage: unliftio-core-0.2.0.1
+- completed:
     hackage: tree-sitter-0.9.0.0@sha256:4fd054b0a9651df9335c5fa0ffed723924dc4dcf7f2521c031323088ca719b05,3411
     pantry-tree:
       size: 3765
@@ -78,30 +127,6 @@ packages:
   original:
     git: https://github.com/serokell/duplo.git
     commit: b0ac4699c44a35ea178d7d117e48076408b0886f
-- completed:
-    name: haskell-lsp
-    version: 0.22.0.0
-    git: https://github.com/serokell/haskell-lsp.git
-    pantry-tree:
-      size: 6165
-      sha256: 2ee3cf3593c598f072fb518aad2bbc5f209e121447c4dd161a7a285c764d7c23
-    commit: 3d6662c2d174cd5ac463d728d55defea69f282f7
-  original:
-    git: https://github.com/serokell/haskell-lsp.git
-    commit: 3d6662c2d174cd5ac463d728d55defea69f282f7
-- completed:
-    subdir: haskell-lsp-types
-    name: haskell-lsp-types
-    version: 0.22.0.0
-    git: https://github.com/serokell/haskell-lsp.git
-    pantry-tree:
-      size: 2670
-      sha256: f37bf786cf608aff12ec3f0ddd9eb8e263a1f572711ea10ef272b07d4cf971fd
-    commit: 3d6662c2d174cd5ac463d728d55defea69f282f7
-  original:
-    subdir: haskell-lsp-types
-    git: https://github.com/serokell/haskell-lsp.git
-    commit: 3d6662c2d174cd5ac463d728d55defea69f282f7
 snapshots:
 - completed:
     size: 531707

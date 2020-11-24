@@ -23,6 +23,7 @@ import Test.Capabilities.Util (contractsDir)
 import Test.FixedExpectations
   (HasCallStack, expectationFailure, shouldBe, shouldContain, shouldMatchList)
 import Test.Util (readContractWithScopes)
+import Test.Util.LigoEnv ({- instance HasLigoClient IO -})
 
 -- | Represents an invariant relation between references and a
 -- definition of some LIGO entity (a variable, a type etc).

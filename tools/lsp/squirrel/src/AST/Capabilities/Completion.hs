@@ -1,6 +1,6 @@
 module AST.Capabilities.Completion where
 
-import Language.Haskell.LSP.Types (CompletionDoc (..), CompletionItem (..), CompletionItemKind (..))
+import Language.LSP.Types (CompletionDoc (..), CompletionItem (..), CompletionItemKind (..))
 
 import Data.Function (on)
 import Data.List (isSubsequenceOf, nubBy)

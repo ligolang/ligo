@@ -9,6 +9,15 @@ packages:
 - .
 
 extra-deps:
+- lsp-1.0.0.0
+- lsp-types-1.0.0.0
+# For lsp:
+- dependent-map-0.4.0.0
+- dependent-sum-0.7.1.0
+- dependent-sum-template-0.1.0.3
+- constraints-extras-0.3.0.2
+- unliftio-core-0.2.0.1  # https://github.com/alanz/lsp/pull/262
+
 - tree-sitter-0.9.0.0@sha256:4fd054b0a9651df9335c5fa0ffed723924dc4dcf7f2521c031323088ca719b05,3411
 - semantic-source-0.0.2.0@sha256:eac962ed1150d8647e703bc78369ecc4c1912db018e111f4ead8a62ae1a85542,2368
 - lingo-0.3.2.0@sha256:80b9ded65f2ddc0272a2872d9c3fc43c37934accae076d3e547dfc6c6b6e16d3,1899
@@ -22,12 +31,6 @@ extra-deps:
 
 - git: https://github.com/serokell/duplo.git
   commit: b0ac4699c44a35ea178d7d117e48076408b0886f
-- git: https://github.com/serokell/haskell-lsp.git
-  commit: 3d6662c2d174cd5ac463d728d55defea69f282f7
-- git: https://github.com/serokell/haskell-lsp.git
-  commit: 3d6662c2d174cd5ac463d728d55defea69f282f7
-  subdirs:
-  - haskell-lsp-types
 
 nix:
   packages: [zlib]

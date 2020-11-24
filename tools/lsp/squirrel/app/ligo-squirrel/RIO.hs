@@ -1,17 +1,14 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 module RIO
   ( RIO
+  , RioEnv
   , run
+
   , load
-  , freshID
-  , respond
   , collectErrors
   , forceFetch
   , fetch
-  , respondWith
-  , log
-  , liftLsp
-  , preload
   ) where
 
 {- TODO: break this module into file loading, diagnostics, haskell-lsp wrappers
@@ -23,19 +20,19 @@ import Prelude hiding (log)
 import Control.Arrow
 import Control.Exception.Safe (MonadCatch, MonadThrow)
 import Control.Monad
-import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, asks, liftIO, runReaderT)
+import Control.Monad.IO.Unlift (MonadUnliftIO)
+import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, asks, runReaderT)
+import Data.Default (def)
 
 import qualified Data.Map as Map
 import qualified Data.SortedList as List
 import Data.String.Interpolate (i)
 import qualified Data.Text as Text
 
-import qualified Language.Haskell.LSP.Core as Core
-import Language.Haskell.LSP.Diagnostics
-import Language.Haskell.LSP.Messages as Msg
-import qualified Language.Haskell.LSP.Types as J
-import qualified Language.Haskell.LSP.Utility as U
-import Language.Haskell.LSP.VFS
+import qualified Language.LSP.Diagnostics as D
+import qualified Language.LSP.Server as J
+import qualified Language.LSP.Types as J
+import qualified Language.LSP.VFS as V
 
 -- import           System.Directory (getDirectoryContents, doesDirectoryExist)
 -- import           System.FilePath
@@ -46,26 +43,19 @@ import AST
 import ASTMap (ASTMap)
 import qualified ASTMap
 import Cli
-import qualified Config
+import Config (Config (..))
 import qualified Log
 import Product
 import Range
 
-send :: Core.LspFuncs Config.Config -> FromServerMessage -> IO ()
-send = Core.sendFunc
-
-nextID :: Core.LspFuncs Config.Config -> IO J.LspId
-nextID = Core.getNextReqId
 
 type RioEnv =
   Product
     '[ ASTMap J.NormalizedUri (LIGO Info', [Msg]) RIO
-     , Core.LspFuncs Config.Config
-     , LigoClientEnv
      ]
 
 newtype RIO a = RIO
-  { _unRio :: ReaderT RioEnv IO a
+  { _unRio :: ReaderT RioEnv (J.LspM Config) a
   }
   deriving newtype
     ( Functor
@@ -75,15 +65,21 @@ newtype RIO a = RIO
     , MonadReader RioEnv
     , MonadThrow
     , MonadCatch
-    , HasLigoClient
+    , MonadUnliftIO
+    , J.MonadLsp Config.Config
     )
 
-run :: RioEnv -> RIO a -> IO a
-run env (RIO action) = runReaderT action env
+-- FIXME: LspT does not provide these instances, even though it is just a ReaderT.
+-- (Do not forget to remove -Wno-orphans.)
+deriving newtype instance MonadThrow m => MonadThrow (J.LspT config m)
+deriving newtype instance MonadCatch m => MonadCatch (J.LspT config m)
 
-liftLsp :: (Core.LspFuncs Config.Config -> IO a) -> RIO a
-liftLsp f = do
-  liftIO . f =<< asks getElem
+instance HasLigoClient RIO where
+  getLigoClientEnv = maybe def (LigoClientEnv . _cLigoBinaryPath) <$> J.getConfig
+
+
+run :: (J.LanguageContextEnv Config.Config, RioEnv) -> RIO a -> IO a
+run (lcEnv, env) (RIO action) = J.runLspT lcEnv $ runReaderT action env
 
 fetch, forceFetch :: J.NormalizedUri -> RIO (LIGO Info', [Msg])
 fetch uri = asks getElem >>= ASTMap.fetchCurrent uri
@@ -92,46 +88,23 @@ forceFetch uri = do
   ASTMap.invalidate uri tmap
   ASTMap.fetchCurrent uri tmap
 
-respond :: Msg.FromServerMessage -> RIO ()
-respond msg = do
-  funs <- asks getElem
-  liftIO $ send funs msg
-
 diagnostic :: Int -> J.NormalizedUri -> J.TextDocumentVersion -> [J.Diagnostic] -> RIO ()
 diagnostic n nuri ver diags = do
-  funs <- asks $ getElem @(Core.LspFuncs Config.Config)
-  let diags' = partitionBySource diags <> emptyDiags
+  let diags' = D.partitionBySource diags <> emptyDiags
   Log.debug "LOOP.DIAG" [i|Diags #{diags'}|]
-  liftIO $ Core.publishDiagnosticsFunc funs n nuri ver diags'
+  J.publishDiagnostics n nuri ver diags'
 
-emptyDiags :: DiagnosticsBySource
+emptyDiags :: D.DiagnosticsBySource
 emptyDiags = Map.fromList [(Just "ligo-lsp", List.toSortedList [])]
-
-freshID :: RIO J.LspId
-freshID = do
-  funs <- asks getElem
-  liftIO do
-    nextID funs
-
-log :: String -> RIO ()
-log = liftIO . U.logs
-
-respondWith
-  :: J.RequestMessage J.ClientMethod req rsp
-  -> (J.ResponseMessage rsp -> FromServerMessage)
-  -> rsp
-  -> RIO ()
-respondWith req wrap rsp = respond $ wrap $ Core.makeResponseMessage req rsp
 
 preload
   :: J.Uri
   -> RIO Source
 preload uri = do
   let Just fin = J.uriToFilePath uri
-  mvf <- liftLsp \funs ->
-    Core.getVirtualFileFunc funs (J.toNormalizedUri uri)
+  mvf <- J.getVirtualFile (J.toNormalizedUri uri)
   return case mvf of
-    Just vf -> Text fin (virtualFileText vf)
+    Just vf -> Text fin (V.virtualFileText vf)
     Nothing -> Path fin
 
 load
@@ -139,9 +112,9 @@ load
   -> RIO (LIGO Info', [Msg])
 load uri = do
   src <- preload uri
-  ligoEnv <- asks $ getElem @LigoClientEnv
+  ligoEnv <- getLigoClientEnv
   Log.debug "LOAD" [i|running with env #{ligoEnv}|]
-  parseWithScopes' src
+  parseWithScopes @Fallback src
 
 collectErrors
   :: (J.NormalizedUri -> RIO (LIGO Info', [Msg]))

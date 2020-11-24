@@ -2,19 +2,31 @@
   inputs = {
     haskell-nix.url =
       "github:input-output-hk/haskell.nix/bd45da822d2dccdbb3f65d0b52dd2a91fd65ca4e";
+    hackage-nix = {
+      url = "github:input-output-hk/hackage.nix";
+      flake = false;
+    };
+    stackage-nix = {
+      url = "github:input-output-hk/stackage.nix";
+      flake = false;
+    };
     nix-npm-buildpackage.url = "github:serokell/nix-npm-buildpackage";
     nixpkgs.url = "github:serokell/nixpkgs";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs =
-    { self, haskell-nix, nix-npm-buildpackage, flake-utils, nixpkgs }@inputs:
+    { self, haskell-nix, hackage-nix, stackage-nix, nix-npm-buildpackage, flake-utils, nixpkgs }@inputs:
     flake-utils.lib.eachSystem [ "x86_64-linux" "x86_64-darwin" ] (system:
       let
-        pkgs = import haskell-nix.sources.nixpkgs {
+        haskellNix = import haskell-nix {
+          sourcesOverride = { hackage = hackage-nix; stackage = stackage-nix; };
+        };
+
+        nixpkgsArgs = {
           overlays = [
             nix-npm-buildpackage.overlay
-            haskell-nix.overlay
+          ] ++ haskellNix.nixpkgsArgs.overlays ++ [
             (final: prev:
               let
                 tree-sitter-prebuilt-tarballs = {
@@ -49,6 +61,8 @@
           ];
           localSystem = system;
         };
+
+        pkgs = import haskell-nix.sources.nixpkgs nixpkgsArgs;
 
         grammars = pkgs.callPackage ./squirrel/grammar { };
 

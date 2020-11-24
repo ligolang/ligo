@@ -4,7 +4,7 @@
 
 module AST.Capabilities.Hover where
 
-import qualified Language.Haskell.LSP.Types as LSP
+import qualified Language.LSP.Types as LSP
 
 import AST.Capabilities.Find
 import AST.Scope

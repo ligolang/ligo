@@ -9,7 +9,7 @@ module AST.Capabilities.SignatureHelp
   , toLspParameter
   ) where
 
-import qualified Language.Haskell.LSP.Types as LSP
+import qualified Language.LSP.Types as LSP
   (List (..), ParameterInformation (..), SignatureHelp (..), SignatureInformation (..))
 
 import Control.Lens (_1, _2, _Just, (^..), (^?))
@@ -68,7 +68,7 @@ findSignature tree position = do
   let sigInfo = LSP.SignatureInformation
         { _label = label
         , _documentation = Just (ppToText (fsep (map pp _sdDoc)))
-        , _parameters = Just (map toLspParameter paramLabels)
+        , _parameters = Just . LSP.List $ map toLspParameter paramLabels
         }
   pure (sigInfo, activeNo)
 

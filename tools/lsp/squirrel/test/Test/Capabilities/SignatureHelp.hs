@@ -5,6 +5,7 @@ module Test.Capabilities.SignatureHelp
   ) where
 
 import Data.Text (Text)
+import qualified Language.LSP.Types as J
 import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion, testCase)
@@ -19,6 +20,7 @@ import Range (Range, point)
 import Test.Capabilities.Util (contractsDir)
 import Test.FixedExpectations (shouldBe)
 import Test.Util (readContractWithScopes)
+import Test.Util.LigoEnv ({- instance HasLigoClient IO -})
 
 data TestInfo = TestInfo
   { tiContract :: String
@@ -129,7 +131,7 @@ test_simpleFunctionCall
         Just ( SignatureInformation
                { _label = makeSignatureLabel dialect tiFunction tiParameters
                , _documentation = Just ""
-               , _parameters = Just (map toLspParameter tiParameters)
+               , _parameters = Just . J.List $ map toLspParameter tiParameters
                }
              , tiActiveParamNo
              )
