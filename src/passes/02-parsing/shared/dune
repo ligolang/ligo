@@ -1,0 +1,25 @@
+;; Stuff common to lexers and parsers of LIGO
+
+;; Build of the lexer as a library
+
+(library
+  (name Shared_parser)
+  (public_name ligo.parser.shared)
+  (libraries
+    Shared_lexer
+
+     ;; Vendors
+     simple-utils
+     Preprocessor
+     ParserLib
+     ;; Third party
+     getopt
+     zarith
+     str
+     menhirLib
+     terminal_size
+     pprint)
+  (modules
+     Common ParserMainGen)
+  (preprocess
+    (pps bisect_ppx --conditional)))

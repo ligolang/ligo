@@ -6,7 +6,7 @@ type return = (list(operation), storage);
 
 let main = ((action, store): (parameter, storage)): return => {
   let store = 
-    switch(action) {
+    switch(action){
     | Increment(n) => store + n
     | Decrement(n) => store - n
     };

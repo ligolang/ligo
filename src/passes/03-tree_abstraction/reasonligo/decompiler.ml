@@ -170,7 +170,7 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
           (* TODO combinators for CSTs. *)
         let%bind ty = decompile_type_expr @@ AST.t_timestamp () in
         let time = CST.EString (String (wrap time)) in
-        return_expr @@ CST.EAnnot (wrap @@ par (time, ghost, ty))
+        return_expr_with_par @@ CST.EAnnot (wrap @@ (time, ghost, ty))
       | Literal_mutez mtez -> return_expr @@ CST.EArith (Mutez (wrap ("",mtez)))
       | Literal_string (Standard str) -> return_expr @@ CST.EString (String   (wrap str))
       | Literal_string (Verbatim ver) -> return_expr @@ CST.EString (Verbatim (wrap ver))
@@ -181,19 +181,19 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
       | Literal_address addr ->
         let addr = CST.EString (String (wrap addr)) in
         let%bind ty = decompile_type_expr @@ AST.t_address () in
-        return_expr @@ CST.EAnnot (wrap @@ par (addr,ghost,ty))
+        return_expr_with_par @@ CST.EAnnot (wrap @@ (addr,ghost,ty))
       | Literal_signature sign ->
         let sign = CST.EString (String (wrap sign)) in
         let%bind ty = decompile_type_expr @@ AST.t_signature () in
-        return_expr @@ CST.EAnnot (wrap @@ par (sign,ghost,ty))
+        return_expr_with_par @@ CST.EAnnot (wrap @@ (sign,ghost,ty))
       | Literal_key k ->
         let k = CST.EString (String (wrap k)) in
         let%bind ty = decompile_type_expr @@ AST.t_key () in
-        return_expr @@ CST.EAnnot (wrap @@ par (k,ghost,ty))
+        return_expr_with_par @@ CST.EAnnot (wrap @@ (k,ghost,ty))
       | Literal_key_hash kh ->
         let kh = CST.EString (String (wrap kh)) in
         let%bind ty = decompile_type_expr @@ AST.t_key_hash () in
-        return_expr @@ CST.EAnnot (wrap @@ par (kh,ghost,ty))
+        return_expr_with_par @@ CST.EAnnot (wrap @@ (kh,ghost,ty))
       | Literal_chain_id _
       | Literal_operation _ ->
         failwith "chain_id, operation are not created currently ?"
@@ -237,6 +237,7 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
   | E_matching {matchee; cases} ->
     let%bind expr  = decompile_expression matchee in
     let%bind cases = decompile_matching_cases cases in
+    let expr = CST.EPar (wrap @@ par @@ expr) in
     let cases : _ CST.case = {kwd_switch=ghost;expr;lbrace=ghost;cases;rbrace=ghost} in
     return_expr @@ CST.ECase (wrap cases)
   | E_record record  ->
@@ -349,7 +350,7 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
   | E_ascription {anno_expr;type_annotation} ->
     let%bind expr = decompile_expression anno_expr in
     let%bind ty   = decompile_type_expr type_annotation in
-    return_expr @@ CST.EAnnot (wrap @@ par (expr,ghost,ty))
+    return_expr_with_par @@ CST.EAnnot (wrap @@ (expr,ghost,ty))
   | E_cond {condition;then_clause;else_clause} ->
     let%bind test  = decompile_expression condition in
     let%bind ifso  = decompile_expression then_clause in

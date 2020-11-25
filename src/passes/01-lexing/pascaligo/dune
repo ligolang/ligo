@@ -1,0 +1,61 @@
+
+;; --------------------------------------------------------------------
+;; LEXING
+
+;; Build of the lexer for PascaLIGO
+
+(ocamllex Token)
+
+;; Build of the PascaLIGO lexer as a library
+
+(library
+  (name lexer_pascaligo)
+  (public_name ligo.lexer.pascaligo)
+  (modules Token Comments File Self_lexing)
+  (libraries
+    ;; LIGO
+    Shared_lexer
+    ;; Third party
+    str
+    hex)
+  (preprocess
+    (pps bisect_ppx --conditional)))
+
+;; Build of a standalone lexer for PascaLIGO
+
+(executable
+  (name LexerMain)
+  (libraries
+    ;; LIGO
+    Shared_lexer
+    lexer_pascaligo
+    ;; Third party
+    str)
+  (modules Version LexerMain)
+  (preprocess
+    (pps bisect_ppx --conditional)))
+
+
+;; Build of the unlexer (for covering the
+;; error states of the LR automaton)
+
+(executable
+  (name Unlexer)
+  (libraries
+    ;; LIGO
+    lexer_pascaligo
+    ;; Third party
+    str)
+  (modules Unlexer)
+  (preprocess
+    (pps bisect_ppx --conditional)))
+
+;; --------------------------------------------------------------------
+;; Build of the version source (for the user, as a CLI option)
+
+(rule
+ (targets version.ml)
+ (action (with-stdout-to
+          version.ml
+          (run "sh" "-c"
+               "printf 'let version = \"%s\"' \"${LIGO_VERSION}\""))))

@@ -1,0 +1,12 @@
+$HOME/git/OCaml-build/Makefile
+
+../shared/ParserMainGen.ml
+
+./Stubs/Parser_pascaligo.ml
+./Stubs/Cst.ml
+./Stubs/Cst_pascaligo.ml
+./Stubs/Shared.ml
+
+$HOME/git/ligo/src/stages/1-cst/pascaligo/CST.ml
+$HOME/git/ligo/src/stages/1-cst/pascaligo/Printer.mli
+$HOME/git/ligo/src/stages/1-cst/pascaligo/Printer.ml

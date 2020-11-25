@@ -1349,16 +1349,16 @@ const f0 = lambda (a : string) return true(unit)
 const f1 = lambda (a : string) return true(unit)
 const f2 = lambda (a : string) return true(unit)
 const letin_nesting =
-  lambda (_ : unit) return let s = "test" in
-                           let p0 = (f0)@(s) in { ASSERTION(p0);
+  lambda (#1 : unit) return let s = "test" in
+                            let p0 = (f0)@(s) in { ASSERTION(p0);
  let p1 = (f1)@(s) in { ASSERTION(p1);
  let p2 = (f2)@(s) in { ASSERTION(p2);
  s}}}
 const letin_nesting2 =
   lambda (x : int) return let y = 2 in let z = 3 in ADD(ADD(x , y) , z)
 const x =
-  let #4 = (+1 , (+2 , +3)) in
-  let #3 = #4.0 in let #2 = #4.1 in let x = #2.0 in let #1 = #2.1 in x
+  let #5 = (+1 , (+2 , +3)) in
+  let #4 = #5.0 in let #3 = #5.1 in let x = #3.0 in let #2 = #3.1 in x
     |}];
 
   run_ligo_bad ["print-ast-typed"; contract "existential.mligo"];

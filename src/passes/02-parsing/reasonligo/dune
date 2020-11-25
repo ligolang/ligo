@@ -1,0 +1,161 @@
+;; --------------------------------------------------------------------
+;; PREPROCESSING
+
+(executable
+  (name PreprocMain)
+  (libraries
+     ;; LIGO
+     lexer_reasonligo
+     ;; Vendors
+     Preprocessor)
+  (modules PreprocMain)
+  (preprocess
+    (pps bisect_ppx --conditional)))
+
+;; --------------------------------------------------------------------
+;; PARSING
+
+;; Build of the parser for ReasonLIGO
+
+(menhir
+  (merge_into Parser)
+  (modules ParToken Parser)
+  (flags -la 1 --table --strict --explain
+         --external-tokens Lexer_reasonligo.Token))
+
+;; Build of the ReasonLIGO parser as a library
+
+(library
+  (name parser_reasonligo)
+  (public_name ligo.parser.reasonligo)
+  (modules
+    Scoping Parser ParErr Pretty)
+  (libraries
+    ;; LIGO
+    lexer_reasonligo
+    cst
+    ;; Vendors
+    simple-utils
+    ParserLib
+    ;; Third party
+    pprint
+    terminal_size
+    menhirLib
+    hex)
+  (preprocess
+    (pps bisect_ppx --conditional))
+  (flags (:standard -open Cst_reasonligo))) ;; For CST in Parser.mli
+
+
+;; Local build of a standalone parser for ReasonLIGO
+
+(executable
+  (name ParserMain)
+  (libraries
+    ;; LIGO
+    parser_reasonligo
+    cst
+    Shared_parser
+    ;; Third party
+    hex)
+  (modules ParserMain Parser_msg)
+  (preprocess
+    (pps bisect_ppx --conditional)))
+
+;; Build of the covering of error states in the LR automaton
+
+(rule
+  (targets Parser.msg)
+  (deps (:script_messages ../../../../vendors/ligo-utils/simple-utils/messages.sh) Parser.mly ParToken.mly)
+  (action (run %{script_messages} --lex-tokens=Token.mli --par-tokens=ParToken.mly Parser.mly)))
+
+(rule
+ (targets Parser_msg.ml)
+ (deps Parser.mly ParToken.mly Parser.msg)
+ (action
+  (with-stdout-to %{targets}
+   (bash
+     "menhir \
+       --compile-errors Parser.msg \
+       --external-tokens Token \
+       --base Parser \
+       ParToken.mly \
+       Parser.mly"))))
+
+;; Build of all the LIGO source file that cover all error states
+
+(rule
+  (targets all.religo)
+  (deps (:script_cover ../../../../vendors/ligo-utils/simple-utils/cover.sh) Parser.mly ParToken.mly Parser.msg)
+  (action (run %{script_cover}
+               --lex-tokens=Token.mli
+               --par-tokens=ParToken.mly
+               --ext=religo
+               --unlexer=%{exe:../../01-lexing/reasonligo/Unlexer.exe}
+               --messages=Parser.msg
+               --dir=.
+               --concatenate Parser.mly)))
+
+;; Error messages
+
+(rule
+ (targets error.messages)
+ (mode (promote (until-clean) (only *)))
+ (deps Parser.mly ParToken.mly error.messages.checked-in)
+ (action
+  (with-stdout-to %{targets}
+  (run menhir
+       --unused-tokens
+       --update-errors error.messages.checked-in
+       --table
+       --strict
+       --external-tokens Lexer_reasonligo.Token
+       --base Parser.mly
+       ParToken.mly
+       Parser.mly))))
+
+(rule
+  (target error.messages.new)
+  (mode (promote (until-clean) (only *)))
+  (action
+    (with-stdout-to %{target}
+      (run menhir
+           --unused-tokens
+           --list-errors
+           --table
+           --strict
+           --external-tokens Lexer_reasonligo.Token
+           --base Parser.mly
+           ParToken.mly
+           Parser.mly))))
+
+(rule
+  (alias runtest)
+  (deps error.messages error.messages.new)
+  (action
+    (run menhir
+         --unused-tokens
+         --table
+         --strict
+         --external-tokens Lexer_reasonligo.Token
+         --base Parser.mly
+         ParToken.mly
+         Parser.mly
+         --compare-errors error.messages.new
+         --compare-errors error.messages)))
+
+(rule
+ (targets ParErr.ml)
+ (mode (promote (until-clean) (only *)))
+ (deps Parser.mly ParToken.mly error.messages.checked-in)
+ (action
+  (with-stdout-to %{targets}
+  (run menhir
+       --unused-tokens
+       --table
+       --strict
+       --external-tokens Lexer_reasonligo.Token
+       --base Parser.mly
+       ParToken.mly
+       Parser.mly
+       --compile-errors error.messages.checked-in))))

@@ -9,15 +9,15 @@ type ('a,'err) sdata = {
   parser : Buffer.t -> ('a,'err) result }
 
 let pascaligo_sdata = {
-  erroneous_source_file = "../passes/01-parsing/pascaligo/all.ligo" ;
+  erroneous_source_file = "../passes/02-parsing/pascaligo/all.ligo" ;
   preproc = (trace preproc_tracer) <@ (Preproc.Pascaligo.preprocess_string []) ;
   parser  = (trace parser_tracer ) <@ (Parser.Pascaligo.parse_expression   []) }
 let cameligo_sdata = {
-  erroneous_source_file = "../passes/01-parsing/cameligo/all.mligo" ;
+  erroneous_source_file = "../passes/02-parsing/cameligo/all.mligo" ;
   preproc = (trace preproc_tracer) <@ (Preproc.Cameligo.preprocess_string []) ;
   parser  = (trace parser_tracer ) <@ (Parser.Cameligo.parse_expression   []) }
 let reasonligo_sdata = {
-  erroneous_source_file = "../passes/01-parsing/reasonligo/all.religo" ;
+  erroneous_source_file = "../passes/02-parsing/reasonligo/all.religo" ;
   preproc = (trace preproc_tracer) <@ (Preproc.Reasonligo.preprocess_string []) ;
   parser  = (trace parser_tracer ) <@ (Parser.Reasonligo.parse_expression   []) }
 
