@@ -8,7 +8,7 @@ There are currently three ways to get started with LIGO. You can choose to use a
 ## Dockerized installation (recommended)
 If you've [installed 🐳 Docker](https://docs.docker.com/install/), you can run the latest [LIGO release 0.4.0](./changelog.md):
 
-> `docker run ligolang/ligo:0.4.0`
+> `docker run ligolang/ligo:0.5.0`
 
 Or if you want the development version:
 

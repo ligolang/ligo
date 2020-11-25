@@ -317,6 +317,55 @@ let rem4 : nat = a mod d;  // 3
 </Syntax>
 
 
+For cases when you need both the quotient and the remainder, LIGO provides the
+`ediv` operation. `ediv x y` returns `Some (quotient, remainder)`, unless `y`
+is zero, in which case it returns `None`
+
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=f
+const a : int = 37
+const b : int = 5
+const ediv1 : option (int * nat) = ediv(a, b)  // Some (7, 2)
+const c : nat = 37n
+const ediv2 : option (int * nat) = ediv(c, b)  // Some (7, 2)
+const d : nat = 5n
+const ediv3 : option (nat * nat) = ediv(c, d)  // Some (7, 2)
+const ediv4 : option (int * nat) = ediv(a, d)  // Some (7, 2)
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=f
+let a : int = 37
+let b : int = 5
+let ediv1 : (int * nat) option = ediv a b  // Some (7, 2)
+let c : nat = 37n
+let ediv2 : (int * nat) option = ediv c b  // Some (7, 2)
+let d : nat = 5n
+let ediv3 : (nat * nat) option = ediv c d  // Some (7, 2)
+let ediv4 : (int * nat) option = ediv a d  // Some (7, 2)
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=f
+let a : int = 37;
+let b : int = 5;
+let ediv1 : option((int , nat)) = ediv(a, b);  // Some (7, 2)
+let c : nat = 37n;
+let ediv2 : option((int , nat)) = ediv(c, b);  // Some (7, 2)
+let d : nat = 5n;
+let ediv3 : option((nat , nat)) = ediv(c, d);  // Some (7, 2)
+let ediv4 : option((int , nat)) = ediv(a, d);  // Some (7, 2)
+```
+
+</Syntax>
+
+
 ## From `int` to `nat` and back
 
 You can *cast* an `int` to a `nat` and vice versa. Here is how:

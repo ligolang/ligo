@@ -6,19 +6,20 @@ title: Types
 import Syntax from '@theme/Syntax';
 
 *LIGO is strongly and statically typed.* This means that the compiler
-checks how your contract processes data. If it passes the test, your
-contract will not fail at run-time due to inconsistent assumptions on
-your data. This is called *type checking*.
+checks how your contract processes data, ensuring that each function's 
+expectations are met. If it passes the test, your contract will not fail at 
+run-time due to some inconsistent assumptions on your data. This is 
+called *type checking*.
 
 LIGO types are built on top of Michelson's type system.
 
 ## Built-in types
 
-For quick reference, you can find all the built-in types [here](https://gitlab.com/ligolang/ligo/blob/dev/src/passes/operators/operators.ml#L35).
+For quick reference, you can find all the built-in types [here](https://gitlab.com/ligolang/ligo/-/blob/dev/src/passes/09-typing/08-typer-common/constant_typers_new.ml#L95).
 
 ## Type aliases
 
-*Type aliasing* consists in renaming a given type, when the context
+*Type aliasing* consists of renaming a given type when the context
 calls for a more precise name. This increases readability and
 maintainability of your smart contracts. For example we can choose to
 alias a string type as an animal breed - this will allow us to
@@ -104,7 +105,7 @@ well-typed storage or functions to work with. LIGO offers a simple way
 to compose simple types into *structured types*.
 
 The first of those structured types is the *record*, which aggregates
-types as *fields* and index them with a *field name*. In the example
+types as *fields* and indexes them with a *field name*. In the example
 below you can see the definition of data types for a ledger that keeps
 the balance and number of previous transactions for a given account.
 
@@ -188,14 +189,11 @@ let my_ledger : ledger =
      {balance: 10mutez, transactions: 5n})]);
 ```
 
-The structured types which are dual to records are the *variant types*
-and they are described in the section about *pattern matching*. They
-are dual because records are a product of types (types are bundled
-into a record), whereas variant types are a sum of types (they are
-exclusive to each other).
-
 </Syntax>
 
+Complementary to records are the *variant types*, which are described in the
+section on [pattern matching](https://ligolang.org/docs/language-basics/unit-option-pattern-matching#variant-types). 
+Records are a product of types, while variant types are sums of types.
 
 ## Annotations
 

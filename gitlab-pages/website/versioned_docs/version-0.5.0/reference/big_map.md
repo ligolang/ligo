@@ -9,12 +9,15 @@ import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
 A lazily deserialized map that's intended to store large amounts of data. 
-Lazily means that storage is read or written per key on demand. Therefore 
-there are no `map`, `fold`, and `iter` operations as in 
+"Lazily" means that storage is read or written per key on demand. Therefore 
+there are no `map`, `fold`, and `iter` operations as there are in 
 [Map](map.md).
 
-The gas costs of big maps are higher than standard maps as data is lazily 
-deserialized.
+Compared to non-lazy maps, which have a high upfront gas cost to deserialize all
+the data and then have cheaper access costs thereafter, lazily-deserialized maps
+spread this cost out across each access, increasing the per-access gas costs,
+but providing a cheaper overall cost when only a small portion of a large 
+dataset is needed.
 
 <SyntaxTitle syntax="pascaligo">
 function empty : big_map ('key, 'value)
@@ -162,6 +165,43 @@ let my_balance : move option =
 ```reasonligo group=big_map
 let my_balance: option (move) =
   Big_map.find_opt("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, moves);
+```
+
+</Syntax>
+
+<SyntaxTitle syntax="pascaligo">
+function mem : 'key -> big_map ('key, 'value) -> bool
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val mem : 'key -> ('key, 'value) big_map -> bool
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let mem: ('key, big_map ('key, 'value)) => bool
+</SyntaxTitle>
+
+Test whether a given key exists within a big map. 
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=big_map
+const has_balance : bool =
+  Big_map.mem (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), moves)
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=big_map
+let has_balance : bool =
+  Big_map.mem ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) moves
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=big_map
+let has_balance: bool =
+  Big_map.mem("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, moves);
 ```
 
 </Syntax>
