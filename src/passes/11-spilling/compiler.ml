@@ -514,7 +514,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
     match errs with
     | _ :: _ -> fail (could_not_parse_raw_michelson ae.location orig_code)
     | [] ->
-      let (code, errs) = Micheline_parser.parse_expression code in
+      let (code, errs) = Micheline_parser.parse_expression ~check:false code in
       match errs with
       | _ :: _ -> fail (could_not_parse_raw_michelson ae.location orig_code)
       | [] ->
