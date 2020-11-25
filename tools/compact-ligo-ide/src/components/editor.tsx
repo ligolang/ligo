@@ -5,6 +5,7 @@ import styled, { withTheme } from 'styled-components';
 
 const Container = styled.div`
   flex: 2;
+  width: inherit;
 `;
 
 export const Editor = withTheme(
