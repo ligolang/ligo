@@ -108,8 +108,8 @@ Converts Michelson data structures to a binary format for serialization.
 
 ```pascaligo
 function id_string (const p : string) : option(string) is block {
-  const packed : bytes = bytes_pack(p) ;
-} with (bytes_unpack(packed): option(string))
+  const packed : bytes = Bytes.pack(p) ;
+} with (Bytes.unpack(packed): option(string))
 ```
 
 </Syntax>
@@ -156,8 +156,8 @@ As the conversion might fail an option type is returned.
 
 ```pascaligo
 function id_string (const p : string) : option(string) is block {
-  const packed : bytes = bytes_pack(p) ;
-} with (bytes_unpack(packed): option(string))
+  const packed : bytes = Bytes.pack(p) ;
+} with (Bytes.unpack(packed): option(string))
 ```
 
 </Syntax>
