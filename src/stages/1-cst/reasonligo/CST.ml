@@ -252,7 +252,7 @@ and field_pattern = {
 and expr =
   ECase    of expr case reg
 | ECond    of cond_expr reg
-| EAnnot   of annot_expr par reg
+| EAnnot   of annot_expr reg
 | ELogic   of logic_expr
 | EArith   of arith_expr
 | EString  of string_expr

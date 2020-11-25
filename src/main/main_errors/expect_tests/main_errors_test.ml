@@ -137,20 +137,6 @@ let%expect_test "main_parser" =
   error (`Parser_generic {value= "yolo"; region= Region.ghost}) ;
   [%expect {|
     yolo|}] ;
-  error
-    (`Parser_wrong_function_arguments
-      (EVar {value= "yolo"; region= default_region1})) ;
-  [%expect
-    {|
-  in file "a dummy file name", line 20, characters 5-5
-
-  It looks like you are defining a function, however we do not
-  understand the parameters declaration.
-  Examples of valid functions:
-  let x = (a: string, b: int) : int => 3;
-  let tuple = ((a, b): (int, int)) => a + b;
-  let x = (a: string) : string => "Hello, " ++ a;
-  |}] ;
   error (`Parser_invalid_wild (EVar {value= "yolo"; region= default_region1})) ;
   [%expect
     {|

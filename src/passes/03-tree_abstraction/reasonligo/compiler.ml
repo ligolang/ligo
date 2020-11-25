@@ -330,7 +330,7 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     return @@ e_matching ~loc matchee cases
   | EAnnot annot ->
     let (annot, loc) = r_split annot in
-    let (expr, _, ty) = annot.inside in
+    let (expr, _, ty) = annot in
     let%bind expr = compile_expression expr in
     let%bind ty   = compile_type_expression ty in
     return @@ e_annotation ~loc expr ty

@@ -429,12 +429,10 @@ and print_fun_call state {value=f,l; _} =
      print_token state rpar ")"
 
 and print_annot_expr state {value; _} =
-  let {lpar; inside=e,colon,t; rpar} = value in
-  print_token state lpar "(";
+  let (e,colon,t) = value in
   print_expr  state e;
   print_token state colon ":";
   print_type_expr state t;
-  print_token state rpar ")"
 
 and print_list_expr state = function
   ECons {value={lbracket;lexpr;comma;ellipsis;rexpr;rbracket}; _} ->
@@ -1148,7 +1146,7 @@ and pp_bin_op node region state op =
   pp_expr (state#pad 2 1) op.arg2
 
 and pp_annotated state annot =
-  let expr, _, t_expr = annot.inside in
+  let expr, _, t_expr = annot in
   pp_expr      (state#pad 2 0) expr;
   pp_type_expr (state#pad 2 1) t_expr
 

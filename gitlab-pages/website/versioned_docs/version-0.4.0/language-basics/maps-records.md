@@ -608,7 +608,7 @@ let force_access (key, moves : address * register) : move =
 let force_access = ((key, moves) : (address, register)) : move => {
   switch (Map.find_opt (key, moves)) {
   | Some (move) => move
-  | None => failwith ("No move.") : move
+  | None => (failwith ("No move.") : move)
   }
 };
 ```

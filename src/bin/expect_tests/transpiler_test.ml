@@ -372,16 +372,16 @@ let transfer_single
 : (action_transfer_single, storage) => return =
   ((gen__parameters1: (action_transfer_single, storage))
    : return =>
-     switch(gen__parameters1) {
+     switch(gen__parameters1){
      | action: action_transfer_single, s: storage =>
          let cards: cards = s.cards;
          let card: card =
            switch(
-            Map.find_opt(action.card_to_transfer, cards)) {
+            Map.find_opt(action.card_to_transfer, cards)){
            | Somecard => card
            | None =>
-               (failwith(("transfer_single: No card.")))
-                : card
+               ((failwith(("transfer_single: No card.")))
+                 : card)
            };
          {
            if ((NEQ((card.card_owner), (Tezos.sender)))) {
@@ -395,19 +395,19 @@ let transfer_single
            let cards =
              Map.add(card, action.card_to_transfer, cards);
            let s = {...s, {cards: cards }};
-           [] : list(operation), s
+           ([] : list(operation)), s
          }
      });
 
 let sell_single: (action_sell_single, storage) => return =
   ((gen__parameters2: (action_sell_single, storage)): return =>
-     switch(gen__parameters2) {
+     switch(gen__parameters2){
      | action: action_sell_single, s: storage =>
          let card: card =
-           switch(Map.find_opt(action.card_to_sell, s.cards)) {
+           switch(Map.find_opt(action.card_to_sell, s.cards)){
            | Somecard => card
            | None =>
-               (failwith(("sell_single: No card."))) : card
+               ((failwith(("sell_single: No card."))) : card)
            };
          {
            if ((NEQ((card.card_owner), (Tezos.sender)))) {
@@ -418,12 +418,12 @@ let sell_single: (action_sell_single, storage) => return =
            let card_pattern: card_pattern =
              switch(
               Map.find_opt(card.card_pattern,
-                 s.card_patterns)) {
+                 s.card_patterns)){
              | Somepattern => pattern
              | None =>
-                 (
-                   failwith(("sell_single: No card pattern.")))
-                  : card_pattern
+                 ((
+                    failwith(("sell_single: No card pattern.")))
+                   : card_pattern)
              };
            let card_pattern =
              {...card_pattern,
@@ -449,12 +449,12 @@ let sell_single: (action_sell_single, storage) => return =
               TIMES((card_pattern.coefficient),
                  (card_pattern.quantity)));
            let receiver: contract(unit) =
-             switch((Tezos.get_contract_opt((Tezos.sender)))
-               : option(contract(unit))) {
+             switch(((Tezos.get_contract_opt((Tezos.sender)))
+                : option(contract(unit)))){
              | Somecontract => contract
              | None =>
-                 (failwith(("sell_single: No contract.")))
-                  : contract(unit)
+                 ((failwith(("sell_single: No contract.")))
+                   : contract(unit))
              };
            let op: operation =
              (Tezos.transaction((unit), (price), (receiver)));
@@ -465,15 +465,15 @@ let sell_single: (action_sell_single, storage) => return =
 
 let buy_single: (action_buy_single, storage) => return =
   ((gen__parameters3: (action_buy_single, storage)): return =>
-     switch(gen__parameters3) {
+     switch(gen__parameters3){
      | action: action_buy_single, s: storage =>
          let card_pattern: card_pattern =
            switch(
-            Map.find_opt(action.card_to_buy, s.card_patterns)) {
+            Map.find_opt(action.card_to_buy, s.card_patterns)){
            | Somepattern => pattern
            | None =>
-               (failwith(("buy_single: No card pattern.")))
-                : card_pattern
+               ((failwith(("buy_single: No card pattern.")))
+                 : card_pattern)
            };
          let price: tez =
            (
@@ -512,15 +512,15 @@ let buy_single: (action_buy_single, storage) => return =
            let s =
              {...s,
                {next_id: (ADD((s.next_id), (1n))) }};
-           [] : list(operation), s
+           ([] : list(operation)), s
          }
      });
 
 let main: (parameter, storage) => return =
   ((gen__parameters4: (parameter, storage)): return =>
-     switch(gen__parameters4) {
+     switch(gen__parameters4){
      | action: parameter, s: storage =>
-         switch(action) {
+         switch(action){
          | Buy_single bs => buy_single(bs, s)
          | Sell_single as => sell_single(as, s)
          | Transfer_single at => transfer_single(at, s)
@@ -625,9 +625,9 @@ type nested_record_t = {nesty: {mymap: map(int, string) } };
 let nested_record: nested_record_t => string =
   ((nee: nested_record_t): string =>
      let nee = Map.add("one", 1, nesty.mymap);
-     switch(Map.find_opt(1, nee.nesty.mymap)) {
+     switch(Map.find_opt(1, nee.nesty.mymap)){
      | Somes => s
-     | None => (failwith(("Should not happen."))) : string
+     | None => ((failwith(("Should not happen."))) : string)
      }); |}]
 
 let%expect_test _ =
@@ -932,17 +932,17 @@ let transferContentsIterator =
      let tokenOwner: option(tokenOwner) =
        (Map.find_opt((transferContents.token_id), (storage)));
      let tokenOwner =
-       switch(tokenOwner) {
+       switch(tokenOwner){
        | SometokenOwner =>
            if ((EQ((tokenOwner), (from_)))) {
              tokenOwner
            } else {
 
-             (failwith((errorInsufficientBalance)))
-              : tokenOwner
+             ((failwith((errorInsufficientBalance)))
+               : tokenOwner)
            }
        | None =>
-           (failwith((errorTokenUndefined))) : tokenOwner
+           ((failwith((errorTokenUndefined))) : tokenOwner)
        };
      let storage =
        (
@@ -987,13 +987,13 @@ let transfer =
         List.fold((transferIterator),
            (transferParameter),
            (storage)));
-     [] : list(operation), storage);
+     ([] : list(operation)), storage);
 
 let main =
   ((gen__7: entrypointParameter): entrypointReturn =>
      let parameter = gen__7[0];
      let storage = gen__7[1];
-     switch(parameter) {
+     switch(parameter){
      | Transfer transferParameter =>
          transfer(transferParameter, storage)
      }); |}]
@@ -1497,7 +1497,7 @@ let transfer
 : (transfer, storage) => (list(operation), storage) =
   ((gen__parameters1: (transfer, storage))
    : (list(operation), storage) =>
-     switch(gen__parameters1) {
+     switch(gen__parameters1){
      | p: transfer, s: storage =>
          let new_allowances: allowances = Big_map.empty;
          let gen__env9 = {
@@ -1519,7 +1519,7 @@ let transfer
              let authorized_value: nat =
                switch((
                  Map.find_opt((Tezos.sender, p.address_from),
-                    (s.allowances)))) {
+                    (s.allowances)))){
                | Somevalue => value
                | None => 0n
                };
@@ -1564,7 +1564,7 @@ let transfer
          let new_allowances = gen__env9.new_allowances;
          let sender_balance: nat =
            switch((
-             Map.find_opt((p.address_from), (s.tokens)))) {
+             Map.find_opt((p.address_from), (s.tokens)))){
            | Somevalue => value
            | None => 0n
            };
@@ -1594,7 +1594,7 @@ let transfer
                  {new_tokens: new_tokens }};
              let receiver_balance: nat =
                switch((
-                 Map.find_opt((p.address_to), (s.tokens)))) {
+                 Map.find_opt((p.address_to), (s.tokens)))){
                | Somevalue => value
                | None => 0n
                };
@@ -1614,7 +1614,7 @@ let transfer
              }
            };
          let new_tokens = gen__env12.new_tokens;
-         [] : list(operation),
+         ([] : list(operation)),
           {...s,
             {
               allowances: new_allowances,
@@ -1626,12 +1626,12 @@ let approve
 : (approve, storage) => (list(operation), storage) =
   ((gen__parameters2: (approve, storage))
    : (list(operation), storage) =>
-     switch(gen__parameters2) {
+     switch(gen__parameters2){
      | p: approve, s: storage =>
          let previous_value: nat =
            switch((
              Map.find_opt((p.spender, Tezos.sender),
-                (s.allowances)))) {
+                (s.allowances)))){
            | Somevalue => value
            | None => 0n
            };
@@ -1664,7 +1664,7 @@ let approve
              }
            };
          let new_allowances = gen__env14.new_allowances;
-         [] : list(operation),
+         ([] : list(operation)),
           {...s,
             {allowances: new_allowances }}
      });
@@ -1673,12 +1673,12 @@ let getAllowance
 : (getAllowance, storage) => (list(operation), storage) =
   ((gen__parameters3: (getAllowance, storage))
    : (list(operation), storage) =>
-     switch(gen__parameters3) {
+     switch(gen__parameters3){
      | p: getAllowance, s: storage =>
          let value: nat =
            switch((
              Map.find_opt((p.owner, p.spender),
-                (s.allowances)))) {
+                (s.allowances)))){
            | Somevalue => value
            | None => 0n
            };
@@ -1694,10 +1694,10 @@ let getBalance
 : (getBalance, storage) => (list(operation), storage) =
   ((gen__parameters4: (getBalance, storage))
    : (list(operation), storage) =>
-     switch(gen__parameters4) {
+     switch(gen__parameters4){
      | p: getBalance, s: storage =>
          let value: nat =
-           switch((Map.find_opt((p.owner), (s.tokens)))) {
+           switch((Map.find_opt((p.owner), (s.tokens)))){
            | Somevalue => value
            | None => 0n
            };
@@ -1713,7 +1713,7 @@ let getTotalSupply
 : (getTotalSupply, storage) => (list(operation), storage) =
   ((gen__parameters5: (getTotalSupply, storage))
    : (list(operation), storage) =>
-     switch(gen__parameters5) {
+     switch(gen__parameters5){
      | p: getTotalSupply, s: storage =>
          let total: nat = s.total_amount;
          let op: operation =
@@ -1727,9 +1727,9 @@ let getTotalSupply
 let main: (action, storage) => (list(operation), storage) =
   ((gen__parameters6: (action, storage))
    : (list(operation), storage) =>
-     switch(gen__parameters6) {
+     switch(gen__parameters6){
      | a: action, s: storage =>
-         switch(a) {
+         switch(a){
          | Transfer p => transfer(p, s)
          | Approve p => approve(p, s)
          | GetAllowance p => getAllowance(p, s)
@@ -1896,10 +1896,10 @@ type return = (list(operation), storage);
 
 let main: (parameter, storage) => return =
   ((gen__parameters1: (parameter, storage)): return =>
-     switch(gen__parameters1) {
+     switch(gen__parameters1){
      | p: parameter, s: storage =>
          {
-           switch(p) {
+           switch(p){
            | Zero n =>
                if ((GT((n), (0n)))) {
                  (failwith(("fail")))
@@ -1913,7 +1913,7 @@ let main: (parameter, storage) => return =
                  (failwith(("fail")))
                }
            };
-           [] : list(operation), s
+           ([] : list(operation)), s
          }
      });
 
@@ -1961,7 +1961,7 @@ let foobar: int => int =
        } else {
 
          {
-           switch(p) {
+           switch(p){
            | Zero n => (failwith((42n)))
            | Pos n => ()
            };
@@ -1969,9 +1969,9 @@ let foobar: int => int =
          }
        };
      let i = gen__env7.i;
-     switch(p) {
+     switch(p){
      | Zero n => i
-     | Pos n => (failwith(("waaaa"))) : int
+     | Pos n => ((failwith(("waaaa"))) : int)
      });
 
 let failer: int => int =
@@ -2024,7 +2024,7 @@ let%expect_test _ =
   [%expect {|
     let rec sum: (int, int) => int =
       ((gen__parameters1: (int, int)): int =>
-         switch(gen__parameters1) {
+         switch(gen__parameters1){
          | n: int, acc: int =>
              if ((LT((n), (1)))) {
                acc
@@ -2035,7 +2035,7 @@ let%expect_test _ =
 
     let rec fibo: (int, int, int) => int =
       ((gen__parameters2: (int, int, int)): int =>
-         switch(gen__parameters2) {
+         switch(gen__parameters2){
          | n: int, n_1: int, n_0: int =>
              if ((LT((n), (2)))) {
                n_1
