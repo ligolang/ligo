@@ -12,6 +12,9 @@ import { MonacoComponent } from './monaco';
 
 const Container = styled.div`
   flex: 2;
+  width: inherit;
+  height: 100%;
+  order: 2;
 `;
 
 const Header = styled.div`
@@ -43,12 +46,12 @@ const SelectLanguage = styled(Select)`
 const CursorPosition = styled.div`
   text-align: right;
   padding: 5px 10px;
-  height: 30px;
+  height: 37px;
   background: var(--blue_trans1);
 `;
 
 
-export const EditorComponent = () => {
+export const EditorComponent = ({editorHeight}) => {
   const dispatch = useDispatch();
   const title = useSelector<AppState, string>(state => state.editor.title);
   const language = useSelector<AppState, EditorState['language']>(
@@ -93,7 +96,7 @@ export const EditorComponent = () => {
           </SelectLanguage>
         </LeftActions>
       </Header>
-      <MonacoComponent ></MonacoComponent>
+      <MonacoComponent editorHeight={editorHeight}></MonacoComponent>
       <CursorPosition>{getCursorPosition()}</CursorPosition>
     </Container>
   );

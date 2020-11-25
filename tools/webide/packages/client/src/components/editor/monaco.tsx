@@ -7,14 +7,18 @@ import { AppState } from '../../redux/app';
 import { ChangeCodeAction, ChangeDirtyAction, ChangeCursorPositionAction } from '../../redux/editor';
 import { ClearSelectedAction } from '../../redux/examples';
 
-const Container = styled.div`
-  height: var(--content_height);
+interface TopPaneStyled {
+  editorHeight: number;
+}
 
+const Container = styled.div<TopPaneStyled>`
+  height: ${props => props.editorHeight - 100}px;
+  
   /* This font size is used to calcuate code font size */
   font-size: 0.8em;
 `;
 
-export const MonacoComponent = () => {
+export const MonacoComponent = ({editorHeight}) => {
   let containerRef = useRef(null);
   const store = useStore();
   const dispatch = useDispatch();
@@ -95,5 +99,5 @@ export const MonacoComponent = () => {
     };
   }, [store, dispatch]);
 
-  return <Container id="editor" ref={containerRef}></Container>;
+  return <Container id="editor" ref={containerRef} editorHeight={editorHeight}></Container>;
 };
