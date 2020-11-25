@@ -20,13 +20,14 @@
     flake-utils.lib.eachSystem [ "x86_64-linux" "x86_64-darwin" ] (system:
       let
         haskellNix = import haskell-nix {
-          sourcesOverride = { hackage = hackage-nix; stackage = stackage-nix; };
+          sourcesOverride = { hackage = hackage-nix; stackage = stackage-nix; } // haskell-nix.sources;
         };
 
         nixpkgsArgs = {
           overlays = [
             nix-npm-buildpackage.overlay
-          ] ++ haskellNix.nixpkgsArgs.overlays ++ [
+            haskellNix.allOverlays.combined-eval-on-build
+          ] ++ [
             (final: prev:
               let
                 tree-sitter-prebuilt-tarballs = {
@@ -139,6 +140,10 @@
       in {
         packages = exes // {
           inherit vscode-extension-native vscode-extension;
+        };
+        checks = {
+          inherit squirrel-sexp-test;
+          inherit (squirrel.checks) squirrel-test;
         };
         defaultPackage = self.packages.${system}.vscode-extension-native;
         # For debug/development reasons only
