@@ -2,11 +2,13 @@ open Errors
 open Ast_typed
 open Trace
 open Ast_typed.Helpers
+open Stage_common
 
 type ('a ,'err) decl_folder = 'a -> declaration -> ('a, 'err) result
 type ('a ,'err) folder = 'a -> expression -> ('a , 'err) result
 let rec fold_expression : ('a , self_ast_typed_error) folder -> 'a -> expression -> ('a , self_ast_typed_error) result = fun f init e ->
   let self = fold_expression f in
+  let idle = fun acc _ -> ok @@ acc in
   let%bind init' = f init e in
   match e.expression_content with
   | E_literal _ | E_variable _ | E_raw_code _ -> ok init'
@@ -52,6 +54,7 @@ let rec fold_expression : ('a , self_ast_typed_error) folder -> 'a -> expression
       let%bind res = self res let_result in
       ok res
     )
+  | E_type_in ti -> Folds.type_in self idle init' ti
 
 and fold_cases : ('a , 'err) folder -> 'a -> matching_expr -> ('a , 'err) result = fun f init m ->
   match m with
@@ -110,6 +113,10 @@ let rec map_expression : self_ast_typed_error mapper -> expression -> (expressio
       let%bind rhs = self rhs in
       let%bind let_result = self let_result in
       return @@ E_let_in { let_binder ; rhs ; let_result; inline }
+    )
+  | E_type_in ti -> (
+      let%bind ti = Maps.type_in self ok ti in
+      return @@ E_type_in ti
     )
   | E_lambda { binder ; result } -> (
       let%bind result = self result in
@@ -200,6 +207,10 @@ let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> ('a
       let%bind (res,let_result) = self res let_result in
       ok (res, return @@ E_let_in { let_binder ; rhs ; let_result ; inline })
     )
+  | E_type_in { type_binder ; rhs ; let_result } -> (
+      let%bind (res,let_result) = self init' let_result in
+      ok (res, return @@ E_type_in { type_binder ; rhs ; let_result })
+    )
   | E_lambda { binder ; result } -> (
       let%bind (res,result) = self init' result in
       ok ( res, return @@ E_lambda { binder ; result })
@@ -255,7 +266,7 @@ and fold_program_decl : ('a, self_ast_typed_error) folder -> ('a, self_ast_typed
   let aux = fun acc (x : declaration Location.wrap) ->
       match Location.unwrap x with
       | Declaration_constant {binder=_ ; expr ; inline=_} as d ->
-        let%bind acc = m_decl acc d in  
+        let%bind acc = m_decl acc d in
         fold_expression m acc expr
       | Declaration_type _t -> ok acc
     in

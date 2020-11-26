@@ -54,6 +54,12 @@ let let_in : ('acc -> 'a -> ('acc, _) result) -> ('acc -> 'c -> ('acc, _) result
   let%bind acc = f acc let_result in
   ok @@ acc
 
+let type_in : ('acc -> 'a -> ('acc, _) result) -> ('acc -> 'c -> ('acc, _) result) -> 'acc -> ('a,'c) type_in -> ('acc , _) result
+= fun f g acc { type_binder=_; rhs ; let_result} ->
+  let%bind acc = g acc rhs in
+  let%bind acc = f acc let_result in
+  ok @@ acc
+
 let lambda : ('acc -> 'a -> ('acc, _) result) -> ('acc -> 'c -> ('acc, _) result) -> 'acc -> ('a,'c) lambda -> ('acc , _) result
 = fun f g acc {binder=b;output_type;result}->
   let%bind acc = binder g acc b in

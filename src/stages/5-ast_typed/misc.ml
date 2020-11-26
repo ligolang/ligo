@@ -33,6 +33,7 @@ module Free_variables = struct
       union
         (expression b' let_result)
         (self rhs)
+    | E_type_in { type_binder=_; rhs=_; let_result} -> self let_result
     | E_raw_code _ -> empty
     | E_recursive {fun_name;lambda;_} ->
       let b' = union (singleton fun_name) b in
@@ -91,7 +92,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
     if (String.equal la lb) && (constant_compare ia ib = 0) then (
       assert_same_size lsta lstb >>= fun _ ->
         List.fold_left (fun acc p -> match acc with | None -> None | Some () -> assert_type_expression_eq p) (Some ()) (List.combine lsta lstb)
-    ) else 
+    ) else
       None
   )
   | T_constant _, _ -> None
@@ -205,6 +206,7 @@ let rec assert_value_eq (a, b: (expression*expression)) : unit option =
   | E_record _, _
   | (E_literal _, _) | (E_variable _, _) | (E_application _, _)
   | (E_lambda _, _) | (E_let_in _, _) | (E_raw_code _, _) | (E_recursive _, _)
+  | (E_type_in _, _)
   | (E_record_accessor _, _) | (E_record_update _,_)
   | (E_matching _, _)
   -> None

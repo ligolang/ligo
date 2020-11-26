@@ -54,13 +54,13 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
 let variable : T.type_expression -> (constraints * T.type_variable) = fun expr ->
   let pattern = type_expression_to_type_value expr in
   let type_name = Core.fresh_type_variable () in
-  let aval = T.Reasons.(wrap (Todo "wrap: variable: whole") (T.P_variable type_name)) in 
+  let aval = T.Reasons.(wrap (Todo "wrap: variable: whole") (T.P_variable type_name)) in
   [{ c = C_equation { aval ; bval = pattern } ; reason = "wrap: variable" }] , type_name
 
 let literal : T.type_expression -> (constraints * T.type_variable) = fun t ->
   let pattern = type_expression_to_type_value t in
   let type_name = Core.fresh_type_variable () in
-  let aval = T.Reasons.(wrap (Todo "wrap: literal: whole") (T.P_variable type_name)) in 
+  let aval = T.Reasons.(wrap (Todo "wrap: literal: whole") (T.P_variable type_name)) in
   [{ c = C_equation { aval ; bval = pattern } ; reason = "wrap: literal" }] , type_name
 
 (* TODO : move to common *)
@@ -154,6 +154,14 @@ let let_in : T.type_expression -> T.type_expression option -> T.type_expression 
   let whole_expr = Core.fresh_type_variable () in
     c_equation result' (T.Reasons.wrap (Todo "wrap: let_in: whole") @@ T.P_variable whole_expr) "wrap: let_in: result (whole)"
   :: rhs_tv_opt', whole_expr
+
+let type_in : T.type_expression -> (constraints * T.type_variable) =
+  fun result ->
+  let result'     = type_expression_to_type_value result in
+  let whole_expr = Core.fresh_type_variable () in
+  [
+    c_equation result' (T.Reasons.wrap (Todo "wrap: type_in: whole") @@ T.P_variable whole_expr) "wrap: type_in: result (whole)"
+  ], whole_expr
 
 let recursive : T.type_expression -> (constraints * T.type_variable) =
   fun fun_type ->

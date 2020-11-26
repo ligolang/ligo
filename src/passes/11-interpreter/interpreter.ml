@@ -370,7 +370,7 @@ let rec apply_operator : Location.t -> Ast_typed.constant' -> value list -> valu
       return @@ V_Construct ("Some" , s)
     (*
     >>>>>>>>
-      Test operators 
+      Test operators
     >>>>>>>>
     *)
     | ( C_TEST_ORIGINATE, [ code ; storage ] ) ->
@@ -508,6 +508,9 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
     | E_let_in {let_binder ; rhs; let_result} -> (
       let* rhs' = eval_ligo rhs env in
       eval_ligo (let_result) (Env.extend env (let_binder,rhs'))
+    )
+    | E_type_in {type_binder=_ ; rhs=_; let_result} -> (
+      eval_ligo (let_result) env
     )
     | E_literal l ->
       eval_literal l

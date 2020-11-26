@@ -55,6 +55,9 @@ let rec decompile_expression : O.expression -> (I.expression, Errors.purificatio
     let%bind rhs = decompile_expression rhs in
     let%bind let_result = decompile_expression let_result in
     return @@ I.E_let_in {let_binder={var;ascr};attributes;rhs;let_result}
+  | O.E_type_in ti ->
+    let%bind ti = type_in self self_type ti in
+    return @@ I.E_type_in ti
   | O.E_raw_code {language;code} ->
     let%bind code  = self code in
     return @@ I.E_raw_code {language;code}

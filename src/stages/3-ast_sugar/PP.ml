@@ -89,6 +89,7 @@ and expression_content ppf (ec : expression_content) =
         expression rhs
         attributes attr
         expression let_result
+  | E_type_in   ti -> type_in expression type_expression ppf ti
   | E_raw_code {language; code} ->
       fprintf ppf "[%%%s %a]" language expression code
   | E_ascription {anno_expr; type_annotation} ->

@@ -114,6 +114,7 @@ and expression_content ppf (ec: expression_content) =
   | E_let_in {let_binder; rhs; let_result; inline} ->
       fprintf ppf "let %a = %a%a in %a" expression_variable let_binder expression
         rhs option_inline inline expression let_result
+  | E_type_in   ti -> type_in expression type_expression ppf ti
   | E_raw_code {language; code} ->
       fprintf ppf "[%%%s %a]" language expression code
   | E_recursive { fun_name;fun_type; lambda} ->
@@ -174,7 +175,7 @@ let constraint_identifier_set = fun ppf s   ->
       let aux ppf (ConstraintIdentifier k) =
         fprintf ppf "(ConstraintIdentifier %Li)" k in
       fprintf ppf "constraint_identifier_set [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
-        
+
 let identifierMap = fun f ppf idmap ->
       let lst = List.sort (fun (ConstraintIdentifier a, _) (ConstraintIdentifier b, _) -> Int64.compare a b) (RedBlackTrees.PolyMap.bindings idmap) in
       let aux ppf (ConstraintIdentifier k, v) =
@@ -315,7 +316,7 @@ let c_constructor_simpl ppf ({is_mandatory_constraint;reason_constr_simpl;tv;c_t
               c_tag : %a ;@
               tv_list : %a
               @]@,}"
-    is_mandatory_constraint 
+    is_mandatory_constraint
     reason_constr_simpl
     type_variable tv
     constant_tag c_tag

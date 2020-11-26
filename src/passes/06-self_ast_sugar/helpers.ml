@@ -43,6 +43,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a, 'err) re
       let%bind res = self res let_result in
       ok res
     )
+  | E_type_in ti -> Folds.type_in self (fun _ -> ok) init' ti
   | E_cond c -> Folds.conditional self init' c
   | E_recursive r -> Folds.recursive self (fun _ -> ok) init' r
   | E_sequence s -> Folds.sequence self init' s
@@ -138,6 +139,10 @@ let rec map_expression : 'err exp_mapper -> expression -> (expression, 'err) res
       let%bind rhs = self rhs in
       let%bind let_result = self let_result in
       return @@ E_let_in { let_binder ; mut; rhs ; let_result; attributes }
+    )
+  | E_type_in ti -> (
+      let%bind ti = Maps.type_in self ok ti in
+      return @@ E_type_in ti
     )
   | E_lambda l -> (
       let%bind l = Maps.lambda self ok l in
@@ -296,6 +301,10 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> ('a 
       let%bind (res,rhs) = self init' rhs in
       let%bind (res,let_result) = self res let_result in
       ok (res, return @@ E_let_in { let_binder ; mut; rhs ; let_result ; attributes })
+    )
+  | E_type_in ti -> (
+      let%bind res,ti = Fold_maps.type_in self idle init' ti in
+      ok (res, return @@ E_type_in ti)
     )
   | E_lambda l -> (
       let%bind res,l = Fold_maps.lambda self idle init' l in

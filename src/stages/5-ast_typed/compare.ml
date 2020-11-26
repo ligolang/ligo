@@ -103,7 +103,7 @@ and arrow {type1=ta1;type2=tb1} {type1=ta2;type2=tb2} =
     type_expression tb1 tb2
 
 let constant_tag (ct : constant_tag) (ct2 : constant_tag) =
-  Int.compare (constant_tag ct ) (constant_tag ct2 ) 
+  Int.compare (constant_tag ct ) (constant_tag ct2 )
 
 let binder (va,ta) (vb,tb) =
   cmp2 expression_variable va vb type_expression ta tb
@@ -117,14 +117,15 @@ let expression_tag expr =
   | E_lambda          _ -> 5
   | E_recursive       _ -> 6
   | E_let_in          _ -> 7
-  | E_raw_code        _ -> 8
+  | E_type_in         _ -> 8
+  | E_raw_code        _ -> 9
   (* Variant *)
-  | E_constructor     _ -> 9
-  | E_matching        _ -> 10
+  | E_constructor     _ -> 10
+  | E_matching        _ -> 11
   (* Record *)
-  | E_record          _ -> 11
-  | E_record_accessor _ -> 12
-  | E_record_update   _ -> 13
+  | E_record          _ -> 12
+  | E_record_accessor _ -> 13
+  | E_record_update   _ -> 14
 
 let rec expression a b =
   match a.expression_content,b.expression_content with
@@ -135,14 +136,15 @@ let rec expression a b =
   | E_lambda a, E_lambda b -> lambda a b
   | E_recursive a, E_recursive b -> recursive a b
   | E_let_in a, E_let_in b -> let_in a b
+  | E_type_in a, E_type_in b -> type_in a b
   | E_raw_code a, E_raw_code b -> raw_code a b
   | E_constructor a, E_constructor b -> constructor a b
   | E_matching a, E_matching b -> matching a b
   | E_record a, E_record b -> record a b
   | E_record_accessor a, E_record_accessor b -> record_accessor a b
   | E_record_update  a, E_record_update b -> record_update a b
-  | (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_recursive _| E_let_in _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _),
-    (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_recursive _| E_let_in _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _) ->
+  | (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_recursive _| E_let_in _| E_type_in _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _),
+    (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_recursive _| E_let_in _| E_type_in _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _) ->
     Int.compare (expression_tag a) (expression_tag b)
 
 and constant ({cons_name=ca;arguments=a}: constant) ({cons_name=cb;arguments=b}: constant) =
@@ -166,6 +168,12 @@ and let_in {let_binder=ba;rhs=ra;let_result=la;inline=aa} {let_binder=bb;rhs=rb;
     expression ra rb
     expression la lb
     bool  aa ab
+
+and type_in {type_binder=ba;rhs=ra;let_result=la} {type_binder=bb;rhs=rb;let_result=lb} =
+  cmp3
+    type_variable ba bb
+    type_expression ra rb
+    expression la lb
 
 and raw_code {language=la;code=ca} {language=lb;code=cb} =
   cmp2
@@ -397,7 +405,7 @@ and c_typeclass {tc_args=ta;typeclass=ca; original_id=x} {tc_args=tb;typeclass=c
     typeclass ca cb
     (Option.compare (constraint_identifier ))x y
 
-and c_access_label 
+and c_access_label
       {c_access_label_tval=val1;accessor=a1;c_access_label_tvar=var1}
       {c_access_label_tval=val2;accessor=a2;c_access_label_tvar=var2} =
   cmp3

@@ -25,6 +25,11 @@ let rec expression : environment -> expression -> expression = fun env expr ->
     let let_result = self ~env' c.let_result in
     return @@ E_let_in { c with rhs ; let_result }
   )
+  | E_type_in c -> (
+    let env' = Environment.add_type c.type_binder c.rhs env in
+    let let_result = self ~env' c.let_result in
+    return @@ E_type_in { c with let_result }
+  )
   (* rec fun_name binder -> result *)
   | E_recursive c -> (
     let env_fun_name = Environment.add_ez_binder c.fun_name c.fun_type env in
@@ -127,7 +132,7 @@ let program : environment -> program_fully_typed -> environment * program_fully_
       (post_env , decl_wrapped' :: rev_decls)
     )
     | Declaration_type t -> (
-      let post_env = Environment.add_type t.type_binder t.type_expr pre_env in      
+      let post_env = Environment.add_type t.type_binder t.type_expr pre_env in
       let wrap_content = Declaration_type t in
       let decl_wrapped' = { decl_wrapped with wrap_content } in
       (post_env , decl_wrapped' :: rev_decls)

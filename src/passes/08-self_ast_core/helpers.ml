@@ -15,13 +15,14 @@ let bind_map_lmap_t f map = bind_lmap (
 type ('a,'err) folder = 'a -> expression -> ('a, 'err) result
 let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a,'err) result = fun f init e ->
   let self = fold_expression f in
+  let idle = fun acc _ -> ok @@ acc in
   let%bind init' = f init e in
   match e.content with
   | E_literal _ | E_variable _ | E_raw_code _ -> ok init'
   | E_constant c -> Folds.constant self init' c
   | E_application app -> Folds.application self init' app
-  | E_lambda l -> Folds.lambda self (fun _ -> ok) init' l
-  | E_ascription a -> Folds.ascription self (fun _ -> ok) init' a
+  | E_lambda l -> Folds.lambda self idle init' l
+  | E_ascription a -> Folds.ascription self idle init' a
   | E_constructor c -> Folds.constructor self init' c
   | E_matching {matchee=e; cases} -> (
       let%bind res = self init' e in
@@ -36,7 +37,8 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a,'err) res
       let%bind res = self res let_result in
       ok res
     )
-  | E_recursive r -> Folds.recursive self (fun _ -> ok) init' r
+  | E_type_in ti -> Folds.type_in self idle init' ti
+  | E_recursive r -> Folds.recursive self idle init' r
 
 and fold_cases : ('a , 'err) folder -> 'a -> matching_expr -> ('a , 'err) result = fun f init m ->
   match m with
@@ -102,6 +104,10 @@ let rec map_expression : 'err exp_mapper -> expression -> (expression , 'err) re
       let%bind let_result = self let_result in
       return @@ E_let_in { let_binder ; rhs ; let_result; inline }
     )
+  | E_type_in ti -> (
+      let%bind ti = Maps.type_in self ok ti in
+      return @@ E_type_in ti
+    )
   | E_lambda l -> (
       let%bind l = Maps.lambda self ok l in
       return @@ E_lambda l
@@ -134,7 +140,7 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_express
     let%bind a' = Maps.type_app self a in
     return @@ T_app a'
   | T_variable _ -> ok te'
-  
+
 
 and map_cases : 'err exp_mapper -> matching_expr -> (matching_expr , 'err) result = fun f m ->
   match m with
@@ -215,6 +221,10 @@ let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> ('a
       let%bind (res,rhs) = self init' rhs in
       let%bind (res,let_result) = self res let_result in
       ok (res, return @@ E_let_in { let_binder ; rhs ; let_result ; inline })
+    )
+  | E_type_in ti -> (
+      let%bind res,ti = Fold_maps.type_in self idle init' ti in
+      ok (res, return @@ E_type_in ti)
     )
   | E_lambda l -> (
       let%bind res,l = Fold_maps.lambda self idle init' l in

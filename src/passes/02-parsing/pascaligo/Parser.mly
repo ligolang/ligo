@@ -196,20 +196,24 @@ declaration:
 
 (* Type declarations *)
 
-type_decl:
-  "type" type_name "is" type_expr ";"? {
+open_type_decl:
+  "type" type_name "is" type_expr {
     Scoping.check_reserved_name $2;
-    let stop =
-      match $5 with
-        Some region -> region
-      |        None -> type_expr_to_region $4 in
+    let stop   = type_expr_to_region $4 in
     let region = cover $1 stop in
     let value  = {kwd_type   = $1;
                   name       = $2;
                   kwd_is     = $3;
                   type_expr  = $4;
-                  terminator = $5}
+                  terminator = None}
     in {region; value} }
+
+type_decl:
+  open_type_decl ";"? {
+    let type_decl : CST.type_decl = $1.value in
+    let type_decl = {type_decl with terminator=$2} in
+    {$1 with value = type_decl} }
+
 
 type_annot:
   ":" type_expr { $1,$2 }
@@ -435,6 +439,7 @@ block:
 statement:
   instruction     { Instr $1 }
 | open_data_decl  { Data  $1 }
+| open_type_decl  { Type  $1 }
 
 open_data_decl:
   open_const_decl { LocalConst $1 }

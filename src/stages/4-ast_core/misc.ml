@@ -59,7 +59,7 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit option =
         | _ -> None
       in
       let all = LMap.merge aux sma smb in
-      if    ((LMap.cardinal all) = (LMap.cardinal sma)) 
+      if    ((LMap.cardinal all) = (LMap.cardinal sma))
          || ((LMap.cardinal all) = (LMap.cardinal smb)) then
         Some ()
       else None
@@ -80,6 +80,7 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit option =
 
   | (E_variable _, _) | (E_lambda _, _)
   | (E_application _, _) | (E_let_in _, _)
+  | (E_type_in _, _)
   | (E_raw_code _, _)
   | (E_recursive _,_) | (E_record_accessor _, _)
   | (E_matching _, _)

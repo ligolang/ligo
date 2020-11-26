@@ -168,6 +168,12 @@ let let_in expression type_expression ppf = fun {let_binder; rhs; let_result; at
     attributes attr
     expression let_result
 
+let type_in expression type_expression ppf = fun {type_binder; rhs; let_result;} ->
+  fprintf ppf "@[let %a =@;<1 2>%a in@ %a@]"
+    type_variable type_binder
+    type_expression rhs
+    expression let_result
+
 let ascription expression type_expression ppf = fun {anno_expr; type_annotation} ->
   fprintf ppf "%a : %a"
     expression anno_expr

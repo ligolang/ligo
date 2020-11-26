@@ -212,6 +212,7 @@ and pp_statements s = pp_nsepseq ";" pp_statement s
 and pp_statement = function
   Instr s -> pp_instruction s
 | Data  s -> pp_data_decl   s
+| Type  s -> pp_type_decl   s
 
 and pp_data_decl = function
   LocalConst d -> pp_const_decl d

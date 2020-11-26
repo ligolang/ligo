@@ -135,6 +135,8 @@ and expression = {
     type_expression: type_expression ;
   }
 
+and expr = expression
+
 and map_kv = {
     key : expression ;
     value : expression ;
@@ -157,6 +159,7 @@ and expression_content =
   | E_lambda of lambda
   | E_recursive of recursive
   | E_let_in of let_in
+  | E_type_in of (expr, ty_expr) type_in
   | E_raw_code of raw_code
   (* Variant *)
   | E_constructor of constructor (* For user defined constructors *)

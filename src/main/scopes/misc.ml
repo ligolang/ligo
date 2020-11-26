@@ -23,6 +23,7 @@ let extract_variable_types :
       let return = add env in
       match exp.expression_content with
       | E_literal _ | E_application _ | E_raw_code _ | E_constructor _
+      | E_type_in _
       | E_record _ | E_record_accessor _ | E_record_update _ | E_constant _ -> return []
       | E_variable v -> return [(v,exp.type_expression)]
       | E_lambda { binder ; _ } ->
@@ -84,7 +85,7 @@ let get_binder_name : 'a Var.t -> string = fun v ->
 let make_def_id name i =
   (name ^ "#" ^ (string_of_int i), i+1)
 
-let add_shadowing_def : (int * _ Var.t) -> def -> def_map -> (int * def_map) =  fun (i,var) def env -> 
+let add_shadowing_def : (int * _ Var.t) -> def -> def_map -> (int * def_map) =  fun (i,var) def env ->
   if Var.is_generated var then (i,env)
   else
     let name = get_binder_name var in
@@ -100,24 +101,24 @@ let add_shadowing_def : (int * _ Var.t) -> def -> def_map -> (int * def_map) =  
 
 type type_ppx = Ast_typed.type_expression -> Ast_typed.type_expression
 
-let resolve_if : 
+let resolve_if :
   with_types:bool -> ?ppx:type_ppx -> bindings_map -> Ast_core.expression_variable -> type_case =
   fun ~with_types ?(ppx = fun i -> i) bindings var ->
     if with_types then (
-      let t_opt = Bindings_map.find_opt var bindings in 
+      let t_opt = Bindings_map.find_opt var bindings in
       match t_opt with
       | Some t -> Resolved (ppx t)
       | None -> Unresolved
-    ) 
+    )
     else Unresolved
 
-let make_v_def_from_core : 
+let make_v_def_from_core :
   with_types:bool -> bindings_map -> Ast_core.expression_variable -> Location.t -> Location.t -> def =
   fun ~with_types bindings var range body_range ->
     let name' = get_binder_name var.wrap_content in
     let type_case = resolve_if ~with_types bindings var in
     make_v_def name' type_case range body_range
-      
+
 let make_v_def_option_type :
   with_types:bool -> bindings_map -> Ast_core.expression_variable -> Ast_core.type_expression option -> Location.t -> Location.t -> def =
   fun ~with_types bindings var core_t_opt range body_range ->

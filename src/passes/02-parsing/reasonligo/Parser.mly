@@ -433,6 +433,7 @@ base_cond:
 base_expr(right_expr):
   let_expr(right_expr)
 | fun_expr(right_expr)
+| local_type_decl(right_expr)
 | disj_expr_level { $1 }
 
 conditional(right_expr):
@@ -516,6 +517,16 @@ let_expr(right_expr):
     let region  = cover $2 stop
     and value   = {kwd_let; kwd_rec; binding; semi; body; attributes}
     in ELetIn {region; value} }
+
+local_type_decl(right_expr):
+  type_decl ";" right_expr {
+    let type_decl = $1.value in
+    let semi      = $2 in
+    let body      = $3 in
+    let stop      = expr_to_region $3 in
+    let region    = cover $1.region stop
+    and value     = {type_decl; semi; body}
+    in ETypeIn {region; value} }
 
 fun_arg:
   sub_irrefutable type_annotation? { 
@@ -836,6 +847,7 @@ series:
 %inline last_expr_inner: 
   fun_expr(last_expr_opt_semi)
 | let_in_sequence
+| local_type_decl(last_expr_opt_semi)
 | switch_expr(last_expr_opt_semi) ";"? { $1 }
 
 last_expr_opt_semi: 

@@ -319,6 +319,19 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
     | None -> (CST.Data lin, [])
     in
     return @@ (Some lst, expr)
+  | E_type_in {type_binder;rhs;let_result} ->
+    let kwd_type = Region.ghost
+    and name = decompile_variable type_binder
+    and kwd_is = Region.ghost in
+    let%bind type_expr = decompile_type_expr dialect rhs in
+    let terminator = terminator dialect in
+    let tin = wrap @@ (CST.{kwd_type; name; kwd_is; type_expr; terminator}) in
+    let%bind (lst, expr) = decompile_eos dialect Expression let_result in
+    let lst = match lst with
+      Some lst -> List.Ne.cons (CST.Type tin) lst
+    | None -> (CST.Type tin, [])
+    in
+    return @@ (Some lst, expr)
   | E_raw_code {language; code} ->
     let language = wrap @@ wrap @@ language in
     let%bind code = decompile_expression ~dialect code in
