@@ -297,10 +297,16 @@ vscode-extension-sexp-tests:
   script:
     - nix-build tools/lsp -A checks.x86_64-linux.squirrel-sexp-test
 
-vscode-extension:
+vscode-extension-linux:
   extends: .nix
   only:
     - merge_requests
+  script:
+    - nix-build tools/lsp -A checks.x86_64-linux.vscode-extension-native
+
+vscode-extension:
+  extends: .nix
+  only:
     - dev
     - tooling
     - /^.*-run-dev$/
