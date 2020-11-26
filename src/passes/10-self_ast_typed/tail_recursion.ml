@@ -29,6 +29,9 @@ let rec check_recursive_call : expression_variable -> bool -> expression -> (uni
     let%bind _ = check_recursive_call n false rhs in
     let%bind _ = check_recursive_call n final_path let_result in
     ok ()
+  | E_type_in {rhs=_;let_result;_} ->
+    let%bind _ = check_recursive_call n final_path let_result in
+    ok ()
   | E_raw_code _ ->
     ok ()
   | E_constructor {element;_} ->

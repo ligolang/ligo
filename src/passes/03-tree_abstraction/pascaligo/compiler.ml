@@ -746,6 +746,17 @@ and compile_data_declaration : next:AST.expression -> CST.data_decl -> _ =
       let%bind fun_name,fun_type,attr,lambda = compile_fun_decl fun_decl in
       return loc fun_name fun_type attr lambda
 
+and compile_type_decl : next:AST.expression -> CST.type_decl Region.reg -> _ =
+  fun ~next type_decl ->
+  let return loc var init =
+    ok @@ e_type_in ~loc var init next
+  in
+  let td,loc = r_split type_decl in
+  let name,_ = r_split td.name in
+  let%bind rhs = compile_type_expression td.type_expr in
+  let name = Var.of_name name in
+  return loc name rhs
+
 and compile_statement : ?next:AST.expression -> CST.statement -> _ result =
   fun ?next statement ->
   let return = ok in
@@ -756,6 +767,10 @@ and compile_statement : ?next:AST.expression -> CST.statement -> _ result =
   | Data dd ->
     let next = Option.unopt ~default:(e_skip ()) next in
     let%bind dd = compile_data_declaration ~next dd
+    in return (Some dd)
+  | Type td ->
+    let next = Option.unopt ~default:(e_skip ()) next in
+    let%bind dd = compile_type_decl ~next td
     in return (Some dd)
 
 and compile_block : ?next:AST.expression -> CST.block CST.reg -> _ result =

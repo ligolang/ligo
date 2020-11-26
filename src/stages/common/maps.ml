@@ -53,6 +53,12 @@ let let_in :  ('a -> ('b, _) result) -> ('c -> ('d, _) result) -> ('a,'c) let_in
   let%bind let_result = f let_result in
   ok @@ {let_binder; rhs; let_result; attributes}
 
+let type_in :  ('a -> ('b, _) result) -> ('c -> ('d, _) result) -> ('a,'c) type_in -> (('b,'d) type_in, _) result
+= fun f g {type_binder; rhs; let_result} ->
+  let%bind rhs        = g rhs in
+  let%bind let_result = f let_result in
+  ok @@ {type_binder; rhs; let_result}
+
 let lambda : ('a -> ('b, _) result) -> ('c -> ('d, _) result) -> ('a,'c) lambda -> (('b,'d) lambda , _) result
 = fun f g {binder=b;output_type;result}->
   let%bind binder = binder g b in

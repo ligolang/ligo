@@ -151,7 +151,7 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
     let name : O.type_variable = Var.todo_cast type_operator in
     let%bind v = trace_option (unbound_type_variable e name t.location) @@
       Environment.get_type_opt name e in
-    let aux : O.type_injection -> (O.type_expression, typer_error) result = fun inj -> 
+    let aux : O.type_injection -> (O.type_expression, typer_error) result = fun inj ->
       (*handles converters*)
       let open Stage_common.Constant in
       let {language=_ ; injection ; parameters} : O.type_injection = inj in
@@ -179,7 +179,7 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
             | T_sum cmap -> ok cmap.content
             | _ -> fail (michelson_comb_no_variant t.location) in
           let pair = Typer_common.Michelson_type_converter.convert_variant_to_left_comb (Ast_typed.LMap.to_kv_list_rev cmap) in
-          return @@ pair 
+          return @@ pair
       | _ -> return (T_constant inj)
     in
     match get_param_inj v with
@@ -455,6 +455,11 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
     let e' = Environment.add_ez_declaration binder rhs e in
     let%bind let_result = type_expression' e' let_result in
     return (E_let_in {let_binder = binder; rhs; let_result; inline}) let_result.type_expression
+  | E_type_in {type_binder; rhs ; let_result} ->
+    let%bind rhs = evaluate_type e rhs in
+    let e' = Environment.add_type type_binder rhs e in
+    let%bind let_result = type_expression' e' let_result in
+    return (E_type_in {type_binder; rhs; let_result}) let_result.type_expression
   | E_raw_code {language;code} ->
     let%bind (code,type_expression) = trace_option (expected_ascription code) @@
       I.get_e_ascription code.content in
@@ -578,6 +583,9 @@ let rec untype_expression (e:O.expression) : (I.expression , typer_error) result
       let%bind rhs = untype_expression rhs in
       let%bind result = untype_expression let_result in
       return (e_let_in {var=let_binder ; ascr=(Some tv)} inline rhs result)
+  | E_type_in ti ->
+    let%bind ti = Stage_common.Maps.type_in untype_expression Typer_common.Untyper.untype_type_expression ti in
+    return @@ make_e @@ E_type_in ti
   | E_raw_code {language; code} ->
       let%bind code = untype_expression code in
       return (e_raw_code language code)

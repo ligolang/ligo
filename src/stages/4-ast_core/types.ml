@@ -68,6 +68,7 @@ and expression_content =
   | E_lambda    of (expr, ty_expr) lambda
   | E_recursive of (expr, ty_expr) recursive
   | E_let_in    of let_in
+  | E_type_in of (expr, ty_expr) type_in
   | E_raw_code of expr raw_code
   | E_constructor of expr constructor
   | E_matching of matching

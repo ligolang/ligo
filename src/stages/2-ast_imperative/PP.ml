@@ -78,7 +78,8 @@ and expression_content ppf (ec : expression_content) =
         expression matchee (matching expression)
         cases
   | E_recursive  r -> recursive expression type_expression ppf r
-  | E_let_in    li -> let_in expression type_expression ppf li
+  | E_let_in    li -> let_in  expression type_expression ppf li
+  | E_type_in   ti -> type_in expression type_expression ppf ti
   | E_raw_code   r -> raw_code expression ppf r
   | E_ascription a -> ascription expression type_expression ppf a
   | E_cond       c -> cond       expression ppf c

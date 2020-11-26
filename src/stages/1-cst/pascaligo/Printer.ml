@@ -321,6 +321,7 @@ and print_statements state sequence =
 and print_statement state = function
   Instr instr -> print_instruction state instr
 | Data  data  -> print_data_decl   state data
+| Type  type_ -> print_type_decl   state type_
 
 and print_instruction state = function
   Cond        {value; _} -> print_conditional state value
@@ -912,15 +913,25 @@ let rec pp_cst state {decl; _} =
 
 and pp_declaration state = function
   TypeDecl {value; region} ->
-    pp_loc_node state "TypeDecl" region;
-    pp_ident (state#pad 2 0) value.name;
-    pp_type_expr (state#pad 2 1) value.type_expr
+    pp_loc_node  state "TypeDecl" region;
+    pp_type_decl state value
 | ConstDecl {value; region} ->
     pp_loc_node state "ConstDecl" region;
     pp_const_decl state value
 | FunDecl {value; region} ->
     pp_loc_node state "FunDecl" region;
     pp_fun_decl state value
+
+and pp_type_decl state (decl : type_decl) =
+  let () =
+    let state = state#pad 2 0 in
+    pp_node  state "<name>";
+    pp_ident (state#pad 1 0) decl.name in
+  let () =
+    let state = state#pad 2 1 in
+    pp_node  state "<type_expr>";
+    pp_type_expr (state#pad 1 0) decl.type_expr
+  in ()
 
 and pp_fun_decl state decl =
   let arity = if decl.kwd_recursive = None then 0 else 1 in
@@ -1146,6 +1157,9 @@ and pp_statement state = function
 | Data data_decl ->
     pp_node state "Data";
     pp_data_decl (state#pad 1 0) data_decl
+| Type type_decl ->
+    pp_node state "Type";
+    pp_type_decl (state#pad 1 0) type_decl.value
 
 and pp_instruction state = function
   Cond {value; region} ->

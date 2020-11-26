@@ -224,6 +224,13 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     let attributes = decompile_attributes attributes in
     let lin : CST.let_in = {kwd_let=ghost;kwd_rec=None;binding;semi=ghost;body;attributes} in
     return_expr @@ CST.ELetIn (wrap lin)
+  | E_type_in {type_binder;rhs;let_result} ->
+    let name = wrap @@ Var.to_name type_binder in
+    let%bind type_expr = decompile_type_expr rhs in
+    let type_decl : CST.type_decl = {kwd_type=ghost;name;eq=ghost;type_expr} in
+    let%bind body = decompile_expression let_result in
+    let tin : CST.type_in = {type_decl;semi=ghost;body} in
+    return_expr @@ CST.ETypeIn (wrap tin)
   | E_raw_code {language; code} ->
     let language = wrap @@ wrap @@ language in
     let%bind code = decompile_expression code in

@@ -82,6 +82,9 @@ let rec decompile_expression : O.expression -> (I.expression, desugaring_error) 
       let%bind let_result = self let_result in
       let attributes = if inline then ["inline"] else [] in
       return @@ I.E_let_in {let_binder;mut=false;attributes;rhs;let_result}
+    | O.E_type_in ti ->
+      let%bind ti = type_in self self_type ti in
+      return @@ I.E_type_in ti
     | O.E_raw_code rc ->
       let%bind rc = raw_code self rc in
       return @@ I.E_raw_code rc

@@ -116,6 +116,9 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
       let%bind let_result = self let_result in
       let inline = get_inline attributes in
       return @@ O.E_let_in {let_binder;inline;rhs;let_result}
+    | I.E_type_in ti ->
+      let%bind ti = type_in self self_type ti in
+      return @@ O.E_type_in ti
     | I.E_raw_code rc ->
       let%bind rc = raw_code self rc in
       return @@ O.E_raw_code rc

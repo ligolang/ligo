@@ -231,6 +231,13 @@ let let_in expression type_expression {let_binder;rhs;let_result;attributes=attr
     ("attributes", attributes attr);
   ]
 
+let type_in expression type_expression {type_binder;rhs;let_result} =
+  `Assoc [
+    ("let_binder", type_variable_to_yojson type_binder );
+    ("rhs", type_expression rhs);
+    ("let_result", expression let_result);
+  ]
+
 let raw_code expression {language;code} =
   `Assoc [
     ("language", `String language);

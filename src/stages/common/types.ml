@@ -94,7 +94,13 @@ type ('exp, 'ty_exp) let_in = {
     let_result: 'exp ;
     attributes: attributes ;
   }
-  [@@deriving yojson]
+
+type ('exp, 'ty_exp) type_in = {
+    type_binder: type_variable ;
+    rhs        : 'ty_exp ;
+    let_result : 'exp ;
+  }
+
 type 'exp raw_code = {
   language : string ;
   code : 'exp ;

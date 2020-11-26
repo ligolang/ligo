@@ -276,6 +276,7 @@ and statements = (statement, semi) nsepseq
 and statement =
   Instr of instruction
 | Data  of data_decl
+| Type  of type_decl reg
 
 and data_decl =
   LocalConst of const_decl reg

@@ -1630,6 +1630,24 @@ let let_in_religo () : (unit, _) result =
   in
   ok ()
 
+let local_type_decl program : (unit, _) result =
+  let%bind () =
+    expect_eq program "local_type" (e_unit ()) (e_int 3)
+  in
+  ok ()
+
+let local_type_decl_ligo () : (unit, _) result =
+  let%bind program = type_file "./contracts/local_type_decl.ligo" in
+  local_type_decl program
+
+let local_type_decl_mligo () : (unit, _) result =
+  let%bind program = mtype_file "./contracts/local_type_decl.mligo" in
+  local_type_decl program
+
+let local_type_decl_religo () : (unit, _) result =
+  let%bind program = retype_file "./contracts/local_type_decl.religo" in
+  local_type_decl program
+
 let match_variant () : (unit, _) result =
   let%bind program = mtype_file "./contracts/match.mligo" in
   let%bind () =
@@ -2537,6 +2555,9 @@ let main = test_suite "Integration (End to End)"
     test no "counter contract (religo)" counter_religo ;
     test no "let-in (mligo)" let_in_mligo ;
     test no "let-in (religo)" let_in_religo ;
+    test no "local type declaration (ligo)" local_type_decl_ligo;
+    test no "local type declaration (mligo)" local_type_decl_mligo;
+    test no "local type declaration (religo)" local_type_decl_religo;
     test no "match variant (mligo)" match_variant ;
     test no "match variant (religo)" match_variant_re ;
     test no "match variant 2 (mligo)" match_matej ;

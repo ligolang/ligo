@@ -24,6 +24,9 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.program -
       let all_defs = merge_defs env all_defs in
       find_scopes' (i,all_defs,env,scopes,let_result.location) bindings let_result
     )
+    | E_type_in { type_binder=_ ; rhs=_ ; let_result } -> (
+      find_scopes' (i,all_defs,env,scopes,let_result.location) bindings let_result
+    )
     | E_recursive { fun_name ; fun_type ; lambda = { result ; _ } } -> (
       let def = make_v_def_option_type bindings fun_name (Some fun_type) fun_name.location result.location in
       let (i,env) = add_shadowing_def (i,fun_name.wrap_content) def env in

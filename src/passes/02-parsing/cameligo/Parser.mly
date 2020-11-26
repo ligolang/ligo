@@ -440,6 +440,7 @@ base_cond:
 base_expr(right_expr):
   tuple_expr
 | let_expr(right_expr)
+| local_type_decl(right_expr)
 | fun_expr(right_expr)
 | disj_expr_level { $1 }
 
@@ -535,6 +536,15 @@ let_expr(right_expr):
                   kwd_in     = $5;
                   body       = $6}
     in ELetIn {region; value} }
+
+local_type_decl(right_expr):
+  type_decl "in" right_expr  {
+    let stop   = expr_to_region $3 in
+    let region = cover $1.region stop
+    and value  = {type_decl  = $1.value;
+                  kwd_in     = $2;
+                  body       = $3}
+    in ETypeIn {region; value} }
 
 fun_expr(right_expr):
   "fun" nseq(irrefutable) "->" right_expr {

@@ -258,6 +258,7 @@ and expr =
 | ETuple   of (expr, comma) nsepseq reg
 | EPar     of expr par reg
 | ELetIn   of let_in reg
+| ETypeIn  of type_in reg
 | EFun     of fun_expr reg
 | ESeq     of expr injection reg
 | ECodeInj of code_inj reg
@@ -397,6 +398,12 @@ and let_in = {
   attributes : attributes
 }
 
+and type_in = {
+  type_decl  : type_decl;
+  kwd_in     : kwd_in;
+  body       : expr;
+}
+
 and fun_expr = {
   kwd_fun    : kwd_fun;
   binders    : pattern nseq;
@@ -505,6 +512,7 @@ let expr_to_region = function
 | EList e -> list_expr_to_region e
 | EConstr e -> constr_expr_to_region e
 | EAnnot {region;_ } | ELetIn {region;_}   | EFun {region;_}
+| ETypeIn {region;_ }
 | ECond {region;_}   | ETuple {region;_}   | ECase {region;_}
 | ECall {region;_}   | EVar {region; _}    | EProj {region; _}
 | EUnit {region;_}   | EPar {region;_}     | EBytes {region; _}

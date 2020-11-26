@@ -156,6 +156,7 @@ and pp_expr = function
 | ETuple      e -> pp_tuple_expr e
 | EPar        e -> pp_par_expr e
 | ELetIn      e -> pp_let_in e
+| ETypeIn     e -> pp_type_in e
 | EFun        e -> pp_fun e
 | ESeq        e -> pp_seq e
 | ECodeInj e -> pp_code_inj e
@@ -367,6 +368,14 @@ and pp_let_in {value; _} =
   and attr    = pp_attributes attributes
   in attr ^^ bindings
      ^^ string ";" ^^ hardline ^^ pp_expr body
+
+and pp_type_in {value; _} =
+  let {type_decl; body; _} = value in
+  let {name; type_expr; _} = type_decl
+  in string "let"
+     ^^ prefix 2 1 (pp_ident name ^^ string "=")
+                   (pp_type_expr type_expr)
+     ^^ string " in" ^^ hardline ^^ group (pp_expr body)
 
 and pp_fun {value; _} =
   let {binders; lhs_type; body; _} = value in

@@ -81,7 +81,7 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
     let name : O.type_variable = Var.todo_cast type_operator in
     let%bind v = trace_option (unbound_type_variable e name t.location) @@
       Environment.get_type_opt name e in
-    let aux : O.type_injection -> (O.type_expression, typer_error) result = fun inj -> 
+    let aux : O.type_injection -> (O.type_expression, typer_error) result = fun inj ->
       (*handles converters*)
       let open Stage_common.Constant in
       let {language=_ ; injection ; parameters} : O.type_injection = inj in
@@ -109,7 +109,7 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
             | T_sum cmap -> ok cmap.content
             | _ -> fail (michelson_comb_no_variant t.location) in
           let pair = Typer_common.Michelson_type_converter.convert_variant_to_left_comb (Ast_typed.LMap.to_kv_list_rev cmap) in
-          return @@ pair 
+          return @@ pair
       | _ -> return (T_constant inj)
     in
     match get_param_inj v with
@@ -301,6 +301,14 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
       Wrap.let_in rhs.type_expression rhs_tv_opt let_result.type_expression in
     return_wrapped (E_let_in {let_binder; rhs; let_result; inline}) e state wrapped
 
+  | E_type_in {type_binder; rhs ; let_result} ->
+    let%bind rhs = evaluate_type e rhs in
+    let e = Environment.add_type type_binder rhs e in
+    let%bind e, state, let_result = type_expression e state let_result in
+    let wrapped =
+      Wrap.type_in let_result.type_expression in
+    return_wrapped (E_type_in {type_binder; rhs; let_result}) e state wrapped
+
   | E_recursive {fun_name;fun_type;lambda} ->
     (* Add the function name to the environment before evaluating the lambda*)
     let fun_name = cast_var fun_name in
@@ -428,7 +436,7 @@ and type_match : environment -> _ O'.typer_state -> O.type_expression -> I.match
 
 module Check : sig
   val check_expression_has_no_unification_vars : O.expression -> (unit, 'a) Simple_utils.Trace.result
-    
+
   val check_has_no_unification_vars : O.program_with_unification_vars -> (O.program_fully_typed, 'a) Simple_utils.Trace.result
 end = struct
   let rec expression : O.expression -> _ = function ({ expression_content; location=_; type_expression } as e) ->
@@ -453,6 +461,7 @@ end = struct
     | O.E_lambda          { binder=_; result } -> expression result
     | O.E_recursive       { fun_name=_; fun_type; lambda={ binder=_; result } } -> let%bind () = expression result in te where fun_type
     | O.E_let_in          { let_binder=_; rhs; let_result; inline=_ } -> let%bind () = expression rhs in expression let_result
+    | O.E_type_in         { type_binder=_; rhs=_; let_result} -> expression let_result
     | O.E_raw_code        { language=_; code } -> expression code
     | O.E_constructor     { constructor=_; element } -> expression element
     | O.E_matching        { matchee; cases } -> let%bind () = expression matchee in

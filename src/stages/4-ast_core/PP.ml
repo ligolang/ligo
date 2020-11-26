@@ -70,6 +70,7 @@ and expression_content ppf (ec : expression_content) =
         cases
   | E_let_in { let_binder ;rhs ; let_result; inline } ->
     fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]" (binder type_expression) let_binder expression rhs option_inline inline expression let_result
+  | E_type_in   ti -> type_in expression type_expression ppf ti
   | E_raw_code r -> raw_code expression ppf r
   | E_ascription a -> ascription expression type_expression ppf a
 

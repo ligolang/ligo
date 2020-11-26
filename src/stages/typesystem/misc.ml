@@ -40,6 +40,10 @@ module Substitution = struct
       let () = ignore @@ substs in
       ok var
 
+    and s_type_variable : (T.type_variable,_) w = fun ~substs var ->
+      let () = ignore @@ substs in
+      ok var
+
     and s_label : (T.label,_) w = fun ~substs l ->
       let () = ignore @@ substs in
       ok l
@@ -146,6 +150,11 @@ module Substitution = struct
         let%bind rhs = s_expression ~substs rhs in
         let%bind let_result = s_expression ~substs let_result in
         ok @@ T.E_let_in { let_binder; rhs; let_result; inline}
+      | T.E_type_in          { type_binder; rhs; let_result} ->
+        let%bind type_binder = s_type_variable ~substs type_binder in
+        let%bind rhs = s_type_expression ~substs rhs in
+        let%bind let_result = s_expression ~substs let_result in
+        ok @@ T.E_type_in { type_binder; rhs; let_result}
       | T.E_raw_code {language; code} ->
         let%bind code = s_expression ~substs code in
         ok @@ T.E_raw_code {language; code}

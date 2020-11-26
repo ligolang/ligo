@@ -364,6 +364,13 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     let%bind body = compile_expression body in
     let aux (binder,attr,rhs) expr = e_let_in ~loc binder attr rhs expr in
     return @@ List.fold_right aux lst body
+  | ETypeIn ti ->
+    let (ti, loc) = r_split ti in
+    let ({type_decl={name;type_expr;_};kwd_in=_;body} : CST.type_in) = ti in
+    let type_binder = Var.of_name name.value in
+    let%bind rhs = compile_type_expression type_expr in
+    let%bind body = compile_expression body in
+    return @@ e_type_in ~loc type_binder rhs body
   | ECodeInj ci ->
     let (ci, loc) = r_split ci in
     let (language, _) = r_split ci.language in

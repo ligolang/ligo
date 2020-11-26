@@ -84,6 +84,9 @@ let rec untype_expression (e:O.expression) : (I.expression, typer_error) result 
     let%bind let_result = untype_expression let_result in
     let var=Location.map Var.todo_cast let_binder in
     return @@ E_let_in {let_binder={var;ascr=Some tv}; rhs; let_result; inline}
+  | E_type_in ti ->
+    let%bind ti = Stage_common.Maps.type_in untype_expression untype_type_expression ti in
+    return @@ E_type_in ti
   | E_raw_code {language; code} ->
     let%bind code = untype_expression code in
     return @@ E_raw_code {language; code}

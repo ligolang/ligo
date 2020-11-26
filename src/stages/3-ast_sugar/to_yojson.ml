@@ -41,6 +41,7 @@ and expression_content = function
   | E_lambda      e -> `List [ `String "E_lambda";      lambda      expression type_expression e ]
   | E_recursive   e -> `List [ `String "E_recursive";   recursive   expression type_expression e ]
   | E_let_in      e -> `List [ `String "E_let_in";      let_in      e ]
+  | E_type_in     e -> `List [ `String "E_type_in";     type_in   expression type_expression e ]
   | E_raw_code    e -> `List [ `String "E_raw_code";    raw_code    expression e ]
   (* Variant *)
   | E_constructor e -> `List [ `String "E_constructor"; constructor expression e ]
