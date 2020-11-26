@@ -302,7 +302,7 @@ vscode-extension-linux:
   only:
     - merge_requests
   script:
-    - nix-build tools/lsp -A checks.x86_64-linux.vscode-extension-native
+    - nix-build tools/lsp -A packages.x86_64-linux.vscode-extension-native
 
 vscode-extension:
   extends: .nix
