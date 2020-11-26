@@ -5,19 +5,31 @@
 
 packages:
 - completed:
-    hackage: lsp-1.0.0.0@sha256:31fc5d7d0548031f6e065fff893d1ae4b71d15cee70e6768bb73ab631ddffddd,5727
+    subdir: .
+    name: lsp
+    version: 1.0.0.0
+    git: https://github.com/serokell/lsp.git
     pantry-tree:
-      size: 1397
-      sha256: 391c18420115ba6dfea52d634c64e1d7c465b17bfbd33808cd90bfc35d69267b
+      size: 7223
+      sha256: bbfd72b979d7bdecfa81027570fb7c795a30b568c09b94ad7f740e6a407bf9ac
+    commit: 1a81bfc5d18e35592b7b3dc752c9584b7a73d589
   original:
-    hackage: lsp-1.0.0.0
+    subdir: .
+    git: https://github.com/serokell/lsp.git
+    commit: 1a81bfc5d18e35592b7b3dc752c9584b7a73d589
 - completed:
-    hackage: lsp-types-1.0.0.0@sha256:dfe637cc9376b03275eb2c557516d20d20eb0a736757fb5f30e551b91a540671,4311
+    subdir: lsp-types
+    name: lsp-types
+    version: 1.0.0.0
+    git: https://github.com/serokell/lsp.git
     pantry-tree:
-      size: 3953
-      sha256: 67e3f6b98b6ccebe5441a43ff642777c86671cefb726f5be4929c93c6848f804
+      size: 4003
+      sha256: a3098847f4adda3dc4bdac35740000b8a2f83854daa890184e303ffb6a2f41e9
+    commit: 1a81bfc5d18e35592b7b3dc752c9584b7a73d589
   original:
-    hackage: lsp-types-1.0.0.0
+    subdir: lsp-types
+    git: https://github.com/serokell/lsp.git
+    commit: 1a81bfc5d18e35592b7b3dc752c9584b7a73d589
 - completed:
     hackage: dependent-map-0.4.0.0@sha256:ca2b131046f4340a1c35d138c5a003fe4a5be96b14efc26291ed35fd08c62221,1657
     pantry-tree:
