@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-{ haskell-nix, grammars, tree }:
+{ haskell-nix, grammars }:
 let
   project = haskell-nix.stackProject {
     src = haskell-nix.haskellLib.cleanGit { src = ./.; };

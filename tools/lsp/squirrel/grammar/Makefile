@@ -1,4 +1,4 @@
-DIRS = $(wildcard */.)
+DIRS = camligo pascaligo reasonligo
 
 generate: $(DIRS)
 

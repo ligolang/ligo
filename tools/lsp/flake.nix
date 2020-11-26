@@ -20,13 +20,14 @@
     flake-utils.lib.eachSystem [ "x86_64-linux" "x86_64-darwin" ] (system:
       let
         haskellNix = import haskell-nix {
-          sourcesOverride = { hackage = hackage-nix; stackage = stackage-nix; };
+          sourcesOverride = { hackage = hackage-nix; stackage = stackage-nix; } // haskell-nix.sources;
         };
 
         nixpkgsArgs = {
           overlays = [
             nix-npm-buildpackage.overlay
-          ] ++ haskellNix.nixpkgsArgs.overlays ++ [
+            haskellNix.allOverlays.combined-eval-on-build
+          ] ++ [
             (final: prev:
               let
                 tree-sitter-prebuilt-tarballs = {
@@ -68,8 +69,6 @@
 
         squirrel = pkgs.callPackage ./squirrel { };
 
-        squirrel-static = pkgs.pkgsCross.musl64.callPackage ./squirrel { };
-
         squirrel-sexp-test = pkgs.stdenv.mkDerivation {
           name = "squirrel-sexp-test";
           src = ./squirrel;
@@ -82,25 +81,71 @@
           '';
         };
 
-        exes =
-          builtins.mapAttrs (_: project: project.components.exes.ligo-squirrel)
-          ({
-            inherit squirrel;
-          } // (if system != "x86_64-darwin" then {
-            inherit squirrel-static;
-          } else
-            { }));
+        pack = pkg:
+          pkg.overrideAttrs (_: {
+            postInstall = with pkgs; ''
+              mkdir -p $out/lib
+              cp ${gmp}/lib/* $out/lib
+              chmod -R 777 $out/lib/
+              install_name_tool -change ${gmp}/lib/libgmp.10.dylib @executable_path/../lib/libgmp.dylib $out/bin/ligo-squirrel
+              install_name_tool -change ${libffi}/lib/libffi.7.dylib /usr/lib/libffi.dylib $out/bin/ligo-squirrel
+              install_name_tool -change ${libiconv}/lib/libiconv.dylib /usr/lib/libiconv.dylib $out/bin/ligo-squirrel
+              install_name_tool -change ${darwin.Libsystem}/lib/libSystem.B.dylib /usr/lib/libSystem.B.dylib $out/bin/ligo-squirrel
+              install_name_tool -change ${darwin.Libsystem}/lib/libSystem.B.dylib /usr/lib/libSystem.B.dylib $out/lib/libgmp.dylib
+            '';
+          });
+
+        squirrel-static = if system == "x86_64-darwin" then {
+          components.exes.ligo-squirrel =
+            pack squirrel.components.exes.ligo-squirrel;
+        } else
+          pkgs.pkgsCross.musl64.callPackage ./squirrel { };
+
+        exes = builtins.mapAttrs
+          (_: project: project.components.exes.ligo-squirrel) {
+            inherit squirrel squirrel-static;
+          };
+
+        per-platform-dispatcher = pkgs.writeTextFile {
+          name = "ligo-squirrel";
+          text = ''
+            #!/bin/sh
+            "$(dirname "''${BASH_SOURCE[0]}")/$(uname)/bin/ligo-squirrel" $@
+          '';
+          executable = true;
+        };
+
+        ligo-squirrel-combined = pkgs.linkFarm "ligo-squirrel-combined" [
+          {
+            name = "bin/ligo-squirrel";
+            path = per-platform-dispatcher;
+          }
+          {
+            name = "bin/Linux";
+            path = self.packages.x86_64-linux.squirrel-static;
+          }
+          {
+            name = "bin/Darwin";
+            path = self.packages.x86_64-darwin.squirrel-static;
+          }
+        ];
+
+        vscode-extension-native = pkgs.callPackage ./vscode-plugin {
+          ligo-squirrel = exes.squirrel-static;
+        };
 
         vscode-extension = pkgs.callPackage ./vscode-plugin {
-          ligo-squirrel = exes.squirrel-static or exes.squirrel;
+          ligo-squirrel = ligo-squirrel-combined;
         };
       in {
-        packages = exes // { inherit vscode-extension; };
+        packages = exes // {
+          inherit vscode-extension-native vscode-extension;
+        };
         checks = {
           inherit squirrel-sexp-test;
           inherit (squirrel.checks) squirrel-test;
         };
-        defaultPackage = self.packages.${system}.vscode-extension;
+        defaultPackage = self.packages.${system}.vscode-extension-native;
         # For debug/development reasons only
         legacyPackages = pkgs;
       });
