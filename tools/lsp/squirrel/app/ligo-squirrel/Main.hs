@@ -4,6 +4,7 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks)
 
 import Data.Default
+import qualified Data.HashMap.Strict as HM
 import Data.Maybe (fromMaybe)
 import Data.String.Interpolate (i)
 import qualified Data.Text as T
@@ -244,18 +245,25 @@ handleRenameRequest req respond = do
           J.ResponseError J.InvalidRequest "Cannot rename this" Nothing
       Ok edits ->
         let
-          -- TODO: change this once we set up proper module system integration
-          documentChanges = J.List
-            [ J.TextDocumentEdit
-                { _textDocument = J.VersionedTextDocumentIdentifier uri Nothing
-                , _edits = J.List edits
-                }
-            ]
+          -- TODO: Add support for renaming references in other files.
+          changes = HM.fromList [ (uri, J.List edits ) ]
+
+          -- XXX: This interface has two benefits: it allows to refer to a specific
+          -- document version and it allows the creation/deletion/renaming of files.
+          -- In this case we do not care about the latter and the actual usefulness
+          -- of the former is not clear either, but it might be worth switching
+          -- to it when we support verions.
+          --documentChanges = J.List
+          --  [ J.TextDocumentEdit
+          --      { _textDocument = J.VersionedTextDocumentIdentifier uri Nothing
+          --      , _edits = J.List edits
+          --      }
+          --  ]
 
           response =
             J.WorkspaceEdit
-              { _changes = Nothing
-              , _documentChanges = Just documentChanges
+              { _changes = Just changes
+              , _documentChanges = Nothing
               }
         in respond . Right $ response
 
