@@ -37,6 +37,7 @@ okayContractsDirs = contractsDir : map (contractsDir </>) rest
     rest = [ "basic_multisig/"
            , "get_scope_tests/"
            , "negative/"
+           , "bugs/"
            ]
 
 badContractsDirs :: [FilePath]
