@@ -6,6 +6,11 @@ module Test.Capabilities.Find
   , unit_definitionOfLeft
   , unit_referenceOfId
   , unit_referenceOfLeft
+
+  , unit_type_of_heap_arg
+  , unit_type_of_heap_const
+  , unit_type_of_let
+  , unit_type_of_lambda_arg
   ) where
 
 import Data.Foldable (for_)
@@ -15,9 +20,9 @@ import Test.Tasty.HUnit (Assertion, testCase)
 import Text.Printf (printf)
 
 import AST (Fallback)
-import AST.Capabilities.Find (definitionOf, referencesOf)
+import AST.Capabilities.Find (definitionOf, referencesOf, typeDefinitionAt)
 import AST.Scope.Common (HasScopeForest)
-import Range (Range (..), interval)
+import Range (Range (..), interval, point)
 
 import Test.Capabilities.Util (contractsDir)
 import Test.FixedExpectations
@@ -256,3 +261,32 @@ unit_referenceOfLeft = (checkIfReference
                          (contractsDir </> "heap.ligo")
                          (interval 89 30 34)
                          (interval 77 9 13))
+
+
+unit_type_of_heap_const :: Assertion
+unit_type_of_heap_const = do
+    tree <- readContractWithScopes @Fallback (contractsDir </> "heap.ligo")
+    case typeDefinitionAt (point 106 8) tree of
+      Nothing -> expectationFailure "Should find type definition"
+      Just range -> range{rFile=""} `shouldBe` interval 4 6 10
+
+unit_type_of_heap_arg :: Assertion
+unit_type_of_heap_arg = do
+    tree <- readContractWithScopes @Fallback (contractsDir </> "heap.ligo")
+    case typeDefinitionAt (point 7 24) tree of
+      Nothing -> expectationFailure "Should find type definition"
+      Just range -> range{rFile=""} `shouldBe` interval 4 6 10
+
+unit_type_of_let :: Assertion
+unit_type_of_let = do
+    tree <- readContractWithScopes @Fallback (contractsDir </> "type-attributes.mligo")
+    case typeDefinitionAt (point 7 10) tree of
+      Nothing -> expectationFailure "Should find type definition"
+      Just range -> range{rFile=""} `shouldBe` interval 1 6 20
+
+unit_type_of_lambda_arg :: Assertion
+unit_type_of_lambda_arg = do
+    tree <- readContractWithScopes @Fallback (contractsDir </> "type-attributes.mligo")
+    case typeDefinitionAt (point 8 54) tree of
+      Nothing -> expectationFailure "Should find type definition"
+      Just range -> range{rFile=""} `shouldBe` interval 1 6 20
