@@ -14,8 +14,8 @@
         { "include": "#other-keywords" },
         { "include": "#numeric-literals" },
         { "include": "#operators" },
-        { "include": "#function-application" },
-        { "include": "#identifiers" }
+        { "include": "#identifier-constructor" },
+        { "include": "#identifier-lower" }
     ],
     "repository": {
         "let-binding": {
@@ -41,14 +41,30 @@
         },
 
         "let-function": {
-            "begin": "([a-zA-Z_]\\w*)?\\b(?=\\s*\\()",
+            "begin": "\\G\\s*([a-zA-Z_]\\w*)\\b(?=\\s*\\()",
             "beginCaptures": {
                 "1": { "name": "entity.name.function.mligo" }
             },
             "end": "(?=\\=)",
             "patterns": [
                 { "include": "#comment" },
-                { "include": "#parenthesized-definition" },
+                { "include": "#parameter-list" },
+                { "include": "#type-annotation" }
+            ]
+        },
+
+        "parameter-list": {
+            "begin": "\\(",
+            "beginCaptures": {
+                "1": { "name": "keyword.operator.parenthesis.mligo" }
+            },
+            "end": "\\)",
+            "endCaptures": {
+                "1": { "name": "keyword.operator.parenthesis.mligo" }
+            },
+            "patterns": [
+                { "include": "#comment" },
+                { "include": "#identifier-parameter" },
                 { "include": "#type-annotation" }
             ]
         },
@@ -64,23 +80,9 @@
             },
             "patterns": [
                 { "include": "#comment" },
-                { "include": "#names-tuple" },
+                { "include": "#identifier-variable-decl" },
                 { "include": "#type-annotation" }
             ]
-        },
-
-        "names-tuple": {
-            "begin": "(?<=\\()",
-            "end": "(?=:)",
-            "patterns": [
-                { "include": "#comment" },
-                { "include": "#names-tuple-name" }
-            ]
-        },
-
-        "names-tuple-name": {
-            "match": "(?:([a-zA-Z_]\\w*)(?=\\s*[,:]))+",
-            "name": "support.variable.parameter.mligo"
         },
 
         "type-annotation": {
@@ -115,14 +117,13 @@
         },
 
         "let-constant": {
-            "begin": "([a-zA-Z_]\\w*)\\b(?!\\s*\\()",
-            "beginCaptures": {
-                "1": { "name": "support.variable.mligo" }
-            },
+            "begin": "\\G",
             "end": "(?=\\=)",
             "patterns": [
                 { "include": "#comment" },
-                { "include": "#type-annotation" }
+                { "include": "#type-annotation" },
+                { "include": "#parenthesized-definition" },
+                { "include": "#identifier-variable-decl" }
             ]
         },
 
@@ -137,7 +138,7 @@
             },
             "patterns": [
                 { "include": "#comment" },
-                { "include": "#parenthesized-definition" }
+                { "include": "#parameter-list" }
             ]
         },
 
@@ -160,13 +161,13 @@
             "end": "\\}",
             "patterns": [
                 { "include": "#comment" },
-                { "include": "#names-tuple-name" },
+                { "include": "#identifier-variable-decl" },
                 { "include": "#type-annotation" }
             ]
         },
 
         "sum-type": {
-            "begin": "\\b([a-zA-Z_]\\w*)\\s+(of)",
+            "begin": "\\b([a-zA-Z_]\\w*)\\s+(of)?",
             "beginCaptures": {
                 "1": { "name": "entity.name.function.mligo" },
                 "2": { "name": "keyword.other.of.mligo" }
@@ -216,12 +217,12 @@
 
         "control-keywords": {
             "name": "keyword.control.mligo",
-            "match": "\\b(match|with|if|then|else|assert|failwith)\\b"
+            "match": "\\b(match|with|if|then|else|assert|failwith|begin|end)\\b"
         },
 
         "other-keywords": {
             "name": "keyword.other.mligo",
-            "match": "\\b(in|begin|end)\\b"
+            "match": "\\b(in)\\b"
         },
 
         "numeric-literals": {
@@ -234,17 +235,31 @@
             "match": "([-+*/])"
         },
 
-        "function-application": {
-            "comment": "We need a negative lookahead here because instead of matching the first rule, TM picks the _longest match_. Without the lookahead, this rule conflicts with #let-binding and #control-keywords.",
-            "match": "(?<=(?:match|with|if|then|else|assert|in|begin|failwith) |->|^|[|=\\.(])\\s*((?!(?:match|with|if|then|else|assert|in|begin|end|let|type|fun|failwith)\\b)[a-zA-Z_]\\w*)\\s+(?=(\\d|[\\[('\"]|[a-zA-Z_]\\w*))",
+        "identifier-lower": {
+            "match": "\\b([a-z_]\\w*)\\b",
             "captures": {
-                "1": { "name": "entity.name.function" }
+                "1": { "name": "entity.name.variable.mligo" }
             }
         },
-        "identifiers": {
+
+        "identifier-constructor": {
+            "match": "\\b([A-Z]\\w*)\\b",
+            "captures": {
+                "1": { "name": "entity.name.function.constructor.mligo" }
+            }
+        },
+
+        "identifier-parameter": {
             "match": "\\b([a-zA-Z_]\\w*)\\b",
             "captures": {
-                "1": { "name": "entity.name.variable" }
+                "1": { "name": "support.variable.parameter.mligo" }
+            }
+        },
+ 
+        "identifier-variable-decl": {
+            "match": "\\b([a-zA-Z_]\\w*)\\b",
+            "captures": {
+                "1": { "name": "support.variable.mligo" }
             }
         }
     },

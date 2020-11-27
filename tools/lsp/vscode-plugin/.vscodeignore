@@ -1,4 +1,5 @@
 .vscode/**
+default.nix
 **/*.ts
 **/*.map
 .gitignore
