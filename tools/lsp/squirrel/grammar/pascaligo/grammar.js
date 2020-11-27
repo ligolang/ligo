@@ -178,10 +178,6 @@ module.exports = grammar({
         field("arguments", $.type_arguments),
       ),
 
-    map: $ => 'map',
-    big_map: $ => 'big_map',
-    list: $ => 'list',
-    set: $ => 'set',
 
     type_tuple: $ => par(sepBy1(',', field("element", $._type_expr))),
 
@@ -658,21 +654,8 @@ module.exports = grammar({
       seq(
         field("module", $.Name_Capital),
         '.',
-        field("method", $._module_fun),
+        field("method", $.Name),
       ),
-
-    _module_fun: $ =>
-      choice(
-        $.Name,
-        $.map,
-        $.or,
-        $.and,
-        $.remove,
-      ),
-
-    or: $ => 'or',
-    and: $ => 'and',
-    remove: $ => 'remove',
 
     _projection: $ =>
       choice(
