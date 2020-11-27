@@ -188,6 +188,7 @@ instance Pretty1 Type where
     TSum      variants  -> sexpr "SUM" variants
     TProduct  elements  -> sexpr "PROD" elements
     TApply    f xs      -> sop f "$" [xs]
+    TApply'   f xs      -> sop f "$" xs
     TString   t         -> pp t
     TOr       l n r m   -> sexpr "OR"   [l, n, r, m]
     TAnd      l n r m   -> sexpr "AND" [l, n, r, m]
@@ -370,6 +371,7 @@ instance LPP1 'Pascal Type where
     TOr       l n r m   -> tuple [l, n, r, m]
     TAnd      l n r m   -> tuple [l, n, r, m]
     TArgs     args      -> tuple args
+    pat                 -> error "unexpected `Type` node failed with: " <+> pp pat
 
 instance LPP1 'Pascal Binding where
   lpp1 = \case
@@ -497,6 +499,7 @@ instance LPP1 'Reason Type where
     TOr       l n r m   -> tuple [l, n, r, m]
     TAnd      l n r m   -> tuple [l, n, r, m]
     TArgs     args      -> train " " args
+    pat                 -> error "unexpected `Type` node failed with: " <+> pp pat
 
 instance LPP1 'Reason Binding where
   lpp1 = \case
@@ -591,6 +594,7 @@ instance LPP1 'Caml Type where
     TOr       l n r m   -> tuple [l, n, r, m]
     TAnd      l n r m   -> tuple [l, n, r, m]
     TArgs     args      -> train " " args
+    pat                 -> error "unexpected `Type` node failed with: " <+> pp pat
 
 instance LPP1 'Caml Binding where
   lpp1 = \case

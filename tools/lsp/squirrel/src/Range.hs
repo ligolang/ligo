@@ -106,5 +106,7 @@ instance Eq Range where
   Range (l, c, _) (r, d, _) f == Range (l1, c1, _) (r1, d1, _) f1 =
     (l, c, r, d, f) == (l1, c1, r1, d1, f1)
 
+instance (Contains Range xs, Eq (Product xs)) => Ord (Product xs) where (<=) = leq
+
 instance (Contains Range xs, Eq (Product xs)) => Lattice (Product xs) where
   a `leq` b = getElem @Range a `leq` getElem @Range b
