@@ -25,7 +25,7 @@ import System.Process
 
 import Cli.Json
 import Cli.Types
-import Extension
+import Extension (Lang (..), getExt)
 import Log (i)
 import qualified Log
 import ParseTree (Source (..), srcToText)

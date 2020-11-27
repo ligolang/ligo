@@ -24,7 +24,7 @@ import Cli
 import Extension
 import ParseTree (Source (..), toParseTree)
 import Parser
-import Range
+import Range (point)
 
 parse :: Source -> IO (LIGO Info, [Msg])
 parse src = do
