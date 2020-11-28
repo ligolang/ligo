@@ -32,8 +32,9 @@ contractsDir =
   )
 
 okayContractsDirs :: [FilePath]
-okayContractsDirs = contractsDir : map (contractsDir </>) rest
+okayContractsDirs = ourDefects : contractsDir : map (contractsDir </>) rest
   where
+    ourDefects = "test/contracts/bugs"
     rest = [ "basic_multisig/"
            , "get_scope_tests/"
            , "negative/"
