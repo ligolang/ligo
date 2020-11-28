@@ -19,7 +19,7 @@ import Range
 type CanSearch xs =
   ( Contains [ScopedDecl] xs
   , Contains Range xs
-  , Contains (Maybe Category) xs
+  , Contains (Maybe Level) xs
   , Contains [Text] xs
   , Pretty (Product xs)
   , Modifies (Product xs)
@@ -36,8 +36,8 @@ findScopedDecl pos tree = do
   let info = extract pt
   let fullEnv = getElem info
   do
-    categ <- getElem info
-    let filtered = filter (ofCategory categ) fullEnv
+    level <- getElem info
+    let filtered = filter (ofLevel level) fullEnv
     lookupEnv (ppToText $ void pt) filtered
 
 definitionOf

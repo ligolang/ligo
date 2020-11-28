@@ -41,9 +41,9 @@ addReferences ligo = execState $ loopM_ addRef ligo
   where
     addRef :: LIGO Info -> State ScopeForest ()
     addRef = \case
-      (match -> Just (r, Name     n)) -> addThisRef Variable (getRange r) n
-      (match -> Just (r, NameDecl n)) -> addThisRef Variable (getRange r) n
-      (match -> Just (r, TypeName n)) -> addThisRef Type     (getRange r) n
+      (match -> Just (r, Name     n)) -> addThisRef TermLevel (getRange r) n
+      (match -> Just (r, NameDecl n)) -> addThisRef TermLevel (getRange r) n
+      (match -> Just (r, TypeName n)) -> addThisRef TypeLevel (getRange r) n
       _                               -> return ()
 
     addThisRef cat' r n = do
@@ -55,13 +55,13 @@ addReferences ligo = execState $ loopM_ addRef ligo
             return sf
 
     walkScope _    _ _ [] = return ()
-    walkScope sort r n (declref : rest) = do
+    walkScope level r n (declref : rest) = do
       decl <- gets (Map.! declref)
-      if ofCategory sort decl && (n == _sdName decl || r == _sdOrigin decl)
+      if ofLevel level decl && (n == _sdName decl || r == _sdOrigin decl)
       then do
         modify $ Map.adjust (addRefToDecl r) declref
       else do
-        walkScope sort r n rest
+        walkScope level r n rest
 
     addRefToDecl r sd = sd { _sdRefs = r : _sdRefs sd }
 

@@ -32,7 +32,7 @@ instance {-# OVERLAPPABLE #-} Pretty x => Show x where
 type FullEnv = Product ["vars" := Env, "types" := Env]
 type Env     = Map Range [ScopedDecl]
 
-data Category = Variable | Type
+data Level = TypeLevel | TermLevel
   deriving Eq
 
 -- | The type/value declaration.
@@ -99,9 +99,9 @@ instance Pretty TypeOrKind where
 instance Pretty Kind where
   pp _ = "TYPE"
 
-instance Pretty Category where
-  pp Variable = "Variable"
-  pp Type     = "Type"
+instance Pretty Level where
+  pp TermLevel = "TermLevel"
+  pp TypeLevel = "TypeLevel"
 
 void' :: Functor f => f a -> f (Product '[])
 void' = fmap $ const Nil
@@ -109,19 +109,19 @@ void' = fmap $ const Nil
 emptyEnv :: FullEnv
 emptyEnv = Tag Map.empty :> Tag Map.empty :> Nil
 
-with :: Category -> FullEnv -> (Env -> Env) -> FullEnv
-with Variable env f = modTag @"vars"  f env
-with Type     env f = modTag @"types" f env
+with :: Level -> FullEnv -> (Env -> Env) -> FullEnv
+with TermLevel env f = modTag @"vars"  f env
+with TypeLevel env f = modTag @"types" f env
 
-ofCategory :: Category -> ScopedDecl -> Bool
-ofCategory Variable ScopedDecl { _sdType = Just (IsKind Star) } = False
-ofCategory Variable _                                           = True
-ofCategory Type     ScopedDecl { _sdType = Just (IsKind Star) } = True
-ofCategory _        _                                           = False
+ofLevel :: Level -> ScopedDecl -> Bool
+ofLevel TermLevel ScopedDecl { _sdType = Just (IsKind Star) } = False
+ofLevel TermLevel _                                           = True
+ofLevel TypeLevel ScopedDecl { _sdType = Just (IsKind Star) } = True
+ofLevel _         _                                           = False
 
 type Info' =
   [ [ScopedDecl]
-  , Maybe Category
+  , Maybe Level
   , [Text]
   , Range
   , ShowRange
@@ -197,13 +197,13 @@ addLocalScopes src tree = do
     descent @(Product Info) @(Product Info') @RawLigoList @RawLigoList defaultHandler
     [ Descent \(i, Name t) -> do
         let env = envAtPoint (getRange i) forest
-        return (env :> Just Variable :> i, Name t)
+        return (env :> Just TermLevel :> i, Name t)
 
     , Descent \(i, NameDecl t) -> do
         let env = envAtPoint (getRange i) forest
-        return (env :> Just Variable :> i, NameDecl t)
+        return (env :> Just TermLevel :> i, NameDecl t)
 
     , Descent \(i, TypeName t) -> do
         let env = envAtPoint (getRange i) forest
-        return (env :> Just Type :> i, TypeName t)
+        return (env :> Just TypeLevel :> i, TypeName t)
     ]

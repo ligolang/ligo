@@ -25,7 +25,7 @@ import Duplo.Tree (match, spineTo)
 
 import AST.Capabilities.Find (CanSearch)
 import AST.Scope (Parameter (..), ScopedDecl (..))
-import AST.Scope.Common (Category (Variable), lookupEnv, ofCategory)
+import AST.Scope.Common (Level (TermLevel), lookupEnv, ofLevel)
 import AST.Skeleton (Expr (Apply), LIGO, Lang (..))
 import Product (Contains, Product, getElem)
 import Range (Range (..), getRange)
@@ -36,7 +36,7 @@ findNestingFunction
   :: CanSearch xs => LIGO xs -> Range -> Maybe (ScopedDecl, Int)
 findNestingFunction tree position = do
   (callInfo, fName, paramRanges) <- asum (map extractFunctionCall covers)
-  let termEnv = filter (ofCategory Variable) (getElem callInfo)
+  let termEnv = filter (ofLevel TermLevel) (getElem callInfo)
   decl <- lookupEnv fName termEnv
   pure (decl, activeParamNo paramRanges)
   where
