@@ -40,7 +40,8 @@ import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import GHC.Generics
 
-import AST.Scope.Common
+import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..), ValueDeclSpecifics (..))
+import AST.Scope.ScopedDecl.Parser (parseType)
 import AST.Skeleton hiding (String)
 import Duplo.Lattice
 import Duplo.Pretty
@@ -713,16 +714,18 @@ toScopedDecl
   LigoDefinitionScope
     { _ldsName = _sdName
     , _ldsRange = (fromMaybe (error "no origin range") . mbFromLigoRange -> _sdOrigin)
-    , _ldsBodyRange = (mbFromLigoRange -> _sdBody)
-    , _ldsT = (fmap (IsType . fmap (const Nil) . fromLigoTypeFull) -> _sdType)
+    , _ldsBodyRange = (mbFromLigoRange -> _vdsInitRange)
+    , _ldsT
     } =
-    ScopedDecl
+    ScopedDecl -- TODO fill in full information when we actually use ligo scopes
       { _sdName
       , _sdOrigin
-      , _sdBody
-      , _sdType
       , _sdRefs = []
       , _sdDoc = []
-      , _sdParams = Nothing
       , _sdDialect = Pascal -- TODO: we have no information regarding dealect in scope output
+      , _sdSpec = ValueSpec $ ValueDeclSpecifics
+        { _vdsInitRange
+        , _vdsParams = Nothing
+        , _vdsType = parseType . fromLigoTypeFull <$> _ldsT
+        }
       }

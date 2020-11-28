@@ -3,20 +3,30 @@
 -- | Pretty printers for all 3 dialects and core s-expressions
 -- and their corresponding `Show` instances for @AST.Sceleton@ types.
 
-module AST.Pretty where
+module AST.Pretty
+  ( module Exports
+  , PPableLIGO
+  , Pretty (..)
+  , TotalLPP
+  , docToText
+  , lppDialect
+  , sexpr
+  ) where
 
+import Data.Maybe (isJust)
 import Data.Sum
 import Data.Text (Text)
 import qualified Data.Text as Text (pack, take)
-
-import AST.Skeleton
-
-import Data.Maybe (isJust)
 import Duplo (Cofree ((:<)), Layers)
-import Duplo.Pretty
+import Duplo.Pretty as Exports
   (Doc, Modifies (..), PP (PP), Pretty (..), Pretty1 (..), above, brackets, color, empty, fsep,
   indent, parens, ppToText, punctuate, ($+$), (<+>), (<.>))
 import Duplo.Tree (Tree)
+
+import AST.Skeleton
+import Parser (ShowRange)
+import Product (Contains)
+import Range (Range)
 
 ----------------------------------------------------------------------------
 -- Internal
@@ -687,3 +697,9 @@ lppDialect dialect = case dialect of
 
 docToText :: Doc -> Text
 docToText = Text.pack . show
+
+type PPableLIGO info =
+  ( Contains [Text] info
+  , Contains Range info
+  , Contains ShowRange info
+  )

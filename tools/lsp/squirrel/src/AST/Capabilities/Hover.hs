@@ -7,12 +7,13 @@ module AST.Capabilities.Hover where
 import qualified Language.LSP.Types as LSP
 
 import AST.Capabilities.Find
-import AST.Scope
+import AST.Pretty (docToText)
+import AST.Scope.ScopedDecl (ScopedDecl (..), lppDeclCategory)
 import AST.Skeleton
 
+import Data.Text (intercalate, pack)
 import Duplo.Pretty
 import Range
-import Data.Text (pack, intercalate)
 
 hoverDecl
   :: CanSearch xs
@@ -27,21 +28,16 @@ hoverDecl at tree = do
     }
 
 mkContents :: ScopedDecl -> LSP.HoverContents
-mkContents ScopedDecl
-  { _sdType   = ppToText -> _sdType
-  , _sdName   = ppToText -> _sdName
-  , _sdDoc    = ppToText -> _sdDoc
-  , _sdOrigin = pack . show -> _sdOrigin
-  -- TODO: more documentation
-  } = LSP.HoverContents $ LSP.MarkupContent
+mkContents decl@ScopedDecl{ .. } = LSP.HoverContents $ LSP.MarkupContent
   { _kind = LSP.MkMarkdown
   , _value = contentDoc
-  } where
+  }
+  where
     contentDoc = intercalate "\n"
-      [ _sdName <> " :: " <> _sdType
+      [ ppToText _sdName <> " :: " <> docToText (lppDeclCategory decl)
       , "\n"
       , "*defined at*"
-      , _sdOrigin
+      , pack (show _sdOrigin)
       , "\n"
-      , _sdDoc
+      , ppToText _sdDoc
       ]

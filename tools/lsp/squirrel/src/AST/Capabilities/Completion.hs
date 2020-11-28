@@ -12,7 +12,9 @@ import Duplo.Lattice
 import Duplo.Pretty
 import Duplo.Tree
 
+import AST.Pretty (docToText)
 import AST.Scope
+import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..), lppDeclCategory)
 import AST.Skeleton
 import Product
 import Range
@@ -81,7 +83,7 @@ mkDoc Completion
 asCompletion :: ScopedDecl -> Completion
 asCompletion sd = Completion
   { cName = ppToText (_sdName sd)
-  , cType = ppToText (_sdType sd)
+  , cType = docToText (lppDeclCategory sd)
   , cDoc  = ppToText (fsep $ map pp $ _sdDoc sd)
   }
 
@@ -90,8 +92,7 @@ isSubseqOf l r = isSubsequenceOf (Text.unpack l) (Text.unpack r)
 
 fitsLevel :: ScopedDecl -> Maybe Level -> Bool
 fitsLevel _ Nothing = True
-fitsLevel decl (Just level) = case (_sdType decl, level) of
-  (Nothing, TermLevel) -> True
-  (Just IsType{}, TermLevel) -> True
-  (Just IsKind{}, TypeLevel) -> True
+fitsLevel decl (Just level) = case (_sdSpec decl, level) of
+  (ValueSpec{}, TermLevel) -> True
+  (TypeSpec{}, TypeLevel) -> True
   _ -> False

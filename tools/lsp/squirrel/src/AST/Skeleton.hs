@@ -48,6 +48,7 @@ data Lang
   = Pascal
   | Caml
   | Reason
+  deriving stock Show
 
 data Contract it
   = ContractEnd

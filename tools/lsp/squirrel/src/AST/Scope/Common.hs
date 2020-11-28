@@ -3,7 +3,6 @@
 module AST.Scope.Common where
 
 import Control.Monad.State
-
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Monoid (First (..))
@@ -16,7 +15,9 @@ import Duplo.Pretty
 import Duplo.Tree hiding (loop)
 
 import AST.Pretty
+import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..))
 import AST.Skeleton
+  (Name (..), NameDecl (..), RawLigoList, SomeLIGO, Tree', TypeName (..), withNestedLIGO)
 import Cli.Types
 import ParseTree
 import Parser
@@ -32,53 +33,8 @@ instance {-# OVERLAPPABLE #-} Pretty x => Show x where
 type FullEnv = Product ["vars" := Env, "types" := Env]
 type Env     = Map Range [ScopedDecl]
 
-data Level = TypeLevel | TermLevel
+data Level = TermLevel | TypeLevel
   deriving Eq
-
--- | The type/value declaration.
-data ScopedDecl = ScopedDecl
-  { _sdName    :: Text
-  , _sdOrigin  :: Range
-  , _sdBody    :: Maybe Range
-  , _sdType    :: Maybe TypeOrKind
-  , _sdRefs    :: [Range]
-  , _sdDoc     :: [Text]
-  , _sdParams  :: Maybe [Parameter]
-  , _sdDialect :: Lang
-  }
-  deriving Show via PP ScopedDecl
-
-newtype Parameter = Parameter
-  { parPresentation :: Text
-  }
-  deriving stock Show
-  deriving newtype Pretty
-
-data TypeOrKind
-  = IsType (LIGO '[])
-  | IsKind Kind
-  deriving Show via PP TypeOrKind
-
-elimIsTypeOrKind :: (LIGO '[] -> c) -> (Kind -> c) -> TypeOrKind -> c
-elimIsTypeOrKind l r = \case
-  IsType t -> l t
-  IsKind k -> r k
-
-isType :: TypeOrKind -> Bool
-isType = elimIsTypeOrKind (const True) (const False)
-
-isKind :: TypeOrKind -> Bool
-isKind = not . isType
-
-instance Eq ScopedDecl where
-  sd == sd1 = and
-    [ pp (_sdName   sd) == pp (_sdName   sd1)
-    ,     _sdOrigin sd  ==     _sdOrigin sd1
-    ]
-
--- | The kind.
-data Kind = Star
-  deriving Show via PP Kind
 
 instance {-# OVERLAPS #-} Pretty FullEnv where
   pp = block . map aux . Map.toList . mergeFE
@@ -87,17 +43,6 @@ instance {-# OVERLAPS #-} Pretty FullEnv where
         pp r `indent` block fe
 
       mergeFE fe = getTag @"vars" @Env fe Prelude.<> getTag @"types" fe
-
-instance Pretty ScopedDecl where
-  pp (ScopedDecl n o _ t refs doc params _) =
-    sexpr "decl" [pp n, pp o, pp t, pp params, pp refs, pp doc]
-
-instance Pretty TypeOrKind where
-  pp (IsType ty) = pp $ fillInfo ty
-  pp (IsKind k)  = pp k
-
-instance Pretty Kind where
-  pp _ = "TYPE"
 
 instance Pretty Level where
   pp TermLevel = "TermLevel"
@@ -114,10 +59,10 @@ with TermLevel env f = modTag @"vars"  f env
 with TypeLevel env f = modTag @"types" f env
 
 ofLevel :: Level -> ScopedDecl -> Bool
-ofLevel TermLevel ScopedDecl { _sdType = Just (IsKind Star) } = False
-ofLevel TermLevel _                                           = True
-ofLevel TypeLevel ScopedDecl { _sdType = Just (IsKind Star) } = True
-ofLevel _         _                                           = False
+ofLevel level decl = case (level, _sdSpec decl) of
+  (TermLevel, ValueSpec{}) -> True
+  (TypeLevel, TypeSpec{}) -> True
+  _ -> False
 
 type Info' =
   [ [ScopedDecl]

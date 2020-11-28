@@ -24,8 +24,8 @@ import Duplo.Pretty (fsep, pp, ppToText)
 import Duplo.Tree (match, spineTo)
 
 import AST.Capabilities.Find (CanSearch)
-import AST.Scope (Parameter (..), ScopedDecl (..))
 import AST.Scope.Common (Level (TermLevel), lookupEnv, ofLevel)
+import AST.Scope.ScopedDecl (Parameter (..), ScopedDecl (..), _ValueSpec, vdsParams)
 import AST.Skeleton (Expr (Apply), LIGO, Lang (..))
 import Product (Contains, Product, getElem)
 import Range (Range (..), getRange)
@@ -62,7 +62,7 @@ findSignature
   :: CanSearch xs => LIGO xs -> Range -> Maybe (LSP.SignatureInformation, Int)
 findSignature tree position = do
   (ScopedDecl{..}, activeNo) <- findNestingFunction tree position
-  params <- _sdParams
+  params <- _sdSpec ^? _ValueSpec . vdsParams . _Just
   let label = makeSignatureLabel _sdDialect _sdName paramLabels
       paramLabels = map parPresentation params
   let sigInfo = LSP.SignatureInformation
