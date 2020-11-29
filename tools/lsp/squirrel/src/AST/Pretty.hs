@@ -5,6 +5,7 @@
 
 module AST.Pretty
   ( module Exports
+  , LPP (..)
   , PPableLIGO
   , Pretty (..)
   , TotalLPP
@@ -19,8 +20,8 @@ import Data.Text (Text)
 import qualified Data.Text as Text (pack, take)
 import Duplo (Cofree ((:<)), Layers)
 import Duplo.Pretty as Exports
-  (Doc, Modifies (..), PP (PP), Pretty (..), Pretty1 (..), above, brackets, color, empty, fsep,
-  indent, parens, ppToText, punctuate, ($+$), (<+>), (<.>))
+  (Doc, Modifies (..), PP (PP), Pretty (..), Pretty1 (..), above, brackets, empty, fsep, indent,
+  parens, ppToText, punctuate, ($+$), (<+>), (<.>))
 import Duplo.Tree (Tree)
 
 import AST.Skeleton
@@ -295,11 +296,11 @@ instance Pretty1 TypeName where
 
 instance Pretty1 FieldName where
   pp1 = \case
-    FieldName    raw -> color 4 $ pp raw
+    FieldName    raw -> pp raw
 
 instance Pretty1 Ctor where
   pp1 = \case
-    Ctor         raw -> color 5 $ pp raw
+    Ctor         raw -> pp raw
 
 instance Pretty1 Path where
   pp1 = \case

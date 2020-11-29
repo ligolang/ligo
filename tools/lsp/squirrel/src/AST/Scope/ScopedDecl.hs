@@ -24,8 +24,12 @@ module AST.Scope.ScopedDecl
   , Parameter (..)
 
   , lppDeclCategory
+
+  , fillTypeIntoCon
   ) where
 
+import Control.Applicative ((<|>))
+import Control.Lens ((%~), (&))
 import Control.Lens.TH (makeLenses, makePrisms)
 import Data.Sum (inject)
 import Data.Text (Text)
@@ -125,3 +129,12 @@ $(makeLenses ''ScopedDecl)
 $(makePrisms ''DeclarationSpecifics)
 $(makeLenses ''TypeDeclSpecifics)
 $(makeLenses ''ValueDeclSpecifics)
+
+-- | Assuming that 'typDecl' is a declaration of a type containing a constructor
+-- that has a declaration 'conDecl', specify 'conDecl''s type as that of
+-- 'typDecl'.
+fillTypeIntoCon :: ScopedDecl -> ScopedDecl -> ScopedDecl
+fillTypeIntoCon typDecl conDecl
+  = conDecl & sdSpec . _ValueSpec . vdsType %~ (<|> Just typ)
+  where
+    typ = AliasType (_sdName typDecl)

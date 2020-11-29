@@ -17,7 +17,7 @@ import Duplo.Tree hiding (loop)
 import AST.Pretty
 import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..))
 import AST.Skeleton
-  (Name (..), NameDecl (..), RawLigoList, SomeLIGO, Tree', TypeName (..), withNestedLIGO)
+  (Ctor (..), Name (..), NameDecl (..), RawLigoList, SomeLIGO, Tree', TypeName (..), withNestedLIGO)
 import Cli.Types
 import ParseTree
 import Parser
@@ -122,9 +122,9 @@ envAtPoint r (ScopeForest sf ds) = do
   map (ds Map.!) sp
 
 spine :: Range -> ScopeTree -> [Set DeclRef]
-spine r (only -> (i, trees)) = if
-  | leq r (getRange i) -> foldMap (spine r) trees <> [getElem @(Set DeclRef) i]
-  | otherwise -> []
+spine r (only -> (i, trees))
+  | leq r (getRange i) = foldMap (spine r) trees <> [getElem @(Set DeclRef) i]
+  | otherwise = []
 
 addLocalScopes
   :: forall impl m. HasScopeForest impl m
@@ -147,6 +147,10 @@ addLocalScopes src tree = do
     , Descent \(i, NameDecl t) -> do
         let env = envAtPoint (getRange i) forest
         return (env :> Just TermLevel :> i, NameDecl t)
+
+    , Descent \(i, Ctor t) -> do
+        let env = envAtPoint (getRange i) forest
+        return (env :> Just TermLevel :> i, Ctor t)
 
     , Descent \(i, TypeName t) -> do
         let env = envAtPoint (getRange i) forest
