@@ -2,6 +2,7 @@
 
 module AST.Scope.ScopedDecl.Parser
   ( parseType
+  , parseTypeDeclSpecifics
   ) where
 
 import Data.Foldable (asum)
@@ -9,10 +10,19 @@ import Data.Maybe (fromMaybe, mapMaybe)
 import Duplo.Tree (layer)
 
 import AST.Pretty (PPableLIGO, ppToText)
-import AST.Scope.ScopedDecl (Type (..), TypeConstructor (..), TypeField (..))
+import AST.Scope.ScopedDecl
+  (Type (..), TypeConstructor (..), TypeDeclSpecifics (..), TypeField (..))
 import AST.Skeleton (LIGO)
 import qualified AST.Skeleton as LIGO
   (Ctor (..), FieldName (..), TField (..), Type (..), Variant (..))
+import Range (getRange)
+
+
+parseTypeDeclSpecifics :: PPableLIGO info => LIGO info -> TypeDeclSpecifics
+parseTypeDeclSpecifics node = TypeDeclSpecifics
+  { _tdsInitRange = getRange node
+  , _tdsInit = parseType node
+  }
 
 -- The node is _always_ parsed as some type. In the worst case — if the node is
 -- not a type, it's parsed as an alias type with the node textual representation

@@ -20,16 +20,16 @@ module AST.Scope.ScopedDecl
   , ValueDeclSpecifics (..)
   , vdsInitRange
   , vdsParams
-  , vdsType
+  , vdsTspec
   , Parameter (..)
 
   , lppDeclCategory
-
   , fillTypeIntoCon
+  , extractRefName
   ) where
 
 import Control.Applicative ((<|>))
-import Control.Lens ((%~), (&))
+import Control.Lens ((%~), (&), (^?))
 import Control.Lens.TH (makeLenses, makePrisms)
 import Data.Sum (inject)
 import Data.Text (Text)
@@ -79,7 +79,7 @@ data TypeConstructor = TypeConstructor
 data ValueDeclSpecifics = ValueDeclSpecifics
   { _vdsInitRange :: Maybe Range
   , _vdsParams :: Maybe [Parameter] -- if there are any, it's a function
-  , _vdsType :: Maybe Type
+  , _vdsTspec :: Maybe TypeDeclSpecifics
   }
 
 newtype Parameter = Parameter
@@ -101,12 +101,15 @@ instance Pretty ScopedDecl where
 lppDeclCategory :: ScopedDecl -> Doc
 lppDeclCategory decl = case _sdSpec decl of
   TypeSpec{} -> pp @Text "TYPE"
-  ValueSpec vspec -> case _vdsType vspec of
+  ValueSpec vspec -> case _vdsTspec vspec of
     Nothing -> pp @Text "unknown"
-    Just typ -> lppDialect (_sdDialect decl) (fillInfo (toLIGO typ))
+    Just tspec -> lppDialect (_sdDialect decl) (fillInfo (toLIGO tspec))
 
 class IsLIGO a where
   toLIGO :: a -> LIGO '[]
+
+instance IsLIGO TypeDeclSpecifics where
+  toLIGO tspec = toLIGO (_tdsInit tspec)
 
 instance IsLIGO Type where
   toLIGO (RecordType fields) = node (LIGO.TRecord (map toLIGO fields))
@@ -129,12 +132,22 @@ $(makeLenses ''ScopedDecl)
 $(makePrisms ''DeclarationSpecifics)
 $(makeLenses ''TypeDeclSpecifics)
 $(makeLenses ''ValueDeclSpecifics)
+$(makePrisms ''Type)
 
 -- | Assuming that 'typDecl' is a declaration of a type containing a constructor
 -- that has a declaration 'conDecl', specify 'conDecl''s type as that of
 -- 'typDecl'.
 fillTypeIntoCon :: ScopedDecl -> ScopedDecl -> ScopedDecl
 fillTypeIntoCon typDecl conDecl
-  = conDecl & sdSpec . _ValueSpec . vdsType %~ (<|> Just typ)
+  = conDecl & sdSpec . _ValueSpec . vdsTspec %~ (<|> Just tspec)
   where
     typ = AliasType (_sdName typDecl)
+    tspec = TypeDeclSpecifics
+      { _tdsInitRange = _sdOrigin typDecl
+      , _tdsInit = typ
+      }
+
+-- | If the type is just a reference to another type, extract a name of that
+-- reference.
+extractRefName :: Type -> Maybe Text
+extractRefName typ = typ ^? _AliasType

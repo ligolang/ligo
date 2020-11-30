@@ -24,9 +24,9 @@ import Duplo.Tree hiding (loop)
 import AST.Pretty (PPableLIGO, TotalLPP, docToText, lppDialect)
 import AST.Scope.Common
 import AST.Scope.ScopedDecl
-  (DeclarationSpecifics (..), Parameter (..), ScopedDecl (..), TypeDeclSpecifics (..),
-  ValueDeclSpecifics (..), fillTypeIntoCon)
-import AST.Scope.ScopedDecl.Parser (parseType)
+  (DeclarationSpecifics (..), Parameter (..), ScopedDecl (..), ValueDeclSpecifics (..),
+  fillTypeIntoCon)
+import AST.Scope.ScopedDecl.Parser (parseTypeDeclSpecifics)
 import AST.Skeleton hiding (Type)
 import Cli.Types
 import Parser
@@ -244,7 +244,7 @@ functionScopedDecl docs nameNode paramNodes typ body = do
   dialect <- ask
   let _vdsInitRange = getRange <$> body
       _vdsParams = pure (params dialect)
-      _vdsType = parseType <$> typ
+      _vdsTspec = parseTypeDeclSpecifics <$> typ
   pure $ ScopedDecl
     { _sdName = name
     , _sdOrigin = origin
@@ -280,7 +280,7 @@ valueScopedDecl docs nameNode typ body = do
     (origin, name) = getName nameNode
     _vdsInitRange = getRange <$> body
     _vdsParams = Nothing
-    _vdsType = parseType <$> typ
+    _vdsTspec = parseTypeDeclSpecifics <$> typ
 
 typeScopedDecl
   :: ( Eq (Product info)
@@ -295,12 +295,10 @@ typeScopedDecl docs nameNode body = do
     , _sdRefs = []
     , _sdDoc = docs
     , _sdDialect = dialect
-    , _sdSpec = TypeSpec TypeDeclSpecifics{ .. }
+    , _sdSpec = TypeSpec (parseTypeDeclSpecifics body)
     }
   where
     (origin, name) = getTypeName nameNode
-    _tdsInitRange = getRange body
-    _tdsInit = parseType body
 
 -- | Wraps a value into a list. Like 'pure' but perhaps with a more clear intent.
 singleton :: a -> [a]

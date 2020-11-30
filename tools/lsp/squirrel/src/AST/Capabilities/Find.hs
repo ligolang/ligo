@@ -1,17 +1,18 @@
 module AST.Capabilities.Find where
 
+import Control.Lens (_Just, (^?))
 import Control.Monad
-import Data.Maybe (listToMaybe)
+import Data.Maybe (fromMaybe, listToMaybe)
 import Data.Text (Text)
-
 import Duplo.Lattice
 import Duplo.Pretty
 import Duplo.Tree
 
-import AST.Scope (Level, lookupEnv, ofLevel)
+import AST.Scope (Level (..), lookupEnv, ofLevel)
 import AST.Scope.ScopedDecl
-  (DeclarationSpecifics (..), ScopedDecl (..), TypeDeclSpecifics (..), ValueDeclSpecifics (..))
-import AST.Skeleton
+  (DeclarationSpecifics (..), ScopedDecl (..), Type (..), TypeDeclSpecifics (..),
+  ValueDeclSpecifics (..), _ValueSpec, extractRefName, sdSpec, vdsTspec)
+import AST.Skeleton (LIGO)
 
 import Product
 import Range
@@ -32,13 +33,25 @@ findScopedDecl
   -> LIGO xs
   -> Maybe ScopedDecl
 findScopedDecl pos tree = do
-  pt <- listToMaybe $ spineTo (\i -> pos `leq` getElem i) tree
-  let info = extract pt
+  node <- findNodeAtPoint pos tree
+  let info = extract node
   let fullEnv = getElem info
-  do
-    level <- getElem info
-    let filtered = filter (ofLevel level) fullEnv
-    lookupEnv (ppToText $ void pt) filtered
+  level <- getElem info
+  let filtered = filter (ofLevel level) fullEnv
+  lookupEnv (ppToText $ void node) filtered
+
+type Scope = [ScopedDecl]
+
+findInfoAtPoint
+  :: (Apply Functor fs, Apply Foldable fs, Lattice b, HasRange b)
+  => Range -> Tree fs b -> Maybe b
+findInfoAtPoint pos tree = extract <$> findNodeAtPoint pos tree
+
+findNodeAtPoint
+  :: (Apply Foldable fs, Lattice a, HasRange a)
+  => Range -> Tree fs a -> Maybe (Tree fs a)
+findNodeAtPoint pos tree =
+  listToMaybe (spineTo (\i -> pos `leq` getRange i) tree)
 
 definitionOf
   :: CanSearch xs
@@ -47,6 +60,35 @@ definitionOf
   -> Maybe Range
 definitionOf pos tree =
   _sdOrigin <$> findScopedDecl pos tree
+
+-- | A type is declared if it has a name and a declaration corresponding to that
+-- name in the scope. A type is inlined if it has a definition inlined into
+-- something else (e.g. a variable definition). A type is not found if for some
+-- reason it's not there (e.g. a variable lacks a type annotation).
+data TypeDefinitionRes
+  = TypeNotFound
+  | TypeDeclared ScopedDecl
+  | TypeInlined TypeDeclSpecifics
+
+typeDefinitionOf :: CanSearch xs => Range -> LIGO xs -> TypeDefinitionRes
+typeDefinitionOf pos tree = fromMaybe TypeNotFound $ do
+  scope <- getElem <$> findInfoAtPoint pos tree
+  varDecl <- findScopedDecl pos tree
+  tspec <- varDecl ^? sdSpec . _ValueSpec . vdsTspec . _Just
+  Just $ case findTypeDeclaration scope (_tdsInit tspec) of
+    Nothing -> TypeInlined tspec
+    Just decl -> TypeDeclared decl
+
+findTypeDeclaration :: Scope -> Type -> Maybe ScopedDecl
+findTypeDeclaration scope typ = do
+  refName <- extractRefName typ
+  lookupEnv refName (filter (ofLevel TypeLevel) scope)
+
+typeDefinitionAt :: CanSearch xs => Range -> LIGO xs -> Maybe Range
+typeDefinitionAt pos tree = case typeDefinitionOf pos tree of
+  TypeNotFound -> Nothing
+  TypeDeclared decl -> Just (_sdOrigin decl)
+  TypeInlined tspec -> Just (_tdsInitRange tspec)
 
 implementationOf
   :: CanSearch xs

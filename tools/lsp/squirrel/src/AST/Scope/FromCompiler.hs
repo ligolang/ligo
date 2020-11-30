@@ -13,7 +13,7 @@ import Duplo.Tree (make, only)
 
 import AST.Scope.Common
 import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..), ValueDeclSpecifics (..))
-import AST.Scope.ScopedDecl.Parser (parseType)
+import AST.Scope.ScopedDecl.Parser (parseTypeDeclSpecifics)
 import AST.Skeleton (Lang, SomeLIGO (..))
 import Cli
 import Product
@@ -53,7 +53,7 @@ fromCompiler dialect (LigoDefinitions decls scopes) =
       where
         _vdsInitRange = mbFromLigoRange bodyR
         _vdsParams = Nothing
-        _vdsType = (parseType . fromLigoTypeFull) <$> ty
+        _vdsTspec = parseTypeDeclSpecifics . fromLigoTypeFull <$> ty
         vspec = ValueDeclSpecifics{ .. }
 
     -- Find a place for a scope inside a ScopeForest.
