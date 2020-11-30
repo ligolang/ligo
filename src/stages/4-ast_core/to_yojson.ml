@@ -14,12 +14,17 @@ and type_content = function
   | T_arrow    t -> `List [ `String "t_arrow";    arrow type_expression t]
   | T_app      t -> `List [ `String "t_app";      t_app type_expression t]
 
-let rec expression {content=ec;sugar;location} =
-  `Assoc [
+let rec expression ?(incl_sugar=false) {content=ec;sugar;location} =
+  `Assoc 
+  (if incl_sugar then [
     ("expression_content", expression_content ec);
     ("sugar", option Ast_sugar.Yojson.expression sugar);
     ("location", Location.to_yojson location);
   ]
+  else [
+    ("expression_content", expression_content ec);
+    ("location", Location.to_yojson location);
+  ])
 
 and expression_content = function
   (* Base *)
