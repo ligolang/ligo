@@ -24,7 +24,7 @@ contracts_dir="./test/contracts"
     for test_file in $test_dir/*.*ligo; do
         printf "checking $test_file\n"
         gold_file="${test_file}.gold"
-        temp_file="${test_file}.temp"
+        temp_file="${test_file}.temp.with-scopes"
         # sed to remove colors, see
         # https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
         ligo-vet print-sexp --with-scopes --contract $test_file 2>&1 \
