@@ -2,6 +2,7 @@
 
 module AST.Capabilities.DocumentSymbol where
 
+import Control.Lens ((^.))
 import Control.Monad.Catch.Pure (MonadCatch)
 import Control.Monad.Writer.Strict
 import Data.Maybe (fromMaybe)
@@ -24,9 +25,10 @@ extractDocumentSymbols
   :: forall m.
      (MonadCatch m)
   => J.Uri
-  -> LIGO Info'
+  -> SomeLIGO Info'
   -> m [SymbolInformation]
-extractDocumentSymbols uri tree = execWriterT $ collectFromContract tree
+extractDocumentSymbols uri tree =
+  execWriterT $ collectFromContract (tree ^. nestedLIGO)
   where
     collectFromContract :: LIGO Info' -> WriterT [SymbolInformation] m ()
     collectFromContract (match @RawContract -> Just (_, RawContract decls))

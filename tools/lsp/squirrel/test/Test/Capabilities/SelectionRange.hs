@@ -2,11 +2,13 @@ module Test.Capabilities.SelectionRange
   ( unit_selectionRangeInsideCase
   ) where
 
+import Control.Lens ((^.))
 import Data.Function ((&))
 import System.FilePath ((</>))
 import Test.HUnit (Assertion)
 
 import AST.Capabilities.SelectionRange (findCoveringRanges)
+import AST.Skeleton (nestedLIGO)
 import Range (Range (..), point)
 
 import Test.Capabilities.Util (contractsDir)
@@ -23,7 +25,7 @@ unit_selectionRangeInsideCase :: Assertion
 unit_selectionRangeInsideCase = do
   tree <- readContract (contractsDir </> "heap.ligo")
   let position = point 16 8
-      results = findCoveringRanges tree position
+      results = findCoveringRanges (tree ^. nestedLIGO) position
               & map simplify
   results `shouldBe` [ SimpleRange (16, 8) (16, 12)
                      , SimpleRange (16, 8) (16, 16)

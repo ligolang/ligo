@@ -201,14 +201,14 @@ handleSignatureHelpRequest req respond = do
     uri = _textDocument ^. J.uri
     position = fromLspPosition _position
   (tree, _) <- RIO.fetch (J.toNormalizedUri uri)
-  let signatureHelp = getSignatureHelp tree position
+  let signatureHelp = getSignatureHelp (tree ^. nestedLIGO) position
   respond . Right $ signatureHelp
 
 handleFoldingRangeRequest :: S.Handler RIO 'J.TextDocumentFoldingRange
 handleFoldingRangeRequest req respond = do
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
     (tree, _) <- RIO.fetch uri
-    actions <- foldingAST tree
+    actions <- foldingAST (tree ^. nestedLIGO)
     respond . Right . J.List
         $ fmap toFoldingRange
         $ actions
@@ -218,7 +218,7 @@ handleSelectionRangeRequest req respond = do
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
     let positions = req ^. J.params . J.positions ^.. folded
     (tree, _) <- RIO.fetch uri
-    let results = map (findSelectionRange tree) positions
+    let results = map (findSelectionRange (tree ^. nestedLIGO)) positions
     respond . Right . J.List $ results
 
 handleDocumentSymbolsRequest :: S.Handler RIO 'J.TextDocumentDocumentSymbol

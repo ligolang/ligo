@@ -1,6 +1,6 @@
 module AST.Capabilities.Find where
 
-import Control.Lens (_Just, (^?))
+import Control.Lens (_Just, (^.), (^?))
 import Control.Monad
 import Data.Maybe (fromMaybe, listToMaybe)
 import Data.Text (Text)
@@ -10,9 +10,9 @@ import Duplo.Tree
 
 import AST.Scope (Level (..), lookupEnv, ofLevel)
 import AST.Scope.ScopedDecl
-  (DeclarationSpecifics (..), ScopedDecl (..), Type (..), TypeDeclSpecifics (..),
-  ValueDeclSpecifics (..), _ValueSpec, extractRefName, sdSpec, vdsTspec)
-import AST.Skeleton (LIGO)
+  (DeclarationSpecifics (..), Scope, ScopedDecl (..), Type (..), TypeDeclSpecifics (..),
+  ValueDeclSpecifics (..), _TypeSpec, _ValueSpec, extractRefName, sdSpec, tdsInit, vdsTspec)
+import AST.Skeleton (LIGO, SomeLIGO, nestedLIGO)
 
 import Product
 import Range
@@ -22,7 +22,6 @@ type CanSearch xs =
   , Contains Range xs
   , Contains (Maybe Level) xs
   , Contains [Text] xs
-  , Pretty (Product xs)
   , Modifies (Product xs)
   , Eq (Product xs)
   )
@@ -30,7 +29,7 @@ type CanSearch xs =
 findScopedDecl
   :: CanSearch xs
   => Range
-  -> LIGO xs
+  -> SomeLIGO xs
   -> Maybe ScopedDecl
 findScopedDecl pos tree = do
   node <- findNodeAtPoint pos tree
@@ -40,23 +39,21 @@ findScopedDecl pos tree = do
   let filtered = filter (ofLevel level) fullEnv
   lookupEnv (ppToText $ void node) filtered
 
-type Scope = [ScopedDecl]
-
 findInfoAtPoint
-  :: (Apply Functor fs, Apply Foldable fs, Lattice b, HasRange b)
-  => Range -> Tree fs b -> Maybe b
+  :: (Contains Range xs, Eq (Product xs))
+  => Range -> SomeLIGO xs -> Maybe (Product xs)
 findInfoAtPoint pos tree = extract <$> findNodeAtPoint pos tree
 
 findNodeAtPoint
-  :: (Apply Foldable fs, Lattice a, HasRange a)
-  => Range -> Tree fs a -> Maybe (Tree fs a)
+  :: (Contains Range xs, Eq (Product xs))
+  => Range -> SomeLIGO xs -> Maybe (LIGO xs)
 findNodeAtPoint pos tree =
-  listToMaybe (spineTo (\i -> pos `leq` getRange i) tree)
+  listToMaybe (spineTo (\i -> pos `leq` getRange i) (tree ^. nestedLIGO))
 
 definitionOf
   :: CanSearch xs
   => Range
-  -> LIGO xs
+  -> SomeLIGO xs
   -> Maybe Range
 definitionOf pos tree =
   _sdOrigin <$> findScopedDecl pos tree
@@ -70,30 +67,39 @@ data TypeDefinitionRes
   | TypeDeclared ScopedDecl
   | TypeInlined TypeDeclSpecifics
 
-typeDefinitionOf :: CanSearch xs => Range -> LIGO xs -> TypeDefinitionRes
+typeDefinitionOf :: CanSearch xs => Range -> SomeLIGO xs -> TypeDefinitionRes
 typeDefinitionOf pos tree = fromMaybe TypeNotFound $ do
   scope <- getElem <$> findInfoAtPoint pos tree
   varDecl <- findScopedDecl pos tree
   tspec <- varDecl ^? sdSpec . _ValueSpec . vdsTspec . _Just
-  Just $ case findTypeDeclaration scope (_tdsInit tspec) of
+  Just $ case findTypeRefDeclaration scope (_tdsInit tspec) of
     Nothing -> TypeInlined tspec
     Just decl -> TypeDeclared decl
 
-findTypeDeclaration :: Scope -> Type -> Maybe ScopedDecl
-findTypeDeclaration scope typ = do
+findTypeRefDeclaration :: Scope -> Type -> Maybe ScopedDecl
+findTypeRefDeclaration scope typ = do
   refName <- extractRefName typ
   lookupEnv refName (filter (ofLevel TypeLevel) scope)
 
-typeDefinitionAt :: CanSearch xs => Range -> LIGO xs -> Maybe Range
+typeDefinitionAt :: CanSearch xs => Range -> SomeLIGO xs -> Maybe Range
 typeDefinitionAt pos tree = case typeDefinitionOf pos tree of
   TypeNotFound -> Nothing
   TypeDeclared decl -> Just (_sdOrigin decl)
   TypeInlined tspec -> Just (_tdsInitRange tspec)
 
+-- | If the type is an alias to a declared type, substitute the type with the
+-- aliased type. Otherwise, leave it be.
+--
+-- If the aliased name is undeclared, leave the type be.
+dereferenceType :: Scope -> Type -> Type
+dereferenceType scope typ = fromMaybe typ $ do
+  refDecl <- findTypeRefDeclaration scope typ
+  refDecl ^? sdSpec . _TypeSpec . tdsInit
+
 implementationOf
   :: CanSearch xs
   => Range
-  -> LIGO xs
+  -> SomeLIGO xs
   -> Maybe Range
 implementationOf pos tree = do
   decl <- findScopedDecl pos tree
@@ -104,7 +110,7 @@ implementationOf pos tree = do
 referencesOf
   :: CanSearch xs
   => Range
-  -> LIGO xs
+  -> SomeLIGO xs
   -> Maybe [Range]
 referencesOf pos tree =
   _sdRefs <$> findScopedDecl pos tree

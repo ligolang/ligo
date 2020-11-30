@@ -19,6 +19,7 @@ import Prelude hiding (log)
 
 import Control.Arrow
 import Control.Exception.Safe (MonadCatch, MonadThrow)
+import Control.Lens ((^.))
 import Control.Monad
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, asks, runReaderT)
@@ -51,7 +52,7 @@ import Range
 
 type RioEnv =
   Product
-    '[ ASTMap J.NormalizedUri (LIGO Info', [Msg]) RIO
+    '[ ASTMap J.NormalizedUri (SomeLIGO Info', [Msg]) RIO
      ]
 
 newtype RIO a = RIO
@@ -81,7 +82,7 @@ instance HasLigoClient RIO where
 run :: (J.LanguageContextEnv Config.Config, RioEnv) -> RIO a -> IO a
 run (lcEnv, env) (RIO action) = J.runLspT lcEnv $ runReaderT action env
 
-fetch, forceFetch :: J.NormalizedUri -> RIO (LIGO Info', [Msg])
+fetch, forceFetch :: J.NormalizedUri -> RIO (SomeLIGO Info', [Msg])
 fetch uri = asks getElem >>= ASTMap.fetchCurrent uri
 forceFetch uri = do
   tmap <- asks getElem
@@ -109,7 +110,7 @@ preload uri = do
 
 load
   :: J.Uri
-  -> RIO (LIGO Info', [Msg])
+  -> RIO (SomeLIGO Info', [Msg])
 load uri = do
   src <- preload uri
   ligoEnv <- getLigoClientEnv
@@ -117,7 +118,7 @@ load uri = do
   parseWithScopes @Fallback src
 
 collectErrors
-  :: (J.NormalizedUri -> RIO (LIGO Info', [Msg]))
+  :: (J.NormalizedUri -> RIO (SomeLIGO Info', [Msg]))
   -> J.NormalizedUri
   -> Maybe Int
   -> RIO ()
@@ -161,8 +162,8 @@ errorToDiag (getRange -> (Range (sl, sc, _) (el, ec, _) _), Error what _) =
 --           Left _ -> return []
 --   return (concat contracts)
 
-collectTreeErrors :: LIGO Info' -> [Msg]
-collectTreeErrors = map (getElem *** void) . collect
+collectTreeErrors :: SomeLIGO Info' -> [Msg]
+collectTreeErrors = map (getElem *** void) . collect . (^. nestedLIGO)
 
 -- TODO: uncomment when it will be used
 -- data ParsedContract = ParsedContract

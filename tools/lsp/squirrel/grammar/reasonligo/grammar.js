@@ -243,7 +243,7 @@ module.exports = grammar({
     indexing: $ => prec.right(12, seq(
       field("box", $._expr),
       brackets(
-        field("index", $._expr),
+        field("index", $._expr), // indices really aren't arbitrary expressions…
       )
     )),
 

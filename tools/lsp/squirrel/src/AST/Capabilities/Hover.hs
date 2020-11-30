@@ -18,7 +18,7 @@ import Range
 hoverDecl
   :: CanSearch xs
   => Range
-  -> LIGO xs
+  -> SomeLIGO xs
   -> Maybe LSP.Hover
 hoverDecl at tree = do
   decl <- findScopedDecl at tree

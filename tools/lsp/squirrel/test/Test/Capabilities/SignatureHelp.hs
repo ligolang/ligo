@@ -4,6 +4,7 @@ module Test.Capabilities.SignatureHelp
   ( test_simpleFunctionCall
   ) where
 
+import Control.Lens ((^.))
 import Data.Text (Text)
 import qualified Language.LSP.Types as J
 import System.FilePath ((</>))
@@ -14,6 +15,7 @@ import AST (Fallback)
 import AST.Capabilities.SignatureHelp
   (SignatureInformation (..), findSignature, makeSignatureLabel, toLspParameter)
 import AST.Scope.Common (HasScopeForest)
+import AST.Skeleton (nestedLIGO)
 import Extension (getExt)
 import Range (Range, point)
 
@@ -126,7 +128,7 @@ test_simpleFunctionCall
       let filepath = contractsDir </> "signature-help" </> tiContract
       tree <- readContractWithScopes @parser filepath
       dialect <- getExt filepath
-      let result = findSignature tree tiCursor
+      let result = findSignature (tree ^. nestedLIGO) tiCursor
       result `shouldBe`
         Just ( SignatureInformation
                { _label = makeSignatureLabel dialect tiFunction tiParameters
