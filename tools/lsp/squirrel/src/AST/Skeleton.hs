@@ -77,7 +77,6 @@ type IsRec = Bool
 data Type it
   = TArrow    it it    -- ^ (Type) (Type)
   | TRecord   [it]     -- ^ [TField]
-  | TVar      it       -- ^ (Name)
   | TSum      [it]     -- ^ [Variant]
   | TProduct  [it]     -- ^ [Type]
   | TApply    it it  -- ^ (Name) (Type)
