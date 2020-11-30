@@ -5,8 +5,7 @@ let program_ppformat ~display_format f p =
   | Human_readable | Dev -> PP.program f p
 
 let program_jsonformat p : json =
-  let p' = Format.asprintf "%a" PP.program p in
-  `Assoc [("AST" , `String p')]
+  To_yojson.program p
 
 let program_format : 'a format = {
   pp = program_ppformat;
