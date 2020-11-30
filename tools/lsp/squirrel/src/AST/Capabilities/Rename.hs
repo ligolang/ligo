@@ -2,13 +2,14 @@
 module AST.Capabilities.Rename
   ( RenameDeclarationResult (..)
   , renameDeclarationAt
+  , prepareRenameDeclarationAt
   ) where
 
 import Data.Text (Text)
 import qualified Language.LSP.Types as J
 
 import AST.Capabilities.Find (CanSearch, findScopedDecl)
-import AST.Scope (ScopedDecl (ScopedDecl, _sdRefs))
+import AST.Scope (ScopedDecl (ScopedDecl, _sdOrigin, _sdRefs))
 import AST.Skeleton (LIGO)
 import Range (Range, toLspRange)
 
@@ -30,3 +31,12 @@ renameDeclarationAt pos tree newName =
         -- XXX: _sdRefs includes the declaration itself too,
         -- so we do not add _sdOrigin.
         map (\r -> J.TextEdit (toLspRange r) newName) _sdRefs
+
+-- | Like 'renameDeclarationAt' but does not actually rename anything,
+-- only looks up the symbol being renamed and returns either @Nothing@
+-- or its declaration range.
+prepareRenameDeclarationAt
+  :: CanSearch xs
+  => Range -> LIGO xs -> Maybe Range
+prepareRenameDeclarationAt pos tree =
+    _sdOrigin <$> findScopedDecl pos tree

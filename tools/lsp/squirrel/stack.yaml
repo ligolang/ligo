@@ -9,8 +9,16 @@ packages:
 - .
 
 extra-deps:
-- lsp-1.0.0.0
-- lsp-types-1.0.0.0
+# - lsp-1.0.0.0
+# - lsp-types-1.0.0.0
+# These are 1.0.0.0 + support for prepareRename
+# (https://github.com/alanz/lsp/pull/265)
+- git: https://github.com/serokell/lsp.git
+  commit: 1a81bfc5d18e35592b7b3dc752c9584b7a73d589
+  subdirs: [ . ]
+- git: https://github.com/serokell/lsp.git
+  commit: 1a81bfc5d18e35592b7b3dc752c9584b7a73d589
+  subdirs: [ lsp-types ]
 # For lsp:
 - dependent-map-0.4.0.0
 - dependent-sum-0.7.1.0
