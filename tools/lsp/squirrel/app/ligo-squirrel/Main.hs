@@ -101,6 +101,7 @@ handlers = mconcat
   , S.notificationHandler J.STextDocumentDidSave (\_msg -> pure ())
 
   , S.requestHandler J.STextDocumentDefinition handleDefinitionRequest
+  , S.requestHandler J.STextDocumentTypeDefinition handleTypeDefinitionRequest
   , S.requestHandler J.STextDocumentReferences handleFindReferencesRequest
   , S.requestHandler J.STextDocumentCompletion handleCompletionRequest
   --, S.requestHandler J.SCompletionItemResolve handleCompletionItemResolveRequest
@@ -146,6 +147,18 @@ handleDefinitionRequest req respond = do
     case AST.definitionOf pos tree of
       Just defPos -> respond . Right . J.InR . J.InL . J.List $ [J.Location uri $ toLspRange defPos]
       Nothing     -> respond . Right . J.InR . J.InL . J.List $ []
+
+handleTypeDefinitionRequest :: S.Handler RIO 'J.TextDocumentTypeDefinition
+handleTypeDefinitionRequest req respond = do
+    let
+      J.TypeDefinitionParams{_textDocument, _position} = req ^. J.params
+      uri = _textDocument ^. J.uri
+      pos = _position ^. to fromLspPosition
+    (tree, _) <- RIO.fetch $ J.toNormalizedUri uri
+    let wrapAndRespond = respond . Right . J.InR . J.InL . J.List
+    case AST.typeDefinitionAt pos tree of
+      Just defPos -> wrapAndRespond [J.Location uri $ toLspRange defPos]
+      Nothing     -> wrapAndRespond []
 
 handleFindReferencesRequest :: S.Handler RIO 'J.TextDocumentReferences
 handleFindReferencesRequest req respond = do
