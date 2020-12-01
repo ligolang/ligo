@@ -63,8 +63,7 @@ module.exports = grammar({
       , [$.lambda, $.tuple_pattern]
       , [$._expr_term, $.nullary_constr_pattern]
       , [$.list, $.list_pattern]
-      , [$._expr_term, $.lhs]
-      , [$.FieldName, $.lhs]
+      , [$.FieldName, $._expr_term]
       , [$._expr_term, $.capture]
       , [$.type_string, $._literal]
       , [$.Name, $.NameDecl]
@@ -163,15 +162,15 @@ module.exports = grammar({
     capture: $ => field("name", $.Name),
 
     record_field: $ => seq(
-      field("name", $.lhs),
+      $._accessor_chain,
       ':',
       field("value", $._expr),
     ),
 
-    lhs: $ => seq(
-      field("callee", $.Name),
-      optional(seq(field("name", $.Name), '.')),
-    ),
+    // The precedence is chosen so as to overtake over
+    // 'field_decl'. The contract where it is relevant is
+    // 'tools/lsp/squirrel/test/contracts/sexps/single_record_item.religo'.
+    _accessor_chain: $ => prec.right(11, sepBy1('.', field("accessor", $.FieldName))),
 
     list: $ => brackets(
       sepBy(',', field("element", $._spread_expr)),
@@ -214,11 +213,11 @@ module.exports = grammar({
     ),
 
     // a.attribute
-    data_projection: $ => prec.right(21, seq(
-      field("box", $._expr),
-      ".",
-      sepBy1('.', field("selector", $.FieldName)),
-    )),
+    data_projection: $ => seq(
+      field("expr", $._expr),
+      '.',
+      $._accessor_chain,
+    ),
 
     binary_call: $ => choice(
       ...OPS
@@ -316,15 +315,6 @@ module.exports = grammar({
       ')',
     ),
 
-    fun_type: $ =>
-      prec.right(8,
-        seq(
-          field("domain", $._type_expr),
-          '=>',
-          field("codomain", $._type_expr),
-        ),
-      ),
-
     _core_type: $ =>
       choice(
         $.type_application,
@@ -375,11 +365,12 @@ module.exports = grammar({
       block(sepBy(',', field("field", $.field_decl))),
 
     field_decl: $ =>
-      seq(
-        field("field_name", $.FieldName),
-        ':',
-        field("field_type", $._type_expr),
-      ),
+    prec(10, // see 'accessor_chain' for explanation of precedence
+         seq(
+           field("field_name", $.FieldName),
+           ':',
+           field("field_type", $._type_expr),
+         )),
 
     //// PATTERNS //////////////////////////////////////////////////////////////
 

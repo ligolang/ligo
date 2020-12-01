@@ -1,0 +1,3 @@
+(contract
+  (type p (RECORD x: int))
+  (const (? o) (lam (type? (? p) int) : p => (record (.= x p)))))

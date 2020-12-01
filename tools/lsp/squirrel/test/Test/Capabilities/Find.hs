@@ -29,6 +29,8 @@ import Test.FixedExpectations
   (HasCallStack, expectationFailure, shouldBe, shouldContain, shouldMatchList)
 import Test.Util (readContractWithScopes)
 import Test.Util.LigoEnv ()
+-- Test.Util.LigoEnv for "instance HasLigoClient IO"
+
 
 -- | Represents an invariant relation between references and a
 -- definition of some LIGO entity (a variable, a type etc).
@@ -158,33 +160,81 @@ invariants =
     , driDef = Just (interval 3 11 12)
     , driRefs = [ interval 3 36 37 ]
     }
-  -- * Tests that don't pass becasue we can't distinguish type attributes and
-  -- usual variables: https://issues.serokell.io/issue/LIGO-82
 
-  -- , DefinitionReferenceInvariant
-  --   { driFile = contractsDir </> "type-attributes.mligo"
-  --   , driDesc = "counter, type attribute"
-  --   , driDef = Nothing  -- type attributes don't have a declaration
-  --   , driRefs = [interval 9 3 10, interval 7 35 42]
-  --   }
-  -- , DefinitionReferenceInvariant
-  --   { driFile = contractsDir </> "type-attributes.mligo"
-  --   , driDesc = "counter, function"
-  --   , driDef = Just (interval 6 5 12)
-  --   , driRefs = []
-  --   }
-  -- , DefinitionReferenceInvariant
-  --   { driFile = contractsDir </> "type-attributes-in-rec.mligo"
-  --   , driDesc = "counter, type attribute"
-  --   , driDef = Nothing  -- type attributes don't have a declaration
-  --   , driRefs = [interval 9 3 10, interval 7 35 42]
-  --   }
-  -- , DefinitionReferenceInvariant
-  --   { driFile = contractsDir </> "type-attributes-in-rec.mligo"
-  --   , driDesc = "counter, function"
-  --   , driDef = Just (interval 6 9 16)
-  --   , driRefs = []
-  --   }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-attributes.ligo"
+    , driDesc = "counter, type attribute"
+    , driDef = Nothing -- type attributes don't have a declaration
+    , driRefs = [interval 9 47 54, interval 13 34 41]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-attributes.ligo"
+    , driDesc = "counter, function"
+    , driDef = Just (interval 7 10 17)
+    , driRefs = []
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-attributes-in-rec.ligo"
+    , driDesc = "counter, type attribute"
+    , driDef = Nothing -- type attributes don't have a declaration
+    , driRefs = [interval 9 47 54, interval 13 34 41]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-attributes-in-rec.ligo"
+    , driDesc = "counter, function"
+    , driDef = Just (interval 7 20 27)
+    , driRefs = []
+    }
+
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-attributes.mligo"
+    , driDesc = "counter, type attribute"
+    , driDef = Nothing  -- type attributes don't have a declaration
+    , driRefs = [interval 9 3 10, interval 7 35 42]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-attributes.mligo"
+    , driDesc = "counter, function"
+    , driDef = Just (interval 6 5 12)
+    , driRefs = []
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-attributes-in-rec.mligo"
+    , driDesc = "counter, type attribute"
+    , driDef = Nothing  -- type attributes don't have a declaration
+    , driRefs = [interval 9 3 10, interval 7 35 42]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-attributes-in-rec.mligo"
+    , driDesc = "counter, function"
+    , driDef = Just (interval 6 9 16)
+    , driRefs = []
+    }
+
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-attributes.religo"
+    , driDesc = "counter, type attribute"
+    , driDef = Nothing  -- type attributes don't have a declaration
+    , driRefs = [interval 9 14 21, interval 7 35 42]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-attributes.religo"
+    , driDesc = "counter, function"
+    , driDef = Just (interval 6 5 12)
+    , driRefs = []
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-attributes-in-rec.religo"
+    , driDesc = "counter, type attribute"
+    , driDef = Nothing  -- type attributes don't have a declaration
+    , driRefs = [interval 9 14 21, interval 7 35 42]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-attributes-in-rec.religo"
+    , driDesc = "counter, function"
+    , driDef = Just (interval 6 9 16)
+    , driRefs = []
+    }
 
   , DefinitionReferenceInvariant
     { driFile = contractsDir </> "recursion.ligo"

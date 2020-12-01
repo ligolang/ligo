@@ -103,9 +103,8 @@ recognise (SomeRawTree dialect rawTree)
     -- FieldAssignment
   , Descent do
       boilerplate \case
-        "field_assignment"      -> FieldAssignment <$> field "name" <*> field "_rhs"
-        "field_path_assignment" -> FieldAssignment <$> field "lhs"  <*> field "_rhs"
-        _                  -> fallthrough
+        "field_path_assignment" -> FieldAssignment <$> fields "accessor" <*> field "_rhs"
+        _ -> fallthrough
 
     -- MapBinding
   , Descent do
@@ -125,10 +124,10 @@ recognise (SomeRawTree dialect rawTree)
 
   , Descent do
       boilerplate \case
-        "data_projection" -> QualifiedName <$> field "struct"    <*> fields "index"
-        "map_lookup"      -> QualifiedName <$> field "container" <*> fields "index"
-        "module_field"    -> QualifiedName <$> field "module"    <*> fields "method"
-        _                 -> fallthrough
+        "data_projection" -> QualifiedName <$> field "struct" <*> fields "accessor"
+        "map_lookup" -> QualifiedName <$> field "container" <*> fields "index"
+        "module_field" -> QualifiedName <$> field "module" <*> fields "method"
+        _ -> fallthrough
 
     -- Literal
   , Descent do
