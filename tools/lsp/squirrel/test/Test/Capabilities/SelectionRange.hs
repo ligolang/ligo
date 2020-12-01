@@ -11,9 +11,12 @@ import AST.Capabilities.SelectionRange (findCoveringRanges)
 import AST.Skeleton (nestedLIGO)
 import Range (Range (..), point)
 
-import Test.Capabilities.Util (contractsDir)
+import qualified Test.Capabilities.Util as Common (contractsDir)
 import Test.FixedExpectations (shouldBe)
 import Test.Util (readContract)
+
+contractsDir :: FilePath
+contractsDir = Common.contractsDir </> "selection-range"
 
 data SimpleRange = SimpleRange (Int, Int) (Int, Int)
   deriving stock (Eq, Show)
@@ -35,5 +38,5 @@ unit_selectionRangeInsideCase = do
                      , SimpleRange (11, 3) (21, 4)
                      , SimpleRange (11, 3) (21, 11)
                      , SimpleRange (10, 1) (21, 11)
-                     , SimpleRange (1, 1) (107, 1)
+                     , SimpleRange (1, 1) (105, 1)
                      ]

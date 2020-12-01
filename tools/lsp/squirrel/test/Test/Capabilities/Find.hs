@@ -24,13 +24,15 @@ import AST.Capabilities.Find (definitionOf, referencesOf, typeDefinitionAt)
 import AST.Scope.Common (HasScopeForest)
 import Range (Range (..), interval, point)
 
-import Test.Capabilities.Util (contractsDir)
+import qualified Test.Capabilities.Util as Common (contractsDir)
 import Test.FixedExpectations
   (HasCallStack, expectationFailure, shouldBe, shouldContain, shouldMatchList)
 import Test.Util (readContractWithScopes)
 import Test.Util.LigoEnv ()
 -- Test.Util.LigoEnv for "instance HasLigoClient IO"
 
+contractsDir :: FilePath
+contractsDir = Common.contractsDir </> "find"
 
 -- | Represents an invariant relation between references and a
 -- definition of some LIGO entity (a variable, a type etc).
@@ -335,8 +337,7 @@ unit_type_of_let = do
 
 unit_type_of_pascaligo_lambda_arg :: Assertion
 unit_type_of_pascaligo_lambda_arg = do
-  tree <- readContractWithScopes @Fallback
-    (contractsDir </> "type-definition" </> "lambda.ligo")
+  tree <- readContractWithScopes @Fallback (contractsDir </> "lambda.ligo")
   case typeDefinitionAt (point 4 21) tree of
     Nothing -> expectationFailure "Should find type definition"
     Just range -> range{rFile=""} `shouldBe` interval 1 6 12

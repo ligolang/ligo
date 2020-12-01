@@ -11,11 +11,14 @@ import AST.Capabilities.Rename (RenameDeclarationResult (Ok), renameDeclarationA
 import AST.Scope (Fallback)
 import Range (point)
 
-import Test.Capabilities.Util (contractsDir)
+import qualified Test.Capabilities.Util as Common (contractsDir)
 import Test.FixedExpectations (shouldBe)
 import Test.Util (readContractWithScopes)
-import Test.Util.LigoEnv ({- instance HasLigoClient IO -})
+import Test.Util.LigoEnv ()
+--  Test.Util.LigoEnv for "instance HasLigoClient IO"
 
+contractsDir :: FilePath
+contractsDir = Common.contractsDir </> "rename"
 
 unit_rename_id :: Assertion
 unit_rename_id = do
