@@ -1,6 +1,6 @@
 PACKAGE := squirrel
 
-STACK_DEV_OPTIONS = --fast --ghc-options -Wwarn --file-watch
+STACK_DEV_OPTIONS = --fast --ghc-options -WError --file-watch
 
 .DEFAULT_GOAL := all
 

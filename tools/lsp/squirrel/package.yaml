@@ -60,7 +60,7 @@ default-extensions:
   - UndecidableInstances
   - ViewPatterns
 
-ghc-options: -freverse-errors -Wall -Werror
+ghc-options: -freverse-errors -Wall
 
 library:
   source-dirs:
