@@ -111,7 +111,10 @@ handlers = mconcat
   , S.requestHandler J.STextDocumentDocumentSymbol handleDocumentSymbolsRequest
   , S.requestHandler J.STextDocumentHover handleHoverRequest
   , S.requestHandler J.STextDocumentRename handleRenameRequest
-  --, S.requestHandler J.STextDocumentPrepareRename _
+  -- , S.requestHandler J.STextDocumentPrepareRename handlePrepareRenameRequest
+  , S.requestHandler J.STextDocumentFormatting handleDocumentFormattingRequest
+  , S.requestHandler J.STextDocumentRangeFormatting handleDocumentRangeFormattingRequest
+  -- , S.requestHandler J.STextDocumentOnTypeFormatting
 
   --, S.notificationHandler J.SCancelRequest _
   --, S.requestHandler J.STextDocumentCodeAction _
@@ -159,6 +162,21 @@ handleTypeDefinitionRequest req respond = do
     case AST.typeDefinitionAt pos tree of
       Just defPos -> wrapAndRespond [J.Location uri $ toLspRange defPos]
       Nothing     -> wrapAndRespond []
+
+handleDocumentFormattingRequest :: S.Handler RIO 'J.TextDocumentFormatting
+handleDocumentFormattingRequest req respond = do
+  let
+    uri = req ^. J.params . J.textDocument . J.uri
+  (tree, _) <- RIO.fetch $ J.toNormalizedUri uri
+  respond . Right =<< AST.formatDocument tree
+
+handleDocumentRangeFormattingRequest :: S.Handler RIO 'J.TextDocumentRangeFormatting
+handleDocumentRangeFormattingRequest req respond = do
+  let
+    uri = req ^. J.params . J.textDocument . J.uri
+    pos = fromLspRange $ req ^. J.params . J.range
+  (tree, _) <- RIO.fetch $ J.toNormalizedUri uri
+  respond . Right =<< AST.formatAt pos tree
 
 handleFindReferencesRequest :: S.Handler RIO 'J.TextDocumentReferences
 handleFindReferencesRequest req respond = do
