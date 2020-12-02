@@ -557,7 +557,7 @@ and compile_recursive {fun_name; fun_type; lambda} =
         let shadowed = shadowed || Var.equal li.let_binder.wrap_content fun_name.wrap_content in
         let%bind let_result = replace_callback fun_name loop_type shadowed li.let_result in
         let%bind rhs = compile_expression li.rhs in
-        let%bind ty  = compile_type e.type_expression in
+        let%bind ty  = compile_type li.rhs.type_expression in
         ok @@ e_let_in (Location.map Var.todo_cast li.let_binder) ty li.inline rhs let_result |
       E_matching m ->
         let%bind ty = compile_type e.type_expression in
