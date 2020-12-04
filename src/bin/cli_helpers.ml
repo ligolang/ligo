@@ -29,7 +29,7 @@ let toplevel : ?output_file:string option -> display_format:ex_display_format ->
       return_good @@ (Format.fprintf fmt "%s\n" as_str ; Format.pp_print_flush fmt ())
     | Error _ -> return_bad as_str
 
-let return_result : ?output_file:string option -> display_format:ex_display_format -> 'value format -> ('value, Build.Errors.build_error) Trace.result -> unit Term.ret =
+let return_result : ?output_file:string option -> display_format:ex_display_format -> 'value format -> ('value, Main_errors.all) Trace.result -> unit Term.ret =
   fun ?(output_file=None) ~display_format value_format value ->
-    let format = bind_format value_format Build.Errors.error_format in
+    let format = bind_format value_format Main_errors.Formatter.error_format in
     toplevel ~output_file ~display_format (Displayable {value ; format}) value

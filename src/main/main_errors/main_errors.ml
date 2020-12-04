@@ -2,6 +2,11 @@ module Formatter = Formatter
 module Types = Types
 type all = Types.all
 
+(* build system *)
+let build_error_tracer (e:all) : all = `Build_error_tracer e
+let build_dependency_cycle (s:string) : all = `Build_dependency_cycle s
+let build_corner_case (loc:string) (msg:string)  = `Build_corner_case (loc,msg)
+
 (* passes tracers *)
 
 let preproc_tracer (e:Preproc.Errors.preproc_error) : all = `Main_preproc e

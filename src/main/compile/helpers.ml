@@ -14,14 +14,20 @@ let get_initial_env  : string -> (Ast_typed.environment, all) result = fun proto
   let%bind protocol = protocol_to_variant protocol_as_str in
   ok @@ Environment.default protocol
 
+(*TODO : move this function to src/helpers so that src/build/.. can use it *)
+let file_extension_to_variant sf =
+  match sf with
+  | ".ligo" | ".pligo" -> Some PascaLIGO
+  | ".mligo"           -> Some CameLIGO
+  | ".religo"          -> Some ReasonLIGO
+  | _                  -> None
+
 let syntax_to_variant (Syntax_name syntax) source =
   match syntax, source with
-    "auto", Some sf ->
-      (match Filename.extension sf with
-         ".ligo" | ".pligo" -> ok PascaLIGO
-       | ".mligo"           -> ok CameLIGO
-       | ".religo"          -> ok ReasonLIGO
-       | ext                -> fail (syntax_auto_detection ext))
+  | "auto", Some sf ->
+    let sf = Filename.extension sf in
+    trace_option (syntax_auto_detection sf) @@
+      file_extension_to_variant sf
   | ("pascaligo" | "PascaLIGO"),   _ -> ok PascaLIGO
   | ("cameligo" | "CameLIGO"),     _ -> ok CameLIGO
   | ("reasonligo" | "ReasonLIGO"), _ -> ok ReasonLIGO
@@ -39,7 +45,6 @@ let preprocess_cameligo   = Preproc.Cameligo.preprocess
 let preprocess_reasonligo = Preproc.Reasonligo.preprocess
 
 let preprocess_file ~(options:Compiler_options.t) ~meta source =
-  trace preproc_tracer @@
   match meta.syntax with
     PascaLIGO  -> preprocess_pascaligo  options.libs source
   | CameLIGO   -> preprocess_cameligo   options.libs source

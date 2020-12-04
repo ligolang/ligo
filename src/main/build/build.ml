@@ -1,25 +1,25 @@
-module Errors = Errors
 module PP = PP
 module To_yojson = To_yojson
 module Formatter = Formatter
 
 open Trace
-open Errors
 open Types
+open Main_errors
 
 type file_name = string
 type graph = G.t * (Compile.Helpers.meta * Compile.Of_core.form * Buffer.t * (string * string) list) SMap.t
 
+type 'a build_error = ('a , Main_errors.all) result
 (* Build system *)
 
-let dependency_graph : options:Compiler_options.t -> string -> Compile.Of_core.form -> file_name -> (graph, _) result =
+let dependency_graph : options:Compiler_options.t -> string -> Compile.Of_core.form -> file_name -> graph build_error =
   fun ~options syntax form file_name ->
   let vertices = SMap.empty in
   let dep_g = G.empty in
   let rec dfs acc (dep_g,vertices) (file_name,form) =
     if not @@ SMap.mem file_name vertices then
-      let%bind meta = trace compiler_error @@ Compile.Of_source.extract_meta syntax file_name in
-      let%bind c_unit, deps = trace compiler_error @@ Compile.Of_source.compile ~options ~meta file_name in
+      let%bind meta = trace build_error_tracer @@ Compile.Of_source.extract_meta syntax file_name in
+      let%bind c_unit, deps = trace preproc_tracer @@ Compile.Helpers.preprocess_file ~options ~meta file_name in
       let vertices = SMap.add file_name (meta,form,c_unit,deps) vertices in
       let dep_g = G.add_vertex dep_g file_name in
       let dep_g =
@@ -41,7 +41,7 @@ let solve_graph : graph -> file_name -> (_ list,_) result =
   if Dfs.has_cycle dep_g
   then (
     let graph = Format.asprintf "%a" PP.graph (dep_g,file_name) in
-    fail @@ dependency_cycle @@ graph
+    fail @@ build_dependency_cycle @@ graph
   )
   else
     let aux v order =
@@ -69,7 +69,7 @@ let aggregate_contract order_deps asts_typed =
   (* Add the module at the beginning of the file *)
   let aux map (file_name,(_,_,_,deps_lst)) =
     let%bind (Ast_typed.Program_Fully_Typed contract,_) =
-      trace_option (corner_case ~loc:__LOC__ "Fail to find typed module") @@
+      trace_option (build_corner_case __LOC__ "Fail to find typed module") @@
       SMap.find_opt file_name asts_typed in
     let aux ast_typed (file_name,module_name) =
       let file_name = Location.wrap @@ Var.of_name file_name in
@@ -84,17 +84,18 @@ let aggregate_contract order_deps asts_typed =
   in
   let%bind asts_typed = bind_fold_list aux SMap.empty order_deps in
   (* Separate the program and the dependency (those are process differently) *)
-  let%bind (file_name,(_,_,_,_deps_lst)),order_deps = match List.rev order_deps with [] -> fail @@ corner_case ~loc:__LOC__ "compiling nothing"
+  let%bind (file_name,(_,_,_,_deps_lst)),order_deps = match List.rev order_deps with
+    | [] -> fail @@ build_corner_case __LOC__ "compiling nothing"
     | hd::tl -> ok @@ (hd,tl) in
   let%bind contract =
-    trace_option (corner_case ~loc:__LOC__ "Fail to find typed module") @@
+    trace_option (build_corner_case __LOC__ "Fail to find typed module") @@
     SMap.find_opt file_name asts_typed in
   (* Add all dependency at the beginning of the file *)
   let add_modules dep_types (file_name,(_,_,_, _deps_lst)) =
     let file_var = Location.wrap @@ Var.of_name file_name in
     (* Get the ast_type of the module *)
     let%bind ast_typed =
-      trace_option (corner_case ~loc:__LOC__ "Fail to find typed module") @@
+      trace_option (build_corner_case __LOC__ "Fail to find typed module") @@
       SMap.find_opt file_name asts_typed in
     (* Filter on Declaration_constant *)
     let aux decl decls = match Location.unwrap decl with
@@ -127,19 +128,19 @@ let aggregate_contract order_deps asts_typed =
   ok @@ Ast_typed.Program_Fully_Typed contract
 
 let type_file_with_dep ~options ~protocol_version asts_typed (file_name, (meta,form,c_unit,deps)) =
-  let%bind ast_core = trace compiler_error @@ Compile.Utils.to_core ~options ~meta c_unit file_name in
+  let%bind ast_core = Compile.Utils.to_core ~options ~meta c_unit file_name in
   let aux (file_name,module_name) =
     let%bind ast_typed =
-      trace_option (corner_case ~loc:__LOC__
+      trace_option (build_corner_case __LOC__
       "File typed before dependency. The build system is broken, contact the devs")
       @@ SMap.find_opt file_name asts_typed
     in
     ok @@ (module_name, ast_typed)
   in
   let%bind deps = bind_map_list aux deps in
-  let%bind init_env   = trace compiler_error @@ Compile.Helpers.get_initial_env protocol_version in
+  let%bind init_env   = Compile.Helpers.get_initial_env protocol_version in
   let init_env = add_modules_in_env init_env deps in
-  let%bind ast_typed,ast_typed_env,_ = trace compiler_error @@ Compile.Of_core.compile ~typer_switch:options.typer_switch ~init_env form ast_core in
+  let%bind ast_typed,ast_typed_env,_ = Compile.Of_core.compile ~typer_switch:options.typer_switch ~init_env form ast_core in
   ok @@ SMap.add file_name (ast_typed,ast_typed_env) asts_typed
 
 let type_contract : options:Compiler_options.t -> string -> Compile.Of_core.form -> _ -> file_name -> (_, _) result =
@@ -160,11 +161,11 @@ let combined_contract : options:Compiler_options.t -> string -> _ -> _ -> file_n
 let build_mini_c : options:Compiler_options.t -> string -> _ -> _ -> file_name -> (_, _) result =
   fun ~options syntax entry_point protocol_version file_name ->
     let%bind contract = combined_contract ~options syntax entry_point protocol_version file_name in
-    let%bind mini_c   = trace compiler_error @@ Compile.Of_typed.compile @@ contract in
+    let%bind mini_c   = trace build_error_tracer @@ Compile.Of_typed.compile @@ contract in
     ok @@ mini_c
 
 let build_contract : options:Compiler_options.t -> string -> string -> _ -> file_name -> (_, _) result =
   fun ~options syntax entry_point protocol_version file_name ->
     let%bind mini_c     = build_mini_c ~options syntax (Contract entry_point) protocol_version file_name in
-    let%bind michelson  = trace compiler_error @@ Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
+    let%bind michelson  = trace build_error_tracer @@ Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
     ok michelson

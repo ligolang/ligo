@@ -3,6 +3,7 @@
   (public_name ligo.build)
   (libraries
     main_errors
+    preproc
     simple-utils
     tezos-utils
     compile
