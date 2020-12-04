@@ -148,6 +148,7 @@ and pp_expr = function
 | EConstr     e -> pp_constr_expr e
 | ERecord     e -> pp_record_expr e
 | EProj       e -> pp_projection e
+| EModA       e -> pp_module_access pp_expr e
 | EUpdate     e -> pp_update e
 | EVar        v -> pp_ident v
 | ECall       e -> pp_call_expr e
@@ -308,6 +309,11 @@ and pp_projection {value; _} =
   let subpath = concat_map pp_selection subpath in
   group (pp_ident struct_name ^^ subpath)
 
+and pp_module_access : type a.(a -> document) -> a module_access reg -> document
+= fun f {value; _} ->
+  let {module_name; field; _} = value in
+  group (pp_ident module_name ^^ string "." ^^ break 0 ^^ f field)
+
 and pp_selection = function
   FieldName v   -> string "." ^^ break 0 ^^ string v.value
 | Component cmp ->
@@ -412,6 +418,7 @@ and pp_type_expr = function
 | TVar t    -> pp_ident t
 | TWild   _ -> string "_"
 | TString s -> pp_string s
+| TModA   t -> pp_module_access pp_type_expr t
 
 and pp_cartesian {value; _} =
   let head, tail = value.inside in

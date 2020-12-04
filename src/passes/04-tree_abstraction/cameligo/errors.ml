@@ -7,6 +7,7 @@ let stage = "abstracter"
 
 type abs_error = [
   | `Concrete_cameligo_recursive_fun of Region.t
+  | `Concrete_cameligo_unknown_constant of string * Location.t
   | `Concrete_cameligo_unsupported_pattern_type of Raw.pattern list
   | `Concrete_cameligo_unsupported_string_singleton of Raw.type_expr
   | `Concrete_cameligo_unsupported_deep_list_pattern of Raw.pattern
@@ -18,6 +19,7 @@ type abs_error = [
   ]
 
 let untyped_recursive_fun reg = `Concrete_cameligo_recursive_fun reg
+let unknown_constant s loc = `Concrete_cameligo_unknown_constant (s,loc)
 let unsupported_pattern_type pl = `Concrete_cameligo_unsupported_pattern_type pl
 let unsupported_deep_list_patterns cons = `Concrete_cameligo_unsupported_deep_list_pattern cons
 let unsupported_string_singleton te = `Concrete_cameligo_unsupported_string_singleton te
@@ -37,6 +39,10 @@ let error_ppformat : display_format:string display_format ->
       Format.fprintf f
       "@[<hv>%a@.Invalid function declaration.@.Recursive functions are required to have a type annotation (for now). @]"
         Snippet.pp_lift reg
+    | `Concrete_cameligo_unknown_constant (s,reg) ->
+      Format.fprintf f
+      "@[<hv>%a@.Unknown constant: %s"
+        Snippet.pp reg s
     | `Concrete_cameligo_unsupported_pattern_type pl ->
       Format.fprintf f
         "@[<hv>%a@.Invalid pattern matching.
@@ -103,6 +109,13 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
     let content = `Assoc [
       ("message", message );
       ("location", `String loc);] in
+    json_error ~stage ~content
+  | `Concrete_cameligo_unknown_constant (s,loc) ->
+    let message = `String ("Unknow constant: " ^ s) in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);
+    ] in
     json_error ~stage ~content
   | `Concrete_cameligo_unsupported_pattern_type pl ->
     let loc = Format.asprintf "%a"

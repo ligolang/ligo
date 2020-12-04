@@ -17,21 +17,21 @@ let rec fold_expression : ('a , self_ast_typed_error) folder -> 'a -> expression
     ok res
   )
   | E_application {lamb; args} -> (
-      let ab = (lamb, args) in
-      let%bind res = bind_fold_pair self init' ab in
-      ok res
-    )
+    let ab = (lamb, args) in
+    let%bind res = bind_fold_pair self init' ab in
+    ok res
+  )
   | E_lambda { binder = _ ; result = e }
   | E_recursive {lambda= {result=e}}
   | E_constructor {element=e} -> (
-      let%bind res = self init' e in
-      ok res
-    )
+    let%bind res = self init' e in
+    ok res
+  )
   | E_matching {matchee=e; cases} -> (
-      let%bind res = self init' e in
-      let%bind res = fold_cases f res cases in
-      ok res
-    )
+    let%bind res = self init' e in
+    let%bind res = fold_cases f res cases in
+    ok res
+  )
   | E_record m -> (
     let aux init'' _ expr =
       let%bind res = fold_expression self init'' expr in
@@ -46,15 +46,19 @@ let rec fold_expression : ('a , self_ast_typed_error) folder -> 'a -> expression
     ok res
   )
   | E_record_accessor {record} -> (
-     let%bind res = self init' record in
-     ok res
-    )
+    let%bind res = self init' record in
+    ok res
+  )
   | E_let_in { let_binder = _ ; rhs ; let_result } -> (
       let%bind res = self init' rhs in
       let%bind res = self res let_result in
       ok res
     )
   | E_type_in ti -> Folds.type_in self idle init' ti
+  | E_module_accessor { module_name = _ ; element } -> (
+    let%bind res = self init' element in
+    ok res
+  )
 
 and fold_cases : ('a , 'err) folder -> 'a -> matching_expr -> ('a , 'err) result = fun f init m ->
   match m with
@@ -83,14 +87,14 @@ let rec map_expression : self_ast_typed_error mapper -> expression -> (expressio
   let return expression_content = ok { e' with expression_content } in
   match e'.expression_content with
   | E_matching {matchee=e;cases} -> (
-      let%bind e' = self e in
-      let%bind cases' = map_cases f cases in
-      return @@ E_matching {matchee=e';cases=cases'}
-    )
+    let%bind e' = self e in
+    let%bind cases' = map_cases f cases in
+    return @@ E_matching {matchee=e';cases=cases'}
+  )
   | E_record_accessor {record; path} -> (
-      let%bind record = self record in
-      return @@ E_record_accessor {record; path}
-    )
+    let%bind record = self record in
+    return @@ E_record_accessor {record; path}
+  )
   | E_record m -> (
     let%bind m' = bind_map_lmap self m in
     return @@ E_record m'
@@ -101,35 +105,39 @@ let rec map_expression : self_ast_typed_error mapper -> expression -> (expressio
     return @@ E_record_update {record;path;update}
   )
   | E_constructor c -> (
-      let%bind e' = self c.element in
-      return @@ E_constructor {c with element = e'}
+    let%bind e' = self c.element in
+    return @@ E_constructor {c with element = e'}
   )
   | E_application {lamb; args} -> (
-      let ab = (lamb, args) in
-      let%bind (a,b) = bind_map_pair self ab in
-      return @@ E_application {lamb=a;args=b}
-    )
+    let ab = (lamb, args) in
+    let%bind (a,b) = bind_map_pair self ab in
+    return @@ E_application {lamb=a;args=b}
+  )
   | E_let_in { let_binder ; rhs ; let_result; inline } -> (
-      let%bind rhs = self rhs in
-      let%bind let_result = self let_result in
-      return @@ E_let_in { let_binder ; rhs ; let_result; inline }
-    )
+    let%bind rhs = self rhs in
+    let%bind let_result = self let_result in
+    return @@ E_let_in { let_binder ; rhs ; let_result; inline }
+  )
   | E_type_in ti -> (
-      let%bind ti = Maps.type_in self ok ti in
-      return @@ E_type_in ti
-    )
+    let%bind ti = Maps.type_in self ok ti in
+    return @@ E_type_in ti
+  )
   | E_lambda { binder ; result } -> (
-      let%bind result = self result in
-      return @@ E_lambda { binder ; result }
-    )
+    let%bind result = self result in
+    return @@ E_lambda { binder ; result }
+  )
   | E_recursive { fun_name; fun_type; lambda = {binder;result}} -> (
-      let%bind result = self result in
-      return @@ E_recursive { fun_name; fun_type; lambda = {binder;result}}
-    )
+    let%bind result = self result in
+    return @@ E_recursive { fun_name; fun_type; lambda = {binder;result}}
+  )
   | E_constant c -> (
-      let%bind args = bind_map_list self c.arguments in
-      return @@ E_constant {c with arguments=args}
-    )
+    let%bind args = bind_map_list self c.arguments in
+    return @@ E_constant {c with arguments=args}
+  )
+  | E_module_accessor { module_name; element } -> (
+    let%bind element = self element in
+    return @@ E_module_accessor { module_name; element }
+  )
   | E_literal _ | E_variable _ | E_raw_code _ as e' -> return e'
 
 
@@ -223,6 +231,10 @@ let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> ('a
       let%bind (res,args) = bind_fold_map_list self init' c.arguments in
       ok (res, return @@ E_constant {c with arguments=args})
     )
+  | E_module_accessor { module_name; element } -> (
+    let%bind (res,element) = self init' element in
+    ok (res, return @@ E_module_accessor { module_name; element })
+  )
   | E_literal _ | E_variable _ | E_raw_code _ as e' -> ok (init', return e')
 
 and fold_map_cases : ('a , self_ast_typed_error) fold_mapper -> 'a -> matching_expr -> ('a * matching_expr , self_ast_typed_error) result = fun f init m ->

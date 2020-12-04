@@ -30,6 +30,7 @@ let rec check_no_nested_bigmap is_in_bigmap e =
     let%bind _ = check_no_nested_bigmap false type2 in
     ok ()
   | T_variable _ -> ok ()
+  | T_module_accessor _ -> ok ()
 
 let self_typing : contract_pass_data -> expression -> (bool * contract_pass_data * expression , self_ast_typed_error) result = fun dat el ->
   let%bind _ = check_no_nested_bigmap false el.type_expression in

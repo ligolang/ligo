@@ -238,6 +238,8 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
       let%bind result' = compile_type type2 in
       return @@ (T_function (param',result'))
   )
+  | T_module_accessor _ ->
+    fail @@ corner_case ~loc:__LOC__ "Module access should de resolved earlier"
 
 (* probably should use result monad for conformity? but these errors
    are supposed to be impossible *)
@@ -264,7 +266,8 @@ let rec compile_literal : AST.literal -> value = fun l -> match l with
 
 and compile_expression (ae:AST.expression) : (expression , spilling_error) result =
   let%bind tv = compile_type ae.type_expression in
-  let return ?(tv = tv) expr = ok @@ Combinators.Expression.make_tpl ~loc:ae.location (expr, tv) in
+  let return ?(tv = tv) expr =
+    ok @@ Combinators.Expression.make_tpl ~loc:ae.location (expr, tv) in
   match ae.expression_content with
   | E_let_in {let_binder; rhs; let_result; inline} ->
     let%bind rhs' = compile_expression rhs in
@@ -514,7 +517,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
     let open Tezos_micheline in
     let orig_code = code in
     let (code, errs) = Micheline_parser.tokenize code in
-    match errs with
+    (match errs with
     | _ :: _ -> fail (could_not_parse_raw_michelson ae.location orig_code)
     | [] ->
       let (code, errs) = Micheline_parser.parse_expression ~check:false code in
@@ -529,6 +532,9 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
           return ~tv:type_anno' @@ E_raw_michelson code
         | _ ->
           fail (raw_michelson_must_be_seq ae.location code)
+    )
+  | E_module_accessor _ ->
+    fail @@ corner_case ~loc:__LOC__ "Module access should de resolved earlier"
 
 and compile_lambda l (input_type , output_type) =
   let { binder ; result } : AST.lambda = l in

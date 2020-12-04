@@ -39,6 +39,10 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a,'err) res
     )
   | E_type_in ti -> Folds.type_in self idle init' ti
   | E_recursive r -> Folds.recursive self idle init' r
+  | E_module_accessor { module_name = _ ; element } -> (
+    let%bind res = self init' element in
+    ok res
+  )
 
 and fold_cases : ('a , 'err) folder -> 'a -> matching_expr -> ('a , 'err) result = fun f init m ->
   match m with
@@ -119,6 +123,10 @@ let rec map_expression : 'err exp_mapper -> expression -> (expression , 'err) re
       let%bind c = Maps.constant self c in
       return @@ E_constant c
     )
+  | E_module_accessor { module_name; element } -> (
+    let%bind element = self element in
+    return @@ E_module_accessor { module_name; element }
+  )
   | E_literal _ | E_variable _ | E_raw_code _ as e' -> return e'
 
 and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_expression , 'err) result =
@@ -140,6 +148,9 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_express
     let%bind a' = Maps.type_app self a in
     return @@ T_app a'
   | T_variable _ -> ok te'
+  | T_module_accessor ma ->
+    let%bind ma = Maps.module_access self ma in
+    return @@ T_module_accessor ma
 
 
 and map_cases : 'err exp_mapper -> matching_expr -> (matching_expr , 'err) result = fun f m ->
@@ -237,6 +248,10 @@ let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> ('a
       let%bind res,c = Fold_maps.constant self init' c in
       ok (res, return @@ E_constant c)
     )
+  | E_module_accessor { module_name; element } -> (
+    let%bind (res,element) = self init' element in
+    ok (res, return @@ E_module_accessor { module_name; element })
+  )
   | E_literal _ | E_variable _ | E_raw_code _ as e' -> ok (init', return e')
 
 and fold_map_cases : ('a , 'err) fold_mapper -> 'a -> matching_expr -> ('a * matching_expr , 'err) result =

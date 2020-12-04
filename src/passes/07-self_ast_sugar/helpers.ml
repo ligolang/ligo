@@ -47,6 +47,10 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a, 'err) re
   | E_cond c -> Folds.conditional self init' c
   | E_recursive r -> Folds.recursive self (fun _ -> ok) init' r
   | E_sequence s -> Folds.sequence self init' s
+  | E_module_accessor { module_name = _ ; element } -> (
+    let%bind res = self init' element in
+    ok res
+  )
 
 and fold_cases : ('a, 'err) folder -> 'a -> matching_expr -> ('a, 'err) result = fun f init m ->
   match m with
@@ -166,6 +170,10 @@ let rec map_expression : 'err exp_mapper -> expression -> (expression, 'err) res
     let%bind t' = bind_map_list self t in
     return @@ E_tuple t'
   )
+  | E_module_accessor { module_name; element } -> (
+    let%bind element = self element in
+    return @@ E_module_accessor { module_name; element }
+  )
   | E_literal _ | E_variable _ | E_raw_code _ | E_skip as e' -> return e'
 
 and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_expression, 'err) result = fun f te ->
@@ -189,6 +197,10 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_express
     let%bind arguments = bind_map_list self arguments in
     return @@ T_app {type_operator;arguments}
   | T_variable _ -> ok te'
+  | T_module_accessor ma ->
+    let%bind ma = Maps.module_access self ma in
+    return @@ T_module_accessor ma
+
 
 and map_cases : 'err exp_mapper -> matching_expr -> (matching_expr, 'err) result = fun f m ->
   match m with
@@ -324,6 +336,10 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> ('a 
       let%bind res,s = Fold_maps.sequence self init' s in
       ok (res, return @@ E_sequence s)
     )
+  | E_module_accessor { module_name; element } -> (
+    let%bind (res,element) = self init' element in
+    ok (res, return @@ E_module_accessor { module_name; element })
+  )
   | E_literal _ | E_variable _ | E_raw_code _ | E_skip as e' -> ok (init', return e')
 
 and fold_map_cases : ('a,'err) fold_mapper -> 'a -> matching_expr -> ('a * matching_expr, 'err) result = fun f init m ->

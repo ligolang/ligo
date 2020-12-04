@@ -39,18 +39,23 @@ type 'ty_expr row_element_mini_c = {
 
 type 'ty_exp type_app = {
   type_operator : type_variable ;
-  arguments : 'ty_exp list ;
+  arguments     : 'ty_exp list ;
 }
 
 type 'ty_expr row_element = {
-  associated_type      : 'ty_expr ;
-  attributes : string list ;
-  decl_pos : int ;
+  associated_type : 'ty_expr ;
+  attributes      : string list ;
+  decl_pos        : int ;
   }
+
+type 'a module_access = {
+  module_name : string ;
+  element     : 'a ;
+}
 
 (* Type level types *)
 type 'ty_exp rows = {
-  fields : 'ty_exp row_element label_map;
+  fields     : 'ty_exp row_element label_map;
   attributes : string list ;
   }
 

@@ -78,6 +78,8 @@ let attributes ppf attributes =
     List.map (fun attr -> "[@@" ^ attr ^ "]") attributes |> String.concat ""
   in fprintf ppf "%s" attr
 
+let module_access f ppf = fun {module_name;element} ->
+  fprintf ppf "%s.%a" module_name f element
 (* Types *)
 
 let type_app type_expression ppf ({type_operator ; arguments}: 'a type_app) : unit =

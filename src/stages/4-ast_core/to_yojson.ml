@@ -8,11 +8,12 @@ let rec type_expression {type_content=tc;sugar=_;location} =
   ]
 
 and type_content = function
-  | T_variable t -> `List [ `String "t_variable"; type_variable_to_yojson t]
-  | T_sum      t -> `List [ `String "t_sum";      label_map (row_element type_expression) t.fields]
-  | T_record   t -> `List [ `String "t_record";   label_map (row_element type_expression) t.fields]
-  | T_arrow    t -> `List [ `String "t_arrow";    arrow type_expression t]
-  | T_app      t -> `List [ `String "t_app";      t_app type_expression t]
+  | T_variable        t -> `List [ `String "t_variable"; type_variable_to_yojson t]
+  | T_sum             t -> `List [ `String "t_sum";      label_map (row_element type_expression) t.fields]
+  | T_record          t -> `List [ `String "t_record";   label_map (row_element type_expression) t.fields]
+  | T_arrow           t -> `List [ `String "t_arrow";    arrow type_expression t]
+  | T_app             t -> `List [ `String "t_app";      t_app type_expression t]
+  | T_module_accessor t -> `List [ `String "t_module_accessor"; module_access type_expression t]
 
 let rec expression ?(incl_sugar=false) {content=ec;sugar;location} =
   `Assoc 
@@ -45,6 +46,7 @@ and expression_content = function
   | E_record_accessor e -> `List [ `String "E_record_accessor"; record_accessor expression e ]
   | E_record_update   e -> `List [ `String "E_record_update"; record_update expression e ]
   | E_ascription      e -> `List [ `String "E_ascription"; ascription expression type_expression e ]
+  | E_module_accessor e -> `List [ `String "E_module_accessor"; module_access expression e]
 
 and let_in {let_binder;rhs;let_result;inline} =
   `Assoc [

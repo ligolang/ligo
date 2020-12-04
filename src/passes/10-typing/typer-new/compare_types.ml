@@ -47,7 +47,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
         assert_type_expression_eq (va, vb)
       in
       let%bind _ =
-        Assert.assert_true (different_types a b) @@ 
+        Assert.assert_true (different_types a b) @@
           Misc.layout_eq ra.layout rb.layout in
       let%bind _ =
         Assert.assert_list_same_size (different_types a b) ra' rb' in
@@ -63,6 +63,11 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   | T_arrow _, _ -> fail @@ different_types a b
   | T_variable x, T_variable y -> let _ = (x = y) in failwith "TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding"
   | T_variable _, _ -> fail @@ different_types a b
+  | T_module_accessor {module_name=mna;element=a}, T_module_accessor {module_name=mnb;element=b} when String.equal mna mnb -> (
+      let%bind _ = assert_type_expression_eq (a, b) in
+      ok ()
+  )
+  | T_module_accessor _,_ -> fail @@ different_types a b
 
 (* No information about what made it fail *)
 let type_expression_eq ab = Trace.to_bool @@ assert_type_expression_eq ab

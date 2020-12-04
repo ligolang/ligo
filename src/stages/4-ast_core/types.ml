@@ -35,11 +35,12 @@ and declaration =
 (* | Macro_declaration of macro_declaration *)
 
 and type_content =
-  | T_variable of type_variable
-  | T_sum      of rows
-  | T_record   of rows
-  | T_arrow    of ty_expr arrow
-  | T_app      of ty_expr type_app
+  | T_variable        of type_variable
+  | T_sum             of rows
+  | T_record          of rows
+  | T_arrow           of ty_expr arrow
+  | T_app             of ty_expr type_app
+  | T_module_accessor of ty_expr module_access
 
 and rows = { fields : row_element label_map ; layout : layout option }
 
@@ -76,6 +77,7 @@ and expression_content =
   | E_record_accessor of expr record_accessor
   | E_record_update   of expr record_update
   | E_ascription      of (expr,ty_expr) ascription
+  | E_module_accessor of expr module_access
 
 and type_expression_option = type_expression option
 

@@ -185,6 +185,11 @@ let row_element g {associated_type; michelson_annotation; decl_pos} =
     ("decl_pos", `Int decl_pos);
   ]
 
+let module_access f {module_name;element} =
+  `Assoc [
+    ("module_name", `String module_name) ;
+    ("element", f element) ;
+  ]
 let t_app f {type_operator ; arguments } =
   `Assoc [
     ("type_operator", type_variable_to_yojson type_operator) ;

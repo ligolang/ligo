@@ -62,6 +62,7 @@ and pp_type_expr = function
 | TVar t    -> pp_ident t
 | TWild   _ -> string "_"
 | TString s -> pp_string s
+| TModA   t -> pp_module_access pp_type_expr t
 
 and pp_sum_type {value; _} =
   let {variants; attributes; _} = value in
@@ -403,6 +404,7 @@ and pp_expr = function
 | EConstr     e -> pp_constr_expr e
 | ERecord     e -> pp_record e
 | EProj       e -> pp_projection e
+| EModA       e -> pp_module_access pp_expr e
 | EUpdate     e -> pp_update e
 | EMap        e -> pp_map_expr e
 | EVar        e -> pp_ident e
@@ -528,6 +530,11 @@ and pp_projection {value; _} =
   and sep    = string "." ^^ break 0 in
   let fields = separate_map sep pp_selection fields in
   group (pp_ident struct_name ^^ string "." ^^ break 0 ^^ fields)
+
+and pp_module_access : type a.(a -> document) -> a module_access reg -> document
+= fun f {value; _} ->
+  let {module_name; field; _} = value in
+  group (pp_ident module_name ^^ string "." ^^ break 0 ^^ f field)
 
 and pp_update {value; _} =
   let {record; updates; _} = value in

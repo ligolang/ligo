@@ -36,6 +36,9 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer
     let type_operator = Var.of_name (Ligo_string.extract injection) in
     return @@ I.T_app {type_operator;arguments}
   | O.T_variable name -> return @@ I.T_variable (Var.todo_cast name)
+  | O.T_module_accessor ma ->
+    let%bind ma = module_access self ma in
+    return @@ I.T_module_accessor ma
 
 let untype_declaration_constant untype_expression O.{binder;expr;inline} =
   let attr = I.{inline} in

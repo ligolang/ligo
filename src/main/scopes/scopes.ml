@@ -12,7 +12,7 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.program -
   let make_v_def_option_type = make_v_def_option_type ~with_types in
   let compile =
     let { init_env ; typer_switch ; _ } : Compiler_options.t = options in
-    Compile.Of_core.compile ~ typer_switch ~init_env Env
+    Compile.Of_core.compile ~typer_switch ~init_env Env
   in
 
   let rec find_scopes' = fun (i,all_defs,env,scopes,lastloc) (bindings:bindings_map) (e : Ast_core.expression) ->
@@ -101,6 +101,8 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.program -
     | E_ascription { anno_expr=e;_ } | E_record_accessor { record=e;_ } | E_constructor { element=e;_ } -> (
       find_scopes' (i,all_defs,env,scopes,e.location) bindings e
     )
+    | E_module_accessor { module_name=_; element=e} ->
+      find_scopes' (i,all_defs,env,scopes,e.location) bindings e
     | E_literal _ | E_raw_code _ | E_variable _ -> (
       let scopes = add_scope (lastloc, env) scopes in
       (i,all_defs,env,scopes)

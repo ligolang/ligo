@@ -194,6 +194,12 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
       aux inj
     | None -> failwith "variable with parameters is not an injection"
   )
+  | T_module_accessor {module_name; element} ->
+    let%bind module_ = match Environment.get_module_opt module_name e with
+      Some m -> ok m
+    | None   -> fail @@ unbound_module e module_name t.location
+    in
+    evaluate_type module_ element
 
 and type_expression : environment -> _ O'.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * _ O'.typer_state, typer_error) result
   = fun e _placeholder_for_state_of_new_typer ?tv_opt ae ->
@@ -488,6 +494,41 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       | None -> ok ()
       | Some tv' -> assert_type_expression_eq anno_expr.location (tv' , type_annotation) in
     ok {expr' with type_expression=type_annotation}
+  | E_module_accessor {module_name; element} ->
+    let module_record_type (module_env : environment) =
+      let aux (env_binding: O.environment_binding) =
+        let binder = Var.to_name env_binding.expr_var.wrap_content in
+        let ty     = env_binding.env_elt.type_value in
+        O.Label binder,
+        O.{associated_type=ty;michelson_annotation=None;decl_pos=0}
+      in
+      let record_t = List.map aux @@ module_env.expression_environment in
+      let record_t = Ast_typed.(ez_t_record record_t) in
+      record_t
+    in
+    let rec aux env module_name (element : I.expression) =
+      let%bind module_ = match Environment.get_module_opt module_name env with
+        Some m -> ok m
+      | None   -> fail @@ unbound_module e module_name ae.location
+      in
+      let ty = module_record_type module_ in
+      match element.content with
+      | E_module_accessor {module_name;element} ->
+        let%bind modules, element, var, ty' = aux module_ module_name element in
+        let modules = (module_name,ty') :: modules in
+        ok @@ (modules, element, var, ty)
+      | E_variable var ->
+        let%bind element = type_expression' module_ element in
+        ok @@ ([], element, Var.to_name var.wrap_content,ty)
+      | _ -> failwith "cornercase : module_accessor cannot be parse like that"
+    in
+    let%bind (modules_ty, element,var,ty) = aux e module_name element in
+    let aux record (module_name,ty) =
+      make_e (E_record_accessor {record;path=Label module_name}) ty
+    in
+    let record = make_e (E_variable (Location.wrap @@ Var.of_name module_name)) @@ ty in
+    let record = List.fold_left aux record modules_ty in
+    return (E_record_accessor {record;path=Label var}) element.type_expression
 
 and type_lambda e {
       binder ;
@@ -533,7 +574,7 @@ let untype_literal (l:O.literal) : (I.literal , typer_error) result =
 
 let rec untype_expression (e:O.expression) : (I.expression , typer_error) result =
   untype_expression_content e.type_expression e.expression_content
-  and untype_expression_content ty (ec:O.expression_content) : (I.expression , typer_error) result =
+and untype_expression_content ty (ec:O.expression_content) : (I.expression , typer_error) result =
   let open I in
   let return e = ok e in
   match ec with
@@ -595,6 +636,9 @@ let rec untype_expression (e:O.expression) : (I.expression , typer_error) result
       let%bind unty_expr= untype_expression_content ty @@ E_lambda lambda in
       let lambda = match unty_expr.content with I.E_lambda l -> l | _ -> failwith "impossible case" in
       return @@ e_recursive fun_name fun_type lambda
+  | E_module_accessor ma ->
+    let%bind ma = Stage_common.Maps.module_access untype_expression ma in
+    return @@ I.make_e @@ E_module_accessor ma
 
 and untype_matching : (O.expression -> (I.expression , typer_error) result) -> O.matching_expr -> (I.matching_expr , typer_error) result = fun f m ->
   let open I in

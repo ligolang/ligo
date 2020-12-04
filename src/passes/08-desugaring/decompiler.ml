@@ -46,6 +46,9 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, des
       | O.T_arrow arr ->
         let%bind arr = arrow self arr in
         return @@ T_arrow arr
+      | O.T_module_accessor ma ->
+        let%bind ma = module_access self ma in
+        return @@ T_module_accessor ma
 
 let rec decompile_expression : O.expression -> (I.expression, desugaring_error) result =
   fun e ->
@@ -117,6 +120,9 @@ let rec decompile_expression : O.expression -> (I.expression, desugaring_error) 
       let%bind anno_expr = self anno_expr in
       let%bind type_annotation = decompile_type_expression type_annotation in
       return @@ I.E_ascription {anno_expr; type_annotation}
+    | O.E_module_accessor ma ->
+      let%bind ma = module_access self ma in
+      return @@ E_module_accessor ma
 
 and decompile_lambda : _ O.lambda -> (_ I.lambda, desugaring_error) result =
   fun {binder=b;output_type;result}->

@@ -41,6 +41,9 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer
     let%bind arguments = bind_map_list self parameters in
     let type_operator = Var.of_name (Ligo_string.extract injection) in
     return @@ I.T_app {type_operator;arguments}
+  | O.T_module_accessor ma ->
+    let%bind ma = module_access self ma in
+    return @@ I.T_module_accessor ma
 
 (*
   Transform a Ast_typed expression into an ast_core expression
@@ -95,6 +98,9 @@ let rec untype_expression (e:O.expression) : (I.expression, typer_error) result 
     let%bind fun_type = Typer_common.Untyper.untype_type_expression fun_type in
     let fun_name = Location.map Var.todo_cast fun_name in
     return @@ E_recursive {fun_name; fun_type; lambda}
+  | E_module_accessor ma ->
+    let%bind ma = module_access untype_expression ma in
+    return @@ E_module_accessor ma
 
 and untype_lambda ty {binder; result} : (_ I.lambda, typer_error) result =
     let%bind io = trace_option (corner_case "This has to be a lambda") @@ get_t_function ty in

@@ -30,7 +30,6 @@ let first_region = function
 %on_error_reduce bin_op(disj_expr_level,BOOL_OR,conj_expr_level)
 %on_error_reduce base_expr(expr)
 %on_error_reduce base_expr(base_cond)
-%on_error_reduce module_fun
 %on_error_reduce core_expr
 %on_error_reduce constr_expr
 %on_error_reduce bin_op(add_expr_level,MINUS,mult_expr_level)
@@ -186,17 +185,11 @@ type_args:
 | fun_type        { $1, [] }
 
 core_type:
-  type_name           {    TVar $1 }
-| "_"                 {   TWild $1 }
-| par(type_expr)      {    TPar $1 }
-| "<string>"          { TString $1 }
-| module_name "." type_name {
-    let module_name = $1.value in
-    let type_name   = $3.value in
-    let value       = module_name ^ "." ^ type_name in
-    let region      = cover $1.region $3.region
-    in TVar {region; value}
-  }
+  type_name       {    TVar $1 }
+| "_"             {   TWild $1 }
+| par(type_expr)  {    TPar $1 }
+| "<string>"      { TString $1 }
+| module_access_t {   TModA $1 }
 | type_name par(type_args) {
    let region = cover $1.region $2.region
    in TApp {region; value = $1,$2} }
@@ -246,6 +239,18 @@ record_type:
       terminator;
       attributes=$1}
     in TRecord {region; value} }
+
+module_access_t :
+  module_name "." module_var_t {
+    let start       = $1.region in
+    let stop        = type_expr_to_region $3 in
+    let region      = cover start stop in
+    let value       = {module_name=$1; selector=$2; field=$3}
+    in {region; value} }
+
+module_var_t:
+  module_access_t   { TModA $1 }
+| field_name        { TVar  $1 }
 
 field_decl:
   seq("[@attr]") field_name {
@@ -670,8 +675,9 @@ core_expr:
 | "<mutez>"                           {             EArith (Mutez $1) }
 | "<nat>"                             {               EArith (Nat $1) }
 | "<bytes>"                           {                     EBytes $1 }
-| "<ident>" | module_field            {                       EVar $1 }
+| "<ident>"                           {                       EVar $1 }
 | projection                          {                      EProj $1 }
+| module_access_e                     {                        EModA $1 }
 | "<string>"                          {           EString (String $1) }
 | "<verbatim>"                        {         EString (Verbatim $1) }
 | unit                                {                      EUnit $1 }
@@ -713,15 +719,6 @@ annot_expr:
     | None -> $1
   }
 
-module_field:
-  module_name "." module_fun {
-    let region = cover $1.region $3.region in
-    {region; value = $1.value ^ "." ^ $3.value} }
-
-module_fun:
-  field_name { $1 }
-| "or"       { {value="or"; region=$1} }
-
 projection:
   struct_name selection {
     let start  = $1.region in
@@ -732,16 +729,6 @@ projection:
                   field_path  = snd $2}
     in {region; value}
   }
-| module_name "." field_name selection {
-    let value       = $1.value ^ "." ^ $3.value in
-    let struct_name = {$1 with value} in
-    let start       = $1.region in
-    let stop        = nsepseq_to_region selection_to_region (snd $4) in
-    let region      = cover start stop
-    and value       = {struct_name;
-                       selector   = fst $4;
-                       field_path = snd $4}
-    in {region; value} }
 
 selection:
   "[" "<int>" "]" selection {
@@ -758,6 +745,20 @@ selection:
   }
 | "." field_name  {    $1, (FieldName $2, []) }
 | "[" "<int>" "]" { ghost, (Component $2, []) }
+
+module_access_e :
+  module_name "." module_var_e {
+    let start       = $1.region in
+    let stop        = expr_to_region $3 in
+    let region      = cover start stop in
+    let value       = {module_name=$1; selector=$2; field=$3}
+    in {region; value} }
+
+module_var_e:
+  module_access_e   { EModA $1 }
+| "or"              { EVar {value="or"; region=$1} }
+| field_name        { EVar  $1 }
+| projection        { EProj $1 }
 
 record_expr:
   "{" field_assignment more_field_assignments? "}" {
@@ -805,9 +806,9 @@ update_record:
       record   = $3;
       comma    = $4;
       updates  = {value = {compound = None;
-                           ne_elements;
-                           terminator;
-                           attributes=[]};
+                          ne_elements;
+                          terminator;
+                          attributes=[]};
                  region = cover $4 $6};
       rbrace   = $6}
     in {region; value} }

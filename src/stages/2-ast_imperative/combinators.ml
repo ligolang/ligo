@@ -51,6 +51,7 @@ let t_sum_ez_attr ?loc ?(attr=[]) lst =
   in t_sum ?loc {fields; attributes=attr}
 
 let t_annoted ?loc ty str : type_expression = make_t ?loc @@ T_annoted (ty, str)
+let t_module_accessor ?loc module_name element = make_t ?loc @@ T_module_accessor {module_name;element}
 
 let t_function ?loc type1 type2  : type_expression = make_t ?loc @@ T_arrow {type1; type2}
 let t_map ?loc key value                  : type_expression = t_app ?loc v_map [key; value]
@@ -133,6 +134,7 @@ let e_accessor ?loc record path      = make_e ?loc @@ E_accessor {record; path}
 let e_update ?loc record path update = make_e ?loc @@ E_update {record; path; update}
 
 let e_annotation ?loc anno_expr ty = make_e ?loc @@ E_ascription {anno_expr; type_annotation = ty}
+let e_module_accessor ?loc module_name element = make_e ?loc @@ E_module_accessor {module_name;element}
 
 let e_tuple ?loc lst : expression = make_e ?loc @@ E_tuple lst
 

@@ -51,44 +51,120 @@ let solve_graph : graph -> file_name -> (_ list,_) result =
     let order = Dfs.fold_component aux [] dep_g file_name in
     ok @@ order
 
-let add_module_in_env init_env _deps = init_env (*TODO*)
+let add_modules_in_env env deps =
+  let aux env (module_name, (_,ast_typed_env)) = Ast_typed.(
+    let env = Environment.add_module module_name ast_typed_env env in
+    let record = List.mapi ( fun i ({expr_var;env_elt}:environment_binding) ->
+    Label (Var.to_name @@ Location.unwrap @@ expr_var),
+    {associated_type=env_elt.type_value;michelson_annotation=None;decl_pos=i})
+    @@ Environment.get_expr_environment ast_typed_env  in
+    let module_var = Location.wrap @@ Var.of_name module_name in
+    let record = ez_t_record record in
+    Environment.add_ez_binder module_var record env
+  )
+  in
+  List.fold_left aux env deps
 
-(* TODO *)
-let build_michelson order_deps asts_typed entry_point =
-  let rec last = function
-    [] -> fail @@ corner_case ~loc:__LOC__ "at least a file is being processed"
-  | hd :: [] -> ok @@ hd
-  | _ :: tl -> last tl
+let aggregate_contract order_deps asts_typed =
+  (* Add the module at the beginning of the file *)
+  let aux map (file_name,(_,_,_,deps_lst)) =
+    let%bind (Ast_typed.Program_Fully_Typed contract,_) =
+      trace_option (corner_case ~loc:__LOC__ "Fail to find typed module") @@
+      SMap.find_opt file_name asts_typed in
+    let aux ast_typed (file_name,module_name) =
+      let file_name = Location.wrap @@ Var.of_name file_name in
+      let module_name = Location.wrap @@ Var.of_name module_name in
+      let expr = Ast_typed.(make_e @@ E_variable file_name) @@ Ast_typed.t_unit () in
+      ((Location.wrap @@ Ast_typed.Declaration_constant {binder=module_name;expr;inline=true})
+      :: ast_typed)
+    in
+    let ast_typed = List.fold_left aux contract deps_lst in
+    let map = SMap.add file_name ast_typed map in
+    ok @@ map
   in
-  let%bind typed,_ = (last order_deps) in
-  let%bind typed =
-    trace_option (corner_case ~loc:__LOC__ "Present by contruction" ) @@
-    SMap.find_opt typed asts_typed
+  let%bind asts_typed = bind_fold_list aux SMap.empty order_deps in
+  (* Separate the program and the dependency (those are process differently) *)
+  let%bind (file_name,(_,_,_,_deps_lst)),order_deps = match List.rev order_deps with [] -> fail @@ corner_case ~loc:__LOC__ "compiling nothing"
+    | hd::tl -> ok @@ (hd,tl) in
+  let%bind contract =
+    trace_option (corner_case ~loc:__LOC__ "Fail to find typed module") @@
+    SMap.find_opt file_name asts_typed in
+  (* Add all dependency at the beginning of the file *)
+  let add_modules dep_types (file_name,(_,_,_, _deps_lst)) =
+    let file_var = Location.wrap @@ Var.of_name file_name in
+    (* Get the ast_type of the module *)
+    let%bind ast_typed =
+      trace_option (corner_case ~loc:__LOC__ "Fail to find typed module") @@
+      SMap.find_opt file_name asts_typed in
+    (* Filter on Declaration_constant *)
+    let aux decl decls = match Location.unwrap decl with
+    | Ast_typed.Declaration_constant dc -> dc :: decls
+    | Ast_typed.Declaration_type _ -> decls
+    in
+    let ast_typed = List.fold_right aux ast_typed [] in
+    (* Don't do anything if the module only contain types *)
+    if List.length ast_typed <> 0 then begin
+      (* Put declaration list as let ... in record [] *)
+      let record = List.map Ast_typed.(
+        fun {binder;expr;inline=_} ->
+        Label (Var.to_name binder.wrap_content),
+        e_a_variable binder expr.type_expression
+      ) ast_typed in
+      let record = Ast_typed.(ez_e_a_record record) in
+      let dep_types = SMap.add file_name record.type_expression dep_types in
+      (* Put the declaration list as a serie of let ... in *)
+      let expr   = List.fold_right Ast_typed.(
+        fun {binder;expr;inline} record ->
+        e_a_let_in binder inline expr @@ record
+      ) ast_typed record in
+      ok @@
+      (dep_types,Some (Location.wrap @@ Ast_typed.Declaration_constant {binder=file_var;expr;inline=false}))
+    end else begin ok @@ (dep_types,None) end
   in
-  let%bind mini_c     = trace compiler_error @@ Compile.Of_typed.compile typed in
-  let%bind michelson  = trace compiler_error @@ Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
-  ok michelson
+  let%bind header_list = bind_fold_map_right_list add_modules (SMap.empty) @@ order_deps in
+  let contract = List.fold_left (fun c a -> match a with Some a -> a::c | None -> c)
+    contract header_list in
+  ok @@ Ast_typed.Program_Fully_Typed contract
+
+let type_file_with_dep ~options ~protocol_version asts_typed (file_name, (meta,form,c_unit,deps)) =
+  let%bind ast_core = trace compiler_error @@ Compile.Utils.to_core ~options ~meta c_unit file_name in
+  let aux (file_name,module_name) =
+    let%bind ast_typed =
+      trace_option (corner_case ~loc:__LOC__
+      "File typed before dependency. The build system is broken, contact the devs")
+      @@ SMap.find_opt file_name asts_typed
+    in
+    ok @@ (module_name, ast_typed)
+  in
+  let%bind deps = bind_map_list aux deps in
+  let%bind init_env   = trace compiler_error @@ Compile.Helpers.get_initial_env protocol_version in
+  let init_env = add_modules_in_env init_env deps in
+  let%bind ast_typed,ast_typed_env,_ = trace compiler_error @@ Compile.Of_core.compile ~typer_switch:options.typer_switch ~init_env form ast_core in
+  ok @@ SMap.add file_name (ast_typed,ast_typed_env) asts_typed
+
+let type_contract : options:Compiler_options.t -> string -> Compile.Of_core.form -> _ -> file_name -> (_, _) result =
+  fun ~options syntax entry_point protocol_version file_name ->
+    let%bind deps = dependency_graph syntax ~options entry_point file_name in
+    let%bind order_deps = solve_graph deps file_name in
+    let%bind asts_typed = bind_fold_list (type_file_with_dep ~options ~protocol_version) (SMap.empty) order_deps in
+    ok @@ fst @@ SMap.find file_name asts_typed
+
+let combined_contract : options:Compiler_options.t -> string -> _ -> _ -> file_name -> (_, _) result =
+  fun ~options syntax entry_point protocol_version file_name ->
+    let%bind deps = dependency_graph syntax ~options entry_point file_name in
+    let%bind order_deps = solve_graph deps file_name in
+    let%bind asts_typed = bind_fold_list (type_file_with_dep ~options ~protocol_version) (SMap.empty) order_deps in
+    let%bind contract = aggregate_contract order_deps asts_typed in
+    ok @@ contract
+
+let build_mini_c : options:Compiler_options.t -> string -> _ -> _ -> file_name -> (_, _) result =
+  fun ~options syntax entry_point protocol_version file_name ->
+    let%bind contract = combined_contract ~options syntax entry_point protocol_version file_name in
+    let%bind mini_c   = trace compiler_error @@ Compile.Of_typed.compile @@ contract in
+    ok @@ mini_c
 
 let build_contract : options:Compiler_options.t -> string -> string -> _ -> file_name -> (_, _) result =
   fun ~options syntax entry_point protocol_version file_name ->
-    let%bind deps = dependency_graph syntax ~options (Contract entry_point) file_name in
-    let%bind order_deps = solve_graph deps file_name in
-    let aux asts_typed (file_name, (meta,form,c_unit,deps)) =
-      let%bind ast_core = trace compiler_error @@ Compile.Utils.to_core ~options ~meta c_unit file_name in
-      let aux (file_name,module_name) =
-        let%bind ast_typed =
-          trace_option (corner_case ~loc:__LOC__
-          "File compiled before dependency. The build system is broken, contact the devs")
-          @@ SMap.find_opt file_name asts_typed
-        in
-        ok @@ (module_name, ast_typed)
-      in
-      let%bind deps = bind_map_list aux deps in
-      let%bind init_env   = trace compiler_error @@ Compile.Helpers.get_initial_env protocol_version in
-      let init_env = add_module_in_env init_env deps in
-      let%bind ast_typed,_,_ = trace compiler_error @@ Compile.Of_core.compile ~typer_switch:options.typer_switch ~init_env form ast_core in
-      ok @@ SMap.add file_name ast_typed asts_typed
-    in
-    let%bind asts_typed = bind_fold_list aux (SMap.empty) order_deps in
-    let%bind contract   = build_michelson order_deps asts_typed entry_point in
-    ok contract
+    let%bind mini_c     = build_mini_c ~options syntax (Contract entry_point) protocol_version file_name in
+    let%bind michelson  = trace compiler_error @@ Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
+    ok michelson

@@ -73,6 +73,11 @@ let%expect_test _ =
                Subcommand: Print the AST. Warning: Intended for development of
                LIGO and can break at any time.
 
+           print-ast-combined
+               Subcommand: Print the contract after combination with the build
+               system. Warning: Intended for development of LIGO and can break at
+               any time.
+
            print-ast-core
                Subcommand: Print the AST. Warning: Intended for development of
                LIGO and can break at any time.
@@ -188,6 +193,11 @@ let%expect_test _ =
            print-ast
                Subcommand: Print the AST. Warning: Intended for development of
                LIGO and can break at any time.
+
+           print-ast-combined
+               Subcommand: Print the contract after combination with the build
+               system. Warning: Intended for development of LIGO and can break at
+               any time.
 
            print-ast-core
                Subcommand: Print the AST. Warning: Intended for development of

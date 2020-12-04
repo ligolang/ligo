@@ -52,6 +52,9 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit option =
   | E_constructor (ca), E_constructor (cb) when ca.constructor = cb.constructor -> (
       assert_value_eq (ca.element, cb.element)
     )
+  | E_module_accessor {module_name=maa;element=a}, E_module_accessor {module_name=mab;element=b} when String.equal maa mab -> (
+      assert_value_eq (a,b)
+  )
   | E_record sma, E_record smb -> (
       let aux _ a b =
         match a, b with
@@ -84,6 +87,7 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit option =
   | (E_raw_code _, _)
   | (E_recursive _,_) | (E_record_accessor _, _)
   | (E_matching _, _)
+  | E_module_accessor _, _
    -> None
 
   | E_literal _ , _

@@ -124,6 +124,13 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
       aux inj
     | None -> failwith "variable with parameters is not an injection"
   )
+  | T_module_accessor {module_name; element} ->
+    let%bind module_ = match Environment.get_module_opt module_name e with
+      Some m -> ok m
+    | None   -> fail @@ unbound_module e module_name t.location
+    in
+    evaluate_type module_ element
+
 
 and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_state -> I.expression -> (environment * _ O'.typer_state * O.expression, typer_error) result = fun ?tv_opt e state ae ->
   let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
@@ -332,6 +339,43 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
        but then this case is not like the others and doesn't call return_wrapped,
        which might do some necessary work *)
     in return_wrapped expr'.expression_content e state wrapped
+  | E_module_accessor {module_name; element} ->
+    let module_record_type (module_env : environment) =
+      let aux (env_binding: O.environment_binding) =
+        let binder = Var.to_name env_binding.expr_var.wrap_content in
+        let ty     = env_binding.env_elt.type_value in
+        O.Label binder,
+        O.{associated_type=ty;michelson_annotation=None;decl_pos=0}
+      in
+      let record_t = List.map aux @@ module_env.expression_environment in
+      let record_t = Ast_typed.(ez_t_record record_t) in
+      record_t
+    in
+    let rec aux env module_name (element : I.expression) =
+      let%bind module_ = match Environment.get_module_opt module_name env with
+        Some m -> ok m
+      | None   -> fail @@ unbound_module e module_name ae.location
+      in
+      let ty = module_record_type module_ in
+      match element.content with
+      | E_module_accessor {module_name;element} ->
+        let%bind modules, element, var, ty' = aux module_ module_name element in
+        let modules = (module_name,ty') :: modules in
+        ok @@ (modules, element, var, ty)
+      | E_variable var ->
+        let%bind _,_,element = type_expression module_ state element in
+        ok @@ ([], element, Var.to_name var.wrap_content,ty)
+      | _ -> failwith "cornercase : module_accessor cannot be parse like that"
+    in
+    let%bind (modules_ty, element,var,ty) = aux e module_name element in
+    let aux record (module_name,ty) =
+      make_e (E_record_accessor {record;path=Label module_name}) ty
+    in
+    let record = make_e (E_variable (Location.wrap @@ Var.of_name module_name)) @@ ty in
+    let record = List.fold_left aux record modules_ty in
+    let expr'  = (O.E_record_accessor {record;path=Label var}) in
+    let wrapped = Wrap.access_label ~base:element.type_expression ~label:(Label var) in
+    return_wrapped expr' e state wrapped
 
 and type_lambda e state {
       binder ;
@@ -481,6 +525,7 @@ end = struct
     | O.E_record          m -> bind_fold_list (fun () (_key, e) -> expression e) () @@ Ast_typed.LMap.bindings m
     | O.E_record_accessor { record; path=_ } -> expression record
     | O.E_record_update   { record; path=_; update } -> let%bind () = expression record in expression update
+    | O.E_module_accessor { module_name=_; element} -> expression element
   and re where : O.row_element -> _ = function { associated_type; michelson_annotation=_; decl_pos=_ } ->
     te where associated_type
   and tc where : O.type_content -> _ = function
@@ -494,6 +539,7 @@ end = struct
     | O.T_variable tv -> failwith (Format.asprintf "Unassigned type variable %a cann't be generalized (LIGO does not support generalization of variables in user code for now). You can try to annotate the expression. The type variable occurred in the %s" Var.pp tv (where ()))
     | O.T_constant { parameters ; _ } ->
       bind_fold_list (fun () texpr -> te where texpr) () parameters
+    | O.T_module_accessor {module_name=_; element} -> te where element
   and te where : O.type_expression -> _ = function { type_content; type_meta=_; location=_ } -> tc where type_content
 
   let check_expression_has_no_unification_vars (expr : O.expression) =
