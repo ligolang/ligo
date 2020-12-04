@@ -5,6 +5,7 @@
     simple-utils
     preproc
     parser
+    self_cst
     tree_abstraction
     self_ast_imperative
     purification

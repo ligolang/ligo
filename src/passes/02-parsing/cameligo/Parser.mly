@@ -161,7 +161,6 @@ declaration:
 
 type_decl:
   "type" type_name "=" type_expr {
-    Scoping.check_reserved_name $2;
     let region = cover $1 (type_expr_to_region $4) in
     let value  = {kwd_type  = $1;
                   name      = $2;
@@ -219,13 +218,11 @@ type_tuple:
 
 sum_type:
   nsepseq(variant,"|") {
-    Scoping.check_variants (Utils.nsepseq_to_list $1);
     let region = nsepseq_to_region (fun x -> x.region) $1 in
     let value  = {variants=$1; attributes=[]; lead_vbar=None}
     in TSum {region; value}
   }
 | seq("[@attr]") "|" nsepseq(variant,"|") {
-    Scoping.check_variants (Utils.nsepseq_to_list $3);
     let region = nsepseq_to_region (fun x -> x.region) $3 in
     let value  = {variants=$3; attributes=$1; lead_vbar = Some $2}
     in TSum {region; value} }
@@ -258,7 +255,6 @@ variant:
 record_type:
   seq("[@attr]") "{" sep_or_term_list(field_decl,";") "}" {
     let fields, terminator = $3 in
-    let () = Utils.nsepseq_to_list fields |> Scoping.check_fields in
     let region =
       match first_region $1 with
         None -> cover $2 $4
@@ -296,13 +292,10 @@ let_declaration:
 
 let_binding:
   "<ident>" nseq(sub_irrefutable) type_annotation? "=" expr {
-    Scoping.check_reserved_name $1;
     let binders = Utils.nseq_cons (PVar $1) $2 in
-    Utils.nseq_iter Scoping.check_pattern binders;
     {binders; lhs_type=$3; eq=$4; let_rhs=$5}
   }
 | irrefutable type_annotation? "=" expr {
-    Scoping.check_pattern $1;
     {binders=$1,[]; lhs_type=$2; eq=$3; let_rhs=$4} }
 
 type_annotation:
@@ -520,7 +513,6 @@ cases(right_expr):
 
 case_clause(right_expr):
   pattern "->" right_expr {
-    Scoping.check_pattern $1;
     {pattern=$1; arrow=$2; rhs=$3} }
 
 let_expr(right_expr):

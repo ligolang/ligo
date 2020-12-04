@@ -32,12 +32,12 @@ dune build
 At the moment, only pass 14-stacking is implemented in
 Coq. `Ligo_coq_ocaml.Compiler` is integrated into the rest of the LIGO
 compiler in
-[14-stacking/compiler_program.ml](../passes/14-stacking/compiler_program.ml). Certain
+[15-stacking/compiler_program.ml](../passes/15-stacking/compiler_program.ml). Certain
 hypotheses in the Coq compiler are instantiated there, too.
 
 An intermediate language is defined in [ligo.v](./ligo.v). This is
 emitted by the previous pass in
-[13-scoping/scoping.ml](../passes/13-scoping/scoping.ml).
+[14-scoping/scoping.ml](../passes/14-scoping/scoping.ml).
 
 In [micheline.v](./micheline.v) a Coq version Micheline is defined
 which extracts directly to Tezos_micheline.
