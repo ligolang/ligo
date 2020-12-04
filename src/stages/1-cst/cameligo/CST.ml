@@ -113,6 +113,7 @@ type eof = Region.t
 (* Literals *)
 
 type variable    = string reg
+type module_name = string reg
 type fun_name    = string reg
 type type_name   = string reg
 type field_name  = string reg
@@ -176,6 +177,7 @@ and type_expr =
 | TVar    of variable
 | TWild   of wild
 | TString of lexeme reg
+| TModA   of type_expr module_access reg
 
 and cartesian = (type_expr, times) nsepseq reg
 
@@ -250,6 +252,7 @@ and expr =
 | EConstr  of constr_expr
 | ERecord  of record reg
 | EProj    of projection reg
+| EModA    of expr module_access reg
 | EUpdate  of update reg
 | EVar     of variable
 | ECall    of (expr * expr nseq) reg
@@ -340,6 +343,12 @@ and comp_expr =
 | Neq   of neq   bin_op reg
 
 and record = field_assign reg ne_injection
+
+and 'a module_access = {
+  module_name : module_name;
+  selector    : dot;
+  field       : 'a;
+}
 
 and projection = {
   struct_name : variable;
@@ -451,6 +460,7 @@ let type_expr_to_region = function
 | TString {region; _}
 | TVar    {region; _}
 | TWild    region
+| TModA   {region; _}
  -> region
 
 let list_pattern_to_region = function
@@ -517,6 +527,7 @@ let expr_to_region = function
 | ECall {region;_}   | EVar {region; _}    | EProj {region; _}
 | EUnit {region;_}   | EPar {region;_}     | EBytes {region; _}
 | ESeq {region; _}   | ERecord {region; _} | EUpdate {region; _}
+| EModA {region; _}
 | ECodeInj {region; _} -> region
 
 let declaration_to_region = function

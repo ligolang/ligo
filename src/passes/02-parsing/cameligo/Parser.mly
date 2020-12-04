@@ -31,7 +31,8 @@ let first_region = function
 %on_error_reduce bin_op(disj_expr_level,BOOL_OR,conj_expr_level)
 %on_error_reduce base_expr(expr)
 %on_error_reduce base_expr(base_cond)
-%on_error_reduce module_fun
+%on_error_reduce module_var_e
+%on_error_reduce module_var_t
 %on_error_reduce core_expr
 %on_error_reduce match_expr(base_cond)
 %on_error_reduce constr_expr
@@ -191,13 +192,7 @@ core_type:
 | "_"                 {   TWild $1 }
 | par(type_expr)      {    TPar $1 }
 | "<string>"          { TString $1 }
-| module_name "." type_name {
-    let module_name = $1.value in
-    let type_name   = $3.value in
-    let value       = module_name ^ "." ^ type_name in
-    let region      = cover $1.region $3.region
-    in TVar {region; value}
-  }
+| module_access_t     {   TModA $1 }
 | core_type type_name {
     let arg, constr = $1, $2 in
     let start       = type_expr_to_region arg
@@ -265,6 +260,18 @@ record_type:
       terminator;
       attributes=$1}
     in TRecord {region; value} }
+
+module_access_t :
+  module_name "." module_var_t {
+    let start       = $1.region in
+    let stop        = type_expr_to_region $3 in
+    let region      = cover start stop in
+    let value       = {module_name=$1; selector=$2; field=$3}
+    in {region; value} }
+
+module_var_t:
+  module_access_t   { TModA $1 }
+| field_name        { TVar  $1 }
 
 field_decl:
   seq("[@attr]") field_name ":" type_expr {
@@ -653,8 +660,9 @@ core_expr:
 | "<mutez>"                           {             EArith (Mutez $1) }
 | "<nat>"                             {               EArith (Nat $1) }
 | "<bytes>"                           {                     EBytes $1 }
-| "<ident>" | module_field            {                       EVar $1 }
+| "<ident>"                           {                       EVar $1 }
 | projection                          {                      EProj $1 }
+| module_access_e                     {                      EModA $1 }
 | "<string>"                          {           EString (String $1) }
 | "<verbatim>"                        {         EString (Verbatim $1) }
 | unit                                {                      EUnit $1 }
@@ -677,15 +685,6 @@ code_inj:
 annot_expr:
   expr ":" type_expr { $1,$2,$3 }
 
-module_field:
-  module_name "." module_fun {
-    let region = cover $1.region $3.region in
-    {region; value = $1.value ^ "." ^ $3.value} }
-
-module_fun:
-  field_name { $1 }
-| "or"       { {value="or"; region=$1} }
-
 projection:
   struct_name "." nsepseq(selection,".") {
     let start  = $1.region in
@@ -694,14 +693,20 @@ projection:
     let value  = {struct_name=$1; selector=$2; field_path=$3}
     in {region; value}
   }
-| module_name "." field_name "." nsepseq(selection,".") {
-    let value       = $1.value ^ "." ^ $3.value in
-    let struct_name = {$1 with value} in
+
+module_access_e:
+  module_name "." module_var_e {
     let start       = $1.region in
-    let stop        = nsepseq_to_region selection_to_region $5 in
+    let stop        = expr_to_region $3 in
     let region      = cover start stop in
-    let value       = {struct_name; selector=$4; field_path=$5}
+    let value       = {module_name=$1; selector=$2; field=$3}
     in {region; value} }
+
+module_var_e:
+  module_access_e   { EModA $1 }
+| "or"              { EVar {value="or"; region=$1} }
+| field_name        { EVar  $1 }
+| projection        { EProj $1 }
 
 selection:
   field_name { FieldName $1 }

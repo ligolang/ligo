@@ -50,6 +50,7 @@ module Captured_variables = struct
     | E_recursive r ->
       let b' = union (singleton r.fun_name) b in
       expression_content b' @@ E_lambda r.lambda
+    | E_module_accessor _ -> ok empty
 
   and matching_variant_case : (bindings -> expression -> (bindings,_) result) -> bindings -> matching_content_case -> (bindings,_) result  = fun f b { constructor=_ ; pattern ; body } ->
     f (union (singleton pattern) b) body

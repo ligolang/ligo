@@ -27,6 +27,9 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, Err
     | O.T_arrow arr ->
       let%bind arr = arrow self arr in
       return @@ T_arrow arr
+    | O.T_module_accessor ma ->
+      let%bind ma = module_access self ma in
+      return @@ I.T_module_accessor ma
 
 let rec decompile_expression : O.expression -> (I.expression, Errors.purification_error) result =
   fun e ->
@@ -83,6 +86,9 @@ let rec decompile_expression : O.expression -> (I.expression, Errors.purificatio
   | O.E_ascription ascr ->
     let%bind ascr = ascription self self_type ascr in
     return @@ I.E_ascription ascr
+  | O.E_module_accessor ma ->
+    let%bind ma = module_access self ma in
+    return @@ I.E_module_accessor ma
   | O.E_cond cond ->
     let%bind cond = conditional self cond in
     return @@ I.E_cond cond

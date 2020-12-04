@@ -5,13 +5,14 @@ module Location = Simple_utils.Location
 include Stage_common.Types
 
 type type_content =
-  | T_variable of type_variable
-  | T_sum      of ty_expr rows
-  | T_record   of ty_expr rows
-  | T_tuple    of ty_expr  list
-  | T_arrow    of ty_expr arrow
-  | T_annoted  of (type_expression * string)
-  | T_app      of ty_expr type_app
+  | T_variable        of type_variable
+  | T_sum             of ty_expr rows
+  | T_record          of ty_expr rows
+  | T_tuple           of ty_expr  list
+  | T_arrow           of ty_expr arrow
+  | T_annoted         of (type_expression * string)
+  | T_app             of ty_expr type_app
+  | T_module_accessor of ty_expr module_access
 
 
 
@@ -53,6 +54,7 @@ and expression_content =
   | E_update   of expr update
   (* Advanced *)
   | E_ascription of (expr, ty_expr) ascription
+  | E_module_accessor of expr module_access
   (* Sugar *)
   | E_cond of expr conditional
   | E_sequence of expr sequence

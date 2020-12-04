@@ -25,6 +25,7 @@ let extract_variable_types :
       | E_literal _ | E_application _ | E_raw_code _ | E_constructor _
       | E_type_in _
       | E_record _ | E_record_accessor _ | E_record_update _ | E_constant _ -> return []
+      | E_module_accessor _ -> return []
       | E_variable v -> return [(v,exp.type_expression)]
       | E_lambda { binder ; _ } ->
         let in_t = match exp.type_expression.type_content with

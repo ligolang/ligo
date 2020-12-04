@@ -47,11 +47,12 @@ let rec type_content : formatter -> type_expression -> unit =
       let attr : string = attributes_1 m.attributes in
       fprintf ppf "({%a} %s)" r m.fields attr
 
-  | T_variable tv -> type_variable ppf tv
-  | T_tuple     t -> type_tuple    type_expression ppf t
-  | T_arrow     a -> arrow         type_expression ppf a
-  | T_annoted (ty, str) -> fprintf ppf "(%a%%%s)" type_expression ty str
-  | T_app     app -> type_app      type_expression ppf app
+  | T_variable        tv -> type_variable ppf tv
+  | T_tuple            t -> type_tuple    type_expression ppf t
+  | T_arrow            a -> arrow         type_expression ppf a
+  | T_annoted  (ty, str) -> fprintf ppf "(%a%%%s)" type_expression ty str
+  | T_app            app -> type_app      type_expression ppf app
+  | T_module_accessor ma -> module_access type_expression ppf ma
 
 and type_expression ppf (te : type_expression) : unit =
   fprintf ppf "%a" type_content te
@@ -82,6 +83,7 @@ and expression_content ppf (ec : expression_content) =
   | E_type_in   ti -> type_in expression type_expression ppf ti
   | E_raw_code   r -> raw_code expression ppf r
   | E_ascription a -> ascription expression type_expression ppf a
+  | E_module_accessor ma -> module_access expression ppf ma
   | E_cond       c -> cond       expression ppf c
   | E_sequence   s -> sequence   expression ppf s
   | E_skip         -> skip                  ppf ()

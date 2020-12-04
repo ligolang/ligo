@@ -7,6 +7,7 @@ let stage = "abstracter"
 
 type abs_error = [
   | `Concrete_reasonligo_unknown_predefined_type of Raw.type_constr
+  | `Concrete_reasonligo_unknown_constant of string * Location.t
   | `Concrete_reasonligo_recursive_fun of Region.t
   | `Concrete_reasonligo_unsupported_pattern_type of Raw.pattern
   | `Concrete_reasonligo_unsupported_string_singleton of Raw.type_expr
@@ -19,6 +20,7 @@ type abs_error = [
   ]
 
 let unknown_predefined_type name = `Concrete_reasonligo_unknown_predefined_type name
+let unknown_constant s loc = `Concrete_reasonligo_unknown_constant (s,loc)
 let untyped_recursive_fun reg = `Concrete_reasonligo_recursive_fun reg
 let unsupported_pattern_type pl = `Concrete_reasonligo_unsupported_pattern_type pl
 let unsupported_deep_list_patterns cons = `Concrete_reasonligo_unsupported_deep_list_pattern cons
@@ -40,6 +42,10 @@ let error_ppformat : display_format:string display_format ->
         "@[<hv>%a@.Unknown type \"%s\". @]"
         Snippet.pp_lift type_name.Region.region
         type_name.Region.value
+    | `Concrete_reasonligo_unknown_constant (s,loc) ->
+      Format.fprintf f
+      "@[<hv>%a@.Unknown constant: %s"
+        Snippet.pp loc s
     | `Concrete_reasonligo_recursive_fun reg ->
       Format.fprintf f
         "@[<hv>%a@.Invalid function declaration.@.Recursive functions are required to have a type annotation (for now). @]"
@@ -112,6 +118,13 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
       ("message", message );
       ("location", `String loc);
       ("type", t ) ] in
+    json_error ~stage ~content
+  | `Concrete_reasonligo_unknown_constant (s,loc) ->
+    let message = `String ("Unknow constant: " ^ s) in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);
+    ] in
     json_error ~stage ~content
   | `Concrete_reasonligo_recursive_fun reg ->
     let message = `String "Untyped recursive functions are not supported yet" in

@@ -32,12 +32,13 @@ let list_sep_d_par f ppf lst =
 let rec type_content : formatter -> type_expression -> unit =
   fun ppf te ->
   match te.type_content with
-  | T_variable tv -> type_variable ppf tv
-  | T_sum      sm -> sum           type_expression ppf sm.fields
-  | T_record   rd -> type_record   type_expression ppf rd.fields
-  | T_tuple     t -> type_tuple    type_expression ppf t
-  | T_arrow     a -> arrow         type_expression ppf a
-  | T_app     app -> type_app      type_expression ppf app
+  | T_variable        tv -> type_variable ppf tv
+  | T_sum             sm -> sum           type_expression ppf sm.fields
+  | T_record          rd -> type_record   type_expression ppf rd.fields
+  | T_tuple            t -> type_tuple    type_expression ppf t
+  | T_arrow            a -> arrow         type_expression ppf a
+  | T_app            app -> type_app      type_expression ppf app
+  | T_module_accessor ma -> module_access type_expression ppf ma
 
 and type_expression ppf (te : type_expression) : unit =
   fprintf ppf "%a" type_content te
@@ -94,6 +95,7 @@ and expression_content ppf (ec : expression_content) =
       fprintf ppf "[%%%s %a]" language expression code
   | E_ascription {anno_expr; type_annotation} ->
       fprintf ppf "%a : %a" expression anno_expr type_expression type_annotation
+  | E_module_accessor ma -> module_access expression ppf ma
   | E_cond {condition; then_clause; else_clause} ->
       fprintf ppf "if %a then %a else %a"
         expression condition

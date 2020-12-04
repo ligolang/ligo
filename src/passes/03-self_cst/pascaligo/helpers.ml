@@ -62,6 +62,8 @@ let rec fold_type_expression : ('a, 'err) folder -> 'a -> type_expr -> ('a, 'err
     ok @@ res
   | TPar    {value;region=_} ->
     self init value.inside
+  | TModA {value;region=_} ->
+    self init value.field
   | TVar    _
   | TWild   _
   | TString _ -> ok @@ init
@@ -154,6 +156,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> ('a, 'err) result =
       ok res
     in
     bind_fold_ne_list aux init @@ npseq_to_ne_list value.updates.value.ne_elements
+  | EModA    {value;region=_} -> self init value.field
   | EVar     _ -> ok init
   | ECall    {value;region=_} ->
     let (lam, args) = value in
@@ -424,6 +427,10 @@ let rec map_type_expression : ('err) mapper -> type_expr -> ('b, 'err) result = 
     let%bind inside = self value.inside in
     let value = {value with inside} in
     return @@ TPar {value;region}
+  | TModA {value;region} ->
+    let%bind field = self value.field in
+    let value = {value with field} in
+    return @@ TModA {value;region}
   | (TVar    _
   | TWild   _
   | TString _ as e )-> ok @@ e
@@ -557,6 +564,10 @@ let rec map_expression : ('err) mapper -> expr -> (expr, 'err) result = fun f e 
     let updates = {value.updates with value = {value.updates.value with ne_elements}} in
     let value = {value with updates} in
     return @@ EUpdate {value;region}
+  | EModA {value;region} ->
+    let%bind field = self value.field in
+    let value = {value with field} in
+    return @@ EModA {value;region}
   | EVar     _ as e -> return e
   | ECall    {value;region} ->
     let (lam, args) = value in

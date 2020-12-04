@@ -1,6 +1,6 @@
 contract: Type Ident EQ VBAR Attr With
 ##
-## Ends in an error in state: 37.
+## Ends in an error in state: 40.
 ##
 ## variant -> nseq(Attr) . Constr [ VBAR Type SEMI RPAR RBRACE Let In EQ EOF COMMA Attr ]
 ## variant -> nseq(Attr) . Constr Of fun_type [ VBAR Type SEMI RPAR RBRACE Let In EQ EOF COMMA Attr ]
@@ -12,8 +12,8 @@ contract: Type Ident EQ VBAR Attr With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 35, spurious reduction of production seq(Attr) ->
-## In state 36, spurious reduction of production nseq(Attr) -> Attr seq(Attr)
+## In state 38, spurious reduction of production seq(Attr) ->
+## In state 39, spurious reduction of production nseq(Attr) -> Attr seq(Attr)
 ##
 
 Ill-formed variant.
@@ -22,7 +22,7 @@ expected.
 
 contract: Type Ident EQ Attr Constr Of With
 ##
-## Ends in an error in state: 39.
+## Ends in an error in state: 42.
 ##
 ## variant -> nseq(Attr) Constr Of . fun_type [ VBAR Type SEMI RPAR RBRACE Let In EQ EOF COMMA Attr ]
 ##
@@ -134,7 +134,7 @@ interactive_expr: Begin With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 213, spurious reduction of production seq(Attr) ->
+## In state 216, spurious reduction of production seq(Attr) ->
 ##
 interactive_expr: Begin If Verbatim Then With
 ##
@@ -222,7 +222,7 @@ interactive_expr: With
 ##
 contract: With
 ##
-## Ends in an error in state: 76.
+## Ends in an error in state: 79.
 ##
 ## let_declaration -> seq(Attr) . Let let_binding [ Type Let EOF Attr ]
 ## let_declaration -> seq(Attr) . Let Rec let_binding [ Type Let EOF Attr ]
@@ -1076,7 +1076,7 @@ interactive_expr: Match Verbatim With WILD ARROW Let Rec With
 ##
 contract: Let Rec With
 ##
-## Ends in an error in state: 79.
+## Ends in an error in state: 82.
 ##
 ## let_declaration -> seq(Attr) Let Rec . let_binding [ Type Let EOF Attr ]
 ##
@@ -1178,7 +1178,7 @@ interactive_expr: Match Verbatim With WILD ARROW Let With
 ##
 contract: Let With
 ##
-## Ends in an error in state: 77.
+## Ends in an error in state: 80.
 ##
 ## let_declaration -> seq(Attr) Let . let_binding [ Type Let EOF Attr ]
 ## let_declaration -> seq(Attr) Let . Rec let_binding [ Type Let EOF Attr ]
@@ -1562,7 +1562,7 @@ expected:
 
 interactive_expr: C_Some With
 ##
-## Ends in an error in state: 215.
+## Ends in an error in state: 218.
 ##
 ## constr_expr -> C_Some . core_expr [ With VBAR Type Then TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE In GT GE End Else EQ EOF CONS COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
 ##
@@ -1577,19 +1577,9 @@ parentheses around what you think is the complete argument.
 
 interactive_expr: Constr DOT With
 ##
-## Ends in an error in state: 205.
+## Ends in an error in state: 208.
 ##
-## module_field -> Constr DOT . module_fun [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
-## projection -> Constr DOT . Ident DOT nsepseq(selection,DOT) [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
-##
-## The known suffix of the stack is as follows:
-## Constr DOT
-##
-interactive_expr: LBRACE Constr DOT With
-##
-## Ends in an error in state: 561.
-##
-## projection -> Constr DOT . Ident DOT nsepseq(selection,DOT) [ With EQ ]
+## module_access_e -> Constr DOT . module_var_e [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Constr DOT
@@ -1624,7 +1614,7 @@ interactive_expr: Fun WILD RPAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 151, spurious reduction of production irrefutable -> sub_irrefutable
+## In state 154, spurious reduction of production irrefutable -> sub_irrefutable
 ##
 interactive_expr: Fun WILD WILD RPAR
 ##
@@ -1639,7 +1629,7 @@ interactive_expr: Fun WILD WILD RPAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 151, spurious reduction of production irrefutable -> sub_irrefutable
+## In state 154, spurious reduction of production irrefutable -> sub_irrefutable
 ##
 
 Ill-formed function expression.
@@ -1667,15 +1657,6 @@ interactive_expr: Ident DOT Int DOT With
 ##
 ## The known suffix of the stack is as follows:
 ## selection DOT
-##
-interactive_expr: Ident DOT With
-##
-## Ends in an error in state: 193.
-##
-## projection -> Ident DOT . nsepseq(selection,DOT) [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
-##
-## The known suffix of the stack is as follows:
-## Ident DOT
 ##
 
 Ill-formed selection in a record or a tuple.
@@ -1705,7 +1686,7 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Fun With
 ##
 interactive_expr: Fun With
 ##
-## Ends in an error in state: 200.
+## Ends in an error in state: 203.
 ##
 ## fun_expr(expr) -> Fun . nseq(irrefutable) ARROW expr [ With Type Then SEMI RPAR RBRACKET RBRACE Let In EOF COLON Attr ]
 ##
@@ -1764,23 +1745,6 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Fun With
 Ill-formed function expression.
 At this point, the first parameter is expected as an irrefutable
 pattern, for example a variable.
-
-interactive_expr: LBRACE Constr DOT Ident With
-##
-## Ends in an error in state: 562.
-##
-## projection -> Constr DOT Ident . DOT nsepseq(selection,DOT) [ With EQ ]
-##
-## The known suffix of the stack is as follows:
-## Constr DOT Ident
-##
-
-Ill-formed selection in a record or a tuple.
-At this point, the selection operator '.' is expected, and one of
-following comes after:
-  * the name of a record field;
-  * the index of a component in a tuple, '0' denoting the first
-    component.
 
 interactive_expr: LBRACE Ident DOT Ident Verbatim
 ##
@@ -1977,7 +1941,7 @@ expression.
 
 interactive_expr: LBRACE Ident WILD
 ##
-## Ends in an error in state: 188.
+## Ends in an error in state: 191.
 ##
 ## field_assignment -> Ident . EQ expr [ SEMI RBRACE ]
 ## path -> Ident . [ With ]
@@ -2076,7 +2040,7 @@ by semicolons ';' and each starting with fully qualified field names.
 
 interactive_expr: LBRACE With
 ##
-## Ends in an error in state: 187.
+## Ends in an error in state: 190.
 ##
 ## record_expr -> LBRACE . sep_or_term_list(field_assignment,SEMI) RBRACE [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
 ## update_record -> LBRACE . path With sep_or_term_list(field_path_assignment,SEMI) RBRACE [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
@@ -2155,7 +2119,7 @@ following is expected:
 
 contract: Let LPAR Constr LBRACKET With
 ##
-## Ends in an error in state: 91.
+## Ends in an error in state: 94.
 ##
 ## list__(tail) -> LBRACKET . option(sep_or_term_list(tail,SEMI)) RBRACKET [ SEMI RPAR RBRACKET RBRACE CONS COMMA ARROW ]
 ##
@@ -2193,7 +2157,7 @@ a closing parenthesis ')' is expected.
 
 contract: Type Ident EQ With
 ##
-## Ends in an error in state: 48.
+## Ends in an error in state: 51.
 ##
 ## record_type -> seq(Attr) . LBRACE sep_or_term_list(field_decl,SEMI) RBRACE [ Type SEMI RPAR RBRACE Let In EQ EOF COMMA Attr ]
 ## sum_type -> seq(Attr) . VBAR nsepseq(variant,VBAR) [ Type SEMI RPAR RBRACE Let In EQ EOF COMMA Attr ]
@@ -2283,7 +2247,7 @@ At this point, a closing bracket ']' is expected.
 
 interactive_expr: MINUS With
 ##
-## Ends in an error in state: 184.
+## Ends in an error in state: 187.
 ##
 ## unary_expr_level -> MINUS . call_expr_level [ With VBAR Type Then TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE In GT GE End Else EQ EOF CONS COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
 ##
@@ -2333,7 +2297,7 @@ interactive_expr: Match Verbatim With WILD COMMA With
 ##
 contract: Let LPAR Constr LPAR WILD COMMA WILD COMMA With
 ##
-## Ends in an error in state: 128.
+## Ends in an error in state: 131.
 ##
 ## nsepseq(tail,COMMA) -> tail COMMA . nsepseq(tail,COMMA) [ RPAR ]
 ##
@@ -2342,7 +2306,7 @@ contract: Let LPAR Constr LPAR WILD COMMA WILD COMMA With
 ##
 contract: Let LPAR Constr LPAR WILD COMMA With
 ##
-## Ends in an error in state: 126.
+## Ends in an error in state: 129.
 ##
 ## tuple(tail) -> tail COMMA . nsepseq(tail,COMMA) [ RPAR ]
 ##
@@ -2408,7 +2372,7 @@ expected:
 
 interactive_expr: Not With
 ##
-## Ends in an error in state: 179.
+## Ends in an error in state: 182.
 ##
 ## unary_expr_level -> Not . call_expr_level [ With VBAR Type Then TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE In GT GE End Else EQ EOF CONS COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
 ##
@@ -2511,17 +2475,7 @@ interactive_expr: Verbatim Constr With
 ##
 ## Ends in an error in state: 211.
 ##
-## module_field -> Constr . DOT module_fun [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
-## projection -> Constr . DOT Ident DOT nsepseq(selection,DOT) [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
-##
-## The known suffix of the stack is as follows:
-## Constr
-##
-interactive_expr: LBRACE Constr With
-##
-## Ends in an error in state: 560.
-##
-## projection -> Constr . DOT Ident DOT nsepseq(selection,DOT) [ With EQ ]
+## module_access_e -> Constr . DOT module_var_e [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Constr
@@ -2677,7 +2631,7 @@ expected.
 
 contract: Let Ident WILD COLON String VBAR
 ##
-## Ends in an error in state: 174.
+## Ends in an error in state: 177.
 ##
 ## let_binding -> Ident nseq(sub_irrefutable) option(type_annotation) . EQ expr [ Type Let In EOF Attr ]
 ##
@@ -2688,11 +2642,11 @@ contract: Let Ident WILD COLON String VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 18, spurious reduction of production cartesian -> core_type
-## In state 25, spurious reduction of production fun_type -> cartesian
-## In state 58, spurious reduction of production type_expr -> fun_type
-## In state 172, spurious reduction of production type_annotation -> COLON type_expr
-## In state 173, spurious reduction of production option(type_annotation) -> type_annotation
+## In state 21, spurious reduction of production cartesian -> core_type
+## In state 28, spurious reduction of production fun_type -> cartesian
+## In state 61, spurious reduction of production type_expr -> fun_type
+## In state 175, spurious reduction of production type_annotation -> COLON type_expr
+## In state 176, spurious reduction of production option(type_annotation) -> type_annotation
 ##
 
 Ill-formed value declaration.
@@ -2701,7 +2655,7 @@ operator '=' is expected, followed by an expression.
 
 contract: Let Ident WILD WILD With
 ##
-## Ends in an error in state: 167.
+## Ends in an error in state: 170.
 ##
 ## seq(sub_irrefutable) -> sub_irrefutable . seq(sub_irrefutable) [ EQ COLON ]
 ##
@@ -2710,7 +2664,7 @@ contract: Let Ident WILD WILD With
 ##
 contract: Let Ident WILD With
 ##
-## Ends in an error in state: 166.
+## Ends in an error in state: 169.
 ##
 ## nseq(sub_irrefutable) -> sub_irrefutable . seq(sub_irrefutable) [ EQ COLON ]
 ##
@@ -2727,7 +2681,7 @@ At this point, one of the following is expected:
 
 contract: Let LBRACE Ident EQ Bytes SEMI Ident EQ Bytes SEMI With
 ##
-## Ends in an error in state: 143.
+## Ends in an error in state: 146.
 ##
 ## nsepseq(field_pattern,SEMI) -> field_pattern SEMI . nsepseq(field_pattern,SEMI) [ RBRACE ]
 ## seq(__anonymous_0(field_pattern,SEMI)) -> field_pattern SEMI . seq(__anonymous_0(field_pattern,SEMI)) [ RBRACE ]
@@ -2737,7 +2691,7 @@ contract: Let LBRACE Ident EQ Bytes SEMI Ident EQ Bytes SEMI With
 ##
 contract: Let LBRACE Ident EQ Bytes SEMI With
 ##
-## Ends in an error in state: 139.
+## Ends in an error in state: 142.
 ##
 ## nsepseq(field_pattern,SEMI) -> field_pattern SEMI . nsepseq(field_pattern,SEMI) [ RBRACE ]
 ## nseq(__anonymous_0(field_pattern,SEMI)) -> field_pattern SEMI . seq(__anonymous_0(field_pattern,SEMI)) [ RBRACE ]
@@ -2753,7 +2707,7 @@ At this point, one of the following is expected:
 
 contract: Let LBRACE Ident EQ Bytes SEMI Ident EQ Bytes With
 ##
-## Ends in an error in state: 142.
+## Ends in an error in state: 145.
 ##
 ## nsepseq(field_pattern,SEMI) -> field_pattern . [ RBRACE ]
 ## nsepseq(field_pattern,SEMI) -> field_pattern . SEMI nsepseq(field_pattern,SEMI) [ RBRACE ]
@@ -2764,7 +2718,7 @@ contract: Let LBRACE Ident EQ Bytes SEMI Ident EQ Bytes With
 ##
 contract: Let LBRACE Ident EQ Bytes With
 ##
-## Ends in an error in state: 138.
+## Ends in an error in state: 141.
 ##
 ## nsepseq(field_pattern,SEMI) -> field_pattern . [ RBRACE ]
 ## nsepseq(field_pattern,SEMI) -> field_pattern . SEMI nsepseq(field_pattern,SEMI) [ RBRACE ]
@@ -2781,7 +2735,7 @@ At this point, one of the following is expected:
 
 contract: Let LBRACE Ident EQ With
 ##
-## Ends in an error in state: 84.
+## Ends in an error in state: 87.
 ##
 ## field_pattern -> Ident EQ . sub_pattern [ SEMI RBRACE ]
 ##
@@ -2795,7 +2749,7 @@ pattern.
 
 contract: Let LBRACE Ident With
 ##
-## Ends in an error in state: 83.
+## Ends in an error in state: 86.
 ##
 ## field_pattern -> Ident . EQ sub_pattern [ SEMI RBRACE ]
 ##
@@ -2809,7 +2763,7 @@ the right-hand side as a pattern.
 
 contract: Let LBRACE With
 ##
-## Ends in an error in state: 82.
+## Ends in an error in state: 85.
 ##
 ## record_pattern -> LBRACE . sep_or_term_list(field_pattern,SEMI) RBRACE [ WILD SEMI RPAR RBRACKET RBRACE LPAR LBRACE Ident EQ Constr CONS COMMA COLON ARROW ]
 ##
@@ -2823,7 +2777,7 @@ semicolons ';'.
 
 contract: Let LPAR Constr C_Some With
 ##
-## Ends in an error in state: 96.
+## Ends in an error in state: 99.
 ##
 ## constr_pattern -> C_Some . sub_pattern [ SEMI RPAR RBRACKET RBRACE CONS COMMA ARROW ]
 ##
@@ -2839,7 +2793,7 @@ parentheses around what you think is the pattern.
 
 contract: Let LPAR Constr Constr With
 ##
-## Ends in an error in state: 163.
+## Ends in an error in state: 166.
 ##
 ## par(closed_irrefutable) -> LPAR closed_irrefutable . RPAR [ WILD RPAR LPAR LBRACE Ident EQ Constr COMMA COLON ARROW ]
 ##
@@ -2850,10 +2804,10 @@ contract: Let LPAR Constr Constr With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 95, spurious reduction of production constr_pattern -> Constr
-## In state 106, spurious reduction of production core_pattern -> constr_pattern
-## In state 105, spurious reduction of production sub_pattern -> core_pattern
-## In state 147, spurious reduction of production closed_irrefutable -> Constr sub_pattern
+## In state 98, spurious reduction of production constr_pattern -> Constr
+## In state 109, spurious reduction of production core_pattern -> constr_pattern
+## In state 108, spurious reduction of production sub_pattern -> core_pattern
+## In state 150, spurious reduction of production closed_irrefutable -> Constr sub_pattern
 ##
 
 Ill-formed parenthesised pattern.
@@ -2862,7 +2816,7 @@ is expected.
 
 contract: Let LPAR Constr LBRACKET WILD RPAR
 ##
-## Ends in an error in state: 108.
+## Ends in an error in state: 111.
 ##
 ## nsepseq(tail,SEMI) -> tail . [ RBRACKET ]
 ## nsepseq(tail,SEMI) -> tail . SEMI nsepseq(tail,SEMI) [ RBRACKET ]
@@ -2875,11 +2829,11 @@ contract: Let LPAR Constr LBRACKET WILD RPAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 112, spurious reduction of production tail -> sub_pattern
+## In state 115, spurious reduction of production tail -> sub_pattern
 ##
 contract: Let LPAR Constr LBRACKET WILD SEMI WILD RPAR
 ##
-## Ends in an error in state: 110.
+## Ends in an error in state: 113.
 ##
 ## nsepseq(tail,SEMI) -> tail . [ RBRACKET ]
 ## nsepseq(tail,SEMI) -> tail . SEMI nsepseq(tail,SEMI) [ RBRACKET ]
@@ -2892,7 +2846,7 @@ contract: Let LPAR Constr LBRACKET WILD SEMI WILD RPAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 112, spurious reduction of production tail -> sub_pattern
+## In state 115, spurious reduction of production tail -> sub_pattern
 ##
 
 Ill-formed list of patterns.
@@ -2903,7 +2857,7 @@ then one of the following is expected:
 
 contract: Let LPAR Constr LBRACKET WILD SEMI With
 ##
-## Ends in an error in state: 109.
+## Ends in an error in state: 112.
 ##
 ## nsepseq(tail,SEMI) -> tail SEMI . nsepseq(tail,SEMI) [ RBRACKET ]
 ## nseq(__anonymous_0(tail,SEMI)) -> tail SEMI . seq(__anonymous_0(tail,SEMI)) [ RBRACKET ]
@@ -2913,7 +2867,7 @@ contract: Let LPAR Constr LBRACKET WILD SEMI With
 ##
 contract: Let LPAR Constr LBRACKET WILD SEMI WILD SEMI With
 ##
-## Ends in an error in state: 111.
+## Ends in an error in state: 114.
 ##
 ## nsepseq(tail,SEMI) -> tail SEMI . nsepseq(tail,SEMI) [ RBRACKET ]
 ## seq(__anonymous_0(tail,SEMI)) -> tail SEMI . seq(__anonymous_0(tail,SEMI)) [ RBRACKET ]
@@ -2929,7 +2883,7 @@ At this point, one of the following is expected:
 
 contract: Let LPAR Constr LPAR WILD COMMA WILD SEMI
 ##
-## Ends in an error in state: 127.
+## Ends in an error in state: 130.
 ##
 ## nsepseq(tail,COMMA) -> tail . [ RPAR ]
 ## nsepseq(tail,COMMA) -> tail . COMMA nsepseq(tail,COMMA) [ RPAR ]
@@ -2941,7 +2895,7 @@ contract: Let LPAR Constr LPAR WILD COMMA WILD SEMI
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 112, spurious reduction of production tail -> sub_pattern
+## In state 115, spurious reduction of production tail -> sub_pattern
 ##
 
 Ill-formed parenthesised tuple of patterns.
@@ -2952,7 +2906,7 @@ complete, then one of the following is expected:
 
 contract: Let LPAR Constr LPAR WILD CONS With
 ##
-## Ends in an error in state: 113.
+## Ends in an error in state: 116.
 ##
 ## tail -> sub_pattern CONS . tail [ SEMI RPAR RBRACKET COMMA ARROW ]
 ##
@@ -2965,7 +2919,7 @@ At this point, a pattern matching a list is expected.
 
 contract: Let LPAR Constr LPAR WILD SEMI
 ##
-## Ends in an error in state: 124.
+## Ends in an error in state: 127.
 ##
 ## par(tail) -> LPAR tail . RPAR [ SEMI RPAR RBRACKET RBRACE CONS COMMA ARROW ]
 ## tuple(tail) -> tail . COMMA nsepseq(tail,COMMA) [ RPAR ]
@@ -2977,7 +2931,7 @@ contract: Let LPAR Constr LPAR WILD SEMI
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 112, spurious reduction of production tail -> sub_pattern
+## In state 115, spurious reduction of production tail -> sub_pattern
 ##
 
 Ill-formed parenthesised pattern.
@@ -2988,7 +2942,7 @@ following is expected:
 
 contract: Let LPAR Constr LPAR With
 ##
-## Ends in an error in state: 90.
+## Ends in an error in state: 93.
 ##
 ## par(ptuple) -> LPAR . ptuple RPAR [ SEMI RPAR RBRACKET RBRACE CONS COMMA ARROW ]
 ## par(tail) -> LPAR . tail RPAR [ SEMI RPAR RBRACKET RBRACE CONS COMMA ARROW ]
@@ -3007,7 +2961,7 @@ parentheses around what you think is the pattern.
 
 contract: Let LPAR WILD WILD
 ##
-## Ends in an error in state: 160.
+## Ends in an error in state: 163.
 ##
 ## closed_irrefutable -> irrefutable . [ RPAR ]
 ## typed_pattern -> irrefutable . COLON type_expr [ RPAR ]
@@ -3019,7 +2973,7 @@ contract: Let LPAR WILD WILD
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 151, spurious reduction of production irrefutable -> sub_irrefutable
+## In state 154, spurious reduction of production irrefutable -> sub_irrefutable
 ##
 
 Ill-formed parenthesised pattern.
@@ -3030,7 +2984,7 @@ following is expected:
 
 contract: Let LPAR With
 ##
-## Ends in an error in state: 80.
+## Ends in an error in state: 83.
 ##
 ## par(closed_irrefutable) -> LPAR . closed_irrefutable RPAR [ WILD RPAR LPAR LBRACE Ident EQ Constr COMMA COLON ARROW ]
 ## unit -> LPAR . RPAR [ WILD RPAR LPAR LBRACE Ident EQ Constr COMMA COLON ARROW ]
@@ -3059,11 +3013,11 @@ contract: Let WILD COLON Ident VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 18, spurious reduction of production cartesian -> core_type
-## In state 25, spurious reduction of production fun_type -> cartesian
-## In state 58, spurious reduction of production type_expr -> fun_type
-## In state 172, spurious reduction of production type_annotation -> COLON type_expr
-## In state 173, spurious reduction of production option(type_annotation) -> type_annotation
+## In state 21, spurious reduction of production cartesian -> core_type
+## In state 28, spurious reduction of production fun_type -> cartesian
+## In state 61, spurious reduction of production type_expr -> fun_type
+## In state 175, spurious reduction of production type_annotation -> COLON type_expr
+## In state 176, spurious reduction of production option(type_annotation) -> type_annotation
 ##
 
 Ill-formed value declaration.
@@ -3072,7 +3026,7 @@ operator '=' is expected, followed by an expression.
 
 contract: Let WILD COMMA With
 ##
-## Ends in an error in state: 152.
+## Ends in an error in state: 155.
 ##
 ## tuple(sub_irrefutable) -> sub_irrefutable COMMA . nsepseq(sub_irrefutable,COMMA) [ WILD RPAR LPAR LBRACE Ident EQ Constr COLON ARROW ]
 ##
@@ -3081,7 +3035,7 @@ contract: Let WILD COMMA With
 ##
 contract: Let WILD COMMA WILD COMMA With
 ##
-## Ends in an error in state: 155.
+## Ends in an error in state: 158.
 ##
 ## nsepseq(sub_irrefutable,COMMA) -> sub_irrefutable COMMA . nsepseq(sub_irrefutable,COMMA) [ WILD RPAR LPAR LBRACE Ident EQ Constr COLON ARROW ]
 ##
@@ -3111,7 +3065,7 @@ contract: Let WILD With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 151, spurious reduction of production irrefutable -> sub_irrefutable
+## In state 154, spurious reduction of production irrefutable -> sub_irrefutable
 ##
 
 Ill-formed value declaration.
@@ -3122,7 +3076,7 @@ is expected:
 
 contract: Type Ident EQ LBRACE Ident COLON Constr SEMI Ident COLON Ident VBAR
 ##
-## Ends in an error in state: 67.
+## Ends in an error in state: 70.
 ##
 ## nsepseq(field_decl,SEMI) -> field_decl . [ RBRACE ]
 ## nsepseq(field_decl,SEMI) -> field_decl . SEMI nsepseq(field_decl,SEMI) [ RBRACE ]
@@ -3135,14 +3089,14 @@ contract: Type Ident EQ LBRACE Ident COLON Constr SEMI Ident COLON Ident VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 18, spurious reduction of production cartesian -> core_type
-## In state 25, spurious reduction of production fun_type -> cartesian
-## In state 58, spurious reduction of production type_expr -> fun_type
-## In state 55, spurious reduction of production field_decl -> seq(Attr) Ident COLON type_expr
+## In state 21, spurious reduction of production cartesian -> core_type
+## In state 28, spurious reduction of production fun_type -> cartesian
+## In state 61, spurious reduction of production type_expr -> fun_type
+## In state 58, spurious reduction of production field_decl -> seq(Attr) Ident COLON type_expr
 ##
 contract: Type Ident EQ LBRACE Ident COLON Ident VBAR
 ##
-## Ends in an error in state: 63.
+## Ends in an error in state: 66.
 ##
 ## nsepseq(field_decl,SEMI) -> field_decl . [ RBRACE ]
 ## nsepseq(field_decl,SEMI) -> field_decl . SEMI nsepseq(field_decl,SEMI) [ RBRACE ]
@@ -3155,10 +3109,10 @@ contract: Type Ident EQ LBRACE Ident COLON Ident VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 18, spurious reduction of production cartesian -> core_type
-## In state 25, spurious reduction of production fun_type -> cartesian
-## In state 58, spurious reduction of production type_expr -> fun_type
-## In state 55, spurious reduction of production field_decl -> seq(Attr) Ident COLON type_expr
+## In state 21, spurious reduction of production cartesian -> core_type
+## In state 28, spurious reduction of production fun_type -> cartesian
+## In state 61, spurious reduction of production type_expr -> fun_type
+## In state 58, spurious reduction of production field_decl -> seq(Attr) Ident COLON type_expr
 ##
 
 Ill-formed record type.
@@ -3169,7 +3123,7 @@ following is expected:
 
 contract: Type Ident EQ LBRACE With
 ##
-## Ends in an error in state: 52.
+## Ends in an error in state: 55.
 ##
 ## field_decl -> seq(Attr) . Ident COLON type_expr [ SEMI RBRACE ]
 ##
@@ -3180,7 +3134,7 @@ contract: Type Ident EQ LBRACE With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 51, spurious reduction of production seq(Attr) ->
+## In state 54, spurious reduction of production seq(Attr) ->
 ##
 
 Ill-formed record type.
@@ -3189,7 +3143,7 @@ field is expected.
 
 contract: Type Ident EQ LBRACE Ident With
 ##
-## Ends in an error in state: 53.
+## Ends in an error in state: 56.
 ##
 ## field_decl -> seq(Attr) Ident . COLON type_expr [ SEMI RBRACE ]
 ##
@@ -3203,7 +3157,7 @@ expected.
 
 contract: Type Ident EQ LPAR String COMMA Constr RPAR With
 ##
-## Ends in an error in state: 13.
+## Ends in an error in state: 15.
 ##
 ## core_type -> type_tuple . Ident [ VBAR Type TIMES SEMI RPAR RBRACE Let In Ident EQ EOF COMMA Attr ARROW ]
 ##
@@ -3217,7 +3171,7 @@ expected, like 'map'.
 
 contract: Type Ident EQ LPAR String COMMA String VBAR
 ##
-## Ends in an error in state: 45.
+## Ends in an error in state: 48.
 ##
 ## nsepseq(type_expr,COMMA) -> type_expr . [ RPAR ]
 ## nsepseq(type_expr,COMMA) -> type_expr . COMMA nsepseq(type_expr,COMMA) [ RPAR ]
@@ -3229,13 +3183,13 @@ contract: Type Ident EQ LPAR String COMMA String VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 18, spurious reduction of production cartesian -> core_type
-## In state 25, spurious reduction of production fun_type -> cartesian
-## In state 58, spurious reduction of production type_expr -> fun_type
+## In state 21, spurious reduction of production cartesian -> core_type
+## In state 28, spurious reduction of production fun_type -> cartesian
+## In state 61, spurious reduction of production type_expr -> fun_type
 ##
 contract: Type Ident EQ LPAR String VBAR
 ##
-## Ends in an error in state: 42.
+## Ends in an error in state: 45.
 ##
 ## par(type_expr) -> LPAR type_expr . RPAR [ VBAR Type TIMES SEMI RPAR RBRACE Let In Ident EQ EOF COMMA Attr ARROW ]
 ## tuple(type_expr) -> type_expr . COMMA nsepseq(type_expr,COMMA) [ RPAR ]
@@ -3247,9 +3201,9 @@ contract: Type Ident EQ LPAR String VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 18, spurious reduction of production cartesian -> core_type
-## In state 25, spurious reduction of production fun_type -> cartesian
-## In state 58, spurious reduction of production type_expr -> fun_type
+## In state 21, spurious reduction of production cartesian -> core_type
+## In state 28, spurious reduction of production fun_type -> cartesian
+## In state 61, spurious reduction of production type_expr -> fun_type
 ##
 
 Ill-formed application to a type constructor.
@@ -3261,7 +3215,7 @@ following is expected:
 
 contract: Type Ident EQ String ARROW With
 ##
-## Ends in an error in state: 26.
+## Ends in an error in state: 29.
 ##
 ## fun_type -> cartesian ARROW . fun_type [ VBAR Type SEMI RPAR RBRACE Let In EQ EOF COMMA Attr ]
 ##
@@ -3303,7 +3257,7 @@ the name of a type defined in the module.
 
 contract: Type Ident EQ String TIMES String TIMES With
 ##
-## Ends in an error in state: 22.
+## Ends in an error in state: 25.
 ##
 ## nsepseq(core_type,TIMES) -> core_type TIMES . nsepseq(core_type,TIMES) [ VBAR Type SEMI RPAR RBRACE Let In EQ EOF COMMA Attr ARROW ]
 ##
@@ -3312,7 +3266,7 @@ contract: Type Ident EQ String TIMES String TIMES With
 ##
 contract: Type Ident EQ String TIMES With
 ##
-## Ends in an error in state: 19.
+## Ends in an error in state: 22.
 ##
 ## cartesian -> core_type TIMES . nsepseq(core_type,TIMES) [ VBAR Type SEMI RPAR RBRACE Let In EQ EOF COMMA Attr ARROW ]
 ##
@@ -3330,7 +3284,7 @@ At this point, one of the following type expressions is expected:
 
 contract: Type Ident EQ VBAR With
 ##
-## Ends in an error in state: 49.
+## Ends in an error in state: 52.
 ##
 ## sum_type -> seq(Attr) VBAR . nsepseq(variant,VBAR) [ Type SEMI RPAR RBRACE Let In EQ EOF COMMA Attr ]
 ##
@@ -3339,7 +3293,7 @@ contract: Type Ident EQ VBAR With
 ##
 contract: Type Ident EQ Constr VBAR With
 ##
-## Ends in an error in state: 33.
+## Ends in an error in state: 36.
 ##
 ## nsepseq(variant,VBAR) -> variant VBAR . nsepseq(variant,VBAR) [ Type SEMI RPAR RBRACE Let In EQ EOF COMMA Attr ]
 ##

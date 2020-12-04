@@ -171,6 +171,7 @@ and print_type_expr state = function
 | TFun t          -> print_fun_type state t
 | TWild wild      -> print_token state wild " "
 | TString s       -> print_string state s
+| TModA   ma      -> print_module_access print_type_expr state ma
 
 and print_sum_type state {value; _} =
   let {variants; attributes; lead_vbar} = value in
@@ -205,6 +206,13 @@ and print_projection state {value; _} =
   print_var     state struct_name;
   print_token   state selector ".";
   print_nsepseq state "." print_selection field_path
+
+and print_module_access : type a.(state -> a -> unit ) -> state -> a module_access reg -> unit =
+fun f state {value; _} ->
+  let {module_name; selector; field} = value in
+  print_var     state module_name;
+  print_token   state selector ".";
+  f             state field;
 
 and print_update state {value; _} =
  let {lbrace; ellipsis; record; comma; updates; rbrace} = value in
@@ -381,6 +389,7 @@ and print_expr state = function
 | ECall e       -> print_fun_call state e
 | EVar v        -> print_var state v
 | EProj p       -> print_projection state p
+| EModA ma      -> print_module_access print_expr state ma
 | EUpdate u     -> print_update state u
 | EUnit e       -> print_unit state e
 | EBytes b      -> print_bytes state b
@@ -885,6 +894,9 @@ and pp_expr state = function
 | EProj {value; region} ->
     pp_loc_node state "EProj" region;
     pp_projection state value
+| EModA {value; region} ->
+    pp_loc_node state "EModA" region;
+    pp_module_access pp_expr state value
 | EUpdate {value; region} ->
     pp_loc_node state "EUpdate" region;
     pp_update state value
@@ -1040,6 +1052,11 @@ and pp_projection state proj =
   let apply len rank = pp_selection (state#pad len rank) in
   pp_ident (state#pad (1+len) 0) proj.struct_name;
   List.iteri (apply len) selections
+
+and pp_module_access : type a. (state -> a -> unit ) -> state -> a module_access -> unit
+= fun f state ma ->
+  pp_ident (state#pad 2 0) ma.module_name;
+  f (state#pad 2 1) ma.field
 
 and pp_update state update =
   pp_path (state#pad 2 0) update.record;
@@ -1248,6 +1265,9 @@ and pp_type_expr state = function
 | TString s ->
     pp_node   state "TString";
     pp_string (state#pad 1 0) s
+| TModA {value; region} ->
+    pp_loc_node state "TModA" region;
+    pp_module_access pp_type_expr state value
 
 and pp_sum_type state {variants; attributes; _} =
   let variants = Utils.nsepseq_to_list variants in

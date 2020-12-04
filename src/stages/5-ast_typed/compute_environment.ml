@@ -72,6 +72,7 @@ let rec expression : environment -> expression -> expression = fun env expr ->
     let cases = self_cases c.cases in
     return @@ E_matching { matchee ; cases }
   )
+  | E_module_accessor _ -> return_id
 
 and cases : environment -> matching_expr -> matching_expr = fun env cs ->
   let return x = x in

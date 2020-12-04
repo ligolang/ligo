@@ -130,7 +130,11 @@ let rec decompile_type_expr : dialect -> AST.type_expression -> _ result = fun d
     let lst : _ CST.par = {lpar=ghost;inside=lst;rpar=ghost} in
     return @@ CST.TApp (wrap (v,wrap lst))
   | T_annoted _annot ->
-    failwith "let's work on it later"
+    failwith "TODO: decompile T_annoted"
+  | T_module_accessor {module_name;element} ->
+    let module_name = wrap module_name in
+    let%bind field  = decompile_type_expr dialect element in
+    return @@ CST.TModA (wrap CST.{module_name;selector=ghost;field})
 
 let get_e_variable : AST.expression -> _ result = fun expr ->
   match expr.expression_content with
@@ -465,6 +469,10 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
     let%bind expr = decompile_expression ~dialect anno_expr in
     let%bind ty   = decompile_type_expr dialect type_annotation in
     return_expr @@ CST.EAnnot (wrap @@ par (expr,ghost,ty))
+  | E_module_accessor {module_name;element} ->
+    let module_name = wrap module_name in
+    let%bind field  = decompile_expression element in
+    return_expr @@ CST.EModA (wrap CST.{module_name;selector=ghost;field})
   | E_cond {condition;then_clause;else_clause} ->
      let%bind test  = decompile_expression ~dialect condition in
      let terminator = terminator dialect in

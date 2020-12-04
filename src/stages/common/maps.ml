@@ -1,6 +1,11 @@
 open Types
 open Trace
 
+let module_access : ('a -> ('b, _) result) -> 'a module_access -> ('b module_access, _) result
+= fun f {module_name; element} ->
+  let%bind element = f element in
+  ok {module_name; element}
+
 (* Types level *)
 
 let type_app : ('a -> ('b, _) result) -> 'a type_app -> ('b type_app, _) result

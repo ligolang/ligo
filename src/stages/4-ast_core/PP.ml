@@ -44,11 +44,12 @@ let rec type_expression ppf (te : type_expression) : unit =
 and type_content : formatter -> type_expression -> unit =
   fun ppf te ->
   match te.type_content with
-  | T_variable tv -> type_variable ppf tv
-  | T_sum       m -> fprintf ppf "@[<hv 4>sum[%a]@]" (variant_sep_d type_expression) m.fields
-  | T_record    m -> fprintf ppf "%a" (tuple_or_record_sep_type type_expression) m.fields
-  | T_arrow     a -> arrow         type_expression ppf a
-  | T_app       a -> type_app type_expression ppf a
+  | T_variable        tv -> type_variable ppf tv
+  | T_sum              m -> fprintf ppf "@[<hv 4>sum[%a]@]" (variant_sep_d type_expression) m.fields
+  | T_record           m -> fprintf ppf "%a" (tuple_or_record_sep_type type_expression) m.fields
+  | T_arrow            a -> arrow         type_expression ppf a
+  | T_app              a -> type_app type_expression ppf a
+  | T_module_accessor ma -> module_access type_expression ppf ma
 
 
 let rec expression ppf (e : expression) =
@@ -73,6 +74,7 @@ and expression_content ppf (ec : expression_content) =
   | E_type_in   ti -> type_in expression type_expression ppf ti
   | E_raw_code r -> raw_code expression ppf r
   | E_ascription a -> ascription expression type_expression ppf a
+  | E_module_accessor ma -> module_access expression ppf ma
 
 and matching_variant_case : (_ -> expression -> unit) -> _ -> match_variant -> unit =
   fun f ppf {constructor=c ; proj ; body } ->

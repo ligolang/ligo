@@ -87,6 +87,9 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression , desu
     | I.T_arrow arr ->
       let%bind arr = arrow self arr in
       return @@ T_arrow arr
+    | I.T_module_accessor ma ->
+      let%bind ma = module_access self ma in
+      return @@ O.T_module_accessor ma
 
 let compile_binder = binder compile_type_expression
 
@@ -207,6 +210,9 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
       let%bind anno_expr = self anno_expr in
       let%bind type_annotation = self_type type_annotation in
       return @@ O.E_ascription {anno_expr; type_annotation}
+    | I.E_module_accessor ma ->
+      let%bind ma = module_access self ma in
+      return @@ O.E_module_accessor ma
     | I.E_cond {condition; then_clause; else_clause} ->
       let%bind matchee = self condition in
       let%bind match_true = self then_clause in

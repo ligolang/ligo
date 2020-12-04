@@ -18,6 +18,9 @@ let pseq_to_list = function
   | Some lst -> npseq_to_list lst
 let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 
+let build_ins = ["Test";"Tezos";"Crypto";"Bytes";"List";"Set";"Map";"Big_map";"Bitwise";"String";"Layout"]
+  @ ["Michelson";"Loop";"Current"]
+
 open Predefined.Tree_abstraction.Cameligo
 
 let r_split = Location.r_split
@@ -27,6 +30,7 @@ let compile_attributes attributes : string list =
   List.map (fst <@ r_split) attributes
 
 let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
+  let self = compile_type_expression in
   let return te = ok @@ te in
   match te with
     TSum sum ->
@@ -37,7 +41,7 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
       let aux (variant : CST.variant CST.reg) =
         let v, _ = r_split variant in
         let%bind type_expr =
-          bind_map_option (compile_type_expression <@ snd) v.arg in
+          bind_map_option (self <@ snd) v.arg in
         let type_expr = Option.unopt ~default:(t_unit ()) type_expr in
         let variant_attr = compile_attributes v.attributes in
         ok @@ (v.constr.value, type_expr, variant_attr) in
@@ -49,7 +53,7 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
       let lst = npseq_to_list injection.ne_elements in
       let aux (field : CST.field_decl CST.reg) =
         let f, _ = r_split field in
-        let%bind type_expr = compile_type_expression f.field_type in
+        let%bind type_expr = self f.field_type in
         let field_attr = List.map (fun x -> x.Region.value) f.attributes
         in return @@ (f.field_name.value, type_expr, field_attr) in
       let%bind fields = bind_map_list aux lst in
@@ -57,7 +61,7 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
   | TProd prod ->
     let (nsepseq, loc) = r_split prod in
     let lst = npseq_to_list nsepseq in
-    let%bind lst = bind_map_list compile_type_expression lst in
+    let%bind lst = bind_map_list self lst in
     return @@ t_tuple ~loc lst
   | TApp app ->
     let get_t_string_singleton_opt = function
@@ -78,8 +82,8 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
           let%bind d' =
             trace_option (michelson_type_wrong te operator.value) @@
               get_t_string_singleton_opt d in
-          let%bind a' = compile_type_expression a in
-          let%bind c' = compile_type_expression c in
+          let%bind a' = self a in
+          let%bind c' = self c in
           return @@ t_michelson_or ~loc a' b' c' d'
           )
         | _ -> fail @@ michelson_type_wrong_arity loc operator.value)
@@ -93,26 +97,26 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
           let%bind d' =
             trace_option (michelson_type_wrong te operator.value) @@
               get_t_string_singleton_opt d in
-          let%bind a' = compile_type_expression a in
-          let%bind c' = compile_type_expression c in
+          let%bind a' = self a in
+          let%bind c' = self c in
           return @@ t_michelson_pair ~loc a' b' c' d'
           )
         | _ -> fail @@ michelson_type_wrong_arity loc operator.value)
     | _ ->
       let operator = Var.of_name operator.value in
       let lst = npseq_to_list args.value.inside in
-      let%bind lst = bind_map_list compile_type_expression lst in
+      let%bind lst = bind_map_list self lst in
       return @@ t_app ~loc operator lst
     )
   | TFun func ->
     let ((input_type,_,output_type), loc) = r_split func in
-    let%bind input_type = compile_type_expression input_type in
-    let%bind output_type = compile_type_expression output_type in
+    let%bind input_type = self input_type in
+    let%bind output_type = self output_type in
     return @@ t_function ~loc input_type output_type
   | TPar par ->
     let (par, _) = r_split par in
     let type_expr = par.inside in
-    compile_type_expression type_expr
+    self type_expr
 
   | TVar var ->
     let (name,loc) = r_split var in
@@ -120,6 +124,12 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
     return @@ t_variable ~loc v
   | TWild _ -> failwith "unsupported TWild"
   | TString _s -> fail @@ unsupported_string_singleton te
+  | TModA ma ->
+    let (ma, loc) = r_split ma in
+    let (module_name, _) = r_split ma.module_name in
+    let%bind element = self ma.field in
+    return @@ t_module_accessor ~loc module_name element
+
 
 let compile_selection (selection : CST.selection) =
   match selection with
@@ -131,9 +141,10 @@ let compile_selection (selection : CST.selection) =
     (Access_tuple index, loc)
 
 let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e ->
+  let self = compile_expression in
   let return e = ok @@ e in
   let compile_tuple_expression ?loc tuple_expr =
-    let%bind lst = bind_map_list compile_expression @@ nseq_to_list tuple_expr in
+    let%bind lst = bind_map_list self @@ nseq_to_list tuple_expr in
     match lst with
       hd::[] -> return hd
     | lst -> return @@ e_tuple ?loc lst
@@ -152,13 +163,13 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
   in
   let compile_bin_op (op_type : AST.constant') (op : _ CST.bin_op CST.reg) =
     let (op, loc) = r_split op in
-    let%bind a = compile_expression op.arg1 in
-    let%bind b = compile_expression op.arg2 in
+    let%bind a = self op.arg1 in
+    let%bind b = self op.arg2 in
     return @@ e_constant ~loc (Const op_type) [a; b]
   in
   let compile_un_op (op_type : AST.constant') (op : _ CST.un_op CST.reg) =
     let (op, loc) = r_split op in
-    let%bind arg = compile_expression op.arg in
+    let%bind arg = self op.arg in
     return @@ e_constant ~loc (Const op_type) [arg]
   in
   match e with
@@ -168,7 +179,7 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
       Some const -> return @@ e_constant ~loc const []
     | None -> return @@ e_variable_ez ~loc var
     )
-  | EPar par -> compile_expression par.value.inside
+  | EPar par -> self par.value.inside
   | EUnit the_unit ->
     let loc = Location.lift the_unit.region in
     return @@ e_unit ~loc ()
@@ -180,8 +191,8 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     match str with
       Cat c ->
       let (op,loc) = r_split c in
-      let%bind a = compile_expression op.arg1 in
-      let%bind b = compile_expression op.arg2 in
+      let%bind a = self op.arg1 in
+      let%bind b = self op.arg2 in
       return @@ e_constant ~loc (Const C_CONCAT) [a;b]
     | String str ->
       let (str, loc) = r_split str in
@@ -235,17 +246,36 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     let (var, loc_var) = r_split var in
     (match constants var with
       Some const ->
-      let%bind args = bind_map_list compile_expression @@ nseq_to_list args in
+      let%bind args = bind_map_list self @@ nseq_to_list args in
       return @@ e_constant ~loc const args
     | None ->
       let func = e_variable_ez ~loc:loc_var var in
-      let%bind args = bind_map_list compile_expression @@ nseq_to_list args in
+      let%bind args = bind_map_list self @@ nseq_to_list args in
       return @@ List.fold_left (e_application ~loc) func @@ args
     )
+  (*TODO: move to proper module*)
+  | ECall {value=(EModA {value={module_name;field};region=_},args);region} when
+    List.mem module_name.value build_ins ->
+    let loc = Location.lift region in
+    let%bind fun_name = match field with
+      EVar v -> ok @@ v.value
+      | EModA _ -> fail @@ unknown_constant module_name.value loc
+      |ECase _|ECond _|EAnnot _|EList _|EConstr _|EUpdate _|ELetIn _|EFun _|ESeq _|ECodeInj _
+      |ELogic _|EArith _|EString _|ERecord _|EProj _|ECall _|EBytes _|EUnit _|ETypeIn _
+      |ETuple _|EPar _ -> failwith "Corner case : This couldn't be produce by the parser"
+    in
+    let var = module_name.value ^ "." ^ fun_name in
+    (match constants var with
+      Some const ->
+      let%bind args = bind_map_list self @@ nseq_to_list args in
+      return @@ e_constant ~loc const args
+    | None ->
+      fail @@ unknown_constant var loc
+      )
   | ECall call ->
     let ((func, args), loc) = r_split call in
-    let%bind func = compile_expression func in
-    let%bind args = bind_map_list compile_expression @@ nseq_to_list args in
+    let%bind func = self func in
+    let%bind args = bind_map_list self @@ nseq_to_list args in
     return @@ List.fold_left (e_application ~loc) func @@ args
   | ETuple lst ->
     let (lst, loc) = r_split lst in
@@ -256,17 +286,36 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     let aux (fa : CST.field_assign CST.reg) =
       let (fa, _) = r_split fa in
       let (name, _) = r_split fa.field_name in
-      let%bind expr = compile_expression fa.field_expr in
+      let%bind expr = self fa.field_expr in
       return (name, expr)
     in
     let%bind record = bind_map_list aux @@ npseq_to_list record.ne_elements in
     return @@ e_record_ez ~loc record
   | EProj proj ->
     let (proj, loc) = r_split proj in
-    let (var, _loc_var) = r_split proj.struct_name in
-    let var  = e_variable_ez ~loc var in
+    let (var, loc_var) = r_split proj.struct_name in
+    let var  = e_variable_ez ~loc:loc_var var in
     let (sels, _) = List.split @@ List.map compile_selection @@ npseq_to_list proj.field_path in
-    return @@ e_accessor var sels
+    return @@ e_accessor ~loc var sels
+  | EModA ma ->
+    let (ma, loc) = r_split ma in
+    let (module_name, _) = r_split ma.module_name in
+    let%bind element = self ma.field in
+    (*TODO: move to proper module*)
+    if List.mem module_name build_ins then
+      let%bind fun_name = match ma.field with
+        EVar v -> ok @@ v.value
+      | EModA _ -> fail @@ unknown_constant module_name loc
+      |ECase _|ECond _|EAnnot _|EList _|EConstr _|EUpdate _|ELetIn _|EFun _|ESeq _|ECodeInj _
+      |ELogic _|EArith _|EString _|ERecord _|EProj _|ECall _|EBytes _|EUnit _|ETypeIn _
+      |ETuple _|EPar _ -> failwith "Corner case : This couldn't be produce by the parser"
+      in
+      let var = module_name ^ "." ^ fun_name in
+      (match constants var with
+        Some const -> return @@ e_constant ~loc const []
+      | None -> return @@ e_variable_ez ~loc var
+      )
+    else return @@ e_module_accessor ~loc module_name element
   | EUpdate update ->
     let (update, _loc) = r_split update in
     let%bind record = compile_path update.record in
@@ -274,7 +323,7 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     let aux (up : CST.field_path_assignment CST.reg) =
       let (up, loc) = r_split up in
       let path = up.field_path in
-      let%bind expr = compile_expression up.field_expr in
+      let%bind expr = self up.field_expr in
       let path = (match path with
         Name var -> [Access_record var.value]
       | Path proj ->
@@ -296,7 +345,7 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     let%bind () = bind_list_iter check_annotation (snd binders) in
     let%bind lhs_type = bind_map_option (compile_type_expression <@ snd) lhs_type in
     let%bind (binder,exprs),lst = bind_map_ne_list compile_parameter binders in
-    let%bind body = compile_expression body in
+    let%bind body = self body in
     let rec aux lst =
       match lst with
         [] -> body,lhs_type
@@ -325,28 +374,28 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     return @@ e_constructor ~loc constr.value args
   | ECase case ->
     let (case, loc) = r_split case in
-    let%bind matchee = compile_expression case.expr in
+    let%bind matchee = self case.expr in
     let (cases, _) = r_split case.cases in
     let%bind cases = compile_matching_expr @@ npseq_to_ne_list cases in
     return @@ e_matching ~loc matchee cases
   | EAnnot annot ->
     let (annot, loc) = r_split annot in
     let (expr, _, ty) = annot.inside in
-    let%bind expr = compile_expression expr in
+    let%bind expr = self expr in
     let%bind ty   = compile_type_expression ty in
     return @@ e_annotation ~loc expr ty
   | ECond cond ->
     let (cond, loc) = r_split cond in
-    let%bind test        = compile_expression cond.test in
-    let%bind then_clause = compile_expression cond.ifso in
-    let%bind else_clause = bind_map_option (compile_expression <@ snd) cond.ifnot in
+    let%bind test        = self cond.test in
+    let%bind then_clause = self cond.ifso in
+    let%bind else_clause = bind_map_option (self <@ snd) cond.ifnot in
     return @@ e_cond ~loc test then_clause @@ Option.unopt ~default:(e_unit ~loc ()) else_clause
   | EList lst -> (
     match lst with
       ECons cons ->
       let (cons, loc) = r_split cons in
-      let%bind a  = compile_expression cons.arg1 in
-      let%bind b  = compile_expression cons.arg2 in
+      let%bind a  = self cons.arg1 in
+      let%bind b  = self cons.arg2 in
       return @@ e_constant ~loc (Const C_CONS) [a; b]
     | EListComp lc ->
       let (lc,loc) = r_split lc in
@@ -354,14 +403,14 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
         Option.unopt ~default:[] @@
         Option.map npseq_to_list lc.elements
       in
-      let%bind lst = bind_map_list compile_expression lst in
+      let%bind lst = bind_map_list self lst in
       return @@ e_list ~loc lst
   )
   | ELetIn li ->
     let (li, loc) = r_split li in
     let ({kwd_rec;binding;body;attributes;_} : CST.let_in) = li in
     let%bind lst = compile_let_binding ?kwd_rec attributes binding in
-    let%bind body = compile_expression body in
+    let%bind body = self body in
     let aux (binder,attr,rhs) expr = e_let_in ~loc binder attr rhs expr in
     return @@ List.fold_right aux lst body
   | ETypeIn ti ->
@@ -375,11 +424,11 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     let (ci, loc) = r_split ci in
     let (language, _) = r_split ci.language in
     let (language, _) = r_split language in
-    let%bind code = compile_expression ci.code in
+    let%bind code = self ci.code in
     return @@ e_raw_code ~loc language code
   | ESeq seq ->
     let (seq, loc) = r_split seq in
-    let%bind seq = bind_map_list compile_expression @@ pseq_to_list seq.elements in
+    let%bind seq = bind_map_list self @@ pseq_to_list seq.elements in
     match seq with
       [] -> return @@ e_unit ~loc ()
     | hd :: tl ->

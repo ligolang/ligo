@@ -9,10 +9,8 @@ let make_e ?(location = Location.generated) expression_content type_expression =
   type_expression ;
   location ;
   }
-let make_n_t type_name type_value = { type_name ; type_value }
-
 let t_variable   ?loc ?core t  : type_expression = make_t ?loc (T_variable t) core
-  
+
 let t_constant ?loc ?core injection parameters : type_expression =
   make_t ?loc (T_constant {language=Stage_common.Backends.michelson; injection = Ligo_string.verbatim injection ; parameters}) core
 

@@ -156,6 +156,7 @@ let peephole_type : unit -> type_expr -> (unit,'err) result = fun _ t ->
   | TFun    {value=_;region=_} -> ok @@ ()
   | TPar    {value=_;region=_} -> ok @@ ()
   | TVar    {value=_;region=_} -> ok @@ ()
+  | TModA   {value=_;region=_} -> ok @@ ()
   | TWild   _                  -> ok @@ ()
   | TString {value=_;region=_} -> ok @@ ()
 
@@ -176,6 +177,7 @@ let peephole_expression : unit -> expr -> (unit,'err) result = fun () e ->
   | ERecord  {value=_;region=_} -> ok @@ ()
   | EProj    {value=_;region=_} -> ok @@ ()
   | EUpdate  {value=_;region=_} -> ok @@ ()
+  | EModA   {value=_;region=_} -> ok @@ ()
   | EVar     {value=_;region=_} -> ok @@ ()
   | ECall    {value=_;region=_} -> ok @@ ()
   | EBytes   {value=_;region=_} -> ok @@ ()

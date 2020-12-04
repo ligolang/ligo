@@ -45,6 +45,7 @@ let repair_mutable_variable_in_matching (match_body : O.expression) (element_nam
       | E_constructor _ | E_record _| E_accessor _|E_update _
       | E_ascription _  | E_sequence _ | E_tuple _
       | E_map _ | E_big_map _ |E_list _ | E_set _
+      | E_module_accessor _
        -> ok (true, (decl_var, free_var),ass_exp)
     )
       (element_names,[])
@@ -92,6 +93,7 @@ and repair_mutable_variable_in_loops (for_body : O.expression) (element_names : 
       | E_constructor _ | E_record _| E_accessor _| E_update _
       | E_ascription _  | E_sequence _ | E_tuple _
       | E_map _ | E_big_map _ |E_list _ | E_set _
+      | E_module_accessor _
        -> ok (true, (decl_var, free_var),ass_exp)
     )
       (element_names,[])
@@ -154,6 +156,9 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression,Errors
     | I.T_app c ->
       let%bind c = type_app self c in
       return @@ T_app c
+    | I.T_module_accessor ma ->
+      let%bind ma = module_access self ma in
+      return @@ O.T_module_accessor ma
     | I.T_annoted (ty, _) -> self ty
 
 let rec compile_expression : I.expression -> (O.expression , _) result =
@@ -232,6 +237,9 @@ and compile_expression' : I.expression -> (O.expression option -> O.expression, 
     | I.E_ascription ascr ->
       let%bind ascr = ascription self self_type ascr in
       return @@ O.E_ascription ascr
+    | I.E_module_accessor ma ->
+      let%bind ma = module_access self ma in
+      return @@ O.E_module_accessor ma
     | I.E_cond {condition;then_clause;else_clause} ->
       let%bind condition    = self condition in
       let%bind then_clause' = self then_clause in

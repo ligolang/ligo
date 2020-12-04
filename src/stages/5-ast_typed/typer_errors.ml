@@ -13,6 +13,7 @@ type typer_error = [
   | `Typer_missing_funarg_annotation of Ast_typed_self_reference.expression_variable
   | `Typer_michelson_comb_no_record of Location.t
   | `Typer_michelson_comb_no_variant of Location.t
+  | `Typer_unbound_module of Environment.t * string * Location.t
   | `Typer_unbound_type_variable of Ast_typed_self_reference.Environment.t * Ast_typed_self_reference.type_variable * Location.t
   | `Typer_unbound_variable of Ast_typed_self_reference.Environment.t * Ast_typed_self_reference.expression_variable * Location.t
   | `Typer_match_missing_case of Ast_core.label list * Ast_core.label list * Location.t
@@ -85,6 +86,7 @@ let variant_redefined_error (loc:Location.t) = `Typer_variant_redefined_error lo
 let record_redefined_error (loc:Location.t) = `Typer_record_redefined_error loc
 let michelson_comb_no_record (loc:Location.t) = `Typer_michelson_comb_no_record loc
 let michelson_comb_no_variant (loc:Location.t) = `Typer_michelson_comb_no_variant loc
+let unbound_module        (e:Environment.t) (name:string) (loc:Location.t) = `Typer_unbound_module (e,name,loc)
 let unbound_type_variable (e:Ast_typed_self_reference.Environment.t) (tv:Ast_typed_self_reference.type_variable) (loc:Location.t) = `Typer_unbound_type_variable (e,tv,loc)
 let unbound_variable (e:Ast_typed_self_reference.Environment.t) (v:Ast_typed_self_reference.expression_variable) (loc:Location.t) = `Typer_unbound_variable (e,v,loc)
 let match_missing_case (m:Ast_core.label list) (v:Ast_core.label list) (loc:Location.t) = `Typer_match_missing_case (m, v, loc)
@@ -182,6 +184,11 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@.Invalid usage of type \"michelson_or\".@.The \"michelson_or\" type expects a variant type as argument. @]"
         Snippet.pp loc
+    | `Typer_unbound_module (_env,name,loc) ->
+      Format.fprintf f
+        "@[<hv>%a@.Module \"%s\" not found. @]"
+        Snippet.pp loc
+        name
     | `Typer_unbound_type_variable (_env,tv,loc) ->
       Format.fprintf f
         "@[<hv>%a@.Type \"%a\" not found. @]"
@@ -551,6 +558,17 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     let content = `Assoc [
       ("message", message);
       ("location", `String loc)
+    ] in
+    json_error ~stage ~content
+  | `Typer_unbound_module (env,value,loc) ->
+    let message = `String "unbound module" in
+    let loc = Format.asprintf "%a" Location.pp loc in
+    let env = Format.asprintf "%a" Environment.PP.environment env in
+    let content = `Assoc [
+      ("message", message);
+      ("location", `String loc);
+      ("value", `String value);
+      ("env", `String env);
     ] in
     json_error ~stage ~content
   | `Typer_unbound_type_variable (env,tv,loc) ->
@@ -1166,8 +1184,8 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     ] in
     json_error ~stage ~content
   | `Typer_constant_tag_number_of_arguments (loc, opa, opb, lena, lenb) ->
-    let message = `String "different number of arguments to type constructors.\ 
-      Expected these two n-ary type constructors to be the same, but they have different number\ 
+    let message = `String "different number of arguments to type constructors.\
+      Expected these two n-ary type constructors to be the same, but they have different number\
       of arguments" in
     let a = `String (Format.asprintf "%a" Ast_typed_self_reference.PP.constant_tag opa) in
     let b = `String (Format.asprintf "%a" Ast_typed_self_reference.PP.constant_tag opb) in

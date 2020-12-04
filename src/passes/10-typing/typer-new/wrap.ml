@@ -21,6 +21,8 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
     p_row C_record @@ T.LMap.map type_expression_to_type_value tmap
   | T_arrow {type1;type2} ->
     p_constant C_arrow @@ List.map type_expression_to_type_value [ type1 ; type2 ]
+  | T_module_accessor {module_name=_; element} ->
+    type_expression_to_type_value element
   | T_constant {language=_;injection;parameters} -> (
     let open Stage_common.Constant in
     let (csttag, args) = Option.unopt_exn @@ (* This will be removed later *)

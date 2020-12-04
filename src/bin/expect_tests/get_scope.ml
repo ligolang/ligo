@@ -177,7 +177,7 @@ Type definitions: |} ] ;
   [%expect{|
     Scopes:
     [ a#1 b#4 g#5 myrec#0 ] in file "../../test/contracts/get_scope_tests/records.mligo", line 16, characters 40-41
-    [ a#1 b#4 g#5 myrec#0 ] in file "../../test/contracts/get_scope_tests/records.mligo", line 16, characters 32-37
+    [ a#1 b#4 g#5 myrec#0 ] in file "../../test/contracts/get_scope_tests/records.mligo", line 16, characters 32-33
     [ a#1 b#4 g#5 myrec#0 ] in file "../../test/contracts/get_scope_tests/records.mligo", line 16, characters 28-29
     [ a#1 b#4 myrec#0 ] in file "../../test/contracts/get_scope_tests/records.mligo", line 16, characters 15-41
     [ a#1 b#4 myrec#0 ] in file "../../test/contracts/get_scope_tests/records.mligo", line 16, characters 3-4
@@ -278,9 +278,9 @@ Type definitions: |} ] ;
     [%expect{|
       Scopes:
       [ a#3 c#1 foo_record#0 j#4 ] in file "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 14, characters 2-3
-      [ a#3 c#1 foo_record#0 ] in file "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 13, characters 10-15
+      [ a#3 c#1 foo_record#0 ] in file "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 13, characters 10-11
       [ c#1 foo_record#0 i#2 ] in file "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 10, characters 2-3
-      [ c#1 foo_record#0 ] in file "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 9, characters 10-15
+      [ c#1 foo_record#0 ] in file "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 9, characters 10-11
       [ foo_record#0 ] in file "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 4, characters 8-9
       [ foo_record#0 ] in file "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 5, characters 8-9
 
@@ -296,7 +296,7 @@ Type definitions: |} ] ;
     run_ligo_good [ "get-scope" ; gs "nominal_types.mligo" ; "--format=dev" ; "--with-types" ] ;
     [%expect{|
       Scopes:
-      [ a#2 b#3 c#4 foo_record#1 foo_variant#0 p#5 ] in file "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 42-47
+      [ a#2 b#3 c#4 foo_record#1 foo_variant#0 p#5 ] in file "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 42-43
       [ a#2 b#3 foo_record#1 foo_variant#0 ] in file "../../test/contracts/get_scope_tests/nominal_types.mligo", line 9, characters 8-9
       [ a#2 b#3 foo_record#1 foo_variant#0 ] in file "../../test/contracts/get_scope_tests/nominal_types.mligo", line 10, characters 8-9
       [ a#2 foo_record#1 foo_variant#0 ] in file "../../test/contracts/get_scope_tests/nominal_types.mligo", line 6, characters 12-14

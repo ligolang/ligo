@@ -6,6 +6,7 @@ let stage = "abstracter"
 
 type abs_error = [
   | `Concrete_pascaligo_unknown_predefined_type of Raw.constr
+  | `Concrete_pascaligo_unknown_constant of string * Location.t
   | `Concrete_pascaligo_unsupported_pattern_type of Raw.pattern
   | `Concrete_pascaligo_unsupported_string_singleton of Raw.type_expr
   | `Concrete_pascaligo_unsupported_deep_list_pattern of Raw.pattern
@@ -17,6 +18,7 @@ type abs_error = [
   ]
 
 let unknown_predefined_type name = `Concrete_pascaligo_unknown_predefined_type name
+let unknown_constant s loc = `Concrete_pascaligo_unknown_constant (s,loc)
 let untyped_recursive_fun loc = `Concrete_pascaligo_recursive_fun loc
 let unsupported_pattern_type pl = `Concrete_pascaligo_unsupported_pattern_type pl
 let unsupported_string_singleton te = `Concrete_pascaligo_unsupported_string_singleton te
@@ -37,6 +39,10 @@ let error_ppformat : display_format:string display_format ->
         "@[<hv>%a@.Unknown type \"%s\". @]"
         Snippet.pp_lift type_name.Region.region
         type_name.Region.value
+    | `Concrete_pascaligo_unknown_constant (s,loc) ->
+      Format.fprintf f
+      "@[<hv>%a@.Unknown constant: %s"
+        Snippet.pp loc s
     | `Concrete_pascaligo_unsupported_pattern_type pl ->
       Format.fprintf f
         "@[<hv>%a@.Invalid case pattern.
@@ -99,6 +105,13 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
       ("message", message );
       ("location", `String loc);
       ("type", t ) ] in
+    json_error ~stage ~content
+  | `Concrete_pascaligo_unknown_constant (s,loc) ->
+    let message = `String ("Unknow constant: " ^ s) in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);
+    ] in
     json_error ~stage ~content
   | `Concrete_pascaligo_recursive_fun loc ->
     let message = `String "Untyped recursive functions are not supported yet" in

@@ -113,6 +113,10 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
     return @@ CST.TApp (wrap (type_operator,wrap lst))
   | T_annoted _annot ->
     failwith "let's work on it later"
+  | T_module_accessor {module_name;element} ->
+    let module_name = wrap module_name in
+    let%bind field  = decompile_type_expr element in
+    return @@ CST.TModA (wrap CST.{module_name;selector=ghost;field})
 
 let get_e_variable : AST.expression -> _ result = fun expr ->
   match expr.expression_content with
@@ -358,6 +362,10 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     let%bind expr = decompile_expression anno_expr in
     let%bind ty   = decompile_type_expr type_annotation in
     return_expr_with_par @@ CST.EAnnot (wrap @@ (expr,ghost,ty))
+  | E_module_accessor {module_name;element} ->
+    let module_name = wrap module_name in
+    let%bind field  = decompile_expression element in
+    return_expr @@ CST.EModA (wrap CST.{module_name;selector=ghost;field})
   | E_cond {condition;then_clause;else_clause} ->
     let%bind test  = decompile_expression condition in
     let%bind ifso  = decompile_expression then_clause in

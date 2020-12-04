@@ -162,6 +162,7 @@ and print_type_expr state = function
 | TVar    type_var    -> print_var         state type_var
 | TWild   wild        -> print_token state wild " "
 | TString str         -> print_string      state str
+| TModA   ma          -> print_module_access print_type_expr state ma
 
 and print_type_annot state (colon, type_expr) =
   print_token     state colon ":";
@@ -477,6 +478,7 @@ and print_expr state = function
 | ERecord  e -> print_record_expr state e
 | EUpdate  e -> print_update_expr state e
 | EProj    e -> print_projection state e
+| EModA   ma -> print_module_access print_expr state ma
 | EMap     e -> print_map_expr state e
 | EVar     v -> print_var state v
 | ECall    e -> print_fun_call state e
@@ -669,6 +671,13 @@ and print_projection state {value; _} =
   print_var        state struct_name;
   print_token      state selector ".";
   print_field_path state field_path
+
+and print_module_access : type a.(state -> a -> unit ) -> state -> a module_access reg -> unit =
+fun f state {value; _} ->
+  let {module_name; selector; field} = value in
+  print_var     state module_name;
+  print_token   state selector ".";
+  f             state field;
 
 and print_field_path state sequence =
   print_nsepseq state "." print_selection sequence
@@ -1031,6 +1040,9 @@ and pp_type_expr state = function
 | TWild wild ->
     pp_node  state "TWild";
     pp_loc_node state "TWild" wild
+| TModA {value; region} ->
+    pp_loc_node state "TModA" region;
+    pp_module_access pp_type_expr state value
 
 and pp_sum_type state {variants; attributes; _} =
   let variants = Utils.nsepseq_to_list variants in
@@ -1391,6 +1403,11 @@ and pp_projection state proj =
   pp_ident (state#pad (1+len) 0) proj.struct_name;
   List.iteri (apply len) selections
 
+and pp_module_access : type a. (state -> a -> unit ) -> state -> a module_access -> unit
+= fun f state ma ->
+  pp_ident (state#pad 2 0) ma.module_name;
+  f (state#pad 2 1) ma.field
+
 and pp_update state update =
   pp_path (state#pad 2 0) update.record;
   pp_ne_injection pp_field_path_assignment state update.updates.value
@@ -1586,6 +1603,9 @@ and pp_expr state = function
 | EProj {value; region} ->
     pp_loc_node state "EProj" region;
     pp_projection state value
+| EModA {value; region} ->
+    pp_loc_node state "EModA" region;
+    pp_module_access pp_expr state value
 | EUpdate {value; region} ->
     pp_loc_node state "EUpdate" region;
     pp_update state value

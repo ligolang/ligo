@@ -38,6 +38,7 @@ module Free_variables = struct
     | E_recursive {fun_name;lambda;_} ->
       let b' = union (singleton fun_name) b in
       expression_content b' @@ E_lambda lambda
+    | E_module_accessor {element;_} -> self element
 
   and lambda : bindings -> lambda -> bindings = fun b l ->
     let b' = union (singleton l.binder) b in
@@ -131,6 +132,9 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   | T_arrow _, _ -> None
   | T_variable x, T_variable y -> let _ = (x = y) in failwith "TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding"
   | T_variable _, _ -> None
+  | T_module_accessor {module_name=mna;element=ea}, T_module_accessor {module_name=mnb;element=eb} when String.equal mna mnb ->
+    assert_type_expression_eq (ea, eb)
+  | T_module_accessor _, _ -> None
 
 let type_expression_eq ab = Option.is_some @@ assert_type_expression_eq ab
 
@@ -187,7 +191,7 @@ let rec assert_value_eq (a, b: (expression*expression)) : unit option =
   | E_constant _, E_constant _ -> None
   | E_constant _, _ -> None
   | E_constructor {constructor=ca;element=a}, E_constructor {constructor=cb;element=b} when ca = cb -> (
-      assert_value_eq (a, b)
+    assert_value_eq (a, b)
   )
   | E_constructor _, E_constructor _ -> None
   | E_constructor _, _ -> None
@@ -203,12 +207,16 @@ let rec assert_value_eq (a, b: (expression*expression)) : unit option =
         Some ()
       else None
     )
+  | E_module_accessor {module_name=mna;element=a}, E_module_accessor {module_name=mnb;element=b} when String.equal mna mnb -> (
+    assert_value_eq (a,b)
+  )
   | E_record _, _
   | (E_literal _, _) | (E_variable _, _) | (E_application _, _)
   | (E_lambda _, _) | (E_let_in _, _) | (E_raw_code _, _) | (E_recursive _, _)
   | (E_type_in _, _)
   | (E_record_accessor _, _) | (E_record_update _,_)
   | (E_matching _, _)
+  | E_module_accessor _, _
   -> None
 
 let merge_annotation (a:type_expression option) (b:type_expression option) assert_eq_fun : type_expression option =

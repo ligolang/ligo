@@ -1128,11 +1128,13 @@ let rebig_map () : (unit, _) result = big_map_ retype_file "./contracts/big_map.
 
 
 let list () : (unit, _) result =
+  Format.printf "Pre_type \n%!";
   let%bind program = type_file "./contracts/list.ligo" in
   let ez lst =
     let lst' = List.map e_int lst in
     e_typed_list lst' (t_int ())
   in
+  Format.printf "Post_type \n%!";
   let%bind () =
     let expected = ez [23 ; 42] in
     expect_eq_evaluate program "fb" expected
@@ -2562,7 +2564,6 @@ let main = test_suite "Integration (End to End)"
     test no "match variant (religo)" match_variant_re ;
     test no "match variant 2 (mligo)" match_matej ;
     test no "match variant 2 (religo)" match_matej_re ;
-    (* test "list matching (mligo)" mligo_list ; *)
     test no "list matching (mligo)" mligo_list ;
     test no "list matching (religo)" religo_list ;
     test no "failwith ligo" failwith_ligo ;
