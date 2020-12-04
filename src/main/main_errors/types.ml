@@ -24,14 +24,17 @@ type all =
  | `Main_preproc of Preproc.Errors.preproc_error
  | `Main_parser of Parser.Errors.parse_error
  | `Main_pretty of Parser.Errors.parse_error
+ | `Main_self_cst_cameligo of Self_cst.Cameligo.Errors.self_cst_cameligo_error
+ | `Main_self_cst_pascaligo of Self_cst.Pascaligo.Errors.self_cst_pascaligo_error
+ | `Main_self_cst_reasonligo of Self_cst.Reasonligo.Errors.self_cst_reasonligo_error
+ | `Main_cit_pascaligo of Tree_abstraction.Pascaligo.Errors.abs_error
+ | `Main_cit_cameligo of Tree_abstraction.Cameligo.Errors.abs_error
+ | `Main_cit_reasonligo of Tree_abstraction.Reasonligo.Errors.abs_error
  | `Main_self_ast_imperative of Self_ast_imperative.Errors.self_ast_imperative_error
  | `Main_purification   of Purification.Errors.purification_error
  | `Main_depurification of Purification.Errors.purification_error
  | `Main_desugaring of Desugaring.Errors.desugaring_error
  | `Main_sugaring   of Desugaring.Errors.desugaring_error
- | `Main_cit_pascaligo of Tree_abstraction.Pascaligo.Errors.abs_error
- | `Main_cit_cameligo of Tree_abstraction.Cameligo.Errors.abs_error
- | `Main_cit_reasonligo of Tree_abstraction.Reasonligo.Errors.abs_error
  | `Main_typer of Typer.Errors.typer_error
  | `Main_interpreter of Interpreter.interpreter_error
  | `Main_self_ast_typed of Self_ast_typed.Errors.self_ast_typed_error

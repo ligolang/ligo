@@ -81,6 +81,9 @@ val bind_map_location :
 val bind_fold_list :
   ('a -> 'b -> ('a, 'd) result) ->
   'a -> 'b list -> ('a, 'd) result
+val bind_fold_ne_list :
+  ('a -> 'b -> ('a, 'd) result) ->
+  'a -> 'b X_list.Ne.t-> ('a, 'd) result
 module TMap :
   functor (X : Map.OrderedType) ->
   sig
@@ -182,6 +185,7 @@ val bind_map_triple :
 val bind_list_cons :
   'a -> ('a list, 'c) result -> ('a list, 'c) result
 val bind_chain : ('a -> ('a, 'b) result) list -> 'a -> ('a, 'b) result
+val bind_chain_acc : ('a -> 'b -> ('a, 'c) result) list -> 'a -> 'b -> ('a, 'c) result
 val bind_chain_ignore_acc :
   ('a -> ('b * 'a, 'c) result) list -> 'a -> ('a, 'c) result
 val generic_try : 'a -> (unit -> 'b) -> ('b, 'a) result

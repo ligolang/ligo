@@ -414,6 +414,10 @@ let bind_fold_list f init lst =
   let aux x y = x >>? fun x -> f x y
   in List.fold_left aux (ok init) lst
 
+let bind_fold_ne_list f init lst =
+  let aux x y = x >>? fun x -> f x y
+  in X_list.Ne.fold_left aux (ok init) lst
+
 module TMap(X : Map.OrderedType) = struct
   module MX = Map.Make(X)
   let bind_fold_Map f init map =
@@ -516,8 +520,15 @@ let rec bind_chain : ('a -> ('a,_) result) list -> 'a -> ('a,_) result =
   match fs with
   | [] -> ok x
   | hd :: tl ->
-    let aux : 'a -> ('a,_) result = fun x -> bind (bind_chain tl) (hd x)
-    in bind aux (ok x)
+    bind (bind_chain tl) (hd x)
+
+let rec bind_chain_acc : ('a -> 'b -> ('a,_) result) list -> 'a -> 'b -> ('a,_) result =
+  fun fs acc x ->
+  match fs with
+  | [] -> ok acc
+  | hd :: tl ->
+    hd acc x >>? fun acc ->
+    bind_chain_acc tl acc x
 
 let rec bind_chain_ignore_acc :
           ('a -> ('b * 'a, _) result) list -> 'a -> ('a,_) result =
@@ -525,10 +536,8 @@ let rec bind_chain_ignore_acc :
   match fs with
   | [] -> ok x
   | hd :: tl ->
-      let aux : 'a -> ('a,_) result = fun x ->
-        hd x >>? fun (_,aa) ->
-        bind (bind_chain_ignore_acc tl) (ok aa) in
-      bind aux (ok x)
+    hd x >>? fun (_,aa) ->
+    bind_chain_ignore_acc tl aa
 
 (* Wraps a call that might trigger an exception in a result. *)
 

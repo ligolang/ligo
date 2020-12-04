@@ -180,6 +180,7 @@ let rec map_expression : 'err exp_mapper -> expression -> (expression, 'err) res
   | E_literal _ | E_variable _ | E_raw_code _ | E_skip as e' -> return e'
 
 and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_expression , _) result = fun f te ->
+  let module SSet = Set.Make (String) in
   let self = map_type_expression f in
   let%bind te' = f te in
   let return type_content = ok { type_content; location=te.location } in
