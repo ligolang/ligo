@@ -23,7 +23,7 @@ import Test.Capabilities.Util (contractsDir)
 import Test.FixedExpectations
   (HasCallStack, expectationFailure, shouldBe, shouldContain, shouldMatchList)
 import Test.Util (readContractWithScopes)
-import Test.Util.LigoEnv ({- instance HasLigoClient IO -})
+import Test.Util.LigoEnv ()
 
 -- | Represents an invariant relation between references and a
 -- definition of some LIGO entity (a variable, a type etc).
@@ -195,7 +195,6 @@ invariants =
     , driRefs = [interval 2 30 33]
     }
 
-
   -- * Does not pass because we have troubles with recursive functions
   -- * in ReasonLIGO: https://issues.serokell.io/issue/LIGO-70
   --
@@ -205,6 +204,25 @@ invariants =
   --   , driDef = Just (interval 1 9 12)
   --   , driRefs = [interval 2 29 32]
   --   }
+
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-constructor.ligo"
+    , driDesc = "Increment, type constructor"
+    , driDef = Just (interval 2 3 12)
+    , driRefs = [interval 5 20 29]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-constructor.mligo"
+    , driDesc = "Increment, type constructor"
+    , driDef = Just (interval 2 3 12)
+    , driRefs = [interval 5 18 27]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-constructor.religo"
+    , driDesc = "Increment, type constructor"
+    , driDef = Just (interval 2 5 14)
+    , driRefs = [interval 5 18 27]
+    }
   ]
 
 test_findDefinitionAndGoToReferencesCorrespondence :: HasCallStack => TestTree

@@ -8,7 +8,7 @@ import Data.Text (Text)
 import qualified Language.LSP.Types as J
 
 import AST.Capabilities.Find (CanSearch, findScopedDecl)
-import AST.Scope (ScopedDecl (ScopedDecl, _sdRefs))
+import AST.Scope.ScopedDecl (ScopedDecl (ScopedDecl, _sdRefs))
 import AST.Skeleton (LIGO)
 import Range (Range, toLspRange)
 

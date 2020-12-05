@@ -12,6 +12,7 @@ import qualified Language.LSP.Types as J
 
 import AST.Capabilities.Find
 import AST.Scope
+import AST.Scope.ScopedDecl (ScopedDecl (..))
 import AST.Skeleton
 import Product
 import Range

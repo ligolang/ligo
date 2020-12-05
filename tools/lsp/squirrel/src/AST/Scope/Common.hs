@@ -3,7 +3,6 @@
 module AST.Scope.Common where
 
 import Control.Monad.State
-
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Monoid (First (..))
@@ -16,7 +15,9 @@ import Duplo.Pretty
 import Duplo.Tree hiding (loop)
 
 import AST.Pretty
+import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..))
 import AST.Skeleton
+  (Ctor (..), Name (..), NameDecl (..), RawLigoList, SomeLIGO, Tree', TypeName (..), withNestedLIGO)
 import Cli.Types
 import ParseTree
 import Parser
@@ -32,53 +33,8 @@ instance {-# OVERLAPPABLE #-} Pretty x => Show x where
 type FullEnv = Product ["vars" := Env, "types" := Env]
 type Env     = Map Range [ScopedDecl]
 
-data Category = Variable | Type
+data Level = TermLevel | TypeLevel
   deriving Eq
-
--- | The type/value declaration.
-data ScopedDecl = ScopedDecl
-  { _sdName    :: Text
-  , _sdOrigin  :: Range
-  , _sdBody    :: Maybe Range
-  , _sdType    :: Maybe TypeOrKind
-  , _sdRefs    :: [Range]
-  , _sdDoc     :: [Text]
-  , _sdParams  :: Maybe [Parameter]
-  , _sdDialect :: Lang
-  }
-  deriving Show via PP ScopedDecl
-
-newtype Parameter = Parameter
-  { parPresentation :: Text
-  }
-  deriving stock Show
-  deriving newtype Pretty
-
-data TypeOrKind
-  = IsType (LIGO '[])
-  | IsKind Kind
-  deriving Show via PP TypeOrKind
-
-elimIsTypeOrKind :: (LIGO '[] -> c) -> (Kind -> c) -> TypeOrKind -> c
-elimIsTypeOrKind l r = \case
-  IsType t -> l t
-  IsKind k -> r k
-
-isType :: TypeOrKind -> Bool
-isType = elimIsTypeOrKind (const True) (const False)
-
-isKind :: TypeOrKind -> Bool
-isKind = not . isType
-
-instance Eq ScopedDecl where
-  sd == sd1 = and
-    [ pp (_sdName   sd) == pp (_sdName   sd1)
-    ,     _sdOrigin sd  ==     _sdOrigin sd1
-    ]
-
--- | The kind.
-data Kind = Star
-  deriving Show via PP Kind
 
 instance {-# OVERLAPS #-} Pretty FullEnv where
   pp = block . map aux . Map.toList . mergeFE
@@ -88,20 +44,9 @@ instance {-# OVERLAPS #-} Pretty FullEnv where
 
       mergeFE fe = getTag @"vars" @Env fe Prelude.<> getTag @"types" fe
 
-instance Pretty ScopedDecl where
-  pp (ScopedDecl n o _ t refs doc params _) =
-    sexpr "decl" [pp n, pp o, pp t, pp params, pp refs, pp doc]
-
-instance Pretty TypeOrKind where
-  pp (IsType ty) = pp $ fillInfo ty
-  pp (IsKind k)  = pp k
-
-instance Pretty Kind where
-  pp _ = "TYPE"
-
-instance Pretty Category where
-  pp Variable = "Variable"
-  pp Type     = "Type"
+instance Pretty Level where
+  pp TermLevel = "TermLevel"
+  pp TypeLevel = "TypeLevel"
 
 void' :: Functor f => f a -> f (Product '[])
 void' = fmap $ const Nil
@@ -109,19 +54,19 @@ void' = fmap $ const Nil
 emptyEnv :: FullEnv
 emptyEnv = Tag Map.empty :> Tag Map.empty :> Nil
 
-with :: Category -> FullEnv -> (Env -> Env) -> FullEnv
-with Variable env f = modTag @"vars"  f env
-with Type     env f = modTag @"types" f env
+with :: Level -> FullEnv -> (Env -> Env) -> FullEnv
+with TermLevel env f = modTag @"vars"  f env
+with TypeLevel env f = modTag @"types" f env
 
-ofCategory :: Category -> ScopedDecl -> Bool
-ofCategory Variable ScopedDecl { _sdType = Just (IsKind Star) } = False
-ofCategory Variable _                                           = True
-ofCategory Type     ScopedDecl { _sdType = Just (IsKind Star) } = True
-ofCategory _        _                                           = False
+ofLevel :: Level -> ScopedDecl -> Bool
+ofLevel level decl = case (level, _sdSpec decl) of
+  (TermLevel, ValueSpec{}) -> True
+  (TypeLevel, TypeSpec{}) -> True
+  _ -> False
 
 type Info' =
   [ [ScopedDecl]
-  , Maybe Category
+  , Maybe Level
   , [Text]
   , Range
   , ShowRange
@@ -177,9 +122,9 @@ envAtPoint r (ScopeForest sf ds) = do
   map (ds Map.!) sp
 
 spine :: Range -> ScopeTree -> [Set DeclRef]
-spine r (only -> (i, trees)) = if
-  | leq r (getRange i) -> foldMap (spine r) trees <> [getElem @(Set DeclRef) i]
-  | otherwise -> []
+spine r (only -> (i, trees))
+  | leq r (getRange i) = foldMap (spine r) trees <> [getElem @(Set DeclRef) i]
+  | otherwise = []
 
 addLocalScopes
   :: forall impl m. HasScopeForest impl m
@@ -197,13 +142,17 @@ addLocalScopes src tree = do
     descent @(Product Info) @(Product Info') @RawLigoList @RawLigoList defaultHandler
     [ Descent \(i, Name t) -> do
         let env = envAtPoint (getRange i) forest
-        return (env :> Just Variable :> i, Name t)
+        return (env :> Just TermLevel :> i, Name t)
 
     , Descent \(i, NameDecl t) -> do
         let env = envAtPoint (getRange i) forest
-        return (env :> Just Variable :> i, NameDecl t)
+        return (env :> Just TermLevel :> i, NameDecl t)
+
+    , Descent \(i, Ctor t) -> do
+        let env = envAtPoint (getRange i) forest
+        return (env :> Just TermLevel :> i, Ctor t)
 
     , Descent \(i, TypeName t) -> do
         let env = envAtPoint (getRange i) forest
-        return (env :> Just Type :> i, TypeName t)
+        return (env :> Just TypeLevel :> i, TypeName t)
     ]

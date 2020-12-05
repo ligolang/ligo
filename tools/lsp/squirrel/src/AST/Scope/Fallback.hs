@@ -1,15 +1,16 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings, RecordWildCards #-}
 
 module AST.Scope.Fallback where
 
 import Control.Arrow ((&&&))
 import Control.Lens ((%~), (&))
 import Control.Monad.Catch.Pure
-import Control.Monad.Reader (Reader, ask, runReader)
+import Control.Monad.Reader (ask, runReader)
 import Control.Monad.State
 import Control.Monad.Writer (Writer, WriterT, execWriterT, runWriter, tell)
 
 import Data.Foldable (for_, toList)
+import Data.Functor ((<&>))
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Maybe (listToMaybe)
@@ -20,9 +21,13 @@ import Duplo.Lattice
 import Duplo.Pretty
 import Duplo.Tree hiding (loop)
 
-import AST.Pretty (TotalLPP, docToText, lppDialect)
+import AST.Pretty (PPableLIGO, TotalLPP, docToText, lppDialect)
 import AST.Scope.Common
-import AST.Skeleton
+import AST.Scope.ScopedDecl
+  (DeclarationSpecifics (..), Parameter (..), ScopedDecl (..), TypeDeclSpecifics (..),
+  ValueDeclSpecifics (..), fillTypeIntoCon)
+import AST.Scope.ScopedDecl.Parser (parseType)
+import AST.Skeleton hiding (Type)
 import Cli.Types
 import Parser
 import Product
@@ -34,16 +39,15 @@ data Fallback
 instance HasLigoClient m => HasScopeForest Fallback m where
   scopeForest _ (SomeLIGO dialect ligo) = pure (runReader (getEnv ligo) dialect)
 
-type ScopeM = Reader Lang
-
 addReferences :: LIGO Info -> ScopeForest -> ScopeForest
 addReferences ligo = execState $ loopM_ addRef ligo
   where
     addRef :: LIGO Info -> State ScopeForest ()
     addRef = \case
-      (match -> Just (r, Name     n)) -> addThisRef Variable (getRange r) n
-      (match -> Just (r, NameDecl n)) -> addThisRef Variable (getRange r) n
-      (match -> Just (r, TypeName n)) -> addThisRef Type     (getRange r) n
+      (match -> Just (r, Name     n)) -> addThisRef TermLevel (getRange r) n
+      (match -> Just (r, NameDecl n)) -> addThisRef TermLevel (getRange r) n
+      (match -> Just (r, Ctor     n)) -> addThisRef TermLevel (getRange r) n
+      (match -> Just (r, TypeName n)) -> addThisRef TypeLevel (getRange r) n
       _                               -> return ()
 
     addThisRef cat' r n = do
@@ -55,13 +59,13 @@ addReferences ligo = execState $ loopM_ addRef ligo
             return sf
 
     walkScope _    _ _ [] = return ()
-    walkScope sort r n (declref : rest) = do
+    walkScope level r n (declref : rest) = do
       decl <- gets (Map.! declref)
-      if ofCategory sort decl && (n == _sdName decl || r == _sdOrigin decl)
+      if ofLevel level decl && (n == _sdName decl || r == _sdOrigin decl)
       then do
         modify $ Map.adjust (addRefToDecl r) declref
       else do
-        walkScope sort r n rest
+        walkScope level r n rest
 
     addRefToDecl r sd = sd { _sdRefs = r : _sdRefs sd }
 
@@ -114,18 +118,19 @@ unLetRec = loop go
       (match -> Just (r, expr)) -> do
         case expr of
           Let (match -> Just (_, Seq decls)) body -> do
-            foldr reLet body decls
+            foldr joinWithLet body decls
           _ -> make (r, expr)
 
       -- TODO: somehow append Unit to the end
       (match -> Just (r, RawContract decls)) -> do
-        case reverse decls of
-          lst : (reverse -> ini) -> do
-            foldr reLet lst ini
-          [] -> make (r, RawContract [])
+        case unconsFromEnd decls of
+          Nothing -> make (r, RawContract [])
+          Just (initDecls, lastDecl) -> foldr joinWithLet lastDecl initDecls
 
       it -> it
 
+-- | Turn all 'Seq'uences of nodes into a tree of 'Let's, so that each
+-- subsequent node turned out to be in the scope of the previous one.
 unSeq
   :: ( Contains  Range     xs
      , Contains [Text]     xs
@@ -138,23 +143,30 @@ unSeq = loop go
   where
     go = \case
       (match -> Just (r, Seq decls)) -> do
-        case reverse decls of
-          lst : (reverse -> ini) -> do
-            foldr reLet lst ini
-          [] -> make (r, Seq [])
+        case unconsFromEnd decls of
+          Nothing -> make (r, Seq [])
+          Just (initDecls, lastDecl) -> foldr joinWithLet lastDecl initDecls
 
       it -> it
 
-reLet
+-- | Split into list into a pair of all but the last elements, and the last
+-- element.
+--
+-- @unconsFromEnd [1, 2, 3] = Just ([1, 2], 3)@
+unconsFromEnd :: [a] -> Maybe ([a], a)
+unconsFromEnd [] = Nothing
+unconsFromEnd xs = Just (init xs, last xs) -- doubt we should care about two passes
+
+-- | Combine two tree nodes with 'Let', so that the second node turns out to be
+-- in the scope of the first node.
+joinWithLet
   :: ( Contains Range xs
      , Apply Functor fs
      , Eq (Product xs)
      , Element Expr fs
      )
-  => Cofree (Sum fs) (Product xs)
-  -> Cofree (Sum fs) (Product xs)
-  -> Tree fs (Product xs)
-reLet decl body = make (r', Let decl body)
+  => Tree' fs xs -> Tree' fs xs -> Tree' fs xs
+joinWithLet decl body = make (r', Let decl body)
   where
     r' = putElem (getRange decl `merged` getRange body)
         $ extract body
@@ -193,13 +205,13 @@ assignDecls = loopM go . fmap (\r -> [] :> False :> getRange r :> r)
 
       (match -> Just (r, BFunction True n params ty b)) -> do
         imms <- foldMapM getImmediateDecls params
-        fDecl <- functionScopedDecl (getElem r) n params ty b
+        fDecl <- functionScopedDecl (getElem r) n params ty (Just b)
         let r' = putElem True $ modElem ((fDecl : imms) <>) r
         pure (make (r', BFunction True n params ty b))
 
       (match -> Just (r, BFunction False n params ty b)) -> do
         imms <- foldMapM getImmediateDecls params
-        fDecl <- functionScopedDecl (getElem r) n params ty b
+        fDecl <- functionScopedDecl (getElem r) n params ty (Just b)
         let r' = putElem True (modElem (fDecl :) r)
         let b' = b & _extract %~ (putElem True . modElem (imms <>))
         pure (make (r', BFunction False n params ty b'))
@@ -219,82 +231,76 @@ assignDecls = loopM go . fmap (\r -> [] :> False :> getRange r :> r)
 
 functionScopedDecl
   :: ( TotalLPP param
-     , HasRange body
-     , Eq (Product nameInfo)
-     , Modifies (Product nameInfo)
-     , Contains Range nameInfo
-     , Contains ShowRange nameInfo
+     , Eq (Product info)
+     , PPableLIGO info
      )
-  => [Text]
-  -> LIGO nameInfo
-  -> [param]
-  -> Maybe (LIGO typ)
-  -> body
+  => [Text] -- ^ documentation comments
+  -> LIGO info -- ^ name node
+  -> [param] -- ^ parameter nodes
+  -> Maybe (LIGO info) -- ^ type node
+  -> Maybe (LIGO info) -- ^ function body node, optional for type constructors
   -> ScopeM ScopedDecl
 functionScopedDecl docs nameNode paramNodes typ body = do
   dialect <- ask
-  let params = map (Parameter . docToText . lppDialect dialect) paramNodes
+  let _vdsInitRange = getRange <$> body
+      _vdsParams = pure (params dialect)
+      _vdsType = parseType <$> typ
   pure $ ScopedDecl
     { _sdName = name
     , _sdOrigin = origin
-    , _sdBody = Just $ getRange body
-    , _sdType = IsType . void' <$> typ
     , _sdRefs = []
     , _sdDoc = docs
-    , _sdParams = Just params
     , _sdDialect = dialect
+    , _sdSpec = ValueSpec ValueDeclSpecifics{ .. }
     }
   where
     (origin, name) = getName nameNode
+    params dialect = map (Parameter . docToText . lppDialect dialect) paramNodes
 
 valueScopedDecl
-  :: ( HasRange body
-     , Eq (Product nameInfo)
-     , Modifies (Product nameInfo)
-     , Contains Range nameInfo
-     , Contains ShowRange nameInfo
+  :: ( Eq (Product info)
+     , PPableLIGO info
      )
-  => [Text]
-  -> LIGO nameInfo
-  -> Maybe (LIGO typ)
-  -> Maybe body
+  => [Text] -- ^ documentation comments
+  -> LIGO info -- ^ name node
+  -> Maybe (LIGO info) -- ^ type node
+  -> Maybe (LIGO info) -- ^ initializer node
   -> ScopeM ScopedDecl
 valueScopedDecl docs nameNode typ body = do
   dialect <- ask
   pure $ ScopedDecl
     { _sdName = name
     , _sdOrigin = origin
-    , _sdBody = getRange <$> body
-    , _sdType = IsType . void' <$> typ
     , _sdRefs = []
     , _sdDoc = docs
-    , _sdParams = Nothing
     , _sdDialect = dialect
+    , _sdSpec = ValueSpec ValueDeclSpecifics{ .. }
     }
   where
     (origin, name) = getName nameNode
+    _vdsInitRange = getRange <$> body
+    _vdsParams = Nothing
+    _vdsType = parseType <$> typ
 
 typeScopedDecl
-  :: ( HasRange body
-     , Eq (Product nameInfo)
-     , Modifies (Product nameInfo)
-     , Contains Range nameInfo
-     , Contains ShowRange nameInfo)
-  => [Text] -> LIGO nameInfo -> body -> ScopeM ScopedDecl
+  :: ( Eq (Product info)
+     , PPableLIGO info
+     )
+  => [Text] -> LIGO info -> LIGO info -> ScopeM ScopedDecl
 typeScopedDecl docs nameNode body = do
   dialect <- ask
   pure $ ScopedDecl
     { _sdName = name
     , _sdOrigin = origin
-    , _sdBody = Just (getRange body)
-    , _sdType = kind
     , _sdRefs = []
     , _sdDoc = docs
-    , _sdParams = Nothing
     , _sdDialect = dialect
+    , _sdSpec = TypeSpec TypeDeclSpecifics{ .. }
     }
   where
     (origin, name) = getTypeName nameNode
+    _tdsInitRange = getRange body
+    _tdsInit = parseType body
 
 -- | Wraps a value into a list. Like 'pure' but perhaps with a more clear intent.
 singleton :: a -> [a]
@@ -303,15 +309,8 @@ singleton x = [x]
 extractScopeTree
   :: LIGO ([ScopedDecl] : Bool : Range : xs)
   -> Tree' '[[]] '[[ScopedDecl], Bool, Range]
-extractScopeTree = go
-  where
-    go
-      :: LIGO ([ScopedDecl] : Bool : Range : xs)
-      -> Tree' '[[]] '[[ScopedDecl], Bool, Range]
-    go ((decls :> visible :> r :> _) :< fs) = do
-      let fs'  = toList fs
-      let fs'' = map go fs'
-      make (decls :> visible :> r :> Nil, fs'')
+extractScopeTree ((decls :> visible :> r :> _) :< fs)
+  = make (decls :> visible :> r :> Nil, map extractScopeTree (toList fs))
 
 -- 'Bool' in the node list denotes whether this part of a tree is a scope
 compressScopeTree
@@ -340,10 +339,10 @@ extractScopeForest = uncurry ScopeForest . runWriter . mapM go
   where
     go
       :: Tree' '[[]] '[[ScopedDecl], Range]
-      -> Writer (Map DeclRef ScopedDecl) (Tree' '[[]] ScopeInfo)
+      -> Writer (Map DeclRef ScopedDecl) ScopeTree
     go (only -> (decls :> r :> Nil, ts)) = do
-      let uName sd  = DeclRef (ppToText (_sdName sd)) (_sdOrigin sd)
-      let extracted = Map.fromList $ map (uName &&& id) decls
+      let mkDeclRef sd = DeclRef (ppToText (_sdName sd)) (_sdOrigin sd)
+      let extracted = Map.fromList $ map (mkDeclRef &&& id) decls
       tell extracted
       let refs    = Map.keysSet extracted
       let r'      = refs :> r :> Nil
@@ -353,24 +352,21 @@ extractScopeForest = uncurry ScopeForest . runWriter . mapM go
     go _ = error "extractScopeForest: impossible"
 
 getImmediateDecls
-  :: ( Contains Range     xs
-     , Contains [Text]     xs
-     , Contains ShowRange xs
-     , Eq (Product xs)
+  :: ( PPableLIGO info
+     , Eq (Product info)
      )
-  => LIGO xs
-  -> ScopeM [ScopedDecl]
+  => LIGO info -> ScopeM [ScopedDecl]
 getImmediateDecls = \case
   (match -> Just (r, pat)) -> do
     case pat of
       IsVar v ->
-        singleton <$> valueScopedDecl (getElem r) v Nothing (Nothing @Range)
+        singleton <$> valueScopedDecl (getElem r) v Nothing Nothing
 
       IsTuple    xs   -> foldMapM getImmediateDecls xs
       IsList     xs   -> foldMapM getImmediateDecls xs
       IsSpread   s    -> getImmediateDecls s
       IsWildcard      -> pure []
-      IsAnnot    x _  -> getImmediateDecls x
+      IsAnnot    x t  -> (<>) <$> getImmediateDecls x <*> getImmediateDecls t
       IsCons     h t  -> (<>) <$> getImmediateDecls h <*> getImmediateDecls t
       IsConstant _    -> pure []
       IsConstr   _ xs -> foldMapM getImmediateDecls xs
@@ -378,33 +374,53 @@ getImmediateDecls = \case
   (match -> Just (r, pat)) -> do
     case pat of
       BFunction _ f params t b ->
-        singleton <$> functionScopedDecl (getElem r) f params t b
+        singleton <$> functionScopedDecl (getElem r) f params t (Just b)
 
       BVar v t b -> singleton <$> valueScopedDecl (getElem r) v t b
 
       BConst name typ (Just (layer -> Just (Lambda params _ body))) ->
-        singleton <$> functionScopedDecl (getElem r) name params typ body
+        singleton <$> functionScopedDecl (getElem r) name params typ (Just body)
 
       BConst c t b -> singleton <$> valueScopedDecl (getElem r) c t b
 
-      BParameter n t
-        -> singleton <$> valueScopedDecl (getElem r) n (Just t) (Nothing @Range)
+      BParameter n t ->
+        singleton <$> valueScopedDecl (getElem r) n (Just t) Nothing
 
-      BTypeDecl t b -> singleton <$> typeScopedDecl (getElem r) t b
+      BTypeDecl t b -> do
+        typeDecl <- typeScopedDecl (getElem r) t b
+        structureDecls <- getImmediateDecls b
+                      <&> map (fillTypeIntoCon typeDecl)
+        -- ^ Gather all other declarations from the depths of ast, such as type
+        -- sum constructors, nested types etc. Then, fill in missing types of
+        -- values. It doesn't seem possible that these values will be anything
+        -- but directly related to the type constructors. There are two reasons
+        -- for that. One is that deeper nested constructors will have their
+        -- types already filled by types corresponding to them. Two is that due
+        -- to grammar limitations there will be no other values besides
+        -- constructors.
+        pure (typeDecl : structureDecls)
 
       BAttribute _ -> pure []
       BInclude _ -> pure []
 
-  _ -> pure []
+  (match -> Just (_, pat)) -> case pat of
+    TRecord typeFields -> foldMapM getImmediateDecls typeFields
+    TProduct typs -> foldMapM getImmediateDecls typs
+    TSum variants -> foldMapM getImmediateDecls variants
+    _ -> pure []
+    -- there are most probably others, add them as problems arise
 
-kind :: Maybe TypeOrKind
-kind = Just $ IsKind Star
+  (match -> Just (r, Variant name paramTyp)) -> do
+    constructorDecl <- functionScopedDecl (getElem r) name [paramTyp] Nothing Nothing
+    -- ^ type is Nothing at this stage, but it will be substituted with the
+    -- (hopefully) correct type higher in the tree (see 'BTypeDecl' branch).
+    nestedDecls <- maybe (pure []) getImmediateDecls paramTyp
+    pure (constructorDecl : nestedDecls)
+  _ -> pure []
 
 select
   :: ( Lattice  (Product info)
-     , Contains  ShowRange info
-     , Contains  Range info
-     , Modifies (Product info)
+     , PPableLIGO info
      , Eq (Product info)
      )
   => Text
@@ -423,9 +439,7 @@ select what handlers t
 
 getName
   :: ( Lattice  (Product info)
-     , Contains  ShowRange info
-     , Contains  Range info
-     , Modifies (Product info)
+     , PPableLIGO info
      , Eq (Product info)
      )
   => LIGO info
@@ -433,13 +447,13 @@ getName
 getName = select "name"
   [ Visit \(r, NameDecl t) -> do
       tell [make (r, Name t)]
+  , Visit \(r, Ctor t) -> do
+      tell [make (r, Name t)]
   ]
 
 getTypeName
   :: ( Lattice  (Product info)
-     , Contains  ShowRange info
-     , Contains  Range info
-     , Modifies (Product info)
+     , PPableLIGO info
      , Eq (Product info)
      )
   => LIGO info

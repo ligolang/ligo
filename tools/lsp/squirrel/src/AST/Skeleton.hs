@@ -6,6 +6,7 @@
 module AST.Skeleton where
 
 import Control.Lens.Lens (Lens, lens)
+import Control.Monad.Reader (Reader)
 import Data.Text (Text)
 
 import Duplo.Tree
@@ -24,6 +25,8 @@ nestedLIGO = lens getLIGO setLIGO
 withNestedLIGO
   :: Functor f => SomeLIGO xs -> (LIGO xs -> f (LIGO xs')) -> f (SomeLIGO xs')
 withNestedLIGO = flip nestedLIGO
+
+type ScopeM = Reader Lang
 
 -- | The AST for Pascali... wait. It is, em, universal one.
 --
@@ -48,6 +51,7 @@ data Lang
   = Pascal
   | Caml
   | Reason
+  deriving stock Show
 
 data Contract it
   = ContractEnd

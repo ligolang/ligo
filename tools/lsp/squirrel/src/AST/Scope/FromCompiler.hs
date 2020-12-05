@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards #-}
 
 module AST.Scope.FromCompiler where
 
@@ -11,6 +12,8 @@ import Duplo.Lattice
 import Duplo.Tree (make, only)
 
 import AST.Scope.Common
+import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..), ValueDeclSpecifics (..))
+import AST.Scope.ScopedDecl.Parser (parseType)
 import AST.Skeleton (Lang, SomeLIGO (..))
 import Cli
 import Product
@@ -45,17 +48,13 @@ fromCompiler dialect (LigoDefinitions decls scopes) =
     fromLigoDecl (LigoDefinitionScope n orig bodyR ty _) = do
       let r = fromLigoRangeOrDef orig
       ( DeclRef n r
-       , ScopedDecl
-           n r (mbFromLigoRange bodyR)
-           (fromLigoTy <$> ty) [] []
-           Nothing dialect -- TODO LIGO-90
+       , ScopedDecl n r [] [] dialect (ValueSpec vspec) -- TODO LIGO-90
        )
-
-    -- I cannot comprehend what does the stuff in Cli.Json means, neither
-    -- can I run it.
-    --
-    fromLigoTy :: LigoTypeFull -> TypeOrKind
-    fromLigoTy = IsType . fmap (const Nil) . fromLigoTypeFull
+      where
+        _vdsInitRange = mbFromLigoRange bodyR
+        _vdsParams = Nothing
+        _vdsType = (parseType . fromLigoTypeFull) <$> ty
+        vspec = ValueDeclSpecifics{ .. }
 
     -- Find a place for a scope inside a ScopeForest.
     --

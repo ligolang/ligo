@@ -12,7 +12,9 @@ import Duplo.Lattice
 import Duplo.Pretty
 import Duplo.Tree
 
+import AST.Pretty (docToText)
 import AST.Scope
+import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..), lppDeclCategory)
 import AST.Skeleton
 import Product
 import Range
@@ -22,14 +24,14 @@ data Completion = Completion
   , cType :: Text
   , cDoc  :: Text
   }
-  deriving (Show)
+  deriving (Eq, Show)
 
 complete
   :: ( Eq (Product xs)
      , Modifies (Product xs)
      , Contains Range xs
      , Contains [ScopedDecl] xs
-     , Contains (Maybe Category) xs
+     , Contains (Maybe Level) xs
      )
   => Range
   -> LIGO xs
@@ -37,13 +39,13 @@ complete
 complete r tree = do
   let l = spineTo (leq r . getElem) tree
   word <- listToMaybe l
-  let scope   = getElem (extract word)
-  let nameCat = getElem (extract word)
+  let scope = getElem (extract word)
+  let nameLevel = getElem (extract word)
   return
     $ filter (isSubseqOf (ppToText word) . cName)
     $ nubBy ((==) `on` cName)
     $ map asCompletion
-    $ filter (fits nameCat . catFromType)
+    $ filter (`fitsLevel` nameLevel)
     $ scope
 
 toCompletionItem :: Completion -> CompletionItem
@@ -81,16 +83,16 @@ mkDoc Completion
 asCompletion :: ScopedDecl -> Completion
 asCompletion sd = Completion
   { cName = ppToText (_sdName sd)
-  , cType = ppToText (_sdType sd)
+  , cType = docToText (lppDeclCategory sd)
   , cDoc  = ppToText (fsep $ map pp $ _sdDoc sd)
   }
 
 isSubseqOf :: Text -> Text -> Bool
 isSubseqOf l r = isSubsequenceOf (Text.unpack l) (Text.unpack r)
 
-fits :: Maybe Category -> Category -> Bool
-fits  Nothing _  = True
-fits (Just c) c' = c == c'
-
-catFromType :: ScopedDecl -> Category
-catFromType = maybe Variable (elimIsTypeOrKind (const Variable) (const Type)) . _sdType
+fitsLevel :: ScopedDecl -> Maybe Level -> Bool
+fitsLevel _ Nothing = True
+fitsLevel decl (Just level) = case (_sdSpec decl, level) of
+  (ValueSpec{}, TermLevel) -> True
+  (TypeSpec{}, TypeLevel) -> True
+  _ -> False
