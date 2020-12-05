@@ -87,6 +87,7 @@ xrefcheck:
   extends: .nix
   only:
     - merge_requests
+  allow_failure: true
   script:
     # Should be replaced with
     # nix run github:serokell/xrefcheck
