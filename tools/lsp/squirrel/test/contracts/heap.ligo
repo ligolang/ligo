@@ -102,3 +102,5 @@ function pop (const h : heap) : heap * heap_elt * nat is
     };
     while False block { skip; }
   } with (h, result, c)
+
+const empty : heap = map []

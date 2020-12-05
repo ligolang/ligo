@@ -33,5 +33,5 @@ unit_selectionRangeInsideCase = do
                      , SimpleRange (11, 3) (21, 4)
                      , SimpleRange (11, 3) (21, 11)
                      , SimpleRange (10, 1) (21, 11)
-                     , SimpleRange (1, 1) (105, 1)
+                     , SimpleRange (1, 1) (107, 1)
                      ]

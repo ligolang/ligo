@@ -41,7 +41,7 @@ import Data.Text (Text)
 import GHC.Generics
 
 import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..), ValueDeclSpecifics (..))
-import AST.Scope.ScopedDecl.Parser (parseType)
+import AST.Scope.ScopedDecl.Parser (parseTypeDeclSpecifics)
 import AST.Skeleton hiding (String)
 import Duplo.Lattice
 import Duplo.Pretty
@@ -726,6 +726,6 @@ toScopedDecl
       , _sdSpec = ValueSpec $ ValueDeclSpecifics
         { _vdsInitRange
         , _vdsParams = Nothing
-        , _vdsType = parseType . fromLigoTypeFull <$> _ldsT
+        , _vdsTspec = parseTypeDeclSpecifics . fromLigoTypeFull <$> _ldsT
         }
       }

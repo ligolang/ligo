@@ -5,7 +5,9 @@ module Test.Capabilities.DocumentSymbol
 
 import Control.Lens ((^.))
 import Data.Text (Text)
-import Language.LSP.Types (Location (Location, _range), SymbolInformation (SymbolInformation, _kind, _location, _name), SymbolKind (..), Uri (Uri))
+import Language.LSP.Types
+  (Location (Location, _range), SymbolInformation (SymbolInformation, _kind, _location, _name),
+  SymbolKind (..), Uri (Uri))
 import Language.LSP.Types.Lens (character, end, line, start)
 import System.FilePath ((</>))
 
@@ -17,7 +19,7 @@ import AST.Scope (Fallback)
 import Test.Capabilities.Util (contractsDir)
 import Test.FixedExpectations (shouldBe)
 import Test.Util (readContractWithScopes)
-import Test.Util.LigoEnv ({- instance HasLigoClient IO -})
+import Test.Util.LigoEnv ()
 
 
 type SimpleSymInfo = (Text, SymbolKind, (Int, Int), (Int, Int))
@@ -42,6 +44,7 @@ unit_document_symbols_example_heap = do
     , ("pop_", SkFunction, (22, 9), (22, 13))
     , ("insert", SkFunction, (46, 9), (46, 15))
     , ("pop", SkFunction, (66, 9), (66, 12))
+    , ("const empty",SkConstant,(105,6),(105,11))
     ]
 
 unit_document_symbols_example_access :: Assertion
