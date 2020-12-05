@@ -110,7 +110,7 @@ handlers = mconcat
   , S.requestHandler J.STextDocumentDocumentSymbol handleDocumentSymbolsRequest
   , S.requestHandler J.STextDocumentHover handleHoverRequest
   , S.requestHandler J.STextDocumentRename handleRenameRequest
-  , S.requestHandler J.STextDocumentPrepareRename handlePrepareRenameRequest
+  --, S.requestHandler J.STextDocumentPrepareRename _
 
   --, S.notificationHandler J.SCancelRequest _
   --, S.requestHandler J.STextDocumentCodeAction _
@@ -266,15 +266,6 @@ handleRenameRequest req respond = do
               , _documentChanges = Nothing
               }
         in respond . Right $ response
-
-handlePrepareRenameRequest :: S.Handler RIO 'J.TextDocumentPrepareRename
-handlePrepareRenameRequest req respond = do
-    let uri  = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
-    let pos  = fromLspPosition $ req ^. J.params . J.position
-
-    (tree, _) <- RIO.fetch uri
-
-    respond . Right . fmap (J.InL . toLspRange) $ prepareRenameDeclarationAt pos tree
 
 exit :: Int -> IO ()
 exit 0 = exitSuccess
