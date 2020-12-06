@@ -16,7 +16,7 @@ let make_meta syntax file_name_opt =
   ok @@ {syntax}
 
 let compile ~options ~meta (source_filename:string) : (c_unit , _) result =
-  preprocess_file ~options ~meta source_filename
+  trace Main_errors.preproc_tracer @@ preprocess_file ~options ~meta source_filename
 
 let compile_string ~options ~meta source : (c_unit , _) result =
   preprocess_string ~options ~meta source

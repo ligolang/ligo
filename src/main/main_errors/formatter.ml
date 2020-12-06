@@ -6,6 +6,11 @@ let rec error_ppformat : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
+    | `Build_error_tracer err -> error_ppformat ~display_format f err
+    | `Build_dependency_cycle trace ->
+      Format.fprintf f "@[<hv>Dependency cycle detected :@, %s@]" trace
+    | `Build_corner_case (loc,msg) ->
+      Format.fprintf f "[@<hv>Building corner case at %s : %s@]" loc msg
     | `Test_err_tracer (name,err) ->
       Format.fprintf f "@[<hv>Test '%s'@ %a@]"
         name (error_ppformat ~display_format) err
@@ -178,6 +183,18 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   -> `Null
 
   (* Top-level errors *)
+  | `Build_error_tracer e -> json_error ~stage:"build system" ~content:(error_jsonformat e)
+  | `Build_dependency_cycle trace ->
+    let content = `Assoc [
+      ("message", `String "dependency cycle detected") ;
+      ("cycle",    `String trace) ; ] in
+    json_error ~stage:"build system" ~content
+  | `Build_corner_case (loc,msg) ->
+    let content = `Assoc [
+      ("message", `String msg) ;
+      ("loc", `String loc) ]
+    in
+    json_error ~stage:"build system" ~content
   | `Main_invalid_syntax_name _ ->
     json_error ~stage:"command line interpreter" ~content:(`String "bad syntax name")
   | `Main_invalid_dialect_name _ ->
