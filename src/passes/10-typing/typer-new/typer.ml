@@ -137,7 +137,7 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
   let module L = Logger.Stateful() in
   let return : _ -> _ -> _ O'.typer_state -> _ -> _ (* return of type_expression *) = fun expr e state constraints type_name ->
     let%bind new_state = Solver.main state constraints in
-    let tv = t_constant (Var.to_name type_name) [] in
+    let tv = t_variable type_name in
     let location = ae.location in
     let expr' = make_e ~location expr tv in
     ok @@ (e,new_state, expr') in
@@ -154,7 +154,6 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
   (* Basic *)
   | E_variable name -> (
     (* Check that the variable exist in the environment and add a new constraint *)
-    let name: O.expression_variable = Location.map Var.todo_cast name in
     let%bind (tv' : Environment.element) =
       trace_option (unbound_variable e name ae.location)
       @@ Environment.get_opt name e in
@@ -594,7 +593,7 @@ let type_and_subst
       (env_state_node : environment * _ O'.typer_state * 'a)
       (apply_substs : ('b , Typer_common.Errors.typer_error) Typesystem.Misc.Substitution.Pattern.w)
       (types_and_returns_env : (environment * _ O'.typer_state * 'a) -> (environment * _ O'.typer_state * 'b , typer_error) Trace.result)
-    : ('b * _ O'.typer_state , typer_error) result =
+    : ('b * _ O'.typer_state * environment , typer_error) result =
   let () = (if Ast_typed.Debug.json_new_typer then Printf.printf "%!\n###############################START_OF_JSON\n[%!") in
   let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "\nTODO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA Print env_state_node here.\n\n") in
   let () = (if Ast_typed.Debug.debug_new_typer || Ast_typed.Debug.json_new_typer then print_env_state_node in_printer env_state_node) in
@@ -613,31 +612,42 @@ let type_and_subst
       let%bind assignment =
         trace_option (corner_case (Format.asprintf "can't find assignment for root %a" Var.pp root)) @@
           (Database_plugins.All_plugins.Assignments.find_opt root assignments) in
-      let O.{ tv ; c_tag ; tv_list } = assignment in
-      let () = ignore tv (* I think there is an issue where the tv is stored twice (as a key and in the element itself) *) in
-      let%bind (expr : O.type_content) = trace_option (corner_case "wrong constant tag") @@
+      match assignment with
+      | `Constructor { tv ; c_tag ; tv_list } ->
+        let () = Format.printf "\ncstr : %a %a\n" Ast_typed.PP.type_variable tv Ast_typed.PP.type_variable variable in
+        let () = assert (Var.equal tv variable) in
+        let%bind (expr : O.type_content) = trace_option (corner_case "wrong constant tag") @@
         Typesystem.Core.type_expression'_of_simple_c_constant (c_tag , (List.map O.t_variable tv_list)) in
-      let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "Substituing var %a (%a is %a)\n" Var.pp variable Var.pp root Ast_typed.PP.type_content expr) in
-      ok @@ expr
+        let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "Substituing var %a (%a is %a)\n" Var.pp variable Var.pp root Ast_typed.PP.type_content expr) in
+        ok @@ expr
+      | `Row { tv ; r_tag ; tv_map ; reason_row_simpl=_; is_mandatory_constraint=_ } ->
+        let () = Format.printf "\ncstr : %a %a\n" Ast_typed.PP.type_variable tv Ast_typed.PP.type_variable variable in
+        let () = assert (Var.equal tv variable) in
+        let (expr : O.type_content) = Typesystem.Core.type_expression'_of_simple_c_row (r_tag , (O.LMap.map O.t_variable tv_map)) in
+        let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "Substituing var %a (%a is %a)\n" Var.pp variable Var.pp root Ast_typed.PP.type_content expr) in
+        ok @@ expr
     in
     apply_substs ~substs node
   in
   let%bind node = subst_all in
   let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "\nTODO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA Print env,state,node here again.\n\n") in
   let () = (if Ast_typed.Debug.debug_new_typer || Ast_typed.Debug.json_new_typer then print_env_state_node out_printer (env, state, node)) in
-  let () = ignore env in        (* TODO: shouldn't we use the `env` somewhere? *)
-  ok (node, state)
+  ok (node, state, env)
 
-let type_program ~init_env (p : I.program) : (O.program_fully_typed * _ O'.typer_state, typer_error) result =
+let type_program ~init_env (p : I.program) : (environment * O.program_fully_typed * _ O'.typer_state, typer_error) result =
   let empty_state = Solver.initial_state in
-  let%bind (p, state) = type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.program\"") (fun ppf p -> Format.fprintf ppf "%s" (Yojson.Safe.to_string (Ast_typed.Yojson.program_with_unification_vars p))) (init_env , empty_state , p) Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_env in
+  let%bind (p, state, env) = type_and_subst
+    (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.program\"")
+    (fun ppf p -> Format.fprintf ppf "%s" (Yojson.Safe.to_string (Ast_typed.Yojson.program_with_unification_vars p)))
+    (init_env , empty_state , p)
+    Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_env in
   let%bind p = Check.check_has_no_unification_vars p in
   let () = (if Ast_typed.Debug.json_new_typer then Printf.printf "%!\"end of JSON\"],\n###############################END_OF_JSON\n%!") in
-  ok (p, state)
+  ok (env, p, state)
 
 let type_expression_subst (env : environment) (state : _ O'.typer_state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.expression * _ O'.typer_state , typer_error) result =
   let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
-  let%bind (expr, state) = type_and_subst
+  let%bind (expr, state, _env) = type_and_subst
       (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.expression\"")
       (fun ppf p -> Format.fprintf ppf "%s" (Yojson.Safe.to_string (Ast_typed.Yojson.expression p)))
       (env , state , e)
@@ -656,6 +666,8 @@ and [@warning "-32"] evaluate_type (e:environment) (t:I.type_expression) : (O.ty
 and [@warning "-32"] type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_state -> I.expression -> (environment * _ O'.typer_state * O.expression, typer_error) result = type_expression
 and [@warning "-32"] type_lambda e state lam = type_lambda e state lam
 let [@warning "-32"] type_program_returns_env ((env, state, p) : environment * _ O'.typer_state * I.program) : (environment * _ O'.typer_state * O.program_with_unification_vars, typer_error) result = type_program_returns_env (env, state, p)
-let [@warning "-32"] type_and_subst (in_printer : (Format.formatter -> 'a -> unit)) (out_printer : (Format.formatter -> 'b -> unit)) (env_state_node : environment * _ O'.typer_state * 'a) (apply_substs : ('b,typer_error) Typesystem.Misc.Substitution.Pattern.w) (types_and_returns_env : (environment * _ O'.typer_state * 'a) -> (environment * _ O'.typer_state * 'b, typer_error) result) : ('b * _ O'.typer_state, typer_error) result = type_and_subst in_printer out_printer env_state_node apply_substs types_and_returns_env
-let [@warning "-32"] type_program ~init_env (p : I.program) : (environment * O.program_fully_typed * _ O'.typer_state, typer_error) result = let%bind (p,s) = type_program ~init_env p in ok (Environment.empty , p , s) (* TODO: that one does not return a new env ? *)
+let [@warning "-32"] type_and_subst (in_printer : (Format.formatter -> 'a -> unit)) (out_printer : (Format.formatter -> 'b -> unit)) (env_state_node : environment * _ O'.typer_state * 'a) (apply_substs : ('b,typer_error) Typesystem.Misc.Substitution.Pattern.w) (types_and_returns_env : (environment * _ O'.typer_state * 'a) -> (environment * _ O'.typer_state * 'b, typer_error) result) : ('b * _ O'.typer_state, typer_error) result =
+  let%bind (_,s,p) = type_and_subst in_printer out_printer env_state_node apply_substs types_and_returns_env in
+  ok (p,s)
+let [@warning "-32"] type_program ~init_env (p : I.program) : (environment * O.program_fully_typed * _ O'.typer_state, typer_error) result = type_program ~init_env p (* TODO: that one does not return a new env ? *)
 let [@warning "-32"] type_expression_subst (env : environment) (state : _ O'.typer_state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.expression * _ O'.typer_state, typer_error) result = type_expression_subst env state ?tv_opt e

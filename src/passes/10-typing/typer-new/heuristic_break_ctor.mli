@@ -6,3 +6,5 @@ val heuristic : <
   grouped_by_variable : type_variable GroupedByVariable.t ;
   ..
 > ex_heuristic_plugin
+
+val selector_ : type_constraint_simpl -> type_variable GroupedByVariable.t -> output_break_ctor list

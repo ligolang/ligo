@@ -45,8 +45,9 @@ let tuple_or_record_sep_t value format_record sep_record format_tuple sep_tuple 
     fprintf ppf format_tuple (tuple_sep_t value (tag sep_tuple)) m
   else
     fprintf ppf format_record (record_sep_t value (tag sep_record)) m
-
+let list_sep_d_short x = list_sep x (tag " , ")
 let list_sep_d x = list_sep x (tag " ,@ ")
+let lmap_sep_d_short x = lmap_sep x (tag " , ")
 let lmap_sep_d x = lmap_sep x (tag " ,@ ")
 let tuple_or_record_sep_expr value = tuple_or_record_sep value "@[<h>record[%a]@]" " ,@ " "@[<h>( %a )@]" " ,@ "
 let tuple_or_record_sep_type value = tuple_or_record_sep_t value "@[<h>record[%a]@]" " ,@ " "@[<h>( %a )@]" " *@ "
@@ -232,6 +233,11 @@ let rec c_equation ppf {aval; bval} =
     type_value aval
     type_value bval
 
+and c_equation_short ppf {aval; bval} =
+  fprintf ppf "%a = %a"
+    type_value_short aval
+    type_value_short bval
+
 and c_typeclass ppf {tc_args; typeclass=tc;original_id} =
   fprintf ppf "{@,@[<hv 2>
               tc_args : %a ;@
@@ -259,8 +265,16 @@ and type_constraint_ ppf = function
 | C_typeclass    tc -> fprintf ppf "%a" c_typeclass tc
 | C_access_label al -> fprintf ppf "%a" c_access_label al
 
+and type_constraint_short_ ppf = function
+  C_equation     eq -> fprintf ppf "%a" c_equation_short eq
+| C_typeclass    _ -> fprintf ppf "not so equation"
+| C_access_label _ -> fprintf ppf "not so equation"
+
+and type_constraint_short ppf {reason=_; c} = fprintf ppf "%a" type_constraint_short_ c
 and type_constraint ppf {reason; c} = fprintf ppf "{@,@[<hv 2> reason : %s ;@ c : %a @]@,}" reason type_constraint_ c
-and p_constraints ppf const = fprintf ppf "%a" (list_sep_d type_constraint) const
+and p_constraints ppf const = fprintf ppf "%a" (list_sep_d_short type_constraint) const
+
+and p_constraints_short ppf const = fprintf ppf "%a" (list_sep_d_short type_constraint_short) const
 
 and p_forall ppf {binder;constraints;body} =
   fprintf ppf "{@,@[<hv 2>
@@ -272,6 +286,13 @@ and p_forall ppf {binder;constraints;body} =
     p_constraints constraints
     type_value body
 
+and p_forall_short ppf {binder;constraints;body} =
+  fprintf ppf "∀ %a, %a => %a"
+    type_variable binder
+    p_constraints_short constraints
+    type_value_short body
+
+
 and p_constant ppf {p_ctor_tag; p_ctor_args} =
   fprintf ppf "{@,@[<hv 2>
               p_ctor_tag : %a ;@
@@ -279,6 +300,11 @@ and p_constant ppf {p_ctor_tag; p_ctor_args} =
               @]@,}"
     constant_tag p_ctor_tag
     (list_sep_d type_value) p_ctor_args
+
+and p_constant_short ppf {p_ctor_tag; p_ctor_args} =
+  fprintf ppf "%a (%a)"
+      constant_tag p_ctor_tag
+      (list_sep_d_short type_value_short) p_ctor_args
 
 and p_apply ppf {tf; targ} =
   fprintf ppf "{@,@[<hv 2>
@@ -295,6 +321,10 @@ and p_row ppf {p_row_tag; p_row_args} =
               @]@,}"
     row_tag p_row_tag
     (lmap_sep_d type_value) @@ LMap.to_kv_list p_row_args
+and p_row_short ppf {p_row_tag; p_row_args} =
+    fprintf ppf "%a { %a }"
+    row_tag p_row_tag
+    (lmap_sep_d_short type_value_short) @@ LMap.to_kv_list p_row_args
 
 and type_value_ ppf = function
   P_forall   fa -> fprintf ppf "%a" p_forall fa
@@ -302,6 +332,14 @@ and type_value_ ppf = function
 | P_constant c  -> fprintf ppf "%a" p_constant c
 | P_apply   app -> fprintf ppf "%a" p_apply app
 | P_row       r -> fprintf ppf "%a" p_row r
+
+and type_value_short_ ppf = function
+| P_constant c  -> fprintf ppf "%a" p_constant_short c
+| P_variable tv -> fprintf ppf "%a" type_variable tv
+| P_forall   fa -> fprintf ppf "%a" p_forall_short fa
+| P_apply   _app -> fprintf ppf "apply"
+| P_row       r -> fprintf ppf "%a" p_row_short r
+
 and type_value ppf t =
   fprintf ppf "{@,@[<hv 2>
               t : %a
@@ -309,6 +347,9 @@ and type_value ppf t =
               @]@,}"
     Location.pp t.location
     type_value_ t.wrap_content
+
+and type_value_short ppf t =
+  fprintf ppf "%a" type_value_short_ t.wrap_content
 
 and typeclass ppf tc = fprintf ppf "%a" (list_sep_d (list_sep_d type_value)) tc
 let c_constructor_simpl ppf ({is_mandatory_constraint;reason_constr_simpl;tv;c_tag;tv_list} : c_constructor_simpl) =
@@ -398,7 +439,6 @@ let constraints ppf ({constructor; poly; (* tc; *) row}: constraints) =
   fprintf ppf "{@,@[<hv 2>
               constructor : %a ;@
               poly : %a ;@
-              tc : %a ;@
               row : %a
               @]@,}"
     (list_sep_d c_constructor_simpl) constructor
@@ -426,13 +466,18 @@ let refined_typeclass ppf ({ refined; original=ConstraintIdentifier x; vars } : 
  *     (typeVariableMap constraints) grouped_by_variable
  *     (fun _ppf _ -> ()) cycle_detection_toposort *)
 
+let constructor_or_row ppf (t : constructor_or_row ) =
+  match t with
+  | `Row r -> c_row_simpl ppf r
+  | `Constructor c -> c_constructor_simpl ppf c
+
 let output_break_ctor ppf ({a_k_var;a_k'_var'}) =
   fprintf ppf "{@,@[<hv 2>
               a_k_var : %a ;@
               a_k'_var' : %a
               @]@,}"
-    c_constructor_simpl a_k_var
-    c_constructor_simpl a_k'_var'
+    constructor_or_row a_k_var
+    constructor_or_row a_k'_var'
 
 let output_specialize1 ppf ({poly;a_k_var}) =
   fprintf ppf "{@,@[<hv 2>
@@ -441,9 +486,10 @@ let output_specialize1 ppf ({poly;a_k_var}) =
               @]@,}"
     c_poly_simpl poly
     c_constructor_simpl a_k_var
+
 let output_tc_fundep ppd (t : output_tc_fundep) =
   let lst = t.tc in
-  let a = t.c in fprintf ppd "{tc:{refined:%a original:%Li vars:%a};a:%a}" c_typeclass_simpl lst.refined (match lst.original with ConstraintIdentifier a -> a) (list_sep_d (fun x _ ->fprintf x "," ) ) ( (fun x ->( List.map (fun y-> Format.asprintf "%a" Var.pp y) @@ ( RedBlackTrees.PolySet.elements x))) lst.vars) c_constructor_simpl a
+  let a = t.c in fprintf ppd "{tc:{refined:%a original:%Li vars:%a};a:%a}" c_typeclass_simpl lst.refined (match lst.original with ConstraintIdentifier a -> a) (list_sep_d (fun x _ ->fprintf x "," ) ) ( (fun x ->( List.map (fun y-> Format.asprintf "%a" Var.pp y) @@ ( RedBlackTrees.PolySet.elements x))) lst.vars) constructor_or_row a
 
 let deduce_and_clean_result ppf {deduced;cleaned} =
   fprintf ppf "{@,@[<hv 2>

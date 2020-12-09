@@ -59,3 +59,15 @@ let type_expression'_of_simple_c_constant : constant_tag * type_expression list 
   | C_timestamp , [] -> return (Ast_typed.t_timestamp ())
   | (C_unit | C_string | C_bytes | C_nat | C_int | C_mutez | C_operation | C_address | C_key | C_key_hash | C_chain_id | C_signature | C_timestamp), _::_ ->
       None
+
+let type_expression'_of_simple_c_row : Ast_typed.row_tag * type_expression Ast_typed.label_map -> Ast_typed.type_content =
+  fun (tag, map) ->
+  let open Ast_typed in
+  (*TODO : layout/annotations/decl_pos should be extracted from earlier passes *)
+  let aux : type_expression -> row_element = fun te ->
+    { associated_type = te ; michelson_annotation = None ; decl_pos = 0 }
+  in
+  let content = LMap.map aux map in
+  match tag with
+  | C_record -> T_record { layout = default_layout ; content }
+  | C_variant -> T_sum { layout = default_layout ; content }

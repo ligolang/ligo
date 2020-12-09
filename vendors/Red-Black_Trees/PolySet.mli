@@ -33,6 +33,8 @@ val is_empty : 'elt t -> bool
 
 val add : 'elt -> 'elt t -> 'elt t
 
+val union : 'elt t -> 'elt t -> 'elt t
+
 (* The value of the call [remove elt set] is a set containing all the
    elements of the set [set] without the element [elt]. *)
 

@@ -19,7 +19,11 @@ type 'a flds = <
 
 type selector_output = output_specialize1
 
-let selector : type_constraint_simpl -> _ flds -> selector_output list =
+(* TODO: we need to detect if a ∀ constraint has already been specialized or not
+   The same need was present for the heuristic_tc_fundep (detect if a TC has already
+   been refined, and if so find the update) *)
+ 
+ let selector : type_constraint_simpl -> _ flds -> selector_output list =
   (* find two rules with the shape (x = forall b, d) and x = k'(var' …) or vice versa *)
   (* TODO: do the same for two rules with the shape (a = forall b, d) and tc(a…) *)
   (* TODO: do the appropriate thing for two rules with the shape (a = forall b, d) and (a = forall b', d') *)
@@ -30,7 +34,7 @@ let selector : type_constraint_simpl -> _ flds -> selector_output list =
     let other_cs = (GroupedByVariable.get_constraints_by_lhs c.tv indexes#grouped_by_variable).poly in
     let cs_pairs = List.map (fun x -> { poly = x ; a_k_var = c }) other_cs in
     cs_pairs
-  | SC_Alias       _                -> [] (* TODO: ??? *)
+  | SC_Alias       _                -> failwith "alias should not be visible here"
   | SC_Poly        p                ->
     let other_cs = (GroupedByVariable.get_constraints_by_lhs p.tv indexes#grouped_by_variable).constructor in
     let cs_pairs = List.map (fun x -> { poly = p ; a_k_var = x }) other_cs in

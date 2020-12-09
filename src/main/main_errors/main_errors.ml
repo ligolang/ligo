@@ -57,7 +57,7 @@ let could_not_serialize errs : all = `Main_could_not_serialize errs
 let unknown : all = `Main_unknown
 
 let unknown_failwith_type : all = `Main_unknown_failwith_type
-let failwith fw : all = `Main_execution_failed fw
+let main_failwith fw : all = `Main_execution_failed fw
 
 let unparsing_michelson_tracer err : all = `Main_unparse_michelson_result err
 let parsing_payload_tracer err : all = `Main_parse_payload err

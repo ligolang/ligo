@@ -20,13 +20,14 @@ let wrap_test name f =
     trace (test_tracer name) @@
     f ()
   in
-  let format = Display.bind_format test_format Main.Formatter.error_format in
-  let disp = Simple_utils.Display.Displayable {value=result ; format} in
-  let s = Simple_utils.Display.convert ~display_format:(Human_readable) disp in
+
   match to_stdlib_result result with
   | Ok ((), annotations) -> ignore annotations; ()
   | Error _ ->
-    Format.printf "%s\n%!" s ;
+    let format = Display.bind_format test_format Main.Formatter.error_format in
+    let disp = Simple_utils.Display.Displayable {value=result ; format} in
+    let s = Simple_utils.Display.convert ~display_format:(Dev) disp in
+    Format.printf "%s\n" s ;
     raise Alcotest.Test_error
 
 

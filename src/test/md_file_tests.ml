@@ -2,8 +2,8 @@ open Trace
 open Test_helpers
 open Main_errors
 
+let () = Unix.putenv "LIGO_FORCE_NEW_TYPER" "false"
 module SnippetsGroup = Map.Make(struct type t = (string * string) let compare a b = compare a b end)
-
 (**
   binds the snippets by (syntax, group_name)
   e.g. :(pascaligo, a) -> "let .. in let .. in"

@@ -13,6 +13,9 @@ let () =
     y Integration_tests.main ;
     y Spilling_tests.main ;
     y Heuristic_tc_fundep_tests.main ;
+    y Heuristic_break_ctor_tests.main ;
+    y Typechecker_tests.main ;
+    y Db_index_tests.main ;
     y Typer_tests.main ;
     no Coase_tests.main ;
     no Vote_tests.main ;

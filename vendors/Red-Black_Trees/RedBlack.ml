@@ -100,6 +100,13 @@ let rec inorder acc = function
 
 let elements t = inorder [] t
 
+
+let union ~cmp choice (tree_a : 'a t) tree_b =
+  List.fold_left
+    (fun acc elt -> add ~cmp choice elt acc)
+    tree_b
+    (elements tree_a)
+    
 let rec fold_inc f ~init = function
                          Ext -> init
 | Int (_, left, root, right) ->

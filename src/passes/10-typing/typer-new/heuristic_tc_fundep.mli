@@ -13,5 +13,5 @@ val heuristic : <
   ..
 > ex_heuristic_plugin
 
-val restrict : c_constructor_simpl -> c_typeclass_simpl -> c_typeclass_simpl
+val restrict : constructor_or_row -> c_typeclass_simpl -> c_typeclass_simpl
 val deduce_and_clean : c_typeclass_simpl -> (deduce_and_clean_result, typer_error) result

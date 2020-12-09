@@ -79,6 +79,7 @@ type typer_error = [
   | `Typer_typeclass_not_a_rectangular_matrix
   | `Typer_could_not_remove
   | `Typer_internal_error of string * string
+  | `Trace_debug of string * typer_error
 ]
 
 let missing_funarg_annotation v = `Typer_missing_funarg_annotation v
@@ -164,6 +165,7 @@ let different_constant_tag_number_of_arguments loc opa opb lena lenb : typer_err
 let typeclass_not_a_rectangular_matrix = `Typer_typeclass_not_a_rectangular_matrix
 let internal_error (loc : string) (msg : string) : typer_error = `Typer_internal_error (loc, msg)
 let could_not_remove : typer_error = `Typer_could_not_remove
+let trace_debug (msg : string) (err : typer_error) : typer_error = `Trace_debug (msg,err)
 
 let rec error_ppformat : display_format:string display_format ->
   Format.formatter -> typer_error -> unit =
@@ -171,6 +173,10 @@ let rec error_ppformat : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
+        | `Trace_debug (msg,err) ->
+      (match display_format with
+      | Human_readable -> Format.fprintf f "%a" (error_ppformat ~display_format) err
+      | _ -> Format.fprintf f "%s\n%a" msg (error_ppformat ~display_format) err)
     | `Typer_missing_funarg_annotation v ->
       Format.fprintf f
         "@[<hv>%a@.Missing a type annotation for argument \"%a\".@]"
@@ -537,6 +543,11 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("content",  content )]
   in
   match a with
+  | `Trace_debug (msg,err) ->
+    let content = `Assoc [
+      ("message", `String msg );
+      ("children", error_jsonformat err); ] in
+    json_error ~stage ~content
   | `Typer_missing_funarg_annotation v ->
     let message = Format.asprintf "Missing type annotation for argument" in
     let content = `Assoc [

@@ -168,7 +168,13 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
       ("content",  content )]
   in
   match a with
-  | `Test_err_tracer _
+  | `Test_err_tracer (name,err) ->
+    let content = `Assoc [
+      ("message", `String name);
+      ("children", error_jsonformat err);
+      ] in
+    json_error ~stage:"test_tracer" ~content
+
   | `Test_run_tracer _
   | `Test_expect_tracer _
   | `Test_expect_n_tracer _

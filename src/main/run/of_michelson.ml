@@ -175,4 +175,4 @@ let evaluate_expression ?options exp exp_type =
   let%bind etv = run_expression ?options exp exp_type in
   match etv with
     | Success (_, value) -> ok value
-    | Fail res -> fail @@ Errors.failwith res
+    | Fail res -> fail @@ Errors.main_failwith res
