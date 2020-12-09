@@ -326,8 +326,8 @@ ensure an OCaml type error is thrown if some of the maps or sets
 within an indexer's state are not updated).
 
 The following indexer plug-ins are implemented:
-* assignments maps variables to their assignment
-* grouped_by_variable maps variables to the constraints referencing
+* `assignments` maps variables to their constructor constraints
+* `grouped_by_variable` maps variables to the constraints referencing
   them
 * each constraint is given a unique ID when it is added to the
   databse; by_constraint_identifier maps the unique ID back to the

@@ -621,15 +621,20 @@ let constraints {constructor; poly; (* tc; *) row} =
  *     ("grouped_by_variable", typeVariableMap constraints grouped_by_variable);
  *     ("cycl_detection_toposort", `Null)
  *   ] *)
+let constructor_or_row (t : constructor_or_row ) =
+  match t with
+  | `Row r -> `Assoc [ ("row" , c_row_simpl r) ]
+  | `Constructor c -> `Assoc [ ("constructor" , c_constructor_simpl c) ]
 
 let output_break_ctor ({a_k_var;a_k'_var'}) =
   `Assoc [
-    ("a_k_var", c_constructor_simpl a_k_var);
-    ("a_k'_var'", c_constructor_simpl a_k'_var')]
+    ("a_k_var", constructor_or_row a_k_var);
+    ("a_k'_var'", constructor_or_row a_k'_var')]
 
 let output_specialize1  ({poly;a_k_var}) =`Assoc [
     ("poly", c_poly_simpl poly);
 ("a_k_var",     c_constructor_simpl a_k_var)]
+
 let output_tc_fundep (t : output_tc_fundep) =
   let lst = t.tc in
   let a = t.c in `Assoc
@@ -638,4 +643,4 @@ let output_tc_fundep (t : output_tc_fundep) =
           ("refined",c_typeclass_simpl lst.refined);
           ("original",`String(Format.asprintf "%Li" (match lst.original with ConstraintIdentifier x -> x)));
           ("vars",list Var.to_yojson ( RedBlackTrees.PolySet.elements lst.vars))])
-      ;("a",c_constructor_simpl a)]
+      ;("a",constructor_or_row a)]

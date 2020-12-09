@@ -22,14 +22,15 @@ open Proof_trace_checker
 
 module Make_solver(Plugins : Plugins) : sig
   type plugin_states = Plugins.Indexers.PluginFields(PerPluginState).flds
-  type typer_state = (typer_error, plugin_states) __plugins__typer_state
+  type nonrec typer_state = (typer_error, plugin_states) Typesystem.Solver_types.typer_state
   val main : typer_state -> type_constraint list -> typer_state result
   val initial_state : typer_state
   val placeholder_for_state_of_new_typer : unit -> typer_state
   val discard_state : typer_state -> unit
 end = struct
+  module Plugin_states = Plugins.Indexers.PluginFields(PerPluginState)
   type plugin_states = Plugins.Indexers.PluginFields(PerPluginState).flds
-  type typer_state = (typer_error, plugin_states) __plugins__typer_state
+  type nonrec typer_state = (typer_error, plugin_states) Typesystem.Solver_types.typer_state
 
   type plugin_units = Plugins.Indexers.PluginFields(PerPluginUnit).flds
   let plugin_fields_unit : plugin_units = Plugins.Indexers.plugin_fields_unit
@@ -38,10 +39,10 @@ end = struct
 
 
   let add_alias : typer_state -> type_constraint_simpl -> (typer_state option, typer_error) Simple_utils.Trace.result =
-    fun { all_constraints ; plugin_states ; aliases ; already_selected_and_propagators } new_constraint ->
+    fun { all_constraints ; added_constraints ; plugin_states ; aliases ; already_selected_and_propagators } new_constraint ->
     match new_constraint with
     | Ast_typed.Types.SC_Alias { reason_alias_simpl=_; is_mandatory_constraint=_; a; b } ->
-      let all_constraints = new_constraint :: all_constraints in
+      let all_constraints = PolySet.add new_constraint all_constraints in
       let UnionFind.Poly2.{ partition = aliases; changed_reprs } =
         UnionFind.Poly2.equiv a b aliases in
       let plugin_states = List.fold_left
@@ -49,7 +50,7 @@ end = struct
              let module MapMergeAliases = Plugins.Indexers.MapPlugins(MergeAliases) in
              MapMergeAliases.f changed_reprs state)
           plugin_states changed_reprs in
-      ok @@ Some { all_constraints ; plugin_states ; aliases ; already_selected_and_propagators }
+      ok @@ Some { all_constraints ; added_constraints ; plugin_states ; aliases ; already_selected_and_propagators }
     | _ ->
       ok @@ None
 
@@ -73,16 +74,28 @@ end = struct
 
   let aux_heuristic constraint_ state (Heuristic_state heuristic) =
     let selector_outputs = heuristic.plugin.selector constraint_ state.plugin_states in
+    let aux = fun (l,already_selected) el ->
+      if PolySet.mem el already_selected then (l,already_selected)
+      else (el::l, PolySet.add el already_selected)
+    in
+    let selector_outputs,already_selected = List.fold_left aux ([], heuristic.already_selected) selector_outputs in
+    let heuristic = { heuristic with already_selected } in
     let%bind (state, new_constraints) = bind_fold_map_list (aux_propagator heuristic) state selector_outputs in
-    ok (state, List.flatten new_constraints)
+    ok (state, (Heuristic_state heuristic, List.flatten new_constraints))
 
   (* apply all the selectors and propagators *)
   let add_constraint_and_apply_heuristics state constraint_ =
-    let state =
-      let module MapAddConstraint = Plugins.Indexers.MapPlugins(AddConstraint) in
-      { state with plugin_states = MapAddConstraint.f (mk_repr state, constraint_) state.plugin_states } in
-    let%bind (state, new_constraints) = bind_fold_map_list (aux_heuristic constraint_) state state.already_selected_and_propagators in
-    ok (state, List.flatten new_constraints)           
+    (*TODO : state.all_constraints should really be a set :)*)
+    if PolySet.mem constraint_ state.all_constraints then ok (state, [])
+    else
+      let state =
+        let module MapAddConstraint = Plugins.Indexers.MapPlugins(AddConstraint) in
+        { state with plugin_states = MapAddConstraint.f (mk_repr state, constraint_) state.plugin_states }
+      in
+      let%bind (state, hc) = bind_fold_map_list (aux_heuristic constraint_) state state.already_selected_and_propagators in
+      let (already_selected_and_propagators, new_constraints) = List.split hc in
+      let state = { state with already_selected_and_propagators } in
+      ok (state, List.flatten new_constraints)
   
    (* Takes a list of constraints, applies all selector+propagator pairs
      to each in turn. *)
@@ -93,28 +106,40 @@ end = struct
       (* repeat until the worklist is empty *)
       (function (_, []) -> true | _ -> false)
       (fun (state, constraints) ->
-         (* Simplify constraint *)
-         let constraints = List.flatten @@ List.map simplify_constraint constraints in
+        let aux (set, lst) (el: type_constraint) =
+          if PolySet.mem el set then 
+            set,lst
+          else
+            match (el.c : type_constraint_) with
+            (* TODO: this should be done by the simplifier? *)
+            | C_equation { aval = {wrap_content=P_variable a} ; bval = {wrap_content=P_variable b} } when Var.equal a b -> set , lst
+            | _ ->
+              (* let () = Format.printf "\nTOTO ADD: %a\n" Ast_typed.PP.type_constraint_short el in *)
+              PolySet.add el set, el::lst
+        in
+        let added_constraints, constraints = List.fold_left aux (state.added_constraints,[]) constraints in
+        let state = { state with added_constraints } in 
+        (* Simplify constraints *)
+        let constraints = List.flatten @@ List.map simplify_constraint constraints in
+        (* Extract aliases and apply them *)
+        let%bind (state, constraints) = bind_fold_map_list (fun state c -> match%bind (add_alias state c) with Some state -> ok (state, []) | None -> ok (state, [c])) state constraints in
+        let constraints = List.flatten constraints in
 
-         (* TODO: BUG: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            add a = list(b)
-            add c = list(d)
-            add a = c
-            this won't trigger the break_ctor heuristic, because its selector
-            isn't called again with the db where a = c *)
-         
-         (* Extract aliases and apply them *)
-         let%bind (state, constraints) = bind_fold_map_list (fun state c -> match%bind (add_alias state c) with Some state -> ok (state, []) | None -> ok (state, [c])) state constraints in
-         let constraints = List.flatten constraints in
-
-         let%bind (state, new_constraints) = bind_fold_map_list add_constraint_and_apply_heuristics state constraints in
-         ok (state, List.flatten new_constraints))
+        let%bind (state, new_constraints) = bind_fold_map_list add_constraint_and_apply_heuristics state constraints in
+        ok (state, List.flatten new_constraints))
       (state, initial_constraints)
     >>|? fst
   (* already_selected_and_propagators ; all_constraints ; plugin_states ; aliases *)
-  
-  
-  let main = select_and_propagate_all
+
+  module All_vars = Typecheck_utils.All_vars(Plugins)
+  let main : typer_state -> type_constraint list -> typer_state result =
+    fun state initial_constraints ->
+    let%bind (state : typer_state) = select_and_propagate_all state initial_constraints in
+    let%bind () = Typecheck.check (PolySet.elements state.all_constraints)
+      (All_vars.all_vars state)
+      (fun v -> UnionFind.Poly2.repr v state.aliases)
+      (fun v -> Plugin_states.Assignments.find_opt v (Plugin_states.assignments state.plugin_states)#assignments) in
+    ok state
   
   (* This function is called when a program is fully compiled, and the
      typechecker's state is discarded. TODO: either get rid of the state
@@ -129,7 +154,8 @@ end = struct
     let module MapCreateState = Plugins.Indexers.MapPlugins(CreateState) in
     let plugin_states = MapCreateState.f () plugin_fields_unit in
     {
-      all_constraints                  = [] ;
+      all_constraints                  = PolySet.create ~cmp:Ast_typed.Compare.type_constraint_simpl ;
+      added_constraints                = PolySet.create ~cmp:Ast_typed.Compare.type_constraint ;
       aliases                          = UnionFind.Poly2.empty Var.pp Var.compare ;
       plugin_states                     = plugin_states ;
       already_selected_and_propagators = List.map init_propagator_heuristic Plugins.heuristics ;

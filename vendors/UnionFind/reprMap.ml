@@ -13,18 +13,17 @@ let create ~cmp ~merge = {
 let alias ~demoted_repr ~new_repr (m : (_,_) t) =
   { m with
     map = match PolyMap.find_opt demoted_repr m.map with
-      | None -> m.map
-      | Some other_value ->
-        PolyMap.update
-          new_repr
-          (function
-              None -> None
-            | Some v -> Some (m.merge other_value v))
-          m.map }
-
-(* We don't export empty, since elements can be removed via
-   List.fold add (empty s) (List.filter … @@ elements s) *)
-(* let empty m = { m with map = PolyMap.empty m.map } *)
+      | None -> m.map (* demoted_repr was not a key in the map, leaving it unchanged *)
+      | Some other_value -> (* demoted_repr was a key in the map, we must either rename it or merge with the new_repr *)
+        let map_without_demoted_repr = PolyMap.remove demoted_repr m.map in
+          PolyMap.update
+            new_repr
+            (function
+              (* new_repr was not a key in the map, be rename the key demoted_repr to new_repr *)
+              | None -> Some other_value
+              (* Both new_repr and demoted_repr were present as keys, remove the demoted_repr and merge their values *)
+              | Some v -> Some (m.merge other_value v))
+          map_without_demoted_repr }
 
 let is_empty m = PolyMap.is_empty m.map
 

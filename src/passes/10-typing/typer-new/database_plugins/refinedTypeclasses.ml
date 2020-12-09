@@ -87,5 +87,9 @@ let merge_aliases : 'old 'new_ . ('old, 'new_) merge_keys -> 'old t -> 'new_ t =
 
 let find_opt : constraint_identifier -> 'typeVariable t -> refined_typeclass option = fun id state ->
   PolyMap.find_opt id state.forwards
+let find : c_typeclass_simpl -> 'typeVariable t -> refined_typeclass = fun c state ->
+  match find_opt c.id_typeclass_simpl state with
+  | Some x -> x
+  | None -> make_refined_typeclass c c.id_typeclass_simpl
 let values : 'typeVariable t -> refined_typeclass list = fun m -> List.map snd @@ PolyMap.bindings m.forwards
 

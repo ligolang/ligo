@@ -196,9 +196,35 @@ let compare_c_constructor_simpl_list = List.compare ~compare:compare_c_construct
 let compare_output_specialize1 { poly = a1; a_k_var = a2 } { poly = b1; a_k_var = b2 } =
   compare_c_poly_simpl a1 b1 <? fun () ->
     compare_c_constructor_simpl a2 b2
+    
+let compare_row_tag a b =
+  match (a,b) with
+  | C_record , C_record -> 0
+  | C_variant , C_variant -> 0
+  | C_record , C_variant -> -1
+  | C_variant , C_record -> +1
+
+let compare_c_row_simpl
+  { reason_row_simpl=a1 ; is_mandatory_constraint=a2 ; tv=a3 ; r_tag=a4 ; tv_map=a5 }
+  { reason_row_simpl=b1 ; is_mandatory_constraint=b2 ; tv=b3 ; r_tag=b4 ; tv_map=b5 } =
+    String.compare a1 b1 <? fun () ->
+    Bool.compare a2 b2 <? fun () ->
+    compare_type_variable a3 b3 <? fun () ->
+    compare_row_tag a4 b4 <? fun () ->
+      let aux = fun (a1,a2) (b1,b2) -> compare_label a1 b1 <? fun () -> compare_type_variable a2 b2 in
+      List.compare ~compare:aux (LMap.bindings a5) (LMap.bindings b5)
+
+let compare_constructor_or_row
+    (a : constructor_or_row)
+    (b : constructor_or_row) =
+  match a,b with
+  | `Row a , `Row b -> compare_c_row_simpl a b
+  | `Constructor a , `Constructor b -> compare_c_constructor_simpl a b
+  | `Constructor _ , `Row _ -> -1
+  | `Row _ , `Constructor _ -> 1
 
 let compare_output_break_ctor { a_k_var=a1; a_k'_var'=a2 } { a_k_var=b1; a_k'_var'=b2 } =
-  compare_c_constructor_simpl a1 b1 <? fun () -> compare_c_constructor_simpl a2 b2
+  compare_constructor_or_row a1 b1 <? fun () -> compare_constructor_or_row a2 b2
 
 let compare_c_typeclass_simpl_args =
   List.compare ~compare:Var.compare
@@ -214,7 +240,7 @@ let compare_refined_typeclass { original=ConstraintIdentifier a1; refined=r1; va
     List.compare ~compare:compare_type_variable (PolySet.elements a2) (PolySet.elements b2)
 
 let compare_output_tc_fundep { tc=a1; c=a2 } { tc=b1; c=b2 } =
-  compare_refined_typeclass a1 b1 <? fun () -> compare_c_constructor_simpl a2 b2
+  compare_refined_typeclass a1 b1 <? fun () -> compare_constructor_or_row a2 b2
 
 (* Using a pretty-printer from the PP.ml module creates a dependency
    loop, so the one that we need temporarily for debugging purposes
@@ -246,3 +272,6 @@ let debug_pp_constant : _ -> constant_tag -> unit = fun ppf c_tag ->
 
 let debug_pp_c_constructor_simpl ppf { tv; c_tag; tv_list } =
   Format.fprintf ppf "CTOR %a %a(%a)" Var.pp tv debug_pp_constant c_tag PP_helpers.(list_sep Var.pp (const " , ")) tv_list
+let debug_pp_c_row_simpl ppf { tv; r_tag } =
+  Format.fprintf ppf "ROW %a (.TODO PRINT..) %a" Var.pp tv Ast_typed.PP.row_tag r_tag
+  

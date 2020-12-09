@@ -21,7 +21,7 @@ let (m,n,o,p,x,y,z) = let v name = Var.fresh ~name () in v "m", v "n", v "o", v 
 let test''
     (name : string)
     (* Restriction function under test *)
-    (restrict : c_constructor_simpl -> c_typeclass_simpl -> c_typeclass_simpl)
+    (restrict : constructor_or_row -> c_typeclass_simpl -> c_typeclass_simpl)
     (* New info: a variable assignment constraint: *)
     tv (_eq : string) c_tag tv_list
     (* Initial typeclass constraint: *)
@@ -33,7 +33,7 @@ let test''
   test name @@ fun () ->
   let%bind e =
     trace typer_tracer @@
-    let info = { reason_constr_simpl = "unit test" ; is_mandatory_constraint = true; tv ; c_tag ; tv_list } in
+    let info = `Constructor { reason_constr_simpl = "unit test" ; is_mandatory_constraint = true; tv ; c_tag ; tv_list } in
     let tc =  { reason_typeclass_simpl = "unit test"; original_id = None; is_mandatory_constraint = false; id_typeclass_simpl = ConstraintIdentifier 42L ; args ; tc } in
     let expected =  { reason_typeclass_simpl = "unit test" ; original_id = None; is_mandatory_constraint = false; id_typeclass_simpl = ConstraintIdentifier 42L ; args = expected_args ; tc = expected_tc } in
     (* TODO: use an error not an assert *)
@@ -86,19 +86,14 @@ let test'
     (expected_inferred  : (type_variable * constant_tag * type_variable list) list)
     expected_args (_in : string) expected_tc =
   test name @@ fun () ->
-  let%bind e =
     trace typer_tracer @@
-    let input_tc =  { reason_typeclass_simpl = "unit test" ; original_id = None; is_mandatory_constraint = false ; id_typeclass_simpl = ConstraintIdentifier 42L ; args ; tc } in
-    let expected_tc =  { reason_typeclass_simpl = "unit test" ; original_id = None; is_mandatory_constraint = false ; id_typeclass_simpl = ConstraintIdentifier 42L ; args = expected_args ; tc = expected_tc } in
-    let expected_inferred = List.map
-        (fun (tv , c_tag , tv_list) -> {reason_constr_simpl = "unit test" ; is_mandatory_constraint = false ; tv ; c_tag ; tv_list})
-        expected_inferred in
-    let%bind actual = deduce_and_clean input_tc in
-    (match to_stdlib_result @@ Heuristic_tc_fundep_tests_compare_cleaned.compare_and_check_vars_deduce_and_clean_result { deduced = expected_inferred ; cleaned = expected_tc } actual with
-     | Ok _ -> ok @@ None
-     | Error e -> ok @@ Some e)
-  in
-  match e with None -> ok () | Some e -> fail e
+      let input_tc =  { reason_typeclass_simpl = "unit test" ; original_id = None; is_mandatory_constraint = false ; id_typeclass_simpl = ConstraintIdentifier 42L ; args ; tc } in
+      let expected_tc =  { reason_typeclass_simpl = "unit test" ; original_id = None; is_mandatory_constraint = false ; id_typeclass_simpl = ConstraintIdentifier 42L ; args = expected_args ; tc = expected_tc } in
+      let expected_inferred = List.map
+          (fun (tv , c_tag , tv_list) -> {reason_constr_simpl = "unit test" ; is_mandatory_constraint = false ; tv ; c_tag ; tv_list})
+          expected_inferred in
+      let%bind actual = deduce_and_clean input_tc in
+      Heuristic_tc_fundep_tests_compare_cleaned.compare_and_check_vars_deduce_and_clean_result { deduced = expected_inferred ; cleaned = expected_tc } actual
 
 let inferred v (_eq : string) c args = v, c, args
 let tests2 deduce_and_clean = [

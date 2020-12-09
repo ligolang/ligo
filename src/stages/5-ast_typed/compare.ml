@@ -453,14 +453,17 @@ let c_poly_simpl {reason_poly_simpl=ra;is_mandatory_constraint=imca;tv=tva;foral
     type_variable  tva tvb
     p_forall       fa  fb
 
-let c_typeclass_simpl {reason_typeclass_simpl=ra;is_mandatory_constraint=imca;id_typeclass_simpl=ida;original_id=oia;tc=ta;args=la} {reason_typeclass_simpl=rb;is_mandatory_constraint=imcb;id_typeclass_simpl=idb;original_id=oib;tc=tb;args=lb} =
-  cmp6
-    String.compare ra rb
-    Bool.compare imca imcb
-    constraint_identifier ida idb
-    (Option.compare constraint_identifier) oia oib
-    (List.compare ~compare:tc_allowed) ta tb
-    (List.compare ~compare:type_variable) la lb
+(* let c_typeclass_simpl {reason_typeclass_simpl=ra;is_mandatory_constraint=imca;id_typeclass_simpl=ida;original_id=oia;tc=ta;args=la} {reason_typeclass_simpl=rb;is_mandatory_constraint=imcb;id_typeclass_simpl=idb;original_id=oib;tc=tb;args=lb} =
+ *   cmp6
+ *     String.compare ra rb
+ *     Bool.compare imca imcb
+ *     constraint_identifier ida idb
+ *     (Option.compare constraint_identifier) oia oib
+ *     (List.compare ~compare:tc_allowed) ta tb
+ *     (List.compare ~compare:type_variable) la lb *)
+
+let c_typeclass_simpl a b =
+  constraint_identifier a.id_typeclass_simpl b.id_typeclass_simpl
 
 let c_row_simpl {reason_row_simpl=ra;is_mandatory_constraint=imca;tv=tva;r_tag=rta;tv_map=ma} {reason_row_simpl=rb;is_mandatory_constraint=imcb;tv=tvb;r_tag=rtb;tv_map=mb} =
   cmp5
@@ -470,6 +473,15 @@ let c_row_simpl {reason_row_simpl=ra;is_mandatory_constraint=imca;tv=tva;r_tag=r
     row_tag        rta rtb
     (label_map ~compare:type_variable) ma mb
 
+let constructor_or_row
+    (a : constructor_or_row)
+    (b : constructor_or_row) =
+  match a,b with
+  | `Row a , `Row b -> c_row_simpl a b
+  | `Constructor a , `Constructor b -> c_constructor_simpl a b
+  | `Constructor _ , `Row _ -> -1
+  | `Row _ , `Constructor _ -> 1
+
 let type_constraint_simpl_tag = function
   | SC_Constructor _ -> 1
   | SC_Alias       _ -> 2
@@ -478,7 +490,6 @@ let type_constraint_simpl_tag = function
   | SC_Row         _ -> 5
 
 let type_constraint_simpl a b =
-  let _ = failwith "src/stages/5-ast_typed/compare.ml type_constraint_simpl should get a comparator for the type variables within" in
   match (a,b) with
   SC_Constructor ca, SC_Constructor cb -> c_constructor_simpl ca cb
 | SC_Alias       aa, SC_Alias       ab -> c_alias aa ab

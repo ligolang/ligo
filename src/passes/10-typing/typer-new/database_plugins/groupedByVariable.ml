@@ -13,7 +13,13 @@ open Trace
 (* map from (unionfind) variables to constraints containing them *)
 type 'typeVariable t = ('typeVariable, constraints) ReprMap.t
 let create_state ~cmp =
-  let merge cs1 cs2 = let _ = failwith "assert (Compare.constraints cs1 cs2 = 0);" in ignore cs2; cs1 in
+  let merge : constraints -> constraints -> constraints = fun cs1 cs2 ->
+    {
+      constructor = cs1.constructor @ cs2.constructor ;
+      poly        = cs1.poly        @ cs2.poly        ;
+      row         = cs1.row         @ cs2.row         ;
+    }
+  in
   ReprMap.create ~cmp ~merge
 
 let add_constraints_related_to : _ -> type_variable -> constraints -> _ t -> _ t =
@@ -70,6 +76,9 @@ let rm_constraints_related_to : _ -> type_variable -> constraints -> _ t -> (_ t
       ReprMap.monotonic_update (repr variable) (function
             None -> raise CouldNotRemove (* Some c *)
           | Some (x : constraints) -> {
+              (* TODO: the test for removal in
+                 src/test/db_index_tests.ml is commented out because
+                 the feature is not implemented yet. *)
               constructor = (assert (List.length c.constructor = 0) (* Only removal of typeclass_simpl implemented for now (the others don't have constraint ids yet) *); x.constructor) ;
               poly        = (assert (List.length c.poly        = 0) (* Only removal of typeclass_simpl implemented for now (the others don't have constraint ids yet) *); x.poly       ) ;
               (* tc          = rm_typeclass_simpl x.tc c.tc         ; *)
@@ -108,3 +117,4 @@ let get_constraints_by_lhs : 'type_variable -> 'type_variable t -> constraints =
       (* tc          = [] ; *)
       row         = [] ;
     }
+let bindings : 'type_variable t -> ('type_variable * constraints) list = fun state -> ReprMap.bindings state

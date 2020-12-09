@@ -2,6 +2,8 @@
      (α₁, α₂, …) ∈ { (τ₁₁, τ₁₂, …) , … }
    to the possible cases, given a second hypothesis of the form
      αᵢ = κ(β₁, β₂, …)
+      or
+     αᵢ = ρ(ℓᵢ : βᵢ, …)
    It restricts the number of possible cases and replaces αᵢ in
    tuple of constrained variables so that the βⱼ are constrained
    instead.
@@ -14,17 +16,11 @@
    repeated or aliased type variables in the arguments, i.e. of the
    form […;x;…;y;…] ∈ […] where x and y are identical or aliased. *)
 
-module Core = Typesystem.Core
 open Ast_typed.Types
 open Typesystem.Solver_types
 open Trace
 open Typer_common.Errors
 open Ast_typed.Reasons
-module Map = RedBlackTrees.PolyMap
-module BiMap = RedBlackTrees.PolyBiMap
-module Set = RedBlackTrees.PolySet
-module UF = UnionFind.Poly2
-module ReprMap = UnionFind.ReprMap
 open Database_plugins.All_plugins
 
 open Heuristic_tc_fundep_utils
@@ -35,44 +31,25 @@ type selector_output = output_tc_fundep
  * Selector
  * *********************************************************************** *)
 
-let get_refined_typeclass : _ indexes -> c_typeclass_simpl -> refined_typeclass =
-  fun indexes tcs ->
-  let open Heuristic_tc_fundep_utils in
-  let tc = tc_to_constraint_identifier tcs in
-  match RefinedTypeclasses.find_opt tc indexes#refined_typeclasses with
-    Some x -> x
-  | None -> failwith "internal error: couldn't find refined version of the typeclass constraint"
-
 (* Find typeclass constraints in the dbs which constrain c.tv *)
-let selector_by_ctor_in_typeclasses : _ indexes -> c_constructor_simpl -> (output_tc_fundep selector_outputs) =
-  fun indexes c ->
-  let typeclasses = (TypeclassesConstraining.get_typeclasses_constraining c.tv indexes#typeclasses_constraining) in
-  let typeclasses = (List.map Option.unopt_exn
-                       (List.map (fun x -> ByConstraintIdentifier.find_opt x indexes#by_constraint_identifier)
-                          (PolySet.elements typeclasses))) in
-  let typeclasses = List.map (get_refined_typeclass indexes) typeclasses in
-  let cs_pairs_db = List.map (fun tc -> { tc ; c }) typeclasses in
-  cs_pairs_db
-
-(* Find typeclass constraints elsewhere??? (not private_storage anymore) which constrain c.tv *)
-let selector_by_ctor_in_refined_typeclasses : _ indexes -> c_constructor_simpl -> (output_tc_fundep selector_outputs) =
-  fun indexes c ->
-  let typeclasses = RefinedTypeclasses.values indexes#refined_typeclasses in
-  let cs_pairs_db = List.map (fun tc -> { tc ; c }) typeclasses in
-  cs_pairs_db
-
 let selector_by_ctor : _ indexes -> c_constructor_simpl -> (output_tc_fundep selector_outputs) =
   fun indexes c ->
-  let cs_pairs_in_db = selector_by_ctor_in_typeclasses indexes c in
-  let cs_pairs_in_private_storage = selector_by_ctor_in_refined_typeclasses indexes c in
-  cs_pairs_in_db @ cs_pairs_in_private_storage
+  let typeclasses = (TypeclassesConstraining.get_refined_typeclasses_constraining_list c.tv indexes) in
+  let cs_pairs_db = List.map (fun tc -> { tc ; c = `Constructor c }) typeclasses in
+  cs_pairs_db
+
+let selector_by_row : _ indexes -> c_row_simpl -> (output_tc_fundep selector_outputs) =
+  fun indexes r ->
+  let typeclasses = (TypeclassesConstraining.get_refined_typeclasses_constraining_list r.tv indexes) in
+  let cs_pairs_db = List.map (fun tc -> { tc ; c = `Row r }) typeclasses in
+  cs_pairs_db
 
 (* Find constructor constraints α = κ(β …) where α is one of the
    variables constrained by the (refined version of the) typeclass
    constraint tcs. *)
 let selector_by_tc : _ indexes -> c_typeclass_simpl -> (output_tc_fundep selector_outputs) =
   fun indexes tcs ->
-  let tc = get_refined_typeclass indexes tcs in
+  let tc = RefinedTypeclasses.find tcs indexes#refined_typeclasses in
   (* TODO: this won't detect already-existing constructor
      constraints that would apply to future versions of the refined
      typeclass. *)
@@ -83,7 +60,7 @@ let selector_by_tc : _ indexes -> c_typeclass_simpl -> (output_tc_fundep selecto
        that variable, e.g. α = κ(βᵢ, …). We can therefore look
        directly in the assignments. *)
     match Assignments.find_opt tv indexes#assignments with
-      Some c -> [({ tc ; c } : output_tc_fundep)]
+    | Some cr -> [({ tc ; c = cr } : output_tc_fundep)]
     | None   -> [] in
   List.flatten @@ List.map aux tc.refined.args
 
@@ -91,9 +68,9 @@ let selector : type_constraint_simpl -> _ indexes -> selector_output list =
   fun type_constraint_simpl indexes ->
   match type_constraint_simpl with
     SC_Constructor c  -> selector_by_ctor indexes c
-  | SC_Row r          -> ignore r; failwith "TODO: call selector_by_ctor indexes r"
-  | SC_Alias       _  -> [] (* TODO: ? *)
-  | SC_Poly        _  -> [] (* TODO: ? *)
+  | SC_Row r          -> selector_by_row indexes r
+  | SC_Alias       _  -> [] (* TODO: this case should go away since aliases are handled by the solver structure *)
+  | SC_Poly        _  -> []
   | SC_Typeclass   tc -> selector_by_tc indexes tc
 
 (* When (αᵢ, …) ∈ { (τ, …) , … } and β = κ(δ …) are in the db,
@@ -103,52 +80,60 @@ let selector : type_constraint_simpl -> _ indexes -> selector_output list =
    (typeclasses_constraining indexer). Add to this the logic for
    refined_typeclass vs. typeclass. *)
 
+   (*
+    1 , 2 , 3 , 4
+    -> (1,3) , (1,4)
+  
+    +5 -> 1 , 2 , 3 , 4 , 5
+
+   *)
+
 let alias_selector : type_variable -> type_variable -> _ indexes -> selector_output list =
   fun a b indexes ->
-  let a_tcs = (TypeclassesConstraining.get_typeclasses_constraining a indexes#typeclasses_constraining) in
-  let a_tcs = (List.map Option.unopt_exn
-                 (List.map (fun x -> ByConstraintIdentifier.find_opt x indexes#by_constraint_identifier)
-                    (PolySet.elements a_tcs))) in
-  let a_ctors = (GroupedByVariable.get_constraints_by_lhs a indexes#grouped_by_variable).constructor in
-  let b_tcs = (TypeclassesConstraining.get_typeclasses_constraining b indexes#typeclasses_constraining) in
-  let b_tcs = (List.map Option.unopt_exn
-                 (List.map (fun x -> ByConstraintIdentifier.find_opt x indexes#by_constraint_identifier)
-                    (PolySet.elements b_tcs))) in
-  let b_ctors = (GroupedByVariable.get_constraints_by_lhs b indexes#grouped_by_variable).constructor in
+  let a_tcs = (TypeclassesConstraining.get_refined_typeclasses_constraining_list a indexes) in
+  let b_tcs = (TypeclassesConstraining.get_refined_typeclasses_constraining_list b indexes) in
+  let a_lhs_constr = GroupedByVariable.get_constraints_by_lhs a indexes#grouped_by_variable in
+  let b_lhs_constr = GroupedByVariable.get_constraints_by_lhs b indexes#grouped_by_variable in
+  let a_ctors = List.map (fun a -> `Constructor a) a_lhs_constr.constructor in
+  let a_rows = List.map (fun a -> `Row a) a_lhs_constr.row in
+  let b_ctors = List.map (fun a -> `Constructor a) b_lhs_constr.constructor in
+  let b_rows = List.map (fun a -> `Row a) b_lhs_constr.row in
   List.flatten @@
   List.map
     (fun tc ->
-       let tc = get_refined_typeclass indexes tc in
        List.map
-         (fun ctor ->
-            { tc ; c = ctor })
-         (a_ctors @ b_ctors))
+         (fun c ->
+            { tc ; c })
+         (a_ctors @ b_ctors @ a_rows @ b_rows ))
     (a_tcs @ b_tcs)
-
 
 (* ***********************************************************************
  * Propagator
  * *********************************************************************** *)
 
-let restrict_one (c : c_constructor_simpl) (allowed : type_value) =
-  match c, allowed.wrap_content with
-  | { reason_constr_simpl=_; tv=_; c_tag; tv_list }, P_constant { p_ctor_tag; p_ctor_args } ->
+let restrict_one (cr : constructor_or_row) (allowed : type_value) =
+  match cr, allowed.wrap_content with
+  | `Constructor { reason_constr_simpl=_; tv=_; c_tag; tv_list }, P_constant { p_ctor_tag; p_ctor_args } ->
     if Ast_typed.Compare.constant_tag c_tag p_ctor_tag = 0
     then if List.compare_lengths tv_list p_ctor_args = 0
       then Some p_ctor_args
       else None (* case removed because type constructors are different *)
     else None   (* case removed because argument lists are of different lengths *)
-  | _, P_row _ -> failwith "TODO: support P_row similarly to P_constant"
-  | _, (P_forall _ | P_variable _ | P_apply _) -> None (* TODO: does this mean that we can't satisfy these constraints? *)
+  | `Row _, P_row _ -> failwith "TODO: support P_row similarly to P_constant"
+  | _, (P_forall _ | P_variable _ | P_apply _ | P_row _ | P_constant _) -> None (* TODO: does this mean that we can't satisfy these constraints? *)
 
 (* Restricts a typeclass to the possible cases given v = k(a, …) in c *)
-let restrict (({ reason_constr_simpl = _; tv = _; c_tag = _; tv_list } as c) : c_constructor_simpl) (tcs : c_typeclass_simpl) =
+let restrict (constructor_or_row : constructor_or_row) (tcs : c_typeclass_simpl) =
+  let (tv_list, tv) = match constructor_or_row with
+    | `Row r -> LMap.to_list r.tv_map , r.tv
+    | `Constructor c -> c.tv_list , c.tv
+  in
   (* TODO: this is bogus if there is shadowing *)
-  let index = List.find_index (Var.equal c.tv) tcs.args in
+  let index = List.find_index (Var.equal tv) tcs.args in
   (* Eliminate the impossible cases and splice in the type arguments
      for the possible cases: *)
   let aux allowed_tuple =
-    splice_or_none (fun allowed -> restrict_one c allowed) index allowed_tuple in
+    splice_or_none (fun allowed -> restrict_one constructor_or_row allowed) index allowed_tuple in
   let tc = List.filter_map aux tcs.tc in
   (* Replace the corresponding typeclass argument with the type
      variables passed to the type constructor *)

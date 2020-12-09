@@ -119,7 +119,7 @@ in {
             "tools"
           ];
           outputs = [ "out" ];
-          buildPhase = "dune runtest";
+          buildPhase = "dune runtest && LIGO_FORCE_NEW_TYPER=true dune runtest --force";
           nativeBuildInputs = oa.nativeBuildInputs
             ++ [ self.buildPackages.coq ];
           installPhase = "mkdir $out";

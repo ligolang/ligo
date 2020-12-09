@@ -509,24 +509,30 @@ and c_alias = {
   }
 
 
-(* sub-sub component: lazy selector (don't re-try all selectors every time) *)
-(* For now: just re-try everytime *)
+(* sub-sub component: lazy selector *)
+  
+type constructor_or_row = [ (* TODO : c_row_simpl and c_constructor_simpl must be merged*)
+  | `Constructor of c_constructor_simpl
+  | `Row of c_row_simpl
+]
 
 (* selector / propagation rule for breaking down composite types *)
 (* For now: break pair(a, b) = pair(c, d) into a = c, b = d *)
-type output_break_ctor = {
-    a_k_var : c_constructor_simpl ;
-    a_k'_var' : c_constructor_simpl ;
+
+type output_break_ctor = { (* TODO : this type must be local heuristic_... *)
+    a_k_var : constructor_or_row ;
+    a_k'_var' : constructor_or_row ;
   }
 
-type output_specialize1 = {
+type output_specialize1 = { (* TODO : this type must be local heuristic_... *) 
     poly : c_poly_simpl ;
     a_k_var : c_constructor_simpl ;
   }
 
-type output_tc_fundep = {
+
+type output_tc_fundep = { (* TODO : this type must be local heuristic_tc_fundep.. *)
     tc : refined_typeclass ;
-    c : c_constructor_simpl ;
+    c :  constructor_or_row ;
   }
 
 type m_break_ctor__already_selected = output_break_ctor poly_set

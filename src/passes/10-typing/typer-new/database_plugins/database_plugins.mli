@@ -12,7 +12,8 @@ module PluginFields_ (Ppt : PerPluginType) : sig
 
   module Assignments : sig
     type 'typeVariable t
-    val find_opt : 'type_variable -> 'type_variable t -> c_constructor_simpl option
+    val find_opt : 'type_variable -> 'type_variable t -> constructor_or_row option
+    val bindings : 'type_variable t -> ('type_variable * constructor_or_row) list
   end
   val assignments : flds -> < assignments : Ppt(Assignments).t >
 end
