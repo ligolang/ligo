@@ -9,6 +9,11 @@ open Region
 open Errors
 open Trace
 
+(* TODO don't *)
+let ignore x =
+  let%bind _ = x in
+  ok ()
+
 (* Useful modules *)
 
 module SSet = Set.Make (String)
@@ -145,10 +150,10 @@ let peephole_type : unit -> type_expr -> (unit,'err) result = fun _ t ->
   match t with
     TProd   {value=_;region=_} -> ok @@ ()
   | TSum    {value;region=_} ->
-    let () = Utils.nsepseq_to_list value.variants |> check_variants in
+    let%bind () = Utils.nsepseq_to_list value.variants |> check_variants in
     ok @@ ()
   | TRecord {value;region=_} ->
-    let () = Utils.nsepseq_to_list value.ne_elements |> check_fields in
+    let%bind () = Utils.nsepseq_to_list value.ne_elements |> check_fields in
     ok @@ ()
   | TApp    {value=_;region=_} -> ok @@ ()
   | TFun    {value=_;region=_} -> ok @@ ()
@@ -162,8 +167,11 @@ let peephole_type : unit -> type_expr -> (unit,'err) result = fun _ t ->
 let peephole_expression : unit -> expr -> (unit,'err) result = fun () e ->
   match e with
     ECase    {value;region=_}   ->
-    let () = Utils.nsepseq_iter (fun ({value;region=_}: _ case_clause reg) ->
-      check_pattern value.pattern) value.cases.value in
+    let%bind () =
+      Trace.bind_iter_list
+        (fun ({value;region=_}: _ case_clause reg) ->
+           check_pattern value.pattern)
+        (Utils.nsepseq_to_list value.cases.value) in
     ok @@ ()
   | ECond    {value=_;region=_} -> ok @@ ()
   | EAnnot   {value=_;region=_} -> ok @@ ()
@@ -183,7 +191,7 @@ let peephole_expression : unit -> expr -> (unit,'err) result = fun () e ->
   | ETuple   {value=_;region=_} -> ok @@ ()
   | EPar     {value=_;region=_} -> ok @@ ()
   | ELetIn   {value;region=_}   ->
-    let () = check_pattern value.binding.binders in
+    let%bind () = check_pattern value.binding.binders in
     ok @@ ()
   | ETypeIn   {value;region=_}   ->
     let%bind () = check_reserved_name value.type_decl.name in
@@ -196,7 +204,7 @@ let peephole_declaration : unit -> declaration -> (unit, 'err) result = fun _ d 
   match d with
     ConstDecl  {value;region=_} ->
     let (_,_,binding,_) = value in
-    let () = check_pattern binding.binders in
+    let%bind () = check_pattern binding.binders in
     ok @@ ()
   | TypeDecl {value;region=_} ->
     let%bind () = check_reserved_name value.name in
