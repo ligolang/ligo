@@ -1393,3 +1393,8 @@ Missing a type annotation for argument "b". |}];
   run_ligo_bad ["print-ast-typed"; bad_contract "funarg_tuple_wrong.religo"];
   [%expect {|
     Invalid record field "2" in record "#1.2". |}];
+
+  run_ligo_bad [ "compile-contract" ; bad_contract "duplicate_record_field.mligo" ; "main" ] ;
+  [%expect {|
+    Duplicate field name "foo" in this record declaration.
+    Hint: Change the name. |}];

@@ -857,18 +857,19 @@ and map_program : ('err) mapper -> t -> (t, 'err) result =
   map (fun decl -> {decl;eof}) @@
   bind_map_ne_list self @@ decl
 
-let fold_to_map : 'a -> ('a, 'err) folder -> ('err) mapper =
+(* TODO this is stupid *)
+let fold_to_map : unit -> (unit, 'err) folder -> ('err) mapper =
   fun init {e;t;s;d} ->
   let e expr =
-    let _ = e init expr in ok @@ expr
+    let%bind () = e init expr in ok @@ expr
   in
   let t ty =
-    let _ = t init ty in ok @@ ty
+    let%bind () = t init ty in ok @@ ty
   in
   let s stat =
-    let _ = s init stat in ok @@ stat
+    let%bind () = s init stat in ok @@ stat
   in
   let d decl =
-    let _ = d init decl in ok @@ decl
+    let%bind () = d init decl in ok @@ decl
   in
   {e;t;s;d}
