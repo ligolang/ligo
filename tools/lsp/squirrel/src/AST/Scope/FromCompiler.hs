@@ -22,9 +22,9 @@ import Range
 data FromCompiler
 
 instance HasLigoClient m => HasScopeForest FromCompiler m where
-  scopeForest ast (SomeLIGO dialect _) = do
+  scopeForest ast (SomeLIGO dialect _) msg = do
     (defs, _) <- getLigoDefinitions ast
-    return $ fromCompiler dialect defs
+    return (fromCompiler dialect defs, msg)
 
 -- | Extract `ScopeForest` from LIGO scope dump.
 --
