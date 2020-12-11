@@ -215,6 +215,21 @@ recognise (SomeRawTree dialect rawTree)
         ("TypeName", name) -> return $ TypeName name
         _                  -> fallthrough
 
+    -- Preprocessor
+  , Descent do
+      boilerplate \case
+        "preprocessor" -> Preprocessor <$> field "preprocessor_command"
+        _              -> fallthrough
+
+    -- ProcessorCommand
+  , Descent do
+      boilerplate \case
+        "p_if" -> PIf <$> field "rest"
+        "p_error" -> PError <$> field "message"
+        "p_warning" -> PWarning <$> field "message"
+        "p_define" -> PDefine <$> field "definition"
+        _ -> fallthrough
+
     -- Ctor
   , Descent do
       boilerplate' $ \case

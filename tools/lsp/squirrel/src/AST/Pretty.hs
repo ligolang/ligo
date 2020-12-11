@@ -267,6 +267,17 @@ instance Pretty1 Pattern where
     IsList       l         -> sexpr "list?" l
     IsTuple      t         -> sexpr "tuple?" t
 
+instance Pretty1 Preprocessor where
+  pp1 = \case
+    Preprocessor p -> p
+
+instance Pretty1 PreprocessorCommand where
+  pp1 = \case
+    PIf rest -> sexpr "#if" [rest]
+    PError msg -> sexpr "#error" [msg]
+    PWarning msg -> sexpr "#warning" [msg]
+    PDefine what -> sexpr "#define" [what]
+
 instance Pretty1 Name where
   pp1 = \case
     Name         raw -> pp raw
@@ -331,6 +342,12 @@ instance LPP1 d FieldName where
 instance LPP1 d Ctor where
   lpp1 = \case
     Ctor         raw -> lpp raw
+
+instance LPP1 d Preprocessor where
+  lpp1 = pp1
+
+instance LPP1 d PreprocessorCommand where
+  lpp1 = pp1
 
 -- instances needed to pass instance resolution during compilation
 

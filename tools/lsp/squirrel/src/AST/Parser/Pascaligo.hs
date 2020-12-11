@@ -99,6 +99,22 @@ recognise (SomeRawTree dialect rawTree)
         "case_clause_instr" -> Alt <$> field "pattern" <*> field  "body"
         _                   -> fallthrough
 
+    -- Preprocessor
+  , Descent do
+      boilerplate \case
+        "preprocessor" -> Preprocessor <$> field "preprocessor_command"
+        _              -> fallthrough
+
+    -- ProcessorCommand
+  , Descent do
+      boilerplate \case
+        "p_if" -> PIf <$> field "rest"
+        "p_error" -> PError <$> field "message"
+        "p_warning" -> PWarning <$> field "message"
+        "p_define" -> PDefine <$> field "definition"
+        _ -> fallthrough
+
+
     -- FieldAssignment
   , Descent do
       boilerplate \case

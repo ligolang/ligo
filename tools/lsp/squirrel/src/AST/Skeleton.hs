@@ -44,7 +44,7 @@ type RawLigoList =
   [ Name, QualifiedName, Pattern, Constant, FieldAssignment
   , MapBinding, Alt, Expr, TField, Variant, Type, Binding
   , RawContract, TypeName, FieldName
-  , Error, Ctor, Contract, NameDecl
+  , Error, Ctor, Contract, NameDecl, Preprocessor, PreprocessorCommand
   ]
 
 data Lang
@@ -130,6 +130,19 @@ data Expr it
   | SetPatch  it [it] -- (QualifiedName) [Expr]
   | RecordUpd it [it] -- (QualifiedName) [FieldAssignment]
   deriving stock (Functor, Foldable, Traversable)
+
+newtype Preprocessor it
+  = Preprocessor it -- (PreprocessorCommand)
+  deriving stock (Functor, Foldable, Traversable)
+
+-- Includes are in bindings
+data PreprocessorCommand it
+  = PIf it
+  | PError it
+  | PWarning it
+  | PDefine it
+  deriving stock (Functor, Foldable, Traversable)
+
 
 data Alt it
   = Alt it it -- (Pattern) (Expr)

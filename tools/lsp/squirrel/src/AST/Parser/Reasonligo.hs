@@ -91,6 +91,21 @@ recognise (SomeRawTree dialect rawTree)
         "spread" -> Spread <$> field "name"
         _ -> fallthrough
 
+    -- Preprocessor
+  , Descent do
+      boilerplate \case
+        "preprocessor" -> Preprocessor <$> field "preprocessor_command"
+        _              -> fallthrough
+
+    -- ProcessorCommand
+  , Descent do
+      boilerplate \case
+        "p_if" -> PIf <$> field "rest"
+        "p_error" -> PError <$> field "message"
+        "p_warning" -> PWarning <$> field "message"
+        "p_define" -> PDefine <$> field "definition"
+        _ -> fallthrough
+
     -- MapBinding
   , Descent do
       boilerplate $ \case
