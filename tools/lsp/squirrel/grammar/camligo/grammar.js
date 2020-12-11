@@ -25,12 +25,7 @@ module.exports = grammar({
       $.let_decl,
       $.fun_decl,
       $.type_decl,
-      $.include,
-    ),
-
-    include: $ => seq(
-      '#include',
-      field("filename", $.String)
+      $.preprocessor,
     ),
 
     fun_decl: $ => withAttrs($, seq(
@@ -374,6 +369,34 @@ module.exports = grammar({
       field("type", $._type_def_body)
     ),
 
+    /// Preprocessor
+
+    preprocessor: $ => field("preprocessor_command", choice(
+      $.include,
+      $.p_if,
+      $.p_error,
+      $.p_warning,
+      $.p_define,
+    )),
+
+    p_error: $ => seq('#error', field("message", $.till_newline)),
+    p_warning: $ => seq('#warning', field("message", $.till_newline)),
+
+    p_define: $ => seq(choice('#define', '#undef'), field("definition", $.till_newline)),
+
+    include: $ => seq(
+      '#include',
+      field("filename", $.String)
+    ),
+
+    p_if: $ => choice(
+      seq(
+        choice('#if', '#ifdef', '#ifndef', '#elif', '#else'),
+        field("rest", $.till_newline),
+      ),
+      '#endif',
+    ),
+
     _literal: $ => choice(
       $.String,
       $.Int,
@@ -404,6 +427,8 @@ module.exports = grammar({
     Unit:          $ => '()',
 
     comment: $ => /\/\/(\*\)[^\n]|\*[^\)\n]|[^\*\n])*\n/,
+
+    till_newline: $ => /[^\n]*\n/,
 
     ocaml_comment: $ =>
       seq(

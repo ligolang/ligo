@@ -74,7 +74,7 @@ module.exports = grammar({
         choice(
           $.type_decl,
           $.let_declaration,
-          $.include,
+          $.preprocessor,
         )
       ),
 
@@ -436,6 +436,34 @@ module.exports = grammar({
       ),
 
 
+    /// Preprocessor
+
+    preprocessor: $ => field("preprocessor_command", choice(
+      $.include,
+      $.p_if,
+      $.p_error,
+      $.p_warning,
+      $.p_define,
+    )),
+
+    p_error: $ => seq('#error', field("message", $.till_newline)),
+    p_warning: $ => seq('#warning', field("message", $.till_newline)),
+
+    p_define: $ => seq(choice('#define', '#undef'), field("definition", $.till_newline)),
+
+    include: $ => seq(
+      '#include',
+      field("filename", $.String)
+    ),
+
+    p_if: $ => choice(
+      seq(
+        choice('#if', '#ifdef', '#ifndef', '#elif', '#else'),
+        field("rest", $.till_newline),
+      ),
+      '#endif',
+    ),
+
     ///////////////////////////////////////////
 
     FieldName: $ => $.Name,
@@ -451,6 +479,8 @@ module.exports = grammar({
       $.block_comment
     ),
 
+    till_newline: $ => /[^\n]*\n/,
+
     oneline_comment: $ => token(seq('//', /.*/)),
 
     block_comment: $ => seq(
@@ -458,8 +488,6 @@ module.exports = grammar({
       repeat(/./),
       '*/'
     ),
-
-    include: $ => seq('#include', $.String),
 
     attr: $ => /\[@[a-zA-Z][a-zA-Z0-9_:]*\]/,
 
@@ -475,7 +503,6 @@ module.exports = grammar({
     Keyword: $ => /[A-Za-z][a-z]*/,
     Bool: $ => choice($.False, $.True),
 
-    include: $ => seq('#include', field("filename", $.String)),
 
     False: $ => 'false',
     True: $ => 'true',

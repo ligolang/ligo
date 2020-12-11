@@ -63,7 +63,7 @@ module.exports = grammar({
         $.type_decl,
         $.const_decl,
         $.fun_decl,
-        $.include,
+        $.preprocessor,
       ),
 
     type_decl: $ =>
@@ -713,9 +713,39 @@ module.exports = grammar({
         optional(field("arguments", $.tuple_pattern)),
       ),
 
+    /// Preprocessor
+
+    preprocessor: $ => field("preprocessor_command", choice(
+      $.include,
+      $.p_if,
+      $.p_error,
+      $.p_warning,
+      $.p_define,
+    )),
+
+    p_error: $ => seq('#error', field("message", $.till_newline)),
+    p_warning: $ => seq('#warning', field("message", $.till_newline)),
+
+    p_define: $ => seq(choice('#define', '#undef'), field("definition", $.till_newline)),
+
+    include: $ => seq(
+      '#include',
+      field("filename", $.String)
+    ),
+
+    p_if: $ => choice(
+      seq(
+        choice('#if', '#ifdef', '#ifndef', '#elif', '#else'),
+        field("rest", $.till_newline),
+      ),
+      '#endif',
+    ),
+
     ///////////////////////////////////////////
 
     comment: $ => /\/\/[^\n]*\n/,
+
+    till_newline: $ => /[^\n]*\n/,
 
     ocaml_comment: $ =>
       seq(
@@ -732,8 +762,6 @@ module.exports = grammar({
       ),
 
     attr: $ => /\[@[a-zA-Z][a-zA-Z0-9_:]*\]/,
-
-    include: $ => seq('#include', field("filename", $.String)),
 
     _NameCapital: $ => /[A-Z][a-zA-Z0-9_]*/,
     String: $ => choice(/\"(\\.|[^"])*\"/, /{\|(\\.|[^\|])*\|}/),
