@@ -224,7 +224,7 @@ recognise (SomeRawTree dialect rawTree)
     -- ProcessorCommand
   , Descent do
       boilerplate \case
-        "p_if" -> PIf <$> field "rest"
+        "p_if" -> PIf <$> fieldOpt "rest"
         "p_error" -> PError <$> field "message"
         "p_warning" -> PWarning <$> field "message"
         "p_define" -> PDefine <$> field "definition"

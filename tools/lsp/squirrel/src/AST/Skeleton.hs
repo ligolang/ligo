@@ -137,7 +137,7 @@ newtype Preprocessor it
 
 -- Includes are in bindings
 data PreprocessorCommand it
-  = PIf it
+  = PIf (Maybe it) -- TODO: A workaround for a somewhat faulty ts parser which can't find field "rest" for `p_if` case
   | PError it
   | PWarning it
   | PDefine it

@@ -273,7 +273,7 @@ instance Pretty1 Preprocessor where
 
 instance Pretty1 PreprocessorCommand where
   pp1 = \case
-    PIf rest -> sexpr "#if" [rest]
+    PIf rest -> sexpr "#if" [pp rest]
     PError msg -> sexpr "#error" [msg]
     PWarning msg -> sexpr "#warning" [msg]
     PDefine what -> sexpr "#define" [what]
