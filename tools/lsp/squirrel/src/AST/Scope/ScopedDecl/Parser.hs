@@ -49,7 +49,7 @@ parseTypeField :: PPableLIGO info => LIGO info -> Maybe TypeField
 parseTypeField node = do
   LIGO.TField nameNode typNode <- layer node
   LIGO.FieldName _tfName <- layer nameNode
-  let _tfType = parseType typNode
+  let _tfTspec = parseTypeDeclSpecifics typNode
   pure TypeField{ .. }
 
 parseVariantType :: LIGO info -> Maybe Type
@@ -67,7 +67,7 @@ parseTypeConstructor node = do
 parseTupleType :: PPableLIGO info => LIGO info -> Maybe Type
 parseTupleType node = do
   LIGO.TProduct elementNodes <- layer node
-  let elements = map parseType elementNodes
+  let elements = map parseTypeDeclSpecifics elementNodes
   pure (TupleType elements)
 
 -- Since we don't care right now about distinguishing functions or whatever, we

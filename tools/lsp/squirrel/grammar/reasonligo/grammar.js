@@ -141,7 +141,7 @@ module.exports = grammar({
       $._literal,
       $.Name,
       $.Name_Capital,
-      $.qualified_name,
+      $.data_projection,
       $.if,
       $.switch,
       $.record,
@@ -169,8 +169,8 @@ module.exports = grammar({
     ),
 
     lhs: $ => seq(
-      optional(seq(field("name", $.Name), '.')),
       field("callee", $.Name),
+      optional(seq(field("name", $.Name), '.')),
     ),
 
     list: $ => brackets(
@@ -213,11 +213,12 @@ module.exports = grammar({
       optional(';'),
     ),
 
-    qualified_name: $ => seq(
-      field("expr", $._expr),
-      '.',
-      field("name", $.FieldName),
-    ),
+    // a.attribute
+    data_projection: $ => prec.right(21, seq(
+      field("box", $._expr),
+      ".",
+      sepBy1('.', field("selector", $.FieldName)),
+    )),
 
     binary_call: $ => choice(
       ...OPS
@@ -243,7 +244,7 @@ module.exports = grammar({
     indexing: $ => prec.right(12, seq(
       field("box", $._expr),
       brackets(
-        field("index", $._expr),
+        field("index", $._expr), // indices really aren't arbitrary expressions…
       )
     )),
 

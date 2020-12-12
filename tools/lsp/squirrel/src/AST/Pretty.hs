@@ -195,7 +195,6 @@ instance Pretty1 Type where
   pp1 = \case
     TArrow    dom codom -> sop dom "->" [codom]
     TRecord   fields    -> sexpr "RECORD" fields
-    TVar      name      -> name
     TSum      variants  -> sexpr "SUM" variants
     TProduct  elements  -> sexpr "PROD" elements
     TApply    f xs      -> sop f "$" [xs]
@@ -368,7 +367,6 @@ instance LPP1 'Caml MapBinding where
 
 instance LPP1 'Pascal Type where
   lpp1 = \case
-    TVar      name      -> name
     TArrow    dom codom -> dom <+> "->" <+> codom
     TRecord   fields    -> "record [" `above` blockWith (<.> ";") fields `above` "]"
     TProduct  [element] -> element
@@ -499,7 +497,6 @@ instance LPP1 'Pascal MapBinding where
 
 instance LPP1 'Reason Type where
   lpp1 = \case
-    TVar      name      -> name
     TArrow    dom codom -> dom <+> "=>" <+> codom
     TRecord   fields    -> "{" `indent` blockWith (<.> ",") fields `above` "}"
     TProduct  elements  -> tuple elements
@@ -594,7 +591,6 @@ instance LPP1 'Reason MapBinding where
 
 instance LPP1 'Caml Type where
   lpp1 = \case
-    TVar      name      -> name
     TArrow    dom codom -> dom <+> "->" <+> codom
     TRecord   fields    -> "{" `indent` blockWith (<.> ";") fields `above` "}"
     TProduct  elements  -> train " *" elements

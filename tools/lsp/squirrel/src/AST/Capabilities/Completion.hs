@@ -2,22 +2,30 @@ module AST.Capabilities.Completion where
 
 import Language.LSP.Types (CompletionDoc (..), CompletionItem (..), CompletionItemKind (..))
 
+import Control.Lens ((^?))
+import Control.Monad (foldM)
+import Data.Foldable (asum)
 import Data.Function (on)
+import Data.Functor ((<&>))
 import Data.List (isSubsequenceOf, nubBy)
-import Data.Maybe (listToMaybe)
 import Data.Text (Text)
 import qualified Data.Text as Text
-
 import Duplo.Lattice
 import Duplo.Pretty
 import Duplo.Tree
 
-import AST.Pretty (docToText)
+import AST.Capabilities.Find
+  (TypeDefinitionRes (..), dereferenceTspec, findNodeAtPoint, typeDefinitionOf)
+import AST.Pretty (PPableLIGO, docToText)
 import AST.Scope
-import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..), lppDeclCategory)
+import AST.Scope.ScopedDecl
+  (Accessor, DeclarationSpecifics (..), Scope, ScopedDecl (..), TypeDeclSpecifics (..),
+  TypeField (..), _RecordType, _TypeSpec, accessField, lppDeclCategory, lppLigoLike, sdSpec,
+  tdsInit)
 import AST.Skeleton
 import Product
 import Range
+import Util (unconsFromEnd)
 
 data Completion = Completion
   { cName :: Text
@@ -26,27 +34,76 @@ data Completion = Completion
   }
   deriving (Eq, Show)
 
-complete
-  :: ( Eq (Product xs)
-     , Modifies (Product xs)
-     , Contains Range xs
-     , Contains [ScopedDecl] xs
-     , Contains (Maybe Level) xs
-     )
-  => Range
-  -> LIGO xs
-  -> Maybe [Completion]
-complete r tree = do
-  let l = spineTo (leq r . getElem) tree
-  word <- listToMaybe l
-  let scope = getElem (extract word)
-  let nameLevel = getElem (extract word)
-  return
-    $ filter (isSubseqOf (ppToText word) . cName)
-    $ nubBy ((==) `on` cName)
-    $ map asCompletion
-    $ filter (`fitsLevel` nameLevel)
-    $ scope
+type CompletionLIGO info =
+  ( Eq (Product info)
+  , Modifies (Product info)
+  , Contains Range info
+  , Contains Scope info
+  , Contains (Maybe Level) info
+  , PPableLIGO info
+  )
+
+complete :: CompletionLIGO xs => Range -> SomeLIGO xs -> Maybe [Completion]
+complete pos tree = do
+  node <- findNodeAtPoint pos tree
+  let scope = getElem (extract node)
+  let nameLevel = getElem (extract node)
+  getPossibleCompletions scope nameLevel pos tree
+    <&> nubBy ((==) `on` cName)
+    <&> filter (isSubseqOf (ppToText node) . cName)
+
+getPossibleCompletions
+  :: CompletionLIGO xs
+  => Scope -> Maybe Level -> Range -> SomeLIGO xs -> Maybe [Completion]
+getPossibleCompletions scope level pos tree = asum completers
+  where
+    completers =
+      [ completeField scope pos tree
+      , completeFromScope scope level
+      ]
+
+parseAccessor :: PPableLIGO xs => LIGO xs -> Accessor
+parseAccessor node = case reads (Text.unpack textValue) of
+  [(num, "")] -> Left num
+  _ -> Right textValue
+  where
+    textValue = ppToText node
+
+completeField
+  :: CompletionLIGO xs => Scope -> Range -> SomeLIGO xs -> Maybe [Completion]
+completeField = completeFieldTypeAware
+
+completeFieldTypeAware
+  :: CompletionLIGO xs => Scope -> Range -> SomeLIGO xs -> Maybe [Completion]
+completeFieldTypeAware scope pos tree@(SomeLIGO dialect nested) = do
+  QualifiedName{ qnSource, qnPath } <- asum (map layer covers)
+  (finished, _unfinished) <- unconsFromEnd qnPath
+  -- ^ throwing away the last field, because it's the field we are trying to complete
+  let accessors = map parseAccessor finished
+  firstTspec <- toTspec (typeDefinitionOf (getRange qnSource) tree)
+  finalTspec <- foldM accessAndDereference firstTspec accessors
+  finalFields <- finalTspec ^? tdsInit . _RecordType
+  pure (map mkCompletion finalFields)
+  where
+    covers = spineTo (leq pos . getRange) nested
+
+    toTspec TypeNotFound = Nothing
+    toTspec (TypeDeclared decl) = decl ^? sdSpec . _TypeSpec
+    toTspec (TypeInlined tspec) = Just tspec
+
+    accessAndDereference :: TypeDeclSpecifics -> Accessor -> Maybe TypeDeclSpecifics
+    accessAndDereference tspec accessor =
+      dereferenceTspec scope <$> accessField tspec accessor
+
+    mkCompletion field = Completion
+      { cName = _tfName field
+      , cType = docToText (lppLigoLike dialect (_tfTspec field))
+      , cDoc = ""
+      }
+
+completeFromScope :: Scope -> Maybe Level -> Maybe [Completion]
+completeFromScope scope level
+  = Just [asCompletion decl | decl <- scope, decl `fitsLevel` level]
 
 toCompletionItem :: Completion -> CompletionItem
 toCompletionItem c@Completion

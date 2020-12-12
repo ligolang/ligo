@@ -6,7 +6,7 @@ module AST.Parser
   ) where
 
 import Control.Exception.Safe (try)
-import Control.Lens (_1, element, view, (%~), (&), (.~), (<&>), (^.))
+import Control.Lens (element, (&), (.~), (^.))
 import Control.Monad.Catch (MonadThrow (throwM))
 import Control.Monad.IO.Class (liftIO)
 import qualified Data.List as List
@@ -26,7 +26,7 @@ import ParseTree (Source (..), toParseTree)
 import Parser
 import Range (point)
 
-parse :: Source -> IO (LIGO Info, [Msg])
+parse :: Source -> IO (SomeLIGO Info, [Msg])
 parse src = do
   recogniser <- onExt ElimExt
     { eePascal = Pascal.recognise
@@ -35,10 +35,10 @@ parse src = do
     } (srcPath src)
   toParseTree src
     >>= (runParserM . recogniser)
-    <&> (_1 %~ view nestedLIGO)
 
 -- | Parse with arbitrary parser.
-parseWithScopes :: forall impl m. HasScopeForest impl m => Source -> m (LIGO Info', [Msg])
+parseWithScopes
+  :: forall impl m. HasScopeForest impl m => Source -> m (SomeLIGO Info', [Msg])
 parseWithScopes src = do
   recogniser <- liftIO do
     onExt ElimExt
@@ -51,7 +51,7 @@ parseWithScopes src = do
     toParseTree src >>= runParserM . recogniser
 
   ast' <- addLocalScopes @impl src ast
-  return (ast' ^. nestedLIGO, msg)
+  return (ast', msg)
 
 -- | Parse with both compiler and fallback parsers.
 parseWithScopes' :: forall m.

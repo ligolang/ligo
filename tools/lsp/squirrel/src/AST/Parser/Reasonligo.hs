@@ -117,7 +117,7 @@ recognise (SomeRawTree dialect rawTree)
 
   , Descent do
       boilerplate $ \case
-        "qualified_name"    -> QualifiedName <$> field "expr" <*> fields "name"
+        "data_projection" -> QualifiedName <$> field "box" <*> fields "selector"
         "lhs" -> QualifiedName <$> field "callee" <*> fields "name"
         _                 -> fallthrough
 

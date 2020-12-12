@@ -9,7 +9,7 @@ import qualified Language.LSP.Types as J
 
 import AST.Capabilities.Find (CanSearch, findScopedDecl)
 import AST.Scope.ScopedDecl (ScopedDecl (ScopedDecl, _sdRefs))
-import AST.Skeleton (LIGO)
+import AST.Skeleton (SomeLIGO)
 import Range (Range, toLspRange)
 
 
@@ -22,7 +22,7 @@ data RenameDeclarationResult = Ok [J.TextEdit] | NotFound
 -- The position is given as a range, becuase that is how we do it, haha :/.
 renameDeclarationAt
   :: CanSearch xs
-  => Range -> LIGO xs -> Text -> RenameDeclarationResult
+  => Range -> SomeLIGO xs -> Text -> RenameDeclarationResult
 renameDeclarationAt pos tree newName =
     case findScopedDecl pos tree of
       Nothing -> NotFound

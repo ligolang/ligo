@@ -1,7 +1,8 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module AST.Scope.ScopedDecl
-  ( ScopedDecl (..)
+  ( Scope
+  , ScopedDecl (..)
   , sdName
   , sdOrigin
   , sdRefs
@@ -15,7 +16,10 @@ module AST.Scope.ScopedDecl
   , tdsInitRange
   , tdsInit
   , Type (..)
+  , _RecordType
   , TypeField (..)
+  , tfName
+  , tfTspec
   , TypeConstructor (..)
   , ValueDeclSpecifics (..)
   , vdsInitRange
@@ -23,7 +27,10 @@ module AST.Scope.ScopedDecl
   , vdsTspec
   , Parameter (..)
 
+  , Accessor
+  , accessField
   , lppDeclCategory
+  , lppLigoLike
   , fillTypeIntoCon
   , extractRefName
   ) where
@@ -31,6 +38,7 @@ module AST.Scope.ScopedDecl
 import Control.Applicative ((<|>))
 import Control.Lens ((%~), (&), (^?))
 import Control.Lens.TH (makeLenses, makePrisms)
+import Data.List (find)
 import Data.Sum (inject)
 import Data.Text (Text)
 import Duplo.Tree (Cofree ((:<)), Element)
@@ -42,6 +50,9 @@ import qualified AST.Skeleton as LIGO
 import Parser (fillInfo)
 import Product (Product (Nil))
 import Range (Range)
+import Util (safeIndex)
+
+type Scope = [ScopedDecl]
 
 data ScopedDecl = ScopedDecl
   { _sdName :: Text
@@ -60,32 +71,37 @@ data TypeDeclSpecifics = TypeDeclSpecifics
   { _tdsInitRange :: Range
   , _tdsInit :: Type
   }
+  deriving stock (Eq, Show)
 
 data Type
   = RecordType [TypeField]
   | VariantType [TypeConstructor]
-  | TupleType [Type]
+  | TupleType [TypeDeclSpecifics]
   | AliasType Text
+  deriving stock (Eq, Show)
 
 data TypeField = TypeField
   { _tfName :: Text
-  , _tfType :: Type
+  , _tfTspec :: TypeDeclSpecifics
   }
+  deriving stock (Eq, Show)
 
 data TypeConstructor = TypeConstructor
   { _tcName :: Text
   }
+  deriving stock (Eq, Show)
 
 data ValueDeclSpecifics = ValueDeclSpecifics
   { _vdsInitRange :: Maybe Range
   , _vdsParams :: Maybe [Parameter] -- if there are any, it's a function
   , _vdsTspec :: Maybe TypeDeclSpecifics
   }
+  deriving stock (Eq, Show)
 
 newtype Parameter = Parameter
   { parPresentation :: Text
   }
-  deriving stock Show
+  deriving stock (Eq, Show)
   deriving newtype Pretty
 
 instance Eq ScopedDecl where
@@ -103,7 +119,10 @@ lppDeclCategory decl = case _sdSpec decl of
   TypeSpec{} -> pp @Text "TYPE"
   ValueSpec vspec -> case _vdsTspec vspec of
     Nothing -> pp @Text "unknown"
-    Just tspec -> lppDialect (_sdDialect decl) (fillInfo (toLIGO tspec))
+    Just tspec -> lppLigoLike (_sdDialect decl) tspec
+
+lppLigoLike :: IsLIGO a => Lang -> a -> Doc
+lppLigoLike dialect ligoLike = lppDialect dialect (fillInfo (toLIGO ligoLike))
 
 class IsLIGO a where
   toLIGO :: a -> LIGO '[]
@@ -119,7 +138,7 @@ instance IsLIGO Type where
 
 instance IsLIGO TypeField where
   toLIGO TypeField{ .. } = node
-    (LIGO.TField (node (LIGO.FieldName _tfName)) (toLIGO _tfType))
+    (LIGO.TField (node (LIGO.FieldName _tfName)) (toLIGO _tfTspec))
 
 instance IsLIGO TypeConstructor where
   toLIGO TypeConstructor{ .. } = node
@@ -133,6 +152,7 @@ $(makePrisms ''DeclarationSpecifics)
 $(makeLenses ''TypeDeclSpecifics)
 $(makeLenses ''ValueDeclSpecifics)
 $(makePrisms ''Type)
+$(makeLenses ''TypeField)
 
 -- | Assuming that 'typDecl' is a declaration of a type containing a constructor
 -- that has a declaration 'conDecl', specify 'conDecl''s type as that of
@@ -151,3 +171,14 @@ fillTypeIntoCon typDecl conDecl
 -- reference.
 extractRefName :: Type -> Maybe Text
 extractRefName typ = typ ^? _AliasType
+
+type Accessor = Either Int Text
+
+accessField :: TypeDeclSpecifics -> Accessor -> Maybe TypeDeclSpecifics
+accessField tspec (Left num) = do
+  tupleTspecs <- tspec ^? tdsInit . _TupleType
+  safeIndex tupleTspecs num
+accessField tspec (Right text) = do
+  typeFields <- tspec ^? tdsInit . _RecordType
+  fitting <- find ((text ==) . _tfName) typeFields
+  pure (_tfTspec fitting)

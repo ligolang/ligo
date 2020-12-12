@@ -32,7 +32,7 @@ import Cli.Types
 import Parser
 import Product
 import Range
-import Util (foldMapM)
+import Util (foldMapM, unconsFromEnd)
 
 data Fallback
 
@@ -148,14 +148,6 @@ unSeq = loop go
           Just (initDecls, lastDecl) -> foldr joinWithLet lastDecl initDecls
 
       it -> it
-
--- | Split into list into a pair of all but the last elements, and the last
--- element.
---
--- @unconsFromEnd [1, 2, 3] = Just ([1, 2], 3)@
-unconsFromEnd :: [a] -> Maybe ([a], a)
-unconsFromEnd [] = Nothing
-unconsFromEnd xs = Just (init xs, last xs) -- doubt we should care about two passes
 
 -- | Combine two tree nodes with 'Let', so that the second node turns out to be
 -- in the scope of the first node.

@@ -164,12 +164,14 @@ module.exports = grammar({
       field("x", $._sub_expr)
     )),
 
-    // a.0
-    index_accessor: $ => prec.right(21, seq(
+    // a.0 or a.attribute
+    data_projection: $ => prec.right(21, seq(
       field("box", $._sub_expr),
       ".",
-      field("field", $._sub_expr)
+      sepBy1('.', field("selector", $._selection)),
     )),
+
+    _selection: $ => choice($.FieldName, $.Int),
 
     // { p with a = b; c = d }
     rec_literal: $ => seq(
@@ -265,7 +267,7 @@ module.exports = grammar({
       $.lambda_expr,
       $.match_expr,
       $.list_expr,
-      $.index_accessor,
+      $.data_projection,
       $.block_expr,
     ),
 

@@ -9,6 +9,7 @@ import Control.Lens.Lens (Lens, lens)
 import Control.Monad.Reader (Reader)
 import Data.Text (Text)
 
+import Duplo.Pretty (Pretty (..))
 import Duplo.Tree
 
 import Product
@@ -25,6 +26,9 @@ nestedLIGO = lens getLIGO setLIGO
 withNestedLIGO
   :: Functor f => SomeLIGO xs -> (LIGO xs -> f (LIGO xs')) -> f (SomeLIGO xs')
 withNestedLIGO = flip nestedLIGO
+
+instance Pretty (LIGO xs) => Pretty (SomeLIGO xs) where
+  pp (SomeLIGO _ nested) = pp nested
 
 type ScopeM = Reader Lang
 
@@ -77,7 +81,6 @@ type IsRec = Bool
 data Type it
   = TArrow    it it    -- ^ (Type) (Type)
   | TRecord   [it]     -- ^ [TField]
-  | TVar      it       -- ^ (Name)
   | TSum      [it]     -- ^ [Variant]
   | TProduct  [it]     -- ^ [Type]
   | TApply    it it  -- ^ (Name) (Type)
