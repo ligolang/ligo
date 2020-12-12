@@ -37,7 +37,8 @@ import Util (foldMapM, unconsFromEnd)
 data Fallback
 
 instance HasLigoClient m => HasScopeForest Fallback m where
-  scopeForest _ (SomeLIGO dialect ligo) = pure (runReader (getEnv ligo) dialect)
+  scopeForest _ (SomeLIGO dialect ligo) msg =
+    pure (runReader (getEnv ligo) dialect, msg)
 
 addReferences :: LIGO Info -> ScopeForest -> ScopeForest
 addReferences ligo = execState $ loopM_ addRef ligo

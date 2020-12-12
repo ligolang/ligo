@@ -35,9 +35,6 @@ import qualified Language.LSP.Server as J
 import qualified Language.LSP.Types as J
 import qualified Language.LSP.VFS as V
 
--- import           System.Directory (getDirectoryContents, doesDirectoryExist)
--- import           System.FilePath
-
 import Duplo.Tree (collect)
 
 import AST
@@ -48,7 +45,6 @@ import Config (Config (..))
 import qualified Log
 import Product
 import Range
-
 
 type RioEnv =
   Product
@@ -115,7 +111,7 @@ load uri = do
   src <- preload uri
   ligoEnv <- getLigoClientEnv
   Log.debug "LOAD" [i|running with env #{ligoEnv}|]
-  parseWithScopes @Fallback src
+  parseWithScopes @Standard src
 
 collectErrors
   :: (J.NormalizedUri -> RIO (SomeLIGO Info', [Msg]))

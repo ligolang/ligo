@@ -10,7 +10,7 @@ module Cli.Impl
   , getLigoDefinitionsFrom
   ) where
 
-import Control.Exception.Safe (Exception (..), SomeException, catchAny, throwIO, try)
+import Control.Exception.Safe (Exception (..), try)
 import Control.Monad
 import Control.Monad.Catch (MonadThrow (throwM))
 import Control.Monad.Reader
@@ -93,61 +93,13 @@ callLigo args con = do
   LigoClientEnv {..} <- getLigoClientEnv
   liftIO $ do
     raw <- srcToText con
-    (ec, lo, le) <- readProcessWithExitCode' _lceClientPath args (unpack raw)
+    (ec, lo, le) <- readProcessWithExitCode _lceClientPath args (unpack raw)
     unless (ec == ExitSuccess && le == mempty) $ do -- TODO: separate JSON errors and other ones
       throwM $ ExpectedClientFailure (pack lo) (pack le)
     unless (le == mempty) $ do
       throwM $ UnexpectedClientFailure 0 (pack lo) (pack le)
     Log.debug "LIGO" [i|Successfully exited with stdout:\n#{lo}\nand stderr:\n#{le}|]
     return (pack lo, pack le)
-
--- | Call ligo binary and pass raw contract to its stdin and return
--- stdin and stderr accordingly.
--- callLigoWith
---   :: HasLigoClient m => [String] -> Source -> m (Text, Text)
--- callLigoWith args con = do
---   env@LigoClientEnv {..} <- getLigoClientEnv
---   liftIO $ do
---     Log.debug "LIGO" [i|Running ligo on #{env} with #{args}|]
---     (Just ligoIn, Just ligoOut, Just ligoErr, ligoProc) <-
---       createProcess (proc _lceClientPath args)
---         { std_out = CreatePipe
---         , std_in  = CreatePipe
---         , std_err = CreatePipe
---         }
---     raw <- srcToBytestring con
---     S.hPut ligoIn raw
---     res <- S.hGetContents ligoOut
---     le <- S.hGetContents ligoErr
---     ec <- waitForProcess ligoProc
---     unless (ec == ExitSuccess) $ do
---       throwM $ ExpectedClientFailure (decodeUtf8 res) (decodeUtf8 le)
---     unless (le == mempty) $ do
---       throwM $ UnexpectedClientFailure 0 (decodeUtf8 res) (decodeUtf8 le)
---     Log.debug "LIGO" [i|Successfully exited with stdout:\n#{S8.unpack res}\nand stderr:\n#{S8.unpack le}|]
---     return (decodeUtf8 res, decodeUtf8 le)
-
--- | Variant of @readProcessWithExitCode@ that prints a better error in case of
--- an exception in the inner @readProcessWithExitCode@ call.
-readProcessWithExitCode'
-  :: FilePath
-  -> [String]
-  -> String
-  -> IO (ExitCode, String, String)
-readProcessWithExitCode' fp args inp =
-    readProcessWithExitCode fp args inp `catchAny` handler
-  where
-    handler :: SomeException -> IO (ExitCode, String, String)
-    handler e = do
-      Log.err "CLI" errorMsg
-      throwIO e
-
-    errorMsg =
-      mconcat
-        [ "ERROR!! There was an error in executing `"
-        , show fp
-        , "` program. Is the executable available in PATH ?"
-        ]
 
 ----------------------------------------------------------------------------
 -- Execution

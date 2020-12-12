@@ -25,7 +25,7 @@ import Product
 import Range
 
 class HasLigoClient m => HasScopeForest impl m where
-  scopeForest :: Source -> SomeLIGO Info -> m ScopeForest
+  scopeForest :: Source -> SomeLIGO Info -> [Msg] -> m (ScopeForest, [Msg])
 
 instance {-# OVERLAPPABLE #-} Pretty x => Show x where
   show = show . pp
@@ -127,18 +127,22 @@ spine r (only -> (i, trees))
   | otherwise = []
 
 addLocalScopes
-  :: forall impl m. HasScopeForest impl m
-  => Source -> SomeLIGO Info -> m (SomeLIGO Info')
-addLocalScopes src tree = do
-  forest <- scopeForest @impl src tree
-
+  :: forall impl m .
+    ( HasScopeForest impl m
+    )
+  => Source
+  -> SomeLIGO Info
+  -> [Msg]
+  -> m (SomeLIGO Info', [Msg])
+addLocalScopes src tree msg = do
+  (forest, msg') <- scopeForest @impl src tree msg
   let
     defaultHandler f (i :< fs) = do
       fs' <- traverse f fs
       let env = envAtPoint (getRange i) forest
       return ((env :> Nothing :> i) :< fs')
 
-  withNestedLIGO tree $
+  scopeTree <- withNestedLIGO tree $
     descent @(Product Info) @(Product Info') @RawLigoList @RawLigoList defaultHandler
     [ Descent \(i, Name t) -> do
         let env = envAtPoint (getRange i) forest
@@ -156,3 +160,5 @@ addLocalScopes src tree = do
         let env = envAtPoint (getRange i) forest
         return (env :> Just TypeLevel :> i, TypeName t)
     ]
+
+  return (scopeTree, msg')
