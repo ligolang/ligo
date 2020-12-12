@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wno-orphans #-}
+{-# OPTIONS_GHC -Wno-incomplete-uni-patterns -Wno-orphans #-}
 
 module RIO
   ( RIO
@@ -101,7 +101,7 @@ preload
   :: J.Uri
   -> RIO Source
 preload uri = do
-  let Just fin = J.uriToFilePath uri
+  let Just fin = J.uriToFilePath uri  -- FIXME: non-exhaustive
   mvf <- J.getVirtualFile (J.toNormalizedUri uri)
   return case mvf of
     Just vf -> Text fin (V.virtualFileText vf)

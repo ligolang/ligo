@@ -16,8 +16,9 @@ let
           # Thanks, I Hate It.
           components.tests.squirrel-test = {
             preBuild = "export CONTRACTS_DIR=${../../../src/test/contracts}";
-            build-tools = [ config.hsPkgs.tasty-discover ];
           };
+
+          package.ghcOptions = "-Werror";
         };
       })
     ];

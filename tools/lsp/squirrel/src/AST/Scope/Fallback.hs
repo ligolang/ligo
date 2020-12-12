@@ -106,8 +106,6 @@ loopM go = aux
 
 unLetRec
   :: ( Contains  Range     xs
-     , Contains [Text]     xs
-     , Contains  ShowRange xs
      , Eq (Product xs)
      )
   => LIGO xs
@@ -133,8 +131,6 @@ unLetRec = loop go
 -- subsequent node turned out to be in the scope of the previous one.
 unSeq
   :: ( Contains  Range     xs
-     , Contains [Text]     xs
-     , Contains  ShowRange xs
      , Eq (Product xs)
      )
   => LIGO xs
@@ -176,7 +172,6 @@ assignDecls
      , Contains [Text]     xs
      , Contains  ShowRange xs
      , Eq (Product xs)
-     , Pretty (Product xs)
      )
   => LIGO xs
   -> ScopeM (LIGO ([ScopedDecl] : Bool : Range : xs))
@@ -417,9 +412,7 @@ getImmediateDecls = \case
   _ -> pure []
 
 select
-  :: ( Lattice  (Product info)
-     , PPableLIGO info
-     , Eq (Product info)
+  :: ( PPableLIGO info
      )
   => Text
   -> [Visit RawLigoList (Product info) (WriterT [LIGO info] Catch)]
@@ -438,7 +431,6 @@ select what handlers t
 getName
   :: ( Lattice  (Product info)
      , PPableLIGO info
-     , Eq (Product info)
      )
   => LIGO info
   -> (Range, Text)
@@ -452,7 +444,6 @@ getName = select "name"
 getTypeName
   :: ( Lattice  (Product info)
      , PPableLIGO info
-     , Eq (Product info)
      )
   => LIGO info
   -> (Range, Text)

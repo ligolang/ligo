@@ -14,6 +14,7 @@ module AST.Pretty
   , sexpr
   ) where
 
+import Data.Kind (Type)
 import Data.Maybe (isJust)
 import Data.Sum
 import Data.Text (Text)
@@ -24,7 +25,8 @@ import Duplo.Pretty as Exports
   parens, ppToText, punctuate, ($+$), (<+>), (<.>))
 import Duplo.Tree (Tree)
 
-import AST.Skeleton
+import AST.Skeleton hiding (Type)
+import qualified AST.Skeleton as AST
 import Parser (ShowRange)
 import Product (Contains)
 import Range (Range)
@@ -33,11 +35,7 @@ import Range (Range)
 -- Internal
 ----------------------------------------------------------------------------
 
-class
-    (Pretty expr)
-  =>
-    LPP (dialect :: Lang) expr
-  where
+class (Pretty expr) => LPP (dialect :: Lang) expr where
     lpp :: expr -> Doc
     lpp = pp
 
@@ -45,18 +43,14 @@ instance LPP dialect () where
 instance LPP dialect Text where
 instance LPP dialect Doc where
 
-class
-    (Pretty1 expr)
-  =>
-    LPP1 (dialect :: Lang) (expr :: * -> *)
-  where
+class (Pretty1 expr) => LPP1 (dialect :: Lang) (expr :: Type -> Type) where
   lpp1 :: expr Doc -> Doc
   lpp1 = pp1
 
 instance LPP1 dialect [] where
   lpp1 = list
 
-deriving instance LPP1 dialect Maybe
+deriving anyclass instance LPP1 dialect Maybe
 
 instance {-# OVERLAPPABLE #-}
     (LPP d a, LPP1 d p, Functor p)
@@ -69,7 +63,7 @@ deriving via PP (Undefined it) instance Pretty it => Show (Undefined it)
 deriving via PP (Contract it) instance Pretty it => Show (Contract it)
 deriving via PP (RawContract it) instance Pretty it => Show (RawContract it)
 deriving via PP (Binding it) instance Pretty it => Show (Binding it)
-deriving via PP (Type it) instance Pretty it => Show (Type it)
+deriving via PP (AST.Type it) instance Pretty it => Show (AST.Type it)
 deriving via PP (Variant it) instance Pretty it => Show (Variant it)
 deriving via PP (TField it) instance Pretty it => Show (TField it)
 deriving via PP (Expr it) instance Pretty it => Show (Expr it)
@@ -191,7 +185,7 @@ instance Pretty1 Binding where
         , ["=", body]
         ]
 
-instance Pretty1 Type where
+instance Pretty1 AST.Type where
   pp1 = \case
     TArrow    dom codom -> sop dom "->" [codom]
     TRecord   fields    -> sexpr "RECORD" fields
@@ -366,7 +360,7 @@ instance LPP1 'Caml MapBinding where
 -- Pascal
 ----------------------------------------------------------------------------
 
-instance LPP1 'Pascal Type where
+instance LPP1 'Pascal AST.Type where
   lpp1 = \case
     TVar      name      -> name
     TArrow    dom codom -> dom <+> "->" <+> codom
@@ -497,7 +491,7 @@ instance LPP1 'Pascal MapBinding where
 -- Reason
 ----------------------------------------------------------------------------
 
-instance LPP1 'Reason Type where
+instance LPP1 'Reason AST.Type where
   lpp1 = \case
     TVar      name      -> name
     TArrow    dom codom -> dom <+> "=>" <+> codom
@@ -592,7 +586,7 @@ instance LPP1 'Reason MapBinding where
 -- Caml
 ----------------------------------------------------------------------------
 
-instance LPP1 'Caml Type where
+instance LPP1 'Caml AST.Type where
   lpp1 = \case
     TVar      name      -> name
     TArrow    dom codom -> dom <+> "->" <+> codom

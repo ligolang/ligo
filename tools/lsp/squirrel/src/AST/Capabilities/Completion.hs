@@ -24,7 +24,7 @@ data Completion = Completion
   , cType :: Text
   , cDoc  :: Text
   }
-  deriving (Eq, Show)
+  deriving stock (Eq, Show)
 
 complete
   :: ( Eq (Product xs)

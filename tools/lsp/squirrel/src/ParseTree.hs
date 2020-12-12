@@ -99,7 +99,7 @@ data TreeKind
   deriving stock (Eq, Ord)
 
 -- TODO: move and refactor
-instance (Pretty k, Pretty v) => Pretty (Map k v) where
+instance (Pretty v) => Pretty (Map k v) where
   pp = pp . fmap snd . toList
 
 instance Pretty TreeKind where
