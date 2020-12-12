@@ -34,7 +34,7 @@ type FullEnv = Product ["vars" := Env, "types" := Env]
 type Env     = Map Range [ScopedDecl]
 
 data Level = TermLevel | TypeLevel
-  deriving Eq
+  deriving stock Eq
 
 instance {-# OVERLAPS #-} Pretty FullEnv where
   pp = block . map aux . Map.toList . mergeFE

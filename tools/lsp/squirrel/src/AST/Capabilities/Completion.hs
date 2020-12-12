@@ -32,7 +32,7 @@ data Completion = Completion
   , cType :: Text
   , cDoc  :: Text
   }
-  deriving (Eq, Show)
+  deriving stock (Eq, Show)
 
 type CompletionLIGO info =
   ( Eq (Product info)

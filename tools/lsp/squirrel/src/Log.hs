@@ -12,7 +12,7 @@ import System.IO.Unsafe
 
 import System.IO (hFlush, hPutStrLn, stderr)
 
-data Level = DEBUG | ERROR | CRASH deriving (Eq, Ord)
+data Level = DEBUG | ERROR | CRASH deriving stock (Eq, Ord)
 
 {-# NOINLINE logLevel #-}
 logLevel :: IORef Level

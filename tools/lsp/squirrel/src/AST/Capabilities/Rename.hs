@@ -15,7 +15,7 @@ import Range (Range, toLspRange)
 
 -- | Result of trying to rename declaration.
 data RenameDeclarationResult = Ok [J.TextEdit] | NotFound
-  deriving (Eq, Show)
+  deriving stock (Eq, Show)
 
 
 -- | Rename the declaration at the given position.

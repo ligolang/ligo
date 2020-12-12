@@ -16,7 +16,7 @@ import Test.FixedExpectations (shouldBe)
 import Test.Util (readContract)
 
 data SimpleRange = SimpleRange (Int, Int) (Int, Int)
-  deriving (Eq, Show)
+  deriving stock (Eq, Show)
 
 simplify :: Range -> SimpleRange
 simplify (Range (l1, c1, _) (l2, c2, _) _) = SimpleRange (l1, c1) (l2, c2)

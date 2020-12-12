@@ -60,7 +60,19 @@ default-extensions:
   - UndecidableInstances
   - ViewPatterns
 
-ghc-options: -freverse-errors -Wall -Werror
+ghc-options:
+  - -Weverything
+  - -Wno-missing-exported-signatures
+  - -Wno-missing-import-lists
+  - -Wno-missed-specialisations
+  - -Wno-all-missed-specialisations
+  - -Wno-unsafe
+  - -Wno-safe
+  - -Wno-missing-local-signatures
+  - -Wno-monomorphism-restriction
+  - -Wno-implicit-prelude
+  - -Wno-partial-fields
+  - -Wno-missing-export-lists  # FIXME
 
 library:
   source-dirs:
@@ -131,6 +143,9 @@ tests:
     source-dirs:
       - test/
 
+    ghc-options:
+      - -Wno-incomplete-uni-patterns
+
     dependencies:
       - template-haskell
       - HUnit
@@ -144,3 +159,6 @@ tests:
       - tasty-discover
       - tasty-hspec
       - tasty-hunit
+
+    build-tools:
+      - tasty-discover:tasty-discover
