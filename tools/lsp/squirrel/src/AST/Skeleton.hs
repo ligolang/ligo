@@ -41,21 +41,20 @@ type LIGO xs = Tree RawLigoList (Product xs)
 type Tree' fs xs = Tree fs (Product xs)
 
 type RawLigoList =
-  [ Name, Path, QualifiedName, Pattern, Constant, FieldAssignment
+  [ Name, QualifiedName, Pattern, Constant, FieldAssignment
   , MapBinding, Alt, Expr, TField, Variant, Type, Binding
   , RawContract, TypeName, FieldName
   , Error, Ctor, Contract, NameDecl
   ]
-
-data Undefined it
-  = Undefined Text
-  deriving stock (Functor, Foldable, Traversable)
 
 data Lang
   = Pascal
   | Caml
   | Reason
   deriving stock Show
+
+-- Let 'Accessor' be either 'FieldName' or a 'Text'ual representation of an
+-- index (a number).
 
 data Contract it
   = ContractEnd
@@ -143,7 +142,7 @@ data MapBinding it
   deriving stock (Functor, Foldable, Traversable)
 
 data FieldAssignment it
-  = FieldAssignment it it -- (QualifiedName) (Expr)
+  = FieldAssignment [it] it -- [Accessor] (Expr)
   | Spread it -- (Name)
   deriving stock (Functor, Foldable, Traversable)
 
@@ -171,13 +170,8 @@ data Pattern it
 data QualifiedName it
   = QualifiedName
     { qnSource ::  it -- Name
-    , qnPath   :: [it] -- [Path]
+    , qnPath   :: [it] -- [Accessor]
     }
-  deriving stock (Functor, Foldable, Traversable)
-
-data Path it
-  = At it -- (Name)
-  | Ix Text
   deriving stock (Functor, Foldable, Traversable)
 
 newtype Name it = Name

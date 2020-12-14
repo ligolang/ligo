@@ -164,20 +164,22 @@ module.exports = grammar({
       field("x", $._sub_expr)
     )),
 
+    _accessor: $ => choice($.FieldName, $.Int),
+
+    // field names (or indices) separated by a dot
+    _accessor_chain: $ => prec.right(sepBy1('.', field("accessor", $._accessor))),
+
     // a.0 or a.attribute
     data_projection: $ => prec.right(21, seq(
       field("box", $._sub_expr),
       ".",
-      sepBy1('.', field("selector", $._selection)),
+      $._accessor_chain,
     )),
-
-    _selection: $ => choice($.FieldName, $.Int),
 
     // { p with a = b; c = d }
     rec_literal: $ => seq(
       "{",
-      field("field", $.rec_assignment),
-      repeat(seq(";", field("field", $.rec_assignment))),
+      sepBy1(";", field("field", $.rec_assignment)),
       optional(";"),
       "}"
     ),
@@ -194,7 +196,7 @@ module.exports = grammar({
     ),
     // a = b;
     rec_assignment: $ => seq(
-      field("field", $._expr),
+      $._accessor_chain,
       "=",
       field("value", $._expr),
     ),

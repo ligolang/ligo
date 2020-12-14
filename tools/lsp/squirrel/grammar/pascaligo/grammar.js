@@ -19,7 +19,7 @@ let left_op = (name, left, right) => op(name, left, right, left)
 let par = x => seq('(', x, ')')
 let brackets = x => seq('[', x, ']')
 
-let ne_injection = (Kind, element) =>
+let non_empty_injection = (Kind, element) =>
   choice(
     seq(
       Kind,
@@ -55,6 +55,11 @@ module.exports = grammar({
   word: $ => $.Keyword,
   extras: $ => [$.ocaml_comment, $.comment, /\s/],
   inline: $ => [$.parameters, $.arguments],
+
+  conflicts: $ =>
+  [ [$._instruction, $._fun_call_or_par_or_projection]
+  , [$.record_patch, $.update_record]
+  ],
 
   rules: {
     Start: $ => sepBy(optional(';'), field("declaration", $._declaration)),
@@ -307,7 +312,7 @@ module.exports = grammar({
         $.case_instr,
         $.assignment,
         $._loop,
-        $._proc_call,
+        $.fun_call,
         $.skip,
         $.record_patch,
         $.map_patch,
@@ -339,7 +344,7 @@ module.exports = grammar({
         'patch',
         field("container", $._path),
         'with',
-        ne_injection('set', field("key", $._expr)),
+        non_empty_injection('set', field("key", $._expr)),
       ),
 
     map_patch: $ =>
@@ -347,7 +352,7 @@ module.exports = grammar({
         'patch',
         field("container", $._path),
         'with',
-        ne_injection('map', field("binding", $.binding)),
+        non_empty_injection('map', field("binding", $.binding)),
       ),
 
     binding: $ =>
@@ -362,11 +367,8 @@ module.exports = grammar({
         'patch',
         field("container", $._path),
         'with',
-        ne_injection('record', field("binding", $.field_assignment)),
+        non_empty_injection('record', field("binding", $.field_path_assignment)),
       ),
-
-    _proc_call: $ =>
-      $.fun_call,
 
     conditional: $ =>
       seq(
@@ -485,15 +487,14 @@ module.exports = grammar({
 
     _collection: $ => choice('map', 'set', 'list'),
 
-    interactive_expr: $ => $._expr,
-
     _expr: $ =>
-      choice(
+    // | a precedence high enough for projections to take over binops
+      prec(10, choice(
         $.case_expr,
         $.cond_expr,
         $._op_expr,
         $.fun_expr,
-      ),
+      )),
 
     case_expr: $ =>
       choice(
@@ -648,14 +649,17 @@ module.exports = grammar({
 
     _path: $ => choice($.Name, $._projection),
 
-    _fpath: $ => choice($.FieldName, $._projection),
+    _accessor: $ => choice($.FieldName, $.Int),
+
+    // field names (or indices) separated by a dot
+    _accessor_chain: $ => prec.right(sepBy1('.', field("accessor", $._accessor))),
 
     module_field: $ =>
-      seq(
+      prec(10, seq(
         field("module", $.Name_Capital),
         '.',
         field("method", $.Name),
-      ),
+      )),
 
     _projection: $ =>
       choice(
@@ -663,55 +667,34 @@ module.exports = grammar({
         $.module_projection,
       ),
 
-    data_projection: $ => seq(
-      field("struct", $.Name),
+    data_projection: $ => prec(11, seq(
+      field("struct", $._expr),
       '.',
-      sepBy1('.', field("index", $._selection)),
-    ),
+      $._accessor_chain,
+    )),
 
     module_projection: $ =>
-      seq(
+      prec(11, seq(
         field("module", $.Name_Capital),
         '.',
         field("index", $.Name),
         '.',
-        sepBy1('.', field("index", $._selection)),
-      ),
-
-    _selection: $ => choice($.FieldName, $.Int),
+        $._accessor_chain,
+      )),
 
     record_expr: $ =>
-      choice(
-        seq(
-          'record',
-          sepBy(';', field("assignment", $.field_assignment)),
-          'end',
-        ),
-        seq(
-          'record',
-          '[',
-          sepBy(';', field("assignment", $.field_assignment)),
-          ']',
-        ),
-      ),
+      injection('record', field("assignment", $.field_path_assignment)),
 
     update_record: $ =>
       seq(
         field("record", $._path),
         'with',
-        ne_injection('record', field("assignment", $.field_path_assignment)),
-      ),
-
-    field_assignment: $ =>
-      seq(
-        field("name", $.FieldName),
-        '=',
-        field("_rhs", $._expr),
+        non_empty_injection('record', field("assignment", $.field_path_assignment)),
       ),
 
     field_path_assignment: $ =>
       seq(
-        field("lhs", $._fpath),
+        $._accessor_chain,
         '=',
         field("_rhs", $._expr),
       ),

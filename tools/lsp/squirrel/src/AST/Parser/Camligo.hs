@@ -108,7 +108,7 @@ recognise (SomeRawTree dialect rawTree)
     -- QualifiedName
   , Descent do
       boilerplate $ \case
-        "data_projection" -> QualifiedName <$> field "box" <*> fields "selector"
+        "data_projection" -> QualifiedName <$> field "box" <*> fields "accessor"
         _ -> fallthrough
 
 
@@ -134,8 +134,8 @@ recognise (SomeRawTree dialect rawTree)
     -- Record fields
   , Descent do
       boilerplate $ \case
-        "rec_assignment" -> FieldAssignment <$> field "field" <*> field "value"
-        _                -> fallthrough
+        "rec_assignment" -> FieldAssignment <$> fields "accessor" <*> field "value"
+        _ -> fallthrough
 
   , Descent do
       boilerplate' $ \case

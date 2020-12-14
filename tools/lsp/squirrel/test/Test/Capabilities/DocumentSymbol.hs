@@ -16,11 +16,14 @@ import Test.HUnit (Assertion)
 import AST.Capabilities.DocumentSymbol (extractDocumentSymbols)
 import AST.Scope (Fallback)
 
-import Test.Capabilities.Util (contractsDir)
+import qualified Test.Capabilities.Util as Common (contractsDir)
 import Test.FixedExpectations (shouldBe)
 import Test.Util (readContractWithScopes)
 import Test.Util.LigoEnv ()
+-- Test.Util.LigoEnv for "instance HasLigoClient IO"
 
+contractsDir :: FilePath
+contractsDir = Common.contractsDir </> "document-symbol"
 
 type SimpleSymInfo = (Text, SymbolKind, (Int, Int), (Int, Int))
 

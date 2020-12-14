@@ -87,9 +87,9 @@ recognise (SomeRawTree dialect rawTree)
     -- TODO: capture and record
   , Descent do
       boilerplate $ \case
-        "record_field"      -> FieldAssignment <$> field "name" <*> field "value"
+        "record_field" -> FieldAssignment <$> fields "accessor" <*> field "value"
         "spread" -> Spread <$> field "name"
-        _                   -> fallthrough
+        _ -> fallthrough
 
     -- MapBinding
   , Descent do
@@ -117,9 +117,8 @@ recognise (SomeRawTree dialect rawTree)
 
   , Descent do
       boilerplate $ \case
-        "data_projection" -> QualifiedName <$> field "box" <*> fields "selector"
-        "lhs" -> QualifiedName <$> field "callee" <*> fields "name"
-        _                 -> fallthrough
+        "data_projection" -> QualifiedName <$> field "expr" <*> fields "accessor"
+        _ -> fallthrough
 
     -- Literal
   , Descent do

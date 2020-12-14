@@ -18,7 +18,7 @@ import Data.Kind (Type)
 import Data.Maybe (isJust)
 import Data.Sum
 import Data.Text (Text)
-import qualified Data.Text as Text (pack, take)
+import qualified Data.Text as Text (pack)
 import Duplo (Cofree ((:<)), Layers)
 import Duplo.Pretty as Exports
   (Doc, Modifies (..), PP (PP), Pretty (..), Pretty1 (..), above, brackets, empty, fsep, indent,
@@ -59,7 +59,6 @@ instance {-# OVERLAPPABLE #-}
   where
   lpp = lpp1 @d . fmap (lpp @d)
 
-deriving via PP (Undefined it) instance Pretty it => Show (Undefined it)
 deriving via PP (Contract it) instance Pretty it => Show (Contract it)
 deriving via PP (RawContract it) instance Pretty it => Show (RawContract it)
 deriving via PP (Binding it) instance Pretty it => Show (Binding it)
@@ -73,7 +72,6 @@ deriving via PP (FieldAssignment it) instance Pretty it => Show (FieldAssignment
 deriving via PP (Constant it) instance Pretty it => Show (Constant it)
 deriving via PP (Pattern it) instance Pretty it => Show (Pattern it)
 deriving via PP (QualifiedName it) instance Pretty it => Show (QualifiedName it)
-deriving via PP (Path it) instance Pretty it => Show (Path it)
 deriving via PP (Name it) instance Pretty it => Show (Name it)
 deriving via PP (NameDecl it) instance Pretty it => Show (NameDecl it)
 deriving via PP (TypeName it) instance Pretty it => Show (TypeName it)
@@ -153,10 +151,6 @@ braces p = "{" <+> p <+> "}"
 ----------------------------------------------------------------------------
 -- Core sexpr
 ----------------------------------------------------------------------------
-
-instance Pretty1 Undefined where
-  pp1 = \case
-    Undefined mess -> "{{{" <.> pp (Text.take 20 mess) <.> "}}}"
 
 instance Pretty1 Contract where
   pp1 = \case
@@ -247,7 +241,7 @@ instance Pretty1 MapBinding where
 
 instance Pretty1 FieldAssignment where
   pp1 = \case
-    FieldAssignment n e -> sexpr ".=" [n, e]
+    FieldAssignment accessors e -> sexpr ".=" (accessors <> [e])
     Spread n -> sexpr "..." [n]
 
 instance Pretty1 Constant where
@@ -295,11 +289,6 @@ instance Pretty1 Ctor where
   pp1 = \case
     Ctor         raw -> pp raw
 
-instance Pretty1 Path where
-  pp1 = \case
-    At n -> n
-    Ix j -> pp j
-
 instance Pretty1 TField where
   pp1 = \case
     TField      n t -> n <.> ":" `indent` t
@@ -344,11 +333,6 @@ instance LPP1 d FieldName where
 instance LPP1 d Ctor where
   lpp1 = \case
     Ctor         raw -> lpp raw
-
-instance LPP1 d Path where
-  lpp1 = \case
-    At n -> n
-    Ix j -> lpp j
 
 -- instances needed to pass instance resolution during compilation
 
