@@ -5,6 +5,7 @@ module RIO
   , RioEnv
   , run
 
+  , preload
   , load
   , collectErrors
   , forceFetch

@@ -10,6 +10,7 @@ module Range
   , cutOut
   , excluding
   , fromLspPosition
+  , fromLspRange
   , merged
   , point
   , interval
@@ -78,6 +79,12 @@ toLspRange Range
 
 fromLspPosition :: LSP.Position -> Range
 fromLspPosition (LSP.Position l c) = point (l + 1) (c + 1)
+
+fromLspRange :: LSP.Range -> Range
+fromLspRange
+  (LSP.Range
+    (fromLspPosition -> s)
+    (fromLspPosition -> e)) = merged s e
 
 instance (Contains Range xs, Apply Functor fs) => HasRange (Tree fs (Product xs)) where
   getRange = getElem . extract
