@@ -26,6 +26,8 @@ import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, asks, runReaderT)
 import Data.Default (def)
 
+import Data.Function (on)
+import Data.List (nubBy)
 import qualified Data.Map as Map
 import qualified Data.SortedList as List
 import Data.String.Interpolate (i)
@@ -43,6 +45,7 @@ import ASTMap (ASTMap)
 import qualified ASTMap
 import Cli
 import Config (Config (..))
+import Duplo.Lattice (Lattice (leq))
 import qualified Log
 import Product
 import Range
@@ -123,6 +126,7 @@ collectErrors fetcher uri version = do
   (tree, errs) <- fetcher uri
   diagnostic 100 uri version
     $ map errorToDiag
+    $ nubBy (leq `on` fst)
     $ errs <> collectTreeErrors tree
 
 errorToDiag :: (Range, Error a) -> J.Diagnostic
