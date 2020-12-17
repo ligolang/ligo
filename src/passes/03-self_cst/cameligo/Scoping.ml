@@ -95,12 +95,15 @@ and vars_of_fields env fields =
   Helpers.bind_fold_npseq vars_of_field_pattern env fields
 
 and vars_of_field_pattern env field =
+
+  (* TODO: Hmm, not really sure
   let var = field.value.field_name in
   if VarSet.mem var env then
     fail @@ non_linear_pattern var
   else
-    let p = field.value.pattern
-    in vars_of_pattern (VarSet.add var env) p
+  *)
+  let p = field.value.pattern in
+  vars_of_pattern env p
 
 and vars_of_pconstr env = function
   PNone _ -> ok @@ env
@@ -163,6 +166,7 @@ let peephole_type : unit -> type_expr -> (unit,'err) result = fun _ t ->
   | TModA   {value=_;region=_} -> ok @@ ()
   | TWild   _                  -> ok @@ ()
   | TString {value=_;region=_} -> ok @@ ()
+  | TInt    {value=_;region=_} -> ok @@ ()
 
 
 let peephole_expression : unit -> expr -> (unit,'err) result = fun () e ->

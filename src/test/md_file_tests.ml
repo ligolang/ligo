@@ -68,7 +68,7 @@ let compile_groups filename grp_list =
       let%bind typed,_,_  = Compile.Of_core.compile ~typer_switch ~init_env Env core in
       let%bind mini_c     = Compile.Of_typed.compile typed in
       bind_map_list
-        (fun ((_, _, exp),_) -> Compile.Of_mini_c.aggregate_and_compile_expression mini_c exp)
+        (fun ((_, _, exp),_) -> Compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c exp)
         mini_c
     )
     grp_list in

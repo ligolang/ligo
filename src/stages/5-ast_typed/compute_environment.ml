@@ -116,6 +116,16 @@ and cases : environment -> matching_expr -> matching_expr = fun env cs ->
     in
     return @@ Match_variant { c with cases }
   )
+  | Match_record r -> (
+    let env' =
+      let aux _label (var,t : expression_variable * type_expression) env =
+        Environment.add_ez_binder var t env
+      in
+      LMap.fold aux r.fields env
+    in
+    let body = self ~env' r.body in
+    return @@ Match_record { r with body }
+  )
 
 let program : environment -> program_fully_typed -> environment * program_fully_typed = fun init_env (Program_Fully_Typed prog) ->
   (*

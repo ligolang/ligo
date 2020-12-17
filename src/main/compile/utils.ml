@@ -34,7 +34,7 @@ let to_mini_c ~options f stx env =
 let compile_file ~options f stx ep =
   let%bind typed,_,_  = type_file ~options f stx @@ Contract ep in
   let%bind mini_c     = Of_typed.compile typed in
-  let%bind michelson  = Of_mini_c.aggregate_and_compile_contract mini_c ep in
+  let%bind michelson  = Of_mini_c.aggregate_and_compile_contract ~options mini_c ep in
   let%bind contract   = Of_michelson.build_contract michelson in
   ok @@ contract
 
@@ -55,12 +55,12 @@ let expression_to_mini_c ~options source_file syntax expression env state =
 
 let compile_expression ~options source_file syntax expression env state =
   let%bind mini_c_exp = expression_to_mini_c ~options source_file syntax expression env state in
-  let%bind compiled   = Of_mini_c.compile_expression mini_c_exp in
+  let%bind compiled   = Of_mini_c.compile_expression ~options mini_c_exp in
   ok @@ compiled
 
 let compile_and_aggregate_expression ~options source_file syntax expression env state mini_c_prg =
   let%bind mini_c_exp = expression_to_mini_c ~options source_file syntax expression env state in
-  let%bind compiled   = Of_mini_c.aggregate_and_compile_expression mini_c_prg mini_c_exp in
+  let%bind compiled   = Of_mini_c.aggregate_and_compile_expression ~options mini_c_prg mini_c_exp in
   ok @@ compiled
 
 let compile_storage ~options storage input source_file syntax env state mini_c_prg =
@@ -72,7 +72,7 @@ let compile_storage ~options storage input source_file syntax env state mini_c_p
   let%bind core       = Of_sugar.compile_expression sugar in
   let%bind typed,_    = Of_core.compile_expression ~typer_switch ~env ~state core in
   let%bind mini_c     = Of_typed.compile_expression typed in
-  let%bind compiled   = Of_mini_c.aggregate_and_compile_expression mini_c_prg mini_c in
+  let%bind compiled   = Of_mini_c.aggregate_and_compile_expression ~options mini_c_prg mini_c in
   ok @@ compiled
 
 let pretty_print ~options ~meta f =

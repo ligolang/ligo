@@ -192,6 +192,7 @@ core_type:
 | "_"                 {   TWild $1 }
 | par(type_expr)      {    TPar $1 }
 | "<string>"          { TString $1 }
+| "<int>"             { TInt    $1 }
 | module_access_t     {   TModA $1 }
 | core_type type_name {
     let arg, constr = $1, $2 in

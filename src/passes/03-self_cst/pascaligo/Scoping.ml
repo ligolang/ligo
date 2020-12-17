@@ -203,6 +203,7 @@ let peephole_type : unit -> type_expr -> (unit, 'err) result = fun _ t ->
   | TModA   {value=_;region=_} -> ok @@ ()
   | TWild   _                  -> ok @@ ()
   | TString {value=_;region=_} -> ok @@ ()
+  | TInt    {value=_;region=_} -> ok @@ ()
 
 let peephole_expression : unit -> expr -> (unit,'err) result = fun () e ->
   match e with

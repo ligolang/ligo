@@ -13,6 +13,7 @@ let fresh_binder () = Core.fresh_type_variable ()
 let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun te ->
   match te.type_content with
   | T_variable tv -> T.Reasons.wrap (Todo "wrap: from source code maybe?") @@ T.P_variable tv
+  | T_singleton _ -> failwith "what about singleton ?"
   | T_sum {content=kvmap ; layout=_} ->
     let tmap = T.LMap.map (fun ({associated_type;_}:T.row_element) -> associated_type) kvmap in
     p_row C_variant @@ T.LMap.map type_expression_to_type_value tmap

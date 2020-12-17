@@ -10,7 +10,6 @@ module Combinators = struct
 end
 module Misc = struct
   include Misc
-  include Misc_smart
 end
 module Helpers = Helpers
 

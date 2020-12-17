@@ -37,6 +37,7 @@ let is_pure_constant : constant' -> bool =
   | C_ADDRESS
   | C_SET_MEM | C_SET_ADD | C_SET_REMOVE | C_SLICE
   | C_SHA256 | C_SHA512 | C_BLAKE2b | C_CHECK_SIGNATURE
+  | C_SHA3 | C_KECCAK
   | C_HASH_KEY | C_BYTES_PACK | C_CONCAT
   | C_FOLD_CONTINUE | C_FOLD_STOP
   | C_LOOP_CONTINUE | C_LOOP_STOP
@@ -47,14 +48,23 @@ let is_pure_constant : constant' -> bool =
   | C_LIST_EMPTY | C_LIST_LITERAL
   | C_MAP_EMPTY | C_MAP_LITERAL
   | C_MAP_GET | C_MAP_REMOVE | C_MAP_MEM
+  | C_MAP_GET_AND_UPDATE | C_BIG_MAP_GET_AND_UPDATE
   | C_LIST_HEAD_OPT
   | C_LIST_TAIL_OPT
   | C_CONVERT_TO_LEFT_COMB | C_CONVERT_TO_RIGHT_COMB
   | C_CONVERT_FROM_LEFT_COMB | C_CONVERT_FROM_RIGHT_COMB
+  | C_TICKET
+  | C_READ_TICKET
+  | C_SPLIT_TICKET
+  | C_JOIN_TICKET
+  | C_PAIRING_CHECK
+  | C_SAPLING_EMPTY_STATE
+  | C_SAPLING_VERIFY_UPDATE
     -> true
   (* unfortunately impure: *)
   | C_BALANCE | C_AMOUNT | C_NOW | C_SOURCE | C_SENDER | C_CHAIN_ID
   | C_ADD | C_SUB |C_MUL|C_DIV|C_MOD | C_LSL | C_LSR
+  | C_LEVEL | C_VOTING_POWER | C_TOTAL_VOTING_POWER
   (* impure: *)
   | C_ASSERTION
   | C_ASSERT_SOME
@@ -117,6 +127,8 @@ let rec is_pure : expression -> bool = fun e ->
     -> List.for_all is_pure [ cond ; bt ; bf ]
 
   | E_let_in (_, _, e1, e2)
+    -> List.for_all is_pure [ e1 ; e2 ]
+  | E_let_pair (e1, (_, e2))
     -> List.for_all is_pure [ e1 ; e2 ]
 
   | E_constant (c)

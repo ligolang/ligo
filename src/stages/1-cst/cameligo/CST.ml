@@ -177,6 +177,7 @@ and type_expr =
 | TVar    of variable
 | TWild   of wild
 | TString of lexeme reg
+| TInt    of (lexeme * Z.t) reg
 | TModA   of type_expr module_access reg
 
 and cartesian = (type_expr, times) nsepseq reg
@@ -458,6 +459,7 @@ let type_expr_to_region = function
 | TFun    {region; _}
 | TPar    {region; _}
 | TString {region; _}
+| TInt    {region; _}
 | TVar    {region; _}
 | TWild    region
 | TModA   {region; _}

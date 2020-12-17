@@ -58,6 +58,9 @@ type typer_error = [
   | `Typer_expected_op_list of Location.t * Ast_typed_self_reference.type_expression
   | `Typer_expected_int of Location.t * Ast_typed_self_reference.type_expression
   | `Typer_expected_bool of Location.t * Ast_typed_self_reference.type_expression
+  | `Typer_expected_ticket of Location.t * Ast_typed_self_reference.type_expression
+  | `Typer_expected_sapling_transaction of Location.t * Ast_typed_self_reference.type_expression
+  | `Typer_expected_sapling_state of Location.t * Ast_typed_self_reference.type_expression
   | `Typer_not_matching of Location.t * Ast_typed_self_reference.type_expression * Ast_typed_self_reference.type_expression
   | `Typer_not_annotated of Location.t
   | `Typer_bad_substraction of Location.t
@@ -80,8 +83,12 @@ type typer_error = [
   | `Typer_could_not_remove
   | `Typer_internal_error of string * string
   | `Trace_debug of string * typer_error
+  | `Typer_pattern_do_not_match of Location.t
+  | `Typer_label_do_not_match of Ast_typed_self_reference.label * Ast_typed_self_reference.label * Location.t
 ]
 
+let label_do_not_match la lb loc = `Typer_label_do_not_match (la , lb , loc )
+let pattern_do_not_match loc = `Typer_pattern_do_not_match loc
 let missing_funarg_annotation v = `Typer_missing_funarg_annotation v
 let variant_redefined_error (loc:Location.t) = `Typer_variant_redefined_error loc
 let record_redefined_error (loc:Location.t) = `Typer_record_redefined_error loc
@@ -125,6 +132,8 @@ let bad_map_fold_tracer err = `Typer_bad_map_fold_tracer err
 let expected_function (loc:Location.t) (t:Ast_typed_self_reference.type_expression) = `Typer_expected_function (loc,t)
 let expected_pair (loc:Location.t) (t:Ast_typed_self_reference.type_expression) = `Typer_expected_pair (loc,t)
 let expected_list (loc:Location.t) (t:Ast_typed_self_reference.type_expression) = `Typer_expected_list (loc,t)
+let expected_sapling_transaction (loc:Location.t) (t:Ast_typed_self_reference.type_expression) = `Typer_expected_sapling_transaction (loc,t)
+let expected_sapling_state (loc:Location.t) (t:Ast_typed_self_reference.type_expression) = `Typer_expected_sapling_state (loc,t)
 let expected_set (loc:Location.t) (t:Ast_typed_self_reference.type_expression) = `Typer_expected_set (loc,t)
 let expected_map (loc:Location.t) (t:Ast_typed_self_reference.type_expression) = `Typer_expected_map (loc,t)
 let expected_big_map (loc:Location.t) (t:Ast_typed_self_reference.type_expression) = `Typer_expected_big_map (loc,t)
@@ -134,6 +143,7 @@ let expected_bytes (loc:Location.t) (t:Ast_typed_self_reference.type_expression)
 let expected_key (loc:Location.t) (t:Ast_typed_self_reference.type_expression) = `Typer_expected_key (loc,t)
 let expected_signature (loc:Location.t) (t:Ast_typed_self_reference.type_expression) = `Typer_expected_signature (loc,t)
 let expected_contract (loc:Location.t) (t:Ast_typed_self_reference.type_expression) = `Typer_expected_contract (loc,t)
+let expected_ticket (loc:Location.t) (t:Ast_typed_self_reference.type_expression) = `Typer_expected_ticket (loc,t)
 let expected_string (loc:Location.t) (t:Ast_typed_self_reference.type_expression) = `Typer_expected_string (loc,t)
 let expected_key_hash (loc:Location.t) (t:Ast_typed_self_reference.type_expression) = `Typer_expected_key_hash (loc,t)
 let expected_mutez (loc:Location.t) (t:Ast_typed_self_reference.type_expression) = `Typer_expected_mutez (loc,t)
@@ -173,10 +183,20 @@ let rec error_ppformat : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
-        | `Trace_debug (msg,err) ->
+    | `Trace_debug (msg,err) ->
       (match display_format with
       | Human_readable -> Format.fprintf f "%a" (error_ppformat ~display_format) err
       | _ -> Format.fprintf f "%s\n%a" msg (error_ppformat ~display_format) err)
+    | `Typer_label_do_not_match (la , lb , loc ) ->
+      Format.fprintf f
+        "@[<hv>%a@.Labels do not match: Expected %a but got %a .@]"
+          Snippet.pp loc
+          Ast_typed_self_reference.PP.label la
+          Ast_typed_self_reference.PP.label lb
+    | `Typer_pattern_do_not_match loc ->
+      Format.fprintf f
+        "@[<hv>%a@.Pattern do not match returned expression.@]"
+          Snippet.pp loc
     | `Typer_missing_funarg_annotation v ->
       Format.fprintf f
         "@[<hv>%a@.Missing a type annotation for argument \"%a\".@]"
@@ -399,6 +419,16 @@ The following forms of subtractions are possible:
         Snippet.pp loc
         name
         expected (List.length actual)
+    | `Typer_expected_sapling_state (loc,t) ->
+      Format.fprintf f
+        "@[<hv>%a@.Invalid argument.@.Expected sapling_state, but got an argument of type \"%a\". @]"
+        Snippet.pp loc
+        Ast_typed_self_reference.PP.type_expression t
+    | `Typer_expected_sapling_transaction (loc,t) ->
+      Format.fprintf f
+        "@[<hv>%a@.Invalid argument.@.Expected sapling_transaction, but got an argument of type \"%a\". @]"
+        Snippet.pp loc
+        Ast_typed_self_reference.PP.type_expression t
     | `Typer_expected_function (loc,e) ->
       Format.fprintf f
         "@[<hv>%a@.Invalid argument.@.Expected a function, but got an argument of type \"%a\". @]"
@@ -459,6 +489,11 @@ The following forms of subtractions are possible:
         "@[<hv>%a@.Incorrect argument.@.Expected a contract, but got an argument of type \"%a\". @]"
         Snippet.pp loc
         Ast_typed_self_reference.PP.type_expression t
+    | `Typer_expected_ticket (loc,t) ->
+        Format.fprintf f
+          "@[<hv>%a@.Incorrect argument.@.Expected a ticket, but got an argument of type \"%a\". @]"
+          Snippet.pp loc
+          Ast_typed_self_reference.PP.type_expression t
     | `Typer_expected_string (loc,t) ->
       Format.fprintf f
         "@[<hv>%a@.Incorrect argument.@.Expected a string, but got an argument of type \"%a\". @]"
@@ -547,6 +582,21 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     let content = `Assoc [
       ("message", `String msg );
       ("children", error_jsonformat err); ] in
+    json_error ~stage ~content
+  | `Typer_label_do_not_match (la , lb , loc ) ->
+    let message = Format.asprintf "Labels do not match" in
+    let content = `Assoc [
+      ("message", `String message );
+      ("location", Location.to_yojson loc);
+      ("expected", Ast_typed_self_reference.Yojson.label la) ;
+      ("actual", Ast_typed_self_reference.Yojson.label lb) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_pattern_do_not_match loc ->
+    let message = Format.asprintf "Pattern do not match returned expression" in
+    let content = `Assoc [
+      ("message", `String message );
+      ("location", Location.to_yojson loc); ] in
     json_error ~stage ~content
   | `Typer_missing_funarg_annotation v ->
     let message = Format.asprintf "Missing type annotation for argument" in
@@ -922,6 +972,15 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("value", value);
     ] in
     json_error ~stage ~content
+  | `Typer_expected_ticket (loc,t) ->
+    let message = `String "expected ticket" in
+    let value = `String (Format.asprintf "%a" Ast_typed_self_reference.PP.type_expression t) in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);
+      ("value", value);
+    ] in
+    json_error ~stage ~content
   | `Typer_expected_string (loc,t) ->
     let message = `String "expected string" in
     let content = `Assoc [
@@ -966,6 +1025,24 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("value", value);
       ("actual", actual);
       ("expected", expected);
+    ] in
+    json_error ~stage ~content
+  | `Typer_expected_sapling_state (loc,t) ->
+    let message = `String "expected sapling_state" in
+    let value = To_yojson.type_expression t in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);
+      ("value", value);
+    ] in
+    json_error ~stage ~content
+  | `Typer_expected_sapling_transaction (loc,t) ->
+    let message = `String "expected sapling_transaction" in
+    let value = To_yojson.type_expression t in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);
+      ("value", value);
     ] in
     json_error ~stage ~content
   | `Typer_expected_function (loc,e) ->

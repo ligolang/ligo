@@ -95,6 +95,12 @@ Fixpoint compile_expr
     let (outer, inner) := assoc_splitting outer inner in
     [Seq nil (compile_expr env1 outer e1);
      Seq nil (compile_binds env2 inner (filter_keeps (right_usages outer)) e2)]
+  | E_let_pair _ inner e1 e2 =>
+    let (env1, env2) := split inner env in
+    let (outer, inner) := assoc_splitting outer inner in
+    [Seq nil (compile_expr env1 outer e1);
+     Prim nil "UNPAIR" [] [];
+     Seq nil (compile_binds env2 inner (filter_keeps (right_usages outer)) e2)]
   | E_app _ e => [Seq nil (compile_args env outer e);
                   Prim nil "SWAP" [] [];
                   Prim nil "EXEC" [] []]
@@ -549,6 +555,8 @@ Proof.
       specialize (H0 _ _ _ H9); eapply H0; eauto.
       eapply used_filter_keeps_right_usages; eauto.
       eauto.
+  (* E_let_pair *)
+  - admit. (* TODO *)
   (* E_app *)
   - eapply H in H4; eauto; simpl in *; eauto.
   (* E_lam *)
@@ -700,6 +708,6 @@ Proof.
       * eapply H1; eauto.
         rewrite <- H7, <- H9.
         eauto.
-Qed.
+Admitted. (* TODO *)
 
 End compiler.

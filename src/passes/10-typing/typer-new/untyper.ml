@@ -44,6 +44,8 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer
   | O.T_module_accessor ma ->
     let%bind ma = module_access self ma in
     return @@ I.T_module_accessor ma
+  | O.T_singleton x ->
+    return @@ I.T_singleton x
 
 (*
   Transform a Ast_typed expression into an ast_core expression
@@ -135,3 +137,12 @@ and untype_matching : (O.expression -> (I.expression, typer_error) result) -> O.
       ok ({constructor;proj;body} : I.match_variant) in
     let%bind lst' = bind_map_list aux cases in
     ok @@ Match_variant lst'
+  | Match_record {fields; body; record_type = _} ->
+    let%bind fields = bind_map_list
+        (fun (label, (var, ty)) ->
+           let%bind ty = untype_type_expression ty in
+           ok (label, {var; ascr = Some ty}))
+        (LMap.to_kv_list fields) in
+    let fields = LMap.of_list fields in
+    let%bind body = f body in
+    ok @@ Match_record {fields; body}

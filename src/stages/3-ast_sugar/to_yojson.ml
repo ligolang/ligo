@@ -19,6 +19,7 @@ and type_content = function
   | T_arrow           t -> `List [ `String "t_arrow"; arrow type_expression t]
   | T_app             t -> `List [ `String "t_app"; t_app type_expression t]
   | T_module_accessor t -> `List [ `String "t_module_accessor"; module_access type_expression t]
+  | T_singleton       t -> `List [ `String "t_singleton" ; literal t ]
 
 and row_element {associated_type; attributes=attr; decl_pos} =
   `Assoc [

@@ -90,6 +90,8 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression , desu
     | I.T_module_accessor ma ->
       let%bind ma = module_access self ma in
       return @@ O.T_module_accessor ma
+    | I.T_singleton x ->
+      return @@ O.T_singleton x
 
 let compile_binder = binder compile_type_expression
 
@@ -264,25 +266,15 @@ and compile_matching : I.expression -> O.expression -> I.matching_expr -> (O.exp
       in
       ok @@ O.e_matching ~loc ~sugar e @@ O.Match_variant lst
     | I.Match_record (fields, expr) ->
-      let%bind next   = compile_expression expr in
-      let aux ((index,expr) : int * _ ) ((I.Label field, binder): (I.label * _ I.binder)) =
-        let%bind binder = compile_binder binder in
-        let f = O.e_let_in ~sugar binder false (O.e_record_accessor ~sugar e (O.Label field)) in
-        ok @@ (index+1, fun expr' -> expr (f expr'))
-      in
-      let%bind (_,header) = bind_fold_list aux (0, fun e -> e) @@ fields
-      in
-      ok @@ header next
+      let fields = O.LMap.of_list @@ fields in
+      let%bind fields = Stage_common.Helpers.bind_map_lmap compile_binder fields in
+      let%bind body = compile_expression expr in
+      ok @@ O.e_matching ~loc ~sugar e @@ O.Match_record { fields ; body }
     | I.Match_tuple (fields, expr) ->
-      let%bind next   = compile_expression expr in
-      let aux ((index,expr) : int * _ ) (binder: _ I.binder) =
-        let%bind binder = compile_binder binder in
-        let f = O.e_let_in ~sugar binder false (O.e_record_accessor ~sugar e (Label (string_of_int index))) in
-        ok @@ (index+1, fun expr' -> expr (f expr'))
-      in
-      let%bind (_,header) = bind_fold_list aux (0, fun e -> e) @@ fields
-      in
-      ok @@ header next
+      let fields' = O.LMap.of_list @@ List.mapi (fun i binder -> (O.Label (string_of_int i), binder)) fields in
+      let%bind fields = Stage_common.Helpers.bind_map_lmap compile_binder fields' in
+      let%bind body = compile_expression expr in
+      ok @@ O.e_matching ~loc ~sugar e @@ O.Match_record { fields ; body }
     | I.Match_variable (a, expr) ->
       let%bind a = compile_binder a in
       let%bind expr = compile_expression expr in

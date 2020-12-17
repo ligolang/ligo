@@ -7,6 +7,11 @@ module AST = Ast_imperative
 
 open AST
 
+type nested_match_repr =
+  | PatternVar of AST.ty_expr binder
+  | TupleVar of AST.ty_expr binder * nested_match_repr list
+  | RecordVar of AST.ty_expr binder * AST.label list * nested_match_repr list
+
 let nseq_to_list (hd, tl) = hd :: tl
 
 let npseq_to_list (hd, tl) = hd :: (List.map snd tl)
@@ -68,6 +73,12 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
       | CST.TString s -> Some s.value
       | _ -> None
     in
+    let get_t_int_singleton_opt = function
+      | CST.TInt x ->
+        let (_,z) = x.value in
+        Some z
+      | _ -> None
+    in
     let ((operator,args), loc) = r_split app in
     (* this is a bad design, michelson_or and pair should be an operator
        see AnnotType *)
@@ -102,6 +113,30 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
           return @@ t_michelson_pair ~loc a' b' c' d'
           )
         | _ -> fail @@ michelson_type_wrong_arity loc operator.value)
+      | "sapling_state" ->
+        let lst = npseq_to_list args.value.inside in
+        (match lst with
+        | [(a : CST.type_expr)] -> (
+          let sloc = Location.lift @@ Raw.type_expr_to_region a in
+          let%bind a' =
+            trace_option (michelson_type_wrong te operator.value) @@
+              get_t_int_singleton_opt a in
+          let singleton = t_singleton ~loc:sloc (Literal_int a') in
+          return @@ t_sapling_state ~loc singleton
+          )
+        | _ -> fail @@ michelson_type_wrong_arity loc operator.value)
+      | "sapling_transaction" ->
+        let lst = npseq_to_list args.value.inside in
+        (match lst with
+        | [(a : CST.type_expr)] -> (
+          let sloc = Location.lift @@ Raw.type_expr_to_region a in
+          let%bind a' =
+            trace_option (michelson_type_wrong te operator.value) @@
+              get_t_int_singleton_opt a in
+          let singleton = t_singleton ~loc:sloc (Literal_int a') in
+          return @@ t_sapling_transaction ~loc singleton
+          )
+        | _ -> fail @@ michelson_type_wrong_arity loc operator.value)
     | _ ->
       let operator = Var.of_name operator.value in
       let lst = npseq_to_list args.value.inside in
@@ -124,12 +159,12 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
     return @@ t_variable ~loc v
   | TWild _ -> failwith "unsupported TWild"
   | TString _s -> fail @@ unsupported_string_singleton te
+  | TInt _s -> fail @@ unsupported_string_singleton te
   | TModA ma ->
     let (ma, loc) = r_split ma in
     let (module_name, _) = r_split ma.module_name in
     let%bind element = self ma.field in
     return @@ t_module_accessor ~loc module_name element
-
 
 let compile_selection (selection : CST.selection) =
   match selection with
@@ -406,13 +441,27 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
       let%bind lst = bind_map_list self lst in
       return @@ e_list ~loc lst
   )
-  | ELetIn li ->
+  | ELetIn li -> (
     let (li, loc) = r_split li in
     let ({kwd_rec;binding;body;attributes;_} : CST.let_in) = li in
-    let%bind lst = compile_let_binding ?kwd_rec attributes binding in
     let%bind body = self body in
-    let aux (binder,attr,rhs) expr = e_let_in ~loc binder attr rhs expr in
-    return @@ List.fold_right aux lst body
+    match binding with
+    | { binders ; let_rhs } -> (
+      let (pattern,arg) = binders in
+      match (unepar pattern,arg) with
+      | CST.PTuple tuple , [] ->
+        let%bind matchee = compile_expression let_rhs in
+        compile_tuple_let_destructuring matchee body tuple
+      | CST.PRecord record , [] ->
+        let%bind matchee = compile_expression let_rhs in
+        compile_record_let_destructuring matchee body record
+      | _ -> (
+        let%bind lst = compile_let_binding ?kwd_rec attributes binding in
+        let aux (binder,attr,rhs) expr = e_let_in ~loc binder attr rhs expr in
+        return @@ List.fold_right aux lst body
+      )
+    )
+  )
   | ETypeIn ti ->
     let (ti, loc) = r_split ti in
     let ({type_decl={name;type_expr;_};kwd_in=_;body} : CST.type_in) = ti in
@@ -438,7 +487,121 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
       in
       aux hd @@ tl
 
-and compile_matching_expr :  'a CST.case_clause CST.reg List.Ne.t -> _ =
+and conv : CST.pattern -> (nested_match_repr,_) result =
+  fun p ->
+  match unepar p with
+  | CST.PWild reg ->
+    let loc = Location.lift reg in
+    let var = Location.wrap ~loc @@ Var.fresh () in
+    ok (PatternVar { var ; ascr = None })
+  | CST.PVar var ->
+    let (var,loc) = r_split var in
+    let var = Location.wrap ~loc @@ Var.of_name var in
+    ok (PatternVar { var ; ascr = None })
+  | CST.PTuple tuple ->
+    let (tuple, _loc) = r_split tuple in
+    let lst = npseq_to_ne_list tuple in
+    let patterns = List.Ne.to_list lst in
+    let%bind nested = bind_map_list conv patterns in
+    let var = Location.wrap @@ Var.fresh () in
+    ok (TupleVar ({var ; ascr = None} , nested))
+  | CST.PRecord record ->
+    let (inj, _loc) = r_split record in
+    let aux : CST.field_pattern CST.reg -> (label * nested_match_repr,_) result = fun field ->
+      let { field_name ; eq=_ ; pattern } : CST.field_pattern = field.value in
+      let%bind pattern = conv pattern in
+      ok (AST.Label field_name.value , pattern)
+    in
+    let%bind lst = bind_map_ne_list aux @@ npseq_to_ne_list inj.ne_elements in
+    let lst = List.Ne.to_list lst in
+    let (labels,nested) = List.split lst in
+    let var = Location.wrap @@ Var.fresh () in
+    ok (RecordVar ({var ; ascr = None}, labels , nested))
+  | _ -> fail @@ unsupported_pattern_type [p]
+
+and get_binder : nested_match_repr -> AST.ty_expr binder =
+  fun s ->
+  match s with
+  | TupleVar (x,_) -> x
+  | PatternVar x -> x
+  | RecordVar (x,_,_) -> x
+
+and fold_nested_z
+  f acc l =
+  match l with
+  | [] -> acc
+  | ( PatternVar _ as z ) :: l ->
+    let x  = f acc z in
+    fold_nested_z f x l
+  | (TupleVar (_,inner) as z)::l ->
+    let x = f acc z in
+    let x = fold_nested_z f x inner in
+    fold_nested_z f x l
+  | (RecordVar (_,_,inner) as z)::l ->
+    let x = f acc z in
+    let x = fold_nested_z f x inner in
+    fold_nested_z f x l
+
+and nestrec : AST.expression -> (AST.expression -> AST.expression) -> nested_match_repr list -> AST.expression =
+  fun res f lst ->
+    let aux :  (AST.expression -> AST.expression) -> nested_match_repr -> (AST.expression -> AST.expression) =
+      fun f z ->
+        match z with
+        | PatternVar _ -> f
+        | TupleVar (matchee,nested) ->
+          let binders = List.map get_binder nested in
+          let f' = fun body -> f (e_matching (e_variable matchee.var) (Match_tuple (binders,body))) in
+          f'
+        | RecordVar (matchee,labels,nested) ->
+          let binders = List.map get_binder nested in
+          let lbinders = List.combine labels binders in
+          let f' = fun body -> f (e_matching (e_variable matchee.var) (Match_record (lbinders,body))) in
+          f'
+    in
+    match lst with
+    | PatternVar _ :: tl -> nestrec res f tl
+    | TupleVar (matchee,nested) :: tl ->
+      let binders = List.map get_binder nested in
+      let f' = fun body -> f (e_matching (e_variable matchee.var) (Match_tuple (binders,body))) in
+      let f'' = fold_nested_z aux f' nested in
+      nestrec res f'' tl
+    | RecordVar (matchee,labels,nested) :: tl ->
+      let binders = List.map get_binder nested in
+      let lbinders = List.combine labels binders in
+      let f' = fun body -> f (e_matching (e_variable matchee.var) (Match_record (lbinders,body))) in
+      let f'' = fold_nested_z aux f' nested in
+      nestrec res f'' tl
+    | [] -> f res
+
+and compile_tuple_let_destructuring : AST.expression -> AST.expression -> (CST.pattern, CST.comma) Utils.nsepseq CST.reg -> (AST.expression,_) result =
+  fun matchee let_result tuple ->
+    let (tuple, loc) = r_split tuple in
+    let lst = npseq_to_ne_list tuple in
+    let patterns = List.Ne.to_list lst in
+    let%bind patterns = bind_map_list conv patterns in
+    let binders = List.map get_binder patterns in
+    let f = fun body -> e_matching ~loc matchee (Match_tuple (binders, body)) in
+    let body = nestrec let_result f patterns in
+    ok body
+
+and compile_record_let_destructuring : AST.expression -> AST.expression -> CST.field_pattern CST.reg CST.ne_injection CST.reg -> (AST.expression,_) result =
+  fun matchee let_result record ->
+    let (record, loc) = r_split record in
+    let aux : CST.field_pattern CST.reg -> (label * CST.pattern,_) result = fun field ->
+      let { field_name ; eq=_ ; pattern } : CST.field_pattern = field.value in
+      ok (AST.Label field_name.value , pattern)
+    in
+    let%bind lst = bind_map_ne_list aux @@ npseq_to_ne_list record.ne_elements in
+    let lst = List.Ne.to_list lst in
+    let (labels,patterns) = List.split lst in
+    let%bind patterns = bind_map_list conv patterns in
+    let binders = List.map get_binder patterns in
+    let lbinders = List.combine labels binders in
+    let f = fun body -> e_matching ~loc matchee (Match_record (lbinders, body)) in
+    let body = nestrec let_result f patterns in
+    ok body
+
+and compile_matching_expr :  'a CST.case_clause CST.reg List.Ne.t -> (matching_expr, abs_error) result =
 fun cases ->
   let return = ok in
   let compile_pattern pattern = return pattern in
@@ -501,8 +664,38 @@ fun cases ->
     let var = Location.wrap ~loc @@ Var.of_name var in
     let binder = {var; ascr=None} in
     return @@ AST.Match_variable (binder, expr)
-  | (PTuple tuple, _expr), [] ->
-    fail @@ unsupported_pattern_type @@ [CST.PTuple tuple]
+  | (PTuple tuple , expr), []
+  | (PPar { value = { inside = PTuple tuple ; _} ;_}, expr), [] ->
+    let aux : CST.pattern -> (ty_expr binder,_) result = fun var ->
+      match var with
+      | CST.PVar var ->
+        let (name, loc) = r_split var in
+        let var = Location.wrap ~loc @@ Var.of_name name in
+        ok @@ { var ; ascr=None }
+      | x ->
+        (* TODO : patterns in match not supported see !909 *)
+        fail @@ unsupported_deep_pattern_matching (Raw.pattern_to_region x)
+    in
+    let%bind lst = bind_map_ne_list aux @@ npseq_to_ne_list tuple.value in
+    let lst : ty_expr binder list = List.Ne.to_list lst in
+    return @@ AST.Match_tuple (lst, expr)
+  | (PRecord record , expr), []
+  | (PPar { value = { inside = PRecord record; _} ;_}, expr), [] ->
+    let (inj, _loc) = r_split record in
+    let aux : CST.field_pattern CST.reg -> (label * ty_expr binder,_) result = fun field ->
+      let { field_name ; eq=_ ; pattern } : CST.field_pattern = field.value in 
+      match pattern with
+      | CST.PVar var ->
+        let (name, loc) = r_split var in
+        let var = Location.wrap ~loc @@ Var.of_name name in
+        ok @@ (Label field_name.value , { var ; ascr=None })
+      | x ->
+        (* TODO : patterns in match not supported see !909 *)
+        fail @@ unsupported_deep_pattern_matching (Raw.pattern_to_region x)
+    in
+    let%bind lst = bind_map_ne_list aux @@ npseq_to_ne_list inj.ne_elements in
+    let lst = List.Ne.to_list lst in
+    return @@ AST.Match_record (lst, expr)
   | (PList _, _), _ ->
     let%bind (match_nil,match_cons) = compile_list_pattern @@ List.Ne.to_list cases in
     return @@ AST.Match_list {match_nil;match_cons}
@@ -510,7 +703,8 @@ fun cases ->
     let (pattern, lst) = List.split @@ List.Ne.to_list cases in
     let%bind constrs = bind_map_list compile_constr_pattern pattern in
     return @@ AST.Match_variant (List.combine constrs lst)
-  | _ -> fail @@ unsupported_pattern_type @@ List.map fst @@ List.Ne.to_list cases
+  | _ ->
+    fail @@ unsupported_pattern_type @@ List.map fst @@ List.Ne.to_list cases
 
 and unepar = function
 | CST.PPar { value = { inside; _ }; _ } -> unepar inside
@@ -578,7 +772,7 @@ and compile_let_binding ?kwd_rec attributes binding =
         ok @@ expr
     in
     return_1 @@ ({var=fun_binder;ascr=lhs_type}, attributes, expr)
-  | PTuple tuple, [] -> (* Tuple destructuring *)
+  | PTuple tuple, [] -> (* tuple destructuring (for top-level only) TODO: this should be deprecated or handled in a better way *)
     let (tuple, loc) = r_split tuple in
     let%bind lst = bind_map_ne_list compile_parameter @@ npseq_to_ne_list tuple in
     let (lst, exprs) = List.Ne.split lst in

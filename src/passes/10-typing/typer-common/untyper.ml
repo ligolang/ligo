@@ -39,6 +39,7 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer
   | O.T_module_accessor ma ->
     let%bind ma = module_access self ma in
     return @@ I.T_module_accessor ma
+  | O.T_singleton x -> return @@ I.T_singleton x
 
 let untype_declaration_constant untype_expression O.{binder;expr;inline} =
   let attr = I.{inline} in

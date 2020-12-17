@@ -12,6 +12,9 @@ type type_content =
   | T_list of type_expression
   | T_set of type_expression
   | T_contract of type_expression
+  | T_ticket of type_expression
+  | T_sapling_state of Z.t
+  | T_sapling_transaction of Z.t
   | T_option of type_expression
 
 and type_expression = {
@@ -36,12 +39,11 @@ and type_base =
   | TB_timestamp
   | TB_baker_hash
   | TB_pvss_key
-  | TB_sapling_transaction
-  | TB_sapling_state
   | TB_baker_operation
   | TB_bls12_381_g1
   | TB_bls12_381_g2
   | TB_bls12_381_fr
+  | TB_never
 
 and environment_element = expression_variable * type_expression
 
@@ -93,6 +95,7 @@ and expression_content =
   | E_if_cons of (expression * expression * (((var_name * type_expression) * (var_name * type_expression)) * expression))
   | E_if_left of expression * ((var_name * type_expression) * expression) * ((var_name * type_expression) * expression)
   | E_let_in of ((var_name * type_expression) * inline * expression * expression)
+  | E_let_pair of expression * (((var_name * type_expression) * (var_name * type_expression)) * expression)
   | E_raw_michelson of (Location.t, string) Tezos_micheline.Micheline.node list
 
 and expression = {

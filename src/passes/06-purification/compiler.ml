@@ -160,6 +160,8 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression,Errors
       let%bind ma = module_access self ma in
       return @@ O.T_module_accessor ma
     | I.T_annoted (ty, _) -> self ty
+    | I.T_singleton t -> return @@ O.T_singleton t
+
 
 let rec compile_expression : I.expression -> (O.expression , _) result =
   fun e ->

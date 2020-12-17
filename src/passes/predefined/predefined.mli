@@ -17,5 +17,5 @@ end
 module Stacking : sig
   include module type of Helpers.Stacking
   open Stage_common.Types
-  val get_operators : constant' -> predicate option
+  val get_operators : Environment.Protocols.t -> constant' -> predicate option
 end

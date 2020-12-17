@@ -39,3 +39,15 @@ let%expect_test _ =
       2 | type bool_option = bool option
 
     Type "bls12_381_g1" not found. |}] ;
+
+  run_ligo_good [ "compile-contract" ; contract "sapling.mligo" ; "main" ; "--disable-michelson-typechecking" ; "--protocol=edo" ] ;
+  [%expect {|
+    { parameter (sapling_transaction 8) ;
+      storage (pair int (sapling_state 8)) ;
+      code { SAPLING_EMPTY_STATE 8 ;
+             SWAP ;
+             CAR ;
+             SAPLING_VERIFY_UPDATE ;
+             IF_NONE { PUSH string "failed" ; FAILWITH } {} ;
+             NIL operation ;
+             PAIR } } |}] ;

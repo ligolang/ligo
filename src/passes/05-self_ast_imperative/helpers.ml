@@ -215,6 +215,7 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_express
   | T_module_accessor ma ->
     let%bind ma = Maps.module_access self ma in
     return @@ T_module_accessor ma
+  | T_singleton _ -> ok te'
 
 and map_cases : 'err exp_mapper -> matching_expr -> (matching_expr , _) result = fun f m ->
   match m with

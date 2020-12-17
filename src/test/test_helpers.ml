@@ -53,7 +53,7 @@ let pack_payload (program:Ast_typed.program_fully_typed) (payload:expression) : 
     let%bind core      = Compile.Of_sugar.compile_expression sugar in
     let%bind (typed,_) = Compile.Of_core.compile_expression ~typer_switch:(typer_switch ()) ~env ~state:(Typer.Solver.initial_state) core in
     let%bind mini_c = Compile.Of_typed.compile_expression typed in
-    Compile.Of_mini_c.compile_expression mini_c in
+    Compile.Of_mini_c.compile_expression ~options mini_c in
   let payload_ty = code.expr_ty in
   let%bind (payload : _ Tezos_utils.Michelson.michelson) =
     Ligo.Run.Of_michelson.evaluate_expression code.expr code.expr_ty in
@@ -97,7 +97,7 @@ let typed_program_to_michelson (program, env, state) entry_point =
   ignore env;
   ignore state;
   let%bind mini_c = Compile.Of_typed.compile program in
-  let%bind michelson = Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
+  let%bind michelson = Compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c entry_point in
   let%bind michelson = Compile.Of_michelson.build_contract ~disable_typecheck:false michelson in
   ok michelson
 
@@ -114,7 +114,7 @@ let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ 
   let () = Typer.Solver.discard_state new_state in
   let%bind compiled_applied = Compile.Of_typed.compile_expression typed_app in
   let%bind mini_c_prg       = Compile.Of_typed.compile program in
-  Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg compiled_applied
+  Compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c_prg compiled_applied
 
 let run_typed_program_with_imperative_input ?options
     ((program, env, state): Ast_typed.program_fully_typed * Ast_typed.environment * _ Typer.Solver.typer_state) (entry_point: string)
@@ -162,7 +162,7 @@ let expect_evaluate (program, _env, _state) entry_point expecter =
   trace (test_run_tracer entry_point) @@
   let%bind mini_c          = Ligo.Compile.Of_typed.compile program in
   let%bind (exp,_)         = trace_option unknown @@ Mini_c.get_entry mini_c entry_point in
-  let%bind michelson_value = Ligo.Compile.Of_mini_c.aggregate_and_compile_expression mini_c exp in
+  let%bind michelson_value = Ligo.Compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c exp in
   let%bind res_michelson   = Ligo.Run.Of_michelson.run_no_failwith michelson_value.expr michelson_value.expr_ty in
   let%bind res             = Decompile.Of_michelson.decompile_typed_program_entry_expression_result (typer_switch ()) program entry_point (Success res_michelson) in
   let%bind res' = match res with

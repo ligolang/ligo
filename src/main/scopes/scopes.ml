@@ -72,6 +72,17 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.program -
         let (i,all_defs,scopes) = List.fold_left aux (i,all_defs,scopes) lst in
         (i,all_defs,env,scopes)
       )
+      | Match_record {fields ; body } ->
+        let aux = fun _l (te: Ast_core.ty_expr Ast_core.binder) (i,all_defs,scopes) ->
+          let ev = te.var in
+          let proj_def = make_v_def_from_core bindings ev ev.location ev.location in
+          let (i,env) = add_shadowing_def (i,ev.wrap_content) proj_def env in
+          let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,body.location) bindings body in
+          let all_defs = merge_defs env all_defs in
+          (i,all_defs,scopes)
+        in
+        let (i,all_defs,scopes) = Ast_core.LMap.fold aux fields (i,all_defs,scopes) in
+        (i,all_defs,env,scopes)
     )
     | E_record emap -> (
       let aux = fun (i,all_defs,scopes) (exp:Ast_core.expression) ->

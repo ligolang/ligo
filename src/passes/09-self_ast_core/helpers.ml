@@ -63,6 +63,8 @@ and fold_cases : ('a , 'err) folder -> 'a -> matching_expr -> ('a , 'err) result
       let%bind res = bind_fold_list aux init lst in
       ok res
     )
+  | Match_record {body;_} ->
+    fold_expression f init body
 
 type 'err exp_mapper = expression -> (expression , 'err) result
 type 'err ty_exp_mapper = type_expression -> (type_expression , 'err) result
@@ -151,6 +153,7 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_express
   | T_module_accessor ma ->
     let%bind ma = Maps.module_access self ma in
     return @@ T_module_accessor ma
+  | T_singleton _ -> ok te'
 
 
 and map_cases : 'err exp_mapper -> matching_expr -> (matching_expr , 'err) result = fun f m ->
@@ -173,6 +176,9 @@ and map_cases : 'err exp_mapper -> matching_expr -> (matching_expr , 'err) resul
       let%bind lst' = bind_map_list aux lst in
       ok @@ Match_variant lst'
     )
+  | Match_record { fields; body } ->
+    let%bind body = map_expression f body in
+    ok @@ Match_record {fields; body}
 
 and map_program : 'err abs_mapper -> program -> (program , 'err) result = fun m p ->
   let aux = fun (x : declaration) ->
@@ -275,3 +281,6 @@ and fold_map_cases : ('a , 'err) fold_mapper -> 'a -> matching_expr -> ('a * mat
       let%bind (init,lst') = bind_fold_map_list aux init lst in
       ok @@ (init, Match_variant lst')
     )
+  | Match_record { body ; fields } ->
+    let%bind (init, body) = fold_map_expression f init body in
+      ok @@ (init, Match_record { fields ; body })

@@ -123,10 +123,12 @@ type constant' =
   | C_MAP_MEM
   | C_MAP_FIND
   | C_MAP_FIND_OPT
+  | C_MAP_GET_AND_UPDATE
   (* Big Maps *)
   | C_BIG_MAP
   | C_BIG_MAP_EMPTY
   | C_BIG_MAP_LITERAL
+  | C_BIG_MAP_GET_AND_UPDATE
   (* Crypto *)
   | C_SHA256
   | C_SHA512
@@ -165,6 +167,19 @@ type constant' =
   | C_TEST_EXTERNAL_CALL
   | C_TEST_ASSERT_FAILURE
   | C_TEST_LOG
+  (* New with EDO*)
+  | C_SHA3
+  | C_KECCAK
+  | C_LEVEL
+  | C_VOTING_POWER
+  | C_TOTAL_VOTING_POWER
+  | C_TICKET
+  | C_READ_TICKET
+  | C_SPLIT_TICKET
+  | C_JOIN_TICKET
+  | C_PAIRING_CHECK
+  | C_SAPLING_VERIFY_UPDATE
+  | C_SAPLING_EMPTY_STATE
 
 type deprecated = {
     name : string ;

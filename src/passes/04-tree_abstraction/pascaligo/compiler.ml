@@ -59,6 +59,12 @@ let rec compile_type_expression : CST.type_expr ->_ result =
       | CST.TString s -> Some s.value
       | _ -> None
     in
+    let get_t_int_singleton_opt = function
+      | CST.TInt x ->
+        let (_,z) = x.value in
+        Some z
+      | _ -> None
+    in
     let ((type_constant,args), loc) = r_split app in
     (* this is a bad design, michelson_or and pair should be an type_constant
        see AnnotType *)
@@ -93,6 +99,30 @@ let rec compile_type_expression : CST.type_expr ->_ result =
           return @@ t_michelson_pair ~loc a' b' c' d'
           )
         | _ -> fail @@ michelson_type_wrong_arity loc type_constant.value)
+      | "sapling_state" ->
+        let lst = npseq_to_list args.value.inside in
+        (match lst with
+        | [(a : CST.type_expr)] -> (
+          let sloc = Location.lift @@ Raw.type_expr_to_region a in
+          let%bind a' =
+            trace_option (michelson_type_wrong te type_constant.value) @@
+              get_t_int_singleton_opt a in
+          let singleton = t_singleton ~loc:sloc (Literal_int a') in
+          return @@ t_sapling_state ~loc singleton
+          )
+        | _ -> fail @@ michelson_type_wrong_arity loc type_constant.value)
+      | "sapling_transaction" ->
+        let lst = npseq_to_list args.value.inside in
+        (match lst with
+        | [(a : CST.type_expr)] -> (
+          let sloc = Location.lift @@ Raw.type_expr_to_region a in
+          let%bind a' =
+            trace_option (michelson_type_wrong te type_constant.value) @@
+              get_t_int_singleton_opt a in
+          let singleton = t_singleton ~loc:sloc (Literal_int a') in
+          return @@ t_sapling_transaction ~loc singleton
+          )
+        | _ -> fail @@ michelson_type_wrong_arity loc type_constant.value)
     | _ ->
       let operator = Var.of_name type_constant.value in
       let lst = npseq_to_list args.value.inside in
@@ -114,6 +144,7 @@ let rec compile_type_expression : CST.type_expr ->_ result =
     return @@ t_variable ~loc v
   | TWild _reg -> failwith "unsupported TWild"
   | TString _s -> fail @@ unsupported_string_singleton te
+  | TInt _s -> fail @@ unsupported_string_singleton te
   | TModA ma ->
     let (ma, loc) = r_split ma in
     let (module_name, _) = r_split ma.module_name in
@@ -554,8 +585,20 @@ fun compiler cases ->
     let var = Location.wrap ~loc @@ Var.of_name var in
     let binder = {var;ascr=None} in
     return @@ AST.Match_variable (binder, expr)
-  | (PTuple tuple, _expr), [] ->
-    fail @@ unsupported_pattern_type @@ CST.PTuple tuple
+  | (PTuple tuple , expr), [] ->
+    let aux : CST.pattern -> (ty_expr binder,_) result = fun var ->
+      match var with
+      | CST.PVar var ->
+        let (name, loc) = r_split var in
+        let var = Location.wrap ~loc @@ Var.of_name name in
+        ok @@ { var ; ascr=None }
+      | x ->
+        (* TODO : patterns in match not supported see !909 *)
+        fail @@ unsupported_deep_pattern_matching (Raw.pattern_to_region x)
+    in
+    let%bind lst = bind_map_ne_list aux @@ npseq_to_ne_list tuple.value.inside in
+    let lst : ty_expr binder list = List.Ne.to_list lst in
+    return @@ AST.Match_tuple (lst, expr)
   | (PList _, _), _ ->
     let%bind (match_nil,match_cons) = compile_list_pattern @@ List.Ne.to_list cases in
     return @@ AST.Match_list {match_nil;match_cons}

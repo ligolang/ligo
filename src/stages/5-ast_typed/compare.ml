@@ -7,6 +7,8 @@ let cmp4 f a1 b1 g a2 b2 h a3 b3 i a4 b4 = match f a1 b1 with 0 -> (match g a2 b
 let cmp5 f a1 b1 g a2 b2 h a3 b3 i a4 b4 j a5 b5 = match f a1 b1 with 0 -> (match g a2 b2 with 0 -> (match h a3 b3 with 0 -> (match i a4 b4 with 0 -> j a5 b5 | c -> c) | c -> c) | c -> c) | c -> c
 let cmp6 f a1 b1 g a2 b2 h a3 b3 i a4 b4 j a5 b5 k a6 b6 = match f a1 b1 with 0 -> (match g a2 b2 with 0 -> (match h a3 b3 with 0 -> (match i a4 b4 with 0 -> (match j a5 b5 with 0 -> k a6 b6 | c -> c) | c -> c) | c -> c) | c -> c) | c -> c
 
+let cmp_pair f g (a1, a2) (b1, b2) = cmp2 f a1 b1 g a2 b2
+
 let compare_lmap_entry  compare (Label na, va) (Label nb, vb) = cmp2 String.compare na nb compare va vb
 let compare_tvmap_entry compare (tva, va) (tvb, vb) = cmp2 Var.compare tva tvb compare va vb
 
@@ -44,6 +46,7 @@ let type_expression_tag ty_expr =
   | T_record          _ -> 4
   | T_arrow           _ -> 5
   | T_module_accessor _ -> 6
+  | T_singleton       _ -> 7
 
 let rec constant_tag (ct : constant_tag) =
   match ct with
@@ -76,8 +79,9 @@ and type_expression a b =
   | T_record   a, T_record   b -> rows a b
   | T_arrow    a, T_arrow    b -> arrow a b
   | T_module_accessor a, T_module_accessor b -> module_access type_expression a b
-  | (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_module_accessor _),
-    (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_module_accessor _) ->
+  | T_singleton a , T_singleton b -> literal a b
+  | (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_module_accessor _ | T_singleton _),
+    (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_module_accessor _ | T_singleton _) ->
     Int.compare (type_expression_tag a) (type_expression_tag b)
 
 and injection {language=la ; injection=ia ; parameters=pa} {language=lb ; injection=ib ; parameters=pb} =
@@ -217,14 +221,16 @@ and matching_expr_tag = function
   Match_list    _ -> 1
 | Match_option  _ -> 2
 | Match_variant _ -> 3
+| Match_record _ -> 4
 
 and matching_expr a b =
   match (a,b) with
     Match_list    a, Match_list    b -> matching_content_list a b
   | Match_option  a, Match_option  b -> matching_content_option a b
   | Match_variant a, Match_variant b -> matching_content_variant a b
-  | (Match_list _| Match_option _| Match_variant _),
-    (Match_list _| Match_option _| Match_variant _) ->
+  | Match_record a, Match_record b -> matching_content_record a b
+  | (Match_list _| Match_option _| Match_variant _ | Match_record _),
+    (Match_list _| Match_option _| Match_variant _ | Match_record _) ->
     Int.compare (matching_expr_tag a) (matching_expr_tag b)
 
 and matching_content_cons {hd=ha;tl=ta;body=ba;tv=va} {hd=hb;tl=tb;body=bb;tv=vb} =
@@ -261,6 +267,13 @@ and matching_content_variant {cases=ca;tv=ta} {cases=cb;tv=tb} =
     (List.compare ~compare:matching_content_case) ca cb
     type_expression ta tb
 
+and matching_content_record
+    {fields = fields1; body = body1; record_type = t1}
+    {fields = fields2; body = body2; record_type = t2} =
+  cmp3
+    (label_map ~compare:(cmp_pair expression_variable type_expression)) fields1 fields2
+    expression body1 body2
+    rows t1 t2
 
 let declaration_tag = function
   | Declaration_constant _ -> 1

@@ -30,6 +30,8 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, Err
     | O.T_module_accessor ma ->
       let%bind ma = module_access self ma in
       return @@ I.T_module_accessor ma
+    | O.T_singleton x ->
+      return @@ I.T_singleton x
 
 let rec decompile_expression : O.expression -> (I.expression, Errors.purification_error) result =
   fun e ->

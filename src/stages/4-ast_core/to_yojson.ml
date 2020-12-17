@@ -14,6 +14,7 @@ and type_content = function
   | T_arrow           t -> `List [ `String "t_arrow";    arrow type_expression t]
   | T_app             t -> `List [ `String "t_app";      t_app type_expression t]
   | T_module_accessor t -> `List [ `String "t_module_accessor"; module_access type_expression t]
+  | T_singleton       t -> `List [ `String "t_singleton" ; literal t ]
 
 let rec expression ?(incl_sugar=false) {content=ec;sugar;location} =
   `Assoc 
@@ -75,6 +76,7 @@ and matching_expr = function
       ("match_some", matching_some match_some);
     ]]
   | Match_variant m -> `List [ `String "Match_variant"; list matching_content_case m ]
+  | Match_record _ -> `Null (* merge MR about ppx_to_yojson first*)
 
 and matching_cons {hd; tl; body} =
   `Assoc [

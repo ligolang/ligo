@@ -21,6 +21,7 @@ and type_content =
   | T_record   of rows
   | T_arrow    of ty_expr arrow
   | T_module_accessor of ty_expr module_access
+  | T_singleton of literal
 
 and type_injection = {
   language : string ;
@@ -97,10 +98,17 @@ and matching_content_variant = {
     tv: type_expression;
   }
 
+and matching_content_record = {
+  fields : (expression_variable * type_expression) label_map;
+  body : expression;
+  record_type : rows;
+}
+
 and matching_expr =
   | Match_list    of matching_content_list
   | Match_option  of matching_content_option
   | Match_variant of matching_content_variant
+  | Match_record of matching_content_record
 
 and declaration_loc = declaration location_wrap
 

@@ -55,6 +55,8 @@ module Free_variables = struct
     | Match_list { match_nil = n ; match_cons = {hd; tl; body; tv=_} } -> union (f b n) (f (union (of_list [hd ; tl]) b) body)
     | Match_option { match_none = n ; match_some = {opt; body; tv=_} } -> union (f b n) (f (union (singleton opt) b) body)
     | Match_variant { cases ; tv=_ } -> unions @@ List.map (matching_variant_case f b) cases
+    | Match_record {fields; body; record_type = _} ->
+      f (union (List.map fst (LMap.to_list fields)) b) body
 
   and matching_expression = fun x -> matching expression x
 
@@ -135,10 +137,12 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   | T_module_accessor {module_name=mna;element=ea}, T_module_accessor {module_name=mnb;element=eb} when String.equal mna mnb ->
     assert_type_expression_eq (ea, eb)
   | T_module_accessor _, _ -> None
+  | T_singleton a , T_singleton b -> assert_literal_eq (a , b)
+  | T_singleton _ , _ -> None
 
-let type_expression_eq ab = Option.is_some @@ assert_type_expression_eq ab
+and type_expression_eq ab = Option.is_some @@ assert_type_expression_eq ab
 
-let assert_literal_eq (a, b : literal * literal) : unit option =
+and assert_literal_eq (a, b : literal * literal) : unit option =
   match (a, b) with
   | Literal_int a, Literal_int b when a = b -> Some ()
   | Literal_int _, Literal_int _ -> None
