@@ -3,138 +3,7 @@ open Stage_common.To_yojson
 type json = Yojson.Safe.t
 
 
-let constant' = function
-  | C_INT                -> `List [`String "C_INT"; `Null ]
-  | C_UNIT               -> `List [`String "C_UNIT"; `Null ]
-  | C_NIL                -> `List [`String "C_NIL"; `Null ]
-  | C_NOW                -> `List [`String "C_NOW"; `Null ]
-  | C_IS_NAT             -> `List [`String "C_IS_NAT"; `Null ]
-  | C_SOME               -> `List [`String "C_SOME"; `Null ]
-  | C_NONE               -> `List [`String "C_NONE"; `Null ]
-  | C_ASSERTION          -> `List [`String "C_ASSERTION"; `Null ]
-  | C_ASSERT_SOME        -> `List [`String "C_ASSERT_SOME"; `Null ]
-  | C_ASSERT_INFERRED    -> `List [`String "C_ASSERT_INFERRED"; `Null ]
-  | C_FAILWITH           -> `List [`String "C_FAILWITH"; `Null ]
-  | C_UPDATE             -> `List [`String "C_UPDATE"; `Null ]
-  (* Loops *)
-  | C_ITER               -> `List [`String "C_ITER"; `Null ]
-  | C_FOLD_WHILE         -> `List [`String "C_FOLD_WHILE"; `Null ]
-  | C_FOLD_CONTINUE      -> `List [`String "C_FOLD_CONTINUE"; `Null ]
-  | C_FOLD_STOP          -> `List [`String "C_FOLD_STOP"; `Null ]
-  | C_LOOP_LEFT          -> `List [`String "C_LOOP_LEFT"; `Null ]
-  | C_LOOP_CONTINUE      -> `List [`String "C_LOOP_CONTINUE"; `Null ]
-  | C_LOOP_STOP          -> `List [`String "C_LOOP_STOP"; `Null ]
-  | C_FOLD               -> `List [`String "C_FOLD"; `Null ]
-  (* MATH *)
-  | C_NEG                -> `List [`String "C_NEG"; `Null ]
-  | C_ABS                -> `List [`String "C_ABS"; `Null ]
-  | C_ADD                -> `List [`String "C_ADD"; `Null ]
-  | C_SUB                -> `List [`String "C_SUB"; `Null ]
-  | C_MUL                -> `List [`String "C_MUL"; `Null ]
-  | C_EDIV               -> `List [`String "C_EDIV"; `Null ]
-  | C_DIV                -> `List [`String "C_DIV"; `Null ]
-  | C_MOD                -> `List [`String "C_MOD"; `Null ]
-  (* LOGIC *)
-  | C_NOT                -> `List [`String "C_NOT"; `Null ]
-  | C_AND                -> `List [`String "C_AND"; `Null ]
-  | C_OR                 -> `List [`String "C_OR"; `Null ]
-  | C_XOR                -> `List [`String "C_XOR"; `Null ]
-  | C_LSL                -> `List [`String "C_LSL"; `Null ]
-  | C_LSR                -> `List [`String "C_LSR"; `Null ]
-  (* COMPARATOR *)
-  | C_EQ                 -> `List [`String "C_EQ"; `Null ]
-  | C_NEQ                -> `List [`String "C_NEQ"; `Null ]
-  | C_LT                 -> `List [`String "C_LT"; `Null ]
-  | C_GT                 -> `List [`String "C_GT"; `Null ]
-  | C_LE                 -> `List [`String "C_LE"; `Null ]
-  | C_GE                 -> `List [`String "C_GE"; `Null ]
-  (* Bytes/ String *)
-  | C_SIZE               -> `List [`String "C_SIZE"; `Null ]
-  | C_CONCAT             -> `List [`String "C_CONCAT"; `Null ]
-  | C_SLICE              -> `List [`String "C_SLICE"; `Null ]
-  | C_BYTES_PACK         -> `List [`String "C_BYTES_PACK"; `Null ]
-  | C_BYTES_UNPACK       -> `List [`String "C_BYTES_UNPACK"; `Null ]
-  | C_CONS               -> `List [`String "C_CONS"; `Null ]
-  (* Pair *)
-  | C_PAIR               -> `List [`String "C_PAIR"; `Null ]
-  | C_CAR                -> `List [`String "C_CAR"; `Null ]
-  | C_CDR                -> `List [`String "C_CDR"; `Null ]
-  | C_TRUE               -> `List [`String "C_TRUE"; `Null ]
-  | C_FALSE              -> `List [`String "C_FALSE"; `Null ]
-  | C_LEFT               -> `List [`String "C_LEFT"; `Null ]
-  | C_RIGHT              -> `List [`String "C_RIGHT"; `Null ]
-  (* Set *)
-  | C_SET_EMPTY          -> `List [`String "C_SET_EMPTY"; `Null ]
-  | C_SET_LITERAL        -> `List [`String "C_SET_LITERAL"; `Null ]
-  | C_SET_ADD            -> `List [`String "C_SET_ADD"; `Null ]
-  | C_SET_REMOVE         -> `List [`String "C_SET_REMOVE"; `Null ]
-  | C_SET_ITER           -> `List [`String "C_SET_ITER"; `Null ]
-  | C_SET_FOLD           -> `List [`String "C_SET_FOLD"; `Null ]
-  | C_SET_MEM            -> `List [`String "C_SET_MEM"; `Null ]
-  (* List *)
-  | C_LIST_EMPTY         -> `List [`String "C_LIST_EMPTY"; `Null ]
-  | C_LIST_LITERAL       -> `List [`String "C_LIST_LITERAL"; `Null ]
-  | C_LIST_ITER          -> `List [`String "C_LIST_ITER"; `Null ]
-  | C_LIST_MAP           -> `List [`String "C_LIST_MAP"; `Null ]
-  | C_LIST_FOLD          -> `List [`String "C_LIST_FOLD"; `Null ]
-  | C_LIST_HEAD_OPT      -> `List [`String "C_HEAD_OPT"; `Null ]
-  | C_LIST_TAIL_OPT      -> `List [`String "C_TAIL_OPT"; `Null ]
-  (* Maps *)
-  | C_MAP                -> `List [`String "C_MAP"; `Null ]
-  | C_MAP_EMPTY          -> `List [`String "C_MAP_EMPTY"; `Null ]
-  | C_MAP_LITERAL        -> `List [`String "C_MAP_LITERAL"; `Null ]
-  | C_MAP_GET            -> `List [`String "C_MAP_GET"; `Null ]
-  | C_MAP_GET_FORCE      -> `List [`String "C_MAP_GET_FORCE"; `Null ]
-  | C_MAP_ADD            -> `List [`String "C_MAP_ADD"; `Null ]
-  | C_MAP_REMOVE         -> `List [`String "C_MAP_REMOVE"; `Null ]
-  | C_MAP_UPDATE         -> `List [`String "C_MAP_UPDATE"; `Null ]
-  | C_MAP_ITER           -> `List [`String "C_MAP_ITER"; `Null ]
-  | C_MAP_MAP            -> `List [`String "C_MAP_MAP"; `Null ]
-  | C_MAP_FOLD           -> `List [`String "C_MAP_FOLD"; `Null ]
-  | C_MAP_MEM            -> `List [`String "C_MAP_MEM"; `Null ]
-  | C_MAP_FIND           -> `List [`String "C_MAP_FIND"; `Null ]
-  | C_MAP_FIND_OPT       -> `List [`String "C_MAP_FIND_OPT"; `Null ]
-  (* Big Maps *)
-  | C_BIG_MAP            -> `List [`String "C_BIG_MAP"; `Null ]
-  | C_BIG_MAP_EMPTY      -> `List [`String "C_BIG_MAP_EMPTY"; `Null ]
-  | C_BIG_MAP_LITERAL    -> `List [`String "C_BIG_MAP_LITERAL"; `Null ]
-  (* Crypto *)
-  | C_SHA256             -> `List [`String "C_SHA256"; `Null ]
-  | C_SHA512             -> `List [`String "C_SHA512"; `Null ]
-  | C_BLAKE2b            -> `List [`String "C_BLAKE2b"; `Null ]
-  | C_HASH               -> `List [`String "C_HASH"; `Null ]
-  | C_HASH_KEY           -> `List [`String "C_HASH_KEY"; `Null ]
-  | C_CHECK_SIGNATURE    -> `List [`String "C_CHECK_SIGNATURE"; `Null ]
-  | C_CHAIN_ID           -> `List [`String "C_CHAIN_ID"; `Null ]
-  (* Blockchain *)
-  | C_CALL                     -> `List [`String "C_CALL"; `Null ]
-  | C_CONTRACT                 -> `List [`String "C_CONTRACT"; `Null ]
-  | C_CONTRACT_OPT             -> `List [`String "C_CONTRACT_OPT"; `Null ]
-  | C_CONTRACT_ENTRYPOINT      -> `List [`String "C_CONTRACT_ENTRYPOINT"; `Null ]
-  | C_CONTRACT_ENTRYPOINT_OPT  -> `List [`String "C_CONTRACT_ENTRYPOINT_OPT"; `Null ]
-  | C_AMOUNT                   -> `List [`String "C_AMOUNT"; `Null ]
-  | C_BALANCE                  -> `List [`String "C_BALANCE"; `Null ]
-  | C_SOURCE                   -> `List [`String "C_SOURCE"; `Null ]
-  | C_SENDER                   -> `List [`String "C_SENDER"; `Null ]
-  | C_ADDRESS                  -> `List [`String "C_ADDRESS"; `Null ]
-  | C_SELF                     -> `List [`String "C_SELF"; `Null ]
-  | C_SELF_ADDRESS             -> `List [`String "C_SELF_ADDRESS"; `Null ]
-  | C_IMPLICIT_ACCOUNT         -> `List [`String "C_IMPLICIT_ACCOUNT"; `Null ]
-  | C_SET_DELEGATE             -> `List [`String "C_SET_DELEGATE"; `Null ]
-  | C_CREATE_CONTRACT          -> `List [`String "C_CREATE_CONTRACT"; `Null ]
-  | C_CONVERT_TO_LEFT_COMB     -> `List [`String "C_CONVERT_TO_LEFT_COMB"; `Null ]
-  | C_CONVERT_TO_RIGHT_COMB    -> `List [`String "C_CONVERT_TO_RIGHT_COMB"; `Null ]
-  | C_CONVERT_FROM_LEFT_COMB   -> `List [`String "C_CONVERT_FROM_LEFT_COMB"; `Null ]
-  | C_CONVERT_FROM_RIGHT_COMB  -> `List [`String "C_CONVERT_FROM_RIGHT_COMB"; `Null ]
-  | C_TEST_ORIGINATE           -> `List [`String "TEST_ORIGINATE"; `Null ]
-  | C_TEST_SET_NOW             -> `List [`String "TEST_SET_NOW"; `Null ]
-  | C_TEST_SET_SOURCE          -> `List [`String "TEST_SET_SOURCE"; `Null ]
-  | C_TEST_SET_BALANCE         -> `List [`String "TEST_SET_BALANCE"; `Null ]
-  | C_TEST_EXTERNAL_CALL       -> `List [`String "TEST_EXTERNAL_CALL"; `Null ]
-  | C_TEST_GET_STORAGE         -> `List [`String "TEST_GET_STORAGE"; `Null ]
-  | C_TEST_GET_BALANCE         -> `List [`String "TEST_GET_BALANCE"; `Null ]
-  | C_TEST_ASSERT_FAILURE      -> `List [`String "TEST_ASSERT_FAILURE"; `Null ]
-  | C_TEST_LOG                 -> `List [`String "TEST_LOG"; `Null ]
+let constant' = Stage_common.To_yojson.constant'
 
 let label = label_to_yojson
 let option f o =
@@ -142,6 +11,7 @@ let option f o =
     | None   -> `List [ `String "None" ; `Null ]
     | Some v -> `List [ `String "Some" ; f v ]
 
+let pair f g (x, y) = `Tuple [ f x ; g y ]
 let list f lst = `List (List.map f lst)
 let label_map f lmap =
   let lst = List.sort (fun (Label a, _) (Label b, _) -> String.compare a b) (LMap.bindings lmap) in
@@ -171,6 +41,7 @@ and type_content = function
   | T_arrow           t -> `List [ `String "t_arrow"; arrow t]
   | T_constant        t -> `List [ `String "t_constant"; type_injection t]
   | T_module_accessor t -> `List [ `String "t_module_accessor"; module_access type_expression t]
+  | T_singleton       t -> `List [ `String "t_singleton" ; literal t ]
 
 and type_injection {language;injection;parameters} =
   `Assoc [
@@ -294,6 +165,7 @@ and matching_expr = function
   | Match_list    m -> `List [ `String "Match_list";    matching_content_list    m ]
   | Match_option  m -> `List [ `String "Match_option";  matching_content_option  m ]
   | Match_variant m -> `List [ `String "Match_variant"; matching_content_variant m ]
+  | Match_record m -> `List [ `String "Match_record"; matching_content_record m ]
 
 and matching_content_list {match_nil;match_cons} =
   `Assoc [
@@ -333,6 +205,13 @@ and matching_content_case {constructor; pattern; body} =
     ("constructor", label constructor);
     ("pattern", expression_variable_to_yojson pattern);
     ("body", expression body);
+  ]
+
+and matching_content_record {fields; body; record_type} =
+  `Assoc [
+    ("fields", label_map (pair expression_variable_to_yojson type_expression) fields);
+    ("body", expression body);
+    ("record_type", rows record_type);
   ]
 
 let declaration_type {type_binder;type_expr} =

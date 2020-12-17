@@ -70,6 +70,8 @@ let rec type_content : formatter -> type_content -> unit =
   | T_record           m -> fprintf ppf "%a" record m
   | T_arrow            a -> arrow         type_expression ppf a
   | T_module_accessor ma -> module_access type_expression ppf ma
+  | T_singleton       x  -> literal       ppf             x
+
 
 and type_injection ppf {language;injection;parameters} =
   ignore language;
@@ -145,6 +147,12 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit =
       fprintf ppf "| Nil -> %a @.| %a :: %a -> %a" f match_nil expression_variable hd expression_variable tl f body
   | Match_option {match_none ; match_some = {opt; body; tv=_}} ->
       fprintf ppf "| None -> %a @.| Some %a -> %a" f match_none expression_variable opt f body
+  | Match_record {fields ; body ; record_type = _} ->
+      let with_annots f g ppf (a , b) = fprintf ppf "%a:%a" f a g b in
+      (* let fields = LMap.map (fun (v,_) -> v) fields in *)
+      fprintf ppf "| %a -> %a"
+        (tuple_or_record_sep_expr (with_annots expression_variable type_expression)) fields
+        f body
 
 let declaration ppf (d : declaration) =
   match d with

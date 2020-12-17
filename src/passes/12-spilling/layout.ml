@@ -48,6 +48,67 @@ let t_sum ~layout return compile_type m =
       map snd @@ lst_fold_right lst
   )
 
+(* abstract description of final physical record layout, with
+   corresponding compiled types: *)
+type record_tree_content =
+  | Field of label
+  | Pair of record_tree * record_tree
+
+and record_tree = {
+  content : record_tree_content ;
+  type_ : Mini_c.type_expression
+}
+
+(* Based on t_record_to_pairs. Can this be used to simplify the other
+   record things in this file? *)
+(* ...also there must be a better way to write this, is it even
+   correct, I'm not sure? *)
+let record_tree ~layout compile_type m =
+  let open AST.Helpers in
+  let is_tuple_lmap = is_tuple_lmap m in
+  let lst = kv_list_of_t_record_or_tuple ~layout m in
+  match layout with
+  | L_tree -> (
+      let node = Append_tree.of_list lst in
+      let aux (a_annot, a) (b_annot, b) =
+        ok (None, { content = Pair (a, b) ;
+                    type_ = Expression.make_t (T_pair ((a_annot, a.type_), (b_annot, b.type_))) })
+      in
+      let%bind m' = Append_tree.bind_fold_ne
+          (fun (Label label, ({associated_type;michelson_annotation}: AST.row_element)) ->
+             let%bind a = compile_type associated_type in
+             let annot = (if is_tuple_lmap then
+                            None
+                          else
+                            Some (annotation_or_label michelson_annotation label)) in
+             ok (annot, { content = Field (Label label) ;
+                          type_ = a })
+          )
+          aux node in
+      ok @@ snd m'
+    )
+  | L_comb -> (
+      (* Right combs *)
+      let aux (Label l , (x : _ row_element_mini_c)) =
+        let%bind t = compile_type x.associated_type in
+        let annot_opt = Some (annotation_or_label x.michelson_annotation l) in
+        ok (annot_opt, { content = Field (Label l) ;
+                         type_ = t })
+      in
+      let rec lst_fold_right = function
+        | [] -> fail (corner_case ~loc:__LOC__ "t_record empty")
+        | [ x ] -> aux x
+        | hd :: tl -> (
+          let%bind (hd_annot, hd) = aux hd in
+          let%bind (tl_annot, tl) = lst_fold_right tl in
+          let t = { content = Pair (hd, tl) ;
+                    type_ = Expression.make_t (T_pair ((hd_annot, hd.type_), (tl_annot, tl.type_))) } in
+          ok (None, t)
+          )
+      in
+      map snd @@ lst_fold_right lst
+    )
+
 let t_record_to_pairs ~layout return compile_type m =
   let open AST.Helpers in
   let is_tuple_lmap = is_tuple_lmap m in

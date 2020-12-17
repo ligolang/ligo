@@ -12,6 +12,7 @@ type type_content =
   | T_arrow           of ty_expr arrow
   | T_annoted         of (type_expression * string)
   | T_app             of ty_expr type_app
+  | T_singleton       of literal
   | T_module_accessor of ty_expr module_access
 
 

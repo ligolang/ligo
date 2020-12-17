@@ -163,9 +163,9 @@ let%expect_test _ =
                     CDR ;
                     ITER { SWAP ;
                            DUP ;
-                           CAR ;
-                           SWAP ;
                            CDR ;
+                           SWAP ;
+                           CAR ;
                            DIG 2 ;
                            DUP ;
                            DUG 3 ;
@@ -180,9 +180,9 @@ let%expect_test _ =
                            CDR ;
                            PAIR ;
                            PAIR ;
-                           DIG 2 ;
+                           SWAP ;
                            DUP ;
-                           DUG 3 ;
+                           DUG 2 ;
                            SWAP ;
                            DUP ;
                            DUG 2 ;
@@ -190,17 +190,15 @@ let%expect_test _ =
                            GET ;
                            IF_NONE
                              { PUSH string "TOKEN_UNDEFINED" ; FAILWITH }
-                             { DIG 2 ;
+                             { DIG 3 ;
                                DUP ;
-                               DUG 3 ;
+                               DUG 4 ;
                                SWAP ;
                                DUP ;
                                DUG 2 ;
                                COMPARE ;
                                EQ ;
                                IF { DROP } { DROP ; PUSH string "INSUFFICIENT_BALANCE" ; FAILWITH } } ;
-                           SWAP ;
-                           DUG 2 ;
                            DUP ;
                            DUG 3 ;
                            CAR ;
@@ -210,6 +208,11 @@ let%expect_test _ =
                            CDR ;
                            UPDATE ;
                            PAIR } ;
-                    CAR } ;
+                    DUP ;
+                    CDR ;
+                    SWAP ;
+                    CAR ;
+                    SWAP ;
+                    DROP } ;
              NIL operation ;
              PAIR } } |}]

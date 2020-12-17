@@ -29,6 +29,8 @@ module Operators_types = struct
   let t_map_find_opt = forall2 "src" "dst" @@ fun src dst -> tuple2 src (map src dst) --> option dst
   let t_map_fold     = forall3 "src" "dst" "acc" @@ fun src dst acc -> tuple3 ( ( (src * dst) * acc ) --> acc ) (map src dst) acc --> acc
   let t_map_map      = forall3 "k" "v" "result" @@ fun k v result -> tuple2 ((k * v) --> result) (map k v) --> map k result
+  let t_map_get_and_update = forall2 "k" "v" @@ fun k v -> tuple3 k (option v) (map k v) --> tuple2 (option v) (map k v)
+  let t_big_map_get_and_update = forall2 "k" "v" @@ fun k v -> tuple3 k (option v) (big_map k v) --> tuple2 (option v) (big_map k v)
 
   (* TODO: the type of map_map_fold might be wrong, check it. *)
   let t_map_map_fold = forall4 "k" "v" "acc" "dst" @@ fun k v acc dst -> tuple3 ( ((k * v) * acc) --> acc * dst ) (map k v) (k * v) --> (map k dst * acc)

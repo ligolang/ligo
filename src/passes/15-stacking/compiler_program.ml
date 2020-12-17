@@ -52,43 +52,43 @@ let literal_value (l : literal) : (Location.t, string) node =
 let compile_binds' = compile_binds
 let compile_expr' = compile_expr
 
-let rec compile_binds env outer proj binds =
-  compile_binds' generated compile_operator literal_type literal_value env outer proj binds
+let rec compile_binds protocol_version env outer proj binds =
+  compile_binds' generated (compile_operator protocol_version) literal_type literal_value env outer proj binds
 
-and compile_expr env outer expr =
-  compile_expr' generated compile_operator literal_type literal_value env outer expr
+and compile_expr protocol_version env outer expr =
+  compile_expr' generated (compile_operator protocol_version) literal_type literal_value env outer expr
 
-and apply_static_args : string -> (_, constant', literal) static_args -> _ node =
-  fun prim args ->
+and apply_static_args : Environment.Protocols.t -> string -> (_, constant', literal) static_args -> _ node =
+  fun protocol_version prim args ->
   match args with
   | Type_args (annot, types) ->
     Prim (generated, prim, types, Option.to_list annot)
   | Script_arg (Script (p, s, e)) ->
     (* prim will always be CREATE_CONTRACT, recursively compile the
        contract here *)
-    let e = compile_binds [] [] [] e in
+    let e = compile_binds protocol_version [] [] [] e in
     let parameter = Prim (generated, "parameter", [p], []) in
     let storage = Prim (generated, "storage", [s], []) in
     let code = Prim (generated, "code", [Seq (generated, e)], []) in
     Prim (generated, prim, [Seq (generated, [parameter; storage; code])], [])
 
-and compile_operator : constant' -> (_, constant', literal) static_args -> (Location.t, string) node list =
-  fun c args ->
-  match Predefined.Stacking.get_operators c with
+and compile_operator : Environment.Protocols.t -> constant' -> (_, constant', literal) static_args -> (Location.t, string) node list =
+  fun protocol_version c args ->
+  match Predefined.Stacking.get_operators protocol_version c with
   | Some x -> [wipe_locations generated
                  (* Handle predefined (and possibly special)
                     operators, applying any type/annot/script args
                     using apply_static_args. *)
                  (Predefined.Stacking.unpredicate
-                    (fun prim -> wipe_locations () (apply_static_args prim args))
+                    (fun prim -> wipe_locations () (apply_static_args protocol_version prim args))
                     x)]
   | None ->
     failwith (Format.asprintf "no operator %a %s"
                 Stage_common.PP.constant' c
                 __LOC__)
 
-let compile_expr env outer e =
-  Seq (generated, compile_expr env outer e)
+let compile_expr protocol_version env outer e =
+  Seq (generated, compile_expr protocol_version env outer e)
 
-let compile_function_body e =
-  Seq (generated, compile_binds [] [] [] e)
+let compile_function_body protocol_version e =
+  Seq (generated, compile_binds protocol_version [] [] [] e)

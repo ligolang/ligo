@@ -6,6 +6,7 @@ open Stage_common.Constant
 
 let make_t ?(loc = Location.generated) type_content = {type_content; location=loc}
 let t_variable ?loc variable  = make_t ?loc @@ T_variable variable
+let t_singleton ?loc x = make_t ?loc @@ T_singleton x
 let t_variable_ez ?loc n     : type_expression = t_variable ?loc (Var.of_name n)
 
 let t_app ?loc type_operator arguments : type_expression = make_t ?loc @@ T_app {type_operator ; arguments}
@@ -60,6 +61,8 @@ let t_set ?loc key                        : type_expression = t_app ?loc v_set [
 let t_contract ?loc contract              : type_expression = t_app ?loc v_contract [contract]
 let t_michelson_or ?loc l l_ann r r_ann   : type_expression = t_app ?loc v_michelson_or [t_annoted l l_ann; t_annoted r r_ann]
 let t_michelson_pair ?loc l l_ann r r_ann : type_expression = t_app ?loc v_michelson_pair [t_annoted l l_ann; t_annoted r r_ann]
+let t_sapling_state ?loc a                : type_expression = t_app ?loc v_sapling_state [a]
+let t_sapling_transaction ?loc a                : type_expression = t_app ?loc v_sapling_trasaction [a]
 let t_michelson_pair_right_comb ?loc c    : type_expression = t_app ?loc v_michelson_pair_right_comb [c]
 let t_michelson_pair_left_comb ?loc c     : type_expression = t_app ?loc v_michelson_pair_left_comb [c]
 let t_michelson_or_right_comb ?loc c      : type_expression = t_app ?loc v_michelson_or_right_comb [c]

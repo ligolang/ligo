@@ -94,10 +94,12 @@ let constant' = function
   | C_MAP_MEM            -> `List [`String "C_MAP_MEM"; `Null ]
   | C_MAP_FIND           -> `List [`String "C_MAP_FIND"; `Null ]
   | C_MAP_FIND_OPT       -> `List [`String "C_MAP_FIND_OPT"; `Null ]
+  | C_MAP_GET_AND_UPDATE -> `List [`String "C_MAP_GET_AND_UPDATE"; `Null ]
   (* Big Maps *)
   | C_BIG_MAP            -> `List [`String "C_BIG_MAP"; `Null ]
   | C_BIG_MAP_EMPTY      -> `List [`String "C_BIG_MAP_EMPTY"; `Null ]
   | C_BIG_MAP_LITERAL    -> `List [`String "C_BIG_MAP_LITERAL"; `Null ]
+  | C_BIG_MAP_GET_AND_UPDATE -> `List [`String "C_BIG_MAP_GET_AND_UPDATE"; `Null ]
   (* Crypto *)
   | C_SHA256             -> `List [`String "C_SHA256"; `Null ]
   | C_SHA512             -> `List [`String "C_SHA512"; `Null ]
@@ -135,6 +137,18 @@ let constant' = function
   | C_TEST_GET_BALANCE         -> `List [`String "TEST_GET_BALANCE"; `Null ]
   | C_TEST_ASSERT_FAILURE      -> `List [`String "TEST_ASSERT_FAILURE"; `Null ]
   | C_TEST_LOG                 -> `List [`String "TEST_LOG"; `Null ]
+  | C_SHA3                     -> `List [`String "SHA3"; `Null ]
+  | C_KECCAK                   -> `List [`String "KECCAK"; `Null ]
+  | C_LEVEL                    -> `List [`String "LEVEL"; `Null ]
+  | C_VOTING_POWER             -> `List [`String "VOTING_POWER"; `Null ]   
+  | C_TOTAL_VOTING_POWER       -> `List [`String "TOTAL_VOTING_POWER"; `Null ]
+  | C_TICKET                   -> `List [`String "TICKET"; `Null ]
+  | C_READ_TICKET              -> `List [`String "READ_TICKET"; `Null ]
+  | C_SPLIT_TICKET             -> `List [`String "SPLIT_TICKET"; `Null ]
+  | C_JOIN_TICKET              -> `List [`String "JOIN_TICKET"; `Null ]
+  | C_PAIRING_CHECK            -> `List [`String "PAIRING_CHECK"; `Null ]
+  | C_SAPLING_VERIFY_UPDATE    -> `List [`String "SAPLING_VERIFY_UPDATE"; `Null ]
+  | C_SAPLING_EMPTY_STATE      -> `List [`String "SAPLING_EMPTY_STATE"; `Null ]
 
 
 let literal = function

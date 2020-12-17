@@ -39,18 +39,24 @@ let basic_types : (type_variable * type_expression) list = [
 let michelson_dalphanet : (type_variable * type_expression) list = [
     (v_baker_hash , t_constant baker_hash_name []);
     (v_pvss_key , t_constant pvss_key_name []);
-    (v_sapling_state , t_constant sapling_state_name []);
-    (v_sapling_trasaction , t_constant sapling_transaction_name []);
+    (v_sapling_state , t_constant sapling_state_name [star]);
+    (v_sapling_trasaction , t_constant sapling_transaction_name [star]);
     (v_baker_operation , t_constant baker_operation_name []);
     (v_bls12_381_g1 , t_constant bls12_381_g1_name []);
     (v_bls12_381_g2 , t_constant bls12_381_g2_name []);
     (v_bls12_381_fr ,  t_constant bls12_381_fr_name []);
   ]
 
+let michelson_edo : (type_variable * type_expression) list = [
+  (v_never , t_constant never_name []);
+  (v_ticket , t_constant ticket_name [star]);
+]
+
 let carthage_types = michelson_base @ basic_types
 let dalphanet_types = basic_types @ michelson_base @ michelson_dalphanet
+let edo_types = dalphanet_types @ michelson_edo
 
 let default : Protocols.t -> environment = function
   | Protocols.Carthage -> Environment.of_list_type carthage_types
   | Protocols.Dalphanet -> Environment.of_list_type dalphanet_types
-
+  | Protocols.Edo -> Environment.of_list_type edo_types

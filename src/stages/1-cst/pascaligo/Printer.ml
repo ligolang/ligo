@@ -162,6 +162,7 @@ and print_type_expr state = function
 | TVar    type_var    -> print_var         state type_var
 | TWild   wild        -> print_token state wild " "
 | TString str         -> print_string      state str
+| TInt    i           -> print_int         state i
 | TModA   ma          -> print_module_access print_type_expr state ma
 
 and print_type_annot state (colon, type_expr) =
@@ -1037,6 +1038,9 @@ and pp_type_expr state = function
 | TString s ->
     pp_node   state "TString";
     pp_string (state#pad 1 0) s
+| TInt s ->
+    pp_node   state "TInt";
+    pp_int (state#pad 1 0) s
 | TWild wild ->
     pp_node  state "TWild";
     pp_loc_node state "TWild" wild

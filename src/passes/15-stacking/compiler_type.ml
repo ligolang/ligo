@@ -22,12 +22,11 @@ let base_type : type_base -> (_ O.michelson , stacking_error) result =
   | TB_chain_id -> ok @@ O.prim "chain_id"
   | TB_baker_hash -> ok @@ O.prim "baker_hash"
   | TB_pvss_key -> ok @@ O.prim "pvss_key"
-  | TB_sapling_transaction -> ok @@ O.prim "sapling_transaction"
-  | TB_sapling_state -> ok @@ O.prim "sapling_state"
   | TB_baker_operation -> ok @@ O.prim "baker_operation"
   | TB_bls12_381_g1 -> ok @@ O.prim "bls12_381_g1"
   | TB_bls12_381_g2 -> ok @@ O.prim "bls12_381_g2"
   | TB_bls12_381_fr -> ok @@ O.prim "bls12_381_fr"
+  | TB_never -> ok @@ O.prim "never"
 
 let rec type_ : type_expression -> (_ O.michelson , stacking_error) result =
   fun te -> match te.type_content with
@@ -64,6 +63,15 @@ let rec type_ : type_expression -> (_ O.michelson , stacking_error) result =
       let%bind arg = type_ arg in
       let%bind ret = type_ ret in
       ok @@ O.prim ~children:[arg;ret] "lambda"
+  | T_sapling_transaction x ->
+      let x' = O.prim @@ Z.to_string x in
+      ok @@ O.prim ~children:[x'] "sapling_transaction"
+  | T_sapling_state x ->
+      let x' = O.prim @@ Z.to_string x in
+      ok @@ O.prim ~children:[x'] "sapling_state"
+  | T_ticket x ->
+      let%bind x' = type_ x in
+      ok @@ O.prim ~children:[x'] "ticket"
 
 and annotated : type_expression annotated -> (_ O.michelson , stacking_error) result =
   function

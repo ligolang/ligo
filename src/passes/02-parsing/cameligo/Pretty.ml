@@ -412,6 +412,7 @@ and pp_type_expr = function
 | TVar t    -> pp_ident t
 | TWild   _ -> string "_"
 | TString s -> pp_string s
+| TInt i    -> pp_int i
 | TModA   t -> pp_module_access pp_type_expr t
 
 and pp_cartesian {value; _} =

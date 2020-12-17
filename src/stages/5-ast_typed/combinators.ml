@@ -28,11 +28,16 @@ let t_nat        ?loc ?core () : type_expression = t_constant ?loc ?core nat_nam
 let t_mutez      ?loc ?core () : type_expression = t_constant ?loc ?core tez_name []
 let t_timestamp  ?loc ?core () : type_expression = t_constant ?loc ?core timestamp_name []
 let t_unit       ?loc ?core () : type_expression = t_constant ?loc ?core unit_name []
+let t_bls12_381_g1 ?loc ?core () : type_expression = t_constant ?loc ?core bls12_381_g1_name []
+let t_bls12_381_g2 ?loc ?core () : type_expression = t_constant ?loc ?core bls12_381_g2_name []
+let t_bls12_381_fr ?loc ?core () : type_expression = t_constant ?loc ?core bls12_381_fr_name []
+
 
 let t_option         ?loc ?core o   : type_expression = t_constant ?loc ?core option_name [o]
 let t_list           ?loc ?core t   : type_expression = t_constant ?loc ?core list_name [t]
 let t_set            ?loc ?core t   : type_expression = t_constant ?loc ?core set_name [t]
 let t_contract       ?loc ?core t   : type_expression = t_constant ?loc ?core contract_name [t]
+let t_ticket         ?loc ?core t   : type_expression = t_constant ?loc ?core ticket_name [t]
 let t_map            ?loc ?core k v : type_expression = t_constant ?loc ?core map_name [ k ; v ]
 let t_big_map        ?loc ?core k v : type_expression = t_constant ?loc ?core big_map_name [ k ; v ]
 let t_map_or_big_map ?loc ?core k v : type_expression = t_constant ?loc ?core map_or_big_map_name [ k ; v ]
@@ -114,10 +119,12 @@ let get_t_contract (t:type_expression) : type_expression option = get_t_unary_in
 let get_t_option (t:type_expression) : type_expression option = get_t_unary_inj t option_name
 let get_t_list (t:type_expression) : type_expression option = get_t_unary_inj t list_name
 let get_t_set (t:type_expression) : type_expression option = get_t_unary_inj t set_name
-
+let get_t_ticket (t:type_expression) : type_expression option = get_t_unary_inj t ticket_name
 let get_t_key (t:type_expression) : unit option = get_t_base_inj t key_name
 let get_t_signature (t:type_expression) : unit option = get_t_base_inj t signature_name
 let get_t_key_hash (t:type_expression) : unit option = get_t_base_inj t key_hash_name
+let get_t_sapling_state (t:type_expression) : type_expression option = get_t_unary_inj t sapling_state_name
+let get_t_sapling_transaction (t:type_expression) : type_expression option = get_t_unary_inj t sapling_transaction_name
 
 let tuple_of_record (m: _ LMap.t) =
   let aux i =

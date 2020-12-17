@@ -10,6 +10,12 @@ exception Should_exit_bad
 let () = Unix.putenv "TERM" "dumb"
 let () = Unix.putenv "LIGO_FORCE_NEW_TYPER" "false"
 
+let bad_test basename =
+  "../../test/contracts/negative/" ^ basename
+
+let test basename =
+  "../../test/contracts/" ^ basename
+
 let run_ligo args =
   Var.reset_counter ();
   let argv = Array.of_list ("ligo" :: args) in

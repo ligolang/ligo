@@ -10,6 +10,8 @@ open Tezos_micheline.Micheline
 open Tezos_utils.Michelson
 include Helpers
 
+type proto = Environment.Protocols.t
+
 (* `arity p` should be `Some n` only if p is (always) an instruction
    which removes n items from the stack and uses them to push 1 item,
    without effects other than gas consumption. It must never fail. *)
@@ -282,7 +284,7 @@ let opt_drop2 : _ peep2 = function
   (* nullary_op ; DROP  ↦  *)
   | Prim (_, p, _, _), Prim (_, "DROP", [], _) when is_nullary_op p -> Some []
   (* DUP ; DROP  ↦  *)
-  | Prim (_, "DUP", _, _), Prim (_, "DROP", [], _) -> Some []
+  | Prim (_, "DUP", [], _), Prim (_, "DROP", [], _) -> Some []
   (* unary_op ; DROP  ↦  DROP *)
   | Prim (_, p, _, _), (Prim (_, "DROP", [], _) as drop) when is_unary_op p -> Some [drop]
   (* binary_op ; DROP  ↦  DROP ; DROP *)
@@ -301,7 +303,7 @@ let opt_drop2 : _ peep2 = function
 
 let opt_drop4 : _ peep4 = function
   (* DUP; unary_op; SWAP; DROP  ↦  unary_op *)
-  | Prim (_, "DUP", _, _),
+  | Prim (_, "DUP", [], _),
     (Prim (_, p, _, _) as unary_op),
     Prim (_, "SWAP", _, _),
     Prim (_, "DROP", [], _)
@@ -344,9 +346,9 @@ let opt_dip3 : _ peep3 = function
   (* replace UNPAIR/UNPIAR with a smaller version *)
   (* TODO probably better to implement optimal UNPAIR in the compiler *)
   (* DUP ; CAR ; DIP { CDR }  ↦  DUP ; CDR ; SWAP ; CAR *)
-  | Prim (_, "DUP", _, _),
-    (Prim (_, ("CAR" | "CDR"), _, _) as proj1),
-    Prim (l, "DIP", [Seq (_, [(Prim (_, ("CAR" | "CDR"), _, _) as proj2)])], _) ->
+  | Prim (_, "DUP", [], _),
+    (Prim (_, ("CAR" | "CDR"), [], _) as proj1),
+    Prim (l, "DIP", [Seq (_, [(Prim (_, ("CAR" | "CDR"), [], _) as proj2)])], _) ->
      Some [ Prim (l, "DUP", [], []) ;
             proj2 ;
             Prim (l, "SWAP", [], []) ;
@@ -358,7 +360,7 @@ let opt_swap2 : _ peep2 = function
   | Prim (_, "SWAP", _, _), Prim (_, "SWAP", _, _) ->
      Some []
   (* DUP ; SWAP  ↦  DUP *)
-  | (Prim (_, "DUP", _, _) as dup), Prim (_, "SWAP", _, _) ->
+  | (Prim (_, "DUP", [], _) as dup), Prim (_, "SWAP", _, _) ->
      Some [dup]
   (* SWAP ; ADD  ↦  ADD *)
   (* etc *)
@@ -380,17 +382,17 @@ let opt_beta3 : _ peep3 = function
 let opt_beta5 : _ peep5 = function
   (* PAIR ; DUP ; CDR ; SWAP ; CAR  ↦  *)
   | Prim (_, "PAIR", _, _),
-    Prim (_, "DUP", _, _),
-    Prim (_, "CDR", _, _),
+    Prim (_, "DUP", [], _),
+    Prim (_, "CDR", [], _),
     Prim (_, "SWAP", _, _),
-    Prim (_, "CAR", _, _) ->
+    Prim (_, "CAR", [], _) ->
     Some []
   (* PAIR ; DUP ; CAR ; SWAP ; CDR  ↦  SWAP *)
   | Prim (l, "PAIR", _, _),
-    Prim (_, "DUP", _, _),
-    Prim (_, "CAR", _, _),
+    Prim (_, "DUP", [], _),
+    Prim (_, "CAR", [], _),
     Prim (_, "SWAP", _, _),
-    Prim (_, "CDR", _, _) ->
+    Prim (_, "CDR", [], _) ->
     Some [Prim(l, "SWAP", [], [])]
   | _ -> None
 
@@ -426,6 +428,43 @@ let opt_digdug3 : _ peep3 = function
   | (Prim (l1, "DUG", [Int (l2, k1)], _), Prim (_, "DUG", [Int (_, k2)], _), Prim (_, "DUG", [Int (_, k3)], _)) when Z.equal k1 k2 && Z.equal k2 k3 && Z.equal k1 (Z.of_int 3) ->
      Some [Prim (l1, "DIG", [Int (l2, Z.of_int 3)], [])]
   | _ -> None
+
+(* remove dead "UNPAIR" *)
+let opt_dead_unpair : _ peep3 = function
+  | (Prim (l, "UNPAIR", [], _), Prim (_, "DROP", [], _), Prim (_, "DROP", [], _)) ->
+    Some [Prim (l, "DROP", [], [])]
+  | _ -> None
+
+(* expand "UNPAIR" if it is not yet an instruction *)
+let opt_unpair_nonedo : proto -> _ peep1 = function
+  | Edo -> fun _ -> None
+  | _ -> function
+    | Prim (l, "UNPAIR", [], _) ->
+      Some [Prim (l, "DUP", [], []);
+            Prim (l, "CDR", [], []);
+            Prim (l, "SWAP", [], []);
+            Prim (l, "CAR", [], [])]
+    | _ -> None
+
+(* for Edo *)
+let opt_beta2 : _ peep2 = function
+  (* PAIR ; UNPAIR  ↦  *)
+  | Prim (_, "PAIR", [], _), Prim (_, "UNPAIR", [], _) ->
+    Some []
+  | _ -> None
+
+(* for Edo *)
+let opt_eta2 : _ peep2 = function
+  (* UNPAIR ; PAIR  ↦  *)
+  | Prim (_, "UNPAIR", [], _), Prim (_, "PAIR", [], _) ->
+    Some []
+  | _ -> None
+
+(* let opt_unpair : _ peep2 = function
+ *   (\* UNPAIR ; PAIR  ↦  *\)
+ *   | Prim (_, "UNPAIR", [], _), Prim (_, "PAIR", [], _) ->
+ *     Some []
+ *   | _ -> None *)
 
 (* This "optimization" deletes dead code produced by the compiler
    after a FAILWITH, which is illegal in Michelson. This means we are
@@ -531,8 +570,8 @@ let rec opt_strip_annots (x : _ michelson) : _ michelson =
     end
   | x -> x
 
-let optimize : 'l. 'l michelson -> 'l michelson =
-  fun x ->
+let optimize : 'l. Environment.Protocols.t -> 'l michelson -> 'l michelson =
+  fun proto x ->
   let x = flatten_seqs x in
   let x = opt_tail_fail x in
   let optimizers = [ peephole @@ peep2 opt_drop2 ;
@@ -546,6 +585,10 @@ let optimize : 'l. 'l michelson -> 'l michelson =
                      peephole @@ peep1 opt_digdug1 ;
                      peephole @@ peep2 opt_digdug2 ;
                      peephole @@ peep3 opt_digdug3 ;
+                     peephole @@ peep2 opt_beta2 ;
+                     peephole @@ peep2 opt_eta2 ;
+                     peephole @@ peep3 opt_dead_unpair ;
+                     peephole @@ peep1 (opt_unpair_nonedo proto) ;
                    ] in
   let x = iterate_optimizer (sequence_optimizers optimizers) x in
   let x = opt_combine_drops x in

@@ -19,18 +19,6 @@ include Stage_common.PP
     let new_pp ppf (_, {associated_type;_}) = fprintf ppf "%a" value associated_type in
     fprintf ppf "%a" (list_sep new_pp sep) lst
 
-  let record_sep_expr value sep ppf (m : 'a label_map) =
-    let lst = LMap.to_kv_list m in
-    let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
-    let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" label k value v in
-    fprintf ppf "%a" (list_sep new_pp sep) lst
-
-  let tuple_sep_expr value sep ppf m =
-    assert (Helpers.is_tuple_lmap m);
-    let lst = Helpers.tuple_of_record m in
-    let new_pp ppf (_,v) = fprintf ppf "%a" value v in
-    fprintf ppf "%a" (list_sep new_pp sep) lst
-
 let tuple_or_record_sep_t value format_record sep_record format_tuple sep_tuple ppf m =
   if Helpers.is_tuple_lmap m then
     fprintf ppf format_tuple (tuple_sep value (tag sep_tuple)) m
@@ -50,7 +38,7 @@ and type_content : formatter -> type_expression -> unit =
   | T_arrow            a -> arrow         type_expression ppf a
   | T_app              a -> type_app type_expression ppf a
   | T_module_accessor ma -> module_access type_expression ppf ma
-
+  | T_singleton       x  -> literal       ppf             x
 
 let rec expression ppf (e : expression) =
   fprintf ppf "%a" expression_content e.content
@@ -89,6 +77,8 @@ and matching : (formatter -> expression -> unit) -> formatter -> matching_expr -
           f match_nil expression_variable hd expression_variable tl f body
     | Match_option {match_none ; match_some = {opt; body}} ->
         fprintf ppf "@[<hv>| None ->@;<1 2>%a@ | Some %a ->@;<1 2>%a@]" f match_none expression_variable opt f body
+    | Match_record { fields; body } ->
+        fprintf ppf "@[<hv>| %a -> %a@]" (tuple_or_record_sep_expr (binder type_expression)) fields f body
 
 (* Shows the type expected for the matched value *)
 and matching_type ppf m = match m with
@@ -98,6 +88,8 @@ and matching_type ppf m = match m with
       fprintf ppf "list"
   | Match_option _ ->
       fprintf ppf "option"
+  | Match_record _ ->
+      fprintf ppf "record"
 
 and matching_variant_case_type ppf {constructor=c ; proj ; body=_ } =
   fprintf ppf "| %a %a" label c expression_variable proj

@@ -80,6 +80,12 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let e1 = replace e1 in
     let e2 = replace e2 in
     return @@ E_let_in ((v, tv), inline, e1, e2)
+  | E_let_pair (expr, (((v1, tv1), (v2, tv2)), body)) ->
+    let expr = replace expr in
+    let v1 = replace_var v1 in
+    let v2 = replace_var v2 in
+    let body = replace body in
+    return @@ E_let_pair (expr, (((v1, tv1), (v2, tv2)), body))
   | E_raw_michelson _ -> e
 
 (**
@@ -125,6 +131,11 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
     let expr = self expr in
     let (v, body) = subst_binder v body in
     return @@ E_let_in ((v , tv) , inline, expr , body)
+  )
+  | E_let_pair (expr, (((v1, tv1), (v2, tv2)), body)) -> (
+    let expr = self expr in
+    let (v1, v2, body) = subst_binder2 v1 v2 body in (* TODO is this backwards? *)
+    return @@ E_let_pair (expr, (((v1, tv1), (v2, tv2)), body))
   )
   | E_iterator (s, ((name , tv) , body) , collection) -> (
     let (name, body) = subst_binder name body in

@@ -117,6 +117,13 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
     let module_name = wrap module_name in
     let%bind field  = decompile_type_expr element in
     return @@ CST.TModA (wrap CST.{module_name;selector=ghost;field})
+  | T_singleton x -> (
+    match x with
+    | Literal_int i ->
+      let z : CST.type_expr = CST.TInt { region = Region.ghost ; value = (Z.to_string i, i) } in
+      return z
+    | _ -> failwith "unsupported singleton"
+  )
 
 let get_e_variable : AST.expression -> _ result = fun expr ->
   match expr.expression_content with

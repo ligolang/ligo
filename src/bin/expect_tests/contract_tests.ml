@@ -1,22 +1,20 @@
 open Cli_expect
 
-let contract basename =
-  "../../test/contracts/" ^ basename
-let bad_contract basename =
-  "../../test/contracts/negative/" ^ basename
+let contract = test
+let bad_contract = bad_test
 
 (* avoid pretty printing *)
 let () = Unix.putenv "TERM" "dumb"
 
 let%expect_test _ =
   run_ligo_good [ "measure-contract" ; contract "coase.ligo" ; "main" ] ;
-  [%expect {| 1241 bytes |}] ;
+  [%expect {| 1253 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig.ligo" ; "main" ] ;
-  [%expect {| 639 bytes |}] ;
+  [%expect {| 633 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig-v2.ligo" ; "main" ] ;
-  [%expect {| 1705 bytes |}] ;
+  [%expect {| 1701 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "vote.mligo" ; "main" ] ;
   [%expect {| 478 bytes |}] ;
@@ -80,11 +78,12 @@ let%expect_test _ =
            { IF_LEFT
                { SWAP ;
                  DUP ;
+                 DUG 2 ;
                  CAR ;
                  CAR ;
-                 DIG 2 ;
+                 SWAP ;
                  DUP ;
-                 DUG 3 ;
+                 DUG 2 ;
                  GET ;
                  IF_NONE { PUSH string "buy_single: No card pattern." ; FAILWITH } {} ;
                  PUSH nat 1 ;
@@ -112,16 +111,16 @@ let%expect_test _ =
                  SWAP ;
                  CAR ;
                  PAIR ;
-                 SWAP ;
-                 DUP ;
-                 DUG 2 ;
-                 CDR ;
                  DIG 2 ;
                  DUP ;
                  DUG 3 ;
-                 CAR ;
                  CDR ;
                  DIG 3 ;
+                 DUP ;
+                 DUG 4 ;
+                 CAR ;
+                 CDR ;
+                 DIG 4 ;
                  CAR ;
                  CAR ;
                  DIG 3 ;
@@ -171,11 +170,12 @@ let%expect_test _ =
                  PAIR }
                { SWAP ;
                  DUP ;
+                 DUG 2 ;
                  CAR ;
                  CDR ;
-                 DIG 2 ;
+                 SWAP ;
                  DUP ;
-                 DUG 3 ;
+                 DUG 2 ;
                  GET ;
                  IF_NONE { PUSH string "sell_single: No card." ; FAILWITH } {} ;
                  SENDER ;
@@ -186,9 +186,9 @@ let%expect_test _ =
                  COMPARE ;
                  NEQ ;
                  IF { PUSH string "This card doesn't belong to you" ; FAILWITH } {} ;
-                 SWAP ;
+                 DIG 2 ;
                  DUP ;
-                 DUG 2 ;
+                 DUG 3 ;
                  CAR ;
                  CAR ;
                  SWAP ;
@@ -207,16 +207,16 @@ let%expect_test _ =
                  SWAP ;
                  CAR ;
                  PAIR ;
-                 DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
-                 CDR ;
                  DIG 3 ;
                  DUP ;
                  DUG 4 ;
-                 CAR ;
                  CDR ;
                  DIG 4 ;
+                 DUP ;
+                 DUG 5 ;
+                 CAR ;
+                 CDR ;
+                 DIG 5 ;
                  CAR ;
                  CAR ;
                  DIG 3 ;
@@ -267,12 +267,13 @@ let%expect_test _ =
                  PAIR } }
            { SWAP ;
              DUP ;
+             DUG 2 ;
              CAR ;
              CDR ;
              DUP ;
-             DIG 3 ;
+             DIG 2 ;
              DUP ;
-             DUG 4 ;
+             DUG 3 ;
              CAR ;
              GET ;
              IF_NONE { PUSH string "transfer_single: No card." ; FAILWITH } {} ;
@@ -284,18 +285,18 @@ let%expect_test _ =
              COMPARE ;
              NEQ ;
              IF { PUSH string "This card doesn't belong to you" ; FAILWITH } {} ;
-             DIG 2 ;
+             DIG 3 ;
              DUP ;
-             DUG 3 ;
+             DUG 4 ;
              CDR ;
              DUG 2 ;
              CDR ;
-             DIG 4 ;
+             DIG 3 ;
              DUP ;
-             DUG 5 ;
+             DUG 4 ;
              CDR ;
              PAIR ;
-             DIG 4 ;
+             DIG 3 ;
              CAR ;
              SWAP ;
              SOME ;
@@ -318,37 +319,35 @@ let%expect_test _ =
   storage
     (pair (pair (list %auth key) (nat %counter)) (pair (string %id) (nat %threshold))) ;
   code { DUP ;
-         CAR ;
-         SWAP ;
          CDR ;
          SWAP ;
+         CAR ;
          DUP ;
-         DUG 2 ;
          CAR ;
          CDR ;
-         SWAP ;
+         DIG 2 ;
          DUP ;
-         DUG 2 ;
+         DUG 3 ;
          CAR ;
          CDR ;
-         DIG 3 ;
+         DIG 2 ;
          DUP ;
-         DUG 4 ;
+         DUG 3 ;
          CAR ;
          CAR ;
          COMPARE ;
          NEQ ;
-         IF { DIG 2 ; DROP ; PUSH string "Counters does not match" ; FAILWITH }
+         IF { SWAP ; DROP ; PUSH string "Counters does not match" ; FAILWITH }
             { CHAIN_ID ;
-              DIG 2 ;
-              DUP ;
-              DUG 3 ;
-              CDR ;
-              CAR ;
-              PAIR ;
               DIG 3 ;
               DUP ;
               DUG 4 ;
+              CDR ;
+              CAR ;
+              PAIR ;
+              DIG 2 ;
+              DUP ;
+              DUG 3 ;
               CAR ;
               CAR ;
               DIG 2 ;
@@ -358,13 +357,13 @@ let%expect_test _ =
               PAIR ;
               PACK ;
               PUSH nat 0 ;
-              DIG 3 ;
+              DIG 4 ;
               DUP ;
-              DUG 4 ;
+              DUG 5 ;
               CAR ;
               CAR ;
               PAIR ;
-              DIG 4 ;
+              DIG 3 ;
               CDR ;
               ITER { SWAP ;
                      PAIR ;
@@ -457,10 +456,9 @@ let%expect_test _ =
          IF_LEFT
            { IF_LEFT
                { DROP ; NIL operation ; PAIR }
-               { PAIR ;
+               { SWAP ;
                  DUP ;
-                 CDR ;
-                 DUP ;
+                 DUG 2 ;
                  CAR ;
                  CAR ;
                  CAR ;
@@ -468,8 +466,6 @@ let%expect_test _ =
                  MEM ;
                  NOT ;
                  IF { PUSH string "Unauthorized address" ; FAILWITH } {} ;
-                 SWAP ;
-                 CAR ;
                  DUP ;
                  PACK ;
                  DIG 2 ;
@@ -990,6 +986,158 @@ let%expect_test _ =
              PAIR } } } |}]
 
 let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; contract "ticket_wallet.mligo" ; "main" ; "--protocol=edo" ; "--disable-michelson-typechecking" ] ;
+  [%expect {|
+{ parameter
+    (or (ticket %receive unit)
+        (pair %send
+           (contract %destination (ticket unit))
+           (pair (nat %amount) (address %ticketer)))) ;
+  storage (pair (address %manager) (big_map %tickets address (ticket unit))) ;
+  code { PUSH mutez 0 ;
+         AMOUNT ;
+         COMPARE ;
+         EQ ;
+         IF {} { PUSH string "failed assertion" ; FAILWITH } ;
+         UNPAIR ;
+         SWAP ;
+         UNPAIR ;
+         DIG 2 ;
+         IF_LEFT
+           { READ_TICKET ;
+             UNPAIR ;
+             SWAP ;
+             DROP ;
+             DIG 3 ;
+             NONE (ticket unit) ;
+             DIG 2 ;
+             DUP ;
+             DUG 3 ;
+             GET_AND_UPDATE ;
+             IF_NONE
+               { DIG 2 }
+               { DIG 3 ;
+                 PAIR ;
+                 JOIN_TICKETS ;
+                 IF_NONE { PUSH string "impossible?" ; FAILWITH } {} } ;
+             SOME ;
+             DIG 2 ;
+             GET_AND_UPDATE ;
+             DROP ;
+             SWAP ;
+             PAIR ;
+             NIL operation ;
+             PAIR }
+           { SWAP ;
+             DUP ;
+             DUG 2 ;
+             SENDER ;
+             COMPARE ;
+             EQ ;
+             IF {} { PUSH string "failed assertion" ; FAILWITH } ;
+             DIG 2 ;
+             NONE (ticket unit) ;
+             DIG 2 ;
+             DUP ;
+             DUG 3 ;
+             CDR ;
+             CDR ;
+             GET_AND_UPDATE ;
+             IF_NONE
+               { DROP 3 ; PUSH string "no tickets" ; FAILWITH }
+               { READ_TICKET ;
+                 UNPAIR ;
+                 DROP ;
+                 UNPAIR ;
+                 DROP ;
+                 DIG 3 ;
+                 DUP ;
+                 DUG 4 ;
+                 CDR ;
+                 CAR ;
+                 DUP ;
+                 DIG 2 ;
+                 SUB ;
+                 ISNAT ;
+                 IF_NONE { PUSH string "not enough tickets" ; FAILWITH } {} ;
+                 SWAP ;
+                 PAIR ;
+                 SWAP ;
+                 SPLIT_TICKET ;
+                 IF_NONE
+                   { DROP 3 ; PUSH string "impossible?" ; FAILWITH }
+                   { UNPAIR ;
+                     DUG 2 ;
+                     SOME ;
+                     DIG 3 ;
+                     DUP ;
+                     DUG 4 ;
+                     CDR ;
+                     CDR ;
+                     GET_AND_UPDATE ;
+                     DROP ;
+                     DIG 2 ;
+                     CAR ;
+                     PUSH mutez 0 ;
+                     DIG 3 ;
+                     TRANSFER_TOKENS ;
+                     SWAP ;
+                     DIG 2 ;
+                     PAIR ;
+                     NIL operation ;
+                     DIG 2 ;
+                     CONS ;
+                     PAIR } } } } } |} ]
+
+let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; contract "ticket_builder.mligo" ; "main" ; "--protocol=edo" ; "--disable-michelson-typechecking" ] ;
+  [%expect {|
+{ parameter
+    (or (ticket %burn unit)
+        (pair %mint (contract %destination (ticket unit)) (nat %amount))) ;
+  storage address ;
+  code { PUSH mutez 0 ;
+         AMOUNT ;
+         COMPARE ;
+         EQ ;
+         IF {} { PUSH string "failed assertion" ; FAILWITH } ;
+         UNPAIR ;
+         IF_LEFT
+           { READ_TICKET ;
+             SWAP ;
+             DROP ;
+             UNPAIR ;
+             SWAP ;
+             DROP ;
+             SELF_ADDRESS ;
+             SWAP ;
+             COMPARE ;
+             EQ ;
+             IF {} { PUSH string "failed assertion" ; FAILWITH } ;
+             NIL operation ;
+             PAIR }
+           { SWAP ;
+             DUP ;
+             DUG 2 ;
+             SENDER ;
+             COMPARE ;
+             EQ ;
+             IF {} { PUSH string "failed assertion" ; FAILWITH } ;
+             DUP ;
+             CAR ;
+             PUSH mutez 0 ;
+             DIG 2 ;
+             CDR ;
+             PUSH unit Unit ;
+             TICKET ;
+             TRANSFER_TOKENS ;
+             SWAP ;
+             NIL operation ;
+             DIG 2 ;
+             CONS ;
+             PAIR } } } |} ]
+
+let%expect_test _ =
     run_ligo_good [ "compile-contract" ; contract "implicit.mligo" ; "main" ] ;
     [%expect {|
       { parameter key_hash ;
@@ -1238,12 +1386,12 @@ let%expect_test _ =
   [%expect {|
     { parameter (or (unit %default) (int %toto)) ;
       storage nat ;
-      code { SELF %toto ;
+      code { CDR ;
+             SELF %toto ;
              PUSH mutez 300000000 ;
              PUSH int 2 ;
              TRANSFER_TOKENS ;
              SWAP ;
-             CDR ;
              NIL operation ;
              DIG 2 ;
              CONS ;
@@ -1253,12 +1401,12 @@ let%expect_test _ =
   [%expect {|
     { parameter int ;
       storage nat ;
-      code { SELF %default ;
+      code { CDR ;
+             SELF %default ;
              PUSH mutez 300000000 ;
              PUSH int 2 ;
              TRANSFER_TOKENS ;
              SWAP ;
-             CDR ;
              NIL operation ;
              DIG 2 ;
              CONS ;
@@ -1333,9 +1481,8 @@ const letin_nesting =
  s}}}
 const letin_nesting2 =
   lambda (x : int) return let y = 2 in let z = 3 in ADD(ADD(x , y) , z)
-const x =
-  let #5 = (+1 , (+2 , +3)) in
-  let #4 = #5.0 in let #3 = #5.1 in let x = #3.0 in let #2 = #3.1 in x
+const x = match (+1 , (+2 , +3)) with (#2 , #4) -> match #4 with (x ,
+  #3) -> x
     |}];
 
   run_ligo_good ["print-ast"; contract "letin.religo"];
@@ -1356,9 +1503,8 @@ const letin_nesting =
  s}}}
 const letin_nesting2 =
   lambda (x : int) return let y = 2 in let z = 3 in ADD(ADD(x , y) , z)
-const x =
-  let #5 = (+1 , (+2 , +3)) in
-  let #4 = #5.0 in let #3 = #5.1 in let x = #3.0 in let #2 = #3.1 in x
+const x = match (+1 , (+2 , +3)) with (#2 , #4) -> match #4 with (x ,
+  #3) -> x
     |}];
 
   run_ligo_bad ["print-ast-typed"; contract "existential.mligo"];

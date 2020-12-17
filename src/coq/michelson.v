@@ -49,6 +49,8 @@ Inductive instr_typed : node A string -> list (node A string) -> list (node A st
     `{instr_typed (Prim l1 "CAR" [] n1) (Prim l2 "pair" [a; b] n2 :: s) (a :: s)}
 | Typed_cdr {a b s} :
     `{instr_typed (Prim l1 "CDR" [] n1) (Prim l2 "pair" [a; b] n2 :: s) (b :: s)}
+| Typed_unpair {a b s} :
+    `{instr_typed (Prim l1 "UNPAIR" [] n1) (Prim l2 "pair" [a; b] n2 :: s) (a :: b :: s)}
 | Typed_unit {s} :
     `{instr_typed (Prim l1 "UNIT" [] n1) s (Prim l2 "unit" [] n2 :: s)}
 | Typed_left {a b s} :

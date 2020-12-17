@@ -133,6 +133,20 @@ let constant'_tag = function
   | C_TEST_GET_BALANCE        -> 117
   | C_TEST_ASSERT_FAILURE     -> 118
   | C_TEST_LOG                -> 119
+  | C_SHA3                    -> 120
+  | C_KECCAK                  -> 121
+  | C_LEVEL                   -> 122
+  | C_VOTING_POWER            -> 123
+  | C_TOTAL_VOTING_POWER      -> 124
+  | C_TICKET                  -> 125
+  | C_READ_TICKET             -> 126
+  | C_SPLIT_TICKET            -> 127
+  | C_JOIN_TICKET             -> 128
+  | C_PAIRING_CHECK           -> 129
+  | C_MAP_GET_AND_UPDATE      -> 130
+  | C_BIG_MAP_GET_AND_UPDATE  -> 131
+  | C_SAPLING_EMPTY_STATE     -> 132
+  | C_SAPLING_VERIFY_UPDATE   -> 133
 
 let constant' a b = Int.compare (constant'_tag a) (constant'_tag b)
 

@@ -171,6 +171,7 @@ and print_type_expr state = function
 | TFun t          -> print_fun_type state t
 | TWild wild      -> print_token state wild " "
 | TString s       -> print_string state s
+| TInt    i       -> print_int state i
 | TModA   ma      -> print_module_access print_type_expr state ma
 
 and print_sum_type state {value; _} =
@@ -1265,6 +1266,9 @@ and pp_type_expr state = function
 | TString s ->
     pp_node   state "TString";
     pp_string (state#pad 1 0) s
+| TInt s ->
+    pp_node   state "TInt";
+    pp_int (state#pad 1 0) s
 | TModA {value; region} ->
     pp_loc_node state "TModA" region;
     pp_module_access pp_type_expr state value

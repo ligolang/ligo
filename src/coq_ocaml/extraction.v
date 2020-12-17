@@ -35,4 +35,7 @@ Extract Inductive Z =>
 Extract Inductive N => "Zarith.t"
  [ "Zarith.zero" "" ] "(fun b1 b2 x -> Zarith.(if x > zero then b2 x else b1 ()))".
 
+(* TODO *)
+Local Set Warnings "-extraction-logical-axiom".
+
 Separate Extraction compiler union.

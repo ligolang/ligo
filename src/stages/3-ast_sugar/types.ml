@@ -12,6 +12,7 @@ type type_content =
   | T_arrow           of ty_expr arrow
   | T_app             of ty_expr type_app
   | T_module_accessor of ty_expr module_access
+  | T_singleton       of literal
 
 and type_expression = {type_content: type_content; location: Location.t}
 and ty_expr = type_expression

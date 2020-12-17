@@ -587,6 +587,17 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
         eval_ligo body env'
       | Match_option cases, V_Construct ("None" , V_Ct C_unit) ->
         eval_ligo cases.match_none env
+      | Match_record {fields ; body ; record_type = _} , V_Record rv ->
+        let aux : label -> ( expression_variable * _ ) -> env -> env =
+          fun l (v,_) env ->
+            let iv = match LMap.find_opt l rv with
+              | Some x -> x
+              | None -> failwith "label do not match"
+            in
+            Env.extend env (v,iv)
+        in
+        let env' = LMap.fold aux fields env in
+        eval_ligo body env'
       | _ -> failwith "not yet supported case"
     )
     | E_recursive {fun_name; fun_type=_; lambda} ->

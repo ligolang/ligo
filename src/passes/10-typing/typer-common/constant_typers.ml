@@ -40,6 +40,12 @@ let set_empty loc = typer_0 loc "SET_EMPTY" @@ fun tv_opt ->
   | Some t -> ok t
 
 let sub loc = typer_2 loc "SUB" @@ fun a b ->
+  if eq_2 (a , b) (t_bls12_381_g1 ())
+  then ok (t_bls12_381_g1 ()) else
+  if eq_2 (a , b) (t_bls12_381_g2 ())
+  then ok (t_bls12_381_g2 ()) else
+  if eq_2 (a , b) (t_bls12_381_fr ())
+  then ok (t_bls12_381_fr ()) else
   if (eq_1 a (t_int ()) || eq_1 a (t_nat ()))
   && (eq_1 b (t_int ()) || eq_1 b (t_nat ()))
   then ok @@ t_int () else
@@ -134,6 +140,20 @@ let map_map loc : typer = typer_2 loc "MAP_MAP" @@ fun f m ->
   let%bind () = assert_eq loc arg kv in
   ok @@ t_map k res
 
+let map_get_and_update loc : typer = typer_3 loc "MAP_GET_AND_UPDATE" @@ fun k opt_v m ->
+  let%bind v = trace_option (expected_option loc opt_v) @@ get_t_option opt_v in
+  let%bind (src , dst) = trace_option (expected_map loc m) @@ get_t_map m in
+  let%bind () = assert_eq loc src k in
+  let%bind () = assert_eq loc dst v in
+  ok @@ t_pair opt_v m
+
+let big_map_get_and_update loc : typer = typer_3 loc "BIG_MAP_GET_AND_UPDATE" @@ fun k opt_v m ->
+  let%bind v = trace_option (expected_option loc opt_v) @@ get_t_option opt_v in
+  let%bind (src , dst) = trace_option (expected_map loc m) @@ get_t_big_map m in
+  let%bind () = assert_eq loc src k in
+  let%bind () = assert_eq loc dst v in
+  ok @@ t_pair opt_v m
+
 let size loc = typer_1 loc "SIZE" @@ fun t ->
   let%bind () =
     Assert.assert_true (wrong_size loc t) @@
@@ -175,8 +195,14 @@ let failwith_ loc = typer_1_opt loc "FAILWITH" @@ fun t opt ->
   ok @@ Simple_utils.Option.unopt ~default opt
 
 let int loc : typer = typer_1 loc "INT" @@ fun t ->
-  let%bind () = trace_option (expected_nat loc t) @@ assert_t_nat t in
-  ok @@ t_int ()
+  if (eq_1 t (t_nat ()) || eq_1 t (t_bls12_381_fr ()))
+  then ok (t_int ()) else
+    fail @@ typeclass_error loc
+              [
+                [t_bls12_381_fr()] ;
+                [t_nat ()] ;
+              ]
+              [t]
 
 let bytes_pack loc : typer = typer_1 loc "PACK" @@ fun _t ->
   ok @@ t_bytes ()
@@ -194,6 +220,14 @@ let hash512 loc = typer_1 loc "SHA512" @@ fun t ->
   ok @@ t_bytes ()
 
 let blake2b loc = typer_1 loc "BLAKE2b" @@ fun t ->
+  let%bind () = trace_option (expected_bytes loc t) @@ assert_t_bytes t in
+  ok @@ t_bytes ()
+
+let sha3 loc = typer_1 loc "SHA3" @@ fun t ->
+  let%bind () = trace_option (expected_bytes loc t) @@ assert_t_bytes t in
+  ok @@ t_bytes ()
+
+let keccak loc = typer_1 loc "KECCAK" @@ fun t ->
   let%bind () = trace_option (expected_bytes loc t) @@ assert_t_bytes t in
   ok @@ t_bytes ()
 
@@ -218,6 +252,14 @@ let amount loc = constant' loc "AMOUNT" @@ t_mutez ()
 let balance loc = constant' loc "BALANCE" @@ t_mutez ()
 
 let chain_id loc = constant' loc "CHAIN_ID" @@ t_chain_id ()
+
+let level loc = constant' loc "LEVEL" @@ t_nat ()
+
+let total_voting_power loc = constant' loc "TOTAL_VOTING_POWER" @@ t_nat ()
+
+let voting_power loc = typer_1 loc "VOTING_POWER" @@ fun t ->
+  let%bind () = trace_option (expected_key_hash loc t) @@ assert_t_key_hash t in
+  ok @@ t_nat ()
 
 let address loc = typer_1 loc "ADDRESS" @@ fun c ->
   let%bind () = trace_option (expected_contract loc c) @@ assert_t_contract c in
@@ -316,6 +358,20 @@ let assert_some loc = typer_1 loc "ASSERT_SOME" @@ fun a ->
   ok @@ t_unit ()
 
 let times loc = typer_2 loc "TIMES" @@ fun a b ->
+  if (eq_1 a (t_bls12_381_g1 ()) && eq_1 b (t_bls12_381_fr ()))
+  then ok (t_bls12_381_g1 ()) else
+  if (eq_1 a (t_bls12_381_g2 ()) && eq_1 b (t_bls12_381_fr ()))
+  then ok (t_bls12_381_g2 ()) else
+  if (eq_1 a (t_bls12_381_fr ()) && eq_1 b (t_bls12_381_fr ()))
+  then ok (t_bls12_381_fr ()) else
+  if (eq_1 a (t_nat ()) && eq_1 b (t_bls12_381_fr ()))
+  then ok (t_bls12_381_fr ()) else
+  if (eq_1 a (t_int ()) && eq_1 b (t_bls12_381_fr ()))
+  then ok (t_bls12_381_fr ()) else
+  if (eq_1 a (t_bls12_381_fr ()) && eq_1 b (t_nat ()))
+  then ok (t_bls12_381_fr ()) else
+  if (eq_1 a (t_bls12_381_fr ()) && eq_1 b (t_int ()))
+  then ok (t_bls12_381_fr ()) else
   if eq_2 (a , b) (t_nat ())
   then ok @@ t_nat () else
   if eq_2 (a , b) (t_int ())
@@ -324,6 +380,13 @@ let times loc = typer_2 loc "TIMES" @@ fun a b ->
   then ok @@ t_mutez () else
     fail @@ typeclass_error loc
               [
+                [t_bls12_381_g1();t_bls12_381_g1()] ;
+                [t_bls12_381_g2();t_bls12_381_g2()] ;
+                [t_bls12_381_fr();t_bls12_381_fr()] ;
+                [t_nat();t_bls12_381_fr()] ;
+                [t_int();t_bls12_381_fr()] ;
+                [t_bls12_381_fr();t_nat()] ;
+                [t_bls12_381_fr();t_int()] ;
                 [t_nat();t_nat()] ;
                 [t_int();t_int()] ;
                 [t_nat();t_mutez()] ;
@@ -389,6 +452,12 @@ let mod_ loc = typer_2 loc "MOD" @@ fun a b ->
               [a; b]
 
 let add loc = typer_2 loc "ADD" @@ fun a b ->
+  if eq_2 (a , b) (t_bls12_381_g1 ())
+  then ok (t_bls12_381_g1 ()) else
+  if eq_2 (a , b) (t_bls12_381_g2 ())
+  then ok (t_bls12_381_g2 ()) else
+  if eq_2 (a , b) (t_bls12_381_fr ())
+  then ok (t_bls12_381_fr ()) else
   if eq_2 (a , b) (t_nat ())
   then ok @@ t_nat () else
   if eq_2 (a , b) (t_int ())
@@ -400,7 +469,10 @@ let add loc = typer_2 loc "ADD" @@ fun a b ->
   if (eq_1 a (t_timestamp ()) && eq_1 b (t_int ())) || (eq_1 b (t_timestamp ()) && eq_1 a (t_int ()))
   then ok @@ t_timestamp () else
     fail @@ typeclass_error loc
-              [
+              [ 
+                [t_bls12_381_g1();t_bls12_381_g1()] ;
+                [t_bls12_381_g2();t_bls12_381_g2()] ;
+                [t_bls12_381_fr();t_bls12_381_fr()] ;
                 [t_nat();t_nat()] ;
                 [t_int();t_int()] ;
                 [t_mutez();t_mutez()] ;
@@ -670,6 +742,44 @@ let rec pair_comparator : Location.t -> string -> typer = fun loc s -> typer_2 l
 and comparator : Location.t -> string -> typer = fun loc s -> typer_2 loc s @@ fun a b ->
   bind_or (pair_comparator loc s [a;b] None, simple_comparator loc s [a;b] None)
 
+let ticket loc = typer_2 loc "TICKET" @@ fun dat amt ->
+  let%bind () = assert_eq loc amt (t_nat ()) in
+  ok @@ t_ticket dat
+
+let read_ticket loc = typer_1 loc "READ_TICKET" @@ fun ticket ->
+  let%bind payload = trace_option (expected_ticket loc ticket) @@ get_t_ticket ticket in
+  ok @@ t_pair (t_pair (t_address ()) (t_pair payload (t_nat ()))) ticket
+
+let split_ticket loc = typer_2 loc "SPLIT_TICKET" @@ fun ticket amts ->
+  let t_nat = t_nat () in
+  let%bind (a,b) = trace_option (expected_pair loc amts) @@ get_t_pair amts in
+  let%bind () = assert_eq loc a t_nat in
+  let%bind () = assert_eq loc b t_nat in
+  let%bind _ = trace_option (expected_ticket loc ticket) @@ get_t_ticket ticket in
+  ok @@ t_option (t_pair ticket ticket)
+
+let join_ticket loc = typer_1 loc "JOIN_TICKET" @@ fun ticks ->
+  let%bind (ticka,tickb) = trace_option (expected_pair loc ticks) @@ get_t_pair ticks in
+  let%bind data = trace_option (expected_ticket loc ticka) @@ get_t_ticket ticka in
+  let%bind datb = trace_option (expected_ticket loc tickb) @@ get_t_ticket tickb in
+  let%bind () = assert_eq loc data datb in
+  ok @@ t_option ticka
+
+let pairing_check loc = typer_1 loc "PAIRING_CHECK" @@ fun lst ->
+  let%bind p = trace_option (expected_list loc lst) @@ get_t_list lst in
+  let%bind (g1,g2) = trace_option (expected_list loc p) @@ get_t_pair p in
+  let%bind () = assert_eq loc g1 (t_bls12_381_g1 ()) in (*TODO expected_tbls .. ? *)
+  let%bind () = assert_eq loc g2 (t_bls12_381_g2 ()) in
+  ok (t_bool ())
+
+let sapling_verify_update loc = typer_2 loc "SAPLING_VERIFY_UPDATE" @@ fun tr state ->
+  let%bind singleton_tr = trace_option (expected_sapling_transaction loc tr) @@ get_t_sapling_transaction tr in
+  let%bind singleton_state = trace_option (expected_sapling_state loc state) @@ get_t_sapling_state state in
+  let%bind () = assert_eq loc singleton_tr singleton_state in
+  ok (t_option (t_pair (t_int ()) state))
+
+let sapling_empty_state loc = typer_0 loc "SAPLING_EMPTY_STATE" @@ fun tv_opt ->
+  trace_option (not_annotated loc) @@ tv_opt
 
 let test_originate loc = typer_2 loc "TEST_ORIGINATE" @@ fun f init_storage  ->
   let%bind (args , ret) = trace_option (expected_function loc f) @@ get_t_function f in
@@ -785,7 +895,9 @@ let constant_typers loc c : (typer , typer_error) result = match c with
   | C_MAP_MEM             -> ok @@ map_mem loc ;
   | C_MAP_FIND            -> ok @@ map_find loc ;
   | C_MAP_FIND_OPT        -> ok @@ map_find_opt loc ;
+  | C_MAP_GET_AND_UPDATE -> ok @@ map_get_and_update loc ;
   (* BIG MAP *)
+  | C_BIG_MAP_GET_AND_UPDATE -> ok @@ big_map_get_and_update loc;
   (* CRYPTO *)
   | C_SHA256              -> ok @@ hash256 loc ;
   | C_SHA512              -> ok @@ hash512 loc ;
@@ -813,6 +925,18 @@ let constant_typers loc c : (typer , typer_error) result = match c with
   | C_CONVERT_TO_LEFT_COMB  -> ok @@ convert_to_left_comb loc ;
   | C_CONVERT_FROM_RIGHT_COMB -> ok @@ convert_from_right_comb loc ;
   | C_CONVERT_FROM_LEFT_COMB  -> ok @@ convert_from_left_comb loc ;
+  | C_SHA3              -> ok @@ sha3 loc ;
+  | C_KECCAK            -> ok @@ keccak loc ;
+  | C_LEVEL             -> ok @@ level loc ;
+  | C_VOTING_POWER      -> ok @@ voting_power loc ;
+  | C_TOTAL_VOTING_POWER -> ok @@ total_voting_power loc ;
+  | C_TICKET -> ok @@ ticket loc ; 
+  | C_READ_TICKET -> ok @@ read_ticket loc ;
+  | C_SPLIT_TICKET -> ok @@ split_ticket loc ;
+  | C_JOIN_TICKET -> ok @@ join_ticket loc ;
+  | C_PAIRING_CHECK -> ok @@ pairing_check loc ;
+  | C_SAPLING_VERIFY_UPDATE -> ok @@ sapling_verify_update loc ;
+  | C_SAPLING_EMPTY_STATE -> ok @@ sapling_empty_state loc ;
   | C_TEST_ORIGINATE -> ok @@ test_originate loc ;
   | C_TEST_SET_NOW -> ok @@ test_set_now loc ;
   | C_TEST_SET_SOURCE -> ok @@ test_set_source loc ;

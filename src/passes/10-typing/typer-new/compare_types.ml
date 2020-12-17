@@ -68,6 +68,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
       ok ()
   )
   | T_module_accessor _,_ -> fail @@ different_types a b
+  | T_singleton _ , _ -> failwith "TODO: mmmh, not sure comparing singleton should happen (?)"
 
 (* No information about what made it fail *)
 let type_expression_eq ab = Trace.to_bool @@ assert_type_expression_eq ab

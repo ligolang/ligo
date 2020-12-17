@@ -130,6 +130,7 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
     | None   -> fail @@ unbound_module e module_name t.location
     in
     evaluate_type module_ element
+  | T_singleton x -> return (T_singleton x)
 
 
 and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_state -> I.expression -> (environment * _ O'.typer_state * O.expression, typer_error) result = fun ?tv_opt e state ae ->
@@ -244,7 +245,8 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
           match cur with
           | Match_list { match_nil ; match_cons = { hd=_ ; tl=_ ; body ; tv=_} } -> [ match_nil ; body ]
           | Match_option { match_none ; match_some = {opt=_; body; tv=_} } -> [ match_none ; body ]
-          | Match_variant { cases ; tv=_ } -> List.map (fun ({constructor=_; pattern=_; body} : O.matching_content_case) -> body) cases in
+          | Match_variant { cases ; tv=_ } -> List.map (fun ({constructor=_; pattern=_; body} : O.matching_content_case) -> body) cases
+          | Match_record _ -> failwith "TODO" in
         List.map get_type_expression @@ aux m' in
       (* constraints:
          all the items of tvs should be equal to the first one
@@ -476,6 +478,8 @@ and type_match : environment -> _ O'.typer_state -> O.type_expression -> I.match
         in
         bind_fold_map_list aux (e,state) lst in
       return e state @@ O.Match_variant {cases ; tv=variant }
+    | Match_record _ ->
+      failwith "TODO"
 
 module Check : sig
   val check_expression_has_no_unification_vars : O.expression -> (unit, 'a) Simple_utils.Trace.result
@@ -520,6 +524,8 @@ end = struct
        | O.Match_variant { cases; tv } ->
          let%bind () = bind_fold_list (fun () ({ constructor = _ ; pattern = _ ; body } : Ast_typed.matching_content_case) -> expression body) () cases in
          te where tv
+       | O.Match_record _ ->
+         failwith "TODO"
       )
     | O.E_record          m -> bind_fold_list (fun () (_key, e) -> expression e) () @@ Ast_typed.LMap.bindings m
     | O.E_record_accessor { record; path=_ } -> expression record
@@ -539,6 +545,7 @@ end = struct
     | O.T_constant { parameters ; _ } ->
       bind_fold_list (fun () texpr -> te where texpr) () parameters
     | O.T_module_accessor {module_name=_; element} -> te where element
+    | O.T_singleton _ -> failwith "TODO: singleton?"
   and te where : O.type_expression -> _ = function { type_content; type_meta=_; location=_ } -> tc where type_content
 
   let check_expression_has_no_unification_vars (expr : O.expression) =

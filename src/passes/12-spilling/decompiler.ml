@@ -200,3 +200,5 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
     fail @@ corner_case ~loc:__LOC__ "trying to decompile at variable type"
   | T_module_accessor _ ->
     fail @@ corner_case ~loc:__LOC__ "trying to decompile at module access type"
+  | T_singleton _ ->
+    fail @@ corner_case ~loc:__LOC__ "no value is of type singleton"

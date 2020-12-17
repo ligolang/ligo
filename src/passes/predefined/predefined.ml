@@ -58,6 +58,16 @@ module Tree_abstraction = struct
     | "Tezos.get_contract_opt"   -> some_const C_CONTRACT_OPT
     | "Tezos.get_entrypoint_opt" -> some_const C_CONTRACT_ENTRYPOINT_OPT
 
+    (* Sapling *)
+    | "Tezos.sapling_empty_state" -> some_const C_SAPLING_EMPTY_STATE
+    | "Tezos.sapling_verify_update" -> some_const C_SAPLING_VERIFY_UPDATE
+    
+    (* Tickets *)
+    | "Tezos.create_ticket" -> some_const C_TICKET
+    | "Tezos.join_tickets" -> some_const C_JOIN_TICKET
+    | "Tezos.split_ticket" -> some_const C_SPLIT_TICKET
+    | "Tezos.read_ticket" -> some_const C_READ_TICKET
+
     (* Crypto module *)
 
     | "Crypto.check"    -> some_const C_CHECK_SIGNATURE
@@ -108,6 +118,8 @@ module Tree_abstraction = struct
     | "Map.remove"   -> some_const C_MAP_REMOVE
     | "Map.empty"    -> some_const C_MAP_EMPTY
     | "Map.literal"  -> some_const C_MAP_LITERAL
+    (* Edo linear operator *)
+    | "Map.get_and_update" -> some_const C_MAP_GET_AND_UPDATE
 
     (* Big_map module *)
 
@@ -119,6 +131,8 @@ module Tree_abstraction = struct
     | "Big_map.mem"      -> some_const C_MAP_MEM
     | "Big_map.remove"   -> some_const C_MAP_REMOVE
     | "Big_map.add"      -> some_const C_MAP_ADD
+    (* Edo linear operator *)
+    | "Big_map.get_and_update" -> some_const C_BIG_MAP_GET_AND_UPDATE
 
     (* Bitwise module *)
 
@@ -185,6 +199,8 @@ module Tree_abstraction = struct
     | C_BLAKE2b         -> "Crypto.blake2b"
     | C_SHA256          -> "Crypto.sha256"
     | C_SHA512          -> "Crypto.sha512"
+    | C_SHA3            -> "Crypto.sha3"
+    | C_KECCAK          -> "Crypto.keccak"
 
     (* Bytes module *)
 
@@ -699,112 +715,128 @@ module Stacking = struct
     `Tezos_utils.Michelson` will help too, so that no Michelson has to actually
     be written by hand.
    *)
-
+  type protocol_type = Environment.Protocols.t
   include Helpers.Stacking
   open Tezos_utils.Michelson
-  open Mini_c
+  open Stage_common.Types
 
-  let get_operators c : predicate option =
-    match c with
-    | C_ADD               -> Some ( simple_binary @@ prim "ADD")
-    | C_SUB               -> Some ( simple_binary @@ prim "SUB")
-    | C_MUL               -> Some ( simple_binary @@ prim "MUL")
-    | C_EDIV              -> Some ( simple_binary @@ prim "EDIV")
-    | C_DIV               -> Some ( simple_binary @@ seq [prim "EDIV" ; i_assert_some_msg (i_push_string "DIV by 0") ; i_car])
-    | C_MOD               -> Some ( simple_binary @@ seq [prim "EDIV" ; i_assert_some_msg (i_push_string "MOD by 0") ; i_cdr])
-    | C_NEG               -> Some ( simple_unary @@ prim "NEG")
-    | C_OR                -> Some ( simple_binary @@ prim "OR")
-    | C_AND               -> Some ( simple_binary @@ prim "AND")
-    | C_XOR               -> Some ( simple_binary @@ prim "XOR")
-    | C_LSL               -> Some ( simple_binary @@ prim "LSL")
-    | C_LSR               -> Some ( simple_binary @@ prim "LSR")
-    | C_NOT               -> Some ( simple_unary @@ prim "NOT")
-    | C_PAIR              -> Some ( simple_binary @@ prim "PAIR")
-    | C_CAR               -> Some ( simple_unary @@ prim "CAR")
-    | C_CDR               -> Some ( simple_unary @@ prim "CDR")
-    | C_TRUE              -> Some ( simple_constant @@ i_push (prim "bool") (prim "True"))
-    | C_FALSE             -> Some ( simple_constant @@ i_push (prim "bool") (prim "False"))
-    | C_EQ                -> Some ( simple_binary @@ seq [prim "COMPARE" ; prim "EQ"])
-    | C_NEQ               -> Some ( simple_binary @@ seq [prim "COMPARE" ; prim "NEQ"])
-    | C_LT                -> Some ( simple_binary @@ seq [prim "COMPARE" ; prim "LT"])
-    | C_LE                -> Some ( simple_binary @@ seq [prim "COMPARE" ; prim "LE"])
-    | C_GT                -> Some ( simple_binary @@ seq [prim "COMPARE" ; prim "GT"])
-    | C_GE                -> Some ( simple_binary @@ seq [prim "COMPARE" ; prim "GE"])
-    | C_UPDATE            -> Some ( simple_ternary @@ prim "UPDATE")
-    | C_SOME              -> Some ( simple_unary  @@ prim "SOME")
-    | C_MAP_FIND          -> Some ( simple_binary @@ seq [prim "GET" ; i_assert_some_msg (i_push_string "MAP FIND")])
-    | C_MAP_MEM           -> Some ( simple_binary @@ prim "MEM")
-    | C_MAP_FIND_OPT      -> Some ( simple_binary @@ prim "GET")
-    | C_MAP_ADD           -> Some ( simple_ternary @@ seq [dip (i_some) ; prim "UPDATE"])
-    | C_MAP_UPDATE        -> Some ( simple_ternary @@ prim "UPDATE")
-    | C_FOLD_WHILE        -> Some ( simple_binary @@ seq [i_swap ; (i_push (prim "bool") (prim "True"));prim ~children:[seq [dip i_dup; i_exec; i_unpair]] "LOOP" ;i_swap ; i_drop])
-    | C_FOLD_CONTINUE     -> Some ( simple_unary @@ seq [(i_push (prim "bool") (prim "True")); i_pair])
-    | C_FOLD_STOP         -> Some ( simple_unary @@ seq [(i_push (prim "bool") (prim "False")); i_pair])
-    | C_SIZE              -> Some ( simple_unary @@ prim "SIZE")
-    | C_FAILWITH          -> Some ( simple_unary @@ prim "FAILWITH")
-    | C_ASSERT_SOME       -> Some ( simple_unary @@ i_assert_some)
-    | C_ASSERT_INFERRED   -> Some ( simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit]))
-    | C_ASSERTION         -> Some ( simple_unary @@ i_if (seq [i_push_unit]) (seq [i_push_string "failed assertion" ; i_failwith]))
-    | C_INT               -> Some ( simple_unary @@ prim "INT")
-    | C_ABS               -> Some ( simple_unary @@ prim "ABS")
-    | C_IS_NAT            -> Some ( simple_unary @@ prim "ISNAT")
-    | C_CONS              -> Some ( simple_binary @@ prim "CONS")
-    | C_UNIT              -> Some ( simple_constant @@ prim "UNIT")
-    | C_BALANCE           -> Some ( simple_constant @@ prim "BALANCE")
-    | C_AMOUNT            -> Some ( simple_constant @@ prim "AMOUNT")
-    | C_ADDRESS           -> Some ( simple_unary @@ prim "ADDRESS")
-    | C_SELF_ADDRESS      -> Some ( simple_constant @@ seq [prim "SELF"; prim "ADDRESS"])
-    | C_IMPLICIT_ACCOUNT  -> Some ( simple_unary @@ prim "IMPLICIT_ACCOUNT")
-    | C_SET_DELEGATE      -> Some ( simple_unary @@ prim "SET_DELEGATE")
-    | C_NOW               -> Some ( simple_constant @@ prim "NOW")
-    | C_CALL              -> Some ( simple_ternary @@ prim "TRANSFER_TOKENS")
-    | C_SOURCE            -> Some ( simple_constant @@ prim "SOURCE")
-    | C_SENDER            -> Some ( simple_constant @@ prim "SENDER")
-    | C_SET_MEM           -> Some ( simple_binary @@ prim "MEM")
-    | C_SET_ADD           -> Some ( simple_binary @@ seq [dip (i_push (prim "bool") (prim "True")) ; prim "UPDATE"])
-    | C_SET_REMOVE        -> Some ( simple_binary @@ seq [dip (i_push (prim "bool") (prim "False")) ; prim "UPDATE"])
-    | C_SLICE             -> Some ( simple_ternary @@ seq [prim "SLICE" ; i_assert_some_msg (i_push_string "SLICE")])
-    | C_SHA256            -> Some ( simple_unary @@ prim "SHA256")
-    | C_SHA512            -> Some ( simple_unary @@ prim "SHA512")
-    | C_BLAKE2b           -> Some ( simple_unary @@ prim "BLAKE2B")
-    | C_CHECK_SIGNATURE   -> Some ( simple_ternary @@ prim "CHECK_SIGNATURE")
-    | C_HASH_KEY          -> Some ( simple_unary @@ prim "HASH_KEY")
-    | C_BYTES_PACK        -> Some ( simple_unary @@ prim "PACK")
-    | C_CONCAT            -> Some ( simple_binary @@ prim "CONCAT")
-    | C_CHAIN_ID          -> Some ( simple_constant @@ prim "CHAIN_ID")
+  let get_operators (protocol_version: protocol_type) c : predicate option =
+    match c , protocol_version with
+    | C_ADD                , _   -> Some ( simple_binary @@ prim "ADD")
+    | C_SUB                , _   -> Some ( simple_binary @@ prim "SUB")
+    | C_MUL                , _   -> Some ( simple_binary @@ prim "MUL")
+    | C_EDIV               , _   -> Some ( simple_binary @@ prim "EDIV")
+    | C_DIV                , _   -> Some ( simple_binary @@ seq [prim "EDIV" ; i_assert_some_msg (i_push_string "DIV by 0") ; i_car])
+    | C_MOD                , _   -> Some ( simple_binary @@ seq [prim "EDIV" ; i_assert_some_msg (i_push_string "MOD by 0") ; i_cdr])
+    | C_NEG                , _   -> Some ( simple_unary @@ prim "NEG")
+    | C_OR                 , _   -> Some ( simple_binary @@ prim "OR")
+    | C_AND                , _   -> Some ( simple_binary @@ prim "AND")
+    | C_XOR                , _   -> Some ( simple_binary @@ prim "XOR")
+    | C_LSL                , _   -> Some ( simple_binary @@ prim "LSL")
+    | C_LSR                , _   -> Some ( simple_binary @@ prim "LSR")
+    | C_NOT                , _   -> Some ( simple_unary @@ prim "NOT")
+    | C_PAIR               , _   -> Some ( simple_binary @@ prim "PAIR")
+    | C_CAR                , _   -> Some ( simple_unary @@ prim "CAR")
+    | C_CDR                , _   -> Some ( simple_unary @@ prim "CDR")
+    | C_TRUE               , _   -> Some ( simple_constant @@ i_push (prim "bool") (prim "True"))
+    | C_FALSE              , _   -> Some ( simple_constant @@ i_push (prim "bool") (prim "False"))
+    | C_EQ                 , _   -> Some ( simple_binary @@ seq [prim "COMPARE" ; prim "EQ"])
+    | C_NEQ                , _   -> Some ( simple_binary @@ seq [prim "COMPARE" ; prim "NEQ"])
+    | C_LT                 , _   -> Some ( simple_binary @@ seq [prim "COMPARE" ; prim "LT"])
+    | C_LE                 , _   -> Some ( simple_binary @@ seq [prim "COMPARE" ; prim "LE"])
+    | C_GT                 , _   -> Some ( simple_binary @@ seq [prim "COMPARE" ; prim "GT"])
+    | C_GE                 , _   -> Some ( simple_binary @@ seq [prim "COMPARE" ; prim "GE"])
+    | C_UPDATE             , _   -> Some ( simple_ternary @@ prim "UPDATE")
+    | C_SOME               , _   -> Some ( simple_unary  @@ prim "SOME")
+    | C_MAP_FIND           , _   -> Some ( simple_binary @@ seq [prim "GET" ; i_assert_some_msg (i_push_string "MAP FIND")])
+    | C_MAP_MEM            , _   -> Some ( simple_binary @@ prim "MEM")
+    | C_MAP_FIND_OPT       , _   -> Some ( simple_binary @@ prim "GET")
+    | C_MAP_ADD            , _   -> Some ( simple_ternary @@ seq [dip (i_some) ; prim "UPDATE"])
+    | C_MAP_UPDATE         , _   -> Some ( simple_ternary @@ prim "UPDATE")
+    | (C_MAP_GET_AND_UPDATE|C_BIG_MAP_GET_AND_UPDATE) , Edo ->
+      Some (simple_ternary @@ seq [prim "GET_AND_UPDATE"; prim "PAIR"])
+    | C_FOLD_WHILE         , _   ->
+      Some ( simple_binary @@ seq [i_swap ; (i_push (prim "bool") (prim "True"));prim ~children:[seq [dip i_dup; i_exec; i_unpair]] "LOOP" ;i_swap ; i_drop])
+    | C_FOLD_CONTINUE      , _   -> Some ( simple_unary @@ seq [(i_push (prim "bool") (prim "True")); i_pair])
+    | C_FOLD_STOP          , _   -> Some ( simple_unary @@ seq [(i_push (prim "bool") (prim "False")); i_pair])
+    | C_SIZE               , _   -> Some ( simple_unary @@ prim "SIZE")
+    | C_FAILWITH           , _   -> Some ( simple_unary @@ prim "FAILWITH")
+    | C_ASSERT_SOME        , _   -> Some ( simple_unary @@ i_assert_some)
+    | C_ASSERT_INFERRED    , _   -> Some ( simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit]))
+    | C_ASSERTION          , _   -> Some ( simple_unary @@ i_if (seq [i_push_unit]) (seq [i_push_string "failed assertion" ; i_failwith]))
+    | C_INT                , _   -> Some ( simple_unary @@ prim "INT")
+    | C_ABS                , _   -> Some ( simple_unary @@ prim "ABS")
+    | C_IS_NAT             , _   -> Some ( simple_unary @@ prim "ISNAT")
+    | C_CONS               , _   -> Some ( simple_binary @@ prim "CONS")
+    | C_UNIT               , _   -> Some ( simple_constant @@ prim "UNIT")
+    | C_BALANCE            , _   -> Some ( simple_constant @@ prim "BALANCE")
+    | C_AMOUNT             , _   -> Some ( simple_constant @@ prim "AMOUNT")
+    | C_ADDRESS            , _   -> Some ( simple_unary @@ prim "ADDRESS")
+    | C_SELF_ADDRESS       , Edo -> Some ( simple_constant @@ seq [prim "SELF_ADDRESS"])
+    | C_SELF_ADDRESS       , _   -> Some ( simple_constant @@ seq [prim "SELF"; prim "ADDRESS"])
+    | C_IMPLICIT_ACCOUNT   , _   -> Some ( simple_unary @@ prim "IMPLICIT_ACCOUNT")
+    | C_SET_DELEGATE       , _   -> Some ( simple_unary @@ prim "SET_DELEGATE")
+    | C_NOW                , _   -> Some ( simple_constant @@ prim "NOW")
+    | C_CALL               , _   -> Some ( simple_ternary @@ prim "TRANSFER_TOKENS")
+    | C_SOURCE             , _   -> Some ( simple_constant @@ prim "SOURCE")
+    | C_SENDER             , _   -> Some ( simple_constant @@ prim "SENDER")
+    | C_SET_MEM            , _   -> Some ( simple_binary @@ prim "MEM")
+    | C_SET_ADD            , _   -> Some ( simple_binary @@ seq [dip (i_push (prim "bool") (prim "True")) ; prim "UPDATE"])
+    | C_SET_REMOVE         , _   -> Some ( simple_binary @@ seq [dip (i_push (prim "bool") (prim "False")) ; prim "UPDATE"])
+    | C_SLICE              , _   -> Some ( simple_ternary @@ seq [prim "SLICE" ; i_assert_some_msg (i_push_string "SLICE")])
+    | C_SHA256             , _   -> Some ( simple_unary @@ prim "SHA256")
+    | C_SHA512             , _   -> Some ( simple_unary @@ prim "SHA512")
+    | C_BLAKE2b            , _   -> Some ( simple_unary @@ prim "BLAKE2B")
+    | C_CHECK_SIGNATURE    , _   -> Some ( simple_ternary @@ prim "CHECK_SIGNATURE")
+    | C_HASH_KEY           , _   -> Some ( simple_unary @@ prim "HASH_KEY")
+    | C_BYTES_PACK         , _   -> Some ( simple_unary @@ prim "PACK")
+    | C_CONCAT             , _   -> Some ( simple_binary @@ prim "CONCAT")
+    | C_CHAIN_ID           , _   -> Some ( simple_constant @@ prim "CHAIN_ID")
+    | C_SHA3               , _   -> Some ( simple_unary @@ prim "SHA3")
+    | C_KECCAK             , _   -> Some ( simple_unary @@ prim "KECCAK")
+    | C_LEVEL              , _   -> Some ( simple_constant @@ prim "LEVEL")
+    | C_VOTING_POWER       , _   -> Some ( simple_unary @@ prim "VOTING_POWER")
+    | C_TOTAL_VOTING_POWER , _   -> Some ( simple_unary @@ prim "TOTAL_VOTING_POWER")
 
-    | C_SELF -> Some (trivial_special "SELF")
-    | C_NONE -> Some (trivial_special "NONE")
-    | C_NIL -> Some (trivial_special "NIL")
-    | C_LOOP_CONTINUE -> Some (trivial_special "LEFT")
-    | C_LOOP_STOP -> Some (trivial_special "RIGHT")
-    | C_LIST_EMPTY -> Some (trivial_special "NIL")
-    | C_LIST_HEAD_OPT     -> Some ( special @@ fun with_args -> i_if_cons (seq [i_swap; i_drop; i_some]) (with_args "NONE") )
-    | C_LIST_TAIL_OPT     -> Some ( special @@ fun with_args -> i_if_cons (seq [i_drop; i_some])       (with_args "NONE") )
-    | C_SET_EMPTY -> Some (trivial_special "EMPTY_SET")
-    | C_MAP_EMPTY -> Some (trivial_special "EMPTY_MAP")
-    | C_BIG_MAP_EMPTY -> Some (trivial_special "EMPTY_BIG_MAP")
-    | C_BYTES_UNPACK -> Some (trivial_special "UNPACK")
-    | C_MAP_REMOVE -> Some (special (fun with_args -> seq [dip (with_args "NONE"); prim "UPDATE"]))
-    | C_LEFT -> Some (trivial_special "LEFT")
-    | C_RIGHT -> Some (trivial_special "RIGHT")
-    | C_CONTRACT ->
+    | C_SELF               , _   -> Some (trivial_special "SELF")
+    | C_NONE               , _   -> Some (trivial_special "NONE")
+    | C_NIL                , _   -> Some (trivial_special "NIL")
+    | C_LOOP_CONTINUE      , _   -> Some (trivial_special "LEFT")
+    | C_LOOP_STOP          , _   -> Some (trivial_special "RIGHT")
+    | C_LIST_EMPTY         , _   -> Some (trivial_special "NIL")
+    | C_LIST_HEAD_OPT      , _   -> Some ( special @@ fun with_args -> i_if_cons (seq [i_swap; i_drop; i_some]) (with_args "NONE") )
+    | C_LIST_TAIL_OPT      , _   -> Some ( special @@ fun with_args -> i_if_cons (seq [i_drop; i_some])       (with_args "NONE") )
+    | C_SET_EMPTY          , _   -> Some (trivial_special "EMPTY_SET")
+    | C_MAP_EMPTY          , _   -> Some (trivial_special "EMPTY_MAP")
+    | C_BIG_MAP_EMPTY      , _   -> Some (trivial_special "EMPTY_BIG_MAP")
+    | C_BYTES_UNPACK       , _   -> Some (trivial_special "UNPACK")
+    | C_MAP_REMOVE         , _   -> Some (special (fun with_args -> seq [dip (with_args "NONE"); prim "UPDATE"]))
+    | C_LEFT               , _   -> Some (trivial_special "LEFT")
+    | C_RIGHT              , _   -> Some (trivial_special "RIGHT")
+    | C_TICKET             , Edo -> Some ( simple_binary @@ prim "TICKET" )
+    | C_READ_TICKET        , Edo -> Some ( simple_unary @@ seq [ prim "READ_TICKET" ; prim "PAIR" ] )
+    | C_SPLIT_TICKET       , Edo -> Some ( simple_binary @@ prim "SPLIT_TICKET" )
+    | C_JOIN_TICKET        , Edo -> Some ( simple_unary @@ prim "JOIN_TICKETS" )
+    | C_SAPLING_EMPTY_STATE, Edo -> Some (trivial_special "SAPLING_EMPTY_STATE")
+    | C_SAPLING_VERIFY_UPDATE , Edo -> Some (simple_binary @@ prim "SAPLING_VERIFY_UPDATE")
+    | C_CONTRACT           , _   ->
       Some (special
               (fun with_args ->
                  seq [with_args "CONTRACT";
                       i_assert_some_msg (i_push_string "bad address for get_contract")]))
-    | C_CONTRACT_OPT -> Some (trivial_special "CONTRACT")
-    | C_CONTRACT_ENTRYPOINT ->
+    | C_CONTRACT_OPT         , _   -> Some (trivial_special "CONTRACT")
+    | C_CONTRACT_ENTRYPOINT , _  ->
       Some (special
               (fun with_args ->
                  seq [with_args "CONTRACT";
                       i_assert_some_msg (i_push_string "bad address for get_entrypoint")]))
-    | C_CONTRACT_ENTRYPOINT_OPT -> Some (trivial_special "CONTRACT")
-    | C_CREATE_CONTRACT ->
+    | C_CONTRACT_ENTRYPOINT_OPT , _ -> Some (trivial_special "CONTRACT")
+    | C_CREATE_CONTRACT , _ ->
       Some (special
               (fun with_args ->
                  seq [with_args "CREATE_CONTRACT";
                       i_pair]))
+
     | _ -> None
 
 end

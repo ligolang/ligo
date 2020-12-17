@@ -138,6 +138,20 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_CONVERT_TO_RIGHT_COMB -> C_CONVERT_TO_RIGHT_COMB
   | C_CONVERT_FROM_LEFT_COMB -> C_CONVERT_FROM_LEFT_COMB
   | C_CONVERT_FROM_RIGHT_COMB -> C_CONVERT_FROM_RIGHT_COMB
+  | C_SHA3 -> C_SHA3
+  | C_KECCAK -> C_KECCAK
+  | C_LEVEL -> C_LEVEL
+  | C_VOTING_POWER -> C_VOTING_POWER 
+  | C_TOTAL_VOTING_POWER -> C_TOTAL_VOTING_POWER
+  | C_TICKET -> C_TICKET
+  | C_READ_TICKET -> C_READ_TICKET
+  | C_SPLIT_TICKET -> C_SPLIT_TICKET
+  | C_JOIN_TICKET -> C_JOIN_TICKET
+  | C_PAIRING_CHECK -> C_PAIRING_CHECK
+  | C_MAP_GET_AND_UPDATE -> C_MAP_GET_AND_UPDATE
+  | C_BIG_MAP_GET_AND_UPDATE -> C_BIG_MAP_GET_AND_UPDATE
+  | C_SAPLING_EMPTY_STATE -> C_SAPLING_EMPTY_STATE
+  | C_SAPLING_VERIFY_UPDATE -> C_SAPLING_VERIFY_UPDATE
   | (   C_TEST_ORIGINATE
       | C_TEST_SET_NOW
       | C_TEST_SET_SOURCE
@@ -174,12 +188,25 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
     | (i, []) when String.equal i signature_name -> return (T_base TB_signature)
     | (i, []) when String.equal i baker_hash_name -> return (T_base TB_baker_hash)
     | (i, []) when String.equal i pvss_key_name -> return (T_base TB_pvss_key)
-    | (i, []) when String.equal i sapling_transaction_name -> return (T_base TB_sapling_transaction)
-    | (i, []) when String.equal i sapling_state_name -> return (T_base TB_sapling_state)
+
     | (i, []) when String.equal i baker_operation_name -> return (T_base TB_baker_operation)
     | (i, []) when String.equal i bls12_381_g1_name -> return (T_base TB_bls12_381_g1)
     | (i, []) when String.equal i bls12_381_g2_name -> return (T_base TB_bls12_381_g2)
     | (i, []) when String.equal i bls12_381_fr_name -> return (T_base TB_bls12_381_fr)
+    | (i, []) when String.equal i never_name -> return (T_base TB_never)
+    | (i, [x]) when String.equal i ticket_name ->
+      let%bind x' = compile_type x in
+      return (T_ticket x')
+    | (i, [x]) when String.equal i sapling_transaction_name -> (
+      match x.type_content with
+      | AST.T_singleton (Literal_int x') -> return (T_sapling_transaction x')
+      | _ -> failwith "wrong sapling_transaction"
+    )
+    | (i, [x]) when String.equal i sapling_state_name -> (
+      match x.type_content with
+      | AST.T_singleton (Literal_int x') -> return (T_sapling_state x')
+      | _ -> failwith "wrong sapling_state"
+    )
     | (i, [x]) when String.equal i contract_name ->
       let%bind x' = compile_type x in
       return (T_contract x')
@@ -240,6 +267,8 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
   )
   | T_module_accessor _ ->
     fail @@ corner_case ~loc:__LOC__ "Module access should de resolved earlier"
+  | T_singleton _ ->
+    fail @@ corner_case ~loc:__LOC__ "Singleton uncaught"
 
 (* probably should use result monad for conformity? but these errors
    are supposed to be impossible *)
@@ -452,6 +481,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
           let%bind cons =
             let%bind ty' = compile_type tv in
             let%bind match_cons' = compile_expression body in
+            (* TODO BUG it doesn't make sense to use ty' in both places here *)
             ok (((Location.map Var.todo_cast hd , ty') , (Location.map Var.todo_cast tl , ty')) , match_cons')
           in
           return @@ E_if_cons (expr' , nil , cons)
@@ -503,6 +533,26 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
               aux expr' tree
             )
       )
+      | Match_record { fields; body; record_type = { content; layout } } ->
+        let%bind tree = Layout.record_tree ~layout compile_type content in
+        let%bind body = compile_expression body in
+        let rec aux expr (tree : Layout.record_tree) body =
+          match tree.content with
+          | Field l ->
+            let var = fst (LMap.find l fields) in
+            return @@ E_let_in ((var, tree.type_), false, expr, body)
+          | Pair (x, y) ->
+            let x_var = Location.wrap (Var.fresh ()) in
+            let y_var = Location.wrap (Var.fresh ()) in
+            let x_ty = x.type_ in
+            let y_ty = y.type_ in
+            let x_var_expr = Combinators.Expression.make_tpl (E_variable x_var, x_ty) in
+            let y_var_expr = Combinators.Expression.make_tpl (E_variable y_var, y_ty) in
+            let%bind yrec = aux y_var_expr y body in
+            let%bind xrec = aux x_var_expr x yrec in
+            return @@ E_let_pair (expr, (((x_var, x_ty), (y_var, y_ty)), xrec))
+        in
+        aux expr' tree body
   )
   | E_raw_code { language; code} ->
     let backend = "Michelson" in
@@ -642,6 +692,26 @@ and compile_recursive {fun_name; fun_type; lambda} =
           trace_strong (corner_case ~loc:__LOC__ "building constructor") @@
           aux expr tree
        )
+      | Match_record { fields ; body ; record_type } ->
+        let%bind tree = Layout.record_tree ~layout:record_type.layout compile_type record_type.content in
+        let%bind body = replace_callback fun_name loop_type shadowed body in
+        let rec aux expr (tree : Layout.record_tree) body =
+          match tree.content with
+          | Field l ->
+            let var = fst (LMap.find l fields) in
+            return @@ E_let_in ((var, tree.type_), false, expr, body)
+          | Pair (x, y) ->
+            let x_var = Location.wrap (Var.fresh ()) in
+            let y_var = Location.wrap (Var.fresh ()) in
+            let x_ty = x.type_ in
+            let y_ty = y.type_ in
+            let x_var_expr = Combinators.Expression.make_tpl (E_variable x_var, x_ty) in
+            let y_var_expr = Combinators.Expression.make_tpl (E_variable y_var, y_ty) in
+            let%bind yrec = aux y_var_expr y body in
+            let%bind xrec = aux x_var_expr x yrec in
+            return @@ E_let_pair (expr, (((x_var, x_ty), (y_var, y_ty)), xrec))
+        in
+        aux expr tree body
   in
   let%bind fun_type = compile_type fun_type in
   let%bind (input_type,output_type) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_function fun_type in

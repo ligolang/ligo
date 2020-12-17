@@ -11,6 +11,6 @@ open Ligo_coq_ocaml
 open Co_de_bruijn
 open Ligo
 
-val compile_expr: (Location.t, string) node list -> splitting -> (Location.t, constant', literal) expr -> (Location.t, string) node
+val compile_expr: Environment.Protocols.t -> (Location.t, string) node list -> splitting -> (Location.t, constant', literal) expr -> (Location.t, string) node
 
-val compile_function_body : (Location.t, constant', literal) binds -> (Location.t, string) node
+val compile_function_body : Environment.Protocols.t -> (Location.t, constant', literal) binds -> (Location.t, string) node

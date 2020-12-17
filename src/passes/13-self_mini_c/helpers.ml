@@ -17,7 +17,10 @@ let rec fold_type_value : ('a -> type_expression -> ('a,_) result) -> 'a -> type
   | T_option a ->
      self init' a
   | T_base _ ->
-     ok init'
+    ok init'
+  | T_sapling_transaction _ -> ok init
+  | T_sapling_state _ -> ok init
+  | T_ticket x -> self init' x
 
 type ('a,'err) folder = 'a -> expression -> ('a,'err) result
 let rec fold_expression : ('a,'err) folder -> 'a -> expression -> ('a, 'err) result = fun f init e ->
@@ -64,6 +67,10 @@ let rec fold_expression : ('a,'err) folder -> 'a -> expression -> ('a, 'err) res
       ok res
   )
   | E_let_in ((_, _) , _inline, expr , body) -> (        
+      let%bind res = bind_fold_pair self init' (expr,body) in
+      ok res
+  )
+  | E_let_pair (expr , (((_, _) , (_, _)) , body)) -> (
       let%bind res = bind_fold_pair self init' (expr,body) in
       ok res
   )
@@ -116,6 +123,10 @@ let rec map_expression : 'err mapper -> expression -> (expression, 'err) result 
   | E_let_in ((v , tv) , inline, expr , body) -> (
       let%bind (expr',body') = bind_map_pair self (expr,body) in
       return @@ E_let_in ((v , tv) , inline , expr' , body')
+  )
+  | E_let_pair (expr, ((x, y), body)) -> (
+      let%bind (expr', body') = bind_map_pair self (expr, body) in
+      return @@ E_let_pair (expr', ((x, y), body'))
   )
 
 let map_sub_level_expression : 'err mapper -> expression -> (expression , 'err) result = fun f e ->

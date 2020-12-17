@@ -69,6 +69,7 @@ let rec type_content : formatter -> type_content -> unit =
   | T_variable tv -> type_variable ppf tv
   | T_constant tc -> type_injection ppf tc
   | T_module_accessor ma -> module_access type_expression ppf ma
+  | T_singleton       x  -> literal       ppf             x
 
 and type_injection ppf {language;injection;parameters} =
   ignore language;
@@ -151,6 +152,10 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit =
       fprintf ppf "| Nil -> %a @.| %a :: %a -> %a" f match_nil expression_variable hd expression_variable tl f body
   | Match_option {match_none ; match_some = {opt; body; tv=_}} ->
       fprintf ppf "| None -> %a @.| Some %a -> %a" f match_none expression_variable opt f body
+  | Match_record {fields = _TODO ; body ; record_type = _} ->
+      fprintf ppf "| {%s} -> %a"
+        "TODO"
+        f body
 
 let declaration ppf (d : declaration) =
   match d with

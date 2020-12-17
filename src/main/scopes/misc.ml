@@ -67,6 +67,8 @@ let extract_variable_types :
               (pattern,proj_t)
           in
           return (List.map aux cases)
+        | Match_record { fields ; _ }  ->
+          return (Ast_typed.LMap.to_list fields)
       )
     in
     let aux' : bindings_map -> Ast_typed.declaration -> (bindings_map, _) result = fun env decl ->

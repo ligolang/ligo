@@ -4,6 +4,7 @@
   (libraries
     simple-utils
     tezos-utils
+    environment
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional ppx_expect)

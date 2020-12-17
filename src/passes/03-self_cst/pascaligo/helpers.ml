@@ -66,6 +66,7 @@ let rec fold_type_expression : ('a, 'err) folder -> 'a -> type_expr -> ('a, 'err
     self init value.field
   | TVar    _
   | TWild   _
+  | TInt    _
   | TString _ -> ok @@ init
 
 let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> ('a, 'err) result = fun f init e  ->
@@ -432,7 +433,8 @@ let rec map_type_expression : ('err) mapper -> type_expr -> ('b, 'err) result = 
     let value = {value with field} in
     return @@ TModA {value;region}
   | (TVar    _
-  | TWild   _
+  | TWild    _
+  | TInt     _
   | TString _ as e )-> ok @@ e
 
 let rec map_expression : ('err) mapper -> expr -> (expr, 'err) result = fun f e  ->

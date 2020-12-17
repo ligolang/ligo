@@ -53,6 +53,10 @@ module Free_variables = struct
       unions [ self expr ;
                expression (union (singleton v) b) body ;
              ]
+    | E_let_pair (expr, (((x, _) , (y, _)) , body)) ->
+      unions [ self expr ;
+               expression (unions [ singleton x ; singleton y ; b ]) body
+             ]
     | E_raw_michelson _ -> empty
 
   and var_name : bindings -> var_name -> bindings = fun b n ->

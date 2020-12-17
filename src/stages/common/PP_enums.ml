@@ -1,60 +1,6 @@
 open Format
 open Types
 
-(** old code
-let operation ppf (o : Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation) : unit =
-  let print_option f ppf o =
-    match o with
-      Some (s) -> fprintf ppf "%a" f s
-    | None -> fprintf ppf "None"
-  in
-    let open Tezos_micheline.Micheline in
-  let rec prim ppf (node : (_,Memory_proto_alpha.Protocol.Alpha_context.Script.prim) node)= match node with
-    | Int (l , i) -> fprintf ppf "Int (%i, %a)" l Z.pp_print i
-    | String (l , s) -> fprintf ppf "String (%i, %s)" l s
-    | Bytes (l, b) -> fprintf ppf "B (%i, %s)" l (Bytes.to_string b)
-    | Prim (l , p , nl, a) -> fprintf ppf "P (%i, %s, %a, %a)" l
-        (Memory_proto_alpha.Protocol.Michelson_v1_primitives.string_of_prim p)
-        (list_sep_d prim) nl
-        (list_sep_d (fun ppf s -> fprintf ppf "%s" s)) a
-    | Seq (l, nl) -> fprintf ppf "S (%i, %a)" l
-        (list_sep_d prim) nl
-  in
-  let l ppf (l: Memory_proto_alpha.Protocol.Alpha_context.Script.lazy_expr) =
-    let oo = Data_encoding.force_decode l in
-    match oo with
-      Some o -> fprintf ppf "%a" prim (Tezos_micheline.Micheline.root o)
-    | None  -> fprintf ppf "Fail decoding"
-  in
-
-  let op ppf (type a) : a Memory_proto_alpha.Protocol.Alpha_context.manager_operation -> unit = function
-    | Reveal (s: Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key.t) ->
-      fprintf ppf "R %a" Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key.pp s
-    | Transaction {amount; parameters; entrypoint; destination} ->
-      fprintf ppf "T {%a; %a; %s; %a}"
-        Memory_proto_alpha.Protocol.Alpha_context.Tez.pp amount
-        l parameters
-        entrypoint
-        Memory_proto_alpha.Protocol.Alpha_context.Contract.pp destination
-
-    | Origination {delegate; script; credit; preorigination} ->
-      fprintf ppf "O {%a; %a; %a; %a}"
-        (print_option Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key_hash.pp) delegate
-        l script.code
-        Memory_proto_alpha.Protocol.Alpha_context.Tez.pp credit
-        (print_option Memory_proto_alpha.Protocol.Alpha_context.Contract.pp) preorigination
-
-    | Delegation so ->
-      fprintf ppf "D %a" (print_option Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key_hash.pp) so
-  in
-  let Internal_operation {source;operation;nonce} = o in
-  fprintf ppf "{source: %s; operation: %a; nonce: %i"
-    (Memory_proto_alpha.Protocol.Alpha_context.Contract.to_b58check source)
-    op operation
-    nonce
-
-*)
-
 let operation ppf (o: bytes) : unit =
   fprintf ppf "%s" @@ Bytes.to_string o
 
@@ -147,10 +93,12 @@ let constant' ppf : constant' -> unit = function
   | C_MAP_MEM               -> fprintf ppf "MAP_MEM"
   | C_MAP_FIND              -> fprintf ppf "MAP_FIND"
   | C_MAP_FIND_OPT          -> fprintf ppf "MAP_FIND_OP"
+  | C_MAP_GET_AND_UPDATE -> fprintf ppf "MAP_GET_AND_UPDATE"
   (* Big Maps *)
   | C_BIG_MAP               -> fprintf ppf "BIG_MAP"
   | C_BIG_MAP_EMPTY         -> fprintf ppf "BIG_MAP_EMPTY"
   | C_BIG_MAP_LITERAL       -> fprintf ppf "BIG_MAP_LITERAL"
+  | C_BIG_MAP_GET_AND_UPDATE -> fprintf ppf "BIG_MAP_GET_AND_UPDATE"
   (* Crypto *)
   | C_SHA256                -> fprintf ppf "SHA256"
   | C_SHA512                -> fprintf ppf "SHA512"
@@ -190,7 +138,18 @@ let constant' ppf : constant' -> unit = function
   | C_TEST_GET_BALANCE -> fprintf ppf "TEST_GET_BALANCE"
   | C_TEST_ASSERT_FAILURE -> fprintf ppf "TEST_ASSERT_FAILURE"
   | C_TEST_LOG -> fprintf ppf "TEST_LOG"
-
+  | C_SHA3 -> fprintf ppf "SHA3"
+  | C_KECCAK -> fprintf ppf "KECCAK"
+  | C_LEVEL -> fprintf ppf "LEVEL"
+  | C_VOTING_POWER -> fprintf ppf "VOTING_POWER"
+  | C_TOTAL_VOTING_POWER -> fprintf ppf "TOTAL_VOTING_POWER"
+  | C_TICKET -> fprintf ppf "TICKET"
+  | C_READ_TICKET -> fprintf ppf "READ_TICKET"
+  | C_SPLIT_TICKET -> fprintf ppf "SPLIT_TICKET"
+  | C_JOIN_TICKET -> fprintf ppf "JOIN_TICKET"
+  | C_PAIRING_CHECK -> fprintf ppf "PAIRING_CHECK"
+  | C_SAPLING_EMPTY_STATE -> fprintf ppf "SAPLING_EMPTY_STATE"
+  | C_SAPLING_VERIFY_UPDATE -> fprintf ppf "SAPLING_VERIFY_UPDATE"
 
 let literal ppf (l : literal) =
   match l with

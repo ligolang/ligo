@@ -49,6 +49,7 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, des
       | O.T_module_accessor ma ->
         let%bind ma = module_access self ma in
         return @@ T_module_accessor ma
+      | O.T_singleton x -> return @@ I.T_singleton x
 
 let rec decompile_expression : O.expression -> (I.expression, desugaring_error) result =
   fun e ->
@@ -152,6 +153,14 @@ and decompile_matching : O.matching_expr -> (I.matching_expr, desugaring_error) 
       ) lst
       in
       ok @@ I.Match_variant lst
+    | O.Match_record { fields; body } ->
+      let aux : O.label * O.ty_expr O.binder -> I.label * I.ty_expr I.binder =
+        fun (l,binder) ->
+          (l , {binder with ascr = None})
+      in
+      let lst = List.map aux (O.LMap.to_kv_list fields) in
+      let%bind body = decompile_expression body in
+      ok @@ I.Match_record (lst,body)
 
 let decompile_declaration : O.declaration Location.wrap -> _ result = fun {wrap_content=declaration;location} ->
   let return decl = ok @@ Location.wrap ~loc:location decl in

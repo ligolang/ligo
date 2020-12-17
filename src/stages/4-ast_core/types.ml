@@ -41,6 +41,7 @@ and type_content =
   | T_arrow           of ty_expr arrow
   | T_app             of ty_expr type_app
   | T_module_accessor of ty_expr module_access
+  | T_singleton       of literal
 
 and rows = { fields : row_element label_map ; layout : layout option }
 
@@ -110,12 +111,17 @@ and match_variant = {
     proj : expression_variable ;
     body : expression ;
   }
+and match_record = {
+  fields : ty_expr binder label_map ;
+  body : expression ;
+}
 
 and match_variant_list = match_variant list
 and matching_expr =
   | Match_list of match_list
   | Match_option of match_option
   | Match_variant of match_variant_list
+  | Match_record of match_record
 
 and matching = {
     matchee: expression ;

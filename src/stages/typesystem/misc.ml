@@ -90,6 +90,7 @@ module Substitution = struct
         | T.T_module_accessor { module_name; element } ->
           let%bind element = s_type_expression ~substs element in
           ok @@ T.T_module_accessor { module_name; element }
+        | T.T_singleton x -> ok @@ T.T_singleton x
 
 
     and s_abstr_type_content : (Ast_core.type_content,_) w = fun ~substs -> function
@@ -98,6 +99,7 @@ module Substitution = struct
       | Ast_core.T_arrow _ -> failwith "TODO: subst: unimplemented case s_type_expression arrow"
       | Ast_core.T_variable _ -> failwith "TODO: subst: unimplemented case s_type_expression variable"
       | Ast_core.T_module_accessor _ -> failwith "TODO: subst: unimplemented case s_type_expression module_accessor"
+      | Ast_core.T_singleton      _  -> failwith "TODO: singleton (used with EDO michelson type 'sapling_transaction' and 'sapling_state')"
       | Ast_core.T_app {type_operator;arguments} ->
         let%bind arguments = bind_map_list
           (s_abstr_type_expression ~substs)
