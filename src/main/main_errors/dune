@@ -20,7 +20,7 @@
     self_mini_c
     stacking
     self_michelson
-    tezos-client-ligo006-PsCARTHA
+    tezos-client-006-PsCARTHA
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)

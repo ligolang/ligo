@@ -12,6 +12,10 @@ type 'a result_monad = ('a,Errors.interpreter_error) result
 
 let ( let>>= ) o f = Trace.bind f o
 
+let wrap_compare compare a b =
+  let res = compare a b in
+  if (res = 0) then 0 else if (res > 0) then 1 else -1
+
 module Command = struct
   type 'a t =
     | Fail_contract_not_found : Location.t -> _ t
@@ -213,9 +217,9 @@ module Command = struct
       ok (ctr, {ctxt with step_constants})
     | Parse_contract_for_script _ -> failwith "Parse_contract_for_script not implemented"
     | Tez_compare_wrapped (x, y) ->
-      ok (Memory_proto_alpha.Protocol.Script_ir_translator.wrap_compare LT.Tez.compare x y, ctxt)
+      ok (wrap_compare LT.Tez.compare x y, ctxt)
     | Int_compare_wrapped (x, y) ->
-      ok (Memory_proto_alpha.Protocol.Script_ir_translator.wrap_compare Int_repr.compare x y, ctxt)
+      ok (wrap_compare Int_repr.compare x y, ctxt)
     | Int_compare (x, y) -> ok (Int_repr.compare x y, ctxt)
     | Int_abs z -> ok (Int_repr.abs z, ctxt)
     | Int_of_int i -> ok (Int_repr.of_int i, ctxt)

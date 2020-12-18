@@ -155,7 +155,7 @@ let ty_eq (type a b)
 (* should not need lwt *)
 let prims_of_strings michelson =
   let (michelson, errs) =
-    Tezos_client_ligo006_PsCARTHA.Michelson_v1_macros.expand_rec michelson in
+    Tezos_client_006_PsCARTHA.Michelson_v1_macros.expand_rec michelson in
   match errs with
   | _ :: _ ->
     Lwt.return (Error errs)
@@ -168,7 +168,7 @@ let prims_of_strings michelson =
 
 let parse_michelson (type aft)
     ?(tezos_context = dummy_environment.tezos_context)
-    ?(top_level = Lambda) michelson
+    ~top_level michelson
     ?type_logger
     (bef:'a Script_typed_ir.stack_ty) (aft:aft Script_typed_ir.stack_ty)
   =
@@ -189,7 +189,7 @@ let parse_michelson (type aft)
 
 let parse_michelson_fail (type aft)
     ?(tezos_context = dummy_environment.tezos_context)
-    ?(top_level = Lambda) michelson
+    ~top_level michelson
     ?type_logger
     (bef:'a Script_typed_ir.stack_ty) (aft:aft Script_typed_ir.stack_ty)
   =
@@ -251,17 +251,93 @@ type options = {
   now : Alpha_context.Script_timestamp.t;
 }
 
+let t_unit = Tezos_micheline.Micheline.(strip_locations (Prim (0, Michelson_v1_primitives.T_unit, [], [])))
+let default_self =
+  force_ok_alpha ~msg:"bad default self"
+    (Alpha_context.Contract.of_b58check "KT1DUMMYDUMMYDUMMYDUMMYDUMMYDUMu2oHG")
+
+(* fake bake a block in order to set the predecessor timestamp *)
+let fake_bake tezos_context chain_id now =
+  let tezos_context = (Alpha_context.finalize tezos_context).context in
+  let ((_, header, hash), _, _) =
+    force_lwt ~msg:("bad init"^__LOC__)
+      (Init_proto_alpha.Context_init.init 1) in
+  let contents = Init_proto_alpha.Context_init.contents ~priority:0 () in
+  let protocol_data =
+    let open! Alpha_context.Block_header in {
+      contents ;
+      signature = Tezos_crypto.Signature.zero ;
+  } in
+  let tezos_context =
+    force_lwt ~msg:("bad block "^__LOC__)
+      ((Protocol.Main.begin_construction
+        ~chain_id
+        ~predecessor_context:tezos_context
+        ~predecessor_timestamp:((match Alpha_context.Timestamp.of_seconds (Z.to_string (Alpha_context.Script_timestamp.to_zint now)) with
+                    | Some t -> t
+                    | _ -> Stdlib.failwith "bad timestamp"))
+        ~predecessor_fitness:header.fitness
+        ~predecessor_level:header.level
+        ~predecessor:hash
+        ~timestamp:(match Alpha_context.Timestamp.of_seconds (Z.to_string (Z.add Z.one (Alpha_context.Script_timestamp.to_zint now))) with
+                    | Some t -> t
+                    | _ -> Stdlib.failwith "bad timestamp")
+        ~protocol_data
+        ())
+      >>= fun x -> Lwt.return @@ Alpha_environment.wrap_error x >>=? fun state ->
+                      return state.ctxt) in
+  tezos_context
+
 let make_options
     ?(tezos_context = dummy_environment.tezos_context)
     ?(now = Alpha_context.Script_timestamp.now dummy_environment.tezos_context)
     ?(sender = (List.nth dummy_environment.identities 0).implicit_contract)
-    ?(self = (List.nth dummy_environment.identities 0).implicit_contract)
+    ?(self = default_self)
+    ?(parameter_ty = t_unit)
     ?(source = (List.nth dummy_environment.identities 1).implicit_contract)
     ?(amount = Alpha_context.Tez.one)
     ?(balance = Alpha_context.Tez.zero)
     ?(chain_id = Environment.Chain_id.zero)
     ()
   =
+  let open Alpha_context in
+  let open Michelson_v1_primitives in
+  let open Tezos_micheline in
+  let open Micheline in
+  let dummy_script =
+    let parameter_ty = root parameter_ty in
+    Script.lazy_expr @@ strip_locations
+    @@ Seq
+         ( 0,
+           [ Prim (0, K_parameter, [parameter_ty], []);
+             Prim (0, K_storage, [Prim (0, T_unit, [], [])], []);
+             Prim
+               ( 0,
+                 K_code,
+                 [ Seq
+                     ( 0,
+                       [ Prim (0, I_CDR, [], []);
+                         Prim (0, I_NIL, [Prim (0, T_operation, [], [])], []);
+                         Prim (0, I_PAIR, [], []) ] ) ],
+                 [] ) ] )
+  in
+  let dummy_storage =
+    Micheline.strip_locations
+    @@ Micheline.Prim (0, Michelson_v1_primitives.D_Unit, [], [])
+  in
+  let lazy_dummy_storage = Script.lazy_expr dummy_storage in
+  let script = Script.{code = dummy_script; storage = lazy_dummy_storage} in
+  let tezos_context =
+    force_lwt_alpha ~msg:("bad options "^__LOC__)
+      (Alpha_context.Contract.originate
+        tezos_context
+        self
+        ~balance
+        ~delegate:None
+        ~script:(script, None)) in
+  (* fake bake to set the predecessor timestamp *)
+  let time_between_blocks = 1 in
+  let tezos_context = fake_bake tezos_context chain_id (Script_timestamp.sub_delta now (Script_int_repr.of_int time_between_blocks)) in
   {
     tezos_context ;
     source = sender ;
@@ -270,7 +346,7 @@ let make_options
     amount ;
     chain_id ;
     balance ;
-    now ;
+    now = Script_timestamp.now tezos_context ;
   }
 
 let default_options = make_options ()
@@ -283,10 +359,10 @@ let interpret ?(options = default_options) (instr:('a, 'b) descr) (bef:'a stack)
     payer ;
     amount ;
     chain_id ;
-    balance ;
-    now ;
+    balance = _ ;
+    now = _ ;
   } = options in
-  let step_constants = { source ; self ; payer ; amount ; chain_id ; balance ; now } in
+  let step_constants = { source ; self ; payer ; amount ; chain_id } in
   Script_interpreter.step tezos_context step_constants instr bef >>=??
   fun (stack, _) -> return stack
 
@@ -326,10 +402,10 @@ let failure_interpret
     payer ;
     amount ;
     chain_id ;
-    balance ;
-    now ;
+    balance = _ ;
+    now = _ ;
   } = options in
-  let step_constants = { source ; self ; payer ; amount ; chain_id ; balance ; now } in
+  let step_constants = { source ; self ; payer ; amount ; chain_id } in
   Script_interpreter.step tezos_context step_constants instr bef >>= fun x ->
   match x with
   | Ok (s , _ctxt) -> return @@ Succeed s
