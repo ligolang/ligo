@@ -301,7 +301,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
   | E_let_in {let_binder; rhs; let_result; inline} ->
     let%bind rhs' = compile_expression rhs in
     let%bind result' = compile_expression let_result in
-    return (E_let_in ((Location.map Var.todo_cast let_binder, rhs'.type_expression), inline, rhs', result'))
+    return (E_let_in (rhs', inline, ((Location.map Var.todo_cast let_binder, rhs'.type_expression), result')))
   | E_type_in {type_binder=_; rhs=_; let_result} ->
     let%bind result' = compile_expression let_result in
     ok result'
@@ -410,12 +410,10 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
                                    arguments = [ car record;
                                                  build_record_update (cdr record) path ] } } in
       return
-        (E_let_in ((Location.wrap record_var, record.type_expression),
-                   false,
-                   record,
+        (E_let_in (record, false, ((Location.wrap record_var, record.type_expression),
                    build_record_update
                      (e_var (Location.wrap record_var) record.type_expression)
-                     path))
+                     path)))
   | E_constant {cons_name=name; arguments=lst} -> (
       let iterator_generator iterator_name =
         let expression_to_iterator_body (f : AST.expression) =
@@ -479,10 +477,10 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
         } -> (
           let%bind nil = compile_expression match_nil in
           let%bind cons =
-            let%bind ty' = compile_type tv in
+            let%bind elt_ty = compile_type tv in
+            let list_ty = { type_content = T_list elt_ty ; location = Location.generated } in
             let%bind match_cons' = compile_expression body in
-            (* TODO BUG it doesn't make sense to use ty' in both places here *)
-            ok (((Location.map Var.todo_cast hd , ty') , (Location.map Var.todo_cast tl , ty')) , match_cons')
+            ok (((Location.map Var.todo_cast hd , elt_ty) , (Location.map Var.todo_cast tl , list_ty)) , match_cons')
           in
           return @@ E_if_cons (expr' , nil , cons)
         )
@@ -512,7 +510,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
                         (c = constructor_name) in
                       List.find_opt aux cases in
                     let%bind body' = compile_expression body in
-                    return @@ E_let_in ((Location.map Var.todo_cast pattern , tv) , false , top , body')
+                    return @@ E_let_in (top, false, ((Location.map Var.todo_cast pattern , tv) , body'))
                   )
                 | ((`Node (a , b)) , tv) ->
                   let%bind a' =
@@ -540,7 +538,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
           match tree.content with
           | Field l ->
             let var = fst (LMap.find l fields) in
-            return @@ E_let_in ((var, tree.type_), false, expr, body)
+            return @@ E_let_in (expr, false, ((var, tree.type_), body))
           | Pair (x, y) ->
             let x_var = Location.wrap (Var.fresh ()) in
             let y_var = Location.wrap (Var.fresh ()) in
@@ -649,9 +647,10 @@ and compile_recursive {fun_name; fun_type; lambda} =
         } -> (
           let%bind nil = replace_callback fun_name loop_type shadowed match_nil in
           let%bind cons =
-            let%bind ty' = compile_type tv in
+            let%bind elt_ty = compile_type tv in
+            let list_ty = { type_content = T_list elt_ty ; location = Location.generated } in
             let%bind match_cons' = replace_callback fun_name loop_type shadowed body in
-            ok (((Location.map Var.todo_cast hd , ty') , (Location.map Var.todo_cast tl , ty')) , match_cons')
+            ok (((Location.map Var.todo_cast hd , elt_ty) , (Location.map Var.todo_cast tl , list_ty)) , match_cons')
           in
           return @@ E_if_cons (expr , nil , cons)
         )
@@ -672,7 +671,7 @@ and compile_recursive {fun_name; fun_type; lambda} =
                       (c = constructor_name) in
                   List.find_opt aux cases in
                 let%bind body' = replace_callback fun_name loop_type shadowed body in
-                return @@ E_let_in ((Location.map Var.todo_cast pattern , tv) , false , top , body')
+                return @@ E_let_in (top, false, ((Location.map Var.todo_cast pattern , tv) , body'))
               )
             | ((`Node (a , b)) , tv) ->
                 let%bind a' =
@@ -699,7 +698,7 @@ and compile_recursive {fun_name; fun_type; lambda} =
           match tree.content with
           | Field l ->
             let var = fst (LMap.find l fields) in
-            return @@ E_let_in ((var, tree.type_), false, expr, body)
+            return @@ E_let_in (expr, false, ((var, tree.type_), body))
           | Pair (x, y) ->
             let x_var = Location.wrap (Var.fresh ()) in
             let y_var = Location.wrap (Var.fresh ()) in

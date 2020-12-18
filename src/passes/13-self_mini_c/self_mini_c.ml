@@ -126,7 +126,7 @@ let rec is_pure : expression -> bool = fun e ->
   | E_if_left (cond, (_, bt), (_, bf))
     -> List.for_all is_pure [ cond ; bt ; bf ]
 
-  | E_let_in (_, _, e1, e2)
+  | E_let_in (e1, _, (_, e2))
     -> List.for_all is_pure [ e1 ; e2 ]
   | E_let_pair (e1, (_, e2))
     -> List.for_all is_pure [ e1 ; e2 ]
@@ -181,7 +181,7 @@ let should_inline : expression_variable -> expression -> expression -> bool =
 let inline_let : bool ref -> expression -> expression =
   fun changed e ->
   match e.content with
-  | E_let_in ((x, _a), should_inline_here, e1, e2) ->
+  | E_let_in (e1, should_inline_here, ((x, _a), e2)) ->
     if is_pure e1 && (should_inline_here || should_inline x e1 e2)
     then
       let e2' = Subst.subst_expression ~body:e2 ~x:x ~expr:e1 in
@@ -213,7 +213,7 @@ let beta : bool ref -> expression -> expression =
   match e.content with
   | E_application ({ content = E_closure { binder = x ; body = e1 } ; type_expression = {type_content = T_function (xtv, tv);_ }}, e2) ->
     (changed := true ;
-     Expression.make (E_let_in ((x, xtv), false, e2, e1)) tv)
+     Expression.make (E_let_in (e2, false,((x, xtv), e1))) tv)
 
   (* also do CAR (PAIR x y) ↦ x, or CDR (PAIR x y) ↦ y, only if x and y are pure *)
   | E_constant {cons_name = C_CAR| C_CDR as const; arguments = [ { content = E_constant {cons_name = C_PAIR; arguments = [ e1 ; e2 ]} ; type_expression = _ } ]} ->
