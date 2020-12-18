@@ -166,15 +166,14 @@ let rec translate_expression (expr : I.expression) (env : I.environment) =
     let (inner, inner_us) = union us2 us3 in
     let (outer, outer_us) = union us1 inner_us in
     (E_if_left (meta, Cond (outer, e1, inner, e2, e3)), outer_us)
-  | E_let_in (binder, _inline, e1, e2) ->
-    let e2 = (binder, e2) in
+  | E_let_in (e1, _inline, e2) ->
     let (e1, us1) = translate_expression e1 env in
     let (e2, us2) = translate_binder e2 env in
     let (ss, us) = union us1 us2 in
     (E_let_in (meta, ss, e1, e2), us)
   | E_let_pair (e1, e2) ->
     let (e1, us1) = translate_expression e1 env in
-    let (e2, us2) = translate_binder2 e2 env in (* TODO is this backwards? *)
+    let (e2, us2) = translate_binder2 e2 env in
     let (ss, us) = union us1 us2 in
     (E_let_pair (meta, ss, e1, e2), us)
   | E_raw_michelson code ->
@@ -190,14 +189,13 @@ and translate_binder (binder, body) env =
   let (_, binder_type) = binder in
   (O.Binds ([List.hd usages], [translate_type binder_type], body), List.tl usages)
 
-(* TODO is this right? *)
 and translate_binder2 ((binder1, binder2), body) env =
   let env' = I.Environment.add binder1 (I.Environment.add binder2 env) in
   let (body, usages) = translate_expression body env' in
   let (_, binder1_type) = binder1 in
   let (_, binder2_type) = binder2 in
   (O.Binds ([List.hd usages; List.hd (List.tl usages)],
-            [translate_type binder2_type; translate_type binder1_type],
+            [translate_type binder1_type; translate_type binder2_type],
             body),
    List.tl (List.tl usages))
 

@@ -75,11 +75,11 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let v2 = replace_var v2 in
     let bt = replace bt in
     return @@ E_if_left (c, ((v1, tv1), bt), ((v2, tv2), bf))
-  | E_let_in ((v, tv), inline, e1, e2) ->
+  | E_let_in (e1, inline, ((v, tv), e2)) ->
     let v = replace_var v in
     let e1 = replace e1 in
     let e2 = replace e2 in
-    return @@ E_let_in ((v, tv), inline, e1, e2)
+    return @@ E_let_in (e1, inline, ((v, tv), e2))
   | E_let_pair (expr, (((v1, tv1), (v2, tv2)), body)) ->
     let expr = replace expr in
     let v1 = replace_var v1 in
@@ -127,10 +127,10 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
     let (binder, body) = subst_binder binder body in
     return @@ E_closure { binder ; body }
   )
-  | E_let_in ((v , tv) , inline, expr , body) -> (
+  | E_let_in (expr, inline, ((v , tv), body)) -> (
     let expr = self expr in
     let (v, body) = subst_binder v body in
-    return @@ E_let_in ((v , tv) , inline, expr , body)
+    return @@ E_let_in (expr, inline, ((v , tv) , body))
   )
   | E_let_pair (expr, (((v1, tv1), (v2, tv2)), body)) -> (
     let expr = self expr in
@@ -259,7 +259,7 @@ let%expect_test _ =
   (* let-in shadowed (not in rhs) *)
   Var.reset_counter () ;
   show_subst
-    ~body:(wrap (E_let_in ((x, dummy_type), false, var x, var x)))
+    ~body:(wrap (E_let_in (var x, false,((x, dummy_type), var x))))
     ~x:x
     ~expr:unit ;
   [%expect{|
@@ -270,7 +270,7 @@ let%expect_test _ =
   (* let-in not shadowed *)
   Var.reset_counter () ;
   show_subst
-    ~body:(wrap (E_let_in ((y, dummy_type), false, var x, var x)))
+    ~body:(wrap (E_let_in (var x, false, ((y, dummy_type), var x))))
     ~x:x
     ~expr:unit ;
   [%expect{|
@@ -281,8 +281,8 @@ let%expect_test _ =
   (* let-in capture avoidance *)
   Var.reset_counter () ;
   show_subst
-    ~body:(wrap (E_let_in ((y, dummy_type), false, var x,
-                           app (var x) (var y))))
+    ~body:(wrap (E_let_in (var x, false, ((y, dummy_type),
+                           app (var x) (var y)))))
     ~x:x
     ~expr:(var y) ;
   [%expect{|
