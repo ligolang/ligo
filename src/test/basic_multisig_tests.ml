@@ -49,11 +49,13 @@ let (first_owner , first_contract) =
 
 let op_list = 
   let open Memory_proto_alpha.Protocol.Alpha_context in
-  let source : Contract.t = first_contract in
+  let open Proto_alpha_utils in
+  let%bind source =
+    Trace.trace_alpha_tzresult (fun _ -> Main_errors.test_internal __LOC__) @@
+    (Contract.of_b58check "KT1DUMMYDUMMYDUMMYDUMMYDUMMYDUMu2oHG") in
   let%bind operation = 
     let parameters : Script.lazy_expr = Script.unit_parameter in
     let entrypoint = "default" in
-    let open Proto_alpha_utils in
     let%bind destination = 
       Trace.trace_alpha_tzresult (fun _ -> Main_errors.test_internal __LOC__) @@
        Contract.of_b58check "tz1PpDGHRXFQq3sYDuH8EpLWzPm5PFpe1sLE" 

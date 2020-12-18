@@ -2,7 +2,7 @@ open Format
 open Types
 
 let operation ppf (o: bytes) : unit =
-  fprintf ppf "%s" @@ Bytes.to_string o
+  fprintf ppf "%a" Hex.pp (Hex.of_bytes o)
 
 let constant' ppf : constant' -> unit = function
   | C_INT                   -> fprintf ppf "INT"
