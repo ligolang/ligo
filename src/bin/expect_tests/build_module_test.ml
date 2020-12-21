@@ -14,7 +14,19 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print-graph" ; contract "cycle_A.mligo"; "--display-format=json" ] ;
   [%expect {|
-    {"root":"../../test/contracts/build/cycle_A.mligo","child":{"file":"../../test/contracts/build/cycle_B.mligo","child":{"file":"../../test/contracts/build/cycle_C.mligo","child":{"file":"../../test/contracts/build/cycle_A.mligo","child":{"file":"../../test/contracts/build/cycle_B.mligo"}}}}} |}]
+    {
+      "root": "../../test/contracts/build/cycle_A.mligo",
+      "child": {
+        "file": "../../test/contracts/build/cycle_B.mligo",
+        "child": {
+          "file": "../../test/contracts/build/cycle_C.mligo",
+          "child": {
+            "file": "../../test/contracts/build/cycle_A.mligo",
+            "child": { "file": "../../test/contracts/build/cycle_B.mligo" }
+          }
+        }
+      }
+    } |}]
 
 let%expect_test _ =
   run_ligo_good [ "print-graph" ; contract "D.mligo" ] ;
@@ -31,7 +43,22 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print-graph" ; contract "D.mligo"; "--display-format=json" ] ;
   [%expect {|
-    {"root":"../../test/contracts/build/D.mligo","child":{"file":"../../test/contracts/build/C.mligo","child":{"file":"../../test/contracts/build/A.mligo"},"child":{"file":"../../test/contracts/build/B.mligo","child":{"file":"../../test/contracts/build/A.mligo"}}},"child":{"file":"../../test/contracts/build/E.mligo","child":{"file":"../../test/contracts/build/F.mligo"},"child":{"file":"../../test/contracts/build/G.mligo"}}} |}]
+    {
+      "root": "../../test/contracts/build/D.mligo",
+      "child": {
+        "file": "../../test/contracts/build/C.mligo",
+        "child": { "file": "../../test/contracts/build/A.mligo" },
+        "child": {
+          "file": "../../test/contracts/build/B.mligo",
+          "child": { "file": "../../test/contracts/build/A.mligo" }
+        }
+      },
+      "child": {
+        "file": "../../test/contracts/build/E.mligo",
+        "child": { "file": "../../test/contracts/build/F.mligo" },
+        "child": { "file": "../../test/contracts/build/G.mligo" }
+      }
+    } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "B.mligo" ; "f" ] ;

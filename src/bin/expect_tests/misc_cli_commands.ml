@@ -35,7 +35,12 @@ let%expect_test _ =
 
   run_ligo_good [ "list-declarations" ; "../../test/contracts/loop.mligo" ; "--format=json" ] ;
   [%expect {|
-    {"source_file":"../../test/contracts/loop.mligo","declarations":["counter_nest","aux_nest","counter","counter_simple","aux_simple"]} |} ];
+    {
+      "source_file": "../../test/contracts/loop.mligo",
+      "declarations": [
+        "counter_nest", "aux_nest", "counter", "counter_simple", "aux_simple"
+      ]
+    } |} ];
 
 
   run_ligo_good [ "list-declarations" ; "../../test/contracts/loop.mligo" ] ;

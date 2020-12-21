@@ -12,7 +12,7 @@ let%expect_test _ =
 
   run_ligo_good [ "run-function" ; contract "failwith.ligo" ; "failer" ; "1" ; "--format=json" ] ;
   [%expect {|
-    {"value":null,"failure":"failwith(42)"} |}];
+    { "value": null, "failure": "failwith(42)" } |}];
 
 
   run_ligo_good [ "dry-run" ; contract "subtle_nontail_fail.mligo" ; "main" ; "()" ; "()" ] ;

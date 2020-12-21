@@ -18,7 +18,7 @@ let toplevel : ?output_file:string option -> display_format:ex_display_format ->
       match t with
       | Human_readable -> convert ~display_format:t disp ;
       | Dev -> convert ~display_format:t disp ;
-      | Json -> Yojson.Safe.to_string @@ convert ~display_format:t disp
+      | Json -> Yojson.Safe.pretty_to_string @@ convert ~display_format:t disp
     in
     match Trace.to_stdlib_result value with
     | Ok _ ->
