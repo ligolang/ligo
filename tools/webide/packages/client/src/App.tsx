@@ -92,7 +92,7 @@ const App: React.FC = () => {
           <FloatButtonComponent
             tooltip="Report an issue"
             text="!"
-            href="https://gitlab.com/ligolang/ligo/issues"
+            href="https://gitlab.com/ligolang/ligo/-/issues/new?issue%5Bassignee_id%5D=&issue%5Bmilestone_id%5D="
           ></FloatButtonComponent>
           <FloatButtonComponent
             tooltip="Ask a question"
