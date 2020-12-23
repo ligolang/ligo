@@ -91,6 +91,7 @@ let md_files = [
   "/gitlab-pages/docs/intro/ligo-intro.md";
   "/gitlab-pages/docs/language-basics/math-numbers-tez.md";
   "/gitlab-pages/docs/language-basics/functions.md";
+  "/gitlab-pages/docs/language-basics/exceptions.md";
   "/gitlab-pages/docs/language-basics/boolean-if-else.md";
   "/gitlab-pages/docs/language-basics/types.md";
   "/gitlab-pages/docs/language-basics/strings.md";

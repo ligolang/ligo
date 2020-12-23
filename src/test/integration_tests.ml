@@ -2567,7 +2567,9 @@ let main = test_suite "Integration (End to End)"
     test no "list matching (religo)" religo_list ;
     test no "failwith ligo" failwith_ligo ;
     test no "failwith mligo" failwith_mligo ;
+    test no "failwith religo" failwith_religo ;
     test no "assert mligo" assert_mligo ;
+    test no "assert religo" assert_religo ;
     test no "recursion (ligo)" recursion_ligo ;
     test no "recursion (mligo)" recursion_mligo ;
     test no "recursion (religo)" recursion_religo ;
