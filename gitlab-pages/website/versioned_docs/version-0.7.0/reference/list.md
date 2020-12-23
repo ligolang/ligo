@@ -35,6 +35,30 @@ Get the number of elements in a list.
 Synonym for `List.length`.
 
 <SyntaxTitle syntax="pascaligo">
+function head_opt : list('a) -> option('a)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val head_opt : 'a list -> 'a option
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let head_opt : list('a) => option('a)
+</SyntaxTitle>
+
+Get the head of a list
+
+<SyntaxTitle syntax="pascaligo">
+function tail_opt : list('a) -> option(list('a))
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val tail_opt : 'a list -> 'a list option
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let tail_opt : list('a) => option(list('a))
+</SyntaxTitle>
+
+Get the tail of a list
+
+<SyntaxTitle syntax="pascaligo">
 function iter : ('a -> unit) -> list('a) -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">

@@ -6,9 +6,9 @@ title: Installation
 There are currently three ways to get started with LIGO. You can choose to use a Docker image, a static Linux binary or to install packages for your Debian Linux distribution.
 
 ## Dockerized installation (recommended)
-If you've [installed 🐳 Docker](https://docs.docker.com/install/), you can run the latest [LIGO release 0.6.0](./changelog.md):
+If you've [installed 🐳 Docker](https://docs.docker.com/install/), you can run the latest [LIGO release 0.7.0](./changelog.md):
 
-> `docker run ligolang/ligo:0.6.0`
+> `docker run ligolang/ligo:0.7.0`
 
 Or if you want the development version:
 
