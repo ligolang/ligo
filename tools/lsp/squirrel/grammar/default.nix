@@ -1,9 +1,10 @@
-{ stdenv, tree-sitter, nodejs }:
-stdenv.mkDerivation {
+{ pkgs ? import <nixpkgs> {} }:
+
+pkgs.stdenv.mkDerivation {
   name = "ligo-grammars";
   src = ./.;
 
-  nativeBuildInputs = [ tree-sitter nodejs ];
+  nativeBuildInputs = with pkgs; [ tree-sitter nodejs ];
 
   HOME = "/tmp";
 

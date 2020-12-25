@@ -65,7 +65,7 @@
 
         pkgs = import haskell-nix.sources.nixpkgs nixpkgsArgs;
 
-        grammars = pkgs.callPackage ./squirrel/grammar { };
+        grammars = import ./squirrel/grammar { inherit pkgs; };
 
         squirrel = pkgs.callPackage ./squirrel { };
 
