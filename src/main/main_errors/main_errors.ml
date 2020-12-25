@@ -2,10 +2,19 @@ module Formatter = Formatter
 module Types = Types
 type all = Types.all
 
+(* build system *)
+let build_error_tracer (e:all) : all = `Build_error_tracer e
+let build_dependency_cycle (s:string) : all = `Build_dependency_cycle s
+let build_corner_case (loc:string) (msg:string)  = `Build_corner_case (loc,msg)
+
 (* passes tracers *)
 
-let parser_tracer (e:Parser.Errors.parser_error) : all = `Main_parser e
-let pretty_tracer (e:Parser.Errors.parser_error) : all = `Main_pretty e
+let preproc_tracer (e:Preproc.Errors.preproc_error) : all = `Main_preproc e
+let parser_tracer (e:Parser.Errors.parse_error) : all = `Main_parser e
+let pretty_tracer (e:Parser.Errors.parse_error) : all = `Main_pretty e
+let self_cst_cameligo_tracer (e:Self_cst.Cameligo.Errors.self_cst_cameligo_error) : all = `Main_self_cst_cameligo e
+let self_cst_pascaligo_tracer (e:Self_cst.Pascaligo.Errors.self_cst_pascaligo_error) : all = `Main_self_cst_pascaligo e
+let self_cst_reasonligo_tracer (e:Self_cst.Reasonligo.Errors.self_cst_reasonligo_error) : all = `Main_self_cst_reasonligo e
 let cit_cameligo_tracer (e:Tree_abstraction.Cameligo.Errors.abs_error) : all = `Main_cit_cameligo e
 let cit_pascaligo_tracer (e:Tree_abstraction.Pascaligo.Errors.abs_error) : all = `Main_cit_pascaligo e
 let cit_reasonligo_tracer (e:Tree_abstraction.Reasonligo.Errors.abs_error) : all = `Main_cit_reasonligo e
@@ -29,6 +38,8 @@ let decompile_michelson : Stacking.Errors.stacking_error -> all = fun e -> `Main
 
 let syntax_auto_detection extension : all = `Main_invalid_extension extension
 let invalid_syntax syntax : all = `Main_invalid_syntax_name syntax
+let invalid_protocol_version possible actual = `Main_invalid_protocol_version (possible,actual)
+let invalid_typer_switch s = `Main_invalid_typer_switch s
 
 let entrypoint_not_a_function : all = `Main_entrypoint_not_a_function
 let entrypoint_not_found : all = `Main_entrypoint_not_found
@@ -37,13 +48,16 @@ let entrypoint_not_found : all = `Main_entrypoint_not_found
 
 let arguments_check_tracer ps err : all = `Main_check_typed_arguments (ps, err)
 let unparse_tracer errs : all = `Main_unparse_tracer errs
-let typecheck_contract_tracer c errs : all = `Main_typecheck_contract_tracer (c,errs)
+let typecheck_contract_tracer c errs : all =
+  let open Tezos_micheline.Micheline in
+  let c = root (strip_locations c) in
+  `Main_typecheck_contract_tracer (c,errs)
 let could_not_serialize errs : all = `Main_could_not_serialize errs
 
 let unknown : all = `Main_unknown
 
 let unknown_failwith_type : all = `Main_unknown_failwith_type
-let failwith fw : all = `Main_execution_failed fw
+let main_failwith fw : all = `Main_execution_failed fw
 
 let unparsing_michelson_tracer err : all = `Main_unparse_michelson_result err
 let parsing_payload_tracer err : all = `Main_parse_payload err
@@ -67,7 +81,8 @@ let test_expect_n_tracer i err : all = `Test_expect_n_tracer (i,err)
 let test_expect_exp_tracer e err : all = `Test_expect_exp_tracer (e,err)
 let test_expect_eq_n_tracer i err : all = `Test_expect_eq_n_tracer (i,err)
 let test_internal loc : all = `Test_internal loc
-let test_md_file_tracer md_file s group prg err : all = `Test_md_file_tracer (md_file,s,group,prg,err) 
+let test_internal_msg loc msg : all = `Test_internal_msg (loc, msg)
+let test_md_file_tracer md_file s group prg err : all = `Test_md_file_tracer (md_file,s,group,prg,err)
 let test_code_block_arg arg : all = `Test_bad_code_block arg
 let test_expected_to_fail : all = `Test_expected_to_fail
 let test_not_expected_to_fail : all = `Test_not_expected_to_fail

@@ -1,0 +1,15 @@
+(library
+  (name parser)
+  (public_name ligo.parser)
+  (libraries
+     Shared_parser
+     
+     ;; Vendors
+     simple-utils
+     tezos-utils
+     ;; LIGO
+     parser_pascaligo
+     parser_cameligo
+     parser_reasonligo)
+  (preprocess
+    (pps ppx_let bisect_ppx --conditional)))

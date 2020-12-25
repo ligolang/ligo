@@ -1,12 +1,11 @@
 open Display
 
-let program_ppformat ~display_format f (p,_) =
+let program_ppformat ~display_format f p =
   match display_format with
   | Human_readable | Dev -> PP.program f p
 
-let program_jsonformat (p,_) : json =
-  let s = Format.asprintf "%a" PP.program p in
-  `Assoc [("Core(temp)" , `String s)]
+let program_jsonformat p : json =
+  To_yojson.program p
 
 let program_format : 'a format = {
   pp = program_ppformat;

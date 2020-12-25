@@ -7,6 +7,9 @@ type t =
   Standard of string
 | Verbatim of string
 
+val standard : string -> t
+val verbatim : string -> t
+
 val compare : ?compare:(string->string->int) -> t -> t -> int
 val pp : Format.formatter -> t -> unit
 val extract : t -> string

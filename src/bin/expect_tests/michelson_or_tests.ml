@@ -5,6 +5,9 @@ let contract basename =
 let bad_contract basename =
   "../../test/contracts/negative/" ^ basename
 
+(* avoid pretty printing *)
+let () = Unix.putenv "TERM" "dumb"
+
 let%expect_test _ =
   run_ligo_good [ "dry-run" ; contract "double_michelson_or.mligo" ; "main" ; "unit" ; "(M_left (1) : storage)" ] ;
   [%expect {| ( LIST_EMPTY() , M_right("one") ) |}];
@@ -23,18 +26,13 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_michelson_or.mligo" ; "main" ] ;
   [%expect {|
-    ligo: error
-          in file "bad_michelson_or.mligo", line 6, characters 12-27
-          Incorrect usage of type "michelson_or".
-          The contructor "M_right" must be annotated with a variant type.
+    in file "../../test/contracts/negative/bad_michelson_or.mligo", line 6, characters 12-27
+      5 | let main (action, store : unit * storage) : return =
+      6 |   let foo = M_right ("one") in
+      7 |   (([] : operation list), (foo: storage))
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}]
+    Incorrect usage of type "michelson_or".
+    The contructor "M_right" must be annotated with a variant type. |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "michelson_or_tree_intermediary.ligo" ; "main" ] ;

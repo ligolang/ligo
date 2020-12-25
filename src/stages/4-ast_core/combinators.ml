@@ -2,6 +2,7 @@ open Types
 module Option = Simple_utils.Option
 
 module SMap = Map.String
+open Stage_common.Constant
 
 let make_t ?(loc = Location.generated) ?sugar type_content = ({type_content; sugar; location=loc}: type_expression)
 
@@ -10,48 +11,49 @@ let tuple_to_record lst =
   let (_, lst ) = List.fold_left aux (0,[]) lst in
   lst
 
-let type_constant ?loc ?sugar type_constant arguments  : type_expression = make_t ?loc ?sugar @@ T_constant {type_constant; arguments}
+let t_variable ?loc ?sugar variable : type_expression = make_t ?loc ?sugar @@ T_variable variable
+let t_app ?loc ?sugar type_operator arguments : type_expression = make_t ?loc ?sugar @@ T_app {type_operator ; arguments}
 
-let t_bool      ?loc ?sugar () : type_expression = make_t ?loc ?sugar @@ T_variable (Var.of_name "bool")
-let t_string    ?loc ?sugar () : type_expression = type_constant ?loc ?sugar TC_string []
-let t_bytes     ?loc ?sugar () : type_expression = type_constant ?loc ?sugar TC_bytes []
-let t_int       ?loc ?sugar () : type_expression = type_constant ?loc ?sugar TC_int []
-let t_operation ?loc ?sugar () : type_expression = type_constant ?loc ?sugar TC_operation []
-let t_nat       ?loc ?sugar () : type_expression = type_constant ?loc ?sugar TC_nat []
-let t_tez       ?loc ?sugar () : type_expression = type_constant ?loc ?sugar TC_mutez []
-let t_unit      ?loc ?sugar () : type_expression = type_constant ?loc ?sugar TC_unit []
-let t_address   ?loc ?sugar () : type_expression = type_constant ?loc ?sugar TC_address []
-let t_signature ?loc ?sugar () : type_expression = type_constant ?loc ?sugar TC_signature []
-let t_key       ?loc ?sugar () : type_expression = type_constant ?loc ?sugar TC_key []
-let t_key_hash  ?loc ?sugar () : type_expression = type_constant ?loc ?sugar TC_key_hash []
-let t_timestamp ?loc ?sugar () : type_expression = type_constant ?loc ?sugar TC_timestamp []
-let t_option    ?loc ?sugar o  : type_expression = type_constant ?loc ?sugar TC_option [o]
-let t_list      ?loc ?sugar t  : type_expression = type_constant ?loc ?sugar TC_list [t]
-let t_variable  ?loc ?sugar n  : type_expression = make_t ?loc ?sugar @@ T_variable (Var.of_name n)
-let t_record_ez ?loc ?sugar lst =
+
+let t_bool      ?loc ?sugar () : type_expression = t_variable ?loc ?sugar v_bool
+let t_string    ?loc ?sugar () : type_expression = t_variable ?loc ?sugar v_string
+let t_bytes     ?loc ?sugar () : type_expression = t_variable ?loc ?sugar v_bytes
+let t_int       ?loc ?sugar () : type_expression = t_variable ?loc ?sugar v_int
+let t_operation ?loc ?sugar () : type_expression = t_variable ?loc ?sugar v_operation
+let t_nat       ?loc ?sugar () : type_expression = t_variable ?loc ?sugar v_nat
+let t_tez       ?loc ?sugar () : type_expression = t_variable ?loc ?sugar v_tez
+let t_unit      ?loc ?sugar () : type_expression = t_variable ?loc ?sugar v_unit
+let t_address   ?loc ?sugar () : type_expression = t_variable ?loc ?sugar v_address
+let t_signature ?loc ?sugar () : type_expression = t_variable ?loc ?sugar v_signature
+let t_key       ?loc ?sugar () : type_expression = t_variable ?loc ?sugar v_key
+let t_key_hash  ?loc ?sugar () : type_expression = t_variable ?loc ?sugar v_key_hash
+let t_timestamp ?loc ?sugar () : type_expression = t_variable ?loc ?sugar v_timestamp
+let t_option    ?loc ?sugar o  : type_expression = t_app ?loc ?sugar v_option [o]
+let t_list      ?loc ?sugar t  : type_expression = t_app ?loc ?sugar v_list [t]
+let t_record_ez ?loc ?sugar ?layout lst =
   let lst = List.map (fun (k, v) -> (Label k, v)) lst in
   let m = LMap.of_list lst in
-  make_t ?loc ?sugar @@ T_record m
+  make_t ?loc ?sugar @@ T_record { layout ; fields = m }
 let t_record ?loc ?sugar m  : type_expression =
-  let lst = Map.String.to_kv_list m in
+  let lst = SMap.to_kv_list_rev m in
   t_record_ez ?loc ?sugar lst
 
 let t_pair  ?loc ?sugar (a , b) : type_expression = t_record_ez ?loc ?sugar [("0",a) ; ("1",b)]
 let t_tuple ?loc ?sugar lst     : type_expression = t_record_ez ?loc ?sugar (tuple_to_record lst)
 
-let ez_t_sum ?loc ?sugar (lst:(string * row_element) list) : type_expression =
-  let aux prev (k, v) = LMap.add (Label k) v prev in
-  let map = List.fold_left aux LMap.empty lst in
-  make_t ?loc ?sugar @@ T_sum map
+let ez_t_sum ?loc ?sugar ?layout (lst:(string * row_element) list) : type_expression =
+  let lst = List.map (fun (k, v) -> (Label k, v)) lst in
+  let m = LMap.of_list lst in
+  make_t ?loc ?sugar @@ T_sum { layout ; fields = m }
 let t_sum ?loc ?sugar m : type_expression =
-  let lst = Map.String.to_kv_list m in
+  let lst = SMap.to_kv_list_rev m in
   ez_t_sum ?loc ?sugar lst
 
 let t_function ?loc ?sugar type1 type2  : type_expression = make_t ?loc ?sugar @@ T_arrow {type1; type2}
-let t_map      ?loc ?sugar key value : type_expression = type_constant ?loc ?sugar TC_map [key ; value]
-let t_big_map  ?loc ?sugar key value : type_expression = type_constant ?loc ?sugar TC_big_map [key ; value]
-let t_set      ?loc ?sugar t         : type_expression = type_constant ?loc ?sugar TC_set [t]
-let t_contract ?loc ?sugar t         : type_expression = type_constant ?loc ?sugar TC_contract [t]
+let t_map      ?loc ?sugar key value : type_expression = t_app ?loc ?sugar (v_map) [key ; value]
+let t_big_map  ?loc ?sugar key value : type_expression = t_app ?loc ?sugar (v_big_map) [key ; value]
+let t_set      ?loc ?sugar t         : type_expression = t_app ?loc ?sugar (v_set) [t]
+let t_contract ?loc ?sugar t         : type_expression = t_app ?loc ?sugar (v_contract) [t]
 
 let make_e ?(loc = Location.generated) ?sugar content = {content; sugar; location=loc }
 
@@ -86,18 +88,19 @@ let e_map_add    ?loc ?sugar k v old  : expression = make_e ?loc ?sugar @@ E_con
 let e_constant    ?loc ?sugar name lst                             = make_e ?loc ?sugar @@ E_constant {cons_name=name ; arguments = lst}
 let e_variable    ?loc ?sugar v                                    = make_e ?loc ?sugar @@ E_variable v
 let e_application ?loc ?sugar a b                                  = make_e ?loc ?sugar @@ E_application {lamb=a ; args=b}
-let e_lambda      ?loc ?sugar binder result                        = make_e ?loc ?sugar @@ E_lambda {binder; result ;  }
+let e_lambda      ?loc ?sugar binder output_type result            = make_e ?loc ?sugar @@ E_lambda {binder; output_type; result ;  }
+let e_lambda_ez   ?loc ?sugar var ?ascr output_type result         = e_lambda ?loc ?sugar {var;ascr} output_type result
 let e_recursive   ?loc ?sugar fun_name fun_type lambda             = make_e ?loc ?sugar @@ E_recursive {fun_name; fun_type; lambda}
-let e_let_in      ?loc ?sugar let_binder inline rhs let_result     = make_e ?loc ?sugar @@
-  E_let_in { let_binder ; rhs ; let_result; inline }
+let e_let_in      ?loc ?sugar let_binder inline rhs let_result     = make_e ?loc ?sugar @@ E_let_in { let_binder ; rhs ; let_result; inline }
+let e_let_in_ez   ?loc ?sugar var ?ascr  inline rhs let_result     = e_let_in ?loc ?sugar {var;ascr} inline rhs let_result
 let e_raw_code    ?loc ?sugar language code                        = make_e ?loc ?sugar @@ E_raw_code {language; code}
 
 let e_constructor ?loc ?sugar s a : expression = make_e ?loc ?sugar @@ E_constructor { constructor = Label s; element = a}
 let e_matching    ?loc ?sugar a b : expression = make_e ?loc ?sugar @@ E_matching {matchee=a;cases=b}
 
 let e_record          ?loc ?sugar map = make_e ?loc ?sugar @@ E_record map
-let e_record_accessor ?loc ?sugar a b = make_e ?loc ?sugar @@ E_record_accessor {record = a; path = b}
-let e_record_update   ?loc ?sugar record path update = make_e ?loc ?sugar @@ E_record_update {record; path; update}
+let e_record_accessor ?loc ?sugar record path        = make_e ?loc ?sugar @@ E_record_accessor ({record; path} : _ record_accessor)
+let e_record_update   ?loc ?sugar record path update = make_e ?loc ?sugar @@ E_record_update ({record; path; update} : _ record_update)
 
 let e_annotation ?loc ?sugar anno_expr ty = make_e ?loc ?sugar @@ E_ascription {anno_expr; type_annotation = ty}
 
@@ -126,20 +129,20 @@ let assert_e_record_accessor = fun t ->
 
 let get_e_pair = fun t ->
   match t with
-  | E_record r -> ( 
-  let lst = LMap.to_kv_list r in
-    match lst with 
+  | E_record r -> (
+  let lst = LMap.to_kv_list_rev r in
+    match lst with
     | [(Label "O",a);(Label "1",b)]
-    | [(Label "1",b);(Label "0",a)] -> 
+    | [(Label "1",b);(Label "0",a)] ->
         Some (a , b)
     | _ -> None
     )
   | _ -> None
 
 let get_e_list = fun t ->
-  let rec aux t = 
+  let rec aux t =
     match t with
-      E_constant {cons_name=C_CONS;arguments=[key;lst]} -> 
+      E_constant {cons_name=C_CONS;arguments=[key;lst]} ->
         let lst = aux lst.content in
         (Some key)::(lst)
     | E_constant {cons_name=C_LIST_EMPTY;arguments=[]} ->
@@ -156,18 +159,18 @@ let get_e_tuple = fun t ->
   | _ -> None
 
 let get_e_ascription = fun a ->
-  match a with 
+  match a with
   | E_ascription {anno_expr; type_annotation} -> Some (anno_expr,type_annotation)
   | _ -> None
 
 (* Same as get_e_pair *)
 let extract_pair : expression -> (expression * expression) option = fun e ->
   match e.content with
-  | E_record r -> ( 
-  let lst = LMap.to_kv_list r in
-    match lst with 
+  | E_record r -> (
+  let lst = LMap.to_kv_list_rev r in
+    match lst with
     | [(Label "O",a);(Label "1",b)]
-    | [(Label "1",b);(Label "0",a)] -> 
+    | [(Label "1",b);(Label "0",a)] ->
       Some (a , b)
     | _ -> None
     )
@@ -181,9 +184,9 @@ let extract_record : expression -> (label * expression) list option = fun e ->
 let extract_map : expression -> (expression * expression) list option = fun e ->
   let rec aux e =
     match e.content with
-      E_constant {cons_name=C_UPDATE|C_MAP_ADD; arguments=[k;v;map]} -> 
+      E_constant {cons_name=C_UPDATE|C_MAP_ADD; arguments=[k;v;map]} ->
         let map = aux map in
-        (Some (k,v))::map 
+        (Some (k,v))::map
     | E_constant {cons_name=C_MAP_EMPTY|C_BIG_MAP_EMPTY; arguments=[]} -> []
     | _ -> [None]
   in

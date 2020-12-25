@@ -19,7 +19,7 @@ module Free_variables = struct
   let rec expression : bindings -> expression -> bindings = fun b e ->
     let self = expression b in
     match e.content with
-    | E_literal v -> value b v
+    | E_literal _ -> empty
     | E_closure f -> lambda b f
     | E_constant (c) -> unions @@ List.map self c.arguments
     | E_application (f, x) -> unions @@ [ self f ; self x ]
@@ -49,43 +49,20 @@ module Free_variables = struct
                expression (union (singleton l) b) bl ;
                expression (union (singleton r) b) br ;
              ]
-    | E_let_in ((v , _) , _, expr , body) ->
+    | E_let_in (expr, _ , ((v , _) , body) )->
       unions [ self expr ;
                expression (union (singleton v) b) body ;
              ]
-    | E_record_update (r, _,e) -> union (self r) (self e)
+    | E_let_pair (expr, (((x, _) , (y, _)) , body)) ->
+      unions [ self expr ;
+               expression (unions [ singleton x ; singleton y ; b ]) body
+             ]
     | E_raw_michelson _ -> empty
 
   and var_name : bindings -> var_name -> bindings = fun b n ->
     if mem n b
     then empty
     else singleton n
-
-  and value : bindings -> value -> bindings = fun b v ->
-    let self = value b in
-    match v with
-    | D_unit
-    | D_bool _
-    | D_nat _
-    | D_timestamp _
-    | D_mutez _
-    | D_int _
-    | D_string _
-    | D_bytes _
-    | D_none
-    | D_operation _
-      -> empty
-    | D_pair (x, y) -> unions [ self x ; self y ]
-    | D_left x
-    | D_right x
-    | D_some x
-      -> self x
-    | D_map kvs
-    | D_big_map kvs
-      -> unions @@ List.map (fun (k, v) -> unions [ self k ; self v ]) kvs
-    | D_list xs
-    | D_set xs
-      -> unions @@ List.map self xs
 
   and lambda : bindings -> anon_function -> bindings = fun b l ->
     let b = union (singleton l.binder) b in

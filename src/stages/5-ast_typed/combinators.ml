@@ -1,61 +1,71 @@
-open Types
+open Ast
+module S = Ast_core
+open Stage_common.Constant
 
-let make_t ?(loc = Location.generated) type_content core = {type_content; location=loc; type_meta = core}
+let make_t_orig_var ?(loc = Location.generated) type_content core orig_var = {type_content; location=loc; type_meta = core ; orig_var}
+let make_t ?(loc = Location.generated) type_content core = {type_content; location=loc; type_meta = core ; orig_var = None}
 let make_e ?(location = Location.generated) expression_content type_expression = {
   expression_content ;
   type_expression ;
   location ;
-}
-let make_n_t type_name type_value = { type_name ; type_value }
+  }
+let t_variable   ?loc ?core t  : type_expression = make_t ?loc (T_variable t) core
 
-let t_constant ?loc ?core type_constant arguments  : type_expression = make_t ?loc (T_constant {type_constant; arguments}) core
+let t_constant ?loc ?core injection parameters : type_expression =
+  make_t ?loc (T_constant {language=Stage_common.Backends.michelson; injection = Ligo_string.verbatim injection ; parameters}) core
 
-let t_signature ?loc ?core () : type_expression = t_constant ?loc ?core TC_signature []
-let t_chain_id  ?loc ?core () : type_expression = t_constant ?loc ?core TC_chain_id []
-let t_string    ?loc ?core () : type_expression = t_constant ?loc ?core TC_string []
-let t_bytes     ?loc ?core () : type_expression = t_constant ?loc ?core TC_bytes []
-let t_key       ?loc ?core () : type_expression = t_constant ?loc ?core TC_key []
-let t_key_hash  ?loc ?core () : type_expression = t_constant ?loc ?core TC_key_hash []
-let t_int       ?loc ?core () : type_expression = t_constant ?loc ?core TC_int []
-let t_address   ?loc ?core () : type_expression = t_constant ?loc ?core TC_address []
-let t_operation ?loc ?core () : type_expression = t_constant ?loc ?core TC_operation []
-let t_nat       ?loc ?core () : type_expression = t_constant ?loc ?core TC_nat []
-let t_mutez     ?loc ?core () : type_expression = t_constant ?loc ?core TC_mutez []
-let t_timestamp ?loc ?core () : type_expression = t_constant ?loc ?core TC_timestamp []
-let t_unit      ?loc ?core () : type_expression = t_constant ?loc ?core TC_unit []
-let t_variable  ?loc ?core t  : type_expression = make_t ?loc (T_variable t) core
-let t_wildcard  ?loc ?core () : type_expression = make_t ?loc (T_wildcard) core
-
-let t_option         ?loc ?core o   : type_expression = t_constant ?loc ?core TC_option   [o]
-let t_list           ?loc ?core t   : type_expression = t_constant ?loc ?core TC_list     [t]
-let t_set            ?loc ?core t   : type_expression = t_constant ?loc ?core TC_set      [t]
-let t_contract       ?loc ?core t   : type_expression = t_constant ?loc ?core TC_contract [t]
-let t_map            ?loc ?core k v : type_expression = t_constant ?loc ?core TC_map             [ k ; v ]
-let t_big_map        ?loc ?core k v : type_expression = t_constant ?loc ?core TC_big_map         [ k ; v ]
-let t_map_or_big_map ?loc ?core k v : type_expression = t_constant ?loc ?core TC_map_or_big_map  [ k ; v ]
+  (*X_name here should be replaced by X_injection*)
+let t_signature  ?loc ?core () : type_expression = t_constant ?loc ?core signature_name []
+let t_chain_id   ?loc ?core () : type_expression = t_constant ?loc ?core chain_id_name []
+let t_string     ?loc ?core () : type_expression = t_constant ?loc ?core string_name []
+let t_bytes      ?loc ?core () : type_expression = t_constant ?loc ?core bytes_name []
+let t_key        ?loc ?core () : type_expression = t_constant ?loc ?core key_name []
+let t_key_hash   ?loc ?core () : type_expression = t_constant ?loc ?core key_hash_name []
+let t_int        ?loc ?core () : type_expression = t_constant ?loc ?core int_name []
+let t_address    ?loc ?core () : type_expression = t_constant ?loc ?core address_name []
+let t_operation  ?loc ?core () : type_expression = t_constant ?loc ?core operation_name []
+let t_nat        ?loc ?core () : type_expression = t_constant ?loc ?core nat_name []
+let t_mutez      ?loc ?core () : type_expression = t_constant ?loc ?core tez_name []
+let t_timestamp  ?loc ?core () : type_expression = t_constant ?loc ?core timestamp_name []
+let t_unit       ?loc ?core () : type_expression = t_constant ?loc ?core unit_name []
+let t_bls12_381_g1 ?loc ?core () : type_expression = t_constant ?loc ?core bls12_381_g1_name []
+let t_bls12_381_g2 ?loc ?core () : type_expression = t_constant ?loc ?core bls12_381_g2_name []
+let t_bls12_381_fr ?loc ?core () : type_expression = t_constant ?loc ?core bls12_381_fr_name []
 
 
-let t_record m ?loc ?core () : type_expression = make_t ?loc (T_record m) core
-let make_t_ez_record ?loc (lst:(string * type_expression) list) : type_expression =
+let t_option         ?loc ?core o   : type_expression = t_constant ?loc ?core option_name [o]
+let t_list           ?loc ?core t   : type_expression = t_constant ?loc ?core list_name [t]
+let t_set            ?loc ?core t   : type_expression = t_constant ?loc ?core set_name [t]
+let t_contract       ?loc ?core t   : type_expression = t_constant ?loc ?core contract_name [t]
+let t_ticket         ?loc ?core t   : type_expression = t_constant ?loc ?core ticket_name [t]
+let t_map            ?loc ?core k v : type_expression = t_constant ?loc ?core map_name [ k ; v ]
+let t_big_map        ?loc ?core k v : type_expression = t_constant ?loc ?core big_map_name [ k ; v ]
+let t_map_or_big_map ?loc ?core k v : type_expression = t_constant ?loc ?core map_or_big_map_name [ k ; v ]
+
+
+let t_record ?loc ?core ~layout content  : type_expression = make_t ?loc (T_record {content;layout}) core
+let default_layout = L_tree
+let make_t_ez_record ?loc ?core ?(layout=default_layout) (lst:(string * type_expression) list) : type_expression =
   let lst = List.mapi (fun i (x,y) -> (Label x, {associated_type=y;michelson_annotation=None;decl_pos=i}) ) lst in
   let map = LMap.of_list lst in
-  make_t ?loc (T_record map) None
-let ez_t_record lst ?loc ?core () : type_expression =
+  t_record ?loc ?core ~layout map
+
+let ez_t_record ?loc ?core ?(layout=default_layout) lst : type_expression =
   let m = LMap.of_list lst in
-  t_record m ?loc ?core ()
+  t_record ?loc ?core ~layout m
 let t_pair ?loc ?core a b : type_expression =
-  ez_t_record [
+  ez_t_record ?loc ?core [
     (Label "0",{associated_type=a;michelson_annotation=None ; decl_pos = 0}) ;
-    (Label "1",{associated_type=b;michelson_annotation=None ; decl_pos = 0}) ] ?loc ?core ()
+    (Label "1",{associated_type=b;michelson_annotation=None ; decl_pos = 0}) ]
 
-let t_sum m ?loc ?core () : type_expression = make_t ?loc (T_sum m) core
-let make_t_ez_sum ?loc ?core (lst:(label * row_element) list) : type_expression =
-  let aux prev (k, v) = LMap.add k v prev in
-  let map = List.fold_left aux LMap.empty lst in
-  make_t ?loc (T_sum map) core
+let t_sum ?loc ?core ~layout content : type_expression = make_t ?loc (T_sum {content;layout}) core
+let t_sum_ez ?loc ?core ?(layout=default_layout) (lst:(string * type_expression) list) : type_expression =
+  let lst = List.mapi (fun i (x,y) -> (Label x, {associated_type=y;michelson_annotation=None;decl_pos=i}) ) lst in
+  let map = LMap.of_list lst in
+  t_sum ?loc ?core ~layout map
 
-let t_bool ?loc ?core ()       : type_expression = make_t_ez_sum ?loc ?core
-  [(Label "true", {associated_type=t_unit ();michelson_annotation=None;decl_pos=0});(Label "false", {associated_type=t_unit ();michelson_annotation=None;decl_pos=1})]
+let t_bool ?loc ?core ()       : type_expression = t_sum_ez ?loc ?core
+  [("true", t_unit ());("false", t_unit ())]
 
 let t_function param result ?loc ?s () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result}) s
 let t_shallow_closure param result ?loc ?s () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result}) s
@@ -74,64 +84,50 @@ let get_lambda_with_type e =
   | _ -> None
 
 let get_t_bool (t:type_expression) : unit option = match t.type_content with
-  | T_variable v when Var.equal v Constant.t_bool -> Some ()
   | t when (compare t (t_bool ()).type_content) = 0-> Some ()
   | _ -> None
 
-let get_t_int (t:type_expression) : unit option = match t.type_content with
-  | T_constant {type_constant=TC_int; arguments=[]} -> Some ()
+let get_param_inj (t:type_expression) : (string * Ligo_string.t * type_expression list) option =
+  match t.type_content with
+  | T_constant {language;injection;parameters} -> Some (language,injection,parameters)
   | _ -> None
 
-let get_t_nat (t:type_expression) : unit option = match t.type_content with
-  | T_constant {type_constant=TC_nat; arguments=[]} -> Some ()
+let get_t_inj (t:type_expression) (v:string) : (type_expression list) option =
+  match t.type_content with
+  | T_constant {language=_;injection; parameters} when String.equal (Ligo_string.extract injection) v -> Some parameters
   | _ -> None
-
-let get_t_unit (t:type_expression) : unit option = match t.type_content with
-  | T_constant {type_constant=TC_unit; arguments=[]}-> Some ()
+let get_t_base_inj (t:type_expression) (v:string) : unit option =
+  match get_t_inj t v with
+  | Some [] -> Some ()
   | _ -> None
-
-let get_t_mutez (t:type_expression) : unit option = match t.type_content with
-  | T_constant {type_constant=TC_mutez; arguments=[]}-> Some ()
+let get_t_unary_inj (t:type_expression) (v:string) : type_expression option =
+  match get_t_inj t v with
+  | Some [a] -> Some a
   | _ -> None
-
-let get_t_bytes (t:type_expression) : unit option = match t.type_content with
-  | T_constant {type_constant=TC_bytes; arguments=[]}-> Some ()
+let get_t_binary_inj (t:type_expression) (v:string) : (type_expression * type_expression) option =
+  match get_t_inj t v with
+  | Some [a;b] -> Some (a,b)
   | _ -> None
+let get_t_int (t:type_expression) : unit option = get_t_base_inj t int_name
+let get_t_nat (t:type_expression) : unit option = get_t_base_inj t nat_name
+let get_t_unit (t:type_expression) : unit option = get_t_base_inj t unit_name
+let get_t_mutez (t:type_expression) : unit option = get_t_base_inj t tez_name
+let get_t_bytes (t:type_expression) : unit option = get_t_base_inj t bytes_name
+let get_t_string (t:type_expression) : unit option = get_t_base_inj t string_name
+let get_t_contract (t:type_expression) : type_expression option = get_t_unary_inj t contract_name
 
-let get_t_string (t:type_expression) : unit option = match t.type_content with
-  | T_constant {type_constant=TC_string; arguments=[]} -> Some ()
-  | _ -> None
-
-let get_t_contract (t:type_expression) : type_expression option = match t.type_content with
-  | T_constant {type_constant=TC_contract; arguments=[x]} -> Some x
-  | _ -> None
-
-let get_t_option (t:type_expression) : type_expression option = match t.type_content with
-  | T_constant {type_constant=TC_option; arguments=[o]} -> Some o
-  | _ -> None
-
-let get_t_list (t:type_expression) : type_expression option = match t.type_content with
-  | T_constant {type_constant=TC_list; arguments=[l]} -> Some l
-  | _ -> None
-
-let get_t_set (t:type_expression) : type_expression option = match t.type_content with
-  | T_constant {type_constant=TC_set; arguments=[s]} -> Some s
-  | _ -> None 
-
-let get_t_key (t:type_expression) : unit option = match t.type_content with
-  | T_constant {type_constant=TC_key; arguments=[]} -> Some ()
-  | _ -> None 
-
-let get_t_signature (t:type_expression) : unit option = match t.type_content with
-  | T_constant {type_constant=TC_signature; arguments=[]} -> Some ()
-  | _ -> None
-
-let get_t_key_hash (t:type_expression) : unit option = match t.type_content with
-  | T_constant {type_constant=TC_key_hash; arguments=[]} -> Some ()
-  | _ -> None
+let get_t_option (t:type_expression) : type_expression option = get_t_unary_inj t option_name
+let get_t_list (t:type_expression) : type_expression option = get_t_unary_inj t list_name
+let get_t_set (t:type_expression) : type_expression option = get_t_unary_inj t set_name
+let get_t_ticket (t:type_expression) : type_expression option = get_t_unary_inj t ticket_name
+let get_t_key (t:type_expression) : unit option = get_t_base_inj t key_name
+let get_t_signature (t:type_expression) : unit option = get_t_base_inj t signature_name
+let get_t_key_hash (t:type_expression) : unit option = get_t_base_inj t key_hash_name
+let get_t_sapling_state (t:type_expression) : type_expression option = get_t_unary_inj t sapling_state_name
+let get_t_sapling_transaction (t:type_expression) : type_expression option = get_t_unary_inj t sapling_transaction_name
 
 let tuple_of_record (m: _ LMap.t) =
-  let aux i = 
+  let aux i =
     let opt = LMap.find_opt (Label (string_of_int i)) m in
     Option.bind (fun opt -> Some (opt,i+1)) opt
   in
@@ -140,12 +136,12 @@ let tuple_of_record (m: _ LMap.t) =
 
 
 let get_t_tuple (t:type_expression) : type_expression list option = match t.type_content with
-  | T_record lst -> Some (tuple_of_record lst)
+  | T_record record -> Some (tuple_of_record record.content)
   | _ -> None
 
 let get_t_pair (t:type_expression) : (type_expression * type_expression) option = match t.type_content with
   | T_record m ->
-      let lst = tuple_of_record m in
+      let lst = tuple_of_record m.content in
       ( match List.(length lst = 2) with
         | true -> Some (List.(nth lst 0 , nth lst 1))
         | false -> None
@@ -160,28 +156,28 @@ let get_t_function_exn t = match get_t_function t with
   | Some x -> x
   | None -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
 
-let get_t_sum (t:type_expression) : row_element label_map option = match t.type_content with
+let get_t_sum (t:type_expression) : rows option = match t.type_content with
   | T_sum m -> Some m
   | _ -> None
 
-let get_t_sum_exn (t:type_expression) : row_element label_map = match t.type_content with
+let get_t_sum_exn (t:type_expression) : rows = match t.type_content with
   | T_sum m -> m
   | _ -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
 
-let get_t_record (t:type_expression) : row_element label_map option = match t.type_content with
+let get_t_record (t:type_expression) : rows option = match t.type_content with
   | T_record m -> Some m
   | _ -> None
 
 let get_t_map (t:type_expression) : (type_expression * type_expression) option =
   match t.type_content with
-  | T_constant {type_constant=TC_map           ; arguments=[ k ; v ]} -> Some (k, v)
-  | T_constant {type_constant=TC_map_or_big_map; arguments=[ k ; v ]} -> Some (k, v)
+  | T_constant {language=_;injection; parameters = [k;v]} when String.equal (Ligo_string.extract injection) map_name -> Some (k,v)
+  | T_constant {language=_;injection; parameters = [k;v]} when String.equal (Ligo_string.extract injection) map_or_big_map_name -> Some (k,v)
   | _ -> None
 
 let get_t_big_map (t:type_expression) : (type_expression * type_expression) option =
   match t.type_content with
-  | T_constant {type_constant=TC_big_map       ; arguments=[ k ; v ]} -> Some (k, v)
-  | T_constant {type_constant=TC_map_or_big_map; arguments=[ k ; v ]} -> Some (k, v)
+  | T_constant {language=_;injection; parameters = [k;v]} when String.equal (Ligo_string.extract injection) big_map_name -> Some (k,v)
+  | T_constant {language=_;injection; parameters = [k;v]} when String.equal (Ligo_string.extract injection) map_or_big_map_name -> Some (k,v)
   | _ -> None
 
 let get_t_map_key : type_expression -> type_expression option = fun t ->
@@ -214,8 +210,8 @@ let assert_t_key_hash = get_t_key_hash
 let assert_t_bytes = get_t_bytes
 let assert_t_string = get_t_string
 
-let assert_t_contract (t:type_expression) : unit option = match t.type_content with
-  | T_constant {type_constant=TC_contract; arguments=[_]} -> Some ()
+let assert_t_contract (t:type_expression) : unit option = match get_t_unary_inj t contract_name with
+  | Some _ -> Some ()
   | _ -> None
 
 let is_t_list t = Option.is_some (get_t_list t)
@@ -227,21 +223,11 @@ let is_t_int t = Option.is_some (get_t_int t)
 
 let assert_t_list_operation (t : type_expression) : unit option =
   match get_t_list t with
-  | Some t' -> (
-    match t'.type_content with
-    | T_constant {type_constant=TC_operation; arguments=[]} -> Some ()
-    | _ -> None
-  )
+  | Some t' -> get_t_base_inj t' operation_name
   | None -> None
 
-let assert_t_int : type_expression -> unit option = fun t -> match t.type_content with
-  | T_constant {type_constant=TC_int; arguments=[]} -> Some ()
-  | _ -> None
-
-let assert_t_nat : type_expression -> unit option = fun t -> match t.type_content with
-  | T_constant {type_constant=TC_nat; arguments=[]} -> Some ()
-  | _ -> None
-
+let assert_t_int : type_expression -> unit option = fun t -> get_t_base_inj t int_name
+let assert_t_nat : type_expression -> unit option = fun t -> get_t_base_inj t nat_name
 let assert_t_bool : type_expression -> unit option = fun v -> get_t_bool v
 let assert_t_option : type_expression -> unit option = fun v -> Option.map (fun _ -> ()) @@ get_t_option v
 let assert_t_unit : type_expression -> unit option = fun v -> get_t_unit v
@@ -289,15 +275,15 @@ let e_a_pair a b = make_e (e_pair a b)
 let e_a_some s = make_e (e_some s) (t_option s.type_expression)
 let e_a_lambda l in_ty out_ty = make_e (e_lambda l) (t_function in_ty out_ty ())
 let e_a_none t = make_e (e_none ()) (t_option t)
-let e_a_record r = make_e (e_record r) (t_record
+let e_a_record ?(layout=default_layout) r = make_e (e_record r) (t_record ~layout
   (LMap.map
     (fun t ->
       let associated_type = get_type_expression t in
       {associated_type ; michelson_annotation=None ; decl_pos = 0} )
-    r ) () )
+    r ))
 let e_a_application a b = make_e (e_application a b) (get_type_expression b)
 let e_a_variable v ty = make_e (e_variable v) ty
-let ez_e_a_record r = make_e (ez_e_record r) (ez_t_record (List.mapi (fun i (x, y) -> x, {associated_type = y.type_expression ; michelson_annotation = None ; decl_pos = i}) r) ())
+let ez_e_a_record ?layout r = make_e (ez_e_record r) (ez_t_record ?layout (List.mapi (fun i (x, y) -> x, {associated_type = y.type_expression ; michelson_annotation = None ; decl_pos = i}) r))
 let e_a_let_in binder expr body attributes = make_e (e_let_in binder expr body attributes) (get_type_expression body)
 
 
@@ -312,7 +298,7 @@ let get_a_string (t:expression) =
   | E_literal (Literal_string s) -> Some (Ligo_string.extract s)
   | _ -> None
 
-let get_a_verbatim (t:expression) = 
+let get_a_verbatim (t:expression) =
   match t.expression_content with
     E_literal (Literal_string (Verbatim v)) -> Some v
   | _ -> None
@@ -325,8 +311,8 @@ let get_a_unit (t:expression) =
 let get_a_bool (t:expression) =
   match t.expression_content with
   | E_constructor {constructor=Label name;element}
-    when (String.equal name "true" || String.equal name "false") 
-    && element.expression_content = e_unit () -> 
+    when (String.equal name "true" || String.equal name "false")
+    && element.expression_content = e_unit () ->
       Some (bool_of_string name)
   | _ -> None
 
@@ -336,10 +322,68 @@ let get_a_record_accessor = fun t ->
   | E_record_accessor {record; path} -> Some (record, path)
   | _ -> None
 
-let get_declaration_by_name : program -> string -> declaration option = fun p name ->
+let get_declaration_by_name : program_fully_typed -> string -> declaration option = fun (Program_Fully_Typed p) name ->
   let aux : declaration -> bool = fun declaration ->
     match declaration with
     | Declaration_constant { binder ; expr=_ ; inline=_ } -> binder.wrap_content = Var.of_name name
     | Declaration_type _ -> false
   in
   List.find_opt aux @@ List.map Location.unwrap p
+
+let make_c_constructor_simpl ?(reason_constr_simpl="") tv c_tag tv_list =
+  {
+    reason_constr_simpl ;
+    is_mandatory_constraint = true ;
+    tv ;
+    c_tag;
+    tv_list
+  }
+
+let make_c_row_simpl ?(reason_row_simpl="") tv r_tag tv_map_as_lst : c_row_simpl = { 
+  reason_row_simpl ;
+  is_mandatory_constraint = true ;
+  tv;
+  r_tag;
+  tv_map = LMap.of_list tv_map_as_lst ;
+}
+
+let make_constructor_or ?(reason_constr_simpl = "") tv c_tag tv_list =
+  `Constructor (make_c_constructor_simpl ~reason_constr_simpl tv c_tag tv_list)
+
+let make_row_or ?(reason_row_simpl = "") tv r_tag tv_map_as_lst : constructor_or_row =
+  `Row (make_c_row_simpl ~reason_row_simpl tv r_tag tv_map_as_lst)
+
+let make_alias ?(reason_alias_simpl="") a b :  type_constraint_simpl = SC_Alias {
+  reason_alias_simpl ;
+  is_mandatory_constraint = true ;
+  a ;
+  b ;
+}
+
+let make_sc_alias ?(reason_alias_simpl="") a b : type_constraint_simpl =
+  SC_Alias {
+    reason_alias_simpl ;
+    is_mandatory_constraint = true ;
+    a ;
+    b ;
+  }
+let make_sc_constructor ?(reason_constr_simpl="") tv c_tag tv_list : type_constraint_simpl =
+  SC_Constructor (make_c_constructor_simpl ~reason_constr_simpl tv c_tag tv_list)
+let make_sc_row ?(reason_row_simpl="") tv r_tag tv_map_as_lst : type_constraint_simpl =
+  SC_Row (make_c_row_simpl ~reason_row_simpl tv r_tag tv_map_as_lst)
+let make_sc_typeclass ?(reason_typeclass_simpl="") (tc : typeclass) (args : type_variable_list) =
+  SC_Typeclass {
+    reason_typeclass_simpl ;
+    is_mandatory_constraint = true ;
+    id_typeclass_simpl = ConstraintIdentifier 1L ;
+    original_id = None ;
+    tc ;
+    args ;
+  }
+let make_sc_poly ?(reason_poly_simpl="") (tv:type_variable) (forall:p_forall) =
+  SC_Poly {
+    reason_poly_simpl ;
+    is_mandatory_constraint = true ;
+    tv ;
+    forall ;
+  }

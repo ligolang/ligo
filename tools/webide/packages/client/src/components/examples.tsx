@@ -9,10 +9,11 @@ import { ChangeSelectedAction, ExamplesState } from '../redux/examples';
 import { getExample } from '../services/api';
 
 const Container = styled.div`
-  flex: 0.5;
+  flex: 0.5;  
   display: flex;
   flex-direction: column;
   min-width: 0;
+  order: 1;
 `;
 
 const Header = styled.div`

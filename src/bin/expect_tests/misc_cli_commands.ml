@@ -35,7 +35,12 @@ let%expect_test _ =
 
   run_ligo_good [ "list-declarations" ; "../../test/contracts/loop.mligo" ; "--format=json" ] ;
   [%expect {|
-    {"source_file":"../../test/contracts/loop.mligo","declarations":["counter_nest","aux_nest","counter","counter_simple","aux_simple"]} |} ];
+    {
+      "source_file": "../../test/contracts/loop.mligo",
+      "declarations": [
+        "counter_nest", "aux_nest", "counter", "counter_simple", "aux_simple"
+      ]
+    } |} ];
 
 
   run_ligo_good [ "list-declarations" ; "../../test/contracts/loop.mligo" ] ;
@@ -56,12 +61,8 @@ let%expect_test _ =
     counter_simple
     aux_simple |} ];
 
-  run_ligo_bad [ "compile-storage" ; "../../test/contracts/coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ; "--brief" ] ;
+  run_ligo_bad [ "interpret" ; "1" ; "--syntax=cameligo" ; "--protocol=do_not_exist" ] ;
   [%expect {|
-    ligo: error
-          Invalid command line argument.
-          The provided storage does not have the correct type for the contract.
-          in file "coase.ligo", line 124, characters 9-13
-          Invalid type(s).
-          Expected: "record[card_patterns -> Map (nat , record[coefficient -> mutez , quantity -> nat]) , cards -> Map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]", but got: "
-          sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]". |}] ;
+    Invalid protocol version 'do_not_exist'. Available versions: carthage ,
+    dalphanet ,
+    edo |}] ;

@@ -31,15 +31,16 @@ let convert : type output . display_format:(output display_format) -> displayabl
   | Dev -> Format.asprintf "%a" (format.pp ~display_format) value
   | Human_readable -> Format.asprintf "%a" (format.pp ~display_format) value
 
+
 let to_json : displayable -> json = convert ~display_format:Json
 
 let bind_format :
-  'value format -> 'error format -> ('value,'error) result format =
+  'value format -> 'error format -> ('value,'error) Trace.result format =
   fun value_format error_format ->
-    let pp ~display_format f a = match a with
-      | Error e -> error_format.pp ~display_format f e
-      | Ok v -> value_format.pp ~display_format f v in
-    let to_json a = match a with
+    let pp ~display_format f a = match Trace.to_stdlib_result a with
+    | Error e -> error_format.pp ~display_format f e
+    | Ok (v, _) -> value_format.pp ~display_format f v in
+    let to_json a = match Trace.to_stdlib_result a with
       | Error e -> error_format.to_json e
-      | Ok v -> value_format.to_json v in
+      | Ok (v, _) -> value_format.to_json v in
     { pp ; to_json }

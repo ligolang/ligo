@@ -33,6 +33,13 @@ val is_empty : 'elt t -> bool
 
 val add : 'elt -> 'elt t -> 'elt t
 
+val union : 'elt t -> 'elt t -> 'elt t
+
+(* The value of the call [remove elt set] is a set containing all the
+   elements of the set [set] without the element [elt]. *)
+
+val remove : 'elt -> 'elt t -> 'elt t
+
 (* The value of the call [find elt set] is the element [y] of set
    [set] such that [cmp y elt = true], where [cmp] is the comparison
    function of [set] (see [create]). If [elt] is not in [set], then
@@ -53,10 +60,6 @@ val find_opt : 'elt -> 'elt t -> 'elt option
 
 val mem : 'elt -> 'elt t -> bool
 
-(* The value of the call [element set] is the list of elements of the
-   set [set] in increasing order (with respect to the total comparison
-   function used to create the set). *)
-
 (* The value of the call [add_list element_list set] is a record of
    type ['a added]. The elements from the [element_list] are added to
    the [set] starting from the head of the list. The elements which
@@ -65,9 +68,12 @@ val mem : 'elt -> 'elt t -> bool
    for these elements, i.e. it keeps the pre-existing version of the
    element). The elements which are not already members of the [set]
    are added to the [set], and gathered in the [added] list. *)
-type 'a added = {set : 'a set; duplicates : 'a list; added : 'a list}
-val add_list : 'a list -> 'a set -> 'a added
+type 'a added = {set : 'a t; duplicates : 'a list; added : 'a list}
+val add_list : 'a list -> 'a t -> 'a added
 
+(* The value of the call [elements set] is the list of elements of the
+   set [set] in increasing order (with respect to the total comparison
+   function used to create the set). *)
 val elements : 'elt t -> 'elt list
 
 (* The value of the call [get_compare set] is the comparison function

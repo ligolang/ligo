@@ -39,7 +39,7 @@ type 'item node =
 type ('item, 'value) map = ('item, 'value) RedBlackTrees.PolyMap.t
 let map_empty (compare : 'item -> 'item -> int) : ('item, 'value) map = RedBlackTrees.PolyMap.create ~cmp:compare
 let map_find : 'item 'value . 'item -> ('item, 'value) map -> 'value = RedBlackTrees.PolyMap.find
-let map_iter : 'item 'value . ('item -> 'value -> unit) -> ('item, 'value) map -> unit = RedBlackTrees.PolyMap.iter
+(* let map_iter : 'item 'value . ('item -> 'value -> unit) -> ('item, 'value) map -> unit = RedBlackTrees.PolyMap.iter *)
 let map_add : 'item 'value . 'item -> 'value -> ('item, 'value) map -> ('item, 'value) map = RedBlackTrees.PolyMap.add
 let map_sorted_keys : 'item 'value . ('item, 'value) map -> 'item list = fun m -> List.map fst @@ RedBlackTrees.PolyMap.bindings m
 
@@ -47,12 +47,14 @@ let map_sorted_keys : 'item 'value . ('item, 'value) map -> 'item list = fun m -
     equivalent items by means of a map from items to nodes of type
     [node] in trees. *)
 type 'item partition = {
-    to_string : 'item -> string ;
+    to_string : Format.formatter -> 'item -> unit ;
     compare : 'item -> 'item -> int ;
     map : ('item, 'item node) map ;
 }
 
 type 'item t = 'item partition
+
+type 'item repr = 'item
 
 let empty to_string compare = { to_string ; compare ; map = map_empty compare }
 
@@ -71,9 +73,9 @@ let rec seek (i: 'item) (p: 'item partition) : 'item * height =
 
 let repr i p = fst (seek i p)
 
-let is_equiv (i: 'item) (j: 'item) (p: 'item partition) : bool =
-  try equal p.compare (repr i p) (repr j p) with
-    Not_found -> false
+(* let is_equiv (i: 'item) (j: 'item) (p: 'item partition) : bool =
+ *   try equal p.compare (repr i p) (repr j p) with
+ *     Not_found -> false *)
 
 let get_or_set_h (i: 'item) (p: 'item partition) =
   try seek i p, p with
@@ -82,18 +84,21 @@ let get_or_set_h (i: 'item) (p: 'item partition) =
 let get_or_set (i: 'item) (p: 'item partition) =
   let (i, _h), p = get_or_set_h i p in (i, p)
 
-let mem i p = try Some (repr i p) with Not_found -> None
+(* let mem i p = try Some (repr i p) with Not_found -> None *)
 
 let repr i p = try repr i p with Not_found -> i
 
-let equiv (i: 'item) (j: 'item) (p: 'item partition) : 'item partition =
+type 'item changed_reprs = { demoted_repr : 'item; new_repr : 'item }
+type 'item equiv_result = { partition : 'item partition; changed_reprs : 'item changed_reprs list }
+
+let equiv (i: 'item) (j: 'item) (p: 'item partition) : 'item equiv_result =
   let (ri,hi as ni), p = get_or_set_h i p in
   let (rj,hj as nj), p = get_or_set_h j p in
   if   equal p.compare ri rj
-  then p
+  then { partition = p; changed_reprs = [ { demoted_repr = ri; new_repr = rj } ] }
   else if   hi > hj
-  then link nj ri p
-  else link ni rj (if hi < hj then p else root (rj, hj+1) p)
+       then { partition = link nj ri p; changed_reprs = [ { demoted_repr = rj; new_repr = ri } ] }
+       else { partition = link ni rj (if hi < hj then p else root (rj, hj+1) p); changed_reprs = [ { demoted_repr = ri; new_repr = rj } ] }
 
 (** The call [alias i j p] results in the same partition as [equiv
     i j p], except that [i] is not the representative of its class
@@ -105,21 +110,21 @@ let equiv (i: 'item) (j: 'item) (p: 'item partition) : 'item partition =
     its class before calling [alias], then the height criteria is
     applied (which, without the constraint above, would yield a
     height-balanced new tree). *)
-let alias (i: 'item) (j: 'item) (p: 'item partition) : 'item partition =
+let [@warning "-32" ] alias (i: 'item) (j: 'item) (p: 'item partition) : 'item partition =
   let (ri,hi as ni), p = get_or_set_h i p in
   let (rj,hj as nj), p = get_or_set_h j p in
   if   equal p.compare ri rj
   then p
   else if   hi = hj || equal p.compare ri i
-  then link ni rj @@ root (rj, max hj (hi+1)) p
-  else if hi < hj then link ni rj p
-  else link nj ri p
+       then link ni rj @@ root (rj, max hj (hi+1)) p
+       else if hi < hj then link ni rj p
+                       else link nj ri p
 
 (** {1 iteration over the elements} *)
 
-let elements : 'item . 'item partition -> 'item list =
-  fun { to_string=_; compare=_; map } ->
-  map_sorted_keys map
+(* let elements : 'item . 'item partition -> 'item list =
+ *   fun { to_string=_; compare=_; map } ->
+ *   map_sorted_keys map *)
 
 let partitions : 'item . 'item partition -> 'item list list =
   let compare_lists_by_first cmp la lb =
@@ -145,20 +150,20 @@ let partitions : 'item . 'item partition -> 'item list list =
   let partitions = List.sort (compare_lists_by_first compare) partitions in
   partitions
 
-let get_compare p = p.compare
+(* let get_compare p = p.compare *)
 
 (** {1 Printing} *)
 
-let print ppf (p: 'item partition) =
-  let print i node =
-    let hi, hj, j =
-      match node with
-        Root hi -> hi,hi,i
-      | Link (j,hi) ->
-         match map_find j p.map with
-           Root hj | Link (_,hj) -> hi,hj,j in
-    let () =
-      Format.fprintf ppf "%s,%d -> %s,%d\n"
-        (p.to_string i) hi (p.to_string j) hj
-    in ()
-  in map_iter print p.map
+(* let print ppf (p: 'item partition) =
+ *   let print i node =
+ *     let hi, hj, j =
+ *       match node with
+ *         Root hi -> hi,hi,i
+ *       | Link (j,hi) ->
+ *          match map_find j p.map with
+ *            Root hj | Link (_,hj) -> hi,hj,j in
+ *     let () =
+ *       Format.fprintf ppf "%a,%d -> %a,%d\n"
+ *         p.to_string i hi p.to_string j hj
+ *     in ()
+ *   in map_iter print p.map *)

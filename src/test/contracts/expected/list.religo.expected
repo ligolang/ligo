@@ -12,7 +12,7 @@ let z: list(int) = [2, ...y];
 
 let main = ((action, s): (parameter, storage)): return => {
   let storage = 
-    switch(action) {
+    switch(action){
     | [] => s
     | [hd, ...tl] => (s[0] + hd, tl)
     };

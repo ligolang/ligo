@@ -4,6 +4,7 @@
     simple-utils
     cmdliner
     ligo
+    build
   )
   (modules cli cli_helpers formatter version changelog)
   (preprocess

@@ -1,35 +1,5 @@
 open Stage_common.Enums
 
-let type_constant_tag = function
-  | TC_unit                      ->  1
-  | TC_string                    ->  2
-  | TC_bytes                     ->  3
-  | TC_nat                       ->  4
-  | TC_int                       ->  5
-  | TC_mutez                     ->  6
-  | TC_operation                 ->  7
-  | TC_address                   ->  8
-  | TC_key                       ->  9
-  | TC_key_hash                  -> 10
-  | TC_chain_id                  -> 11
-  | TC_signature                 -> 12
-  | TC_timestamp                 -> 13
-  | TC_contract                  -> 14
-  | TC_option                    -> 15
-  | TC_list                      -> 16
-  | TC_set                       -> 17
-  | TC_map                       -> 18
-  | TC_big_map                   -> 19
-  | TC_map_or_big_map            -> 20
-  | TC_michelson_pair            -> 21
-  | TC_michelson_or              -> 22
-  | TC_michelson_pair_right_comb -> 23
-  | TC_michelson_pair_left_comb  -> 24
-  | TC_michelson_or_right_comb   -> 25
-  | TC_michelson_or_left_comb    -> 26
-
-let type_constant a b = Int.compare (type_constant_tag a) (type_constant_tag b)
-
 let constant'_tag = function
   | C_INT                     ->   1
   | C_UNIT                    ->   2
@@ -102,53 +72,81 @@ let constant'_tag = function
   | C_LIST_ITER               ->  61
   | C_LIST_MAP                ->  62
   | C_LIST_FOLD               ->  63
+  | C_LIST_HEAD_OPT           ->  64
+  | C_LIST_TAIL_OPT           ->  65
   (* Maps *)
-  | C_MAP                     ->  64
-  | C_MAP_EMPTY               ->  65
-  | C_MAP_LITERAL             ->  66
-  | C_MAP_GET                 ->  67
-  | C_MAP_GET_FORCE           ->  68
-  | C_MAP_ADD                 ->  69
-  | C_MAP_REMOVE              ->  70
-  | C_MAP_UPDATE              ->  71
-  | C_MAP_ITER                ->  72
-  | C_MAP_MAP                 ->  73
-  | C_MAP_FOLD                ->  74
-  | C_MAP_MEM                 ->  75
-  | C_MAP_FIND                ->  76
-  | C_MAP_FIND_OPT            ->  77
+  | C_MAP                     ->  66
+  | C_MAP_EMPTY               ->  67
+  | C_MAP_LITERAL             ->  68
+  | C_MAP_GET                 ->  69
+  | C_MAP_GET_FORCE           ->  70
+  | C_MAP_ADD                 ->  71
+  | C_MAP_REMOVE              ->  72
+  | C_MAP_UPDATE              ->  73
+  | C_MAP_ITER                ->  74
+  | C_MAP_MAP                 ->  75
+  | C_MAP_FOLD                ->  76
+  | C_MAP_MEM                 ->  77
+  | C_MAP_FIND                ->  78
+  | C_MAP_FIND_OPT            ->  79
   (* Big Maps *)
-  | C_BIG_MAP                 ->  78
-  | C_BIG_MAP_EMPTY           ->  79
-  | C_BIG_MAP_LITERAL         ->  80
+  | C_BIG_MAP                 ->  80
+  | C_BIG_MAP_EMPTY           ->  81
+  | C_BIG_MAP_LITERAL         ->  82
   (* Crypto *)
-  | C_SHA256                  ->  81
-  | C_SHA512                  ->  82
-  | C_BLAKE2b                 ->  83
-  | C_HASH                    ->  84
-  | C_HASH_KEY                ->  85
-  | C_CHECK_SIGNATURE         ->  86
-  | C_CHAIN_ID                ->  87
+  | C_SHA256                  ->  83
+  | C_SHA512                  ->  84
+  | C_BLAKE2b                 ->  85
+  | C_HASH                    ->  86
+  | C_HASH_KEY                ->  87
+  | C_CHECK_SIGNATURE         ->  88
+  | C_CHAIN_ID                ->  89
   (* Blockchain *)
-  | C_CALL                    ->  88
-  | C_CONTRACT                ->  89
-  | C_CONTRACT_OPT            ->  90
-  | C_CONTRACT_ENTRYPOINT     ->  91
-  | C_CONTRACT_ENTRYPOINT_OPT ->  92
-  | C_AMOUNT                  ->  93
-  | C_BALANCE                 ->  94
-  | C_SOURCE                  ->  95
-  | C_SENDER                  ->  96
-  | C_ADDRESS                 ->  97
-  | C_SELF                    ->  98
-  | C_SELF_ADDRESS            ->  99
-  | C_IMPLICIT_ACCOUNT        -> 100
-  | C_SET_DELEGATE            -> 101
-  | C_CREATE_CONTRACT         -> 102
-  | C_CONVERT_TO_LEFT_COMB    -> 103
-  | C_CONVERT_TO_RIGHT_COMB   -> 104
-  | C_CONVERT_FROM_LEFT_COMB  -> 105
-  | C_CONVERT_FROM_RIGHT_COMB -> 106
+  | C_CALL                    ->  90
+  | C_CONTRACT                ->  91
+  | C_CONTRACT_OPT            ->  92
+  | C_CONTRACT_ENTRYPOINT     ->  93
+  | C_CONTRACT_ENTRYPOINT_OPT ->  94
+  | C_AMOUNT                  ->  95
+  | C_BALANCE                 ->  96
+  | C_SOURCE                  ->  97
+  | C_SENDER                  ->  98
+  | C_ADDRESS                 ->  99
+  | C_SELF                    -> 100
+  | C_SELF_ADDRESS            -> 101
+  | C_IMPLICIT_ACCOUNT        -> 102
+  | C_SET_DELEGATE            -> 103
+  | C_CREATE_CONTRACT         -> 104
+  | C_CONVERT_TO_LEFT_COMB    -> 105
+  | C_CONVERT_TO_RIGHT_COMB   -> 106
+  | C_CONVERT_FROM_LEFT_COMB  -> 107
+  | C_CONVERT_FROM_RIGHT_COMB -> 108
+  (* and more *)
+  | C_TRUE                    -> 109
+  | C_FALSE                   -> 110
+  | C_TEST_ORIGINATE          -> 111
+  | C_TEST_SET_NOW            -> 112
+  | C_TEST_SET_SOURCE         -> 113
+  | C_TEST_SET_BALANCE        -> 114
+  | C_TEST_EXTERNAL_CALL      -> 115
+  | C_TEST_GET_STORAGE        -> 116
+  | C_TEST_GET_BALANCE        -> 117
+  | C_TEST_ASSERT_FAILURE     -> 118
+  | C_TEST_LOG                -> 119
+  | C_SHA3                    -> 120
+  | C_KECCAK                  -> 121
+  | C_LEVEL                   -> 122
+  | C_VOTING_POWER            -> 123
+  | C_TOTAL_VOTING_POWER      -> 124
+  | C_TICKET                  -> 125
+  | C_READ_TICKET             -> 126
+  | C_SPLIT_TICKET            -> 127
+  | C_JOIN_TICKET             -> 128
+  | C_PAIRING_CHECK           -> 129
+  | C_MAP_GET_AND_UPDATE      -> 130
+  | C_BIG_MAP_GET_AND_UPDATE  -> 131
+  | C_SAPLING_EMPTY_STATE     -> 132
+  | C_SAPLING_VERIFY_UPDATE   -> 133
 
 let constant' a b = Int.compare (constant'_tag a) (constant'_tag b)
 

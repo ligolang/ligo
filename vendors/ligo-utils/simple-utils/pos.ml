@@ -109,7 +109,7 @@ let make ~byte ~point_num ~point_bol =
             "character", offset
           else "column", offset + 1 in
         if file && self#file <> "" then
-          sprintf "File \"%s\", line %i, %s %i"
+          sprintf "File %S, line %i, %s %i"
                   self#file self#line horizontal value
         else sprintf "Line %i, %s %i"
                      self#line horizontal value
@@ -157,7 +157,8 @@ let of_yojson x =
   | `Assoc ["byte", byte;
             "point_num", `Int point_num;
             "point_bol", `Int point_bol] ->
-      Stdlib.Result.map (fun byte -> make ~byte ~point_num ~point_bol) (position_of_yojson byte)
+     Stdlib.Result.map (fun byte -> make ~byte ~point_num ~point_bol)
+                       (position_of_yojson byte)
   | _ ->
       Utils.error_yojson_format "{byte: Lexing.position, point_num: int, point_bol: int}\nwhere Lexing.position is {pos_fname: string, pos_lnum: int, pos_bol: int, pos_cnum: int}"
 
@@ -169,8 +170,14 @@ let from_byte byte =
 let ghost = make ~byte:Lexing.dummy_pos ~point_num:(-1) ~point_bol:(-1)
 
 let min ~file =
-  let pos = make ~byte:Lexing.dummy_pos ~point_num:0 ~point_bol:0
-  in pos#set_file file
+  let min_byte = Lexing.{
+    pos_fname = file;
+    pos_lnum  = 1;
+    pos_bol   = 0;
+    pos_cnum  = 0
+  }
+  in make ~byte:min_byte ~point_num:0 ~point_bol:0
+
 
 (* Comparisons *)
 

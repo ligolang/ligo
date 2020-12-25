@@ -1,0 +1,16 @@
+_build/*
+*/_build
+*~
+.merlin
+*/.merlin
+*.install
+/Version.ml
+/dune-project
+/Parser.mli
+/Parser.ml
+/Lexer.ml
+/Token.ml
+/Tests
+error.messages
+error.messages.new
+ParErr.ml

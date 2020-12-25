@@ -1,4 +1,5 @@
-import { Tezos } from '@taquito/taquito';
+import { TezosToolkit } from '@taquito/taquito';
+import { importKey } from "@taquito/signer";
 import { Dispatch } from 'redux';
 import slugify from 'slugify';
 
@@ -10,15 +11,15 @@ import { ChangeOutputAction } from '../result';
 import { Command } from '../types';
 import { CancellableAction } from './cancellable';
 
-const URL = 'https://api.tez.ie/keys/carthagenet/';
+const URL = 'https://api.tez.ie/keys/delphinet/';
 const AUTHORIZATION_HEADER = 'Bearer ligo-ide';
+const Tezos = new TezosToolkit('https://api.tez.ie/rpc/delphinet');
 
 export async function fetchRandomPrivateKey(): Promise<string> {
   const response = await fetch(URL, {
     method: 'POST',
     headers: { Authorization: AUTHORIZATION_HEADER }
   });
-
   return response.text();
 }
 
@@ -69,7 +70,7 @@ export class GenerateDeployScriptAction extends CancellableAction {
 
         dispatch({ ...new UpdateLoadingAction('Estimating burn cap...') });
 
-        await Tezos.importKey(await fetchRandomPrivateKey());
+        await importKey(Tezos, await fetchRandomPrivateKey());
 
         const estimate = await Tezos.estimate.originate({
           code: JSON.parse(michelsonCodeJson.result),

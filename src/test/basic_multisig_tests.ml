@@ -5,25 +5,22 @@ let file   = "./contracts/basic_multisig/multisig.ligo"
 let mfile  = "./contracts/basic_multisig/multisig.mligo"
 let refile = "./contracts/basic_multisig/multisig.religo"
 
-let type_file f s =
-  let%bind typed,state = Ligo.Compile.Utils.type_file f s (Contract "main") in
-  ok @@ (typed,state)
-
 let get_program f st =
   let s = ref None in
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-        let%bind program = type_file f st in
-        s := Some program ;
-        ok program
-      )
+      let options = Compiler_options.make () in
+      let%bind program = Ligo.Compile.Utils.type_file ~options f st (Contract "main") in
+      s := Some program ;
+      ok program
+    )
 
 let compile_main f s () = 
-  let%bind typed_prg,_   = type_file f s in
+  let%bind typed_prg,_,_ = get_program f s () in
   let%bind mini_c_prg    = Ligo.Compile.Of_typed.compile typed_prg in
-  let%bind michelson_prg = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
-  let%bind (_contract: Tezos_utils.Michelson.michelson) =
+  let%bind michelson_prg = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
+  let%bind _contract =
     (* fails if the given entry point is not a valid contract *)
     Ligo.Compile.Of_michelson.build_contract michelson_prg in
   ok ()
@@ -52,11 +49,13 @@ let (first_owner , first_contract) =
 
 let op_list = 
   let open Memory_proto_alpha.Protocol.Alpha_context in
-  let source : Contract.t = first_contract in
+  let open Proto_alpha_utils in
+  let%bind source =
+    Trace.trace_alpha_tzresult (fun _ -> Main_errors.test_internal __LOC__) @@
+    (Contract.of_b58check "KT1DUMMYDUMMYDUMMYDUMMYDUMMYDUMu2oHG") in
   let%bind operation = 
     let parameters : Script.lazy_expr = Script.unit_parameter in
     let entrypoint = "default" in
-    let open Proto_alpha_utils in
     let%bind destination = 
       Trace.trace_alpha_tzresult (fun _ -> Main_errors.test_internal __LOC__) @@
        Contract.of_b58check "tz1PpDGHRXFQq3sYDuH8EpLWzPm5PFpe1sLE" 
@@ -69,13 +68,12 @@ let op_list =
   ok @@ (e_typed_list [e_literal (Literal_operation opbytes)] (t_operation ()))
 let empty_payload = e_unit ()
 
-let chain_id_zero = e_chain_id @@ Tezos_crypto.Base58.simple_encode
-  Tezos_base__TzPervasives.Chain_id.b58check_encoding
-  Tezos_base__TzPervasives.Chain_id.zero
+let chain_id_zero =
+  e_bytes_raw (Tezos_crypto.Chain_id.to_bytes Tezos_base__TzPervasives.Chain_id.zero)
 
 (* sign the message 'msg' with 'keys', if 'is_valid'=false the providid signature will be incorrect *)
 let params counter payload keys is_validl f s = 
-  let%bind program,_ = get_program f s () in
+  let%bind program,_,_ = get_program f s () in
   let aux = fun acc (key,is_valid) ->
     let (_,_pk,sk) = key in
     let (pkh,_,_) = str_keys key in

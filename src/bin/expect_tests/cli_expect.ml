@@ -8,6 +8,13 @@ exception Should_exit_bad
 
 (* ugh, can we avoid this? *)
 let () = Unix.putenv "TERM" "dumb"
+let () = Unix.putenv "LIGO_FORCE_NEW_TYPER" "false"
+
+let bad_test basename =
+  "../../test/contracts/negative/" ^ basename
+
+let test basename =
+  "../../test/contracts/" ^ basename
 
 let run_ligo args =
   Var.reset_counter ();

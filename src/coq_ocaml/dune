@@ -1,0 +1,27 @@
+(library
+ (name ligo_coq_ocaml)
+ (public_name ligo.coq_ocaml)
+ (flags :standard -w "-33-39")
+ (libraries
+  simple-utils
+  zarith
+  tezos-micheline))
+
+(coq.extraction
+ (prelude extraction)
+ (extracted_modules
+  Datatypes
+  Nat
+  List
+  BinInt
+  BinPos
+  Specif
+
+  co_de_bruijn
+  ligo
+  compiler)
+ (theories ligo_coq)
+ (libraries
+  simple-utils
+  zarith
+  tezos-micheline))

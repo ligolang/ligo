@@ -13,6 +13,15 @@ let%expect_test _ =
     MORE HELP
            Use `ligo COMMAND --help' for help on a single command.
 
+    DOCUMENTATION
+           https://ligolang.org/docs/intro/introduction
+
+    ASK A QUESTION
+           https://discord.gg/9rhYaEt
+
+    OPEN AN ISSUE
+           https://gitlab.com/ligolang/ligo/issues/new
+
     COMMANDS
            changelog
                Dump the LIGO changelog to stdout.
@@ -47,9 +56,6 @@ let%expect_test _ =
                Subcommand: Interpret the expression in the context initialized by
                the provided source file.
 
-           ligo-interpret
-               Subcommand: (temporary / dev only) uses LIGO interpret.
-
            list-declarations
                Subcommand: List all the top-level declarations.
 
@@ -67,6 +73,11 @@ let%expect_test _ =
                Subcommand: Print the AST. Warning: Intended for development of
                LIGO and can break at any time.
 
+           print-ast-combined
+               Subcommand: Print the contract after combination with the build
+               system. Warning: Intended for development of LIGO and can break at
+               any time.
+
            print-ast-core
                Subcommand: Print the AST. Warning: Intended for development of
                LIGO and can break at any time.
@@ -83,12 +94,19 @@ let%expect_test _ =
                Subcommand: Print the CST. Warning: Intended for development of
                LIGO and can break at any time.
 
+           print-graph
+               Subcommand: Print the dependency graph. Warning: Intended for
+               development of LIGO and can break at any time.
+
            print-mini-c
                Subcommand: Print Mini-C. Warning: Intended for development of
                LIGO and can break at any time.
 
            run-function
                Subcommand: Run a function with the given parameter.
+
+           test
+               Subcommand: Test a contract with the LIGO interpreter (BETA).
 
            transpile-contract
                Subcommand: Transpile a contract to another syntax.
@@ -116,6 +134,15 @@ let%expect_test _ =
     MORE HELP
            Use `ligo COMMAND --help' for help on a single command.
 
+    DOCUMENTATION
+           https://ligolang.org/docs/intro/introduction
+
+    ASK A QUESTION
+           https://discord.gg/9rhYaEt
+
+    OPEN AN ISSUE
+           https://gitlab.com/ligolang/ligo/issues/new
+
     COMMANDS
            changelog
                Dump the LIGO changelog to stdout.
@@ -150,9 +177,6 @@ let%expect_test _ =
                Subcommand: Interpret the expression in the context initialized by
                the provided source file.
 
-           ligo-interpret
-               Subcommand: (temporary / dev only) uses LIGO interpret.
-
            list-declarations
                Subcommand: List all the top-level declarations.
 
@@ -170,6 +194,11 @@ let%expect_test _ =
                Subcommand: Print the AST. Warning: Intended for development of
                LIGO and can break at any time.
 
+           print-ast-combined
+               Subcommand: Print the contract after combination with the build
+               system. Warning: Intended for development of LIGO and can break at
+               any time.
+
            print-ast-core
                Subcommand: Print the AST. Warning: Intended for development of
                LIGO and can break at any time.
@@ -186,12 +215,19 @@ let%expect_test _ =
                Subcommand: Print the CST. Warning: Intended for development of
                LIGO and can break at any time.
 
+           print-graph
+               Subcommand: Print the dependency graph. Warning: Intended for
+               development of LIGO and can break at any time.
+
            print-mini-c
                Subcommand: Print Mini-C. Warning: Intended for development of
                LIGO and can break at any time.
 
            run-function
                Subcommand: Run a function with the given parameter.
+
+           test
+               Subcommand: Test a contract with the LIGO interpreter (BETA).
 
            transpile-contract
                Subcommand: Transpile a contract to another syntax.
@@ -224,9 +260,6 @@ let%expect_test _ =
                SOURCE_FILE is the path to the smart contract file.
 
     OPTIONS
-           --brief
-               in case of an error, do not display links to online resources
-
            --disable-michelson-typechecking
                disable Michelson typecking, this might produce ill-typed
                Michelson code.
@@ -253,11 +286,19 @@ let%expect_test _ =
                OUTPUT_FILE if used, prints the output into the specified file
                instead of stdout
 
+           -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
+               PROTOCOL_VERSION will decide protocol's types/values pre-loaded
+               into the LIGO environment (carthage , dalphanet , edo). By
+               default, the current protocol (carthage) will be used
+
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
                the syntax is guessed from the extension (.ligo, .mligo, .religo
                respectively).
+
+           --typer=TYPER_SWITCH (absent=old)
+               TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
                Show version information. |} ] ;
@@ -292,9 +333,6 @@ let%expect_test _ =
                BALANCE is the balance the Michelson interpreter will use for the
                contract balance.
 
-           --brief
-               in case of an error, do not display links to online resources
-
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
                DISPLAY_FORMAT is the format that will be used by the CLI.
@@ -321,6 +359,11 @@ let%expect_test _ =
                OUTPUT_FILE if used, prints the output into the specified file
                instead of stdout
 
+           -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
+               PROTOCOL_VERSION will decide protocol's types/values pre-loaded
+               into the LIGO environment (carthage , dalphanet , edo). By
+               default, the current protocol (carthage) will be used
+
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
@@ -334,6 +377,9 @@ let%expect_test _ =
            --source=SOURCE
                SOURCE is the source the Michelson interpreter transaction will
                use.
+
+           --typer=TYPER_SWITCH (absent=old)
+               TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
                Show version information. |} ] ;
@@ -369,9 +415,6 @@ let%expect_test _ =
                BALANCE is the balance the Michelson interpreter will use for the
                contract balance.
 
-           --brief
-               in case of an error, do not display links to online resources
-
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
                DISPLAY_FORMAT is the format that will be used by the CLI.
@@ -398,6 +441,11 @@ let%expect_test _ =
                OUTPUT_FILE if used, prints the output into the specified file
                instead of stdout
 
+           -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
+               PROTOCOL_VERSION will decide protocol's types/values pre-loaded
+               into the LIGO environment (carthage , dalphanet , edo). By
+               default, the current protocol (carthage) will be used
+
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
@@ -411,6 +459,9 @@ let%expect_test _ =
            --source=SOURCE
                SOURCE is the source the Michelson interpreter transaction will
                use.
+
+           --typer=TYPER_SWITCH (absent=old)
+               TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
                Show version information. |} ] ;
@@ -447,9 +498,6 @@ let%expect_test _ =
                BALANCE is the balance the Michelson interpreter will use for the
                contract balance.
 
-           --brief
-               in case of an error, do not display links to online resources
-
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
                DISPLAY_FORMAT is the format that will be used by the CLI.
@@ -467,6 +515,11 @@ let%expect_test _ =
                NOW is the NOW value the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
 
+           -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
+               PROTOCOL_VERSION will decide protocol's types/values pre-loaded
+               into the LIGO environment (carthage , dalphanet , edo). By
+               default, the current protocol (carthage) will be used
+
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
@@ -480,6 +533,9 @@ let%expect_test _ =
            --source=SOURCE
                SOURCE is the source the Michelson interpreter transaction will
                use.
+
+           --typer=TYPER_SWITCH (absent=old)
+               TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
                Show version information. |} ] ;
@@ -513,9 +569,6 @@ let%expect_test _ =
                BALANCE is the balance the Michelson interpreter will use for the
                contract balance.
 
-           --brief
-               in case of an error, do not display links to online resources
-
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
                DISPLAY_FORMAT is the format that will be used by the CLI.
@@ -533,6 +586,11 @@ let%expect_test _ =
                NOW is the NOW value the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
 
+           -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
+               PROTOCOL_VERSION will decide protocol's types/values pre-loaded
+               into the LIGO environment (carthage , dalphanet , edo). By
+               default, the current protocol (carthage) will be used
+
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
@@ -546,6 +604,9 @@ let%expect_test _ =
            --source=SOURCE
                SOURCE is the source the Michelson interpreter transaction will
                use.
+
+           --typer=TYPER_SWITCH (absent=old)
+               TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
                Show version information. |} ] ;
@@ -574,9 +635,6 @@ let%expect_test _ =
                BALANCE is the balance the Michelson interpreter will use for the
                contract balance.
 
-           --brief
-               in case of an error, do not display links to online resources
-
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
                DISPLAY_FORMAT is the format that will be used by the CLI.
@@ -594,6 +652,11 @@ let%expect_test _ =
                NOW is the NOW value the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
 
+           -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
+               PROTOCOL_VERSION will decide protocol's types/values pre-loaded
+               into the LIGO environment (carthage , dalphanet , edo). By
+               default, the current protocol (carthage) will be used
+
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
@@ -607,6 +670,9 @@ let%expect_test _ =
            --source=SOURCE
                SOURCE is the source the Michelson interpreter transaction will
                use.
+
+           --typer=TYPER_SWITCH (absent=old)
+               TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
                Show version information. |} ] ;
@@ -630,9 +696,6 @@ let%expect_test _ =
                respectively).
 
     OPTIONS
-           --brief
-               in case of an error, do not display links to online resources
-
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
                DISPLAY_FORMAT is the format that will be used by the CLI.
@@ -646,10 +709,22 @@ let%expect_test _ =
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
                `plain' whenever the TERM env var is `dumb' or undefined.
 
+           --init-file=INIT_FILE
+               INIT_FILE is the path to smart contract file to be used for
+               context initialization.
+
            --michelson-format=MICHELSON_FORMAT (absent=text)
                MICHELSON_FORMAT is the format that will be used by
                compile-contract for the resulting Michelson. Available formats
                are 'text' (default), 'json' and 'hex'.
+
+           -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
+               PROTOCOL_VERSION will decide protocol's types/values pre-loaded
+               into the LIGO environment (carthage , dalphanet , edo). By
+               default, the current protocol (carthage) will be used
+
+           --typer=TYPER_SWITCH (absent=old)
+               TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
                Show version information. |} ] ;

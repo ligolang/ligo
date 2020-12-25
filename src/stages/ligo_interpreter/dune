@@ -3,6 +3,8 @@
   (public_name ligo.ligo_interpreter)
   (libraries
     simple-utils
+    proto-alpha-utils
+    tezos-utils
     ast_typed
     stage_common
   )

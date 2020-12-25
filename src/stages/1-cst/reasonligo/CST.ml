@@ -108,6 +108,7 @@ type eof = Region.t
 (* Literals *)
 
 type variable    = string reg
+type module_name = string reg
 type fun_name    = string reg
 type type_name   = string reg
 type field_name  = string reg
@@ -169,7 +170,7 @@ and type_decl = {
 
 and type_expr =
   TProd   of cartesian
-| TSum    of (variant reg, vbar) nsepseq reg
+| TSum    of sum_type reg
 | TRecord of field_decl reg ne_injection reg
 | TApp    of (type_constr * type_tuple) reg
 | TFun    of (type_expr * arrow * type_expr) reg
@@ -177,18 +178,28 @@ and type_expr =
 | TVar    of variable
 | TWild   of wild
 | TString of lexeme reg
+| TInt    of (lexeme * Z.t) reg
+| TModA   of type_expr module_access reg
 
 and cartesian = (type_expr, comma) nsepseq par reg
 
+and sum_type = {
+  lead_vbar  : vbar option;
+  variants   : (variant reg, vbar) nsepseq;
+  attributes : attributes
+}
+
 and variant = {
-  constr : constr;
-  arg    : (kwd_of * type_expr) option
+  constr     : constr;
+  arg        : (kwd_of * type_expr) option;
+  attributes : attributes
 }
 
 and field_decl = {
   field_name : field_name;
   colon      : colon;
-  field_type : type_expr
+  field_type : type_expr;
+  attributes : attributes
 }
 
 and type_tuple = (type_expr, comma) nsepseq par reg
@@ -244,7 +255,7 @@ and field_pattern = {
 and expr =
   ECase    of expr case reg
 | ECond    of cond_expr reg
-| EAnnot   of annot_expr par reg
+| EAnnot   of annot_expr reg
 | ELogic   of logic_expr
 | EArith   of arith_expr
 | EString  of string_expr
@@ -252,6 +263,7 @@ and expr =
 | EConstr  of constr_expr
 | ERecord  of record reg
 | EProj    of projection reg
+| EModA    of expr module_access reg
 | EUpdate  of update reg
 | EVar     of variable
 | ECall    of (expr * arguments) reg
@@ -260,6 +272,7 @@ and expr =
 | ETuple   of (expr, comma) nsepseq reg
 | EPar     of expr par reg
 | ELetIn   of let_in reg
+| ETypeIn  of type_in reg
 | EFun     of fun_expr reg
 | ESeq     of expr injection reg
 | ECodeInj of code_inj reg
@@ -279,7 +292,8 @@ and 'a injection = {
 and 'a ne_injection = {
   compound    : compound option;
   ne_elements : ('a, semi) nsepseq;
-  terminator  : semi option
+  terminator  : semi option;
+  attributes  : attributes
 }
 
 and compound =
@@ -353,6 +367,12 @@ and comp_expr =
 
 and record = field_assign reg ne_injection
 
+and 'a module_access = {
+  module_name : module_name;
+  selector    : dot;
+  field       : 'a;
+}
+
 and projection = {
   struct_name : variable;
   selector    : dot;
@@ -412,6 +432,12 @@ and let_in = {
   attributes : attributes
 }
 
+and type_in = {
+  type_decl  : type_decl;
+  semi       : semi;
+  body       : expr;
+}
+
 and fun_expr = {
   binders    : pattern;
   lhs_type   : (colon * type_expr) option;
@@ -455,8 +481,10 @@ let type_expr_to_region = function
 | TFun    {region; _}
 | TPar    {region; _}
 | TString {region; _}
+| TInt    {region; _}
 | TVar    {region; _}
 | TWild    region
+| TModA   {region; _}
  -> region
 
 let list_pattern_to_region = function
@@ -518,10 +546,12 @@ let expr_to_region = function
 | EList e -> list_expr_to_region e
 | EConstr e -> constr_expr_to_region e
 | EAnnot {region;_ } | ELetIn {region;_}   | EFun {region;_}
+| ETypeIn {region;_ }
 | ECond {region;_}   | ETuple {region;_}   | ECase {region;_}
 | ECall {region;_}   | EVar {region; _}    | EProj {region; _}
 | EUnit {region;_}   | EPar {region;_}     | EBytes {region; _}
 | ESeq {region; _}   | ERecord {region; _} | EUpdate {region; _}
+| EModA {region; _}
 | ECodeInj {region; _} -> region
 
 let declaration_to_region = function

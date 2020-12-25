@@ -1,32 +1,21 @@
-open Enums_utils
+type z = Z.t
+type ligo_string = Simple_utils.Ligo_string.t
 
-type type_constant =
-  | TC_unit
-  | TC_string
-  | TC_bytes
-  | TC_nat
-  | TC_int
-  | TC_mutez
-  | TC_operation
-  | TC_address
-  | TC_key
-  | TC_key_hash
-  | TC_chain_id
-  | TC_signature
-  | TC_timestamp
-  | TC_contract
-  | TC_option
-  | TC_list
-  | TC_set
-  | TC_map
-  | TC_big_map
-  | TC_map_or_big_map
-  | TC_michelson_pair
-  | TC_michelson_or
-  | TC_michelson_pair_right_comb
-  | TC_michelson_pair_left_comb
-  | TC_michelson_or_right_comb
-  | TC_michelson_or_left_comb
+let [@warning "-32"] z_to_yojson x = `String (Z.to_string x)
+let [@warning "-32"] z_of_yojson x =
+  try match x with
+      | `String s -> Ok (Z.of_string s)
+      | _ -> Utils.error_yojson_format "JSON string"
+  with
+  | Invalid_argument _ ->
+     Error "Invalid formatting.
+            The Zarith library does not know how to handle this formatting."
+
+let bytes_to_yojson b = `String (Bytes.to_string b)
+
+type layout =
+  | L_comb
+  | L_tree
 
 type literal =
   | Literal_unit
@@ -99,6 +88,8 @@ type constant' =
   | C_PAIR
   | C_CAR
   | C_CDR
+  | C_TRUE
+  | C_FALSE
   | C_LEFT
   | C_RIGHT
   (* Set *)
@@ -115,6 +106,8 @@ type constant' =
   | C_LIST_ITER
   | C_LIST_MAP
   | C_LIST_FOLD
+  | C_LIST_HEAD_OPT
+  | C_LIST_TAIL_OPT
   (* Maps *)
   | C_MAP
   | C_MAP_EMPTY
@@ -130,10 +123,12 @@ type constant' =
   | C_MAP_MEM
   | C_MAP_FIND
   | C_MAP_FIND_OPT
+  | C_MAP_GET_AND_UPDATE
   (* Big Maps *)
   | C_BIG_MAP
   | C_BIG_MAP_EMPTY
   | C_BIG_MAP_LITERAL
+  | C_BIG_MAP_GET_AND_UPDATE
   (* Crypto *)
   | C_SHA256
   | C_SHA512
@@ -162,6 +157,29 @@ type constant' =
   | C_CONVERT_TO_RIGHT_COMB
   | C_CONVERT_FROM_LEFT_COMB
   | C_CONVERT_FROM_RIGHT_COMB
+  (* Tests - ligo interpreter only *)
+  | C_TEST_ORIGINATE
+  | C_TEST_GET_STORAGE
+  | C_TEST_GET_BALANCE
+  | C_TEST_SET_NOW
+  | C_TEST_SET_SOURCE
+  | C_TEST_SET_BALANCE
+  | C_TEST_EXTERNAL_CALL
+  | C_TEST_ASSERT_FAILURE
+  | C_TEST_LOG
+  (* New with EDO*)
+  | C_SHA3
+  | C_KECCAK
+  | C_LEVEL
+  | C_VOTING_POWER
+  | C_TOTAL_VOTING_POWER
+  | C_TICKET
+  | C_READ_TICKET
+  | C_SPLIT_TICKET
+  | C_JOIN_TICKET
+  | C_PAIRING_CHECK
+  | C_SAPLING_VERIFY_UPDATE
+  | C_SAPLING_EMPTY_STATE
 
 type deprecated = {
     name : string ;

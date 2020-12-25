@@ -50,6 +50,7 @@ val get_t_left : type_expression -> type_expression option
 val get_t_right : type_expression -> type_expression option
 val get_t_contract : type_expression -> type_expression option
 val get_t_operation : type_expression -> type_expression option
+val get_t_sapling_state : type_expression -> Z.t option
 val get_operation : value -> bytes option
 
 val t_int      : ?loc:Location.t -> unit -> type_expression 
@@ -76,4 +77,5 @@ val d_unit : value
 val environment_wrap : environment -> environment -> environment_wrap
 val id_environment_wrap : environment -> environment_wrap
 val e_var : ?loc:Location.t -> var_name -> type_expression -> expression
+val ec_pair : expression -> expression -> expression_content
 val e_application : ?loc:Location.t -> expression -> type_expression -> expression -> expression

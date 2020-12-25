@@ -18,6 +18,11 @@ If you wish to build it yourself, do `nix build -f. $thing`, where `$thing` is
 
 The output of `nix build` can be found in `result` directory.
 
+To see the logs while building, use the [secret
+`-L`|`--print-build-logs`
+option](https://github.com/NixOS/nix/issues/1904#issuecomment-706518776)
+to `nix build`.
+
 ## Quick maintenance guide
 
 - `opam-repository` is pinned. To update it when required, run `niv update` (you can get niv with `nix shell 'nixpkgs#niv'`)

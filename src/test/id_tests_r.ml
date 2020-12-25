@@ -3,25 +3,23 @@ open Test_helpers
 open Ast_imperative
 
 
-let retype_file f =
-  let%bind typed,state = Ligo.Compile.Utils.type_file f "reasonligo" (Contract "main") in
-  ok (typed,state)
 
 let get_program =
   let s = ref None in
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-        let%bind program = retype_file "./contracts/id.religo" in
-        s := Some program ;
-        ok program
-      )
+      let options = Compiler_options.make () in
+      let%bind program = Ligo.Compile.Utils.type_file ~options "./contracts/id.religo"  "reasonligo" (Contract "main") in
+      s := Some program ;
+      ok program
+    )
 
 let compile_main () =
-  let%bind typed_prg,_     = get_program () in
+  let%bind typed_prg,_,_   = get_program () in
   let%bind mini_c_prg      = Ligo.Compile.Of_typed.compile typed_prg in
-  let%bind michelson_prg   = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
-  let%bind (_contract: Tezos_utils.Michelson.michelson) =
+  let%bind michelson_prg   = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
+  let%bind _contract =
     (* fails if the given entry point is not a valid contract *)
     Ligo.Compile.Of_michelson.build_contract michelson_prg in
   ok ()

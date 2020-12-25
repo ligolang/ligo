@@ -1,19 +1,17 @@
-const x : int = 1; attributes ["inline"]
+[@annot] const x : int = 1;
 
-function foo (const a : int) : int is
+[@inline] function foo (const a : int) : int is
   block {
-    const test : int = 2 + a;
-    attributes ["inline"];
+    [@inline] const test : int = 2 + a;
   } with test;
-attributes ["inline"];
 
-const y : int = 1; attributes ["inline"; "other"]
+[@inline][@other] const y : int = 1;
 
 function bar (const b : int) : int is
   block {
+    [@inline][@foo][@bar]
     function test (const z : int) : int is
       block {
         const r : int = 2 + b + z
       } with r;
-    attributes ["inline"; "foo"; "bar"]
   } with test (b)

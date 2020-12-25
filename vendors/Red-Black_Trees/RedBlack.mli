@@ -26,6 +26,8 @@ type choice = Old | New
 
 val add: cmp:('a -> 'a -> int) -> choice -> 'a -> 'a t -> 'a t
 
+val union: cmp:('a -> 'a -> int) -> choice -> 'a t -> 'a t -> 'a t
+
 (* The value of the call [remove ~cmp x t] is a red-black tree
    containing the same elements as [t] with the exception of the
    element identified by [x]. The type of [x] can be different from

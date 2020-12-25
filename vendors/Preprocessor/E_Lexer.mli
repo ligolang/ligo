@@ -6,17 +6,8 @@ module Region = Simple_utils.Region
 
 val string_of_token : E_Parser.token -> string
 
-(* Errors *)
-
-type error = Invalid_character of char
-
-val error_to_string : error -> string
-
-val format :
-  ?offsets:bool -> error Region.reg -> file:bool -> string Region.reg
-
 (* Lexing boolean expressions (may raise [Error]) *)
 
-exception Error of error Region.reg
+exception Error of string Region.reg
 
 val scan : Lexing.lexbuf -> E_Parser.token

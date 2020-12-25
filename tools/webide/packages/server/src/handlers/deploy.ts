@@ -1,5 +1,6 @@
 import joi from '@hapi/joi';
-import { Tezos } from '@taquito/taquito';
+import { TezosToolkit } from '@taquito/taquito';
+import { importKey } from "@taquito/signer";
 import { Request, Response } from 'express';
 
 import { CompilerError, LigoCompiler } from '../ligo-compiler';
@@ -13,7 +14,7 @@ interface DeployBody {
   storage: string;
 }
 
-Tezos.setProvider({ rpc: 'https://api.tez.ie/rpc/carthagenet' });
+const Tezos = new TezosToolkit('https://api.tez.ie/rpc/delphinet');
 
 const validateRequest = (body: any): { value: DeployBody; error?: any } => {
   return joi
@@ -48,7 +49,7 @@ export async function deployHandler(req: Request, res: Response) {
         body.storage
       );
 
-      await Tezos.importKey(await fetchRandomPrivateKey());
+      await importKey(Tezos, await fetchRandomPrivateKey());
 
       const op = await Tezos.contract.originate({
         code: JSON.parse(michelsonCode),

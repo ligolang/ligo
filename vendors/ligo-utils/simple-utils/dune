@@ -1,10 +1,13 @@
+;; Building the simple utilities for LIGO as a library
+
 (library
   (name simple_utils)
   (public_name simple-utils)
   (libraries
-    yojson
-    result
-    unix
-    str)
+    ;; Third party
+   yojson
+   result
+   unix
+   str)
   (preprocess
     (pps ppx_let)))

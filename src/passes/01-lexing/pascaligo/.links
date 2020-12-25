@@ -1,0 +1,8 @@
+$HOME/git/OCaml-build/Makefile
+
+../shared/Lexer.mli
+../shared/Lexer.mll
+../shared/LexerMainGen.ml
+
+./Stubs/Lexer_pascaligo.ml
+./Stubs/Shared_lexer.ml

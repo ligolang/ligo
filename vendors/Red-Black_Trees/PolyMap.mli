@@ -5,7 +5,7 @@
    standard library instead, at the cost of the polymorphism on the
    keys.
 
-   No deletion is provided.
+   Deletion does not balance the tree.
 *)
 
 type ('key, 'value) t
@@ -40,7 +40,7 @@ val is_empty : ('key, 'value) t -> bool
 
 val add : 'key -> 'value -> ('key, 'value) t -> ('key, 'value) t
 
-(* The value of the call [add key value map] is a map containing all
+(* The value of the call [remove key map] is a map containing all
    the bindings of the map [map], except for the binding of [key]. *)
 
 val remove : 'key -> ('key, 'value) t -> ('key, 'value) t

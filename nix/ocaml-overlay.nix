@@ -13,6 +13,10 @@ let
       sources = import "${sources.tezos-packaging}/nix/nix/sources.nix";
     };
 
+  fixHardeningWarning = pkg: if pkg.stdenv.isDarwin then pkg.overrideAttrs (_: {
+    hardeningDisable = [ "strictoverflow" ];
+  }) else pkg;
+
   inherit (import sources."gitignore.nix" { inherit (self) lib; })
     gitignoreSource;
   # Remove list of directories or files from source (to stop unneeded rebuilds)
@@ -23,10 +27,8 @@ let
       src = gitignoreSource ../.;
     });
 in {
-  ocamlPackages = self.ocaml-ng.ocamlPackages_4_09.overrideScope'
+  ocamlPackages = (self.extend ocaml-overlay).ocamlPackages.overrideScope'
     (builtins.foldl' self.lib.composeExtensions (_: _: { }) [
-      # opam-repository is updated manually with `niv update`
-      (oself: osuper: (ocaml-overlay self super).ocamlPackages)
       (opam-nix.callOPAMPackage (filterOut [
         ".git"
         ".gitlab-ci.yml"
@@ -46,7 +48,6 @@ in {
         xmldiff = osuper.xmldiff.overrideAttrs (_: { src = sources.xmldiff; });
         getopt = osuper.getopt.overrideAttrs (_: { configurePhase = "true"; });
         # Force certain versions
-        cohttp-lwt = osuper.cohttp-lwt.versions."2.4.0";
         ocaml-migrate-parsetree =
           osuper.ocaml-migrate-parsetree.versions."1.4.0";
         ppx_tools_versioned = osuper.ppx_tools_versioned.versions."5.2.3";
@@ -54,6 +55,9 @@ in {
           src = builtins.fetchTarball
             "https://github.com/aantron/bisect_ppx/archive/02dfb10188033a26d07d23480c2bc44a3a670357.tar.gz";
         });
+        coq = null;
+
+        hacl = fixHardeningWarning osuper.hacl;
 
         proto-alpha-utils = osuper.proto-alpha-utils.overrideAttrs (oa: rec {
           buildInputs = oa.buildInputs
@@ -77,8 +81,10 @@ in {
           ];
         };
 
+        ligo-dune = osuper.ligo.override { dune = osuper.dune_2; };
+
         # LIGO executable and public libraries
-        ligo-out = osuper.ligo.overrideAttrs (oa: {
+        ligo-out = oself.ligo-dune.overrideAttrs (oa: {
           name = "ligo-out";
           LIGO_VERSION = if isNull
           (builtins.match "[0-9]+\\.[0-9]+\\.[0-9]+" CI_COMMIT_TAG) then
@@ -98,11 +104,11 @@ in {
           buildInputs = oa.buildInputs
             ++ [ oself.UnionFind oself.Preprocessor ];
           nativeBuildInputs = oa.nativeBuildInputs
-            ++ [ self.buildPackages.rakudo ];
+            ++ [ self.buildPackages.coq ];
         });
 
         # LIGO test suite; output empty on purpose
-        ligo-tests = osuper.ligo.overrideAttrs (oa: {
+        ligo-tests = oself.ligo-dune.overrideAttrs (oa: {
           name = "ligo-tests";
           src = filterOut [
             ".git"
@@ -113,21 +119,21 @@ in {
             "tools"
           ];
           outputs = [ "out" ];
-          buildPhase = "dune runtest";
+          buildPhase = "dune runtest && LIGO_FORCE_NEW_TYPER=true dune runtest --force";
           nativeBuildInputs = oa.nativeBuildInputs
-            ++ [ self.buildPackages.rakudo ];
+            ++ [ self.buildPackages.coq ];
           installPhase = "mkdir $out";
           buildInputs = oa.buildInputs ++ oa.checkInputs;
         });
         # LIGO odoc documentation
-        ligo-doc = osuper.ligo.overrideAttrs (oa: {
+        ligo-doc = oself.ligo-dune.overrideAttrs (oa: {
           name = "ligo-doc";
           buildInputs = oa.buildInputs
             ++ [ oself.odoc oself.tezos-protocol-updater ];
           outputs = [ "out" ];
           buildPhase = "dune build @doc";
           nativeBuildInputs = oa.nativeBuildInputs
-            ++ [ self.buildPackages.rakudo ];
+            ++ [ self.buildPackages.coq ];
           installPhase =
             "mkdir $out; cp -r _build/default/_doc/_html/ $out/doc";
         });
@@ -135,7 +141,7 @@ in {
         ligo-coverage = oself.ligo-tests.overrideAttrs (oa: {
           name = "ligo-coverage";
           nativeBuildInputs = oa.nativeBuildInputs
-            ++ [ self.buildPackages.rakudo ];
+            ++ [ self.buildPackages.coq ];
           buildPhase = ''
             # Needed for coverage and nothing else
             mkdir -p $out/share/coverage
@@ -157,4 +163,5 @@ in {
         });
       })
     ]);
+  coq = (self.coq_8_12.override { buildIde = false; csdp = null; });
 }

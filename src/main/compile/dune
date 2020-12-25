@@ -6,7 +6,10 @@
     simple-utils
     tezos-utils
     proto-alpha-utils
+    preproc
     parser
+    cst
+    self_cst
     tree_abstraction
     ast_imperative
     self_ast_imperative
@@ -27,6 +30,7 @@
     scoping
     stacking
     self_michelson
+    compiler_options
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)

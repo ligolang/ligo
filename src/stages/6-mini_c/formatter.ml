@@ -7,14 +7,14 @@ type optim =
   | Optimized of expression
   | Raw of program
 
-let program_ppformat ~display_format f (p,_) =
+let program_ppformat ~display_format f p =
   match display_format with
   | Human_readable | Dev -> ( match p with
     | Optimized e -> PP.expression f e
     | Raw e -> PP.program f e
   )
 
-let program_jsonformat (p,_) : json =
+let program_jsonformat p : json =
   let s = ( match p with
     | Optimized e -> Format.asprintf "%a" PP.expression e
     | Raw e -> Format.asprintf "%a" PP.program e ) in

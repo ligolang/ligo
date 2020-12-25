@@ -144,14 +144,18 @@ function HomePage() {
         flexDirection: 'column'
       }}>
         <div id="intro" className="centered">
-        <div id="callToAction">
-          <ul>
-            <li className="primary">
-              <a href="https://ide.ligolang.org">Try Online</a>
-            </li>
-            <li className="secondary">
-              <a href={useBaseUrl('/docs/intro/installation')}>Install</a>
-            </li>
+          <div id="callToAction">
+            <ul>
+              <li className="primary">
+                <a href="https://ide.ligolang.org">
+                  Try Online
+                </a>
+              </li>
+              <li className="secondary">
+                <a href={useBaseUrl('/docs/intro/installation')}>
+                  Install
+                </a>
+              </li>
           </ul>
         </div>
         <div id="preview">

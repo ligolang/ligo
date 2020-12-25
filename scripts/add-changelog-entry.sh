@@ -36,7 +36,7 @@ if ! [ "1$2" -eq "1$2" ] 2>/dev/null; then
     exit 1
 fi
 
-if command -v nix-shell > /dev/null && [[ -z "${IN_NIX_SHELL-}" ]]; then
+if command -v nix-shell &> /dev/null && ( [[ -z "${IN_NIX_SHELL-}" ]] || ( ! command -v jq &> /dev/null ) || ( ! command -v json2yaml &> /dev/null ) ); then
     nix-shell -p jq -p remarshal --run "${0@Q} ${1@Q} ${2@Q} ${3@Q} ${4@Q}"
     exit $?
 fi

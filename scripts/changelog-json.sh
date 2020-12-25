@@ -20,6 +20,7 @@ for VERSION in "${VERSIONS[@]}"; do
     fi
     CHANGES="$(git diff --diff-filter=A --name-only "$VERSION" "$PREV_VERSION" -- changelog | sort -r --general-numeric-sort)"
     export PREV_VERSION
+    export name
     if [[ "$PREV_VERSION" == "HEAD" ]]; then
         name="Unreleased"
     else

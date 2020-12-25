@@ -12,6 +12,9 @@ type type_content =
   | T_list of type_expression
   | T_set of type_expression
   | T_contract of type_expression
+  | T_ticket of type_expression
+  | T_sapling_state of Z.t
+  | T_sapling_transaction of Z.t
   | T_option of type_expression
 
 and type_expression = {
@@ -34,6 +37,13 @@ and type_base =
   | TB_chain_id
   | TB_signature
   | TB_timestamp
+  | TB_baker_hash
+  | TB_pvss_key
+  | TB_baker_operation
+  | TB_bls12_381_g1
+  | TB_bls12_381_g2
+  | TB_bls12_381_fr
+  | TB_never
 
 and environment_element = expression_variable * type_expression
 
@@ -73,20 +83,20 @@ type value =
 and selector = var_name list
 
 and expression_content =
-  | E_literal of value
+  | E_literal of literal
   | E_closure of anon_function
   | E_constant of constant
   | E_application of (expression * expression)
   | E_variable of var_name
   | E_iterator of constant' * ((var_name * type_expression) * expression) * expression
-  | E_fold of (((var_name * type_expression) * expression) * expression * expression)
-  | E_if_bool of (expression * expression * expression)
-  | E_if_none of expression * expression * ((var_name * type_expression) * expression)
-  | E_if_cons of (expression * expression * (((var_name * type_expression) * (var_name * type_expression)) * expression))
-  | E_if_left of expression * ((var_name * type_expression) * expression) * ((var_name * type_expression) * expression)
-  | E_let_in of ((var_name * type_expression) * inline * expression * expression)
-  | E_record_update of (expression * [`Left | `Right] list * expression)
-  | E_raw_michelson of string
+  | E_fold     of (((var_name * type_expression) * expression) * expression * expression)
+  | E_if_bool  of (expression * expression * expression)
+  | E_if_none  of expression * expression * ((var_name * type_expression) * expression)
+  | E_if_cons  of expression * expression * (((var_name * type_expression) * (var_name * type_expression)) * expression)
+  | E_if_left  of expression * ((var_name * type_expression) * expression) * ((var_name * type_expression) * expression)
+  | E_let_in   of expression * inline * ((var_name * type_expression) * expression)
+  | E_let_pair of expression * (((var_name * type_expression) * (var_name * type_expression)) * expression)
+  | E_raw_michelson of (Location.t, string) Tezos_micheline.Micheline.node list
 
 and expression = {
   content : expression_content ;

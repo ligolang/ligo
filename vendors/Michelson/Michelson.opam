@@ -1,0 +1,16 @@
+opam-version : "1.0"
+name         : "Michelson"
+version      : "1.0"
+synopsis     : "A lexer and a parser for Michelson"
+description  : "A lexer and a parser for Michelson"
+maintainer   : "rinderknecht@free.fr"
+authors      : "Christian Rinderknecht"
+license      : "MIT"
+homepage     : "https://gitlab.com/ligolang/Michelson"
+bug-reports  : "https://gitlab.com/ligolang/Michelson/issues"
+depends      : ["dune" "base" "ocaml" "simple-utils" "bisect_ppx"
+                "getopt" "LexerLib" "Preprocessor" "ParserLib"]
+build        : [
+                [ "sh" "-c" "printf 'let version = \"%s\"' \"$(git describe --always --dirty)\" > version.ml" ]
+                [ "dune" "build" "-p" name "-j" jobs ]
+               ]

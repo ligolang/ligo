@@ -1,29 +1,26 @@
 open Trace
 open Helpers
 
-let compile (source_filename:string) syntax : (Ast_imperative.program , _) result =
-  let%bind syntax = syntax_to_variant syntax (Some source_filename) in
-  let%bind abstract = parse_and_abstract syntax source_filename in
-  ok abstract
+type file_path = string
+type module_name = string
 
-let compile_string (source:string) syntax : (Ast_imperative.program , _) result =
-  let%bind abstract = parse_and_abstract_string syntax source in
-  ok abstract
+type c_unit = Buffer.t * (file_path * module_name) list
 
-let compile_expression : v_syntax -> string -> (Ast_imperative.expression , _) result =
-    fun syntax exp ->
-  parse_and_abstract_expression syntax exp
+(* we should have on for filename with syntax_opt and one in case of no file *)
+let extract_meta syntax file_name =
+  let%bind syntax   = syntax_to_variant (Syntax_name syntax) (Some file_name) in
+  ok @@ {syntax}
 
-let compile_contract_input : string -> string -> v_syntax -> (Ast_imperative.expression , _) result =
-    fun storage parameter syntax ->
-  let%bind (storage,parameter) = bind_map_pair (compile_expression syntax) (storage,parameter) in
-  ok @@ Ast_imperative.e_pair storage parameter
+let make_meta syntax file_name_opt =
+  let%bind syntax   = syntax_to_variant (Syntax_name syntax) file_name_opt in
+  ok @@ {syntax}
 
-let pretty_print_cst source_filename syntax =
-  Helpers.pretty_print_cst syntax source_filename
+let compile ~options ~meta (source_filename:string) : (c_unit , _) result =
+  trace Main_errors.preproc_tracer @@ preprocess_file ~options ~meta source_filename
 
-let preprocess source_filename syntax =
-  Helpers.preprocess syntax source_filename
+let compile_string ~options ~meta source : (c_unit , _) result =
+  preprocess_string ~options ~meta source
 
-let pretty_print source_filename syntax =
-  Helpers.pretty_print syntax source_filename
+let compile_contract_input : options:Compiler_options.t -> meta:meta -> string -> string -> (c_unit * c_unit , _) result =
+    fun ~options ~meta storage parameter ->
+  bind_map_pair (compile_string ~options ~meta) (storage,parameter)

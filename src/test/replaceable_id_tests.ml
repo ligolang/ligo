@@ -1,83 +1,82 @@
 open Trace
 open Test_helpers
 
-let type_file f = 
-  let%bind typed,state = Ligo.Compile.Utils.type_file f "pascaligo" (Contract "main") in
-  ok @@ (typed,state)
+let type_file f = Ligo.Compile.Utils.type_file f "pascaligo" (Contract "main")
 
 let get_program =
   let s = ref None in
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-        let%bind program = type_file "./contracts/replaceable_id.ligo" in
-        s := Some program ;
-        ok program
-      )
-
-let compile_main () = 
-  let%bind typed_prg,_     = get_program () in 
+      let options = Compiler_options.make () in
+      let%bind program = type_file ~options "./contracts/replaceable_id.ligo" in
+      s := Some program ;
+      ok program
+    )
+      
+let compile_main () =
+  let%bind typed_prg,_,_   = get_program () in
   let%bind mini_c_prg      = Ligo.Compile.Of_typed.compile typed_prg in
-  let%bind michelson_prg   = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
-  let%bind (_contract: Tezos_utils.Michelson.michelson) =
+  let%bind michelson_prg   = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
+  let%bind _contract =
     (* fails if the given entry point is not a valid contract *)
     Ligo.Compile.Of_michelson.build_contract michelson_prg in
   ok ()
 
 open Ast_imperative
 
-let empty_op_list = 
+let empty_op_list =
   (e_typed_list [] (t_operation ()))
-let empty_message = e_lambda (Location.wrap @@ Var.of_name "arguments",t_unit ()) 
-  @@ e_annotation empty_op_list (t_list (t_operation ()))
+let empty_message = e_lambda_ez (Location.wrap @@ Var.of_name "arguments")
+  ~ascr:(t_unit ()) (Some (t_list (t_operation ())))
+  empty_op_list
 
-
-let storage id = e_address @@ addr id 
+let storage id = e_address @@ addr id
 let entry_change_addr id = e_constructor "Change_address"
   @@ e_address @@ addr @@ id
 let entry_pass_message = e_constructor "Pass_message"
   @@ empty_message
 
 let change_addr_success () =
-  let%bind (program , state) = get_program () in
+  let%bind (program, env, state) = get_program () in
   let init_storage = storage 1 in
   let param = entry_change_addr 2 in
   let options =
     let sender = contract 1 in
     Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
-  expect_eq ~options (program, state) "main"
+  expect_eq ~options (program, env, state) "main"
     (e_pair param init_storage) (e_pair empty_op_list (storage 2))
 
 let change_addr_fail () =
-  let%bind (program , state) = get_program () in
+  let%bind (program, env, state) = get_program () in
   let init_storage = storage 1 in
   let param = entry_change_addr 2 in
   let options =
     let sender = contract 3 in
     Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
   let exp_failwith = "Unauthorized sender" in
-  expect_string_failwith ~options (program, state) "main"
+  expect_string_failwith ~options (program, env, state) "main"
     (e_pair param init_storage) exp_failwith
 
 let pass_message_success () =
-  let%bind (program , state) = get_program () in
+  let%bind (program, env, state) = get_program () in
   let init_storage = storage 1 in
   let param = entry_pass_message in
   let options =
     let sender = contract 1 in
     Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
-  expect_eq ~options (program, state) "main"
+  expect_eq ~options (program, env, state) "main"
     (e_pair param init_storage) (e_pair empty_op_list init_storage)
 
 let pass_message_fail () =
-  let%bind (program , state) = get_program () in
+  let%bind (program, env, state) = get_program () in
   let init_storage = storage 1 in
   let param = entry_pass_message in
   let options =
     let sender = contract 2 in
     Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
   let exp_failwith = "Unauthorized sender" in
-  expect_string_failwith ~options (program, state) "main"
+  expect_string_failwith ~options (program, env, state) "main"
     (e_pair param init_storage) exp_failwith
 
 let main = test_suite "Replaceable ID" [

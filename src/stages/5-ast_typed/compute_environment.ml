@@ -25,6 +25,11 @@ let rec expression : environment -> expression -> expression = fun env expr ->
     let let_result = self ~env' c.let_result in
     return @@ E_let_in { c with rhs ; let_result }
   )
+  | E_type_in c -> (
+    let env' = Environment.add_type c.type_binder c.rhs env in
+    let let_result = self ~env' c.let_result in
+    return @@ E_type_in { c with let_result }
+  )
   (* rec fun_name binder -> result *)
   | E_recursive c -> (
     let env_fun_name = Environment.add_ez_binder c.fun_name c.fun_type env in
@@ -67,6 +72,7 @@ let rec expression : environment -> expression -> expression = fun env expr ->
     let cases = self_cases c.cases in
     return @@ E_matching { matchee ; cases }
   )
+  | E_module_accessor _ -> return_id
 
 and cases : environment -> matching_expr -> matching_expr = fun env cs ->
   let return x = x in
@@ -99,7 +105,7 @@ and cases : environment -> matching_expr -> matching_expr = fun env cs ->
       let aux (c : matching_content_case) =
         let case =
           try (
-            LMap.find c.constructor variant_type
+            LMap.find c.constructor variant_type.content
           ) with _ -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
         in
         let env' = Environment.add_ez_binder c.pattern case.associated_type env in
@@ -110,8 +116,18 @@ and cases : environment -> matching_expr -> matching_expr = fun env cs ->
     in
     return @@ Match_variant { c with cases }
   )
+  | Match_record r -> (
+    let env' =
+      let aux _label (var,t : expression_variable * type_expression) env =
+        Environment.add_ez_binder var t env
+      in
+      LMap.fold aux r.fields env
+    in
+    let body = self ~env' r.body in
+    return @@ Match_record { r with body }
+  )
 
-let program : environment -> program -> environment * program = fun init_env prog ->
+let program : environment -> program_fully_typed -> environment * program_fully_typed = fun init_env (Program_Fully_Typed prog) ->
   (*
       BAD
       We take the old type environment and add it to the current value environment
@@ -127,11 +143,11 @@ let program : environment -> program -> environment * program = fun init_env pro
       (post_env , decl_wrapped' :: rev_decls)
     )
     | Declaration_type t -> (
-      let post_env = Environment.add_type t.type_binder t.type_expr pre_env in      
+      let post_env = Environment.add_type t.type_binder t.type_expr pre_env in
       let wrap_content = Declaration_type t in
       let decl_wrapped' = { decl_wrapped with wrap_content } in
       (post_env , decl_wrapped' :: rev_decls)
     )
   in
   let (last_env , rev_decls) = List.fold_left aux (init_env , []) prog in
-  (last_env , List.rev rev_decls)
+  (last_env , Program_Fully_Typed (List.rev rev_decls))

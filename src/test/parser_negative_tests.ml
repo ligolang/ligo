@@ -1,17 +1,25 @@
 open Test_helpers
 open Trace
 open Main_errors
+open Function
 
-type ('a,'err) sdata = { erroneous_source_file : string ; parser : string -> ('a,'err) result }
+type ('a,'err) sdata = {
+  erroneous_source_file : string ;
+  preproc : string -> (Buffer.t * (string * string) list,'err) result;
+  parser : Buffer.t -> ('a,'err) result }
+
 let pascaligo_sdata = {
-  erroneous_source_file = "../passes/01-parsing/pascaligo/all.ligo" ;
-  parser = Parser.Pascaligo.parse_expression }
+  erroneous_source_file = "../passes/02-parsing/pascaligo/all.ligo" ;
+  preproc = (trace preproc_tracer) <@ (Preproc.Pascaligo.preprocess_string []) ;
+  parser  = (trace parser_tracer ) <@ (Parser.Pascaligo.parse_expression   []) }
 let cameligo_sdata = {
-  erroneous_source_file = "../passes/01-parsing/cameligo/all.mligo" ;
-  parser = Parser.Cameligo.parse_expression }
+  erroneous_source_file = "../passes/02-parsing/cameligo/all.mligo" ;
+  preproc = (trace preproc_tracer) <@ (Preproc.Cameligo.preprocess_string []) ;
+  parser  = (trace parser_tracer ) <@ (Parser.Cameligo.parse_expression   []) }
 let reasonligo_sdata = {
-  erroneous_source_file = "../passes/01-parsing/reasonligo/all.religo" ;
-  parser = Parser.Reasonligo.parse_expression }
+  erroneous_source_file = "../passes/02-parsing/reasonligo/all.religo" ;
+  preproc = (trace preproc_tracer) <@ (Preproc.Reasonligo.preprocess_string []) ;
+  parser  = (trace parser_tracer ) <@ (Parser.Reasonligo.parse_expression   []) }
 
 let get_exp_as_string filename =
   let lines = ref [] in
@@ -25,10 +33,16 @@ let get_exp_as_string filename =
     List.rev !lines ;;
 
 let assert_syntax_error sdata () =
-  let%bind _l = bind_iter_list
-    (fun entry -> Assert.assert_fail (test_internal __LOC__) @@ sdata.parser entry)
-    (get_exp_as_string sdata.erroneous_source_file) in
-  ok ()
+  let aux entry =
+    Format.printf "Entry : <%s>%!\n" entry ;
+    let%bind c_unit,_ = sdata.preproc entry in
+    let result   = sdata.parser c_unit in
+    Format.printf "Parsed%!\n" ;
+    Assert.assert_fail (test_internal __LOC__) result
+  in
+  let exps = get_exp_as_string sdata.erroneous_source_file in
+  bind_iter_list aux exps
+
 
 let () =
   Printexc.record_backtrace true ;

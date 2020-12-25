@@ -9,7 +9,7 @@ let failwith_to_string (f:failwith) : string =
     Format.asprintf "0X%a" Hex.pp (Hex.of_bytes b) in
   Format.asprintf "failwith(%s)" str
 
-let expression_ppformat ~display_format f (runned_result,_) =
+let expression_ppformat ~display_format f runned_result =
   match display_format with
   | Display.Human_readable | Dev -> (
     match runned_result with
@@ -17,10 +17,10 @@ let expression_ppformat ~display_format f (runned_result,_) =
       let failstring = failwith_to_string fail_res in
       Format.pp_print_string f failstring
     | Success typed ->
-      Ast_core.PP.expression f typed
+      Ast_core.PP.expression f typed      
   )
 
-let expression_jsonformat (runned_result,_) : Display.json =
+let expression_jsonformat runned_result : Display.json =
   match runned_result with
   | Fail fail_res ->
     let failstring = failwith_to_string fail_res in

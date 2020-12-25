@@ -3,7 +3,9 @@
   (public_name ligo.main_errors)
   (libraries
     simple-utils
+    preproc
     parser
+    self_cst
     tree_abstraction
     self_ast_imperative
     purification
@@ -18,7 +20,7 @@
     self_mini_c
     stacking
     self_michelson
-    tezos-client-ligo006-PsCARTHA
+    tezos-client-006-PsCARTHA
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)

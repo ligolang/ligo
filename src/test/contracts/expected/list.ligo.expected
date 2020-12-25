@@ -6,6 +6,10 @@ const fb2 : foobar = 144 # fb
 
 const fb3 : foobar = cons (688, fb2)
 
+const fb_head = List.head_opt (fb)
+
+const fb_tail = List.tail_opt (fb)
+
 function size_ (const m : foobar) : nat is size (m)
 
 const bl : foobar = list [144; 51; 42; 120; 421]

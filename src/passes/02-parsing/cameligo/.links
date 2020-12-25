@@ -1,0 +1,16 @@
+$HOME/git/OCaml-build/Makefile
+
+../shared/Lexer.mli
+../shared/Lexer.mll
+../shared/LexerMainGen.ml
+../shared/ParserMainGen.ml
+
+./Stubs/Lexer_cameligo.ml
+./Stubs/Parser_cameligo.ml
+./Stubs/Cst.ml
+./Stubs/Cst_cameligo.ml
+./Stubs/Shared.ml
+
+$HOME/git/ligo/src/stages/1-cst/cameligo/CST.ml
+$HOME/git/ligo/src/stages/1-cst/cameligo/Printer.mli
+$HOME/git/ligo/src/stages/1-cst/cameligo/Printer.ml

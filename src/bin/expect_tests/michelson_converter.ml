@@ -5,36 +5,18 @@ let contract basename =
 let bad_contract basename =
   "../../test/contracts/negative/" ^ basename
 
+(* avoid pretty printing *)
+let () = Unix.putenv "TERM" "dumb"
+
 let%expect_test _ =
-  run_ligo_bad [ "interpret" ; "--init-file="^(bad_contract "michelson_converter_no_annotation.mligo") ; "l4"] ;
-  [%expect {|
-    ligo: error
-          in file "michelson_converter_no_annotation.mligo", line 4, characters 9-39
-          Incorrect argument provided to Layout.convert_to_(left|right)_comb.
-          The given argument must be annotated with the type of the value.
-
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}] ;
-
   run_ligo_bad [ "interpret" ; "--init-file="^(bad_contract "michelson_converter_short_record.mligo") ; "l1"] ;
   [%expect {|
-    ligo: error
-          in file "michelson_converter_short_record.mligo", line 4, characters 9-44
-          Incorrect argument provided to Layout.convert_to_(left|right)_comb.
-          The record must have at least two elements.
+    in file "../../test/contracts/negative/michelson_converter_short_record.mligo", line 4, characters 9-44
+      3 |
+      4 | let l1 = Layout.convert_to_left_comb (v1:t1)
 
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}]
+    Incorrect argument provided to Layout.convert_to_(left|right)_comb.
+    The record must have at least two elements. |}]
 
 let%expect_test _ =
   run_ligo_good [ "interpret" ; "--init-file="^(contract "michelson_converter_pair.mligo") ; "r3"] ;
@@ -146,12 +128,8 @@ let%expect_test _ =
         (or (pair %option1 (string %bar) (nat %baz)) (pair %option2 (string %bar) (nat %baz))) ;
       storage nat ;
       code { CAR ;
-             IF_LEFT
-               { LEFT (pair (string %bar) (nat %baz)) }
-               { RIGHT (pair (string %bar) (nat %baz)) } ;
-             IF_LEFT
-               { LEFT (pair (string %bar) (nat %baz)) }
-               { RIGHT (pair (string %bar) (nat %baz)) } ;
+             IF_LEFT { LEFT (pair string nat) } { RIGHT (pair string nat) } ;
+             IF_LEFT { LEFT (pair string nat) } { RIGHT (pair string nat) } ;
              IF_LEFT { CDR ; NIL operation ; PAIR } { CDR ; NIL operation ; PAIR } } } |}]
 
 let%expect_test _ =
@@ -177,8 +155,7 @@ let%expect_test _ =
                     DUG 2 ;
                     COMPARE ;
                     NEQ ;
-                    IF { PUSH string "NOT_OWNER" ; FAILWITH } { PUSH unit Unit } ;
-                    DROP ;
+                    IF { PUSH string "NOT_OWNER" ; FAILWITH } {} ;
                     DIG 2 ;
                     CAR ;
                     PAIR ;
@@ -186,9 +163,9 @@ let%expect_test _ =
                     CDR ;
                     ITER { SWAP ;
                            DUP ;
-                           CAR ;
-                           SWAP ;
                            CDR ;
+                           SWAP ;
+                           CAR ;
                            DIG 2 ;
                            DUP ;
                            DUG 3 ;
@@ -203,9 +180,9 @@ let%expect_test _ =
                            CDR ;
                            PAIR ;
                            PAIR ;
-                           DIG 2 ;
+                           SWAP ;
                            DUP ;
-                           DUG 3 ;
+                           DUG 2 ;
                            SWAP ;
                            DUP ;
                            DUG 2 ;
@@ -213,18 +190,15 @@ let%expect_test _ =
                            GET ;
                            IF_NONE
                              { PUSH string "TOKEN_UNDEFINED" ; FAILWITH }
-                             { DIG 2 ;
+                             { DIG 3 ;
                                DUP ;
-                               DUG 3 ;
+                               DUG 4 ;
                                SWAP ;
                                DUP ;
                                DUG 2 ;
                                COMPARE ;
                                EQ ;
-                               IF {} { DROP ; PUSH string "INSUFFICIENT_BALANCE" ; FAILWITH } } ;
-                           DROP ;
-                           SWAP ;
-                           DUG 2 ;
+                               IF { DROP } { DROP ; PUSH string "INSUFFICIENT_BALANCE" ; FAILWITH } } ;
                            DUP ;
                            DUG 3 ;
                            CAR ;
@@ -234,6 +208,11 @@ let%expect_test _ =
                            CDR ;
                            UPDATE ;
                            PAIR } ;
-                    CAR } ;
+                    DUP ;
+                    CDR ;
+                    SWAP ;
+                    CAR ;
+                    SWAP ;
+                    DROP } ;
              NIL operation ;
              PAIR } } |}]
