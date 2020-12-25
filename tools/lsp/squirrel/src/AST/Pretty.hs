@@ -294,7 +294,7 @@ instance Pretty1 TField where
 
 instance Pretty1 Error where
   pp1 = \case
-    Error       src children -> sexpr ("ERROR: " <> src) (map pp children)
+    Error _src children -> sexpr "ERROR" [pp children]
 
 ----------------------------------------------------------------------------
 -- Common
