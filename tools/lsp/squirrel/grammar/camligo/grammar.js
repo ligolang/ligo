@@ -3,6 +3,8 @@ let sepBy  = (sep, p) => optional(sepBy1(sep, p))
 
 let some = x => seq(x, repeat(x))
 
+let withAttrs = ($, x) => seq(field("attributes", repeat($.attr)), x)
+
 function mkOp($, opExpr) {
   return seq(
     field("left", $._expr),
@@ -17,7 +19,7 @@ module.exports = grammar({
   extras: $ => [$.ocaml_comment, $.comment, /\s/],
 
   rules: {
-    contract: $ => repeat(field("declaration", $._declaration)),
+    source_file: $ => repeat(field("declaration", $._declaration)),
 
     _declaration: $ => choice(
       $.let_decl,
@@ -31,9 +33,7 @@ module.exports = grammar({
       field("filename", $.String)
     ),
 
-    _attribute: $ => /\[@@[a-z]+\]/,
-
-    fun_decl: $ => seq(
+    fun_decl: $ => withAttrs($, seq(
       "let",
       optional(field("recursive", "rec")),
       field("name", $.NameDecl),
@@ -44,10 +44,9 @@ module.exports = grammar({
       )),
       "=",
       field("body",$._program),
-      repeat(field("attribute", $._attribute))
-    ),
+    )),
 
-    let_decl: $ => seq(
+    let_decl: $ => withAttrs($, seq(
       "let",
       optional(field("recursive", "rec")),
       field("name", $._pattern),
@@ -57,8 +56,7 @@ module.exports = grammar({
       )),
       "=",
       field("body",$._program),
-      repeat(field("attribute", $._attribute))
-    ),
+    )),
 
     //========== EXPR ============
 
@@ -111,7 +109,7 @@ module.exports = grammar({
 
     con_pattern: $ => prec(10,
       seq(
-        field("ctor", $.data_con),
+        field("ctor", $.ConstrName),
         optional(field("args",$._pattern))
       )
     ),
@@ -261,7 +259,7 @@ module.exports = grammar({
       $.paren_expr,
       $.annot_expr,
       $.Name,
-      $.Name_Capital,
+      $.ConstrName,
       $._literal,
       $.rec_expr,
       $.rec_literal,
@@ -293,18 +291,13 @@ module.exports = grammar({
       ")",
     ),
 
-    //========== TYPE_EXPR ============
-    // t, test, string, integer
-    type_con: $ => $.TypeName,
-    // Red, Green, Blue, Cat
-    data_con: $ => $.Name_Capital,
     // a t, (a, b) t
     type_app: $ => prec(10,seq(
       choice(
         field("x", $._type_expr),
         field("x", $.type_tuple),
       ),
-      field("f", $.type_con)
+      field("f", $.TypeName)
     )),
 
     type_tuple: $ => seq(
@@ -333,41 +326,40 @@ module.exports = grammar({
       $.type_fun,
       $.type_product,
       $.type_app,
-      $.type_con,
+      $.TypeName,
       $.type_tuple,
     ),
 
     // Cat of string, Person of string * string
-    variant: $ => seq(
-      field("constructor", $.data_con),
+    variant: $ => withAttrs($, seq(
+      field("constructor", $.ConstrName),
       optional(seq(
         "of",
         field("type", $._type_expr)
       ))
-    ),
+    )),
 
-    // Cat of string | Personn of string * string
-    type_sum: $ => seq(
-      optional('|'),
+    type_sum: $ => seq(choice(
       sepBy1('|', field("variant", $.variant)),
-    ),
+      withAttrs($, seq('|', sepBy1('|', field("variant", $.variant)))),
+    )),
 
     _label: $ => $.FieldName,
 
     // field : string * int
-    type_rec_field: $ => seq(
+    type_rec_field: $ => withAttrs($, seq(
       field("field", $._label),
       ":",
       field("type", $._type_expr)
-    ),
+    )),
 
     // { field1 : a; field2 : b }
-    type_rec: $ => seq(
+    type_rec: $ => withAttrs($, seq(
       "{",
       sepBy(";", field("field", $.type_rec_field)),
       optional(";"),
       "}"
-    ),
+    )),
 
     _type_def_body: $ => choice(
       $.type_sum,
@@ -377,7 +369,7 @@ module.exports = grammar({
 
     type_decl: $ => seq(
       "type",
-      field("name", $.type_con),
+      field("name", $.TypeName),
       "=",
       field("type", $._type_def_body)
     ),
@@ -393,6 +385,8 @@ module.exports = grammar({
       $.Unit
     ),
 
+    attr: $ => /\[@[a-zA-Z][a-zA-Z0-9_:]*\]/,
+
     String:       $ => /\"(\\.|[^"])*\"/,
     Int:          $ => /-?([1-9][0-9_]*|0)/,
     Nat:          $ => /([1-9][0-9_]*|0)n/,
@@ -402,7 +396,7 @@ module.exports = grammar({
     TypeName:     $ => /[a-z][a-zA-Z0-9_]*/,
     NameDecl:     $ => /[a-z][a-zA-Z0-9_]*/,
     FieldName:    $ => /[a-z][a-zA-Z0-9_]*/,
-    Name_Capital: $ => /[A-Z][a-zA-Z0-9_]*/,
+    ConstrName:   $ => /[A-Z][a-zA-Z0-9_]*/,
     Keyword:      $ => /[A-Za-z][a-z]*/,
 
     False:         $ => 'false',

@@ -61,7 +61,6 @@ recognise (SomeRawTree dialect rawTree)
         "conditional"       -> If        <$> field  "selector"  <*> field "then" <*> fieldOpt "else"
         "cond_expr"         -> If        <$> field  "selector"  <*> field "then" <*> fieldOpt "else"
         "assignment"        -> Assign    <$> field  "LHS"       <*> field "RHS"
-        "attr_decl"         -> Attrs     <$> fields "attribute"
         "record_expr"       -> Record    <$> fields "assignment"
         "big_map_injection" -> BigMap    <$> fields "binding"
         "map_remove"        -> MapRemove <$> field  "key"       <*> field "container"

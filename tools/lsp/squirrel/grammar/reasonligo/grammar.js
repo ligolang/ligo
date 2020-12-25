@@ -7,7 +7,6 @@ const PREC = {
   MINUS: 6,
   MUL: 7,
   DIV: 7,
-  ATTR: 1,
   TYPE: 101,
   LET: 100,
 };
@@ -29,14 +28,11 @@ const OPS = [
   ['||', PREC.OR],
 ]
 
-let sepBy1 = (sep, rule) =>
-  seq(
-    rule,
-    repeat(seq(sep, rule)),
-    optional(sep)
-  )
-
+let sepBy1 = (sep, rule) => seq(rule, repeat(seq(sep, rule)))
 let sepBy = (sep, rule) => optional(sepBy1(sep, rule))
+
+let sepEndBy1 = (sep, rule) => seq(rule, repeat(seq(sep, rule)), optional(sep))
+let sepEndBy = (sep, rule) => optional(sepEndBy1(sep, rule))
 
 let par = x => seq('(', x, ')')
 let opar = x => seq(optional('('), x, optional(')'))
@@ -44,15 +40,14 @@ let brackets = x => seq('[', x, ']')
 let block = x => seq('{', x, '}')
 
 let tuple = x => seq(x, ',', x, repeat(seq(',', x)))
-let list__ = x => brackets(sepBy(';', x))
 
-let nseq = x => seq(x, repeat(x))
+let withAttrs = ($, x) => seq(field("attributes", repeat($.attr)), x)
 
 module.exports = grammar({
   name: 'ReasonLigo',
 
   word: $ => $.Keyword,
-  extras: $ => [$.oneline_comment, $.block_comment, /\s/, $.attr],
+  extras: $ => [$.oneline_comment, $.block_comment, /\s/],
 
   conflicts: $ =>
     [[$._expr_term, $._pattern]
@@ -72,7 +67,7 @@ module.exports = grammar({
     ],
 
   rules: {
-    contract: $ => sepBy1(optional(';'), field("declaration", $._declaration)),
+    source_file: $ => sepEndBy1(optional(';'), field("declaration", $._declaration)),
 
     _declaration: $ =>
       field("declaration",
@@ -85,7 +80,7 @@ module.exports = grammar({
 
     //// EXPRESSIONS ///////////////////////////////////////////////////////////
 
-    let_declaration: $ => prec.left(PREC.LET, seq(
+    let_declaration: $ => prec.left(PREC.LET, withAttrs($, seq(
       'let',
       optional(field("rec", $.rec)),
       sepBy1(',', field("binding", $._pattern)),
@@ -95,7 +90,7 @@ module.exports = grammar({
       )),
       '=',
       field("value", $._expr),
-    )),
+    ))),
 
     fun_type: $ =>
       prec.right(8,
@@ -139,7 +134,7 @@ module.exports = grammar({
       $.list,
       $._literal,
       $.Name,
-      $.Name_Capital,
+      $.ConstrName,
       $.data_projection,
       $.if,
       $.switch,
@@ -249,8 +244,7 @@ module.exports = grammar({
 
     block: $ => prec(1, block(
       seq(
-        sepBy(';', field("statement", $._statement)),
-        optional(';'),
+        sepEndBy(';', field("statement", $._statement)),
       )
     )),
 
@@ -345,32 +339,30 @@ module.exports = grammar({
     type_tuple: $ =>
       par(sepBy1(',', field("element", $._type_expr))),
 
-    sum_type: $ =>
-      prec.left(8,
-        seq(
-          optional('|'),
-          sepBy1('|', field("variant", $.variant)),
-        ),
-      ),
+    sum_type: $ => choice(
+      sepBy1('|', field("variant", $.variant)),
+      withAttrs($, seq('|', sepBy1('|', field("variant", $.variant)))),
+    ),
 
     variant: $ =>
       prec.left(8,
-        seq(
-          field("constructor", $.Name_Capital),
+        withAttrs($, seq(
+          field("constructor", $.ConstrName),
           optional(par(field("arguments", $._type_expr))),
-        ),
+        )),
       ),
 
-    record_type: $ =>
-      block(sepBy(',', field("field", $.field_decl))),
+    record_type: $ => withAttrs($,
+      block(sepEndBy1(',', field("field", $.field_decl)))
+    ),
 
     field_decl: $ =>
     prec(10, // see 'accessor_chain' for explanation of precedence
-         seq(
+         withAttrs($, seq(
            field("field_name", $.FieldName),
            ':',
            field("field_type", $._type_expr),
-         )),
+         ))),
 
     //// PATTERNS //////////////////////////////////////////////////////////////
 
@@ -389,16 +381,16 @@ module.exports = grammar({
     var_pattern: $ => field("var", $.NameDecl),
 
     nullary_constr_pattern: $ => seq(
-      field("constructor", $.Name_Capital),
+      field("constructor", $.ConstrName),
     ),
 
     unary_constr_pattern: $ => prec(1, seq(
-      field("constructor", $.Name_Capital),
+      field("constructor", $.ConstrName),
       field("arg", $._pattern),
     )),
 
     constr_pattern: $ => seq(
-      field("ctor", $.Name_Capital),
+      field("ctor", $.ConstrName),
       optional(seq(
         '(',
         sepBy(',', field("arg", $._pattern)),
@@ -447,10 +439,11 @@ module.exports = grammar({
     ///////////////////////////////////////////
 
     FieldName: $ => $.Name,
+    ConstrName: $ => $._NameCapital,
     fun_name: $ => $.Name,
     struct_name: $ => $.Name,
     var: $ => $.Name,
-    module_name: $ => $.Name_Capital,
+    module_name: $ => $._NameCapital,
     _ident: $ => $.Name,
 
     comment: $ => choice(
@@ -468,6 +461,8 @@ module.exports = grammar({
 
     include: $ => seq('#include', $.String),
 
+    attr: $ => /\[@[a-zA-Z][a-zA-Z0-9_:]*\]/,
+
     String: $ => /\"(\\.|[^"])*\"/,
     Int: $ => /-?([1-9][0-9_]*|0)/,
     Nat: $ => /([1-9][0-9_]*|0)n/,
@@ -476,7 +471,7 @@ module.exports = grammar({
     Name: $ => /[a-z][a-zA-Z0-9_]*/,
     NameDecl: $ => /[a-z][a-zA-Z0-9_]*/,
     TypeName: $ => /[a-z][a-zA-Z0-9_]*/,
-    Name_Capital: $ => /[A-Z][a-zA-Z0-9_]*/,
+    _NameCapital: $ => /[A-Z][a-zA-Z0-9_]*/,
     Keyword: $ => /[A-Za-z][a-z]*/,
     Bool: $ => choice($.False, $.True),
 
@@ -492,7 +487,5 @@ module.exports = grammar({
     rec: $ => 'rec',
     wildcard: $ => '_',
     rec: $ => 'rec',
-
-    attr: $ => seq('[@', $.Name, ']'),
   }
 });

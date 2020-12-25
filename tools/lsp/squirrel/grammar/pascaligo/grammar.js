@@ -16,6 +16,8 @@ let left_op = (name, left, right) => op(name, left, right, left)
 let par = x => seq('(', x, ')')
 let brackets = x => seq('[', x, ']')
 
+let withAttrs = ($, x) => seq(field("attributes", repeat($.attr)), x)
+
 let non_empty_injection = (Kind, element) =>
   choice(
     seq(
@@ -53,11 +55,6 @@ module.exports = grammar({
   extras: $ => [$.ocaml_comment, $.comment, /\s/],
   inline: $ => [$.parameters, $.arguments],
 
-  conflicts: $ =>
-  [ [$._instruction, $._fun_call_or_par_or_projection]
-  , [$.record_patch, $.update_record]
-  ],
-
   rules: {
     source_file: $ => sepEndBy(optional(';'), field("declaration", $._declaration)),
 
@@ -66,13 +63,7 @@ module.exports = grammar({
         $.type_decl,
         $.const_decl,
         $.fun_decl,
-        $.attr_decl,
         $.include,
-      ),
-
-    attr_decl: $ =>
-      injection("attributes",
-        field("attribute", $.String)
       ),
 
     type_decl: $ =>
@@ -143,15 +134,14 @@ module.exports = grammar({
         ")",
       ),
 
-    sum_type: $ =>
-      seq(
-        optional('|'),
-        sepBy1('|', field("variant", $.variant)),
-      ),
+    sum_type: $ => choice(
+      sepBy1('|', field("variant", $.variant)),
+      withAttrs($, seq('|', sepBy1('|', field("variant", $.variant)))),
+    ),
 
     variant: $ => choice(
-      $._variant_simple,
-      $._variant_args,
+      withAttrs($, $._variant_simple),
+      withAttrs($, $._variant_args),
     ),
 
     _variant_simple: $ => field("constructor", $.NameConstr),
@@ -161,18 +151,20 @@ module.exports = grammar({
       field("arguments", $._simple_type)
     ),
 
-    record_type: $ =>
+    record_type: $ => withAttrs($,
       choice(
         seq('record', sepEndBy(';', field("field", $.field_decl)), 'end'),
         seq('record', '[', sepEndBy(';', field("field", $.field_decl)), ']'),
       ),
+    ),
 
-    field_decl: $ =>
+    field_decl: $ => withAttrs($,
       seq(
         field("fieldName", $.FieldName),
         ':',
         field("fieldType", $._type_expr),
       ),
+    ),
 
     fun_expr: $ =>
       seq(
@@ -185,7 +177,7 @@ module.exports = grammar({
         field("body", $._expr),
       ),
 
-    fun_decl: $ =>
+    fun_decl: $ => withAttrs($,
         seq(
           field("recursive", optional($.recursive)),
           'function',
@@ -198,6 +190,7 @@ module.exports = grammar({
           'is',
           field("body", $._let_expr),
         ),
+    ),
 
     _let_expr: $ =>
       choice(
@@ -230,7 +223,6 @@ module.exports = grammar({
       choice(
         $._instruction,
         $._open_data_decl,
-        $.attr_decl,
         $.type_decl,
       ),
 
@@ -241,7 +233,7 @@ module.exports = grammar({
         $.fun_decl,
       ),
 
-    const_decl: $ =>
+    const_decl: $ => withAttrs($,
       seq(
         'const',
         field("name", $.NameDecl),
@@ -252,6 +244,7 @@ module.exports = grammar({
         '=',
         field("value", $._expr),
       ),
+    ),
 
     var_decl: $ =>
       seq(
@@ -737,6 +730,8 @@ module.exports = grammar({
         )),
         '*)'
       ),
+
+    attr: $ => /\[@[a-zA-Z][a-zA-Z0-9_:]*\]/,
 
     include: $ => seq('#include', field("filename", $.String)),
 

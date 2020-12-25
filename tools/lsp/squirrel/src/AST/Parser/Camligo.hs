@@ -71,7 +71,7 @@ recognise (SomeRawTree dialect rawTree)
   [ -- Contract
     Descent do
       boilerplate $ \case
-        "contract" -> RawContract <$> fields "declaration"
+        "source_file" -> RawContract <$> fields "declaration"
         _ -> fallthrough
 
   , Descent do
@@ -212,14 +212,13 @@ recognise (SomeRawTree dialect rawTree)
     -- TypeName
   , Descent do
       boilerplate' $ \case
-        ("type_con", name) -> return $ TypeName name
+        ("TypeName", name) -> return $ TypeName name
         _                  -> fallthrough
 
     -- Ctor
   , Descent do
       boilerplate' $ \case
-        ("Name_Capital", name) -> return $ Ctor name
-        ("data_con",     name) -> return $ Ctor name
+        ("ConstrName", name)   -> return $ Ctor name
         ("False", _)           -> return $ Ctor "False"
         ("True", _)            -> return $ Ctor "True"
         ("Unit", _)            -> return $ Ctor "Unit"
