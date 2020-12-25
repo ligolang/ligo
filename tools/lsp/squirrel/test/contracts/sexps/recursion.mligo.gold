@@ -14,7 +14,7 @@
     fibo
     (type?
       (tuple? (tuple? (? n) (tuple? (? n_1) (? n_0))))
-      (PROD (PROD int int) int))
+      (PROD int (PROD int int)))
     :
     int
     =
