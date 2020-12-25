@@ -36,24 +36,3 @@ function add (const a : int ; const b : int) : int is
     )
   )
 )
-
-
-
-=========
-Function insert
-=========
-
-function insert (const h : heap ; const e : heap_elt) : heap is
-  block {
-        if heap_elt_lt (get_force (parent,h), get_force(i,h))) then {
-          largest := parent;
-          const tmp : heap_elt = get_force (i,h);
-          h[i] := get_force(parent, h);
-          h[parent] := tmp
-        } else skip
-  } with h
-
----
-
-(source_file
-)
