@@ -190,7 +190,7 @@ recognise (SomeRawTree dialect rawTree)
   , Descent do
       boilerplate $ \case
         "type_fun"           -> TArrow   <$> field  "domain" <*> field "codomain"
-        "type_app"           -> TApply   <$> field  "f"      <*> field "x"
+        "type_app"           -> TApply   <$> field  "f"      <*> fields "x"
         "type_product"       -> TProduct <$> fields "x"
         "type_tuple"         -> TProduct <$> fields "x"
         "type_rec"           -> TRecord  <$> fields "field"

@@ -157,7 +157,7 @@ recognise (SomeRawTree dialect rawTree)
   , Descent do
       boilerplate $ \case
         "fun_type"         -> TArrow   <$> field  "domain"     <*> field "codomain"
-        "type_application" -> TApply   <$> field  "functor" <*> field "argument"
+        "type_application" -> TApply   <$> field  "functor" <*> fields "argument"
         "type_tuple"       -> TProduct <$> fields "element"
         "record_type"      -> TRecord  <$> fields "field"
         "sum_type"         -> TSum     <$> fields "variant"

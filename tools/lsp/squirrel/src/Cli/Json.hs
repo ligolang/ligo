@@ -633,7 +633,7 @@ fromLigoTypeFull = enclose . \case
       st <- get
       n <- fromLigoPrimitive name
       p <- sequence $ fromLigoParameter <$> params
-      return $ make' (st, TApply' n p)
+      return $ make' (st, TApply n p)
 
     fromLigoType
       :: LigoTypeContent
@@ -660,7 +660,7 @@ fromLigoTypeFull = enclose . \case
         st <- get
         p <- fromLigoPrimitive _ltciTypeOperator
         return . make' . (st,) $
-          TApply' p (fromLigoTypeFull <$> _ltciArguments)
+          TApply p (fromLigoTypeFull <$> _ltciArguments)
 
       LTCArrow {..} -> do
         st <- get

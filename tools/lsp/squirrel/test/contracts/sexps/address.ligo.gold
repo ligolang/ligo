@@ -7,6 +7,5 @@
     =
     (let
       (seq
-        (const
-          c (contract $ (TARGS unit)) (apply (. Tezos implicit_account) p)))
+        (const c (contract $ unit) (apply (. Tezos implicit_account) p)))
     (apply (. Tezos address) c))))

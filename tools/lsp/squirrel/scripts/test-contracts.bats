@@ -35,5 +35,6 @@ contracts_dir="./test/contracts"
              --ignore-blank-lines \
              --new-file # treat absent files as empty
         rm "$temp_file"
+        printf "ok\n"
     done
 }

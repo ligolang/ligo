@@ -181,7 +181,7 @@ recognise (SomeRawTree dialect rawTree)
       boilerplate \case
         "fun_type"         -> TArrow   <$> field  "domain" <*> field "codomain"
         "prod_type"        -> TProduct <$> fields "element"
-        "app_type"         -> TApply   <$> field  "name" <*> field "arg"
+        "app_type"         -> TApply   <$> field  "name" <*> fields "arg"
         "record_type"      -> TRecord  <$> fields "field"
         "sum_type"         -> TSum     <$> fields "variant"
         "michelsonTypeOr"  -> TOr      <$> field "left_type" <*> field "left_type_name" <*> field "right_type" <*> field "right_type_name"
@@ -210,6 +210,7 @@ recognise (SomeRawTree dialect rawTree)
   , Descent do
       boilerplate' \case
         ("NameConstr", name) -> return $ Ctor name
+        ("NameModule", name) -> return $ Ctor name
         ("None", _)            -> return $ Ctor "None"
         ("True", _)            -> return $ Ctor "True"
         ("False", _)           -> return $ Ctor "False"

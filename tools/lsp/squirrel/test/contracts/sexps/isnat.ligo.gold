@@ -1,4 +1,2 @@
 (contract
-  (fun
-    main
-    (parameter i int) : (option $ (TARGS nat)) = (apply is_nat i)))
+  (fun main (parameter i int) : (option $ nat) = (apply is_nat i)))

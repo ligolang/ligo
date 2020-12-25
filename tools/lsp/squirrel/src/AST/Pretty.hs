@@ -185,8 +185,7 @@ instance Pretty1 AST.Type where
     TRecord   fields    -> sexpr "RECORD" fields
     TSum      variants  -> sexpr "SUM" variants
     TProduct  elements  -> sexpr "PROD" elements
-    TApply    f xs      -> sop f "$" [xs]
-    TApply'   f xs      -> sop f "$" xs
+    TApply    f xs      -> sop f "$" xs
     TString   t         -> pp t
     TOr       l n r m   -> sexpr "OR"   [l, n, r, m]
     TAnd      l n r m   -> sexpr "AND" [l, n, r, m]
@@ -350,13 +349,10 @@ instance LPP1 'Pascal AST.Type where
     TProduct  elements  -> parens $ train " *" elements
     TSum      (x:xs)    -> x <.> blockWith ("|"<.>) xs
     TSum      []        -> error "looks like you've been given malformed AST" -- never called
-    -- TApply    f [x]      -> f <.> x
-    TApply    f xs      -> f <.> lpp xs -- TODO: does not work, elements are parsed as tuple rather than a list
-    -- TApply'    f xs      -> f <.> lpp xs -- TODO: does not work, elements are parsed as tuple rather than a list
+    TApply    f xs      -> f <.> lpp xs
     TString   t         -> "\"" <.> lpp t <.> "\""
     TOr       l n r m   -> tuple [l, n, r, m]
     TAnd      l n r m   -> tuple [l, n, r, m]
-    pat                 -> error "unexpected `Type` node failed with: " <+> pp pat
 
 instance LPP1 'Pascal Binding where
   lpp1 = \case
@@ -482,7 +478,6 @@ instance LPP1 'Reason AST.Type where
     TString   t         -> "\"" <.> lpp t <.> "\""
     TOr       l n r m   -> tuple [l, n, r, m]
     TAnd      l n r m   -> tuple [l, n, r, m]
-    pat                 -> error "unexpected `Type` node failed with: " <+> pp pat
 
 instance LPP1 'Reason Binding where
   lpp1 = \case
@@ -575,7 +570,6 @@ instance LPP1 'Caml AST.Type where
     TString   t         -> "\"" <.> lpp t <.> "\""
     TOr       l n r m   -> tuple [l, n, r, m]
     TAnd      l n r m   -> tuple [l, n, r, m]
-    pat                 -> error "unexpected `Type` node failed with: " <+> pp pat
 
 instance LPP1 'Caml Binding where
   lpp1 = \case

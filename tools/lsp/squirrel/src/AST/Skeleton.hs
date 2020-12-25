@@ -82,8 +82,7 @@ data Type it
   | TRecord   [it]     -- ^ [TField]
   | TSum      [it]     -- ^ [Variant]
   | TProduct  [it]     -- ^ [Type]
-  | TApply    it it  -- ^ (Name) (Type)
-  | TApply'   it [it]  -- ^ (Name) [Type] -- Same as `TApply` but more corresponding to ligo one, never used in fallback parsers
+  | TApply    it [it]  -- ^ (Name) [Type]
   | TString   Text     -- ^ (TString)
   | TOr       it it it it
   | TAnd      it it it it

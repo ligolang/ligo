@@ -111,9 +111,9 @@ module.exports = grammar({
       seq($._simple_type, '*', $._simple_type)
     ),
 
-    app_type: $ => seq(field("name", $.TypeName), field("arg", $._type_arg)),
+    app_type: $ => seq(field("name", $.TypeName), $._type_arg),
 
-    _type_arg: $ => par(sepBy1(',', $._type_expr)),
+    _type_arg: $ => par(sepBy1(',', field("arg", $._type_expr))),
 
     michelsonTypeOr: $ =>
       seq(
