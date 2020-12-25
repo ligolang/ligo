@@ -85,7 +85,6 @@ data Type it
   | TApply    it it  -- ^ (Name) (Type)
   | TApply'   it [it]  -- ^ (Name) [Type] -- Same as `TApply` but more corresponding to ligo one, never used in fallback parsers
   | TString   Text     -- ^ (TString)
-  | TArgs     [it]     -- ^ [Type]
   | TOr       it it it it
   | TAnd      it it it it
   deriving stock (Functor, Foldable, Traversable)

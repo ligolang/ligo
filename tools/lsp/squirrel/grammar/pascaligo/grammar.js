@@ -1,11 +1,8 @@
-let sepBy1 = (sep, rule) =>
-  seq(
-    rule,
-    repeat(seq(sep, rule)),
-    optional(sep)
-  )
-
+let sepBy1 = (sep, rule) => seq(rule, repeat(seq(sep, rule)))
 let sepBy = (sep, rule) => optional(sepBy1(sep, rule))
+
+let sepEndBy1 = (sep, rule) => seq(rule, repeat(seq(sep, rule)), optional(sep))
+let sepEndBy = (sep, rule) => optional(sepEndBy1(sep, rule))
 
 let op = (name, left, right, term) =>
   choice(
@@ -23,13 +20,13 @@ let non_empty_injection = (Kind, element) =>
   choice(
     seq(
       Kind,
-      sepBy1(';', element),
+      sepEndBy1(';', element),
       'end',
     ),
     seq(
       Kind,
       '[',
-      sepBy1(';', element),
+      sepEndBy1(';', element),
       ']',
     ),
   )
@@ -38,13 +35,13 @@ let injection = (Kind, element) =>
   choice(
     seq(
       Kind,
-      sepBy(';', element),
+      sepEndBy(';', element),
       'end',
     ),
     seq(
       Kind,
       '[',
-      sepBy(';', element),
+      sepEndBy(';', element),
       ']',
     ),
   )
@@ -62,7 +59,7 @@ module.exports = grammar({
   ],
 
   rules: {
-    Start: $ => sepBy(optional(';'), field("declaration", $._declaration)),
+    source_file: $ => sepEndBy(optional(';'), field("declaration", $._declaration)),
 
     _declaration: $ =>
       choice(
@@ -86,60 +83,37 @@ module.exports = grammar({
         field("typeValue", $._type_expr),
       ),
 
-    _type_expr: $ =>
-      prec.right(10,
-        choice(
-          $._fun_type,
-          $.sum_type,
-          $.record_type,
-        ),
-      ),
+    _type_expr: $ => choice(
+      $.sum_type,
+      $.record_type,
+      $._simple_type,
+    ),
 
-    _fun_type: $ =>
-      prec.right(10,
-        choice(
-          $.fun_type,
-          $._core_type,
-          $.cartesian,
-        ),
-      ),
+    // upstream: `fun_type` -> `cartesian` -> `core_type`
+    _simple_type: $ => choice(
+      $.fun_type,
+      $.prod_type,
+      $.TypeName,
+      $.TypeWildcard,
+      par($._type_expr),
+      $.app_type,
+      $.michelsonTypeOr,
+      $.michelsonTypeAnd,
+    ),
 
-    fun_type: $ =>
-      prec.right(10,
-        seq(
-          field("domain", $._fun_type),
-          '->',
-          field("codomain", $._fun_type),
-        ),
-      ),
+    fun_type: $ => prec.right(1, seq(
+        field("domain", $._simple_type),
+        '->',
+        field("codomain", $._simple_type),
+    )),
 
+    prod_type: $ => prec.right(2,
+      seq($._simple_type, '*', $._simple_type)
+    ),
 
-    cartesian: $ =>
-      prec.right(10, choice(
-        seq(
-          choice(
-            field("element", $._core_type),
-            par(field("element", $._type_expr)),
-          ),
-          '*',
-          sepBy1('*',
-            choice(
-              field("element", $._core_type),
-              par(field("element", $._type_expr)),
-            ),
-          ),
-        ),
-      ),
-      ),
+    app_type: $ => seq(field("name", $.TypeName), field("arg", $._type_arg)),
 
-    _core_type: $ =>
-      choice(
-        $.TypeName,
-        $.invokeBinary,
-        $.invokeUnary,
-        $.michelsonTypeOr,
-        $.michelsonTypeAnd,
-      ),
+    _type_arg: $ => par(sepBy1(',', $._type_expr)),
 
     michelsonTypeOr: $ =>
       seq(
@@ -169,45 +143,28 @@ module.exports = grammar({
         ")",
       ),
 
-    type_arguments: $ => par(sepBy(',', field("argument", $._type_expr))),
-
-    invokeBinary: $ =>
-      seq(
-        field("typeConstr", choice('map', 'big_map')),
-        field("arguments", $.type_arguments),
-      ),
-
-    invokeUnary: $ =>
-      seq(
-        field("typeConstr", choice('list', 'set', 'option', 'contract')),
-        field("arguments", $.type_arguments),
-      ),
-
-
-    type_tuple: $ => par(sepBy1(',', field("element", $._type_expr))),
-
     sum_type: $ =>
       seq(
         optional('|'),
         sepBy1('|', field("variant", $.variant)),
       ),
 
-    variant: $ =>
-      choice(
-        field("constructor", $.constr),
-        seq(
-          field("constructor", $.constr),
-          'of',
-          field("arguments", $._fun_type)
-        ),
-      ),
+    variant: $ => choice(
+      $._variant_simple,
+      $._variant_args,
+    ),
 
-    constr: $ => $.Name_Capital,
+    _variant_simple: $ => field("constructor", $.NameConstr),
+    _variant_args: $ => seq(
+      field("constructor", $.NameConstr),
+      'of',
+      field("arguments", $._simple_type)
+    ),
 
     record_type: $ =>
       choice(
-        seq('record', sepBy(';', field("field", $.field_decl)), 'end'),
-        seq('record', '[', sepBy(';', field("field", $.field_decl)), ']'),
+        seq('record', sepEndBy(';', field("field", $.field_decl)), 'end'),
+        seq('record', '[', sepEndBy(';', field("field", $.field_decl)), ']'),
       ),
 
     field_decl: $ =>
@@ -229,7 +186,6 @@ module.exports = grammar({
       ),
 
     fun_decl: $ =>
-      prec.right(0,
         seq(
           field("recursive", optional($.recursive)),
           'function',
@@ -238,12 +194,10 @@ module.exports = grammar({
           ':',
           choice(
             field("type", $._type_expr),
-            par(field("type", $._type_expr)),
           ),
           'is',
           field("body", $._let_expr),
         ),
-      ),
 
     _let_expr: $ =>
       choice(
@@ -270,7 +224,7 @@ module.exports = grammar({
 
     _access: $ => choice('var', 'const'),
 
-    _param_type: $ => $._fun_type,
+    _param_type: $ => $._simple_type,
 
     _statement: $ =>
       choice(
@@ -389,19 +343,19 @@ module.exports = grammar({
       ),
 
     clause_block: $ =>
-      seq('{', sepBy1(';', field("statement", $._statement)), '}'),
+      seq('{', sepEndBy1(';', field("statement", $._statement)), '}'),
 
     block: $ =>
       choice(
         seq(
           'begin',
-          sepBy(';', field("statement", $._statement)),
+          sepEndBy(';', field("statement", $._statement)),
           'end',
         ),
         seq(
           'block',
           '{',
-          sepBy(';', field("statement", $._statement)),
+          sepEndBy(';', field("statement", $._statement)),
           '}',
         ),
       ),
@@ -413,7 +367,7 @@ module.exports = grammar({
           field("subject", $._expr),
           'of',
           optional('|'),
-          sepBy1('|', field("case", $.case_clause_instr)),
+          sepEndBy1('|', field("case", $.case_clause_instr)),
           'end'
         ),
         seq(
@@ -422,7 +376,7 @@ module.exports = grammar({
           'of',
           '[',
           optional('|'),
-          sepBy1('|', field("case", $.case_clause_instr)),
+          sepEndBy1('|', field("case", $.case_clause_instr)),
           ']'
         ),
       ),
@@ -503,7 +457,7 @@ module.exports = grammar({
           field("subject", $._expr),
           'of',
           optional('|'),
-          sepBy1('|', field("case", $.case_clause_expr)),
+          sepEndBy1('|', field("case", $.case_clause_expr)),
           'end'
         ),
         seq(
@@ -512,7 +466,7 @@ module.exports = grammar({
           'of',
           '[',
           optional('|'),
-          sepBy1('|', field("case", $.case_clause_expr)),
+          sepEndBy1('|', field("case", $.case_clause_expr)),
           ']'
         ),
       ),
@@ -588,12 +542,12 @@ module.exports = grammar({
     _constr_use: $ =>
       choice(
         $.constr_call,
-        $.constr
+        $.NameConstr
       ),
 
     constr_call: $ =>
       seq(
-        field("constr", $.constr),
+        field("constr", $.NameConstr),
         $.arguments
       ),
 
@@ -656,7 +610,7 @@ module.exports = grammar({
 
     module_field: $ =>
       prec(10, seq(
-        field("module", $.Name_Capital),
+        field("module", $.NameModule),
         '.',
         field("method", $.Name),
       )),
@@ -668,19 +622,18 @@ module.exports = grammar({
       ),
 
     data_projection: $ => prec(11, seq(
-      field("struct", $._expr),
+      field("struct", $.Name),
       '.',
       $._accessor_chain,
     )),
 
-    module_projection: $ =>
-      prec(11, seq(
-        field("module", $.Name_Capital),
+    module_projection: $ => seq(
+        field("module", $.NameModule),
         '.',
         field("index", $.Name),
         '.',
         $._accessor_chain,
-      )),
+      ),
 
     record_expr: $ =>
       injection('record', field("assignment", $.field_path_assignment)),
@@ -760,7 +713,7 @@ module.exports = grammar({
 
     user_constr_pattern: $ =>
       seq(
-        field("constr", $.constr),
+        field("constr", $.NameConstr),
         optional(field("arguments", $.tuple_pattern)),
       ),
 
@@ -784,6 +737,7 @@ module.exports = grammar({
 
     include: $ => seq('#include', field("filename", $.String)),
 
+    _NameCapital: $ => /[A-Z][a-zA-Z0-9_]*/,
     String: $ => choice(/\"(\\.|[^"])*\"/, /{\|(\\.|[^\|])*\|}/),
     Int: $ => /-?([1-9][0-9_]*|0)/,
     Nat: $ => /([1-9][0-9_]*|0)n/,
@@ -791,9 +745,11 @@ module.exports = grammar({
     Bytes: $ => /0x[0-9a-fA-F]+/,
     FieldName: $ => /[a-z][a-zA-Z0-9_]*/,
     TypeName: $ => /[a-z][a-zA-Z0-9_]*/,
+    TypeWildcard: $ => '_',
     Name: $ => /[a-z][a-zA-Z0-9_]*/,
     NameDecl: $ => /[a-z][a-zA-Z0-9_]*/,
-    Name_Capital: $ => /[A-Z][a-zA-Z0-9_]*/,
+    NameConstr: $ => $._NameCapital,
+    NameModule: $ => $._NameCapital,
     Keyword: $ => /[A-Za-z][a-z]*/,
 
     False: $ => 'False',

@@ -39,7 +39,7 @@ recognise (SomeRawTree dialect rawTree)
   [ -- Contract
     Descent do
       boilerplate \case
-        "Start" -> RawContract <$> fields "declaration"
+        "source_file" -> RawContract <$> fields "declaration"
         _ -> fallthrough
 
     -- Expr
@@ -179,14 +179,11 @@ recognise (SomeRawTree dialect rawTree)
     -- Type
   , Descent do
       boilerplate \case
-        "fun_type"         -> TArrow   <$> field  "domain"     <*> field "codomain"
-        "cartesian"        -> TProduct <$> fields "element"
-        "invokeBinary"     -> TApply   <$> field  "typeConstr" <*> field "arguments"
-        "invokeUnary"      -> TApply   <$> field  "typeConstr" <*> field "arguments"
-        "type_tuple"       -> TProduct <$> fields "element"
+        "fun_type"         -> TArrow   <$> field  "domain" <*> field "codomain"
+        "prod_type"        -> TProduct <$> fields "element"
+        "app_type"         -> TApply   <$> field  "name" <*> field "arg"
         "record_type"      -> TRecord  <$> fields "field"
         "sum_type"         -> TSum     <$> fields "variant"
-        "type_arguments"   -> TArgs    <$> fields "argument"
         "michelsonTypeOr"  -> TOr      <$> field "left_type" <*> field "left_type_name" <*> field "right_type" <*> field "right_type_name"
         "michelsonTypeAnd" -> TAnd     <$> field "left_type" <*> field "left_type_name" <*> field "right_type" <*> field "right_type_name"
         _                 -> fallthrough
@@ -207,18 +204,12 @@ recognise (SomeRawTree dialect rawTree)
   , Descent do
       boilerplate' \case
         ("TypeName", name) -> return $ TypeName name
-        ("list",     _)    -> return $ TypeName "list"
-        ("big_map",  _)    -> return $ TypeName "big_map"
-        ("map",      _)    -> return $ TypeName "map"
-        ("set",      _)    -> return $ TypeName "set"
-        ("option",   _)    -> return $ TypeName "option"
-        ("contract", _)    -> return $ TypeName "contract"
         _                  -> fallthrough
 
     -- Ctor
   , Descent do
       boilerplate' \case
-        ("Name_Capital", name) -> return $ Ctor name
+        ("NameConstr", name) -> return $ Ctor name
         ("None", _)            -> return $ Ctor "None"
         ("True", _)            -> return $ Ctor "True"
         ("False", _)           -> return $ Ctor "False"

@@ -190,7 +190,6 @@ instance Pretty1 AST.Type where
     TString   t         -> pp t
     TOr       l n r m   -> sexpr "OR"   [l, n, r, m]
     TAnd      l n r m   -> sexpr "AND" [l, n, r, m]
-    TArgs     args      -> sexpr "TARGS" args
 
 instance Pretty1 Variant where
   pp1 = \case
@@ -357,7 +356,6 @@ instance LPP1 'Pascal AST.Type where
     TString   t         -> "\"" <.> lpp t <.> "\""
     TOr       l n r m   -> tuple [l, n, r, m]
     TAnd      l n r m   -> tuple [l, n, r, m]
-    TArgs     args      -> tuple args
     pat                 -> error "unexpected `Type` node failed with: " <+> pp pat
 
 instance LPP1 'Pascal Binding where
@@ -484,7 +482,6 @@ instance LPP1 'Reason AST.Type where
     TString   t         -> "\"" <.> lpp t <.> "\""
     TOr       l n r m   -> tuple [l, n, r, m]
     TAnd      l n r m   -> tuple [l, n, r, m]
-    TArgs     args      -> train " " args
     pat                 -> error "unexpected `Type` node failed with: " <+> pp pat
 
 instance LPP1 'Reason Binding where
@@ -578,7 +575,6 @@ instance LPP1 'Caml AST.Type where
     TString   t         -> "\"" <.> lpp t <.> "\""
     TOr       l n r m   -> tuple [l, n, r, m]
     TAnd      l n r m   -> tuple [l, n, r, m]
-    TArgs     args      -> train " " args
     pat                 -> error "unexpected `Type` node failed with: " <+> pp pat
 
 instance LPP1 'Caml Binding where
