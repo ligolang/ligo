@@ -79,6 +79,7 @@ recognise (SomeRawTree dialect rawTree)
         "set_patch"         -> SetPatch  <$> field  "container"  <*> fields "key"
         "set_remove"        -> SetRemove <$> field  "key"        <*> field  "container"
         "update_record"     -> RecordUpd <$> field  "record"     <*> fields "assignment"
+        "michelson_interop" -> Michelson <$> field  "code"       <*> field  "type"    <*> fields "argument"
         _                   -> fallthrough
 
     -- Pattern
@@ -208,6 +209,12 @@ recognise (SomeRawTree dialect rawTree)
       boilerplate \case
         "variant" -> Variant <$> field "constructor" <*> fieldOpt "arguments"
         _         -> fallthrough
+
+  -- MichelsonCode
+  , Descent do
+      boilerplate \case
+        "michelson_code" -> MichelsonCode <$> fields "keyword"
+        _                -> fallthrough
 
     -- TField
   , Descent do

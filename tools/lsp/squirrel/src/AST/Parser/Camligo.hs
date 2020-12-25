@@ -103,6 +103,7 @@ recognise (SomeRawTree dialect rawTree)
         "annot_expr"        -> Annot      <$> field  "expr"      <*> field "type"
         "binary_op_app"     -> BinOp      <$> field  "left"      <*> field "op"    <*> field "right"
         "unary_op_app"      -> UnOp       <$> field  "negate"    <*> field "arg"
+        "michelson_interop" -> Michelson <$> field  "code"       <*> field "type"  <*> fields "argument"
         _                   -> fallthrough
 
     -- QualifiedName
@@ -167,6 +168,12 @@ recognise (SomeRawTree dialect rawTree)
         ("String", i) -> return $ String i
         ("Tez",    i) -> return $ Tez i
         _             -> fallthrough
+
+    -- MichelsonCode
+  , Descent do
+      boilerplate \case
+        "michelson_code" -> MichelsonCode <$> fields "keyword"
+        _                -> fallthrough
 
     -- Name
   , Descent do

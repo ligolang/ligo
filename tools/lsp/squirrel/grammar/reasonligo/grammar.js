@@ -139,6 +139,33 @@ module.exports = grammar({
       $.if,
       $.switch,
       $.record,
+      $.michelson_interop,
+    ),
+
+    michelson_code: $ => seq(
+      '{|',
+      repeat(
+        choice(
+          field("keyword", choice($.Keyword, $.String)),
+          '{',
+          '}',
+          ';'
+        )
+      ),
+      '|}'
+    ),
+
+    michelson_interop: $ => seq(
+      '[%Michelson',
+      par(
+        seq(
+          field("code", $.michelson_code),
+          ':',
+          field("type", $._type_expr),
+        )
+      ),
+      optional(par(sepBy(',', field("argument", $._expr)))),
+      ']'
     ),
 
     record: $ => block(

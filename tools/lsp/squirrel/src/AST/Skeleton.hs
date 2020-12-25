@@ -43,7 +43,7 @@ type Tree' fs xs = Tree fs (Product xs)
 type RawLigoList =
   [ Name, QualifiedName, Pattern, Constant, FieldAssignment
   , MapBinding, Alt, Expr, TField, Variant, Type, Binding
-  , RawContract, TypeName, FieldName
+  , RawContract, TypeName, FieldName, MichelsonCode
   , Error, Ctor, Contract, NameDecl, Preprocessor, PreprocessorCommand
   ]
 
@@ -129,6 +129,11 @@ data Expr it
   | MapPatch  it [it] -- (QualifiedName) [MapBinding]
   | SetPatch  it [it] -- (QualifiedName) [Expr]
   | RecordUpd it [it] -- (QualifiedName) [FieldAssignment]
+  | Michelson it it [it] -- (MichelsonCode) (Type) (Arguments)
+  deriving stock (Functor, Foldable, Traversable)
+
+newtype MichelsonCode it
+  = MichelsonCode [it] -- [Keyword]
   deriving stock (Functor, Foldable, Traversable)
 
 newtype Preprocessor it

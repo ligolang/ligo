@@ -66,6 +66,33 @@ module.exports = grammar({
         $.preprocessor,
       ),
 
+    // Regex assertions are not supported, so we are doing it the hard way
+    michelson_code: $ => seq(
+      '{|',
+      repeat(
+        choice(
+          field("keyword", choice($.Keyword, $.String)),
+          '{',
+          '}',
+          ';'
+        )
+      ),
+      '|}'
+    ),
+
+    michelson_interop: $ => seq(
+      '[%Michelson',
+      par(
+        seq(
+          field("code", $.michelson_code),
+          ':',
+          field("type", $._type_expr),
+        )
+      ),
+      optional(par(sepBy(',', field("argument", $._expr)))),
+      ']'
+    ),
+
     type_decl: $ =>
       seq(
         "type",
@@ -438,13 +465,13 @@ module.exports = grammar({
     _collection: $ => choice('map', 'set', 'list'),
 
     _expr: $ =>
-    // | a precedence high enough for projections to take over binops
-      prec(10, choice(
+      choice(
         $.case_expr,
         $.cond_expr,
         $._op_expr,
         $.fun_expr,
-      )),
+        $.michelson_interop,
+      ),
 
     case_expr: $ =>
       choice(

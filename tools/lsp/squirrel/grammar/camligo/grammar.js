@@ -3,6 +3,8 @@ let sepBy  = (sep, p) => optional(sepBy1(sep, p))
 
 let some = x => seq(x, repeat(x))
 
+let par = x => seq('(', x, ')')
+
 let withAttrs = ($, x) => seq(field("attributes", repeat($.attr)), x)
 
 function mkOp($, opExpr) {
@@ -145,6 +147,33 @@ module.exports = grammar({
       prec.left(10, mkOp($, choice("=", "<>", "==", "<", "<=", ">", ">="))),
     ),
 
+    // Regex assertions are not supported, so we are doing it the hard way
+    michelson_code: $ => seq(
+      '{|',
+      repeat(
+        choice(
+          field("keyword", choice($.Keyword, $.String)),
+          '{',
+          '}',
+          ';'
+        )
+      ),
+      '|}'
+    ),
+
+    michelson_interop: $ => seq(
+      '[%Michelson',
+      par(
+        seq(
+          field("code", $.michelson_code),
+          ':',
+          field("type", $._type_expr),
+        )
+      ),
+      optional(par(sepBy(',', field("argument", $._sub_expr)))),
+      ']'
+    ),
+
     // - a
     unary_op_app: $ => prec(19, seq(
       field("negate", "-"),
@@ -246,7 +275,7 @@ module.exports = grammar({
     _expr: $ => choice(
       $._call,
       $._sub_expr,
-      $.tup_expr
+      $.tup_expr,
     ),
 
     _sub_expr: $ => choice(
@@ -264,6 +293,7 @@ module.exports = grammar({
       $.list_expr,
       $.data_projection,
       $.block_expr,
+      $.michelson_interop,
     ),
 
     block_expr: $ => seq(

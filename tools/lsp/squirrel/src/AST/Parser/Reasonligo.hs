@@ -62,6 +62,7 @@ recognise (SomeRawTree dialect rawTree)
         "tuple"       -> Tuple      <$> fields "item"
         "switch"      -> Case       <$> field  "subject"   <*> fields   "alt"
         "lambda"      -> Lambda     <$> fields "argument"  <*> fieldOpt "type"   <*> field "body"
+        "michelson_interop" -> Michelson  <$> field  "code"      <*> field "type"  <*> fields "argument"
         _             -> fallthrough
 
     -- Pattern
@@ -153,6 +154,12 @@ recognise (SomeRawTree dialect rawTree)
         "type_decl" -> BTypeDecl <$> field "type_name" <*> field "type_value"
         "attr_decl" -> BAttribute <$> field "name"
         _ -> fallthrough
+
+    -- MichelsonCode
+  , Descent do
+      boilerplate \case
+        "michelson_code" -> MichelsonCode <$> fields "keyword"
+        _                -> fallthrough
 
     -- Name
   , Descent do

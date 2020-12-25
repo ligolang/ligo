@@ -228,6 +228,11 @@ instance Pretty1 Expr where
     MapPatch  z bs       -> sexpr "patch" (z : bs)
     SetPatch  z bs       -> sexpr "patch_set" (z : bs)
     RecordUpd r up       -> sexpr "update" (r : up)
+    Michelson c t args   -> sexpr "%Michelson" (c : t : args)
+
+instance Pretty1 MichelsonCode where
+  pp1 = \case
+    MichelsonCode _ -> "<SomeMichelsonCode>"
 
 instance Pretty1 Alt where
   pp1 = \case
@@ -348,6 +353,9 @@ instance LPP1 d Preprocessor where
 
 instance LPP1 d PreprocessorCommand where
   lpp1 = pp1
+
+instance LPP1 d MichelsonCode where
+  lpp1 = pp
 
 -- instances needed to pass instance resolution during compilation
 
