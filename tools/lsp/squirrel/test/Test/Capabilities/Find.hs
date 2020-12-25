@@ -11,6 +11,7 @@ module Test.Capabilities.Find
   , unit_type_of_heap_const
   , unit_type_of_let
   , unit_type_of_pascaligo_lambda_arg
+  , unit_pascaligo_local_type
   ) where
 
 import Data.Foldable (for_)
@@ -341,6 +342,13 @@ unit_type_of_pascaligo_lambda_arg = do
   case typeDefinitionAt (point 4 21) tree of
     Nothing -> expectationFailure "Should find type definition"
     Just range -> range{rFile=""} `shouldBe` interval 1 6 12
+
+unit_pascaligo_local_type :: Assertion
+unit_pascaligo_local_type = do
+  tree <- readContractWithScopes @Fallback (contractsDir </> "local_type.ligo")
+  case typeDefinitionAt (point 3 23) tree of
+    Nothing -> expectationFailure "Should find type definition"
+    Just range -> range{rFile=""} `shouldBe` interval 2 8 12
 
 -- See LIGO-110
 -- unit_type_of_camligo_lambda_arg :: Assertion

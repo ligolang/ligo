@@ -231,6 +231,7 @@ module.exports = grammar({
         $._instruction,
         $._open_data_decl,
         $.attr_decl,
+        $.type_decl,
       ),
 
     _open_data_decl: $ =>
