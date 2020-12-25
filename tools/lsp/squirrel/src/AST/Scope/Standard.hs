@@ -2,8 +2,6 @@
 module AST.Scope.Standard where
 
 import Control.Exception.Safe
-import Control.Lens (element, (&), (.~))
-import qualified Data.List as List
 
 import AST.Scope.Common (HasScopeForest (..))
 import AST.Scope.Fallback (Fallback)
@@ -14,6 +12,7 @@ import Cli.Json (fromLigoErrorToMsg)
 import Cli.Types (HasLigoClient)
 
 import Control.Monad.Catch (catchAll)
+
 import Duplo.Lattice (Lattice (leq))
 import Parser (Msg)
 
@@ -33,6 +32,4 @@ instance HasLigoClient m => HasScopeForest Standard m where
 
       -- | Rewrite error message at the most local scope or append it to the end.
       rewriteAt :: [Msg] -> Msg -> [Msg]
-      rewriteAt at what@(from, _) = maybe (at <> [what]) (\(i, _) -> at & element i .~ what) el
-        where
-          el = List.find ((from `leq`) . fst . snd) (zip [0..] at)
+      rewriteAt at what@(from, _) = filter (not . (from `leq`) . fst) at <> [what]
