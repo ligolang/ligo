@@ -15,15 +15,3 @@ Version.ml
 *.coverage
 /_coverage/
 /_coverage_*/
-*.gyp
-
-# lsp-related 
-node_modules/
-tools/lsp/squirrel/grammar/*/src
-tools/lsp/squirrel/vendor/**
-.stack-work
-nix/result
-.idea
-*.iml
-stale_outputs_checked
-*.cabal
