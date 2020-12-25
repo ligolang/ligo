@@ -244,8 +244,10 @@ module.exports = grammar({
       seq(
         'const',
         field("name", $.NameDecl),
-        ':',
-        field("type", $._type_expr),
+        optional(seq(
+          ':',
+          field("type", $._type_expr),
+        )),
         '=',
         field("value", $._expr),
       ),
