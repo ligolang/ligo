@@ -87,7 +87,7 @@ and pp_patt_c_app {value; _} =
       prefix 2 0 (pp_ident constr)  (pp_pattern pat)
 
 and pp_patt_some {value; _} =
-  prefix 2 0 (string "Some") (pp_pattern (snd value))
+  prefix 2 1 (string "Some") (pp_pattern (snd value))
 
 and pp_int {value; _} =
   string (Z.to_string (snd value))
@@ -162,9 +162,14 @@ and pp_expr = function
 | ESeq        e -> pp_seq e
 | ECodeInj e -> pp_code_inj e
 
+and pp_case_expr_switch s e = 
+  match e with 
+    EVar _ -> prefix 2 1 s (pp_expr e)
+  | _      -> s ^^ pp_expr e
+
 and pp_case_expr {value; _} =
   let {expr; cases; _} = value in
-  group (string "switch" ^^ (pp_expr expr) ^^ string "{"
+  group ((pp_case_expr_switch (string "switch") expr) ^^ string "{"
          ^^ pp_cases cases ^^ hardline ^^ string "}")
 
 and pp_cases {value; _} =
@@ -328,7 +333,7 @@ and pp_update {value; _} =
 
 and pp_code_inj {value; _} =
   let {language; code; _} = value in
-  let language = pp_string language.value
+  let language = string language.value.value
   and code     = pp_expr code in
   string "[%" ^^ language ^/^ code ^^ string "]"
 
@@ -378,10 +383,10 @@ and pp_let_in {value; _} =
 and pp_type_in {value; _} =
   let {type_decl; body; _} = value in
   let {name; type_expr; _} = type_decl
-  in string "let"
-     ^^ prefix 2 1 (pp_ident name ^^ string "=")
+  in string "type "
+     ^^ prefix 2 1 (pp_ident name ^^ string " =")
                    (pp_type_expr type_expr)
-     ^^ string " in" ^^ hardline ^^ group (pp_expr body)
+     ^^ string ";" ^^ hardline ^^ pp_expr body
 
 and pp_fun {value; _} =
   let {binders; lhs_type; body; _} = value in

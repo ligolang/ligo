@@ -545,7 +545,7 @@ and pp_update {value; _} =
 
 and pp_code_inj {value; _} =
   let {language; code; _} = value in
-  let language = pp_string language.value
+  let language = string language.value.value
   and code     = pp_expr code in
   string "[%" ^^ language ^/^ code ^^ string "]"
 
