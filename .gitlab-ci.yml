@@ -312,6 +312,7 @@ vscode-extension:
     - dev
     - tooling
     - /^.*-run-dev$/
+    - vscode-production
   script:
     - nix-build tools/lsp -A packages.x86_64-linux.vscode-extension
     - cp -Lr --no-preserve=mode,ownership,timestamps result/*.vsix ligo-extension.vsix
@@ -319,3 +320,12 @@ vscode-extension:
     expose_as: "LSP vscode extension for x86_64-linux and x86_64-darwin"
     paths:
       - ligo-extension.vsix
+
+vscode-extension-publish:
+  stage: push
+  dependencies: [vscode-extension]
+  only:
+    - vscode-production
+  when: manual
+  script:
+    - nix run -f nix/vsce.nix -c vsce publish --packagePath *.vsix -p "$MICROSOFT_MARKETPLACE_TOKEN"
