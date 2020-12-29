@@ -378,7 +378,7 @@ let transfer_single
          let card: card =
            switch(
             Map.find_opt(action.card_to_transfer, cards)){
-           | Somecard => card
+           | Some card => card
            | None =>
                ((failwith(("transfer_single: No card.")))
                  : card)
@@ -405,7 +405,7 @@ let sell_single: (action_sell_single, storage) => return =
      | action: action_sell_single, s: storage =>
          let card: card =
            switch(Map.find_opt(action.card_to_sell, s.cards)){
-           | Somecard => card
+           | Some card => card
            | None =>
                ((failwith(("sell_single: No card."))) : card)
            };
@@ -419,7 +419,7 @@ let sell_single: (action_sell_single, storage) => return =
              switch(
               Map.find_opt(card.card_pattern,
                  s.card_patterns)){
-             | Somepattern => pattern
+             | Some pattern => pattern
              | None =>
                  ((
                     failwith(("sell_single: No card pattern.")))
@@ -451,7 +451,7 @@ let sell_single: (action_sell_single, storage) => return =
            let receiver: contract(unit) =
              switch(((Tezos.get_contract_opt((Tezos.sender)))
                 : option(contract(unit)))){
-             | Somecontract => contract
+             | Some contract => contract
              | None =>
                  ((failwith(("sell_single: No contract.")))
                    : contract(unit))
@@ -470,7 +470,7 @@ let buy_single: (action_buy_single, storage) => return =
          let card_pattern: card_pattern =
            switch(
             Map.find_opt(action.card_to_buy, s.card_patterns)){
-           | Somepattern => pattern
+           | Some pattern => pattern
            | None =>
                ((failwith(("buy_single: No card pattern.")))
                  : card_pattern)
@@ -626,7 +626,7 @@ let nested_record: nested_record_t => string =
   ((nee: nested_record_t): string =>
      let nee = Map.add("one", 1, nesty.mymap);
      switch(Map.find_opt(1, nee.nesty.mymap)){
-     | Somes => s
+     | Some s => s
      | None => ((failwith(("Should not happen."))) : string)
      }); |}]
 
@@ -935,7 +935,7 @@ let transferContentsIterator =
                (storage)));
          let tokenOwner =
            switch(tokenOwner){
-           | SometokenOwner =>
+           | Some tokenOwner =>
                if ((EQ((tokenOwner), (from_)))) {
                  tokenOwner
                } else {
@@ -1522,7 +1522,7 @@ let transfer
                switch((
                  Map.find_opt((Tezos.sender, p.address_from),
                     (s.allowances)))){
-               | Somevalue => value
+               | Some value => value
                | None => 0n
                };
              let gen__env8 = {
@@ -1567,7 +1567,7 @@ let transfer
          let sender_balance: nat =
            switch((
              Map.find_opt((p.address_from), (s.tokens)))){
-           | Somevalue => value
+           | Some value => value
            | None => 0n
            };
          let new_tokens: tokens = Big_map.empty;
@@ -1597,7 +1597,7 @@ let transfer
              let receiver_balance: nat =
                switch((
                  Map.find_opt((p.address_to), (s.tokens)))){
-               | Somevalue => value
+               | Some value => value
                | None => 0n
                };
              let new_tokens =
@@ -1634,7 +1634,7 @@ let approve
            switch((
              Map.find_opt((p.spender, Tezos.sender),
                 (s.allowances)))){
-           | Somevalue => value
+           | Some value => value
            | None => 0n
            };
          let new_allowances: allowances = Big_map.empty;
@@ -1681,7 +1681,7 @@ let getAllowance
            switch((
              Map.find_opt((p.owner, p.spender),
                 (s.allowances)))){
-           | Somevalue => value
+           | Some value => value
            | None => 0n
            };
          let op: operation =
@@ -1700,7 +1700,7 @@ let getBalance
      | p: getBalance, s: storage =>
          let value: nat =
            switch((Map.find_opt((p.owner), (s.tokens)))){
-           | Somevalue => value
+           | Some value => value
            | None => 0n
            };
          let op: operation =

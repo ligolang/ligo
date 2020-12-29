@@ -328,7 +328,7 @@ and pp_update {value; _} =
 
 and pp_code_inj {value; _} =
   let {language; code; _} = value in
-  let language = pp_string language.value
+  let language = string language.value.value
   and code     = pp_expr code in
   string "[%" ^^ language ^/^ code ^^ string "]"
 
@@ -373,8 +373,8 @@ and pp_let_in {value; _} =
 and pp_type_in {value; _} =
   let {type_decl; body; _} = value in
   let {name; type_expr; _} = type_decl
-  in string "let"
-     ^^ prefix 2 1 (pp_ident name ^^ string "=")
+  in string "type "
+     ^^ prefix 2 1 (pp_ident name ^^ string " =")
                    (pp_type_expr type_expr)
      ^^ string " in" ^^ hardline ^^ group (pp_expr body)
 
