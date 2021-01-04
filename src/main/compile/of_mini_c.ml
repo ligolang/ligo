@@ -16,7 +16,7 @@ let compile_contract : options:Compiler_options.t -> expression -> (Stacking.com
   let body = Scoping.translate_closed_function body input_ty in
   let body = Stacking.Program.compile_function_body options.protocol_version body in
   let expr = Self_michelson.optimize options.protocol_version body in
-  let%bind expr_ty = trace stacking_tracer @@ Stacking.Type.type_ e.type_expression in
+  let expr_ty = Scoping.translate_type e.type_expression in
   let expr_ty = dummy_locations expr_ty in
   ok ({ expr_ty ; expr } : Stacking.Program.compiled_expression)
 
@@ -25,7 +25,7 @@ let compile_expression : options:Compiler_options.t -> expression -> (compiled_e
   let (expr, _) = Scoping.translate_expression e [] in
   let expr = Stacking.Program.compile_expr options.protocol_version [] [] expr in
   let expr = Self_michelson.optimize options.protocol_version expr in
-  let%bind expr_ty = Stacking.Type.type_ e.type_expression in
+  let expr_ty = Scoping.translate_type e.type_expression in
   let expr_ty = dummy_locations expr_ty in
   ok ({ expr_ty ; expr } : Program.compiled_expression)
 
