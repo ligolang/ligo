@@ -3,13 +3,14 @@ id: exceptions
 title: Exceptions
 ---
 
-To interupt the flow of execution and exit the program. In case of inconsistant value or
-the caller falling to authentifies. Ligo offer several mechanism.
-
+In some cases it's necessary to interrupt the flow of execution and fail the
+contract. This is where the `failwith` function comes in.
 ## The failwith function
 
-The failwith function takes a message and exit the program displaying the message
+The failwith function
 
+raises an error that cannot be caught, and terminates the
+contract.
 
 <Syntax syntax="pascaligo">
 
@@ -42,22 +43,29 @@ let main (p, store : unit * storage) : operation list * storage =
   (failwith "This contract always fails" : operation list * storage)
 ```
 
-In cameligo, the call to failwith should be annoted with a type as the typechecker cannot infer the correct type yet
+The call to failwith should be annoted with a type as the typechecker cannot infer the correct type yet.
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=failwith
 let main = (p : unit, s : unit) =>
-  if (true) { failwith("This contract always fails"); };
+  if (true) { 
+    failwith("This contract always fails"); 
+  };
 ```
+
+The call to failwith should be annoted with a type as the typechecker cannot infer the correct type yet.
 
 </Syntax>
 
-## The assert and assert_some functions
+## Assertions
 
-The assert functions familly check that a certain condition is verified and return unit or exit the program with a default message if the condition is not verified.
-`assert` check that the boolean argument is `true` and `assert_some` check that the option argument is not `none`
+Assertions can be used to ensure a certain condition is met when running a 
+contract. 
+`assert` is used to check if a boolean condition is `true` and `assert_some` is used 
+to check if an option value is not `None`. When a condition is not met, the 
+contract will stop executing and display an error.
 
 <Syntax syntax="pascaligo">
 
