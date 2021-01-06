@@ -12,6 +12,7 @@
       "language-basics/unit-option-pattern-matching",
       "language-basics/maps-records",
       "language-basics/sets-lists-tuples",
+      "language-basics/exceptions",
       "language-basics/tezos-specific"
     ],
     "Advanced": [
