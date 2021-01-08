@@ -488,7 +488,7 @@ if_then(right_expr):
     in ECond {region; value} }
 
 base_if_then_else__open(x):
-  base_expr(x) | if_then_else(x) { $1 }
+  base_expr(x) | conditional(x) { $1 }
 
 base_if_then_else:
   base_if_then_else__open(base_if_then_else) { $1 }
@@ -922,7 +922,7 @@ let_in_sequence:
     in ELetIn {region; value} }
 
 seq_expr:
-  disj_expr_level | if_then_else (closed_if) { $1 }
+  disj_expr_level | conditional (closed_if) { $1 }
 
 field_assignment_punning:
   (* This can only happen with multiple fields -
