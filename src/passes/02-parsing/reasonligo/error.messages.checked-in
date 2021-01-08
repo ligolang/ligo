@@ -3910,3 +3910,250 @@ contract: WILD
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Module Constr EQ LBRACE Type Ident EQ Constr EOF
+##
+## Ends in an error in state: 675.
+##
+## module_decl -> Module Constr EQ LBRACE module_ . RBRACE [ Type SEMI RBRACE Module Let EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## Module Constr EQ LBRACE module_
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 33, spurious reduction of production variant -> Constr 
+## In state 41, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 66, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 56, spurious reduction of production type_expr -> sum_type 
+## In state 85, spurious reduction of production type_decl -> Type Ident EQ type_expr 
+## In state 90, spurious reduction of production option(SEMI) -> 
+## In state 92, spurious reduction of production declaration -> type_decl option(SEMI) 
+## In state 680, spurious reduction of production declarations -> declaration 
+## In state 679, spurious reduction of production module_ -> declarations 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Module Constr EQ LBRACE Type Ident EQ Constr RBRACE WILD
+##
+## Ends in an error in state: 673.
+##
+## declaration -> module_decl . option(SEMI) [ Type RBRACE Module Let EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## module_decl
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Module Constr EQ WILD
+##
+## Ends in an error in state: 88.
+##
+## module_decl -> Module Constr EQ . LBRACE module_ RBRACE [ Type SEMI RBRACE Module Let EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## Module Constr EQ
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Module Constr WILD
+##
+## Ends in an error in state: 87.
+##
+## module_decl -> Module Constr . EQ LBRACE module_ RBRACE [ Type SEMI RBRACE Module Let EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## Module Constr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Module WILD
+##
+## Ends in an error in state: 86.
+##
+## module_decl -> Module . Constr EQ LBRACE module_ RBRACE [ Type SEMI RBRACE Module Let EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## Module
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ Constr RBRACE
+##
+## Ends in an error in state: 682.
+##
+## contract -> declarations . EOF [ # ]
+##
+## The known suffix of the stack is as follows:
+## declarations
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 33, spurious reduction of production variant -> Constr 
+## In state 41, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 66, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 56, spurious reduction of production type_expr -> sum_type 
+## In state 85, spurious reduction of production type_decl -> Type Ident EQ type_expr 
+## In state 90, spurious reduction of production option(SEMI) -> 
+## In state 92, spurious reduction of production declaration -> type_decl option(SEMI) 
+## In state 680, spurious reduction of production declarations -> declaration 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Module Constr EQ LBRACE Type Ident EQ Constr RBRACE WILD
+##
+## Ends in an error in state: 272.
+##
+## local_module_decl(expr) -> module_decl . SEMI expr [ Type SEMI RPAR RBRACKET RBRACE Module Let EOF COMMA COLON Attr ]
+##
+## The known suffix of the stack is as follows:
+## module_decl
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch Verbatim LBRACE VBAR WILD ARROW Module Constr EQ LBRACE Type Ident EQ Constr RBRACE WILD
+##
+## Ends in an error in state: 632.
+##
+## local_module_decl(base_cond) -> module_decl . SEMI base_cond [ VBAR SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## module_decl
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR Bytes RPAR LBRACE Module Constr EQ LBRACE Type Ident EQ Constr RBRACE WILD
+##
+## Ends in an error in state: 385.
+##
+## local_module_decl(closed_if) -> module_decl . SEMI closed_if [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## module_decl
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR Bytes RPAR LBRACE Switch Verbatim LBRACE VBAR WILD ARROW Module Constr EQ LBRACE Type Ident EQ Constr RBRACE WILD
+##
+## Ends in an error in state: 427.
+##
+## local_module_decl(base_if_then_else) -> module_decl . SEMI base_if_then_else [ VBAR SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## module_decl
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Module Constr EQ Constr WILD
+##
+## Ends in an error in state: 274.
+##
+## local_module_alias(expr) -> module_alias . SEMI expr [ Type SEMI RPAR RBRACKET RBRACE Module Let EOF COMMA COLON Attr ]
+##
+## The known suffix of the stack is as follows:
+## module_alias
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Module Constr EQ Constr Type
+##
+## Ends in an error in state: 274.
+##
+## local_module_alias(expr) -> module_alias . SEMI expr [ Type SEMI RPAR RBRACKET RBRACE Module Let EOF COMMA COLON Attr ]
+##
+## The known suffix of the stack is as follows:
+## module_alias
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 700, spurious reduction of production nsepseq(module_name,DOT) -> Constr 
+## In state 703, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR Bytes RPAR LBRACE Module Constr EQ Constr Type
+##
+## Ends in an error in state: 391.
+##
+## local_module_alias(closed_if) -> module_alias . SEMI closed_if [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## module_alias
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 700, spurious reduction of production nsepseq(module_name,DOT) -> Constr 
+## In state 703, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR Bytes RPAR LBRACE Switch Verbatim LBRACE VBAR WILD ARROW Module Constr EQ Constr Type
+##
+## Ends in an error in state: 437.
+##
+## local_module_alias(base_if_then_else) -> module_alias . SEMI base_if_then_else [ VBAR SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## module_alias
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 700, spurious reduction of production nsepseq(module_name,DOT) -> Constr 
+## In state 703, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch Verbatim LBRACE VBAR WILD ARROW Module Constr EQ Constr Type
+##
+## Ends in an error in state: 646.
+##
+## local_module_alias(base_cond) -> module_alias . SEMI base_cond [ VBAR SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## module_alias
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 700, spurious reduction of production nsepseq(module_name,DOT) -> Constr 
+## In state 703, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Module Constr EQ Constr DOT WILD
+##
+## Ends in an error in state: 701.
+##
+## nsepseq(module_name,DOT) -> Constr DOT . nsepseq(module_name,DOT) [ Type SEMI RBRACE Module Let EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## Constr DOT
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>

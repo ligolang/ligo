@@ -44,6 +44,8 @@ and expression_content = function
   | E_recursive   e -> `List [ `String "E_recursive";   recursive   expression type_expression e ]
   | E_let_in      e -> `List [ `String "E_let_in";      let_in      e ]
   | E_type_in     e -> `List [ `String "E_type_in";     type_in   expression type_expression e ]
+  | E_mod_in      e -> `List [ `String "E_mod_in";      mod_in    expression type_expression e ]
+  | E_mod_alias   e -> `List [ `String "E_mod_alias";   mod_alias expression                 e ]
   | E_raw_code    e -> `List [ `String "E_raw_code";    raw_code    expression e ]
   (* Variant *)
   | E_constructor e -> `List [ `String "E_constructor"; constructor expression e ]
@@ -127,8 +129,6 @@ and matching_content_case ((constructor, pattern), body) =
     ("body", expression body);
   ]
 
-let declaration = function
-  | Declaration_type     dt -> `List [ `String "Declaration_type"; declaration_type type_expression dt]
-  | Declaration_constant dc -> `List [ `String "Declaration_constant"; declaration_constant expression type_expression dc]
+let declaration = declaration expression type_expression
 
-let program = program declaration
+let module_ = module' expression type_expression

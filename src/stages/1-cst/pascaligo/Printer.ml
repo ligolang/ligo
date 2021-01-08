@@ -128,9 +128,11 @@ let rec print_tokens state ast =
   print_token state eof "EOF"
 
 and print_decl state = function
-  TypeDecl  decl -> print_type_decl  state decl
-| ConstDecl decl -> print_const_decl state decl
-| FunDecl   decl -> print_fun_decl   state decl
+  TypeDecl    decl -> print_type_decl    state decl
+| ConstDecl   decl -> print_const_decl   state decl
+| FunDecl     decl -> print_fun_decl     state decl
+| ModuleDecl  decl -> print_module_decl  state decl
+| ModuleAlias decl -> print_module_alias state decl
 
 and print_const_decl state {value; _} =
   let {kwd_const; name; const_type;
@@ -151,6 +153,35 @@ and print_type_decl state {value; _} =
   print_token      state kwd_is "is";
   print_type_expr  state type_expr;
   print_terminator state terminator
+
+and print_module_decl state {value; _} =
+  let {kwd_module; name; kwd_is;enclosing;
+       module_; terminator} = value in
+  match enclosing with
+    Brace (lbrace, rbrace) ->
+    print_token      state kwd_module "module";
+    print_var        state name;
+    print_token      state kwd_is "is";
+    print_token      state lbrace "{";
+    print_tokens     state module_;
+    print_token      state rbrace "}";
+    print_terminator state terminator
+  | BeginEnd (kwd_begin, kwd_end) ->
+    print_token      state kwd_module "module";
+    print_var        state name;
+    print_token      state kwd_is "is";
+    print_token      state kwd_begin "begin";
+    print_tokens     state module_;
+    print_token      state kwd_end "end";
+    print_terminator state terminator
+
+and print_module_alias state {value; _} =
+  let {kwd_module; alias; kwd_is; binders;terminator} = value in
+    print_token      state kwd_module "module";
+    print_var        state alias;
+    print_token      state kwd_is "is";
+    print_nsepseq    state "." print_var binders;
+    print_terminator state terminator
 
 and print_type_expr state = function
   TProd   cartesian   -> print_cartesian   state cartesian
@@ -297,9 +328,12 @@ and print_block state block =
       print_token      state kwd_end "end"
 
 and print_data_decl state = function
-  LocalConst decl -> print_const_decl state decl
-| LocalVar   decl -> print_var_decl   state decl
-| LocalFun  decl -> print_fun_decl  state decl
+  LocalConst       decl -> print_const_decl   state decl
+| LocalVar         decl -> print_var_decl     state decl
+| LocalFun         decl -> print_fun_decl     state decl
+| LocalType        decl -> print_type_decl    state decl
+| LocalModule      decl -> print_module_decl  state decl
+| LocalModuleAlias decl -> print_module_alias state decl
 
 and print_var_decl state {value; _} =
   let {kwd_var; name; var_type;
@@ -323,7 +357,6 @@ and print_statements state sequence =
 and print_statement state = function
   Instr instr -> print_instruction state instr
 | Data  data  -> print_data_decl   state data
-| Type  type_ -> print_type_decl   state type_
 
 and print_instruction state = function
   Cond        {value; _} -> print_conditional state value
@@ -931,6 +964,12 @@ and pp_declaration state = function
 | FunDecl {value; region} ->
     pp_loc_node state "FunDecl" region;
     pp_fun_decl state value
+| ModuleDecl {value; region} ->
+    pp_loc_node state "ModuleDecl" region;
+    pp_mod_decl state value
+| ModuleAlias {value; region} ->
+    pp_loc_node  state "ModuleAlias" region;
+    pp_mod_alias state value
 
 and pp_type_decl state (decl : type_decl) =
   let () =
@@ -941,6 +980,31 @@ and pp_type_decl state (decl : type_decl) =
     let state = state#pad 2 1 in
     pp_node  state "<type_expr>";
     pp_type_expr (state#pad 1 0) decl.type_expr
+  in ()
+
+and pp_mod_decl state (decl : module_decl) =
+  let () =
+    let state = state#pad 2 0 in
+    pp_node  state "<name>";
+    pp_ident (state#pad 1 0) decl.name in
+  let () =
+    let state = state#pad 2 1 in
+    pp_node  state "<module>";
+    pp_cst (state#pad 1 0) decl.module_
+  in ()
+
+and pp_mod_alias state (decl : module_alias) =
+  let () =
+    let state = state#pad 2 0 in
+    pp_node  state "<alias>";
+    pp_ident (state#pad 1 0) decl.alias in
+  let () =
+    let state = state#pad 2 1 in
+    let binders     = Utils.nsepseq_to_list decl.binders in
+    let len            = List.length binders in
+    let apply len rank = pp_ident (state#pad len rank) in
+    pp_node  state "<module>";
+    List.iteri (apply len) binders
   in ()
 
 and pp_fun_decl state decl =
@@ -1173,10 +1237,6 @@ and pp_statement state = function
 | Data data_decl ->
     pp_node state "Data";
     pp_data_decl (state#pad 1 0) data_decl
-| Type type_decl ->
-    pp_node state "Type";
-    pp_type_decl (state#pad 1 0) type_decl.value
-
 and pp_instruction state = function
   Cond {value; region} ->
     pp_loc_node state "Cond" region;
@@ -1565,6 +1625,16 @@ and pp_data_decl state = function
 | LocalFun {value; region} ->
     pp_loc_node state "LocalFun" region;
     pp_fun_decl state value
+| LocalType type_decl ->
+    pp_node state "Type";
+    pp_type_decl (state#pad 1 0) type_decl.value
+| LocalModule module_decl ->
+    pp_node state "Module";
+    pp_mod_decl (state#pad 1 0) module_decl.value
+| LocalModuleAlias module_alias ->
+    pp_node state "Module";
+    pp_mod_alias (state#pad 1 0) module_alias.value
+
 
 and pp_var_decl state decl =
   let arity = if decl.var_type = None then 2 else 3 in

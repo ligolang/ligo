@@ -145,11 +145,11 @@ end = struct
      typechecker's state is discarded. TODO: either get rid of the state
      earlier, or perform a sanity check here (e.g. that types have been
      inferred for all bindings and expressions, etc.
-  
+
      Also, we should check at these places that we indeed do not need the
      state any further. Suzanne *)
   let discard_state (_ : typer_state) = ()
-  
+
   let initial_state : typer_state =
     let module MapCreateState = Plugins.Indexers.MapPlugins(CreateState) in
     let plugin_states = MapCreateState.f () plugin_fields_unit in
@@ -184,8 +184,6 @@ let json_typer_state = fun ({ all_constraints=_ ; plugin_states=_ ; aliases=_ ; 
   `Assoc[ ("all_constraints", `String "TODO");
           ("plugin_states", (* (Ast_typed.Yojson.structured_dbs structured_dbs) *) `String "TODO");
           ("aliases", `String "TODO");
-          ("already_selected_and_propagators", 
+          ("already_selected_and_propagators",
            let list f lst = `List (List.map f lst) in
            (list json_ex_propagator_state already_selected_and_propagators))]
-
-

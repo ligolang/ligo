@@ -40,7 +40,7 @@ let repair_mutable_variable_in_matching (match_body : O.expression) (element_nam
       | E_constant _
       | E_skip
       | E_literal _ | E_variable _
-      | E_type_in _
+      | E_type_in _ | E_mod_in _ |  E_mod_alias _
       | E_application _ | E_lambda _| E_recursive _ | E_raw_code _
       | E_constructor _ | E_record _| E_accessor _|E_update _
       | E_ascription _  | E_sequence _ | E_tuple _
@@ -88,7 +88,7 @@ and repair_mutable_variable_in_loops (for_body : O.expression) (element_names : 
       | E_constant _
       | E_skip
       | E_literal _ | E_variable _
-      | E_type_in _
+      | E_type_in _ | E_mod_in _ | E_mod_alias _
       | E_application _ | E_lambda _| E_recursive _ | E_raw_code _
       | E_constructor _ | E_record _| E_accessor _| E_update _
       | E_ascription _  | E_sequence _ | E_tuple _
@@ -200,6 +200,12 @@ and compile_expression' : I.expression -> (O.expression option -> O.expression, 
     | I.E_type_in ti ->
       let%bind ti = type_in self self_type ti in
       return @@ O.E_type_in ti
+    | I.E_mod_in mi ->
+      let%bind mi = mod_in self self_type mi in
+      return @@ O.E_mod_in mi
+    | I.E_mod_alias ma ->
+      let%bind ma = mod_alias self ma in
+      return @@ O.E_mod_alias ma
     | I.E_raw_code rc ->
       let%bind rc = raw_code self rc in
       return @@ O.E_raw_code rc
@@ -493,7 +499,7 @@ and compile_for_each I.{fe_binder;collection;collection_type; fe_body} =
   in
   ok @@ restore_mutable_variable fold free_vars env_rec
 
-let compile_declaration : I.declaration Location.wrap -> _ =
+and compile_declaration : I.declaration Location.wrap -> _ =
   fun {wrap_content=declaration;location} ->
   let return decl = ok @@ Location.wrap ~loc:location decl in
   match declaration with
@@ -503,6 +509,12 @@ let compile_declaration : I.declaration Location.wrap -> _ =
   | I.Declaration_constant dc ->
     let%bind dc = declaration_constant compile_expression compile_type_expression dc in
     return @@ O.Declaration_constant dc
+  | I.Declaration_module dm ->
+    let%bind dm = declaration_module compile_expression compile_type_expression dm in
+    return @@ O.Declaration_module dm
+  | I.Module_alias ma ->
+    let%bind ma = module_alias ma in
+    return @@ O.Module_alias ma
 
-let compile_program : I.program -> (O.program , Errors.purification_error) result = fun p ->
-  program compile_declaration p
+and compile_module : I.module_ -> (O.module_ , Errors.purification_error) result = fun m ->
+  module' compile_expression compile_type_expression m

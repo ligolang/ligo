@@ -233,5 +233,11 @@ module Ne = struct
     | Some x -> Some x
     | None -> find_map f tl
   let append : 'a t -> 'a t -> 'a t = fun (hd, tl) (hd', tl') -> hd, List.append tl @@ hd' :: tl'
+  let compare = fun ?compare:cmp (hd,tl) (hd',tl') -> 
+    let cmp = unopt ~default:Stdlib.compare cmp in
+    match cmp hd hd' with 
+      0 -> compare ~compare:cmp tl tl'
+    | c -> c
+
 
 end

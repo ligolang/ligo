@@ -68,6 +68,7 @@ module Token = Lexer_reasonligo.Token
 %token <Region.t> Or     "or"
 %token <Region.t> True   "true"
 %token <Region.t> Type   "type"
+%token <Region.t> Module "module"
 
   (* Data constructors *)
 

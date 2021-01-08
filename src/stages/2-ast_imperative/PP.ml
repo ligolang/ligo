@@ -82,7 +82,9 @@ and expression_content ppf (ec : expression_content) =
   | E_recursive  r -> recursive expression type_expression ppf r
   | E_let_in    li -> let_in  expression type_expression ppf li
   | E_type_in   ti -> type_in expression type_expression ppf ti
-  | E_raw_code   r -> raw_code expression ppf r
+  | E_mod_in    mi -> mod_in  expression type_expression ppf mi
+  | E_mod_alias ma -> mod_alias  expression ppf ma
+  | E_raw_code   r -> raw_code   expression ppf r
   | E_ascription a -> ascription expression type_expression ppf a
   | E_module_accessor ma -> module_access expression ppf ma
   | E_cond       c -> cond       expression ppf c
@@ -135,14 +137,11 @@ and matching_type ppf m = match m with
 and matching_variant_case_type ppf ((c,n),_a) =
   fprintf ppf "| %a %a" label c expression_variable n
 
-and attributes ppf attributes =
+let attributes ppf attributes =
   let attr =
     List.map (fun attr -> "[@@" ^ attr ^ "]") attributes |> String.concat ""
   in fprintf ppf "%s" attr
 
-let declaration ppf (d : declaration) =
-  match d with
-  | Declaration_type     dt -> declaration_type                type_expression ppf dt
-  | Declaration_constant dc -> declaration_constant expression type_expression ppf dc
+let declaration ppf (d : declaration) = declaration expression type_expression ppf d
 
-let program ppf (p : program) = program declaration ppf p
+let module_ ppf (p : module_) = module' expression type_expression ppf p

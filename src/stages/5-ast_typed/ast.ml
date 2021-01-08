@@ -112,11 +112,11 @@ and matching_expr =
 
 and declaration_loc = declaration location_wrap
 
-and program_ = declaration_loc list
+and module' = declaration_loc list
 
-and program_with_unification_vars = Program_With_Unification_Vars of program_
+and module_with_unification_vars = Module_With_Unification_Vars of module'
 
-and program_fully_typed = Program_Fully_Typed of program_
+and module_fully_typed = Module_Fully_Typed of module'
 
 (* A Declaration_constant is described by
  *   a name + a type-annotated expression
@@ -131,12 +131,19 @@ and declaration_constant = {
 
 and declaration_type = {
     type_binder : type_variable ;
-    type_expr : type_expression ;
+    type_expr   : type_expression ;
+  }
+
+and declaration_module = {
+    module_binder : module_variable ;
+    module_       : module_fully_typed ;
   }
 
 and declaration =
   | Declaration_constant of declaration_constant
   | Declaration_type of declaration_type
+  | Declaration_module of declaration_module
+  | Module_alias       of module_alias
 
 and expression = {
     expression_content: expression_content ;
@@ -169,6 +176,8 @@ and expression_content =
   | E_recursive of recursive
   | E_let_in of let_in
   | E_type_in of (expr, ty_expr) type_in
+  | E_mod_in of mod_in
+  | E_mod_alias of expr mod_alias
   | E_raw_code of raw_code
   (* Variant *)
   | E_constructor of constructor (* For user defined constructors *)
@@ -199,6 +208,12 @@ and let_in = {
     rhs: expression ;
     let_result: expression ;
     inline : bool ;
+  }
+
+and mod_in = {
+    module_binder: module_variable ;
+    rhs: module_fully_typed ;
+    let_result: expression ;
   }
 
 and raw_code = {
@@ -272,7 +287,7 @@ and type_environment_binding = {
 and module_environment = module_environment_binding list
 
 and module_environment_binding = {
-  module_name : string ;
+  module_variable : module_variable ;
   module_ : environment ;
 }
 and environment = {
@@ -457,7 +472,7 @@ and type_variable_list = type_variable list
 and type_variable_lmap = type_variable label_map
 and c_constructor_simpl = {
   reason_constr_simpl : string ;
-  (* If false, the constraint can be deleted without compromising the correctness of the typechecker: it might be a constraint used for bookkeeping which helps with inference, but its removal does not risk causing an ill-typed program to be accepted. If true, this constraint might (or might not) be necessary for correctness. It is always safe to use "true" for correctness. Use "false" only when being sure it is safe to remove that constraint. *)
+  (* If false, the constraint can be deleted without compromising the correctness of the typechecker: it might be a constraint used for bookkeeping which helps with inference, but its removal does not risk causing an ill-typed module to be accepted. If true, this constraint might (or might not) be necessary for correctness. It is always safe to use "true" for correctness. Use "false" only when being sure it is safe to remove that constraint. *)
   is_mandatory_constraint : bool ;
   tv : type_variable;
   c_tag : constant_tag;

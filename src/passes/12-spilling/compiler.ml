@@ -11,6 +11,7 @@ module Append_tree = Tree.Append
 open AST.Combinators
 open Mini_c
 
+module SMap = Map.Make(String)
 
 let temp_unwrap_loc = Location.unwrap
 let temp_unwrap_loc_list = List.map Location.unwrap
@@ -278,6 +279,19 @@ let internal_error loc msg =
        "@[<v>Internal error, please report this as a bug@ %s@ %s@ @]"
        loc msg)
 
+let rec build_record_accessor record path =
+  match path with
+  | [] -> ok record
+  | label :: path ->
+    let%bind t =
+      trace_option (corner_case ~loc:__LOC__ "Could not get record field type")
+      @@ get_record_field_type (get_type_expression record) label in
+    build_record_accessor
+      (Ast_typed.Combinators.make_e
+         (E_record_accessor { record = record ; path = label })
+         t)
+      path
+
 let rec compile_literal : AST.literal -> value = fun l -> match l with
   | Literal_int n -> D_int n
   | Literal_nat n -> D_nat n
@@ -293,25 +307,44 @@ let rec compile_literal : AST.literal -> value = fun l -> match l with
   | Literal_operation op -> D_operation op
   | Literal_unit -> D_unit
 
-and compile_expression (ae:AST.expression) : (expression , spilling_error) result =
+and compile_expression ?(module_env = SMap.empty) (ae:AST.expression) : (expression , spilling_error) result =
   let%bind tv = compile_type ae.type_expression in
+  let self ?(module_env=module_env) = compile_expression ~module_env in
   let return ?(tv = tv) expr =
     ok @@ Combinators.Expression.make_tpl ~loc:ae.location (expr, tv) in
   match ae.expression_content with
   | E_let_in {let_binder; rhs; let_result; inline} ->
-    let%bind rhs' = compile_expression rhs in
-    let%bind result' = compile_expression let_result in
+    let%bind rhs' = self rhs in
+    let%bind result' = self let_result in
     return (E_let_in (rhs', inline, ((Location.map Var.todo_cast let_binder, rhs'.type_expression), result')))
   | E_type_in {type_binder=_; rhs=_; let_result} ->
-    let%bind result' = compile_expression let_result in
+    let%bind result' = self let_result in
     ok result'
+  | E_mod_in {module_binder; rhs; let_result} ->
+    let%bind record,module_env = compile_module_as_record module_binder module_env rhs in
+    let t_record = record.type_expression in
+    let%bind result' = self ~module_env let_result in
+    return @@ E_let_in (record,false, ((Location.wrap @@ Var.of_name module_binder, t_record),result'))
+  | E_mod_alias {alias; binders; result} -> (
+    let module_binder,access = binders in
+    let%bind module_ =
+      trace_option (corner_case ~loc:__LOC__ "Mod_alias: This program shouldn't type")
+      @@ SMap.find_opt  module_binder module_env  in
+    let module_var = e_a_variable (Location.wrap (Var.of_name module_binder)) module_ in
+    let%bind module_expr = build_record_accessor module_var (List.map (fun l -> Label l) access) in
+    let module_ = get_type_expression module_expr in
+    let%bind module_expr = self ~module_env module_expr in
+    let module_env  = SMap.add alias module_ module_env in
+    let%bind result' = self ~module_env result in
+    return @@ E_let_in (module_expr,false,((Location.wrap @@ Var.of_name alias, tv),result'))
+  )
   | E_literal l -> return @@ E_literal l
   | E_variable name -> (
       return @@ E_variable (Location.map Var.todo_cast name)
     )
   | E_application {lamb; args} ->
-      let%bind a = compile_expression lamb in
-      let%bind b = compile_expression args in
+      let%bind a = self lamb in
+      let%bind b = self args in
       return @@ E_application (a, b)
   | E_constructor {constructor=Label name;element} when (String.equal name "true"|| String.equal name "false") && element.expression_content = AST.e_unit () ->
     return @@ E_constant { cons_name = if bool_of_string name then C_TRUE else C_FALSE ; arguments = [] }
@@ -328,13 +361,13 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
       in
       return ~tv:ty @@ E_constant {cons_name=c;arguments=[pred]}
     in
-    let%bind element' = compile_expression element in
+    let%bind element' = self element in
     let%bind expr = bind_fold_list aux element' path in
     ok expr
   )
   | E_record m -> (
       let%bind record_t = trace_option (corner_case ~loc:__LOC__ "record expected") (AST.get_t_record ae.type_expression) in
-      Layout.record_to_pairs compile_expression return record_t m
+      Layout.record_to_pairs self return record_t m
     )
   | E_record_accessor {record; path} ->
       let%bind ty' = compile_type (get_type_expression record) in
@@ -348,7 +381,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
         in
         return ~tv:ty @@ E_constant {cons_name=c;arguments=[pred]}
       in
-      let%bind record' = compile_expression record in
+      let%bind record' = self record in
       let%bind expr = bind_fold_list aux record' path in
       ok expr
   | E_record_update {record; path; update} ->
@@ -379,8 +412,8 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
       in
       let%bind (update, path) = aux [] (record, path, update) in
       let path = List.map snd path in
-      let%bind update = compile_expression update in
-      let%bind record = compile_expression record in
+      let%bind update = self update in
+      let%bind record = self record in
       let record_var = Var.fresh () in
       let car (e : expression) : expression =
         match e.type_expression.type_content with
@@ -418,7 +451,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
       let iterator_generator iterator_name =
         let expression_to_iterator_body (f : AST.expression) =
           let%bind (input , output) = trace_option (corner_case ~loc:__LOC__ "expected function type") @@ AST.get_t_function f.type_expression in
-          let%bind f' = compile_expression f in
+          let%bind f' = self f in
           let%bind input' = compile_type input in
           let%bind output' = compile_type output in
           let binder = Location.wrap @@ Var.fresh ~name:"iterated" () in
@@ -428,13 +461,13 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
         fun (lst : AST.expression list) -> match (lst , iterator_name) with
           | [f ; i] , C_ITER | [f ; i] , C_MAP -> (
               let%bind f' = expression_to_iterator_body f in
-              let%bind i' = compile_expression i in
+              let%bind i' = self i in
               return @@ E_iterator (iterator_name , f' , i')
             )
           | [ f ; collection ; initial ] , C_FOLD -> (
               let%bind f' = expression_to_iterator_body f in
-              let%bind initial' = compile_expression initial in
-              let%bind collection' = compile_expression collection in
+              let%bind initial' = self initial in
+              let%bind collection' = self collection in
               return @@ E_fold (f' , collection' , initial')
             )
           | _ -> fail @@ corner_case ~loc:__LOC__ (Format.asprintf "bad iterator arity: %a" PP.constant iterator_name)
@@ -450,24 +483,24 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
       | (C_SET_FOLD , lst) -> fold lst
       | (C_MAP_FOLD , lst) -> fold lst
       | _ -> (
-          let%bind lst' = bind_map_list (compile_expression) lst in
+          let%bind lst' = bind_map_list (self) lst in
           return @@ E_constant {cons_name=compile_constant' name;arguments=lst'}
         )
     )
   | E_lambda l ->
     let%bind io = trace_option (corner_case ~loc:__LOC__ "expected function type") @@
       AST.get_t_function ae.type_expression in
-    compile_lambda l io
+    compile_lambda module_env l io
   | E_recursive r ->
-    compile_recursive r
+    compile_recursive module_env r
   | E_matching {matchee=expr; cases=m} -> (
-      let%bind expr' = compile_expression expr in
+      let%bind expr' = self expr in
       match m with
       | Match_option { match_none; match_some = {opt; body; tv} } ->
-          let%bind n = compile_expression match_none in
+          let%bind n = self match_none in
           let%bind (tv' , s') =
             let%bind tv' = compile_type tv in
-            let%bind s' = compile_expression body in
+            let%bind s' = self body in
             ok (tv' , s')
           in
           return @@ E_if_none (expr' , n , ((Location.map Var.todo_cast opt , tv') , s'))
@@ -475,11 +508,11 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
           match_nil ;
           match_cons = {hd; tl; body; tv} ;
         } -> (
-          let%bind nil = compile_expression match_nil in
+          let%bind nil = self match_nil in
           let%bind cons =
             let%bind elt_ty = compile_type tv in
             let list_ty = { type_content = T_list elt_ty ; location = Location.generated } in
-            let%bind match_cons' = compile_expression body in
+            let%bind match_cons' = self body in
             ok (((Location.map Var.todo_cast hd , elt_ty) , (Location.map Var.todo_cast tl , list_ty)) , match_cons')
           in
           return @@ E_if_cons (expr' , nil , cons)
@@ -495,7 +528,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
                 (AST.LMap.find_opt (Label c) cases) in
             let%bind match_true  = get_case "true" in
             let%bind match_false = get_case "false" in
-            let%bind (t , f) = bind_map_pair (compile_expression) (match_true, match_false) in
+            let%bind (t , f) = bind_map_pair (self) (match_true, match_false) in
             return @@ E_if_bool (expr', t, f)
           | _ -> (
               let%bind { content ; layout } = trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
@@ -509,7 +542,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
                       let aux ({constructor = Label c ; pattern=_ ; body=_} : AST.matching_content_case) =
                         (c = constructor_name) in
                       List.find_opt aux cases in
-                    let%bind body' = compile_expression body in
+                    let%bind body' = self body in
                     return @@ E_let_in (top, false, ((Location.map Var.todo_cast pattern , tv) , body'))
                   )
                 | ((`Node (a , b)) , tv) ->
@@ -533,7 +566,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
       )
       | Match_record { fields; body; record_type = { content; layout } } ->
         let%bind tree = Layout.record_tree ~layout compile_type content in
-        let%bind body = compile_expression body in
+        let%bind body = self body in
         let rec aux expr (tree : Layout.record_tree) body =
           match tree.content with
           | Field l ->
@@ -581,12 +614,36 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
         | _ ->
           fail (raw_michelson_must_be_seq ae.location code)
     )
-  | E_module_accessor _ ->
-    fail @@ corner_case ~loc:__LOC__ "Module access should de resolved earlier"
+  | E_module_accessor {module_name; element} -> (
+    let module_var = module_name in
+    let%bind module_ =
+      trace_option (corner_case ~loc:__LOC__ "Mod_alias: This program shouldn't type")
+      @@ SMap.find_opt module_var module_env in
+    (* TODO E_module_accessor should not be this way *)
+    let rec aux (element : AST.expression) =
+      match element.expression_content with
+      | E_module_accessor {module_name; element} ->
+        let module_var = module_name in
+        let%bind module_names = aux element in
+        ok @@ (module_var :: module_names)
+      | E_variable var ->
+        ok @@ [Var.to_name @@ Location.unwrap @@ var]
+      | E_record_accessor {record; path} ->
+        let%bind module_names = aux record in
+        let Label module_var = path in
+        ok @@ (module_names @ [module_var])
+      | _ -> fail @@ corner_case ~loc:__LOC__ "The parser shouldn't allowed this construct"
+    in
+    let%bind access_list = aux element in
+    let module_var = e_a_variable (Location.wrap (Var.of_name module_var)) module_ in
+    let%bind expr = build_record_accessor module_var (List.map (fun l -> Label l) access_list) in
+    let%bind expr = self ~module_env expr in
+    ok @@ expr
+  )
 
-and compile_lambda l (input_type , output_type) =
+and compile_lambda module_env l (input_type , output_type) =
   let { binder ; result } : AST.lambda = l in
-  let%bind result' = compile_expression result in
+  let%bind result' = compile_expression ~module_env result in
   let%bind input = compile_type input_type in
   let%bind output = compile_type output_type in
   let tv = Combinators.t_function input output in
@@ -594,7 +651,7 @@ and compile_lambda l (input_type , output_type) =
   let closure = E_closure { binder; body = result'} in
   ok @@ Combinators.Expression.make_tpl ~loc:result.location (closure , tv)
 
-and compile_recursive {fun_name; fun_type; lambda} =
+and compile_recursive module_env {fun_name; fun_type; lambda} =
   let rec map_lambda : AST.expression_variable -> type_expression -> AST.expression -> (expression * expression_variable list , spilling_error) result = fun fun_name loop_type e ->
     match e.expression_content with
       E_lambda {binder;result} ->
@@ -610,7 +667,7 @@ and compile_recursive {fun_name; fun_type; lambda} =
       E_let_in li ->
         let shadowed = shadowed || Var.equal li.let_binder.wrap_content fun_name.wrap_content in
         let%bind let_result = replace_callback fun_name loop_type shadowed li.let_result in
-        let%bind rhs = compile_expression li.rhs in
+        let%bind rhs = compile_expression ~module_env li.rhs in
         let%bind ty  = compile_type li.rhs.type_expression in
         ok @@ e_let_in (Location.map Var.todo_cast li.let_binder) ty li.inline rhs let_result |
       E_matching m ->
@@ -619,19 +676,19 @@ and compile_recursive {fun_name; fun_type; lambda} =
       E_application {lamb;args} -> (
         match lamb.expression_content,shadowed with
         E_variable name, false when Var.equal fun_name.wrap_content name.wrap_content ->
-          let%bind expr = compile_expression args in
+          let%bind expr = compile_expression ~module_env args in
           ok @@ Expression.make (E_constant {cons_name=C_LOOP_CONTINUE;arguments=[expr]}) loop_type |
         _ ->
-          let%bind expr = compile_expression e in
+          let%bind expr = compile_expression ~module_env e in
           ok @@ Expression.make (E_constant {cons_name=C_LOOP_STOP;arguments=[expr]}) loop_type
       ) |
       _ ->
-        let%bind expr = compile_expression e in
+        let%bind expr = compile_expression ~module_env e in
         ok @@ Expression.make (E_constant {cons_name=C_LOOP_STOP;arguments=[expr]}) loop_type
 
   and matching : AST.expression_variable -> type_expression -> bool -> AST.matching -> type_expression -> (expression , spilling_error) result = fun fun_name loop_type shadowed m ty ->
     let return ret = ok @@ Expression.make ret @@ ty in
-    let%bind expr = compile_expression m.matchee in
+    let%bind expr = compile_expression ~module_env m.matchee in
     match m.cases with
       | Match_option { match_none; match_some = {opt; body; tv} } ->
           let%bind n = replace_callback fun_name loop_type shadowed match_none in
@@ -722,22 +779,97 @@ and compile_recursive {fun_name; fun_type; lambda} =
   let body = Expression.make (E_iterator (C_LOOP_LEFT, ((Location.map Var.todo_cast lambda.binder, loop_type),body), expr)) output_type in
   ok @@ Expression.make (E_closure {binder;body}) fun_type
 
-let compile_declaration env (d:AST.declaration) : (toplevel_statement option , spilling_error) result =
+and compile_declaration module_env env (d:AST.declaration) : ((toplevel_statement * _ SMap.t) option , spilling_error) result =
   match d with
+  | Declaration_type _ -> ok None
   | Declaration_constant { binder ; expr ; inline } ->
-      let%bind expression = compile_expression expr in
-      let binder = Location.map Var.todo_cast binder in
-      let tv = Combinators.Expression.get_type expression in
-      let env' = Environment.add (binder, tv) env in
-      ok @@ Some ((binder, inline, expression), environment_wrap env env')
-  | _ -> ok None
+    let%bind expression = compile_expression ~module_env expr in
+    let binder = Location.map Var.todo_cast binder in
+    let tv = Combinators.Expression.get_type expression in
+    let env' = Environment.add (binder, tv) env in
+    ok @@ Some (((binder, inline, expression), environment_wrap env env'), module_env)
+  | Declaration_module {module_binder; module_} ->
+    let%bind record,module_env = compile_module_as_record module_binder module_env module_ in
+    let binder = Location.wrap @@ Var.of_name module_binder in
+    let tv = Combinators.Expression.get_type record in
+    let env' = Environment.add (binder, tv) env in
+    ok @@ Some (((binder, false, record), environment_wrap env env'), module_env)
+  | Module_alias {alias; binders} ->
+    let module_var, access = binders in
+    let%bind module_ =
+      trace_option (corner_case ~loc:__LOC__ "Mod_alias: This program shouldn't type")
+      @@ SMap.find_opt module_var module_env  in
+    let module_var = e_a_variable (Location.wrap (Var.of_name module_var)) module_ in
+    let%bind module_expr = build_record_accessor module_var (List.map (fun l -> Label l) access) in
+    let module_ = get_type_expression module_expr in
+    let%bind module_expr = compile_expression ~module_env module_expr in
+    let module_env  = SMap.add alias module_ module_env in
+    let%bind module_type = compile_type module_ in
+    let env' = Environment.add (Location.wrap @@ Var.of_name alias, module_type) env in
+    ok @@ Some ((((Location.wrap @@ Var.of_name alias),true,module_expr),environment_wrap env env'),module_env)
 
-let compile_program ((AST.Program_Fully_Typed lst) : AST.program_fully_typed) : (program , spilling_error) result =
-  let aux (prev:(toplevel_statement list * Environment.t , spilling_error) result) cur =
-    let%bind (hds, env) = prev in
-    match%bind compile_declaration env cur with
-    | Some ((_ , env')  as cur') -> ok (hds @ [ cur' ] , env'.post_environment)
-    | None -> ok (hds , env)
+
+
+and compile_module ((AST.Module_Fully_Typed lst) : AST.module_fully_typed) : (program , spilling_error) result =
+  let aux (prev:(toplevel_statement list * _ SMap.t * Environment.t , spilling_error) result) cur =
+    let%bind (hds, module_env, env) = prev in
+    match%bind compile_declaration module_env env cur with
+    | Some (((_ , env') as cur', module_env)) -> ok (hds @ [ cur' ] , module_env, env'.post_environment)
+    | None -> prev
   in
-  let%bind (statements, _) = List.fold_left aux (ok ([], Environment.empty)) (temp_unwrap_loc_list lst) in
+  let%bind (statements,_, _) = List.fold_left aux (ok ([], SMap.empty,Environment.empty)) (temp_unwrap_loc_list lst) in
   ok statements
+
+and compile_module_as_record module_name (module_env : _ SMap.t) (lst : AST.module_fully_typed) : (_ , spilling_error) result =
+  let rec module_as_record module_env (AST.Module_Fully_Typed lst) : ((AST.expression * _),_) result =
+    let aux (r,env) (cur : AST.declaration ) =
+      match cur with
+      | Declaration_constant { binder ; expr; inline=_ } ->
+        let l = Var.to_name @@ Location.unwrap binder in
+        ok @@ ((Label l,(expr,false))::r,env)
+      | Declaration_type _ty -> ok @@ (r,env)
+      | Declaration_module {module_binder; module_} ->
+        let l = module_binder in
+        let%bind r',_ = module_as_record env module_ in
+        let env = SMap.add l (get_type_expression r') env in
+        ok @@ ((Label l,(r',false))::r,env)
+      | Module_alias {alias; binders} ->
+        let l = alias in
+        let module_var, access = binders in
+        let%bind module_type =
+          trace_option (corner_case ~loc:__LOC__ "Mod_alias: This program shouldn't type")
+          @@ SMap.find_opt module_var env in
+        let module_var = e_a_variable (Location.wrap (Var.of_name module_var)) module_type in
+        let%bind module_expr = build_record_accessor module_var (List.map (fun l -> Label l) access) in
+        let module_type = get_type_expression module_expr in
+        let env = SMap.add l module_type env in
+        let r' = module_expr in
+        ok @@ ((Label l,(r',true))::r,env)
+
+    in
+    let%bind r,env = bind_fold_list aux ([],module_env) (temp_unwrap_loc_list lst) in
+    if List.length r <> 0 then begin
+      let build_record r =
+        let aux (Label l, ((expr : AST.expression), _)) =
+          let expr = {expr with expression_content = e_variable @@ Location.wrap @@ Var.of_name l} in
+          (Label l, expr)
+        in
+        let record = ez_e_a_record @@ List.map aux (List.rev r) in
+      (* prefix with let_in*)
+        let aux record (Label l, (expr, inline)) =
+          let binder = Location.wrap @@ Var.of_name l in
+          AST.e_a_let_in binder expr record inline
+        in
+        let record = List.fold_left aux record r in
+        record
+      in
+      let record = build_record r in
+      ok @@ (record,env)
+    end
+    else
+      ok @@ (e_a_unit,env)
+  in
+  let%bind record,env = module_as_record module_env lst in
+  let module_env = SMap.add module_name (get_type_expression record) env in
+  let%bind record = compile_expression ~module_env record in
+  ok @@ (record, module_env)

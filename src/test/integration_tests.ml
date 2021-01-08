@@ -689,6 +689,22 @@ let include_religo () : (unit, _) result =
   let%bind program = retype_file "./contracts/includer.religo" in
   expect_eq_evaluate program "bar" (e_int 144)
 
+let modules program : (unit, _) result =
+  let%bind () = expect_eq_evaluate program "toto" (e_int 42) in
+  expect_eq program "add" (e_pair (e_int 1) (e_int 2)) (e_int 3)
+
+let modules_ligo () : (unit, _) result =
+  let%bind program = type_file "./contracts/modules.ligo" in
+  modules program
+
+let modules_mligo () : (unit, _) result =
+  let%bind program = mtype_file "./contracts/modules.mligo" in
+  modules program
+
+let modules_religo () : (unit, _) result =
+  let%bind program = retype_file "./contracts/modules.religo" in
+  modules program
+
 let record_ez_int names n =
   e_record_ez @@ List.map (fun x -> x, e_int n) names
 
@@ -2543,6 +2559,9 @@ let main = test_suite "Integration (End to End)"
     test no(*y*) "#include directives (mligo)" include_mligo ;
     test no(*y*) "#include directives (religo)" include_religo ;
 
+    test no "modules" modules_ligo ;
+    test no "modules (mligo)" modules_mligo ;
+    test no "modules (religo)" modules_religo ;
 
     test no "counter contract" counter_contract ;
     test no "super counter contract" super_counter_contract ;

@@ -15,37 +15,51 @@ type environment = Environment.t
 let cast_var (orig: 'a Var.t Location.wrap) = { orig with wrap_content = Var.todo_cast orig.wrap_content}
 let assert_type_expression_eq = Typer_common.Helpers.assert_type_expression_eq
 
-let rec type_program ~init_env (p:I.program) : (environment * O.program_fully_typed * _ O'.typer_state, typer_error) result =
+let rec type_module ~init_env (p:I.module_) : (environment * O.module_fully_typed * _ O'.typer_state, typer_error) result =
   let aux (e, acc:(environment * O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
-    let%bind ed' = (bind_map_location (type_declaration e (Solver.placeholder_for_state_of_new_typer ()))) d in
-    let loc : 'a . 'a Location.wrap -> _ -> _ = fun x v -> Location.wrap ~loc:x.location v in
-    let (e', _placeholder_for_state_of_new_typer , d') = Location.unwrap ed' in
-    ok (e', loc ed' d' :: acc)
+    let%bind (e', _, d') = (type_declaration e (Solver.placeholder_for_state_of_new_typer ())) d in
+    ok (e', d' :: acc)
   in
   let%bind (e, lst) =
-    trace (program_error_tracer p) @@
+    trace (module_error_tracer p) @@
     bind_fold_list aux (init_env, []) p in
   let p = List.rev lst in
   (* the typer currently in use doesn't use unification variables, so there is no need to check for their absence. *)
-  let p = O.Program_Fully_Typed p in
+  let p = O.Module_Fully_Typed p in
   ok @@ (e,p , (Solver.placeholder_for_state_of_new_typer ()))
 
 
-and type_declaration env (_placeholder_for_state_of_new_typer : _ O'.typer_state) : I.declaration -> (environment * _ O'.typer_state * O.declaration, typer_error) result = function
+and type_declaration env (_placeholder_for_state_of_new_typer : _ O'.typer_state) : I.declaration Location.wrap -> (environment * _ O'.typer_state * O.declaration Location.wrap, typer_error) result =
+fun d ->
+let return ?(loc = d.location) e s (d : O.declaration) = ok (e,s, Location.wrap ~loc d) in
+match Location.unwrap d with
   | Declaration_type {type_binder ; type_expr} ->
-      let type_binder = Var.todo_cast type_binder in
-      let%bind tv = evaluate_type env type_expr in
-      let env' = Environment.add_type type_binder tv env in
-      ok (env', (Solver.placeholder_for_state_of_new_typer ()) , (O.Declaration_type { type_binder ; type_expr = tv } ))
+    let type_binder = Var.todo_cast type_binder in
+    let%bind tv = evaluate_type env type_expr in
+    let env' = Environment.add_type type_binder tv env in
+    return env' (Solver.placeholder_for_state_of_new_typer ()) @@ Declaration_type { type_binder ; type_expr = tv }
   | Declaration_constant {binder  ; attr={inline} ; expr} -> (
-      let%bind tv'_opt = bind_map_option (evaluate_type env) binder.ascr in
-      let%bind expr =
-        trace (constant_declaration_error_tracer binder.var expr tv'_opt) @@
-        type_expression' ?tv_opt:tv'_opt env expr in
-      let binder : O.expression_variable = cast_var binder.var in
-      let post_env = Environment.add_ez_declaration binder expr env in
-      ok (post_env, (Solver.placeholder_for_state_of_new_typer ()) , (O.Declaration_constant { binder ; expr ; inline}))
-    )
+    let%bind tv'_opt = bind_map_option (evaluate_type env) binder.ascr in
+    let%bind expr =
+      trace (constant_declaration_error_tracer binder.var expr tv'_opt) @@
+      type_expression' ?tv_opt:tv'_opt env expr in
+    let binder : O.expression_variable = cast_var binder.var in
+    let post_env = Environment.add_ez_declaration binder expr env in
+    return post_env (Solver.placeholder_for_state_of_new_typer ()) @@ Declaration_constant { binder ; expr ; inline}
+  )
+  | Declaration_module {module_binder;module_} -> (
+    let%bind e,module_,_ = type_module ~init_env:env module_ in
+    let post_env = Environment.add_module module_binder e env in
+    return post_env (Solver.placeholder_for_state_of_new_typer ()) @@ Declaration_module { module_binder; module_}
+  )
+  | Module_alias {alias;binders} -> (
+    let aux env binder =
+      trace_option (unbound_module_variable env binder d.location)
+      @@ Environment.get_module_opt binder env in
+    let%bind e = bind_fold_ne_list aux env binders in
+    let post_env = Environment.add_module alias e env in
+    return post_env (Solver.placeholder_for_state_of_new_typer ()) @@ Module_alias { alias; binders}
+  )
 
 and type_match : (environment -> I.expression -> (O.expression , typer_error) result) -> environment -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> (O.matching_expr, typer_error) result =
   fun f e t i _ae loc -> match i with
@@ -233,15 +247,15 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
   | T_module_accessor {module_name; element} ->
     let%bind module_ = match Environment.get_module_opt module_name e with
       Some m -> ok m
-    | None   -> fail @@ unbound_module e module_name t.location
+    | None   -> fail @@ unbound_module_variable e module_name t.location
     in
     evaluate_type module_ element
   | T_singleton x -> return (T_singleton x)
 
-and type_expression : environment -> _ O'.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * _ O'.typer_state, typer_error) result
+and type_expression : environment -> _ O'.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.environment * O.expression * _ O'.typer_state, typer_error) result
   = fun e _placeholder_for_state_of_new_typer ?tv_opt ae ->
     let%bind res = type_expression' e ?tv_opt ae in
-    ok (res, (Solver.placeholder_for_state_of_new_typer ()))
+    ok (e, res, (Solver.placeholder_for_state_of_new_typer ()))
 
 and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression -> (O.expression, typer_error) result = fun e ?tv_opt ae ->
   let module L = Logger.Stateful() in
@@ -504,6 +518,19 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
     let e' = Environment.add_type type_binder rhs e in
     let%bind let_result = type_expression' e' let_result in
     return (E_type_in {type_binder; rhs; let_result}) let_result.type_expression
+  | E_mod_in {module_binder; rhs ; let_result} ->
+    let%bind env,rhs,_ = type_module ~init_env:e rhs in
+    let e' = Environment.add_module module_binder env e in
+    let%bind let_result = type_expression' e' let_result in
+    return (E_mod_in {module_binder; rhs; let_result}) let_result.type_expression
+  | E_mod_alias {alias; binders; result} ->
+    let aux e binder =
+      trace_option (unbound_module_variable e binder ae.location) @@
+      Environment.get_module_opt binder e in
+    let%bind env = bind_fold_ne_list aux e binders in
+    let e' = Environment.add_module alias env e in
+    let%bind result = type_expression' e' result in
+    return (E_mod_alias {alias; binders; result}) result.type_expression
   | E_raw_code {language;code} ->
     let%bind (code,type_expression) = trace_option (expected_ascription code) @@
       I.get_e_ascription code.content in
@@ -533,40 +560,13 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       | Some tv' -> assert_type_expression_eq anno_expr.location (tv' , type_annotation) in
     ok {expr' with type_expression=type_annotation}
   | E_module_accessor {module_name; element} ->
-    let module_record_type (module_env : environment) =
-      let aux (env_binding: O.environment_binding) =
-        let binder = Var.to_name env_binding.expr_var.wrap_content in
-        let ty     = env_binding.env_elt.type_value in
-        O.Label binder,
-        O.{associated_type=ty;michelson_annotation=None;decl_pos=0}
-      in
-      let record_t = List.map aux @@ module_env.expression_environment in
-      let record_t = Ast_typed.(ez_t_record record_t) in
-      record_t
+    let%bind module_env = match Environment.get_module_opt module_name e with
+      Some m -> ok m
+    | None   -> fail @@ unbound_module_variable e module_name ae.location
     in
-    let rec aux env module_name (element : I.expression) =
-      let%bind module_ = match Environment.get_module_opt module_name env with
-        Some m -> ok m
-      | None   -> fail @@ unbound_module e module_name ae.location
-      in
-      let ty = module_record_type module_ in
-      match element.content with
-      | E_module_accessor {module_name;element} ->
-        let%bind modules, element, var, ty' = aux module_ module_name element in
-        let modules = (module_name,ty') :: modules in
-        ok @@ (modules, element, var, ty)
-      | E_variable var ->
-        let%bind element = type_expression' module_ element in
-        ok @@ ([], element, Var.to_name var.wrap_content,ty)
-      | _ -> failwith "cornercase : module_accessor cannot be parse like that"
-    in
-    let%bind (modules_ty, element,var,ty) = aux e module_name element in
-    let aux record (module_name,ty) =
-      make_e (E_record_accessor {record;path=Label module_name}) ty
-    in
-    let record = make_e (E_variable (Location.wrap @@ Var.of_name module_name)) @@ ty in
-    let record = List.fold_left aux record modules_ty in
-    return (E_record_accessor {record;path=Label var}) element.type_expression
+    let%bind element = type_expression' ?tv_opt module_env element in
+    return (E_module_accessor {module_name; element}) element.type_expression
+
 
 and type_lambda e {
       binder ;
@@ -609,6 +609,39 @@ let untype_literal (l:O.literal) : (I.literal , typer_error) result =
   | Literal_bytes b -> ok (Literal_bytes b)
   | Literal_address s -> ok (Literal_address s)
   | Literal_operation s -> ok (Literal_operation s)
+
+let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer_error) result =
+  let self = untype_type_expression in
+  let return t = ok @@ I.make_t t in
+  match t.type_content with
+  | O.T_sum {content ; layout} ->
+     let aux ({associated_type ; michelson_annotation ; decl_pos} : O.row_element) =
+       let%bind associated_type = untype_type_expression associated_type in
+       let v' = ({associated_type ; michelson_annotation ; decl_pos} : I.row_element) in
+       ok @@ v' in
+     let%bind x' = Stage_common.Helpers.bind_map_lmap aux content in
+     return @@ I.T_sum { fields = x' ; layout = Some layout }
+  | O.T_record {content;layout} -> (
+    let aux ({associated_type ; michelson_annotation ; decl_pos} : O.row_element) =
+      let%bind associated_type = untype_type_expression associated_type in
+      let v' = ({associated_type ; michelson_annotation ; decl_pos} : I.row_element) in
+      ok @@ v' in
+    let%bind x' = Stage_common.Helpers.bind_map_lmap aux content in
+    return @@ I.T_record {fields = x' ; layout = Some layout}
+  )
+  | O.T_variable name -> return @@ I.T_variable (Var.todo_cast name)
+  | O.T_arrow arr ->
+    let%bind arr = Stage_common.Maps.arrow self arr in
+    return @@ I.T_arrow arr
+  | O.T_constant {language=_;injection;parameters} ->
+    let%bind arguments = bind_map_list self parameters in
+    let type_operator = Var.of_name (Ligo_string.extract injection) in
+    return @@ I.T_app {type_operator;arguments}
+  | O.T_module_accessor ma ->
+    let%bind ma = Stage_common.Maps.module_access self ma in
+    return @@ I.T_module_accessor ma
+  | O.T_singleton l ->
+    return @@ I.T_singleton l
 
 let rec untype_expression (e:O.expression) : (I.expression , typer_error) result =
   untype_expression_content e.type_expression e.expression_content
@@ -665,6 +698,13 @@ and untype_expression_content ty (ec:O.expression_content) : (I.expression , typ
   | E_type_in ti ->
     let%bind ti = Stage_common.Maps.type_in untype_expression Typer_common.Untyper.untype_type_expression ti in
     return @@ make_e @@ E_type_in ti
+  | E_mod_in {module_binder;rhs;let_result} ->
+      let%bind rhs = untype_module_fully_typed rhs in
+      let%bind result = untype_expression let_result in
+      return @@ e_mod_in module_binder rhs result
+  | E_mod_alias ma ->
+      let%bind ma = Stage_common.Maps.mod_alias untype_expression ma in 
+      return @@ make_e @@ E_mod_alias ma
   | E_raw_code {language; code} ->
       let%bind code = untype_expression code in
       return (e_raw_code language code)
@@ -705,3 +745,23 @@ and untype_matching : (O.expression -> (I.expression , typer_error) result) -> O
     in
     let fields = LMap.map aux fields in
     ok @@ Match_record { fields ; body }
+
+and untype_declaration : O.declaration -> (I.declaration, typer_error) result =
+let return (d: I.declaration) = ok @@ d in
+function
+  Declaration_type {type_binder; type_expr} ->
+  let%bind type_expr = untype_type_expression type_expr in
+  return @@ Declaration_type {type_binder; type_expr}
+| Declaration_constant {binder;expr;inline} ->
+  let%bind ty = untype_type_expression expr.type_expression in
+  let var = Location.map Var.todo_cast binder in
+  let%bind expr = untype_expression expr in
+  return @@ Declaration_constant {binder={var;ascr=Some ty};expr;attr={inline}}
+| Declaration_module {module_binder;module_} ->
+  let%bind module_ = untype_module_fully_typed module_ in
+  return @@ Declaration_module {module_binder;module_}
+| Module_alias ma ->
+  return @@ Module_alias ma
+
+and untype_module_fully_typed : O.module_fully_typed -> (I.module_, typer_error) result = fun (Module_Fully_Typed m) ->
+  bind_map_list (bind_map_location untype_declaration) m

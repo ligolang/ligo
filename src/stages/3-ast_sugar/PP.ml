@@ -92,6 +92,8 @@ and expression_content ppf (ec : expression_content) =
         attributes attr
         expression let_result
   | E_type_in   ti -> type_in expression type_expression ppf ti
+  | E_mod_in    mi -> mod_in  expression type_expression ppf mi
+  | E_mod_alias ma -> mod_alias expression ppf ma
   | E_raw_code {language; code} ->
       fprintf ppf "[%%%s %a]" language expression code
   | E_ascription {anno_expr; type_annotation} ->
@@ -171,9 +173,6 @@ and attributes ppf attributes =
     List.map (fun attr -> "[@@" ^ attr ^ "]") attributes |> String.concat ""
   in fprintf ppf "%s" attr
 
-let declaration ppf (d : declaration) =
-  match d with
-  | Declaration_type     dt -> declaration_type                type_expression ppf dt
-  | Declaration_constant dc -> declaration_constant expression type_expression ppf dc
+let declaration ppf (d : declaration) = declaration expression type_expression ppf d
 
-let program ppf (p : program) = program declaration ppf p
+let module_ ppf (p : module_) = module' expression type_expression ppf p

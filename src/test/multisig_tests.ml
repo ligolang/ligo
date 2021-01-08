@@ -58,7 +58,7 @@ let chain_id_zero = e_chain_id @@ Tezos_crypto.Base58.simple_encode
 
 (* sign the message 'msg' with 'keys', if 'is_valid'=false the providid signature will be incorrect *)
 let params counter msg keys is_validl f s =
-  let%bind program,_,_ = get_program f s () in
+  let%bind _,env,_ = get_program f s () in
   let aux = fun acc (key,is_valid) ->
     let (_,_pk,sk) = key in
     let (pkh,_,_) = str_keys key in
@@ -67,7 +67,7 @@ let params counter msg keys is_validl f s =
         e_nat counter ;
         e_string (if is_valid then "MULTISIG" else "XX") ;
         chain_id_zero ] in
-    let%bind signature = sign_message program payload sk in
+    let%bind signature = sign_message env payload sk in
     ok @@ (e_pair (e_key_hash pkh) (e_signature signature))::acc in
   let%bind signed_msgs = Trace.bind_fold_list aux [] (List.rev @@ List.combine keys is_validl) in
   ok @@ e_constructor

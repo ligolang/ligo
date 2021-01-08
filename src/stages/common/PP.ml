@@ -13,7 +13,8 @@ let label ppf (l:label) : unit =
   let Label l = l in fprintf ppf "%s" l
 
 let expression_variable ppf (t : expression_variable) : unit = fprintf ppf "%a" Var.pp t.wrap_content
-let type_variable       ppf (t : type_variable) : unit = fprintf ppf "%a" Var.pp t
+let type_variable       ppf (t : type_variable)       : unit = fprintf ppf "%a" Var.pp t
+let module_variable     ppf (t : module_variable)     : unit = pp_print_string ppf t
 
 and access f ppf a =
   match a with
@@ -79,7 +80,7 @@ let attributes ppf attributes =
   in fprintf ppf "%s" attr
 
 let module_access f ppf = fun {module_name;element} ->
-  fprintf ppf "%s.%a" module_name f element
+  fprintf ppf "%a.%a" module_variable module_name f element
 (* Types *)
 
 let type_app type_expression ppf ({type_operator ; arguments}: 'a type_app) : unit =
@@ -251,7 +252,31 @@ let declaration_constant expression type_expression ppf = fun {binder=binder'; a
     expression expr
     attributes attr
 
-let program declaration ppf = fun p ->
+let rec declaration_module expression type_expression ppf = fun {module_binder;module_} ->
+  fprintf ppf "@[<2>module %a =@ %a@]" module_variable module_binder (module' expression type_expression) module_
+
+and module_alias ppf = fun ({alias;binders} : module_alias) ->
+  fprintf ppf "@[<2>module %a =@ %a@]" module_variable alias (list_sep_d module_variable) @@ List.Ne.to_list binders 
+
+and declaration expression type_expression ppf = function
+    Declaration_type    ty -> declaration_type                type_expression ppf ty
+  | Declaration_constant c -> declaration_constant expression type_expression ppf c
+  | Declaration_module   m -> declaration_module   expression type_expression ppf m
+  | Module_alias        ma -> module_alias                                    ppf ma
+
+and module' expression type_expression ppf = fun p ->
   fprintf ppf "@[<v>%a@]"
-    (list_sep declaration (tag "@;"))
+    (list_sep (declaration expression type_expression) (tag "@;"))
     (List.map Location.unwrap p)
+
+and mod_in expression type_expression ppf = fun {module_binder; rhs; let_result;} ->
+  fprintf ppf "@[module %a =@;<1 2>%a in@ %a@]"
+    module_variable module_binder
+    (module' expression type_expression) rhs
+    expression let_result
+
+and mod_alias expression ppf = fun {alias; binders; result} ->
+  fprintf ppf "@[module %a =@;<1 2>%a in@ %a@]"
+    module_variable alias
+    (list_sep module_variable (tag ".")) (List.Ne.to_list binders)
+    expression result

@@ -3,7 +3,7 @@ open Helpers
 
 type c_unit = Buffer.t
 
-let compile ~options ~meta c_unit (source_filename:string) : (Ast_imperative.program , _) result =
+let compile ~options ~meta c_unit (source_filename:string) : (Ast_imperative.module_ , _) result =
   parse_and_abstract ~options ~meta c_unit source_filename
 
 let compile_expression : options:Compiler_options.t -> meta:meta -> c_unit -> (Ast_imperative.expression , _) result =

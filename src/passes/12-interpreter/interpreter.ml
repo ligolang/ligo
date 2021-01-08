@@ -512,6 +512,8 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
     | E_type_in {type_binder=_ ; rhs=_; let_result} -> (
       eval_ligo (let_result) env
     )
+    | E_mod_in    _ -> failwith "Module are not handled in interpreter yet"
+    | E_mod_alias _ -> failwith "Module are not handled in interpreter yet"
     | E_literal l ->
       eval_literal l
     | E_variable var ->
@@ -610,8 +612,8 @@ open Proto_alpha_utils.Memory_proto_alpha
 
 let ( let>>= ) o f = Trace.bind f o
 
-let eval : ?options:options -> Ast_typed.program_fully_typed -> (env , Errors.interpreter_error) result =
-  fun ?(options = default_options) (Program_Fully_Typed prg) ->
+let eval : ?options:options -> Ast_typed.module_fully_typed -> (env , Errors.interpreter_error) result =
+  fun ?(options = default_options) (Module_Fully_Typed prg) ->
     let init_ctxt = Ligo_interpreter.Mini_proto.option_to_context options in
     let aux : env -> declaration location_wrap -> (env, Errors.interpreter_error) Trace.result =
       fun top_env el ->
@@ -626,10 +628,17 @@ let eval : ?options:options -> Ast_typed.program_fully_typed -> (env , Errors.in
           in
           let top_env' = Env.extend top_env (binder, v) in
           ok top_env'
+        | Ast_typed.Declaration_module {module_binder; module_=_} ->
+          let>>= module_env =
+            failwith "Module are not handled in interpreter yet"
+          in
+          let top_env' = Env.extend top_env (Location.wrap @@ Var.of_name module_binder, module_env) in
+          ok top_env'
+        | Ast_typed.Module_alias _ -> failwith "Module are not handled in interpreter yet"
     in
     bind_fold_list aux (Env.empty_env) prg
 
-let eval_test : ?options:options -> Ast_typed.program_fully_typed -> string -> (bool , Errors.interpreter_error) result =
+let eval_test : ?options:options -> Ast_typed.module_fully_typed -> string -> (bool , Errors.interpreter_error) result =
   fun ?(options = default_options) prg test_entry ->
     let>>= env = eval ~options prg in
   let v = Env.to_kv_list env in

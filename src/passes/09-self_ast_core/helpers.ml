@@ -38,6 +38,16 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a,'err) res
       ok res
     )
   | E_type_in ti -> Folds.type_in self idle init' ti
+  | E_mod_in  mi ->
+    let%bind res = bind_fold_list (fun acc (x: declaration Location.wrap) -> match x.wrap_content with
+      | Declaration_constant dc ->
+        let%bind res = self acc dc.expr in
+        ok @@ res
+      | _ -> ok @@ acc) init' mi.rhs
+    in
+    let%bind res = self res mi.let_result in
+    ok @@ res
+  | E_mod_alias ma -> Folds.mod_alias self init' ma
   | E_recursive r -> Folds.recursive self idle init' r
   | E_module_accessor { module_name = _ ; element } -> (
     let%bind res = self init' element in
@@ -114,6 +124,19 @@ let rec map_expression : 'err exp_mapper -> expression -> (expression , 'err) re
       let%bind ti = Maps.type_in self ok ti in
       return @@ E_type_in ti
     )
+  | E_mod_in  mi ->
+    let%bind rhs = bind_map_list (fun (x: declaration Location.wrap) -> match x.wrap_content with
+      | Declaration_constant dc ->
+        let%bind expr = self dc.expr in
+        let dc : declaration = Declaration_constant {dc with expr } in
+        ok @@ {x with wrap_content=dc}
+      | _ -> ok @@ x) mi.rhs
+    in
+    let%bind let_result = self mi.let_result in
+    return @@ E_mod_in {mi with rhs;let_result}
+  | E_mod_alias ma ->
+    let%bind ma = Maps.mod_alias self ma in
+    return @@ E_mod_alias ma
   | E_lambda l -> (
       let%bind l = Maps.lambda self ok l in
       return @@ E_lambda l
@@ -180,16 +203,17 @@ and map_cases : 'err exp_mapper -> matching_expr -> (matching_expr , 'err) resul
     let%bind body = map_expression f body in
     ok @@ Match_record {fields; body}
 
-and map_program : 'err abs_mapper -> program -> (program , 'err) result = fun m p ->
+and map_module : 'err abs_mapper -> module_ -> (module_ , 'err) result = fun m p ->
   let aux = fun (x : declaration) ->
+    let return (x:declaration) = ok @@ x in
     match x,m with
     | (Declaration_type dt, Type_expression m') -> (
         let%bind dt = Maps.declaration_type (map_type_expression m') dt in
-        ok (Declaration_type dt)
+        return @@ (Declaration_type dt)
       )
     | (Declaration_constant decl_cst, Expression m') -> (
         let%bind expr = map_expression m' decl_cst.expr in
-        ok (Declaration_constant {decl_cst with expr})
+        return @@ (Declaration_constant {decl_cst with expr})
       )
     | decl,_ -> ok decl
   (* | Declaration_type of (type_variable * type_expression) *)
@@ -243,6 +267,19 @@ let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> ('a
       let%bind res,ti = Fold_maps.type_in self idle init' ti in
       ok (res, return @@ E_type_in ti)
     )
+  | E_mod_in  mi ->
+    let%bind res,rhs = bind_fold_map_list (fun acc (x: declaration Location.wrap) -> match x.wrap_content with
+      | Declaration_constant dc ->
+        let%bind res,expr = self acc dc.expr in
+        let dc : declaration = Declaration_constant {dc with expr } in
+        ok @@ (res,{x with wrap_content=dc})
+      | _ -> ok @@ (acc,x)) init' mi.rhs
+    in
+    let%bind res,let_result = self res mi.let_result in
+    ok (res, return @@ E_mod_in {mi with rhs;let_result})
+  | E_mod_alias ma ->
+    let%bind res,ma = Fold_maps.mod_alias self init' ma in
+    ok ( res, return @@ E_mod_alias ma)
   | E_lambda l -> (
       let%bind res,l = Fold_maps.lambda self idle init' l in
       ok ( res, return @@ E_lambda l)

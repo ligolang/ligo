@@ -119,6 +119,10 @@ and expression_content ppf (ec: expression_content) =
       fprintf ppf "let %a = %a%a in %a" expression_variable let_binder expression
         rhs option_inline inline expression let_result
   | E_type_in   ti -> type_in expression type_expression ppf ti
+  | E_mod_in {module_binder; rhs; let_result} ->
+      fprintf ppf "let %a = %a in %a" module_variable module_binder module_fully_typed
+        rhs expression let_result
+  | E_mod_alias ma -> mod_alias expression ppf ma
   | E_raw_code {language; code} ->
       fprintf ppf "[%%%s %a]" language expression code
   | E_recursive { fun_name;fun_type; lambda} ->
@@ -157,19 +161,23 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit =
         "TODO"
         f body
 
-let declaration ppf (d : declaration) =
+and declaration ppf (d : declaration) =
   match d with
   | Declaration_constant {binder; expr; inline} ->
       fprintf ppf "const %a = %a%a" expression_variable binder expression expr option_inline inline
   | Declaration_type {type_binder; type_expr} ->
       fprintf ppf "type %a = %a" type_variable type_binder type_expression type_expr
+  | Declaration_module {module_binder; module_} ->
+      fprintf ppf "module %a = %a" module_variable module_binder module_fully_typed module_
+  | Module_alias {alias; binders} ->
+      fprintf ppf "module %a = %a" module_variable alias (list module_variable) @@ List.Ne.to_list binders
 
-let program_fully_typed ppf (Program_Fully_Typed p : program_fully_typed) =
+and module_fully_typed ppf (Module_Fully_Typed p : module_fully_typed) =
   fprintf ppf "@[<v>%a@]"
     (list_sep declaration (tag "@;"))
     (List.map Location.unwrap p)
 
-let program_with_unification_vars ppf (Program_With_Unification_Vars p : program_with_unification_vars) =
+let module_with_unification_vars ppf (Module_With_Unification_Vars p : module_with_unification_vars) =
   fprintf ppf "@[<v>%a@]"
     (list_sep declaration (tag "@;"))
     (List.map Location.unwrap p)

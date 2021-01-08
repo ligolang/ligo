@@ -4396,3 +4396,171 @@ interactive_expr: Begin Var Ident COLON WILD ASS With
 Ill-formed variable declaration.
 At this point, the initial value of the variable is expected as an
 expression.
+
+contract: Module Constr Is Begin Type Ident Is Constr RBRACE
+##
+## Ends in an error in state: 377.
+##
+## open_module_decl -> Module Constr Is Begin module_ . End [ Type SEMI Recursive RBRACE Module Function End EOF Const Attr ]
+##
+## The known suffix of the stack is as follows:
+## Module Constr Is Begin module_
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 22, spurious reduction of production variant -> Constr 
+## In state 32, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 66, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 52, spurious reduction of production type_expr -> sum_type 
+## In state 89, spurious reduction of production open_type_decl -> Type Ident Is type_expr 
+## In state 339, spurious reduction of production option(SEMI) -> 
+## In state 341, spurious reduction of production type_decl -> open_type_decl option(SEMI) 
+## In state 338, spurious reduction of production declaration -> type_decl 
+## In state 373, spurious reduction of production nseq(declaration) -> declaration 
+## In state 348, spurious reduction of production module_ -> nseq(declaration) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Module Constr Is Begin With
+##
+## Ends in an error in state: 376.
+##
+## open_module_decl -> Module Constr Is Begin . module_ End [ Type SEMI Recursive RBRACE Module Function End EOF Const Attr ]
+##
+## The known suffix of the stack is as follows:
+## Module Constr Is Begin
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Module Constr Is LBRACE Type Ident Is Constr End
+##
+## Ends in an error in state: 370.
+##
+## open_module_decl -> Module Constr Is LBRACE module_ . RBRACE [ Type SEMI Recursive RBRACE Module Function End EOF Const Attr ]
+##
+## The known suffix of the stack is as follows:
+## Module Constr Is LBRACE module_
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 22, spurious reduction of production variant -> Constr 
+## In state 32, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 66, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 52, spurious reduction of production type_expr -> sum_type 
+## In state 89, spurious reduction of production open_type_decl -> Type Ident Is type_expr 
+## In state 339, spurious reduction of production option(SEMI) -> 
+## In state 341, spurious reduction of production type_decl -> open_type_decl option(SEMI) 
+## In state 338, spurious reduction of production declaration -> type_decl 
+## In state 373, spurious reduction of production nseq(declaration) -> declaration 
+## In state 348, spurious reduction of production module_ -> nseq(declaration) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Module Constr Is LBRACE With
+##
+## Ends in an error in state: 320.
+##
+## open_module_decl -> Module Constr Is LBRACE . module_ RBRACE [ Type SEMI Recursive RBRACE Module Function End EOF Const Attr ]
+##
+## The known suffix of the stack is as follows:
+## Module Constr Is LBRACE
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Module Constr Is With
+##
+## Ends in an error in state: 319.
+##
+## open_module_decl -> Module Constr Is . LBRACE module_ RBRACE [ Type SEMI Recursive RBRACE Module Function End EOF Const Attr ]
+## open_module_decl -> Module Constr Is . Begin module_ End [ Type SEMI Recursive RBRACE Module Function End EOF Const Attr ]
+##
+## The known suffix of the stack is as follows:
+## Module Constr Is
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Module Constr With
+##
+## Ends in an error in state: 318.
+##
+## open_module_decl -> Module Constr . Is LBRACE module_ RBRACE [ Type SEMI Recursive RBRACE Module Function End EOF Const Attr ]
+## open_module_decl -> Module Constr . Is Begin module_ End [ Type SEMI Recursive RBRACE Module Function End EOF Const Attr ]
+##
+## The known suffix of the stack is as follows:
+## Module Constr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Module With
+##
+## Ends in an error in state: 317.
+##
+## open_module_decl -> Module . Constr Is LBRACE module_ RBRACE [ Type SEMI Recursive RBRACE Module Function End EOF Const Attr ]
+## open_module_decl -> Module . Constr Is Begin module_ End [ Type SEMI Recursive RBRACE Module Function End EOF Const Attr ]
+##
+## The known suffix of the stack is as follows:
+## Module
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident Is Constr RBRACE
+##
+## Ends in an error in state: 618.
+##
+## contract -> nseq(declaration) . EOF [ # ]
+##
+## The known suffix of the stack is as follows:
+## nseq(declaration)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 22, spurious reduction of production variant -> Constr 
+## In state 32, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 66, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 52, spurious reduction of production type_expr -> sum_type 
+## In state 89, spurious reduction of production open_type_decl -> Type Ident Is type_expr 
+## In state 339, spurious reduction of production option(SEMI) -> 
+## In state 341, spurious reduction of production type_decl -> open_type_decl option(SEMI) 
+## In state 338, spurious reduction of production declaration -> type_decl 
+## In state 373, spurious reduction of production nseq(declaration) -> declaration 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Module Constr Is Constr DOT With
+##
+## Ends in an error in state: 380.
+##
+## nsepseq(module_name,DOT) -> Constr DOT . nsepseq(module_name,DOT) [ Type SEMI Recursive RBRACE Module Function End EOF Const Attr ]
+##
+## The known suffix of the stack is as follows:
+## Constr DOT
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Module Constr Is Constr With
+##
+## Ends in an error in state: 379.
+##
+## nsepseq(module_name,DOT) -> Constr . [ Type SEMI Recursive RBRACE Module Function End EOF Const Attr ]
+## nsepseq(module_name,DOT) -> Constr . DOT nsepseq(module_name,DOT) [ Type SEMI Recursive RBRACE Module Function End EOF Const Attr ]
+##
+## The known suffix of the stack is as follows:
+## Constr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>

@@ -17,7 +17,7 @@ and type_content = function
   | T_singleton       t -> `List [ `String "t_singleton" ; literal t ]
 
 let rec expression ?(incl_sugar=false) {content=ec;sugar;location} =
-  `Assoc 
+  `Assoc
   (if incl_sugar then [
     ("expression_content", expression_content ec);
     ("sugar", option Ast_sugar.Yojson.expression sugar);
@@ -38,7 +38,9 @@ and expression_content = function
   | E_recursive   e -> `List [ `String "E_recursive";   recursive   expression type_expression e ]
   | E_let_in      e -> `List [ `String "E_let_in";      let_in e ]
   | E_type_in     e -> `List [ `String "E_type_in";     type_in   expression type_expression e ]
-  | E_raw_code    e -> `List [ `String "E_raw_code";    raw_code    expression e ]
+  | E_mod_in      e -> `List [ `String "E_mod_in";      mod_in e ]
+  | E_mod_alias   e -> `List [ `String "E_mod_alias";   mod_alias expression e ]
+  | E_raw_code    e -> `List [ `String "E_raw_code";    raw_code  expression e ]
   (* Variant *)
   | E_constructor     e -> `List [ `String "E_constructor"; constructor expression e ]
   | E_matching        e -> `List [ `String "E_matching"; matching e ]
@@ -55,6 +57,13 @@ and let_in {let_binder;rhs;let_result;inline} =
     ("rhs", expression rhs);
     ("let_result", expression let_result);
     ("inline", `Bool inline);
+  ]
+
+and mod_in {module_binder;rhs;let_result} =
+  `Assoc [
+    ("module_binder", module_variable_to_yojson module_binder );
+    ("rhs", module_ rhs);
+    ("let_result", expression let_result);
   ]
 
 
@@ -98,14 +107,28 @@ and matching_content_case {constructor; proj; body} =
     ("body", expression body);
   ]
 
-let declaration_constant {binder=b;expr;attr} =
+and declaration_constant {binder=b;expr;attr} =
   `Assoc [
     ("binder",binder type_expression b);
     ("expr", expression expr);
     ("attr", `Bool attr.inline);
   ]
-let declaration = function
+
+and declaration_module {module_binder;module_=m} =
+  `Assoc [
+    ("module_binder",module_variable_to_yojson module_binder);
+    ("module_", module_ m);
+  ]
+
+and module_alias ({alias;binders} : module_alias) =
+  `Assoc [
+    ("alias"  , module_variable_to_yojson alias  );
+    ("binders", list module_variable_to_yojson @@ List.Ne.to_list binders);
+  ]
+and declaration = function
   | Declaration_type     dt -> `List [ `String "Declaration_type";     declaration_type type_expression dt]
   | Declaration_constant dc -> `List [ `String "Declaration_constant"; declaration_constant dc]
+  | Declaration_module   dm -> `List [ `String "Declaration_module";   declaration_module   dm]
+  | Module_alias         ma -> `List [ `String "Module_alias"; module_alias ma]
 
-let program =  program declaration
+and module_ m = list (Location.wrap_to_yojson declaration) m

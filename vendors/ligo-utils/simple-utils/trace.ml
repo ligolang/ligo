@@ -408,7 +408,11 @@ let bind_location (x:_ Location.wrap) =
   x.wrap_content >>? fun wrap_content ->
   ok { x with wrap_content }
 
-let bind_map_location f x = bind_location (Location.map f x)
+let bind_map_location  f x     = bind_location (Location.map f x)
+let bind_fold_location f acc x = f acc x.Location.wrap_content
+let bind_fold_map_location f acc x =
+  f acc x.Location.wrap_content >>? fun (acc, wrap_content) ->
+  ok (acc, { x with wrap_content })
 
 let bind_fold_list f init lst =
   let aux x y = x >>? fun x -> f x y

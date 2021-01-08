@@ -75,7 +75,7 @@ let apply = function
 let parse_file dirs buffer file_path =
   ContractParser.parse_file dirs buffer file_path |> apply
 
-let parse_program_string dirs string =
+let parse_module_string dirs string =
   ContractParser.parse_string dirs string |> apply
 
 (* Parsing expressions *)

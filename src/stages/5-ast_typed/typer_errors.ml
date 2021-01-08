@@ -13,7 +13,7 @@ type typer_error = [
   | `Typer_missing_funarg_annotation of Ast_typed_self_reference.expression_variable
   | `Typer_michelson_comb_no_record of Location.t
   | `Typer_michelson_comb_no_variant of Location.t
-  | `Typer_unbound_module of Environment.t * string * Location.t
+  | `Typer_unbound_module_variable of Environment.t * Ast_typed_self_reference.module_variable * Location.t
   | `Typer_unbound_type_variable of Ast_typed_self_reference.Environment.t * Ast_typed_self_reference.type_variable * Location.t
   | `Typer_unbound_variable of Ast_typed_self_reference.Environment.t * Ast_typed_self_reference.expression_variable * Location.t
   | `Typer_match_missing_case of Ast_core.label list * Ast_core.label list * Location.t
@@ -22,7 +22,7 @@ type typer_error = [
   | `Typer_redundant_constructor of Ast_typed_self_reference.Environment.t * Ast_core.label * Location.t
   | `Typer_type_constant_wrong_number_of_arguments of Ast_core.type_variable* int * int * Location.t
   | `Typer_michelson_or_no_annotation of Ast_core.label * Location.t
-  | `Typer_program_tracer of Ast_core.program * typer_error
+  | `Typer_module_tracer of Ast_core.module_ * typer_error
   | `Typer_constant_declaration_tracer of Ast_core.expression_variable * Ast_core.expression * (Ast_typed_self_reference.type_expression option) * typer_error
   | `Typer_match_error of Ast_core.matching_expr * Ast_typed_self_reference.type_expression * Location.t
   | `Typer_needs_annotation of Ast_core.expression * string
@@ -94,7 +94,7 @@ let variant_redefined_error (loc:Location.t) = `Typer_variant_redefined_error lo
 let record_redefined_error (loc:Location.t) = `Typer_record_redefined_error loc
 let michelson_comb_no_record (loc:Location.t) = `Typer_michelson_comb_no_record loc
 let michelson_comb_no_variant (loc:Location.t) = `Typer_michelson_comb_no_variant loc
-let unbound_module        (e:Environment.t) (name:string) (loc:Location.t) = `Typer_unbound_module (e,name,loc)
+let unbound_module_variable (e:Environment.t) (mv:Ast_typed_self_reference.module_variable) (loc:Location.t) = `Typer_unbound_module_variable (e,mv,loc)
 let unbound_type_variable (e:Ast_typed_self_reference.Environment.t) (tv:Ast_typed_self_reference.type_variable) (loc:Location.t) = `Typer_unbound_type_variable (e,tv,loc)
 let unbound_variable (e:Ast_typed_self_reference.Environment.t) (v:Ast_typed_self_reference.expression_variable) (loc:Location.t) = `Typer_unbound_variable (e,v,loc)
 let match_missing_case (m:Ast_core.label list) (v:Ast_core.label list) (loc:Location.t) = `Typer_match_missing_case (m, v, loc)
@@ -103,7 +103,7 @@ let unbound_constructor (e:Ast_typed_self_reference.Environment.t) (c:Ast_core.l
 let type_constant_wrong_number_of_arguments (op:Ast_core.type_variable) (expected:int) (actual:int) loc = `Typer_type_constant_wrong_number_of_arguments (op,expected,actual,loc)
 let redundant_constructor (e:Ast_typed_self_reference.Environment.t) (c:Ast_core.label) (loc:Location.t) = `Typer_redundant_constructor (e,c,loc)
 let michelson_or (c:Ast_core.label) (loc:Location.t) = `Typer_michelson_or_no_annotation (c,loc)
-let program_error_tracer (p:Ast_core.program) (err:typer_error) = `Typer_program_tracer (p,err)
+let module_error_tracer (p:Ast_core.module_) (err:typer_error) = `Typer_module_tracer (p,err)
 let constant_declaration_error_tracer (name:Ast_core.expression_variable) (ae:Ast_core.expression) (expected: Ast_typed_self_reference.type_expression option) (err:typer_error) =
   `Typer_constant_declaration_tracer (name,ae,expected,err)
 let match_error ~(expected: Ast_core.matching_expr) ~(actual: Ast_typed_self_reference.type_expression) (loc:Location.t) =
@@ -210,11 +210,11 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@.Invalid usage of type \"michelson_or\".@.The \"michelson_or\" type expects a variant type as argument. @]"
         Snippet.pp loc
-    | `Typer_unbound_module (_env,name,loc) ->
+    | `Typer_unbound_module_variable (_env,mv,loc) ->
       Format.fprintf f
-        "@[<hv>%a@.Module \"%s\" not found. @]"
+        "@[<hv>%a@.Module \"%a\" not found. @]"
         Snippet.pp loc
-        name
+        Ast_typed_self_reference.PP.module_variable mv
     | `Typer_unbound_type_variable (_env,tv,loc) ->
       Format.fprintf f
         "@[<hv>%a@.Type \"%a\" not found. @]"
@@ -289,7 +289,7 @@ let rec error_ppformat : display_format:string display_format ->
         "@[<hv>%a@.Incorrect usage of type \"michelson_or\".@.The contructor \"%a\" must be annotated with a variant type. @]"
         Snippet.pp loc
         Ast_core.PP.label c
-    | `Typer_program_tracer (_program,err) ->
+    | `Typer_module_tracer (_module,err) ->
       Format.fprintf f
         "%a"
         (error_ppformat ~display_format) err
@@ -621,9 +621,10 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("location", `String loc)
     ] in
     json_error ~stage ~content
-  | `Typer_unbound_module (env,value,loc) ->
+  | `Typer_unbound_module_variable (env,mv,loc) ->
     let message = `String "unbound module" in
     let loc = Format.asprintf "%a" Location.pp loc in
+    let value = Format.asprintf "%a" Ast_typed_self_reference.PP.module_variable mv in
     let env = Format.asprintf "%a" Environment.PP.environment env in
     let content = `Assoc [
       ("message", message);
@@ -741,8 +742,8 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("value", `String value);
     ] in
     json_error ~stage ~content
-  | `Typer_program_tracer (p,err) ->
-    let message = `String "Typing program" in
+  | `Typer_module_tracer (p,err) ->
+    let message = `String "Typing module" in
     let over = List.fold_left (fun a (p:Ast_core.declaration Location.wrap) -> match p.location with File reg -> Region.cover a reg | Virtual _ -> a) Region.ghost p in
     let loc = `String (Format.asprintf "%a" Location.pp_lift over) in
     let content = `Assoc [

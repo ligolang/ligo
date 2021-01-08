@@ -155,6 +155,18 @@ and print_statement state = function
     print_var       state name;
     print_token     state eq "=";
     print_type_expr state type_expr
+| ModuleDecl {value={kwd_module; name; eq; kwd_struct; module_; kwd_end}; _} ->
+    print_token  state kwd_module "module";
+    print_var    state name;
+    print_token  state eq "=";
+    print_token  state kwd_struct "struct";
+    print_tokens state module_;
+    print_token  state kwd_end "end";
+| ModuleAlias {value={kwd_module; alias; eq; binders}; _} ->
+    print_token   state kwd_module "module";
+    print_var     state alias;
+    print_token   state eq "=";
+    print_nsepseq state "." print_var binders;
 
 and print_type_expr state = function
   TProd prod      -> print_cartesian state prod
@@ -370,29 +382,31 @@ and print_constr_app_pattern state node =
   | Some pattern -> print_pattern state pattern
 
 and print_expr state = function
-  ELetIn let_in -> print_let_in      state let_in
-| ETypeIn type_in -> print_type_in   state type_in
-| ECond cond    -> print_conditional state cond
-| ETuple tuple  -> print_csv         state print_expr tuple
-| ECase case    -> print_match_expr  state case
-| EFun e        -> print_fun_expr    state e
-| EAnnot e      -> print_annot_expr  state e
-| ELogic e      -> print_logic_expr  state e
-| EArith e      -> print_arith_expr  state e
-| EString e     -> print_string_expr state e
-| ECall e       -> print_fun_call state e
-| EVar v        -> print_var state v
-| EProj p       -> print_projection state p
-| EModA ma      -> print_module_access print_expr state ma
-| EUpdate u     -> print_update state u
-| EUnit e       -> print_unit state e
-| EBytes b      -> print_bytes state b
-| EPar e        -> print_expr_par state e
-| EList e       -> print_list_expr state e
-| ESeq seq      -> print_sequence state seq
-| ERecord e     -> print_record_expr state e
-| EConstr e     -> print_constr_expr state e
-| ECodeInj e    -> print_code_inj state e
+  ELetIn let_in       -> print_let_in      state let_in
+| ETypeIn type_in     -> print_type_in     state type_in
+| EModIn mod_in       -> print_mod_in      state mod_in
+| EModAlias mod_alias -> print_mod_alias   state mod_alias
+| ECond cond          -> print_conditional state cond
+| ETuple tuple        -> print_csv         state print_expr tuple
+| ECase case          -> print_match_expr  state case
+| EFun e              -> print_fun_expr    state e
+| EAnnot e            -> print_annot_expr  state e
+| ELogic e            -> print_logic_expr  state e
+| EArith e            -> print_arith_expr  state e
+| EString e           -> print_string_expr state e
+| ECall e             -> print_fun_call    state e
+| EVar v              -> print_var         state v
+| EProj p             -> print_projection  state p
+| EModA ma            -> print_module_access print_expr state ma
+| EUpdate u           -> print_update      state u
+| EUnit e             -> print_unit        state e
+| EBytes b            -> print_bytes       state b
+| EPar e              -> print_expr_par    state e
+| EList e             -> print_list_expr   state e
+| ESeq seq            -> print_sequence    state seq
+| ERecord e           -> print_record_expr state e
+| EConstr e           -> print_constr_expr state e
+| ECodeInj e          -> print_code_inj    state e
 
 and print_constr_expr state = function
   ENone e      -> print_none_expr       state e
@@ -610,6 +624,28 @@ and print_type_in state {value; _} =
   print_token        state kwd_in "in";
   print_expr         state body
 
+and print_mod_in state {value; _} =
+  let {mod_decl; kwd_in; body} = value in
+  let {kwd_module; name; eq; kwd_struct; module_; kwd_end} = mod_decl in
+  print_token        state kwd_module "module";
+  print_var          state name;
+  print_token        state eq     "eq";
+  print_token        state kwd_struct "struct";
+  print_tokens       state module_;
+  print_token        state kwd_end "end";
+  print_token        state kwd_in "in";
+  print_expr         state body
+
+and print_mod_alias state {value; _} =
+  let {mod_alias; kwd_in; body} = value in
+  let {kwd_module; alias; eq; binders} = mod_alias in
+  print_token        state kwd_module "module";
+  print_var          state alias;
+  print_token        state eq     "eq";
+  print_nsepseq      state "." print_var binders;
+  print_token        state kwd_in "in";
+  print_expr         state body
+
 and print_fun_expr state {value; _} =
   let {kwd_fun; binders; lhs_type; arrow; body} = value in
   let () = print_token state kwd_fun "fun" in
@@ -695,6 +731,12 @@ and pp_declaration state = function
 | TypeDecl {value; region} ->
     pp_loc_node  state "TypeDecl" region;
     pp_type_decl state value
+| ModuleDecl {value; region} ->
+    pp_loc_node    state "ModuleDecl" region;
+    pp_module_decl state value
+| ModuleAlias {value; region} ->
+    pp_loc_node    state "ModuleDecl" region;
+    pp_module_alias state value
 
 and pp_let_binding state node attr =
   let {binders; lhs_type; let_rhs; _} = node in
@@ -729,6 +771,17 @@ and pp_let_binding state node attr =
 and pp_type_decl state decl =
   pp_ident     (state#pad 2 0) decl.name;
   pp_type_expr (state#pad 2 1) decl.type_expr
+
+and pp_module_decl state decl =
+  pp_ident     (state#pad 2 0) decl.name;
+  pp_cst       (state#pad 2 1) decl.module_
+
+and pp_module_alias state decl =
+  let binders     = Utils.nsepseq_to_list decl.binders in
+  let len            = List.length binders in
+  let apply len rank = pp_ident (state#pad len rank) in
+  pp_ident (state#pad (1+len) 0) decl.alias;
+  List.iteri (apply len) binders
 
 and pp_binders state patterns =
   let patterns       = Utils.nseq_to_list patterns in
@@ -911,8 +964,14 @@ and pp_expr state = function
     pp_loc_node state  "ELetIn" region;
     pp_let_in state value
 | ETypeIn {value; region} ->
-    pp_loc_node state  "ELetIn" region;
+    pp_loc_node state  "ETypeIn" region;
     pp_type_in state value
+| EModIn {value; region} ->
+    pp_loc_node state  "EModIn" region;
+    pp_mod_in state value
+| EModAlias {value; region} ->
+    pp_loc_node state  "EModAlias" region;
+    pp_mod_alias state value
 | EFun {value; region} ->
     pp_loc_node state "EFun" region;
     pp_fun_expr state value
@@ -1002,12 +1061,49 @@ and pp_type_in state node =
   let {name; type_expr; _} = type_decl in
   let () =
     let state = state#pad 3 0 in
-    pp_node state "<name>";
+    pp_node  state "<name>";
     pp_ident state name in
   let () =
     let state = state#pad 3 1 in
     pp_node state "<type>";
     pp_type_expr (state#pad 1 0) type_expr in
+  let () =
+    let state = state#pad 3 2 in
+    pp_node state "<body>";
+    pp_expr (state#pad 1 0) body
+  in ()
+
+and pp_mod_in state node =
+  let {mod_decl; body; _} = node in
+  let {name; module_; _} = mod_decl in
+  let () =
+    let state = state#pad 3 0 in
+    pp_node state "<name>";
+    pp_ident state name in
+  let () =
+    let state = state#pad 3 1 in
+    pp_node state "<module>";
+    pp_cst (state#pad 1 0) module_ in
+  let () =
+    let state = state#pad 3 2 in
+    pp_node state "<body>";
+    pp_expr (state#pad 1 0) body
+  in ()
+
+and pp_mod_alias state node =
+  let {mod_alias; body; _} = node in
+  let {alias;binders; _} = mod_alias in
+  let () =
+    let state = state#pad 3 0 in
+    pp_node  state "<alias>";
+    pp_ident state alias in
+  let () =
+    let state = state#pad 3 1 in
+    let binders     = Utils.nsepseq_to_list binders in
+    let len            = List.length binders in
+    let apply len rank = pp_ident (state#pad len rank) in
+    pp_node state "<module>";
+    List.iteri (apply len) binders in
   let () =
     let state = state#pad 3 2 in
     pp_node state "<body>";

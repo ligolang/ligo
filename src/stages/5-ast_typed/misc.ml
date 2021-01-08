@@ -34,6 +34,8 @@ module Free_variables = struct
         (expression b' let_result)
         (self rhs)
     | E_type_in { type_binder=_; rhs=_; let_result} -> self let_result
+    | E_mod_in { module_binder=_; rhs=_; let_result} -> self let_result
+    | E_mod_alias { alias=_; binders=_; result} -> self result
     | E_raw_code _ -> empty
     | E_recursive {fun_name;lambda;_} ->
       let b' = union (singleton fun_name) b in
@@ -217,7 +219,7 @@ let rec assert_value_eq (a, b: (expression*expression)) : unit option =
   | E_record _, _
   | (E_literal _, _) | (E_variable _, _) | (E_application _, _)
   | (E_lambda _, _) | (E_let_in _, _) | (E_raw_code _, _) | (E_recursive _, _)
-  | (E_type_in _, _)
+  | (E_type_in _, _)| (E_mod_in _, _) | (E_mod_alias _,_)
   | (E_record_accessor _, _) | (E_record_update _,_)
   | (E_matching _, _)
   | E_module_accessor _, _
@@ -235,7 +237,7 @@ let merge_annotation (a:type_expression option) (b:type_expression option) asser
       | _, None -> Some a
       | _, Some _ -> Some b
 
-let get_entry (Program_Fully_Typed lst : program_fully_typed) (name : string) : expression option =
+let get_entry (Module_Fully_Typed lst : module_fully_typed) (name : string) : expression option =
   let aux x =
     match Location.unwrap x with
     | Declaration_constant { binder ; expr ; inline=_ } -> (
@@ -243,7 +245,9 @@ let get_entry (Program_Fully_Typed lst : program_fully_typed) (name : string) : 
       then Some expr
       else None
     )
-    | Declaration_type _ -> None
+    | Declaration_type   _
+    | Declaration_module _
+    | Module_alias       _ -> None
   in
   List.find_map aux lst
 

@@ -30,27 +30,29 @@ type lexeme = string
 
 (* Keywords of OCaml *)
 
-type keyword   = Region.t
-type kwd_and   = Region.t
-type kwd_begin = Region.t
-type kwd_else  = Region.t
-type kwd_end   = Region.t
-type kwd_false = Region.t
-type kwd_fun   = Region.t
-type kwd_rec   = Region.t
-type kwd_if    = Region.t
-type kwd_in    = Region.t
-type kwd_let   = Region.t
-type kwd_match = Region.t
-type kwd_mod   = Region.t
-type kwd_not   = Region.t
-type kwd_of    = Region.t
-type kwd_or    = Region.t
-type kwd_then  = Region.t
-type kwd_true  = Region.t
-type kwd_type  = Region.t
-type kwd_with  = Region.t
+type keyword       = Region.t
+type kwd_and       = Region.t
+type kwd_begin     = Region.t
+type kwd_else      = Region.t
+type kwd_end       = Region.t
+type kwd_false     = Region.t
+type kwd_fun       = Region.t
+type kwd_rec       = Region.t
+type kwd_if        = Region.t
+type kwd_in        = Region.t
+type kwd_let       = Region.t
+type kwd_match     = Region.t
+type kwd_mod       = Region.t
+type kwd_not       = Region.t
+type kwd_of        = Region.t
+type kwd_or        = Region.t
+type kwd_then      = Region.t
+type kwd_true      = Region.t
+type kwd_type      = Region.t
+type kwd_with      = Region.t
 type kwd_let_entry = Region.t
+type kwd_module    = Region.t
+type kwd_struct    = Region.t
 
 (* Data constructors *)
 
@@ -143,13 +145,15 @@ and ast = t
 and attributes = attribute list
 
 and declaration =
-  Let      of let_decl
-| TypeDecl of type_decl reg
+  Let         of let_decl     reg
+| TypeDecl    of type_decl    reg
+| ModuleDecl  of module_decl  reg
+| ModuleAlias of module_alias reg
 
 (* Non-recursive values *)
 
 and let_decl =
-  (kwd_let * kwd_rec option * let_binding * attributes) reg
+  (kwd_let * kwd_rec option * let_binding * attributes)
 
 and let_binding = {
   binders  : pattern nseq;
@@ -165,6 +169,22 @@ and type_decl = {
   name       : type_name;
   eq         : equal;
   type_expr  : type_expr
+}
+
+and module_decl = {
+  kwd_module : kwd_module;
+  name       : module_name;
+  eq         : equal;
+  kwd_struct : kwd_struct;
+  module_    : t;
+  kwd_end    : kwd_end;
+}
+
+and module_alias = {
+  kwd_module : kwd_module;
+  alias      : module_name;
+  eq         : equal;
+  binders    : (module_name, dot) nsepseq;
 }
 
 and type_expr =
@@ -243,29 +263,31 @@ and field_pattern = {
 }
 
 and expr =
-  ECase    of expr case reg
-| ECond    of cond_expr reg
-| EAnnot   of annot_expr par reg
-| ELogic   of logic_expr
-| EArith   of arith_expr
-| EString  of string_expr
-| EList    of list_expr
-| EConstr  of constr_expr
-| ERecord  of record reg
-| EProj    of projection reg
-| EModA    of expr module_access reg
-| EUpdate  of update reg
-| EVar     of variable
-| ECall    of (expr * expr nseq) reg
-| EBytes   of (string * Hex.t) reg
-| EUnit    of the_unit reg
-| ETuple   of (expr, comma) nsepseq reg
-| EPar     of expr par reg
-| ELetIn   of let_in reg
-| ETypeIn  of type_in reg
-| EFun     of fun_expr reg
-| ESeq     of expr injection reg
-| ECodeInj of code_inj reg
+  ECase     of expr case reg
+| ECond     of cond_expr reg
+| EAnnot    of annot_expr par reg
+| ELogic    of logic_expr
+| EArith    of arith_expr
+| EString   of string_expr
+| EList     of list_expr
+| EConstr   of constr_expr
+| ERecord   of record reg
+| EProj     of projection reg
+| EModA     of expr module_access reg
+| EUpdate   of update reg
+| EVar      of variable
+| ECall     of (expr * expr nseq) reg
+| EBytes    of (string * Hex.t) reg
+| EUnit     of the_unit reg
+| ETuple    of (expr, comma) nsepseq reg
+| EPar      of expr par reg
+| ELetIn    of let_in reg
+| ETypeIn   of type_in reg
+| EModIn    of mod_in reg
+| EModAlias of mod_alias reg
+| EFun      of fun_expr reg
+| ESeq      of expr injection reg
+| ECodeInj  of code_inj reg
 
 and annot_expr = expr * colon * type_expr
 
@@ -414,6 +436,18 @@ and type_in = {
   body       : expr;
 }
 
+and mod_in = {
+  mod_decl : module_decl;
+  kwd_in   : kwd_in;
+  body     : expr;
+}
+
+and mod_alias = {
+  mod_alias : module_alias;
+  kwd_in    : kwd_in;
+  body      : expr;
+}
+
 and fun_expr = {
   kwd_fun    : kwd_fun;
   binders    : pattern nseq;
@@ -524,7 +558,7 @@ let expr_to_region = function
 | EList e -> list_expr_to_region e
 | EConstr e -> constr_expr_to_region e
 | EAnnot {region;_ } | ELetIn {region;_}   | EFun {region;_}
-| ETypeIn {region;_ }
+| ETypeIn {region;_ }| EModIn {region;_}   | EModAlias {region;_}
 | ECond {region;_}   | ETuple {region;_}   | ECase {region;_}
 | ECall {region;_}   | EVar {region; _}    | EProj {region; _}
 | EUnit {region;_}   | EPar {region;_}     | EBytes {region; _}
@@ -533,8 +567,10 @@ let expr_to_region = function
 | ECodeInj {region; _} -> region
 
 let declaration_to_region = function
-| Let {region;_}
-| TypeDecl {region;_} -> region
+| Let         {region;_}
+| TypeDecl    {region;_}
+| ModuleDecl  {region;_}
+| ModuleAlias {region;_} -> region
 
 let selection_to_region = function
   FieldName f -> f.region

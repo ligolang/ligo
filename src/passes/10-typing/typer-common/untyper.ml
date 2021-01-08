@@ -55,15 +55,28 @@ let untype_declaration_type O.{type_binder; type_expr} =
   let type_binder = Var.todo_cast type_binder in
   ok @@ I.{type_binder; type_expr}
 
-let untype_declaration untype_expression = function
-  | O.Declaration_constant dc ->
-     let%bind dc = untype_declaration_constant untype_expression dc in
-     ok @@ I.Declaration_constant dc
-  | O.Declaration_type dt ->
-     let%bind dt = untype_declaration_type dt in
-     ok @@ I.Declaration_type dt
+let rec untype_declaration_module untype_expression O.{module_binder; module_} =
+  let%bind module_ = untype_module untype_expression module_ in
+  ok @@ I.{module_binder; module_}
 
-let untype_program untype_expression : O.program_fully_typed -> (I.program, _) result =
-  fun (O.Program_Fully_Typed p) ->
+and untype_declaration untype_expression =
+  let return (d: I.declaration) = ok @@ d in
+  fun (d: O.declaration) -> match d with
+  | Declaration_constant dc ->
+    let%bind dc = untype_declaration_constant untype_expression dc in
+    return @@ Declaration_constant dc
+  | Declaration_type dt ->
+    let%bind dt = untype_declaration_type dt in
+    return @@ Declaration_type dt
+  | Declaration_module dm ->
+    let%bind dm = untype_declaration_module untype_expression dm in
+    return @@ Declaration_module dm
+  | Module_alias ma -> 
+    return @@ Module_alias ma
+
+
+
+and untype_module untype_expression : O.module_fully_typed -> (I.module_, _) result =
+  fun (O.Module_Fully_Typed p) ->
   let untype_declaration = untype_declaration untype_expression in
   bind_map_list (bind_map_location untype_declaration) p

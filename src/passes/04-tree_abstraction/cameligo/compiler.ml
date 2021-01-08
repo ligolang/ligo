@@ -296,8 +296,8 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
       EVar v -> ok @@ v.value
       | EModA _ -> fail @@ unknown_constant module_name.value loc
       |ECase _|ECond _|EAnnot _|EList _|EConstr _|EUpdate _|ELetIn _|EFun _|ESeq _|ECodeInj _
-      |ELogic _|EArith _|EString _|ERecord _|EProj _|ECall _|EBytes _|EUnit _|ETypeIn _
-      |ETuple _|EPar _ -> failwith "Corner case : This couldn't be produce by the parser"
+      |ELogic _|EArith _|EString _|ERecord _|EProj _|ECall _|EBytes _|EUnit _|ETypeIn _|EModIn _
+      |EModAlias _|ETuple _|EPar _ -> failwith "Corner case : This couldn't be produce by the parser"
     in
     let var = module_name.value ^ "." ^ fun_name in
     (match constants var with
@@ -342,15 +342,16 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
         EVar v -> ok @@ v.value
       | EModA _ -> fail @@ unknown_constant module_name loc
       |ECase _|ECond _|EAnnot _|EList _|EConstr _|EUpdate _|ELetIn _|EFun _|ESeq _|ECodeInj _
-      |ELogic _|EArith _|EString _|ERecord _|EProj _|ECall _|EBytes _|EUnit _|ETypeIn _
-      |ETuple _|EPar _ -> failwith "Corner case : This couldn't be produce by the parser"
+      |ELogic _|EArith _|EString _|ERecord _|EProj _|ECall _|EBytes _|EUnit _|ETypeIn _|EModIn _
+      |EModAlias _|ETuple _|EPar _ -> failwith "Corner case : This couldn't be produce by the parser"
       in
       let var = module_name ^ "." ^ fun_name in
       (match constants var with
         Some const -> return @@ e_constant ~loc const []
       | None -> return @@ e_variable_ez ~loc var
       )
-    else return @@ e_module_accessor ~loc module_name element
+    else
+      return @@ e_module_accessor ~loc module_name element
   | EUpdate update ->
     let (update, _loc) = r_split update in
     let%bind record = compile_path update.record in
@@ -469,6 +470,20 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     let%bind rhs = compile_type_expression type_expr in
     let%bind body = compile_expression body in
     return @@ e_type_in ~loc type_binder rhs body
+  | EModIn mi ->
+    let (mi, loc) = r_split mi in
+    let ({mod_decl={name;module_;_};kwd_in=_;body} : CST.mod_in) = mi in
+    let module_binder = name.value in
+    let%bind rhs = compile_module module_ in
+    let%bind body = compile_expression body in
+    return @@ e_mod_in ~loc module_binder rhs body
+  | EModAlias ma ->
+    let (ma, loc) = r_split ma in
+    let ({mod_alias={alias;binders;_};kwd_in=_;body} : CST.mod_alias) = ma in
+    let module_alias   = alias.value in
+    let module_binders,_ = List.Ne.split @@ List.Ne.map r_split @@ npseq_to_ne_list binders in
+    let%bind body = compile_expression body in
+    return @@ e_mod_alias ~loc module_alias module_binders body
   | ECodeInj ci ->
     let (ci, loc) = r_split ci in
     let (language, _) = r_split ci.language in
@@ -828,7 +843,7 @@ and compile_parameter : CST.pattern -> _ result =
     return ~ascr loc exprs @@ Location.unwrap var
   | _ -> fail @@ unsupported_pattern_type [pattern]
 
-let compile_declaration : CST.declaration -> _ = fun decl ->
+and compile_declaration : CST.declaration -> _ = fun decl ->
   let return reg decl =
     ok @@ List.map (Location.wrap ~loc:(Location.lift reg)) decl in
   let return_1 reg decl = return reg [decl] in
@@ -841,7 +856,15 @@ let compile_declaration : CST.declaration -> _ = fun decl ->
     let%bind lst = compile_let_binding ?kwd_rec attributes let_binding in
     let aux (binder,attr, expr) =  AST.Declaration_constant {binder; attr; expr} in
     return region @@ List.map aux lst
+  | ModuleDecl {value={name; module_; _};region} ->
+    let (name,_) = r_split name in
+    let%bind module_ = compile_module module_ in
+    return_1 region @@ AST.Declaration_module  {module_binder=name; module_}
+  | ModuleAlias {value={alias; binders; _};region} ->
+    let (alias,_)   = r_split alias in
+    let binders,_ = List.Ne.split @@ List.Ne.map r_split @@ npseq_to_ne_list binders in
+    return_1 region @@ AST.Module_alias {alias; binders}
 
-let compile_program : CST.ast -> _ result = fun t ->
+and compile_module : CST.ast -> _ result = fun t ->
     let%bind lst = bind_map_list compile_declaration @@ nseq_to_list t.decl in
     ok @@ List.flatten lst
