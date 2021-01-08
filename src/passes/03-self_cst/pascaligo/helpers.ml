@@ -213,6 +213,7 @@ and fold_statement : ('a, 'err) folder -> 'a -> statement -> ('a, 'err) result =
   let self = fold_statement f in
   let self_expr = fold_expression f in
   let self_type = fold_type_expression f in
+  let self_module = fold_module f in
   let%bind init = f.s init s in
   let if_clause res = function
       ClauseInstr inst -> self res @@ Instr inst
@@ -335,10 +336,17 @@ and fold_statement : ('a, 'err) folder -> 'a -> statement -> ('a, 'err) result =
       Some (_, ty) -> self_type res ty
     | None ->    ok @@ res
     )
-  | Type {value;region=_} ->
+  | Data LocalType {value;region=_} ->
     let {kwd_type=_;name=_;kwd_is=_;type_expr;terminator=_} = value in
     let%bind res = self_type init type_expr in
     ok @@ res
+  | Data LocalModule {value;region=_} ->
+    let {kwd_module=_;name=_;kwd_is=_;enclosing=_;module_;terminator=_} = value in
+    let%bind res = self_module init module_ in
+    ok @@ res
+  | Data LocalModuleAlias {value;region=_} ->
+    let {kwd_module=_;alias=_;kwd_is=_;binders=_;terminator=_} = value in
+    ok @@ init
 
 
 
@@ -353,6 +361,7 @@ and fold_declaration : ('a, 'err) folder -> 'a -> declaration -> ('a, 'err) resu
   fun f init d ->
   let self_expr = fold_expression f in
   let self_type = fold_type_expression f in
+  let self_module = fold_module f in
   let%bind init = f.d init d in
   match d with
     ConstDecl {value;region=_} ->
@@ -373,8 +382,15 @@ and fold_declaration : ('a, 'err) folder -> 'a -> declaration -> ('a, 'err) resu
     let {kwd_type=_;name=_;kwd_is=_;type_expr;terminator=_} = value in
     let%bind res = self_type init type_expr in
     ok @@ res
+  | ModuleDecl {value;region=_} ->
+    let {kwd_module=_;name=_;kwd_is=_;enclosing=_;module_;terminator=_} = value in
+    let%bind res = self_module init module_ in
+    ok @@ res
+  | ModuleAlias {value;region=_} ->
+    let {kwd_module=_;alias=_;kwd_is=_;binders=_;} = value in
+    ok @@ init
 
-and fold_program : ('a, 'err) folder -> 'a -> t -> ('a, 'err) result =
+and fold_module : ('a, 'err) folder -> 'a -> t -> ('a, 'err) result =
   fun f init {decl;eof=_} ->
   let self = fold_declaration f in
   bind_fold_ne_list self init @@ decl
@@ -654,6 +670,7 @@ and map_statement : 'err mapper -> statement -> (statement, 'err) result = fun f
   let self_expr = map_expression f in
   let self_inst = map_instruction f in
   let self_type = map_type_expression f in
+  let self_module = map_module f in
   let%bind s = f.s s in
   match s with
   | Instr inst -> let%bind inst = self_inst inst in ok @@ Instr inst
@@ -677,11 +694,19 @@ and map_statement : 'err mapper -> statement -> (statement, 'err) result = fun f
       -> let%bind ty = self_type ty in ok @@ (w,ty)) ret_type in
     let value = {value with return;ret_type} in
     ok @@ Data (LocalFun {value;region})
-  | Type {value;region} ->
+  | Data LocalType {value;region} ->
     let {kwd_type=_;name=_;kwd_is=_;type_expr;terminator=_} = value in
     let%bind type_expr = self_type type_expr in
     let value = {value with type_expr} in
-    ok @@ Type {value;region}
+    ok @@ Data (LocalType {value;region})
+  | Data LocalModule {value;region} ->
+    let {kwd_module=_;name=_;kwd_is=_;enclosing=_;module_;terminator=_} = value in
+    let%bind module_ = self_module module_ in
+    let value = {value with module_} in
+    ok @@ Data (LocalModule {value;region})
+  | Data LocalModuleAlias {value;region} ->
+    let {kwd_module=_;alias=_;kwd_is=_;binders=_;terminator=_} = value in
+    ok @@ Data (LocalModuleAlias {value;region})
 
 and map_instruction = fun f i ->
   let self = map_instruction f in
@@ -830,6 +855,7 @@ and map_declaration : ('err) mapper -> declaration -> (declaration, 'err) result
   fun f d ->
   let self_expr = map_expression f in
   let self_type = map_type_expression f in
+  let self_module = map_module f in
   let return = ok in
   let%bind d = f.d d in
   match d with
@@ -852,8 +878,16 @@ and map_declaration : ('err) mapper -> declaration -> (declaration, 'err) result
     let%bind type_expr = self_type type_expr in
     let value = {value with type_expr} in
     return @@ TypeDecl {value;region}
+  | ModuleDecl {value;region} ->
+    let {kwd_module=_;name=_;kwd_is=_;enclosing=_;module_;terminator=_} = value in
+    let%bind module_ = self_module module_ in
+    let value = {value with module_} in
+    return @@ ModuleDecl {value;region}
+  | ModuleAlias {value;region} ->
+    let {kwd_module=_;alias=_;kwd_is=_;binders=_} = value in
+    return @@ ModuleAlias {value;region}
 
-and map_program : ('err) mapper -> t -> (t, 'err) result =
+and map_module : ('err) mapper -> t -> (t, 'err) result =
   fun f {decl;eof} ->
   let self = map_declaration f in
   map (fun decl -> {decl;eof}) @@

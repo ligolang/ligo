@@ -97,7 +97,7 @@ let message_size_exceeded () =
 (* sender has already has reached maximum number of proposal *)
 let maximum_number_of_proposal () =
   let%bind (program, env, state) = get_program () in
-  let%bind packed_payload1 = pack_payload program (send_param empty_message) in
+  let%bind packed_payload1 = pack_payload env (send_param empty_message) in
   let bytes1 = e_bytes_raw packed_payload1 in
   let init_storage = storage {
     threshold = 1 ; max_proposal = 1 ; max_msg_size = 15 ; state_hash = Bytes.empty ;
@@ -115,7 +115,7 @@ let maximum_number_of_proposal () =
 (* sender message is already stored in the message store *)
 let send_already_accounted () =
   let%bind (program, env, state) = get_program () in
-  let%bind packed_payload = pack_payload program empty_message in
+  let%bind packed_payload = pack_payload env empty_message in
   let bytes = e_bytes_raw packed_payload in
   let init_storage = storage {
     threshold = 2 ;  max_proposal = 1 ;  max_msg_size = 15 ; state_hash = Bytes.empty ;
@@ -131,7 +131,7 @@ let send_already_accounted () =
 (* sender message isn't stored in the message store *)
 let send_never_accounted () =
   let%bind (program, env, state) = get_program () in
-  let%bind packed_payload = pack_payload program empty_message in
+  let%bind packed_payload = pack_payload env empty_message in
   let bytes = e_bytes_raw packed_payload in
   let init_storage' = {
     threshold = 2 ; max_proposal = 1 ;  max_msg_size = 15 ; state_hash = Bytes.empty ;
@@ -152,7 +152,7 @@ let send_never_accounted () =
 (* sender withdraw message is already binded to one address in the message store *)
 let withdraw_already_accounted_one () =
   let%bind (program, env, state) = get_program () in
-  let%bind packed_payload = pack_payload program empty_message in
+  let%bind packed_payload = pack_payload env empty_message in
   let bytes = e_bytes_raw packed_payload in
   let param = withdraw_param in
   let init_storage' = {
@@ -173,7 +173,7 @@ let withdraw_already_accounted_one () =
 (* sender withdraw message is already binded to two addresses in the message store *)
 let withdraw_already_accounted_two () =
   let%bind (program, env, state) = get_program () in
-  let%bind packed_payload = pack_payload program empty_message in
+  let%bind packed_payload = pack_payload env empty_message in
   let bytes = e_bytes_raw packed_payload in
   let param = withdraw_param in
   let init_storage' = {
@@ -194,7 +194,7 @@ let withdraw_already_accounted_two () =
 (* triggers the threshold and check that all the participants get their counters decremented *)
 let counters_reset () =
   let%bind (program, env, state) = get_program () in
-  let%bind packed_payload = pack_payload program empty_message in
+  let%bind packed_payload = pack_payload env empty_message in
   let bytes = e_bytes_raw packed_payload in
   let param = send_param empty_message in
   let hash_after_msg = sha_256_hash (Bytes.concat Bytes.empty [Bytes.empty ; packed_payload]) in
@@ -232,7 +232,7 @@ let withdraw_never_accounted () =
 (* successful storing in the message store *)
 let succeeded_storing () =
   let%bind (program, env, state) = get_program () in
-  let%bind packed_payload = pack_payload program empty_message in
+  let%bind packed_payload = pack_payload env empty_message in
   let bytes = e_bytes_raw packed_payload in
   let init_storage th = {
     threshold = th ; max_proposal = 1 ;  max_msg_size = 15 ; state_hash = Bytes.empty ;

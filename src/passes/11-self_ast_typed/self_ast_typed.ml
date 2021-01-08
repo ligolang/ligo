@@ -12,10 +12,10 @@ let contract_passes = [
   No_nested_big_map.self_typing ;
 ]
 
-let all_program program =
-  let all_p = List.map Helpers.map_program all_passes in
-  let%bind program' = bind_chain all_p program in
-  ok program'
+let all_module module_ =
+  let all_p = List.map Helpers.map_module all_passes in
+  let%bind module' = bind_chain all_p module_ in
+  ok module'
 
 let all_expression =
   let all_p = List.map Helpers.map_expression all_passes in
@@ -27,7 +27,7 @@ let all_contract main_name prg =
     contract_type = contract_type ;
     main_name = main_name ;
     } in
-  let all_p = List.map (fun pass -> Helpers.fold_map_program pass data) contract_passes in
+  let all_p = List.map (fun pass -> Helpers.fold_map_module pass data) contract_passes in
   bind_chain_ignore_acc all_p prg
 let all = [
   Tail_recursion.peephole_expression

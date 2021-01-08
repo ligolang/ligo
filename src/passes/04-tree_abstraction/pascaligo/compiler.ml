@@ -336,7 +336,8 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
         Some const -> return @@ e_constant ~loc const []
       | None -> return @@ e_variable_ez ~loc var
       )
-    else return @@ e_module_accessor ~loc module_name element
+    else
+      return @@ e_module_accessor ~loc module_name element
   | EUpdate update ->
     let (update, _loc) = r_split update in
     let%bind record = compile_path update.record in
@@ -855,17 +856,25 @@ and compile_data_declaration : next:AST.expression -> CST.data_decl -> _ =
       let fun_decl, loc = r_split fun_decl in
       let%bind fun_name,fun_type,attr,lambda = compile_fun_decl fun_decl in
       return loc fun_name fun_type attr lambda
+    
+  | LocalType type_decl ->
+    let td,loc = r_split type_decl in
+    let name,_ = r_split td.name in
+    let%bind rhs = compile_type_expression td.type_expr in
+    let name = Var.of_name name in
+    ok @@ e_type_in ~loc name rhs next
 
-and compile_type_decl : next:AST.expression -> CST.type_decl Region.reg -> _ =
-  fun ~next type_decl ->
-  let return loc var init =
-    ok @@ e_type_in ~loc var init next
-  in
-  let td,loc = r_split type_decl in
-  let name,_ = r_split td.name in
-  let%bind rhs = compile_type_expression td.type_expr in
-  let name = Var.of_name name in
-  return loc name rhs
+  | LocalModule module_decl ->
+    let md,loc = r_split module_decl in
+    let name,_ = r_split md.name in
+    let%bind rhs = compile_module md.module_ in
+    ok @@ e_mod_in ~loc name rhs next
+
+  | LocalModuleAlias module_alias ->
+    let ma,loc = r_split module_alias in
+    let alias,_ = r_split ma.alias in
+    let binders,_ = List.Ne.split @@ List.Ne.map r_split @@ npseq_to_ne_list ma.binders in
+    ok @@ e_mod_alias ~loc alias binders next
 
 and compile_statement : ?next:AST.expression -> CST.statement -> _ result =
   fun ?next statement ->
@@ -877,10 +886,6 @@ and compile_statement : ?next:AST.expression -> CST.statement -> _ result =
   | Data dd ->
     let next = Option.unopt ~default:(e_skip ()) next in
     let%bind dd = compile_data_declaration ~next dd
-    in return (Some dd)
-  | Type td ->
-    let next = Option.unopt ~default:(e_skip ()) next in
-    let%bind dd = compile_type_decl ~next td
     in return (Some dd)
 
 and compile_block : ?next:AST.expression -> CST.block CST.reg -> _ result =
@@ -940,28 +945,36 @@ and compile_fun_decl : CST.fun_decl -> (expression_variable * type_expression op
   let attr = compile_attributes attributes in
   return (fun_binder, fun_type, attr, func)
 
-let compile_declaration : CST.declaration -> _ =
+and compile_declaration : CST.declaration -> _ =
   fun decl ->
   let return reg decl =
     ok @@ Location.wrap ~loc:(Location.lift reg) decl in
   match decl with
     TypeDecl {value={name; type_expr; _}; region} ->
-      let name, _ = r_split name in
-      let%bind type_expr = compile_type_expression type_expr in
-      return region @@ AST.Declaration_type {type_binder=Var.of_name name; type_expr}
+    let name, _ = r_split name in
+    let%bind type_expr = compile_type_expression type_expr in
+    return region @@ AST.Declaration_type {type_binder=Var.of_name name; type_expr}
   | ConstDecl {value={name; const_type; init; attributes; _}; region} ->
-      let attr = compile_attributes attributes in
-      let name, loc = r_split name in
-      let var = Location.wrap ~loc @@ Var.of_name name in
-      let%bind ascr =
-        bind_map_option (compile_type_expression <@ snd) const_type in
-      let%bind expr = compile_expression init in
-      let binder = {var;ascr} in
-      return region @@ AST.Declaration_constant {binder;attr;expr}
+    let attr = compile_attributes attributes in
+    let name, loc = r_split name in
+    let var = Location.wrap ~loc @@ Var.of_name name in
+    let%bind ascr =
+      bind_map_option (compile_type_expression <@ snd) const_type in
+    let%bind expr = compile_expression init in
+    let binder = {var;ascr} in
+    return region @@ AST.Declaration_constant {binder;attr;expr}
   | FunDecl {value;region} ->
-      let%bind (var,ascr,attr,expr) = compile_fun_decl value in
-      let binder = {var;ascr} in
-      return region @@ AST.Declaration_constant {binder;attr;expr}
+    let%bind (var,ascr,attr,expr) = compile_fun_decl value in
+    let binder = {var;ascr} in
+    return region @@ AST.Declaration_constant {binder;attr;expr}
+  | ModuleDecl {value={name; module_; _};region} ->
+    let (name,_) = r_split name in
+    let%bind module_ = compile_module module_ in
+    return region @@ AST.Declaration_module  {module_binder=name; module_}
+  | ModuleAlias {value={alias; binders; _};region} ->
+    let (alias,_) = r_split alias in
+    let binders,_ = List.Ne.split @@ List.Ne.map r_split @@ npseq_to_ne_list binders in
+    return region @@ AST.Module_alias {alias; binders}
 
-let compile_program : CST.ast -> _ result =
+and compile_module : CST.ast -> _ result =
   fun t -> bind_map_list compile_declaration @@ nseq_to_list t.decl

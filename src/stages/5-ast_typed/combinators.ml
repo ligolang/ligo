@@ -257,7 +257,7 @@ let e_lambda l : expression_content = E_lambda l
 let e_pair a b : expression_content = ez_e_record [(Label "0",a);(Label "1", b)]
 let e_application lamb args : expression_content = E_application {lamb;args}
 let e_variable v : expression_content = E_variable v
-let e_let_in let_binder inline rhs let_result = E_let_in { let_binder ; rhs ; let_result; inline }
+let e_let_in let_binder rhs let_result inline = E_let_in { let_binder ; rhs ; let_result; inline }
 
 let e_constructor constructor element: expression_content = E_constructor {constructor;element}
 
@@ -317,18 +317,33 @@ let get_a_bool (t:expression) =
   | _ -> None
 
 
+let get_a_record = fun t ->
+  match t.expression_content with
+  | E_record record -> Some record
+  | _ -> None
+
 let get_a_record_accessor = fun t ->
   match t.expression_content with
   | E_record_accessor {record; path} -> Some (record, path)
   | _ -> None
 
-let get_declaration_by_name : program_fully_typed -> string -> declaration option = fun (Program_Fully_Typed p) name ->
+let get_declaration_by_name : module_fully_typed -> string -> declaration option = fun (Module_Fully_Typed p) name ->
   let aux : declaration -> bool = fun declaration ->
     match declaration with
     | Declaration_constant { binder ; expr=_ ; inline=_ } -> binder.wrap_content = Var.of_name name
-    | Declaration_type _ -> false
+    | Declaration_type   _
+    | Declaration_module _
+    | Module_alias       _ -> false
   in
   List.find_opt aux @@ List.map Location.unwrap p
+
+let get_record_field_type (t : type_expression) (label : label) : type_expression option =
+  match get_t_record t with
+  | None -> None
+  | Some record ->
+    match LMap.find_opt label record.content with
+    | None -> None
+    | Some row_element -> Some row_element.associated_type
 
 let make_c_constructor_simpl ?(reason_constr_simpl="") tv c_tag tv_list =
   {

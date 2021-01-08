@@ -63,6 +63,12 @@ let rec decompile_expression : O.expression -> (I.expression, Errors.purificatio
   | O.E_type_in ti ->
     let%bind ti = type_in self self_type ti in
     return @@ I.E_type_in ti
+  | O.E_mod_in mi ->
+    let%bind mi = mod_in self self_type mi in
+    return @@ I.E_mod_in mi
+  | O.E_mod_alias ma ->
+    let%bind ma = mod_alias self ma in
+    return @@ I.E_mod_alias ma
   | O.E_raw_code {language;code} ->
     let%bind code  = self code in
     return @@ I.E_raw_code {language;code}
@@ -163,7 +169,13 @@ let decompile_declaration : O.declaration Location.wrap -> _ result = fun {wrap_
   | O.Declaration_constant dc ->
     let%bind dc = declaration_constant decompile_expression decompile_type_expression dc in
     return @@ I.Declaration_constant dc
+  | O.Declaration_module dm ->
+    let%bind dm = declaration_module decompile_expression decompile_type_expression dm in
+    return @@ I.Declaration_module dm
+  | O.Module_alias ma ->
+    let%bind ma = module_alias ma in
+    return @@ I.Module_alias ma
 
 
-let decompile_program : O.program -> (I.program, Errors.purification_error) result = fun prg ->
-  program decompile_declaration prg
+let decompile_module : O.module_ -> (I.module_, Errors.purification_error) result = fun m ->
+  module' decompile_expression decompile_type_expression m

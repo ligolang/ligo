@@ -3453,3 +3453,304 @@ interactive_expr: Match Verbatim With WILD ARROW Type Ident EQ Constr With
 Ill-formed local type declaration.
 At this point, if the type expression is complete, the keyword 'in' is
 expected, followed by an expression.
+
+contract: Type Ident EQ Constr End
+##
+## Ends in an error in state: 656.
+##
+## contract -> declarations . EOF [ # ]
+##
+## The known suffix of the stack is as follows:
+## declarations
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 8, spurious reduction of production variant -> Constr 
+## In state 35, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 60, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 50, spurious reduction of production type_expr -> sum_type 
+## In state 77, spurious reduction of production type_decl -> Type Ident EQ type_expr 
+## In state 82, spurious reduction of production declaration -> type_decl 
+## In state 654, spurious reduction of production declarations -> declaration 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Module Constr EQ Struct Type Ident EQ Constr EOF
+##
+## Ends in an error in state: 650.
+##
+## module_decl -> Module Constr EQ Struct module_ . End [ Type Module Let In End EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## Module Constr EQ Struct module_
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 8, spurious reduction of production variant -> Constr 
+## In state 35, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 60, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 50, spurious reduction of production type_expr -> sum_type 
+## In state 77, spurious reduction of production type_decl -> Type Ident EQ type_expr 
+## In state 82, spurious reduction of production declaration -> type_decl 
+## In state 654, spurious reduction of production declarations -> declaration 
+## In state 653, spurious reduction of production module_ -> declarations 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Module Constr EQ With
+##
+## Ends in an error in state: 80.
+##
+## module_decl -> Module Constr EQ . Struct module_ End [ Type Module Let In End EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## Module Constr EQ
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Module Constr With
+##
+## Ends in an error in state: 79.
+##
+## module_decl -> Module Constr . EQ Struct module_ End [ Type Module Let In End EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## Module Constr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Module With
+##
+## Ends in an error in state: 78.
+##
+## module_decl -> Module . Constr EQ Struct module_ End [ Type Module Let In End EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## Module
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Module Constr EQ Struct Type Ident EQ Constr End With
+##
+## Ends in an error in state: 261.
+##
+## local_module_decl(expr) -> module_decl . In expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
+##
+## The known suffix of the stack is as follows:
+## module_decl
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Module Constr EQ Struct Type Ident EQ Constr End With
+##
+## Ends in an error in state: 377.
+##
+## local_module_decl(base_cond) -> module_decl . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
+## local_module_decl(closed_if) -> module_decl . In closed_if [ Else ]
+##
+## The known suffix of the stack is as follows:
+## module_decl
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Verbatim With WILD ARROW Module Constr EQ Struct Type Ident EQ Constr End With
+##
+## Ends in an error in state: 477.
+##
+## local_module_decl(base_cond) -> module_decl . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
+##
+## The known suffix of the stack is as follows:
+## module_decl
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Module Constr EQ Struct Type Ident EQ Constr End With
+##
+## Ends in an error in state: 431.
+##
+## local_module_decl(base_cond) -> module_decl . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
+## local_module_decl(base_if_then_else) -> module_decl . In base_if_then_else [ Else ]
+##
+## The known suffix of the stack is as follows:
+## module_decl
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If Verbatim Then Module Constr EQ Struct Type Ident EQ Constr End With
+##
+## Ends in an error in state: 575.
+##
+## local_module_decl(closed_if) -> module_decl . In closed_if [ Else ]
+## local_module_decl(expr) -> module_decl . In expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
+##
+## The known suffix of the stack is as follows:
+## module_decl
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Begin If Verbatim Then Module Constr EQ Struct Type Ident EQ Constr End With
+##
+## Ends in an error in state: 514.
+##
+## local_module_decl(closed_if) -> module_decl . In closed_if [ Else ]
+##
+## The known suffix of the stack is as follows:
+## module_decl
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Module Constr EQ Constr With
+##
+## Ends in an error in state: 263.
+##
+## local_module_alias(expr) -> module_alias . In expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
+##
+## The known suffix of the stack is as follows:
+## module_alias
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Module Constr EQ Constr Type
+##
+## Ends in an error in state: 263.
+##
+## local_module_alias(expr) -> module_alias . In expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
+##
+## The known suffix of the stack is as follows:
+## module_alias
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 677, spurious reduction of production nsepseq(module_name,DOT) -> Constr 
+## In state 680, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Module Constr EQ Constr Type
+##
+## Ends in an error in state: 383.
+##
+## local_module_alias(base_cond) -> module_alias . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
+## local_module_alias(closed_if) -> module_alias . In closed_if [ Else ]
+##
+## The known suffix of the stack is as follows:
+## module_alias
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 677, spurious reduction of production nsepseq(module_name,DOT) -> Constr 
+## In state 680, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Module Constr EQ Constr Type
+##
+## Ends in an error in state: 443.
+##
+## local_module_alias(base_cond) -> module_alias . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
+## local_module_alias(base_if_then_else) -> module_alias . In base_if_then_else [ Else ]
+##
+## The known suffix of the stack is as follows:
+## module_alias
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 677, spurious reduction of production nsepseq(module_name,DOT) -> Constr 
+## In state 680, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Match Verbatim With WILD ARROW Module Constr EQ Constr Type
+##
+## Ends in an error in state: 493.
+##
+## local_module_alias(base_cond) -> module_alias . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
+##
+## The known suffix of the stack is as follows:
+## module_alias
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 677, spurious reduction of production nsepseq(module_name,DOT) -> Constr 
+## In state 680, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Begin If Verbatim Then Module Constr EQ Constr Type
+##
+## Ends in an error in state: 532.
+##
+## local_module_alias(closed_if) -> module_alias . In closed_if [ Else ]
+##
+## The known suffix of the stack is as follows:
+## module_alias
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 677, spurious reduction of production nsepseq(module_name,DOT) -> Constr 
+## In state 680, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If Verbatim Then Module Constr EQ Constr Type
+##
+## Ends in an error in state: 595.
+##
+## local_module_alias(closed_if) -> module_alias . In closed_if [ Else ]
+## local_module_alias(expr) -> module_alias . In expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
+##
+## The known suffix of the stack is as follows:
+## module_alias
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 677, spurious reduction of production nsepseq(module_name,DOT) -> Constr 
+## In state 680, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Module Constr EQ Constr DOT With
+##
+## Ends in an error in state: 678.
+##
+## nsepseq(module_name,DOT) -> Constr DOT . nsepseq(module_name,DOT) [ Type Module Let In End EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## Constr DOT
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>

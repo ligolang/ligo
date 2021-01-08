@@ -150,13 +150,18 @@ list__(item):
 contract:
   declarations EOF { {decl=$1; eof=$2} }
 
+module_:
+  declarations { {decl=$1; eof=Region.ghost} }
+
 declarations:
   declaration              { $1,[] : CST.declaration Utils.nseq }
 | declaration declarations { Utils.nseq_cons $1 $2              }
 
 declaration:
-  type_decl       { TypeDecl $1 }
-| let_declaration {      Let $1 }
+  type_decl       {    TypeDecl $1 }
+| let_declaration {         Let $1 }
+| module_decl     {  ModuleDecl $1 }
+| module_alias    { ModuleAlias $1 }
 
 (* Type declarations *)
 
@@ -167,6 +172,27 @@ type_decl:
                   name      = $2;
                   eq        = $3;
                   type_expr = $4}
+    in {region; value} }
+
+module_decl:
+  "module" module_name "=" "struct" module_ "end" {
+    let region = cover $1 $6 in
+    let value  = {kwd_module  = $1;
+                  name        = $2;
+                  eq          = $3;
+                  kwd_struct  = $4;
+                  module_     = $5;
+                  kwd_end     = $6}
+    in {region; value} }
+
+module_alias:
+  "module" module_name "=" nsepseq(module_name,".") {
+    let stop   = nsepseq_to_region (fun x -> x.region) $4 in
+    let region = cover $1 stop in
+    let value  = {kwd_module  = $1;
+                  alias       = $2;
+                  eq          = $3;
+                  binders     = $4}
     in {region; value} }
 
 type_expr:
@@ -442,6 +468,8 @@ base_expr(right_expr):
   tuple_expr
 | let_expr(right_expr)
 | local_type_decl(right_expr)
+| local_module_decl(right_expr)
+| local_module_alias(right_expr)
 | fun_expr(right_expr)
 | disj_expr_level { $1 }
 
@@ -545,6 +573,24 @@ local_type_decl(right_expr):
                   kwd_in     = $2;
                   body       = $3}
     in ETypeIn {region; value} }
+
+local_module_decl(right_expr):
+  module_decl "in" right_expr  {
+    let stop   = expr_to_region $3 in
+    let region = cover $1.region stop
+    and value  = {mod_decl  = $1.value;
+                  kwd_in    = $2;
+                  body      = $3}
+    in EModIn {region; value} }
+
+local_module_alias(right_expr):
+  module_alias "in" right_expr  {
+    let stop   = expr_to_region $3 in
+    let region = cover $1.region stop
+    and value  = {mod_alias = $1.value;
+                  kwd_in    = $2;
+                  body      = $3}
+    in EModAlias {region; value} }
 
 fun_expr(right_expr):
   "fun" nseq(irrefutable) "->" right_expr {

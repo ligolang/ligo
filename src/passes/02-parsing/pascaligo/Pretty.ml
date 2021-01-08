@@ -28,9 +28,11 @@ let rec print ast =
   separate_map (hardline ^^ hardline) app decl
 
 and pp_declaration = function
-  TypeDecl  d -> pp_type_decl  d
-| ConstDecl d -> pp_const_decl d
-| FunDecl   d -> pp_fun_decl   d
+  TypeDecl    d -> pp_type_decl    d
+| ConstDecl   d -> pp_const_decl   d
+| FunDecl     d -> pp_fun_decl     d
+| ModuleDecl  d -> pp_module_decl  d
+| ModuleAlias d -> pp_module_alias d
 
 and pp_const_decl {value; _} =
   let {name; const_type; init; attributes; _} = value in
@@ -49,8 +51,19 @@ and pp_const_decl {value; _} =
 
 and pp_type_decl decl =
   let {name; type_expr; _} = decl.value in
-  string "type " ^^ string name.value ^^ string " is"
+  string "type " ^^ pp_ident name ^^ string " is"
   ^^ group (nest 2 (break 1 ^^ pp_type_expr type_expr))
+
+and pp_module_decl decl =
+  let {name; module_; enclosing; _} = decl.value in
+  string "module " ^^ pp_ident name ^^ string " is {"
+  ^^ group (nest 2 (break 1 ^^ print module_))
+  ^^ string "}"
+
+and pp_module_alias decl =
+  let {alias; binders; _} = decl.value in
+  string "module " ^^ string alias.value
+  ^^ group (nest 2 (break 1 ^^ pp_nsepseq "." pp_ident binders))
 
 and pp_type_expr = function
   TProd t   -> pp_cartesian t
@@ -214,12 +227,14 @@ and pp_statements s = pp_nsepseq ";" pp_statement s
 and pp_statement = function
   Instr s -> pp_instruction s
 | Data  s -> pp_data_decl   s
-| Type  s -> pp_type_decl   s
 
 and pp_data_decl = function
-  LocalConst d -> pp_const_decl d
-| LocalVar   d -> pp_var_decl   d
-| LocalFun   d -> pp_fun_decl   d
+  LocalConst       d -> pp_const_decl   d
+| LocalVar         d -> pp_var_decl     d
+| LocalFun         d -> pp_fun_decl     d
+| LocalType        d -> pp_type_decl    d
+| LocalModule      d -> pp_module_decl  d
+| LocalModuleAlias d -> pp_module_alias d
 
 and pp_var_decl {value; _} =
   let {name; var_type; init; _} = value in

@@ -201,7 +201,7 @@ let row_element g {associated_type; michelson_annotation; decl_pos} =
 
 let module_access f {module_name;element} =
   `Assoc [
-    ("module_name", `String module_name) ;
+    ("module_name", module_variable_to_yojson module_name) ;
     ("element", f element) ;
   ]
 let t_app f {type_operator ; arguments } =
@@ -367,4 +367,37 @@ let declaration_constant expression type_expression {binder=b;attr;expr} =
     ("attribute", attributes attr);
   ]
 
-let program declaration = list (Location.wrap_to_yojson declaration)
+let rec declaration_module expression type_expression {module_binder;module_} =
+  `Assoc [
+    ("module_binder", module_variable_to_yojson module_binder);
+    ("module_", (module' expression type_expression) module_);
+  ]
+
+and module_alias ({alias;binders} : module_alias) =
+  `Assoc [
+    ("alias"  , module_variable_to_yojson alias) ;
+    ("binders", list module_variable_to_yojson @@ List.Ne.to_list binders) ;
+  ]
+
+and declaration expression type_expression = function
+  Declaration_type    ty -> `List [ `String "Declaration_type"    ; declaration_type                type_expression ty ]
+| Declaration_constant c -> `List [ `String "Declaration_constant"; declaration_constant expression type_expression c  ]
+| Declaration_module   m -> `List [ `String "Declaration_module"  ; declaration_module   expression type_expression m  ] 
+| Module_alias        ma -> `List [ `String "Module_alias"        ; module_alias                                    ma ]
+
+and module' expression type_expression = list (Location.wrap_to_yojson (declaration expression type_expression))
+
+
+and mod_in expression type_expression {module_binder;rhs;let_result} =
+  `Assoc [
+    ("module_binder", module_variable_to_yojson module_binder );
+    ("rhs", (module' expression type_expression) rhs);
+    ("let_result", expression let_result);
+  ]
+
+and mod_alias expression {alias; binders; result} =
+  `Assoc [
+    ("alias",  module_variable_to_yojson alias  );
+    ("binders", list module_variable_to_yojson @@ List.Ne.to_list binders );
+    ("result", expression result );
+  ]

@@ -50,6 +50,10 @@ let block_enclosing = function
   | Terse -> CST.Block (ghost,ghost,ghost)
   | Verbose -> CST.BeginEnd (ghost,ghost)
 
+let module_enclosing = function
+  | Terse -> CST.Brace (ghost,ghost)
+  | Verbose -> CST.BeginEnd (ghost,ghost)
+
 let inject dialect kind a =
   CST.{kind;enclosing=enclosing dialect;elements=a;terminator=terminator dialect}
 
@@ -339,8 +343,33 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
     let tin = wrap @@ (CST.{kwd_type; name; kwd_is; type_expr; terminator}) in
     let%bind (lst, expr) = decompile_eos dialect Expression let_result in
     let lst = match lst with
-      Some lst -> List.Ne.cons (CST.Type tin) lst
-    | None -> (CST.Type tin, [])
+      Some lst -> List.Ne.cons (CST.Data (CST.LocalType tin)) lst
+    | None -> (CST.Data (CST.LocalType tin), [])
+    in
+    return @@ (Some lst, expr)
+  | E_mod_in {module_binder;rhs;let_result} ->
+    let kwd_module = Region.ghost
+    and name = wrap module_binder
+    and kwd_is = Region.ghost in
+    let%bind module_ = decompile_module ~dialect rhs in
+    let terminator = terminator dialect in
+    let enclosing  = module_enclosing dialect in
+    let min = wrap @@ (CST.{kwd_module; name; kwd_is;enclosing; module_; terminator}) in
+    let%bind (lst, expr) = decompile_eos dialect Expression let_result in
+    let lst = match lst with
+      Some lst -> List.Ne.cons (CST.Data (CST.LocalModule min)) lst
+    | None -> (CST.Data (CST.LocalModule min), [])
+    in
+    return @@ (Some lst, expr)
+  | E_mod_alias {alias; binders; result} ->
+    let alias   = wrap alias in
+    let binders = nelist_to_npseq @@ List.Ne.map wrap binders in
+    let terminator = terminator dialect in
+    let ma = wrap @@ CST.{kwd_module=ghost;alias;kwd_is=ghost;binders;terminator} in
+    let%bind (lst, expr) = decompile_eos dialect Expression result in
+    let lst = match lst with
+      Some lst -> List.Ne.cons (CST.Data (CST.LocalModuleAlias ma)) lst
+    | None -> (CST.Data (CST.LocalModuleAlias ma), [])
     in
     return @@ (Some lst, expr)
   | E_raw_code {language; code} ->
@@ -689,7 +718,7 @@ fun f m ->
     bind_map_list aux lst
   in
   map wrap @@ list_to_nsepseq cases
-let decompile_declaration ~dialect : AST.declaration Location.wrap -> (CST.declaration, _) result = fun decl ->
+and decompile_declaration ~dialect : AST.declaration Location.wrap -> (CST.declaration, _) result = fun decl ->
   let decl = Location.unwrap decl in
   let wrap value = ({value;region=Region.ghost} : _ Region.reg) in
   match decl with
@@ -700,7 +729,7 @@ let decompile_declaration ~dialect : AST.declaration Location.wrap -> (CST.decla
     let%bind type_expr = decompile_type_expr dialect type_expr in
     let terminator = terminator dialect in
     ok @@ CST.TypeDecl (wrap (CST.{kwd_type; name; kwd_is; type_expr; terminator}))
-  | Declaration_constant {binder; attr; expr} ->
+  | Declaration_constant {binder; attr; expr} -> (
     let attributes = decompile_attributes attr in
     let name = decompile_variable binder.var.wrap_content in
     let fun_name = name in
@@ -719,8 +748,25 @@ let decompile_declaration ~dialect : AST.declaration Location.wrap -> (CST.decla
       let%bind init = decompile_expression ~dialect expr in
       let const_decl : CST.const_decl = {kwd_const=ghost;name;const_type=const_type;equal=ghost;init;terminator; attributes} in
       ok @@ CST.ConstDecl (wrap const_decl)
+  )
+  | Declaration_module {module_binder;module_} ->
+    let kwd_module = Region.ghost
+    and name = wrap module_binder
+    and kwd_is = Region.ghost in
+    let%bind module_ = decompile_module ~dialect module_ in
+    let terminator = terminator dialect in
+    let enclosing = module_enclosing dialect in
+    ok @@ CST.ModuleDecl (wrap (CST.{kwd_module; name; kwd_is; enclosing; module_; terminator}))
+  | Module_alias {alias;binders} ->
+    let kwd_module = Region.ghost
+    and alias   = wrap alias
+    and binders = nelist_to_npseq @@ List.Ne.map wrap binders
+    and kwd_is = Region.ghost in
+    let terminator = terminator dialect in
+    ok @@ CST.ModuleAlias (wrap (CST.{kwd_module; alias; kwd_is; binders; terminator}))
+  
 
-let decompile_program ?(dialect=Verbose): AST.program -> (CST.ast, _) result = fun prg ->
+and decompile_module ?(dialect=Verbose): AST.module_ -> (CST.ast, _) result = fun prg ->
   let%bind decl = bind_map_list (decompile_declaration ~dialect) prg in
   let decl = List.Ne.of_list decl in
   ok @@ ({decl;eof=ghost}: CST.ast)

@@ -82,6 +82,8 @@ module T =
     | True      of Region.t  (* true  *)
     | Type      of Region.t  (* type  *)
     | With      of Region.t  (* with  *)
+    | Module    of Region.t  (* module *)
+    | Struct    of Region.t  (* strcut *)
 
     (* Data constructors *)
 
@@ -181,6 +183,8 @@ module T =
     | "True"  -> "true"
     | "Type"  -> "type"
     | "With"  -> "with"
+    | "Module"-> "module"
+    | "Struct"-> "struct"
 
     (* Data constructors *)
 
@@ -258,24 +262,26 @@ module T =
 
     (* Keywords *)
 
-    | Begin region -> region, "Begin"
-    | Else  region -> region, "Else"
-    | End   region -> region, "End"
-    | False region -> region, "False"
-    | Fun   region -> region, "Fun"
-    | Rec   region -> region, "Rec"
-    | If    region -> region, "If"
-    | In    region -> region, "In"
-    | Let   region -> region, "Let"
-    | Match region -> region, "Match"
-    | Mod   region -> region, "Mod"
-    | Not   region -> region, "Not"
-    | Of    region -> region, "Of"
-    | Or    region -> region, "Or"
-    | Then  region -> region, "Then"
-    | True  region -> region, "True"
-    | Type  region -> region, "Type"
-    | With  region -> region, "With"
+    | Begin  region -> region, "Begin"
+    | Else   region -> region, "Else"
+    | End    region -> region, "End"
+    | False  region -> region, "False"
+    | Fun    region -> region, "Fun"
+    | Rec    region -> region, "Rec"
+    | If     region -> region, "If"
+    | In     region -> region, "In"
+    | Let    region -> region, "Let"
+    | Match  region -> region, "Match"
+    | Mod    region -> region, "Mod"
+    | Not    region -> region, "Not"
+    | Of     region -> region, "Of"
+    | Or     region -> region, "Or"
+    | Then   region -> region, "Then"
+    | True   region -> region, "True"
+    | Type   region -> region, "Type"
+    | With   region -> region, "With"
+    | Module region -> region, "Module"
+    | Struct region -> region, "Struct"
 
     (* Data *)
 
@@ -333,24 +339,26 @@ module T =
 
     (* Keywords *)
 
-    | Begin _ -> "begin"
-    | Else  _ -> "else"
-    | End   _ -> "end"
-    | False _ -> "false"
-    | Fun   _ -> "fun"
-    | Rec   _ -> "rec"
-    | If    _ -> "if"
-    | In    _ -> "in"
-    | Let   _ -> "let"
-    | Match _ -> "match"
-    | Mod   _ -> "mod"
-    | Not   _ -> "not"
-    | Of    _ -> "of"
-    | Or    _ -> "or"
-    | True  _ -> "true"
-    | Type  _ -> "type"
-    | Then  _ -> "then"
-    | With  _ -> "with"
+    | Begin  _ -> "begin"
+    | Else   _ -> "else"
+    | End    _ -> "end"
+    | False  _ -> "false"
+    | Fun    _ -> "fun"
+    | Rec    _ -> "rec"
+    | If     _ -> "if"
+    | In     _ -> "in"
+    | Let    _ -> "let"
+    | Match  _ -> "match"
+    | Mod    _ -> "mod"
+    | Not    _ -> "not"
+    | Of     _ -> "of"
+    | Or     _ -> "or"
+    | True   _ -> "true"
+    | Type   _ -> "type"
+    | Then   _ -> "then"
+    | With   _ -> "with"
+    | Module _ -> "module"
+    | Struct _ -> "struct"
 
     (* Data constructors *)
 
@@ -390,7 +398,10 @@ module T =
       (fun reg -> Then      reg);
       (fun reg -> True      reg);
       (fun reg -> Type      reg);
-      (fun reg -> With      reg)]
+      (fun reg -> With      reg);
+      (fun reg -> Module    reg);
+      (fun reg -> Struct    reg);
+    ]
 
     let reserved =
       let open SSet in
@@ -413,7 +424,6 @@ module T =
       |> add "lsl"
       |> add "lsr"
       |> add "method"
-      |> add "module"
       |> add "mutable"
       |> add "new"
       |> add "nonrec"
@@ -421,7 +431,6 @@ module T =
       |> add "open"
       |> add "private"
       |> add "sig"
-      |> add "struct"
       |> add "to"
       |> add "try"
       |> add "val"

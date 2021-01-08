@@ -11,10 +11,10 @@ module Solver : module type of Typer_new.Solver
 
 type environment = Environment.t
 
-val type_program     : init_env:environment -> I.program -> (environment * O.program_fully_typed * typer_error O'.typer_state, typer_error) result
-val type_declaration : environment -> typer_error O'.typer_state -> I.declaration -> (environment * typer_error O'.typer_state * O.declaration , typer_error) result
+val type_module     : init_env:environment -> I.module_ -> (environment * O.module_fully_typed * typer_error O'.typer_state, typer_error) result
+val type_declaration : environment -> typer_error O'.typer_state -> I.declaration Location.wrap -> (environment * typer_error O'.typer_state * O.declaration Location.wrap , typer_error) result
 val evaluate_type : environment -> I.type_expression -> (O.type_expression , typer_error) result
-val type_expression : environment -> typer_error O'.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * typer_error O'.typer_state , typer_error) result
+val type_expression : environment -> typer_error O'.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.environment * O.expression * typer_error O'.typer_state , typer_error) result
 val type_constant : I.constant' -> Location.t -> O.type_expression list -> O.type_expression option -> (O.constant' * O.type_expression , typer_error) result
 (*
 val untype_type_value : O.type_value -> (I.type_expression) result

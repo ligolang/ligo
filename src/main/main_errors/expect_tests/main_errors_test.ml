@@ -564,7 +564,7 @@ let%expect_test "typer" =
     Incorrect usage of type "michelson_or".
     The contructor "Some-Constructor" must be annotated with a variant type.|}] ;
   error
-    (`Typer_program_tracer
+    (`Typer_module_tracer
       ([], `Typer_michelson_comb_no_variant (File default_location))) ;
   [%expect
     {|
@@ -573,7 +573,7 @@ let%expect_test "typer" =
     Invalid usage of type "michelson_or".
     The "michelson_or" type expects a variant type as argument.|}] ;
   error
-    (`Typer_program_tracer ([], `Typer_michelson_comb_no_variant location_t)) ;
+    (`Typer_module_tracer ([], `Typer_michelson_comb_no_variant location_t)) ;
   [%expect
     {|
     in file "a dummy file name", line 20, characters 5-5

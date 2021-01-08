@@ -124,6 +124,13 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
     | I.E_type_in ti ->
       let%bind ti = type_in self self_type ti in
       return @@ O.E_type_in ti
+    | I.E_mod_in {module_binder;rhs;let_result} ->
+      let%bind rhs = compile_module rhs in
+      let%bind let_result = self let_result in
+      return @@ O.E_mod_in {module_binder;rhs;let_result}
+    | I.E_mod_alias ma ->
+      let%bind ma = mod_alias self ma in
+      return @@ O.E_mod_alias ma
     | I.E_raw_code rc ->
       let%bind rc = raw_code self rc in
       return @@ O.E_raw_code rc
@@ -280,9 +287,10 @@ and compile_matching : I.expression -> O.expression -> I.matching_expr -> (O.exp
       let%bind expr = compile_expression expr in
       ok @@ O.e_let_in ~sugar a false e expr
 
-let compile_declaration : I.declaration Location.wrap -> _ =
-  fun {wrap_content=declaration;location} ->
-  let return decl = ok @@ Location.wrap ~loc:location decl in
+and compile_declaration : I.declaration -> (O.declaration , desugaring_error) result =
+
+  fun declaration ->
+  let return (decl: O.declaration) = ok @@ decl in
   match declaration with
   | I.Declaration_type dt ->
     let%bind dt = declaration_type compile_type_expression dt in
@@ -292,6 +300,13 @@ let compile_declaration : I.declaration Location.wrap -> _ =
     let%bind expr = compile_expression expr in
     let inline = get_inline attr in
     return @@ O.Declaration_constant {binder; attr={inline}; expr}
+  | I.Declaration_module {module_binder;module_} ->
+    let%bind module_ = compile_module module_ in
+    return @@ O.Declaration_module {module_binder;module_}
+  | I.Module_alias ma ->
+    let%bind ma = module_alias ma in
+    return @@ O.Module_alias ma
 
-let compile_program : I.program -> (O.program , desugaring_error) result = fun p ->
-  program compile_declaration p
+
+and compile_module : I.module_ -> (O.module_ , desugaring_error) result = fun m ->
+  bind_map_list (bind_map_location compile_declaration) m

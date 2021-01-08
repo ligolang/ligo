@@ -192,10 +192,15 @@ sepseq(X,Sep):
 contract:
   nseq(declaration) EOF { {decl=$1; eof=$2} }
 
+module_:
+  nseq(declaration) { {decl=$1; eof=Region.ghost} }
+
 declaration:
-  type_decl  {  TypeDecl $1 }
-| const_decl { ConstDecl $1 }
-| fun_decl   {   FunDecl $1 }
+  type_decl    {    TypeDecl $1 }
+| const_decl   {   ConstDecl $1 }
+| fun_decl     {     FunDecl $1 }
+| module_decl  {  ModuleDecl $1 }
+| module_alias { ModuleAlias $1 }
 
 (* Type declarations *)
 
@@ -215,6 +220,52 @@ type_decl:
     let type_decl : CST.type_decl = $1.value in
     let type_decl = {type_decl with terminator=$2} in
     {$1 with value = type_decl} }
+
+
+open_module_decl:
+  "module" module_name "is" "{" module_ "}" {
+    let region = cover $1 $6 in
+    let value  = {kwd_module = $1;
+                  name       = $2;
+                  kwd_is     = $3;
+                  enclosing  = Brace ($4,$6);
+                  module_    = $5;
+                  terminator = None}
+    in {region; value} }
+
+| "module" module_name "is" "begin" module_ "end" {
+    let region = cover $1 $6 in
+    let value  = {kwd_module = $1;
+                  name       = $2;
+                  kwd_is     = $3;
+                  enclosing  = BeginEnd ($4,$6);
+                  module_    = $5;
+                  terminator = None}
+    in {region; value} }
+
+module_decl:
+  open_module_decl ";"? {
+    let mod_decl : CST.module_decl = $1.value in
+    let mod_decl = {mod_decl with terminator=$2} in
+    {$1 with value = mod_decl} }
+
+
+open_module_alias:
+  "module" module_name "is" nsepseq(module_name,".") {
+    let stop   = nsepseq_to_region (fun x -> x.region) $4 in
+    let region = cover $1 stop in
+    let value  = {kwd_module = $1;
+                  alias      = $2;
+                  kwd_is     = $3;
+                  binders    = $4;
+                  terminator = None}
+    in {region; value} }
+
+module_alias:
+  open_module_alias ";"? {
+    let mod_alias : CST.module_alias = $1.value in
+    let mod_alias = {mod_alias with terminator=$2} in
+    {$1 with value = mod_alias} }
 
 
 type_annot:
@@ -243,7 +294,7 @@ core_type:
 | "_"             { TWild   $1 }
 | "<string>"      { TString $1 }
 | "<int>"         { TInt    $1 }
-| module_access_t {   TModA $1 }
+| module_access_t { TModA   $1 }
 | par(type_expr)  { TPar    $1 }
 | type_name type_tuple {
     let region = cover $1.region $2.region
@@ -445,12 +496,14 @@ block:
 statement:
   instruction     { Instr $1 }
 | open_data_decl  { Data  $1 }
-| open_type_decl  { Type  $1 }
 
 open_data_decl:
-  open_const_decl { LocalConst $1 }
-| open_var_decl   { LocalVar   $1 }
-| open_fun_decl   { LocalFun   $1 }
+  open_const_decl   { LocalConst       $1 }
+| open_var_decl     { LocalVar         $1 }
+| open_fun_decl     { LocalFun         $1 }
+| open_type_decl    { LocalType        $1 }
+| open_module_decl  { LocalModule      $1 }
+| open_module_alias { LocalModuleAlias $1 }
 
 open_const_decl:
   seq("[@attr]") "const" unqualified_decl("=") {

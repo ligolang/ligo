@@ -78,6 +78,9 @@ val bind_map_location :
   ('a -> ('b, 'd) result) ->
   'a Location.wrap ->
   ('b Location.wrap, 'd) result
+val bind_fold_location :
+  ('a -> 'b -> ('a, 'd) result) ->
+  'a -> 'b Location.wrap -> ('a, 'd) result
 val bind_fold_list :
   ('a -> 'b -> ('a, 'd) result) ->
   'a -> 'b list -> ('a, 'd) result
@@ -149,6 +152,9 @@ val bind_fold_triple :
 val bind_fold_map_list :
   ('a -> 'b -> ('a * 'c, 'e) result) ->
   'a -> 'b list -> ('a * 'c list, 'e) result
+val bind_fold_map_location :
+  ('a -> 'b -> ('a * 'c, 'e) result) ->
+  'a -> 'b Location.wrap -> ('a * 'c Location.wrap, 'e) result
 val bind_fold_map_right_list :
   ('a -> 'b -> ('a * 'c, 'e) result) ->
   'a -> 'b list -> ('c list, 'e) result

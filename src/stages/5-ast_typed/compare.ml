@@ -23,13 +23,14 @@ let label_map ~compare lma lmb =
 
 let typeVariableMap compare a b = List.compare ~compare:(compare_tvmap_entry compare) a b
 
-let type_variable = Var.compare
 let expression_variable = Location.compare_wrap ~compare:Var.compare
+let type_variable       = Var.compare
+let module_variable     = String.compare
 
 let module_access f {module_name=mna; element=ea}
                     {module_name=mnb; element=eb} =
   cmp2
-    String.compare mna mnb
+    module_variable mna mnb
     f ea eb
 
 let layout_tag = function
@@ -130,15 +131,23 @@ let expression_tag expr =
   | E_recursive       _ -> 6
   | E_let_in          _ -> 7
   | E_type_in         _ -> 8
-  | E_raw_code        _ -> 9
+  | E_mod_in          _ -> 9
+  | E_mod_alias       _ -> 10
+  | E_raw_code        _ -> 11
   (* Variant *)
-  | E_constructor     _ -> 10
-  | E_matching        _ -> 11
+  | E_constructor     _ -> 12
+  | E_matching        _ -> 13
   (* Record *)
-  | E_record          _ -> 12
-  | E_record_accessor _ -> 13
-  | E_record_update   _ -> 14
-  | E_module_accessor _ -> 15
+  | E_record          _ -> 14
+  | E_record_accessor _ -> 15
+  | E_record_update   _ -> 16
+  | E_module_accessor _ -> 17
+
+and declaration_tag = function
+  | Declaration_constant _ -> 1
+  | Declaration_type     _ -> 2
+  | Declaration_module   _ -> 3
+  | Module_alias         _ -> 4
 
 let rec expression a b =
   match a.expression_content,b.expression_content with
@@ -150,6 +159,8 @@ let rec expression a b =
   | E_recursive a, E_recursive b -> recursive a b
   | E_let_in a, E_let_in b -> let_in a b
   | E_type_in a, E_type_in b -> type_in a b
+  | E_mod_in a, E_mod_in b -> mod_in a b
+  | E_mod_alias a, E_mod_alias b -> mod_alias a b
   | E_raw_code a, E_raw_code b -> raw_code a b
   | E_constructor a, E_constructor b -> constructor a b
   | E_matching a, E_matching b -> matching a b
@@ -157,8 +168,8 @@ let rec expression a b =
   | E_record_accessor a, E_record_accessor b -> record_accessor a b
   | E_record_update  a, E_record_update b -> record_update a b
   | E_module_accessor a, E_module_accessor b -> module_access expression a b
-  | (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_recursive _| E_let_in _| E_type_in _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_module_accessor _),
-    (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_recursive _| E_let_in _| E_type_in _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_module_accessor _) ->
+  | (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_recursive _| E_let_in _| E_type_in _| E_mod_in _| E_mod_alias _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_module_accessor _),
+    (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_recursive _| E_let_in _| E_type_in _| E_mod_in _| E_mod_alias _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_module_accessor _) ->
     Int.compare (expression_tag a) (expression_tag b)
 
 and constant ({cons_name=ca;arguments=a}: constant) ({cons_name=cb;arguments=b}: constant) =
@@ -187,6 +198,18 @@ and type_in {type_binder=ba;rhs=ra;let_result=la} {type_binder=bb;rhs=rb;let_res
   cmp3
     type_variable ba bb
     type_expression ra rb
+    expression la lb
+
+and mod_in {module_binder=ba;rhs= Module_Fully_Typed ra;let_result=la} {module_binder=bb;rhs= Module_Fully_Typed rb;let_result=lb} =
+  cmp3
+    module_variable ba bb
+    module_ ra rb
+    expression la lb
+
+and mod_alias {alias=aa; binders=ba; result=la} {alias=ab; binders=bb; result=lb} =
+  cmp3
+    module_variable aa ab
+    (List.Ne.compare ~compare:module_variable) ba bb
     expression la lb
 
 and raw_code {language=la;code=ca} {language=lb;code=cb} =
@@ -275,30 +298,39 @@ and matching_content_record
     expression body1 body2
     rows t1 t2
 
-let declaration_tag = function
-  | Declaration_constant _ -> 1
-  | Declaration_type     _ -> 2
-
-let declaration_constant {binder=ba;expr=ea;inline=ia} {binder=bb;expr=eb;inline=ib} =
+and declaration_constant {binder=ba;expr=ea;inline=ia} {binder=bb;expr=eb;inline=ib} =
   cmp3
     expression_variable ba bb
     expression ea eb
     bool ia ib
 
-let declaration_type {type_binder=tba;type_expr=tea} {type_binder=tbb;type_expr=teb} =
+and declaration_type {type_binder=tba;type_expr=tea} {type_binder=tbb;type_expr=teb} =
   cmp2
     type_variable tba tbb
     type_expression tea teb
 
-let declaration a b =
+and declaration_module {module_binder=mba;module_= Module_Fully_Typed ma} {module_binder=mbb;module_= Module_Fully_Typed mb} =
+ cmp2
+    module_variable mba mbb
+    module_ ma mb
+
+and module_alias : module_alias -> module_alias -> int
+= fun {alias = aa; binders = ba} {alias = ab; binders = bb} ->
+ cmp2
+    module_variable aa ab
+    (List.Ne.compare ~compare:module_variable) ba bb
+
+and declaration a b =
   match (a,b) with
     Declaration_constant a, Declaration_constant b -> declaration_constant a b
   | Declaration_type     a, Declaration_type     b -> declaration_type a b
-  | (Declaration_constant _| Declaration_type _),
-    (Declaration_constant _| Declaration_type _) ->
+  | Declaration_module   a, Declaration_module   b -> declaration_module a b
+  | Module_alias         a, Module_alias         b -> module_alias a b
+  | (Declaration_constant _| Declaration_type _| Declaration_module _| Module_alias _),
+    (Declaration_constant _| Declaration_type _| Declaration_module _| Module_alias _) ->
     Int.compare (declaration_tag a) (declaration_tag b)
 
-let program = List.compare ~compare:(Location.compare_wrap ~compare:declaration)
+and module_ m = List.compare ~compare:(Location.compare_wrap ~compare:declaration) m
 
 (* Environment *)
 let free_variables = List.compare ~compare:expression_variable
@@ -334,10 +366,10 @@ and environment_binding {expr_var=eva;env_elt=eea} {expr_var=evb;env_elt=eeb} =
 
 and expression_environment a b = List.compare ~compare:environment_binding a b
 
-and module_environment_binding {module_name=mna;module_=ma}
-                               {module_name=mnb;module_=mb} =
+and module_environment_binding {module_variable=mva;module_=ma}
+                               {module_variable=mvb;module_=mb} =
   cmp2
-    String.compare mna mnb
+    module_variable mva mvb
     environment    ma  mb
 
 and module_environment a b = List.compare ~compare:module_environment_binding a b

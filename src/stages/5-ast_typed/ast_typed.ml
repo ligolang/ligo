@@ -18,7 +18,6 @@ include Misc
 include Combinators
 module Debug = Stage_common.Debug
 
-let program_environment env program = fst (Compute_environment.program env program)
 module Compare = struct include Compare end
 
 module Typer_errors = Typer_errors

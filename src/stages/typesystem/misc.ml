@@ -32,9 +32,9 @@ module Substitution = struct
         let%bind type_ = s_type_expression ~substs type_ in
         ok @@ T.{type_variable ; type_}) tenv
     and s_module_environment: (T.module_environment,_) w = fun ~substs menv ->
-      bind_map_list (fun T.{module_name ; module_} ->
+      bind_map_list (fun T.{module_variable ; module_} ->
         let%bind module_ = s_environment ~substs module_ in
-        ok @@ T.{module_name;module_}) menv
+        ok @@ T.{module_variable;module_}) menv
     and s_environment : (T.environment,_) w = fun ~substs T.{expression_environment ; type_environment ; module_environment} ->
       let%bind expression_environment = s_expr_environment ~substs expression_environment in
       let%bind type_environment = s_type_environment ~substs type_environment in
@@ -167,6 +167,13 @@ module Substitution = struct
         let%bind rhs = s_type_expression ~substs rhs in
         let%bind let_result = s_expression ~substs let_result in
         ok @@ T.E_type_in { type_binder; rhs; let_result}
+      | T.E_mod_in          { module_binder; rhs; let_result} ->
+        let%bind rhs = s_module' ~substs rhs in
+        let%bind let_result = s_expression ~substs let_result in
+        ok @@ T.E_mod_in { module_binder; rhs; let_result}
+      | T.E_mod_alias          { alias; binders; result} ->
+        let%bind result  = s_expression ~substs result in
+        ok @@ T.E_mod_alias { alias; binders; result}
       | T.E_raw_code {language; code} ->
         let%bind code = s_expression ~substs code in
         ok @@ T.E_raw_code {language; code}
@@ -210,22 +217,33 @@ module Substitution = struct
       let location = location in
       ok T.{ expression_content;type_expression=type_expr; location }
 
-    and s_declaration : (T.declaration,_) w = fun ~substs ->
+    and s_declaration : (T.declaration,_) w =
+    let return (d : T.declaration) = ok @@ d in
+    fun ~substs ->
       function
       | Ast_typed.Declaration_constant {binder ; expr ; inline} ->
-         let%bind binder = s_variable ~substs binder in
-         let%bind expr = s_expression ~substs expr in
-         ok @@ Ast_typed.Declaration_constant {binder; expr; inline}
-      | Declaration_type t -> ok (Ast_typed.Declaration_type t)
+        let%bind binder = s_variable ~substs binder in
+        let%bind expr = s_expression ~substs expr in
+        return @@ Declaration_constant {binder; expr; inline}
+      | Declaration_type t -> return @@ Declaration_type t
+      | Declaration_module {module_binder;module_} ->
+        let%bind module_       = s_module' ~substs module_ in
+        return @@ Declaration_module {module_binder;module_}
+      | Module_alias {alias;binders} ->
+        return @@ Module_alias {alias; binders}
 
     and s_declaration_wrap : (T.declaration Location.wrap,_) w = fun ~substs d ->
       Trace.bind_map_location (s_declaration ~substs) d
 
     (* Replace the type variable ~v with ~expr everywhere within the
-       program ~p. TODO: issues with scoping/shadowing. *)
-    and s_program : (Ast_typed.program_with_unification_vars,_) w = fun ~substs (Ast_typed.Program_With_Unification_Vars p) ->
+       module ~p. TODO: issues with scoping/shadowing. *)
+    and s_module : (Ast_typed.module_with_unification_vars,_) w = fun ~substs (Ast_typed.Module_With_Unification_Vars p) ->
       let%bind p = Trace.bind_map_list (s_declaration_wrap ~substs) p in
-      ok @@ Ast_typed.Program_With_Unification_Vars p
+      ok @@ Ast_typed.Module_With_Unification_Vars p
+
+    and s_module' : (Ast_typed.module_fully_typed,_) w = fun ~substs (T.Module_Fully_Typed p) ->
+      let%bind p = Trace.bind_map_list (s_declaration_wrap ~substs) p in
+      ok @@ T.Module_Fully_Typed p
 
     (*
        Computes `P[v := expr]`.
@@ -286,7 +304,7 @@ module Substitution = struct
     and typeclass ~tc ~substs =
       List.map (List.map (fun tv -> type_value ~tv ~substs)) tc
 
-    (* let program = s_program *)
+    (* let module = s_module *)
 
     (* Performs beta-reduction at the root of the type *)
     let eval_beta_root ~(tv : type_value) =

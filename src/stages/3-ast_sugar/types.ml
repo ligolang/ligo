@@ -18,16 +18,9 @@ and type_expression = {type_content: type_content; location: Location.t}
 and ty_expr = type_expression
 
 
-type program = declaration program'
+type module_ = (expr,ty_expr) module'
 
-and declaration =
-  | Declaration_type of ty_expr declaration_type
-  (* A Declaration_constant is described by
-   *   a name
-   *   an optional type annotation
-   *   a boolean indicating whether it should be inlined
-   *   an expression *)
-  | Declaration_constant of (expr,ty_expr) declaration_constant
+and declaration = (expr,ty_expr) declaration'
 
 (* | Macro_declaration of macro_declaration *)
 and expression = {expression_content: expression_content; location: Location.t}
@@ -43,7 +36,9 @@ and expression_content =
   | E_recursive of (expr, ty_expr) recursive
   | E_let_in of let_in
   | E_type_in of (expr, ty_expr) type_in
-  | E_raw_code of expr raw_code
+  | E_mod_in of (expr, ty_expr) mod_in
+  | E_mod_alias of expr mod_alias
+  | E_raw_code  of expr raw_code
   (* Variant *)
   | E_constructor of expr constructor (* For user defined constructors *)
   | E_matching of matching

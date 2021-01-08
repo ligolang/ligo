@@ -85,6 +85,8 @@ and expression_content = function
   | E_recursive   e -> `List [ `String "E_recursive"; recursive e ]
   | E_let_in      e -> `List [ `String "E_let_in"; let_in e ]
   | E_type_in     e -> `List [ `String "E_type_in"; type_in   expression type_expression e ]
+  | E_mod_in      e -> `List [ `String "E_mod_in"; mod_in e ]
+  | E_mod_alias   e -> `List [ `String "E_mod_alias"; mod_alias expression e ]
   | E_raw_code    e -> `List [ `String "E_raw_code"; raw_code e ]
   (* Variant *)
   | E_constructor     e -> `List [ `String "E_constructor"; constructor e ]
@@ -126,6 +128,13 @@ and let_in {let_binder;rhs;let_result;inline} =
     ("rhs", expression rhs);
     ("let_result", expression let_result);
     ("inline", `Bool inline);
+  ]
+
+and mod_in {module_binder;rhs;let_result} =
+  `Assoc [
+    ("module_binder", module_variable_to_yojson module_binder);
+    ("rhs", module_fully_typed rhs);
+    ("let_result", expression let_result);
   ]
 
 and raw_code {language;code} =
@@ -214,24 +223,38 @@ and matching_content_record {fields; body; record_type} =
     ("record_type", rows record_type);
   ]
 
-let declaration_type {type_binder;type_expr} =
+and declaration_type {type_binder;type_expr} =
   `Assoc [
     ("type_binder", type_variable_to_yojson type_binder);
     ("type_expr", type_expression type_expr);
   ]
 
-let declaration_constant {binder;inline;expr} =
+and declaration_constant {binder;inline;expr} =
   `Assoc [
     ("binder",expression_variable_to_yojson binder);
     ("expr", expression expr);
     ("attribute", `Bool inline);
   ]
-let declaration = function
-  | Declaration_type     dt -> `List [ `String "Declaration_type"; declaration_type dt]
-  | Declaration_constant dc -> `List [ `String "Declaration_constant"; declaration_constant dc]
 
-let program_with_unification_vars (Program_With_Unification_Vars p) = list (Location.wrap_to_yojson declaration) p
-let program_fully_typed (Program_Fully_Typed p) = list (Location.wrap_to_yojson declaration) p
+and declaration_module {module_binder;module_} =
+  `Assoc [
+    ("module_binder",module_variable_to_yojson module_binder);
+    ("module_", module_fully_typed module_);
+  ]
+
+and module_alias ({alias ; binders} : module_alias) =
+  `Assoc [
+    ("alais"  , module_variable_to_yojson alias);
+    ("binders", list module_variable_to_yojson @@ List.Ne.to_list binders);
+  ]
+and declaration = function
+  | Declaration_type     dt -> `List [ `String "Declaration_type";     declaration_type dt]
+  | Declaration_constant dc -> `List [ `String "Declaration_constant"; declaration_constant dc]
+  | Declaration_module   dm -> `List [ `String "Declaration_module";   declaration_module dm]
+  | Module_alias         ma -> `List [ `String "Module_alias";         module_alias ma]
+
+and module_fully_typed (Module_Fully_Typed p) = list (Location.wrap_to_yojson declaration) p
+let module_with_unification_vars (Module_With_Unification_Vars p) = list (Location.wrap_to_yojson declaration) p
 
 
 (* Environment *)
@@ -267,9 +290,9 @@ and type_environment_binding {type_variable;type_} =
   ]
 and type_environment e = list type_environment_binding e
 
-and module_environment_binding {module_name; module_} =
+and module_environment_binding {module_variable; module_} =
   `Assoc [
-    ("module_name", `String module_name);
+    ("module_name", module_variable_to_yojson module_variable);
     ("module_", environment module_)
   ]
 

@@ -260,9 +260,17 @@ let peephole_statement : unit -> statement -> (unit, 'err) result = fun _ s ->
     let%bind () = check_parameters @@ Utils.nsepseq_to_list param.value.inside in
     let%bind () = check_reserved_name fun_name in
     ok @@ ()
-  | Type  {value;region=_} ->
+  | Data LocalType  {value;region=_} ->
     let {kwd_type=_;name;kwd_is=_;type_expr=_;terminator=_} = value in
     let%bind () = check_reserved_name name in
+    ok @@ ()
+  | Data LocalModule {value;region=_} ->
+    let {kwd_module=_;name;kwd_is=_;enclosing=_;module_=_;terminator=_} = value in
+    let%bind () = check_reserved_name name in
+    ok @@ ()
+  | Data LocalModuleAlias {value;region=_} ->
+    let {kwd_module=_;alias;kwd_is=_;binders=_;terminator=_} = value in
+    let%bind () = check_reserved_name alias in
     ok @@ ()
 
 let peephole_declaration : unit -> declaration -> (unit, 'err) result = fun _ d ->
@@ -278,6 +286,12 @@ let peephole_declaration : unit -> declaration -> (unit, 'err) result = fun _ d 
     let {kwd_recursive=_;kwd_function=_;fun_name;param;ret_type=_;kwd_is=_;return=_;terminator=_;attributes=_} = value in
     let%bind () = check_parameters @@ Utils.nsepseq_to_list param.value.inside in
     let%bind () = check_reserved_name fun_name in
+    ok @@ ()
+  | ModuleDecl  {value;region=_} ->
+    let%bind () = check_reserved_name value.name in
+    ok @@ ()
+  | ModuleAlias {value;region=_} ->
+    let%bind () = check_reserved_name value.alias in
     ok @@ ()
 
 

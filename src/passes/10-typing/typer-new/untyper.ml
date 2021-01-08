@@ -92,6 +92,13 @@ let rec untype_expression (e:O.expression) : (I.expression, typer_error) result 
   | E_type_in ti ->
     let%bind ti = Stage_common.Maps.type_in untype_expression untype_type_expression ti in
     return @@ E_type_in ti
+  | E_mod_in {module_binder; rhs;let_result} ->
+    let%bind rhs        = untype_module_fully_typed rhs in
+    let%bind let_result = untype_expression let_result in
+    return @@ E_mod_in {module_binder; rhs; let_result}
+  | E_mod_alias ma ->
+    let%bind ma = mod_alias untype_expression ma in
+    return @@ E_mod_alias ma
   | E_raw_code {language; code} ->
     let%bind code = untype_expression code in
     return @@ E_raw_code {language; code}
@@ -146,3 +153,23 @@ and untype_matching : (O.expression -> (I.expression, typer_error) result) -> O.
     let fields = LMap.of_list fields in
     let%bind body = f body in
     ok @@ Match_record {fields; body}
+
+and untype_declaration : O.declaration -> (I.declaration, typer_error) result =
+let return (d: I.declaration) = ok @@ d in
+function
+  Declaration_type {type_binder; type_expr} ->
+  let%bind type_expr = untype_type_expression type_expr in
+  return @@ Declaration_type {type_binder; type_expr}
+| Declaration_constant {binder;expr;inline} ->
+  let%bind ty = untype_type_expression expr.type_expression in
+  let var = Location.map Var.todo_cast binder in
+  let%bind expr = untype_expression expr in
+  return @@ Declaration_constant {binder={var;ascr=Some ty};expr;attr={inline}}
+| Declaration_module {module_binder;module_} ->
+  let%bind module_ = untype_module_fully_typed module_ in
+  return @@ Declaration_module {module_binder;module_}
+| Module_alias ma ->
+  return @@ Module_alias ma
+
+and untype_module_fully_typed : O.module_fully_typed -> (I.module_, typer_error) result = fun (Module_Fully_Typed m) ->
+  bind_map_list (bind_map_location untype_declaration) m

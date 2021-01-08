@@ -102,6 +102,7 @@ module T =
     | Var        of Region.t  (* var        *)
     | While      of Region.t  (* while      *)
     | With       of Region.t  (* with       *)
+    | Module     of Region.t  (* Module     *)
 
     (* Data constructors *)
 
@@ -206,6 +207,7 @@ module T =
       | "Var"       -> "var"
       | "While"     -> "while"
       | "With"      -> "with"
+      | "Module"    -> "module"
 
       (* Data constructors *)
 
@@ -320,6 +322,7 @@ module T =
     | Var        region -> region, "Var"
     | While      region -> region, "While"
     | With       region -> region, "With"
+    | Module     region -> region, "Module"
 
     (* Data *)
 
@@ -414,6 +417,7 @@ module T =
     | Var        _ -> "var"
     | While      _ -> "while"
     | With       _ -> "with"
+    | Module     _ -> "module"
 
     (* Data constructors *)
 
@@ -474,7 +478,8 @@ module T =
       (fun reg -> Unit       reg);
       (fun reg -> Var        reg);
       (fun reg -> While      reg);
-      (fun reg -> With       reg)
+      (fun reg -> With       reg);
+      (fun reg -> Module     reg);
     ]
 
     let reserved = SSet.empty

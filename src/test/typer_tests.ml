@@ -13,7 +13,7 @@ let int () : (unit, _) result =
   let open Typer in
   let e = Environment.empty in
   let state = Typer.Solver.initial_state in
-  let%bind (post , new_state) = trace typer_tracer @@ type_expression_subst (typer_switch ()) e state pre in
+  let%bind (_, post, new_state) = trace typer_tracer @@ type_expression_subst (typer_switch ()) e state pre in
   let () = Typer.Solver.discard_state new_state in
   let open! Typed in
   let open Combinators in
@@ -30,7 +30,7 @@ module TestExpressions = struct
     let pre = expr in
     let open Typer in
     let open! Typed in
-    let%bind (post , new_state) = trace typer_tracer @@ type_expression_subst (typer_switch ()) env state pre in
+    let%bind (_ , post , new_state) = trace typer_tracer @@ type_expression_subst (typer_switch ()) env state pre in
     let () = Typer.Solver.discard_state new_state in
     let () = Format.printf "RE.MILALA\n%a\n - \n%a\n" PP.type_expression post.type_expression PP.type_expression test_expected_ty in
     let%bind () = trace_option (test_internal __LOC__) @@ assert_type_expression_eq (post.type_expression, test_expected_ty) in

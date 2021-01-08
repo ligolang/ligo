@@ -112,7 +112,7 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
   | T_annoted _annot ->
     failwith "let's work on it later"
   | T_module_accessor {module_name;element} ->
-    let module_name = wrap module_name in
+    let module_name = wrap @@ module_name in
     let%bind field  = decompile_type_expr element in
     return @@ CST.TModA (wrap CST.{module_name;selector=ghost;field})
   | T_singleton x -> (
@@ -230,12 +230,26 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     let lin : CST.let_in = {kwd_let=ghost;kwd_rec=None;binding;kwd_in=ghost;body;attributes} in
     return_expr @@ CST.ELetIn (wrap lin)
   | E_type_in {type_binder;rhs;let_result} ->
-    let name = wrap @@ Var.to_name type_binder in
+    let name = decompile_variable type_binder in
     let%bind type_expr = decompile_type_expr rhs in
     let type_decl : CST.type_decl = {kwd_type=ghost;name;eq=ghost;type_expr} in
     let%bind body = decompile_expression let_result in
     let tin : CST.type_in = {type_decl;kwd_in=ghost;body} in
     return_expr @@ CST.ETypeIn (wrap tin)
+  | E_mod_in {module_binder;rhs;let_result} ->
+    let name = wrap module_binder in
+    let%bind module_ = decompile_module rhs in
+    let mod_decl : CST.module_decl = {kwd_module=ghost;name;eq=ghost;kwd_struct=ghost;module_;kwd_end=ghost} in
+    let%bind body = decompile_expression let_result in
+    let min : CST.mod_in = {mod_decl;kwd_in=ghost;body} in
+    return_expr @@ CST.EModIn (wrap min)
+  | E_mod_alias {alias; binders; result} ->
+    let alias   = wrap alias in
+    let binders = nelist_to_npseq @@ List.Ne.map wrap binders in
+    let mod_alias : CST.module_alias = {kwd_module=ghost;alias;eq=ghost;binders} in
+    let%bind body = decompile_expression result in
+    let mod_alias : CST.mod_alias = {mod_alias;kwd_in=ghost;body} in
+    return_expr @@ CST.EModAlias (wrap mod_alias)
   | E_raw_code {language; code} ->
     let language = wrap @@ wrap @@ language in
     let%bind code = decompile_expression code in
@@ -488,7 +502,7 @@ fun m ->
     bind_map_list aux lst
   in
   map wrap @@ list_to_nsepseq cases
-let decompile_declaration : AST.declaration Location.wrap -> (CST.declaration, _) result = fun decl ->
+and decompile_declaration : AST.declaration Location.wrap -> (CST.declaration, _) result = fun decl ->
   let decl = Location.unwrap decl in
   let wrap value = ({value;region=Region.ghost} : _ Region.reg) in
   match decl with
@@ -496,7 +510,7 @@ let decompile_declaration : AST.declaration Location.wrap -> (CST.declaration, _
     let name = decompile_variable type_binder in
     let%bind type_expr = decompile_type_expr type_expr in
     ok @@ CST.TypeDecl (wrap (CST.{kwd_type=ghost; name; eq=ghost; type_expr}))
-  | Declaration_constant {binder;attr;expr}->
+  | Declaration_constant {binder;attr;expr}-> (
     let attributes : CST.attributes = decompile_attributes attr in
     let var = CST.PVar (decompile_variable binder.var.wrap_content) in
     let binders = (var,[]) in
@@ -505,20 +519,31 @@ let decompile_declaration : AST.declaration Location.wrap -> (CST.declaration, _
       E_lambda lambda ->
       let%bind let_rhs = decompile_expression @@ AST.make_e @@ AST.E_lambda lambda in
       let let_binding : CST.let_binding = {binders;lhs_type;eq=ghost;let_rhs} in
-      let let_decl : CST.let_decl = wrap (ghost,None,let_binding,attributes) in
-      ok @@ CST.Let let_decl
+      let let_decl : CST.let_decl = (ghost,None,let_binding,attributes) in
+      ok @@ CST.Let (wrap @@ let_decl)
     | E_recursive {lambda; _} ->
       let%bind let_rhs = decompile_expression @@ AST.make_e @@ AST.E_lambda lambda in
       let let_binding : CST.let_binding = {binders;lhs_type;eq=ghost;let_rhs} in
-      let let_decl : CST.let_decl = wrap (ghost,Some ghost,let_binding,attributes) in
-      ok @@ CST.Let (let_decl)
+      let let_decl : CST.let_decl = (ghost,Some ghost,let_binding,attributes) in
+      ok @@ CST.Let (wrap @@ let_decl)
     | _ ->
       let%bind let_rhs = decompile_expression expr in
       let let_binding : CST.let_binding = {binders;lhs_type;eq=ghost;let_rhs} in
-      let let_decl : CST.let_decl = wrap (ghost,None,let_binding,attributes) in
-      ok @@ CST.Let let_decl
+      let let_decl : CST.let_decl = (ghost,None,let_binding,attributes) in
+      ok @@ CST.Let (wrap @@ let_decl)
+  )
+  | Declaration_module {module_binder;module_} ->
+    let name = wrap module_binder in
+    let%bind module_ = decompile_module module_ in
+    let module_decl :CST.module_decl = {kwd_module=ghost;name;eq=ghost;kwd_struct=ghost;module_;kwd_end=ghost} in
+    ok @@ CST.ModuleDecl (wrap @@ module_decl)
+  | Module_alias {alias;binders} ->
+    let alias   = wrap alias in
+    let binders = nelist_to_npseq @@ List.Ne.map wrap binders in
+    let module_alias :CST.module_alias = {kwd_module=ghost;alias;eq=ghost;binders} in
+    ok @@ CST.ModuleAlias (wrap @@ module_alias)
 
-let decompile_program : AST.program -> (CST.ast, _) result = fun prg ->
+and decompile_module : AST.module_ -> (CST.ast, _) result = fun prg ->
   let%bind decl = bind_map_list decompile_declaration prg in
   let decl = List.Ne.of_list decl in
   ok @@ ({decl;eof=ghost}: CST.ast)

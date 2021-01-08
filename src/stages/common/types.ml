@@ -13,6 +13,9 @@ type type_
 and type_variable = type_ Var.t
 let type_variable_to_yojson var = Var.to_yojson var
 let type_variable_of_yojson var = Var.of_yojson var
+type module_variable = string
+let module_variable_to_yojson var = `String var
+let module_variable_of_yojson var = `String var
 
 type label = Label of string
 let label_to_yojson (Label l) = `List [`String "Label"; `String l]
@@ -49,7 +52,7 @@ type 'ty_expr row_element = {
   }
 
 type 'a module_access = {
-  module_name : string ;
+  module_name : module_variable ;
   element     : 'a ;
 }
 
@@ -174,12 +177,41 @@ type 'ty_exp declaration_type = {
     type_expr : 'ty_exp ;
   }
 
-type ('exp,'ty_exp) declaration_constant = {
+and ('exp,'ty_exp) declaration_constant = {
     binder : 'ty_exp binder;
     attr : attributes ;
     expr : 'exp ;
   }
 
-(* Program types *)
+and ('exp,'ty_expr) declaration_module = {
+    module_binder : module_variable ;
+    module_ : ('exp,'ty_expr) module' ;
+  }
 
-type 'dec program' = 'dec location_wrap list
+and module_alias = {
+    alias   : module_variable ;
+    binders : module_variable List.Ne.t;
+}
+
+(* Module types *)
+
+and ('exp,'ty_exp) declaration' =
+  | Declaration_type of 'ty_exp declaration_type
+  | Declaration_constant of ('exp,'ty_exp) declaration_constant
+  | Declaration_module   of ('exp, 'ty_exp) declaration_module
+  | Module_alias         of module_alias
+
+and ('exp,'ty_exp) module' = ('exp,'ty_exp) declaration' location_wrap list
+
+
+type ('exp,'type_exp) mod_in = {
+  module_binder : module_variable ;
+  rhs           : ('exp,'type_exp) module' ;
+  let_result    : 'exp ;
+}
+
+and 'exp mod_alias = {
+  alias   : module_variable ;
+  binders : module_variable List.Ne.t;
+  result  : 'exp ;
+}

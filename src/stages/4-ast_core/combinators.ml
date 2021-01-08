@@ -93,6 +93,7 @@ let e_lambda_ez   ?loc ?sugar var ?ascr output_type result         = e_lambda ?l
 let e_recursive   ?loc ?sugar fun_name fun_type lambda             = make_e ?loc ?sugar @@ E_recursive {fun_name; fun_type; lambda}
 let e_let_in      ?loc ?sugar let_binder inline rhs let_result     = make_e ?loc ?sugar @@ E_let_in { let_binder ; rhs ; let_result; inline }
 let e_let_in_ez   ?loc ?sugar var ?ascr  inline rhs let_result     = e_let_in ?loc ?sugar {var;ascr} inline rhs let_result
+let e_mod_in      ?loc ?sugar module_binder rhs let_result         = make_e ?loc ?sugar @@ E_mod_in { module_binder ; rhs ; let_result }
 let e_raw_code    ?loc ?sugar language code                        = make_e ?loc ?sugar @@ E_raw_code {language; code}
 
 let e_constructor ?loc ?sugar s a : expression = make_e ?loc ?sugar @@ E_constructor { constructor = Label s; element = a}

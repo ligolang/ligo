@@ -60,6 +60,9 @@ and expression_content ppf (ec : expression_content) =
   | E_let_in { let_binder ;rhs ; let_result; inline } ->
     fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]" (binder type_expression) let_binder expression rhs option_inline inline expression let_result
   | E_type_in   ti -> type_in expression type_expression ppf ti
+  | E_mod_in {module_binder; rhs; let_result;} ->
+    fprintf ppf "@[let %a =@;<1 2>%a in@ %a@]" module_variable module_binder module_ rhs expression let_result
+  | E_mod_alias ma -> mod_alias expression ppf ma
   | E_raw_code r -> raw_code expression ppf r
   | E_ascription a -> ascription expression type_expression ppf a
   | E_module_accessor ma -> module_access expression ppf ma
@@ -94,7 +97,7 @@ and matching_type ppf m = match m with
 and matching_variant_case_type ppf {constructor=c ; proj ; body=_ } =
   fprintf ppf "| %a %a" label c expression_variable proj
 
-let declaration ppf (d : declaration) =
+and declaration ppf (d : declaration) =
   match d with
   | Declaration_type     dt -> declaration_type                type_expression ppf dt
   | Declaration_constant {binder=b ; attr ; expr} ->
@@ -102,6 +105,12 @@ let declaration ppf (d : declaration) =
         (binder type_expression) b
         expression expr
         option_inline attr.inline
+  | Declaration_module {module_binder;module_=m} ->
+      fprintf ppf "@[<2>module %a =@ %a@]"
+        module_variable module_binder
+        module_ m
+  | Module_alias {alias;binders} ->
+    fprintf ppf "@[<2>module %a =@ %a@]" module_variable alias (list_sep_d module_variable) @@ List.Ne.to_list binders
 
 
-let program ppf (p : program) = program declaration ppf p
+and module_ ppf (p : module_) = list (declaration) ppf (List.map Location.unwrap p)

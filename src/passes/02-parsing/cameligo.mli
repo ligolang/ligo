@@ -23,7 +23,7 @@ type dirs      = file_path list (* For #include directives *)
 (* Parsing *)
 
 val parse_file           : dirs -> Buffer.t -> file_path -> cst (* contract in a file   *)
-val parse_program_string : dirs -> Buffer.t -> cst    (* contract in a string *)
+val parse_module_string  : dirs -> Buffer.t -> cst    (* contract in a string *)
 val parse_expression     : dirs -> Buffer.t -> expr   (* expr in a string     *)
 
 (* Pretty-printing *)

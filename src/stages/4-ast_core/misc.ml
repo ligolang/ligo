@@ -40,6 +40,8 @@ let assert_literal_eq (a, b : literal * literal) : unit option =
   | Literal_chain_id _, Literal_chain_id _ -> None
   | Literal_chain_id _, _ -> None
 
+(* TODO this was supposed to mean equality of _values_; if
+   assert_value_eq (a, b) = Some (), then a and b should be values *)
 let rec assert_value_eq (a, b: (expression * expression )) : unit option =
   match (a.content , b.content) with
   | E_literal a , E_literal b ->
@@ -83,7 +85,7 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit option =
 
   | (E_variable _, _) | (E_lambda _, _)
   | (E_application _, _) | (E_let_in _, _)
-  | (E_type_in _, _)
+  | (E_type_in _, _) | (E_mod_in _, _) | (E_mod_alias _, _)
   | (E_raw_code _, _)
   | (E_recursive _,_) | (E_record_accessor _, _)
   | (E_matching _, _)

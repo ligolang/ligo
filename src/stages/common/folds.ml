@@ -174,12 +174,39 @@ let declaration_type : ('acc -> 'a -> ('acc, _) result) -> 'acc -> 'a declaratio
   let%bind acc = g acc type_expr in
   ok @@ acc
 
-let declaration_constant : ('acc -> 'a -> ('acc,_) result) -> ('acc -> 'b -> ('acc,_) result) -> 'acc -> ('a,'c) declaration_constant -> ('acc, _) result
+let declaration_constant : ('acc -> 'a -> ('acc,_) result) -> ('acc -> 'b -> ('acc,_) result) -> 'acc -> ('a,'b) declaration_constant -> ('acc, _) result
 = fun f g acc {binder=b; attr=_; expr} ->
   let%bind acc = binder g acc b in
   let%bind acc = f acc expr     in
   ok @@ acc
 
-let program : ('acc -> 'a -> ('acc,_) result) -> 'acc -> 'a list -> ('acc, _) result
-= fun d acc prg ->
-  bind_fold_list d acc prg
+let rec declaration_module : ('acc -> 'a -> ('acc,_) result) -> ('acc -> 'b -> ('acc,_) result) -> 'acc -> ('a,'b) declaration_module -> ('acc, _) result
+= fun f g acc {module_binder=_;module_} ->
+  let%bind acc = module' f g acc module_ in
+  ok @@ acc
+
+and module_alias
+= fun acc _ ->
+  ok @@ acc
+
+and declaration : ('acc -> 'a -> ('acc,_) result) -> ('acc -> 'b -> ('acc,_) result) -> 'acc -> ('a,'b) declaration' -> ('acc,_) result
+= fun f g acc -> function
+  Declaration_type    ty -> declaration_type       g acc ty
+| Declaration_constant c -> declaration_constant f g acc c
+| Declaration_module   m -> declaration_module   f g acc m
+| Module_alias        ma -> module_alias             acc ma
+
+and module' : ('acc -> 'a -> ('acc,_) result) -> ('acc -> 'b -> ('acc,_) result) -> 'acc -> ('a,'b) module' -> ('acc, _) result
+= fun f g acc prg ->
+  bind_fold_list (bind_fold_location (declaration f g)) acc prg
+
+let mod_in : ('acc -> 'a -> ('acc, _) result) -> ('acc -> 'c -> ('acc, _) result) -> 'acc -> ('a,'c) mod_in -> ('acc , _) result
+= fun f g acc { module_binder=_; rhs ; let_result} ->
+  let%bind acc = (module' f g) acc rhs in
+  let%bind acc = f acc let_result in
+  ok @@ acc
+
+let mod_alias : ('acc -> 'a -> ('acc, _) result) -> 'acc -> 'a mod_alias -> ('acc , _) result
+= fun f acc { alias=_; binders=_; result} ->
+  let%bind acc = f acc result in
+  ok @@ acc

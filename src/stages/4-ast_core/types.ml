@@ -15,14 +15,17 @@ type attribute = {
 }
 
 
-type program_loc = declaration Location.wrap
-and program = program_loc list
+and module_ = declaration Location.wrap list
 
 and declaration_constant = {
     binder : ty_expr binder;
     attr : attribute ;
     expr : expression ;
   }
+and declaration_module = {
+  module_binder : module_variable ;
+  module_       : module_ ;
+}
 and declaration =
   | Declaration_type of ty_expr declaration_type
   (* A Declaration_constant is described by
@@ -31,6 +34,8 @@ and declaration =
    *   a boolean indicating whether it should be inlined
    *   an expression *)
   | Declaration_constant of declaration_constant
+  | Declaration_module   of declaration_module
+  | Module_alias         of module_alias
 
 (* | Macro_declaration of macro_declaration *)
 
@@ -71,6 +76,8 @@ and expression_content =
   | E_recursive of (expr, ty_expr) recursive
   | E_let_in    of let_in
   | E_type_in of (expr, ty_expr) type_in
+  | E_mod_in  of mod_in
+  | E_mod_alias  of expr mod_alias
   | E_raw_code of expr raw_code
   | E_constructor of expr constructor
   | E_matching of matching
@@ -88,6 +95,12 @@ and let_in = {
     let_result: expression ;
     inline: bool ;
   }
+
+and mod_in = {
+  module_binder: module_variable ;
+  rhs          : module_ ;
+  let_result   : expression ;
+}
 
 and match_cons = {
     hd : expression_variable ;

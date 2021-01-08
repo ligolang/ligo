@@ -89,6 +89,13 @@ let rec decompile_expression : O.expression -> (I.expression, desugaring_error) 
     | O.E_type_in ti ->
       let%bind ti = type_in self self_type ti in
       return @@ I.E_type_in ti
+    | O.E_mod_in {module_binder;rhs;let_result} ->
+      let%bind rhs = decompile_module rhs in
+      let%bind let_result = self let_result in
+      return @@ I.E_mod_in {module_binder;rhs;let_result}
+    | O.E_mod_alias ma ->
+      let%bind ma = mod_alias self ma in
+      return @@ I.E_mod_alias ma
     | O.E_raw_code rc ->
       let%bind rc = raw_code self rc in
       return @@ I.E_raw_code rc
@@ -162,8 +169,9 @@ and decompile_matching : O.matching_expr -> (I.matching_expr, desugaring_error) 
       let%bind body = decompile_expression body in
       ok @@ I.Match_record (lst,body)
 
-let decompile_declaration : O.declaration Location.wrap -> _ result = fun {wrap_content=declaration;location} ->
-  let return decl = ok @@ Location.wrap ~loc:location decl in
+and decompile_declaration : O.declaration -> (I.declaration , desugaring_error) result =
+  fun declaration ->
+  let return (decl: I.declaration) = ok @@ decl in
   match declaration with
   | O.Declaration_type dt ->
     let%bind dt = declaration_type decompile_type_expression dt in
@@ -173,6 +181,12 @@ let decompile_declaration : O.declaration Location.wrap -> _ result = fun {wrap_
     let%bind expr = decompile_expression expr in
     let attr = if inline then ["inline"] else [] in
     return @@ I.Declaration_constant {binder; attr; expr}
+  | O.Declaration_module {module_binder;module_} ->
+    let%bind module_ = decompile_module module_ in
+    return @@ I.Declaration_module {module_binder;module_}
+  | O.Module_alias ma ->
+    let%bind ma = module_alias ma in
+    return @@ Module_alias ma
 
-let decompile_program : O.program -> (I.program, desugaring_error) result = fun prg ->
-  program decompile_declaration prg
+and decompile_module : O.module_ -> (I.module_ , desugaring_error) result = fun m ->
+  bind_map_list (bind_map_location decompile_declaration) m

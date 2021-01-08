@@ -86,6 +86,7 @@ module Token = Lexer_pascaligo.Token
 %token <Region.t> Var         "var"
 %token <Region.t> While       "while"
 %token <Region.t> With        "with"
+%token <Region.t> Module      "module"
 
   (* Data constructors *)
 

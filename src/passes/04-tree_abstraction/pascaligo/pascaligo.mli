@@ -1,4 +1,4 @@
-(** Converts PascaLIGO programs to the Simplified Abstract Syntax Tree. *)
+(** Converts PascaLIGO modules to the Simplified Abstract Syntax Tree. *)
 
 module CST = Cst.Pascaligo
 module AST = Ast_imperative
@@ -12,10 +12,10 @@ open Trace
     expression AST used by the compiler. *)
 val compile_expression : CST.expr -> (AST.expr, Errors.abs_error) result
 
-(** Convert a concrete PascaLIGO program CST to the miperative program
+(** Convert a concrete PascaLIGO module CST to the miperative module
     AST used by the compiler. *)
-val compile_program : CST.ast -> (AST.program, Errors.abs_error) result
+val compile_module : CST.ast -> (AST.module_, Errors.abs_error) result
 
 val decompile_expression : ?dialect:Decompiler.dialect -> AST.expr -> (CST.expr, _) result
 
-val decompile_program : ?dialect:Decompiler.dialect -> AST.program -> (CST.ast, _) result
+val decompile_module : ?dialect:Decompiler.dialect -> AST.module_ -> (CST.ast, _) result

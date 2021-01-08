@@ -67,9 +67,9 @@ let parse_and_abstract_pascaligo libs c_unit source =
   let%bind raw = trace parser_tracer @@
     Parser.Pascaligo.parse_file libs c_unit source in
   let%bind applied = trace self_cst_pascaligo_tracer @@
-    Self_cst.Pascaligo.all_program raw in
+    Self_cst.Pascaligo.all_module raw in
   let%bind imperative = trace cit_pascaligo_tracer @@
-    Tree_abstraction.Pascaligo.compile_program applied
+    Tree_abstraction.Pascaligo.compile_module applied
   in ok imperative
 
 let parse_and_abstract_expression_pascaligo libs c_unit =
@@ -85,9 +85,9 @@ let parse_and_abstract_cameligo libs c_unit source =
   let%bind raw = trace parser_tracer @@
     Parser.Cameligo.parse_file libs c_unit source in
   let%bind applied = trace self_cst_cameligo_tracer @@
-    Self_cst.Cameligo.all_program raw in
+    Self_cst.Cameligo.all_module raw in
   let%bind imperative = trace cit_cameligo_tracer @@
-    Tree_abstraction.Cameligo.compile_program applied
+    Tree_abstraction.Cameligo.compile_module applied
   in ok imperative
 
 let parse_and_abstract_expression_cameligo libs source =
@@ -103,9 +103,9 @@ let parse_and_abstract_reasonligo libs c_unit source =
   let%bind raw = trace parser_tracer @@
     Parser.Reasonligo.parse_file libs c_unit source in
   let%bind applied = trace self_cst_reasonligo_tracer @@
-    Self_cst.Reasonligo.all_program raw in
+    Self_cst.Reasonligo.all_module raw in
   let%bind imperative = trace cit_reasonligo_tracer @@
-    Tree_abstraction.Reasonligo.compile_program applied
+    Tree_abstraction.Reasonligo.compile_module applied
   in ok imperative
 
 let parse_and_abstract_expression_reasonligo libs source =
@@ -117,7 +117,7 @@ let parse_and_abstract_expression_reasonligo libs source =
     Tree_abstraction.Reasonligo.compile_expression applied
   in ok imperative
 
-let parse_and_abstract ~(options:Compiler_options.t) ~meta c_unit source : (Ast_imperative.program, _) Trace.result =
+let parse_and_abstract ~(options:Compiler_options.t) ~meta c_unit source : (Ast_imperative.module_, _) Trace.result =
   let%bind parse_and_abstract =
     match meta.syntax with
       PascaLIGO  -> ok parse_and_abstract_pascaligo
@@ -125,7 +125,7 @@ let parse_and_abstract ~(options:Compiler_options.t) ~meta c_unit source : (Ast_
     | ReasonLIGO -> ok parse_and_abstract_reasonligo in
   let%bind parsified = parse_and_abstract options.libs c_unit source in
   let%bind applied = trace self_ast_imperative_tracer @@
-    Self_ast_imperative.all_program parsified in
+    Self_ast_imperative.all_module parsified in
   ok applied
 
 let parse_and_abstract_expression ~(options:Compiler_options.t) ~meta source =
@@ -140,26 +140,26 @@ let parse_and_abstract_expression ~(options:Compiler_options.t) ~meta source =
 
 let parse_and_abstract_string_reasonligo libs source =
   let%bind raw = trace parser_tracer @@
-    Parser.Reasonligo.parse_program_string libs source
+    Parser.Reasonligo.parse_module_string libs source
   in
   let%bind imperative = trace cit_reasonligo_tracer @@
-    Tree_abstraction.Reasonligo.compile_program raw
+    Tree_abstraction.Reasonligo.compile_module raw
   in ok imperative
 
 let parse_and_abstract_string_pascaligo libs source =
   let%bind raw = trace parser_tracer @@
-    Parser.Pascaligo.parse_program_string libs source
+    Parser.Pascaligo.parse_module_string libs source
   in
   let%bind imperative = trace cit_pascaligo_tracer @@
-    Tree_abstraction.Pascaligo.compile_program raw
+    Tree_abstraction.Pascaligo.compile_module raw
   in ok imperative
 
 let parse_and_abstract_string_cameligo libs source =
   let%bind raw = trace parser_tracer @@
-    Parser.Cameligo.parse_program_string libs source
+    Parser.Cameligo.parse_module_string libs source
   in
   let%bind imperative = trace cit_cameligo_tracer @@
-    Tree_abstraction.Cameligo.compile_program raw
+    Tree_abstraction.Cameligo.compile_module raw
   in ok imperative
 
 let parse_and_abstract_string ~libs syntax source =
@@ -170,7 +170,7 @@ let parse_and_abstract_string ~libs syntax source =
     | ReasonLIGO -> ok parse_and_abstract_string_reasonligo in
   let%bind parsified = parse_and_abstract libs source in
   let%bind applied = trace self_ast_imperative_tracer @@
-    Self_ast_imperative.all_program parsified
+    Self_ast_imperative.all_module parsified
   in ok applied
 
 let pretty_print_pascaligo_cst libs c_unit source =

@@ -147,6 +147,11 @@ let access_label ~(base : T.type_expression) ~(label : O.accessor) : (constraint
   let expr_type = Core.fresh_type_variable () in
   [{ c = C_access_label { c_access_label_tval = base' ; accessor = label ; c_access_label_tvar = expr_type } ; reason = "wrap: access_label" }] , expr_type
 
+let module_access (expr : T.type_expression) : (constraints * T.type_variable) =
+  let expr' = type_expression_to_type_value expr in
+  let whole_expr = Core.fresh_type_variable () in
+  [c_equation (T.Reasons.wrap (Todo "wrap: module: whole") @@ T.P_variable whole_expr) expr' "wrap: module: whole"] , whole_expr
+
 let let_in : T.type_expression -> T.type_expression option -> T.type_expression -> (constraints * T.type_variable) =
   fun rhs rhs_tv_opt result ->
   let rhs'        = type_expression_to_type_value rhs in
@@ -164,6 +169,22 @@ let type_in : T.type_expression -> (constraints * T.type_variable) =
   let whole_expr = Core.fresh_type_variable () in
   [
     c_equation result' (T.Reasons.wrap (Todo "wrap: type_in: whole") @@ T.P_variable whole_expr) "wrap: type_in: result (whole)"
+  ], whole_expr
+
+let mod_in : T.type_expression -> (constraints * T.type_variable) =
+  fun result ->
+  let result'     = type_expression_to_type_value result in
+  let whole_expr = Core.fresh_type_variable () in
+  [
+    c_equation result' (T.Reasons.wrap (Todo "wrap: mod_in: whole") @@ T.P_variable whole_expr) "wrap: mod_in: result (whole)"
+  ], whole_expr
+
+let mod_alias : T.type_expression -> (constraints * T.type_variable) =
+  fun result ->
+  let result'     = type_expression_to_type_value result in
+  let whole_expr = Core.fresh_type_variable () in
+  [
+    c_equation result' (T.Reasons.wrap (Todo "wrap: mod_alias: whole") @@ T.P_variable whole_expr) "wrap: mod_alias: result (whole)"
   ], whole_expr
 
 let recursive : T.type_expression -> (constraints * T.type_variable) =

@@ -54,7 +54,7 @@ let commit () =
   let%bind lock_time = mk_time "2000-01-02T00:10:10Z" in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
   let test_hash = e_bytes_raw test_hash_raw in
-  let%bind packed_sender = pack_payload program (e_address first_committer) in
+  let%bind packed_sender = pack_payload env (e_address first_committer) in
   let salted_hash = e_bytes_raw (sha_256_hash
                                    (Bytes.concat Bytes.empty [test_hash_raw;
                                                               packed_sender]))
@@ -108,7 +108,7 @@ let reveal_young_commit () =
   let%bind lock_time = mk_time "2000-01-02T00:10:10Z" in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
   let test_hash = e_bytes_raw test_hash_raw in
-  let%bind packed_sender = pack_payload program (e_address first_committer) in
+  let%bind packed_sender = pack_payload env (e_address first_committer) in
   let salted_hash = e_bytes_raw (sha_256_hash
                                    (Bytes.concat Bytes.empty [test_hash_raw;
                                                               packed_sender])) in
@@ -139,7 +139,7 @@ let reveal_breaks_commit () =
   let%bind now = mk_time "2000-01-01T00:10:10Z" in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
   let test_hash = e_bytes_raw test_hash_raw in
-  let%bind packed_sender = pack_payload program (e_address first_committer) in
+  let%bind packed_sender = pack_payload env (e_address first_committer) in
   let salted_hash = e_bytes_raw (sha_256_hash
                                    (Bytes.concat Bytes.empty [Bytes.of_string "hello";
                                                               packed_sender])) in
@@ -170,7 +170,7 @@ let reveal_wrong_commit () =
   let%bind now = mk_time "2000-01-01T00:10:10Z" in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
   let test_hash = e_bytes_raw test_hash_raw in
-  let%bind packed_sender = pack_payload program (e_address first_committer) in
+  let%bind packed_sender = pack_payload env (e_address first_committer) in
   let salted_hash = e_bytes_raw (sha_256_hash
                                    (Bytes.concat Bytes.empty [Bytes.of_string "hello";
                                                               packed_sender])) in
@@ -201,7 +201,7 @@ let reveal_no_reuse () =
   let%bind now = mk_time "2000-01-01T00:10:10Z" in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
   let test_hash = e_bytes_raw test_hash_raw in
-  let%bind packed_sender = pack_payload program (e_address first_committer) in
+  let%bind packed_sender = pack_payload env (e_address first_committer) in
   let salted_hash = e_bytes_raw (sha_256_hash
                                    (Bytes.concat Bytes.empty [Bytes.of_string "hello";
                                                               packed_sender])) in
@@ -232,7 +232,7 @@ let reveal () =
   let%bind now = mk_time "2000-01-01T00:10:10Z" in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
   let test_hash = e_bytes_raw test_hash_raw in
-  let%bind packed_sender = pack_payload program (e_address first_committer) in
+  let%bind packed_sender = pack_payload env (e_address first_committer) in
   let salted_hash = e_bytes_raw (sha_256_hash
                                    (Bytes.concat Bytes.empty [Bytes.of_string "hello world";
                                                               packed_sender])) in

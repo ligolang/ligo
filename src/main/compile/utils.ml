@@ -18,7 +18,7 @@ let to_core ~options ~meta c_unit f =
   let%bind core   = Of_sugar.compile sugar in
   ok @@ core
 
-let type_file ~options f stx form : (Ast_typed.program_fully_typed * Ast_typed.environment * _ Typer.Solver.typer_state, _) result =
+let type_file ~options f stx form : (Ast_typed.module_fully_typed * Ast_typed.environment * _ Typer.Solver.typer_state, _) result =
   let {init_env ; typer_switch ; _} : Compiler_options.t = options in
   let%bind meta          = Of_source.extract_meta stx f in
   let%bind c_unit,_      = Of_source.compile ~options ~meta f in
@@ -45,11 +45,11 @@ let type_expression ~options source_file syntax expression env state =
   let%bind imperative_exp    = Of_c_unit.compile_expression ~options ~meta c_unit_exp in
   let%bind sugar_exp         = Of_imperative.compile_expression imperative_exp in
   let%bind core_exp          = Of_sugar.compile_expression sugar_exp in
-  let%bind (typed_exp,state) = Of_core.compile_expression ~typer_switch ~env ~state core_exp in
-  ok @@ (typed_exp,state)
+  let%bind typed_exp,e,state = Of_core.compile_expression ~typer_switch ~env ~state core_exp in
+  ok @@ (typed_exp,e,state)
 
 let expression_to_mini_c ~options source_file syntax expression env state =
-  let%bind (typed_exp,_)  = type_expression ~options source_file syntax expression env state in
+  let%bind (typed_exp,_,_)  = type_expression ~options source_file syntax expression env state in
   let%bind mini_c_exp     = Of_typed.compile_expression typed_exp in
   ok @@ mini_c_exp
 
@@ -70,7 +70,7 @@ let compile_storage ~options storage input source_file syntax env state mini_c_p
   let%bind imperative = Of_c_unit.compile_contract_input ~options ~meta storage input in
   let%bind sugar      = Of_imperative.compile_expression imperative in
   let%bind core       = Of_sugar.compile_expression sugar in
-  let%bind typed,_    = Of_core.compile_expression ~typer_switch ~env ~state core in
+  let%bind typed,_,_  = Of_core.compile_expression ~typer_switch ~env ~state core in
   let%bind mini_c     = Of_typed.compile_expression typed in
   let%bind compiled   = Of_mini_c.aggregate_and_compile_expression ~options mini_c_prg mini_c in
   ok @@ compiled

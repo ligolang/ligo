@@ -76,7 +76,7 @@ let apply thunk =
 let parse_file dirs buffer file_path =
   apply (fun () -> ContractParser.parse_file dirs buffer file_path)
 
-let parse_program_string dirs buffer =
+let parse_module_string dirs buffer =
   apply (fun () -> ContractParser.parse_string dirs buffer)
 
 (* Parsing expressions *)

@@ -44,6 +44,8 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a, 'err) re
       ok res
     )
   | E_type_in ti -> Folds.type_in self (fun _ -> ok) init' ti
+  | E_mod_in  mi -> Folds.mod_in  self (fun _ -> ok) init' mi
+  | E_mod_alias  mi -> Folds.mod_alias  self init' mi
   | E_cond c -> Folds.conditional self init' c
   | E_recursive r -> Folds.recursive self (fun _ -> ok) init' r
   | E_sequence s -> Folds.sequence self init' s
@@ -148,6 +150,14 @@ let rec map_expression : 'err exp_mapper -> expression -> (expression, 'err) res
       let%bind ti = Maps.type_in self ok ti in
       return @@ E_type_in ti
     )
+  | E_mod_in mi -> (
+      let%bind mi = Maps.mod_in self ok mi in
+      return @@ E_mod_in mi
+    )
+  | E_mod_alias ma -> (
+      let%bind ma = Maps.mod_alias self ma in
+      return @@ E_mod_alias ma
+    )
   | E_lambda l -> (
       let%bind l = Maps.lambda self ok l in
       return @@ E_lambda l
@@ -236,7 +246,7 @@ and map_cases : 'err exp_mapper -> matching_expr -> (matching_expr, 'err) result
       ok @@ Match_variable (name, e')
     )
 
-and map_program : 'err abs_mapper -> program -> (program, 'err) result = fun m p ->
+and map_module : 'err abs_mapper -> module_ -> (module_, 'err) result = fun m p ->
   let aux = fun (x : declaration) ->
     match x,m with
     | (Declaration_constant dc, Expression m') -> (
@@ -318,6 +328,14 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> ('a 
   | E_type_in ti -> (
       let%bind res,ti = Fold_maps.type_in self idle init' ti in
       ok (res, return @@ E_type_in ti)
+    )
+  | E_mod_in mi -> (
+      let%bind res,mi = Fold_maps.mod_in self idle init' mi in
+      ok (res, return @@ E_mod_in mi)
+    )
+  | E_mod_alias ma -> (
+      let%bind res,ma = Fold_maps.mod_alias self init' ma in
+      ok (res, return @@ E_mod_alias ma)
     )
   | E_lambda l -> (
       let%bind res,l = Fold_maps.lambda self idle init' l in
