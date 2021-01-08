@@ -246,7 +246,7 @@ let while_ expression ppf = fun {cond; body} ->
 let declaration_type type_expression ppf = fun {type_binder;type_expr} ->
   fprintf ppf "@[<2>type %a =@ %a@]" type_variable type_binder type_expression type_expr
 
-let declaration_constant expression type_expression ppf = fun {binder=binder'; attr ; expr} ->
+let declaration_constant expression type_expression ppf = fun {name = _; binder=binder'; attr ; expr} ->
   fprintf ppf "@[<2>const %a =@ %a%a@]"
     (binder type_expression) binder'
     expression expr

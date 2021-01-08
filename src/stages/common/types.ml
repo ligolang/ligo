@@ -178,6 +178,7 @@ type 'ty_exp declaration_type = {
   }
 
 and ('exp,'ty_exp) declaration_constant = {
+    name : string option;
     binder : 'ty_exp binder;
     attr : attributes ;
     expr : 'exp ;

@@ -107,8 +107,9 @@ and matching_content_case {constructor; proj; body} =
     ("body", expression body);
   ]
 
-and declaration_constant {binder=b;expr;attr} =
+and declaration_constant {name;binder=b;expr;attr} =
   `Assoc [
+    ("name", option' (fun name -> `String name) name);
     ("binder",binder type_expression b);
     ("expr", expression expr);
     ("attr", `Bool attr.inline);

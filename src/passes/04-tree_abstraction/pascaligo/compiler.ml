@@ -854,8 +854,8 @@ and compile_data_declaration : next:AST.expression -> CST.data_decl -> _ =
 
   | LocalFun fun_decl ->
       let fun_decl, loc = r_split fun_decl in
-      let%bind fun_name,fun_type,attr,lambda = compile_fun_decl fun_decl in
-      return loc fun_name fun_type attr lambda
+      let%bind _fun_name,fun_var,fun_type,attr,lambda = compile_fun_decl fun_decl in
+      return loc fun_var fun_type attr lambda
     
   | LocalType type_decl ->
     let td,loc = r_split type_decl in
@@ -902,7 +902,7 @@ and compile_block : ?next:AST.expression -> CST.block CST.reg -> _ result =
     Some block -> return block
   | None -> fail @@ block_start_with_attribute block
 
-and compile_fun_decl : CST.fun_decl -> (expression_variable * type_expression option * AST.attributes * expression , _) Trace.result =
+and compile_fun_decl : CST.fun_decl -> (string * expression_variable * type_expression option * AST.attributes * expression , _) Trace.result =
   fun ({kwd_recursive; fun_name; param; ret_type; return=r; attributes}: CST.fun_decl) ->
   let return = ok in
   let (fun_name, loc) = r_split fun_name in
@@ -943,7 +943,7 @@ and compile_fun_decl : CST.fun_decl -> (expression_variable * type_expression op
       return @@ make_e ~loc @@ E_lambda lambda
   in
   let attr = compile_attributes attributes in
-  return (fun_binder, fun_type, attr, func)
+  return (fun_name, fun_binder, fun_type, attr, func)
 
 and compile_declaration : CST.declaration -> _ =
   fun decl ->
@@ -962,11 +962,11 @@ and compile_declaration : CST.declaration -> _ =
       bind_map_option (compile_type_expression <@ snd) const_type in
     let%bind expr = compile_expression init in
     let binder = {var;ascr} in
-    return region @@ AST.Declaration_constant {binder;attr;expr}
+    return region @@ AST.Declaration_constant {name = Some name; binder;attr;expr}
   | FunDecl {value;region} ->
-    let%bind (var,ascr,attr,expr) = compile_fun_decl value in
+    let%bind (name,var,ascr,attr,expr) = compile_fun_decl value in
     let binder = {var;ascr} in
-    return region @@ AST.Declaration_constant {binder;attr;expr}
+    return region @@ AST.Declaration_constant {name = Some name; binder;attr;expr}
   | ModuleDecl {value={name; module_; _};region} ->
     let (name,_) = r_split name in
     let%bind module_ = compile_module module_ in

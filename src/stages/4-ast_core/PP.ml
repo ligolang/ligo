@@ -100,7 +100,7 @@ and matching_variant_case_type ppf {constructor=c ; proj ; body=_ } =
 and declaration ppf (d : declaration) =
   match d with
   | Declaration_type     dt -> declaration_type                type_expression ppf dt
-  | Declaration_constant {binder=b ; attr ; expr} ->
+  | Declaration_constant {name = _ ; binder=b ; attr ; expr} ->
       fprintf ppf "@[<2>const %a =@ %a%a@]"
         (binder type_expression) b
         expression expr

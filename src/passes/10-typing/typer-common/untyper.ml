@@ -41,14 +41,14 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer
     return @@ I.T_module_accessor ma
   | O.T_singleton x -> return @@ I.T_singleton x
 
-let untype_declaration_constant untype_expression O.{binder;expr;inline} =
+let untype_declaration_constant untype_expression O.{name;binder;expr;inline} =
   let attr = I.{inline} in
   let%bind ty = untype_type_expression expr.type_expression in
   let var = Location.map Var.todo_cast binder in
   let binder = ({var;ascr= Some ty}: _ I.binder) in
   let%bind expr = untype_expression expr in
   let expr = I.e_annotation expr ty in
-  ok @@ I.{binder;attr;expr;}
+  ok @@ I.{name;binder;attr;expr;}
 
 let untype_declaration_type O.{type_binder; type_expr} =
   let%bind type_expr = untype_type_expression type_expr in

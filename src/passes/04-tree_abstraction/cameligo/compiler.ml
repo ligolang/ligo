@@ -458,7 +458,7 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
         compile_record_let_destructuring matchee body record
       | _ -> (
         let%bind lst = compile_let_binding ?kwd_rec attributes binding in
-        let aux (binder,attr,rhs) expr = e_let_in ~loc binder attr rhs expr in
+        let aux (_name,binder,attr,rhs) expr = e_let_in ~loc binder attr rhs expr in
         return @@ List.fold_right aux lst body
       )
     )
@@ -786,16 +786,16 @@ and compile_let_binding ?kwd_rec attributes binding =
     | None   ->
         ok @@ expr
     in
-    return_1 @@ ({var=fun_binder;ascr=lhs_type}, attributes, expr)
+    return_1 @@ (Some name.value, {var=fun_binder;ascr=lhs_type}, attributes, expr)
   | PTuple tuple, [] -> (* tuple destructuring (for top-level only) TODO: this should be deprecated or handled in a better way *)
     let (tuple, loc) = r_split tuple in
     let%bind lst = bind_map_ne_list compile_parameter @@ npseq_to_ne_list tuple in
     let (lst, exprs) = List.Ne.split lst in
-    let exprs = List.flatten @@ List.Ne.to_list exprs in
+    let exprs = List.map (fun (x, y, z) -> (None, x, y, z)) (List.flatten @@ List.Ne.to_list exprs) in
     let var = Location.wrap ~loc @@ Var.fresh () in
     let body = e_variable var in
-    let aux i binder = Z.add i Z.one, (binder, attributes, e_accessor body @@ [Access_tuple i]) in
-    return @@ ({var;ascr=None}, [], expr) :: (List.fold_map aux Z.zero @@ List.Ne.to_list lst) @ exprs
+    let aux i binder = Z.add i Z.one, (None, binder, attributes, e_accessor body @@ [Access_tuple i]) in
+    return @@ (None, {var;ascr=None}, [], expr) :: (List.fold_map aux Z.zero @@ List.Ne.to_list lst) @ exprs
   | _ -> fail @@ unsupported_pattern_type @@ nseq_to_list binders
   in aux binders
 
@@ -854,7 +854,7 @@ and compile_declaration : CST.declaration -> _ = fun decl ->
     return_1 region @@ AST.Declaration_type  {type_binder=Var.of_name name; type_expr}
   | Let {value = (_kwd_let, kwd_rec, let_binding, attributes); region} ->
     let%bind lst = compile_let_binding ?kwd_rec attributes let_binding in
-    let aux (binder,attr, expr) =  AST.Declaration_constant {binder; attr; expr} in
+    let aux (name, binder,attr, expr) =  AST.Declaration_constant {name; binder; attr; expr} in
     return region @@ List.map aux lst
   | ModuleDecl {value={name; module_; _};region} ->
     let (name,_) = r_split name in

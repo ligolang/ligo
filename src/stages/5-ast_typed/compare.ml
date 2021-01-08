@@ -298,8 +298,9 @@ and matching_content_record
     expression body1 body2
     rows t1 t2
 
-and declaration_constant {binder=ba;expr=ea;inline=ia} {binder=bb;expr=eb;inline=ib} =
-  cmp3
+and declaration_constant {name=na;binder=ba;expr=ea;inline=ia} {name=nb;binder=bb;expr=eb;inline=ib} =
+  cmp4
+    (Option.compare String.compare) na nb
     expression_variable ba bb
     expression ea eb
     bool ia ib
