@@ -153,7 +153,9 @@ const siteConfig = {
     algolia: {
       apiKey: '12be98d9fd4242a5f16b70a5cc6b0158',
       indexName: 'ligolang',
-      algoliaOptions: {} // Optional, if provided by Algolia
+      algoliaOptions: {
+        contextualSearch: true
+      } // Optional, if provided by Algolia
     },
     navbar: {
       logo: {
