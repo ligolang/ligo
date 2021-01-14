@@ -11,11 +11,11 @@ import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import useUserPreferencesContext from '@theme/hooks/useUserPreferencesContext';
 import useLockBodyScroll from '@theme/hooks/useLockBodyScroll';
 import useWindowSize, {windowSizes} from '@theme/hooks/useWindowSize';
-import useLogo from '@theme/hooks/useLogo';
 import useScrollPosition from '@theme/hooks/useScrollPosition';
 import Link from '@docusaurus/Link';
 import isInternalUrl from '@docusaurus/isInternalUrl';
 import type {Props} from '@theme/DocSidebar';
+import Logo from '@theme/Logo';
 
 import styles from './styles.module.css';
 
@@ -180,7 +180,6 @@ function DocSidebar({
     } = {},
     isClient,
   } = useDocusaurusContext();
-  const {logoLink, logoLinkProps, logoImageUrl, logoAlt} = useLogo();
   const {isAnnouncementBarClosed} = useUserPreferencesContext();
   const {scrollY} = useScrollPosition();
 
@@ -198,18 +197,8 @@ function DocSidebar({
       className={clsx(styles.sidebar, {
         [styles.sidebarWithHideableNavbar]: hideOnScroll,
       })}>
-      {hideOnScroll && (
-        <Link
-          tabIndex={-1}
-          className={styles.sidebarLogo}
-          to={logoLink}
-          {...logoLinkProps}>
-          {logoImageUrl != null && (
-            <img key={isClient} src={logoImageUrl} alt={logoAlt} />
-          )}
-          {title != null && <strong>{title}</strong>}
-        </Link>
-      )}
+            {hideOnScroll && <Logo tabIndex={-1} className={styles.sidebarLogo} />}
+
       {isClient && document.location.pathname.startsWith('/docs') && !showResponsiveSidebar ? 
         <div className={styles.switchContainer}>
           Display syntax: <SyntaxSwitch syntax={syntax} onSyntaxChange={s => onSyntaxChange(s)} /> 
