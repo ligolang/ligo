@@ -18,9 +18,10 @@ import NotFound from '@theme/NotFound';
 import type {DocumentRoute} from '@theme/DocItem';
 import type {Props} from '@theme/DocPage';
 import {matchPath} from '@docusaurus/router';
-import Head from '@docusaurus/Head';
 
 import styles from './styles.module.css';
+
+import {docVersionSearchTag} from '@docusaurus/theme-common';
 
 import SyntaxContext from '@theme/Syntax/SyntaxContext';
 
@@ -30,37 +31,13 @@ type DocPageContentProps = {
   readonly children: ReactNode;
 };
 
-// This theme is not coupled to Algolia, but can we do something else?
-// Note the last version is also indexed with "last", to avoid breaking search on new releases
-// See https://github.com/facebook/docusaurus/issues/3391
-function DocSearchVersionHeader({
-  version,
-  isLast,
-}: {
-  version: string;
-  isLast: boolean;
-}) {
-  const versions = isLast ? [version, 'latest'] : [version];
-  return (
-    <Head>
-      <meta
-        name="docsearch:version"
-        content={
-          // See https://github.com/facebook/docusaurus/issues/3391#issuecomment-685594160
-          versions.join(',')
-        }
-      />
-    </Head>
-  );
-}
-
 function DocPageContent({
   currentDocRoute,
   versionMetadata,
   children,
 }: DocPageContentProps): JSX.Element {
   const {siteConfig, isClient} = useDocusaurusContext();
-  const {permalinkToSidebar, docsSidebars, version, isLast} = versionMetadata;
+  const {pluginId, permalinkToSidebar, docsSidebars, version} = versionMetadata;
   const sidebarName = permalinkToSidebar[currentDocRoute.path];
   const sidebar = docsSidebars[sidebarName];
 
@@ -71,39 +48,41 @@ function DocPageContent({
   
   const [syntax, setSyntax] = useState(defaultSyntax);
   return (
-    <>
-      <DocSearchVersionHeader version={version} isLast={isLast} />
-      <Layout key={isClient}>
-        <SyntaxContext.Provider value={syntax}>
-          <div className={styles.docPage}>
-            {sidebar && (
-              <div className={styles.docSidebarContainer} role="complementary">
-                <DocSidebar
-                  key={
-                    // Reset sidebar state on sidebar changes
-                    // See https://github.com/facebook/docusaurus/issues/3414
-                    sidebarName
-                  }
-                  sidebar={sidebar}
-                  path={currentDocRoute.path}
-                  sidebarCollapsible={
-                    siteConfig.themeConfig?.sidebarCollapsible ?? true
-                  }
-                  syntax={syntax}
-                  onSyntaxChange={l => {
-                    localStorage.setItem('syntax', l);
-                    setSyntax(l)
-                  }}
-                />
-              </div>
-            )}
-            <main className={styles.docMainContainer}>
-              <MDXProvider components={MDXComponents}>{children}</MDXProvider>
-            </main>
-          </div>
-        </SyntaxContext.Provider>
-      </Layout>
-    </>
+    <Layout 
+      key={isClient} 
+      searchMetadatas={{
+        version, 
+        tag: docVersionSearchTag(pluginId, version)
+      }}>
+      <SyntaxContext.Provider value={syntax}>
+        <div className={styles.docPage}>
+          {sidebar && (
+            <div className={styles.docSidebarContainer} role="complementary">
+              <DocSidebar
+                key={
+                  // Reset sidebar state on sidebar changes
+                  // See https://github.com/facebook/docusaurus/issues/3414
+                  sidebarName
+                }
+                sidebar={sidebar}
+                path={currentDocRoute.path}
+                sidebarCollapsible={
+                  siteConfig.themeConfig?.sidebarCollapsible ?? true
+                }
+                syntax={syntax}
+                onSyntaxChange={l => {
+                  localStorage.setItem('syntax', l);
+                  setSyntax(l)
+                }}
+              />
+            </div>
+          )}
+          <main className={styles.docMainContainer}>
+            <MDXProvider components={MDXComponents}>{children}</MDXProvider>
+          </main>
+        </div>
+      </SyntaxContext.Provider>
+    </Layout>
   );
 }
 
