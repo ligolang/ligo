@@ -156,7 +156,7 @@ const siteConfig = {
       indexName: 'ligolang',
       // contextualSearch: true,
       searchParameters: {
-        facetFilters: ["version:latest"]
+        facetFilters: ["version:0.7.1"]
       },
       algoliaOptions: {} // Optional, if provided by Algolia
     },
