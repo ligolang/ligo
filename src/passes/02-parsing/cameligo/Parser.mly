@@ -33,6 +33,7 @@ let first_region = function
 %on_error_reduce base_expr(base_cond)
 %on_error_reduce module_var_e
 %on_error_reduce module_var_t
+%on_error_reduce nsepseq(module_name,DOT)
 %on_error_reduce core_expr
 %on_error_reduce match_expr(base_cond)
 %on_error_reduce constr_expr
@@ -148,14 +149,10 @@ list__(item):
 (* Main *)
 
 contract:
-  declarations EOF { {decl=$1; eof=$2} }
+  module_ EOF { {$1 with eof=$2} }
 
 module_:
-  declarations { {decl=$1; eof=Region.ghost} }
-
-declarations:
-  declaration              { $1,[] : CST.declaration Utils.nseq }
-| declaration declarations { Utils.nseq_cons $1 $2              }
+  nseq(declaration) { {decl=$1; eof=Region.ghost} }
 
 declaration:
   type_decl       {    TypeDecl $1 }
@@ -724,7 +721,7 @@ core_expr:
 | par(annot_expr)                     {                     EAnnot $1 }
 
 code_inj:
-  "<lang>" expr "]" {
+  "[%lang" expr "]" {
     let region = cover $1.region $3
     and value  = {language=$1; code=$2; rbracket=$3}
     in {region; value} }

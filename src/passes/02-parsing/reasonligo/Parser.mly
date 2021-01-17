@@ -44,6 +44,9 @@ let first_region = function
 %on_error_reduce nsepseq(fun_arg,COMMA)
 %on_error_reduce fun_type
 %on_error_reduce core_type
+%on_error_reduce module_var_e
+%on_error_reduce module_var_t
+%on_error_reduce nsepseq(module_name,DOT)
 
 (* See [ParToken.mly] for the definition of tokens. *)
 
@@ -745,7 +748,7 @@ core_expr:
  }
 
 code_inj:
-  "<lang>" expr "]" {
+  "[%lang" expr "]" {
     let region = cover $1.region $3
     and value  = {language=$1; code=$2; rbracket=$3}
     in {region; value} }
