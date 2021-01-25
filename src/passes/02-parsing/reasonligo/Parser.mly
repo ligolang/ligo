@@ -685,27 +685,33 @@ unary_expr_level:
     let stop = expr_to_region $2 in
     let region = cover start stop
     and value  = {op=$1; arg=$2} in
-    ELogic (BoolExpr (Not ({region; value})))
+    ELogic (BoolExpr (Not {region; value}))
   }
 | call_expr_level { $1 }
 
 call_expr_level:
-  call_expr | constr_expr | core_expr { $1 }
+  call_expr
+| core_expr   { $1 }
+| constr_expr { EConstr $1 }
 
 constr_expr:
-  "None" {
-    EConstr (ENone $1)
-  }
-| "Some" core_expr {
+  "Some" argument {
     let region = cover $1 (expr_to_region $2)
-    in EConstr (ESomeApp {region; value=$1,$2})
+    in ESomeApp {region; value=$1,$2}
   }
-| "<constr>" core_expr {
+| "<constr>" argument {
     let region = cover $1.region (expr_to_region $2) in
-    EConstr (EConstrApp {region; value=$1, Some $2})
-   }
-| "<constr>" {
-    EConstr (EConstrApp {$1 with value=$1, None}) }
+    EConstrApp {region; value = ($1, Some $2)}
+  }
+| constant_constr { $1 }
+
+argument:
+  constant_constr { EConstr $1 }
+| core_expr       {         $1 }
+
+constant_constr:
+  "None"     { ENone $1                             }
+| "<constr>" { EConstrApp {$1 with value=($1,None)} }
 
 call_expr:
   core_expr par(nsepseq(annot_expr, ",")) {
