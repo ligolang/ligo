@@ -20,6 +20,7 @@ let peephole_expression : expression -> (expression , self_ast_imperative_error)
           @@ of_notation str in
         let itime = Z.of_int64 @@ to_seconds time in
         return @@ E_literal (Literal_timestamp itime)
+      | (E_literal (Literal_string str) , T_variable tv) when Var.equal tv v_chain_id -> return @@ E_literal (Literal_chain_id (Ligo_string.extract str))
       | (E_literal (Literal_string str) , T_variable tv) when Var.equal tv v_address -> return @@ E_literal (Literal_address (Ligo_string.extract str))
       | (E_literal (Literal_string str) , T_variable tv) when Var.equal tv v_bytes -> (
           let str = Ligo_string.extract str in
