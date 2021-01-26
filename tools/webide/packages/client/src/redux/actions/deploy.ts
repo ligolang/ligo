@@ -7,7 +7,7 @@ import { AppState } from '../app';
 import { MichelsonFormat } from '../compile';
 import { DoneLoadingAction, UpdateLoadingAction } from '../loading';
 import { ChangeContractAction, ChangeOutputAction } from '../result';
-import { Command } from '../types';
+import { CommandType } from '../types';
 import { CancellableAction } from './cancellable';
 
 const Tezos = new TezosToolkit('https://api.tez.ie/rpc/delphinet');
@@ -19,7 +19,7 @@ export class DeployAction extends CancellableAction {
   async deployWithTezBridge(dispatch: Dispatch, getState: () => AppState) {
     dispatch({ ...new UpdateLoadingAction('Compiling contract...') });
 
-    const { editor: editorState, deploy: deployState } = getState();
+    const { Editor: editorState, Deploy: deployState } = getState();
 
     const michelsonCode = await compileContract(
       editorState.language,
@@ -70,7 +70,7 @@ export class DeployAction extends CancellableAction {
       ...new UpdateLoadingAction('Deploying to delphinet network...')
     });
 
-    const { editor: editorState, deploy: deployState } = getState();
+    const { Editor: editorState, Deploy: deployState } = getState();
 
     return await deploy(
       editorState.language,
@@ -82,10 +82,10 @@ export class DeployAction extends CancellableAction {
 
   getAction() {
     return async (dispatch: Dispatch, getState: () => AppState) => {
-      const { deploy } = getState();
+      const { Deploy } = getState();
 
       try {
-        const contract = deploy.useTezBridge
+        const contract = Deploy.useTezBridge
           ? await this.deployWithTezBridge(dispatch, getState)
           : await this.deployOnServerSide(dispatch, getState);
 
@@ -94,22 +94,22 @@ export class DeployAction extends CancellableAction {
         }
 
         dispatch({
-          ...new ChangeContractAction(contract.address, Command.Deploy)
+          ...new ChangeContractAction(contract.address, CommandType.Deploy)
         });
         dispatch({
-          ...new ChangeOutputAction(contract.storage, Command.Deploy, false)
+          ...new ChangeOutputAction(contract.storage, CommandType.Deploy, false)
         });
       } catch (ex) {
         if (this.isCancelled()) {
           return;
         }
         dispatch({
-          ...new ChangeContractAction('', Command.Deploy)
+          ...new ChangeContractAction('', CommandType.Deploy)
         });
         dispatch({
           ...new ChangeOutputAction(
             `Error: ${getErrorMessage(ex)}`,
-            Command.Deploy,
+            CommandType.Deploy,
             true
           )
         });

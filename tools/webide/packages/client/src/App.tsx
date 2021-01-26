@@ -6,12 +6,12 @@ import SplitPane from 'react-split-pane';
 import './index.css'
 
 import { EditorComponent } from './components/editor/editor';
-import { Examples } from './components/examples';
+import Examples from './components/examples';
 import { FloatButtonComponent } from './components/float-button';
 import { HeaderComponent } from './components/header';
 import { TabsPanelComponent } from './components/tabs-panel';
 import { TooltipContainer } from './components/tooltip';
-import { OutputTab } from './components/output/output-tab';
+import OutputTab from './components/output/output-tab';
 import configureStore from './configure-store';
 
 const store = configureStore();

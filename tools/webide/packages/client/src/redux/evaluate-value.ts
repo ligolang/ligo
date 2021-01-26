@@ -19,7 +19,7 @@ const DEFAULT_STATE: EvaluateValueState = {
   entrypoint: ''
 };
 
-export default (state = DEFAULT_STATE, action: Action): EvaluateValueState => {
+const EvaluateValue = (state = DEFAULT_STATE, action: Action): EvaluateValueState => {
   switch (action.type) {
     case ExamplesActionType.ChangeSelected:
       return {
@@ -31,6 +31,9 @@ export default (state = DEFAULT_STATE, action: Action): EvaluateValueState => {
         ...state,
         entrypoint: action.payload
       };
+    default:
+      return state;
   }
-  return state;
 };
+
+export default EvaluateValue;

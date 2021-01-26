@@ -1,0 +1,8 @@
+[build]
+  publish = "build"
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://api.ligo-ide.tez.ie/api/:splat"
+  status = 200
+  force = true

@@ -3,6 +3,11 @@ import axios from 'axios';
 import { AppState } from '../redux/app';
 import { Language } from '../redux/types';
 
+export async function getExampleList() {
+  const response = await axios.get(`/static/examples/list`);
+  return response.data;
+}
+
 export async function getExample(id: string) {
   const response = await axios.get(`/static/examples/${id}`);
   return response.data;
@@ -77,33 +82,33 @@ export async function dryRun(
 }
 
 export async function share({
-  editor,
-  compile,
-  dryRun,
-  deploy,
-  evaluateValue,
-  evaluateFunction,
-  generateDeployScript
+  Editor,
+  Compile,
+  DryRun,
+  Deploy,
+  EvaluateValue,
+  EvaluateFunction,
+  GenerateDeployScript
 }: Partial<AppState>) {
   const params = {
-    editor,
-    compile,
-    dryRun,
-    deploy,
-    evaluateValue,
-    evaluateFunction,
-    generateDeployScript
+    Editor,
+    Compile,
+    DryRun,
+    Deploy,
+    EvaluateValue,
+    EvaluateFunction,
+    GenerateDeployScript
   };
 
   // We don't want to store the following configuration
-  if (params.compile) {
-    delete params.compile.michelsonFormat;
+  if (params.Compile) {
+    delete params.Compile.michelsonFormat;
   }
-  if (params.deploy) {
-    delete params.deploy.useTezBridge;
+  if (params.Deploy) {
+    delete params.Deploy.useTezBridge;
   }
-  if (params.editor?.cursorPosition) {
-    delete params.editor.cursorPosition;
+  if (params.Editor?.cursorPosition) {
+    delete params.Editor.cursorPosition;
   }
 
   const response = await axios.post('/api/share', params);

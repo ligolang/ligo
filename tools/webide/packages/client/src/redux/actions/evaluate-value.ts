@@ -4,13 +4,13 @@ import { evaluateValue, getErrorMessage } from '../../services/api';
 import { AppState } from '../app';
 import { DoneLoadingAction, UpdateLoadingAction } from '../loading';
 import { ChangeOutputAction } from '../result';
-import { Command } from '../types';
+import { CommandType } from '../types';
 import { CancellableAction } from './cancellable';
 
 export class EvaluateValueAction extends CancellableAction {
   getAction() {
     return async (dispatch: Dispatch, getState: () => AppState) => {
-      const { editor, evaluateValue: evaluateValueState } = getState();
+      const { Editor, EvaluateValue: evaluateValueState } = getState();
 
       dispatch({
         ...new UpdateLoadingAction(
@@ -20,8 +20,8 @@ export class EvaluateValueAction extends CancellableAction {
 
       try {
         const result = await evaluateValue(
-          editor.language,
-          editor.code,
+          Editor.language,
+          Editor.code,
           evaluateValueState.entrypoint
         );
 
@@ -30,7 +30,7 @@ export class EvaluateValueAction extends CancellableAction {
         }
 
         dispatch({
-          ...new ChangeOutputAction(result.code, Command.EvaluateValue, false)
+          ...new ChangeOutputAction(result.code, CommandType.EvaluateValue, false)
         });
       } catch (ex) {
         if (this.isCancelled()) {
@@ -39,7 +39,7 @@ export class EvaluateValueAction extends CancellableAction {
         dispatch({
           ...new ChangeOutputAction(
             `Error: ${getErrorMessage(ex)}`,
-            Command.EvaluateValue,
+            CommandType.EvaluateValue,
             true
           )
         });

@@ -4,7 +4,7 @@ import { compileContract, getErrorMessage } from '../../services/api';
 import { AppState } from '../app';
 import { DoneLoadingAction, UpdateLoadingAction } from '../loading';
 import { ChangeOutputAction } from '../result';
-import { Command } from '../types';
+import { CommandType } from '../types';
 import { CancellableAction } from './cancellable';
 
 export class CompileAction extends CancellableAction {
@@ -13,10 +13,10 @@ export class CompileAction extends CancellableAction {
       dispatch({ ...new UpdateLoadingAction('Compiling contract...') });
 
       try {
-        const { editor, compile: compileState } = getState();
+        const { Editor, Compile: compileState } = getState();
         const michelsonCode = await compileContract(
-          editor.language,
-          editor.code,
+          Editor.language,
+          Editor.code,
           compileState.entrypoint,
           compileState.michelsonFormat
         );
@@ -26,7 +26,7 @@ export class CompileAction extends CancellableAction {
         }
 
         dispatch({
-          ...new ChangeOutputAction(michelsonCode.result, Command.Compile, false)
+          ...new ChangeOutputAction(michelsonCode.result, CommandType.Compile, false)
         });
       } catch (ex) {
         if (this.isCancelled()) {
@@ -35,7 +35,7 @@ export class CompileAction extends CancellableAction {
         dispatch({
           ...new ChangeOutputAction(
             `Error: ${getErrorMessage(ex)}`,
-            Command.Compile,
+            CommandType.Compile,
             true
           )
         });

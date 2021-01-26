@@ -16,12 +16,12 @@ const Checkbox = styled(CheckboxComponent)`
 export const CompilePaneComponent = () => {
   const dispatch = useDispatch();
   const entrypoint = useSelector<AppState, CompileState['entrypoint']>(
-    state => state.compile.entrypoint
+    state => state.Compile.entrypoint
   );
   const michelsonFormat = useSelector<
     AppState,
     CompileState['michelsonFormat']
-  >(state => state.compile.michelsonFormat);
+  >(state => state.Compile.michelsonFormat);
 
   return (
     <Container>

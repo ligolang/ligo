@@ -11,7 +11,7 @@ const Container = styled.div``;
 export const EvaluateValuePaneComponent = () => {
   const dispatch = useDispatch();
   const entrypoint = useSelector<AppState, EvaluateValueState['entrypoint']>(
-    state => state.evaluateValue.entrypoint
+    state => state.EvaluateValue.entrypoint
   );
 
   return (

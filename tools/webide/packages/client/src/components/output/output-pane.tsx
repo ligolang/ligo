@@ -1,9 +1,6 @@
-import React from 'react';
-import { useSelector } from 'react-redux';
+import React, {FC} from 'react';
+import { connect } from 'react-redux';
 import styled from 'styled-components';
-
-import { AppState } from '../../redux/app';
-import { ResultState } from '../../redux/result';
 
 const Container = styled.div<{ visible?: boolean }>`
   display: flex;
@@ -23,10 +20,12 @@ const Pre = styled.pre`
   width: -webkit-fill-available;
 `;
 
-export const OutputPane = () => {
-  const output = useSelector<AppState, ResultState['output']>(
-    state => state.result.output
-  );
+interface stateTypes {
+  output?: string;
+}
+
+const OutputPane: FC<stateTypes> = (props) => {
+  const { output } = props
 
   return (
     <Container>
@@ -36,3 +35,12 @@ export const OutputPane = () => {
     </Container>
   );
 };
+
+function mapStateToProps(state) {
+  const { Result } = state
+  return { 
+    output: Result.output,
+  }
+}
+
+export default connect(mapStateToProps, null)(OutputPane)
