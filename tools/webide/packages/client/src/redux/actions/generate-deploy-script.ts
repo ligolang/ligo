@@ -8,7 +8,7 @@ import { AppState } from '../app';
 import { MichelsonFormat } from '../compile';
 import { DoneLoadingAction, UpdateLoadingAction } from '../loading';
 import { ChangeOutputAction } from '../result';
-import { Command } from '../types';
+import { CommandType } from '../types';
 import { CancellableAction } from './cancellable';
 
 const URL = 'https://api.tez.ie/keys/delphinet/';
@@ -29,19 +29,19 @@ export class GenerateDeployScriptAction extends CancellableAction {
       dispatch({ ...new UpdateLoadingAction('Compiling contract...') });
 
       try {
-        const { editor, generateDeployScript } = getState();
+        const { Editor, GenerateDeployScript } = getState();
 
         const michelsonCodeJson = await compileContract(
-          editor.language,
-          editor.code,
-          generateDeployScript.entrypoint,
+          Editor.language,
+          Editor.code,
+          GenerateDeployScript.entrypoint,
           MichelsonFormat.Json
         );
 
         const michelsonCode = await compileContract(
-          editor.language,
-          editor.code,
-          generateDeployScript.entrypoint
+          Editor.language,
+          Editor.code,
+          GenerateDeployScript.entrypoint
         );
 
         if (this.isCancelled()) {
@@ -50,18 +50,18 @@ export class GenerateDeployScriptAction extends CancellableAction {
 
         dispatch({ ...new UpdateLoadingAction('Compiling storage...') });
         const michelsonStorageJson = await compileStorage(
-          editor.language,
-          editor.code,
-          generateDeployScript.entrypoint,
-          generateDeployScript.storage,
+          Editor.language,
+          Editor.code,
+          GenerateDeployScript.entrypoint,
+          GenerateDeployScript.storage,
           MichelsonFormat.Json
         );
 
         const michelsonStorage = await compileStorage(
-          editor.language,
-          editor.code,
-          generateDeployScript.entrypoint,
-          generateDeployScript.storage
+          Editor.language,
+          Editor.code,
+          GenerateDeployScript.entrypoint,
+          GenerateDeployScript.storage
         );
 
         if (this.isCancelled()) {
@@ -82,7 +82,7 @@ export class GenerateDeployScriptAction extends CancellableAction {
         }
 
         //const title = slugify(editor.title).toLowerCase() || 'untitled';
-        const title = slugify(editor.title, {remove: /[*+~.()'"!]/g, lower: true})
+        const title = slugify(Editor.title, {remove: /[*+~.()'"!]/g, lower: true})
         const output = `tezos-client \\
   originate \\
   contract \\
@@ -94,7 +94,7 @@ export class GenerateDeployScriptAction extends CancellableAction {
   --burn-cap ${estimate.burnFeeMutez / 1000000}`;
 
         dispatch({
-          ...new ChangeOutputAction(output, Command.GenerateDeployScript, false)
+          ...new ChangeOutputAction(output, CommandType.GenerateDeployScript, false)
         });
       } catch (ex) {
         if (this.isCancelled()) {
@@ -103,7 +103,7 @@ export class GenerateDeployScriptAction extends CancellableAction {
         dispatch({
           ...new ChangeOutputAction(
             `Error: ${getErrorMessage(ex)}`,
-            Command.GenerateDeployScript,
+            CommandType.GenerateDeployScript,
             true
           )
         });

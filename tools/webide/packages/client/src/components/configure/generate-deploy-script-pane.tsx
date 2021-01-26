@@ -21,15 +21,15 @@ export const GenerateDeployScriptPane = () => {
   const dispatch = useDispatch();
 
   const tool = useSelector<AppState, GenerateDeployScriptState['tool']>(
-    state => state.generateDeployScript.tool
+    state => state.GenerateDeployScript.tool
   );
 
   const entrypoint = useSelector<AppState, GenerateDeployScriptState['entrypoint']>(
-    state => state.generateDeployScript.entrypoint
+    state => state.GenerateDeployScript.entrypoint
   );
 
   const storage = useSelector<AppState, GenerateDeployScriptState['storage']>(
-    state => state.generateDeployScript.storage
+    state => state.GenerateDeployScript.storage
   );
 
   return (

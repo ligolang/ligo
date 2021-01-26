@@ -1,4 +1,4 @@
-import { Command } from './types';
+import { CommandType } from './types';
 
 export enum ActionType {
   ChangeOutput = 'result-change-output',
@@ -6,7 +6,7 @@ export enum ActionType {
 }
 
 export interface ResultState {
-  command: Command;
+  command: CommandType;
   output: string;
   contract: string;
   error: boolean;
@@ -32,13 +32,13 @@ export class ChangeContractAction {
 type Action = ChangeOutputAction | ChangeContractAction;
 
 const DEFAULT_STATE: ResultState = {
-  command: Command.Compile,
+  command: CommandType.Compile,
   output: '',
   contract: '',
   error: false
 };
 
-export default (state = DEFAULT_STATE, action: Action): ResultState => {
+const Result = (state = DEFAULT_STATE, action: Action): ResultState => {
   switch (action.type) {
     case ActionType.ChangeOutput:
       return {
@@ -54,6 +54,9 @@ export default (state = DEFAULT_STATE, action: Action): ResultState => {
         contract: action.contract,
         command: action.command
       };
+    default:
+      return state;
   }
-  return state;
 };
+
+export default Result

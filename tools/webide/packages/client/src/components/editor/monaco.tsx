@@ -27,8 +27,8 @@ export const MonacoComponent = ({editorHeight}) => {
     const cleanupFunc: Array<() => void> = [];
     const { editor: editorState } = store.getState();
     const model = monaco.editor.createModel(
-      editorState.code,
-      editorState.language
+      editorState && editorState.code,
+      editorState && editorState.language
     );
 
     monaco.editor.defineTheme('ligoTheme', {
@@ -76,7 +76,7 @@ export const MonacoComponent = ({editorHeight}) => {
 
     cleanupFunc.push(
       store.subscribe(() => {
-        const { editor: editorState }: AppState = store.getState();
+        const { Editor: editorState }: AppState = store.getState();
 
         if (editorState.code !== editor.getValue()) {
           shouldDispatchCodeChangedAction = false;

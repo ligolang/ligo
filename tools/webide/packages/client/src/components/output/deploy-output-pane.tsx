@@ -1,5 +1,5 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
+import { connect } from 'react-redux';
 import styled from 'styled-components';
 
 import { AppState } from '../../redux/app';
@@ -27,14 +27,8 @@ const Pre = styled.pre`
   width: -webkit-fill-available;
 `;
 
-export const DeployOutputPane = () => {
-  const output = useSelector<AppState, ResultState['output']>(
-    state => state.result.output
-  );
-  const contract = useSelector<AppState, ResultState['contract']>(
-    state => state.result.contract
-  );
-
+const DeployOutputPane = (props) => {
+const {contract, output} = props
   return (
     <Container>
       <Output id="output">
@@ -66,3 +60,13 @@ export const DeployOutputPane = () => {
     </Container>
   );
 };
+
+function mapStateToProps(state) {
+  const { Result } = state
+  return { 
+    output: Result.output,
+    contract: Result.contract
+   }
+}
+
+export default connect(mapStateToProps, null)(DeployOutputPane)

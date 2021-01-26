@@ -53,13 +53,13 @@ const CursorPosition = styled.div`
 
 export const EditorComponent = ({editorHeight}) => {
   const dispatch = useDispatch();
-  const title = useSelector<AppState, string>(state => state.editor.title);
+  const title = useSelector<AppState, string>(state => state.Editor.title);
   const language = useSelector<AppState, EditorState['language']>(
-    state => state.editor.language
+    state => state.Editor.language
   );
 
   const cursorPosition = useSelector<AppState, EditorState['cursorPosition']>(
-    state => state.editor.cursorPosition
+    state => state.Editor.cursorPosition
   );
   
   const getCursorPosition = () => {

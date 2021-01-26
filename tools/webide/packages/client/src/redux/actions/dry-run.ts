@@ -4,7 +4,7 @@ import { dryRun, getErrorMessage } from '../../services/api';
 import { AppState } from '../app';
 import { DoneLoadingAction, UpdateLoadingAction } from '../loading';
 import { ChangeOutputAction } from '../result';
-import { Command } from '../types';
+import { CommandType } from '../types';
 import { CancellableAction } from './cancellable';
 
 export class DryRunAction extends CancellableAction {
@@ -15,10 +15,10 @@ export class DryRunAction extends CancellableAction {
       });
 
       try {
-        const { editor, dryRun: dryRunState } = getState();
+        const { Editor, DryRun: dryRunState } = getState();
         const result = await dryRun(
-          editor.language,
-          editor.code,
+          Editor.language,
+          Editor.code,
           dryRunState.entrypoint,
           dryRunState.parameters,
           dryRunState.storage
@@ -26,7 +26,7 @@ export class DryRunAction extends CancellableAction {
         if (this.isCancelled()) {
           return;
         }
-        dispatch({ ...new ChangeOutputAction(result.output, Command.DryRun, false) });
+        dispatch({ ...new ChangeOutputAction(result.output, CommandType.DryRun, false) });
       } catch (ex) {
         if (this.isCancelled()) {
           return;
@@ -34,7 +34,7 @@ export class DryRunAction extends CancellableAction {
         dispatch({
           ...new ChangeOutputAction(
             `Error: ${getErrorMessage(ex)}`,
-            Command.DryRun,
+            CommandType.DryRun,
             true
           )
         });

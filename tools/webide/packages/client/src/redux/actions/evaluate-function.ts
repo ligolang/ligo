@@ -4,13 +4,13 @@ import { getErrorMessage, runFunction } from '../../services/api';
 import { AppState } from '../app';
 import { DoneLoadingAction, UpdateLoadingAction } from '../loading';
 import { ChangeOutputAction } from '../result';
-import { Command } from '../types';
+import { CommandType } from '../types';
 import { CancellableAction } from './cancellable';
 
 export class EvaluateFunctionAction extends CancellableAction {
   getAction() {
     return async (dispatch: Dispatch, getState: () => AppState) => {
-      const { editor, evaluateFunction: evaluateFunctionState } = getState();
+      const { Editor, EvaluateFunction: evaluateFunctionState } = getState();
 
       dispatch({
         ...new UpdateLoadingAction(
@@ -20,8 +20,8 @@ export class EvaluateFunctionAction extends CancellableAction {
 
       try {
         const result = await runFunction(
-          editor.language,
-          editor.code,
+          Editor.language,
+          Editor.code,
           evaluateFunctionState.entrypoint,
           evaluateFunctionState.parameters
         );
@@ -29,7 +29,7 @@ export class EvaluateFunctionAction extends CancellableAction {
           return;
         }
         dispatch({
-          ...new ChangeOutputAction(result.output, Command.EvaluateFunction, false)
+          ...new ChangeOutputAction(result.output, CommandType.EvaluateFunction, false)
         });
       } catch (ex) {
         if (this.isCancelled()) {
@@ -38,7 +38,7 @@ export class EvaluateFunctionAction extends CancellableAction {
         dispatch({
           ...new ChangeOutputAction(
             `Error: ${getErrorMessage(ex)}`,
-            Command.EvaluateFunction,
+            CommandType.EvaluateFunction,
             true
           )
         });

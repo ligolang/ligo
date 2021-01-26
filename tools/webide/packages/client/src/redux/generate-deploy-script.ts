@@ -44,7 +44,7 @@ const DEFAULT_STATE: GenerateDeployScriptState = {
   burnCap: 0
 };
 
-export default (
+const GenerateDeployScript = (
   state = DEFAULT_STATE,
   action: Action
 ): GenerateDeployScriptState => {
@@ -69,6 +69,9 @@ export default (
         ...state,
         storage: action.payload
       };
+      default:
+      return state;
   }
-  return state;
 };
+
+export default GenerateDeployScript

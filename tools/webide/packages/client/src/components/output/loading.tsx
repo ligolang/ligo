@@ -35,12 +35,12 @@ const Message = styled.div`
 `;
 
 export const Loading = (props: { onCancel?: () => void }) => {
-  const loading = useSelector<AppState, LoadingState>(state => state.loading);
+  const loading = useSelector<AppState, LoadingState>(state => state.Loading);
 
   const dispatchedAction = useSelector<
     AppState,
     CommandState['dispatchedAction']
-  >(state => state.command.dispatchedAction);
+  >(state => state.Command.dispatchedAction);
 
   const dispatch = useDispatch();
 

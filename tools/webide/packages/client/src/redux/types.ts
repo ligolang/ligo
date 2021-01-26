@@ -4,7 +4,7 @@ export enum Language {
   ReasonLIGO = 'reasonligo'
 }
 
-export enum Command {
+export enum CommandType {
   Compile = 'compile',
   DryRun = 'dry-run',
   EvaluateValue = 'evaluate-value',

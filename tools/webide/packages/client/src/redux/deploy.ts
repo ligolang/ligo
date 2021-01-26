@@ -39,7 +39,7 @@ const DEFAULT_STATE: DeployState = {
   useTezBridge: false
 };
 
-export default (state = DEFAULT_STATE, action: Action): DeployState => {
+const Deploy = (state = DEFAULT_STATE, action: Action): DeployState => {
   switch (action.type) {
     case ExamplesActionType.ChangeSelected:
       return {
@@ -61,6 +61,8 @@ export default (state = DEFAULT_STATE, action: Action): DeployState => {
         ...state,
         useTezBridge: action.payload
       };
-  }
-  return state;
+    default:
+      return state;}
 };
+
+export default Deploy

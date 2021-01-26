@@ -24,7 +24,7 @@ export const DEFAULT_STATE: LoadingState = {
   message: ''
 };
 
-export default (state = DEFAULT_STATE, action: Action): LoadingState => {
+const Loading = (state = DEFAULT_STATE, action: Action): LoadingState => {
   switch (action.type) {
     case ActionType.UpdateLoading:
       return {
@@ -37,6 +37,9 @@ export default (state = DEFAULT_STATE, action: Action): LoadingState => {
         ...state,
         ...DEFAULT_STATE
       };
+    default:
+      return state;
   }
-  return state;
 };
+
+export default Loading

@@ -63,7 +63,7 @@ const DEFAULT_STATE: EditorState = {
   cursorPosition: null
 };
 
-export default (state = DEFAULT_STATE, action: Action): EditorState => {
+const Editor = (state = DEFAULT_STATE, action: Action): EditorState => {
   switch (action.type) {
     case ExamplesActionType.ChangeSelected:
       return {
@@ -101,3 +101,5 @@ export default (state = DEFAULT_STATE, action: Action): EditorState => {
       return state;
   }
 };
+
+export default Editor

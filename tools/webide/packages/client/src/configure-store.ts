@@ -4,13 +4,11 @@ import ReduxThunk from 'redux-thunk';
 import rootReducer, { AppState } from './redux/app';
 
 declare var defaultServerState: AppState | undefined;
+ 
 
 export default function configureStore() {
   const store = createStore(
     rootReducer,
-    {
-      ...(typeof defaultServerState === 'undefined' ? {} : defaultServerState)
-    },
     applyMiddleware(ReduxThunk, cleanRouteOnAction)
   );
 
@@ -22,7 +20,7 @@ const cleanRouteOnAction: Middleware = store => next => action => {
   next(action);
   const state = store.getState();
   if (
-    share.link !== undefined &&
+    share && share.link !== undefined &&
     state.share.link === undefined &&
     window.location.pathname !== '/'
   ) {
