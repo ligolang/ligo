@@ -654,8 +654,8 @@ and print_fun_expr state {value; _} =
     match lhs_type with
       None -> ()
     | Some (colon, type_expr) ->
-       print_token     state colon ":";
-       print_type_expr state type_expr in
+        print_token     state colon ":";
+        print_type_expr state type_expr in
   let () =
     print_token state arrow "->"
   in print_expr state body
@@ -722,11 +722,11 @@ let rec pp_cst state {decl; _} =
   List.iteri (List.length decls |> apply) decls
 
 and pp_declaration state = function
-  Let {value =(_, kwd_rec, let_binding, attr); region} ->
+  Let {value = (_, kwd_rec, let_binding, attr); region} ->
     pp_loc_node state "Let" region;
     (match kwd_rec with
        None -> ()
-     | Some (_) -> pp_node (state#pad 0 0) "rec"); (* Hack *)
+     | Some _ -> pp_node (state#pad 0 0) "rec"); (* Hack *)
     pp_let_binding state let_binding attr
 | TypeDecl {value; region} ->
     pp_loc_node  state "TypeDecl" region;
@@ -868,13 +868,14 @@ and pp_injection :
 and pp_ne_injection :
   'a.(state -> 'a -> unit) -> state -> 'a ne_injection -> unit =
   fun printer state inj ->
-    let ne_elements    = Utils.nsepseq_to_list inj.ne_elements in
-    let length         = List.length ne_elements in
-    let arity          = if inj.attributes = [] then length else length+1
+    let ne_elements = Utils.nsepseq_to_list inj.ne_elements in
+    let length      = List.length ne_elements in
+    let arity       = if inj.attributes = [] then length else length+1
     and apply len rank = printer (state#pad len rank)
     in List.iteri (apply arity) ne_elements;
-       let state = state#pad arity (arity-1)
-       in pp_attributes state inj.attributes
+       if inj.attributes <> [] then
+         let state = state#pad arity (arity-1)
+         in pp_attributes state inj.attributes
 
 and pp_record_type state = pp_ne_injection pp_field_decl state
 
@@ -1395,7 +1396,8 @@ and pp_variant state {constr; arg; attributes=attr} =
   let rank =
     match arg with
       None -> rank
-    | Some (_,c) -> pp_type_expr (state#pad arity rank) c; rank+1 in
-  let _ = if attr <> [] then
-            pp_attributes (state#pad arity rank) attr
+    | Some (_,c) ->
+        pp_type_expr (state#pad arity rank) c; rank+1 in
+  let () = if attr <> [] then
+             pp_attributes (state#pad arity rank) attr
   in ()
