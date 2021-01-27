@@ -64,13 +64,16 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
     (* Create the indexer's initial state *)
     val create_state : cmp:('typeVariable -> 'typeVariable -> int) -> 'typeVariable t
     (* Update the state when a constraint is added *)
-    val add_constraint : (type_variable -> 'type_variable) -> 'type_variable t -> type_constraint_simpl -> 'type_variable t
+    val add_constraint : ?debug:(Format.formatter -> 'type_variable -> unit) -> (type_variable -> 'type_variable) -> 'type_variable t -> type_constraint_simpl -> 'type_variable t
     (* Update the state when a constraint is removed *)
     (* TODO: check this API to see if we're giving too much flexibility to the plugin *)
-    val remove_constraint : (type_variable -> 'type_variable) -> 'type_variable t -> type_constraint_simpl -> ('type_variable t, Typer_errors.typer_error) Trace.result
+    val remove_constraint :(Format.formatter -> 'type_variable -> unit) -> (type_variable -> 'type_variable) -> 'type_variable t -> type_constraint_simpl -> ('type_variable t, Typer_errors.typer_error) Trace.result
     (* Update the state to merge entries of maps and sets of type
        variables.  *)
-    val merge_aliases : ('old, 'new_) merge_keys -> 'old t -> 'new_ t
+    val merge_aliases : ?debug:(Format.formatter -> 'new_ t -> unit) -> ('old, 'new_) merge_keys -> 'old t -> 'new_ t
+    (* The pretty-printer is used for debugging *)
+    val pp : (Format.formatter -> 'typeVariable -> unit) -> Format.formatter -> 'typeVariable t -> unit
+    val name : string
   end
 
   (* The kind PerPluginType describes type-level functions which take
@@ -87,15 +90,16 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
        …
   *)
   (* type PerPluginType = 🞰→(🞰→🞰)→🞰 *)
-  module type PerPluginTypeArg = sig type 'typeVariable t end (* just the part of Plugin we care about *)
+  module type PerPluginTypeArg = sig type 'typeVariable t val pp : (Format.formatter -> 'type_variable -> unit) -> Format.formatter -> 'type_variable t -> unit end (* just the part of Plugin we care about *)
   module type PerPluginType = functor (Plugin : PerPluginTypeArg) -> sig
     type t
+    val pp : Format.formatter -> t -> unit
   end
 
   (* These are two useful PerPlugin type-level functions. The first
      gives a `unit' type for each plugin, the second *)
-  module PerPluginUnit = functor (Plugin : PerPluginTypeArg) -> struct type t = unit end
-  module PerPluginState = functor (Plugin : PerPluginTypeArg) -> struct type t = type_variable Plugin.t end
+  module PerPluginUnit = functor (Plugin : PerPluginTypeArg) -> struct type t = unit let pp ppf () = Format.fprintf ppf "()" end
+  module PerPluginState = functor (Plugin : PerPluginTypeArg) -> struct type t = type_variable Plugin.t let pp ppf t = Format.fprintf ppf "%a" (Plugin.pp PP.type_variable) t end
 
   module type Monad = sig
     type 'a t
@@ -117,7 +121,7 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
     module MakeOutType : PerPluginType
     module Monad : Monad
     module F(Plugin : Plugin) : sig
-      val f : extra_args -> MakeInType(Plugin).t -> MakeOutType(Plugin).t Monad.t
+      val f : string -> extra_args -> MakeInType(Plugin).t -> MakeOutType(Plugin).t Monad.t
     end
   end
 
@@ -131,6 +135,7 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
       type 'typeVariable t
       val find_opt : 'type_variable -> 'type_variable t -> constructor_or_row option
       val bindings : 'type_variable t -> ('type_variable * constructor_or_row) list
+      val pp : (Format.formatter -> 'typeVariable -> unit) -> Format.formatter -> 'typeVariable t -> unit
     end
     val assignments : flds -> < assignments : Ppt(Assignments).t >
   end

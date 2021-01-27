@@ -7,7 +7,7 @@ module Operators_types = struct
 
   let tc_subarg   a b c = tc "arguments for (-)"        [a;b;c] [ (*TODO…*) ]
   let tc_sizearg  a     = tc "arguments for size"       [a]     [ [int] ]
-  let tc_packable a     = tc "packable"                 [a]     [ [int] ; [string] ; [bool] (*TODO…*) ]
+  let tc_packable a     = tc "packable"                 [a]     [ [int] ; [string] ; [bool] ; [address] ; (*TODO…*) ]
   let tc_timargs  a b c = tc "arguments for ( * )"      [a;b;c] [ [nat;nat;nat] ; [int;int;int] (*TODO…*) ]
   let tc_edivargs a b c = tc "arguments for ediv"       [a;b;c] [ (*TODO…*) ]
   let tc_divargs  a b c = tc "arguments for div"        [a;b;c] [ (*TODO…*) ]
@@ -40,8 +40,8 @@ module Operators_types = struct
   let t_failwith     = tuple1 string --> unit
   let t_get_force    = forall2 "src" "dst" @@ fun src dst -> tuple2 src (map src dst) --> dst
   let t_int          = tuple1 nat --> int
-  let t_bytes_pack   = forall_tc "a" @@ fun a -> [tc_packable a] => tuple1 a --> bytes (* TYPECLASS *)
-  let t_bytes_unpack = forall_tc "a" @@ fun a -> [tc_packable a] => tuple1 bytes --> a (* TYPECLASS *)
+  let t_bytes_pack   = forall_tc "a" @@ fun a -> [tc_packable a] => a --> bytes (* TYPECLASS *)
+  let t_bytes_unpack = forall_tc "a" @@ fun a -> [tc_packable a] => bytes --> option a (* TYPECLASS *)
   let t_hash256      = tuple1 bytes --> bytes
   let t_hash512      = tuple1 bytes --> bytes
   let t_blake2b      = tuple1 bytes --> bytes
@@ -86,6 +86,7 @@ module Operators_types = struct
   let t_set_iter      = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple2 (a --> unit) (set a) --> unit
   (* TODO: check that the implementation has this type *)
   let t_set_fold      = forall2_tc "a" "b" @@ fun a b -> [tc_comparable b] => tuple3 (pair a b --> a) (set b) a --> a
+  let t_list_empty    = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple0 --> list a
   let t_list_iter     = forall "a" @@ fun a -> tuple2 (a --> unit) (list a) --> unit
   let t_list_map      = forall2 "a" "b" @@ fun a b -> tuple2 (a --> b) (list a) --> (list b)
   (* TODO: check that the implementation has this type *)
@@ -149,6 +150,7 @@ module Operators_types = struct
     | C_SET_MEM             -> ok @@ t_set_mem ;
 
     (* LIST *)
+    | C_LIST_EMPTY          -> ok @@ t_list_empty ;
     | C_LIST_ITER           -> ok @@ t_list_iter ;
     | C_LIST_MAP            -> ok @@ t_list_map ;
     | C_LIST_FOLD           -> ok @@ t_list_fold ;

@@ -5,5 +5,4 @@ module Assignments                   = Assignments
 module GroupedByVariable             = GroupedByVariable
 module CycleDetectionTopologicalSort = CycleDetectionTopologicalSort
 module ByConstraintIdentifier        = ByConstraintIdentifier
-module RefinedTypeclasses            = RefinedTypeclasses
 module TypeclassesConstraining       = TypeclassesConstraining

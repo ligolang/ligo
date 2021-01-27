@@ -28,8 +28,17 @@ module Rope = struct
       l
 end
 
-module SimpleRope = struct
+module SimpleRope : sig
+  type 'a t
+  val empty : 'a t
+  val rope : 'a -> 'a t
+  val pair :
+    'a t -> 'a t -> 'a t
+  val list_of_rope : 'a t -> 'a list
+  val rope_of_list : 'a list -> 'a t
+end = struct
   open Rope
+  type 'a t = ('a, unit) rope
   let empty = empty
   let rope x = rope ~info:(fun _ -> ()) x
   let pair x y = pair ~merge:(fun () () -> ()) ~default:() x y

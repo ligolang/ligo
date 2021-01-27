@@ -406,40 +406,45 @@ and p_row {p_row_tag;p_row_args} =
     ("p_row_args", label_map type_value p_row_args);
   ]
 
-let c_constructor_simpl {is_mandatory_constraint;reason_constr_simpl;tv;c_tag;tv_list} =
+let c_constructor_simpl {id_constructor_simpl = ConstraintIdentifier ci;reason_constr_simpl;original_id;tv;c_tag;tv_list} =
   `Assoc [
-        ("is_mandatory_constraint", `Bool is_mandatory_constraint);
+    ("id_row_simpl", `String (Format.sprintf "%Li" ci));
+    ("original_id", `String (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null" ));
     ("reason_constr_simpl", `String reason_constr_simpl);
     ("tv", type_variable_to_yojson tv);
     ("c_tag", constant_tag c_tag);
     ("tv_list", list type_variable_to_yojson tv_list)
   ]
 
-let c_alias {is_mandatory_constraint;reason_alias_simpl; a; b} =
-  `Assoc [        ("is_mandatory_constraint", `Bool is_mandatory_constraint);
+let c_alias {reason_alias_simpl; a; b} =
+  `Assoc [
     ("reason_alias_simpl", `String reason_alias_simpl);
     ("a", type_variable_to_yojson a);
     ("b", type_variable_to_yojson b);
   ]
 
-let c_poly_simpl {is_mandatory_constraint;reason_poly_simpl; tv; forall} =
-  `Assoc [        ("is_mandatory_constraint", `Bool is_mandatory_constraint);
+let c_poly_simpl {id_poly_simpl = ConstraintIdentifier ci; reason_poly_simpl; original_id; tv; forall} =
+  `Assoc [
+    ("id_row_simpl", `String (Format.sprintf "%Li" ci));
+    ("original_id", `String (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null" ));
     ("reason_poly_simpl", `String reason_poly_simpl);
     ("tv", type_variable_to_yojson tv);
     ("forall", p_forall forall)
   ]
 
-let c_typeclass_simpl {is_mandatory_constraint;id_typeclass_simpl=ConstraintIdentifier ci;reason_typeclass_simpl;original_id;tc;args} =
-  `Assoc [        ("is_mandatory_constraint", `Bool is_mandatory_constraint);
+let c_typeclass_simpl {id_typeclass_simpl = ConstraintIdentifier ci;reason_typeclass_simpl;original_id;tc;args} =
+  `Assoc [
     ("id_typeclass_simpl", `String (Format.sprintf "%Li" ci));
-                  ("reason_typeclass_simpl", `String reason_typeclass_simpl);
-                  ("original_id", `String (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null" ));
+    ("original_id", `String (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null" ));
+    ("reason_typeclass_simpl", `String reason_typeclass_simpl);
     ("tc", typeclass tc);
     ("args", list type_variable_to_yojson args)
   ]
 
-let c_row_simpl {is_mandatory_constraint;reason_row_simpl; tv;r_tag;tv_map} =
-  `Assoc [        ("is_mandatory_constraint", `Bool is_mandatory_constraint);
+let c_row_simpl {id_row_simpl = ConstraintIdentifier ci; reason_row_simpl; original_id; tv;r_tag;tv_map} =
+  `Assoc [
+    ("id_row_simpl", `String (Format.sprintf "%Li" ci));
+    ("original_id", `String (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null" ));
     ("reason_row_simpl", `String reason_row_simpl);
     ("tv", type_variable_to_yojson tv);
     ("r_tag", row_tag r_tag);
@@ -492,24 +497,10 @@ let type_variable_set s =
     `String (Format.asprintf "%a" Var.pp v) in
   let lst' = List.map aux lst in
   `Assoc ["typeVariableSet",  `List lst']
-let refined_typeclass ({ original=ConstraintIdentifier x; refined; vars } : refined_typeclass) : json =
-  `Assoc [
-    "original", `String (Format.asprintf "%Li" x);
-    "refined", c_typeclass_simpl refined;
-    "vars", type_variable_set vars
-  ]
 
 let constraint_identifier (ConstraintIdentifier ci : constraint_identifier) : json =
   `Assoc [
     "ConstraintIdentifier", `String (Format.asprintf "%Li" ci);
-  ]
-
-let constraints {constructor; poly; (* tc; *) row} =
-  `Assoc [
-    ("constructor", list c_constructor_simpl constructor);
-    ("poly", list c_poly_simpl poly);
-    (* ("tc", list c_typeclass_simpl tc); *)
-    ("row", list c_row_simpl row);
   ]
 
 (* let structured_dbs {refined_typeclasses;refined_typeclasses_back;typeclasses_constrained_by;by_constraint_identifier;all_constraints;aliases;assignments;grouped_by_variable;cycle_detection_toposort=_} =
@@ -542,8 +533,5 @@ let output_tc_fundep (t : output_tc_fundep) =
   let lst = t.tc in
   let a = t.c in `Assoc
     [
-      ("tc",`Assoc[
-          ("refined",c_typeclass_simpl lst.refined);
-          ("original",`String(Format.asprintf "%Li" (match lst.original with ConstraintIdentifier x -> x)));
-          ("vars",list Var.to_yojson ( RedBlackTrees.PolySet.elements lst.vars))])
+      ("tc",c_typeclass_simpl lst)
       ;("a",constructor_or_row a)]

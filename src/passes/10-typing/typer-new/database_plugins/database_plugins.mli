@@ -6,7 +6,6 @@ module PluginFields_ (Ppt : PerPluginType) : sig
     grouped_by_variable              : Ppt(GroupedByVariable).t ;
     cycle_detection_topological_sort : Ppt(CycleDetectionTopologicalSort).t ;
     by_constraint_identifier         : Ppt(ByConstraintIdentifier).t ;
-    refined_typeclasses              : Ppt(RefinedTypeclasses).t ;
     typeclasses_constraining         : Ppt(TypeclassesConstraining).t ;
   >
 
@@ -14,6 +13,7 @@ module PluginFields_ (Ppt : PerPluginType) : sig
     type 'typeVariable t
     val find_opt : 'type_variable -> 'type_variable t -> constructor_or_row option
     val bindings : 'type_variable t -> ('type_variable * constructor_or_row) list
+    val pp : (Format.formatter -> 'typeVariable -> unit) -> Format.formatter -> 'typeVariable t -> unit
   end
   val assignments : flds -> < assignments : Ppt(Assignments).t >
 end

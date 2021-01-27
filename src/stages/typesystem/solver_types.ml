@@ -5,7 +5,7 @@ module Set = RedBlackTrees.PolySet
 type 'old_constraint_type selector_input = 'old_constraint_type (* some info about the constraint just added, so that we know what to look for *)
 type 'selector_output selector_outputs = 'selector_output list
 (* type ('old_contraint_type, 'selector_output) selector = 'old_constraint_type selector_input -> structured_dbs -> 'selector_output selector_outputs *)
-type ('selector_output , 'errors) propagator = 'selector_output -> (updates, 'errors) result
+type ('selector_output , 'errors) propagator = 'selector_output -> (type_variable -> type_variable) -> (updates, 'errors) result
 
 type ('selector_output, -'flds) selector = type_constraint_simpl -> 'flds -> 'selector_output list
 
@@ -13,6 +13,7 @@ type ('selector_output, -'flds) heuristic_plugin = {
   (* Finds in the databases tuples of constraints which are
      interesting for this plugin and include the given
      type_constraint_simpl. *)
+  heuristic_name : string ;
   selector     : ('selector_output, 'flds) selector ;
   (* Select in the databases tuples of constraints which are
      interesting and involve the given two type_viables, knowing that
@@ -20,7 +21,7 @@ type ('selector_output, -'flds) heuristic_plugin = {
      database's merge_aliases functions are called (i.e. the database
      does not reflect the effects of the merge yet). *)
   alias_selector : type_variable -> type_variable -> 'flds -> 'selector_output list ;
-  propagator   : 'selector_output -> (updates, Ast_typed.Typer_errors.typer_error) result ;
+  propagator   : ('selector_output , Ast_typed.Typer_errors.typer_error) propagator ;
   (* called when two 'data are associated with the same type_constraint *)
   printer      : Format.formatter -> 'selector_output -> unit ;
   printer_json : 'selector_output -> Yojson.Safe.t ;
@@ -37,6 +38,9 @@ type -'flds ex_heuristic_plugin =
 
 type -'flds ex_heuristic_state =
     Heuristic_state : ('selector_output, 'flds) heuristic_state -> 'flds ex_heuristic_state
+
+type -'flds ex_heuristic_selector =
+    Heuristic_selector: ('selector_output, 'flds) heuristic_state * 'selector_output selector_outputs -> 'flds ex_heuristic_selector
 
 type 'flds heuristic_plugins = 'flds ex_heuristic_plugin list
 

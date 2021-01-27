@@ -11,15 +11,12 @@ open Database_plugins.All_plugins
 type 'a indexes = <
     assignments              : type_variable Assignments.t ;
     grouped_by_variable      : type_variable GroupedByVariable.t ;
-    refined_typeclasses      : type_variable RefinedTypeclasses.t ;
     typeclasses_constraining : type_variable TypeclassesConstraining.t ;
     by_constraint_identifier : type_variable ByConstraintIdentifier.t ;
     ..                          (* TODO: remove this it breaks type safety below *)
 > as 'a
 
 let set_of_vars l = (Set.add_list l (Set.create ~cmp:Var.compare)).set
-
-let make_refined_typeclass refined ~original : refined_typeclass = { refined; original ; vars = set_of_vars refined.args }
 
 let constraint_identifier_to_tc (dbs : _ indexes) (ci : constraint_identifier) =
   (* TODO: this can fail: catch the exception and throw an error *)
@@ -109,7 +106,7 @@ let transpose : c_typeclass_simpl -> ((type_variable * type_value list) list, _)
                           [map(unit,nat) ; string ; ] ;
                           [map(int,int)  ; unit   ; ] ; ]) *)
 let transpose_back : _ -> _ -> (type_variable * type_value list) list -> (c_typeclass_simpl, _) result =
-  fun (reason_typeclass_simpl, original_id, is_mandatory_constraint) id_typeclass_simpl tcs ->
+  fun (reason_typeclass_simpl, original_id) id_typeclass_simpl tcs ->
   let%bind tc =
     match tcs with
     | [] -> ok []
@@ -124,7 +121,7 @@ let transpose_back : _ -> _ -> (type_variable * type_value list) list -> (c_type
   in
   let args = List.map fst tcs in
   check_typeclass_rectangular @@
-  { reason_typeclass_simpl; original_id; is_mandatory_constraint; id_typeclass_simpl; tc; args }
+  { reason_typeclass_simpl; original_id; id_typeclass_simpl; tc; args }
 
 type 'a all_equal = Empty | All_equal_to of 'a | Different
 let all_equal cmp = function

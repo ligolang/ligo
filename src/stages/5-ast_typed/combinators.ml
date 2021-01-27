@@ -348,32 +348,42 @@ let get_record_field_type (t : type_expression) (label : label) : type_expressio
     | None -> None
     | Some row_element -> Some row_element.associated_type
 
-let make_c_constructor_simpl ?(reason_constr_simpl="") tv c_tag tv_list =
-  {
-    reason_constr_simpl ;
-    is_mandatory_constraint = true ;
-    tv ;
-    c_tag;
-    tv_list
-  }
+let make_c_constructor_simpl ?(reason_constr_simpl="") id_constructor_simpl original_id tv c_tag tv_list = {
+  reason_constr_simpl ;
+  id_constructor_simpl = ConstraintIdentifier (Int64.of_int id_constructor_simpl) ;
+  original_id = Option.map (fun i -> ConstraintIdentifier (Int64.of_int i)) original_id;
+  tv ;
+  c_tag;
+  tv_list
+}
 
-let make_c_row_simpl ?(reason_row_simpl="") tv r_tag tv_map_as_lst : c_row_simpl = { 
+let make_c_row_simpl ?(reason_row_simpl="") id_row_simpl original_id tv r_tag tv_map_as_lst : c_row_simpl = { 
   reason_row_simpl ;
-  is_mandatory_constraint = true ;
+  id_row_simpl = ConstraintIdentifier (Int64.of_int id_row_simpl) ;
+  original_id = Option.map (fun i -> ConstraintIdentifier (Int64.of_int i)) original_id;
   tv;
   r_tag;
   tv_map = LMap.of_list tv_map_as_lst ;
 }
 
-let make_constructor_or ?(reason_constr_simpl = "") tv c_tag tv_list =
-  `Constructor (make_c_constructor_simpl ~reason_constr_simpl tv c_tag tv_list)
 
-let make_row_or ?(reason_row_simpl = "") tv r_tag tv_map_as_lst : constructor_or_row =
-  `Row (make_c_row_simpl ~reason_row_simpl tv r_tag tv_map_as_lst)
+let make_c_typeclass_simpl ?(reason_typeclass_simpl="") id_typeclass_simpl original_id args tc : c_typeclass_simpl =
+  {
+    reason_typeclass_simpl ;
+    id_typeclass_simpl = ConstraintIdentifier (Int64.of_int id_typeclass_simpl) ;
+    original_id = Option.map (fun i -> ConstraintIdentifier (Int64.of_int i)) original_id;
+    tc ;
+    args ;
+  }
+
+let make_constructor_or ?(reason_constr_simpl = "") id_constructor_simpl original_id tv c_tag tv_list =
+  `Constructor (make_c_constructor_simpl ~reason_constr_simpl id_constructor_simpl original_id tv c_tag tv_list)
+
+let make_row_or ?(reason_row_simpl = "") id_row_simpl original_id tv r_tag tv_map_as_lst : constructor_or_row =
+  `Row (make_c_row_simpl ~reason_row_simpl id_row_simpl original_id tv r_tag tv_map_as_lst)
 
 let make_alias ?(reason_alias_simpl="") a b :  type_constraint_simpl = SC_Alias {
   reason_alias_simpl ;
-  is_mandatory_constraint = true ;
   a ;
   b ;
 }
@@ -381,18 +391,16 @@ let make_alias ?(reason_alias_simpl="") a b :  type_constraint_simpl = SC_Alias 
 let make_sc_alias ?(reason_alias_simpl="") a b : type_constraint_simpl =
   SC_Alias {
     reason_alias_simpl ;
-    is_mandatory_constraint = true ;
     a ;
     b ;
   }
-let make_sc_constructor ?(reason_constr_simpl="") tv c_tag tv_list : type_constraint_simpl =
-  SC_Constructor (make_c_constructor_simpl ~reason_constr_simpl tv c_tag tv_list)
-let make_sc_row ?(reason_row_simpl="") tv r_tag tv_map_as_lst : type_constraint_simpl =
-  SC_Row (make_c_row_simpl ~reason_row_simpl tv r_tag tv_map_as_lst)
+let make_sc_constructor ?(reason_constr_simpl="") id_constructor_simpl original_id tv c_tag tv_list : type_constraint_simpl =
+  SC_Constructor (make_c_constructor_simpl ~reason_constr_simpl id_constructor_simpl original_id tv c_tag tv_list)
+let make_sc_row ?(reason_row_simpl="") id_row_simpl original_id tv r_tag tv_map_as_lst : type_constraint_simpl =
+  SC_Row (make_c_row_simpl ~reason_row_simpl id_row_simpl original_id tv r_tag tv_map_as_lst)
 let make_sc_typeclass ?(reason_typeclass_simpl="") (tc : typeclass) (args : type_variable_list) =
   SC_Typeclass {
     reason_typeclass_simpl ;
-    is_mandatory_constraint = true ;
     id_typeclass_simpl = ConstraintIdentifier 1L ;
     original_id = None ;
     tc ;
@@ -401,7 +409,8 @@ let make_sc_typeclass ?(reason_typeclass_simpl="") (tc : typeclass) (args : type
 let make_sc_poly ?(reason_poly_simpl="") (tv:type_variable) (forall:p_forall) =
   SC_Poly {
     reason_poly_simpl ;
-    is_mandatory_constraint = true ;
+    id_poly_simpl = ConstraintIdentifier 1L ;
+    original_id = None ;
     tv ;
     forall ;
   }

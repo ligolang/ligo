@@ -40,7 +40,7 @@ type ('item, 'value) map = ('item, 'value) RedBlackTrees.PolyMap.t
 let map_empty (compare : 'item -> 'item -> int) : ('item, 'value) map = RedBlackTrees.PolyMap.create ~cmp:compare
 let map_find : 'item 'value . 'item -> ('item, 'value) map -> 'value = RedBlackTrees.PolyMap.find
 (* let map_iter : 'item 'value . ('item -> 'value -> unit) -> ('item, 'value) map -> unit = RedBlackTrees.PolyMap.iter *)
-let map_add : 'item 'value . 'item -> 'value -> ('item, 'value) map -> ('item, 'value) map = RedBlackTrees.PolyMap.add
+let map_add : 'item 'value . ?debug:(Format.formatter -> 'item * 'value -> unit) -> 'item -> 'value -> ('item, 'value) map -> ('item, 'value) map = RedBlackTrees.PolyMap.add
 let map_sorted_keys : 'item 'value . ('item, 'value) map -> 'item list = fun m -> List.map fst @@ RedBlackTrees.PolyMap.bindings m
 
 (** The type [partition] implements a partition of classes of
@@ -58,13 +58,13 @@ type 'item repr = 'item
 
 let empty to_string compare = { to_string ; compare ; map = map_empty compare }
 
-let root : 'item * height -> 'item t -> 'item t =
-  fun (item, height) { to_string ; compare ; map } ->
-  { to_string ; compare ; map = map_add item (Root height) map }
+let root : ?debug:(Format.formatter -> 'item * 'item node -> unit) -> 'item * height -> 'item t -> 'item t =
+  fun ?debug (item, height) { to_string ; compare ; map } ->
+  { to_string ; compare ; map = map_add ?debug item (Root height) map }
 
-let link : 'item * height -> 'item -> 'item t -> 'item t
-  = fun (src, height) dst { to_string ; compare ; map } ->
-  { to_string ; compare ; map = map_add src (Link (dst, height)) map }
+let link : ?debug:(Format.formatter -> 'item * 'item node -> unit) -> 'item * height -> 'item -> 'item t -> 'item t
+  = fun ?debug (src, height) dst { to_string ; compare ; map } ->
+  { to_string ; compare ; map = map_add ?debug src (Link (dst, height)) map }
 
 let rec seek (i: 'item) (p: 'item partition) : 'item * height =
   match map_find i p.map with
@@ -77,28 +77,28 @@ let repr i p = fst (seek i p)
  *   try equal p.compare (repr i p) (repr j p) with
  *     Not_found -> false *)
 
-let get_or_set_h (i: 'item) (p: 'item partition) =
+let get_or_set_h ?debug (i: 'item) (p: 'item partition) =
   try seek i p, p with
-    Not_found -> let n = i,0 in (n, root n p)
+    Not_found -> let n = i,0 in (n, root ?debug n p)
 
-let get_or_set (i: 'item) (p: 'item partition) =
-  let (i, _h), p = get_or_set_h i p in (i, p)
+let get_or_set ?debug (i: 'item) (p: 'item partition) =
+  let (i, _h), p = get_or_set_h ?debug i p in (i, p)
 
 (* let mem i p = try Some (repr i p) with Not_found -> None *)
 
 let repr i p = try repr i p with Not_found -> i
 
 type 'item changed_reprs = { demoted_repr : 'item; new_repr : 'item }
-type 'item equiv_result = { partition : 'item partition; changed_reprs : 'item changed_reprs list }
+type 'item equiv_result = { partition : 'item partition; changed_reprs : 'item changed_reprs }
 
-let equiv (i: 'item) (j: 'item) (p: 'item partition) : 'item equiv_result =
-  let (ri,hi as ni), p = get_or_set_h i p in
-  let (rj,hj as nj), p = get_or_set_h j p in
+let equiv ?debug (i: 'item) (j: 'item) (p: 'item partition) : 'item equiv_result =
+  let (ri,hi as ni), p = get_or_set_h ?debug i p in
+  let (rj,hj as nj), p = get_or_set_h ?debug j p in
   if   equal p.compare ri rj
-  then { partition = p; changed_reprs = [ { demoted_repr = ri; new_repr = rj } ] }
+  then { partition = p; changed_reprs = { demoted_repr = ri; new_repr = rj } }
   else if   hi > hj
-       then { partition = link nj ri p; changed_reprs = [ { demoted_repr = rj; new_repr = ri } ] }
-       else { partition = link ni rj (if hi < hj then p else root (rj, hj+1) p); changed_reprs = [ { demoted_repr = ri; new_repr = rj } ] }
+       then { partition = link ?debug nj ri p; changed_reprs = { demoted_repr = rj; new_repr = ri } }
+       else { partition = link ?debug ni rj (if hi < hj then p else root ?debug (rj, hj+1) p); changed_reprs = { demoted_repr = ri; new_repr = rj } }
 
 (** The call [alias i j p] results in the same partition as [equiv
     i j p], except that [i] is not the representative of its class
@@ -110,15 +110,15 @@ let equiv (i: 'item) (j: 'item) (p: 'item partition) : 'item equiv_result =
     its class before calling [alias], then the height criteria is
     applied (which, without the constraint above, would yield a
     height-balanced new tree). *)
-let [@warning "-32" ] alias (i: 'item) (j: 'item) (p: 'item partition) : 'item partition =
-  let (ri,hi as ni), p = get_or_set_h i p in
-  let (rj,hj as nj), p = get_or_set_h j p in
+let [@warning "-32" ] alias ~debug (i: 'item) (j: 'item) (p: 'item partition) : 'item partition =
+  let (ri,hi as ni), p = get_or_set_h ~debug i p in
+  let (rj,hj as nj), p = get_or_set_h ~debug j p in
   if   equal p.compare ri rj
   then p
   else if   hi = hj || equal p.compare ri i
-       then link ni rj @@ root (rj, max hj (hi+1)) p
-       else if hi < hj then link ni rj p
-                       else link nj ri p
+       then link ~debug ni rj @@ root ~debug (rj, max hj (hi+1)) p
+       else if hi < hj then link ~debug ni rj p
+                       else link ~debug nj ri p
 
 (** {1 iteration over the elements} *)
 
@@ -167,3 +167,14 @@ let partitions : 'item . 'item partition -> 'item list list =
  *         p.to_string i hi p.to_string j hj
  *     in ()
  *   in map_iter print p.map *)
+
+let bindings ({map;_} : 'a t) = RedBlackTrees.PolyMap.bindings map
+
+let pp_node f ppf = function
+  Root h -> Format.fprintf ppf "Root (%i)" h
+| Link (a,h) -> Format.fprintf ppf "Link (%a,%i)" f a h
+
+let pp f ppf (uf : 'a t) =
+  let pp_sep = (fun ppf () -> Format.fprintf ppf " ,@ ") in
+  Format.fprintf ppf "@[(%a)@]"
+  (Format.pp_print_list ~pp_sep (fun ppf (a,b) -> Format.fprintf ppf "(%a,%a)" f a (pp_node f) b)) (bindings uf)

@@ -14,7 +14,6 @@ type    c_access_label        =    Ast_typed.c_access_label
 type    type_constraint       =    Ast_typed.type_constraint
 type    typeclass             =    Ast_typed.typeclass
 type 'a typeVariableMap       = 'a Ast_typed.typeVariableMap
-type    constraints           =    Ast_typed.constraints
 type    c_constructor_simpl   =    Ast_typed.c_constructor_simpl
 type    c_const_e             =    Ast_typed.c_const_e
 type    c_equation_e          =    Ast_typed.c_equation_e

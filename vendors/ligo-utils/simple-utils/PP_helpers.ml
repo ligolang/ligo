@@ -6,7 +6,7 @@ let tag tag : formatter -> unit -> unit = fun ppf () -> fprintf ppf tag
 
 let bool ppf b = fprintf ppf "%b" b
 
-let pair f g ppf (a , b) = fprintf ppf "%a , %a" f a g b
+let pair f g ppf (a , b) = fprintf ppf "(%a , %a)" f a g b
 
 let new_line : formatter -> unit -> unit = tag "@;"
 

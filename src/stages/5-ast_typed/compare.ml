@@ -477,29 +477,19 @@ and c_access_label
 and tc_allowed t = List.compare ~compare:type_value t
 and typeclass  t = List.compare ~compare:tc_allowed t
 
-let c_constructor_simpl {reason_constr_simpl=ra;is_mandatory_constraint=imca;tv=tva;c_tag=ca;tv_list=la} {reason_constr_simpl=rb;is_mandatory_constraint=imcb;tv=tvb;c_tag=cb;tv_list=lb} =
-  cmp5
-    String.compare ra rb
-    Bool.compare imca imcb
-    type_variable tva tvb
-    constant_tag ca cb
-    (List.compare ~compare:type_variable) la lb
+let c_constructor_simpl {id_constructor_simpl = ConstraintIdentifier ca;_} {id_constructor_simpl = ConstraintIdentifier cb;_} =
+  Int64.compare ca cb
 
-let c_alias {reason_alias_simpl=ra;is_mandatory_constraint=imca;a=aa;b=ba} {reason_alias_simpl=rb;is_mandatory_constraint=imcb;a=ab;b=bb} =
-  cmp4
+let c_alias {reason_alias_simpl=ra;a=aa;b=ba} {reason_alias_simpl=rb;a=ab;b=bb} =
+  cmp3
     String.compare ra rb
-    Bool.compare imca imcb
     type_variable  aa ab
     type_variable  ba bb
 
-let c_poly_simpl {reason_poly_simpl=ra;is_mandatory_constraint=imca;tv=tva;forall=fa} {reason_poly_simpl=rb;is_mandatory_constraint=imcb;tv=tvb;forall=fb} =
-  cmp4
-    String.compare ra  rb
-    Bool.compare imca imcb
-    type_variable  tva tvb
-    p_forall       fa  fb
+let c_poly_simpl {id_poly_simpl = ConstraintIdentifier ca;_} {id_poly_simpl = ConstraintIdentifier cb;_} =
+  Int64.compare ca cb
 
-(* let c_typeclass_simpl {reason_typeclass_simpl=ra;is_mandatory_constraint=imca;id_typeclass_simpl=ida;original_id=oia;tc=ta;args=la} {reason_typeclass_simpl=rb;is_mandatory_constraint=imcb;id_typeclass_simpl=idb;original_id=oib;tc=tb;args=lb} =
+(* let c_typeclass_simpl {reason_typeclass_simpl=ra;id_typeclass_simpl=ida;original_id=oia;tc=ta;args=la} {reason_typeclass_simpl=rb;id_typeclass_simpl=idb;original_id=oib;tc=tb;args=lb} =
  *   cmp6
  *     String.compare ra rb
  *     Bool.compare imca imcb
@@ -511,13 +501,8 @@ let c_poly_simpl {reason_poly_simpl=ra;is_mandatory_constraint=imca;tv=tva;foral
 let c_typeclass_simpl a b =
   constraint_identifier a.id_typeclass_simpl b.id_typeclass_simpl
 
-let c_row_simpl {reason_row_simpl=ra;is_mandatory_constraint=imca;tv=tva;r_tag=rta;tv_map=ma} {reason_row_simpl=rb;is_mandatory_constraint=imcb;tv=tvb;r_tag=rtb;tv_map=mb} =
-  cmp5
-    String.compare ra rb
-    Bool.compare imca imcb
-    type_variable  tva tvb
-    row_tag        rta rtb
-    (label_map ~compare:type_variable) ma mb
+let c_row_simpl {id_row_simpl = ConstraintIdentifier ca;_} {id_row_simpl = ConstraintIdentifier cb;_} =
+  Int64.compare ca cb
 
 let constructor_or_row
     (a : constructor_or_row)

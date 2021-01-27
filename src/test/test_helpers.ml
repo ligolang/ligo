@@ -109,7 +109,7 @@ let typed_program_with_imperative_input_to_michelson
 let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "\nINPUT = %s\n\n%!" (Format.asprintf "%a" Ast_core.PP.expression core)) in
   let%bind app              = Compile.Of_core.apply entry_point core in
 let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "\n\nSTATE IZ=%a\n\n" Typer.Solver.pp_typer_state state) in
-  let%bind (typed_app, _env, new_state)    = Compile.Of_core.compile_expression ~typer_switch:(typer_switch ()) ~env ~state app in
+  let%bind (typed_app,_env,new_state)    = Compile.Of_core.compile_expression ~typer_switch:(typer_switch ()) ~env ~state:(Typer.Solver.initial_state) app in
   let () = Typer.Solver.discard_state new_state in
   let%bind compiled_applied = Compile.Of_typed.compile_expression typed_app in
   let%bind mini_c_prg       = Compile.Of_typed.compile program in

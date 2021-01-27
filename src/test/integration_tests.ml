@@ -2163,6 +2163,22 @@ let entrypoints_ligo () : (unit, _) result =
   (* hmm... *)
   ok ()
 
+let simple1 () : (unit,_) result =
+  let%bind program = type_file "./contracts/simple1.ligo" in
+  expect_eq_evaluate program "i" (e_int 42)
+
+let simple2 () : (unit,_) result =
+  let%bind program = type_file "./contracts/simple2.ligo" in
+  expect_eq_evaluate program "i" (e_int 42)
+
+let simple3 () : (unit,_) result =
+  let%bind program = type_file "./contracts/simple3.ligo" in
+  expect_eq_evaluate program "my_address" (e_address "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx")
+
+let simple4 () : (unit,_) result =
+  let%bind program = type_file "./contracts/simple4.ligo" in
+  expect_eq_evaluate program "my_string_option" (e_string "hello")
+
 let chain_id () : (unit, _) result =
   let%bind program = type_file "./contracts/chain_id.ligo" in
   let pouet = Tezos_crypto.Base58.simple_encode
@@ -2454,10 +2470,14 @@ let y = true
 let main = test_suite "Integration (End to End)"
     @@ (fun lst -> List.map snd @@ match typer_switch () with Ast_typed.New -> List.filter fst lst | _ -> lst) @@ [
 
-    test no "chain id" chain_id ;                         (* record *)
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "simple1" simple1 ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "simple2" simple2 ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "simple3" simple3 ;
+    (* test no "simple4" simple4 ; *)
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "chain id" chain_id ;                         (* record *)
     test no "bytes unpack" bytes_unpack ;                 (* record *)
     test no "bytes unpack (mligo)" bytes_unpack_mligo ;   (* record *)
-    test no "bytes unpack (religo)" bytes_unpack_religo ; (* record *)
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bytes unpack (religo)" bytes_unpack_religo ; (* record *)
     test no "key hash" key_hash ;                         (* C_access_label *)
     test no "key hash (mligo)" key_hash_mligo ;           (* C_access_label *)
     test no "key hash (religo)" key_hash_religo ;         (* C_access_label *)
@@ -2465,18 +2485,18 @@ let main = test_suite "Integration (End to End)"
     test no "check signature (mligo)" check_signature_mligo ;   (* C_access_label *)
     test no "check signature (religo)" check_signature_religo ; (* C_access_label *)
 
-    test y "type alias" type_alias ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "type alias" type_alias ;
 
-    test no "function" function_ ;                        (* tests don't typecheck the test case's application *)
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "function" function_ ;                        (* tests don't typecheck the test case's application *)
 
     test no "blockless function" blockless;
     (* test "procedure"  procedure ; *)
     test no "assign" assign ;
-    test no "declaration local" declaration_local ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "declaration local" declaration_local ;
     test no "complex function" complex_function ;
     test no(*y*) "anon function" anon_function ;
 
-    test no(*y*) "various applications" application ;
+    test no (*y*) "various applications" application ;
 
     test no "closure" closure ;
     test no "closure (mligo)" closure_mligo ;
@@ -2502,11 +2522,11 @@ let main = test_suite "Integration (End to End)"
     test no "condition (ligo)" condition ;
     test no "condition (mligo)" condition_mligo ;
     test no "condition (religo)" condition_religo ;
-    test no "sequence (mligo" sequence_mligo ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "sequence (mligo" sequence_mligo ;
     test no "eq bool (ligo)" eq_bool ;
     test no "eq bool (mligo)" eq_bool_mligo ;
     test no "eq bool (religo)" eq_bool_religo ;
-    test no "shadow" shadow ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "shadow" shadow ;
     test no(*y*) "annotation" annotation ;
 
     test no "multiple parameters" multiple_parameters ;
@@ -2518,9 +2538,9 @@ let main = test_suite "Integration (End to End)"
     test no "arithmetic" arithmetic ;
     test no "arithmetic (mligo)" arithmetic_mligo ;
     test no "arithmetic (religo)" arithmetic_religo ;
-    test no "bitwise_arithmetic" bitwise_arithmetic ;
-    test no "bitwise_arithmetic (mligo)" bitwise_arithmetic_mligo;
-    test no "bitwise_arithmetic (religo)" bitwise_arithmetic_religo;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bitwise_arithmetic" bitwise_arithmetic ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bitwise_arithmetic (mligo)" bitwise_arithmetic_mligo;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bitwise_arithmetic (religo)" bitwise_arithmetic_religo;
     test no "string_arithmetic" string_arithmetic ;
     test no "string_arithmetic (mligo)" string_arithmetic_mligo ;
     test no "string_arithmetic (religo)" string_arithmetic_religo ;
@@ -2534,8 +2554,8 @@ let main = test_suite "Integration (End to End)"
     (* test "set_arithmetic" set_arithmetic ; *)
     test no "set_arithmetic (mligo)" set_arithmetic_mligo ;
     test no "set_arithmetic (religo)" set_arithmetic_religo ;
-    test no(*y*) "unit" unit_expression ;
-    test no(*y*) "string" string_expression ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "unit" unit_expression ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "string" string_expression ;
     test no "option" option ;
     test no(*y*) "option (mligo)" moption ;
     test no(*y*) "option (religo)" reoption ;
@@ -2555,13 +2575,10 @@ let main = test_suite "Integration (End to End)"
     test no "quote declaration" quote_declaration ;
     test no "quote declarations" quote_declarations ;
 
-    test no(*y*) "#include directives" include_ ;
-    test no(*y*) "#include directives (mligo)" include_mligo ;
-    test no(*y*) "#include directives (religo)" include_religo ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "#include directives" include_ ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "#include directives (mligo)" include_mligo ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "#include directives (religo)" include_religo ;
 
-    test no "modules" modules_ligo ;
-    test no "modules (mligo)" modules_mligo ;
-    test no "modules (religo)" modules_religo ;
 
     test no "counter contract" counter_contract ;
     test no "super counter contract" super_counter_contract ;
@@ -2586,9 +2603,7 @@ let main = test_suite "Integration (End to End)"
     test no "list matching (religo)" religo_list ;
     test no "failwith ligo" failwith_ligo ;
     test no "failwith mligo" failwith_mligo ;
-    test no "failwith religo" failwith_religo ;
     test no "assert mligo" assert_mligo ;
-    test no "assert religo" assert_religo ;
     test no "recursion (ligo)" recursion_ligo ;
     test no "recursion (mligo)" recursion_mligo ;
     test no "recursion (religo)" recursion_religo ;
@@ -2623,9 +2638,9 @@ let main = test_suite "Integration (End to End)"
     test no "address" address ;
     test no "address (mligo)" address_mligo ;
     test no "address (religo)" address_religo ;
-    test no(*y*) "self address" self_address ;
-    test no(*y*) "self address (mligo)" self_address_mligo ;
-    test no(*y*) "self address (religo)" self_address_religo ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "self address" self_address ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "self address (mligo)" self_address_mligo ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "self address (religo)" self_address_religo ;
     test no(*y*) "implicit account" implicit_account ;
     test no(*y*) "implicit account (mligo)" implicit_account_mligo ;
     test no(*y*) "implicit account (religo)" implicit_account_religo ;
@@ -2659,5 +2674,5 @@ let main = test_suite "Integration (End to End)"
     test no "no semicolon (religo)" no_semicolon_religo ;
     test no "loop_bugs (ligo)" loop_bugs_ligo ;
     test no(*y*) "tuple_list (religo)" tuple_list_religo ;
-    test no(*y*) "single_record_expr (religo)" single_record_expr_religo ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "single_record_expr (religo)" single_record_expr_religo ;
   ]
