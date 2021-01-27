@@ -724,9 +724,7 @@ let rec pp_cst state {decl; _} =
 and pp_declaration state = function
   Let {value = (_, kwd_rec, let_binding, attr); region} ->
     pp_loc_node state "Let" region;
-    (match kwd_rec with
-       None -> ()
-     | Some _ -> pp_node (state#pad 0 0) "rec"); (* Hack *)
+    (if kwd_rec <> None then pp_node (state#pad 0 0) "rec"); (* Hack *)
     pp_let_binding state let_binding attr
 | TypeDecl {value; region} ->
     pp_loc_node  state "TypeDecl" region;
