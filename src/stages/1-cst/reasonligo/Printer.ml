@@ -742,9 +742,7 @@ let rec pp_cst state {decl; _} =
 and pp_declaration state = function
   ConstDecl {value = (_, kwd_rec, let_binding, attr); region} ->
     pp_loc_node state "ConstDecl" region;
-    (match kwd_rec with
-        None -> ()
-     | Some _ -> pp_node (state#pad 0 0) "rec"); (* Hack *)
+    (if kwd_rec <> None then pp_node (state#pad 0 0) "rec"); (* Hack *)
     pp_let_binding state let_binding attr
 | TypeDecl {value; region} ->
     pp_loc_node  state "TypeDecl" region;
@@ -1410,7 +1408,8 @@ and pp_variant state {constr; arg; attributes=attr} =
   let rank =
     match arg with
       None -> rank
-    | Some (_,c) -> pp_type_expr (state#pad arity rank) c; rank+1 in
-  let _ = if attr <> [] then
+    | Some (_,c) ->
+        pp_type_expr (state#pad arity rank) c; rank+1 in
+  let () = if attr <> [] then
             pp_attributes (state#pad arity rank) attr
   in ()
