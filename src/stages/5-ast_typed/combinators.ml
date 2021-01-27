@@ -330,7 +330,10 @@ let get_a_record_accessor = fun t ->
 let get_declaration_by_name : module_fully_typed -> string -> declaration option = fun (Module_Fully_Typed p) name ->
   let aux : declaration -> bool = fun declaration ->
     match declaration with
-    | Declaration_constant { binder ; expr=_ ; inline=_ } -> binder.wrap_content = Var.of_name name
+    | Declaration_constant { name = name'; binder = _ ; expr=_ ; inline=_ } ->
+      (match name' with
+       | None -> false
+       | Some name' -> String.equal name' name)
     | Declaration_type   _
     | Declaration_module _
     | Module_alias       _ -> false

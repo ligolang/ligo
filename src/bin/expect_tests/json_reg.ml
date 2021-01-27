@@ -1596,6 +1596,7 @@ let%expect_test _ =
         "wrap_content": [
           "Declaration_constant",
           {
+            "name": "send",
             "binder": {
               "var": {
                 "wrap_content": { "name": "send" },
@@ -9728,6 +9729,7 @@ let%expect_test _ =
         "wrap_content": [
           "Declaration_constant",
           {
+            "name": "withdraw",
             "binder": {
               "var": {
                 "wrap_content": { "name": "withdraw" },
@@ -13341,6 +13343,7 @@ let%expect_test _ =
         "wrap_content": [
           "Declaration_constant",
           {
+            "name": "default",
             "binder": {
               "var": {
                 "wrap_content": { "name": "default" },
@@ -13978,6 +13981,7 @@ let%expect_test _ =
         "wrap_content": [
           "Declaration_constant",
           {
+            "name": "main",
             "binder": {
               "var": {
                 "wrap_content": { "name": "main" },

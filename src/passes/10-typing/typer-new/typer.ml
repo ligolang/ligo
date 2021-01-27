@@ -126,7 +126,7 @@ match Location.unwrap d with
     let%bind type_expr = evaluate_type env type_expr in
     let env' = Environment.add_type (type_binder) type_expr env in
     return env' state @@ Declaration_type {type_binder; type_expr}
-  | Declaration_constant {binder; attr; expr} -> (
+  | Declaration_constant {name; binder; attr; expr} -> (
     (*
       Determine the type of the expression and add it to the environment
     *)
@@ -136,7 +136,7 @@ match Location.unwrap d with
       type_expression env state ?tv_opt expr in
     let binder = Location.map Var.todo_cast binder.var in
     let post_env = Environment.add_ez_declaration binder expr e in
-    return post_env state' @@ Declaration_constant { binder ; expr ; inline=attr.inline}
+    return post_env state' @@ Declaration_constant { name ; binder ; expr ; inline=attr.inline}
     )
   | Declaration_module {module_binder;module_} -> (
     let%bind (e,module_,_) = type_module ~init_env:env module_ in

@@ -38,14 +38,14 @@ match Location.unwrap d with
     let%bind tv = evaluate_type env type_expr in
     let env' = Environment.add_type type_binder tv env in
     return env' (Solver.placeholder_for_state_of_new_typer ()) @@ Declaration_type { type_binder ; type_expr = tv }
-  | Declaration_constant {binder  ; attr={inline} ; expr} -> (
+  | Declaration_constant {name ; binder ; attr={inline} ; expr} -> (
     let%bind tv'_opt = bind_map_option (evaluate_type env) binder.ascr in
     let%bind expr =
       trace (constant_declaration_error_tracer binder.var expr tv'_opt) @@
       type_expression' ?tv_opt:tv'_opt env expr in
     let binder : O.expression_variable = cast_var binder.var in
     let post_env = Environment.add_ez_declaration binder expr env in
-    return post_env (Solver.placeholder_for_state_of_new_typer ()) @@ Declaration_constant { binder ; expr ; inline}
+    return post_env (Solver.placeholder_for_state_of_new_typer ()) @@ Declaration_constant { name ; binder ; expr ; inline}
   )
   | Declaration_module {module_binder;module_} -> (
     let%bind e,module_,_ = type_module ~init_env:env module_ in
@@ -752,11 +752,11 @@ function
   Declaration_type {type_binder; type_expr} ->
   let%bind type_expr = untype_type_expression type_expr in
   return @@ Declaration_type {type_binder; type_expr}
-| Declaration_constant {binder;expr;inline} ->
+| Declaration_constant {name; binder;expr;inline} ->
   let%bind ty = untype_type_expression expr.type_expression in
   let var = Location.map Var.todo_cast binder in
   let%bind expr = untype_expression expr in
-  return @@ Declaration_constant {binder={var;ascr=Some ty};expr;attr={inline}}
+  return @@ Declaration_constant {name; binder={var;ascr=Some ty};expr;attr={inline}}
 | Declaration_module {module_binder;module_} ->
   let%bind module_ = untype_module_fully_typed module_ in
   return @@ Declaration_module {module_binder;module_}

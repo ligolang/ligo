@@ -176,11 +176,11 @@ and decompile_declaration : O.declaration -> (I.declaration , desugaring_error) 
   | O.Declaration_type dt ->
     let%bind dt = declaration_type decompile_type_expression dt in
     return @@ I.Declaration_type dt
-  | O.Declaration_constant {binder=b; attr={inline}; expr} ->
+  | O.Declaration_constant {name; binder=b; attr={inline}; expr} ->
     let%bind binder = binder decompile_type_expression b in
     let%bind expr = decompile_expression expr in
     let attr = if inline then ["inline"] else [] in
-    return @@ I.Declaration_constant {binder; attr; expr}
+    return @@ I.Declaration_constant {name; binder; attr; expr}
   | O.Declaration_module {module_binder;module_} ->
     let%bind module_ = decompile_module module_ in
     return @@ I.Declaration_module {module_binder;module_}

@@ -160,11 +160,11 @@ function
   Declaration_type {type_binder; type_expr} ->
   let%bind type_expr = untype_type_expression type_expr in
   return @@ Declaration_type {type_binder; type_expr}
-| Declaration_constant {binder;expr;inline} ->
+| Declaration_constant {name; binder;expr;inline} ->
   let%bind ty = untype_type_expression expr.type_expression in
   let var = Location.map Var.todo_cast binder in
   let%bind expr = untype_expression expr in
-  return @@ Declaration_constant {binder={var;ascr=Some ty};expr;attr={inline}}
+  return @@ Declaration_constant {name; binder={var;ascr=Some ty};expr;attr={inline}}
 | Declaration_module {module_binder;module_} ->
   let%bind module_ = untype_module_fully_typed module_ in
   return @@ Declaration_module {module_binder;module_}

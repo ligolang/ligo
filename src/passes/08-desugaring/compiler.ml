@@ -295,11 +295,11 @@ and compile_declaration : I.declaration -> (O.declaration , desugaring_error) re
   | I.Declaration_type dt ->
     let%bind dt = declaration_type compile_type_expression dt in
     return @@ O.Declaration_type dt
-  | I.Declaration_constant {binder;attr;expr} ->
+  | I.Declaration_constant {name; binder;attr;expr} ->
     let%bind binder = compile_binder binder in
     let%bind expr = compile_expression expr in
     let inline = get_inline attr in
-    return @@ O.Declaration_constant {binder; attr={inline}; expr}
+    return @@ O.Declaration_constant {name; binder; attr={inline}; expr}
   | I.Declaration_module {module_binder;module_} ->
     let%bind module_ = compile_module module_ in
     return @@ O.Declaration_module {module_binder;module_}

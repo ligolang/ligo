@@ -173,10 +173,10 @@ let declaration_type : ('acc -> 'a -> ('acc * 'b, _) result) -> 'acc -> 'a decla
   ok @@ (acc,{type_binder; type_expr})
 
 let declaration_constant : ('acc -> 'a -> ('acc * 'b,_) result) -> ('acc -> 'c -> ('acc * 'd,_) result) -> 'acc -> ('a,'c) declaration_constant -> ('acc * ('b,'d) declaration_constant, _) result
-= fun f g acc {binder=b; attr; expr} ->
+= fun f g acc {name; binder=b; attr; expr} ->
   let%bind acc,binder = binder g acc b in
   let%bind acc,expr   = f acc expr     in
-  ok @@ (acc,{binder;attr;expr})
+  ok @@ (acc,{name;binder;attr;expr})
 
 let rec declaration_module : ('acc -> 'a -> ('acc * 'b, _) result) -> ('acc -> 'c -> ('acc * 'd,_) result) -> 'acc -> ('a,'c) declaration_module -> ('acc * ('b,'d) declaration_module, _) result
 = fun f g acc {module_binder; module_} ->

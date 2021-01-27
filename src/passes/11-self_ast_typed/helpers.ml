@@ -206,9 +206,9 @@ and map_module : self_ast_typed_error mapper -> module_fully_typed -> (module_fu
   let aux = fun (x : declaration) ->
     let return (d : declaration) = ok @@ d in
     match x with
-    | Declaration_constant {binder; expr ; inline} -> (
+    | Declaration_constant {name; binder; expr ; inline} -> (
         let%bind expr = map_expression m expr in
-        return @@ Declaration_constant {binder; expr ; inline}
+        return @@ Declaration_constant {name; binder; expr ; inline}
     )
     | Declaration_type t -> return @@ Declaration_type t
     | Declaration_module {module_binder;module_} ->
@@ -317,9 +317,9 @@ and fold_map_cases : ('a , self_ast_typed_error) fold_mapper -> 'a -> matching_e
 and fold_map_module : ('a, self_ast_typed_error) fold_mapper -> 'a -> module_fully_typed -> ('a * module_fully_typed , self_ast_typed_error) result = fun m init (Module_Fully_Typed p) ->
   let aux = fun acc (x : declaration Location.wrap) ->
     match Location.unwrap x with
-    | Declaration_constant {binder ; expr ; inline} -> (
+    | Declaration_constant {name; binder ; expr ; inline} -> (
       let%bind (acc', expr) = fold_map_expression m acc expr in
-      let wrap_content : declaration = Declaration_constant {binder ; expr ; inline} in
+      let wrap_content : declaration = Declaration_constant {name; binder ; expr ; inline} in
       ok (acc', {x with wrap_content})
     )
     | Declaration_type t -> (

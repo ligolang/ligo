@@ -18,6 +18,7 @@ type attribute = {
 and module_ = declaration Location.wrap list
 
 and declaration_constant = {
+    name : string option ;
     binder : ty_expr binder;
     attr : attribute ;
     expr : expression ;

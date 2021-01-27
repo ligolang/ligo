@@ -172,6 +172,13 @@ let option f o =
     | None   -> `List [ `String "None" ; `Null ]
     | Some v -> `List [ `String "Some" ; f v ]
 
+let option' f o =
+  match o with
+  | None -> `Null
+  | Some v -> f v
+
+let string s = `String s
+
 let list f lst = `List (List.map f lst)
 
 let label_map f lmap =
@@ -360,8 +367,9 @@ let declaration_type type_expression {type_binder; type_expr} =
     ("type_expr", type_expression type_expr);
   ]
 
-let declaration_constant expression type_expression {binder=b;attr;expr} =
+let declaration_constant expression type_expression {name; binder=b;attr;expr} =
   `Assoc [
+    ("name", option' string name);
     ("binder", binder type_expression b);
     ("expr", expression expr);
     ("attribute", attributes attr);

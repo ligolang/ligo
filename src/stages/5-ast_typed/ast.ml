@@ -124,6 +124,7 @@ and module_fully_typed = Module_Fully_Typed of module'
  *   the environment before the declaration (the original environment)
  *   the environment after the declaration (i.e. with that new declaration added to the original environment). *)
 and declaration_constant = {
+    name : string option ;
     binder : expression_variable ;
     expr : expression ;
     inline : bool ;

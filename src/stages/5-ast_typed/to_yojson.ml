@@ -229,8 +229,9 @@ and declaration_type {type_binder;type_expr} =
     ("type_expr", type_expression type_expr);
   ]
 
-and declaration_constant {binder;inline;expr} =
+and declaration_constant {name; binder;inline;expr} =
   `Assoc [
+    ("name", option' string name);
     ("binder",expression_variable_to_yojson binder);
     ("expr", expression expr);
     ("attribute", `Bool inline);

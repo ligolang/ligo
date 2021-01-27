@@ -175,7 +175,7 @@ let declaration_type : ('acc -> 'a -> ('acc, _) result) -> 'acc -> 'a declaratio
   ok @@ acc
 
 let declaration_constant : ('acc -> 'a -> ('acc,_) result) -> ('acc -> 'b -> ('acc,_) result) -> 'acc -> ('a,'b) declaration_constant -> ('acc, _) result
-= fun f g acc {binder=b; attr=_; expr} ->
+= fun f g acc {name = _; binder=b; attr=_; expr} ->
   let%bind acc = binder g acc b in
   let%bind acc = f acc expr     in
   ok @@ acc

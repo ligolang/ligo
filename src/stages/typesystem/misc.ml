@@ -221,10 +221,10 @@ module Substitution = struct
     let return (d : T.declaration) = ok @@ d in
     fun ~substs ->
       function
-      | Ast_typed.Declaration_constant {binder ; expr ; inline} ->
+      | Ast_typed.Declaration_constant {name ; binder ; expr ; inline} ->
         let%bind binder = s_variable ~substs binder in
         let%bind expr = s_expression ~substs expr in
-        return @@ Declaration_constant {binder; expr; inline}
+        return @@ Declaration_constant {name; binder; expr; inline}
       | Declaration_type t -> return @@ Declaration_type t
       | Declaration_module {module_binder;module_} ->
         let%bind module_       = s_module' ~substs module_ in
