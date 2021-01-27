@@ -788,11 +788,11 @@ and print_ne_injection :
     match enclosing with
       Brackets (lbracket, rbracket) ->
         print_token      state lbracket "[";
-        print_nsepseq     state ";" print ne_elements;
+        print_nsepseq    state ";" print ne_elements;
         print_terminator state terminator;
         print_token      state rbracket "]"
     | End kwd_end ->
-        print_nsepseq     state ";" print ne_elements;
+        print_nsepseq    state ";" print ne_elements;
         print_terminator state terminator;
         print_token      state kwd_end "end"
 
@@ -1431,8 +1431,9 @@ and pp_ne_injection :
     let arity          = if inj.attributes = [] then length else length + 1
     and apply len rank = printer (state#pad len rank)
     in List.iteri (apply arity) ne_elements;
-       let state = state#pad arity (arity-1)
-       in pp_attributes state inj.attributes
+       if inj.attributes <> [] then
+         let state = state#pad arity (arity-1)
+         in pp_attributes state inj.attributes
 
 and pp_tuple_pattern state tuple =
   let patterns       = Utils.nsepseq_to_list tuple.inside in
@@ -1467,10 +1468,11 @@ and pp_projection state proj =
   pp_ident (state#pad (1+len) 0) proj.struct_name;
   List.iteri (apply len) selections
 
-and pp_module_access : type a. (state -> a -> unit ) -> state -> a module_access -> unit
-= fun f state ma ->
-  pp_ident (state#pad 2 0) ma.module_name;
-  f (state#pad 2 1) ma.field
+and pp_module_access
+    : type a. (state -> a -> unit ) -> state -> a module_access -> unit
+  = fun printer state access ->
+      pp_ident (state#pad 2 0) access.module_name;
+      printer  (state#pad 2 1) access.field
 
 and pp_update state update =
   pp_path (state#pad 2 0) update.record;
