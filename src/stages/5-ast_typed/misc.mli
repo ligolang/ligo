@@ -40,4 +40,3 @@ val layout_eq : layout -> layout -> bool
 val assert_eq : 'a -> 'a -> unit option
 val assert_list_eq : ('a -> 'a -> unit option) -> 'a list -> 'a list -> unit option
 
-val is_mandatory_constraint : type_constraint_simpl -> bool

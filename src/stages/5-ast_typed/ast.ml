@@ -140,11 +140,13 @@ and declaration_module = {
     module_       : module_fully_typed ;
   }
 
-and declaration =
+and declaration' =
   | Declaration_constant of declaration_constant
   | Declaration_type of declaration_type
   | Declaration_module of declaration_module
   | Module_alias       of module_alias
+
+and declaration = declaration'
 
 and expression = {
     expression_content: expression_content ;
@@ -440,20 +442,12 @@ let unionfind_of_yojson _ = Error ("can't parse unionfind")
 
 type 'v constraint_identifierMap = (constraint_identifier, 'v) RedBlackTrees.PolyMap.t
 
-type refined_typeclass = {
-  refined : c_typeclass_simpl ;
-  original : constraint_identifier ; (* TODO: remove this field, it's duplicated in refined.original_id *)
-  vars : type_variable_set ;
-}
-
 and type_variable_set = type_variable poly_set
-and refined_typeclass_constraint_identifierMap = refined_typeclass constraint_identifierMap
 
 and constraint_identifier_set = constraint_identifier RedBlackTrees.PolySet.t
 and constraint_identifier_set_map = constraint_identifier_set typeVariableMap
 
 and c_constructor_simpl_typeVariableMap = c_constructor_simpl typeVariableMap
-and constraints_typeVariableMap = constraints typeVariableMap
 and c_typeclass_simpl_constraint_identifierMap = c_typeclass_simpl constraint_identifierMap
 and constraint_identifier_constraint_identifierMap = (constraint_identifier, constraint_identifier) RedBlackTrees.PolyMap.t
 and type_constraint_simpl_list = type_constraint_simpl list
@@ -462,19 +456,12 @@ and c_constructor_simpl_list = c_constructor_simpl list
 and c_poly_simpl_list        = c_poly_simpl        list
 and c_typeclass_simpl_list   = c_typeclass_simpl   list
 and c_row_simpl_list         = c_row_simpl         list
-and constraints = {
-  (* If implemented in a language with decent sets, these should be sets not lists. *)
-  constructor : c_constructor_simpl_list ; (* List of ('a = constructor(args…)) constraints *)
-  poly        : c_poly_simpl_list        ; (* List of ('a = forall 'b, some_type) constraints *)
-  (* tc          : c_typeclass_simpl_list   ; (\* List of (typeclass(args…)) constraints *\) *)
-  row         : c_row_simpl_list         ; (* List of ('a = row (args..)) constraints *)
-}
 and type_variable_list = type_variable list
 and type_variable_lmap = type_variable label_map
 and c_constructor_simpl = {
   reason_constr_simpl : string ;
-  (* If false, the constraint can be deleted without compromising the correctness of the typechecker: it might be a constraint used for bookkeeping which helps with inference, but its removal does not risk causing an ill-typed module to be accepted. If true, this constraint might (or might not) be necessary for correctness. It is always safe to use "true" for correctness. Use "false" only when being sure it is safe to remove that constraint. *)
-  is_mandatory_constraint : bool ;
+  id_constructor_simpl : constraint_identifier ;
+  original_id  : constraint_identifier option ;
   tv : type_variable;
   c_tag : constant_tag;
   (* Types wih no arguments like int, string etc. have an empty tv_list *)
@@ -483,7 +470,8 @@ and c_constructor_simpl = {
 and c_row_simpl = {
   reason_row_simpl : string ;
   (* see description above in c_constructor_simpl *)
-  is_mandatory_constraint : bool ;
+  id_row_simpl : constraint_identifier ;
+  original_id  : constraint_identifier option ;
   tv : type_variable;
   r_tag : row_tag;
   tv_map : type_variable_lmap;
@@ -499,16 +487,16 @@ and c_equation_e = {
 and c_typeclass_simpl = {
   reason_typeclass_simpl : string ;
   (* see description above in c_constructor_simpl *)
-  is_mandatory_constraint : bool ;
-  id_typeclass_simpl     : constraint_identifier ;
-  original_id : constraint_identifier option ; (* Pointer to the original typeclass, if this one is a refinement of it *)
+  id_typeclass_simpl : constraint_identifier ;
+  original_id        : constraint_identifier option ; (* Pointer to the original typeclass, if this one is a refinement of it *)
   tc   : typeclass          ;
   args : type_variable_list ;
 }
 and c_poly_simpl = {
   reason_poly_simpl : string ;
   (* see description above in c_constructor_simpl *)
-  is_mandatory_constraint : bool ;
+  id_poly_simpl : constraint_identifier ;
+  original_id   : constraint_identifier option ;
   tv     : type_variable ;
   forall : p_forall      ;
 }
@@ -527,7 +515,6 @@ and deduce_and_clean_result = {
 and c_alias = {
     reason_alias_simpl : string ;
     (* see description above in c_constructor_simpl *)
-    is_mandatory_constraint : bool ;
     a : type_variable ;
     b : type_variable ;
   }
@@ -555,7 +542,7 @@ type output_specialize1 = { (* TODO : this type must be local heuristic_... *)
 
 
 type output_tc_fundep = { (* TODO : this type must be local heuristic_tc_fundep.. *)
-    tc : refined_typeclass ;
+    tc : c_typeclass_simpl ;
     c :  constructor_or_row ;
   }
 

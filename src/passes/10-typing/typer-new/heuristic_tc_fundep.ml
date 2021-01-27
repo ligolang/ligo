@@ -34,13 +34,13 @@ type selector_output = output_tc_fundep
 (* Find typeclass constraints in the dbs which constrain c.tv *)
 let selector_by_ctor : _ indexes -> c_constructor_simpl -> (output_tc_fundep selector_outputs) =
   fun indexes c ->
-  let typeclasses = (TypeclassesConstraining.get_refined_typeclasses_constraining_list c.tv indexes) in
+  let typeclasses = (TypeclassesConstraining.get_typeclasses_constraining_list c.tv indexes) in
   let cs_pairs_db = List.map (fun tc -> { tc ; c = `Constructor c }) typeclasses in
   cs_pairs_db
 
 let selector_by_row : _ indexes -> c_row_simpl -> (output_tc_fundep selector_outputs) =
   fun indexes r ->
-  let typeclasses = (TypeclassesConstraining.get_refined_typeclasses_constraining_list r.tv indexes) in
+  let typeclasses = (TypeclassesConstraining.get_typeclasses_constraining_list r.tv indexes) in
   let cs_pairs_db = List.map (fun tc -> { tc ; c = `Row r }) typeclasses in
   cs_pairs_db
 
@@ -48,11 +48,7 @@ let selector_by_row : _ indexes -> c_row_simpl -> (output_tc_fundep selector_out
    variables constrained by the (refined version of the) typeclass
    constraint tcs. *)
 let selector_by_tc : _ indexes -> c_typeclass_simpl -> (output_tc_fundep selector_outputs) =
-  fun indexes tcs ->
-  let tc = RefinedTypeclasses.find tcs indexes#refined_typeclasses in
-  (* TODO: this won't detect already-existing constructor
-     constraints that would apply to future versions of the refined
-     typeclass. *)
+  fun indexes tc ->
   let aux tv =
     (* Find the constructor constraints which apply to tv. *)
     (* Since we are only refining the typeclass one type expression
@@ -62,7 +58,7 @@ let selector_by_tc : _ indexes -> c_typeclass_simpl -> (output_tc_fundep selecto
     match Assignments.find_opt tv indexes#assignments with
     | Some cr -> [({ tc ; c = cr } : output_tc_fundep)]
     | None   -> [] in
-  List.flatten @@ List.map aux tc.refined.args
+  List.flatten @@ List.map aux tc.args
 
 let selector : type_constraint_simpl -> _ indexes -> selector_output list =
   fun type_constraint_simpl indexes ->
@@ -90,14 +86,16 @@ let selector : type_constraint_simpl -> _ indexes -> selector_output list =
 
 let alias_selector : type_variable -> type_variable -> _ indexes -> selector_output list =
   fun a b indexes ->
-  let a_tcs = (TypeclassesConstraining.get_refined_typeclasses_constraining_list a indexes) in
-  let b_tcs = (TypeclassesConstraining.get_refined_typeclasses_constraining_list b indexes) in
-  let a_lhs_constr = GroupedByVariable.get_constraints_by_lhs a indexes#grouped_by_variable in
-  let b_lhs_constr = GroupedByVariable.get_constraints_by_lhs b indexes#grouped_by_variable in
-  let a_ctors = List.map (fun a -> `Constructor a) a_lhs_constr.constructor in
-  let a_rows = List.map (fun a -> `Row a) a_lhs_constr.row in
-  let b_ctors = List.map (fun a -> `Constructor a) b_lhs_constr.constructor in
-  let b_rows = List.map (fun a -> `Row a) b_lhs_constr.row in
+  let a_tcs = (TypeclassesConstraining.get_typeclasses_constraining_list a indexes) in
+  let b_tcs = (TypeclassesConstraining.get_typeclasses_constraining_list b indexes) in
+  let a_lhs_constructors = GroupedByVariable.get_constructors_by_lhs a indexes#grouped_by_variable in
+  let b_lhs_constructors = GroupedByVariable.get_constructors_by_lhs b indexes#grouped_by_variable in
+  let a_lhs_rows = GroupedByVariable.get_rows_by_lhs a indexes#grouped_by_variable in
+  let b_lhs_rows = GroupedByVariable.get_rows_by_lhs b indexes#grouped_by_variable in
+  let a_ctors = MultiSet.map_elements (fun a -> `Constructor a) a_lhs_constructors in
+  let a_rows  = MultiSet.map_elements (fun a -> `Row a        ) a_lhs_rows         in
+  let b_ctors = MultiSet.map_elements (fun a -> `Constructor a) b_lhs_constructors in
+  let b_rows  = MultiSet.map_elements (fun a -> `Row a        ) b_lhs_rows         in
   List.flatten @@
   List.map
     (fun tc ->
@@ -123,13 +121,19 @@ let restrict_one (cr : constructor_or_row) (allowed : type_value) =
   | _, (P_forall _ | P_variable _ | P_apply _ | P_row _ | P_constant _) -> None (* TODO: does this mean that we can't satisfy these constraints? *)
 
 (* Restricts a typeclass to the possible cases given v = k(a, …) in c *)
-let restrict (constructor_or_row : constructor_or_row) (tcs : c_typeclass_simpl) =
+let restrict repr (constructor_or_row : constructor_or_row) (tcs : c_typeclass_simpl) =
   let (tv_list, tv) = match constructor_or_row with
     | `Row r -> LMap.to_list r.tv_map , r.tv
     | `Constructor c -> c.tv_list , c.tv
   in
   (* TODO: this is bogus if there is shadowing *)
-  let index = List.find_index (Var.equal tv) tcs.args in
+  let index =
+    let repr_tv = (repr tv) in
+    try List.find_index (fun x -> Var.equal repr_tv (repr x)) tcs.args
+    with Failure _ ->
+      failwith (Format.asprintf "problem: couldn't find tv = %a in tcs.args = %a"
+                  Var.pp tv (Ast_typed.PP.list_sep_d Var.pp) tcs.args);
+  in
   (* Eliminate the impossible cases and splice in the type arguments
      for the possible cases: *)
   let aux allowed_tuple =
@@ -139,7 +143,7 @@ let restrict (constructor_or_row : constructor_or_row) (tcs : c_typeclass_simpl)
      variables passed to the type constructor *)
   let args = splice (fun _arg -> tv_list) index tcs.args in
   let id_typeclass_simpl = tcs.id_typeclass_simpl in
-  { reason_typeclass_simpl = tcs.reason_typeclass_simpl; original_id = tcs.original_id; is_mandatory_constraint = tcs.is_mandatory_constraint; id_typeclass_simpl ; tc ; args }
+  { reason_typeclass_simpl = tcs.reason_typeclass_simpl; original_id = tcs.original_id; id_typeclass_simpl ; tc ; args }
 
 (* input:
      x ? [ map3( nat , unit , float ) ; map3( bytes , mutez , float ) ]
@@ -171,8 +175,9 @@ let replace_var_and_possibilities_1 ((x : type_variable) , (possibilities_for_x 
     | (arguments_of_first_constructor :: _) as arguments_of_constructors ->
       let fresh_vars = List.map (fun _arg -> Var.fresh_like x) arguments_of_first_constructor in
       let deduced : c_constructor_simpl = {
+        id_constructor_simpl = ConstraintIdentifier 0L;
+        original_id = None;
         reason_constr_simpl = "inferred because it is the only remaining possibility at this point according to the typeclass [TODO:link to the typeclass here]" ;
-        is_mandatory_constraint = false;
         tv = x;
         c_tag ;
         tv_list = fresh_vars
@@ -183,7 +188,6 @@ let replace_var_and_possibilities_1 ((x : type_variable) , (possibilities_for_x 
             "sub-part of a typeclass: expansion of the possible \
              arguments for the constructor associated with %a"
             Ast_typed.PP.type_variable x;
-        is_mandatory_constraint = false;
         original_id = None;     (* TODO this and the is_mandatory_constraint are not actually used, should use a different type without these fields. *)
         id_typeclass_simpl = ConstraintIdentifier (-1L) ; (* TODO: this and the reason_typeclass_simpl should simply not be used here *)
         args = fresh_vars ;
@@ -235,17 +239,19 @@ let deduce_and_clean : c_typeclass_simpl -> (deduce_and_clean_result, _) result 
          deduced:
          [ x         = map3  ( fresh_x_1 , fresh_x_2 , fresh_x_3 ) ;
            fresh_x_3 = float (                                   ) ; ] *)
-  let%bind cleaned = transpose_back (tcs.reason_typeclass_simpl, tcs.original_id, tcs.is_mandatory_constraint) tcs.id_typeclass_simpl vars_and_possibilities in
+  let%bind cleaned = transpose_back (tcs.reason_typeclass_simpl, tcs.original_id) tcs.id_typeclass_simpl vars_and_possibilities in
   ok { deduced ; cleaned }
 
 let propagator : (output_tc_fundep, typer_error) propagator =
-  fun selected ->
+  fun selected repr ->
   (* The selector is expected to provide constraints with the shape (α
      = κ(β, …)) and to update the private storage to keep track of the
      refined typeclass *)
-  let restricted = restrict selected.c selected.tc.refined in
+  let () = Format.printf "heuristic_tc_fundep propagator: %a\n%!" Ast_typed.PP.output_tc_fundep selected in
+  let () = Format.printf "and tv: %a and repr tv :%a \n%!" (PP_helpers.list_sep_d Ast_typed.PP.type_variable) selected.tc.args (PP_helpers.list_sep_d Ast_typed.PP.type_variable) @@ List.map repr selected.tc.args in
+  let restricted = restrict repr selected.c selected.tc in
+  let () = Format.printf "restricted: %a\n!" Ast_typed.PP.c_typeclass_simpl_short restricted in
   let%bind {deduced ; cleaned} = deduce_and_clean restricted in
-  let cleaned : refined_typeclass = make_refined_typeclass cleaned ~original:selected.tc.original in
   (* TODO: this is because we cannot return a simplified constraint,
      and instead need to retun a constraint as it would appear if it
      came from the module (generated by the ill-named module
@@ -254,13 +260,13 @@ let propagator : (output_tc_fundep, typer_error) propagator =
      around. Hopefully this can be sorted out so that we don't need a
      dummy value for the srcloc and maybe even so that we don't need a
      conversion (one may dream). *)
-  let tc_args = List.map (fun x -> wrap (Todo "no idea") @@ P_variable x) cleaned.refined.args in
+  let tc_args = List.map (fun x -> wrap (Todo "no idea") @@ P_variable x) cleaned.args in
   let cleaned : type_constraint = {
-      reason = cleaned.refined.reason_typeclass_simpl;
+      reason = cleaned.reason_typeclass_simpl;
       c = C_typeclass {
         tc_args ;
-        typeclass = cleaned.refined.tc;
-        original_id = Some selected.tc.original;
+        typeclass = cleaned.tc;
+        original_id = selected.tc.original_id;
       }
     }
   in
@@ -279,13 +285,16 @@ let propagator : (output_tc_fundep, typer_error) propagator =
     }
   in
   let deduced : type_constraint list = List.map aux deduced in
-  ok [
+  let ret = [
       {
-        remove_constraints = [SC_Typeclass selected.tc.refined];
+        remove_constraints = [SC_Typeclass selected.tc];
         add_constraints = cleaned :: deduced;
         proof_trace = Axiom (HandWaved "cut with the following (cleaned => removed_typeclass) to show that the removal does not lose info, (removed_typeclass => selected.c => cleaned) to show that the cleaned vesion does not introduce unwanted constraints.")
       }
-    ]
+    ] in
+  Format.printf "Fundep : returning with new constraint %a\n%!" (PP_helpers.list_sep_d Ast_typed.PP.type_constraint_short) @@ cleaned::deduced ;
+  Format.printf "and remove_constraints %a\n%!" Ast_typed.PP.type_constraint_simpl_short @@ SC_Typeclass selected.tc;
+  ok ret
 
 (* ***********************************************************************
  * Heuristic
@@ -295,4 +304,4 @@ let printer = Ast_typed.PP.output_tc_fundep
 let printer_json = Ast_typed.Yojson.output_tc_fundep
 let comparator = Solver_should_be_generated.compare_output_tc_fundep
 
-let heuristic = Heuristic_plugin { selector; alias_selector; propagator; printer; printer_json; comparator }
+let heuristic = Heuristic_plugin { heuristic_name = "tc_fundep"; selector; alias_selector; propagator; printer; printer_json; comparator }

@@ -24,7 +24,9 @@ let rec type_constraint_simpl : type_constraint -> type_constraint_simpl list =
     let fresh_vars = List.map (fun _ -> Core.fresh_type_variable ()) args in
     let fresh_eqns = List.map (fun (v,t) -> c_equation (wrap (Todo "solver: simplifier: split_constant") @@ P_variable v) t "simplifier: split_constant") (List.combine fresh_vars args) in
     let recur = List.map type_constraint_simpl fresh_eqns in
-    [SC_Constructor { is_mandatory_constraint = true; tv=a;c_tag;tv_list=fresh_vars;reason_constr_simpl=Format.asprintf "simplifier: split constant %a = %a (%a)" Var.pp a Ast_typed.PP.constant_tag c_tag (PP_helpers.list_sep Ast_typed.PP.type_value (fun ppf () -> Format.fprintf ppf ", ")) args}] @ List.flatten recur in
+    let id_constructor_simpl = ConstraintIdentifier (!global_next_constraint_id) in
+    global_next_constraint_id := Int64.add !global_next_constraint_id 1L;
+    SC_Constructor {id_constructor_simpl;original_id=None;tv=a;c_tag;tv_list=fresh_vars;reason_constr_simpl=Format.asprintf "simplifier: split constant %a = %a (%a)" Var.pp a Ast_typed.PP.constant_tag c_tag (PP_helpers.list_sep Ast_typed.PP.type_value (fun ppf () -> Format.fprintf ppf ", ")) args} :: List.flatten recur in
   let split_row a r_tag args =
     let aux const _ v =
       let var = Core.fresh_type_variable () in
@@ -33,12 +35,17 @@ let rec type_constraint_simpl : type_constraint -> type_constraint_simpl list =
     in
     let fresh_eqns, fresh_vars = LMap.fold_map aux [] args in
     let recur = List.map type_constraint_simpl fresh_eqns in
-    [SC_Row {is_mandatory_constraint = true; tv=a;r_tag;tv_map=fresh_vars;reason_row_simpl=Format.asprintf "simplifier: split constant %a = %a (%a)" Var.pp a Ast_typed.PP.row_tag r_tag (Ast_typed.PP.record_sep Ast_typed.PP.type_value (fun ppf () -> Format.fprintf ppf ", ")) args}] @ List.flatten recur in
-  let gather_forall a forall = [SC_Poly { is_mandatory_constraint = true; tv=a; forall ; reason_poly_simpl="simplifier: gather_forall"}] in
+    let id_row_simpl = ConstraintIdentifier (!global_next_constraint_id) in
+    global_next_constraint_id := Int64.add !global_next_constraint_id 1L;
+    [SC_Row {id_row_simpl;original_id=None;tv=a;r_tag;tv_map=fresh_vars;reason_row_simpl=Format.asprintf "simplifier: split constant %a = %a (%a)" Var.pp a Ast_typed.PP.row_tag r_tag (Ast_typed.PP.record_sep Ast_typed.PP.type_value (fun ppf () -> Format.fprintf ppf ", ")) args}] @ List.flatten recur in
+  let gather_forall a forall = 
+    let id_poly_simpl = ConstraintIdentifier (!global_next_constraint_id) in
+    global_next_constraint_id := Int64.add !global_next_constraint_id 1L;
+    [SC_Poly {id_poly_simpl; original_id=None; tv=a; forall ; reason_poly_simpl="simplifier: gather_forall"}] in
   let gather_alias a b =
     if Var.equal a b
     then [] (* Don't include trivial aliases. *)
-    else [SC_Alias { is_mandatory_constraint = true; a ; b ; reason_alias_simpl="simplifier: gather_alias"}] in
+    else [SC_Alias { a ; b ; reason_alias_simpl="simplifier: gather_alias"}] in
   let reduce_type_app a b =
     let (reduced, new_constraints) = Typelang.check_applied @@ Typelang.type_level_eval b in
     let recur = List.map type_constraint_simpl new_constraints in
@@ -50,7 +57,7 @@ let rec type_constraint_simpl : type_constraint -> type_constraint_simpl list =
     let recur = List.map type_constraint_simpl fresh_eqns in
     let id_typeclass_simpl = ConstraintIdentifier (!global_next_constraint_id) in
     global_next_constraint_id := Int64.add !global_next_constraint_id 1L;
-    [SC_Typeclass { is_mandatory_constraint = true; tc ; args = fresh_vars ; id_typeclass_simpl ; original_id; reason_typeclass_simpl="simplifier: split_typeclass"}] @ List.flatten recur in
+    [SC_Typeclass { tc ; args = fresh_vars ; id_typeclass_simpl ; original_id; reason_typeclass_simpl="simplifier: split_typeclass"}] @ List.flatten recur in
 
   match new_constraint.c with
   (* break down (forall 'b, body = forall 'c, body') into ('a = forall 'b, body and 'a = forall 'c, body')) *)

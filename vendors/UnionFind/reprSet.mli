@@ -9,14 +9,14 @@
 type 'elt t
 type 'elt set = 'elt t
 
-val alias : demoted_repr:'elt -> new_repr:'elt -> 'elt t -> 'elt t
+val alias : ?debug:(Format.formatter -> 'elt -> unit) -> demoted_repr:'elt -> new_repr:'elt -> 'elt t -> 'elt t
 
 val create : cmp:('elt -> 'elt -> int) -> 'elt t
 (* We don't export empty, since elements can be removed via
    add_list (List.filter … @@ elements s) (empty s) *)
 (* val empty : 'elt t -> 'elt t *)
 val is_empty : 'elt t -> bool
-val add : 'elt -> 'elt t -> 'elt t
+val add : ?debug:(Format.formatter -> 'elt -> unit) -> 'elt -> 'elt t -> 'elt t
 (* No removal, should be monotonic aside from merges due to aliasing *)
 (* val remove : 'elt -> 'elt t -> 'elt t *)
 val find : 'elt -> 'elt t -> 'elt

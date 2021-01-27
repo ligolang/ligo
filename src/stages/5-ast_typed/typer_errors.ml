@@ -80,11 +80,12 @@ type typer_error = [
   | `Typer_record_redefined_error of Location.t
   | `Typer_constant_tag_number_of_arguments of string * Ast_typed_self_reference.constant_tag * Ast_typed_self_reference.constant_tag * int * int
   | `Typer_typeclass_not_a_rectangular_matrix
-  | `Typer_could_not_remove
+  | `Typer_could_not_remove of Ast_typed_self_reference.type_constraint_simpl
   | `Typer_internal_error of string * string
   | `Trace_debug of string * typer_error
   | `Typer_pattern_do_not_match of Location.t
   | `Typer_label_do_not_match of Ast_typed_self_reference.label * Ast_typed_self_reference.label * Location.t
+  | `Typer_solver_no_progress of string
 ]
 
 let label_do_not_match la lb loc = `Typer_label_do_not_match (la , lb , loc )
@@ -174,8 +175,9 @@ let different_types a b = `Typer_different_types (a,b)
 let different_constant_tag_number_of_arguments loc opa opb lena lenb : typer_error = `Typer_constant_tag_number_of_arguments (loc, opa, opb, lena, lenb)
 let typeclass_not_a_rectangular_matrix = `Typer_typeclass_not_a_rectangular_matrix
 let internal_error (loc : string) (msg : string) : typer_error = `Typer_internal_error (loc, msg)
-let could_not_remove : typer_error = `Typer_could_not_remove
+let could_not_remove : Ast_typed_self_reference.type_constraint_simpl -> typer_error = fun constraints -> `Typer_could_not_remove constraints
 let trace_debug (msg : string) (err : typer_error) : typer_error = `Trace_debug (msg,err)
+let solver_made_no_progress (msg : string) : typer_error = `Typer_solver_no_progress msg
 
 let rec error_ppformat : display_format:string display_format ->
   Format.formatter -> typer_error -> unit =
@@ -567,7 +569,9 @@ The following forms of subtractions are possible:
     | `Typer_typeclass_not_a_rectangular_matrix ->
       Format.fprintf f "@[<hv>internal error: typeclass is not represented as a rectangular matrix with one column per argument@]"
     | `Typer_internal_error (loc, msg) -> Format.fprintf f "internal error at %s: %s" loc msg
-    | `Typer_could_not_remove -> Format.fprintf f "Heuristic requested removal of a constraint that cannot be removed"
+    | `Typer_could_not_remove constraint_ -> Format.fprintf f "Heuristic requested removal of a constraint that cannot be removed: %a" Ast_typed_self_reference.PP.type_constraint_simpl constraint_
+    | `Typer_solver_no_progress msg ->
+      Format.fprintf f "Solver made no progress %s" msg
   )
 
 let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
@@ -1304,9 +1308,15 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("message", message);
     ] in
     json_error ~stage ~content
-  | `Typer_could_not_remove ->
-    let message = `String (Format.sprintf "Heuristic requested removal of a constraint that cannot be removed" ) in
+  | `Typer_could_not_remove constraint_ ->
+    let message = `String (Format.asprintf "Heuristic requested removal of a constraint that cannot be removed: %a" Ast_typed_self_reference.PP.type_constraint_simpl constraint_) in
     let content = `Assoc [
       ("message", message);
     ] in
+    json_error ~stage ~content
+  | `Typer_solver_no_progress msg ->
+    let message = `String (Format.asprintf "Solver made no progress %s" msg) in
+    let content = `Assoc [
+        ("message", message);
+      ] in
     json_error ~stage ~content

@@ -31,12 +31,12 @@ type selector_output = output_specialize1
   match type_constraint_simpl with
   | SC_Constructor c                ->
     (* vice versa *)
-    let other_cs = (GroupedByVariable.get_constraints_by_lhs c.tv indexes#grouped_by_variable).poly in
+    let other_cs = MultiSet.elements @@ GroupedByVariable.get_polys_by_lhs c.tv indexes#grouped_by_variable in
     let cs_pairs = List.map (fun x -> { poly = x ; a_k_var = c }) other_cs in
     cs_pairs
   | SC_Alias       _                -> failwith "alias should not be visible here"
   | SC_Poly        p                ->
-    let other_cs = (GroupedByVariable.get_constraints_by_lhs p.tv indexes#grouped_by_variable).constructor in
+    let other_cs = MultiSet.elements @@ GroupedByVariable.get_constructors_by_lhs p.tv indexes#grouped_by_variable in
     let cs_pairs = List.map (fun x -> { poly = p ; a_k_var = x }) other_cs in
     cs_pairs
   | SC_Typeclass   _                -> []
@@ -48,10 +48,10 @@ type selector_output = output_specialize1
 
 let alias_selector : type_variable -> type_variable -> _ flds -> selector_output list =
   fun a b indexes ->
-  let a_polys = (GroupedByVariable.get_constraints_by_lhs a indexes#grouped_by_variable).poly in
-  let a_ctors = (GroupedByVariable.get_constraints_by_lhs a indexes#grouped_by_variable).constructor in
-  let b_polys = (GroupedByVariable.get_constraints_by_lhs b indexes#grouped_by_variable).poly in
-  let b_ctors = (GroupedByVariable.get_constraints_by_lhs b indexes#grouped_by_variable).constructor in
+  let a_polys = MultiSet.elements @@ GroupedByVariable.get_polys_by_lhs a indexes#grouped_by_variable in
+  let a_ctors = MultiSet.elements @@ GroupedByVariable.get_constructors_by_lhs a indexes#grouped_by_variable in
+  let b_polys = MultiSet.elements @@ GroupedByVariable.get_polys_by_lhs b indexes#grouped_by_variable in
+  let b_ctors = MultiSet.elements @@ GroupedByVariable.get_constructors_by_lhs b indexes#grouped_by_variable in
   List.flatten @@
   List.map
     (fun poly ->
@@ -62,7 +62,7 @@ let alias_selector : type_variable -> type_variable -> _ flds -> selector_output
     (a_polys @ b_polys)
 
 let propagator : (output_specialize1 , typer_error) propagator =
-  fun selected ->
+  fun selected _repr ->
   let a = selected.poly in
   let b = selected.a_k_var in
 
@@ -89,13 +89,19 @@ let propagator : (output_specialize1 , typer_error) propagator =
        Ast_typed.PP.type_value apply
        Ast_typed.PP.c_constructor_simpl b
        Ast_typed.PP.type_value reduced
-       (PP_helpers.list_sep Ast_typed.PP.type_constraint (fun ppf () -> Format.fprintf ppf " ;\n")) new_constraints);
+       (PP_helpers.list_sep Ast_typed.PP.type_constraint_short (fun ppf () -> Format.fprintf ppf " ;\n")) new_constraints);
   
   let eq1 = c_equation (wrap (Todo "solver: propagator: specialize1 eq1") @@ P_variable b.tv) reduced "propagator: specialize1" in
   let eqs = eq1 :: new_constraints in
+  let pp_indented_constraint_list =
+    let open PP_helpers in
+    let open Ast_typed.PP in
+    (list_sep type_constraint_short (tag "\n  ")) in
+  let () = Format.printf "specialize1: rm %a, add:\n  %a\n\n%!" Ast_typed.PP.type_constraint_simpl_short (SC_Poly a) pp_indented_constraint_list eqs in
+  Format.printf "Specialize : returning with new constraint %a\n%!" (PP_helpers.list_sep_d Ast_typed.PP.type_constraint_short) @@ eqs ;
     ok [
         {
-          remove_constraints = [];
+          remove_constraints = [ SC_Poly a ];
           add_constraints = eqs;
           proof_trace = Axiom Axioms.specialize
         }
@@ -105,4 +111,4 @@ let printer = Ast_typed.PP.output_specialize1
 let printer_json = Ast_typed.Yojson.output_specialize1
 let comparator = Solver_should_be_generated.compare_output_specialize1
 
-let heuristic = Heuristic_plugin { selector; alias_selector; propagator; printer; printer_json; comparator }
+let heuristic = Heuristic_plugin { heuristic_name = "specialize1"; selector; alias_selector; propagator; printer; printer_json; comparator }

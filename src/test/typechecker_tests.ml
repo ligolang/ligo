@@ -33,22 +33,22 @@ module Random_type_generator = struct
         (i,t,tmap)
       | 0 ->
         let i,nv,tmap = nest (i-1) tmap in
-        let cor = make_constructor_or tvar C_set [ nv.var ] in
+        let cor = make_constructor_or 0 None tvar C_set [ nv.var ] in
         return i (concrete_t tvar cor) tmap
       | 1 -> 
         let i,nv,tmap = nest (i-1) tmap in
-        let cor = make_constructor_or tvar C_list [ nv.var ] in
+        let cor = make_constructor_or 0 None tvar C_list [ nv.var ] in
         return i (concrete_t tvar cor) tmap
       | 2 ->
         let i,l,tmap = nest (i-1) tmap in
         let i,r,tmap = nest (i-1) tmap in
-        let cor = make_constructor_or tvar C_map [ l.var ; r.var ] in
+        let cor = make_constructor_or 0 None tvar C_map [ l.var ; r.var ] in
         return i (concrete_t tvar cor) tmap
       | _ -> failwith "fix definition of n above"
     )
   let generate nb_type max_depth =
-    let base_type1 = make_constructor_or base_t_1 C_int [] in
-    let base_type2 = make_constructor_or base_t_2 C_nat [] in
+    let base_type1 = make_constructor_or 0 None base_t_1 C_int [] in
+    let base_type2 = make_constructor_or 0 None base_t_2 C_nat [] in
     let init_map = [
       {var = base_t_1 ; cor_opt = Some base_type1} ;
       {var = base_t_2 ; cor_opt = Some base_type2} ; ]
@@ -106,18 +106,18 @@ module Small_env_manual_test = struct
   let find_assignment_mock : type_variable -> constructor_or_row option = fun v ->
     (* a = map(c,d) , b = a, c = nat, d = mutez, e = map(f, d), f = nat , g = variant | Foo | Bar , j = record {baz goo} , k = c -> c *)
     match v with
-    | a' when Var.equal a' a -> Some (make_constructor_or a C_map [c ; d])
+    | a' when Var.equal a' a -> Some (make_constructor_or 1 None a C_map [c ; d])
     | b' when Var.equal b' b -> None
-    | c' when Var.equal c' c -> Some (make_constructor_or c C_nat [])
-    | d' when Var.equal d' d -> Some (make_constructor_or d C_mutez [])
-    | e' when Var.equal e' e -> Some (make_constructor_or e C_map [f ; d])
-    | f' when Var.equal f' f -> Some (make_constructor_or f C_nat [])
+    | c' when Var.equal c' c -> Some (make_constructor_or 2 None c C_nat [])
+    | d' when Var.equal d' d -> Some (make_constructor_or 3 None d C_mutez [])
+    | e' when Var.equal e' e -> Some (make_constructor_or 4 None e C_map [f ; d])
+    | f' when Var.equal f' f -> Some (make_constructor_or 5 None f C_nat [])
     | g' when Var.equal g' g -> None
-    | h' when Var.equal h' h -> Some (make_row_or h C_variant [(Label "foo", c) ; (Label "bar", d)]) 
-    | h' when Var.equal h' h -> Some (make_row_or h C_variant [(Label "foo", c) ; (Label "bar", d)]) 
+    | h' when Var.equal h' h -> Some (make_row_or 6 None h C_variant [(Label "foo", c) ; (Label "bar", d)]) 
+    | h' when Var.equal h' h -> Some (make_row_or 7 None h C_variant [(Label "foo", c) ; (Label "bar", d)]) 
     | i' when Var.equal i' i -> None
-    | j' when Var.equal j' j -> Some (make_row_or j C_record [(Label "baz", b) ; (Label "goo", e)])
-    | k' when Var.equal k' k -> Some (make_constructor_or k C_arrow [h ; c])
+    | j' when Var.equal j' j -> Some (make_row_or 8 None j C_record [(Label "baz", b) ; (Label "goo", e)])
+    | k' when Var.equal k' k -> Some (make_constructor_or 9 None k C_arrow [h ; c])
     | v -> failwith ("test internal : FIND_ASSIGNENT_MOCK" ^ (Format.asprintf "%a" Var.pp v))
   let test_checker constraints_list =
     trace (Main_errors.test_tracer "typechecker tests") @@
@@ -137,27 +137,27 @@ let alias () =
   
 let constructor () =
   let open Small_env_manual_test in
-  let ctor_ok = make_sc_constructor a C_map [c ; d] in
+  let ctor_ok = make_sc_constructor 1 None a C_map [c ; d] in
   let%bind () = test_checker [ctor_ok] in
-  let ctor_ok2 = make_sc_constructor b C_map [c ; d] in
+  let ctor_ok2 = make_sc_constructor 2 None b C_map [c ; d] in
   let%bind () = test_checker [ctor_ok2] in
-  let ctor_ok3 = make_sc_constructor k C_arrow [ g ; c] in
+  let ctor_ok3 = make_sc_constructor 3 None k C_arrow [ g ; c] in
   let%bind () = test_checker [ctor_ok3] in
-  let ctor_nok = make_sc_constructor a C_list [c] in
+  let ctor_nok = make_sc_constructor 4 None a C_list [c] in
   let%bind () = test_checker_neg [ctor_nok] in
   ok ()
 
 let row () =
   let open Small_env_manual_test in
-  let row_ok = make_sc_row h C_variant [(Label "foo", c) ; (Label "bar", d)] in
+  let row_ok  = make_sc_row 1 None h C_variant [(Label "foo", c) ; (Label "bar", d)] in
   let%bind () = test_checker [row_ok] in
-  let row_ok2 = make_sc_row j C_record [(Label "baz", b) ; (Label "goo", e)] in
+  let row_ok2 = make_sc_row 2 None j C_record [(Label "baz", b) ; (Label "goo", e)] in
   let%bind () = test_checker [row_ok2] in
-  let row_ok3 = make_sc_row g C_variant [(Label "foo", c) ; (Label "bar", d)] in
+  let row_ok3 = make_sc_row 3 None g C_variant [(Label "foo", c) ; (Label "bar", d)] in
   let%bind () = test_checker [row_ok3] in
-  let row_ok3 = make_sc_row i C_record [(Label "baz", b) ; (Label "goo", e)] in
+  let row_ok3 = make_sc_row 4 None i C_record [(Label "baz", b) ; (Label "goo", e)] in
   let%bind () = test_checker [row_ok3] in
-  let row_nok = make_sc_row h C_record [(Label "foo", c) ; (Label "bar", d)] in
+  let row_nok = make_sc_row 5 None h C_record [(Label "foo", c) ; (Label "bar", d)] in
   let%bind () = test_checker_neg [row_nok] in
   ok ()
 

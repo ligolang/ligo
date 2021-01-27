@@ -1,4 +1,3 @@
-open Trace
 open Typer_common.Errors
 module Core = Typesystem.Core
 module Map = RedBlackTrees.PolyMap
@@ -15,15 +14,17 @@ module MergeAliases = struct
   module MakeOutType = PerPluginState
   module Monad = NoMonad
   module F(Plugin : Plugin) = struct
-    let f UnionFind.Poly2.{ demoted_repr ; new_repr } state =
+    let f _ UnionFind.Poly2.{ demoted_repr ; new_repr } state =
       let merge_keys = {
-        map = (fun m -> ReprMap.alias ~demoted_repr ~new_repr m);
+        map = (fun m -> ReprMap.alias ~debug:(fun ppf (a,_) -> Ast_typed.PP.type_variable ppf a) ~demoted_repr ~new_repr m);
         set = (fun s -> ReprSet.alias ~demoted_repr ~new_repr s);
         (* var = (fun a -> if Var.compare a demoted_repr = 0 then new_repr else a) *)
       }
-      in Plugin.merge_aliases merge_keys state
+      in Plugin.merge_aliases ~debug:(Plugin.pp Ast_typed.PP.type_variable) merge_keys state
   end
 end
+(* check module matches signature without hiding its contents *)
+let _ = (module MergeAliases : Ast_typed.Types.MappedFunction)
 
 (* Function which adds a constraint to single indexer plugin's state *)
 module AddConstraint = struct
@@ -32,10 +33,13 @@ module AddConstraint = struct
   module MakeOutType = PerPluginState
   module Monad = NoMonad
   module F(Plugin : Plugin) = struct
-    let f (repr, constraint_) state =
+    let f _ (repr, constraint_) state =
+      (* Format.printf "In AddConstraint for %s and constraint %a\n%!" name PP.type_constraint_ constraint_; *)
       Plugin.add_constraint repr state constraint_
   end
 end
+(* check module matches signature without hiding its contents *)
+let _ = (module AddConstraint : Ast_typed.Types.MappedFunction)
 
 module Typer_error_trace_monad = struct
   type 'a t = ('a, typer_error) Trace.result
@@ -51,10 +55,13 @@ module RemoveConstraint = struct
   module MakeOutType = PerPluginState
   module Monad = Typer_error_trace_monad
   module F(Plugin : Plugin) = struct
-    let f (repr, to_remove) state =
-      Plugin.remove_constraint repr state to_remove
+    let f _ (repr, to_remove) state =
+      (* Format.printf "In Remove Constraint in %s for %a\n%!" name PP.type_constraint_ to_remove; *)
+      Plugin.remove_constraint Ast_typed.PP.type_variable repr state to_remove
   end
 end
+(* check module matches signature without hiding its contents *)
+let _ = (module RemoveConstraint : Ast_typed.Types.MappedFunction)
 
 (* Function which creates a plugin's initial state *)
 module CreateState = struct
@@ -63,26 +70,27 @@ module CreateState = struct
   module MakeOutType = PerPluginState
   module Monad = NoMonad
   module F(Plugin : Plugin) = struct
-    let f () (() as _state) = Plugin.create_state ~cmp:Ast_typed.Compare.type_variable
+    let f _ () (() as _state) = Plugin.create_state ~cmp:Ast_typed.Compare.type_variable
   end
 end
+(* check module matches signature without hiding its contents *)
+let _ = (module CreateState : Ast_typed.Types.MappedFunction)
+
+(* Function which calls the plugin's pretty-printer and appends it to an accumulator string *)
+module PPPlugin = struct
+  type extra_args = Format.formatter
+  module MakeInType = PerPluginState
+  module MakeOutType = PerPluginUnit
+  module Monad = NoMonad
+  module F(Plugin : Plugin) = struct
+    let f _ ppf state =
+      Format.fprintf ppf "%s =@ @[<hv 2> %a @] ;@ " Plugin.name (Plugin.pp Var.pp) state
+  end
+end
+(* check module matches signature without hiding its contents *)
+let _ = (module PPPlugin : Ast_typed.Types.MappedFunction)
 
 type nonrec 'a result = ('a, typer_error) Simple_utils.Trace.result
-
-let simplify_constraint : type_constraint -> type_constraint_simpl list =
-  fun new_constraint ->
-  Simplifier.type_constraint_simpl new_constraint
-
-let rec until predicate f state = if predicate state then ok state else let%bind state = f state in until predicate f state
-
-(* library function *)
-let rec worklist : ('state -> 'element -> ('state * 'element list) result) -> 'state -> 'element list -> 'state result =
-  fun f state elements ->
-  match elements with
-    [] -> ok state
-  | element :: rest ->
-    let%bind new_state, new_elements = f state element in
-    worklist f new_state (new_elements @ rest)
 
 let init_propagator_heuristic (Heuristic_plugin plugin) =
   Heuristic_state { plugin; already_selected = Set.create ~cmp:plugin.comparator }

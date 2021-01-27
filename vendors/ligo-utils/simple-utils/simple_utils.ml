@@ -5,6 +5,7 @@ module PP_helpers = PP_helpers
 module Location = Location
 
 module List = X_list
+module Pair = X_pair
 module Option = X_option
 module Int = X_int
 module Map = X_map

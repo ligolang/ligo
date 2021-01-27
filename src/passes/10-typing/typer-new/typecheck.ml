@@ -202,20 +202,20 @@ let check_forall_instantiations_are_unifiable : db_access:db_access ->  bound_in
   (* Check if a polymorphic variable already has an instantiation *)
   let aux : (type_variable, type_variable) PolyMap.t -> (type_variable * type_variable) -> (type_variable, type_variable) PolyMap.t result =
     (fun acc (bound_by_forall,new_instantiation) ->
-    match (PolyMap.find_opt bound_by_forall acc) with
-    (* If no, add the binding to the map *)
-    | None ->
-      ok (PolyMap.add bound_by_forall new_instantiation acc)
-    (* If yes, run fast_assert_types_are_equal existing_instantiation new_instantiation *)
-    | Some existing_instantiation ->
-      let%bind () =
-        fast_assert_types_are_equal
-          (corner_case "TODO err : incompatible types unif and existing_unif for the same bound variable")
-          ~db_access
-          new_instantiation
-          existing_instantiation
-      in
-      ok acc)
+       match (PolyMap.find_opt bound_by_forall acc) with
+       (* If no, add the binding to the map *)
+       | None ->
+         ok (PolyMap.add bound_by_forall new_instantiation acc)
+       (* If yes, run fast_assert_types_are_equal existing_instantiation new_instantiation *)
+       | Some existing_instantiation ->
+         let%bind () =
+           fast_assert_types_are_equal
+             (corner_case "TODO err : incompatible types unif and existing_unif for the same bound variable")
+             ~db_access
+             new_instantiation
+             existing_instantiation
+         in
+         ok acc)
   in
   (* finally, return the map built that way. *)
   let instantiations =
@@ -224,14 +224,17 @@ let check_forall_instantiations_are_unifiable : db_access:db_access ->  bound_in
       (Compare_renaming.flatten_tree binder_instantiations) in
   bind_fold_list aux (PolyMap.create ~cmp:Ast_typed.Compare.type_variable) instantiations
 
-let rec check_type_variable_and_type_value : db_access:db_access -> (type_variable, type_variable) PolyMap.t -> type_variable -> type_value -> unit result =
-  fun ~db_access bound_var_assignments a b ->
+(* This checks that a (a variable like a) = b (a type_value), using
+   the substitutions from bound_var_assignments and the look-up table
+   from db_access *)
+let rec check_type_variable_and_type_value : db_access:db_access -> bound_var_assignments:(type_variable, type_variable) PolyMap.t -> type_variable -> type_value -> unit result =
+  fun ~db_access ~bound_var_assignments a b ->
     match db_access.find_assignment a, b.wrap_content with
     | (None, _) ->
       fail @@ corner_case "unassigned unification variable, please annotate or make sure this variable gets generalized (generalization not supported as of 02020-11-20"
     | (Some (`Constructor ka), P_constant kb) ->
       let%bind () = Assert.assert_true (err_TODO __LOC__) (Ast_typed.Compare.constant_tag ka.c_tag kb.p_ctor_tag = 0) in
-      bind_iter_list (fun (a,b) -> check_type_variable_and_type_value ~db_access bound_var_assignments a b)
+      bind_iter_list (fun (a,b) -> check_type_variable_and_type_value ~db_access ~bound_var_assignments a b)
         (List.combine ka.tv_list kb.p_ctor_args)
     | (Some (`Row ra), P_row rb) ->
       let%bind () = Assert.assert_true (err_TODO __LOC__) (Ast_typed.Compare.row_tag ra.r_tag rb.p_row_tag = 0) in
@@ -239,7 +242,7 @@ let rec check_type_variable_and_type_value : db_access:db_access -> (type_variab
       bind_iter_list
         (fun ((la,a),(lb,b)) ->
           let%bind () = Assert.assert_true (err_TODO __LOC__) (Ast_typed.Compare.label la lb = 0) in
-          check_type_variable_and_type_value ~db_access bound_var_assignments a b)
+          check_type_variable_and_type_value ~db_access ~bound_var_assignments a b)
         (List.combine (LMap.bindings ra.tv_map) (LMap.bindings rb.p_row_args))
     | (Some _, P_variable vb) -> (
       match PolyMap.find_opt vb bound_var_assignments with
@@ -248,14 +251,14 @@ let rec check_type_variable_and_type_value : db_access:db_access -> (type_variab
     )
     | _ -> fail (corner_case "incompatible types")
 
-let rec compare_type_value_with_bound_var : db_access:db_access -> (type_variable, type_variable) PolyMap.t -> type_value -> type_value -> unit result
-  = fun ~db_access bound_var_assignments a b ->
-    let compare_384 ~db_access m a b  = (* TODO *) ignore (db_access,m,a,b); ok () in
+(* Compares a and b using the given bound_var_assignments for bound variables *)
+let rec compare_type_values_using_bound_vars : db_access:db_access -> bound_var_assignments:(type_variable, type_variable) PolyMap.t -> type_value -> type_value -> unit result
+  = fun ~db_access ~bound_var_assignments (a : type_value) (b : type_value) ->
     match a.wrap_content , b.wrap_content with
     | P_constant ka , P_constant kb ->
       let%bind () = Assert.assert_true (err_TODO __LOC__) (Ast_typed.Compare.constant_tag ka.p_ctor_tag kb.p_ctor_tag = 0) in
       bind_list_iter
-        (fun (a,b) -> compare_type_value_with_bound_var ~db_access bound_var_assignments a b)
+        (fun (a,b) -> compare_type_values_using_bound_vars ~db_access ~bound_var_assignments a b)
         (List.combine ka.p_ctor_args kb.p_ctor_args)
     | P_row      ra , P_row      rb ->
       let%bind () = Assert.assert_true (err_TODO __LOC__) (Ast_typed.Compare.row_tag ra.p_row_tag rb.p_row_tag = 0) in
@@ -263,37 +266,86 @@ let rec compare_type_value_with_bound_var : db_access:db_access -> (type_variabl
       bind_list_iter
         (fun ((la,a),(lb,b)) ->
            let%bind () = Assert.assert_true (err_TODO __LOC__) (Ast_typed.Compare.label la lb = 0) in
-           compare_type_value_with_bound_var ~db_access bound_var_assignments a b)
+           compare_type_values_using_bound_vars ~db_access ~bound_var_assignments a b)
         (List.combine (LMap.bindings ra.p_row_args) (LMap.bindings rb.p_row_args))
     | P_forall (*{ binder; constraints; body }*)_ , P_forall (*{ binder; constraints; body }*)_     ->
       failwith "comparison of foralls is not implemented yet."
     | (P_variable tv , _other)  ->
       (match PolyMap.find_opt tv bound_var_assignments with
        | None -> failwith "unassigned type variable"
-       | Some assignment -> compare_384 ~db_access bound_var_assignments assignment b)
+       | Some assignment -> check_type_variable_and_type_value ~db_access ~bound_var_assignments assignment b)
     | (_other, P_variable tv)  ->
       (match PolyMap.find_opt tv bound_var_assignments with
        | None -> failwith "unassigned type variable"
-       | Some assignment -> compare_384 ~db_access bound_var_assignments assignment a)
+       | Some assignment -> check_type_variable_and_type_value ~db_access ~bound_var_assignments assignment a)
     | P_apply _ ,_        ->
       failwith "p_apply is not currently used, this case should not happen. When it gets used, implement this case."
     | _ -> fail (corner_case "incompatible types: a b")
 
+let check_access_label : _ = fun ~db_access ~bound_var_assignments accessor c_access_label_tvar { p_row_tag; p_row_args } ->
+  (match p_row_tag with
+     Ast_typed.Types.C_record ->
+     let%bind field_type = trace_option
+         (corner_case
+            (Format.asprintf "Type error: field %a is not in record %a"
+               Ast_typed.PP.label accessor
+               (fun ppf lm -> Ast_typed.PP.(lmap_sep_d type_value) ppf @@ LMap.to_kv_list lm) p_row_args)) @@ LMap.find_opt accessor p_row_args in
+     let _ = check_type_variable_and_type_value ~db_access ~bound_var_assignments c_access_label_tvar field_type in
+     failwith "TODO c_access_label"
+   | Ast_typed.Types.C_variant -> failwith "Type error: cannot access field in variant")
+
+let check_access_label_simpl : db_access:db_access -> bound_var_assignments:(type_variable, type_variable) PolyMap.t -> Stage_common.Types.label -> Ast_typed.Types.type_variable -> Ast_typed.Types.c_row_simpl -> unit result
+  = fun ~db_access ~bound_var_assignments accessor c_access_label_tvar ({ reason_row_simpl=_; id_row_simpl=_; original_id=_; tv=_; r_tag; tv_map } : c_row_simpl) ->
+  let () = ignore bound_var_assignments in
+  match r_tag with
+    Ast_typed.Types.C_record ->
+    let%bind field_type = trace_option
+        (corner_case
+           (Format.asprintf "Type error: field %a is not in record %a"
+              Ast_typed.PP.label accessor
+              (fun ppf lm -> Ast_typed.PP.(lmap_sep_d type_variable) ppf @@ LMap.to_kv_list lm) tv_map)) @@ LMap.find_opt accessor tv_map in
+    let%bind field_type_value = recursive_find_assignnment ~db_access field_type in
+    let%bind c_access_label_tvar_value = recursive_find_assignnment ~db_access c_access_label_tvar in
+    Compare_renaming.compare_and_check_vars
+      ~compare:Compare_renaming.type_value
+      ~print_whole:(Ast_typed.PP.type_value)
+      c_access_label_tvar_value field_type_value
+  | Ast_typed.Types.C_variant -> failwith "Type error: cannot access field in variant"
+
 (* -> check 3c that each constraint is satisfied given the 'x -> part_of_α which was found by the check 3a and "checked all =" by 3b *)
-let check_forall_constraints_are_satisfied : db_access:db_access -> (type_variable, type_variable) PolyMap.t -> bound_info Compare_renaming.tree -> unit result =
-  fun ~db_access bound_var_assignements tree ->
+let check_forall_constraints_are_satisfied : db_access:db_access -> bound_var_assignments:(type_variable, type_variable) PolyMap.t -> bound_info Compare_renaming.tree -> unit result =
+  fun ~db_access ~bound_var_assignments tree ->
+  let {repr ; find_assignment} = db_access in
   (* start with an empty map *)
   (* Check if a polymorphic variable already has an instantiation *)
   let aux : type_constraint -> unit result =
     fun c ->
       match c.c with
       | C_equation { aval; bval } ->
-        compare_type_value_with_bound_var ~db_access bound_var_assignements aval bval
+        compare_type_values_using_bound_vars ~db_access ~bound_var_assignments aval bval
       | C_typeclass c_tc ->
-        let aux'' (arg, possible) = match Trace.to_option @@ compare_type_value_with_bound_var ~db_access bound_var_assignements arg possible with None -> false | Some () -> true in
+        let aux'' (arg, possible) = match Trace.to_option @@ compare_type_values_using_bound_vars ~db_access ~bound_var_assignments arg possible with None -> false | Some () -> true in
         let aux' args allowed_tuple = List.for_all aux'' (List.combine args allowed_tuple) in
         Assert.assert_true (err_TODO __LOC__) @@ List.exists (aux' c_tc.tc_args) c_tc.typeclass
-      | C_access_label _ -> failwith "TODO: c_access_label should be moved to a typeclass using labels and rows"
+      | C_access_label { c_access_label_tval ; accessor ; c_access_label_tvar } ->
+        (* ....................................................................................................................................... *)
+        (
+          match c_access_label_tval.wrap_content with
+            Ast_typed.Types.P_forall _ -> failwith "fields cannot be accessed on polymorphic values yet, please implement this check"
+          | Ast_typed.Types.P_variable tv ->
+            (match PolyMap.find_opt tv bound_var_assignments with
+             | None -> failwith "unassigned type variable"
+             | Some assignment ->
+               (match find_assignment (repr assignment) with
+                  None -> fail (corner_case "Error: unbound type variable v in expected type, actual type was some_assignment")
+                | Some (`Constructor _) -> failwith "Type error: cannot access field in non-record"
+                | Some (`Row r) -> check_access_label_simpl ~db_access ~bound_var_assignments accessor c_access_label_tvar r))
+          | Ast_typed.Types.P_constant _ -> failwith "Type error: cannot access field in non-record"
+          | Ast_typed.Types.P_apply _ ->
+            failwith "p_apply is not currently used, this case should not happen. When it gets used, implement this case."
+          | Ast_typed.Types.P_row r -> check_access_label ~db_access ~bound_var_assignments accessor c_access_label_tvar r
+        )
+        (* compare_type_values_using_bound_vars ~db_access ~bound_var_assignments (c_access_label_tval . accessor) == c_access_label_tvar *)
   in
   (* finally, return the map built that way. *)
   let constraints =
@@ -313,7 +365,7 @@ let check_forall_constraints_are_satisfied : db_access:db_access -> (type_variab
                       α = forall 'y, constraints => (forall 'x, constraints => map('x,'x))
                           bound_by_∀ = { 'y }
                       α = forall 'x, constraints => map('x,'x)
-                      ₂    bound_by_∀ = { 'y; 'x }
+                          bound_by_∀ = { 'y; 'x }
               map(β, β₂) = map('x,'x)
                   β      =     'x
                           return instantiated_binders = [ 'x ↦ β ]
@@ -350,7 +402,8 @@ let check_forall ~(db_access:db_access) (p : c_poly_simpl) : unit result =
       compare_and_stop_at_bound_vars ~db_access p.tv (P_forall p.forall)
     in
     (* -> check 3b that (recursive find_assignment part_of_α_1) = (recursive find_assignment part_of_α_2) if they were corresponding to the same 'x in the check 3a *)
-    let%bind bound_var_assignements = check_forall_instantiations_are_unifiable ~db_access binder_intantiations
+    (* bound_var_assignments is a mapping from an 'x variable in a type_value to an α variable which can be looked up in the assignments *)
+    let%bind bound_var_assignments = check_forall_instantiations_are_unifiable ~db_access binder_intantiations
     in
     (* -> check 3c that each constraint is satisfied given the 'x -> part_of_α which was found by the check 3a and "checked all =" by 3b *)
     (* α = forall β, p.forall.constraints… => δ
@@ -360,11 +413,12 @@ let check_forall ~(db_access:db_access) (p : c_poly_simpl) : unit result =
         α = forall β₁, (no constraints here) => (forall β₂, (some_typeclass(β1,β2)) => δ)
         at this point we should know the instantiated_binder for β₁ and β₂, and these are
         stored in bound_var_assignments *)
-    let%bind () =  check_forall_constraints_are_satisfied ~db_access bound_var_assignements binder_intantiations in
+    let%bind () =  check_forall_constraints_are_satisfied ~db_access ~bound_var_assignments binder_intantiations in
     ok ()
 
 let check : type_constraint_simpl list -> type_variable list -> (type_variable -> type_variable) -> (type_variable -> constructor_or_row option) -> unit result =
   fun all_constraints all_vars repr find_assignment ->
+    (* Format.printf "Typechecking"; *)
     let%bind hashconsed_assignments = hashcons all_vars repr find_assignment in
     let db_access : db_access = { repr ; find_assignment ; hashconsed_assignments } in
     let aux : type_constraint_simpl -> unit result = fun c ->

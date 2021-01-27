@@ -61,19 +61,20 @@ module Substitution = struct
       let () = ignore @@ substs in
       ok c
 
+    and s_rows : (T.rows,_) w = fun ~substs rows ->
+      let aux T.{ associated_type; michelson_annotation ; decl_pos } =
+        let%bind associated_type = s_type_expression ~substs associated_type in
+        ok @@ T.{ associated_type; michelson_annotation; decl_pos } in
+      let%bind content = Ast_typed.Helpers.bind_map_lmap aux rows.content in
+      ok @@ { rows with content }
+
     and s_type_content : (T.type_content,_) w = fun ~substs -> function
         | T.T_sum rows ->
-           let aux T.{ associated_type; michelson_annotation ; decl_pos } =
-             let%bind associated_type = s_type_expression ~substs associated_type in
-             ok @@ T.{ associated_type; michelson_annotation; decl_pos } in
-           let%bind content = Ast_typed.Helpers.bind_map_lmap aux rows.content in
-           ok @@ T.T_sum {content ; layout = rows.layout }
+          let%bind rows = s_rows ~substs rows in
+          ok @@ T.T_sum rows
         | T.T_record rows ->
-           let aux T.{ associated_type; michelson_annotation ; decl_pos } =
-             let%bind associated_type = s_type_expression ~substs associated_type in
-             ok @@ T.{ associated_type; michelson_annotation; decl_pos } in
-           let%bind content = Ast_typed.Helpers.bind_map_lmap aux rows.content in
-           ok @@ T.T_record {content ; layout = rows.layout }
+          let%bind rows = s_rows ~substs rows in
+          ok @@ T.T_sum rows
         | T.T_variable variable ->
            begin
              match substs ~variable with
@@ -92,27 +93,8 @@ module Substitution = struct
           ok @@ T.T_module_accessor { module_name; element }
         | T.T_singleton x -> ok @@ T.T_singleton x
 
-
-    and s_abstr_type_content : (Ast_core.type_content,_) w = fun ~substs -> function
-      | Ast_core.T_sum _ -> failwith "TODO: subst: unimplemented case s_type_expression sum"
-      | Ast_core.T_record _ -> failwith "TODO: subst: unimplemented case s_type_expression record"
-      | Ast_core.T_arrow _ -> failwith "TODO: subst: unimplemented case s_type_expression arrow"
-      | Ast_core.T_variable _ -> failwith "TODO: subst: unimplemented case s_type_expression variable"
-      | Ast_core.T_module_accessor _ -> failwith "TODO: subst: unimplemented case s_type_expression module_accessor"
-      | Ast_core.T_singleton      _  -> failwith "TODO: singleton (used with EDO michelson type 'sapling_transaction' and 'sapling_state')"
-      | Ast_core.T_app {type_operator;arguments} ->
-        let%bind arguments = bind_map_list
-          (s_abstr_type_expression ~substs)
-          arguments in
-        (* TODO: when we have generalized operators, we might need to subst the operator name itself? *)
-        ok @@ Ast_core.T_app {type_operator ; arguments}
-    and s_abstr_type_expression : (Ast_core.type_expression,_) w = fun ~substs {type_content;sugar;location} ->
-      let%bind type_content = s_abstr_type_content ~substs type_content in
-      ok @@ (Ast_core.{type_content;sugar;location} : Ast_core.type_expression)
-
     and s_type_expression : (T.type_expression,_) w = fun ~substs { type_content; location; type_meta } ->
       let%bind type_content = s_type_content ~substs type_content in
-      let%bind type_meta = bind_map_option (s_abstr_type_expression ~substs) type_meta in
       ok @@ T.{ type_content; location; type_meta ; orig_var = None}
     and s_literal : (T.literal,_) w = fun ~substs -> function
       | T.Literal_unit ->
@@ -131,12 +113,35 @@ module Substitution = struct
       | (T.Literal_chain_id _ as x)
       | (T.Literal_operation _ as x) ->
         ok @@ x
-    and s_matching_expr : (T.matching_expr,_) w = fun ~substs _ ->
-      let _TODO = substs in
-      failwith "TODO: subst: unimplemented case s_matching"
-    and s_accessor  : (T.record_accessor,_) w = fun ~substs _ ->
-      let _TODO = substs in
-      failwith "TODO: subst: unimplemented case s_access_path"
+    and s_matching_expr : (T.matching_expr,_) w = fun ~(substs : substs) -> function
+      | Match_list {match_nil;match_cons={hd;tl;body;tv}} ->
+        let%bind match_nil = s_expression ~substs match_nil in
+        let%bind body      = s_expression ~substs body in
+        let%bind tv        = s_type_expression ~substs tv in
+        ok @@ T.Match_list {match_nil;match_cons={hd;tl;body;tv}}
+      | Match_option {match_none;match_some={opt;body;tv}} ->
+        let%bind match_none = s_expression ~substs match_none in
+        let%bind body      = s_expression ~substs body in
+        let%bind tv        = s_type_expression ~substs tv in
+        ok @@ T.Match_option {match_none;match_some={opt;body;tv}}
+      | Match_variant {cases;tv} ->
+        let%bind cases = bind_map_list (
+          fun ({constructor;pattern;body} : T.matching_content_case) ->
+            let%bind body = s_expression ~substs body in
+            ok @@ ({constructor;pattern;body} : T.matching_content_case)
+        ) cases in
+        let%bind tv = s_type_expression ~substs tv in
+        ok @@ T.Match_variant {cases;tv}
+      | Match_record {fields; body; record_type}  ->
+        let%bind fields = T.Helpers.bind_map_lmap (fun (a,b) -> let%bind b = s_type_expression ~substs b in ok (a,b)) fields in
+        let%bind body   = s_expression ~substs body in
+        let%bind record_type = s_rows ~substs record_type in
+        ok @@ T.Match_record {fields; body; record_type}
+
+    and s_accessor  : (T.record_accessor,_) w = fun ~substs {record;path} ->
+      let%bind record = s_expression ~substs record in
+      ok @@ ({record;path} : T.record_accessor)
+
 
     and s_expression_content : (T.expression_content,_) w = fun ~(substs : substs) -> function
       | T.E_literal         x ->
@@ -188,13 +193,11 @@ module Substitution = struct
         let%bind element = s_expression ~substs element in
         ok @@ T.E_constructor {constructor;element}
       | T.E_record          aemap ->
-        let _TODO = aemap in
-        failwith "TODO: subst in record"
-        (* let%bind aemap = TSMap.bind_map_Map (fun ~k:key ~v:val_ ->
-         *     let key = s_type_variable ~v ~expr key in
-         *     let val_ = s_expression ~v ~expr val_ in
-         *     ok @@ (key , val_)) aemap in
-         * ok @@ T.E_record aemap *)
+        let%bind aemap = bind_map_list (fun (key,val_) ->
+          let%bind val_ = s_expression ~substs val_ in
+          ok @@ (key , val_)) @@ T.LMap.to_kv_list aemap in
+        let aemap = T.LMap.of_list aemap in
+        ok @@ T.E_record aemap
       | T.E_record_accessor {record=e;path} ->
         let%bind record = s_expression ~substs e in
         let%bind path = s_label ~substs path in
