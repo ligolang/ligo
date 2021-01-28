@@ -10,9 +10,9 @@ stages:
   - ide-deploy
   - versioning
 
-# This job builds the website from the docs directory and deploys it as a Branch Deploy to Netlify using the netlify-cli tool. After the deployment is done
-# a comment is posted to the MR with the draft site URL as well as the Netlify logs.
-build-preview-website:
+# This job builds the ligo-webide front-end from the tools/webide/ directory and deploys it as a Branch Deploy to Netlify using the netlify-cli tool. 
+# After the deployment is done a comment is posted to the MR with the draft site URL as well as the Netlify logs.
+build-preview-ligo-webide-front-end:
   stage: build
   image: node:12.20.0-buster
   script:
@@ -27,23 +27,25 @@ build-preview-website:
     - npx netlify deploy --site $NETLIFY_SITE_ID --auth $NETLIFY_AUTH_TOKEN --json --alias="$CI_COMMIT_SHORT_SHA" > netlify.json
     - export NETLIFY_DEPLOY_URL=$(jq -r .deploy_url netlify.json)
     - export NETLIFY_DEPLOY_LOGS=$(jq -r .logs netlify.json)
+    - echo "The URL for this deployment is $NETLIFY_DEPLOY_URL"
+    - echo "Logs for this deployment can be found at $NETLIFY_DEPLOY_LOGS"
     - 'CI_MERGE_REQUEST_IID=$(curl --request GET --header "Private-Token: $GITLAB_PERSONAL_API_PRIVATE_TOKEN" "https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/repository/commits/$CI_COMMIT_SHA/merge_requests" --insecure | jq --raw-output ".[0].iid")'
     - '[ ! -z "$CI_MERGE_REQUEST_IID" ] && curl POST https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/merge_requests/$CI_MERGE_REQUEST_IID/notes -d "{\"body\": \"A new deploy preview is available on Netlify at $NETLIFY_DEPLOY_URL, you can view the logs at $NETLIFY_DEPLOY_LOGS\"}" --header "Content-Type: application/json" --header "Private-Token: $GITLAB_PERSONAL_API_PRIVATE_TOKEN"'
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
-        - docs/**/*
+        - tools/webide/**/*
+      when: always
   tags:
     - docker
 
-# This job builds the website from the docs directory and does a production deployment to Netlify and publishes the site using the netlify-cli tool.
-build-website:
+# This job builds the ligo-webide front-end from the tools/webide/ directory and does a production deployment to Netlify and publishes the site using the netlify-cli tool.
+build-ligo-webide-front-end:
   stage: build
   image: node:12.20.0-buster
   script:
     - npm install netlify-cli -g
     - apt-get update
-    - apt-get install -y --no-install-recommends jq
     - cd ./tools/webide/
     - mv ./packages/client/prod-netlify.toml ./packages/client/netlify.toml
     - yarn install 
@@ -53,7 +55,8 @@ build-website:
   rules:
     - if: '$CI_COMMIT_BRANCH == "dev"'
       changes:
-        - docs/**/*
+        - tools/webide/**/*
+      when: always
   tags:
     - docker
 

@@ -1,3 +1,4 @@
+# These settings should be used in future in favour of having a file for each environment.
 # Settings in the [build] context are global and are applied to all contexts
 # unless otherwise overridden by more specific contexts.
 [build]
