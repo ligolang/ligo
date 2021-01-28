@@ -1,5 +1,5 @@
 let sepBy1 = (sep, p) => seq(p, repeat(seq(sep, p)))
-let sepBy  = (sep, p) => optional(sepBy1(sep, p))
+let sepBy = (sep, p) => optional(sepBy1(sep, p))
 
 let some = x => seq(x, repeat(x))
 
@@ -17,7 +17,7 @@ function mkOp($, opExpr) {
 
 module.exports = grammar({
   name: 'CameLigo',
-  word:   $ => $.Keyword,
+  word: $ => $.Keyword,
   extras: $ => [$.ocaml_comment, $.comment, /\s/],
 
   rules: {
@@ -34,13 +34,18 @@ module.exports = grammar({
       "let",
       optional(field("recursive", "rec")),
       field("name", $.NameDecl),
-      some(field("arg", $.annot_pattern)),
+      // TODO: we treat arguments as an annotated pattern. Once we set up proper
+      // argument and its type resolution, this must be changed.
+      some(choice(
+        $.Unit,
+        field("arg", $.annot_pattern)
+      )),
       optional(seq(
         ":",
         field("type", $._type_expr)
       )),
       "=",
-      field("body",$._program),
+      field("body", $._program),
     )),
 
     let_decl: $ => withAttrs($, seq(
@@ -52,7 +57,7 @@ module.exports = grammar({
         field("type", $._type_expr)
       )),
       "=",
-      field("body",$._program),
+      field("body", $._program),
     )),
 
     //========== EXPR ============
@@ -83,7 +88,7 @@ module.exports = grammar({
     )),
 
     // a, b, c
-    tup_pattern: $ => prec.right(8,seq(
+    tup_pattern: $ => prec.right(8, seq(
       field("item", $._pattern),
       ",",
       sepBy1(",", field("item", $._pattern))
@@ -107,7 +112,7 @@ module.exports = grammar({
     con_pattern: $ => prec(10,
       seq(
         field("ctor", $.ConstrName),
-        optional(field("args",$._pattern))
+        optional(field("args", $._pattern))
       )
     ),
 
@@ -236,7 +241,7 @@ module.exports = grammar({
     )),
 
     // match x with ...
-    match_expr: $ => prec.right(1,seq(
+    match_expr: $ => prec.right(1, seq(
       "match",
       field("subject", $._expr),
       "with",
@@ -264,7 +269,7 @@ module.exports = grammar({
       "]"
     ),
 
-    tup_expr: $ => prec.right(9,seq(
+    tup_expr: $ => prec.right(9, seq(
       field("x", $._expr),
       some(seq(
         ",",
@@ -317,7 +322,7 @@ module.exports = grammar({
     ),
 
     // a t, (a, b) t
-    type_app: $ => prec(10,seq(
+    type_app: $ => prec(10, seq(
       choice(
         field("x", $._type_expr),
         field("x", $.type_tuple),
@@ -440,21 +445,21 @@ module.exports = grammar({
 
     attr: $ => /\[@[a-zA-Z][a-zA-Z0-9_:]*\]/,
 
-    String:       $ => /\"(\\.|[^"])*\"/,
-    Int:          $ => /-?([1-9][0-9_]*|0)/,
-    Nat:          $ => /([1-9][0-9_]*|0)n/,
-    Tez:          $ => /([1-9][0-9_]*|0)(\.[0-9_]+)?(tz|tez|mutez)/,
-    Bytes:        $ => /0x[0-9a-fA-F]+/,
-    Name:         $ => /[a-z][a-zA-Z0-9_]*/,
-    TypeName:     $ => /[a-z][a-zA-Z0-9_]*/,
-    NameDecl:     $ => /[a-z][a-zA-Z0-9_]*/,
-    FieldName:    $ => /[a-z][a-zA-Z0-9_]*/,
-    ConstrName:   $ => /[A-Z][a-zA-Z0-9_]*/,
-    Keyword:      $ => /[A-Za-z][a-z]*/,
+    String: $ => /\"(\\.|[^"])*\"/,
+    Int: $ => /-?([1-9][0-9_]*|0)/,
+    Nat: $ => /([1-9][0-9_]*|0)n/,
+    Tez: $ => /([1-9][0-9_]*|0)(\.[0-9_]+)?(tz|tez|mutez)/,
+    Bytes: $ => /0x[0-9a-fA-F]+/,
+    Name: $ => /[a-z][a-zA-Z0-9_]*/,
+    TypeName: $ => /[a-z][a-zA-Z0-9_]*/,
+    NameDecl: $ => /[a-z][a-zA-Z0-9_]*/,
+    FieldName: $ => /[a-z][a-zA-Z0-9_]*/,
+    ConstrName: $ => /[A-Z][a-zA-Z0-9_]*/,
+    Keyword: $ => /[A-Za-z][a-z]*/,
 
-    False:         $ => 'false',
-    True:          $ => 'true',
-    Unit:          $ => '()',
+    False: $ => 'false',
+    True: $ => 'true',
+    Unit: $ => seq('(', ')'),
 
     comment: $ => /\/\/(\*\)[^\n]|\*[^\)\n]|[^\*\n])*\n/,
 
