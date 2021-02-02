@@ -82,7 +82,8 @@ let tests1 restrict = [
 
 let test'
     name
-    (deduce_and_clean : c_typeclass_simpl -> (deduce_and_clean_result, _) result)
+    (deduce_and_clean : (type_variable -> type_variable) -> c_typeclass_simpl -> (deduce_and_clean_result, _) result)
+    repr
     args (_in : string) tc
     (expected_inferred  : (type_variable * constant_tag * type_variable list) list)
     expected_args (_in : string) expected_tc =
@@ -93,12 +94,14 @@ let test'
       let expected_inferred = List.map
           (fun (tv , c_tag , tv_list) -> {reason_constr_simpl = "unit test" ; original_id = None; id_constructor_simpl = ConstraintIdentifier 42L ; tv ; c_tag ; tv_list})
           expected_inferred in
-      let%bind actual = deduce_and_clean input_tc in
+      let%bind actual = deduce_and_clean repr input_tc in
       Heuristic_tc_fundep_tests_compare_cleaned.compare_and_check_vars_deduce_and_clean_result { deduced = expected_inferred ; cleaned = expected_tc } actual
 
 let inferred v (_eq : string) c args = v, c, args
-let tests2 deduce_and_clean = [
-  test' "deduce_and_clean split type constructor" deduce_and_clean
+let tests2 deduce_and_clean =
+  let repr : type_variable ->type_variable = (fun v -> v) in
+  [
+  test' "deduce_and_clean split type constructor" deduce_and_clean repr
     (* Input restricted typeclass: *)
     [x;z]   "∈" [ [ map( nat , unit ) ; int ] ; [ map( bytes , mutez ) ; string ] ; ]
     (* Expected inferred constraints: *)
@@ -107,7 +110,7 @@ let tests2 deduce_and_clean = [
     [m;n;z] "∈" [ [      nat ; unit   ; int ] ; [      bytes ; mutez   ; string ] ; ]
   ;
 
-  test' "deduce_and_clean recursive" deduce_and_clean
+  test' "deduce_and_clean recursive" deduce_and_clean repr
     (* Input restricted typeclass: *)
     [x;z]   "∈" [ [ map( nat , unit ) ; int ] ; [ map( bytes , unit ) ; string ] ; ]
     (* Expected inferred constraints: *)
@@ -117,7 +120,7 @@ let tests2 deduce_and_clean = [
     [m;z]   "∈" [ [      nat ;          int ] ; [      bytes ;          string ] ; ]
   ;
 
-  test' "deduce_and_clean remove recursive" deduce_and_clean
+  test' "deduce_and_clean remove recursive" deduce_and_clean repr
     (* Input restricted typeclass: *)
     [x;z]   "∈" [ [ map( nat , unit ) ; int ] ; [ map( nat , unit ) ; string ] ; ]
     (* Expected inferred constraints: *)
@@ -128,7 +131,7 @@ let tests2 deduce_and_clean = [
     [z]     "∈" [ [                     int ] ; [                     string ] ; ]
   ;
 
-  test' "deduce_and_clean remove no-argument type constructor" deduce_and_clean
+  test' "deduce_and_clean remove no-argument type constructor" deduce_and_clean repr
     (* Input restricted typeclass: *)
     [x;z]   "∈" [ [nat ; int] ; [nat ; string] ; ]
     (* Expected inferred constraints: *)
@@ -137,7 +140,7 @@ let tests2 deduce_and_clean = [
     [z]     "∈" [ [      int] ; [      string] ; ]
   ;
 
-  test' "deduce_and_clean remove two no-argument type constructors" deduce_and_clean
+  test' "deduce_and_clean remove two no-argument type constructors" deduce_and_clean repr
     (* Input restricted typeclass: *)
     [x;y;z] "∈" [ [nat ; int ; unit] ; [nat ; string ; unit] ; ]
     (* Expected inferred constraints: *)
@@ -147,7 +150,7 @@ let tests2 deduce_and_clean = [
     [y]     "∈" [ [      int       ] ; [      string       ] ; ]
   ;
 
-  test' "deduce_and_clean split type constructor (again)" deduce_and_clean
+  test' "deduce_and_clean split type constructor (again)" deduce_and_clean repr
     (* Input restricted typeclass: *)
     [x;z]   "∈" [ [map(nat,unit) ; int] ; [map(unit,nat) ; string] ; ]
     (* Expected inferred constraints: *)
@@ -156,7 +159,7 @@ let tests2 deduce_and_clean = [
     [m;n;z] "∈" [ [    nat;unit  ; int] ; [    unit;nat  ; string] ; ]
   ;
 
-  test' "deduce_and_clean two recursive" deduce_and_clean
+  test' "deduce_and_clean two recursive" deduce_and_clean repr
     (* Input restricted typeclass: *)
     [x;y;z]   "∈" [ [ map( nat , unit ) ; map( bytes , mutez ) ; int ] ; [ map( nat , unit ) ; map( bytes , unit ) ; string ] ; ]
     (* Expected inferred constraints: *)

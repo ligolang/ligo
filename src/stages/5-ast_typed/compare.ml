@@ -39,8 +39,8 @@ let layout_tag = function
 
 let layout a b = Int.compare (layout_tag a) (layout_tag b)
 
-let type_expression_tag ty_expr =
-  match ty_expr.type_content with
+let type_expression_tag ty_cont =
+  match ty_cont with
     T_variable        _ -> 1
   | T_constant        _ -> 2
   | T_sum             _ -> 3
@@ -73,7 +73,10 @@ let rec constant_tag (ct : constant_tag) =
   | C_chain_id  ->  0
 
 and type_expression a b =
-  match a.type_content,b.type_content with
+  type_content a.type_content b.type_content
+
+and type_content a b =
+  match a, b with
     T_variable a, T_variable b -> type_variable a b
   | T_constant a, T_constant b -> injection a b
   | T_sum      a, T_sum      b -> rows a b
@@ -93,7 +96,7 @@ and injection {language=la ; injection=ia ; parameters=pa} {language=lb ; inject
 
 and rows {content=ca; layout=la} {content=cb; layout=lb} =
   cmp2
-    (label_map ~compare:row) ca cb
+    (label_map ~compare:row_element) ca cb
     layout la lb
 
 and constraint_identifier (ConstraintIdentifier a) (ConstraintIdentifier b) =
@@ -104,7 +107,7 @@ and constraint_identifier (ConstraintIdentifier a) (ConstraintIdentifier b) =
 and constraint_identifier_set (a : constraint_identifier PolySet.t) (b : constraint_identifier PolySet.t) : int =
   List.compare ~compare:constraint_identifier (PolySet.elements a)  (PolySet.elements b)
 
-and row {associated_type=aa;michelson_annotation=ma;decl_pos=da} {associated_type=ab;michelson_annotation=mb;decl_pos=db} =
+and row_element {associated_type=aa;michelson_annotation=ma;decl_pos=da} {associated_type=ab;michelson_annotation=mb;decl_pos=db} =
   cmp3
     type_expression aa ab
     (Option.compare String.compare) ma mb
@@ -291,12 +294,12 @@ and matching_content_variant {cases=ca;tv=ta} {cases=cb;tv=tb} =
     type_expression ta tb
 
 and matching_content_record
-    {fields = fields1; body = body1; record_type = t1}
-    {fields = fields2; body = body2; record_type = t2} =
+    {fields = fields1; body = body1; tv = t1}
+    {fields = fields2; body = body2; tv = t2} =
   cmp3
     (label_map ~compare:(cmp_pair expression_variable type_expression)) fields1 fields2
     expression body1 body2
-    rows t1 t2
+    type_expression t1 t2
 
 and declaration_constant {name=na;binder=ba;expr=ea;inline=ia} {name=nb;binder=bb;expr=eb;inline=ib} =
   cmp4
@@ -354,10 +357,9 @@ let environment_element_definition a b = match a,b with
   | ED_declaration _, ED_binder -> 1
   | ED_declaration a, ED_declaration b -> environment_element_definition_declaration a b
 
-let rec environment_element {type_value=ta;source_environment=sa;definition=da} {type_value=tb;source_environment=sb;definition=db} =
-  cmp3
+let rec environment_element {type_value=ta;definition=da} {type_value=tb;definition=db} =
+  cmp2
     type_expression ta tb
-    environment sa sb
     environment_element_definition da db
 
 and environment_binding {expr_var=eva;env_elt=eea} {expr_var=evb;env_elt=eeb} =
@@ -440,7 +442,13 @@ and p_apply {tf=ta;targ=la} {tf=tb;targ=lb} =
 and p_row {p_row_tag=ra;p_row_args=la} {p_row_tag=rb;p_row_args=lb} =
   cmp2
     row_tag ra rb
-    (label_map ~compare:type_value) la lb
+    (label_map ~compare:row_value) la lb
+
+and row_value {associated_value=aa;michelson_annotation=ma;decl_pos=da} {associated_value=ab;michelson_annotation=mb;decl_pos=db} =
+  cmp3
+    type_value aa ab
+    (Option.compare String.compare) ma mb
+    Int.compare     da db
 
 and type_constraint {reason=ra;c=ca} {reason=rb;c=cb} =
   cmp2
@@ -501,6 +509,9 @@ let c_poly_simpl {id_poly_simpl = ConstraintIdentifier ca;_} {id_poly_simpl = Co
 let c_typeclass_simpl a b =
   constraint_identifier a.id_typeclass_simpl b.id_typeclass_simpl
 
+let c_access_label_simpl a b =
+  constraint_identifier a.id_access_label_simpl b.id_access_label_simpl
+
 let c_row_simpl {id_row_simpl = ConstraintIdentifier ca;_} {id_row_simpl = ConstraintIdentifier cb;_} =
   Int64.compare ca cb
 
@@ -518,6 +529,7 @@ let type_constraint_simpl_tag = function
   | SC_Alias       _ -> 2
   | SC_Poly        _ -> 3
   | SC_Typeclass   _ -> 4
+  | SC_Access_label   _ -> 6
   | SC_Row         _ -> 5
 
 let type_constraint_simpl a b =
@@ -526,6 +538,7 @@ let type_constraint_simpl a b =
 | SC_Alias       aa, SC_Alias       ab -> c_alias aa ab
 | SC_Poly        pa, SC_Poly        pb -> c_poly_simpl pa pb
 | SC_Typeclass   ta, SC_Typeclass   tb -> c_typeclass_simpl ta tb
+| SC_Access_label la, SC_Access_label lb -> c_access_label_simpl la lb
 | SC_Row         ra, SC_Row         rb -> c_row_simpl ra rb
 | a, b -> Int.compare (type_constraint_simpl_tag a) (type_constraint_simpl_tag b)
 

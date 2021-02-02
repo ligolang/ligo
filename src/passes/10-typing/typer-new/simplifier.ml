@@ -15,11 +15,18 @@ let global_next_constraint_id : int64 ref = ref 0L
 
 let rec type_constraint_simpl : type_constraint -> type_constraint_simpl list =
   fun new_constraint ->
-  let insert_fresh a b =
+  let equal_via_fresh a b =
     let fresh = Core.fresh_type_variable () in
     let cs1 = type_constraint_simpl (c_equation (wrap (Todo "solver: simplifier: simpl 1") @@ P_variable fresh) a "simplifier: simpl 1") in
     let cs2 = type_constraint_simpl (c_equation (wrap (Todo "solver: simplifier: simpl 2") @@ P_variable fresh) b "simplifier: simpl 2") in
     cs1 @ cs2 in
+  let access_label_via_fresh tv record_type label = (* τ.label = β  via  α = τ && α.label = β *)
+    let fresh = Core.fresh_type_variable () in
+    let cs1 = type_constraint_simpl (c_equation (wrap (Todo "solver: simplifier: simpl target of label access") @@ P_variable fresh) record_type "simplifier: simpl target of label access") in
+    let id_access_label_simpl = ConstraintIdentifier (!global_next_constraint_id) in
+    global_next_constraint_id := Int64.add !global_next_constraint_id 1L;
+    let cs2 = [SC_Access_label { id_access_label_simpl; record_type = fresh; label; tv; reason_access_label_simpl= "simplifier: simpl label access on record via a fresh var for the record's type" }] in
+    cs2 @ cs1 in
   let split_constant a c_tag args =
     let fresh_vars = List.map (fun _ -> Core.fresh_type_variable ()) args in
     let fresh_eqns = List.map (fun (v,t) -> c_equation (wrap (Todo "solver: simplifier: split_constant") @@ P_variable v) t "simplifier: split_constant") (List.combine fresh_vars args) in
@@ -28,16 +35,16 @@ let rec type_constraint_simpl : type_constraint -> type_constraint_simpl list =
     global_next_constraint_id := Int64.add !global_next_constraint_id 1L;
     SC_Constructor {id_constructor_simpl;original_id=None;tv=a;c_tag;tv_list=fresh_vars;reason_constr_simpl=Format.asprintf "simplifier: split constant %a = %a (%a)" Var.pp a Ast_typed.PP.constant_tag c_tag (PP_helpers.list_sep Ast_typed.PP.type_value (fun ppf () -> Format.fprintf ppf ", ")) args} :: List.flatten recur in
   let split_row a r_tag args =
-    let aux const _ v =
+    let aux const _ {associated_value = v;michelson_annotation;decl_pos} =
       let var = Core.fresh_type_variable () in
       let v   = c_equation (wrap (Todo "solver: simplifier: split_row") @@ P_variable var) v "simplifier: split_row" in
-      (v::const, var)
+      (v::const, {associated_variable=var;michelson_annotation;decl_pos})
     in
     let fresh_eqns, fresh_vars = LMap.fold_map aux [] args in
     let recur = List.map type_constraint_simpl fresh_eqns in
     let id_row_simpl = ConstraintIdentifier (!global_next_constraint_id) in
     global_next_constraint_id := Int64.add !global_next_constraint_id 1L;
-    [SC_Row {id_row_simpl;original_id=None;tv=a;r_tag;tv_map=fresh_vars;reason_row_simpl=Format.asprintf "simplifier: split constant %a = %a (%a)" Var.pp a Ast_typed.PP.row_tag r_tag (Ast_typed.PP.record_sep Ast_typed.PP.type_value (fun ppf () -> Format.fprintf ppf ", ")) args}] @ List.flatten recur in
+    [SC_Row {id_row_simpl;original_id=None;tv=a;r_tag;tv_map=fresh_vars;reason_row_simpl=Format.asprintf "simplifier: split constant %a = %a (%a)" Var.pp a Ast_typed.PP.row_tag r_tag (Ast_typed.PP.record_sep Ast_typed.PP.row_value (fun ppf () -> Format.fprintf ppf ", ")) args}] @ List.flatten recur in
   let gather_forall a forall = 
     let id_poly_simpl = ConstraintIdentifier (!global_next_constraint_id) in
     global_next_constraint_id := Int64.add !global_next_constraint_id 1L;
@@ -61,22 +68,22 @@ let rec type_constraint_simpl : type_constraint -> type_constraint_simpl list =
 
   match new_constraint.c with
   (* break down (forall 'b, body = forall 'c, body') into ('a = forall 'b, body and 'a = forall 'c, body')) *)
-  | C_equation {aval=({ location = _ ; wrap_content = P_forall _ } as a); bval=({ location = _ ; wrap_content = P_forall _ } as b)}     -> insert_fresh a b
+  | C_equation {aval=({ location = _ ; wrap_content = P_forall _ } as a); bval=({ location = _ ; wrap_content = P_forall _ } as b)}     -> equal_via_fresh a b
   (* break down (forall 'b, body = c(args)) into ('a = forall 'b, body and 'a = c(args)) *)
-  | C_equation {aval=({ location = _ ; wrap_content = P_forall _ } as a); bval=({ location = _ ; wrap_content = P_constant _ } as b)}   -> insert_fresh a b
+  | C_equation {aval=({ location = _ ; wrap_content = P_forall _ } as a); bval=({ location = _ ; wrap_content = P_constant _ } as b)}   -> equal_via_fresh a b
   (* break down (forall 'b, body = r(args)) into ('a = forall 'b, body and 'a = r(args)) *)
-  | C_equation {aval=({ location = _ ; wrap_content = P_forall _ } as a); bval=({ location = _ ; wrap_content = P_row _ } as b)}   -> insert_fresh a b
+  | C_equation {aval=({ location = _ ; wrap_content = P_forall _ } as a); bval=({ location = _ ; wrap_content = P_row _ } as b)}   -> equal_via_fresh a b
   (* break down (c(args) = c'(args')) into ('a = c(args) and 'a = c'(args')) *)
-  | C_equation {aval=({ location = _ ; wrap_content = P_constant _ } as a); bval=({ location = _ ; wrap_content = P_constant _ } as b)} -> insert_fresh a b
+  | C_equation {aval=({ location = _ ; wrap_content = P_constant _ } as a); bval=({ location = _ ; wrap_content = P_constant _ } as b)} -> equal_via_fresh a b
   (* break down (r(args) = r'(args')) into ('a = r(args) and 'a = r'(args')) *)
-  | C_equation {aval=({ location = _ ; wrap_content = P_row _ } as a); bval=({ location = _ ; wrap_content = P_row _ } as b)} -> insert_fresh a b
+  | C_equation {aval=({ location = _ ; wrap_content = P_row _ } as a); bval=({ location = _ ; wrap_content = P_row _ } as b)} -> equal_via_fresh a b
   (* break down (c(args) = forall 'b, body) into ('a = c(args) and 'a = forall 'b, body) *)
-  | C_equation {aval=({ location = _ ; wrap_content = P_constant _ } as a); bval=({ location = _ ; wrap_content = P_forall _ } as b)}   -> insert_fresh a b
+  | C_equation {aval=({ location = _ ; wrap_content = P_constant _ } as a); bval=({ location = _ ; wrap_content = P_forall _ } as b)}   -> equal_via_fresh a b
   (* break down (r(args) = forall 'b, body) into ('a = r(args) and 'a = forall 'b, body) *)
-  | C_equation {aval=({ location = _ ; wrap_content = P_row _ } as a); bval=({ location = _ ; wrap_content = P_forall _ } as b)}   -> insert_fresh a b
+  | C_equation {aval=({ location = _ ; wrap_content = P_row _ } as a); bval=({ location = _ ; wrap_content = P_forall _ } as b)}   -> equal_via_fresh a b
   (* break down (r(args) = c(args')) into ('a = r(args) and 'a = c(args')) *)
   | C_equation {aval=({ location = _ ; wrap_content = P_constant _} as a); bval = ({ location = _ ; wrap_content = P_row _} as b)}
-  | C_equation {aval=({ location = _ ; wrap_content = P_row _} as a); bval = ({ location = _ ; wrap_content = P_constant _} as b)} -> insert_fresh a b
+  | C_equation {aval=({ location = _ ; wrap_content = P_row _} as a); bval = ({ location = _ ; wrap_content = P_constant _} as b)} -> equal_via_fresh a b
   | C_equation {aval={ location = _ ; wrap_content = P_forall forall }; bval={ location = _ ; wrap_content = P_variable b }}        -> gather_forall b forall
   | C_equation {aval={ location = _ ; wrap_content = P_variable a }; bval={ location = _ ; wrap_content = P_forall forall }}            -> gather_forall a forall
   | C_equation {aval={ location = _ ; wrap_content = P_variable a }; bval={ location = _ ; wrap_content = P_variable b }}               -> gather_alias a b
@@ -89,5 +96,5 @@ let rec type_constraint_simpl : type_constraint -> type_constraint_simpl list =
   | C_equation {aval=({ location = _ ; wrap_content = P_apply _ } as a); bval=(_ as b)}               -> reduce_type_app b a
   (* break down (TC(args)) into (TC('a, …) and ('a = arg) …) *)
   | C_typeclass { tc_args; typeclass; original_id }                              -> split_typeclass tc_args typeclass original_id
-  | C_access_label { c_access_label_tval; accessor; c_access_label_tvar } -> let _todo = ignore (c_access_label_tval, accessor, c_access_label_tvar) in failwith "TODO C_access_label" (* tv, label, result *)
+  | C_access_label { c_access_label_tval; accessor; c_access_label_tvar } -> access_label_via_fresh c_access_label_tvar c_access_label_tval accessor
 

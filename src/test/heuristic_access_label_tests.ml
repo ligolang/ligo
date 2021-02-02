@@ -21,7 +21,7 @@ let selector_test : (_ -> type_constraint_simpl -> type_variable Map.t -> output
   ok ()
 
 let main =
-  test_suite "Typer : ctor break heuristic" @@
+  test_suite "Typer : access label heuristic" @@
     [
       test "selector" (selector_test Typer_new.Heuristic_break_ctor.selector_) ;
     ]

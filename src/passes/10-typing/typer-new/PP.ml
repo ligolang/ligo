@@ -32,6 +32,7 @@ let type_constraint_ : _ -> type_constraint_simpl -> unit = fun ppf ->
   |SC_Alias       { a; b } -> fprintf ppf "Alias %a %a" Var.pp a Var.pp b
   |SC_Poly        _ -> fprintf ppf "Poly"
   |SC_Typeclass   _ -> fprintf ppf "TC"
+  |SC_Access_label _ -> fprintf ppf "Access_label"
   |SC_Row { tv; r_tag; tv_map=_ } ->
     let r = match r_tag with
       | C_record       -> "record"

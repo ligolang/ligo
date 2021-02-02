@@ -53,13 +53,17 @@ module Grouped_by_variable_tests = struct
     let expected_actual_str =
       let open PP_helpers in
       let pp' pp x = (list_sep_d (pair Var.pp (MultiSet.pp pp))) x in
-      Format.asprintf "expected=\n{ctors=\n%a;\nrows=\n%a;\npolys=\n%a}\nactual=\n{ctors=\n%a;\nrows=\n%a;\npolys=\n%a}"
+      Format.asprintf "expected=\n{ctors=\n%a;\nrows=\n%a;\npolys=\n%a;\naccess_result=\n%a;\naccess_record=\n%a}\nactual=\n{ctors=\n%a;\nrows=\n%a;\npolys=\n%a;\naccess_result=\n%a;\naccess_record=\n%a}"
         (pp' Ast_typed.PP.c_constructor_simpl) expected.constructor
         (pp' Ast_typed.PP.c_row_simpl        ) expected.row
         (pp' Ast_typed.PP.c_poly_simpl       ) expected.poly
+        (pp' Ast_typed.PP.c_access_label_simpl) expected.access_label_by_result_type
+        (pp' Ast_typed.PP.c_access_label_simpl) expected.access_label_by_record_type
         (pp' Ast_typed.PP.c_constructor_simpl) actual.constructor
         (pp' Ast_typed.PP.c_row_simpl        ) actual.row
         (pp' Ast_typed.PP.c_poly_simpl       ) actual.poly
+        (pp' Ast_typed.PP.c_access_label_simpl) actual.access_label_by_result_type
+        (pp' Ast_typed.PP.c_access_label_simpl) actual.access_label_by_record_type
     in
     let a msg expected actual =
       tst_assert (Format.asprintf "%s\n%s\n%s\n" msg loc expected_actual_str)
@@ -81,15 +85,19 @@ type nonrec t_for_tests = type_variable GroupedByVariable.t_for_tests
 let filter_only_ctors  = List.filter_map (function Ast_typed.Types.SC_Constructor c -> Some c | _ -> None)
 let filter_only_rows   = List.filter_map (function Ast_typed.Types.SC_Row         c -> Some c | _ -> None)
 let filter_only_polys  = List.filter_map (function Ast_typed.Types.SC_Poly        c -> Some c | _ -> None)
+let filter_only_access_labels = List.filter_map (function Ast_typed.Types.SC_Access_label c -> Some c | _ -> None)
 let to_ctor_sets = List.map (fun (v,cs) -> (v, (MultiSet.of_list ~cmp:Ast_typed.Compare.c_constructor_simpl (filter_only_ctors cs))))
 let to_row_sets  = List.map (fun (v,cs) -> (v, (MultiSet.of_list ~cmp:Ast_typed.Compare.c_row_simpl         (filter_only_rows  cs))))
 let to_poly_sets = List.map (fun (v,cs) -> (v, (MultiSet.of_list ~cmp:Ast_typed.Compare.c_poly_simpl        (filter_only_polys cs))))
+let to_access_label_sets = List.map (fun (v,cs) -> (v, (MultiSet.of_list ~cmp:Ast_typed.Compare.c_access_label_simpl (filter_only_access_labels cs))))
 
 let assert_states_equal
     loc
     ?(expected_ctors:(type_variable * type_constraint_simpl list) list = [])
     ?(expected_rows:(type_variable * type_constraint_simpl list) list = [])
     ?(expected_polys:(type_variable * type_constraint_simpl list) list = [])
+    ?(expected_access_labels_by_result_type:(type_variable * type_constraint_simpl list) list = [])
+    ?(expected_access_labels_by_record_type:(type_variable * type_constraint_simpl list) list = [])
     (actual:type_variable t) =
   same_state'
     loc
@@ -97,6 +105,8 @@ let assert_states_equal
       constructor = to_ctor_sets expected_ctors ;
       row         = to_row_sets  expected_rows  ;
       poly        = to_poly_sets expected_polys ;
+      access_label_by_result_type = to_access_label_sets expected_access_labels_by_result_type ;
+      access_label_by_record_type = to_access_label_sets expected_access_labels_by_record_type ;
     }
     (GroupedByVariable.bindings actual)
 
@@ -250,6 +260,27 @@ let poly_add_and_merge () =
   let sc_c : type_constraint_simpl = poly tvc p_forall in
   add_and_merge ~sc_a ~sc_b ~sc_c (fun loc expected_polys state -> assert_states_equal (loc ^ "\n" ^ __LOC__) ~expected_polys state)
 
+let access_label_add_and_merge () =
+  let sc_abf : type_constraint_simpl = access_label tva ~record_type:tvb labelfoo in
+  let sc_bbb : type_constraint_simpl = access_label tvb ~record_type:tvb labelbar in
+  let sc_ccb : type_constraint_simpl = access_label tvc ~record_type:tvc labelbar in
+  let check = (fun loc expected_access_labels_by_result_type expected_access_labels_by_record_type state ->
+      assert_states_equal (loc ^ "\n" ^ __LOC__) ~expected_access_labels_by_result_type ~expected_access_labels_by_record_type state) in
+
+  let repr : type_variable -> type_variable = fun tv -> tv in
+  let state = create_state ~cmp:Ast_typed.Compare.type_variable in
+
+  let state = add_constraint repr state sc_abf in
+  let%bind () = check __LOC__ [(tva, [sc_abf])] [(tvb, [sc_abf])] state in
+  let state = add_constraint repr state sc_bbb in
+  let%bind () = check __LOC__ [(tva, [sc_abf]); (tvb, [sc_bbb])] [(tvb, [sc_abf; sc_bbb])] state in
+  let repr, state = merge ~demoted_repr:tvb ~new_repr:tva repr state in
+  let%bind () = check __LOC__ [(tva, [sc_abf; sc_bbb])] [(tva, [sc_abf; sc_bbb])] state in
+  let state = add_constraint repr state sc_ccb in
+  let%bind () = check __LOC__ [(tva, [sc_abf; sc_bbb]) ; (tvc, [sc_ccb])] [(tva, [sc_abf; sc_bbb]); (tvc, [sc_ccb])] state in
+
+  ok ()
+
 
 
 let add_and_remove ~sc_a ~sc_b ~sc_c check =
@@ -313,6 +344,27 @@ let poly_add_and_remove () =
   let sc_b : type_constraint_simpl = poly tvb p_forall in
   let sc_c : type_constraint_simpl = poly tvc p_forall in
   add_and_remove ~sc_a ~sc_b ~sc_c (fun loc expected_polys state -> assert_states_equal (loc ^ "\n" ^ __LOC__) ~expected_polys state)
+
+let access_label_add_and_remove () =
+  let sc_baf : type_constraint_simpl = access_label tvb ~record_type:tva labelfoo in
+  let sc_bbb : type_constraint_simpl = access_label tvb ~record_type:tvb labelbar in
+  let sc_ccb : type_constraint_simpl = access_label tvc ~record_type:tvc labelbar in
+  let check = (fun loc expected_access_labels_by_result_type expected_access_labels_by_record_type state ->
+      assert_states_equal (loc ^ "\n" ^ __LOC__) ~expected_access_labels_by_result_type ~expected_access_labels_by_record_type state) in
+
+  let repr : type_variable -> type_variable = fun tv -> tv in
+  let state = create_state ~cmp:Ast_typed.Compare.type_variable in
+
+  let state = add_constraint repr state sc_baf in
+  let%bind () = check __LOC__ [(tvb, [sc_baf])] [(tva, [sc_baf])] state in
+  let state = add_constraint repr state sc_bbb in
+  let%bind () = check __LOC__ [tvb, [sc_baf; sc_bbb]] [(tva, [sc_baf]); (tvb, [sc_bbb])] state in
+  let%bind state = remove_constraint repr state sc_bbb in
+  let%bind () = check __LOC__ [(tvb, [sc_baf])] [(tva, [sc_baf])] state in
+  let state = add_constraint repr state sc_ccb in
+  let%bind () = check __LOC__ [(tvb, [sc_baf]); (tvc, [sc_ccb])] [(tva, [sc_baf]) ; (tvc, [sc_ccb])] state in
+
+  ok ()
 
 (* Test mixed + remove + merge *)
 
@@ -418,6 +470,49 @@ let mixed () =
       ~expected_polys:[(tvc, [sc_c])]
       state in
 
+  let sc_acf = access_label tva ~record_type:tvc labelfoo in
+  let state = add_constraint repr state sc_acf in
+
+  let%bind () = assert_states_equal __LOC__
+      ~expected_ctors:[(tva, [sc_a]); (tvc, [sc_c2])]
+      ~expected_rows:[(tva, [sc_b3])]
+      ~expected_polys:[(tvc, [sc_c])]
+      ~expected_access_labels_by_result_type:[(tva, [sc_acf])]
+      ~expected_access_labels_by_record_type:[(tvc, [sc_acf])]
+      state in
+
+  let sc_bcb = access_label tvb ~record_type:tvc labelbar in
+  let state = add_constraint repr state sc_bcb in
+
+  let%bind () = assert_states_equal __LOC__
+      ~expected_ctors:[(tva, [sc_a]); (tvc, [sc_c2])]
+      ~expected_rows:[(tva, [sc_b3])]
+      ~expected_polys:[(tvc, [sc_c])]
+      ~expected_access_labels_by_result_type:[(tva, [sc_acf; sc_bcb])]
+      ~expected_access_labels_by_record_type:[(tvc, [sc_acf; sc_bcb])]
+      state in
+
+  let sc_dcb = access_label tvc ~record_type:tvb labelbar in
+  let state = add_constraint repr state sc_dcb in
+
+  let%bind () = assert_states_equal __LOC__
+      ~expected_ctors:[(tva, [sc_a]); (tvc, [sc_c2])]
+      ~expected_rows:[(tva, [sc_b3])]
+      ~expected_polys:[(tvc, [sc_c])]
+      ~expected_access_labels_by_result_type:[(tva, [sc_acf; sc_bcb]); (tvd, [sc_dcb])]
+      ~expected_access_labels_by_record_type:[(tvc, [sc_acf; sc_bcb; sc_dcb])]
+      state in
+
+  let%bind state = remove_constraint repr state sc_acf in
+
+  let%bind () = assert_states_equal __LOC__
+      ~expected_ctors:[(tva, [sc_a]); (tvc, [sc_c2])]
+      ~expected_rows:[(tva, [sc_b3])]
+      ~expected_polys:[(tvc, [sc_c])]
+      ~expected_access_labels_by_result_type:[(tva, [sc_bcb]); (tvd, [sc_dcb])]
+      ~expected_access_labels_by_record_type:[(tvc, [sc_bcb; sc_dcb])]
+      state in
+
   ok ()
 
 let grouped_by_variable () =
@@ -429,5 +524,7 @@ let grouped_by_variable () =
   let%bind () = row_add_and_remove () in
   let%bind () = poly_add_and_merge () in
   let%bind () = poly_add_and_remove () in
+  let%bind () = access_label_add_and_merge () in
+  let%bind () = access_label_add_and_remove () in
   let%bind () = mixed () in
   ok ()

@@ -13,6 +13,7 @@ let constructor id original_id tv tag args = make_sc_constructor id original_id 
 let row ?(row=[]) id tv = make_sc_row id None tv C_record row
 let tc tc args = make_sc_typeclass tc args
 let poly tv forall = make_sc_poly tv forall
+let access_label tv ~record_type label = make_sc_access_label tv ~record_type label
 
 module Test_vars = struct
   let tva : type_variable = Var.of_name "a"
@@ -21,4 +22,6 @@ module Test_vars = struct
   let tvd : type_variable = Var.of_name "d"
   let tve : type_variable = Var.of_name "e"
   let tvf : type_variable = Var.of_name "f"
+  let labelfoo : label = Label "foo"
+  let labelbar : label = Label "bar"
 end

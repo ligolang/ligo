@@ -216,11 +216,11 @@ and matching_content_case {constructor; pattern; body} =
     ("body", expression body);
   ]
 
-and matching_content_record {fields; body; record_type} =
+and matching_content_record {fields; body; tv} =
   `Assoc [
     ("fields", label_map (pair expression_variable_to_yojson type_expression) fields);
     ("body", expression body);
-    ("record_type", rows record_type);
+    ("record_type", type_expression tv);
   ]
 
 and declaration_type {type_binder;type_expr} =
@@ -270,10 +270,9 @@ let environment_element_definition = function
   | ED_binder  -> `List [ `String "ED_binder"; `Null]
   | ED_declaration ed -> `List [ `String "ED_declaration"; environment_element_definition_declaration ed]
 
-let rec environment_element {type_value;source_environment;definition} =
+let rec environment_element {type_value;definition} =
   `Assoc [
     ("type_value", type_expression type_value);
-    ("source_environment", environment source_environment);
     ("definition", environment_element_definition definition);
   ]
 
@@ -403,8 +402,16 @@ and p_apply {tf;targ} =
 and p_row {p_row_tag;p_row_args} =
   `Assoc [
     ("p_row_tag", row_tag p_row_tag);
-    ("p_row_args", label_map type_value p_row_args);
+    ("p_row_args", label_map row_value p_row_args);
   ]
+
+and row_value {associated_value; michelson_annotation; decl_pos} =
+  `Assoc [
+    ("associated_value", type_value associated_value);
+    ("michelson_annotation", option (fun s -> `String s) michelson_annotation);
+    ("decl_pos", `Int decl_pos);
+  ]
+
 
 let c_constructor_simpl {id_constructor_simpl = ConstraintIdentifier ci;reason_constr_simpl;original_id;tv;c_tag;tv_list} =
   `Assoc [
@@ -441,6 +448,22 @@ let c_typeclass_simpl {id_typeclass_simpl = ConstraintIdentifier ci;reason_typec
     ("args", list type_variable_to_yojson args)
   ]
 
+let c_access_label_simpl { id_access_label_simpl = ConstraintIdentifier ci ; reason_access_label_simpl ; record_type ; label = l ; tv } =
+  `Assoc [
+    ("id_access_label_simpl", `String (Format.sprintf "%Li" ci));
+    ("reason_access_label_simpl", `String reason_access_label_simpl);
+    ("record_type", type_variable_to_yojson record_type);
+    ("label", label_to_yojson l);
+    ("tv", type_variable_to_yojson tv)
+  ]
+
+let row_variable {associated_variable; michelson_annotation; decl_pos} =
+  `Assoc [
+    ("associated_variable", type_variable_to_yojson associated_variable);
+    ("michelson_annotation", option (fun s -> `String s) michelson_annotation);
+    ("decl_pos", `Int decl_pos);
+  ]
+
 let c_row_simpl {id_row_simpl = ConstraintIdentifier ci; reason_row_simpl; original_id; tv;r_tag;tv_map} =
   `Assoc [
     ("id_row_simpl", `String (Format.sprintf "%Li" ci));
@@ -448,13 +471,14 @@ let c_row_simpl {id_row_simpl = ConstraintIdentifier ci; reason_row_simpl; origi
     ("reason_row_simpl", `String reason_row_simpl);
     ("tv", type_variable_to_yojson tv);
     ("r_tag", row_tag r_tag);
-    ("tv_map", label_map type_variable_to_yojson tv_map)
+    ("tv_map", label_map row_variable tv_map)
   ]
 let type_constraint_simpl = function
   | SC_Constructor c -> `List [`String "SC_constructor"; c_constructor_simpl c]
   | SC_Alias       c -> `List [`String "SC_alias"; c_alias c]
   | SC_Poly        c -> `List [`String "SC_Poly"; c_poly_simpl c]
   | SC_Typeclass   c -> `List [`String "SC_Typclass"; c_typeclass_simpl c]
+  | SC_Access_label c -> `List [`String "SC_Access_label"; c_access_label_simpl c]
   | SC_Row         c -> `List [`String "SC_Row"; c_row_simpl c]
 
 let poly_unionfind f p =

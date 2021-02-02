@@ -23,23 +23,24 @@ type selector_output = output_specialize1
    The same need was present for the heuristic_tc_fundep (detect if a TC has already
    been refined, and if so find the update) *)
  
- let selector : type_constraint_simpl -> _ flds -> selector_output list =
+ let selector : (type_variable -> type_variable) -> type_constraint_simpl -> _ flds -> selector_output list =
   (* find two rules with the shape (x = forall b, d) and x = k'(var' …) or vice versa *)
   (* TODO: do the same for two rules with the shape (a = forall b, d) and tc(a…) *)
   (* TODO: do the appropriate thing for two rules with the shape (a = forall b, d) and (a = forall b', d') *)
-  fun type_constraint_simpl indexes ->
+  fun repr type_constraint_simpl indexes ->
   match type_constraint_simpl with
   | SC_Constructor c                ->
     (* vice versa *)
-    let other_cs = MultiSet.elements @@ GroupedByVariable.get_polys_by_lhs c.tv indexes#grouped_by_variable in
+    let other_cs = MultiSet.elements @@ GroupedByVariable.get_polys_by_lhs (repr c.tv) indexes#grouped_by_variable in
     let cs_pairs = List.map (fun x -> { poly = x ; a_k_var = c }) other_cs in
     cs_pairs
   | SC_Alias       _                -> failwith "alias should not be visible here"
   | SC_Poly        p                ->
-    let other_cs = MultiSet.elements @@ GroupedByVariable.get_constructors_by_lhs p.tv indexes#grouped_by_variable in
+    let other_cs = MultiSet.elements @@ GroupedByVariable.get_constructors_by_lhs (repr p.tv) indexes#grouped_by_variable in
     let cs_pairs = List.map (fun x -> { poly = p ; a_k_var = x }) other_cs in
     cs_pairs
   | SC_Typeclass   _                -> []
+  | SC_Access_label _               -> []
   | SC_Row _                        -> []
 
 (* when α = ∀ δ, γ and β = κ(ε, …) are in the db, aliasing α and β
@@ -61,13 +62,19 @@ let alias_selector : type_variable -> type_variable -> _ flds -> selector_output
          (a_ctors @ b_ctors))
     (a_polys @ b_polys)
 
+let get_referenced_constraints ({ poly; a_k_var } : selector_output) : type_constraint_simpl list =
+  [
+    SC_Poly poly;
+    SC_Constructor a_k_var;
+  ]
+
 let propagator : (output_specialize1 , typer_error) propagator =
-  fun selected _repr ->
+  fun selected repr ->
   let a = selected.poly in
   let b = selected.a_k_var in
 
   (* The selector is expected to provide two constraints with the shape (x = forall y, z) and x = k'(var' …) *)
-  assert (Var.equal (a : c_poly_simpl).tv (b : c_constructor_simpl).tv);
+  assert (Var.equal (repr (a : c_poly_simpl).tv) (repr (b : c_constructor_simpl).tv));
 
   (* produce constraints: *)
 
@@ -91,7 +98,7 @@ let propagator : (output_specialize1 , typer_error) propagator =
        Ast_typed.PP.type_value reduced
        (PP_helpers.list_sep Ast_typed.PP.type_constraint_short (fun ppf () -> Format.fprintf ppf " ;\n")) new_constraints);
   
-  let eq1 = c_equation (wrap (Todo "solver: propagator: specialize1 eq1") @@ P_variable b.tv) reduced "propagator: specialize1" in
+  let eq1 = c_equation (wrap (Todo "solver: propagator: specialize1 eq1") @@ P_variable (repr b.tv)) reduced "propagator: specialize1" in
   let eqs = eq1 :: new_constraints in
   let pp_indented_constraint_list =
     let open PP_helpers in
@@ -111,4 +118,4 @@ let printer = Ast_typed.PP.output_specialize1
 let printer_json = Ast_typed.Yojson.output_specialize1
 let comparator = Solver_should_be_generated.compare_output_specialize1
 
-let heuristic = Heuristic_plugin { heuristic_name = "specialize1"; selector; alias_selector; propagator; printer; printer_json; comparator }
+let heuristic = Heuristic_plugin { heuristic_name = "specialize1"; selector; alias_selector; get_referenced_constraints; propagator; printer; printer_json; comparator }

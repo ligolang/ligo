@@ -10,7 +10,7 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
   let open! AST in
   let return e = ok (make_e e t) in
   match t.type_content with
-  | tc when (compare tc (t_bool ()).type_content) = 0-> (
+  | tc when (AST.Compare.type_content tc (t_bool ()).type_content) = 0-> (
         let%bind b =
           trace_option (wrong_mini_c_value t v) @@
           get_bool v in

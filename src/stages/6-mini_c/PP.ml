@@ -80,7 +80,10 @@ let rec value ppf : value -> unit = function
 and type_expression_annotated ppf : type_expression annotated -> unit = fun (_, tv) ->
   type_expression ppf tv
 
-and type_expression ppf : type_expression -> unit = fun te -> match te.type_content with
+and type_expression ppf : type_expression -> unit = fun te ->
+  fprintf ppf "%a" type_content te.type_content
+  
+and type_content ppf : type_content -> unit = function
   | T_pair (a,b) -> fprintf ppf "pair %a %a" type_expression_annotated a type_expression_annotated b
   | T_or    (a,b) -> fprintf ppf "or %a %a" type_expression_annotated a type_expression_annotated b
   | T_function (a, b) -> fprintf ppf "lambda (%a) %a" type_expression a type_expression b

@@ -40,7 +40,7 @@ let t_record ?loc m  : type_expression =
 
 let t_pair ?loc (a , b) : type_expression = t_record_ez ?loc [
                                                           ("0",{associated_type=a ; attributes=[] (* TODO *); decl_pos=0}) ;
-                                                          ("1",{associated_type=b ; attributes=[] (* TODO *); decl_pos=0})]
+                                                          ("1",{associated_type=b ; attributes=[] (* TODO *); decl_pos=1})]
 let t_tuple ?loc lst    : type_expression = t_record_ez ?loc (tuple_to_record lst)
 
 let t_sum_ez ?loc (lst:((string * ty_expr row_element) list)) : type_expression =

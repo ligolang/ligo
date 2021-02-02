@@ -168,7 +168,7 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
   let return tc = ok @@ Expression.make_t ~loc:t.location @@ tc in
   match t.type_content with
   | T_variable (name) -> fail @@ no_type_variable @@ name
-  | t when (compare t (t_bool ()).type_content) = 0-> return (T_base TB_bool)
+  | t when (AST.Compare.type_content t (t_bool ()).type_content) = 0-> return (T_base TB_bool)
   | T_constant {language ; injection ; parameters} -> (
     let open Stage_common.Constant in
     let%bind () = Assert.assert_true (corner_case ~loc:__LOC__ "unsupported language") @@ String.equal language Stage_common.Backends.michelson in
@@ -564,7 +564,9 @@ and compile_expression ?(module_env = SMap.empty) (ae:AST.expression) : (express
               aux expr' tree
             )
       )
-      | Match_record { fields; body; record_type = { content; layout } } ->
+      | Match_record { fields; body; tv } ->
+        let%bind { content ; layout } = trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
+          get_t_record tv in
         let%bind tree = Layout.record_tree ~layout compile_type content in
         let%bind body = self body in
         let rec aux expr (tree : Layout.record_tree) body =
@@ -748,8 +750,10 @@ and compile_recursive module_env {fun_name; fun_type; lambda} =
           trace_strong (corner_case ~loc:__LOC__ "building constructor") @@
           aux expr tree
        )
-      | Match_record { fields ; body ; record_type } ->
-        let%bind tree = Layout.record_tree ~layout:record_type.layout compile_type record_type.content in
+      | Match_record { fields ; body ; tv } ->
+        let%bind { content ; layout } = trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
+            get_t_record tv in
+        let%bind tree = Layout.record_tree ~layout compile_type content in
         let%bind body = replace_callback fun_name loop_type shadowed body in
         let rec aux expr (tree : Layout.record_tree) body =
           match tree.content with

@@ -589,7 +589,7 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
         eval_ligo body env'
       | Match_option cases, V_Construct ("None" , V_Ct C_unit) ->
         eval_ligo cases.match_none env
-      | Match_record {fields ; body ; record_type = _} , V_Record rv ->
+      | Match_record {fields ; body ; tv = _} , V_Record rv ->
         let aux : label -> ( expression_variable * _ ) -> env -> env =
           fun l (v,_) env ->
             let iv = match LMap.find_opt l rv with

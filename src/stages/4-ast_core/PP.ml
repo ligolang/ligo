@@ -28,10 +28,10 @@ let tuple_or_record_sep_t value format_record sep_record format_tuple sep_tuple 
 let tuple_or_record_sep_type value = tuple_or_record_sep_t value "@[<hv 7>record[%a]@]" " ,@ " "@[<hv 2>( %a )@]" " *@ "
 
 let rec type_expression ppf (te : type_expression) : unit =
-  fprintf ppf "%a" type_content te
-and type_content : formatter -> type_expression -> unit =
+  fprintf ppf "%a" type_content te.type_content
+and type_content : formatter -> type_content -> unit =
   fun ppf te ->
-  match te.type_content with
+  match te with
   | T_variable        tv -> type_variable ppf tv
   | T_sum              m -> fprintf ppf "@[<hv 4>sum[%a]@]" (variant_sep_d type_expression) m.fields
   | T_record           m -> fprintf ppf "%a" (tuple_or_record_sep_type type_expression) m.fields
@@ -113,4 +113,4 @@ and declaration ppf (d : declaration) =
     fprintf ppf "@[<2>module %a =@ %a@]" module_variable alias (list_sep_d module_variable) @@ List.Ne.to_list binders
 
 
-and module_ ppf (p : module_) = list (declaration) ppf (List.map Location.unwrap p)
+and module_ ppf (p : module_) = list_sep_d (declaration) ppf (List.map Location.unwrap p)

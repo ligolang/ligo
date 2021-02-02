@@ -37,7 +37,11 @@ let rec recursive_find_assignnment : db_access:db_access -> type_variable -> typ
     ok @@ Ast_typed.Reasons.wrap (Todo k.reason_constr_simpl) @@ P_constant { p_ctor_tag = k.c_tag ; p_ctor_args }
   | Some `Row r ->
     let%bind () = Assert.assert_true (corner_case (Format.asprintf "internal error: invalid assignment: the variable constrained by the rhs is not the same as the lhs being assigned (modulo aliasing) raised at %s" __LOC__)) (Var.equal (repr r.tv) (repr arg)) in
-    let%bind p_row_args = Stage_common.Helpers.bind_map_lmap (recursive_find_assignnment ~db_access) r.tv_map in
+    let aux {associated_variable;michelson_annotation;decl_pos} : (Ast_typed.row_value,_) Trace.result =
+      let%bind associated_value =  recursive_find_assignnment ~db_access associated_variable in
+      ok @@ {associated_value;michelson_annotation;decl_pos}
+    in
+    let%bind p_row_args = Stage_common.Helpers.bind_map_lmap aux r.tv_map in
     ok @@ Ast_typed.Reasons.wrap (Todo r.reason_row_simpl) @@ P_row { p_row_tag = r.r_tag ; p_row_args }
   | None -> fail (corner_case (Format.asprintf "error  raised at %s" __LOC__))
 
@@ -71,7 +75,6 @@ let check_alias : db_access:db_access -> c_alias -> unit result =
   fun ~db_access al ->
     fast_assert_types_are_equal ~db_access (err_TODO __LOC__) al.a al.b
 
-  (* LGTM *)
 let check_typeclass : db_access:db_access -> c_typeclass_simpl -> unit result =
   fun ~db_access tc ->
     (* (α, …) ∈ [ (type_value…) ; … ] *)
@@ -105,8 +108,9 @@ let check_typeclass : db_access:db_access -> c_typeclass_simpl -> unit result =
       (* ??? Not sure if this is the right thing to do,
         should we allow non-aliases and recursively check
       the equality of the assignments ? That would be slow. *)
-      let aux : (label * type_variable) * (label * type_variable) -> unit result =
-        fun ( (label_left, var_left) , (label_right, var_right) ) ->
+      let aux : (label * row_variable) * (label * row_variable) -> unit result =
+        (* TODO : write better row comparisons *)
+        fun ( (label_left, {associated_variable=var_left}) , (label_right, {associated_variable=var_right}) ) ->
           let%bind () = Assert.assert_true (err_TODO __LOC__) (Ast_typed.Compare.label label_left label_right = 0) in
           let%bind () = fast_assert_types_are_equal ~db_access (err_TODO __LOC__) var_left var_right in
           ok ()
@@ -158,7 +162,7 @@ let rec compare_and_stop_at_bound_vars
       let%bind () = Assert.assert_true (err_TODO __LOC__)(*internal error*) (Var.equal (db_access.repr r.tv) (db_access.repr lhs)) in
       let%bind () = Assert.assert_true (err_TODO __LOC__)(*wrong tag k.c_tag != p_ctor_tag*) (Ast_typed.Compare.row_tag r.r_tag p_row_tag = 0) in
       let%bind l = bind_map_list
-        (fun (lhs, (rhs:type_value)) -> compare_and_stop_at_bound_vars ~db_access lhs rhs.wrap_content bound_by_foralls)
+        (fun ({associated_variable=lhs}, ({associated_value=rhs;_}:row_value)) -> compare_and_stop_at_bound_vars ~db_access lhs rhs.wrap_content bound_by_foralls)
         (*instantiated_binder*)
         (List.combine (LMap.to_list r.tv_map) (LMap.to_list p_row_args))
       in
@@ -243,7 +247,7 @@ let rec check_type_variable_and_type_value : db_access:db_access -> bound_var_as
         (fun ((la,a),(lb,b)) ->
           let%bind () = Assert.assert_true (err_TODO __LOC__) (Ast_typed.Compare.label la lb = 0) in
           check_type_variable_and_type_value ~db_access ~bound_var_assignments a b)
-        (List.combine (LMap.bindings ra.tv_map) (LMap.bindings rb.p_row_args))
+        (List.combine (LMap.bindings @@ LMap.map (fun {associated_variable} -> associated_variable) ra.tv_map) (LMap.bindings @@ LMap.map (fun {associated_value;} -> associated_value) rb.p_row_args))
     | (Some _, P_variable vb) -> (
       match PolyMap.find_opt vb bound_var_assignments with
       | None -> fail (corner_case "unbound type variable")
@@ -267,7 +271,7 @@ let rec compare_type_values_using_bound_vars : db_access:db_access -> bound_var_
         (fun ((la,a),(lb,b)) ->
            let%bind () = Assert.assert_true (err_TODO __LOC__) (Ast_typed.Compare.label la lb = 0) in
            compare_type_values_using_bound_vars ~db_access ~bound_var_assignments a b)
-        (List.combine (LMap.bindings ra.p_row_args) (LMap.bindings rb.p_row_args))
+        (List.combine (LMap.bindings @@ LMap.map (fun {associated_value} -> associated_value) ra.p_row_args) (LMap.bindings @@ LMap.map (fun {associated_value} -> associated_value) rb.p_row_args))
     | P_forall (*{ binder; constraints; body }*)_ , P_forall (*{ binder; constraints; body }*)_     ->
       failwith "comparison of foralls is not implemented yet."
     | (P_variable tv , _other)  ->
@@ -289,9 +293,8 @@ let check_access_label : _ = fun ~db_access ~bound_var_assignments accessor c_ac
          (corner_case
             (Format.asprintf "Type error: field %a is not in record %a"
                Ast_typed.PP.label accessor
-               (fun ppf lm -> Ast_typed.PP.(lmap_sep_d type_value) ppf @@ LMap.to_kv_list lm) p_row_args)) @@ LMap.find_opt accessor p_row_args in
-     let _ = check_type_variable_and_type_value ~db_access ~bound_var_assignments c_access_label_tvar field_type in
-     failwith "TODO c_access_label"
+               (fun ppf lm -> Ast_typed.PP.(lmap_sep_d row_value) ppf @@ LMap.to_kv_list lm) p_row_args)) @@ LMap.find_opt accessor p_row_args in
+     check_type_variable_and_type_value ~db_access ~bound_var_assignments c_access_label_tvar field_type.associated_value
    | Ast_typed.Types.C_variant -> failwith "Type error: cannot access field in variant")
 
 let check_access_label_simpl : db_access:db_access -> bound_var_assignments:(type_variable, type_variable) PolyMap.t -> Stage_common.Types.label -> Ast_typed.Types.type_variable -> Ast_typed.Types.c_row_simpl -> unit result
@@ -303,8 +306,8 @@ let check_access_label_simpl : db_access:db_access -> bound_var_assignments:(typ
         (corner_case
            (Format.asprintf "Type error: field %a is not in record %a"
               Ast_typed.PP.label accessor
-              (fun ppf lm -> Ast_typed.PP.(lmap_sep_d type_variable) ppf @@ LMap.to_kv_list lm) tv_map)) @@ LMap.find_opt accessor tv_map in
-    let%bind field_type_value = recursive_find_assignnment ~db_access field_type in
+              (fun ppf lm -> Ast_typed.PP.(lmap_sep_d row_variable) ppf @@ LMap.to_kv_list lm) tv_map)) @@ LMap.find_opt accessor tv_map in
+    let%bind field_type_value = recursive_find_assignnment ~db_access field_type.associated_variable in
     let%bind c_access_label_tvar_value = recursive_find_assignnment ~db_access c_access_label_tvar in
     Compare_renaming.compare_and_check_vars
       ~compare:Compare_renaming.type_value
@@ -416,6 +419,15 @@ let check_forall ~(db_access:db_access) (p : c_poly_simpl) : unit result =
     let%bind () =  check_forall_constraints_are_satisfied ~db_access ~bound_var_assignments binder_intantiations in
     ok ()
 
+let check_access_label_simpl' : db_access:db_access -> c_access_label_simpl -> unit result =
+  fun ~db_access { reason_access_label_simpl = _; id_access_label_simpl = _; record_type; label; tv } ->
+  match db_access.find_assignment (db_access.repr record_type) with
+    None -> fail (err_TODO __LOC__)(* unassigned unification variable *)
+  | Some (`Constructor _) -> failwith "Type error: cannot access field on non-record"
+  | Some (`Row { r_tag = C_variant }) -> failwith "Type error: cannot access field on variant"
+  | Some (`Row r) ->
+    check_access_label_simpl ~db_access ~bound_var_assignments:(PolyMap.create ~cmp:Ast_typed.Compare.type_variable) label tv r
+
 let check : type_constraint_simpl list -> type_variable list -> (type_variable -> type_variable) -> (type_variable -> constructor_or_row option) -> unit result =
   fun all_constraints all_vars repr find_assignment ->
     (* Format.printf "Typechecking"; *)
@@ -426,6 +438,7 @@ let check : type_constraint_simpl list -> type_variable list -> (type_variable -
       | SC_Constructor c  -> check_constructor ~db_access c
       | SC_Alias       al -> check_alias ~db_access al
       | SC_Typeclass   tc -> check_typeclass ~db_access tc
+      | SC_Access_label l -> check_access_label_simpl' ~db_access l
       | SC_Row         r  -> check_row ~db_access r
       | SC_Poly        p  -> check_forall ~db_access p
     in
