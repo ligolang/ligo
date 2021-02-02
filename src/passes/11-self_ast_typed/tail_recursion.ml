@@ -79,7 +79,7 @@ and check_recursive_call_in_matching = fun n final_path c ->
     in
     let%bind _ = bind_map_list aux cases in
     ok ()
-  | Match_record {fields = _; body; record_type = _} ->
+  | Match_record {fields = _; body; tv = _} ->
     check_recursive_call n final_path body
 
 

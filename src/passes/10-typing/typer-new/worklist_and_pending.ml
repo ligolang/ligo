@@ -144,6 +144,22 @@ let rec until' :
       | Worklist.Some_processing_done w ->
         until' predicate f (state, w)
 
+let rec choose_processor' : 'typer_state 'typer_error . ('typer_state * Worklist.t -> ('typer_state * Worklist.monad, 'typer_error) result) list -> 'typer_state * Worklist.monad -> ('typer_state * Worklist.monad, 'typer_error) result =
+  fun processors (state, worklist) ->
+  match processors with
+    [] -> ok (state, worklist)
+  | hd::tl ->
+    match worklist with
+      Worklist.Some_processing_done worklist ->
+      ok @@ (state, Worklist.Some_processing_done worklist)
+    | Worklist.Unchanged worklist ->
+      let%bind (state, worklist) =
+        hd (state, worklist)
+      in choose_processor' tl (state, worklist)
+
+let choose_processor : 'typer_state 'typer_error . ('typer_state * Worklist.t -> ('typer_state * Worklist.monad, 'typer_error) result) list -> 'typer_state * Worklist.t -> ('typer_state * Worklist.monad, 'typer_error) result =
+  fun processors (state, worklist) -> choose_processor' processors (state, Worklist.Unchanged worklist)
+
 module Worklist_monad = struct
 
   module Let_syntax = struct
@@ -152,6 +168,5 @@ module Worklist_monad = struct
       match worklist_monad with
         Worklist.Some_processing_done w -> ok (state, Worklist.Some_processing_done w)
       | Worklist.Unchanged w -> f (state, w)
-
   end
 end

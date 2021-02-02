@@ -144,7 +144,7 @@ and untype_matching : (O.expression -> (I.expression, typer_error) result) -> O.
       ok ({constructor;proj;body} : I.match_variant) in
     let%bind lst' = bind_map_list aux cases in
     ok @@ Match_variant lst'
-  | Match_record {fields; body; record_type = _} ->
+  | Match_record {fields; body; tv = _} ->
     let%bind fields = bind_map_list
         (fun (label, (var, ty)) ->
            let%bind ty = untype_type_expression ty in

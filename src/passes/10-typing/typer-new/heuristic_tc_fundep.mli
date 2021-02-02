@@ -13,4 +13,4 @@ val heuristic : <
 > ex_heuristic_plugin
 
 val restrict : (type_variable -> type_variable) -> constructor_or_row -> c_typeclass_simpl -> c_typeclass_simpl
-val deduce_and_clean : c_typeclass_simpl -> (deduce_and_clean_result, typer_error) result
+val deduce_and_clean : (type_variable -> type_variable) -> c_typeclass_simpl -> (deduce_and_clean_result, typer_error) result

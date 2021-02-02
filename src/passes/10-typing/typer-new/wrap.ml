@@ -14,12 +14,14 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
   match te.type_content with
   | T_variable tv -> T.Reasons.wrap (Todo "wrap: from source code maybe?") @@ T.P_variable tv
   | T_singleton _ -> failwith "what about singleton ?"
-  | T_sum {content=kvmap ; layout=_} ->
-    let tmap = T.LMap.map (fun ({associated_type;_}:T.row_element) -> associated_type) kvmap in
-    p_row C_variant @@ T.LMap.map type_expression_to_type_value tmap
-  | T_record {content=kvmap;layout=_} ->
-    let tmap = T.LMap.map (fun ({associated_type;_}:T.row_element) -> associated_type) kvmap in
-    p_row C_record @@ T.LMap.map type_expression_to_type_value tmap
+  | T_sum {content ; layout=_} ->
+    let aux ({associated_type;michelson_annotation;decl_pos}:T.row_element) : T.row_value =
+       {associated_value = type_expression_to_type_value associated_type;michelson_annotation;decl_pos} in
+    p_row C_variant @@ T.LMap.map aux content
+  | T_record {content ; layout=_} ->
+    let aux ({associated_type;michelson_annotation;decl_pos}:T.row_element) : T.row_value =
+       {associated_value = type_expression_to_type_value associated_type;michelson_annotation;decl_pos} in
+    p_row C_record @@ T.LMap.map aux content
   | T_arrow {type1;type2} ->
     p_constant C_arrow @@ List.map type_expression_to_type_value [ type1 ; type2 ]
   | T_module_accessor {module_name=_; element} ->
@@ -56,7 +58,7 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
 
 let variable : I.expression_variable -> T.type_expression -> (constraints * T.type_variable) = fun name expr ->
   let pattern = type_expression_to_type_value expr in
-  let type_name = Core.fresh_type_variable ~name:(Var.to_name name.wrap_content) () in
+  let type_name = Core.fresh_for_expr_var name in
   let aval = T.Reasons.(wrap (Todo "wrap: variable: whole") (T.P_variable type_name)) in
   [{ c = C_equation { aval ; bval = pattern } ; reason = "wrap: variable" }] , type_name
 
@@ -76,15 +78,10 @@ let lmap_of_tuple lst =
 let constant : I.constant' -> O.type_value -> T.type_expression list -> (constraints * T.type_variable) =
   fun name f args ->
   let whole_expr = Core.fresh_type_variable ~name:(Format.asprintf "capp_%a" I.PP.constant' name) () in
-  let args = match args with 
-    [] -> Location.wrap @@ T.P_variable (Var.fresh ~name:"unit" ())
-  | arg::[] -> type_expression_to_type_value arg
-  | args ->
-    let args'      = lmap_of_tuple @@ List.map type_expression_to_type_value args in
-    p_row C_record args' 
-  in
+    let args'      = lmap_of_tuple @@ List.mapi (fun i arg -> ({associated_value = type_expression_to_type_value arg ; michelson_annotation = None; decl_pos = i}: T.row_value)) args in
+  let args_tuple = p_row C_record args' in
   [
-      c_equation f (p_constant C_arrow ([args ; (T.Reasons.wrap (Todo "wrap: constant: whole") (T.P_variable whole_expr))])) "wrap: constant: as declared for built-in"
+      c_equation f (p_constant C_arrow ([args_tuple ; (T.Reasons.wrap (Todo "wrap: constant: whole") (T.P_variable whole_expr))])) "wrap: constant: as declared for built-in"
   ] , whole_expr
 
 (* TODO : change type of lambda *)
@@ -156,6 +153,17 @@ let access_label ~(base : T.type_expression) ~(label : O.accessor) : (constraint
   let base' = type_expression_to_type_value base in
   let expr_type = Core.fresh_type_variable () in
   [{ c = C_access_label { c_access_label_tval = base' ; accessor = label ; c_access_label_tvar = expr_type } ; reason = "wrap: access_label" }] , expr_type
+
+let record_update ~(base : T.type_expression) ~(label : O.accessor) (update : T.type_expression) : (constraints * T.type_variable) =
+  let base' = type_expression_to_type_value base in
+  let update = type_expression_to_type_value update in
+  let update_var = Core.fresh_type_variable () in
+  let whole_expr = Core.fresh_type_variable () in
+  [
+    { c = C_access_label { c_access_label_tval = base' ; accessor = label ; c_access_label_tvar = update_var } ; reason = "wrap: access_label" };
+    c_equation update (T.Reasons.wrap (Todo "wrap: record_update: update") @@ T.P_variable update_var) "wrap: record_update: update";
+    c_equation base' (T.Reasons.wrap (Todo "wrap: record_update: whole") @@ T.P_variable whole_expr) "wrap: record_update: record (whole)"
+  ] , whole_expr
 
 let module_access (expr : T.type_expression) : (constraints * T.type_variable) =
   let expr' = type_expression_to_type_value expr in

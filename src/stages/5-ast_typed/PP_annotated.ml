@@ -63,13 +63,19 @@ let list_sep_d_par f ppf lst =
 let rec type_content : formatter -> type_content -> unit =
   fun ppf tc ->
   match tc with
-  | T_sum m -> fprintf ppf "@[<h>sum[%a]@]" (lmap_sep_d type_expression) (LMap.to_kv_list @@ LMap.map (fun {associated_type;_} -> associated_type) m.content)
-  | T_record m -> fprintf ppf "%a" record m
-  | T_arrow a -> fprintf ppf "@[<h>%a ->@ %a@]" type_expression a.type1 type_expression a.type2
-  | T_variable tv -> type_variable ppf tv
-  | T_constant tc -> type_injection ppf tc
+  | T_variable        tv -> type_variable                 ppf tv
+  | T_constant        tc -> type_injection ppf tc
+  | T_sum              m -> fprintf ppf "@[<h>sum[%a]@]" (lmap_sep_d row_element) (LMap.to_kv_list_rev m.content)
+  | T_record           m -> fprintf ppf "%a" record m
+  | T_arrow            a -> arrow         type_expression ppf a
   | T_module_accessor ma -> module_access type_expression ppf ma
   | T_singleton       x  -> literal       ppf             x
+
+and row_element : formatter -> row_element -> unit =
+  fun ppf { associated_type ; michelson_annotation=_ ; decl_pos } ->
+    fprintf ppf "{associated_type %a ; pos %i}"
+      type_expression associated_type
+      decl_pos
 
 and type_injection ppf {language;injection;parameters} =
   ignore language;
@@ -156,7 +162,7 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit =
       fprintf ppf "| Nil -> %a @.| %a :: %a -> %a" f match_nil expression_variable hd expression_variable tl f body
   | Match_option {match_none ; match_some = {opt; body; tv=_}} ->
       fprintf ppf "| None -> %a @.| Some %a -> %a" f match_none expression_variable opt f body
-  | Match_record {fields = _TODO ; body ; record_type = _} ->
+  | Match_record {fields = _TODO ; body ; tv = _} ->
       fprintf ppf "| {%s} -> %a"
         "TODO"
         f body
@@ -314,7 +320,15 @@ and p_row ppf {p_row_tag; p_row_args} =
               p_row_args : %a
               @]@,}"
     row_tag p_row_tag
-    (lmap_sep_d type_value) @@ LMap.to_kv_list p_row_args
+    (lmap_sep_d row_value) @@ LMap.to_kv_list p_row_args
+
+
+and row_value : formatter -> row_value -> unit =
+  fun ppf { associated_value ; michelson_annotation=_ ; decl_pos } ->
+    fprintf ppf "{associated_value %a ; pos %i}"
+      type_value associated_value
+      decl_pos
+
 
 and type_value_ ppf = function
   P_forall   fa -> fprintf ppf "%a" p_forall fa
@@ -385,6 +399,20 @@ let c_typeclass_simpl ppf ({id_typeclass_simpl = ConstraintIdentifier ci; reason
     typeclass tc
     (list_sep_d type_variable) args
 
+let c_access_label_simpl ppf { id_access_label_simpl = ConstraintIdentifier ci ; reason_access_label_simpl ; record_type ; label = l ; tv } =
+  fprintf ppf "{@,@[<hv 2>
+              id_access_label_simpl : %Li; @
+              reason_access_label_simpl : %s; @
+              record_type : %a ;@
+              label : %a
+              tv : %a
+              @]@,}"
+    ci
+    reason_access_label_simpl
+    type_variable record_type
+    label l
+    type_variable tv
+
 let constraint_identifier ppf (ConstraintIdentifier ci) =
   fprintf ppf "ConstraintIdentifier %Li" ci
 let constraint_identifierMap = fun f ppf tvmap   ->
@@ -393,6 +421,11 @@ let constraint_identifierMap = fun f ppf tvmap   ->
         fprintf ppf "(%a, %a)" constraint_identifier k f v in
       fprintf ppf "typeVariableMap [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
 
+let row_variable : formatter -> row_variable -> unit =
+  fun ppf { associated_variable ; michelson_annotation=_ ; decl_pos } ->
+    fprintf ppf "{associated_variable %a ; pos %i}"
+      type_variable associated_variable
+      decl_pos
 let c_row_simpl ppf ({id_row_simpl = ConstraintIdentifier ci; reason_row_simpl; original_id; tv; r_tag; tv_map}) =
   fprintf ppf "{@,@[<hv 2>
               id_row_simpl : %Li; @
@@ -407,13 +440,14 @@ let c_row_simpl ppf ({id_row_simpl = ConstraintIdentifier ci; reason_row_simpl; 
     reason_row_simpl
     type_variable tv
     row_tag r_tag
-    (lmap_sep_d type_variable) @@ LMap.to_kv_list tv_map
+    (lmap_sep_d row_variable) @@ LMap.to_kv_list tv_map
 
 let type_constraint_simpl ppf (tc: type_constraint_simpl) = match tc with
   | SC_Constructor c -> fprintf ppf "SC_Constructor (%a)" c_constructor_simpl c
   | SC_Alias       a -> fprintf ppf "SC_Alias (%a)" c_alias a
   | SC_Poly        p -> fprintf ppf "SC_Poly (%a)" c_poly_simpl p
   | SC_Typeclass   t -> fprintf ppf "SC_Typeclass (%a)" c_typeclass_simpl t
+  | SC_Access_label l -> fprintf ppf "SC_Access_label (%a)" c_access_label_simpl l
   | SC_Row         r -> fprintf ppf "SC_Row (%a)" c_row_simpl r
 
 let constraint_identifier ppf (ConstraintIdentifier ci) =

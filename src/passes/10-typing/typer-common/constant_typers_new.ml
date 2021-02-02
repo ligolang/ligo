@@ -5,14 +5,54 @@ open Trace
 module Operators_types = struct
   open Typesystem.Shorthands
 
-  let tc_subarg   a b c = tc "arguments for (-)"        [a;b;c] [ (*TODO…*) ]
+  let tc_subarg   a b c = tc "arguments for (-)"        [a;b;c] [ [nat;nat;int] ;
+                                                                  [nat;int;int] ;
+                                                                  [int;nat;int] ;
+                                                                  [int;int;int] ;
+                                                                  [timestamp;int;timestamp] ;
+                                                                  [timestamp;timestamp;int] ;
+                                                                  [mutez;mutez;mutez] ;
+                                                                ]
   let tc_sizearg  a     = tc "arguments for size"       [a]     [ [int] ]
   let tc_packable a     = tc "packable"                 [a]     [ [int] ; [string] ; [bool] ; [address] ; (*TODO…*) ]
-  let tc_timargs  a b c = tc "arguments for ( * )"      [a;b;c] [ [nat;nat;nat] ; [int;int;int] (*TODO…*) ]
-  let tc_edivargs a b c = tc "arguments for ediv"       [a;b;c] [ (*TODO…*) ]
-  let tc_divargs  a b c = tc "arguments for div"        [a;b;c] [ (*TODO…*) ]
-  let tc_modargs  a b c = tc "arguments for mod"        [a;b;c] [ (*TODO…*) ]
-  let tc_addargs  a b c = tc "arguments for (+)"        [a;b;c] [ [nat;nat;nat] ; [int;int;int] (*TODO…*) ]
+  let tc_timargs  a b c = tc "arguments for ( * )"      [a;b;c] [ [nat;nat;nat] ; 
+                                                                  [nat;int;int] ; 
+                                                                  [int;nat;int] ;
+                                                                  [int;int;int] ;
+                                                                  [mutez;nat;mutez] ;
+                                                                  [nat;mutez;mutez] ;
+                                                                  (* bl struff todo ..*)
+                                                                ]
+  let tc_edivargs a b c = tc "arguments for ediv"       [a;b;c] [ [nat;nat;option @@ tuple2 nat nat] ; 
+                                                                  [nat;int;option @@ tuple2 int nat] ;
+                                                                  [int;nat;option @@ tuple2 int nat] ;
+                                                                  [int;int;option @@ tuple2 int nat] ;
+                                                                  [mutez;nat;option @@ tuple2 mutez mutez] ;
+                                                                  [mutez;mutez;option @@ tuple2 nat mutez] ;
+                                                                ]
+  let tc_divargs  a b c = tc "arguments for div"        [a;b;c] [ [nat;nat;nat] ;
+                                                                  [nat;int;int] ;
+                                                                  [int;nat;int] ;
+                                                                  [int;int;int] ;
+                                                                  [mutez;nat;mutez] ;
+                                                                  [mutez;mutez;nat] ;
+                                                                ]
+  let tc_modargs  a b c = tc "arguments for mod"        [a;b;c] [ [nat;nat;nat] ;
+                                                                  [nat;int;nat] ;
+                                                                  [int;nat;nat] ;
+                                                                  [int;int;nat] ;
+                                                                  [mutez;nat;mutez] ;
+                                                                  [mutez;mutez;mutez] ;
+                                                                ]
+  let tc_addargs  a b c = tc "arguments for (+)"        [a;b;c] [ [nat;nat;nat] ; 
+                                                                  [int;int;int] ; 
+                                                                  (* [nat;int;int] ;
+                                                                  [int;nat;int] ; makes a bug in closure *)
+                                                                  [timestamp;int;timestamp] ;
+                                                                  [int;timestamp;int] ;
+                                                                  [mutez;mutez;mutez]
+                                                                  (* bls stuff *)
+                                                                ]
   let tc_comparable a   = tc "comparable"               [a]     [ [nat] ; [int] ; [mutez] ; [timestamp] ]
   let tc_concatable a   = tc "concatenable"             [a]     [ [string] ; [bytes] ]
   let tc_storable a     = tc "storable"                 [a]     [ [string] ; [bytes] ; (*Humm .. TODO ?*) ]
@@ -20,7 +60,7 @@ module Operators_types = struct
   let t_none         = forall "a" @@ fun a -> option a
 
   let t_sub          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_subarg a b c] => tuple2 a b --> c (* TYPECLASS *)
-  let t_some         = forall "a" @@ fun a -> a --> option a
+  let t_some         = forall "a" @@ fun a -> tuple1 a --> option a
   let t_map_remove   = forall2 "src" "dst" @@ fun src dst -> tuple2 src (map src dst) --> map src dst
   let t_map_add      = forall2 "src" "dst" @@ fun src dst -> tuple3 src dst (map src dst) --> map src dst
   let t_map_update   = forall2 "src" "dst" @@ fun src dst -> tuple3 src (option dst) (map src dst) --> map src dst
@@ -40,8 +80,8 @@ module Operators_types = struct
   let t_failwith     = tuple1 string --> unit
   let t_get_force    = forall2 "src" "dst" @@ fun src dst -> tuple2 src (map src dst) --> dst
   let t_int          = tuple1 nat --> int
-  let t_bytes_pack   = forall_tc "a" @@ fun a -> [tc_packable a] => a --> bytes (* TYPECLASS *)
-  let t_bytes_unpack = forall_tc "a" @@ fun a -> [tc_packable a] => bytes --> option a (* TYPECLASS *)
+  let t_bytes_pack   = forall_tc "a" @@ fun a -> [tc_packable a] => tuple1 a --> bytes (* TYPECLASS *)
+  let t_bytes_unpack = forall_tc "a" @@ fun a -> [tc_packable a] => tuple1 bytes --> option a (* TYPECLASS *)
   let t_hash256      = tuple1 bytes --> bytes
   let t_hash512      = tuple1 bytes --> bytes
   let t_blake2b      = tuple1 bytes --> bytes

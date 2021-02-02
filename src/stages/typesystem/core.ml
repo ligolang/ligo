@@ -31,6 +31,11 @@ let fresh_type_variable : ?name:string -> unit -> type_variable = fun ?name () -
   let () = (if Ast_typed.Debug.debug_new_typer && false then Printf.fprintf stderr "Generated variable %s\n%!%s\n%!" (Var.debug fresh_name) (Printexc.get_backtrace ())) in
   fresh_name
 
+let fresh_for_expr_var: Ast_typed.expression_variable -> type_variable = fun v ->
+  let fresh_name = Var.fresh_like v.wrap_content in
+  let () = (if Ast_typed.Debug.debug_new_typer && false then Printf.fprintf stderr "Generated variable %s\n%!%s\n%!" (Var.debug fresh_name) (Printexc.get_backtrace ())) in
+  fresh_name
+
 let type_expression'_of_simple_c_constant : constant_tag * type_expression list -> Ast_typed.type_content option = fun (c, l) ->
   let return (x:type_expression) = Some x.type_content in
   match c, l with
@@ -59,14 +64,11 @@ let type_expression'_of_simple_c_constant : constant_tag * type_expression list 
   | (C_unit | C_string | C_bytes | C_nat | C_int | C_mutez | C_operation | C_address | C_key | C_key_hash | C_chain_id | C_signature | C_timestamp), _::_ ->
       None
 
-let type_expression'_of_simple_c_row : Ast_typed.row_tag * type_expression Ast_typed.label_map -> Ast_typed.type_content =
-  fun (tag, map) ->
+let type_expression'_of_simple_c_row : Ast_typed.row_tag * Ast_typed.row_variable Ast_typed.label_map -> Ast_typed.type_content =
+  fun (tag, content) ->
   let open Ast_typed in
-  (*TODO : layout/annotations/decl_pos should be extracted from earlier passes *)
-  let aux : type_expression -> row_element = fun te ->
-    { associated_type = te ; michelson_annotation = None ; decl_pos = 0 }
-  in
-  let content = LMap.map aux map in
+  let content = LMap.map (fun {associated_variable;michelson_annotation;decl_pos} ->
+    {associated_type = Ast_typed.t_variable associated_variable; michelson_annotation; decl_pos}) content in
   match tag with
   | C_record -> T_record { layout = default_layout ; content }
   | C_variant -> T_sum { layout = default_layout ; content }

@@ -144,7 +144,7 @@ and type_match : (environment -> I.expression -> (O.expression , typer_error) re
     let%bind fields = bind_map_list aux' x in
     let e' = List.fold_left aux e x in
     let%bind body = f e' body in
-    ok (O.Match_record {fields = O.LMap.of_list fields ; body ; record_type = record_t})
+    ok (O.Match_record {fields = O.LMap.of_list fields ; body ; tv = t})
 
 
 and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, typer_error) result =
@@ -738,7 +738,7 @@ and untype_matching : (O.expression -> (I.expression , typer_error) result) -> O
         ok {constructor ; proj = (cast_var pattern) ;  body } in
       let%bind lst' = bind_map_list aux cases in
       ok @@ Match_variant lst'
-  | Match_record { fields; body; record_type = _ } ->
+  | Match_record { fields; body; tv = _ } ->
     let%bind body = f body in
     let aux : ( O.expression_variable * O.type_expression ) -> I.ty_expr binder =
       fun (v,_) -> { var = (cast_var v) ; ascr = None }

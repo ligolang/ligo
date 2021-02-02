@@ -150,7 +150,7 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression,Errors
       let%bind (l,r) = bind_map_pair compile_type_expression (l,r) in
       let sum : (O.label * _ O.row_element) list = [
         (O.Label "0", {associated_type = l ; attributes = [ "annot:"^l_ann ] ; decl_pos = 0});
-        (O.Label "1", {associated_type = r ; attributes = [ "annot:"^r_ann ] ; decl_pos = 0}); ]
+        (O.Label "1", {associated_type = r ; attributes = [ "annot:"^r_ann ] ; decl_pos = 1}); ]
       in
       return @@ O.T_record { fields = (O.LMap.of_list sum) ; attributes = [] }
     | I.T_app c ->

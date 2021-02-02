@@ -13,6 +13,7 @@ let () =
     y Vendors.main ;
     y Heuristic_tc_fundep_tests.main ;
     y Heuristic_break_ctor_tests.main ;
+    y Heuristic_access_label_tests.main ;
     y Typechecker_tests.main ;
     y Db_index_tests.main ;
     y Typer_tests.main ;

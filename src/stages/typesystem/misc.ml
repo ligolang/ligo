@@ -22,11 +22,10 @@ module Substitution = struct
         let%bind free_variables = bind_map_list (s_variable ~substs) free_variables in
         ok @@ T.ED_declaration {expression ; free_variables}
     and s_expr_environment : (T.expression_environment,_) w = fun ~substs env ->
-      bind_map_list (fun T.{expr_var=variable ; env_elt={ type_value; source_environment; definition }} ->
+      bind_map_list (fun T.{expr_var=variable ; env_elt={ type_value; definition }} ->
           let%bind type_value = s_type_expression ~substs type_value in
-          let%bind source_environment = s_environment ~substs source_environment in
           let%bind definition = s_environment_element_definition ~substs definition in
-          ok @@ T.{expr_var=variable ; env_elt={ type_value; source_environment; definition }}) env
+          ok @@ T.{expr_var=variable ; env_elt={ type_value; definition }}) env
     and s_type_environment : (T.type_environment,_) w = fun ~substs tenv ->
       bind_map_list (fun T.{type_variable ; type_} ->
         let%bind type_ = s_type_expression ~substs type_ in
@@ -74,7 +73,7 @@ module Substitution = struct
           ok @@ T.T_sum rows
         | T.T_record rows ->
           let%bind rows = s_rows ~substs rows in
-          ok @@ T.T_sum rows
+          ok @@ T.T_record rows
         | T.T_variable variable ->
            begin
              match substs ~variable with
@@ -132,11 +131,11 @@ module Substitution = struct
         ) cases in
         let%bind tv = s_type_expression ~substs tv in
         ok @@ T.Match_variant {cases;tv}
-      | Match_record {fields; body; record_type}  ->
+      | Match_record {fields; body; tv}  ->
         let%bind fields = T.Helpers.bind_map_lmap (fun (a,b) -> let%bind b = s_type_expression ~substs b in ok (a,b)) fields in
         let%bind body   = s_expression ~substs body in
-        let%bind record_type = s_rows ~substs record_type in
-        ok @@ T.Match_record {fields; body; record_type}
+        let%bind tv     = s_type_expression ~substs tv in
+        ok @@ T.Match_record {fields; body; tv}
 
     and s_accessor  : (T.record_accessor,_) w = fun ~substs {record;path} ->
       let%bind record = s_expression ~substs record in
@@ -266,7 +265,7 @@ module Substitution = struct
           T.Reasons.(wrap (Todo "2") @@ T.P_apply { tf = self tf ; targ = self targ})
         )
       | P_row {p_row_tag; p_row_args} ->
-        let p_row_args = T.LMap.map self p_row_args in
+        let p_row_args = T.LMap.map (fun ({associated_value;michelson_annotation;decl_pos}: T.row_value ) -> ({associated_value=self associated_value;michelson_annotation;decl_pos} : T.row_value)) p_row_args in
         wrap (Todo "3") @@ T.P_row {p_row_tag ; p_row_args}
       | P_forall p -> (
           let aux c = constraint_ ~c ~substs in

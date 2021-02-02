@@ -204,6 +204,13 @@ let rec compare ?compare:cmp a b =
         0 -> compare ~compare:cmp ta tb
       | c -> c)
 
+let pp ?(sep = ", ") ?pp_sep l =
+  let pp_sep = match pp_sep with
+      None -> (fun ppf () -> Format.fprintf ppf "%s" sep)
+    | Some pp -> (pp sep)
+  in
+  Format.pp_print_list ~pp_sep l
+
 module Ne = struct
 
   type 'a t = 'a * 'a list

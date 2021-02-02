@@ -46,7 +46,7 @@ let t_map_or_big_map ?loc ?core k v : type_expression = t_constant ?loc ?core ma
 let t_record ?loc ?core ~layout content  : type_expression = make_t ?loc (T_record {content;layout}) core
 let default_layout = L_tree
 let make_t_ez_record ?loc ?core ?(layout=default_layout) (lst:(string * type_expression) list) : type_expression =
-  let lst = List.mapi (fun i (x,y) -> (Label x, {associated_type=y;michelson_annotation=None;decl_pos=i}) ) lst in
+  let lst = List.mapi (fun i (x,y) -> (Label x, ({associated_type=y;michelson_annotation=None;decl_pos=i} : row_element)) ) lst in
   let map = LMap.of_list lst in
   t_record ?loc ?core ~layout map
 
@@ -56,11 +56,11 @@ let ez_t_record ?loc ?core ?(layout=default_layout) lst : type_expression =
 let t_pair ?loc ?core a b : type_expression =
   ez_t_record ?loc ?core [
     (Label "0",{associated_type=a;michelson_annotation=None ; decl_pos = 0}) ;
-    (Label "1",{associated_type=b;michelson_annotation=None ; decl_pos = 0}) ]
+    (Label "1",{associated_type=b;michelson_annotation=None ; decl_pos = 1}) ]
 
 let t_sum ?loc ?core ~layout content : type_expression = make_t ?loc (T_sum {content;layout}) core
 let t_sum_ez ?loc ?core ?(layout=default_layout) (lst:(string * type_expression) list) : type_expression =
-  let lst = List.mapi (fun i (x,y) -> (Label x, {associated_type=y;michelson_annotation=None;decl_pos=i}) ) lst in
+  let lst = List.mapi (fun i (x,y) -> (Label x, ({associated_type=y;michelson_annotation=None;decl_pos=i}:row_element)) ) lst in
   let map = LMap.of_list lst in
   t_sum ?loc ?core ~layout map
 
@@ -363,7 +363,7 @@ let make_c_row_simpl ?(reason_row_simpl="") id_row_simpl original_id tv r_tag tv
   original_id = Option.map (fun i -> ConstraintIdentifier (Int64.of_int i)) original_id;
   tv;
   r_tag;
-  tv_map = LMap.of_list tv_map_as_lst ;
+  tv_map = LMap.of_list @@ List.mapi (fun i (k,v) -> (k,{associated_variable=v;michelson_annotation=None;decl_pos=i})) tv_map_as_lst ;
 }
 
 
@@ -413,4 +413,12 @@ let make_sc_poly ?(reason_poly_simpl="") (tv:type_variable) (forall:p_forall) =
     original_id = None ;
     tv ;
     forall ;
+  }
+let make_sc_access_label ?(reason_access_label_simpl="") (tv:type_variable) ~(record_type:type_variable) (label:label) =
+  SC_Access_label {
+    reason_access_label_simpl ;
+    id_access_label_simpl = ConstraintIdentifier 1L ;
+    tv ;
+    record_type ;
+    label ;
   }

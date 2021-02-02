@@ -4,14 +4,14 @@ open Combinators
 type t = environment
 type element = environment_element
 
-let make_element : type_expression -> environment -> environment_element_definition -> element =
-  fun type_value source_environment definition -> {type_value ; source_environment ; definition}
+let make_element : type_expression -> environment_element_definition -> element =
+  fun type_value definition -> {type_value ; definition}
 
-let make_element_binder = fun t s -> make_element t s ED_binder
+let make_element_binder = fun t -> make_element t ED_binder
 
-let make_element_declaration = fun s (expr : expression) ->
+let make_element_declaration = fun (expr : expression) ->
   let free_variables = Misc.Free_variables.(expression empty expr) in
-  make_element (get_type_expression expr) s (ED_declaration {expression=expr ; free_variables})
+  make_element (get_type_expression expr) (ED_declaration {expression=expr ; free_variables})
 
 let empty : t = { expression_environment = [] ; type_environment = [] ; module_environment = [] }
 
@@ -43,10 +43,10 @@ let get_module_opt : module_variable -> t -> environment option = fun k x ->
     List.find_opt (fun {module_variable; module_=_} -> String.equal module_variable k) (get_module_environment x)
 
 let add_ez_binder : expression_variable -> type_expression -> t -> t = fun k v e ->
-  add_expr k (make_element_binder v e) e
+  add_expr k (make_element_binder v) e
 
 let add_ez_declaration : expression_variable -> expression -> t -> t = fun k ae e ->
-  add_expr k (make_element_declaration e ae) e
+  add_expr k (make_element_declaration ae) e
 
 let get_constructor : label -> t -> (type_expression * type_expression) option = fun k x -> (* Left is the constructor, right is the sum type *)
   let rec rec_aux e =
@@ -129,7 +129,7 @@ module PP = struct
   let list_sep_scope x = list_sep x (const " | ")
 
   let rec environment_element = fun ppf {expr_var ; env_elt} ->
-    fprintf ppf "%a -> %a \n %a" PP.expression_variable expr_var PP.type_expression env_elt.type_value environment env_elt.source_environment
+    fprintf ppf "%a -> %a \n" PP.expression_variable expr_var PP.type_expression env_elt.type_value
 
   and type_environment_element = fun ppf {type_variable ; type_} ->
     fprintf ppf "%a -> %a" PP.type_variable type_variable PP.type_expression type_

@@ -16,12 +16,16 @@ type 'typeVariable t = {
   constructor : ('typeVariable, c_constructor_simpl MultiSet.t) ReprMap.t ;
   poly        : ('typeVariable, c_poly_simpl MultiSet.t) ReprMap.t ;
   row         : ('typeVariable, c_row_simpl MultiSet.t) ReprMap.t ;
+  access_label_by_result_type : ('typeVariable, c_access_label_simpl MultiSet.t) ReprMap.t ;
+  access_label_by_record_type : ('typeVariable, c_access_label_simpl MultiSet.t) ReprMap.t ;
 }
 
 let create_state ~cmp =
   { constructor = ReprMap.create ~cmp ~merge:MultiSet.union ;
     poly        = ReprMap.create ~cmp ~merge:MultiSet.union ;
-    row         = ReprMap.create ~cmp ~merge:MultiSet.union ;}
+    row         = ReprMap.create ~cmp ~merge:MultiSet.union ;
+    access_label_by_result_type = ReprMap.create ~cmp ~merge:MultiSet.union ;
+    access_label_by_record_type = ReprMap.create ~cmp ~merge:MultiSet.union ;}
 
 let update_add_to_constraint_set ~cmp c = function
     None -> MultiSet.add c (MultiSet.create ~cmp)
@@ -33,6 +37,11 @@ let add_constraint ?debug repr (state : _ t) new_constraint =
     SC_Constructor c -> { state with constructor = ReprMap.monotonic_update (repr c.tv) (update_add_to_constraint_set ~cmp:Ast_typed.Compare.c_constructor_simpl c) state.constructor }
   | SC_Row         c -> { state with row         = ReprMap.monotonic_update (repr c.tv) (update_add_to_constraint_set ~cmp:Ast_typed.Compare.c_row_simpl         c) state.row         }
   | SC_Poly        c -> { state with poly        = ReprMap.monotonic_update (repr c.tv) (update_add_to_constraint_set ~cmp:Ast_typed.Compare.c_poly_simpl        c) state.poly        }
+  | SC_Access_label c ->
+    { state with
+      access_label_by_result_type = ReprMap.monotonic_update (repr c.tv) (update_add_to_constraint_set ~cmp:Ast_typed.Compare.c_access_label_simpl c) state.access_label_by_result_type ;
+      access_label_by_record_type = ReprMap.monotonic_update (repr c.record_type) (update_add_to_constraint_set ~cmp:Ast_typed.Compare.c_access_label_simpl c) state.access_label_by_record_type
+    }
   | SC_Typeclass   _ -> state (* Handled by a different indexer (typeclasses_constraining *)
   | SC_Alias       _ -> failwith "TODO: impossible: tc_alias handled in main solver loop"
 
@@ -66,6 +75,11 @@ let remove_constraint _ repr (state : _ t) constraint_to_rm =
         SC_Constructor c -> { state with constructor = ReprMap.monotonic_update (repr c.tv) (update_remove_constraint_from_set constraint_to_rm c) state.constructor }
       | SC_Row         c -> { state with row         = ReprMap.monotonic_update (repr c.tv) (update_remove_constraint_from_set constraint_to_rm c) state.row         }
       | SC_Poly        c -> { state with poly        = ReprMap.monotonic_update (repr c.tv) (update_remove_constraint_from_set constraint_to_rm c) state.poly        }
+      | SC_Access_label c -> {
+          state with
+          access_label_by_result_type = ReprMap.monotonic_update (repr c.tv) (update_remove_constraint_from_set constraint_to_rm c) state.access_label_by_result_type ;
+          access_label_by_record_type = ReprMap.monotonic_update (repr c.tv) (update_remove_constraint_from_set constraint_to_rm c) state.access_label_by_record_type
+        }
       | SC_Typeclass   _ -> state
       | SC_Alias       _ -> failwith "TODO: impossible: tc_alias handled in main solver loop and aliasing constraints cannot be removed"
     )
@@ -76,10 +90,12 @@ let remove_constraint _ repr (state : _ t) constraint_to_rm =
     ok result
 
 let merge_aliases =
-  fun ?debug:_ updater { constructor ; poly ; row } -> {
+  fun ?debug:_ updater { constructor ; poly ; row ; access_label_by_result_type ; access_label_by_record_type } -> {
       constructor = updater.map constructor ;
       poly       = updater.map poly ;
       row        = updater.map row ;
+      access_label_by_result_type = updater.map access_label_by_result_type ;
+      access_label_by_record_type = updater.map access_label_by_record_type ;
     }
 
 let pp type_variable ppf (state : _ t) =
@@ -109,15 +125,30 @@ let get_polys_by_lhs : 'type_variable -> 'type_variable t -> c_poly_simpl MultiS
     Some s -> s 
   | None -> MultiSet.create ~cmp:Ast_typed.Compare.c_poly_simpl
 
+let get_access_labels_by_result_type : 'type_variable -> 'type_variable t -> c_access_label_simpl MultiSet.t =
+  fun variable state ->
+  match ReprMap.find_opt variable state.access_label_by_result_type with
+    Some s -> s
+  | None -> MultiSet.create ~cmp:Ast_typed.Compare.c_access_label_simpl
+
+let get_access_labels_by_record_type : 'type_variable -> 'type_variable t -> c_access_label_simpl MultiSet.t =
+  fun variable state ->
+  match ReprMap.find_opt variable state.access_label_by_record_type with
+    Some s -> s
+  | None -> MultiSet.create ~cmp:Ast_typed.Compare.c_access_label_simpl
 
 type 'typeVariable t_for_tests = {
   constructor : ('typeVariable * c_constructor_simpl MultiSet.t) list ;
   poly        : ('typeVariable * c_poly_simpl MultiSet.t) list ;
   row         : ('typeVariable * c_row_simpl MultiSet.t) list ;
+  access_label_by_result_type : ('typeVariable * c_access_label_simpl MultiSet.t) list ;
+  access_label_by_record_type : ('typeVariable * c_access_label_simpl MultiSet.t) list ;
 }
 
-let constructor_bindings : 'type_variable t -> ('type_variable * c_constructor_simpl MultiSet.t) list = fun state -> ReprMap.bindings state.constructor
-let row_bindings : 'type_variable t -> ('type_variable * c_row_simpl MultiSet.t) list = fun state -> ReprMap.bindings state.row
-let poly_bindings : 'type_variable t -> ('type_variable * c_poly_simpl MultiSet.t) list = fun state -> ReprMap.bindings state.poly
-
-let bindings (state : _ t) : _ t_for_tests  = { constructor = constructor_bindings state ; row = row_bindings state ; poly = poly_bindings state }
+let bindings (state : _ t) : _ t_for_tests  = {
+  constructor                 = ReprMap.bindings state.constructor                 ;
+  row                         = ReprMap.bindings state.row                         ;
+  poly                        = ReprMap.bindings state.poly                        ;
+  access_label_by_result_type = ReprMap.bindings state.access_label_by_result_type ;
+  access_label_by_record_type = ReprMap.bindings state.access_label_by_record_type ;
+}

@@ -101,7 +101,7 @@ and matching_content_variant = {
 and matching_content_record = {
   fields : (expression_variable * type_expression) label_map;
   body : expression;
-  record_type : rows;
+  tv : type_expression;
 }
 
 and matching_expr =
@@ -269,7 +269,6 @@ and free_variables = expression_variable list
 
 and environment_element = {
     type_value: type_expression ;
-    source_environment: environment ;
     definition: environment_element_definition ;
   }
 
@@ -360,10 +359,16 @@ and p_constant = {
     p_ctor_args : p_ctor_args ;
   }
 
-and tv_lmap = type_value label_map
+and row_value = {
+  associated_value : type_value;
+  michelson_annotation : string option;
+  decl_pos : int;
+}
+
+and row_lmap = row_value label_map
 and p_row = {
     p_row_tag  : row_tag ;
-    p_row_args : tv_lmap ;
+    p_row_args : row_lmap ;
   }
 
 and p_constraints = type_constraint list
@@ -474,7 +479,13 @@ and c_row_simpl = {
   original_id  : constraint_identifier option ;
   tv : type_variable;
   r_tag : row_tag;
-  tv_map : type_variable_lmap;
+  tv_map : row_variable label_map;
+}
+
+and row_variable = {
+  associated_variable : type_variable;
+  michelson_annotation : string option;
+  decl_pos : int;
 }
 and c_const_e = {
     c_const_e_tv : type_variable ;
@@ -492,6 +503,13 @@ and c_typeclass_simpl = {
   tc   : typeclass          ;
   args : type_variable_list ;
 }
+and c_access_label_simpl = {
+  reason_access_label_simpl : string ;
+  id_access_label_simpl : constraint_identifier ;
+  record_type : type_variable ;
+  label : label ;
+  tv : type_variable ;          (* result of the access label, e.g. α in the constraint α = β.ℓ *)
+}
 and c_poly_simpl = {
   reason_poly_simpl : string ;
   (* see description above in c_constructor_simpl *)
@@ -505,6 +523,7 @@ and type_constraint_simpl =
   | SC_Alias       of c_alias                         (* α = β *)
   | SC_Poly        of c_poly_simpl                    (* α = forall β, δ where δ can be a more complex type *)
   | SC_Typeclass   of c_typeclass_simpl               (* TC(α, …) *)
+  | SC_Access_label of c_access_label_simpl           (* α = β.ℓ *)
   | SC_Row         of c_row_simpl                     (* α = row(l -> β, …) *)
 
 and deduce_and_clean_result = {

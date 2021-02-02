@@ -32,7 +32,6 @@ module TestExpressions = struct
     let open! Typed in
     let%bind (_ , post , new_state) = trace typer_tracer @@ type_expression_subst (typer_switch ()) env state pre in
     let () = Typer.Solver.discard_state new_state in
-    let () = Format.printf "RE.MILALA\n%a\n - \n%a\n" PP.type_expression post.type_expression PP.type_expression test_expected_ty in
     let%bind () = trace_option (test_internal __LOC__) @@ assert_type_expression_eq (post.type_expression, test_expected_ty) in
     ok ()
 
@@ -51,6 +50,9 @@ module TestExpressions = struct
   let option () : (unit,_) result = test_expression I.(e_some @@ e_int Z.zero) O.(t_option @@ t_int ())
   let bytes_pack () : (unit,_) result = test_expression I.(e_constant C_BYTES_PACK [e_string @@ Standard "pack"]) O.(t_bytes ())
   let bytes_unpack () : (unit,_) result = test_expression I.(e_annotation (e_constant C_BYTES_UNPACK [e_bytes_string @@ "unpack"]) (t_option @@ t_bytes ())) O.(t_option @@ t_bytes ())
+
+  let add () : (unit,_) result = test_expression I.(e_constant C_ADD [e_int Z.zero; e_int Z.one]) O.(t_int ())
+  let key_hash () : (unit,_) result = test_expression I.(e_constant C_HASH_KEY [e_key "toto"]) O.(t_key_hash ())
 
   let application () : (unit, _) result =
     test_expression
@@ -138,6 +140,8 @@ let main = test_suite "Typer (from core AST)"
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "option"          TestExpressions.option ;    
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bytes_pack"      TestExpressions.bytes_pack ;    
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bytes_unpack"    TestExpressions.bytes_unpack ;    
+    test y (* enabled AND PASSES as of 02021-01-29 5dc448c7f *) "add"             TestExpressions.add;
+    test y (* enabled AND PASSES as of 02021-01-30 3aaa688f1 *) "keyhash"         TestExpressions.key_hash;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "application"     TestExpressions.application ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "lambda"          TestExpressions.lambda ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "let_in"          TestExpressions.let_in ;
@@ -145,8 +149,8 @@ let main = test_suite "Typer (from core AST)"
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "constructor"     TestExpressions.constructor ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "matching"        TestExpressions.matching ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "record"          TestExpressions.record ;
-    test no "record_accessor" TestExpressions.record_accessor ;
-    test no "record_update"   TestExpressions.record_update ;
+    test y (* enabled AND PASSES as of 02021-01-30 c2e450161 *) "record_accessor" TestExpressions.record_accessor ;
+    test y (* enabled AND PASSES as of 02021-01-30 c2e450161 *) "record_update"   TestExpressions.record_update ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "tuple"           TestExpressions.tuple ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "ascription"      TestExpressions.ascription ;
   ]

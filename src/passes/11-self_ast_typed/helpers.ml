@@ -88,7 +88,7 @@ and fold_cases : ('a , 'err) folder -> 'a -> matching_expr -> ('a , 'err) result
       let%bind res = bind_fold_list aux init cases in
       ok res
     )
-  | Match_record {fields = _; body; record_type = _} ->
+  | Match_record {fields = _; body; tv = _} ->
     fold_expression f init body
 
 and fold_module : ('a,self_ast_typed_error) folder -> 'a -> module_fully_typed -> ('a, self_ast_typed_error) result = fun f init (Module_Fully_Typed p) ->
@@ -198,9 +198,9 @@ and map_cases : self_ast_typed_error mapper -> matching_expr -> (matching_expr ,
       let%bind cases = bind_map_list aux cases in
       ok @@ Match_variant {cases ; tv}
     )
-  | Match_record {fields; body; record_type} ->
+  | Match_record {fields; body; tv} ->
     let%bind body = map_expression f body in
-    ok @@ Match_record {fields; body; record_type}
+    ok @@ Match_record {fields; body; tv}
 
 and map_module : self_ast_typed_error mapper -> module_fully_typed -> (module_fully_typed, self_ast_typed_error) result = fun m (Module_Fully_Typed p) ->
   let aux = fun (x : declaration) ->
@@ -310,9 +310,9 @@ and fold_map_cases : ('a , self_ast_typed_error) fold_mapper -> 'a -> matching_e
       let%bind (init,cases) = bind_fold_map_list aux init cases in
       ok @@ (init, Match_variant {cases ; tv})
     )
-  | Match_record { fields; body; record_type } ->
+  | Match_record { fields; body; tv } ->
       let%bind (init, body) = fold_map_expression f init body in
-      ok @@ (init, Match_record { fields ; body ; record_type })
+      ok @@ (init, Match_record { fields ; body ; tv })
 
 and fold_map_module : ('a, self_ast_typed_error) fold_mapper -> 'a -> module_fully_typed -> ('a * module_fully_typed , self_ast_typed_error) result = fun m init (Module_Fully_Typed p) ->
   let aux = fun acc (x : declaration Location.wrap) ->
