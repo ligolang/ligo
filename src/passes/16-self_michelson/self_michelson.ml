@@ -301,6 +301,12 @@ let opt_drop2 : _ peep2 = function
     Some [Prim (l1, p, [Seq (l2, bt @ [drop]); bf], annot1)]
   | _ -> None
 
+let opt_drop3 : _ peep3 = function
+  (* SWAP ; DROP ; DROP  ↦  DROP ; DROP *)
+  | Prim (_, "SWAP", [], _), (Prim (_, "DROP", [], _) as drop1), (Prim (_, "DROP", [], _) as drop2) ->
+    Some [drop1; drop2]
+  | _ -> None
+
 let opt_drop4 : _ peep4 = function
   (* DUP; unary_op; SWAP; DROP  ↦  unary_op *)
   | Prim (_, "DUP", [], _),
@@ -575,6 +581,7 @@ let optimize : 'l. Environment.Protocols.t -> 'l michelson -> 'l michelson =
   let x = flatten_seqs x in
   let x = opt_tail_fail x in
   let optimizers = [ peephole @@ peep2 opt_drop2 ;
+                     peephole @@ peep3 opt_drop3 ;
                      peephole @@ peep4 opt_drop4 ;
                      peephole @@ peep3 opt_dip3 ;
                      peephole @@ peep2 opt_dip2 ;
