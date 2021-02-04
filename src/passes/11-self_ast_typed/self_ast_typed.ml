@@ -2,9 +2,16 @@ open Trace
 module Errors = Errors
 module Helpers = Helpers
 
-let all_passes = [
-  Tail_recursion.peephole_expression ;
-  Michelson_layout.peephole_expression ;
+let all_module_passes = [
+  Helpers.map_module Tail_recursion.peephole_expression ;
+  Helpers.map_module Michelson_layout.peephole_expression ;
+  Uncurry.uncurry_module_fully_typed ;
+]
+
+let all_expression_passes = [
+  Helpers.map_expression Tail_recursion.peephole_expression ;
+  Helpers.map_expression Michelson_layout.peephole_expression ;
+  Uncurry.uncurry_expression ;
 ]
 
 let contract_passes = [
@@ -12,14 +19,11 @@ let contract_passes = [
   No_nested_big_map.self_typing ;
 ]
 
-let all_module module_ =
-  let all_p = List.map Helpers.map_module all_passes in
-  let%bind module' = bind_chain all_p module_ in
-  ok module'
+let all_module =
+  bind_chain all_module_passes
 
 let all_expression =
-  let all_p = List.map Helpers.map_expression all_passes in
-  bind_chain all_p
+  bind_chain all_expression_passes
 
 let all_contract main_name prg =
   let%bind contract_type = Helpers.fetch_contract_type main_name prg in

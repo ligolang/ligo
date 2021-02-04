@@ -1544,3 +1544,18 @@ Missing a type annotation for argument "b". |}];
   [%expect {|
     Duplicate field name "foo" in this record declaration.
     Hint: Change the name. |}];
+
+  ()
+
+(* uncurrying example *)
+let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; contract "uncurry_contract.mligo" ; "main" ] ;
+  let output = [%expect.output] in
+  let lines = String.split_on_char '\n' output in
+  let lines = List.take 3 lines in
+  let output = String.concat "\n" lines in
+  print_string output;
+  [%expect {|
+    { parameter unit ;
+      storage unit ;
+      code { LAMBDA (pair unit (pair unit (pair unit unit))) unit { DROP ; PUSH unit Unit } ; |}]
