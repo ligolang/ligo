@@ -9,6 +9,7 @@
 open Tezos_micheline.Micheline
 open Tezos_utils.Michelson
 include Helpers
+open Peephole
 
 type proto = Environment.Protocols.t
 
@@ -160,76 +161,15 @@ let rec flatten_seqs : _ michelson -> _ michelson =
   | Prim (l, p, args, annot) -> Prim (l, p, List.map flatten_seqs args, annot)
   | _ -> x
 
-type 'l peep1 = 'l michelson -> 'l michelson list option
-type 'l peep2 = 'l michelson * 'l michelson -> 'l michelson list option
-type 'l peep3 = 'l michelson * 'l michelson * 'l michelson -> 'l michelson list option
-type 'l peep4 = 'l michelson * 'l michelson * 'l michelson * 'l michelson -> 'l michelson list option
-type 'l peep5 = 'l michelson * 'l michelson * 'l michelson * 'l michelson * 'l michelson -> 'l michelson list option
-
-let rec peep1 (f : 'l peep1) : 'l michelson list -> bool * 'l michelson list = function
-  | [] -> (false, [])
-  | x1 :: xs ->
-     match f x1 with
-     | Some xs' -> let (_, xs') = peep1 f (xs' @ xs) in
-                   (true, xs')
-     | None -> let (changed, xs) = peep1 f xs in
-               (changed, x1 :: xs)
-
-let rec peep2 (f : 'l peep2) : 'l michelson list -> bool * 'l michelson list = function
-  | [] -> (false, [])
-  | [x] -> (false, [x])
-  | x1 :: x2 :: xs ->
-     match f (x1, x2) with
-     | Some xs' -> let (_, xs') = peep2 f (xs' @ xs) in
-                   (true, xs')
-     | None -> let (changed, xs') = peep2 f (x2 :: xs) in
-               (changed, x1 :: xs')
-
-let rec peep3 (f : 'l peep3) : 'l michelson list -> bool * 'l michelson list = function
-  | [] -> (false, [])
-  | [x] -> (false, [x])
-  | [x ; y] -> (false, [x ; y])
-  | x1 :: x2 :: x3 :: xs ->
-     match f (x1, x2, x3) with
-     | Some xs' -> let (_, xs') = peep3 f (xs' @ xs) in
-                   (true, xs')
-     | None -> let (changed, xs') = peep3 f (x2 :: x3 :: xs) in
-               (changed, x1 :: xs')
-
-let rec peep4 (f : 'l peep4) : 'l michelson list -> bool * 'l michelson list = function
-  | [] -> (false, [])
-  | [x] -> (false, [x])
-  | [x ; y] -> (false, [x ; y])
-  | [x ; y ; z] -> (false, [x ; y ; z])
-  | x1 :: x2 :: x3 :: x4 :: xs ->
-     match f (x1, x2, x3, x4) with
-     | Some xs' -> let (_, xs') = peep4 f (xs' @ xs) in
-                   (true, xs')
-     | None -> let (changed, xs') = peep4 f (x2 :: x3 :: x4 :: xs) in
-               (changed, x1 :: xs')
-
-let rec peep5 (f : 'l peep5) : 'l michelson list -> bool * 'l michelson list = function
-  | [] -> (false, [])
-  | [x] -> (false, [x])
-  | [x ; y] -> (false, [x ; y])
-  | [x ; y ; z] -> (false, [x ; y ; z])
-  | [x ; y ; z ; w] -> (false, [x ; y ; z ; w])
-  | x1 :: x2 :: x3 :: x4 :: x5 :: xs ->
-     match f (x1, x2, x3, x4, x5) with
-     | Some xs' -> let (_, xs') = peep5 f (xs' @ xs) in
-                   (true, xs')
-     | None -> let (changed, xs') = peep5 f (x2 :: x3 :: x4 :: x5 :: xs) in
-               (changed, x1 :: xs')
-
 (* apply f to all seqs *)
-let rec peephole (f : 'l michelson list -> bool * 'l michelson list) : 'l michelson -> bool * 'l michelson =
+let rec on_seqs (f : 'l michelson list -> bool * 'l michelson list) : 'l michelson -> bool * 'l michelson =
   let peep_args ~seq args =
     let (changed, args) = if seq
                           then f args
                           else (false, args) in
     List.fold_map_acc
       (fun changed1 arg ->
-        let (changed2, arg) = peephole f arg in
+        let (changed2, arg) = on_seqs f arg in
         (changed1 || changed2, arg))
       changed
       args in
@@ -418,22 +358,30 @@ let opt_digdug2 : _ peep2 = function
   (* DUG k ; DIG k  ↦   *)
   | (Prim (_, "DUG", [Int (_, k1)], _), Prim (_, "DIG", [Int (_, k2)], _)) when Z.equal k1 k2 ->
      Some []
-  (* DIG 2 ; DIG 2  ↦  DUG 2 *)
-  | (Prim (l1, "DIG", [Int (l2, k1)], _), Prim (_, "DIG", [Int (_, k2)], _)) when Z.equal k1 k2 && Z.equal k1 (Z.of_int 2) ->
-     Some [Prim (l1, "DUG", [Int (l2, Z.of_int 2)], [])]
-  (* DUG 2 ; DUG 2  ↦  DIG 2 *)
-  | (Prim (l1, "DUG", [Int (l2, k1)], _), Prim (_, "DUG", [Int (_, k2)], _)) when Z.equal k1 k2 && Z.equal k1 (Z.of_int 2) ->
-     Some [Prim (l1, "DIG", [Int (l2, Z.of_int 2)], [])]
   | _ -> None
 
-let opt_digdug3 : _ peep3 = function
-  (* DIG 3 ; DIG 3 ; DIG 3  ↦  DUG 3 *)
-  | (Prim (l1, "DIG", [Int (l2, k1)], _), Prim (_, "DIG", [Int (_, k2)], _), Prim (_, "DIG", [Int (_, k3)], _)) when Z.equal k1 k2 && Z.equal k2 k3 && Z.equal k1 (Z.of_int 3) ->
-     Some [Prim (l1, "DUG", [Int (l2, Z.of_int 3)], [])]
-  (* DUG 3 ; DUG 3 ; DUG 3  ↦  DIG 3 *)
-  | (Prim (l1, "DUG", [Int (l2, k1)], _), Prim (_, "DUG", [Int (_, k2)], _), Prim (_, "DUG", [Int (_, k3)], _)) when Z.equal k1 k2 && Z.equal k2 k3 && Z.equal k1 (Z.of_int 3) ->
-     Some [Prim (l1, "DIG", [Int (l2, Z.of_int 3)], [])]
-  | _ -> None
+let flip_digdug : string -> string = function
+  | "DIG" -> "DUG"
+  | "DUG" -> "DIG"
+  | s -> s
+
+(* DIG k ; ...k times  ↦  DUG k
+   DUG k ; ...k times  ↦  DIG k *)
+let opt_digdug_cycles () =
+  match%bind peep with
+  | Prim (l1, ("DIG"|"DUG" as p), [Int (l2, k)], _)
+    when Z.geq k (Z.of_int 2) ->
+    let rec aux n =
+      if Z.equal k n
+      then Changed [Prim (l1, flip_digdug p, [Int (l2, k)], [])]
+      else
+        match%bind peep with
+        | Prim (_, ("DIG"|"DUG" as p'), [Int (_, k')], _)
+          when String.equal p p' && Z.equal k k' ->
+          aux (Z.succ n)
+        | _ -> No_change in
+    aux Z.one
+  | _ -> No_change
 
 (* remove dead "UNPAIR" *)
 let opt_dead_unpair : _ peep3 = function
@@ -591,12 +539,13 @@ let optimize : 'l. Environment.Protocols.t -> 'l michelson -> 'l michelson =
                      peephole @@ peep5 opt_beta5 ;
                      peephole @@ peep1 opt_digdug1 ;
                      peephole @@ peep2 opt_digdug2 ;
-                     peephole @@ peep3 opt_digdug3 ;
                      peephole @@ peep2 opt_beta2 ;
                      peephole @@ peep2 opt_eta2 ;
                      peephole @@ peep3 opt_dead_unpair ;
                      peephole @@ peep1 (opt_unpair_nonedo proto) ;
+                     peephole @@ opt_digdug_cycles () ;
                    ] in
+  let optimizers = List.map on_seqs optimizers in
   let x = iterate_optimizer (sequence_optimizers optimizers) x in
   let x = opt_combine_drops x in
   let x = opt_strip_annots x in
