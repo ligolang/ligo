@@ -64,6 +64,7 @@ module.exports = grammar({
 
     _program: $ => choice(
       $.let_expr1,
+      $.type_decl,
       $._expr
     ),
 
@@ -369,10 +370,13 @@ module.exports = grammar({
       ))
     )),
 
-    type_sum: $ => seq(choice(
-      sepBy1('|', field("variant", $.variant)),
-      withAttrs($, seq('|', sepBy1('|', field("variant", $.variant)))),
-    )),
+    type_sum: $ =>
+      prec.left(10,
+        seq(choice(
+          sepBy1('|', field("variant", $.variant)),
+          withAttrs($, seq('|', sepBy1('|', field("variant", $.variant)))),
+        ))
+      ),
 
     _label: $ => $.FieldName,
 
