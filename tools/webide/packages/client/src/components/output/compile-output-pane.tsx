@@ -45,9 +45,9 @@ const CompileOutputPane = (props) => {
 };
 
 function mapStateToProps(state) {
-  const { Result } = state
+  const { result } = state
   return { 
-    output: Result.output,
+    output: result.output,
   }
 }
 

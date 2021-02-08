@@ -35,7 +35,7 @@ const DEFAULT_STATE: CompileState = {
   michelsonFormat: MichelsonFormat.Text
 };
 
-const Compile = (state = DEFAULT_STATE, action: Action): CompileState => {
+const compile = (state = DEFAULT_STATE, action: Action): CompileState => {
   switch (action.type) {
     case ExamplesActionType.ChangeSelected:
       return {
@@ -57,4 +57,4 @@ const Compile = (state = DEFAULT_STATE, action: Action): CompileState => {
   }
 };
 
-export default Compile
+export default compile

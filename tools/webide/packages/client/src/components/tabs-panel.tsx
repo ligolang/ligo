@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import styled, { css } from 'styled-components';
+import styled from 'styled-components';
 
 import { ConfigureTabComponent } from './configure/configure-tab';
 

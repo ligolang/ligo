@@ -1,5 +1,11 @@
 import React, { useState } from 'react';
 import { Provider } from 'react-redux';
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+} from "react-router-dom";
+
 import styled from 'styled-components';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SplitPane from 'react-split-pane';
@@ -13,6 +19,8 @@ import { TabsPanelComponent } from './components/tabs-panel';
 import { TooltipContainer } from './components/tooltip';
 import OutputTab from './components/output/output-tab';
 import configureStore from './configure-store';
+import ViewSharedFile from './components/view-shared-file'
+import ViewExampleFile from './components/view-example-file'
 
 const store = configureStore();
 
@@ -78,7 +86,8 @@ const App: React.FC = () => {
 
   return (
     <Provider store={store}>
-      <Wrapper>
+      <Router>
+        <Wrapper>
         <HeaderComponent />
         <Container>
         <div className="col-sm-12 col-md-2 order-md-1"><Examples /></div>
@@ -102,6 +111,15 @@ const App: React.FC = () => {
         </FeedbackContainer>
         <TooltipContainer />
       </Wrapper>
+      <Switch>
+      <Route path="/p/:id">
+        <ViewSharedFile />
+      </Route>
+      <Route path="/">
+        <ViewExampleFile />
+      </Route>
+      </Switch>
+      </Router>
     </Provider>
   );
 };

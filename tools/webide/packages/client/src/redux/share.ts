@@ -1,43 +1,12 @@
-import {
-  ActionType as CompileActionType,
-  ChangeEntrypointAction as ChangeCompileEntrypointAction,
-  ChangeMichelsonFormatAction,
-} from './compile';
-import {
-  ActionType as DeployActionType,
-  ChangeEntrypointAction as ChangeDeployEntrypointAction,
-  ChangeStorageAction as ChangeDeployStorageAction,
-  UseTezBridgeAction,
-} from './deploy';
-import {
-  ActionType as DryRunActionType,
-  ChangeEntrypointAction as ChangeDryRunEntrypointAction,
-  ChangeParametersAction as ChangeDryRunParametersAction,
-  ChangeStorageAction as ChangeDryRunStorageAction,
-} from './dry-run';
-import { ActionType as EditorActionType, ChangeCodeAction, ChangeLanguageAction, ChangeTitleAction } from './editor';
-import {
-  ActionType as EvaluateFunctionActionType,
-  ChangeEntrypointAction as ChangeEvaluateFunctionEntrypointAction,
-  ChangeParametersAction as ChangeEvaluateFunctionParametersAction,
-} from './evaluate-function';
-import {
-  ActionType as EvaluateValueActionType,
-  ChangeEntrypointAction as ChangeEvaluateValueEntrypointAction,
-} from './evaluate-value';
-import { ActionType as ExamplesActionType, ChangeSelectedAction as ChangeSelectedExampleAction } from './examples';
-import {
-  ActionType as GenerateDeployActionType,
-  ChangeEntrypointAction as ChangeGenerateDeployEntrypointAction,
-  ChangeStorageAction as ChangeGenerateDeployStorageAction,
-} from './generate-deploy-script';
-
 export enum ActionType {
-  ChangeShareLink = 'share-change-link'
+  ChangeShareLink = 'share-change-link',
+  GetSharedFile = 'get-shared-file',
 }
 
 export interface ShareState {
   link: string;
+  file: string;
+  loaded: boolean;
 }
 
 export class ChangeShareLinkAction {
@@ -45,59 +14,31 @@ export class ChangeShareLinkAction {
   constructor(public payload: ShareState['link']) {}
 }
 
-type Action =
-  | ChangeShareLinkAction
-  | ChangeTitleAction
-  | ChangeCodeAction
-  | ChangeLanguageAction
-  | ChangeCompileEntrypointAction
-  | ChangeMichelsonFormatAction
-  | ChangeDeployEntrypointAction
-  | ChangeDeployStorageAction
-  | ChangeGenerateDeployEntrypointAction
-  | ChangeGenerateDeployStorageAction
-  | UseTezBridgeAction
-  | ChangeDryRunEntrypointAction
-  | ChangeDryRunParametersAction
-  | ChangeDryRunStorageAction
-  | ChangeEvaluateFunctionEntrypointAction
-  | ChangeEvaluateFunctionParametersAction
-  | ChangeEvaluateValueEntrypointAction
-  | ChangeSelectedExampleAction;
-
 const DEFAULT_STATE: ShareState = {
-  link: ''
+  link: '',
+  file: '',
+  loaded: false,
 };
 
-const Share = (state = DEFAULT_STATE, action: Action): ShareState => {
+const share = (state, action: any): ShareState => {
+  if (!state) {
+    state = DEFAULT_STATE;
+  }
   switch (action.type) {
-    case EditorActionType.ChangeTitle:
-    case ExamplesActionType.ChangeSelected:
-    case EditorActionType.ChangeCode:
-    case EditorActionType.ChangeLanguage:
-    case CompileActionType.ChangeEntrypoint:
-    case DeployActionType.ChangeEntrypoint:
-    case DeployActionType.ChangeStorage:
-    case GenerateDeployActionType.ChangeEntrypoint:
-    case GenerateDeployActionType.ChangeStorage:
-    case DryRunActionType.ChangeEntrypoint:
-    case DryRunActionType.ChangeParameters:
-    case DryRunActionType.ChangeStorage:
-    case EvaluateFunctionActionType.ChangeEntrypoint:
-    case EvaluateFunctionActionType.ChangeParameters:
-    case EvaluateValueActionType.ChangeEntrypoint:
-      return {
-        ...state,
-        ...DEFAULT_STATE
-      };
     case ActionType.ChangeShareLink:
       return {
         ...state,
-        link: action.payload
+        link: action.payload,
+      };
+    case ActionType.GetSharedFile:
+      return {
+        ...state,
+        file: action.value,
+        loaded: true,
       };
     default:
-      return state;
+      return { ...state };
   }
 };
 
-export default Share
+export default share;

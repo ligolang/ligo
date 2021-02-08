@@ -1,4 +1,7 @@
-import { ActionType as ExamplesActionType, ChangeSelectedAction as ChangeSelectedExampleAction } from './examples';
+import {
+  ActionType as ExamplesActionType,
+  ChangeSelectedAction as ChangeSelectedExampleAction,
+} from './examples';
 import { Language } from './types';
 
 export enum ActionType {
@@ -6,7 +9,7 @@ export enum ActionType {
   ChangeCode = 'editor-change-code',
   ChangeDirty = 'editor-change-dirty',
   ChangeTitle = 'editor-change-title',
-  ChangeCursorPosition = 'editor-change-cursor-position'
+  ChangeCursorPosition = 'editor-change-cursor-position',
 }
 
 export interface CursorPosition {
@@ -60,46 +63,49 @@ const DEFAULT_STATE: EditorState = {
   code: '',
   title: '',
   dirty: false,
-  cursorPosition: null
+  cursorPosition: null,
 };
 
-const Editor = (state = DEFAULT_STATE, action: Action): EditorState => {
+const editor = (state, action: Action): EditorState => {
+  if (!state) {
+    state = DEFAULT_STATE;
+  }
   switch (action.type) {
     case ExamplesActionType.ChangeSelected:
       return {
         ...state,
         ...(!action.payload
           ? DEFAULT_STATE
-          : { ...action.payload.editor, title: action.payload.name })
+          : { ...action.payload.editor, title: action.payload.name }),
       };
     case ActionType.ChangeLanguage:
       return {
         ...state,
-        language: action.payload
+        language: action.payload,
       };
     case ActionType.ChangeCode:
       return {
         ...state,
-        code: action.payload
+        code: action.payload,
       };
     case ActionType.ChangeDirty:
       return {
         ...state,
-        dirty: action.payload
+        dirty: action.payload,
       };
     case ActionType.ChangeTitle:
       return {
         ...state,
-        title: action.payload
+        title: action.payload,
       };
     case ActionType.ChangeCursorPosition:
       return {
         ...state,
-        cursorPosition: action.payload
+        cursorPosition: action.payload,
       };
     default:
-      return state;
+      return { ...state };
   }
 };
 
-export default Editor
+export default editor;

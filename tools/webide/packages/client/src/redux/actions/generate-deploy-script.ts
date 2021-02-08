@@ -1,9 +1,13 @@
 import { TezosToolkit } from '@taquito/taquito';
-import { importKey } from "@taquito/signer";
+import { importKey } from '@taquito/signer';
 import { Dispatch } from 'redux';
 import slugify from 'slugify';
 
-import { compileContract, compileStorage, getErrorMessage } from '../../services/api';
+import {
+  compileContract,
+  compileStorage,
+  getErrorMessage,
+} from '../../services/api';
 import { AppState } from '../app';
 import { MichelsonFormat } from '../compile';
 import { DoneLoadingAction, UpdateLoadingAction } from '../loading';
@@ -18,7 +22,7 @@ const Tezos = new TezosToolkit('https://api.tez.ie/rpc/delphinet');
 export async function fetchRandomPrivateKey(): Promise<string> {
   const response = await fetch(URL, {
     method: 'POST',
-    headers: { Authorization: AUTHORIZATION_HEADER }
+    headers: { Authorization: AUTHORIZATION_HEADER },
   });
   return response.text();
 }
@@ -29,19 +33,19 @@ export class GenerateDeployScriptAction extends CancellableAction {
       dispatch({ ...new UpdateLoadingAction('Compiling contract...') });
 
       try {
-        const { Editor, GenerateDeployScript } = getState();
+        const { editor, generateDeployScript } = getState();
 
         const michelsonCodeJson = await compileContract(
-          Editor.language,
-          Editor.code,
-          GenerateDeployScript.entrypoint,
+          editor.language,
+          editor.code,
+          generateDeployScript.entrypoint,
           MichelsonFormat.Json
         );
 
         const michelsonCode = await compileContract(
-          Editor.language,
-          Editor.code,
-          GenerateDeployScript.entrypoint
+          editor.language,
+          editor.code,
+          generateDeployScript.entrypoint
         );
 
         if (this.isCancelled()) {
@@ -50,18 +54,18 @@ export class GenerateDeployScriptAction extends CancellableAction {
 
         dispatch({ ...new UpdateLoadingAction('Compiling storage...') });
         const michelsonStorageJson = await compileStorage(
-          Editor.language,
-          Editor.code,
-          GenerateDeployScript.entrypoint,
-          GenerateDeployScript.storage,
+          editor.language,
+          editor.code,
+          generateDeployScript.entrypoint,
+          generateDeployScript.storage,
           MichelsonFormat.Json
         );
 
         const michelsonStorage = await compileStorage(
-          Editor.language,
-          Editor.code,
-          GenerateDeployScript.entrypoint,
-          GenerateDeployScript.storage
+          editor.language,
+          editor.code,
+          generateDeployScript.entrypoint,
+          generateDeployScript.storage
         );
 
         if (this.isCancelled()) {
@@ -74,15 +78,18 @@ export class GenerateDeployScriptAction extends CancellableAction {
 
         const estimate = await Tezos.estimate.originate({
           code: JSON.parse(michelsonCodeJson.result),
-          init: JSON.parse(michelsonStorageJson.result)
+          init: JSON.parse(michelsonStorageJson.result),
         });
 
         if (this.isCancelled()) {
-          return; 
+          return;
         }
 
         //const title = slugify(editor.title).toLowerCase() || 'untitled';
-        const title = slugify(Editor.title, {remove: /[*+~.()'"!]/g, lower: true})
+        const title = slugify(editor.title, {
+          remove: /[*+~.()'"!]/g,
+          lower: true,
+        });
         const output = `tezos-client \\
   originate \\
   contract \\
@@ -94,7 +101,11 @@ export class GenerateDeployScriptAction extends CancellableAction {
   --burn-cap ${estimate.burnFeeMutez / 1000000}`;
 
         dispatch({
-          ...new ChangeOutputAction(output, CommandType.GenerateDeployScript, false)
+          ...new ChangeOutputAction(
+            output,
+            CommandType.GenerateDeployScript,
+            false
+          ),
         });
       } catch (ex) {
         if (this.isCancelled()) {
@@ -105,7 +116,7 @@ export class GenerateDeployScriptAction extends CancellableAction {
             `Error: ${getErrorMessage(ex)}`,
             CommandType.GenerateDeployScript,
             true
-          )
+          ),
         });
       }
 

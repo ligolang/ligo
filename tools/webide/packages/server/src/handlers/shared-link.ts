@@ -6,27 +6,27 @@ import latestSchema from '../schemas/share-latest';
 import { storage } from '../storage';
 import { FileNotFoundError } from '../storage/interface';
 
-export function sharedLinkHandler(
-  appBundleDirectory: string,
-  template: (state: string) => string
-) {
+export function sharedLinkHandler() {
   return async (req: Request, res: Response) => {
     try {
       const content = await storage.read(`${req.params['hash']}.txt`);
-      const storedState = JSON.parse(content);
-      const migratedState = latestSchema.forward(storedState);
-      const defaultState = await loadDefaultState(appBundleDirectory);
 
-      const state = {
-        ...defaultState,
-        ...migratedState.state,
-        share: { link: req.params['hash'] }
-      };
+      logger.info(content);
 
-      res.send(template(JSON.stringify(state)));
+      // const storedState = JSON.parse(content);
+      // const migratedState = latestSchema.forward(storedState);
+
+      // const state = {
+      //   ...migratedState.state,
+      //   share: { link: req.params['hash'] },
+      // };
+
+      res.send(JSON.stringify(content));
     } catch (ex) {
+      logger.error(ex);
+
       if (ex instanceof FileNotFoundError) {
-        res.sendStatus(404);
+        res.send(ex);
       } else {
         logger.error(ex);
         res.sendStatus(500);

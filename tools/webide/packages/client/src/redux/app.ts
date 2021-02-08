@@ -1,49 +1,51 @@
 import { combineReducers } from 'redux';
 
-import Command, { CommandState } from './command';
-import Compile, { CompileState } from './compile';
-import Deploy, { DeployState } from './deploy';
-import { DryRunState, DryRun } from './dry-run';
-import Editor, { EditorState } from './editor';
-import EvaluateFunction, { EvaluateFunctionState } from './evaluate-function';
-import EvaluateValue, { EvaluateValueState } from './evaluate-value';
-import Examples, { ExamplesState } from './examples';
-import GenerateDeployScript, { GenerateDeployScriptState } from './generate-deploy-script';
-import Loading, { LoadingState } from './loading';
-import Result, { ResultState } from './result';
-import Share, { ShareState } from './share';
-import Version, { VersionState } from './version';
+import command, { CommandState } from './command';
+import compile, { CompileState } from './compile';
+import deploy, { DeployState } from './deploy';
+import { DryRunState, dryRun } from './dry-run';
+import editor, { EditorState } from './editor';
+import evaluateFunction, { EvaluateFunctionState } from './evaluate-function';
+import evaluateValue, { EvaluateValueState } from './evaluate-value';
+import examples, { ExamplesState } from './examples';
+import generateDeployScript, {
+  GenerateDeployScriptState,
+} from './generate-deploy-script';
+import loading, { LoadingState } from './loading';
+import result, { ResultState } from './result';
+import share, { ShareState } from './share';
+import version, { VersionState } from './version';
 
 export interface AppState {
-  Version: VersionState;
-  Editor: EditorState;
-  Share: ShareState;
-  Compile: CompileState;
-  DryRun: DryRunState;
-  Deploy: DeployState;
-  EvaluateFunction: EvaluateFunctionState;
-  EvaluateValue: EvaluateValueState;
-  GenerateDeployScript: GenerateDeployScriptState;
+  version: VersionState;
+  editor: EditorState;
+  share: ShareState;
+  compile: CompileState;
+  dryRun: DryRunState;
+  deploy: DeployState;
+  evaluateFunction: EvaluateFunctionState;
+  evaluateValue: EvaluateValueState;
+  generateDeployScript: GenerateDeployScriptState;
   result: ResultState;
-  Command: CommandState;
-  Examples: ExamplesState;
-  Loading: LoadingState;
+  command: CommandState;
+  examples: ExamplesState;
+  loading: LoadingState;
 }
 
 const reducer = combineReducers({
-  Editor,
-  Share,
-  Compile,
-  DryRun,
-  Deploy,
-  EvaluateFunction,
-  EvaluateValue,
-  GenerateDeployScript,
-  Result,
-  Command,
-  Examples,
-  Loading,
-  Version
+  editor,
+  share,
+  compile,
+  dryRun,
+  deploy,
+  evaluateFunction,
+  evaluateValue,
+  generateDeployScript,
+  result,
+  command,
+  examples,
+  loading,
+  version,
 });
 
-export default reducer
+export default reducer;

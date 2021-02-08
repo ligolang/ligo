@@ -38,7 +38,7 @@ const DEFAULT_STATE: ResultState = {
   error: false
 };
 
-const Result = (state = DEFAULT_STATE, action: Action): ResultState => {
+const result = (state = DEFAULT_STATE, action: Action): ResultState => {
   switch (action.type) {
     case ActionType.ChangeOutput:
       return {
@@ -59,4 +59,4 @@ const Result = (state = DEFAULT_STATE, action: Action): ResultState => {
   }
 };
 
-export default Result
+export default result

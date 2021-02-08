@@ -8,8 +8,8 @@ const DEFAULT_STATE: VersionState = {
   branch: 'dev'
 };
 
-const Version = (state = DEFAULT_STATE): VersionState => {
+const version = (state = DEFAULT_STATE): VersionState => {
   return state;
 };
 
-export default Version
+export default version
