@@ -13,10 +13,10 @@ export class CompileAction extends CancellableAction {
       dispatch({ ...new UpdateLoadingAction('Compiling contract...') });
 
       try {
-        const { Editor, Compile: compileState } = getState();
+        const { editor, compile: compileState } = getState();
         const michelsonCode = await compileContract(
-          Editor.language,
-          Editor.code,
+          editor.language,
+          editor.code,
           compileState.entrypoint,
           compileState.michelsonFormat
         );
@@ -26,7 +26,11 @@ export class CompileAction extends CancellableAction {
         }
 
         dispatch({
-          ...new ChangeOutputAction(michelsonCode.result, CommandType.Compile, false)
+          ...new ChangeOutputAction(
+            michelsonCode.result,
+            CommandType.Compile,
+            false
+          ),
         });
       } catch (ex) {
         if (this.isCancelled()) {
@@ -37,7 +41,7 @@ export class CompileAction extends CancellableAction {
             `Error: ${getErrorMessage(ex)}`,
             CommandType.Compile,
             true
-          )
+          ),
         });
       }
 

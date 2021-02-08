@@ -7,3 +7,9 @@
   to = "https://api.ligo-ide.tez.ie/api/:splat"
   status = 200
   force = true
+
+[[redirects]]
+  from = "/p/*"
+  to = "/index.html"
+  status = 200
+  force = true

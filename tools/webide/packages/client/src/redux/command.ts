@@ -3,7 +3,7 @@ import { CommandType } from './types';
 
 export enum ActionType {
   ChangeSelected = 'command-change-selected',
-  ChangeDispatchedAction = 'command-change-dispatched-action'
+  ChangeDispatchedAction = 'command-change-dispatched-action',
 }
 
 export interface CommandState {
@@ -25,24 +25,24 @@ type Action = ChangeSelectedAction | ChangeDispatchedAction;
 
 const DEFAULT_STATE: CommandState = {
   selected: CommandType.Compile,
-  dispatchedAction: null
+  dispatchedAction: null,
 };
 
-const Command = (state = DEFAULT_STATE, action: Action): CommandState => {
+const command = (state = DEFAULT_STATE, action: Action): CommandState => {
   switch (action.type) {
     case ActionType.ChangeSelected:
       return {
         ...state,
-        selected: action.payload
+        selected: action.payload,
       };
     case ActionType.ChangeDispatchedAction:
       return {
         ...state,
-        dispatchedAction: action.payload
+        dispatchedAction: action.payload,
       };
     default:
       return state;
   }
 };
 
-export default Command
+export default command;

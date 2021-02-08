@@ -100,10 +100,10 @@ export const ConfigureTabComponent = (props: {
   const dispatchedAction = useSelector<
     AppState,
     CommandState['dispatchedAction']
-  >(state => state.Command.dispatchedAction);
+  >(state => state.command && state.command.dispatchedAction);
 
   const command = useSelector<AppState, CommandState['selected']>(
-    state => state.Command.selected
+    state => state.command && state.command.selected
   );
 
   const dispatch = useDispatch();

@@ -10,18 +10,18 @@ import { CancellableAction } from './cancellable';
 export class EvaluateValueAction extends CancellableAction {
   getAction() {
     return async (dispatch: Dispatch, getState: () => AppState) => {
-      const { Editor, EvaluateValue: evaluateValueState } = getState();
+      const { editor, evaluateValue: evaluateValueState } = getState();
 
       dispatch({
         ...new UpdateLoadingAction(
           `Evaluating "${evaluateValueState.entrypoint}" entrypoint...`
-        )
+        ),
       });
 
       try {
         const result = await evaluateValue(
-          Editor.language,
-          Editor.code,
+          editor.language,
+          editor.code,
           evaluateValueState.entrypoint
         );
 
@@ -30,7 +30,11 @@ export class EvaluateValueAction extends CancellableAction {
         }
 
         dispatch({
-          ...new ChangeOutputAction(result.code, CommandType.EvaluateValue, false)
+          ...new ChangeOutputAction(
+            result.code,
+            CommandType.EvaluateValue,
+            false
+          ),
         });
       } catch (ex) {
         if (this.isCancelled()) {
@@ -41,7 +45,7 @@ export class EvaluateValueAction extends CancellableAction {
             `Error: ${getErrorMessage(ex)}`,
             CommandType.EvaluateValue,
             true
-          )
+          ),
         });
       }
 

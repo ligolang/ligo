@@ -23,7 +23,7 @@ export async function compileContract(
     syntax,
     code,
     entrypoint,
-    format
+    format,
   });
   return response.data;
 }
@@ -36,7 +36,7 @@ export async function compileExpression(
   const response = await axios.post('/api/compile-expression', {
     syntax,
     expression: `${expression}`,
-    format
+    format,
   });
   return response.data;
 }
@@ -56,7 +56,7 @@ export async function compileStorage(
     code,
     entrypoint,
     storage,
-    format
+    format,
   });
   return response.data;
 }
@@ -76,39 +76,44 @@ export async function dryRun(
     code,
     entrypoint,
     parameters,
-    storage
+    storage,
   });
   return response.data;
 }
 
+export async function getSharedFile(fileHash: string) {
+  const response = await axios.get(`/api/share/${fileHash}`);
+  return response.data;
+}
+
 export async function share({
-  Editor,
-  Compile,
-  DryRun,
-  Deploy,
-  EvaluateValue,
-  EvaluateFunction,
-  GenerateDeployScript
+  editor,
+  compile,
+  dryRun,
+  deploy,
+  evaluateValue,
+  evaluateFunction,
+  generateDeployScript,
 }: Partial<AppState>) {
   const params = {
-    Editor,
-    Compile,
-    DryRun,
-    Deploy,
-    EvaluateValue,
-    EvaluateFunction,
-    GenerateDeployScript
+    editor,
+    compile,
+    dryRun,
+    deploy,
+    evaluateValue,
+    evaluateFunction,
+    generateDeployScript,
   };
 
   // We don't want to store the following configuration
-  if (params.Compile) {
-    delete params.Compile.michelsonFormat;
+  if (params.compile) {
+    delete params.compile.michelsonFormat;
   }
-  if (params.Deploy) {
-    delete params.Deploy.useTezBridge;
+  if (params.deploy) {
+    delete params.deploy.useTezBridge;
   }
-  if (params.Editor?.cursorPosition) {
-    delete params.Editor.cursorPosition;
+  if (params.editor?.cursorPosition) {
+    delete params.editor.cursorPosition;
   }
 
   const response = await axios.post('/api/share', params);
@@ -128,7 +133,7 @@ export async function deploy(
     syntax,
     code,
     entrypoint,
-    storage
+    storage,
   });
   return response.data;
 }
@@ -141,7 +146,7 @@ export async function evaluateValue(
   const response = await axios.post('/api/evaluate-value', {
     syntax,
     code,
-    entrypoint
+    entrypoint,
   });
   return response.data;
 }
@@ -156,7 +161,7 @@ export async function runFunction(
     syntax,
     code,
     entrypoint,
-    parameters
+    parameters,
   });
   return response.data;
 }

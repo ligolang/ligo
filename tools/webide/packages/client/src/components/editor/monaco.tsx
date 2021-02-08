@@ -76,15 +76,15 @@ export const MonacoComponent = ({editorHeight}) => {
 
     cleanupFunc.push(
       store.subscribe(() => {
-        const { Editor: editorState }: AppState = store.getState();
+        const { editor: editorState }: AppState = store.getState();
 
-        if (editorState.code !== editor.getValue()) {
+        if ( editorState && editorState.code !== editor.getValue()) {
           shouldDispatchCodeChangedAction = false;
           editor.setValue(editorState.code);
           shouldDispatchCodeChangedAction = true;
         }
 
-        if (editorState.language !== model.getModeId()) {
+        if (editorState && editorState.language !== model.getModeId()) {
           if (editorState.language === 'reasonligo') {
             monaco.editor.setModelLanguage(model, 'javascript');
           } else {

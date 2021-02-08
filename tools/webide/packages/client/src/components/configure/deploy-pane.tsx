@@ -21,13 +21,13 @@ const Hint = styled.span`
 export const DeployPaneComponent = () => {
   const dispatch = useDispatch();
   const entrypoint = useSelector<AppState, DeployState['entrypoint']>(
-    state => state.Deploy.entrypoint
+    state => state.deploy && state.deploy.entrypoint
   );
   const storage = useSelector<AppState, DeployState['storage']>(
-    state => state.Deploy.storage
+    state => state.deploy && state.deploy.storage
   );
   const useTezBridge = useSelector<AppState, DeployState['useTezBridge']>(
-    state => state.Deploy.useTezBridge
+    state => state.deploy && state.deploy.useTezBridge
   );
 
   return (

@@ -30,9 +30,9 @@ const corsOptions = {
   origin: [
     'https://ligolang.org',
     'http://localhost:3000',
-    'http://localhost:1234'
+    'http://localhost:1234',
   ],
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
 };
 
 const appRootDirectory =
@@ -48,7 +48,7 @@ app.use(
     collectDefaultMetrics: true,
     collectDefaultBuckets: true,
     requestDurationBuckets: [0.5, 0.6, 0.7, 1, 10, 20, 30, 60],
-    metricsApp: metrics
+    metricsApp: metrics,
   })
 );
 
@@ -73,10 +73,7 @@ app.use(express.static(appBundleDirectory));
 
 app.options('/api/share', cors(corsOptions));
 
-app.get(
-  `/p/:hash([0-9a-zA-Z\-\_]+)`,
-  sharedLinkHandler(appBundleDirectory, template)
-);
+app.get(`/api/share/:hash([0-9a-zA-Z\-\_]+)`, sharedLinkHandler());
 app.post('/api/compile-contract', compileContractHandler);
 app.post('/api/compile-expression', compileExpressionHandler);
 app.post('/api/compile-storage', compileStorageHandler);

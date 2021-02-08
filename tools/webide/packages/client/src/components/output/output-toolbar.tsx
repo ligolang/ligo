@@ -78,10 +78,10 @@ const OutputToolbarComponent: FC<propsTypes & stateTypes> = (props) => {
 };
 
 function mapStateToProps(state) {
-  const { Result } = state
+  const { result } = state
   return { 
-    output: Result.output,
-    hasError: Result.error
+    output: result.output,
+    hasError: result.error
    }
 }
 

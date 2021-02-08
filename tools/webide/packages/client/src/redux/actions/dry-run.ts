@@ -11,14 +11,14 @@ export class DryRunAction extends CancellableAction {
   getAction() {
     return async (dispatch: Dispatch, getState: () => AppState) => {
       dispatch({
-        ...new UpdateLoadingAction('Waiting for dry run results...')
+        ...new UpdateLoadingAction('Waiting for dry run results...'),
       });
 
       try {
-        const { Editor, DryRun: dryRunState } = getState();
+        const { editor, dryRun: dryRunState } = getState();
         const result = await dryRun(
-          Editor.language,
-          Editor.code,
+          editor.language,
+          editor.code,
           dryRunState.entrypoint,
           dryRunState.parameters,
           dryRunState.storage
@@ -26,7 +26,9 @@ export class DryRunAction extends CancellableAction {
         if (this.isCancelled()) {
           return;
         }
-        dispatch({ ...new ChangeOutputAction(result.output, CommandType.DryRun, false) });
+        dispatch({
+          ...new ChangeOutputAction(result.output, CommandType.DryRun, false),
+        });
       } catch (ex) {
         if (this.isCancelled()) {
           return;
@@ -36,7 +38,7 @@ export class DryRunAction extends CancellableAction {
             `Error: ${getErrorMessage(ex)}`,
             CommandType.DryRun,
             true
-          )
+          ),
         });
       }
 

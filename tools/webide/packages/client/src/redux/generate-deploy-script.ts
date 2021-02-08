@@ -1,10 +1,13 @@
-import { ActionType as ExamplesActionType, ChangeSelectedAction as ChangeSelectedExampleAction } from './examples';
+import {
+  ActionType as ExamplesActionType,
+  ChangeSelectedAction as ChangeSelectedExampleAction,
+} from './examples';
 import { Tool } from './types';
 
 export enum ActionType {
   ChangeTool = 'generate-deploy-script-change-tool',
   ChangeEntrypoint = 'generate-deploy-script-change-entrypoint',
-  ChangeStorage = 'generate-deploy-script-change-storage'
+  ChangeStorage = 'generate-deploy-script-change-storage',
 }
 
 export interface GenerateDeployScriptState {
@@ -41,10 +44,10 @@ const DEFAULT_STATE: GenerateDeployScriptState = {
   entrypoint: '',
   storage: '',
   originationAccount: '',
-  burnCap: 0
+  burnCap: 0,
 };
 
-const GenerateDeployScript = (
+const generateDeployScript = (
   state = DEFAULT_STATE,
   action: Action
 ): GenerateDeployScriptState => {
@@ -52,26 +55,28 @@ const GenerateDeployScript = (
     case ExamplesActionType.ChangeSelected:
       return {
         ...state,
-        ...(!action.payload ? DEFAULT_STATE : action.payload.generateDeployScript)
+        ...(!action.payload
+          ? DEFAULT_STATE
+          : action.payload.generateDeployScript),
       };
     case ActionType.ChangeTool:
       return {
         ...state,
-        tool: action.payload
+        tool: action.payload,
       };
     case ActionType.ChangeEntrypoint:
       return {
         ...state,
-        entrypoint: action.payload
+        entrypoint: action.payload,
       };
     case ActionType.ChangeStorage:
       return {
         ...state,
-        storage: action.payload
+        storage: action.payload,
       };
-      default:
+    default:
       return state;
   }
 };
 
-export default GenerateDeployScript
+export default generateDeployScript;

@@ -79,12 +79,12 @@ const OutputTab: FC<propTypes & stateTypes> = (props) => {
 };
 
 function mapStateToProps(state) {
-  const { Result, Loading } = state
+  const { result, loading } = state
   return { 
-    output: Result.output,
-    hasError: Result.error,
-    command: Result.command,
-    loading: Loading.loading
+    output: result.output,
+    hasError: result.error,
+    command: result.command,
+    loading: loading.loading
    }
 }
 

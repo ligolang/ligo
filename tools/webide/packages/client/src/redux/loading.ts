@@ -1,6 +1,6 @@
 export enum ActionType {
   UpdateLoading = 'loading-update-loading',
-  DoneLoading = 'loading-done-loading'
+  DoneLoading = 'loading-done-loading',
 }
 
 export interface LoadingState {
@@ -21,25 +21,25 @@ type Action = UpdateLoadingAction | DoneLoadingAction;
 
 export const DEFAULT_STATE: LoadingState = {
   loading: false,
-  message: ''
+  message: '',
 };
 
-const Loading = (state = DEFAULT_STATE, action: Action): LoadingState => {
+const loading = (state = DEFAULT_STATE, action: Action): LoadingState => {
   switch (action.type) {
     case ActionType.UpdateLoading:
       return {
         ...state,
         loading: true,
-        message: action.payload
+        message: action.payload,
       };
     case ActionType.DoneLoading:
       return {
         ...state,
-        ...DEFAULT_STATE
+        ...DEFAULT_STATE,
       };
     default:
       return state;
   }
 };
 
-export default Loading
+export default loading;

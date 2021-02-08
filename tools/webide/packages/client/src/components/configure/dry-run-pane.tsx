@@ -11,13 +11,13 @@ const Container = styled.div``;
 export const DryRunPaneComponent = () => {
   const dispatch = useDispatch();
   const entrypoint = useSelector<AppState, DryRunState['entrypoint']>(
-    state => state.DryRun.entrypoint
+    state => state.dryRun && state.dryRun.entrypoint
   );
   const parameters = useSelector<AppState, DryRunState['parameters']>(
-    state => state.DryRun.parameters
+    state => state.dryRun && state.dryRun.parameters
   );
   const storage = useSelector<AppState, DryRunState['storage']>(
-    state => state.DryRun.storage
+    state => state.dryRun && state.dryRun.storage
   );
 
   return (

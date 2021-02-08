@@ -1,11 +1,11 @@
 import { getExampleList, getExample } from '../../services/api';
-import { SetDefaultList, ChangeSelectedAction } from '../examples';
+import { ActionType, ChangeSelectedAction } from '../examples';
 
 export const ExampleListAction = () => {
   return (dispatch) =>
     new Promise((resolve) => {
       getExampleList().then((response) => {
-        dispatch({ type: SetDefaultList, value: response });
+        dispatch({ type: ActionType.SetDefaultList, value: response });
         resolve(response);
       });
     });
