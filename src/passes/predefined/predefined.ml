@@ -57,6 +57,7 @@ module Tree_abstraction = struct
     | "Tezos.set_delegate"       -> some_const C_SET_DELEGATE
     | "Tezos.get_contract_opt"   -> some_const C_CONTRACT_OPT
     | "Tezos.get_entrypoint_opt" -> some_const C_CONTRACT_ENTRYPOINT_OPT
+    | "Tezos.level"              -> some_const C_LEVEL
 
     (* Sapling *)
     | "Tezos.sapling_empty_state" -> some_const C_SAPLING_EMPTY_STATE
