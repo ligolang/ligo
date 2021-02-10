@@ -8,6 +8,7 @@ authors      : "Christian Rinderknecht"
 license      : "MIT"
 homepage     : "https://gitlab.com/ligolang/ParserLib"
 bug-reports  : "https://gitlab.com/ligolang/Parser/issues"
+# If you change the dependencies, run `opam lock` in the root
 depends      : ["dune" "base" "ocaml" "simple-utils" "bisect_ppx"
                 "menhir" "getopt"]
 build        : [
