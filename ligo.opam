@@ -7,6 +7,7 @@ bug-reports: "https://gitlab.com/ligolang/tezos/issues"
 synopsis: "A high-level language which compiles to Michelson"
 dev-repo: "git+https://gitlab.com/ligolang/tezos.git"
 license: "MIT"
+# If you change the dependencies, run `opam lock` in the root
 depends: [
   "ocamlfind" { build }
   "dune" { build & >= "2.7.1" & < "2.9" }

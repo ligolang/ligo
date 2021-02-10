@@ -8,6 +8,7 @@ homepage     : "https://github.com/rinderknecht/Red-Black_Trees"
 bug-reports  : "https://github.com/rinderknecht/Red-Black_Trees/issues"
 dev-repo     : "git+https://github.com/rinderknecht/Red-Black_Trees.git"
 license      : "MIT"
+# If you change the dependencies, run `opam lock` in the root
 depends      : ["dune"]
 build        : [
                 ["dune" "build" "-p" name "-j" jobs]

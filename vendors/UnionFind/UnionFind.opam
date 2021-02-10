@@ -9,6 +9,7 @@ bug-reports  : "https://github.com/rinderknecht/UnionFind/issues"
 dev-repo     : "git+https://github.com/rinderknecht/UnionFind.git"
 license      : "MIT"
 
+# If you change the dependencies, run `opam lock` in the root
 depends      : [ "dune" "RedBlackTrees" ]
 
 build        : [
