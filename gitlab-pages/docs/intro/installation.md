@@ -9,7 +9,7 @@ There are currently three ways to get started with LIGO. You can choose to use a
 If you've [installed 🐳 Docker](https://docs.docker.com/install/), you can run the latest [LIGO release 0.9.0](./changelog.md):
 
 Linux or OSX:
-> `docker run --rm -v "$PWD:"$PWD" -w "$PWD" ligolang/ligo:0.9.0`
+> `docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.9.0`
 
 Windows:
 > `docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:0.9.0`
