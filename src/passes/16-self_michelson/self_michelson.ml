@@ -236,6 +236,8 @@ let rec peephole (f : 'l michelson list -> bool * 'l michelson list) : 'l michel
   function
   | Seq (l, args) -> let (changed, args) = peep_args ~seq:true args in
                      (changed, Seq (l, args))
+  (* Should not optimize seqs (even code seqs) under PUSH. Ugh... *)
+  | Prim (_, "PUSH", _, _) as x -> (false, x)
   | Prim (l, p, args, annot) -> let (changed, args) = peep_args ~seq:false args in
                                 (changed, Prim (l, p, args, annot))
   | x -> (false, x)
