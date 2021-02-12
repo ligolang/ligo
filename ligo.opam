@@ -9,6 +9,7 @@ dev-repo: "git+https://gitlab.com/ligolang/tezos.git"
 license: "MIT"
 # If you change the dependencies, run `opam lock` in the root
 depends: [
+  "odoc" { build }
   "ocamlfind" { build }
   "dune" { build & >= "2.7.1" & < "2.9" }
   "menhir" { = "20200624" }

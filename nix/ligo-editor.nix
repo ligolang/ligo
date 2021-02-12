@@ -17,7 +17,7 @@ let
       rm node_modules/server/server
     '';
     doCheck = true;
-    checkPhase = "DATA_DIR=/tmp LIGO_CMD=${ligo-bin}/bin/ligo yarn --offline jest";
+    checkPhase = "DATA_DIR=/tmp LIGO_CMD=${../ligo} yarn --offline jest";
     distPhase = "true";
     inherit yarnLock installPhase;
   };
@@ -69,7 +69,7 @@ let
   # Run the WebIDE server with all the needed env variables
   ligo-editor = writeShellScriptBin "ligo-editor" ''
     set -e
-    LIGO_CMD=${ligo-bin}/bin/ligo \
+    LIGO_CMD=${../ligo} \
     STATIC_ASSETS=${client} \
     DATA_DIR=/tmp \
     ${nodejs}/bin/node ${server}/node_modules/server/dist/src/index.js

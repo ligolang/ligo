@@ -27,6 +27,10 @@
           changelog.ml
           (run "sh" "-c" "printf 'let changelog = {changelog|%s|changelog}' \"$(cat ${CHANGELOG_PATH:-../../gitlab-pages/docs/intro/changelog.md})\""))))
 
+; build static executable with --profile static
+(env
+ (static (flags (:standard -ccopt -static -cclib "-lgmp"))))
+
 (executable
   (name runligo)
   (public_name ligo)

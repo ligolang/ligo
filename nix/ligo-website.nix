@@ -1,5 +1,5 @@
 { buildNpmPackage, writeShellScriptBin, yarn, linkFarm, nodejs-slim, python2
-, ligo-changelog, ligo-doc, ligo-deb, ligo-static }:
+, ligo-changelog }:
 buildNpmPackage {
   src = ../gitlab-pages/website;
   npmBuild = "npm run build";
@@ -10,10 +10,10 @@ buildNpmPackage {
   '';
   installPhase = ''
     cp -Lr build $out
-    cp -r ${ligo-deb}/ligo.deb $out/deb
+    cp -r ${../ligo.deb} $out/deb
     mkdir -p $out/bin/linux
-    cp -r ${ligo-static}/bin/ligo $out/bin/linux/ligo
-    cp -r ${ligo-doc}/share/doc $out/odoc
+    cp -r ${../ligo} $out/bin/linux/ligo
+    cp -r ${../doc} $out/odoc
   '';
   extraEnvVars.nativeBuildInputs = [ python2 ];
 }
