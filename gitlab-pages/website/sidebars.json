@@ -103,6 +103,9 @@
     ],
     "Inter-contract invocations": [
       "tutorials/inter-contract-calls/inter-contract-calls"
+    ],
+    "Security": [
+      "tutorials/security/security"
     ]
   }
 }
