@@ -115,7 +115,7 @@ let type_contract : options:Compiler_options.t -> string -> Compile.Of_core.form
     let%bind deps = dependency_graph syntax ~options entry_point file_name in
     let%bind order_deps = solve_graph deps file_name in
     let%bind asts_typed = bind_fold_list (type_file_with_dep ~options) (SMap.empty) order_deps in
-    ok @@ fst @@ SMap.find file_name asts_typed
+    ok @@ SMap.find file_name asts_typed
 
 let combined_contract : options:Compiler_options.t -> _ -> _ -> file_name -> (_, _) result =
   fun ~options syntax entry_point file_name ->
@@ -123,16 +123,16 @@ let combined_contract : options:Compiler_options.t -> _ -> _ -> file_name -> (_,
     let%bind order_deps = solve_graph deps file_name in
     let%bind asts_typed = bind_fold_list (type_file_with_dep ~options) (SMap.empty) order_deps in
     let%bind contract = aggregate_contract order_deps asts_typed in
-    ok @@ contract
+    ok @@ (contract, snd @@ SMap.find file_name asts_typed)
 
 let build_mini_c : options:Compiler_options.t -> _ -> _ -> file_name -> (_, _) result =
   fun ~options syntax entry_point file_name ->
-    let%bind contract = combined_contract ~options syntax entry_point file_name in
-    let%bind mini_c   = trace build_error_tracer @@ Compile.Of_typed.compile @@ contract in
-    ok @@ mini_c
+    let%bind contract,env = combined_contract ~options syntax entry_point file_name in
+    let%bind mini_c       = trace build_error_tracer @@ Compile.Of_typed.compile @@ contract in
+    ok @@ (mini_c,env)
 
 let build_contract : options:Compiler_options.t -> string -> _ -> file_name -> (_, _) result =
   fun ~options syntax entry_point file_name ->
-    let%bind mini_c     = build_mini_c ~options syntax (Contract entry_point) file_name in
+    let%bind mini_c,_   = build_mini_c ~options syntax (Contract entry_point) file_name in
     let%bind michelson  = trace build_error_tracer @@ Compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c entry_point in
     ok michelson
