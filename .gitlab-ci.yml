@@ -6,6 +6,7 @@ variables:
   LIGO_CONTAINER_NAME: "ligo-container"
 
 stages:
+  - pretooling      # changelog
   - docker-build    # build, test, produces binaries/.deb/doc within docker
   - docker-extract  # extract what have been built and expose them as artifact
   - tooling         # build miscellaneous tooling-related things (website, changelog..)
@@ -18,16 +19,41 @@ stages:
     - nix-env -f "https://gitlab.com/ligolang/nixpkgs/repository/archive.tar.gz?ref=7f50e4b4311f1489bc73ee8470ab797c271d04b1" -iA gnutar gitMinimal
     - export COMMIT_DATE="$(git show --no-patch --format=%ci)"
 
-# TODO: https://docs.gitlab.com/ee/ci/yaml/#onlychangesexceptchanges ?
-docker_build:
-  stage: docker-build
+changelog:
+  stage: pretooling
+  extends : .nix
   only:
     - merge_requests
     - dev
     - /^.*-run-dev$/
     - /[0-9]+\.[0-9]+\.[0-9]+/
   script:
-    - docker build . -t ${LIGO_IMAGE_NAME}
+    - nix-build nix -A ligo-changelog
+    - cp -L result/* .
+  artifacts:
+    paths:
+      - changelog.md
+      - changelog.txt
+      - release-notes.md
+      - release-notes.txt
+
+# TODO: https://docs.gitlab.com/ee/ci/yaml/#onlychangesexceptchanges ?
+docker_build:
+  stage: docker-build
+  dependencies:
+    - changelog
+  only:
+    - merge_requests
+    - dev
+    - /^.*-run-dev$/
+    - /[0-9]+\.[0-9]+\.[0-9]+/
+  script:
+    - docker build .
+      --build-arg=ci_commit_tag=$CI_COMMIT_TAG
+      --build-arg=ci_commit_sha=$CI_COMMIT_SHA
+      --build-arg=ci_commit_timestamp=$CI_COMMIT_TIMESTAMP
+      --build-arg=changelog_path=changelog.txt
+      -t ${LIGO_IMAGE_NAME}
     - docker save -o ligo.tar.gz ${LIGO_IMAGE_NAME}
   artifacts:
     expose_as: "Ligo docker image - light -"
@@ -122,24 +148,6 @@ webide-docker:
   artifacts:
     paths:
       - webide.tar.gz
-
-changelog:
-  stage: tooling
-  extends : .nix
-  only:
-    - merge_requests
-    - dev
-    - /^.*-run-dev$/
-    - /[0-9]+\.[0-9]+\.[0-9]+/
-  script:
-    - nix-build nix -A ligo-changelog
-    - cp -L result/* .
-  artifacts:
-    paths:
-      - changelog.md
-      - changelog.txt
-      - release-notes.md
-      - release-notes.txt
 
 .docker-image:
   stage: push
