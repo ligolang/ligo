@@ -321,7 +321,7 @@ let print_ast_typed =
         let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
         ok @@ Compiler_options.make ~typer_switch ~init_env ()
       in
-      let%bind typed = Build.type_contract ~options syntax Env source_file in
+      let%bind typed,_ = Build.type_contract ~options syntax Env source_file in
       ok @@ typed
   in
   let term = Term.(const f $ source_file 0  $ syntax $ typer_switch $ protocol_version $ display_format) in
@@ -338,7 +338,7 @@ let print_ast_combined =
         let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
         ok @@ Compiler_options.make ~typer_switch ~init_env ~protocol_version ()
       in
-      let%bind typed = Build.combined_contract ~options syntax Env source_file in
+      let%bind typed,_ = Build.combined_contract ~options syntax Env source_file in
       ok @@ typed
   in
   let term = Term.(const f $ source_file 0  $ syntax $ typer_switch $ protocol_version $ display_format) in
@@ -355,7 +355,7 @@ let print_mini_c =
         let%bind protocol_version = Helpers.protocol_to_variant protocol_version in
         ok @@ Compiler_options.make ~typer_switch ~init_env ~protocol_version ()
       in
-      let%bind mini_c = Build.build_mini_c ~options syntax Env source_file in
+      let%bind mini_c,_ = Build.build_mini_c ~options syntax Env source_file in
       match optimize with
         | None -> ok @@ Mini_c.Formatter.Raw mini_c
         | Some entry_point ->
@@ -388,14 +388,14 @@ let compile_parameter =
       let%bind init_env = Helpers.get_initial_env protocol_version in
       let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
       let options = Compiler_options.make ~typer_switch ~init_env () in
-      let%bind typed_prg,env,state = Compile.Utils.type_file ~options source_file syntax (Contract entry_point) in
+      let%bind typed_prg,env   = Build.combined_contract ~options syntax (Contract entry_point) source_file in
       let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
       let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg entry_point in
       let%bind _contract =
         (* fails if the given entry point is not a valid contract *)
         Compile.Of_michelson.build_contract michelson_prg in
 
-      let%bind typed_param,_,_  = Compile.Utils.type_expression ~options (Some source_file) syntax expression env state in
+      let%bind typed_param,_,_  = Compile.Utils.type_expression ~options (Some source_file) syntax expression env Typer.Solver.initial_state in
       let%bind mini_c_param     = Compile.Of_typed.compile_expression typed_param in
       let%bind compiled_param   = Compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c_prg mini_c_param in
       let%bind ()               = Compile.Of_typed.assert_equal_contract_type Check_parameter entry_point typed_prg typed_param in
@@ -441,14 +441,14 @@ let compile_storage =
       let%bind init_env   = Helpers.get_initial_env protocol_version in
       let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
       let options = Compiler_options.make ~typer_switch ~init_env () in
-      let%bind typed_prg,env,state = Compile.Utils.type_file ~options source_file syntax (Contract entry_point) in
+      let%bind typed_prg,env       = Build.combined_contract ~options syntax (Contract entry_point) source_file in
       let%bind mini_c_prg          = Compile.Of_typed.compile typed_prg in
       let%bind michelson_prg       = Compile.Of_mini_c.aggregate_and_compile_contract ~options  mini_c_prg entry_point in
       let%bind _contract =
         (* fails if the given entry point is not a valid contract *)
         Compile.Of_michelson.build_contract michelson_prg in
 
-      let%bind typed_param,_,_  = Compile.Utils.type_expression ~options (Some source_file) syntax expression env state in
+      let%bind typed_param,_,_  = Compile.Utils.type_expression ~options (Some source_file) syntax expression env Typer.Solver.initial_state in
       let%bind mini_c_param     = Compile.Of_typed.compile_expression typed_param in
       let%bind compiled_param   = Compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c_prg mini_c_param in
       let%bind ()               = Compile.Of_typed.assert_equal_contract_type Check_storage entry_point typed_prg typed_param in
@@ -542,14 +542,13 @@ let compile_expression =
       let%bind init_env   = Helpers.get_initial_env protocol_version in
       let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
       let options = Compiler_options.make ~typer_switch ~init_env () in
-      let%bind (decl_list,state,env) = match init_file with
+      let%bind (decl_list,env) = match init_file with
         | Some init_file ->
-          let%bind typed_prg,env,state = Compile.Utils.type_file ~options init_file syntax Env in
-          let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
-          ok (mini_c_prg,state,env)
-        | None -> ok ([],Typer.Solver.initial_state,init_env) in
+          let%bind mini_c_prg,env  = Build.build_mini_c ~options syntax Env init_file  in
+          ok (mini_c_prg,env)
+        | None -> ok ([],init_env) in
 
-      let%bind typed_exp,_,_  = Compile.Utils.type_expression ~options init_file syntax expression env state in
+      let%bind typed_exp,_,_  = Compile.Utils.type_expression ~options init_file syntax expression env @@ Typer.Solver.initial_state in
       let%bind mini_c_exp     = Compile.Of_typed.compile_expression typed_exp in
       let%bind compiled_exp   = Compile.Of_mini_c.aggregate_and_compile_expression ~options decl_list mini_c_exp in
       Run.evaluate_expression compiled_exp.expr compiled_exp.expr_ty
