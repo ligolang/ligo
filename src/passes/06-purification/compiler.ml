@@ -421,32 +421,33 @@ and compile_while I.{cond;body} =
 
 and compile_for I.{binder;start;final;incr;f_body} =
   let env_rec = Location.wrap @@ Var.fresh ~name:"env_rec" () in
+  let loop_binder = Location.wrap @@ Var.fresh ~name:"loop_binder" () in
   (*Make the cond and the step *)
   let cond = I.e_annotation (I.e_constant (Const C_LE) [I.e_variable binder ; final]) (I.t_bool ()) in
   let%bind cond = compile_expression cond in
   let%bind step = compile_expression incr in
-  let continue_expr = O.e_constant C_FOLD_CONTINUE [(O.e_variable env_rec)] in
+  let continue_expr = O.e_constant C_FOLD_CONTINUE [(O.e_variable loop_binder)] in
   let ctrl =
     O.e_let_in_ez binder ~ascr:(O.t_int ()) false [] (O.e_constant C_ADD [ O.e_variable binder ; step ]) @@
-    O.e_let_in_ez env_rec false [] (O.e_update (O.e_variable env_rec) [Access_tuple Z.one] @@ O.e_variable binder)@@
+    O.e_let_in_ez loop_binder false [] (O.e_update (O.e_variable loop_binder) [Access_tuple Z.one] @@ O.e_variable binder)@@
     continue_expr
   in
   (* Modify the body loop*)
   let%bind body = compile_expression f_body in
-  let%bind ((_,captured_name_list),for_body) = repair_mutable_variable_in_loops body [binder] env_rec in
+  let%bind ((_,captured_name_list),for_body) = repair_mutable_variable_in_loops body [binder] loop_binder in
   let for_body = add_to_end for_body ctrl in
 
   let aux name expr=
-    O.e_let_in_ez name false [] (O.e_accessor (O.e_variable env_rec) [Access_tuple Z.zero; Access_record (Var.to_name name.wrap_content)]) expr
+    O.e_let_in_ez name false [] (O.e_accessor (O.e_variable loop_binder) [Access_tuple Z.zero; Access_record (Var.to_name name.wrap_content)]) expr
   in
 
   (* restores the initial value of the free_var*)
   let restore = fun expr -> List.fold_right aux captured_name_list expr in
 
   (*Prep the lambda for the fold*)
-  let stop_expr = O.e_constant C_FOLD_STOP [O.e_variable env_rec] in
-  let aux_func = O.e_lambda_ez env_rec None @@
-                 O.e_let_in_ez binder ~ascr:(O.t_int ()) false [] (O.e_accessor (O.e_variable env_rec) [Access_tuple Z.one]) @@
+  let stop_expr = O.e_constant C_FOLD_STOP [O.e_variable loop_binder] in
+  let aux_func = O.e_lambda_ez loop_binder None @@
+                 O.e_let_in_ez binder ~ascr:(O.t_int ()) false [] (O.e_accessor (O.e_variable loop_binder) [Access_tuple Z.one]) @@
                  O.e_cond cond (restore for_body) (stop_expr) in
 
   (* Make the fold_while en precharge the vakye *)

@@ -40,7 +40,7 @@ let test''
     (* TODO: use an error not an assert *)
     (* Format.printf "\n\nActual: %a\n\n" Ast_typed.PP_generic.c_typeclass_simpl (restrict info tc);
      * Format.printf "\n\nExpected %a\n\n" Ast_typed.PP_generic.c_typeclass_simpl expected; *)
-    if Ast_typed.Compare.c_typeclass_simpl (restrict repr info tc) expected != 0 then ok @@ Some (test_internal __LOC__)
+    if Ast_typed.Compare.c_typeclass_simpl_compare_all_fields (restrict repr info tc) expected != 0 then ok @@ Some (test_internal __LOC__)
     else ok None
   in match e with None -> ok () | Some e -> fail e
 
@@ -82,7 +82,7 @@ let tests1 restrict = [
 
 let test'
     name
-    (deduce_and_clean : (type_variable -> type_variable) -> c_typeclass_simpl -> (deduce_and_clean_result, _) result)
+    (deduce_and_clean : (type_variable -> type_variable) -> c_typeclass_simpl -> (_, _) result)
     repr
     args (_in : string) tc
     (expected_inferred  : (type_variable * constant_tag * type_variable list) list)

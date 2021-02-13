@@ -1,22 +1,14 @@
 open Trace
 
-(* module Core = Typesystem.Core *)
 open Ast_typed.Types
-(* open Ast_typed.Reasons *)
+open Solver_types
 open Ast_typed.Combinators
-open Database_plugins.All_plugins
-(* module Assignments                   = Assignments
-module GroupedByVariable             = GroupedByVariable
-module CycleDetectionTopologicalSort = CycleDetectionTopologicalSort
-module ByConstraintIdentifier        = ByConstraintIdentifier
-module RefinedTypeclasses            = RefinedTypeclasses
-module TypeclassesConstraining       = TypeclassesConstraining *)
 
 open Db_index_tests_common
 
 module Typeclasses_constraining_tests = struct
   include Test_vars
-  module Plugin_under_test = TypeclassesConstraining
+  module Plugin_under_test = Database_plugins.All_plugins.Typeclasses_constraining
   include Plugin_under_test
   let repr : type_variable -> type_variable = fun tv ->
     match tv with

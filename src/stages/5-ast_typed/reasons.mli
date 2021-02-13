@@ -9,4 +9,5 @@ type t =
   | Propagator_specialize_eq
   | Todo of string
 
+val pp : Format.formatter -> t -> unit
 val wrap : t -> 'v -> 'v Location.wrap

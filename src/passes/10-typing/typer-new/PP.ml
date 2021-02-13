@@ -3,6 +3,8 @@ open Ast_typed
 open Format
 module UF = UnionFind.Poly2
 
+type 'a pretty_printer = Format.formatter -> 'a -> unit
+
 let type_constraint_ : _ -> type_constraint_simpl -> unit = fun ppf ->
   function
   |SC_Constructor { tv; c_tag; tv_list=_ } ->

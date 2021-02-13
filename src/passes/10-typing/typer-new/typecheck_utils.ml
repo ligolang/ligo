@@ -4,11 +4,11 @@ open Ast_typed.Types
 open Solver_helpers
 
 open Pretty_print_variables
-open Typesystem.Solver_types
+open Solver_types
 
 module All_vars(Plugins : Plugins) = struct
-  module Plugin_states = Plugins.Indexers.PluginFields(PerPluginState)
-  let all_vars (state : ('typer_error, 'plugin_states) Typesystem.Solver_types.typer_state) =
+  module Plugin_states = Plugins.Indexers.Indexers_plugins_fields(PerPluginState)
+  let all_vars (state : 'plugin_states typer_state) =
     let from_aliases = List.flatten @@ UnionFind.Poly2.partitions state.aliases in
     let aux1 : type_variable * constructor_or_row  -> type_variable list = fun (tv, cor) ->
       match cor with
@@ -51,7 +51,7 @@ let other_check all_constraints assignments =
                  (type_variable PolySet.t * type_variable Compare_renaming.tree) result
     = fun already_seen unification_var repr find_assignment ->
       let repr_unification_var = repr unification_var in
-      Format.printf "In toposort for : %a , repr : %a\n%!" Ast_typed.PP.type_variable repr_unification_var Ast_typed.PP.type_variable unification_var;
+      Format.printf "In toposort for : %a , repr : %a\n%!" Ast_typed.PP.type_variable unification_var Ast_typed.PP.type_variable repr_unification_var;
       if Set.mem repr_unification_var already_seen then 
         (*return without further changes*) ok (already_seen, Compare_renaming.List [])
       else (*add the dependencies first, then our newfound variable if it is still new*) (

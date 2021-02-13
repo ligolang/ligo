@@ -12,7 +12,7 @@ let rec number_to_letters_ : int -> string = fun n ->
 let number_to_letters : int -> string = fun n ->
   if n = 0 then "a" else number_to_letters_ n
 
-let flush_pending_print (state : (_,_) Typesystem.Solver_types.typer_state) =
+let flush_pending_print (state : _ Solver_types.typer_state) =
   let aux i vars =
     let letters = number_to_letters i in
     List.map (fun var -> (Var.internal_get_name_and_counter var, letters)) vars in

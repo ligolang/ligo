@@ -1,7 +1,8 @@
 (library
-  (name typer_new)
-  (public_name ligo.typer_new)
+  (name type_variable_abstraction)
+  (public_name ligo.typer_new.type_variable_abstraction)
   (libraries
+    ;; Many of these are unused dependencies
     simple-utils
     tezos-utils
     ast_core
@@ -9,9 +10,6 @@
     predefined
     UnionFind
     environment
-    typer_common
-    database_plugins
-    type_variable_abstraction
   )
   (preprocess
     (pps ppx_let)

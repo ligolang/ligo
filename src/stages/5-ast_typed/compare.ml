@@ -1,11 +1,16 @@
 open Ast
 open Compare_enum
 
+type 'a comparator = 'a -> 'a -> int
+let (<?) ca cb = if ca = 0 then cb () else ca
+
 let cmp2 f a1 b1 g a2 b2 = match f a1 b1 with 0 -> g a2 b2 | c -> c
 let cmp3 f a1 b1 g a2 b2 h a3 b3 = match f a1 b1 with 0 -> (match g a2 b2 with 0 -> h a3 b3 | c -> c) | c -> c
 let cmp4 f a1 b1 g a2 b2 h a3 b3 i a4 b4 = match f a1 b1 with 0 -> (match g a2 b2 with 0 -> (match h a3 b3 with 0 -> i a4 b4 | c -> c) | c -> c) | c -> c
 let cmp5 f a1 b1 g a2 b2 h a3 b3 i a4 b4 j a5 b5 = match f a1 b1 with 0 -> (match g a2 b2 with 0 -> (match h a3 b3 with 0 -> (match i a4 b4 with 0 -> j a5 b5 | c -> c) | c -> c) | c -> c) | c -> c
 let cmp6 f a1 b1 g a2 b2 h a3 b3 i a4 b4 j a5 b5 k a6 b6 = match f a1 b1 with 0 -> (match g a2 b2 with 0 -> (match h a3 b3 with 0 -> (match i a4 b4 with 0 -> (match j a5 b5 with 0 -> k a6 b6 | c -> c) | c -> c) | c -> c) | c -> c) | c -> c
+let cmp8 f a1 b1 g a2 b2 h a3 b3 i a4 b4 j a5 b5 k a6 b6 l a7 b7 m a8 b8 = match f a1 b1 with 0 -> (match g a2 b2 with 0 -> (match h a3 b3 with 0 -> (match i a4 b4 with 0 -> (match j a5 b5 with 0 -> (match k a6 b6 with 0 -> (match l a7 b7 with 0 -> m a8 b8 | c -> c) | c -> c) | c -> c) | c -> c) | c -> c) | c -> c) | c -> c
+let cmp7 f a1 b1 g a2 b2 h a3 b3 i a4 b4 j a5 b5 k a6 b6 l a7 b7 = match f a1 b1 with 0 -> (match g a2 b2 with 0 -> (match h a3 b3 with 0 -> (match i a4 b4 with 0 -> (match j a5 b5 with 0 -> (match k a6 b6 with 0 -> l a7 b7 | c -> c) | c -> c) | c -> c) | c -> c) | c -> c) | c -> c
 
 let cmp_pair f g (a1, a2) (b1, b2) = cmp2 f a1 b1 g a2 b2
 
@@ -497,14 +502,13 @@ let c_alias {reason_alias_simpl=ra;a=aa;b=ba} {reason_alias_simpl=rb;a=ab;b=bb} 
 let c_poly_simpl {id_poly_simpl = ConstraintIdentifier ca;_} {id_poly_simpl = ConstraintIdentifier cb;_} =
   Int64.compare ca cb
 
-(* let c_typeclass_simpl {reason_typeclass_simpl=ra;id_typeclass_simpl=ida;original_id=oia;tc=ta;args=la} {reason_typeclass_simpl=rb;id_typeclass_simpl=idb;original_id=oib;tc=tb;args=lb} =
- *   cmp6
- *     String.compare ra rb
- *     Bool.compare imca imcb
- *     constraint_identifier ida idb
- *     (Option.compare constraint_identifier) oia oib
- *     (List.compare ~compare:tc_allowed) ta tb
- *     (List.compare ~compare:type_variable) la lb *)
+let c_typeclass_simpl_compare_all_fields {reason_typeclass_simpl=ra;id_typeclass_simpl=ida;original_id=oia;tc=ta;args=la} {reason_typeclass_simpl=rb;id_typeclass_simpl=idb;original_id=oib;tc=tb;args=lb} =
+  cmp5
+    String.compare ra rb
+    constraint_identifier ida idb
+    (Option.compare constraint_identifier) oia oib
+    (List.compare ~compare:tc_allowed) ta tb
+    (List.compare ~compare:type_variable) la lb
 
 let c_typeclass_simpl a b =
   constraint_identifier a.id_typeclass_simpl b.id_typeclass_simpl
@@ -541,8 +545,3 @@ let type_constraint_simpl a b =
 | SC_Access_label la, SC_Access_label lb -> c_access_label_simpl la lb
 | SC_Row         ra, SC_Row         rb -> c_row_simpl ra rb
 | a, b -> Int.compare (type_constraint_simpl_tag a) (type_constraint_simpl_tag b)
-
-let deduce_and_clean_result {deduced=da;cleaned=ca} {deduced=db;cleaned=cb} =
-  cmp2
-    (List.compare ~compare:c_constructor_simpl) da db
-    c_typeclass_simpl ca cb

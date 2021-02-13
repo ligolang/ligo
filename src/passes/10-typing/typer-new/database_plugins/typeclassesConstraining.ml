@@ -1,4 +1,13 @@
-open Ast_typed.Types
+open Solver_types
+
+module M = functor
+  (Type_variable : sig type t end)
+  (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) ->
+struct
+  open Type_variable_abstraction.Types
+  (* TODO: replace (did this to avoid merge conflict) *)
+  module Ast_typed = Type_variable_abstraction
+open Solver_types
 open UnionFind
 open Trace
 
@@ -75,9 +84,10 @@ let name = "typeclasses_constraining"
 let get_state_for_tests state = state
 
 
-let get_typeclasses_constraining tv (state : ('type_variable, _) state) =
+let get_typeclasses_constraining tv state =
   Option.unopt ~default:(PolySet.create ~cmp:Ast_typed.Compare.c_typeclass_simpl)
-  @@ ReprMap.find_opt tv state#typeclasses_constraining
+  @@ ReprMap.find_opt tv state
 
-let get_typeclasses_constraining_list tv (state : ('type_variable, _) state) =
+let get_typeclasses_constraining_list tv state =
   PolySet.elements @@ get_typeclasses_constraining tv state
+end

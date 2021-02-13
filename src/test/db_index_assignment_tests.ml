@@ -2,15 +2,15 @@ open Trace
 
 (* module Core = Typesystem.Core *)
 open Ast_typed.Types
+open Solver_types
 (* open Ast_typed.Reasons *)
 open Ast_typed.Combinators
-open Database_plugins.All_plugins
 
 open Db_index_tests_common
 
 module Assignments_tests = struct
   include Test_vars
-  module Plugin_under_test = Assignments
+  module Plugin_under_test = Database_plugins.All_plugins.Assignments
   include Plugin_under_test
   let repr : type_variable -> type_variable = fun tv ->
     match tv with
