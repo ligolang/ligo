@@ -471,38 +471,6 @@ let constraint_identifier ppf (ConstraintIdentifier ci) =
   | `Row r -> c_row_simpl ppf r
   | `Constructor c -> c_constructor_simpl ppf c
 
-let output_break_ctor ppf ({a_k_var;a_k'_var'}) =
-  fprintf ppf "{@,@[<hv 2>
-              a_k_var : %a ;@
-              a_k'_var' : %a
-              @]@,}"
-    constructor_or_row a_k_var
-    constructor_or_row a_k'_var'
-
-let output_specialize1 ppf ({poly;a_k_var}) =
-  fprintf ppf "{@,@[<hv 2>
-              poly : %a ;@
-              a_k_var : %a
-              @]@,}"
-    c_poly_simpl poly
-    c_constructor_simpl a_k_var
-
-let output_tc_fundep ppf (t : output_tc_fundep) =
-  let lst = t.tc in
-  let a = t.c in
-  fprintf ppf "{tc:%a; c:%a}"
-    c_typeclass_simpl
-    lst
-    constructor_or_row a
-
-let deduce_and_clean_result ppf {deduced;cleaned} =
-  fprintf ppf "{@,@[<hv 2>
-              deduced : %a ;@
-              cleaned : %a
-              @]@,}"
-    (list c_constructor_simpl) deduced
-    c_typeclass_simpl cleaned
-
 let axiom ppf = function |HandWaved s -> fprintf ppf "HandWaved %s" s
 
 let proof_trace ppf = function

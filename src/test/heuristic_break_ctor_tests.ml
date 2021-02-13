@@ -14,8 +14,8 @@ let map (k,v) = mk C_map [k; v]
 (* A bunch of type variables: *)
 let (m,n,o,p,x,y,z) = let v name : type_variable = Var.fresh ~name () in v "m", v "n", v "o", v "p", v "x", v "y", v "z"
 
-module Map = Database_plugins.All_plugins.GroupedByVariable
-let selector_test : (_ -> type_constraint_simpl -> type_variable Map.t -> output_break_ctor list) -> unit -> (unit,Main_errors.all) result =
+module Map = Database_plugins.All_plugins.Grouped_by_variable
+let selector_test : (_ -> type_constraint_simpl -> < grouped_by_variable : type_variable Map.t > -> Typer_new.Heuristic_break_ctor.selector_output list) -> unit -> (unit,Main_errors.all) result =
   fun _selector () ->
     (*create a state :) *)
   ok ()
@@ -23,5 +23,5 @@ let selector_test : (_ -> type_constraint_simpl -> type_variable Map.t -> output
 let main =
   test_suite "Typer : ctor break heuristic" @@
     [
-      test "selector" (selector_test Typer_new.Heuristic_break_ctor.selector_) ;
+      test "selector" (selector_test Typer_new.Heuristic_break_ctor.selector) ;
     ]

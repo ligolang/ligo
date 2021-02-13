@@ -1,6 +1,6 @@
 open Database_plugins.All_plugins
 open Ast_typed.Types
-open Typesystem.Solver_types
+open Solver_types
 
 type selector_output = {
   a_k_var : c_row_simpl ;
@@ -8,6 +8,6 @@ type selector_output = {
 }
 
 val heuristic : <
-  grouped_by_variable : type_variable GroupedByVariable.t ;
+  grouped_by_variable : type_variable Grouped_by_variable.t ;
   ..
 > ex_heuristic_plugin

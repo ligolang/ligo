@@ -1,16 +1,16 @@
 (library
-  (name typer_new)
-  (public_name ligo.typer_new)
+  (name solver_types)
+  (public_name ligo.typer_new.solver_types)
   (libraries
+    ;; Many of these are unused dependencies
     simple-utils
     tezos-utils
     ast_core
     ast_typed
     predefined
     UnionFind
-    environment
     typer_common
-    database_plugins
+    yojson
     type_variable_abstraction
   )
   (preprocess

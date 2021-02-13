@@ -4,6 +4,8 @@ open Format
 open PP_helpers
 include Stage_common.PP
 
+type 'a pretty_printer = Format.formatter -> 'a -> unit
+
 let lmap_sep value sep ppf m =
   let lst = List.sort (fun (Label a,_) (Label b,_) -> String.compare a b) m in
   let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" label k value v in
@@ -603,28 +605,6 @@ let constructor_or_row_short ppf (t : constructor_or_row ) =
   match t with
   | `Row r -> c_row_simpl_short ppf r
   | `Constructor c -> c_constructor_simpl_short ppf c
-
-let output_break_ctor ppf ({a_k_var;a_k'_var'}) =
-  fprintf ppf "%a = %a"
-    constructor_or_row_short a_k_var
-    constructor_or_row_short a_k'_var'
-
-let output_specialize1 ppf ({poly;a_k_var}) =
-  fprintf ppf "%a = %a"
-    c_poly_simpl_short poly
-    c_constructor_simpl_short a_k_var
-
-let output_tc_fundep ppd (t : output_tc_fundep) =
-  let lst = t.tc in
-  let a = t.c in fprintf ppd "%a and %a" c_typeclass_simpl_short lst constructor_or_row_short a
-
-let deduce_and_clean_result ppf {deduced;cleaned} =
-  fprintf ppf "{@[<hv 2>@
-              deduced : %a;@
-              cleaned : %a;@
-              @]}"
-    (list c_constructor_simpl) deduced
-    c_typeclass_simpl cleaned
 
 let axiom ppf = function |HandWaved s -> fprintf ppf "HandWaved %s" s
 

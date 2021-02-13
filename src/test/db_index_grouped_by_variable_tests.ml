@@ -1,31 +1,8 @@
 open Trace
 open Ast_typed.Types
+open Solver_types
 open Database_plugins.All_plugins
 open Db_index_tests_common
-
-open GroupedByVariable
-
-let merge_in_state ~demoted_repr ~new_repr state =
-  let updater = {
-    map = (fun m -> UnionFind.ReprMap.alias ~demoted_repr ~new_repr m);
-    set = (fun s -> UnionFind.ReprSet.alias ~demoted_repr ~new_repr s);
-  } in
-  merge_aliases updater state
-
-let merge_in_repr ~demoted_repr ~new_repr repr =
-  fun tv -> match repr tv with
-      tv when Var.equal tv demoted_repr -> new_repr
-    | other -> other
-
-let merge ~demoted_repr ~new_repr repr state =
-  if (not (Var.equal (repr demoted_repr) demoted_repr)) ||
-     (not (Var.equal (repr new_repr) new_repr))
-  then
-    failwith "Internal error: bad test: the demoted_repr and new_repr \
-              should already be representants when merge is called."
-  else
-    ((merge_in_repr ~demoted_repr ~new_repr repr),
-     (merge_in_state ~demoted_repr ~new_repr state))
 
 (* can't be defined easily in MultiSet.ml because it doesn't have access to List.compare ~cmp  *)
 let multiset_compare a b =
@@ -37,7 +14,7 @@ let multiset_compare a b =
 
 module Grouped_by_variable_tests = struct
   include Test_vars
-  module Plugin_under_test = GroupedByVariable
+  module Plugin_under_test = Database_plugins.All_plugins.Grouped_by_variable
   include Plugin_under_test
   let repr : type_variable -> type_variable = fun tv ->
     match tv with
@@ -75,12 +52,34 @@ module Grouped_by_variable_tests = struct
     ok ()
 
   let same_state (expected : _ t) (actual : _ t) =
-    same_state' __LOC__ (GroupedByVariable.bindings expected) (GroupedByVariable.bindings actual)
+    same_state' __LOC__ (Grouped_by_variable.bindings expected) (Grouped_by_variable.bindings actual)
 end
 
-open Grouped_by_variable_tests
+open! Grouped_by_variable_tests
 
-type nonrec t_for_tests = type_variable GroupedByVariable.t_for_tests
+let merge_in_state ~demoted_repr ~new_repr state =
+  let updater = {
+    map = (fun m -> UnionFind.ReprMap.alias ~demoted_repr ~new_repr m);
+    set = (fun s -> UnionFind.ReprSet.alias ~demoted_repr ~new_repr s);
+  } in
+  merge_aliases updater state
+
+let merge_in_repr ~demoted_repr ~new_repr repr =
+  fun tv -> match repr tv with
+      tv when Var.equal tv demoted_repr -> new_repr
+    | other -> other
+
+let merge ~demoted_repr ~new_repr repr state =
+  if (not (Var.equal (repr demoted_repr) demoted_repr)) ||
+     (not (Var.equal (repr new_repr) new_repr))
+  then
+    failwith "Internal error: bad test: the demoted_repr and new_repr \
+              should already be representants when merge is called."
+  else
+    ((merge_in_repr ~demoted_repr ~new_repr repr),
+     (merge_in_state ~demoted_repr ~new_repr state))
+
+type nonrec t_for_tests = type_variable Grouped_by_variable.t_for_tests
 
 let filter_only_ctors  = List.filter_map (function Ast_typed.Types.SC_Constructor c -> Some c | _ -> None)
 let filter_only_rows   = List.filter_map (function Ast_typed.Types.SC_Row         c -> Some c | _ -> None)
@@ -108,7 +107,7 @@ let assert_states_equal
       access_label_by_result_type = to_access_label_sets expected_access_labels_by_result_type ;
       access_label_by_record_type = to_access_label_sets expected_access_labels_by_record_type ;
     }
-    (GroupedByVariable.bindings actual)
+    (Grouped_by_variable.bindings actual)
 
 let remove_constraint repr state constraint_to_rm =
   trace Main_errors.typer_tracer @@

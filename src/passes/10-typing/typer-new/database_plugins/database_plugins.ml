@@ -1,14 +1,20 @@
-open Ast_typed.Types
+open Solver_types
 
-(* data PluginFields (Ppt :: PerPluginType) = PluginFields {
+(* data Indexers_plugins_fields (Ppt :: PerPluginType) = Indexers_plugins_fields {
      assignments       :: Ppt Assignments,
      groupedByVariable :: Ppt GroupedByVariable,
      …
    }
 *)
 
+module Assignments = Assignments.M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
+module GroupedByVariable = GroupedByVariable.M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
+module CycleDetectionTopologicalSort = CycleDetectionTopologicalSort.M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
+module ByConstraintIdentifier = ByConstraintIdentifier.M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
+module TypeclassesConstraining = TypeclassesConstraining.M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
+
 (* TODO: this is probably hidden by its signature somewhere? *)
-module PluginFields = functor (Ppt : PerPluginType) -> struct
+module Indexers_plugins_fields = functor (Ppt : PerPluginType) -> struct
   type flds = <
     assignments                      : Ppt(Assignments).t ;
     grouped_by_variable              : Ppt(GroupedByVariable).t ;
@@ -22,14 +28,14 @@ module PluginFields = functor (Ppt : PerPluginType) -> struct
 end
 
 (* TODO: try removing this _ workaround *)
-module PluginFields_ = PluginFields
+module Indexers_plugins_fields_ = Indexers_plugins_fields
 
-(* mapPlugins :: (F : MappedFunction) → (PluginFields F.MakeIn) → (PluginFields F.MakeOut) *)
-module MapPlugins = functor (F : MappedFunction) -> struct
+(* mapPlugins :: (F : MappedFunction) → (Indexers_plugins_fields F.MakeIn) → (Indexers_plugins_fields F.MakeOut) *)
+module Map_indexer_plugins = functor (F : Mapped_function) -> struct
   let f :
     F.extra_args ->
-    PluginFields(F.MakeInType).flds ->
-    PluginFields(F.MakeOutType).flds F.Monad.t
+    Indexers_plugins_fields(F.MakeInType).flds ->
+    Indexers_plugins_fields(F.MakeOutType).flds F.Monad.t
     = fun extra_args fieldsIn ->
       let module Let_syntax = F.Monad in
       let%bind assignments                      = (let module F = F.F(Assignments)                   in F.f "assign" extra_args fieldsIn#assignments)                      in
@@ -49,8 +55,8 @@ end
 (* A value containing an empty (dummy) unit associated each plugin
    name This allows us to use `map' to discard this `unit' and
    e.g. initialize each plugin. *)
-type plugin_units = PluginFields(PerPluginUnit).flds
-let plugin_fields_unit : plugin_units = object
+type indexers_plugins_fields_unit = Indexers_plugins_fields(PerPluginUnit).flds
+let indexers_plugins_fields_unit : indexers_plugins_fields_unit = object
   method assignments                      = () ;
   method grouped_by_variable              = () ;
   method cycle_detection_topological_sort = () ;

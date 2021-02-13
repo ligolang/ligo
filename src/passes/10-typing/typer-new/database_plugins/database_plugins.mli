@@ -1,6 +1,13 @@
 open Ast_typed.Types
+open Solver_types
 
-module PluginFields_ (Ppt : PerPluginType) : sig
+module Assignments : module type of Assignments.M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
+module GroupedByVariable : module type of GroupedByVariable.M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
+module CycleDetectionTopologicalSort : module type of CycleDetectionTopologicalSort.M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
+module ByConstraintIdentifier : module type of ByConstraintIdentifier.M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
+module TypeclassesConstraining : module type of TypeclassesConstraining.M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
+
+module Indexers_plugins_fields_ (Ppt : PerPluginType) : sig
   type flds = <
     assignments                      : Ppt(Assignments).t ;
     grouped_by_variable              : Ppt(GroupedByVariable).t ;
@@ -18,9 +25,9 @@ module PluginFields_ (Ppt : PerPluginType) : sig
   val assignments : flds -> < assignments : Ppt(Assignments).t >
 end
 
-include Ast_typed.Types.IndexerPlugins
+include Solver_types.IndexerPlugins
   (* TODO: do we need this & the definition above? *)
-  with module PluginFields = PluginFields_
+  with module Indexers_plugins_fields = Indexers_plugins_fields_
 
 
 (* OCaml/dune hide the contents of a folder unless they are

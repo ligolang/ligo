@@ -3,40 +3,56 @@
  * produces the new constraint (x = z[y ↦ fresh_y])
  * where [from ↦ to] denotes substitution. *)
 
+module TYPE_VARIABLE_ABSTRACTION = Type_variable_abstraction.TYPE_VARIABLE_ABSTRACTION
+
+module INDEXES = functor (Type_variable : sig type t end) (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) -> struct
+  module All_plugins = Database_plugins.All_plugins.M(Type_variable)(Type_variable_abstraction)
+  open All_plugins
+  module type S = sig
+    val grouped_by_variable : Type_variable.t  Grouped_by_variable.t
+  end
+end
+
 module Core = Typesystem.Core
-open Ast_typed.Misc
-open Ast_typed.Types
-open Typesystem.Solver_types
+open Solver_types
 open Trace
 open Typer_common.Errors
-open Database_plugins.All_plugins
 open Ast_typed.Reasons
-
-type 'a flds = <
-  grouped_by_variable : type_variable GroupedByVariable.t ;
-  ..
-> as 'a
-
-type selector_output = output_specialize1
 
 (* TODO: we need to detect if a ∀ constraint has already been specialized or not
    The same need was present for the heuristic_tc_fundep (detect if a TC has already
    been refined, and if so find the update) *)
  
- let selector : (type_variable -> type_variable) -> type_constraint_simpl -> _ flds -> selector_output list =
+module M = functor (Type_variable : sig type t end) (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) -> struct
+  open Type_variable_abstraction
+  open Type_variable_abstraction.Types
+  type type_variable = Type_variable.t
+
+
+  type flds = (module INDEXES(Type_variable)(Type_variable_abstraction).S)
+  module All_plugins = Database_plugins.All_plugins.M(Type_variable)(Type_variable_abstraction)
+  open All_plugins
+
+  type selector_output = {
+      poly : c_poly_simpl ;
+      a_k_var : c_constructor_simpl ;
+    }
+  let heuristic_name = "specialize1"
+
+ let selector : (type_variable -> type_variable) -> type_constraint_simpl -> flds -> selector_output list =
   (* find two rules with the shape (x = forall b, d) and x = k'(var' …) or vice versa *)
   (* TODO: do the same for two rules with the shape (a = forall b, d) and tc(a…) *)
   (* TODO: do the appropriate thing for two rules with the shape (a = forall b, d) and (a = forall b', d') *)
-  fun repr type_constraint_simpl indexes ->
+  fun repr type_constraint_simpl ((module Indexes) : flds)->
   match type_constraint_simpl with
   | SC_Constructor c                ->
     (* vice versa *)
-    let other_cs = MultiSet.elements @@ GroupedByVariable.get_polys_by_lhs (repr c.tv) indexes#grouped_by_variable in
+    let other_cs = MultiSet.elements @@ Grouped_by_variable.get_polys_by_lhs (repr c.tv) Indexes.grouped_by_variable in
     let cs_pairs = List.map (fun x -> { poly = x ; a_k_var = c }) other_cs in
     cs_pairs
   | SC_Alias       _                -> failwith "alias should not be visible here"
   | SC_Poly        p                ->
-    let other_cs = MultiSet.elements @@ GroupedByVariable.get_constructors_by_lhs (repr p.tv) indexes#grouped_by_variable in
+    let other_cs = MultiSet.elements @@ Grouped_by_variable.get_constructors_by_lhs (repr p.tv) Indexes.grouped_by_variable in
     let cs_pairs = List.map (fun x -> { poly = p ; a_k_var = x }) other_cs in
     cs_pairs
   | SC_Typeclass   _                -> []
@@ -47,12 +63,12 @@ type selector_output = output_specialize1
    should check they are non-empty (and in that case produce a
    selector_output for all pairs) *)
 
-let alias_selector : type_variable -> type_variable -> _ flds -> selector_output list =
-  fun a b indexes ->
-  let a_polys = MultiSet.elements @@ GroupedByVariable.get_polys_by_lhs a indexes#grouped_by_variable in
-  let a_ctors = MultiSet.elements @@ GroupedByVariable.get_constructors_by_lhs a indexes#grouped_by_variable in
-  let b_polys = MultiSet.elements @@ GroupedByVariable.get_polys_by_lhs b indexes#grouped_by_variable in
-  let b_ctors = MultiSet.elements @@ GroupedByVariable.get_constructors_by_lhs b indexes#grouped_by_variable in
+let alias_selector : type_variable -> type_variable -> flds -> selector_output list =
+  fun a b (module Indexes) ->
+  let a_polys = MultiSet.elements @@ Grouped_by_variable.get_polys_by_lhs a Indexes.grouped_by_variable in
+  let a_ctors = MultiSet.elements @@ Grouped_by_variable.get_constructors_by_lhs a Indexes.grouped_by_variable in
+  let b_polys = MultiSet.elements @@ Grouped_by_variable.get_polys_by_lhs b Indexes.grouped_by_variable in
+  let b_ctors = MultiSet.elements @@ Grouped_by_variable.get_constructors_by_lhs b Indexes.grouped_by_variable in
   List.flatten @@
   List.map
     (fun poly ->
@@ -68,13 +84,13 @@ let get_referenced_constraints ({ poly; a_k_var } : selector_output) : type_cons
     SC_Constructor a_k_var;
   ]
 
-let propagator : (output_specialize1 , typer_error) propagator =
+let propagator : (selector_output , typer_error) Type_variable_abstraction.Solver_types.propagator =
   fun selected repr ->
   let a = selected.poly in
   let b = selected.a_k_var in
 
   (* The selector is expected to provide two constraints with the shape (x = forall y, z) and x = k'(var' …) *)
-  assert (Var.equal (repr (a : c_poly_simpl).tv) (repr (b : c_constructor_simpl).tv));
+  assert (Type_variable_abstraction.Compare.type_variable (repr (a : c_poly_simpl).tv) (repr (b : c_constructor_simpl).tv) = 0);
 
   (* produce constraints: *)
 
@@ -90,22 +106,9 @@ let propagator : (output_specialize1 , typer_error) propagator =
       }
   in
   let (reduced, new_constraints) = Typelang.check_applied @@ Typelang.type_level_eval apply in
-  (if Ast_typed.Debug.debug_new_typer
-   then Printf.fprintf stderr "%s"
-     @@ Format.asprintf "apply = %a\nb = %a\nreduced = %a\nnew_constraints = [\n%a\n]\n"
-       Ast_typed.PP.type_value apply
-       Ast_typed.PP.c_constructor_simpl b
-       Ast_typed.PP.type_value reduced
-       (PP_helpers.list_sep Ast_typed.PP.type_constraint_short (fun ppf () -> Format.fprintf ppf " ;\n")) new_constraints);
   
-  let eq1 = c_equation (wrap (Todo "solver: propagator: specialize1 eq1") @@ P_variable (repr b.tv)) reduced "propagator: specialize1" in
+  let eq1 = Misc.c_equation (wrap (Todo "solver: propagator: specialize1 eq1") @@ P_variable (repr b.tv)) reduced "propagator: specialize1" in
   let eqs = eq1 :: new_constraints in
-  let pp_indented_constraint_list =
-    let open PP_helpers in
-    let open Ast_typed.PP in
-    (list_sep type_constraint_short (tag "\n  ")) in
-  let () = Format.printf "specialize1: rm %a, add:\n  %a\n\n%!" Ast_typed.PP.type_constraint_simpl_short (SC_Poly a) pp_indented_constraint_list eqs in
-  Format.printf "Specialize : returning with new constraint %a\n%!" (PP_helpers.list_sep_d Ast_typed.PP.type_constraint_short) @@ eqs ;
     ok [
         {
           remove_constraints = [ SC_Poly a ];
@@ -114,8 +117,53 @@ let propagator : (output_specialize1 , typer_error) propagator =
         }
       ]
 
-let printer = Ast_typed.PP.output_specialize1
-let printer_json = Ast_typed.Yojson.output_specialize1
-let comparator = Solver_should_be_generated.compare_output_specialize1
+let printer ppf ({poly;a_k_var}) =
+  let open Format in
+  let open Type_variable_abstraction.PP in
+  fprintf ppf "%a = %a"
+    c_poly_simpl_short poly
+    c_constructor_simpl_short a_k_var
+let printer_json ({poly;a_k_var}) =
+  let open Type_variable_abstraction.Yojson in
+  `Assoc [
+    ("poly",    c_poly_simpl poly);
+    ("a_k_var", c_constructor_simpl a_k_var)]
+let comparator { poly = a1; a_k_var = a2 } { poly = b1; a_k_var = b2 } =
+  let open Type_variable_abstraction.Compare in
+  c_poly_simpl a1 b1 <? fun () -> c_constructor_simpl a2 b2
+end
 
-let heuristic = Heuristic_plugin { heuristic_name = "specialize1"; selector; alias_selector; get_referenced_constraints; propagator; printer; printer_json; comparator }
+module MM = M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
+
+open Ast_typed.Types
+open Solver_types
+
+module Compat = struct
+  module All_plugins = Database_plugins.All_plugins.M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
+  open All_plugins
+  let heuristic_name = MM.heuristic_name
+  let selector repr c (flds : < grouped_by_variable : type_variable Grouped_by_variable.t ; .. >) =
+    let module Flds = struct
+      let grouped_by_variable : type_variable Grouped_by_variable.t = flds#grouped_by_variable
+    end
+    in
+    MM.selector repr c (module Flds)
+  let alias_selector a b (flds : < grouped_by_variable : type_variable Grouped_by_variable.t ; .. >) =
+    let module Flds = struct
+      let grouped_by_variable : type_variable Grouped_by_variable.t = flds#grouped_by_variable
+    end
+    in
+    MM.alias_selector a b (module Flds)
+  let get_referenced_constraints = MM.get_referenced_constraints
+  let propagator = MM.propagator
+  let printer = MM.printer
+  let printer_json = MM.printer_json
+  let comparator = MM.comparator
+end
+let heuristic = Heuristic_plugin Compat.{ heuristic_name; selector; alias_selector; get_referenced_constraints; propagator; printer; printer_json; comparator }
+type nonrec selector_output = MM.selector_output = {
+      poly : c_poly_simpl ;
+      a_k_var : c_constructor_simpl ;
+    }
+let selector = Compat.selector
+

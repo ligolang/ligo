@@ -54,7 +54,7 @@ let rec type_constraint_simpl : type_constraint -> type_constraint_simpl list =
     then [] (* Don't include trivial aliases. *)
     else [SC_Alias { a ; b ; reason_alias_simpl="simplifier: gather_alias"}] in
   let reduce_type_app a b =
-    let (reduced, new_constraints) = Typelang.check_applied @@ Typelang.type_level_eval b in
+    let (reduced, new_constraints) = Solver_types.Typelang.check_applied @@ Solver_types.Typelang.type_level_eval b in
     let recur = List.map type_constraint_simpl new_constraints in
     let resimpl = type_constraint_simpl (c_equation a reduced "simplifier: reduce_type_app") in (* Note: this calls recursively but cant't fall in the same case. *)
     resimpl @ List.flatten recur in

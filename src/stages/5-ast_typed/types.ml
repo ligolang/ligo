@@ -2,4 +2,3 @@
    type declarations, and Types_utils which contains some alias
    declarations and other definitions used by the fold generator. *)
 include Ast
-include SolverDBPlugins.Dep_cycle(Typer_errors)

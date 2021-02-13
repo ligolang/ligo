@@ -20,5 +20,4 @@ module Debug = Stage_common.Debug
 
 module Compare = struct include Compare end
 
-module Typer_errors = Typer_errors
 type typer_switch = Old | New
