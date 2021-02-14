@@ -120,7 +120,7 @@ type error =
 | Invalid_symbol
 | File_not_found of string
 | Unterminated_comment of string
-| Unterminated_inclusion
+| Missing_filename
 
 let error_to_string = function
   Directive_inside_line ->
@@ -172,9 +172,8 @@ let error_to_string = function
 | Unterminated_comment ending ->
     sprintf "Unterminated comment.\n\
              Hint: Close with %S." ending
-| Unterminated_inclusion ->
-    sprintf "Unterminated #include directive.\n\
-             Hint: Add as a string the name of the file to be included."
+| Missing_filename ->
+    sprintf "Filename expected in a string literal."
 
 let format_error config ~msg (region: Region.t) =
   let file  = config#input <> None in
@@ -716,12 +715,12 @@ and in_block block opening state = parse
          in fail state opening err                                 }
 | _    { copy state lexbuf; in_block block opening state lexbuf    }
 
-(* Included filename *)
+(* #include *)
 
 and scan_inclusion state = parse
-  blank+   { scan_inclusion state lexbuf                    }
-| '"'      { in_inclusion (mk_reg lexbuf) [] 0 state lexbuf }
-| nl | eof { stop state lexbuf       Unterminated_inclusion }
+  blank+ { scan_inclusion state lexbuf                    }
+| '"'    { in_inclusion (mk_reg lexbuf) [] 0 state lexbuf }
+| _      { stop state lexbuf Missing_filename             }
 
 and in_inclusion opening acc len state = parse
   '"'    { let closing = mk_reg lexbuf
@@ -730,12 +729,12 @@ and in_inclusion opening acc len state = parse
 | eof    { fail state opening Unterminated_string             }
 | _ as c { in_inclusion opening (c::acc) (len+1) state lexbuf }
 
-(* Imported filaname with module *)
+(* #import *)
 
 and scan_import state = parse
-  blank+   { scan_import state lexbuf                       }
-| '"'      { in_import (mk_reg lexbuf) [] 0 state lexbuf    }
-| nl | eof { stop state lexbuf       Unterminated_inclusion }
+  blank+ { scan_import state lexbuf                    }
+| '"'    { in_import (mk_reg lexbuf) [] 0 state lexbuf }
+| _      { stop state lexbuf Missing_filename          }
 
 and in_import opening acc len state = parse
   '"'    { let imp_path = mk_str len acc
@@ -745,9 +744,9 @@ and in_import opening acc len state = parse
 | _ as c { in_import opening (c::acc) (len+1) state lexbuf }
 
 and scan_module opening imp_path state = parse
-  blank+   { scan_module opening imp_path state lexbuf      }
-| '"'      { in_module opening imp_path [] 0 state lexbuf   }
-| nl | eof { stop state lexbuf       Unterminated_inclusion }
+  blank+ { scan_module opening imp_path state lexbuf    }
+| '"'    { in_module opening imp_path [] 0 state lexbuf }
+| _      { stop state lexbuf Missing_filename           }
 
 and in_module opening imp_path acc len state = parse
   '"'    { let closing = mk_reg lexbuf
