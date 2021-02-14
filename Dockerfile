@@ -71,22 +71,24 @@ USER opam
 WORKDIR /ligo
 RUN sh scripts/install_vendors_deps.sh
 
-# Version info env vars
-ARG ci_job_id
-ARG ci_commit_sha
-ARG commit_date
-ENV CI_JOB_ID=$ci_job_id
-ENV CI_COMMIT_SHA=$ci_commit_sha
-ENV COMMIT_DATE=$commit_date
-
 # Install LIGO
 USER root
 COPY src /ligo/src
+COPY dune-project /ligo/dune-project
+COPY scripts/version.sh /ligo/scripts/version.sh
 RUN chown -R opam:opam /ligo
 USER opam
 WORKDIR /ligo
-# RUN opam install -y .
-RUN eval $(opam env) && dune build -p ligo --profile static
+# Version info and changelog
+ARG ci_commit_tag
+ARG ci_commit_sha
+ARG ci_commit_timestamp
+ENV CI_COMMIT_TAG=$ci_commit_tag
+ENV CI_COMMIT_SHA=$ci_commit_sha
+ENV CI_COMMIT_TIMESTAMP=$ci_commit_timestamp
+COPY changelog.txt /ligo/changelog.txt
+ENV CHANGELOG_PATH=/ligo/changelog.txt
+RUN eval $(opam env) && LIGO_VERSION=$(/ligo/scripts/version.sh) dune build -p ligo --profile static
 
 # Run tests
 USER root

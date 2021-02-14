@@ -10,7 +10,8 @@ buildNpmPackage {
   '';
   installPhase = ''
     cp -Lr build $out
-    cp -r ${../ligo.deb} $out/deb
+    mkdir -p $out/deb
+    cp ${../ligo.deb} $out/deb/ligo.deb
     mkdir -p $out/bin/linux
     cp -r ${../ligo} $out/bin/linux/ligo
     cp -r ${../doc} $out/odoc
