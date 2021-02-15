@@ -289,7 +289,7 @@ let%expect_test _ =
            -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
                PROTOCOL_VERSION will decide protocol's types/values pre-loaded
                into the LIGO environment (carthage , dalphanet , edo). By
-               default, the current protocol (carthage) will be used
+               default, the current protocol (edo) will be used
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
@@ -362,7 +362,7 @@ let%expect_test _ =
            -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
                PROTOCOL_VERSION will decide protocol's types/values pre-loaded
                into the LIGO environment (carthage , dalphanet , edo). By
-               default, the current protocol (carthage) will be used
+               default, the current protocol (edo) will be used
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
@@ -444,7 +444,7 @@ let%expect_test _ =
            -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
                PROTOCOL_VERSION will decide protocol's types/values pre-loaded
                into the LIGO environment (carthage , dalphanet , edo). By
-               default, the current protocol (carthage) will be used
+               default, the current protocol (edo) will be used
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
@@ -518,7 +518,7 @@ let%expect_test _ =
            -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
                PROTOCOL_VERSION will decide protocol's types/values pre-loaded
                into the LIGO environment (carthage , dalphanet , edo). By
-               default, the current protocol (carthage) will be used
+               default, the current protocol (edo) will be used
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
@@ -589,7 +589,7 @@ let%expect_test _ =
            -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
                PROTOCOL_VERSION will decide protocol's types/values pre-loaded
                into the LIGO environment (carthage , dalphanet , edo). By
-               default, the current protocol (carthage) will be used
+               default, the current protocol (edo) will be used
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
@@ -655,7 +655,7 @@ let%expect_test _ =
            -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
                PROTOCOL_VERSION will decide protocol's types/values pre-loaded
                into the LIGO environment (carthage , dalphanet , edo). By
-               default, the current protocol (carthage) will be used
+               default, the current protocol (edo) will be used
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
@@ -721,7 +721,7 @@ let%expect_test _ =
            -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
                PROTOCOL_VERSION will decide protocol's types/values pre-loaded
                into the LIGO environment (carthage , dalphanet , edo). By
-               default, the current protocol (carthage) will be used
+               default, the current protocol (edo) will be used
 
            --typer=TYPER_SWITCH (absent=old)
                TYPER_SWITCH is the typer to be used ('new' or 'old')

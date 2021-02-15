@@ -19,9 +19,10 @@ module X = struct
     : type ta tb. context -> int -> ta stack_ty -> tb stack_ty ->
       ((ta stack_ty, tb stack_ty) eq * context) tzresult
     = fun ctxt lvl ta tb ->
+      let dummy_loc  = 0 in (*TODO not sure ..*)
       match ta, tb with
       | Item_t (tva, ra, _), Item_t (tvb, rb, _) ->
-        ty_eq ctxt tva tvb |>
+        ty_eq ctxt dummy_loc tva tvb |>
         record_trace (Bad_stack_item lvl) >>? fun (Eq, ctxt) ->
         stack_ty_eq ctxt (lvl + 1) ra rb >>? fun (Eq, ctxt) ->
         (Ok (Eq, ctxt) : ((ta stack_ty, tb stack_ty) eq * context) tzresult)
@@ -30,110 +31,12 @@ module X = struct
 
 
 
-  open Script_typed_ir
-  open Protocol.Environment.Error_monad
-  module Unparse_costs = Michelson_v1_gas.Cost_of.Unparse
-  open Protocol.Environment
+  module Unparse_costs = Michelson_v1_gas.Cost_of.Unparsing
 
   type ex_typed_value =
     Ex_typed_value : ('a Script_typed_ir.ty * 'a) -> ex_typed_value
 
-  (* TODO copied from Script_ir_translator *)
-  let has_big_map : type t. t Script_typed_ir.ty -> bool = function
-    | Unit_t _ ->
-        false
-    | Int_t _ ->
-        false
-    | Nat_t _ ->
-        false
-    | Signature_t _ ->
-        false
-    | String_t _ ->
-        false
-    | Bytes_t _ ->
-        false
-    | Mutez_t _ ->
-        false
-    | Key_hash_t _ ->
-        false
-    | Key_t _ ->
-        false
-    | Timestamp_t _ ->
-        false
-    | Address_t _ ->
-        false
-    | Bool_t _ ->
-        false
-    | Lambda_t (_, _, _) ->
-        false
-    | Set_t (_, _) ->
-        false
-    | Big_map_t (_, _, _) ->
-        true
-    | Contract_t (_, _) ->
-        false
-    | Operation_t _ ->
-        false
-    | Chain_id_t _ ->
-        false
-    | Pair_t (_, _, _, has_big_map) ->
-        has_big_map
-    | Union_t (_, _, _, has_big_map) ->
-        has_big_map
-    | Option_t (_, _, has_big_map) ->
-        has_big_map
-    | List_t (_, _, has_big_map) ->
-        has_big_map
-    | Map_t (_, _, _, has_big_map) ->
-        has_big_map
-
-  let rec ty_of_comparable_ty : type a s. (a, s) comparable_struct -> a ty =
-    function
-    | Int_key tname ->
-        Int_t tname
-    | Nat_key tname ->
-        Nat_t tname
-    | String_key tname ->
-        String_t tname
-    | Bytes_key tname ->
-        Bytes_t tname
-    | Mutez_key tname ->
-        Mutez_t tname
-    | Bool_key tname ->
-        Bool_t tname
-    | Key_hash_key tname ->
-        Key_hash_t tname
-    | Timestamp_key tname ->
-        Timestamp_t tname
-    | Address_key tname ->
-        Address_t tname
-    | Pair_key ((l, al), (r, ar), tname) ->
-        Pair_t
-          ( (ty_of_comparable_ty l, al, None),
-            (ty_of_comparable_ty r, ar, None),
-            tname,
-            false )
-
 module Interp_costs = Michelson_v1_gas.Cost_of
-type ex_descr_stack = Ex_descr_stack : (('a, 'b) descr * 'a stack) -> ex_descr_stack
-
-let unparse_stack ctxt (stack, stack_ty) =
-  (* We drop the gas limit as this function is only used for debugging/errors. *)
-  let ctxt = Gas.set_unlimited ctxt in
-  let rec unparse_stack
-    : type a. a stack * a stack_ty -> (Script.expr * string option) list tzresult Lwt.t
-    = function
-      | Empty, Empty_t -> return_nil
-      | Item (v, rest), Item_t (ty, rest_ty, annot) ->
-          unparse_data ctxt Readable ty v >>=? fun (data, _ctxt) ->
-          unparse_stack (rest, rest_ty) >>=? fun rest ->
-          let annot = match Script_ir_annot.unparse_var_annot annot with
-            | [] -> None
-            | [ a ] -> Some a
-            | _ -> assert false in
-          let data = Micheline.strip_locations data in
-          return ((data, annot) :: rest) in
-  unparse_stack (stack, stack_ty)
 
 end
 
@@ -149,13 +52,13 @@ let ty_eq (type a b)
     ?(tezos_context = dummy_environment.tezos_context)
     (a:a ty) (b:b ty)
   =
-  alpha_wrap (Script_ir_translator.ty_eq tezos_context a b) >>? fun (Eq, _) ->
+  alpha_wrap (Script_ir_translator.ty_eq tezos_context 0 a b) >>? fun (Eq, _) ->
   ok Eq
 
 (* should not need lwt *)
 let prims_of_strings michelson =
   let (michelson, errs) =
-    Tezos_client_006_PsCARTHA.Michelson_v1_macros.expand_rec michelson in
+    Tezos_client_008_PtEdoTez.Michelson_v1_macros.expand_rec michelson in
   match errs with
   | _ :: _ ->
     Lwt.return (Error errs)
@@ -192,6 +95,7 @@ let parse_michelson_fail (type aft)
     ~top_level michelson
     ?type_logger
     (bef:'a Script_typed_ir.stack_ty) (aft:aft Script_typed_ir.stack_ty)
+    : (('a, aft) descr, error trace) result Lwt.t
   =
   prims_of_strings michelson >>=? fun michelson ->
   parse_instr
@@ -212,14 +116,14 @@ let parse_michelson_fail (type aft)
 let parse_michelson_data
     ?(tezos_context = dummy_environment.tezos_context)
     michelson ty =
-  parse_data tezos_context ty michelson ~legacy:false >>=?? fun (data, _) ->
+  parse_data tezos_context ty michelson ~legacy:false ~allow_forged:true >>=?? fun (data, _) ->
   return data
 
 let parse_michelson_ty
     ?(tezos_context = dummy_environment.tezos_context)
-    ?(allow_big_map = true) ?(allow_operation = true) ?(allow_contract = true)
+    ?(allow_operation = true) ?(allow_contract = true) ?(allow_lazy_storage = true) ?(allow_ticket = true)
     michelson =
-  Lwt.return @@ parse_ty tezos_context ~allow_big_map ~allow_operation michelson ~legacy:false ~allow_contract >>=?? fun (ty, _) ->
+  Lwt.return @@ parse_ty tezos_context ~allow_operation michelson ~legacy:false ~allow_contract ~allow_lazy_storage ~ allow_ticket >>=?? fun (ty, _) ->
   return ty
 
 let strings_of_prims michelson =
@@ -237,7 +141,7 @@ let unparse_michelson_data
 let unparse_michelson_ty
     ?(tezos_context = dummy_environment.tezos_context)
     ty =
-  Script_ir_translator.unparse_ty tezos_context ty >>=?? fun (michelson, _) ->
+  Lwt.return @@ Script_ir_translator.unparse_ty tezos_context ty >>=?? fun (michelson, _) ->
   return (strings_of_prims michelson)
 
 type options = {
@@ -273,13 +177,13 @@ let fake_bake tezos_context chain_id now =
       ((Protocol.Main.begin_construction
         ~chain_id
         ~predecessor_context:tezos_context
-        ~predecessor_timestamp:((match Alpha_context.Timestamp.of_seconds (Z.to_string (Alpha_context.Script_timestamp.to_zint now)) with
+        ~predecessor_timestamp:((match Alpha_context.Timestamp.of_seconds_string (Z.to_string (Alpha_context.Script_timestamp.to_zint now)) with
                     | Some t -> t
                     | _ -> Stdlib.failwith "bad timestamp"))
         ~predecessor_fitness:header.fitness
         ~predecessor_level:header.level
         ~predecessor:hash
-        ~timestamp:(match Alpha_context.Timestamp.of_seconds (Z.to_string (Z.add Z.one (Alpha_context.Script_timestamp.to_zint now))) with
+        ~timestamp:(match Alpha_context.Timestamp.of_seconds_string (Z.to_string (Z.add Z.one (Alpha_context.Script_timestamp.to_zint now))) with
                     | Some t -> t
                     | _ -> Stdlib.failwith "bad timestamp")
         ~protocol_data
@@ -351,7 +255,18 @@ let make_options
 
 let default_options = make_options ()
 
-let interpret ?(options = default_options) (instr:('a, 'b) descr) (bef:'a stack) : 'b stack tzresult Lwt.t  =
+(* copied from script_interpreter.ml (not exposed) *)
+module No_trace : STEP_LOGGER = struct
+  let log_interp _ctxt _descr _stack = ()
+
+  let log_entry _ctxt _descr _stack = ()
+
+  let log_exit _ctxt _descr _stack = ()
+
+  let get_log () = return None
+end
+
+let interpret ?(options = default_options) (instr:('a, 'b) descr) bef : (_*_) tzresult Lwt.t  =
   let {
     tezos_context ;
     source ;
@@ -363,11 +278,11 @@ let interpret ?(options = default_options) (instr:('a, 'b) descr) (bef:'a stack)
     now = _ ;
   } = options in
   let step_constants = { source ; self ; payer ; amount ; chain_id } in
-  Script_interpreter.step tezos_context step_constants instr bef >>=??
+  Script_interpreter.step (module No_trace : STEP_LOGGER) tezos_context step_constants instr bef >>=??
   fun (stack, _) -> return stack
 
 let unparse_ty_michelson ty =
-  Script_ir_translator.unparse_ty dummy_environment.tezos_context ty >>=??
+  Lwt.return @@ Script_ir_translator.unparse_ty dummy_environment.tezos_context ty >>=??
   fun (n,_) -> return n
 
 type typecheck_res =
@@ -378,23 +293,20 @@ type typecheck_res =
 
 let typecheck_contract contract =
   let contract' = Tezos_micheline.Micheline.strip_locations contract in
-  Script_ir_translator.typecheck_code dummy_environment.tezos_context contract' >>= fun x ->
+  let legacy = false in
+  Script_ir_translator.typecheck_code ~legacy dummy_environment.tezos_context contract' >>= fun x ->
   match x with
   | Ok _ -> return @@ contract
   | Error errs -> Lwt.return @@ Error (List.map (alpha_error_wrap) errs)
 
-let assert_equal_michelson_type ty1 ty2 =
-  (* alpha_wrap (Script_ir_translator.ty_eq tezos_context a b) >>? fun (Eq, _) -> *)
-  alpha_wrap (Script_ir_translator.ty_eq dummy_environment.tezos_context ty1 ty2)
-
 type 'a interpret_res =
-  | Succeed of 'a stack
+  | Succeed of 'a
   | Fail of Script_repr.expr
 
 let failure_interpret
     ?(options = default_options)
-    (instr:('a, 'b) descr)
-    (bef:'a stack) : 'b interpret_res tzresult Lwt.t =
+    (instr:('b, 'a) descr)
+    (bef:'b) : 'a interpret_res tzresult Lwt.t =
   let {
     tezos_context ;
     source ;
@@ -406,7 +318,7 @@ let failure_interpret
     now = _ ;
   } = options in
   let step_constants = { source ; self ; payer ; amount ; chain_id } in
-  Script_interpreter.step tezos_context step_constants instr bef >>= fun x ->
+  Script_interpreter.step (module No_trace : STEP_LOGGER) tezos_context step_constants instr bef >>= fun x ->
   match x with
   | Ok (s , _ctxt) -> return @@ Succeed s
   | Error ((Reject (_, expr, _))::_t) -> return @@ Fail expr (* This catches failwith errors *)

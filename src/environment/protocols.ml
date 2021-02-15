@@ -1,5 +1,5 @@
 type t = Carthage | Dalphanet | Edo
-let current = Carthage
+let current = Edo
 
 (* this list is used to print the list of protocols in the CLI help *)
 let protocols_str : string list = [

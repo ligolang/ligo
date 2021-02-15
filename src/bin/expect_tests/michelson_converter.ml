@@ -162,10 +162,7 @@ let%expect_test _ =
                     SWAP ;
                     CDR ;
                     ITER { SWAP ;
-                           DUP ;
-                           CDR ;
-                           SWAP ;
-                           CAR ;
+                           UNPAIR ;
                            DIG 2 ;
                            DUP ;
                            DUG 3 ;
@@ -208,10 +205,7 @@ let%expect_test _ =
                            CDR ;
                            UPDATE ;
                            PAIR } ;
-                    DUP ;
-                    CDR ;
-                    SWAP ;
-                    CAR ;
+                    UNPAIR ;
                     SWAP ;
                     DROP } ;
              NIL operation ;
