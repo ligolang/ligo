@@ -46,7 +46,7 @@ in {
         # Strange problems
         bigstring = osuper.bigstring.overrideAttrs (_: { doCheck = false; });
         xmldiff = osuper.xmldiff.overrideAttrs (_: { src = sources.xmldiff; });
-        getopt = osuper.getopt.overrideAttrs (_: { configurePhase = "true"; });
+        # getopt = osuper.getopt.overrideAttrs (_: { configurePhase = "true"; });
         # Force certain versions
         ocaml-migrate-parsetree =
           osuper.ocaml-migrate-parsetree.versions."1.4.0";
@@ -56,12 +56,17 @@ in {
             "https://github.com/aantron/bisect_ppx/archive/02dfb10188033a26d07d23480c2bc44a3a670357.tar.gz";
         });
         coq = null;
+        ocamlgraph = null ;
+        hidapi = null ;
+        lwt = null ;
+        getopt = null ;
+
 
         hacl = fixHardeningWarning osuper.hacl;
 
         proto-alpha-utils = osuper.proto-alpha-utils.overrideAttrs (oa: rec {
           buildInputs = oa.buildInputs
-            ++ [ oself.tezos-protocol-006-PsCARTHA-parameters ];
+            ++ [ oself.tezos-protocol-008-PtEdoTez-parameters ];
           propagatedBuildInputs = buildInputs;
         });
         tezos-protocol-compiler = osuper.tezos-protocol-compiler.overrideAttrs

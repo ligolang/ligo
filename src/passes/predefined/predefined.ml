@@ -58,6 +58,7 @@ module Tree_abstraction = struct
     | "Tezos.get_contract_opt"   -> some_const C_CONTRACT_OPT
     | "Tezos.get_entrypoint_opt" -> some_const C_CONTRACT_ENTRYPOINT_OPT
     | "Tezos.level"              -> some_const C_LEVEL
+    | "Tezos.pairing_check"      -> some_const C_PAIRING_CHECK
 
     (* Sapling *)
     | "Tezos.sapling_empty_state" -> some_const C_SAPLING_EMPTY_STATE
@@ -820,6 +821,7 @@ module Stacking = struct
     | C_JOIN_TICKET        , Edo -> Some ( simple_unary @@ prim "JOIN_TICKETS" )
     | C_SAPLING_EMPTY_STATE, Edo -> Some (trivial_special "SAPLING_EMPTY_STATE")
     | C_SAPLING_VERIFY_UPDATE , Edo -> Some (simple_binary @@ prim "SAPLING_VERIFY_UPDATE")
+    | C_PAIRING_CHECK , _ -> Some (simple_binary @@ prim "PAIRING_CHECK")
     | C_CONTRACT           , _   ->
       Some (special
               (fun with_args ->

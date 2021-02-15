@@ -8,13 +8,13 @@ let () = Unix.putenv "TERM" "dumb"
 
 let%expect_test _ =
   run_ligo_good [ "measure-contract" ; contract "coase.ligo" ; "main" ] ;
-  [%expect {| 1253 bytes |}] ;
+  [%expect {| 1247 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig.ligo" ; "main" ] ;
-  [%expect {| 633 bytes |}] ;
+  [%expect {| 627 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig-v2.ligo" ; "main" ] ;
-  [%expect {| 1701 bytes |}] ;
+  [%expect {| 1695 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "vote.mligo" ; "main" ] ;
   [%expect {| 478 bytes |}] ;
@@ -70,10 +70,7 @@ let%expect_test _ =
     (pair (pair (map %card_patterns nat (pair (mutez %coefficient) (nat %quantity)))
                 (map %cards nat (pair (address %card_owner) (nat %card_pattern))))
           (nat %next_id)) ;
-  code { DUP ;
-         CDR ;
-         SWAP ;
-         CAR ;
+  code { UNPAIR ;
          IF_LEFT
            { IF_LEFT
                { SWAP ;
@@ -318,10 +315,7 @@ let%expect_test _ =
           (list %signatures (pair key_hash signature))) ;
   storage
     (pair (pair (list %auth key) (nat %counter)) (pair (string %id) (nat %threshold))) ;
-  code { DUP ;
-         CDR ;
-         SWAP ;
-         CAR ;
+  code { UNPAIR ;
          DUP ;
          CAR ;
          CDR ;
@@ -449,10 +443,7 @@ let%expect_test _ =
                 (pair (nat %max_proposal) (map %message_store bytes (set address))))
           (pair (pair (map %proposal_counters address nat) (bytes %state_hash))
                 (nat %threshold))) ;
-  code { DUP ;
-         CDR ;
-         SWAP ;
-         CAR ;
+  code { UNPAIR ;
          IF_LEFT
            { IF_LEFT
                { DROP ; NIL operation ; PAIR }
@@ -1178,6 +1169,8 @@ let%expect_test _ =
       1: { parameter int ;
       2:   storage address ;
       3:   code { DROP /* [] */ ; PUSH address "KT1badaddr" ; NIL operation ; PAIR } }
+    At line 3 characters 38 to 50, value "KT1badaddr"
+    is invalid for type address.
     Invalid contract notation "KT1badaddr" |}]
 
 let%expect_test _ =
@@ -1230,7 +1223,7 @@ let%expect_test _ =
   [%expect {|
     { parameter int ;
       storage (pair (map %one key_hash nat) (big_map %two key_hash bool)) ;
-      code { CDR ; NIL operation ; PAIR } } |}]
+      code { UNPAIR ; DROP ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "long_sum_type_names.ligo" ; "main" ] ;
@@ -1348,7 +1341,9 @@ let%expect_test _ =
 
   run_ligo_good [ "compile-contract" ; contract "self_type_annotation.ligo" ; "main" ] ;
   [%expect {|
-    { parameter nat ; storage int ; code { CDR ; NIL operation ; PAIR } } |}]
+    { parameter nat ;
+      storage int ;
+      code { UNPAIR ; DROP ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract.mligo" ; "main" ] ;
@@ -1386,7 +1381,8 @@ let%expect_test _ =
   [%expect {|
     { parameter (or (unit %default) (int %toto)) ;
       storage nat ;
-      code { CDR ;
+      code { UNPAIR ;
+             DROP ;
              SELF %toto ;
              PUSH mutez 300000000 ;
              PUSH int 2 ;
@@ -1401,7 +1397,8 @@ let%expect_test _ =
   [%expect {|
     { parameter int ;
       storage nat ;
-      code { CDR ;
+      code { UNPAIR ;
+             DROP ;
              SELF %default ;
              PUSH mutez 300000000 ;
              PUSH int 2 ;

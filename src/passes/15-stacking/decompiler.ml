@@ -7,10 +7,17 @@ let rec decompile_value :
   ('l, string) node -> ('l, string) node -> (value , stacking_error) result =
   fun ty value ->
   match (ty, value) with
-  | Prim (_, "pair", [a_ty; b_ty], _), Prim (_, "Pair", [a; b], _) -> (
-      let%bind a = decompile_value a_ty a in
-      let%bind b = decompile_value b_ty b in
-      ok @@ D_pair(a, b)
+  | Prim (_, "pair", ts, _), Prim (_, "Pair", vs, _) -> (
+      let%bind els = bind_map_list (fun (t,v) -> decompile_value t v) (List.combine ts vs) in
+      let rec aux l =
+        match l with
+        | [] -> fail (untranspilable ty value)
+        | [x] -> ok x
+        | hd::tl -> (
+            let%bind tl' = aux tl in
+            ok @@ D_pair (hd, tl')
+          ) in
+      aux els
     )
   | Prim (_, "or", [a_ty; _], _), Prim (_, "Left", [a], _) -> (
       let%bind a = decompile_value a_ty a in
@@ -24,12 +31,14 @@ let rec decompile_value :
       ok @@ D_int n
   | Prim (_, "nat", [], _), Int (_, n) ->
       ok @@ D_nat n
-  | Prim (_, "chain_id", [], _), Bytes (_, id) ->
-    let id = Tezos_base.TzPervasives.Chain_id.of_bytes_exn id in
-    let str = Tezos_crypto.Base58.simple_encode
+  | Prim (_, "chain_id", _, _), String (_, id) ->
+    (* Before EDO :
+      let id = Tezos_base.TzPervasives.Chain_id.of_bytes_exn id in
+      let str = Tezos_crypto.Base58.simple_encode
       (Tezos_base__TzPervasives.Chain_id.b58check_encoding)
       id in
-    ok @@ D_string str
+    *)
+    ok @@ D_string id
   | Prim (_, "key_hash", [], _), String (_, n) ->
     ok @@ D_string n
   | Prim (_, "key", [], _), String (_, n) ->

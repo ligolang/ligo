@@ -1,7 +1,7 @@
 open! Memory_proto_alpha
 module Signature = Tezos_base.TzPervasives.Signature
 module Data_encoding = Alpha_environment.Data_encoding
-module MBytes = Alpha_environment.MBytes
+module MBytes = Bytes
 module Error_monad = X_error_monad
 open Error_monad
 open Protocol
@@ -105,7 +105,7 @@ module Context_init = struct
       Stdlib.failwith "Must have one account with a roll to bake";
 
     (* Check there is at least one roll *)
-    let constants : Constants_repr.parametric = Tezos_protocol_006_PsCARTHA_parameters.Default_parameters.constants_test in
+    let constants : Constants_repr.parametric = Tezos_protocol_008_PtEdoTez_parameters.Default_parameters.constants_test in
     check_constants_consistency constants >>=? fun () ->
 
     let hash =
@@ -200,7 +200,8 @@ type environment = {
 let init_environment () =
   Context_init.main 10 >>=? fun (tezos_context, accounts, contracts) ->
   let accounts = List.map fst accounts in
-  let tezos_context = Alpha_context.Gas.set_limit tezos_context @@ Z.of_int 800000 in
+  let x = Memory_proto_alpha.Protocol.Alpha_context.Gas.Arith.(integral_of_int 800000) in
+  let tezos_context = Alpha_context.Gas.set_limit tezos_context x in
   let identities =
     List.map (fun ((a:Context_init.account), c) -> {
                   public_key = a.pk ;

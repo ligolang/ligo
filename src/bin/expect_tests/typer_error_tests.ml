@@ -125,19 +125,22 @@ let%expect_test _ =
 
 (*
   This test is here to ensure compatibility with comparable pairs introduced in carthage
-  note that only "comb pairs" are allowed to be compared (would be beter if any pair would be comparable ?)
+  note that only "comb pairs" are allowed to be compared (would be better if any pair would be comparable ?)
+  EDIT: With EDO, all kind of pairs are comparable
 *)
 let%expect_test _ =
   run_ligo_good [ "interpret" ; "Set.literal [ (1,(2,3)) ; (2,(3,4)) ]" ; "--syntax=cameligo" ] ;
   [%expect {|
-    SET_ADD(( 2 , ( 3 , 4 ) ) , SET_ADD(( 1 , ( 2 , 3 ) ) , SET_EMPTY())) |}];
+    SET_ADD(( 2 , ( 3 , 4 ) ) , SET_ADD(( 1 , ( 2 , 3 ) ) , SET_EMPTY())) |}]
 
+  (* 
   run_ligo_bad [ "interpret" ; "Set.literal [ (1,2,3) ; (2,3,4) ]" ; "--syntax=cameligo" ] ;
   [%expect {|
     Error(s) occurred while parsing the Michelson input:
     At (unshown) location 1, comparable type expected.Type
                                                         pair (pair int int) int
                                                       is not comparable. |}]
+  *)
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/failwith_wrong_type.ligo" ; "main" ] ;

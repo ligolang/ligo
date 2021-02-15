@@ -34,17 +34,15 @@ depends: [
   "uri"
   "uutf"
   # tezos does not constrain their required version
-  "zarith" {= "1.7"}
+  "zarith" {= "1.11"}
   "ocplib-json-typed"
   "ocplib-json-typed-bson"
   "tezos-crypto"
   "tezos-error-monad"
   "tezos-stdlib-unix"
   "tezos-protocol-environment"
-  "tezos-protocol-006-PsCARTHA"
-  "tezos-client-006-PsCARTHA"
-  "tezos-protocol-007-PsDELPH1"
-  "tezos-client-007-PsDELPH1"
+  "tezos-protocol-008-PtEdoTez"
+  "tezos-client-008-PtEdoTez"
   "tezos-memory-proto-alpha"
   "simple-utils"
   "tezos-utils"
