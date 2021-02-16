@@ -17,8 +17,12 @@ import Duplo.Tree hiding (loop)
 import AST.Pretty
 import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..))
 import AST.Skeleton
-  (Ctor (..), Name (..), NameDecl (..), RawLigoList, SomeLIGO, Tree', TypeName (..), withNestedLIGO)
+  (Ctor (..), Lang, Name (..), NameDecl (..), RawLigoList, SomeLIGO, Tree', TypeName (..),
+  withNestedLIGO)
 import Cli.Types
+import Control.Exception.Safe
+import Control.Monad.Reader
+import Control.Monad.Trans.Except
 import ParseTree
 import Parser
 import Product
@@ -63,6 +67,21 @@ ofLevel level decl = case (level, _sdSpec decl) of
   (TermLevel, ValueSpec{}) -> True
   (TypeLevel, TypeSpec{}) -> True
   _ -> False
+
+data ScopeError =
+  TreeDoesNotContainName
+    Doc  -- pprinted tree (used for simplyfying purposes for not stacking
+         -- type parameters for `ScopeM` which brings plethora of confusion)
+    Text -- variable name
+  deriving Show via PP ScopeError
+
+instance Pretty ScopeError where
+  pp = \case
+    (TreeDoesNotContainName tree name) -> "Given tree: " <> tree <> " does not contain name: " <> pp name
+
+instance Exception ScopeError
+
+type ScopeM = ExceptT ScopeError (Reader Lang)
 
 type Info' =
   [ [ScopedDecl]

@@ -8,7 +8,6 @@
 module AST.Skeleton where
 
 import Control.Lens.Lens (Lens, lens)
-import Control.Monad.Reader (Reader)
 import Data.Text (Text)
 
 import Duplo.Pretty (Pretty (..))
@@ -34,7 +33,6 @@ withNestedLIGO = flip nestedLIGO
 instance Pretty (LIGO xs) => Pretty (SomeLIGO xs) where
   pp (SomeLIGO _ nested) = pp nested
 
-type ScopeM = Reader Lang
 
 -- | The AST for Pascali... wait. It is, em, universal one.
 --
