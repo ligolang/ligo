@@ -76,6 +76,7 @@ let rec value ppf : value -> unit = function
   | D_big_map m -> fprintf ppf "Big_map[%a]" (list_sep_d value_assoc) m
   | D_list lst -> fprintf ppf "List[%a]" (list_sep_d value) lst
   | D_set lst -> fprintf ppf "Set[%a]" (list_sep_d value) lst
+  | D_ticket (a,b) -> fprintf ppf "ticket(%a,%a)" value a value b
 
 and type_expression_annotated ppf : type_expression annotated -> unit = fun (_, tv) ->
   type_expression ppf tv

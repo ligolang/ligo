@@ -1081,7 +1081,7 @@ let%expect_test _ =
                      PAIR } } } } } |} ]
 
 let%expect_test _ =
-  run_ligo_good [ "compile-contract" ; contract "ticket_builder.mligo" ; "main" ; "--protocol=edo" ; "--disable-michelson-typechecking" ] ;
+  run_ligo_good [ "compile-contract" ; contract "ticket_builder.mligo" ; "main" ; "--protocol=edo" ] ;
   [%expect {|
 { parameter
     (or (ticket %burn unit)
