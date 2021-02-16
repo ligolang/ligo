@@ -42,6 +42,7 @@ val get_t_list : type_expression -> type_expression option
 val get_t_set : type_expression -> type_expression option
 val get_left : value -> value option
 val get_right : value -> value option
+val get_ticket : value -> (value*value) option
 val get_or : value -> ( bool * value ) option
 (*
 val wrong_type : string -> type_expression -> unit -> error

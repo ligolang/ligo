@@ -171,11 +171,22 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
         let%bind init = return @@ E_constant {cons_name=C_SET_EMPTY;arguments=[]} in
         bind_fold_list aux init lst'
       )
+    | (i, [ty]) when String.equal i ticket_name -> (
+      let%bind (v,amt) =
+        trace_option (wrong_mini_c_value t v) @@
+        get_ticket v
+      in
+      let%bind v = decompile v ty in
+      let%bind amt = decompile amt (Ast_typed.t_nat ()) in
+      return (E_constant {cons_name=C_TICKET;arguments=[v;amt]})
+    )
     | (i, _) when String.equal i contract_name ->
       fail @@ bad_decompile v
     | (i,_) when List.exists (fun el ->String.equal i el) [michelson_pair_name ; michelson_or_name; michelson_pair_left_comb_name ; michelson_pair_right_comb_name ; michelson_or_left_comb_name ; michelson_or_right_comb_name ] ->
       fail @@ corner_case ~loc:"unspiller" "Michelson_combs t should not be present in mini-c"
     | _ ->
+      (* let () = Format.printf "%a" Mini_c.PP.value v in *)
+      let () = Format.printf "%a" Ast_typed.PP.type_content t.type_content in
       fail @@ corner_case ~loc:"unspiller" "Wrong number of args or wrong kinds for the type constant"
   )
   | T_sum {layout ; content} ->

@@ -81,6 +81,10 @@ let get_set (v:value) = match v with
   | D_set lst -> Some lst
   | _ -> None
 
+let get_ticket (v:value) = match v with
+  | D_ticket t -> Some t
+  | _ -> None
+
 let get_function_with_ty (e : expression) =
   match (e.content , e.type_expression.type_content) with
   | E_closure f , T_function ty -> Some (f , ty)

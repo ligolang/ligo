@@ -125,5 +125,11 @@ let rec decompile_value :
       let pp_lambda =
         Format.asprintf "[lambda of type: %a ]" Michelson.pp ty in
         ok @@ D_string pp_lambda
-  | ty, v ->
+  | Prim (xx, "ticket", [ty], _) , Prim (_, "Pair", [addr;v;amt], _) ->
+    ignore addr;
+    let ty_nat = Prim (xx, "nat", [], []) in
+    let%bind v' = decompile_value ty v in
+    let%bind amt' = decompile_value ty_nat amt in
+    ok @@ D_ticket (v', amt')
+ | ty, v ->
       fail (untranspilable ty v)
