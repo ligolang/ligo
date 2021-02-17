@@ -68,7 +68,7 @@ module.exports = grammar({
     ),
 
     let_expr1: $ => seq(
-      field("decl", $.let_decl),
+      field("decl", choice($.let_decl, $.fun_decl)),
       "in",
       field("body", $._program)
     ),
