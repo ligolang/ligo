@@ -13,6 +13,7 @@
       "language-basics/maps-records",
       "language-basics/sets-lists-tuples",
       "language-basics/exceptions",
+      "language-basics/modules",
       "language-basics/tezos-specific"
     ],
     "Advanced": [
