@@ -272,6 +272,18 @@ let updated_map: register =
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
+function get_and_update : key -> option(value) -> big_map (key, value) -> option(value) * big_map (key, value)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val get_and_update : 'key -> 'value option -> ('key, 'value) big_map -> value option * ('key, 'value) big_map
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let get_and_update : 'key => option('value) => big_map ('key, 'value) => option('value) * big_map ('key, 'value)
+</SyntaxTitle>
+
+Similar to `update` but it also returns the value that was previously stored in the big_map
+
+<SyntaxTitle syntax="pascaligo">
 function add : 'key -> 'value -> big_map ('key, 'value) -> big_map ('key, 'value)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
