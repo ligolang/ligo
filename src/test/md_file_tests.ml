@@ -93,6 +93,7 @@ let md_files = [
   "/gitlab-pages/docs/language-basics/functions.md";
   "/gitlab-pages/docs/language-basics/exceptions.md";
   "/gitlab-pages/docs/language-basics/boolean-if-else.md";
+  "/gitlab-pages/docs/language-basics/modules.md";
   "/gitlab-pages/docs/language-basics/types.md";
   "/gitlab-pages/docs/language-basics/strings.md";
   "/gitlab-pages/docs/language-basics/maps-records.md";
