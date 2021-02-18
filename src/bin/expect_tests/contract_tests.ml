@@ -17,10 +17,10 @@ let%expect_test _ =
   [%expect {| 1695 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "vote.mligo" ; "main" ] ;
-  [%expect {| 478 bytes |}] ;
+  [%expect {| 460 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "issue-184-combs.mligo" ; "main2" ] ;
-  [%expect {| 231 bytes |}] ;
+  [%expect {| 235 bytes |}] ;
 
   run_ligo_good [ "compile-parameter" ; contract "coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ] ;
   [%expect {| (Left (Left 1)) |}] ;
@@ -878,8 +878,7 @@ let%expect_test _ =
     (pair (pair (pair (timestamp %finish_time) (nat %nay))
                 (pair (timestamp %start_time) (string %title)))
           (pair (set %voters address) (nat %yea))) ;
-  code { DUP ;
-         CAR ;
+  code { UNPAIR ;
          IF_LEFT
            { SWAP ;
              DROP ;
@@ -905,15 +904,8 @@ let%expect_test _ =
              PAIR ;
              NIL operation ;
              PAIR }
-           { SWAP ;
-             CDR ;
+           { SENDER ;
              SWAP ;
-             PAIR ;
-             DUP ;
-             CDR ;
-             SENDER ;
-             DIG 2 ;
-             CAR ;
              IF_LEFT
                { DROP ;
                  SWAP ;
@@ -1141,7 +1133,9 @@ let%expect_test _ =
   [%expect {|
     { parameter bool ;
       storage (lambda unit mutez) ;
-      code { CAR ;
+      code { UNPAIR ;
+             SWAP ;
+             DROP ;
              IF { AMOUNT ; LAMBDA (pair mutez unit) mutez { CAR } ; SWAP ; APPLY }
                 { LAMBDA unit mutez { DROP ; AMOUNT } } ;
              NIL operation ;
@@ -1296,7 +1290,9 @@ Free variable 'a' is not allowed in CREATE_CONTRACT lambda |}] ;
   [%expect {|
     { parameter string ;
       storage string ;
-      code { PUSH string "un" ;
+      code { UNPAIR ;
+             DROP ;
+             PUSH string "un" ;
              PUSH mutez 300000000 ;
              NONE key_hash ;
              CREATE_CONTRACT
@@ -1305,7 +1301,6 @@ Free variable 'a' is not allowed in CREATE_CONTRACT lambda |}] ;
                  code { DROP ; PUSH string "one" ; NIL operation ; PAIR } } ;
              PAIR ;
              SWAP ;
-             CDR ;
              NIL operation ;
              DIG 2 ;
              CAR ;
@@ -1535,7 +1530,7 @@ Missing a type annotation for argument "b". |}];
     The tuple "b, c, d" does not match the type "int * int". |}];
   run_ligo_bad ["print-ast-typed"; bad_contract "funarg_tuple_wrong.religo"];
   [%expect {|
-    Invalid record field "2" in record "#1.2". |}];
+    Pattern do not match returned expression. |}];
 
   run_ligo_bad [ "compile-contract" ; bad_contract "duplicate_record_field.mligo" ; "main" ] ;
   [%expect {|

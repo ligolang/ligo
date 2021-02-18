@@ -125,29 +125,35 @@ Module definitions: |} ] ;
   run_ligo_good [ "get-scope" ; gs "rec.mligo" ; "--syntax=cameligo" ; "--format=dev" ; "--with-types" ] ;
   [%expect{|
     Scopes:
-    [ a#0 b#6 c#5 ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 8-9
-    [ a#0 b#6 c#5 ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 5-6
-    [ a#0 b#6 c#5 ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 2-3
-    [ a#0 c#5 ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 8, character 2 to line 9, character 10
-    [ a#0 c#1 i#2 j#3 k#4 ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 6, characters 9-10
-    [ a#0 c#1 i#2 j#3 k#4 ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 6, characters 7-8
-    [ a#0 c#1 i#2 j#3 k#4 ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 6, characters 4-5
-    [ a#0 c#1 i#2 j#3 ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 20-21
-    [ a#0 c#1 i#2 j#3 ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 16-17
-    [ a#0 c#1 i#2 j#3 ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 12-13
-    [ a#0 c#1 i#2 ]
+    [ a#0 b#7 c#6 ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 8-9
+    [ a#0 b#7 c#6 ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 5-6
+    [ a#0 b#7 c#6 ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 2-3
+    [ a#0 c#6 ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 8, character 2 to line 9, character 10
+    [ a#0 c#1 j#4 k#5 ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 6, characters 9-10
+    [ a#0 c#1 j#4 k#5 ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 6, characters 7-8
+    [ a#0 c#1 j#4 k#5 ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 6, characters 4-5
+    [ a#0 c#1 j#4 ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 20-21
+    [ a#0 c#1 j#4 ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 16-17
+    [ a#0 c#1 j#4 ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 12-13
+    [ a#0 c#1 i#2 k#3 ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 6, characters 9-10
+    [ a#0 c#1 i#2 k#3 ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 6, characters 7-8
+    [ a#0 c#1 i#2 k#3 ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 6, characters 4-5
+    [ a#0 c#1 i#2 ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 20-21
+    [ a#0 c#1 i#2 ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 16-17
+    [ a#0 c#1 i#2 ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 12-13
     [ a#0 c#1 ]
     [ ] in file "../../test/contracts/get_scope_tests/rec.mligo", line 1, characters 0-9
 
     Variable definitions:
     (a#0 -> a) |resolved: int | in file "../../test/contracts/get_scope_tests/rec.mligo", line 1, characters 4-5
-    (b#6 -> b) |resolved: int | in file "../../test/contracts/get_scope_tests/rec.mligo", line 8, characters 6-7
-    (b#7 -> b) |resolved: int | in file "../../test/contracts/get_scope_tests/rec.mligo", line 3, characters 4-5
+    (b#7 -> b) |resolved: int | in file "../../test/contracts/get_scope_tests/rec.mligo", line 8, characters 6-7
+    (b#8 -> b) |resolved: int | in file "../../test/contracts/get_scope_tests/rec.mligo", line 3, characters 4-5
     (c#1 -> c) |core: ( int * int ) -> int | in file "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 10-11
-    (c#5 -> c) |core: ( int * int ) -> int | in file "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 10-11
+    (c#6 -> c) |core: ( int * int ) -> int | in file "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 10-11
     (i#2 -> i) |resolved: int | in file "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 37-38
-    (j#3 -> j) |resolved: int | in file "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 39-40
-    (k#4 -> k) |resolved: int | in file "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 8-9
+    (j#4 -> j) |resolved: int | in file "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 39-40
+    (k#3 -> k) |resolved: int | in file "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 8-9
+    (k#5 -> k) |resolved: int | in file "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 8-9
     Type definitions:
     Module definitions: |} ] ;
 

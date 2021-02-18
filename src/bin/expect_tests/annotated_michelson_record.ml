@@ -9,7 +9,7 @@ let%expect_test _ =
   [%expect {|
              { parameter unit ;
                storage (pair (int %anbfoo) (string %anabar)) ;
-               code { CDR ; NIL operation ; PAIR } } |}];
+               code { UNPAIR ; DROP ; NIL operation ; PAIR } } |}];
   run_ligo_good [ "compile-contract" ; contract "annotated_michelson_record_comb.mligo" ; "main_comb_three" ] ;
   [%expect {|
              { parameter unit ;
@@ -28,7 +28,7 @@ let%expect_test _ =
                storage
                  (pair (int %an_One)
                        (pair (string %an_Two) (pair (bool %an_Three) (pair (nat %an_Four) (int %an_Five))))) ;
-               code { CDR ; NIL operation ; PAIR } } |}]
+               code { UNPAIR ; DROP ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "dry-run" ; contract "annotated_michelson_record_comb.mligo" ; "main_comb_two" ; "()" ; "{ foo = 2 ; bar = \"bar\" }" ] ;
@@ -48,7 +48,7 @@ let%expect_test _ =
   [%expect {|
              { parameter unit ;
                storage (pair (string %anbar) (int %anfoo)) ;
-               code { CDR ; NIL operation ; PAIR } } |}];
+               code { UNPAIR ; DROP ; NIL operation ; PAIR } } |}];
   run_ligo_good [ "compile-contract" ; contract "annotated_michelson_record_tree.mligo" ; "main_comb_three" ] ;
   [%expect {|
              { parameter unit ;
@@ -67,7 +67,7 @@ let%expect_test _ =
                storage
                  (pair (pair (pair (int %an_Five) (nat %an_Four)) (pair (int %an_One) (bool %an_Three)))
                        (string %an_Two)) ;
-               code { CDR ; NIL operation ; PAIR } } |}]
+               code { UNPAIR ; DROP ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "dry-run" ; contract "annotated_michelson_record_tree.mligo" ; "main_comb_two" ; "()" ; "{ foo = 2 ; bar = \"bar\" }" ] ;
