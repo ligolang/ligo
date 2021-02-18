@@ -52,7 +52,9 @@ let%expect_test _ =
   [%expect {|
     { parameter (pair (int %one) (pair (nat %two) (pair (string %three) (bool %four)))) ;
       storage string ;
-      code { CAR ;
+      code { UNPAIR ;
+             SWAP ;
+             DROP ;
              DUP ;
              CDR ;
              CDR ;
@@ -71,7 +73,18 @@ let%expect_test _ =
   [%expect {|
     { parameter (pair (pair (pair (int %one) (nat %two)) (string %three)) (bool %four)) ;
       storage string ;
-      code { CAR ; DUP ; CAR ; CDR ; SWAP ; CAR ; CDR ; CONCAT ; NIL operation ; PAIR } } |}];
+      code { UNPAIR ;
+             SWAP ;
+             DROP ;
+             DUP ;
+             CAR ;
+             CDR ;
+             SWAP ;
+             CAR ;
+             CDR ;
+             CONCAT ;
+             NIL operation ;
+             PAIR } } |}];
   run_ligo_good [ "dry-run" ; contract "michelson_converter_or.mligo" ; "main_r" ; "vr" ; "Foo4 2"] ;
   [%expect {|
     ( LIST_EMPTY() , Baz4("eq") ) |}] ;
@@ -79,7 +92,9 @@ let%expect_test _ =
   [%expect {|
     { parameter (or (int %foo4) (or (nat %bar4) (or (string %baz4) (bool %boz4)))) ;
       storage (or (or (nat %bar4) (string %baz4)) (or (bool %boz4) (int %foo4))) ;
-      code { CAR ;
+      code { UNPAIR ;
+             SWAP ;
+             DROP ;
              IF_LEFT
                { RIGHT bool ; RIGHT (or nat string) }
                { IF_LEFT
@@ -96,7 +111,9 @@ let%expect_test _ =
   [%expect {|
     { parameter (or (or (or (int %foo4) (nat %bar4)) (string %baz4)) (bool %boz4)) ;
       storage (or (or (nat %bar4) (string %baz4)) (or (bool %boz4) (int %foo4))) ;
-      code { CAR ;
+      code { UNPAIR ;
+             SWAP ;
+             DROP ;
              IF_LEFT
                { IF_LEFT
                    { IF_LEFT
@@ -127,7 +144,9 @@ let%expect_test _ =
     { parameter
         (or (pair %option1 (string %bar) (nat %baz)) (pair %option2 (string %bar) (nat %baz))) ;
       storage nat ;
-      code { CAR ;
+      code { UNPAIR ;
+             SWAP ;
+             DROP ;
              IF_LEFT { LEFT (pair string nat) } { RIGHT (pair string nat) } ;
              IF_LEFT { LEFT (pair string nat) } { RIGHT (pair string nat) } ;
              IF_LEFT { CDR ; NIL operation ; PAIR } { CDR ; NIL operation ; PAIR } } } |}]
@@ -139,15 +158,9 @@ let%expect_test _ =
         (list (pair (address %from_)
                     (list %txs (pair (address %to_) (pair (nat %token_id) (nat %amount)))))) ;
       storage (big_map nat address) ;
-      code { DUP ;
-             CDR ;
-             SWAP ;
-             CAR ;
-             ITER { SWAP ;
-                    PAIR ;
-                    DUP ;
-                    CDR ;
-                    DUP ;
+      code { UNPAIR ;
+             ITER { DUP ;
+                    DUG 2 ;
                     CAR ;
                     SENDER ;
                     SWAP ;
@@ -156,8 +169,7 @@ let%expect_test _ =
                     COMPARE ;
                     NEQ ;
                     IF { PUSH string "NOT_OWNER" ; FAILWITH } {} ;
-                    DIG 2 ;
-                    CAR ;
+                    SWAP ;
                     PAIR ;
                     SWAP ;
                     CDR ;

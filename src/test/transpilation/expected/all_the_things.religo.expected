@@ -384,8 +384,8 @@ type transferContentsIteratorAccumulator = (storage,
  tokenOwner);
 
 let transferContentsIterator = ((accumulator,
-     transferContentsMichelson): (transferContentsIteratorAccumulator,
-    transferContentsMichelson))
+    transferContentsMichelson): (transferContentsIteratorAccumulator,
+   transferContentsMichelson))
 : transferContentsIteratorAccumulator => {
   let (storage, from_) = accumulator;
   let transferContents: transferContents = 
@@ -420,7 +420,7 @@ let allowOnlyOwnTransfer = (from: tokenOwner): unit => {
 };
 
 let transferIterator = ((storage, transferMichelson): (storage,
-    transferMichelson)): storage => {
+   transferMichelson)): storage => {
   let transferAuxiliary2: transferAuxiliary = 
     Layout.convert_from_right_comb(transferMichelson);
   let from_: tokenOwner = transferAuxiliary2.from_;
@@ -434,7 +434,7 @@ let transferIterator = ((storage, transferMichelson): (storage,
 };
 
 let transfer = ((transferParameter, storage): (transferParameter,
-    storage)): entrypointReturn => {
+   storage)): entrypointReturn => {
   let storage = 
     List.fold(transferIterator, transferParameter, storage);
   (([] : list(operation)), storage)
@@ -686,7 +686,7 @@ let buy = ((parameter, storage): (buy, storage))
 };
 
 let update_owner = ((parameter, storage): (update_owner,
-    storage)): (list(operation), storage) => {
+   storage)): (list(operation), storage) => {
   let void: unit = 
     if (amount != 0mutez) {
       failwith("Updating owner doesn't cost anything.")
@@ -722,7 +722,7 @@ let update_owner = ((parameter, storage): (update_owner,
 };
 
 let update_details = ((parameter, storage): (update_details,
-    storage)): (list(operation), storage) => {
+   storage)): (list(operation), storage) => {
   let void: unit = 
     if (amount != 0mutez) {
       failwith("Updating details doesn't cost anything.")
@@ -1140,7 +1140,7 @@ let check_message = ((param, s): (check_message_pt, storage))
       let valid: nat = 0n;
       let keys: authorized_keys = s.auth;
       let aux = ((vk, pkh_sig): ((nat, authorized_keys),
-          (key_hash, signature))): (nat, authorized_keys) => {
+         (key_hash, signature))): (nat, authorized_keys) => {
         let (valid, keys) = vk;
         switch(keys){
         | [] => vk
@@ -1210,7 +1210,7 @@ let donate = ((p, s): (unit, storage))
 };
 
 let distribute = ((p, s): ((unit => list(operation)),
-    storage)): (list(operation), storage) => {
+   storage)): (list(operation), storage) => {
   if (Tezos.sender == s) {
     (p(), s)
   } else {
