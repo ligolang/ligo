@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5b44c15e8d1cdcf997ca6cc868ccdb189093b2640a330e0eda0ae54bdf159d7f
+-- hash: f751b5d40d2971bc84a6543138ce4b9463a6f81e3bc0a8f1d847b819746b846d
 
 name:           ligo-squirrel
 version:        0.0.0
@@ -183,6 +183,7 @@ test-suite squirrel-test
   type: exitcode-stdio-1.0
   main-is: Driver.hs
   other-modules:
+      Test.Capabilities.CodeAction.ExtractTypeAlias
       Test.Capabilities.Completion
       Test.Capabilities.DocumentSymbol
       Test.Capabilities.Find
@@ -235,4 +236,5 @@ test-suite squirrel-test
     , transformers
     , tree-sitter
     , unliftio
+    , unordered-containers
   default-language: Haskell2010
