@@ -1,8 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.2.
+-- This file has been generated from package.yaml by hpack version 0.33.0.
 --
 -- see: https://github.com/sol/hpack
+--
+-- hash: 5b44c15e8d1cdcf997ca6cc868ccdb189093b2640a330e0eda0ae54bdf159d7f
 
 name:           ligo-squirrel
 version:        0.0.0
@@ -12,6 +14,7 @@ library
   exposed-modules:
       AST
       AST.Capabilities
+      AST.Capabilities.CodeAction.ExtractTypeAlias
       AST.Capabilities.Completion
       AST.Capabilities.DocumentSymbol
       AST.Capabilities.Find
@@ -21,6 +24,7 @@ library
       AST.Capabilities.Rename
       AST.Capabilities.SelectionRange
       AST.Capabilities.SignatureHelp
+      AST.CodeAction
       AST.Parser
       AST.Parser.Camligo
       AST.Parser.Pascaligo
@@ -74,6 +78,7 @@ library
     , exceptions
     , fastsum
     , filepath
+    , generic-deriving
     , ghc-prim
     , hashable
     , interpolate
@@ -117,6 +122,7 @@ executable ligo-squirrel
     , fastsum
     , filepath
     , focus
+    , generic-deriving
     , ghc-prim
     , hashable
     , hslogger
@@ -156,6 +162,7 @@ executable ligo-vet
     , exceptions
     , fastsum
     , filepath
+    , generic-deriving
     , ghc-prim
     , hashable
     , interpolate
@@ -207,6 +214,7 @@ test-suite squirrel-test
     , exceptions
     , fastsum
     , filepath
+    , generic-deriving
     , ghc-prim
     , hashable
     , hspec-expectations

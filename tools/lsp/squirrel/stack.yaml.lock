@@ -5,20 +5,6 @@
 
 packages:
 - completed:
-    hackage: lsp-1.0.0.0@sha256:31fc5d7d0548031f6e065fff893d1ae4b71d15cee70e6768bb73ab631ddffddd,5727
-    pantry-tree:
-      size: 1397
-      sha256: 391c18420115ba6dfea52d634c64e1d7c465b17bfbd33808cd90bfc35d69267b
-  original:
-    hackage: lsp-1.0.0.0
-- completed:
-    hackage: lsp-types-1.0.0.0@sha256:dfe637cc9376b03275eb2c557516d20d20eb0a736757fb5f30e551b91a540671,4311
-    pantry-tree:
-      size: 3953
-      sha256: 67e3f6b98b6ccebe5441a43ff642777c86671cefb726f5be4929c93c6848f804
-  original:
-    hackage: lsp-types-1.0.0.0
-- completed:
     hackage: dependent-map-0.4.0.0@sha256:ca2b131046f4340a1c35d138c5a003fe4a5be96b14efc26291ed35fd08c62221,1657
     pantry-tree:
       size: 551
@@ -116,6 +102,30 @@ packages:
       sha256: c882dca2a96b98d02b0d21875b651edb11ac67d90e736c0de7a92c410a19eb7f
   original:
     hackage: primitive-unlifted-0.1.3.0
+- completed:
+    name: lsp
+    version: 1.0.0.1
+    git: git@github.com:alanz/lsp.git
+    pantry-tree:
+      size: 7224
+      sha256: c4fa42affca9073bdcf1f522672463a61351bbe3ff8ad59e6c1e83dadd461116
+    commit: 36b655d9cc538f79b14c847ca383d97ffcc18162
+  original:
+    git: git@github.com:alanz/lsp.git
+    commit: 36b655d9cc538f79b14c847ca383d97ffcc18162
+- completed:
+    subdir: lsp-types
+    name: lsp-types
+    version: 1.0.0.1
+    git: git@github.com:alanz/lsp.git
+    pantry-tree:
+      size: 4004
+      sha256: f3b89018d72f45eb5cd0158196dec1f5bf158a9b0ee6e59dc587da9d5445b983
+    commit: 0556d22fc66f24bb526f671666183a86b485837e
+  original:
+    subdir: lsp-types
+    git: git@github.com:alanz/lsp.git
+    commit: 0556d22fc66f24bb526f671666183a86b485837e
 - completed:
     name: duplo
     version: 0.0.0

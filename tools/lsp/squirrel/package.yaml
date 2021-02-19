@@ -21,6 +21,7 @@ dependencies:
   - transformers
   - tree-sitter
   - unliftio
+  - generic-deriving 
 
 default-extensions:
   - AllowAmbiguousTypes
@@ -117,6 +118,7 @@ executables:
       - stm-containers
       - unliftio-core
       - unordered-containers
+      - generic-deriving
 
     source-dirs:
       - app/ligo-squirrel
