@@ -161,6 +161,7 @@ tests:
       - tasty-discover
       - tasty-hspec
       - tasty-hunit
+      - unordered-containers
 
     build-tools:
       - tasty-discover:tasty-discover
