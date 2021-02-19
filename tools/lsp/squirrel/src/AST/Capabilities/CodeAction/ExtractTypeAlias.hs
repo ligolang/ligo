@@ -49,14 +49,8 @@ import Parser
 import Product
 import Range
 
-
--- Filter out first `n` elements that do match proposition `p`
-filterOutFirst :: (a -> Bool) -> [a] -> [a]
-filterOutFirst p = \case
-  [] -> []
-  l@(x:xs)
-    | p x -> filterOutFirst p xs
-    | True -> l
+extractedTypeNameAlias :: String
+extractedTypeNameAlias = "extractedTypeName"
 
 -- | Construct all code actions regarding type extraction for the contract.
 typeExtractionCodeAction
@@ -70,40 +64,39 @@ typeExtractionCodeAction at uri (SomeLIGO dialect tree) =
     isPreprocessor = \case
       (match -> Just (_, Preprocessor _)) -> True
       _ -> False
-
-  in do
-  (filteredSubtreeRange, strippedTree) <- case match tree of
-      (Just (i, RawContract xs)) -> do
-        let
-          filteredSubtree = filterOutFirst isPreprocessor xs
-          filteredSubtreeRange = case filteredSubtree of
-            [] -> getElem @Range i
-            (x:_) -> getElem @Range $ extract x
-        return (filteredSubtreeRange, make (i, RawContract filteredSubtree))
-      _ -> error "typeExtractionCodeAction: passed malformed tree: this should not have happened"
-
-  case spineTo (leq at . getElem) strippedTree of
-    ((match -> Just (info, TypeName tn)):_) -> do
-      typeAliasName <- genTypeName tree
-      typeEdits <- makeReplaceTypeEdits typeAliasName (Right tn) strippedTree
+  in case match tree of
+    (Just (i, RawContract xs)) -> do
       let
-        replaceRange = getElem @Range info
-        typeAlias = constructTypeAlias dialect typeAliasName (Left tn) filteredSubtreeRange
-      return $ mkCodeAction uri replaceRange (typeEdits <> [typeAlias])
-    (typeNode@(match @Type -> Just (info, exactType)):_) -> do
-      typeAliasName <- genTypeName tree
-      typeEdits <- makeReplaceTypeEdits typeAliasName (Left exactType) strippedTree
-      let
-        replaceRange = getElem @Range info
-        typeAlias = constructTypeAlias dialect typeAliasName (Right typeNode) filteredSubtreeRange
-      return $ mkCodeAction uri replaceRange (typeEdits <> [typeAlias])
-    _ -> return []
+        filteredSubtree = dropWhile isPreprocessor xs
+        filteredSubtreeRange = case filteredSubtree of
+          [] -> getElem @Range i
+          (x:_) -> getElem @Range $ extract x
+        strippedTree =  make (i, RawContract filteredSubtree)
+      case spineTo (leq at . getElem) strippedTree of
+        ((match -> Just (info, TypeName tn)):_) -> do
+          typeAliasName <- genTypeName tree
+          typeEdits <- makeReplaceTypeEdits typeAliasName (Right tn) strippedTree
+          let
+            replaceRange = getElem @Range info
+            typeAlias = constructTypeAlias dialect typeAliasName (Left tn) filteredSubtreeRange
+          return $ mkCodeAction uri replaceRange (typeEdits <> [typeAlias])
+        (typeNode@(match @Type -> Just (info, exactType)):_) -> do
+          typeAliasName <- genTypeName tree
+          typeEdits <- makeReplaceTypeEdits typeAliasName (Left exactType) strippedTree
+          let
+            replaceRange = getElem @Range info
+            typeAlias = constructTypeAlias dialect typeAliasName (Right typeNode) filteredSubtreeRange
+          return $ mkCodeAction uri replaceRange (typeEdits <> [typeAlias])
+        _ -> return [] -- Matched everything but type, ignore
+    _ -> return [] -- Malformed tree with error nodes passed, ignore
 
 -- | Generate fresh type alias that is not found
 -- in the given tree.
 -- TODO: Somewhat the tree, passed to `typeExtractionCodeAction`
 -- lacks of `ScopedDecl`s which is strange since we parse trees
--- in our ASTMap with scopes as well.
+-- in our ASTMap with scopes as well. So I (awkure) decided
+-- that we return blank `extractedTypeNameAlias` instead for now
+-- since user may want to rename the type anyway.
 genTypeName :: Monad m => LIGO Info' -> m T.Text
 genTypeName _tree = do
   -- let
@@ -116,8 +109,7 @@ genTypeName _tree = do
   --     = head
   --     . filterOutFirst (isJust . findInTree)
   --     $ ("t"<>) . T.pack . show @Integer <$> [0..]
-  let name = "extractedTypeName"
-  return name
+  return $ T.pack extractedTypeNameAlias
 
 -- | Reconstructs type definition node from given alias name and
 -- either if it's a typename or some other complex type.
@@ -168,6 +160,7 @@ mkCodeAction uri replaceRange typeEdits =
     , _kind = Just J.CodeActionRefactorExtract
     , _diagnostics = Just $ J.List [mkDiagnostics replaceRange]
     , _isPreferred = Just False
+    , _disabled = Nothing
     , _edit = Just J.WorkspaceEdit
         {
           _changes = Just $ HM.fromList [(uri, J.List typeEdits)]
@@ -189,14 +182,13 @@ makeReplaceTypeEdits
   -> LIGO Info'
   -> m [J.TextEdit]
 makeReplaceTypeEdits newTypeName (Left typeNode) originTree =
-  let
-  in execWriterT $ visit
-  [ Visit @Type $ \case
-      (getElem @Range -> r, typeNode') | typeNode == typeNode' -> do
-        tell [J.TextEdit { _range = toLspRange r, _newText = newTypeName }]
-      _ -> pure ()
-  ]
-  originTree
+  execWriterT $ visit
+    [ Visit @Type $ \case
+        (getElem @Range -> r, typeNode') | typeNode == typeNode' -> do
+          tell [J.TextEdit { _range = toLspRange r, _newText = newTypeName }]
+        _ -> pure ()
+    ]
+    originTree
 makeReplaceTypeEdits newTypeName (Right oldTypeName) originTree =
   execWriterT $ visit
     [ Visit @TypeName $ \case
