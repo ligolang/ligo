@@ -266,6 +266,8 @@ deploy-handoff:
 build-preview-ligo-webide-front-end:
   stage: ide-deploy
   image: node:12.20.0-buster
+  tags:
+    - docker
   script:
     # - npm install netlify-cli -g
     - apt-get update
@@ -292,6 +294,8 @@ build-preview-ligo-webide-front-end:
 build-ligo-webide-front-end:
   stage: ide-deploy
   image: node:12.20.0-buster
+  tags:
+    - docker
   script:
     # - npm install netlify-cli -g
     - apt-get update
