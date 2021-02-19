@@ -24,7 +24,6 @@ import Control.Lens ((^.))
 import Control.Monad
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, asks, runReaderT)
-import Data.Default (def)
 
 import Data.Function (on)
 import Data.List (nubBy)
@@ -76,7 +75,7 @@ deriving newtype instance MonadThrow m => MonadThrow (J.LspT config m)
 deriving newtype instance MonadCatch m => MonadCatch (J.LspT config m)
 
 instance HasLigoClient RIO where
-  getLigoClientEnv = maybe def (LigoClientEnv . _cLigoBinaryPath) <$> J.getConfig
+  getLigoClientEnv = fmap (LigoClientEnv . _cLigoBinaryPath) J.getConfig
 
 
 run :: (J.LanguageContextEnv Config.Config, RioEnv) -> RIO a -> IO a
