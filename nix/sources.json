@@ -66,6 +66,19 @@
         "url": "https://github.com/serokell/tezos-packaging/archive/6c2f721f75e5da4668ae8de87ac051a1ecc47038.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
+    "vscode-vsce": {
+        "branch": "master",
+        "description": "VS Code Extension Manager",
+        "homepage": "https://code.visualstudio.com/",
+        "owner": "microsoft",
+        "repo": "vscode-vsce",
+        "rev": "20378752b7931016bd43886184d623b157703639",
+        "sha256": "0li2d7w1wnhvszx6vavqdbipw0vp9d41ldw0ysw03wj2y98z2llz",
+        "type": "tarball",
+        "url": "https://github.com/microsoft/vscode-vsce/archive/20378752b7931016bd43886184d623b157703639.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz",
+        "version": "v1.83.0"
+    },
     "xmldiff": {
         "branch": "master",
         "description": "Diffs on XML trees",
