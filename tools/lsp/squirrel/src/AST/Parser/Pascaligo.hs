@@ -184,6 +184,7 @@ recognise (SomeRawTree dialect rawTree)
         ("Name", n) -> return $ Name n
         ("and", _)  -> return $ Name "and"
         ("or", _)   -> return $ Name "or"
+        ("contains", _) -> return $ Name "contains"
         _           -> fallthrough
 
     -- NameDecl
