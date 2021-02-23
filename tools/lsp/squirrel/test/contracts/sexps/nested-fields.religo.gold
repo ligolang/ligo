@@ -1,6 +1,6 @@
 (contract
-  (type password (RECORD series: int number: int))
-  (type user (RECORD id: password is_admin: bool name: string))
+  (type_decl password (RECORD series: int number: int))
+  (type_decl user (RECORD id: password is_admin: bool name: string))
   (const
     (? alice)
     user
