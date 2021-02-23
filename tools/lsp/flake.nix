@@ -148,5 +148,8 @@
         defaultPackage = self.packages.${system}.vscode-extension-native;
         # For debug/development reasons only
         legacyPackages = pkgs;
+        devShell = pkgs.mkShell rec {
+          buildInputs = [ pkgs.tree-sitter ];
+        };
       });
 }

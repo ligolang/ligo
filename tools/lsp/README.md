@@ -49,22 +49,16 @@ On top of all that is an event loop for handling messages from some lsp-client.
 
 To compile and run, the following tools are needed:
 
-1) tree-sitter-clr (the Node.js one was usied during development)
+1) tree-sitter-cli@0.16.9 (the Node.js one was usied during development)
 2) optionally, nix package manager
-3) haskell-stack
+3) haskell-stack (preferably of `2.5.1` version)
 
-First, you need to generate the `parser.c`.
+First, you need to generate the `parser.c` for all dialects.
 For that, do
 
 ```
-cd tools/lsp/pascaligo
-tree-sitter generate
+cd tools/lsp/squirrel/grammars && make
 ```
 
-Then
-```
-cd ../squirrel
-stack install
-```
-
-The executable is a language server.
+`squirrel` package also has appropriate `Makefile` for development, so running `make`
+would build `squirrel` project
