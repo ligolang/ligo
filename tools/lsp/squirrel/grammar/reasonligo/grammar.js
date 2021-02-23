@@ -64,6 +64,9 @@ module.exports = grammar({
       , [$.Name, $.NameDecl]
       , [$.NameDecl, $.TypeName]
       , [$.Name, $.NameDecl, $.TypeName]
+      , [$.list_pattern, $.Nil, $.list]
+      , [$.list, $.Nil]
+      , [$.list_pattern, $.Nil]
     ],
 
   rules: {
@@ -384,12 +387,12 @@ module.exports = grammar({
     ),
 
     field_decl: $ =>
-    prec(10, // see 'accessor_chain' for explanation of precedence
-         withAttrs($, seq(
-           field("field_name", $.FieldName),
-           ':',
-           field("field_type", $._type_expr),
-         ))),
+      prec(10, // see 'accessor_chain' for explanation of precedence
+        withAttrs($, seq(
+          field("field_name", $.FieldName),
+          ':',
+          field("field_type", $._type_expr),
+        ))),
 
     //// PATTERNS //////////////////////////////////////////////////////////////
 
@@ -533,8 +536,8 @@ module.exports = grammar({
 
     False: $ => 'false',
     True: $ => 'true',
-    Unit: $ => '()',
-    Nil: $ => '[]',
+    Unit: $ => seq('(', ')'),
+    Nil: $ => seq('[', ']'),
     None: $ => 'None',
     Some: $ => 'Some',
     skip: $ => 'skip',
