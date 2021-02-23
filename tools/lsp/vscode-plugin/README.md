@@ -33,3 +33,10 @@ Formatting
 - [ ] Whole document formatting
 - [ ] On-type formatting
 - [ ] Document range formatting
+
+## Releasing the plugin
+
+Once the plugin is ready for release, code should be pushed to the `vscode-production` branch.
+`vscode-extension-publish` job should be triggered manually from this branch pipeline.
+
+You can read more about manual interaction with the pipeline [here](https://docs.gitlab.com/ee/ci/pipelines/#add-manual-interaction-to-your-pipeline).
