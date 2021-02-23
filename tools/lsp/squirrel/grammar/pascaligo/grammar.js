@@ -14,6 +14,9 @@ let right_op = (name, left, right) => op(name, left, right, right)
 let left_op = (name, left, right) => op(name, left, right, left)
 
 let par = x => seq('(', x, ')')
+// Don't consider parens as a part of a subnode, this little hack
+// allows us to skip nested parens in product types.
+let parNested = x => seq(/\(/, x, /\(/)
 let brackets = x => seq('[', x, ']')
 
 let withAttrs = ($, x) => seq(field("attributes", repeat($.attr)), x)
@@ -113,6 +116,7 @@ module.exports = grammar({
       $.prod_type,
       $.TypeName,
       $.TypeWildcard,
+      parNested($._type_expr),
       par($._type_expr),
       $.app_type,
       $.michelsonTypeOr,
@@ -120,16 +124,20 @@ module.exports = grammar({
     ),
 
     fun_type: $ => prec.right(1, seq(
-        field("domain", $._simple_type),
-        '->',
-        field("codomain", $._simple_type),
+      field("domain", $._simple_type),
+      '->',
+      field("codomain", $._simple_type),
     )),
 
     prod_type: $ => prec.right(2,
-      seq($._simple_type, '*', $._simple_type)
+      seq(
+        field("element", $._simple_type),
+        '*',
+        field("element", $._simple_type),
+      )
     ),
 
-    app_type: $ => seq(field("name", $.TypeName), $._type_arg),
+    app_type: $ => prec.left(8, seq(field("name", $.TypeName), $._type_arg)),
 
     _type_arg: $ => par(sepBy1(',', field("arg", $._type_expr))),
 
@@ -205,18 +213,18 @@ module.exports = grammar({
       ),
 
     fun_decl: $ => withAttrs($,
-        seq(
-          field("recursive", optional($.recursive)),
-          'function',
-          field("name", $.NameDecl),
-          $.parameters,
-          ':',
-          choice(
-            field("type", $._type_expr),
-          ),
-          'is',
-          field("body", $._let_expr),
+      seq(
+        field("recursive", optional($.recursive)),
+        'function',
+        field("name", $.NameDecl),
+        $.parameters,
+        ':',
+        choice(
+          field("type", $._type_expr),
         ),
+        'is',
+        field("body", $._let_expr),
+      ),
     ),
 
     _let_expr: $ =>
@@ -651,12 +659,12 @@ module.exports = grammar({
     )),
 
     module_projection: $ => seq(
-        field("module", $.NameModule),
-        '.',
-        field("index", $.Name),
-        '.',
-        $._accessor_chain,
-      ),
+      field("module", $.NameModule),
+      '.',
+      field("index", $.Name),
+      '.',
+      $._accessor_chain,
+    ),
 
     record_expr: $ =>
       injection('record', field("assignment", $.field_path_assignment)),

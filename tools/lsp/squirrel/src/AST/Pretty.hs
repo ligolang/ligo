@@ -163,7 +163,7 @@ instance Pretty1 RawContract where
 
 instance Pretty1 Binding where
   pp1 = \case
-    BTypeDecl     n    ty       -> sexpr "type"  [n, ty]
+    BTypeDecl     n    ty       -> sexpr "type_decl"  [n, ty]
     BParameter    n    ty       -> sexpr "parameter"  [n, ty]
     BVar          name ty value -> sexpr "var"   [name, pp ty, pp value]
     BConst        name ty body  -> sexpr "const" [name, pp ty, pp body]
@@ -186,7 +186,7 @@ instance Pretty1 AST.Type where
     TSum      variants  -> sexpr "SUM" variants
     TProduct  elements  -> sexpr "PROD" elements
     TApply    f xs      -> sop f "$" xs
-    TString   t         -> pp t
+    TString   t         -> sexpr "TSTRING" [pp t]
     TOr       l n r m   -> sexpr "OR"   [l, n, r, m]
     TAnd      l n r m   -> sexpr "AND" [l, n, r, m]
 
@@ -198,8 +198,8 @@ instance Pretty1 Expr where
   pp1 = \case
     Let       decl body  -> "(let" `indent` decl `above` body <.> ")"
     Apply     f xs       -> sexpr "apply" (f : xs)
-    Constant  constant   -> constant
-    Ident     qname      -> qname
+    Constant  constant   -> sexpr "constant" [constant]
+    Ident     qname      -> sexpr "qname" [qname]
     BinOp     l o r      -> sop l (ppToText o) [r]
     UnOp        o r      -> sexpr (ppToText o) [r]
     Op          o        -> pp o
@@ -274,7 +274,7 @@ instance Pretty1 Pattern where
 
 instance Pretty1 Preprocessor where
   pp1 = \case
-    Preprocessor p -> p
+    Preprocessor p -> sexpr "preprocessor" [p]
 
 instance Pretty1 PreprocessorCommand where
   pp1 = \case
@@ -381,7 +381,7 @@ instance LPP1 'Pascal AST.Type where
 
 instance LPP1 'Pascal Binding where
   lpp1 = \case
-    BTypeDecl     n    ty       -> "type" <+> n <+> "is" <+> lpp ty
+    BTypeDecl     n    ty       -> "type" <+> lpp n <+> "is" <+> lpp ty
     BVar          name ty value -> "var" <+> name <+> ":" <+> lpp ty <+> ":=" <+> lpp value
     BConst        name ty body  -> "const" <+> name <+> ":" <+> lpp ty <+> "=" <+> lpp body
     BAttribute    name          -> brackets ("@" <.> name)

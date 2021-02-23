@@ -36,7 +36,8 @@ mainLoop :: IO Int
 mainLoop = do
     let
       serverDefinition = S.ServerDefinition
-        { S.onConfigurationChange = pure . Config.getConfigFromNotification
+        { S.onConfigurationChange = Config.getConfigFromNotification
+        , S.defaultConfig = def
         , S.doInitialize = \lcEnv _msg -> Right . (lcEnv, ) <$> initialize
         , S.staticHandlers = catchExceptions handlers
         , S.interpretHandler = \envs -> S.Iso (RIO.run envs) liftIO
@@ -114,6 +115,7 @@ handlers = mconcat
   -- , S.requestHandler J.STextDocumentPrepareRename handlePrepareRenameRequest
   , S.requestHandler J.STextDocumentFormatting handleDocumentFormattingRequest
   , S.requestHandler J.STextDocumentRangeFormatting handleDocumentRangeFormattingRequest
+  , S.requestHandler J.STextDocumentCodeAction handleTextDocumentCodeAction
   -- , S.requestHandler J.STextDocumentOnTypeFormatting
 
   --, S.notificationHandler J.SCancelRequest _
@@ -230,6 +232,17 @@ handleFoldingRangeRequest req respond = do
     respond . Right . J.List
         $ fmap toFoldingRange
         $ actions
+
+handleTextDocumentCodeAction :: S.Handler RIO 'J.TextDocumentCodeAction
+handleTextDocumentCodeAction req respond = do
+    let
+      uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
+      r = req ^. J.params . J.range . to fromLspRange
+      con = req ^. J.params . J.context
+    (tree, _) <- RIO.fetch uri
+    actions <- collectCodeActions r con (J.fromNormalizedUri uri) tree
+    let response = Right . J.List . fmap J.InR $ actions
+    respond response
 
 handleSelectionRangeRequest :: S.Handler RIO 'J.TextDocumentSelectionRange
 handleSelectionRangeRequest req respond = do

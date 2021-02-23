@@ -1,6 +1,7 @@
 -- | Module that exports all capabilities.
 module AST.Capabilities (module Exports) where
 
+import AST.Capabilities.CodeAction.ExtractTypeAlias as Exports
 import AST.Capabilities.Completion as Exports
 import AST.Capabilities.DocumentSymbol as Exports
 import AST.Capabilities.Find as Exports

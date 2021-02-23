@@ -1,5 +1,5 @@
 (contract
-  (type sum_aggregator (RECORD counter: int sum: int))
+  (type_decl sum_aggregator (RECORD counter: int sum: int))
   (fun
     counter
     (type? (? n) int)

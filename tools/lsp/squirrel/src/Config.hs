@@ -7,7 +7,9 @@ module Config
   , getConfigFromNotification
   ) where
 
-import Data.Aeson ((.=), (.:), (.:?), (.!=), FromJSON (parseJSON), Result (Error, Success), ToJSON (toJSON), Value, fromJSON, object, withObject)
+import Data.Aeson
+  (FromJSON (parseJSON), Result (Error, Success), ToJSON (toJSON), Value, fromJSON, object,
+  withObject, (.!=), (.:), (.:?), (.=))
 import Data.Default (Default (def))
 import qualified Data.Text as T
 
@@ -19,8 +21,8 @@ import Cli (LigoClientEnv (..))
 
 -- | Given a DidChangeConfigurationNotification message, this function returns the parsed
 -- Config object if possible.
-getConfigFromNotification :: Value -> Either T.Text Config
-getConfigFromNotification p =
+getConfigFromNotification :: Config -> Value -> Either T.Text Config
+getConfigFromNotification _old p =
   case fromJSON p of
     Success c -> Right c
     Error err -> Left $ T.pack err

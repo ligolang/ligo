@@ -1,6 +1,6 @@
 (contract
-  (type passport (RECORD series: int number: int))
-  (type user (RECORD id: passport is_admin: bool name: string))
+  (type_decl passport (RECORD series: int number: int))
+  (type_decl user (RECORD id: passport is_admin: bool name: string))
   (const
     alice
     user

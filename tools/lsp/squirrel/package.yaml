@@ -21,6 +21,7 @@ dependencies:
   - transformers
   - tree-sitter
   - unliftio
+  - generic-deriving 
 
 default-extensions:
   - AllowAmbiguousTypes
@@ -117,6 +118,7 @@ executables:
       - stm-containers
       - unliftio-core
       - unordered-containers
+      - generic-deriving
 
     source-dirs:
       - app/ligo-squirrel
@@ -159,6 +161,7 @@ tests:
       - tasty-discover
       - tasty-hspec
       - tasty-hunit
+      - unordered-containers
 
     build-tools:
       - tasty-discover:tasty-discover

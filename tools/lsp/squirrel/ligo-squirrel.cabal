@@ -3,6 +3,8 @@ cabal-version: 1.12
 -- This file has been generated from package.yaml by hpack version 0.34.2.
 --
 -- see: https://github.com/sol/hpack
+--
+-- hash: f751b5d40d2971bc84a6543138ce4b9463a6f81e3bc0a8f1d847b819746b846d
 
 name:           ligo-squirrel
 version:        0.0.0
@@ -12,6 +14,7 @@ library
   exposed-modules:
       AST
       AST.Capabilities
+      AST.Capabilities.CodeAction.ExtractTypeAlias
       AST.Capabilities.Completion
       AST.Capabilities.DocumentSymbol
       AST.Capabilities.Find
@@ -21,6 +24,7 @@ library
       AST.Capabilities.Rename
       AST.Capabilities.SelectionRange
       AST.Capabilities.SignatureHelp
+      AST.CodeAction
       AST.Parser
       AST.Parser.Camligo
       AST.Parser.Pascaligo
@@ -74,6 +78,7 @@ library
     , exceptions
     , fastsum
     , filepath
+    , generic-deriving
     , ghc-prim
     , hashable
     , interpolate
@@ -117,6 +122,7 @@ executable ligo-squirrel
     , fastsum
     , filepath
     , focus
+    , generic-deriving
     , ghc-prim
     , hashable
     , hslogger
@@ -156,6 +162,7 @@ executable ligo-vet
     , exceptions
     , fastsum
     , filepath
+    , generic-deriving
     , ghc-prim
     , hashable
     , interpolate
@@ -176,6 +183,7 @@ test-suite squirrel-test
   type: exitcode-stdio-1.0
   main-is: Driver.hs
   other-modules:
+      Test.Capabilities.CodeAction.ExtractTypeAlias
       Test.Capabilities.Completion
       Test.Capabilities.DocumentSymbol
       Test.Capabilities.Find
@@ -207,6 +215,7 @@ test-suite squirrel-test
     , exceptions
     , fastsum
     , filepath
+    , generic-deriving
     , ghc-prim
     , hashable
     , hspec-expectations
@@ -227,4 +236,5 @@ test-suite squirrel-test
     , transformers
     , tree-sitter
     , unliftio
+    , unordered-containers
   default-language: Haskell2010
