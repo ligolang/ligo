@@ -127,4 +127,4 @@ WORKDIR /root/
 COPY --from=0 /ligo/_build/install/default/bin/ligo /root/ligo
 COPY --from=0 /ligo/_build/default/_doc/_html /root/doc
 COPY --from=0 /ligo/coverage /root/coverage
-CMD ["./ligo"]
+ENTRYPOINT ["/root/ligo"]
