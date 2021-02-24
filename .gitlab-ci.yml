@@ -2,7 +2,7 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
   LIGO_REGISTRY_IMAGE_BASE_NAME: "${CI_PROJECT_PATH}/${CI_PROJECT_NAME}"
   WEBIDE_IMAGE_NAME: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide"
-  LIGO_IMAGE_NAME: "ligo:alpine"
+  LIGO_IMAGE_NAME: "ligo"
   LIGO_CONTAINER_NAME: "ligo-container"
 
 stages:
