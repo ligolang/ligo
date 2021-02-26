@@ -406,6 +406,7 @@ module.exports = grammar({
         $.unary_constr_pattern,
         $.nullary_constr_pattern,
         $.list_pattern,
+        $.record_pattern,
       ),
 
     var_pattern: $ => field("var", $.NameDecl),
@@ -427,6 +428,19 @@ module.exports = grammar({
         ')',
       )),
     ),
+
+    record_pattern: $ => withAttrs($, seq(
+      "{",
+      sepBy(",", field("field", $.record_field_pattern)),
+      optional(","),
+      "}"
+    )),
+
+    record_field_pattern: $ => withAttrs($, prec(9, seq(
+      field("name", $.FieldName),
+      "=",
+      field("body", $._pattern),
+    ))),
 
     annot_pattern: $ => seq(
       field("subject", $._pattern),

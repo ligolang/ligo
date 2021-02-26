@@ -102,8 +102,24 @@ module.exports = grammar({
       $.list_pattern,
       $.list_con_pattern,
       $.tup_pattern,
+      $.rec_pattern,
       "_"
     ),
+
+    // { field1 = pat_a ; field2 = pat_b }
+    rec_pattern: $ => withAttrs($, seq(
+      "{",
+      sepBy(";", field("field", $.rec_field_pattern)),
+      optional(";"),
+      "}"
+    )),
+
+    // field = _pattern
+    rec_field_pattern: $ => withAttrs($, prec(9, seq(
+      field("name", $._label),
+      "=",
+      field("body", $._pattern),
+    ))),
 
     var_pattern: $ => seq(
       field("var", $.NameDecl)
