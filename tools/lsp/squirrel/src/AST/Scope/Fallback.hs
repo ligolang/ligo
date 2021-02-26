@@ -349,6 +349,7 @@ getImmediateDecls = \case
         singleton <$> valueScopedDecl (getElem r) v Nothing Nothing
 
       IsTuple    xs   -> foldMapM getImmediateDecls xs
+      IsRecord   xs   -> foldMapM getImmediateDecls xs
       IsList     xs   -> foldMapM getImmediateDecls xs
       IsSpread   s    -> getImmediateDecls s
       IsWildcard      -> pure []
@@ -356,6 +357,11 @@ getImmediateDecls = \case
       IsCons     h t  -> (<>) <$> getImmediateDecls h <*> getImmediateDecls t
       IsConstant _    -> pure []
       IsConstr   _ xs -> foldMapM getImmediateDecls xs
+
+  (match -> Just (r, pat)) -> do
+    case pat of
+      IsRecordField label body ->
+        singleton <$> valueScopedDecl (getElem r) label Nothing (Just body)
 
   (match -> Just (r, pat)) -> do
     case pat of
