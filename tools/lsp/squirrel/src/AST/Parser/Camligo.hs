@@ -123,8 +123,15 @@ recognise (SomeRawTree dialect rawTree)
         "annot_pattern"    -> IsAnnot  <$> field  "pat"  <*> field "type"
         "paren_pattern"    -> IsTuple  <$> fields "pat"
         "var_pattern"      -> IsVar    <$> field  "var"
+        "rec_pattern"      -> IsRecord <$> fields "field"
         "_"                -> pure IsWildcard
         _                  -> fallthrough
+
+   -- RecordFieldPattern
+  , Descent do
+      boilerplate $ \case
+        "rec_field_pattern" -> IsRecordField <$> field "name" <*> field "body"
+        _                   -> fallthrough
 
     -- Alt
   , Descent do

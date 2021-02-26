@@ -45,7 +45,7 @@ type LIGO xs = Tree RawLigoList (Product xs)
 type Tree' fs xs = Tree fs (Product xs)
 
 type RawLigoList =
-  [ Name, QualifiedName, Pattern, Constant, FieldAssignment
+  [ Name, QualifiedName, Pattern, RecordFieldPattern, Constant, FieldAssignment
   , MapBinding, Alt, Expr, TField, Variant, Type, Binding
   , RawContract, TypeName, FieldName, MichelsonCode
   , Error, Ctor, Contract, NameDecl, Preprocessor, PreprocessorCommand
@@ -186,6 +186,12 @@ data Pattern it
   | IsSpread     it   -- (Name)
   | IsList       [it] -- [Pattern]
   | IsTuple      [it] -- [Pattern]
+  | IsRecord     [it] -- [FieldPattern]
+  deriving stock (Generic, Eq, Functor, Foldable, Traversable)
+
+-- Used specifically in record destructuring
+data RecordFieldPattern it
+  = IsRecordField it it
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data QualifiedName it
@@ -283,6 +289,9 @@ instance Eq1 Alt where
 
 instance Eq1 MapBinding where
   liftEq f (MapBinding a b) (MapBinding c d) = f a c && f b d
+
+instance Eq1 RecordFieldPattern where
+  liftEq f (IsRecordField la ba) (IsRecordField lb bb) = f la lb && f ba bb
 
 instance Eq1 FieldAssignment where
   liftEq f (FieldAssignment as a) (FieldAssignment bs b) =
