@@ -3,7 +3,6 @@ variables:
   LIGO_REGISTRY_IMAGE_BASE_NAME: "${CI_PROJECT_PATH}/${CI_PROJECT_NAME}"
   WEBIDE_IMAGE_NAME: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide"
   LIGO_IMAGE_NAME: "ligo"
-  LIGO_CONTAINER_NAME: "ligo-container"
 
 stages:
   - pretooling      # changelog
@@ -72,18 +71,15 @@ docker_extract:
     - docker_build
   script:
     - docker load -i ligo.tar.gz
-    - docker container run -itd --name ${LIGO_CONTAINER_NAME} ${LIGO_IMAGE_NAME}
-    - docker cp ${LIGO_CONTAINER_NAME}:/root/ligo .
+    - docker cp $(docker create ${LIGO_IMAGE_NAME}):/root/ligo .
     - chmod +rwx ligo
     # Check that the binary is truly static and has 0 dependencies
     - ldd ligo | grep 'statically' # TODO: there is maybe a better way to do that ?
-    - docker cp ${LIGO_CONTAINER_NAME}:/root/coverage .
+    - docker cp $(docker create ${LIGO_IMAGE_NAME}):/root/coverage .
     - cat coverage/coverage-summary
-    - docker cp -La ${LIGO_CONTAINER_NAME}:/root/doc .
+    - docker cp -La $(docker create ${LIGO_IMAGE_NAME}):/root/doc .
     - nix-build nix -A ligo-deb
     - cp -L result/ligo.deb .
-    - docker container stop ${LIGO_CONTAINER_NAME}
-    - docker rm -v ${LIGO_CONTAINER_NAME}
   artifacts:
     paths:
       - ligo
