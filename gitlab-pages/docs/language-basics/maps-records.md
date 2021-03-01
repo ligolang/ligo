@@ -422,6 +422,15 @@ The hiding of a variable by another (here `p`) is called `shadowing`.
 
 </Syntax>
 
+### Comparison
+
+Record types are comparable, which allows to check for equality and
+use records as key in sets or maps. By default, the ordering of
+records is **undefined and implementation dependent**. Ultimately, the
+order is determined by the translated Michelson type. When using the
+`[@layout:comb]` attribute, fields are translated in their order in
+the record, and records are then ordered with lexicographic ordering.
+
 ## Maps
 
 *Maps* are a data structure which associate values of the same type to

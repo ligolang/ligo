@@ -448,6 +448,10 @@ let comparable_mligo () : (unit, _) result =
   let%bind () = expect_eq program "bytes_" (e_bytes_string "deadbeaf") (e_bool false) in
   let%bind () = expect_eq program "address_" (e_address "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx") (e_bool false) in
   let%bind () = expect_eq program "timestamp_" (e_timestamp 101112) (e_bool false) in
+  let%bind () = expect_eq program "option_" (e_some (e_int 1)) (e_bool false) in
+  (*
+  let%bind () = expect_eq program "sum" (e_constructor "A" (e_int 1)) (e_bool false) in
+  *)
   let open Tezos_crypto in
   let pkh, _, _ = Signature.generate_key () in
   let key_hash = Signature.Public_key_hash.to_b58check @@ pkh in
