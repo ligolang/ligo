@@ -62,6 +62,9 @@ let from_list ~cmp elts =
 let bindings map =
   RB.fold_dec (fun ~elt ~acc -> elt::acc) ~init:[] map.tree
 
+let keys map = List.map fst (bindings map)
+let values map = List.map snd (bindings map)
+
 let get_compare set = set.cmp
 
 let iter f map = RB.iter (fun (k,v) -> f k v) map.tree

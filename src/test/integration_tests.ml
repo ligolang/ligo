@@ -172,6 +172,15 @@ let shadow () : (unit, _) result =
   let make_expect = fun _ -> 0 in
   expect_eq_n_int program "foo" make_expect
 
+let shadowing () : (unit, _) result =
+  let%bind program = mtype_file "./contracts/shadowing.mligo" in
+  let%bind _ =
+    let input = e_constructor "A" (e_int 1) in
+    let expected = e_list [e_constructor "A" (e_int 1)] in
+    expect_eq program "main" input expected
+  in
+  ok ()
+
 let higher_order () : (unit, _) result =
   let%bind program = type_file "./contracts/high-order.ligo" in
   let make_expect = fun n -> n in
@@ -2523,50 +2532,50 @@ let main = test_suite "Integration (End to End)"
     test y "condition (mligo)" condition_mligo ;
     test y "condition (religo)" condition_religo ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "sequence (mligo" sequence_mligo ;
-    test no (* todo p_row specialize *) "eq bool (ligo)" eq_bool ;
-    test no "eq bool (mligo)" eq_bool_mligo ;
-    test no "eq bool (religo)" eq_bool_religo ;
+    test y (* todo p_row specialize *) "eq bool (ligo)" eq_bool ;
+    test y "eq bool (mligo)" eq_bool_mligo ;
+    test y "eq bool (religo)" eq_bool_religo ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "shadow" shadow ;
     test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "annotation" annotation ;
 
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "multiple parameters" multiple_parameters ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "multiple parameters (mligo)" multiple_parameters_mligo ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "multiple parameters (religo)" multiple_parameters_religo ;
-    test no (* todo p_row specialize *) "bool" bool_expression ;
-    test no "bool (mligo)" bool_expression_mligo ;
-    test no "bool (religo)" bool_expression_religo ;
-    test no (* failure todo *) "arithmetic" arithmetic ;
-    test no "arithmetic (mligo)" arithmetic_mligo ;
-    test no "arithmetic (religo)" arithmetic_religo ;
-    test no (* todo *) "bitwise_arithmetic" bitwise_arithmetic ;
-    test no "bitwise_arithmetic (mligo)" bitwise_arithmetic_mligo;
-    test no "bitwise_arithmetic (religo)" bitwise_arithmetic_religo;
+    test y (* todo p_row specialize *) "bool" bool_expression ;
+    test y "bool (mligo)" bool_expression_mligo ;
+    test y "bool (religo)" bool_expression_religo ;
+    test y (* failure todo *) "arithmetic" arithmetic ;
+    test y "arithmetic (mligo)" arithmetic_mligo ;
+    test y "arithmetic (religo)" arithmetic_religo ;
+    test y (* todo *) "bitwise_arithmetic" bitwise_arithmetic ;
+    test y "bitwise_arithmetic (mligo)" bitwise_arithmetic_mligo;
+    test y "bitwise_arithmetic (religo)" bitwise_arithmetic_religo;
     test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "string_arithmetic" string_arithmetic ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "string_arithmetic (mligo)" string_arithmetic_mligo ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "string_arithmetic (religo)" string_arithmetic_religo ;
     test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "bytes_arithmetic" bytes_arithmetic ;
     test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "bytes_arithmetic (mligo)" bytes_arithmetic_mligo ;
     test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "bytes_arithmetic (religo)" bytes_arithmetic_religo ;
-    test no (* exist in typeclasse *) "comparable (mligo)" comparable_mligo;
+    test y (* exist in typeclasse *) "comparable (mligo)" comparable_mligo;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "crypto" crypto ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "crypto (mligo)" crypto_mligo ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "crypto (religo)" crypto_religo ;
     (* test "set_arithmetic" set_arithmetic ; *)
-    test no (* Missing typeclass *) "set_arithmetic (mligo)" set_arithmetic_mligo ;
-    test no "set_arithmetic (religo)" set_arithmetic_religo ;
+    test y (* Missing typeclass *) "set_arithmetic (mligo)" set_arithmetic_mligo ;
+    test y "set_arithmetic (religo)" set_arithmetic_religo ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "unit" unit_expression ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "string" string_expression ;
     test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "option" option ;
     test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "option (mligo)" moption ;
     test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "option (religo)" reoption ;
 
-    test no (* exist for tc_size or t_map_size *) "map" map ;
-    test no "map (mligo)" mmap ;
+    test y (* exist for tc_size or t_map_size *) "map" map ;
+    test y "map (mligo)" mmap ;
     (* test "map (religo)" remap ; *)
-    test no (* incompatible type MAP BIG_MAP *) "big_map" big_map ;
-    test no "big_map (mligo)" mbig_map ;
-    test no "big_map (religo)" rebig_map ;
-    test no (* rework typeclass *) "list" list ;
+    test y (* incompatible type MAP BIG_MAP *) "big_map" big_map ;
+    test y "big_map (mligo)" mbig_map ;
+    test y "big_map (religo)" rebig_map ;
+    test y (* rework typeclass *) "list" list ;
     test y "loop" loop ;
     test y "loop (mligo)" loop_mligo ;
     test y "loop (religo)" loop_religo ;
@@ -2599,8 +2608,8 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02020-02-03 2e8d3689b *) "match variant (religo)" match_variant_re ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "match variant 2 (mligo)" match_matej ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "match variant 2 (religo)" match_matej_re ;
-    test no (* uncomplete typclass *) "list matching (mligo)" mligo_list ;
-    test no "list matching (religo)" religo_list ;
+    test y (* uncomplete typclass *) "list matching (mligo)" mligo_list ;
+    test y "list matching (religo)" religo_list ;
     test y "failwith ligo" failwith_ligo ;
     test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "failwith mligo" failwith_mligo ;
     test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "assert mligo" assert_mligo ;
@@ -2673,6 +2682,7 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "tuple type (religo)" tuple_type_religo ;
     test y "no semicolon (religo)" no_semicolon_religo ;
     test y "loop_bugs (ligo)" loop_bugs_ligo ;
-    test no (* new typeclass *) "tuple_list (religo)" tuple_list_religo ;
+    test y (* new typeclass *) "tuple_list (religo)" tuple_list_religo ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "single_record_expr (religo)" single_record_expr_religo ;
+    test y "shadowing (mligo)" shadowing;
   ]

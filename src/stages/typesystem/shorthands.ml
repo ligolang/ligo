@@ -3,8 +3,12 @@ open Core
 open Ast_typed.Misc
 open Ast_typed.Reasons
 
-let tc description type_vars allowed_list : type_constraint = {
-    c = C_typeclass {tc_args = type_vars ; original_id = None ; typeclass = allowed_list} ;
+(* TODO: remove this () argument, it is just here to make sure that
+   the ~bound and ~constraints arguments are given (while adding the
+   fields to the record, we need to make sure they're supplied
+   everywhere) *)
+let tc description ~bound ~constraints () type_vars allowed_list : type_constraint = {
+    c = C_typeclass { tc_bound=bound; tc_constraints=constraints; tc_args = type_vars ; original_id = None ; typeclass = allowed_list} ;
     reason = "typeclass for operator: " ^ description
   }
 
@@ -83,7 +87,152 @@ let key_hash      = p_constant C_key_hash  []
 let signature     = p_constant C_signature []
 let operation     = p_constant C_operation []
 let contract t    = p_constant C_contract  [t]
+let bls12_381_g1  = p_constant C_bls12_381_g1 []
+let bls12_381_g2  = p_constant C_bls12_381_g2 []
+let bls12_381_fr  = p_constant C_bls12_381_fr []
 let ( * ) a b = pair a b
+
+(* type value of recursive types *)
+let comparable = Var.of_name "comparable"
+let tc_comparable = 
+  let a =Var.fresh () in
+   P_abs {arg = a; ret =
+    let x = Var.fresh () in
+    let y = Var.fresh () in
+    Location.wrap @@ P_constraint { pc = { c = C_typeclass {
+      tc_bound = [x;y] ;
+      tc_constraints =[c_apply comparable x "tc_comparable:bound"; 
+                      c_apply comparable y "tc_comparable:bound"];
+      tc_args = [p_var a];
+      original_id = None;
+      typeclass  =  [ 
+                [address] ;
+                [bool] ;
+                [bytes] ;
+                [chain_id] ;
+                [int] ; 
+                [key] ; 
+                [key_hash] ;
+                [mutez] ; 
+                [nat] ; 
+                (* [never] ; *)
+                [option (p_var x)] ;
+                [sum (p_var x) (p_var y)] ;
+                [pair (p_var x) (p_var y)] ;
+                [set (p_var x)] ;
+                [signature] ;
+                [string] ;
+                [timestamp] ;
+                [unit] ; 
+                (* pair of comparable *)
+              ]
+    }; reason = "default tc"}
+  }
+}
+
+let storable = Var.of_name "storable" 
+
+let tc_storable =
+  let a = Var.fresh () in
+   P_abs {arg = a; ret =
+    let c = Var.fresh () in
+    let x = Var.fresh () in
+    let y = Var.fresh () in
+    Location.wrap @@ P_constraint { pc = { c = C_typeclass {
+      tc_bound = [c;x;y];
+      tc_constraints =[
+                                 c_apply comparable c "tc_storable:comparable bound";
+                                 c_apply storable c "tc_storable:bound";
+                                 c_apply storable x "tc_storable:bound"; 
+                                 c_apply storable y "tc_storable:bound"];
+      tc_args = [p_var a];
+      original_id = None;
+      typeclass = [ 
+                [address] ;
+                [big_map (p_var x) (p_var y)] ;
+                [bls12_381_fr] ;
+                [bls12_381_g1] ;
+                [bls12_381_g2] ;
+                [bool] ;
+                [bytes] ;
+                [chain_id] ;
+                [int] ; 
+                [key] ; 
+                [key_hash] ; 
+                [(p_var x) --> (p_var y)] ;
+                [list (p_var x)] ;
+                [map (p_var c) (p_var y)] ;
+                [mutez] ; 
+                [nat] ; 
+                (* [never] ; *)
+                [option (p_var x)] ;
+                [sum (p_var x) (p_var y)] ;
+                [pair (p_var x) (p_var y)] ;
+                (* [sapling_state (var x)] ;
+                [sapling_transaction (var x)] ; *)
+                [set (p_var c)] ;
+                [signature] ;
+                [string] ;
+                (* [ticket (var x)] ; *)
+                [timestamp] ;
+                [unit] ; 
+              ]
+      };reason = ""
+    }
+  }
+}
+
+let packable = Var.of_name "packable"
+
+let tc_packable =  
+  let a = Var.fresh () in
+   P_abs {arg = a; ret =
+    let c = Var.fresh () in
+    let x = Var.fresh () in
+    let y = Var.fresh () in
+    Location.wrap @@ P_constraint { pc = { c = C_typeclass {
+      tc_bound = [c;x;y];
+      tc_constraints = [
+                                      c_apply comparable c "tc_packable: comparable bound";
+                                      c_apply packable c "tc_packable:bound";
+                                      c_apply packable x "tc_packable:bound"; 
+                                      c_apply packable y "tc_packable:bound"];
+      tc_args = [p_var a];
+      original_id = None;
+      typeclass = [ 
+                [address] ;
+                [bls12_381_fr] ;
+                [bls12_381_g1] ;
+                [bls12_381_g2] ;
+                [bool] ;
+                [bytes] ;
+                [chain_id] ;
+                [contract (p_var x)] ;
+                [int] ; 
+                [key] ; 
+                [key_hash] ; 
+                [(p_var x) --> (p_var y)] ;
+                [list (p_var x)] ;
+                [map (p_var c) (p_var y)] ;
+                [mutez] ; 
+                [nat] ; 
+                (* [never] ; *)
+                [option (p_var x)] ;
+                [sum (p_var x) (p_var y)] ;
+                [pair (p_var x) (p_var y)] ;
+                [set (p_var c)] ;
+                [signature] ;
+                [string] ;
+                [timestamp] ;
+                [unit] ; 
+              ]
+      };
+    reason = ""
+    }
+  }
+}
+
+
 
 (* These are used temporarily to de-curry functions that correspond to Michelson operators *)
 let tuple0        = p_row_ez   C_record    []

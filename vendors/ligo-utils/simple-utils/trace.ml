@@ -389,6 +389,7 @@ let bind_concat l1 l2 =
   ok @@ (l1' @ l2')
 
 let bind_map_list f lst = bind_list (List.map f lst)
+let bind_map2_list f lst1 lst2 = bind_list (List.map2 f lst1 lst2)
 let bind_mapi_list f lst = bind_list (List.mapi f lst)
 
 let rec bind_map_list_seq f lst = match lst with
@@ -458,6 +459,16 @@ let bind_fold_map_list f acc lst =
         aux (acc', hd'::prev) f tl in
   aux (acc , []) f lst >>? fun (acc' , lst') ->
   ok @@ (acc' , List.rev lst')
+
+let bind_fold_map2_list f acc lst1 lst2 =
+  let rec aux (acc, prev) f = function
+    | [],[] -> ok (acc,prev)
+    | hd1 :: tl1, hd2 :: tl2 ->
+        f acc hd1 hd2 >>? fun (acc', hd) ->
+          aux (acc', hd::prev) f (tl1,tl2) 
+    | _ -> ok (acc,prev) in
+    aux (acc, []) f (lst1,lst2) >>? fun (acc', lst') ->
+    ok @@ (acc', List.rev lst')
 
 let bind_fold_map_right_list = fun f acc lst ->
   let rec aux (acc , prev) f = function

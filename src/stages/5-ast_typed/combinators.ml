@@ -350,8 +350,8 @@ let get_record_field_type (t : type_expression) (label : label) : type_expressio
 
 let make_c_constructor_simpl ?(reason_constr_simpl="") id_constructor_simpl original_id tv c_tag tv_list = {
   reason_constr_simpl ;
-  id_constructor_simpl = ConstraintIdentifier (Int64.of_int id_constructor_simpl) ;
-  original_id = Option.map (fun i -> ConstraintIdentifier (Int64.of_int i)) original_id;
+  id_constructor_simpl = ConstraintIdentifier.T (Int64.of_int id_constructor_simpl) ;
+  original_id = Option.map (fun i -> ConstraintIdentifier.T (Int64.of_int i)) original_id;
   tv ;
   c_tag;
   tv_list
@@ -359,19 +359,25 @@ let make_c_constructor_simpl ?(reason_constr_simpl="") id_constructor_simpl orig
 
 let make_c_row_simpl ?(reason_row_simpl="") id_row_simpl original_id tv r_tag tv_map_as_lst : c_row_simpl = { 
   reason_row_simpl ;
-  id_row_simpl = ConstraintIdentifier (Int64.of_int id_row_simpl) ;
-  original_id = Option.map (fun i -> ConstraintIdentifier (Int64.of_int i)) original_id;
+  id_row_simpl = ConstraintIdentifier.T (Int64.of_int id_row_simpl) ;
+  original_id = Option.map (fun i -> ConstraintIdentifier.T (Int64.of_int i)) original_id;
   tv;
   r_tag;
   tv_map = LMap.of_list @@ List.mapi (fun i (k,v) -> (k,{associated_variable=v;michelson_annotation=None;decl_pos=i})) tv_map_as_lst ;
 }
 
 
-let make_c_typeclass_simpl ?(reason_typeclass_simpl="") id_typeclass_simpl original_id args tc : c_typeclass_simpl =
+(* TODO: remove this () argument, it is just here to make sure that
+   the ~bound and ~constraints arguments are given (while adding the
+   fields to the record, we need to make sure they're supplied
+   everywhere) *)
+let make_c_typeclass_simpl ?(reason_typeclass_simpl="") ~bound ~constraints () id_typeclass_simpl original_id args tc : c_typeclass_simpl =
   {
+    tc_bound = bound;
+    tc_constraints = constraints;
     reason_typeclass_simpl ;
-    id_typeclass_simpl = ConstraintIdentifier (Int64.of_int id_typeclass_simpl) ;
-    original_id = Option.map (fun i -> ConstraintIdentifier (Int64.of_int i)) original_id;
+    id_typeclass_simpl = ConstraintIdentifier.T (Int64.of_int id_typeclass_simpl) ;
+    original_id = Option.map (fun i -> ConstraintIdentifier.T (Int64.of_int i)) original_id;
     tc ;
     args ;
   }
@@ -398,10 +404,16 @@ let make_sc_constructor ?(reason_constr_simpl="") id_constructor_simpl original_
   SC_Constructor (make_c_constructor_simpl ~reason_constr_simpl id_constructor_simpl original_id tv c_tag tv_list)
 let make_sc_row ?(reason_row_simpl="") id_row_simpl original_id tv r_tag tv_map_as_lst : type_constraint_simpl =
   SC_Row (make_c_row_simpl ~reason_row_simpl id_row_simpl original_id tv r_tag tv_map_as_lst)
-let make_sc_typeclass ?(reason_typeclass_simpl="") (tc : typeclass) (args : type_variable_list) =
+(* TODO: remove this () argument, it is just here to make sure that
+   the ~bound and ~constraints arguments are given (while adding the
+   fields to the record, we need to make sure they're supplied
+   everywhere) *)
+let make_sc_typeclass ?(reason_typeclass_simpl="") ~bound ~constraints () (tc : typeclass) (args : type_variable list) =
   SC_Typeclass {
+    tc_bound = bound;
+    tc_constraints = constraints;
     reason_typeclass_simpl ;
-    id_typeclass_simpl = ConstraintIdentifier 1L ;
+    id_typeclass_simpl = ConstraintIdentifier.fresh () ;
     original_id = None ;
     tc ;
     args ;
@@ -409,7 +421,7 @@ let make_sc_typeclass ?(reason_typeclass_simpl="") (tc : typeclass) (args : type
 let make_sc_poly ?(reason_poly_simpl="") (tv:type_variable) (forall:p_forall) =
   SC_Poly {
     reason_poly_simpl ;
-    id_poly_simpl = ConstraintIdentifier 1L ;
+    id_poly_simpl = ConstraintIdentifier.fresh () ;
     original_id = None ;
     tv ;
     forall ;
@@ -417,7 +429,7 @@ let make_sc_poly ?(reason_poly_simpl="") (tv:type_variable) (forall:p_forall) =
 let make_sc_access_label ?(reason_access_label_simpl="") (tv:type_variable) ~(record_type:type_variable) (label:label) =
   SC_Access_label {
     reason_access_label_simpl ;
-    id_access_label_simpl = ConstraintIdentifier 1L ;
+    id_access_label_simpl = ConstraintIdentifier.fresh () ;
     tv ;
     record_type ;
     label ;

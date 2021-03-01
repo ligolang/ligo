@@ -99,6 +99,8 @@ type ('key, 'value) added = {map : ('key, 'value) t; duplicates : ('key * 'value
 val add_list : ('key * 'value) list -> ('key, 'value) t -> ('key, 'value) added
 
 val bindings : ('key, 'value) t -> ('key * 'value) list
+val keys : ('key, 'value) t -> 'key list
+val values : ('key, 'value) t -> 'value list
 
 (* The value of the call [get_compare map] is the comparison function
    used by the given map *)

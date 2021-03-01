@@ -250,7 +250,7 @@ module Substitution = struct
     (*
        Computes `P[v := expr]`.
     *)
-    and type_value : tv:type_value -> substs:T.type_ Var.t * type_value -> type_value = fun ~tv ~substs ->
+    and type_value : tv:type_value -> substs:type_variable * type_value -> type_value = fun ~tv ~substs ->
       let open T.Reasons in
       let self tv = type_value ~tv ~substs in
       let (v, expr) = substs in
@@ -283,6 +283,8 @@ module Substitution = struct
             wrap (Todo "5") @@ T.P_forall { p with constraints ; body }
           )
         )
+      | P_abs _ -> failwith "P_abs : unimplemented"
+      | P_constraint _ -> failwith "P_constraint : unimplemented"
 
     and constraint_ ~c:{c;reason} ~substs =
       {c = constraint__ ~c ~substs;reason}
@@ -293,15 +295,17 @@ module Substitution = struct
         let aux tv = type_value ~tv ~substs in
           C_equation { aval = aux aval ; bval = aux bval }
         )
-      | C_typeclass { tc_args; original_id; typeclass=tc } -> (
+      | C_typeclass { tc_bound; tc_constraints; tc_args; original_id; typeclass=tc } -> (
           let tc_args = List.map (fun tv -> type_value ~tv ~substs) tc_args in
+          let tc_constraints = List.map (fun c -> constraint_ ~c ~substs) tc_constraints in
           let tc = typeclass ~tc ~substs in
-          C_typeclass {tc_args ; original_id; typeclass=tc}
+          C_typeclass {tc_bound; tc_constraints; tc_args ; original_id; typeclass=tc}
         )
-      | C_access_label { c_access_label_tval; accessor; c_access_label_tvar } -> (
-          let c_access_label_tval = type_value ~tv:c_access_label_tval ~substs in
-          C_access_label {c_access_label_tval ; accessor ; c_access_label_tvar}
+      | C_access_label { c_access_label_record_type; accessor; c_access_label_tvar } -> (
+          let c_access_label_record_type = type_value ~tv:c_access_label_record_type ~substs in
+          C_access_label {c_access_label_record_type ; accessor ; c_access_label_tvar}
         )
+      | c -> c
 
     and typeclass ~tc ~substs =
       List.map (List.map (fun tv -> type_value ~tv ~substs)) tc

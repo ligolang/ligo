@@ -170,7 +170,7 @@ let dispatch_buy () =
         Memory_proto_alpha.Protocol.Alpha_context.Tez.of_mutez @@ Int64.of_int 0 in
       let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~sender:second_contract () in
       Assert.assert_fail (test_internal "could buy without money") @@
-        expect_eq_n_pos_small ~options program "buy_single" make_input make_expected in
+        expect_eq_n_pos_small ~options program "main" make_input make_expected in
     ok ()
   in
   ok ()

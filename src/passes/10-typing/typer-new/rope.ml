@@ -34,8 +34,10 @@ module SimpleRope : sig
   val rope : 'a -> 'a t
   val pair :
     'a t -> 'a t -> 'a t
+  val singleton : 'a -> 'a t
   val list_of_rope : 'a t -> 'a list
   val rope_of_list : 'a list -> 'a t
+  val pp : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
 end = struct
   open Rope
   type 'a t = ('a, unit) rope
@@ -44,4 +46,9 @@ end = struct
   let pair x y = pair ~merge:(fun () () -> ()) ~default:() x y
   let list_of_rope = list_of_rope
   let rope_of_list l = rope_of_list ~merge:(fun () () -> ()) ~default:() ~info:(fun _ -> ()) l
+  let singleton x = Leaf ((), x)
+  let rec pp p ppf = function
+      Empty -> Format.fprintf ppf "ø"
+    | Leaf ((), x) -> Format.fprintf ppf "%a" p x
+    | Pair ((), l, r) -> Format.fprintf ppf "⟦%a,%a⟧" (pp p) l (pp p) r
 end

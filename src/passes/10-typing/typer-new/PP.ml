@@ -7,6 +7,8 @@ type 'a pretty_printer = Format.formatter -> 'a -> unit
 
 let type_constraint_ : _ -> type_constraint_simpl -> unit = fun ppf ->
   function
+  |SC_Apply _ -> fprintf ppf "Apply"
+  |SC_Abs _ -> fprintf ppf "Abs"
   |SC_Constructor { tv; c_tag; tv_list=_ } ->
     let ct = match c_tag with
       | C_arrow        -> "arrow"
@@ -29,6 +31,9 @@ let type_constraint_ : _ -> type_constraint_simpl -> unit = fun ppf ->
       | C_operation    -> "operation"
       | C_contract     -> "contract"
       | C_chain_id     -> "chain_id"
+      | C_bls12_381_g1 -> "bls12_381_g1"
+      | C_bls12_381_g2 -> "bls12_381_g2"
+      | C_bls12_381_fr -> "bls12_381_fr"
     in
     fprintf ppf "CTOR %a %s()" Var.pp tv ct
   |SC_Alias       { a; b } -> fprintf ppf "Alias %a %a" Var.pp a Var.pp b

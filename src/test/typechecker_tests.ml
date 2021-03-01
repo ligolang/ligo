@@ -167,10 +167,10 @@ let typeclass () =
   let mutez = wrap (Todo "test") @@ P_constant { p_ctor_tag = C_mutez ; p_ctor_args = [] } in
   let args = [c ; d] in
   let tc_ok : typeclass = [[nat ; mutez]; [mutez ; nat]] in
-  let tcc_ok = make_sc_typeclass tc_ok args in
+  let tcc_ok = make_sc_typeclass ~bound:[] ~constraints:[] () tc_ok args in
   let%bind () = test_checker [tcc_ok] in
   let tc_nok : typeclass = [[nat ; nat]; [mutez ; nat]] in
-  let tcc_nok = make_sc_typeclass tc_nok args in
+  let tcc_nok = make_sc_typeclass ~bound:[] ~constraints:[] () tc_nok args in
   let%bind () = test_checker_neg [tcc_nok] in
   ok ()
 
@@ -180,7 +180,7 @@ let forall () =
   (* a = map(c,d) , b = a, c = nat, d = mutez, e = map(f, d), f = nat , g = variant | Foo | Bar , j = record {baz goo} *)
   let unwrap (f:type_value) = match f.wrap_content with P_forall x -> x | _ -> failwith "test internal failure" in
   (* let d = wrap (Todo "test") @@ P_variable d in *)
-  let tc x = tc "test" [x] [ [nat] ; [int] ] in
+  let tc x = tc "test" ~bound:[] ~constraints:[] () [x] [ [nat] ; [int] ] in
   let map_lhs x = wrap (Todo "test") @@ P_constant { p_ctor_tag = C_map ; p_ctor_args = [ x ; mutez ] } in
   let forall = forall_tc "x" @@ fun x -> [tc x] => map_lhs x in
   let forall_sc = make_sc_poly a (unwrap forall) in

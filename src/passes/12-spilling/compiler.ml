@@ -619,7 +619,7 @@ and compile_expression ?(module_env = SMap.empty) (ae:AST.expression) : (express
   | E_module_accessor {module_name; element} -> (
     let module_var = module_name in
     let%bind module_ =
-      trace_option (corner_case ~loc:__LOC__ "Mod_alias: This program shouldn't type")
+      trace_option (corner_case ~loc:__LOC__ "Module_accessor: This program shouldn't type")
       @@ SMap.find_opt module_var module_env in
     (* TODO E_module_accessor should not be this way *)
     let rec aux (element : AST.expression) =

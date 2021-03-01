@@ -293,6 +293,10 @@ and type_expression' : ?tv_opt:O.type_expression -> environment -> _ O'.typer_st
     let%bind (tv' : Environment.element) =
       trace_option (unbound_variable e name ae.location)
       @@ Environment.get_opt name e in
+    Format.printf "wrap variable : %a, %a\n%!"
+      O.PP.expression_variable name
+      O.PP.environment_element tv'
+      ;
     let wrapped = Wrap.variable name tv'.type_value in
     let expr' = e_variable name in
     return_wrapped expr' e state [] wrapped
@@ -351,7 +355,7 @@ and type_expression' : ?tv_opt:O.type_expression -> environment -> _ O'.typer_st
     return_wrapped (E_constant {cons_name;arguments=lst}) e state constraints wrapped
 
   | E_lambda lambda ->
-    let%bind lambda,e,state,constraints,wrapped = type_lambda e state lambda in
+    let%bind lambda,_,state,constraints,wrapped = type_lambda e state lambda in
     return_wrapped (E_lambda lambda) e state constraints wrapped
 
   | E_application {lamb;args} ->
@@ -368,7 +372,7 @@ and type_expression' : ?tv_opt:O.type_expression -> environment -> _ O'.typer_st
     let%bind (e,state, element),constraints = self e state element in
     (* Check that the element in the variant as the proper type *)
     (* TODO: infer the variant or the type of the element ?*)
-    let wrapped = Wrap.constructor element.type_expression c_tv sum_tv in
+    let wrapped = Wrap.constructor constructor element.type_expression c_tv sum_tv in
     return_wrapped (E_constructor {constructor; element}) e state constraints wrapped
 
   | E_matching {matchee;cases} -> (
@@ -426,9 +430,10 @@ and type_expression' : ?tv_opt:O.type_expression -> environment -> _ O'.typer_st
     let%bind rhs_tv_opt = bind_map_option (evaluate_type e) (let_binder.ascr) in
     let%bind (e,state,rhs),c1 = self e state rhs in
     let let_binder = cast_var let_binder.var in
-    let e = Environment.add_ez_declaration let_binder rhs e in
-    let%bind (e,state,let_result),c2 = self e state let_result in
-    let wrapped = Wrap.let_in rhs.type_expression rhs_tv_opt let_result.type_expression in
+    let fresh = Typesystem.Core.fresh_for_expr_var let_binder in
+    let e = Environment.add_ez_binder (let_binder) (t_variable fresh) e in
+    let%bind (_,state,let_result),c2 = self e state let_result in
+    let wrapped = Wrap.let_in fresh rhs.type_expression rhs_tv_opt let_result.type_expression in
     return_wrapped (E_let_in {let_binder; rhs; let_result; inline}) e state (c1@c2) wrapped
 
   | E_type_in {type_binder; rhs ; let_result} ->
@@ -502,7 +507,7 @@ and type_lambda e state {
       let%bind output_type' = bind_map_option (evaluate_type e) output_type in
       let binder = cast_var binder.var in
 
-      let fresh : O.type_expression = t_variable (Wrap.fresh_binder ()) in
+      let fresh : O.type_expression = t_variable (Typesystem.Core.fresh_for_expr_var binder) in
       let e' = Environment.add_ez_binder (binder) fresh e in
 
       let%bind (e, state', result),constraints = type_expression' e' state result in
@@ -551,17 +556,17 @@ and type_match : environment -> _ O'.typer_state -> O.type_expression -> I.match
     | Match_variant lst ->
       let%bind (e, state, c), cases =
         let aux (e,state,c) ({constructor; proj; body}: I.match_variant) =
-          let%bind (constructor_type , variant) =
+          let%bind (constructor_type , _variant) =
             trace_option (unbound_constructor e constructor loc) @@
             Environment.get_constructor constructor e in
           let pattern = cast_var proj in
           let e = Environment.add_ez_binder pattern constructor_type e in
           let%bind (e,state,body),c1 = self e state body in
-          let c2 = Wrap.match_variant constructor variant t in
+          let c2 = Wrap.match_variant constructor ~case:constructor_type t in
           ok ((e, state,c1@c2@c) , ({constructor ; pattern ; body} : O.matching_content_case))
         in
         bind_fold_map_list aux (e,state,[]) lst in
-      (* TODO: check that the variant is complete *)
+      (* TODO: check that the variant is complete, has to do with the unused variant *)
       return e state c @@ O.Match_variant {cases ; tv= t }
 
 (* Apply type_declaration on every node of the AST_core from the root p *)
@@ -611,7 +616,7 @@ and type_and_subst : type a b.
     Format.printf "Substitutions ongoing\n%!";
     let aliases = state.aliases in
     let assignments = state.plugin_states#assignments in
-    let substs : variable: O.type_variable -> _ = fun ~variable ->
+    let substs : variable: O.type_variable -> O.type_content option = fun ~variable ->
       to_option @@
       let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "Looking up var  %a\n" Var.pp variable) in
       let%bind root = Solver.get_alias variable aliases in
@@ -640,6 +645,7 @@ and type_and_subst : type a b.
     let%bind node = apply_substs ~substs node in
     Format.printf "substituting env %a\n%!" Ast_typed.PP.environment env;
     let%bind env  = Typesystem.Misc.Substitution.Pattern.s_environment ~substs env in
+    Format.printf "New env %a\n%!" O.PP.environment env;
     ok (node,env)
   in
   Format.printf "Substritutions done\n%!";
