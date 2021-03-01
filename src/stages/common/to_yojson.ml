@@ -346,6 +346,7 @@ let collect_type = function
   | Map  -> `List [ `String "Map"; `Null]
   | Set  -> `List [ `String "Set"; `Null]
   | List -> `List [ `String "List"; `Null]
+  | Any  -> `List [ `String "Any"; `Null]
 
 let for_each expression {fe_binder;collection;collection_type;fe_body} =
   `Assoc [

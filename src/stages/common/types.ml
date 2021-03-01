@@ -165,6 +165,7 @@ and collect_type =
   | Map
   | Set
   | List
+  | Any
 
 and 'exp while_loop = {
   cond : 'exp ;
