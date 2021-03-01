@@ -727,20 +727,50 @@ let simple_comparator : Location.t -> string -> typer = fun loc s -> typer_2 loc
     ] in
   ok @@ t_bool ()
 
-let rec pair_comparator : Location.t -> string -> typer = fun loc s -> typer_2 loc s @@ fun a b ->
+let rec record_comparator : Location.t -> string -> typer = fun loc s -> typer_2 loc s @@ fun a b ->
   let%bind () =
     Assert.assert_true (uncomparable_types loc a b) @@ eq_1 a b
   in
-  let%bind (a_k, a_v) =
+  let%bind a_r =
     trace_option (comparator_composed loc a) @@
-    get_t_pair a in
-  let%bind (b_k, b_v) = trace_option (expected_pair loc b) @@ get_t_pair b in
-  let%bind _ = simple_comparator loc s [a_k;b_k] None
+    get_t_record a in
+  let%bind b_r = trace_option (expected_variant loc b) @@ get_t_record b in
+  let aux (a,b) : (type_expression, typer_error) result =
+    comparator loc s [a.associated_type;b.associated_type] None
   in
-  comparator loc s [a_v;b_v] None
+  let%bind _ = bind_map_list aux @@ List.combine (LMap.to_list a_r.content) (LMap.to_list b_r.content) in
+  ok @@ t_bool ()
+
+and sum_comparator : Location.t -> string -> typer = fun loc s -> typer_2 loc s @@ fun a b ->
+  let%bind () =
+    Assert.assert_true (uncomparable_types loc a b) @@ eq_1 a b
+  in
+  let%bind a_r =
+    trace_option (comparator_composed loc a) @@
+    get_t_sum a in
+  let%bind b_r = trace_option (expected_variant loc b) @@ get_t_sum b in
+  let aux (a,b) : (type_expression, typer_error) result =
+    comparator loc s [a.associated_type;b.associated_type] None
+  in
+  let%bind _ = bind_map_list aux @@ List.combine (LMap.to_list a_r.content) (LMap.to_list b_r.content) in
+  ok @@ t_bool ()
+
+and option_comparator : Location.t -> string -> typer = fun loc s -> typer_2 loc s @@ fun a_opt b_opt ->
+  let%bind () =
+    Assert.assert_true (uncomparable_types loc a_opt b_opt) @@ eq_1 a_opt b_opt
+  in
+  let%bind a =
+    trace_option (comparator_composed loc a_opt) @@
+    get_t_option a_opt in
+  let%bind b = trace_option (expected_option loc b_opt) @@ get_t_option b_opt in
+  comparator loc s [a;b] None
 
 and comparator : Location.t -> string -> typer = fun loc s -> typer_2 loc s @@ fun a b ->
-  bind_or (pair_comparator loc s [a;b] None, simple_comparator loc s [a;b] None)
+
+  bind_or (
+    bind_or (record_comparator loc s [a;b] None, option_comparator loc s [a;b] None),
+    bind_or (sum_comparator  loc s [a;b] None, simple_comparator loc s [a;b] None)
+  )
 
 let ticket loc = typer_2 loc "TICKET" @@ fun dat amt ->
   let%bind () = assert_eq loc amt (t_nat ()) in
