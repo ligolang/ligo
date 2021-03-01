@@ -39,12 +39,19 @@ module M = functor (Type_variable : sig type t end) (Type_variable_abstraction :
     }
   let heuristic_name = "specialize1"
 
+  let pp_selector_output ppf {poly;a_k_var} =
+    Format.fprintf ppf "{poly : %a; a_k_var :%a}"
+      PP.c_poly_simpl_short poly
+      PP.c_constructor_simpl_short a_k_var
+
  let selector : (type_variable -> type_variable) -> type_constraint_simpl -> flds -> selector_output list =
   (* find two rules with the shape (x = forall b, d) and x = k'(var' …) or vice versa *)
   (* TODO: do the same for two rules with the shape (a = forall b, d) and tc(a…) *)
   (* TODO: do the appropriate thing for two rules with the shape (a = forall b, d) and (a = forall b', d') *)
   fun repr type_constraint_simpl ((module Indexes) : flds)->
   match type_constraint_simpl with
+    SC_Apply _ -> []
+  | SC_Abs   _ -> []
   | SC_Constructor c                ->
     (* vice versa *)
     let other_cs = MultiSet.elements @@ Grouped_by_variable.get_polys_by_lhs (repr c.tv) Indexes.grouped_by_variable in
@@ -86,6 +93,7 @@ let get_referenced_constraints ({ poly; a_k_var } : selector_output) : type_cons
 
 let propagator : (selector_output , typer_error) Type_variable_abstraction.Solver_types.propagator =
   fun selected repr ->
+  Format.printf "In specialize propagator for %a\n%!" pp_selector_output selected;
   let a = selected.poly in
   let b = selected.a_k_var in
 
@@ -113,6 +121,7 @@ let propagator : (selector_output , typer_error) Type_variable_abstraction.Solve
         {
           remove_constraints = [ SC_Poly a ];
           add_constraints = eqs;
+          add_constraints_simpl = [];
           proof_trace = Axiom Axioms.specialize
         }
       ]
@@ -139,26 +148,13 @@ open Ast_typed.Types
 open Solver_types
 
 module Compat = struct
-  module All_plugins = Database_plugins.All_plugins.M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
+  include MM
   open All_plugins
-  let heuristic_name = MM.heuristic_name
-  let selector repr c (flds : < grouped_by_variable : type_variable Grouped_by_variable.t ; .. >) =
-    let module Flds = struct
-      let grouped_by_variable : type_variable Grouped_by_variable.t = flds#grouped_by_variable
-    end
-    in
-    MM.selector repr c (module Flds)
-  let alias_selector a b (flds : < grouped_by_variable : type_variable Grouped_by_variable.t ; .. >) =
-    let module Flds = struct
-      let grouped_by_variable : type_variable Grouped_by_variable.t = flds#grouped_by_variable
-    end
-    in
-    MM.alias_selector a b (module Flds)
-  let get_referenced_constraints = MM.get_referenced_constraints
-  let propagator = MM.propagator
-  let printer = MM.printer
-  let printer_json = MM.printer_json
-  let comparator = MM.comparator
+  let compat_flds flds : MM.flds = (module struct
+    let grouped_by_variable : type_variable Grouped_by_variable.t = flds#grouped_by_variable
+  end)
+  let selector repr c flds = MM.selector repr c (compat_flds flds)
+  let alias_selector a b flds = MM.alias_selector a b (compat_flds flds)
 end
 let heuristic = Heuristic_plugin Compat.{ heuristic_name; selector; alias_selector; get_referenced_constraints; propagator; printer; printer_json; comparator }
 type nonrec selector_output = MM.selector_output = {
@@ -166,4 +162,6 @@ type nonrec selector_output = MM.selector_output = {
       a_k_var : c_constructor_simpl ;
     }
 let selector = Compat.selector
+let propagator = Compat.propagator
+let comparator = Compat.comparator
 

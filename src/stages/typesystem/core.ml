@@ -48,20 +48,23 @@ let type_expression'_of_simple_c_constant : constant_tag * type_expression list 
   | C_arrow     , [x ; y] -> Some (Ast_typed.T_arrow {type1=x ; type2=y}) (* For now, the arrow type constructor is special *)
   | (C_contract | C_option | C_list | C_set | C_map | C_big_map | C_arrow ), _ -> None
 
-  | C_unit      , [] -> return (Ast_typed.t_unit ())
-  | C_string    , [] -> return (Ast_typed.t_string ())
-  | C_bytes     , [] -> return (Ast_typed.t_bytes ())
-  | C_nat       , [] -> return (Ast_typed.t_nat ())
-  | C_int       , [] -> return (Ast_typed.t_int ())
-  | C_mutez     , [] -> return (Ast_typed.t_mutez ())
-  | C_operation , [] -> return (Ast_typed.t_operation ())
-  | C_address   , [] -> return (Ast_typed.t_address ())
-  | C_key       , [] -> return (Ast_typed.t_key ())
-  | C_key_hash  , [] -> return (Ast_typed.t_key_hash ())
-  | C_chain_id  , [] -> return (Ast_typed.t_chain_id ())
-  | C_signature , [] -> return (Ast_typed.t_signature ())
-  | C_timestamp , [] -> return (Ast_typed.t_timestamp ())
-  | (C_unit | C_string | C_bytes | C_nat | C_int | C_mutez | C_operation | C_address | C_key | C_key_hash | C_chain_id | C_signature | C_timestamp), _::_ ->
+  | C_unit         , [] -> return (Ast_typed.t_unit ())
+  | C_string       , [] -> return (Ast_typed.t_string ())
+  | C_bytes        , [] -> return (Ast_typed.t_bytes ())
+  | C_nat          , [] -> return (Ast_typed.t_nat ())
+  | C_int          , [] -> return (Ast_typed.t_int ())
+  | C_mutez        , [] -> return (Ast_typed.t_mutez ())
+  | C_operation    , [] -> return (Ast_typed.t_operation ())
+  | C_address      , [] -> return (Ast_typed.t_address ())
+  | C_key          , [] -> return (Ast_typed.t_key ())
+  | C_key_hash     , [] -> return (Ast_typed.t_key_hash ())
+  | C_chain_id     , [] -> return (Ast_typed.t_chain_id ())
+  | C_signature    , [] -> return (Ast_typed.t_signature ())
+  | C_timestamp    , [] -> return (Ast_typed.t_timestamp ())
+  | C_bls12_381_g1 , [] -> return (Ast_typed.t_bls12_381_g1 ())
+  | C_bls12_381_g2 , [] -> return (Ast_typed.t_bls12_381_g1 ())
+  | C_bls12_381_fr , [] -> return (Ast_typed.t_bls12_381_g1 ())
+  | (C_unit | C_string | C_bytes | C_nat | C_int | C_mutez | C_operation | C_address | C_key | C_key_hash | C_chain_id | C_signature | C_timestamp | C_bls12_381_g1 | C_bls12_381_g2 | C_bls12_381_fr), _::_ ->
       None
 
 let type_expression'_of_simple_c_row : Ast_typed.row_tag * Ast_typed.row_variable Ast_typed.label_map -> Ast_typed.type_content =

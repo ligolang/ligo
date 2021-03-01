@@ -200,14 +200,14 @@ let typeVariableSet = fun ppf s   ->
         fprintf ppf "(Var %a)" Var.pp k in
       fprintf ppf "typeVariableSet [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
 let constraint_identifier_set = fun ppf s   ->
-      let lst = List.sort (fun (ConstraintIdentifier a) (ConstraintIdentifier b) -> Int64.compare a b) (RedBlackTrees.PolySet.elements s) in
-      let aux ppf (ConstraintIdentifier k) =
+      let lst = List.sort (fun (ConstraintIdentifier.T a) (ConstraintIdentifier.T b) -> Int64.compare a b) (RedBlackTrees.PolySet.elements s) in
+      let aux ppf (ConstraintIdentifier.T k) =
         fprintf ppf "(ConstraintIdentifier %Li)" k in
       fprintf ppf "constraint_identifier_set [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
 
 let identifierMap = fun f ppf idmap ->
-      let lst = List.sort (fun (ConstraintIdentifier a, _) (ConstraintIdentifier b, _) -> Int64.compare a b) (RedBlackTrees.PolyMap.bindings idmap) in
-      let aux ppf (ConstraintIdentifier k, v) =
+      let lst = List.sort (fun (ConstraintIdentifier.T a, _) (ConstraintIdentifier.T b, _) -> Int64.compare a b) (RedBlackTrees.PolyMap.bindings idmap) in
+      let aux ppf (ConstraintIdentifier.T k, v) =
         fprintf ppf "(ConstraintIdentifier %Li, %a)" k f v in
       fprintf ppf "typeVariableMap [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
 
@@ -225,26 +225,29 @@ let poly_unionfind = (fun f ppf p   ->
   fprintf ppf "UnionFind [@,@[<hv 2> %a @]@,]" aux2 lst)
 
 let constant_tag ppf c_tag = match c_tag with
-  | C_arrow     -> fprintf ppf "C_arrow"
-  | C_option    -> fprintf ppf "C_option"
-  | C_map       -> fprintf ppf "C_map"
-  | C_big_map   -> fprintf ppf "C_big_map"
-  | C_list      -> fprintf ppf "C_list"
-  | C_set       -> fprintf ppf "C_set"
-  | C_unit      -> fprintf ppf "C_unit"
-  | C_string    -> fprintf ppf "C_string"
-  | C_nat       -> fprintf ppf "C_nat"
-  | C_mutez     -> fprintf ppf "C_mutez"
-  | C_timestamp -> fprintf ppf "C_timestamp"
-  | C_int       -> fprintf ppf "C_int"
-  | C_address   -> fprintf ppf "C_address"
-  | C_bytes     -> fprintf ppf "C_bytes"
-  | C_key_hash  -> fprintf ppf "C_key_hash"
-  | C_key       -> fprintf ppf "C_key"
-  | C_signature -> fprintf ppf "C_signature"
-  | C_operation -> fprintf ppf "C_operation"
-  | C_contract  -> fprintf ppf "C_contract"
-  | C_chain_id  -> fprintf ppf "C_chain_id"
+  | C_arrow        -> fprintf ppf "C_arrow"
+  | C_option       -> fprintf ppf "C_option"
+  | C_map          -> fprintf ppf "C_map"
+  | C_big_map      -> fprintf ppf "C_big_map"
+  | C_list         -> fprintf ppf "C_list"
+  | C_set          -> fprintf ppf "C_set"
+  | C_unit         -> fprintf ppf "C_unit"
+  | C_string       -> fprintf ppf "C_string"
+  | C_nat          -> fprintf ppf "C_nat"
+  | C_mutez        -> fprintf ppf "C_mutez"
+  | C_timestamp    -> fprintf ppf "C_timestamp"
+  | C_int          -> fprintf ppf "C_int"
+  | C_address      -> fprintf ppf "C_address"
+  | C_bytes        -> fprintf ppf "C_bytes"
+  | C_key_hash     -> fprintf ppf "C_key_hash"
+  | C_key          -> fprintf ppf "C_key"
+  | C_signature    -> fprintf ppf "C_signature"
+  | C_operation    -> fprintf ppf "C_operation"
+  | C_contract     -> fprintf ppf "C_contract"
+  | C_chain_id     -> fprintf ppf "C_chain_id"
+  | C_bls12_381_g1 -> fprintf ppf "C_bls12_381_g1"
+  | C_bls12_381_g2 -> fprintf ppf "C_bls12_381_g2"
+  | C_bls12_381_fr -> fprintf ppf "C_bls12_381_fr"
 
 let row_tag ppf = function
     C_record -> fprintf ppf "C_record"
@@ -258,32 +261,42 @@ let rec c_equation ppf {aval; bval} =
     type_value aval
     type_value bval
 
-and c_typeclass ppf {tc_args; typeclass=tc;original_id} =
+and c_typeclass ppf {tc_bound; tc_constraints; tc_args; typeclass=tc;original_id} =
   fprintf ppf "{@,@[<hv 2>
-original_id : %s
+tc_bound : %a;@ tc_constraints : %a;@ original_id : %s
               tc_args : %a ;@
               typeclass : %a
               @]@,}"
-    (match original_id with Some (ConstraintIdentifier x) -> Int64.to_string x | None -> "null")
+    (list_sep_d type_variable) tc_bound
+    (list_sep_d type_constraint) tc_constraints
+    (match original_id with Some (ConstraintIdentifier.T x) -> Int64.to_string x | None -> "null")
     (list_sep_d type_value) tc_args
     typeclass tc
 
-and c_access_label ppf {c_access_label_tval; accessor; c_access_label_tvar} =
+and c_access_label ppf {c_access_label_record_type; accessor; c_access_label_tvar} =
   fprintf ppf "{@,@[<hv 2>
-              c_access_label_tval : %a ;@
+              c_access_label_record_type : %a ;@
               accessor : %a ;@
               c_access_label_tvar : %a
               @]@,}"
-    type_value c_access_label_tval
+    type_value c_access_label_record_type
     label accessor
     type_variable c_access_label_tvar
 
+and c_apply ppf ({ f; arg } : c_apply) =
+  fprintf ppf "{@,@[<hv 2>
+              f : %a
+              arg : %a
+              @]@,}"
+    type_variable f
+    type_variable arg
 
 
 and type_constraint_ ppf = function
   C_equation     eq -> fprintf ppf "%a" c_equation eq
 | C_typeclass    tc -> fprintf ppf "%a" c_typeclass tc
 | C_access_label al -> fprintf ppf "%a" c_access_label al
+| C_apply        ap -> fprintf ppf "%a" c_apply ap
 
 and type_constraint ppf {reason; c} = fprintf ppf "{@,@[<hv 2> reason : %s ;@ c : %a @]@,}" reason type_constraint_ c
 and p_constraints ppf const = fprintf ppf "%a" (list_sep_d type_constraint) const
@@ -322,6 +335,14 @@ and p_row ppf {p_row_tag; p_row_args} =
     row_tag p_row_tag
     (lmap_sep_d row_value) @@ LMap.to_kv_list p_row_args
 
+and p_abs ppf {arg; ret} =
+  fprintf ppf "{@[<hv 2>@ arg: %a;@ ret: %a;@]@ }"
+    type_variable arg
+    type_value ret
+
+and p_constraint ppf {pc} =
+  fprintf ppf "{@[<hv 2>@ pc: %a;@]@ }"
+    type_constraint pc
 
 and row_value : formatter -> row_value -> unit =
   fun ppf { associated_value ; michelson_annotation=_ ; decl_pos } ->
@@ -331,11 +352,14 @@ and row_value : formatter -> row_value -> unit =
 
 
 and type_value_ ppf = function
-  P_forall   fa -> fprintf ppf "%a" p_forall fa
-| P_variable tv -> fprintf ppf "%a" type_variable tv
-| P_constant c  -> fprintf ppf "%a" p_constant c
-| P_apply   app -> fprintf ppf "%a" p_apply app
-| P_row       r -> fprintf ppf "%a" p_row r
+    P_forall    fa -> fprintf ppf "%a" p_forall fa
+  | P_variable  tv -> fprintf ppf "%a" type_variable tv
+  | P_constant   c -> fprintf ppf "%a" p_constant c
+  | P_apply    app -> fprintf ppf "%a" p_apply app
+  | P_row        r -> fprintf ppf "%a" p_row r
+  | P_abs        a -> fprintf ppf "%a" p_abs a
+  | P_constraint c -> fprintf ppf "%a" p_constraint c
+
 and type_value ppf t =
   fprintf ppf "{@,@[<hv 2>
               t : %a
@@ -345,7 +369,7 @@ and type_value ppf t =
     type_value_ t.wrap_content
 
 and typeclass ppf tc = fprintf ppf "%a" (list_sep_d (list_sep_d type_value)) tc
-let c_constructor_simpl ppf ({id_constructor_simpl = ConstraintIdentifier ci; reason_constr_simpl; original_id; tv;c_tag;tv_list} : c_constructor_simpl) =
+let c_constructor_simpl ppf ({id_constructor_simpl = ConstraintIdentifier.T ci; reason_constr_simpl; original_id; tv;c_tag;tv_list} : c_constructor_simpl) =
   fprintf ppf "{@[<hv>
               id_constructor_simpl : %Li; @
               original_id : %s; @
@@ -355,7 +379,7 @@ let c_constructor_simpl ppf ({id_constructor_simpl = ConstraintIdentifier ci; re
               tv_list : %a;@
               @]}"
     ci
-    (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null")
+    (match original_id with Some (ConstraintIdentifier.T x) -> Format.asprintf "%Li" x | None -> "null")
     reason_constr_simpl
     type_variable tv
     constant_tag c_tag
@@ -371,7 +395,7 @@ let c_alias ppf ({reason_alias_simpl;a;b}: c_alias) =
     type_variable a
     type_variable b
 
-let c_poly_simpl ppf ({id_poly_simpl = ConstraintIdentifier ci; reason_poly_simpl; original_id; tv; forall}) =
+let c_poly_simpl ppf ({id_poly_simpl = ConstraintIdentifier.T ci; reason_poly_simpl; original_id; tv; forall}) =
   fprintf ppf "{@,@[<hv 2>
               id_poly_simpl : %Li; @
               original_id : %s; @
@@ -380,26 +404,30 @@ let c_poly_simpl ppf ({id_poly_simpl = ConstraintIdentifier ci; reason_poly_simp
               forall : %a
               @]@,}"
     ci
-    (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null")
+    (match original_id with Some (ConstraintIdentifier.T x) -> Format.asprintf "%Li" x | None -> "null")
     reason_poly_simpl
     type_variable tv
     p_forall forall
 
-let c_typeclass_simpl ppf ({id_typeclass_simpl = ConstraintIdentifier ci; reason_typeclass_simpl; original_id; tc; args}) =
+let rec c_typeclass_simpl ppf ({tc_bound; tc_constraints; id_typeclass_simpl = ConstraintIdentifier.T ci; reason_typeclass_simpl; original_id; tc; args}) =
   fprintf ppf "{@,@[<hv 2>
+              tc_bound: %a; @
+              tc_constraints: %a; @
               id_typeclass_simpl : %Li; @
               original_id : %s; @
               reason_typeclass_simpl : %s; @
               tc : %a ;@
               args : %a
               @]@,}"
+    (list_sep_d type_variable) tc_bound
+    (list_sep_d type_constraint_simpl) tc_constraints
     ci
-    (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null")
+    (match original_id with Some (ConstraintIdentifier.T x) -> Format.asprintf "%Li" x | None -> "null")
     reason_typeclass_simpl
     typeclass tc
     (list_sep_d type_variable) args
 
-let c_access_label_simpl ppf { id_access_label_simpl = ConstraintIdentifier ci ; reason_access_label_simpl ; record_type ; label = l ; tv } =
+and c_access_label_simpl ppf { id_access_label_simpl = ConstraintIdentifier.T ci ; reason_access_label_simpl ; record_type ; label = l ; tv } =
   fprintf ppf "{@,@[<hv 2>
               id_access_label_simpl : %Li; @
               reason_access_label_simpl : %s; @
@@ -413,20 +441,20 @@ let c_access_label_simpl ppf { id_access_label_simpl = ConstraintIdentifier ci ;
     label l
     type_variable tv
 
-let constraint_identifier ppf (ConstraintIdentifier ci) =
+and constraint_identifier ppf (ConstraintIdentifier.T ci) =
   fprintf ppf "ConstraintIdentifier %Li" ci
-let constraint_identifierMap = fun f ppf tvmap   ->
+and constraint_identifierMap = fun f ppf tvmap   ->
       let lst = RedBlackTrees.PolyMap.bindings tvmap in
       let aux ppf (k, v) =
         fprintf ppf "(%a, %a)" constraint_identifier k f v in
       fprintf ppf "typeVariableMap [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
 
-let row_variable : formatter -> row_variable -> unit =
+and row_variable : formatter -> row_variable -> unit =
   fun ppf { associated_variable ; michelson_annotation=_ ; decl_pos } ->
     fprintf ppf "{associated_variable %a ; pos %i}"
       type_variable associated_variable
       decl_pos
-let c_row_simpl ppf ({id_row_simpl = ConstraintIdentifier ci; reason_row_simpl; original_id; tv; r_tag; tv_map}) =
+and c_row_simpl ppf ({id_row_simpl = ConstraintIdentifier.T ci; reason_row_simpl; original_id; tv; r_tag; tv_map}) =
   fprintf ppf "{@,@[<hv 2>
               id_row_simpl : %Li; @
               original_id : %s; @
@@ -436,13 +464,52 @@ let c_row_simpl ppf ({id_row_simpl = ConstraintIdentifier ci; reason_row_simpl; 
               tv_map : %a
               @]@,}"
     ci
-    (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null")
+    (match original_id with Some (ConstraintIdentifier.T x) -> Format.asprintf "%Li" x | None -> "null")
     reason_row_simpl
     type_variable tv
     row_tag r_tag
     (lmap_sep_d row_variable) @@ LMap.to_kv_list tv_map
 
-let type_constraint_simpl ppf (tc: type_constraint_simpl) = match tc with
+and c_apply_simpl ppf { id_apply_simpl = ConstraintIdentifier.T ci ; reason_apply_simpl ; f; arg } =
+  fprintf ppf "{@,@[<hv 2>
+              id_apply_simpl : %Li; @
+              reason_apply_simpl : %s; @
+              f : %a
+              arg : %a
+              @]@,}"
+    ci
+    reason_apply_simpl
+    type_variable f
+    type_variable arg
+
+and c_apply_simpl_short ppf { id_apply_simpl = _ ; reason_apply_simpl = _ ; f ; arg } =
+  fprintf ppf "%a(%a)"
+    type_variable f
+    type_variable arg
+
+and c_abs_simpl ppf { id_abs_simpl = ConstraintIdentifier.T ci ; reason_abs_simpl ; tv; param; body } =
+  fprintf ppf "{@,@[<hv 2>
+              id_access_label_simpl : %Li; @
+              reason_access_label_simpl : %s; @
+              tv : %a ;@
+              param : %a
+              body : %a
+              @]@,}"
+    ci
+    reason_abs_simpl
+    type_variable tv
+    type_variable param
+    type_value body
+
+and c_abs_simpl_short ppf { id_abs_simpl = _ ; reason_abs_simpl = _ ; tv; param ; body } =
+  fprintf ppf "%a = λ%a, %a"
+    type_variable tv
+    type_variable param
+    type_value body
+
+and type_constraint_simpl ppf (tc: type_constraint_simpl) = match tc with
+  | SC_Apply       a -> fprintf ppf "SC_Constructor (%a)" c_apply_simpl a
+  | SC_Abs         a -> fprintf ppf "SC_Constructor (%a)" c_abs_simpl a
   | SC_Constructor c -> fprintf ppf "SC_Constructor (%a)" c_constructor_simpl c
   | SC_Alias       a -> fprintf ppf "SC_Alias (%a)" c_alias a
   | SC_Poly        p -> fprintf ppf "SC_Poly (%a)" c_poly_simpl p
@@ -450,7 +517,7 @@ let type_constraint_simpl ppf (tc: type_constraint_simpl) = match tc with
   | SC_Access_label l -> fprintf ppf "SC_Access_label (%a)" c_access_label_simpl l
   | SC_Row         r -> fprintf ppf "SC_Row (%a)" c_row_simpl r
 
-let constraint_identifier ppf (ConstraintIdentifier ci) =
+let constraint_identifier ppf (ConstraintIdentifier.T ci) =
   fprintf ppf "ConstraintIdentifier %Li" ci
 
 
@@ -476,14 +543,16 @@ let axiom ppf = function |HandWaved s -> fprintf ppf "HandWaved %s" s
 let proof_trace ppf = function
   Axiom a -> fprintf ppf "Axiom %a" axiom a
 
-let update ppf {remove_constraints;add_constraints;proof_trace=x} =
+let update ppf {remove_constraints;add_constraints;add_constraints_simpl;proof_trace=x} =
   fprintf ppf "{@,@[<hv 2>
               remove_constraints : %a ;@
               add_constraints : %a ;@
+              add_constraints_simpl : %a ;@
               proof_trace : %a
               @]@,}"
     (list type_constraint_simpl) remove_constraints
     (list type_constraint) add_constraints
+    (list type_constraint_simpl) add_constraints_simpl
     proof_trace x
 
 let updates_list ppf = fprintf ppf "%a" (list (list update))

@@ -18,7 +18,9 @@ module All_vars(Plugins : Plugins) = struct
       aux1
       (Plugin_states.Assignments.bindings (Plugin_states.assignments state.plugin_states)#assignments)
     in
-    let aux = function
+    let type_constraint_simpl_all_vars = function
+    | SC_Apply       a  -> [a.f; a.arg]                       (* φ(β) *)
+    | SC_Abs         a  -> [a.tv;]                            (* α = λβ.τ *)
     | SC_Constructor k  -> k.tv :: k.tv_list                  (* α = ctor(β, …) *)
     | SC_Alias       al -> [al.a ; al.b]                      (* α = β *)
     (* the binder β is not a unification variable of the program,
@@ -31,7 +33,7 @@ module All_vars(Plugins : Plugins) = struct
     | SC_Access_label l  -> [l.tv; l.record_type]                   (* TC(α, …) *)
     | SC_Row         r  -> r.tv :: List.map (fun {associated_variable} -> associated_variable) (LMap.to_list r.tv_map)      (* α = row(l -> β, …) *)
     in
-    let from_constraints = List.flatten @@ List.map aux @@ PolySet.elements state.all_constraints in
+    let from_constraints = List.flatten @@ List.map type_constraint_simpl_all_vars @@ PolySet.elements state.all_constraints in
     let uniq lst = PolySet.elements (PolySet.add_list lst (PolySet.create ~cmp:Var.compare)).set in
     uniq (from_aliases @ from_assignments @ from_constraints)
 end

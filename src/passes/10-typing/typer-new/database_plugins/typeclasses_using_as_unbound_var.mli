@@ -6,9 +6,9 @@ module M : functor
 sig
   open Type_variable_abstraction.Types
   include INDEXER_PLUGIN_TYPE(Type_variable)(Type_variable_abstraction).S
-  type ('type_variable, 'a) state = < typeclasses_constraining : 'type_variable t ; .. > as 'a
+  type ('type_variable, 'a) state = < typeclasses_using_as_unbound_var : 'type_variable t ; .. > as 'a
 
-  module type STATE = sig val typeclasses_constraining : Type_variable.t t end
+  module type STATE = sig val typeclasses_using_as_unbound_var : Type_variable.t t end
   val get : Type_variable.t -> (module STATE) -> c_typeclass_simpl MultiSet.t
   val get_list : Type_variable.t -> (module STATE) -> c_typeclass_simpl list
 

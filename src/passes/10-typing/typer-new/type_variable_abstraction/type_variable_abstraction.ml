@@ -1,9 +1,14 @@
 module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> struct
   module type S = sig
+    (* this is dangerous, it ignores repr etc. because it works on type_value *)
+
     module Types : sig
+      module ConstraintIdentifier : sig
+        type t = T of int64
+        val fresh : unit -> t
+      end
       type type_variable = Type_variable.t
-      type p_constraints
-      type constraint_identifier = ConstraintIdentifier of int64
+      type constraint_identifier = ConstraintIdentifier.t
       type constant_tag
       type row_tag =
         | C_record    (* ( label , * ) … -> * *)
@@ -18,6 +23,13 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
         | P_constant     of p_constant
         | P_apply        of p_apply
         | P_row          of p_row
+          (* new stuff: *)
+        | P_abs          of p_abs
+        | P_constraint   of p_constraint
+      
+      and p_abs = { arg: type_variable; ret: type_value }
+      and p_constraint = { pc: type_constraint }
+      and p_constraints = type_constraint list
       and p_forall = {
         binder      : type_variable ;
         constraints : p_constraints ;
@@ -80,6 +92,8 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
         reason_typeclass_simpl : string ;
         id_typeclass_simpl : constraint_identifier ;
         original_id        : constraint_identifier option ;
+        tc_bound           : type_variable list; (* NOTE: these variables are disjoint from unification variables; using repr on them is harmless but useless *)
+        tc_constraints     : type_constraint_simpl list;
         tc   : typeclass          ;
         args : type_variable list ;
       }
@@ -97,7 +111,22 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
         tv     : type_variable ;
         forall : p_forall ;
       }
+      and c_apply_simpl = {
+        id_apply_simpl : constraint_identifier ;
+        reason_apply_simpl : string ;
+        f: type_variable;
+        arg: type_variable;
+      }
+      and c_abs_simpl = {
+        id_abs_simpl : constraint_identifier ;
+        reason_abs_simpl : string ;
+        tv: type_variable;
+        param: type_variable;
+        body: type_value;
+      }
       and type_constraint_simpl =
+        | SC_Apply        of c_apply_simpl
+        | SC_Abs          of c_abs_simpl
         | SC_Constructor  of c_constructor_simpl
         | SC_Alias        of c_alias
         | SC_Poly         of c_poly_simpl
@@ -114,6 +143,7 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
         | C_equation of c_equation
         | C_typeclass of c_typeclass
         | C_access_label of c_access_label
+        | C_apply of c_apply
 
       and c_equation = {
         aval : type_value ;
@@ -123,18 +153,25 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
       and tc_args = type_value list
 
       and c_typeclass = {
+        tc_bound : type_variable list; (* NOTE: these variables are disjoint from unification variables; using repr on them is harmless but useless *)
+        tc_constraints : type_constraint list;
         tc_args : tc_args ;
         original_id : constraint_identifier option ;
         typeclass : typeclass ;
       }
 
       and c_access_label = {
-        c_access_label_tval : type_value ;
+        c_access_label_record_type : type_value ;
         accessor : label ;
         c_access_label_tvar : type_variable ;
       }
 
-      type type_constraint = {
+      and c_apply = {
+        f: type_variable;
+        arg: type_variable;
+      }
+
+      and type_constraint = {
         reason : string ;
         c : type_constraint_ ;
       }
@@ -147,6 +184,7 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
       type update = {
         remove_constraints : type_constraint_simpl list ;
         add_constraints : type_constraint list ;
+        add_constraints_simpl : type_constraint_simpl list ;
         proof_trace : proof_trace ;
       }
       type updates = update list
@@ -159,22 +197,34 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
       type type_expression
       type expression
     end
+    val cast_access_to_simplifier_do_not_do_this_do_not_use_this : (Ast_typed.Types.type_constraint -> Ast_typed.Types.type_constraint_simpl list) -> (Types.type_constraint -> Types.type_constraint_simpl list)
+    module Substitution : sig
+      module Pattern : sig
+        open Types
+        val type_value : tv:type_value -> substs:Type_variable.t * type_value -> type_value
+      end
+    end
 
     module Compare : sig
       open Types
       type 'a comparator = 'a -> 'a -> int
       val (<?) : int -> (unit -> int) -> int
+      val cmp2 : 'a comparator -> 'a -> 'a -> 'b comparator -> 'b -> 'b -> int
       val c_constructor_simpl : c_constructor_simpl comparator
       val c_row_simpl : c_row_simpl comparator
       val c_poly_simpl : c_poly_simpl comparator
       val c_access_label_simpl : c_access_label_simpl comparator
       val c_typeclass_simpl : c_typeclass_simpl comparator
+      val c_apply_simpl : c_apply_simpl comparator
+      val c_abs_simpl : c_abs_simpl comparator
       val constructor_or_row : constructor_or_row comparator
       val label : label comparator
       val constant_tag : constant_tag comparator
       val row_tag : row_tag comparator
       val constraint_identifier : constraint_identifier comparator
       val type_variable : type_variable comparator
+      val type_value : type_value comparator
+      val typeclass  : typeclass comparator
     end
 
     module PP : sig
@@ -183,14 +233,20 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
       val c_constructor_simpl : c_constructor_simpl pretty_printer
       val c_constructor_simpl_short : c_constructor_simpl pretty_printer
       val c_row_simpl : c_row_simpl pretty_printer
+      val c_row_simpl_short : c_row_simpl pretty_printer
       val c_poly_simpl_short : c_poly_simpl pretty_printer
       val c_typeclass_simpl : c_typeclass_simpl pretty_printer
       val c_typeclass_simpl_short : c_typeclass_simpl pretty_printer
       val c_access_label_simpl : c_access_label_simpl pretty_printer
+      val c_access_label_simpl_short : c_access_label_simpl pretty_printer
       val constructor_or_row_short : constructor_or_row pretty_printer
-      val c_row_simpl_short : c_row_simpl pretty_printer
+      val c_apply_simpl_short : c_apply_simpl pretty_printer
+      val c_abs_simpl_short : c_abs_simpl pretty_printer
       val constraint_identifier : constraint_identifier pretty_printer
       val type_variable : type_variable pretty_printer
+      val type_value_short : type_value pretty_printer
+      val type_constraint : type_constraint pretty_printer
+      val type_constraint_simpl_short : type_constraint_simpl pretty_printer
     end
 
     module Yojson : sig
@@ -201,6 +257,8 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
       val c_row_simpl : c_row_simpl json_printer
       val c_poly_simpl : c_poly_simpl json_printer
       val c_typeclass_simpl : c_typeclass_simpl json_printer
+      val c_abs_simpl : c_abs_simpl json_printer
+      val c_apply_simpl : c_apply_simpl json_printer
       val c_access_label_simpl : c_access_label_simpl json_printer
     end
 
@@ -220,6 +278,7 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
         | Forall_TC
         | Builtin_type
         | Propagator_break_ctor of string
+        | Propagator_access_label of string
         | Propagator_specialize_apply
         | Propagator_specialize_tf
         | Propagator_specialize_targ
@@ -325,6 +384,7 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
         | `Typer_pattern_do_not_match of Location.t
         | `Typer_label_do_not_match of Types.label * Types.label * Location.t
         | `Typer_solver_no_progress of string
+        | `Typer_different_typeclasses of Ast_typed.c_typeclass_simpl * Ast_typed.c_typeclass_simpl
       ]
     end
   end

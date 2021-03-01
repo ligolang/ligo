@@ -368,6 +368,7 @@ let access_label_add_and_remove () =
 (* Test mixed + remove + merge *)
 
 let mixed () =
+  Format.printf "In mixed \n%!";
   let repr : type_variable -> type_variable = fun tv -> tv in
   let state = create_state ~cmp:Ast_typed.Compare.type_variable in
 
@@ -376,6 +377,7 @@ let mixed () =
   let state = add_constraint repr state sc_a in
 
   (* Test 1: state is { a -> [sc_a]} *)
+  Format.printf "Test 1\n%!";
   let%bind () = assert_states_equal __LOC__
       ~expected_ctors:[(tva, [sc_a])]
       state in
@@ -386,6 +388,7 @@ let mixed () =
   (* Test 2: state is { a -> [sc_a]; b -> [sc_b]} *)
 
   (* Test 2; state is ctors = {a -> [sc_a]} rows = {b -> [sc_b]} *)
+  Format.printf "Test 2\n%!";
   let%bind () = assert_states_equal __LOC__
       ~expected_ctors:[(tva, [sc_a])]
       ~expected_rows:[(tvb, [sc_b])]
@@ -401,6 +404,7 @@ let mixed () =
   let state = add_constraint repr state sc_c in
 
   (* Test 3; state is ctors = {a -> [sc_a]} rows = {b -> [sc_b]} polys = {c -> [sc_c]} *)
+  Format.printf "Test 3\n%!";
   let%bind () = assert_states_equal __LOC__
       ~expected_ctors:[(tva, [sc_a])]
       ~expected_rows:[(tvb, [sc_b])]
@@ -421,6 +425,7 @@ let mixed () =
   let repr, state = merge ~demoted_repr:tvb ~new_repr:tva repr state in
 
   (* Test 5; state is ctors = {a -> [sc_a]; c -> [sc_c2]} rows = {a -> [sc_b]} polys = {c -> [sc_c]} *)
+  Format.printf "Test 5\n%!";
   let%bind () = assert_states_equal __LOC__
       ~expected_ctors:[(tva, [sc_a]); (tvc, [sc_c2])]
       ~expected_rows:[(tva, [sc_b])]
@@ -432,6 +437,7 @@ let mixed () =
   let state = add_constraint repr state sc_b2 in
 
   (* Test 6; state is ctors = {a -> [sc_a]; c -> [sc_c2]} rows = {a -> [sc_b; sc_b2]} polys = {c -> [sc_c]} *)
+  Format.printf "Test 6\n%!";
   let%bind () = assert_states_equal __LOC__
       ~expected_ctors:[(tva, [sc_a]); (tvc, [sc_c2])]
       ~expected_rows:[(tva, [sc_b; sc_b2])]
@@ -442,6 +448,7 @@ let mixed () =
   let%bind state = remove_constraint repr state sc_b in
 
   (* Test 7; state is ctors = {a -> [sc_a]; c -> [sc_c2]} rows = {a -> [sc_b2]} polys = {c -> [sc_c]} *)
+  Format.printf "Test 7\n%!";
   let%bind () = assert_states_equal __LOC__
       ~expected_ctors:[(tva, [sc_a]); (tvc, [sc_c2])]
       ~expected_rows:[(tva, [sc_b2])]
@@ -453,6 +460,7 @@ let mixed () =
   let state = add_constraint repr state sc_b3 in
 
   (* Test 8; state is ctors = {a -> [sc_a]; c -> [sc_c2]} rows = {a -> [sc_b2; sc_b3]} polys = {c -> [sc_c]} *)
+  Format.printf "Test 8\n%!";
   let%bind () = assert_states_equal __LOC__
       ~expected_ctors:[(tva, [sc_a]); (tvc, [sc_c2])]
       ~expected_rows:[(tva, [sc_b2; sc_b3])]
@@ -463,6 +471,7 @@ let mixed () =
   let%bind state = remove_constraint repr state sc_b2 in
 
   (* Test 9; state is ctors = {a -> [sc_a]; c -> [sc_c2]} rows = {a -> [sc_b3]} polys = {c -> [sc_c]} *)
+  Format.printf "Test 9\n%!";
   let%bind () = assert_states_equal __LOC__
       ~expected_ctors:[(tva, [sc_a]); (tvc, [sc_c2])]
       ~expected_rows:[(tva, [sc_b3])]
@@ -498,11 +507,16 @@ let mixed () =
       ~expected_ctors:[(tva, [sc_a]); (tvc, [sc_c2])]
       ~expected_rows:[(tva, [sc_b3])]
       ~expected_polys:[(tvc, [sc_c])]
-      ~expected_access_labels_by_result_type:[(tva, [sc_acf; sc_bcb]); (tvd, [sc_dcb])]
-      ~expected_access_labels_by_record_type:[(tvc, [sc_acf; sc_bcb; sc_dcb])]
+      ~expected_access_labels_by_result_type:[(tva, [sc_acf; sc_bcb]); (tvc, [sc_dcb])]
+      ~expected_access_labels_by_record_type:[(tvc, [sc_acf; sc_bcb]); (tva, [sc_dcb])]
       state in
 
+  Format.printf "Before remove constraint :%a\n"
+    Ast_typed.PP.type_constraint_simpl_short sc_acf
+    ;
   let%bind state = remove_constraint repr state sc_acf in
+  Format.printf "Afer remove\n%!";
+
 
   let%bind () = assert_states_equal __LOC__
       ~expected_ctors:[(tva, [sc_a]); (tvc, [sc_c2])]

@@ -22,7 +22,7 @@ module Typeclasses_constraining_tests = struct
     bind_list_iter
       (fun (a , b) ->
         let%bind () = tst_assert ("type variable =" ^ Var.to_name (fst a) ^ " " ^ Var.to_name (fst b)) (Ast_typed.Compare.type_variable (fst a) (fst b) = 0) in
-        let%bind () = tst_assert "c_typeclass_simpl set =" (List.compare ~compare:Ast_typed.Compare.c_typeclass_simpl (PolySet.elements (snd a)) (PolySet.elements (snd b)) = 0) in
+        let%bind () = tst_assert "c_typeclass_simpl set =" (List.compare ~compare:Ast_typed.Compare.c_typeclass_simpl (MultiSet.elements (snd a)) (MultiSet.elements (snd b)) = 0) in
         ok ()
       )
       (List.combine sa (List.sort (fun (x,_) (y,_) -> Var.compare x y) sb))
@@ -45,7 +45,7 @@ let tval_map_int_unit = tval C_map [tval C_int []; tval C_unit []]
 let typeclasses_constraining () =
   Printf.printf "0000000000000000000";
   let open Typeclasses_constraining_tests in
-  let set l = (PolySet.add_list l @@ PolySet.create ~cmp:Ast_typed.Compare.c_typeclass_simpl).set in
+  let set l = MultiSet.add_list l @@ MultiSet.create ~cmp:Ast_typed.Compare.c_typeclass_simpl in
   (* create empty state *)
   let state = create_state ~cmp:Ast_typed.Compare.type_variable in
   (* assert state = {} *)
@@ -64,7 +64,7 @@ let typeclasses_constraining () =
     [ tval_unit ; tval_int ] ;
     [ tval_map_int_unit; tval_map_int_unit ] ;
   ] in
-  let tc_bc = make_c_typeclass_simpl 1 None [tvb;tvc] tc_allowed_bc in
+  let tc_bc = make_c_typeclass_simpl ~bound:[] ~constraints:[] () 1 None [tvb;tvc] tc_allowed_bc in
   let state'' = add_constraint repr state' (SC_Typeclass tc_bc) in
   Format.printf "%a" (pp Var.pp) state'';
   (* assert state'' = [], [] because there is no refined typeclass yet *)
@@ -79,7 +79,7 @@ let typeclasses_constraining () =
     [ tval_int ] ;
     [ tval_unit ] ;
   ] in
-  let tc_b = make_c_typeclass_simpl 2 (Some 1) [tvb] tc_allowed_b in
+  let tc_b = make_c_typeclass_simpl ~bound:[] ~constraints:[] ()  2 (Some 1) [tvb] tc_allowed_b in
   let state''' = add_constraint repr state'' (SC_Typeclass tc_b) in
   (* assert state''' = … *)
   let%bind () = same_state2 state''' [

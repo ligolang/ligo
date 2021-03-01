@@ -313,7 +313,7 @@ let check_access_label_simpl : db_access:db_access -> bound_var_assignments:(typ
       ~compare:Compare_renaming.type_value
       ~print_whole:(Ast_typed.PP.type_value)
       c_access_label_tvar_value field_type_value
-  | Ast_typed.Types.C_variant -> failwith "Type error: cannot access field in variant"
+  | Ast_typed.Types.C_variant -> failwith "TODO: cannot access field in variant in typechecker, but works in the rest of the typer."
 
 (* -> check 3c that each constraint is satisfied given the 'x -> part_of_α which was found by the check 3a and "checked all =" by 3b *)
 let check_forall_constraints_are_satisfied : db_access:db_access -> bound_var_assignments:(type_variable, type_variable) PolyMap.t -> bound_info Compare_renaming.tree -> unit result =
@@ -330,10 +330,10 @@ let check_forall_constraints_are_satisfied : db_access:db_access -> bound_var_as
         let aux'' (arg, possible) = match Trace.to_option @@ compare_type_values_using_bound_vars ~db_access ~bound_var_assignments arg possible with None -> false | Some () -> true in
         let aux' args allowed_tuple = List.for_all aux'' (List.combine args allowed_tuple) in
         Assert.assert_true (err_TODO __LOC__) @@ List.exists (aux' c_tc.tc_args) c_tc.typeclass
-      | C_access_label { c_access_label_tval ; accessor ; c_access_label_tvar } ->
+      | C_access_label { c_access_label_record_type ; accessor ; c_access_label_tvar } ->
         (* ....................................................................................................................................... *)
         (
-          match c_access_label_tval.wrap_content with
+          match c_access_label_record_type.wrap_content with
             Ast_typed.Types.P_forall _ -> failwith "fields cannot be accessed on polymorphic values yet, please implement this check"
           | Ast_typed.Types.P_variable tv ->
             (match PolyMap.find_opt tv bound_var_assignments with
@@ -347,8 +347,11 @@ let check_forall_constraints_are_satisfied : db_access:db_access -> bound_var_as
           | Ast_typed.Types.P_apply _ ->
             failwith "p_apply is not currently used, this case should not happen. When it gets used, implement this case."
           | Ast_typed.Types.P_row r -> check_access_label ~db_access ~bound_var_assignments accessor c_access_label_tvar r
+          | Ast_typed.Types.P_abs _ -> failwith "P_abs: unimplemented"
+          | Ast_typed.Types.P_constraint _ -> failwith "P_constraint: unimplemented"
         )
-        (* compare_type_values_using_bound_vars ~db_access ~bound_var_assignments (c_access_label_tval . accessor) == c_access_label_tvar *)
+      | C_apply _ -> failwith "TODO "
+        (* compare_type_values_using_bound_vars ~db_access ~bound_var_assignments (c_access_label_record_type . accessor) == c_access_label_tvar *)
   in
   (* finally, return the map built that way. *)
   let constraints =
@@ -428,6 +431,12 @@ let check_access_label_simpl' : db_access:db_access -> c_access_label_simpl -> u
   | Some (`Row r) ->
     check_access_label_simpl ~db_access ~bound_var_assignments:(PolyMap.create ~cmp:Ast_typed.Compare.type_variable) label tv r
 
+let check_apply : db_access:db_access -> c_apply_simpl -> unit result =
+  fun ~db_access { reason_apply_simpl = _; id_apply_simpl = _; f; arg } ->
+  let _ = db_access, f, arg in
+  let () = Format.printf "TODO: inference of type applications is implemented but not its type checking" in
+  ok ()
+
 let check : type_constraint_simpl list -> type_variable list -> (type_variable -> type_variable) -> (type_variable -> constructor_or_row option) -> unit result =
   fun all_constraints all_vars repr find_assignment ->
     (* Format.printf "Typechecking"; *)
@@ -435,6 +444,8 @@ let check : type_constraint_simpl list -> type_variable list -> (type_variable -
     let db_access : db_access = { repr ; find_assignment ; hashconsed_assignments } in
     let aux : type_constraint_simpl -> unit result = fun c ->
       match c with
+      | SC_Apply       a  -> check_apply ~db_access a
+      | SC_Abs         _  -> failwith "kind error: expected a constraint (kind Constraint) but got a type abstraction (type-level function with kind _ -> _)"
       | SC_Constructor c  -> check_constructor ~db_access c
       | SC_Alias       al -> check_alias ~db_access al
       | SC_Typeclass   tc -> check_typeclass ~db_access tc

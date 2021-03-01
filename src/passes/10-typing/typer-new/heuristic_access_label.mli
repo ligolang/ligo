@@ -3,7 +3,7 @@ open Ast_typed.Types
 open Solver_types
 
 type selector_output = {
-  a_k_var : c_row_simpl ;
+  a_r_map : c_row_simpl ;
   a_var_l : c_access_label_simpl ;
 }
 

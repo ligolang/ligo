@@ -3,6 +3,7 @@ type t =
   | Forall_TC
   | Builtin_type
   | Propagator_break_ctor of string
+  | Propagator_access_label of string
   | Propagator_specialize_apply
   | Propagator_specialize_tf
   | Propagator_specialize_targ

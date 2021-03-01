@@ -56,26 +56,29 @@ let type_expression_tag ty_cont =
 
 let rec constant_tag (ct : constant_tag) =
   match ct with
-    C_arrow     ->  1
-  | C_option    ->  2
-  | C_map       ->  3
-  | C_big_map   ->  4
-  | C_list      ->  5
-  | C_set       ->  6
-  | C_unit      ->  8
-  | C_string    ->  7
-  | C_nat       ->  9
-  | C_mutez     -> 10
-  | C_timestamp -> 11
-  | C_int       -> 12
-  | C_address   -> 13
-  | C_bytes     -> 14
-  | C_key_hash  -> 15
-  | C_key       -> 16
-  | C_signature -> 17
-  | C_operation -> 18
-  | C_contract  -> 19
-  | C_chain_id  ->  0
+    C_arrow        ->  1
+  | C_option       ->  2
+  | C_map          ->  3
+  | C_big_map      ->  4
+  | C_list         ->  5
+  | C_set          ->  6
+  | C_unit         ->  8
+  | C_string       ->  7
+  | C_nat          ->  9
+  | C_mutez        -> 10
+  | C_timestamp    -> 11
+  | C_int          -> 12
+  | C_address      -> 13
+  | C_bytes        -> 14
+  | C_key_hash     -> 15
+  | C_key          -> 16
+  | C_signature    -> 17
+  | C_operation    -> 18
+  | C_contract     -> 19
+  | C_chain_id     -> 20
+  | C_bls12_381_g1 -> 21
+  | C_bls12_381_g2 -> 22
+  | C_bls12_381_fr -> 23
 
 and type_expression a b =
   type_content a.type_content b.type_content
@@ -104,7 +107,7 @@ and rows {content=ca; layout=la} {content=cb; layout=lb} =
     (label_map ~compare:row_element) ca cb
     layout la lb
 
-and constraint_identifier (ConstraintIdentifier a) (ConstraintIdentifier b) =
+and constraint_identifier (ConstraintIdentifier.T a) (ConstraintIdentifier.T b) =
   cmp2
     Int64.compare a b
     (List.compare ~compare:type_expression) [] []
@@ -400,13 +403,16 @@ let type_constraint_tag = function
   | C_equation     _ -> 1
   | C_typeclass    _ -> 2
   | C_access_label _ -> 3
+  | C_apply        _ -> 4
 
 let type_value_tag = function
-  | P_forall   _  -> 1
-  | P_variable _  -> 2
-  | P_constant _  -> 3
-  | P_apply    _  -> 4
-  | P_row      _  -> 5
+  | P_forall     _ -> 1
+  | P_variable   _ -> 2
+  | P_constant   _ -> 3
+  | P_apply      _ -> 4
+  | P_row        _ -> 5
+  | P_abs        _ -> 6
+  | P_constraint _ -> 7
 
 
 let row_tag = function
@@ -473,15 +479,17 @@ and c_equation {aval=a1;bval=b1} {aval=a2;bval=b2} =
 
 and tc_args a = List.compare ~compare:type_value a
 
-and c_typeclass {tc_args=ta;typeclass=ca; original_id=x} {tc_args=tb;typeclass=cb; original_id =y} =
-  cmp3
+and c_typeclass {tc_bound=wa; tc_constraints=za; tc_args=ta;typeclass=ca; original_id=x} {tc_bound=wb; tc_constraints=zb; tc_args=tb;typeclass=cb; original_id =y} =
+  cmp5
+    (List.compare ~compare:type_variable) wa wb
+    (List.compare ~compare:type_constraint) za zb
     tc_args ta tb
     typeclass ca cb
     (Option.compare (constraint_identifier ))x y
 
 and c_access_label
-      {c_access_label_tval=val1;accessor=a1;c_access_label_tvar=var1}
-      {c_access_label_tval=val2;accessor=a2;c_access_label_tvar=var2} =
+      {c_access_label_record_type=val1;accessor=a1;c_access_label_tvar=var1}
+      {c_access_label_record_type=val2;accessor=a2;c_access_label_tvar=var2} =
   cmp3
     type_value val1 val2
     label a1 a2
@@ -490,7 +498,12 @@ and c_access_label
 and tc_allowed t = List.compare ~compare:type_value t
 and typeclass  t = List.compare ~compare:tc_allowed t
 
-let c_constructor_simpl {id_constructor_simpl = ConstraintIdentifier ca;_} {id_constructor_simpl = ConstraintIdentifier cb;_} =
+let c_abs_simpl {id_abs_simpl = ConstraintIdentifier.T ca;_} {id_abs_simpl = ConstraintIdentifier.T cb;_} =
+  Int64.compare ca cb
+let c_apply_simpl {id_apply_simpl = ConstraintIdentifier.T ca;_} {id_apply_simpl = ConstraintIdentifier.T cb;_} =
+  Int64.compare ca cb
+
+let c_constructor_simpl {id_constructor_simpl = ConstraintIdentifier.T ca;_} {id_constructor_simpl = ConstraintIdentifier.T cb;_} =
   Int64.compare ca cb
 
 let c_alias {reason_alias_simpl=ra;a=aa;b=ba} {reason_alias_simpl=rb;a=ab;b=bb} =
@@ -499,27 +512,29 @@ let c_alias {reason_alias_simpl=ra;a=aa;b=ba} {reason_alias_simpl=rb;a=ab;b=bb} 
     type_variable  aa ab
     type_variable  ba bb
 
-let c_poly_simpl {id_poly_simpl = ConstraintIdentifier ca;_} {id_poly_simpl = ConstraintIdentifier cb;_} =
+let c_poly_simpl {id_poly_simpl = ConstraintIdentifier.T ca;_} {id_poly_simpl = ConstraintIdentifier.T cb;_} =
   Int64.compare ca cb
 
-let c_typeclass_simpl_compare_all_fields {reason_typeclass_simpl=ra;id_typeclass_simpl=ida;original_id=oia;tc=ta;args=la} {reason_typeclass_simpl=rb;id_typeclass_simpl=idb;original_id=oib;tc=tb;args=lb} =
-  cmp5
+let rec c_typeclass_simpl_compare_all_fields {tc_bound=ba;tc_constraints=ca;reason_typeclass_simpl=ra;id_typeclass_simpl=ida;original_id=oia;tc=ta;args=la} {tc_bound=bb;tc_constraints=cb;reason_typeclass_simpl=rb;id_typeclass_simpl=idb;original_id=oib;tc=tb;args=lb} =
+  cmp7
+    (List.compare ~compare:type_variable) ba bb
+    (List.compare ~compare:type_constraint_simpl) ca cb
     String.compare ra rb
     constraint_identifier ida idb
     (Option.compare constraint_identifier) oia oib
     (List.compare ~compare:tc_allowed) ta tb
     (List.compare ~compare:type_variable) la lb
 
-let c_typeclass_simpl a b =
+and c_typeclass_simpl a b =
   constraint_identifier a.id_typeclass_simpl b.id_typeclass_simpl
 
-let c_access_label_simpl a b =
+and c_access_label_simpl a b =
   constraint_identifier a.id_access_label_simpl b.id_access_label_simpl
 
-let c_row_simpl {id_row_simpl = ConstraintIdentifier ca;_} {id_row_simpl = ConstraintIdentifier cb;_} =
+and c_row_simpl {id_row_simpl = ConstraintIdentifier.T ca;_} {id_row_simpl = ConstraintIdentifier.T cb;_} =
   Int64.compare ca cb
 
-let constructor_or_row
+and constructor_or_row
     (a : constructor_or_row)
     (b : constructor_or_row) =
   match a,b with
@@ -528,15 +543,17 @@ let constructor_or_row
   | `Constructor _ , `Row _ -> -1
   | `Row _ , `Constructor _ -> 1
 
-let type_constraint_simpl_tag = function
+and type_constraint_simpl_tag = function
   | SC_Constructor _ -> 1
   | SC_Alias       _ -> 2
   | SC_Poly        _ -> 3
   | SC_Typeclass   _ -> 4
-  | SC_Access_label   _ -> 6
   | SC_Row         _ -> 5
+  | SC_Access_label   _ -> 6
+  | SC_Apply       _ -> 7
+  | SC_Abs         _ -> 8
 
-let type_constraint_simpl a b =
+and type_constraint_simpl a b =
   match (a,b) with
   SC_Constructor ca, SC_Constructor cb -> c_constructor_simpl ca cb
 | SC_Alias       aa, SC_Alias       ab -> c_alias aa ab
@@ -544,4 +561,8 @@ let type_constraint_simpl a b =
 | SC_Typeclass   ta, SC_Typeclass   tb -> c_typeclass_simpl ta tb
 | SC_Access_label la, SC_Access_label lb -> c_access_label_simpl la lb
 | SC_Row         ra, SC_Row         rb -> c_row_simpl ra rb
-| a, b -> Int.compare (type_constraint_simpl_tag a) (type_constraint_simpl_tag b)
+| SC_Apply       aa, SC_Apply       ab -> c_apply_simpl aa ab
+| SC_Abs         aa, SC_Abs         ab -> c_abs_simpl aa ab
+| ((SC_Apply _|SC_Abs _|SC_Constructor _|SC_Alias _|SC_Poly _|SC_Typeclass _|SC_Access_label _|SC_Row _) as a),
+  ((SC_Apply _|SC_Abs _|SC_Constructor _|SC_Alias _|SC_Poly _|SC_Typeclass _|SC_Access_label _|SC_Row _) as b) ->
+    Int.compare (type_constraint_simpl_tag a) (type_constraint_simpl_tag b)

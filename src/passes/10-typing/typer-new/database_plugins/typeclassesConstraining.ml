@@ -5,28 +5,21 @@ module M = functor
   (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) ->
 struct
   open Type_variable_abstraction.Types
-  (* TODO: replace (did this to avoid merge conflict) *)
-  module Ast_typed = Type_variable_abstraction
-open Solver_types
 open UnionFind
 open Trace
 
-type 'typeVariable t = ('typeVariable, c_typeclass_simpl PolySet.t) ReprMap.t
+type 'typeVariable t = ('typeVariable, c_typeclass_simpl MultiSet.t) ReprMap.t
 type ('type_variable, 'a) state = < typeclasses_constraining : 'type_variable t ; .. > as 'a
 
 let create_state ~cmp =
-  let merge = PolySet.union in
+  let merge = MultiSet.union in
   ReprMap.create ~cmp ~merge
-
-(* TODO: in all indexer plug-ins *and* heuristic plug-ins, we should
-   use constraint types which are parameterized by the 'type_variable
-   to make it opaque. *)
 
 let register_typeclasses_constraining : _ -> c_typeclass_simpl -> _ t -> _ t =
   fun repr c state ->
   let aux' = function
-      Some set -> PolySet.add c set
-    | None -> PolySet.add c (PolySet.create ~cmp:Ast_typed.Compare.c_typeclass_simpl) in
+      Some set -> MultiSet.add c set
+    | None -> MultiSet.add c (MultiSet.create ~cmp:Type_variable_abstraction.Compare.c_typeclass_simpl) in
   let aux state tv =
     ReprMap.monotonic_update (repr tv) aux' state in
   List.fold_left
@@ -43,14 +36,14 @@ let add_constraint ?debug repr state new_constraint =
 let remove_constraint printer repr state constraint_to_remove =
   Format.printf "remove_constraint for typeclassesConstraining.... \n%!";
     match constraint_to_remove with
-  | Ast_typed.Types.SC_Typeclass constraint_to_remove ->
+  | Type_variable_abstraction.Types.SC_Typeclass constraint_to_remove ->
     let aux' = function
-        Some set -> PolySet.remove constraint_to_remove set
+        Some set -> MultiSet.remove constraint_to_remove set
       | None -> 
-        Format.printf "No set linked to tv";
-        PolySet.create ~cmp:Ast_typed.Compare.c_typeclass_simpl in
+        Format.printf "ERROR: No set linked to tv"; (* TODO: should probably fail at this point. *)
+        MultiSet.create ~cmp:Type_variable_abstraction.Compare.c_typeclass_simpl in
     let aux typeclasses_constrained_by tv =
-      Format.printf "In aux with tv : %a and repr tv : %a\n%!" Ast_typed.PP.type_variable tv printer @@ repr tv;
+      Format.printf "In aux with tv : %a and repr tv : %a\n%!" Type_variable_abstraction.PP.type_variable tv printer @@ repr tv;
       ReprMap.monotonic_update (repr tv) aux' typeclasses_constrained_by in
     let state =
       List.fold_left
@@ -65,9 +58,7 @@ let remove_constraint printer repr state constraint_to_remove =
 
 let merge_aliases : 'old 'new_ . ?debug:(Format.formatter -> 'new_ t -> unit) -> ('old, 'new_) merge_keys -> 'old t -> 'new_ t =
   fun ?debug:_ merge_keys state -> 
-    (* Format.printf "In merge alias for typeclassesConstraining\n%!"; *)
     let state = merge_keys.map state in
-    (* (match debug with Some (debug) -> Format.printf "Return from typeclassesConnstraining with new state %a\n" debug state | _ -> ()); *)
     state
 
 let pp type_variable ppf state =
@@ -75,7 +66,7 @@ let pp type_variable ppf state =
   list_sep_d
     (pair
        type_variable
-       (fun ppf set -> list_sep_d Ast_typed.PP.c_typeclass_simpl_short ppf (PolySet.elements set)))
+       (fun ppf set -> list_sep_d Type_variable_abstraction.PP.c_typeclass_simpl_short ppf (MultiSet.elements set)))
     ppf
     (ReprMap.bindings state)
 
@@ -83,11 +74,12 @@ let name = "typeclasses_constraining"
 
 let get_state_for_tests state = state
 
+module type STATE = sig val typeclasses_constraining : Type_variable.t t end
 
-let get_typeclasses_constraining tv state =
-  Option.unopt ~default:(PolySet.create ~cmp:Ast_typed.Compare.c_typeclass_simpl)
-  @@ ReprMap.find_opt tv state
+let get tv (module State : STATE) =
+  Option.unopt ~default:(MultiSet.create ~cmp:Type_variable_abstraction.Compare.c_typeclass_simpl)
+  @@ ReprMap.find_opt tv State.typeclasses_constraining
 
-let get_typeclasses_constraining_list tv state =
-  PolySet.elements @@ get_typeclasses_constraining tv state
+let get_list tv state =
+  MultiSet.elements @@ get tv state
 end

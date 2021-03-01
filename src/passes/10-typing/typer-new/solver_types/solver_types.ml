@@ -3,9 +3,6 @@ module Set = RedBlackTrees.PolySet
 
 module TYPE_VARIABLE_ABSTRACTION = Type_variable_abstraction.TYPE_VARIABLE_ABSTRACTION
 
-type 'old_constraint_type selector_input = 'old_constraint_type (* some info about the constraint just added, so that we know what to look for *)
-type 'selector_output selector_outputs = 'selector_output list
-(* type ('old_contraint_type, 'selector_output) selector = 'old_constraint_type selector_input -> structured_dbs -> 'selector_output selector_outputs *)
 type ('selector_output , 'errors) propagator = 'selector_output -> (Ast_typed.type_variable -> Ast_typed.type_variable) -> (Ast_typed.updates, 'errors) result
 
 (* TODO: move this with the AST, probably? *)
@@ -15,7 +12,9 @@ module Typelang = Typelang
 module Type_variable = struct type t = Ast_typed.Types.type_variable end
 
 module Opaque_type_variable = struct
+  let cast_access_to_simplifier_do_not_do_this_do_not_use_this = fun x -> x
   module Types        = Ast_typed.Types
+  module Substitution = Typesystem.Misc.Substitution
   module Compare      = Ast_typed.Compare
   module PP           = Ast_typed.PP
   module Yojson       = Ast_typed.Yojson
@@ -242,7 +241,7 @@ type -'flds ex_heuristic_state =
     Heuristic_state : ('selector_output, 'flds) heuristic_state -> 'flds ex_heuristic_state
 
 type -'flds ex_heuristic_selector =
-    Heuristic_selector: ('selector_output, 'flds) heuristic_state * 'selector_output selector_outputs -> 'flds ex_heuristic_selector
+    Heuristic_selector: ('selector_output, 'flds) heuristic_state * 'selector_output list -> 'flds ex_heuristic_selector
 
 type 'flds heuristic_plugins = 'flds ex_heuristic_plugin list
 

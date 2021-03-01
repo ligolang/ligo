@@ -274,9 +274,24 @@ let p_row_ez (p_row_tag : row_tag) (p_row_args : (string * type_value) list ) =
   let p_row_args = LMap.of_list @@ List.mapi (fun i (x,y) -> Label x,{associated_value=y; michelson_annotation = None; decl_pos = i }) p_row_args in
   p_row p_row_tag p_row_args
 
+let p_apply tf targ =
+  Reasons.wrap Builtin_type @@
+    P_apply { tf ; targ }
+
+let p_var var = 
+  Reasons.wrap Builtin_type @@
+    P_variable var
+
+let p_var_ez var = 
+  Reasons.wrap Builtin_type @@
+    P_variable (Var.of_name var)
+
 let c_equation aval bval reason = { c = C_equation { aval ; bval }; reason }
+let c_apply f arg reason = {c = C_apply {f; arg}; reason}
 
 let reason_simpl_ : type_constraint_simpl -> string = function
+  | SC_Apply { reason_apply_simpl=reason; _ }
+  | SC_Abs { reason_abs_simpl=reason; _ }
   | SC_Constructor { reason_constr_simpl=reason; _ }
   | SC_Row { reason_row_simpl=reason; _ }
   | SC_Alias { reason_alias_simpl=reason; _ }

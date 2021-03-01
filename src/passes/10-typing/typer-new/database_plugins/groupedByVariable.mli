@@ -6,9 +6,10 @@ module M : functor
 sig
   open Type_variable_abstraction.Types
   include INDEXER_PLUGIN_TYPE(Type_variable)(Type_variable_abstraction).S
-  val get_constructors_by_lhs          : 'type_variable -> 'type_variable t -> c_constructor_simpl MultiSet.t
-  val get_rows_by_lhs                  : 'type_variable -> 'type_variable t -> c_row_simpl MultiSet.t
-  val get_polys_by_lhs                 : 'type_variable -> 'type_variable t -> c_poly_simpl MultiSet.t
+  val get_abs_by_lhs                   : 'type_variable -> 'type_variable t -> c_abs_simpl          MultiSet.t
+  val get_constructors_by_lhs          : 'type_variable -> 'type_variable t -> c_constructor_simpl  MultiSet.t
+  val get_rows_by_lhs                  : 'type_variable -> 'type_variable t -> c_row_simpl          MultiSet.t
+  val get_polys_by_lhs                 : 'type_variable -> 'type_variable t -> c_poly_simpl         MultiSet.t
   val get_access_labels_by_result_type : 'type_variable -> 'type_variable t -> c_access_label_simpl MultiSet.t
   val get_access_labels_by_record_type : 'type_variable -> 'type_variable t -> c_access_label_simpl MultiSet.t
 

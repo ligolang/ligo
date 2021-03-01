@@ -79,6 +79,7 @@ type typer_error = [
   | `Typer_pattern_do_not_match of Location.t
   | `Typer_label_do_not_match of Ast_typed.label * Ast_typed.label * Location.t
   | `Typer_solver_no_progress of string
+  | `Typer_different_typeclasses of Ast_typed.c_typeclass_simpl * Ast_typed.c_typeclass_simpl
 ]
 
 let label_do_not_match la lb loc = `Typer_label_do_not_match (la , lb , loc )
@@ -171,6 +172,8 @@ let internal_error (loc : string) (msg : string) : typer_error = `Typer_internal
 let could_not_remove = fun constraints -> `Typer_could_not_remove constraints
 let trace_debug (msg : string) (err : typer_error) : typer_error = `Trace_debug (msg,err)
 let solver_made_no_progress (msg : string) : typer_error = `Typer_solver_no_progress msg
+
+let different_typeclasses a b : typer_error = `Typer_different_typeclasses (a,b)
 
 let rec error_ppformat : display_format:string display_format ->
   Format.formatter -> typer_error -> unit =
@@ -565,6 +568,7 @@ The following forms of subtractions are possible:
     | `Typer_could_not_remove constraint_ -> Format.fprintf f "Heuristic requested removal of a constraint that cannot be removed: %a" Ast_typed.PP.type_constraint_simpl constraint_
     | `Typer_solver_no_progress msg ->
       Format.fprintf f "Solver made no progress %s" msg
+    | `Typer_different_typeclasses (expected,actual) -> Format.fprintf f "Typeclasses are different@ expected : %a but got %a" Ast_typed.PP.c_typeclass_simpl_short expected Ast_typed.PP.c_typeclass_simpl_short actual
   )
 
 let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
@@ -1312,4 +1316,12 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     let content = `Assoc [
         ("message", message);
       ] in
+    json_error ~stage ~content
+  | `Typer_different_typeclasses (expected,actual) ->
+    let message = `String "Typeclasses are differents" in
+    let content = `Assoc [
+      ("message", message);
+      ("expected", Ast_typed.Yojson.c_typeclass_simpl expected);
+      ("actual", Ast_typed.Yojson.c_typeclass_simpl actual);
+    ] in
     json_error ~stage ~content

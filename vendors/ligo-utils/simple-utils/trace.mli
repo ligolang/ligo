@@ -59,6 +59,9 @@ val bind_concat :
 val bind_map_list :
   ('a -> ('b, 'd) result) ->
   'a list -> ('b list, 'd) result
+val bind_map2_list :
+  ('a1 -> 'a2 -> ('b, 'd) result) ->
+  'a1 list -> 'a2 list -> ('b list, 'd) result
 val bind_mapi_list :
   (int -> 'a -> ('b, 'd) result) ->
   'a list -> ('b list, 'd) result
@@ -152,6 +155,9 @@ val bind_fold_triple :
 val bind_fold_map_list :
   ('a -> 'b -> ('a * 'c, 'e) result) ->
   'a -> 'b list -> ('a * 'c list, 'e) result
+val bind_fold_map2_list :
+  ('a -> 'b -> 'c -> ('a * 'd, 'e) result) ->
+  'a -> 'b list -> 'c list -> ('a * 'd list, 'e) result
 val bind_fold_map_location :
   ('a -> 'b -> ('a * 'c, 'e) result) ->
   'a -> 'b Location.wrap -> ('a * 'c Location.wrap, 'e) result

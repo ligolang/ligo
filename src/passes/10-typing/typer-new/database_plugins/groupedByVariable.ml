@@ -21,15 +21,24 @@ open Trace
 (* the state is 3 maps from (unionfind) variables to constraints containing them *)
 
 type 'typeVariable t = {
+  abs         : ('typeVariable, c_abs_simpl         MultiSet.t) ReprMap.t ;
   constructor : ('typeVariable, c_constructor_simpl MultiSet.t) ReprMap.t ;
-  poly        : ('typeVariable, c_poly_simpl MultiSet.t) ReprMap.t ;
-  row         : ('typeVariable, c_row_simpl MultiSet.t) ReprMap.t ;
+  poly        : ('typeVariable, c_poly_simpl        MultiSet.t) ReprMap.t ;
+  row         : ('typeVariable, c_row_simpl         MultiSet.t) ReprMap.t ;
   access_label_by_result_type : ('typeVariable, c_access_label_simpl MultiSet.t) ReprMap.t ;
   access_label_by_record_type : ('typeVariable, c_access_label_simpl MultiSet.t) ReprMap.t ;
 }
+let pp type_variable ppf (state : _ t) =
+  let open PP_helpers in
+  Format.fprintf ppf "{ constructor = %a ; row = %a ; poly = %a }"
+  (list_sep_d (pair type_variable (MultiSet.pp Type_variable_abstraction.PP.c_constructor_simpl_short))) (ReprMap.bindings state.constructor)
+  (list_sep_d (pair type_variable (MultiSet.pp Type_variable_abstraction.PP.c_row_simpl_short))) (ReprMap.bindings state.row)
+  (list_sep_d (pair type_variable (MultiSet.pp Type_variable_abstraction.PP.c_poly_simpl_short))) (ReprMap.bindings state.poly)
+
 
 let create_state ~cmp =
-  { constructor = ReprMap.create ~cmp ~merge:MultiSet.union ;
+  { abs         = ReprMap.create ~cmp ~merge:MultiSet.union ;
+    constructor = ReprMap.create ~cmp ~merge:MultiSet.union ;
     poly        = ReprMap.create ~cmp ~merge:MultiSet.union ;
     row         = ReprMap.create ~cmp ~merge:MultiSet.union ;
     access_label_by_result_type = ReprMap.create ~cmp ~merge:MultiSet.union ;
@@ -42,7 +51,9 @@ let update_add_to_constraint_set ~cmp c = function
 let add_constraint ?debug repr (state : _ t) new_constraint =
   let _ = debug in
   match new_constraint with
-    SC_Constructor c -> { state with constructor = ReprMap.monotonic_update (repr c.tv) (update_add_to_constraint_set ~cmp:Type_variable_abstraction.Compare.c_constructor_simpl c) state.constructor }
+    SC_Apply       _ -> state
+  | SC_Abs         c -> { state with abs         = ReprMap.monotonic_update (repr c.tv) (update_add_to_constraint_set ~cmp:Type_variable_abstraction.Compare.c_abs_simpl         c) state.abs         }
+  | SC_Constructor c -> { state with constructor = ReprMap.monotonic_update (repr c.tv) (update_add_to_constraint_set ~cmp:Type_variable_abstraction.Compare.c_constructor_simpl c) state.constructor }
   | SC_Row         c -> { state with row         = ReprMap.monotonic_update (repr c.tv) (update_add_to_constraint_set ~cmp:Type_variable_abstraction.Compare.c_row_simpl         c) state.row         }
   | SC_Poly        c -> { state with poly        = ReprMap.monotonic_update (repr c.tv) (update_add_to_constraint_set ~cmp:Type_variable_abstraction.Compare.c_poly_simpl        c) state.poly        }
   | SC_Access_label c ->
@@ -80,13 +91,15 @@ let remove_constraint _ repr (state : _ t) constraint_to_rm =
   match
     (
       match constraint_to_rm with
-        SC_Constructor c -> { state with constructor = ReprMap.monotonic_update (repr c.tv) (update_remove_constraint_from_set constraint_to_rm c) state.constructor }
+        SC_Apply       _ -> state
+      | SC_Abs         c -> { state with abs         = ReprMap.monotonic_update (repr c.tv) (update_remove_constraint_from_set constraint_to_rm c) state.abs         }
+      | SC_Constructor c -> { state with constructor = ReprMap.monotonic_update (repr c.tv) (update_remove_constraint_from_set constraint_to_rm c) state.constructor }
       | SC_Row         c -> { state with row         = ReprMap.monotonic_update (repr c.tv) (update_remove_constraint_from_set constraint_to_rm c) state.row         }
       | SC_Poly        c -> { state with poly        = ReprMap.monotonic_update (repr c.tv) (update_remove_constraint_from_set constraint_to_rm c) state.poly        }
       | SC_Access_label c -> {
           state with
           access_label_by_result_type = ReprMap.monotonic_update (repr c.tv) (update_remove_constraint_from_set constraint_to_rm c) state.access_label_by_result_type ;
-          access_label_by_record_type = ReprMap.monotonic_update (repr c.tv) (update_remove_constraint_from_set constraint_to_rm c) state.access_label_by_record_type
+          access_label_by_record_type = ReprMap.monotonic_update (repr c.record_type) (update_remove_constraint_from_set constraint_to_rm c) state.access_label_by_record_type ;
         }
       | SC_Typeclass   _ -> state
       | SC_Alias       _ -> failwith "TODO: impossible: tc_alias handled in main solver loop and aliasing constraints cannot be removed"
@@ -98,20 +111,14 @@ let remove_constraint _ repr (state : _ t) constraint_to_rm =
     ok result
 
 let merge_aliases =
-  fun ?debug:_ updater { constructor ; poly ; row ; access_label_by_result_type ; access_label_by_record_type } -> {
+  fun ?debug:_ updater { abs; constructor ; poly ; row ; access_label_by_result_type ; access_label_by_record_type } -> {
+      abs                         = updater.map abs ;
       constructor = updater.map constructor ;
       poly       = updater.map poly ;
       row        = updater.map row ;
       access_label_by_result_type = updater.map access_label_by_result_type ;
       access_label_by_record_type = updater.map access_label_by_record_type ;
     }
-
-let pp type_variable ppf (state : _ t) =
-  let open PP_helpers in
-  Format.fprintf ppf "{ constructor = %a ; row = %a ; poly = %a }"
-  (list_sep_d (pair type_variable (MultiSet.pp Type_variable_abstraction.PP.c_constructor_simpl_short))) (ReprMap.bindings state.constructor)
-  (list_sep_d (pair type_variable (MultiSet.pp Type_variable_abstraction.PP.c_row_simpl_short))) (ReprMap.bindings state.row)
-  (list_sep_d (pair type_variable (MultiSet.pp Type_variable_abstraction.PP.c_poly_simpl_short))) (ReprMap.bindings state.poly)
 
 let name = "grouped_by_variable"
 
@@ -144,6 +151,12 @@ let get_access_labels_by_record_type : 'type_variable -> 'type_variable t -> c_a
   match ReprMap.find_opt variable state.access_label_by_record_type with
     Some s -> s
   | None -> MultiSet.create ~cmp:Type_variable_abstraction.Compare.c_access_label_simpl
+
+let get_abs_by_lhs : 'type_variable -> 'type_variable t -> c_abs_simpl MultiSet.t =
+  fun variable state ->
+  match ReprMap.find_opt variable state.abs with
+    Some s -> s
+  | None -> MultiSet.create ~cmp:Type_variable_abstraction.Compare.c_abs_simpl
 
 type 'typeVariable t_for_tests = {
   constructor : ('typeVariable * c_constructor_simpl MultiSet.t) list ;
