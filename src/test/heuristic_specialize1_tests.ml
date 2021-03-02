@@ -95,7 +95,7 @@ let main =
   test_suite "Typer : specialize1 heuristic" @@
     [
       (* test "selector" (selector_test selector comparator) ;
-      test "propagator" (propagator_test propagator) ;*)
+      test "propagator" (propagator_test propagator) ; *)
       test "selector2" (selector_test2 selector comparator) ;
       test "propagator2" (propagator_test2 propagator) ;
     ]
