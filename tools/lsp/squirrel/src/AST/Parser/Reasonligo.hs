@@ -8,6 +8,8 @@ import Duplo.Tree
 
 import ParseTree
 import Parser
+  (CodeSource (CodeSource), Info, ParserM, ShowRange (N), boilerplate, boilerplate', fallthrough,
+  field, fieldOpt, fields, withComments)
 import Product
 
 -- example :: FilePath
@@ -76,7 +78,14 @@ recognise (SomeRawTree dialect rawTree)
         "nullary_constr_pattern" -> IsConstr <$> field "constructor" <*> return Nothing
         "unary_constr_pattern"   -> IsConstr <$> field "constructor" <*> fieldOpt "arg"
         "spread_pattern"         -> IsSpread <$> field "expr"
+        "record_pattern"         -> IsRecord <$> fields "field"
         _                        -> fallthrough
+
+    -- RecordFieldPattern
+  , Descent do
+      boilerplate $ \case
+        "record_field_pattern"  -> IsRecordField <$> field "name" <*> field "body"
+        _                       -> fallthrough
 
     -- Alt
   , Descent do

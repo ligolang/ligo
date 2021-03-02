@@ -271,6 +271,11 @@ instance Pretty1 Pattern where
     IsSpread     n         -> "..." <.> pp n
     IsList       l         -> sexpr "list?" l
     IsTuple      t         -> sexpr "tuple?" t
+    IsRecord     xs        -> sexpr "record?" xs
+
+instance Pretty1 RecordFieldPattern where
+  pp1 = \case
+    IsRecordField l b -> sexpr "rec_field?" [l, b]
 
 instance Pretty1 Preprocessor where
   pp1 = \case
@@ -480,6 +485,10 @@ instance LPP1 'Pascal Pattern where
     IsTuple      t         -> tuple t
     pat                    -> error "unexpected `Pattern` node failed with: " <+> pp pat
 
+instance LPP1 'Pascal RecordFieldPattern where
+  lpp1 = \case
+    IsRecordField _ _ -> error "unexpected `RecordFieldPattern` node in pascaligo dialect"
+
 instance LPP1 'Pascal TField where
   lpp1 = \case
     TField      n t -> n <.> ":" `indent` t
@@ -570,7 +579,12 @@ instance LPP1 'Reason Pattern where
     IsSpread     n         -> "..." <.> lpp n
     IsList       l         -> brackets $ train "," l
     IsTuple      t         -> tuple t
+    IsRecord     fields    -> "{" <+> train "," fields <+> "}"
     pat                    -> error "unexpected `Pattern` node failed with: " <+> pp pat
+
+instance LPP1 'Reason RecordFieldPattern where
+  lpp1 = \case
+    IsRecordField name body -> name <+> "=" <+> body
 
 instance LPP1 'Reason TField where
   lpp1 = \case
@@ -671,7 +685,12 @@ instance LPP1 'Caml Pattern where
     IsList       l         -> list l
     IsTuple      t         -> train "," t
     IsCons       h t       -> h <+> "::" <+> t
+    IsRecord     fields    -> "{" <+> train "," fields <+> "}"
     pat                    -> error "unexpected `Pattern` node failed with:" <+> pp pat
+
+instance LPP1 'Caml RecordFieldPattern where
+  lpp1 = \case
+    IsRecordField name body -> name <+> "=" <+> body
 
 instance LPP1 'Caml TField where
   lpp1 = \case
