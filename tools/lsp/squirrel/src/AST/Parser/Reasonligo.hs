@@ -109,12 +109,12 @@ recognise (SomeRawTree dialect rawTree)
 
     -- ProcessorCommand
   , Descent do
-      boilerplate \case
-        "p_if" -> PIf <$> fieldOpt "rest"
-        "p_error" -> PError <$> field "message"
-        "p_warning" -> PWarning <$> field "message"
-        "p_define" -> PDefine <$> field "definition"
-        _ -> fallthrough
+      boilerplate' \case
+        ("p_if"      , rest) -> return $ PreprocessorCommand $ "#if "      <> rest
+        ("p_error"   , rest) -> return $ PreprocessorCommand $ "#error "   <> rest
+        ("p_warning" , rest) -> return $ PreprocessorCommand $ "#warning " <> rest
+        ("p_define"  , rest) -> return $ PreprocessorCommand $ "#define "  <> rest
+        _                    -> fallthrough
 
     -- MapBinding
   , Descent do
@@ -162,6 +162,7 @@ recognise (SomeRawTree dialect rawTree)
         "let_declaration" -> BConst <$> field "binding" <*> fieldOpt "type" <*> fieldOpt "value"
         "type_decl" -> BTypeDecl <$> field "type_name" <*> field "type_value"
         "attr_decl" -> BAttribute <$> field "name"
+        "include"   -> BInclude  <$>                      field "filename"
         _ -> fallthrough
 
     -- MichelsonCode

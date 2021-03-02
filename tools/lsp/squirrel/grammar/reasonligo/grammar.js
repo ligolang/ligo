@@ -491,10 +491,10 @@ module.exports = grammar({
       $.p_define,
     )),
 
-    p_error: $ => seq('#error', field("message", $.till_newline)),
-    p_warning: $ => seq('#warning', field("message", $.till_newline)),
+    p_error: $ => seq('#error', field("message", $._till_newline)),
+    p_warning: $ => seq('#warning', field("message", $._till_newline)),
 
-    p_define: $ => seq(choice('#define', '#undef'), field("definition", $.till_newline)),
+    p_define: $ => seq(choice('#define', '#undef'), field("definition", $._till_newline)),
 
     include: $ => seq(
       '#include',
@@ -504,7 +504,7 @@ module.exports = grammar({
     p_if: $ => choice(
       seq(
         choice('#if', '#ifdef', '#ifndef', '#elif', '#else'),
-        field("rest", $.till_newline),
+        field("rest", $._till_newline),
       ),
       '#endif',
     ),
@@ -524,7 +524,7 @@ module.exports = grammar({
       $.block_comment
     ),
 
-    till_newline: $ => /[^\n]*\n/,
+    _till_newline: $ => /[^\n]*\n/,
 
     oneline_comment: $ => token(seq('//', /.*/)),
 
