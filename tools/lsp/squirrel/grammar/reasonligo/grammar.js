@@ -280,6 +280,7 @@ module.exports = grammar({
 
     _statement: $ => prec(1, choice(
       $.let_declaration,
+      $.type_decl,
       $._expr,
     )),
 
