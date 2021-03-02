@@ -104,7 +104,7 @@ module.exports = grammar({
       $.list_con_pattern,
       $.tup_pattern,
       $.rec_pattern,
-      "_"
+      $.wildcard_pattern,
     ),
 
     // { field1 = pat_a ; field2 = pat_b }
@@ -121,6 +121,9 @@ module.exports = grammar({
       "=",
       field("body", $._pattern),
     ))),
+
+
+    wildcard_pattern: $ => "_",
 
     var_pattern: $ => seq(
       field("var", $.NameDecl)

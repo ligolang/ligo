@@ -4,8 +4,7 @@ module AST.Scope.Fallback where
 
 import Control.Arrow ((&&&))
 import Control.Lens ((%~), (&))
-import Control.Monad.Catch.Pure
-import Control.Monad.Reader (ask, runReader)
+import Control.Monad.Catch.Pure hiding (throwM)
 import Control.Monad.State
 import Control.Monad.Writer (Writer, WriterT, execWriterT, runWriter, tell)
 
@@ -29,6 +28,8 @@ import AST.Scope.ScopedDecl
 import AST.Scope.ScopedDecl.Parser (parseTypeDeclSpecifics)
 import AST.Skeleton hiding (Type)
 import Cli.Types
+import Control.Monad.Except
+import Control.Monad.Trans.Reader
 import Parser
 import Product
 import Range
@@ -38,7 +39,21 @@ data Fallback
 
 instance HasLigoClient m => HasScopeForest Fallback m where
   scopeForest _ (SomeLIGO dialect ligo) msg =
-    pure (runReader (getEnv ligo) dialect, msg)
+    let sf = flip runReader dialect
+           . runExceptT
+           . getEnv
+           $ ligo
+        emptyScopeForest = ScopeForest [] Map.empty
+        _fallbackErrorMsg e = (point 1 1, Error e [])
+    in case sf of
+      -- TODO: We have a problem with tree sitter suggesting minimal possible subtree
+      -- being inserted when it lacks of some by replacing it. In this case we had a problem
+      -- with `wildcard_pattern` being inserted automatically into the `let` subtree without
+      -- ability of catching the warning of doing so. So instead of being unable to find
+      -- the declarations in `_?` scopes I (awkure) decided to leave it untouched.
+      -- Left e -> pure (emptyScopeForest, msg ++ [fallbackErrorMsg (ppToText e)])
+      Left _ -> pure (emptyScopeForest, msg)
+      Right sf' -> pure (sf', msg)
 
 addReferences :: LIGO Info -> ScopeForest -> ScopeForest
 addReferences ligo = execState $ loopM_ addRef ligo
@@ -229,7 +244,8 @@ functionScopedDecl
   -> Maybe (LIGO info) -- ^ function body node, optional for type constructors
   -> ScopeM ScopedDecl
 functionScopedDecl docs nameNode paramNodes typ body = do
-  dialect <- ask
+  dialect <- lift ask
+  (origin, name) <- getName nameNode
   let _vdsInitRange = getRange <$> body
       _vdsParams = pure (params dialect)
       _vdsTspec = parseTypeDeclSpecifics <$> typ
@@ -242,7 +258,6 @@ functionScopedDecl docs nameNode paramNodes typ body = do
     , _sdSpec = ValueSpec ValueDeclSpecifics{ .. }
     }
   where
-    (origin, name) = getName nameNode
     params dialect = map (Parameter . docToText . lppDialect dialect) paramNodes
 
 valueScopedDecl
@@ -255,7 +270,8 @@ valueScopedDecl
   -> Maybe (LIGO info) -- ^ initializer node
   -> ScopeM ScopedDecl
 valueScopedDecl docs nameNode typ body = do
-  dialect <- ask
+  dialect <- lift ask
+  (origin, name) <- getName nameNode
   pure $ ScopedDecl
     { _sdName = name
     , _sdOrigin = origin
@@ -265,7 +281,6 @@ valueScopedDecl docs nameNode typ body = do
     , _sdSpec = ValueSpec ValueDeclSpecifics{ .. }
     }
   where
-    (origin, name) = getName nameNode
     _vdsInitRange = getRange <$> body
     _vdsParams = Nothing
     _vdsTspec = parseTypeDeclSpecifics <$> typ
@@ -276,7 +291,8 @@ typeScopedDecl
      )
   => [Text] -> LIGO info -> LIGO info -> ScopeM ScopedDecl
 typeScopedDecl docs nameNode body = do
-  dialect <- ask
+  dialect <- lift ask
+  (origin, name) <- getTypeName nameNode
   pure $ ScopedDecl
     { _sdName = name
     , _sdOrigin = origin
@@ -285,8 +301,6 @@ typeScopedDecl docs nameNode body = do
     , _sdDialect = dialect
     , _sdSpec = TypeSpec (parseTypeDeclSpecifics body)
     }
-  where
-    (origin, name) = getTypeName nameNode
 
 -- | Wraps a value into a list. Like 'pure' but perhaps with a more clear intent.
 singleton :: a -> [a]
@@ -412,15 +426,16 @@ getImmediateDecls = \case
 
 select
   :: ( PPableLIGO info
+     , MonadError ScopeError m
      )
   => Text
   -> [Visit RawLigoList (Product info) (WriterT [LIGO info] Catch)]
   -> LIGO info
-  -> (Range, Text)
+  -> m (Range, Text)
 select what handlers t
   = maybe
-      (error . show $ "Tree does not contain a" <+> pp what <.> ":" <+> pp t <+> pp (getRange $ extract t))
-      (getElem . extract &&& ppToText)
+      (throwError $ TreeDoesNotContainName (pp t) what)
+      (return . (getElem . extract &&& ppToText))
   $ either (const Nothing) listToMaybe
   $ runCatch
   $ execWriterT
@@ -430,9 +445,10 @@ select what handlers t
 getName
   :: ( Lattice  (Product info)
      , PPableLIGO info
+     , MonadError ScopeError m
      )
   => LIGO info
-  -> (Range, Text)
+  -> m (Range, Text)
 getName = select "name"
   [ Visit \(r, NameDecl t) -> do
       tell [make (r, Name t)]
@@ -443,9 +459,10 @@ getName = select "name"
 getTypeName
   :: ( Lattice  (Product info)
      , PPableLIGO info
+     , MonadError ScopeError m
      )
   => LIGO info
-  -> (Range, Text)
+  -> m (Range, Text)
 getTypeName = select "type name"
   [ Visit \(r, TypeName t) -> do
       tell [make (r, TypeName t)]

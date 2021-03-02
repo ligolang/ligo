@@ -124,7 +124,7 @@ recognise (SomeRawTree dialect rawTree)
         "paren_pattern"    -> IsTuple  <$> fields "pat"
         "var_pattern"      -> IsVar    <$> field  "var"
         "rec_pattern"      -> IsRecord <$> fields "field"
-        "_"                -> pure IsWildcard
+        "wildcard_pattern" -> pure IsWildcard
         _                  -> fallthrough
 
    -- RecordFieldPattern
