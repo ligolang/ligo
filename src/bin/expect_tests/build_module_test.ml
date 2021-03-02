@@ -69,8 +69,7 @@ let%expect_test _ =
              PUSH int 1 ;
              ADD ;
              SWAP ;
-             UNPAIR ;
-             DROP ;
+             CDR ;
              SWAP ;
              PUSH int 1 ;
              DIG 2 ;
@@ -142,25 +141,16 @@ let%expect_test _ =
              DUP ;
              DUG 2 ;
              PAIR ;
-             DIG 2 ;
-             DUP ;
-             DUG 3 ;
+             DUP 3 ;
              DIG 2 ;
              PAIR ;
              LAMBDA
                (pair (pair int int) (pair unit int))
                (pair (list operation) int)
-               { DUP ;
-                 CDR ;
-                 SWAP ;
-                 CAR ;
-                 DUP ;
-                 CDR ;
-                 SWAP ;
-                 CAR ;
-                 DIG 2 ;
+               { UNPAIR ;
                  UNPAIR ;
-                 DROP ;
+                 DIG 2 ;
+                 CDR ;
                  SWAP ;
                  DUG 2 ;
                  ADD ;
@@ -169,24 +159,18 @@ let%expect_test _ =
                  PAIR } ;
              SWAP ;
              APPLY ;
-             DIG 2 ;
-             DUP ;
-             DUG 3 ;
+             DUP 3 ;
              PAIR ;
              PAIR ;
              DUP ;
              CDR ;
              CAR ;
-             DIG 2 ;
-             DUP ;
-             DUG 3 ;
+             DUP 3 ;
              ADD ;
              PUSH int 3 ;
              PUSH unit Unit ;
              PAIR ;
-             DIG 2 ;
-             DUP ;
-             DUG 3 ;
+             DUP 3 ;
              CAR ;
              CDR ;
              SWAP ;
@@ -223,7 +207,7 @@ let%expect_test _ =
   [%expect {|
     { parameter string ;
       storage int ;
-      code { UNPAIR ; DROP ; PUSH int 1 ; ADD ; NIL operation ; PAIR } } |}]
+      code { CDR ; PUSH int 1 ; ADD ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ = 
   run_ligo_good [ "compile-expression" ; "--init-file" ; contract "C.mligo" ; "cameligo" ; "tata" ] ;

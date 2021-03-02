@@ -9,8 +9,7 @@ let%expect_test _ =
   [%expect {|
              { parameter unit ;
                storage (or (int %anbfoo) (string %anabar)) ;
-               code { UNPAIR ;
-                      DROP ;
+               code { CDR ;
                       IF_LEFT
                         { DROP ; PUSH string "foo" ; RIGHT int }
                         { DROP ; PUSH int 1 ; LEFT string } ;
@@ -27,8 +26,7 @@ let%expect_test _ =
                storage
                  (or (int %an_One)
                      (or (string %an_Two) (or (bool %an_Three) (or (nat %an_Four) (int %an_Five))))) ;
-               code { UNPAIR ;
-                      DROP ;
+               code { CDR ;
                       IF_LEFT
                         { DROP ; PUSH int 1 ; RIGHT nat ; RIGHT bool ; RIGHT string ; RIGHT int }
                         { IF_LEFT
@@ -55,8 +53,7 @@ let%expect_test _ =
   [%expect {|
              { parameter unit ;
                storage (or (string %anabar) (int %anbfoo)) ;
-               code { UNPAIR ;
-                      DROP ;
+               code { CDR ;
                       IF_LEFT
                         { DROP ; PUSH int 1 ; RIGHT string }
                         { DROP ; PUSH string "foo" ; LEFT int } ;
@@ -73,8 +70,7 @@ let%expect_test _ =
                storage
                  (or (or (or (int %an_Five) (nat %an_Four)) (or (int %an_One) (bool %an_Three)))
                      (string %an_Two)) ;
-               code { UNPAIR ;
-                      DROP ;
+               code { CDR ;
                       IF_LEFT
                         { IF_LEFT
                             { IF_LEFT

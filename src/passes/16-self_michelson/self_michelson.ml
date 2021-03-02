@@ -403,6 +403,43 @@ let opt_eta2 : _ peep2 = function
     Some []
   | _ -> None
 
+let opt_unpair_edo : _ peep4 = function
+  | (Prim (l, "DUP", [], []),
+     Prim (_, "CDR", [], []),
+     Prim (_, "SWAP", [], []),
+     Prim (_, "CAR", [], [])) ->
+    Some [Prim (l, "UNPAIR", [], [])]
+  | _ -> None
+
+let opt_dupn_edo : _ peep3 = function
+  | (Prim (l1, "DIG", [Int (l2, n)], []),
+     Prim (_, "DUP", [], []),
+     Prim (_, "DUG", [Int (_, m)], []))
+    when Z.equal (Z.succ n) m ->
+    Some [Prim (l1, "DUP", [Int (l2, m)], [])]
+  | _ -> None
+
+let opt_unpair_cdr () : _ peep =
+  match%bind peep with
+  | Prim (l, "UNPAIR", [], _) ->
+    (match%bind peep with
+     | Prim (_, "DROP", [], _) ->
+       Changed [Prim (l, "CDR", [], [])]
+     | _ -> No_change)
+  | _ -> No_change
+
+let opt_unpair_car () : _ peep =
+  match%bind peep with
+  | Prim (l, "UNPAIR", [], _) ->
+    (match%bind peep with
+     | Prim (_, "SWAP", [], _) ->
+       (match%bind peep with
+        | Prim (_, "DROP", [], _) ->
+          Changed [Prim (l, "CAR", [], [])]
+        | _ -> No_change)
+     | _ -> No_change)
+  | _ -> No_change
+
 (* This "optimization" deletes dead code produced by the compiler
    after a FAILWITH, which is illegal in Michelson. This means we are
    thwarting the intent of the Michelson tail fail restriction -- the
@@ -527,6 +564,10 @@ let optimize : 'l. Environment.Protocols.t -> 'l michelson -> 'l michelson =
                      peephole @@ peep2 opt_eta2 ;
                      peephole @@ peep3 opt_dead_unpair ;
                      peephole @@ opt_digdug_cycles () ;
+                     peephole @@ opt_unpair_car () ;
+                     peephole @@ opt_unpair_cdr () ;
+                     peephole @@ peep4 opt_unpair_edo ;
+                     peephole @@ peep3 opt_dupn_edo ;
                    ] in
   let optimizers = List.map on_seqs optimizers in
   let x = iterate_optimizer (sequence_optimizers optimizers) x in

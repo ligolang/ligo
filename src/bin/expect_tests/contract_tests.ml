@@ -8,19 +8,19 @@ let () = Unix.putenv "TERM" "dumb"
 
 let%expect_test _ =
   run_ligo_good [ "measure-contract" ; contract "coase.ligo" ; "main" ] ;
-  [%expect {| 1247 bytes |}] ;
+  [%expect {| 1175 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig.ligo" ; "main" ] ;
-  [%expect {| 627 bytes |}] ;
+  [%expect {| 567 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig-v2.ligo" ; "main" ] ;
-  [%expect {| 1695 bytes |}] ;
+  [%expect {| 1539 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "vote.mligo" ; "main" ] ;
-  [%expect {| 460 bytes |}] ;
+  [%expect {| 430 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "issue-184-combs.mligo" ; "main2" ] ;
-  [%expect {| 235 bytes |}] ;
+  [%expect {| 231 bytes |}] ;
 
   run_ligo_good [ "compile-parameter" ; contract "coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ] ;
   [%expect {| (Left (Left 1)) |}] ;
@@ -108,22 +108,16 @@ let%expect_test _ =
                  SWAP ;
                  CAR ;
                  PAIR ;
-                 DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
+                 DUP 3 ;
                  CDR ;
-                 DIG 3 ;
-                 DUP ;
-                 DUG 4 ;
+                 DUP 4 ;
                  CAR ;
                  CDR ;
                  DIG 4 ;
                  CAR ;
                  CAR ;
                  DIG 3 ;
-                 DIG 4 ;
-                 DUP ;
-                 DUG 5 ;
+                 DUP 5 ;
                  SWAP ;
                  SOME ;
                  SWAP ;
@@ -136,9 +130,7 @@ let%expect_test _ =
                  DIG 2 ;
                  SENDER ;
                  PAIR ;
-                 DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
+                 DUP 3 ;
                  CDR ;
                  SWAP ;
                  SOME ;
@@ -183,9 +175,7 @@ let%expect_test _ =
                  COMPARE ;
                  NEQ ;
                  IF { PUSH string "This card doesn't belong to you" ; FAILWITH } {} ;
-                 DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
+                 DUP 3 ;
                  CAR ;
                  CAR ;
                  SWAP ;
@@ -204,21 +194,15 @@ let%expect_test _ =
                  SWAP ;
                  CAR ;
                  PAIR ;
-                 DIG 3 ;
-                 DUP ;
-                 DUG 4 ;
+                 DUP 4 ;
                  CDR ;
-                 DIG 4 ;
-                 DUP ;
-                 DUG 5 ;
+                 DUP 5 ;
                  CAR ;
                  CDR ;
                  DIG 5 ;
                  CAR ;
                  CAR ;
-                 DIG 3 ;
-                 DUP ;
-                 DUG 4 ;
+                 DUP 4 ;
                  DIG 5 ;
                  CDR ;
                  SWAP ;
@@ -244,9 +228,7 @@ let%expect_test _ =
                  DUP ;
                  DUG 2 ;
                  CDR ;
-                 DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
+                 DUP 3 ;
                  CAR ;
                  CDR ;
                  DIG 4 ;
@@ -268,9 +250,7 @@ let%expect_test _ =
              CAR ;
              CDR ;
              DUP ;
-             DIG 2 ;
-             DUP ;
-             DUG 3 ;
+             DUP 3 ;
              CAR ;
              GET ;
              IF_NONE { PUSH string "transfer_single: No card." ; FAILWITH } {} ;
@@ -282,15 +262,11 @@ let%expect_test _ =
              COMPARE ;
              NEQ ;
              IF { PUSH string "This card doesn't belong to you" ; FAILWITH } {} ;
-             DIG 3 ;
-             DUP ;
-             DUG 4 ;
+             DUP 4 ;
              CDR ;
              DUG 2 ;
              CDR ;
-             DIG 3 ;
-             DUP ;
-             DUG 4 ;
+             DUP 4 ;
              CDR ;
              PAIR ;
              DIG 3 ;
@@ -319,41 +295,29 @@ let%expect_test _ =
          DUP ;
          CAR ;
          CDR ;
-         DIG 2 ;
-         DUP ;
-         DUG 3 ;
+         DUP 3 ;
          CAR ;
          CDR ;
-         DIG 2 ;
-         DUP ;
-         DUG 3 ;
+         DUP 3 ;
          CAR ;
          CAR ;
          COMPARE ;
          NEQ ;
          IF { SWAP ; DROP ; PUSH string "Counters does not match" ; FAILWITH }
             { CHAIN_ID ;
-              DIG 3 ;
-              DUP ;
-              DUG 4 ;
+              DUP 4 ;
               CDR ;
               CAR ;
               PAIR ;
-              DIG 2 ;
-              DUP ;
-              DUG 3 ;
+              DUP 3 ;
               CAR ;
               CAR ;
-              DIG 2 ;
-              DUP ;
-              DUG 3 ;
+              DUP 3 ;
               PAIR ;
               PAIR ;
               PACK ;
               PUSH nat 0 ;
-              DIG 4 ;
-              DUP ;
-              DUG 5 ;
+              DUP 5 ;
               CAR ;
               CAR ;
               PAIR ;
@@ -379,15 +343,11 @@ let%expect_test _ =
                          DROP ;
                          DUP ;
                          HASH_KEY ;
-                         DIG 3 ;
-                         DUP ;
-                         DUG 4 ;
+                         DUP 4 ;
                          CAR ;
                          COMPARE ;
                          EQ ;
-                         IF { DIG 4 ;
-                              DUP ;
-                              DUG 5 ;
+                         IF { DUP 5 ;
                               DIG 3 ;
                               CDR ;
                               DIG 2 ;
@@ -400,9 +360,7 @@ let%expect_test _ =
                        { DROP ; PAIR } } ;
               SWAP ;
               DROP ;
-              DIG 2 ;
-              DUP ;
-              DUG 3 ;
+              DUP 3 ;
               CDR ;
               CDR ;
               SWAP ;
@@ -415,9 +373,7 @@ let%expect_test _ =
                    DUG 2 ;
                    CDR ;
                    PUSH nat 1 ;
-                   DIG 3 ;
-                   DUP ;
-                   DUG 4 ;
+                   DUP 4 ;
                    CAR ;
                    CDR ;
                    ADD ;
@@ -459,9 +415,7 @@ let%expect_test _ =
                  IF { PUSH string "Unauthorized address" ; FAILWITH } {} ;
                  DUP ;
                  PACK ;
-                 DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
+                 DUP 3 ;
                  CAR ;
                  CAR ;
                  CDR ;
@@ -472,9 +426,7 @@ let%expect_test _ =
                  COMPARE ;
                  GT ;
                  IF { PUSH string "Message size exceed maximum limit" ; FAILWITH } {} ;
-                 DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
+                 DUP 3 ;
                  CAR ;
                  CDR ;
                  CDR ;
@@ -483,27 +435,19 @@ let%expect_test _ =
                  DUG 2 ;
                  GET ;
                  IF_NONE
-                   { DIG 2 ;
-                     DUP ;
-                     DUG 3 ;
+                   { DUP 3 ;
                      CDR ;
                      CDR ;
-                     DIG 3 ;
-                     DUP ;
-                     DUG 4 ;
+                     DUP 4 ;
                      CDR ;
                      CAR ;
                      CDR ;
-                     DIG 4 ;
-                     DUP ;
-                     DUG 5 ;
+                     DUP 5 ;
                      CDR ;
                      CAR ;
                      CAR ;
                      PUSH nat 1 ;
-                     DIG 6 ;
-                     DUP ;
-                     DUG 7 ;
+                     DUP 7 ;
                      CDR ;
                      CAR ;
                      CAR ;
@@ -528,27 +472,19 @@ let%expect_test _ =
                      SENDER ;
                      MEM ;
                      IF { DIG 3 }
-                        { DIG 3 ;
-                          DUP ;
-                          DUG 4 ;
+                        { DUP 4 ;
                           CDR ;
                           CDR ;
-                          DIG 4 ;
-                          DUP ;
-                          DUG 5 ;
+                          DUP 5 ;
                           CDR ;
                           CAR ;
                           CDR ;
-                          DIG 5 ;
-                          DUP ;
-                          DUG 6 ;
+                          DUP 6 ;
                           CDR ;
                           CAR ;
                           CAR ;
                           PUSH nat 1 ;
-                          DIG 7 ;
-                          DUP ;
-                          DUG 8 ;
+                          DUP 8 ;
                           CDR ;
                           CAR ;
                           CAR ;
@@ -593,9 +529,7 @@ let%expect_test _ =
                  DUP ;
                  CDR ;
                  CDR ;
-                 DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
+                 DUP 3 ;
                  SIZE ;
                  COMPARE ;
                  GE ;
@@ -607,15 +541,11 @@ let%expect_test _ =
                       CAR ;
                       CDR ;
                       CDR ;
-                      DIG 4 ;
-                      DUP ;
-                      DUG 5 ;
+                      DUP 5 ;
                       NONE (set address) ;
                       SWAP ;
                       UPDATE ;
-                      DIG 2 ;
-                      DUP ;
-                      DUG 3 ;
+                      DUP 3 ;
                       CAR ;
                       CDR ;
                       CAR ;
@@ -638,17 +568,13 @@ let%expect_test _ =
                       CDR ;
                       CDR ;
                       DIG 4 ;
-                      DIG 3 ;
-                      DUP ;
-                      DUG 4 ;
+                      DUP 4 ;
                       CDR ;
                       CAR ;
                       CDR ;
                       CONCAT ;
                       SHA256 ;
-                      DIG 3 ;
-                      DUP ;
-                      DUG 4 ;
+                      DUP 4 ;
                       CDR ;
                       CAR ;
                       CAR ;
@@ -670,9 +596,7 @@ let%expect_test _ =
                              DUG 2 ;
                              CDR ;
                              CAR ;
-                             DIG 4 ;
-                             DUP ;
-                             DUG 5 ;
+                             DUP 5 ;
                              SWAP ;
                              DUP ;
                              DUG 2 ;
@@ -682,15 +606,11 @@ let%expect_test _ =
                                   DUG 2 ;
                                   CDR ;
                                   CDR ;
-                                  DIG 2 ;
-                                  DUP ;
-                                  DUG 3 ;
+                                  DUP 3 ;
                                   CDR ;
                                   CAR ;
                                   CDR ;
-                                  DIG 3 ;
-                                  DUP ;
-                                  DUG 4 ;
+                                  DUP 4 ;
                                   CDR ;
                                   CAR ;
                                   CAR ;
@@ -731,9 +651,7 @@ let%expect_test _ =
                       SOME ;
                       SWAP ;
                       UPDATE ;
-                      DIG 2 ;
-                      DUP ;
-                      DUG 3 ;
+                      DUP 3 ;
                       CAR ;
                       CDR ;
                       CAR ;
@@ -768,27 +686,19 @@ let%expect_test _ =
                  SIZE ;
                  COMPARE ;
                  NEQ ;
-                 IF { DIG 2 ;
-                      DUP ;
-                      DUG 3 ;
+                 IF { DUP 3 ;
                       CDR ;
                       CDR ;
-                      DIG 3 ;
-                      DUP ;
-                      DUG 4 ;
+                      DUP 4 ;
                       CDR ;
                       CAR ;
                       CDR ;
-                      DIG 4 ;
-                      DUP ;
-                      DUG 5 ;
+                      DUP 5 ;
                       CDR ;
                       CAR ;
                       CAR ;
                       PUSH nat 1 ;
-                      DIG 6 ;
-                      DUP ;
-                      DUG 7 ;
+                      DUP 7 ;
                       CDR ;
                       CAR ;
                       CAR ;
@@ -807,9 +717,7 @@ let%expect_test _ =
                       PAIR }
                     { DIG 2 } ;
                  PUSH nat 0 ;
-                 DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
+                 DUP 3 ;
                  SIZE ;
                  COMPARE ;
                  EQ ;
@@ -827,9 +735,7 @@ let%expect_test _ =
                       NONE (set address) ;
                       SWAP ;
                       UPDATE ;
-                      DIG 2 ;
-                      DUP ;
-                      DUG 3 ;
+                      DUP 3 ;
                       CAR ;
                       CDR ;
                       CAR ;
@@ -853,9 +759,7 @@ let%expect_test _ =
                       SOME ;
                       SWAP ;
                       UPDATE ;
-                      DIG 2 ;
-                      DUP ;
-                      DUG 3 ;
+                      DUP 3 ;
                       CAR ;
                       CDR ;
                       CAR ;
@@ -889,9 +793,7 @@ let%expect_test _ =
              DUP ;
              DUG 2 ;
              CDR ;
-             DIG 2 ;
-             DUP ;
-             DUG 3 ;
+             DUP 3 ;
              CAR ;
              CDR ;
              PAIR ;
@@ -912,15 +814,11 @@ let%expect_test _ =
                  DUP ;
                  DUG 2 ;
                  CDR ;
-                 DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
+                 DUP 3 ;
                  CAR ;
                  CDR ;
                  PUSH nat 1 ;
-                 DIG 4 ;
-                 DUP ;
-                 DUG 5 ;
+                 DUP 5 ;
                  CAR ;
                  CAR ;
                  CDR ;
@@ -934,15 +832,11 @@ let%expect_test _ =
                  PAIR }
                { DROP ;
                  PUSH nat 1 ;
-                 DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
+                 DUP 3 ;
                  CDR ;
                  CDR ;
                  ADD ;
-                 DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
+                 DUP 3 ;
                  CDR ;
                  CAR ;
                  PAIR ;
@@ -988,14 +882,10 @@ let%expect_test _ =
          DIG 2 ;
          IF_LEFT
            { READ_TICKET ;
-             UNPAIR ;
-             SWAP ;
-             DROP ;
+             CAR ;
              DIG 3 ;
              NONE (ticket unit) ;
-             DIG 2 ;
-             DUP ;
-             DUG 3 ;
+             DUP 3 ;
              GET_AND_UPDATE ;
              IF_NONE
                { DIG 2 }
@@ -1020,22 +910,16 @@ let%expect_test _ =
              IF {} { PUSH string "failed assertion" ; FAILWITH } ;
              DIG 2 ;
              NONE (ticket unit) ;
-             DIG 2 ;
-             DUP ;
-             DUG 3 ;
+             DUP 3 ;
              CDR ;
              CDR ;
              GET_AND_UPDATE ;
              IF_NONE
                { DROP 3 ; PUSH string "no tickets" ; FAILWITH }
                { READ_TICKET ;
-                 UNPAIR ;
-                 DROP ;
-                 UNPAIR ;
-                 DROP ;
-                 DIG 3 ;
-                 DUP ;
-                 DUG 4 ;
+                 CDR ;
+                 CDR ;
+                 DUP 4 ;
                  CDR ;
                  CAR ;
                  DUP ;
@@ -1052,9 +936,7 @@ let%expect_test _ =
                    { UNPAIR ;
                      DUG 2 ;
                      SOME ;
-                     DIG 3 ;
-                     DUP ;
-                     DUG 4 ;
+                     DUP 4 ;
                      CDR ;
                      CDR ;
                      GET_AND_UPDATE ;
@@ -1089,9 +971,7 @@ let%expect_test _ =
            { READ_TICKET ;
              SWAP ;
              DROP ;
-             UNPAIR ;
-             SWAP ;
-             DROP ;
+             CAR ;
              SELF_ADDRESS ;
              SWAP ;
              COMPARE ;
@@ -1133,9 +1013,7 @@ let%expect_test _ =
   [%expect {|
     { parameter bool ;
       storage (lambda unit mutez) ;
-      code { UNPAIR ;
-             SWAP ;
-             DROP ;
+      code { CAR ;
              IF { AMOUNT ; LAMBDA (pair mutez unit) mutez { CAR } ; SWAP ; APPLY }
                 { LAMBDA unit mutez { DROP ; AMOUNT } } ;
              NIL operation ;
@@ -1217,7 +1095,7 @@ let%expect_test _ =
   [%expect {|
     { parameter int ;
       storage (pair (map %one key_hash nat) (big_map %two key_hash bool)) ;
-      code { UNPAIR ; DROP ; NIL operation ; PAIR } } |}]
+      code { CDR ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "long_sum_type_names.ligo" ; "main" ] ;
@@ -1290,8 +1168,7 @@ Free variable 'a' is not allowed in CREATE_CONTRACT lambda |}] ;
   [%expect {|
     { parameter string ;
       storage string ;
-      code { UNPAIR ;
-             DROP ;
+      code { CDR ;
              PUSH string "un" ;
              PUSH mutez 300000000 ;
              NONE key_hash ;
@@ -1336,9 +1213,7 @@ let%expect_test _ =
 
   run_ligo_good [ "compile-contract" ; contract "self_type_annotation.ligo" ; "main" ] ;
   [%expect {|
-    { parameter nat ;
-      storage int ;
-      code { UNPAIR ; DROP ; NIL operation ; PAIR } } |}]
+    { parameter nat ; storage int ; code { CDR ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract.mligo" ; "main" ] ;
@@ -1376,8 +1251,7 @@ let%expect_test _ =
   [%expect {|
     { parameter (or (unit %default) (int %toto)) ;
       storage nat ;
-      code { UNPAIR ;
-             DROP ;
+      code { CDR ;
              SELF %toto ;
              PUSH mutez 300000000 ;
              PUSH int 2 ;
@@ -1392,8 +1266,7 @@ let%expect_test _ =
   [%expect {|
     { parameter int ;
       storage nat ;
-      code { UNPAIR ;
-             DROP ;
+      code { CDR ;
              SELF %default ;
              PUSH mutez 300000000 ;
              PUSH int 2 ;
