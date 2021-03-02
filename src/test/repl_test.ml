@@ -3,7 +3,7 @@ open Trace
 
 let dry_run_options = Proto_alpha_utils.Memory_proto_alpha.make_options ()
 let init_state = Repl.make_initial_state
-                   Compile.Helpers.CameLIGO
+                   Ligo_compile.Helpers.CameLIGO
                    Environment.Protocols.Edo
                    false dry_run_options
 

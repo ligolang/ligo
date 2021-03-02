@@ -8,21 +8,13 @@ let pp_ct : Format.formatter -> constant_val -> unit = fun ppf c ->
   | C_int z -> Format.fprintf ppf "%s" (Int.to_string z)
   | C_nat n -> Format.fprintf ppf "%sn" (Int.to_string n)
   | C_timestamp t -> Format.fprintf ppf "timestamp(%a)" Z.pp_print t
-  | C_mutez m -> Format.fprintf ppf "%Ld mutez" (Tez.to_mutez m)
   | C_string s -> Format.fprintf ppf "\"%s\"" s
   | C_bytes b -> Format.fprintf ppf "0x%a" Hex.pp (Hex.of_bytes b)
-  | C_address s -> Format.fprintf ppf "@%s" s
-  | C_signature s -> Format.fprintf ppf "signature %s" s
-  | C_key s -> Format.fprintf ppf "key %s" s
-  | C_key_hash s -> Format.fprintf ppf "key_hash %s" s
-  | C_chain_id s -> Format.fprintf ppf "chain_id %s" s
-  | C_operation _ -> Format.fprintf ppf "operation"
+  | C_address c -> Format.fprintf ppf "%a" Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Contract.pp c
 
 let rec pp_value : Format.formatter -> value -> unit = fun ppf v ->
   match v with
   | V_Ct c -> Format.fprintf ppf "%a" pp_ct c
-  | V_packed c -> Format.fprintf ppf "packed data %a" pp_value c
-  | V_Failure s -> Format.fprintf ppf "Failure(\"%s\")" s
   | V_Func_val _ -> Format.fprintf ppf "<fun>"
   | V_Func_rec _ -> Format.fprintf ppf "<rec fun>"
   | V_Construct (name,v) -> Format.fprintf ppf "%s (%a)" name pp_value v
@@ -44,19 +36,10 @@ let rec pp_value : Format.formatter -> value -> unit = fun ppf v ->
         Format.fprintf ppf "%s = %a" l pp_value v
       in
       Format.fprintf ppf "{%a}" (list_sep aux (tag " ; ")) (LMap.to_kv_list recmap)
-    
-let pp_context : Format.formatter -> Mini_proto.t -> unit = fun ppf { contracts ; step_constants=_ } ->
-  let open Mini_proto in
-  let aux : Format.formatter -> addr * state -> unit = fun ppf (Counter addr, {script = { code ; storage } ; script_balance }) ->
-    Format.fprintf ppf "@[<h>{@ Address %d:@ code : %a@ storage : %a@ script_balance %a@ }@]"
-      addr
-      pp_value code
-      pp_value storage
-      Tez.pp script_balance
-  in
-  Format.fprintf ppf "@[<h 2>%a@]"
-    (list_sep aux (tag "@ "))
-    (StateMap.to_kv_list contracts)
+  | V_Michelson (Ty_code (code,_,_) | Contract code (* | Subst_code (code,_) *) ) ->
+    Format.fprintf ppf "%a" Tezos_utils.Michelson.pp code
+  | V_Ligo (_syntax , code) ->
+    Format.fprintf ppf "%s" code
 
 let pp_env : Format.formatter -> env -> unit = fun ppf env ->
   let aux : Format.formatter -> expression_variable * value -> unit = fun ppf (var,v) ->

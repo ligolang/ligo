@@ -169,12 +169,19 @@ module Tree_abstraction = struct
     | "Test.originate" -> some_const C_TEST_ORIGINATE
     | "Test.set_now" -> some_const C_TEST_SET_NOW
     | "Test.set_source" -> some_const C_TEST_SET_SOURCE
-    | "Test.set_balance" -> some_const C_TEST_SET_BALANCE
-    | "Test.external_call" -> some_const C_TEST_EXTERNAL_CALL
+    | "Test.set_baker" -> some_const C_TEST_SET_BAKER
+    | "Test.transfer" -> some_const C_TEST_EXTERNAL_CALL
+    | "Test.transfer_exn" -> some_const C_TEST_EXTERNAL_CALL_EXN
     | "Test.get_storage" -> some_const C_TEST_GET_STORAGE
     | "Test.get_balance" -> some_const C_TEST_GET_BALANCE
-    | "Test.assert_failure" -> some_const C_TEST_ASSERT_FAILURE
+    | "Test.michelson_equal" -> some_const C_TEST_MICHELSON_EQUAL
     | "Test.log" -> some_const C_TEST_LOG
+    | "Test.reset_state" -> some_const C_TEST_STATE_RESET
+    | "Test.compile_expression" -> some_const C_TEST_COMPILE_EXPRESSION
+    | "Test.compile_expression_subst" -> some_const C_TEST_COMPILE_EXPRESSION_SUBST
+    | "Test.nth_bootstrap_account" -> some_const C_TEST_GET_NTH_BS
+    | "Test.last_originations" -> some_const C_TEST_LAST_ORIGINATIONS
+    | "Test.compile_value" -> some_const C_TEST_COMPILE_META_VALUE
 
     | _ -> None
 

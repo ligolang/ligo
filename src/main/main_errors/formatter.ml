@@ -10,7 +10,7 @@ let rec error_ppformat : display_format:string display_format ->
     | `Build_dependency_cycle trace ->
       Format.fprintf f "@[<hv>Dependency cycle detected :@, %s@]" trace
     | `Build_corner_case (loc,msg) ->
-      Format.fprintf f "[@<hv>Building corner case at %s : %s@]" loc msg
+      Format.fprintf f "@[<hv>Building corner case at %s : %s@]" loc msg
     | `Test_err_tracer (name,err) ->
       Format.fprintf f "@[<hv>Test '%s'@ %a@]"
         name (error_ppformat ~display_format) err
@@ -86,17 +86,17 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_unparse_tracer errs ->
       let errs = List.map ( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[Error(s) occurred while translating to Michelson:@.%a@]"
-      (Tezos_client_008_PtEdoTez.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Tezos_client_008_PtEdo2Zk.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_typecheck_contract_tracer (_c,err_l) ->
       let errs = List.map ( fun e -> match e with `Tezos_alpha_error a -> a) err_l in
       Format.fprintf f "@[<hv>Error(s) occurred while type checking the contract:@.%a@]"
-      (Tezos_client_008_PtEdoTez.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Tezos_client_008_PtEdo2Zk.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_could_not_serialize errs ->
       let errs = List.map ( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while serializing Michelson code:@.%a @]"
-      (Tezos_client_008_PtEdoTez.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Tezos_client_008_PtEdo2Zk.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_check_typed_arguments (Simple_utils.Runned_result.Check_parameter, err) ->
       Format.fprintf f "@[<hv>Invalid command line argument. @.The provided parameter does not have the correct type for the given entrypoint.@ %a@]"
@@ -131,24 +131,24 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_unparse_michelson_result errs ->
       let errs = List.map ( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while unparsing the Michelson result:@.%a @]"
-      (Tezos_client_008_PtEdoTez.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Tezos_client_008_PtEdo2Zk.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_parse_payload _ -> Format.fprintf f "@[<hv>Error parsing message. @]" (* internal testing *)
     | `Main_pack_payload _ -> Format.fprintf f "@[<hv>Error packing message. @]" (* internal testing *)
     | `Main_parse_michelson_input errs ->
       let errs = List.map ( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while parsing the Michelson input:@.%a @]"
-      (Tezos_client_008_PtEdoTez.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Tezos_client_008_PtEdo2Zk.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_parse_michelson_code errs ->
       let errs = List.map ( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while checking the contract:@.%a @]"
-        (Tezos_client_008_PtEdoTez.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+        (Tezos_client_008_PtEdo2Zk.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_michelson_execution_error errs ->
       let errs = List.map ( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while executing the contract:@.%a @]"
-      (Tezos_client_008_PtEdoTez.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Tezos_client_008_PtEdo2Zk.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_preproc e -> Preprocessing.Errors.error_ppformat ~display_format f e
     | `Main_parser e -> Parsing.Errors.error_ppformat ~display_format f e
@@ -169,10 +169,31 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_inferance e -> Inferance.Errors.error_ppformat ~display_format f e
     | `Main_checking e -> Checking.Errors.error_ppformat ~display_format f e
     | `Main_self_ast_typed e -> Self_ast_typed.Errors.error_ppformat ~display_format f e
-    | `Main_interpreter e -> Interpreter.Errors.error_ppformat ~display_format f e
     | `Main_self_mini_c e -> Self_mini_c.Errors.error_ppformat ~display_format f e
     | `Main_spilling e -> Spilling.Errors.error_ppformat ~display_format f  e
     | `Main_stacking e -> Stacking.Errors.error_ppformat ~display_format f e
+
+    | `Main_interpret_test_entry_not_found s ->
+      Format.fprintf f "Test entry '%s' not found" s
+    | `Main_interpret_target_lang_error (loc, errs) ->
+      Format.fprintf f "@[<v 4>%a@.An uncaught error occured in the object language:@.%a@]"
+        Snippet.pp loc
+        (Tezos_client_008_PtEdo2Zk.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+    | `Main_interpret_boostrap_not_enough loc ->
+      Format.fprintf f "@[<hv>%a@.We need at least two boostrap accounts for the default source and baker@]"
+      Snippet.pp loc
+    | `Main_interpret_meta_lang_eval (loc,reason) ->
+      Format.fprintf f "@[<hv>%a@.%s@]"
+        Snippet.pp loc
+        reason
+    | `Main_interpret_meta_lang_failwith (loc,value) ->
+      Format.fprintf f "@[<hv>%a@.Test failed with %a@]"
+        Snippet.pp loc
+        Ligo_interpreter.PP.pp_value value
+    | `Main_interpret_generic (loc,desc) ->
+      Format.fprintf f "@[<hv>%a@.%s@]"
+        Snippet.pp loc
+        desc
 
     | `Main_decompile_michelson e -> Stacking.Errors.error_ppformat ~display_format f  e
     | `Main_decompile_mini_c e -> Spilling.Errors.error_ppformat ~display_format f  e
@@ -344,10 +365,17 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Main_inferance e -> Inferance.Errors.error_jsonformat e
   | `Main_checking e -> Checking.Errors.error_jsonformat e
   | `Main_self_ast_typed e -> Self_ast_typed.Errors.error_jsonformat e
-  | `Main_interpreter _ -> `Null (*no error*)
   | `Main_spilling e -> Spilling.Errors.error_jsonformat e
   | `Main_self_mini_c e -> Self_mini_c.Errors.error_jsonformat e
   | `Main_stacking e -> Stacking.Errors.error_jsonformat e
+
+  | `Main_interpret_test_entry_not_found _
+  | `Main_interpret_target_lang_error _ 
+  | `Main_interpret_boostrap_not_enough _ 
+  | `Main_interpret_meta_lang_eval _
+  | `Main_interpret_meta_lang_failwith _
+  | `Main_interpret_generic _
+   -> `Null
 
   | `Main_decompile_michelson e -> Stacking.Errors.error_jsonformat e
   | `Main_decompile_mini_c e -> Spilling.Errors.error_jsonformat e

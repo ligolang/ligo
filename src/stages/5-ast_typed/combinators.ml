@@ -58,14 +58,27 @@ let t_pair ?loc ?core a b : type_expression =
     (Label "0",{associated_type=a;michelson_annotation=None ; decl_pos = 0}) ;
     (Label "1",{associated_type=b;michelson_annotation=None ; decl_pos = 1}) ]
 
+let t_triplet ?loc ?core a b c : type_expression =
+  ez_t_record ?loc ?core [
+    (Label "0",{associated_type=a;michelson_annotation=None ; decl_pos = 0}) ;
+    (Label "1",{associated_type=b;michelson_annotation=None ; decl_pos = 1}) ;
+    (Label "2",{associated_type=c;michelson_annotation=None ; decl_pos = 2}) ]
+    
 let t_sum ?loc ?core ~layout content : type_expression = make_t ?loc (T_sum {content;layout}) core
 let t_sum_ez ?loc ?core ?(layout=default_layout) (lst:(string * type_expression) list) : type_expression =
   let lst = List.mapi (fun i (x,y) -> (Label x, ({associated_type=y;michelson_annotation=None;decl_pos=i}:row_element)) ) lst in
   let map = LMap.of_list lst in
   t_sum ?loc ?core ~layout map
-
 let t_bool ?loc ?core ()       : type_expression = t_sum_ez ?loc ?core
   [("true", t_unit ());("false", t_unit ())]
+
+(* types specific to LIGO test framework*)
+let t_ligo_code ?loc ?core () : type_expression = t_constant ?loc ?core test_ligo_name []
+let t_michelson_code ?loc ?core () : type_expression = t_constant ?loc ?core test_michelson_name []
+let t_test_exec_error ?loc ?core () : type_expression = t_sum_ez ?loc ?core
+  [ ("Rejected", t_pair (t_michelson_code ()) (t_address ())) ; ("Other" , t_unit ())]
+let t_test_exec_result ?loc ?core () : type_expression = t_sum_ez ?loc ?core
+  [ ("Success" ,t_unit ()); ("Fail", t_sum_ez [ ("Rejected", t_pair (t_michelson_code ()) (t_address ())) ; ("Other" , t_unit ())])]
 
 let t_function param result ?loc ?s () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result}) s
 let t_shallow_closure param result ?loc ?s () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result}) s
@@ -113,9 +126,10 @@ let get_t_nat (t:type_expression) : unit option = get_t_base_inj t nat_name
 let get_t_unit (t:type_expression) : unit option = get_t_base_inj t unit_name
 let get_t_mutez (t:type_expression) : unit option = get_t_base_inj t tez_name
 let get_t_bytes (t:type_expression) : unit option = get_t_base_inj t bytes_name
+let get_t_ligo_code (t:type_expression) : unit option = get_t_base_inj t test_ligo_name
+let get_t_michelson_code (t:type_expression) : unit option = get_t_base_inj t test_michelson_name
 let get_t_string (t:type_expression) : unit option = get_t_base_inj t string_name
 let get_t_contract (t:type_expression) : type_expression option = get_t_unary_inj t contract_name
-
 let get_t_option (t:type_expression) : type_expression option = get_t_unary_inj t option_name
 let get_t_list (t:type_expression) : type_expression option = get_t_unary_inj t list_name
 let get_t_set (t:type_expression) : type_expression option = get_t_unary_inj t set_name
@@ -209,7 +223,8 @@ let assert_t_signature = get_t_signature
 let assert_t_key_hash = get_t_key_hash
 let assert_t_bytes = get_t_bytes
 let assert_t_string = get_t_string
-
+let assert_t_ligo_code = get_t_ligo_code
+let assert_t_michelson_code = get_t_michelson_code
 let assert_t_contract (t:type_expression) : unit option = match get_t_unary_inj t contract_name with
   | Some _ -> Some ()
   | _ -> None
@@ -258,6 +273,7 @@ let e_operation s : expression_content = E_literal (Literal_operation s)
 let e_lambda l : expression_content = E_lambda l
 let e_pair a b : expression_content = ez_e_record [(Label "0",a);(Label "1", b)]
 let e_application lamb args : expression_content = E_application {lamb;args}
+let e_raw_code language code : expression_content = E_raw_code { language ; code }
 let e_variable v : expression_content = E_variable v
 let e_let_in let_binder rhs let_result inline = E_let_in { let_binder ; rhs ; let_result; inline }
 
@@ -283,11 +299,11 @@ let e_a_record ?(layout=default_layout) r = make_e (e_record r) (t_record ~layou
       let associated_type = get_type_expression t in
       {associated_type ; michelson_annotation=None ; decl_pos = 0} )
     r ))
-let e_a_application a b = make_e (e_application a b) (get_type_expression b)
+let e_a_application a b t = make_e (e_application a b) t
 let e_a_variable v ty = make_e (e_variable v) ty
 let ez_e_a_record ?layout r = make_e (ez_e_record r) (ez_t_record ?layout (List.mapi (fun i (x, y) -> x, {associated_type = y.type_expression ; michelson_annotation = None ; decl_pos = i}) r))
 let e_a_let_in binder expr body attributes = make_e (e_let_in binder expr body attributes) (get_type_expression body)
-
+let e_a_raw_code l c t = make_e (e_raw_code l c) t
 
 
 let get_a_int (t:expression) =

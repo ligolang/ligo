@@ -12,12 +12,12 @@ type all =
  | `Main_invalid_protocol_version of string list *  string
  | `Main_invalid_typer_switch of string
  | `Main_unparse_tracer of tezos_alpha_error list
- | `Main_typecheck_contract_tracer of int Michelson.michelson * tezos_alpha_error list
+ | `Main_typecheck_contract_tracer of int Tezos_utils.Michelson.michelson * tezos_alpha_error list
  | `Main_could_not_serialize of tezos_alpha_error list
  | `Main_check_typed_arguments of Simple_utils.Runned_result.check_type * all
  | `Main_unknown_failwith_type
  | `Main_unknown
- | `Main_execution_failed of Runned_result.failwith
+ | `Main_execution_failed of Simple_utils.Runned_result.failwith
  | `Main_unparse_michelson_result of tezos_alpha_error list
  | `Main_parse_payload of tezos_alpha_error list
  | `Main_pack_payload of tezos_alpha_error list
@@ -44,10 +44,17 @@ type all =
  | `Main_inferance of Inferance.Errors.typer_error
  | `Main_checking of Checking.Errors.typer_error
  | `Main_self_ast_typed of Self_ast_typed.Errors.self_ast_typed_error
- | `Main_interpreter of Interpreter.interpreter_error
  | `Main_spilling of Spilling.Errors.spilling_error
  | `Main_self_mini_c of Self_mini_c.Errors.self_mini_c_error
  | `Main_stacking of Stacking.Errors.stacking_error
+
+ (* | `Main_interpreter of Interpreter.interpreter_error *)
+ | `Main_interpret_test_entry_not_found of string
+ | `Main_interpret_target_lang_error of Location.t * Tezos_error_monad__TzCore.error list
+ | `Main_interpret_boostrap_not_enough of Location.t
+ | `Main_interpret_meta_lang_eval of Location.t * string
+ | `Main_interpret_meta_lang_failwith of Location.t * Ligo_interpreter.Types.value
+ | `Main_interpret_generic of Location.t * string
 
  | `Main_decompile_michelson of Stacking.Errors.stacking_error
  | `Main_decompile_mini_c of Spilling.Errors.spilling_error

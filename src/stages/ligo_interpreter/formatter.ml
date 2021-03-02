@@ -1,14 +1,11 @@
 open Display
 
-let test_ppformat ~display_format f success =
+let test_ppformat ~display_format f v =
   match display_format with
   | Human_readable | Dev ->
-    Format.pp_print_string f (
-      if success then "Test was successful"
-      else "Test failed"
-    )
+    Format.fprintf f "Test passed with %a" PP.pp_value v
 
-let test_jsonformat b : json = `Bool b
+let test_jsonformat b : json = ignore b ; `Null
 
 let test_format : 'a format = {
   pp = test_ppformat;

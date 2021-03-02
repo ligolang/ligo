@@ -3,7 +3,7 @@ open Test_helpers
 
 let mfile_FA12  = "./contracts/FA1.2.mligo"
 
-let type_file f s = Ligo.Compile.Utils.type_file f s (Contract "main")
+let type_file f s = Ligo_compile.Utils.type_file f s (Contract "main")
 
 let get_program f st =
   let s = ref None in
@@ -17,11 +17,11 @@ let get_program f st =
 
 let compile_main f s () =
   let%bind typed_prg,_   = get_program f s () in
-  let%bind mini_c_prg    = Ligo.Compile.Of_typed.compile typed_prg in
-  let%bind michelson_prg = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
+  let%bind mini_c_prg    = Ligo_compile.Of_typed.compile typed_prg in
+  let%bind michelson_prg = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
   let%bind _contract =
     (* fails if the given entry point is not a valid contract *)
-    Ligo.Compile.Of_michelson.build_contract michelson_prg in
+    Ligo_compile.Of_michelson.build_contract michelson_prg in
   ok ()
 
 open Ast_imperative

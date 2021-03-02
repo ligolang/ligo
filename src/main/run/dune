@@ -16,7 +16,7 @@
     mini_c
     predefined
     stacking
-    compile
+    ligo_compile
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)

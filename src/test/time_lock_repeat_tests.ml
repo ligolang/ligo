@@ -3,7 +3,7 @@ open Test_helpers
 open Ast_imperative
 open Main_errors
 
-let type_file f = Ligo.Compile.Utils.type_file f "cameligo" (Contract "main")
+let type_file f = Ligo_compile.Utils.type_file f "cameligo" (Contract "main")
 let options = Compiler_options.make ()
 
 let get_program =
@@ -18,11 +18,11 @@ let get_program =
 
 let compile_main () =
   let%bind typed_prg,_   = type_file ~options "./contracts/timelock_repeat.mligo" in
-  let%bind mini_c_prg      = Ligo.Compile.Of_typed.compile typed_prg in
-  let%bind michelson_prg   = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
+  let%bind mini_c_prg      = Ligo_compile.Of_typed.compile typed_prg in
+  let%bind michelson_prg   = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
   let%bind _contract =
     (* fails if the given entry point is not a valid contract *)
-    Ligo.Compile.Of_michelson.build_contract michelson_prg in
+    Ligo_compile.Of_michelson.build_contract michelson_prg in
   ok ()
 
 let empty_op_list =

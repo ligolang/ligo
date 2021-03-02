@@ -71,20 +71,6 @@ let variant_match =
   | Bar i -> true
   | Baz s -> false
 
-(* UNSUPPORTED: No deep patterns yet.
-type bar_variant =
-| Baz
-| Buz of int * int
-| Biz of int * int * string
-
-let long_variant_match =
-  let a = Biz (1,2,"Biz") in
-  match a with
-  | Baz -> "Baz"
-  | Buz (a,b) -> "Buz"
-  | Biz (a,b,c) -> c
- *)
-
 let bool_match =
   let b = true in
   match b with
@@ -144,14 +130,6 @@ let map_list =
   | hd::tl -> (hd = 2)
   | [] -> false
 
-let iter_list_fail =
-  let a = [1; 2; 3; 4] in
-  let check_something : int -> unit =
-    fun (i : int) ->
-      if i = 2 then failwith "you failed"
-  in
-  Test.assert_failure (fun (u:unit) -> List.iter check_something a)
-
 let fold_list =
   let a = [1; 2; 3; 4] in
   let acc : int * int -> int =
@@ -170,18 +148,11 @@ let comparison_string = not("foo"="bar") && ("baz"="baz")
 
 let divs_int =
   let a = 1/2 in
-  (* let b = 1/2n in *)
-  (* let c = 1n/2 in *)
   (a = 0)
 
 let divs_nat =
   let a = 1n/2n in
-  let b = 1tz/2tz in
-  (a = 0n) && (a = b)
-
-let divs_tez =
-  let a = 1tz/2n in
-  (a = 0.5tz)
+  (a = 0n)
 
 let var_neg =
   let a = 2 in
@@ -212,8 +183,6 @@ let assertion_pass =
   let unitt = assert (1=1) in
   true
 
-let assertion_fail = Test.assert_failure (fun (u:unit) -> assert (1=2))
-
 let map_finds =
   let m = Map.literal [("one", 1); ("two", 2); ("three", 3)]
   in
@@ -221,21 +190,11 @@ let map_finds =
   | Some v -> true
   | None -> false
 
-let map_finds_fail =
-  let m = Map.literal [("one", 1); ("two", 2); ("three", 3)]
-  in Test.assert_failure (fun (u:unit) -> Map.find "four" m)
-
 let m = Map.literal [("one", 1); ("two", 2); ("three", 3)]
 
 let map_fold =
   let aux = fun (i : int * (string * int)) -> i.0 + i.1.1
   in (Map.fold aux m 0 = 6)
-
-let map_iter =
-  let aux =
-    fun (i : string * int) -> if i.1 = 12 then failwith "never"
-  in
-  let u = Map.iter aux m in true
 
 let map_map =
   let aux = fun (i : string * int) -> i.1 + String.length i.0 in
@@ -260,10 +219,6 @@ let set_add =
   let s = Set.add 1 (Set.empty : int set) in
   Set.mem 1 s
 
-let set_iter_fail =
-  let aux = fun (i : int) -> if i = 1 then failwith "set_iter_fail"
-  in Test.assert_failure (fun (u:unit) -> Set.iter aux s)
-
 let set_mem =
   (Set.mem 1 s) && (Set.mem 2 s) && (Set.mem 3 s)
 
@@ -277,18 +232,3 @@ let rec sum_rec ((n,acc):int * int) : int =
     if (n < 1) then acc else sum_rec (n-1, acc+n)
 
 let top_level_recursion = (sum_rec (10,0) = 55)
-
-let pack_unpack =
-  let packed1 : bytes = Bytes.pack 1 in
-  let packed2 : bytes = Bytes.pack "hey" in
-  let v1 : int option = Bytes.unpack packed1 in
-  let v2 : string option = Bytes.unpack packed2 in
-  let v1 = match v1 with
-  | Some s -> s
-  | None -> -1
-  in
-  let v2 = match v2 with
-  | Some s -> s
-  | None -> ""
-  in
-  (v1 = 1) && (v2 = "hey")

@@ -893,48 +893,79 @@ let sapling_verify_update loc = typer_2 loc "SAPLING_VERIFY_UPDATE" @@ fun tr st
 let sapling_empty_state loc = typer_0 loc "SAPLING_EMPTY_STATE" @@ fun tv_opt ->
   trace_option (not_annotated loc) @@ tv_opt
 
-let test_originate loc = typer_2 loc "TEST_ORIGINATE" @@ fun f init_storage  ->
-  let%bind (args , ret) = trace_option (expected_function loc f) @@ get_t_function f in
-  let%bind (_param,storage_in) = trace_option (expected_pair loc args) @@ get_t_pair args in
-  let%bind (oplist,storage_out) = trace_option (expected_pair loc ret) @@ get_t_pair ret in
-  let%bind () = trace_option (expected_op_list loc oplist) @@ assert_t_list_operation oplist in
-  let%bind () = assert_eq loc storage_in init_storage in
-  let%bind () = assert_eq loc storage_in storage_out in
-  ok (t_address ())
+let test_originate loc = typer_3 loc "TEST_ORIGINATE" @@ fun source_file entrypoint storage ->
+  let%bind () = trace_option (expected_string loc source_file) @@ assert_t_string source_file in
+  let%bind () = trace_option (expected_string loc entrypoint) @@ assert_t_string entrypoint in
+  let%bind () = trace_option (expected_michelson_code loc storage) @@ assert_t_michelson_code storage in
+  ok (t_triplet (t_address ()) (t_michelson_code ()) (t_int ()))
+
+let test_compile_expression_subst loc = typer_3 loc "TEST_COMPILE_EXPRESSION_SUBST" @@ fun source_file_opt ligo_insertion subst_list ->
+  let%bind subst_pair = trace_option (expected_list loc subst_list) @@ get_t_list subst_list in
+  let%bind (str,code) = trace_option (expected_pair loc subst_pair) @@ get_t_pair subst_pair in
+  let%bind source_file = trace_option (expected_option loc source_file_opt) @@ get_t_option source_file_opt in
+  let%bind () = trace_option (expected_michelson_code loc code) @@ get_t_michelson_code code in
+  let%bind () = trace_option (expected_string loc str) @@ get_t_string str in
+  let%bind () = trace_option (expected_string loc source_file) @@ assert_t_string source_file in
+  let%bind () = trace_option (expected_ligo_code loc ligo_insertion) @@ assert_t_ligo_code ligo_insertion in
+  ok (t_michelson_code ())
+
+let test_compile_expression loc = typer_2 loc "TEST_COMPILE_EXPRESSION" @@ fun source_file_opt ligo_insertion ->
+  let%bind source_file = trace_option (expected_option loc source_file_opt) @@ get_t_option source_file_opt in
+  let%bind () = trace_option (expected_string loc source_file) @@ assert_t_string source_file in
+  let%bind () = trace_option (expected_ligo_code loc ligo_insertion) @@ assert_t_ligo_code ligo_insertion in
+  ok (t_michelson_code ())
+
+let test_state_reset loc = typer_2 loc "TEST_STATE_RESET" @@ fun n amts ->
+  let%bind amt = trace_option (expected_list loc amts) @@ get_t_list amts in
+  let%bind () = trace_option (expected_nat loc amt) @@ get_t_nat amt in
+  let%bind () = trace_option (expected_nat loc n) @@ get_t_nat n in
+  ok (t_unit ())
 
 let test_set_now loc = typer_1 loc "TEST_SET_NOW" @@ fun time ->
   let%bind () = assert_eq loc time (t_timestamp ()) in
   ok (t_unit ())
 
-let test_set_source loc = typer_1 loc "TEST_SET_SOURCE" @@ fun s ->
+let test_set_source loc = typer_1 loc "TEST_SET" @@ fun s ->
   let%bind () = assert_eq loc s (t_address ()) in
   ok (t_unit ())
 
-let test_set_balance loc = typer_2 loc "TEST_SET_BALANCE" @@ fun addr b ->
+let test_get_nth loc = typer_1 loc "TEST_GET_NTH" @@ fun n ->
+  let%bind () = trace_option (expected_int loc n) @@ assert_t_int n in
+  ok (t_address ())
+
+let test_external_call_exn loc = typer_3 loc "TEST_EXTERNAL_CALL_EXN" @@ fun addr p amt  ->
   let%bind () = assert_eq loc addr (t_address ()) in
-  let%bind () = assert_eq loc b (t_mutez ()) in
+  let%bind () = assert_eq loc amt (t_nat ()) in
+  let%bind () = assert_eq loc p (t_michelson_code ()) in
   ok (t_unit ())
 
-let test_external_call loc = typer_3 loc "TEST_EXTERNAL_CALL" @@ fun addr _p amt  ->
+let test_external_call loc = typer_3 loc "TEST_EXTERNAL_CALL" @@ fun addr p amt  ->
   let%bind () = assert_eq loc addr (t_address ()) in
-  let%bind () = assert_eq loc amt (t_mutez ()) in
-  ok (t_unit ())
+  let%bind () = assert_eq loc amt (t_nat ()) in
+  let%bind () = assert_eq loc p (t_michelson_code ()) in
+  ok (t_test_exec_result ())
 
-let test_get_storage loc = typer_1_opt loc "TEST_GET_STORAGE" @@ fun addr opt ->
+let test_get_storage loc = typer_1 loc "TEST_GET_STORAGE" @@ fun addr ->
   let%bind () = assert_eq loc addr (t_address ()) in
-  trace_option (not_annotated loc) @@ opt
+  ok (t_michelson_code ())
 
 let test_get_balance loc = typer_1 loc "TEST_GET_BALANCE" @@ fun addr ->
   let%bind () = assert_eq loc addr (t_address ()) in
-  ok (t_mutez ())
+  ok (t_michelson_code ())
 
-let test_assert_failure loc = typer_1 loc "TEST_ASSERT_FAILURE" @@ fun f ->
-  let%bind (input , output) = trace_option (expected_function loc f) @@ get_t_function f in
-  let%bind () = assert_eq loc input (t_unit ()) in
-  ignore output;
+let test_michelson_equal loc = typer_2 loc "TEST_ASSERT_EQUAL" @@ fun x y ->
+  let%bind () = trace_option (expected_michelson_code loc x) @@ assert_t_michelson_code x in
+  let%bind () = trace_option (expected_michelson_code loc y) @@ assert_t_michelson_code y in
   ok (t_bool ())
 
 let test_log loc = typer_1 loc "TEST_LOG" @@ fun _ -> ok @@ t_unit ()
+
+let test_last_originations loc = typer_1 loc "TEST_LAST_ORIGINATIONS" @@ fun u ->
+  let%bind () = trace_option (expected_unit loc u) @@ assert_t_unit u in
+  ok (t_map (t_address ()) (t_list (t_address ())))
+
+let test_compile_meta_value loc = typer_1 loc "TEST_LAST_ORIGINATIONS" @@ fun _ ->
+  ok (t_michelson_code ())
 
 let constant_typers loc c : (typer , typer_error) result = match c with
   | C_INT                 -> ok @@ int loc ;
@@ -1056,13 +1087,19 @@ let constant_typers loc c : (typer , typer_error) result = match c with
   | C_TEST_ORIGINATE -> ok @@ test_originate loc ;
   | C_TEST_SET_NOW -> ok @@ test_set_now loc ;
   | C_TEST_SET_SOURCE -> ok @@ test_set_source loc ;
-  | C_TEST_SET_BALANCE -> ok @@ test_set_balance loc ;
+  | C_TEST_SET_BAKER -> ok @@ test_set_source loc ;
   | C_TEST_EXTERNAL_CALL -> ok @@ test_external_call loc ;
+  | C_TEST_EXTERNAL_CALL_EXN -> ok @@ test_external_call_exn loc ;
   | C_TEST_GET_STORAGE -> ok @@ test_get_storage loc ;
   | C_TEST_GET_BALANCE -> ok @@ test_get_balance loc ;
-  | C_TEST_ASSERT_FAILURE -> ok @@ test_assert_failure loc ;
+  | C_TEST_MICHELSON_EQUAL -> ok @@ test_michelson_equal loc ;
+  | C_TEST_GET_NTH_BS -> ok @@ test_get_nth loc ;
   | C_TEST_LOG -> ok @@ test_log loc ;
-  
+  | C_TEST_COMPILE_EXPRESSION -> ok @@ test_compile_expression loc ;
+  | C_TEST_COMPILE_EXPRESSION_SUBST -> ok @@ test_compile_expression_subst loc ;
+  | C_TEST_STATE_RESET -> ok @@ test_state_reset loc ;
+  | C_TEST_LAST_ORIGINATIONS -> ok @@ test_last_originations loc ;
+  | C_TEST_COMPILE_META_VALUE -> ok @@ test_compile_meta_value loc ;
   (* JsLIGO *)
   | C_POLYMORPHIC_ADD  -> ok @@ polymorphic_add loc ;
   | _ as cst -> fail (corner_case @@ Format.asprintf "typer not implemented for constant %a" PP.constant' cst)

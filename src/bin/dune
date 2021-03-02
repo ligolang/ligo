@@ -4,6 +4,7 @@
     simple-utils
     cmdliner
     ligo
+    ligo_compile
     build
     repl
   )
@@ -11,7 +12,7 @@
   (preprocess
     (pps ppx_let bisect_ppx --conditional)
   )
-  (flags (:standard -open Simple_utils))
+  (flags (:standard -open Simple_utils -open Ligo))
 )
 
 (library

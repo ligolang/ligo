@@ -8,6 +8,6 @@
      simple-utils
      tezos-utils
      tezos-micheline
-     main)
+     ligo_main)
   (preprocess
     (pps ppx_let bisect_ppx --conditional)))

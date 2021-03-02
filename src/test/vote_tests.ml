@@ -9,7 +9,7 @@ let get_program =
     | Some s -> ok s
     | None -> (
       let options = Compiler_options.make () in
-      let%bind program = Ligo.Compile.Utils.type_file ~options "./contracts/vote.mligo" "cameligo" (Contract "main") in
+      let%bind program = Ligo_compile.Utils.type_file ~options "./contracts/vote.mligo" "cameligo" (Contract "main") in
       s := Some program ;
       ok program
     )

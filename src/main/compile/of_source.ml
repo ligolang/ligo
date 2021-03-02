@@ -30,5 +30,5 @@ let compile_string_without_preproc source : (c_unit , _) result =
   ok @@ (buffer, [])
 
 let compile_contract_input : options:Compiler_options.t -> meta:meta -> string -> string -> (c_unit * c_unit , _) result =
-    fun ~options ~meta storage parameter ->
-  bind_map_pair (compile_string ~options ~meta) (storage,parameter)
+    fun ~options ~meta parameter storage ->
+  bind_map_pair (compile_string ~options ~meta) (parameter,storage)

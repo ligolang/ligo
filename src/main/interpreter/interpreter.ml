@@ -2,13 +2,15 @@ open Trace
 open Ligo_interpreter.Types
 open Ligo_interpreter.Combinators
 include Ast_typed.Types
-
-module Errors = Errors
-type interpreter_error = Errors.interpreter_error
 module Env = Ligo_interpreter.Environment
+module Ligo_interpreter_exc = Ligo_interpreter_exc
+open Ligo_interpreter_exc
 
-let apply_comparison : Ast_typed.constant' -> value list -> value Monad.t =
-  fun c operands ->
+
+type interpreter_error = Errors.interpreter_error
+
+let apply_comparison : Location.t -> Ast_typed.constant' -> value list -> value Monad.t =
+  fun loc c operands ->
     let open Monad in
     match (c,operands) with
     | ( comp , [ V_Ct (C_int a'      ) ; V_Ct (C_int b'      ) ] )
@@ -18,63 +20,39 @@ let apply_comparison : Ast_typed.constant' -> value list -> value Monad.t =
       let>> cmpres = Int_of_int i in
       let>> cmpres = Int_compare (cmpres, Ligo_interpreter.Int_repr_copied.zero) in
       let x = match comp with
-        (*TODO those Int.(XX) ... should be added as a command in the monad and replaced by
-          int_repr_copied.Compare.(XX)*)
         | C_EQ -> (cmpres = 0)
         | C_NEQ -> (cmpres <> 0)
         | C_LT -> (cmpres < 0)
         | C_LE -> (cmpres <= 0)
         | C_GT -> (cmpres > 0)
         | C_GE -> (cmpres >= 0)
-        | _ -> failwith "apply compare must be called with a comparative constant"
+        | _ -> raise (Meta_lang_ex {location = loc ; reason = Reason "Not comparable" })
       in
       return @@ v_bool x
-    | ( comp , [ V_Ct (C_mutez a'    ) ; V_Ct (C_mutez b'    ) ] ) ->
-      let>> i = Tez_compare_wrapped (a', b') in
-      let>> cmpres = Int_of_int i in
-      let>> cmpres = Int_compare (cmpres, Ligo_interpreter.Int_repr_copied.zero) in
-      let x = match comp with
-        (*TODO those Int.(XX) ... should be added as a command in the monad and replaced by
-          int_repr_copied.Compare.(XX)*)
-        | C_EQ -> (cmpres = 0)
-        | C_NEQ -> (cmpres <> 0)
-        | C_LT -> (cmpres < 0)
-        | C_LE -> (cmpres <= 0)
-        | C_GT -> (cmpres > 0)
-        | C_GE -> (cmpres >= 0)
-        | _ -> failwith "apply compare must be called with a comparative constant"
-      in
-      return @@ v_bool x
-    | ( comp     , [ V_Ct (C_string a'  ) ; V_Ct (C_string b'  ) ] )
-    | ( comp     , [ V_Ct (C_address a' ) ; V_Ct (C_address b' ) ] )
-    | ( comp     , [ V_Ct (C_key_hash a') ; V_Ct (C_key_hash b') ] ) ->
-    (* TODO : monad, allign with Michelson *)
+    | ( _     , [ V_Ct (C_address b ) ; V_Ct (C_address a ) ] ) ->
+      return @@ v_bool @@ Tezos_state.compare_account a b
+    | ( comp     , [ V_Ct (C_string a'  ) ; V_Ct (C_string b'  ) ] ) ->
       let f_op = match comp with
         | C_EQ -> fun a b -> (String.compare a b = 0)
         | C_NEQ -> fun a b -> (String.compare a b != 0)
-        (* the above might not be alligned with Michelson interpreter. Do we care ? *)
         | C_LT -> fun a b -> (String.compare a b < 0)
         | C_LE -> fun a b -> (String.compare a b <= 0)
         | C_GT -> fun a b -> (String.compare a b > 0)
         | C_GE -> fun a b -> (String.compare a b >= 0)
-        | _ -> failwith "apply compare must be called with a comparative constant" in
+        | _ -> raise (Meta_lang_ex {location = loc ; reason = Reason "Not comparable" }) in
       Monad.return @@ v_bool (f_op a' b')
 
     | ( comp     , [ V_Ct (C_bytes a'  ) ; V_Ct (C_bytes b'  ) ] ) ->
-    (* TODO : monad, allign with Michelson *)
       let f_op = match comp with
         | C_EQ -> fun a b -> (Bytes.compare a b = 0)
         | C_NEQ -> fun a b -> (Bytes.compare a b != 0)
-        (* the above might not be alligned with Michelson interpreter. Do we care ? *)
         | C_LT -> fun a b -> (Bytes.compare a b < 0)
         | C_LE -> fun a b -> (Bytes.compare a b <= 0)
         | C_GT -> fun a b -> (Bytes.compare a b > 0)
         | C_GE -> fun a b -> (Bytes.compare a b >= 0)
-        | _ -> failwith "apply compare must be called with a comparative constant" in
+        | _ -> raise (Meta_lang_ex {location = loc ; reason = Reason "Not comparable" }) in
       Monad.return @@ v_bool (f_op a' b')
-    | _ ->
-      let () = List.iter (fun el -> Format.printf "%a" Ligo_interpreter.PP.pp_value el) operands in
-      failwith "unsupported comparison"
+    | _ -> raise (Meta_lang_ex {location = loc ; reason = Reason "Not comparable" })
 
 let rec apply_operator : Location.t -> Ast_typed.constant' -> value list -> value Monad.t =
   fun loc c operands ->
@@ -88,9 +66,6 @@ let rec apply_operator : Location.t -> Ast_typed.constant' -> value list -> valu
     | ( C_UNIT , [] ) -> return @@ V_Ct C_unit
     | ( C_NIL  , [] ) -> return @@ V_List []
     (* unary *)
-    | ( C_FAILWITH , [ V_Ct ct ] ) ->
-      let s = Format.asprintf "%a" Ligo_interpreter.PP.pp_ct ct in
-      Errors.contract_failure s
     | ( C_SIZE   , [(V_Set l | V_List l)] ) -> return_ct @@ C_nat (Z.of_int @@ List.length l)
     | ( C_SIZE   , [ V_Map l            ] ) -> return_ct @@ C_nat (Z.of_int @@ List.length l)
     | ( C_SIZE   , [ V_Ct (C_string s ) ] ) -> return_ct @@ C_nat (Z.of_int @@ String.length s)
@@ -107,17 +82,17 @@ let rec apply_operator : Location.t -> Ast_typed.constant' -> value list -> valu
     | ( C_FOLD_STOP      , [ v ] ) -> return @@ v_pair (v_bool false , v)
     | ( C_ASSERTION , [ v ] ) ->
       if (is_true v) then return_ct @@ C_unit
-      else Errors.contract_failure "failed assertion"
+      else raise (Meta_lang_ex {location = loc ; reason = Reason "Failed assertion"})
     | C_MAP_FIND_OPT , [ k ; V_Map l ] -> ( match List.assoc_opt k l with
       | Some v -> return @@ v_some v
       | None -> return @@ v_none ()
     )
     | C_MAP_FIND , [ k ; V_Map l ] -> ( match List.assoc_opt k l with
       | Some v -> return @@ v
-      | None -> Errors.contract_failure "failed map find"
+      | None -> raise (Meta_lang_ex {location = loc ; reason = Reason (Predefined.Tree_abstraction.pseudo_module_to_string c)})
     )
     (* binary *)
-    | ( (C_EQ | C_NEQ | C_LT | C_LE | C_GT | C_GE) , _ ) -> apply_comparison c operands
+    | ( (C_EQ | C_NEQ | C_LT | C_LE | C_GT | C_GE) , _ ) -> apply_comparison loc c operands
     | ( C_SUB    , [ V_Ct (C_int a' | C_nat a') ; V_Ct (C_int b' | C_nat b') ] ) -> return_ct @@ C_int (Z.sub a' b')
     | ( C_CONS   , [ v                  ; V_List vl          ] ) -> return @@ V_List (v::vl)
     | ( C_ADD    , [ V_Ct (C_int a'  )  ; V_Ct (C_int b'  )  ] )
@@ -128,26 +103,6 @@ let rec apply_operator : Location.t -> Ast_typed.constant' -> value list -> valu
     | ( C_MUL    , [ V_Ct (C_nat a'  )  ; V_Ct (C_int b'  )  ] )
     | ( C_MUL    , [ V_Ct (C_int a'  )  ; V_Ct (C_nat b'  )  ] ) -> let>> r = Int_mul (a',b') in return_ct (C_int r)
     | ( C_MUL    , [ V_Ct (C_nat a'  )  ; V_Ct (C_nat b'  )  ] ) -> let>> r = Int_mul_n (a',b') in return_ct (C_nat r)
-    | ( C_MUL    , [ V_Ct (C_nat a'  )  ; V_Ct (C_mutez b')  ] ) ->
-      let>> a' = Int_to_int64 a' in
-      begin
-        match a' with
-        | None -> call Fail_overflow
-        | Some a' ->
-          let res = Tez.(b' *? a') in
-          let>> res = Lift_tz_result res in
-          return_ct (C_mutez res)
-      end
-    | ( C_MUL    , [ V_Ct (C_mutez a')  ; V_Ct (C_nat b')  ] ) ->
-      let>> b' = Int_to_int64 b' in
-      begin
-        match b' with
-        | None -> call Fail_overflow
-        | Some b' ->
-          let res = Tez.(a' *? b') in
-          let>> res = Lift_tz_result res in
-          return_ct (C_mutez res)
-      end
     | ( C_DIV    , [ V_Ct (C_int a'  )  ; V_Ct (C_int b'  )  ] )
     | ( C_DIV    , [ V_Ct (C_int a'  )  ; V_Ct (C_nat b'  )  ] )
     | ( C_DIV    , [ V_Ct (C_nat a'  )  ; V_Ct (C_int b'  )  ] ) ->
@@ -155,64 +110,29 @@ let rec apply_operator : Location.t -> Ast_typed.constant' -> value list -> valu
       begin
         match a with
         | Some (res,_) -> return_ct @@ C_int res
-        | None -> Errors.contract_failure "div/0"
+        | None -> raise (Meta_lang_ex {location = loc ; reason = Reason "Dividing by zero"})
       end
     | ( C_DIV    , [ V_Ct (C_nat a')  ; V_Ct (C_nat b')  ] ) ->
       let>> a = Int_ediv_n (a',b') in
       begin
         match a with
         | Some (res,_) -> return_ct @@ C_nat res
-        | None -> Errors.contract_failure "div/0"
-      end
-    | ( C_DIV    , [ V_Ct (C_mutez a')  ; V_Ct (C_nat b'  )  ] ) ->
-      let>> a' = Int_of_int64 (Tez.to_mutez a') in
-      let>> res = Int_ediv (a', b') in
-      begin
-        match res with
-        | None -> Errors.contract_failure "div/0"
-        | Some (q, _r) ->
-            let>> q' = Int_to_int64 q in
-              match q' with
-              | Some q ->
-                  begin
-                    match Tez.of_mutez q with
-                    | Some q -> return_ct @@ C_mutez q
-                    (* Cannot overflow *)
-                    | _ -> Errors.contract_failure "div/0"
-                  end
-              (* Cannot overflow *)
-              | _ -> Errors.contract_failure "div/0"
-      end
-    | ( C_DIV    , [ V_Ct (C_mutez a')  ; V_Ct (C_mutez b')  ] ) ->
-      let abs : Tez.t -> _ Monad.t = fun x ->
-        let>> x' = Int_of_int64 (Tez.to_mutez x) in
-        let>> x' = Int_abs x' in
-        return x'
-      in
-      let* a' = abs a' in
-      let* b' = abs b' in
-      let>> div = Int_ediv_n (a', b') in
-      begin
-        match div with
-            | None -> Errors.contract_failure "div/0"
-            | Some (q, _r) -> return_ct @@ (C_nat q)
+        | None -> raise (Meta_lang_ex {location = loc ; reason = Reason "Dividing by zero"})
       end
     | ( C_MOD    , [ V_Ct (C_int a')    ; V_Ct (C_int b')    ] )
     | ( C_MOD    , [ V_Ct (C_int a')    ; V_Ct (C_nat b')    ] )
-    | ( C_MOD    , [ V_Ct (C_nat a')    ; V_Ct (C_int b')    ] ) ->
+    | ( C_MOD    , [ V_Ct (C_nat a')    ; V_Ct (C_int b')    ] ) -> (
       let>> a = Int_ediv (a',b') in
-      begin
-        match a with
-        | Some (_,r) -> return_ct @@ C_nat r
-        | None -> Errors.contract_failure "div/0"
-      end
-    | ( C_MOD    , [ V_Ct (C_nat a')    ; V_Ct (C_nat b')    ] ) ->
+      match a with
+      | Some (_,r) -> return_ct @@ C_nat r
+      | None -> raise (Meta_lang_ex {location = loc ; reason = Reason "Dividing by zero"})
+    )
+    | ( C_MOD    , [ V_Ct (C_nat a')    ; V_Ct (C_nat b')    ] ) -> (
       let>> a = Int_ediv_n (a',b') in
-      begin
-        match a with
-        | Some (_,r) -> return_ct @@ C_nat r
-        | None -> Errors.contract_failure "div/0"
-      end
+      match a with
+      | Some (_,r) -> return_ct @@ C_nat r
+      | None -> raise (Meta_lang_ex {location = loc ; reason = Reason "Dividing by zero"})
+    )
     | ( C_CONCAT , [ V_Ct (C_string a') ; V_Ct (C_string b') ] ) -> return_ct @@ C_string (a' ^ b')
     | ( C_CONCAT , [ V_Ct (C_bytes a' ) ; V_Ct (C_bytes b' ) ] ) -> return_ct @@ C_bytes  (Bytes.cat a' b')
     | ( C_OR     , [ V_Ct (C_bool a'  ) ; V_Ct (C_bool b'  ) ] ) -> return_ct @@ C_bool   (a' || b')
@@ -283,14 +203,12 @@ let rec apply_operator : Location.t -> Ast_typed.constant' -> value list -> valu
         )
         init kvs
     | ( C_MAP_MEM , [ k ; V_Map kvs ] ) -> return @@ v_bool (List.mem_assoc k kvs)
-    | ( C_MAP_ADD , [ k ; v ; V_Map kvs as vmap] ) ->
-      if (List.mem_assoc k kvs) then return vmap
-      else return (V_Map ((k,v)::kvs))
+    | ( C_MAP_ADD , [ k ; v ; V_Map kvs] ) -> return (V_Map ((k,v) :: List.remove_assoc k kvs))
     | ( C_MAP_REMOVE , [ k ; V_Map kvs] ) -> return @@ V_Map (List.remove_assoc k kvs)
     | ( C_MAP_UPDATE , [ k ; V_Construct (option,v) ; V_Map kvs] ) -> (match option with
       | "Some" -> return @@ V_Map ((k,v)::(List.remove_assoc k kvs))
       | "None" -> return @@ V_Map (List.remove_assoc k kvs)
-      | _ -> failwith "update without an option"
+      | _ -> assert false
     )
     | ( C_SET_EMPTY, []) -> return @@ V_Set ([])
     | ( C_SET_ADD , [ v ; V_Set l ] ) -> return @@ V_Set (List.sort_uniq compare (v::l))
@@ -311,152 +229,74 @@ let rec apply_operator : Location.t -> Ast_typed.constant' -> value list -> valu
         (V_Ct C_unit) elts
     | ( C_SET_MEM    , [ v ; V_Set (elts) ] ) -> return @@ v_bool (List.mem v elts)
     | ( C_SET_REMOVE , [ v ; V_Set (elts) ] ) -> return @@ V_Set (List.filter (fun el -> not (el = v)) elts)
-    | ( C_NOW , [] ) -> let>> now = Now in return_ct @@ C_timestamp now
-    | ( C_AMOUNT , [] ) -> let>> amt = Amount in return_ct @@ C_mutez amt
-    | ( C_BALANCE , [] ) -> let>> blc = Balance in return_ct @@ C_mutez blc
-    | ( C_SENDER, [] ) -> let>> snd = Sender in return_ct @@ C_address (string_of_int snd)
-    | ( C_SOURCE, [] ) -> let>> src = Source in return_ct @@ C_address (string_of_int src)
-    | ( C_CHAIN_ID, [] ) -> let>> id = Chain_id in return_ct @@ C_bytes id
-    | ( (C_CONTRACT_ENTRYPOINT_OPT | C_CONTRACT_OPT) , [ V_Ct (C_address addr) ] ) ->
-      (* TODO: For now contract_entrypoint does not perform extra checks
-         but the contract types are held in the context so it is possible *)
-      let ctr = counter_of_address addr in
-      let>> v = Get_contract ctr in
-      ( match v with
-        | Some v -> return (V_Construct ("Some", v))
-        | None -> return (V_Construct ("None", V_Ct C_unit))
-      )
-    | ( (C_CONTRACT | C_CONTRACT_ENTRYPOINT) , [ V_Ct (C_address addr) ] ) ->
-      let ctr = counter_of_address addr in
-      let>> v = Get_contract ctr in
-      ( match v with
-        | Some v -> return v
-        | None -> return (Errors.contract_not_found addr)
-      )
-    | ( C_CALL , [ param ; V_Ct (C_mutez amt) ; V_Ct (C_address addr) ] ) -> (
-      let ctr = counter_of_address addr in
-      let>> (code,storage) = Get_script (ctr,loc) in
-      match code with
-        | V_Func_val {arg_binder ; body ; env} ->
-          let param_storage = V_Record (LMap.of_list [ (Label "0", param) ; (Label "1", storage) ]) in
-          let f_env' = Env.extend env (arg_binder, param_storage) in
-          return_ct (C_operation (Internal_transaction { addr=ctr ; code = body ; env = f_env' ; amount = amt }))
-        | _ -> failwith "transaction code is not a function"
-    )
-    | ( C_CREATE_CONTRACT , [ code ; delegate ; V_Ct (C_mutez amount) ; storage ] ) ->
-      ignore delegate;
-      let>> ctr = Generate_addr in
-      let op : Ligo_interpreter.Types.operation = Create_contract { addr=ctr ; code ; amount ; storage } in
-      let addr = string_of_int ctr in
-      return @@ V_Record (LMap.of_list [
-        (Label "0", V_Ct (C_operation op)) ;
-        (Label "1", V_Ct (C_address addr)) ])
     | ( C_ADDRESS , [ addr ] ) ->
       return addr
-    | ( C_SELF , [ _ep ] ) ->
-      let>> s = Self in
-      return s
-    | ( C_SELF_ADDRESS , [] ) ->
-      let>> s = Self in
-      return s
-    | ( C_IMPLICIT_ACCOUNT , [ V_Ct (C_key_hash pkh) ] ) ->
-      let>> s = Implicit_account pkh in
-      return s
-    | ( C_BYTES_PACK , [ v ] ) ->
-      let>> s = Serialize_pack_data v in
-      return (V_packed s)
-    | ( C_BYTES_UNPACK , [ V_packed s ] ) ->
-      let>> s = Serialize_unpack_data s in
-      return @@ V_Construct ("Some" , s)
     (*
     >>>>>>>>
       Test operators
     >>>>>>>>
     *)
-    | ( C_TEST_ORIGINATE, [ code ; storage ] ) ->
-      let>> ctr = Generate_addr in
-      let>> () = Inject_script (ctr, code, storage) in
-      return_ct @@ C_address (string_of_int ctr)
-    | ( C_TEST_SET_BALANCE , [ V_Ct (C_address addr) ; V_Ct (C_mutez amt) ] ) ->
-      let>> () = Set_balance (counter_of_address addr, amt) in
-      return_ct C_unit
+    | ( C_TEST_COMPILE_EXPRESSION_SUBST, [ file_opt ; V_Ligo (syntax,ligo_exp) ; subst ] ) ->
+      let>> code = Compile_expression (loc, file_opt, syntax, ligo_exp, Some subst) in
+      return code
+    | ( C_TEST_COMPILE_EXPRESSION, [ file_opt ; V_Ligo (syntax,ligo_exp) ] ) ->
+      let>> code = Compile_expression (loc, file_opt, syntax, ligo_exp, None) in
+      return code
+    | ( C_TEST_ORIGINATE, [ V_Ct (C_string source_file) ; V_Ct (C_string entryp) ; storage ] ) ->
+      let>> (code,size) = Compile_contract (source_file,entryp) in
+      let>> addr = Inject_script (loc, code, storage) in
+      return @@ V_Record (LMap.of_list [ (Label "0", addr) ; (Label "1", code) ; (Label "2", size) ])
     | ( C_TEST_SET_NOW , [ V_Ct (C_timestamp t) ] ) ->
-      let>> () = Set_now t in
+      let>> () = Set_now (loc,t) in
       return_ct C_unit
-    | ( C_TEST_SET_SOURCE , [ V_Ct (C_address addr) ] ) ->
-      let>> () = Set_source (counter_of_address addr) in
+    | ( C_TEST_SET_SOURCE , [ addr ] ) ->
+      let>> () = Set_source addr in
       return_ct C_unit
-    | ( C_TEST_EXTERNAL_CALL , [ V_Ct (C_address addr) ; param ; V_Ct (C_mutez amt) ] ) -> (
-      let ctr = counter_of_address addr in
-      let>> (code,storage) = Get_script (ctr,loc) in
-      let* result = match code with
-          | V_Func_val {arg_binder ; body ; env} ->
-            let param_storage = V_Record (LMap.of_list [ (Label "0", param) ; (Label "1", storage) ]) in
-            let f_env' = Env.extend env (arg_binder, param_storage) in
-            Try (
-              let>> () = Credit_balance (ctr, amt) in
-              let>> () = External_call (ctr, amt) in
-              let* res = eval_ligo body f_env' in
-              let>> () = Update_storage (ctr, res) in
-              return res
-            )
-          | _ -> failwith "code is not a function"
-      in
-      match result with
-      | None ->
-        Errors.contract_failure @@ Format.asprintf "external contract call at address '%s'" addr
-      | Some r ->
-        let ops = get_operations r in
-        let aux : value -> operation -> _ = fun _ op ->
-          match op with
-          | Create_contract { addr ; code ; amount ; storage } ->
-            let>> () = Inject_script (addr, code, storage) in
-            let>> () = Set_balance (addr, amount) in
-            return_ct C_unit
-          | Internal_transaction { addr ; code ; env ; amount } ->
-            let* result = Try (
-              let>> () = Debit_balance amount in
-              let>> () = Credit_balance (addr, amount) in
-              let>> () = Internal_call (addr, amount) in
-              let* res = eval_ligo code env in
-              let>> () = Update_storage (addr, res) in
-              return_ct C_unit
-            ) in
-            begin
-              match result with
-              | None ->
-                Errors.contract_failure @@ Format.asprintf "internal contract call at address '%d' has failed" addr
-              | Some r -> return r
-            end
-        in
-        Monad.bind_fold_list aux r ops
+    | ( C_TEST_SET_BAKER , [ addr ] ) ->
+      let>> () = Set_baker addr in
+      return_ct C_unit
+    | ( C_TEST_EXTERNAL_CALL_EXN , [ addr ; param ; amt ] ) -> (
+      let>> err_opt = External_call (loc,addr,param,amt) in
+      match err_opt with
+      | None -> return_ct C_unit
+      | Some e -> raise (Object_lang_ex (loc,e))
     )
-    | ( C_TEST_GET_STORAGE , [ V_Ct (C_address addr) ] ) ->
-      let>> storage = Get_storage (counter_of_address addr) in
+    | ( C_TEST_EXTERNAL_CALL , [ addr ; param ; amt ] ) -> (
+      let>> err_opt = External_call (loc,addr,param,amt) in
+      match err_opt with
+      | None -> return_ct C_unit
+      | Some e ->
+        let>> a = State_error_to_value e in
+        return a
+    )
+    | ( C_TEST_GET_STORAGE , [ addr ] ) ->
+      let>> storage = Get_storage (loc, addr) in
       return storage
-    | ( C_TEST_GET_BALANCE , [ V_Ct (C_address addr) ] ) ->
-      let>> balance = Get_balance (counter_of_address addr) in
+    | ( C_TEST_GET_BALANCE , [ addr ] ) ->
+      let>> balance = Get_balance (loc, addr) in
       return balance
-    | ( C_TEST_ASSERT_FAILURE , [ V_Func_val {arg_binder=_ ; body ; env} ] ) ->
-      let* failed = Try (eval_ligo body env) in
-      return_ct (C_bool (Option.is_none failed))
+    | ( C_TEST_MICHELSON_EQUAL , [ a ; b ] ) ->
+      let>> b = Michelson_equal (loc,a,b) in
+      return_ct (C_bool b)
     | ( C_TEST_LOG , [ v ]) ->
       let () = Format.printf "%a\n" Ligo_interpreter.PP.pp_value v in
       return_ct C_unit
-    | _ -> call @@ Fail_prim_not_supported (loc,c)
+    | ( C_TEST_STATE_RESET , [ n ; amts ] ) ->
+      let>> () = Reset_state (loc,n,amts) in
+      return_ct C_unit
+    | ( C_TEST_GET_NTH_BS , [ n ] ) ->
+      let>> x = Get_bootstrap (loc,n) in
+      return x
+    | ( C_TEST_LAST_ORIGINATIONS , [ _ ] ) ->
+      let>> x = Get_last_originations () in
+      return x
+    | ( C_TEST_COMPILE_META_VALUE , [ a ] ) ->
+      let>> x = Compile_meta_value (loc,a) in
+      return x
+    | ( C_FAILWITH , [ a ] ) ->
+      raise (Meta_lang_ex {location = loc ; reason = Val a})
+    | _ -> Fail_ligo (Errors.generic_error loc "Unbound primitive.")
   )
-
-(* TODO
-hash on bytes
-C_BLAKE2b
-C_SHA256
-C_SHA512
-hash on key
-C_HASH_KEY
-
-need exts
-C_CHECK_SIGNATURE
-*)
 
 (*interpreter*)
 and eval_literal : Ast_typed.literal -> value Monad.t = function
@@ -466,25 +306,7 @@ and eval_literal : Ast_typed.literal -> value Monad.t = function
   | Literal_timestamp i -> Monad.return @@ V_Ct (C_timestamp i)
   | Literal_string s    -> Monad.return @@ V_Ct (C_string (Ligo_string.extract s))
   | Literal_bytes s     -> Monad.return @@ V_Ct (C_bytes s)
-  | Literal_mutez t     ->
-    let cast_to_mutez v = match Tez.of_mutez v with
-      | None -> failwith "tez literal is negative"
-      | Some r -> r in
-   Monad.(
-      let>> t = Int_to_int64 t in
-      begin
-        match t with
-          | Some t ->
-            Monad.return @@ V_Ct (C_mutez (cast_to_mutez t))
-          | None -> call Fail_overflow
-      end
-  )
-  | Literal_address s   -> Monad.return @@ V_Ct (C_address s)
-  | Literal_signature s -> Monad.return @@ V_Ct (C_signature s)
-  | Literal_key s       -> Monad.return @@ V_Ct (C_key s)
-  | Literal_key_hash s  -> Monad.return @@ V_Ct (C_key_hash s)
-  | Literal_chain_id s  -> Monad.return @@ V_Ct (C_key_hash s)
-  | Literal_operation _o -> failwith "no literal operations"
+  | _   -> Monad.fail @@ Errors.generic_error Location.generated "Unsupported literal"
 
 and eval_ligo : Ast_typed.expression -> env -> value Monad.t
   = fun term env ->
@@ -494,7 +316,7 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
         let* f' = eval_ligo f env in
         let* args' = eval_ligo args env in
         match f' with
-          | V_Func_val {arg_binder ; body ; env} ->
+          | V_Func_val {arg_binder ; body ; env; _} ->
             let f_env' = Env.extend env (arg_binder, args') in
             eval_ligo body f_env'
           | V_Func_rec (fun_name, arg_names, body, f_env) ->
@@ -504,7 +326,7 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
           | _ -> failwith "trying to apply on something that is not a function"
       )
     | E_lambda {binder; result;} ->
-      return @@ V_Func_val {arg_binder=binder ; body=result ; env}
+      return @@ V_Func_val {orig_lambda = term ; arg_binder=binder ; body=result ; env}
     | E_let_in {let_binder ; rhs; let_result} -> (
       let* rhs' = eval_ligo rhs env in
       eval_ligo (let_result) (Env.extend env (let_binder,rhs'))
@@ -600,54 +422,60 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
         in
         let env' = LMap.fold aux fields env in
         eval_ligo body env'
-      | _ -> failwith "not yet supported case"
+      | _ , v -> failwith ("not yet supported case "^ Format.asprintf "%a" Ligo_interpreter.PP.pp_value v)
     )
     | E_recursive {fun_name; fun_type=_; lambda} ->
       return @@ V_Func_rec (fun_name, lambda.binder, lambda.result, env)
-    | E_raw_code _ -> failwith "can't evaluate a raw code insertion"
+    | E_raw_code {language ; code} -> (
+      match code.expression_content with
+      | E_literal (Literal_string x) ->
+        let exp_as_string = Ligo_string.extract x in
+        return @@ V_Ligo (language , exp_as_string)
+      | _ -> failwith "impossible"
+    )
     | E_module_accessor {module_name=_; element=_} ->
       failwith "Can't evalute module yet"
 
-open Proto_alpha_utils.Memory_proto_alpha
-
 let ( let>>= ) o f = Trace.bind f o
 
-let eval : ?options:options -> Ast_typed.module_fully_typed -> (env , Errors.interpreter_error) result =
-  fun ?(options = default_options) (Module_Fully_Typed prg) ->
-    let init_ctxt = Ligo_interpreter.Mini_proto.option_to_context options in
-    let aux : env -> declaration location_wrap -> (env, Errors.interpreter_error) Trace.result =
-      fun top_env el ->
+let eval : Ast_typed.module_fully_typed -> (env , Errors.interpreter_error) result =
+  fun (Module_Fully_Typed prg) ->
+    let aux : env * Tezos_state.context -> declaration location_wrap -> (env * Tezos_state.context, Errors.interpreter_error) Trace.result =      
+      fun (top_env,state) el ->
         match Location.unwrap el with
-        | Ast_typed.Declaration_type _ -> ok top_env
+        | Ast_typed.Declaration_type _ -> ok (top_env,state)
         | Ast_typed.Declaration_constant {binder; expr ; inline=_ ; _} ->
-          let>>= v =
-            try
-              let>>= (v, _ctxt) = Monad.eval (eval_ligo expr top_env) init_ctxt None in
-              ok v
-            with Temporary_hack s -> fail @@ Errors.failwith s
+          let>>= (v,state) =
+            try Monad.eval (eval_ligo expr top_env) state None
+            with
+              | Object_lang_ex (loc,e) -> fail @@ Errors.target_lang_error loc e
+              | Meta_lang_ex {location ; reason = Val x} -> fail @@ Errors.meta_lang_failwith location x
+              | Meta_lang_ex {location ; reason = Reason x} -> fail @@ Errors.meta_lang_eval location x
           in
           let top_env' = Env.extend top_env (binder, v) in
-          ok top_env'
+          ok (top_env',state)
         | Ast_typed.Declaration_module {module_binder; module_=_} ->
           let>>= module_env =
             failwith "Module are not handled in interpreter yet"
           in
           let top_env' = Env.extend top_env (Location.wrap @@ Var.of_name module_binder, module_env) in
-          ok top_env'
+          ok (top_env',state)
         | Ast_typed.Module_alias _ -> failwith "Module are not handled in interpreter yet"
     in
-    bind_fold_list aux (Env.empty_env) prg
+    let%bind initial_state = Tezos_state.init_ctxt () in
+    let%bind (env,_) = bind_fold_list aux (Env.empty_env, initial_state) prg in
+    ok env
 
-let eval_test : ?options:options -> Ast_typed.module_fully_typed -> string -> (bool , Errors.interpreter_error) result =
-  fun ?(options = default_options) prg test_entry ->
-    let>>= env = eval ~options prg in
-  let v = Env.to_kv_list env in
-  let aux : expression_variable * value -> bool = fun (ev, _) ->
-    let name = Var.to_name @@ Location.unwrap ev in
-    String.equal name test_entry
-  in
-  match List.find_opt aux v with
-  | Some (_,v) -> if is_bool v then ok @@ is_true v else fail @@ Errors.bad_test v test_entry
-  | None -> fail @@ Errors.test_entry_not_found test_entry
+let eval_test : Ast_typed.module_fully_typed -> string -> (value , Errors.interpreter_error) result =
+  fun prg test_entry ->
+    let>>= env = eval prg in
+    let v = Env.to_kv_list env in
+    let aux : expression_variable * value -> bool = fun (ev, _) ->
+      let name = Var.to_name @@ Location.unwrap ev in
+      String.equal name test_entry
+    in
+    match List.find_opt aux v with
+    | Some (_,v) -> ok v
+    | None -> fail @@ Errors.test_entry_not_found test_entry
 
 let () = Printexc.record_backtrace true

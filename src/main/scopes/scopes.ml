@@ -11,7 +11,7 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
   let make_v_def_option_type = make_v_def_option_type ~with_types in
   let compile =
     let { init_env ; infer } : Compiler_options.t = options in
-    Compile.Of_core.compile ~infer ~init_env Env
+    Ligo_compile.Of_core.compile ~infer ~init_env Env
   in
 
   let rec find_scopes' = fun (i,all_defs,env,scopes,lastloc) (bindings:bindings_map) (e : Ast_core.expression) ->

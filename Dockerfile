@@ -10,7 +10,6 @@ RUN apk update && apk upgrade && apk --no-cache add \
   opam cargo
 
 RUN opam init --disable-sandboxing --bare
-RUN opam update
 
 # make bls12-381 build ???
 ENV RUSTFLAGS='--codegen target-feature=-crt-static'
@@ -18,7 +17,7 @@ ENV RUSTFLAGS='--codegen target-feature=-crt-static'
 # Install opam switch & deps
 WORKDIR /ligo
 COPY scripts/setup_switch.sh /ligo/scripts/setup_switch.sh
-RUN sh scripts/setup_switch.sh
+RUN opam update && sh scripts/setup_switch.sh
 COPY scripts/install_opam_deps.sh /ligo/scripts/install_opam_deps.sh
 COPY ligo.opam /ligo
 COPY ligo.opam.locked /ligo
@@ -34,7 +33,8 @@ COPY vendors/ligo-utils/proto-alpha-utils/proto-alpha-utils.opam /ligo/vendors/l
 COPY vendors/ligo-utils/tezos-utils/tezos-utils.opam /ligo/vendors/ligo-utils/tezos-utils/tezos-utils.opam
 COPY vendors/ligo-utils/memory-proto-alpha/tezos-memory-proto-alpha.opam /ligo/vendors/ligo-utils/memory-proto-alpha/tezos-memory-proto-alpha.opam
 COPY vendors/ligo-utils/simple-utils/simple-utils.opam /ligo/vendors/ligo-utils/simple-utils/simple-utils.opam
-RUN sh scripts/install_opam_deps.sh
+COPY vendors/ligo-utils/ligo_008_PtEdo2Zk_test_helpers/ligo-008-PtEdo2Zk-test-helpers.opam /ligo/vendors/ligo-utils/ligo_008_PtEdo2Zk_test_helpers/ligo-008-PtEdo2Zk-test-helpers.opam
+RUN opam update && sh scripts/install_opam_deps.sh
 
 # Now install vendor libs
 COPY vendors /ligo/vendors
