@@ -1,6 +1,5 @@
 import cors from 'cors';
 import express from 'express';
-import fs from 'fs';
 import { dirname, join } from 'path';
 
 import { compileContractHandler } from './handlers/compile-contract';
@@ -16,7 +15,6 @@ import { errorLoggerMiddleware, loggerMiddleware } from './logger';
 require('./metrics');
 
 const bodyParser = require('body-parser');
-const escape = require('escape-html');
 const prometheus = require('express-prometheus-middleware');
 
 const app = express();

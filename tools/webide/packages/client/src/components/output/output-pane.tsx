@@ -18,6 +18,7 @@ const Output = styled.div`
 const Pre = styled.pre`
   margin: 0;
   width: -webkit-fill-available;
+  white-space: normal;
 `;
 
 interface stateTypes {

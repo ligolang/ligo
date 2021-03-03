@@ -13,7 +13,7 @@ import { ChangeDispatchedAction, ChangeSelectedAction, CommandState } from '../.
 import { CommandType } from '../../redux/types';
 import { Option, Select } from '../form/select';
 import { CompilePaneComponent } from './compile-pane';
-import { DeployPaneComponent } from './deploy-pane';
+import DeployPaneComponent from './deploy-pane';
 import { DryRunPaneComponent } from './dry-run-pane';
 import { EvaluateFunctionPaneComponent } from './evaluate-function-pane';
 import { EvaluateValuePaneComponent } from './evaluate-value-pane';
