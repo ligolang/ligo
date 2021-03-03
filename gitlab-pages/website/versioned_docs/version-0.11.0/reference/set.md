@@ -193,6 +193,18 @@ let remove: ('value, set('value)) => set('value)
 Remove a value from a set.
 
 <SyntaxTitle syntax="pascaligo">
+function update : 'elt -> bool -> set('a) -> set('a)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val update : 'elt -> bool -> 'a set -> 'a set
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let update: 'elt => bool => set('a) => set('a)
+</SyntaxTitle>
+
+add or remove an element in a set based on the boolean value being passed.
+
+<SyntaxTitle syntax="pascaligo">
 function iter : ('a -> unit) -> set('a) -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
@@ -203,6 +215,7 @@ let iter: (('a => unit), set('a)) => unit
 </SyntaxTitle>
 
 Iterate over values in a set.
+
 
 
 <Syntax syntax="pascaligo">
