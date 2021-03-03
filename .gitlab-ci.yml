@@ -2,7 +2,8 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
   LIGO_REGISTRY_IMAGE_BASE_NAME: "${CI_PROJECT_PATH}/${CI_PROJECT_NAME}"
   WEBIDE_IMAGE_NAME: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide"
-  LIGO_IMAGE_NAME: "ligo"
+  WEBIDE_IMAGE_TAG: "${WEBIDE_IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
+  LIGO_IMAGE_TAG: "ligo:${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}"
 
 stages:
   - pretooling      # changelog
@@ -52,8 +53,10 @@ docker_build:
       --build-arg=ci_commit_sha=$CI_COMMIT_SHA
       --build-arg=ci_commit_timestamp=$CI_COMMIT_TIMESTAMP
       --build-arg=changelog_path=changelog.txt
-      -t ${LIGO_IMAGE_NAME}
-    - docker save -o ligo.tar.gz ${LIGO_IMAGE_NAME}
+      -t ${LIGO_IMAGE_TAG}
+    - docker save -o ligo.tar.gz ${LIGO_IMAGE_TAG}
+  after_script:
+    - docker image rm "${LIGO_IMAGE_TAG}"
   artifacts:
     expose_as: "Ligo docker image - light -"
     paths:
@@ -71,15 +74,17 @@ docker_extract:
     - docker_build
   script:
     - docker load -i ligo.tar.gz
-    - docker cp $(docker create ${LIGO_IMAGE_NAME}):/root/ligo .
+    - docker cp $(docker create ${LIGO_IMAGE_TAG}):/root/ligo .
     - chmod +rwx ligo
     # Check that the binary is truly static and has 0 dependencies
     - ldd ligo | grep 'statically' # TODO: there is maybe a better way to do that ?
-    - docker cp $(docker create ${LIGO_IMAGE_NAME}):/root/coverage .
+    - docker cp $(docker create ${LIGO_IMAGE_TAG}):/root/coverage .
     - cat coverage/coverage-summary
-    - docker cp -La $(docker create ${LIGO_IMAGE_NAME}):/root/doc .
+    - docker cp -La $(docker create ${LIGO_IMAGE_TAG}):/root/doc .
     - nix-build nix -A ligo-deb
     - cp -L result/ligo.deb .
+  after_script:
+    - docker image rm "${LIGO_IMAGE_TAG}"
   artifacts:
     paths:
       - ligo
@@ -141,6 +146,8 @@ webide-docker:
   script:
     - nix-build nix -A ligo-editor-docker
     - cp -L result webide.tar.gz
+  after_script:
+    - docker image rm "${WEBIDE_IMAGE_TAG}"
   artifacts:
     paths:
       - webide.tar.gz
@@ -167,8 +174,10 @@ docker-push:
     - docker load -i=./ligo.tar.gz
     - if test "$CI_COMMIT_REF_NAME" = "dev"; then export LIGO_TAG=next; else if echo "$CI_COMMIT_TAG" | grep -E "[0-9]+\.[0-9]+\.[0-9]+"; then export LIGO_TAG="$CI_COMMIT_TAG"; else export LIGO_TAG=next-attempt; fi; fi
     - export LIGO_REGISTRY_FULL_NAME="${LIGO_REGISTRY_IMAGE_BUILD:-ligolang/ligo}:$LIGO_TAG"
-    - docker tag ligo "${LIGO_REGISTRY_FULL_NAME}"
+    - docker tag "${LIGO_IMAGE_TAG}" "${LIGO_REGISTRY_FULL_NAME}"
     - docker push "${LIGO_REGISTRY_FULL_NAME}"
+  after_script:
+    - docker image rm "${LIGO_IMAGE_TAG}"
 
 # docker-large-push: ?
 #   extends: docker-push
@@ -198,8 +207,10 @@ webide-push:
   script:
     - echo "${CI_BUILD_TOKEN}" | docker login -u gitlab-ci-token --password-stdin registry.gitlab.com
     - docker load -i=./webide.tar.gz
-    - docker tag ligo-editor "${WEBIDE_IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
-    - docker push "${WEBIDE_IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
+    - docker tag ligo-editor "${WEBIDE_IMAGE_TAG}"
+    - docker push "${WEBIDE_IMAGE_TAG}"
+  after_script:
+    - docker image rm "${WEBIDE_IMAGE_TAG}"
 
 release:
   stage: push
