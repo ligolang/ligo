@@ -144,14 +144,6 @@ newtype Preprocessor it
   deriving stock (Generic, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveFor1Field
 
--- Includes are in bindings
-data PreprocessorCommand it
-  = PIf (Maybe it) -- TODO: A workaround for a somewhat faulty ts parser which can't find field "rest" for `p_if` case
-  | PError it
-  | PWarning it
-  | PDefine it
-  deriving stock (Generic, Functor, Foldable, Traversable)
-
 data Alt it
   = Alt it it -- (Pattern) (Expr)
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
@@ -216,6 +208,10 @@ newtype TypeName it = TypeName Text
   deriving Eq1 via DefaultEq1DeriveForText
 
 newtype Ctor it = Ctor Text
+  deriving stock (Generic, Eq, Functor, Foldable, Traversable)
+  deriving Eq1 via DefaultEq1DeriveForText
+
+newtype PreprocessorCommand it = PreprocessorCommand Text
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 
@@ -332,10 +328,6 @@ instance Eq1 Error where
 
 instance Eq1 Binding where
   -- liftEq _ _ _ = error "Cannot compare `Binding`"
-  liftEq _ _ _ = False
-
-instance Eq1 PreprocessorCommand where
-  -- liftEq _ _ _ = error "Cannot compare `PreprocessorCommand`"
   liftEq _ _ _ = False
 
 instance Eq1 Type where
