@@ -1,23 +1,37 @@
-;;; ligo-mode.el --- A major emacs mode for editing LIGO source code
+;;; ligo-mode.el --- A major mode for editing LIGO source code
 
 ;; Version: 0.1.0
 ;; Author: LigoLang SASU
 ;; Url: https://gitlab.com/ligolang/ligo/-/tree/dev/tools/emacs
 ;; Keywords: languages
-;; Package-Requires: ((emacs "25.1"))
+;; Package-Requires: ((emacs "27.1"))
 
 ;; This file is distributed under the terms of the MIT license.
 
 ;;; Commentary:
-;;
+
+;; This provides font lock and other support for the three dialects of
+;; the Ligo smart contract language for the Tezos blockchain.
+
+;; For users of `lsp-mode', setup can be performed automatically by
+;; calling the command `ligo-setup-lsp', or with the following snippet
+;; in an init file:
+
+;;   (with-eval-after-load 'lsp-mode
+;;     (with-eval-after-load 'ligo-mode
+;;       (ligo-setup-lsp)))
 
 ;;; Code:
 
-; ------------------------------------------------
-;             Customizable options
-; ------------------------------------------------
+(eval-when-compile
+  (require 'rx))
+(require 'subr-x)
 
-(defgroup ligo-mode nil
+;; ------------------------------------------------
+;;             Customizable options
+;; ------------------------------------------------
+
+(defgroup ligo nil
   "Support for LIGO code."
   :link '(url-link "https://www.ligolang.org/")
   :group 'languages)
@@ -25,22 +39,16 @@
 (defcustom ligo-squirrel-bin "ligo-squirrel"
   "Path to LIGO language server executable."
   :type 'string
-  :group 'ligo-mode)
+  :group 'ligo)
 
 (defface ligo-constructor-face
   '((t :inherit font-lock-type-face))
   "Face for value constructors."
-  :group 'ligo-mode)
+  :group 'ligo)
 
-; ------------------------------------------------
-;     Common variables, regexes and functions
-; ------------------------------------------------
-
-(eval-when-compile
-  (require 'rx)
-  (when (version< emacs-version "26")
-    (defalias 'if-let* #'if-let)
-    (defalias 'when-let* #'when-let)))
+;; ------------------------------------------------
+;;     Common variables, regexes and functions
+;; ------------------------------------------------
 
 (rx-define ligo-ident-symbol (or (syntax word) (syntax symbol)))
 (rx-define ligo-ident (1+ ligo-ident-symbol))
@@ -72,14 +80,14 @@
       (let* ((regex-with-parens (rx (or (group "(") ")" (regexp type-end-re) )))  ; "(" is treated specially
              (match (re-search-forward regex-with-parens limit t)))
         (cond
-          ; Couldn't find any end matches within the limit
-          ((null match) (throw 'ligo-type-end nil))
-          ; Reached the end of the type definition, returning the start pos of the match
-          ((null (match-string 1)) (throw 'ligo-type-end (car (match-data))))
-          ; Found an open paren, find the balanced pair and continue
-          (t
-            (catch 'scan-error
-              (goto-char (scan-lists (point) 1 1)))))))))
+         ;; Couldn't find any end matches within the limit
+         ((null match) (throw 'ligo-type-end nil))
+         ;; Reached the end of the type definition, returning the start pos of the match
+         ((null (match-string 1)) (throw 'ligo-type-end (car (match-data))))
+         ;; Found an open paren, find the balanced pair and continue
+         (t
+          (catch 'scan-error
+            (goto-char (scan-lists (point) 1 1)))))))))
 
 (defun ligo-type-matcher (type-start-matcher type-end-re)
   "Matches type annotations that possibly include braces"
@@ -95,10 +103,10 @@
 
 (defun ligo-colon-matcher (limit)
   "Finds the char before the first colon"
-  ; We need to handle hd::tail notation, so we can't just match ':'
-  ; elisp doesn't support negative lookaheads, so we have to
-  ; match [^:]:[^:] and then update the match data, which is
-  ; an ugly but working solution
+  ;; We need to handle hd::tail notation, so we can't just match ':'
+  ;; elisp doesn't support negative lookaheads, so we have to
+  ;; match [^:]:[^:] and then update the match data, which is
+  ;; an ugly but working solution
   (when-let* ((colon (re-search-forward (rx (not ":") ":" (not ":")) limit t)))
     (let ((colon-match-begin (car (match-data)))
           (colon-match-end (nth 1 (match-data))))
@@ -113,27 +121,27 @@
 (defun ligo-syntax-table ()
   "Common syntax table for all LIGO dialects."
   (let ((st (make-syntax-table)))
-    ; Identifiers
+    ;; Identifiers
     (modify-syntax-entry ?_ "_" st)
     (modify-syntax-entry ?' "_" st)
     (modify-syntax-entry ?. "'" st)
 
-    ; Punctuation
+    ;; Punctuation
     (dolist (c '(?# ?! ?$ ?% ?& ?+ ?- ?/ ?: ?< ?= ?> ?@ ?^ ?| ?? ?~))
       (modify-syntax-entry c "." st))
 
-    ; Quotes
+    ;; Quotes
     (modify-syntax-entry ?\" "\"" st)
     (modify-syntax-entry ?\\ "\\" st)
 
-    ; Comments are different in dialects, so they should be added
-    ; by dialect-specific syntax tables
+    ;; Comments are different in dialects, so they should be added
+    ;; by dialect-specific syntax tables
     st))
 
 
-; ------------------------------------------------
-;     PascaLIGO-specific variables and regexes
-; ------------------------------------------------
+;; ------------------------------------------------
+;;     PascaLIGO-specific variables and regexes
+;; ------------------------------------------------
 
 (rx-define ligo-pascal-type-end
   (or "," ";" "=" ":=" (: symbol-start "is" symbol-end) eol))
@@ -159,40 +167,40 @@
   '("list"))
 
 (defvar ligo-pascal-mode-highlights
-  `(; Preprocessor macros
+  `(;; Preprocessor macros
     (,(rx ligo-macro-expr)
      . ((1 font-lock-preprocessor-face) (2 font-lock-string-face)))
 
-    ; Type definitions ("type foo")
+    ;; Type definitions ("type foo")
     (,(rx ligo-typedef)
      . ((1 font-lock-keyword-face) (2 font-lock-type-face)))
 
-    ; Variable definitions ("const x", "var y")
+    ;; Variable definitions ("const x", "var y")
     (,(rx ligo-pascal-variable-def)
      . ((1 font-lock-keyword-face) (2 font-lock-variable-name-face)))
 
-    ; Function definitions ("function bar")
+    ;; Function definitions ("function bar")
     (,(rx ligo-pascal-function-def)
      . ((1 font-lock-keyword-face) (2 font-lock-function-name-face)))
 
-    ; Keywords
+    ;; Keywords
     (,(regexp-opt ligo-pascal-keywords 'symbols) . font-lock-keyword-face)
 
-    ; Big_map.remove, Tezos.address
+    ;; Big_map.remove, Tezos.address
     (,(rx ligo-upper-qname)
      . ((1 font-lock-builtin-face)))
 
-    ; ": type" annotations
+    ;; ": type" annotations
     (,(ligo-type-matcher 'ligo-colon-matcher (rx ligo-pascal-type-end))
      . font-lock-type-face)
     
-    ; Unqualified builtin functions like "list" in PascaLIGO
+    ;; Unqualified builtin functions like "list" in PascaLIGO
     (,(regexp-opt ligo-pascal-builtins 'symbols) . font-lock-builtin-face)
     
-    ; Constructors
+    ;; Constructors
     (,(rx ligo-upper-ident) . 'ligo-constructor-face)
 
-    ; Constants: True, False, 0n, 5mutez
+    ;; Constants: True, False, 0n, 5mutez
     (,(rx ligo-pascal-constant) . font-lock-constant-face))
   "Syntax highlighting rules for PascaLIGO.")
 
@@ -208,14 +216,14 @@
     st))
 
 
-; ------------------------------------------------
-;     CameLIGO-specific variables and regexes
-; ------------------------------------------------
+;; ------------------------------------------------
+;;     CameLIGO-specific variables and regexes
+;; ------------------------------------------------
 
 (rx-define ligo-caml-type-end
   (or "," ";" "=" eol))
 
-; Doesn't support "let a: int, b: string" for now
+;; Doesn't support "let a: int, b: string" for now
 (rx-define ligo-caml-variable-def
   (: symbol-start (group "let") symbol-end (* space)
      (group ligo-lower-ident)))
@@ -233,40 +241,40 @@
       (: symbol-start "False" symbol-end)))
 
 (defvar ligo-caml-mode-highlights
-  `(; Preprocessor macros
+  `(;; Preprocessor macros
     (,(rx ligo-macro-expr)
      . ((1 font-lock-preprocessor-face) (2 font-lock-string-face)))
 
-    ; Type definitions ("type foo")
+    ;; Type definitions ("type foo")
     (,(rx ligo-typedef)
      . ((1 font-lock-keyword-face) (2 font-lock-type-face)))
 
-    ; Function definitions ("function bar")
-    ;(,(rx ligo-caml-function-def)
-    ; . ((1 font-lock-keyword-face) (2 font-lock-function-name-face)))
+    ;; Function definitions ("function bar")
+    ;;(,(rx ligo-caml-function-def)
+    ;; . ((1 font-lock-keyword-face) (2 font-lock-function-name-face)))
 
-    ; Keywords
+    ;; Keywords
     (,(regexp-opt ligo-caml-keywords 'symbols) . font-lock-keyword-face)
 
-    ; Big_map.remove, Tezos.address
+    ;; Big_map.remove, Tezos.address
     (,(rx ligo-upper-qname)
      . ((1 font-lock-builtin-face)))
 
-    ; ": type" annotations
+    ;; ": type" annotations
     (,(ligo-type-matcher 'ligo-colon-matcher (rx ligo-caml-type-end))
      . font-lock-type-face)
 
-    ; Variable definitions ("const x", "var y")
+    ;; Variable definitions ("const x", "var y")
     (,(rx ligo-caml-variable-def)
      . ((1 font-lock-keyword-face) (2 font-lock-variable-name-face)))
 
-    ; Unqualified builtin functions
+    ;; Unqualified builtin functions
     (,(regexp-opt ligo-caml-builtins 'symbols) . font-lock-builtin-face)
     
-    ; Constructors
+    ;; Constructors
     (,(rx ligo-upper-ident) . 'ligo-constructor-face)
 
-    ; Constants: True, False, 0n, 5mutez
+    ;; Constants: True, False, 0n, 5mutez
     (,(rx ligo-caml-constant) . font-lock-constant-face))
   "Syntax highlighting rules for CameLIGO.")
 
@@ -276,14 +284,14 @@
   (ligo-pascal-mode-syntax-table))
 
 
-; ------------------------------------------------
-;     ReasonLIGO-specific variables and regexes
-; ------------------------------------------------
+;; ------------------------------------------------
+;;     ReasonLIGO-specific variables and regexes
+;; ------------------------------------------------
 
 (rx-define ligo-reason-type-end
   (or "," "=" eol))
 
-; Doesn't support "let a: int, b: string" for now
+;; Doesn't support "let a: int, b: string" for now
 (rx-define ligo-reason-variable-def
   (: symbol-start (group "let") symbol-end (* space)
      (group ligo-lower-ident)))
@@ -298,17 +306,17 @@
   "Returns t if `: expression` is in type context"
   (re-search-backward (rx (or "(" ")" "{" "}" "=" ";" "let")) nil t)
   (cond
-    ; Skip balanced braces and recurse
+    ;; Skip balanced braces and recurse
     ((looking-at (rx (or ")" "}")))
       (progn
-        ; If we see a closing brace, we jump to
-        ; the matching one and recurse
+        ;; If we see a closing brace, we jump to
+        ;; the matching one and recurse
         (forward-char)
         (backward-list)
         (ligo-reason-type-context-p)))
 
-    ; We're inside curly braces, so we need to distinguish
-    ; between `type a = { foo: bar }` and `let a = { foo: bar }`
+    ;; We're inside curly braces, so we need to distinguish
+    ;; between `type a = { foo: bar }` and `let a = { foo: bar }`
     ((looking-at "{")
       (let ((maybe-type
               (re-search-backward
@@ -344,70 +352,59 @@
       (: symbol-start "false" symbol-end)))
 
 (defvar ligo-reason-mode-highlights
-  `(; Preprocessor macros
+  `(;; Preprocessor macros
     (,(rx ligo-macro-expr)
      . ((1 font-lock-preprocessor-face) (2 font-lock-string-face)))
 
-    ; Type definitions ("type foo")
+    ;; Type definitions ("type foo")
     (,(rx ligo-typedef)
      . ((1 font-lock-keyword-face) (2 font-lock-type-face)))
 
-    ; Variable definitions ("const x", "var y")
+    ;; Variable definitions ("const x", "var y")
     (,(rx ligo-reason-variable-def)
      . ((1 font-lock-keyword-face) (2 font-lock-variable-name-face)))
 
-    ; Keywords
+    ;; Keywords
     (,(regexp-opt ligo-reason-keywords 'symbols) . font-lock-keyword-face)
 
-    ; Big_map.remove, Tezos.address
+    ;; Big_map.remove, Tezos.address
     (,(rx ligo-upper-qname)
      . ((1 font-lock-builtin-face)))
 
-    ; ": type" annotations
+    ;; ": type" annotations
     (,(ligo-type-matcher 'ligo-reason-type-matcher (rx ligo-reason-type-end))
      . font-lock-type-face)
 
-    ; Unqualified builtin functions
+    ;; Unqualified builtin functions
     (,(regexp-opt ligo-reason-builtins 'symbols) . font-lock-builtin-face)
     
-    ; Constructors
+    ;; Constructors
     (,(rx ligo-upper-ident) . 'ligo-constructor-face)
 
-    ; Constants: True, False, 0n, 5mutez
+    ;; Constants: True, False, 0n, 5mutez
     (,(rx ligo-reason-constant) . font-lock-constant-face))
   "Syntax highlighting rules for ReasonLIGO.")
 
 (defun ligo-reason-mode-syntax-table ()
   "ReasonLIGO syntax table."
   (let ((st (ligo-syntax-table)))
-    ; C++/ReasonML style comments
+    ;; C++/ReasonML style comments
     (modify-syntax-entry ?*  ". 23" st)
     (modify-syntax-entry ?\n "> b" st)
     (modify-syntax-entry ?/  ". 124b" st)
     st))
 
 
-; ------------------------------------------------
-;                   Exports
-; ------------------------------------------------
+;; ------------------------------------------------
+;;                   Exports
+;; ------------------------------------------------
 
 (defun ligo-reload ()
+  "Reload the ligo-mode code and re-apply the default major mode in the current buffer."
   (interactive)
   (unload-feature 'ligo-mode)
   (require 'ligo-mode)
-  (ligo-mode))
-
-(defun ligo-caml-reload ()
-  (interactive)
-  (unload-feature 'ligo-caml-mode)
-  (require 'ligo-caml-mode)
-  (ligo-caml-mode))
-
-(defun ligo-reason-reload ()
-  (interactive)
-  (unload-feature 'ligo-reason-mode)
-  (require 'ligo-reason-mode)
-  (ligo-reason-mode))
+  (normal-mode))
 
 ;;;###autoload
 (define-derived-mode ligo-pascal-mode prog-mode "ligo"
@@ -427,35 +424,32 @@
   (setq font-lock-defaults '(ligo-reason-mode-highlights))
   (set-syntax-table (ligo-reason-mode-syntax-table)))
 
+;; Forward declarations for byte compiler
+(defvar lsp-language-id-configuration)
+(declare-function lsp-register-client 'lsp-mode)
+(declare-function make-lsp-client 'lsp-mode)
+(declare-function lsp-stdio-connection 'lsp-mode)
+
 ;;;###autoload
 (defun ligo-setup-lsp ()
+  "Set up an LSP backend for ligo that will use `ligo-squirrel-bin'."
   (interactive)
   (add-to-list 'lsp-language-id-configuration '(ligo-pascal-mode . "ligo"))
   (add-to-list 'lsp-language-id-configuration '(ligo-caml-mode . "ligo"))
   (add-to-list 'lsp-language-id-configuration '(ligo-reason-mode . "ligo"))
   (lsp-register-client
-    (make-lsp-client
-      :new-connection (lsp-stdio-connection `(,ligo-squirrel-bin))
-      :major-modes '(ligo-pascal-mode ligo-caml-mode ligo-reason-mode)
-      :server-id 'ligo)))
+   (make-lsp-client
+    :new-connection (lsp-stdio-connection `(,ligo-squirrel-bin))
+    :major-modes '(ligo-pascal-mode ligo-caml-mode ligo-reason-mode)
+    :server-id 'ligo)))
 
 ;;;###autoload
-(defun ligo-mode ()
-  "Runs LIGO mode. This function chooses the correct dialect mode
-   automatically based on the file extension."
-  (interactive)
-  (let ((ext (file-name-extension (buffer-file-name (current-buffer)))))
-    (cond
-      ((string= ext "religo") (ligo-reason-mode))
-      ((string= ext "mligo") (ligo-caml-mode))
-      (t (ligo-pascal-mode)))
-    (when (require 'lsp-mode nil t)
-      (ligo-setup-lsp))))
+(define-obsolete-function-alias 'ligo-mode 'normal-mode "2021-02")
 
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.\\(re\\|m\\)?ligo\\'" . ligo-mode))
+(add-to-list 'auto-mode-alist '("\\.ligo\\'" . ligo-pascal-mode))
+(add-to-list 'auto-mode-alist '("\\.mligo\\'" . ligo-caml-mode))
+(add-to-list 'auto-mode-alist '("\\.religo\\'" . ligo-reason-mode))
 
 (provide 'ligo-mode)
-(provide 'ligo-pascal-mode)
-(provide 'ligo-caml-mode)
-(provide 'ligo-reason-mode)
+;;; ligo-mode.el ends here
