@@ -992,6 +992,55 @@ let (ta,tb) =
 
 </Syntax>
 
+<SyntaxTitle syntax="pascaligo">
+function join_ticket : ticket('value) * ticket ('value) -> option (ticket ('value))
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val join_ticket : 'value ticket * 'value ticket -> ('value ticket) option
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let join_ticket : (ticket('value), ticket('value)) => option (ticket('value))
+</SyntaxTitle>
+
+To add two tickets, you have to join them. This works as the inverse
+of `Tezos.split_ticket`.  Provided two tickets with the same ticketer
+and content, they are deleted and a new ticket will be returned with
+an amount equal to the sum of the amounts of the input tickets.
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=manip_ticket
+const tc =
+  block {
+    const ta = Tezos.create_ticket(1, 10n);
+    const tb = Tezos.create_ticket(1, 5n)
+  } with Tezos.join_tickets((ta, tb))
+```
+
+</Syntax>
+
+<Syntax syntax="cameligo">
+
+```cameligo group=manip_ticket
+let tc : int ticket option =
+  let ta = Tezos.create_ticket 1 10n in
+  let tb = Tezos.create_ticket 1 5n in
+  Tezos.join_tickets (ta, tb)
+```
+
+</Syntax>
+
+<Syntax syntax="reasonligo">
+
+```reasonligo group=manip_ticket
+let tc =
+  let ta = Tezos.create_ticket(1, 10n);
+  let tb = Tezos.create_ticket(1, 5n);
+  Tezos.join_tickets((ta, tb));
+```
+
+</Syntax>
+
 ### Linearity
 
 If a contract storage type contains a ticket, you must destructure the parameter-storage pair within the body to preserve storage linearity (e.g. avoid `DUP`-ing storage).
