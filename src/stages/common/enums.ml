@@ -100,6 +100,7 @@ type constant' =
   | C_SET_ITER
   | C_SET_FOLD
   | C_SET_MEM
+  | C_SET_UPDATE
   (* List *)
   | C_LIST_EMPTY
   | C_LIST_LITERAL
