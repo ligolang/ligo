@@ -710,3 +710,343 @@ deprecated. Please use `Tezos.get_entrypoint_opt` instead.
 Note that `Operation.get_entrypoint` and `Operation.get_entrypoint_opt` are 
 deprecated. Please use `Tezos.get_entrypoint_opt` instead.
 </Syntax>
+
+<SyntaxTitle syntax="pascaligo">
+function pairing_check : list(bls12_381_g1 * bls12_381_g2) -> bool
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+function pairing_check : (bls12_381_g1 * bls12_381_g2) list -> bool
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+function pairing_check: list(bls12_381_g1 , bls12_381_g2) => bool
+</SyntaxTitle>
+
+Verify that the product of pairings of the given list of points is equal to 1 in Fq12. Returns true if the list is empty.
+Can be used to verify if two pairings P1 and P2 are equal by verifying `P1 * P2^(-1) = 1`.
+(extracted from Tezos documentation)
+
+
+<h2>Sapling</h2>
+
+Delphi protocol introduced the following sapling types (state and transaction) with N being an int singleton
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=sap_t
+type st is sapling_state (8)
+type tr is sapling_transaction (8)
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=sap_t
+type st = 8 sapling_state
+type tr = 8 sapling_transaction
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=sap_t
+type st = sapling_state(8);
+type tr = sapling_transaction(8);
+```
+
+</Syntax>
+
+<SyntaxTitle syntax="pascaligo">
+function sapling_empty_state : sapling_state (N)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val sapling_empty_state : N sapling_state
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let sapling_empty_state: sapling_state(N)
+</SyntaxTitle>
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=sap_t
+const x : st = Tezos.sapling_empty_state ;
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=sap_t
+let x : st = Tezos.sapling_empty_state
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=sap_t
+let x : st = Tezos.sapling_empty_state ;
+```
+
+</Syntax>
+
+Sapling empty state
+
+<SyntaxTitle syntax="pascaligo">
+function sapling_verify_update : sapling_transaction (N) -> sapling_state (N) -> option (int * sapling_state (N))
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val sapling_verify_update : N sapling_transaction -> N sapling_state -> (int * N sapling_state) option
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let sapling_verify_update: sapling_transaction(N) => sapling_state(N) => option(int, sapling_state(N))
+</SyntaxTitle>
+
+Verify sapling update
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=sap_t
+function f (const tr : tr) : (int * st) is
+  case (Tezos.sapling_verify_update (tr, x)) of
+    | Some (x) -> x
+    | None -> (failwith ("failed") : (int * st))
+  end
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=sap_t
+let f (tr : tr) : int * st =
+  match Tezos.sapling_verify_update tr x with
+  | Some x -> x
+  | None -> (failwith "failed" : int * st)
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=sap_t
+let f = (tr : tr) : (int , st) =>
+  switch (Tezos.sapling_verify_update (tr, x)) {
+    | Some x => x
+    | None => (failwith ("failed") : (int , st))
+  }
+```
+
+</Syntax>
+
+
+<h2>Tickets</h2>
+
+<SyntaxTitle syntax="pascaligo">
+function create_ticket : 'value -> nat -> ticket ('value) 
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val create_ticket : 'value -> nat -> 'value ticket
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let create_ticket : 'value => nat => ticket('value)
+</SyntaxTitle>
+
+To create a ticket, the value and the amount of tickets to be created needs to be provided.
+The ticket will also contain the contract address it originated from (which corresponds to `Tezos.self`).
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=manip_ticket
+const my_ticket1 : ticket (int) = Tezos.create_ticket (1, 10n)
+const my_ticket2 : ticket (string) = Tezos.create_ticket ("one", 10n)
+```
+
+</Syntax>
+
+<Syntax syntax="cameligo">
+
+```cameligo group=manip_ticket
+let my_ticket1 : int ticket = Tezos.create_ticket 1 10n
+let my_ticket2 : string ticket = Tezos.create_ticket "one" 10n
+```
+
+</Syntax>
+
+<Syntax syntax="reasonligo">
+
+```reasonligo group=manip_ticket
+let my_ticket1 : ticket(int) = Tezos.create_ticket(1, 10n);
+let my_ticket2 : ticket(string) = Tezos.create_ticket("one", 10n);
+```
+
+</Syntax>
+
+<SyntaxTitle syntax="pascaligo">
+function read_ticket : ticket ('value) -> (address * ('value * nat)) * ticket ('value)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val read_ticket : 'value ticket -> (address * ('value * nat)) * 'value ticket
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let read_ticket : ticket('value) => ((address, ('value , nat)) , ticket('value))
+</SyntaxTitle>
+
+
+Reading a ticket will return a tuple with the ticket address, the value and the same ticket for later use.
+A ticket is only consumed when it is dropped (e.g. `DROP`-ed from the michelson stack) so if the returned ticket isn't stored in some form by your contract, it will be fully consumed.
+
+<Syntax syntax="pascaligo">
+
+To read the content of a ticket, you need to use pattern matching
+
+```pascaligo group=manip_ticket
+const v : int =
+  case (Tezos.read_ticket (my_ticket1)) of
+  | (content,ticket) -> (
+    case content of
+    | (addr,x) -> (
+      case x of
+      | (payload,amt) -> (
+        payload
+      ) end
+    ) end
+  ) end
+```
+
+</Syntax>
+
+<Syntax syntax="cameligo">
+
+To read the content of a ticket, you can either use tuple destructuring or pattern matching
+
+```cameligo group=manip_ticket
+let v1 : int =
+  match (Tezos.read_ticket my_ticket1) with
+  | (content,ticket) -> (
+    match content with
+    | (addr,x) -> (
+      match x with
+      | (payload,amt) -> payload
+    )
+  )
+let v2 : string =
+  let ((addr,(v,amt)),ticket) = Tezos.read_ticket my_ticket2 in
+  v
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+To read the content of a ticket, you need to use tuple destructuring
+
+```reasonligo group=manip_ticket
+let v2 : string =
+  let ((addr,(v,amt)),ticket) = Tezos.read_ticket (my_ticket2) ;
+  v ;
+```
+
+</Syntax>
+
+
+<SyntaxTitle syntax="pascaligo">
+function split_ticket : ticket ('value) -> nat * nat -> option (ticket('value) * ticket ('value))
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val split_ticket : 'value ticket -> nat * nat -> ('value ticket * 'value ticket) option
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let split_ticket : ticket('value) => (nat , nat) => option (ticket('value) * ticket('value))
+</SyntaxTitle>
+
+To partially use/consume a ticket, you have to split it.
+Provided a ticket and two amounts, two new tickets will be returned to you if the two amounts match the amount of the original ticket.
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=manip_ticket
+const x =
+  case Tezos.split_ticket (my_ticket1, (6n, 4n)) of
+  | None -> (failwith ("amt_a + amt_v != amt") : (ticket(int) * ticket(int)))
+  | Some (split_tickets) -> split_tickets
+  end
+```
+
+</Syntax>
+
+<Syntax syntax="cameligo">
+
+```cameligo group=manip_ticket
+let (ta,tb) =
+  match Tezos.split_ticket my_ticket1 (6n, 4n) with
+  | None -> (failwith "amt_a + amt_v != amt" : (int ticket * int ticket))
+  | Some split_tickets -> split_tickets
+```
+
+</Syntax>
+
+<Syntax syntax="reasonligo">
+
+```reasonligo group=manip_ticket
+let (ta,tb) =
+  switch (Tezos.split_ticket(my_ticket1, (6n, 4n))) {
+  | None => (failwith("amt_a + amt_v != amt") : (ticket(int) , ticket(int)))
+  | Some split_tickets => split_tickets
+  } ;
+```
+
+</Syntax>
+
+### Linearity
+
+If a contract storage type contains a ticket, you must destructure the parameter-storage pair within the body to preserve storage linearity (e.g. avoid `DUP`-ing storage).
+For the same reasons, if tickets are stored in a `map`/`big_map` you must use the new operator `get_and_update` to update your bindings.
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=contract_ticket
+type storage is big_map (string, ticket(int))
+type parameter is int
+type return is list (operation) * storage
+
+function main (const i : parameter ; const store : storage) : return is
+  block {
+    const my_ticket1 : ticket(int) = Tezos.create_ticket (i, 10n) ;
+    const res = Big_map.get_and_update("hello", (Some (my_ticket1)), store) ;
+    var res : return := ((nil : list (operation)), store) ;
+    case res of
+    | (t,x) -> res := ((nil : list (operation)), x)
+    end
+  } with res
+```
+
+</Syntax>
+
+<Syntax syntax="cameligo">
+
+```cameligo group=contract_ticket
+type storage = (string, int ticket) big_map
+type parameter = int
+type return = operation list * storage
+
+let main (x : parameter * storage) : return =
+  let (i,store) = x in
+  let my_ticket1 : int ticket = Tezos.create_ticket i 10n in
+  let (_,x) = Big_map.get_and_update "hello" (Some my_ticket1) store in
+  (([] : operation list), x)
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=contract_ticket
+type storage = big_map (string, ticket(int)) ;
+
+type parameter = int ;
+
+type return = (list (operation), storage);
+
+let main = (x : (parameter , storage)) : return => {
+  let (i,store) = x ;
+  let my_ticket1 : ticket(int) = Tezos.create_ticket (i, 10n) ;
+  let (_,x) = Big_map.get_and_update ("hello", Some(my_ticket1), store) ;
+  (([] : list(operation)), x)
+};
+```
+
+</Syntax>
