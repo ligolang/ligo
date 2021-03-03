@@ -22,23 +22,24 @@ const Pre = styled.pre`
   overflow: hidden;
   height: 100%;
   width: -webkit-fill-available;
+  white-space: normal;
 `;
 
 const DeployOutputPane = (props) => {
-const {contract, output} = props
+const {contract, output, network} = props
   return (
     <Container>
       <Output id="output">
         {contract && (
           <div>
-            The contract was successfully deployed to the delphinet test network.
+            The contract was successfully deployed to the {network} test network.
             <br />
             <br />
             View your new contract using{' '}
             <a
               target="_blank"
               rel="noopener noreferrer"
-              href={`https://better-call.dev/delphinet/${contract}`}
+              href={`https://better-call.dev/${network}/${contract}`}
             >
               Better Call Dev
             </a>
@@ -59,10 +60,11 @@ const {contract, output} = props
 };
 
 function mapStateToProps(state) {
-  const { result } = state
+  const { result, deploy } = state
   return { 
     output: result.output,
-    contract: result.contract
+    contract: result.contract,
+    network: deploy.network
    }
 }
 
