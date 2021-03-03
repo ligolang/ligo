@@ -493,7 +493,7 @@ and compile_for_each I.{fe_binder;collection;collection_type; fe_body} =
   in
   let lambda = O.e_lambda_ez args  None (restore for_body) in
   let%bind op_name = match collection_type with
-   | Map -> ok @@ O.C_MAP_FOLD | Set -> ok @@ O.C_SET_FOLD | List -> ok @@ O.C_LIST_FOLD
+   | Map -> ok @@ O.C_MAP_FOLD | Set -> ok @@ O.C_SET_FOLD | List -> ok @@ O.C_LIST_FOLD | Any -> ok @@ O.C_FOLD
   in
   let fold = fun expr ->
     O.e_let_in_ez env_rec false [] (O.e_constant op_name [lambda; collect ; init_record]) expr

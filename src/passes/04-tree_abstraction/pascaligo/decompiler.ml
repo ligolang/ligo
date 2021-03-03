@@ -578,7 +578,7 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
     let bind_to = Option.map (fun (x:AST.expression_variable) -> (ghost,decompile_variable x.wrap_content)) @@ snd fe_binder in
     let%bind expr = decompile_expression ~dialect collection in
     let collection = match collection_type with
-      Map -> CST.Map ghost | Set -> Set ghost | List -> List ghost in
+      Map -> CST.Map ghost | Set -> Set ghost | List -> List ghost | Any -> failwith "TODO : have the type of the collection propagated from AST_typed" in
     let%bind (block,_next) = decompile_to_block dialect fe_body in
     let block = wrap @@ Option.unopt ~default:(empty_block dialect) block in
     let fc : CST.for_collect = {kwd_for=ghost;var;bind_to;kwd_in=ghost;collection;expr;block} in
