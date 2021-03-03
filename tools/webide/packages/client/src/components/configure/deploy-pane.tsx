@@ -40,11 +40,11 @@ const DeployPaneComponent:FC<stateTypes> = (props) => {
   const dispatch = useDispatch();
 
   const setSigner = (isSelected) => {
-    dispatch({ ...new UseSignerAction(signerType.Beacon) })
-
     if(isSelected && useNetwork !== networkType.Mainnet){
       dispatch({ ...new UseSignerAction(signerType.Sign) })
-    } 
+    } else {
+      dispatch({ ...new UseSignerAction(signerType.Beacon) })
+    }
   }
 
   return (
@@ -57,7 +57,11 @@ const DeployPaneComponent:FC<stateTypes> = (props) => {
           onChange={network => {
             useNetwork = network
               dispatch({ ...new UseNetworkAction(network) })
-              setSigner(false)
+              if (useNetwork !== networkType.Mainnet) {
+                setSigner(true)
+              } else {
+                setSigner(false)
+              }
           }}
         >
           <Option value={networkType.Edonet}>Edonet</Option>

@@ -62,7 +62,7 @@ const DEFAULT_STATE: DeployState = {
   entrypoint: '',
   storage: '',
   network: NetworkType.EDONET,
-  signer: signerType.Beacon,
+  signer: signerType.Sign,
 };
 
 const deploy = (state = DEFAULT_STATE, action: Action): DeployState => {
