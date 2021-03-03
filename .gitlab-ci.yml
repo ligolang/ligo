@@ -1,8 +1,7 @@
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
   LIGO_REGISTRY_IMAGE_BASE_NAME: "${CI_PROJECT_PATH}/${CI_PROJECT_NAME}"
-  WEBIDE_IMAGE_NAME: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide"
-  WEBIDE_IMAGE_TAG: "${WEBIDE_IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
+  WEBIDE_IMAGE_TAG: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide:${CI_COMMIT_SHORT_SHA}"
   LIGO_IMAGE_TAG: "ligo:${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}"
 
 stages:
@@ -146,8 +145,6 @@ webide-docker:
   script:
     - nix-build nix -A ligo-editor-docker
     - cp -L result webide.tar.gz
-  after_script:
-    - docker image rm "${WEBIDE_IMAGE_TAG}"
   artifacts:
     paths:
       - webide.tar.gz
