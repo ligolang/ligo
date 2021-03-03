@@ -23,3 +23,5 @@ let patch_op_deep (s: string set * nat) : string set * nat =
 let mem_op (s : string set) : bool = Set.mem "foobar" s
 
 let size_op (s: string set) : nat = Set.cardinal s
+
+let upd (s: string set) (flag: bool) : string set = Set.update "foobar" flag s 

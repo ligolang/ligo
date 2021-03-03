@@ -264,6 +264,7 @@ module Operators_types = struct
   let t_set_mem      = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple2 a (set a) --> bool
   let t_set_add      = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple2 a (set a) --> set a
   let t_set_remove   = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple2 a (set a) --> set a
+  let t_set_update   = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple3 a bool (set a) --> (set a)
   let t_not          = forall2_tc "a" "b" @@ fun a b -> [tc_notargs a b] => tuple1 a --> b
   let t_continuation  = forall "a" @@ fun a -> tuple1 a --> pair bool a
   let t_fold_while    = forall "a" @@ fun a -> tuple2 (a --> pair bool a) a --> a
@@ -341,6 +342,7 @@ module Operators_types = struct
     | C_SET_ITER            -> ok @@ t_set_iter ;
     | C_SET_FOLD            -> ok @@ t_set_fold ;
     | C_SET_MEM             -> ok @@ t_set_mem ;
+    | C_SET_UPDATE          -> ok @@ t_set_update ;
 
     (* LIST *)
     | C_CONS                -> ok @@ t_cons ;

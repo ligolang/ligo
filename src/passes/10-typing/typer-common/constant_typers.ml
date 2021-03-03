@@ -39,6 +39,12 @@ let set_empty loc = typer_0 loc "SET_EMPTY" @@ fun tv_opt ->
   | None -> fail (not_annotated loc)
   | Some t -> ok t
 
+let set_update loc = typer_3 loc "SET_UPDATE" @@ fun elt flag set ->
+  let%bind elt' = trace_option (expected_set loc set) @@ get_t_set set in
+  let%bind () = trace_option (expected_bool loc flag) @@ assert_t_bool flag in
+  let%bind () = assert_eq loc elt elt' in
+  ok set
+
 let sub loc = typer_2 loc "SUB" @@ fun a b ->
   if eq_2 (a , b) (t_bls12_381_g1 ())
   then ok (t_bls12_381_g1 ()) else
@@ -904,7 +910,7 @@ let constant_typers loc c : (typer , typer_error) result = match c with
   | C_SET_ITER            -> ok @@ set_iter loc ;
   | C_SET_FOLD            -> ok @@ set_fold loc ;
   | C_SET_MEM             -> ok @@ set_mem loc ;
-
+  | C_SET_UPDATE          -> ok @@ set_update loc;
   (* LIST *)
   | C_CONS                -> ok @@ cons loc ;
   | C_LIST_EMPTY          -> ok @@ list_empty loc;
