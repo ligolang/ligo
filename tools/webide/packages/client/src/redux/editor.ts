@@ -74,9 +74,10 @@ const editor = (state, action: Action): EditorState => {
     case ExamplesActionType.ChangeSelected:
       return {
         ...state,
-        ...(!action.payload
-          ? DEFAULT_STATE
-          : { ...action.payload.editor, title: action.payload.name }),
+        ...action.payload?.editor,
+        title: action.payload.name
+          ? action.payload.name
+          : action.payload?.editor.title,
       };
     case ActionType.ChangeLanguage:
       return {
