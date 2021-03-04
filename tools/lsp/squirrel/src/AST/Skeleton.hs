@@ -136,8 +136,9 @@ data Expr it
   deriving stock (Generic, Functor, Foldable, Traversable)
 
 newtype MichelsonCode it
-  = MichelsonCode [it] -- [Keyword]
+  = MichelsonCode Text
   deriving stock (Generic, Functor, Foldable, Traversable)
+  deriving Eq1 via DefaultEq1DeriveForText
 
 newtype Preprocessor it
   = Preprocessor it -- (PreprocessorCommand)
@@ -316,10 +317,6 @@ instance Eq1 Expr where
 instance Eq1 Contract where
   liftEq f (ContractCons a as) (ContractCons b bs) = f a b && f as bs
   liftEq _ ContractEnd ContractEnd = True
-  liftEq _ _ _ = False
-
-instance Eq1 MichelsonCode where
-  -- liftEq _ _ _ = error "Cannot compare `MichelsonCode`"
   liftEq _ _ _ = False
 
 instance Eq1 Error where

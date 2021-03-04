@@ -147,14 +147,7 @@ module.exports = grammar({
 
     michelson_code: $ => seq(
       '{|',
-      repeat(
-        choice(
-          field("keyword", choice($.Keyword, $.String)),
-          '{',
-          '}',
-          ';'
-        )
-      ),
+      repeat(/([^\|]|\|[^}])/),
       '|}'
     ),
 
