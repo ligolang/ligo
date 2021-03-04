@@ -391,36 +391,17 @@ let opt_dead_unpair : _ peep3 = function
     Some [Prim (l, "DROP", [], [])]
   | _ -> None
 
-(* expand "UNPAIR" if it is not yet an instruction *)
-let opt_unpair_nonedo : proto -> _ peep1 = function
-  | Edo -> fun _ -> None
-  | _ -> function
-    | Prim (l, "UNPAIR", [], _) ->
-      Some [Prim (l, "DUP", [], []);
-            Prim (l, "CDR", [], []);
-            Prim (l, "SWAP", [], []);
-            Prim (l, "CAR", [], [])]
-    | _ -> None
-
-(* for Edo *)
 let opt_beta2 : _ peep2 = function
   (* PAIR ; UNPAIR  ↦  *)
   | Prim (_, "PAIR", [], _), Prim (_, "UNPAIR", [], _) ->
     Some []
   | _ -> None
 
-(* for Edo *)
 let opt_eta2 : _ peep2 = function
   (* UNPAIR ; PAIR  ↦  *)
   | Prim (_, "UNPAIR", [], _), Prim (_, "PAIR", [], _) ->
     Some []
   | _ -> None
-
-(* let opt_unpair : _ peep2 = function
- *   (\* UNPAIR ; PAIR  ↦  *\)
- *   | Prim (_, "UNPAIR", [], _), Prim (_, "PAIR", [], _) ->
- *     Some []
- *   | _ -> None *)
 
 (* This "optimization" deletes dead code produced by the compiler
    after a FAILWITH, which is illegal in Michelson. This means we are
@@ -528,6 +509,7 @@ let rec opt_strip_annots (x : _ michelson) : _ michelson =
 
 let optimize : 'l. Environment.Protocols.t -> 'l michelson -> 'l michelson =
   fun proto x ->
+  ignore proto;
   let x = flatten_seqs x in
   let x = opt_tail_fail x in
   let optimizers = [ peephole @@ peep2 opt_drop2 ;
@@ -544,7 +526,6 @@ let optimize : 'l. Environment.Protocols.t -> 'l michelson -> 'l michelson =
                      peephole @@ peep2 opt_beta2 ;
                      peephole @@ peep2 opt_eta2 ;
                      peephole @@ peep3 opt_dead_unpair ;
-                     peephole @@ peep1 (opt_unpair_nonedo proto) ;
                      peephole @@ opt_digdug_cycles () ;
                    ] in
   let optimizers = List.map on_seqs optimizers in

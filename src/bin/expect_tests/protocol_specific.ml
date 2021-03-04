@@ -10,7 +10,7 @@ let%expect_test _ =
       storage bool ;
       code { UNPAIR ; SWAP ; DROP ; PAIRING_CHECK ; NIL operation ; PAIR } } |}] ;
 
-  run_ligo_good [ "print-ast-typed" ; contract "protocol_dalphanet.mligo" ; "--protocol=dalphanet" ; ] ;
+  run_ligo_good [ "print-ast-typed" ; contract "protocol_dalphanet.mligo" ; "--protocol=edo" ; ] ;
   [%expect {xxx|
     type bls_l = list (( bls12_381_g1 * bls12_381_g2 ))
     const a = [%Michelson {|
