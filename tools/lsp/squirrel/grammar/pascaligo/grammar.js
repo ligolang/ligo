@@ -16,7 +16,6 @@ let left_op = (name, left, right) => op(name, left, right, left)
 let par = x => seq('(', x, ')')
 // Don't consider parens as a part of a subnode, this little hack
 // allows us to skip nested parens in product types.
-let parNested = x => seq(/\(/, x, /\(/)
 let brackets = x => seq('[', x, ']')
 
 let withAttrs = ($, x) => seq(field("attributes", repeat($.attr)), x)
@@ -116,12 +115,13 @@ module.exports = grammar({
       $.prod_type,
       $.TypeName,
       $.TypeWildcard,
-      parNested($._type_expr),
-      par($._type_expr),
+      $.type_group,
       $.app_type,
       $.michelsonTypeOr,
       $.michelsonTypeAnd,
     ),
+
+    type_group: $ => par(field("type", $._type_expr)),
 
     fun_type: $ => prec.right(1, seq(
       field("domain", $._simple_type),
