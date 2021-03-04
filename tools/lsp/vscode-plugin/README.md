@@ -11,26 +11,27 @@ Code navigation
 - [x] Find references
 - [x] Folding range
 - [x] Selection range
-- [ ] Jump to type definition
-- [ ] Document symbols
+- [x] Jump to type definition (limited)
+- [x] Document symbols
 - [ ] Workspace symbols
 
 Diagnostics
 
 - [x] Parser diagnostics
-- [ ] Extended diagnostics
+- [x] Compiler diagnostics (if LIGO is available in PATH)
 
 Code editing
 
 - [x] Hover suggestions
-- [ ] Code actions (refactor, rename, etc.)
+- [x] Rename symbol
 - [x] Code completion for variable names
-- [ ] Code completion for record fields and constructors
-- [ ] Signature help
+- [x] Code completion for record fields and constructors (limited)
+- [x] Signature help
+- [ ] Refactorings
 
 Formatting
 
-- [ ] Whole document formatting
+- [x] Whole document formatting
 - [ ] On-type formatting
 - [ ] Document range formatting
 
