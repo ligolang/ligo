@@ -125,10 +125,8 @@ let rec translate_expression (expr : I.expression) (env : I.environment) =
      | C_ITER -> (O.E_iter (meta, ss, body, expr), us)
      | C_MAP -> (O.E_map (meta, ss, body, expr), us)
      | C_LOOP_LEFT ->
-       (match body with
-        | Binds (_, [Prim (_, "or", [_; b], _)], _) ->
-          (O.E_loop_left (meta, ss, body, b, expr), us)
-        | _ -> internal_error __LOC__ "type of loop_left accumulator is not or")
+       let b = translate_type ty in
+       (O.E_loop_left (meta, ss, body, b, expr), us)
      | _ -> internal_error __LOC__ "invalid iterator constant")
   | E_fold (body, coll, init) ->
     let (body, body_usages) = translate_binder body env in
