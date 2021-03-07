@@ -60,6 +60,9 @@ COPY changelog.txt /ligo/changelog.txt
 ENV CHANGELOG_PATH=/ligo/changelog.txt
 RUN eval $(opam env) && LIGO_VERSION=$(/ligo/scripts/version.sh) dune build -p ligo --profile static
 
+# Copy binary now to avoid problems with BISECT_ENABLE below
+RUN cp /ligo/_build/install/default/bin/ligo /tmp/ligo
+
 # Run tests
 COPY gitlab-pages /ligo/gitlab-pages
 RUN BISECT_ENABLE=yes opam exec -- dune runtest --profile static --no-buffer
@@ -84,7 +87,7 @@ RUN opam exec -- dune build @doc
 # TODO see also ligo-docker-large in nix build
 FROM alpine:3.12
 WORKDIR /root/
-COPY --from=0 /ligo/_build/install/default/bin/ligo /root/ligo
+COPY --from=0 /tmp/ligo /root/ligo
 COPY --from=0 /ligo/_build/default/_doc/_html /root/doc
 COPY --from=0 /ligo/coverage /root/coverage
 ENTRYPOINT ["/root/ligo"]
