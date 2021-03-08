@@ -5,10 +5,10 @@ let contract basename =
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "protocol_dalphanet.mligo" ; "main"  ] ;
-  [%expect {|
+  [%expect{|
     { parameter (list (pair bls12_381_g1 bls12_381_g2)) ;
       storage bool ;
-      code { UNPAIR ; SWAP ; DROP ; PAIRING_CHECK ; NIL operation ; PAIR } } |}] ;
+      code { CAR ; PAIRING_CHECK ; NIL operation ; PAIR } } |}] ;
 
   run_ligo_good [ "print-ast-typed" ; contract "protocol_dalphanet.mligo" ; "--protocol=edo" ; ] ;
   [%expect {xxx|
@@ -27,9 +27,7 @@ let%expect_test _ =
   [%expect {|
     { parameter (sapling_transaction 8) ;
       storage (pair int (sapling_state 8)) ;
-      code { UNPAIR ;
-             SWAP ;
-             DROP ;
+      code { CAR ;
              SAPLING_EMPTY_STATE 8 ;
              SWAP ;
              SAPLING_VERIFY_UPDATE ;
