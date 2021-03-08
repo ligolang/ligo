@@ -27,9 +27,9 @@ module M(Plugins : Plugins)(Solver : sig
 
   let simplify_constraint (state, new_constraint) =
     let constraint_simplified = Simplifier.type_constraint_simpl new_constraint in
-    Format.printf "Simplify constraint : %a\n, new_constraint : %a\n%!"
+    (* Format.printf "Simplify constraint : %a\n, new_constraint : %a\n%!"
       Ast_typed.PP.type_constraint_short new_constraint
-      (PP_helpers.list_sep_d Ast_typed.PP.type_constraint_simpl_short) constraint_simplified;
+      (PP_helpers.list_sep_d Ast_typed.PP.type_constraint_simpl_short) constraint_simplified; *)
     ok (state, { Worklist.empty with pending_type_constraint_simpl = Pending.of_list constraint_simplified })
 
   let split_aliases (state, new_constraint) =

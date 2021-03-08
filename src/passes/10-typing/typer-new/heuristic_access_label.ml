@@ -106,8 +106,8 @@ let get_referenced_constraints ({ a_r_map; a_var_l } : selector_output) : type_c
 
 let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver_types.propagator =
   fun selected repr ->
-  Format.printf "In access_label.propagator for %a\n%!"
-    printer selected;
+  (* Format.printf "In access_label.propagator for %a\n%!"
+    printer selected; *)
   let a_var_l = selected.a_var_l in
   let a_r_map = selected.a_r_map in
   (* The selector is expected to provice two constraints with the shape x = k(var …) and x = k'(var' …) *)

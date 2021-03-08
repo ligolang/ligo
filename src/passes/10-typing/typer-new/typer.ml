@@ -119,13 +119,14 @@ end
   Extract pairs of (name,type) in the declaration and add it to the environment
 *)
 let rec type_declaration env state : I.declaration Location.wrap -> (environment * _ O'.typer_state * O.declaration Location.wrap, typer_error) result = fun d ->
-  let return : _ -> _ -> _ O'.typer_state -> _ (* return of type_expression *) = fun expr e state constraints ->
-    Format.printf "Solving expression : %a\n%!" O.PP_annotated.declaration expr ;
+  let return : O.declaration -> _ -> _ O'.typer_state -> _ (* return of type_expression *) = fun expr e state constraints ->
+    (* Format.printf "Solving expression : %a\n%!" O.PP_annotated.declaration expr ; *)
     let%bind state = Solver.main state constraints in
     Format.printf "Leaving type declaration\n\n%!";
     let () = Pretty_print_variables.flush_pending_print state in
     ok @@ (e,state, Location.wrap ~loc:d.location expr ) in
   Format.printf "Type_declaration : %a\n%!" I.PP.declaration (Location.unwrap d);
+  Format.printf "env : %a\n" O.PP.environment env ;
   match Location.unwrap d with
   | Declaration_type {type_binder; type_expr} ->
     let type_binder = Var.todo_cast type_binder in
@@ -278,6 +279,7 @@ and type_expression' : ?tv_opt:O.type_expression -> environment -> _ O'.typer_st
     ok @@ ((e,state, expr'),new_constraints@constraints) in
   let return_wrapped expr e state constraints (c , expr_type) = return expr e state c constraints expr_type in
   Format.printf "Type_expression : %a\n%!" Ast_core.PP.expression ae ;
+  Format.printf "Env : %a\n%!" Ast_typed.PP.environment e;
   trace (expression_tracer ae) @@
   match ae.content with
 
@@ -494,7 +496,7 @@ and type_expression' : ?tv_opt:O.type_expression -> environment -> _ O'.typer_st
       Some m -> ok m
     | None   -> fail @@ unbound_module_variable e module_name ae.location
     in
-    let%bind (e,state,element),constraints = self ?tv_opt module_env state element in
+    let%bind (_,state,element),constraints = self ?tv_opt module_env state element in
     let wrapped = Wrap.module_access element.type_expression in
     return_wrapped (E_module_accessor {module_name; element}) e state constraints wrapped
 

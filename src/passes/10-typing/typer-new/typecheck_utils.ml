@@ -53,7 +53,7 @@ let other_check all_constraints assignments =
                  (type_variable PolySet.t * type_variable Compare_renaming.tree) result
     = fun already_seen unification_var repr find_assignment ->
       let repr_unification_var = repr unification_var in
-      Format.printf "In toposort for : %a , repr : %a\n%!" Ast_typed.PP.type_variable unification_var Ast_typed.PP.type_variable repr_unification_var;
+      (* Format.printf "In toposort for : %a , repr : %a\n%!" Ast_typed.PP.type_variable unification_var Ast_typed.PP.type_variable repr_unification_var; *)
       if Set.mem repr_unification_var already_seen then 
         (*return without further changes*) ok (already_seen, Compare_renaming.List [])
       else (*add the dependencies first, then our newfound variable if it is still new*) (

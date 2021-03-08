@@ -108,11 +108,11 @@ module Utils = functor (Type_variable : sig type t end) (Type_variable_abstracti
   
 let all_equal' : type_constraint_simpl list -> (type_variable -> type_variable) -> type_variable -> type_value list -> (constructor_or_row * type_variable list * type_value list list) all_equal =
   fun tc_constraints repr x type_values ->
-    Format.printf "In all_equal' with tc_constraints : %a, x: %a, type_values:%a\n%!"
+    (* Format.printf "In all_equal' with tc_constraints : %a, x: %a, type_values:%a\n%!"
       (PP_helpers.list_sep_d PP.type_constraint_simpl_short) tc_constraints
       PP.type_variable x
       (PP_helpers.list_sep_d PP.type_value_short) type_values
-     ;
+     ; *)
     let rec simplify type_values : [> `Constructor of constant_tag * int * type_value_ Location.wrap list | `Row of row_tag * label list * row_value list | `TODO ] list =
       let res = List.map (
         function
@@ -158,7 +158,7 @@ let all_equal' : type_constraint_simpl list -> (type_variable -> type_variable) 
       in List.flatten res
     in
     let type_values' = simplify type_values in
-    Format.printf "Testing for any\n%!";
+    (* Format.printf "Testing for any\n%!"; *)
     if (List.exists (function `Any -> true | _ -> false) type_values')
     then Different
     else
@@ -262,11 +262,11 @@ let rec replace_var_and_possibilities_1
       ok (rec_cleaned, pair (singleton deduced) rec_deduced, true)
 
   and replace_var_and_possibilities_rec tc_constraints repr matrix =
-    Format.printf "tc_constraints : %a; matrix: %a\n%!"
+    (* Format.printf "tc_constraints : %a; matrix: %a\n%!"
       (PP_helpers.list_sep_d PP.type_constraint_simpl_short) tc_constraints
       PP.(PP_helpers.list_sep_d (fun ppf (a,b) -> 
         Format.fprintf ppf "%a,(%a)" type_variable a (PP_helpers.list_sep_d type_value_short) b)) matrix
-    ;
+    ;*)
     let open Rope.SimpleRope in
     (loop3 (replace_var_and_possibilities_1 tc_constraints repr) (empty, empty, false) (pair, pair, (||))) matrix
 
@@ -285,7 +285,7 @@ let rec deduce_and_clean_constraints repr (c : type_constraint_simpl) =
 
 and deduce_and_clean : (_ -> _) -> c_typeclass_simpl -> (deduce_and_clean_result, _) result = fun repr tcs ->
   let open Rope.SimpleRope in
-  Format.printf "In deduce_and_clean for : %a\n%!" PP.c_typeclass_simpl_short tcs;
+  (* Format.printf "In deduce_and_clean for : %a\n%!" PP.c_typeclass_simpl_short tcs; *)
   (* ex.   [ x                             ; z      ]
        ∈ [ [ map3( nat   , unit  , float ) ; int    ] ;
            [ map3( bytes , mutez , float ) ; string ] ] *)
@@ -308,11 +308,11 @@ and deduce_and_clean : (_ -> _) -> c_typeclass_simpl -> (deduce_and_clean_result
 
  let wrapped_deduce_and_clean repr tc ~(original:c_typeclass_simpl) =
   let%bind {deduced; cleaned; changed} = deduce_and_clean repr tc in
-  Format.printf "retourning with deduce: %a; cleaned: %a; changed: %b\n" 
+  (* Format.printf "retourning with deduce: %a; cleaned: %a; changed: %b\n" 
     (PP_helpers.list_sep_d PP.constructor_or_row_short) deduced
     PP.c_typeclass_simpl_short cleaned
     changed
-    ;
+    ; *)
   let cleaned = SC_Typeclass { cleaned with original_id = Some original.id_typeclass_simpl; id_typeclass_simpl = ConstraintIdentifier.fresh ()} in
   let aux : constructor_or_row -> type_constraint_simpl = function
       `Constructor x -> SC_Constructor x

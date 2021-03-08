@@ -156,8 +156,8 @@ let row_value v = { associated_value = p_variable v.associated_variable; michels
 
 let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver_types.propagator =
   fun selected repr ->
-  Format.printf "in inline_named.propagator for %a\n%!"
-    printer selected;
+    (* Format.printf "in inline_named.propagator for %a\n%!"
+    printer selected; *)
   let { tc; c } = selected in
   let inline_p_variable changed = function
       { Location.wrap_content = P_variable v ; location } when Compare.type_variable (repr v) (repr (tv c)) = 0 ->

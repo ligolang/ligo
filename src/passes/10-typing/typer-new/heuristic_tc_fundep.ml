@@ -46,11 +46,6 @@ module M = functor (Type_variable : sig type t end) (Type_variable_abstraction :
     c :  constructor_or_row ;
   }
 
-  let pp_selector_output ppf {tc;c} =
-    Format.fprintf ppf "{tc:%a,c:%a}"
-      PP.c_typeclass_simpl_short tc
-      PP.constructor_or_row_short c
-
   let heuristic_name = "tc_fundep"
   
 (* ***********************************************************************
@@ -72,19 +67,17 @@ let selector_by_variable : (type_variable -> type_variable) -> flds -> construct
    typeclass constraint tcs. *)
 let selector_by_tc : (type_variable -> type_variable) -> flds -> c_typeclass_simpl -> selector_output list =
   fun repr (module Indexes) tc ->
-    Format.printf "In selector_by_tc : %a\n%!" PP.c_typeclass_simpl_short tc;
+    (* Format.printf "In selector_by_tc : %a\n%!" PP.c_typeclass_simpl_short tc; *)
   let aux tv =
     (* Since we are only refining the typeclass one type expression
        node at a time, we only need the top-level assignment for
        that variable, e.g. α = κ(βᵢ, …). We can therefore look
        directly in the assignments. *)
-    Format.printf "Searching for tv :%a, repr: %a in assignments\n%!" PP.type_variable tv PP.type_variable @@ repr tv;
+    (* Format.printf "Searching for tv :%a, repr: %a in assignments\n%!" PP.type_variable tv PP.type_variable @@ repr tv; *)
     match Assignments.find_opt (repr tv) Indexes.assignments with
     | Some cr -> 
-        Format.printf "found :%a\n%!" PP.constructor_or_row_short cr;
         [{ tc ; c = cr }]
     | None    -> 
-        Format.printf "Not found";
         [] in
   List.flatten @@ List.map aux tc.args
 
@@ -203,9 +196,8 @@ and restrict repr c tc =
 
 let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver_types.propagator =
   fun selected repr ->
-    Format.printf "In propagator for tc_fundep for :%a\n" pp_selector_output selected; 
+    (* Format.printf "In propagator for tc_fundep for :%a\n" pp_selector_output selected;  *)
   let%bind restricted = restrict repr selected.c selected.tc in
-  Format.printf "restricted : %a\n%!" PP.c_typeclass_simpl_short restricted;
   let not_changed =
     Compare.(cmp2
       (List.compare ~compare:type_variable) restricted.args selected.tc.args
