@@ -120,7 +120,7 @@ let comparator { a_k_var=a1; a_k'_var'=a2 } { a_k_var=b1; a_k'_var'=b2 } =
 
 let propagator : (selector_output, _) Type_variable_abstraction.Solver_types.propagator =
   fun selected repr ->
-  Format.printf "In break_ctor.propagator for %a\n%!" printer selected;
+  (* Format.printf "In break_ctor.propagator for %a\n%!" printer selected; *)
   let a = selected.a_k_var in
   let b = selected.a_k'_var' in
   let get_tv : constructor_or_row -> type_variable = fun cr ->

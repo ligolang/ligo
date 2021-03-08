@@ -713,6 +713,7 @@ and module_environment_binding ppf ({module_variable;module_} : module_environme
     module_variable
     environment module_
 
-and environment ppf ({expression_environment;type_environment=_;module_environment=_} : environment) =
-  fprintf ppf "{@[<hv 2> @ expression_environment : (%a);@]@ }"
+and environment ppf ({expression_environment;type_environment=_;module_environment} : environment) =
+  fprintf ppf "{@[<hv 2> @ expression_environment : (%a); module_environment : (%a) @]@ }"
     (list_sep_d environment_binding) expression_environment
+    (list_sep_d module_environment_binding) module_environment

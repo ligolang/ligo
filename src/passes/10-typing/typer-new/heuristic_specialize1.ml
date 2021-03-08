@@ -39,11 +39,6 @@ module M = functor (Type_variable : sig type t end) (Type_variable_abstraction :
     }
   let heuristic_name = "specialize1"
 
-  let pp_selector_output ppf {poly;a_k_var} =
-    Format.fprintf ppf "{poly : %a; a_k_var :%a}"
-      PP.c_poly_simpl_short poly
-      PP.c_constructor_simpl_short a_k_var
-
  let selector : (type_variable -> type_variable) -> type_constraint_simpl -> flds -> selector_output list =
   (* find two rules with the shape (x = forall b, d) and x = k'(var' …) or vice versa *)
   (* TODO: do the same for two rules with the shape (a = forall b, d) and tc(a…) *)
@@ -93,7 +88,7 @@ let get_referenced_constraints ({ poly; a_k_var } : selector_output) : type_cons
 
 let propagator : (selector_output , typer_error) Type_variable_abstraction.Solver_types.propagator =
   fun selected repr ->
-  Format.printf "In specialize propagator for %a\n%!" pp_selector_output selected;
+  (* Format.printf "In specialize propagator for %a\n%!" pp_selector_output selected; *)
   let a = selected.poly in
   let b = selected.a_k_var in
 

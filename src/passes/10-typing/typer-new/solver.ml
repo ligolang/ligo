@@ -101,29 +101,29 @@ end = struct
       | SC_Row c -> SC_Row { c with id_row_simpl = ConstraintIdentifier.fresh () }
       | SC_Typeclass c -> SC_Typeclass { c with id_typeclass_simpl = ConstraintIdentifier.fresh () }
       ) add_constraints_simpl in
-    Format.printf "In aux_update, remove :%a, add:%a, add_simpl:%a\n%!" 
+    (* Format.printf "In aux_update, remove :%a, add:%a, add_simpl:%a\n%!" 
       (list_sep_d type_constraint_simpl_short) remove_constraints
       (list_sep_d type_constraint_short) add_constraints
       (list_sep_d type_constraint_simpl_short) add_constraints_simpl
-      ;
-    Format.printf "Returning from aux_update\n%!" ;
+      ; *)
+    (* Format.printf "Returning from aux_update\n%!" ; *)
     ok (state, { Worklist.empty with pending_type_constraint = Pending.of_list add_constraints;
                                      pending_type_constraint_simpl = Pending.of_list add_constraints_simpl;
                                      pending_removes = Pending.of_list remove_constraints })
 
   and aux_propagator (state, (module M : PENDING_PROPAGATOR)) =
     let heuristic_plugin, selector_output = M.heuristic_plugin, M.selector_output in
-    Format.printf "in aux_propagator %s for %a\n%!" heuristic_plugin.heuristic_name heuristic_plugin.printer selector_output;
+    (* Format.printf "in aux_propagator %s for %a\n%!" heuristic_plugin.heuristic_name heuristic_plugin.printer selector_output; *)
     (* TODO: before applying a propagator, check if it does
        not depend on constraints which were removed by the
        previous propagator *)
     let referenced_constraints = heuristic_plugin.get_referenced_constraints selector_output in
     let uses_deleted_constraints = List.exists (fun c -> (PolySet.mem c state.deleted_constraints)) referenced_constraints in
-    if uses_deleted_constraints then
-      (Format.printf "contraint deleted; not runing propagator \n";
+    if uses_deleted_constraints then ( 
+      (*Format.printf "contraint deleted; not runing propagator \n"; *)
       ok (state, Worklist.empty))
     else(
-      Format.printf "reuning propagator : %s ..." heuristic_plugin.heuristic_name;
+      (* Format.printf "reuning propagator : %s ..." heuristic_plugin.heuristic_name; *)
       let%bind updates = heuristic_plugin.propagator selector_output (mk_repr state) in
       ok (state, { Worklist.empty with pending_updates = Pending.of_list @@ updates })
     )
@@ -141,7 +141,7 @@ end = struct
       Heuristic_selector (heuristic, selector_outputs)
     in
     fun (state , ({ reason_alias_simpl=_; a; b } as new_constraint)) ->
-      Format.printf "Adding alias : %a\n%!" Ast_typed.PP.c_alias_short new_constraint;
+      (* Format.printf "Adding alias : %a\n%!" Ast_typed.PP.c_alias_short new_constraint; *)
       (* let () = Format.printf "Add_alias %a=%a\n%!" Ast_typed.PP.type_variable a Ast_typed.PP.type_variable b in *)
 
 
