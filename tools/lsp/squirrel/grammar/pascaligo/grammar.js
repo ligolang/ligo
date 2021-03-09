@@ -68,17 +68,9 @@ module.exports = grammar({
         $.preprocessor,
       ),
 
-    // Regex assertions are not supported, so we are doing it the hard way
     michelson_code: $ => seq(
       '{|',
-      repeat(
-        choice(
-          field("keyword", choice($.Keyword, $.String)),
-          '{',
-          '}',
-          ';'
-        )
-      ),
+      repeat(/([^\|]|\|[^}])/),
       '|}'
     ),
 

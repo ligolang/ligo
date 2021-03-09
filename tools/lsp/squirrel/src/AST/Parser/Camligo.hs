@@ -178,9 +178,9 @@ recognise (SomeRawTree dialect rawTree)
 
     -- MichelsonCode
   , Descent do
-      boilerplate \case
-        "michelson_code" -> MichelsonCode <$> fields "keyword"
-        _                -> fallthrough
+      boilerplate' \case
+        ("michelson_code", code) -> return $ MichelsonCode code
+        _                        -> fallthrough
 
     -- Name
   , Descent do
