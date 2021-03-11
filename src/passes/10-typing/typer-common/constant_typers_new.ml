@@ -281,11 +281,14 @@ module Operators_types = struct
   let t_set_iter      = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple2 (a --> unit) (set a) --> unit
   (* TODO: check that the implementation has this type *)
   let t_set_fold      = forall2_tc "a" "b" @@ fun a b -> [tc_comparable b] => tuple3 (pair a b --> a) (set b) a --> a
+  let t_SET_FOLD_DESC= forall2_tc "a" "b" @@ fun a b -> [tc_comparable b] => tuple3 (pair b a --> a) (set b) a --> a
   let t_list_empty    = forall "a" @@ fun a -> tuple0 --> list a
   let t_list_iter     = forall "a" @@ fun a -> tuple2 (a --> unit) (list a) --> unit
   let t_list_map      = forall2 "a" "b" @@ fun a b -> tuple2 (a --> b) (list a) --> (list b)
   (* TODO: check that the implementation has this type *)
   let t_list_fold     = forall2 "a" "b" @@ fun a b -> tuple3 (pair a b --> a) (list b) a --> a
+  let t_list_fold_left  = forall2 "a" "b" @@ fun a b -> tuple3 (pair a b --> a) a (list b) --> a
+  let t_list_fold_right = forall2 "a" "b" @@ fun a b -> tuple3 (pair b a --> a) (list b) a --> a
   let t_list_head_opt = forall "a" @@ fun a -> tuple1 (list a) --> option a
   let t_list_tail_opt = forall "a" @@ fun a -> tuple1 (list a) --> option (list a)
   let t_self_address  = tuple0 --> address
@@ -341,6 +344,7 @@ module Operators_types = struct
     | C_SET_REMOVE          -> ok @@ t_set_remove ;
     | C_SET_ITER            -> ok @@ t_set_iter ;
     | C_SET_FOLD            -> ok @@ t_set_fold ;
+    | C_SET_FOLD_DESC      -> ok @@ t_SET_FOLD_DESC ;
     | C_SET_MEM             -> ok @@ t_set_mem ;
     | C_SET_UPDATE          -> ok @@ t_set_update ;
 
@@ -350,6 +354,8 @@ module Operators_types = struct
     | C_LIST_ITER           -> ok @@ t_list_iter ;
     | C_LIST_MAP            -> ok @@ t_list_map ;
     | C_LIST_FOLD           -> ok @@ t_list_fold ;
+    | C_LIST_FOLD_LEFT      -> ok @@ t_list_fold_left ;
+    | C_LIST_FOLD_RIGHT     -> ok @@ t_list_fold_right ;
     | C_LIST_HEAD_OPT       -> ok @@ t_list_head_opt ;
     | C_LIST_TAIL_OPT       -> ok @@ t_list_tail_opt ;
 

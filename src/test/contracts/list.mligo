@@ -21,6 +21,14 @@ let fold_op (s : int list) : int =
   let aggregate = fun (t : int * int) -> t.0 + t.1
   in List.fold aggregate s 10
 
+let fold_left (s : int list) : int list =
+  let aggregate = fun (t : int list * int) -> t.1 :: t.0 
+  in List.fold_left aggregate ([] : int list) s
+
+let fold_right (s : int list) : int list =
+  let aggregate = fun (t : int * int list) -> t.0 :: t.1
+  in List.fold_right aggregate s ([] : int list)
+
 let map_op (s : int list) : int list =
   List.map (fun (cur : int) -> cur + 1) s
 

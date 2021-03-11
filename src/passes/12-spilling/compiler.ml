@@ -1,6 +1,6 @@
 (* The compiler is a function that takes as input the Typed AST, and outputs expressions in a language that is basically a Michelson with named variables and first-class-environments.
 
-For more info, see back-end.md: https://gitlab.com/ligolang/ligo/blob/dev/gitlab-pages/docs/contributors/big-picture/back-end.md *)
+   For more info, see back-end.md: https://gitlab.com/ligolang/ligo/blob/dev/gitlab-pages/docs/contributors/big-picture/back-end.md *)
 
 open Trace
 module Errors = Errors
@@ -38,6 +38,8 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_LOOP_CONTINUE -> C_LOOP_CONTINUE
   | C_LOOP_STOP -> C_LOOP_STOP
   | C_FOLD -> C_FOLD
+  | C_FOLD_LEFT -> C_FOLD_LEFT
+  | C_FOLD_RIGHT -> C_FOLD_RIGHT
   (* MATH *)
   | C_NEG -> C_NEG
   | C_ABS -> C_ABS
@@ -83,6 +85,7 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_SET_REMOVE -> C_SET_REMOVE
   | C_SET_ITER -> C_SET_ITER
   | C_SET_FOLD -> C_SET_FOLD
+  | C_SET_FOLD_DESC -> C_SET_FOLD_DESC
   | C_SET_MEM -> C_SET_MEM
   | C_SET_UPDATE -> C_SET_UPDATE
   (* List *)
@@ -91,6 +94,8 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_LIST_ITER -> C_LIST_ITER
   | C_LIST_MAP -> C_LIST_MAP
   | C_LIST_FOLD -> C_LIST_FOLD
+  | C_LIST_FOLD_LEFT -> C_LIST_FOLD_LEFT
+  | C_LIST_FOLD_RIGHT -> C_LIST_FOLD_RIGHT
   | C_LIST_HEAD_OPT -> C_LIST_HEAD_OPT
   | C_LIST_TAIL_OPT -> C_LIST_TAIL_OPT
   (* Maps *)
@@ -155,14 +160,14 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_SAPLING_EMPTY_STATE -> C_SAPLING_EMPTY_STATE
   | C_SAPLING_VERIFY_UPDATE -> C_SAPLING_VERIFY_UPDATE
   | (   C_TEST_ORIGINATE
-      | C_TEST_SET_NOW
-      | C_TEST_SET_SOURCE
-      | C_TEST_SET_BALANCE
-      | C_TEST_EXTERNAL_CALL
-      | C_TEST_GET_STORAGE
-      | C_TEST_GET_BALANCE
-      | C_TEST_ASSERT_FAILURE
-      | C_TEST_LOG ) as c ->
+    | C_TEST_SET_NOW
+    | C_TEST_SET_SOURCE
+    | C_TEST_SET_BALANCE
+    | C_TEST_EXTERNAL_CALL
+    | C_TEST_GET_STORAGE
+    | C_TEST_GET_BALANCE
+    | C_TEST_ASSERT_FAILURE
+    | C_TEST_LOG ) as c ->
     failwith (Format.asprintf "%a is only available for LIGO interpreter" PP.constant c)
 
 let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error) result =
@@ -232,20 +237,20 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
     | _ -> fail @@ corner_case ~loc:__LOC__ "wrong constant"
   )
   | T_sum { content = m ; layout } -> (
-    let open Ast_typed.Helpers in
-    match is_michelson_or m with
-    | Some (a , b) -> (
-      let aux (x : AST.row_element) =
-        let%bind t = compile_type x.associated_type in
-        let annot = remove_empty_annotation x.michelson_annotation in
-        ok (annot , t)
-      in
-      let%bind a' = aux a in
-      let%bind b' = aux b in
-      return @@ T_or (a' , b')
+      let open Ast_typed.Helpers in
+      match is_michelson_or m with
+      | Some (a , b) -> (
+          let aux (x : AST.row_element) =
+            let%bind t = compile_type x.associated_type in
+            let annot = remove_empty_annotation x.michelson_annotation in
+            ok (annot , t)
+          in
+          let%bind a' = aux a in
+          let%bind b' = aux b in
+          return @@ T_or (a' , b')
+        )
+      | None -> Layout.t_sum ~layout return compile_type m
     )
-    | None -> Layout.t_sum ~layout return compile_type m
-  )
   | T_record { content = m ; layout } -> (
       let open Ast_typed.Helpers in
       match is_michelson_pair m with
@@ -371,43 +376,43 @@ and compile_expression ?(module_env = SMap.empty) (ae:AST.expression) : (express
       Layout.record_to_pairs self return record_t m
     )
   | E_record_accessor {record; path} ->
-      let%bind ty' = compile_type (get_type_expression record) in
-      let%bind {content ; layout} = trace_option (corner_case ~loc:__LOC__ "not a record") @@
-        get_t_record (get_type_expression record) in
-      let%bind path = Layout.record_access_to_lr ~layout ty' content path in
-      let aux = fun pred (ty, lr) ->
-        let c = match lr with
-          | `Left  -> C_CAR
-          | `Right -> C_CDR
-        in
-        return ~tv:ty @@ E_constant {cons_name=c;arguments=[pred]}
+    let%bind ty' = compile_type (get_type_expression record) in
+    let%bind {content ; layout} = trace_option (corner_case ~loc:__LOC__ "not a record") @@
+      get_t_record (get_type_expression record) in
+    let%bind path = Layout.record_access_to_lr ~layout ty' content path in
+    let aux = fun pred (ty, lr) ->
+      let c = match lr with
+        | `Left  -> C_CAR
+        | `Right -> C_CDR
       in
-      let%bind record' = self record in
-      let%bind expr = bind_fold_list aux record' path in
-      ok expr
+      return ~tv:ty @@ E_constant {cons_name=c;arguments=[pred]}
+    in
+    let%bind record' = compile_expression record in
+    let%bind expr = bind_fold_list aux record' path in
+    ok expr
   | E_record_update {record; path; update} ->
     (* Compile record update to simple constructors &
        projections. This will be optimized to some degree by eta
        contraction in a later pass. *)
 
     let rec aux res (r,p,up) =
-        let ty = get_type_expression r in
-        let%bind {content;layout} =
-          trace_option (corner_case ~loc:__LOC__ "not a record") @@
-          get_t_record (ty) in
-        let%bind ty' = compile_type (ty) in
-        let%bind p' =
-          trace_strong (corner_case ~loc:__LOC__ "record access") @@
-          Layout.record_access_to_lr ~layout ty' content p in
-        let res' = res @ p' in
-        match (up:AST.expression).expression_content with
-        | AST.E_record_update {record=record'; path=path'; update=update'} -> (
+      let ty = get_type_expression r in
+      let%bind {content;layout} =
+        trace_option (corner_case ~loc:__LOC__ "not a record") @@
+        get_t_record (ty) in
+      let%bind ty' = compile_type (ty) in
+      let%bind p' =
+        trace_strong (corner_case ~loc:__LOC__ "record access") @@
+        Layout.record_access_to_lr ~layout ty' content p in
+      let res' = res @ p' in
+      match (up:AST.expression).expression_content with
+      | AST.E_record_update {record=record'; path=path'; update=update'} -> (
           match record'.expression_content with
-            | AST.E_record_accessor {record;path} ->
-              if (AST.Misc.equal_variables record r && path = p) then
-                aux res' (record',path',update')
-              else ok @@ (up,res')
-            | _ -> ok @@ (up,res')
+          | AST.E_record_accessor {record;path} ->
+            if (AST.Misc.equal_variables record r && path = p) then
+              aux res' (record',path',update')
+            else ok @@ (up,res')
+          | _ -> ok @@ (up,res')
         )
         | _ -> ok @@ (up,res')
       in
@@ -471,9 +476,28 @@ and compile_expression ?(module_env = SMap.empty) (ae:AST.expression) : (express
               let%bind collection' = self collection in
               return @@ E_fold (f' , collection' , initial')
             )
+          | [ f ; initial ; collection ], C_FOLD_LEFT -> (
+              let%bind f' = expression_to_iterator_body f in
+              let%bind initial' = self initial in
+              let%bind collection' = self collection in
+              return @@ E_fold (f' , collection' , initial')
+            )
+          | [ f ; collection ; initial ], C_FOLD_RIGHT -> (
+              let%bind f' = expression_to_iterator_body f in
+              let%bind initial' = self initial in
+              let%bind elem_type = 
+                bind (trace_option (corner_case ~loc:__LOC__ "Wrong type : expecting collection")) @@
+                map get_t_collection @@ compile_type collection.type_expression in
+              let%bind collection' = self collection in
+              return @@ E_fold_right (f' , (collection',elem_type) , initial')
+            )
           | _ -> fail @@ corner_case ~loc:__LOC__ (Format.asprintf "bad iterator arity: %a" PP.constant iterator_name)
       in
-      let (iter , map , fold) = iterator_generator C_ITER, iterator_generator C_MAP, iterator_generator C_FOLD in
+      let (iter , map , fold, fold_left, fold_right) = iterator_generator C_ITER,
+                                                       iterator_generator C_MAP,
+                                                       iterator_generator C_FOLD,
+                                                       iterator_generator C_FOLD_LEFT,
+                                                       iterator_generator C_FOLD_RIGHT in
       match (name , lst) with
       | (C_SET_ITER , lst) -> iter lst
       | (C_LIST_ITER , lst) -> iter lst
@@ -483,6 +507,9 @@ and compile_expression ?(module_env = SMap.empty) (ae:AST.expression) : (express
       | (C_LIST_FOLD , lst) -> fold lst
       | (C_SET_FOLD , lst) -> fold lst
       | (C_MAP_FOLD , lst) -> fold lst
+      | (C_LIST_FOLD_LEFT, lst) -> fold_left lst
+      | (C_LIST_FOLD_RIGHT, lst) -> fold_right lst
+      | (C_SET_FOLD_DESC , lst) -> fold_right lst
       | _ -> (
           let%bind lst' = bind_map_list (self) lst in
           return @@ E_constant {cons_name=compile_constant' name;arguments=lst'}
@@ -519,7 +546,7 @@ and compile_expression ?(module_env = SMap.empty) (ae:AST.expression) : (express
           return @@ E_if_cons (expr' , nil , cons)
         )
       | Match_variant {cases ; tv} -> (
-        match expr'.type_expression.type_content with
+          match expr'.type_expression.type_content with
           | T_base TB_bool ->
             let ctor_body (case : AST.matching_content_case) = (case.constructor, case.body) in
             let cases = AST.LMap.of_list (List.map ctor_body cases) in
@@ -658,12 +685,12 @@ and compile_recursive module_env {fun_name; fun_type; lambda} =
   let rec map_lambda : AST.expression_variable -> type_expression -> AST.expression -> (expression * expression_variable list , spilling_error) result = fun fun_name loop_type e ->
     match e.expression_content with
       E_lambda {binder;result} ->
-        let binder = Location.map Var.todo_cast binder in
-        let%bind (body,l) = map_lambda fun_name loop_type result in
-        ok @@ (Expression.make ~loc:e.location (E_closure {binder;body}) loop_type, binder::l)
-      | _  ->
-        let%bind res = replace_callback fun_name loop_type false e in
-        ok @@ (res, [])
+      let binder = Location.map Var.todo_cast binder in
+      let%bind (body,l) = map_lambda fun_name loop_type result in
+      ok @@ (Expression.make ~loc:e.location (E_closure {binder;body}) loop_type, binder::l)
+    | _  ->
+      let%bind res = replace_callback fun_name loop_type false e in
+      ok @@ (res, [])
 
   and replace_callback : AST.expression_variable -> type_expression -> bool -> AST.expression -> (expression , spilling_error) result = fun fun_name loop_type shadowed e ->
     match e.expression_content with
@@ -674,8 +701,8 @@ and compile_recursive module_env {fun_name; fun_type; lambda} =
         let%bind ty  = compile_type li.rhs.type_expression in
         ok @@ e_let_in (Location.map Var.todo_cast li.let_binder) ty li.inline rhs let_result |
       E_matching m ->
-        let%bind ty = compile_type e.type_expression in
-        matching fun_name loop_type shadowed m ty |
+      let%bind ty = compile_type e.type_expression in
+      matching fun_name loop_type shadowed m ty |
       E_application {lamb;args} -> (
         match lamb.expression_content,shadowed with
         E_variable name, false when Var.equal fun_name.wrap_content name.wrap_content ->

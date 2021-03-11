@@ -20,6 +20,8 @@ let constant' ppf : constant' -> unit = function
   (* Loops *)
   | C_ITER                  -> fprintf ppf "ITER"
   | C_FOLD                  -> fprintf ppf "FOLD"
+  | C_FOLD_LEFT             -> fprintf ppf "FOLD_LEFT"
+  | C_FOLD_RIGHT            -> fprintf ppf "FOLD_RIGHT"
   | C_FOLD_WHILE            -> fprintf ppf "FOLD_WHILE"
   | C_FOLD_CONTINUE         -> fprintf ppf "CONTINUE"
   | C_FOLD_STOP             -> fprintf ppf "STOP"
@@ -69,6 +71,7 @@ let constant' ppf : constant' -> unit = function
   | C_SET_REMOVE            -> fprintf ppf "SET_REMOVE"
   | C_SET_ITER              -> fprintf ppf "SET_ITER"
   | C_SET_FOLD              -> fprintf ppf "SET_FOLD"
+  | C_SET_FOLD_DESC        -> fprintf ppf "SET_FOLD_DESC"
   | C_SET_MEM               -> fprintf ppf "SET_MEM"
   | C_SET_UPDATE            -> fprintf ppf "SET_UPDATE"
   (* List *)
@@ -77,6 +80,8 @@ let constant' ppf : constant' -> unit = function
   | C_LIST_ITER             -> fprintf ppf "LIST_ITER"
   | C_LIST_MAP              -> fprintf ppf "LIST_MAP"
   | C_LIST_FOLD             -> fprintf ppf "LIST_FOLD"
+  | C_LIST_FOLD_LEFT        -> fprintf ppf "LIST_FOLD_LEFT"
+  | C_LIST_FOLD_RIGHT       -> fprintf ppf "LIST_FOLD_RIGHT"
   | C_LIST_HEAD_OPT         -> fprintf ppf "LIST_HEAD_OPT"
   | C_LIST_TAIL_OPT         -> fprintf ppf "LIST_TAIL_OPT"
   (* Maps *)

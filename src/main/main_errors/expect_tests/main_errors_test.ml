@@ -727,7 +727,7 @@ let%expect_test "typer" =
     in file "a dummy file name", line 20, characters 5-5
 
     Incorrect argument.
-    Expected a tuple, but got an argument of type "foo".|}] ;
+    Expected a pair, but got an argument of type "foo".|}] ;
   error (`Typer_expected_list (location_t, type_expression)) ;
   [%expect
     {|

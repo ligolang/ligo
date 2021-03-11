@@ -33,6 +33,11 @@ module Free_variables = struct
                self collection ;
                self initial ;
              ]
+    | E_fold_right (((v, _), body), (collection,_elem_type), initial) ->
+      unions [ expression (union (singleton v) b) body ;
+               self collection ;
+               self initial ;
+             ]
     | E_if_bool (x, bt, bf) -> unions [ self x ; self bt ; self bf ]
     | E_if_none (x, bn, ((s, _), bs)) ->
       unions [ self x ;

@@ -93,20 +93,24 @@ module Tree_abstraction = struct
     | "List.iter"     -> some_const C_LIST_ITER
     | "List.map"      -> some_const C_LIST_MAP
     | "List.fold"     -> some_const C_LIST_FOLD
+    | "List.fold_left"  -> some_const C_LIST_FOLD_LEFT
+    | "List.fold_right" -> some_const C_LIST_FOLD_RIGHT
     | "List.head_opt" -> some_const C_LIST_HEAD_OPT
     | "List.tail_opt" -> some_const C_LIST_TAIL_OPT
 
     (* Set module *)
 
-    | "Set.empty"    -> some_const C_SET_EMPTY
-    | "Set.literal"  -> some_const C_SET_LITERAL
-    | "Set.cardinal" -> some_const C_SIZE
-    | "Set.mem"      -> some_const C_SET_MEM
-    | "Set.add"      -> some_const C_SET_ADD
-    | "Set.remove"   -> some_const C_SET_REMOVE
-    | "Set.iter"     -> some_const C_SET_ITER
-    | "Set.fold"     -> some_const C_SET_FOLD
-    | "Set.update"   -> some_const C_SET_UPDATE
+    | "Set.empty"      -> some_const C_SET_EMPTY
+    | "Set.literal"    -> some_const C_SET_LITERAL
+    | "Set.cardinal"   -> some_const C_SIZE
+    | "Set.mem"        -> some_const C_SET_MEM
+    | "Set.add"        -> some_const C_SET_ADD
+    | "Set.remove"     -> some_const C_SET_REMOVE
+    | "Set.iter"       -> some_const C_SET_ITER
+    | "Set.fold"       -> some_const C_SET_FOLD
+    | "Set.fold_asc"   -> some_const C_SET_FOLD
+    | "Set.fold_desc"  -> some_const C_SET_FOLD_DESC
+    | "Set.update"     -> some_const C_SET_UPDATE
 
     (* Map module *)
 
@@ -215,22 +219,25 @@ module Tree_abstraction = struct
 
     (* List module *)
 
-  (*  | C_SIZE      -> "List.size" *)
+    (*  | C_SIZE      -> "List.size" *)
     | C_LIST_ITER -> "List.iter"
     | C_LIST_MAP  -> "List.map"
     | C_LIST_FOLD -> "List.fold"
+    | C_LIST_FOLD_LEFT -> "List.fold_left"
+    | C_LIST_FOLD_RIGHT -> "List.fold_right"
 
     (* Set module *)
 
-    | C_SET_EMPTY   -> "Set.empty"
-    | C_SET_LITERAL -> "Set.literal"
-   (* | C_SIZE        -> "Set.cardinal"*)
-    | C_SET_MEM     -> "Set.mem"
-    | C_SET_ADD     -> "Set.add"
-    | C_SET_REMOVE  -> "Set.remove"
-    | C_SET_ITER    -> "Set.iter"
-    | C_SET_FOLD    -> "Set.fold"
-    | C_SET_UPDATE  -> "Set.update"
+    | C_SET_EMPTY      -> "Set.empty"
+    | C_SET_LITERAL    -> "Set.literal"
+    (* | C_SIZE        -> "Set.cardinal"*)
+    | C_SET_MEM        -> "Set.mem"
+    | C_SET_ADD        -> "Set.add"
+    | C_SET_REMOVE     -> "Set.remove"
+    | C_SET_ITER       -> "Set.iter"
+    | C_SET_FOLD       -> "Set.fold"
+    | C_SET_FOLD_DESC -> "Set.fold_right"
+    | C_SET_UPDATE     -> "Set.update"
 
     (* Map module *)
 
@@ -240,7 +247,7 @@ module Tree_abstraction = struct
     | C_MAP_MAP      -> "Map.map"
     | C_MAP_FOLD     -> "Map.fold"
     | C_MAP_MEM      -> "Map.mem"
-  (*  | C_SIZE         -> "Map.size" *)
+    (*  | C_SIZE         -> "Map.size" *)
     | C_MAP_ADD      -> "Map.add"
     | C_MAP_REMOVE   -> "Map.remove"
     | C_MAP_EMPTY    -> "Map.empty"
@@ -249,13 +256,13 @@ module Tree_abstraction = struct
     (* Big_map module *)
 
     | C_MAP_FIND        -> "Big_map.find"
-  (*  | C_MAP_FIND_OPT    -> "Big_map.find_opt"
-    | C_MAP_UPDATE      -> "Big_map.update" *)
+    (*  | C_MAP_FIND_OPT    -> "Big_map.find_opt"
+        | C_MAP_UPDATE      -> "Big_map.update" *)
     | C_BIG_MAP_LITERAL -> "Big_map.literal"
     | C_BIG_MAP_EMPTY   -> "Big_map.empty"
-  (*  | C_MAP_MEM         -> "Big_map.mem"
-    | C_MAP_REMOVE      -> "Big_map.remove"
-    | C_MAP_ADD         -> "Big_map.add" *)
+    (*  | C_MAP_MEM         -> "Big_map.mem"
+        | C_MAP_REMOVE      -> "Big_map.remove"
+        | C_MAP_ADD         -> "Big_map.add" *)
 
     (* Bitwise module *)
 
@@ -267,9 +274,9 @@ module Tree_abstraction = struct
 
     (* String module *)
 
-  (*  | C_SIZE   -> "String.length" (* will never trigger, rename size *)
-    | C_SLICE  -> "String.sub"
-    | C_CONCAT -> "String.concat" *)
+    (*  | C_SIZE   -> "String.length" (* will never trigger, rename size *)
+        | C_SLICE  -> "String.sub"
+        | C_CONCAT -> "String.concat" *)
 
     (* michelson pair/or type converter module *)
 

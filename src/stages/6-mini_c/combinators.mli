@@ -40,6 +40,7 @@ val get_t_map : type_expression -> ( type_expression * type_expression ) option
 val get_t_big_map : type_expression -> ( type_expression * type_expression ) option
 val get_t_list : type_expression -> type_expression option
 val get_t_set : type_expression -> type_expression option
+val get_t_collection : type_expression -> type_expression option
 val get_left : value -> value option
 val get_right : value -> value option
 val get_ticket : value -> (value*value) option

@@ -91,6 +91,7 @@ and expression_content =
   | E_variable of var_name
   | E_iterator of constant' * ((var_name * type_expression) * expression) * expression
   | E_fold     of (((var_name * type_expression) * expression) * expression * expression)
+  | E_fold_right of (((var_name * type_expression) * expression) * (expression * type_expression) * expression)
   | E_if_bool  of (expression * expression * expression)
   | E_if_none  of expression * expression * ((var_name * type_expression) * expression)
   | E_if_cons  of expression * expression * (((var_name * type_expression) * (var_name * type_expression)) * expression)

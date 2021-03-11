@@ -204,3 +204,95 @@ let sum_of_elements : int = List.fold (sum, my_list, 0);
 ```
 
 </Syntax>
+
+<SyntaxTitle syntax="pascaligo">
+function fold_left : (('accumulator -> 'item -> 'accumulator) -> 'accumulator -> list('item)) -> 'accumulator
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val fold_left : ('accumulator -> 'item -> 'accumulator) -> 'accumulator -> 'item list -> 'accumulator
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let fold_left: ((('accumulator, 'item) => 'accumulator), 'accumulator, list('item)) => 'accumulator
+</SyntaxTitle>
+
+[Fold over items in a list](../language-basics/sets-lists-tuples.md#folded-operation-over-lists);
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=lists
+const my_list: list(int) = list [1; 2; 3]
+
+function sum (const acc : int; const i : int): int is acc + i
+
+const sum_of_elements : int = List.fold_left (sum, 0, my_list)
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=lists
+let my_list : int list = [1; 2; 3]
+
+let sum (acc, i : int * int) : int = acc + i
+
+let sum_of_elements : int = List.fold_left sum 0 my_list
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=lists
+let my_list : list(int) = [1, 2, 3];
+
+let sum = ((result, i): (int, int)): int => result + i;
+
+let sum_of_elements : int = List.fold_left (sum, 0, my_list);
+```
+
+</Syntax>
+
+<SyntaxTitle syntax="pascaligo">
+function fold_right : (('item -> 'accumulator -> 'accumulator) -> list('item) -> 'accumulator) -> 'accumulator
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val fold_right : ('item -> 'accumulator -> 'accumulator) -> 'item list -> 'accumulator -> 'accumulator
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let fold_right: ((('item, 'accumulator) => 'accumulator), list('item), 'accumulator) => 'accumulator
+</SyntaxTitle>
+
+[Fold over items in a list](../language-basics/sets-lists-tuples.md#folded-operation-over-lists);
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=lists
+const my_list: list(int) = list [1; 2; 3]
+
+function sum_right (const i : int; const acc : int): int is acc + i
+
+const sum_of_elements : int = List.fold_right (sum_right, my_list, 0)
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=lists
+let my_list : int list = [1; 2; 3]
+
+let sum_right (i, acc : int * int) : int = acc + i
+
+let sum_of_elements : int = List.fold_right sum_right my_list 0
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=lists
+let my_list : list(int) = [1, 2, 3];
+
+let sum_right = ((i, result): (int, int)): int => result + i;
+
+let sum_of_elements : int = List.fold_right (sum_right, my_list, 0);
+```
+
+</Syntax>

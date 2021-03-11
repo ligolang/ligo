@@ -50,6 +50,12 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let initial = replace initial in
     let v = replace_var v in
     return @@ E_fold (((v, tv), body), collection, initial)
+  | E_fold_right (((v, tv), body), (collection, elem_tv), initial) ->
+    let body = replace body in
+    let collection = replace collection in
+    let initial = replace initial in
+    let v = replace_var v in
+    return @@ E_fold_right (((v, tv), body), (collection,elem_tv), initial)
   | E_if_bool (c, bt, bf) ->
     let c = replace c in
     let bt = replace bt in
@@ -147,6 +153,12 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
     let collection = self collection in
     let init = self init in
     return @@ E_fold (((name , tv) , body) , collection , init)
+  )
+  | E_fold_right (((name , tv) , body) , (collection, elem_tv) , init) -> (
+    let (name, body) = subst_binder name body in
+    let collection = self collection in
+    let init = self init in
+    return @@ E_fold_right (((name , tv) , body) , (collection, elem_tv) , init)
   )
   | E_if_none (c, n, ((name, tv) , s)) -> (
     let c = self c in
