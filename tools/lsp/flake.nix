@@ -110,7 +110,7 @@
           name = "ligo-squirrel";
           text = ''
             #!/bin/sh
-            "$(dirname "''${BASH_SOURCE[0]}")/$(uname)/bin/ligo-squirrel" $@
+            "$(dirname "$(readlink -f "$0")")/$(uname)/bin/ligo-squirrel" $@
           '';
           executable = true;
         };
