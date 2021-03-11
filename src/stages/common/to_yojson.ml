@@ -25,6 +25,8 @@ let constant' = function
   | C_LOOP_CONTINUE      -> `List [`String "C_LOOP_CONTINUE"; `Null ]
   | C_LOOP_STOP          -> `List [`String "C_LOOP_STOP"; `Null ]
   | C_FOLD               -> `List [`String "C_FOLD"; `Null ]
+  | C_FOLD_LEFT          -> `List [`String "C_FOLD_LEFT"; `Null ]
+  | C_FOLD_RIGHT         -> `List [`String "C_FOLD_RIGHT"; `Null ]
   (* MATH *)
   | C_NEG                -> `List [`String "C_NEG"; `Null ]
   | C_ABS                -> `List [`String "C_ABS"; `Null ]
@@ -70,6 +72,7 @@ let constant' = function
   | C_SET_REMOVE         -> `List [`String "C_SET_REMOVE"; `Null ]
   | C_SET_ITER           -> `List [`String "C_SET_ITER"; `Null ]
   | C_SET_FOLD           -> `List [`String "C_SET_FOLD"; `Null ]
+  | C_SET_FOLD_DESC     -> `List [`String "C_SET_FOLD_DESC"; `Null ]
   | C_SET_MEM            -> `List [`String "C_SET_MEM"; `Null ]
   | C_SET_UPDATE         -> `List [`String "C_SET_UPDATE"; `Null ]
   (* List *)
@@ -78,6 +81,8 @@ let constant' = function
   | C_LIST_ITER          -> `List [`String "C_LIST_ITER"; `Null ]
   | C_LIST_MAP           -> `List [`String "C_LIST_MAP"; `Null ]
   | C_LIST_FOLD          -> `List [`String "C_LIST_FOLD"; `Null ]
+  | C_LIST_FOLD_LEFT     -> `List [`String "C_LIST_FOLD_LEFT"; `Null ]
+  | C_LIST_FOLD_RIGHT    -> `List [`String "C_LIST_FOLD_RIGHT"; `Null ]
   | C_LIST_HEAD_OPT      -> `List [`String "C_LIST_HEAD_OPT"; `Null ]
   | C_LIST_TAIL_OPT      -> `List [`String "C_LIST_TAIL_OPT"; `Null ]
   (* Maps *)
@@ -169,9 +174,9 @@ let literal = function
 
 let label (Label l) = `List [`String "Label"; `String l]
 let option f o =
-    match o with
-    | None   -> `List [ `String "None" ; `Null ]
-    | Some v -> `List [ `String "Some" ; f v ]
+  match o with
+  | None   -> `List [ `String "None" ; `Null ]
+  | Some v -> `List [ `String "Some" ; f v ]
 
 let option' f o =
   match o with
@@ -185,8 +190,8 @@ let list f lst = `List (List.map f lst)
 let label_map f lmap =
   let lst = List.sort (fun (Label a, _) (Label b, _) -> String.compare a b) (LMap.bindings lmap) in
   let lst' = List.fold_left
-    (fun acc (Label k, v) -> (k , f v)::acc)
-    [] lst
+      (fun acc (Label k, v) -> (k , f v)::acc)
+      [] lst
   in
   `Assoc lst'
 

@@ -175,11 +175,11 @@ let slice loc = typer_3 loc "SLICE" @@ fun i j s ->
   else if eq_1 s (t_bytes ())
   then ok @@ t_bytes ()
   else fail @@ typeclass_error loc
-                 [
-                   [t_nat;t_nat;t_string()] ;
-                   [t_nat;t_nat;t_bytes()] ;
-                 ]
-                 [i ; j ; s]
+      [
+        [t_nat;t_nat;t_string()] ;
+        [t_nat;t_nat;t_bytes()] ;
+      ]
+      [i ; j ; s]
 
 let failwith_ loc = typer_1_opt loc "FAILWITH" @@ fun t opt ->
   let%bind _ =
@@ -414,15 +414,15 @@ let ediv loc = typer_2 loc "EDIV" @@ fun a b ->
   if eq_1 a (t_mutez ()) && eq_1 b (t_nat ())
   then ok @@ t_option (t_pair (t_mutez ()) (t_mutez ()) ) else
     fail @@ typeclass_error loc
-              [
-                [t_nat();t_nat()] ;
-                [t_int();t_int()] ;
-                [t_nat();t_int()] ;
-                [t_int();t_nat()] ;
-                [t_mutez();t_nat()] ;
-                [t_mutez();t_mutez()] ;
-              ]
-              [a; b]
+      [
+        [t_nat();t_nat()] ;
+        [t_int();t_int()] ;
+        [t_nat();t_int()] ;
+        [t_int();t_nat()] ;
+        [t_mutez();t_nat()] ;
+        [t_mutez();t_mutez()] ;
+      ]
+      [a; b]
 
 let div loc = typer_2 loc "DIV" @@ fun a b ->
   if eq_2 (a , b) (t_nat ())
@@ -434,13 +434,13 @@ let div loc = typer_2 loc "DIV" @@ fun a b ->
   if eq_1 a (t_mutez ()) && eq_1 b (t_mutez ())
   then ok @@ t_nat () else
     fail @@ typeclass_error loc
-              [
-                [t_nat();t_nat()] ;
-                [t_int();t_int()] ;
-                [t_mutez();t_nat()] ;
-                [t_mutez();t_mutez()] ;
-              ]
-              [a; b]
+      [
+        [t_nat();t_nat()] ;
+        [t_int();t_int()] ;
+        [t_mutez();t_nat()] ;
+        [t_mutez();t_mutez()] ;
+      ]
+      [a; b]
 
 let mod_ loc = typer_2 loc "MOD" @@ fun a b ->
   if (eq_1 a (t_nat ()) || eq_1 a (t_int ())) && (eq_1 b (t_nat ()) || eq_1 b (t_int ()))
@@ -448,14 +448,14 @@ let mod_ loc = typer_2 loc "MOD" @@ fun a b ->
   if eq_1 a (t_mutez ()) && eq_1 b (t_mutez ())
   then ok @@ t_mutez () else
     fail @@ typeclass_error loc
-              [
-                [t_nat();t_nat()] ;
-                [t_nat();t_int()] ;
-                [t_int();t_nat()] ;
-                [t_int();t_int()] ;
-                [t_mutez();t_mutez()] ;
-              ]
-              [a; b]
+      [
+        [t_nat();t_nat()] ;
+        [t_nat();t_int()] ;
+        [t_int();t_nat()] ;
+        [t_int();t_int()] ;
+        [t_mutez();t_mutez()] ;
+      ]
+      [a; b]
 
 let add loc = typer_2 loc "ADD" @@ fun a b ->
   if eq_2 (a , b) (t_bls12_381_g1 ())
@@ -538,6 +538,24 @@ let list_fold loc = typer_3 loc "LIST_FOLD" @@ fun body lst init ->
   let%bind () = assert_eq loc res init in
   ok res
 
+let list_fold_left loc = typer_3 loc "LIST_FOLD_LEFT" @@ fun body init lst ->
+  let%bind (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
+  let%bind (prec , cur) = trace_option (expected_pair loc arg) @@ get_t_pair arg in
+  let%bind key = trace_option (expected_list loc lst) @@ get_t_list lst in
+  let%bind () = assert_eq loc key cur in
+  let%bind () = assert_eq loc prec res in
+  let%bind () = assert_eq loc res init in
+  ok res
+
+let list_fold_right loc = typer_3 loc "LIST_FOLD_RIGHT" @@ fun body lst init ->
+  let%bind (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
+  let%bind (cur , prec) = trace_option (expected_pair loc arg) @@ get_t_pair arg in
+  let%bind key = trace_option (expected_list loc lst) @@ get_t_list lst in
+  let%bind () = assert_eq loc key cur in
+  let%bind () = assert_eq loc prec res in
+  let%bind () = assert_eq loc res init in
+  ok res
+
 let list_head_opt loc = typer_1 loc "LIST_HEAD_OPT" @@ fun lst ->
   let%bind key = trace_option (expected_list loc lst) @@ get_t_list lst in
   ok @@ t_option ~loc key
@@ -549,6 +567,15 @@ let list_tail_opt loc = typer_1 loc "LIST_TAIL_OPT" @@ fun lst ->
 let set_fold loc = typer_3 loc "SET_FOLD" @@ fun body lst init ->
   let%bind (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
   let%bind (prec , cur) = trace_option (expected_pair loc arg) @@ get_t_pair arg in
+  let%bind key = trace_option (expected_set loc lst) @@ get_t_set lst in
+  let%bind () = assert_eq loc key cur in
+  let%bind () = assert_eq loc prec res in
+  let%bind () = assert_eq loc res init in
+  ok res
+
+let set_fold_desc loc = typer_3 loc "SET_FOLD_DESC" @@ fun body lst init ->
+  let%bind (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
+  let%bind (cur , prec) = trace_option (expected_pair loc arg) @@ get_t_pair arg in
   let%bind key = trace_option (expected_set loc lst) @@ get_t_set lst in
   let%bind () = assert_eq loc key cur in
   let%bind () = assert_eq loc prec res in
@@ -597,11 +624,11 @@ let or_ loc = typer_2 loc "OR" @@ fun a b ->
   else if eq_2 (a , b) (t_nat ())
   then ok @@ t_nat ()
   else fail @@ typeclass_error loc
-                 [
-                   [t_bool();t_bool()] ;
-                   [t_nat();t_nat()] ;
-                 ]
-                 [a; b]
+      [
+        [t_bool();t_bool()] ;
+        [t_nat();t_nat()] ;
+      ]
+      [a; b]
 
 let xor loc = typer_2 loc "XOR" @@ fun a b ->
   if eq_2 (a , b) (t_bool ())
@@ -609,11 +636,11 @@ let xor loc = typer_2 loc "XOR" @@ fun a b ->
   else if eq_2 (a , b) (t_nat ())
   then ok @@ t_nat ()
   else fail @@ typeclass_error loc
-                 [
-                   [t_bool();t_bool()] ;
-                   [t_nat();t_nat()] ;
-                 ]
-                 [a; b]
+      [
+        [t_bool();t_bool()] ;
+        [t_nat();t_nat()] ;
+      ]
+      [a; b]
 
 let and_ loc = typer_2 loc "AND" @@ fun a b ->
   if eq_2 (a , b) (t_bool ())
@@ -621,30 +648,30 @@ let and_ loc = typer_2 loc "AND" @@ fun a b ->
   else if eq_2 (a , b) (t_nat ()) || (eq_1 b (t_nat ()) && eq_1 a (t_int ()))
   then ok @@ t_nat ()
   else fail @@ typeclass_error loc
-                 [
-                   [t_bool();t_bool()] ;
-                   [t_nat();t_nat()] ;
-                   [t_int();t_nat()] ;
-                 ]
-                 [a; b]
+      [
+        [t_bool();t_bool()] ;
+        [t_nat();t_nat()] ;
+        [t_int();t_nat()] ;
+      ]
+      [a; b]
 
 let lsl_ loc = typer_2 loc "LSL" @@ fun a b ->
   if eq_2 (a , b) (t_nat ())
   then ok @@ t_nat ()
   else fail @@ typeclass_error loc
-                 [
-                   [t_nat();t_nat()] ;
-                 ]
-                 [a; b]
+      [
+        [t_nat();t_nat()] ;
+      ]
+      [a; b]
 
 let lsr_ loc = typer_2 loc "LSR" @@ fun a b ->
   if eq_2 (a , b) (t_nat ())
   then ok @@ t_nat ()
   else fail @@ typeclass_error loc
-                 [
-                   [t_nat();t_nat()] ;
-                 ]
-                 [a; b]
+      [
+        [t_nat();t_nat()] ;
+      ]
+      [a; b]
 
 let concat loc = typer_2 loc "CONCAT" @@ fun a b ->
   if eq_2 (a , b) (t_string ())
@@ -652,11 +679,11 @@ let concat loc = typer_2 loc "CONCAT" @@ fun a b ->
   else if eq_2 (a , b) (t_bytes ())
   then ok @@ t_bytes ()
   else fail @@ typeclass_error loc
-                 [
-                   [t_string();t_string()] ;
-                   [t_bytes();t_bytes()] ;
-                 ]
-                 [a; b]
+      [
+        [t_string();t_string()] ;
+        [t_bytes();t_bytes()] ;
+      ]
+      [a; b]
 
 let cons loc = typer_2 loc "CONS" @@ fun hd tl ->
   let%bind elt = trace_option (expected_list loc tl) @@ get_t_list tl in
@@ -665,57 +692,57 @@ let cons loc = typer_2 loc "CONS" @@ fun hd tl ->
 
 let convert_to_right_comb loc = typer_1 loc "CONVERT_TO_RIGHT_COMB" @@ fun t ->
   match t.type_content with
-    | T_record lmap ->
-      let kvl = LMap.to_kv_list_rev lmap.content in
-      let%bind () = Michelson_type_converter.field_checks kvl loc in
-      let pair = Michelson_type_converter.convert_pair_to_right_comb kvl in
-      ok {t with type_content = pair}
-    | T_sum cmap ->
-      let kvl = LMap.to_kv_list_rev cmap.content in
-      let%bind () = Michelson_type_converter.field_checks kvl loc in
-      let michelson_or = Michelson_type_converter.convert_variant_to_right_comb kvl in
-      ok {t with type_content = michelson_or}
-    | _ -> fail @@ wrong_converter t
+  | T_record lmap ->
+    let kvl = LMap.to_kv_list_rev lmap.content in
+    let%bind () = Michelson_type_converter.field_checks kvl loc in
+    let pair = Michelson_type_converter.convert_pair_to_right_comb kvl in
+    ok {t with type_content = pair}
+  | T_sum cmap ->
+    let kvl = LMap.to_kv_list_rev cmap.content in
+    let%bind () = Michelson_type_converter.field_checks kvl loc in
+    let michelson_or = Michelson_type_converter.convert_variant_to_right_comb kvl in
+    ok {t with type_content = michelson_or}
+  | _ -> fail @@ wrong_converter t
 
 let convert_to_left_comb loc = typer_1 loc "CONVERT_TO_LEFT_COMB" @@ fun t ->
   match t.type_content with
-    | T_record lmap ->
-      let kvl =  LMap.to_kv_list_rev lmap.content in
-      let%bind () = Michelson_type_converter.field_checks kvl loc in
-      let pair = Michelson_type_converter.convert_pair_to_left_comb kvl in
-      ok {t with type_content = pair}
-    | T_sum cmap ->
-      let kvl = LMap.to_kv_list_rev cmap.content in
-      let%bind () = Michelson_type_converter.field_checks kvl loc in
-      let michelson_or = Michelson_type_converter.convert_variant_to_left_comb kvl in
-      ok {t with type_content = michelson_or}
-    | _ -> fail @@ wrong_converter t
+  | T_record lmap ->
+    let kvl =  LMap.to_kv_list_rev lmap.content in
+    let%bind () = Michelson_type_converter.field_checks kvl loc in
+    let pair = Michelson_type_converter.convert_pair_to_left_comb kvl in
+    ok {t with type_content = pair}
+  | T_sum cmap ->
+    let kvl = LMap.to_kv_list_rev cmap.content in
+    let%bind () = Michelson_type_converter.field_checks kvl loc in
+    let michelson_or = Michelson_type_converter.convert_variant_to_left_comb kvl in
+    ok {t with type_content = michelson_or}
+  | _ -> fail @@ wrong_converter t
 
 let convert_from_right_comb loc = typer_1_opt loc "CONVERT_FROM_RIGHT_COMB" @@ fun t opt ->
   let%bind dst_t = trace_option (not_annotated loc) opt in
   match t.type_content with
-    | T_record {content=src_lmap;_} ->
-      let%bind dst_lmap = trace_option (expected_record loc dst_t) @@ get_t_record dst_t in
-      let%bind record = Michelson_type_converter.convert_pair_from_right_comb src_lmap dst_lmap.content in
-      ok {t with type_content = record}
-    | T_sum src_cmap ->
-      let%bind dst_cmap = trace_option (expected_variant loc dst_t) @@ get_t_sum dst_t in
-      let%bind variant = Michelson_type_converter.convert_variant_from_right_comb src_cmap.content dst_cmap.content in
-      ok {t with type_content = variant}
-    | _ -> fail @@ wrong_converter t
+  | T_record {content=src_lmap;_} ->
+    let%bind dst_lmap = trace_option (expected_record loc dst_t) @@ get_t_record dst_t in
+    let%bind record = Michelson_type_converter.convert_pair_from_right_comb src_lmap dst_lmap.content in
+    ok {t with type_content = record}
+  | T_sum src_cmap ->
+    let%bind dst_cmap = trace_option (expected_variant loc dst_t) @@ get_t_sum dst_t in
+    let%bind variant = Michelson_type_converter.convert_variant_from_right_comb src_cmap.content dst_cmap.content in
+    ok {t with type_content = variant}
+  | _ -> fail @@ wrong_converter t
 
 let convert_from_left_comb loc = typer_1_opt loc "CONVERT_FROM_LEFT_COMB" @@ fun t opt ->
   let%bind dst_t = trace_option (not_annotated loc) opt in
   match t.type_content with
-    | T_record {content=src_lmap;_} ->
-      let%bind dst_lmap = trace_option (expected_record loc dst_t) @@ get_t_record dst_t in
-      let%bind record = Michelson_type_converter.convert_pair_from_left_comb src_lmap dst_lmap.content in
-      ok {t with type_content = record}
-    | T_sum src_cmap ->
-      let%bind dst_cmap = trace_option (expected_variant loc dst_t) @@ get_t_sum dst_t in
-      let%bind variant = Michelson_type_converter.convert_variant_from_left_comb src_cmap.content dst_cmap.content in
-      ok {t with type_content = variant}
-    | _ -> fail @@ wrong_converter t
+  | T_record {content=src_lmap;_} ->
+    let%bind dst_lmap = trace_option (expected_record loc dst_t) @@ get_t_record dst_t in
+    let%bind record = Michelson_type_converter.convert_pair_from_left_comb src_lmap dst_lmap.content in
+    ok {t with type_content = record}
+  | T_sum src_cmap ->
+    let%bind dst_cmap = trace_option (expected_variant loc dst_t) @@ get_t_sum dst_t in
+    let%bind variant = Michelson_type_converter.convert_variant_from_left_comb src_cmap.content dst_cmap.content in
+    ok {t with type_content = variant}
+  | _ -> fail @@ wrong_converter t
 
 let simple_comparator : Location.t -> string -> typer = fun loc s -> typer_2 loc s @@ fun a b ->
   let%bind () =
@@ -870,11 +897,11 @@ let constant_typers loc c : (typer , typer_error) result = match c with
   | C_ASSERTION           -> ok @@ assertion loc ;
   | C_ASSERT_SOME         -> ok @@ assert_some loc ;
   | C_FAILWITH            -> ok @@ failwith_ loc ;
-  (* LOOPS *)
+    (* LOOPS *)
   | C_FOLD_WHILE          -> ok @@ fold_while loc ;
   | C_FOLD_CONTINUE       -> ok @@ continue loc ;
   | C_FOLD_STOP           -> ok @@ stop loc ;
-   (* MATH *)
+    (* MATH *)
   | C_NEG                 -> ok @@ neg loc ;
   | C_ABS                 -> ok @@ abs loc ;
   | C_ADD                 -> ok @@ add loc ;
@@ -883,32 +910,33 @@ let constant_typers loc c : (typer , typer_error) result = match c with
   | C_EDIV                -> ok @@ ediv loc ;
   | C_DIV                 -> ok @@ div loc ;
   | C_MOD                 -> ok @@ mod_ loc ;
-  (* LOGIC *)
+    (* LOGIC *)
   | C_NOT                 -> ok @@ not_ loc ;
   | C_AND                 -> ok @@ and_ loc ;
   | C_OR                  -> ok @@ or_ loc ;
   | C_XOR                 -> ok @@ xor loc ;
   | C_LSL                 -> ok @@ lsl_ loc;
   | C_LSR                 -> ok @@ lsr_ loc;
-  (* COMPARATOR *)
+    (* COMPARATOR *)
   | C_EQ                  -> ok @@ comparator loc "EQ" ;
   | C_NEQ                 -> ok @@ comparator loc "NEQ" ;
   | C_LT                  -> ok @@ comparator loc "LT" ;
   | C_GT                  -> ok @@ comparator loc "GT" ;
   | C_LE                  -> ok @@ comparator loc "LE" ;
   | C_GE                  -> ok @@ comparator loc "GE" ;
-  (* BYTES / STRING *)
+    (* BYTES / STRING *)
   | C_SIZE                -> ok @@ size loc ;
   | C_CONCAT              -> ok @@ concat loc ;
   | C_SLICE               -> ok @@ slice loc ;
   | C_BYTES_PACK          -> ok @@ bytes_pack loc ;
   | C_BYTES_UNPACK        -> ok @@ bytes_unpack loc ;
-  (* SET  *)
+    (* SET  *)
   | C_SET_EMPTY           -> ok @@ set_empty loc;
   | C_SET_ADD             -> ok @@ set_add loc ;
   | C_SET_REMOVE          -> ok @@ set_remove loc ;
   | C_SET_ITER            -> ok @@ set_iter loc ;
   | C_SET_FOLD            -> ok @@ set_fold loc ;
+  | C_SET_FOLD_DESC       -> ok @@ set_fold_desc loc ;
   | C_SET_MEM             -> ok @@ set_mem loc ;
   | C_SET_UPDATE          -> ok @@ set_update loc;
   (* LIST *)
@@ -917,9 +945,11 @@ let constant_typers loc c : (typer , typer_error) result = match c with
   | C_LIST_ITER           -> ok @@ list_iter loc ;
   | C_LIST_MAP            -> ok @@ list_map loc ;
   | C_LIST_FOLD           -> ok @@ list_fold loc ;
+  | C_LIST_FOLD_LEFT      -> ok @@ list_fold_left loc ;
+  | C_LIST_FOLD_RIGHT     -> ok @@ list_fold_right loc ;
   | C_LIST_HEAD_OPT       -> ok @@ list_head_opt loc;
   | C_LIST_TAIL_OPT       -> ok @@ list_tail_opt loc;
-  (* MAP *)
+    (* MAP *)
   | C_MAP_EMPTY           -> ok @@ map_empty loc;
   | C_BIG_MAP_EMPTY       -> ok @@ big_map_empty loc;
   | C_MAP_ADD             -> ok @@ map_add loc ;
@@ -941,7 +971,7 @@ let constant_typers loc c : (typer , typer_error) result = match c with
   | C_HASH_KEY            -> ok @@ hash_key loc ;
   | C_CHECK_SIGNATURE     -> ok @@ check_signature loc ;
   | C_CHAIN_ID            -> ok @@ chain_id loc;
-  (*BLOCKCHAIN *)
+    (*BLOCKCHAIN *)
   | C_CONTRACT            -> ok @@ get_contract loc ;
   | C_CONTRACT_OPT        -> ok @@ get_contract_opt loc ;
   | C_CONTRACT_ENTRYPOINT -> ok @@ get_entrypoint loc ;

@@ -613,7 +613,7 @@ let set_arithmetic () : (unit, _) result =
 
 let set_arithmetic_mligo () : (unit, _) result =
   let%bind program = mtype_file "./contracts/set_arithmetic.mligo" in
-  let%bind program_1 = type_file "./contracts/set_arithmetic-1.ligo" in
+  let%bind program_1 = mtype_file "./contracts/set_arithmetic-1.mligo" in
   let%bind () =
     expect_eq program "literal_op"
       (e_unit ())
@@ -642,7 +642,12 @@ let set_arithmetic_mligo () : (unit, _) result =
   let%bind () =
     expect_eq program_1 "fold_op"
       (e_set [ e_int 4 ; e_int 10 ])
-      (e_int 29)
+      (e_list [e_int 10; e_int  4 ])
+  in
+  let%bind () =
+    expect_eq program_1 "fold_right"
+      (e_set [ e_int 4 ; e_int 10 ])
+      (e_list [e_int 4; e_int  10 ])
   in
   ok ()
 
@@ -1740,6 +1745,8 @@ let mligo_list () : (unit, _) result =
   let%bind () = expect_eq program "size_" (e_list [e_int 0; e_int 1; e_int 2]) (e_nat 3) in
   let aux lst = e_list @@ List.map e_int lst in
   let%bind () = expect_eq program "fold_op" (aux [ 1 ; 2 ; 3 ]) (e_int 16) in
+  let%bind () = expect_eq program "fold_left"  (aux [ 1 ; 2 ; 3 ]) (aux [ 3 ; 2 ; 1 ]) in
+  let%bind () = expect_eq program "fold_right" (aux [ 1 ; 2 ; 3 ]) (aux [ 1 ; 2 ; 3 ]) in
   let%bind () =
     let make_input n =
       e_pair (e_list [e_int n; e_int (2*n)])

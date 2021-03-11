@@ -66,7 +66,7 @@ let rec value ppf : value -> unit = function
   | D_unit -> fprintf ppf "unit"
   | D_string s -> fprintf ppf "\"%s\"" s
   | D_bytes x ->
-     fprintf ppf "0x%a" Hex.pp @@ Hex.of_bytes x
+    fprintf ppf "0x%a" Hex.pp @@ Hex.of_bytes x
   | D_pair (a, b) -> fprintf ppf "(%a), (%a)" value a value b
   | D_left a -> fprintf ppf "L(%a)" value a
   | D_right b -> fprintf ppf "R(%a)" value b
@@ -136,16 +136,17 @@ and expression_content ppf (e:expression_content) = match e with
         expression expr
         expression body
   | E_iterator (b , ((name , _) , body) , expr) ->
-      fprintf ppf "@[for_%a %a of %a do ( %a )@]" constant b Var.pp name.wrap_content expression expr expression body
+    fprintf ppf "@[for_%a %a of %a do ( %a )@]" constant b Var.pp name.wrap_content expression expr expression body
   | E_fold (((name , _) , body) , collection , initial) ->
-      fprintf ppf "@[fold %a on %a with %a do ( %a )@]" expression collection expression initial Var.pp name.wrap_content expression body
-
+    fprintf ppf "@[fold %a on %a with %a do ( %a )@]" expression collection expression initial Var.pp name.wrap_content expression body
+  | E_fold_right (((name , _) , body) , (collection,_) , initial) ->
+    fprintf ppf "@[fold_right %a on %a with %a do ( %a )@]" expression collection expression initial Var.pp name.wrap_content expression body
   | E_raw_michelson code ->
-      let open Tezos_micheline in
-      let code = Micheline.Seq (Location.generated, code) in
-      let code = Micheline.strip_locations code in
-      let code = Micheline_printer.printable (fun prim -> prim) code in
-      fprintf ppf "%a" Micheline_printer.print_expr code
+    let open Tezos_micheline in
+    let code = Micheline.Seq (Location.generated, code) in
+    let code = Micheline.strip_locations code in
+    let code = Micheline_printer.printable (fun prim -> prim) code in
+    fprintf ppf "%a" Micheline_printer.print_expr code
 
 and expression_with_type : _ -> expression -> _  = fun ppf e ->
   fprintf ppf "%a : %a"

@@ -76,11 +76,16 @@ let is_pure_constant : constant' -> bool =
   | C_ITER
   | C_LOOP_LEFT
   | C_FOLD
+  | C_FOLD_LEFT
+  | C_FOLD_RIGHT
   | C_SET_ITER
   | C_SET_FOLD
+  | C_SET_FOLD_DESC
   | C_LIST_ITER
   | C_LIST_MAP
   | C_LIST_FOLD
+  | C_LIST_FOLD_LEFT
+  | C_LIST_FOLD_RIGHT
   | C_MAP_GET_FORCE
   | C_MAP_ITER
   | C_MAP_MAP
@@ -138,6 +143,7 @@ let rec is_pure : expression -> bool = fun e ->
   | E_application _
   | E_iterator _
   | E_fold _
+  | E_fold_right _
     -> false
 
 let occurs_in : expression_variable -> expression -> bool =

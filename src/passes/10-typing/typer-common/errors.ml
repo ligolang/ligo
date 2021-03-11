@@ -434,7 +434,7 @@ The following forms of subtractions are possible:
         Ast_typed.PP.type_expression e
     | `Typer_expected_pair (loc,e) ->
       Format.fprintf f
-        "@[<hv>%a@.Incorrect argument.@.Expected a tuple, but got an argument of type \"%a\". @]"
+        "@[<hv>%a@.Incorrect argument.@.Expected a pair, but got an argument of type \"%a\". @]"
         Snippet.pp loc
         Ast_typed.PP.type_expression e
     | `Typer_expected_list (loc,e) ->

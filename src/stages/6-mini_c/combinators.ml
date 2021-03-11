@@ -131,6 +131,10 @@ let get_t_set (t:type_expression) = match t.type_content with
   | T_set t -> Some t
   | _ -> None
 
+let get_t_collection (t:type_expression ) = match t.type_content with
+  | T_list t | T_set t | T_map (_,t) | T_big_map (_,t) -> Some t
+  | _ -> None 
+
 let get_left (v:value) = match v with
   | D_left b -> Some b
   | _ -> None
