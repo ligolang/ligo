@@ -5,12 +5,13 @@ variables:
   LIGO_IMAGE_TAG: "ligo:${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}"
 
 stages:
-  - pretooling      # changelog
-  - docker-build    # build, test, produces binaries/.deb/doc within docker
-  - docker-extract  # extract what have been built and expose them as artifact
-  - tooling         # build miscellaneous tooling-related things (website, changelog..)
-  - push            # deploy docker images, pages, releases (tag)
-  - ide-deploy      # deploy web IDE
+  - pretooling                      # changelog
+  - docker-build                    # build, test, produces binaries/.deb/doc within docker
+  - docker-extract                  # extract what have been built and expose them as artifact
+  - tooling                         # build miscellaneous tooling-related things (website, changelog..)
+  - push                            # deploy docker images, pages, releases (tag)
+  - ide-deploy                      # deploy web IDE
+  - ide-feature-container-removal   # remove feature branch containers of the webide
 
 .nix:
   before_script:
@@ -198,8 +199,12 @@ webide-push:
   needs:
     - webide-docker
   rules:
-    # Only deploy docker when from the dev branch AND on the canonical ligolang/ligo repository
-    - if: '$CI_COMMIT_REF_NAME =~ /^(dev|.*-run-dev)$/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+    # Only deploy docker when from the dev branch or a merge request AND on the canonical ligolang/ligo repository
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      changes:
+        - tools/webide/**/*
+      when: always
+    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
   script:
     - echo "${CI_BUILD_TOKEN}" | docker login -u gitlab-ci-token --password-stdin registry.gitlab.com
@@ -253,36 +258,55 @@ pages-attempt:
     - merge_requests
     - /^.*-run-dev$/
 
+# This job will deploy the web-ide docker container to the test server.
+deploy-handoff-feature:
+  # Handoff deployment duties to private repo.
+  stage: ide-deploy
+  variables:
+    IDE_DOCKER_IMAGE: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide"
+    LIGO_COMMIT_REF_NAME: "${CI_COMMIT_SHORT_SHA}"
+    LIGO_CI_MERGE_REQUEST_IID: "${CI_MERGE_REQUEST_IID}"
+  trigger: 
+    project: ligolang/ligo-webide-deploy
+  rules:
+    # Only deploy handoff when from an MR AND on the canonical ligolang/ligo repository.
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      changes:
+        - tools/webide/**/*
+      when: always
+
 deploy-handoff:
   # Handoff deployment duties to private repo
   stage: ide-deploy
   variables:
     IDE_DOCKER_IMAGE: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide"
     LIGO_COMMIT_REF_NAME: "${CI_COMMIT_SHORT_SHA}"
-  trigger: ligolang/ligo-webide-deploy
+  trigger: 
+    project: ligolang/ligo-webide-deploy
   rules:
     # Only deploy handoff when from the dev branch AND on the canonical ligolang/ligo repository
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
 
 # This job builds the ligo-webide front-end from the tools/webide/ directory and deploys it as a Branch Deploy to Netlify using the netlify-cli tool.
-# After the deployment is done a comment is posted to the MR with the draft site URL as well as the Netlify logs.
+# After the deployment is done a comment is posted to the MR with the draft site URL as well as the Netlify logs
 build-preview-ligo-webide-front-end:
   stage: ide-deploy
   image: node:12.20.0-buster
   tags:
     - docker
   script:
-    # - npm install netlify-cli -g
     - apt-get update
     - apt-get install -y --no-install-recommends jq
     - cd ./tools/webide/
-    - mv ./packages/client/staging-netlify.toml ./packages/client/netlify.toml
+    - sed -i "s/temphost/$CI_MERGE_REQUEST_IID-$CI_COMMIT_SHORT_SHA/g" ./packages/client/feature-netlify.toml
+    - cat ./packages/client/feature-netlify.toml
+    - mv ./packages/client/feature-netlify.toml ./packages/client/netlify.toml
     - yarn install
     - CI= yarn workspaces run build
     - cd ./packages/client
     - npm install netlify-cli
-    - npx netlify deploy --site $NETLIFY_SITE_ID --auth $NETLIFY_AUTH_TOKEN --json --alias="$CI_COMMIT_SHORT_SHA" > netlify.json
+    - npx netlify deploy --site $NETLIFY_SITE_ID --auth $NETLIFY_AUTH_TOKEN --json --alias="$CI_MERGE_REQUEST_IID-$CI_COMMIT_SHORT_SHA" > netlify.json
     - export NETLIFY_DEPLOY_URL=$(jq -r .deploy_url netlify.json)
     - export NETLIFY_DEPLOY_LOGS=$(jq -r .logs netlify.json)
     - echo "The URL for this deployment is $NETLIFY_DEPLOY_URL"
@@ -294,24 +318,25 @@ build-preview-ligo-webide-front-end:
         - tools/webide/**/*
       when: always
 
-# This job builds the ligo-webide front-end from the tools/webide/ directory and does a production deployment to Netlify and publishes the site using the netlify-cli tool.
-build-ligo-webide-front-end:
-  stage: ide-deploy
-  image: node:12.20.0-buster
-  tags:
-    - docker
-  script:
-    # - npm install netlify-cli -g
-    - apt-get update
-    - cd ./tools/webide/
-    - mv ./packages/client/prod-netlify.toml ./packages/client/netlify.toml
-    - yarn install
-    - CI= yarn workspaces run build
-    - cd ./packages/client
-    - npm install netlify-cli
-    - npx netlify deploy --site $NETLIFY_SITE_ID --auth $NETLIFY_AUTH_TOKEN --json --prod > netlify.json
+# This job will remove the web-ide docker containers that contain the MR_IID in their name from the test server.
+downstream-webide-removal-handoff:
+  # Handoff deployment duties to private repo
+  stage: ide-feature-container-removal
+  variables:
+    IDE_DOCKER_IMAGE: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide"
+    LIGO_COMMIT_REF_NAME: "${CI_COMMIT_SHORT_SHA}"
+    LIGO_CI_MERGE_REQUEST_IID: "${CI_MERGE_REQUEST_IID}"
+    CLEAN_DOWNSTREAM: "true"
+  trigger: 
+    project: ligolang/ligo-webide-deploy
   rules:
-    - if: '$CI_COMMIT_BRANCH == "dev"'
+    # When there is a merge request there will be a manual job to remove feature branch containers
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      changes:
+        - tools/webide/**/*
+      when: manual
+    # After a MR merges and is committed to the default branch, the removal job will be triggered
+    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo" && $CI_MERGE_REQUEST_IID != null'
       changes:
         - tools/webide/**/*
       when: always
