@@ -177,11 +177,11 @@ let rec translate_expression (expr : I.expression) (env : I.environment) =
     let (e2, us2) = translate_binder e2 env in
     let (ss, us) = union us1 us2 in
     (E_let_in (meta, ss, e1, e2), us)
-  | E_let_pair (e1, e2) ->
+  | E_let_tuple (e1, e2) ->
     let (e1, us1) = translate_expression e1 env in
-    let (e2, us2) = translate_binder2 e2 env in
+    let (e2, us2) = translate_binderN e2 env in
     let (ss, us) = union us1 us2 in
-    (E_let_pair (meta, ss, e1, e2), us)
+    (E_let_tuple (meta, ss, e1, e2), us)
   | E_raw_michelson code ->
     (* maybe should move type into syntax? *)
     let (a, b) = match Mini_c.get_t_function ty with
@@ -204,6 +204,16 @@ and translate_binder2 ((binder1, binder2), body) env =
             [translate_type binder1_type; translate_type binder2_type],
             body),
    List.tl (List.tl usages))
+
+and translate_binderN (vars, body) env =
+  let env' = List.fold_right I.Environment.add vars env in
+  let (body, usages) = translate_expression body env' in
+  let var_types = List.map snd vars in
+  let n = List.length vars in
+  (O.Binds (List.firstn n usages,
+            List.map translate_type var_types,
+            body),
+   List.skipn n usages)
 
 and translate_args (arguments : I.expression list) env : _ O.args * usage list =
   let arguments = List.map (fun argument -> translate_expression argument env) arguments in

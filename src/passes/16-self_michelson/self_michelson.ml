@@ -440,6 +440,20 @@ let opt_unpair_car () : _ peep =
      | _ -> No_change)
   | _ -> No_change
 
+(* UNPAIR 2  ↦  UNPAIR *)
+let opt_unpair2 () : _ peep =
+  match%bind peep with
+  | Prim (l, "UNPAIR", [Int (_, k)], _) when Z.(equal k (of_int 2)) ->
+    Changed [Prim (l, "UNPAIR", [], [])]
+  | _ -> No_change
+
+(* PAIR 2  ↦  PAIR *)
+let opt_pair2 () : _ peep =
+  match%bind peep with
+  | Prim (l, "PAIR", [Int (_, k)], _) when Z.(equal k (of_int 2)) ->
+    Changed [Prim (l, "PAIR", [], [])]
+  | _ -> No_change
+
 (* This "optimization" deletes dead code produced by the compiler
    after a FAILWITH, which is illegal in Michelson. This means we are
    thwarting the intent of the Michelson tail fail restriction -- the
@@ -568,6 +582,8 @@ let optimize : 'l. Environment.Protocols.t -> 'l michelson -> 'l michelson =
                      peephole @@ opt_unpair_cdr () ;
                      peephole @@ peep4 opt_unpair_edo ;
                      peephole @@ peep3 opt_dupn_edo ;
+                     peephole @@ opt_pair2 () ;
+                     peephole @@ opt_unpair2 () ;
                    ] in
   let optimizers = List.map on_seqs optimizers in
   let x = iterate_optimizer (sequence_optimizers optimizers) x in

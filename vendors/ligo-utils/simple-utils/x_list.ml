@@ -10,6 +10,25 @@ let rec take n = function
   | _ when n = 0 -> []
   | hd :: tl -> hd :: take (n - 1) tl
 
+(* this is the same as `take`, but ported from and named like Coq's
+   List.firstn *)
+let rec firstn n l =
+  if n = 0
+  then []
+  else
+    match l with
+    | [] -> []
+    | a :: l -> a :: firstn (n - 1) l
+
+(* Coq's List.skipn *)
+let rec skipn n l =
+  if n = 0
+  then l
+  else
+    match l with
+    | [] -> []
+    | _ :: l -> skipn (n - 1) l
+
 let split3 l = List.fold_left (fun (la, lb, lc) (a, b, c) -> (a :: la , b :: lb, c :: lc)) ([],[],[]) (List.rev l)
 
 let map f lst =

@@ -14,6 +14,14 @@ Local Open Scope string_scope.
 
 Local Generalizable Variable l n.
 
+(* ugh... *)
+Inductive comb_ty : node A string -> list (node A string) -> Prop :=
+| Comb_two {a b} :
+    `{comb_ty (Prim l "pair" [a; b] n) [a; b]}
+| Comb_cons {c ts t} :
+    `{comb_ty c ts ->
+      comb_ty (Prim l "pair" [t; c] n) (t :: ts)}.
+
 Inductive instr_typed : node A string -> list (node A string) -> list (node A string) -> Prop :=
 | Typed_seq {p s1 s2} :
     `{prog_typed p s1 s2 ->
@@ -45,12 +53,22 @@ Inductive instr_typed : node A string -> list (node A string) -> list (node A st
       instr_typed (Prim l1 "PUSH" [Prim l2 "lambda" [a; b] n2; Seq l3 p] n1) s (Prim l4 "lambda" [a; b] n4 :: s)}
 | Typed_pair {a b s} :
     `{instr_typed (Prim l1 "PAIR" [] n1) (a :: b :: s) (Prim l2 "pair" [a; b] n2 :: s)}
+| Typed_pairN {k t ts s} :
+    `{k >= 2 ->
+      List.length ts = k ->
+      comb_ty t ts ->
+      instr_typed (Prim l1 "PAIR" [Int l2 (Z.of_nat k)] n1) (ts ++ s) (t :: s)}
 | Typed_car {a b s} :
     `{instr_typed (Prim l1 "CAR" [] n1) (Prim l2 "pair" [a; b] n2 :: s) (a :: s)}
 | Typed_cdr {a b s} :
     `{instr_typed (Prim l1 "CDR" [] n1) (Prim l2 "pair" [a; b] n2 :: s) (b :: s)}
 | Typed_unpair {a b s} :
     `{instr_typed (Prim l1 "UNPAIR" [] n1) (Prim l2 "pair" [a; b] n2 :: s) (a :: b :: s)}
+| Typed_unpairN {k t ts s} :
+    `{k >= 2 ->
+      List.length ts = k ->
+      comb_ty t ts ->
+      instr_typed (Prim l1 "UNPAIR" [Int l2 (Z.of_nat k)] n1) (t :: s) (ts ++ s)}
 | Typed_unit {s} :
     `{instr_typed (Prim l1 "UNIT" [] n1) s (Prim l2 "unit" [] n2 :: s)}
 | Typed_left {a b s} :
@@ -116,6 +134,7 @@ Qed.
 
 End instr.
 
+Hint Constructors comb_ty.
 Hint Constructors instr_typed.
 Hint Constructors prog_typed.
 Hint Resolve weak_prog.

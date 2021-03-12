@@ -167,7 +167,7 @@ let uncurried_rows (depth : int) (args : type_expression list) : rows =
                michelson_annotation = None ;
                decl_pos = i }))
          (List.combine labels args)) in
-  { content ; layout = L_comb }
+  { content ; layout = L_tree }
 
 let uncurried_record_type depth args =
   let record_type = uncurried_rows depth args in
@@ -189,11 +189,30 @@ let uncurry_rhs (depth : int) (expr : expression) : (expression, self_ast_typed_
   let matchee = { expression_content = E_variable binder ;
                   location = Location.generated ;
                   type_expression = record_type } in
-  let fields = LMap.of_list (List.combine labels (List.combine vars arg_types)) in
+  (* generate fresh vars in the tuple pattern in order to specify
+     binding precedence of duplicate vars, i.e. to work correctly no
+     matter what [let (x, x) = (0, 1) in x] is. *)
+  let fresh_vars = List.map (Location.map Var.fresh_like) vars in
+  let fields = LMap.of_list (List.combine labels (List.combine fresh_vars arg_types)) in
   let record_tv = { type_content = T_record rows ;
                     type_meta = None ;
                     orig_var = None ;
                     location = Location.generated } in
+  (* lets for binding original vars with correct precedence: *)
+  let body =
+    List.fold_right
+      (fun (var, (fresh_var, arg_type)) body ->
+         let fresh_var_expr = { expression_content = E_variable fresh_var;
+                                location = Location.generated;
+                                type_expression = arg_type } in
+         { expression_content = E_let_in { let_binder = var;
+                                           rhs = fresh_var_expr;
+                                           let_result = body;
+                                           inline = true };
+           location = Location.generated;
+           type_expression = body.type_expression })
+      (List.combine vars (List.combine fresh_vars arg_types))
+      body in
   let result = { expression_content = E_matching { matchee ;
                                                    cases = Match_record { fields ;
                                                                           body ;

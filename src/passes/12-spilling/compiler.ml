@@ -595,6 +595,19 @@ and compile_expression ?(module_env = SMap.empty) (ae:AST.expression) : (express
       | Match_record { fields; body; tv } ->
         let%bind { content ; layout } = trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
           get_t_record tv in
+        match layout with
+        (* TODO unify with or simplify other case below? *)
+        | L_comb ->
+          let record_fields = Ast_typed.Helpers.kv_list_of_t_record_or_tuple ~layout:L_comb content in
+          let%bind fields =
+            bind_map_list
+              (fun (l, (row_element : _ row_element_mini_c)) ->
+                 let%bind t = compile_type row_element.associated_type in
+                 ok (fst (LMap.find l fields), t))
+              record_fields in
+          let%bind body = self body in
+          return (E_let_tuple (expr', (fields, body)))
+        | _ ->
         let%bind tree = Layout.record_tree ~layout compile_type content in
         let%bind body = self body in
         let rec aux expr (tree : Layout.record_tree) body =
@@ -611,7 +624,7 @@ and compile_expression ?(module_env = SMap.empty) (ae:AST.expression) : (express
             let y_var_expr = Combinators.Expression.make_tpl (E_variable y_var, y_ty) in
             let%bind yrec = aux y_var_expr y body in
             let%bind xrec = aux x_var_expr x yrec in
-            return @@ E_let_pair (expr, (((x_var, x_ty), (y_var, y_ty)), xrec))
+            return @@ E_let_tuple (expr, ([(x_var, x_ty); (y_var, y_ty)], xrec))
         in
         aux expr' tree body
   )
@@ -797,7 +810,7 @@ and compile_recursive module_env {fun_name; fun_type; lambda} =
             let y_var_expr = Combinators.Expression.make_tpl (E_variable y_var, y_ty) in
             let%bind yrec = aux y_var_expr y body in
             let%bind xrec = aux x_var_expr x yrec in
-            return @@ E_let_pair (expr, (((x_var, x_ty), (y_var, y_ty)), xrec))
+            return @@ E_let_tuple (expr, ([(x_var, x_ty); (y_var, y_ty)], xrec))
         in
         aux expr tree body
   in

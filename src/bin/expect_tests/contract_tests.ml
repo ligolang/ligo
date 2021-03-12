@@ -1417,10 +1417,39 @@ let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "uncurry_contract.mligo" ; "main" ] ;
   let output = [%expect.output] in
   let lines = String.split_on_char '\n' output in
-  let lines = List.take 3 lines in
+  let lines = List.take 4 lines in
   let output = String.concat "\n" lines in
   print_string output;
   [%expect {|
     { parameter unit ;
       storage unit ;
-      code { LAMBDA (pair unit (pair unit (pair unit unit))) unit { DROP ; PUSH unit Unit } ; |}]
+      code { LAMBDA (pair (pair unit unit) (pair unit unit)) unit { DROP ; PUSH unit Unit } ;
+             LAMBDA (pair nat nat) nat { UNPAIR ; MUL } ; |}]
+
+(* old uncurry bugs: *)
+let%expect_test _ =
+  run_ligo_good [ "interpret"; "-s"; "cameligo"; "let f (y : int) (x : int) (y : int) = (x, y) in f 1 2 3" ] ;
+  [%expect {| ( 2 , 3 ) |}]
+
+let%expect_test _ =
+  run_ligo_good [ "interpret"; "-s"; "cameligo"; "let f (x0 : int) (x1 : int) (x2 : int) (x3 : int) (x4 : int) (x5 : int) (x6 : int) (x7 : int) (x8 : int) (x9 : int) (x10 : int) : int list = [x0; x1; x2; x3; x4; x5; x6; x7; x8; x9; x10] in f 0 1 2 3 4 5 6 7 8 9 10" ] ;
+  [%expect {|
+    CONS(0 ,
+         CONS(1 ,
+              CONS(2 ,
+                   CONS(3 ,
+                        CONS(4 ,
+                             CONS(5 ,
+                                  CONS(6 ,
+                                       CONS(7 ,
+                                            CONS(8 ,
+                                                 CONS(9 ,
+                                                      CONS(10 , LIST_EMPTY()))))))))))) |}]
+
+(* Edo combs example *)
+let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; contract "edo_combs.mligo" ; "main" ] ;
+  [%expect {|
+    { parameter (pair (int %x) (pair (int %y) (pair (int %z) (int %w)))) ;
+      storage int ;
+      code { CAR ; UNPAIR 4 ; ADD ; ADD ; ADD ; NIL operation ; PAIR } } |}]
