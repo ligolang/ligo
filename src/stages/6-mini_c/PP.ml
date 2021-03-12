@@ -129,10 +129,10 @@ and expression_content ppf (e:expression_content) = match e with
         expression c Var.pp name_l.wrap_content expression l Var.pp name_r.wrap_content expression r
   | E_let_in (expr, inline , ((name , _) , body)) ->
       fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]" Var.pp name.wrap_content expression expr option_inline inline expression body
-  | E_let_pair (expr , (((x, _), (y, _)), body)) ->
-      fprintf ppf "@[let (%a, %a) =@;<1 2>%a in@ %a@]"
-        Var.pp x.wrap_content
-        Var.pp y.wrap_content
+  | E_let_tuple (expr, (fields, body)) ->
+      fprintf ppf "@[let (%a) =@;<1 2>%a in@ %a@]"
+        Format.(pp_print_list ~pp_sep:(fun ppf () -> pp_print_string ppf ", ") Var.pp)
+          (List.map (fun (x, _) -> x.Location.wrap_content) fields)
         expression expr
         expression body
   | E_iterator (b , ((name , _) , body) , expr) ->

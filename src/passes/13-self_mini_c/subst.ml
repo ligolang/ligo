@@ -11,6 +11,11 @@ open Mini_c
    Below, this bug is fixed by adopting the other order choice for
    replace (as well as subst).  *)
 
+let replace_var : var_name -> var_name -> var_name -> var_name =
+  fun v x y ->
+  if Var.equal v.wrap_content x.wrap_content
+  then y
+  else v
 
 (* replace in `e` the variable `x` with `y`.
 
@@ -20,10 +25,7 @@ let rec replace : expression -> var_name -> var_name -> expression =
   fun e x y ->
   let replace e = replace e x y in
   let return content = { e with content } in
-  let replace_var (v:var_name) =
-    if Var.equal v.wrap_content x.wrap_content
-    then y
-    else v in
+  let replace_var v = replace_var v x y in
   match e.content with
   | E_literal _ -> e
   | E_closure { binder ; body } ->
@@ -86,42 +88,74 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let e1 = replace e1 in
     let e2 = replace e2 in
     return @@ E_let_in (e1, inline, ((v, tv), e2))
-  | E_let_pair (expr, (((v1, tv1), (v2, tv2)), body)) ->
+  | E_let_tuple (expr, (vtvs, body)) ->
     let expr = replace expr in
-    let v1 = replace_var v1 in
-    let v2 = replace_var v2 in
+    let vtvs = List.map (fun (v, tv) -> (replace_var v, tv)) vtvs in
     let body = replace body in
-    return @@ E_let_pair (expr, (((v1, tv1), (v2, tv2)), body))
+    return @@ E_let_tuple (expr, (vtvs, body))
   | E_raw_michelson _ -> e
+
+(* Given an implementation of substitution on an arbitary type of
+   body, implements substitution on a binder (pair of bound variable
+   and body) *)
+let subst_binder : type body.
+  (body:body -> x:var_name -> expr:expression -> body) ->
+  (body -> var_name -> var_name -> body) ->
+  body:(var_name * body) -> x:var_name -> expr:expression -> (var_name * body) =
+  fun subst replace ~body:(y, body) ~x ~expr ->
+    (* if x is shadowed, binder doesn't change *)
+    if Var.equal x.wrap_content y.wrap_content
+    then (y, body)
+    (* else, if no capture, subst in binder *)
+    else if not (Free_variables.mem y (Free_variables.expression [] expr))
+    then (y, subst ~body ~x ~expr)
+    (* else, avoid capture and subst in binder *)
+    else
+      let fresh = Location.wrap @@ Var.fresh_like y.wrap_content in
+      let body = replace body y fresh in
+      (fresh, subst ~body ~x ~expr)
+
+(* extending to general n-ary binders *)
+type 'body binds = var_name list * 'body
+
+let replace_binds : type body.
+  (body -> var_name -> var_name -> body) ->
+  (body binds -> var_name -> var_name -> body binds) =
+  fun replace (vars, body) x y ->
+  (List.map (fun v -> replace_var v x y) vars,
+   replace body x y)
+
+let rec subst_binds : type body.
+  (body:body -> x:var_name -> expr:expression -> body) ->
+  (body -> var_name -> var_name -> body) ->
+  body:(body binds) -> x:var_name -> expr:expression -> body binds =
+  fun subst replace ~body ~x ~expr ->
+  match body with
+  | ([], body) -> ([], subst ~body ~x ~expr)
+  | (v :: vs, body) ->
+    let (v, (vs, body)) =
+      subst_binder
+        (subst_binds subst replace)
+        (replace_binds replace)
+        ~body:(v, (vs, body)) ~x ~expr in
+    (v :: vs, body)
 
 (**
    Computes `body[x := expr]`.
-   This raises Bad_argument in the case of assignments with a name clash. (`x <- 42[x := 23]` makes no sense.)
 **)
 let rec subst_expression : body:expression -> x:var_name -> expr:expression -> expression =
   fun ~body ~x ~expr ->
   let self body = subst_expression ~body ~x ~expr in
-  let subst_binder (y:var_name) expr' =
-    (* if x is shadowed, binder doesn't change *)
-    if Var.equal x.wrap_content y.wrap_content
-    then (y, expr')
-    (* else, if no capture, subst in binder *)
-    else if not (Free_variables.mem y (Free_variables.expression [] expr))
-    then (y, self expr')
-    (* else, avoid capture and subst in binder *)
-    else
-      let fresh = Location.wrap @@ Var.fresh_like y.wrap_content in
-      let new_body = replace expr' y fresh in
-      (fresh, self new_body) in
-  (* hack to avoid reimplementing subst_binder for 2-ary binder in E_if_cons:
-     intuitively, we substitute in \hd tl. expr' as if it were \hd. \tl. expr *)
-  let subst_binder2 y z expr' =
-    let dummy = Expression.make_t @@ T_base TB_unit in
-    let hack = Expression.make (E_closure { binder = z ; body = expr' }) dummy in
-    match subst_binder y hack with
-    | (y', { content = E_closure { binder = z' ; body = body } ; type_expression = _dummy }) ->
-      (y', z', { body with type_expression = expr'.type_expression })
-    | _ -> assert false in
+  let subst_binder1 =
+    subst_binder subst_expression replace in
+  let subst_binder2 =
+    subst_binder
+      subst_binder1
+      (fun (x, body) y z -> (replace_var x y z, replace body y z)) in
+  let subst_binds = subst_binds subst_expression replace in
+  let self_binder1 ~body = subst_binder1 ~body ~x ~expr in
+  let self_binder2 ~body = subst_binder2 ~body ~x ~expr in
+  let self_binds ~body = subst_binds ~body ~x ~expr in
   let return content = {body with content} in
   let return_id = body in
   match body.content with
@@ -130,32 +164,34 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
      then expr
      else return_id
   | E_closure { binder; body } -> (
-    let (binder, body) = subst_binder binder body in
+    let (binder, body) = self_binder1 ~body:(binder, body) in
     return @@ E_closure { binder ; body }
   )
   | E_let_in (expr, inline, ((v , tv), body)) -> (
     let expr = self expr in
-    let (v, body) = subst_binder v body in
+    let (v, body) = self_binder1 ~body:(v, body) in
     return @@ E_let_in (expr, inline, ((v , tv) , body))
   )
-  | E_let_pair (expr, (((v1, tv1), (v2, tv2)), body)) -> (
+  | E_let_tuple (expr, (vtvs, body)) -> (
     let expr = self expr in
-    let (v1, v2, body) = subst_binder2 v1 v2 body in (* TODO is this backwards? *)
-    return @@ E_let_pair (expr, (((v1, tv1), (v2, tv2)), body))
+    let (vs, tvs) = List.split vtvs in
+    let (vs, body) = self_binds ~body:(vs, body) in
+    let vtvs = List.combine vs tvs in
+    return @@ E_let_tuple (expr, (vtvs, body))
   )
   | E_iterator (s, ((name , tv) , body) , collection) -> (
-    let (name, body) = subst_binder name body in
+    let (name, body) = self_binder1 ~body:(name, body) in
     let collection = self collection in
     return @@ E_iterator (s, ((name , tv) , body) , collection)
   )
   | E_fold (((name , tv) , body) , collection , init) -> (
-    let (name, body) = subst_binder name body in
+    let (name, body) = self_binder1 ~body:(name, body) in
     let collection = self collection in
     let init = self init in
     return @@ E_fold (((name , tv) , body) , collection , init)
   )
   | E_fold_right (((name , tv) , body) , (collection, elem_tv) , init) -> (
-    let (name, body) = subst_binder name body in
+    let (name, body) = self_binder1 ~body:(name, body) in
     let collection = self collection in
     let init = self init in
     return @@ E_fold_right (((name , tv) , body) , (collection, elem_tv) , init)
@@ -163,27 +199,26 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
   | E_if_none (c, n, ((name, tv) , s)) -> (
     let c = self c in
     let n = self n in
-    let (name, s) = subst_binder name s in
+    let (name, s) = self_binder1 ~body:(name, s) in
     return @@ E_if_none (c, n, ((name, tv) , s))
   )
   | E_if_cons (c, n, (((hd, hdtv) , (tl, tltv)) , cons)) -> (
     let c = self c in
     let n = self n in
-    let (hd, tl, cons) = subst_binder2 hd tl cons in
+    let (hd, (tl, cons)) = self_binder2 ~body:(hd, (tl, cons)) in
     return @@ E_if_cons (c, n, (((hd, hdtv) , (tl, tltv)) , cons))
   )
   | E_if_left (c, ((name_l, tvl) , l), ((name_r, tvr) , r)) -> (
     let c = self c in
-    let (name_l, l) = subst_binder name_l l in
-    let (name_r, r) = subst_binder name_r r in
+    let (name_l, l) = self_binder1 ~body:(name_l, l) in
+    let (name_r, r) = self_binder1 ~body:(name_r, r) in
     return @@ E_if_left (c, ((name_l, tvl) , l), ((name_r, tvr) , r))
   )
-  (* All that follows is boilerplate *)
-  | E_literal _ | E_raw_michelson _
-    as em -> return em
-  | E_constant (c) -> (
-      let lst = List.map self c.arguments in
-      return @@ E_constant {cons_name = c.cons_name; arguments = lst }
+  | E_literal _ | E_raw_michelson _ ->
+    return_id
+  | E_constant {cons_name; arguments} -> (
+      let arguments = List.map self arguments in
+      return @@ E_constant {cons_name; arguments}
   )
   | E_application farg -> (
       let farg' = Tuple.map2 self farg in

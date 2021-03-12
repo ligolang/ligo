@@ -133,7 +133,7 @@ let rec is_pure : expression -> bool = fun e ->
 
   | E_let_in (e1, _, (_, e2))
     -> List.for_all is_pure [ e1 ; e2 ]
-  | E_let_pair (e1, (_, e2))
+  | E_let_tuple (e1, (_, e2))
     -> List.for_all is_pure [ e1 ; e2 ]
 
   | E_constant (c)
