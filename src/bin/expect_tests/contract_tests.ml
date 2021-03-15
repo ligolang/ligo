@@ -1423,8 +1423,8 @@ let%expect_test _ =
   [%expect {|
     { parameter unit ;
       storage unit ;
-      code { LAMBDA (pair (pair unit unit) (pair unit unit)) unit { DROP ; PUSH unit Unit } ;
-             LAMBDA (pair nat nat) nat { UNPAIR ; MUL } ; |}]
+      code { LAMBDA
+               (pair unit (pair unit (pair unit unit))) |}]
 
 (* old uncurry bugs: *)
 let%expect_test _ =
@@ -1445,6 +1445,11 @@ let%expect_test _ =
                                             CONS(8 ,
                                                  CONS(9 ,
                                                       CONS(10 , LIST_EMPTY()))))))))))) |}]
+
+(* uncurrying w/ interpret (old bug) *)
+let%expect_test _ =
+  run_ligo_good [ "interpret"; "--init-file"; contract "uncurry_contract.mligo"; "mul 3n 4n" ] ;
+  [%expect {| +12 |}]
 
 (* Edo combs example *)
 let%expect_test _ =

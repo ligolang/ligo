@@ -5,13 +5,11 @@ module Helpers = Helpers
 let all_module_passes = [
   Helpers.map_module Tail_recursion.peephole_expression ;
   Helpers.map_module Michelson_layout.peephole_expression ;
-  Uncurry.uncurry_module_fully_typed ;
 ]
 
 let all_expression_passes = [
   Helpers.map_expression Tail_recursion.peephole_expression ;
   Helpers.map_expression Michelson_layout.peephole_expression ;
-  Uncurry.uncurry_expression ;
 ]
 
 let contract_passes = [
