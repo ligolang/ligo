@@ -269,3 +269,7 @@ let rec all_expression : expression -> expression =
   if !changed
   then all_expression e
   else e
+
+let all_expression e =
+  let e = all_expression e in
+  Uncurry.uncurry_expression e
