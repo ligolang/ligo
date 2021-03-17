@@ -1,10 +1,8 @@
-type 'a thunk = unit -> 'a
-type annotation = Yojson.t
-type annotation_thunk = annotation thunk
 type (+'value, +'error) result
 val ok : 'a -> ('a, 'c) result
 val fail : 'a -> ('b, 'a) result
-val to_stdlib_result : ('value, 'error) result -> ('value * annotation_thunk list, 'error) Stdlib.result
+val update_annotation : 'error -> ('value, 'error) result -> ('value, 'error) result
+val to_stdlib_result : ('value, 'error) result -> ('value * 'error list, 'error * 'error list) Stdlib.result
 val bind :
   ('a -> ('b, 'd) result) ->
   ('a, 'd) result -> ('b, 'd) result
@@ -20,11 +18,8 @@ sig
     f:('a -> ('d, 'c) result) -> ('d, 'c) result
   module Open_on_rhs_bind : sig  end
 end
-val thunk : 'a -> unit -> 'a
 val trace : ('a -> 'b) -> ('c, 'a) result -> ('c, 'b) result
 val trace_strong : 'a -> ('b, 'c) result -> ('b, 'a) result
-val trace_r :
-  (unit -> ('a, 'a) result) -> ('c, 'd) result -> ('c, 'a) result
 val to_bool : ('a, 'b) result -> bool
 val to_option : ('a, 'c) result -> 'a option
 val to_json : ('a -> ([> `Null ] as 'b)) -> ('a, 'd) result -> 'b
@@ -172,10 +167,10 @@ val bind_find_map_list :
 val bind_list_iter :
   ('a -> (unit, 'c) result) ->
   'a list -> (unit, 'c) result
-val bind_or : ('a, 'b) result * ('a, 'c) result -> ('a, 'c) result
+val bind_or : ('a, 'c) result * ('a, 'c) result -> ('a, 'c) result
 val bind_map_or :
-  ('a -> ('b, 'c) result) * ('a -> ('b, 'd) result) ->
-  'a -> ('b, 'd) result
+  ('a -> ('b, 'c) result) * ('a -> ('b, 'c) result) ->
+  'a -> ('b, 'c) result
 val bind_and :
   ('a, 'c) result * ('d, 'c) result ->
   ('a * 'd, 'c) result

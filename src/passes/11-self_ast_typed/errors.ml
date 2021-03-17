@@ -16,6 +16,7 @@ type self_ast_typed_error = [
     string * Ast_typed.type_expression * Ast_typed.type_expression * Ast_typed.expression
   | `Self_ast_typed_pair_in of Location.t
   | `Self_ast_typed_pair_out of Location.t
+  | `Self_ast_typed_warning_unused of Location.t * string
 ]
 let recursive_call_is_only_allowed_as_the_last_operation name loc =
   `Self_ast_typed_rec_call (name,loc)
@@ -56,7 +57,7 @@ let error_ppformat : display_format:string display_format ->
     | `Self_ast_typed_format_entrypoint_ann (ep,loc) ->
       Format.fprintf f
         "@[<hv>%a@.Invalid entrypoint \"%s\".
-One of the following patterns is expected: 
+One of the following patterns is expected:
   * \"%%bar\" is expected for entrypoint \"Bar\"
   * \"%%default\" when no entrypoint is used."
         Snippet.pp loc
@@ -102,12 +103,22 @@ One of the following patterns is expected:
       Format.fprintf f
         "@[<hv>%a@.Invalid entrypoint.@.Expected a tuple of operations and storage as return value.@]"
         Snippet.pp loc
+    | `Self_ast_typed_warning_unused (loc, s) ->
+       Format.fprintf f
+         "@[Warning: unused variable \"%s\" %a. @]"
+         s Location.pp loc
   )
 
 let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;
+      ("stage", `String stage) ;
+      ("content",  content )]
+  in
+  let json_warning ~stage ~content =
+    `Assoc [
+      ("status", `String "warning") ;
       ("stage", `String stage) ;
       ("content",  content )]
   in
@@ -255,3 +266,13 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
        ]
     in
     json_error ~stage ~content
+  | `Self_ast_typed_warning_unused (loc, s) ->
+     let message = `String "unused variable" in
+     let description = `String s in
+     let loc = `String (Format.asprintf "%a" Location.pp loc) in
+     let content = `Assoc [
+                       ("message", message);
+                       ("location", loc);
+                       ("variable", description)
+                     ] in
+     json_warning ~stage ~content

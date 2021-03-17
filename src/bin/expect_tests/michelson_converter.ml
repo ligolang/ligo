@@ -47,9 +47,13 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "dry-run" ; (contract "michelson_converter_pair.mligo") ; "main_r" ; "test_input_pair_r" ; "s"] ;
   [%expect {|
+    Warning: unused variable "s" in file "../../test/contracts/michelson_converter_pair.mligo", line 11, characters 15-16.
+    Warning: unused variable "s" in file "../../test/contracts/michelson_converter_pair.mligo", line 16, characters 15-16.
     ( LIST_EMPTY() , "eqeq" ) |}] ;
   run_ligo_good [ "compile-contract" ; (contract "michelson_converter_pair.mligo") ; "main_r" ] ;
   [%expect {|
+    Warning: unused variable "s" in file "../../test/contracts/michelson_converter_pair.mligo", line 11, characters 15-16.
+    Warning: unused variable "s" in file "../../test/contracts/michelson_converter_pair.mligo", line 16, characters 15-16.
     { parameter (pair (int %one) (pair (nat %two) (pair (string %three) (bool %four)))) ;
       storage string ;
       code { CAR ;
@@ -66,17 +70,25 @@ let%expect_test _ =
              PAIR } } |}];
   run_ligo_good [ "dry-run" ; (contract "michelson_converter_pair.mligo") ; "main_l" ; "test_input_pair_l" ; "s"] ;
   [%expect {|
+    Warning: unused variable "s" in file "../../test/contracts/michelson_converter_pair.mligo", line 11, characters 15-16.
+    Warning: unused variable "s" in file "../../test/contracts/michelson_converter_pair.mligo", line 16, characters 15-16.
     ( LIST_EMPTY() , "eqeq" ) |}] ;
   run_ligo_good [ "compile-contract" ; (contract "michelson_converter_pair.mligo") ; "main_l" ] ;
   [%expect {|
+    Warning: unused variable "s" in file "../../test/contracts/michelson_converter_pair.mligo", line 11, characters 15-16.
+    Warning: unused variable "s" in file "../../test/contracts/michelson_converter_pair.mligo", line 16, characters 15-16.
     { parameter (pair (pair (pair (int %one) (nat %two)) (string %three)) (bool %four)) ;
       storage string ;
       code { CAR ; DUP ; CAR ; CDR ; SWAP ; CAR ; CDR ; CONCAT ; NIL operation ; PAIR } } |}];
   run_ligo_good [ "dry-run" ; contract "michelson_converter_or.mligo" ; "main_r" ; "vr" ; "Foo4 2"] ;
   [%expect {|
+    Warning: unused variable "s" in file "../../test/contracts/michelson_converter_or.mligo", line 25, characters 15-16.
+    Warning: unused variable "s" in file "../../test/contracts/michelson_converter_or.mligo", line 30, characters 15-16.
     ( LIST_EMPTY() , Baz4("eq") ) |}] ;
   run_ligo_good [ "compile-contract" ; contract "michelson_converter_or.mligo" ; "main_r" ] ;
   [%expect {|
+    Warning: unused variable "s" in file "../../test/contracts/michelson_converter_or.mligo", line 25, characters 15-16.
+    Warning: unused variable "s" in file "../../test/contracts/michelson_converter_or.mligo", line 30, characters 15-16.
     { parameter (or (int %foo4) (or (nat %bar4) (or (string %baz4) (bool %boz4)))) ;
       storage (or (or (nat %bar4) (string %baz4)) (or (bool %boz4) (int %foo4))) ;
       code { CAR ;
@@ -91,9 +103,13 @@ let%expect_test _ =
              PAIR } } |}] ;
   run_ligo_good [ "dry-run" ; contract "michelson_converter_or.mligo" ; "main_l" ; "vl" ; "Foo4 2"] ;
   [%expect {|
+    Warning: unused variable "s" in file "../../test/contracts/michelson_converter_or.mligo", line 25, characters 15-16.
+    Warning: unused variable "s" in file "../../test/contracts/michelson_converter_or.mligo", line 30, characters 15-16.
     ( LIST_EMPTY() , Baz4("eq") ) |}] ;
   run_ligo_good [ "compile-contract" ; contract "michelson_converter_or.mligo" ; "main_l" ] ;
   [%expect {|
+    Warning: unused variable "s" in file "../../test/contracts/michelson_converter_or.mligo", line 25, characters 15-16.
+    Warning: unused variable "s" in file "../../test/contracts/michelson_converter_or.mligo", line 30, characters 15-16.
     { parameter (or (or (or (int %foo4) (nat %bar4)) (string %baz4)) (bool %boz4)) ;
       storage (or (or (nat %bar4) (string %baz4)) (or (bool %boz4) (int %foo4))) ;
       code { CAR ;
@@ -111,12 +127,20 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "michelson_comb_type_operators.mligo" ; "main_r"] ;
   [%expect {|
+    Warning: unused variable "store" in file "../../test/contracts/michelson_comb_type_operators.mligo", line 6, characters 20-25.
+    Warning: unused variable "action" in file "../../test/contracts/michelson_comb_type_operators.mligo", line 6, characters 12-18.
+    Warning: unused variable "store" in file "../../test/contracts/michelson_comb_type_operators.mligo", line 9, characters 20-25.
+    Warning: unused variable "action" in file "../../test/contracts/michelson_comb_type_operators.mligo", line 9, characters 12-18.
     { parameter (pair (int %foo) (pair (nat %bar) (string %baz))) ;
       storage unit ;
       code { DROP ; UNIT ; NIL operation ; PAIR } } |}] ;
 
   run_ligo_good [ "compile-contract" ; contract "michelson_comb_type_operators.mligo" ; "main_l"] ;
   [%expect {|
+    Warning: unused variable "store" in file "../../test/contracts/michelson_comb_type_operators.mligo", line 6, characters 20-25.
+    Warning: unused variable "action" in file "../../test/contracts/michelson_comb_type_operators.mligo", line 6, characters 12-18.
+    Warning: unused variable "store" in file "../../test/contracts/michelson_comb_type_operators.mligo", line 9, characters 20-25.
+    Warning: unused variable "action" in file "../../test/contracts/michelson_comb_type_operators.mligo", line 9, characters 12-18.
     { parameter (pair (pair (int %foo) (nat %bar)) (string %baz)) ;
       storage unit ;
       code { DROP ; UNIT ; NIL operation ; PAIR } } |}]
@@ -124,6 +148,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; (contract "michelson_converter_mixed_pair_or.mligo") ; "main2" ] ;
   [%expect {|
+    Warning: unused variable "s" in file "../../test/contracts/michelson_converter_mixed_pair_or.mligo", line 29, characters 15-16.
     { parameter
         (or (pair %option1 (string %bar) (nat %baz)) (pair %option2 (string %bar) (nat %baz))) ;
       storage nat ;
@@ -135,6 +160,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; (contract "double_fold_converter.religo") ; "main" ] ;
   [%expect {|
+    Warning: unused variable "tokenOwner" in file "../../test/contracts/double_fold_converter.religo", line 33, characters 8-18.
     { parameter
         (list (pair (address %from_)
                     (list %txs (pair (address %to_) (pair (nat %token_id) (nat %amount)))))) ;
