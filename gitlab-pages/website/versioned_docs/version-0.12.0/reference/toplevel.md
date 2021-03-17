@@ -459,3 +459,71 @@ let ediv: (nat, nat) => option((nat, nat))
 </SyntaxTitle>
 
 Compiles to Michelson `EDIV`, one operation to get both the quotient and remainder of a division. `ediv x y` returns None if `y` is zero, otherwise returns `Some (quotient, remainder)` such that `x = (quotient * y) + remainder` and `0 <= remainder < abs(y)`.
+
+<SyntaxTitle syntax="pascaligo">
+type sapling_state (N)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type N sapling_state
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type sapling_state(N)
+</SyntaxTitle>
+
+<SyntaxTitle syntax="pascaligo">
+type sapling_transaction (N)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type N sapling_transaction
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type sapling_transaction(N)
+</SyntaxTitle>
+
+
+<SyntaxTitle syntax="pascaligo">
+type ticket 'v
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type 'v ticket
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type ticket('v)
+</SyntaxTitle>
+
+Edo protocol introduced the following ticket type.
+Follow this [wallet example](https://gitlab.com/ligolang/ligo/-/blob/dev/src/test/contracts/ticket_wallet.mligo) for an example of
+correct usage (it goes with its [builder](https://gitlab.com/ligolang/ligo/-/blob/dev/src/test/contracts/ticket_builder.mligo)).
+This [article](https://medium.com/tezos-israel/tickets-on-edo-simply-explained-c5a411cc27f9) might also be useful.
+
+Note that a variable containing a ticket can only be used once (they are not `DUP`-able).
+
+The ticket type can be defined over a comparable type `'v`.
+`'v` being the type of the value used to identify a given ticket.
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=ticket_t
+type va is int
+type my_ticket is ticket (va)
+```
+
+</Syntax>
+
+<Syntax syntax="cameligo">
+
+```cameligo group=ticket_t
+type va = int
+type my_ticket = va ticket
+```
+
+</Syntax>
+
+<Syntax syntax="reasonligo">
+
+```reasonligo group=ticket_t
+type va = int;
+type my_ticket = ticket(va);
+```
+
+</Syntax>
