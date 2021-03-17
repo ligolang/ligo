@@ -15,6 +15,7 @@ import loading, { LoadingState } from './loading';
 import result, { ResultState } from './result';
 import share, { ShareState } from './share';
 import version, { VersionState } from './version';
+import compileFunction, { CompileFunctionState } from './compile-function';
 
 export interface AppState {
   version: VersionState;
@@ -30,6 +31,7 @@ export interface AppState {
   command: CommandState;
   examples: ExamplesState;
   loading: LoadingState;
+  compileFunction: CompileFunctionState;
 }
 
 const reducer = combineReducers({
@@ -46,6 +48,7 @@ const reducer = combineReducers({
   examples,
   loading,
   version,
+  compileFunction,
 });
 
 export default reducer;

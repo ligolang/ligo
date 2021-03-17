@@ -13,6 +13,14 @@ export async function getExample(id: string) {
   return response.data;
 }
 
+export async function getListDeclaration(syntax: string, code: string) {
+  const response = await axios.post('/api/list-declaration', {
+    syntax,
+    code,
+  });
+  return response.data;
+}
+
 export async function compileContract(
   syntax: Language,
   code: string,
