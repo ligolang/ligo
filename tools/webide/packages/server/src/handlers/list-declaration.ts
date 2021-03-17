@@ -4,36 +4,40 @@ import { Request, Response } from 'express';
 import { CompilerError, LigoCompiler } from '../ligo-compiler';
 import { logger } from '../logger';
 
-interface CompileBody {
+interface ListDeclarationBody {
+  code: string;
   syntax: string;
-  expression: string;
-  format?: string;
 }
 
-const validateRequest = (body: any): { value: CompileBody; error?: any } => {
+const validateRequest = (
+  body: any
+): { value: ListDeclarationBody; error?: any } => {
   return joi
     .object({
+      code: joi.string().required(),
       syntax: joi.string().required(),
-      expression: joi.string().required(),
-      format: joi.string().optional(),
     })
     .validate(body);
 };
 
-export async function compileExpressionHandler(req: Request, res: Response) {
+export async function listDeclarationHandler(req: Request, res: Response) {
   const { error, value: body } = validateRequest(req.body);
 
   if (error) {
     res.status(400).json({ error: error.message });
   } else {
     try {
-      const michelsonCode = await new LigoCompiler().compileExpression(
+      const result = await new LigoCompiler().listDeclaration(
         body.syntax,
-        body.expression,
-        body.format || ''
+        body.code
       );
+      const declarations = result
+        .substr(result.indexOf(':') + 1, result.length)
+        .replace(/(\r\n|\n|\r)/gm, ' ')
+        .trim()
+        .split(' ');
 
-      res.send({ result: michelsonCode });
+      res.send({ declarations: declarations });
     } catch (ex) {
       if (ex instanceof CompilerError) {
         res.status(400).json({ error: ex.message });

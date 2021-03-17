@@ -11,6 +11,7 @@ import { evaluateValueHandler } from './handlers/evaluate-value';
 import { runFunctionHandler } from './handlers/run-function';
 import { shareHandler } from './handlers/share';
 import { sharedLinkHandler } from './handlers/shared-link';
+import { listDeclarationHandler } from './handlers/list-declaration';
 import { errorLoggerMiddleware, loggerMiddleware } from './logger';
 require('./metrics');
 
@@ -63,6 +64,7 @@ app.post('/api/share', cors(corsOptions), shareHandler);
 app.post('/api/evaluate-value', evaluateValueHandler);
 app.post('/api/run-function', runFunctionHandler);
 app.post('/api/deploy', deployHandler);
+app.post('/api/list-declaration', listDeclarationHandler);
 
 app.use(errorLoggerMiddleware);
 

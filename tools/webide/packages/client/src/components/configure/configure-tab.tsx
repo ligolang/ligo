@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import styled, { css } from 'styled-components';
 
 import { CompileAction } from '../../redux/actions/compile';
+import { CompileFunctionAction } from '../../redux/actions/compile-function';
 import { DeployAction } from '../../redux/actions/deploy';
 import { DryRunAction } from '../../redux/actions/dry-run';
 import { EvaluateFunctionAction } from '../../redux/actions/evaluate-function';
@@ -15,6 +16,7 @@ import { Option, Select } from '../form/select';
 import { CompilePaneComponent } from './compile-pane';
 import DeployPaneComponent from './deploy-pane';
 import { DryRunPaneComponent } from './dry-run-pane';
+import CompileFunctionPaneComponent from './compile-function-pane';
 import { EvaluateFunctionPaneComponent } from './evaluate-function-pane';
 import { EvaluateValuePaneComponent } from './evaluate-value-pane';
 import { GenerateDeployScriptPane } from './generate-deploy-script-pane';
@@ -78,6 +80,8 @@ function createAction(command: CommandType) {
   switch (command) {
     case CommandType.Compile:
       return new CompileAction();
+    case CommandType.CompileFunction:
+      return new CompileFunctionAction();
     case CommandType.DryRun:
       return new DryRunAction();
     case CommandType.Deploy:
@@ -119,6 +123,7 @@ export const ConfigureTabComponent = (props: {
           }}
         >
           <Option value={CommandType.Compile}>Compile</Option>
+          <Option value={CommandType.CompileFunction}>Compile Function</Option>
           <Option value={CommandType.Deploy}>Deploy</Option>
           <Option value={CommandType.DryRun}>Dry Run</Option>
           <Option value={CommandType.EvaluateFunction}>Evaluate Function</Option>
@@ -144,7 +149,10 @@ export const ConfigureTabComponent = (props: {
       </CommonActionsGroup>
       {(command === CommandType.Compile && (
         <CompilePaneComponent></CompilePaneComponent>
-      )) ||
+        )) ||
+        (command === CommandType.CompileFunction && (
+          <CompileFunctionPaneComponent></CompileFunctionPaneComponent>
+        )) ||
         (command === CommandType.DryRun && (
           <DryRunPaneComponent></DryRunPaneComponent>
         )) ||
