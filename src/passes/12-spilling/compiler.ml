@@ -855,15 +855,15 @@ and compile_declaration module_env env (d:AST.declaration) : ((toplevel_statemen
 
 
 
-and compile_module ((AST.Module_Fully_Typed lst) : AST.module_fully_typed) : (program , spilling_error) result =
+and compile_module ?(module_env = Ast_core.SMap.empty) ((AST.Module_Fully_Typed lst) : AST.module_fully_typed) : (program * AST.type_expression SMap.t , spilling_error) result =
   let aux (prev:(toplevel_statement list * _ SMap.t * Environment.t , spilling_error) result) cur =
     let%bind (hds, module_env, env) = prev in
     match%bind compile_declaration module_env env cur with
     | Some (((_ , env') as cur', module_env)) -> ok (hds @ [ cur' ] , module_env, env'.post_environment)
     | None -> prev
   in
-  let%bind (statements,_, _) = List.fold_left aux (ok ([], SMap.empty,Environment.empty)) (temp_unwrap_loc_list lst) in
-  ok statements
+  let%bind (statements,map, _) = List.fold_left aux (ok ([], module_env,Environment.empty)) (temp_unwrap_loc_list lst) in
+  ok (statements, map)
 
 and compile_module_as_record module_name (module_env : _ SMap.t) (lst : AST.module_fully_typed) : (_ , spilling_error) result =
   let rec module_as_record module_env (AST.Module_Fully_Typed lst) : ((AST.expression * _),_) result =

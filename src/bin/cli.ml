@@ -672,6 +672,27 @@ let test =
   let doc = "Subcommand: Test a contract with the LIGO interpreter (BETA)." in
   (Term.ret term , Term.info ~doc cmdname)
 
+let repl =
+  let f syntax_name protocol_version typer_switch
+    amount balance sender source now display_format init_file : unit Term.ret =
+    (let protocol = Environment.Protocols.protocols_to_variant protocol_version in
+    let syntax = Helpers.syntax_to_variant (Syntax_name syntax_name) None in
+    let typer_switch = Compile.Helpers.typer_switch_to_variant typer_switch in
+    let dry_run_opts = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
+    match protocol, Trace.to_option syntax, Trace.to_option typer_switch, Trace.to_option dry_run_opts with
+    | _, None, _, _ -> `Error (false, "Please check syntax name.")
+    | None, _, _, _ -> `Error (false, "Please check protocol name.")
+    | _, _, None, _ -> `Error (false, "Please check typer name.")
+    | _, _, _, None -> `Error (false, "Please check run options.")
+    | Some protocol, Some syntax, Some typer_switch, Some dry_run_opts ->
+       `Ok (Repl.main syntax display_format protocol typer_switch dry_run_opts init_file)) in
+  let term =
+    Term.(const f $ req_syntax 0 $ protocol_version $ typer_switch $ amount $ balance $ sender $ source $ now $ display_format $ init_file) in
+  let cmdname = "repl" in
+  let doc = "Subcommand: REPL" in
+  (Term.ret term , Term.info ~doc cmdname)
+
+
 let buffer = Buffer.create 100
 
 
@@ -703,4 +724,5 @@ let run ?argv () =
     preprocess;
     pretty_print;
     get_scope;
+    repl;
   ]

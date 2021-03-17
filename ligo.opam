@@ -31,6 +31,7 @@ depends: [
   "LexerLib"
   "UnionFind"
   "RedBlackTrees"
+  "linenoise"
   # work around upstream in-place update
   "ocaml-migrate-parsetree" { = "1.4.0" }
   # work around tezos' failure to constrain

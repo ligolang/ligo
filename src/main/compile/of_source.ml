@@ -15,11 +15,19 @@ let make_meta syntax file_name_opt =
   let%bind syntax   = syntax_to_variant (Syntax_name syntax) file_name_opt in
   ok @@ {syntax}
 
+let make_meta_from_syntax syntax =
+  ok @@ {syntax}
+
 let compile ~options ~meta (source_filename:string) : (c_unit , _) result =
   trace Main_errors.preproc_tracer @@ preprocess_file ~options ~meta source_filename
 
 let compile_string ~options ~meta source : (c_unit , _) result =
   preprocess_string ~options ~meta source
+
+let compile_string_without_preproc source : (c_unit , _) result =
+  let buffer = Buffer.create 0 in
+  Buffer.add_string buffer source;
+  ok @@ (buffer, [])
 
 let compile_contract_input : options:Compiler_options.t -> meta:meta -> string -> string -> (c_unit * c_unit , _) result =
     fun ~options ~meta storage parameter ->

@@ -3,11 +3,15 @@ open Ast_typed
 open Spilling
 open Main_errors
 
-let compile : Ast_typed.module_fully_typed -> (Mini_c.program, _) result = fun p ->
-  trace spilling_tracer @@ compile_module p
+let compile_with_modules ?(module_env = Ast_core.SMap.empty) : Ast_typed.module_fully_typed -> (Mini_c.program * AST.type_expression Ast_core.SMap.t, _) result = fun p ->
+  trace spilling_tracer @@ compile_module ~module_env:module_env p
 
-let compile_expression : expression -> (Mini_c.expression, _) result = fun e ->
-  trace spilling_tracer @@ compile_expression e
+let compile ?(module_env = Ast_core.SMap.empty) : Ast_typed.module_fully_typed -> (Mini_c.program, _) result = fun p ->
+  let%bind mini_c,_ = compile_with_modules ~module_env:module_env p in
+  ok mini_c
+
+let compile_expression ?(module_env = Ast_core.SMap.empty) : expression -> (Mini_c.expression, _) result = fun e ->
+  trace spilling_tracer @@ compile_expression ~module_env:module_env e
 
 let assert_equal_contract_type : Simple_utils.Runned_result.check_type -> string -> Ast_typed.module_fully_typed -> Ast_typed.expression -> (unit , _) result =
     fun c entry contract param ->
@@ -28,3 +32,31 @@ let assert_equal_contract_type : Simple_utils.Runned_result.check_type -> string
   )
 
 let some_interpret ~options x test_entry = trace interpret_tracer @@ Interpreter.eval_test ~options x test_entry
+
+let list_declarations (m : Ast_typed.module') : string list =
+  List.fold_left
+    (fun prev el ->
+      let open Location in
+      match (el.wrap_content : Ast_typed.declaration) with
+      | Declaration_constant {binder;_} -> (Var.to_name binder.wrap_content)::prev
+      | _ -> prev)
+    [] m
+
+let list_type_declarations (m : Ast_typed.module') : string list =
+  List.fold_left
+    (fun prev el ->
+      let open Location in
+      match (el.wrap_content : Ast_typed.declaration) with
+      | Declaration_type {type_binder;_} -> (Var.to_name type_binder)::prev
+      | _ -> prev)
+    [] m
+
+let list_mod_declarations (m : Ast_typed.module') : string list =
+  List.fold_left
+    (fun prev el ->
+      let open Location in
+      match (el.wrap_content : Ast_typed.declaration) with
+      | Declaration_module {module_binder;_} -> (module_binder)::prev
+      | Module_alias {alias;_} -> (alias)::prev
+      | _ -> prev)
+    [] m

@@ -43,4 +43,25 @@ let list_declarations (m : Ast_core.module_) : string list =
       | _ -> prev)
     [] m
 
+let list_type_declarations (m : Ast_core.module_) : string list =
+  List.fold_left
+    (fun prev el ->
+      let open Location in
+      let open Ast_core in
+      match (el.wrap_content : Ast_core.declaration) with
+      | Declaration_type {type_binder;_} -> (Var.to_name type_binder)::prev
+      | _ -> prev)
+    [] m
+
+let list_mod_declarations (m : Ast_core.module_) : string list =
+  List.fold_left
+    (fun prev el ->
+      let open Location in
+      let open Ast_core in
+      match (el.wrap_content : Ast_core.declaration) with
+      | Declaration_module {module_binder;_} -> (module_binder)::prev
+      | Module_alias {alias;_} -> (alias)::prev
+      | _ -> prev)
+    [] m
+
 let evaluate_type ~(typer_switch : Ast_typed.typer_switch) (env : Ast_typed.Environment.t) (t: Ast_core.type_expression) = trace typer_tracer @@ Typer.evaluate_type typer_switch env t
