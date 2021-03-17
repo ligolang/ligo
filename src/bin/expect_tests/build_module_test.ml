@@ -205,6 +205,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "type_B.mligo"; "main" ] ;
   [%expect {|
+    Warning: unused variable "p" in file "../../test/contracts/build/type_B.mligo", line 5, characters 5-6.
     { parameter string ;
       storage int ;
       code { CDR ; PUSH int 1 ; ADD ; NIL operation ; PAIR } } |}]

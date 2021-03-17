@@ -6,6 +6,7 @@ let contract basename =
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "protocol_dalphanet.mligo" ; "main"  ] ;
   [%expect{|
+    Warning: unused variable "s" in file "../../test/contracts/protocol_dalphanet.mligo", line 12, characters 13-14.
     { parameter (list (pair bls12_381_g1 bls12_381_g2)) ;
       storage bool ;
       code { CAR ; PAIRING_CHECK ; NIL operation ; PAIR } } |}] ;
@@ -25,6 +26,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "sapling.mligo" ; "main" ; "--disable-michelson-typechecking" ; "--protocol=edo" ] ;
   [%expect {|
+    Warning: unused variable "store" in file "../../test/contracts/sapling.mligo", line 8, characters 14-19.
     { parameter (sapling_transaction 8) ;
       storage (pair int (sapling_state 8)) ;
       code { CAR ;

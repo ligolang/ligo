@@ -201,14 +201,22 @@ let typer_switch =
     info ~docv ~doc ["typer"] in
     value @@ opt string "old" info
 
+let warn =
+  let open Arg in
+  let info =
+    let docv = "BOOL" in
+    let doc = "$(docv) indicates whether warning messages should be printed in stderr or not" in
+    info ~docv ~doc ["warn"] in
+    value @@ opt bool true info
+
 module Helpers   = Ligo.Compile.Helpers
 module Compile   = Ligo.Compile
 module Decompile = Ligo.Decompile
 module Run = Ligo.Run.Of_michelson
 
 let compile_file =
-  let f source_file entry_point syntax typer_switch protocol_version display_format disable_typecheck michelson_format output_file =
-    return_result ~output_file ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
+  let f source_file entry_point syntax typer_switch protocol_version display_format disable_typecheck michelson_format output_file warn =
+    return_result ~warn ~output_file ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
       let%bind options =
         let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
         let%bind init_env = Helpers.get_initial_env protocol_version in
@@ -219,7 +227,7 @@ let compile_file =
       Compile.Of_michelson.build_contract ~disable_typecheck michelson
   in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ typer_switch $ protocol_version $ display_format $ disable_michelson_typechecking $ michelson_code_format $ output_file) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ typer_switch $ protocol_version $ display_format $ disable_michelson_typechecking $ michelson_code_format $ output_file $ warn) in
   let cmdname = "compile-contract" in
   let doc = "Subcommand: Compile a contract." in
   (Term.ret term , Term.info ~doc cmdname)
@@ -368,8 +376,8 @@ let print_mini_c =
   (Term.ret term, Term.info ~doc cmdname)
 
 let measure_contract =
-  let f source_file entry_point syntax typer_switch protocol_version display_format =
-    return_result ~display_format Formatter.contract_size_format @@
+  let f source_file entry_point syntax typer_switch protocol_version display_format warn =
+    return_result ~warn ~display_format Formatter.contract_size_format @@
       let%bind init_env   = Helpers.get_initial_env protocol_version in
       let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
       let options = Compiler_options.make ~typer_switch ~init_env () in
@@ -377,14 +385,14 @@ let measure_contract =
       Compile.Of_michelson.measure contract
   in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1  $ syntax $ typer_switch $ protocol_version $ display_format) in
+    Term.(const f $ source_file 0 $ entry_point 1  $ syntax $ typer_switch $ protocol_version $ display_format $ warn) in
   let cmdname = "measure-contract" in
   let doc = "Subcommand: Measure a contract's compiled size in bytes." in
   (Term.ret term , Term.info ~doc cmdname)
 
 let compile_parameter =
-  let f source_file entry_point expression syntax typer_switch protocol_version amount balance sender source now display_format michelson_format output_file =
-    return_result ~output_file ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
+  let f source_file entry_point expression syntax typer_switch protocol_version amount balance sender source now display_format michelson_format output_file warn =
+    return_result ~warn ~output_file ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
       let%bind init_env = Helpers.get_initial_env protocol_version in
       let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
       let options = Compiler_options.make ~typer_switch ~init_env () in
@@ -403,7 +411,7 @@ let compile_parameter =
       Run.evaluate_expression ~options compiled_param.expr compiled_param.expr_ty
     in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2  $ syntax $ typer_switch $ protocol_version $ amount $ balance $ sender $ source $ now $ display_format $ michelson_code_format $ output_file) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2  $ syntax $ typer_switch $ protocol_version $ amount $ balance $ sender $ source $ now $ display_format $ michelson_code_format $ output_file $ warn) in
   let cmdname = "compile-parameter" in
   let doc = "Subcommand: Compile parameters to a Michelson expression. The resulting Michelson expression can be passed as an argument in a transaction which calls a contract." in
   (Term.ret term , Term.info ~doc cmdname)
@@ -436,8 +444,8 @@ let interpret =
   (Term.ret term , Term.info ~doc cmdname)
 
 let compile_storage =
-  let f source_file entry_point expression syntax typer_switch protocol_version amount balance sender source now display_format michelson_format output_file =
-    return_result ~output_file ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
+  let f source_file entry_point expression syntax typer_switch protocol_version amount balance sender source now display_format michelson_format output_file warn =
+    return_result ~warn ~output_file ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
       let%bind init_env   = Helpers.get_initial_env protocol_version in
       let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
       let options = Compiler_options.make ~typer_switch ~init_env () in
@@ -455,14 +463,14 @@ let compile_storage =
       let%bind options          = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
       Run.evaluate_expression ~options compiled_param.expr compiled_param.expr_ty in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ expression "STORAGE" 2  $ syntax $ typer_switch $ protocol_version $ amount $ balance $ sender $ source $ now $ display_format $ michelson_code_format $ output_file) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ expression "STORAGE" 2  $ syntax $ typer_switch $ protocol_version $ amount $ balance $ sender $ source $ now $ display_format $ michelson_code_format $ output_file $ warn) in
   let cmdname = "compile-storage" in
   let doc = "Subcommand: Compile an initial storage in ligo syntax to a Michelson expression. The resulting Michelson expression can be passed as an argument in a transaction which originates a contract." in
   (Term.ret term , Term.info ~doc cmdname)
 
 let dry_run =
-  let f source_file entry_point storage input amount balance sender source now syntax typer_switch protocol_version display_format =
-    return_result ~display_format (Decompile.Formatter.expression_format) @@
+  let f source_file entry_point storage input amount balance sender source now syntax typer_switch protocol_version display_format warn =
+    return_result ~warn ~display_format (Decompile.Formatter.expression_format) @@
       let%bind init_env   = Helpers.get_initial_env protocol_version in
       let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
       let options = Compiler_options.make ~typer_switch ~init_env () in
@@ -481,7 +489,7 @@ let dry_run =
       Decompile.Of_michelson.decompile_typed_program_entry_function_result typer_switch typed_prg entry_point runres
     in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ expression "STORAGE" 3 $ amount $ balance $ sender $ source $ now  $ syntax $ typer_switch $ protocol_version $ display_format) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ expression "STORAGE" 3 $ amount $ balance $ sender $ source $ now  $ syntax $ typer_switch $ protocol_version $ display_format $ warn) in
   let cmdname = "dry-run" in
   let doc = "Subcommand: Run a smart-contract with the given storage and input." in
   (Term.ret term , Term.info ~doc cmdname)
@@ -537,8 +545,8 @@ let evaluate_value =
   (Term.ret term , Term.info ~doc cmdname)
 
 let compile_expression =
-  let f expression syntax typer_switch protocol_version init_file display_format michelson_format =
-    return_result ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
+  let f expression syntax typer_switch protocol_version init_file display_format michelson_format warn =
+    return_result ~warn ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
       let%bind init_env   = Helpers.get_initial_env protocol_version in
       let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
       let options = Compiler_options.make ~typer_switch ~init_env () in
@@ -554,7 +562,7 @@ let compile_expression =
       Run.evaluate_expression compiled_exp.expr compiled_exp.expr_ty
     in
   let term =
-    Term.(const f $ expression "" 1 $ req_syntax 0 $ typer_switch $ protocol_version $ init_file $ display_format $ michelson_code_format) in
+    Term.(const f $ expression "" 1 $ req_syntax 0 $ typer_switch $ protocol_version $ init_file $ display_format $ michelson_code_format $ warn) in
   let cmdname = "compile-expression" in
   let doc = "Subcommand: Compile to a michelson value." in
   (Term.ret term , Term.info ~doc cmdname)
