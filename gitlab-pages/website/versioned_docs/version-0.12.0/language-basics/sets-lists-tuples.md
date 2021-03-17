@@ -371,17 +371,25 @@ A *folded operation* is the most general of iterations. The folded
 function takes two arguments: an *accumulator* and the structure
 *element* at hand, with which it then produces a new accumulator. This
 enables having a partial result that becomes complete when the
-traversal of the data structure is over. The predefined functional
-iterator implementing the folded operation over lists is called
-`List.fold` and is used as follows.
+traversal of the data structure is over. Folding can be done in two
+ways, labeled with the directions left and right. One way to tell them
+apart is to look where the folded function, and the fold itself, keep
+the accumulator in their signatures. Take for example a function `f`, 
+a list `[1; 2; 3; 4; 5]`, and an accumulator that's just an empty
+list. A rough approximation of the result of a left fold would look
+like `f(f(f(f(f([], 1), 2), 3), 4), 5)`, while a right fold would 
+instead look like `f(1, f(2, f(3, f(4, f(5, [])))))`.
 
-
+The left fold operation has a function signature of 
+`List.fold_left (a -> x -> a) -> a -> x list -> a`, while the right
+fold operation has `List.fold_right (x -> a -> a) -> x list -> a -> a`.
+Here is an example of their use.
 
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=lists
 function sum (const acc : int; const i : int): int is acc + i
-const sum_of_elements : int = List.fold (sum, my_list, 0)
+const sum_of_elements : int = List.fold_left (sum, 0, my_list)
 ```
 
 > Note that `list_fold` is *deprecated*.
@@ -391,7 +399,7 @@ const sum_of_elements : int = List.fold (sum, my_list, 0)
 
 ```cameligo group=lists
 let sum (acc, i: int * int) : int = acc + i
-let sum_of_elements : int = List.fold sum my_list 0
+let sum_of_elements : int = List.fold_left sum 0 my_list
 ```
 
 </Syntax>
@@ -399,7 +407,7 @@ let sum_of_elements : int = List.fold sum my_list 0
 
 ```reasonligo group=lists
 let sum = ((result, i): (int, int)): int => result + i;
-let sum_of_elements : int = List.fold (sum, my_list, 0);
+let sum_of_elements : int = List.fold_left (sum, 0, my_list);
 ```
 
 </Syntax>
@@ -764,7 +772,10 @@ function takes two arguments: an *accumulator* and the structure
 *element* at hand, with which it then produces a new accumulator. This
 enables having a partial result that becomes complete when the
 traversal of the data structure is over. The predefined fold over sets
-is called `Set.fold`.
+is called `Set.fold`, however an additional function, `Set.fold_right`,
+has been added to properly conform to the function signature of OCaml's
+`Set.fold` operation, and it has the function signature
+`Set.fold_right (x -> a -> a) -> x Set -> a -> a`.
 
 
 <Syntax syntax="pascaligo">
