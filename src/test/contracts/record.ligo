@@ -36,3 +36,24 @@ function modify_inner (const r : double_record) : double_record is
   block {
     r := r with record [inner.b = 2048]
   } with r
+
+type color is
+| Blue
+| Green
+
+type preferences is record [
+  color : color;
+  other : int;
+]
+
+type account is record [
+  id : int;
+  preferences : preferences;
+]
+
+const acc : account = record [ id = 1 ; preferences = record [ color = Blue ; other = 1]]
+
+function change_color_preference (const account : account; const color : color ) : account is
+  block {
+      account := account with record [preferences.color = color]
+  } with account

@@ -36,3 +36,22 @@ type double_record = {inner : abc}
 
 let modify_inner (r : double_record) : double_record =
   {r with inner.b = 2048}
+
+type color =
+  Blue
+| Green
+
+type preferences = {
+  color : color;
+  other : int;
+}
+
+type account = {
+  id: int;
+  preferences: preferences;
+}
+
+let acc : account = { id = 1 ; preferences = { color = Blue ; other = 1}}
+
+let change_color_preference (account : account) (color : color) : account =
+  { account with preferences.color = color }

@@ -3,9 +3,37 @@ open Mini_c.Types
 open Tezos_micheline.Micheline
 open Trace
 
+let rec comb prim loc xs =
+  match xs with
+  | [] | [_] -> assert false
+  | [x1; x2] -> Prim (loc, prim, [x1; x2], [])
+  | x1 :: x2 :: xs ->
+    let xs = comb prim loc (x2 :: xs) in
+    Prim (loc, prim, [x1; xs], [])
+
+let normalize_edo_comb_type =
+  function
+  | Prim (loc, "pair", xs, _) ->
+    comb "pair" loc xs
+  | t -> t
+
+let normalize_edo_comb_value =
+  function
+  (* only do it for type is "pair", because Seq case is ambiguous *)
+  | Prim (_, "pair", _, _) ->
+    (function
+      | Prim (loc, "Pair", xs, _) ->
+        comb "Pair" loc xs
+      | Seq (loc, xs) ->
+        comb "Pair" loc xs
+      | x -> x)
+  | _ -> fun x -> x
+
 let rec decompile_value :
   ('l, string) node -> ('l, string) node -> (value , stacking_error) result =
   fun ty value ->
+  let ty = normalize_edo_comb_type ty in
+  let value = normalize_edo_comb_value ty value in
   match (ty, value) with
   | Prim (_, "pair", ts, _), Prim (_, "Pair", vs, _) -> (
       let%bind els = bind_map_list (fun (t,v) -> decompile_value t v) (List.combine ts vs) in
