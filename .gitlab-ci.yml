@@ -56,7 +56,7 @@ docker_build:
       -t ${LIGO_IMAGE_TAG}
     - docker save -o ligo.tar.gz ${LIGO_IMAGE_TAG}
   after_script:
-    - docker image rm "${LIGO_IMAGE_TAG}"
+    - docker image rm "${LIGO_IMAGE_TAG}" >/dev/null 2>&1 || true
   artifacts:
     expose_as: "Ligo docker image - light -"
     paths:
@@ -84,7 +84,7 @@ docker_extract:
     - nix-build nix -A ligo-deb
     - cp -L result/ligo.deb .
   after_script:
-    - docker image rm "${LIGO_IMAGE_TAG}"
+    - docker image rm "${LIGO_IMAGE_TAG}" >/dev/null 2>&1 || true
   artifacts:
     paths:
       - ligo
@@ -175,7 +175,7 @@ docker-push:
     - docker tag "${LIGO_IMAGE_TAG}" "${LIGO_REGISTRY_FULL_NAME}"
     - docker push "${LIGO_REGISTRY_FULL_NAME}"
   after_script:
-    - docker image rm "${LIGO_IMAGE_TAG}"
+    - docker image rm "${LIGO_IMAGE_TAG}" >/dev/null 2>&1 || true
 
 # docker-large-push: ?
 #   extends: docker-push
@@ -212,7 +212,7 @@ webide-push:
     - docker tag ligo-editor "${WEBIDE_IMAGE_TAG}"
     - docker push "${WEBIDE_IMAGE_TAG}"
   after_script:
-    - docker image rm "${WEBIDE_IMAGE_TAG}"
+    - docker image rm "${WEBIDE_IMAGE_TAG}" >/dev/null 2>&1 || true
 
 release:
   stage: push
