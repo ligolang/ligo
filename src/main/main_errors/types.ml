@@ -69,4 +69,7 @@ type all =
  | `Test_bad_code_block of string
  | `Test_expected_to_fail
  | `Test_not_expected_to_fail
+ | `Test_repl of string list * string list
+
+ | `Repl_unexpected
 ]

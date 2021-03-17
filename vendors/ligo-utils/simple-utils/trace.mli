@@ -20,6 +20,7 @@ sig
 end
 val trace : ('a -> 'b) -> ('c, 'a) result -> ('c, 'b) result
 val trace_strong : 'a -> ('b, 'c) result -> ('b, 'a) result
+val try_catch : ('a -> ('b, 'a) result) -> ('b, 'a) result -> ('b, 'a) result
 val to_bool : ('a, 'b) result -> bool
 val to_option : ('a, 'c) result -> 'a option
 val to_json : ('a -> ([> `Null ] as 'b)) -> ('a, 'd) result -> 'b

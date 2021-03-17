@@ -5,8 +5,25 @@
     cmdliner
     ligo
     build
+    repl
   )
   (modules cli cli_helpers formatter version changelog)
+  (preprocess
+    (pps ppx_let bisect_ppx --conditional)
+  )
+  (flags (:standard -open Simple_utils))
+)
+
+(library
+  (name repl)
+  (libraries
+    simple-utils
+    cmdliner
+    ligo
+    build
+    linenoise
+  )
+  (modules repl)
   (preprocess
     (pps ppx_let bisect_ppx --conditional)
   )

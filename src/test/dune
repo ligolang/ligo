@@ -1,10 +1,12 @@
 (ocamllex md)
 
 (executables
-  (names test doc_test parser_negative_tests mydebugplease)
+  (names test doc_test repl_test parser_negative_tests mydebugplease)
   (libraries
     simple-utils
+    tezos-memory-proto-alpha
     ligo
+    repl
     alcotest
     tezos-utils
     tezos-crypto
@@ -18,6 +20,12 @@
 (rule
   (alias doc-test)
   (action (run ./doc_test.exe))
+  (deps (source_tree ../../gitlab-pages/docs))
+)
+
+(rule
+  (alias repl-test)
+  (action (run ./repl_test.exe))
   (deps (source_tree ../../gitlab-pages/docs))
 )
 
@@ -41,7 +49,7 @@
 
 (alias
   (name runtest)
-  (deps (alias ligo-test) (alias doc-test) (alias parser-negative-tests))
+  (deps (alias ligo-test) (alias doc-test) (alias parser-negative-tests) (alias repl-test))
 )
 
 (rule

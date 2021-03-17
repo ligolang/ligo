@@ -290,6 +290,10 @@ let trace_strong err = function
   Ok (v, _) -> Ok (v, [])
 | Error _ -> Error (err, [])
 
+let try_catch handler = function
+    Ok _ as o -> o
+  | Error (e, _) -> handler e
+
 (* Check if there is no error. Useful for tests. *)
 let to_bool = function
   | Ok _ -> true

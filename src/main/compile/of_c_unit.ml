@@ -10,6 +10,10 @@ let compile_expression : options:Compiler_options.t -> meta:meta -> c_unit -> (A
     fun ~options ~meta c_unit ->
   parse_and_abstract_expression ~options ~meta c_unit
 
+let compile_string : options:Compiler_options.t -> meta:meta -> c_unit -> (Ast_imperative.module_ , _) result =
+    fun ~options ~meta c_unit ->
+  parse_and_abstract_string ~libs:options.libs meta.syntax c_unit
+
 let compile_contract_input : options:Compiler_options.t -> meta:meta -> c_unit -> c_unit -> (Ast_imperative.expression , _) result =
     fun ~options ~meta storage parameter ->
   let%bind (storage,parameter) = bind_map_pair (compile_expression ~options ~meta) (storage,parameter) in

@@ -38,6 +38,26 @@ let compile_file ~options f stx ep =
   let%bind contract   = Of_michelson.build_contract michelson in
   ok @@ contract
 
+let type_expression_string ~options syntax expression env state =
+  let {typer_switch ; _} : Compiler_options.t = options in
+  let%bind meta              = Of_source.make_meta_from_syntax syntax in
+  let%bind c_unit_exp, _     = Of_source.compile_string_without_preproc expression in
+  let%bind imperative_exp    = Of_c_unit.compile_expression ~options ~meta c_unit_exp in
+  let%bind sugar_exp         = Of_imperative.compile_expression imperative_exp in
+  let%bind core_exp          = Of_sugar.compile_expression sugar_exp in
+  let%bind typed_exp,e,state = Of_core.compile_expression ~typer_switch ~env ~state core_exp in
+  ok @@ (typed_exp,e,state)
+
+let type_contract_string ~options syntax expression env =
+  let {typer_switch ; _} : Compiler_options.t = options in
+  let%bind meta          = Of_source.make_meta_from_syntax syntax in
+  let%bind c_unit, _     = Of_source.compile_string_without_preproc expression in
+  let%bind imperative    = Of_c_unit.compile_string ~options ~meta c_unit in
+  let%bind sugar         = Of_imperative.compile imperative in
+  let%bind core          = Of_sugar.compile sugar in
+  let%bind typed,e,state = Of_core.compile ~typer_switch ~init_env:env Env core in
+  ok @@ (typed,core,e,state)
+
 let type_expression ~options source_file syntax expression env state =
   let {typer_switch ; _} : Compiler_options.t = options in
   let%bind meta              = Of_source.make_meta syntax source_file in

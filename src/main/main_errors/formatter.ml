@@ -54,6 +54,12 @@ let rec error_ppformat : display_format:string display_format ->
         arg
     | `Test_expected_to_fail -> Format.fprintf f "test was expected to fail but did not"
     | `Test_not_expected_to_fail -> Format.fprintf f "test was not expected to fail but did"
+    | `Test_repl (expected, actual) ->
+       Format.fprintf f "@[<hv>Expected:@ %a@ got:@ %a@]"
+        (Simple_utils.PP_helpers.list_sep_d Simple_utils.PP_helpers.string)
+        expected
+        (Simple_utils.PP_helpers.list_sep_d Simple_utils.PP_helpers.string)
+        actual
 
     | `Main_invalid_syntax_name syntax ->
       Format.fprintf f
@@ -169,6 +175,7 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_decompile_mini_c e -> Spilling.Errors.error_ppformat ~display_format f  e
     | `Main_decompile_typed e -> Typer.Errors.error_ppformat ~display_format f  e
 
+    | `Repl_unexpected -> Format.fprintf f "unexpected error, missing expression?"
   )
 
 let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
@@ -197,6 +204,7 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Test_bad_code_block _
   | `Test_expected_to_fail
   | `Test_not_expected_to_fail
+  | `Test_repl _
   -> `Null
 
   (* Top-level errors *)
@@ -337,6 +345,11 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Main_decompile_michelson e -> Stacking.Errors.error_jsonformat e
   | `Main_decompile_mini_c e -> Spilling.Errors.error_jsonformat e
   | `Main_decompile_typed e -> Typer.Errors.error_jsonformat e
+
+  | `Repl_unexpected ->
+     let message = `String "unexpected error" in
+     let content = `Assoc [("message", message)] in
+     json_error ~stage:"evaluating expression" ~content
 
 let error_format : _ Display.format = {
   pp = error_ppformat;
