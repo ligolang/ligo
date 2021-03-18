@@ -271,5 +271,6 @@ let rec all_expression : expression -> expression =
   else e
 
 let all_expression e =
+  let e = Uncurry.uncurry_expression e in
   let e = all_expression e in
-  Uncurry.uncurry_expression e
+  e
