@@ -81,6 +81,11 @@ module.exports = grammar({
         )
       ),
 
+    _program: $ => prec(1, choice(
+      $.let_in,
+      $._expr
+    )),
+
     //// EXPRESSIONS ///////////////////////////////////////////////////////////
 
     let_declaration: $ => prec.left(PREC.LET, withAttrs($, seq(
@@ -92,7 +97,7 @@ module.exports = grammar({
         field("type", $._type_expr)
       )),
       '=',
-      field("value", $._expr),
+      field("value", $._program),
     ))),
 
     fun_type: $ =>
@@ -111,6 +116,12 @@ module.exports = grammar({
         $.TypeName,
       ),
 
+    let_in: $ => seq(
+      $._declaration,
+      ';',
+      field("body", $._program),
+    ),
+
     _expr: $ => choice(
       $.lambda,
       $.indexing,
@@ -128,7 +139,13 @@ module.exports = grammar({
 
     apply: $ => prec.left(20, seq(
       field("function", $._expr),
-      par(sepBy(',', field("argument", $._expr))),
+      par(sepBy(',', field("argument", $._program))),
+    )),
+
+    par_program: $ => par(seq(
+      field("program", $._statement),
+      ';',
+      sepBy1(';', field("program", $._statement))
     )),
 
     _expr_term: $ => choice(
@@ -143,6 +160,7 @@ module.exports = grammar({
       $.switch,
       $.record,
       $.michelson_interop,
+      $.par_program,
     ),
 
     michelson_code: $ => seq(
@@ -182,7 +200,7 @@ module.exports = grammar({
     record_field: $ => seq(
       $._accessor_chain,
       ':',
-      field("value", $._expr),
+      field("value", $._program),
     ),
 
     // The precedence is chosen so as to overtake over
@@ -226,7 +244,7 @@ module.exports = grammar({
     alt: $ => seq(
       field("pattern", $._pattern),
       '=>',
-      field("expr", $._expr),
+      field("expr", $._program),
       optional(';'),
     ),
 
@@ -298,7 +316,7 @@ module.exports = grammar({
         field("type", $._type_expr),
       )),
       '=>',
-      field("body", $._expr),
+      field("body", $._program),
     )),
 
     //// TYPES /////////////////////////////////////////////////////////////////

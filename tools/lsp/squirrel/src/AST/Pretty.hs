@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 -- | Pretty printers for all 3 dialects and core s-expressions
--- and their corresponding `Show` instances for @AST.Sceleton@ types.
+-- and their corresponding `Show` instances for @AST.Skeleton@ types.
 
 module AST.Pretty
   ( module Exports

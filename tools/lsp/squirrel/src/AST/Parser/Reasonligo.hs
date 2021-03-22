@@ -65,6 +65,8 @@ recognise (SomeRawTree dialect rawTree)
         "switch"      -> Case       <$> field  "subject"   <*> fields   "alt"
         "lambda"      -> Lambda     <$> fields "argument"  <*> fieldOpt "type"   <*> field "body"
         "michelson_interop" -> Michelson  <$> field  "code"      <*> field "type"  <*> fields "argument"
+        "let_in"      -> Let        <$> field "declaration"      <*> field "body"
+        "par_program" -> Seq        <$> fields "program"
         _             -> fallthrough
 
     -- Pattern

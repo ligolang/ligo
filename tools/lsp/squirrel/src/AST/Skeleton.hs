@@ -1,4 +1,4 @@
-{- | The AST and auxillary types along with their pretty-printers.
+{- | The AST and auxiliary types along with their pretty-printers.
 
      The comments for fields in types are the type before it was made untyped.
 -}
