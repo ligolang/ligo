@@ -5,6 +5,7 @@ module Cli.Impl
   ( SomeLigoException (..)
   , LigoExpectedClientFailureException (..)
   , LigoDecodedExpectedClientFailureException (..)
+  , LigoUnexpectedCrashException (..)
   , callLigo
   , getLigoDefinitions
   , parseLigoDefinitions

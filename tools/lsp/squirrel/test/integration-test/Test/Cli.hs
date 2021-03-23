@@ -4,27 +4,31 @@ module Test.Cli
   ( test_ligo_159
   ) where
 
-import Control.Exception.Safe (try)
+import Control.Exception.Safe (SomeException, fromException, tryJust)
+import Data.Foldable (asum)
 import System.FilePath ((</>))
 
 import Cli
 import ParseTree (Source (..))
 
-import Test.FixedExpectations (HasCallStack, expectationFailure, shouldBe)
+import Test.FixedExpectations (HasCallStack, expectationFailure)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
 
-checkFile :: HasCallStack => Maybe LigoBinaryCallError -> FilePath -> TestTree
-checkFile expectedError path = testCase path $
-  try @_ @LigoBinaryCallError (getLigoDefinitions $ Path path) >>= \case
-    Left err -> case expectedError of
-      Nothing -> pure ()
-      Just expected -> expected `shouldBe` err
+filterException :: SomeException -> Maybe SomeLigoException
+filterException e = asum
+  [ SomeLigoException <$> fromException @LigoDecodedExpectedClientFailureException e
+  , SomeLigoException <$> fromException @LigoUnexpectedCrashException              e
+  ]
+
+checkFile :: HasCallStack => FilePath -> TestTree
+checkFile path = testCase path $
+  tryJust filterException (getLigoDefinitions $ Path path) >>= \case
+    Left  _ -> pure ()
     Right _ -> expectationFailure "Expected contract to fail, but it has succeeded."
 
 test_ligo_159 :: TestTree
-test_ligo_159 = testGroup "Contracts should throw errors" $
-  checkFile Nothing <$> files
+test_ligo_159 = testGroup "Contracts should throw errors" $ checkFile <$> files
   where
     files :: [FilePath]
     files = (\f -> "test" </> "contracts" </> "json-bugs" </> f) <$>

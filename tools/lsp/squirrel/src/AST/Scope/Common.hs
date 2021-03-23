@@ -3,6 +3,7 @@
 module AST.Scope.Common where
 
 import Control.Monad.State
+import qualified Data.List as List
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Monoid (First (..))
@@ -21,6 +22,7 @@ import AST.Skeleton
   withNestedLIGO)
 import Cli.Types
 import Control.Exception.Safe
+import Control.Lens.Operators ((&))
 import Control.Monad.Reader
 import Control.Monad.Trans.Except
 import ParseTree
@@ -28,7 +30,7 @@ import Parser
 import Product
 import Range
 
-class HasLigoClient m => HasScopeForest impl m where
+class HasLigoClient m => HasScopeForest imfl m where
   scopeForest :: Source -> SomeLIGO Info -> [Msg] -> m (ScopeForest, [Msg])
 
 instance {-# OVERLAPPABLE #-} Pretty x => Show x where
@@ -111,6 +113,41 @@ data DeclRef = DeclRef
 
 instance Pretty DeclRef where
   pp (DeclRef n r) = pp n <.> "@" <.> pp r
+
+-- | Merge two scope forests into one.
+-- TODO: whilst perfomance optimisation this function should be
+-- looked into in first place, specifically in `mergeDeclsWithLigoPriority`.
+mergeScopeForest :: ScopeForest -> ScopeForest -> ScopeForest
+mergeScopeForest (ScopeForest sl dl) (ScopeForest sr dr) =
+  ScopeForest (zipWith go sl sr) (Map.union dl dr)
+  where
+    go :: ScopeTree -> ScopeTree -> ScopeTree
+    go
+      (only -> (ldecls :> lr :> Nil, ldeepen))
+      (only -> (rdecls :> rr :> Nil, rdeepen))
+      -- The left scope is more local than the right hence try to find
+      -- where it's ambient from local subscopes from the right.
+      | leq lr rr = make (mergeDeclsWithLigoPriority ldecls rdecls :> rr :> Nil, zipWith go sl rdeepen)
+      -- Merge 2 scopes if they have different decls withing the equal range
+      | lr == rr  = make (mergeDeclsWithLigoPriority ldecls rdecls :> rr :> Nil, zipWith go ldeepen rdeepen)
+      -- The left scope is ambient to the right one hence try to find whence
+      -- the left subscope is more local or equal to the right one
+      | otherwise = make (mergeDeclsWithLigoPriority ldecls rdecls :> lr :> Nil, zipWith go ldeepen sr)
+    go _ _ = error "ScopeForest.mergeScopeForest: Impossible"
+
+    -- Merge two sets of declrefs by assuming that one of them is generated
+    -- from ligo compiler and replacing them consequently, or either take a
+    -- union of two sets.
+    mergeDeclsWithLigoPriority :: Set DeclRef -> Set DeclRef -> Set DeclRef
+    mergeDeclsWithLigoPriority l r
+      = Set.union l r
+      & Set.toList
+      & List.nubBy isLigoDecl
+      & Set.fromList
+      where
+        isLigoDecl DeclRef {drRange = rFile -> ldr} DeclRef {drRange = rFile -> rdr}
+          = "/dev/stdin" `List.isInfixOf` ldr
+          || "/dev/stdin" `List.isInfixOf` rdr
 
 withScopeForest
   :: (  ([ScopeTree], Map DeclRef ScopedDecl)
