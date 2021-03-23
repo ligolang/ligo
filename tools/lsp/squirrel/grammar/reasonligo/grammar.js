@@ -142,12 +142,6 @@ module.exports = grammar({
       par(sepBy(',', field("argument", $._program))),
     )),
 
-    par_program: $ => par(seq(
-      field("program", $._statement),
-      ';',
-      sepBy1(';', field("program", $._statement))
-    )),
-
     _expr_term: $ => choice(
       $.block,
       $.tuple,
@@ -160,8 +154,11 @@ module.exports = grammar({
       $.switch,
       $.record,
       $.michelson_interop,
-      $.par_program,
+      $.expr_group,
+      $.let_in,
     ),
+
+    expr_group: $ => prec(8, par(field("expr", $._expr_term))),
 
     michelson_code: $ => seq(
       '{|',
