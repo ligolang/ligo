@@ -41,7 +41,7 @@ using `begin` and `end`, separating expressions using semi-colons. The
 last expression, which represents the value returned, can have a
 different type to `unit`:
 
-``cameligo group=a
+```cameligo group=a
 let m (x : int) =
   begin
     assert (x > 0);
@@ -64,7 +64,7 @@ using braces, separating expressions using semi-colons. The last
 expression, which represents the value returned, can have a different
 type to `unit`:
 
-``reasonligo group=a
+```reasonligo group=a
 let m = (x : int) =>
   { assert (x > 0);
     assert (x < 10);
