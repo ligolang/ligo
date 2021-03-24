@@ -562,18 +562,18 @@ group n l
 --     (LigoRangeInner (LigoByte "contracts/test.ligo" 5 undefined undefined) 11 12)
 --   )
 -- :}
--- contracts/test.ligo:2:3-5:1
+-- contracts/test.ligo:2:4-5:2
 mbFromLigoRange :: LigoRange -> Maybe Range
 mbFromLigoRange (Virtual _) = Nothing
 mbFromLigoRange
   (LigoRange
-    (LigoRangeInner (LigoByte { _lbPosLnum = startLine, _lbPosFname = startFilePath }) startCNum startBol)
-    (LigoRangeInner (LigoByte { _lbPosLnum = endLine, _lbPosFname = endFilePath }) endCNum endBol)
+    (LigoRangeInner LigoByte { _lbPosLnum = startLine , _lbPosFname = startFilePath } startCNum startBol)
+    (LigoRangeInner LigoByte { _lbPosLnum = endLine   , _lbPosFname = endFilePath   } endCNum   endBol)
   )
   | startFilePath /= endFilePath = error "start file of a range does not equal to it's end file"
   | otherwise = Just $ Range
-      { rStart = (startLine, abs (startCNum - startBol), 0)
-      , rFinish = (endLine, abs (endCNum - endBol), 0)
+      { rStart = (startLine, abs (startCNum - startBol) + 1, 0)
+      , rFinish = (endLine, abs (endCNum - endBol) + 1, 0)
       , rFile = startFilePath
       }
 
