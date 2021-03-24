@@ -51,6 +51,7 @@ html[data-theme='dark'] {
   --color-primary-text: white;
   --blockquote-color: var(--ifm-navbar-background-color);
   --light-blue: var(--ifm-navbar-background-color);
+  --lighter-blue: #082e4f;
 }
 
 html {
@@ -737,7 +738,6 @@ a:hover {
   cursor: pointer;
   background-color: var(--lighter-blue);
   border-left: 6px solid var(--blue);
-  color: black;
   text-decoration: none;
 }
 
