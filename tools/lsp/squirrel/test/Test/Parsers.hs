@@ -62,11 +62,11 @@ getBadContractsWithExtension ext
 
 getOkayContracts :: IO [FilePath]
 getOkayContracts =
-  foldMap getOkayContractsWithExtension [".ligo", ".mligo", "religo"]
+  foldMap getOkayContractsWithExtension [".ligo", ".mligo", ".religo"]
 
 getBadContracts :: IO [FilePath]
 getBadContracts =
-  foldMap getBadContractsWithExtension [".ligo", ".mligo", "religo"]
+  foldMap getBadContractsWithExtension [".ligo", ".mligo", ".religo"]
 
 test_okayContracts :: IO TestTree
 test_okayContracts
