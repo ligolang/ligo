@@ -529,6 +529,14 @@ let list_map loc = typer_2 loc "LIST_MAP" @@ fun body lst ->
   let%bind () = assert_eq loc key arg in
   ok (t_list res )
 
+let fold loc = typer_3 loc "FOLD" @@ fun body container init ->
+  let%bind (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
+  let%bind (prec , cur) = trace_option (expected_pair loc arg) @@ get_t_pair arg in
+  let%bind key = trace_option (expected_list loc container) @@ Option.map_pair_or (get_t_list,get_t_set) container in
+  let%bind () = assert_eq loc key cur in
+  let%bind () = assert_eq loc prec res in
+  let%bind () = assert_eq loc res init in
+  ok res
 let list_fold loc = typer_3 loc "LIST_FOLD" @@ fun body lst init ->
   let%bind (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
   let%bind (prec , cur) = trace_option (expected_pair loc arg) @@ get_t_pair arg in
@@ -901,7 +909,8 @@ let constant_typers loc c : (typer , typer_error) result = match c with
   | C_FOLD_WHILE          -> ok @@ fold_while loc ;
   | C_FOLD_CONTINUE       -> ok @@ continue loc ;
   | C_FOLD_STOP           -> ok @@ stop loc ;
-    (* MATH *)
+  | C_FOLD                -> ok @@ fold loc ;
+   (* MATH *)
   | C_NEG                 -> ok @@ neg loc ;
   | C_ABS                 -> ok @@ abs loc ;
   | C_ADD                 -> ok @@ add loc ;

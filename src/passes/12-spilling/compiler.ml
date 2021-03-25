@@ -507,6 +507,7 @@ and compile_expression ?(module_env = SMap.empty) (ae:AST.expression) : (express
       | (C_LIST_FOLD , lst) -> fold lst
       | (C_SET_FOLD , lst) -> fold lst
       | (C_MAP_FOLD , lst) -> fold lst
+      | (C_FOLD, lst) -> fold lst
       | (C_LIST_FOLD_LEFT, lst) -> fold_left lst
       | (C_LIST_FOLD_RIGHT, lst) -> fold_right lst
       | (C_SET_FOLD_DESC , lst) -> fold_right lst
