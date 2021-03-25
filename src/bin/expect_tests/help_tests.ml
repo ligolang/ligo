@@ -311,7 +311,11 @@ let%expect_test _ =
 
            --warn=BOOL (absent=true)
                BOOL indicates whether warning messages should be printed in
-               stderr or not |} ] ;
+               stderr or not
+
+           --werror=BOOL (absent=false)
+               BOOL indicates whether warning messages should be treated as
+               errors or not |} ] ;
 
   run_ligo_good [ "compile-parameter" ; "--help" ] ;
   [%expect {|
@@ -396,7 +400,11 @@ let%expect_test _ =
 
            --warn=BOOL (absent=true)
                BOOL indicates whether warning messages should be printed in
-               stderr or not |} ] ;
+               stderr or not
+
+           --werror=BOOL (absent=false)
+               BOOL indicates whether warning messages should be treated as
+               errors or not |} ] ;
 
   run_ligo_good [ "compile-storage" ; "--help" ] ;
   [%expect {|
@@ -482,7 +490,11 @@ let%expect_test _ =
 
            --warn=BOOL (absent=true)
                BOOL indicates whether warning messages should be printed in
-               stderr or not |} ] ;
+               stderr or not
+
+           --werror=BOOL (absent=false)
+               BOOL indicates whether warning messages should be treated as
+               errors or not |} ] ;
 
   run_ligo_good [ "dry-run" ; "--help" ] ;
   [%expect {|
@@ -560,7 +572,11 @@ let%expect_test _ =
 
            --warn=BOOL (absent=true)
                BOOL indicates whether warning messages should be printed in
-               stderr or not |} ] ;
+               stderr or not
+
+           --werror=BOOL (absent=false)
+               BOOL indicates whether warning messages should be treated as
+               errors or not |} ] ;
 
   run_ligo_good [ "run-function" ; "--help" ] ;
   [%expect {|
@@ -753,4 +769,8 @@ let%expect_test _ =
 
            --warn=BOOL (absent=true)
                BOOL indicates whether warning messages should be printed in
-               stderr or not |} ] ;
+               stderr or not
+
+           --werror=BOOL (absent=false)
+               BOOL indicates whether warning messages should be treated as
+               errors or not |} ] ;
