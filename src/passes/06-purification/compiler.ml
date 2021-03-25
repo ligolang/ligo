@@ -35,6 +35,7 @@ let repair_mutable_variable_in_matching (match_body : O.expression) (element_nam
         | E_constant {cons_name=C_MAP_FOLD;arguments= _}
         | E_constant {cons_name=C_SET_FOLD;arguments= _}
         | E_constant {cons_name=C_LIST_FOLD;arguments= _}
+        | E_constant {cons_name=C_FOLD;arguments= _}
         | E_cond _
         | E_matching _ -> ok @@ (false, (decl_var,free_var),ass_exp)
       | E_constant _
@@ -83,6 +84,7 @@ and repair_mutable_variable_in_loops (for_body : O.expression) (element_names : 
         | E_constant {cons_name=C_MAP_FOLD;arguments= _}
         | E_constant {cons_name=C_SET_FOLD;arguments= _}
         | E_constant {cons_name=C_LIST_FOLD;arguments= _}
+        | E_constant {cons_name=C_FOLD;arguments= _}
         | E_cond _
         | E_matching _ -> ok @@ (false,(decl_var,free_var),ass_exp)
       | E_constant _
@@ -491,7 +493,7 @@ and compile_for_each I.{fe_binder;collection;collection_type; fe_body} =
     )
     | _ -> fun expr -> restore (O.e_let_in_ez (fst fe_binder) false [] (O.e_accessor (O.e_variable args) [Access_tuple Z.one]) expr)
   in
-  let lambda = O.e_lambda_ez args  None (restore for_body) in
+  let lambda = O.e_lambda_ez args None (restore for_body) in
   let%bind op_name = match collection_type with
    | Map -> ok @@ O.C_MAP_FOLD | Set -> ok @@ O.C_SET_FOLD | List -> ok @@ O.C_LIST_FOLD | Any -> ok @@ O.C_FOLD
   in

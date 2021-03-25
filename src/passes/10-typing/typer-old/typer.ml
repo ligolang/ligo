@@ -367,7 +367,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
   | E_lambda lambda ->
    let%bind (lambda, lambda_type) = type_lambda e lambda in
    return (E_lambda lambda ) lambda_type
-  | E_constant {cons_name=( C_LIST_FOLD | C_MAP_FOLD | C_SET_FOLD) as opname ;
+  | E_constant {cons_name=( C_LIST_FOLD | C_MAP_FOLD | C_SET_FOLD | C_FOLD) as opname ;
                 arguments=[
                     ( { content = (I.E_lambda { binder = {var=lname ; ascr = None};
                                                    output_type = None ;
