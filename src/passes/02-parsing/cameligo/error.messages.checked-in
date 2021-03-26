@@ -37,7 +37,7 @@ parentheses around what you think is the type.
 
 interactive_expr: Begin Fun WILD ARROW Bytes SEMI
 ##
-## Ends in an error in state: 571.
+## Ends in an error in state: 574.
 ##
 ## sequence -> Begin option(series) . End [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Module Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr C_None CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
 ##
@@ -57,12 +57,12 @@ interactive_expr: Begin Fun WILD ARROW Bytes SEMI
 ## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
 ## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 544, spurious reduction of production seq_expr -> disj_expr_level
-## In state 507, spurious reduction of production last_expr -> seq_expr
-## In state 560, spurious reduction of production fun_expr(last_expr) -> Fun nseq(irrefutable) ARROW last_expr
-## In state 556, spurious reduction of production last_expr -> fun_expr(last_expr)
-## In state 555, spurious reduction of production series -> last_expr
-## In state 570, spurious reduction of production option(series) -> series
+## In state 559, spurious reduction of production seq_expr -> disj_expr_level
+## In state 508, spurious reduction of production last_expr -> seq_expr
+## In state 563, spurious reduction of production fun_expr(last_expr) -> Fun nseq(irrefutable) ARROW last_expr
+## In state 558, spurious reduction of production last_expr -> fun_expr(last_expr)
+## In state 557, spurious reduction of production series -> last_expr
+## In state 573, spurious reduction of production option(series) -> series
 ##
 
 Ill-formed sequence of expressions.
@@ -73,7 +73,7 @@ expected:
 
 interactive_expr: Begin If Verbatim Then Verbatim Else With
 ##
-## Ends in an error in state: 543.
+## Ends in an error in state: 544.
 ##
 ## if_then_else(seq_expr) -> If expr Then closed_if Else . seq_expr [ SEMI End ]
 ##
@@ -86,7 +86,7 @@ At this point, the expression of the 'else' branch is expected.
 
 interactive_expr: Begin Match Verbatim With WILD ARROW Fun WILD ARROW With
 ##
-## Ends in an error in state: 508.
+## Ends in an error in state: 509.
 ##
 ## let_expr(base_cond) -> seq(Attr) . Let let_binding In base_cond [ VBAR ]
 ## let_expr(base_cond) -> seq(Attr) . Let Rec let_binding In base_cond [ VBAR ]
@@ -122,7 +122,7 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW With
 ##
 interactive_expr: Begin With
 ##
-## Ends in an error in state: 548.
+## Ends in an error in state: 550.
 ##
 ## let_in_sequence -> seq(Attr) . Let let_binding In series [ End ]
 ## let_in_sequence -> seq(Attr) . Let Rec let_binding In series [ End ]
@@ -138,7 +138,7 @@ interactive_expr: Begin With
 ##
 interactive_expr: Begin If Verbatim Then With
 ##
-## Ends in an error in state: 528.
+## Ends in an error in state: 529.
 ##
 ## let_expr(closed_if) -> seq(Attr) . Let let_binding In closed_if [ Else ]
 ## let_expr(closed_if) -> seq(Attr) . Let Rec let_binding In closed_if [ Else ]
@@ -150,11 +150,11 @@ interactive_expr: Begin If Verbatim Then With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 518, spurious reduction of production seq(Attr) ->
+## In state 519, spurious reduction of production seq(Attr) ->
 ##
 interactive_expr: If Verbatim Then With
 ##
-## Ends in an error in state: 591.
+## Ends in an error in state: 594.
 ##
 ## let_expr(closed_if) -> seq(Attr) . Let let_binding In closed_if [ Else ]
 ## let_expr(closed_if) -> seq(Attr) . Let Rec let_binding In closed_if [ Else ]
@@ -168,7 +168,7 @@ interactive_expr: If Verbatim Then With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 576, spurious reduction of production seq(Attr) ->
+## In state 579, spurious reduction of production seq(Attr) ->
 ##
 interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then With
 ##
@@ -218,7 +218,7 @@ interactive_expr: With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 689, spurious reduction of production seq(Attr) ->
+## In state 692, spurious reduction of production seq(Attr) ->
 ##
 contract: With
 ##
@@ -243,7 +243,7 @@ At this point, if the attributes (if any) are complete, the keyword
 
 interactive_expr: Begin If Verbatim Then If Verbatim Then Verbatim COMMA Bytes With
 ##
-## Ends in an error in state: 540.
+## Ends in an error in state: 541.
 ##
 ## if_then_else(closed_if) -> If expr Then closed_if . Else closed_if [ Else ]
 ##
@@ -266,13 +266,13 @@ interactive_expr: Begin If Verbatim Then If Verbatim Then Verbatim COMMA Bytes W
 ## In state 322, spurious reduction of production nsepseq(disj_expr_level,COMMA) -> disj_expr_level
 ## In state 321, spurious reduction of production tuple(disj_expr_level) -> disj_expr_level COMMA nsepseq(disj_expr_level,COMMA)
 ## In state 243, spurious reduction of production tuple_expr -> tuple(disj_expr_level)
-## In state 527, spurious reduction of production base_expr(closed_if) -> tuple_expr
+## In state 528, spurious reduction of production base_expr(closed_if) -> tuple_expr
 ## In state 406, spurious reduction of production base_if_then_else__open(closed_if) -> base_expr(closed_if)
 ## In state 405, spurious reduction of production closed_if -> base_if_then_else__open(closed_if)
 ##
 interactive_expr: Begin If Verbatim Then Verbatim COMMA Bytes With
 ##
-## Ends in an error in state: 542.
+## Ends in an error in state: 543.
 ##
 ## if_then_else(seq_expr) -> If expr Then closed_if . Else seq_expr [ SEMI End ]
 ##
@@ -295,13 +295,13 @@ interactive_expr: Begin If Verbatim Then Verbatim COMMA Bytes With
 ## In state 322, spurious reduction of production nsepseq(disj_expr_level,COMMA) -> disj_expr_level
 ## In state 321, spurious reduction of production tuple(disj_expr_level) -> disj_expr_level COMMA nsepseq(disj_expr_level,COMMA)
 ## In state 243, spurious reduction of production tuple_expr -> tuple(disj_expr_level)
-## In state 527, spurious reduction of production base_expr(closed_if) -> tuple_expr
+## In state 528, spurious reduction of production base_expr(closed_if) -> tuple_expr
 ## In state 406, spurious reduction of production base_if_then_else__open(closed_if) -> base_expr(closed_if)
 ## In state 405, spurious reduction of production closed_if -> base_if_then_else__open(closed_if)
 ##
 interactive_expr: Begin If Verbatim Then Verbatim With
 ##
-## Ends in an error in state: 537.
+## Ends in an error in state: 538.
 ##
 ## base_expr(closed_if) -> disj_expr_level . [ Else ]
 ## bin_op(disj_expr_level,BOOL_OR,conj_expr_level) -> disj_expr_level . BOOL_OR conj_expr_level [ Or Else COMMA BOOL_OR ]
@@ -332,7 +332,7 @@ keyword 'else' is expected, followed by an expression.
 
 interactive_expr: Begin If Verbatim Then If Verbatim With
 ##
-## Ends in an error in state: 520.
+## Ends in an error in state: 521.
 ##
 ## if_then_else(closed_if) -> If expr . Then closed_if Else closed_if [ Else ]
 ##
@@ -358,7 +358,7 @@ interactive_expr: Begin If Verbatim Then If Verbatim With
 ##
 interactive_expr: Begin If Verbatim With
 ##
-## Ends in an error in state: 517.
+## Ends in an error in state: 518.
 ##
 ## if_then_else(seq_expr) -> If expr . Then closed_if Else seq_expr [ SEMI End ]
 ##
@@ -412,7 +412,7 @@ interactive_expr: Begin Match Verbatim With WILD ARROW If Verbatim With
 ##
 interactive_expr: If Verbatim Then If Verbatim With
 ##
-## Ends in an error in state: 583.
+## Ends in an error in state: 586.
 ##
 ## if_then(expr) -> If expr . Then expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
 ## if_then_else(closed_if) -> If expr . Then closed_if Else closed_if [ Else ]
@@ -468,7 +468,7 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW If Verbatim Wi
 ##
 interactive_expr: If Verbatim With
 ##
-## Ends in an error in state: 575.
+## Ends in an error in state: 578.
 ##
 ## if_then(expr) -> If expr . Then expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
 ## if_then_else(expr) -> If expr . Then closed_if Else expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
@@ -555,7 +555,7 @@ expected, followed by an expression.
 
 interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes With
 ##
-## Ends in an error in state: 531.
+## Ends in an error in state: 532.
 ##
 ## let_expr(closed_if) -> seq(Attr) Let Rec let_binding . In closed_if [ Else ]
 ##
@@ -582,7 +582,7 @@ interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes With
 ##
 interactive_expr: Begin Let Rec WILD EQ Bytes With
 ##
-## Ends in an error in state: 551.
+## Ends in an error in state: 553.
 ##
 ## let_in_sequence -> seq(Attr) Let Rec let_binding . In series [ End ]
 ##
@@ -609,7 +609,7 @@ interactive_expr: Begin Let Rec WILD EQ Bytes With
 ##
 interactive_expr: Begin Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes With
 ##
-## Ends in an error in state: 511.
+## Ends in an error in state: 512.
 ##
 ## let_expr(base_cond) -> seq(Attr) Let Rec let_binding . In base_cond [ VBAR ]
 ## let_in_sequence -> seq(Attr) Let Rec let_binding . In series [ End ]
@@ -637,7 +637,7 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes Wit
 ##
 interactive_expr: If Verbatim Then Let Rec WILD EQ Bytes With
 ##
-## Ends in an error in state: 594.
+## Ends in an error in state: 597.
 ##
 ## let_expr(closed_if) -> seq(Attr) Let Rec let_binding . In closed_if [ Else ]
 ## let_expr(expr) -> seq(Attr) Let Rec let_binding . In expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
@@ -775,7 +775,7 @@ interactive_expr: Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes With
 ##
 interactive_expr: Begin If Verbatim Then Let WILD EQ Bytes With
 ##
-## Ends in an error in state: 538.
+## Ends in an error in state: 539.
 ##
 ## let_expr(closed_if) -> seq(Attr) Let let_binding . In closed_if [ Else ]
 ##
@@ -802,7 +802,7 @@ interactive_expr: Begin If Verbatim Then Let WILD EQ Bytes With
 ##
 interactive_expr: Begin Let WILD EQ Bytes With
 ##
-## Ends in an error in state: 557.
+## Ends in an error in state: 560.
 ##
 ## let_in_sequence -> seq(Attr) Let let_binding . In series [ End ]
 ##
@@ -829,7 +829,7 @@ interactive_expr: Begin Let WILD EQ Bytes With
 ##
 interactive_expr: Begin Match Verbatim With WILD ARROW Let WILD EQ Bytes With
 ##
-## Ends in an error in state: 562.
+## Ends in an error in state: 565.
 ##
 ## let_expr(base_cond) -> seq(Attr) Let let_binding . In base_cond [ VBAR ]
 ## let_in_sequence -> seq(Attr) Let let_binding . In series [ End ]
@@ -885,7 +885,7 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Let WILD EQ By
 ##
 interactive_expr: If Verbatim Then Let WILD EQ Bytes With
 ##
-## Ends in an error in state: 601.
+## Ends in an error in state: 604.
 ##
 ## let_expr(closed_if) -> seq(Attr) Let let_binding . In closed_if [ Else ]
 ## let_expr(expr) -> seq(Attr) Let let_binding . In expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
@@ -1000,7 +1000,7 @@ expression, the keyword 'in' is expected, followed by an expression.
 
 interactive_expr: Begin If Verbatim Then Let Rec With
 ##
-## Ends in an error in state: 530.
+## Ends in an error in state: 531.
 ##
 ## let_expr(closed_if) -> seq(Attr) Let Rec . let_binding In closed_if [ Else ]
 ##
@@ -1009,7 +1009,7 @@ interactive_expr: Begin If Verbatim Then Let Rec With
 ##
 interactive_expr: Begin Match Verbatim With WILD ARROW Let Rec With
 ##
-## Ends in an error in state: 510.
+## Ends in an error in state: 511.
 ##
 ## let_expr(base_cond) -> seq(Attr) Let Rec . let_binding In base_cond [ VBAR ]
 ## let_in_sequence -> seq(Attr) Let Rec . let_binding In series [ End ]
@@ -1019,7 +1019,7 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Let Rec With
 ##
 interactive_expr: Begin Let Rec With
 ##
-## Ends in an error in state: 550.
+## Ends in an error in state: 552.
 ##
 ## let_in_sequence -> seq(Attr) Let Rec . let_binding In series [ End ]
 ##
@@ -1028,7 +1028,7 @@ interactive_expr: Begin Let Rec With
 ##
 interactive_expr: If Verbatim Then Let Rec With
 ##
-## Ends in an error in state: 593.
+## Ends in an error in state: 596.
 ##
 ## let_expr(closed_if) -> seq(Attr) Let Rec . let_binding In closed_if [ Else ]
 ## let_expr(expr) -> seq(Attr) Let Rec . let_binding In expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
@@ -1090,7 +1090,7 @@ identifier for the value being defined.
 
 interactive_expr: Begin If Verbatim Then Let With
 ##
-## Ends in an error in state: 529.
+## Ends in an error in state: 530.
 ##
 ## let_expr(closed_if) -> seq(Attr) Let . let_binding In closed_if [ Else ]
 ## let_expr(closed_if) -> seq(Attr) Let . Rec let_binding In closed_if [ Else ]
@@ -1100,7 +1100,7 @@ interactive_expr: Begin If Verbatim Then Let With
 ##
 interactive_expr: Begin Let With
 ##
-## Ends in an error in state: 549.
+## Ends in an error in state: 551.
 ##
 ## let_in_sequence -> seq(Attr) Let . let_binding In series [ End ]
 ## let_in_sequence -> seq(Attr) Let . Rec let_binding In series [ End ]
@@ -1110,7 +1110,7 @@ interactive_expr: Begin Let With
 ##
 interactive_expr: Begin Match Verbatim With WILD ARROW Let With
 ##
-## Ends in an error in state: 509.
+## Ends in an error in state: 510.
 ##
 ## let_expr(base_cond) -> seq(Attr) Let . let_binding In base_cond [ VBAR ]
 ## let_expr(base_cond) -> seq(Attr) Let . Rec let_binding In base_cond [ VBAR ]
@@ -1134,7 +1134,7 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Let With
 ##
 interactive_expr: If Verbatim Then Let With
 ##
-## Ends in an error in state: 592.
+## Ends in an error in state: 595.
 ##
 ## let_expr(closed_if) -> seq(Attr) Let . let_binding In closed_if [ Else ]
 ## let_expr(closed_if) -> seq(Attr) Let . Rec let_binding In closed_if [ Else ]
@@ -1247,7 +1247,7 @@ interactive_expr: Begin Match Verbatim Type
 ##
 interactive_expr: Match Verbatim Type
 ##
-## Ends in an error in state: 659.
+## Ends in an error in state: 662.
 ##
 ## match_expr(base_cond) -> Match expr . With option(VBAR) cases(base_cond) [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
 ##
@@ -1273,7 +1273,7 @@ interactive_expr: Match Verbatim Type
 ##
 interactive_expr: If Verbatim Then Match Verbatim Type
 ##
-## Ends in an error in state: 578.
+## Ends in an error in state: 581.
 ##
 ## match_expr(base_cond) -> Match expr . With option(VBAR) cases(base_cond) [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
 ## match_expr(base_if_then_else) -> Match expr . With option(VBAR) cases(base_if_then_else) [ Else ]
@@ -1305,7 +1305,7 @@ then the keyword 'with' is expected, followed by matching cases.
 
 interactive_expr: Begin Match Verbatim With WILD ARROW Verbatim With
 ##
-## Ends in an error in state: 566.
+## Ends in an error in state: 569.
 ##
 ## cases(base_cond) -> cases(base_cond) . VBAR case_clause(base_cond) [ VBAR ]
 ## cases(last_expr) -> cases(base_cond) . VBAR case_clause(last_expr) [ End ]
@@ -1402,7 +1402,7 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD CONS Bytes SEMI
 ##
 interactive_expr: Match Verbatim With WILD CONS Bytes SEMI
 ##
-## Ends in an error in state: 662.
+## Ends in an error in state: 665.
 ##
 ## case_clause(base_cond) -> pattern . ARROW base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
 ##
@@ -1432,7 +1432,7 @@ interactive_expr: Begin If Verbatim Then Match Verbatim With With
 ##
 interactive_expr: Begin Match Verbatim With WILD ARROW Bytes VBAR With
 ##
-## Ends in an error in state: 567.
+## Ends in an error in state: 570.
 ##
 ## cases(base_cond) -> cases(base_cond) VBAR . case_clause(base_cond) [ VBAR ]
 ## cases(last_expr) -> cases(base_cond) VBAR . case_clause(last_expr) [ End ]
@@ -1469,7 +1469,7 @@ interactive_expr: Begin Match Verbatim With With
 ##
 interactive_expr: If Verbatim Then Match Verbatim With With
 ##
-## Ends in an error in state: 579.
+## Ends in an error in state: 582.
 ##
 ## match_expr(base_cond) -> Match expr With . option(VBAR) cases(base_cond) [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
 ## match_expr(base_if_then_else) -> Match expr With . option(VBAR) cases(base_if_then_else) [ Else ]
@@ -1479,7 +1479,7 @@ interactive_expr: If Verbatim Then Match Verbatim With With
 ##
 interactive_expr: If Verbatim Then Match Verbatim With VBAR Begin
 ##
-## Ends in an error in state: 580.
+## Ends in an error in state: 583.
 ##
 ## match_expr(base_cond) -> Match expr With option(VBAR) . cases(base_cond) [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
 ## match_expr(base_if_then_else) -> Match expr With option(VBAR) . cases(base_if_then_else) [ Else ]
@@ -1499,7 +1499,7 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Bytes VBAR Wit
 ##
 interactive_expr: Match Verbatim With VBAR Begin
 ##
-## Ends in an error in state: 661.
+## Ends in an error in state: 664.
 ##
 ## match_expr(base_cond) -> Match expr With option(VBAR) . cases(base_cond) [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
 ##
@@ -1508,7 +1508,7 @@ interactive_expr: Match Verbatim With VBAR Begin
 ##
 interactive_expr: Match Verbatim With WILD ARROW Bytes VBAR With
 ##
-## Ends in an error in state: 665.
+## Ends in an error in state: 668.
 ##
 ## cases(base_cond) -> cases(base_cond) VBAR . case_clause(base_cond) [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
 ##
@@ -1517,7 +1517,7 @@ interactive_expr: Match Verbatim With WILD ARROW Bytes VBAR With
 ##
 interactive_expr: Match Verbatim With With
 ##
-## Ends in an error in state: 660.
+## Ends in an error in state: 663.
 ##
 ## match_expr(base_cond) -> Match expr With . option(VBAR) cases(base_cond) [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
 ##
@@ -1530,14 +1530,13 @@ At this point, a case is expected to start with a pattern.
 
 interactive_expr: Begin Verbatim With
 ##
-## Ends in an error in state: 544.
+## Ends in an error in state: 515.
 ##
-## bin_op(disj_expr_level,BOOL_OR,conj_expr_level) -> disj_expr_level . BOOL_OR conj_expr_level [ SEMI Or End BOOL_OR ]
-## bin_op(disj_expr_level,Or,conj_expr_level) -> disj_expr_level . Or conj_expr_level [ SEMI Or End BOOL_OR ]
-## seq_expr -> disj_expr_level . [ SEMI End ]
+## last_expr -> seq_expr . [ End ]
+## series -> seq_expr . SEMI series [ End ]
 ##
 ## The known suffix of the stack is as follows:
-## disj_expr_level
+## seq_expr
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -1552,6 +1551,7 @@ interactive_expr: Begin Verbatim With
 ## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
 ## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 559, spurious reduction of production seq_expr -> disj_expr_level
 ##
 
 Ill-formed sequence of expressions.
@@ -1667,7 +1667,7 @@ At this point, one of the following is expected:
 
 interactive_expr: Begin Fun With
 ##
-## Ends in an error in state: 545.
+## Ends in an error in state: 546.
 ##
 ## fun_expr(last_expr) -> Fun . nseq(irrefutable) ARROW last_expr [ End ]
 ##
@@ -1695,7 +1695,7 @@ interactive_expr: Fun With
 ##
 interactive_expr: If Verbatim Then Fun With
 ##
-## Ends in an error in state: 585.
+## Ends in an error in state: 588.
 ##
 ## fun_expr(closed_if) -> Fun . nseq(irrefutable) ARROW closed_if [ Else ]
 ## fun_expr(expr) -> Fun . nseq(irrefutable) ARROW expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
@@ -1705,7 +1705,7 @@ interactive_expr: If Verbatim Then Fun With
 ##
 interactive_expr: Begin If Verbatim Then Fun With
 ##
-## Ends in an error in state: 522.
+## Ends in an error in state: 523.
 ##
 ## fun_expr(closed_if) -> Fun . nseq(irrefutable) ARROW closed_if [ Else ]
 ##
@@ -1748,7 +1748,7 @@ pattern, for example a variable.
 
 interactive_expr: LBRACE Ident DOT Ident Verbatim
 ##
-## Ends in an error in state: 613.
+## Ends in an error in state: 616.
 ##
 ## update_record -> LBRACE path . With sep_or_term_list(field_path_assignment,SEMI) RBRACE [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Module Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr C_None CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
 ##
@@ -1761,7 +1761,7 @@ interactive_expr: LBRACE Ident DOT Ident Verbatim
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production nsepseq(selection,DOT) -> selection
 ## In state 207, spurious reduction of production projection -> Ident DOT nsepseq(selection,DOT)
-## In state 612, spurious reduction of production path -> projection
+## In state 615, spurious reduction of production path -> projection
 ##
 
 Ill-formed record update.
@@ -1771,7 +1771,7 @@ separated by semicolons ';'.
 
 interactive_expr: LBRACE Ident EQ Bytes SEMI Ident EQ Bytes SEMI With
 ##
-## Ends in an error in state: 638.
+## Ends in an error in state: 641.
 ##
 ## nsepseq(field_assignment,SEMI) -> field_assignment SEMI . nsepseq(field_assignment,SEMI) [ RBRACE ]
 ## seq(__anonymous_0(field_assignment,SEMI)) -> field_assignment SEMI . seq(__anonymous_0(field_assignment,SEMI)) [ RBRACE ]
@@ -1781,7 +1781,7 @@ interactive_expr: LBRACE Ident EQ Bytes SEMI Ident EQ Bytes SEMI With
 ##
 interactive_expr: LBRACE Ident EQ Bytes SEMI With
 ##
-## Ends in an error in state: 633.
+## Ends in an error in state: 636.
 ##
 ## nsepseq(field_assignment,SEMI) -> field_assignment SEMI . nsepseq(field_assignment,SEMI) [ RBRACE ]
 ## nseq(__anonymous_0(field_assignment,SEMI)) -> field_assignment SEMI . seq(__anonymous_0(field_assignment,SEMI)) [ RBRACE ]
@@ -1797,7 +1797,7 @@ At this point, one of the following is expected:
 
 interactive_expr: LBRACE Ident EQ Bytes SEMI Ident EQ Bytes With
 ##
-## Ends in an error in state: 637.
+## Ends in an error in state: 640.
 ##
 ## nsepseq(field_assignment,SEMI) -> field_assignment . [ RBRACE ]
 ## nsepseq(field_assignment,SEMI) -> field_assignment . SEMI nsepseq(field_assignment,SEMI) [ RBRACE ]
@@ -1822,11 +1822,11 @@ interactive_expr: LBRACE Ident EQ Bytes SEMI Ident EQ Bytes With
 ## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
 ## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
 ## In state 332, spurious reduction of production expr -> base_cond__open(expr)
-## In state 609, spurious reduction of production field_assignment -> Ident EQ expr
+## In state 612, spurious reduction of production field_assignment -> Ident EQ expr
 ##
 interactive_expr: LBRACE Ident EQ Bytes With
 ##
-## Ends in an error in state: 632.
+## Ends in an error in state: 635.
 ##
 ## nsepseq(field_assignment,SEMI) -> field_assignment . [ RBRACE ]
 ## nsepseq(field_assignment,SEMI) -> field_assignment . SEMI nsepseq(field_assignment,SEMI) [ RBRACE ]
@@ -1851,7 +1851,7 @@ interactive_expr: LBRACE Ident EQ Bytes With
 ## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
 ## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
 ## In state 332, spurious reduction of production expr -> base_cond__open(expr)
-## In state 609, spurious reduction of production field_assignment -> Ident EQ expr
+## In state 612, spurious reduction of production field_assignment -> Ident EQ expr
 ##
 
 Ill-formed record expression.
@@ -1862,7 +1862,7 @@ one of the following is expected:
 
 interactive_expr: LBRACE Ident With Ident EQ Bytes SEMI Ident EQ Bytes With
 ##
-## Ends in an error in state: 627.
+## Ends in an error in state: 630.
 ##
 ## nsepseq(field_path_assignment,SEMI) -> field_path_assignment . [ RBRACE ]
 ## nsepseq(field_path_assignment,SEMI) -> field_path_assignment . SEMI nsepseq(field_path_assignment,SEMI) [ RBRACE ]
@@ -1887,11 +1887,11 @@ interactive_expr: LBRACE Ident With Ident EQ Bytes SEMI Ident EQ Bytes With
 ## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
 ## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
 ## In state 332, spurious reduction of production expr -> base_cond__open(expr)
-## In state 620, spurious reduction of production field_path_assignment -> path EQ expr
+## In state 623, spurious reduction of production field_path_assignment -> path EQ expr
 ##
 interactive_expr: LBRACE Ident With Ident EQ Bytes With
 ##
-## Ends in an error in state: 623.
+## Ends in an error in state: 626.
 ##
 ## nsepseq(field_path_assignment,SEMI) -> field_path_assignment . [ RBRACE ]
 ## nsepseq(field_path_assignment,SEMI) -> field_path_assignment . SEMI nsepseq(field_path_assignment,SEMI) [ RBRACE ]
@@ -1916,7 +1916,7 @@ interactive_expr: LBRACE Ident With Ident EQ Bytes With
 ## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
 ## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
 ## In state 332, spurious reduction of production expr -> base_cond__open(expr)
-## In state 620, spurious reduction of production field_path_assignment -> path EQ expr
+## In state 623, spurious reduction of production field_path_assignment -> path EQ expr
 ##
 
 Ill-formed record update.
@@ -1927,7 +1927,7 @@ complete, one of the following is expected:
 
 interactive_expr: LBRACE Ident EQ Bytes SEMI Ident With
 ##
-## Ends in an error in state: 634.
+## Ends in an error in state: 637.
 ##
 ## field_assignment -> Ident . EQ expr [ SEMI RBRACE ]
 ##
@@ -1961,7 +1961,7 @@ At this point, one of the following is expected:
 
 interactive_expr: LBRACE Ident With Ident DOT Ident With
 ##
-## Ends in an error in state: 618.
+## Ends in an error in state: 621.
 ##
 ## field_path_assignment -> path . EQ expr [ SEMI RBRACE ]
 ##
@@ -1974,7 +1974,7 @@ interactive_expr: LBRACE Ident With Ident DOT Ident With
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 204, spurious reduction of production nsepseq(selection,DOT) -> selection
 ## In state 207, spurious reduction of production projection -> Ident DOT nsepseq(selection,DOT)
-## In state 612, spurious reduction of production path -> projection
+## In state 615, spurious reduction of production path -> projection
 ##
 
 Ill-formed record update.
@@ -1983,7 +1983,7 @@ expression (update).
 
 interactive_expr: LBRACE Ident With Ident EQ Bytes SEMI Ident EQ Bytes SEMI With
 ##
-## Ends in an error in state: 628.
+## Ends in an error in state: 631.
 ##
 ## nsepseq(field_path_assignment,SEMI) -> field_path_assignment SEMI . nsepseq(field_path_assignment,SEMI) [ RBRACE ]
 ## seq(__anonymous_0(field_path_assignment,SEMI)) -> field_path_assignment SEMI . seq(__anonymous_0(field_path_assignment,SEMI)) [ RBRACE ]
@@ -1993,7 +1993,7 @@ interactive_expr: LBRACE Ident With Ident EQ Bytes SEMI Ident EQ Bytes SEMI With
 ##
 interactive_expr: LBRACE Ident With Ident EQ Bytes SEMI With
 ##
-## Ends in an error in state: 624.
+## Ends in an error in state: 627.
 ##
 ## nsepseq(field_path_assignment,SEMI) -> field_path_assignment SEMI . nsepseq(field_path_assignment,SEMI) [ RBRACE ]
 ## nseq(__anonymous_0(field_path_assignment,SEMI)) -> field_path_assignment SEMI . seq(__anonymous_0(field_path_assignment,SEMI)) [ RBRACE ]
@@ -2009,7 +2009,7 @@ At this point, one of the following is expected:
 
 interactive_expr: LBRACE Ident With Ident With
 ##
-## Ends in an error in state: 615.
+## Ends in an error in state: 618.
 ##
 ## path -> Ident . [ EQ ]
 ## projection -> Ident . DOT nsepseq(selection,DOT) [ EQ ]
@@ -2026,7 +2026,7 @@ At this point, one of the following is expected:
 
 interactive_expr: LBRACE Ident With With
 ##
-## Ends in an error in state: 614.
+## Ends in an error in state: 617.
 ##
 ## update_record -> LBRACE path With . sep_or_term_list(field_path_assignment,SEMI) RBRACE [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Module Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr C_None CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
 ##
@@ -2056,7 +2056,7 @@ At this point, one of the following is expected:
 
 interactive_expr: LBRACKET Verbatim SEMI Verbatim With
 ##
-## Ends in an error in state: 649.
+## Ends in an error in state: 652.
 ##
 ## nsepseq(expr,SEMI) -> expr . [ RBRACKET ]
 ## nsepseq(expr,SEMI) -> expr . SEMI nsepseq(expr,SEMI) [ RBRACKET ]
@@ -2084,7 +2084,7 @@ interactive_expr: LBRACKET Verbatim SEMI Verbatim With
 ##
 interactive_expr: LBRACKET Verbatim With
 ##
-## Ends in an error in state: 645.
+## Ends in an error in state: 648.
 ##
 ## nsepseq(expr,SEMI) -> expr . [ RBRACKET ]
 ## nsepseq(expr,SEMI) -> expr . SEMI nsepseq(expr,SEMI) [ RBRACKET ]
@@ -2134,7 +2134,7 @@ At this point, one of the following is expected:
 
 interactive_expr: LPAR Verbatim COLON Ident VBAR
 ##
-## Ends in an error in state: 656.
+## Ends in an error in state: 659.
 ##
 ## par(annot_expr) -> LPAR annot_expr . RPAR [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Module Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr C_None CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
 ##
@@ -2148,7 +2148,7 @@ interactive_expr: LPAR Verbatim COLON Ident VBAR
 ## In state 22, spurious reduction of production cartesian -> core_type
 ## In state 29, spurious reduction of production fun_type -> cartesian
 ## In state 62, spurious reduction of production type_expr -> fun_type
-## In state 655, spurious reduction of production annot_expr -> expr COLON type_expr
+## In state 658, spurious reduction of production annot_expr -> expr COLON type_expr
 ##
 
 Ill-formed annotated expression.
@@ -2182,7 +2182,7 @@ following is expected:
 
 interactive_expr: LPAR Verbatim With
 ##
-## Ends in an error in state: 652.
+## Ends in an error in state: 655.
 ##
 ## annot_expr -> expr . COLON type_expr [ RPAR ]
 ## par(expr) -> LPAR expr . RPAR [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Module Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr C_None CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
@@ -2217,7 +2217,7 @@ expected:
 
 interactive_expr: Lang Verbatim With
 ##
-## Ends in an error in state: 666.
+## Ends in an error in state: 669.
 ##
 ## code_inj -> Lang expr . RBRACKET [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Module Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr C_None CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
 ##
@@ -2599,7 +2599,7 @@ parentheses around what you think is the expression.
 
 interactive_expr: Ident WILD
 ##
-## Ends in an error in state: 691.
+## Ends in an error in state: 694.
 ##
 ## interactive_expr -> expr . EOF [ # ]
 ##
@@ -3373,7 +3373,7 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Type Ident EQ 
 ##
 interactive_expr: Begin If Verbatim Then Type Ident EQ Constr With
 ##
-## Ends in an error in state: 525.
+## Ends in an error in state: 526.
 ##
 ## local_type_decl(closed_if) -> type_decl . In closed_if [ Else ]
 ##
@@ -3392,7 +3392,7 @@ interactive_expr: Begin If Verbatim Then Type Ident EQ Constr With
 ##
 interactive_expr: If Verbatim Then Type Ident EQ Constr With
 ##
-## Ends in an error in state: 588.
+## Ends in an error in state: 591.
 ##
 ## local_type_decl(closed_if) -> type_decl . In closed_if [ Else ]
 ## local_type_decl(expr) -> type_decl . In expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
@@ -3456,7 +3456,7 @@ expected, followed by an expression.
 
 contract: Type Ident EQ Constr End
 ##
-## Ends in an error in state: 686.
+## Ends in an error in state: 689.
 ##
 ## contract -> module_ . EOF [ # ]
 ##
@@ -3473,9 +3473,9 @@ contract: Type Ident EQ Constr End
 ## In state 51, spurious reduction of production type_expr -> sum_type
 ## In state 78, spurious reduction of production type_decl -> Type Ident EQ type_expr
 ## In state 83, spurious reduction of production declaration -> type_decl
-## In state 678, spurious reduction of production seq(declaration) ->
-## In state 679, spurious reduction of production nseq(declaration) -> declaration seq(declaration)
-## In state 672, spurious reduction of production module_ -> nseq(declaration)
+## In state 681, spurious reduction of production seq(declaration) ->
+## In state 682, spurious reduction of production nseq(declaration) -> declaration seq(declaration)
+## In state 675, spurious reduction of production module_ -> nseq(declaration)
 ##
 
 Ill-formed contract.
@@ -3485,7 +3485,7 @@ At this point, one the following is expected:
 
 contract: Module Constr EQ Struct Type Ident EQ Constr EOF
 ##
-## Ends in an error in state: 675.
+## Ends in an error in state: 678.
 ##
 ## module_decl -> Module Constr EQ Struct module_ . End [ Type Module Let In End EOF Attr ]
 ##
@@ -3502,9 +3502,9 @@ contract: Module Constr EQ Struct Type Ident EQ Constr EOF
 ## In state 51, spurious reduction of production type_expr -> sum_type
 ## In state 78, spurious reduction of production type_decl -> Type Ident EQ type_expr
 ## In state 83, spurious reduction of production declaration -> type_decl
-## In state 678, spurious reduction of production seq(declaration) ->
-## In state 679, spurious reduction of production nseq(declaration) -> declaration seq(declaration)
-## In state 672, spurious reduction of production module_ -> nseq(declaration)
+## In state 681, spurious reduction of production seq(declaration) ->
+## In state 682, spurious reduction of production nseq(declaration) -> declaration seq(declaration)
+## In state 675, spurious reduction of production module_ -> nseq(declaration)
 ##
 
 Ill-formed module declaration.
@@ -3598,7 +3598,7 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Module Constr 
 ##
 interactive_expr: If Verbatim Then Module Constr EQ Struct Type Ident EQ Constr End With
 ##
-## Ends in an error in state: 596.
+## Ends in an error in state: 599.
 ##
 ## local_module_decl(closed_if) -> module_decl . In closed_if [ Else ]
 ## local_module_decl(expr) -> module_decl . In expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
@@ -3608,7 +3608,7 @@ interactive_expr: If Verbatim Then Module Constr EQ Struct Type Ident EQ Constr 
 ##
 interactive_expr: Begin If Verbatim Then Module Constr EQ Struct Type Ident EQ Constr End With
 ##
-## Ends in an error in state: 533.
+## Ends in an error in state: 534.
 ##
 ## local_module_decl(closed_if) -> module_decl . In closed_if [ Else ]
 ##
@@ -3632,8 +3632,8 @@ interactive_expr: Module Constr EQ Constr Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 682, spurious reduction of production nsepseq(module_name,DOT) -> Constr
-## In state 685, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT)
+## In state 685, spurious reduction of production nsepseq(module_name,DOT) -> Constr
+## In state 688, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT)
 ##
 interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Module Constr EQ Constr Type
 ##
@@ -3649,8 +3649,8 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Module Constr 
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 682, spurious reduction of production nsepseq(module_name,DOT) -> Constr
-## In state 685, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT)
+## In state 685, spurious reduction of production nsepseq(module_name,DOT) -> Constr
+## In state 688, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT)
 ##
 interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Module Constr EQ Constr Type
 ##
@@ -3666,8 +3666,8 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Module Constr 
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 682, spurious reduction of production nsepseq(module_name,DOT) -> Constr
-## In state 685, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT)
+## In state 685, spurious reduction of production nsepseq(module_name,DOT) -> Constr
+## In state 688, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT)
 ##
 interactive_expr: Match Verbatim With WILD ARROW Module Constr EQ Constr Type
 ##
@@ -3682,12 +3682,12 @@ interactive_expr: Match Verbatim With WILD ARROW Module Constr EQ Constr Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 682, spurious reduction of production nsepseq(module_name,DOT) -> Constr
-## In state 685, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT)
+## In state 685, spurious reduction of production nsepseq(module_name,DOT) -> Constr
+## In state 688, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT)
 ##
 interactive_expr: Begin If Verbatim Then Module Constr EQ Constr Type
 ##
-## Ends in an error in state: 535.
+## Ends in an error in state: 536.
 ##
 ## local_module_alias(closed_if) -> module_alias . In closed_if [ Else ]
 ##
@@ -3698,12 +3698,12 @@ interactive_expr: Begin If Verbatim Then Module Constr EQ Constr Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 682, spurious reduction of production nsepseq(module_name,DOT) -> Constr
-## In state 685, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT)
+## In state 685, spurious reduction of production nsepseq(module_name,DOT) -> Constr
+## In state 688, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT)
 ##
 interactive_expr: If Verbatim Then Module Constr EQ Constr Type
 ##
-## Ends in an error in state: 598.
+## Ends in an error in state: 601.
 ##
 ## local_module_alias(closed_if) -> module_alias . In closed_if [ Else ]
 ## local_module_alias(expr) -> module_alias . In expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF COLON Attr ]
@@ -3715,8 +3715,8 @@ interactive_expr: If Verbatim Then Module Constr EQ Constr Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 682, spurious reduction of production nsepseq(module_name,DOT) -> Constr
-## In state 685, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT)
+## In state 685, spurious reduction of production nsepseq(module_name,DOT) -> Constr
+## In state 688, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT)
 ##
 
 Ill-formed local module declaration.
@@ -3725,7 +3725,7 @@ keyword 'in' is expected.
 
 contract: Module Constr EQ Constr DOT With
 ##
-## Ends in an error in state: 683.
+## Ends in an error in state: 686.
 ##
 ## nsepseq(module_name,DOT) -> Constr DOT . nsepseq(module_name,DOT) [ Type Module Let In End EOF Attr ]
 ##

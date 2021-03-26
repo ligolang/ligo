@@ -19,6 +19,7 @@ let first_region = function
 
 (* Reductions on error *)
 
+%on_error_reduce seq_expr
 %on_error_reduce nsepseq(selection,DOT)
 %on_error_reduce call_expr_level
 %on_error_reduce add_expr_level
@@ -827,7 +828,8 @@ last_expr:
   seq_expr
 | fun_expr(last_expr)
 | match_expr(last_expr)
-| let_in_sequence       { $1 }
+| let_in_sequence
+| tuple_expr { $1 }
 
 let_in_sequence:
   seq("[@attr]") "let" ioption("rec") let_binding "in" series  {
