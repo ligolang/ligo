@@ -110,7 +110,7 @@
           name = "ligo-squirrel";
           text = ''
             #!/bin/sh
-            "$(dirname "$(readlink -f "$0")")/$(uname)/bin/ligo-squirrel" $@
+            "./bin/$(uname)/bin/ligo-squirrel" $@
           '';
           executable = true;
         };
