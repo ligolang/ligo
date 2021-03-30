@@ -209,6 +209,7 @@ recognise (SomeRawTree dialect rawTree)
         "type_tuple"         -> TProduct <$> fields "x"
         "type_rec"           -> TRecord  <$> fields "field"
         "type_sum"           -> TSum     <$> fields "variant"
+        "TypeWildcard"       -> pure TWildcard
         _                 -> fallthrough
 
     -- Variant

@@ -195,6 +195,7 @@ recognise (SomeRawTree dialect rawTree)
         "type_tuple"       -> TProduct <$> fields "element"
         "record_type"      -> TRecord  <$> fields "field"
         "sum_type"         -> TSum     <$> fields "variant"
+        "TypeWildcard"     -> pure TWildcard
         _                  -> fallthrough
 
    -- Michelson pair types

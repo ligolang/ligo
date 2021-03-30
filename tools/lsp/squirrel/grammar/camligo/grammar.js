@@ -365,6 +365,7 @@ module.exports = grammar({
     )),
 
     _type_expr: $ => choice(
+      $.TypeWildcard,
       $.type_fun,
       $.type_product,
       $.type_app,
@@ -467,6 +468,7 @@ module.exports = grammar({
     Bytes: $ => /0x[0-9a-fA-F]+/,
     Name: $ => /[a-z][a-zA-Z0-9_]*/,
     TypeName: $ => /[a-z][a-zA-Z0-9_]*/,
+    TypeWildcard: $ => '_',
     NameDecl: $ => /[a-z][a-zA-Z0-9_]*/,
     FieldName: $ => /[a-z][a-zA-Z0-9_]*/,
     ConstrName: $ => /[A-Z][a-zA-Z0-9_]*/,

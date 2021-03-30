@@ -203,6 +203,7 @@ recognise (SomeRawTree dialect rawTree)
         "michelsonTypeOr"  -> TOr      <$> field "left_type" <*> field "left_type_name" <*> field "right_type" <*> field "right_type_name"
         "michelsonTypeAnd" -> TAnd     <$> field "left_type" <*> field "left_type_name" <*> field "right_type" <*> field "right_type_name"
         "type_group"       -> TProduct <$> (pure <$> field "type")
+        "TypeWildcard"     -> pure TWildcard
         _                 -> fallthrough
 
     -- Variant

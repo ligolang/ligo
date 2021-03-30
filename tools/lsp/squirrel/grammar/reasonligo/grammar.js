@@ -67,6 +67,7 @@ module.exports = grammar({
       , [$.list_pattern, $.Nil, $.list]
       , [$.list, $.Nil]
       , [$.list_pattern, $.Nil]
+      , [$.TypeWildcard, $.wildcard]
     ],
 
   rules: {
@@ -328,6 +329,7 @@ module.exports = grammar({
 
     _type_expr: $ =>
       choice(
+        $.TypeWildcard,
         $.fun_type,
         $._core_type,
         $.type_tuple,
@@ -552,6 +554,7 @@ module.exports = grammar({
     Name: $ => /[a-z][a-zA-Z0-9_]*/,
     NameDecl: $ => /[a-z][a-zA-Z0-9_]*/,
     TypeName: $ => /[a-z][a-zA-Z0-9_]*/,
+    TypeWildcard: $ => '_',
     _NameCapital: $ => /[A-Z][a-zA-Z0-9_]*/,
     Keyword: $ => /[A-Za-z][a-z]*/,
     Bool: $ => choice($.False, $.True),

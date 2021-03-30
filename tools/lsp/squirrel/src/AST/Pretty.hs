@@ -189,6 +189,7 @@ instance Pretty1 AST.Type where
     TString   t         -> sexpr "TSTRING" [pp t]
     TOr       l n r m   -> sexpr "OR"   [l, n, r, m]
     TAnd      l n r m   -> sexpr "AND" [l, n, r, m]
+    TWildcard           -> "_"
 
 instance Pretty1 Variant where
   pp1 = \case
@@ -380,6 +381,7 @@ instance LPP1 'Pascal AST.Type where
     TString   t         -> "\"" <.> lpp t <.> "\""
     TOr       l n r m   -> tuple [l, n, r, m]
     TAnd      l n r m   -> tuple [l, n, r, m]
+    TWildcard           -> "_"
 
 instance LPP1 'Pascal Binding where
   lpp1 = \case
@@ -509,6 +511,7 @@ instance LPP1 'Reason AST.Type where
     TString   t         -> "\"" <.> lpp t <.> "\""
     TOr       l n r m   -> tuple [l, n, r, m]
     TAnd      l n r m   -> tuple [l, n, r, m]
+    TWildcard           -> "_"
 
 instance LPP1 'Reason Binding where
   lpp1 = \case
@@ -606,6 +609,7 @@ instance LPP1 'Caml AST.Type where
     TString   t         -> "\"" <.> lpp t <.> "\""
     TOr       l n r m   -> tuple [l, n, r, m]
     TAnd      l n r m   -> tuple [l, n, r, m]
+    TWildcard           -> "_"
 
 instance LPP1 'Caml Binding where
   lpp1 = \case
