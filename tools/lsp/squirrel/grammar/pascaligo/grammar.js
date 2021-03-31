@@ -211,15 +211,9 @@ module.exports = grammar({
         $.parameters,
         optional(seq(':', field("type", $._type_expr))),
         'is',
-        field("body", $._let_expr),
+        field("body", $._expr),
       ),
     ),
-
-    _let_expr: $ =>
-      choice(
-        $.let_expr,
-        $._expr,
-      ),
 
     let_expr: $ =>
       seq(
@@ -466,6 +460,7 @@ module.exports = grammar({
         $._op_expr,
         $.fun_expr,
         $.michelson_interop,
+        $.let_expr,
       ),
 
     case_expr: $ =>
