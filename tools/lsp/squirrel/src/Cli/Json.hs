@@ -1,8 +1,8 @@
 -- | ligo version: a98a94dd5cadb791a2d4db1d60dde73b1a132811
+-- | The definition of type as is represented in ligo JSON output
 
 {-# LANGUAGE DeriveGeneric, RecordWildCards, TupleSections #-}
 
--- | The definition of type as is represented in ligo JSON output
 module Cli.Json
   ( LigoError (..)
   , LigoErrorContent (..)

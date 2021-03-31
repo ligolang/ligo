@@ -77,8 +77,8 @@ completeFieldTypeAware
   :: CompletionLIGO xs => Scope -> Range -> SomeLIGO xs -> Maybe [Completion]
 completeFieldTypeAware scope pos tree@(SomeLIGO dialect nested) = do
   QualifiedName{ qnSource, qnPath } <- asum (map layer covers)
+  -- throwing away the last field, because it's the field we are trying to complete
   (finished, _unfinished) <- unconsFromEnd qnPath
-  -- ^ throwing away the last field, because it's the field we are trying to complete
   let accessors = map parseAccessor finished
   firstTspec <- toTspec (typeDefinitionOf (getRange qnSource) tree)
   finalTspec <- foldM accessAndDereference firstTspec accessors
