@@ -83,6 +83,12 @@ recognise (SomeRawTree dialect rawTree)
         "record_pattern"         -> IsRecord <$> fields "field"
         _                        -> fallthrough
 
+    -- Irrefutable tuple
+  , Descent do
+      boilerplate $ \case
+        "irrefutable_tuple" -> IsTuple <$> fields "item"
+        _                   -> fallthrough
+
     -- RecordFieldPattern
   , Descent do
       boilerplate $ \case

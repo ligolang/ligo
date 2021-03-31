@@ -93,6 +93,12 @@ recognise (SomeRawTree dialect rawTree)
         "var_pattern"         -> IsVar    <$> field  "name"
         _                     -> fallthrough
 
+    -- Irrefutable tuple
+  , Descent do
+      boilerplate $ \case
+        "irrefutable_tuple" -> IsTuple <$> fields "item"
+        _                   -> fallthrough
+
     -- Alt
   , Descent do
       boilerplate \case

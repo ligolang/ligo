@@ -76,8 +76,10 @@ findSignature tree position = do
 makeSignatureLabel :: Lang -> Text -> [Text] -> Text
 makeSignatureLabel Pascal name params
   = "function " <> name <> " (" <> Text.intercalate "; " params <> ")"
-makeSignatureLabel _ name params
+makeSignatureLabel Caml name params
   = "let " <> name <> " " <> Text.unwords params
+makeSignatureLabel Reason name params
+  = "let " <> name <> " = " <> Text.unwords params
 
 -- | Make a 'ParameterInformation' by a parameter's name. For now, we don't
 -- support parameter docs.

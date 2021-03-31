@@ -36,10 +36,7 @@ module.exports = grammar({
       field("name", $.NameDecl),
       // TODO: we treat arguments as an annotated pattern. Once we set up proper
       // argument and its type resolution, this must be changed.
-      some(choice(
-        $.Unit,
-        field("arg", $.annot_pattern)
-      )),
+      some(field("arg", $._irrefutable)),
       optional(seq(
         ":",
         field("type", $._type_expr)
@@ -51,7 +48,7 @@ module.exports = grammar({
     let_decl: $ => withAttrs($, seq(
       "let",
       optional(field("recursive", "rec")),
-      field("name", $._pattern),
+      field("name", $._irrefutable),
       optional(seq(
         ":",
         field("type", $._type_expr)
@@ -122,6 +119,36 @@ module.exports = grammar({
       field("body", $._pattern),
     ))),
 
+    _irrefutable: $ => choice(
+      $._sub_irrefutable,
+      $.irrefutable_tuple,
+    ),
+
+    // a, b, c
+    irrefutable_tuple: $ => prec.right(8, seq(
+      field("item", $._sub_irrefutable),
+      ",",
+      sepBy1(",", field("item", $._sub_irrefutable)),
+    )),
+
+    _sub_irrefutable: $ => choice(
+      $.var_pattern,
+      $.wildcard_pattern,
+      $.Unit,
+      $.rec_pattern,
+      $.ConstrName,
+      $._closed_irrefutable,
+    ),
+
+    _closed_irrefutable: $ => choice(
+      $.annot_pattern,
+      $.closed_irrefutable,
+    ),
+
+    closed_irrefutable: $ => par(field("pat", choice(
+      $._irrefutable,
+      $.con_pattern,
+    ))),
 
     wildcard_pattern: $ => "_",
 
@@ -137,8 +164,18 @@ module.exports = grammar({
     ),
 
     _paren_pattern: $ => choice(
-      $.annot_pattern,
+      $.par_annot_pattern,
       $.paren_pattern,
+    ),
+
+    par_annot_pattern: $ => choice(
+      seq(
+        "(",
+        field("pat", $._pattern),
+        ":",
+        field("type", $._type_expr),
+        ")",
+      ),
     ),
 
     paren_pattern: $ =>
@@ -151,7 +188,7 @@ module.exports = grammar({
     annot_pattern: $ =>
       seq(
         "(",
-        field("pat", $._pattern),
+        field("pat", $._irrefutable),
         ":",
         field("type", $._type_expr),
         ")"
@@ -270,7 +307,7 @@ module.exports = grammar({
 
     lambda_expr: $ => seq(
       "fun",
-      repeat1(field("arg", $.annot_pattern)),
+      repeat1(field("arg", $._irrefutable)),
       "->",
       field("body", $._program)
     ),

@@ -13,8 +13,7 @@
     rec
     fibo
     (type?
-      (tuple? (tuple? (? n) (tuple? (? n_1) (? n_0))))
-      (PROD int (PROD int int)))
+      (tuple? (tuple? (? n) (? n_1) (? n_0))) (PROD int (PROD int int)))
     :
     int
     =
