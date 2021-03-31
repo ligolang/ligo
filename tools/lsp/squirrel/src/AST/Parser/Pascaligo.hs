@@ -93,6 +93,12 @@ recognise (SomeRawTree dialect rawTree)
         "var_pattern"         -> IsVar    <$> field  "name"
         _                     -> fallthrough
 
+    -- Irrefutable tuple
+  , Descent do
+      boilerplate $ \case
+        "irrefutable_tuple" -> IsTuple <$> fields "item"
+        _                   -> fallthrough
+
     -- Alt
   , Descent do
       boilerplate \case
@@ -203,6 +209,7 @@ recognise (SomeRawTree dialect rawTree)
         "michelsonTypeOr"  -> TOr      <$> field "left_type" <*> field "left_type_name" <*> field "right_type" <*> field "right_type_name"
         "michelsonTypeAnd" -> TAnd     <$> field "left_type" <*> field "left_type_name" <*> field "right_type" <*> field "right_type_name"
         "type_group"       -> TProduct <$> (pure <$> field "type")
+        "TypeWildcard"     -> pure TWildcard
         _                 -> fallthrough
 
     -- Variant

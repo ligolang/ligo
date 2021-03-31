@@ -89,6 +89,7 @@ data Type it
   | TString   Text     -- ^ (TString)
   | TOr       it it it it
   | TAnd      it it it it
+  | TWildcard
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data Variant it

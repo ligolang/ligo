@@ -120,12 +120,20 @@ recognise (SomeRawTree dialect rawTree)
         "list_con_pattern" -> IsCons   <$> field  "x"    <*> field "xs"
         "tup_pattern"      -> IsTuple  <$> fields "item"
         "con_pattern"      -> IsConstr <$> field  "ctor" <*> fieldOpt "args"
-        "annot_pattern"    -> IsAnnot  <$> field  "pat"  <*> field "type"
+        "par_annot_pattern"-> IsAnnot  <$> field  "pat"  <*> field "type"
         "paren_pattern"    -> IsTuple  <$> fields "pat"
         "var_pattern"      -> IsVar    <$> field  "var"
         "rec_pattern"      -> IsRecord <$> fields "field"
         "wildcard_pattern" -> pure IsWildcard
         _                  -> fallthrough
+
+    -- Irrefutable
+  , Descent do
+      boilerplate $ \case
+        "irrefutable_tuple"  -> IsTuple <$> fields "item"
+        "annot_pattern"      -> IsAnnot <$> field  "pat"  <*> field "type"
+        "closed_irrefutable" -> IsTuple <$> fields "pat"
+        _                    -> fallthrough
 
    -- RecordFieldPattern
   , Descent do
@@ -209,6 +217,7 @@ recognise (SomeRawTree dialect rawTree)
         "type_tuple"         -> TProduct <$> fields "x"
         "type_rec"           -> TRecord  <$> fields "field"
         "type_sum"           -> TSum     <$> fields "variant"
+        "TypeWildcard"       -> pure TWildcard
         _                 -> fallthrough
 
     -- Variant

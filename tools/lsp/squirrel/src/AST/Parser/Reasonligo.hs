@@ -83,6 +83,12 @@ recognise (SomeRawTree dialect rawTree)
         "record_pattern"         -> IsRecord <$> fields "field"
         _                        -> fallthrough
 
+    -- Irrefutable tuple
+  , Descent do
+      boilerplate $ \case
+        "irrefutable_tuple" -> IsTuple <$> fields "item"
+        _                   -> fallthrough
+
     -- RecordFieldPattern
   , Descent do
       boilerplate $ \case
@@ -195,6 +201,7 @@ recognise (SomeRawTree dialect rawTree)
         "type_tuple"       -> TProduct <$> fields "element"
         "record_type"      -> TRecord  <$> fields "field"
         "sum_type"         -> TSum     <$> fields "variant"
+        "TypeWildcard"     -> pure TWildcard
         _                  -> fallthrough
 
    -- Michelson pair types
