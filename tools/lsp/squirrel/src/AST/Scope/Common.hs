@@ -30,7 +30,7 @@ import Parser
 import Product
 import Range
 
-class HasLigoClient m => HasScopeForest imfl m where
+class HasLigoClient m => HasScopeForest impl m where
   scopeForest :: Source -> SomeLIGO Info -> [Msg] -> m (ScopeForest, [Msg])
 
 instance {-# OVERLAPPABLE #-} Pretty x => Show x where
@@ -143,11 +143,12 @@ mergeScopeForest (ScopeForest sl dl) (ScopeForest sr dr) =
       = Set.union l r
       & Set.toList
       & List.nubBy isLigoDecl
+      & reverse
+      & List.nubBy isLigoDecl -- since `nubBy` is not symmetric
       & Set.fromList
       where
-        isLigoDecl DeclRef {drRange = rFile -> ldr} DeclRef {drRange = rFile -> rdr}
-          = "/dev/stdin" `List.isInfixOf` ldr
-          || "/dev/stdin" `List.isInfixOf` rdr
+        isLigoDecl DeclRef {drName = n, drRange = rFile -> lr} DeclRef {drName = n'}
+          = n == n' && "/dev/stdin" `List.isInfixOf` lr
 
 withScopeForest
   :: (  ([ScopeTree], Map DeclRef ScopedDecl)
