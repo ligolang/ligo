@@ -36,6 +36,20 @@ the OCaml convention.
 let n : unit = ()
 ```
 
+Sequences of expressions that return the `unit` type can be written
+using `begin` and `end`, separating expressions using semi-colons. The
+last expression, which represents the value returned, can have a
+different type to `unit`:
+
+```cameligo group=a
+let m (x : int) =
+  begin
+    assert (x > 0);
+    assert (x < 10);
+    x
+  end
+```
+
 </Syntax>
 <Syntax syntax="reasonligo">
 
@@ -43,6 +57,18 @@ In ReasonLIGO, the unique value of the `unit` type is `()`, following
 the OCaml convention.
 ```reasonligo group=a
 let n : unit = ();
+```
+
+Sequences of expressions that return the `unit` type can be written
+using braces, separating expressions using semi-colons. The last
+expression, which represents the value returned, can have a different
+type to `unit`:
+
+```reasonligo group=a
+let m = (x : int) =>
+  { assert (x > 0);
+    assert (x < 10);
+    x }
 ```
 
 </Syntax>

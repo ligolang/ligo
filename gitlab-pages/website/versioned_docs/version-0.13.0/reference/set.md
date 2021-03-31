@@ -193,6 +193,18 @@ let remove: ('value, set('value)) => set('value)
 Remove a value from a set.
 
 <SyntaxTitle syntax="pascaligo">
+function update : 'elt -> bool -> set('a) -> set('a)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val update : 'elt -> bool -> 'a set -> 'a set
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let update: 'elt => bool => set('a) => set('a)
+</SyntaxTitle>
+
+add or remove an element in a set based on the boolean value being passed.
+
+<SyntaxTitle syntax="pascaligo">
 function iter : ('a -> unit) -> set('a) -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
@@ -203,6 +215,7 @@ let iter: (('a => unit), set('a)) => unit
 </SyntaxTitle>
 
 Iterate over values in a set.
+
 
 
 <Syntax syntax="pascaligo">
@@ -274,6 +287,44 @@ let sum_of_elements : int = Set.fold sum my_set 0
 ```reasonligo group=sets
 let sum = ((acc, i) : (int, int)) : int => acc + i;
 let sum_of_elements : int = Set.fold (sum, my_set, 0);
+```
+
+</Syntax>
+
+<SyntaxTitle syntax="pascaligo">
+function fold_desc: (('item -> 'accumulator -> 'accumulator) -> set ('item) -> 'accumulator) -> 'accumulator
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val fold_desc : ('item -> 'accumulator -> 'accumulator) -> 'set list -> 'accumulator -> 'accumulator
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let fold_desc: ((('item, 'accumulator) => 'accumulator), set('item), 'accumulator) => 'accumulator
+</SyntaxTitle>
+
+[Fold over values in a set](../language-basics/sets-lists-tuples.md#folded-operation)
+
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=sets
+function sum_right (const i : int; const acc : int): int is acc + i
+const sum_of_elements : int = Set.fold_desc (sum_right, my_set, 0)
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=sets
+let sum_right (i, acc : int * int) : int = acc + i
+let sum_of_elements : int = Set.fold_desc sum_right my_set 0
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=sets
+let sum_right = ((i, acc) : (int, int)) : int => acc + i;
+let sum_of_elements : int = Set.fold_desc (sum_right, my_set, 0);
 ```
 
 </Syntax>
