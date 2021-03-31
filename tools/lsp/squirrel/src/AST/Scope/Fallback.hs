@@ -394,9 +394,7 @@ getImmediateDecls = \case
 
       BTypeDecl t b -> do
         typeDecl <- typeScopedDecl (getElem r) t b
-        structureDecls <- getImmediateDecls b
-                      <&> map (fillTypeIntoCon typeDecl)
-        -- ^ Gather all other declarations from the depths of ast, such as type
+        -- Gather all other declarations from the depths of ast, such as type
         -- sum constructors, nested types etc. Then, fill in missing types of
         -- values. It doesn't seem possible that these values will be anything
         -- but directly related to the type constructors. There are two reasons
@@ -404,6 +402,8 @@ getImmediateDecls = \case
         -- types already filled by types corresponding to them. Two is that due
         -- to grammar limitations there will be no other values besides
         -- constructors.
+        structureDecls <- getImmediateDecls b
+                      <&> map (fillTypeIntoCon typeDecl)
         pure (typeDecl : structureDecls)
 
       BAttribute _ -> pure []
@@ -417,9 +417,9 @@ getImmediateDecls = \case
     -- there are most probably others, add them as problems arise
 
   (match -> Just (r, Variant name paramTyp)) -> do
-    constructorDecl <- functionScopedDecl (getElem r) name [paramTyp] Nothing Nothing
-    -- ^ type is Nothing at this stage, but it will be substituted with the
+    -- type is Nothing at this stage, but it will be substituted with the
     -- (hopefully) correct type higher in the tree (see 'BTypeDecl' branch).
+    constructorDecl <- functionScopedDecl (getElem r) name [paramTyp] Nothing Nothing
     nestedDecls <- maybe (pure []) getImmediateDecls paramTyp
     pure (constructorDecl : nestedDecls)
   _ -> pure []
