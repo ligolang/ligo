@@ -9,6 +9,7 @@ export enum networkType {
   Delphinet = 'delphinet',
   Mainnet = 'mainnet',
   Edonet = 'edonet',
+  Florencenet = 'florencenet',
 }
 
 export enum signerType {
