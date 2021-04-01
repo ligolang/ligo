@@ -30,8 +30,6 @@ test contracts in Michelson:
 
 * [Cleveland](https://gitlab.com/morley-framework/morley/-/blob/9455cd384b2ab897fb7b31822abca3730a4ad08b/code/cleveland/testingEDSL.md)
 
-* [Truffle for Tezos](https://www.trufflesuite.com/docs/tezos/truffle/getting-started/testing-your-tezos-contracts)
-
 Another alternative is to use Tezos's binary `tezos-client`
 directly. There's a new
 [mockup](https://tezos.gitlab.io/user/mockup.html) mode which is does
