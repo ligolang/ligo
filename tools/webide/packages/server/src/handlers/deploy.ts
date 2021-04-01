@@ -53,7 +53,7 @@ export async function deployHandler(req: Request, res: Response) {
 
       const TezosNetwork = Tezos(body.network);
 
-      await importKey(TezosNetwork, await fetchRandomPrivateKey());
+      await importKey(TezosNetwork, await fetchRandomPrivateKey(body.network));
 
       const op = await TezosNetwork.contract.originate({
         code: JSON.parse(michelsonCode),

@@ -22,11 +22,11 @@ import { CancellableAction } from './cancellable';
 
 export class DeployAction extends CancellableAction {
   async deployOnServerSide(dispatch: Dispatch, getState: () => AppState) {
-    dispatch({
-      ...new UpdateLoadingAction('Deploying to Edonet network...'),
-    });
-
     const { editor: editorState, deploy: deployState } = getState();
+    const network = deployState.network;
+    dispatch({
+      ...new UpdateLoadingAction(`Deploying to ${network} network...`),
+    });
 
     return await deploy(
       editorState.language,
@@ -47,6 +47,14 @@ export class DeployAction extends CancellableAction {
           type: NetworkType.EDONET,
           name: 'Edonet',
           rpcUrl: `https://api.tez.ie/rpc/edonet`,
+        },
+      });
+    } else if (launchNetwork === 'florencenet') {
+      await beaconWallet.requestPermissions({
+        network: {
+          type: NetworkType.CUSTOM,
+          name: 'Florencenet',
+          rpcUrl: `https://api.tez.ie/rpc/florencenet`,
         },
       });
     } else if (launchNetwork === 'mainnet') {
@@ -83,7 +91,10 @@ export class DeployAction extends CancellableAction {
     let networkURL = 'https://api.tez.ie/rpc/edonet';
     let network = { type: NetworkType.EDONET };
 
-    if (deployState.network === NetworkType.MAINNET) {
+    if (deployState.network === NetworkType.CUSTOM) {
+      networkURL = 'https://api.tez.ie/rpc/florencenet';
+      network = { type: NetworkType.CUSTOM };
+    } else if (deployState.network === NetworkType.MAINNET) {
       networkURL = 'https://api.tez.ie/rpc/mainnet';
       network = { type: NetworkType.MAINNET };
     }
