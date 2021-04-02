@@ -1,8 +1,8 @@
 open Trace
 
-open Ast_typed.Types
+open Ast_core.Types
 open Solver_types
-open Ast_typed.Combinators
+open Ast_core.Combinators
 
 open Db_index_tests_common
 
@@ -25,7 +25,7 @@ end
 let cycle_detection_topological_sort () =
   let open Cycle_detection_topological_sort_tests in
   (* create empty state *)
-  let state = create_state ~cmp:Ast_typed.Compare.type_variable in
+  let state = create_state ~cmp:Ast_core.Compare.type_variable in
   (* assert state = () *)
   let%bind () = tst_assert "state = ()" @@ (match get_state_for_tests state with () -> true) in
 

@@ -285,7 +285,7 @@ and compile_matching : I.expression -> O.expression -> I.matching_expr -> (O.exp
     | I.Match_variable (a, expr) ->
       let%bind a = compile_binder a in
       let%bind expr = compile_expression expr in
-      ok @@ O.e_let_in ~sugar a false e expr
+      ok @@ O.e_let_in ~sugar a e expr false
 
 and compile_declaration : I.declaration -> (O.declaration , desugaring_error) result =
 

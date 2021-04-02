@@ -16,7 +16,7 @@ let get_program =
     )
 
 let compile_main () =
-  let%bind typed_prg,_,_   = get_program () in
+  let%bind typed_prg,_     = get_program () in
   let%bind mini_c_prg      = Ligo.Compile.Of_typed.compile typed_prg in
   let%bind michelson_prg   = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
   let%bind _contract =

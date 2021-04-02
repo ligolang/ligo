@@ -1,4 +1,4 @@
-open Ast
+open Types
 open Compare_enum
 
 type 'a comparator = 'a -> 'a -> int
@@ -112,9 +112,6 @@ and constraint_identifier (ConstraintIdentifier.T a) (ConstraintIdentifier.T b) 
     Int64.compare a b
     (List.compare ~compare:type_expression) [] []
 
-and constraint_identifier_set (a : constraint_identifier PolySet.t) (b : constraint_identifier PolySet.t) : int =
-  List.compare ~compare:constraint_identifier (PolySet.elements a)  (PolySet.elements b)
-
 and row_element {associated_type=aa;michelson_annotation=ma;decl_pos=da} {associated_type=ab;michelson_annotation=mb;decl_pos=db} =
   cmp3
     type_expression aa ab
@@ -129,8 +126,17 @@ and arrow {type1=ta1;type2=tb1} {type1=ta2;type2=tb2} =
 let constant_tag (ct : constant_tag) (ct2 : constant_tag) =
   Int.compare (constant_tag ct ) (constant_tag ct2 )
 
-let binder (va,ta) (vb,tb) =
-  cmp2 expression_variable va vb type_expression ta tb
+let option f oa ob =
+  match oa,ob with
+  | None, None -> 0
+  | Some _, None -> 1
+  | None, Some _ -> -1
+  | Some a, Some b -> f a b
+
+let binder ty_expr {var=va;ascr=aa} {var=vb;ascr=ab} =
+  cmp2
+    expression_variable va vb
+    (option ty_expr) aa ab
 
 let expression_tag expr =
   match expr.expression_content with
@@ -190,7 +196,9 @@ and application ({lamb=la;args=a}) ({lamb=lb;args=b}) =
   cmp2 expression la lb expression a b
 
 and lambda ({binder=ba;result=ra}) ({binder=bb;result=rb}) =
-  cmp2 expression_variable ba bb expression ra rb
+  cmp2 
+    expression_variable ba bb 
+    expression ra rb
 
 and recursive ({fun_name=fna;fun_type=fta;lambda=la}) {fun_name=fnb;fun_type=ftb;lambda=lb} =
   cmp3
@@ -309,6 +317,11 @@ and matching_content_record
     expression body1 body2
     type_expression t1 t2
 
+and ascription {anno_expr=aa; type_annotation=ta} {anno_expr=ab; type_annotation=tb} =
+  cmp2
+    expression aa ab
+    type_expression ta tb
+
 and declaration_constant {name=na;binder=ba;expr=ea;inline=ia} {name=nb;binder=bb;expr=eb;inline=ib} =
   cmp4
     (Option.compare String.compare) na nb
@@ -391,178 +404,3 @@ and environment {expression_environment=eea;type_environment=tea; module_environ
    expression_environment eea eeb
    type_environment       tea teb
    module_environment     mea meb
-
-(* Solver types *)
-
-let unionfind a b =
-  let a = UnionFind.Poly2.partitions a in
-  let b = UnionFind.Poly2.partitions b in
-  List.compare ~compare:(List.compare ~compare:type_variable) a b
-
-let type_constraint_tag = function
-  | C_equation     _ -> 1
-  | C_typeclass    _ -> 2
-  | C_access_label _ -> 3
-  | C_apply        _ -> 4
-
-let type_value_tag = function
-  | P_forall     _ -> 1
-  | P_variable   _ -> 2
-  | P_constant   _ -> 3
-  | P_apply      _ -> 4
-  | P_row        _ -> 5
-  | P_abs        _ -> 6
-  | P_constraint _ -> 7
-
-
-let row_tag = function
-  | C_record  -> 1
-  | C_variant -> 2
-
-let row_tag a b = Int.compare (row_tag a) (row_tag b)
-
-let rec type_value_ a b = match (a,b) with
-  P_forall   a, P_forall   b -> p_forall a b
-| P_variable a, P_variable b -> type_variable a b
-| P_constant a, P_constant b -> p_constant a b
-| P_apply    a, P_apply    b -> p_apply a b
-| P_row      a, P_row      b -> p_row a b
-| a, b -> Int.compare (type_value_tag a) (type_value_tag b)
-
-and type_value : type_value_ location_wrap -> type_value_ location_wrap -> int = fun ta tb ->
-    type_value_ ta.wrap_content tb.wrap_content
-
-and p_constraints c = List.compare ~compare:type_constraint c
-
-and p_forall {binder=ba;constraints=ca;body=a} {binder=bb;constraints=cb;body=b} =
-  cmp3
-    type_variable ba bb
-    p_constraints ca cb
-    type_value    a  b
-
-and p_constant {p_ctor_tag=ca;p_ctor_args=la} {p_ctor_tag=cb;p_ctor_args=lb} =
-  cmp2
-    constant_tag ca cb
-    (List.compare ~compare:type_value) la lb
-
-and p_apply {tf=ta;targ=la} {tf=tb;targ=lb} =
-  cmp2
-    type_value ta tb
-    type_value la lb
-
-and p_row {p_row_tag=ra;p_row_args=la} {p_row_tag=rb;p_row_args=lb} =
-  cmp2
-    row_tag ra rb
-    (label_map ~compare:row_value) la lb
-
-and row_value {associated_value=aa;michelson_annotation=ma;decl_pos=da} {associated_value=ab;michelson_annotation=mb;decl_pos=db} =
-  cmp3
-    type_value aa ab
-    (Option.compare String.compare) ma mb
-    Int.compare     da db
-
-and type_constraint {reason=ra;c=ca} {reason=rb;c=cb} =
-  cmp2
-    String.compare   ra rb
-    type_constraint_ ca cb
-
-and type_constraint_ a b = match (a,b) with
-  | C_equation     a, C_equation     b -> c_equation a b
-  | C_typeclass    a, C_typeclass    b -> c_typeclass a b
-  | C_access_label a, C_access_label b -> c_access_label a b
-  | a, b -> Int.compare (type_constraint_tag a) (type_constraint_tag b)
-
-and c_equation {aval=a1;bval=b1} {aval=a2;bval=b2} =
-  cmp2
-    type_value a1 a2
-    type_value b1 b2
-
-and tc_args a = List.compare ~compare:type_value a
-
-and c_typeclass {tc_bound=wa; tc_constraints=za; tc_args=ta;typeclass=ca; original_id=x} {tc_bound=wb; tc_constraints=zb; tc_args=tb;typeclass=cb; original_id =y} =
-  cmp5
-    (List.compare ~compare:type_variable) wa wb
-    (List.compare ~compare:type_constraint) za zb
-    tc_args ta tb
-    typeclass ca cb
-    (Option.compare (constraint_identifier ))x y
-
-and c_access_label
-      {c_access_label_record_type=val1;accessor=a1;c_access_label_tvar=var1}
-      {c_access_label_record_type=val2;accessor=a2;c_access_label_tvar=var2} =
-  cmp3
-    type_value val1 val2
-    label a1 a2
-    type_variable var1 var2
-
-and tc_allowed t = List.compare ~compare:type_value t
-and typeclass  t = List.compare ~compare:tc_allowed t
-
-let c_abs_simpl {id_abs_simpl = ConstraintIdentifier.T ca;_} {id_abs_simpl = ConstraintIdentifier.T cb;_} =
-  Int64.compare ca cb
-let c_apply_simpl {id_apply_simpl = ConstraintIdentifier.T ca;_} {id_apply_simpl = ConstraintIdentifier.T cb;_} =
-  Int64.compare ca cb
-
-let c_constructor_simpl {id_constructor_simpl = ConstraintIdentifier.T ca;_} {id_constructor_simpl = ConstraintIdentifier.T cb;_} =
-  Int64.compare ca cb
-
-let c_alias {reason_alias_simpl=ra;a=aa;b=ba} {reason_alias_simpl=rb;a=ab;b=bb} =
-  cmp3
-    String.compare ra rb
-    type_variable  aa ab
-    type_variable  ba bb
-
-let c_poly_simpl {id_poly_simpl = ConstraintIdentifier.T ca;_} {id_poly_simpl = ConstraintIdentifier.T cb;_} =
-  Int64.compare ca cb
-
-let rec c_typeclass_simpl_compare_all_fields {tc_bound=ba;tc_constraints=ca;reason_typeclass_simpl=ra;id_typeclass_simpl=ida;original_id=oia;tc=ta;args=la} {tc_bound=bb;tc_constraints=cb;reason_typeclass_simpl=rb;id_typeclass_simpl=idb;original_id=oib;tc=tb;args=lb} =
-  cmp7
-    (List.compare ~compare:type_variable) ba bb
-    (List.compare ~compare:type_constraint_simpl) ca cb
-    String.compare ra rb
-    constraint_identifier ida idb
-    (Option.compare constraint_identifier) oia oib
-    (List.compare ~compare:tc_allowed) ta tb
-    (List.compare ~compare:type_variable) la lb
-
-and c_typeclass_simpl a b =
-  constraint_identifier a.id_typeclass_simpl b.id_typeclass_simpl
-
-and c_access_label_simpl a b =
-  constraint_identifier a.id_access_label_simpl b.id_access_label_simpl
-
-and c_row_simpl {id_row_simpl = ConstraintIdentifier.T ca;_} {id_row_simpl = ConstraintIdentifier.T cb;_} =
-  Int64.compare ca cb
-
-and constructor_or_row
-    (a : constructor_or_row)
-    (b : constructor_or_row) =
-  match a,b with
-  | `Row a , `Row b -> c_row_simpl a b
-  | `Constructor a , `Constructor b -> c_constructor_simpl a b
-  | `Constructor _ , `Row _ -> -1
-  | `Row _ , `Constructor _ -> 1
-
-and type_constraint_simpl_tag = function
-  | SC_Constructor _ -> 1
-  | SC_Alias       _ -> 2
-  | SC_Poly        _ -> 3
-  | SC_Typeclass   _ -> 4
-  | SC_Row         _ -> 5
-  | SC_Access_label   _ -> 6
-  | SC_Apply       _ -> 7
-  | SC_Abs         _ -> 8
-
-and type_constraint_simpl a b =
-  match (a,b) with
-  SC_Constructor ca, SC_Constructor cb -> c_constructor_simpl ca cb
-| SC_Alias       aa, SC_Alias       ab -> c_alias aa ab
-| SC_Poly        pa, SC_Poly        pb -> c_poly_simpl pa pb
-| SC_Typeclass   ta, SC_Typeclass   tb -> c_typeclass_simpl ta tb
-| SC_Access_label la, SC_Access_label lb -> c_access_label_simpl la lb
-| SC_Row         ra, SC_Row         rb -> c_row_simpl ra rb
-| SC_Apply       aa, SC_Apply       ab -> c_apply_simpl aa ab
-| SC_Abs         aa, SC_Abs         ab -> c_abs_simpl aa ab
-| ((SC_Apply _|SC_Abs _|SC_Constructor _|SC_Alias _|SC_Poly _|SC_Typeclass _|SC_Access_label _|SC_Row _) as a),
-  ((SC_Apply _|SC_Abs _|SC_Constructor _|SC_Alias _|SC_Poly _|SC_Typeclass _|SC_Access_label _|SC_Row _) as b) ->
-    Int.compare (type_constraint_simpl_tag a) (type_constraint_simpl_tag b)

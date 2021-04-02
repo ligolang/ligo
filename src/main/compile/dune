@@ -19,8 +19,8 @@
     desugaring
     ast_core
     self_ast_core
-    typer_new
-    typer
+    inferance
+    checking
     ast_typed
     self_ast_typed
     interpreter

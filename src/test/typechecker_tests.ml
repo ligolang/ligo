@@ -1,8 +1,8 @@
 open Test_helpers
 module Core = Typesystem.Core
-open Ast_typed.Types
-open Ast_typed.Reasons
-open Ast_typed.Combinators
+open Ast_core.Types
+open Ast_core.Reasons
+open Ast_core.Combinators
 open Trace
 
 module Random_type_generator = struct
@@ -17,7 +17,7 @@ module Random_type_generator = struct
   let pp : Format.formatter -> m -> unit = fun ppf {var ; cor_opt} ->
     match cor_opt with
     | None -> Format.fprintf ppf "Alias %a" Var.pp var
-    | Some cor -> Format.fprintf ppf "Concrete %a -> %a" Var.pp var Ast_typed.PP.constructor_or_row cor
+    | Some cor -> Format.fprintf ppf "Concrete %a -> %a" Var.pp var Ast_core.PP.constructor_or_row cor
   let rec make_type ~base_type1 ~base_type2 ~max_depth i depth tmap  : int * m * m list =
     let tvar = make_var i in
     let continue () = make_type ~base_type1 ~base_type2 ~max_depth i 0 tmap in
@@ -70,8 +70,8 @@ module Random_type_generator = struct
     let all_vars : type_variable list = List.map (fun ({var ;_}:m) -> var) map in
     let test_checker constraints_list =
       trace (Main_errors.test_tracer "typechecker tests") @@
-      trace (Main_errors.typer_tracer) @@
-      Typer_new.Typecheck.check constraints_list all_vars repr_mock find_assignment_mock
+      trace (Main_errors.inference_tracer) @@
+      Inferance.Typecheck.check constraints_list all_vars repr_mock find_assignment_mock
     in
     let test_checker_neg lst =
       Trace.Assert.assert_fail (Main_errors.test_internal "This check should fail") (test_checker lst)
@@ -121,8 +121,8 @@ module Small_env_manual_test = struct
     | v -> failwith ("test internal : FIND_ASSIGNENT_MOCK" ^ (Format.asprintf "%a" Var.pp v))
   let test_checker constraints_list =
     trace (Main_errors.test_tracer "typechecker tests") @@
-      trace (Main_errors.typer_tracer) @@
-        Typer_new.Typecheck.check constraints_list all_vars repr_mock find_assignment_mock
+      trace (Main_errors.inference_tracer) @@
+        Inferance.Typecheck.check constraints_list all_vars repr_mock find_assignment_mock
   let test_checker_neg lst =
     Trace.Assert.assert_fail (Main_errors.test_internal "This check should fail") (test_checker lst)
 end

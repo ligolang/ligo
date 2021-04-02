@@ -39,16 +39,18 @@ type all =
  | `Main_depurification of Purification.Errors.purification_error
  | `Main_desugaring of Desugaring.Errors.desugaring_error
  | `Main_sugaring   of Desugaring.Errors.desugaring_error
- | `Main_typer of Typer.Errors.typer_error
- | `Main_interpreter of Interpreter.interpreter_error
+ | `Main_inferance of Inferance.Errors.typer_error
+ | `Main_checking of Checking.Errors.typer_error
  | `Main_self_ast_typed of Self_ast_typed.Errors.self_ast_typed_error
- | `Main_self_mini_c of Self_mini_c.Errors.self_mini_c_error
+ | `Main_interpreter of Interpreter.interpreter_error
  | `Main_spilling of Spilling.Errors.spilling_error
+ | `Main_self_mini_c of Self_mini_c.Errors.self_mini_c_error
  | `Main_stacking of Stacking.Errors.stacking_error
 
  | `Main_decompile_michelson of Stacking.Errors.stacking_error
  | `Main_decompile_mini_c of Spilling.Errors.spilling_error
- | `Main_decompile_typed of Typer.Errors.typer_error
+ | `Main_decompile_typed of Checking.Errors.typer_error
+ | `Main_decompile_inferred of Inferance.Errors.typer_error
  | `Main_entrypoint_not_a_function
  | `Main_entrypoint_not_found
  | `Main_invalid_balance of string

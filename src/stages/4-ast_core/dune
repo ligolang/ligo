@@ -5,6 +5,7 @@
     simple-utils
     stage_common
     ast_sugar
+    UnionFind
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)

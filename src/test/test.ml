@@ -2,38 +2,35 @@
 
 open Test_helpers
 
-let test enabled_for_typer_not_currently_in_use name f = enabled_for_typer_not_currently_in_use, test name f
-let no test_suite = false, test_suite
-let y test_suite = true, test_suite
 
 let () =
   Printexc.record_backtrace true ;
     run_test @@ test_suite "LIGO"
-    @@ (fun lst -> List.map snd @@ match typer_switch () with Ast_typed.New -> List.filter fst lst | _ -> lst) @@ [
-    y Vendors.main ;
-    y Heuristic_tc_fundep_tests.main ;
-    y Heuristic_break_ctor_tests.main ;
-    y Heuristic_specialize1_tests.main ;
-    y Heuristic_access_label_tests.main ;
-    y Typechecker_tests.main ;
-    y Db_index_tests.main ;
-    y Typer_tests.main ;
-    y Integration_tests.main ;
-    y Spilling_tests.main ;
-    y Coase_tests.main ;
-    y Vote_tests.main ;
-    y Id_tests.main ;
-    y Id_tests_p.main ;
-    y Id_tests_r.main ;
-    y Basic_multisig_tests.main;
-    y Multisig_tests.main ;
-    y Multisig_v2_tests.main ;
-    y Replaceable_id_tests.main ;
-    y Time_lock_tests.main ;
-    y Hash_lock_tests.main ;
-    y Time_lock_repeat_tests.main ;
-    y Pledge_tests.main ;
-    y Tzip12_tests.main ;
-    y Positive_contract_tests.main ;
+  [
+    Vendors.main ;
+    Heuristic_tc_fundep_tests.main ;
+    Heuristic_break_ctor_tests.main ;
+    Heuristic_specialize1_tests.main ;
+    Heuristic_access_label_tests.main ;
+    Typechecker_tests.main ;
+    Db_index_tests.main ;
+    Typer_tests.main ;
+    Integration_tests.main ;
+    Spilling_tests.main ;
+    Coase_tests.main ;
+    Vote_tests.main ;
+    Id_tests.main ;
+    Id_tests_p.main ;
+    Id_tests_r.main ;
+    Basic_multisig_tests.main;
+    Multisig_tests.main ;
+    Multisig_v2_tests.main ;
+    Replaceable_id_tests.main ;
+    Time_lock_tests.main ;
+    Hash_lock_tests.main ;
+    Time_lock_repeat_tests.main ;
+    Pledge_tests.main ;
+    Tzip12_tests.main ;
+    Positive_contract_tests.main ;
   ] ;
   ()

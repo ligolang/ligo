@@ -72,40 +72,38 @@ let repl_result_format : 'a Display.format = {
 module Run = Ligo.Run.Of_michelson
 
 type state = { env : Ast_typed.environment;
-               typer : Typer.Errors.typer_error Typer.Solver.typer_state;
                syntax : Compile.Helpers.v_syntax;
-               typer_switch : Ast_typed.typer_switch;
+               infer : bool ;
                protocol : Environment.Protocols.t;
                decl_list : Mini_c.program;
                dry_run_opts : Run.options;
-               mod_types : Ast_typed.type_expression Ast_core.SMap.t}
+               mod_types : Ast_typed.type_expression Stage_common.Ast_common.SMap.t}
 
 let try_eval state s =
-  let options = Compiler_options.make ~init_env:state.env ~typer_switch:state.typer_switch ~protocol_version:state.protocol () in
+  let options = Compiler_options.make ~init_env:state.env ~infer:state.infer ~protocol_version:state.protocol () in
 
-  let%bind typed_exp,env,typer = Compile.Utils.type_expression_string ~options:options state.syntax s state.env state.typer in
+  let%bind typed_exp,env = Compile.Utils.type_expression_string ~options:options state.syntax s state.env in
   let%bind mini_c_exp = Compile.Of_typed.compile_expression ~module_env:state.mod_types typed_exp in
   let%bind compiled_exp = Compile.Of_mini_c.aggregate_and_compile_expression ~options:options state.decl_list mini_c_exp in
   let options = state.dry_run_opts in
   let%bind runres = Run.run_expression ~options:options compiled_exp.expr compiled_exp.expr_ty in
-  match%bind (Decompile.Of_michelson.decompile_expression state.typer_switch typed_exp.type_expression runres) with
+  match%bind (Decompile.Of_michelson.decompile_expression typed_exp.type_expression runres) with
   | Success expr ->
-     let state = { state with env = env; typer = typer; decl_list = state.decl_list } in
+     let state = { state with env = env; decl_list = state.decl_list } in
      ok (state, Expression_value expr)
   | Fail _ ->
      fail @@ `Repl_unexpected
 
 let try_contract state s =
-  let options = Compiler_options.make ~init_env:state.env ~typer_switch:state.typer_switch ~protocol_version:state.protocol () in
+  let options = Compiler_options.make ~init_env:state.env ~infer:state.infer ~protocol_version:state.protocol () in
   let%bind c =
     generic_try (`Repl_unexpected : Main_errors.all) @@ fun _ ->
-      let%bind typed_prg,core_prg,env,typer =
+      let%bind typed_prg,core_prg,env =
         Compile.Utils.type_contract_string ~options:options state.syntax s state.env in
       let%bind mini_c,mods =
         Compile.Of_typed.compile_with_modules ~module_env:state.mod_types typed_prg in
       let mod_types = Ast_core.SMap.union (fun _ _ a -> Some a) state.mod_types mods in
       let state = { state with env = env;
-                               typer = typer;
                                decl_list = state.decl_list @ mini_c;
                                mod_types = mod_types; } in
       ok @@ (state, Defined_values_core core_prg) in
@@ -114,7 +112,7 @@ let try_contract state s =
       | e -> fail e) c
 
 let import_file state file_name module_name =
-  let options = Compiler_options.make ~init_env:state.env ~typer_switch:state.typer_switch ~protocol_version:state.protocol () in
+  let options = Compiler_options.make ~init_env:state.env ~infer:state.infer ~protocol_version:state.protocol () in
   let%bind mini_c,mod_types,_,env = Build.build_contract_module ~options (variant_to_syntax state.syntax) Compile.Of_core.Env file_name module_name in
   let env = Ast_typed.Environment.add_module module_name env state.env in
   let mod_env = Ast_core.SMap.find module_name mod_types in
@@ -123,7 +121,7 @@ let import_file state file_name module_name =
   ok @@ (state, Just_ok)
 
 let use_file state s =
-  let options = Compiler_options.make ~init_env:state.env ~typer_switch:state.typer_switch ~protocol_version:state.protocol () in
+  let options = Compiler_options.make ~init_env:state.env ~infer:state.infer ~protocol_version:state.protocol () in
   (* Missing typer environment? *)
   let%bind mini_c,mod_types,(Ast_typed.Module_Fully_Typed module'),env = Build.build_contract_use ~options (variant_to_syntax state.syntax) s in
   let mod_types = Ast_core.SMap.union (fun _ _ a -> Some a) state.mod_types mod_types in
@@ -183,12 +181,11 @@ Included directives:
   #use \"file_path\";;
   #import \"file_path\" \"module_name\";;"
 
-let make_initial_state syntax protocol typer_switch dry_run_opts =
+let make_initial_state syntax protocol infer dry_run_opts =
   { env = Environment.default protocol;
-    typer = Typer.Solver.initial_state;
     decl_list = [];
     syntax = syntax;
-    typer_switch = typer_switch;
+    infer = infer;
     protocol = protocol;
     dry_run_opts = dry_run_opts;
     mod_types = Ast_core.SMap.empty }

@@ -33,12 +33,6 @@ let syntax_to_variant (Syntax_name syntax) source =
   | ("reasonligo" | "ReasonLIGO"), _ -> ok ReasonLIGO
   | _ -> fail (invalid_syntax syntax)
 
-let typer_switch_to_variant t =
-  match t with
-  | "old" -> ok Ast_typed.Old
-  | "new" -> ok Ast_typed.New
-  | _ -> fail (invalid_typer_switch t)
-
 (* Preprocessing *)
 let preprocess_pascaligo  = Preproc.Pascaligo.preprocess
 let preprocess_cameligo   = Preproc.Cameligo.preprocess

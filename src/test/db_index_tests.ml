@@ -7,9 +7,9 @@ open Db_index_typeclasses_constraining_tests
 
 (* TODO: move this to another file *)
 open Trace
-open Ast_typed.Types
+open Ast_core.Types
 open Solver_types
-open Ast_typed.Combinators
+open Ast_core.Combinators
 open Db_index_tests_common
 module X (M : sig module Plugin_under_test : INDEXER_PLUGIN_TYPE(Solver_types.Type_variable)(Solver_types.Opaque_type_variable).S val same_state : type_variable Plugin_under_test.t -> type_variable Plugin_under_test.t -> (unit, Main_errors.all) result end) = struct
   open Test_vars
@@ -26,7 +26,7 @@ module X (M : sig module Plugin_under_test : INDEXER_PLUGIN_TYPE(Solver_types.Ty
     in
 
     (* create empty state *)
-    let istate = M.Plugin_under_test.create_state ~cmp:Ast_typed.Compare.type_variable in
+    let istate = M.Plugin_under_test.create_state ~cmp:Ast_core.Compare.type_variable in
     let aux : _ t -> test_seq -> _ t = fun state seq ->
       match seq with
       | Add_cstr tv ->

@@ -3,14 +3,16 @@ open Ast_typed
 open Spilling
 open Main_errors
 
-let compile_with_modules ?(module_env = Ast_core.SMap.empty) : Ast_typed.module_fully_typed -> (Mini_c.program * AST.type_expression Ast_core.SMap.t, _) result = fun p ->
+module SMap = Map.Make(String)
+
+let compile_with_modules ?(module_env = SMap.empty) : Ast_typed.module_fully_typed -> (Mini_c.program * AST.type_expression SMap.t, _) result = fun p ->
   trace spilling_tracer @@ compile_module ~module_env:module_env p
 
-let compile ?(module_env = Ast_core.SMap.empty) : Ast_typed.module_fully_typed -> (Mini_c.program, _) result = fun p ->
+let compile ?(module_env = SMap.empty) : Ast_typed.module_fully_typed -> (Mini_c.program, _) result = fun p ->
   let%bind mini_c,_ = compile_with_modules ~module_env:module_env p in
   ok mini_c
 
-let compile_expression ?(module_env = Ast_core.SMap.empty) : expression -> (Mini_c.expression, _) result = fun e ->
+let compile_expression ?(module_env = SMap.empty) : expression -> (Mini_c.expression, _) result = fun e ->
   trace spilling_tracer @@ compile_expression ~module_env:module_env e
 
 let assert_equal_contract_type : Simple_utils.Runned_result.check_type -> string -> Ast_typed.module_fully_typed -> Ast_typed.expression -> (unit , _) result =
@@ -24,12 +26,14 @@ let assert_equal_contract_type : Simple_utils.Runned_result.check_type -> string
           let {associated_type=param_exp;_} = LMap.find (Label "0") m.content in
           let {associated_type=storage_exp;_} = LMap.find (Label "1") m.content in
             match c with
-            | Check_parameter -> trace typer_tracer @@ Typer.assert_type_expression_eq entry_point.location (param_exp, param.type_expression)
-            | Check_storage   -> trace typer_tracer @@ Typer.assert_type_expression_eq entry_point.location (storage_exp, param.type_expression)
+            | Check_parameter -> trace checking_tracer @@ Checking.assert_type_expression_eq entry_point.location (param_exp, param.type_expression)
+            | Check_storage   -> trace checking_tracer @@ Checking.assert_type_expression_eq entry_point.location (storage_exp, param.type_expression)
         )
         | _ -> fail @@ entrypoint_not_a_function )
     | _ -> fail @@ entrypoint_not_a_function
   )
+
+let decompile_env e = trace checking_tracer @@ Checking.decompile_env e
 
 let some_interpret ~options x test_entry = trace interpret_tracer @@ Interpreter.eval_test ~options x test_entry
 

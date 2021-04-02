@@ -5,7 +5,7 @@ let dry_run_options = Proto_alpha_utils.Memory_proto_alpha.make_options ()
 let init_state = Repl.make_initial_state
                    Compile.Helpers.CameLIGO
                    Environment.Protocols.Edo
-                   Ast_typed.Old dry_run_options
+                   false dry_run_options
 
 let apply_repl_sequence commands =
   let f state command =

@@ -1,7 +1,6 @@
 open Types
 open Trace
 
-type tstate = Typer_common.Errors.typer_error Typer.O'.typer_state
 type tenv = Ast_typed.environment
 
 let var_equal : Ast_typed.expression_variable -> Ast_typed.expression_variable -> bool = fun v1 v2 ->

@@ -1,10 +1,10 @@
 open Test_helpers
 open Main_errors
 
-open Ast_typed.Combinators
+open Ast_core.Combinators
 module Core = Typesystem.Core
-open Ast_typed.Types
-open Ast_typed.Reasons
+open Ast_core.Types
+open Ast_core.Reasons
 (* open Typesystem.Solver_types *)
 open Trace
 (* open Typer_common.Errors *)
@@ -33,7 +33,7 @@ let test_restrict
     expected_args (_in : string) expected_tc =
   test name @@ fun () ->
   let repr = (fun v -> v) in
-    trace typer_tracer @@
+    trace inference_tracer @@
     let info = `Constructor { reason_constr_simpl = "unit test" ; original_id = None; id_constructor_simpl = ConstraintIdentifier.T 42L ; tv ; c_tag ; tv_list } in
     let tc = make_c_typeclass_simpl ~bound:[] ~constraints:[] () 42 None args tc in
     let expected =  make_c_typeclass_simpl ~bound:[] ~constraints:[] () 42 None expected_args expected_tc in
@@ -41,7 +41,8 @@ let test_restrict
     (* Format.printf "\n\nActual: %a\n\n" Ast_typed.PP_generic.c_typeclass_simpl (restrict info tc);
      * Format.printf "\n\nExpected %a\n\n" Ast_typed.PP_generic.c_typeclass_simpl expected; *)
     let%bind restricted = restrict repr info tc in
-    Assert.assert_true (Typer_common.Errors.different_typeclasses expected restricted) (Ast_typed.Compare.c_typeclass_simpl_compare_all_fields restricted expected = 0)
+    Assert.assert_true (Typer_common.Errors.different_typeclasses expected restricted) (Ast_core.Compare.c_typeclass_simpl_compare_all_fields restricted expected = 0)
+
 
 let tests1 restrict = [
   (
@@ -87,7 +88,7 @@ let test_deduce_and_clean
     (expected_inferred  : (type_variable * constant_tag * type_variable list) list)
     expected_args (_in : string) expected_tc =
   test name @@ fun () ->
-    trace typer_tracer @@
+    trace inference_tracer @@
       let input_tc = make_c_typeclass_simpl ~bound:[] ~constraints:[] () 42 None args tc in
       let expected_tc = make_c_typeclass_simpl ~bound:[] ~constraints:[] () 42 None expected_args expected_tc in
       let expected_inferred = List.map
@@ -176,6 +177,6 @@ let tests2 deduce_and_clean =
 let main = test_suite "Typer: fundep heuriscic"
   @@ List.flatten
     [
-      tests1 Typer_new.Heuristic_tc_fundep.restrict ;
-      tests2 Typer_new.Heuristic_tc_fundep.deduce_and_clean ;
+      tests1 Inferance.Heuristic_tc_fundep.restrict ;
+      tests2 Inferance.Heuristic_tc_fundep.deduce_and_clean ;
     ]

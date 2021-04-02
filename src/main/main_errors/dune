@@ -13,7 +13,8 @@
     self_ast_sugar
     desugaring
     self_ast_core
-    typer
+    inferance
+    checking
     self_ast_typed
     interpreter
     spilling

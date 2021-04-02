@@ -1,8 +1,8 @@
 open Trace
 
-open Ast_typed.Types
+open Ast_core.Types
 open Solver_types
-open Ast_typed.Combinators
+open Ast_core.Combinators
 
 open Db_index_tests_common
 
@@ -21,8 +21,8 @@ module Typeclasses_constraining_tests = struct
     let%bind () = tst_assert "Length saf = Length sbf" (List.length sa = List.length sb) in
     bind_list_iter
       (fun (a , b) ->
-        let%bind () = tst_assert ("type variable =" ^ Var.to_name (fst a) ^ " " ^ Var.to_name (fst b)) (Ast_typed.Compare.type_variable (fst a) (fst b) = 0) in
-        let%bind () = tst_assert "c_typeclass_simpl set =" (List.compare ~compare:Ast_typed.Compare.c_typeclass_simpl (MultiSet.elements (snd a)) (MultiSet.elements (snd b)) = 0) in
+        let%bind () = tst_assert ("type variable =" ^ Var.to_name (fst a) ^ " " ^ Var.to_name (fst b)) (Ast_core.Compare.type_variable (fst a) (fst b) = 0) in
+        let%bind () = tst_assert "c_typeclass_simpl set =" (List.compare ~compare:Ast_core.Compare.c_typeclass_simpl (MultiSet.elements (snd a)) (MultiSet.elements (snd b)) = 0) in
         ok ()
       )
       (List.combine sa (List.sort (fun (x,_) (y,_) -> Var.compare x y) sb))
@@ -45,9 +45,9 @@ let tval_map_int_unit = tval C_map [tval C_int []; tval C_unit []]
 let typeclasses_constraining () =
   Printf.printf "0000000000000000000";
   let open Typeclasses_constraining_tests in
-  let set l = MultiSet.add_list l @@ MultiSet.create ~cmp:Ast_typed.Compare.c_typeclass_simpl in
+  let set l = MultiSet.add_list l @@ MultiSet.create ~cmp:Ast_core.Compare.c_typeclass_simpl in
   (* create empty state *)
-  let state = create_state ~cmp:Ast_typed.Compare.type_variable in
+  let state = create_state ~cmp:Ast_core.Compare.type_variable in
   (* assert state = {} *)
   let%bind () = same_state2 state [] in
 

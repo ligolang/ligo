@@ -19,5 +19,3 @@ include Combinators
 module Debug = Stage_common.Debug
 
 module Compare = struct include Compare end
-
-type typer_switch = Old | New
