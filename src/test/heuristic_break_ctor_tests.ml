@@ -1,12 +1,12 @@
 open Test_helpers
 module Core = Typesystem.Core
-open Ast_typed.Types
+open Ast_core.Types
 open Solver_types
 open Typer_common.Errors
 open Trace
 open Heuristic_common
 
-open Typer_new.Heuristic_break_ctor
+open Inferance.Heuristic_break_ctor
 
 let c1 = constraint_ 1L m == ctor C_int[]
 let c2 = constraint_ 2L n == row C_record { x = {associated_variable=m;michelson_annotation=None;decl_pos=0} ; y = {associated_variable=m;michelson_annotation=None;decl_pos=1} }
@@ -42,7 +42,7 @@ let propagator_test : (selector_output, typer_error) propagator -> unit -> (unit
       (constraint 3L c = map(m, n))
       (constraint 5L c = map(y, z)) *)
   let repr = fun x -> x in
-  let%bind result = trace Main_errors.typer_tracer @@
+  let%bind result = trace Main_errors.inference_tracer @@
     propagator { a_k_var = `Constructor !.. c3; a_k'_var' = `Constructor !.. c5 } repr in
   (* check that the propagator returns these constraints
      (order is not important, order left/right in the equality is not
@@ -72,7 +72,7 @@ let propagator_test2 : _ -> unit -> (unit,Main_errors.all) result =
   (* call the propagator with the pair of constraints
       (constraint 3L c = map(m, n))
       (constraint 6L c = map(y, n)) THIS was changed to y,n instead of y,z in the other test *)
-  let%bind result = trace Main_errors.typer_tracer @@
+  let%bind result = trace Main_errors.inference_tracer @@
     propagator { a_k_var = `Constructor !.. c3; a_k'_var' = `Constructor !.. c5 } repr in
   (* check that the propagator returns these constraints
      (order is not important, order left/right in the equality is not
@@ -82,7 +82,7 @@ let propagator_test2 : _ -> unit -> (unit,Main_errors.all) result =
   check_list_of_equalities (result : update list) [(m,y);(n,z)]
 
 let main =
-  let open Typer_new.Heuristic_break_ctor in
+  let open Inferance.Heuristic_break_ctor in
   test_suite "Typer : ctor break heuristic" @@
     [
       test "selector" (selector_test selector comparator) ;

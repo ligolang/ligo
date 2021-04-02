@@ -4,6 +4,7 @@
   (libraries
     environment
     simple-utils
+    checking
     ast_typed
   )
   (preprocess

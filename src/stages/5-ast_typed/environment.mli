@@ -1,4 +1,4 @@
-open Ast
+open Types
 
 type t = environment
 type element = environment_element

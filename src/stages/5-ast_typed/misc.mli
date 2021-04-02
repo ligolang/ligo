@@ -1,4 +1,4 @@
-open Ast
+open Types
 
 val assert_value_eq : ( expression * expression ) -> unit option
 val assert_type_expression_eq : ( type_expression * type_expression ) -> unit option
@@ -28,19 +28,7 @@ val assert_literal_eq : ( literal * literal ) -> unit result
 
 val get_entry : module_fully_typed -> string -> expression option
 
-val p_constant : Ast.constant_tag -> p_ctor_args -> type_value
-val p_row      : row_tag      -> row_lmap -> type_value
-val p_row_ez   : row_tag      -> (string * type_value) list -> type_value
-val p_apply    : type_value   -> type_value -> type_value
-val p_var      : type_variable -> type_value
-val p_var_ez   : string     -> type_value
-val c_equation : type_value -> type_value -> string -> type_constraint
-val c_apply    : type_variable -> type_variable -> string -> type_constraint
-
-val reason_simpl : type_constraint_simpl -> string
-
 val layout_eq : layout -> layout -> bool
 
 val assert_eq : 'a -> 'a -> unit option
 val assert_list_eq : ('a -> 'a -> unit option) -> 'a list -> 'a list -> unit option
-

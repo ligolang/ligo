@@ -1,9 +1,9 @@
 open Trace
 
 (* module Core = Typesystem.Core *)
-open Ast_typed.Types
-(* open Ast_typed.Reasons *)
-open Ast_typed.Combinators
+open Ast_core.Types
+(* open AinfAst_coreped.Reasons *)
+open Ast_core.Combinators
 
 let test_err s = Main_errors.test_internal s
 let tst_assert s p = Assert.assert_true (test_err s) p

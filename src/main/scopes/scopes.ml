@@ -4,19 +4,18 @@ open Misc
 
 module Formatter = Formatter
 
-type tstate = Typer_common.Errors.typer_error Typer.O'.typer_state
 type sub_module = { m : Ast_core.module_  ; bindings : bindings_map }
 
 let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -> ((def_map * scopes), Main_errors.all) result = fun ~with_types ~options core_prg ->
   let make_v_def_from_core = make_v_def_from_core ~with_types  in
   let make_v_def_option_type = make_v_def_option_type ~with_types in
   let compile =
-    let { init_env ; typer_switch ; _ } : Compiler_options.t = options in
-    Compile.Of_core.compile ~typer_switch ~init_env Env
+    let { init_env ; infer } : Compiler_options.t = options in
+    Compile.Of_core.compile ~infer ~init_env Env
   in
 
   let rec find_scopes' = fun (i,all_defs,env,scopes,lastloc) (bindings:bindings_map) (e : Ast_core.expression) ->
-    match e.content with
+    match e.expression_content with
     | E_let_in { let_binder = {var ; ascr} ; rhs ; let_result } -> (
       let (i,all_defs,_, scopes) = find_scopes' (i,all_defs,env,scopes,e.location) bindings rhs in
       let def = make_v_def_option_type bindings var ascr var.location rhs.location in
@@ -159,7 +158,7 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
       let m = List.append sub_prg.m [x] in
       let typed_prg = if with_types then Trace.to_option @@ compile m else None in
       let bindings = match typed_prg with
-        | Some (typed_prg,_,_) -> extract_variable_types sub_prg.bindings typed_prg
+        | Some (typed_prg,_) -> extract_variable_types sub_prg.bindings typed_prg
         | None -> sub_prg.bindings
       in
       let sub_prg' = { m ; bindings } in

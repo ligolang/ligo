@@ -1,5 +1,5 @@
-open Typer_new.Compare_renaming
-open Typer_new.Heuristic_tc_fundep
+open Inferance.Compare_renaming
+open Inferance.Heuristic_tc_fundep
 
 let deduce_and_clean_result : deduce_and_clean_result cmp  = fun expected actual ->
   let { deduced = a1 ; cleaned = a2 } = expected in

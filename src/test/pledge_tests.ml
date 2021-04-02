@@ -15,7 +15,7 @@ let get_program =
     )
 
 let compile_main () =
-  let%bind typed_prg,_,_  = get_program () in
+  let%bind typed_prg,_    = get_program () in
   let%bind mini_c_prg     = Ligo.Compile.Of_typed.compile typed_prg in
   let%bind michelson_prg  = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
   let%bind _contract =
@@ -43,36 +43,36 @@ let empty_message = e_lambda_ez (Location.wrap @@ Var.of_name "arguments")
 
 
 let pledge () =
-  let%bind (program, env, state) = get_program () in
+  let%bind (program,env) = get_program () in
   let storage = e_address oracle_addr in
   let parameter = e_unit () in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
                   ~sender:oracle_contract
                   ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.one) ()
   in
-  expect_eq ~options (program, env, state) "donate"
+  expect_eq ~options (program,env) "donate"
     (e_pair parameter storage)
     (e_pair (e_list []) storage)
 
 let distribute () =
-  let%bind (program, env, state) = get_program () in
+  let%bind (program,env) = get_program () in
   let storage = e_address oracle_addr in
   let parameter =  empty_message in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
                   ~sender:oracle_contract ()
   in
-  expect_eq ~options (program, env, state) "distribute"
+  expect_eq ~options (program,env) "distribute"
     (e_pair parameter storage)
     (e_pair (e_list []) storage)
 
 let distribute_unauthorized () =
-  let%bind (program, env, state) = get_program () in
+  let%bind (program,env) = get_program () in
   let storage = e_address oracle_addr in
   let parameter =  empty_message in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
                   ~sender:stranger_contract ()
   in
-  expect_string_failwith ~options (program, env, state) "distribute"
+  expect_string_failwith ~options (program,env) "distribute"
     (e_pair parameter storage)
     "You're not the oracle for this distribution."
 

@@ -1,11 +1,21 @@
-include Types
-
-(* include Misc *)
-include Combinators
-module Helpers = Helpers
 module Types = Types
-module Misc = Misc
+module Environment = Environment
 module PP = PP
 module Yojson = To_yojson
-module Combinators = Combinators
 module Formatter = Formatter
+module Reasons = Reasons
+module Combinators = Combinators
+
+module Misc = struct
+  include Misc
+end
+module Helpers = Helpers
+
+include Types
+include Misc
+include Combinators
+module Debug = Stage_common.Debug
+
+module Compare = struct include Compare end
+
+type typer_switch = Old | New

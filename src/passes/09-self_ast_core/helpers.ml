@@ -17,7 +17,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a,'err) res
   let self = fold_expression f in
   let idle = fun acc _ -> ok @@ acc in
   let%bind init' = f init e in
-  match e.content with
+  match e.expression_content with
   | E_literal _ | E_variable _ | E_raw_code _ -> ok init'
   | E_constant c -> Folds.constant self init' c
   | E_application app -> Folds.application self init' app
@@ -84,8 +84,8 @@ type 'err abs_mapper =
 let rec map_expression : 'err exp_mapper -> expression -> (expression , 'err) result = fun f e ->
   let self = map_expression f in
   let%bind e' = f e in
-  let return content = ok { e' with content } in
-  match e'.content with
+  let return expression_content = ok { e' with expression_content } in
+  match e'.expression_content with
   | E_ascription ascr -> (
       let%bind ascr = Maps.ascription self ok ascr in
       return @@ E_ascription ascr
@@ -227,8 +227,8 @@ let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> ('a
   let%bind (continue, init',e') = f a e in
   if (not continue) then ok(init',e')
   else
-  let return content = { e' with content } in
-  match e'.content with
+  let return expression_content = { e' with expression_content } in
+  match e'.expression_content with
   | E_ascription ascr -> (
       let%bind (res,ascr) = Fold_maps.ascription self idle init' ascr in
       ok (res, return @@ E_ascription ascr)
@@ -239,7 +239,7 @@ let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> ('a
       ok (res, return @@ E_matching {matchee=e';cases=cases'})
     )
   | E_record m -> (
-    let%bind (res, m') = bind_fold_map_lmap (fun res _ e -> self res e) init' m in
+    let%bind (res, m') = Stage_common.Helpers.bind_fold_map_lmap (fun res _ e -> self res e) init' m in
     ok (res, return @@ E_record m')
   )
   | E_record_accessor acc -> (

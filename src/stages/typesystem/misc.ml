@@ -6,7 +6,7 @@ module Substitution = struct
   module Pattern = struct
 
     open Trace
-    module T = Ast_typed
+    module T = Ast_core
     (* module TSMap = Trace.TMap(String) *)
 
     type substs = variable:type_variable -> T.type_content option (* this string is a type_name or type_variable I think *)
@@ -48,6 +48,11 @@ module Substitution = struct
       let () = ignore @@ substs in
       ok var
 
+    and s_binder : (_ T.binder,_) w = fun ~substs {var;ascr} ->
+      let%bind var = s_variable ~substs var in
+      let%bind ascr = bind_map_option (s_type_expression ~substs) ascr in
+      ok @@ T.{var;ascr}
+
     and s_label : (T.label,_) w = fun ~substs l ->
       let () = ignore @@ substs in
       ok l
@@ -64,8 +69,8 @@ module Substitution = struct
       let aux T.{ associated_type; michelson_annotation ; decl_pos } =
         let%bind associated_type = s_type_expression ~substs associated_type in
         ok @@ T.{ associated_type; michelson_annotation; decl_pos } in
-      let%bind content = Ast_typed.Helpers.bind_map_lmap aux rows.content in
-      ok @@ { rows with content }
+      let%bind fields = Ast_typed.Helpers.bind_map_lmap aux rows.fields in
+      ok @@ { rows with fields }
 
     and s_type_content : (T.type_content,_) w = fun ~substs -> function
         | T.T_sum rows ->
@@ -80,21 +85,21 @@ module Substitution = struct
              | Some expr -> s_type_content ~substs expr (* TODO: is it the right thing to recursively examine this? We mustn't go into an infinite loop. *)
              | None -> ok @@ T.T_variable variable
            end
-        | T.T_constant {language;injection;parameters} ->
-          let%bind parameters = bind_map_list (s_type_expression ~substs) parameters in
-          ok @@ T.T_constant {language;injection;parameters}
         | T.T_arrow { type1; type2 } ->
           let%bind type1 = s_type_expression ~substs type1 in
           let%bind type2 = s_type_expression ~substs type2 in
           ok @@ T.T_arrow { type1; type2 }
+        | T.T_app {type_operator;arguments} ->
+          let%bind arguments = bind_map_list (s_type_expression ~substs) arguments in
+          ok @@ T.T_app {type_operator;arguments}
         | T.T_module_accessor { module_name; element } ->
           let%bind element = s_type_expression ~substs element in
           ok @@ T.T_module_accessor { module_name; element }
         | T.T_singleton x -> ok @@ T.T_singleton x
 
-    and s_type_expression : (T.type_expression,_) w = fun ~substs { type_content; location; type_meta } ->
+    and s_type_expression : (T.type_expression,_) w = fun ~substs { type_content; location; sugar } ->
       let%bind type_content = s_type_content ~substs type_content in
-      ok @@ T.{ type_content; location; type_meta ; orig_var = None}
+      ok @@ T.{ type_content; location; sugar}
     and s_literal : (T.literal,_) w = fun ~substs -> function
       | T.Literal_unit ->
         let () = ignore @@ substs in
@@ -113,33 +118,29 @@ module Substitution = struct
       | (T.Literal_operation _ as x) ->
         ok @@ x
     and s_matching_expr : (T.matching_expr,_) w = fun ~(substs : substs) -> function
-      | Match_list {match_nil;match_cons={hd;tl;body;tv}} ->
+      | Match_list {match_nil;match_cons={hd;tl;body}} ->
         let%bind match_nil = s_expression ~substs match_nil in
         let%bind body      = s_expression ~substs body in
-        let%bind tv        = s_type_expression ~substs tv in
-        ok @@ T.Match_list {match_nil;match_cons={hd;tl;body;tv}}
-      | Match_option {match_none;match_some={opt;body;tv}} ->
+        ok @@ T.Match_list {match_nil;match_cons={hd;tl;body}}
+      | Match_option {match_none;match_some={opt;body}} ->
         let%bind match_none = s_expression ~substs match_none in
         let%bind body      = s_expression ~substs body in
-        let%bind tv        = s_type_expression ~substs tv in
-        ok @@ T.Match_option {match_none;match_some={opt;body;tv}}
-      | Match_variant {cases;tv} ->
+        ok @@ T.Match_option {match_none;match_some={opt;body}}
+      | Match_variant cases ->
         let%bind cases = bind_map_list (
-          fun ({constructor;pattern;body} : T.matching_content_case) ->
+          fun ({constructor;proj;body} : T.match_variant) ->
             let%bind body = s_expression ~substs body in
-            ok @@ ({constructor;pattern;body} : T.matching_content_case)
+            ok @@ ({constructor;proj;body} : T.match_variant)
         ) cases in
-        let%bind tv = s_type_expression ~substs tv in
-        ok @@ T.Match_variant {cases;tv}
-      | Match_record {fields; body; tv}  ->
-        let%bind fields = T.Helpers.bind_map_lmap (fun (a,b) -> let%bind b = s_type_expression ~substs b in ok (a,b)) fields in
+        ok @@ T.Match_variant cases
+      | Match_record {fields; body}  ->
+        let%bind fields = T.Helpers.bind_map_lmap (s_binder ~substs) fields in
         let%bind body   = s_expression ~substs body in
-        let%bind tv     = s_type_expression ~substs tv in
-        ok @@ T.Match_record {fields; body; tv}
+        ok @@ T.Match_record {fields; body}
 
-    and s_accessor  : (T.record_accessor,_) w = fun ~substs {record;path} ->
+    and s_accessor  : (_ T.record_accessor,_) w = fun ~substs {record;path} ->
       let%bind record = s_expression ~substs record in
-      ok @@ ({record;path} : T.record_accessor)
+      ok @@ ({record;path} : _ T.record_accessor)
 
 
     and s_expression_content : (T.expression_content,_) w = fun ~(substs : substs) -> function
@@ -157,12 +158,13 @@ module Substitution = struct
         let%bind lamb = s_expression ~substs lamb in
         let%bind args = s_expression ~substs args in
         ok @@ T.E_application {lamb;args}
-      | T.E_lambda          { binder; result } ->
-        let%bind binder = s_variable ~substs binder in
+      | T.E_lambda          { binder; output_type; result } ->
+        let%bind binder = s_binder ~substs binder in
+        let%bind output_type = bind_map_option (s_type_expression ~substs) output_type in
         let%bind result = s_expression ~substs result in
-        ok @@ T.E_lambda { binder; result }
+        ok @@ T.E_lambda { binder; output_type; result }
       | T.E_let_in          { let_binder; rhs; let_result; inline} ->
-        let%bind let_binder = s_variable ~substs let_binder in
+        let%bind let_binder = s_binder ~substs let_binder in
         let%bind rhs = s_expression ~substs rhs in
         let%bind let_result = s_expression ~substs let_result in
         ok @@ T.E_let_in { let_binder; rhs; let_result; inline}
@@ -212,26 +214,29 @@ module Substitution = struct
       | T.E_module_accessor { module_name; element } ->
         let%bind element = s_expression ~substs element in
         ok @@ T.E_module_accessor { module_name; element }
+      | T.E_ascription {anno_expr; type_annotation} ->
+        let%bind anno_expr = s_expression ~substs anno_expr in
+        let%bind type_annotation = s_type_expression ~substs type_annotation in
+        ok @@ T.E_ascription {anno_expr; type_annotation}
 
-    and s_expression : (T.expression,_) w = fun ~(substs:substs) { expression_content; type_expression; location } ->
+    and s_expression : (T.expression,_) w = fun ~(substs:substs) { expression_content; sugar; location } ->
       let%bind expression_content = s_expression_content ~substs expression_content in
-      let%bind type_expr = s_type_expression ~substs type_expression in
       let location = location in
-      ok T.{ expression_content;type_expression=type_expr; location }
+      ok T.{ expression_content;sugar; location }
 
     and s_declaration : (T.declaration,_) w =
     let return (d : T.declaration) = ok @@ d in
     fun ~substs ->
       function
-      | Ast_typed.Declaration_constant {name ; binder ; expr ; inline} ->
-        let%bind binder = s_variable ~substs binder in
+      | T.Declaration_constant {name ; binder ; expr ; attr={inline}} ->
+        let%bind binder = s_binder ~substs binder in
         let%bind expr = s_expression ~substs expr in
-        return @@ Declaration_constant {name; binder; expr; inline}
-      | Declaration_type t -> return @@ Declaration_type t
-      | Declaration_module {module_binder;module_} ->
+        return @@ Declaration_constant {name; binder; expr; attr={inline}}
+      | T.Declaration_type t -> return @@ Declaration_type t
+      | T.Declaration_module {module_binder;module_} ->
         let%bind module_       = s_module' ~substs module_ in
         return @@ Declaration_module {module_binder;module_}
-      | Module_alias {alias;binders} ->
+      | T.Module_alias {alias;binders} ->
         return @@ Module_alias {alias; binders}
 
     and s_declaration_wrap : (T.declaration Location.wrap,_) w = fun ~substs d ->
@@ -239,13 +244,13 @@ module Substitution = struct
 
     (* Replace the type variable ~v with ~expr everywhere within the
        module ~p. TODO: issues with scoping/shadowing. *)
-    and s_module : (Ast_typed.module_with_unification_vars,_) w = fun ~substs (Ast_typed.Module_With_Unification_Vars p) ->
+    and s_module : (T.module_with_unification_vars,_) w = fun ~substs (T.Module_With_Unification_Vars p) ->
       let%bind p = Trace.bind_map_list (s_declaration_wrap ~substs) p in
-      ok @@ Ast_typed.Module_With_Unification_Vars p
+      ok @@ T.Module_With_Unification_Vars p
 
-    and s_module' : (Ast_typed.module_fully_typed,_) w = fun ~substs (T.Module_Fully_Typed p) ->
+    and s_module' : (T.module_,_) w = fun ~substs (p) ->
       let%bind p = Trace.bind_map_list (s_declaration_wrap ~substs) p in
-      ok @@ T.Module_Fully_Typed p
+      ok @@ p
 
     (*
        Computes `P[v := expr]`.

@@ -59,7 +59,7 @@ let rec decompile_expression : O.expression -> (I.expression, desugaring_error) 
   match e.sugar with
     Some e -> ok @@ e
   | None ->
-    match e.content with
+    match e.expression_content with
       O.E_literal lit -> return @@ I.E_literal (lit)
     | O.E_constant {cons_name;arguments} ->
       let%bind arguments = bind_map_list self arguments in

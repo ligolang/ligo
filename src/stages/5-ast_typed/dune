@@ -3,7 +3,7 @@
   (public_name ligo.ast_typed)
   (libraries
     simple-utils
-    ast_core ; Is that a good idea?
+    ast_core
     stage_common
     UnionFind
   )

@@ -464,7 +464,7 @@ let%expect_test "main_cit_reasonligo" =
 let%expect_test "typer" =
   let open Ast_typed in
   let open Location in
-  let error e = human_readable_error (`Main_typer e) in
+  let error e = human_readable_error (`Main_checking e) in
   let location_t = File default_location in
   let environment = Environment.empty in
   let type_variable = Var.of_name "foo" in
@@ -476,7 +476,7 @@ let%expect_test "typer" =
     E_variable ast_core_expression_variable
   in
   let ast_core_expression : Ast_core.expression =
-    {content= ast_core_expression_content; sugar= None; location= location_t}
+    {expression_content= ast_core_expression_content; sugar= None; location= location_t}
   in
   let type_expression : Ast_typed.type_expression =
     { type_content= T_variable (Var.of_name "foo");

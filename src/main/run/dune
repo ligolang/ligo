@@ -9,8 +9,8 @@
     self_ast_imperative
     desugaring
     ast_core
-    typer_new
-    typer
+    inferance
+    checking
     ast_typed
     spilling
     mini_c

@@ -1,5 +1,7 @@
 include Enums
 
+module SMap = Map.Make(String)
+
 type location = Location.t
 type 'a location_wrap = 'a Location.wrap
 

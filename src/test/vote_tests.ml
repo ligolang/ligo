@@ -35,10 +35,10 @@ let reset title start_time finish_time =
 let yea = e_constructor "Vote" (e_constructor "Yea" (e_unit ()))
 
 let init_vote () =
-  let%bind (program, env, state) = get_program () in
+  let%bind (program, env) = get_program () in
   let%bind result =
     Test_helpers.run_typed_program_with_imperative_input
-      (program, env, state) "main" (e_pair yea (init_storage "basic")) in
+      (program, env) "main" (e_pair yea (init_storage "basic")) in
   let%bind (_, storage) = trace_option (test_internal __LOC__) @@ Ast_core.extract_pair result in
   let%bind storage' = trace_option (test_internal __LOC__) @@ Ast_core.extract_record storage in
   let storage' =  List.map (fun (Ast_core.Label l,v) -> (Label l, v)) storage' in

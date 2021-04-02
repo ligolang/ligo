@@ -283,6 +283,9 @@ let%expect_test _ =
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
                `plain' whenever the TERM env var is `dumb' or undefined.
 
+           --infer
+               enable type inferance
+
            --michelson-format=MICHELSON_FORMAT (absent=text)
                MICHELSON_FORMAT is the format that will be used by
                compile-contract for the resulting Michelson. Available formats
@@ -302,9 +305,6 @@ let%expect_test _ =
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
                the syntax is guessed from the extension (.ligo, .mligo, .religo
                respectively).
-
-           --typer=TYPER_SWITCH (absent=old)
-               TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
                Show version information.
@@ -360,6 +360,9 @@ let%expect_test _ =
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
                `plain' whenever the TERM env var is `dumb' or undefined.
 
+           --infer
+               enable type inferance
+
            --michelson-format=MICHELSON_FORMAT (absent=text)
                MICHELSON_FORMAT is the format that will be used by
                compile-contract for the resulting Michelson. Available formats
@@ -391,9 +394,6 @@ let%expect_test _ =
            --source=SOURCE
                SOURCE is the source the Michelson interpreter transaction will
                use.
-
-           --typer=TYPER_SWITCH (absent=old)
-               TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
                Show version information.
@@ -450,6 +450,9 @@ let%expect_test _ =
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
                `plain' whenever the TERM env var is `dumb' or undefined.
 
+           --infer
+               enable type inferance
+
            --michelson-format=MICHELSON_FORMAT (absent=text)
                MICHELSON_FORMAT is the format that will be used by
                compile-contract for the resulting Michelson. Available formats
@@ -481,9 +484,6 @@ let%expect_test _ =
            --source=SOURCE
                SOURCE is the source the Michelson interpreter transaction will
                use.
-
-           --typer=TYPER_SWITCH (absent=old)
-               TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
                Show version information.
@@ -541,6 +541,9 @@ let%expect_test _ =
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
                `plain' whenever the TERM env var is `dumb' or undefined.
 
+           --infer
+               enable type inferance
+
            --now=NOW
                NOW is the NOW value the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
@@ -563,9 +566,6 @@ let%expect_test _ =
            --source=SOURCE
                SOURCE is the source the Michelson interpreter transaction will
                use.
-
-           --typer=TYPER_SWITCH (absent=old)
-               TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
                Show version information.
@@ -620,6 +620,9 @@ let%expect_test _ =
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
                `plain' whenever the TERM env var is `dumb' or undefined.
 
+           --infer
+               enable type inferance
+
            --now=NOW
                NOW is the NOW value the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
@@ -642,9 +645,6 @@ let%expect_test _ =
            --source=SOURCE
                SOURCE is the source the Michelson interpreter transaction will
                use.
-
-           --typer=TYPER_SWITCH (absent=old)
-               TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
                Show version information. |} ] ;
@@ -686,6 +686,9 @@ let%expect_test _ =
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
                `plain' whenever the TERM env var is `dumb' or undefined.
 
+           --infer
+               enable type inferance
+
            --now=NOW
                NOW is the NOW value the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
@@ -708,9 +711,6 @@ let%expect_test _ =
            --source=SOURCE
                SOURCE is the source the Michelson interpreter transaction will
                use.
-
-           --typer=TYPER_SWITCH (absent=old)
-               TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
                Show version information. |} ] ;
@@ -747,6 +747,9 @@ let%expect_test _ =
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
                `plain' whenever the TERM env var is `dumb' or undefined.
 
+           --infer
+               enable type inferance
+
            --init-file=INIT_FILE
                INIT_FILE is the path to smart contract file to be used for
                context initialization.
@@ -760,9 +763,6 @@ let%expect_test _ =
                PROTOCOL_VERSION will decide protocol's types/values pre-loaded
                into the LIGO environment (edo). By default, the current protocol
                (edo) will be used
-
-           --typer=TYPER_SWITCH (absent=old)
-               TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
                Show version information.

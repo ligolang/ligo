@@ -1,6 +1,6 @@
 module Core = Typesystem.Core
-open Ast_typed.Types
-open Ast_typed.Reasons
+open Ast_core.Types
+open Ast_core.Reasons
 open Trace
 let test_err s = Main_errors.test_internal s
 let tst_assert s p = Assert.assert_true (test_err s) p
@@ -44,16 +44,16 @@ let grouped_by_variable state =
 let check_list_of_equalities (la : update list) (_lb : (type_variable * type_variable) list) =
   let aux' ({ reason = _; c } : type_constraint) =
     match c with
-    | Ast_typed.Types.C_equation { aval = { location = _; wrap_content = aval_ } ; bval = { location = _; wrap_content = bval_ } } ->
+    | Ast_core.Types.C_equation { aval = { location = _; wrap_content = aval_ } ; bval = { location = _; wrap_content = bval_ } } ->
       (match aval_, bval_ with
          P_variable avar, P_variable bvar -> ok (if Var.equal avar bvar then [] else [avar; bvar])
        | _ ->
          fail (test_err "bad result from heuristic_break_ctor, expected equation constraint with two variables, but at least one of the members of the equation is not a variable."))
-    | Ast_typed.Types.C_typeclass _ ->
+    | Ast_core.Types.C_typeclass _ ->
       fail (test_err "bad result from heuristic_break_ctor, expected equation constraints but got got a typeclass constraint.")
-    | Ast_typed.Types.C_access_label _ ->
+    | Ast_core.Types.C_access_label _ ->
       fail (test_err "bad result from heuristic_break_ctor, expected equation constraints but got got a c_access_label constraint.")
-    | Ast_typed.Types.C_apply _ ->
+    | Ast_core.Types.C_apply _ ->
       fail (test_err "bad result from heuristic_break_ctor, expected equation constraints but got got a c_apply.") in
   let aux ({ remove_constraints; add_constraints; proof_trace } : update) =
     let%bind () = tst_assert "bad result from heuristic_break_ctor, expected no constraints to remove but got some." (List.length remove_constraints = 0) in

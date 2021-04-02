@@ -1,4 +1,4 @@
-open Ast
+open Types
 open Combinators
 
 type t = environment
@@ -120,6 +120,7 @@ let get_sum : _ label_map -> t -> rows option = fun lmap e ->
         match res with Some _ as s -> s | None -> rec_aux module_
       ) None modules
   in rec_aux e
+
 
 module PP = struct
   open Format

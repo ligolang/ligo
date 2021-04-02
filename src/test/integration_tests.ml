@@ -2162,9 +2162,9 @@ let get_contract_ligo () : (unit, _) result =
   let%bind () =
     let make_input = fun _n -> e_unit () in
     let make_expected : int -> Ast_core.expression -> (unit, _) result = fun _n result ->
-      let%bind (ops , storage) = trace_option (test_internal __LOC__) @@ Ast_core.get_e_pair result.content in
+      let%bind (ops , storage) = trace_option (test_internal __LOC__) @@ Ast_core.get_e_pair result.expression_content in
       let%bind () =
-        let%bind lst = trace_option (test_internal __LOC__) @@ Ast_core.get_e_list ops.content in
+        let%bind lst = trace_option (test_internal __LOC__) @@ Ast_core.get_e_list ops.expression_content in
         Assert.assert_list_size (test_internal __LOC__) lst 1 in
       let expected_storage = Ast_core.e_unit () in
       trace_option (test_internal __LOC__) @@ Ast_core.Misc.assert_value_eq (expected_storage , storage)
@@ -2484,216 +2484,214 @@ let loop_bugs_ligo () : (unit, _) result =
     expect_eq program "shadowing_assigned_in_body" input expected in
   ok ()
 
-let test enabled_for_typer_not_currently_in_use name f = enabled_for_typer_not_currently_in_use, test name f
 let no = false
 let y = true
 let main = test_suite "Integration (End to End)"
-    @@ (fun lst -> List.map snd @@ match typer_switch () with Ast_typed.New -> List.filter fst lst | _ -> lst) @@ [
+  [
 
-    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "simple1" simple1 ;
-    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "simple2" simple2 ;
-    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "simple3" simple3 ;
-    (* test no "simple4" simple4 ; *)
-    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "chain id" chain_id ;
-    test y (* enabled AND PASSES as of 02021-01-28 15478d068 *) "bytes unpack" bytes_unpack ;
-    test y (* enabled AND PASSES as of 02021-01-28 15478d068 *) "bytes unpack (mligo)" bytes_unpack_mligo ;
-    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bytes unpack (religo)" bytes_unpack_religo ; 
-    test y (* enabled AND PASSES as of 02021-01-30 3aaa688f1 *) "key hash" key_hash ;                         (* C_access_label *)
-    test y (* enabled AND PASSES as of 02021-01-30 3aaa688f1 *) "key hash (mligo)" key_hash_mligo ;           (* C_access_label *)
-    test y (* enabled AND PASSES as of 02021-01-30 3aaa688f1 *) "key hash (religo)" key_hash_religo ;         (* C_access_label *)
-    test y (* enabled AND PASSES as of 02021-01-30 938866182 *) "check signature" check_signature ;                 (* C_access_label *)
-    test y (* enabled AND PASSES as of 02021-01-30 938866182 *) "check signature (mligo)" check_signature_mligo ;   (* C_access_label *)
-    test y (* enabled AND PASSES as of 02021-01-30 938866182 *) "check signature (religo)" check_signature_religo ; (* C_access_label *)
+    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "simple1" simple1 ;
+    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "simple2" simple2 ;
+    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "simple3" simple3 ;
+    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "chain id" chain_id ;
+    test (* enabled AND PASSES as of 02021-01-28 15478d068 *) "bytes unpack" bytes_unpack ;
+    test (* enabled AND PASSES as of 02021-01-28 15478d068 *) "bytes unpack (mligo)" bytes_unpack_mligo ;
+    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bytes unpack (religo)" bytes_unpack_religo ; 
+    test (* enabled AND PASSES as of 02021-01-30 3aaa688f1 *) "key hash" key_hash ;                         (* C_access_label *)
+    test (* enabled AND PASSES as of 02021-01-30 3aaa688f1 *) "key hash (mligo)" key_hash_mligo ;           (* C_access_label *)
+    test (* enabled AND PASSES as of 02021-01-30 3aaa688f1 *) "key hash (religo)" key_hash_religo ;         (* C_access_label *)
+    test (* enabled AND PASSES as of 02021-01-30 938866182 *) "check signature" check_signature ;                 (* C_access_label *)
+    test (* enabled AND PASSES as of 02021-01-30 938866182 *) "check signature (mligo)" check_signature_mligo ;   (* C_access_label *)
+    test (* enabled AND PASSES as of 02021-01-30 938866182 *) "check signature (religo)" check_signature_religo ; (* C_access_label *)
 
-    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "type alias" type_alias ;
+    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "type alias" type_alias ;
 
-    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "function" function_ ;                        (* tests don't typecheck the test case's application *)
+    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "function" function_ ;                        (* tests don't typecheck the test case's application *)
 
-    test y (* enabled AND PASSES as of 02021-01-28 15478d068 *) "blockless function" blockless;
+    test (* enabled AND PASSES as of 02021-01-28 15478d068 *) "blockless function" blockless;
     (* test "procedure"  procedure ; *)
-    test y (* enabled AND PASSES as of 02021-01-28 15478d068 *) "assign" assign ;
-    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "declaration local" declaration_local ;
-    test y (* enabled AND PASSES as of 02021-01-28 15478d068 *) "complex function" complex_function ;
-    test y (* enabled AND PASSES as of 02021-01-28 92040f207 *) "anon function" anon_function ;
+    test (* enabled AND PASSES as of 02021-01-28 15478d068 *) "assign" assign ;
+    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "declaration local" declaration_local ;
+    test (* enabled AND PASSES as of 02021-01-28 15478d068 *) "complex function" complex_function ;
+    test (* enabled AND PASSES as of 02021-01-28 92040f207 *) "anon function" anon_function ;
 
-    test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "various applications" application ;
+    test (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "various applications" application ;
 
-    test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "closure" closure ;
-    test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "closure (mligo)" closure_mligo ;
-    test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "closure (religo)" closure_religo ;
-    test y (* enabled AND PASSES as of 02021-01-30 938866182 *) "shared function" shared_function ;
-    test y (* enabled AND PASSES as of 02021-01-30 938866182 *) "shared function (mligo)" shared_function_mligo ;
-    test y (* enabled AND PASSES as of 02021-01-30 938866182 *) "shared function (religo)" shared_function_religo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "higher order" higher_order ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "higher order (mligo)" higher_order_mligo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "higher order (religo)" higher_order_religo ;
-    test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "variant" variant ;
-    test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "variant (mligo)" variant_mligo ;
-    test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "variant (religo)" variant_religo ;
+    test (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "closure" closure ;
+    test (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "closure (mligo)" closure_mligo ;
+    test (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "closure (religo)" closure_religo ;
+    test (* enabled AND PASSES as of 02021-01-30 938866182 *) "shared function" shared_function ;
+    test (* enabled AND PASSES as of 02021-01-30 938866182 *) "shared function (mligo)" shared_function_mligo ;
+    test (* enabled AND PASSES as of 02021-01-30 938866182 *) "shared function (religo)" shared_function_religo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "higher order" higher_order ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "higher order (mligo)" higher_order_mligo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "higher order (religo)" higher_order_religo ;
+    test (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "variant" variant ;
+    test (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "variant (mligo)" variant_mligo ;
+    test (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "variant (religo)" variant_religo ;
 
-    test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "variant matching" variant_matching ;
-    test y (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "tuple" tuple ;
-    test y (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "tuple (mligo)" tuple_mligo ;
-    test y (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "tuple (religo)" tuple_religo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "record" record ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "record (mligo)" record_mligo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "record (religo)" record_religo ;
-    test y "condition simple" condition_simple ;
-    test y "condition (ligo)" condition ;
-    test y "condition (mligo)" condition_mligo ;
-    test y "condition (religo)" condition_religo ;
-    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "sequence (mligo" sequence_mligo ;
-    test y (* todo p_row specialize *) "eq bool (ligo)" eq_bool ;
-    test y "eq bool (mligo)" eq_bool_mligo ;
-    test y "eq bool (religo)" eq_bool_religo ;
-    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "shadow" shadow ;
-    test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "annotation" annotation ;
+    test (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "variant matching" variant_matching ;
+    test (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "tuple" tuple ;
+    test (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "tuple (mligo)" tuple_mligo ;
+    test (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "tuple (religo)" tuple_religo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "record" record ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "record (mligo)" record_mligo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "record (religo)" record_religo ;
+    test "condition simple" condition_simple ;
+    test "condition (ligo)" condition ;
+    test "condition (mligo)" condition_mligo ;
+    test "condition (religo)" condition_religo ;
+    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "sequence (mligo" sequence_mligo ;
+    test (* todo p_row specialize *) "eq bool (ligo)" eq_bool ;
+    test "eq bool (mligo)" eq_bool_mligo ;
+    test "eq bool (religo)" eq_bool_religo ;
+    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "shadow" shadow ;
+    test (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "annotation" annotation ;
 
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "multiple parameters" multiple_parameters ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "multiple parameters (mligo)" multiple_parameters_mligo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "multiple parameters (religo)" multiple_parameters_religo ;
-    test y (* todo p_row specialize *) "bool" bool_expression ;
-    test y "bool (mligo)" bool_expression_mligo ;
-    test y "bool (religo)" bool_expression_religo ;
-    test y (* failure todo *) "arithmetic" arithmetic ;
-    test y "arithmetic (mligo)" arithmetic_mligo ;
-    test y "arithmetic (religo)" arithmetic_religo ;
-    test y (* todo *) "bitwise_arithmetic" bitwise_arithmetic ;
-    test y "bitwise_arithmetic (mligo)" bitwise_arithmetic_mligo;
-    test y "bitwise_arithmetic (religo)" bitwise_arithmetic_religo;
-    test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "string_arithmetic" string_arithmetic ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "string_arithmetic (mligo)" string_arithmetic_mligo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "string_arithmetic (religo)" string_arithmetic_religo ;
-    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "bytes_arithmetic" bytes_arithmetic ;
-    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "bytes_arithmetic (mligo)" bytes_arithmetic_mligo ;
-    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "bytes_arithmetic (religo)" bytes_arithmetic_religo ;
-    test y (* exist in typeclasse *) "comparable (mligo)" comparable_mligo;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "crypto" crypto ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "crypto (mligo)" crypto_mligo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "crypto (religo)" crypto_religo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "multiple parameters" multiple_parameters ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "multiple parameters (mligo)" multiple_parameters_mligo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "multiple parameters (religo)" multiple_parameters_religo ;
+    test (* todo p_row specialize *) "bool" bool_expression ;
+    test "bool (mligo)" bool_expression_mligo ;
+    test "bool (religo)" bool_expression_religo ;
+    test (* failure todo *) "arithmetic" arithmetic ;
+    test "arithmetic (mligo)" arithmetic_mligo ;
+    test "arithmetic (religo)" arithmetic_religo ;
+    test (* todo *) "bitwise_arithmetic" bitwise_arithmetic ;
+    test "bitwise_arithmetic (mligo)" bitwise_arithmetic_mligo;
+    test "bitwise_arithmetic (religo)" bitwise_arithmetic_religo;
+    test (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "string_arithmetic" string_arithmetic ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "string_arithmetic (mligo)" string_arithmetic_mligo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "string_arithmetic (religo)" string_arithmetic_religo ;
+    test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "bytes_arithmetic" bytes_arithmetic ;
+    test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "bytes_arithmetic (mligo)" bytes_arithmetic_mligo ;
+    test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "bytes_arithmetic (religo)" bytes_arithmetic_religo ;
+    test (* exist in typeclasse *) "comparable (mligo)" comparable_mligo;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "crypto" crypto ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "crypto (mligo)" crypto_mligo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "crypto (religo)" crypto_religo ;
     (* test "set_arithmetic" set_arithmetic ; *)
-    test y (* Missing typeclass *) "set_arithmetic (mligo)" set_arithmetic_mligo ;
-    test y "set_arithmetic (religo)" set_arithmetic_religo ;
-    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "unit" unit_expression ;
-    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "string" string_expression ;
-    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "option" option ;
-    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "option (mligo)" moption ;
-    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "option (religo)" reoption ;
+    test (* Missing typeclass *) "set_arithmetic (mligo)" set_arithmetic_mligo ;
+    test "set_arithmetic (religo)" set_arithmetic_religo ;
+    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "unit" unit_expression ;
+    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "string" string_expression ;
+    test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "option" option ;
+    test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "option (mligo)" moption ;
+    test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "option (religo)" reoption ;
 
-    test y (* exist for tc_size or t_map_size *) "map" map ;
-    test y "map (mligo)" mmap ;
+    test (* exist for tc_size or t_map_size *) "map" map ;
+    test "map (mligo)" mmap ;
     (* test "map (religo)" remap ; *)
-    test y (* incompatible type MAP BIG_MAP *) "big_map" big_map ;
-    test y "big_map (mligo)" mbig_map ;
-    test y "big_map (religo)" rebig_map ;
-    test y (* rework typeclass *) "list" list ;
-    test y "loop" loop ;
-    test y "loop (mligo)" loop_mligo ;
-    test y "loop (religo)" loop_religo ;
-    test y "matching" matching ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "declarations" declarations ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "quote declaration" quote_declaration ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "quote declarations" quote_declarations ;
+    test (* incompatible type MAP BIG_MAP *) "big_map" big_map ;
+    test "big_map (mligo)" mbig_map ;
+    test "big_map (religo)" rebig_map ;
+    test (* rework typeclass *) "list" list ;
+    test "loop" loop ;
+    test "loop (mligo)" loop_mligo ;
+    test "loop (religo)" loop_religo ;
+    test "matching" matching ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "declarations" declarations ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "quote declaration" quote_declaration ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "quote declarations" quote_declarations ;
 
-    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "#include directives" include_ ;
-    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "#include directives (mligo)" include_mligo ;
-    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "#include directives (religo)" include_religo ;
+    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "#include directives" include_ ;
+    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "#include directives (mligo)" include_mligo ;
+    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "#include directives (religo)" include_religo ;
 
 
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "counter contract" counter_contract ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "counter contract (mligo)" counter_mligo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "counter contract (religo)" counter_religo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "super counter contract" super_counter_contract ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "super counter contract" super_counter_contract_mligo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "super counter contract (reasonligo)" super_counter_contract_religo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "dispatch counter contract" dispatch_counter_contract ;
-    test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "basic (mligo)" basic_mligo ;
-    test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "basic (religo)" basic_religo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "counter contract" counter_contract ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "counter contract (mligo)" counter_mligo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "counter contract (religo)" counter_religo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "super counter contract" super_counter_contract ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "super counter contract" super_counter_contract_mligo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "super counter contract (reasonligo)" super_counter_contract_religo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "dispatch counter contract" dispatch_counter_contract ;
+    test (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "basic (mligo)" basic_mligo ;
+    test (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "basic (religo)" basic_religo ;
 
-    test y "let-in (mligo)" let_in_mligo ;
-    test y "let-in (religo)" let_in_religo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "local type declaration (ligo)" local_type_decl_ligo;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "local type declaration (mligo)" local_type_decl_mligo;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "local type declaration (religo)" local_type_decl_religo;
-    test y (* enabled AND PASSES as of 02020-02-03 2e8d3689b *) "match variant (mligo)" match_variant ;
-    test y (* enabled AND PASSES as of 02020-02-03 2e8d3689b *) "match variant (religo)" match_variant_re ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "match variant 2 (mligo)" match_matej ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "match variant 2 (religo)" match_matej_re ;
-    test y (* uncomplete typclass *) "list matching (mligo)" mligo_list ;
-    test y "list matching (religo)" religo_list ;
-    test y "failwith ligo" failwith_ligo ;
-    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "failwith mligo" failwith_mligo ;
-    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "assert mligo" assert_mligo ;
-    test y "recursion (ligo)" recursion_ligo ;
-    test y "recursion (mligo)" recursion_mligo ;
-    test y "recursion (religo)" recursion_religo ;
+    test "let-in (mligo)" let_in_mligo ;
+    test "let-in (religo)" let_in_religo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "local type declaration (ligo)" local_type_decl_ligo;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "local type declaration (mligo)" local_type_decl_mligo;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "local type declaration (religo)" local_type_decl_religo;
+    test (* enabled AND PASSES as of 02020-02-03 2e8d3689b *) "match variant (mligo)" match_variant ;
+    test (* enabled AND PASSES as of 02020-02-03 2e8d3689b *) "match variant (religo)" match_variant_re ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "match variant 2 (mligo)" match_matej ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "match variant 2 (religo)" match_matej_re ;
+    test (* uncomplete typclass *) "list matching (mligo)" mligo_list ;
+    test "list matching (religo)" religo_list ;
+    test "failwith ligo" failwith_ligo ;
+    test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "failwith mligo" failwith_mligo ;
+    test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "assert mligo" assert_mligo ;
+    test "recursion (ligo)" recursion_ligo ;
+    test "recursion (mligo)" recursion_mligo ;
+    test "recursion (religo)" recursion_religo ;
     (* test "guess string mligo" guess_string_mligo ; WIP? *)
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "lambda mligo" lambda_mligo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "lambda religo" lambda_religo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "lambda ligo" lambda_ligo ;
-    test y (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "tez (ligo)" tez_ligo ;
-    test y (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "tez (mligo)" tez_mligo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "lambda mligo" lambda_mligo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "lambda religo" lambda_religo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "lambda ligo" lambda_ligo ;
+    test (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "tez (ligo)" tez_ligo ;
+    test (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "tez (mligo)" tez_mligo ;
 
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "lambda2 mligo" lambda2_mligo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "lambda2 religo" lambda2_religo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "lambda2 mligo" lambda2_mligo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "lambda2 religo" lambda2_religo ;
     (* test "fibo (mligo)" fibo_mligo ; *)
     (* test "fibo2 (mligo)" fibo2_mligo ; *)
     (* test "fibo3 (mligo)" fibo3_mligo ; *)
     (* test "fibo4 (mligo)" fibo4_mligo ; *)
-    test y "michelson inserion ligo" michelson_insertion_ligo;
-    test y "michelson inserion mligo" michelson_insertion_mligo;
-    test y "michelson inserion religo" michelson_insertion_religo;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "website1 ligo" website1_ligo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "website2 ligo" website2_ligo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "website2 (mligo)" website2_mligo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "website2 (religo)" website2_religo ;
-    test y "let multiple (mligo)" mligo_let_multiple ;
-    test y "let multiple (religo)" religo_let_multiple ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "balance constant" balance_constant ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "balance constant (mligo)" balance_constant_mligo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "balance constant (religo)" balance_constant_religo ;
-    test y "amount" amount ;
-    test y "amount (mligo)" amount_mligo ;
-    test y "amount (religo)" amount_religo ;
-    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "address" address ;
-    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "address (mligo)" address_mligo ;
-    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "address (religo)" address_religo ;
-    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "self address" self_address ;
-    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "self address (mligo)" self_address_mligo ;
-    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "self address (religo)" self_address_religo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "implicit account" implicit_account ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "implicit account (mligo)" implicit_account_mligo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "implicit account (religo)" implicit_account_religo ;
+    test "michelson inserion ligo" michelson_insertion_ligo;
+    test "michelson inserion mligo" michelson_insertion_mligo;
+    test "michelson inserion religo" michelson_insertion_religo;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "website1 ligo" website1_ligo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "website2 ligo" website2_ligo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "website2 (mligo)" website2_mligo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "website2 (religo)" website2_religo ;
+    test "let multiple (mligo)" mligo_let_multiple ;
+    test "let multiple (religo)" religo_let_multiple ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "balance constant" balance_constant ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "balance constant (mligo)" balance_constant_mligo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "balance constant (religo)" balance_constant_religo ;
+    test "amount" amount ;
+    test "amount (mligo)" amount_mligo ;
+    test "amount (religo)" amount_religo ;
+    test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "address" address ;
+    test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "address (mligo)" address_mligo ;
+    test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "address (religo)" address_religo ;
+    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "self address" self_address ;
+    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "self address (mligo)" self_address_mligo ;
+    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "self address (religo)" self_address_religo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "implicit account" implicit_account ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "implicit account (mligo)" implicit_account_mligo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "implicit account (religo)" implicit_account_religo ;
 
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "set delegate" set_delegate ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "set delegate (mligo)" set_delegate_mligo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "set delegate (religo)" set_delegate_religo ;
-    test y (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "is_nat" is_nat ;
-    test y (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "is_nat (mligo)" is_nat_mligo ;
-    test y (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "is_nat (religo)" is_nat_religo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "tuples_sequences_functions (religo)" tuples_sequences_functions_religo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "set delegate" set_delegate ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "set delegate (mligo)" set_delegate_mligo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "set delegate (religo)" set_delegate_religo ;
+    test (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "is_nat" is_nat ;
+    test (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "is_nat (mligo)" is_nat_mligo ;
+    test (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "is_nat (religo)" is_nat_religo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "tuples_sequences_functions (religo)" tuples_sequences_functions_religo ;
 
-    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "simple_access (ligo)" simple_access_ligo;
-    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "deep_access (ligo)" deep_access_ligo;
-    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "get_contract (ligo)" get_contract_ligo;
-    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "entrypoints (ligo)" entrypoints_ligo ;
+    test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "simple_access (ligo)" simple_access_ligo;
+    test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "deep_access (ligo)" deep_access_ligo;
+    test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "get_contract (ligo)" get_contract_ligo;
+    test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "entrypoints (ligo)" entrypoints_ligo ;
 
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "curry (mligo)" curry ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "type tuple destruct (mligo)" type_tuple_destruct ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "attributes (ligo)" attributes_ligo;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "attributes (mligo)" attributes_mligo;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "attributes (religo)" attributes_religo;
-    test y "let in multi-bind (mligo)" let_in_multi_bind ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "tuple param destruct (mligo)" tuple_param_destruct ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "tuple param destruct (religo)" tuple_param_destruct_religo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "empty case" empty_case ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "empty case (mligo)" empty_case_mligo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "empty case (religo)" empty_case_religo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "tuple type (mligo)" tuple_type_mligo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "tuple type (religo)" tuple_type_religo ;
-    test y "no semicolon (religo)" no_semicolon_religo ;
-    test y "loop_bugs (ligo)" loop_bugs_ligo ;
-    test y (* new typeclass *) "tuple_list (religo)" tuple_list_religo ;
-    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "single_record_expr (religo)" single_record_expr_religo ;
-    test y "shadowing (mligo)" shadowing;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "curry (mligo)" curry ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "type tuple destruct (mligo)" type_tuple_destruct ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "attributes (ligo)" attributes_ligo;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "attributes (mligo)" attributes_mligo;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "attributes (religo)" attributes_religo;
+    test "let in multi-bind (mligo)" let_in_multi_bind ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "tuple param destruct (mligo)" tuple_param_destruct ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "tuple param destruct (religo)" tuple_param_destruct_religo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "empty case" empty_case ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "empty case (mligo)" empty_case_mligo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "empty case (religo)" empty_case_religo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "tuple type (mligo)" tuple_type_mligo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "tuple type (religo)" tuple_type_religo ;
+    test "no semicolon (religo)" no_semicolon_religo ;
+    test "loop_bugs (ligo)" loop_bugs_ligo ;
+    test (* new typeclass *) "tuple_list (religo)" tuple_list_religo ;
+    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "single_record_expr (religo)" single_record_expr_religo ;
+    test "shadowing (mligo)" shadowing;
   ]

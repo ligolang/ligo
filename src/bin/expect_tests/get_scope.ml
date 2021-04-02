@@ -119,7 +119,7 @@ Module definitions: |} ] ;
     (x#3 -> x) |resolved: int | in file "../../test/contracts/get_scope_tests/match.mligo", line 7, characters 4-9
     (y#4 -> y) |resolved: string | in file "../../test/contracts/get_scope_tests/match.mligo", line 8, characters 4-9
     Type definitions:
-    (mytype#0 -> mytype) : sum[Bar -> string []  , Foo -> int [] ] in file "../../test/contracts/get_scope_tests/match.mligo", line 1, characters 0-40
+    (mytype#0 -> mytype) : sum[Bar -> string , Foo -> int] in file "../../test/contracts/get_scope_tests/match.mligo", line 1, characters 0-40
     Module definitions: |} ] ;
 
   run_ligo_good [ "get-scope" ; gs "rec.mligo" ; "--syntax=cameligo" ; "--format=dev" ; "--with-types" ] ;
@@ -209,7 +209,7 @@ Module definitions: |} ] ;
     (i#2 -> i) |resolved: int | in file "../../test/contracts/get_scope_tests/records.mligo", line 6, characters 18-19
     (j#3 -> j) |resolved: int | in file "../../test/contracts/get_scope_tests/records.mligo", line 6, characters 31-32
     Type definitions:
-    (myrec#0 -> myrec) : record[bar -> int []  , foo -> int [] ] in file "../../test/contracts/get_scope_tests/records.mligo", line 1, characters 0-36
+    (myrec#0 -> myrec) : record[bar -> int , foo -> int] in file "../../test/contracts/get_scope_tests/records.mligo", line 1, characters 0-36
     Module definitions: |} ] ;
 
   run_ligo_good [ "get-scope" ; gs "constant.mligo" ; "--syntax=cameligo" ; "--format=dev" ; "--with-types" ] ;
@@ -307,7 +307,7 @@ Module definitions: |} ] ;
     (i#2 -> i) |resolved: int | in file "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 9, characters 6-7
     (j#4 -> j) |unresolved| in file "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 13, characters 6-7
     Type definitions:
-    (foo_record#0 -> foo_record) : record[bar -> int []  , foo -> int [] ] in file "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 1, characters 0-43
+    (foo_record#0 -> foo_record) : record[bar -> int , foo -> int] in file "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 1, characters 0-43
     Module definitions: |} ] ;
 
   run_ligo_good [ "get-scope" ; gs "nominal_types.mligo" ; "--format=dev" ; "--with-types" ] ;
@@ -326,9 +326,8 @@ Module definitions: |} ] ;
     (main#6 -> main) |core: foo_record -> foo_variant | in file "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 4-8
     (p#5 -> p) |core: foo_record | in file "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 9-25
     Type definitions:
-    (foo_record#1 -> foo_record) : record[bar -> foo_variant []  ,
-                                          foo -> foo_variant [] ] in file "../../test/contracts/get_scope_tests/nominal_types.mligo", line 2, characters 0-58
-    (foo_variant#0 -> foo_variant) : sum[Bar -> string []  , Foo -> int [] ] in file "../../test/contracts/get_scope_tests/nominal_types.mligo", line 1, characters 0-45
+    (foo_record#1 -> foo_record) : record[bar -> foo_variant , foo -> foo_variant] in file "../../test/contracts/get_scope_tests/nominal_types.mligo", line 2, characters 0-58
+    (foo_variant#0 -> foo_variant) : sum[Bar -> string , Foo -> int] in file "../../test/contracts/get_scope_tests/nominal_types.mligo", line 1, characters 0-45
     Module definitions: |} ] ;
     
   run_ligo_good [ "get-scope" ; gs "module.mligo" ; "--format=dev" ; "--with-types" ] ;
