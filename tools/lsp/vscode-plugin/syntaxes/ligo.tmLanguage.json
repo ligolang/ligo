@@ -175,12 +175,12 @@
 
         "control-keywords": {
             "name": "keyword.control.ligo",
-            "match": "\\b(case|of|if|then|else|for|to|skip|assert|failwith|begin|end)\\b"
+            "match": "\\b(case|of|if|then|else|for|in|step|to|skip|assert|failwith|begin|end|contains)\\b"
         },
 
         "other-keywords": {
             "name": "keyword.other.ligo",
-            "match": "\\b(block|with|record)\\b"
+            "match": "\\b(block|with|record|set|map|list)\\b"
         },
 
         "numeric-literals": {
