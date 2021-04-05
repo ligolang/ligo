@@ -44,15 +44,9 @@ instance HasLigoClient m => HasScopeForest Fallback m where
            . getEnv
            $ ligo
         emptyScopeForest = ScopeForest [] Map.empty
-        _fallbackErrorMsg e = (point 1 1, Error e [])
+        fallbackErrorMsg e@(TreeDoesNotContainName _ r _) = (r, Error (ppToText e) [])
     in case sf of
-      -- TODO: We have a problem with tree sitter suggesting minimal possible subtree
-      -- being inserted when it lacks of some by replacing it. In this case we had a problem
-      -- with `wildcard_pattern` being inserted automatically into the `let` subtree without
-      -- ability of catching the warning of doing so. So instead of being unable to find
-      -- the declarations in `_?` scopes I (awkure) decided to leave it untouched.
-      -- Left e -> pure (emptyScopeForest, msg ++ [fallbackErrorMsg (ppToText e)])
-      Left _ -> pure (emptyScopeForest, msg)
+      Left e -> pure (emptyScopeForest, msg ++ [fallbackErrorMsg e])
       Right sf' -> pure (sf', msg)
 
 addReferences :: LIGO Info -> ScopeForest -> ScopeForest
@@ -98,6 +92,7 @@ prepareTree
   -> ScopeM (LIGO '[[ScopedDecl], Bool, Range, [Text], Range, ShowRange, CodeSource])
 prepareTree
   = assignDecls
+  . wildcardToName
   . unSeq
   . unLetRec
 
@@ -119,6 +114,21 @@ loopM
 loopM go = aux
   where
     aux (r :< fs) = go =<< ((r :<) <$> traverse aux fs)
+
+-- | Replace a wildcard with a dummy "_" name so that the LSP doesn't trip up
+-- with 'TreeDoesNotContainName'. This is also necessary so that we are able to
+-- use capabilities inside wildcards declarations, such as the definition of `x`
+-- in `let _ = x * x`.
+wildcardToName
+  :: ( Contains Range xs
+     , Eq (Product xs)
+     )
+  => LIGO xs
+  -> LIGO xs
+wildcardToName = loop go
+  where
+    go (match -> Just (r, IsWildcard)) = make (r, NameDecl "_")
+    go it = it
 
 unLetRec
   :: ( Contains  Range     xs
@@ -434,7 +444,7 @@ select
   -> m (Range, Text)
 select what handlers t
   = maybe
-      (throwError $ TreeDoesNotContainName (pp t) what)
+      (throwError $ TreeDoesNotContainName (pp t) (getRange t) what)
       (return . (getElem . extract &&& ppToText))
   $ either (const Nothing) listToMaybe
   $ runCatch
