@@ -11,6 +11,7 @@
         { "include": "#type-definition" },
         { "include": "#control-keywords" },
         { "include": "#other-keywords" },
+        { "include": "#operators" },
         { "include": "#function-application" },
         { "include": "#identifiers" }
     ],
@@ -35,13 +36,10 @@
 
         "binding": {
             "begin": "\\b(var|const)\\s+([a-zA-Z_]\\w*)\\b",
-            "end": "([=),;]|:=)",
+            "end": "(?=[=),;]|:=)",
             "beginCaptures": {
                 "1": { "name": "keyword.other.binding.ligo" },
                 "2": { "name": "entity.name.variable"}
-            },
-            "endCaptures": {
-                "1": { "name": "keyword.operator.eq.ligo"}
             },
             "patterns": [
                 { "include": "#comment" },
@@ -50,7 +48,7 @@
         },
 
         "type-annotation": {
-            "begin": "(:)\\s*",
+            "begin": "(:(?!=))\\s*",
             "beginCaptures": {
                 "1": { "name": "keyword.operator.type.ligo" }
             },
@@ -190,7 +188,7 @@
 
         "operators": {
             "name": "keyword.operator.other.ligo",
-            "match": "([-+*/])"
+            "match": "([-+*/=]|->|:=)"
         },
 
         "function-application": {
