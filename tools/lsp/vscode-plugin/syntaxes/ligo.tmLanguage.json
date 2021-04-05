@@ -5,6 +5,7 @@
         { "include": "#string" },
         { "include": "#single-quotes" },
         { "include": "#comment" },
+        { "include": "#macro" },
         { "include": "#function" },
         { "include": "#binding" },
         { "include": "#type-annotation" },
@@ -47,6 +48,19 @@
             ]
         },
 
+        "macro": {
+            "begin": "^\\s*((#)\\w+)",
+            "beginCaptures": {
+                "1": { "name": "meta.preprocessor.ligo" },
+                "2": { "name": "punctuation.definition.directive.ligo" }
+            },
+            "end": "$",
+            "patterns": [
+                { "include": "#string" },
+                { "include": "#comment" }
+            ]
+        },
+
         "type-annotation": {
             "begin": "(:(?!=))\\s*",
             "beginCaptures": {
@@ -85,7 +99,7 @@
                 "2": { "name": "entity.name.type.ligo" },
                 "3": { "name": "keyword.other.is.ligo" }
             },
-            "end": "(?=\\b(?:function|type|const|var)\\b)",
+            "end": "(?=\\b(?:function|type|const|var)\\b|^\\s*#\\w+)",
             "patterns": [
                 { "include": "#comment" },
                 { "include": "#struct-type" },
@@ -117,7 +131,7 @@
                 "1": { "name": "entity.name.function.ligo" },
                 "2": { "name": "keyword.other.of.ligo" }
             },
-            "end": "(\\||(?=\\b(?:function|type|const|var)\\b))",
+            "end": "(\\||(?=\\b(?:function|type|const|var)\\b|^\\s*#\\w+))",
             "patterns": [
                 { "include": "#comment" },
                 { "include": "#type-expression" }
@@ -126,7 +140,7 @@
 
         "type-alias": {
             "begin": "\\G\\s*(?!record\\b)(?=[(a-z])",
-            "end": "(?=\\b(?:function|type|const|var)\\b)",
+            "end": "(?=\\b(?:function|type|const|var)\\b|^\\s*#\\w+)",
             "patterns": [
                 { "include": "#comment" },
                 { "include": "#type-expression" }
