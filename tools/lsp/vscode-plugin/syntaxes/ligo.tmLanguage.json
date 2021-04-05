@@ -5,12 +5,14 @@
         { "include": "#string" },
         { "include": "#single-quotes" },
         { "include": "#comment" },
+        { "include": "#macro" },
         { "include": "#function" },
         { "include": "#binding" },
         { "include": "#type-annotation" },
         { "include": "#type-definition" },
         { "include": "#control-keywords" },
         { "include": "#other-keywords" },
+        { "include": "#operators" },
         { "include": "#function-application" },
         { "include": "#identifiers" }
     ],
@@ -35,13 +37,10 @@
 
         "binding": {
             "begin": "\\b(var|const)\\s+([a-zA-Z_]\\w*)\\b",
-            "end": "([=),;]|:=)",
+            "end": "(?=[=),;]|:=)",
             "beginCaptures": {
                 "1": { "name": "keyword.other.binding.ligo" },
                 "2": { "name": "entity.name.variable"}
-            },
-            "endCaptures": {
-                "1": { "name": "keyword.operator.eq.ligo"}
             },
             "patterns": [
                 { "include": "#comment" },
@@ -49,8 +48,21 @@
             ]
         },
 
+        "macro": {
+            "begin": "^\\s*((#)\\w+)",
+            "beginCaptures": {
+                "1": { "name": "meta.preprocessor.ligo" },
+                "2": { "name": "punctuation.definition.directive.ligo" }
+            },
+            "end": "$",
+            "patterns": [
+                { "include": "#string" },
+                { "include": "#comment" }
+            ]
+        },
+
         "type-annotation": {
-            "begin": "(:)\\s*",
+            "begin": "(:(?!=))\\s*",
             "beginCaptures": {
                 "1": { "name": "keyword.operator.type.ligo" }
             },
@@ -72,7 +84,7 @@
                     ]
                 },
                 {
-                    "match": "((?:(?!\\bis\\b|:=)[^=()|;}\\]])*)",
+                    "match": "((?:(?!\\bis\\b|:=)[^=()|;}/\\]])*)",
                     "captures": {
                         "1": { "name": "entity.name.type.ligo" }
                     }
@@ -87,20 +99,25 @@
                 "2": { "name": "entity.name.type.ligo" },
                 "3": { "name": "keyword.other.is.ligo" }
             },
-            "end": "(?=\\b(?:function|type||const|var)\\b)",
+            "end": "(?=\\b(?:function|type|const|var)\\b|^\\s*#\\w+)",
             "patterns": [
                 { "include": "#comment" },
                 { "include": "#struct-type" },
-                { "include": "#sum-type" }
+                { "include": "#sum-type" },
+                { "include": "#type-alias" }
             ]
         },
 
         "struct-type": {
-            "begin": "\\b(record)\\s*\\[",
+            "begin": "\\b(record)\\s*(\\[?)",
             "beginCaptures": {
-                "1": { "name": "keyword.other.record.ligo" }
+                "1": { "name": "keyword.other.record.ligo" },
+                "2": { "name": "keyword.other.begin.ligo" }
             },
-            "end": "\\]",
+            "end": "(\\]|\\bend\\b)",
+            "endCaptures": {
+                "1": { "name": "keyword.other.end.ligo" }
+            },
             "patterns": [
                 { "include": "#comment" },
                 { "include": "#identifiers" },
@@ -109,13 +126,23 @@
         },
 
         "sum-type": {
-            "begin": "\\b([a-zA-Z_]\\w*)\\s+(of)",
+            "begin": "\\b([A-Z]\\w*)\\s+(of)?",
             "beginCaptures": {
                 "1": { "name": "entity.name.function.ligo" },
                 "2": { "name": "keyword.other.of.ligo" }
             },
-            "end": "(\\||\\blet\\b|\\btype\\b)",
+            "end": "(\\||(?=\\b(?:function|type|const|var)\\b|^\\s*#\\w+))",
             "patterns": [
+                { "include": "#comment" },
+                { "include": "#type-expression" }
+            ]
+        },
+
+        "type-alias": {
+            "begin": "\\G\\s*(?!record\\b)(?=[(a-z])",
+            "end": "(?=\\b(?:function|type|const|var)\\b|^\\s*#\\w+)",
+            "patterns": [
+                { "include": "#comment" },
                 { "include": "#type-expression" }
             ]
         },
@@ -145,7 +172,7 @@
                     "match": "(//.*)"
                 },
                 {
-                    "name" : "comment.line.double-slash.ligo",
+                    "name" : "comment.block.ligo",
                     "begin" : "\\(\\*",
                     "end" : "\\*\\)",
                     "patterns" : []
@@ -160,12 +187,12 @@
 
         "control-keywords": {
             "name": "keyword.control.ligo",
-            "match": "\\b(case|of|if|then|else|for|to|skip|assert|failwith|begin|end)\\b"
+            "match": "\\b(case|of|if|then|else|for|in|step|to|skip|assert|failwith|begin|end|contains)\\b"
         },
 
         "other-keywords": {
             "name": "keyword.other.ligo",
-            "match": "\\b(block|with|record)\\b"
+            "match": "\\b(block|with|record|set|map|list)\\b"
         },
 
         "numeric-literals": {
@@ -175,7 +202,7 @@
 
         "operators": {
             "name": "keyword.operator.other.ligo",
-            "match": "([-+*/])"
+            "match": "([-+*/=]|->|:=)"
         },
 
         "function-application": {
