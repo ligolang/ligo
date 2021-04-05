@@ -6,6 +6,8 @@ module Test.Capabilities.Find
   , unit_definitionOfLeft
   , unit_referenceOfId
   , unit_referenceOfLeft
+  , unit_definitionOfXInWildcard
+  , unit_referenceOfXInWildcard
 
   , unit_type_of_heap_arg
   , unit_type_of_heap_const
@@ -314,6 +316,18 @@ unit_referenceOfLeft = (checkIfReference
                          (contractsDir </> "heap.ligo")
                          (interval 89 30 34)
                          (interval 77 9 13))
+
+unit_definitionOfXInWildcard :: Assertion
+unit_definitionOfXInWildcard = checkIfDefinition
+  (contractsDir </> "wildcard.mligo")
+  (interval 1 5 6)
+  (interval 2 13 14)
+
+unit_referenceOfXInWildcard :: Assertion
+unit_referenceOfXInWildcard = checkIfReference
+  (contractsDir </> "wildcard.mligo")
+  (interval 2 13 14)
+  (interval 1 5 6)
 
 unit_type_of_heap_const :: Assertion
 unit_type_of_heap_const = do

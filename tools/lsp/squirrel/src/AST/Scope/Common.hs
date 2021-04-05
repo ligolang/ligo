@@ -70,14 +70,15 @@ ofLevel level decl = case (level, _sdSpec decl) of
 
 data ScopeError =
   TreeDoesNotContainName
-    Doc  -- pprinted tree (used for simplyfying purposes for not stacking
+    Doc  -- ^ pprinted tree (used for simplifying purposes for not stacking
          -- type parameters for `ScopeM` which brings plethora of confusion)
-    Text -- variable name
+    Range -- ^ location where the error has occurred
+    Text -- ^ variable name
   deriving Show via PP ScopeError
 
 instance Pretty ScopeError where
   pp = \case
-    (TreeDoesNotContainName tree name) -> "Given tree: " <> tree <> " does not contain name: " <> pp name
+    (TreeDoesNotContainName tree _ name) -> "Given tree: " <> tree <> " does not contain name: " <> pp name
 
 instance Exception ScopeError
 
