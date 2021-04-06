@@ -12,30 +12,6 @@ import Parser
   field, fieldOpt, fields, withComments)
 import Product
 
--- example :: FilePath
--- example = "../../../src/test/contracts/counter.religo"
--- example = "./contracts/variant.religo"
--- example = "./contracts/amount.religo"
--- example = "./contracts/multisig.religo"
--- example = "./contracts/arithmetic.religo"
--- example = "./contracts/lambda.religo"
--- example = "./contracts/id.religo"
--- example = "../../../src/test/contracts/FA1.2.religo"
--- example = "../../../src/test/contracts/multisig.religo"
--- example = "../../../src/test/contracts/lambda.religo"
--- example = "../../../src/test/contracts/record.religo"
--- example = "../../../src/test/contracts/tuple_type.religo"
--- example = "../../../src/test/contracts/empty_case.religo"
--- example = "./contracts/empty_case.religo"
--- example = "./contracts/tuple_type.religo"
--- example = "./contracts/assert.religo"
--- example = "./contracts/tuples_no_annotation.religo"
--- example = "./contracts/match.religo"
--- example = "./contracts/let_multiple.religo"
--- example = "./contracts/attributes.religo"
--- example = "./contracts/lambda.religo"
--- example = "./contracts/arithmetic.religo"
--- example = "./contracts/FA2.religo"
 
 recognise :: SomeRawTree -> ParserM (SomeLIGO Info)
 recognise (SomeRawTree dialect rawTree)

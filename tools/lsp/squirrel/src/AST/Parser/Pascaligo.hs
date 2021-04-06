@@ -9,27 +9,6 @@ import ParseTree
 import Parser
 import Product (Product (Nil, (:>)))
 
--- example :: FilePath
--- example = "../../../src/test/contracts/arithmetic.ligo"
--- example = "../../../src/test/contracts/address.ligo"
--- example = "../../../src/test/contracts/annotation.ligo"
--- example = "../../../src/test/contracts/amount.ligo"
--- example = "../../../src/test/contracts/attributes.ligo"
--- example = "../../../src/test/contracts/application.ligo"
--- example = "../../../src/test/contracts/assign.ligo"
--- example = "../../../src/test/contracts/big_map.ligo"
--- example = "../../../src/test/contracts/blockless.ligo"
--- example = "../../../src/test/contracts/bad_timestamp.ligo"
--- example = "../../../src/test/contracts/boolean_operators.ligo"
--- example = "../../../src/test/contracts/bitwise_arithmetic.ligo"
--- example = "../../../src/test/contracts/bad_type_operator.ligo"
--- example = "../../../src/test/contracts/blocks.ligo"
--- example = "../../../src/test/contracts/bytes_unpack.ligo"
--- example = "../../../src/test/contracts/balance_constant.ligo"
--- example = "../../../src/test/contracts/blockless.ligo"
--- example = "../../../src/test/contracts/bytes_arithmetic.ligo"
--- example = "../../../src/test/contracts/chain_id.ligo"
--- example = "../../../src/test/contracts/closure-3.ligo"
 
 recognise :: SomeRawTree -> ParserM (SomeLIGO Info)
 recognise (SomeRawTree dialect rawTree)
