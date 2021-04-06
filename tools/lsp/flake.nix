@@ -151,5 +151,24 @@
         devShell = pkgs.mkShell rec {
           buildInputs = [ pkgs.tree-sitter ];
         };
-      });
+      }) // {
+        # docker image with the language server
+        squirell-docker-image = { creationDate ? "1970-01-01T00:00:01Z" }: self.legacyPackages.x86_64-linux.dockerTools.buildImage {
+          name = "squirell";
+          tag = "latest";
+          created = creationDate;
+          contents = self.packages.x86_64-linux.squirrel-static;
+          config = {
+            Entrypoint = [ "ligo-squirrel" ];
+          };
+
+          # language server needs /tmp directory
+          extraCommands = ''
+            mkdir -m 0777 ./tmp
+          '';
+        };
+
+        # skopeo package used by CI
+        skopeo = self.legacyPackages.x86_64-linux.skopeo;
+      };
 }

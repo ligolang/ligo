@@ -19,6 +19,9 @@ let
           };
 
           package.ghcOptions = "-Werror";
+
+          # strip library references from the executable to reduce closure size
+          dontStrip = false;
         };
       })
     ];
