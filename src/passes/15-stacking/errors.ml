@@ -48,7 +48,7 @@ let error_ppformat : display_format:string display_format ->
        let s = Format.asprintf "bad iterator: iter %a" Mini_c.PP.constant cst in
        Format.pp_print_string f s ;
     | `Stacking_not_comparable_pair_struct ->
-      let s = "Invalid comparable value. When using a tuple of with more than 2 components, structure the tuple like this: \"(a, (b, c))\". " in
+      let s = "Invalid comparable value. When using a tuple with more than 2 components, structure the tuple like this: \"(a, (b, c))\". " in
       Format.pp_print_string f s;
     | `Stacking_could_not_tokenize_michelson code ->
       Format.fprintf f "Could not tokenize raw Michelson: %s" code
