@@ -842,7 +842,6 @@ and print_par_expr state {value; _} =
 
 and print_pattern state = function
   PVar var         -> print_var state var
-| PWild wild       -> print_token state wild "_"
 | PInt i           -> print_int state i
 | PNat n           -> print_nat state n
 | PBytes b         -> print_bytes state b
@@ -1337,9 +1336,7 @@ and pp_case_clause :
     printer (state#pad 2 1) clause.rhs
 
 and pp_pattern state = function
-  PWild region ->
-    pp_loc_node state "PWild" region
-| PConstr pattern ->
+  PConstr pattern ->
     pp_node state "PConstr";
     pp_constr_pattern (state#pad 1 0) pattern
 | PVar v ->

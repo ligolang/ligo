@@ -452,7 +452,8 @@ let small   = ['a'-'z']
 let capital = ['A'-'Z']
 let letter  = small | capital
 let digit   = ['0'-'9']
-let ident   = small (letter | '_' | digit)*
+let ident   = small (letter | '_' | digit)* |
+              '_' (letter | '_' (letter | digit) | digit)+
 let constr  = capital (letter | '_' | digit)*
 
 (* Rules *)

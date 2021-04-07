@@ -64,7 +64,6 @@ and pp_pattern = function
 | PBytes    b -> pp_bytes b
 | PString   s -> pp_string s
 | PVerbatim s -> pp_verbatim s
-| PWild     _ -> string "_"
 | PList     l -> pp_plist l
 | PTuple    t -> pp_ptuple t
 | PPar      p -> pp_ppar p

@@ -31,6 +31,8 @@ open Predefined.Tree_abstraction.Cameligo
 
 let r_split = Location.r_split
 
+let mk_var var = if String.compare var Var.wildcard = 0 then Var.fresh () else Var.of_name var
+
 let compile_variable var = Location.map Var.of_name @@ Location.lift_region var
 let compile_attributes attributes : string list =
   List.map (fst <@ r_split) attributes
@@ -510,13 +512,9 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
 and conv : CST.pattern -> (nested_match_repr,_) result =
   fun p ->
   match unepar p with
-  | CST.PWild reg ->
-    let loc = Location.lift reg in
-    let var = Location.wrap ~loc @@ Var.fresh () in
-    ok (PatternVar { var ; ascr = None })
   | CST.PVar var ->
     let (var,loc) = r_split var in
-    let var = Location.wrap ~loc @@ Var.of_name var in
+    let var = Location.wrap ~loc @@ mk_var var in
     ok (PatternVar { var ; ascr = None })
   | CST.PTuple tuple ->
     let (tuple, _loc) = r_split tuple in
@@ -628,7 +626,7 @@ fun cases ->
   let compile_simple_pattern (pattern : CST.pattern) =
     let rec aux = function
       CST.PVar var ->
-        return @@ Var.of_name var.value
+        return @@ mk_var var.value
     | PPar par ->
         aux par.value.inside
     | _ -> fail @@ unsupported_pattern_type pattern
@@ -681,14 +679,14 @@ fun cases ->
   match cases with
   | (PVar var, expr), [] ->
     let (var, loc) = r_split var in
-    let var = Location.wrap ~loc @@ Var.of_name var in
+    let var = Location.wrap ~loc @@ mk_var var in
     return @@ AST.Match_variable ({var; ascr=None}, expr)
   | (PPar { value = { inside = PTuple tuple ; _} ;_}, expr), [] ->
     let aux : CST.pattern -> (ty_expr binder,_) result = fun var ->
       match var with
       | CST.PVar var ->
         let (name, loc) = r_split var in
-        let var = Location.wrap ~loc @@ Var.of_name name in
+        let var = Location.wrap ~loc @@ mk_var name in
         ok @@ { var ; ascr=None }
       | x ->
         (* TODO : patterns in match not supported see !909 *)
@@ -705,7 +703,7 @@ fun cases ->
       match pattern with
       | CST.PVar var ->
         let (name, loc) = r_split var in
-        let var = Location.wrap ~loc @@ Var.of_name name in
+        let var = Location.wrap ~loc @@ mk_var name in
         ok @@ (Label field_name.value , { var ; ascr=None })
       | x ->
         (* TODO : patterns in match not supported see !909 *)
@@ -792,10 +790,7 @@ and compile_parameter : CST.pattern -> (_ binder * (_ -> _),_) result =
     return_1 ~ascr:(t_unit ~loc ()) loc @@ Var.fresh ()
   | PVar var ->
     let (var,loc) = r_split var in
-    return_1 loc @@ Var.of_name var
-  | PWild reg ->
-    let loc = Location.lift reg in
-    return_1 loc @@ Var.fresh ()
+    return_1 loc @@ mk_var var
   | PTuple tuple ->
     let (tuple, loc) = r_split tuple in
     let var = Var.fresh () in

@@ -57,3 +57,5 @@ type names_for_print = { get_name_for_print : 'a . 'a t -> string }
 val with_names_for_print : names_for_print -> (unit -> unit) -> unit
 
 val internal_get_name_and_counter : 'a t -> (string * int option)
+
+val wildcard : string

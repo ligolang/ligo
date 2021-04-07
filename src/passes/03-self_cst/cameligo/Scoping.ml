@@ -70,6 +70,10 @@ let check_reserved_name var =
     fail @@ reserved_name var
   else ok @@ ()
 
+let is_wildcard var =
+  let var = var.value in
+  String.compare var Var.wildcard = 0
+
 (* Checking the linearity of patterns *)
 
 open! CST
@@ -78,8 +82,8 @@ let rec vars_of_pattern env = function
   PConstr p -> (vars_of_pconstr env p : _ result)
 | PUnit _
 | PInt _ | PNat _ | PBytes _
-| PString _ | PVerbatim _
-| PWild _ -> ok @@ env
+| PString _ | PVerbatim _ -> ok @@ env
+| PVar var when is_wildcard var -> ok @@ env
 | PVar var ->
     let%bind () = check_reserved_name var in
     if VarSet.mem var env then

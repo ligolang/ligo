@@ -16,6 +16,8 @@ open Predefined.Tree_abstraction.Pascaligo
 
 let r_split = Location.r_split
 
+let mk_var var = if String.compare var Var.wildcard = 0 then Var.fresh () else Var.of_name var
+
 let compile_attributes : CST.attributes -> AST.attributes = fun attributes ->
   List.map (fst <@ r_split) attributes
 
@@ -518,7 +520,7 @@ fun compiler cases ->
     match pattern with
       PVar var ->
         let (var, _) = r_split var in
-        return @@ Var.of_name var
+        return @@ mk_var var
     | _ -> fail @@ unsupported_pattern_type pattern
   in
   let compile_list_pattern (cases : (CST.pattern * _) list) =
@@ -583,7 +585,7 @@ fun compiler cases ->
   match cases with
   | (PVar var, expr), [] ->
     let (var, loc) = r_split var in
-    let var = Location.wrap ~loc @@ Var.of_name var in
+    let var = Location.wrap ~loc @@ mk_var var in
     let binder = {var;ascr=None} in
     return @@ AST.Match_variable (binder, expr)
   | (PTuple tuple , expr), [] ->
@@ -591,7 +593,7 @@ fun compiler cases ->
       match var with
       | CST.PVar var ->
         let (name, loc) = r_split var in
-        let var = Location.wrap ~loc @@ Var.of_name name in
+        let var = Location.wrap ~loc @@ mk_var name in
         ok @@ { var ; ascr=None }
       | x ->
         (* TODO : patterns in match not supported see !909 *)
