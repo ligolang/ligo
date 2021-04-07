@@ -68,6 +68,7 @@ module.exports = grammar({
       , [$.list, $.Nil]
       , [$.list_pattern, $.Nil]
       , [$.TypeWildcard, $.wildcard]
+      , [$._core_type, $._literal]
     ],
 
   rules: {
@@ -354,6 +355,7 @@ module.exports = grammar({
       choice(
         $.type_application,
         $.TypeName,
+        $.Int,
         // $.module_TypeName,
       ),
 

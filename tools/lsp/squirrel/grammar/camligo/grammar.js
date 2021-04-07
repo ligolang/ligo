@@ -372,10 +372,7 @@ module.exports = grammar({
 
     // a t, (a, b) t
     type_app: $ => prec(10, seq(
-      choice(
-        field("x", $._type_expr),
-        field("x", $.type_tuple),
-      ),
+      field("x", $._type_expr),
       field("f", $.TypeName)
     )),
 
@@ -408,6 +405,7 @@ module.exports = grammar({
       $.type_app,
       $.TypeName,
       $.type_tuple,
+      $.Int,
     ),
 
     // Cat of string, Person of string * string
