@@ -118,11 +118,10 @@ handlers = mconcat
   , S.requestHandler J.STextDocumentCodeAction handleTextDocumentCodeAction
   -- , S.requestHandler J.STextDocumentOnTypeFormatting
 
-  --, S.notificationHandler J.SCancelRequest _
+  , S.notificationHandler J.SCancelRequest (\_msg -> pure ())
   --, S.requestHandler J.STextDocumentCodeAction _
   --, S.requestHandler J.SWorkspaceExecuteCommand _
   ]
-
 
 handleDidOpenTextDocument :: S.Handler RIO 'J.TextDocumentDidOpen
 handleDidOpenTextDocument notif = do
