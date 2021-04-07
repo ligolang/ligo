@@ -232,7 +232,6 @@ and pattern =
 | PBytes    of (lexeme * Hex.t) reg
 | PString   of string reg
 | PVerbatim of string reg
-| PWild     of wild
 | PList     of list_pattern
 | PTuple    of (pattern, comma) nsepseq reg
 | PPar      of pattern par reg
@@ -514,7 +513,7 @@ let pattern_to_region = function
 | PTuple {region;_} | PVar {region;_}
 | PInt {region;_}
 | PString {region;_} | PVerbatim {region;_}
-| PWild region | PPar {region;_}
+| PPar {region;_}
 | PRecord {region; _} | PTyped {region; _}
 | PNat {region; _} | PBytes {region; _}
   -> region

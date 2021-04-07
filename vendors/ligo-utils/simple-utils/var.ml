@@ -121,3 +121,5 @@ let is_generated var =
 let internal_get_name_and_counter var = (var.name, var.counter)
 
 let todo_cast : 'a 'b . 'a t -> 'b t = fun { name ; counter } -> { name ; counter }
+
+let wildcard = "_"

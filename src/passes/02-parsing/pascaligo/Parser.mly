@@ -465,6 +465,15 @@ param_decl:
                   param_type = $3}
     in ParamVar {region; value}
   }
+| "var" "_" param_type? {
+    let stop   = match $3 with
+                   None -> $2
+                 | Some (_,t) -> type_expr_to_region t in
+    let region = cover $1 stop
+    and value  = {kwd_var    =                                $1;
+                  var        =      { value = "_"; region = $2 };
+                  param_type =                                $3}
+    in ParamVar {region; value} }
 | "const" var param_type? {
     let stop   = match $3 with
                    None -> $2.region
@@ -473,6 +482,15 @@ param_decl:
     and value  = {kwd_const  = $1;
                   var        = $2;
                   param_type = $3}
+    in ParamConst {region; value} }
+| "const" "_" param_type? {
+    let stop   = match $3 with
+                   None -> $2
+                 | Some (_,t) -> type_expr_to_region t in
+    let region = cover $1 stop
+    and value  = {kwd_const  =                                $1;
+                  var        =      { value = "_"; region = $2 };
+                  param_type =                                $3}
     in ParamConst {region; value} }
 
 param_type:
@@ -1098,15 +1116,15 @@ pattern:
     in PList (PCons {region; value}) }
 
 core_pattern:
-  var                      {    PVar $1 }
-| "_"                      {   PWild $1 }
-| "<int>"                  {    PInt $1 }
-| "<nat>"                  {    PNat $1 }
-| "<bytes>"                {  PBytes $1 }
-| "<string>"               { PString $1 }
-| list_pattern             {   PList $1 }
-| tuple_pattern            {  PTuple $1 }
-| constr_pattern           { PConstr $1 }
+  var                      {                           PVar $1 }
+| "_"                      { PVar { value = "_"; region = $1 } }
+| "<int>"                  {                           PInt $1 }
+| "<nat>"                  {                           PNat $1 }
+| "<bytes>"                {                         PBytes $1 }
+| "<string>"               {                        PString $1 }
+| list_pattern             {                          PList $1 }
+| tuple_pattern            {                         PTuple $1 }
+| constr_pattern           {                        PConstr $1 }
 
 list_pattern:
   "nil"                          {      PNil $1 }

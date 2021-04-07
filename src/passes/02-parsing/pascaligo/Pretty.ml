@@ -642,7 +642,6 @@ and pp_nsepseq :
 and pp_pattern = function
   PConstr p -> pp_constr_pattern p
 | PVar    v -> pp_ident v
-| PWild   _ -> string "_"
 | PInt    i -> pp_int i
 | PNat    n -> pp_nat n
 | PBytes  b -> pp_bytes b

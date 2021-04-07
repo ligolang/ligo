@@ -327,7 +327,6 @@ and print_pattern state = function
 | PBytes b -> print_bytes state b
 | PString s -> print_string state s
 | PVerbatim v -> print_verbatim state v
-| PWild wild -> print_token state wild "_"
 | PPar {value={lpar;inside=p;rpar}; _} ->
     print_token   state lpar "(";
     print_pattern state p;
@@ -808,8 +807,6 @@ and pp_pattern state = function
 | PVar v ->
     pp_node  state "PVar";
     pp_ident (state#pad 1 0) v
-| PWild region ->
-    pp_loc_node state "PWild" region
 | PInt i ->
     pp_node state "PInt";
     pp_int  state i

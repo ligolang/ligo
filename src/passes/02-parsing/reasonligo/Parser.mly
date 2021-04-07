@@ -330,11 +330,11 @@ irrefutable:
     in PTuple {region; value=$1} }
 
 sub_irrefutable:
-  "<ident>"                                              {    PVar $1 }
-| "_"                                                    {   PWild $1 }
-| unit                                                   {   PUnit $1 }
-| record_pattern                                         { PRecord $1 }
-| par(closed_irrefutable)                                {    PPar $1 }
+  "<ident>"                       {                           PVar $1 }
+| "_"                             { PVar { value = "_"; region = $1 } }
+| unit                            {                          PUnit $1 }
+| record_pattern                  {                        PRecord $1 }
+| par(closed_irrefutable)         {                           PPar $1 }
 
 closed_irrefutable:
   irrefutable                                            {         $1 }
@@ -373,18 +373,18 @@ sub_pattern:
 | core_pattern     {      $1 }
 
 core_pattern:
-  "<ident>"                                    {              PVar $1 }
-| "_"                                          {             PWild $1 }
-| "<int>"                                      {              PInt $1 }
-| "<nat>"                                      {              PNat $1 }
-| "<bytes>"                                    {            PBytes $1 }
-| "<string>"                                   {           PString $1 }
-| "<verbatim>"                                 {         PVerbatim $1 }
-| unit                                         {             PUnit $1 }
-| par(ptuple)                                  {              PPar $1 }
-| list__(sub_pattern)                          { PList (PListComp $1) }
-| constr_pattern                               {           PConstr $1 }
-| record_pattern                               {           PRecord $1 }
+  "<ident>"                       {                           PVar $1 }
+| "_"                             { PVar { value = "_"; region = $1 } }
+| "<int>"                         {                           PInt $1 }
+| "<nat>"                         {                           PNat $1 }
+| "<bytes>"                       {                         PBytes $1 }
+| "<string>"                      {                        PString $1 }
+| "<verbatim>"                    {                      PVerbatim $1 }
+| unit                            {                          PUnit $1 }
+| par(ptuple)                     {                           PPar $1 }
+| list__(sub_pattern)             {              PList (PListComp $1) }
+| constr_pattern                  {                        PConstr $1 }
+| record_pattern                  {                        PRecord $1 }
 
 record_pattern:
   "{" sep_or_term_list(field_pattern,",") "}" {

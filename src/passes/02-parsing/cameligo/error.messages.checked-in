@@ -12,8 +12,8 @@ contract: Type Ident EQ VBAR Attr With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 39, spurious reduction of production seq(Attr) ->
-## In state 40, spurious reduction of production nseq(Attr) -> Attr seq(Attr)
+## In state 39, spurious reduction of production seq(Attr) -> 
+## In state 40, spurious reduction of production nseq(Attr) -> Attr seq(Attr) 
 ##
 
 Ill-formed variant.
@@ -48,21 +48,21 @@ interactive_expr: Begin Fun WILD ARROW Bytes SEMI
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 559, spurious reduction of production seq_expr -> disj_expr_level
-## In state 508, spurious reduction of production last_expr -> seq_expr
-## In state 563, spurious reduction of production fun_expr(last_expr) -> Fun nseq(irrefutable) ARROW last_expr
-## In state 558, spurious reduction of production last_expr -> fun_expr(last_expr)
-## In state 557, spurious reduction of production series -> last_expr
-## In state 573, spurious reduction of production option(series) -> series
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 559, spurious reduction of production seq_expr -> disj_expr_level 
+## In state 508, spurious reduction of production last_expr -> seq_expr 
+## In state 563, spurious reduction of production fun_expr(last_expr) -> Fun nseq(irrefutable) ARROW last_expr 
+## In state 558, spurious reduction of production last_expr -> fun_expr(last_expr) 
+## In state 557, spurious reduction of production series -> last_expr 
+## In state 573, spurious reduction of production option(series) -> series 
 ##
 
 Ill-formed sequence of expressions.
@@ -100,7 +100,7 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Fun WILD ARROW With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 506, spurious reduction of production seq(Attr) ->
+## In state 506, spurious reduction of production seq(Attr) -> 
 ##
 interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW With
 ##
@@ -118,7 +118,7 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 366, spurious reduction of production seq(Attr) ->
+## In state 366, spurious reduction of production seq(Attr) -> 
 ##
 interactive_expr: Begin With
 ##
@@ -134,7 +134,7 @@ interactive_expr: Begin With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 223, spurious reduction of production seq(Attr) ->
+## In state 223, spurious reduction of production seq(Attr) -> 
 ##
 interactive_expr: Begin If Verbatim Then With
 ##
@@ -150,7 +150,7 @@ interactive_expr: Begin If Verbatim Then With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 519, spurious reduction of production seq(Attr) ->
+## In state 519, spurious reduction of production seq(Attr) -> 
 ##
 interactive_expr: If Verbatim Then With
 ##
@@ -168,7 +168,7 @@ interactive_expr: If Verbatim Then With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 579, spurious reduction of production seq(Attr) ->
+## In state 579, spurious reduction of production seq(Attr) -> 
 ##
 interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then With
 ##
@@ -186,7 +186,7 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 483, spurious reduction of production seq(Attr) ->
+## In state 483, spurious reduction of production seq(Attr) -> 
 ##
 interactive_expr: Match Verbatim With WILD ARROW Let WILD EQ Bytes In With
 ##
@@ -202,7 +202,7 @@ interactive_expr: Match Verbatim With WILD ARROW Let WILD EQ Bytes In With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 500, spurious reduction of production seq(Attr) ->
+## In state 500, spurious reduction of production seq(Attr) -> 
 ##
 interactive_expr: With
 ##
@@ -218,7 +218,7 @@ interactive_expr: With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 692, spurious reduction of production seq(Attr) ->
+## In state 692, spurious reduction of production seq(Attr) -> 
 ##
 contract: With
 ##
@@ -234,7 +234,7 @@ contract: With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 0, spurious reduction of production seq(Attr) ->
+## In state 0, spurious reduction of production seq(Attr) -> 
 ##
 
 Ill-formed value declaration.
@@ -254,21 +254,21 @@ interactive_expr: Begin If Verbatim Then If Verbatim Then Verbatim COMMA Bytes W
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 322, spurious reduction of production nsepseq(disj_expr_level,COMMA) -> disj_expr_level
-## In state 321, spurious reduction of production tuple(disj_expr_level) -> disj_expr_level COMMA nsepseq(disj_expr_level,COMMA)
-## In state 243, spurious reduction of production tuple_expr -> tuple(disj_expr_level)
-## In state 528, spurious reduction of production base_expr(closed_if) -> tuple_expr
-## In state 406, spurious reduction of production base_if_then_else__open(closed_if) -> base_expr(closed_if)
-## In state 405, spurious reduction of production closed_if -> base_if_then_else__open(closed_if)
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 322, spurious reduction of production nsepseq(disj_expr_level,COMMA) -> disj_expr_level 
+## In state 321, spurious reduction of production tuple(disj_expr_level) -> disj_expr_level COMMA nsepseq(disj_expr_level,COMMA) 
+## In state 243, spurious reduction of production tuple_expr -> tuple(disj_expr_level) 
+## In state 528, spurious reduction of production base_expr(closed_if) -> tuple_expr 
+## In state 406, spurious reduction of production base_if_then_else__open(closed_if) -> base_expr(closed_if) 
+## In state 405, spurious reduction of production closed_if -> base_if_then_else__open(closed_if) 
 ##
 interactive_expr: Begin If Verbatim Then Verbatim COMMA Bytes With
 ##
@@ -283,21 +283,21 @@ interactive_expr: Begin If Verbatim Then Verbatim COMMA Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 322, spurious reduction of production nsepseq(disj_expr_level,COMMA) -> disj_expr_level
-## In state 321, spurious reduction of production tuple(disj_expr_level) -> disj_expr_level COMMA nsepseq(disj_expr_level,COMMA)
-## In state 243, spurious reduction of production tuple_expr -> tuple(disj_expr_level)
-## In state 528, spurious reduction of production base_expr(closed_if) -> tuple_expr
-## In state 406, spurious reduction of production base_if_then_else__open(closed_if) -> base_expr(closed_if)
-## In state 405, spurious reduction of production closed_if -> base_if_then_else__open(closed_if)
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 322, spurious reduction of production nsepseq(disj_expr_level,COMMA) -> disj_expr_level 
+## In state 321, spurious reduction of production tuple(disj_expr_level) -> disj_expr_level COMMA nsepseq(disj_expr_level,COMMA) 
+## In state 243, spurious reduction of production tuple_expr -> tuple(disj_expr_level) 
+## In state 528, spurious reduction of production base_expr(closed_if) -> tuple_expr 
+## In state 406, spurious reduction of production base_if_then_else__open(closed_if) -> base_expr(closed_if) 
+## In state 405, spurious reduction of production closed_if -> base_if_then_else__open(closed_if) 
 ##
 interactive_expr: Begin If Verbatim Then Verbatim With
 ##
@@ -315,15 +315,15 @@ interactive_expr: Begin If Verbatim Then Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
 ##
 
 Ill-formed conditional expression.
@@ -343,18 +343,18 @@ interactive_expr: Begin If Verbatim Then If Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
 ##
 interactive_expr: Begin If Verbatim With
 ##
@@ -369,18 +369,18 @@ interactive_expr: Begin If Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
 ##
 interactive_expr: Begin Match Verbatim With WILD ARROW If Verbatim With
 ##
@@ -397,18 +397,18 @@ interactive_expr: Begin Match Verbatim With WILD ARROW If Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
 ##
 interactive_expr: If Verbatim Then If Verbatim With
 ##
@@ -425,18 +425,18 @@ interactive_expr: If Verbatim Then If Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
 ##
 interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW If Verbatim With
 ##
@@ -453,18 +453,18 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW If Verbatim Wi
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
 ##
 interactive_expr: If Verbatim With
 ##
@@ -480,18 +480,18 @@ interactive_expr: If Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
 ##
 interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then If Verbatim With
 ##
@@ -508,18 +508,18 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then If Verbatim Wi
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
 ##
 interactive_expr: Match Verbatim With WILD ARROW If Verbatim With
 ##
@@ -535,18 +535,18 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
 ##
 
 Ill-formed conditional expression.
@@ -566,19 +566,19 @@ interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
-## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr 
 ##
 interactive_expr: Begin Let Rec WILD EQ Bytes With
 ##
@@ -593,19 +593,19 @@ interactive_expr: Begin Let Rec WILD EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
-## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr 
 ##
 interactive_expr: Begin Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes With
 ##
@@ -621,19 +621,19 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes Wit
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
-## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr 
 ##
 interactive_expr: If Verbatim Then Let Rec WILD EQ Bytes With
 ##
@@ -649,19 +649,19 @@ interactive_expr: If Verbatim Then Let Rec WILD EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
-## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr 
 ##
 interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes With
 ##
@@ -677,19 +677,19 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Let Rec WILD E
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
-## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr 
 ##
 interactive_expr: Let Rec WILD EQ Bytes With
 ##
@@ -704,19 +704,19 @@ interactive_expr: Let Rec WILD EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
-## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr 
 ##
 interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Let Rec WILD EQ Bytes With
 ##
@@ -732,19 +732,19 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Let Rec WILD E
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
-## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr 
 ##
 interactive_expr: Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes With
 ##
@@ -759,19 +759,19 @@ interactive_expr: Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
-## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr 
 ##
 interactive_expr: Begin If Verbatim Then Let WILD EQ Bytes With
 ##
@@ -786,19 +786,19 @@ interactive_expr: Begin If Verbatim Then Let WILD EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
-## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr 
 ##
 interactive_expr: Begin Let WILD EQ Bytes With
 ##
@@ -813,19 +813,19 @@ interactive_expr: Begin Let WILD EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
-## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr 
 ##
 interactive_expr: Begin Match Verbatim With WILD ARROW Let WILD EQ Bytes With
 ##
@@ -841,19 +841,19 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Let WILD EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
-## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr 
 ##
 interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Let WILD EQ Bytes With
 ##
@@ -869,19 +869,19 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Let WILD EQ By
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
-## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr 
 ##
 interactive_expr: If Verbatim Then Let WILD EQ Bytes With
 ##
@@ -897,19 +897,19 @@ interactive_expr: If Verbatim Then Let WILD EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
-## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr 
 ##
 interactive_expr: Let WILD EQ Bytes With
 ##
@@ -924,19 +924,19 @@ interactive_expr: Let WILD EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
-## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr 
 ##
 interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Let WILD EQ Bytes With
 ##
@@ -952,19 +952,19 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Let WILD EQ By
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
-## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr 
 ##
 interactive_expr: Match Verbatim With WILD ARROW Let WILD EQ Bytes With
 ##
@@ -979,19 +979,19 @@ interactive_expr: Match Verbatim With WILD ARROW Let WILD EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
-## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 338, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr 
 ##
 
 Ill-formed value declaration.
@@ -1206,18 +1206,18 @@ interactive_expr: Begin If Verbatim Then Match Verbatim Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
 ##
 interactive_expr: Begin Match Verbatim Type
 ##
@@ -1232,18 +1232,18 @@ interactive_expr: Begin Match Verbatim Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
 ##
 interactive_expr: Match Verbatim Type
 ##
@@ -1258,18 +1258,18 @@ interactive_expr: Match Verbatim Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
 ##
 interactive_expr: If Verbatim Then Match Verbatim Type
 ##
@@ -1285,18 +1285,18 @@ interactive_expr: If Verbatim Then Match Verbatim Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
 ##
 
 Ill-formed pattern matching.
@@ -1317,20 +1317,20 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 503, spurious reduction of production base_expr(base_cond) -> disj_expr_level
-## In state 407, spurious reduction of production base_cond__open(base_cond) -> base_expr(base_cond)
-## In state 408, spurious reduction of production base_cond -> base_cond__open(base_cond)
-## In state 467, spurious reduction of production case_clause(base_cond) -> pattern ARROW base_cond
-## In state 475, spurious reduction of production cases(base_cond) -> case_clause(base_cond)
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 503, spurious reduction of production base_expr(base_cond) -> disj_expr_level 
+## In state 407, spurious reduction of production base_cond__open(base_cond) -> base_expr(base_cond) 
+## In state 408, spurious reduction of production base_cond -> base_cond__open(base_cond) 
+## In state 467, spurious reduction of production case_clause(base_cond) -> pattern ARROW base_cond 
+## In state 475, spurious reduction of production cases(base_cond) -> case_clause(base_cond) 
 ##
 interactive_expr: Begin If Verbatim Then Match Verbatim With WILD ARROW Bytes With
 ##
@@ -1346,20 +1346,20 @@ interactive_expr: Begin If Verbatim Then Match Verbatim With WILD ARROW Bytes Wi
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 454, spurious reduction of production base_expr(base_cond) -> disj_expr_level
-## In state 407, spurious reduction of production base_cond__open(base_cond) -> base_expr(base_cond)
-## In state 408, spurious reduction of production base_cond -> base_cond__open(base_cond)
-## In state 467, spurious reduction of production case_clause(base_cond) -> pattern ARROW base_cond
-## In state 475, spurious reduction of production cases(base_cond) -> case_clause(base_cond)
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 454, spurious reduction of production base_expr(base_cond) -> disj_expr_level 
+## In state 407, spurious reduction of production base_cond__open(base_cond) -> base_expr(base_cond) 
+## In state 408, spurious reduction of production base_cond -> base_cond__open(base_cond) 
+## In state 467, spurious reduction of production case_clause(base_cond) -> pattern ARROW base_cond 
+## In state 475, spurious reduction of production cases(base_cond) -> case_clause(base_cond) 
 ##
 
 Ill-formed pattern matching.
@@ -1380,8 +1380,8 @@ interactive_expr: Begin Match Verbatim With WILD CONS Bytes SEMI
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 120, spurious reduction of production tail -> sub_pattern
-## In state 350, spurious reduction of production pattern -> sub_pattern CONS tail
+## In state 120, spurious reduction of production tail -> sub_pattern 
+## In state 350, spurious reduction of production pattern -> sub_pattern CONS tail 
 ##
 interactive_expr: If Verbatim Then Match Verbatim With WILD CONS Bytes SEMI
 ##
@@ -1397,8 +1397,8 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD CONS Bytes SEMI
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 120, spurious reduction of production tail -> sub_pattern
-## In state 350, spurious reduction of production pattern -> sub_pattern CONS tail
+## In state 120, spurious reduction of production tail -> sub_pattern 
+## In state 350, spurious reduction of production pattern -> sub_pattern CONS tail 
 ##
 interactive_expr: Match Verbatim With WILD CONS Bytes SEMI
 ##
@@ -1413,8 +1413,8 @@ interactive_expr: Match Verbatim With WILD CONS Bytes SEMI
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 120, spurious reduction of production tail -> sub_pattern
-## In state 350, spurious reduction of production pattern -> sub_pattern CONS tail
+## In state 120, spurious reduction of production tail -> sub_pattern 
+## In state 350, spurious reduction of production pattern -> sub_pattern CONS tail 
 ##
 
 Ill-formed pattern matching.
@@ -1542,16 +1542,16 @@ interactive_expr: Begin Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 559, spurious reduction of production seq_expr -> disj_expr_level
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 559, spurious reduction of production seq_expr -> disj_expr_level 
 ##
 
 Ill-formed sequence of expressions.
@@ -1614,7 +1614,7 @@ interactive_expr: Fun WILD RPAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 159, spurious reduction of production irrefutable -> sub_irrefutable
+## In state 159, spurious reduction of production irrefutable -> sub_irrefutable 
 ##
 interactive_expr: Fun WILD WILD RPAR
 ##
@@ -1629,7 +1629,7 @@ interactive_expr: Fun WILD WILD RPAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 159, spurious reduction of production irrefutable -> sub_irrefutable
+## In state 159, spurious reduction of production irrefutable -> sub_irrefutable 
 ##
 
 Ill-formed function expression.
@@ -1759,9 +1759,9 @@ interactive_expr: LBRACE Ident DOT Ident Verbatim
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production nsepseq(selection,DOT) -> selection
-## In state 207, spurious reduction of production projection -> Ident DOT nsepseq(selection,DOT)
-## In state 615, spurious reduction of production path -> projection
+## In state 204, spurious reduction of production nsepseq(selection,DOT) -> selection 
+## In state 207, spurious reduction of production projection -> Ident DOT nsepseq(selection,DOT) 
+## In state 615, spurious reduction of production path -> projection 
 ##
 
 Ill-formed record update.
@@ -1810,19 +1810,19 @@ interactive_expr: LBRACE Ident EQ Bytes SEMI Ident EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
-## In state 612, spurious reduction of production field_assignment -> Ident EQ expr
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 612, spurious reduction of production field_assignment -> Ident EQ expr 
 ##
 interactive_expr: LBRACE Ident EQ Bytes With
 ##
@@ -1839,19 +1839,19 @@ interactive_expr: LBRACE Ident EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
-## In state 612, spurious reduction of production field_assignment -> Ident EQ expr
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 612, spurious reduction of production field_assignment -> Ident EQ expr 
 ##
 
 Ill-formed record expression.
@@ -1875,19 +1875,19 @@ interactive_expr: LBRACE Ident With Ident EQ Bytes SEMI Ident EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
-## In state 623, spurious reduction of production field_path_assignment -> path EQ expr
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 623, spurious reduction of production field_path_assignment -> path EQ expr 
 ##
 interactive_expr: LBRACE Ident With Ident EQ Bytes With
 ##
@@ -1904,19 +1904,19 @@ interactive_expr: LBRACE Ident With Ident EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
-## In state 623, spurious reduction of production field_path_assignment -> path EQ expr
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 623, spurious reduction of production field_path_assignment -> path EQ expr 
 ##
 
 Ill-formed record update.
@@ -1972,9 +1972,9 @@ interactive_expr: LBRACE Ident With Ident DOT Ident With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 204, spurious reduction of production nsepseq(selection,DOT) -> selection
-## In state 207, spurious reduction of production projection -> Ident DOT nsepseq(selection,DOT)
-## In state 615, spurious reduction of production path -> projection
+## In state 204, spurious reduction of production nsepseq(selection,DOT) -> selection 
+## In state 207, spurious reduction of production projection -> Ident DOT nsepseq(selection,DOT) 
+## In state 615, spurious reduction of production path -> projection 
 ##
 
 Ill-formed record update.
@@ -2069,18 +2069,18 @@ interactive_expr: LBRACKET Verbatim SEMI Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
 ##
 interactive_expr: LBRACKET Verbatim With
 ##
@@ -2097,18 +2097,18 @@ interactive_expr: LBRACKET Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
 ##
 
 Ill-formed list of expressions.
@@ -2145,10 +2145,10 @@ interactive_expr: LPAR Verbatim COLON Ident VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 22, spurious reduction of production cartesian -> core_type
-## In state 29, spurious reduction of production fun_type -> cartesian
-## In state 62, spurious reduction of production type_expr -> fun_type
-## In state 658, spurious reduction of production annot_expr -> expr COLON type_expr
+## In state 22, spurious reduction of production cartesian -> core_type 
+## In state 29, spurious reduction of production fun_type -> cartesian 
+## In state 62, spurious reduction of production type_expr -> fun_type 
+## In state 658, spurious reduction of production annot_expr -> expr COLON type_expr 
 ##
 
 Ill-formed annotated expression.
@@ -2169,7 +2169,7 @@ contract: Type Ident EQ With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 3, spurious reduction of production seq(Attr) ->
+## In state 3, spurious reduction of production seq(Attr) -> 
 ##
 
 Ill-formed record type or sum type.
@@ -2194,18 +2194,18 @@ interactive_expr: LPAR Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
 ##
 
 Ill formed expression.
@@ -2228,18 +2228,18 @@ interactive_expr: Lang Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
 ##
 
 Ill-formed code injection.
@@ -2610,19 +2610,19 @@ interactive_expr: Ident WILD
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 200, spurious reduction of production core_expr -> Ident
-## In state 252, spurious reduction of production call_expr_level -> core_expr
-## In state 258, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 249, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 289, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 332, spurious reduction of production expr -> base_cond__open(expr)
+## In state 200, spurious reduction of production core_expr -> Ident 
+## In state 252, spurious reduction of production call_expr_level -> core_expr 
+## In state 258, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 239, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 249, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 289, spurious reduction of production cons_expr_level -> add_expr_level 
+## In state 279, spurious reduction of production cat_expr_level -> cons_expr_level 
+## In state 311, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 318, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 325, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 331, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 332, spurious reduction of production expr -> base_cond__open(expr) 
 ##
 
 Ill-formed expression.
@@ -2642,11 +2642,11 @@ contract: Let Ident WILD COLON String VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 22, spurious reduction of production cartesian -> core_type
-## In state 29, spurious reduction of production fun_type -> cartesian
-## In state 62, spurious reduction of production type_expr -> fun_type
-## In state 180, spurious reduction of production type_annotation -> COLON type_expr
-## In state 181, spurious reduction of production option(type_annotation) -> type_annotation
+## In state 22, spurious reduction of production cartesian -> core_type 
+## In state 29, spurious reduction of production fun_type -> cartesian 
+## In state 62, spurious reduction of production type_expr -> fun_type 
+## In state 180, spurious reduction of production type_annotation -> COLON type_expr 
+## In state 181, spurious reduction of production option(type_annotation) -> type_annotation 
 ##
 
 Ill-formed value declaration.
@@ -2804,10 +2804,10 @@ contract: Let LPAR Constr Constr With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 103, spurious reduction of production constr_pattern -> Constr
-## In state 114, spurious reduction of production core_pattern -> constr_pattern
-## In state 113, spurious reduction of production sub_pattern -> core_pattern
-## In state 155, spurious reduction of production closed_irrefutable -> Constr sub_pattern
+## In state 103, spurious reduction of production constr_pattern -> Constr 
+## In state 114, spurious reduction of production core_pattern -> constr_pattern 
+## In state 113, spurious reduction of production sub_pattern -> core_pattern 
+## In state 155, spurious reduction of production closed_irrefutable -> Constr sub_pattern 
 ##
 
 Ill-formed parenthesised pattern.
@@ -2829,7 +2829,7 @@ contract: Let LPAR Constr LBRACKET WILD RPAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 120, spurious reduction of production tail -> sub_pattern
+## In state 120, spurious reduction of production tail -> sub_pattern 
 ##
 contract: Let LPAR Constr LBRACKET WILD SEMI WILD RPAR
 ##
@@ -2846,7 +2846,7 @@ contract: Let LPAR Constr LBRACKET WILD SEMI WILD RPAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 120, spurious reduction of production tail -> sub_pattern
+## In state 120, spurious reduction of production tail -> sub_pattern 
 ##
 
 Ill-formed list of patterns.
@@ -2895,7 +2895,7 @@ contract: Let LPAR Constr LPAR WILD COMMA WILD SEMI
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 120, spurious reduction of production tail -> sub_pattern
+## In state 120, spurious reduction of production tail -> sub_pattern 
 ##
 
 Ill-formed parenthesised tuple of patterns.
@@ -2931,7 +2931,7 @@ contract: Let LPAR Constr LPAR WILD SEMI
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 120, spurious reduction of production tail -> sub_pattern
+## In state 120, spurious reduction of production tail -> sub_pattern 
 ##
 
 Ill-formed parenthesised pattern.
@@ -2973,7 +2973,7 @@ contract: Let LPAR WILD WILD
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 159, spurious reduction of production irrefutable -> sub_irrefutable
+## In state 159, spurious reduction of production irrefutable -> sub_irrefutable 
 ##
 
 Ill-formed parenthesised pattern.
@@ -3013,11 +3013,11 @@ contract: Let WILD COLON Ident VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 22, spurious reduction of production cartesian -> core_type
-## In state 29, spurious reduction of production fun_type -> cartesian
-## In state 62, spurious reduction of production type_expr -> fun_type
-## In state 180, spurious reduction of production type_annotation -> COLON type_expr
-## In state 181, spurious reduction of production option(type_annotation) -> type_annotation
+## In state 22, spurious reduction of production cartesian -> core_type 
+## In state 29, spurious reduction of production fun_type -> cartesian 
+## In state 62, spurious reduction of production type_expr -> fun_type 
+## In state 180, spurious reduction of production type_annotation -> COLON type_expr 
+## In state 181, spurious reduction of production option(type_annotation) -> type_annotation 
 ##
 
 Ill-formed value declaration.
@@ -3065,7 +3065,7 @@ contract: Let WILD With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 159, spurious reduction of production irrefutable -> sub_irrefutable
+## In state 159, spurious reduction of production irrefutable -> sub_irrefutable 
 ##
 
 Ill-formed value declaration.
@@ -3089,10 +3089,10 @@ contract: Type Ident EQ LBRACE Ident COLON Constr SEMI Ident COLON Ident VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 22, spurious reduction of production cartesian -> core_type
-## In state 29, spurious reduction of production fun_type -> cartesian
-## In state 62, spurious reduction of production type_expr -> fun_type
-## In state 59, spurious reduction of production field_decl -> seq(Attr) Ident COLON type_expr
+## In state 22, spurious reduction of production cartesian -> core_type 
+## In state 29, spurious reduction of production fun_type -> cartesian 
+## In state 62, spurious reduction of production type_expr -> fun_type 
+## In state 59, spurious reduction of production field_decl -> seq(Attr) Ident COLON type_expr 
 ##
 contract: Type Ident EQ LBRACE Ident COLON Ident VBAR
 ##
@@ -3109,10 +3109,10 @@ contract: Type Ident EQ LBRACE Ident COLON Ident VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 22, spurious reduction of production cartesian -> core_type
-## In state 29, spurious reduction of production fun_type -> cartesian
-## In state 62, spurious reduction of production type_expr -> fun_type
-## In state 59, spurious reduction of production field_decl -> seq(Attr) Ident COLON type_expr
+## In state 22, spurious reduction of production cartesian -> core_type 
+## In state 29, spurious reduction of production fun_type -> cartesian 
+## In state 62, spurious reduction of production type_expr -> fun_type 
+## In state 59, spurious reduction of production field_decl -> seq(Attr) Ident COLON type_expr 
 ##
 
 Ill-formed record type.
@@ -3134,7 +3134,7 @@ contract: Type Ident EQ LBRACE With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 55, spurious reduction of production seq(Attr) ->
+## In state 55, spurious reduction of production seq(Attr) -> 
 ##
 
 Ill-formed record type.
@@ -3183,9 +3183,9 @@ contract: Type Ident EQ LPAR String COMMA String VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 22, spurious reduction of production cartesian -> core_type
-## In state 29, spurious reduction of production fun_type -> cartesian
-## In state 62, spurious reduction of production type_expr -> fun_type
+## In state 22, spurious reduction of production cartesian -> core_type 
+## In state 29, spurious reduction of production fun_type -> cartesian 
+## In state 62, spurious reduction of production type_expr -> fun_type 
 ##
 contract: Type Ident EQ LPAR String VBAR
 ##
@@ -3201,9 +3201,9 @@ contract: Type Ident EQ LPAR String VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 22, spurious reduction of production cartesian -> core_type
-## In state 29, spurious reduction of production fun_type -> cartesian
-## In state 62, spurious reduction of production type_expr -> fun_type
+## In state 22, spurious reduction of production cartesian -> core_type 
+## In state 29, spurious reduction of production fun_type -> cartesian 
+## In state 62, spurious reduction of production type_expr -> fun_type 
 ##
 
 Ill-formed application to a type constructor.
@@ -3345,11 +3345,11 @@ interactive_expr: Type Ident EQ Constr With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 9, spurious reduction of production variant -> Constr
-## In state 36, spurious reduction of production nsepseq(variant,VBAR) -> variant
-## In state 61, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
-## In state 51, spurious reduction of production type_expr -> sum_type
-## In state 78, spurious reduction of production type_decl -> Type Ident EQ type_expr
+## In state 9, spurious reduction of production variant -> Constr 
+## In state 36, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 61, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 51, spurious reduction of production type_expr -> sum_type 
+## In state 78, spurious reduction of production type_decl -> Type Ident EQ type_expr 
 ##
 interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Type Ident EQ Constr With
 ##
@@ -3365,11 +3365,11 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Type Ident EQ 
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 9, spurious reduction of production variant -> Constr
-## In state 36, spurious reduction of production nsepseq(variant,VBAR) -> variant
-## In state 61, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
-## In state 51, spurious reduction of production type_expr -> sum_type
-## In state 78, spurious reduction of production type_decl -> Type Ident EQ type_expr
+## In state 9, spurious reduction of production variant -> Constr 
+## In state 36, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 61, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 51, spurious reduction of production type_expr -> sum_type 
+## In state 78, spurious reduction of production type_decl -> Type Ident EQ type_expr 
 ##
 interactive_expr: Begin If Verbatim Then Type Ident EQ Constr With
 ##
@@ -3384,11 +3384,11 @@ interactive_expr: Begin If Verbatim Then Type Ident EQ Constr With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 9, spurious reduction of production variant -> Constr
-## In state 36, spurious reduction of production nsepseq(variant,VBAR) -> variant
-## In state 61, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
-## In state 51, spurious reduction of production type_expr -> sum_type
-## In state 78, spurious reduction of production type_decl -> Type Ident EQ type_expr
+## In state 9, spurious reduction of production variant -> Constr 
+## In state 36, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 61, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 51, spurious reduction of production type_expr -> sum_type 
+## In state 78, spurious reduction of production type_decl -> Type Ident EQ type_expr 
 ##
 interactive_expr: If Verbatim Then Type Ident EQ Constr With
 ##
@@ -3404,11 +3404,11 @@ interactive_expr: If Verbatim Then Type Ident EQ Constr With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 9, spurious reduction of production variant -> Constr
-## In state 36, spurious reduction of production nsepseq(variant,VBAR) -> variant
-## In state 61, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
-## In state 51, spurious reduction of production type_expr -> sum_type
-## In state 78, spurious reduction of production type_decl -> Type Ident EQ type_expr
+## In state 9, spurious reduction of production variant -> Constr 
+## In state 36, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 61, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 51, spurious reduction of production type_expr -> sum_type 
+## In state 78, spurious reduction of production type_decl -> Type Ident EQ type_expr 
 ##
 interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Type Ident EQ Constr With
 ##
@@ -3424,11 +3424,11 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Type Ident EQ 
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 9, spurious reduction of production variant -> Constr
-## In state 36, spurious reduction of production nsepseq(variant,VBAR) -> variant
-## In state 61, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
-## In state 51, spurious reduction of production type_expr -> sum_type
-## In state 78, spurious reduction of production type_decl -> Type Ident EQ type_expr
+## In state 9, spurious reduction of production variant -> Constr 
+## In state 36, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 61, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 51, spurious reduction of production type_expr -> sum_type 
+## In state 78, spurious reduction of production type_decl -> Type Ident EQ type_expr 
 ##
 interactive_expr: Match Verbatim With WILD ARROW Type Ident EQ Constr With
 ##
@@ -3443,11 +3443,11 @@ interactive_expr: Match Verbatim With WILD ARROW Type Ident EQ Constr With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 9, spurious reduction of production variant -> Constr
-## In state 36, spurious reduction of production nsepseq(variant,VBAR) -> variant
-## In state 61, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
-## In state 51, spurious reduction of production type_expr -> sum_type
-## In state 78, spurious reduction of production type_decl -> Type Ident EQ type_expr
+## In state 9, spurious reduction of production variant -> Constr 
+## In state 36, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 61, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 51, spurious reduction of production type_expr -> sum_type 
+## In state 78, spurious reduction of production type_decl -> Type Ident EQ type_expr 
 ##
 
 Ill-formed local type declaration.
@@ -3467,15 +3467,15 @@ contract: Type Ident EQ Constr End
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 9, spurious reduction of production variant -> Constr
-## In state 36, spurious reduction of production nsepseq(variant,VBAR) -> variant
-## In state 61, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
-## In state 51, spurious reduction of production type_expr -> sum_type
-## In state 78, spurious reduction of production type_decl -> Type Ident EQ type_expr
-## In state 83, spurious reduction of production declaration -> type_decl
-## In state 681, spurious reduction of production seq(declaration) ->
-## In state 682, spurious reduction of production nseq(declaration) -> declaration seq(declaration)
-## In state 675, spurious reduction of production module_ -> nseq(declaration)
+## In state 9, spurious reduction of production variant -> Constr 
+## In state 36, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 61, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 51, spurious reduction of production type_expr -> sum_type 
+## In state 78, spurious reduction of production type_decl -> Type Ident EQ type_expr 
+## In state 83, spurious reduction of production declaration -> type_decl 
+## In state 681, spurious reduction of production seq(declaration) -> 
+## In state 682, spurious reduction of production nseq(declaration) -> declaration seq(declaration) 
+## In state 675, spurious reduction of production module_ -> nseq(declaration) 
 ##
 
 Ill-formed contract.
@@ -3496,15 +3496,15 @@ contract: Module Constr EQ Struct Type Ident EQ Constr EOF
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 9, spurious reduction of production variant -> Constr
-## In state 36, spurious reduction of production nsepseq(variant,VBAR) -> variant
-## In state 61, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
-## In state 51, spurious reduction of production type_expr -> sum_type
-## In state 78, spurious reduction of production type_decl -> Type Ident EQ type_expr
-## In state 83, spurious reduction of production declaration -> type_decl
-## In state 681, spurious reduction of production seq(declaration) ->
-## In state 682, spurious reduction of production nseq(declaration) -> declaration seq(declaration)
-## In state 675, spurious reduction of production module_ -> nseq(declaration)
+## In state 9, spurious reduction of production variant -> Constr 
+## In state 36, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 61, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 51, spurious reduction of production type_expr -> sum_type 
+## In state 78, spurious reduction of production type_decl -> Type Ident EQ type_expr 
+## In state 83, spurious reduction of production declaration -> type_decl 
+## In state 681, spurious reduction of production seq(declaration) -> 
+## In state 682, spurious reduction of production nseq(declaration) -> declaration seq(declaration) 
+## In state 675, spurious reduction of production module_ -> nseq(declaration) 
 ##
 
 Ill-formed module declaration.
@@ -3632,8 +3632,8 @@ interactive_expr: Module Constr EQ Constr Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 685, spurious reduction of production nsepseq(module_name,DOT) -> Constr
-## In state 688, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT)
+## In state 685, spurious reduction of production nsepseq(module_name,DOT) -> Constr 
+## In state 688, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT) 
 ##
 interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Module Constr EQ Constr Type
 ##
@@ -3649,8 +3649,8 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Module Constr 
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 685, spurious reduction of production nsepseq(module_name,DOT) -> Constr
-## In state 688, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT)
+## In state 685, spurious reduction of production nsepseq(module_name,DOT) -> Constr 
+## In state 688, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT) 
 ##
 interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Module Constr EQ Constr Type
 ##
@@ -3666,8 +3666,8 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Module Constr 
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 685, spurious reduction of production nsepseq(module_name,DOT) -> Constr
-## In state 688, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT)
+## In state 685, spurious reduction of production nsepseq(module_name,DOT) -> Constr 
+## In state 688, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT) 
 ##
 interactive_expr: Match Verbatim With WILD ARROW Module Constr EQ Constr Type
 ##
@@ -3682,8 +3682,8 @@ interactive_expr: Match Verbatim With WILD ARROW Module Constr EQ Constr Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 685, spurious reduction of production nsepseq(module_name,DOT) -> Constr
-## In state 688, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT)
+## In state 685, spurious reduction of production nsepseq(module_name,DOT) -> Constr 
+## In state 688, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT) 
 ##
 interactive_expr: Begin If Verbatim Then Module Constr EQ Constr Type
 ##
@@ -3698,8 +3698,8 @@ interactive_expr: Begin If Verbatim Then Module Constr EQ Constr Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 685, spurious reduction of production nsepseq(module_name,DOT) -> Constr
-## In state 688, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT)
+## In state 685, spurious reduction of production nsepseq(module_name,DOT) -> Constr 
+## In state 688, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT) 
 ##
 interactive_expr: If Verbatim Then Module Constr EQ Constr Type
 ##
@@ -3715,8 +3715,8 @@ interactive_expr: If Verbatim Then Module Constr EQ Constr Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 685, spurious reduction of production nsepseq(module_name,DOT) -> Constr
-## In state 688, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT)
+## In state 685, spurious reduction of production nsepseq(module_name,DOT) -> Constr 
+## In state 688, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT) 
 ##
 
 Ill-formed local module declaration.
