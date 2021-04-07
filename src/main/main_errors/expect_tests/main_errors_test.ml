@@ -1136,7 +1136,7 @@ let%expect_test "stacking" =
   [%expect {|bad iterator: iter INT |}] ;
   error `Stacking_not_comparable_pair_struct ;
   [%expect
-    {|Invalid comparable value. When using a tuple of with more than 2 components, structure the tuple like this: "(a, (b, c))". |}]
+    {|Invalid comparable value. When using a tuple with more than 2 components, structure the tuple like this: "(a, (b, c))". |}]
 
 
 let%expect_test "decompile_michelson" = () (* same as stacking *)
