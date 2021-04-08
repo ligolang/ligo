@@ -32,12 +32,16 @@ open H
 let none loc = typer_0 loc "NONE" @@ fun tv_opt ->
   match tv_opt with
   | None -> fail (not_annotated loc)
-  | Some t -> ok t
+  | Some t ->
+    let%bind () = trace_option (expected_option loc t) @@ assert_t_option t in
+    ok t
 
 let set_empty loc = typer_0 loc "SET_EMPTY" @@ fun tv_opt ->
   match tv_opt with
   | None -> fail (not_annotated loc)
-  | Some t -> ok t
+  | Some t ->
+    let%bind () = trace_option (expected_set loc t) @@ assert_t_set t in
+    ok t
 
 let set_update loc = typer_3 loc "SET_UPDATE" @@ fun elt flag set ->
   let%bind elt' = trace_option (expected_set loc set) @@ get_t_set set in
@@ -514,7 +518,9 @@ let set_iter loc = typer_2 loc "SET_ITER" @@ fun body set ->
 let list_empty loc = typer_0 loc "LIST_EMPTY" @@ fun tv_opt ->
   match tv_opt with
   | None -> fail (not_annotated loc)
-  | Some t -> ok t
+  | Some t ->
+    let%bind () = trace_option (expected_list loc t) @@ assert_t_list t in
+    ok t
 
 let list_iter loc = typer_2 loc "LIST_ITER" @@ fun body lst ->
   let%bind (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in

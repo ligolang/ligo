@@ -171,3 +171,13 @@ let%expect_test _ =
       4 |   (([] : operation list) , { storage with nofield=2048} )
 
     Invalid record field "nofield" in record "{ storage with { nofield = 2048 } }". |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/override_option.mligo" ; "main" ] ;
+  [%expect {|
+    in file "../../test/contracts/negative/override_option.mligo", line 3, characters 53-57
+      2 |
+      3 | let main (x,y:bool * bool) = ([] : operation list), (None : option)
+
+    Incorrect argument.
+    Expected an option, but got an argument of type "int". |} ]
