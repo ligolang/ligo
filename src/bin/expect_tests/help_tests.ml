@@ -30,18 +30,14 @@ let%expect_test _ =
                Subcommand: Compile a contract.
 
            compile-expression
-               Subcommand: Compile to a michelson value.
+               Subcommand: Compile to a Michelson value.
 
            compile-parameter
-               Subcommand: Compile parameters to a Michelson expression. The
-               resulting Michelson expression can be passed as an argument in a
-               transaction which calls a contract.
+               Subcommand: Compile parameters to a Michelson expression.
 
            compile-storage
-               Subcommand: Compile an initial storage in ligo syntax to a
-               Michelson expression. The resulting Michelson expression can be
-               passed as an argument in a transaction which originates a
-               contract.
+               Subcommand: Compile an initial storage in LIGO syntax to a
+               Michelson expression.
 
            dry-run
                Subcommand: Run a smart-contract with the given storage and input.
@@ -112,10 +108,10 @@ let%expect_test _ =
                Subcommand: Test a contract with the LIGO interpreter (BETA).
 
            transpile-contract
-               Subcommand: Transpile a contract to another syntax.
+               Subcommand: Transpile a contract to another syntax (BETA).
 
            transpile-expression
-               Subcommand: Transpile an expression to another syntax.
+               Subcommand: Transpile an expression to another syntax (BETA).
 
     OPTIONS
            --help[=FMT] (default=auto)
@@ -154,18 +150,14 @@ let%expect_test _ =
                Subcommand: Compile a contract.
 
            compile-expression
-               Subcommand: Compile to a michelson value.
+               Subcommand: Compile to a Michelson value.
 
            compile-parameter
-               Subcommand: Compile parameters to a Michelson expression. The
-               resulting Michelson expression can be passed as an argument in a
-               transaction which calls a contract.
+               Subcommand: Compile parameters to a Michelson expression.
 
            compile-storage
-               Subcommand: Compile an initial storage in ligo syntax to a
-               Michelson expression. The resulting Michelson expression can be
-               passed as an argument in a transaction which originates a
-               contract.
+               Subcommand: Compile an initial storage in LIGO syntax to a
+               Michelson expression.
 
            dry-run
                Subcommand: Run a smart-contract with the given storage and input.
@@ -236,10 +228,10 @@ let%expect_test _ =
                Subcommand: Test a contract with the LIGO interpreter (BETA).
 
            transpile-contract
-               Subcommand: Transpile a contract to another syntax.
+               Subcommand: Transpile a contract to another syntax (BETA).
 
            transpile-expression
-               Subcommand: Transpile an expression to another syntax.
+               Subcommand: Transpile an expression to another syntax (BETA).
 
     OPTIONS
            --help[=FMT] (default=auto)
@@ -257,6 +249,11 @@ let%expect_test _ =
 
     SYNOPSIS
            ligo compile-contract [OPTION]... SOURCE_FILE ENTRY_POINT
+
+    DESCRIPTION
+           This sub-command compiles a contract to Michelson code. It expects a
+           source file and an entrypoint function that has the type of a
+           contract: "parameter * storage -> operations list * storage".
 
     ARGUMENTS
            ENTRY_POINT (required)
@@ -321,12 +318,16 @@ let%expect_test _ =
   [%expect {|
     NAME
            ligo-compile-parameter - Subcommand: Compile parameters to a Michelson
-           expression. The resulting Michelson expression can be passed as an
-           argument in a transaction which calls a contract.
+           expression.
 
     SYNOPSIS
            ligo compile-parameter [OPTION]... SOURCE_FILE ENTRY_POINT
            PARAMETER_EXPRESSION
+
+    DESCRIPTION
+           This sub-command compiles a parameter for a given contract to a
+           Michelson expression. The resulting Michelson expression can be passed
+           as an argument in a transaction which calls a contract.
 
     ARGUMENTS
            ENTRY_POINT (required)
@@ -409,14 +410,17 @@ let%expect_test _ =
   run_ligo_good [ "compile-storage" ; "--help" ] ;
   [%expect {|
     NAME
-           ligo-compile-storage - Subcommand: Compile an initial storage in ligo
-           syntax to a Michelson expression. The resulting Michelson expression
-           can be passed as an argument in a transaction which originates a
-           contract.
+           ligo-compile-storage - Subcommand: Compile an initial storage in LIGO
+           syntax to a Michelson expression.
 
     SYNOPSIS
            ligo compile-storage [OPTION]... SOURCE_FILE ENTRY_POINT
            STORAGE_EXPRESSION
+
+    DESCRIPTION
+           This sub-command compiles an initial storage for a given contract to a
+           Michelson expression. The resulting Michelson expression can be passed
+           as an argument in a transaction which originates a contract.
 
     ARGUMENTS
            ENTRY_POINT (required)
@@ -506,6 +510,12 @@ let%expect_test _ =
            ligo dry-run [OPTION]... SOURCE_FILE ENTRY_POINT PARAMETER_EXPRESSION
            STORAGE_EXPRESSION
 
+    DESCRIPTION
+           This sub-command runs a LIGO contract on a given storage and
+           parameter. The context is initialized from a source file where the
+           contract is implemented. The interpretation is done using Michelson's
+           interpreter.
+
     ARGUMENTS
            ENTRY_POINT (required)
                ENTRY_POINT is entry-point that will be compiled.
@@ -588,6 +598,11 @@ let%expect_test _ =
            ligo run-function [OPTION]... SOURCE_FILE ENTRY_POINT
            PARAMETER_EXPRESSION
 
+    DESCRIPTION
+           This sub-command runs a LIGO function on a given argument. The context
+           is initialized from a source file where the function is implemented.
+           The interpretation is done using Michelson's interpreter.
+
     ARGUMENTS
            ENTRY_POINT (required)
                ENTRY_POINT is entry-point that will be compiled.
@@ -657,6 +672,11 @@ let%expect_test _ =
     SYNOPSIS
            ligo evaluate-value [OPTION]... SOURCE_FILE ENTRY_POINT
 
+    DESCRIPTION
+           This sub-command evaluates a LIGO definition. The context is
+           initialized from a source file where the definition is written. The
+           interpretation is done using Michelson's interpreter.
+
     ARGUMENTS
            ENTRY_POINT (required)
                ENTRY_POINT is entry-point that will be compiled.
@@ -718,10 +738,15 @@ let%expect_test _ =
   run_ligo_good [ "compile-expression" ; "--help" ] ;
   [%expect {|
     NAME
-           ligo-compile-expression - Subcommand: Compile to a michelson value.
+           ligo-compile-expression - Subcommand: Compile to a Michelson value.
 
     SYNOPSIS
            ligo compile-expression [OPTION]... SYNTAX _EXPRESSION
+
+    DESCRIPTION
+           This sub-command compiles a LIGO expression to a Michelson value. It
+           works by compiling the LIGO expression to a Michelson expression and
+           then interpreting it using Michelson's interpreter.
 
     ARGUMENTS
            _EXPRESSION (required)

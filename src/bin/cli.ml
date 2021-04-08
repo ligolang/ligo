@@ -236,7 +236,12 @@ let compile_file =
     Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ infer $ protocol_version $ display_format $ disable_michelson_typechecking $ michelson_code_format $ output_file $ warn $ werror) in
   let cmdname = "compile-contract" in
   let doc = "Subcommand: Compile a contract." in
-  (Term.ret term , Term.info ~doc cmdname)
+  let man = [`S Manpage.s_description;
+             `P "This sub-command compiles a contract to Michelson \
+                 code. It expects a source file and an entrypoint \
+                 function that has the type of a contract: \"parameter \
+                 * storage -> operations list * storage\"."]
+  in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let preprocess =
   let f source_file syntax display_format =
@@ -249,7 +254,15 @@ let preprocess =
   let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
   let cmdname = "preprocess" in
   let doc = "Subcommand: Preprocess the source file.\nWarning: Intended for development of LIGO and can break at any time." in
-  (Term.ret term, Term.info ~doc cmdname)
+  let man = [`S Manpage.s_description;
+             `P "This sub-command runs the pre-processor on a LIGO \
+                 source file and outputs the result. The directive \
+                 `#include` directly inlines the included file and \
+                 therefore its content appears in the output. In \
+                 contrast, the directive `#import` includes the file \
+                 as a module and therefore the content of the imported \
+                 file is not printed by this sub-command."]
+  in (Term.ret term, Term.info ~man ~doc cmdname)
 
 let pretty_print =
   let f source_file syntax display_format =
@@ -260,8 +273,13 @@ let pretty_print =
   in
   let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
   let cmdname = "pretty-print" in
-  let doc = "Subcommand: Pretty-print the source file."
-  in (Term.ret term, Term.info ~doc cmdname)
+  let doc = "Subcommand: Pretty-print the source file." in
+  let man = [`S Manpage.s_description;
+             `P "This sub-command pretty-prints a source file in \
+                 LIGO. The width of the pretty-printed text is \
+                 adjusted to the number of columns in the terminal (or \
+                 60 if it cannot be determined)."]
+  in (Term.ret term, Term.info ~man ~doc cmdname)
 
 let print_graph =
   let f source_file syntax display_format =
@@ -273,7 +291,11 @@ let print_graph =
   let term = Term.(const f $ source_file 0  $ syntax $ display_format) in
   let cmdname = "print-graph" in
   let doc = "Subcommand: Print the dependency graph.\nWarning: Intended for development of LIGO and can break at any time." in
-  (Term.ret term, Term.info ~doc cmdname)
+  let man = [`S Manpage.s_description;
+             `P "This sub-command prints the dependency graph created \
+                 by the module system. It explores all imported source \
+                 files (recursively) following a DFS strategy."]
+  in (Term.ret term, Term.info ~man ~doc cmdname)
 
 let print_cst =
   let f source_file syntax display_format =
@@ -285,7 +307,10 @@ let print_cst =
   let term = Term.(const f $ source_file 0  $ syntax $ display_format) in
   let cmdname = "print-cst" in
   let doc = "Subcommand: Print the CST.\nWarning: Intended for development of LIGO and can break at any time." in
-  (Term.ret term, Term.info ~doc cmdname)
+  let man = [`S Manpage.s_description;
+             `P "This sub-command prints the source file in the CST \
+                 stage, obtained after preprocessing and parsing."]
+  in (Term.ret term, Term.info ~man ~doc cmdname)
 
 let print_ast =
   let f source_file syntax display_format =
@@ -298,7 +323,10 @@ let print_ast =
   let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
   let cmdname = "print-ast" in
   let doc = "Subcommand: Print the AST.\n Warning: Intended for development of LIGO and can break at any time." in
-  (Term.ret term, Term.info ~doc cmdname)
+  let man = [`S Manpage.s_description;
+             `P "This sub-command prints the source file in the AST \
+                 imperative stage, before sugaring step is applied."]
+  in (Term.ret term, Term.info ~man ~doc cmdname)
 
 
 let print_ast_sugar =
@@ -312,7 +340,10 @@ let print_ast_sugar =
   let term = Term.(const f $ source_file 0  $ syntax $ display_format) in
   let cmdname = "print-ast-sugar" in
   let doc = "Subcommand: Print the AST.\n Warning: Intended for development of LIGO and can break at any time." in
-  (Term.ret term, Term.info ~doc cmdname)
+  let man = [`S Manpage.s_description;
+             `P "This sub-command prints the source file in the AST \
+                 stage, after sugaring step is applied."]
+  in (Term.ret term, Term.info ~man ~doc cmdname)
 
 let print_ast_core =
   let f source_file syntax display_format =
@@ -325,7 +356,10 @@ let print_ast_core =
   let term = Term.(const f $ source_file 0  $ syntax $ display_format) in
   let cmdname = "print-ast-core" in
   let doc = "Subcommand: Print the AST.\n Warning: Intended for development of LIGO and can break at any time." in
-  (Term.ret term, Term.info ~doc cmdname)
+  let man = [`S Manpage.s_description;
+             `P "This sub-command prints the source file in the AST \
+                 core stage."]
+  in (Term.ret term, Term.info ~man ~doc cmdname)
 
 let print_ast_typed =
   let f source_file syntax infer protocol_version display_format =
@@ -340,7 +374,12 @@ let print_ast_typed =
   let term = Term.(const f $ source_file 0  $ syntax $ infer $ protocol_version $ display_format) in
   let cmdname = "print-ast-typed" in
   let doc = "Subcommand: Print the typed AST.\n Warning: Intended for development of LIGO and can break at any time." in
-  (Term.ret term, Term.info ~doc cmdname)
+  let man = [`S Manpage.s_description;
+             `P "This sub-command prints the source file in the AST \
+                 typed stage. Internally, it uses the build system to \
+                 type the contract, but the contract is not combined \
+                 with imported modules."]
+  in (Term.ret term, Term.info ~man ~doc cmdname)
 
 let print_ast_combined =
   let f source_file syntax infer protocol_version display_format =
@@ -356,7 +395,12 @@ let print_ast_combined =
   let term = Term.(const f $ source_file 0  $ syntax $ infer $ protocol_version $ display_format) in
   let cmdname = "print-ast-combined" in
   let doc = "Subcommand: Print the contract after combination with the build system.\n Warning: Intended for development of LIGO and can break at any time." in
-  (Term.ret term, Term.info ~doc cmdname)
+  let man = [`S Manpage.s_description;
+             `P "This sub-command prints the source file in the AST \
+                 typed stage. Internally, it uses the build system to \
+                 type the contract, and the contract is combined with \
+                 the imported modules."]
+  in (Term.ret term, Term.info ~man ~doc cmdname)
 
 let print_mini_c =
   let f source_file syntax infer protocol_version display_format optimize =
@@ -376,7 +420,12 @@ let print_mini_c =
   let term = Term.(const f $ source_file 0 $ syntax $ infer $ protocol_version $ display_format $ optimize) in
   let cmdname = "print-mini-c" in
   let doc = "Subcommand: Print Mini-C. Warning: Intended for development of LIGO and can break at any time." in
-  (Term.ret term, Term.info ~doc cmdname)
+  let man = [`S Manpage.s_description;
+             `P "This sub-command prints the source file in the Mini-C \
+                 stage. Internally, it uses the build system to type \
+                 and compile the contract. Compilation is applied \
+                 after combination in the AST typed stage."]
+  in (Term.ret term, Term.info ~man ~doc cmdname)
 
 let measure_contract =
   let f source_file entry_point syntax infer protocol_version display_format warn werror =
@@ -390,8 +439,12 @@ let measure_contract =
   let term =
     Term.(const f $ source_file 0 $ entry_point 1  $ syntax $ infer $ protocol_version $ display_format $ warn $ werror) in
   let cmdname = "measure-contract" in
- let doc = "Subcommand: Measure a contract's compiled size in bytes." in
-  (Term.ret term , Term.info ~doc cmdname)
+  let doc = "Subcommand: Measure a contract's compiled size in bytes." in
+  let man = [`S Manpage.s_description;
+             `P "This sub-command compiles a source file and measures \
+                 the contract's compiled size in bytes. It does not \
+                 use the build system."]
+  in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let compile_parameter =
   let f source_file entry_point expression syntax infer protocol_version amount balance sender source now display_format michelson_format output_file warn werror =
@@ -415,8 +468,13 @@ let compile_parameter =
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2  $ syntax $ infer $ protocol_version $ amount $ balance $ sender $ source $ now $ display_format $ michelson_code_format $ output_file $ warn $ werror) in
   let cmdname = "compile-parameter" in
-  let doc = "Subcommand: Compile parameters to a Michelson expression. The resulting Michelson expression can be passed as an argument in a transaction which calls a contract." in
-  (Term.ret term , Term.info ~doc cmdname)
+  let doc = "Subcommand: Compile parameters to a Michelson expression." in
+  let man = [`S Manpage.s_description;
+             `P "This sub-command compiles a parameter for a given \
+                 contract to a Michelson expression. The resulting \
+                 Michelson expression can be passed as an argument in \
+                 a transaction which calls a contract."]
+  in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let interpret =
   let f expression init_file syntax infer protocol_version amount balance sender source now display_format =
@@ -440,7 +498,12 @@ let interpret =
     Term.(const f $ expression "EXPRESSION" 0 $ init_file $ syntax $ infer $ protocol_version $ amount $ balance $ sender $ source $ now $ display_format) in
   let cmdname = "interpret" in
   let doc = "Subcommand: Interpret the expression in the context initialized by the provided source file." in
-  (Term.ret term , Term.info ~doc cmdname)
+  let man = [`S Manpage.s_description;
+             `P "This sub-command interprets a LIGO expression. The \
+                 context can be initialized by providing a source file \
+                 (which is compiled not using the build system). The \
+                 interpretation is done using Michelson's interpreter."]
+  in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let compile_storage =
   let f source_file entry_point expression syntax infer protocol_version amount balance sender source now display_format michelson_format output_file warn werror =
@@ -463,8 +526,14 @@ let compile_storage =
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ expression "STORAGE" 2  $ syntax $ infer $ protocol_version $ amount $ balance $ sender $ source $ now $ display_format $ michelson_code_format $ output_file $ warn $ werror) in
   let cmdname = "compile-storage" in
-  let doc = "Subcommand: Compile an initial storage in ligo syntax to a Michelson expression. The resulting Michelson expression can be passed as an argument in a transaction which originates a contract." in
-  (Term.ret term , Term.info ~doc cmdname)
+  let doc = "Subcommand: Compile an initial storage in LIGO syntax to \
+             a Michelson expression." in
+  let man = [`S Manpage.s_description;
+             `P "This sub-command compiles an initial storage for a \
+                 given contract to a Michelson expression. The \
+                 resulting Michelson expression can be passed as an \
+                 argument in a transaction which originates a contract."]
+  in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let dry_run =
   let f source_file entry_point storage input amount balance sender source now syntax infer protocol_version display_format warn werror =
@@ -488,7 +557,13 @@ let dry_run =
     Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ expression "STORAGE" 3 $ amount $ balance $ sender $ source $ now  $ syntax $ infer $ protocol_version $ display_format $ warn $ werror) in
   let cmdname = "dry-run" in
   let doc = "Subcommand: Run a smart-contract with the given storage and input." in
-  (Term.ret term , Term.info ~doc cmdname)
+  let man = [`S Manpage.s_description;
+             `P "This sub-command runs a LIGO contract on a given \
+                 storage and parameter. The context is initialized \
+                 from a source file where the contract is \
+                 implemented. The interpretation is done using \
+                 Michelson's interpreter."]
+  in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let run_function =
   let f source_file entry_point parameter amount balance sender source now syntax infer protocol_version display_format =
@@ -514,7 +589,12 @@ let run_function =
     Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ amount $ balance $ sender $ source $ now  $ syntax $ infer $ protocol_version $ display_format) in
   let cmdname = "run-function" in
   let doc = "Subcommand: Run a function with the given parameter." in
-  (Term.ret term , Term.info ~doc cmdname)
+  let man = [`S Manpage.s_description;
+             `P "This sub-command runs a LIGO function on a given \
+                 argument. The context is initialized from a source \
+                 file where the function is implemented. The \
+                 interpretation is done using Michelson's interpreter."]
+  in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let evaluate_value =
   let f source_file entry_point amount balance sender source now syntax infer protocol_version display_format =
@@ -532,7 +612,12 @@ let evaluate_value =
     Term.(const f $ source_file 0 $ entry_point 1 $ amount $ balance $ sender $ source $ now  $ syntax $ infer $ protocol_version $ display_format) in
   let cmdname = "evaluate-value" in
   let doc = "Subcommand: Evaluate a given definition." in
-  (Term.ret term , Term.info ~doc cmdname)
+  let man = [`S Manpage.s_description;
+             `P "This sub-command evaluates a LIGO definition. The \
+                 context is initialized from a source file where the \
+                 definition is written. The interpretation is done \
+                 using Michelson's interpreter."]
+  in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let compile_expression =
   let f expression syntax infer protocol_version init_file display_format michelson_format warn werror =
@@ -553,8 +638,13 @@ let compile_expression =
   let term =
     Term.(const f $ expression "" 1 $ req_syntax 0 $ infer $ protocol_version $ init_file $ display_format $ michelson_code_format $ warn $ werror) in
   let cmdname = "compile-expression" in
-  let doc = "Subcommand: Compile to a michelson value." in
-  (Term.ret term , Term.info ~doc cmdname)
+  let doc = "Subcommand: Compile to a Michelson value." in
+  let man = [`S Manpage.s_description;
+             `P "This sub-command compiles a LIGO expression to a \
+                 Michelson value. It works by compiling the LIGO \
+                 expression to a Michelson expression and then \
+                 interpreting it using Michelson's interpreter."]
+  in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let dump_changelog =
   let f display_format =
@@ -565,7 +655,9 @@ let dump_changelog =
     Term.(const f $ display_format) in
   let cmdname = "changelog" in
   let doc = "Dump the LIGO changelog to stdout." in
-  (Term.ret term , Term.info ~doc cmdname)
+  let man = [`S Manpage.s_description;
+             `P "This sub-command dumps the changelog to the stdout."]
+  in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let list_declarations =
   let f source_file syntax display_format =
@@ -581,7 +673,10 @@ let list_declarations =
     Term.(const f $ source_file 0  $ syntax $ display_format) in
   let cmdname = "list-declarations" in
   let doc = "Subcommand: List all the top-level declarations." in
-  (Term.ret term , Term.info ~doc cmdname)
+  let man = [`S Manpage.s_description;
+             `P "This sub-command prints a list of all top-level \
+                 declarations (not including types and modules)."]
+  in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let transpile_contract =
   let f source_file new_syntax syntax new_dialect display_format =
@@ -600,8 +695,13 @@ let transpile_contract =
   let term =
     Term.(const f $ source_file 0 $ req_syntax 1  $ syntax $ dialect $ display_format) in
   let cmdname = "transpile-contract" in
-  let doc = "Subcommand: Transpile a contract to another syntax." in
-  (Term.ret term , Term.info ~doc cmdname)
+  let doc = "Subcommand: Transpile a contract to another syntax (BETA)." in
+  let man = [`S Manpage.s_description;
+             `P "This sub-command transpiles a source file to another \
+                 syntax. It does not use the build system, but the \
+                 source file is preprocessed. Comments are currently \
+                 not transpiled. Please use at your own risk."]
+  in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let transpile_expression =
   let f expression new_syntax syntax new_dialect display_format =
@@ -624,8 +724,12 @@ let transpile_expression =
   let term =
     Term.(const f $ expression "" 1  $ req_syntax 2 $ req_syntax 0 $ dialect $ display_format) in
   let cmdname = "transpile-expression" in
-  let doc = "Subcommand: Transpile an expression to another syntax." in
-  (Term.ret term, Term.info ~doc cmdname)
+  let doc = "Subcommand: Transpile an expression to another syntax (BETA)." in
+  let man = [`S Manpage.s_description;
+             `P "This sub-command transpiles a LIGO expression to \
+                 another syntax. Comments are currently not \
+                 transpiled. Please use at your own risk."]
+  in (Term.ret term, Term.info ~man ~doc cmdname)
 
 
 let get_scope =
@@ -642,7 +746,10 @@ let get_scope =
     Term.(const f $ source_file 0 $ syntax $ infer $ protocol_version $ libraries $ display_format $ with_types) in
   let cmdname = "get-scope" in
   let doc = "Subcommand: Return the JSON encoded environment for a given file." in
-  (Term.ret term , Term.info ~doc cmdname)
+  let man = [`S Manpage.s_description;
+             `P "This sub-command returns the environment for a given \
+                 file in JSON format. It does not use the build system."]
+  in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let test =
   let f source_file test_entry syntax infer protocol_version amount balance sender source now display_format =
@@ -657,7 +764,31 @@ let test =
     Term.(const f $ source_file 0 $ test_entry 1 $ syntax $ infer $ protocol_version $ amount $ balance $ sender $ source $ now $ display_format) in
   let cmdname = "test" in
   let doc = "Subcommand: Test a contract with the LIGO interpreter (BETA)." in
-  (Term.ret term , Term.info ~doc cmdname)
+  let man = [`S Manpage.s_description;
+             `P "This sub-command tests a LIGO contract using a LIGO \
+                 interpreter, no Michelson code is evaluated. Still \
+                 under development, there are features that are work \
+                 in progress and are subject to change. No real test \
+                 procedure should rely on this sub-command alone.";
+             `S "EXTRA PRIMITIVES FOR TESTING";
+             `P "Test.originate c st : binds contract c with the \
+                 address addr which is returned, st as the initial \
+                 storage.";
+             `P "Test.set_now t : sets the current time to t.";
+             `P "Test.set_balance addr b : sets the balance of \
+                 contract bound to address addr (returns unit).";
+             `P "Test.external_call addr p amt : performs a call to \
+                 contract bound to addr with parameter p and amount \
+                 amt (returns unit).";
+             `P "Test.get_storage addr : returns current storage bound \
+                 to address addr.";
+             `P "Test.get_balance : returns current balance bound to \
+                 address addr.";
+             `P "Test.assert_failure (f : unit -> _) : returns true if \
+                 f () fails.";
+             `P "Test.log x : prints x into the console."
+            ]
+  in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let repl =
   let f syntax_name protocol_version infer
