@@ -177,6 +177,12 @@ recognise (SomeRawTree dialect rawTree)
         ("NameDecl", n) -> return $ NameDecl n
         _               -> fallthrough
 
+    -- NameModule
+  , Descent do
+      boilerplate' $ \case
+        ("NameModule", n) -> return $ NameModule n
+        _                 -> fallthrough
+
     -- Type
   , Descent do
       boilerplate \case
@@ -189,6 +195,13 @@ recognise (SomeRawTree dialect rawTree)
         "michelsonTypeAnd" -> TAnd     <$> field "left_type" <*> field "left_type_name" <*> field "right_type" <*> field "right_type_name"
         "type_group"       -> TProduct <$> (pure <$> field "type")
         "TypeWildcard"     -> pure TWildcard
+        _                 -> fallthrough
+
+    -- Module access:
+  , Descent do
+      boilerplate $ \case
+        "module_TypeName" -> ModuleAccess <$> fields "path" <*> field "type"
+        "module_access"   -> ModuleAccess <$> fields "path" <*> field "field"
         _                 -> fallthrough
 
     -- Variant

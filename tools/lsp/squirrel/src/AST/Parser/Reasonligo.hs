@@ -37,6 +37,7 @@ recognise (SomeRawTree dialect rawTree)
         "annot_expr"  -> Annot      <$> field  "subject"   <*> field "type"
         "if"          -> If         <$> field  "selector"  <*> field "then"      <*> fieldOpt "else"
         "record"      -> Record     <$> fields "assignment"
+        "record_update" -> RecordUpd <$> field  "subject" <*> fields "field"
         "tuple"       -> Tuple      <$> fields "item"
         "switch"      -> Case       <$> field  "subject"   <*> fields   "alt"
         "lambda"      -> Lambda     <$> fields "argument"  <*> fieldOpt "type"   <*> field "body"
@@ -82,6 +83,7 @@ recognise (SomeRawTree dialect rawTree)
   , Descent do
       boilerplate $ \case
         "record_field" -> FieldAssignment <$> fields "accessor" <*> field "value"
+        "record_field_path" -> FieldAssignment <$> fields "accessor" <*> field "value"
         "spread" -> Spread <$> field "name"
         _ -> fallthrough
 
@@ -169,6 +171,12 @@ recognise (SomeRawTree dialect rawTree)
         ("NameDecl", n) -> return $ NameDecl n
         _               -> fallthrough
 
+    -- NameModule
+  , Descent do
+      boilerplate' $ \case
+        ("NameModule", n) -> return $ NameModule n
+        _                 -> fallthrough
+
     -- Type
   , Descent do
       boilerplate $ \case
@@ -179,6 +187,13 @@ recognise (SomeRawTree dialect rawTree)
         "sum_type"         -> TSum     <$> fields "variant"
         "TypeWildcard"     -> pure TWildcard
         _                  -> fallthrough
+
+    -- Module access:
+  , Descent do
+      boilerplate $ \case
+        "module_TypeName" -> ModuleAccess <$> fields "path" <*> field "type"
+        "module_access"   -> ModuleAccess <$> fields "path" <*> field "field"
+        _                 -> fallthrough
 
    -- Michelson pair types
   , Descent do
