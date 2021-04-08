@@ -111,6 +111,7 @@ module.exports = grammar({
       $.app_type,
       $.michelsonTypeOr,
       $.michelsonTypeAnd,
+      $.Int,
     ),
 
     type_group: $ => par(field("type", $._type_expr)),
@@ -129,7 +130,7 @@ module.exports = grammar({
       )
     ),
 
-    app_type: $ => prec.left(8, seq(field("name", $.TypeName), $._type_arg)),
+    app_type: $ => prec.left(8, seq(field("name", $._simple_type), $._type_arg)),
 
     _type_arg: $ => par(sepBy1(',', field("arg", $._type_expr))),
 
