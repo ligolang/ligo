@@ -71,9 +71,9 @@ let make ~(start: Pos.t) ~(stop: Pos.t) =
 
       (* Getters *)
 
-      method file      = start#file
-      method pos       = start, stop
-      method byte_pos  = start#byte, stop#byte
+      method file     = start#file
+      method pos      = start, stop
+      method byte_pos = start#byte, stop#byte
 
       (* Predicates *)
 
@@ -88,14 +88,17 @@ let make ~(start: Pos.t) ~(stop: Pos.t) =
         and stop_offset =
           if offsets then stop#offset mode else stop#column mode in
         let info =
-          if   file
-          then sprintf "in file %S, line %i, %s"
+          if file
+          then sprintf "File %S, line %i, %s"
                  (String.escaped start#file) start#line horizontal
-          else sprintf "at line %i, %s" start#line horizontal
-        in if   stop#line = start#line
-          then sprintf "%ss %i-%i" info start_offset stop_offset
-          else sprintf "%s %i to line %i, %s %i"
-                  info start_offset stop#line horizontal stop_offset
+          else sprintf "Line %i, %s" start#line horizontal
+        in if stop#line = start#line
+           then
+             if start_offset = stop_offset
+             then sprintf "%s %i:" info start_offset
+             else sprintf "%ss %i-%i:" info start_offset stop_offset
+           else sprintf "%s %i to line %i, %s %i:"
+                        info start_offset stop#line horizontal stop_offset
 
       method compact ?(file=true) ?(offsets=true) mode =
         if start#is_ghost || stop#is_ghost then "ghost"

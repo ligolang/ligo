@@ -3,7 +3,7 @@ open Cli_expect
 let%expect_test _ =
   run_ligo_bad [ "interpret" ; "--init="^(bad_test "linear_pattern_matching.mligo") ; "yy" ] ;
   [%expect {|
-    in file "../../test/contracts/negative/linear_pattern_matching.mligo", line 3, character 18 to line 4, character 35
+    File "../../test/contracts/negative/linear_pattern_matching.mligo", line 3, character 18 to line 4, character 35:
       2 |
       3 | let yy : string = match { a = 1 ; b = 2n ; c = "33" } with
       4 |   | { a = a ;  b = b ; c = c } -> a

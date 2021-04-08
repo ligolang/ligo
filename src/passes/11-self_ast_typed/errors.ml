@@ -104,9 +104,9 @@ One of the following patterns is expected:
         "@[<hv>%a@.Invalid entrypoint.@.Expected a tuple of operations and storage as return value.@]"
         Snippet.pp loc
     | `Self_ast_typed_warning_unused (loc, s) ->
-       Format.fprintf f
-         "@[Warning: unused variable \"%s\" %a. @]"
-         s Location.pp loc
+         Format.fprintf f
+           "@[<hv>%a@.Warning: unused variable \"%s\".\n@]"
+           Location.pp loc s
   )
 
 let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->

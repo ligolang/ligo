@@ -11,7 +11,7 @@ let () = Unix.putenv "TERM" "dumb"
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_michelson_insertion_1.ligo" ; "main" ] ;
   [%expect{xxx|
-    in file "../../test/contracts/negative/bad_michelson_insertion_1.ligo", line 4, characters 32-74
+    File "../../test/contracts/negative/bad_michelson_insertion_1.ligo", line 4, characters 32-74:
       3 | function main (const p : nat; const s: nat ) : list (operation)* nat is block {
       4 |   const f : (nat * nat -> nat)= [%Michelson ({| ADD |} : nat *nat -> nat)];
       5 | } with ((nil: list(operation)), f (p, s))
@@ -21,7 +21,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_michelson_insertion_2.ligo" ; "main" ] ;
   [%expect{xxx|
-in file "../../test/contracts/negative/bad_michelson_insertion_2.ligo", line 5, characters 34-40
+File "../../test/contracts/negative/bad_michelson_insertion_2.ligo", line 5, characters 34-40:
   4 |   const f : (nat -> nat -> nat)= [%Michelson ({| ADD |} : nat -> nat -> nat)];
   5 | } with ((nil: list(operation)), f (p, s))
 

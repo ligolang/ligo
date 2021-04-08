@@ -206,16 +206,11 @@ module Make (Lexer: LEXER)
         try Stdlib.Ok (interpreter parser) with
         (* See [mk_menhir_lexer]: *)
           LexingError msg -> Stdlib.Error msg
-        | Failure msg ->
-          let window = get_window () in
-          let region = Token.to_region window#current_token in
-          let msg    = "Failure while parsing, " ^ msg ^ ".\n"
-          in Stdlib.Error Region.{value=msg; region}
         | ParsingError msg ->
-          let window = get_window () in
-          let region = Token.to_region window#current_token in
-          let msg    = msg ^ "\n"
-          in Stdlib.Error Region.{value=msg; region}
+            let window = get_window () in
+            let region = Token.to_region window#current_token in
+            let msg    = msg ^ "\n"
+            in Stdlib.Error Region.{value=msg; region}
       in flush_all (); tree
 
     let incr_from_lexbuf  = incr_menhir (fun x -> x)

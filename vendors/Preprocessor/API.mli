@@ -53,7 +53,8 @@ type config = <
 type message = string Region.reg
 
 type preprocessed =
-  (Buffer.t * (file_path * module_name) list, Buffer.t option * message) Stdlib.result
+  (Buffer.t * (file_path * module_name) list,
+   Buffer.t option * message) Stdlib.result
 
 type 'src preprocessor = config -> 'src -> preprocessed
 

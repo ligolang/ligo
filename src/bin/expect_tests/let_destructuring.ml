@@ -13,7 +13,7 @@ let%expect_test _ =
   [%expect{| +1 |}] ;
   run_ligo_bad [ "interpret" ; "--init="^(bad_test "let_destructuring.mligo") ; "t1" ] ;
   [%expect{|
-    in file "../../test/contracts/negative/let_destructuring.mligo", line 4, characters 6-23
+    File "../../test/contracts/negative/let_destructuring.mligo", line 4, characters 6-23:
       3 | let t1 =
       4 |   let { a = a ; f = b }  = { a = 1 ; b = 1n } in
       5 |   (a,b)

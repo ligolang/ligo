@@ -12,22 +12,30 @@ let%expect_test _ =
 
   run_ligo_good [ "measure-contract" ; contract "multisig.ligo" ; "main" ] ;
   [%expect {|
-    Warning: unused variable "keys" in file "../../test/contracts/multisig.ligo", line 49, characters 10-20.
+    File "../../test/contracts/multisig.ligo", line 49, characters 10-20:
+    Warning: unused variable "keys".
+
     567 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig-v2.ligo" ; "main" ] ;
   [%expect {|
-    Warning: unused variable "p" in file "../../test/contracts/multisig-v2.ligo", line 135, characters 24-25.
+    File "../../test/contracts/multisig-v2.ligo", line 135, characters 24-25:
+    Warning: unused variable "p".
+
     1539 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "vote.mligo" ; "main" ] ;
   [%expect {|
-    Warning: unused variable "now" in file "../../test/contracts/vote.mligo", line 34, characters 6-9.
+    File "../../test/contracts/vote.mligo", line 34, characters 6-9:
+    Warning: unused variable "now".
+
     430 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "issue-184-combs.mligo" ; "main2" ] ;
   [%expect {|
-    Warning: unused variable "us" in file "../../test/contracts/issue-184-combs.mligo", line 30, characters 16-18.
+    File "../../test/contracts/issue-184-combs.mligo", line 30, characters 16-18:
+    Warning: unused variable "us".
+
     231 bytes |}] ;
 
   run_ligo_good [ "compile-parameter" ; contract "coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ] ;
@@ -40,7 +48,7 @@ let%expect_test _ =
   [%expect {|
 Invalid command line argument.
 The provided storage does not have the correct type for the contract.
-in file "../../test/contracts/coase.ligo", line 124, characters 9-13
+File "../../test/contracts/coase.ligo", line 124, characters 9-13:
 123 |
 124 | function main (const action : parameter; const s : storage) : return is
 125 |   case action of
@@ -53,7 +61,7 @@ sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sel
   [%expect {|
 Invalid command line argument.
 The provided parameter does not have the correct type for the given entrypoint.
-in file "../../test/contracts/coase.ligo", line 124, characters 9-13
+File "../../test/contracts/coase.ligo", line 124, characters 9-13:
 123 |
 124 | function main (const action : parameter; const s : storage) : return is
 125 |   case action of
@@ -67,8 +75,11 @@ record[card_patterns -> map (nat , record[coefficient -> tez , quantity -> nat])
 let%expect_test _  =
   run_ligo_good [ "compile-storage" ; contract "timestamp.ligo" ; "main" ; "now" ; "--now" ; "2042-01-01T00:00:00Z" ] ;
   [%expect {|
-    Warning: unused variable "s" in file "../../test/contracts/timestamp.ligo", line 3, characters 37-38.
-    Warning: unused variable "p" in file "../../test/contracts/timestamp.ligo", line 3, characters 21-22.
+    File "../../test/contracts/timestamp.ligo", line 3, characters 37-38:
+    Warning: unused variable "s".
+    File "../../test/contracts/timestamp.ligo", line 3, characters 21-22:
+    Warning: unused variable "p".
+
     "2042-01-01T00:00:00Z" |}]
 
 let%expect_test _ =
@@ -297,7 +308,9 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "multisig.ligo" ; "main" ] ;
   [%expect {|
-Warning: unused variable "keys" in file "../../test/contracts/multisig.ligo", line 49, characters 10-20.
+File "../../test/contracts/multisig.ligo", line 49, characters 10-20:
+Warning: unused variable "keys".
+
 { parameter
     (pair (pair (nat %counter) (lambda %message unit (list operation)))
           (list %signatures (pair key_hash signature))) ;
@@ -403,7 +416,9 @@ Warning: unused variable "keys" in file "../../test/contracts/multisig.ligo", li
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "multisig-v2.ligo" ; "main" ] ;
   [%expect {|
-Warning: unused variable "p" in file "../../test/contracts/multisig-v2.ligo", line 135, characters 24-25.
+File "../../test/contracts/multisig-v2.ligo", line 135, characters 24-25:
+Warning: unused variable "p".
+
 { parameter
     (or (or (unit %default) (lambda %send bytes (list operation)))
         (lambda %withdraw bytes (list operation))) ;
@@ -788,7 +803,9 @@ Warning: unused variable "p" in file "../../test/contracts/multisig-v2.ligo", li
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "vote.mligo" ; "main" ] ;
   [%expect {|
-Warning: unused variable "now" in file "../../test/contracts/vote.mligo", line 34, characters 6-9.
+File "../../test/contracts/vote.mligo", line 34, characters 6-9:
+Warning: unused variable "now".
+
 { parameter
     (or (pair %reset (pair (timestamp %finish_time) (timestamp %start_time)) (string %title))
         (or %vote (unit %nay) (unit %yea))) ;
@@ -971,7 +988,9 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "ticket_builder.mligo" ; "main" ; "--protocol=edo" ] ;
   [%expect {|
-Warning: unused variable "ticket" in file "../../test/contracts/ticket_builder.mligo", line 29, characters 28-34.
+File "../../test/contracts/ticket_builder.mligo", line 29, characters 28-34:
+Warning: unused variable "ticket".
+
 { parameter
     (or (ticket %burn unit)
         (pair %mint (contract %destination (ticket unit)) (nat %amount))) ;
@@ -1018,8 +1037,11 @@ Warning: unused variable "ticket" in file "../../test/contracts/ticket_builder.m
 let%expect_test _ =
     run_ligo_good [ "compile-contract" ; contract "implicit.mligo" ; "main" ] ;
     [%expect {|
-      Warning: unused variable "s" in file "../../test/contracts/implicit.mligo", line 1, characters 25-35.
-      Warning: unused variable "c" in file "../../test/contracts/implicit.mligo", line 2, characters 6-7.
+      File "../../test/contracts/implicit.mligo", line 1, characters 25-35:
+      Warning: unused variable "s".
+      File "../../test/contracts/implicit.mligo", line 2, characters 6-7:
+      Warning: unused variable "c".
+
       { parameter key_hash ;
         storage unit ;
         code { DROP ; UNIT ; NIL operation ; PAIR } } |}]
@@ -1028,11 +1050,17 @@ let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "amount_lambda.mligo" ; "main" ] ;
   (* AMOUNT should occur inside the second lambda, but not the first lambda *)
   [%expect {|
-    Warning: unused variable "x" in file "../../test/contracts/amount_lambda.mligo", line 2, characters 7-17.
-    Warning: unused variable "x" in file "../../test/contracts/amount_lambda.mligo", line 4, characters 6-16.
-    Warning: unused variable "x" in file "../../test/contracts/amount_lambda.mligo", line 7, characters 7-17.
-    Warning: unused variable "x" in file "../../test/contracts/amount_lambda.mligo", line 8, characters 6-16.
-    Warning: unused variable "s" in file "../../test/contracts/amount_lambda.mligo", line 10, characters 12-13.
+    File "../../test/contracts/amount_lambda.mligo", line 2, characters 7-17:
+    Warning: unused variable "x".
+    File "../../test/contracts/amount_lambda.mligo", line 4, characters 6-16:
+    Warning: unused variable "x".
+    File "../../test/contracts/amount_lambda.mligo", line 7, characters 7-17:
+    Warning: unused variable "x".
+    File "../../test/contracts/amount_lambda.mligo", line 8, characters 6-16:
+    Warning: unused variable "x".
+    File "../../test/contracts/amount_lambda.mligo", line 10, characters 12-13:
+    Warning: unused variable "s".
+
     { parameter bool ;
       storage (lambda unit mutez) ;
       code { CAR ;
@@ -1048,7 +1076,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_type_operator.ligo" ; "main" ] ;
   [%expect {|
-    in file "../../test/contracts/bad_type_operator.ligo", line 4, characters 16-29
+    File "../../test/contracts/bad_type_operator.ligo", line 4, characters 16-29:
       3 | type binding is nat * nat
       4 | type storage is map (binding)
       5 |
@@ -1070,7 +1098,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_timestamp.ligo" ; "main" ] ;
   [%expect {|
-    in file "../../test/contracts/bad_timestamp.ligo", line 7, characters 30-44
+    File "../../test/contracts/bad_timestamp.ligo", line 7, characters 30-44:
       6 |   block {
       7 |     var stamp : timestamp := ("badtimestamp" : timestamp)
       8 |   }
@@ -1081,22 +1109,31 @@ let%expect_test _ =
 let%expect_test _ =
     run_ligo_good [ "dry-run" ; contract "redeclaration.ligo" ; "main" ; "unit" ; "0" ] ;
     [%expect {|
-      Warning: unused variable "p" in file "../../test/contracts/redeclaration.ligo", line 1, characters 20-21.
-      Warning: unused variable "s" in file "../../test/contracts/redeclaration.ligo", line 3, characters 37-38.
-      Warning: unused variable "p" in file "../../test/contracts/redeclaration.ligo", line 3, characters 21-22.
-      Warning: unused variable "p" in file "../../test/contracts/redeclaration.ligo", line 6, characters 20-21.
+      File "../../test/contracts/redeclaration.ligo", line 1, characters 20-21:
+      Warning: unused variable "p".
+      File "../../test/contracts/redeclaration.ligo", line 3, characters 37-38:
+      Warning: unused variable "s".
+      File "../../test/contracts/redeclaration.ligo", line 3, characters 21-22:
+      Warning: unused variable "p".
+      File "../../test/contracts/redeclaration.ligo", line 6, characters 20-21:
+      Warning: unused variable "p".
+
       ( LIST_EMPTY() , 0 ) |}]
 
 let%expect_test _ =
     run_ligo_good [ "dry-run" ; contract "double_main.ligo" ; "main" ; "unit" ; "0" ] ;
     [%expect {|
-      Warning: unused variable "p" in file "../../test/contracts/double_main.ligo", line 5, characters 20-21.
+      File "../../test/contracts/double_main.ligo", line 5, characters 20-21:
+      Warning: unused variable "p".
+
       ( LIST_EMPTY() , 2 ) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "subtle_nontail_fail.mligo" ; "main" ] ;
   [%expect {|
-    Warning: unused variable "ps" in file "../../test/contracts/subtle_nontail_fail.mligo", line 1, characters 9-27.
+    File "../../test/contracts/subtle_nontail_fail.mligo", line 1, characters 9-27:
+    Warning: unused variable "ps".
+
     { parameter unit ;
       storage unit ;
       code { DROP ;
@@ -1108,7 +1145,9 @@ let%expect_test _ =
   (* TODO should not be bad? *)
   run_ligo_good [ "dry-run" ; contract "subtle_nontail_fail.mligo" ; "main" ; "()" ; "()" ] ;
   [%expect {|
-    Warning: unused variable "ps" in file "../../test/contracts/subtle_nontail_fail.mligo", line 1, characters 9-27.
+    File "../../test/contracts/subtle_nontail_fail.mligo", line 1, characters 9-27:
+    Warning: unused variable "ps".
+
     failwith("This contract always fails") |}]
 
 let%expect_test _ =
@@ -1119,15 +1158,21 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile-storage" ; contract "big_map.ligo" ; "main" ; "(big_map1,unit)" ] ;
   [%expect {|
-    Warning: unused variable "p" in file "../../test/contracts/big_map.ligo", line 5, characters 21-22.
-    Warning: unused variable "toto" in file "../../test/contracts/big_map.ligo", line 7, characters 8-12.
-    Warning: unused variable "toto" in file "../../test/contracts/big_map.ligo", line 8, characters 4-19.
+    File "../../test/contracts/big_map.ligo", line 5, characters 21-22:
+    Warning: unused variable "p".
+    File "../../test/contracts/big_map.ligo", line 7, characters 8-12:
+    Warning: unused variable "toto".
+    File "../../test/contracts/big_map.ligo", line 8, characters 4-19:
+    Warning: unused variable "toto".
+
     (Pair { Elt 23 0 ; Elt 42 0 } Unit) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "key_hash_comparable.ligo" ; "main" ] ;
   [%expect {|
-    Warning: unused variable "a" in file "../../test/contracts/key_hash_comparable.ligo", line 8, characters 21-22.
+    File "../../test/contracts/key_hash_comparable.ligo", line 8, characters 21-22:
+    Warning: unused variable "a".
+
     { parameter int ;
       storage (pair (map %one key_hash nat) (big_map %two key_hash bool)) ;
       code { CDR ; NIL operation ; PAIR } } |}]
@@ -1135,7 +1180,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "long_sum_type_names.ligo" ; "main" ] ;
   [%expect {|
-    in file "../../test/contracts/negative/long_sum_type_names.ligo", line 2, character 2 to line 4, character 18
+    File "../../test/contracts/negative/long_sum_type_names.ligo", line 2, character 2 to line 4, character 18:
       1 | type action is
       2 | | Incrementttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt of int
       3 | // | Increment of int
@@ -1153,7 +1198,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "redundant_constructors.mligo" ; "main" ] ;
   [%expect{|
-    in file "../../test/contracts/negative/redundant_constructors.mligo", line 7, character 2 to line 9, character 15
+    File "../../test/contracts/negative/redundant_constructors.mligo", line 7, character 2 to line 9, character 15:
       6 | type union_b =
       7 | | Add of nat
       8 | | Remove of nat
@@ -1166,7 +1211,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_toplevel.mligo" ; "main" ] ;
   [%expect {|
-in file "../../test/contracts/negative/create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8
+File "../../test/contracts/negative/create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8:
   3 | let main (action, store : string * string) : return =
   4 |   let toto : operation * address = Tezos.create_contract
   5 |     (fun (p, s : nat * string) -> (([] : operation list), store))
@@ -1179,7 +1224,7 @@ Free variable 'store' is not allowed in CREATE_CONTRACT lambda |}] ;
 
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_var.mligo" ; "main" ] ;
   [%expect {|
-in file "../../test/contracts/negative/create_contract_var.mligo", line 6, character 35 to line 10, character 5
+File "../../test/contracts/negative/create_contract_var.mligo", line 6, character 35 to line 10, character 5:
   5 | let main (action, store : string * string) : return =
   6 |   let toto : operation * address = Tezos.create_contract
   7 |     (fun (p, s : nat * int) -> (([] : operation list), a))
@@ -1192,7 +1237,7 @@ Free variable 'a' is not allowed in CREATE_CONTRACT lambda |}] ;
 
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_no_inline.mligo" ; "main" ] ;
   [%expect {|
-    in file "../../test/contracts/negative/create_contract_no_inline.mligo", line 3, characters 40-46
+    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 3, characters 40-46:
       2 |
       3 | let dummy_contract (p, s : nat * int) : return =
       4 |  (([] : operation list), foo)
@@ -1201,9 +1246,13 @@ Free variable 'a' is not allowed in CREATE_CONTRACT lambda |}] ;
 
   run_ligo_good [ "compile-contract" ; contract "create_contract.mligo" ; "main" ] ;
   [%expect {|
-    Warning: unused variable "action" in file "../../test/contracts/create_contract.mligo", line 3, characters 10-16.
-    Warning: unused variable "s" in file "../../test/contracts/create_contract.mligo", line 5, characters 13-14.
-    Warning: unused variable "p" in file "../../test/contracts/create_contract.mligo", line 5, characters 10-11.
+    File "../../test/contracts/create_contract.mligo", line 3, characters 10-16:
+    Warning: unused variable "action".
+    File "../../test/contracts/create_contract.mligo", line 5, characters 13-14:
+    Warning: unused variable "s".
+    File "../../test/contracts/create_contract.mligo", line 5, characters 10-11:
+    Warning: unused variable "p".
+
     { parameter string ;
       storage string ;
       code { CDR ;
@@ -1224,8 +1273,11 @@ Free variable 'a' is not allowed in CREATE_CONTRACT lambda |}] ;
 
   run_ligo_good [ "compile-contract" ; contract "tuples_no_annotation.religo" ; "main" ] ;
   [%expect {|
-    Warning: unused variable "storage" in file "../../test/contracts/tuples_no_annotation.religo", line 5, characters 15-22.
-    Warning: unused variable "p" in file "../../test/contracts/tuples_no_annotation.religo", line 5, characters 13-14.
+    File "../../test/contracts/tuples_no_annotation.religo", line 5, characters 15-22:
+    Warning: unused variable "storage".
+    File "../../test/contracts/tuples_no_annotation.religo", line 5, characters 13-14:
+    Warning: unused variable "p".
+
     { parameter int ;
       storage (pair (pair int string) (pair nat bool)) ;
       code { DROP ;
@@ -1242,7 +1294,7 @@ Free variable 'a' is not allowed in CREATE_CONTRACT lambda |}] ;
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "self_type_annotation.ligo" ; "main" ] ;
   [%expect {|
-    in file "../../test/contracts/negative/self_type_annotation.ligo", line 8, characters 41-64
+    File "../../test/contracts/negative/self_type_annotation.ligo", line 8, characters 41-64:
       7 |   block {
       8 |     const self_contract: contract(int) = Tezos.self ("%default");
       9 |   }
@@ -1253,14 +1305,17 @@ let%expect_test _ =
 
   run_ligo_good [ "compile-contract" ; contract "self_type_annotation.ligo" ; "main" ] ;
   [%expect {|
-    Warning: unused variable "p" in file "../../test/contracts/self_type_annotation.ligo", line 6, characters 21-22.
-    Warning: unused variable "self_contract" in file "../../test/contracts/self_type_annotation.ligo", line 8, characters 10-23.
+    File "../../test/contracts/self_type_annotation.ligo", line 6, characters 21-22:
+    Warning: unused variable "p".
+    File "../../test/contracts/self_type_annotation.ligo", line 8, characters 10-23:
+    Warning: unused variable "self_contract".
+
     { parameter nat ; storage int ; code { CDR ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract.mligo" ; "main" ] ;
   [%expect {|
-    in file "../../test/contracts/negative/bad_contract.mligo", line 4, characters 9-46
+    File "../../test/contracts/negative/bad_contract.mligo", line 4, characters 9-46:
       3 |
       4 | let main (action, store : parameter * storage) : storage =
       5 |   store + 1
@@ -1270,7 +1325,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract2.mligo" ; "main" ] ;
   [%expect {|
-    in file "../../test/contracts/negative/bad_contract2.mligo", line 5, characters 9-46
+    File "../../test/contracts/negative/bad_contract2.mligo", line 5, characters 9-46:
       4 |
       5 | let main (action, store : parameter * storage) : return =
       6 |   ("bad",store + 1)
@@ -1280,7 +1335,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract3.mligo" ; "main" ] ;
   [%expect {|
-    in file "../../test/contracts/negative/bad_contract3.mligo", line 5, characters 9-46
+    File "../../test/contracts/negative/bad_contract3.mligo", line 5, characters 9-46:
       4 |
       5 | let main (action, store : parameter * storage) : return =
       6 |   (([]: operation list),"bad")
@@ -1291,7 +1346,9 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "self_with_entrypoint.ligo" ; "main" ] ;
   [%expect {|
-    Warning: unused variable "p" in file "../../test/contracts/self_with_entrypoint.ligo", line 6, characters 21-22.
+    File "../../test/contracts/self_with_entrypoint.ligo", line 6, characters 21-22:
+    Warning: unused variable "p".
+
     { parameter (or (unit %default) (int %toto)) ;
       storage nat ;
       code { CDR ;
@@ -1307,7 +1364,9 @@ let%expect_test _ =
 
   run_ligo_good [ "compile-contract" ; contract "self_without_entrypoint.ligo" ; "main" ] ;
   [%expect {|
-    Warning: unused variable "p" in file "../../test/contracts/self_without_entrypoint.ligo", line 6, characters 21-22.
+    File "../../test/contracts/self_without_entrypoint.ligo", line 6, characters 21-22:
+    Warning: unused variable "p".
+
     { parameter int ;
       storage nat ;
       code { CDR ;
@@ -1323,7 +1382,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; bad_contract "self_bad_entrypoint_format.ligo" ; "main" ] ;
   [%expect {|
-    in file "../../test/contracts/negative/self_bad_entrypoint_format.ligo", line 8, characters 52-58
+    File "../../test/contracts/negative/self_bad_entrypoint_format.ligo", line 8, characters 52-58:
       7 |   block {
       8 |     const self_contract: contract(int) = Tezos.self("Toto") ;
       9 |     const op : operation = Tezos.transaction (2, 300tz, self_contract) ;
@@ -1335,7 +1394,7 @@ let%expect_test _ =
 
   run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_1.religo"; "main"];
   [%expect {|
-    in file "../../test/contracts/negative/nested_bigmap_1.religo", line 1, characters 11-29
+    File "../../test/contracts/negative/nested_bigmap_1.religo", line 1, characters 11-29:
       1 | type bar = big_map (nat, int);
       2 |
 
@@ -1344,7 +1403,7 @@ let%expect_test _ =
 
   run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_2.religo"; "main"];
   [%expect {|
-    in file "../../test/contracts/negative/nested_bigmap_2.religo", line 2, characters 29-50
+    File "../../test/contracts/negative/nested_bigmap_2.religo", line 2, characters 29-50:
       1 | /* this should result in an error as nested big_maps are not supported: */
       2 | type storage = big_map (nat, big_map (int, string));
       3 |
@@ -1354,7 +1413,7 @@ let%expect_test _ =
 
   run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_3.religo"; "main"];
   [%expect {|
-    in file "../../test/contracts/negative/nested_bigmap_3.religo", line 1, characters 11-29
+    File "../../test/contracts/negative/nested_bigmap_3.religo", line 1, characters 11-29:
       1 | type bar = big_map (nat, int);
       2 |
 
@@ -1363,7 +1422,7 @@ let%expect_test _ =
 
   run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_4.religo"; "main"];
   [%expect {|
-    in file "../../test/contracts/negative/nested_bigmap_4.religo", line 2, characters 25-61
+    File "../../test/contracts/negative/nested_bigmap_4.religo", line 2, characters 25-61:
       1 | /* this should result in an error as nested big_maps are not supported: */
       2 | type storage = map (int, big_map (nat, big_map (int, string)));
       3 |
@@ -1418,13 +1477,13 @@ const x = match (+1 , (+2 , +3)) with (#2 , #4) -> match #4 with (x ,
 
   run_ligo_bad ["print-ast-typed"; contract "existential.mligo"];
   [%expect {|
-    in file "../../test/contracts/existential.mligo", line 1, characters 8-9
+    File "../../test/contracts/existential.mligo", line 1, characters 8-9:
       1 | let a : 'a = 2
       2 | let b : _ ->'b = fun _ -> 2
     Unexpected character '\''. |}];
   run_ligo_bad ["print-ast-typed"; bad_contract "missing_funarg_annotation.mligo"];
   [%expect {|
-    in file "../../test/contracts/negative/missing_funarg_annotation.mligo", line 2, characters 6-7
+    File "../../test/contracts/negative/missing_funarg_annotation.mligo", line 2, characters 6-7:
       1 | (* these should give a missing type annotation error *)
       2 | let a b = b
       3 | let a (b,c) = b
@@ -1432,7 +1491,7 @@ const x = match (+1 , (+2 , +3)) with (#2 , #4) -> match #4 with (x ,
     Missing a type annotation for argument "b". |}];
   run_ligo_bad ["print-ast-typed"; bad_contract "missing_funarg_annotation.religo"];
   [%expect {|
-in file "../../test/contracts/negative/missing_funarg_annotation.religo", line 2, characters 8-9
+File "../../test/contracts/negative/missing_funarg_annotation.religo", line 2, characters 8-9:
   1 | /* these should give a missing type annotation error */
   2 | let a = b => b
   3 | let a = (b,c) => b
@@ -1440,7 +1499,7 @@ in file "../../test/contracts/negative/missing_funarg_annotation.religo", line 2
 Missing a type annotation for argument "b". |}];
   run_ligo_bad ["print-ast-typed"; bad_contract "funarg_tuple_wrong.mligo"];
   [%expect {|
-    in file "../../test/contracts/negative/funarg_tuple_wrong.mligo", line 1, characters 7-14
+    File "../../test/contracts/negative/funarg_tuple_wrong.mligo", line 1, characters 7-14:
       1 | let a (b, c, d: int * int) = d
       2 | let a (((b, c, d)): ((((int))) * int)) = d
 
@@ -1465,14 +1524,14 @@ let%expect_test _ =
   let output = String.concat "\n" lines in
   print_string output;
   [%expect {|
-    Warning: unused variable "x" in file "../../test/contracts/uncurry_contract.mligo", line 5, characters 8-18.
-    Warning: unused variable "y" in file "../../test/contracts/uncurry_contract.mligo", line 5, characters 19-29.
-    Warning: unused variable "z" in file "../../test/contracts/uncurry_contract.mligo", line 5, characters 30-40.
-    Warning: unused variable "w" in file "../../test/contracts/uncurry_contract.mligo", line 5, characters 41-51.
-    { parameter unit ;
-      storage unit ;
-      code { LAMBDA
-               (pair unit (pair unit (pair unit unit))) |}]
+    File "../../test/contracts/uncurry_contract.mligo", line 5, characters 8-18:
+    Warning: unused variable "x".
+    File "../../test/contracts/uncurry_contract.mligo", line 5, characters 19-29:
+    Warning: unused variable "y".
+    File "../../test/contracts/uncurry_contract.mligo", line 5, characters 30-40:
+    Warning: unused variable "z".
+    File "../../test/contracts/uncurry_contract.mligo", line 5, characters 41-51:
+    Warning: unused variable "w". |}]
 
 (* old uncurry bugs: *)
 let%expect_test _ =
@@ -1503,7 +1562,9 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "edo_combs.mligo" ; "main" ] ;
   [%expect {|
-    Warning: unused variable "s" in file "../../test/contracts/edo_combs.mligo", line 10, characters 13-14.
+    File "../../test/contracts/edo_combs.mligo", line 10, characters 13-14:
+    Warning: unused variable "s".
+
     { parameter (pair (int %x) (pair (int %y) (pair (int %z) (int %w)))) ;
       storage int ;
       code { CAR ; UNPAIR 4 ; ADD ; ADD ; ADD ; NIL operation ; PAIR } } |}]
@@ -1512,7 +1573,9 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "warning_unused.mligo" ; "main" ] ;
   [%expect {|
-    Warning: unused variable "x" in file "../../test/contracts/warning_unused.mligo", line 11, characters 6-7.
+    File "../../test/contracts/warning_unused.mligo", line 11, characters 6-7:
+    Warning: unused variable "x".
+
     { parameter int ;
       storage (pair (int %x) (int %y)) ;
       code { CDR ;
