@@ -1,4 +1,4 @@
-/* Test boolean comparison in ReasonLIGO *
+/* Test boolean comparison in ReasonLIGO */
 (contract
   (const
     (? main)
