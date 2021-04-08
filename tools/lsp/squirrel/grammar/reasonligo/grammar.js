@@ -538,7 +538,7 @@ module.exports = grammar({
 
     _till_newline: $ => /[^\n]*\n/,
 
-    oneline_comment: $ => token(seq('//', /.*/)),
+    oneline_comment: $ => token(/\/\/.*/),
 
     block_comment: $ => seq(
       '/*',

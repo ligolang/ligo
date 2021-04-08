@@ -761,7 +761,7 @@ module.exports = grammar({
 
     ///////////////////////////////////////////
 
-    comment: $ => /\/\/[^\n]*\n/,
+    comment: $ => token(/\/\/.*/),
 
     _till_newline: $ => /[^\n]*\n/,
 

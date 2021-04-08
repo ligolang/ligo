@@ -513,7 +513,7 @@ module.exports = grammar({
     True: $ => 'true',
     Unit: $ => seq('(', ')'),
 
-    comment: $ => /\/\/(\*\)[^\n]|\*[^\)\n]|[^\*\n])*\n/,
+    comment: $ => token(/\/\/.*/),
 
     _till_newline: $ => /[^\n]*\n/,
 
