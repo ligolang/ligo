@@ -521,6 +521,7 @@ type error =
 | Broken_string
 | Invalid_character_in_string
 | Undefined_escape_sequence
+| Invalid_linemarker_flag
 
 let sprintf = Printf.sprintf
 
@@ -543,6 +544,8 @@ let error_to_string = function
 | Invalid_character_in_string ->
     "Invalid character in string.\n\
      Hint: Remove or replace the character."
+| Invalid_linemarker_flag ->
+    "Invalid linemarker flag."
 
 let fail region error =
   let msg = error_to_string error in
@@ -559,8 +562,8 @@ let scan_utf8_wrap scan_utf8 callback thread state lexbuf =
   match status with
     Stdlib.Ok () -> callback thread (state#set_pos stop) lexbuf
   | Stdlib.Error error ->
-     let region = Region.make ~start:state#pos ~stop
-     in fail region error
+      let region = Region.make ~start:state#pos ~stop
+      in fail region error
 
 (* An input program may contain preprocessing directives, and the
    entry modules (named *Main.ml) run the preprocessor on them, as if
@@ -573,19 +576,20 @@ let scan_utf8_wrap scan_utf8 callback thread state lexbuf =
    directives, and the equivalent of the traditional mode leaves the
    markup undisturbed.
 
-     The line directives may carry some additional flags:
+     The line directives (linemarkers) may carry some additional
+   flags:
 
    https://gcc.gnu.org/onlinedocs/cpp/Preprocessor-Output.html
 
-   of which 1 and 2 indicate, respectively, the start of a new file
-   and the return from a file (after its inclusion has been
-   processed). *)
+   of which we will retain in our context 1 and 2 (either 1 or 2),
+   indicating, respectively, the start of a new file and the return
+   from a file (after its inclusion has been processed). *)
 
-let line_preproc scan_flags ~line ~file state lexbuf =
-  let {state; _}   = state#sync lexbuf in
-  let flags, state = scan_flags [] state lexbuf in
-  let ()           = ignore flags
-  and line         = int_of_string line in
+let line_preproc scan_flag ~line ~file state lexbuf =
+  let {state; _}  = state#sync lexbuf in
+  let flag, state = scan_flag state lexbuf in
+  let ()          = ignore flag
+  and line        = int_of_string line in
   state#set_pos (state#pos#set ~file ~line ~offset:0)
 
 (* END HEADER *)
@@ -605,6 +609,7 @@ let hexa_digit = digit | ['A'-'F' 'a'-'f']
 let byte       = hexa_digit hexa_digit
 let esc        = "\\n" | "\\\"" | "\\\\" | "\\b"
                | "\\r" | "\\t" | "\\x" byte
+let flag       = '1' | '2' (* Linemarkers *)
 
 (* Comment delimiters *)
 
@@ -683,10 +688,10 @@ rule scan client state = parse
     | Some _ | None -> (* Not a comment for this syntax *)
         rollback lexbuf; client#callback state lexbuf }
 
-  (* Line preprocessing directives (from #include) *)
+  (* Linemarkers preprocessing directives (e.g. from #include) *)
 
 | '#' blank* (natural as line) blank+ '"' (string as file) '"' {
-    let state = line_preproc scan_flags ~line ~file state lexbuf
+    let state = line_preproc scan_flag ~line ~file state lexbuf
     in scan client state lexbuf }
 
   (* Other tokens *)
@@ -792,16 +797,24 @@ and scan_string thread state = parse
 | _ as c { let {state; _} = state#sync lexbuf in
            scan_string (thread#push_char c) state lexbuf }
 
-(* Scanning the flags of the line preprocessing directives *)
+(* Scanning the flag of the linemarkers, if any *)
 
-and scan_flags acc state = parse
-  blank+          { let {state; _} = state#sync lexbuf
-                    in scan_flags acc state lexbuf                 }
-| natural as code { let {state; _} = state#sync lexbuf
-                    and acc = int_of_string code :: acc
-                    in scan_flags acc state lexbuf                 }
-| nl              { List.rev acc, state#set_pos (state#pos#add_nl) }
-| eof             { List.rev acc, (state#sync lexbuf).state        }
+and scan_flag state = parse
+  blank+       { let {state; _} = state#sync lexbuf
+                 in scan_flag state lexbuf                        }
+| flag as code { let {state; _} = state#sync lexbuf in
+                 Some (int_of_char code), skip_line state lexbuf }
+| nl           { None, state#set_pos (state#pos#add_nl)            }
+| eof          { None, (state#sync lexbuf).state                   }
+| _            { let {region; _} = state#sync lexbuf
+                 in fail region Invalid_linemarker_flag            }
+
+(* Skipping all characters until the end of line or end of file. *)
+
+and skip_line state = parse
+  nl  { state#set_pos (state#pos#add_nl)           }
+| eof { (state#sync lexbuf).state                  }
+| _   { skip_line (state#sync lexbuf).state lexbuf }
 
 (* Scanner called first *)
 
@@ -830,7 +843,7 @@ let mk_scan (client: 'token client) =
     in lift (scanner internal_client state)
 
 let line_preproc ~line ~file state lexbuf =
-  line_preproc scan_flags ~line ~file state lexbuf
+  line_preproc scan_flag ~line ~file state lexbuf
 
 (* END TRAILER *)
 }

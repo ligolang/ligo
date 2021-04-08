@@ -140,7 +140,7 @@ let%expect_test "main_parser" =
   error (`Parser_invalid_wild (EVar {value= "yolo"; region= default_region1})) ;
   [%expect
     {|
-  in file "a dummy file name", line 20, characters 5-5
+  File "a dummy file name", line 20, character 5:
 
   It looks like you are using a catch-all pattern where it cannot be used
   |}]
@@ -159,7 +159,7 @@ let%expect_test "self_ast_imperative" =
   error (`Self_ast_imperative_long_constructor ("foo", type_expression)) ;
   [%expect
     {|
-  in file "a dummy file name", line 20, characters 5-5
+  File "a dummy file name", line 20, character 5:
 
   Ill-formed data constructor "foo".
   Data constructors have a maximum length of 32 characters, which is a limitation imposed by annotations in Tezos.
@@ -167,32 +167,29 @@ let%expect_test "self_ast_imperative" =
   error (`Self_ast_imperative_bad_timestamp ("bar", expression)) ;
   [%expect
     {|
-  in file "a dummy file name", line 20, characters 5-5
-
-  Ill-formed timestamp "bar".
+  File "a dummy file name", line 20, character 5:
+   Ill-formed timestamp "bar".
   At this point, a string with a RFC3339 notation or the number of seconds since Epoch is expected.
   |}] ;
   error (`Self_ast_imperative_bad_format_literal expression) ;
   [%expect
     {|
-  in file "a dummy file name", line 20, characters 5-5
-
-  Ill-formed literal "skip".
+  File "a dummy file name", line 20, character 5:
+   Ill-formed literal "skip".
   In the case of an address, a string is expected prefixed by either tz1, tz2, tz3 or KT1 and followed by a Base58 encoded hash and terminated by a 4-byte checksum.
   In the case of a key_hash, signature, or key a Base58 encoded hash is expected.
   |}] ;
   error (`Self_ast_imperative_bad_empty_arity (C_INT, expression)) ;
   [%expect
     {|
-  in file "a dummy file name", line 20, characters 5-5
-
-  Ill-formed "INT" expression.
+  File "a dummy file name", line 20, character 5:
+   Ill-formed "INT" expression.
   No functions arguments are expected.
   |}] ;
   error (`Self_ast_imperative_bad_single_arity (C_ASSERTION, expression)) ;
   [%expect
     {|
-  in file "a dummy file name", line 20, characters 5-5
+  File "a dummy file name", line 20, character 5:
 
   Ill-formed "ASSERTION" expression
   One function argument is expected.
@@ -200,7 +197,7 @@ let%expect_test "self_ast_imperative" =
   error (`Self_ast_imperative_bad_map_param_type (C_EDIV, expression)) ;
   [%expect
     {|
-  in file "a dummy file name", line 20, characters 5-5
+  File "a dummy file name", line 20, character 5:
 
   Ill-formed "EDIV" expression.
   A list of pair parameters is expected.
@@ -208,7 +205,7 @@ let%expect_test "self_ast_imperative" =
   error (`Self_ast_imperative_bad_set_param_type (C_ITER, expression)) ;
   [%expect
     {|
-  in file "a dummy file name", line 20, characters 5-5
+  File "a dummy file name", line 20, character 5:
 
   Ill-formed "ITER" expression.
   A list of pair parameters is expected.
@@ -216,9 +213,8 @@ let%expect_test "self_ast_imperative" =
   error (`Self_ast_imperative_bad_convertion_bytes expression) ;
   [%expect
     {|
-  in file "a dummy file name", line 20, characters 5-5
-
-  Ill-formed bytes literal.
+  File "a dummy file name", line 20, character 5:
+   Ill-formed bytes literal.
   Example of a valid bytes literal: "ff7a7aff".
   |}]
 
@@ -243,13 +239,13 @@ let%expect_test "main_cit_pascaligo" =
   error (`Concrete_pascaligo_unknown_predefined_type lexeme_reg) ;
   [%expect
     {|
-      in file "a dummy file name", line 20, characters 5-5
+      File "a dummy file name", line 20, character 5:
 
       Unknown type "foo".|}] ;
 error (`Concrete_pascaligo_unsupported_pattern_type pvar) ;
   [%expect
     {|
-      in file "a dummy file name", line 20, characters 5-5
+      File "a dummy file name", line 20, character 5:
 
       Invalid case pattern.
       If this is a case over Booleans, then "true" or "false" is expected.
@@ -262,14 +258,14 @@ error (`Concrete_pascaligo_unsupported_pattern_type pvar) ;
   error (`Concrete_pascaligo_unsupported_string_singleton type_expr) ;
   [%expect
     {|
-      in file "a dummy file name", line 20, characters 5-5
+      File "a dummy file name", line 20, character 5:
 
       Invalid type.
       It's not possible to assign a string to a type.|}] ;
   error (`Concrete_pascaligo_unsupported_deep_list_pattern pvar) ;
   [%expect
     {|
-      in file "a dummy file name", line 20, characters 5-5
+      File "a dummy file name", line 20, character 5:
 
       Invalid list pattern in a case clause.
       At this point, one of the following is expected:
@@ -278,14 +274,14 @@ error (`Concrete_pascaligo_unsupported_pattern_type pvar) ;
   error (`Concrete_pascaligo_unsupported_deep_tuple_pattern { value = { inside = (pvar, []); lpar = Region.ghost; rpar = Region.ghost }; region = default_region1});
   [%expect
     {|
-      in file "a dummy file name", line 20, characters 5-5
+      File "a dummy file name", line 20, character 5:
 
       Invalid constructor in a case clause.
       Currently, nested constructor arguments (tuples) are not supported in case clauses.|}] ;
   error (`Concrete_pascaligo_michelson_type_wrong (type_expr, "foo")) ;
   [%expect
     {|
-  in file "a dummy file name", line 20, characters 5-5
+  File "a dummy file name", line 20, character 5:
 
   Invalid "foo" type.
   At this point, an annotation, in the form of a string, is expected for the preceding type.
@@ -293,14 +289,14 @@ error (`Concrete_pascaligo_unsupported_pattern_type pvar) ;
   error (`Concrete_pascaligo_michelson_type_wrong_arity (location_t, "zzz")) ;
   [%expect
     {|
-      in file "a dummy file name", line 20, characters 5-5
+      File "a dummy file name", line 20, character 5:
 
       Invalid "zzz" type.
       An even number of 2 or more arguments is expected, where each odd item is a type annotated by the following string.|}] ;
   error (`Concrete_pascaligo_recursive_fun location_t) ;
   [%expect
     {|
-  in file "a dummy file name", line 20, characters 5-5
+  File "a dummy file name", line 20, character 5:
 
   Invalid function declaration.
   Recursive functions are required to have a type annotation (for now).
@@ -340,14 +336,14 @@ let%expect_test "main_cit_cameligo" =
   error (`Concrete_cameligo_recursive_fun default_region1) ;
   [%expect
     {|
-      in file "a dummy file name", line 20, characters 5-5
+      File "a dummy file name", line 20, character 5:
 
       Invalid function declaration.
       Recursive functions are required to have a type annotation (for now).|}] ;
   error (`Concrete_cameligo_unsupported_pattern_type [pvar]) ;
   [%expect
     {|
-      in file "a dummy file name", line 20, characters 5-5
+      File "a dummy file name", line 20, character 5:
 
       Invalid pattern matching.
       If this is pattern matching over Booleans, then "true" or "false" is expected.
@@ -360,20 +356,20 @@ let%expect_test "main_cit_cameligo" =
   error (`Concrete_cameligo_unsupported_string_singleton type_expr) ;
   [%expect
     {|
-      in file "a dummy file name", line 20, characters 5-5
+      File "a dummy file name", line 20, character 5:
 
       Invalid type.
       It's not possible to assign a string to a type.|}] ;
   error (`Concrete_cameligo_recursion_on_non_function location_t) ;
   [%expect {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid let declaration.
     Only functions can be recursive.|}] ;
   error (`Concrete_cameligo_michelson_type_wrong (type_expr, "foo")) ;
   [%expect
     {|
-in file "a dummy file name", line 20, characters 5-5
+File "a dummy file name", line 20, character 5:
 
 Invalid "foo" type.
 At this point, an annotation, in the form of a string, is expected for the preceding type.
@@ -381,14 +377,14 @@ At this point, an annotation, in the form of a string, is expected for the prece
   error (`Concrete_cameligo_michelson_type_wrong_arity (location_t, "zzz")) ;
   [%expect
     {|
-      in file "a dummy file name", line 20, characters 5-5
+      File "a dummy file name", line 20, character 5:
 
       Invalid "zzz" type.
       An even number of 2 or more arguments is expected, where each odd item is a type annotated by the following string.|}];
   error(`Concrete_cameligo_missing_funarg_annotation variable);
   [%expect
     {|
-      in file "a dummy file name", line 20, characters 5-5
+      File "a dummy file name", line 20, character 5:
 
       Missing a type annotation for argument "dog".|}]
 
@@ -403,20 +399,20 @@ let%expect_test "main_cit_reasonligo" =
   error (`Concrete_reasonligo_unknown_predefined_type variable) ;
   [%expect
     {|
-      in file "a dummy file name", line 20, characters 5-5
+      File "a dummy file name", line 20, character 5:
 
       Unknown type "dog".|}] ;
   error (`Concrete_reasonligo_recursive_fun default_region1) ;
   [%expect
     {|
-      in file "a dummy file name", line 20, characters 5-5
+      File "a dummy file name", line 20, character 5:
 
       Invalid function declaration.
       Recursive functions are required to have a type annotation (for now).|}] ;
   error (`Concrete_reasonligo_unsupported_pattern_type pvar) ;
   [%expect
     {|
-      in file "a dummy file name", line 20, characters 5-5
+      File "a dummy file name", line 20, character 5:
 
       Invalid pattern matching.
       If this is pattern matching over Booleans, then "true" or "false" is expected.
@@ -429,34 +425,34 @@ let%expect_test "main_cit_reasonligo" =
   error (`Concrete_reasonligo_unsupported_string_singleton type_expr) ;
   [%expect
     {|
-      in file "a dummy file name", line 20, characters 5-5
+      File "a dummy file name", line 20, character 5:
 
       Invalid type.
       It's not possible to assign a string to a type.|}] ;
   error (`Concrete_reasonligo_recursion_on_non_function location_t) ;
   [%expect {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid let declaration.
     Only functions can be recursive.|}] ;
   error (`Concrete_reasonligo_michelson_type_wrong (type_expr, "foo")) ;
   [%expect
     {|
-        in file "a dummy file name", line 20, characters 5-5
+        File "a dummy file name", line 20, character 5:
 
         Invalid "foo" type.
         At this point, an annotation, in the form of a string, is expected for the preceding type.|}] ;
   error (`Concrete_reasonligo_michelson_type_wrong_arity (location_t, "bar")) ;
   [%expect
     {|
-      in file "a dummy file name", line 20, characters 5-5
+      File "a dummy file name", line 20, character 5:
 
       Invalid "bar" type.
       An even number of 2 or more arguments is expected, where each odd item is a type annotated by the following string.|}];
   error(`Concrete_reasonligo_missing_funarg_annotation variable);
   [%expect
     {|
-      in file "a dummy file name", line 20, characters 5-5
+      File "a dummy file name", line 20, character 5:
 
       Missing a type annotation for argument "dog".|}]
 
@@ -507,39 +503,39 @@ let%expect_test "typer" =
   error (`Typer_michelson_comb_no_record location_t) ;
   [%expect
     {|
-      in file "a dummy file name", line 20, characters 5-5
+      File "a dummy file name", line 20, character 5:
 
       Invalid usage of type "michelson_pair".
       The "michelson_pair" type expects a record type as argument.|}] ;
   error (`Typer_michelson_comb_no_variant location_t) ;
   [%expect
     {|
-      in file "a dummy file name", line 20, characters 5-5
+      File "a dummy file name", line 20, character 5:
 
       Invalid usage of type "michelson_or".
       The "michelson_or" type expects a variant type as argument.|}] ;
   error (`Typer_unbound_type_variable (environment, type_variable, location_t)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Type "foo" not found.|}] ;
   error
     (`Typer_unbound_variable (environment, expression_variable, location_t)) ;
   [%expect
     {|
-      in file "a dummy file name", line 20, characters 5-5
+      File "a dummy file name", line 20, character 5:
 
       Variable "bar" not found.|}] ;
   error (`Typer_match_missing_case ([Label "Foo"; Label "Bar"; Label "Cat"], [Label "Bar"], location_t)) ;
   [%expect {|
-  in file "a dummy file name", line 20, characters 5-5
+  File "a dummy file name", line 20, character 5:
 
   Pattern matching is not exhaustive.
   Cases that are missing: Cat, Foo.|}] ;
   error (`Typer_match_extra_case ([Label "Foo"], [Label "Foo"; Label "Foo"; Label "Bar"], location_t)) ;
   [%expect {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Pattern matching over too many cases.
     These case(s) are duplicate:
@@ -552,14 +548,14 @@ let%expect_test "typer" =
       (environment, Label "Some-Constructor", location_t)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Constructor "Some-Constructor" not found.|}] ;
   error
     (`Typer_michelson_or_no_annotation (Label "Some-Constructor", location_t)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Incorrect usage of type "michelson_or".
     The contructor "Some-Constructor" must be annotated with a variant type.|}] ;
@@ -568,7 +564,7 @@ let%expect_test "typer" =
       ([], `Typer_michelson_comb_no_variant (File default_location))) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid usage of type "michelson_or".
     The "michelson_or" type expects a variant type as argument.|}] ;
@@ -576,7 +572,7 @@ let%expect_test "typer" =
     (`Typer_module_tracer ([], `Typer_michelson_comb_no_variant location_t)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid usage of type "michelson_or".
     The "michelson_or" type expects a variant type as argument.|}] ;
@@ -588,7 +584,7 @@ let%expect_test "typer" =
         `Typer_michelson_comb_no_record location_t )) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid usage of type "michelson_pair".
     The "michelson_pair" type expects a record type as argument.|}] ;
@@ -596,7 +592,7 @@ let%expect_test "typer" =
     (`Typer_match_error (ast_core_matching_expr, type_expression, location_t)) ;
   [%expect
     {|
-  in file "a dummy file name", line 20, characters 5-5
+  File "a dummy file name", line 20, character 5:
 
   Pattern matching over an expression of an incorrect type.
   Type "variant | Foo bar
@@ -604,7 +600,7 @@ let%expect_test "typer" =
   error (`Typer_needs_annotation (ast_core_expression, "foo")) ;
   [%expect
     {|
-  in file "a dummy file name", line 20, characters 5-5
+  File "a dummy file name", line 20, character 5:
 
   Missing type annotation.
   'foo' needs to be annotated with a type.|}] ;
@@ -613,14 +609,14 @@ let%expect_test "typer" =
       (ast_core_expression, expression_variable)) ;
   [%expect
     {|
-  in file "a dummy file name", line 20, characters 5-5
+  File "a dummy file name", line 20, character 5:
 
   Free variable 'bar' is not allowed in CREATE_CONTRACT lambda|}] ;
   error
     (`Typer_create_contract_lambda (ast_core_constant, ast_core_expression)) ;
   [%expect
     {|
-  in file "a dummy file name", line 20, characters 5-5
+  File "a dummy file name", line 20, character 5:
 
   Invalid usage of Tezos.create_contract.
   The first argument must be an inline function.|}] ;
@@ -628,7 +624,7 @@ let%expect_test "typer" =
     (`Typer_should_be_a_function_type (type_expression, ast_core_expression)) ;
   [%expect
     {|
-  in file "a dummy file name", line 20, characters 5-5
+  File "a dummy file name", line 20, character 5:
 
   Invalid type.
   Expected a function type, but got "foo".|}] ;
@@ -637,7 +633,7 @@ let%expect_test "typer" =
       (Label "bar", ast_core_expression, type_expression, location_t)) ;
   [%expect
     {|
-  in file "a dummy file name", line 20, characters 5-5
+  File "a dummy file name", line 20, character 5:
 
   Invalid record field "bar" in record "bar".|}] ;
   error
@@ -647,7 +643,7 @@ let%expect_test "typer" =
           (Label "bar", ast_core_expression, type_expression, location_t) )) ;
   [%expect
     {|
-  in file "a dummy file name", line 20, characters 5-5
+  File "a dummy file name", line 20, character 5:
 
   Invalid record field "bar" in record "bar".|}] ;
   error
@@ -657,12 +653,12 @@ let%expect_test "typer" =
           (Label "bar", ast_core_expression, type_expression, location_t) )) ;
   [%expect
     {|
-  in file "a dummy file name", line 20, characters 5-5
+  File "a dummy file name", line 20, character 5:
 
   Invalid record field "bar" in record "bar".|}] ;
   error (`Typer_assert_equal (location_t, type_expression, type_expression2)) ;
   [%expect {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid type(s).
     Expected: "foo", but got: "bar".|}] ;
@@ -673,35 +669,35 @@ let%expect_test "typer" =
   error (`Typer_bad_collect_loop (type_expression, location_t)) ;
   [%expect
     {|
-      in file "a dummy file name", line 20, characters 5-5
+      File "a dummy file name", line 20, character 5:
 
       Bounded loop over a value with an incorrect type.
       Expected a value with type: "list", "set" or "map", but got a value of type "foo".|}] ;
   error (`Typer_declaration_order_record location_t) ;
   [%expect
     {|
-      in file "a dummy file name", line 20, characters 5-5
+      File "a dummy file name", line 20, character 5:
 
       Incorrect argument provided to Layout.convert_to_(left|right)_comb.
       The given argument must be annotated with the type of the value.|}] ;
   error (`Typer_too_small_record location_t) ;
   [%expect
     {|
-      in file "a dummy file name", line 20, characters 5-5
+      File "a dummy file name", line 20, character 5:
 
       Incorrect argument provided to Layout.convert_to_(left|right)_comb.
       The record must have at least two elements.|}] ;
   error (`Typer_expected_record (location_t, type_expression)) ;
   [%expect
     {|
-      in file "a dummy file name", line 20, characters 5-5
+      File "a dummy file name", line 20, character 5:
 
       Invalid argument.
       Expected a record, but got an argument of type "foo".|}] ;
   error (`Typer_expected_variant (location_t, type_expression)) ;
   [%expect
     {|
-      in file "a dummy file name", line 20, characters 5-5
+      File "a dummy file name", line 20, character 5:
 
       Invalid argument.
       Expected a variant, but got an argument of type "foo".|}] ;
@@ -710,151 +706,151 @@ let%expect_test "typer" =
       (location_t, "foo", 10, [type_expression; type_expression2])) ;
   [%expect
     {|
-      in file "a dummy file name", line 20, characters 5-5
+      File "a dummy file name", line 20, character 5:
 
       Function "foo" called with wrong number of arguments.
       Expected 10 arguments, got 2 arguments.|}] ;
   error (`Typer_expected_function (location_t, type_expression)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid argument.
     Expected a function, but got an argument of type "foo".|}] ;
   error (`Typer_expected_pair (location_t, type_expression)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Incorrect argument.
     Expected a pair, but got an argument of type "foo".|}] ;
   error (`Typer_expected_list (location_t, type_expression)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Incorrect argument.
     Expected a list, but got an argument of type "foo".|}] ;
   error (`Typer_expected_set (location_t, type_expression)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Incorrect argument.
     Expected a set, but got an argument of type "foo".|}] ;
   error (`Typer_expected_map (location_t, type_expression)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Incorrect argument.
     Expected a map, but got an argument of type "foo".|}] ;
   error (`Typer_expected_big_map (location_t, type_expression)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Incorrect argument.
     Expected a big_map, but got an argument of type "foo".|}] ;
   error (`Typer_expected_option (location_t, type_expression)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Incorrect argument.
     Expected an option, but got an argument of type "foo".|}] ;
   error (`Typer_expected_nat (location_t, type_expression)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Incorrect argument.
     Expected a nat, but got an argument of type "foo".|}] ;
   error (`Typer_expected_bytes (location_t, type_expression)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Incorrect argument.
     Expected bytes, but got an argument of type "foo".|}] ;
   error (`Typer_expected_key (location_t, type_expression)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Incorrect argument.
     Expected a key, but got an argument of type "foo".|}] ;
   error (`Typer_expected_signature (location_t, type_expression)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Incorrect argument.
     Expected a signature, but got an argument of type "foo".|}] ;
   error (`Typer_expected_contract (location_t, type_expression)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Incorrect argument.
     Expected a contract, but got an argument of type "foo".|}] ;
   error (`Typer_expected_string (location_t, type_expression)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Incorrect argument.
     Expected a string, but got an argument of type "foo".|}] ;
   error (`Typer_expected_key_hash (location_t, type_expression)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Incorrect argument.
     Expected a key hash, but got an argument of type "foo".|}] ;
   error (`Typer_expected_mutez (location_t, type_expression)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Incorrect argument.
     Expected a mutez, but got an argument of type "foo".|}] ;
   error (`Typer_expected_op_list (location_t, type_expression)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Incorrect argument.
     Expected a list of operations, but got an argument of type "foo".|}] ;
   error (`Typer_expected_int (location_t, type_expression)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Incorrect argument.
     Expected an int, but got an argument of type "foo".|}] ;
   error (`Typer_expected_bool (location_t, type_expression)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Incorrect argument.
     Expected a boolean, but got an argument of type "foo".|}] ;
   error (`Typer_not_matching (location_t, type_expression, type_expression2)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     These types are not matching: - foo
     - bar|}] ;
   error (`Typer_not_annotated location_t);
   [%expect {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Can't infer the type of this value, please add a type annotation.|}] ;
   error (`Typer_bad_substraction location_t);
   [%expect {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid subtraction.
     The following forms of subtractions are possible:
@@ -865,62 +861,62 @@ let%expect_test "typer" =
   error (`Typer_wrong_size (location_t, type_expression)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Incorrect value applied.
     A value with one of the following types is expected: map, list, string, byte or set.|}] ;
   error (`Typer_wrong_neg (location_t, type_expression)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid value used for negation.
     Expected a value of type nat or int, but got foo.|}] ;
   error (`Typer_wrong_not (location_t, type_expression)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid value used for not operation.
     Expected a value of type Boolean, nat or int, but got foo.|}] ;
   error (`Typer_typeclass_error (location_t, [[type_expression; type_expression2 ]], [type_expression2])) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid arguments.
     Expected an argument of type (foo, bar), but got an argument of type bar.|}] ;
   error (`Typer_converter type_expression) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid usage of a Michelson converter.
     Converters can only be used on records or variants, but got foo.|}] ;
   error (`Typer_converter type_expression) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid usage of a Michelson converter.
     Converters can only be used on records or variants, but got foo.|}] ;
   error (`Typer_uncomparable_types (location_t, type_expression, type_expression2)) ;
   [%expect {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid arguments.
     These types cannot be compared: "foo" and "bar".|}] ;
   error (`Typer_comparator_composed (location_t, type_expression)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid arguments.
     Only composed types of not more than two element are allowed to be compared.|}] ;
   error (`Typer_expected_ascription ast_core_expression) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid argument.
     At this point a block of code is expected, but got "bar".|}] ;
@@ -934,7 +930,7 @@ let%expect_test "typer" =
       `Typer_comparator_composed (location_t, type_expression ))) ;
 [%expect
   {|
-  in file "a dummy file name", line 20, characters 5-5
+  File "a dummy file name", line 20, character 5:
 
   Invalid arguments.
   Only composed types of not more than two element are allowed to be compared.|}] ;
@@ -943,7 +939,7 @@ error
     (ast_core_matching_expr, `Typer_comparator_composed (location_t, type_expression))) ;
 [%expect
   {|
-  in file "a dummy file name", line 20, characters 5-5
+  File "a dummy file name", line 20, character 5:
 
   Invalid arguments.
   Only composed types of not more than two element are allowed to be compared.|}] ;
@@ -953,7 +949,7 @@ error
         type_expression2)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     This expression has type bar, but an expression was expected of type foo.|}]
 
@@ -984,7 +980,7 @@ let%expect_test "self_ast_typed" =
   error (`Self_ast_typed_rec_call (expression_variable, location_t)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Recursive call not in tail position.
     The value of a recursive call must be immediately returned by the defined function.|}] ;
@@ -993,7 +989,7 @@ let%expect_test "self_ast_typed" =
       (type_expression, type_expression2, location_t)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid type annotation.
     "bar" was given, but "foo" was expected.
@@ -1001,7 +997,7 @@ let%expect_test "self_ast_typed" =
   error (`Self_ast_typed_format_entrypoint_ann ("foo", location_t)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid entrypoint "foo".
     One of the following patterns is expected:
@@ -1010,21 +1006,21 @@ let%expect_test "self_ast_typed" =
   error (`Self_ast_typed_entrypoint_ann_not_literal location_t) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid entrypoint value.
     The entrypoint value must be a string literal. |}] ;
   error (`Self_ast_typed_unmatched_entrypoint location_t) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid entrypoint value.
     The entrypoint value does not match a constructor of the contract parameter. |}] ;
   error (`Self_ast_typed_nested_big_map location_t) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid big map nesting.
     A big map cannot be nested inside another big map. |}] ;
@@ -1034,7 +1030,7 @@ let%expect_test "self_ast_typed" =
   error (`Self_ast_typed_contract_io ("foo", expression)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid type for entrypoint "foo".
     An entrypoint must of type "parameter * storage -> operations list * storage". |}] ;
@@ -1042,7 +1038,7 @@ let%expect_test "self_ast_typed" =
     (`Self_ast_typed_contract_list_ops ("foo", type_expression, expression)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid type for entrypoint "foo".
     An entrypoint must of type "parameter * storage -> operations list * storage". |}] ;
@@ -1051,21 +1047,21 @@ let%expect_test "self_ast_typed" =
       ("foo", type_expression, type_expression2, expression)) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid type for entrypoint "foo".
     The storage type "foo" of the function parameter must be the same as the storage type "bar" of the return value. |}] ;
   error (`Self_ast_typed_pair_in location_t) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid entrypoint.
     Expected a tuple as argument. |}] ;
   error (`Self_ast_typed_pair_out location_t) ;
   [%expect
     {|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid entrypoint.
     Expected a tuple of operations and storage as return value. |}]
@@ -1107,7 +1103,7 @@ let%expect_test "spilling" =
   [%expect{| Type "foo" not found (should not happen and be caught earlier). |}] ;
   error (`Spilling_unsupported_pattern_matching location_t) ;
   [%expect{|
-    in file "a dummy file name", line 20, characters 5-5
+    File "a dummy file name", line 20, character 5:
 
     Invalid pattern matching.@Tuple patterns are not (yet) supported. |}] ;
   error (`Spilling_unsupported_recursive_function expression_variable) ;

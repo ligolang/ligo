@@ -44,7 +44,8 @@
            (run ./test.exe)))
   (deps (glob_files contracts/*)
         (:pos (glob_files contracts/positive/*))
-        (glob_files contracts/negative/*))
+        (glob_files contracts/negative/*)
+        (glob_files preprocessor/*))
 )
 
 (alias

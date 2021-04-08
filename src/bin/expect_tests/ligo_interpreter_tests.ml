@@ -235,7 +235,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "test" ; bad_test "interpret_test_error1.mligo" ; "error1"] ;
   [%expect {|
-    in file "../../test/contracts/negative/interpret_test_error1.mligo", line 3, characters 10-46
+    File "../../test/contracts/negative/interpret_test_error1.mligo", line 3, characters 10-46:
     Contract not found in the current context |}]
 
 let%expect_test _ =
