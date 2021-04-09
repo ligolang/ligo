@@ -22,6 +22,7 @@ import Data.Text.Encoding (encodeUtf8)
 import Duplo.Pretty (PP (PP), Pretty (..), text, (<+>), (<.>))
 import System.Exit (ExitCode (..))
 import System.Process
+import Text.Regex.TDFA ((=~), getAllTextSubmatches)
 
 import Cli.Json
 import Cli.Types
@@ -51,7 +52,7 @@ data LigoBinaryCallError
     DecodedExpectedClientFailure
       LigoError -- ^ decoded JSON stderr
 
-  -- Below are the errors which may fail due to some changes in ligo compiller.
+  -- Below are the errors which may fail due to some changes in ligo compiler.
 
   --   -- | Ligo compiller produced a type which we consider is malformed
   --   MalformedType
@@ -62,6 +63,10 @@ data LigoBinaryCallError
   | -- | Parse error occured during ligo stderr JSON decoding.
     LigoErrorNodeParseError
       Text
+  | -- | Ligo has unexpectedly crashed.
+    UnexpectedCrash
+      Text -- ^ extracted failure message
+  deriving stock (Eq)
   deriving (Show) via PP LigoBinaryCallError
 
 instance Exception LigoBinaryCallError where
@@ -81,6 +86,8 @@ instance Pretty LigoBinaryCallError where
       "ligo binary produced error JSON which we consider malformed:\n" <.> pp err <.> "[end]"
     DefinitionParseError err ->
       "ligo binary produced output which we consider malformed:\n" <.> pp err
+    UnexpectedCrash err ->
+      "ligo binary crashed with error: " <+> pp err
 
 ----------------------------------------------------------------------------
 -- Execution
@@ -158,6 +165,9 @@ getLigoDefinitions contract = do
       Pascal -> "pascaligo"
       Caml   -> "cameligo"
   mbOut <- try $
+    -- TODO: Use --typer=new, but currently it displays a lot of logging
+    -- information together with the JSON which makes it difficult to reason
+    -- about. It displays more errors than --typer=old (default).
     callLigo ["get-scope", "--format=json", "--with-types", "--syntax=" <> syntax, "/dev/stdin"] contract
   case mbOut of
     Right (output, errs) -> do
@@ -170,16 +180,40 @@ getLigoDefinitions contract = do
 
     -- A middleware for processing `ExpectedClientFailure` error needed to pass it multiple levels up
     -- allowing us from restoring from expected ligo errors.
-    Left (ExpectedClientFailure _ ligoStdErr) -> do
+    Left (ExpectedClientFailure ligoStdOut ligoStdErr) -> do
       -- otherwise call ligo with `compile-contract` to extract more readable error message
       Log.debug "LIGO.PARSE" [i|decoding ligo error|]
       case eitherDecodeStrict' @LigoError . encodeUtf8 $ ligoStdErr of
         Left err -> do
-          Log.debug "LIGO.PARSE" [i|ligo error decoding failure #{err}|]
-          throwM $ LigoErrorNodeParseError (pack err)
+          -- LIGO dumps its crash information on StdOut rather than StdErr.
+          let failureRecovery = attemptToRecoverFromPossibleLigoCrash err $ unpack ligoStdOut
+          case failureRecovery of
+            Left failure -> do
+              Log.debug "LIGO.PARSE" [i|ligo error decoding failure: #{failure}|]
+              throwM $ LigoErrorNodeParseError $ pack failure
+            Right recovered -> do
+              -- LIGO doesn't dump any information we can extract to figure out
+              -- where this error occurred, so we just log it for now. E.g.: a
+              -- type-checker error just crashes with "Update an expression which is not a record"
+              -- in the old typer. In the new typer, the error is the less
+              -- intuitive "type error : break_ctor propagator".
+              Log.debug "LIGO.PARSE" [i|ligo crashed with: #{recovered}|]
+              throwM $ UnexpectedCrash $ pack recovered
         Right decodedError -> do
-          Log.debug "LIGO.PARSE" [i|ligo error decoding successfull with:\n#{decodedError}|]
+          Log.debug "LIGO.PARSE" [i|ligo error decoding successful with:\n#{decodedError}|]
           throwM $ DecodedExpectedClientFailure decodedError
 
     -- All other errors remain untouched
     Left err -> throwM err
+
+-- | When LIGO fails to e.g. typecheck, it crashes. This function attempts to
+-- extract the error message that was included with the crash.
+-- Returns 'Left' if we failed to decode with the first parameter, otherwise
+-- returns 'Right' with the recovered crash message.
+attemptToRecoverFromPossibleLigoCrash :: String -> String -> Either String String
+attemptToRecoverFromPossibleLigoCrash errDecoded stdErr = case getAllTextSubmatches (stdErr =~ regex) of
+  [_, err] -> Right err
+  _        -> Left errDecoded
+  where
+    regex :: String
+    regex = "ligo: internal error, uncaught exception:\n      \\(Failure \"(.*)\"\\)"
