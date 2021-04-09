@@ -1,6 +1,9 @@
 let sepBy1 = (sep, p) => seq(p, repeat(seq(sep, p)))
 let sepBy = (sep, p) => optional(sepBy1(sep, p))
 
+let sepEndBy1 = (sep, rule) => seq(rule, repeat(seq(sep, rule)), optional(sep))
+let sepEndBy = (sep, rule) => optional(sepEndBy1(sep, rule))
+
 let some = x => seq(x, repeat(x))
 
 let par = x => seq('(', x, ')')
@@ -240,6 +243,8 @@ module.exports = grammar({
       field("x", $._sub_expr)
     )),
 
+    _path: $ => choice($.Name, $.data_projection),
+
     _accessor: $ => choice($.FieldName, $.Int),
 
     // field names (or indices) separated by a dot
@@ -247,32 +252,40 @@ module.exports = grammar({
 
     // a.0 or a.attribute
     data_projection: $ => prec.right(21, seq(
-      field("box", $._sub_expr),
+      // TODO (LIGO-144 | LIGO-147): Once we have modules, change ConstrName to
+      // actually use module projection.
+      field("box", choice($.Name, $.ConstrName)),
       ".",
       $._accessor_chain,
     )),
 
-    // { p with a = b; c = d }
+    // { a = b; c = d }
     rec_literal: $ => seq(
       "{",
-      sepBy1(";", field("field", $.rec_assignment)),
-      optional(";"),
+      sepEndBy1(";", field("field", $.rec_assignment)),
       "}"
     ),
 
-    // { p with a = b; c = d }
+    // { p with a.x = b; c = d }
     rec_expr: $ => seq(
       "{",
-      field("subject", $.Name),
+      field("subject", $._path),
       "with",
-      field("field", $.rec_assignment),
-      repeat(seq(";", field("field", $.rec_assignment))),
-      optional(";"),
+      sepEndBy1(";", field("field", $.rec_path_assignment)),
       "}"
     ),
+
+    // a.x = b;
+    // a = b;
+    rec_path_assignment: $ => seq(
+      $._path,
+      "=",
+      field("value", $._expr),
+    ),
+
     // a = b;
     rec_assignment: $ => seq(
-      $._accessor_chain,
+      field("accessor", $.FieldName),
       "=",
       field("value", $._expr),
     ),
