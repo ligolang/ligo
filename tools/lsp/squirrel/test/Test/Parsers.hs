@@ -45,6 +45,7 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "heap.ligo"
       , "modules.ligo"
       , "assert.religo"
+      , "let_multiple.mligo"
       ]
 
 okayContractsDirs :: [FilePath]
