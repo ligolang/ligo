@@ -98,7 +98,8 @@ recognise (SomeRawTree dialect rawTree)
     -- Record fields
   , Descent do
       boilerplate $ \case
-        "rec_assignment" -> FieldAssignment <$> fields "accessor" <*> field "value"
+        "rec_assignment" -> FieldAssignment <$> (pure <$> field "accessor") <*> field "value"
+        "rec_path_assignment" -> FieldAssignment <$> fields "accessor" <*> field "value"
         _ -> fallthrough
 
   , Descent do
