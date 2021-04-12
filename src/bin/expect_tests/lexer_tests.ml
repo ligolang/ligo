@@ -112,7 +112,7 @@ Unexpected character '\239'.
   [%expect {|
 File "../../test/lexer/unterminated_comment.mligo", line 1, characters 0-2:
   1 | (* not closed
-File "../../test/lexer/unterminated_comment.mligo", line 1, characters 0-2::
+File "../../test/lexer/unterminated_comment.mligo", line 1, characters 0-2:
 Unterminated comment.
 Hint: Close with "*)".
  |} ];
