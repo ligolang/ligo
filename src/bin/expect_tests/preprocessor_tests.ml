@@ -5,6 +5,6 @@ let%expect_test _ =
   [%expect {|
 File "../../test/preprocessor/directive_inside_line.ligo", line 1, characters 2-10:
   1 |   #include "foo"
-File "../../test/preprocessor/directive_inside_line.ligo", line 1, characters 2-10::
+File "../../test/preprocessor/directive_inside_line.ligo", line 1, characters 2-10:
 Directive inside a line.
  |}];

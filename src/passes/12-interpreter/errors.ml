@@ -29,10 +29,10 @@ let error_ppformat : display_format:string display_format ->
     match a with
     | `Ligo_interpret_contract_not_found loc ->
       Format.fprintf f
-        "@[<hv>%a@.Contract not found in the current context@]"
+        "@[<hv>%a:@.Contract not found in the current context@]"
         Location.pp loc
     | `Ligo_interpret_constant_not_supported (loc, cst) ->
-      Format.fprintf f "@[<hv>%a@.LIGO interpreter does not support constant %a yet@]"
+      Format.fprintf f "@[<hv>%a:@.LIGO interpreter does not support constant %a yet@]"
       Location.pp loc
       Ast_typed.PP.constant' cst
     | `Ligo_interpret_test_entry_not_found s ->
@@ -53,11 +53,11 @@ let error_ppformat : display_format:string display_format ->
 let contract_failure : string -> _ = fun s ->
   raise (Ligo_interpreter.Types.Temporary_hack s)
 
-let contract_not_found : string -> _ = fun addr -> 
+let contract_not_found : string -> _ = fun addr ->
   contract_failure @@
     Format.asprintf
     "Could not find address %s in the context" addr
 
 let trace_alpha_contract_failure : string -> 'a Proto_alpha_utils.Trace.AE.Error_monad.tzresult -> 'a = fun s f ->
   let v  = Trace.to_option @@ Proto_alpha_utils.Trace.trace_alpha_tzresult dummy f in
-  match v with Some x -> x | None -> contract_failure s 
+  match v with Some x -> x | None -> contract_failure s

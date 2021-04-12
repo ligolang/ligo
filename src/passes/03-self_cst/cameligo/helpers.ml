@@ -299,10 +299,10 @@ let rec map_type_expression : ('err) mapper -> type_expr -> ('b, 'err) result = 
     let%bind field = self value.field in
     let value = {value with field} in
     return @@ TModA {value;region}
-  | (TVar    _
+  | TVar    _
   | TWild   _
   | TInt _
-  | TString _ as e )-> ok @@ e
+  | TString _ -> ok @@ t
 
 let rec map_expression : ('err) mapper -> expr -> (expr, 'err) result = fun f e  ->
   let self = map_expression f in

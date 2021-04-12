@@ -68,7 +68,7 @@ let pp ppf (loc: Location.t) =
   match loc with
   | File l -> (
     if l#file <> "" then
-      Format.fprintf ppf "%s\n" (l#to_string `Byte);
+      Format.fprintf ppf "%s:\n" (l#to_string `Byte);
     try
       let in_ = open_in l#file in
       let result = print_code ppf l (fun () -> input_line in_) in

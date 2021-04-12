@@ -105,7 +105,7 @@ One of the following patterns is expected:
         Snippet.pp loc
     | `Self_ast_typed_warning_unused (loc, s) ->
          Format.fprintf f
-           "@[<hv>%a@.Warning: unused variable \"%s\".\n@]"
+           "@[<hv>%a:@.Warning: unused variable \"%s\".\n@]"
            Location.pp loc s
   )
 

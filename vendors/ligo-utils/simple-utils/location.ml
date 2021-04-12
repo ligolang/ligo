@@ -53,7 +53,7 @@ type 'a wrap = {
   location : t ;
 }
 
-let wrap_to_yojson f {wrap_content;location} = 
+let wrap_to_yojson f {wrap_content;location} =
   `Assoc [("wrap_content", f wrap_content); ("location",to_yojson location)]
 let wrap_of_yojson f = function
   | `Assoc [("wrap_content", wrap_content); ("location",location)] ->
@@ -65,7 +65,7 @@ let wrap_of_yojson f = function
     | _ ->
      Utils.error_yojson_format "{wrap_content: 'a; location: location}"
      )
-  | _ -> 
+  | _ ->
      Utils.error_yojson_format "{wrap_content: 'a; location: location}"
 
 

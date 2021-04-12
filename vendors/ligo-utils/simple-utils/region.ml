@@ -95,10 +95,11 @@ let make ~(start: Pos.t) ~(stop: Pos.t) =
         in if stop#line = start#line
            then
              if start_offset = stop_offset
-             then sprintf "%s %i:" info start_offset
-             else sprintf "%ss %i-%i:" info start_offset stop_offset
-           else sprintf "%s %i to line %i, %s %i:"
-                        info start_offset stop#line horizontal stop_offset
+             then sprintf "%s %i" info start_offset
+             else sprintf "%ss %i-%i" info start_offset stop_offset
+           else sprintf "%s %i to line %i, %s %i"
+                        info start_offset stop#line horizontal
+                        stop_offset
 
       method compact ?(file=true) ?(offsets=true) mode =
         if start#is_ghost || stop#is_ghost then "ghost"
