@@ -51,6 +51,17 @@ let main = (p : (nat, nat), s : (nat, nat)) : (list(operation), (nat, nat)) =>
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+// @inline
+let fst = (p: [nat, nat]): nat => p[0];
+
+let main = (p: [nat, nat], s: [nat, nat]) : [list<operation>, [nat, nat]] =>
+    [list([]) as list<operation>, [fst([p[0], p[1]]), fst([s[1], s[0]])]];
+```
+
+</Syntax>
 
 Now if we measure the difference between inlining and without inlining, using
 `ligo measure-contract name_of_contract.ligo <entrypoint>`, we see the 

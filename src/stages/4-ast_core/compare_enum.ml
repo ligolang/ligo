@@ -153,6 +153,7 @@ let constant'_tag = function
   | C_BIG_MAP_GET_AND_UPDATE  -> 132
   | C_SAPLING_EMPTY_STATE     -> 133
   | C_SAPLING_VERIFY_UPDATE   -> 134
+  | C_POLYMORPHIC_ADD         -> 135
 
 let constant' a b = Int.compare (constant'_tag a) (constant'_tag b)
 

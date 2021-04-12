@@ -4,7 +4,7 @@
   (libraries
     simple-utils
     tezos-utils
-    parser
+    parsing
     tree_abstraction
     self_ast_imperative
     desugaring

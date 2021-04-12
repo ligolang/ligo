@@ -1,5 +1,6 @@
 module Formatter = Formatter
 module Types = Types
+
 type all = Types.all
 
 (* build system *)
@@ -9,15 +10,17 @@ let build_corner_case (loc:string) (msg:string)  = `Build_corner_case (loc,msg)
 
 (* passes tracers *)
 
-let preproc_tracer (e:Preproc.Errors.preproc_error) : all = `Main_preproc e
-let parser_tracer (e:Parser.Errors.parse_error) : all = `Main_parser e
-let pretty_tracer (e:Parser.Errors.parse_error) : all = `Main_pretty e
+let preproc_tracer (e:Preprocessing.Errors.t) : all = `Main_preproc e
+let parser_tracer (e:Parsing.Errors.t) : all = `Main_parser e
+let pretty_tracer (e:Parsing.Errors.t) : all = `Main_pretty e
 let self_cst_cameligo_tracer (e:Self_cst.Cameligo.Errors.self_cst_cameligo_error) : all = `Main_self_cst_cameligo e
 let self_cst_pascaligo_tracer (e:Self_cst.Pascaligo.Errors.self_cst_pascaligo_error) : all = `Main_self_cst_pascaligo e
-let self_cst_reasonligo_tracer (e:Self_cst.Reasonligo.Errors.self_cst_reasonligo_error) : all = `Main_self_cst_reasonligo e
+let self_cst_reasonligo_tracer (e: Self_cst.Reasonligo.Errors.self_cst_reasonligo_error) : all = `Main_self_cst_reasonligo e
+let self_cst_jsligo_tracer (e:Self_cst.Jsligo.Errors.self_cst_jsligo_error) : all = `Main_self_cst_jsligo e
 let cit_cameligo_tracer (e:Tree_abstraction.Cameligo.Errors.abs_error) : all = `Main_cit_cameligo e
 let cit_pascaligo_tracer (e:Tree_abstraction.Pascaligo.Errors.abs_error) : all = `Main_cit_pascaligo e
 let cit_reasonligo_tracer (e:Tree_abstraction.Reasonligo.Errors.abs_error) : all = `Main_cit_reasonligo e
+let cit_jsligo_tracer (e:Tree_abstraction.Jsligo.Errors.abs_error) : all = `Main_cit_jsligo e
 let self_ast_imperative_tracer (e:Self_ast_imperative.Errors.self_ast_imperative_error) : all = `Main_self_ast_imperative e
 let purification_tracer (e:Purification.Errors.purification_error) : all = `Main_purification e
 let depurification_tracer (e:Purification.Errors.purification_error) : all = `Main_depurification e

@@ -147,19 +147,17 @@ list__(item):
 (* Main *)
 
 contract:
-  declarations EOF { {decl=$1; eof=$2} }
-
-module_:
-  declarations { {decl=$1; eof=Region.ghost} }
-declarations:
-  declaration              { $1,[] : CST.declaration Utils.nseq }
-| declaration declarations { Utils.nseq_cons $1 $2              }
+  nseq(declaration) EOF { {decl=$1; eof=$2} }
 
 declaration:
-  type_decl ";"?           { TypeDecl    $1 }
-| let_declaration ";"?     { ConstDecl   $1 }
-| module_decl ";"?         { ModuleDecl  $1 }
-| module_alias ";"?        { ModuleAlias $1 }
+  type_decl ";"?        { TypeDecl    $1 }
+| let_declaration ";"?  { ConstDecl   $1 }
+| module_decl ";"?      { ModuleDecl  $1 }
+| module_alias ";"?     { ModuleAlias $1 }
+| "<directive>"         { Directive   $1 }
+
+module_:
+  nseq(declaration) { {decl=$1; eof=Region.ghost} }
 
 (* Type declarations *)
 
@@ -737,7 +735,7 @@ core_expr:
 | "<bytes>"                           {                     EBytes $1 }
 | "<ident>"                           {                       EVar $1 }
 | projection                          {                      EProj $1 }
-| module_access_e                     {                        EModA $1 }
+| module_access_e                     {                      EModA $1 }
 | "<string>"                          {           EString (String $1) }
 | "<verbatim>"                        {         EString (Verbatim $1) }
 | unit                                {                      EUnit $1 }

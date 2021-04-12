@@ -19,6 +19,9 @@ val empty : 'value set
 <SyntaxTitle syntax="reasonligo">
 let empty: set('value)
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let empty: set&lt;&apos;value&gt;
+</SyntaxTitle>
 
 Create an empty set.
 
@@ -49,6 +52,13 @@ let my_set : set (int) = Set.empty;
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=sets
+let my_set: set<int> = Set.empty;
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function literal : list('value) -> set('value)
@@ -58,6 +68,9 @@ val literal : 'value list -> 'value set
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let literal: list('value) => set('value)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let literal: (input: list&lt;&apos;value&gt;) => set&lt;&apos;value&gt;
 </SyntaxTitle>
 
 Create a non-empty set.
@@ -91,6 +104,14 @@ let my_set : set (int) =
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=sets
+let my_set : set<int> =
+  Set.literal(list([3, 2, 2, 1]));
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function mem : 'value -> set('value) -> 'bool
@@ -100,6 +121,9 @@ val mem : 'value -> 'value set -> bool
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let mem: ('value, set('value)) => bool
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let mem: (v: &apos;value, set: set&lt;&apos;value&gt;) => bool
 </SyntaxTitle>
 
 Checks if a value exists in the set.
@@ -131,6 +155,13 @@ let contains_3 : bool = Set.mem (3, my_set);
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=sets
+let contains_3 : bool = Set.mem (3, my_set);
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function cardinal : set('value) -> nat
@@ -140,6 +171,9 @@ val cardinal : 'value set -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let cardinal: set('value) => nat
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let cardinal: (set: set&lt;&apos;value&gt;) => nat
 </SyntaxTitle>
 
 Number of elements in a set.
@@ -167,6 +201,13 @@ let cardinal : nat = Set.size (my_set);
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=sets
+let cardinal: nat = Set.size(my_set);
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function add : 'value -> set('value) -> set('value)
@@ -176,6 +217,9 @@ val add : 'value -> 'value set -> 'value set
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let add: ('value, set('value)) => set('value)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let add: (value: &apos;value, set: set&lt;&apos;value&gt;) => set&lt;&apos;value&gt;
 </SyntaxTitle>
 
 Add a value to a set.
@@ -188,6 +232,9 @@ val remove : 'value -> 'value set -> 'value set
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let remove: ('value, set('value)) => set('value)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let remove: (value: &apos;value, set: set&lt;&apos;value&gt;) => set&lt;&apos;value&gt;
 </SyntaxTitle>
 
 Remove a value from a set.
@@ -212,6 +259,9 @@ val iter : ('a -> unit) -> 'a set -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let iter: (('a => unit), set('a)) => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let iter: (iterator: ((item: &apos;a) => unit), set: set&lt;&apos;a&gt;) => unit
 </SyntaxTitle>
 
 Iterate over values in a set.
@@ -250,6 +300,16 @@ let iter_op = (s : set (int)) : unit => {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=sets
+let iter_op = (s: set<int>): unit => {
+  let predicate = (i : int): unit => assert(i > 3);
+  Set.iter(predicate, s);
+};
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function fold : (('accumulator -> 'item -> 'accumulator) -> set ('item) -> 'accumulator) -> 'accumulator
@@ -259,6 +319,9 @@ val fold : ('accumulator -> 'item -> 'accumulator) -> 'set list -> 'accumulator 
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let fold: ((('accumulator, 'item) => 'accumulator), set('item), 'accumulator) => 'accumulator
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let fold: ((iterator: [accumulator: &apos;accumulator, item: &apos;item]) => &apos;accumulator), set: set&lt;&apos;item&gt;, accumulator: &apos;accumulator) => &apos;accumulator
 </SyntaxTitle>
 
 [Fold over values in a set](../language-basics/sets-lists-tuples.md#folded-operation)
@@ -290,7 +353,14 @@ let sum_of_elements : int = Set.fold (sum, my_set, 0);
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
 
+```jsligo group=sets
+let sum = ([acc, i]: [int, int]): int => acc + i;
+let sum_of_elements: int = Set.fold(sum, my_set, 0);
+```
+
+</Syntax>
 <SyntaxTitle syntax="pascaligo">
 function fold_desc: (('item -> 'accumulator -> 'accumulator) -> set ('item) -> 'accumulator) -> 'accumulator
 </SyntaxTitle>
@@ -299,6 +369,9 @@ val fold_desc : ('item -> 'accumulator -> 'accumulator) -> 'set list -> 'accumul
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let fold_desc: ((('item, 'accumulator) => 'accumulator), set('item), 'accumulator) => 'accumulator
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let fold_desc: (((a: [&apos;item, &apos;accumulator]) => &apos;accumulator), set&lt;&apos;item&gt;, &apos;accumulator) => &apos;accumulator
 </SyntaxTitle>
 
 [Fold over values in a set](../language-basics/sets-lists-tuples.md#folded-operation)
@@ -324,6 +397,14 @@ let sum_of_elements : int = Set.fold_desc sum_right my_set 0
 
 ```reasonligo group=sets
 let sum_right = ((i, acc) : (int, int)) : int => acc + i;
+let sum_of_elements : int = Set.fold_desc (sum_right, my_set, 0);
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=sets
+let sum_right = ([i, acc] : [int, int]) : int => acc + i;
 let sum_of_elements : int = Set.fold_desc (sum_right, my_set, 0);
 ```
 

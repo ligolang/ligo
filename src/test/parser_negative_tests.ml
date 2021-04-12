@@ -5,21 +5,42 @@ open Function
 
 type ('a,'err) sdata = {
   erroneous_source_file : string ;
-  preproc : string -> (Buffer.t * (string * string) list,'err) result;
-  parser : Buffer.t -> ('a,'err) result }
+  preproc : string -> (Buffer.t * (string * string) list, 'err) result;
+  parser : Buffer.t -> ('a,'err) result
+}
 
 let pascaligo_sdata = {
-  erroneous_source_file = "../passes/02-parsing/pascaligo/all.ligo" ;
-  preproc = (trace preproc_tracer) <@ (Preproc.Pascaligo.preprocess_string []) ;
-  parser  = (trace parser_tracer ) <@ (Parser.Pascaligo.parse_expression   []) }
+  erroneous_source_file =
+    "../passes/02-parsing/pascaligo/all.ligo" ;
+  preproc =
+    trace preproc_tracer <@
+    Preprocessing.Pascaligo.preprocess_string [] ;
+  parser =
+    trace parser_tracer <@
+      Parsing.Pascaligo.parse_expression
+}
+
 let cameligo_sdata = {
-  erroneous_source_file = "../passes/02-parsing/cameligo/all.mligo" ;
-  preproc = (trace preproc_tracer) <@ (Preproc.Cameligo.preprocess_string []) ;
-  parser  = (trace parser_tracer ) <@ (Parser.Cameligo.parse_expression   []) }
+  erroneous_source_file =
+    "../passes/02-parsing/cameligo/all.mligo";
+  preproc =
+    trace preproc_tracer <@
+    Preprocessing.Cameligo.preprocess_string [];
+  parser =
+    trace parser_tracer <@
+    Parsing.Cameligo.parse_expression
+}
+
 let reasonligo_sdata = {
-  erroneous_source_file = "../passes/02-parsing/reasonligo/all.religo" ;
-  preproc = (trace preproc_tracer) <@ (Preproc.Reasonligo.preprocess_string []) ;
-  parser  = (trace parser_tracer ) <@ (Parser.Reasonligo.parse_expression   []) }
+  erroneous_source_file =
+    "../passes/02-parsing/reasonligo/all.religo" ;
+  preproc =
+    trace preproc_tracer <@
+    Preprocessing.Reasonligo.preprocess_string [];
+  parser =
+    trace parser_tracer <@
+    Parsing.Reasonligo.parse_expression
+}
 
 let get_exp_as_string filename =
   let lines = ref [] in
@@ -30,7 +51,7 @@ let get_exp_as_string filename =
     done; !lines
   with End_of_file ->
     close_in chan;
-    List.rev !lines ;;
+    List.rev !lines
 
 let assert_syntax_error sdata () =
   let aux entry =

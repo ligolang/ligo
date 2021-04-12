@@ -36,7 +36,8 @@ end = struct
         (O.Literal_signature _)|O.E_literal (O.Literal_key _)|O.E_literal
         (O.Literal_key_hash _)|O.E_literal (O.Literal_chain_id _)|O.E_literal
         (O.Literal_operation _) -> ok ()
-    | O.E_constant        { cons_name=_; arguments } -> bind_fold_list (fun () e -> expression e) () arguments
+    | O.E_constant        { cons_name = _; arguments } -> 
+      bind_fold_list (fun () e -> expression e) () arguments
     | O.E_variable        _ -> ok ()
     | O.E_application     { lamb; args } -> let%bind () = expression lamb in expression args
     | O.E_lambda          { binder=_; result } -> expression result
@@ -290,7 +291,6 @@ and type_expression' : ?tv_opt:O.type_expression -> environment -> _ O'.typer_st
   | E_literal (Literal_unit) -> (
       return_wrapped (e_unit ()) e state [] @@ Wrap.literal "unit" (t_unit ())
     )
-
   | E_constant {cons_name; arguments=lst} ->
     let%bind t = Typer_common.Constant_typers_new.Operators_types.constant_type cons_name in
     let%bind (e,state,constraints),lst = bind_fold_map_list

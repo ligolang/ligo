@@ -2,7 +2,8 @@
   (name cst_reasonligo)
   (public_name ligo.cst.reasonligo)
   (libraries
-    ;; Ligo
+    ;; Vendors
+    LexerLib
     simple-utils
     ;; Third party
     hex

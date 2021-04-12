@@ -6,20 +6,36 @@ module Region = Simple_utils.Region
 open! Region
 open! PPrint
 module Option = Simple_utils.Option
+(*module Directive = LexerLib.Directive*)
 
 let pp_par printer {value; _} =
   string "(" ^^ nest 1 (printer value.inside ^^ string ")")
 
 let rec print ast =
-  let app decl = group (pp_declaration decl) in
   let decl = Utils.nseq_to_list ast.decl in
-  separate_map (hardline ^^ hardline) app decl
+  let decl = List.filter_map pp_declaration decl
+  in separate_map (hardline ^^ hardline) group decl
 
 and pp_declaration = function
-  Let         decl -> pp_let_decl     decl
-| TypeDecl    decl -> pp_type_decl    decl
-| ModuleDecl  decl -> pp_module_decl  decl
-| ModuleAlias decl -> pp_module_alias decl
+  Let         decl -> Some (pp_let_decl     decl)
+| TypeDecl    decl -> Some (pp_type_decl    decl)
+| ModuleDecl  decl -> Some (pp_module_decl  decl)
+| ModuleAlias decl -> Some (pp_module_alias decl)
+| Directive      _ -> None
+
+(*
+and pp_dir_decl = function
+  Directive.Linemarker {value; _} ->
+    let open Directive in
+    let linenum, file_path, flag_opt = value in
+    let flag =
+      match flag_opt with
+        Some Push -> " 1"
+      | Some Pop  -> " 2"
+      | None      -> "" in
+    let lexeme = Printf.sprintf "# %d %S%s" linenum file_path flag
+    in string lexeme
+*)
 
 and pp_let_decl {value; _} =
   let _, rec_opt, binding, attr = value in

@@ -59,6 +59,21 @@ let main = (p : unit, s : unit) =>
 The call to failwith should be annoted with a type as the typechecker cannot infer the correct type yet.
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=failwith
+let main = (p: unit, s: unit): unit => {
+  if (true) { 
+    return failwith("This contract always fails"); 
+  };
+}
+```
+
+The call to failwith should be annoted with a type as the typechecker cannot infer the correct type yet.
+
+</Syntax>
+
+
 
 ## Assertions
 
@@ -103,6 +118,20 @@ let main = (p : bool, s : unit) => {
 
 let some = (o : option (unit)) => {
   assert_some (o)
+};
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=failwith
+let main = (p: bool, s: unit): [list<operation>, unit] => {
+  let u: unit = assert(p);
+  return [list([]) as list<operation>, s];
+};
+
+let some = (o: option<unit>): unit => {
+  assert_some(o)
 };
 ```
 

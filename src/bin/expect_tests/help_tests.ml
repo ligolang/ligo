@@ -299,9 +299,9 @@ let%expect_test _ =
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
-               respectively).
+               syntaxes are "pascaligo", "cameligo", "reasonligo" and "jsligo".
+               By default, the syntax is guessed from the extension (.ligo,
+               .mligo, .religo, and .jsligo respectively).
 
            --version
                Show version information.
@@ -384,9 +384,9 @@ let%expect_test _ =
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
-               respectively).
+               syntaxes are "pascaligo", "cameligo", "reasonligo" and "jsligo".
+               By default, the syntax is guessed from the extension (.ligo,
+               .mligo, .religo, and .jsligo respectively).
 
            --sender=SENDER
                SENDER is the sender the Michelson interpreter transaction will
@@ -477,9 +477,9 @@ let%expect_test _ =
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
-               respectively).
+               syntaxes are "pascaligo", "cameligo", "reasonligo" and "jsligo".
+               By default, the syntax is guessed from the extension (.ligo,
+               .mligo, .religo, and .jsligo respectively).
 
            --sender=SENDER
                SENDER is the sender the Michelson interpreter transaction will
@@ -565,9 +565,9 @@ let%expect_test _ =
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
-               respectively).
+               syntaxes are "pascaligo", "cameligo", "reasonligo" and "jsligo".
+               By default, the syntax is guessed from the extension (.ligo,
+               .mligo, .religo, and .jsligo respectively).
 
            --sender=SENDER
                SENDER is the sender the Michelson interpreter transaction will
@@ -649,9 +649,9 @@ let%expect_test _ =
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
-               respectively).
+               syntaxes are "pascaligo", "cameligo", "reasonligo" and "jsligo".
+               By default, the syntax is guessed from the extension (.ligo,
+               .mligo, .religo, and .jsligo respectively).
 
            --sender=SENDER
                SENDER is the sender the Michelson interpreter transaction will
@@ -720,9 +720,9 @@ let%expect_test _ =
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
-               respectively).
+               syntaxes are "pascaligo", "cameligo", "reasonligo" and "jsligo".
+               By default, the syntax is guessed from the extension (.ligo,
+               .mligo, .religo, and .jsligo respectively).
 
            --sender=SENDER
                SENDER is the sender the Michelson interpreter transaction will
@@ -755,8 +755,8 @@ let%expect_test _ =
            SYNTAX (required)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
-               respectively).
+               the syntax is guessed from the extension (.ligo, .mligo, .religo,
+               .jsligo respectively).
 
     OPTIONS
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT

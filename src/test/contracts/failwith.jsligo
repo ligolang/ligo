@@ -1,0 +1,5 @@
+type storage = unit;
+
+let main = (p: [unit, storage]): unit => {
+  if (true) { failwith("This contract always fails"); };
+};

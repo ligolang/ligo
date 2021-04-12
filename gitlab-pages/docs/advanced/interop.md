@@ -84,6 +84,16 @@ type animal =
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=orig
+type animal = 
+| ["Elephant"]
+| ["Dog"]
+| ["Cat"];
+```
+
+</Syntax>
 
 will translate to:
 
@@ -145,6 +155,17 @@ type animal =
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+type animal =
+// @layout:comb
+| ["Elephant"]
+| ["Dog"]
+| ["Cat"];
+```
+
+</Syntax>
 
 The `layout:comb` attribute can also be used on record types:
 
@@ -185,6 +206,20 @@ type artist =
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+type artist =  
+// @layout:comb
+{
+  genre: string,
+  since: timestamp,
+  name: string
+};
+```
+
+</Syntax>
+
 
 
 ## Different Michelson annotations
@@ -221,6 +256,17 @@ type animal =
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=annot
+type animal = 
+| /* @annot:memory */ ["Elephant"]
+| /* @annot:face */ ["Dog"]
+| /* @annot:fish */ ["Cat"]
+```
+
+</Syntax>
+
 
 will result into:
 
@@ -265,6 +311,17 @@ type artist = {
   [@annot:style] genre: string,
   [@annot:from] since: timestamp,
   [@annot:performer] name: string
+}
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=annot
+type artist = {
+  /* @annot:style */ genre: string,
+  /* @annot:from */ since: timestamp,
+  /* @annot:performer */ name: string
 }
 ```
 
@@ -326,6 +383,16 @@ type z_or = michelson_or(unit, "z", y_or, "other")
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+type w_and_v = michelson_pair<[int, "w", nat, "v"]>;
+type x_and = michelson_pair<[string, "x", w_and_v, "other"]>;
+type y_or = michelson_or<[unit, "y", x_and, "other"]>;
+type z_or = michelson_or<[unit, "z", y_or, "other"]>;
+```
+
+</Syntax>
 
 If you don't want to have an annotation, you need to provide an empty string.
 
@@ -377,6 +444,20 @@ let y: z_or = (M_right (y_1) : z_or)
 let x_pair: x_and = ("foo", (2, 3n))
 let x_1: y_or = (M_right (x_pair): y_or)
 let x: z_or = (M_right (y_1) : z_or)
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let z: z_or = M_left(unit) as z_or;
+
+let y_1: y_or = M_left(unit) as y_or;
+let y: z_or = M_right(y_1) as z_or;
+
+let x_pair: x_and = ["foo", [2, 3 as nat]];
+let x_1: y_or = M_right (x_pair) as y_or;
+let x: z_or = M_right (y_1) as z_or;
 ```
 
 </Syntax>
@@ -439,6 +520,18 @@ type l_record = {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+type l_record = {
+  s: string,
+  w: int,
+  v: nat
+};
+```
+
+</Syntax>
+
 
 If we want to convert from the Michelson type to our record type and vice 
 versa, we can use the following code:
@@ -495,6 +588,25 @@ let to_michelson = (f: l_record) : michelson => {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+type michelson = michelson_pair_left_comb<l_record>;
+
+let of_michelson = (f: michelson): l_record => { 
+  let p: l_record = Layout.convert_from_left_comb(f);
+  return p
+};
+
+let to_michelson = (f: l_record) : michelson => {
+  let p = Layout.convert_to_left_comb(f as l_record);
+  return p
+};
+
+```
+
+</Syntax>
+
 
 In the case of a left combed Michelson `or` data structure, that you want to 
 translate to a variant, you can use the `michelson_or_left_comb` type.
@@ -534,6 +646,18 @@ type vari =
 | Other(bool)
 
 type r = michelson_or_left_comb(vari)
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+type vari = 
+| ["Foo", int]
+| ["Bar", nat]
+| ["Other", bool];
+
+type r = michelson_or_left_comb<vari>;
 ```
 
 </Syntax>
@@ -583,6 +707,22 @@ let to_michelson_or = (f: vari) : r => {
   let p = Layout.convert_to_left_comb(f: vari);
   p
 }
+
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let of_michelson_or = (f: r): vari => { 
+  let p: vari = Layout.convert_from_left_comb(f);
+  return p;
+};
+
+let to_michelson_or = (f: vari): r => {
+  let p = Layout.convert_to_left_comb(f as vari);
+  return p;
+};
 
 ```
 
@@ -811,6 +951,71 @@ let make_abstract_record = (z: string, y: int, x: string, w: bool, v: int) : tes
 
 </Syntax>
 
+<Syntax syntax="jsligo">
+
+```jsligo group=helper_functions
+type z_to_v =
+  ["Z"]
+| ["Y"]
+| ["X"]
+| ["W"]
+| ["V"];
+
+type w_or_v = michelson_or<[unit, "w", unit, "v"]>;
+type x_or = michelson_or<[unit, "x", w_or_v, "other"]>;
+type y_or = michelson_or<[unit, "y", x_or, "other"]>;
+type z_or = michelson_or<[unit, "z", y_or, "other"]>;
+
+type test = {
+  z: string,
+  y: int,
+  x: string,
+  w: bool,
+  v: int
+};
+
+let make_concrete_sum = (r: z_to_v): z_or =>
+  match(r, {
+    Z: () => M_left(unit) as z_or,
+    Y: () => M_right(M_left(unit) as y_or) as z_or,
+    X: () => M_right (M_right (M_left(unit) as x_or) as y_or) as z_or ,
+    W: () => M_right (M_right (M_right(M_left(unit) as w_or_v) as x_or) as y_or) as z_or ,
+    V: () => M_right (M_right (M_right(M_right(unit) as w_or_v) as x_or) as y_or) as z_or 
+  });
+
+
+let make_concrete_record = (r: test): [string, int, string, bool, int] =>
+  [r.z, r.y, r.x, r.w, r.v];
+
+let make_abstract_sum = (z_or: z_or): z_to_v =>
+  match(z_or, {
+    M_left: (n: unit) => Z(),
+    M_right: (y_or: y_or) => {
+      return match(y_or, {
+        M_left: (n: unit) => Y(),
+        M_right: (x_or: x_or) => {
+          return match(x_or, {
+            M_left: (n: unit) => X(),
+            M_right: (w_or: w_or) => {
+              return match(w_or, {
+                M_left: (n: unit) => W(),
+                M_right: (n: unit) => V()
+              })
+            }
+          })
+        }
+      })
+    }
+  })
+
+let make_abstract_record = (z: string, y: int, x: string, w: bool, v: int): test =>
+  ({ z: z, y, x, w, v })
+  
+```
+
+</Syntax>
+
+
 ## Entrypoints and annotations
 It's possible for a contract to have multiple entrypoints, which translates in 
 LIGO to a `parameter` with a variant type as shown here:
@@ -865,6 +1070,24 @@ let main = ((p, x): (parameter, storage)): (list(operation), storage) => {
   | Right(i) => x + i
   }))
 };
+
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+type storage = int;
+
+type parameter = 
+   ["Left", int]
+ | ["Right", int];
+
+let main = ([p, x]: [parameter, storage]): [list<operation>, storage] =>
+  [list ([]) as list<operation>, match(p, {
+    Left: (i: int) => x - i,
+    Right: (i: int) => x + i
+  })];
 
 ```
 
@@ -941,6 +1164,30 @@ let main = ((p, s): (parameter, storage)): (list(operation), storage) => {
 ```
 
 </Syntax>
+
+<Syntax syntax="jsligo">
+
+```jsligo group=get_entrypoint_opt
+type storage = int;
+
+type parameter = int;
+
+type x = | ["Left", int];
+
+let main = ([p, s]: [parameter, storage]): [list<operation>, storage] => {
+  let contract: contract<x> = 
+    match (Tezos.get_entrypoint_opt("%left", "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address) as option<contract<x>>, {
+      Some: ( c: contract<x>) => c,
+      None: () => (failwith ("contract does not match") as contract<x>)
+    });
+  return [
+    list([Tezos.transaction(Left(2), 2 as mutez, contract)]) as list<operation>, 
+    s];
+};
+```
+
+</Syntax>
+
 
 Notice how we directly use the `%left` entrypoint without mentioning the 
 `%right` entrypoint. This is done with the help of annotations. Without 

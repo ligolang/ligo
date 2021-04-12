@@ -8,12 +8,13 @@ let npseq_to_list (hd, tl) = hd :: (List.map snd tl)
 let npseq_to_ne_list (hd, tl) = hd, (List.map snd tl)
 let bind_map_npseq f (hd,tl) =
   let%bind hd = f hd in
-  let%bind tl = bind_map_list (fun (a,b) -> let%bind b = f b in ok @@ (a,b)) tl in
-  ok @@ (hd,tl)
+  let%bind tl = bind_map_list (fun (a,b) -> let%bind b = f b in ok (a,b)) tl
+  in ok (hd,tl)
+
 let bind_fold_npseq f init (hd,tl) =
   let%bind res = f init hd in
   let%bind res = bind_fold_list (fun init (_,b) -> f init b) res tl in
-  ok @@ res
+  ok res
 
 let pseq_to_list = function
   | None -> []
@@ -369,14 +370,14 @@ and fold_declaration : ('a, 'err) folder -> 'a -> declaration -> ('a, 'err) resu
     let%bind res = self_expr init expr in
     (match const_type with
       Some (_, ty) -> self_type res ty
-    | None ->    ok @@ res
+    | None ->    ok res
     )
   | FunDecl {value;region=_} ->
     let {kwd_recursive=_;kwd_function=_;fun_name=_;param=_;ret_type;kwd_is=_;return;terminator=_;attributes=_} = value in
     let%bind res = self_expr init return in
     (match ret_type with
       Some (_, ty) -> self_type res ty
-    | None ->    ok @@ res
+    | None ->    ok res
     )
   | TypeDecl {value;region=_} ->
     let {kwd_type=_;name=_;kwd_is=_;type_expr;terminator=_} = value in
@@ -389,6 +390,7 @@ and fold_declaration : ('a, 'err) folder -> 'a -> declaration -> ('a, 'err) resu
   | ModuleAlias {value;region=_} ->
     let {kwd_module=_;alias=_;kwd_is=_;binders=_;} = value in
     ok @@ init
+  | Directive _ -> ok init
 
 and fold_module : ('a, 'err) folder -> 'a -> t -> ('a, 'err) result =
   fun f init {decl;eof=_} ->
@@ -851,7 +853,7 @@ and matching_cases : type b. (b-> (b,_) result) -> (b case_clause reg,_) Utils.n
   ok @@ {cases with value}
 
 
-and map_declaration : ('err) mapper -> declaration -> (declaration, 'err) result =
+and map_declaration : 'err mapper -> declaration -> (declaration, 'err) result =
   fun f d ->
   let self_expr = map_expression f in
   let self_type = map_type_expression f in
@@ -886,6 +888,7 @@ and map_declaration : ('err) mapper -> declaration -> (declaration, 'err) result
   | ModuleAlias {value;region} ->
     let {kwd_module=_;alias=_;kwd_is=_;binders=_} = value in
     return @@ ModuleAlias {value;region}
+  | Directive _ as d -> return d
 
 and map_module : ('err) mapper -> t -> (t, 'err) result =
   fun f {decl;eof} ->

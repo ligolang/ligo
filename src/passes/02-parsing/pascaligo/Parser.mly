@@ -9,7 +9,7 @@
 
 open Simple_utils.Region
 module CST = Cst.Pascaligo
-open CST
+open! CST
 
 (* Utilities *)
 
@@ -61,8 +61,6 @@ let mk_arith f arg1 op arg2 =
 %on_error_reduce nsepseq(core_pattern,COMMA)
 %on_error_reduce constr_pattern
 %on_error_reduce core_expr
-%on_error_reduce module_var_e
-%on_error_reduce module_var_t
 %on_error_reduce nsepseq(param_decl,SEMI)
 %on_error_reduce nsepseq(selection,DOT)
 %on_error_reduce nsepseq(field_path_assignment,SEMI)
@@ -99,6 +97,8 @@ let mk_arith f arg1 op arg2 =
 %on_error_reduce option(arguments)
 %on_error_reduce path
 %on_error_reduce nseq(Attr)
+%on_error_reduce module_var_e
+%on_error_reduce module_var_t
 
 %%
 
@@ -198,11 +198,12 @@ module_:
   nseq(declaration) { {decl=$1; eof=Region.ghost} }
 
 declaration:
-  type_decl    {    TypeDecl $1 }
-| const_decl   {   ConstDecl $1 }
-| fun_decl     {     FunDecl $1 }
-| module_decl  {  ModuleDecl $1 }
-| module_alias { ModuleAlias $1 }
+  type_decl     {    TypeDecl $1 }
+| const_decl    {   ConstDecl $1 }
+| fun_decl      {     FunDecl $1 }
+| module_decl   {  ModuleDecl $1 }
+| module_alias  { ModuleAlias $1 }
+| "<directive>" {   Directive $1 }
 
 (* Type declarations *)
 

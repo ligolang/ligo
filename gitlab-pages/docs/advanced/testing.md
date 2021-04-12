@@ -100,6 +100,26 @@ let main = ((action, store) : (parameter, storage)) : return => {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+// This is mockup_testme.jsligo
+type storage = string;
+
+type parameter =
+| ["Append", string];
+
+type return_ = [list<operation>, storage];
+
+let main = ([action, store]: [parameter, storage]): return_ => {
+ return [list([]) as list<operation>,    // No operations
+  match(action, {
+    Append: (s: string) => store + s
+  })]
+};
+```
+
+</Syntax>
 
 To obtain Michelson code from it, we run the LIGO compiler:
 
@@ -396,6 +416,37 @@ let main = ((action, store) : (parameter, storage)) : return => {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+// This is testme.jsligo
+type storage = int;
+
+type parameter =
+  ["Increment", int]
+| ["Decrement", int]
+| ["Reset"];
+
+type return_ = [list<operation>, storage];
+
+// Two entrypoints
+let add = ([store, delta]: [storage, int]): storage => store + delta;
+let sub = ([store, delta]: [storage, int]): storage => store - delta;
+
+/* Main access point that dispatches to the entrypoints according to
+   the smart contract parameter. */
+let main = ([action, store]: [parameter, storage]) : return_ => {
+  return [
+    list([]) as list<operation>,    // No operations
+    match(action, {
+      Increment:(n: int) => add ([store, n]),
+      Decrement:(n: int) => sub ([store, n]),
+      Reset: ()          => 0})
+  ]
+};
+```
+
+</Syntax>
 
 This contract keeps an integer as storage, and has three entry-points:
 one for incrementing the storage, one for decrementing the storage,
@@ -506,6 +557,17 @@ let testme =
   let addr = Test.originate(main, 10);
   let u = Test.external_call(addr, Increment (32), 0tz);
   (Test.get_storage(addr) : int) == 42;
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo skip
+let testme = ({
+  let addr = Test.originate(main, 10);
+  let u = Test.external_call(addr, Increment(32), 0 as tez);
+  return (Test.get_storage(addr) as int) == 42;
+});
 ```
 
 </Syntax>

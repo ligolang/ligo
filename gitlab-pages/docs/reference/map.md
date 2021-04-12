@@ -17,6 +17,9 @@ val empty : ('key, 'value) map
 <SyntaxTitle syntax="reasonligo">
 let empty: map('key, 'value)
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let empty: map&lt;'key, 'value&gt;
+</SyntaxTitle>
 
 Create an empty map.
 
@@ -56,6 +59,16 @@ let empty : register = Map.empty
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=maps
+type move = [int, int];
+type register = map<address, move>;
+
+let empty: register = Map.empty;
+```
+
+</Syntax>
 
 
 <SyntaxTitle syntax="pascaligo">
@@ -66,6 +79,9 @@ val literal : ('key * 'value) list -> ('key, 'value) map
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let literal: list(('key, 'value)) => map('key, 'value)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let literal: (input: list&lt;['key, 'value]&gt;) => map&lt;'key, 'value&gt;
 </SyntaxTitle>
 
 Create a non-empty map.
@@ -109,6 +125,16 @@ let moves : register =
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=maps
+let moves: register =
+  Map.literal(list([
+    [("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address), [1, 2]],
+    [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), [0, 3]]]));
+```
+
+</Syntax>
 
 
 <SyntaxTitle syntax="pascaligo">
@@ -119,6 +145,9 @@ val find_opt : 'key -> ('key, 'value) map -> 'value option
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let find_opt : ('key, map ('key, 'value)) => option ('value)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let find_opt : (key: 'key, map: map &lt;'key, 'value&gt;) => option &lt;'value&gt;
 </SyntaxTitle>
 
 Retrieve a (option) value from a map with the given key. Returns `None` if the 
@@ -156,6 +185,14 @@ let my_balance : option (move) =
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=maps
+let my_balance: option<move> =
+  Map.find_opt(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), moves);
+```
+
+</Syntax>
 
 
 <SyntaxTitle syntax="pascaligo">
@@ -166,6 +203,9 @@ val update: 'key -> 'value option -> ('key, 'value) map -> ('key, 'value) map
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let update: ('key, option('value), map('key, 'value)) => map ('key, 'value)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let update: (key: 'key, new_value: option&lt;'value&gt;, map: map&lt;'key, 'value&gt;) => map &lt;'key, 'value&gt;
 </SyntaxTitle>
 
 Note: when `None` is used as a value, the key and associated value is removed 
@@ -220,6 +260,15 @@ let updated_map : register =
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=maps
+let updated_map : register =
+  Map.update
+    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), Some ([4, 9]), moves);
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function get_and_update : key -> option(value) -> map (key, value) -> option(value) * map (key, value)
@@ -241,6 +290,9 @@ val add : 'key -> 'value -> ('key, 'value) map  -> ('key, 'value) map
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let add: ('key, 'value, map('key, 'value)) => map('key, 'value) 
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let add: (key: 'key, value: 'value, map: map&lt;'key, 'value&gt;) => map&lt;'key, 'value&gt;
 </SyntaxTitle>
 <Syntax syntax="pascaligo">
 
@@ -267,6 +319,15 @@ let add = (m: register): register =>
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=maps
+let add = (m: register): register =>
+  Map.add
+    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), [4, 9], m);
+```
+
+</Syntax>
 
 
 <SyntaxTitle syntax="pascaligo">
@@ -277,6 +338,9 @@ val remove : 'key -> ('key, 'value) map -> ('key, 'value) map
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let remove: (key, map('key, 'value)) => map('key, 'value)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let remove: (key: key, map: map&lt;'key, 'value&gt;) => map&lt;'key, 'value&gt;
 </SyntaxTitle>
 
 <Syntax syntax="pascaligo">
@@ -315,6 +379,14 @@ let updated_map : register =
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=maps
+let updated_map : register =
+  Map.remove (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), moves);
+```
+
+</Syntax>
 
 
 <SyntaxTitle syntax="pascaligo">
@@ -325,6 +397,9 @@ val iter : (('key * 'value) -> unit) -> ('key, 'value) map -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let iter: ((('key, 'value)) => unit, map('key, 'value)) => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let iter: (iter: (['key, 'value]) => unit, map: map&lt;'key, 'value&gt;) => unit
 </SyntaxTitle>
 
 
@@ -360,6 +435,16 @@ let iter_op = (m : register) : unit => {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=maps
+let iter_op = (m : register) : unit => {
+  let predicate = ([i, j] : [address, move]): unit => assert (j[0] > 3);
+  Map.iter (predicate, m);
+};
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function map : (('key, 'value) -> ('mapped_key, 'mapped_item)) -> map ('key, 'value) -> map ('mapped_key, 'mapped_value)
@@ -369,6 +454,9 @@ val map : (('key * 'value) -> ('mapped_key * 'mapped_item)) -> (key, value) map 
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let map: ((('key, 'value)) => ('mapped_key, 'mapped_item), map(key, value)) => map(mapped_key, mapped_value)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let map: (mapper: (item: ['key, 'value]) => ['mapped_key, 'mapped_item], map: map&lt;key, value&gt;) => map&lt;mapped_key, mapped_value&gt;
 </SyntaxTitle>
 
 
@@ -415,6 +503,9 @@ val fold : ('accumulator -> ('key * 'value) -> 'accumulator) -> ('key, 'value) m
 <SyntaxTitle syntax="reasonligo">
 let fold: ((('accumulator, ('key, 'value)) => 'accumulator), map('key, 'value), 'accumulator) => 'accumulator
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let fold: (iter: ((accumulator: 'accumulator, item: ['key, 'value]) => 'accumulator), map: map&lt;'key, 'value&gt;, accumulator: 'accumulator) => 'accumulator
+</SyntaxTitle>
 
 
 <Syntax syntax="pascaligo">
@@ -449,6 +540,16 @@ let fold_op = (m : register) : int => {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=maps
+let fold_op = (m : register): int => {
+  let folded = ([i,j]: [int, [address, move]]):int => i + j[1][1];
+  return Map.fold (folded, m, 5);
+};
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function size : map ('key, 'value) -> nat
@@ -458,6 +559,9 @@ val size : ('key, 'value) map -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let size: map('key, 'value) => nat
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let size: (map: map&lt;'key, 'value&gt;) => nat
 </SyntaxTitle>
 
 Returns the number of items in the map.
@@ -471,6 +575,9 @@ val mem : 'key -> ('key, 'value) map => bool
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let mem : ('key, map('key, 'value)) => bool
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let mem : (key: 'key, map: map&lt;'key, 'value&gt;) => bool
 </SyntaxTitle>
 
 Checks if a key exists in the map.

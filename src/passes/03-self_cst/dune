@@ -7,6 +7,7 @@
     self_cst_cameligo
     self_cst_pascaligo
     self_cst_reasonligo
+    self_cst_jsligo
     tezos-crypto
     tezos-base
   )

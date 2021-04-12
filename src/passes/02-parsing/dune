@@ -1,15 +1,19 @@
+;; Build of all LIGO parsers as a library
+
 (library
-  (name parser)
-  (public_name ligo.parser)
+  (name parsing)
+  (public_name ligo.parsing)
   (libraries
-     Shared_parser
-     
      ;; Vendors
      simple-utils
-     tezos-utils
      ;; LIGO
-     parser_pascaligo
-     parser_cameligo
-     parser_reasonligo)
+     parsing_shared
+     parsing_pascaligo
+     parsing_cameligo
+     parsing_reasonligo
+     parsing_jsligo
+     )
+  (modules
+     Parsing Errors Pascaligo Cameligo Reasonligo Jsligo)
   (preprocess
     (pps ppx_let bisect_ppx --conditional)))

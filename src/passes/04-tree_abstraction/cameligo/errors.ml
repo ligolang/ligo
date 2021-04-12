@@ -1,7 +1,7 @@
 open Simple_utils.Display
 
 module Raw = Cst.Cameligo
-module Parser = Parser.Cameligo
+module Parsing = Parsing.Cameligo
 
 let stage = "abstracter"
 
@@ -89,8 +89,8 @@ Other forms of pattern matching are not (yet) supported. @]"
           Snippet.pp_lift v.region
           v.value
     | `Concrete_cameligo_funarg_tuple_type_mismatch (region, pattern, texpr) -> (
-      let p = Parser.pretty_print_pattern pattern |> Buffer.contents in
-      let t = Parser.pretty_print_type_expr texpr |> Buffer.contents in
+      let p = Parsing.pretty_print_pattern pattern |> Buffer.contents in
+      let t = Parsing.pretty_print_type_expr texpr |> Buffer.contents in
       Format.fprintf
         f
         "@[<hv>%a@.The tuple \"%s\" does not match the type \"%s\". @]"

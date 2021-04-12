@@ -1,7 +1,3 @@
-
-;; --------------------------------------------------------------------
-;; LEXING
-
 ;; Build of the lexer for ReasonLIGO
 
 (ocamllex Token)
@@ -9,12 +5,12 @@
 ;; Build of the ReasonLIGO lexer as a library
 
 (library
-  (name lexer_reasonligo)
-  (public_name ligo.lexer.reasonligo)
-  (modules Token Comments File Self_lexing)
+  (name lexing_reasonligo)
+  (public_name ligo.lexing.reasonligo)
+  (modules Token Self_tokens Style)
   (libraries
     ;; LIGO
-    Shared_lexer
+    lexing_shared
     ;; Third party
     str
     hex)
@@ -27,8 +23,9 @@
   (name LexerMain)
   (libraries
     ;; LIGO
-    Shared_lexer
-    lexer_reasonligo
+    preprocessing_reasonligo
+    lexing_shared
+    lexing_reasonligo
     ;; Third party
     str)
   (modules Version LexerMain)
@@ -42,7 +39,8 @@
   (name Unlexer)
   (libraries
     ;; LIGO
-    lexer_reasonligo
+    lexing_shared
+    lexing_reasonligo
     ;; Third party
     str)
   (modules Unlexer)

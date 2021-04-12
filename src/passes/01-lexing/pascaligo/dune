@@ -1,7 +1,3 @@
-
-;; --------------------------------------------------------------------
-;; LEXING
-
 ;; Build of the lexer for PascaLIGO
 
 (ocamllex Token)
@@ -9,12 +5,12 @@
 ;; Build of the PascaLIGO lexer as a library
 
 (library
-  (name lexer_pascaligo)
-  (public_name ligo.lexer.pascaligo)
-  (modules Token Comments File Self_lexing)
+  (name lexing_pascaligo)
+  (public_name ligo.lexing.pascaligo)
+  (modules Token Self_tokens Style)
   (libraries
     ;; LIGO
-    Shared_lexer
+    lexing_shared
     ;; Third party
     str
     hex)
@@ -27,8 +23,9 @@
   (name LexerMain)
   (libraries
     ;; LIGO
-    Shared_lexer
-    lexer_pascaligo
+    preprocessing_pascaligo
+    lexing_shared
+    lexing_pascaligo
     ;; Third party
     str)
   (modules Version LexerMain)
@@ -43,7 +40,8 @@
   (name Unlexer)
   (libraries
     ;; LIGO
-    lexer_pascaligo
+    lexing_shared
+    lexing_pascaligo
     ;; Third party
     str)
   (modules Unlexer)

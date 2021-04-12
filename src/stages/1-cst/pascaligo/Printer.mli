@@ -8,11 +8,7 @@ type state
 val mk_state :
   offsets:bool -> mode:[`Point|`Byte] -> buffer:Buffer.t -> state
 
-(* Printing tokens from the CST in a buffer
-
-   Printing the tokens reconstructed from the CST. This is very useful
-   for debugging, as the output of [print_token ast] can be textually
-   compared to that of [Lexer.trace] (see module [LexerMain]). *)
+(* Printing tokens from the CST in a buffer *)
 
 val print_tokens      : state -> CST.t -> unit
 val print_path        : state -> CST.path -> unit

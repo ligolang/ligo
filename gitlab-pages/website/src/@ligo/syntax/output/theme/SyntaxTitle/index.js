@@ -51,7 +51,8 @@ Prism.languages = { ...Prism.languages,
   },
   cameligo: { ...Prism.languages.ocaml,
     'comment': [/(^|[^\\])\/\*[\s\S]*?\*\//, /\(\*[\s\S]*?\*\)/, /\/\/.*/]
-  }
+  },
+  jsligo: Prism.languages.typescript
 };
 
 function SyntaxTitle(props) {
@@ -72,9 +73,9 @@ function SyntaxTitle(props) {
   useEffect(() => {
     setMounted(true);
   }, []);
-  return /*#__PURE__*/React.createElement(SyntaxContext.Consumer, null, syntax => {
+  return React.createElement(SyntaxContext.Consumer, null, syntax => {
     if (syntax === props.syntax) {
-      return /*#__PURE__*/React.createElement(Highlight, _extends({}, defaultProps, {
+      return React.createElement(Highlight, _extends({}, defaultProps, {
         key: mounted,
         language: props.syntax,
         code: props.children,
@@ -85,7 +86,7 @@ function SyntaxTitle(props) {
         tokens,
         getLineProps,
         getTokenProps
-      }) => /*#__PURE__*/React.createElement("pre", {
+      }) => React.createElement("pre", {
         className: className,
         style: {
           backgroundColor: 'var(--ifm-background-color)',
@@ -95,15 +96,15 @@ function SyntaxTitle(props) {
           whiteSpace: 'break-spaces',
           marginTop: '3rem'
         }
-      }, tokens.map((line, i) => /*#__PURE__*/React.createElement("div", getLineProps({
+      }, tokens.map((line, i) => React.createElement("div", getLineProps({
         line,
         key: i
-      }), line.map((token, key) => /*#__PURE__*/React.createElement("span", getTokenProps({
+      }), line.map((token, key) => React.createElement("span", getTokenProps({
         token,
         key
       })))))));
     } else {
-      return /*#__PURE__*/React.createElement("div", null);
+      return React.createElement("div", null);
     }
   });
 }

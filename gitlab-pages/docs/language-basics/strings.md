@@ -29,6 +29,19 @@ let a : string = "Hello Alice";
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let a: string = "Hello Alice";
+```
+
+or with single quotes:
+
+```jsligo
+let a: string = 'Hello Alice';
+```
+
+</Syntax>
 
 
 
@@ -65,6 +78,17 @@ Strings can be concatenated using the `++` operator.
 let name : string = "Alice";
 let greeting : string = "Hello";
 let full_greeting : string = greeting ++ " " ++ name;
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+Strings can be concatenated using the `+` operator.
+
+```jsligo group=a
+let name: string = "Alice";
+let greeting: string = "Hello";
+let full_greeting: string = greeting + " " + name;
 ```
 
 </Syntax>
@@ -107,6 +131,14 @@ let slice : string = String.sub (0n, 1n, name);
 > Note that `String.slice` is *deprecated*.
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=b
+let name: string = "Alice";
+let slice: string = String.sub (0 as nat, 1 as nat, name);
+```
+
+</Syntax>
 
 
 > ⚠️ Notice that the offset and length of the slice are natural
@@ -145,6 +177,14 @@ let length : nat = String.length (name);  // length == 5
 ```
 
 > Note that `String.size` is *deprecated*.
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=c
+let name: string = "Alice";
+let length: nat = String.length(name);  // length == 5
+```
 
 </Syntax>
 

@@ -63,12 +63,12 @@ let check_reserved_names vars =
   if not (VarSet.is_empty inter) then
     let clash = VarSet.choose inter in
     fail @@ reserved_name clash
-  else ok @@ vars
+  else ok vars
 
 let check_reserved_name var =
   if SSet.mem var.value reserved then
     fail @@ reserved_name var
-  else ok @@ ()
+  else ok ()
 
 let is_wildcard var =
   let var = var.value in
@@ -240,6 +240,7 @@ let peephole_declaration : unit -> declaration -> (unit, 'err) result =
   | ModuleAlias {value; _} ->
       let%bind () = check_reserved_name value.alias
       in ok @@ ()
+  | Directive _ -> ok ()
 
 let peephole : (unit,'err) Helpers.folder = {
   t = peephole_type;

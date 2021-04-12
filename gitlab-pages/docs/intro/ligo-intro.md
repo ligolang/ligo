@@ -59,6 +59,7 @@ the syntax in the upcoming sections of the documentation.
     { label: 'PascaLIGO', value: 'pascaligo', },
     { label: 'CameLIGO', value: 'cameligo', },
     { label: 'ReasonLIGO', value: 'reasonligo', },
+    { label: 'JsLIGO', value: 'jsligo', },
   ]
 }>
 <TabItem value="pascaligo">
@@ -122,6 +123,31 @@ let main = ((action, store): (parameter, storage)) : return => {
    | Increment (n) => store + n
    | Decrement (n) => store - n
    | Reset         => 0}));
+};
+```
+
+</TabItem>
+<TabItem value="jsligo">
+
+```jsligo group=a
+type storage = int;
+
+type parameter =
+  ["Increment", int]
+| ["Decrement", int]
+| ["Reset"];
+
+type return_ = [list<operation>, storage];
+
+let main = ([action, store]: [parameter, storage]) : return_ => {
+  return [
+    list([]) as list<operation>,
+    match(action, {
+      Increment: (n: int) => store + n,
+      Decrement: (n: int) => store - n,
+      Reset:     ()       => 0
+    })
+  ];
 };
 ```
 

@@ -2,6 +2,10 @@
 
 module Region = Simple_utils.Region
 
+(* LIGO dependencies *)
+
+module type FILE = Preprocessing_shared.File.S
+
 (* This module factors the common actions expected from LexerMain in
    all LIGO syntaxes, like reading and checking the command-line,
    building the preprocessor, the lexer, composing them and calling
@@ -9,11 +13,10 @@ module Region = Simple_utils.Region
    that a side-effect is performed (reading from and writing to
    [Sys.argv]: see module [LexerLib.CLI].). *)
 
-module Make (Comments    : Comments.S)
-            (File        : File.S)
+module Make (File        : FILE)
             (Token'      : Token.S)
             (CLI         : LexerLib.CLI.S)
-            (Self_lexing : Self_lexing.S with type token = Token'.t):
+            (Self_tokens : Self_tokens.S with type token = Token'.t) :
   sig
     module Token : Token.S
     type token = Token.t
@@ -29,7 +32,7 @@ module Make (Comments    : Comments.S)
 
     val scan : Lexing.lexbuf -> (token, message) Stdlib.result
 
-    val get_window : (unit -> window option) ref
+    val get_window : unit -> window option
 
     val clear : unit -> unit
 

@@ -10,6 +10,8 @@ features `tuples`, `lists` and `sets`.
 
 ## Tuples
 
+<Syntax syntax="pascaligo">
+
 Tuples gather a given number of values in a specific order and those
 values, called *components*, can be retrieved by their index
 (position).  Probably the most common tuple is the *pair*. For
@@ -21,6 +23,49 @@ for example, we cannot add an extra component to a pair and obtain a
 triple of the same type: `(x,y)` has always a different type from
 `(x,y,z)`, whereas `(y,x)` might have the same type as `(x,y)`.
 
+</Syntax>
+<Syntax syntax="cameligo">
+
+Tuples gather a given number of values in a specific order and those
+values, called *components*, can be retrieved by their index
+(position).  Probably the most common tuple is the *pair*. For
+example, if we were storing coordinates on a two dimensional grid we
+might use a pair `(x,y)` to store the coordinates `x` and `y`. There
+is a *specific order*, so `(y,x)` is not equal to `(x,y)` in
+general. The number of components is part of the type of a tuple, so,
+for example, we cannot add an extra component to a pair and obtain a
+triple of the same type: `(x,y)` has always a different type from
+`(x,y,z)`, whereas `(y,x)` might have the same type as `(x,y)`.
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+Tuples gather a given number of values in a specific order and those
+values, called *components*, can be retrieved by their index
+(position).  Probably the most common tuple is the *pair*. For
+example, if we were storing coordinates on a two dimensional grid we
+might use a pair `(x,y)` to store the coordinates `x` and `y`. There
+is a *specific order*, so `(y,x)` is not equal to `(x,y)` in
+general. The number of components is part of the type of a tuple, so,
+for example, we cannot add an extra component to a pair and obtain a
+triple of the same type: `(x,y)` has always a different type from
+`(x,y,z)`, whereas `(y,x)` might have the same type as `(x,y)`.
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+Tuples gather a given number of values in a specific order and those
+values, called *components*, can be retrieved by their index
+(position).  Probably the most common tuple is the *pair*. For
+example, if we were storing coordinates on a two dimensional grid we
+might use a pair `[x, y]` to store the coordinates `x` and `y`. There
+is a *specific order*, so `[y, x]` is not equal to `[x, y]` in
+general. The number of components is part of the type of a tuple, so,
+for example, we cannot add an extra component to a pair and obtain a
+triple of the same type: `[x, y]` has always a different type from
+`[x, y, z]`, whereas `[y, x]` might have the same type as `[x, y]`.
+
+</Syntax>
 Like records, tuple components can be of arbitrary types.
 
 ### Defining Tuples
@@ -55,6 +100,15 @@ let full_name : full_name = ("Alice", "Johnson") // Optional parentheses
 type full_name = (string, string);  // Alias
 
 let full_name : full_name = ("Alice", "Johnson");
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=tuple
+type full_name = [string, string];  // Alias
+
+let full_name: full_name = ["Alice", "Johnson"];
 ```
 
 </Syntax>
@@ -105,6 +159,29 @@ Notice that we use the underscore to indicate that we ignore the last element
 of the tuple.
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+### Destructuring
+
+If we want to get the first and last name of the `full_name` type, we can use
+destructuring. Destructuring a tuple allows you to give names to the elements
+inside the tuple.
+
+```jsligo group=tuple
+let [first_name, last_name]: full_name = full_name;
+```
+
+This also works in functions:
+
+```jsligo group=tuple
+let first_name = ([first_name, _]: full_name):string => first_name;
+let alice = first_name(full_name);
+```
+
+Notice that we use the underscore to indicate that we ignore the last element
+of the tuple.
+
+</Syntax>
 
 
 ### Accessing Components
@@ -137,6 +214,13 @@ let first_name : string = full_name.0
 
 ```reasonligo group=tuple
 let first_name : string = full_name[0];
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=tuple
+let first_name: string = full_name[0];
 ```
 
 </Syntax>
@@ -179,6 +263,14 @@ let my_list : int list = [1; 2; 2] // The head is 1
 ```reasonligo group=lists
 let empty_list : list (int) = [];
 let my_list : list (int) = [1, 2, 2]; // The head is 1
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=lists
+let empty_list: list<int> = list([]);
+let my_list: list<int> = list([1, 2, 2]); // The head is 1
 ```
 
 </Syntax>
@@ -226,6 +318,17 @@ let larger_list : list (int) = [5, ...my_list]; // [5,1,2,2]
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+In JsLIGO, the *cons operator* is infix and noted `, ...`. It is
+not symmetric: on the left lies the element to cons, and, on the
+right, a list on which to cons.
+
+```jsligo group=lists
+let larger_list: list<int> = list([5, ...my_list]); // [5,1,2,2]
+```
+
+</Syntax>
 
 ### Accessing list element
 
@@ -254,6 +357,14 @@ let tail : int list option = List.tail_opt my_list // [2;2]
 ```reasonligo group=lists
 let head : option (int) = List.head_opt (my_list); // 1
 let tail : option (list (int)) = List.tail_opt (my_list); // [2,2]
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=lists
+let head: option<int> = List.head_opt(my_list); // 1
+let tail: option<list<int>> = List.tail_opt(my_list); // [2,2]
 ```
 
 </Syntax>
@@ -317,6 +428,16 @@ let iter_op = (l : list (int)) : unit => {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=lists
+let iter_op = (l: list<int>): unit => {
+  let predicate = (i: int): unit => assert(i > 3);
+  List.iter(predicate, l);
+};
+```
+
+</Syntax>
 
 
 
@@ -359,6 +480,16 @@ let increment = (i : int) : int => i + 1;
 
 // Creates a new list with all elements incremented by 1
 let plus_one : list (int) = List.map (increment, larger_list);
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=lists
+let increment = (i: int): int => i + 1;
+
+// Creates a new list with all elements incremented by 1
+let plus_one: list<int> = List.map(increment, larger_list);
 ```
 
 </Syntax>
@@ -411,6 +542,14 @@ let sum_of_elements : int = List.fold_left (sum, 0, my_list);
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=lists
+let sum = ([result, i]: [int, int]): int => result + i;
+let sum_of_elements: int = List.fold (sum, my_list, 0);
+```
+
+</Syntax>
 
 
 ## Sets
@@ -451,6 +590,16 @@ In ReasonLIGO, the empty set is denoted by the predefined value
 
 ```reasonligo group=sets
 let my_set : set (int) = Set.empty;
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+In JsLIGO, the empty set is denoted by the predefined value
+`Set.empty`.
+
+```jsligo group=sets
+let my_set: set<int> = Set.empty;
 ```
 
 </Syntax>
@@ -521,6 +670,24 @@ gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.religo my_set
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=sets
+let my_set: set<int> =
+  Set.add(3, Set.add(2, Set.add(2, Set.add(1, Set.empty as set<int>))));
+```
+
+You can check that `2` is not repeated in `my_set` by using the LIGO
+compiler like this (the output will sort the elements of the set, but
+that order is not significant for the compiler):
+
+```shell
+ligo evaluate-value
+gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.jsligo my_set
+# Outputs: { 3 ; 2 ; 1 }
+```
+
+</Syntax>
 
 
 ### Set Membership
@@ -557,6 +724,16 @@ let contains_3 : bool = Set.mem (3, my_set);
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+In JsLIGO, the predefined predicate `Set.mem` tests for membership
+in a set as follows:
+
+```jsligo group=sets
+let contains_3: bool = Set.mem(3, my_set);
+```
+
+</Syntax>
 
 
 
@@ -587,6 +764,13 @@ let cardinal : nat = Set.size my_set
 
 ```reasonligo group=sets
 let cardinal : nat = Set.size (my_set);
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=sets
+let cardinal: nat = Set.size(my_set);
 ```
 
 </Syntax>
@@ -656,6 +840,18 @@ let smaller_set : set (int) = Set.remove (3, my_set);
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+In JsLIGO, we can use the predefined functions `Set.add` and
+`Set.remove`. We update a given set by creating another one, with or
+without some elements.
+
+```jsligo group=sets
+let larger_set: set<int> = Set.add(4, my_set);
+let smaller_set: set<int> = Set.remove(3, my_set);
+```
+
+</Syntax>
 
 
 
@@ -712,6 +908,16 @@ let iter_op (s : int set) : unit =
 let iter_op = (s : set (int)) : unit => {
   let predicate = (i : int) => assert (i > 3);
   Set.iter (predicate, s);
+};
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=sets
+let iter_op = (s: set<int>): unit => {
+  let predicate = (i: int): unit => assert(i > 3);
+  Set.iter(predicate, s);
 };
 ```
 
@@ -812,6 +1018,14 @@ let sum_of_elements : int = Set.fold sum my_set 0
 ```reasonligo group=sets
 let sum = ((acc, i) : (int, int)) : int => acc + i;
 let sum_of_elements : int = Set.fold (sum, my_set, 0);
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=sets
+let sum = ([acc, i]: [int, int]): int => acc + i;
+let sum_of_elements: int = Set.fold(sum, my_set, 0);
 ```
 
 </Syntax>

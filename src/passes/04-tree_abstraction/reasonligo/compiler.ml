@@ -699,7 +699,7 @@ fun cases ->
   | (PPar { value = { inside = PRecord record; _} ;_}, expr), [] ->
     let (inj, _loc) = r_split record in
     let aux : CST.field_pattern CST.reg -> (label * ty_expr binder,_) result = fun field ->
-      let { field_name ; eq=_ ; pattern } : CST.field_pattern = field.value in 
+      let { field_name ; eq=_ ; pattern } : CST.field_pattern = field.value in
       match pattern with
       | CST.PVar var ->
         let (name, loc) = r_split var in
@@ -831,6 +831,8 @@ and compile_declaration : CST.declaration -> _ = fun decl ->
     let (alias,_) = r_split alias in
     let binders,_ = List.Ne.split @@ List.Ne.map r_split @@ npseq_to_ne_list binders in
     return_1 region @@ AST.Module_alias {alias ; binders}
+  | Directive _ -> ok []
+
   | ConstDecl {value = (_kwd_let, kwd_rec, let_binding, attributes); region} ->
     match let_binding with
     | { binders ; let_rhs } -> (
@@ -868,7 +870,6 @@ and compile_declaration : CST.declaration -> _ = fun decl ->
         return region @@ List.map aux lst
       )
     )
-
 
 and compile_module : CST.ast -> _ result = fun t ->
     let%bind lst = bind_map_list compile_declaration @@ nseq_to_list t.decl in

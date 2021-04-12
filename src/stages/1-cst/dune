@@ -4,6 +4,7 @@
   (libraries
     cst_cameligo
     cst_pascaligo
-    cst_reasonligo)
+    cst_reasonligo
+    cst_jsligo)
   (preprocess
     (pps ppx_let bisect_ppx --conditional)))

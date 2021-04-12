@@ -90,6 +90,35 @@ let main = ((action, store) : (parameter, storage)) : return => {
 };
 `;
 
+const JSLIGO_EXAMPLE = `
+type storage = int;
+
+type parameter =
+| ["Increment", int]
+| ["Decrement", int]
+| ["Reset"];
+
+type return_ = [list <operation>, storage];
+
+/* Two entrypoints */
+
+let add = ([store, delta] : [storage, int]) : storage => store + delta;
+let sub = ([store, delta] : [storage, int]) : storage => store - delta;
+
+/* Main access point that dispatches to the entrypoints according to
+   the smart contract parameter. */
+
+let main = ([action, store] : [parameter, storage]) : return_ => {
+ return [
+   (list([]) as list <operation>),    // No operations
+   (match (action, {
+    Increment: (n: int) => add ([store, n]),
+    Decrement: (n: int) => sub ([store, n]),
+    Reset:     ()  => 0})
+  ]
+};
+`;
+
 
 function CodeExamples (props) {
   const {
@@ -110,6 +139,7 @@ function CodeExamples (props) {
     { label: 'PascaLIGO', value: 'pascaligo', },
     { label: 'CameLIGO', value: 'cameligo', },
     { label: 'ReasonLIGO', value: 'reasonligo', },
+    { label: 'JsLIGO (experimental)', value: 'jsligo', },
   ]
 }>
         <TabItem value="pascaligo">
@@ -146,6 +176,22 @@ function CodeExamples (props) {
         <TabItem value="reasonligo">
 
         <Highlight {...defaultProps} language="reasonligo" code={REASONLIGO_EXAMPLE} theme={prismTheme}>
+            {({ className, style, tokens, getLineProps, getTokenProps }) => (
+              <pre className={className} style={style}>
+                {tokens.map((line, i) => (
+                  <div {...getLineProps({ line, key: i })}>
+                    {line.map((token, key) => (
+                      <span {...getTokenProps({ token, key })} />
+                    ))}
+                  </div>
+                ))}
+              </pre>
+            )}
+          </Highlight>
+        </TabItem>
+        <TabItem value="jsligo">
+
+        <Highlight {...defaultProps} language="jsligo" code={JSLIGO_EXAMPLE} theme={prismTheme}>
             {({ className, style, tokens, getLineProps, getTokenProps }) => (
               <pre className={className} style={style}>
                 {tokens.map((line, i) => (

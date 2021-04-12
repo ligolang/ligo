@@ -3,6 +3,6 @@ let main = (p: bool,s: unit) => {
   ([]: list (operation), s);
 };
 
-let some = (o : option (unit)) => {
-  assert_some (o)
+let some = (o : option(unit)) => {
+  assert_some(o)
 };

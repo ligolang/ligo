@@ -14,6 +14,8 @@ values of type `tez` are units of measure of Tezos tokens.
     languages, for example, `10`, `-6` and `0`, but there is only one
     canonical zero: `0` (so, for instance, `-0` and `00` are invalid).
 
+<Syntax syntax="pascaligo">
+
   * Natural numbers are written as digits follwed by the suffix `n`,
     like so: `12n`, `0n`, and the same restriction on zero as integers
     applies: `0n` is the only way to specify the natural zero.
@@ -27,6 +29,43 @@ values of type `tez` are units of measure of Tezos tokens.
 
 Note that large integral values can be expressed using underscores to
 separate groups of digits, like `1_000mutez` or `0.000_004tez`.
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+  * Natural numbers are written as digits follwed by the suffix `n`,
+    like so: `12n`, `0n`, and the same restriction on zero as integers
+    applies: `0n` is the only way to specify the natural zero.
+
+  * Tezos tokens can be specified using literals of three kinds:
+      * units of millionth of `tez`, using the suffix `mutez` after a
+        natural literal, like `10000mutez` or `0mutez`;
+      * units of `tez`, using the suffix `tz` or `tez`, like `3tz` or
+        `3tez`;
+      * decimal amounts of `tz` or `tez`, like `12.3tz` or `12.4tez`.
+
+Note that large integral values can be expressed using underscores to
+separate groups of digits, like `1_000mutez` or `0.000_004tez`.
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+  * Natural numbers are written as digits follwed by the annotation `as nat`,
+    like so: `12 as nat`, `0 as nat`, and the same restriction on zero as 
+    integers applies: `0 as nat` is the only way to specify the natural zero.
+
+  * Tezos tokens can be specified using literals of three kinds:
+      * units of millionth of `tez`, using the annotation `as mutez` after a
+        natural literal, like `10000 as mutez` or `0 as mutez`;
+      * units of `tez`, using the annotation `as tez`, like `3 as tez`;
+      * decimal amounts of `tez` are not supported by JsLIGO, instead the 
+        amount should be written as `mutez`.
+      
+
+Note that large integral values can be expressed using underscores to
+separate groups of digits, like `1_000 as mutez`.
+
+</Syntax>
 
 ## Addition
 
@@ -132,11 +171,41 @@ let g : int = 1_000_000;
 > Pro tip: you can use underscores for readability when defining large
 > numbers:
 >```reasonligo
->let sum : tex = 100_000mutez;
+>let sum : tez = 100_000mutez;
 >```
 
 </Syntax>
+<Syntax syntax="jsligo">
 
+```jsligo group=a
+// int + int yields int
+let a: int = 5 + 10;
+
+// nat + int yields int
+let b: int = (5 as nat) + 10;
+
+// tez + tez yields tez
+let c: tez = (5 as mutez) + (1 as tez);
+
+// tez + int or tez + nat is invalid:
+// let d : tez = (5 as mutez) + (10 as nat);
+
+// two nats yield a nat
+let e: nat = (5 as nat) + (10 as nat);
+
+// nat + int yields an int: invalid
+// let f : nat = (5 as nat) + 10;
+
+let g: int = 1_000_000;
+```
+
+> Pro tip: you can use underscores for readability when defining large
+> numbers:
+>```jsligo
+>let sum : tez = 100_000 as mutez;
+>```
+
+</Syntax>
 
 ## Subtraction
 
@@ -190,6 +259,21 @@ let d : tez = 5mutez - 1mutez;
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=b
+let a: int = 5 - 10;
+
+// Subtraction of two nats yields an int
+let b: int = (5 as nat) - (2 as nat);
+
+// Therefore the following is invalid
+// let c : nat = (5 as nat) - (2 as nat);
+
+let d: tez = (5 as mutez) - (1 as mutez);
+```
+
+</Syntax>
 
 
 
@@ -231,6 +315,17 @@ let c : tez = 5n * 5mutez;
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=c
+let a: int = 5 * 5;
+let b: nat = (5 as nat) * (5 as nat);
+
+// You can also multiply `nat` and `tez`
+let c: tez = (5 as nat) * (5 as mutez);
+```
+
+</Syntax>
 
 
 ## Euclidean Division
@@ -264,6 +359,15 @@ let c : nat = 10mutez / 3mutez
 let a : int = 10 / 3;
 let b : nat = 10n / 3n;
 let c : nat = 10mutez / 3mutez;
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=d
+let a: int = 10 / 3;
+let b: nat = (10 as nat) / (3 as nat);
+let c: nat = (10 as mutez) / (3 as mutez);
 ```
 
 </Syntax>
@@ -312,6 +416,25 @@ let rem2 : nat = c mod b;  // 3
 let d : nat = 9n;
 let rem3 : nat = c mod d;  // 3
 let rem4 : nat = a mod d;  // 3
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+> The behaviour of the `%` operator in JsLIGO is different from JavaScript. 
+> In JsLIGO, `%` is a modulus operator and in JavaScript it's a remainder 
+> operator. In the case of positive numbers everything is the same, but
+> not with negative numbers.
+ 
+```jsligo group=d
+let a: int = 120;
+let b: int = 9;
+let rem1: nat = a % b;  // 3
+let c: nat = 120 as nat;
+let rem2: nat = c % b;  // 3
+let d: nat = 9 as nat;
+let rem3: nat = c % d;  // 3
+let rem4: nat = a % d;  // 3
 ```
 
 </Syntax>
@@ -364,6 +487,20 @@ let ediv4 : option((int , nat)) = ediv(a, d);  // Some (7, 2)
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=f
+let a: int = 37;
+let b: int = 5;
+let ediv1 : option<[int , nat]> = ediv(a, b);  // Some (7, 2)
+let c: nat = 37 as nat;
+let ediv2: option<[int , nat]> = ediv(c, b);  // Some (7, 2)
+let d: nat = 5 as nat;
+let ediv3: option<[nat , nat]> = ediv(c, d);  // Some (7, 2)
+let ediv4: option<[int , nat]> = ediv(a, d);  // Some (7, 2)
+```
+
+</Syntax>
 
 
 ## From `int` to `nat` and back
@@ -395,6 +532,14 @@ let b : nat = abs (1);
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=e
+let a: int = int(1 as nat);
+let b: nat = abs(1);
+```
+
+</Syntax>
 
 
 ## Checking a `nat`
@@ -423,6 +568,13 @@ let is_a_nat : nat option = Michelson.is_nat (1)
 
 ```reasonligo group=e
 let is_a_nat : option (nat) = Michelson.is_nat (1);
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=e
+let is_a_nat: option<nat> = Michelson.is_nat(1);
 ```
 
 </Syntax>

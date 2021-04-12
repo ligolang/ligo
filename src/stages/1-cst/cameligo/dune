@@ -2,7 +2,8 @@
   (name cst_cameligo)
   (public_name ligo.cst.cameligo)
   (libraries
-    ;; Ligo
+    ;; Vendors
+    LexerLib
     simple-utils
     ;; Third party
     hex

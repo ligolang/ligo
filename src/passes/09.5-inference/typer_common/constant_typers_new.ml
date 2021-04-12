@@ -21,6 +21,23 @@ module Operators_types = struct
                 [bls12_381_g2;bls12_381_g2;bls12_381_g2] ;
                 [bls12_381_fr;bls12_381_fr;bls12_381_fr] ;
               ]
+
+let tc_polymorphic_addargs  a b c = 
+tc "arguments for (+)"
+  ~bound:[] ~constraints:[] ()
+  [a;b;c] [ [string;string;string] ; 
+            [nat;nat;nat] ; 
+            [int;int;int] ; 
+            [nat;int;int] ;
+            [int;nat;int] ;
+            [timestamp;int;timestamp] ;
+            [int;timestamp;timestamp] ;
+            [mutez;mutez;mutez] ;
+            [bls12_381_g1;bls12_381_g1;bls12_381_g1] ;
+            [bls12_381_g2;bls12_381_g2;bls12_381_g2] ;
+            [bls12_381_fr;bls12_381_fr;bls12_381_fr] ;
+          ]    
+
   let tc_subarg   a b c = 
     tc "arguments for (-)"
       ~bound:[] ~constraints:[] ()
@@ -261,6 +278,7 @@ module Operators_types = struct
   let t_div          = forall4_tc "a" "b" "c" "d" @@ fun a b c d -> [tc_edivargs a b c d] => tuple2 a b --> c (* TYPECLASS *)
   let t_mod          = forall4_tc "a" "b" "c" "d" @@ fun a b c d -> [tc_edivargs a b c d] => tuple2 a b --> d (* TYPECLASS *)
   let t_add          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_addargs a b c] => tuple2 a b --> c (* TYPECLASS *)
+  let t_polymorphic_add  = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_polymorphic_addargs a b c] => tuple2 a b --> c (* TYPECLASS *)
   let t_set_mem      = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple2 a (set a) --> bool
   let t_set_add      = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple2 a (set a) --> set a
   let t_set_remove   = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple2 a (set a) --> set a
@@ -395,5 +413,6 @@ module Operators_types = struct
     | C_SELF_ADDRESS        -> ok @@ t_self_address;
     | C_IMPLICIT_ACCOUNT    -> ok @@ t_implicit_account;
     | C_SET_DELEGATE        -> ok @@ t_set_delegate ;
+    | C_POLYMORPHIC_ADD     -> ok @@ t_polymorphic_add ;
     | c                     -> fail (corner_case (Format.asprintf "Typer not implemented for constant %a" Ast_typed.PP.constant' c))
 end

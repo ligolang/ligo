@@ -60,7 +60,7 @@ type trace = cond list
        (#include);
      * the field [incl] is the file system's path to the the
        current input file;
-     * the field [imp] is a list of (filename,module)
+     * the field [import] is a list of (filename, module) imports
        (#import);
      *)
 
@@ -86,7 +86,7 @@ type state = {
   out    : Buffer.t;
   chans  : in_channel list;
   incl   : file_path list;
-  imp    : (file_path * module_name) list
+  import : (file_path * module_name) list;
 }
 
 (* Directories *)
@@ -249,14 +249,14 @@ let rec last_mode = function
 
 (* Finding a file to #include *)
 
-let rec find base = function
+let rec find file_path = function
          [] -> None
 | dir::dirs ->
     let path =
-      if dir = "." || dir = "" then base
-      else dir ^ Filename.dir_sep ^ base in
+      if dir = "." || dir = "" then file_path
+      else dir ^ Filename.dir_sep ^ file_path in
     try Some (path, open_in path) with
-      Sys_error _ -> find base dirs
+      Sys_error _ -> find file_path dirs
 
 let find dir file dirs =
   let path =
@@ -525,22 +525,22 @@ rule scan state = parse
           let state' = {state with mode=Copy; trace=[]} in
           let state' = scan (push_dir incl_dir state') incl_buf in
           let state  = {state with env=state'.env; chans=state'.chans} in
-          let path   = if path = "" then base
+          let path   = if path = "" || path = "." then base
                        else path ^ Filename.dir_sep ^ base in
           let ()     = print state (sprintf "\n# %i %S 2\n" (line+1) path)
           in scan state lexbuf
         else scan state lexbuf
     | "import" ->
-        let reg, imp_file, imp_name = scan_import state lexbuf in
+        let reg, import_file, imported_module = scan_import state lexbuf in
         if state.mode = Copy then
           let path = mk_path state in
-          let imp_path =
-            match find path imp_file state.config#dirs with
+          let import_path =
+            match find path import_file state.config#dirs with
               Some p -> fst p
-            |   None -> fail state reg (File_not_found imp_file) in
-          let state  = {state with imp = (imp_path,imp_name)::state.imp}
-          in scan state lexbuf
-        else scan state lexbuf
+            | None -> fail state reg (File_not_found import_file) in
+          let state  = {state with import = (import_path, imported_module)::state.import}
+          in (proc_nl state lexbuf; scan state lexbuf)
+        else (proc_nl state lexbuf; scan state lexbuf)
     | "if" ->
         let mode  = expr state lexbuf in
         let mode  = if state.mode = Copy then mode else Skip in
@@ -797,30 +797,32 @@ and preproc state = parse
    that the trace is empty at the end.  Note that we discard the state
    at the end. *)
 
-type message = string Region.reg
+type module_deps = (file_path * module_name) list
+type success     = Buffer.t * module_deps
+type message     = string Region.reg
 
-type preprocessed =
-  (Buffer.t * (file_path * module_name) list,
-   Buffer.t option * message) Stdlib.result
+type result = (success, Buffer.t option * message) Stdlib.result
 
-type 'src preprocessor = config -> 'src -> preprocessed
+type 'src preprocessor = config -> 'src -> result
+
+(* Preprocessing from various sources *)
 
 let from_lexbuf config buffer =
   let path = Lexing.(buffer.lex_curr_p.pos_fname) in
   let state = {
     config;
-    env   = E_AST.Env.empty;
-    mode  = Copy;
-    trace = [];
-    out   = Buffer.create 80;
-    chans = [];
-    incl  = [Filename.dirname path];
-    imp    = [];
+    env    = E_AST.Env.empty;
+    mode   = Copy;
+    trace  = [];
+    out    = Buffer.create 80;
+    chans  = [];
+    incl   = [Filename.dirname path];
+    import = []
   } in
   match preproc state buffer with
     state ->
       List.iter close_in state.chans;
-      Stdlib.Ok (state.out,state.imp)
+      Stdlib.Ok (state.out, state.import)
   | exception Error (buffer, msg) ->
       Stdlib.Error (Some buffer, msg)
 

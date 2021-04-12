@@ -161,6 +161,7 @@ declaration:
 | let_declaration {         Let $1 }
 | module_decl     {  ModuleDecl $1 }
 | module_alias    { ModuleAlias $1 }
+| "<directive>"   {   Directive $1 }
 
 (* Type declarations *)
 
@@ -296,8 +297,8 @@ module_access_t :
     in {region; value} }
 
 module_var_t:
-  module_access_t   { TModA $1 }
-| field_name        { TVar  $1 }
+  module_access_t  { TModA $1 }
+| field_name       { TVar  $1 }
 
 field_decl:
   seq("[@attr]") field_name ":" type_expr {
@@ -439,7 +440,7 @@ ptuple:
     in PTuple {region; value=$1} }
 
 unit:
-  "(" ")" { {region = cover $1 $2; value = ghost, ghost} }
+  "(" ")" { {region = cover $1 $2; value = $1,$2} }
 
 tail:
   sub_pattern { $1 }

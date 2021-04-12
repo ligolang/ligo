@@ -7,6 +7,7 @@ let variant_to_syntax v =
   | Compile.Helpers.PascaLIGO -> "pascaligo"
   | Compile.Helpers.CameLIGO -> "cameligo"
   | Compile.Helpers.ReasonLIGO -> "reasonligo"
+  | Compile.Helpers.JsLIGO -> "jsligo"
 
 let get_declarations_core core_prg =
      let func_declarations  = Compile.Of_core.list_declarations core_prg in

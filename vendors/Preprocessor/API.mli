@@ -47,16 +47,17 @@ type config = <
 >
 
 (* In case of success, a buffer containing the preprocessed input is
-   returned. In case of an error, we return the preprocessed buffer so
-   far. *)
+   returned, together with the list of imported modules and their
+   locations on the file system. In case of an error, we return the
+   preprocessed buffer so far. *)
 
-type message = string Region.reg
+type module_deps = (file_path * module_name) list
+type success     = Buffer.t * module_deps
+type message     = string Region.reg
 
-type preprocessed =
-  (Buffer.t * (file_path * module_name) list,
-   Buffer.t option * message) Stdlib.result
+type result = (success, Buffer.t option * message) Stdlib.result
 
-type 'src preprocessor = config -> 'src -> preprocessed
+type 'src preprocessor = config -> 'src -> result
 
 (* Preprocessing from various sources *)
 

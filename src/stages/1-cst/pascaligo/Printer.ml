@@ -3,6 +3,7 @@
 
 open CST
 
+module Directive = LexerLib.Directive
 module Region = Simple_utils.Region
 open! Region
 
@@ -133,6 +134,12 @@ and print_decl state = function
 | FunDecl     decl -> print_fun_decl     state decl
 | ModuleDecl  decl -> print_module_decl  state decl
 | ModuleAlias decl -> print_module_alias state decl
+| Directive   dir  -> print_directive    state dir
+
+and print_directive state dir =
+  let s =
+    Directive.to_string ~offsets:state#offsets state#mode dir
+  in Buffer.add_string state#buffer s
 
 and print_const_decl state {value; _} =
   let {kwd_const; name; const_type;
@@ -913,12 +920,16 @@ let to_string ~offsets ~mode printer node =
 
 let tokens_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_tokens
+
 let path_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_path
+
 let pattern_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_pattern
+
 let instruction_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_instruction
+
 let type_expr_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_type_expr
 
@@ -969,6 +980,10 @@ and pp_declaration state = function
 | ModuleAlias {value; region} ->
     pp_loc_node  state "ModuleAlias" region;
     pp_mod_alias state value
+| Directive dir ->
+    let region, string = Directive.project dir in
+    pp_loc_node state "Directive" region;
+    pp_node state string
 
 and pp_type_decl state (decl : type_decl) =
   let () =

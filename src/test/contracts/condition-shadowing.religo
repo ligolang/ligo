@@ -1,5 +1,3 @@
-/* TODO : make a test using mutation, not shadowing */
-
 let main = (i: int) => {
   let result = 0;
   if (i == 2) {

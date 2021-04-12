@@ -21,16 +21,19 @@ let insert_es6fun_token tokens =
   (* Unclosed parentheses are used to check if the parentheses are balanced *)
   let rec inner result unclosed_parentheses tokens =
     match tokens with
-      (* Balancing parentheses *)
+    (* Balancing parentheses *)
+
     | (RPAR _ as hd) :: rest ->
       inner (hd :: result) (unclosed_parentheses + 1) rest
 
-      (* let foo = (b: (int, int) => int) => ... *)
+    (* let foo = (b: (int, int) => int) => ... *)
+
     | (LPAR _ as hd) :: (COLON _ as c) :: (Ident _ as i) :: (LPAR _ as l) :: rest
          when unclosed_parentheses = 1 ->
       List.rev_append (l :: i :: c :: es6fun :: hd :: result) rest
 
-      (* let a = (x:int) => x *)
+    (* let a = (x:int) => x *)
+
     | (LPAR _ as hd) :: (ARROW _ as a) :: rest when unclosed_parentheses = 1 ->
       List.rev_append (a :: es6fun :: hd :: result) rest
 
@@ -39,30 +42,36 @@ let insert_es6fun_token tokens =
     | (_ as hd) :: (Constr _ as c) :: rest ->
       List.rev_append (c :: hd :: result) rest
 
-      (* let foo = (a: int) => (b: int) => a + b *)
+    (* let foo = (a: int) => (b: int) => a + b *)
+
     | (_ as hd) :: (ARROW _ as a) :: rest when unclosed_parentheses = 0 ->
       List.rev_append (a :: es6fun :: hd :: result) rest
 
-      (* ((a: int) => a *)
+    (* ((a: int) => a *)
+
     | (LPAR _ as hd) :: (LPAR _ as a) :: rest when unclosed_parentheses = 1 ->
       List.rev_append (a :: es6fun :: hd :: result) rest
 
-      (* let x : (int => int) *)
+    (* let x : (int => int) *)
+
     | (LPAR _ as hd) :: rest when unclosed_parentheses = 0 ->
       List.rev_append (hd :: es6fun :: result) rest
 
-      (* Balancing parentheses *)
+    (* Balancing parentheses *)
+
     | (LPAR _ as hd) :: rest ->
       inner (hd :: result) (unclosed_parentheses - 1) rest
 
-      (* When the arrow '=>' is not part of a function: *)
+    (* When the arrow '=>' is not part of a function: *)
+
     | (RBRACKET _ as hd) :: rest
     | (C_Some _ as hd) :: rest
     | (C_None _ as hd) :: rest
     | (VBAR _ as hd) :: rest ->
       List.rev_append (hd :: result) rest
 
-      (* let foo : int => int = (i: int) => ...  *)
+    (* let foo : int => int = (i: int) => ...  *)
+
     | (COLON _ as hd) :: (Ident _ as i) :: (Let _ as l) :: rest when unclosed_parentheses = 0 ->
       List.rev_append (l :: i :: hd :: es6fun :: result) rest
 
@@ -77,8 +86,8 @@ let process tokens =
   let open Token in
   let rec inner result t =
     match t with
-    | (ARROW _ as a) :: rest ->
-      inner (insert_es6fun_token (a :: result)) rest
+     (ARROW _ as a) :: rest ->
+       inner (insert_es6fun_token (a :: result)) rest
     | hd :: rest -> inner (hd :: result) rest
     | [] -> List.rev result
   in
