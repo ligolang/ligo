@@ -19,11 +19,10 @@ let to_core ~options ~meta c_unit f =
   ok @@ core
 
 let type_file ~options f stx form : (Ast_typed.module_fully_typed * Ast_typed.environment, _) result =
-  let {init_env; _} : Compiler_options.t = options in
   let%bind meta          = Of_source.extract_meta stx f in
   let%bind c_unit,_      = Of_source.compile ~options ~meta f in
   let%bind core          = to_core ~options ~meta c_unit f in
-  let%bind typed,e       = Of_core.compile ~init_env form core in
+  let%bind typed,e       = Of_core.compile ~options:{options with infer = false} form core in
   ok @@ (typed,e)
 
 let to_mini_c ~options f stx env =
@@ -49,13 +48,12 @@ let type_expression_string ~options syntax expression env =
   ok @@ (typed_exp,e)
 
 let type_contract_string ~options syntax expression env =
-  let {infer ; _} : Compiler_options.t = options in
   let%bind meta          = Of_source.make_meta_from_syntax syntax in
   let%bind c_unit, _     = Of_source.compile_string_without_preproc expression in
   let%bind imperative    = Of_c_unit.compile_string ~options ~meta c_unit in
   let%bind sugar         = Of_imperative.compile imperative in
   let%bind core          = Of_sugar.compile sugar in
-  let%bind typed,e       = Of_core.compile ~infer ~init_env:env Env core in
+  let%bind typed,e       = Of_core.compile ~options:{options with init_env = env} Env core in
   ok @@ (typed,core,e)
 
 let type_expression ~options source_file syntax expression env =

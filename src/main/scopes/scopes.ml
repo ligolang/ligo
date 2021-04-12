@@ -9,10 +9,7 @@ type sub_module = { m : Ast_core.module_  ; bindings : bindings_map }
 let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -> ((def_map * scopes), Main_errors.all) result = fun ~with_types ~options core_prg ->
   let make_v_def_from_core = make_v_def_from_core ~with_types  in
   let make_v_def_option_type = make_v_def_option_type ~with_types in
-  let compile =
-    let { init_env ; infer } : Compiler_options.t = options in
-    Compile.Of_core.compile ~infer ~init_env Env
-  in
+  let compile = Compile.Of_core.compile ~options Env in
 
   let rec find_scopes' = fun (i,all_defs,env,scopes,lastloc) (bindings:bindings_map) (e : Ast_core.expression) ->
     match e.expression_content with
