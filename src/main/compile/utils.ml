@@ -22,7 +22,7 @@ let type_file ~options f stx form : (Ast_typed.module_fully_typed * Ast_typed.en
   let%bind meta          = Of_source.extract_meta stx f in
   let%bind c_unit,_      = Of_source.compile ~options ~meta f in
   let%bind core          = to_core ~options ~meta c_unit f in
-  let%bind typed,e       = Of_core.compile ~options:{options with infer = false} form core in
+  let%bind typed,e       = Of_core.compile ~options form core in
   ok @@ (typed,e)
 
 let to_mini_c ~options f stx env =
