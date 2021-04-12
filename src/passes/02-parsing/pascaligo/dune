@@ -1,38 +1,21 @@
-;; --------------------------------------------------------------------
-;; PREPROCESSING
-
-(executable
-  (name PreprocMain)
-  (libraries
-     ;; LIGO
-     lexer_pascaligo
-     ;; Vendors
-     Preprocessor)
-  (modules PreprocMain)
-  (preprocess
-    (pps bisect_ppx --conditional)))
-
-;; --------------------------------------------------------------------
-;; PARSING
-
 ;; Build of the parser for PascaLIGO
 
 (menhir
   (merge_into Parser)
   (modules ParToken Parser)
   (flags -la 1 --table --strict --explain
-         --external-tokens Lexer_pascaligo.Token))
+         --external-tokens Lexing_pascaligo.Token))
 
 ;; Build of the PascaLIGO parser as a library
 
 (library
-  (name parser_pascaligo)
-  (public_name ligo.parser.pascaligo)
+  (name parsing_pascaligo)
+  (public_name ligo.parsing.pascaligo)
   (modules
     Parser ParErr Pretty)
   (libraries
     ;; LIGO
-    lexer_pascaligo
+    lexing_pascaligo
     cst
     ;; Vendors
     simple-utils
@@ -52,8 +35,10 @@
   (name ParserMain)
   (libraries
     ;; LIGO
-    parser_pascaligo
-    Shared_parser
+    preprocessing_pascaligo
+    lexing_pascaligo
+    parsing_shared
+    parsing_pascaligo
     cst
     ;; Third party
     hex)
@@ -98,14 +83,14 @@
 ;; Error messages
 
 (rule
- (targets error.messages)
+ (targets errors.msg)
  (mode (promote (until-clean) (only *)))
- (deps Parser.mly ParToken.mly error.messages.checked-in)
+ (deps Parser.mly ParToken.mly errors.msg.in)
  (action
   (with-stdout-to %{targets}
   (run menhir
        --unused-tokens
-       --update-errors error.messages.checked-in
+       --update-errors errors.msg.in
        --table
        --strict
        --external-tokens Lexer_pascaligo.Token
@@ -114,7 +99,7 @@
        Parser.mly))))
 
 (rule
-  (target error.messages.new)
+  (target errors.msg.new)
   (mode (promote (until-clean) (only *)))
   (action
     (with-stdout-to %{target}
@@ -130,7 +115,7 @@
 
 (rule
   (alias runtest)
-  (deps error.messages error.messages.new)
+  (deps errors.msg errors.msg.new)
   (action
     (run menhir
          --unused-tokens
@@ -140,13 +125,13 @@
          --base Parser.mly
          ParToken.mly
          Parser.mly
-         --compare-errors error.messages.new
-         --compare-errors error.messages)))
+         --compare-errors errors.msg.new
+         --compare-errors errors.msg)))
 
 (rule
  (targets ParErr.ml)
  (mode (promote (until-clean) (only *)))
- (deps Parser.mly ParToken.mly error.messages.checked-in)
+ (deps Parser.mly ParToken.mly errors.msg.in)
  (action
   (with-stdout-to %{targets}
   (run menhir
@@ -157,5 +142,4 @@
        --base Parser.mly
        ParToken.mly
        Parser.mly
-       --compile-errors error.messages.checked-in))))
-
+       --compile-errors errors.msg.in))))

@@ -75,7 +75,8 @@ Prism.languages = {
       /(^|[^\\])\/\*[\s\S]*?\*\//,
       /\(\*[\s\S]*?\*\)/,   
       /\/\/.*/   
-    ]}
+    ]},
+  jsligo: Prism.languages.typescript
 };
 
 

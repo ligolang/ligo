@@ -4,7 +4,9 @@
   (libraries
     cameligo
     pascaligo
-    reasonligo)
+    reasonligo
+    jsligo
+    )
   (preprocess
     (pps
       ppx_let

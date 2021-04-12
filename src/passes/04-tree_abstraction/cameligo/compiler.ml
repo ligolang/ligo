@@ -694,7 +694,7 @@ fun cases ->
   | (PPar { value = { inside = PRecord record; _} ;_}, expr), [] ->
     let (inj, _loc) = r_split record in
     let aux : CST.field_pattern CST.reg -> (label * ty_expr binder,_) result = fun field ->
-      let { field_name ; eq=_ ; pattern } : CST.field_pattern = field.value in 
+      let { field_name ; eq=_ ; pattern } : CST.field_pattern = field.value in
       match pattern with
       | CST.PVar var ->
         let (name, loc) = r_split var in
@@ -832,15 +832,20 @@ and compile_declaration : CST.declaration -> _ = fun decl ->
     let (name,_) = r_split name in
     let%bind type_expr = compile_type_expression type_expr in
     return_1 region @@ AST.Declaration_type  {type_binder=Var.of_name name; type_expr}
+
+  | Directive _ -> ok []
+
   | ModuleDecl {value={name; module_; _};region} ->
-    let (name,_) = r_split name in
-    let%bind module_ = compile_module module_ in
-    return_1 region @@ AST.Declaration_module  {module_binder=name; module_}
+      let name, _ = r_split name in
+      let%bind module_ = compile_module module_ in
+      let ast = AST.Declaration_module  {module_binder=name; module_}
+      in return_1 region ast
+
   | ModuleAlias {value={alias; binders; _};region} ->
     let (alias,_)   = r_split alias in
     let binders,_ = List.Ne.split @@ List.Ne.map r_split @@ npseq_to_ne_list binders in
     return_1 region @@ AST.Module_alias {alias; binders}
-  | Let {value = (_kwd_let, kwd_rec, let_binding, attributes); region} -> 
+  | Let {value = (_kwd_let, kwd_rec, let_binding, attributes); region} ->
     match let_binding with
     | { binders ; let_rhs } -> (
       let (pattern,arg) = binders in
@@ -879,6 +884,7 @@ and compile_declaration : CST.declaration -> _ = fun decl ->
       )
     )
 
-and compile_module : CST.ast -> _ result = fun t ->
+and compile_module : CST.ast -> _ result =
+  fun t ->
     let%bind lst = bind_map_list compile_declaration @@ nseq_to_list t.decl in
     ok @@ List.flatten lst

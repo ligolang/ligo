@@ -58,6 +58,46 @@ ligo evaluate-value gitlab-pages/docs/language-basics/src/variables-and-constant
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+> In the experimental version of JsLIGO, constants are not enforced but will 
+> be in the future, to match JavaScript's behaviour.
+
+```jsligo group=a
+const age: int = 25;
+```
+
+Unlike the other syntaxes, JsLIGO doesn't allow variable names to be reused in the same block scope:
+
+```jsligo skip
+let x = (a: int): int => {
+  const age: int = 25;
+  const age: int = 3; // will give an error
+};
+```
+
+However, the following does work:
+
+```jsligo group=d
+let x = (a: int): int => {
+  const age: int = 25;
+  {
+     const age: int = 3; // does not give an error
+     return age;
+  }
+};
+```
+
+> This is not yet enforced in the experimental version of JsLIGO, but will be in the future.
+
+You can evaluate the constant definition above using the following CLI
+command:
+```shell
+ligo evaluate-value gitlab-pages/docs/language-basics/src/variables-and-constants/const.jsligo age
+# Outputs: 25
+```
+
+</Syntax>
 
 
 ## Variables
@@ -137,6 +177,35 @@ like this:
 ligo run-function gitlab-pages/docs/language-basics/src/variables-and-constants/add.religo add '(1,1)'
 # Outputs: 2
 ```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+Variables, unlike constants, are *mutable*. 
+
+> ⚠️ Please be wary that mutation only works within the function scope
+> itself, values outside of the function scope will not be
+> affected. In other words, when a function is called, its arguments
+> are copied, *as well as the environment*. Any side-effect to that
+> environment is therefore lost when the function returns.
+
+
+```jsligo group=b
+let add = (a: int, b: int): int => {
+  let c = a;
+  c = c + b;
+  return c
+}
+```
+
+You can run the `add` function defined above using the LIGO compiler
+like this:
+
+```shell
+ligo run-function gitlab-pages/docs/language-basics/src/variables-and-constants/add.jsligo add '(1,1)'
+# Outputs: 2
+```
+
 
 </Syntax>
 

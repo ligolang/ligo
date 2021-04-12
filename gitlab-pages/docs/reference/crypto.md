@@ -17,6 +17,9 @@ val blake2b : bytes -> bytes
 <SyntaxTitle syntax="reasonligo">
 let blake2b: bytes => bytes
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let blake2b: (b: bytes) => bytes
+</SyntaxTitle>
 
 Runs the [blake2b hash algorithm](https://en.wikipedia.org/wiki/BLAKE_(hash_function)#BLAKE2)
 over the given `bytes` data and returns a `bytes` representing the hash.
@@ -48,6 +51,13 @@ let hasherman_blake = (s: bytes) => Crypto.blake2b(s);
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let hasherman_blake = (s: bytes):bytes => Crypto.blake2b(s);
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function sha256 : bytes -> bytes
@@ -57,6 +67,9 @@ val sha256 : bytes -> bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let sha256: bytes => bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let sha256: (b: bytes) => bytes
 </SyntaxTitle>
 
 Runs the [sha256 hash algorithm](https://en.wikipedia.org/wiki/SHA-2) over the given
@@ -88,6 +101,13 @@ let hasherman = (s: bytes): bytes => Crypto.sha256(s);
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let hasherman = (s: bytes): bytes => Crypto.sha256(s);
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function sha512 : bytes -> bytes
@@ -97,6 +117,9 @@ val sha512 : bytes -> bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let sha512: bytes => bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let sha512: (b: bytes) => bytes
 </SyntaxTitle>
 
 Runs the [sha512 hash algorithm](https://en.wikipedia.org/wiki/SHA-2) over the given
@@ -127,6 +150,13 @@ let hasherman512 = (s: bytes) => Crypto.sha512(s);
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let hasherman512 = (s: bytes): bytes => Crypto.sha512(s);
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function hash_key : key -> key_hash
@@ -136,6 +166,9 @@ val hash_key : key -> key_hash
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let hash_key: key => key_hash
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let hash_key: (k: key) => key_hash
 </SyntaxTitle>
 
 Hashes a key for easy comparison and storage.
@@ -181,6 +214,21 @@ let check_hash_key = ((kh1, k2): (key_hash, key)) : (bool, key_hash) => {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let check_hash_key = ([kh1, k2]: [key_hash, key]) : [bool, key_hash] => {
+  let kh2 : key_hash = Crypto.hash_key(k2);
+  if (kh1 == kh2) {
+    return [true, kh2];
+  }
+  else {
+    return [false, kh2];
+  };
+};
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function check : key -> signature -> bytes -> bool
@@ -190,6 +238,9 @@ val check : key -> signature -> bytes -> bool
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let check: (key, signature, bytes) => bool
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let check: (k: key, s: signature, b: bytes) => bool
 </SyntaxTitle>
 
 Check that a message has been signed by a particular key.
@@ -224,6 +275,15 @@ let check_signature (pk, signed, msg: key * signature * bytes) : bool =
 ```reasonligo
 let check_signature = ((pk, signed, msg): (key, signature, bytes)) : bool => {
   Crypto.check(pk, signed, msg);
+};
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let check_signature = ([pk, signed, msg]: [key, signature, bytes]) : bool => {
+  return Crypto.check(pk, signed, msg);
 };
 ```
 

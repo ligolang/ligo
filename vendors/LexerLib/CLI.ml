@@ -15,7 +15,7 @@ module type COMMENTS =
     val line  : line_comment option
   end
 
-module type PREPROC_CLI =
+module type PREPROCESSOR_CLI =
   sig
     include COMMENTS
 
@@ -43,14 +43,14 @@ module type PREPROC_CLI =
 
 module type S =
   sig
-    module Preproc_CLI : PREPROC_CLI
+    module Preprocessor_CLI : PREPROCESSOR_CLI
 
-    val preproc : bool
-    val mode    : [`Byte | `Point]
-    val command : [`Copy | `Units | `Tokens] option
+    val preprocess : bool
+    val mode       : [`Byte | `Point]
+    val command    : [`Copy | `Units | `Tokens] option
 
     type status = [
-      Preproc_CLI.status
+      Preprocessor_CLI.status
     | `Conflict of string * string
     ]
 
@@ -59,9 +59,9 @@ module type S =
 
 (* Parsing the command line options *)
 
-module Make (Preproc_CLI: PREPROC_CLI) : S =
+module Make (Preprocessor_CLI: PREPROCESSOR_CLI) : S =
   struct
-    module Preproc_CLI = Preproc_CLI
+    module Preprocessor_CLI = Preprocessor_CLI
 
     (* Auxiliary functions and modules *)
 
@@ -75,7 +75,7 @@ module Make (Preproc_CLI: PREPROC_CLI) : S =
         "  -u, --units      Print lexical units";
         "  -c, --copy       Print lexemes and markup";
         "      --bytes      Bytes for source locations";
-        "      --preproc    Run the preprocessor"
+        "      --preprocess Run the preprocessor"
       ] in
       begin
         Buffer.add_string buffer (String.concat "\n" options);
@@ -85,15 +85,15 @@ module Make (Preproc_CLI: PREPROC_CLI) : S =
 
     (* Specifying the command-line options a la GNU *)
 
-    let copy     = ref false
-    and tokens   = ref false
-    and units    = ref false
-    and bytes    = ref false
-    and preproc  = ref false
+    let copy       = ref false
+    and tokens     = ref false
+    and units      = ref false
+    and bytes      = ref false
+    and preprocess = ref false
 
-    and help     = ref false
-    and version  = ref false
-    and cli      = ref false
+    and help       = ref false
+    and version    = ref false
+    and cli        = ref false
 
     (* The following has been copied and pasted from the
        implementation of the module [Getopt], under the original
@@ -164,15 +164,15 @@ module Make (Preproc_CLI: PREPROC_CLI) : S =
 
     let specs =
       let open! Getopt in [
-        noshort, "copy",    set copy true, None;
-        noshort, "tokens",  set tokens true, None;
-        noshort, "units",   set units true, None;
-        noshort, "bytes",   set bytes true, None;
-        noshort, "preproc", set preproc true, None;
+        noshort, "copy",       set copy true, None;
+        noshort, "tokens",     set tokens true, None;
+        noshort, "units",      set units true, None;
+        noshort, "bytes",      set bytes true, None;
+        noshort, "preprocess", set preprocess true, None;
 
-        noshort, "cli",     set cli true, None;
-        'h',     "help",    set help true, None;
-        'v',     "version", set version true, None
+        noshort, "cli",        set cli true, None;
+        'h',     "help",       set help true, None;
+        'v',     "version",    set version true, None
         ]
 
      (* Handler of anonymous arguments: those have been handled by a
@@ -199,7 +199,8 @@ module Make (Preproc_CLI: PREPROC_CLI) : S =
        and we finally restore [Sys.argv] from its original copy.
 
        Before parsing the command-line, we assign the status with the
-       status of the previous CLI (here, [Preproc_CLI.status]). *)
+       status of the previous CLI (here,
+       [Preprocessor_CLI.status]). *)
 
     module SSet = Set.Make (String)
 
@@ -209,7 +210,7 @@ module Make (Preproc_CLI: PREPROC_CLI) : S =
       |> add "--copy"
       |> add "--tokens"
       |> add "--units"
-      |> add "--preproc"
+      |> add "--preprocess"
 
       (* The following options are present in all CLI *)
       |> add "--cli"
@@ -223,11 +224,11 @@ module Make (Preproc_CLI: PREPROC_CLI) : S =
     let () = Argv.filter ~opt_wo_arg ~opt_with_arg
 
     type status = [
-      Preproc_CLI.status
+      Preprocessor_CLI.status
     | `Conflict of string * string
     ]
 
-    let status = (Preproc_CLI.status :> status)
+    let status = (Preprocessor_CLI.status :> status)
 
     let status =
       try
@@ -241,11 +242,11 @@ module Make (Preproc_CLI: PREPROC_CLI) : S =
 
     (* Re-exporting immutable fields with their CLI value *)
 
-    let copy    = !copy
-    and tokens  = !tokens
-    and units   = !units
-    and mode    = if !bytes then `Byte else `Point
-    and preproc = !preproc
+    let copy       = !copy
+    and tokens     = !tokens
+    and units      = !units
+    and mode       = if !bytes then `Byte else `Point
+    and preprocess = !preprocess
 
     (* Re-exporting and printing on stdout the CLI options *)
 
@@ -256,7 +257,7 @@ module Make (Preproc_CLI: PREPROC_CLI) : S =
         sprintf "tokens     = %b" tokens;
         sprintf "units      = %b" units;
         sprintf "bytes      = %b" !bytes;
-        sprintf "preproc    = %b" preproc] in
+        sprintf "preprocess = %b" preprocess] in
     begin
       Buffer.add_string buffer (String.concat "\n" options);
       Buffer.add_char   buffer '\n';

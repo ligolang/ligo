@@ -1,0 +1,10 @@
+let main = (i: int): int => {
+  let result = 0;
+  if (i == 2) {
+    let result = 42;
+    return result;
+  } else {
+    let result = 0;
+    return result;
+  };
+};

@@ -150,15 +150,17 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f "@[<hv>Error(s) occurred while executing the contract:@.%a @]"
       (Tezos_client_008_PtEdoTez.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
-    | `Main_preproc e -> Preproc.Errors.error_ppformat ~display_format f e
-    | `Main_parser e -> Parser.Errors.error_ppformat ~display_format f e
+    | `Main_preproc e -> Preprocessing.Errors.error_ppformat ~display_format f e
+    | `Main_parser e -> Parsing.Errors.error_ppformat ~display_format f e
     | `Main_pretty _e -> () (*no error in this pass*)
     | `Main_self_cst_cameligo e -> Self_cst.Cameligo.Errors.error_ppformat ~display_format f e
     | `Main_self_cst_pascaligo e -> Self_cst.Pascaligo.Errors.error_ppformat ~display_format f e
     | `Main_self_cst_reasonligo e -> Self_cst.Reasonligo.Errors.error_ppformat ~display_format f e
+    | `Main_self_cst_jsligo e -> Self_cst.Jsligo.Errors.error_ppformat ~display_format f e
     | `Main_cit_pascaligo e -> Tree_abstraction.Pascaligo.Errors.error_ppformat ~display_format f e
     | `Main_cit_cameligo e -> Tree_abstraction.Cameligo.Errors.error_ppformat ~display_format f e
     | `Main_cit_reasonligo e -> Tree_abstraction.Reasonligo.Errors.error_ppformat ~display_format f e
+    | `Main_cit_jsligo e -> Tree_abstraction.Jsligo.Errors.error_ppformat ~display_format f e
     | `Main_self_ast_imperative e -> Self_ast_imperative.Errors.error_ppformat ~display_format f e
     | `Main_purification e -> Purification.Errors.error_ppformat ~display_format f e
     | `Main_depurification _e -> () (*no error in this pass*)
@@ -323,15 +325,17 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Main_entrypoint_not_a_function -> json_error ~stage:"top-level glue" ~content:(`String "given entrypoint is not a function")
   | `Main_entrypoint_not_found -> json_error ~stage:"top-level glue" ~content:(`String "Missing entrypoint")
 
-  | `Main_preproc e -> Preproc.Errors.error_jsonformat e
-  | `Main_parser e -> Parser.Errors.error_jsonformat e
+  | `Main_preproc e -> Preprocessing.Errors.error_jsonformat e
+  | `Main_parser e -> Parsing.Errors.error_jsonformat e
   | `Main_pretty _ -> `Null (*no error in this pass*)
   | `Main_self_cst_cameligo e -> Self_cst.Cameligo.Errors.error_jsonformat e
   | `Main_self_cst_pascaligo e -> Self_cst.Pascaligo.Errors.error_jsonformat e
   | `Main_self_cst_reasonligo e -> Self_cst.Reasonligo.Errors.error_jsonformat e
+  | `Main_self_cst_jsligo e -> Self_cst.Jsligo.Errors.error_jsonformat e
   | `Main_cit_pascaligo e -> Tree_abstraction.Pascaligo.Errors.error_jsonformat e
   | `Main_cit_cameligo e -> Tree_abstraction.Cameligo.Errors.error_jsonformat e
   | `Main_cit_reasonligo e -> Tree_abstraction.Reasonligo.Errors.error_jsonformat e
+  | `Main_cit_jsligo e -> Tree_abstraction.Jsligo.Errors.error_jsonformat e
   | `Main_self_ast_imperative e -> Self_ast_imperative.Errors.error_jsonformat e
   | `Main_purification e -> Purification.Errors.error_jsonformat e
   | `Main_depurification _ -> `Null (*no error in this pass*)

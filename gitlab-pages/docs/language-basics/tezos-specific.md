@@ -55,6 +55,16 @@ let id_string = (p : string) : option (string) => {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=a
+let id_string = (p: string): option<string> => {
+  let packed: bytes = Bytes.pack(p);
+  return (Bytes.unpack(packed) as option<string>);
+};
+```
+
+</Syntax>
 
 
 ## Hashing Keys
@@ -97,6 +107,16 @@ let check_hash_key (kh1, k2 : key_hash * key) : bool * key_hash =
 let check_hash_key = ((kh1, k2) : (key_hash, key)) : (bool, key_hash) => {
   let kh2 : key_hash = Crypto.hash_key (k2);
   ((kh1 == kh2), kh2);
+};
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=b
+let check_hash_key = ([kh1, k2]: [key_hash, key]): [bool, key_hash] => {
+  let kh2: key_hash = Crypto.hash_key(k2);
+  return [(kh1 == kh2), kh2];
 };
 ```
 
@@ -147,6 +167,15 @@ let check_signature =
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=c
+let check_signature =
+  ([pk, signed, msg]: [key, signature, bytes]): bool =>
+  Crypto.check(pk, signed, msg);
+```
+
+</Syntax>
 
 
 ## Contract's Own Address
@@ -180,6 +209,13 @@ let current_addr : address = Tezos.self_address
 
 ```reasonligo group=d
 let current_addr : address = Tezos.self_address;
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=d
+let current_addr: address = Tezos.self_address;
 ```
 
 </Syntax>
@@ -222,6 +258,17 @@ let origination : (operation, address) = Tezos.create_contract (
   None: option(key_hash),
   3tz,
   "initial_storage")
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=e
+let origination : [operation, address] = Tezos.create_contract (
+  ([p, s]: [nat,string]): [list<operation>, string] => [(list([]) as list<operation>), s],
+  None() as option<key_hash>,
+  3 as tez,
+  "initial_storage");
 ```
 
 </Syntax>

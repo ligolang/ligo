@@ -134,10 +134,10 @@ let%expect_test _ =
 
 let%expect_test "main_parser" =
   let error e = human_readable_error (`Main_parser e) in
-  error (`Parser_generic {value= "yolo"; region= Region.ghost}) ;
+  error (`Parsing_generic {value= "yolo"; region= Region.ghost}) ;
   [%expect {|
     yolo|}] ;
-  error (`Parser_invalid_wild (EVar {value= "yolo"; region= default_region1})) ;
+  error (`Parsing_invalid_wild (EVar {value= "yolo"; region= default_region1})) ;
   [%expect
     {|
   File "a dummy file name", line 20, character 5:

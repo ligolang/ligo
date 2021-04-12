@@ -19,6 +19,9 @@ type address
 <SyntaxTitle syntax="reasonligo">
 type address
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+type address
+</SyntaxTitle>
 
 An untyped address which can refer to a smart contract or account.
 
@@ -30,6 +33,9 @@ type ('key, 'value) big_map
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 type big_map ('key, 'value)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+type big_map &lt;&apos;key, &apos;value&gt;
 </SyntaxTitle>
 
 <Syntax syntax="pascaligo">
@@ -65,6 +71,17 @@ type register = big_map(address, move);
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+The type of a big map from values of type `key` to
+values of type `value` is `big_map<key, value>`.
+
+```jsligo group=big_map
+type move = [int, int];
+type register = big_map<address, move>;
+```
+
+</Syntax>
 
 Be aware that a `big_map` cannot appear inside another `big_map`.
 
@@ -77,6 +94,9 @@ type bool
 <SyntaxTitle syntax="reasonligo">
 type bool
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+type bool
+</SyntaxTitle>
 
 <SyntaxTitle syntax="pascaligo">
 type bytes
@@ -87,7 +107,9 @@ type bytes
 <SyntaxTitle syntax="reasonligo">
 type bytes
 </SyntaxTitle>
-
+<SyntaxTitle syntax="jsligo">
+type bytes
+</SyntaxTitle>
 
 <SyntaxTitle syntax="pascaligo">
 type contract('parameter)
@@ -97,6 +119,9 @@ type 'parameter contract
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 type contract('parameter)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+type contract&lt;&apos;parameter&gt;
 </SyntaxTitle>
 
 A typed contract. 
@@ -112,6 +137,9 @@ type chain_id
 <SyntaxTitle syntax="reasonligo">
 type chain_id
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+type chain_id
+</SyntaxTitle>
 
 The identifier of a chain, used to indicate test or main chains.
 
@@ -122,6 +150,9 @@ type int
 type int
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
+type int
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
 type int
 </SyntaxTitle>
 
@@ -138,6 +169,9 @@ type key
 <SyntaxTitle syntax="reasonligo">
 type key
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+type key
+</SyntaxTitle>
 
 A public cryptographic key.
 
@@ -148,6 +182,9 @@ type key_hash
 type key_hash
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
+type key_hash
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
 type key_hash
 </SyntaxTitle>
 
@@ -162,6 +199,9 @@ type 't list
 <SyntaxTitle syntax="reasonligo">
 type list('t)
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+type list&lt;&apos;t&gt;
+</SyntaxTitle>
 
 A sequence of elements of the same type.
 
@@ -173,6 +213,9 @@ type ('key, 'value) map
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 type map ('key, 'value)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+type map &lt;&apos;key, &apos;value&gt;
 </SyntaxTitle>
 
 <Syntax syntax="pascaligo">
@@ -208,6 +251,17 @@ type register = map (address, move);
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+The type of a map from values of type `key` to
+values of type `value` is `map <key, value>`.
+
+```jsligo group=maps
+type move = [int, int];
+type register = map <address, move>;
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 type nat
@@ -216,6 +270,9 @@ type nat
 type nat
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
+type nat
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
 type nat
 </SyntaxTitle>
 
@@ -232,6 +289,9 @@ type operation
 <SyntaxTitle syntax="reasonligo">
 type operation
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+type operation
+</SyntaxTitle>
 
 An operation emitted by the contract
 
@@ -245,6 +305,9 @@ type 'value set
 <SyntaxTitle syntax="reasonligo">
 type set('value)
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+type set&lt;&apos;value&gt;
+</SyntaxTitle>
 
 <SyntaxTitle syntax="pascaligo">
 type signature
@@ -253,6 +316,9 @@ type signature
 type signature
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
+type signature
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
 type signature
 </SyntaxTitle>
 
@@ -268,6 +334,9 @@ type string
 <SyntaxTitle syntax="reasonligo">
 type string
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+type string
+</SyntaxTitle>
 
 A sequence of characters.
 
@@ -278,6 +347,9 @@ type tez
 type tez
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
+type tez
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
 type tez
 </SyntaxTitle>
 
@@ -292,6 +364,9 @@ type timestamp
 <SyntaxTitle syntax="reasonligo">
 type timestamp
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+type timestamp
+</SyntaxTitle>
 
 A date in the real world.
 
@@ -304,6 +379,9 @@ type unit
 <SyntaxTitle syntax="reasonligo">
 type unit
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+type unit
+</SyntaxTitle>
 
 
 <SyntaxTitle syntax="pascaligo">
@@ -314,6 +392,9 @@ val is_nat: int -> nat option
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let is_nat: int => option(nat)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let is_nat: (i: int) => option&lt;nat&gt;
 </SyntaxTitle>
 
 Convert an `int` to a `nat` if possible.
@@ -329,6 +410,9 @@ val abs: int -> nat
 <SyntaxTitle syntax="reasonligo">
 let abs: int => nat
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let abs: (i: int) => nat
+</SyntaxTitle>
 
 Cast an `int` to `nat`.
 
@@ -340,6 +424,9 @@ val int: nat -> int
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let int: nat => int
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let int: (n: nat) => int
 </SyntaxTitle>
 
 Cast an `nat` to `int`.
@@ -353,6 +440,9 @@ val unit: unit
 <SyntaxTitle syntax="reasonligo">
 let (): unit
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let unit: unit
+</SyntaxTitle>
 
 A helper to create a unit.
 
@@ -365,6 +455,9 @@ val failwith : 'a -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let failwith: 'a => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let failwith: (message: &apos;a) => unit
 </SyntaxTitle>
 
 Cause the contract to fail with an error message or integer. Other types are 
@@ -399,6 +492,15 @@ let main = ((p,s) : (int, unit)) =>
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let main = ([p, s] : [int, unit]): unit => {
+  if (p > 10) { failwith ("Failure."); };
+};
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 `Current.failwith` is deprecated. Use `Tezos.failwith` or `failwith` instead.
 </Syntax>
@@ -415,6 +517,9 @@ val assert : bool -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let assert: bool => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let assert: (condition: bool) => unit
 </SyntaxTitle>
 
 Check if a certain condition has been met. If not the contract will fail.
@@ -456,6 +561,19 @@ let ediv: (mutez, mutez) => option((nat, mutez))
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let ediv: (nat, nat) => option((nat, nat))
+</SyntaxTitle>
+
+<SyntaxTitle syntax="jsligo">
+let ediv: (value: int, divided_by: int) => option&lt;[int, nat]&gt;
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let ediv: (value: mutez, divided_by: nat) => option&lt;[mutez, mutez]&gt;
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let ediv: (value: mutez, divided_by: mutez) => option&lt;[nat, mutez]&gt;
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let ediv: (value: nat, divided_by: nat) => option&lt;[nat, nat]&gt;
 </SyntaxTitle>
 
 Compiles to Michelson `EDIV`, one operation to get both the quotient and remainder of a division. `ediv x y` returns None if `y` is zero, otherwise returns `Some (quotient, remainder)` such that `x = (quotient * y) + remainder` and `0 <= remainder < abs(y)`.

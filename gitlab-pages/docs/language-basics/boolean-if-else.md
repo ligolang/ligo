@@ -35,6 +35,14 @@ let b : bool = false;
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=a
+let a: bool = true;
+let b: bool = false;
+```
+
+</Syntax>
 
 Common operations:
 
@@ -404,6 +412,130 @@ let lte: bool = 4 <= 3;
 </div>
 </Syntax>
 
+
+<Syntax syntax="jsligo">
+<div className="boolean-example-table">
+  <div className="operation">
+    &&
+  </div>
+  <div className="description">
+    Logical and
+  </div>
+  <div className="example">
+
+```jsligo
+let logical_and: bool = true && true;
+```
+
+  </div>
+  <div className="operation">
+    ||
+  </div>
+  <div className="description">
+    Logical or
+  </div>
+  <div className="example">
+
+```jsligo
+let logical_or: bool = false || true;
+```
+
+  </div>
+  <div className="operation">
+    !
+  </div>
+  <div className="description">
+    Logical not
+  </div>
+  <div className="example">
+
+```jsligo
+let logical_not: bool = !false;
+```
+
+  </div>
+  <div className="operation">
+    ==
+  </div>
+  <div className="description">
+    Equals
+  </div>
+  <div className="example">
+
+```jsligo
+let eq: bool = 2 == 3;
+```
+
+  </div>  
+  <div className="operation">
+    !=
+  </div>
+  <div className="description">
+    Not equals
+  </div>
+  <div className="example">
+
+```jsligo
+let not_eq: bool = 2 != 3;
+```
+
+  </div>
+  <div className="operation">
+    &gt;
+  </div>
+  <div className="description">
+    Greater than
+  </div>
+  <div className="example">
+
+```jsligo
+let gt: bool = 4 > 3;
+```
+
+  </div>  
+  <div className="operation">
+    &lt;
+  </div>
+  <div className="description">
+    Less than
+  </div>
+  <div className="example">
+
+```jsligo
+let lt: bool = 4 < 3;
+```
+
+  </div>  
+  <div className="operation">
+    &gt;=
+  </div>
+  <div className="description">
+    Greater than or equal to
+  </div>
+  <div className="example">
+
+```jsligo
+let gte: bool = 4 >= 3;
+```
+
+  </div>    
+  <div className="operation">
+    &lt;=
+  </div>
+  <div className="description">
+    Less than or equal to
+  </div>
+  <div className="example">
+
+```jsligo
+let lte: bool = 4 <= 3;
+```
+
+  </div>    
+</div>
+</Syntax>
+
+
 ## Comparing Values
 
 In LIGO, only values of the same type can be compared. Moreover, not
@@ -442,6 +574,15 @@ let c : bool = (a = b) // true
 let a : string = "Alice";
 let b : string = "Alice";
 let c : bool = (a == b); // true
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=b
+let a: string = "Alice";
+let b: string = "Alice";
+let c: bool = (a == b); // true
 ```
 
 </Syntax>
@@ -492,7 +633,20 @@ let h : bool = (a != b);
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
 
+```jsligo group=c
+let a: int  = 5;
+let b: int  = 4;
+let c: bool = (a == b);
+let d: bool = (a > b);
+let e: bool = (a < b);
+let f: bool = (a <= b);
+let g: bool = (a >= b);
+let h: bool = (a != b);
+```
+
+</Syntax>
 
 ### Comparing tez
 
@@ -524,6 +678,15 @@ let c : bool = (a = b) // false
 let a : tez  = 5mutez;
 let b : tez  = 10mutez;
 let c : bool = (a == b); // false
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=d
+let a: tez  = 5 as mutez;
+let b: tez  = 10 as mutez;
+let c: bool = (a == b); // false
 ```
 
 </Syntax>
@@ -618,4 +781,24 @@ gitlab-pages/docs/language-basics/src/boolean-if-else/cond.religo compare '21n'
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=e
+type magnitude = ["Small"] | ["Large"]; // See variant types.
+
+let compare = (n : nat) : magnitude => {
+  if (n < (10 as nat)) { return Small (); } else { return Large (); };
+};
+```
+
+You can run the `compare` function defined above using the LIGO compiler
+like this:
+```shell
+ligo run-function
+gitlab-pages/docs/language-basics/src/boolean-if-else/cond.religo compare '21n'
+# Outputs: Large
+```
+
+</Syntax>
+
 

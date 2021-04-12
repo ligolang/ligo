@@ -62,6 +62,8 @@ module type TOKEN =
     val is_annot  : token -> bool
     val is_sym    : token -> bool
     val is_eof    : token -> bool
+
+    val support_string_delimiter : char -> bool
   end
 
 (* The functorised interface *)
@@ -169,6 +171,8 @@ module Make (Token : TOKEN) =
       let msg = error_to_string error in
       raise (Error Region.{value=msg;region})
 
+    let support_string_delimiter = Token.support_string_delimiter
+
     (* TOKENS *)
 
     (* Making tokens *)
@@ -179,17 +183,17 @@ module Make (Token : TOKEN) =
       let region = Region.make ~start ~stop in
       let lexeme = thread#to_string in
       let token  = Token.mk_string lexeme region
-      in state#enqueue token
+      in Core.Token token, state
 
     let mk_bytes bytes state buffer =
       let Core.{region; state; _} = state#sync buffer in
       let token = Token.mk_bytes bytes region
-      in state#enqueue token
+      in Core.Token token, state
 
     let mk_int state buffer =
       let Core.{region; lexeme; state} = state#sync buffer in
       match Token.mk_int lexeme region with
-        Ok token -> state#enqueue token
+        Ok token -> Core.Token token, state
       | Error Token.Non_canonical_zero ->
           fail region Non_canonical_zero
 
@@ -201,7 +205,7 @@ module Make (Token : TOKEN) =
       and start = state#pos in
       let Core.{region; lexeme; state} = state#sync buffer in
       match Token.mk_ident lexeme region with
-        Ok token -> state#enqueue token
+        Ok token -> Core.Token token, state
       | Error Token.Valid_prefix (index, tree) ->
           let region = mk_region index start in
           fail region (Valid_prefix tree)
@@ -221,19 +225,19 @@ module Make (Token : TOKEN) =
     let mk_annot state buffer =
       let Core.{region; lexeme; state} = state#sync buffer
       in match Token.mk_annot lexeme region with
-           Ok token -> state#enqueue token
+           Ok token -> Core.Token token, state
          | Error Token.Annotation_length max ->
              fail region (Annotation_length max)
 
     let mk_sym state buffer =
       let Core.{region; lexeme; state} = state#sync buffer in
       let token = Token.mk_sym lexeme region
-      in state#enqueue token
+      in Core.Token token, state
 
     let mk_eof state buffer =
       let Core.{region; state; _} = state#sync buffer in
       let token = Token.eof region
-      in state#enqueue token
+      in Core.Token token, state
 
 (* END HEADER *)
 }
@@ -292,12 +296,13 @@ let client =
     method mk_string = mk_string
     method mk_eof    = lift <@ mk_eof
     method callback  = lift <@ scan
+    method support_string_delimiter = support_string_delimiter
   end
 
 let scan = Core.mk_scan client
 
 (* Style checking *)
-
+(*
 let check_right_context config token next_token lexbuf =
   let pos    = (config#to_region token)#stop in
   let region = Region.make ~start:pos ~stop:pos in
@@ -315,7 +320,7 @@ let check_right_context config token next_token lexbuf =
             else ()
         | _::_ -> ()
   in lift next lexbuf
-
+     *)
 end (* of functor [Make] in HEADER *)
 
 (* END TRAILER *)

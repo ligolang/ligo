@@ -42,6 +42,15 @@ let foo : int = 144;
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+// Demonstrate JsLIGO inclusion statements, see includer.jsligo
+
+let foo: int = 144;
+```
+
+</Syntax>
 
 
 
@@ -76,4 +85,12 @@ let bar : int = foo;
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
 
+```jsligo
+#include "included.jsligo"
+
+let bar: int = foo;
+```
+
+</Syntax>

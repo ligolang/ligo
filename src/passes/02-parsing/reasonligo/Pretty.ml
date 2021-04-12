@@ -6,16 +6,33 @@ module Region = Simple_utils.Region
 open! Region
 open! PPrint
 module Option = Simple_utils.Option
+(*module Directive = LexerLib.Directive*)
 
 let rec print ast =
-  let app decl = group (pp_declaration decl) in
-  separate_map (hardline ^^ hardline) app (Utils.nseq_to_list ast.decl)
+  let decl = Utils.nseq_to_list ast.decl in
+  let decl = List.filter_map pp_declaration decl
+  in separate_map (hardline ^^ hardline) group decl
 
 and pp_declaration = function
-  ConstDecl   decl -> pp_const_decl   decl
-| TypeDecl    decl -> pp_type_decl    decl
-| ModuleDecl  decl -> pp_module_decl  decl
-| ModuleAlias decl -> pp_module_alias decl
+  ConstDecl   decl -> Some (pp_const_decl decl)
+| TypeDecl    decl -> Some (pp_type_decl  decl)
+| ModuleDecl  decl -> Some (pp_module_decl  decl)
+| ModuleAlias decl -> Some (pp_module_alias decl)
+| Directive      _ -> None
+
+(*
+and pp_dir_decl = function
+  Directive.Linemarker {value; _} ->
+    let open Directive in
+    let linenum, file_path, flag_opt = value in
+    let flag =
+      match flag_opt with
+        Some Push -> " 1"
+      | Some Pop  -> " 2"
+      | None      -> "" in
+    let lexeme = Printf.sprintf "# %d %S%s" linenum file_path flag
+    in string lexeme
+*)
 
 and pp_const_decl = function
 | {value = (_,rec_opt, binding, attr); _} ->
@@ -175,8 +192,8 @@ and pp_expr = function
 | ESeq        e -> pp_seq e
 | ECodeInj e -> pp_code_inj e
 
-and pp_case_expr_switch s e = 
-  match e with 
+and pp_case_expr_switch s e =
+  match e with
     EVar _ -> prefix 2 1 s (pp_expr e)
   | _      -> s ^^ pp_expr e
 

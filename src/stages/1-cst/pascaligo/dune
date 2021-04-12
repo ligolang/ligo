@@ -2,7 +2,8 @@
   (name cst_pascaligo)
   (public_name ligo.cst.pascaligo)
   (libraries
-    ;; Ligo
+    ;; Vendors
+    LexerLib
     simple-utils
     ;; Third party
     hex

@@ -12,6 +12,8 @@ module Tree_abstraction : sig
 
   module Reasonligo : Constant
 
+  module Jsligo : Constant
+
 end
 
 module Stacking : sig

@@ -493,6 +493,41 @@ let add loc = typer_2 loc "ADD" @@ fun a b ->
               ]
               [a; b]
 
+let polymorphic_add loc = typer_2 loc "POLYMORPHIC_ADD" @@ fun a b ->
+  if eq_2 (a , b) (t_string ())
+  then ok @@ t_string () else
+  if eq_2 (a , b) (t_bls12_381_g1 ())
+  then ok (t_bls12_381_g1 ()) else
+  if eq_2 (a , b) (t_bls12_381_g2 ())
+  then ok (t_bls12_381_g2 ()) else
+  if eq_2 (a , b) (t_bls12_381_fr ())
+  then ok (t_bls12_381_fr ()) else
+  if eq_2 (a , b) (t_nat ())
+  then ok @@ t_nat () else
+  if eq_2 (a , b) (t_int ())
+  then ok @@ t_int () else
+  if eq_2 (a , b) (t_mutez ())
+  then ok @@ t_mutez () else
+  if (eq_1 a (t_nat ()) && eq_1 b (t_int ())) || (eq_1 b (t_nat ()) && eq_1 a (t_int ()))
+  then ok @@ t_int () else
+  if (eq_1 a (t_timestamp ()) && eq_1 b (t_int ())) || (eq_1 b (t_timestamp ()) && eq_1 a (t_int ()))
+  then ok @@ t_timestamp () else
+    fail @@ typeclass_error loc
+              [ 
+                [t_string();t_string()] ;
+                [t_bls12_381_g1();t_bls12_381_g1()] ;
+                [t_bls12_381_g2();t_bls12_381_g2()] ;
+                [t_bls12_381_fr();t_bls12_381_fr()] ;
+                [t_nat();t_nat()] ;
+                [t_int();t_int()] ;
+                [t_mutez();t_mutez()] ;
+                [t_nat();t_int()] ;
+                [t_int();t_nat()] ;
+                [t_timestamp();t_int()] ;
+                [t_int();t_timestamp()] ;
+              ]
+              [a; b]
+
 let set_mem loc = typer_2 loc "SET_MEM" @@ fun elt set ->
   let%bind key = trace_option (expected_set loc set) @@ get_t_set set in
   let%bind () = assert_eq loc elt key in
@@ -1027,4 +1062,7 @@ let constant_typers loc c : (typer , typer_error) result = match c with
   | C_TEST_GET_BALANCE -> ok @@ test_get_balance loc ;
   | C_TEST_ASSERT_FAILURE -> ok @@ test_assert_failure loc ;
   | C_TEST_LOG -> ok @@ test_log loc ;
+  
+  (* JsLIGO *)
+  | C_POLYMORPHIC_ADD  -> ok @@ polymorphic_add loc ;
   | _ as cst -> fail (corner_case @@ Format.asprintf "typer not implemented for constant %a" PP.constant' cst)

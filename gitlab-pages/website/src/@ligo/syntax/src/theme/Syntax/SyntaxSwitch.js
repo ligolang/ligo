@@ -8,6 +8,7 @@ function SyntaxSwitch (props) {
             <option value="pascaligo">PascaLIGO</option>
             <option value="cameligo">CameLIGO</option>
             <option value="reasonligo">ReasonLIGO</option>
+            <option value="jsligo">JsLIGO</option>
         </select>
     )
 }

@@ -117,6 +117,31 @@ let main = ((action, store) : (parameter, storage)) : return =>
 
 </Syntax>
 
+<Syntax syntax="jsligo">
+
+```jsligo
+type parameter =
+| ["Increment", int]
+| ["Decrement", int]
+;
+
+type storage = int;
+
+type return_ = [list<operation>, storage];
+
+let add = ([n, store]: [int, storage]): storage => store + n;
+let sub = ([n, store]: [int, storage]): storage => store - n;
+
+let main = ([action, store]: [parameter, storage]): return_ =>
+  [list([]) as list <operation>,
+    (match (action, {
+     Increment: (n: int) => add ([n, store]),
+     Decrement: (n: int) => sub ([n, store])
+    }))];
+```
+
+</Syntax>
+
 To dry-run the counter contract, we will provide the `main` function
 with a variant parameter of value `Increment (5)` and an initial
 storage value of `5`.

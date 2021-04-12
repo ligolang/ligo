@@ -164,11 +164,12 @@ module Trace_tutorial = struct
     Ok (x, annotations) -> Ok (f x, annotations)
   | e -> e
 
-  (*  The function [bind_list] turns a list of results of type [('a
-      result) list] into a result of list, of type [('a list) result],
-      as follows.
-        * If the list only contains [Ok] values, it strips the [Ok]
-          of each element and returns that list wrapped with [Ok].}
+  (* The function [bind_list] turns a list of results of type [('a,
+     'b) result list] into a result of list, of type [('a list, 'b)
+     result], as follows.
+
+        * If the list only contains [Ok] values, it strips the [Ok] of
+          each element and returns that list wrapped with [Ok].}
 
         * Otherwise, one or more of the elements of the input list
           is [Error], then [bind_list] returns the first error in the

@@ -17,6 +17,9 @@ val balance : tez
 <SyntaxTitle syntax="reasonligo">
 let balance: tez
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let balance: tez
+</SyntaxTitle>
 
 Get the balance for the contract.
 
@@ -27,7 +30,7 @@ function main (const p : unit; const s: tez) : list (operation) * tez is
   ((nil : list (operation)), Tezos.balance)
 ```
 
-> Note that `balance` and `Current.balance` are *deprecated*. 
+> Note that `balance` and `Current.balance` are *deprecated*.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -49,6 +52,14 @@ let main = ((p,s) : (unit, tez)) =>
 > Note that `balance` and `Current.balance` are *deprecated*.
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let main = ([p, s] : [unit, tez]):[list<operation>, tez] =>
+  [(list([]) as list<operation>), Tezos.balance];
+```
+
+</Syntax>
 
 
 <SyntaxTitle syntax="pascaligo">
@@ -58,6 +69,9 @@ const now : timestamp
 val now : timestamp
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
+let now: timestamp
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
 let now: timestamp
 </SyntaxTitle>
 
@@ -110,6 +124,17 @@ let one_day_later: timestamp = some_date + one_day;
 > Note that `Current.time` is *deprecated*.
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=b
+let today: timestamp = Tezos.now;
+let one_day: int = 86_400;
+let in_24_hrs: timestamp = today + one_day;
+let some_date: timestamp = ("2000-01-01t10:10:10Z" as timestamp);
+let one_day_later: timestamp = some_date + one_day;
+```
+
+</Syntax>
 
 
 #### 24 hours ago
@@ -148,6 +173,15 @@ let in_24_hrs: timestamp = today - one_day;
 > Note that `Current.time` is *deprecated*.
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=c
+let today: timestamp = Tezos.now;
+let one_day: int = 86_400;
+let in_24_hrs: timestamp = today - one_day;
+```
+
+</Syntax>
 
 
 #### Comparing Timestamps
@@ -183,7 +217,13 @@ let not_tomorrow: bool = (Tezos.now == in_24_hrs);
 > Note that `Current.time` is *deprecated*.
 
 </Syntax>
+<Syntax syntax="jsligo">
 
+```jsligo group=c
+let not_tomorrow: bool = (Tezos.now == in_24_hrs);
+```
+
+</Syntax>
 
 
 <SyntaxTitle syntax="pascaligo">
@@ -193,6 +233,9 @@ const amount : tez
 val amount : tez
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
+let amount: tez
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
 let amount: tez
 </SyntaxTitle>
 
@@ -230,7 +273,15 @@ let threshold = (p : unit) : int =>
 > Note that `Current.amount` is *deprecated*.
 
 </Syntax>
+<Syntax syntax="jsligo">
 
+```jsligo
+let threshold = (p : unit) : int => {
+  if (Tezos.amount == (100 as tez)) { return 42; } else { return 0; };
+};
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 const sender : address
@@ -239,6 +290,9 @@ const sender : address
 val sender : address
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
+let sender: address
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
 let sender: address
 </SyntaxTitle>
 
@@ -273,6 +327,13 @@ let main = (p : unit) : address => Tezos.sender;
 > Note that `Current.sender` is *deprecated*.
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let main = (p : unit) : address => Tezos.sender;
+```
+
+</Syntax>
 
 
 
@@ -284,6 +345,9 @@ val address : 'a contract -> address
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let address: contract('a) => address
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let address: (contract: contract&lt;&apos;a&gt;) => address
 </SyntaxTitle>
 
 Get the address associated with a value of type `contract`.
@@ -326,6 +390,16 @@ let main = (p : key_hash) : address => {
 > *deprecated*.
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let main = (p : key_hash): address => {
+  let c: contract<unit> = Tezos.implicit_account(p);
+  return Tezos.address(c);
+};
+```
+
+</Syntax>
 
 
 <SyntaxTitle syntax="pascaligo">
@@ -335,6 +409,9 @@ const self_address : address
 val self_address : address
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
+let self_address: address
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
 let self_address: address
 </SyntaxTitle>
 
@@ -369,6 +446,13 @@ let main = (p : unit) : address => Tezos.self_address;
 > Note that `Current.self_address` is *deprecated*.
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let main = (p : unit): address => Tezos.self_address;
+```
+
+</Syntax>
 <SyntaxTitle syntax="pascaligo">
 function self : string -> contract 'a
 </SyntaxTitle>
@@ -377,6 +461,9 @@ val self : string -> 'a contract
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let self: string => contract('a)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let self: (entrypoint: string) => contract&lt;&apos;a&gt;
 </SyntaxTitle>
 
 Typecast the currently running contract with an entrypoint annotation.
@@ -408,6 +495,14 @@ let main = (p: unit) : contract(unit) =>
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let main = (p: unit) : contract<unit> =>
+  (Tezos.self("%Default") as contract<unit>);
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function implicit_account : key_hash -> contract 'a
@@ -418,12 +513,15 @@ val implicit_account : key_hash -> 'a contract
 <SyntaxTitle syntax="reasonligo">
 let implicit_account: key_hash => contract('a)
 </SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let implicit_account: (hash: key_hash) => contract&lt;'a&gt;
+</SyntaxTitle>
 
 Get the default contract associated with an on-chain key-pair. This
 contract does not execute code, instead it exists to receive tokens on
 behalf of a key's owner.
 
-See also: http://tezos.gitlab.io/user/glossary.html#implicit-account 
+See also: http://tezos.gitlab.io/user/glossary.html#implicit-account
 
 <Syntax syntax="pascaligo">
 
@@ -454,6 +552,14 @@ let main = (kh : key_hash): contract (unit) =>
 > Note that `Current.implicit_account` is *deprecated*.
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let main = (kh: key_hash): contract<unit> =>
+  Tezos.implicit_account(kh);
+```
+
+</Syntax>
 
 
 <SyntaxTitle syntax="pascaligo">
@@ -463,6 +569,9 @@ const source : address
 val source : address
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
+let source: address
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
 let source: address
 </SyntaxTitle>
 
@@ -519,6 +628,13 @@ let main = (p : unit) : address => Tezos.source;
 > Note that `Current.source` is *deprecated*.
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let main = (p : unit) : address => Tezos.source;
+```
+
+</Syntax>
 
 
 <SyntaxTitle syntax="pascaligo">
@@ -529,6 +645,9 @@ val failwith : 'a -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let failwith: 'a -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+function failwith: (message: &apos;a) -> unit
 </SyntaxTitle>
 
 [See `failwith`](toplevel.md#failwith)
@@ -543,6 +662,9 @@ val chain_id : chain_id
 <SyntaxTitle syntax="reasonligo">
 let chain_id: chain_id
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let chain_id: chain_id
+</SyntaxTitle>
 
 Get the identifier of the chain to distinguish between main and test chains.
 
@@ -554,7 +676,7 @@ only be used together with `Bytes.pack` and `Bytes.unpack`.
 ```pascaligo
 type storage is bytes
 
-function main (const ignore : unit; const storage: storage) : 
+function main (const ignore : unit; const storage: storage) :
   (list(operation) * storage) is block {
   const packed : bytes = Bytes.pack (Tezos.chain_id);
   if (storage =/= packed) then {
@@ -595,6 +717,22 @@ let main = ((ignore, storage): (unit, storage)) => {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+type storage = bytes;
+
+let main = ([ignore, storage]: [unit, storage]):[list<operation>, storage] => {
+  let packed = Bytes.pack(Tezos.chain_id);
+  if (storage != packed) {
+    return (failwith("wrong chain") as [list<operation>, storage]);
+  } else {
+    return [(list([]) as list<operation>), packed];
+  };
+};
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function transaction : 'parameter -> mutez -> contract('parameter) -> operation
@@ -603,7 +741,10 @@ function transaction : 'parameter -> mutez -> contract('parameter) -> operation
 val transaction : 'parameter -> mutez -> 'parameter contract -> operation
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let transaction: 'parameter -> mutez -> contract('parameter) -> operation
+let transaction: ('parameter, mutez , contract('parameter)) => operation
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let transaction: (action: &apos;parameter, amount: mutez, contract: contract&lt;&apos;parameter&gt;) => operation
 </SyntaxTitle>
 
 Transfer `tez` to an account, or run code of another smart contract.
@@ -629,6 +770,11 @@ val set_delegate : key_hash option -> operation
 <SyntaxTitle syntax="reasonligo">
 let set_delegate: option(key_hash) => operation
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let set_delegate: (delegate: option&lt;key_hash&gt;) => operation
+</SyntaxTitle>
+
+
 
 Modify the [delegate](http://tezos.gitlab.io/user/glossary.html?highlight=delegate#delegate) of the current contract.
 
@@ -639,15 +785,15 @@ The operation fails when:
 Use `None` to withdraw the current delegate.
 
 <Syntax syntax="pascaligo">
-Note that `set_delegate` is deprecated. Please use `Tezos.set_delegate` 
+Note that `set_delegate` is deprecated. Please use `Tezos.set_delegate`
 instead.
 </Syntax>
 <Syntax syntax="cameligo">
-Note that `Operation.set_delegate` is deprecated. Please use 
+Note that `Operation.set_delegate` is deprecated. Please use
 `Tezos.set_delegate` instead.
 </Syntax>
 <Syntax syntax="reasonligo">
-Note that `Operation.set_delegate` is deprecated. Please use 
+Note that `Operation.set_delegate` is deprecated. Please use
 `Tezos.set_delegate` instead.
 </Syntax>
 
@@ -660,10 +806,13 @@ val get_contract_opt : address -> 'parameter contract option
 <SyntaxTitle syntax="reasonligo">
 let get_contract_opt : address => option(contract('parameter))
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let get_contract_opt : (a: address) => option&lt;contract&lt;&apos;parameter&gt;&gt;
+</SyntaxTitle>
 
 Get a contract from an address.
 
-When no contract is found or the contract doesn't match the type,  
+When no contract is found or the contract doesn't match the type,
 `None` is returned.
 
 <Syntax syntax="pascaligo">
@@ -671,11 +820,11 @@ Note that `get_contract` and `get_contract_opt` are deprecated. Please use
 `Tezos.get_contract_opt` instead.
 </Syntax>
 <Syntax syntax="cameligo">
-Note that `Operation.get_contract` and `Operation.get_contract_opt` are 
+Note that `Operation.get_contract` and `Operation.get_contract_opt` are
 deprecated. Please use `Tezos.get_contract_opt` instead.
 </Syntax>
 <Syntax syntax="reasonligo">
-Note that `Operation.get_contract` and `Operation.get_contract_opt` are 
+Note that `Operation.get_contract` and `Operation.get_contract_opt` are
 deprecated. Please use `Tezos.get_contract_opt` instead.
 </Syntax>
 
@@ -688,26 +837,29 @@ val get_entrypoint_opt : string -> address -> 'parameter contract option
 <SyntaxTitle syntax="reasonligo">
 let get_entrypoint_opt: (string, address) => option(contract('parameter))
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let get_entrypoint_opt: (entrypoint: string, a: address) => option&lt;contract&lt;&apos;parameter&gt;&gt;
+</SyntaxTitle>
 
-Get a contract from an address and entrypoint. 
+Get a contract from an address and entrypoint.
 
 Entrypoints are written in the form of: `%entrypoint`.
 
-When no contract is found or the contract doesn't match the type,  
+When no contract is found or the contract doesn't match the type,
 `None` is returned.
 
 <Syntax syntax="pascaligo">
-Note that `get_entrypoint` and `get_entrypoint_opt` are deprecated. Please use 
+Note that `get_entrypoint` and `get_entrypoint_opt` are deprecated. Please use
 `Tezos.get_entrypoint_opt` instead.
 </Syntax>
 
 <Syntax syntax="cameligo">
-Note that `Operation.get_entrypoint` and `Operation.get_entrypoint_opt` are 
+Note that `Operation.get_entrypoint` and `Operation.get_entrypoint_opt` are
 deprecated. Please use `Tezos.get_entrypoint_opt` instead.
 </Syntax>
 
 <Syntax syntax="reasonligo">
-Note that `Operation.get_entrypoint` and `Operation.get_entrypoint_opt` are 
+Note that `Operation.get_entrypoint` and `Operation.get_entrypoint_opt` are
 deprecated. Please use `Tezos.get_entrypoint_opt` instead.
 </Syntax>
 
@@ -850,7 +1002,7 @@ let f = (tr : tr) : (int , st) =>
 <h2>Tickets</h2>
 
 <SyntaxTitle syntax="pascaligo">
-function create_ticket : 'value -> nat -> ticket ('value) 
+function create_ticket : 'value -> nat -> ticket ('value)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val create_ticket : 'value -> nat -> 'value ticket

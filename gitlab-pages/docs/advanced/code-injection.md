@@ -46,6 +46,14 @@ let michelson_add = (n : (nat, nat)) : nat =>
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let michelson_add = (n: [nat, nat]): nat =>
+  (Michelson`{ UNPAIR ; ADD }` as ((n: [nat, nat]) => nat))(n);
+```
+
+</Syntax>
 
 Note that the type annotation is required, because the embedded Michelson code
 is not type checked by LIGO. This assumes that the given type is correct.
@@ -196,6 +204,26 @@ let main = ((action,store): (parameter, storage)) => {
     | Extend (k) => [%Michelson ({| { NEVER } |} : (never => int))](k)
     };
   ([]: list(operation), storage);
+};
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo skip
+type parameter =
+  ["Increment", int]
+| ["Extend", never];
+
+type storage = int;
+
+let main = ([action,store]: [parameter, storage]) => {
+  let storage =
+    match(action, {
+     Increment: (n: int) => store + n,
+     Extend: (k: never) => (Michelson`{ NEVER }` as ((n: never) => int))(k);
+    });
+  return [list([]) as list<operation>, storage];
 };
 ```
 

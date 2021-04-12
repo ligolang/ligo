@@ -6,7 +6,7 @@
   (name LexerLib)
   (public_name LexerLib)
   (wrapped true)
-  (modules CLI Core API Markup Version)
+  (modules CLI Core API Markup Directive Version)
   (libraries
     ;; Vendor
     simple-utils

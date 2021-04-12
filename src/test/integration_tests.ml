@@ -5,6 +5,9 @@ open Main_errors
 open Ast_imperative.Combinators
 
 let init_env = Environment.default Environment.Protocols.current
+
+let jstype_file f =
+  Ligo.Compile.Utils.type_file ~options f "jsligo" Env
 let retype_file f =
   Ligo.Compile.Utils.type_file ~options f "reasonligo" Env
 let mtype_file f =
@@ -111,7 +114,19 @@ let variant_religo () : (unit, _) result =
     expect_eq_evaluate program "kee" expected in
   ok ()
 
-
+let variant_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/variant.jsligo" in
+  let%bind () =
+    let expected = e_constructor "Foo" (e_int 42) in
+    expect_eq_evaluate program "foo" expected in
+  let%bind () =
+    let expected = e_constructor "Bar" (e_bool true) in
+    expect_eq_evaluate program "bar" expected in
+  let%bind () =
+    let expected = e_constructor "Kee" (e_nat 23) in
+    expect_eq_evaluate program "kee" expected in
+  ok ()
+  
 let variant_matching () : (unit, _) result =
   let%bind program = type_file "./contracts/variant-matching.ligo" in
   let%bind () =
@@ -166,6 +181,15 @@ let closure_religo () : (unit, _) result =
   in
   ok ()
 
+let closure_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/closure.jsligo" in
+  let%bind _ =
+    let input = e_int 0 in
+    let expected = e_int 25 in
+    expect_eq program "test" input expected
+  in
+  ok ()
+  
 
 let shadow () : (unit, _) result =
   let%bind program = type_file "./contracts/shadow.ligo" in
@@ -212,6 +236,17 @@ let higher_order_religo () : (unit, _) result =
   let%bind _ = expect_eq_n_int program "foobar5" make_expect in
   ok ()
 
+let higher_order_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/high-order.jsligo" in
+  let make_expect = fun n -> n in
+  let%bind _ = expect_eq_n_int program "foobar" make_expect in
+  let%bind _ = expect_eq_n_int program "foobar2" make_expect in
+  let%bind _ = expect_eq_n_int program "foobar3" make_expect in
+  let%bind _ = expect_eq_n_int program "foobar4" make_expect in
+  let%bind _ = expect_eq_n_int program "foobar5" make_expect in
+  ok ()
+  
+
 let shared_function () : (unit, _) result =
   let%bind program = type_file "./contracts/function-shared.ligo" in
   let%bind () =
@@ -251,6 +286,14 @@ let shared_function_religo () : (unit, _) result =
   in
   ok ()
 
+let shared_function_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/function-shared.jsligo" in
+  let%bind () =
+    let make_expect = fun n -> (2 * n + 70) in
+    expect_eq_n_int program "foobar" make_expect
+  in
+  ok ()
+  
 let bool_expression () : (unit, _) result =
   let%bind program = type_file "./contracts/boolean_operators.ligo" in
   let%bind _ =
@@ -279,6 +322,19 @@ let bool_expression_mligo () : (unit, _) result =
 
 let bool_expression_religo () : (unit, _) result =
   let%bind program = retype_file "./contracts/boolean_operators.religo" in
+  let%bind _ =
+    let aux (name, f) = expect_eq_b_bool program name f in
+    bind_map_list aux [
+      ("or_true", fun b -> b || true) ;
+      ("or_false", fun b -> b || false) ;
+      ("and_true", fun b -> b && true) ;
+      ("and_false", fun b -> b && false) ;
+      ("not_bool", fun b -> not b) ;
+    ] in
+  ok ()
+
+let bool_expression_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/boolean_operators.jsligo" in
   let%bind _ =
     let aux (name, f) = expect_eq_b_bool program name f in
     bind_map_list aux [
@@ -338,6 +394,23 @@ let arithmetic_religo () : (unit, _) result =
   let%bind () = expect_eq_n_pos program "ediv_op" e_int (fun n -> e_some (e_pair (e_int (n/2)) (e_nat (n mod 2)))) in
   ok ()
 
+let arithmetic_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/arithmetic.jsligo" in
+  let%bind _ =
+    let aux (name, f) = expect_eq_n_int program name f in
+    bind_map_list aux [
+      ("plus_op", fun n -> (n + 42)) ;
+      ("minus_op", fun n -> (n - 42)) ;
+      ("times_op", fun n -> (n * 42)) ;
+      ("neg_op", fun n -> (-n)) ;
+      ("neg_op_2", fun n -> -(n + 10)) ;
+    ] in
+  let%bind () = expect_eq_n_pos program "mod_op" e_int (fun n -> e_nat (n mod 42)) in
+  let%bind () = expect_eq_n_pos program "div_op" e_int (fun n -> e_int (n / 2)) in
+  let%bind () = expect_eq_n_pos program "ediv_op" e_int (fun n -> e_some (e_pair (e_int (n/2)) (e_nat (n mod 2)))) in
+  ok ()
+  
+
 let bitwise_arithmetic () : (unit, _) result =
   let%bind program = type_file "./contracts/bitwise_arithmetic.ligo" in
   let%bind () = expect_eq program "or_op" (e_nat 7) (e_nat 7) in
@@ -392,6 +465,24 @@ let bitwise_arithmetic_religo () : (unit, _) result =
   let%bind () = expect_eq program "lsr_op" (e_nat 128000) (e_nat 1000) in
   ok ()
 
+let bitwise_arithmetic_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/bitwise_arithmetic.jsligo" in
+  let%bind () = expect_eq program "or_op" (e_nat 7) (e_nat 7) in
+  let%bind () = expect_eq program "or_op" (e_nat 3) (e_nat 7) in
+  let%bind () = expect_eq program "or_op" (e_nat 2) (e_nat 6) in
+  let%bind () = expect_eq program "or_op" (e_nat 14) (e_nat 14) in
+  let%bind () = expect_eq program "or_op" (e_nat 10) (e_nat 14) in
+  let%bind () = expect_eq program "and_op" (e_nat 7) (e_nat 7) in
+  let%bind () = expect_eq program "and_op" (e_nat 3) (e_nat 3) in
+  let%bind () = expect_eq program "and_op" (e_nat 2) (e_nat 2) in
+  let%bind () = expect_eq program "and_op" (e_nat 14) (e_nat 6) in
+  let%bind () = expect_eq program "and_op" (e_nat 10) (e_nat 2) in
+  let%bind () = expect_eq program "xor_op" (e_nat 0) (e_nat 7) in
+  let%bind () = expect_eq program "xor_op" (e_nat 7) (e_nat 0) in
+  let%bind () = expect_eq program "lsl_op" (e_nat 1000) (e_nat 128000) in
+  let%bind () = expect_eq program "lsr_op" (e_nat 128000) (e_nat 1000) in
+  ok ()
+
 let string_arithmetic () : (unit, _) result =
   let%bind program = type_file "./contracts/string_arithmetic.ligo" in
   let%bind () = expect_eq program "concat_op" (e_string "foo") (e_string "foototo") in
@@ -417,6 +508,14 @@ let string_arithmetic_religo () : (unit, _) result =
   let%bind () = expect_eq program "concat_syntax" (e_string "string_") (e_string "string_test_literal")
   in ok ()
 
+let string_arithmetic_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/string_arithmetic.jsligo" in
+  let%bind () = expect_eq program "size_op"  (e_string "tata") (e_nat 4) in
+  let%bind () = expect_eq program "slice_op" (e_string "tata") (e_string "at") in
+  let%bind () = expect_eq program "slice_op" (e_string "foo") (e_string "oo") in
+  let%bind () = expect_eq program "concat_syntax" (e_string "string_") (e_string "string_test_literal")
+  in ok ()
+  
 
 let bytes_arithmetic () : (unit, _) result =
   let%bind program = type_file "./contracts/bytes_arithmetic.ligo" in
@@ -508,6 +607,21 @@ let crypto_religo () : (unit, _) result =
   let%bind () = trace_assert_fail_option (test_internal __LOC__) @@ Ast_core.Misc.assert_value_eq (b5 , b4) in
   ok ()
 
+let crypto_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/crypto.jsligo" in
+  let%bind foo = trace_option (test_internal __LOC__) @@ e_bytes_hex_ez "0f00" in
+  let%bind foototo = trace_option (test_internal __LOC__) @@ e_bytes_hex_ez "0f007070" in
+  let%bind b1 = Test_helpers.run_typed_program_with_imperative_input program "hasherman512" foo in
+  let%bind () = expect_eq_core program "hasherman512" foo b1 in
+  let%bind b2 = Test_helpers.run_typed_program_with_imperative_input program "hasherman512" foototo in
+  let%bind () = trace_assert_fail_option (test_internal __LOC__) @@ Ast_core.Misc.assert_value_eq (b2 , b1) in
+  let%bind b4 = Test_helpers.run_typed_program_with_imperative_input program "hasherman_blake" foo in
+  let%bind () = expect_eq_core program "hasherman_blake" foo b4 in
+  let%bind b5 = Test_helpers.run_typed_program_with_imperative_input program "hasherman_blake" foototo in
+  let%bind () = trace_assert_fail_option (test_internal __LOC__) @@ Ast_core.Misc.assert_value_eq (b5 , b4) in
+  ok ()
+  
+
 let bytes_arithmetic_mligo () : (unit, _) result =
   let%bind program = mtype_file "./contracts/bytes_arithmetic.mligo" in
   let%bind foo = trace_option (test_internal __LOC__) @@ e_bytes_hex_ez "0f00" in
@@ -547,6 +661,27 @@ let bytes_arithmetic_religo () : (unit, _) result =
   let%bind b3 = Test_helpers.run_typed_program_with_imperative_input program "hasherman" foototo in
   let%bind () = trace_assert_fail_option (test_internal __LOC__) @@  Ast_core.Misc.assert_value_eq (b3 , b1) in
   ok ()
+
+let bytes_arithmetic_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/bytes_arithmetic.jsligo" in
+  let%bind foo = trace_option (test_internal __LOC__) @@ e_bytes_hex_ez "0f00" in
+  let%bind foototo = trace_option (test_internal __LOC__) @@ e_bytes_hex_ez "0f007070" in
+  let%bind toto = trace_option (test_internal __LOC__) @@ e_bytes_hex_ez "7070" in
+  let%bind empty = trace_option (test_internal __LOC__) @@ e_bytes_hex_ez "" in
+  let%bind tata = trace_option (test_internal __LOC__) @@ e_bytes_hex_ez "ff7a7aff" in
+  let%bind at = trace_option (test_internal __LOC__) @@ e_bytes_hex_ez "7a7a" in
+  let%bind ba = trace_option (test_internal __LOC__) @@ e_bytes_hex_ez "ba" in
+  let%bind () = expect_eq program "concat_op" foo foototo in
+  let%bind () = expect_eq program "concat_op" empty toto in
+  let%bind () = expect_eq program "slice_op" tata at in
+  let%bind () = expect_fail program "slice_op" foo in
+  let%bind () = expect_fail program "slice_op" ba in
+  let%bind b1 = Test_helpers.run_typed_program_with_imperative_input program"hasherman" foo in
+  let%bind () = expect_eq_core program "hasherman" foo b1 in
+  let%bind b3 = Test_helpers.run_typed_program_with_imperative_input program "hasherman" foototo in
+  let%bind () = trace_assert_fail_option (test_internal __LOC__) @@  Ast_core.Misc.assert_value_eq (b3 , b1) in
+  ok ()
+  
 
 let set_arithmetic () : (unit, _) result =
   let%bind program = type_file "./contracts/set_arithmetic.ligo" in
@@ -686,6 +821,41 @@ let set_arithmetic_religo () : (unit, _) result =
   in
   ok ()
 
+let set_arithmetic_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/set_arithmetic.jsligo" in
+  let%bind program_1 = type_file "./contracts/set_arithmetic-1.ligo" in
+  let%bind () =
+    expect_eq program "literal_op"
+      (e_unit ())
+      (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
+  in
+  let%bind () =
+    expect_eq program "size_op"
+      (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
+      (e_nat 3) in
+  let%bind () =
+    expect_eq program "add_op"
+      (e_set [e_string "foo" ; e_string "bar"])
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"]) in
+  let%bind () =
+    expect_eq program "add_op"
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"]) in
+  let%bind () =
+    expect_eq program "remove_op"
+      (e_set [e_string "foo" ; e_string "bar"])
+      (e_set [e_string "foo" ; e_string "bar"]) in
+  let%bind () =
+    expect_eq program "remove_op"
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
+      (e_set [e_string "foo" ; e_string "bar"]) in
+  let%bind () =
+    expect_eq program_1 "fold_op"
+      (e_set [ e_int 4 ; e_int 10 ])
+      (e_int 29)
+  in
+  ok ()
+
 let unit_expression () : (unit, _) result =
   let%bind program = type_file "./contracts/unit.ligo" in
   expect_eq_evaluate program "u" (e_unit ())
@@ -707,6 +877,11 @@ let include_religo () : (unit, _) result =
   let%bind program = retype_file "./contracts/includer.religo" in
   expect_eq_evaluate program "bar" (e_int 144)
 
+let include_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/includer.jsligo" in
+  expect_eq_evaluate program "bar" (e_int 144)
+
+
 let modules program : (unit, _) result =
   let%bind () = expect_eq_evaluate program "toto" (e_int 42) in
   expect_eq program "add" (e_pair (e_int 1) (e_int 2)) (e_int 3)
@@ -722,6 +897,11 @@ let modules_mligo () : (unit, _) result =
 let modules_religo () : (unit, _) result =
   let%bind program = retype_file "./contracts/modules.religo" in
   modules program
+
+let modules_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/modules.jsligo" in
+  modules program
+  
 
 let record_ez_int names n =
   e_record_ez @@ List.map (fun x -> x, e_int n) names
@@ -756,6 +936,18 @@ let multiple_parameters_mligo () : (unit, _) result  =
 
 let multiple_parameters_religo () : (unit, _) result  =
   let%bind program = retype_file "./contracts/multiple-parameters.religo" in
+  let aux ((name : string) , make_input , make_output) =
+    let make_output' = fun n -> e_int @@ make_output n in
+    expect_eq_n program name make_input make_output'
+  in
+  let%bind _ = bind_list @@ List.map aux [
+      (* Didn't include the other tests because they're probably not necessary *)
+      ("abcde", tuple_ez_int ["a";"b";"c";"d";"e"], fun n -> 2 * n + 3) ;
+    ] in
+  ok ()
+
+let multiple_parameters_jsligo () : (unit, _) result  =
+  let%bind program = jstype_file "./contracts/multiple-parameters.jsligo" in
   let aux ((name : string) , make_input , make_output) =
     let make_output' = fun n -> e_int @@ make_output n in
     expect_eq_n program name make_input make_output'
@@ -904,6 +1096,52 @@ let record_religo () : (unit, _) result  =
   in
   ok ()
 
+let record_jsligo () : (unit, _) result  =
+  let%bind program = jstype_file "./contracts/record.jsligo" in
+  let%bind () =
+    let expected = record_ez_int ["foo" ; "bar"] 0 in
+    expect_eq_evaluate program "fb" expected
+  in
+  let%bind () =
+    let%bind () = expect_eq_evaluate program "a" (e_int 42) in
+    let%bind () = expect_eq_evaluate program "b" (e_int 142) in
+    let%bind () = expect_eq_evaluate program "c" (e_int 242) in
+    ok ()
+  in
+  let%bind () =
+    let make_input = record_ez_int ["foo" ; "bar"] in
+    let make_expected = fun n -> e_int (2 * n) in
+    expect_eq_n program "projection" make_input make_expected
+  in
+  let%bind () =
+    let make_input = record_ez_int ["foo" ; "bar"] in
+    let make_expected = fun n -> e_record_ez [("foo" , e_int 256) ; ("bar" , e_int n) ] in
+    expect_eq_n program "modify" make_input make_expected
+  in
+  let%bind () =
+    let make_input = record_ez_int ["a" ; "b" ; "c"] in
+    let make_expected = fun n -> e_record_ez [
+        ("a" , e_int n) ;
+        ("b" , e_int 2048) ;
+        ("c" , e_int 42)
+      ] in
+    expect_eq_n program "modify_abc" make_input make_expected
+  in
+  let%bind () =
+    let expected = record_ez_int ["a";"b";"c";"d";"e"] 23 in
+    expect_eq_evaluate program "br" expected
+  in
+  let%bind () =
+    let make_input = fun n -> e_record_ez [("inner", record_ez_int ["a";"b";"c"] n)] in
+    let make_expected = fun n -> e_record_ez [("inner", e_record_ez[
+        ("a" , e_int n) ;
+        ("b" , e_int 2048) ;
+        ("c" , e_int n)
+    ])] in
+    expect_eq_n program "modify_inner" make_input make_expected
+  in
+  ok ()
+
 let tuple () : (unit, _) result  =
   let%bind program = type_file "./contracts/tuple.ligo" in
   let ez n =
@@ -992,6 +1230,30 @@ let tuple_religo () : (unit, _) result  =
   in
   ok ()
 
+let tuple_jsligo () : (unit, _) result  =
+  let%bind program = jstype_file "./contracts/tuple.jsligo" in
+  let ez n =
+    e_tuple (List.map e_int n) in
+  let%bind () =
+    let expected = ez [0 ; 0] in
+    expect_eq_evaluate program "fb" expected
+  in
+  let%bind () =
+    let make_input = fun n -> ez [n ; n] in
+    let make_expected = fun n -> e_int (2 * n) in
+    expect_eq_n program "projection" make_input make_expected
+  in
+  let%bind () =
+    let make_input = fun n -> ez [n ; 2 * n ; n] in
+    let make_expected = fun n -> e_int (2 * n) in
+    expect_eq_n program "projection_abc" make_input make_expected
+  in
+  let%bind () =
+    let expected = ez [23 ; 23 ; 23 ; 23 ; 23] in
+    expect_eq_evaluate program "br" expected
+  in
+  ok ()
+
 let option () : (unit, _) result =
   let%bind program = type_file "./contracts/option.ligo" in
   let%bind () =
@@ -1032,6 +1294,18 @@ let reoption () : (unit, _) result =
   in
   ok ()
 
+let jsoption () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/option.jsligo" in
+  let%bind () =
+    let expected = e_some (e_int 42) in
+    expect_eq_evaluate program "s" expected
+  in
+  let%bind () =
+    let expected = e_typed_none (t_int ()) in
+    expect_eq_evaluate program "n" expected
+  in
+  ok ()
+  
 
 let map_ type_f path : (unit, _) result =
   let%bind program = type_f path in
@@ -1156,9 +1430,12 @@ let big_map_ type_f path : (unit, _) result =
 let map () : (unit, _) result = map_ type_file "./contracts/map.ligo"
 let mmap () : (unit, _) result = map_ mtype_file "./contracts/map.mligo"
 let remap () : (unit, _) result = map_ retype_file "./contracts/map.religo"
+let jsmap () : (unit, _) result = map_ jstype_file "./contracts/map.jsligo"
 let big_map () : (unit, _) result = big_map_ type_file "./contracts/big_map.ligo"
 let mbig_map () : (unit, _) result = big_map_ mtype_file "./contracts/big_map.mligo"
 let rebig_map () : (unit, _) result = big_map_ retype_file "./contracts/big_map.religo"
+let jsbig_map () : (unit, _) result = big_map_ jstype_file "./contracts/big_map.jsligo"
+
 
 
 let list () : (unit, _) result =
@@ -1258,6 +1535,20 @@ let condition_religo () : (unit, _) result =
     ] in
   ok ()
 
+let condition_jsligo () : (unit, _) result =
+  let%bind _ =
+    let aux file =
+      let%bind program = jstype_file file in
+      let make_input = e_int in
+      let make_expected = fun n -> e_int (if n = 2 then 42 else 0) in
+      expect_eq_n program "main"  make_input make_expected in
+    bind_map_list aux [
+      "./contracts/condition.jsligo";
+      "./contracts/condition-shadowing.jsligo";
+      "./contracts/condition-annot.jsligo";
+    ] in
+  ok ()
+
 let sequence_mligo () : (unit, _) result =
   let%bind program = mtype_file "./contracts/sequence.mligo" in
   expect_eq program "y" (e_unit ()) (e_nat 1)
@@ -1285,6 +1576,10 @@ let eq_bool_mligo () : (unit, _) result =
 
 let eq_bool_religo () : (unit, _) result =
   let%bind program = retype_file "./contracts/eq_bool.religo" in
+  eq_bool_common program
+
+let eq_bool_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/eq_bool.jsligo" in
   eq_bool_common program
 
 let condition_simple () : (unit, _) result =
@@ -1402,6 +1697,91 @@ let loop_religo () : (unit, _) result =
     expect_eq program "counter_nest" input expected
   in ok ()
 
+let loop_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/loop.jsligo" in
+  let%bind () =
+    let input = e_int 0 in
+    let expected = e_int 100 in
+    expect_eq program "counter_simple" input expected
+  in
+  let%bind () =
+    let input = e_int 100 in
+    let expected = e_int 5050 in
+    expect_eq program "counter" input expected
+  in
+  let%bind () =
+    let input = e_int 100 in
+    let expected = e_int 10000 in
+    expect_eq program "counter_nest" input expected
+  in ok ()
+
+let loop2_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/loop2.jsligo" in
+  (* let%bind () =
+    let make_input = e_nat in
+    let make_expected = e_nat in
+    expect_eq_n_pos program "dummy" make_input make_expected in *)
+  let%bind () =
+    let make_input = e_nat in
+    let make_expected = e_nat in
+    expect_eq_n_pos_mid program "counter" make_input make_expected in
+  (* let%bind () =
+    let make_input = e_nat in
+    let make_expected = fun n -> e_nat (n * (n + 1) / 2) in
+    expect_eq_n_pos_mid program "while_sum" make_input make_expected in
+  let%bind () =
+    let make_input = e_nat in
+    let make_expected = fun n -> e_int (n * (n + 1) / 2) in
+    expect_eq_n_pos_mid program "for_sum" make_input make_expected in
+  let%bind () =
+    let make_input = e_nat in
+    let make_expected = fun n -> e_int (n * n) in
+    expect_eq_n_pos_mid program "for_sum_step" make_input make_expected in
+  let input = e_unit () in
+  let%bind () =
+    let expected = e_pair (e_int 3) (e_string "totototo") in
+    expect_eq program "for_collection_list" input expected in
+  let%bind () =
+    let expected = e_pair (e_int 6) (e_string "totototo") in
+    expect_eq program "for_collection_set" input expected in
+  let%bind () =
+    let expected = e_pair (e_int 6) (e_string "123") in
+    expect_eq program "for_collection_map_kv" input expected in
+  let%bind () =
+    let expected = (e_int 0) in
+    expect_eq program "for_collection_empty" input expected in
+  let%bind () =
+    let expected = (e_int 13) in
+    expect_eq program "for_collection_if_and_local_var" input expected in
+  let%bind () =
+    let expected = (e_int 1020) in
+    expect_eq program "for_collection_rhs_capture" input expected in
+  let%bind () =
+    let expected = (e_int 1040) in
+    expect_eq program "for_collection_proc_call" input expected in
+  let%bind () =
+    let expected = (e_int 20) in
+    expect_eq program "for_collection_comp_with_acc" input expected in
+  let%bind () =
+    let expected = e_pair (e_int 24)
+      (e_string "1 one,two 2 one,two 3 one,two 1 one,two 2 one,two 3 one,two 1 one,two 2 one,two 3 one,two ") in
+    expect_eq program "nested_for_collection" input expected in
+  let%bind () =
+    let expected = e_pair (e_int 24)
+      (e_string "123123123") in
+    expect_eq program "nested_for_collection_local_var" input expected in
+  let%bind () =
+    let expected = e_pair (e_bool true) (e_int 4) in
+    expect_eq program "inner_capture_in_conditional_block"  input expected in
+  let%bind () =
+    let ez lst =
+      let lst' = List.map (fun (x, y) -> e_string x, e_int y) lst in
+        e_typed_map lst' (t_string ()) (t_int ())
+    in
+    let expected = ez [ ("I" , 12) ; ("am" , 12) ; ("foo" , 12) ] in
+    expect_eq program "for_collection_with_patches" input expected in *)
+  ok ()
+  
 
 let matching () : (unit, _) result =
   let%bind program = type_file "./contracts/match.ligo" in
@@ -1511,7 +1891,16 @@ let super_counter_contract_religo () : (unit, _) result =
     e_pair (e_typed_list [] (t_operation())) (e_int (op 42 n)) in
   expect_eq_n program "main" make_input make_expected
 
-
+let super_counter_contract_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/super-counter.jsligo" in
+  let make_input = fun n ->
+    let action = if n mod 2 = 0 then "Increment" else "Decrement" in
+    e_pair (e_constructor action (e_int n)) (e_int 42) in
+  let make_expected = fun n ->
+    let op = if n mod 2 = 0 then (+) else (-) in
+    e_pair (e_typed_list [] (t_operation())) (e_int (op 42 n)) in
+  expect_eq_n program "main" make_input make_expected
+  
 let dispatch_counter_contract () : (unit, _) result =
   let%bind program = type_file "./contracts/dispatch-counter.ligo" in
   let make_input = fun n ->
@@ -1547,6 +1936,11 @@ let failwith_religo () : (unit, _) result =
   let make_input = e_pair (e_unit ()) (e_unit ()) in
   expect_fail program "main" make_input
 
+let failwith_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/failwith.jsligo" in
+  let make_input = e_pair (e_unit ()) (e_unit ()) in
+  expect_fail program "main" make_input
+
 let assert_mligo () : (unit, _) result =
   let%bind program = mtype_file "./contracts/assert.mligo" in
   let make_input b = e_pair (e_bool b) (e_unit ()) in
@@ -1565,6 +1959,14 @@ let assert_religo () : (unit, _) result =
   let%bind _ = expect_eq program "main" (make_input true) make_expected in
   ok ()
 
+let assert_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/assert.jsligo" in
+  let make_input b = e_pair (e_bool b) (e_unit ()) in
+  let make_expected = e_pair (e_typed_list [] (t_operation())) (e_unit ()) in
+  let%bind _ = expect_fail program "main" (make_input false) in
+  let%bind _ = expect_eq program "main" (make_input true) make_expected in
+  ok ()
+    
 let recursion_ligo () : (unit, _) result =
   let%bind program = type_file "./contracts/recursion.ligo" in
   let%bind _ =
@@ -1605,6 +2007,20 @@ let recursion_religo () : (unit, _) result =
     expect_eq program "fibo" make_input make_expected
   in ok ()
 
+let recursion_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/recursion.jsligo" in
+  let%bind _ =
+    let make_input = e_pair (e_int 10) (e_int 0) in
+    let make_expected = e_int 55 in
+    expect_eq program "sum" make_input make_expected
+  in
+  let%bind _ =
+    let make_input = e_tuple [(e_int 10); (e_int 1); (e_int 1)] in
+    let make_expected = e_int 89 in
+    expect_eq program "fibo" make_input make_expected
+  in ok ()
+  
+
 let guess_string_mligo () : (unit, _) result =
   let%bind program = type_file "./contracts/guess_string.mligo" in
   let make_input = fun n -> e_pair (e_int n) (e_int 42) in
@@ -1631,6 +2047,11 @@ let counter_religo () : (unit, _) result =
   let make_expected n = e_pair (e_typed_list [] (t_operation ())) (e_int (42 + n)) in
   expect_eq_n program "main" make_input make_expected
 
+let counter_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/counter.jsligo" in
+  let make_input n = e_pair (e_int n) (e_int 42) in
+  let make_expected n = e_pair (e_typed_list [] (t_operation ())) (e_int (42 + n)) in
+  expect_eq_n program "main" make_input make_expected
 
 let let_in_mligo () : (unit, _) result =
   let%bind program = mtype_file "./contracts/letin.mligo" in
@@ -1666,6 +2087,24 @@ let let_in_religo () : (unit, _) result =
   in
   ok ()
 
+let let_in_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/letin.jsligo" in
+  let%bind () =
+    let make_input n = e_pair (e_int n) (e_pair (e_int 3) (e_int 5)) in
+    let make_expected n =
+      e_pair (e_typed_list [] (t_operation ())) (e_pair (e_int (7+n)) (e_int (3+5)))
+    in
+    expect_eq_n program "main" make_input make_expected
+  in
+  let%bind () =
+    expect_eq program "letin_nesting" (e_unit ()) (e_string "test")
+  in
+  let%bind () =
+    expect_eq program "letin_nesting2" (e_int 4) (e_int 9)
+  in
+  ok ()
+  
+
 let local_type_decl program : (unit, _) result =
   let%bind () =
     expect_eq program "local_type" (e_unit ()) (e_int 3)
@@ -1683,6 +2122,10 @@ let local_type_decl_mligo () : (unit, _) result =
 let local_type_decl_religo () : (unit, _) result =
   let%bind program = retype_file "./contracts/local_type_decl.religo" in
   local_type_decl program
+
+let local_type_decl_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/local_type_decl.jsligo" in
+  local_type_decl program  
 
 let match_variant () : (unit, _) result =
   let%bind program = mtype_file "./contracts/match.mligo" in
@@ -1722,6 +2165,14 @@ let match_variant_re () : (unit, _) result =
     e_pair (e_typed_list [] (t_operation ())) (e_int (3-n))
   in expect_eq_n program "main" make_input make_expected
 
+let match_variant_js () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/match.jsligo" in
+  let make_input n =
+    e_pair (e_constructor "Sub" (e_int n)) (e_int 3) in
+  let make_expected n =
+    e_pair (e_typed_list [] (t_operation ())) (e_int (3-n))
+  in expect_eq_n program "main" make_input make_expected
+  
 
 let match_matej () : (unit, _) result =
   let%bind program = mtype_file "./contracts/match_bis.mligo" in
@@ -1739,6 +2190,14 @@ let match_matej_re () : (unit, _) result =
     e_pair (e_typed_list [] (t_operation ())) (e_int (3-n))
   in expect_eq_n program "main" make_input make_expected
 
+let match_matej_js () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/match_bis.jsligo" in
+  let make_input n =
+    e_pair (e_constructor "Decrement" (e_int n)) (e_int 3) in
+  let make_expected n =
+    e_pair (e_typed_list [] (t_operation ())) (e_int (3-n))
+  in expect_eq_n program "main" make_input make_expected
+  
 
 let mligo_list () : (unit, _) result =
   let%bind program = mtype_file "./contracts/list.mligo" in
@@ -1786,6 +2245,29 @@ let religo_list () : (unit, _) result =
   let%bind () = expect_eq program "iter_op" (aux [2 ; 3 ; 4 ; 5]) (e_unit ()) in
   ok ()
 
+let jsligo_list () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/list.jsligo" in
+  let%bind () = expect_eq program "size_" (e_list [e_int 0; e_int 1; e_int 2]) (e_nat 3) in
+  let aux lst = e_list @@ List.map e_int lst in
+  let%bind () = expect_eq program "fold_op" (aux [ 1 ; 2 ; 3 ]) (e_int 16) in
+  let%bind () =
+    let make_input n =
+      e_pair (e_list [e_int n; e_int (2*n)])
+        (e_pair (e_int 3) (e_list [e_int 8])) in
+    let make_expected n =
+      e_pair (e_typed_list [] (t_operation ()))
+        (e_pair (e_int (n+3)) (e_list [e_int (2*n)]))
+    in
+    expect_eq_n program "main" make_input make_expected
+  in
+  let%bind () = expect_eq_evaluate program "x" (e_list []) in
+  let%bind () = expect_eq_evaluate program "y" (e_list @@ List.map e_int [3 ; 4 ; 5]) in
+  let%bind () = expect_eq_evaluate program "z" (e_list @@ List.map e_int [2 ; 3 ; 4 ; 5]) in
+  let%bind () = expect_eq program "map_op" (aux [2 ; 3 ; 4 ; 5]) (aux [3 ; 4 ; 5 ; 6]) in
+  let%bind () = expect_eq program "iter_op" (aux [2 ; 3 ; 4 ; 5]) (e_unit ()) in
+  ok ()
+  
+
 let lambda_mligo () : (unit, _) result =
   let%bind program = mtype_file "./contracts/lambda.mligo" in
   let make_input = e_pair (e_unit ()) (e_unit ()) in
@@ -1798,6 +2280,11 @@ let lambda_religo () : (unit, _) result =
   let make_expected = (e_unit ()) in
   expect_eq program "main" make_input make_expected
 
+let lambda_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/lambda.jsligo" in
+  let make_input = e_pair (e_unit ()) (e_unit ()) in
+  let make_expected = (e_unit ()) in
+  expect_eq program "main" make_input make_expected
 
 let lambda_ligo () : (unit, _) result =
   let%bind program = type_file "./contracts/lambda.ligo" in
@@ -1817,6 +2304,12 @@ let lambda2_religo () : (unit, _) result =
   let make_expected = (e_unit ()) in
   expect_eq program "main" make_input make_expected
 
+let lambda2_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/lambda2.jsligo" in
+  let make_input = e_pair (e_unit ()) (e_unit ()) in
+  let make_expected = (e_unit ()) in
+  expect_eq program "main" make_input make_expected
+  
 
 let fibo_mligo () : (unit, _) result =
   let%bind program = mtype_file "./contracts/fibo.mligo" in
@@ -1838,6 +2331,9 @@ let michelson_insertion_mligo () : (unit, _) result =
 
 let michelson_insertion_religo () : (unit, _) result =
   michelson_insertion @@ retype_file "./contracts/michelson_insertion.religo"
+
+let michelson_insertion_jsligo () : (unit, _) result =
+  michelson_insertion @@ jstype_file "./contracts/michelson_insertion.jsligo"
 
 let website1_ligo () : (unit, _) result =
   let%bind program = type_file "./contracts/website1.ligo" in
@@ -1898,7 +2394,16 @@ let website2_religo () : (unit, _) result =
     e_pair (e_typed_list [] (t_operation ())) (e_int (op 42 n)) in
   expect_eq_n program "main" make_input make_expected
 
-
+let website2_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/website2.jsligo" in
+  let make_input = fun n ->
+    let action = if n mod 2 = 0 then "Increment" else "Decrement" in
+    e_pair (e_constructor action (e_int n)) (e_int 42) in
+  let make_expected = fun n ->
+    let op = if n mod 2 = 0 then (+) else (-) in
+    e_pair (e_typed_list [] (t_operation ())) (e_int (op 42 n)) in
+  expect_eq_n program "main" make_input make_expected
+  
 let mligo_let_multiple () : (unit, _) result =
   let%bind program = mtype_file "./contracts/let_multiple.mligo" in
   let%bind () =
@@ -1952,6 +2457,25 @@ let religo_let_multiple () : (unit, _) result =
   in
   ok ()
 
+let jsligo_let_multiple () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/let_multiple.jsligo" in
+  let%bind () =
+    let input = e_unit () in
+    let expected = e_int 3 in
+    expect_eq program "main" input expected
+  in
+  let%bind () =
+    let input = e_unit () in
+    let expected = e_int 6 in
+    expect_eq program "main_paren" input expected
+  in
+  let%bind () =
+    let input = e_unit () in
+    let expected = e_int 65 in
+    expect_eq program "non_tuple_rhs" input expected
+  in
+  ok ()
+  
 
 let balance_test_options () =
   let%bind balance = trace_option (test_internal "could not convert balance") @@
@@ -1979,6 +2503,14 @@ let balance_constant_religo () : (unit, _) result =
   let expected = e_tuple [e_list []; e_mutez 4000000000000] in
   let%bind options = balance_test_options () in
   expect_eq ~options program "main" input expected
+
+let balance_constant_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/balance_constant.jsligo" in
+  let input = e_tuple [e_unit () ; e_mutez 0]  in
+  let expected = e_tuple [e_list []; e_mutez 4000000000000] in
+  let%bind options = balance_test_options () in
+  expect_eq ~options program "main" input expected
+  
 
 let amount () : (unit, _) result =
   let%bind program = type_file "./contracts/amount.ligo" in
@@ -2016,6 +2548,19 @@ let amount_religo () : (unit, _) result =
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount () in
   expect_eq ~options program "check_" input expected
 
+let amount_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/amount.jsligo" in
+  let input = e_unit () in
+  let expected = e_int 42 in
+  let amount =
+    match Memory_proto_alpha.Protocol.Alpha_context.Tez.of_string "100" with
+    | Some t -> t
+    | None -> Memory_proto_alpha.Protocol.Alpha_context.Tez.one
+  in
+  let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount () in
+  expect_eq ~options program "check_" input expected
+  
+
 let addr_test program =
   let open Proto_alpha_utils.Memory_proto_alpha in
   let addr = Protocol.Alpha_context.Contract.to_b58check @@
@@ -2037,6 +2582,10 @@ let address_religo () : (unit, _) result =
   let%bind program = retype_file "./contracts/address.religo" in
   addr_test program
 
+let address_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/address.jsligo" in
+  addr_test program
+  
 
 let self_address () : (unit, _) result =
   let%bind _ = type_file "./contracts/self_address.ligo" in
@@ -2048,6 +2597,10 @@ let self_address_mligo () : (unit, _) result =
 
 let self_address_religo () : (unit, _) result =
   let%bind _ = retype_file "./contracts/self_address.religo" in
+  ok ()
+
+let self_address_jsligo () : (unit, _) result =
+  let%bind _ = jstype_file "./contracts/self_address.jsligo" in
   ok ()
 
 let implicit_account () : (unit, _) result =
@@ -2063,9 +2616,19 @@ let implicit_account_religo () : (unit, _) result =
   let%bind _ = retype_file "./contracts/implicit_account.religo" in
   ok ()
 
+let implicit_account_jsligo () : (unit, _) result =
+  let%bind _ = jstype_file "./contracts/implicit_account.jsligo" in
+  ok ()
+  
+
 let tuples_sequences_functions_religo () : (unit, _) result =
   let%bind _ = retype_file "./contracts/tuples_sequences_functions.religo" in
   ok ()
+
+let tuples_sequences_functions_jsligo () : (unit, _) result =
+  let%bind _ = jstype_file "./contracts/tuples_sequences_functions.jsligo" in
+  ok ()
+  
 
 let is_nat () : (unit, _) result =
   let%bind program = type_file "./contracts/isnat.ligo" in
@@ -2106,6 +2669,18 @@ let is_nat_religo () : (unit, _) result =
     expect_eq program "main" input expected
   in ok ()
 
+let is_nat_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/isnat.jsligo" in
+  let%bind () =
+    let input = e_int 10 in
+    let expected = e_some (e_nat 10) in
+    expect_eq program "main" input expected
+  in
+  let%bind () =
+    let input = e_int (-10) in
+    let expected = e_none () in
+    expect_eq program "main" input expected
+  in ok ()
 
 let simple_access_ligo () : (unit, _) result =
   let%bind program = type_file "./contracts/simple_access.ligo" in
@@ -2156,6 +2731,16 @@ let attributes_religo () : (unit, _) result =
     expect_eq program "foo" input expected
   in
   ok ()
+
+let attributes_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/attributes.jsligo" in
+  let%bind () =
+    let input = e_int 3 in
+    let expected = e_int 5 in
+    expect_eq program "foo" input expected
+  in
+  ok ()
+  
 
 let get_contract_ligo () : (unit, _) result =
   let%bind program = type_file "./contracts/get_contract.ligo" in
@@ -2242,6 +2827,18 @@ let key_hash_religo () : (unit, _) result =
   let%bind () = expect_eq program "check_hash_key" make_input make_expected in
   ok ()
 
+let key_hash_jsligo () : (unit, _) result =
+  let open Tezos_crypto in
+  let (raw_pkh,raw_pk,_) = Signature.generate_key () in
+  let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
+  let pk_str = Signature.Public_key.to_b58check raw_pk in
+  let%bind program = jstype_file "./contracts/key_hash.jsligo" in
+  let make_input = e_pair (e_key_hash pkh_str) (e_key pk_str) in
+  let make_expected = e_pair (e_bool true) (e_key_hash pkh_str) in
+  let%bind () = expect_eq program "check_hash_key" make_input make_expected in
+  ok ()
+  
+
 let check_signature () : (unit, _) result =
   let open Tezos_crypto in
   let (_, raw_pk, sk) = Signature.generate_key () in
@@ -2282,6 +2879,20 @@ let check_signature_religo () : (unit, _) result =
   let%bind () = expect_eq program "check_signature" make_input make_expected in
   ok ()
 
+let check_signature_jsligo () : (unit, _) result =
+  let open Tezos_crypto in
+  let (_, raw_pk, sk) = Signature.generate_key () in
+  let pk_str = Signature.Public_key.to_b58check raw_pk in
+  let signed = Signature.sign sk (Bytes.of_string "hello world") in
+  let%bind program = jstype_file "./contracts/check_signature.jsligo" in
+  let make_input = e_tuple [e_key pk_str ;
+                            e_signature (Signature.to_b58check signed) ;
+                            e_bytes_string "hello world"] in
+  let make_expected = e_bool true in
+  let%bind () = expect_eq program "check_signature" make_input make_expected in
+  ok ()
+  
+
 let curry () : (unit, _) result =
   let%bind program = mtype_file "./contracts/curry.mligo" in
   let%bind () =
@@ -2315,6 +2926,15 @@ let set_delegate_religo () : (unit, _) result =
   let%bind program = retype_file "./contracts/set_delegate.religo" in
   let%bind () = expect_eq program "main" (e_key_hash pkh_str) (e_typed_list [] (t_operation ()))
   in ok ()
+
+let set_delegate_jsligo () : (unit, _) result =
+  let open Tezos_crypto in
+  let (raw_pkh,_,_) = Signature.generate_key () in
+  let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
+  let%bind program = jstype_file "./contracts/set_delegate.jsligo" in
+  let%bind () = expect_eq program "main" (e_key_hash pkh_str) (e_typed_list [] (t_operation ()))
+  in ok ()
+  
 
 let type_tuple_destruct () : (unit, _) result =
   let%bind program = mtype_file "./contracts/type_tuple_destruct.mligo" in
@@ -2376,6 +2996,16 @@ let bytes_unpack_religo () : (unit, _) result =
   let%bind () = expect_eq program "id_address" (e_address addr) (e_some (e_address addr)) in
   ok ()
 
+let bytes_unpack_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/bytes_unpack.jsligo" in
+  let%bind () = expect_eq program "id_string" (e_string "teststring") (e_some (e_string "teststring")) in
+  let%bind () = expect_eq program "id_int" (e_int 42) (e_some (e_int 42)) in
+  let open Proto_alpha_utils.Memory_proto_alpha in
+  let addr = Protocol.Alpha_context.Contract.to_b58check @@
+      (List.nth dummy_environment.identities 0).implicit_contract in
+  let%bind () = expect_eq program "id_address" (e_address addr) (e_some (e_address addr)) in
+  ok ()
+
 let empty_case () : (unit, _) result =
   let%bind program = type_file "./contracts/empty_case.ligo" in
   let%bind () =
@@ -2418,6 +3048,21 @@ let empty_case_religo () : (unit, _) result =
   in
   ok ()
 
+let empty_case_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/empty_case.jsligo" in
+  let%bind () =
+    let input _ = e_constructor "Bar" (e_int 1) in
+    let expected _ = e_int 1 in
+    expect_eq_n program "main" input expected
+  in
+  let%bind () =
+    let input _ = e_constructor "Baz" (e_unit ()) in
+    let expected _ = e_int (-1) in
+    expect_eq_n program "main" input expected
+  in
+  ok ()
+  
+
 let tuple_type_mligo () : (unit, _) result =
   let%bind program = mtype_file "./contracts/tuple_type.mligo" in
   let%bind () =
@@ -2456,6 +3101,31 @@ let tuple_type_religo () : (unit, _) result =
   in
   ok ()
 
+let tuple_type_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/tuple_type.jsligo" in
+  let%bind () =
+    let input _ = e_int 0 in
+    let expected _ = e_int 8 in
+    expect_eq_n program "arguments_test" input expected
+  in
+  let%bind () =
+    let input _ = e_int 0 in
+    let expected _ = e_int 8 in
+    expect_eq_n program "tuple_test" input expected
+  in
+  let%bind () =
+    let input _ = e_int 0 in
+    let expected _ = e_int 8 in
+    expect_eq_n program "arguments_test_inline" input expected
+  in
+  let%bind () =
+    let input _ = e_int 0 in
+    let expected _ = e_int 8 in
+    expect_eq_n program "tuple_test_inline" input expected
+  in
+  ok ()
+  
+
 let no_semicolon_religo () : (unit, _) result =
   let%bind program = retype_file "./contracts/no_semicolon.religo" in
   let%bind () =
@@ -2465,8 +3135,21 @@ let no_semicolon_religo () : (unit, _) result =
   in
   ok ()
 
+let no_semicolon_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/no_semicolon.jsligo" in
+  let%bind () =
+    let input _ = e_int 2 in
+    let expected _ = e_int 3 in
+    expect_eq_n program "a" input expected
+  in
+  ok ()
+
 let tuple_list_religo () : (unit, _) result =
   let%bind _ = retype_file "./contracts/tuple_list.religo" in
+  ok ()
+
+let tuple_list_jsligo () : (unit, _) result =
+  let%bind _ = jstype_file "./contracts/tuple_list.jsligo" in
   ok ()
 
 let single_record_expr_religo () : (unit, _) result =
@@ -2496,12 +3179,15 @@ let main = test_suite "Integration (End to End)"
     test (* enabled AND PASSES as of 02021-01-28 15478d068 *) "bytes unpack" bytes_unpack ;
     test (* enabled AND PASSES as of 02021-01-28 15478d068 *) "bytes unpack (mligo)" bytes_unpack_mligo ;
     test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bytes unpack (religo)" bytes_unpack_religo ; 
+    test "bytes unpack (jsligo)" bytes_unpack_jsligo ; 
     test (* enabled AND PASSES as of 02021-01-30 3aaa688f1 *) "key hash" key_hash ;                         (* C_access_label *)
     test (* enabled AND PASSES as of 02021-01-30 3aaa688f1 *) "key hash (mligo)" key_hash_mligo ;           (* C_access_label *)
     test (* enabled AND PASSES as of 02021-01-30 3aaa688f1 *) "key hash (religo)" key_hash_religo ;         (* C_access_label *)
+    test "key hash (jsligo)" key_hash_jsligo ;         (* C_access_label *)
     test (* enabled AND PASSES as of 02021-01-30 938866182 *) "check signature" check_signature ;                 (* C_access_label *)
     test (* enabled AND PASSES as of 02021-01-30 938866182 *) "check signature (mligo)" check_signature_mligo ;   (* C_access_label *)
     test (* enabled AND PASSES as of 02021-01-30 938866182 *) "check signature (religo)" check_signature_religo ; (* C_access_label *)
+    test "check signature (jsligo)" check_signature_jsligo ; (* C_access_label *)
 
     test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "type alias" type_alias ;
 
@@ -2519,75 +3205,96 @@ let main = test_suite "Integration (End to End)"
     test (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "closure" closure ;
     test (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "closure (mligo)" closure_mligo ;
     test (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "closure (religo)" closure_religo ;
+    test "closure (jsligo)" closure_jsligo ;
     test (* enabled AND PASSES as of 02021-01-30 938866182 *) "shared function" shared_function ;
     test (* enabled AND PASSES as of 02021-01-30 938866182 *) "shared function (mligo)" shared_function_mligo ;
     test (* enabled AND PASSES as of 02021-01-30 938866182 *) "shared function (religo)" shared_function_religo ;
+    test (* enabled AND PASSES as of 02021-01-30 938866182 *) "shared function (jsligo)" shared_function_jsligo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "higher order" higher_order ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "higher order (mligo)" higher_order_mligo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "higher order (religo)" higher_order_religo ;
+    test "higher order (jsligo)" higher_order_jsligo ;
     test (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "variant" variant ;
     test (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "variant (mligo)" variant_mligo ;
     test (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "variant (religo)" variant_religo ;
+    test "variant (jsligo)" variant_jsligo ;
 
     test (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "variant matching" variant_matching ;
     test (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "tuple" tuple ;
     test (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "tuple (mligo)" tuple_mligo ;
     test (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "tuple (religo)" tuple_religo ;
+    test "tuple (jsligo)" tuple_jsligo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "record" record ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "record (mligo)" record_mligo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "record (religo)" record_religo ;
+    test "record (jsligo)" record_jsligo ;
     test "condition simple" condition_simple ;
     test "condition (ligo)" condition ;
     test "condition (mligo)" condition_mligo ;
     test "condition (religo)" condition_religo ;
+    test "condition (jsligo)" condition_jsligo ;
     test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "sequence (mligo" sequence_mligo ;
     test (* todo p_row specialize *) "eq bool (ligo)" eq_bool ;
     test "eq bool (mligo)" eq_bool_mligo ;
     test "eq bool (religo)" eq_bool_religo ;
+    test "eq bool (jsligo)" eq_bool_jsligo ;
     test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "shadow" shadow ;
     test (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "annotation" annotation ;
 
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "multiple parameters" multiple_parameters ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "multiple parameters (mligo)" multiple_parameters_mligo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "multiple parameters (religo)" multiple_parameters_religo ;
+    test "multiple parameters (jsligo)" multiple_parameters_jsligo ;
     test (* todo p_row specialize *) "bool" bool_expression ;
     test "bool (mligo)" bool_expression_mligo ;
     test "bool (religo)" bool_expression_religo ;
+    test "bool (jsligo)" bool_expression_jsligo ;
     test (* failure todo *) "arithmetic" arithmetic ;
     test "arithmetic (mligo)" arithmetic_mligo ;
     test "arithmetic (religo)" arithmetic_religo ;
+    test "arithmetic (jsligo)" arithmetic_jsligo ;
     test (* todo *) "bitwise_arithmetic" bitwise_arithmetic ;
     test "bitwise_arithmetic (mligo)" bitwise_arithmetic_mligo;
     test "bitwise_arithmetic (religo)" bitwise_arithmetic_religo;
+    test "bitwise_arithmetic (jsligo)" bitwise_arithmetic_jsligo;
     test (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "string_arithmetic" string_arithmetic ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "string_arithmetic (mligo)" string_arithmetic_mligo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "string_arithmetic (religo)" string_arithmetic_religo ;
     test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "bytes_arithmetic" bytes_arithmetic ;
     test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "bytes_arithmetic (mligo)" bytes_arithmetic_mligo ;
     test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "bytes_arithmetic (religo)" bytes_arithmetic_religo ;
+    test "bytes_arithmetic (jsligo)" bytes_arithmetic_jsligo ;
     test (* exist in typeclasse *) "comparable (mligo)" comparable_mligo;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "crypto" crypto ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "crypto (mligo)" crypto_mligo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "crypto (religo)" crypto_religo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "crypto (jsligo)" crypto_jsligo ;
     (* test "set_arithmetic" set_arithmetic ; *)
     test (* Missing typeclass *) "set_arithmetic (mligo)" set_arithmetic_mligo ;
     test "set_arithmetic (religo)" set_arithmetic_religo ;
+    test "set_arithmetic (jsligo)" set_arithmetic_jsligo ;
     test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "unit" unit_expression ;
     test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "string" string_expression ;
     test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "option" option ;
     test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "option (mligo)" moption ;
     test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "option (religo)" reoption ;
+    test "option (jsligo)" jsoption ;
 
     test (* exist for tc_size or t_map_size *) "map" map ;
     test "map (mligo)" mmap ;
     (* test "map (religo)" remap ; *)
+    test "map (jsligo)" jsmap;
     test (* incompatible type MAP BIG_MAP *) "big_map" big_map ;
     test "big_map (mligo)" mbig_map ;
     test "big_map (religo)" rebig_map ;
+    test "big_map (jsligo)" jsbig_map ;
     test (* rework typeclass *) "list" list ;
     test "loop" loop ;
     test "loop (mligo)" loop_mligo ;
     test "loop (religo)" loop_religo ;
+    test "loop (jsligo)" loop_jsligo ;
+    test "loop2 (jsligo)" loop2_jsligo ;
+
     test "matching" matching ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "declarations" declarations ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "quote declaration" quote_declaration ;
@@ -2596,44 +3303,56 @@ let main = test_suite "Integration (End to End)"
     test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "#include directives" include_ ;
     test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "#include directives (mligo)" include_mligo ;
     test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "#include directives (religo)" include_religo ;
-
+    test "#include directives (jsligo)" include_jsligo ;
 
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "counter contract" counter_contract ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "counter contract (mligo)" counter_mligo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "counter contract (religo)" counter_religo ;
+    test "counter contract (jsligo)" counter_jsligo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "super counter contract" super_counter_contract ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "super counter contract" super_counter_contract_mligo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "super counter contract (reasonligo)" super_counter_contract_religo ;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "super counter contract (jsligo)" super_counter_contract_jsligo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "dispatch counter contract" dispatch_counter_contract ;
     test (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "basic (mligo)" basic_mligo ;
     test (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "basic (religo)" basic_religo ;
 
     test "let-in (mligo)" let_in_mligo ;
     test "let-in (religo)" let_in_religo ;
+    test "let-in (jsligo)" let_in_jsligo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "local type declaration (ligo)" local_type_decl_ligo;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "local type declaration (mligo)" local_type_decl_mligo;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "local type declaration (religo)" local_type_decl_religo;
+    test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "local type declaration (jsligo)" local_type_decl_jsligo;
     test (* enabled AND PASSES as of 02020-02-03 2e8d3689b *) "match variant (mligo)" match_variant ;
     test (* enabled AND PASSES as of 02020-02-03 2e8d3689b *) "match variant (religo)" match_variant_re ;
+    test "match variant (jsligo)" match_variant_js ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "match variant 2 (mligo)" match_matej ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "match variant 2 (religo)" match_matej_re ;
+    test "match variant 2 (jsligo)" match_matej_js ;
     test (* uncomplete typclass *) "list matching (mligo)" mligo_list ;
     test "list matching (religo)" religo_list ;
+    test "list matching (jsligo)" jsligo_list ;
     test "failwith ligo" failwith_ligo ;
+    test "failwith jsligo" failwith_jsligo ;
     test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "failwith mligo" failwith_mligo ;
     test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "assert mligo" assert_mligo ;
+    test "assert jsligo" assert_jsligo ;
     test "recursion (ligo)" recursion_ligo ;
     test "recursion (mligo)" recursion_mligo ;
     test "recursion (religo)" recursion_religo ;
+    test "recursion (jsligo)" recursion_jsligo ;
     (* test "guess string mligo" guess_string_mligo ; WIP? *)
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "lambda mligo" lambda_mligo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "lambda religo" lambda_religo ;
+    test "lambda jsligo" lambda_jsligo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "lambda ligo" lambda_ligo ;
     test (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "tez (ligo)" tez_ligo ;
     test (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "tez (mligo)" tez_mligo ;
 
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "lambda2 mligo" lambda2_mligo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "lambda2 religo" lambda2_religo ;
+    test "lambda2 jsligo" lambda2_jsligo ;
     (* test "fibo (mligo)" fibo_mligo ; *)
     (* test "fibo2 (mligo)" fibo2_mligo ; *)
     (* test "fibo3 (mligo)" fibo3_mligo ; *)
@@ -2641,35 +3360,46 @@ let main = test_suite "Integration (End to End)"
     test "michelson inserion ligo" michelson_insertion_ligo;
     test "michelson inserion mligo" michelson_insertion_mligo;
     test "michelson inserion religo" michelson_insertion_religo;
+    test "michelson inserion jsligo" michelson_insertion_jsligo;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "website1 ligo" website1_ligo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "website2 ligo" website2_ligo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "website2 (mligo)" website2_mligo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "website2 (religo)" website2_religo ;
+    test "website2 (jsligo)" website2_jsligo ;
     test "let multiple (mligo)" mligo_let_multiple ;
     test "let multiple (religo)" religo_let_multiple ;
+    test "let multiple (jsligo)" jsligo_let_multiple ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "balance constant" balance_constant ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "balance constant (mligo)" balance_constant_mligo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "balance constant (religo)" balance_constant_religo ;
+    test "balance constant (jsligo)" balance_constant_jsligo ;
     test "amount" amount ;
     test "amount (mligo)" amount_mligo ;
     test "amount (religo)" amount_religo ;
+    test "amount (jsligo)" amount_jsligo ;
     test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "address" address ;
     test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "address (mligo)" address_mligo ;
     test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "address (religo)" address_religo ;
+    test "address (jsligo)" address_jsligo ;
     test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "self address" self_address ;
     test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "self address (mligo)" self_address_mligo ;
     test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "self address (religo)" self_address_religo ;
+    test "self address (jsligo)" self_address_jsligo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "implicit account" implicit_account ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "implicit account (mligo)" implicit_account_mligo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "implicit account (religo)" implicit_account_religo ;
+    test "implicit account (jsligo)" implicit_account_jsligo ;
 
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "set delegate" set_delegate ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "set delegate (mligo)" set_delegate_mligo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "set delegate (religo)" set_delegate_religo ;
+    test "set delegate (jsligo)" set_delegate_jsligo ;
     test (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "is_nat" is_nat ;
     test (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "is_nat (mligo)" is_nat_mligo ;
     test (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "is_nat (religo)" is_nat_religo ;
+    test "is_nat (jsligo)" is_nat_jsligo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "tuples_sequences_functions (religo)" tuples_sequences_functions_religo ;
+    test "tuples_sequences_functions (jsligo)" tuples_sequences_functions_jsligo ;
 
     test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "simple_access (ligo)" simple_access_ligo;
     test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "deep_access (ligo)" deep_access_ligo;
@@ -2681,17 +3411,22 @@ let main = test_suite "Integration (End to End)"
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "attributes (ligo)" attributes_ligo;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "attributes (mligo)" attributes_mligo;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "attributes (religo)" attributes_religo;
+    test "attributes (jsligo)" attributes_jsligo;
     test "let in multi-bind (mligo)" let_in_multi_bind ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "tuple param destruct (mligo)" tuple_param_destruct ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "tuple param destruct (religo)" tuple_param_destruct_religo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "empty case" empty_case ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "empty case (mligo)" empty_case_mligo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "empty case (religo)" empty_case_religo ;
+    test "empty case (jsligo)" empty_case_jsligo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "tuple type (mligo)" tuple_type_mligo ;
     test (* enabled AND PASSES as of 02020-02-02 e38be768a *) "tuple type (religo)" tuple_type_religo ;
+    test "tuple type (jsligo)" tuple_type_jsligo ;
     test "no semicolon (religo)" no_semicolon_religo ;
+    test "no semicolon (jsligo)" no_semicolon_jsligo ;
     test "loop_bugs (ligo)" loop_bugs_ligo ;
     test (* new typeclass *) "tuple_list (religo)" tuple_list_religo ;
+    test "no semicolon (jsligo)" no_semicolon_jsligo ;
     test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "single_record_expr (religo)" single_record_expr_religo ;
     test "shadowing (mligo)" shadowing;
   ]

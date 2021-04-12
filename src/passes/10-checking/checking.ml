@@ -464,6 +464,24 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let tv_lst = [tv_key;tv_val;tv_map] in
       let%bind (name', tv) = type_constant cst ae.location tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=[key';val';map']}) tv
+  | E_constant {cons_name = C_POLYMORPHIC_ADD;arguments} ->
+      let%bind lst' = bind_list @@ List.map (type_expression' e) arguments in
+      let tv_lst = List.map get_type_expression lst' in
+      let cst = (match lst' with 
+        | {expression_content = E_literal (Literal_string _); _ } :: _ -> S.C_CONCAT
+        | {expression_content = E_constant {cons_name = C_ADD; _ }; _ } :: _ -> C_ADD
+        | {expression_content = E_constant {cons_name = C_CONCAT; _ }; _ } :: _ -> C_CONCAT
+        | {expression_content = E_literal (Literal_int _); _ } :: _ -> C_ADD
+        | {expression_content = E_variable _; type_expression = texpr } :: _ ->
+                if is_t_string texpr then
+                  C_CONCAT
+                else
+                  C_ADD
+      | _ -> C_ADD
+      ) in
+      let%bind (name', tv) =
+        type_constant cst ae.location tv_lst tv_opt in
+      return (E_constant {cons_name=name';arguments=lst'}) tv
   | E_constant {cons_name;arguments} ->
       let%bind lst' = bind_list @@ List.map (type_expression' e) arguments in
       let tv_lst = List.map get_type_expression lst' in

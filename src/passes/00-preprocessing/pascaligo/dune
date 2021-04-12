@@ -1,0 +1,23 @@
+;; Build of the preprocessor of PascaLIGO as a library
+
+(library
+  (name preprocessing_pascaligo)
+  (public_name ligo.preprocessing.pascaligo)
+  (libraries
+     ;; Vendors
+     Preprocessor)
+  (modules Comments File)
+  (preprocess
+    (pps bisect_ppx --conditional)))
+
+;; Build of a standalone preprocessor for PascaLIGO
+
+(executable
+  (name PreprocMain)
+  (libraries
+    ;; LIGO
+    preprocessing_pascaligo
+    preprocessing_shared)
+  (modules PreprocMain)
+  (preprocess
+    (pps bisect_ppx --conditional)))

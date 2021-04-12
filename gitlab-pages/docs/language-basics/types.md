@@ -50,6 +50,14 @@ let dog_breed : breed = "Saluki";
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=a
+type breed = string;
+let dog_breed: breed = "Saluki";
+```
+
+</Syntax>
 
 
 > The above type definitions are aliases, which means that `breed` and
@@ -93,6 +101,19 @@ type account_balances = map (address, tez);
 let ledger: account_balances =
   Map.literal
     ([("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address, 10mutez)]);
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=b
+// The type account_balances denotes maps from addresses to tez
+
+type account_balances = map<address, tez>;
+
+let ledger: account_balances =
+  Map.literal
+    (list([["tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address, 10 as mutez]]));
 ```
 
 </Syntax>
@@ -187,6 +208,32 @@ let my_ledger : ledger =
   Map.literal([
     ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address,
      {balance: 10mutez, transactions: 5n})]);
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=c
+// Type aliasing
+
+type account = address;
+type number_of_transactions = nat;
+
+// The type account_data is a record with two fields.
+
+type account_data = {
+  balance: tez,
+  transactions: number_of_transactions
+};
+
+// A ledger is a map from accounts to account_data
+
+type ledger = map <account, account_data>;
+
+let my_ledger : ledger =
+  Map.literal(list([
+    ["tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address,
+     {balance: 10 as mutez, transactions: 5 as nat}]]));
 ```
 
 </Syntax>
@@ -287,6 +334,42 @@ let back = ((param, store) : (unit, storage)) : return => {
     | Some (x) => (no_op, store)
     }
   }
+};
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=d
+type parameter = 
+  ["Back"] 
+| ["Claim"] 
+| ["Withdraw"];
+
+type storage = {
+  owner    : address,
+  goal     : tez,
+  deadline : timestamp,
+  backers  : map<address, tez>,
+  funded   : bool
+};
+
+type return_ = [list<operation>, storage];
+
+let back = ([param, store] : [unit, storage]) : return_ => {
+  let no_op : list<operation> = list([]);
+  if (Tezos.now > store.deadline) {
+    return (failwith ("Deadline passed.") as return_); // Annotation
+  }
+  else {
+    return match(Map.find_opt (sender, store.backers), {
+      None: () => {
+        let backers = Map.update(sender, Some(amount), store.backers);
+        return [no_op, {...store, backers:backers}]; 
+      },
+      Some: (x: tez) => [no_op, store]
+    })
+  };
 };
 ```
 

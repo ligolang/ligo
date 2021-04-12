@@ -208,7 +208,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> ('a, 'err) result =
     let%bind res = self init body in
     (match lhs_type with
       Some (_, ty) -> self_type res ty
-    | None ->    ok @@ res
+    | None ->    ok res
     )
   | ESeq     {value;region=_} ->
     bind_fold_list self init @@ pseq_to_list value.elements
@@ -236,19 +236,21 @@ and fold_declaration : ('a, 'err) folder -> 'a -> declaration -> ('a, 'err) resu
     let%bind res = self_expr init let_rhs in
     (match lhs_type with
       Some (_, ty) -> self_type res ty
-    | None ->    ok @@ res
+    | None -> ok res
     )
   | TypeDecl {value;region=_} ->
     let {kwd_type=_;name=_;eq=_;type_expr} = value in
     let%bind res = self_type init type_expr in
-    ok @@ res
+    ok res
+
   | ModuleDecl {value;region=_} ->
     let {kwd_module=_;name=_;eq=_;lbrace=_;module_;rbrace=_} = value in
     let%bind res = self_module init module_ in
-    ok @@ res
+    ok res
   | ModuleAlias {value;region=_} ->
     let {kwd_module=_;alias=_;eq=_;binders=_} = value in
-    ok @@ init
+    ok init
+  | Directive _ -> ok init
 
 and fold_module : ('a, 'err) folder -> 'a -> t -> ('a, 'err) result =
   fun f init {decl;eof=_} ->
@@ -560,6 +562,7 @@ and map_declaration : ('err) mapper -> declaration -> (declaration, 'err) result
   | ModuleAlias {value;region} ->
     let {kwd_module=_;alias=_;eq=_;binders=_} = value in
     return @@ ModuleAlias {value;region}
+  | Directive _ as d -> return d
 
 and map_module : ('err) mapper -> t -> (t, 'err) result =
   fun f {decl;eof} ->

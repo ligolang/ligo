@@ -187,6 +187,8 @@ type constant' =
   | C_PAIRING_CHECK
   | C_SAPLING_VERIFY_UPDATE
   | C_SAPLING_EMPTY_STATE
+  (* JsLIGO *)
+  | C_POLYMORPHIC_ADD
 
 type deprecated = {
   name : string ;

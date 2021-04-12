@@ -5,7 +5,7 @@
     main_errors
     simple-utils
     tezos-utils
-    parser
+    parsing
     tree_abstraction
     ast_imperative
     self_ast_imperative

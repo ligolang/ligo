@@ -11,12 +11,7 @@ module Comments =
 
 module CLI     = Preprocessor.CLI.Make (Comments)
 module MainGen = Preprocessor.PreprocMainGen
-module Preproc = MainGen.Make (CLI)
+module Main    = MainGen.Make (CLI)
 
-let () = Preproc.check_cli ()
-
-let () =
-  match Preproc.preprocess () with
-    Stdlib.Ok (buffer, _) ->
-      Printf.printf "%s%!" (Buffer.contents buffer)
-  | _ -> ()
+let () = Main.check_cli ()
+let () = Main.preprocess () |> ignore

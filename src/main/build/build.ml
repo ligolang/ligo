@@ -20,7 +20,8 @@ let dependency_graph : options:Compiler_options.t -> string -> Compile.Of_core.f
   let rec dfs acc (dep_g,vertices) (file_name,form) =
     if not @@ SMap.mem file_name vertices then
       let%bind meta = trace build_error_tracer @@ Compile.Of_source.extract_meta syntax file_name in
-      let%bind c_unit, deps = trace preproc_tracer @@ Compile.Helpers.preprocess_file ~options ~meta file_name in
+      let%bind c_unit, deps =
+        Compile.Helpers.preprocess_file ~options ~meta file_name in
       let vertices = SMap.add file_name (meta,form,c_unit,deps) vertices in
       let dep_g = G.add_vertex dep_g file_name in
       let dep_g =
@@ -96,7 +97,7 @@ let aggregate_contract order_deps asts_typed =
     contract header_list in
   ok @@ Ast_typed.Module_Fully_Typed contract
 
-let type_file_with_dep ~options  asts_typed (file_name, (meta,form,c_unit,deps)) =
+let type_file_with_dep ~(options:Compiler_options.t)  asts_typed (file_name, (meta,form,c_unit,deps)) =
   let%bind ast_core = Compile.Utils.to_core ~options ~meta c_unit file_name in
   let aux (file_name,module_name) =
     let%bind ast_typed =
