@@ -71,9 +71,11 @@ deriving via PP (MapBinding it) instance Pretty it => Show (MapBinding it)
 deriving via PP (FieldAssignment it) instance Pretty it => Show (FieldAssignment it)
 deriving via PP (Constant it) instance Pretty it => Show (Constant it)
 deriving via PP (Pattern it) instance Pretty it => Show (Pattern it)
+deriving via PP (ModuleAccess it) instance Pretty it => Show (ModuleAccess it)
 deriving via PP (QualifiedName it) instance Pretty it => Show (QualifiedName it)
 deriving via PP (Name it) instance Pretty it => Show (Name it)
 deriving via PP (NameDecl it) instance Pretty it => Show (NameDecl it)
+deriving via PP (NameModule it) instance Pretty it => Show (NameModule it)
 deriving via PP (TypeName it) instance Pretty it => Show (TypeName it)
 deriving via PP (Ctor it) instance Pretty it => Show (Ctor it)
 deriving via PP (FieldName it) instance Pretty it => Show (FieldName it)
@@ -257,6 +259,10 @@ instance Pretty1 Constant where
     Bytes         z   -> pp z
     Tez           z   -> pp z
 
+instance Pretty1 ModuleAccess where
+  pp1 = \case
+    ModuleAccess path field -> sexpr "." (path <> [field])
+
 instance Pretty1 QualifiedName where
   pp1 = \case
     QualifiedName src path -> sexpr "." (src : path)
@@ -294,6 +300,10 @@ instance Pretty1 NameDecl where
   pp1 = \case
     NameDecl     raw -> pp raw
 
+instance Pretty1 NameModule where
+  pp1 = \case
+    NameModule   raw -> pp raw
+
 instance Pretty1 TypeName where
   pp1 = \case
     TypeName     raw -> pp raw
@@ -318,6 +328,10 @@ instance Pretty1 Error where
 -- Common
 ----------------------------------------------------------------------------
 
+instance LPP1 d ModuleAccess where
+  lpp1 = \case
+    ModuleAccess path field -> mconcat (punctuate "." path) <> lpp field
+
 instance LPP1 d QualifiedName where
   lpp1 = \case
     QualifiedName src path -> mconcat $ punctuate "." (src : path)
@@ -338,6 +352,10 @@ instance LPP1 d Name where
 instance LPP1 d NameDecl where
   lpp1 = \case
     NameDecl     raw -> lpp raw
+
+instance LPP1 d NameModule where
+  lpp1 = \case
+    NameModule   raw -> lpp raw
 
 instance LPP1 d TypeName where
   lpp1 = \case

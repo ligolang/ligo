@@ -51,14 +51,10 @@ module.exports = grammar({
 
   conflicts: $ =>
     [[$._expr_term, $._pattern]
-      , [$._expr_term, $.var_pattern]
       , [$.Name, $.TypeName]
-      , [$._expr_term, $.module_name]
       , [$.annot_pattern, $.let_declaration]
       , [$.lambda, $.tuple_pattern]
       , [$._expr_term, $.nullary_constr_pattern]
-      , [$.list, $.list_pattern]
-      , [$.FieldName, $._expr_term]
       , [$._expr_term, $.capture]
       , [$.type_string, $._literal]
       , [$.Name, $.NameDecl]
@@ -111,12 +107,11 @@ module.exports = grammar({
         ),
       ),
 
-    module_TypeName: $ =>
-      seq(
-        $.module_name,
-        '.',
-        $.TypeName,
-      ),
+    module_access: $ => seq(
+      sepBy1('.', field("path", $.NameModule)),
+      '.',
+      field("field", $.FieldName),
+    ),
 
     let_in: $ => seq(
       $._declaration,
@@ -132,6 +127,7 @@ module.exports = grammar({
       $._expr_term,
       $.apply,
       $.Some_call,
+      $.module_access,
     ),
 
     Some_call: $ => prec.right(10, seq(
@@ -154,7 +150,7 @@ module.exports = grammar({
       $.data_projection,
       $.if,
       $.switch,
-      $.record,
+      $._record_expr,
       $.michelson_interop,
       $.expr_group,
       $.let_in,
@@ -181,13 +177,19 @@ module.exports = grammar({
       ']'
     ),
 
-    record: $ => block(
-      seq(
-        // TODO: possible multiple spreads
-        optional(seq(field("assignment", $.spread), ',')),
-        sepBy(',', field("assignment", $._record_field)),
-      ),
+    _record_expr: $ => choice(
+      $.record,
+      $.record_update,
     ),
+
+    record: $ => block(sepBy(',', field("assignment", $._record_field))),
+
+    record_update: $ => block(seq(
+      // TODO: possible multiple spreads
+      field("subject", $.spread),
+      ',',
+      sepBy1(',', field("field", $.record_field_path)),
+    )),
 
     _record_field: $ => choice(
       $.record_field,
@@ -197,6 +199,12 @@ module.exports = grammar({
     capture: $ => field("name", $.Name),
 
     record_field: $ => seq(
+      field("accessor", $.FieldName),
+      ':',
+      field("value", $._program),
+    ),
+
+    record_field_path: $ => seq(
       $._accessor_chain,
       ':',
       field("value", $._program),
@@ -249,7 +257,7 @@ module.exports = grammar({
 
     // a.attribute
     data_projection: $ => seq(
-      field("expr", $._expr),
+      field("expr", $.Name),
       '.',
       $._accessor_chain,
     ),
@@ -356,12 +364,12 @@ module.exports = grammar({
         $.type_application,
         $.TypeName,
         $.Int,
-        // $.module_TypeName,
+        $.module_TypeName,
       ),
 
     module_TypeName: $ =>
       seq(
-        field("module", $.module_name),
+        sepBy1('.', field("path", $.NameModule)),
         '.',
         field("type", $.TypeName),
       ),
@@ -555,6 +563,7 @@ module.exports = grammar({
     Bytes: $ => /0x[0-9a-fA-F]+/,
     Name: $ => /[a-z][a-zA-Z0-9_]*/,
     NameDecl: $ => /[a-z][a-zA-Z0-9_]*/,
+    NameModule: $ => $._NameCapital,
     TypeName: $ => /[a-z][a-zA-Z0-9_]*/,
     TypeWildcard: $ => '_',
     _NameCapital: $ => /[A-Z][a-zA-Z0-9_]*/,

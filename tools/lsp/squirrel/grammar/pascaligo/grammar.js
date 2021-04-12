@@ -95,6 +95,13 @@ module.exports = grammar({
         field("typeValue", $._type_expr),
       ),
 
+    module_TypeName: $ =>
+      seq(
+        sepBy1('.', field("path", $.NameModule)),
+        '.',
+        field("type", $.TypeName),
+      ),
+
     _type_expr: $ => choice(
       $.sum_type,
       $.record_type,
@@ -103,6 +110,7 @@ module.exports = grammar({
 
     // upstream: `fun_type` -> `cartesian` -> `core_type`
     _simple_type: $ => choice(
+      $.module_TypeName,
       $.fun_type,
       $.prod_type,
       $.TypeName,
@@ -535,7 +543,6 @@ module.exports = grammar({
         $.Nat,
         $.Tez,
         $.Name,
-        $.module_field,
         $.String,
         $.Bytes,
         $.False,
@@ -615,6 +622,12 @@ module.exports = grammar({
         brackets(field("index", $._expr)),
       ),
 
+    module_access: $ => seq(
+      sepBy1('.', field("path", $.NameModule)),
+      '.',
+      field("field", $.FieldName),
+    ),
+
     _path: $ => choice($.Name, $._projection),
 
     _accessor: $ => choice($.FieldName, $.Int),
@@ -622,17 +635,10 @@ module.exports = grammar({
     // field names (or indices) separated by a dot
     _accessor_chain: $ => prec.right(sepBy1('.', field("accessor", $._accessor))),
 
-    module_field: $ =>
-      prec(10, seq(
-        field("module", $.NameModule),
-        '.',
-        field("method", $.Name),
-      )),
-
     _projection: $ =>
       choice(
         $.data_projection,
-        $.module_projection,
+        $.module_access,
       ),
 
     data_projection: $ => prec(11, seq(
@@ -640,14 +646,6 @@ module.exports = grammar({
       '.',
       $._accessor_chain,
     )),
-
-    module_projection: $ => seq(
-      field("module", $.NameModule),
-      '.',
-      field("index", $.Name),
-      '.',
-      $._accessor_chain,
-    ),
 
     record_expr: $ =>
       injection('record', field("assignment", $.field_path_assignment)),
@@ -668,7 +666,7 @@ module.exports = grammar({
 
     fun_call: $ =>
       seq(
-        field("f", choice($.Name, $.module_field)),
+        field("f", choice($.Name)),
         $.arguments,
       ),
 

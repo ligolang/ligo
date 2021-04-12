@@ -245,6 +245,12 @@ module.exports = grammar({
 
     _path: $ => choice($.Name, $.data_projection),
 
+    module_access: $ => seq(
+      sepBy1('.', field("path", $.NameModule)),
+      '.',
+      field("field", $.FieldName),
+    ),
+
     _accessor: $ => choice($.FieldName, $.Int),
 
     // field names (or indices) separated by a dot
@@ -252,9 +258,7 @@ module.exports = grammar({
 
     // a.0 or a.attribute
     data_projection: $ => prec.right(21, seq(
-      // TODO (LIGO-144 | LIGO-147): Once we have modules, change ConstrName to
-      // actually use module projection.
-      field("box", choice($.Name, $.ConstrName)),
+      field("box", $.Name),
       ".",
       $._accessor_chain,
     )),
@@ -359,6 +363,7 @@ module.exports = grammar({
       $.match_expr,
       $.list_expr,
       $.data_projection,
+      $.module_access,
       $.block_expr,
       $.michelson_interop,
     ),
@@ -411,6 +416,13 @@ module.exports = grammar({
       field("codomain", $._type_expr)
     )),
 
+    module_TypeName: $ =>
+      seq(
+        sepBy1('.', field("path", $.NameModule)),
+        '.',
+        field("type", $.TypeName),
+      ),
+
     _type_expr: $ => choice(
       $.TypeWildcard,
       $.type_fun,
@@ -419,6 +431,7 @@ module.exports = grammar({
       $.TypeName,
       $.type_tuple,
       $.Int,
+      $.module_TypeName,
     ),
 
     // Cat of string, Person of string * string
@@ -518,6 +531,7 @@ module.exports = grammar({
     TypeName: $ => /[a-z][a-zA-Z0-9_]*/,
     TypeWildcard: $ => '_',
     NameDecl: $ => /[a-z][a-zA-Z0-9_]*/,
+    NameModule: $ => /[A-Z][a-zA-Z0-9_]*/,
     FieldName: $ => /[a-z][a-zA-Z0-9_]*/,
     ConstrName: $ => /[A-Z][a-zA-Z0-9_]*/,
     Keyword: $ => /[A-Za-z][a-z]*/,

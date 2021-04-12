@@ -47,6 +47,7 @@ type RawLigoList =
   , MapBinding, Alt, Expr, TField, Variant, Type, Binding
   , RawContract, TypeName, FieldName, MichelsonCode
   , Error, Ctor, Contract, NameDecl, Preprocessor, PreprocessorCommand
+  , NameModule, ModuleAccess
   ]
 
 data Lang
@@ -186,6 +187,12 @@ data RecordFieldPattern it
   = IsRecordField it it
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
+data ModuleAccess it = ModuleAccess
+  { maPath  :: [it] -- [Name]
+  , maField :: it -- Accessor
+  }
+  deriving stock (Generic, Eq, Functor, Foldable, Traversable)
+
 data QualifiedName it
   = QualifiedName
     { qnSource ::  it -- Name
@@ -202,6 +209,10 @@ newtype Name it = Name
 newtype NameDecl it = NameDecl
   { _raw     :: Text
   }
+  deriving stock (Generic, Eq, Functor, Foldable, Traversable)
+  deriving Eq1 via DefaultEq1DeriveForText
+
+newtype NameModule it = NameModule Text
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 
@@ -343,6 +354,10 @@ instance Eq1 Variant where
 
 instance Eq1 TField where
   liftEq f (TField an at) (TField bn bt) = f an bn && f at bt
+
+instance Eq1 ModuleAccess where
+  liftEq f (ModuleAccess ap asrc) (ModuleAccess bp bsrc) =
+    f asrc bsrc && liftEqList f ap bp
 
 instance Eq1 QualifiedName where
   liftEq f (QualifiedName asrc ap) (QualifiedName bsrc bp) =
