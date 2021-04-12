@@ -5,10 +5,7 @@
     (type? (tuple? (tuple? (? n) (? acc))) (PROD int int))
     :
     int
-    =
-    (if
-      (tuple (n < 1))
-      acc (apply sum (tuple (tuple (apply n -1) (acc + n))))))
+    = (if ((n < 1)) acc (apply sum ((tuple (apply n -1) (acc + n))))))
   (fun
     rec
     fibo
@@ -18,7 +15,5 @@
     int
     =
     (if
-      (tuple (n < 2))
-      n_1
-      (apply
-        fibo (tuple (tuple (apply n -1) (tuple (n_1 + n_0) n_1)))))))
+      ((n < 2))
+      n_1 (apply fibo ((tuple (apply n -1) (tuple (n_1 + n_0) n_1)))))))

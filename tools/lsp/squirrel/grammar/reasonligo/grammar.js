@@ -153,11 +153,11 @@ module.exports = grammar({
       $.switch,
       $._record_expr,
       $.michelson_interop,
-      $.expr_group,
+      $.paren_expr,
       $.let_in,
     ),
 
-    expr_group: $ => prec(8, par(field("expr", $._expr_term))),
+    paren_expr: $ => prec(8, par(field("expr", $._annot_expr))),
 
     michelson_code: $ => seq(
       '{|',
@@ -303,8 +303,11 @@ module.exports = grammar({
       $._expr,
     )),
 
-    tuple: $ =>
-      par(sepBy1(',', field("item", $._annot_expr))),
+    tuple: $ => par(seq(
+      field("item", $._annot_expr),
+      ',',
+      sepBy1(',', field("item", $._annot_expr)),
+    )),
 
     _annot_expr: $ => choice(
       $.annot_expr,

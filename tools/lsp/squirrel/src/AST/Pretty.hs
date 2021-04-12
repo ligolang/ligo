@@ -232,6 +232,7 @@ instance Pretty1 Expr where
     SetPatch  z bs       -> sexpr "patch_set" (z : bs)
     RecordUpd r up       -> sexpr "update" (r : up)
     Michelson c t args   -> sexpr "%Michelson" (c : t : args)
+    Paren     e          -> "(" <> pp e <> ")"
 
 instance Pretty1 MichelsonCode where
   pp1 = \case
@@ -471,6 +472,7 @@ instance LPP1 'Pascal Expr where
       , foldr above empty $ lpp <$> az
       , "end"
       ]
+    Paren     e          -> "(" <+> lpp e <+> ")"
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node
 
 instance LPP1 'Pascal Alt where
@@ -558,7 +560,7 @@ instance LPP1 'Reason Expr where
     ListAccess l ids     -> lpp l <.> fsep (brackets <$> ids)
     Tuple     l          -> tuple l
     Annot     n t        -> parens (n <+> ":" <+> t)
-    Case      s az       -> foldr (<+>) empty $
+    Case      s az       -> foldr (<+>) empty
       [ "switch"
       , lpp s
       , "{\n"
@@ -566,8 +568,9 @@ instance LPP1 'Reason Expr where
       , "\n}"
       ]
     Seq       es         -> train " " es
-    Lambda    ps ty b    -> foldr (<+>) empty $
+    Lambda    ps ty b    -> foldr (<+>) empty
       [ train "," ps, if isJust ty then ":" <+> lpp ty else "", "=> {", lpp b, "}" ]
+    Paren     e          -> "(" <+> lpp e <+> ")"
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node
 
 instance LPP1 'Reason Alt where
@@ -664,16 +667,17 @@ instance LPP1 'Caml Expr where
     ListAccess l ids     -> lpp l <.> fsep (brackets <$> ids)
     Tuple     l          -> tuple l
     Annot     n t        -> parens (n <+> ":" <+> t)
-    Case      s az       -> foldr (<+>) empty $
+    Case      s az       -> foldr (<+>) empty
       [ "match"
       , lpp s
       , "with\n"
       , foldr above empty $ lpp <$> az
       ]
     Seq       es         -> train " " es
-    Lambda    ps ty b    -> foldr (<+>) empty $
+    Lambda    ps ty b    -> foldr (<+>) empty
       [ train "," ps, if isJust ty then ":" <+> lpp ty else "", "=>", lpp b ]
     RecordUpd r with     -> r <+> "with" <+> train ";" with
+    Paren     e          -> "(" <+> lpp e <+> ")"
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node
 
 instance LPP1 'Caml Alt where

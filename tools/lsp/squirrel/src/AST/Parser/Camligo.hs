@@ -46,7 +46,7 @@ recognise (SomeRawTree dialect rawTree)
         "lambda_expr"       -> Lambda     <$> fields "arg"       <*> pure Nothing  <*> field "body"
         "list_expr"         -> List       <$> fields "item"
         "tup_expr"          -> Tuple      <$> fields "x"
-        "paren_expr"        -> Tuple      <$> fields "expr"
+        "paren_expr"        -> Paren      <$> field  "expr"
         "block_expr"        -> Seq        <$> fields "item"
         "annot_expr"        -> Annot      <$> field  "expr"      <*> field "type"
         "binary_op_app"     -> BinOp      <$> field  "left"      <*> field "op"    <*> field "right"

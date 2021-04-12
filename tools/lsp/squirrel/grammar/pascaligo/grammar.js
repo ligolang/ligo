@@ -560,6 +560,7 @@ module.exports = grammar({
         $.record_expr,
         $.update_record,
         $._constr_use,
+        $.paren_expr,
       ),
 
     _constr_use: $ =>
@@ -672,7 +673,13 @@ module.exports = grammar({
         $.arguments,
       ),
 
-    tuple_expr: $ => par(sepBy1(',', field("element", $._expr))),
+    paren_expr: $ => par(field("expr", $._expr)),
+
+    tuple_expr: $ => par(seq(
+      field("element", $._expr),
+      ',',
+      sepBy1(',', field("element", $._expr))),
+    ),
     arguments: $ => par(sepBy(',', field("argument", $._expr))),
 
     _list_expr: $ => choice($.list_injection, 'nil'),
