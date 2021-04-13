@@ -600,7 +600,7 @@ and type_constant (name:I.constant') (loc:Location.t) (lst:O.type_expression lis
   let%bind tv = typer lst tv_opt in
   ok (name, tv)
 
-and untype_literal (l:O.literal) : (I.literal , typer_error) result =
+let untype_literal (l:O.literal) : (I.literal , typer_error) result =
   let open I in
   match l with
   | Literal_unit -> ok Literal_unit
@@ -618,7 +618,7 @@ and untype_literal (l:O.literal) : (I.literal , typer_error) result =
   | Literal_address s -> ok (Literal_address s)
   | Literal_operation s -> ok (Literal_operation s)
 
-and untype_type_expression (t:O.type_expression) : (I.type_expression, typer_error) result =
+let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer_error) result =
   let self = untype_type_expression in
   let return t = ok @@ I.make_t t in
   match t.type_content with
