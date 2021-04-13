@@ -369,10 +369,14 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       | None -> let%bind (lambda, lambda_type) = type_lambda e lambda in
                 return (E_lambda lambda ) lambda_type
       | Some tv' ->
-        let (input_type,_) = O.get_t_function_exn tv' in
-        let%bind input_type = Untyper.untype_type_expression input_type in
-        let binder = {lambda.binder with ascr = Some input_type } in
-        let%bind (lambda, lambda_type) = type_lambda e { lambda with binder = binder } in
+        let (input_type,_output_type) = O.get_t_function_exn tv' in
+        let input_type = Untyper.untype_type_expression_nofail input_type in
+        let lambda = match lambda.binder.ascr with
+          | None -> let binder = { lambda.binder with ascr = Some input_type } in
+            { lambda with binder = binder }
+          | Some _ -> lambda
+        in
+        let%bind (lambda, lambda_type) = type_lambda e lambda in
         return (E_lambda lambda ) lambda_type
     end
   | E_constant {cons_name=( C_LIST_FOLD | C_MAP_FOLD | C_SET_FOLD | C_FOLD) as opname ;
