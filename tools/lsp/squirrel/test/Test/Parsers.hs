@@ -38,7 +38,6 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       [ "modules.religo"
       , "get_scope_tests/module.mligo"
       , "uncurry_contract.mligo"
-      , "sapling.mligo"
       , "existential.mligo"
       , "protocol_dalphanet.mligo"
       , "modules.mligo"
