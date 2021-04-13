@@ -288,6 +288,7 @@ module.exports = grammar({
         $.assignment,
         $._loop,
         $.fun_call,
+        $.projection_call,
         $.skip,
         $.record_patch,
         $.map_patch,
