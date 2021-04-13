@@ -364,8 +364,17 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
     return (E_record_update {record; path; update}) wrapped
   (* Data-structure *)
   | E_lambda lambda ->
-   let%bind (lambda, lambda_type) = type_lambda e lambda in
-   return (E_lambda lambda ) lambda_type
+    begin 
+      match tv_opt with
+      | None -> let%bind (lambda, lambda_type) = type_lambda e lambda in
+                return (E_lambda lambda ) lambda_type
+      | Some tv' ->
+        let (input_type,_) = O.get_t_function_exn tv' in
+        let%bind input_type = Untyper.untype_type_expression input_type in
+        let binder = {lambda.binder with ascr = Some input_type } in
+        let%bind (lambda, lambda_type) = type_lambda e { lambda with binder = binder } in
+        return (E_lambda lambda ) lambda_type
+    end
   | E_constant {cons_name=( C_LIST_FOLD | C_MAP_FOLD | C_SET_FOLD | C_FOLD) as opname ;
                 arguments=[
                     ( { expression_content = (I.E_lambda { binder = {var=lname ; ascr = None};
@@ -591,7 +600,7 @@ and type_constant (name:I.constant') (loc:Location.t) (lst:O.type_expression lis
   let%bind tv = typer lst tv_opt in
   ok (name, tv)
 
-let untype_literal (l:O.literal) : (I.literal , typer_error) result =
+and untype_literal (l:O.literal) : (I.literal , typer_error) result =
   let open I in
   match l with
   | Literal_unit -> ok Literal_unit
@@ -609,7 +618,7 @@ let untype_literal (l:O.literal) : (I.literal , typer_error) result =
   | Literal_address s -> ok (Literal_address s)
   | Literal_operation s -> ok (Literal_operation s)
 
-let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer_error) result =
+and untype_type_expression (t:O.type_expression) : (I.type_expression, typer_error) result =
   let self = untype_type_expression in
   let return t = ok @@ I.make_t t in
   match t.type_content with
