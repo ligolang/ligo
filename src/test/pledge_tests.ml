@@ -2,7 +2,7 @@ open Trace
 open Test_helpers
 open Ast_imperative
 
-let retype_file f = Ligo.Compile.Utils.type_file ~options f "reasonligo" Env
+let retype_file f = Ligo_compile.Utils.type_file ~options f "reasonligo" Env
 
 let get_program =
   let s = ref None in
@@ -16,11 +16,11 @@ let get_program =
 
 let compile_main () =
   let%bind typed_prg,_    = get_program () in
-  let%bind mini_c_prg     = Ligo.Compile.Of_typed.compile typed_prg in
-  let%bind michelson_prg  = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
+  let%bind mini_c_prg     = Ligo_compile.Of_typed.compile typed_prg in
+  let%bind michelson_prg  = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
   let%bind _contract =
     (* fails if the given entry point is not a valid contract *)
-    Ligo.Compile.Of_michelson.build_contract michelson_prg in
+    Ligo_compile.Of_michelson.build_contract michelson_prg in
   ok ()
 
 let (oracle_addr , oracle_contract) =

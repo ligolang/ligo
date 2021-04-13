@@ -535,7 +535,7 @@ that the resulting storage is `42` after executing a call to
 ```pascaligo skip
 const testme = block {
   var addr := Test.originate(main, 10);
-  var u := Test.external_call(addr, Increment (32), 0tz)
+  var u := Test.transfer(addr, Increment (32), 0tz)
   } with (Test.get_storage(addr) : int) = 42
 ```
 
@@ -545,7 +545,7 @@ const testme = block {
 ```cameligo skip
 let testme =
   let addr = Test.originate main 10 in
-  let u = Test.external_call addr  (Increment (32)) 0tz in
+  let u = Test.transfer addr  (Increment (32)) 0tz in
   (Test.get_storage addr : int) = 42
 ```
 
@@ -555,7 +555,7 @@ let testme =
 ```reasonligo skip
 let testme =
   let addr = Test.originate(main, 10);
-  let u = Test.external_call(addr, Increment (32), 0tz);
+  let u = Test.transfer(addr, Increment (32), 0tz);
   (Test.get_storage(addr) : int) == 42;
 ```
 
@@ -576,7 +576,7 @@ Notice that now we wrote the property *inside* LIGO, using:
 
 * `Test.originate` to deploy a contract.
 
-* `Test.external_call` to simulate an external call.
+* `Test.transfer` to simulate an external call.
 
 * `Test.get_storage` to check the storage from a contract.
 
@@ -621,7 +621,7 @@ The extra features we can use in LIGO when using the sub-command
 
 * `Test.set_balance addr b` sets the balance of contract bound to address `addr` (returns `unit`).
 
-* `Test.external_call addr p amt` performs a call to contract bound to `addr` with parameter `p` and amount `amt` (returns `unit`).
+* `Test.transfer addr p amt` performs a call to contract bound to `addr` with parameter `p` and amount `amt` (returns `unit`).
 
 * `Test.get_storage addr` returns current storage bound to address `addr`.
 

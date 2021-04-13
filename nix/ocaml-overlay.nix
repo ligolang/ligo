@@ -66,7 +66,7 @@ in {
 
         proto-alpha-utils = osuper.proto-alpha-utils.overrideAttrs (oa: rec {
           buildInputs = oa.buildInputs
-            ++ [ oself.tezos-protocol-008-PtEdoTez-parameters ];
+            ++ [ oself.tezos-protocol-008-PtEdo2Zk-parameters ];
           propagatedBuildInputs = buildInputs;
         });
         tezos-protocol-compiler = osuper.tezos-protocol-compiler.overrideAttrs

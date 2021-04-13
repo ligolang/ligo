@@ -24,5 +24,5 @@ let main = ((action, store) : (parameter, storage)) : return => {
 
 let testme =
   let addr = Test.originate(main, 10);
-  let u = Test.external_call(addr, Increment (32), 0tz);
+  let u = Test.transfer(addr, Increment (32), 0tz);
   (Test.get_storage(addr) : int) == 42;

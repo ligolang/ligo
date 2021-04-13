@@ -1,5 +1,5 @@
 module Run = Run
-module Compile   = Compile
+module Ligo_compile = Ligo_compile
 module Decompile = Decompile
 module Display = Display
 module Formatter = Main_errors.Formatter

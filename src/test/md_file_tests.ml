@@ -60,15 +60,15 @@ let compile_groups filename grp_list =
       trace (test_md_file filename s grp contents) @@
       let options         = Compiler_options.make () in
       let {init_env;infer} : Compiler_options.t = options in
-      let%bind meta       = Compile.Of_source.make_meta s None in
-      let%bind c_unit,_   = Compile.Of_source.compile_string ~options ~meta contents in
-      let%bind imperative = Compile.Of_c_unit.compile ~meta c_unit filename in
-      let%bind sugar      = Ligo.Compile.Of_imperative.compile imperative in
-      let%bind core       = Ligo.Compile.Of_sugar.compile sugar in
-      let%bind typed,_    = Compile.Of_core.compile ~infer ~init_env Env core in
-      let%bind mini_c     = Compile.Of_typed.compile typed in
+      let%bind meta       = Ligo_compile.Of_source.make_meta s None in
+      let%bind c_unit,_   = Ligo_compile.Of_source.compile_string ~options ~meta contents in
+      let%bind imperative = Ligo_compile.Of_c_unit.compile ~meta c_unit filename in
+      let%bind sugar      = Ligo_compile.Of_imperative.compile imperative in
+      let%bind core       = Ligo_compile.Of_sugar.compile sugar in
+      let%bind typed,_    = Ligo_compile.Of_core.compile ~infer ~init_env Env core in
+      let%bind mini_c     = Ligo_compile.Of_typed.compile typed in
       bind_map_list
-        (fun ((_, _, exp),_) -> Compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c exp)
+        (fun ((_, _, exp),_) -> Ligo_compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c exp)
         mini_c
     )
     grp_list in

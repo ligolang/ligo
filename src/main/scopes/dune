@@ -3,7 +3,7 @@
   (public_name ligo.scopes)
   (libraries
     main_errors
-    compile
+    ligo_compile
     simple-utils
     self_ast_core
     ast_typed

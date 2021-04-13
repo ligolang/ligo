@@ -216,10 +216,9 @@ let werror =
     info ~docv ~doc ["werror"] in
     value @@ opt bool false info
 
-module Helpers   = Ligo.Compile.Helpers
-module Compile   = Ligo.Compile
-module Decompile = Ligo.Decompile
-module Run = Ligo.Run.Of_michelson
+module Compile = Ligo_compile
+module Helpers   = Ligo_compile.Helpers
+module Run = Run.Of_michelson
 
 let compile_file =
   let f source_file entry_point syntax infer protocol_version display_format disable_typecheck michelson_format output_file warn werror =
@@ -536,7 +535,7 @@ let compile_storage =
   in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let dry_run =
-  let f source_file entry_point storage input amount balance sender source now syntax infer protocol_version display_format warn werror =
+  let f source_file entry_point input storage amount balance sender source now syntax infer protocol_version display_format warn werror =
     return_result ~werror ~warn ~display_format (Decompile.Formatter.expression_format) @@
       let%bind init_env   = Helpers.get_initial_env protocol_version in
       let options = Compiler_options.make ~infer ~init_env () in
@@ -546,7 +545,7 @@ let dry_run =
         (* fails if the given entry point is not a valid contract *)
         Compile.Of_michelson.build_contract michelson_prg in
 
-      let%bind compiled_params   = Compile.Utils.compile_storage ~options storage input source_file syntax env mini_c_prg in
+      let%bind compiled_params   = Compile.Utils.compile_storage ~options input storage source_file syntax env mini_c_prg in
       let%bind args_michelson    = Run.evaluate_expression compiled_params.expr compiled_params.expr_ty in
 
       let%bind options           = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
@@ -734,13 +733,13 @@ let transpile_expression =
 
 let get_scope =
   let f source_file syntax infer protocol_version libs display_format with_types =
-    return_result ~display_format Ligo.Scopes.Formatter.scope_format @@
+    return_result ~display_format Scopes.Formatter.scope_format @@
       let%bind init_env   = Helpers.get_initial_env protocol_version in
       let options       = Compiler_options.make ~infer ~init_env ~libs () in
       let%bind meta     = Compile.Of_source.extract_meta syntax source_file in
       let%bind c_unit,_ = Compile.Utils.to_c_unit ~options ~meta source_file in
       let%bind core_prg = Compile.Utils.to_core ~options ~meta c_unit source_file in
-      Ligo.Scopes.scopes ~with_types ~options core_prg
+      Scopes.scopes ~with_types ~options core_prg
   in
   let term =
     Term.(const f $ source_file 0 $ syntax $ infer $ protocol_version $ libraries $ display_format $ with_types) in
@@ -752,18 +751,17 @@ let get_scope =
   in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let test =
-  let f source_file test_entry syntax infer protocol_version amount balance sender source now display_format =
+  let f source_file test_entry syntax infer protocol_version display_format =
     return_result ~display_format (Ligo_interpreter.Formatter.test_format) @@
-      let%bind init_env   = Helpers.get_initial_env protocol_version in
+      let%bind init_env   = Helpers.get_initial_env ~test_env:true protocol_version in
       let options = Compiler_options.make ~infer ~init_env () in
       let%bind typed,_    = Compile.Utils.type_file ~options source_file syntax Env in
-      let%bind options    = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
-      Compile.Of_typed.some_interpret ~options typed test_entry
+      Interpreter.eval_test typed test_entry
   in
   let term =
-    Term.(const f $ source_file 0 $ test_entry 1 $ syntax $ infer $ protocol_version $ amount $ balance $ sender $ source $ now $ display_format) in
+    Term.(const f $ source_file 0 $ test_entry 1 $ syntax $ infer $ protocol_version $ display_format) in
   let cmdname = "test" in
-  let doc = "Subcommand: Test a contract with the LIGO interpreter (BETA)." in
+  let doc = "Subcommand: Test a contract with the LIGO test framework (BETA)." in
   let man = [`S Manpage.s_description;
              `P "This sub-command tests a LIGO contract using a LIGO \
                  interpreter, no Michelson code is evaluated. Still \

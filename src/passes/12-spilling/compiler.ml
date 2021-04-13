@@ -161,14 +161,21 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_SAPLING_VERIFY_UPDATE -> C_SAPLING_VERIFY_UPDATE
   | C_POLYMORPHIC_ADD -> C_POLYMORPHIC_ADD
   | (   C_TEST_ORIGINATE
-    | C_TEST_SET_NOW
-    | C_TEST_SET_SOURCE
-    | C_TEST_SET_BALANCE
-    | C_TEST_EXTERNAL_CALL
-    | C_TEST_GET_STORAGE
-    | C_TEST_GET_BALANCE
-    | C_TEST_ASSERT_FAILURE
-    | C_TEST_LOG ) as c ->
+      | C_TEST_SET_NOW
+      | C_TEST_SET_SOURCE
+      | C_TEST_SET_BAKER
+      | C_TEST_EXTERNAL_CALL
+      | C_TEST_EXTERNAL_CALL_EXN
+      | C_TEST_GET_STORAGE
+      | C_TEST_GET_BALANCE
+      | C_TEST_MICHELSON_EQUAL
+      | C_TEST_LOG 
+      | C_TEST_COMPILE_EXPRESSION
+      | C_TEST_COMPILE_EXPRESSION_SUBST
+      | C_TEST_GET_NTH_BS
+      | C_TEST_STATE_RESET
+      | C_TEST_LAST_ORIGINATIONS
+      | C_TEST_COMPILE_META_VALUE ) as c ->
     failwith (Format.asprintf "%a is only available for LIGO interpreter" PP.constant c)
 
 let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error) result =
@@ -631,7 +638,7 @@ and compile_expression ?(module_env = SMap.empty) (ae:AST.expression) : (express
         aux expr' tree body
   )
   | E_raw_code { language; code} ->
-    let backend = "Michelson" in
+    let backend = Stage_common.Backends.michelson in
     let%bind () =
       Assert.assert_true
         (corner_case ~loc:__LOC__ "Language insert - backend mismatch only provide code insertion in the language you are compiling to")

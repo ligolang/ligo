@@ -86,7 +86,7 @@ let fetch_lambda_types (contract_ty : _ Michelson.t) =
   | _ -> fail Errors.unknown (*TODO*)
 
 let run_contract ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) (input_michelson : _ Michelson.t) =
-  let open! Tezos_raw_protocol_008_PtEdoTez in
+  let open! Tezos_raw_protocol_008_PtEdo2Zk in
   let%bind (input_ty, output_ty) = fetch_lambda_types exp_type in
   let%bind input_ty =
     Trace.trace_tzresult_lwt Errors.parsing_input_tracer @@
@@ -131,7 +131,7 @@ let run_contract ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) (inpu
     | _              -> fail @@ Errors.unknown_failwith_type )
 
 let run_expression ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) =
-  let open! Tezos_raw_protocol_008_PtEdoTez in
+  let open! Tezos_raw_protocol_008_PtEdo2Zk in
   let%bind exp_type =
     Trace.trace_tzresult_lwt Errors.parsing_input_tracer @@
     Memory_proto_alpha.prims_of_strings exp_type in

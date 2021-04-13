@@ -127,33 +127,39 @@ let constant'_tag = function
   | C_CONVERT_TO_RIGHT_COMB   -> 112
   | C_CONVERT_FROM_LEFT_COMB  -> 113
   | C_CONVERT_FROM_RIGHT_COMB -> 114
-  (* and more *)
-  | C_TRUE                    -> 110
-  | C_FALSE                   -> 111
-  | C_TEST_ORIGINATE          -> 112
-  | C_TEST_SET_NOW            -> 113
-  | C_TEST_SET_SOURCE         -> 114
-  | C_TEST_SET_BALANCE        -> 115
-  | C_TEST_EXTERNAL_CALL      -> 116
-  | C_TEST_GET_STORAGE        -> 117
-  | C_TEST_GET_BALANCE        -> 118
-  | C_TEST_ASSERT_FAILURE     -> 119
-  | C_TEST_LOG                -> 120
-  | C_SHA3                    -> 121
-  | C_KECCAK                  -> 122
-  | C_LEVEL                   -> 123
-  | C_VOTING_POWER            -> 124
-  | C_TOTAL_VOTING_POWER      -> 125
-  | C_TICKET                  -> 126
-  | C_READ_TICKET             -> 127
-  | C_SPLIT_TICKET            -> 128
-  | C_JOIN_TICKET             -> 129
-  | C_PAIRING_CHECK           -> 130
-  | C_MAP_GET_AND_UPDATE      -> 131
-  | C_BIG_MAP_GET_AND_UPDATE  -> 132
-  | C_SAPLING_EMPTY_STATE     -> 133
-  | C_SAPLING_VERIFY_UPDATE   -> 134
-  | C_POLYMORPHIC_ADD         -> 135
+  | C_TRUE                    -> 115
+  | C_FALSE                   -> 116
+  | C_TEST_ORIGINATE          -> 117
+  | C_TEST_SET_NOW            -> 118
+  | C_TEST_SET_SOURCE         -> 119
+  | C_TEST_SET_BAKER          -> 120
+  | C_TEST_EXTERNAL_CALL      -> 121
+  | C_TEST_GET_STORAGE        -> 122
+  | C_TEST_GET_BALANCE        -> 123
+  | C_TEST_MICHELSON_EQUAL    -> 124
+  | C_TEST_LOG                -> 125
+  | C_SHA3                    -> 126
+  | C_KECCAK                  -> 127
+  | C_LEVEL                   -> 128
+  | C_VOTING_POWER            -> 129
+  | C_TOTAL_VOTING_POWER      -> 130
+  | C_TICKET                  -> 131
+  | C_READ_TICKET             -> 132
+  | C_SPLIT_TICKET            -> 133
+  | C_JOIN_TICKET             -> 134
+  | C_PAIRING_CHECK           -> 135
+  | C_MAP_GET_AND_UPDATE      -> 136
+  | C_BIG_MAP_GET_AND_UPDATE  -> 137
+  | C_SAPLING_EMPTY_STATE     -> 138
+  | C_SAPLING_VERIFY_UPDATE   -> 139
+  | C_TEST_COMPILE_EXPRESSION -> 141
+  | C_TEST_STATE_RESET        -> 142
+  | C_TEST_EXTERNAL_CALL_EXN  -> 143
+  | C_TEST_GET_NTH_BS         -> 144
+  | C_TEST_LAST_ORIGINATIONS  -> 145
+  | C_TEST_COMPILE_META_VALUE -> 146
+  | C_TEST_COMPILE_EXPRESSION_SUBST -> 147
+  | C_POLYMORPHIC_ADD         -> 148
 
 let constant' a b = Int.compare (constant'_tag a) (constant'_tag b)
 

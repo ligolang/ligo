@@ -54,6 +54,9 @@ type typer_error = [
   | `Typer_expected_ticket of Location.t * Ast_typed.type_expression
   | `Typer_expected_sapling_transaction of Location.t * Ast_typed.type_expression
   | `Typer_expected_sapling_state of Location.t * Ast_typed.type_expression
+  | `Typer_expected_ligo_code of Location.t * Ast_typed.type_expression
+  | `Typer_expected_michelson_code of Location.t * Ast_typed.type_expression
+  | `Typer_expected_unit of Location.t * Ast_typed.type_expression
   | `Typer_not_matching of Location.t * Ast_typed.type_expression * Ast_typed.type_expression
   | `Typer_not_annotated of Location.t
   | `Typer_bad_substraction of Location.t
@@ -126,6 +129,8 @@ let expected_pair (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expect
 let expected_list (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_list (loc,t)
 let expected_sapling_transaction (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_sapling_transaction (loc,t)
 let expected_sapling_state (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_sapling_state (loc,t)
+let expected_ligo_code (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_ligo_code (loc,t)
+let expected_michelson_code (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_michelson_code (loc,t)
 let expected_set (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_set (loc,t)
 let expected_map (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_map (loc,t)
 let expected_big_map (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_big_map (loc,t)
@@ -142,6 +147,7 @@ let expected_mutez (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expec
 let expected_op_list (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_op_list (loc,t)
 let expected_int (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_int (loc,t)
 let expected_bool (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_bool (loc,t)
+let expected_unit (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_unit (loc,t)
 let expected_ascription (t:Ast_core.expression) = `Typer_expected_ascription t
 let not_matching (loc:Location.t) (t1:Ast_typed.type_expression) (t2:Ast_typed.type_expression) = `Typer_not_matching (loc,t1,t2)
 let not_annotated (loc: Location.t) = `Typer_not_annotated loc
@@ -412,6 +418,16 @@ The following forms of subtractions are possible:
         Snippet.pp loc
         name
         expected (List.length actual)
+    | `Typer_expected_ligo_code (loc,t) ->
+      Format.fprintf f
+        "@[<hv>%a@.Invalid argument.@.Expected raw ligo code, but got an argument of type \"%a\". @]"
+        Snippet.pp loc
+        Ast_typed.PP.type_expression t
+    | `Typer_expected_michelson_code (loc,t) ->
+      Format.fprintf f
+        "@[<hv>%a@.Invalid argument.@.Expected raw michelson code, but got an argument of type \"%a\". @]"
+        Snippet.pp loc
+        Ast_typed.PP.type_expression t
     | `Typer_expected_sapling_state (loc,t) ->
       Format.fprintf f
         "@[<hv>%a@.Invalid argument.@.Expected sapling_state, but got an argument of type \"%a\". @]"
@@ -510,6 +526,11 @@ The following forms of subtractions are possible:
     | `Typer_expected_int (loc,t) ->
       Format.fprintf f
         "@[<hv>%a@.Incorrect argument.@.Expected an int, but got an argument of type \"%a\". @]"
+        Snippet.pp loc
+        Ast_typed.PP.type_expression t
+    | `Typer_expected_unit (loc,t) ->
+      Format.fprintf f
+        "@[<hv>%a@.Incorrect argument.@.Expected unit, but got an argument of type \"%a\". @]"
         Snippet.pp loc
         Ast_typed.PP.type_expression t
     | `Typer_expected_bool (loc,t) ->
@@ -920,6 +941,15 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("value", value);
     ] in
     json_error ~stage ~content
+  | `Typer_expected_unit (loc,t) ->
+    let message = `String "expected unit" in
+    let value = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t) in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);
+      ("value", value);
+    ] in
+    json_error ~stage ~content
   | `Typer_expected_nat (loc,t) ->
     let message = `String "expected a nat" in
     let value = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t) in
@@ -1018,6 +1048,24 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("value", value);
       ("actual", actual);
       ("expected", expected);
+    ] in
+    json_error ~stage ~content
+  | `Typer_expected_ligo_code (loc,t) ->
+    let message = `String "expected ligo code" in
+    let value = Ast_typed.Yojson.type_expression t in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);
+      ("value", value);
+    ] in
+    json_error ~stage ~content
+  | `Typer_expected_michelson_code (loc,t) ->
+    let message = `String "expected michelson code" in
+    let value = Ast_typed.Yojson.type_expression t in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);
+      ("value", value);
     ] in
     json_error ~stage ~content
   | `Typer_expected_sapling_state (loc,t) ->

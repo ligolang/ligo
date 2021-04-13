@@ -105,7 +105,7 @@ let%expect_test _ =
                Subcommand: Run a function with the given parameter.
 
            test
-               Subcommand: Test a contract with the LIGO interpreter (BETA).
+               Subcommand: Test a contract with the LIGO test framework (BETA).
 
            transpile-contract
                Subcommand: Transpile a contract to another syntax (BETA).
@@ -225,7 +225,7 @@ let%expect_test _ =
                Subcommand: Run a function with the given parameter.
 
            test
-               Subcommand: Test a contract with the LIGO interpreter (BETA).
+               Subcommand: Test a contract with the LIGO test framework (BETA).
 
            transpile-contract
                Subcommand: Transpile a contract to another syntax (BETA).

@@ -58,7 +58,7 @@ let ty_eq (type a b)
 (* should not need lwt *)
 let prims_of_strings michelson =
   let (michelson, errs) =
-    Tezos_client_008_PtEdoTez.Michelson_v1_macros.expand_rec michelson in
+    Tezos_client_008_PtEdo2Zk.Michelson_v1_macros.expand_rec michelson in
   match errs with
   | _ :: _ ->
     Lwt.return (Error errs)
@@ -68,6 +68,11 @@ let prims_of_strings michelson =
        (Michelson_v1_primitives.prims_of_strings
           (Tezos_micheline.Micheline.strip_locations michelson))) >>=? fun michelson ->
   return (Tezos_micheline.Micheline.root michelson)
+
+
+let lazy_expr expr =
+    let open Alpha_context in
+    Script.lazy_expr expr
 
 let parse_michelson (type aft)
     ?(tezos_context = dummy_environment.tezos_context)

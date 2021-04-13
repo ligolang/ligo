@@ -11,18 +11,18 @@ let get_program =
     | Some s -> ok s
     | None -> (
       let options = Compiler_options.make () in
-      let%bind program  = Ligo.Compile.Utils.type_file ~options "./contracts/coase.ligo" "pascaligo" (Contract "main") in
+      let%bind program  = Ligo_compile.Utils.type_file ~options "./contracts/coase.ligo" "pascaligo" (Contract "main") in
       s := Some program;
       ok program
     )
 
 let compile_main () = 
   let%bind typed_prg, _env = get_program () in
-  let%bind mini_c_prg         = Ligo.Compile.Of_typed.compile typed_prg in
-  let%bind michelson_prg      = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
+  let%bind mini_c_prg         = Ligo_compile.Of_typed.compile typed_prg in
+  let%bind michelson_prg      = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
   let%bind _contract =
     (* fails if the given entry point is not a valid contract *)
-    Ligo.Compile.Of_michelson.build_contract michelson_prg in
+    Ligo_compile.Of_michelson.build_contract michelson_prg in
   ok ()
 
 open Ast_imperative

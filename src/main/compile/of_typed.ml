@@ -34,9 +34,6 @@ let assert_equal_contract_type : Simple_utils.Runned_result.check_type -> string
   )
 
 let decompile_env e = trace checking_tracer @@ Checking.decompile_env e
-
-let some_interpret ~options x test_entry = trace interpret_tracer @@ Interpreter.eval_test ~options x test_entry
-
 let list_declarations (m : Ast_typed.module') : string list =
   List.fold_left
     (fun prev el ->

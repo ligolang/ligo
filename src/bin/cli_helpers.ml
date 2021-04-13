@@ -1,5 +1,5 @@
 open Cmdliner
-open Main.Display
+open Display
 
 let return_good v = `Ok v
 let return_bad v = (

@@ -13,10 +13,9 @@ let protocol_to_variant : string -> (Environment.Protocols.t, all) result =
   trace_option (invalid_protocol_version Environment.Protocols.protocols_str s)
   @@ Environment.Protocols.protocols_to_variant s
 
-let get_initial_env  : string -> (Ast_typed.environment, all) result =
-  fun protocol_as_str ->
+let get_initial_env  : ?test_env:bool -> string -> (Ast_typed.environment, all) result = fun ?(test_env=false) protocol_as_str ->
   let%bind protocol = protocol_to_variant protocol_as_str in
-  ok @@ Environment.default protocol
+  ok @@ (if test_env then Environment.default_with_test else Environment.default) protocol
 
 (*TODO : move this function to src/helpers so that src/build/.. can use it *)
 let file_extension_to_variant sf =
