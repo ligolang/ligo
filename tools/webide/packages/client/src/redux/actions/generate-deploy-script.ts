@@ -15,9 +15,9 @@ import { ChangeOutputAction } from '../result';
 import { CommandType } from '../types';
 import { CancellableAction } from './cancellable';
 
-const URL = 'https://api.tez.ie/keys/delphinet/';
+const URL = 'https://api.tez.ie/keys/edonet/';
 const AUTHORIZATION_HEADER = 'Bearer ligo-ide';
-const Tezos = new TezosToolkit('https://api.tez.ie/rpc/delphinet');
+const Tezos = new TezosToolkit('https://api.tez.ie/rpc/edonet');
 
 export async function fetchRandomPrivateKey(): Promise<string> {
   const response = await fetch(URL, {
