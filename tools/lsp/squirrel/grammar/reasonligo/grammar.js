@@ -182,13 +182,13 @@ module.exports = grammar({
       $.record_update,
     ),
 
-    record: $ => block(sepBy(',', field("assignment", $._record_field))),
+    record: $ => block(sepEndBy(',', field("assignment", $._record_field))),
 
     record_update: $ => block(seq(
       // TODO: possible multiple spreads
       field("subject", $.spread),
       ',',
-      sepBy1(',', field("field", $.record_field_path)),
+      sepEndBy1(',', field("field", $.record_field_path)),
     )),
 
     _record_field: $ => choice(

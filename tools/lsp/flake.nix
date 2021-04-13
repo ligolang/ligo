@@ -149,7 +149,7 @@
         # For debug/development reasons only
         legacyPackages = pkgs;
         devShell = pkgs.mkShell rec {
-          buildInputs = [ pkgs.tree-sitter ];
+          buildInputs = [ pkgs.tree-sitter pkgs.nodejs ];
         };
       }) // {
         # docker image with the language server

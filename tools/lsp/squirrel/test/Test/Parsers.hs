@@ -31,34 +31,52 @@ contractsDir =
     in liftIO getDir >>= liftString
   )
 
-okayContractsDirs :: [FilePath]
--- FIXME: need to fix all parser issues
-okayContractsDirs = "test/contracts/bugs" : [] {- contractsDir : map (contractsDir </>) rest
+okayIgnoreContracts :: [FilePath]
+okayIgnoreContracts = (contractsDir </>) <$> ignore
   where
-    rest = [ "basic_multisig/"
-           , "get_scope_tests/"
-           -- TODO: Figure out which negative tests are for parsing and which are not
-           -- , "negative/"
-           ]
--}
+    ignore =
+      [ "modules.religo"
+      , "get_scope_tests/module.mligo"
+      , "uncurry_contract.mligo"
+      , "existential.mligo"
+      , "protocol_dalphanet.mligo"
+      , "modules.mligo"
+      , "heap.ligo"
+      , "modules.ligo"
+      , "assert.religo"
+      , "let_multiple.mligo"
+      ]
+
+okayContractsDirs :: [FilePath]
+okayContractsDirs = lspTests : contractsDir : map (contractsDir </>) compilerTests
+  where
+    lspTests = "test/contracts/bugs"
+    compilerTests =
+      [ "basic_multisig/"
+      , "get_scope_tests/"
+      , "positive"
+      -- TODO: Figure out which negative tests are for parsing and which are not
+      -- , "negative/"
+      ]
 
 badContractsDirs :: [FilePath]
 badContractsDirs = "test/contracts/bad" : map (contractsDir </>) rest
   where
     rest = []
 
-getContractsWithExtension :: String -> FilePath -> IO [FilePath]
-getContractsWithExtension ext dir = listDirectory dir
+getContractsWithExtension :: String -> [FilePath] -> FilePath -> IO [FilePath]
+getContractsWithExtension ext ignore dir = listDirectory dir
                                 <&> filter (ext `isSuffixOf`)
                                 <&> map (dir </>)
+                                <&> filter (`notElem` ignore)
 
 getOkayContractsWithExtension :: String -> IO [FilePath]
 getOkayContractsWithExtension ext =
-  foldMap (getContractsWithExtension ext) okayContractsDirs
+  foldMap (getContractsWithExtension ext okayIgnoreContracts) okayContractsDirs
 
 getBadContractsWithExtension :: String -> IO [FilePath]
 getBadContractsWithExtension ext
-  = foldMap (getContractsWithExtension ext) badContractsDirs
+  = foldMap (getContractsWithExtension ext []) badContractsDirs
 
 getOkayContracts :: IO [FilePath]
 getOkayContracts =
