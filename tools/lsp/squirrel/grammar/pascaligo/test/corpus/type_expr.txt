@@ -34,9 +34,11 @@ type test is
     (TypeName)
     (sum_type
       (variant (NameConstr)
-        (sum_type
-          (variant (NameConstr))
-          (variant (NameConstr))
+        (type_group
+          (sum_type
+            (variant (NameConstr))
+            (variant (NameConstr))
+          )
         )
       )
       (variant (NameConstr)
@@ -74,7 +76,9 @@ type test is (((int * (bool * nat))))
 (source_file
   (type_decl
     (TypeName)
-    (prod_type (TypeName) (prod_type (TypeName) (TypeName)))
+    (type_group (type_group (type_group
+      (prod_type (TypeName) (type_group (prod_type (TypeName) (TypeName))))
+    )))
   )
 )
 
