@@ -364,8 +364,20 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
     return (E_record_update {record; path; update}) wrapped
   (* Data-structure *)
   | E_lambda lambda ->
-   let%bind (lambda, lambda_type) = type_lambda e lambda in
-   return (E_lambda lambda ) lambda_type
+     let lambda =
+         match tv_opt with
+         | None -> lambda
+         | Some tv' ->
+            match O.get_t_function tv' with
+            | None -> lambda
+            | Some (input_type,_ ) ->
+               let input_type = Untyper.untype_type_expression_nofail input_type in
+               match lambda.binder.ascr with
+               | None -> let binder = {lambda.binder with ascr = Some input_type } in
+                         { lambda with binder = binder }
+               | Some _ -> lambda in
+     let%bind (lambda,lambda_type) = type_lambda e lambda in
+     return (E_lambda lambda ) lambda_type
   | E_constant {cons_name=( C_LIST_FOLD | C_MAP_FOLD | C_SET_FOLD | C_FOLD) as opname ;
                 arguments=[
                     ( { expression_content = (I.E_lambda { binder = {var=lname ; ascr = None};

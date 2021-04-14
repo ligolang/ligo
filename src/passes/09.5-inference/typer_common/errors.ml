@@ -197,7 +197,7 @@ let rec error_ppformat : display_format:string display_format ->
           Snippet.pp loc
     | `Typer_missing_funarg_annotation v ->
       Format.fprintf f
-        "@[<hv>%a@.Missing a type annotation for argument \"%a\".@]"
+        "@[<hv>%a@.In inference: Missing a type annotation for argument \"%a\".@]"
           Snippet.pp v.location
           Ast_core.PP.expression_variable v
     | `Typer_michelson_comb_no_record loc ->
