@@ -768,6 +768,9 @@ let test =
                  under development, there are features that are work \
                  in progress and are subject to change. No real test \
                  procedure should rely on this sub-command alone.";
+             (* 
+             TODO: correct text below
+             
              `S "EXTRA PRIMITIVES FOR TESTING";
              `P "Test.originate c st : binds contract c with the \
                  address addr which is returned, st as the initial \
@@ -784,7 +787,7 @@ let test =
                  address addr.";
              `P "Test.assert_failure (f : unit -> _) : returns true if \
                  f () fails.";
-             `P "Test.log x : prints x into the console."
+             `P "Test.log x : prints x into the console." *)
             ]
   in (Term.ret term , Term.info ~man ~doc cmdname)
 

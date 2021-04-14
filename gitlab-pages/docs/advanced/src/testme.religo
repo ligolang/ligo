@@ -21,8 +21,3 @@ let main = ((action, store) : (parameter, storage)) : return => {
   | Decrement (n) => sub ((store, n))
   | Reset         => 0}))
 };
-
-let testme =
-  let addr = Test.originate(main, 10);
-  let u = Test.transfer(addr, Increment (32), 0tz);
-  (Test.get_storage(addr) : int) == 42;
