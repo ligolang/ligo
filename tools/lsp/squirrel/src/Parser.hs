@@ -6,7 +6,7 @@ module Parser where
 import Control.Arrow
 import Control.Monad.Catch
 import Control.Monad.RWS hiding (Product)
-import Data.Maybe (mapMaybe)
+import Data.Maybe (isJust, mapMaybe)
 
 import Data.Functor
 import Data.String.Interpolate (i)
@@ -36,19 +36,18 @@ runParserM p = (\(a, _, errs) -> (a, errs)) <$> runRWST p [] ([], [])
 type Msg      = (Range, Error ())
 type ParserM  = RWST [RawTree] [Msg] ([Text], [Text]) IO
 
-data Failure = Failure String
+newtype Failure = Failure String
   deriving stock (Show)
   deriving anyclass (Exception)
 
 instance Scoped (Product [Range, Text]) ParserM RawTree ParseTree where
-  before (r :> _ :> _) (ParseTree _ cs _) = do
+  before (_ :> _ :> _) (ParseTree _ cs _) = do
     let (comms, rest) = allComments cs
     let (comms1, _)   = allComments $ reverse rest
     modify $ first  (++ comms)
     modify $ second (++ reverse comms1)
 
-    let errs = allErrors cs
-    tell (map (r,) errs)
+    tell $ allErrors cs
 
   after _ _ = do
     modify $ \(_, y) -> (y, [])
@@ -69,20 +68,20 @@ allComments = first (map getBody . filter isComment) . break isMeaningful
     isComment :: RawTree -> Bool
     isComment (gist -> ParseTree ty _ _) = "comment" `Text.isSuffixOf` ty
 
-allErrors :: [RawTree] -> [Error ()]
+allErrors :: [RawTree] -> [(Range, Error ())]
 allErrors = mapMaybe extractUnnamedError
   where
-    extractUnnamedError :: RawTree -> Maybe (Error ())
+    extractUnnamedError :: RawTree -> Maybe (Range, Error ())
     extractUnnamedError tree = case only tree of
-      (_ :> "" :> _, ParseTree "ERROR" children _)
-        -> Just (void (Error (getBody tree) children))
+      (r :> "" :> _, ParseTree "ERROR" children _)
+        -> Just (r, void (Error (getBody tree) children))
       _ -> Nothing
 
 getBody :: RawTree -> Text
 getBody (gist -> f) = ptSource f
 
 flag :: Text -> ParserM Bool
-flag name = fieldOpt name <&> maybe False (const True)
+flag name = fieldOpt name <&> isJust
 
 field :: Text -> ParserM RawTree
 field name =
@@ -90,23 +89,23 @@ field name =
     >>= maybe (throwM $ Failure [i|Cannot find field #{name}|]) return
 
 fieldOpt :: Text -> ParserM (Maybe RawTree)
-fieldOpt name = ask >>= go
+fieldOpt name = go <$> ask
   where
     go (tree@(extract -> _ :> n :> _) : rest)
-      | n == name = return (Just tree)
+      | n == name = Just tree
       | otherwise = go rest
 
-    go _ = return Nothing
+    go _ = Nothing
 
 fields :: Text -> ParserM [RawTree]
-fields name = ask >>= go
+fields name = go <$> ask
   where
     go (tree : rest)
-      | _ :> n :> _ <- extract tree, n == name = (tree :) <$> go rest
-      | errorAtTheTop tree = (tree :) <$> go rest
+      | _ :> n :> _ <- extract tree, n == name = tree : go rest
+      | errorAtTheTop tree = tree : go rest
       | otherwise = go rest
 
-    go _ = return []
+    go _ = []
 
     errorAtTheTop :: RawTree -> Bool
     errorAtTheTop (match -> Just (_, ParseTree "ERROR" _ _)) = True

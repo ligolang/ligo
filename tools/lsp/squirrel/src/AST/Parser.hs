@@ -30,15 +30,5 @@ parse src = do
 parseWithScopes
   :: forall impl m. HasScopeForest impl m => Source -> m (SomeLIGO Info', [Msg])
 parseWithScopes src = do
-  recogniser <- liftIO do
-    onExt ElimExt
-      { eePascal = Pascal.recognise
-      , eeCaml   = CAML.recognise
-      , eeReason = Reason.recognise
-      } (srcPath src)
-
-  (ast, msg) <- liftIO do
-    toParseTree src >>= runParserM . recogniser
-
-  (ast', msg') <- addLocalScopes @impl src ast msg
-  return (ast', msg')
+  (ast, msg) <- liftIO $ parse src
+  addLocalScopes @impl src ast msg
