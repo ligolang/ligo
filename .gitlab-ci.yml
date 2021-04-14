@@ -16,7 +16,6 @@ stages:
 .nix:
   before_script:
     - find "$CI_PROJECT_DIR" -path "$CI_PROJECT_DIR/.git" -prune -o "(" -type d -a -not -perm -u=w ")" -exec chmod --verbose u+w {} ";"
-    - nix-env -f "https://gitlab.com/ligolang/nixpkgs/repository/archive.tar.gz?ref=7f50e4b4311f1489bc73ee8470ab797c271d04b1" -iA gnutar gitMinimal
     - export COMMIT_DATE="$(git show --no-patch --format=%ci)"
 
 changelog:
