@@ -20,8 +20,3 @@ let main (action, store : parameter * storage) : return =
    Increment (n) -> add (store, n)
  | Decrement (n) -> sub (store, n)
  | Reset         -> 0)
-
-let testme =
-  let addr = Test.originate main 10 in
-  let u = Test.transfer addr  (Increment (32)) 0tz in
-  (Test.get_storage addr : int) = 42

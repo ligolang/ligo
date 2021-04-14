@@ -23,8 +23,3 @@ function main (const action : parameter; const store : storage) : return is
   | Decrement (n) -> sub (store, n)
   | Reset         -> 0
   end)
-
-const testme = block {
-  var addr := Test.originate(main, 10);
-  var u := Test.transfer(addr, Increment (32), 0tz)
-  } with (Test.get_storage(addr) : int) = 42

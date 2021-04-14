@@ -23,6 +23,7 @@
       "advanced/first-contract",
       "advanced/michelson-and-ligo",
       "advanced/testing",
+      "advanced/michelson_testing",
       "advanced/inline",
       "advanced/interop",
       "advanced/embedded-michelson"
@@ -69,7 +70,8 @@
       "reference/map-reference",
       "reference/set-reference",
       "reference/string-reference",
-      "reference/current-reference"
+      "reference/current-reference",
+      "reference/test"
     ]
   },
   "contributors-docs": {

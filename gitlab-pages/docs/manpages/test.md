@@ -14,6 +14,9 @@ Michelson code is evaluated. Still under development, there are features
 that are work in progress and are subject to change. No real test
 procedure should rely on this sub-command alone.
 
+<!-- 
+TODO: correct text below
+
 ### EXTRA PRIMITIVES FOR TESTING
 
 Test.originate c st : binds contract c with the address addr which is
@@ -106,4 +109,4 @@ Test.log x : prints x into the console.
 
 **\--version**
 
-:   Show version information.
+:   Show version information. -->
