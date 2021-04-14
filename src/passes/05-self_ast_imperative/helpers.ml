@@ -30,7 +30,8 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a, 'err) re
   | E_constructor c -> Folds.constructor self init' c
   | E_matching {matchee=e; cases} -> (
       let%bind res = self init' e in
-      let%bind res = fold_cases f res cases in
+      let aux acc ({body ; _ }: _ Ast_imperative.match_case) = self acc body in
+      let%bind res = bind_fold_list aux res cases in
       ok res
     )
   | E_record m -> Folds.record self init' m
@@ -52,38 +53,6 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a, 'err) re
   | E_for f -> Folds.for_ self init' f
   | E_for_each fe -> Folds.for_each self init' fe
   | E_while w -> Folds.while_loop self init' w
-
-and fold_cases : ('a , 'b) folder -> 'a -> matching_expr -> ('a , 'b) result = fun f init m ->
-  match m with
-  | Match_variant lst -> (
-      let aux init' ((_ , _) , e) =
-        let%bind res' = fold_expression f init' e in
-        ok res' in
-      let%bind res = bind_fold_list aux init lst in
-      ok res
-    )
-  | Match_list { match_nil ; match_cons = (_ , _ , cons) } -> (
-      let%bind res = fold_expression f init match_nil in
-      let%bind res = fold_expression f res cons in
-      ok res
-    )
-  | Match_option { match_none ; match_some = (_ , some) } -> (
-      let%bind res = fold_expression f init match_none in
-      let%bind res = fold_expression f res some in
-      ok res
-    )
-  | Match_record (_, e) -> (
-      let%bind res = fold_expression f init e in
-      ok res
-    )
-  | Match_tuple (_, e) -> (
-      let%bind res = fold_expression f init e in
-      ok res
-    )
-  | Match_variable (_, e) -> (
-      let%bind res = fold_expression f init e in
-      ok res
-    )
 
 type 'err exp_mapper = expression -> (expression , 'err) result
 type 'err ty_exp_mapper = type_expression -> (type_expression, 'err) result
@@ -115,11 +84,14 @@ let rec map_expression : 'err exp_mapper -> expression -> (expression, 'err) res
       let%bind ascr = Maps.ascription self ok ascr in
       return @@ E_ascription ascr
     )
-  | E_matching {matchee=e;cases} -> (
-      let%bind e' = self e in
-      let%bind cases' = map_cases f cases in
-      return @@ E_matching {matchee=e';cases=cases'}
-    )
+  | E_matching {matchee=e;cases} ->
+    let%bind e' = self e in
+    let aux { pattern ; body } =
+      let%bind body' = self body in
+      ok { pattern ; body = body'}
+    in
+    let%bind cases' = bind_map_list aux cases in
+    return @@ E_matching {matchee=e';cases=cases'}
   | E_record m -> (
     let%bind m' = bind_map_lmap self m in
     return @@ E_record m'
@@ -227,39 +199,6 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_express
     return @@ T_module_accessor ma
   | T_singleton _ -> ok te'
 
-and map_cases : 'err exp_mapper -> matching_expr -> (matching_expr , _) result = fun f m ->
-  match m with
-  | Match_variant lst -> (
-      let aux ((a , b) , e) =
-        let%bind e' = map_expression f e in
-        ok ((a , b) , e')
-      in
-      let%bind lst' = bind_map_list aux lst in
-      ok @@ Match_variant lst'
-    )
-  | Match_list { match_nil ; match_cons = (hd , tl , cons) } -> (
-      let%bind match_nil = map_expression f match_nil in
-      let%bind cons = map_expression f cons in
-      ok @@ Match_list { match_nil ; match_cons = (hd , tl , cons) }
-    )
-  | Match_option { match_none ; match_some = (name , some) } -> (
-      let%bind match_none = map_expression f match_none in
-      let%bind some = map_expression f some in
-      ok @@ Match_option { match_none ; match_some = (name , some) }
-    )
-  | Match_record (names, e) -> (
-      let%bind e' = map_expression f e in
-      ok @@ Match_record (names, e')
-    )
-  | Match_tuple (names, e) -> (
-      let%bind e' = map_expression f e in
-      ok @@ Match_tuple (names, e')
-    )
-  | Match_variable (name, e) -> (
-      let%bind e' = map_expression f e in
-      ok @@ Match_variable (name, e')
-    )
-
 and map_module : 'err abs_mapper -> module_ -> (module_ , _) result = fun m p ->
   let aux = fun (x : declaration) ->
     match x,m with
@@ -305,11 +244,14 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> ('a 
       let%bind (res,ascr) = Fold_maps.ascription self idle init' ascr in
       ok (res, return @@ E_ascription ascr)
     )
-  | E_matching {matchee=e;cases} -> (
-      let%bind (res, e') = self init' e in
-      let%bind (res,cases') = fold_map_cases f res cases in
-      ok (res, return @@ E_matching {matchee=e';cases=cases'})
-    )
+  | E_matching {matchee=e;cases} ->
+    let%bind (res,e') = self init' e in
+    let aux acc { pattern ; body } =
+      let%bind (res,body') = self acc body in
+      ok (res,{ pattern ; body = body'})
+    in
+    let%bind (res, cases') = bind_fold_map_list aux res cases in
+    ok @@ (res, return @@ E_matching {matchee=e';cases=cases'})
   | E_record m -> (
     let%bind (res, m') = bind_fold_map_lmap (fun res _ e -> self res e) init' m in
     ok (res, return @@ E_record m')
@@ -385,36 +327,3 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> ('a 
     ok (res, return @@ E_module_accessor { module_name; element })
   )
   | E_literal _ | E_variable _ | E_raw_code _ | E_skip as e' -> ok (init', return e')
-
-and fold_map_cases : ('a , 'err) fold_mapper -> 'a -> matching_expr -> ('a * matching_expr , 'err) result = fun f init m ->
-  match m with
-  | Match_variant lst -> (
-      let aux init ((a , b) , e) =
-        let%bind (init,e') = fold_map_expression f init e in
-        ok (init, ((a , b) , e'))
-      in
-      let%bind (init,lst') = bind_fold_map_list aux init lst in
-      ok @@ (init, Match_variant lst')
-    )
-  | Match_list { match_nil ; match_cons = (hd , tl , cons) } -> (
-      let%bind (init, match_nil) = fold_map_expression f init match_nil in
-      let%bind (init, cons) = fold_map_expression f init cons in
-      ok @@ (init, Match_list { match_nil ; match_cons = (hd , tl , cons) })
-    )
-  | Match_option { match_none ; match_some = (name , some) } -> (
-      let%bind (init, match_none) = fold_map_expression f init match_none in
-      let%bind (init, some) = fold_map_expression f init some in
-      ok @@ (init, Match_option { match_none ; match_some = (name , some) })
-    )
-  | Match_record (names, e) -> (
-      let%bind (init, e') = fold_map_expression f init e in
-      ok @@ (init, Match_record (names, e'))
-    )
-  | Match_tuple (names, e) -> (
-      let%bind (init, e') = fold_map_expression f init e in
-      ok @@ (init, Match_tuple (names, e'))
-    )
-  | Match_variable (name, e) -> (
-      let%bind (init, e') = fold_map_expression f init e in
-      ok @@ (init, Match_variable (name, e'))
-    )

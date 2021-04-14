@@ -52,13 +52,7 @@ let error_ppformat : display_format:string display_format ->
     | `Concrete_pascaligo_unsupported_pattern_type pl ->
       Format.fprintf f
         "@[<hv>%a@.Invalid case pattern.
-If this is a case over Booleans, then \"true\" or \"false\" is expected.
-If this is a case on a list, then one of the following is expected:
-  * an empty list pattern \"[]\";
-  * a cons list pattern \"head#tail\".
-If this is a case over variants, then a constructor of a variant is expected.
-
-Other patterns in case clauses are not (yet) supported. @]"
+        Can't match on values. @]"
         Snippet.pp_lift @@ Raw.pattern_to_region pl
     | `Concrete_pascaligo_unsupported_string_singleton te ->
       Format.fprintf f

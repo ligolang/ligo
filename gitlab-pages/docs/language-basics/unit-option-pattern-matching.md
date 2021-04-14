@@ -275,102 +275,226 @@ let div = ([a, b]: [nat, nat]): option<nat> => {
 
 *Pattern matching* is similiar to the `switch` construct in
 Javascript, and can be used to route the program's control flow based
-on the value of a variant. Consider for example the definition of a
-function `flip` that flips a coin.
+on the value of a variant, record, tuple, or list.
 
+A component of a pattern can be discarded by using a wildcard `_` instead of a variable name.
+
+<Syntax syntax="reasonligo">
+
+> Note: Support for pattern matching isn't yet stable for ReasonLIGO.
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+> Note: JsLIGO only supports basic pattern matching at the moment. This will change in the future.
+
+</Syntax>
+
+### Match on variants
+
+Here is a function that transforms a color variant type to an int.
 
 <Syntax syntax="pascaligo">
 
-```pascaligo group=e
-type coin is Head | Tail
+```pascaligo group=pm_variant
+type color is
+  | RGB   of int * int * int
+  | Gray  of int 
+  | Default
 
-function flip (const c : coin) : coin is
+function int_of_color (const c : color) : int is
   case c of
-    Head -> Tail
-  | Tail -> Head
+  | RGB (r,g,b) -> 16 + b + g * 6 + r * 36
+  | Gray (i) -> 232 + i
+  | Default -> 0
   end
-```
-
-You can call the function `flip` by using the LIGO compiler like so:
-```shell
-ligo run-function
-gitlab-pages/docs/language-basics/src/unit-option-pattern-matching/flip.ligo
-flip "Head"
-# Outputs: Tail(Unit)
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo group=e
-type coin = Head | Tail
+```cameligo group=pm_variant
+type color =
+  | RGB   of int * int * int
+  | Gray  of int 
+  | Default
 
-let flip (c : coin) : coin =
+let int_of_color (c : color) : int =
   match c with
-    Head -> Tail
-  | Tail -> Head
-```
-
-You can call the function `flip` by using the LIGO compiler like so:
-```shell
-ligo run-function
-gitlab-pages/docs/language-basics/src/unit-option-pattern-matching/flip.mligo
-flip Head
-# Outputs: Tail(Unit)
+  | RGB (r,g,b) -> 16 + b + g * 6 + r * 36
+  | Gray i -> 232 + i
+  | Default -> 0
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo group=e
-type coin = | Head | Tail;
+```reasonligo group=pm_variant
+type color =
+  | RGB  ((int, int, int))
+  | Gray (int)
+  | Default
 
-let flip = (c : coin) : coin =>
+let int_of_color = (c : color) : int =>
   switch (c) {
-  | Head => Tail
-  | Tail => Head
+  | RGB (r,g,b) => (16 + b + g * 6 + r * 36)
+  | Gray i => 232 + i
+  | Default => 0
   };
 ```
 
-You can call the function `flip` by using the LIGO compiler like so:
-```shell
-ligo run-function
-gitlab-pages/docs/language-basics/src/unit-option-pattern-matching/flip.religo
-flip Head
-# Outputs: Tail(Unit)
+</Syntax>
+
+### Match on records or tuples
+
+Fields of records and components of tuples can be destructured. Record pattern variables can be renamed.
+
+
+<Syntax syntax="cameligo">
+
+```cameligo group=pm_rec_tuple
+type my_record = { a : int ; b : nat ; c : string }
+type my_tuple = int * nat * string
+
+let on_record (v : my_record) : int =
+  match v with
+  | { a ; b = b_renamed ; c = _ } -> a + int(b_renamed)
+
+let on_tuple (v : my_tuple) : int =
+  match v with
+  | ( x , y , _ ) -> x + int(y)
 ```
 
 </Syntax>
-<Syntax syntax="jsligo">
+<Syntax syntax="pascaligo">
 
-JsLIGO uses a predefined function called `match` to perform pattern matching.
-In the case of pattern matching over a variant, an object should be used as argument:
+```pascaligo group=pm_rec_tuple
+type my_record is record [ a : int ; b : nat ; c : string ]
+type my_tuple is (int * nat * string)
 
-```jsligo group=e
-type coin = ["Head"] | ["Tail"];
-let flip = (c: coin): coin =>
-  match (c, {
-    Head: () => Tail(),
-    Tail: () => Head()
-  });
+function on_record (const v : my_record) : int is
+  case v of
+   record [ a ; b = b_renamed ; c = _ ] -> a + int(b_renamed)
+  end
+
+function on_tuple (const v : my_tuple) : int is
+  case v of
+  | ( x , y , _ ) -> x + int(y)
+  end
 ```
 
-You can call the function `flip` by using the LIGO compiler like so:
-```shell
-ligo run-function
-gitlab-pages/docs/language-basics/src/unit-option-pattern-matching/flip.jsligo
-flip Head
-# Outputs: Tail(Unit)
+</Syntax>
+<Syntax syntax="reasonligo">
+
+<!-- skipping, REASONLIGO LEFTOVER -->
+```reasonligo skip
+type my_record = { a : int , b : nat , c : string } ;
+type my_tuple = ( int , nat , string ) ;
+
+let on_record = (v : my_record) : int =>
+  switch v {
+  | { a , b : b_renamed , c : _ } => a + int(b_renamed)
+  };
+
+let on_tuple = (v : my_tuple) : int =>
+  switch v {
+  | (x,y,_) => x + int(y)
+  };
 ```
 
-In the case of pattern matching over a list, a list should be used as argument:
+</Syntax>
 
-```jsligo group=f
-let main = (a: list<int>): int =>
-  match(a, list([
-    ([]: list<string>) => -1,
-    ([hd, ...tl]: list<string>) => hd
-  ]));
+### Match on lists
+
+<Syntax syntax="cameligo">
+
+```cameligo group=pm_lists
+let weird_length (v : int list) : int =
+  match v with 
+  | [] -> -1
+  | [ a; b ; c] -> -2
+  | x -> int (List.length x)
+```
+
+</Syntax>
+<Syntax syntax="pascaligo">
+
+```pascaligo group=pm_lists
+function weird_length (const v : list(int)) : int is
+  case v of 
+  | nil -> -1
+  | list [ a; b ; c] -> -2
+  | x -> int (List.length (x))
+  end
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+<!-- skipping, REASONLIGO LEFTOVER -->
+```reasonligo skip
+let weird_length = (v : list(int)) : int =>
+  switch v {
+  | [] => 1
+  | [a,b,c] => -2
+  | x => int (List.length (x))
+  }
+
+```
+
+</Syntax>
+
+
+### Deep patterns
+
+Pattern matching can also be used for nested patterns.
+
+<Syntax syntax="cameligo">
+
+```cameligo group=pm_complex
+type complex_t = { a : int list option ; b : int list }
+
+
+let complex = fun (x:complex_t) (y:complex_t) ->
+  match (x,y) with
+  | {a=None;b=_} , { a = _ ; b = _ } -> -1
+  | {a=_;b=_} , { a = Some ([]) ; b = (hd::tl) } -> hd
+  | {a=_;b=_} , { a = Some (hd::tl) ; b = [] } -> hd
+  | {a=Some a;b=_} , _ -> int (List.length a)
+```
+
+</Syntax>
+<Syntax syntax="pascaligo">
+
+```pascaligo group=pm_complex
+type complex_t is record [ a : option(list(int)) ; b : list(int) ]
+
+function complex (const x:complex_t ; const y:complex_t) is
+  case (x,y) of
+  | (record [ a=None;b=_] , record [ a = _ ; b = _ ]) -> -1
+  | (record [ a=_;b=_]    , record [ a = Some (nil) ; b = (hd#tl) ]) -> hd
+  | (record [ a=_;b=_]    , record [ a = Some ((hd#tl)) ; b = nil ]) -> hd
+  | (record [ a=Some (a);b=_] , _) -> int ( List.length(a) )
+  end
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+<!-- skipping, REASONLIGO LEFTOVER -->
+```reasonligo skip
+// let t13 = 
+//   ((x: recordi) => 
+//      ((y: recordi) => 
+//         switch (x, y) {
+//         | {a : None, b : _ }, {a : _, b : _ } => -1
+//         | { a : _, b : _ }, {a : Some [], b : [hd, ...tl] } =>
+//             hd
+//         | { a : _, b = _ }, {a : Some [hd, ...tl], b : [] } =>
+//             hd
+//         | { a : Some a, b : _}, _ => int(Bytes.length(a))
+//         }));
 ```
 
 </Syntax>

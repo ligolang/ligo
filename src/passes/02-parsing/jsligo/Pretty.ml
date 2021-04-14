@@ -278,6 +278,7 @@ and pp_expr_fun = function
     let expr, _, type_expr = value in
       group (nest 1 (pp_expr_fun expr ^^ string ": "
                      ^^ pp_type_expr type_expr))
+| EUnit _ -> string "()"
 | _ as c -> pp_expr c
 
 and pp_fun {value; _} =

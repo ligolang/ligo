@@ -75,10 +75,9 @@ let rec untype_expression (e:O.expression) : (I.expression, typer_error) result 
     let%bind record = untype_expression record in
     let%bind update = untype_expression update in
     return @@ E_record_update {record; path; update}
-  | E_matching {matchee;cases} ->
-    let%bind matchee = untype_expression matchee in
-    let%bind cases   = untype_matching untype_expression cases in
+  | E_matching {matchee;cases} -> (
     return @@ E_matching {matchee;cases}
+  )
   | E_let_in {let_binder; rhs;let_result; inline} ->
     let%bind rhs        = untype_expression rhs in
     let%bind let_result = untype_expression let_result in
@@ -119,38 +118,6 @@ and untype_lambda {binder; output_type; result} : (_ O.lambda, typer_error) resu
 (*
   Transform a Ast_inferred matching into an ast_core matching
 *)
-and untype_matching : (O.expression -> (I.expression, typer_error) result) -> O.matching_expr -> (I.matching_expr, typer_error) result = fun f m ->
-  let open I in
-  match m with
-  | Match_option {match_none ; match_some = {opt; body}} ->
-    let%bind match_none = f match_none in
-    let%bind body = f body in
-    let opt = Location.map Var.todo_cast opt in
-    let match_some = {opt; body} in
-    ok @@ Match_option {match_none ; match_some}
-  | Match_list {match_nil ; match_cons = {hd;tl;body}} ->
-    let%bind match_nil = f match_nil in
-    let hd = Location.map Var.todo_cast hd in
-    let tl = Location.map Var.todo_cast tl in
-    let%bind body = f body in
-    let match_cons = {hd ; tl ; body} in
-    ok @@ Match_list {match_nil ; match_cons}
-  | Match_variant cases ->
-    let aux ({constructor;proj;body} : O.match_variant) =
-      let%bind body = f body in
-      let proj = Location.map Var.todo_cast proj in
-      ok ({constructor;proj;body} : I.match_variant) in
-    let%bind lst' = bind_map_list aux cases in
-    ok @@ Match_variant lst'
-  | Match_record {fields; body} ->
-    let%bind fields = bind_map_list
-        (fun (label, binder) ->
-          let%bind binder = Stage_common.Maps.binder untype_type_expression binder in
-           ok (label, binder))
-        (LMap.to_kv_list fields) in
-    let fields = LMap.of_list fields in
-    let%bind body = f body in
-    ok @@ Match_record {fields; body}
 
 and untype_declaration : O.declaration -> (I.declaration, typer_error) result =
 let return (d: I.declaration) = ok @@ d in

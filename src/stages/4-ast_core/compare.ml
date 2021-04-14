@@ -164,6 +164,14 @@ let expression_tag expr =
   | E_module_accessor _ -> 17
   | E_ascription      _ -> 18
 
+and pattern_tag = function
+| P_unit -> 1
+| P_var _ -> 2
+| P_list _ -> 3
+| P_variant _ -> 4
+| P_tuple _ -> 5
+| P_record _ -> 6
+
 and declaration_tag = function
   | Declaration_constant _ -> 1
   | Declaration_type     _ -> 2
@@ -250,7 +258,7 @@ and constructor {constructor=ca;element=ea} {constructor=cb;element=eb} =
 and matching {matchee=ma;cases=ca} {matchee=mb;cases=cb} =
   cmp2
     expression ma mb
-    matching_expr ca cb
+    (List.compare ~compare:match_case) ca cb
 
 and record ra rb = label_map ~compare:expression ra rb
 
@@ -265,58 +273,35 @@ and record_update {record=ra;path=pa;update=ua} {record=rb;path=pb;update=ub} =
     label pa pb
     expression ua ub
 
-and matching_expr_tag = function
-  Match_list    _ -> 1
-| Match_option  _ -> 2
-| Match_variant _ -> 3
-| Match_record _ -> 4
+and pattern_repr : type_expression pattern ->type_expression pattern -> int =
+  fun a b ->
+    match a.wrap_content,b.wrap_content with
+    | P_unit, P_unit -> 0
+    | P_var x , P_var y -> (binder type_expression) x y
+    | P_list (Cons (xa,ya)) , P_list (Cons (xb,yb)) ->
+      cmp2
+        pattern_repr xa xb
+        pattern_repr ya yb
+    | P_list (List x) , P_list (List y)
+    | P_tuple x , P_tuple y ->
+      (List.compare ~compare:pattern_repr) x y
+    | P_variant (la,xa) , P_variant (lb,xb) ->
+      cmp2
+        label la lb
+        (option pattern_repr) xa xb
+    | P_record (la,xa), P_record (lb,xb) ->
+      cmp2
+        (List.compare ~compare:label) la lb
+        (List.compare ~compare:pattern_repr) xa xb
+    | (P_unit | P_var _| P_list (Cons _ | List _)| P_tuple _ | P_variant _ | P_record _ ) ,
+      (P_unit | P_var _| P_list (Cons _ | List _)| P_tuple _ | P_variant _ | P_record _ ) ->
+      Int.compare (pattern_tag a.wrap_content) (pattern_tag b.wrap_content)
 
-and matching_expr a b =
-  match (a,b) with
-    Match_list    a, Match_list    b -> matching_content_list a b
-  | Match_option  a, Match_option  b -> matching_content_option a b
-  | Match_variant a, Match_variant b -> matching_content_variant a b
-  | Match_record a, Match_record b -> matching_content_record a b
-  | (Match_list _| Match_option _| Match_variant _ | Match_record _),
-    (Match_list _| Match_option _| Match_variant _ | Match_record _) ->
-    Int.compare (matching_expr_tag a) (matching_expr_tag b)
-
-and matching_content_cons {hd=ha;tl=ta;body=ba} {hd=hb;tl=tb;body=bb} =
-  cmp3
-    expression_variable ha hb
-    expression_variable ta tb
-    expression      ba bb
-
-and matching_content_list {match_nil=na;match_cons=ca} {match_nil=nb;match_cons=cb} =
+and match_case {pattern=pa;body=ba} {pattern=pb;body=bb} =
   cmp2
-    expression na nb
-    matching_content_cons ca cb
-
-and matching_content_some {opt=oa;body=ba} {opt=ob;body=bb} =
-  cmp2
-    expression_variable oa ob
     expression ba bb
+    pattern_repr pa pb
 
-and matching_content_option {match_none=na;match_some=sa} {match_none=nb;match_some=sb} =
-  cmp2
-    expression na nb
-    matching_content_some sa sb
-
-and matching_content_case {constructor=ca;proj=pa;body=ba} {constructor=cb;proj=pb;body=bb} =
-  cmp3
-    label ca cb
-    expression_variable pa pb
-    expression ba bb
-
-and matching_content_variant ca cb =
-  (List.compare ~compare:matching_content_case) ca cb
-
-and matching_content_record
-    {fields = fields1; body = body1}
-    {fields = fields2; body = body2} =
-  cmp2
-    (label_map ~compare:(binder type_expression)) fields1 fields2
-    expression body1 body2
 
 and ascription {anno_expr=aa; type_annotation=ta} {anno_expr=ab; type_annotation=tb} =
   cmp2

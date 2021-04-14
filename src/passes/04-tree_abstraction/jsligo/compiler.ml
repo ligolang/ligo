@@ -438,11 +438,11 @@ and compile_expression : CST.expr -> (AST.expr, _) result = fun e ->
     let fields' = Utils.nsepseq_to_list fields in
     let compile_simple_pattern p =
       let rec aux = function
-        CST.EVar v -> ok @@ Var.of_name v.value
+        CST.EVar v -> ok @@ Some (Var.of_name v.value)
       | EPar par -> aux par.value.inside
       | ESeq {value = (hd, []); _} -> aux hd
       | EAnnot {value = (a, _, _); _} -> aux a
-      | EUnit _ -> ok @@ Var.of_name "_"
+      | EUnit _ -> ok @@ None
       | _ as e -> fail @@ unsupported_match_pattern e
       in 
       aux p
@@ -451,9 +451,9 @@ and compile_expression : CST.expr -> (AST.expr, _) result = fun e ->
       CST.Property {value = {name = EVar {value = constr; _}; value; _}; _} -> (
         match value with 
           EFun {value = {parameters; body; _}; _} -> 
-            let%bind parameters = compile_simple_pattern parameters in
+            let%bind parameters_opt = compile_simple_pattern parameters in
             let%bind expr = compile_function_body_to_expression body in
-            ok ((Label constr, Location.wrap @@ parameters), expr)
+            ok ((Label constr, parameters_opt), expr)
         | _ as e -> fail @@ invalid_case constr e (* TODO: improve error message *)
       ) 
     | _ as f -> fail @@ unsupported_match_object_property f
@@ -461,7 +461,22 @@ and compile_expression : CST.expr -> (AST.expr, _) result = fun e ->
     let loc = Location.lift region in
     let%bind matchee = compile_expression input in
     let%bind constrs = bind_map_list compile_constr_pattern fields' in
-    let cases = AST.Match_variant constrs in
+    let cases = List.map
+      (fun ((constructor,p_opt),body) ->
+        (* TODO: location should be fetch*)
+        let param_loc = Location.generated in
+        let whole_pattern_loc = Location.generated in
+        let pvar = match p_opt with
+          | Some p ->
+            let parameters = Location.wrap ~loc:param_loc p in
+            Some (Location.wrap ~loc:param_loc @@ P_var ({var = parameters ; ascr = None}:_ AST.binder))
+          | None -> None
+        in 
+        let pattern = Location.wrap ~loc:whole_pattern_loc @@ P_variant (constructor, pvar) in
+        ({body ; pattern} : _ AST.match_case)
+      )
+      constrs
+    in
     ok @@ e_matching ~loc matchee cases
   | ECall {value=(EVar {value = "match"; _}, Multiple {value = {inside = (input, [(_, ECall {value = EVar {value="list"; _}, Multiple { value = {inside = (CST.EArray args, _); _} ;_} ;_})]); _}; _}); region} ->
     let args = Utils.nsepseq_to_list args.value.inside in
@@ -507,7 +522,19 @@ and compile_expression : CST.expr -> (AST.expr, _) result = fun e ->
         | Match_cons (a,b), Match_nil match_nil, body, body_nil ->
           let%bind matchee = compile_expression input in
           let loc = Location.lift region in
-          ok @@ e_matching ~loc matchee @@ AST.Match_list {match_nil = body_nil;match_cons = (a,b, body) }
+          let nil_case =
+            (* TODO: improve locations here *)
+            let pattern = Location.wrap @@ P_list (List []) in
+            {pattern ; body = body_nil}
+          in
+          let cons_case =
+            (* TODO: improve locations here *)
+            let a = Location.wrap @@ P_var {var = a ; ascr = None} in
+            let b = Location.wrap @@ P_var {var = b ; ascr = None} in
+            let pattern = Location.wrap @@ P_list (Cons (a,b)) in
+            {pattern ; body = body}
+          in
+          ok @@ e_matching ~loc matchee [nil_case;cons_case]
         | _ -> fail @@ invalid_list_pattern_match args
         )
     | _ -> fail @@ invalid_list_pattern_match args)
@@ -755,26 +782,28 @@ and nestrec : AST.expression -> (AST.expression -> AST.expression) -> nested_mat
         match z with
         | PatternVar _ -> f
         | TupleVar (matchee,nested) ->
-          let binders = List.map get_binder nested in
-          let f' = fun body -> f (e_matching (e_variable matchee.var) (Match_tuple (binders,body))) in
+          let binders = List.map (fun x -> let var = get_binder x in Location.wrap @@ P_var var) nested in
+          let pattern = Location.wrap @@ P_tuple binders in
+          let f' = fun body -> f (e_matching (e_variable matchee.var) [{pattern ; body}]) in
           f'
         | RecordVar (matchee,labels,nested) ->
-          let binders = List.map get_binder nested in
-          let lbinders = List.combine labels binders in
-          let f' = fun body -> f (e_matching (e_variable matchee.var) (Match_record (lbinders,body))) in
+          let binders = List.map (fun x -> let var = get_binder x in Location.wrap @@ P_var var) nested in
+          let pattern = Location.wrap @@ P_record (labels, binders) in
+          let f' = fun body -> f (e_matching (e_variable matchee.var) [{pattern ; body}]) in
           f'
     in
     match lst with
     | PatternVar _ :: tl -> nestrec res f tl
     | TupleVar (matchee,nested) :: tl ->
-      let binders = List.map get_binder nested in
-      let f' = fun body -> f (e_matching (e_variable matchee.var) (Match_tuple (binders,body))) in
+      let binders = List.map (fun x -> let var = get_binder x in Location.wrap @@ P_var var) nested in
+      let pattern = Location.wrap @@ P_tuple binders in
+      let f' = fun body -> f (e_matching (e_variable matchee.var) [{pattern ; body}]) in
       let f'' = fold_nested_z aux f' nested in
       nestrec res f'' tl
     | RecordVar (matchee,labels,nested) :: tl ->
-      let binders = List.map get_binder nested in
-      let lbinders = List.combine labels binders in
-      let f' = fun body -> f (e_matching (e_variable matchee.var) (Match_record (lbinders,body))) in
+      let binders = List.map (fun x -> let var = get_binder x in Location.wrap @@ P_var var) nested in
+      let pattern = Location.wrap @@ P_record (labels, binders) in
+      let f' = fun body -> f (e_matching (e_variable matchee.var) [{pattern ; body}]) in
       let f'' = fold_nested_z aux f' nested in
       nestrec res f'' tl
     | [] -> f res
@@ -785,8 +814,9 @@ and compile_array_let_destructuring : AST.expression -> (CST.pattern, Region.t) 
     let lst = npseq_to_ne_list tuple.inside in
     let patterns = List.Ne.to_list lst in
     let%bind patterns = bind_map_list conv patterns in
-    let binders = List.map get_binder patterns in
-    let f = fun body -> e_matching ~loc matchee (Match_tuple (binders, body)) in
+    let binders = List.map (fun x -> let var = get_binder x in Location.wrap @@ P_var var) patterns in
+    let pattern = Location.wrap @@ P_tuple binders in
+    let f = fun body -> e_matching ~loc matchee [{pattern ; body}] in
     ok (fun let_result -> nestrec let_result f patterns)
 
 and compile_object_let_destructuring : AST.expression -> (CST.pattern, Region.t) Utils.nsepseq CST.braced CST.reg -> (AST.expression -> AST.expression, _) result =
@@ -802,9 +832,9 @@ and compile_object_let_destructuring : AST.expression -> (CST.pattern, Region.t)
     let%bind lst = bind_map_list aux @@ Utils.nsepseq_to_list record.inside in
     let (labels,patterns) = List.split lst in
     let%bind patterns = bind_map_list conv patterns in
-    let binders = List.map get_binder patterns in
-    let lbinders = List.combine labels binders in
-    let f = fun body -> e_matching ~loc matchee (Match_record (lbinders, body)) in
+    let binders = List.map (fun x -> let var = get_binder x in Location.wrap @@ P_var var) patterns in
+    let pattern = Location.wrap @@ P_record (labels, binders) in
+    let f = fun body -> e_matching ~loc matchee [{pattern ; body}] in
     ok (fun let_result -> nestrec let_result f patterns)
 
 and compile_parameter : CST.expr ->

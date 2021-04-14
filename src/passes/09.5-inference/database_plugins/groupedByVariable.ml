@@ -72,7 +72,7 @@ let update_remove_constraint_from_set tcs c = function
   | Some s -> MultiSet.remove c s
 
 
-let remove_constraint _ repr (state : _ t) constraint_to_rm =
+let remove_constraint _ repr (state : _ t) constraint_to_rm : (_,Type_variable_abstraction.Errors.typer_error) Trace.result =
   (* This update is "monotonic" as required by ReprMap + the solver.
      The `add` function of this indexer is only called once per
      constraint, and constraints are indexed by their lhs variable.

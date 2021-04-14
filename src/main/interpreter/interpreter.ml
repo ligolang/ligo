@@ -382,11 +382,23 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
     | E_matching { matchee ; cases} -> (
       let* e' = eval_ligo matchee env in
       match cases, e' with
-      | Match_list cases , V_List [] ->
-        eval_ligo cases.match_nil env
-      | Match_list cases , V_List (head::tail) ->
-        let {hd;tl;body;tv=_} = cases.match_cons in
-        let env' = Env.extend (Env.extend env (hd,head)) (tl, V_List tail) in
+      | Match_variant {cases;_}, V_List [] ->
+        let {constructor=_ ; pattern=_ ; body} =
+          List.find
+            (fun {constructor = (Label c) ; pattern=_ ; body=_} ->
+              String.equal "Nil" c)
+            cases in
+        eval_ligo body env
+      | Match_variant {cases;_}, V_List lst ->
+        let {constructor=_ ; pattern ; body} =
+          List.find
+            (fun {constructor = (Label c) ; pattern=_ ; body=_} ->
+              String.equal "Cons" c)
+            cases in
+        let hd = List.hd lst in
+        let tl = V_List (List.tl lst) in
+        let proj = v_pair (hd,tl) in
+        let env' = Env.extend env (pattern, proj) in
         eval_ligo body env'
       | Match_variant {cases;_}, V_Ct (C_bool b) ->
         let ctor_body (case : matching_content_case) = (case.constructor, case.body) in
@@ -405,12 +417,6 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
             cases in
         let env' = Env.extend env (pattern, proj) in
         eval_ligo body env'
-      | Match_option cases, V_Construct ("Some" , proj) ->
-        let {opt;body;tv=_} = cases.match_some in
-        let env' = Env.extend env (opt,proj) in
-        eval_ligo body env'
-      | Match_option cases, V_Construct ("None" , V_Ct C_unit) ->
-        eval_ligo cases.match_none env
       | Match_record {fields ; body ; tv = _} , V_Record rv ->
         let aux : label -> ( expression_variable * _ ) -> env -> env =
           fun l (v,_) env ->

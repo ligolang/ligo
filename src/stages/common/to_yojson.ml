@@ -376,6 +376,32 @@ let while_loop expression {cond;body} =
     ("body", expression body);
   ]
 
+let rec list_pattern type_expression lp =
+  match lp with
+  | Cons (a,b) -> `List [`String "Cons" ; pattern type_expression a ; pattern type_expression b]
+  | List lp -> `List [`String "Tuple" ; list (pattern type_expression) lp ]
+
+and pattern type_expression p =
+  match p.wrap_content with
+  | P_unit -> `List [`String "Unit" ; `Null]
+  | P_var b -> `List [`String "Var"; binder type_expression b]
+  | P_list lp -> `List [`String "List" ; list_pattern type_expression lp]
+  | P_variant (l,popt) -> `List [`String "Variant" ; label l ; option (pattern type_expression) popt ]
+  | P_tuple lp -> `List [`String "Tuple" ; list (pattern type_expression) lp ]
+  | P_record (ll,lp) -> `List [`String "Record" ; list label ll ; list (pattern type_expression) lp ]
+
+and match_case expression type_expression {pattern=p ; body } =
+  `Assoc [
+    ("pattern", pattern type_expression p) ;
+    ("body", expression body) ;
+  ]
+
+let match_exp expression type_expression {matchee ; cases} =
+  `Assoc [
+    ("matchee", expression matchee) ;
+    ("cases", list (match_case expression type_expression) cases) ;
+  ]
+
 let declaration_type type_expression {type_binder; type_expr} =
   `Assoc [
     ("type_binder", type_variable_to_yojson type_binder);

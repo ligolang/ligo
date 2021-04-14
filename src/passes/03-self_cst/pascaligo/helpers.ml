@@ -317,14 +317,14 @@ and fold_statement : ('a, 'err) folder -> 'a -> statement -> ('a, 'err) result =
     let%bind res = fold_path res set in
     ok @@ res
   | Data LocalConst   {value;region=_} ->
-    let {kwd_const=_;name=_;const_type;equal=_;init=expr;terminator=_;attributes=_} = value in
+    let {kwd_const=_;pattern=_;const_type;equal=_;init=expr;terminator=_;attributes=_} = value in
     let%bind res = self_expr init expr in
     (match const_type with
       Some (_, ty) -> self_type res ty
     | None ->    ok @@ res
     )
   | Data LocalVar     {value;region=_} ->
-    let {kwd_var=_;name=_;var_type;assign=_;init=expr;terminator=_} = value in
+    let {kwd_var=_;pattern=_;var_type;assign=_;init=expr;terminator=_} = value in
     let%bind res = self_expr init expr in
     (match var_type with
       Some (_, ty) -> self_type res ty
@@ -366,7 +366,7 @@ and fold_declaration : ('a, 'err) folder -> 'a -> declaration -> ('a, 'err) resu
   let%bind init = f.d init d in
   match d with
     ConstDecl {value;region=_} ->
-    let {kwd_const=_;name=_;const_type;equal=_;init=expr;terminator=_;attributes=_} = value in
+    let {kwd_const=_;pattern=_;const_type;equal=_;init=expr;terminator=_;attributes=_} = value in
     let%bind res = self_expr init expr in
     (match const_type with
       Some (_, ty) -> self_type res ty
@@ -677,14 +677,14 @@ and map_statement : 'err mapper -> statement -> (statement, 'err) result = fun f
   match s with
   | Instr inst -> let%bind inst = self_inst inst in ok @@ Instr inst
   | Data LocalConst   {value;region} ->
-    let {kwd_const=_;name=_;const_type;equal=_;init;terminator=_;attributes=_} = value in
+    let {kwd_const=_;pattern=_;const_type;equal=_;init;terminator=_;attributes=_} = value in
     let%bind init = self_expr init in
     let%bind const_type = bind_map_option (fun (w, ty)
       -> let%bind ty = self_type ty in ok @@ (w,ty)) const_type in
     let value = {value with init;const_type} in
     ok @@ Data (LocalConst {value;region})
   | Data LocalVar     {value;region} ->
-    let {kwd_var=_;name=_;var_type;assign=_;init;terminator=_} = value in
+    let {kwd_var=_;pattern=_;var_type;assign=_;init;terminator=_} = value in
     let%bind var_type = bind_map_option (fun (w, ty)
       -> let%bind ty = self_type ty in ok @@ (w,ty)) var_type in
     let value = {value with init;var_type} in
@@ -862,7 +862,7 @@ and map_declaration : 'err mapper -> declaration -> (declaration, 'err) result =
   let%bind d = f.d d in
   match d with
     ConstDecl {value;region} ->
-    let {kwd_const=_;name=_;const_type;equal=_;init;terminator=_;attributes=_} = value in
+    let {kwd_const=_;pattern=_;const_type;equal=_;init;terminator=_;attributes=_} = value in
     let%bind init = self_expr init in
     let%bind const_type = bind_map_option (fun (a,b) ->
       let%bind b = self_type b in ok (a,b)) const_type in

@@ -48,19 +48,9 @@ end = struct
     | O.E_mod_alias       { alias=_; binders=_; result} -> expression result
     | O.E_raw_code        { language=_; code } -> expression code
     | O.E_constructor     { constructor=_; element } -> expression element
-    | O.E_matching        { matchee; cases } -> let%bind () = expression matchee in
-      (match cases with
-         O.Match_list    { match_nil; match_cons = { hd = _; tl = _; body} } ->
-         let%bind () = expression match_nil in
-         expression body
-       | O.Match_option  { match_none; match_some = { opt=_; body } } ->
-         let%bind () = expression match_none in
-         expression body
-       | O.Match_variant cases ->
-         bind_fold_list (fun () ({ constructor = _ ; proj = _ ; body } : Ast_core.match_variant) -> expression body) () cases
-       | O.Match_record { fields=_; body } ->
-         expression body
-      )
+    | O.E_matching        { matchee; cases } ->
+      let%bind () = expression matchee in
+      bind_iter_list (fun ({body ; _ }: _ O.match_case ) -> expression body) cases
     | O.E_record          m -> bind_fold_list (fun () (_key, e) -> expression e) () @@ Ast_core.LMap.bindings m
     | O.E_record_accessor { record; path=_ } -> expression record
     | O.E_record_update   { record; path=_; update } -> let%bind () = expression record in expression update
@@ -325,12 +315,129 @@ and type_expression' : ?tv_opt:O.type_expression -> environment -> _ O'.typer_st
     return_wrapped (e_constructor constructor element) e state constraints wrapped
 
   | E_matching {matchee;cases} -> (
-      let%bind (e,state,ex',t_e),constraints = self e state matchee in
-      let%bind (e,state,m',tvs),c_match  = type_match e state t_e cases ae ae.location in
-      let wrapped = Wrap.matching tvs in
-      return_wrapped (e_matching ex' m') e state (constraints@c_match) wrapped
-    )
+    let type_match_case (state,env) ({pattern;body} : _ I.match_case) : ((_ O'.typer_state * environment) * (_ O.match_case * O.type_constraint list * (O.type_expression * O.type_expression)),_) result =
+      let%bind (new_pattern,new_constraints,whole_pattern_t) =
+        let rec gather_constraints_from_pattern : _ I.pattern -> (_ O.pattern * O.type_constraint list * O.type_expression,_) result = fun x ->
+          match x.wrap_content with
+          | P_unit ->
+            let fresh = t_variable (Typesystem.Core.fresh_type_variable ~name:"match_unit_pattern" ()) in
+            let c = Wrap.pattern_match_unit fresh in
+            ok (x, c, fresh)
+          | P_var v ->(
+            let fresh = t_variable (Typesystem.Core.fresh_for_expr_var v.var) in
+            let ascr = Some fresh in
+            let%bind c : (O.type_constraint list , _) result =
+              match v.ascr with
+              | Some (t: I.type_expression) ->
+                (* environment should be updated if we have dependent type matching *)
+                let%bind t = evaluate_type e t in
+                ok (Wrap.pattern_match_var t fresh)
+              | None -> ok []
+            in
+            let x = { x with wrap_content = (O.P_var {v with ascr}) } in
+            ok (x, c, fresh)
+          )
+          | P_list (List pl) -> (
+            let element_type = t_variable (Typesystem.Core.fresh_type_variable ~name:"match_element_type" ()) in
+            let list_type = t_variable (Typesystem.Core.fresh_type_variable ~name:"match_list_type" ()) in
+            let%bind (ps,constraints,ts) = bind_map_list gather_constraints_from_pattern pl >>|? List.split3 in
+            let nested_pattern_constraints = List.flatten constraints in
+            let whole_list_constraints = Wrap.match_lst element_type list_type in
+            let all_els_same_type_constraints = Wrap.pattern_match_list element_type ts in
+            let constraints' = all_els_same_type_constraints @ whole_list_constraints @ nested_pattern_constraints in
+            let x = { x with wrap_content = O.P_list (List ps) } in
+            ok (x, constraints', list_type)
+          )
+          | P_list (Cons (hd,tl)) -> (
+            let%bind (hd_p,hd_cs,hd_t) = gather_constraints_from_pattern hd in
+            let%bind (tl_p,tl_cs,tl_t) = gather_constraints_from_pattern tl in
+            let whole_cons_constraints = Wrap.match_lst hd_t tl_t in
+            let constraints' = whole_cons_constraints @ hd_cs @ tl_cs in
+            let x = { x with wrap_content = O.P_list (Cons (hd_p,tl_p)) } in
+            ok (x, constraints', tl_t)
+          )
+          | P_variant (constructor, arg_opt) -> (
+            let fresh = t_variable (Typesystem.Core.fresh_type_variable ~name:"match_variant" ()) in
+            let%bind (arg_t_env , variant_t_env) =
+              (* TODO For row polymorphism or variant inference:
+                delete this and the associated constraint and have a heuristic which infers variants 
+              *)
+              match constructor with
+              (* TODO: this prevents shadowing *)
+              | Label "None" ->
+                let option_content = Location.wrap ~loc:x.location @@ Ast_core.P_variable (Typesystem.Core.fresh_type_variable ~name:"option_content_none (special case)" ()) in
+                let p = Ast_core.Misc.p_constant C_option [option_content] in
+                ok (Wrap.type_expression_to_type_value (t_unit ()), p)
+              | Label "Some" -> 
+                let option_content = Location.wrap ~loc:x.location @@ Ast_core.P_variable (Typesystem.Core.fresh_type_variable ~name:"option_content_some (special case)" ()) in
+                let p = Ast_core.Misc.p_constant C_option [option_content] in
+                ok (option_content, p)
+              | _ ->
+                let%bind (x,y) = trace_option (unbound_constructor e constructor ae.location) @@
+                  Environment.get_constructor constructor e
+                in
+                ok (Wrap.type_expression_to_type_value x , Wrap.type_expression_to_type_value y)
+            in
+            let%bind (arg_p,arg_cs,arg_t) = match arg_opt with
+              | Some arg ->
+                let%bind (arg_p,arg_cs,arg_t) = gather_constraints_from_pattern arg in
+                ok (Some arg_p,arg_cs,arg_t)
+              | None ->
+                ok (None,[],O.t_unit ())
+            in
+            let variant_constraints = Wrap.match_variant constructor ~case:arg_t arg_t_env fresh variant_t_env in
+            let x = { x with wrap_content = O.P_variant (constructor, arg_p)} in
+            let constraints = variant_constraints @ arg_cs in
+            ok (x, constraints, fresh)
+          )
+          | P_record (labels,pl) -> (
+            let fresh = t_variable (Typesystem.Core.fresh_type_variable ~name:"match_record" ()) in
+            let%bind (pl,all_fields_constraints,ts) = bind_map_list gather_constraints_from_pattern pl >>|? List.split3 in
+            let lm = O.LMap.of_list (List.combine labels ts) in
+            let record_contraints = Wrap.match_record lm fresh in
+            let constraints = record_contraints @ (List.flatten all_fields_constraints) in
+            let x = {x with wrap_content = O.P_record (labels,pl)} in
+            ok (x, constraints, fresh)
+          )
+          | P_tuple pl -> (
+            let labels = List.mapi (fun i _ -> O.Label (string_of_int i)) pl in
+            let fresh = t_variable (Typesystem.Core.fresh_type_variable ~name:"match_record" ()) in
+            let%bind (pl,all_fields_constraints,ts) = bind_map_list gather_constraints_from_pattern pl >>|? List.split3 in
+            let lm = O.LMap.of_list (List.combine labels ts) in
+            let record_contraints = Wrap.match_record lm fresh in
+            let constraints = record_contraints @ (List.flatten all_fields_constraints) in
+            let x = {x with wrap_content = O.P_tuple pl} in
+            ok (x, constraints, fresh)
+          )
+        in
+        gather_constraints_from_pattern pattern
+      in
+      let env = (* populate env with pattern binders (all P_var's) *)
+        Stage_common.Helpers.fold_pattern
+          (fun env x ->
+            match x.wrap_content with
+            | P_var {var ; ascr = Some t} -> Environment.add_ez_binder var t env
+            | P_var {var=_ ; ascr = None} -> failwith "impossible"
+            | _ -> env
+          )
+          env
+          new_pattern
+      in
+      let%bind (env, state, body, body_t),body_constraints = type_expression' env state body in
+      let case : _ I.match_case = { body; pattern = new_pattern} in
+      let case_constraints = body_constraints @ new_constraints in
+      ok ((state,env),(case,case_constraints,(whole_pattern_t,body_t)))
+    in
 
+    let%bind (e,state,matchee,matchee_t),constraints_matchee = self e state matchee in
+    let%bind ((state,env),x) = bind_fold_map_list type_match_case (state,e) cases in
+    let (cases,cases_constraints,ts) = List.split3 x in
+    let (pattern_ts,body_ts) = List.split ts in
+    let constraints_cases = List.flatten cases_constraints in
+    let (cs,wrapped) = Wrap.match_cases body_ts pattern_ts matchee_t in
+    let constraints = constraints_matchee @ constraints_cases in
+    return_wrapped (e_matching matchee cases) env state constraints (cs,wrapped)
+  )
   (* Record *)
   | E_record m ->
     let aux (e,state,c) _ expr =
@@ -448,68 +555,6 @@ and type_lambda e state {
       let%bind (e, state', result,t),constraints = type_expression' e' state result in
       let wrapped = Wrap.lambda fresh input_type' output_type' t in
       ok (({binder;output_type = Some t ;result}:_ O.lambda),e,state',constraints,wrapped)
-
-(* TODO: Rewrite this entire function *)
-and type_match : environment -> _ O'.typer_state -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> ((environment * _ O'.typer_state * O.matching_expr * O.type_expression list) * _, typer_error) result =
-  fun e state t i _ae loc ->
-  let self = type_expression' in
-  let return e state t c m = ok @@ ((e,state, m,t),c) in
-  match i with
-    | Match_option {match_none ; match_some} ->
-      let%bind (e,state, match_none, t_none),c1 = self e state match_none in
-      let {opt; body}:I.match_some = match_some in
-      let opt = cast_var opt in
-      (* Add the binder just for typing the case *)
-      let tv = t_variable @@ Var.fresh ~name:"match_some" () in
-      let e = Environment.add_ez_binder opt tv e in
-      let c = Wrap.match_opt tv t in
-      let%bind (e,state, body, t_body),c2 = type_expression' e state body in
-      return e state [t_none;t_body] (c@c1@c2) @@ O.Match_option {match_none ; match_some = { opt; body}}
-    | Match_list {match_nil ; match_cons} ->
-      let%bind (e,state,match_nil, t_nil),c1 = self e state match_nil in
-      let {hd; tl; body} : I.match_cons = match_cons in
-      let hd = cast_var hd in
-      let tl = cast_var tl in
-      (* Add the binder just for typing the case *)
-      let t_elt = t_variable @@ Var.fresh ~name:"elt" () in
-      let e = Environment.add_ez_binder hd t_elt e in
-      let e = Environment.add_ez_binder tl t e in
-      let%bind (e,state,body, t_body),c2 = self e state body in
-      let c = Wrap.match_lst t_elt t in
-      return e state [t_nil;t_body] (c@c1@c2) @@ O.Match_list {match_nil ; match_cons = {hd; tl; body}}
-    | Match_record {fields ; body } ->
-      (*
-      let aux e _ ({var;ascr} : I.type_expression I.binder) =
-        let%bind ty_opt = bind_map_option (evaluate_type e)  ascr in
-        let ty = Option.unopt ~default:(O.t_variable @@ Var.fresh ()) ty_opt in
-        let e  = Environment.add_ez_binder var ty e in
-        ok @@ (e,(var,ty)) 
-      in
-      *)
-      let aux e _ binder =
-        let%bind binder = Stage_common.Maps.binder (evaluate_type e) binder in
-        let ty = Option.unopt ~default:(O.t_variable @@ Var.fresh ()) binder.ascr in
-        let e = Environment.add_ez_binder binder.var ty e in
-        ok @@ (e,(binder,ty))
-      in 
-      let%bind (e', fields) = Stage_common.Helpers.bind_fold_map_lmap aux e fields in
-      let%bind (e,state,body,t_body),c = self e' state body in
-      let c2 = Wrap.match_record (O.LMap.map snd fields) t in
-      return e state [t_body] (c@c2) @@ O.Match_record {fields= O.LMap.map fst fields ; body }
-    | Match_variant lst ->
-      let%bind (e, state, c,ty), cases =
-        let aux (e,state,c,ty) ({constructor; proj; body}: I.match_variant) =
-          let%bind (constructor_type , _variant) =
-            trace_option (unbound_constructor e constructor loc) @@
-            Environment.get_constructor constructor e in
-          let e = Environment.add_ez_binder proj constructor_type e in
-          let%bind (e,state,body, t_body),c1 = self e state body in
-          let c2 = Wrap.match_variant constructor ~case:constructor_type t in
-          ok ((e, state,c1@c2@c, t_body :: ty) , ({constructor ; proj ; body} : O.match_variant))
-        in
-        bind_fold_map_list aux (e,state,[],[]) lst in
-      (* TODO: check that the variant is complete, has to do with the unused variant *)
-      return e state ty c @@ O.Match_variant cases
 
 (* Apply type_declaration on every node of the AST_core from the root p *)
 and type_module_returns_env ((env, state, p) : environment * _ O'.typer_state * I.module_) : (environment * _ O'.typer_state * O.module_with_unification_vars * O.type_expression, Typer_common.Errors.typer_error) result =
@@ -643,7 +688,6 @@ let untype_expression       = Untyper.untype_expression
 
 (* These aliases are just here for quick navigation during debug, and can safely be removed later *)
 let [@warning "-32"] (*rec*) type_declaration _env _state : I.declaration Location.wrap -> (environment * _ O'.typer_state * O.declaration Location.wrap * O.type_expression, typer_error) result = type_declaration _env _state
-and [@warning "-32"] type_match : environment -> _ O'.typer_state -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> ((environment * _ O'.typer_state * O.matching_expr * _) * _, typer_error) result = type_match
 and [@warning "-32"] evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, typer_error) result = evaluate_type e t
 and [@warning "-32"] type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_state -> I.expression -> (environment * _ O'.typer_state * O.expression * O.type_expression, typer_error) result = type_expression
 and [@warning "-32"] type_lambda e state lam = type_lambda e state lam

@@ -59,91 +59,6 @@ match Location.unwrap d with
     return post_env @@ Module_alias { alias; binders}
   )
 
-and type_match : (environment -> I.expression -> (O.expression , typer_error) result) -> environment -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> (O.matching_expr, typer_error) result =
-  fun f e t i _ae loc -> match i with
-  | Match_option {match_none ; match_some = { opt ; body }} ->
-      let opt = cast_var opt in
-      let%bind tv =
-        trace_option (match_error ~expected:i ~actual:t loc)
-        @@ get_t_option t in
-      let%bind match_none = f e match_none in
-      let e' = Environment.add_ez_binder opt tv e in
-      let%bind body = f e' body in
-      ok (O.Match_option {match_none ; match_some = {opt; body; tv}})
-  | Match_list {match_nil ; match_cons = {hd ; tl ; body}} ->
-      let hd = cast_var hd in
-      let tl = cast_var tl in
-      let%bind t_elt =
-        trace_option (match_error ~expected:i ~actual:t loc)
-        @@ get_t_list t in
-      let%bind match_nil = f e match_nil in
-      let e' = Environment.add_ez_binder hd t_elt e in
-      let e' = Environment.add_ez_binder tl t e' in
-      let%bind body = f e' body in
-      ok (O.Match_list {match_nil ; match_cons = {hd; tl; body; tv=t_elt}})
-  | Match_variant lst ->
-      let%bind variant_cases' =
-        trace_option (match_error ~expected:i ~actual:t loc)
-        @@ Ast_typed.Combinators.get_t_sum t in
-      let variant_cases = List.map fst @@ O.LMap.to_kv_list_rev variant_cases'.content in
-      let match_cases = List.map (fun ({constructor;_}:I.match_variant) -> constructor) lst in
-      let test_case = fun c ->
-        Assert.assert_true (corner_case "match case") (List.mem c match_cases)
-      in
-      let%bind () =
-        trace_strong (match_missing_case variant_cases match_cases loc) @@
-        bind_iter_list test_case variant_cases in
-      let%bind () =
-        Assert.assert_true (match_extra_case variant_cases match_cases loc) List.(length variant_cases = length match_cases) in
-      let%bind cases =
-        let aux ({constructor ; proj ; body}:I.match_variant) =
-          let%bind {associated_type=constructor_t;_} =
-            trace_option (unbound_constructor e constructor loc) @@
-            O.LMap.find_opt constructor variant_cases'.content in
-          let e' = Environment.add_ez_binder proj constructor_t e in
-          let%bind body = f e' body in
-          let constructor = constructor in
-          ok ({constructor ; pattern = proj ; body} : O.matching_content_case)
-        in
-        bind_map_list aux lst in
-      ok (O.Match_variant { cases ; tv=t })
-  | Match_record {fields ; body } ->
-    let%bind record_t = trace_option (match_error ~expected:i ~actual:t loc) @@ get_t_record t in
-    let aux : environment -> (O.label *  O.row_element) * (O.label * S.type_expression S.binder) -> environment =
-      fun e ( (_, {associated_type ; _ }) , (_, { var ; _ }) ) ->
-        Environment.add_ez_binder var associated_type e
-    in
-    let aux' :
-      (O.label * O.row_element) * (O.label * S.type_expression S.binder) -> ((O.label * (O.expression_variable * O.type_expression)), typer_error) result =
-      fun ( (la , {associated_type ; _} ) , (lb , {var ; ascr } ) ) ->
-        let%bind () =
-          (*
-            since the syntax forbid annotation of match pattern:
-              `match a with ( a : some_annotation ) -> ..`
-            this check is useless (for now ?)
-          *)
-          match ascr with
-          | Some t ->
-            let%bind t = evaluate_type e t in
-            assert_type_expression_eq var.location (t,associated_type)
-          | None -> ok ()
-        in
-        let%bind () = Assert.assert_true (label_do_not_match la lb loc) (O.Compare.label la lb = 0) in
-        ok (la, (var , associated_type))
-    in
-    let t_fields = O.LMap.to_kv_list record_t.content in
-    let e_fields = O.LMap.to_kv_list fields in
-    let%bind () =
-      (* TODO: find out if this error can happen outside of tuple destructuring, if not the error could be more specific*)
-      Assert.assert_true (pattern_do_not_match loc) (List.length t_fields = List.length e_fields)
-    in 
-    let x = List.combine t_fields e_fields in
-    let%bind fields = bind_map_list aux' x in
-    let e' = List.fold_left aux e x in
-    let%bind body = f e' body in
-    ok (O.Match_record {fields = O.LMap.of_list fields ; body ; tv = t})
-
-
 and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, typer_error) result =
   let return tv' = ok (make_t ~loc:t.location tv' (Some t)) in
   match t.type_content with
@@ -515,26 +430,17 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       return (E_application {lamb=lamb'; args=args'}) tv
   (* Advanced *)
   | E_matching {matchee;cases} -> (
-      let%bind ex' = type_expression' e matchee in
-      let%bind m' = type_match (type_expression' ?tv_opt:None) e ex'.type_expression cases ae ae.location in
-      let tvs =
-        let aux (cur:O.matching_expr) =
-          match cur with
-          | Match_list { match_nil ; match_cons = {hd=_ ; tl=_ ; body ; tv=_} } -> [ match_nil ; body ]
-          | Match_option { match_none ; match_some = {opt=_ ; body ; tv=_ } } -> [ match_none ; body ]
-          | Match_variant {cases; tv=_} -> List.map (fun (c : O.matching_content_case) -> c.body) cases
-          | Match_record { body ; _  } -> [ body ] in
-        List.map get_type_expression @@ aux m' in
-      let aux prec (cur:O.type_expression) =
-        let%bind () =
-          match prec with
-          | None -> ok ()
-          | Some cur' -> assert_type_expression_eq ae.location (cur , cur') in
-        ok (Some cur) in
-      let%bind tv_opt = bind_fold_list aux None tvs in
-      let tv = Option.unopt_exn tv_opt in
-      return (O.E_matching {matchee=ex'; cases=m'}) tv
-    )
+    let%bind matchee' = type_expression' e matchee in
+    let matcheevar = Location.wrap (Var.fresh ()) in
+    let aux : (I.expression, I.type_expression) I.match_case -> ((I.type_expression I.pattern * O.type_expression) list * (I.expression * O.environment)) =
+      fun {pattern ; body} -> ([(pattern,matchee'.type_expression)], (body,e))
+    in
+    let eqs = List.map aux cases in
+    let%bind case_exp = Pattern_matching.compile_matching ~err_loc:ae.location ~type_f:(type_expression') ~body_t:(tv_opt) matcheevar eqs in
+    let case_exp = { case_exp with location = ae.location } in
+    let x = O.e_let_in matcheevar matchee' case_exp false in
+    return x case_exp.type_expression
+  )
   | E_let_in {let_binder = {var ; ascr} ; rhs ; let_result; inline} ->
     let%bind rhs_tv_opt = bind_map_option (evaluate_type e) ascr in
     let%bind rhs = type_expression' ?tv_opt:rhs_tv_opt e rhs in
@@ -713,10 +619,48 @@ and untype_expression_content ty (ec:O.expression_content) : (I.expression , typ
     let%bind r' = untype_expression r in
     let%bind e = untype_expression e in
     return (e_record_update r' (I.Label l) e)
-  | E_matching {matchee;cases} ->
-      let%bind ae' = untype_expression matchee in
-      let%bind m' = untype_matching untype_expression cases in
-      return (e_matching ae' m')
+  | E_matching {matchee;cases} -> (
+    let%bind matchee = untype_expression matchee in
+    match cases with
+    | Match_variant {cases ; tv} ->
+      (*
+        If one day this code is actually executed, and if the list type is still not a tuple type.
+        A special case for lists might be required here
+      *)
+      let aux : Ast_typed.matching_content_case -> (_ match_case, _) result =
+        fun { constructor ; pattern ; body } -> (
+          let pattern =
+            match tv with
+            | _ ->
+              let proj = Location.wrap @@ P_var { ascr = None ; var = (cast_var pattern) } in
+              Location.wrap @@ P_variant (constructor, Some proj)
+          in
+          let%bind body = untype_expression body in
+          ok @@ ({pattern ; body } : (Ast_core.expression, Ast_core.type_expression) match_case)
+        )
+      in
+      let%bind cases = bind_map_list aux cases in
+      return (e_matching matchee cases)
+    | Match_record {fields ; body ; tv=_} -> (
+      let aux : (Ast_typed.label * (Ast_typed.expression_variable * _)) -> label * Ast_core.type_expression pattern =
+        fun (Ast_typed.Label label, (proj,_)) -> (
+          let proj = Location.wrap @@ P_var { ascr = None ; var = (cast_var proj) } in
+          (Label label, proj)
+        )
+      in
+      let (labels,patterns) = List.split @@ List.map aux (LMap.to_kv_list fields) in
+      let%bind body = untype_expression body in
+      let case = match Ast_typed.Helpers.is_tuple_lmap fields with
+        | false ->
+          let pattern = Location.wrap (P_record (labels,patterns)) in
+          ({ pattern ; body } : _ Ast_core.match_case)
+        | true ->
+          let pattern = Location.wrap (P_tuple patterns) in
+          ({ pattern ; body } : _ Ast_core.match_case)
+      in
+      return (e_matching matchee [case])
+    )
+  )
   | E_let_in {let_binder;rhs;let_result; inline} ->
       let let_binder = cast_var let_binder in
       let%bind tv = Untyper.untype_type_expression rhs.type_expression in
@@ -745,34 +689,6 @@ and untype_expression_content ty (ec:O.expression_content) : (I.expression , typ
   | E_module_accessor ma ->
     let%bind ma = Stage_common.Maps.module_access untype_expression ma in
     return @@ I.make_e @@ E_module_accessor ma
-
-and untype_matching : (O.expression -> (I.expression , typer_error) result) -> O.matching_expr -> (I.matching_expr , typer_error) result = fun f m ->
-  let open I in
-  match m with
-  | Match_option {match_none ; match_some = {opt; body ; tv=_}} ->
-      let opt = cast_var opt in
-      let%bind match_none = f match_none in
-      let%bind body = f body in
-      ok @@ Match_option {match_none ; match_some = {opt ; body}}
-  | Match_list {match_nil ; match_cons = {hd ; tl ; body ; tv=_}} ->
-      let hd = cast_var hd in
-      let tl = cast_var tl in
-      let%bind match_nil = f match_nil in
-      let%bind body = f body in
-      ok @@ Match_list {match_nil ; match_cons = { hd ; tl ; body }}
-  | Match_variant {cases;tv=_} ->
-      let aux ({constructor;pattern;body} : O.matching_content_case) =
-        let%bind body = f body in
-        ok {constructor ; proj = pattern ;  body } in
-      let%bind lst' = bind_map_list aux cases in
-      ok @@ Match_variant lst'
-  | Match_record { fields; body; tv = _ } ->
-    let%bind body = f body in
-    let aux : ( O.expression_variable * O.type_expression ) -> I.ty_expr binder =
-      fun (v,_) -> { var = (cast_var v) ; ascr = None }
-    in
-    let fields = LMap.map aux fields in
-    ok @@ Match_record { fields ; body }
 
 and untype_declaration : O.declaration -> (I.declaration, typer_error) result =
 let return (d: I.declaration) = ok @@ d in

@@ -87,6 +87,10 @@ let get_type_expression (x:expression) = x.type_expression
 let get_type' (x:type_expression) = x.type_content
 let get_expression (x:expression) = x.expression_content
 
+let get_variable e : expression_variable option = match e.expression_content with
+  | E_variable v -> Some v
+  | _ -> None
+
 let get_lambda e : lambda option = match e.expression_content with
   | E_lambda l -> Some l
   | _ -> None
@@ -217,6 +221,7 @@ let get_t_big_map_value : type_expression -> type_expression option = fun t ->
 let is_t_map t = Option.is_some (get_t_map t)
 let is_t_big_map t = Option.is_some (get_t_big_map t)
 
+let is_e_matching e = match e.expression_content with | E_matching _ -> true | _ -> false
 let assert_t_mutez : type_expression -> unit option = get_t_mutez
 let assert_t_key = get_t_key
 let assert_t_signature = get_t_signature
@@ -256,6 +261,8 @@ let ez_e_record (lst : (label * expression) list) : expression_content =
   e_record map
 let e_some s : expression_content = E_constant {cons_name=C_SOME;arguments=[s]}
 let e_none (): expression_content = E_constant {cons_name=C_NONE; arguments=[]}
+
+let e_failwith e : expression_content = E_constant {cons_name=C_FAILWITH ; arguments=[e]}
 
 let e_unit () : expression_content =     E_literal (Literal_unit)
 let e_int n : expression_content = E_literal (Literal_int n)

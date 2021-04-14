@@ -61,49 +61,21 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
     )
     | E_matching {matchee; cases} -> (
       let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,matchee.location) bindings matchee in
-      match cases with
-      | Match_list { match_nil ; match_cons = { hd ; tl ; body }} -> (
-        let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,match_nil.location) bindings match_nil in
-        let all_defs = merge_defs env all_defs in
-        let hd_def = make_v_def_from_core bindings hd hd.location hd.location in
-        let tl_def = make_v_def_from_core bindings tl tl.location tl.location in
-        let (i,env) = add_shadowing_def (i,hd.wrap_content) hd_def env in
-        let (i,env) = add_shadowing_def (i,tl.wrap_content) tl_def env in
+      let aux = fun (i,all_defs,scopes) ({pattern;body}: (Ast_core.expression,_) Ast_core.match_case) ->
+        let aux (i,env) (p: _ Ast_core.pattern) =
+          match p.wrap_content with
+          | Ast_core.P_var binder ->
+            let proj_def = make_v_def_from_core bindings binder.var binder.var.location binder.var.location in
+            add_shadowing_def (i,binder.var.wrap_content) proj_def env
+          | _ -> (i,env)
+        in
+        let (i,env) = Stage_common.Helpers.fold_pattern aux (i,env) pattern in
         let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,body.location) bindings body in
         let all_defs = merge_defs env all_defs in
-        (i,all_defs,env,scopes)
-      )
-      | Match_option { match_none ; match_some = {opt ; body } } -> (
-        let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,match_none.location) bindings match_none in
-        let all_defs = merge_defs env all_defs in
-        let def = make_v_def_from_core bindings opt opt.location opt.location in
-        let (i,env) = add_shadowing_def (i,opt.wrap_content) def env in
-        let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,body.location) bindings body in
-        let all_defs = merge_defs env all_defs in
-        (i,all_defs,env,scopes)
-      )
-      | Match_variant lst -> (
-        let aux = fun (i,all_defs,scopes) ({constructor=_;proj;body}:Ast_core.match_variant) ->
-          let proj_def = make_v_def_from_core bindings proj proj.location proj.location in
-          let (i,env) = add_shadowing_def (i,proj.wrap_content) proj_def env in
-          let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,body.location) bindings body in
-          let all_defs = merge_defs env all_defs in
-          (i,all_defs,scopes)
-        in
-        let (i,all_defs,scopes) = List.fold_left aux (i,all_defs,scopes) lst in
-        (i,all_defs,env,scopes)
-      )
-      | Match_record {fields ; body } ->
-        let aux = fun _l (te: Ast_core.ty_expr Ast_core.binder) (i,all_defs,scopes) ->
-          let ev = te.var in
-          let proj_def = make_v_def_from_core bindings ev ev.location ev.location in
-          let (i,env) = add_shadowing_def (i,ev.wrap_content) proj_def env in
-          let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,body.location) bindings body in
-          let all_defs = merge_defs env all_defs in
-          (i,all_defs,scopes)
-        in
-        let (i,all_defs,scopes) = Ast_core.LMap.fold aux fields (i,all_defs,scopes) in
-        (i,all_defs,env,scopes)
+        (i,all_defs,scopes)
+      in
+      let (i,all_defs,scopes) = List.fold_left aux (i,all_defs,scopes) cases in
+      (i,all_defs,env,scopes)
     )
     | E_record emap -> (
       let aux = fun (i,all_defs,scopes) (exp:Ast_core.expression) ->

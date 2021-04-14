@@ -20,6 +20,11 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_function_annotation_3.mligo"; "f"];
   [%expect {|
+    File "../../test/contracts/negative/error_function_annotation_3.mligo", line 8, characters 14-20:
+      7 |   match s with
+      8 |   | Add si -> Add si
+      9 |   | Sub si -> Sub si
+
     Invalid type(s).
     Expected: "( list (operation) * sum[Add -> int , Sub -> int] )", but got: "
     sum[Add -> int , Sub -> int]". |}];

@@ -14,7 +14,7 @@ val equal_variables : expression -> expression -> bool
 module Free_variables : sig
   type bindings = expression_variable list
 
-  val matching_expression : bindings -> matching_expr -> bindings
+  val matching_expression : bindings -> (expression, type_expression) match_case list -> bindings
   val lambda : bindings -> (expression,type_expression) lambda -> bindings
 
   val expression : bindings -> expression -> bindings

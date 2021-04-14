@@ -73,25 +73,7 @@ and constant =
   ; arguments: expression list }
 
 
-
-and matching_expr =
-  | Match_variant of ((label * expression_variable) * expression) list
-  | Match_list of {
-      match_nil  : expression ;
-      match_cons : expression_variable * expression_variable * expression ;
-    }
-  | Match_option of {
-      match_none : expression ;
-      match_some : expression_variable * expression ;
-    }
-  | Match_tuple of ty_expr binder list  * expression
-  | Match_record of (label * ty_expr binder) list * expression
-  | Match_variable of ty_expr binder * expression
-
-and matching =
-  { matchee: expression
-  ; cases: matching_expr
-  }
+and matching = (expression , type_expression) match_exp
 
 and environment_element_definition =
   | ED_binder

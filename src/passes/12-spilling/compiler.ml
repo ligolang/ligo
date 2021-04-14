@@ -533,30 +533,46 @@ and compile_expression ?(module_env = SMap.empty) (ae:AST.expression) : (express
   | E_matching {matchee=expr; cases=m} -> (
       let%bind expr' = self expr in
       match m with
-      | Match_option { match_none; match_some = {opt; body; tv} } ->
-          let%bind n = self match_none in
-          let%bind (tv' , s') =
-            let%bind tv' = compile_type tv in
-            let%bind s' = self body in
-            ok (tv' , s')
-          in
-          return @@ E_if_none (expr' , n , ((Location.map Var.todo_cast opt , tv') , s'))
-      | Match_list {
-          match_nil ;
-          match_cons = {hd; tl; body; tv} ;
-        } -> (
-          let%bind nil = self match_nil in
-          let%bind cons =
-            let%bind elt_ty = compile_type tv in
-            let list_ty = { type_content = T_list elt_ty ; location = Location.generated } in
-            let%bind match_cons' = self body in
-            ok (((Location.map Var.todo_cast hd , elt_ty) , (Location.map Var.todo_cast tl , list_ty)) , match_cons')
-          in
-          return @@ E_if_cons (expr' , nil , cons)
-        )
       | Match_variant {cases ; tv} -> (
-          match expr'.type_expression.type_content with
-          | T_base TB_bool ->
+          match expr.type_expression.type_content with
+          | T_constant { injection ; parameters = [list_ty] } when String.equal (Ligo_string.extract injection) Stage_common.Constant.list_name ->
+            let%bind list_ty = compile_type list_ty in
+            let get_c_body (case : AST.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
+            let c_body_lst = AST.LMap.of_list (List.map get_c_body cases) in
+            let get_case c =
+              trace_option
+                (corner_case ~loc:__LOC__ ("missing " ^ c ^ " case in match"))
+                (AST.LMap.find_opt (Label c) c_body_lst) in
+            let%bind match_nil = get_case "Nil" in
+            let%bind match_cons = get_case "Cons" in
+            let%bind nil = self (fst match_nil) in
+            let%bind cons =
+              let hd = Location.wrap @@ Var.fresh () in
+              let tl = Location.wrap @@ Var.fresh () in
+              let proj_t = t_pair (None,list_ty) (None,expr'.type_expression) in
+              let proj = Expression.make (ec_pair (e_var hd list_ty) (e_var tl expr'.type_expression)) proj_t in
+              let%bind cons_body = self (fst match_cons) in
+              let cons_body' = e_let_in (snd match_cons) proj_t false proj cons_body in
+              ok (((hd,list_ty), (tl,expr'.type_expression)), cons_body')
+            in
+            return @@ E_if_cons (expr' , nil , cons)
+          | T_constant { injection ; parameters = [opt_tv] } when String.equal (Ligo_string.extract injection) Stage_common.Constant.option_name ->
+            let get_c_body (case : AST.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
+            let c_body_lst = AST.LMap.of_list (List.map get_c_body cases) in
+            let get_case c =
+              trace_option
+                (corner_case ~loc:__LOC__ ("missing " ^ c ^ " case in match"))
+                (AST.LMap.find_opt (Label c) c_body_lst) in
+            let%bind match_none = get_case "None" in
+            let%bind match_some = get_case "Some" in
+            let%bind n = self (fst match_none) in
+            let%bind (tv' , s') =
+              let%bind tv' = compile_type opt_tv in
+              let%bind s' = self (fst match_some) in
+              ok (tv' , s')
+            in
+            return @@ E_if_none (expr' , n , ((Location.map Var.todo_cast (snd match_some) , tv') , s'))
+          | T_sum _ when Option.is_some (Ast_typed.get_t_bool expr.type_expression) ->
             let ctor_body (case : AST.matching_content_case) = (case.constructor, case.body) in
             let cases = AST.LMap.of_list (List.map ctor_body cases) in
             let get_case c =
@@ -716,73 +732,99 @@ and compile_recursive module_env {fun_name; fun_type; lambda} =
 
   and replace_callback : AST.expression_variable -> type_expression -> bool -> AST.expression -> (expression , spilling_error) result = fun fun_name loop_type shadowed e ->
     match e.expression_content with
-      E_let_in li ->
+      | E_let_in li ->
         let shadowed = shadowed || Var.equal li.let_binder.wrap_content fun_name.wrap_content in
         let%bind let_result = replace_callback fun_name loop_type shadowed li.let_result in
         let%bind rhs = compile_expression ~module_env li.rhs in
         let%bind ty  = compile_type li.rhs.type_expression in
-        ok @@ e_let_in (Location.map Var.todo_cast li.let_binder) ty li.inline rhs let_result |
-      E_matching m ->
-      let%bind ty = compile_type e.type_expression in
-      matching fun_name loop_type shadowed m ty |
-      E_application {lamb;args} -> (
+        ok @@ e_let_in (Location.map Var.todo_cast li.let_binder) ty li.inline rhs let_result
+      | E_matching m ->
+        let%bind ty = compile_type e.type_expression in
+        matching fun_name loop_type shadowed m ty
+      | E_application {lamb;args} -> (
         match lamb.expression_content,shadowed with
-        E_variable name, false when Var.equal fun_name.wrap_content name.wrap_content ->
+        | E_variable name, false when Var.equal fun_name.wrap_content name.wrap_content ->
           let%bind expr = compile_expression ~module_env args in
-          ok @@ Expression.make (E_constant {cons_name=C_LOOP_CONTINUE;arguments=[expr]}) loop_type |
-        _ ->
+          ok @@ Expression.make (E_constant {cons_name=C_LOOP_CONTINUE;arguments=[expr]}) loop_type
+        | _ ->
           let%bind expr = compile_expression ~module_env e in
           ok @@ Expression.make (E_constant {cons_name=C_LOOP_STOP;arguments=[expr]}) loop_type
-      ) |
-      _ ->
+      )
+      | _ ->
         let%bind expr = compile_expression ~module_env e in
         ok @@ Expression.make (E_constant {cons_name=C_LOOP_STOP;arguments=[expr]}) loop_type
 
   and matching : AST.expression_variable -> type_expression -> bool -> AST.matching -> type_expression -> (expression , spilling_error) result = fun fun_name loop_type shadowed m ty ->
     let return ret = ok @@ Expression.make ret @@ ty in
-    let%bind expr = compile_expression ~module_env m.matchee in
+    let%bind expr' = compile_expression ~module_env m.matchee in
+    let self = replace_callback fun_name loop_type shadowed in
     match m.cases with
-      | Match_option { match_none; match_some = {opt; body; tv} } ->
-          let%bind n = replace_callback fun_name loop_type shadowed match_none in
+    | Match_variant {cases ; tv} -> (
+        match m.matchee.type_expression.type_content with
+        | T_constant { injection ; parameters = [list_ty] } when String.equal (Ligo_string.extract injection) Stage_common.Constant.list_name ->
+          let%bind list_ty = compile_type list_ty in
+          let get_c_body (case : AST.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
+          let c_body_lst = AST.LMap.of_list (List.map get_c_body cases) in
+          let get_case c =
+            trace_option
+              (corner_case ~loc:__LOC__ ("missing " ^ c ^ " case in match"))
+              (AST.LMap.find_opt (Label c) c_body_lst) in
+          let%bind match_nil = get_case "Nil" in
+          let%bind match_cons = get_case "Cons" in
+          let%bind nil = self (fst match_nil) in
+          let%bind cons =
+            let hd = Location.wrap @@ Var.fresh () in
+            let tl = Location.wrap @@ Var.fresh () in
+            let proj_t = t_pair (None,list_ty) (None,expr'.type_expression) in
+            let proj = Expression.make (ec_pair (e_var hd list_ty) (e_var tl expr'.type_expression)) proj_t in
+            let%bind cons_body = self (fst match_cons) in
+            let cons_body' = e_let_in (snd match_cons) proj_t false proj cons_body in
+            ok (((hd,list_ty), (tl,expr'.type_expression)), cons_body')
+          in
+          return @@ E_if_cons (expr' , nil , cons)
+        | T_constant { injection ; parameters = [opt_tv] } when String.equal (Ligo_string.extract injection) Stage_common.Constant.option_name ->
+          let get_c_body (case : AST.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
+          let c_body_lst = AST.LMap.of_list (List.map get_c_body cases) in
+          let get_case c =
+            trace_option
+              (corner_case ~loc:__LOC__ ("missing " ^ c ^ " case in match"))
+              (AST.LMap.find_opt (Label c) c_body_lst) in
+          let%bind match_none = get_case "None" in
+          let%bind match_some = get_case "Some" in
+          let%bind n = self (fst match_none) in
           let%bind (tv' , s') =
-            let%bind tv' = compile_type tv in
-            let%bind s' = replace_callback fun_name loop_type shadowed body in
+            let%bind tv' = compile_type opt_tv in
+            let%bind s' = self (fst match_some) in
             ok (tv' , s')
           in
-          return @@ E_if_none (expr , n , ((Location.map Var.todo_cast opt , tv') , s'))
-      | Match_list {
-          match_nil ;
-          match_cons = { hd ; tl ; body ; tv } ;
-        } -> (
-          let%bind nil = replace_callback fun_name loop_type shadowed match_nil in
-          let%bind cons =
-            let%bind elt_ty = compile_type tv in
-            let list_ty = { type_content = T_list elt_ty ; location = Location.generated } in
-            let%bind match_cons' = replace_callback fun_name loop_type shadowed body in
-            ok (((Location.map Var.todo_cast hd , elt_ty) , (Location.map Var.todo_cast tl , list_ty)) , match_cons')
-          in
-          return @@ E_if_cons (expr , nil , cons)
-        )
-      | Match_variant {cases=[{constructor=Label t;body=match_true};{constructor=Label f;body=match_false}];_}
-        when String.equal t "true" && String.equal f "false" ->
-          let%bind (t , f) = bind_map_pair (replace_callback fun_name loop_type shadowed) (match_true, match_false) in
-          return @@ E_if_bool (expr, t, f)
-      | Match_variant {cases;tv} -> (
-          let%bind { content ; layout } = trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
-            get_t_sum tv in
-          let%bind tree = Layout.match_variant_to_tree ~layout ~compile_type content in
-          let rec aux top t =
-            match t with
-            | ((`Leaf (Label constructor_name)) , tv) -> (
-                let%bind {constructor=_ ; pattern ; body} =
-                  trace_option (corner_case ~loc:__LOC__ "missing match clause") @@
+          return @@ E_if_none (expr' , n , ((Location.map Var.todo_cast (snd match_some) , tv') , s'))
+        | T_sum _ when Option.is_some (Ast_typed.get_t_bool m.matchee.type_expression) ->
+          let ctor_body (case : AST.matching_content_case) = (case.constructor, case.body) in
+          let cases = AST.LMap.of_list (List.map ctor_body cases) in
+          let get_case c =
+            trace_option
+              (corner_case ~loc:__LOC__ ("missing " ^ c ^ " case in match"))
+              (AST.LMap.find_opt (Label c) cases) in
+          let%bind match_true  = get_case "true" in
+          let%bind match_false = get_case "false" in
+          let%bind (t , f) = bind_map_pair (self) (match_true, match_false) in
+          return @@ E_if_bool (expr', t, f)
+        | _ -> (
+            let%bind { content ; layout } = trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
+              get_t_sum tv in
+            let%bind tree = Layout.match_variant_to_tree ~layout ~compile_type content in
+            let rec aux top t =
+              match t with
+              | ((`Leaf (Label constructor_name)) , tv) -> (
+                  let%bind {constructor=_ ; pattern ; body} =
+                    trace_option (corner_case ~loc:__LOC__ "missing match clause") @@
                     let aux ({constructor = Label c ; pattern=_ ; body=_} : AST.matching_content_case) =
                       (c = constructor_name) in
-                  List.find_opt aux cases in
-                let%bind body' = replace_callback fun_name loop_type shadowed body in
-                return @@ E_let_in (top, false, ((Location.map Var.todo_cast pattern , tv) , body'))
-              )
-            | ((`Node (a , b)) , tv) ->
+                    List.find_opt aux cases in
+                  let%bind body' = self body in
+                  return @@ E_let_in (top, false, ((Location.map Var.todo_cast pattern , tv) , body'))
+                )
+              | ((`Node (a , b)) , tv) ->
                 let%bind a' =
                   let%bind a_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_left tv in
                   let left_var = Location.wrap @@ Var.fresh ~name:"left" () in
@@ -798,8 +840,9 @@ and compile_recursive module_env {fun_name; fun_type; lambda} =
                 return @@ E_if_left (top , a' , b')
           in
           trace_strong (corner_case ~loc:__LOC__ "building constructor") @@
-          aux expr tree
+          aux expr' tree
        )
+      )
       | Match_record { fields ; body ; tv } ->
         let%bind { content ; layout } = trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
             get_t_record tv in
@@ -821,7 +864,7 @@ and compile_recursive module_env {fun_name; fun_type; lambda} =
             let%bind xrec = aux x_var_expr x yrec in
             return @@ E_let_tuple (expr, ([(x_var, x_ty); (y_var, y_ty)], xrec))
         in
-        aux expr tree body
+        aux expr' tree body
   in
   let%bind fun_type = compile_type fun_type in
   let%bind (input_type,output_type) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_function fun_type in

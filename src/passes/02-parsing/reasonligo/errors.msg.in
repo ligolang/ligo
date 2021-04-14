@@ -3255,49 +3255,9 @@ interactive_expr: WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let LBRACE Ident EQ Bytes COMMA Ident EQ Bytes COMMA WILD
+contract: Let LBRACE Ident COLON Bytes WILD
 ##
 ## Ends in an error in state: 158.
-##
-## nsepseq(field_pattern,COMMA) -> field_pattern COMMA . nsepseq(field_pattern,COMMA) [ RBRACE ]
-## seq(__anonymous_0(field_pattern,COMMA)) -> field_pattern COMMA . seq(__anonymous_0(field_pattern,COMMA)) [ RBRACE ]
-##
-## The known suffix of the stack is as follows:
-## field_pattern COMMA
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: Let LBRACE Ident EQ Bytes COMMA Ident EQ Bytes WILD
-##
-## Ends in an error in state: 157.
-##
-## nsepseq(field_pattern,COMMA) -> field_pattern . [ RBRACE ]
-## nsepseq(field_pattern,COMMA) -> field_pattern . COMMA nsepseq(field_pattern,COMMA) [ RBRACE ]
-## seq(__anonymous_0(field_pattern,COMMA)) -> field_pattern . COMMA seq(__anonymous_0(field_pattern,COMMA)) [ RBRACE ]
-##
-## The known suffix of the stack is as follows:
-## field_pattern
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: Let LBRACE Ident EQ Bytes COMMA WILD
-##
-## Ends in an error in state: 154.
-##
-## nsepseq(field_pattern,COMMA) -> field_pattern COMMA . nsepseq(field_pattern,COMMA) [ RBRACE ]
-## nseq(__anonymous_0(field_pattern,COMMA)) -> field_pattern COMMA . seq(__anonymous_0(field_pattern,COMMA)) [ RBRACE ]
-##
-## The known suffix of the stack is as follows:
-## field_pattern COMMA
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: Let LBRACE Ident EQ Bytes WILD
-##
-## Ends in an error in state: 153.
 ##
 ## nsepseq(field_pattern,COMMA) -> field_pattern . [ RBRACE ]
 ## nsepseq(field_pattern,COMMA) -> field_pattern . COMMA nsepseq(field_pattern,COMMA) [ RBRACE ]
@@ -3309,14 +3269,54 @@ contract: Let LBRACE Ident EQ Bytes WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let LBRACE Ident EQ VBAR
+contract: Let LBRACE Ident COLON VBAR
+##
+## Ends in an error in state: 157.
+##
+## field_pattern -> Ident COLON . sub_pattern [ RBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## Ident COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LBRACE Ident COMMA Ident COLON Bytes WILD
+##
+## Ends in an error in state: 154.
+##
+## nsepseq(field_pattern,COMMA) -> field_pattern . [ RBRACE ]
+## nsepseq(field_pattern,COMMA) -> field_pattern . COMMA nsepseq(field_pattern,COMMA) [ RBRACE ]
+## seq(__anonymous_0(field_pattern,COMMA)) -> field_pattern . COMMA seq(__anonymous_0(field_pattern,COMMA)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## field_pattern
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LBRACE Ident COMMA Ident COMMA WILD
+##
+## Ends in an error in state: 153.
+##
+## nsepseq(field_pattern,COMMA) -> field_pattern COMMA . nsepseq(field_pattern,COMMA) [ RBRACE ]
+## seq(__anonymous_0(field_pattern,COMMA)) -> field_pattern COMMA . seq(__anonymous_0(field_pattern,COMMA)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## field_pattern COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LBRACE Ident COMMA WILD
 ##
 ## Ends in an error in state: 104.
 ##
-## field_pattern -> Ident EQ . sub_pattern [ RBRACE COMMA ]
+## nsepseq(field_pattern,COMMA) -> field_pattern COMMA . nsepseq(field_pattern,COMMA) [ RBRACE ]
+## nseq(__anonymous_0(field_pattern,COMMA)) -> field_pattern COMMA . seq(__anonymous_0(field_pattern,COMMA)) [ RBRACE ]
 ##
 ## The known suffix of the stack is as follows:
-## Ident EQ
+## field_pattern COMMA
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>

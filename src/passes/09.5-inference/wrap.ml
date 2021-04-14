@@ -134,15 +134,6 @@ let constructor : T.label -> T.type_expression -> T.type_expression -> T.type_ex
     c_equation t_arg c_arg "wrap: construcotr: arg" ;
   ] , whole_expr
 
-(* Constraint all branch of the matching to be equal *)
-(* TODO : missing constraint that the matchee is equal to the cases ? *)
-let matching : T.type_expression list -> (constraints * T.type_variable) =
-  fun es ->
-  let whole_expr = Core.fresh_type_variable ~name:"matching" () in
-  let type_expressions = (List.map type_expression_to_type_value es) in
-  let cs = List.map (fun e -> c_equation (T.Reasons.wrap (Todo "wrap: matching: case") @@ T.P_variable whole_expr) e "wrap: matching: case (whole)") type_expressions
-  in cs, whole_expr
-
 let record : T.rows -> (constraints * T.type_variable) = fun {fields;layout} ->
   let record_type = type_expression_to_type_value (T.t_record ?layout fields) in
   let whole_expr = Core.fresh_type_variable ~name:"record" () in
@@ -216,7 +207,21 @@ let recursive : T.type_variable -> T.type_expression -> (constraints * T.type_va
     c_equation rec_type (T.Reasons.wrap (Todo "wrap: recursive: lambda") @@ T.P_variable lambda_type) "wrap: recursive: lambda_type = rec_type" ;
     c_equation rec_type (T.Reasons.wrap (Todo "wrap: recursive: whole") @@ T.P_variable whole_expr) "wrap: recursive: rec_type (whole)" ;
   ], whole_expr
-
+let pattern_match_var : T.type_expression -> T.type_expression -> constraints = fun t_ascr fresh ->
+  let t_ascr = type_expression_to_type_value t_ascr in
+  let fresh = type_expression_to_type_value fresh in
+  [
+    c_equation t_ascr fresh "wrap: match_exp: binder annotation"
+  ]
+let pattern_match_unit : T.type_expression -> constraints = fun fresh ->
+  let fresh = type_expression_to_type_value fresh in
+  [
+    c_equation (T.p_constant C_unit []) fresh "wrap: match_exp: unit pattern must match against unit"
+  ]
+let pattern_match_list : T.type_expression -> T.type_expression list -> constraints = fun el_t ts ->
+  let el_t = type_expression_to_type_value el_t in
+  let ts = List.map type_expression_to_type_value ts in
+  List.map (fun x -> c_equation el_t x "wrap: match_exp: element types must be identical") ts
 let raw_code : T.type_expression -> T.type_expression -> (constraints * T.type_variable) =
   fun type_anno verbatim_string ->
   let type_anno = type_expression_to_type_value type_anno in
@@ -274,16 +279,19 @@ let match_lst :T.type_expression -> T.type_expression -> constraints =
     let lst = type_expression_to_type_value lst in
     let elt = type_expression_to_type_value elt in
     [
-      c_equation lst (T.Reasons.wrap (Todo "wrap: match_lst") @@ T.P_constant
-        {p_ctor_tag=C_list;p_ctor_args=[elt]} ) "wrap: match_lst"
+      c_equation lst (T.Reasons.wrap (Todo "wrap: match_lst: list of") @@ T.P_constant
+        {p_ctor_tag=C_list;p_ctor_args=[elt]} ) "wrap: match_lst: list type must be equal to list of elt type"
     ]
 
-let match_variant : T.label -> case:T.type_expression -> T.type_expression -> constraints =
-  fun cons ~case t ->
+let match_variant : T.label -> case:T.type_expression -> T.type_value -> T.type_expression -> T.type_value -> constraints =
+  fun cons ~case case_env t t_env ->
     let t = type_expression_to_type_value t in
     let t_var = Core.fresh_type_variable () in
     let case  = type_expression_to_type_value case in
   [
+    c_equation t_env t "wrap: match_variant t env";
+    c_equation case_env case "wrap: match_variant env";
+    (* bellow will go (after constraints simplification) *)
     c_equation case (T.Reasons.wrap (Todo "wrap: match_variant") @@ T.P_variable t_var) "wrap: match_variant";
     { c = C_access_label { c_access_label_record_type = t ; accessor = cons ; c_access_label_tvar = t_var } ; reason = "wrap: match_variant" }
   ]
@@ -298,3 +306,15 @@ let match_record : T.type_expression T.label_map -> T.type_expression -> constra
   [
     c_equation t (T.p_row T.C_record row) "wrap: match_record"
   ]
+
+let match_cases : T.type_expression list -> T.type_expression list -> T.type_expression -> (constraints * T.type_variable) =
+  fun body_ts pattern_ts matchee_t ->
+    let match_whole = Core.fresh_type_variable ~name:("match_whole") () in
+    let match_whole_expr = (T.Reasons.wrap (Todo "wrap: match_whole") @@ T.P_variable match_whole) in
+    let body_ts = List.map type_expression_to_type_value body_ts in
+    let body_cs = List.map (fun tbody -> c_equation tbody match_whole_expr "wrap: match_whole body") body_ts in
+
+    let pattern_ts = List.map type_expression_to_type_value pattern_ts in
+    let matchee_t = type_expression_to_type_value matchee_t in
+    let pattern_cs = List.map (fun tpat -> c_equation tpat matchee_t  "wrap: matchee") pattern_ts in
+    body_cs @ pattern_cs , match_whole

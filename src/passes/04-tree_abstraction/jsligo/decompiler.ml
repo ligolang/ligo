@@ -566,8 +566,9 @@ and decompile_lambda : (AST.expr, AST.ty_expr) AST.lambda -> _ =
     let%bind body = function_body body in
     ok @@ (parameters, lhs_type, body)
 
-and decompile_matching_cases : AST.matching_expr -> (CST.expr,_) result =
-  fun m ->
+and decompile_matching_cases : _ AST.match_case list -> (CST.expr,_) result =
+  fun m -> ignore m ; failwith "TODO: decompile matching cases"
+    (* old version (before deep pattern matching) :
     let cases = match m with
     | Match_variant lst ->
       let aux ((c,(v:AST.expression_variable)),e) =
@@ -628,6 +629,7 @@ and decompile_matching_cases : AST.matching_expr -> (CST.expr,_) result =
       ok @@ CST.EObject (wrap @@ braced fields)
   in
   cases
+  *)
 
 and decompile_declaration : AST.declaration Location.wrap -> (CST.statement, _) result = fun decl ->
   let decl = Location.unwrap decl in

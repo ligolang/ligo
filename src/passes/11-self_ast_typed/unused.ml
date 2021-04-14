@@ -111,30 +111,13 @@ and defuse_of_lambda defuse {binder; result} =
   remove_defined_var_after defuse binder defuse_of_expr result
 
 and defuse_of_cases defuse = function
-  | Match_list    x -> defuse_of_plist defuse x
-  | Match_option  x -> defuse_of_poption defuse x
   | Match_variant x -> defuse_of_variant defuse x
   | Match_record  x -> defuse_of_record defuse x
-
-and defuse_of_plist defuse {match_nil;match_cons} =
-  let {hd;tl;body;_} = match_cons in
-  let hd' = M.find_opt hd defuse in
-  let tl' = M.find_opt tl defuse in
-  let defuse,unused = defuse_of_expr (M.add hd false (M.add tl false defuse)) body in
-  let unused = add_if_not_generated hd unused (M.find hd defuse) in
-  let unused = add_if_not_generated tl unused (M.find tl defuse) in
-  let defuse = replace_opt hd hd' (replace_opt tl tl' defuse) in
-  defuse_union (defuse,unused) (defuse_of_expr defuse match_nil)
-
-and defuse_of_poption defuse {match_none;match_some} =
-  let {opt;body;_} = match_some in
-  defuse_union (defuse_of_expr defuse match_none)
-    (remove_defined_var_after defuse opt defuse_of_expr body)
 
 and defuse_of_variant defuse {cases;_} =
   defuse_unions defuse @@
     List.map
-      (fun {pattern;body;_} ->
+      (fun ({pattern;body;_}: matching_content_case) ->
         remove_defined_var_after defuse pattern defuse_of_expr body)
       cases
 
