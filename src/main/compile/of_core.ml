@@ -5,12 +5,12 @@ type form =
   | Contract of string
   | Env
 
-let compile ?(infer = false) ~(init_env:Ast_typed.environment) (cform : form) (m : Ast_core.module_) : (Ast_typed.module_fully_typed * Ast_typed.environment , _) result =
-  let env_inf = Option.unopt_exn @@ Trace.to_option @@ Checking.decompile_env init_env in
-  let%bind inferred = match infer with
+let compile ~(options: Compiler_options.t) (cform : form) (m : Ast_core.module_) : (Ast_typed.module_fully_typed * Ast_typed.environment , _) result =
+  let env_inf = Option.unopt_exn @@ Trace.to_option @@ Checking.decompile_env options.init_env in
+  let%bind inferred = match options.infer with
     | true  -> let%bind (_,e,_,_) = trace inference_tracer @@ Inferance.type_module ~init_env:env_inf m in ok @@ e
     | false -> ok @@ m in
-  let%bind e,typed = trace checking_tracer @@ Checking.type_module ~init_env inferred in
+  let%bind e,typed = trace checking_tracer @@ Checking.type_module ~init_env:options.init_env inferred in
   let%bind applied = trace self_ast_typed_tracer @@
     let%bind selfed = Self_ast_typed.all_module typed in
     match cform with

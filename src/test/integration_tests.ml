@@ -1588,6 +1588,152 @@ let condition_simple () : (unit, _) result =
   let make_expected = fun _ -> e_int 42 in
   expect_eq_n program "main" make_input make_expected
 
+let loop1 () : (unit, _) result =
+  let%bind _program = type_file "./contracts/loop1.ligo" in
+  ok ()
+
+let loop2 () : (unit, _) result =
+  let%bind program = type_file "./contracts/loop2.ligo" in
+  let%bind () =
+    let make_input = e_nat in
+    let make_expected = e_nat in
+    expect_eq_n_pos program "dummy" make_input make_expected in
+  ok ()
+
+let loop3 () : (unit, _) result =
+  let%bind program = type_file "./contracts/loop3.ligo" in
+  let%bind () =
+    let make_input = e_nat in
+    let make_expected = e_nat in
+    expect_eq_n_pos_mid program "counter" make_input make_expected in
+  ok ()
+
+let loop4 () : (unit, _) result =
+  let%bind program = type_file "./contracts/loop4.ligo" in
+  let%bind () =
+    let make_input = e_nat in
+    let make_expected = fun n -> e_nat (n * (n + 1) / 2) in
+    expect_eq_n_pos_mid program "while_sum" make_input make_expected in
+  ok ()
+
+let loop5 () : (unit, _) result =
+  let%bind program = type_file "./contracts/loop5.ligo" in
+  let%bind () =
+    let make_input = e_nat in
+    let make_expected = fun n -> e_int (n * (n + 1) / 2) in
+    expect_eq_n_pos_mid program "for_sum" make_input make_expected in
+  ok ()
+
+let loop6 () : (unit, _) result =
+  let%bind program = type_file "./contracts/loop6.ligo" in
+  let%bind () =
+    let make_input = e_nat in
+    let make_expected = fun n -> e_int (n * n) in
+    expect_eq_n_pos_mid program "for_sum_step" make_input make_expected in
+  ok ()
+
+let loop7 () : (unit, _) result =
+  let%bind program = type_file "./contracts/loop7.ligo" in
+  let input = e_unit () in
+  let%bind () =
+    let expected = e_pair (e_int 3) (e_string "totototo") in
+    expect_eq program "for_collection_list" input expected in
+  ok ()
+
+let loop8 () : (unit, _) result =
+  let%bind program = type_file "./contracts/loop8.ligo" in
+  let input = e_unit () in
+  let%bind () =
+    let expected = e_pair (e_int 6) (e_string "totototo") in
+    expect_eq program "for_collection_set" input expected in
+  ok ()
+
+let loop9 () : (unit, _) result =
+  let%bind program = type_file "./contracts/loop9.ligo" in
+  let input = e_unit () in
+  let%bind () =
+    let expected = e_pair (e_int 6) (e_string "123") in
+    expect_eq program "for_collection_map_kv" input expected in
+  ok ()
+
+let loop10 () : (unit, _) result =
+  let%bind program = type_file "./contracts/loop10.ligo" in
+  let input = e_unit () in
+  let%bind () =
+    let expected = (e_int 0) in
+    expect_eq program "for_collection_empty" input expected in
+  ok ()
+
+let loop11 () : (unit, _) result =
+  let%bind program = type_file "./contracts/loop11.ligo" in
+  let input = e_unit () in
+  let%bind () =
+    let expected = (e_int 13) in
+    expect_eq program "for_collection_if_and_local_var" input expected in
+  ok ()
+
+let loop12 () : (unit, _) result =
+  let%bind program = type_file "./contracts/loop12.ligo" in
+  let input = e_unit () in
+  let%bind () =
+    let expected = (e_int 1020) in
+    expect_eq program "for_collection_rhs_capture" input expected in
+  ok ()
+
+let loop13 () : (unit, _) result =
+  let%bind program = type_file "./contracts/loop13.ligo" in
+  let input = e_unit () in
+  let%bind () =
+    let expected = (e_int 1040) in
+    expect_eq program "for_collection_proc_call" input expected in
+  ok ()
+
+let loop14 () : (unit, _) result =
+  let%bind program = type_file "./contracts/loop14.ligo" in
+  let input = e_unit () in
+  let%bind () =
+    let expected = (e_int 20) in
+    expect_eq program "for_collection_comp_with_acc" input expected in
+  ok ()
+
+let loop15 () : (unit, _) result =
+  let%bind program = type_file "./contracts/loop15.ligo" in
+  let input = e_unit () in
+  let%bind () =
+    let expected = e_pair (e_int 24)
+      (e_string "1 one,two 2 one,two 3 one,two 1 one,two 2 one,two 3 one,two 1 one,two 2 one,two 3 one,two ") in
+    expect_eq program "nested_for_collection" input expected in
+  ok ()
+
+let loop16 () : (unit, _) result =
+  let%bind program = type_file "./contracts/loop16.ligo" in
+  let input = e_unit () in
+  let%bind () =
+    let expected = e_pair (e_int 24)
+      (e_string "123123123") in
+    expect_eq program "nested_for_collection_local_var" input expected in
+  ok ()
+
+let loop17 () : (unit, _) result =
+  let%bind program = type_file "./contracts/loop.ligo" in
+  let input = e_unit () in
+  let%bind () =
+    let expected = e_pair (e_bool true) (e_int 4) in
+    expect_eq program "inner_capture_in_conditional_block"  input expected in
+  ok ()
+
+let loop18 () : (unit, _) result =
+  let%bind program = type_file "./contracts/loop.ligo" in
+  let input = e_unit () in
+  let%bind () =
+    let ez lst =
+      let lst' = List.map (fun (x, y) -> e_string x, e_int y) lst in
+        e_typed_map lst' (t_string ()) (t_int ())
+    in
+    let expected = ez [ ("I" , 12) ; ("am" , 12) ; ("foo" , 12) ] in
+    expect_eq program "for_collection_with_patches" input expected in
+  ok ()
+
 let loop () : (unit, _) result =
   let%bind program = type_file "./contracts/loop.ligo" in
   let%bind () =
@@ -3289,6 +3435,24 @@ let main = test_suite "Integration (End to End)"
     test "big_map (religo)" rebig_map ;
     test "big_map (jsligo)" jsbig_map ;
     test (* rework typeclass *) "list" list ;
+    test "loop1" loop1 ;
+    test "loop2" loop2 ;
+    test "loop3" loop3 ;
+    test "loop4" loop4 ;
+    test "loop5" loop5 ;
+    test "loop6" loop6 ;
+    test "loop7" loop7 ;
+    test "loop8" loop8 ;
+    test "loop9" loop9 ;
+    test "loop10" loop10 ;
+    test "loop11" loop11 ;
+    test "loop12" loop12 ;
+    test "loop13" loop13 ;
+    test "loop14" loop14 ;
+    test "loop15" loop15 ;
+    test "loop16" loop16 ;
+    test "loop17" loop17 ;
+    test "loop18" loop18 ;
     test "loop" loop ;
     test "loop (mligo)" loop_mligo ;
     test "loop (religo)" loop_religo ;

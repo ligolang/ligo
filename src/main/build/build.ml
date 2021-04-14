@@ -109,7 +109,8 @@ let type_file_with_dep ~(options:Compiler_options.t)  asts_typed (file_name, (me
   in
   let%bind deps = bind_map_list aux deps in
   let init_env = add_modules_in_env options.init_env deps in
-  let%bind ast_typed,ast_typed_env = Ligo_compile.Of_core.compile ~infer:options.infer ~init_env form ast_core in
+  let options = {options with init_env } in
+  let%bind ast_typed,ast_typed_env = Ligo_compile.Of_core.compile ~options form ast_core in
   ok @@ SMap.add file_name (ast_typed,ast_typed_env) asts_typed
 
 let type_contract : options:Compiler_options.t -> string -> Ligo_compile.Of_core.form -> file_name -> (_, _) result =

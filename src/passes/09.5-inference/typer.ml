@@ -516,8 +516,8 @@ and type_module_returns_env ((env, state, p) : environment * _ O'.typer_state * 
   let aux ((e : environment), (s : _ O'.typer_state) , (ds : O.declaration Location.wrap list), tys) (d:I.declaration Location.wrap) =
     let%bind (e , s' , d',t) = type_declaration_subst e s d in
     (* TODO: Move this filter to the spiller *)
-    let ds',tys' = match Location.unwrap d' with
-      | O.Declaration_type _ -> ds,tys
+    let ds',tys' = match (Location.unwrap d' : O.declaration) with
+      | O.Declaration_type _ -> d' :: ds,tys
       | O.Declaration_constant {binder = {var= {wrap_content = n}};_}
         ->  let n = Var.to_name n in d' :: ds, (n,t)::tys
       | O.Declaration_module {module_binder = n;_}
