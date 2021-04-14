@@ -23,7 +23,8 @@ let type_file ~options f stx form : (Ast_typed.module_fully_typed * Ast_typed.en
   let%bind meta          = Of_source.extract_meta stx f in
   let%bind c_unit,_      = Of_source.compile ~options ~meta f in
   let%bind core          = to_core ~options ~meta c_unit f in
-  let%bind typed,e       = Of_core.compile ~options form core in
+  let%bind inferred      = Of_core.infer ~options core in
+  let%bind typed,e       = Of_core.typecheck ~options form inferred in
   ok @@ (typed,e)
 
 let to_mini_c ~options f stx env =
@@ -54,7 +55,8 @@ let type_contract_string ~options syntax expression env =
   let%bind imperative    = Of_c_unit.compile_string ~meta c_unit in
   let%bind sugar         = Of_imperative.compile imperative in
   let%bind core          = Of_sugar.compile sugar in
-  let%bind typed,e       = Of_core.compile ~options:{options with init_env = env} Env core in
+  let%bind inferred      = Of_core.infer ~options:{options with init_env = env} core in
+  let%bind typed,e       = Of_core.typecheck ~options:{options with init_env = env} Env inferred in
   ok @@ (typed,core,e)
 
 let type_expression ~options source_file syntax expression env =
