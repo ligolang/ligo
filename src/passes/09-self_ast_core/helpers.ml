@@ -25,10 +25,11 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a,'err) res
   | E_ascription a -> Folds.ascription self idle init' a
   | E_constructor c -> Folds.constructor self init' c
   | E_matching {matchee=e; cases} -> (
-      let%bind res = self init' e in
-      let%bind res = fold_cases f res cases in
-      ok res
-    )
+    let%bind res = self init' e in
+    let aux acc ({body ; _ }: _ Ast_sugar.match_case) = self acc body in
+    let%bind res = bind_fold_list aux res cases in
+    ok res
+  )
   | E_record m -> Folds.record self init' m
   | E_record_update ru -> Folds.record_update self init' ru
   | E_record_accessor ra -> Folds.record_accessor self init' ra
@@ -54,28 +55,6 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a,'err) res
     ok res
   )
 
-and fold_cases : ('a , 'err) folder -> 'a -> matching_expr -> ('a , 'err) result = fun f init m ->
-  match m with
-  | Match_list { match_nil ; match_cons = { body ; _ } } -> (
-      let%bind res = fold_expression f init match_nil in
-      let%bind res = fold_expression f res body in
-      ok res
-    )
-  | Match_option { match_none ; match_some = { body ; _ } } -> (
-      let%bind res = fold_expression f init match_none in
-      let%bind res = fold_expression f res body in
-      ok res
-    )
-  | Match_variant lst -> (
-      let aux init' ({ body ; _ } : match_variant) =
-        let%bind res' = fold_expression f init' body in
-        ok res' in
-      let%bind res = bind_fold_list aux init lst in
-      ok res
-    )
-  | Match_record {body;_} ->
-    fold_expression f init body
-
 type 'err exp_mapper = expression -> (expression , 'err) result
 type 'err ty_exp_mapper = type_expression -> (type_expression , 'err) result
 type 'err abs_mapper =
@@ -91,10 +70,14 @@ let rec map_expression : 'err exp_mapper -> expression -> (expression , 'err) re
       return @@ E_ascription ascr
     )
   | E_matching {matchee=e;cases} -> (
-      let%bind e' = self e in
-      let%bind cases' = map_cases f cases in
-      return @@ E_matching {matchee=e';cases=cases'}
-    )
+    let%bind e' = self e in
+    let aux { pattern ; body } =
+      let%bind body' = self body in
+      ok { pattern ; body = body'}
+    in
+    let%bind cases' = bind_map_list aux cases in
+    return @@ E_matching {matchee=e';cases=cases'}
+  )
   | E_record_accessor acc -> (
       let%bind acc = Maps.record_accessor self acc in
       return @@ E_record_accessor acc
@@ -178,31 +161,6 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_express
     return @@ T_module_accessor ma
   | T_singleton _ -> ok te'
 
-
-and map_cases : 'err exp_mapper -> matching_expr -> (matching_expr , 'err) result = fun f m ->
-  match m with
-  | Match_list { match_nil ; match_cons = {hd ; tl ; body} } -> (
-      let%bind match_nil = map_expression f match_nil in
-      let%bind body = map_expression f body in
-      ok @@ Match_list { match_nil ; match_cons = {hd ; tl ; body} }
-    )
-  | Match_option { match_none ; match_some = {opt ; body} } -> (
-      let%bind match_none = map_expression f match_none in
-      let%bind body = map_expression f body in
-      ok @@ Match_option { match_none ; match_some = { opt ; body } }
-    )
-  | Match_variant lst -> (
-      let aux (match_variant:match_variant) =
-        let%bind body = map_expression f match_variant.body in
-        ok { match_variant with body }
-      in
-      let%bind lst' = bind_map_list aux lst in
-      ok @@ Match_variant lst'
-    )
-  | Match_record { fields; body } ->
-    let%bind body = map_expression f body in
-    ok @@ Match_record {fields; body}
-
 and map_module : 'err abs_mapper -> module_ -> (module_ , 'err) result = fun m p ->
   let aux = fun (x : declaration) ->
     let return (x:declaration) = ok @@ x in
@@ -234,9 +192,13 @@ let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> ('a
       ok (res, return @@ E_ascription ascr)
     )
   | E_matching {matchee=e;cases} -> (
-      let%bind (res, e') = self init' e in
-      let%bind (res,cases') = fold_map_cases f res cases in
-      ok (res, return @@ E_matching {matchee=e';cases=cases'})
+      let%bind (res,e') = self init' e in
+      let aux acc { pattern ; body } =
+        let%bind (res,body') = self acc body in
+        ok (res,{ pattern ; body = body'})
+      in
+      let%bind (res, cases') = bind_fold_map_list aux res cases in
+      ok @@ (res, return @@ E_matching {matchee=e';cases=cases'})
     )
   | E_record m -> (
     let%bind (res, m') = Stage_common.Helpers.bind_fold_map_lmap (fun res _ e -> self res e) init' m in
@@ -296,28 +258,3 @@ let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> ('a
     ok (res, return @@ E_module_accessor { module_name; element })
   )
   | E_literal _ | E_variable _ | E_raw_code _ as e' -> ok (init', return e')
-
-and fold_map_cases : ('a , 'err) fold_mapper -> 'a -> matching_expr -> ('a * matching_expr , 'err) result =
-    fun f init m ->
-  match m with
-  | Match_list { match_nil ; match_cons = {hd ; tl ; body} } -> (
-      let%bind (init, match_nil) = fold_map_expression f init match_nil in
-      let%bind (init, body ) = fold_map_expression f init body in
-      ok @@ (init, Match_list { match_nil ; match_cons = { hd ; tl ; body } })
-    )
-  | Match_option { match_none ; match_some = {opt ; body} } -> (
-      let%bind (init, match_none) = fold_map_expression f init match_none in
-      let%bind (init, body) = fold_map_expression f init body in
-      ok @@ (init, Match_option { match_none ; match_some = {opt ; body} })
-    )
-  | Match_variant lst -> (
-      let aux init (match_variant:match_variant) =
-        let%bind (init,body) = fold_map_expression f init match_variant.body in
-        ok (init, {match_variant with body})
-      in
-      let%bind (init,lst') = bind_fold_map_list aux init lst in
-      ok @@ (init, Match_variant lst')
-    )
-  | Match_record { body ; fields } ->
-    let%bind (init, body) = fold_map_expression f init body in
-      ok @@ (init, Match_record { fields ; body })

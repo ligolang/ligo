@@ -58,29 +58,6 @@ and type_expression = {
   }
 and ty_expr = type_expression
 
-and matching_content_cons = {
-    hd : expression_variable;
-    tl : expression_variable;
-    body : expression;
-    tv : type_expression;
-  }
-
-and matching_content_list = {
-    match_nil : expression ;
-    match_cons : matching_content_cons;
-  }
-
-and matching_content_some = {
-    opt  : expression_variable ;
-    body : expression ;
-    tv   : type_expression ;
-  }
-
-and matching_content_option = {
-    match_none : expression ;
-    match_some : matching_content_some ;
-  }
-
 and expression_variable_list = expression_variable list
 and type_expression_list = type_expression list
 
@@ -104,8 +81,6 @@ and matching_content_record = {
 }
 
 and matching_expr =
-  | Match_list    of matching_content_list
-  | Match_option  of matching_content_option
   | Match_variant of matching_content_variant
   | Match_record of matching_content_record
 

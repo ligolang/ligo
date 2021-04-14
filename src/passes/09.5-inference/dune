@@ -11,6 +11,7 @@
     environment
     database_plugins
     type_variable_abstraction
+    self_ast_core
   )
   (preprocess
     (pps ppx_let)

@@ -248,13 +248,7 @@ error (`Concrete_pascaligo_unsupported_pattern_type pvar) ;
       File "a dummy file name", line 20, character 5:
 
       Invalid case pattern.
-      If this is a case over Booleans, then "true" or "false" is expected.
-      If this is a case on a list, then one of the following is expected:
-        * an empty list pattern "[]";
-        * a cons list pattern "head#tail".
-      If this is a case over variants, then a constructor of a variant is expected.
-
-      Other patterns in case clauses are not (yet) supported.|}] ;
+              Can't match on values.|}] ;
   error (`Concrete_pascaligo_unsupported_string_singleton type_expr) ;
   [%expect
     {|
@@ -310,7 +304,7 @@ error (`Concrete_pascaligo_unsupported_pattern_type pvar) ;
                   (LocalVar
                      { value=
                          { kwd_var= Region.ghost;
-                           name= {value= "foo"; region= Region.ghost};
+                           pattern= PVar {value= "foo"; region= Region.ghost};
                            var_type= None;
                            assign= Region.ghost;
                            init= EVar {value= "xxx"; region= Region.ghost};
@@ -345,14 +339,8 @@ let%expect_test "main_cit_cameligo" =
     {|
       File "a dummy file name", line 20, character 5:
 
-      Invalid pattern matching.
-      If this is pattern matching over Booleans, then "true" or "false" is expected.
-      If this is pattern matching on a list, then one of the following is expected:
-        * an empty list pattern "[]";
-        * a cons list pattern "head#tail".
-      If this is pattern matching over variants, then a constructor of a variant is expected.
-
-      Other forms of pattern matching are not (yet) supported.|}] ;
+      Invalid pattern.
+              Can't match on values.|}] ;
   error (`Concrete_cameligo_unsupported_string_singleton type_expr) ;
   [%expect
     {|
@@ -415,13 +403,7 @@ let%expect_test "main_cit_reasonligo" =
       File "a dummy file name", line 20, character 5:
 
       Invalid pattern matching.
-      If this is pattern matching over Booleans, then "true" or "false" is expected.
-      If this is pattern matching on a list, then one of the following is expected:
-        * an empty list pattern "[]";
-        * a cons list pattern "[head, ...tail]".
-      If this is pattern matching over variants, then a constructor of a variant is expected.
-
-      Other forms of pattern matching are not (yet) supported.|}] ;
+              Can't match on values.|}] ;
   error (`Concrete_reasonligo_unsupported_string_singleton type_expr) ;
   [%expect
     {|
@@ -485,15 +467,6 @@ let%expect_test "typer" =
       type_meta= None;
       orig_var = None ;
       location= File default_location }
-  in
-  let ast_core_matching_expr : Ast_core.matching_expr =
-    Match_variant
-      [ { constructor= Label "Foo";
-          proj= Location.wrap (Var.of_name "bar");
-          body= ast_core_expression };
-        { constructor= Label "Cat";
-          proj= Location.wrap (Var.of_name "dog");
-          body= ast_core_expression } ]
   in
   let ast_core_constant = C_INT in
   let expression_content = E_literal Literal_unit in
@@ -588,15 +561,6 @@ let%expect_test "typer" =
 
     Invalid usage of type "michelson_pair".
     The "michelson_pair" type expects a record type as argument.|}] ;
-  error
-    (`Typer_match_error (ast_core_matching_expr, type_expression, location_t)) ;
-  [%expect
-    {|
-  File "a dummy file name", line 20, character 5:
-
-  Pattern matching over an expression of an incorrect type.
-  Type "variant | Foo bar
-  | Cat dog" was expected, but got type "foo".|}] ;
   error (`Typer_needs_annotation (ast_core_expression, "foo")) ;
   [%expect
     {|
@@ -928,15 +892,6 @@ let%expect_test "typer" =
       ast_core_expression,
       Some type_expression2,
       `Typer_comparator_composed (location_t, type_expression ))) ;
-[%expect
-  {|
-  File "a dummy file name", line 20, character 5:
-
-  Invalid arguments.
-  Only composed types of not more than two element are allowed to be compared.|}] ;
-error
-  (`Typer_match_variant_tracer
-    (ast_core_matching_expr, `Typer_comparator_composed (location_t, type_expression))) ;
 [%expect
   {|
   File "a dummy file name", line 20, character 5:

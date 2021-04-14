@@ -80,7 +80,7 @@ and expression_content =
   | E_mod_alias  of expr mod_alias
   | E_raw_code of expr raw_code
   | E_constructor of expr constructor
-  | E_matching of matching
+  | E_matching of matching_expr
   | E_record of expression_label_map
   | E_record_accessor of expr record_accessor
   | E_record_update   of expr record_update
@@ -102,51 +102,13 @@ and mod_in = {
   let_result   : expression ;
 }
 
-and match_cons = {
-    hd : expression_variable ;
-    tl : expression_variable ;
-    body : expression ;
-  }
-and match_list = {
-    match_nil  : expression ;
-    match_cons : match_cons ;
-  }
-and match_some = {
-    opt : expression_variable ;
-    body : expression ;
-  }
-and match_option = {
-    match_none : expression ;
-    match_some : match_some ;
-  }
-and match_variant = {
-    constructor : label ;
-    proj : expression_variable ;
-    body : expression ;
-  }
-and match_record = {
-  fields : ty_expr binder label_map ;
-  body : expression ;
-}
-
-and match_variant_list = match_variant list
-and matching_expr =
-  | Match_list of match_list
-  | Match_option of match_option
-  | Match_variant of match_variant_list
-  | Match_record of match_record
-
-and matching = {
-    matchee: expression ;
-    cases: matching_expr ;
-  }
-
 and module' = declaration location_wrap list
 
 and module_with_unification_vars = Module_With_Unification_Vars of module'
 
-(* Env types*)
+and matching_expr = (expr, ty_expr) match_exp
 
+(* Env types*)
 
 and environment_element_definition =
   | ED_binder

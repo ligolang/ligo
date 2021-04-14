@@ -117,27 +117,11 @@ module Substitution = struct
       | (T.Literal_chain_id _ as x)
       | (T.Literal_operation _ as x) ->
         ok @@ x
-    and s_matching_expr : (T.matching_expr,_) w = fun ~(substs : substs) -> function
-      | Match_list {match_nil;match_cons={hd;tl;body}} ->
-        let%bind match_nil = s_expression ~substs match_nil in
-        let%bind body      = s_expression ~substs body in
-        ok @@ T.Match_list {match_nil;match_cons={hd;tl;body}}
-      | Match_option {match_none;match_some={opt;body}} ->
-        let%bind match_none = s_expression ~substs match_none in
-        let%bind body      = s_expression ~substs body in
-        ok @@ T.Match_option {match_none;match_some={opt;body}}
-      | Match_variant cases ->
-        let%bind cases = bind_map_list (
-          fun ({constructor;proj;body} : T.match_variant) ->
-            let%bind body = s_expression ~substs body in
-            ok @@ ({constructor;proj;body} : T.match_variant)
-        ) cases in
-        ok @@ T.Match_variant cases
-      | Match_record {fields; body}  ->
-        let%bind fields = T.Helpers.bind_map_lmap (s_binder ~substs) fields in
-        let%bind body   = s_expression ~substs body in
-        ok @@ T.Match_record {fields; body}
-
+    and s_matching_expr : (_ T.match_case list,_) w = fun ~(substs : substs) -> 
+      fun x ->
+        bind_map_list
+          (fun (x: _ T.match_case) -> let%bind body = s_expression ~substs x.body in ok { x with body })
+          x
     and s_accessor  : (_ T.record_accessor,_) w = fun ~substs {record;path} ->
       let%bind record = s_expression ~substs record in
       ok @@ ({record;path} : _ T.record_accessor)

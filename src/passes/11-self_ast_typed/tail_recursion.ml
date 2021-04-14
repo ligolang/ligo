@@ -64,14 +64,6 @@ let rec check_recursive_call : expression_variable -> bool -> expression -> (uni
 
 and check_recursive_call_in_matching = fun n final_path c ->
   match c with
-  | Match_list {match_nil;match_cons={hd=_;tl=_;body;tv=_}} ->
-    let%bind _ = check_recursive_call n final_path match_nil in
-    let%bind _ = check_recursive_call n final_path body in
-    ok ()
-  | Match_option {match_none; match_some={opt=_;body;tv=_}} ->
-    let%bind _ = check_recursive_call n final_path match_none in
-    let%bind _ = check_recursive_call n final_path body in
-    ok ()
   | Match_variant {cases;tv=_} ->
     let aux {constructor=_; pattern=_; body} =
       let%bind _ = check_recursive_call n final_path body in

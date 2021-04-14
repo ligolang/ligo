@@ -246,57 +246,17 @@ and matching {matchee=ma;cases=ca} {matchee=mb;cases=cb} =
     expression ma mb
     matching_expr ca cb
 
-and record ra rb = label_map ~compare:expression ra rb
-
-and record_accessor {record=ra;path=pa} {record=rb;path=pb} =
-  cmp2
-    expression ra rb
-    label pa pb
-
-and record_update {record=ra;path=pa;update=ua} {record=rb;path=pb;update=ub} =
-  cmp3
-    expression ra rb
-    label pa pb
-    expression ua ub
-
 and matching_expr_tag = function
-  Match_list    _ -> 1
-| Match_option  _ -> 2
-| Match_variant _ -> 3
-| Match_record _ -> 4
+| Match_variant _ -> 1
+| Match_record _ -> 2
 
 and matching_expr a b =
   match (a,b) with
-    Match_list    a, Match_list    b -> matching_content_list a b
-  | Match_option  a, Match_option  b -> matching_content_option a b
   | Match_variant a, Match_variant b -> matching_content_variant a b
   | Match_record a, Match_record b -> matching_content_record a b
-  | (Match_list _| Match_option _| Match_variant _ | Match_record _),
-    (Match_list _| Match_option _| Match_variant _ | Match_record _) ->
+  | ( Match_variant _ | Match_record _),
+    ( Match_variant _ | Match_record _) ->
     Int.compare (matching_expr_tag a) (matching_expr_tag b)
-
-and matching_content_cons {hd=ha;tl=ta;body=ba;tv=va} {hd=hb;tl=tb;body=bb;tv=vb} =
-  cmp4
-    expression_variable ha hb
-    expression_variable ta tb
-    expression      ba bb
-    type_expression va vb
-
-and matching_content_list {match_nil=na;match_cons=ca} {match_nil=nb;match_cons=cb} =
-  cmp2
-    expression na nb
-    matching_content_cons ca cb
-
-and matching_content_some {opt=oa;body=ba;tv=ta} {opt=ob;body=bb;tv=tb} =
-  cmp3
-    expression_variable oa ob
-    expression ba bb
-    type_expression ta tb
-
-and matching_content_option {match_none=na;match_some=sa} {match_none=nb;match_some=sb} =
-  cmp2
-    expression na nb
-    matching_content_some sa sb
 
 and matching_content_case {constructor=ca;pattern=pa;body=ba} {constructor=cb;pattern=pb;body=bb} =
   cmp3
@@ -316,6 +276,18 @@ and matching_content_record
     (label_map ~compare:(cmp_pair expression_variable type_expression)) fields1 fields2
     expression body1 body2
     type_expression t1 t2
+and record ra rb = label_map ~compare:expression ra rb
+
+and record_accessor {record=ra;path=pa} {record=rb;path=pb} =
+  cmp2
+    expression ra rb
+    label pa pb
+
+and record_update {record=ra;path=pa;update=ua} {record=rb;path=pb;update=ub} =
+  cmp3
+    expression ra rb
+    label pa pb
+    expression ua ub
 
 and ascription {anno_expr=aa; type_annotation=ta} {anno_expr=ab; type_annotation=tb} =
   cmp2

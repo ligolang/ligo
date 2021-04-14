@@ -8,6 +8,7 @@
     ast_typed
     predefined
     environment
+    self_ast_core
   )
   (preprocess
     (pps ppx_let)

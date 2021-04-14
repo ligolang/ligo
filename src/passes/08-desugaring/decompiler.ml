@@ -104,8 +104,15 @@ let rec decompile_expression : O.expression -> (I.expression, desugaring_error) 
       return @@ I.E_constructor const
     | O.E_matching {matchee; cases} ->
       let%bind matchee = self matchee in
-      let%bind cases   = decompile_matching cases in
-      return @@ I.E_matching {matchee;cases}
+      let aux :
+        (O.expression, O.type_expression) O.match_case -> ((I.expression, I.type_expression) I.match_case , _) result =
+          fun {pattern ; body} ->
+            let%bind body = self body in
+            let%bind pattern = Stage_common.Helpers.map_pattern_t (binder self_type) pattern in
+            ok I.{pattern ; body}
+      in
+      let%bind cases = bind_map_list aux cases in
+      return @@ I.E_matching {matchee ; cases}
     | O.E_record record ->
       let record = O.LMap.to_kv_list_rev record in
       let%bind record =
@@ -138,36 +145,6 @@ and decompile_lambda : _ O.lambda -> (_ I.lambda, desugaring_error) result =
     let%bind output_type = bind_map_option decompile_type_expression output_type in
     let%bind result = decompile_expression result in
     ok @@ I.{binder;output_type;result}
-and decompile_matching : O.matching_expr -> (I.matching_expr, desugaring_error) result =
-  fun m ->
-  match m with
-    | O.Match_list {match_nil;match_cons = { hd ; tl ; body }} ->
-      let hd = cast_var hd in
-      let tl = cast_var tl in
-      let%bind match_nil = decompile_expression match_nil in
-      let%bind expr = decompile_expression body in
-      ok @@ I.Match_list {match_nil; match_cons=(hd,tl,expr)}
-    | O.Match_option {match_none; match_some = { opt ; body }} ->
-      let opt = cast_var opt in
-      let%bind match_none = decompile_expression match_none in
-      let%bind expr = decompile_expression body in
-      ok @@ I.Match_option {match_none; match_some=(opt,expr)}
-    | O.Match_variant lst ->
-      let%bind lst = bind_map_list (
-        fun ({ constructor; proj ; body } : O.match_variant) ->
-          let%bind expr = decompile_expression body in
-          ok @@ ((constructor, cast_var proj),expr)
-      ) lst
-      in
-      ok @@ I.Match_variant lst
-    | O.Match_record { fields; body } ->
-      let aux : O.label * O.ty_expr O.binder -> I.label * I.ty_expr I.binder =
-        fun (l,binder) ->
-          (l , {binder with ascr = None})
-      in
-      let lst = List.map aux (O.LMap.to_kv_list fields) in
-      let%bind body = decompile_expression body in
-      ok @@ I.Match_record (lst,body)
 
 and decompile_declaration : O.declaration -> (I.declaration , desugaring_error) result =
   fun declaration ->

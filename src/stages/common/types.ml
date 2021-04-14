@@ -174,6 +174,30 @@ and 'exp while_loop = {
   body : 'exp ;
   }
 
+type 'ty_exp list_pattern =
+  | Cons of 'ty_exp pattern * 'ty_exp pattern
+  | List of 'ty_exp pattern list
+
+and 'ty_exp pattern_repr =
+  | P_unit
+  | P_var of 'ty_exp binder
+  | P_list of 'ty_exp list_pattern
+  | P_variant of label * 'ty_exp pattern option
+  | P_tuple of 'ty_exp pattern list
+  | P_record of label list * 'ty_exp pattern list
+
+and 'ty_exp pattern = 'ty_exp pattern_repr Location.wrap
+
+type ('exp , 'ty_exp) match_case = {
+  pattern : 'ty_exp pattern ;
+  body : 'exp
+}
+
+type ('exp , 'ty_exp) match_exp = {
+  matchee : 'exp ;
+  cases : ('exp , 'ty_exp) match_case list
+}
+
 (* Declaration types *)
 type 'ty_exp declaration_type = {
     type_binder : type_variable ;
@@ -204,6 +228,9 @@ and ('exp,'ty_exp) declaration' =
   | Declaration_constant of ('exp,'ty_exp) declaration_constant
   | Declaration_module   of ('exp, 'ty_exp) declaration_module
   | Module_alias         of module_alias
+
+
+(* Program types *)
 
 and ('exp,'ty_exp) module' = ('exp,'ty_exp) declaration' location_wrap list
 

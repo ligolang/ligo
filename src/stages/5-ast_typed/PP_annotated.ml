@@ -160,10 +160,6 @@ and matching_variant_case : (_ -> expression -> unit) -> _ -> matching_content_c
 and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit = fun f ppf m -> match m with
   | Match_variant {cases ; tv=_} ->
       fprintf ppf "%a" (list_sep (matching_variant_case f) (tag "@.")) cases
-  | Match_list {match_nil ; match_cons = {hd; tl; body; tv=_}} ->
-      fprintf ppf "| Nil -> %a @.| %a :: %a -> %a" f match_nil expression_variable hd expression_variable tl f body
-  | Match_option {match_none ; match_some = {opt; body; tv=_}} ->
-      fprintf ppf "| None -> %a @.| Some %a -> %a" f match_none expression_variable opt f body
   | Match_record {fields = _TODO ; body ; tv = _} ->
       fprintf ppf "| {%s} -> %a"
         "TODO"

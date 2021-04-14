@@ -134,7 +134,11 @@ let e_constructor ?loc s a : expression = make_e ?loc @@ E_constructor { constru
 let e_true  ?loc (): expression = e_constructor ?loc "true"  @@ e_unit ?loc ()
 let e_false ?loc (): expression = e_constructor ?loc "false" @@ e_unit ?loc ()
 let e_matching ?loc a b : expression = make_e ?loc @@ E_matching {matchee=a;cases=b}
-
+let e_matching_tuple ?loc matchee (binders: _ binder list) body : expression =
+  let pv_lst = List.map (fun (b:_ binder) -> Location.wrap @@ (P_var b)) binders in
+  let pattern = Location.wrap @@ P_tuple pv_lst in
+  let cases = [ { pattern ; body } ] in
+  make_e ?loc @@ E_matching {matchee;cases}
 let e_accessor ?loc record path      = make_e ?loc @@ E_accessor {record; path}
 let e_update ?loc record path update = make_e ?loc @@ E_update {record; path; update}
 
@@ -157,23 +161,7 @@ let e_while ?loc cond body = make_e ?loc @@ E_while {cond; body}
 let e_for ?loc binder start final incr f_body = make_e ?loc @@ E_for {binder;start;final;incr;f_body}
 let e_for_each ?loc fe_binder collection collection_type fe_body = make_e ?loc @@ E_for_each {fe_binder;collection;collection_type;fe_body}
 
-(* let e_for_ez ?loc binder start final increment body = e_for ?loc (Var.of_name binder) start final increment body *)
-(* let e_for_each_ez ?loc (b,bo) collection collection_type body = e_for_each ?loc (Var.of_name b, Option.map Var.of_name bo) collection collection_type body *)
-
 let e_bool ?loc   b : expression = e_constructor ?loc (string_of_bool b) (e_unit ())
-
-let e_matching_variant ?loc a lst = e_matching ?loc a @@ Match_variant lst
-let e_matching_record   ?loc m lst expr = e_matching ?loc m @@ Match_record   (lst, expr)
-let e_matching_tuple    ?loc m lst expr = e_matching ?loc m @@ Match_tuple    (lst, expr)
-let e_matching_variable ?loc m var expr = e_matching ?loc m @@ Match_variable (var, expr)
-
-(* let e_matching_tuple_ez ?loc m lst ty_opt expr =
-  let lst = List.map Var.of_name lst in
-  e_matching_tuple ?loc m lst ty_opt expr *)
-
-(* let ez_match_variant (lst : ((string * string) * 'a) list) =
-  let lst = List.map (fun ((c,n),a) -> ((Constructor c, Var.of_name n), a) ) lst in
-  Match_variant lst *)
 
 let e_record ?loc map = make_e ?loc @@ E_record map
 let e_record_ez ?loc (lst : (string * expr) list) : expression =

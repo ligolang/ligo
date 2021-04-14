@@ -51,14 +51,8 @@ let error_ppformat : display_format:string display_format ->
         Snippet.pp reg s
     | `Concrete_cameligo_unsupported_pattern_type pl ->
       Format.fprintf f
-        "@[<hv>%a@.Invalid pattern matching.
-If this is pattern matching over Booleans, then \"true\" or \"false\" is expected.
-If this is pattern matching on a list, then one of the following is expected:
-  * an empty list pattern \"[]\";
-  * a cons list pattern \"head#tail\".
-If this is pattern matching over variants, then a constructor of a variant is expected.
-
-Other forms of pattern matching are not (yet) supported. @]"
+        "@[<hv>%a@.Invalid pattern.
+        Can't match on values. @]"
         Snippet.pp_lift (List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost pl)
     | `Concrete_cameligo_unsupported_string_singleton te ->
       Format.fprintf f

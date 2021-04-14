@@ -3,7 +3,7 @@ open Test_helpers
 open Ast_imperative
 open Main_errors
 
-let type_file f = Ligo_compile.Utils.type_file f "cameligo" (Contract "main")
+let type_file ~options f = Ligo_compile.Utils.type_file ~options f "cameligo" (Contract "main")
 let options = Compiler_options.make ()
 
 let get_program =

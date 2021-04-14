@@ -396,7 +396,12 @@ record_pattern:
     in {region; value} }
 
 field_pattern:
-  field_name "=" sub_pattern {
+  field_name {
+    let region  = $1.region
+    and value  = {field_name=$1; eq=Region.ghost; pattern=PVar $1}
+    in {region; value} 
+  }
+| field_name ":" sub_pattern {
     let start  = $1.region
     and stop   = pattern_to_region $3 in
     let region = cover start stop

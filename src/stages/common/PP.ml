@@ -129,7 +129,7 @@ let record_update expression ppf = fun {record; path; update} ->
   fprintf ppf "@[{ %a@;<1 2>with@;<1 2>{ %a = %a } }@]" expression record label path expression update
 
 let tuple expression ppf = fun t ->
-  fprintf ppf "(%a)" (list_sep_d expression) t
+  fprintf ppf "(@[<h>%a@])" (list_sep_d expression) t
 
 let accessor expression ppf = fun ({record;path}: _ accessor) ->
   fprintf ppf "%a.%a" expression record (list_sep (access expression) (const ".")) path
@@ -241,6 +241,38 @@ let while_ expression ppf = fun {cond; body} ->
     expression cond
     expression body
 
+(* matches *)
+
+let rec list_pattern type_expression ppf = fun pl ->
+  let mpp = match_pattern type_expression in
+  match pl with
+  | Cons (pl,pr) -> fprintf ppf "%a :: %a" mpp pl mpp pr
+  | List pl -> fprintf ppf "[ %a ]" (list_sep mpp (tag " ; ")) pl
+
+and match_pattern type_expression ppf = fun p ->
+  match p.wrap_content with
+  | P_unit -> fprintf ppf "()"
+  | P_var b -> fprintf ppf "%a" (binder type_expression) b
+  | P_list l -> list_pattern type_expression ppf l
+  | P_variant (l , p_opt) -> (
+    match p_opt with
+    | Some p -> fprintf ppf "%a %a" label l (match_pattern type_expression) p
+    | None -> fprintf ppf "%a" label l
+  )
+  | P_tuple pl ->
+    fprintf ppf "(%a)" (list_sep (match_pattern type_expression) (tag ",")) pl
+  | P_record (ll , pl) ->
+    let x = List.combine ll pl in
+    let aux ppf (l,p) =
+      fprintf ppf "%a = %a" label l (match_pattern type_expression) p
+    in
+    fprintf ppf "{%a}" (list_sep aux (tag " ; ")) x
+
+let match_case expression type_expression ppf = fun {pattern ; body} ->
+  fprintf ppf "@[| %a -> %a@]" (match_pattern type_expression) pattern expression body
+
+let match_exp expression type_expression ppf = fun {matchee ; cases} ->
+  fprintf ppf "@[<v 2> match %a with@,%a@]" expression matchee (list_sep (match_case expression type_expression) (tag "@ ")) cases
 
 (* Declaration *)
 let declaration_type type_expression ppf = fun {type_binder;type_expr} ->

@@ -2751,6 +2751,7 @@ contract: Let LBRACE Ident With
 ##
 ## Ends in an error in state: 92.
 ##
+## field_pattern -> Ident . [ SEMI RBRACE ]
 ## field_pattern -> Ident . EQ sub_pattern [ SEMI RBRACE ]
 ##
 ## The known suffix of the stack is as follows:

@@ -75,10 +75,7 @@ and expression_content ppf (ec : expression_content) =
   | E_accessor    a -> accessor    expression ppf a
   | E_update      u -> update      expression ppf u
   | E_lambda      l -> lambda      expression type_expression ppf l
-  | E_matching {matchee; cases; _} ->
-      fprintf ppf "match %a with %a"
-        expression matchee (matching expression)
-        cases
+  | E_matching    m -> match_exp expression type_expression ppf m
   | E_recursive  r -> recursive expression type_expression ppf r
   | E_let_in    li -> let_in  expression type_expression ppf li
   | E_type_in   ti -> type_in expression type_expression ppf ti
@@ -99,45 +96,7 @@ and expression_content ppf (ec : expression_content) =
   | E_for_each   f -> for_each   expression ppf f
   | E_while      w -> while_     expression ppf w
 
-and matching_variant_case : type a . (_ -> a -> unit) -> _ -> (label * expression_variable) * a -> unit =
-  fun f ppf ((c,n),a) ->
-  fprintf ppf "| %a %a -> %a" label c expression_variable n f a
-
-and matching : (formatter -> expression -> unit) -> formatter -> matching_expr -> unit =
-  fun f ppf m -> match m with
-    | Match_variant lst ->
-        fprintf ppf "%a" (list_sep (matching_variant_case f) (tag "@.")) lst
-    | Match_list {match_nil ; match_cons = (hd, tl, match_cons)} ->
-        fprintf ppf "| Nil -> %a @.| %a :: %a -> %a" f match_nil expression_variable hd expression_variable tl f match_cons
-    | Match_option {match_none ; match_some = (some, match_some)} ->
-        fprintf ppf "| None -> %a @.| Some %a -> %a" f match_none expression_variable some f match_some
-    | Match_tuple (lst,b) ->
-        fprintf ppf "(%a) -> %a" (list_sep_d (binder type_expression)) lst f b
-    | Match_record (lst,b) ->
-        fprintf ppf "{%a} -> %a" (list_sep_d (fun ppf (a,b) -> fprintf ppf "%a = %a" label a (binder type_expression) b)) lst f b
-    | Match_variable (a,b) ->
-        fprintf ppf "%a -> %a" (binder type_expression) a f b
-
-
-(* Shows the type expected for the matched value *)
-and matching_type ppf m = match m with
-  | Match_variant lst ->
-      fprintf ppf "variant %a" (list_sep matching_variant_case_type (tag "@.")) lst
-  | Match_list _ ->
-      fprintf ppf "list"
-  | Match_option _ ->
-      fprintf ppf "option"
-  | Match_tuple _ ->
-      fprintf ppf "tuple"
-  | Match_record _ ->
-      fprintf ppf "record"
-  | Match_variable _ ->
-      fprintf ppf "variable"
-
-and matching_variant_case_type ppf ((c,n),_a) =
-  fprintf ppf "| %a %a" label c expression_variable n
-
-let attributes ppf attributes =
+and attributes ppf attributes =
   let attr =
     List.map (fun attr -> "[@@" ^ attr ^ "]") attributes |> String.concat ""
   in fprintf ppf "%s" attr

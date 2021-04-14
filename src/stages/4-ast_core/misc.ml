@@ -9,7 +9,6 @@ module Free_variables = struct
   let union : bindings -> bindings -> bindings = (@)
   let unions : bindings list -> bindings = List.concat
   let empty : bindings = []
-  let of_list : expression_variable list -> bindings = fun x -> x
 
   let rec expression_content : bindings -> expression_content -> bindings = fun b ec ->
     let self = expression b in
@@ -50,18 +49,21 @@ module Free_variables = struct
   and expression : bindings -> expression -> bindings = fun b e ->
     expression_content b e.expression_content
 
-  and matching_variant_case : (bindings -> expression -> bindings) -> bindings -> match_variant -> bindings  = fun f b { constructor=_ ; proj ; body } ->
-    f (union (singleton proj) b) body
-
-  and matching : (bindings -> expression -> bindings) -> bindings -> matching_expr -> bindings = fun f b m ->
-    match m with
-    | Match_list { match_nil = n ; match_cons = {hd; tl; body} } -> union (f b n) (f (union (of_list [hd ; tl]) b) body)
-    | Match_option { match_none = n ; match_some = {opt; body} } -> union (f b n) (f (union (singleton opt) b) body)
-    | Match_variant cases -> unions @@ List.map (matching_variant_case f b) cases
-    | Match_record {fields; body} ->
-      f (union (List.map (fun b -> b.var) (LMap.to_list fields)) b) body
-
-  and matching_expression = fun x -> matching expression x
+  and matching_expression : bindings -> (expression, type_expression) match_case list -> bindings = fun b cases ->
+    let aux : bindings -> (expression,type_expression) match_case -> bindings = fun b {pattern ; body} ->
+      let b' =
+        Stage_common.Helpers.fold_pattern
+          (fun b x ->
+            match x.wrap_content with
+            | P_var x -> union b (singleton x.var)
+            | _ -> b
+          )
+          b
+          pattern
+      in
+      expression b' body
+    in
+    List.fold_left aux b cases
 
 end
 

@@ -71,3 +71,58 @@ let kv_list_of_record_or_tuple (m: _ LMap.t) =
     tuple_of_record m
   else
     LMap.to_kv_list m
+
+let rec fold_pattern : ('a -> 'b pattern -> 'a) -> 'a -> 'b pattern -> 'a =
+  fun f acc p ->
+    let acc' = f acc p in
+    match p.wrap_content with
+    | P_unit -> acc'
+    | P_var _ -> acc'
+    | P_list lp -> (
+      match lp with
+      | Cons (pa,pb) -> fold_pattern f (fold_pattern f acc' pb) pa
+      | List lp -> List.fold_left (fold_pattern f) acc' lp 
+    )
+    | P_variant (_,p_opt) -> (
+      match p_opt with
+      | Some p -> fold_pattern f acc' p
+      | None -> acc'
+    )
+    | P_tuple lp -> List.fold_left (fold_pattern f) acc' lp
+    | P_record (_,lp) -> List.fold_left (fold_pattern f) acc' lp
+
+open Trace
+let fold_pattern_list f acc l = List.fold_left (fold_pattern f) acc l
+
+let rec map_pattern_t : ('a binder -> ('b binder, 'err) result) -> 'a pattern -> ('b pattern, 'err) result =
+  fun f p ->
+    let self = map_pattern_t f in
+    let ret wrap_content = ok { p with wrap_content } in
+    match p.wrap_content with
+    | P_unit -> ret P_unit
+    | P_var b ->
+      let%bind b' = f b in
+      ret (P_var b')
+    | P_list lp -> (
+      let%bind lp =
+        match lp with
+        | Cons (pa,pb) ->
+          let%bind pa = self pa in
+          let%bind pb = self pb in
+          ok @@ (Cons (pa, pb) : 'b list_pattern)
+        | List lp ->
+          let%bind lp = bind_map_list self lp in
+          ok @@ (List lp : 'b list_pattern)
+      in
+      ret @@ P_list lp
+    )
+    | P_variant (l,p_opt) -> (
+      let%bind p_opt = bind_map_option self p_opt in
+      ret @@ P_variant (l,p_opt)
+    )
+    | P_tuple lp ->
+      let%bind lp = bind_map_list self lp in
+      ret @@ P_tuple lp
+    | P_record (x,lp) ->
+      let%bind lp = bind_map_list self lp in
+      ret @@ P_record (x,lp)

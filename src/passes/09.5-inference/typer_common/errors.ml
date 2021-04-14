@@ -65,7 +65,6 @@ type typer_error = [
   | `Typer_uncomparable_types of Location.t * Ast_core.type_expression * Ast_core.type_expression
   | `Typer_comparator_composed of Location.t * Ast_core.type_expression
   | `Typer_constant_decl_tracer of Ast_core.expression_variable * Ast_core.expression * Ast_core.type_expression option * typer_error
-  | `Typer_match_variant_tracer of Ast_core.matching_expr * typer_error
   | `Typer_unrecognized_type_constant of Ast_core.type_expression
   | `Typer_expected_ascription of Ast_core.expression
   | `Typer_different_types of Ast_core.type_expression * Ast_core.type_expression
@@ -163,8 +162,6 @@ let unrecognized_type_constant (e:Ast_core.type_expression) = `Typer_unrecognize
 (* new typer errors *)
 let constant_declaration_tracer (name: Ast_core.expression_variable) (ae:Ast_core.expression) (expected: Ast_core.type_expression option) (err:typer_error) =
   `Typer_constant_decl_tracer (name,ae,expected,err)
-let in_match_variant_tracer (ae:Ast_core.matching_expr) (err:typer_error) =
-  `Typer_match_variant_tracer (ae,err)
 let different_types a b = `Typer_different_types (a,b)
 let different_constant_tag_number_of_arguments loc opa opb lena lenb = `Typer_constant_tag_number_of_arguments (loc, opa, opb, lena, lenb)
 let typeclass_not_a_rectangular_matrix = `Typer_typeclass_not_a_rectangular_matrix
@@ -297,7 +294,7 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@.Pattern matching over an expression of an incorrect type.@.Type \"%a\" was expected, but got type \"%a\". @]"
         Snippet.pp loc
-        Ast_core.PP.matching_type expected
+        (Ast_core.PP.match_exp Ast_core.PP.expression Ast_core.PP.type_expression) expected
         Ast_core.PP.type_expression actual
     | `Typer_needs_annotation (exp,case) ->
       Format.fprintf f
@@ -374,9 +371,6 @@ The following forms of subtractions are possible:
         "@[<hv>%a@.Invalid arguments.@.Only composed types of not more than two element are allowed to be compared. @]"
         Snippet.pp loc
     | `Typer_constant_decl_tracer (_name,_ae,_expected,err) ->
-      Format.fprintf f
-        "%a" (error_ppformat ~display_format) err
-    | `Typer_match_variant_tracer (_ae,err) ->
       Format.fprintf f
         "%a" (error_ppformat ~display_format) err
     | `Typer_unrecognized_type_constant e ->
@@ -782,7 +776,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
   | `Typer_match_error (expected,actual,loc) ->
     let message = `String "Typing match" in
     let loc = `String (Format.asprintf "%a" Location.pp loc) in
-    let expected = `String (Format.asprintf "%a" Ast_core.PP.matching_type expected) in
+    let expected = `String (Format.asprintf "%a" (Ast_core.PP.match_exp Ast_core.PP.expression Ast_core.PP.type_expression) expected) in
     let actual = `String (Format.asprintf "%a" Ast_core.PP.type_expression actual) in
     let content = `Assoc [
       ("message", message);
@@ -1217,15 +1211,6 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("message", message) ;
       ("name", name) ;
       ("location", loc) ;
-      ("expected", expected) ;
-      ("children", error_jsonformat err) ;
-    ] in
-    json_error ~stage ~content
-  | `Typer_match_variant_tracer (m,err) ->
-    let message = `String "typing matching expression" in
-    let expected = `String (Format.asprintf "%a" Ast_core.PP.matching_type m) in
-    let content = `Assoc [
-      ("message", message) ;
       ("expected", expected) ;
       ("children", error_jsonformat err) ;
     ] in

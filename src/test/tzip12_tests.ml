@@ -3,7 +3,7 @@ open Test_helpers
 
 let mfile_FA12  = "./contracts/FA1.2.mligo"
 
-let type_file f s = Ligo_compile.Utils.type_file f s (Contract "main")
+let type_file ~options f s = Ligo_compile.Utils.type_file ~options f s (Contract "main")
 
 let get_program f st =
   let s = ref None in

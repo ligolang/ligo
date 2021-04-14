@@ -5,12 +5,14 @@ module Helpers = Helpers
 let all_module_passes = [
   Helpers.map_module Tail_recursion.peephole_expression ;
   Helpers.map_module Michelson_layout.peephole_expression ;
+  Helpers.map_module Pattern_matching_simpl.peephole_expression ;
   Unused.unused_map_module ;
 ]
 
 let all_expression_passes = [
   Helpers.map_expression Tail_recursion.peephole_expression ;
   Helpers.map_expression Michelson_layout.peephole_expression ;
+  Pattern_matching_simpl.peephole_expression ;
 ]
 
 let contract_passes = [

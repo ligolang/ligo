@@ -12,20 +12,20 @@ let retype_file f =
   Ligo_compile.Utils.type_file ~options f "reasonligo" Env
 let mtype_file f =
   Ligo_compile.Utils.type_file ~options f "cameligo" Env
-let type_file f =
+let ptype_file f =
   Ligo_compile.Utils.type_file ~options f "pascaligo" Env
 
 let type_alias () : (unit,_) result =
-  let%bind program = type_file "./contracts/type-alias.ligo" in
+  let%bind program = ptype_file "./contracts/type-alias.ligo" in
   expect_eq_evaluate program "foo" (e_int 23)
 
 let function_ () : (unit,_) result =
-  let%bind program = type_file "./contracts/function.ligo" in
+  let%bind program = ptype_file "./contracts/function.ligo" in
   let make_expect = fun n -> n in
   expect_eq_n_int program "main" make_expect
 
 let blockless () : (unit,_) result =
-  let%bind program = type_file "./contracts/blockless.ligo" in
+  let%bind program = ptype_file "./contracts/blockless.ligo" in
   let make_expect = fun n-> n + 10 in
   expect_eq_n_int program "blockless" make_expect
 
@@ -36,12 +36,12 @@ let blockless () : (unit,_) result =
   expect_eq_n_int program "main" make_expect *)
 
 let assign () : (unit,_) result =
-  let%bind program = type_file "./contracts/assign.ligo" in
+  let%bind program = ptype_file "./contracts/assign.ligo" in
   let make_expect = fun n -> n + 1 in
   expect_eq_n_int program "main" make_expect
 
 let annotation () : (unit,_) result =
-  let%bind program = type_file "./contracts/annotation.ligo" in
+  let%bind program = ptype_file "./contracts/annotation.ligo" in
   let%bind () =
     expect_eq_evaluate program "lst" (e_list [])
   in
@@ -51,19 +51,19 @@ let annotation () : (unit,_) result =
   ok ()
 
 let complex_function () : (unit,_) result =
-  let%bind program = type_file "./contracts/function-complex.ligo" in
+  let%bind program = ptype_file "./contracts/function-complex.ligo" in
   let make_expect = fun n -> (3 * n + 2) in
   expect_eq_n_int program "main" make_expect
 
 let anon_function () : (unit, _) result =
-  let%bind program = type_file "./contracts/function-anon.ligo" in
+  let%bind program = ptype_file "./contracts/function-anon.ligo" in
   let%bind () =
     expect_eq_evaluate program "x" (e_int 42)
   in
   ok ()
 
 let application () : (unit, _) result =
-  let%bind program = type_file "./contracts/application.ligo" in
+  let%bind program = ptype_file "./contracts/application.ligo" in
   let%bind () =
     let expected = e_int 42 in
     expect_eq_evaluate program "x" expected in
@@ -76,7 +76,7 @@ let application () : (unit, _) result =
   ok ()
 
 let variant () : (unit, _) result =
-  let%bind program = type_file "./contracts/variant.ligo" in
+  let%bind program = ptype_file "./contracts/variant.ligo" in
   let%bind () =
     let expected = e_constructor "Foo" (e_int 42) in
     expect_eq_evaluate program "foo" expected in
@@ -128,7 +128,7 @@ let variant_jsligo () : (unit, _) result =
   ok ()
   
 let variant_matching () : (unit, _) result =
-  let%bind program = type_file "./contracts/variant-matching.ligo" in
+  let%bind program = ptype_file "./contracts/variant-matching.ligo" in
   let%bind () =
     let make_input = fun n -> e_constructor "Foo" (e_int n) in
     let make_expected = e_int in
@@ -141,10 +141,10 @@ let variant_matching () : (unit, _) result =
   ok ()
 
 let closure () : (unit, _) result =
-  let%bind program = type_file "./contracts/closure.ligo" in
-  let%bind program_1 = type_file "./contracts/closure-1.ligo" in
-  let%bind program_2 = type_file "./contracts/closure-2.ligo" in
-  let%bind program_3 = type_file "./contracts/closure-3.ligo" in
+  let%bind program = ptype_file "./contracts/closure.ligo" in
+  let%bind program_1 = ptype_file "./contracts/closure-1.ligo" in
+  let%bind program_2 = ptype_file "./contracts/closure-2.ligo" in
+  let%bind program_3 = ptype_file "./contracts/closure-3.ligo" in
   let%bind _ =
     let make_expect = fun n -> (49 + n) in
     expect_eq_n_int program_3 "foobar" make_expect
@@ -192,7 +192,7 @@ let closure_jsligo () : (unit, _) result =
   
 
 let shadow () : (unit, _) result =
-  let%bind program = type_file "./contracts/shadow.ligo" in
+  let%bind program = ptype_file "./contracts/shadow.ligo" in
   let make_expect = fun _ -> 0 in
   expect_eq_n_int program "foo" make_expect
 
@@ -206,7 +206,7 @@ let shadowing () : (unit, _) result =
   ok ()
 
 let higher_order () : (unit, _) result =
-  let%bind program = type_file "./contracts/high-order.ligo" in
+  let%bind program = ptype_file "./contracts/high-order.ligo" in
   let make_expect = fun n -> n in
   let%bind _ = expect_eq_n_int program "foobar" make_expect in
   let%bind _ = expect_eq_n_int program "foobar2" make_expect in
@@ -248,7 +248,7 @@ let higher_order_jsligo () : (unit, _) result =
   
 
 let shared_function () : (unit, _) result =
-  let%bind program = type_file "./contracts/function-shared.ligo" in
+  let%bind program = ptype_file "./contracts/function-shared.ligo" in
   let%bind () =
     let make_expect = fun n -> (n + 1) in
     expect_eq_n_int program "inc" make_expect
@@ -295,7 +295,7 @@ let shared_function_jsligo () : (unit, _) result =
   ok ()
   
 let bool_expression () : (unit, _) result =
-  let%bind program = type_file "./contracts/boolean_operators.ligo" in
+  let%bind program = ptype_file "./contracts/boolean_operators.ligo" in
   let%bind _ =
     let aux (name , f) = expect_eq_b_bool program name f in
     bind_map_list aux [
@@ -347,7 +347,7 @@ let bool_expression_jsligo () : (unit, _) result =
   ok ()
 
 let arithmetic () : (unit, _) result =
-  let%bind program = type_file "./contracts/arithmetic.ligo" in
+  let%bind program = ptype_file "./contracts/arithmetic.ligo" in
   let%bind _ =
     let aux (name , f) = expect_eq_n_int program name f in
     bind_map_list aux [
@@ -412,7 +412,7 @@ let arithmetic_jsligo () : (unit, _) result =
   
 
 let bitwise_arithmetic () : (unit, _) result =
-  let%bind program = type_file "./contracts/bitwise_arithmetic.ligo" in
+  let%bind program = ptype_file "./contracts/bitwise_arithmetic.ligo" in
   let%bind () = expect_eq program "or_op" (e_nat 7) (e_nat 7) in
   let%bind () = expect_eq program "or_op" (e_nat 3) (e_nat 7) in
   let%bind () = expect_eq program "or_op" (e_nat 2) (e_nat 6) in
@@ -484,7 +484,7 @@ let bitwise_arithmetic_jsligo () : (unit, _) result =
   ok ()
 
 let string_arithmetic () : (unit, _) result =
-  let%bind program = type_file "./contracts/string_arithmetic.ligo" in
+  let%bind program = ptype_file "./contracts/string_arithmetic.ligo" in
   let%bind () = expect_eq program "concat_op" (e_string "foo") (e_string "foototo") in
   let%bind () = expect_eq program "concat_op" (e_string "") (e_string "toto") in
   let%bind () = expect_eq program "slice_op" (e_string "tata") (e_string "at") in
@@ -518,7 +518,7 @@ let string_arithmetic_jsligo () : (unit, _) result =
   
 
 let bytes_arithmetic () : (unit, _) result =
-  let%bind program = type_file "./contracts/bytes_arithmetic.ligo" in
+  let%bind program = ptype_file "./contracts/bytes_arithmetic.ligo" in
   let%bind foo = trace_option (test_internal __LOC__) @@ e_bytes_hex_ez "0f00" in
   let%bind foototo = trace_option (test_internal __LOC__) @@ e_bytes_hex_ez "0f007070" in
   let%bind toto = trace_option (test_internal __LOC__) @@ e_bytes_hex_ez "7070" in
@@ -566,7 +566,7 @@ let comparable_mligo () : (unit, _) result =
   ok ()
 
 let crypto () : (unit, _) result =
-  let%bind program = type_file "./contracts/crypto.ligo" in
+  let%bind program = ptype_file "./contracts/crypto.ligo" in
   let%bind foo = trace_option (test_internal __LOC__) @@ e_bytes_hex_ez "0f00" in
   let%bind foototo = trace_option (test_internal __LOC__) @@ e_bytes_hex_ez "0f007070" in
   let%bind b1 = Test_helpers.run_typed_program_with_imperative_input program "hasherman512" foo in
@@ -684,8 +684,8 @@ let bytes_arithmetic_jsligo () : (unit, _) result =
   
 
 let set_arithmetic () : (unit, _) result =
-  let%bind program = type_file "./contracts/set_arithmetic.ligo" in
-  let%bind program_1 = type_file "./contracts/set_arithmetic-1.ligo" in
+  let%bind program = ptype_file "./contracts/set_arithmetic.ligo" in
+  let%bind program_1 = ptype_file "./contracts/set_arithmetic-1.ligo" in
   let%bind () =
     expect_eq program_1 "iter_op"
       (e_set [e_int 2 ; e_int 4 ; e_int 7])
@@ -788,7 +788,7 @@ let set_arithmetic_mligo () : (unit, _) result =
 
 let set_arithmetic_religo () : (unit, _) result =
   let%bind program = retype_file "./contracts/set_arithmetic.religo" in
-  let%bind program_1 = type_file "./contracts/set_arithmetic-1.ligo" in
+  let%bind program_1 = ptype_file "./contracts/set_arithmetic-1.ligo" in
   let%bind () =
     expect_eq program "literal_op"
       (e_unit ())
@@ -823,7 +823,7 @@ let set_arithmetic_religo () : (unit, _) result =
 
 let set_arithmetic_jsligo () : (unit, _) result =
   let%bind program = jstype_file "./contracts/set_arithmetic.jsligo" in
-  let%bind program_1 = type_file "./contracts/set_arithmetic-1.ligo" in
+  let%bind program_1 = ptype_file "./contracts/set_arithmetic-1.ligo" in
   let%bind () =
     expect_eq program "literal_op"
       (e_unit ())
@@ -857,16 +857,16 @@ let set_arithmetic_jsligo () : (unit, _) result =
   ok ()
 
 let unit_expression () : (unit, _) result =
-  let%bind program = type_file "./contracts/unit.ligo" in
+  let%bind program = ptype_file "./contracts/unit.ligo" in
   expect_eq_evaluate program "u" (e_unit ())
 
 let string_expression () : (unit, _) result =
-  let%bind program = type_file "./contracts/string.ligo" in
+  let%bind program = ptype_file "./contracts/string.ligo" in
   let%bind _ = expect_eq_evaluate program "s" (e_string "toto") in
   expect_eq_evaluate program "y" (e_string "foototobar")
 
 let include_ () : (unit, _) result =
-  let%bind program = type_file "./contracts/includer.ligo" in
+  let%bind program = ptype_file "./contracts/includer.ligo" in
   expect_eq_evaluate program "bar" (e_int 144)
 
 let include_mligo () : (unit, _) result =
@@ -887,7 +887,7 @@ let modules program : (unit, _) result =
   expect_eq program "add" (e_pair (e_int 1) (e_int 2)) (e_int 3)
 
 let modules_ligo () : (unit, _) result =
-  let%bind program = type_file "./contracts/modules.ligo" in
+  let%bind program = ptype_file "./contracts/modules.ligo" in
   modules program
 
 let modules_mligo () : (unit, _) result =
@@ -910,7 +910,7 @@ let tuple_ez_int names n =
   e_tuple @@ List.map (fun _ -> e_int n) names
 
 let multiple_parameters () : (unit, _) result  =
-  let%bind program = type_file "./contracts/multiple-parameters.ligo" in
+  let%bind program = ptype_file "./contracts/multiple-parameters.ligo" in
   let aux ((name : string) , make_input , make_output) =
     let make_output' = fun n -> e_int @@ make_output n in
     expect_eq_n program name make_input make_output'
@@ -959,7 +959,7 @@ let multiple_parameters_jsligo () : (unit, _) result  =
   ok ()
 
 let record () : (unit, _) result  =
-  let%bind program = type_file "./contracts/record.ligo" in
+  let%bind program = ptype_file "./contracts/record.ligo" in
   let%bind () =
     let expected = record_ez_int ["foo" ; "bar"] 0 in
     expect_eq_evaluate program "fb" expected
@@ -1143,7 +1143,7 @@ let record_jsligo () : (unit, _) result  =
   ok ()
 
 let tuple () : (unit, _) result  =
-  let%bind program = type_file "./contracts/tuple.ligo" in
+  let%bind program = ptype_file "./contracts/tuple.ligo" in
   let ez n =
     e_tuple (List.map e_int n) in
   let%bind () =
@@ -1255,7 +1255,7 @@ let tuple_jsligo () : (unit, _) result  =
   ok ()
 
 let option () : (unit, _) result =
-  let%bind program = type_file "./contracts/option.ligo" in
+  let%bind program = ptype_file "./contracts/option.ligo" in
   let%bind () =
     let expected = e_some (e_int 42) in
     expect_eq_evaluate program "s" expected
@@ -1427,11 +1427,11 @@ let big_map_ type_f path : (unit, _) result =
   ok ()
 
 
-let map () : (unit, _) result = map_ type_file "./contracts/map.ligo"
+let map () : (unit, _) result = map_ ptype_file "./contracts/map.ligo"
 let mmap () : (unit, _) result = map_ mtype_file "./contracts/map.mligo"
 let remap () : (unit, _) result = map_ retype_file "./contracts/map.religo"
 let jsmap () : (unit, _) result = map_ jstype_file "./contracts/map.jsligo"
-let big_map () : (unit, _) result = big_map_ type_file "./contracts/big_map.ligo"
+let big_map () : (unit, _) result = big_map_ ptype_file "./contracts/big_map.ligo"
 let mbig_map () : (unit, _) result = big_map_ mtype_file "./contracts/big_map.mligo"
 let rebig_map () : (unit, _) result = big_map_ retype_file "./contracts/big_map.religo"
 let jsbig_map () : (unit, _) result = big_map_ jstype_file "./contracts/big_map.jsligo"
@@ -1440,7 +1440,7 @@ let jsbig_map () : (unit, _) result = big_map_ jstype_file "./contracts/big_map.
 
 let list () : (unit, _) result =
   Format.printf "Pre_type \n%!";
-  let%bind program = type_file "./contracts/list.ligo" in
+  let%bind program = ptype_file "./contracts/list.ligo" in
   let ez lst =
     let lst' = List.map e_int lst in
     e_typed_list lst' (t_int ())
@@ -1495,7 +1495,7 @@ let list () : (unit, _) result =
   ok ()
 
 let condition () : (unit, _) result =
-  let%bind program = type_file "./contracts/condition.ligo" in
+  let%bind program = ptype_file "./contracts/condition.ligo" in
   let%bind _ =
     let make_input = e_int in
     let make_expected = fun n -> e_int (if n = 2 then 42 else 0) in
@@ -1567,7 +1567,7 @@ let eq_bool_common program =
   ok ()
 
 let eq_bool () : (unit, _) result =
-  let%bind program = type_file "./contracts/eq_bool.ligo" in
+  let%bind program = ptype_file "./contracts/eq_bool.ligo" in
   eq_bool_common program
 
 let eq_bool_mligo () : (unit, _) result =
@@ -1583,17 +1583,17 @@ let eq_bool_jsligo () : (unit, _) result =
   eq_bool_common program
 
 let condition_simple () : (unit, _) result =
-  let%bind program = type_file "./contracts/condition-simple.ligo" in
+  let%bind program = ptype_file "./contracts/condition-simple.ligo" in
   let make_input = e_int in
   let make_expected = fun _ -> e_int 42 in
   expect_eq_n program "main" make_input make_expected
 
 let loop1 () : (unit, _) result =
-  let%bind _program = type_file "./contracts/loop1.ligo" in
+  let%bind _program = ptype_file "./contracts/loop1.ligo" in
   ok ()
 
 let loop2 () : (unit, _) result =
-  let%bind program = type_file "./contracts/loop2.ligo" in
+  let%bind program = ptype_file "./contracts/loop2.ligo" in
   let%bind () =
     let make_input = e_nat in
     let make_expected = e_nat in
@@ -1601,7 +1601,7 @@ let loop2 () : (unit, _) result =
   ok ()
 
 let loop3 () : (unit, _) result =
-  let%bind program = type_file "./contracts/loop3.ligo" in
+  let%bind program = ptype_file "./contracts/loop3.ligo" in
   let%bind () =
     let make_input = e_nat in
     let make_expected = e_nat in
@@ -1609,7 +1609,7 @@ let loop3 () : (unit, _) result =
   ok ()
 
 let loop4 () : (unit, _) result =
-  let%bind program = type_file "./contracts/loop4.ligo" in
+  let%bind program = ptype_file "./contracts/loop4.ligo" in
   let%bind () =
     let make_input = e_nat in
     let make_expected = fun n -> e_nat (n * (n + 1) / 2) in
@@ -1617,7 +1617,7 @@ let loop4 () : (unit, _) result =
   ok ()
 
 let loop5 () : (unit, _) result =
-  let%bind program = type_file "./contracts/loop5.ligo" in
+  let%bind program = ptype_file "./contracts/loop5.ligo" in
   let%bind () =
     let make_input = e_nat in
     let make_expected = fun n -> e_int (n * (n + 1) / 2) in
@@ -1625,7 +1625,7 @@ let loop5 () : (unit, _) result =
   ok ()
 
 let loop6 () : (unit, _) result =
-  let%bind program = type_file "./contracts/loop6.ligo" in
+  let%bind program = ptype_file "./contracts/loop6.ligo" in
   let%bind () =
     let make_input = e_nat in
     let make_expected = fun n -> e_int (n * n) in
@@ -1633,7 +1633,7 @@ let loop6 () : (unit, _) result =
   ok ()
 
 let loop7 () : (unit, _) result =
-  let%bind program = type_file "./contracts/loop7.ligo" in
+  let%bind program = ptype_file "./contracts/loop7.ligo" in
   let input = e_unit () in
   let%bind () =
     let expected = e_pair (e_int 3) (e_string "totototo") in
@@ -1641,7 +1641,7 @@ let loop7 () : (unit, _) result =
   ok ()
 
 let loop8 () : (unit, _) result =
-  let%bind program = type_file "./contracts/loop8.ligo" in
+  let%bind program = ptype_file "./contracts/loop8.ligo" in
   let input = e_unit () in
   let%bind () =
     let expected = e_pair (e_int 6) (e_string "totototo") in
@@ -1649,7 +1649,7 @@ let loop8 () : (unit, _) result =
   ok ()
 
 let loop9 () : (unit, _) result =
-  let%bind program = type_file "./contracts/loop9.ligo" in
+  let%bind program = ptype_file "./contracts/loop9.ligo" in
   let input = e_unit () in
   let%bind () =
     let expected = e_pair (e_int 6) (e_string "123") in
@@ -1657,7 +1657,7 @@ let loop9 () : (unit, _) result =
   ok ()
 
 let loop10 () : (unit, _) result =
-  let%bind program = type_file "./contracts/loop10.ligo" in
+  let%bind program = ptype_file "./contracts/loop10.ligo" in
   let input = e_unit () in
   let%bind () =
     let expected = (e_int 0) in
@@ -1665,7 +1665,7 @@ let loop10 () : (unit, _) result =
   ok ()
 
 let loop11 () : (unit, _) result =
-  let%bind program = type_file "./contracts/loop11.ligo" in
+  let%bind program = ptype_file "./contracts/loop11.ligo" in
   let input = e_unit () in
   let%bind () =
     let expected = (e_int 13) in
@@ -1673,7 +1673,7 @@ let loop11 () : (unit, _) result =
   ok ()
 
 let loop12 () : (unit, _) result =
-  let%bind program = type_file "./contracts/loop12.ligo" in
+  let%bind program = ptype_file "./contracts/loop12.ligo" in
   let input = e_unit () in
   let%bind () =
     let expected = (e_int 1020) in
@@ -1681,7 +1681,7 @@ let loop12 () : (unit, _) result =
   ok ()
 
 let loop13 () : (unit, _) result =
-  let%bind program = type_file "./contracts/loop13.ligo" in
+  let%bind program = ptype_file "./contracts/loop13.ligo" in
   let input = e_unit () in
   let%bind () =
     let expected = (e_int 1040) in
@@ -1689,7 +1689,7 @@ let loop13 () : (unit, _) result =
   ok ()
 
 let loop14 () : (unit, _) result =
-  let%bind program = type_file "./contracts/loop14.ligo" in
+  let%bind program = ptype_file "./contracts/loop14.ligo" in
   let input = e_unit () in
   let%bind () =
     let expected = (e_int 20) in
@@ -1697,7 +1697,7 @@ let loop14 () : (unit, _) result =
   ok ()
 
 let loop15 () : (unit, _) result =
-  let%bind program = type_file "./contracts/loop15.ligo" in
+  let%bind program = ptype_file "./contracts/loop15.ligo" in
   let input = e_unit () in
   let%bind () =
     let expected = e_pair (e_int 24)
@@ -1706,7 +1706,7 @@ let loop15 () : (unit, _) result =
   ok ()
 
 let loop16 () : (unit, _) result =
-  let%bind program = type_file "./contracts/loop16.ligo" in
+  let%bind program = ptype_file "./contracts/loop16.ligo" in
   let input = e_unit () in
   let%bind () =
     let expected = e_pair (e_int 24)
@@ -1715,7 +1715,7 @@ let loop16 () : (unit, _) result =
   ok ()
 
 let loop17 () : (unit, _) result =
-  let%bind program = type_file "./contracts/loop.ligo" in
+  let%bind program = ptype_file "./contracts/loop.ligo" in
   let input = e_unit () in
   let%bind () =
     let expected = e_pair (e_bool true) (e_int 4) in
@@ -1723,7 +1723,7 @@ let loop17 () : (unit, _) result =
   ok ()
 
 let loop18 () : (unit, _) result =
-  let%bind program = type_file "./contracts/loop.ligo" in
+  let%bind program = ptype_file "./contracts/loop.ligo" in
   let input = e_unit () in
   let%bind () =
     let ez lst =
@@ -1735,7 +1735,7 @@ let loop18 () : (unit, _) result =
   ok ()
 
 let loop () : (unit, _) result =
-  let%bind program = type_file "./contracts/loop.ligo" in
+  let%bind program = ptype_file "./contracts/loop.ligo" in
   let%bind () =
     let make_input = e_nat in
     let make_expected = e_nat in
@@ -1930,7 +1930,7 @@ let loop2_jsligo () : (unit, _) result =
   
 
 let matching () : (unit, _) result =
-  let%bind program = type_file "./contracts/match.ligo" in
+  let%bind program = ptype_file "./contracts/match.ligo" in
   let%bind () =
     let make_input = e_int in
     let make_expected = fun n -> e_int (if n = 2 then 42 else 0) in
@@ -1977,38 +1977,38 @@ let matching () : (unit, _) result =
   ok ()
 
 let declarations () : (unit, _) result =
-  let%bind program = type_file "./contracts/declarations.ligo" in
+  let%bind program = ptype_file "./contracts/declarations.ligo" in
   let make_input = e_int in
   let make_expected = fun n -> e_int (42 + n) in
   expect_eq program "main" (make_input 0) (make_expected 0) >>? fun () ->
   expect_eq_n program "main" make_input make_expected
 
 let declaration_local () : (unit, _) result =
-  let%bind program = type_file "./contracts/declaration-local.ligo" in
+  let%bind program = ptype_file "./contracts/declaration-local.ligo" in
   let make_input = e_int in
   let make_expected = fun _ -> e_int 42 in
   expect_eq_n program "main" make_input make_expected
 
 let quote_declaration () : (unit, _) result =
-  let%bind program = type_file "./contracts/quote-declaration.ligo" in
+  let%bind program = ptype_file "./contracts/quote-declaration.ligo" in
   let make_input = e_int in
   let make_expected = fun n -> e_int (42 + 2 * n) in
   expect_eq_n program "main" make_input make_expected
 
 let quote_declarations () : (unit, _) result =
-  let%bind program = type_file "./contracts/quote-declarations.ligo" in
+  let%bind program = ptype_file "./contracts/quote-declarations.ligo" in
   let make_input = e_int in
   let make_expected = fun n -> e_int (74 + 2 * n) in
   expect_eq_n program "main" make_input make_expected
 
 let counter_contract () : (unit, _) result =
-  let%bind program = type_file "./contracts/counter.ligo" in
+  let%bind program = ptype_file "./contracts/counter.ligo" in
   let make_input = fun n-> e_pair (e_int n) (e_int 42) in
   let make_expected = fun n -> e_pair (e_typed_list [] (t_operation ())) (e_int (42 + n)) in
   expect_eq_n program "main" make_input make_expected
 
 let super_counter_contract () : (unit, _) result =
-  let%bind program = type_file "./contracts/super-counter.ligo" in
+  let%bind program = ptype_file "./contracts/super-counter.ligo" in
   let make_input = fun n ->
     let action = if n mod 2 = 0 then "Increment" else "Decrement" in
     e_pair (e_constructor action (e_int n)) (e_int 42) in
@@ -2048,7 +2048,7 @@ let super_counter_contract_jsligo () : (unit, _) result =
   expect_eq_n program "main" make_input make_expected
   
 let dispatch_counter_contract () : (unit, _) result =
-  let%bind program = type_file "./contracts/dispatch-counter.ligo" in
+  let%bind program = ptype_file "./contracts/dispatch-counter.ligo" in
   let make_input = fun n ->
     let action = if n mod 2 = 0 then "Increment" else "Decrement" in
     e_pair (e_constructor action (e_int n)) (e_int 42) in
@@ -2058,7 +2058,7 @@ let dispatch_counter_contract () : (unit, _) result =
   expect_eq_n program "main" make_input make_expected
 
 let failwith_ligo () : (unit, _) result =
-  let%bind program = type_file "./contracts/failwith.ligo" in
+  let%bind program = ptype_file "./contracts/failwith.ligo" in
   let should_fail = expect_fail program "main" in
   let should_work input = expect_eq program "main" input (e_pair (e_typed_list [] (t_operation())) (e_unit ())) in
   let%bind _ = should_work (e_pair (e_constructor "Zero" (e_nat 0)) (e_unit ())) in
@@ -2114,7 +2114,7 @@ let assert_jsligo () : (unit, _) result =
   ok ()
     
 let recursion_ligo () : (unit, _) result =
-  let%bind program = type_file "./contracts/recursion.ligo" in
+  let%bind program = ptype_file "./contracts/recursion.ligo" in
   let%bind _ =
     let make_input = e_pair (e_int 10) (e_int 0) in
     let make_expected = e_int 55 in
@@ -2168,7 +2168,7 @@ let recursion_jsligo () : (unit, _) result =
   
 
 let guess_string_mligo () : (unit, _) result =
-  let%bind program = type_file "./contracts/guess_string.mligo" in
+  let%bind program = ptype_file "./contracts/guess_string.mligo" in
   let make_input = fun n -> e_pair (e_int n) (e_int 42) in
   let make_expected = fun n -> e_pair (e_typed_list [] (t_operation())) (e_int (42 + n))
   in expect_eq_n program "main" make_input make_expected
@@ -2258,7 +2258,7 @@ let local_type_decl program : (unit, _) result =
   ok ()
 
 let local_type_decl_ligo () : (unit, _) result =
-  let%bind program = type_file "./contracts/local_type_decl.ligo" in
+  let%bind program = ptype_file "./contracts/local_type_decl.ligo" in
   local_type_decl program
 
 let local_type_decl_mligo () : (unit, _) result =
@@ -2433,7 +2433,7 @@ let lambda_jsligo () : (unit, _) result =
   expect_eq program "main" make_input make_expected
 
 let lambda_ligo () : (unit, _) result =
-  let%bind program = type_file "./contracts/lambda.ligo" in
+  let%bind program = ptype_file "./contracts/lambda.ligo" in
   let make_input = e_pair (e_unit ()) (e_unit ()) in
   let make_expected = (e_unit ()) in
   expect_eq program "main" make_input make_expected
@@ -2470,7 +2470,7 @@ let michelson_insertion program : (unit, _) result =
   expect_eq_n_pos program "michelson_add" make_input make_expected
 
 let michelson_insertion_ligo () : (unit, _) result =
-  michelson_insertion @@ type_file "./contracts/michelson_insertion.ligo"
+  michelson_insertion @@ ptype_file "./contracts/michelson_insertion.ligo"
 
 let michelson_insertion_mligo () : (unit, _) result =
   michelson_insertion @@ mtype_file "./contracts/michelson_insertion.mligo"
@@ -2482,13 +2482,13 @@ let michelson_insertion_jsligo () : (unit, _) result =
   michelson_insertion @@ jstype_file "./contracts/michelson_insertion.jsligo"
 
 let website1_ligo () : (unit, _) result =
-  let%bind program = type_file "./contracts/website1.ligo" in
+  let%bind program = ptype_file "./contracts/website1.ligo" in
   let make_input = fun n-> e_pair (e_int n) (e_int 42) in
   let make_expected = fun _n -> e_pair (e_typed_list [] (t_operation ())) (e_int (42 + 1)) in
   expect_eq_n program "main" make_input make_expected
 
 let website2_ligo () : (unit, _) result =
-  let%bind program = type_file "./contracts/website2.ligo" in
+  let%bind program = ptype_file "./contracts/website2.ligo" in
   let make_input = fun n ->
     let action = if n mod 2 = 0 then "Increment" else "Decrement" in
     e_pair (e_constructor action (e_int n)) (e_int 42) in
@@ -2498,7 +2498,7 @@ let website2_ligo () : (unit, _) result =
   expect_eq_n program "main" make_input make_expected
 
 let tez_ligo () : (unit, _) result =
-  let%bind program = type_file "./contracts/tez.ligo" in
+  let%bind program = ptype_file "./contracts/tez.ligo" in
   let%bind _ = expect_eq_evaluate program "add_tez" (e_mutez 42) in
   let%bind _ = expect_eq_evaluate program "sub_tez" (e_mutez 1) in
   let%bind _ = expect_eq_evaluate program "not_enough_tez" (e_mutez 4611686018427387903) in
@@ -2629,7 +2629,7 @@ let balance_test_options () =
   ok @@ Proto_alpha_utils.Memory_proto_alpha.make_options ~balance ()
 
 let balance_constant () : (unit, _) result =
-  let%bind program = type_file "./contracts/balance_constant.ligo" in
+  let%bind program = ptype_file "./contracts/balance_constant.ligo" in
   let input = e_tuple [e_unit () ; e_mutez 0]  in
   let expected = e_tuple [e_list []; e_mutez 4000000000000] in
   let%bind options = balance_test_options () in
@@ -2659,7 +2659,7 @@ let balance_constant_jsligo () : (unit, _) result =
   
 
 let amount () : (unit, _) result =
-  let%bind program = type_file "./contracts/amount.ligo" in
+  let%bind program = ptype_file "./contracts/amount.ligo" in
   let input = e_unit () in
   let expected = e_int 42 in
   let amount =
@@ -2717,7 +2717,7 @@ let addr_test program =
   expect_eq program "main" (e_key_hash key_hash) (e_address addr)
 
 let address () : (unit, _) result =
-  let%bind program = type_file "./contracts/address.ligo" in
+  let%bind program = ptype_file "./contracts/address.ligo" in
   addr_test program
 
 let address_mligo () : (unit, _) result =
@@ -2734,7 +2734,7 @@ let address_jsligo () : (unit, _) result =
   
 
 let self_address () : (unit, _) result =
-  let%bind _ = type_file "./contracts/self_address.ligo" in
+  let%bind _ = ptype_file "./contracts/self_address.ligo" in
   ok ()
 
 let self_address_mligo () : (unit, _) result =
@@ -2750,7 +2750,7 @@ let self_address_jsligo () : (unit, _) result =
   ok ()
 
 let implicit_account () : (unit, _) result =
-  let%bind _ = type_file "./contracts/implicit_account.ligo" in
+  let%bind _ = ptype_file "./contracts/implicit_account.ligo" in
   ok ()
 
 let implicit_account_mligo () : (unit, _) result =
@@ -2777,7 +2777,7 @@ let tuples_sequences_functions_jsligo () : (unit, _) result =
   
 
 let is_nat () : (unit, _) result =
-  let%bind program = type_file "./contracts/isnat.ligo" in
+  let%bind program = ptype_file "./contracts/isnat.ligo" in
   let%bind () =
     let input = e_int 10 in
     let expected = e_some (e_nat 10) in
@@ -2829,13 +2829,13 @@ let is_nat_jsligo () : (unit, _) result =
   in ok ()
 
 let simple_access_ligo () : (unit, _) result =
-  let%bind program = type_file "./contracts/simple_access.ligo" in
+  let%bind program = ptype_file "./contracts/simple_access.ligo" in
   let make_input = e_tuple [e_int 0; e_int 1] in
   let make_expected = e_int 2 in
   expect_eq program "main" make_input make_expected
 
 let deep_access_ligo () : (unit, _) result =
-  let%bind program = type_file "./contracts/deep_access.ligo" in
+  let%bind program = ptype_file "./contracts/deep_access.ligo" in
   let%bind () =
     let make_input = e_unit () in
     let make_expected = e_int 2 in
@@ -2852,7 +2852,7 @@ let deep_access_ligo () : (unit, _) result =
   ok ()
 
 let attributes_ligo () : (unit, _) result =
-  let%bind program = type_file "./contracts/attributes.ligo" in
+  let%bind program = ptype_file "./contracts/attributes.ligo" in
   let%bind () =
     let input = e_int 3 in
     let expected = e_int 5 in
@@ -2889,7 +2889,7 @@ let attributes_jsligo () : (unit, _) result =
   
 
 let get_contract_ligo () : (unit, _) result =
-  let%bind program = type_file "./contracts/get_contract.ligo" in
+  let%bind program = ptype_file "./contracts/get_contract.ligo" in
   let%bind () =
     let make_input = fun _n -> e_unit () in
     let make_expected : int -> Ast_core.expression -> (unit, _) result = fun _n result ->
@@ -2910,28 +2910,28 @@ let get_contract_ligo () : (unit, _) result =
   ok()
 
 let entrypoints_ligo () : (unit, _) result =
-  let%bind _program = type_file "./contracts/entrypoints.ligo" in
+  let%bind _program = ptype_file "./contracts/entrypoints.ligo" in
   (* hmm... *)
   ok ()
 
 let simple1 () : (unit,_) result =
-  let%bind program = type_file "./contracts/simple1.ligo" in
+  let%bind program = ptype_file "./contracts/simple1.ligo" in
   expect_eq_evaluate program "i" (e_int 42)
 
 let simple2 () : (unit,_) result =
-  let%bind program = type_file "./contracts/simple2.ligo" in
+  let%bind program = ptype_file "./contracts/simple2.ligo" in
   expect_eq_evaluate program "i" (e_int 42)
 
 let simple3 () : (unit,_) result =
-  let%bind program = type_file "./contracts/simple3.ligo" in
+  let%bind program = ptype_file "./contracts/simple3.ligo" in
   expect_eq_evaluate program "my_address" (e_address "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx")
 
 let simple4 () : (unit,_) result =
-  let%bind program = type_file "./contracts/simple4.ligo" in
+  let%bind program = ptype_file "./contracts/simple4.ligo" in
   expect_eq_evaluate program "my_string_option" (e_string "hello")
 
 let chain_id () : (unit, _) result =
-  let%bind program = type_file "./contracts/chain_id.ligo" in
+  let%bind program = ptype_file "./contracts/chain_id.ligo" in
   let pouet = Tezos_crypto.Base58.simple_encode
     Tezos_base__TzPervasives.Chain_id.b58check_encoding
     Tezos_base__TzPervasives.Chain_id.zero in
@@ -2945,7 +2945,7 @@ let key_hash () : (unit, _) result =
   let (raw_pkh,raw_pk,_) = Signature.generate_key () in
   let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
   let pk_str = Signature.Public_key.to_b58check raw_pk in
-  let%bind program = type_file "./contracts/key_hash.ligo" in
+  let%bind program = ptype_file "./contracts/key_hash.ligo" in
   let make_input = e_pair (e_key_hash pkh_str) (e_key pk_str) in
   let make_expected = e_pair (e_bool true) (e_key_hash pkh_str) in
   let%bind () = expect_eq program "check_hash_key" make_input make_expected in
@@ -2990,7 +2990,7 @@ let check_signature () : (unit, _) result =
   let (_, raw_pk, sk) = Signature.generate_key () in
   let pk_str = Signature.Public_key.to_b58check raw_pk in
   let signed = Signature.sign sk (Bytes.of_string "hello world") in
-  let%bind program = type_file "./contracts/check_signature.ligo" in
+  let%bind program = ptype_file "./contracts/check_signature.ligo" in
   let make_input = e_tuple [e_key pk_str ;
                             e_signature (Signature.to_b58check signed) ;
                             e_bytes_string "hello world"] in
@@ -3053,7 +3053,7 @@ let set_delegate () : (unit, _) result =
   let open Tezos_crypto in
   let (raw_pkh,_,_) = Signature.generate_key () in
   let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
-  let%bind program = type_file "./contracts/set_delegate.ligo" in
+  let%bind program = ptype_file "./contracts/set_delegate.ligo" in
   let%bind () = expect_eq program "main" (e_key_hash pkh_str) (e_typed_list [] (t_operation ()))
   in ok ()
 
@@ -3113,7 +3113,7 @@ let let_in_multi_bind () : (unit, _) result =
   in ok ()
 
 let bytes_unpack () : (unit, _) result =
-  let%bind program = type_file "./contracts/bytes_unpack.ligo" in
+  let%bind program = ptype_file "./contracts/bytes_unpack.ligo" in
   let%bind () = expect_eq program "id_string" (e_string "teststring") (e_some (e_string "teststring")) in
   let%bind () = expect_eq program "id_int" (e_int 42) (e_some (e_int 42)) in
   let open Proto_alpha_utils.Memory_proto_alpha in
@@ -3153,7 +3153,7 @@ let bytes_unpack_jsligo () : (unit, _) result =
   ok ()
 
 let empty_case () : (unit, _) result =
-  let%bind program = type_file "./contracts/empty_case.ligo" in
+  let%bind program = ptype_file "./contracts/empty_case.ligo" in
   let%bind () =
     let input _ = e_constructor "Bar" (e_int 1) in
     let expected _ = e_int 1 in
@@ -3303,7 +3303,7 @@ let single_record_expr_religo () : (unit, _) result =
   ok ()
 
 let loop_bugs_ligo () : (unit, _) result =
-  let%bind program = type_file "./contracts/loop_bugs.ligo" in
+  let%bind program = ptype_file "./contracts/loop_bugs.ligo" in
   let input = e_unit () in
   let%bind () =
     let expected = e_string "tata" in
@@ -3313,8 +3313,6 @@ let loop_bugs_ligo () : (unit, _) result =
     expect_eq program "shadowing_assigned_in_body" input expected in
   ok ()
 
-let no = false
-let y = true
 let main = test_suite "Integration (End to End)"
   [
 

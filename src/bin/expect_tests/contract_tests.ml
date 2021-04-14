@@ -1449,8 +1449,8 @@ const letin_nesting =
  s}}}
 const letin_nesting2 =
   lambda (x : int) return let y = 2 in let z = 3 in ADD(ADD(x , y) , z)
-const x = match (+1 , (+2 , +3)) with (#2 , #4) -> match #4 with (x ,
-  #3) -> x
+const x =  match (+1 , (+2 , +3)) with
+            | (_,(x,_)) -> x
     |}];
 
   run_ligo_good ["print-ast"; contract "letin.religo"];
@@ -1471,8 +1471,8 @@ const letin_nesting =
  s}}}
 const letin_nesting2 =
   lambda (x : int) return let y = 2 in let z = 3 in ADD(ADD(x , y) , z)
-const x = match (+1 , (+2 , +3)) with (#2 , #4) -> match #4 with (x ,
-  #3) -> x
+const x =  match (+1 , (+2 , +3)) with
+            | (_,(x,_)) -> x
     |}];
 
   run_ligo_bad ["print-ast-typed"; contract "existential.mligo"];
@@ -1506,7 +1506,7 @@ Missing a type annotation for argument "b". |}];
     The tuple "b, c, d" does not match the type "int * int". |}];
   run_ligo_bad ["print-ast-typed"; bad_contract "funarg_tuple_wrong.religo"];
   [%expect {|
-    Pattern do not match returned expression. |}];
+    Pattern (b,c,d) do not conform type ( int * int ) |}];
 
   run_ligo_bad [ "compile-contract" ; bad_contract "duplicate_record_field.mligo" ; "main" ] ;
   [%expect {|

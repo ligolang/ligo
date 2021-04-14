@@ -142,11 +142,11 @@ and print_directive state dir =
   in Buffer.add_string state#buffer s
 
 and print_const_decl state {value; _} =
-  let {kwd_const; name; const_type;
+  let {kwd_const; pattern; const_type;
        equal; init; terminator; attributes; _} = value in
   print_attributes state attributes;
   print_token      state kwd_const "const";
-  print_var        state name;
+  print_pattern    state pattern;
   print_option     state print_type_annot const_type;
   print_token      state equal "=";
   print_expr       state init;
@@ -343,10 +343,10 @@ and print_data_decl state = function
 | LocalModuleAlias decl -> print_module_alias state decl
 
 and print_var_decl state {value; _} =
-  let {kwd_var; name; var_type;
+  let {kwd_var; pattern; var_type;
        assign; init; terminator} = value in
   print_token      state kwd_var "var";
-  print_var        state name;
+  print_pattern    state pattern;
   print_option     state print_type_annot var_type;
   print_token      state assign ":=";
   print_expr       state init;
@@ -785,6 +785,7 @@ and print_injection_kwd state = function
 | InjMap    kwd_map     -> print_token state kwd_map "map"
 | InjBigMap kwd_big_map -> print_token state kwd_big_map "big_map"
 | InjList   kwd_list    -> print_token state kwd_list "list"
+| InjRecord   kwd_list    -> print_token state kwd_list "record"
 
 and print_ne_injection :
   'a.state -> (state -> 'a -> unit) -> 'a ne_injection reg -> unit =
@@ -856,7 +857,17 @@ and print_pattern state = function
 | PList pattern    -> print_list_pattern state pattern
 | PTuple ptuple    -> print_ptuple state ptuple
 | PConstr pattern  -> print_constr_pattern state pattern
+| PRecord record   -> print_record_pattern state record
 
+
+and print_record_pattern state record_pattern =
+  print_injection state print_field_pattern record_pattern
+
+and print_field_pattern state {value; _} =
+  let {field_name; eq; pattern} = value in
+  print_var     state field_name;
+  print_token   state eq "=";
+  print_pattern state pattern
 and print_constr_pattern state = function
   PUnit region     -> print_token state region "Unit"
 | PFalse region    -> print_token state region "False"
@@ -871,15 +882,9 @@ and print_constr_pattern state = function
     | Some tuple -> print_ptuple state tuple
 
 and print_psome state {value; _} =
-  let c_Some, patterns = value in
+  let c_Some, pattern = value in
   print_token    state c_Some "Some";
-  print_patterns state patterns
-
-and print_patterns state {value; _} =
-  let {lpar; inside; rpar} = value in
-  print_token   state lpar "(";
-  print_pattern state inside;
-  print_token   state rpar ")"
+  print_pattern state pattern
 
 and print_list_pattern state = function
   PListComp comp ->
@@ -1071,7 +1076,7 @@ and pp_const_decl state decl =
   let arity = arity + 2 in
   let rank = 0 in
   let rank =
-    pp_ident (state#pad arity 0) decl.name; rank+1 in
+    pp_pattern (state#pad arity 0) decl.pattern; rank+1 in
   let rank =
     pp_type_annot (state#pad arity rank) rank decl.const_type in
   let rank =
@@ -1375,6 +1380,13 @@ and pp_pattern state = function
 | PTuple {value; region} ->
     pp_loc_node state "PTuple" region;
     pp_tuple_pattern (state#pad 1 0) value
+| PRecord {value; _} ->
+    pp_node state "PRecord";
+    pp_injection pp_field_pattern state value
+
+and pp_field_pattern state {value; _} =
+  pp_node    state value.field_name.value;
+  pp_pattern (state#pad 1 0) value.pattern
 
 and pp_bytes state {value=lexeme,hex; region} =
   pp_loc_node (state#pad 2 0) lexeme region;
@@ -1387,9 +1399,9 @@ and pp_int state {value=lexeme,z; region} =
 and pp_constr_pattern state = function
   PNone region ->
     pp_loc_node state "PNone" region
-| PSomeApp {value=_,{value=par; _}; region} ->
+| PSomeApp {value=_,pattern; region} ->
     pp_loc_node state "PSomeApp" region;
-    pp_pattern (state#pad 1 0) par.inside
+    pp_pattern (state#pad 1 0) pattern
 | PUnit region ->
     pp_loc_node state "PUnit" region
 | PFalse region ->
@@ -1653,7 +1665,7 @@ and pp_data_decl state = function
 and pp_var_decl state decl =
   let arity = if decl.var_type = None then 2 else 3 in
   let rank = 0 in
-  let rank = pp_ident (state#pad arity rank) decl.name; rank+1 in
+  let rank = pp_pattern (state#pad arity rank) decl.pattern; rank+1 in
   let rank = pp_type_annot (state#pad arity rank) rank decl.var_type
   in pp_expr (state#pad arity rank) decl.init
 

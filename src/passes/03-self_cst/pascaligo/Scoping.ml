@@ -115,16 +115,35 @@ let rec vars_of_pattern env = function
 | PInt _ | PNat _ | PBytes _ | PString _ -> ok @@ env
 | PList l -> vars_of_plist env l
 | PTuple t -> vars_of_ptuple env t.value
-| PVar var when is_wildcard var -> ok @@ env
+| PRecord p -> vars_of_fields env p.value.elements
 | PVar var ->
     if VarSet.mem var env then
       fail @@ non_linear_pattern var
-    else ok @@ VarSet.add var env
+    else
+      if String.equal "_" var.value then
+        ok env
+      else
+        ok (VarSet.add var env)
+
+and vars_of_fields env fields =
+  Helpers.bind_fold_pseq vars_of_field_pattern env fields
+  
+and vars_of_field_pattern env field =
+
+  (* TODO: Hmm, not really sure
+  let var = field.value.field_name in
+  if VarSet.mem var env then
+    fail @@ non_linear_pattern var
+  else
+  *)
+  let p = field.value.pattern in
+  vars_of_pattern env p
+  
 
 and vars_of_pconstr env = function
-  PUnit _ | PFalse _ | PTrue _ | PNone _ -> ok env
-| PSomeApp {value=_, {value={inside; _};_}; _} ->
-    vars_of_pattern env inside
+  PUnit _ | PFalse _ | PTrue _ | PNone _ -> ok @@ env
+| PSomeApp {value=_, pattern; _} ->
+    vars_of_pattern env pattern
 | PConstrApp {value=_, Some tuple; _} ->
     vars_of_ptuple env tuple.value
 | PConstrApp {value=_,None; _} -> ok env
@@ -257,13 +276,13 @@ let peephole_statement : unit -> statement -> (unit, 'err) result = fun _ s ->
     ok ()
   | Instr _ -> ok ()
   | Data LocalConst {value;region=_} ->
-    let {kwd_const=_;name;const_type=_;equal=_;init=_;terminator=_;attributes=_} = value in
-    let%bind () = check_reserved_name name in
-    ok ()
+    let {kwd_const=_;pattern;const_type=_;equal=_;init=_;terminator=_;attributes=_} = value in
+    let%bind () = check_pattern pattern in
+    ok @@ ()
   | Data LocalVar {value;region=_} ->
-    let {kwd_var=_;name;var_type=_;assign=_;init=_;terminator=_} = value in
-    let%bind () = check_reserved_name name in
-    ok ()
+    let {kwd_var=_;pattern;var_type=_;assign=_;init=_;terminator=_} = value in
+    let%bind () = check_pattern pattern in
+    ok @@ ()
   | Data LocalFun {value;region=_}  ->
     let {kwd_recursive=_;kwd_function=_;fun_name;param;ret_type=_;kwd_is=_;return=_;terminator=_;attributes=_} = value in
     let%bind () = check_parameters @@ Utils.nsepseq_to_list param.value.inside in
@@ -288,10 +307,9 @@ let peephole_declaration : unit -> declaration -> (unit, 'err) result = fun _ d 
     let%bind () = check_reserved_name value.name in
     ok ()
   | ConstDecl {value;region=_} ->
-     let {kwd_const=_; name; const_type=_; equal=_; init=_;
-          terminator=_; attributes=_} = value in
-     let%bind () = check_reserved_name name in
-     ok ()
+    let {kwd_const=_;pattern;const_type=_;equal=_;init=_;terminator=_;attributes=_} = value in
+    let%bind () = check_pattern pattern in
+    ok @@ ()
   | FunDecl {value;region=_} ->
      let {kwd_recursive=_; kwd_function=_; fun_name; param; ret_type=_;
           kwd_is=_; return=_; terminator=_; attributes=_} = value in

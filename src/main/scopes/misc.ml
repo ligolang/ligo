@@ -6,7 +6,6 @@ type tenv = Ast_typed.environment
 let var_equal : Ast_typed.expression_variable -> Ast_typed.expression_variable -> bool = fun v1 v2 ->
   Var.equal v1.wrap_content v2.wrap_content
 
-(* type t_bindings = (Ast_typed.expression_variable * Ast_typed.type_expression) list *)
 let extract_variable_types :
   bindings_map -> Ast_typed.module_fully_typed -> bindings_map =
   fun prev prg ->
@@ -42,30 +41,30 @@ let extract_variable_types :
         return @@ [(let_binder,rhs.type_expression)]
       | E_matching {matchee ; cases } -> (
         match cases with
-        | Match_list {match_nil = _ ; match_cons = {hd ; tl ; _}} ->
-          let proj_t = match Ast_typed.get_t_list matchee.type_expression with
-            | Some t -> t
-            | None -> failwith "match_list projection does not have type list"
-          in
-          return [ (tl , matchee.type_expression) ; (hd , proj_t) ]
-        | Match_option {match_none = _ ; match_some = {opt; }} ->
-          let proj_t = match Ast_typed.get_t_option matchee.type_expression with
-            | Some t -> t
-            | None -> failwith "match_option projection does not have type option"
-          in
-          return [ (opt,proj_t) ]
-        | Match_variant {cases ; tv=_} ->
-          let variant_t = match Ast_typed.get_t_sum matchee.type_expression with
-            | Some t -> t
-            | None -> failwith "match_variant projection does not have type sum"
-          in
-          let aux :
-            Ast_typed.matching_content_case -> (Ast_typed.expression_variable * Ast_typed.type_expression) =
-            fun { constructor ; pattern ; _ } ->
-              let proj_t = (Ast_core.LMap.find constructor variant_t.content).associated_type in
-              (pattern,proj_t)
-          in
-          return (List.map aux cases)
+        | Match_variant {cases ; tv=_} -> (
+          match Ast_typed.get_t_sum matchee.type_expression with
+            | Some variant_t ->
+              let aux : Ast_typed.matching_content_case -> (Ast_typed.expression_variable * Ast_typed.type_expression) =
+                fun { constructor ; pattern ; _ } ->
+                  let proj_t = (Ast_core.LMap.find constructor variant_t.content).associated_type in
+                  (pattern,proj_t)
+              in
+              return (List.map aux cases)
+            | None -> (
+              match Ast_typed.get_t_option matchee.type_expression with
+                | Some proj_t ->
+                  let x = List.find (fun ({constructor=Label l;_}:Ast_typed.matching_content_case) -> String.equal l "Some") cases in
+                  return [(x.pattern,proj_t)]
+                | None -> (
+                  match Ast_typed.get_t_list matchee.type_expression with
+                  | Some list_proj ->
+                    let x = List.find (fun ({constructor=Label l;_}:Ast_typed.matching_content_case) -> String.equal l "Cons") cases in
+                    let t = Ast_typed.t_pair list_proj matchee.type_expression in
+                    return [(x.pattern,t)]
+                  | None -> failwith "matched value in the Match_variant: wrong type"
+                ) 
+              )
+        )
         | Match_record { fields ; _ }  ->
           return (Ast_typed.LMap.to_list fields)
       )

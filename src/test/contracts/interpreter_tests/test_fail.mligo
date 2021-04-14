@@ -11,7 +11,7 @@ let test =
     match e with
     | Rejected x ->
       let (x, addr_fail) = x in
-      let unt = assert (addr_fail = addr) in
+      let () = assert (addr_fail = addr) in
       x
     | Other -> (failwith "Failed, but wrong reason" : michelson_program )
   )

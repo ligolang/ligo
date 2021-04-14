@@ -93,3 +93,8 @@ let pp_lift = fun ppf r -> pp ppf @@ lift r
 
 let r_extract : 'a Region.reg -> t = fun x -> File x.region
 let r_split : 'a Region.reg -> ('a * t) = fun x -> x.value , File x.region
+let cover : t -> t -> t = fun a b ->
+  match a , b with
+  | File _ , Virtual _ -> a
+  | Virtual _ , _ -> b
+  | File rega , File regb -> File (Region.cover rega regb)

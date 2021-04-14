@@ -1,5 +1,6 @@
 type foo = { a :int ; b : nat }
 type bar = { c : int * nat ; d : foo }
+type baz = OneCase of int 
 
 let t1 =
   let (a,b,c,d) = (1,2,3,4) in
@@ -33,3 +34,7 @@ let t7 =
 let t8 =
   let (x, (y, { a = a ; b = b })) = (1, (1n, {a = 1 ; b = 1n})) in
   (x + a , y + b)
+
+let t9 =
+  let ((OneCase (av)), { a ; b = _ }) = (OneCase (1), { a = 1 ; b = 1n }) in
+  av + a

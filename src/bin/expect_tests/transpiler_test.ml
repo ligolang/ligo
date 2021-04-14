@@ -196,7 +196,7 @@ let%expect_test _ =
     : action_transfer_single * storage -> return =
       (fun gen__parameters1 : action_transfer_single * storage ->
          match gen__parameters1 with
-         action : action_transfer_single, s : storage ->
+         action, s ->
              let cards : cards = s.cards in
              let card : card =
                match Map.find_opt action.card_to_transfer cards
@@ -222,7 +222,7 @@ let%expect_test _ =
     let sell_single : action_sell_single * storage -> return =
       (fun gen__parameters2 : action_sell_single * storage ->
          match gen__parameters2 with
-         action : action_sell_single, s : storage ->
+         action, s ->
              let card : card =
                match Map.find_opt action.card_to_sell s.cards
                with
@@ -281,7 +281,7 @@ let%expect_test _ =
     let buy_single : action_buy_single * storage -> return =
       (fun gen__parameters3 : action_buy_single * storage ->
          match gen__parameters3 with
-         action : action_buy_single, s : storage ->
+         action, s ->
              let card_pattern : card_pattern =
                match Map.find_opt
                        action.card_to_buy
@@ -328,7 +328,7 @@ let%expect_test _ =
     let main : parameter * storage -> return =
       (fun gen__parameters4 : parameter * storage ->
          match gen__parameters4 with
-         action : parameter, s : storage ->
+         action, s ->
              match action with
                Buy_single bs -> buy_single bs s
              | Sell_single as -> sell_single as s
@@ -372,12 +372,12 @@ let transfer_single
 : (action_transfer_single, storage) => return =
   ((gen__parameters1: (action_transfer_single, storage))
    : return =>
-     switch(gen__parameters1){
-     | action: action_transfer_single, s: storage =>
+     switch gen__parameters1{
+     | action, s =>
          let cards: cards = s.cards;
          let card: card =
-           switch(
-            Map.find_opt(action.card_to_transfer, cards)){
+           switch
+           Map.find_opt(action.card_to_transfer, cards){
            | Some card => card
            | None =>
                ((failwith(("transfer_single: No card.")))
@@ -401,10 +401,10 @@ let transfer_single
 
 let sell_single: (action_sell_single, storage) => return =
   ((gen__parameters2: (action_sell_single, storage)): return =>
-     switch(gen__parameters2){
-     | action: action_sell_single, s: storage =>
+     switch gen__parameters2{
+     | action, s =>
          let card: card =
-           switch(Map.find_opt(action.card_to_sell, s.cards)){
+           switchMap.find_opt(action.card_to_sell, s.cards){
            | Some card => card
            | None =>
                ((failwith(("sell_single: No card."))) : card)
@@ -416,9 +416,8 @@ let sell_single: (action_sell_single, storage) => return =
              ()
            };
            let card_pattern: card_pattern =
-             switch(
-              Map.find_opt(card.card_pattern,
-                 s.card_patterns)){
+             switch
+             Map.find_opt(card.card_pattern, s.card_patterns){
              | Some pattern => pattern
              | None =>
                  ((
@@ -449,8 +448,8 @@ let sell_single: (action_sell_single, storage) => return =
               TIMES((card_pattern.coefficient),
                  (card_pattern.quantity)));
            let receiver: contract(unit) =
-             switch(((Tezos.get_contract_opt((Tezos.sender)))
-                : option(contract(unit)))){
+             switch((Tezos.get_contract_opt((Tezos.sender)))
+               : option(contract(unit))){
              | Some contract => contract
              | None =>
                  ((failwith(("sell_single: No contract.")))
@@ -465,11 +464,11 @@ let sell_single: (action_sell_single, storage) => return =
 
 let buy_single: (action_buy_single, storage) => return =
   ((gen__parameters3: (action_buy_single, storage)): return =>
-     switch(gen__parameters3){
-     | action: action_buy_single, s: storage =>
+     switch gen__parameters3{
+     | action, s =>
          let card_pattern: card_pattern =
-           switch(
-            Map.find_opt(action.card_to_buy, s.card_patterns)){
+           switch
+           Map.find_opt(action.card_to_buy, s.card_patterns){
            | Some pattern => pattern
            | None =>
                ((failwith(("buy_single: No card pattern.")))
@@ -518,9 +517,9 @@ let buy_single: (action_buy_single, storage) => return =
 
 let main: (parameter, storage) => return =
   ((gen__parameters4: (parameter, storage)): return =>
-     switch(gen__parameters4){
-     | action: parameter, s: storage =>
-         switch(action){
+     switch gen__parameters4{
+     | action, s =>
+         switch action{
          | Buy_single bs => buy_single(bs, s)
          | Sell_single as => sell_single(as, s)
          | Transfer_single at => transfer_single(at, s)
@@ -625,7 +624,7 @@ type nested_record_t = {nesty: {mymap: map(int, string) } };
 let nested_record: nested_record_t => string =
   ((nee: nested_record_t): string =>
      let nee = Map.add("one", 1, nesty.mymap);
-     switch(Map.find_opt(1, nee.nesty.mymap)){
+     switchMap.find_opt(1, nee.nesty.mymap){
      | Some s => s
      | None => ((failwith(("Should not happen."))) : string)
      }); |}]
@@ -812,15 +811,15 @@ let transferContentsIterator =
                   (storage)) in
              let tokenOwner =
                match tokenOwner with
-                 Some tokenOwner ->
+                 None ->
+                   ((failwith (errorTokenUndefined))
+                    : tokenOwner)
+               | Some tokenOwner ->
                    if (EQ (tokenOwner) (from_))
                    then tokenOwner
                    else
                      ((failwith (errorInsufficientBalance))
-                      : tokenOwner)
-               | None ->
-                   ((failwith (errorTokenUndefined))
-                    : tokenOwner) in
+                      : tokenOwner) in
              let storage =
                (Map.update
                   (transferContents.token_id)
@@ -849,12 +848,12 @@ let transferIterator =
                     (transferAuxiliary2.txs)
                     (storage, from_))
            with
-           storage, gen__3 -> storage
+           storage, _ -> storage
          end)
 
 let transfer =
-  (fun gen__4 : transferParameter * storage ->
-     match gen__4 with
+  (fun gen__3 : transferParameter * storage ->
+     match gen__3 with
      transferParameter, storage ->
          let storage =
            (List.fold
@@ -864,8 +863,8 @@ let transfer =
          ([] : operation list), storage)
 
 let main =
-  (fun gen__5 : entrypointParameter ->
-     match gen__5 with
+  (fun gen__4 : entrypointParameter ->
+     match gen__4 with
      parameter, storage ->
          match parameter with
          Transfer transferParameter ->
@@ -923,10 +922,10 @@ let transferContentsIterator =
   ((gen__1: (transferContentsIteratorAccumulator,
       transferContentsMichelson))
    : transferContentsIteratorAccumulator =>
-     switch(gen__1){
-     | accumulator: _, transferContentsMichelson: _ =>
-         switch(accumulator){
-         | storage: _, from_: _ =>
+     switch gen__1{
+     | accumulator, transferContentsMichelson =>
+         switch accumulator{
+         | storage, from_ =>
              let transferContents: transferContents =
                (
                 Layout.convert_from_right_comb((transferContentsMichelson)));
@@ -935,7 +934,10 @@ let transferContentsIterator =
                 Map.find_opt((transferContents.token_id),
                    (storage)));
              let tokenOwner =
-               switch(tokenOwner){
+               switch tokenOwner{
+               | None =>
+                   ((failwith((errorTokenUndefined)))
+                     : tokenOwner)
                | Some tokenOwner =>
                    if ((EQ((tokenOwner), (from_)))) {
                      tokenOwner
@@ -944,9 +946,6 @@ let transferContentsIterator =
                      ((failwith((errorInsufficientBalance)))
                        : tokenOwner)
                    }
-               | None =>
-                   ((failwith((errorTokenUndefined)))
-                     : tokenOwner)
                };
              let storage =
                (
@@ -967,27 +966,27 @@ let allowOnlyOwnTransfer =
 
 let transferIterator =
   ((gen__2: (storage, transferMichelson)): storage =>
-     switch(gen__2){
-     | storage: _, transferMichelson: _ =>
+     switch gen__2{
+     | storage, transferMichelson =>
          let transferAuxiliary2: transferAuxiliary =
            (
             Layout.convert_from_right_comb((transferMichelson)));
          let from_: tokenOwner = transferAuxiliary2.from_;
          {
            allowOnlyOwnTransfer(from_);
-           switch((
-             List.fold((transferContentsIterator),
-                (transferAuxiliary2.txs),
-                (storage, from_)))){
-           | storage: _, gen__3: _ => storage
+           switch(
+            List.fold((transferContentsIterator),
+               (transferAuxiliary2.txs),
+               (storage, from_))){
+           | storage, _ => storage
            }
          }
      });
 
 let transfer =
-  ((gen__4: (transferParameter, storage)): entrypointReturn =>
-     switch(gen__4){
-     | transferParameter: _, storage: _ =>
+  ((gen__3: (transferParameter, storage)): entrypointReturn =>
+     switch gen__3{
+     | transferParameter, storage =>
          let storage =
            (
             List.fold((transferIterator),
@@ -997,10 +996,10 @@ let transfer =
      });
 
 let main =
-  ((gen__5: entrypointParameter): entrypointReturn =>
-     switch(gen__5){
-     | parameter: _, storage: _ =>
-         switch(parameter){
+  ((gen__4: entrypointParameter): entrypointReturn =>
+     switch gen__4{
+     | parameter, storage =>
+         switch parameter{
          | Transfer transferParameter =>
              transfer(transferParameter, storage)
          }
@@ -1031,41 +1030,41 @@ let%expect_test _ =
     function foobar (const i : int) is
     block {
       const p : parameter = (Zero (42n));
-      const gen__env7 = record [i = i];
-      const gen__env7
+      const gen__env8 = record [i = i];
+      const gen__env8
       = if GT (i, 0)
         then
           block {
             const i = ADD (i, 1);
-            gen__env7.i := i;
-            const gen__env5 = record [i = i];
-            const gen__env5
+            gen__env8.i := i;
+            const gen__env6 = record [i = i];
+            const gen__env6
             = if GT (i, 10)
               then
                 block {
                   const i = 20;
-                  gen__env5.i := i;
+                  gen__env6.i := i;
                   failwith ("who knows");
                   const i = 30;
-                  gen__env5.i := i;
+                  gen__env6.i := i;
                   skip
-                } with gen__env5
+                } with gen__env6
               else
                 block {
                   skip
-                } with gen__env5;
-            const i = gen__env5.i;
-            gen__env7.i := i;
+                } with gen__env6;
+            const i = gen__env6.i;
+            gen__env8.i := i;
             skip
-          } with gen__env7
+          } with gen__env8
         else
           block {
             case p of [
               Zero (n) -> failwith (42n)
             | Pos (n) -> skip
             ]
-          } with gen__env7;
-      const i = gen__env7.i
+          } with gen__env8;
+      const i = gen__env8.i
     } with
         case p of [
           Zero (n) -> i
@@ -1087,7 +1086,7 @@ let%expect_test _ =
     let main : parameter * storage -> return =
       (fun gen__parameters1 : parameter * storage ->
          match gen__parameters1 with
-         p : parameter, s : storage ->
+         p, s ->
              begin
                match p with
                  Zero n ->
@@ -1104,46 +1103,46 @@ let%expect_test _ =
     let foobar : int -> int =
       (fun i : int ->
          let p : parameter = (Zero 42n) in
-         let gen__env7 = {i = i} in
-         let gen__env7 =
+         let gen__env8 = {i = i} in
+         let gen__env8 =
            if (GT (i) (0))
            then
              let i = (ADD (i) (1)) in
-             let gen__env7 = {gen__env7 with {i = i}} in
-             let gen__env5 = {i = i} in
-             let gen__env5 =
+             let gen__env8 = {gen__env8 with {i = i}} in
+             let gen__env6 = {i = i} in
+             let gen__env6 =
                if (GT (i) (10))
                then
                  let i = 20 in
-                 let gen__env5 = {gen__env5 with {i = i}} in
+                 let gen__env6 = {gen__env6 with {i = i}} in
                  begin
                    (failwith ("who knows"));
                    let i = 30 in
-                   let gen__env5 = {gen__env5 with {i = i}} in
+                   let gen__env6 = {gen__env6 with {i = i}} in
                    begin
                      ();
-                     gen__env5
+                     gen__env6
                    end
                  end
                else
                  begin
                    ();
-                   gen__env5
+                   gen__env6
                  end in
-             let i = gen__env5.i in
-             let gen__env7 = {gen__env7 with {i = i}} in
+             let i = gen__env6.i in
+             let gen__env8 = {gen__env8 with {i = i}} in
              begin
                ();
-               gen__env7
+               gen__env8
              end
            else
              begin
                match p with
                  Zero n -> (failwith (42n))
                | Pos n -> ();
-               gen__env7
+               gen__env8
              end in
-         let i = gen__env7.i in
+         let i = gen__env8.i in
          match p with
            Zero n -> i
          | Pos n -> ((failwith ("waaaa")) : int))
@@ -1164,10 +1163,10 @@ type return = (list(operation), storage);
 
 let main: (parameter, storage) => return =
   ((gen__parameters1: (parameter, storage)): return =>
-     switch(gen__parameters1){
-     | p: parameter, s: storage =>
+     switch gen__parameters1{
+     | p, s =>
          {
-           switch(p){
+           switch p{
            | Zero n =>
                if ((GT((n), (0n)))) {
                  (failwith(("fail")))
@@ -1188,56 +1187,56 @@ let main: (parameter, storage) => return =
 let foobar: int => int =
   ((i: int): int =>
      let p: parameter = (Zero 42n);
-     let gen__env7 = {
+     let gen__env8 = {
        i: i
      };
-     let gen__env7 =
+     let gen__env8 =
        if ((GT((i), (0)))) {
 
          let i = (ADD((i), (1)));
-         let gen__env7 = {...gen__env7, {i: i }};
-         let gen__env5 = {
+         let gen__env8 = {...gen__env8, {i: i }};
+         let gen__env6 = {
            i: i
          };
-         let gen__env5 =
+         let gen__env6 =
            if ((GT((i), (10)))) {
 
              let i = 20;
-             let gen__env5 = {...gen__env5, {i: i }};
+             let gen__env6 = {...gen__env6, {i: i }};
              {
                (failwith(("who knows")));
                let i = 30;
-               let gen__env5 = {...gen__env5, {i: i }};
+               let gen__env6 = {...gen__env6, {i: i }};
                {
                  ();
-                 gen__env5
+                 gen__env6
                }
              }
            } else {
 
              {
                ();
-               gen__env5
+               gen__env6
              }
            };
-         let i = gen__env5.i;
-         let gen__env7 = {...gen__env7, {i: i }};
+         let i = gen__env6.i;
+         let gen__env8 = {...gen__env8, {i: i }};
          {
            ();
-           gen__env7
+           gen__env8
          }
        } else {
 
          {
-           switch(p){
+           switch p{
            | Zero n => (failwith((42n)))
            | Pos n => ()
            };
-           gen__env7
+           gen__env8
          }
        };
-     let i = gen__env7.i;
-     switch(p){
+     let i = gen__env8.i;
+     switch p{
      | Zero n => i
      | Pos n => ((failwith(("waaaa"))) : int)
      });
@@ -1276,7 +1275,7 @@ let%expect_test _ =
     let rec sum : int * int -> int =
       (fun gen__parameters1 : int * int ->
          match gen__parameters1 with
-         n : int, acc : int ->
+         n, acc ->
              if (LT (n) (1))
              then acc
              else sum (SUB (n) (1)) (ADD (acc) (n)))
@@ -1284,7 +1283,7 @@ let%expect_test _ =
     let rec fibo : int * int * int -> int =
       (fun gen__parameters2 : int * int * int ->
          match gen__parameters2 with
-         n : int, n_1 : int, n_0 : int ->
+         n, n_1, n_0 ->
              if (LT (n) (2))
              then n_1
              else fibo (SUB (n) (1)) (ADD (n_1) (n_0)) n_1) |}];
@@ -1292,8 +1291,8 @@ let%expect_test _ =
   [%expect {|
     let rec sum: (int, int) => int =
       ((gen__parameters1: (int, int)): int =>
-         switch(gen__parameters1){
-         | n: int, acc: int =>
+         switch gen__parameters1{
+         | n, acc =>
              if ((LT((n), (1)))) {
                acc
              } else {
@@ -1303,8 +1302,8 @@ let%expect_test _ =
 
     let rec fibo: (int, int, int) => int =
       ((gen__parameters2: (int, int, int)): int =>
-         switch(gen__parameters2){
-         | n: int, n_1: int, n_0: int =>
+         switch gen__parameters2{
+         | n, n_1, n_0 =>
              if ((LT((n), (2)))) {
                n_1
              } else {

@@ -104,13 +104,24 @@ module TestExpressions = struct
   let matching () : (unit, _) result =
     let variant_foo_bar = Inferred.t_sum_ez [
         ("Foo", Inferred.t_int () );
-        ("Bar", Inferred.t_string () ); ]
+        ("Bar", Inferred.t_string () ); 
+        ("Baz", Inferred.t_unit ());
+        ("Qux", Inferred.t_list (t_int ()));
+        ("Quux", Inferred.t_unit ());
+      ]
     in
+    let binder_wild : type_expression binder = {var=Location.wrap (Var.of_name "_");ascr=None} in
+    let binder_x : type_expression binder = {var=Location.wrap (Var.of_name "x");ascr=None} in
+    let binder_y : type_expression binder = {var=Location.wrap (Var.of_name "y");ascr=None} in
     test_expression
       ~env:(E.add_type (Var.of_name "test_t") variant_foo_bar E.empty)
       I.(e_matching (e_constructor (Label "Foo") (e_int (Z.of_int 32)))
-      @@ Match_variant [{constructor=Label "Foo"; proj=Location.wrap @@ Var.of_name "x"; body=e_var "x"};
-                        {constructor=Label "Bar"; proj=Location.wrap @@ Var.of_name "_"; body=e_int Z.zero}]
+        [
+          {pattern = Location.wrap @@ P_variant (Label "Foo", Some (Location.wrap @@ P_var binder_x )); body = e_var "x"};
+          {pattern= Location.wrap @@ P_variant (Label "Bar", Some (Location.wrap @@ P_var binder_y)); body=e_int Z.zero};
+          {pattern= Location.wrap @@ P_variant (Label "Baz", None); body=e_int Z.zero};
+          {pattern= Location.wrap @@ P_var binder_wild; body=e_int Z.zero}
+        ]
       ) O.(t_int ())
 
   let record () : (unit, _) result =
@@ -143,8 +154,6 @@ end
 (* TODO: deep types (e.g. record of record)
    TODO: negative tests (expected type error) *)
 
-let no = false
-let y = true
 let main = test_suite "Typer (from core AST)"
   [
     test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "int" int ;
