@@ -1,7 +1,8 @@
 open Ast_typed
 open Stage_common.Constant
 module Protocols = Protocols
-let star = t_variable @@ Var.of_name "will_be_ignored" (* This will later be replaced by the kind of the constant *)
+let starvar = Var.of_name "will_be_ignored"
+let star = t_variable @@ starvar (* This will later be replaced by the kind of the constant *)
 
 let basic_types : (type_variable * type_expression) list = [
     (v_bool , t_sum_ez [ ("true" ,t_unit ()); ("false",t_unit ()) ] ) ;

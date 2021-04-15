@@ -6,12 +6,37 @@ module I = Ast_core
 module O = Ast_typed
 open O.Combinators
 
+let starvar = Environment.starvar
+
 module Environment = O.Environment
 
 type environment = Environment.t
 
 let cast_var (orig: 'a Var.t Location.wrap) = { orig with wrap_content = Var.todo_cast orig.wrap_content}
 let assert_type_expression_eq = Helpers.assert_type_expression_eq
+
+let is_not_will_be_ignored te = not @@ match te.O.type_content with
+  | O.T_variable var -> Var.equal var starvar
+  | _ -> false
+
+let rec is_closed ~loc (t : O.type_content) =
+  let self = is_closed in
+  let self_list = bind_list_iter
+                    (fun (v : O.type_expression) -> self ~loc:v.location v.type_content) in
+  match t with
+  | O.T_constant {injection;parameters} ->
+     let arg_len = List.length parameters in
+     let arg_actual = List.filter is_not_will_be_ignored parameters |>  List.length in
+     let name = injection |> Ligo_string.extract |> Var.of_name in
+     if arg_len <> arg_actual then
+       fail @@ type_constant_wrong_number_of_arguments name arg_len arg_actual loc
+     else
+       ok ()
+  | O.T_sum rows | O.T_record rows ->
+     self_list (O.LMap.to_list rows.content |> List.map (fun v -> v.O.associated_type))
+  | O.T_arrow {type1;type2} ->
+     self_list [type1; type2]
+  | _ -> ok @@ ()
 
 let rec type_module ~init_env (p:I.module_) : (environment * O.module_fully_typed, typer_error) result =
   let aux (e, acc:(environment * O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
@@ -145,7 +170,9 @@ and type_match : (environment -> I.expression -> (O.expression , typer_error) re
 
 
 and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, typer_error) result =
-  let return tv' = ok (make_t ~loc:t.location tv' (Some t)) in
+  let return tv' =
+    let%bind _ = is_closed ~loc:t.location tv' in
+    ok (make_t ~loc:t.location tv' (Some t)) in
   match t.type_content with
   | T_arrow {type1;type2} ->
       let%bind type1 = evaluate_type e type1 in
@@ -194,8 +221,10 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
   | T_variable variable ->
     (* Check that the variable is in the environment *)
     let name : O.type_variable = Var.todo_cast variable in
-    trace_option (unbound_type_variable e name t.location) @@
-      Environment.get_type_opt (name) e
+    let%bind r = trace_option (unbound_type_variable e name t.location) @@
+                   (Environment.get_type_opt (name) e) in
+    let%bind () = is_closed ~loc:t.location r.type_content in
+    ok @@ r
   | T_app {type_operator;arguments} -> (
     let name : O.type_variable = Var.todo_cast type_operator in
     let%bind v = trace_option (unbound_type_variable e name t.location) @@
