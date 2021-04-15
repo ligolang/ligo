@@ -26,8 +26,6 @@ buffers.
   - [Checking](./passes/10-checking)
 - [Ast\_typed](./stages/5-ast_typed)
   - [Self\_ast\_typed](./passes/11-self_ast_typed)
-  - [Interpreter](./passes/12-interpreter)
-    (Not really a compiler pass, but interprets ast_typed directly.)
   - [Spilling](./passes/12-spilling)
 - [Mini C](./stages/6-mini_c)
   - [Self\_mini\_c](./passes/13-self_mini_c)
