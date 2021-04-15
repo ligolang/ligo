@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f751b5d40d2971bc84a6543138ce4b9463a6f81e3bc0a8f1d847b819746b846d
+-- hash: aab1d40275a07ea6b44310beded5c6cd009b7f72000eb603da813dc0ebba82d3
 
 name:           ligo-squirrel
 version:        0.0.0
@@ -182,7 +182,60 @@ executable ligo-vet
     , with-utf8
   default-language: Haskell2010
 
-test-suite squirrel-test
+test-suite ligo-contracts-test
+  type: exitcode-stdio-1.0
+  main-is: Driver.hs
+  other-modules:
+      Test.Parsers
+      Test.FixedExpectations
+      Test.Util
+      Test.Util.LigoEnv
+      Test.Util.Parsers
+      Paths_ligo_squirrel
+  hs-source-dirs:
+      test/ligo-contracts-test/
+      test/test-common/
+  default-extensions: AllowAmbiguousTypes ApplicativeDo BangPatterns BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralisedNewtypeDeriving LambdaCase MagicHash MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings QuantifiedConstraints QuasiQuotes RankNTypes ScopedTypeVariables StandaloneDeriving TemplateHaskell TupleSections TypeApplications TypeFamilies TypeOperators UndecidableInstances ViewPatterns
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-incomplete-uni-patterns
+  build-tool-depends:
+      tasty-discover:tasty-discover
+  build-depends:
+      HUnit
+    , async
+    , base
+    , bytestring
+    , containers
+    , data-default
+    , directory
+    , duplo
+    , exceptions
+    , fastsum
+    , filepath
+    , generic-deriving
+    , ghc-prim
+    , hashable
+    , hspec-expectations
+    , interpolate
+    , lens
+    , ligo-squirrel
+    , lsp-types
+    , mtl
+    , pretty
+    , safe-exceptions
+    , sorted-list
+    , tasty
+    , tasty-discover
+    , tasty-hspec
+    , tasty-hunit
+    , template-haskell
+    , text
+    , transformers
+    , tree-sitter
+    , unliftio
+    , unordered-containers
+  default-language: Haskell2010
+
+test-suite lsp-test
   type: exitcode-stdio-1.0
   main-is: Driver.hs
   other-modules:
@@ -194,14 +247,16 @@ test-suite squirrel-test
       Test.Capabilities.SelectionRange
       Test.Capabilities.SignatureHelp
       Test.Capabilities.Util
-      Test.FixedExpectations
       Test.Parsers
       Test.Scope.ScopedDecl
+      Test.FixedExpectations
       Test.Util
       Test.Util.LigoEnv
+      Test.Util.Parsers
       Paths_ligo_squirrel
   hs-source-dirs:
-      test/
+      test/lsp-test/
+      test/test-common/
   default-extensions: AllowAmbiguousTypes ApplicativeDo BangPatterns BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralisedNewtypeDeriving LambdaCase MagicHash MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings QuantifiedConstraints QuasiQuotes RankNTypes ScopedTypeVariables StandaloneDeriving TemplateHaskell TupleSections TypeApplications TypeFamilies TypeOperators UndecidableInstances ViewPatterns
   ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-incomplete-uni-patterns
   build-tool-depends:
