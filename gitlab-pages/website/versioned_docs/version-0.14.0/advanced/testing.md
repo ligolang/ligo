@@ -380,4 +380,4 @@ ligo test gitlab-pages/docs/advanced/src/test.jsligo "test"
 
 </Syntax>
 
-[More info about the `Test` module available when using the sub-command `test`.](../reference/test)
+[More info about the `Test` module available when using the sub-command `test`.](../reference/test.md)
