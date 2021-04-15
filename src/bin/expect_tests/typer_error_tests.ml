@@ -186,3 +186,14 @@ let%expect_test _ =
 
     Incorrect argument.
     Expected an option, but got an argument of type "int". |} ]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/will_be_ignored.mligo" ; "main" ] ;
+  [%expect {|
+    File "../../test/contracts/negative/will_be_ignored.mligo", line 6, characters 20-28:
+      5 | let main (amoun, s: tez * storage): operation list * storage =
+      6 |      let receiver : contract =
+      7 |       match (Tezos.get_contract_opt(s.owner) : contract option) with
+
+    Wrong number of arguments for type constant: contract expected: 1
+    got: 0 |}]
