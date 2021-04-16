@@ -620,7 +620,7 @@ and scan_constr region lexicon = parse
 
     let eof region = EOF region
 
-    type sym_err = Invalid_symbol
+    type sym_err = Invalid_symbol of string
 
     let mk_sym lexeme region =
       match lexeme with
@@ -658,7 +658,7 @@ and scan_constr region lexicon = parse
 
       (* Invalid symbols *)
 
-      | _ -> Error Invalid_symbol
+      | s ->  Error (Invalid_symbol s)
 
 
     (* Identifiers *)

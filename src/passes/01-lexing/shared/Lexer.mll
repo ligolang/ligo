@@ -24,7 +24,7 @@ module Make (Token : Token.S) =
       Unexpected_character of char
     | Non_canonical_zero
     | Reserved_name of string
-    | Invalid_symbol
+    | Invalid_symbol of string
     | Invalid_natural
     | Unterminated_verbatim
     | Invalid_linemarker_argument
@@ -40,9 +40,9 @@ module Make (Token : Token.S) =
     | Reserved_name s ->
         sprintf "Reserved name: \"%s\".\n\
          Hint: Change the name." s
-    | Invalid_symbol ->
-        "Invalid symbol.\n\
-         Hint: Check the LIGO syntax you use."
+    | Invalid_symbol s ->
+        sprintf "Invalid symbol: %S.\n\
+                 Hint: Check the LIGO syntax you use." s
     | Invalid_natural ->
         "Invalid natural number."
     | Unterminated_verbatim ->
@@ -182,8 +182,8 @@ module Make (Token : Token.S) =
       match Token.mk_sym lexeme region with
         Ok token ->
           Core.Token token, state
-      | Error Token.Invalid_symbol ->
-          fail region Invalid_symbol
+      | Error Token.Invalid_symbol s ->
+          fail region (Invalid_symbol  s)
 
     let mk_eof state buffer =
       let Core.{region; state; _} = state#sync buffer in
