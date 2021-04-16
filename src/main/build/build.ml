@@ -97,8 +97,7 @@ let aggregate_contract order_deps asts_typed =
     contract header_list in
   ok @@ Ast_typed.Module_Fully_Typed contract
 
-let type_file_with_dep ~(options:Compiler_options.t)  asts_typed (file_name, (meta,form,c_unit,deps)) =
-  let%bind ast_core = Ligo_compile.Utils.to_core ~options ~meta c_unit file_name in
+let add_deps_to_env ~(options:Compiler_options.t) asts_typed (_file_name, (_meta,_form,_c_unit,deps)) =
   let aux (file_name,module_name) =
     let%bind ast_typed =
       trace_option (build_corner_case __LOC__
@@ -108,23 +107,50 @@ let type_file_with_dep ~(options:Compiler_options.t)  asts_typed (file_name, (me
     ok @@ (module_name, ast_typed)
   in
   let%bind deps = bind_map_list aux deps in
-  let init_env = add_modules_in_env options.init_env deps in
-  let options = {options with init_env } in
-  let%bind ast_typed,ast_typed_env = Ligo_compile.Of_core.compile ~options form ast_core in
+  let env_with_deps = add_modules_in_env options.init_env deps in
+  ok @@ env_with_deps
+
+let infer_file_with_deps ~(options:Compiler_options.t) asts_typed (file_name, (meta,form,c_unit,deps)) =
+  let%bind env_with_deps = add_deps_to_env  ~options asts_typed (file_name, (meta,form,c_unit,deps)) in
+  let options = {options with init_env = env_with_deps } in
+  
+  let%bind ast_core = Ligo_compile.Utils.to_core ~options ~meta c_unit file_name in
+  let%bind inferred = Ligo_compile.Of_core.infer ~options ast_core in
+  ok (inferred, env_with_deps)
+
+let typecheck_file_with_deps ~(options:Compiler_options.t) asts_typed (file_name, (_meta,form,_c_unit,_deps)) ast_core_inferred =
+  let%bind ast_typed,ast_typed_env = Ligo_compile.Of_core.typecheck ~options form ast_core_inferred in
   ok @@ SMap.add file_name (ast_typed,ast_typed_env) asts_typed
+
+let infer_and_typecheck_file_with_deps ~(options:Compiler_options.t) asts_typed (file_name, (meta,form,c_unit,deps)) =
+  let%bind (ast_core_inferred, env_with_deps) = infer_file_with_deps ~options asts_typed (file_name, (meta, form, c_unit, deps)) in
+  let options = { options with init_env = env_with_deps } in
+  typecheck_file_with_deps ~options asts_typed (file_name, (meta, form, c_unit, deps)) ast_core_inferred
+
+let infer_contract : options:Compiler_options.t -> string -> Ligo_compile.Of_core.form -> file_name -> (_, _) result =
+  fun ~options syntax entry_point main_file_name ->
+    let%bind deps = dependency_graph syntax ~options entry_point main_file_name in
+    let%bind ordered_deps = solve_graph deps main_file_name in
+    (* This assumes that there are no dependency cycles involving the main file.
+       Dependency cycles are not supported anyway. *)
+    let mains, ordered_deps_only = List.partition (fun (this_file_name, _) -> String.equal this_file_name main_file_name) ordered_deps in
+    let main = assert (List.length mains == 1); List.hd mains in
+    let%bind asts_typed = bind_fold_list (infer_and_typecheck_file_with_deps ~options) (SMap.empty) ordered_deps_only in
+    let%bind (inferred_main, env_with_deps_of_main) = infer_file_with_deps ~options asts_typed main in
+    ok @@ (main, inferred_main, env_with_deps_of_main, asts_typed)
 
 let type_contract : options:Compiler_options.t -> string -> Ligo_compile.Of_core.form -> file_name -> (_, _) result =
   fun ~options syntax entry_point file_name ->
-    let%bind deps = dependency_graph syntax ~options entry_point file_name in
-    let%bind order_deps = solve_graph deps file_name in
-    let%bind asts_typed = bind_fold_list (type_file_with_dep ~options) (SMap.empty) order_deps in
+    let%bind (main, inferred_main, env_with_deps_of_main, asts_typed) = infer_contract ~options syntax entry_point file_name in
+    let options = { options with init_env = env_with_deps_of_main } in
+    let%bind asts_typed = typecheck_file_with_deps ~options asts_typed main inferred_main in
     ok @@ SMap.find file_name asts_typed
 
 let combined_contract : options:Compiler_options.t -> _ -> _ -> file_name -> (_, _) result =
   fun ~options syntax entry_point file_name ->
     let%bind deps = dependency_graph syntax ~options entry_point file_name in
     let%bind order_deps = solve_graph deps file_name in
-    let%bind asts_typed = bind_fold_list (type_file_with_dep ~options) (SMap.empty) order_deps in
+    let%bind asts_typed = bind_fold_list (infer_and_typecheck_file_with_deps ~options) (SMap.empty) order_deps in
     let%bind contract = aggregate_contract order_deps asts_typed in
     ok @@ (contract, snd @@ SMap.find file_name asts_typed)
 
@@ -150,7 +176,7 @@ let build_contract_module : options:Compiler_options.t -> string -> _ -> file_na
   fun ~options syntax entry_point file_name module_name ->
   let%bind deps = dependency_graph syntax ~options entry_point file_name in
   let%bind order_deps = solve_graph deps file_name in
-  let%bind asts_typed = bind_fold_list (type_file_with_dep ~options) (SMap.empty) order_deps in
+  let%bind asts_typed = bind_fold_list (infer_and_typecheck_file_with_deps ~options) (SMap.empty) order_deps in
   let _, env = SMap.find file_name asts_typed in
   let%bind contract = aggregate_contract order_deps asts_typed in
   let module_contract = Ast_typed.Declaration_module { module_binder = module_name;

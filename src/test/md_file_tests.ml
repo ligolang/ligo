@@ -64,7 +64,8 @@ let compile_groups filename grp_list =
       let%bind imperative = Ligo_compile.Of_c_unit.compile ~meta c_unit filename in
       let%bind sugar      = Ligo_compile.Of_imperative.compile imperative in
       let%bind core       = Ligo_compile.Of_sugar.compile sugar in
-      let%bind typed,_    = Ligo_compile.Of_core.compile ~options Env core in
+      let%bind inferred   = Ligo_compile.Of_core.infer ~options core in
+      let%bind typed,_    = Ligo_compile.Of_core.typecheck ~options Env inferred in
       let%bind mini_c     = Ligo_compile.Of_typed.compile typed in
       bind_map_list
         (fun ((_, _, exp),_) -> Ligo_compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c exp)
