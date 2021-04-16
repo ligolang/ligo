@@ -24,7 +24,7 @@ currently not transpiled. Please use at your own risk.
 :   *SYNTAX* is the syntax that will be used. Currently supported
     syntaxes are \"pascaligo\", \"cameligo\" and \"reasonligo\". By
     default, the syntax is guessed from the extension (.ligo, .mligo,
-    .religo respectively).
+    .religo, .jsligo respectively).
 
 ### OPTIONS
 
@@ -51,9 +51,9 @@ currently not transpiled. Please use at your own risk.
 **-s** *SYNTAX*, **\--syntax**=*SYNTAX* (absent=auto)
 
 :   *SYNTAX* is the syntax that will be used. Currently supported
-    syntaxes are \"pascaligo\", \"cameligo\" and \"reasonligo\". By
-    default, the syntax is guessed from the extension (.ligo, .mligo,
-    .religo respectively).
+    syntaxes are \"pascaligo\", \"cameligo\", \"reasonligo\" and
+    \"jsligo\". By default, the syntax is guessed from the extension
+    (.ligo, .mligo, .religo, and .jsligo respectively).
 
 **\--version**
 

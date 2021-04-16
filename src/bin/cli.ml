@@ -453,8 +453,7 @@ let measure_contract =
   let doc = "Subcommand: Measure a contract's compiled size in bytes." in
   let man = [`S Manpage.s_description;
              `P "This sub-command compiles a source file and measures \
-                 the contract's compiled size in bytes. It does not \
-                 use the build system."]
+                 the contract's compiled size in bytes."]
   in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let compile_parameter =
@@ -511,9 +510,9 @@ let interpret =
   let doc = "Subcommand: Interpret the expression in the context initialized by the provided source file." in
   let man = [`S Manpage.s_description;
              `P "This sub-command interprets a LIGO expression. The \
-                 context can be initialized by providing a source file \
-                 (which is compiled not using the build system). The \
-                 interpretation is done using Michelson's interpreter."]
+                 context can be initialized by providing a source \
+                 file. The interpretation is done using Michelson's \
+                 interpreter."]
   in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let compile_storage =

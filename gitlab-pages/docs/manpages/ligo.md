@@ -130,7 +130,7 @@ https://gitlab.com/ligolang/ligo/issues/new
 
 **test**
 
-:   Subcommand: Test a contract with the LIGO interpreter (BETA).
+:   Subcommand: Test a contract with the LIGO test framework (BETA).
 
 **transpile-contract**
 

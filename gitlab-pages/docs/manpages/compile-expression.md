@@ -23,7 +23,7 @@ then interpreting it using Michelson\`s interpreter.
 :   *SYNTAX* is the syntax that will be used. Currently supported
     syntaxes are \"pascaligo\", \"cameligo\" and \"reasonligo\". By
     default, the syntax is guessed from the extension (.ligo, .mligo,
-    .religo respectively).
+    .religo, .jsligo respectively).
 
 ### OPTIONS
 
