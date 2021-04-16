@@ -10,9 +10,8 @@ initialized by the provided source file.
 ### DESCRIPTION
 
 This sub-command interprets a LIGO expression. The context can be
-initialized by providing a source file (which is compiled not using the
-build system). The interpretation is done using Michelson\`s
-interpreter.
+initialized by providing a source file. The interpretation is done using
+Michelson\`s interpreter.
 
 ### ARGUMENTS
 
@@ -69,9 +68,9 @@ interpreter.
 **-s** *SYNTAX*, **\--syntax**=*SYNTAX* (absent=auto)
 
 :   *SYNTAX* is the syntax that will be used. Currently supported
-    syntaxes are \"pascaligo\", \"cameligo\" and \"reasonligo\". By
-    default, the syntax is guessed from the extension (.ligo, .mligo,
-    .religo respectively).
+    syntaxes are \"pascaligo\", \"cameligo\", \"reasonligo\" and
+    \"jsligo\". By default, the syntax is guessed from the extension
+    (.ligo, .mligo, .religo, and .jsligo respectively).
 
 **\--sender**=*SENDER*
 

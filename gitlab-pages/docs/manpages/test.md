@@ -1,6 +1,6 @@
 ### NAME
 
-ligo-test - Subcommand: Test a contract with the LIGO interpreter
+ligo-test - Subcommand: Test a contract with the LIGO test framework
 (BETA).
 
 ### SYNOPSIS
@@ -51,16 +51,6 @@ Test.log x : prints x into the console.
 
 ### OPTIONS
 
-**\--amount**=*AMOUNT* (absent=0)
-
-:   *AMOUNT* is the amount the Michelson interpreter will use for the
-    transaction.
-
-**\--balance**=*BALANCE* (absent=0)
-
-:   *BALANCE* is the balance the Michelson interpreter will use for the
-    contract balance.
-
 **\--format**=*DISPLAY_FORMAT*, **\--display-format**=*DISPLAY_FORMAT* (absent=human-readable)
 
 :   *DISPLAY_FORMAT* is the format that will be used by the CLI.
@@ -79,11 +69,6 @@ Test.log x : prints x into the console.
 
 :   enable type inferance
 
-**\--now**=*NOW*
-
-:   *NOW* is the NOW value the Michelson interpreter will use (e.g.
-    \`2000-01-01T10:10:10Z\`)
-
 **-p** *PROTOCOL_VERSION*, **\--protocol**=*PROTOCOL_VERSION* (absent=current)
 
 :   *PROTOCOL_VERSION* will decide protocol\`s types/values pre-loaded
@@ -93,19 +78,9 @@ Test.log x : prints x into the console.
 **-s** *SYNTAX*, **\--syntax**=*SYNTAX* (absent=auto)
 
 :   *SYNTAX* is the syntax that will be used. Currently supported
-    syntaxes are \"pascaligo\", \"cameligo\" and \"reasonligo\". By
-    default, the syntax is guessed from the extension (.ligo, .mligo,
-    .religo respectively).
-
-**\--sender**=*SENDER*
-
-:   *SENDER* is the sender the Michelson interpreter transaction will
-    use.
-
-**\--source**=*SOURCE*
-
-:   *SOURCE* is the source the Michelson interpreter transaction will
-    use.
+    syntaxes are \"pascaligo\", \"cameligo\", \"reasonligo\" and
+    \"jsligo\". By default, the syntax is guessed from the extension
+    (.ligo, .mligo, .religo, and .jsligo respectively).
 
 **\--version**
 

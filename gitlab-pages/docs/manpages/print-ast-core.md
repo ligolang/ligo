@@ -33,12 +33,22 @@ This sub-command prints the source file in the AST core stage.
     format is \`pager\` or \`plain\` whenever the **TERM** env var is
     \`dumb\` or undefined.
 
+**\--infer**
+
+:   enable type inferance
+
+**-p** *PROTOCOL_VERSION*, **\--protocol**=*PROTOCOL_VERSION* (absent=current)
+
+:   *PROTOCOL_VERSION* will decide protocol\`s types/values pre-loaded
+    into the LIGO environment (edo). By default, the current protocol
+    (edo) will be used
+
 **-s** *SYNTAX*, **\--syntax**=*SYNTAX* (absent=auto)
 
 :   *SYNTAX* is the syntax that will be used. Currently supported
-    syntaxes are \"pascaligo\", \"cameligo\" and \"reasonligo\". By
-    default, the syntax is guessed from the extension (.ligo, .mligo,
-    .religo respectively).
+    syntaxes are \"pascaligo\", \"cameligo\", \"reasonligo\" and
+    \"jsligo\". By default, the syntax is guessed from the extension
+    (.ligo, .mligo, .religo, and .jsligo respectively).
 
 **\--version**
 
