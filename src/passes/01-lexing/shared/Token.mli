@@ -64,7 +64,7 @@ module type S =
     type ident_err = Reserved_name
     type   nat_err = Invalid_natural
                    | Non_canonical_zero_nat
-    type   sym_err = Invalid_symbol
+    type   sym_err = Invalid_symbol of string
     type   kwd_err = Invalid_keyword
 
     val mk_int      : lexeme -> Region.t -> (token,   int_err) result

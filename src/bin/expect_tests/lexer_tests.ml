@@ -121,7 +121,7 @@ run_ligo_bad [ "compile-contract" ; "../../test/lexer/invalid_symbol.ligo" ; "ma
   [%expect {|
 File "../../test/lexer/invalid_symbol.ligo", line 1, characters 17-20:
   1 | const b: int = 1 ... 10;
-Invalid symbol.
+Invalid symbol: "...".
 Hint: Check the LIGO syntax you use.
  |} ];
 
@@ -129,7 +129,7 @@ run_ligo_bad [ "compile-contract" ; "../../test/lexer/invalid_symbol.mligo" ; "m
   [%expect {|
 File "../../test/lexer/invalid_symbol.mligo", line 1, characters 10-13:
   1 | let b = 1 ... 10;
-Invalid symbol.
+Invalid symbol: "...".
 Hint: Check the LIGO syntax you use.
  |} ];
 
@@ -137,7 +137,7 @@ run_ligo_bad [ "compile-contract" ; "../../test/lexer/invalid_symbol.religo" ; "
   [%expect {|
 File "../../test/lexer/invalid_symbol.religo", line 1, characters 10-11:
   1 | let b = 1 # 10;
-Invalid symbol.
+Invalid symbol: "#".
 Hint: Check the LIGO syntax you use.
  |} ];
 
