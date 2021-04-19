@@ -30,7 +30,6 @@ bool tree_sitter_ReasonLigo_external_scanner_scan(
       for (;;) {
         switch (lexer->lookahead) {
         case '\n':
-          lexer->advance(lexer, false);
         case '\0':
           lexer->result_symbol = COMMENT;
           return true;

@@ -143,7 +143,7 @@ ascribeComms :: [Text] -> Doc -> Doc
 ascribeComms comms
   | null comms = id
   | otherwise  = \d ->
-      block $ map (pp . Text.replace "\n" "") comms ++ [d]
+      block $ map pp comms ++ [d]
 
 ascribeRange :: Pretty p => p -> ShowRange -> Doc -> Doc
 ascribeRange r Y = (pp r $$)
