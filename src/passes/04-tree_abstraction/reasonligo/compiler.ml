@@ -156,7 +156,7 @@ let rec compile_type_expression : CST.type_expr -> _ result =
     let (name,loc) = r_split var in
     let v = Var.of_name name in
     return @@ t_variable ~loc v
-  | TWild _reg -> failwith "TWild unsupported"
+  | TWild _reg -> fail @@ unsupported_twild te
   | TString _s -> fail @@ unsupported_string_singleton te
   | TInt _s -> fail @@ unsupported_string_singleton te
   | TModA ma ->
