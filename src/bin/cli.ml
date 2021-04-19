@@ -689,8 +689,8 @@ let list_declarations =
   in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let transpile_contract =
-  let f source_file new_syntax syntax new_dialect display_format =
-    return_result ~display_format (Parsing.Formatter.ppx_format) @@
+  let f source_file new_syntax syntax new_dialect display_format output_file =
+    return_result ~output_file ~display_format (Parsing.Formatter.ppx_format) @@
       let options         = Compiler_options.make () in
       let%bind meta       = Compile.Of_source.extract_meta syntax source_file in
       let%bind c_unit,_   = Compile.Utils.to_c_unit ~options ~meta source_file in
@@ -703,7 +703,7 @@ let transpile_contract =
       ok @@ buffer
   in
   let term =
-    Term.(const f $ source_file 0 $ req_syntax 1  $ syntax $ dialect $ display_format) in
+    Term.(const f $ source_file 0 $ req_syntax 1  $ syntax $ dialect $ display_format $ output_file) in
   let cmdname = "transpile-contract" in
   let doc = "Subcommand: Transpile a contract to another syntax (BETA)." in
   let man = [`S Manpage.s_description;
