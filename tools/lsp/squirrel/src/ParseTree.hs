@@ -31,6 +31,7 @@ import Data.String (IsString (..))
 import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.Encoding as Text
+import qualified Data.Text.IO as Text
 import Data.Traversable (for)
 
 import Control.Monad ((>=>))
@@ -78,9 +79,9 @@ srcToBytestring = \case
 
 srcToText :: Source -> IO Text
 srcToText = \case
-  Path       p   -> readFile p >>= return . Text.pack
+  Path       p   -> Text.readFile p
   Text       _ t -> return t
-  ByteString _ s -> return $ Text.decodeUtf8 $ s
+  ByteString _ s -> return $ Text.decodeUtf8 s
 
 data SomeRawTree where
   SomeRawTree
