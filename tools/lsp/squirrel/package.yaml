@@ -142,11 +142,40 @@ executables:
       - with-utf8
 
 tests:
-  squirrel-test:
+  lsp-test:
     main: Driver.hs
 
     source-dirs:
-      - test/
+      - test/lsp-test/
+      - test/test-common/
+
+    ghc-options:
+      - -Wno-incomplete-uni-patterns
+
+    dependencies:
+      - template-haskell
+      - HUnit
+      - directory
+      - filepath
+      - hspec-expectations
+      - lens
+      - ligo-squirrel
+      - lsp-types
+      - tasty
+      - tasty-discover
+      - tasty-hspec
+      - tasty-hunit
+      - unordered-containers
+
+    build-tools:
+      - tasty-discover:tasty-discover
+
+  ligo-contracts-test:
+    main: Driver.hs
+
+    source-dirs:
+      - test/ligo-contracts-test/
+      - test/test-common/
 
     ghc-options:
       - -Wno-incomplete-uni-patterns

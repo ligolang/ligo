@@ -143,7 +143,8 @@
         };
         checks = {
           inherit squirrel-sexp-test;
-          inherit (squirrel.checks) squirrel-test;
+          inherit (squirrel.checks) lsp-test;
+          inherit (squirrel.checks) ligo-contracts-test;
         };
         defaultPackage = self.packages.${system}.vscode-extension-native;
         # For debug/development reasons only

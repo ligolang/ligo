@@ -14,7 +14,7 @@ let
             cp -r ${grammars} grammar
           '';
           # Thanks, I Hate It.
-          components.tests.squirrel-test = {
+          components.tests.ligo-contracts-test = {
             preBuild = "export CONTRACTS_DIR=${../../../src/test/contracts}";
           };
 
