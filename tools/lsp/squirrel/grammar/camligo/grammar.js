@@ -21,6 +21,7 @@ function mkOp($, opExpr) {
 module.exports = grammar({
   name: 'CameLigo',
   word: $ => $.Keyword,
+  externals: $ => [$.ocaml_comment, $.comment],
   extras: $ => [$.ocaml_comment, $.comment, /\s/],
 
   rules: {
@@ -540,20 +541,6 @@ module.exports = grammar({
     True: $ => 'true',
     Unit: $ => seq('(', ')'),
 
-    comment: $ => token(/\/\/.*/),
-
     _till_newline: $ => /[^\n]*\n/,
-
-    ocaml_comment: $ =>
-      seq(
-        '(*',
-        repeat(choice(
-          $.ocaml_comment,
-          /[^\*\(]/,
-          /\*[^\)]/,
-          /\([^\*]/,
-        )),
-        /\*+\)/
-      ),
   }
 });

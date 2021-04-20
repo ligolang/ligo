@@ -47,7 +47,8 @@ module.exports = grammar({
   name: 'ReasonLigo',
 
   word: $ => $.Keyword,
-  extras: $ => [$.oneline_comment, $.block_comment, /\s/],
+  externals: $ => [$.ocaml_comment, $.comment],
+  extras: $ => [$.ocaml_comment, $.comment, /\s/],
 
   conflicts: $ =>
     [[$._expr_term, $._pattern]
@@ -539,20 +540,7 @@ module.exports = grammar({
     module_name: $ => $._NameCapital,
     _ident: $ => $.Name,
 
-    comment: $ => choice(
-      $.oneline_comment,
-      $.block_comment
-    ),
-
     _till_newline: $ => /[^\n]*\n/,
-
-    oneline_comment: $ => token(/\/\/.*/),
-
-    block_comment: $ => seq(
-      '/*',
-      repeat(/./),
-      '*/'
-    ),
 
     attr: $ => /\[@[a-zA-Z][a-zA-Z0-9_:]*\]/,
 

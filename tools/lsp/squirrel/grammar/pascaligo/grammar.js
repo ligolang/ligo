@@ -54,6 +54,7 @@ module.exports = grammar({
   name: 'PascaLigo',
 
   word: $ => $.Keyword,
+  externals: $ => [$.ocaml_comment, $.comment],
   extras: $ => [$.ocaml_comment, $.comment, /\s/],
   inline: $ => [$.parameters, $.arguments],
 
@@ -760,23 +761,7 @@ module.exports = grammar({
 
     ///////////////////////////////////////////
 
-    comment: $ => token(/\/\/.*/),
-
     _till_newline: $ => /[^\n]*\n/,
-
-    ocaml_comment: $ =>
-      seq(
-        '(*',
-        repeat(choice(
-          $.ocaml_comment,
-          /'([^'\\]|\\[\\"'ntbr ]|\\[0-9][0-9][0-9]|\\x[0-9A-Fa-f][0-9A-Fa-f]|\\o[0-3][0-7][0-7])'/,
-          /"([^\\"]|\\(.|\n))*"/,
-          /[A-Za-z_][a-zA-Z0-9_']*/,
-          /[^('"{*A-Za-z_]+/,
-          '(', "'", '*',
-        )),
-        '*)'
-      ),
 
     attr: $ => /\[@[a-zA-Z][a-zA-Z0-9_:]*\]/,
 
