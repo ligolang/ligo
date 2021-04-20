@@ -11,6 +11,7 @@ type abs_error = [
   | `Concrete_reasonligo_recursive_fun of Region.t
   | `Concrete_reasonligo_unsupported_pattern_type of Raw.pattern
   | `Concrete_reasonligo_unsupported_string_singleton of Raw.type_expr
+  | `Concrete_reasonligo_unsupported_twild of Raw.type_expr
   | `Concrete_reasonligo_unsupported_deep_list_pattern of Raw.pattern
   | `Concrete_reasonligo_michelson_type_wrong of Raw.type_expr * string
   | `Concrete_reasonligo_michelson_type_wrong_arity of Location.t * string
@@ -26,6 +27,7 @@ let untyped_recursive_fun reg = `Concrete_reasonligo_recursive_fun reg
 let unsupported_pattern_type pl = `Concrete_reasonligo_unsupported_pattern_type pl
 let unsupported_deep_list_patterns cons = `Concrete_reasonligo_unsupported_deep_list_pattern cons
 let unsupported_string_singleton te = `Concrete_reasonligo_unsupported_string_singleton te
+let unsupported_twild te = `Concrete_reasonligo_unsupported_twild te
 let recursion_on_non_function reg = `Concrete_reasonligo_recursion_on_non_function reg
 let michelson_type_wrong texpr name = `Concrete_reasonligo_michelson_type_wrong (texpr,name)
 let michelson_type_wrong_arity loc name = `Concrete_reasonligo_michelson_type_wrong_arity (loc,name)
@@ -64,6 +66,10 @@ let error_ppformat : display_format:string display_format ->
     | `Concrete_reasonligo_unsupported_string_singleton te ->
       Format.fprintf f
         "@[<hv>%a@.Invalid type. @.It's not possible to assign a string to a type. @]"
+        Snippet.pp_lift (Raw.type_expr_to_region te)
+    | `Concrete_reasonligo_unsupported_twild te ->
+      Format.fprintf f
+        "@[<hv>%a@.Invalid type. @.It's not possible to use _ in a type. @]"
         Snippet.pp_lift (Raw.type_expr_to_region te)
     | `Concrete_reasonligo_unsupported_deep_list_pattern cons ->
       Format.fprintf f
@@ -149,6 +155,13 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Concrete_reasonligo_unsupported_string_singleton te ->
     let message = `String "Unsupported singleton string type" in
+    let loc = Format.asprintf "%a" Location.pp_lift (Raw.type_expr_to_region te) in
+    let content = `Assoc [
+      ("message", message );
+      ("location", `String loc);] in
+    json_error ~stage ~content
+  | `Concrete_reasonligo_unsupported_twild te ->
+    let message = `String "Unsupported _ in type" in
     let loc = Format.asprintf "%a" Location.pp_lift (Raw.type_expr_to_region te) in
     let content = `Assoc [
       ("message", message );
