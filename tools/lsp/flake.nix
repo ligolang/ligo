@@ -153,8 +153,8 @@
         };
       }) // {
         # docker image with the language server
-        squirell-docker-image = { creationDate ? "1970-01-01T00:00:01Z" }: self.legacyPackages.x86_64-linux.dockerTools.buildImage {
-          name = "squirell";
+        lsp-docker-image = { creationDate ? "1970-01-01T00:00:01Z" }: self.legacyPackages.x86_64-linux.dockerTools.buildImage {
+          name = "ligo-lsp";
           tag = "latest";
           created = creationDate;
           contents = self.packages.x86_64-linux.squirrel-static;
