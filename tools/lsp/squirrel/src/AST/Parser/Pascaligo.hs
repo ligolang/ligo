@@ -59,6 +59,7 @@ recognise (SomeRawTree dialect rawTree)
         "set_remove"        -> SetRemove <$> field  "key"        <*> field  "container"
         "update_record"     -> RecordUpd <$> field  "record"     <*> fields "assignment"
         "michelson_interop" -> Michelson <$> field  "code"       <*> field  "type"    <*> fields "argument"
+        "paren_expr"        -> Paren     <$> field  "expr"
         _                   -> fallthrough
 
     -- Pattern

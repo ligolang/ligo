@@ -166,6 +166,14 @@ toParseTree input = do
           let
             start2D  = nodeStartPoint node
             finish2D = nodeEndPoint   node
+            -- An empty node indicates a missing token, for example, if we have:
+            -- `function idsa (const iff : int) : int is (iff`
+            -- Then tree-sitter will report:
+            -- `(MISSING ")" [0, 45] - [0, 45])`
+            -- But won't indicate an error on the parse tree itself. According to
+            -- https://github.com/tree-sitter/tree-sitter-bash/issues/27#issuecomment-410865045
+            -- we can check for this by testing whether we have an empty node.
+            name     = if start2D == finish2D then "ERROR" else Text.pack ty
             i        = fromIntegral
 
           let
@@ -187,7 +195,7 @@ toParseTree input = do
           return $ make
             ( range :> "" :> Nil
             , ParseTree
-              { ptName     = Text.pack ty
+              { ptName     = name
               , ptChildren = trees
               , ptSource   = cutOut range src
               }

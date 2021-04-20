@@ -135,6 +135,7 @@ data Expr it
   | SetPatch  it [it] -- (QualifiedName) [Expr]
   | RecordUpd it [it] -- (QualifiedName) [FieldAssignment]
   | Michelson it it [it] -- (MichelsonCode) (Type) (Arguments)
+  | Paren     it -- (Expr)
   deriving stock (Generic, Functor, Foldable, Traversable)
 
 newtype MichelsonCode it

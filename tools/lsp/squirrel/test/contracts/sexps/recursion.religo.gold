@@ -7,8 +7,7 @@
       int
       =>
       (if
-        (tuple (n < 1))
-        (seq acc) (seq (apply sum (tuple (n - 1) (acc + n)))))))
+        ((n < 1)) (seq acc) (seq (apply sum (tuple (n - 1) (acc + n)))))))
   (const
     (? fibo)
     (lam
@@ -17,5 +16,5 @@
       int
       =>
       (if
-        (tuple (n < 2))
+        ((n < 2))
         (seq n_1) (seq (apply fibo (tuple (n - 1) (n_1 + n_0) n_1)))))))
