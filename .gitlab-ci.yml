@@ -1,227 +1,29 @@
-# TODO: remove this as submodules aren't used anymore.
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
   LIGO_REGISTRY_IMAGE_BASE_NAME: "${CI_PROJECT_PATH}/${CI_PROJECT_NAME}"
-  WEBIDE_IMAGE_NAME: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide"
+  WEBIDE_IMAGE_TAG: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide:${CI_COMMIT_SHORT_SHA}"
+  LIGO_IMAGE_TAG: "ligo:${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}"
 
 stages:
-  - build
-  - push
-  - ide-deploy
-  - versioning
+  - pretooling                      # changelog
+  - docker-build                    # build, test, produces binaries/.deb/doc within docker
+  - docker-extract                  # extract what have been built and expose them as artifact
+  - tooling                         # build miscellaneous tooling-related things (website, changelog..)
+  - push                            # deploy docker images, pages, releases (tag)
+  - ide-deploy                      # deploy web IDE
+  - ide-feature-container-removal   # remove feature branch containers of the webide
 
-.docker-image:
-  stage: push
-  image: docker:19.03.5
-  services:
-    - docker:19.03.5-dind
-
-version_scheduled_job:
-  stage: versioning
-  script:
-    - scripts/versioning.sh
-  only:
-    - schedules
+# jobs for building and testing LSP
+include: '/tools/lsp/.gitlab-ci.yml'
 
 .nix:
-  stage: build
-  tags:
-    - nix
   before_script:
     - find "$CI_PROJECT_DIR" -path "$CI_PROJECT_DIR/.git" -prune -o "(" -type d -a -not -perm -u=w ")" -exec chmod --verbose u+w {} ";"
-    # - nix-env -f channel:nixos-unstable -iA gnutar gitMinimal
     - export COMMIT_DATE="$(git show --no-patch --format=%ci)"
 
-# The binary produced is useless by itself
-binary:
-  extends: .nix
-  only:
-    - merge_requests
-    - dev
-    - /^.*-run-dev$/
-  script:
-    - nix-build nix -A ligo-bin
-
-deb:
-  extends: .nix
-  only:
-    - merge_requests
-    - dev
-    - /^.*-run-dev$/
-    - /[0-9]+\.[0-9]+\.[0-9]+/
-  script:
-    - nix-build nix -A ligo-deb
-    - cp -L result/ligo.deb .
-  artifacts:
-    paths:
-      - ligo.deb
-
-doc:
-  extends: .nix
-  only:
-    - merge_requests
-    - dev
-    - /^.*-run-dev$/
-  script:
-    - nix-build nix -A ligo-doc
-    - cp -Lr --no-preserve=mode,ownership,timestamps result/share/doc .
-  artifacts:
-    paths:
-      - doc
-
-test:
-  extends: .nix
-  only:
-    - merge_requests
-    - dev
-    - /^.*-run-dev$/
-  script:
-    - nix-build nix -A ligo-coverage
-    - cat result/share/coverage-all
-    - cp -Lr --no-preserve=mode,ownership,timestamps result/share/coverage .
-  artifacts:
-    paths:
-      - coverage
-
-xrefcheck:
-  extends: .nix
-  only:
-    - merge_requests
-  allow_failure: true
-  script:
-    # Should be replaced with
-    # nix run github:serokell/xrefcheck
-    # Once flakes roll out to stable
-    # - nix run -f https://github.com/serokell/xrefcheck/archive/v0.1.1.2.tar.gz -c 'xrefcheck local-only'
-    - curl -L https://github.com/serokell/xrefcheck/releases/download/v0.1.1/release.tar.gz | tar -zxf - xrefcheck/bin/xrefcheck
-    - xrefcheck/bin/xrefcheck
-  allow_failure: true #TODO could be better if we do not allow failure for realeases
-
-# Strange race conditions, disable for now
-.webide-e2e:
-  extends: .nix
-  only:
-    # Disabled for now unless the branch name contains webide, because a test in this job fails randomly
-    - /.*webide.*/
-    #- merge_requests
-    #- dev
-    #- /^.*-run-dev$/
-  script:
-    - nix-build nix -A ligo-editor.e2e
-
-docker:
-  extends: .nix
-  only:
-    - merge_requests
-    - dev
-    - /^.*-run-dev$/
-    - /[0-9]+\.[0-9]+\.[0-9]+/
-  script:
-    - nix-build nix -A ligo-docker
-    - cp -L result ligo.tar.gz
-  artifacts:
-    paths:
-      - ligo.tar.gz
-
-docker-large:
-  extends: docker
-  script:
-    - nix-build nix -A ligo-docker-large
-    - cp -L result ligo.tar.gz
-
-docker-push:
-  extends: .docker-image
-  dependencies:
-    - docker
-  needs:
-    - docker
-  only:
-    - dev
-    - /^.*-run-dev$/
-    - /[0-9]+\.[0-9]+\.[0-9]+/
-  script:
-    - echo ${LIGO_REGISTRY_PASSWORD} | docker login -u ${LIGO_REGISTRY_USER} --password-stdin
-    - docker load -i=./ligo.tar.gz
-    - if test "$CI_COMMIT_REF_NAME" = "dev"; then export LIGO_TAG=next; else if echo "$CI_COMMIT_TAG" | grep -E "[0-9]+\.[0-9]+\.[0-9]+"; then export LIGO_TAG="$CI_COMMIT_TAG"; else export LIGO_TAG=next-attempt; fi; fi
-    - export LIGO_REGISTRY_FULL_NAME="${LIGO_REGISTRY_IMAGE_BUILD:-ligolang/ligo}:$LIGO_TAG"
-    - docker tag ligo "${LIGO_REGISTRY_FULL_NAME}"
-    - docker push "${LIGO_REGISTRY_FULL_NAME}"
-
-docker-large-push:
-  extends: docker-push
-  dependencies:
-    - docker-large
-  needs:
-    - docker-large
-  script:
-    - echo "${LIGO_REGISTRY_PASSWORD}" | docker login -u "${LIGO_REGISTRY_USER}" --password-stdin
-    - docker load -i=./ligo.tar.gz
-    - if test "$CI_COMMIT_REF_NAME" = "dev"; then export LIGO_TAG=next-large; else if echo "$CI_COMMIT_TAG" | grep -E "[0-9]+\.[0-9]+\.[0-9]+"; then export LIGO_TAG="$CI_COMMIT_TAG-large"; else export LIGO_TAG=next-attempt-large; fi; fi
-    - export LIGO_REGISTRY_FULL_NAME="${LIGO_REGISTRY_IMAGE_BUILD:-ligolang/ligo}:$LIGO_TAG"
-    - docker tag ligo "${LIGO_REGISTRY_FULL_NAME}"
-    - docker push "${LIGO_REGISTRY_FULL_NAME}"
-
-webide-docker:
-  extends: .nix
-  only:
-    - merge_requests
-    - dev
-    - /^.*-run-dev$/
-  script:
-    - nix-build nix -A ligo-editor-docker
-    - cp -L result webide.tar.gz
-  artifacts:
-    paths:
-      - webide.tar.gz
-
-webide-push:
-  extends: .docker-image
-  dependencies:
-    - webide-docker
-  needs:
-    - webide-docker
-  rules:
-    # Only deploy docker when from the dev branch AND on the canonical ligolang/ligo repository
-    - if: '$CI_COMMIT_REF_NAME =~ /^(dev|.*-run-dev)$/ && $CI_PROJECT_PATH == "ligolang/ligo"'
-      when: always
-  script:
-    - echo "${CI_BUILD_TOKEN}" | docker login -u gitlab-ci-token --password-stdin registry.gitlab.com
-    - docker load -i=./webide.tar.gz
-    - docker tag ligo-editor "${WEBIDE_IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
-    - docker push "${WEBIDE_IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
-
-deploy-handoff:
-  # Handoff deployment duties to private repo
-  stage: ide-deploy
-  variables:
-    IDE_DOCKER_IMAGE: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide"
-    LIGO_COMMIT_REF_NAME: "${CI_COMMIT_SHORT_SHA}"
-  trigger: ligolang/ligo-webide-deploy
-  rules:
-    # Only deploy handoff when from the dev branch AND on the canonical ligolang/ligo repository
-    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
-      when: always
-
-static-binary:
-  extends: .nix
-  only:
-    - merge_requests
-    - dev
-    - /^.*-run-dev$/
-    - /[0-9]+\.[0-9]+\.[0-9]+/
-  script:
-    - nix-build nix -A ligo-static
-    # Check that the binary is truly static and has 0 dependencies
-    - test $(nix-store -q --references ./result | wc -l) -eq 0
-    - cp -L result/bin/ligo ligo
-    - chmod +rwx ligo
-  artifacts:
-    expose_as: "Static Linux binary"
-    paths:
-      - ligo
-
 changelog:
-  extends: .nix
+  stage: pretooling
+  extends : .nix
   only:
     - merge_requests
     - dev
@@ -237,6 +39,194 @@ changelog:
       - release-notes.md
       - release-notes.txt
 
+to_dos:
+  stage: pretooling
+  only:
+    - merge_requests
+    - /^.*-run-dev$/
+  script:
+    - ./scripts/list-to-dos.sh > to-dos.html
+  artifacts:
+    paths:
+      - to-dos.html
+
+# TODO: https://docs.gitlab.com/ee/ci/yaml/#onlychangesexceptchanges ?
+docker_build:
+  stage: docker-build
+  dependencies:
+    - changelog
+  only:
+    - merge_requests
+    - dev
+    - /^.*-run-dev$/
+    - /[0-9]+\.[0-9]+\.[0-9]+/
+  script:
+    - docker build .
+      --build-arg=ci_commit_tag=$CI_COMMIT_TAG
+      --build-arg=ci_commit_sha=$CI_COMMIT_SHA
+      --build-arg=ci_commit_timestamp=$CI_COMMIT_TIMESTAMP
+      --build-arg=changelog_path=changelog.txt
+      -t ${LIGO_IMAGE_TAG}
+    - docker save -o ligo.tar.gz ${LIGO_IMAGE_TAG}
+  after_script:
+    - docker image rm "${LIGO_IMAGE_TAG}" >/dev/null 2>&1 || true
+  artifacts:
+    expose_as: "Ligo docker image - light -"
+    paths:
+      - ligo.tar.gz
+
+docker_extract:
+  stage: docker-extract
+  only:
+    - merge_requests
+    - dev
+    - /^.*-run-dev$/
+    - /[0-9]+\.[0-9]+\.[0-9]+/
+  extends: .nix
+  dependencies :
+    - docker_build
+  script:
+    - docker load -i ligo.tar.gz
+    - docker cp $(docker create ${LIGO_IMAGE_TAG}):/root/ligo .
+    - chmod +rwx ligo
+    # Check that the binary is truly static and has 0 dependencies
+    - ldd ligo | grep 'statically' # TODO: there is maybe a better way to do that ?
+    - docker cp $(docker create ${LIGO_IMAGE_TAG}):/root/coverage .
+    - cat coverage/coverage-summary
+    - docker cp -La $(docker create ${LIGO_IMAGE_TAG}):/root/doc .
+    - nix-build nix -A ligo-deb
+    - cp -L result/ligo.deb .
+  after_script:
+    - docker image rm "${LIGO_IMAGE_TAG}" >/dev/null 2>&1 || true
+  artifacts:
+    paths:
+      - ligo
+      - ligo.deb
+      - coverage
+      - doc
+
+xrefcheck:
+  stage: tooling
+  only:
+    - merge_requests
+  script:
+    # Should be replaced with
+    # nix run github:serokell/xrefcheck
+    # Once flakes roll out to stable
+    # - nix run -f https://github.com/serokell/xrefcheck/archive/v0.1.1.2.tar.gz -c 'xrefcheck local-only'
+    - curl -L https://github.com/serokell/xrefcheck/releases/download/v0.1.1/release.tar.gz | tar -zxf - xrefcheck/bin/xrefcheck
+    - xrefcheck/bin/xrefcheck
+  allow_failure: true #TODO could be better if we do not allow failure for realeases
+
+
+# Strange race conditions, disable for now
+.webide-e2e:
+  stage: tooling
+  extends: .nix
+  only:
+    # Disabled for now unless the branch name contains webide, because a test in this job fails randomly
+    - /.*webide.*/
+    #- merge_requests
+    #- dev
+    #- /^.*-run-dev$/
+  script:
+    - nix-build nix -A ligo-editor.e2e
+
+docker:
+  stage: tooling
+  dependencies:
+    - docker_build
+  only:
+    - merge_requests
+    - dev
+    - /^.*-run-dev$/
+    - /[0-9]+\.[0-9]+\.[0-9]+/
+  script:
+    - ':'
+  artifacts:
+    paths:
+      - ligo.tar.gz
+
+webide-docker:
+  extends: .nix
+  stage: tooling
+  dependencies:
+    - docker_extract
+  only:
+    - merge_requests
+    - dev
+    - /^.*-run-dev$/
+  script:
+    - nix-build nix -A ligo-editor-docker
+    - cp -L result webide.tar.gz
+  artifacts:
+    paths:
+      - webide.tar.gz
+
+.docker-image:
+  stage: push
+  image: docker:19.03.5
+  services:
+    - docker:19.03.5-dind
+
+docker-push:
+  stage: push
+  extends: .docker-image
+  dependencies:
+    - docker_build
+  needs:
+    - docker_build
+  only:
+    - dev
+    - /^.*-run-dev$/
+    - /[0-9]+\.[0-9]+\.[0-9]+/
+  script:
+    - echo ${LIGO_REGISTRY_PASSWORD} | docker login -u ${LIGO_REGISTRY_USER} --password-stdin
+    - docker load -i=./ligo.tar.gz
+    - if test "$CI_COMMIT_REF_NAME" = "dev"; then export LIGO_TAG=next; else if echo "$CI_COMMIT_TAG" | grep -E "[0-9]+\.[0-9]+\.[0-9]+"; then export LIGO_TAG="$CI_COMMIT_TAG"; else export LIGO_TAG=next-attempt; fi; fi
+    - export LIGO_REGISTRY_FULL_NAME="${LIGO_REGISTRY_IMAGE_BUILD:-ligolang/ligo}:$LIGO_TAG"
+    - docker tag "${LIGO_IMAGE_TAG}" "${LIGO_REGISTRY_FULL_NAME}"
+    - docker push "${LIGO_REGISTRY_FULL_NAME}"
+  after_script:
+    - docker image rm "${LIGO_IMAGE_TAG}" >/dev/null 2>&1 || true
+
+# docker-large-push: ?
+#   extends: docker-push
+#   dependencies:
+#     - docker-large
+#   needs:
+#     - docker-large
+#   script:
+#     - echo "${LIGO_REGISTRY_PASSWORD}" | docker login -u "${LIGO_REGISTRY_USER}" --password-stdin
+#     - docker load -i=./ligo.tar.gz
+#     - if test "$CI_COMMIT_REF_NAME" = "dev"; then export LIGO_TAG=next-large; else if echo "$CI_COMMIT_TAG" | grep -E "[0-9]+\.[0-9]+\.[0-9]+"; then export LIGO_TAG="$CI_COMMIT_TAG-large"; else export LIGO_TAG=next-attempt-large; fi; fi
+#     - export LIGO_REGISTRY_FULL_NAME="${LIGO_REGISTRY_IMAGE_BUILD:-ligolang/ligo}:$LIGO_TAG"
+#     - docker tag ligo "${LIGO_REGISTRY_FULL_NAME}"
+#     - docker push "${LIGO_REGISTRY_FULL_NAME}"
+
+webide-push:
+  extends: .docker-image
+  stage: push
+  dependencies:
+    - webide-docker
+  needs:
+    - webide-docker
+  rules:
+    # Only deploy docker when from the dev branch or a merge request AND on the canonical ligolang/ligo repository
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      changes:
+        - tools/webide/**/*
+      when: always
+    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+  script:
+    - echo "${CI_BUILD_TOKEN}" | docker login -u gitlab-ci-token --password-stdin registry.gitlab.com
+    - docker load -i=./webide.tar.gz
+    - docker tag ligo-editor "${WEBIDE_IMAGE_TAG}"
+    - docker push "${WEBIDE_IMAGE_TAG}"
+  after_script:
+    - docker image rm "${WEBIDE_IMAGE_TAG}" >/dev/null 2>&1 || true
+
 release:
   stage: push
   image: registry.gitlab.com/gitlab-org/release-cli
@@ -244,9 +234,8 @@ release:
     - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]+/'
       when: always
   dependencies:
+    - docker_extract
     - changelog
-    - static-binary
-    - deb
   ## FIXME find a better solution to upload the binary
   artifacts:
     expire_in: 1000 yrs
@@ -257,10 +246,15 @@ release:
     - release-cli create --name "Release $CI_COMMIT_TAG" --description "$(cat release-notes.md)" --assets-links-name "Static Linux binary" --assets-links-url "$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/ligo" --assets-links-name "deb package" --assets-links-url "$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/ligo.deb"
 
 .website:
+  stage: push
   extends: .nix
+  dependencies:
+    - docker_extract
+    - to_dos
   script:
     - nix-build nix -A ligo-website
     - cp -Lr --no-preserve=mode,ownership,timestamps result/ public
+    - touch to-dos.html; cp to-dos.html public/to-dos.html
   artifacts:
     paths:
       - public
@@ -279,78 +273,85 @@ pages-attempt:
     - merge_requests
     - /^.*-run-dev$/
 
-vscode-extension-tests:
-  extends: .nix
-  only:
-    - merge_requests
-    - dev
-    - tooling
-    - /^.*-run-dev$/
-  script:
-    - nix-build tools/lsp -A checks.x86_64-linux.squirrel-test
+# This job will deploy the web-ide docker container to the test server.
+deploy-handoff-feature:
+  # Handoff deployment duties to private repo.
+  stage: ide-deploy
+  variables:
+    IDE_DOCKER_IMAGE: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide"
+    LIGO_COMMIT_REF_NAME: "${CI_COMMIT_SHORT_SHA}"
+    LIGO_CI_MERGE_REQUEST_IID: "${CI_MERGE_REQUEST_IID}"
+  trigger: 
+    project: ligolang/ligo-webide-deploy
+  rules:
+    # Only deploy handoff when from an MR AND on the canonical ligolang/ligo repository.
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      changes:
+        - tools/webide/**/*
+      when: always
 
-vscode-extension-sexp-tests:
-  extends: .nix
-  only:
-    - merge_requests
-    - dev
-    - tooling
-    - /^.*-run-dev$/
-  script:
-    - nix-build tools/lsp -A checks.x86_64-linux.squirrel-sexp-test
+deploy-handoff:
+  # Handoff deployment duties to private repo
+  stage: ide-deploy
+  variables:
+    IDE_DOCKER_IMAGE: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide"
+    LIGO_COMMIT_REF_NAME: "${CI_COMMIT_SHORT_SHA}"
+  trigger: 
+    project: ligolang/ligo-webide-deploy
+  rules:
+    # Only deploy handoff when from the dev branch AND on the canonical ligolang/ligo repository
+    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
 
-vscode-extension-linux:
-  extends: .nix
-  only:
-    - merge_requests
+# This job builds the ligo-webide front-end from the tools/webide/ directory and deploys it as a Branch Deploy to Netlify using the netlify-cli tool.
+# After the deployment is done a comment is posted to the MR with the draft site URL as well as the Netlify logs
+build-preview-ligo-webide-front-end:
+  stage: ide-deploy
+  image: node:12.20.0-buster
+  tags:
+    - docker
   script:
-    - nix-build tools/lsp -A packages.x86_64-linux.vscode-extension-native
+    - apt-get update
+    - apt-get install -y --no-install-recommends jq
+    - cd ./tools/webide/
+    - sed -i "s/temphost/$CI_MERGE_REQUEST_IID-$CI_COMMIT_SHORT_SHA/g" ./packages/client/feature-netlify.toml
+    - cat ./packages/client/feature-netlify.toml
+    - mv ./packages/client/feature-netlify.toml ./packages/client/netlify.toml
+    - yarn install
+    - CI= yarn workspaces run build
+    - cd ./packages/client
+    - npm install netlify-cli
+    - npx netlify deploy --site $NETLIFY_SITE_ID --auth $NETLIFY_AUTH_TOKEN --json --alias="$CI_MERGE_REQUEST_IID-$CI_COMMIT_SHORT_SHA" > netlify.json
+    - export NETLIFY_DEPLOY_URL=$(jq -r .deploy_url netlify.json)
+    - export NETLIFY_DEPLOY_LOGS=$(jq -r .logs netlify.json)
+    - echo "The URL for this deployment is $NETLIFY_DEPLOY_URL"
+    - echo "Logs for this deployment can be found at $NETLIFY_DEPLOY_LOGS"
+    - '[ ! -z "$CI_MERGE_REQUEST_IID" ] && curl POST https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/merge_requests/$CI_MERGE_REQUEST_IID/notes -d "{\"body\": \"A new deploy preview is available on Netlify at $NETLIFY_DEPLOY_URL, you can view the logs at $NETLIFY_DEPLOY_LOGS\"}" --header "Content-Type: application/json" --header "Private-Token: $GITLAB_PERSONAL_API_PRIVATE_TOKEN"'
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - tools/webide/**/*
+      when: always
 
-vscode-extension:
-  extends: .nix
-  only:
-    - dev
-    - tooling
-    - /^.*-run-dev$/
-    - vscode-production
-  script:
-    - nix-build tools/lsp -A packages.x86_64-linux.vscode-extension
-    - cp -Lr --no-preserve=mode,ownership,timestamps result/*.vsix ligo-extension.vsix
-  artifacts:
-    expose_as: "LSP vscode extension for x86_64-linux and x86_64-darwin"
-    paths:
-      - ligo-extension.vsix
-
-vscode-extension-publish:
-  stage: push
-  dependencies: [vscode-extension]
-  only:
-    - vscode-production
-  when: manual
-  script:
-    - nix run -f nix/vsce.nix -c vsce publish --packagePath *.vsix -p "$MICROSOFT_MARKETPLACE_TOKEN"
-
-squirell-docker-image:
-  extends: .nix
-  only:
-    - merge_requests
-    - dev
-    - tooling
-    - /^.*-run-dev$/
-  script:
-    - nix-build tools/lsp -A squirell-docker-image
-
-squirell-docker-image-publish:
-  extends: .nix
-  stage: push
-  only:
-    - tooling
-  script:
-    # set creation date to current date
-    - CURRENT_DATE=$(date --iso-8601=seconds)
-    - nix-build tools/lsp -A squirell-docker-image --argstr creationDate "$CURRENT_DATE"
-    # docker registry credentials provided by gitlab
-    - DEST_CREDS="$CI_REGISTRY_USER":"$CI_REGISTRY_PASSWORD"
-    # use '--insecury-policy' to disable container signature checking, because we only upload the image
-    - nix run -f tools/lsp skopeo -c
-        skopeo --insecure-policy copy --dest-creds "$DEST_CREDS" docker-archive:./result docker://"$CI_REGISTRY_IMAGE"/ligo-lsp:latest
+# This job will remove the web-ide docker containers that contain the MR_IID in their name from the test server.
+downstream-webide-removal-handoff:
+  # Handoff deployment duties to private repo
+  stage: ide-feature-container-removal
+  variables:
+    IDE_DOCKER_IMAGE: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide"
+    LIGO_COMMIT_REF_NAME: "${CI_COMMIT_SHORT_SHA}"
+    LIGO_CI_MERGE_REQUEST_IID: "${CI_MERGE_REQUEST_IID}"
+    CLEAN_DOWNSTREAM: "true"
+  trigger: 
+    project: ligolang/ligo-webide-deploy
+  rules:
+    # When there is a merge request there will be a manual job to remove feature branch containers
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      changes:
+        - tools/webide/**/*
+      when: manual
+    # After a MR merges and is committed to the default branch, the removal job will be triggered
+    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo" && $CI_MERGE_REQUEST_IID != null'
+      changes:
+        - tools/webide/**/*
+      when: always
