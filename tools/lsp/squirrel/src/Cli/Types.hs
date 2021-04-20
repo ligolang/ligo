@@ -46,5 +46,6 @@ instance Default LigoClientEnv where
 class (Monad m, MonadIO m, MonadCatch m) => HasLigoClient m where
   getLigoClientEnv :: m LigoClientEnv
 
+-- Mostly for debugging purposes
 instance HasLigoClient IO where
   getLigoClientEnv = pure def

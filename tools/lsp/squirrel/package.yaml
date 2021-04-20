@@ -1,11 +1,13 @@
 name: ligo-squirrel
 
 dependencies:
+  - algebraic-graphs
   - async
   - base
   - bytestring
   - containers
   - data-default
+  - directory
   - duplo
   - exceptions
   - fastsum
@@ -50,7 +52,9 @@ default-extensions:
   - OverloadedStrings
   - QuantifiedConstraints
   - QuasiQuotes
+  - PatternSynonyms
   - RankNTypes
+  - RecordWildCards
   - ScopedTypeVariables
   - StandaloneDeriving
   - TemplateHaskell
@@ -93,6 +97,7 @@ library:
     - grammar/camligo/src/scanner.c
 
   dependencies:
+    - algebraic-graphs
     - aeson
     - bytestring
     - lens
@@ -109,6 +114,7 @@ executables:
     main: Main.hs
 
     dependencies:
+      - algebraic-graphs
       - clock
       - focus
       - lsp

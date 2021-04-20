@@ -17,11 +17,10 @@ module Test.Capabilities.Find
 import AST.Scope (Fallback)
 
 import Test.Common.Capabilities.Find
-import Test.Common.FixedExpectations (HasCallStack)
 import Test.Tasty (TestTree)
 import Test.Tasty.HUnit (Assertion)
 
-test_findDefinitionAndGoToReferencesCorrespondence :: HasCallStack => TestTree
+test_findDefinitionAndGoToReferencesCorrespondence :: TestTree
 test_findDefinitionAndGoToReferencesCorrespondence = findDefinitionAndGoToReferencesCorrespondence @Fallback
 
 unit_definitionOfId :: Assertion
