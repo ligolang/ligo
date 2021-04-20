@@ -20,7 +20,8 @@ vscode-extension-tests:
     - *run-on-lsp-label
     - *run-with-failure-allowed
   script:
-    - nix-build tools/lsp -A checks.x86_64-linux.squirrel-test
+    - nix-build tools/lsp -A checks.x86_64-linux.lsp-test
+    - nix-build tools/lsp -A checks.x86_64-linux.ligo-contracts-test
 
 vscode-extension-sexp-tests:
   stage: tooling
