@@ -17,5 +17,3 @@ val type_declaration : environment -> typer_error O'.typer_state -> I.declaratio
 val evaluate_type : environment -> I.type_expression -> (O.type_expression, typer_error) result
 val type_expression : ?tv_opt:O.type_expression -> environment -> typer_error O'.typer_state -> I.expression -> (environment * typer_error O'.typer_state * O.expression * O.type_expression, typer_error) result
 val type_expression_subst : environment -> typer_error O'.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (environment * O.expression * O.type_expression * typer_error O'.typer_state, typer_error) result
-
-val untype_expression : O.expression -> (I.expression, typer_error) result
