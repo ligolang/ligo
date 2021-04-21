@@ -148,37 +148,36 @@ module TestExpressions = struct
     test_expression
       I.(e_ascription (e_int Z.one) (t_int ()))
       O.(t_int ())
-
-
 end
+
 (* TODO: deep types (e.g. record of record)
    TODO: negative tests (expected type error) *)
 
 let main = test_suite "Typer (from core AST)"
   [
-    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "int" int ;
-    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "unit"            TestExpressions.unit ;
-    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "int2"            TestExpressions.int ;
-    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bool"            TestExpressions.bool ; (* needs variants *)
-    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "string"          TestExpressions.string ;
-    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bytes"           TestExpressions.bytes ;    
-    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "option"          TestExpressions.option ;    
-    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bytes_pack"      TestExpressions.bytes_pack ;    
-    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bytes_unpack"    TestExpressions.bytes_unpack ;    
-    test (* enabled AND PASSES as of 02021-01-29 5dc448c7f *) "add"             TestExpressions.add ;
-    test "eq" TestExpressions.eq ;
-    test (* enabled AND PASSES as of 02021-01-30 3aaa688f1 *) "keyhash"         TestExpressions.key_hash ;
-    test (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "failwith"        TestExpressions.failwith ;
-    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "application"     TestExpressions.application ;
-    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "lambda"          TestExpressions.lambda ;
-    test "recursive"          TestExpressions.recursive ;
-    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "let_in"          TestExpressions.let_in ;
-    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "let_in_ascr"     TestExpressions.let_in_ascr ;
-    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "constructor"     TestExpressions.constructor ;
-    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "matching"        TestExpressions.matching ;
-    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "record"          TestExpressions.record ;
-    test (* enabled AND PASSES as of 02021-01-30 c2e450161 *) "record_accessor" TestExpressions.record_accessor ;
-    test (* enabled AND PASSES as of 02021-01-30 c2e450161 *) "record_update"   TestExpressions.record_update ;
-    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "tuple"           TestExpressions.tuple ;
-    test (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "ascription"      TestExpressions.ascription ;
+    test "int" int ;
+    test "unit"            TestExpressions.unit ;
+    test "int2"            TestExpressions.int ;
+    test "bool"            TestExpressions.bool ;
+    test "string"          TestExpressions.string ;
+    test "bytes"           TestExpressions.bytes ;    
+    test "option"          TestExpressions.option ;    
+    test "bytes_pack"      TestExpressions.bytes_pack ;    
+    test "bytes_unpack"    TestExpressions.bytes_unpack ;    
+    test "add"             TestExpressions.add ;
+    test "eq"              TestExpressions.eq ;
+    test "keyhash"         TestExpressions.key_hash ;
+    test "failwith"        TestExpressions.failwith ;
+    test "application"     TestExpressions.application ;
+    test "lambda"          TestExpressions.lambda ;
+    test "recursive"       TestExpressions.recursive ;
+    test "let_in"          TestExpressions.let_in ;
+    test "let_in_ascr"     TestExpressions.let_in_ascr ;
+    test "constructor"     TestExpressions.constructor ;
+    test "matching"        TestExpressions.matching ;
+    test "record"          TestExpressions.record ;
+    test "record_accessor" TestExpressions.record_accessor ;
+    test "record_update"   TestExpressions.record_update ;
+    test "tuple"           TestExpressions.tuple ;
+    test "ascription"      TestExpressions.ascription ;
   ]
