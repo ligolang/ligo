@@ -67,7 +67,7 @@ Test.log x : prints x into the console.
 
 **\--infer**
 
-:   enable type inferance
+:   enable type inference
 
 **-p** *PROTOCOL_VERSION*, **\--protocol**=*PROTOCOL_VERSION* (absent=current)
 

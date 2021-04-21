@@ -45,7 +45,7 @@ source file and an entrypoint function that has the type of a contract:
 
 **\--infer**
 
-:   enable type inferance
+:   enable type inference
 
 **\--michelson-format**=*MICHELSON_FORMAT* (absent=text)
 

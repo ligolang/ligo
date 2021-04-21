@@ -17,7 +17,7 @@ let decompile_value func_or_expr program entry (ty, value) =
   let%bind mini_c = trace decompile_michelson @@ Stacking.Decompiler.decompile_value ty value in
   let%bind typed =  trace decompile_mini_c    @@ Spilling.decompile mini_c output_type in
   let%bind inferred  =  trace decompile_typed     @@ Checking.untype_expression typed in
-  let%bind core      = trace inference_tracer @@ Inferance.untype_expression inferred in
+  let%bind core      = trace inference_tracer @@ Inference.untype_expression inferred in
   ok @@ core
 
 let decompile_typed_program_entry_expression_result program entry runned_result =

@@ -13,7 +13,7 @@
     self_ast_sugar
     desugaring
     self_ast_core
-    inferance
+    inference
     checking
     self_ast_typed
     ligo_interpreter

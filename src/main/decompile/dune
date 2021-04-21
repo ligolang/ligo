@@ -15,7 +15,7 @@
     desugaring
     ast_core
     self_ast_core
-    inferance
+    inference
     checking
     ast_typed
     self_ast_typed

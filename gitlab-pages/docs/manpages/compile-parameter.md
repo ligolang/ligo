@@ -56,7 +56,7 @@ as an argument in a transaction which calls a contract.
 
 **\--infer**
 
-:   enable type inferance
+:   enable type inference
 
 **\--michelson-format**=*MICHELSON_FORMAT* (absent=text)
 

@@ -281,7 +281,7 @@ let%expect_test _ =
                `plain' whenever the TERM env var is `dumb' or undefined.
 
            --infer
-               enable type inferance
+               enable type inference
 
            --michelson-format=MICHELSON_FORMAT (absent=text)
                MICHELSON_FORMAT is the format that will be used by
@@ -362,7 +362,7 @@ let%expect_test _ =
                `plain' whenever the TERM env var is `dumb' or undefined.
 
            --infer
-               enable type inferance
+               enable type inference
 
            --michelson-format=MICHELSON_FORMAT (absent=text)
                MICHELSON_FORMAT is the format that will be used by
@@ -455,7 +455,7 @@ let%expect_test _ =
                `plain' whenever the TERM env var is `dumb' or undefined.
 
            --infer
-               enable type inferance
+               enable type inference
 
            --michelson-format=MICHELSON_FORMAT (absent=text)
                MICHELSON_FORMAT is the format that will be used by
@@ -552,7 +552,7 @@ let%expect_test _ =
                `plain' whenever the TERM env var is `dumb' or undefined.
 
            --infer
-               enable type inferance
+               enable type inference
 
            --now=NOW
                NOW is the NOW value the Michelson interpreter will use (e.g.
@@ -636,7 +636,7 @@ let%expect_test _ =
                `plain' whenever the TERM env var is `dumb' or undefined.
 
            --infer
-               enable type inferance
+               enable type inference
 
            --now=NOW
                NOW is the NOW value the Michelson interpreter will use (e.g.
@@ -707,7 +707,7 @@ let%expect_test _ =
                `plain' whenever the TERM env var is `dumb' or undefined.
 
            --infer
-               enable type inferance
+               enable type inference
 
            --now=NOW
                NOW is the NOW value the Michelson interpreter will use (e.g.
@@ -773,7 +773,7 @@ let%expect_test _ =
                `plain' whenever the TERM env var is `dumb' or undefined.
 
            --infer
-               enable type inferance
+               enable type inference
 
            --init-file=INIT_FILE
                INIT_FILE is the path to smart contract file to be used for

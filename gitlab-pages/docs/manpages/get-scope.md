@@ -36,7 +36,7 @@ format. It does not use the build system.
 
 **\--infer**
 
-:   enable type inferance
+:   enable type inference
 
 **-l** *LIBRARY*, **\--lib**=*LIBRARY*
 

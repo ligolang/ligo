@@ -35,7 +35,7 @@ This sub-command prints the source file in the AST core stage.
 
 **\--infer**
 
-:   enable type inferance
+:   enable type inference
 
 **-p** *PROTOCOL_VERSION*, **\--protocol**=*PROTOCOL_VERSION* (absent=current)
 

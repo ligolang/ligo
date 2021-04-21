@@ -50,7 +50,7 @@ is done using Michelson\`s interpreter.
 
 **\--infer**
 
-:   enable type inferance
+:   enable type inference
 
 **\--now**=*NOW*
 

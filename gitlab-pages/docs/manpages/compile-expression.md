@@ -43,7 +43,7 @@ then interpreting it using Michelson\`s interpreter.
 
 **\--infer**
 
-:   enable type inferance
+:   enable type inference
 
 **\--init-file**=*INIT_FILE*
 
