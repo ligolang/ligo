@@ -196,7 +196,7 @@ let optimize =
 let infer =
   let open Arg in
   let info =
-    let doc = "enable type inferance" in
+    let doc = "enable type inference" in
     info ~doc ["infer"] in
     value @@ flag info
 

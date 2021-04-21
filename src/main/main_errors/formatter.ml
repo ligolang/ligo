@@ -166,7 +166,7 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_depurification _e -> () (*no error in this pass*)
     | `Main_desugaring _e -> () (*no error in this pass*)
     | `Main_sugaring _e -> () (*no error in this pass*)
-    | `Main_inferance e -> Inferance.Errors.error_ppformat ~display_format f e
+    | `Main_inference e -> Inference.Errors.error_ppformat ~display_format f e
     | `Main_checking e -> Checking.Errors.error_ppformat ~display_format f e
     | `Main_self_ast_typed e -> Self_ast_typed.Errors.error_ppformat ~display_format f e
     | `Main_self_mini_c e -> Self_mini_c.Errors.error_ppformat ~display_format f e
@@ -198,7 +198,7 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_decompile_michelson e -> Stacking.Errors.error_ppformat ~display_format f  e
     | `Main_decompile_mini_c e -> Spilling.Errors.error_ppformat ~display_format f  e
     | `Main_decompile_typed e -> Checking.Errors.error_ppformat ~display_format f  e
-    | `Main_decompile_inferred e -> Inferance.Errors.error_ppformat ~display_format f  e
+    | `Main_decompile_inferred e -> Inference.Errors.error_ppformat ~display_format f  e
 
     | `Repl_unexpected -> Format.fprintf f "unexpected error, missing expression?"
   )
@@ -362,7 +362,7 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Main_depurification _ -> `Null (*no error in this pass*)
   | `Main_desugaring _ -> `Null (*no error in this pass*)
   | `Main_sugaring _ -> `Null (*no error in this pass*)
-  | `Main_inferance e -> Inferance.Errors.error_jsonformat e
+  | `Main_inference e -> Inference.Errors.error_jsonformat e
   | `Main_checking e -> Checking.Errors.error_jsonformat e
   | `Main_self_ast_typed e -> Self_ast_typed.Errors.error_jsonformat e
   | `Main_spilling e -> Spilling.Errors.error_jsonformat e
@@ -380,7 +380,7 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Main_decompile_michelson e -> Stacking.Errors.error_jsonformat e
   | `Main_decompile_mini_c e -> Spilling.Errors.error_jsonformat e
   | `Main_decompile_typed e -> Checking.Errors.error_jsonformat e
-  | `Main_decompile_inferred e -> Inferance.Errors.error_jsonformat e
+  | `Main_decompile_inferred e -> Inference.Errors.error_jsonformat e
 
   | `Repl_unexpected ->
      let message = `String "unexpected error" in

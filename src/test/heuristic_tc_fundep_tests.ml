@@ -177,6 +177,6 @@ let tests2 deduce_and_clean =
 let main = test_suite "Typer: fundep heuriscic"
   @@ List.flatten
     [
-      tests1 Inferance.Heuristic_tc_fundep.restrict ;
-      tests2 Inferance.Heuristic_tc_fundep.deduce_and_clean ;
+      tests1 Inference.Heuristic_tc_fundep.restrict ;
+      tests2 Inference.Heuristic_tc_fundep.deduce_and_clean ;
     ]

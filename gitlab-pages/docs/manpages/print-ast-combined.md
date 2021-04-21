@@ -38,7 +38,7 @@ contract is combined with the imported modules.
 
 **\--infer**
 
-:   enable type inferance
+:   enable type inference
 
 **-p** *PROTOCOL_VERSION*, **\--protocol**=*PROTOCOL_VERSION* (absent=current)
 

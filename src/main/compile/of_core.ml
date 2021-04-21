@@ -8,7 +8,7 @@ type form =
 let infer ~(options: Compiler_options.t) (m : Ast_core.module_) =
   let env_inf = Option.unopt_exn @@ Trace.to_option @@ Checking.decompile_env options.init_env in
   match options.infer with
-    | true  -> let%bind (_,e,_,_) = trace inference_tracer @@ Inferance.type_module ~init_env:env_inf m in ok @@ e
+    | true  -> let%bind (_,e,_,_) = trace inference_tracer @@ Inference.type_module ~init_env:env_inf m in ok @@ e
     | false -> ok @@ m
 
 let typecheck ~(options: Compiler_options.t) (cform : form) (m : Ast_core.module_) : (Ast_typed.module_fully_typed * Ast_typed.environment , _) result =
@@ -25,7 +25,7 @@ let compile_expression ?(infer = false) ~(env : Ast_typed.environment) (e : Ast_
   let env_inf = Option.unopt_exn @@ Trace.to_option @@ Checking.decompile_env env in
   let%bind inferred = match infer with 
     | true  -> let%bind (_,e,_,_) =
-      trace inference_tracer @@ Inferance.type_expression_subst env_inf Inferance.Solver.initial_state e in
+      trace inference_tracer @@ Inference.type_expression_subst env_inf Inference.Solver.initial_state e in
       ok e
     | false -> ok e 
   in

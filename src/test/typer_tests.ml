@@ -5,13 +5,13 @@ open Main_errors
 
 module Environment = Environment
 module Inferred = Ast_core
-module Inferance = Inferance
+module Inference = Inference
 module Simplified = Ast_core
 
 let int () : (unit, _) result =
   let open Ast_core.Combinators in
   let pre = e_int (Z.of_int 32) in
-  let open Inferance in
+  let open Inference in
   let e = Inferred.Environment.empty in
   let state = Solver.initial_state in
   let%bind (_, _post,t,new_state) = trace inference_tracer @@ type_expression_subst e state pre in
@@ -28,11 +28,11 @@ open Ast_core
 
 module TestExpressions = struct
   let test_expression ?(env = init_env)
-                      ?(state = Inferance.Solver.initial_state)
+                      ?(state = Inference.Solver.initial_state)
                       (expr : expression)
                       (test_expected_ty : Inferred.type_expression) =
     let pre = expr in
-    let open Inferance in
+    let open Inference in
     let open! Inferred in
     let%bind (_ , _post ,t,new_state) = trace inference_tracer @@ type_expression_subst env state pre in
     let () = Solver.discard_state new_state in

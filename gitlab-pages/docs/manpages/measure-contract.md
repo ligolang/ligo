@@ -40,7 +40,7 @@ compiled size in bytes.
 
 **\--infer**
 
-:   enable type inferance
+:   enable type inference
 
 **-p** *PROTOCOL_VERSION*, **\--protocol**=*PROTOCOL_VERSION* (absent=current)
 

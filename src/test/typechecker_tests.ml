@@ -71,7 +71,7 @@ module Random_type_generator = struct
     let test_checker constraints_list =
       trace (Main_errors.test_tracer "typechecker tests") @@
       trace (Main_errors.inference_tracer) @@
-      Inferance.Typecheck.check constraints_list all_vars repr_mock find_assignment_mock
+      Inference.Typecheck.check constraints_list all_vars repr_mock find_assignment_mock
     in
     let test_checker_neg lst =
       Trace.Assert.assert_fail (Main_errors.test_internal "This check should fail") (test_checker lst)
@@ -122,7 +122,7 @@ module Small_env_manual_test = struct
   let test_checker constraints_list =
     trace (Main_errors.test_tracer "typechecker tests") @@
       trace (Main_errors.inference_tracer) @@
-        Inferance.Typecheck.check constraints_list all_vars repr_mock find_assignment_mock
+        Inference.Typecheck.check constraints_list all_vars repr_mock find_assignment_mock
   let test_checker_neg lst =
     Trace.Assert.assert_fail (Main_errors.test_internal "This check should fail") (test_checker lst)
 end

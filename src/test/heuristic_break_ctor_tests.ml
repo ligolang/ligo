@@ -6,7 +6,7 @@ open Typer_common.Errors
 open Trace
 open Heuristic_common
 
-open Inferance.Heuristic_break_ctor
+open Inference.Heuristic_break_ctor
 
 let c1 = constraint_ 1L m == ctor C_int[]
 let c2 = constraint_ 2L n == row C_record { x = {associated_variable=m;michelson_annotation=None;decl_pos=0} ; y = {associated_variable=m;michelson_annotation=None;decl_pos=1} }
@@ -82,7 +82,7 @@ let propagator_test2 : _ -> unit -> (unit,Main_errors.all) result =
   check_list_of_equalities (result : update list) [(m,y);(n,z)]
 
 let main =
-  let open Inferance.Heuristic_break_ctor in
+  let open Inference.Heuristic_break_ctor in
   test_suite "Typer : ctor break heuristic" @@
     [
       test "selector" (selector_test selector comparator) ;

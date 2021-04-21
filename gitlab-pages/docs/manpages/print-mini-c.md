@@ -37,7 +37,7 @@ is applied after combination in the AST typed stage.
 
 **\--infer**
 
-:   enable type inferance
+:   enable type inference
 
 **\--optimize**=*ENTRY_POINT*
 

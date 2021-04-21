@@ -9,7 +9,7 @@
     self_ast_imperative
     desugaring
     ast_core
-    inferance
+    inference
     checking
     ast_typed
     spilling
