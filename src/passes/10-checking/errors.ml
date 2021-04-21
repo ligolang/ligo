@@ -14,6 +14,7 @@ type typer_error = [
   | `Typer_unbound_constructor of Ast_typed.Environment.t * Ast_core.label * Location.t
   | `Typer_redundant_constructor of Ast_typed.Environment.t * Ast_core.label * Location.t
   | `Typer_type_constant_wrong_number_of_arguments of Ast_core.type_variable* int * int * Location.t
+  | `Typer_type_variable_with_parameters_not_injection of Ast_core.type_variable* Location.t
   | `Typer_michelson_or_no_annotation of Ast_core.label * Location.t
   | `Typer_module_tracer of Ast_core.module_ * typer_error
   | `Typer_constant_declaration_tracer of Ast_core.expression_variable * Ast_core.expression * (Ast_typed.type_expression option) * typer_error
@@ -96,6 +97,7 @@ let match_missing_case (m:Ast_core.label list) (v:Ast_core.label list) (loc:Loca
 let match_extra_case (m:Ast_core.label list) (v:Ast_core.label list) (loc:Location.t) = `Typer_match_extra_case (m, v, loc)
 let unbound_constructor (e:Ast_typed.Environment.t) (c:Ast_core.label) (loc:Location.t) = `Typer_unbound_constructor (e,c,loc)
 let type_constant_wrong_number_of_arguments (op:Ast_core.type_variable) (expected:int) (actual:int) loc = `Typer_type_constant_wrong_number_of_arguments (op,expected,actual,loc)
+let type_variable_with_parameters_not_injection (op:Ast_core.type_variable) loc = `Typer_type_variable_with_parameters_not_injection (op,loc)
 let redundant_constructor (e:Ast_typed.Environment.t) (c:Ast_core.label) (loc:Location.t) = `Typer_redundant_constructor (e,c,loc)
 let michelson_or (c:Ast_core.label) (loc:Location.t) = `Typer_michelson_or_no_annotation (c,loc)
 let module_error_tracer (p:Ast_core.module_) (err:typer_error) = `Typer_module_tracer (p,err)
@@ -276,6 +278,11 @@ let rec error_ppformat : display_format:string display_format ->
         Snippet.pp loc
         Ast_core.PP.type_variable op
         e a
+    | `Typer_type_variable_with_parameters_not_injection (op,loc) ->
+      Format.fprintf f
+        "@[<hv>%a@ Type %a does not expect an argument. @]"
+        Snippet.pp loc
+        Ast_core.PP.type_variable op
     | `Typer_michelson_or_no_annotation (c,loc) ->
       Format.fprintf f
         "@[<hv>%a@.Incorrect usage of type \"michelson_or\".@.The contructor \"%a\" must be annotated with a variant type. @]"
@@ -744,6 +751,16 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("type_constant", `String op);
       ("expected", `Int e);
       ("actuel", `Int a);
+    ] in
+    json_error ~stage ~content
+  | `Typer_type_variable_with_parameters_not_injection (op, loc) ->
+    let message = `String "Type does not expect an argument" in
+    let loc = Format.asprintf "%a" Location.pp loc in
+    let op  = Format.asprintf "%a" Ast_core.PP.type_variable op in
+    let content = `Assoc [
+      ("message", message);
+      ("location", `String loc);
+      ("type_variable", `String op);
     ] in
     json_error ~stage ~content
   | `Typer_michelson_or_no_annotation (c,loc) ->
