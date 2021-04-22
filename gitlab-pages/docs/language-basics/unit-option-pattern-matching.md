@@ -277,7 +277,12 @@ let div = ([a, b]: [nat, nat]): option<nat> => {
 Javascript, and can be used to route the program's control flow based
 on the value of a variant, record, tuple, or list.
 
-A component of a pattern can be discarded by using a wildcard `_` instead of a variable name.
+A component of a pattern can be discarded by using a wildcard `_`
+instead of a variable name.
+
+LIGO will warn about unused variables bound in patterns in the same
+way that function arguments are warned about. Variable names beginning
+with `_` can be used as a binder to prevent warnings.
 
 <Syntax syntax="reasonligo">
 
