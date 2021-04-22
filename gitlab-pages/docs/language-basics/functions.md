@@ -68,6 +68,21 @@ The function body consists of two parts:
 - `block { <instructions and declarations> }` is the logic of the function;
 - `with <value>` is the value returned by the function.
 
+By default, LIGO will warn about unused parameters inside
+functions. In case we do not use a parameter, we can use the wildcard
+`_` to prevent warnings. Either use `_` instead of the parameter
+identifier:
+
+```pascaligo
+function k (const x : int; const _ : int) is x
+```
+
+or use a parameter identifier starting with wildcard:
+
+```pascaligo
+function k (const x : int; const _y : int) is x
+```
+
 ### Blockless functions
 
 Functions that can contain all of their logic into a single
@@ -148,6 +163,21 @@ ligo run-function gitlab-pages/docs/language-basics/src/functions/curry.mligo in
 
 The function body is a single expression, whose value is returned.
 
+By default, LIGO will warn about unused arguments inside
+functions. In case we do not use an argument, we can use the wildcard
+`_` to prevent warnings. Either use `_` instead of the argument
+identifier:
+
+```cameligo
+let k (x : int) (_ : int) = x
+```
+
+or use an identifier starting with wildcard:
+
+```cameligo
+let k (x : int) (_y : int) = x
+```
+
 </Syntax>
 <Syntax syntax="reasonligo">
 
@@ -178,6 +208,21 @@ let myFun = ((x, y) : (int, int)) : int => {
   let doubleY = y + y;
   doubleX + doubleY
 };
+```
+
+By default, LIGO will warn about unused arguments inside
+functions. In case we do not use an argument, we can use the wildcard
+`_` to prevent warnings. Either use `_` instead of the argument
+identifier:
+
+```reasonligo
+let k = ((x, _) : (int, int)) => x;
+```
+
+or use an identifier starting with wildcard:
+
+```reasonligo
+let k = ((x, _y) : (int, int)) => x;
 ```
 
 </Syntax>
@@ -219,6 +264,21 @@ let myFun = ([x, y]: [int, int]): int => {
 Note that JsLIGO, like JavaScript, requires the `return` keyword to indicate 
 what is being returned. If `return` is not used, it will be the same as 
 `return unit`.
+
+By default, LIGO will warn about unused arguments inside
+functions. In case we do not use an argument, we can use the wildcard
+`_` to prevent warnings. Either use `_` instead of the argument
+identifier:
+
+```jsligo
+let k = ([x, _] : [int, int]) : int => x;
+```
+
+or use an identifier starting with wildcard:
+
+```jsligo
+let k = ([x, _y] : [int, int]) : int => x;
+```
 
 </Syntax>
 
