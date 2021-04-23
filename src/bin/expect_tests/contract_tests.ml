@@ -1304,13 +1304,16 @@ let%expect_test _ =
     Note that "Tezos.self" refers to this contract, so the parameters should be the same. |}] ;
 
   run_ligo_good [ "compile-contract" ; contract "self_type_annotation.ligo" ; "main" ] ;
-  [%expect {|
-    File "../../test/contracts/self_type_annotation.ligo", line 6, characters 21-22:
-    Warning: unused variable "p".
-    File "../../test/contracts/self_type_annotation.ligo", line 8, characters 10-23:
-    Warning: unused variable "self_contract".
+  [%expect{|
+    { parameter nat ;
+      storage address ;
+      code { DROP ; SELF %default ; ADDRESS ; NIL operation ; PAIR } } |}] ;
 
-    { parameter nat ; storage int ; code { CDR ; NIL operation ; PAIR } } |}]
+  run_ligo_good [ "compile-contract" ; contract "self_default_with_variant_parameter.mligo" ; "main" ] ;
+    [%expect{|
+      { parameter (or (address %one) (unit %two)) ;
+        storage address ;
+        code { DROP ; SELF %default ; ADDRESS ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract.mligo" ; "main" ] ;

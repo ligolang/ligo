@@ -1,10 +1,10 @@
 type parameter is nat
-type storage is int
+type storage is address
 type return is list (operation) * storage
 
 
-function main (const p : parameter; const s : storage) : return is
+function main (const _p : parameter; const _s : storage) : return is
   block {
-    const self_contract: contract(parameter) = Tezos.self("%default") ;
+    const s : contract(parameter) = Tezos.self("%default") ;
   }
-  with ((nil: list(operation)), s)
+  with ((nil: list(operation)), Tezos.address (s))
