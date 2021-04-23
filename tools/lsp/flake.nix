@@ -81,6 +81,24 @@
           '';
         };
 
+        squirrel-grammar-test = pkgs.stdenv.mkDerivation {
+          name = "squirrel-grammar-test";
+          HOME = "/tmp";
+          src = "${grammars}";
+          buildInputs = [ pkgs.tree-sitter ];
+          doCheck = true;
+          phases = [ "unpackPhase" "checkPhase" ];
+          checkPhase =
+            let testDialect = dialect: ''
+                   cd ${dialect}
+                   tree-sitter test
+                   cd ..
+                 '';
+                 dialects = ["camligo" "reasonligo" "pascaligo"];
+             in pkgs.lib.strings.concatStrings (map testDialect dialects)
+                + "touch $out";
+        };
+
         pack = pkg:
           pkg.overrideAttrs (_: {
             postInstall = with pkgs; ''
@@ -143,6 +161,7 @@
         };
         checks = {
           inherit squirrel-sexp-test;
+          inherit squirrel-grammar-test;
           inherit (squirrel.checks) lsp-test;
           inherit (squirrel.checks) ligo-contracts-test;
         };

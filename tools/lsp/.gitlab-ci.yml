@@ -33,6 +33,16 @@ vscode-extension-sexp-tests:
   script:
     - nix-build tools/lsp -A checks.x86_64-linux.squirrel-sexp-test
 
+vscode-extension-grammar-tests:
+  stage: tooling
+  rules:
+    # for serokell: all merge requests and "tooling" branch
+    - if: '$CI_PROJECT_PATH == "serokell/ligo/ligo" && ($CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_REF_NAME == "tooling")'
+    - *run-on-lsp-label
+    - *run-with-failure-allowed
+  script:
+    - nix-build tools/lsp -A checks.x86_64-linux.squirrel-grammar-test
+
 vscode-extension-linux:
   stage: tooling
   rules:
