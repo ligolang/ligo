@@ -203,16 +203,15 @@ type row_tag =
   | C_record    (* ( label , * ) … -> * *)
   | C_variant   (* ( label , * ) … -> * *)
 
-(* TODO: rename to type_expression or something similar (it includes variables, and unevaluated functions + applications *)
+(* TODO: merge with type_expression *)
 type type_value_ =
-  | P_forall       of p_forall
   | P_variable     of type_variable
-  | P_constant     of p_constant
-  | P_apply        of p_apply   (* TODO: remove this until it is usead (for now waiting on a kinding system and appropriate evaluation heuristics similar to eval_beta_root in src/stages/typesystem/misc.ml) *)
   | P_row          of p_row
-    (* new stuff: *)
+  | P_constant     of p_constant (* TODO: split into P_singleton and P_apply *)
+  | P_forall       of p_forall
   | P_abs          of p_abs
   | P_constraint   of p_constraint
+  | P_apply        of p_apply   (* This is not used yet (waiting on a kinding system and appropriate evaluation heuristics similar to eval_beta_root in src/stages/typesystem/misc.ml) *)
 
 and type_value = type_value_ location_wrap
 
@@ -450,14 +449,14 @@ and c_abs_simpl = {
   body: type_value;
 }
 and type_constraint_simpl =
-  | SC_Apply       of c_apply_simpl                   (* φ(α) *)
-  | SC_Abs         of c_abs_simpl                     (* α = λβ.τ *)
-  | SC_Constructor of c_constructor_simpl             (* α = ctor(β, …) *)
-  | SC_Alias       of c_alias                         (* α = β *)
-  | SC_Poly        of c_poly_simpl                    (* α = forall β, δ where δ can be a more complex type *)
-  | SC_Typeclass   of c_typeclass_simpl               (* α ∈ TC(, …) *)
-  | SC_Access_label of c_access_label_simpl           (* α = β.ℓ *)
-  | SC_Row         of c_row_simpl                     (* α = row(l -> β, …) *)
+  | SC_Apply        of c_apply_simpl         (* φ(α) *)
+  | SC_Abs          of c_abs_simpl           (* α = λβ.τ *)
+  | SC_Constructor  of c_constructor_simpl   (* α = ctor(β, …) *)
+  | SC_Alias        of c_alias               (* α = β *)
+  | SC_Poly         of c_poly_simpl          (* α = forall β, δ where δ can be a more complex type *)
+  | SC_Typeclass    of c_typeclass_simpl     (* α ∈ TC(, …) *)
+  | SC_Access_label of c_access_label_simpl  (* α = β.ℓ *)
+  | SC_Row          of c_row_simpl           (* α = row(l -> β, …) *)
 
 and c_alias = {
     reason_alias_simpl : string ;

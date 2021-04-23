@@ -683,17 +683,3 @@ and type_expression_subst (env : environment) (state : _ O'.typer_state) ?(tv_op
   let () = (if Ast_core.Debug.json_new_typer then Printf.eprintf "%!\"end of JSON\"],\n###############################END_OF_JSON\n%!") in
   let () = Pretty_print_variables.flush_pending_print state in
   ok (env, expr, t, state)
-
-let untype_expression       = Untyper.untype_expression
-
-(* These aliases are just here for quick navigation during debug, and can safely be removed later *)
-let [@warning "-32"] (*rec*) type_declaration _env _state : I.declaration Location.wrap -> (environment * _ O'.typer_state * O.declaration Location.wrap * O.type_expression, typer_error) result = type_declaration _env _state
-and [@warning "-32"] evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, typer_error) result = evaluate_type e t
-and [@warning "-32"] type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_state -> I.expression -> (environment * _ O'.typer_state * O.expression * O.type_expression, typer_error) result = type_expression
-and [@warning "-32"] type_lambda e state lam = type_lambda e state lam
-let [@warning "-32"] type_module_returns_env ((env, state, p) : environment * _ O'.typer_state * I.module_) : (environment * _ O'.typer_state * O.module_with_unification_vars * O.type_expression, typer_error) result = type_module_returns_env (env, state, p)
-let [@warning "-32"] type_and_subst (in_printer : (Format.formatter -> 'a -> unit)) (out_printer : (Format.formatter -> 'b -> unit)) (env_state_node : environment * _ O'.typer_state * 'a) (apply_substs : ('b,typer_error) Typesystem.Misc.Substitution.Pattern.w) (types_and_returns_env : (environment * _ O'.typer_state * 'a) -> (environment * _ O'.typer_state * 'b * 'c, typer_error) result) : ('b * 'c * _ O'.typer_state, typer_error) result =
-  let%bind (n,t,s,_) = type_and_subst in_printer out_printer env_state_node apply_substs types_and_returns_env in
-  ok (n,t,s)
-let [@warning "-32"] type_module ~init_env (p : I.module_) : (environment * O.module_ * O.type_expression * _ O'.typer_state, typer_error) result = type_module ~init_env p
-let [@warning "-32"] type_expression_subst (env : environment) (state : _ O'.typer_state) ?(tv_opt : O.type_expression option) (e : I.expression) : (environment * O.expression * O.type_expression * _ O'.typer_state, typer_error) result = type_expression_subst env state ?tv_opt e

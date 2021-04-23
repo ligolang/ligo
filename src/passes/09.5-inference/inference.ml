@@ -8,4 +8,4 @@ module Heuristic_tc_fundep = Heuristic_tc_fundep
 
 module Compare_renaming = Compare_renaming
 module Typecheck = Typecheck
-
+module Untyper = Untyper

@@ -18,14 +18,13 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
       type 'a label_map = 'a LMap.t
       type typeclass = type_value list list
       and type_value_ =
-        | P_forall       of p_forall
         | P_variable     of type_variable
-        | P_constant     of p_constant
-        | P_apply        of p_apply
         | P_row          of p_row
-          (* new stuff: *)
+        | P_constant     of p_constant
+        | P_forall       of p_forall
         | P_abs          of p_abs
         | P_constraint   of p_constraint
+        | P_apply        of p_apply
       
       and p_abs = { arg: type_variable; ret: type_value }
       and p_constraint = { pc: type_constraint }
