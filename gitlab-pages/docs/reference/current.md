@@ -474,7 +474,7 @@ If you are not using entrypoints: use "%default"
 
 ```pascaligo
 function main (const p : unit) : contract(unit) is block {
-  const c : contract(unit) = Tezos.self("%Default") ;
+  const c : contract(unit) = Tezos.self("%default") ;
 } with c
 ```
 
@@ -483,7 +483,7 @@ function main (const p : unit) : contract(unit) is block {
 
 ```cameligo
 let main (p : unit) : unit contract =
-  (Tezos.self("%Default") : unit contract)
+  (Tezos.self("%default") : unit contract)
 ```
 
 </Syntax>
@@ -491,7 +491,7 @@ let main (p : unit) : unit contract =
 
 ```reasonligo
 let main = (p: unit) : contract(unit) =>
-  (Tezos.self("%Default") : contract(unit));
+  (Tezos.self("%default") : contract(unit));
 ```
 
 </Syntax>
@@ -499,7 +499,7 @@ let main = (p: unit) : contract(unit) =>
 
 ```jsligo
 let main = (p: unit) : contract<unit> =>
-  (Tezos.self("%Default") as contract<unit>);
+  (Tezos.self("%default") as contract<unit>);
 ```
 
 </Syntax>
