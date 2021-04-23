@@ -350,6 +350,22 @@ let int_of_color = (c : color) : int =>
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=pm_variant
+type color =
+| ["RGB", [int, int, int]]
+| ["Gray", int]
+| ["Default"];
+
+let int_of_color = (c : color) : int =>
+  match(c, {
+    RGB: (rgb : [int,int,int]) => 16 + rgb[2] + rgb[1] * 6 + rgb[0] * 36,
+    Gray: (i : int) => 232 + i,
+    Default: () => 0 });
+```
+
+</Syntax>
 
 ### Match on records or tuples
 
@@ -409,6 +425,11 @@ let on_tuple = (v : my_tuple) : int =>
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+Pattern-matching on records and tuples are not supported in JsLIGO yet.
+
+</Syntax>
 
 ### Match on lists
 
@@ -446,6 +467,17 @@ let weird_length = (v : list(int)) : int =>
   | x => int (List.length (x))
   }
 
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=pm_lists
+let weird_length = (v : list<int>) : int =>
+  match(v, list([
+    ([] : list<int>) => -1,
+    ([hd, ...tl] : list<int>) => 1 + int(List.length(tl))
+  ]));
 ```
 
 </Syntax>
