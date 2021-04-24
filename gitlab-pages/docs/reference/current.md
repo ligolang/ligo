@@ -647,7 +647,7 @@ val failwith : 'a -> unit
 let failwith: 'a -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-function failwith: (message: &apos;a) -> unit
+let failwith: (message: &apos;a) => unit
 </SyntaxTitle>
 
 [See `failwith`](toplevel.md#failwith)
@@ -872,6 +872,9 @@ val level : nat
 <SyntaxTitle syntax="reasonligo">
 let level : nat
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let level : nat
+</SyntaxTitle>
 
 Get the current block level.
 
@@ -883,6 +886,9 @@ val pairing_check : (bls12_381_g1 * bls12_381_g2) list -> bool
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let pairing_check: list(bls12_381_g1 , bls12_381_g2) => bool
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let pairing_check: list&lt;[bls12_381_g1, bls12_381_g2]&gt;) => bool
 </SyntaxTitle>
 
 Verify that the product of pairings of the given list of points is equal to 1 in Fq12. Returns true if the list is empty.
@@ -918,6 +924,14 @@ type tr = sapling_transaction(8);
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=sap_t
+type st = sapling_state<8>;
+type tr = sapling_transaction<8>;
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 const sapling_empty_state : sapling_state (N)
@@ -927,6 +941,9 @@ val sapling_empty_state : N sapling_state
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let sapling_empty_state: sapling_state(N)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let sapling_empty_state: sapling_state&lt;N&gt;
 </SyntaxTitle>
 
 <Syntax syntax="pascaligo">
@@ -950,6 +967,13 @@ let x : st = Tezos.sapling_empty_state ;
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=sap_t
+let x : st = Tezos.sapling_empty_state ;
+```
+
+</Syntax>
 
 Sapling empty state
 
@@ -962,6 +986,10 @@ val sapling_verify_update : N sapling_transaction -> N sapling_state -> (int * N
 <SyntaxTitle syntax="reasonligo">
 let sapling_verify_update: sapling_transaction(N) => sapling_state(N) => option(int, sapling_state(N))
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let sapling_verify_update: sapling_transaction&lt;N&gt; => sapling_state&lt;N&gt; => option&lt;int, sapling_state&lt;N&gt;&gt;
+</SyntaxTitle>
+
 
 Verify sapling update
 
@@ -997,6 +1025,17 @@ let f = (tr : tr) : (int , st) =>
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=sap_t
+let f = (tr : tr) : [int , st] =>
+  match (Tezos.sapling_verify_update(tr, x), {
+    Some: (x: [int, st]) => x,
+    None: () => (failwith ("failed") as [int , st])
+  });
+```
+
+</Syntax>
 
 
 <h2>Tickets</h2>
@@ -1009,6 +1048,9 @@ val create_ticket : 'value -> nat -> 'value ticket
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let create_ticket : 'value => nat => ticket('value)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let create_ticket: 'value => nat => ticket&lt;'value&gt;
 </SyntaxTitle>
 
 To create a ticket, the value and the amount of tickets to be created needs to be provided.
@@ -1040,6 +1082,15 @@ let my_ticket2 : ticket(string) = Tezos.create_ticket("one", 10n);
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=manip_ticket
+let my_ticket1 : ticket<int> = Tezos.create_ticket(1, 10 as nat);
+let my_ticket2 : ticket<string> = Tezos.create_ticket("one", 10 as nat);
+```
+
+</Syntax>
+
 
 <SyntaxTitle syntax="pascaligo">
 function read_ticket : ticket ('value) -> (address * ('value * nat)) * ticket ('value)
@@ -1049,6 +1100,9 @@ val read_ticket : 'value ticket -> (address * ('value * nat)) * 'value ticket
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let read_ticket : ticket('value) => ((address, ('value , nat)) , ticket('value))
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let read_ticket: ticket&lt;'value&gt; => &lt;&lt;address, &lt;'value , nat&gt;&gt; , ticket&lt;'value&gt;&gt;
 </SyntaxTitle>
 
 
@@ -1106,7 +1160,18 @@ let v2 : string =
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
 
+To read the content of a ticket, you need to use tuple destructuring
+
+```jsligo group=manip_ticket
+let v2 = (_: unit): string => {
+  let [[addr, [v, amt]], ticket] = Tezos.read_ticket(my_ticket2);
+  return v;
+}
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function split_ticket : ticket ('value) -> nat * nat -> option (ticket('value) * ticket ('value))
@@ -1117,9 +1182,12 @@ val split_ticket : 'value ticket -> nat * nat -> ('value ticket * 'value ticket)
 <SyntaxTitle syntax="reasonligo">
 let split_ticket : ticket('value) => (nat , nat) => option ((ticket('value), ticket('value)))
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let split_ticket: ticket&lt;'value&gt; => &lt;nat , nat&gt; => option &lt;&lt;ticket&lt;'value&gt;, ticket&lt;'value&gt;&gt;&gt;
+</SyntaxTitle>
 
 To partially use/consume a ticket, you have to split it.
-Provided a ticket and two amounts, two new tickets will be returned to you if the two amounts match the amount of the original ticket.
+Provided a ticket and two amounts, two new tickets will be returned to you if, and only if, the sum equals to the amount of the original ticket.
 
 <Syntax syntax="pascaligo">
 
@@ -1155,6 +1223,17 @@ let (ta,tb) =
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=manip_ticket
+let [ta, tb] =
+  match(Tezos.split_ticket(my_ticket1, [6 as nat, 4 as nat]), {
+    None: () => (failwith("amt_a + amt_v != amt") as [ticket<int>, ticket<int>]),
+    Some: (split_tickets: [ticket<int>, ticket<int>]) => split_tickets
+  });
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function join_ticket : ticket('value) * ticket ('value) -> option (ticket ('value))
@@ -1164,6 +1243,9 @@ val join_ticket : 'value ticket * 'value ticket -> ('value ticket) option
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let join_ticket : (ticket('value), ticket('value)) => option (ticket('value))
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let join_ticket = &lt;ticket&lt;'value&gt;, ticket&lt;'value&gt;&gt; => option &lt;ticket&lt;'value&gt;&gt;
 </SyntaxTitle>
 
 To add two tickets, you have to join them. This works as the inverse
@@ -1201,6 +1283,15 @@ let tc =
   let ta = Tezos.create_ticket(1, 10n);
   let tb = Tezos.create_ticket(1, 5n);
   Tezos.join_tickets((ta, tb));
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=manip_ticket
+let ta = Tezos.create_ticket(1, 10 as nat);
+let tb = Tezos.create_ticket(1, 5 as nat);
+let tc = Tezos.join_tickets([ta, tb]);
 ```
 
 </Syntax>
@@ -1259,6 +1350,24 @@ let main = (x : (parameter , storage)) : return => {
   let my_ticket1 : ticket(int) = Tezos.create_ticket (i, 10n) ;
   let (_,x) = Big_map.get_and_update ("hello", Some(my_ticket1), store) ;
   (([] : list(operation)), x)
+};
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=contract_ticket
+type storage = big_map<string, ticket<int>> ;
+
+type parameter = int ;
+
+type return_ = [list<operation>, storage];
+
+let main = (x: [parameter, storage]): return_ => {
+  let [i, store] = x ;
+  let my_ticket1: ticket<int> = Tezos.create_ticket (i, 10 as nat);
+  let [_, x] = Big_map.get_and_update ("hello", Some(my_ticket1), store);
+  return [list([]) as list<operation>, x]
 };
 ```
 
