@@ -76,6 +76,9 @@ module Compile_type = struct
     | _ as t -> fail @@ invalid_constructor t
 
   and get_t_int_singleton_opt = function
+  | CST.TInt x -> 
+    let (_,z) = x.value in
+    Some z
   | _ -> None
 
   and get_t_string_singleton_opt = function
