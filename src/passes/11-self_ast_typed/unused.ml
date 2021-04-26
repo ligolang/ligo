@@ -79,8 +79,8 @@ let rec defuse_of_expr defuse expr : defuse =
      defuse_union (defuse_of_expr defuse lamb) (defuse_of_expr defuse args)
   | E_lambda l ->
      defuse_of_lambda defuse l
-  | E_recursive {fun_name;lambda;_} ->
-     remove_defined_var_after defuse fun_name defuse_of_lambda lambda
+  | E_recursive {lambda;_} ->
+     defuse_of_lambda defuse lambda
   | E_let_in {let_binder;rhs;let_result;_} ->
      let defuse,unused = defuse_of_expr defuse rhs in
      let old_binder = M.find_opt let_binder defuse in

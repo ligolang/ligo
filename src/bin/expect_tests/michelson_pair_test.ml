@@ -63,8 +63,6 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "michelson_pair_tree.jsligo" ; "main" ] ;
   [%expect {|
-    File "../../test/contracts/michelson_pair_tree.jsligo", line 8, characters 4-8:
-    Warning: unused variable "main".
     File "../../test/contracts/michelson_pair_tree.jsligo", line 8, characters 13-19:
     Warning: unused variable "action".
     File "../../test/contracts/michelson_pair_tree.jsligo", line 8, characters 21-26:
