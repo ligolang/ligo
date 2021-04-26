@@ -7,6 +7,7 @@ module Extension
   ) where
 
 import Control.Monad.Catch
+import Data.Functor ((<&>))
 import System.FilePath
 
 import AST.Skeleton (Lang (..))
@@ -17,12 +18,12 @@ data ElimExt a = ElimExt
   , eeReason ::  a
   }
 
-data UnsupportedExtension = UnsupportedExtension String
+newtype UnsupportedExtension = UnsupportedExtension String
   deriving stock Show
   deriving anyclass Exception
 
 getExt :: MonadThrow m => FilePath -> m Lang
-getExt path = do
+getExt path =
   case takeExtension path of
     ".religo" -> return Reason
     ".ligo"   -> return Pascal
@@ -30,8 +31,8 @@ getExt path = do
     ext      -> throwM $ UnsupportedExtension ext
 
 onExt :: ElimExt a -> FilePath -> IO a
-onExt ee path = do
-  getExt path >>= return . \case
+onExt ee path =
+  getExt path <&> \case
     Pascal -> eePascal ee
     Caml   -> eeCaml   ee
     Reason -> eeReason ee

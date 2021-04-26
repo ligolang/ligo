@@ -132,11 +132,11 @@ sop :: Doc -> Text -> [Doc] -> Doc
 sop a op b = "(" <.> a `indent` pp op `indent` foldr above empty b <.> ")"
 
 blockWith :: forall dialect p . LPP dialect p => (Doc -> Doc) -> [p] -> Doc
-blockWith f = foldr indent empty . map (f . lpp @dialect)
+blockWith f = foldr (indent . f . lpp @dialect) empty
 
 block' :: [Doc] -> Doc
 -- block' = foldr (<.>) empty . map ((<.> "\n") . lpp)
-block' = foldr ($+$) empty . map ((<.> "\n") . lpp)
+block' = foldr (($+$) . (<.> "\n") . lpp) empty
 
 list :: forall dialect p . LPP dialect p => [p] -> Doc
 list = brackets . train @dialect @p ";"
@@ -448,11 +448,11 @@ instance LPP1 'Pascal Expr where
     MapRemove k m        -> "remove" <+> k <+> "from map" <+> m
     SetRemove k s        -> "remove" <+> k <+> "from set" <+> s
     Skip                 -> "skip"
-    ForLoop   j s f d b  -> foldr (<+>) empty $
+    ForLoop   j s f d b  -> foldr (<+>) empty
       [ "for", j, ":=", lpp s
       , "to", lpp f, "block' {", lpp d, "} with", lpp b
       ]
-    ForBox    k mv t z b -> foldr (<+>) empty $
+    ForBox    k mv t z b -> foldr (<+>) empty
       [ "for", k
       , maybe empty ("->" <+>) mv
       , "in", lpp t
@@ -460,12 +460,12 @@ instance LPP1 'Pascal Expr where
       ]
     WhileLoop f b        -> "while" <+> lpp f <+> "block' {" `indent` lpp b `above` "}"
     Seq       es         -> block' $ map (<.>";") es
-    Attrs     ts         -> mconcat $ (brackets . ("@"<+>)) <$> ts
+    Attrs     ts         -> mconcat $ brackets . ("@"<+>) <$> ts
     Lambda    ps ty b    -> "function" <+> lpp ps <+> ":" <+> lpp ty <+> "is" <+> lpp b
     MapPatch  z bs       -> "patch" <+> z <+> "with map" <+> lpp bs
     SetPatch  z bs       -> "patch" <+> z <+> "with set" <+> lpp bs
     RecordUpd r up       -> r <+> "with record" <+> lpp up
-    Case      s az       -> foldr (<+>) empty $
+    Case      s az       -> foldr (<+>) empty
       [ "case"
       , lpp s
       , "of\n"

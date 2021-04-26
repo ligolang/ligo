@@ -29,7 +29,7 @@ extra-deps:
 
 - git: https://github.com/alanz/lsp.git
   commit: 1778cabf168f9c1e8235cb273bdba85eedba5813
-  subdirs: 
+  subdirs:
     - .
     - lsp-types
 

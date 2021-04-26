@@ -90,7 +90,7 @@ data LigoDefinitions = LigoDefinitions
   deriving stock (Generic, Show)
 
 -- | First part under `"variables"` constraint
-data LigoDefinitionsInner = LigoDefinitionsInner
+newtype LigoDefinitionsInner = LigoDefinitionsInner
   { -- | `"variables"`
     _ldiVariables :: HM.HashMap Text LigoDefinitionScope
   }
@@ -549,7 +549,7 @@ prepareField dropAmount = Prelude.drop (dropAmount + 2) . concatMap process
 group :: Int -> [a] -> [[a]]
 group _ [] = []
 group n l
-  | n > 0 = (take n l) : (group n (drop n l))
+  | n > 0 = take n l : group n (drop n l)
   | otherwise = error "Negative or zero n"
 
 -- | Converts ligo ranges to our internal ones.
@@ -705,7 +705,7 @@ make' (i, f)
   | otherwise = i' :< inject f
   where
     ges = List.filter (not . (`leq` i)) (extract <$> toList f)
-    r = (getElem $ List.minimum ges) `merged` (getElem $ List.maximum ges)
+    r = getElem (List.minimum ges) `merged` getElem (List.maximum ges)
     i' = putElem r i
 
 -- | Converts ligo scope to our internal representation.

@@ -44,7 +44,7 @@ extractDocumentSymbols uri tree =
             tellScopedDecl
               r
               J.SkFunction
-              (\_ -> Nothing)
+              (const Nothing)
 
           -- TODO: currently we do not count imports as declarations in scopes
           (BInclude (match @Constant -> Just (getElem @Range -> r, _))) ->
@@ -57,7 +57,7 @@ extractDocumentSymbols uri tree =
             tellScopedDecl
               r
               J.SkTypeParameter
-              (\_ -> Nothing)
+              (const Nothing)
 
           (BConst (match @NameDecl -> Just (getElem @Range -> r, _)) _ _) ->
             tellScopedDecl

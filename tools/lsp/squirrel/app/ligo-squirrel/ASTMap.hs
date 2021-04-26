@@ -96,7 +96,7 @@ loadValue k ASTMap{amValues, amLoadStarted, amLoad} time = do
       -- Cache the value, but only if ours is newer than the current cache
       atomically $ Map.focus (insertOrChooseNewer snd (v, time)) k amValues
       pure v
-    else do
+    else
       -- Someone else is loading it and they somehow managed to start later than
       -- we did, so... why not just wait for them?
       atomically $ Map.lookup k amValues >>= \case
@@ -204,7 +204,7 @@ fetchLatest k tmap@ASTMap{amInvalid} = go
   where
     go = do
       (v, vTime) <- fetchCurrent' k tmap
-      again <- atomically $ do
+      again <- atomically $
         Map.lookup k amInvalid <&> \case
           Nothing -> False
           Just invTime

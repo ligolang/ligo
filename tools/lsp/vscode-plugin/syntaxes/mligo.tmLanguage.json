@@ -280,7 +280,7 @@
                 "1": { "name": "support.variable.parameter.mligo" }
             }
         },
- 
+
         "identifier-variable-decl": {
             "match": "\\b([a-zA-Z_]\\w*)\\b",
             "captures": {

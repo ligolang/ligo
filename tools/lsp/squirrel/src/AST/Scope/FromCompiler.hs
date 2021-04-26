@@ -72,7 +72,7 @@ fromCompiler dialect (LigoDefinitions decls scopes) =
         -- Otherwise, put it in a tree that covers it.
         --
         maybeLoop :: Maybe ScopeTree -> Maybe ScopeTree
-        maybeLoop = maybe (Just subject) (Just . restart)
+        maybeLoop = Just . maybe subject restart
 
         -- Take a forest out of tree, loop, put it back.
         --

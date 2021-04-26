@@ -151,8 +151,7 @@ ascribeRange _ _ = id
 withComments :: ParserM (Product xs, a) -> ParserM (Product ([Text] : xs), a)
 withComments act = do
   comms <- grabComments
-  res   <- act
-  return $ first (comms :>) res
+  first (comms :>) <$> act
 
 boilerplate
   :: (Text -> ParserM (f RawTree))

@@ -14,7 +14,7 @@ import AST (Fallback, parse, parseWithScopes)
 import Cli.Types (HasLigoClient (..))
 import ParseTree (Source (Path))
 
-data Command = PrintSexp PrintSexpOptions
+newtype Command = PrintSexp PrintSexpOptions
 
 data PrintSexpOptions = PrintSexpOptions
   { psoContract :: FilePath
@@ -57,7 +57,7 @@ instance Pretty SomePretty where
   pp (SomePretty a) = pp a
 
 main :: IO ()
-main = withUtf8 $ do
+main = withUtf8 $
   execParser programInfo >>= \case
     PrintSexp PrintSexpOptions{ .. } -> do
       let parser = if psoWithScopes
@@ -67,7 +67,7 @@ main = withUtf8 $ do
       putStrLn (render (pp tree))
       unless (null messages) $ do
         putStrLn "The following errors have been encountered: "
-        for_ messages $ \(range, err) -> do
+        for_ messages $ \(range, err) ->
           putStrLn (render (pp range <> ": " <> pp err))
 
 -- FIXME: HACK

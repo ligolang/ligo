@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: aab1d40275a07ea6b44310beded5c6cd009b7f72000eb603da813dc0ebba82d3
+-- hash: ae83eb4a0d695014be2c097546268704755b468fc3af0f1834d734cef8b98657
 
 name:           ligo-squirrel
 version:        0.0.0

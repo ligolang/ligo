@@ -112,7 +112,7 @@ toCompletionItem c@Completion
   , cDoc  = _cDoc
   } = CompletionItem
   { _label = cName
-  , _kind = Just $ CiFunction -- TODO
+  , _kind = Just CiFunction -- TODO
   , _detail = Just $ ":: " <> cType -- TODO: more elaborate info
   , _documentation = Just $ mkDoc c
   , _deprecated = Nothing

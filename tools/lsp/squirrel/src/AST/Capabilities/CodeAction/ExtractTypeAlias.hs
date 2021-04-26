@@ -98,7 +98,7 @@ typeExtractionCodeAction at uri (SomeLIGO dialect tree) =
 -- that we return blank `extractedTypeNameAlias` instead for now
 -- since user may want to rename the type anyway.
 genTypeName :: Monad m => LIGO Info' -> m T.Text
-genTypeName _tree = do
+genTypeName _tree =
   -- let
   --   decls = getElem @[SD.ScopedDecl] $ extract tree
   --   findInTree proposedName = flip Foldable.find decls \case
@@ -184,7 +184,7 @@ makeReplaceTypeEdits
 makeReplaceTypeEdits newTypeName (Left typeNode) originTree =
   execWriterT $ visit
     [ Visit @Type $ \case
-        (getElem @Range -> r, typeNode') | typeNode == typeNode' -> do
+        (getElem @Range -> r, typeNode') | typeNode == typeNode' ->
           tell [J.TextEdit { _range = toLspRange r, _newText = newTypeName }]
         _ -> pure ()
     ]
@@ -192,7 +192,7 @@ makeReplaceTypeEdits newTypeName (Left typeNode) originTree =
 makeReplaceTypeEdits newTypeName (Right oldTypeName) originTree =
   execWriterT $ visit
     [ Visit @TypeName $ \case
-        (getElem @Range -> r, TypeName typeName') | oldTypeName == typeName' -> do
+        (getElem @Range -> r, TypeName typeName') | oldTypeName == typeName' ->
           tell [J.TextEdit { _range = toLspRange r, _newText = newTypeName }]
         _ -> pure ()
     ]

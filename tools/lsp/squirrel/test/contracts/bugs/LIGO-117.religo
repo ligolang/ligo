@@ -1,5 +1,5 @@
 let f = ((
 
-)) : list (int) => [ 
+)) : list (int) => [
 
 ];

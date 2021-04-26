@@ -19,7 +19,7 @@ newtype RawContractCode = RawContractCode
 
 
 -- | Environment passed throughout the ligo interaction
-data LigoClientEnv = LigoClientEnv
+newtype LigoClientEnv = LigoClientEnv
   { -- | Ligo binary path
     _lceClientPath :: FilePath
   }

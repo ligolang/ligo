@@ -43,7 +43,6 @@ setLogLevel level = liftIO do
   return ()
 
 synchronized :: (MonadMask m, MonadIO m) => m a -> m a
-synchronized action = bracket_
+synchronized = bracket_
   do liftIO $ takeMVar logLock
   do liftIO $ putMVar  logLock ()
-  action

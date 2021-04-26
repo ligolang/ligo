@@ -94,9 +94,9 @@ callLigo args con = do
   liftIO $ do
     raw <- srcToText con
     (ec, lo, le) <- readProcessWithExitCode _lceClientPath args (unpack raw)
-    unless (ec == ExitSuccess && le == mempty) $ do -- TODO: separate JSON errors and other ones
+    unless (ec == ExitSuccess && le == mempty) $ -- TODO: separate JSON errors and other ones
       throwM $ ExpectedClientFailure (pack lo) (pack le)
-    unless (le == mempty) $ do
+    unless (le == mempty) $
       throwM $ UnexpectedClientFailure 0 (pack lo) (pack le)
     Log.debug "LIGO" [i|Successfully exited with stdout:\n#{lo}\nand stderr:\n#{le}|]
     return (pack lo, pack le)
