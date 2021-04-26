@@ -3,7 +3,7 @@ include Stage_common.Types
 type 'a annotated = string option * 'a
 
 type type_content =
-  | T_pair of (type_expression annotated * type_expression annotated)
+  | T_tuple of type_expression annotated list
   | T_or of (type_expression annotated * type_expression annotated)
   | T_function of (type_expression * type_expression)
   | T_base of type_base
@@ -97,7 +97,17 @@ and expression_content =
   | E_if_cons  of expression * expression * (((var_name * type_expression) * (var_name * type_expression)) * expression)
   | E_if_left  of expression * ((var_name * type_expression) * expression) * ((var_name * type_expression) * expression)
   | E_let_in   of expression * inline * ((var_name * type_expression) * expression)
+  | E_tuple of expression list
   | E_let_tuple of expression * (((var_name * type_expression) list) * expression)
+  (* E_proj (record, index, field_count): we use the field_count to
+     know whether the index is the last field or not, since Michelson
+     treats the last element of a comb differently than the rest. We
+     could alternatively put `unit` at the end of all our combs, but
+     that would break compatibility and is not a standard Michelson
+     convention... *)
+  | E_proj of expression * int * int
+  (* E_update (record, index, update, field_count): field_count as for E_proj *)
+  | E_update of expression * int * expression * int
   | E_raw_michelson of (Location.t, string) Tezos_micheline.Micheline.node list
 
 and expression = {

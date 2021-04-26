@@ -22,9 +22,8 @@ let annotate (ann : string option) (x : (meta, string) node) : (meta, string) no
 let rec translate_type : I.type_expression -> (meta, string) node =
   fun a ->
   match a.type_content with
-  | I.T_pair ((ann1, a1), (ann2, a2)) ->
-    Prim (nil, "pair", [annotate ann1 (translate_type a1);
-                        annotate ann2 (translate_type a2)], [])
+  | I.T_tuple ts ->
+    tuple_comb ts
   | I.T_or ((ann1, a1), (ann2, a2)) ->
     Prim (nil, "or", [annotate ann1 (translate_type a1);
                       annotate ann2 (translate_type a2)], [])
@@ -67,6 +66,20 @@ let rec translate_type : I.type_expression -> (meta, string) node =
   | I.T_option a ->
     Prim (nil, "option", [translate_type a], [])
 
+(* could consider delaying this to the next pass, in Coq, but
+   currently the Coq pass type translation is the identity *)
+and tuple_comb_ann ts =
+  match ts with
+  | [] -> (None, Prim (nil, "unit", [], []))
+  | [(ann, t)] -> (ann, translate_type t)
+  | (ann1, t1) :: ts ->
+    let t1 = translate_type t1 in
+    let (ann, ts) = tuple_comb_ann ts in
+    (None, Prim (nil, "pair", [annotate ann1 t1; annotate ann ts], []))
+
+and tuple_comb ts =
+  snd (tuple_comb_ann ts)
+
 let translate_var (m : meta) (x : I.var_name) (env : I.environment) =
   let (_, idx) = I.Environment.Environment.get_i x env in
   let usages = List.repeat idx Drop
@@ -84,6 +97,11 @@ let internal_error loc msg =
     (Format.asprintf
        "@[<v>Internal error, please report this as a bug@ %s@ %s@ @]"
        loc msg)
+
+let rec int_to_nat (x : int) : Ligo_coq_ocaml.Datatypes.nat =
+  if x <= 0
+  then O
+  else S (int_to_nat (x - 1))
 
 (* The translation. Given an expression in an environment, returns a
    "co-de Bruijn" expression with an embedding (`list usage`) showing
@@ -115,7 +133,7 @@ let rec translate_expression (expr : I.expression) (env : I.environment) =
     let ((cons_name, static_args, args), usages) = translate_constant constant expr.type_expression env in
     (O.E_operator (meta, cons_name, static_args, args), usages)
   | E_application (f, x) ->
-    let (args, us) = translate_args [x; f] env in
+    let (args, us) = translate_args [f; x] env in
     (E_app (meta, args), us)
   | E_iterator (name, body, expr) ->
     let (body, body_usages) = translate_binder body env in
@@ -177,11 +195,21 @@ let rec translate_expression (expr : I.expression) (env : I.environment) =
     let (e2, us2) = translate_binder e2 env in
     let (ss, us) = union us1 us2 in
     (E_let_in (meta, ss, e1, e2), us)
+  | E_tuple exprs ->
+    (* arguments are in reverse order for REV_PAIR for now *)
+    let (exprs, us) = translate_args (List.rev exprs) env in
+    (E_tuple (meta, exprs), us)
   | E_let_tuple (e1, e2) ->
     let (e1, us1) = translate_expression e1 env in
     let (e2, us2) = translate_binderN e2 env in
     let (ss, us) = union us1 us2 in
     (E_let_tuple (meta, ss, e1, e2), us)
+  | E_proj (e, i, n) ->
+    let (e, us) = translate_expression e env in
+    (E_proj (meta, e, int_to_nat i, int_to_nat n), us)
+  | E_update (e1, i, e2, n) ->
+    let (args, us) = translate_args [e2; e1] env in
+    (E_update (meta, args, int_to_nat i, int_to_nat n), us)
   | E_raw_michelson code ->
     (* maybe should move type into syntax? *)
     let (a, b) = match Mini_c.get_t_function ty with
@@ -216,6 +244,7 @@ and translate_binderN (vars, body) env =
    List.skipn n usages)
 
 and translate_args (arguments : I.expression list) env : _ O.args * usage list =
+  let arguments = List.rev arguments in
   let arguments = List.map (fun argument -> translate_expression argument env) arguments in
   List.fold_right
     (fun (arg, arg_usages) (args, args_usages) ->
@@ -317,7 +346,7 @@ and translate_constant (expr : I.constant) (ty : I.type_expression) env :
   let arguments = match special with
     | Some (_, arguments) -> arguments
     | None -> expr.arguments in
-  let (arguments, usages) = translate_args (List.rev arguments) env in
+  let (arguments, usages) = translate_args arguments env in
   ((expr.cons_name, static_args, arguments), usages)
 
 and translate_closed_function ({ binder ; body } : I.anon_function) input_ty : _ O.binds =

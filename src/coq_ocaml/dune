@@ -12,6 +12,7 @@
  (extracted_modules
   Datatypes
   Nat
+  PeanoNat
   List
   BinInt
   BinPos

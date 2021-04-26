@@ -270,7 +270,7 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
           in
           let%bind a' = aux a in
           let%bind b' = aux b in
-          let t = T_pair (a' , b') in
+          let t = T_tuple [a'; b'] in
           return t
         )
       | None -> Layout.t_record_to_pairs ~layout return compile_type m
@@ -305,6 +305,43 @@ let rec build_record_accessor record path =
          (E_record_accessor { record = record ; path = label })
          t)
       path
+
+(* todo: refactor handling of recursive functions *)
+let compile_record_matching expr' return k ({ fields; body; tv } : Ast_typed.matching_content_record) =
+  let%bind { content ; layout } = trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
+    get_t_record tv in
+  match layout with
+  (* TODO unify with or simplify other case below? *)
+  | L_comb ->
+    let record_fields = Ast_typed.Helpers.kv_list_of_t_record_or_tuple ~layout:L_comb content in
+    let%bind fields =
+      bind_map_list
+        (fun (l, (row_element : _ row_element_mini_c)) ->
+           let%bind t = compile_type row_element.associated_type in
+           ok (fst (LMap.find l fields), t))
+        record_fields in
+    let%bind body = k body in
+    return (E_let_tuple (expr', (fields, body)))
+  | _ ->
+    let%bind tree = Layout.record_tree ~layout compile_type content in
+    let%bind body = k body in
+    let rec aux expr (tree : Layout.record_tree) body =
+      match tree.content with
+      | Field l ->
+        let var = fst (LMap.find l fields) in
+        return @@ E_let_in (expr, false, ((var, tree.type_), body))
+      | Pair (x, y) ->
+        let x_var = Location.wrap (Var.fresh ()) in
+        let y_var = Location.wrap (Var.fresh ()) in
+        let x_ty = x.type_ in
+        let y_ty = y.type_ in
+        let x_var_expr = Combinators.Expression.make_tpl (E_variable x_var, x_ty) in
+        let y_var_expr = Combinators.Expression.make_tpl (E_variable y_var, y_ty) in
+        let%bind yrec = aux y_var_expr y body in
+        let%bind xrec = aux x_var_expr x yrec in
+        return @@ E_let_tuple (expr, ([(x_var, x_ty); (y_var, y_ty)], xrec))
+    in
+    aux expr' tree body
 
 let rec compile_literal : AST.literal -> value = fun l -> match l with
   | Literal_int n -> D_int n
@@ -381,12 +418,21 @@ and compile_expression ?(module_env = SMap.empty) (ae:AST.expression) : (express
   )
   | E_record m -> (
       let%bind record_t = trace_option (corner_case ~loc:__LOC__ "record expected") (AST.get_t_record ae.type_expression) in
+      (* Note: now returns E_tuple, not pairs, for combs *)
       Layout.record_to_pairs self return record_t m
     )
-  | E_record_accessor {record; path} ->
+  | E_record_accessor {record; path} -> (
     let%bind ty' = compile_type (get_type_expression record) in
     let%bind {content ; layout} = trace_option (corner_case ~loc:__LOC__ "not a record") @@
       get_t_record (get_type_expression record) in
+    match layout with
+    | L_comb ->
+      let record_fields = Ast_typed.Helpers.kv_list_of_t_record_or_tuple ~layout content in
+      let i = List.find_index (fun (label, _) -> 0 = Ast_typed.Compare.label path label) record_fields in
+      let n = List.length record_fields in
+      let%bind record = compile_expression record in
+      return (E_proj (record, i, n))
+    | _ ->
     let%bind path = Layout.record_access_to_lr ~layout ty' content path in
     let aux = fun pred (ty, lr) ->
       let c = match lr with
@@ -398,47 +444,42 @@ and compile_expression ?(module_env = SMap.empty) (ae:AST.expression) : (express
     let%bind record' = compile_expression record in
     let%bind expr = bind_fold_list aux record' path in
     ok expr
-  | E_record_update {record; path; update} ->
+  )
+  | E_record_update {record; path; update} -> (
     (* Compile record update to simple constructors &
        projections. This will be optimized to some degree by eta
        contraction in a later pass. *)
-
-    let rec aux res (r,p,up) =
-      let ty = get_type_expression r in
+      let ty = get_type_expression record in
       let%bind {content;layout} =
         trace_option (corner_case ~loc:__LOC__ "not a record") @@
         get_t_record (ty) in
       let%bind ty' = compile_type (ty) in
-      let%bind p' =
+      match layout with
+      | L_comb ->
+        let record_fields = Ast_typed.Helpers.kv_list_of_t_record_or_tuple ~layout content in
+        let%bind record = self record in
+        let%bind update = self update in
+        let i = List.find_index (fun (label, _) -> 0 = Ast_typed.Compare.label label path) record_fields in
+        let n = List.length record_fields in
+        return (E_update (record, i, update, n))
+      | _ ->
+      let%bind path =
         trace_strong (corner_case ~loc:__LOC__ "record access") @@
-        Layout.record_access_to_lr ~layout ty' content p in
-      let res' = res @ p' in
-      match (up:AST.expression).expression_content with
-      | AST.E_record_update {record=record'; path=path'; update=update'} -> (
-          match record'.expression_content with
-          | AST.E_record_accessor {record;path} ->
-            if (AST.Misc.equal_variables record r && path = p) then
-              aux res' (record',path',update')
-            else ok @@ (up,res')
-          | _ -> ok @@ (up,res')
-        )
-        | _ -> ok @@ (up,res')
-      in
-      let%bind (update, path) = aux [] (record, path, update) in
+        Layout.record_access_to_lr ~layout ty' content path in
       let path = List.map snd path in
       let%bind update = self update in
       let%bind record = self record in
       let record_var = Var.fresh () in
       let car (e : expression) : expression =
         match e.type_expression.type_content with
-        | T_pair ((_, a), _) ->
+        | T_tuple [(_, a); _] ->
           { e with
             content = E_constant { cons_name = C_CAR ; arguments = [e] } ;
             type_expression = a }
         | _ -> internal_error __LOC__ "record did not have pair type" in
       let cdr (e : expression) : expression =
         match e.type_expression.type_content with
-        | T_pair (_, (_, b)) ->
+        | T_tuple [_; (_, b)] ->
           { e with
             content = E_constant { cons_name = C_CDR ; arguments = [e] } ;
             type_expression = b }
@@ -461,6 +502,7 @@ and compile_expression ?(module_env = SMap.empty) (ae:AST.expression) : (express
                    build_record_update
                      (e_var (Location.wrap record_var) record.type_expression)
                      path)))
+  )
   | E_constant {cons_name=name; arguments=lst} -> (
       let iterator_generator iterator_name =
         let expression_to_iterator_body (f : AST.expression) =
@@ -617,41 +659,8 @@ and compile_expression ?(module_env = SMap.empty) (ae:AST.expression) : (express
               aux expr' tree
             )
       )
-      | Match_record { fields; body; tv } ->
-        let%bind { content ; layout } = trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
-          get_t_record tv in
-        match layout with
-        (* TODO unify with or simplify other case below? *)
-        | L_comb ->
-          let record_fields = Ast_typed.Helpers.kv_list_of_t_record_or_tuple ~layout:L_comb content in
-          let%bind fields =
-            bind_map_list
-              (fun (l, (row_element : _ row_element_mini_c)) ->
-                 let%bind t = compile_type row_element.associated_type in
-                 ok (fst (LMap.find l fields), t))
-              record_fields in
-          let%bind body = self body in
-          return (E_let_tuple (expr', (fields, body)))
-        | _ ->
-        let%bind tree = Layout.record_tree ~layout compile_type content in
-        let%bind body = self body in
-        let rec aux expr (tree : Layout.record_tree) body =
-          match tree.content with
-          | Field l ->
-            let var = fst (LMap.find l fields) in
-            return @@ E_let_in (expr, false, ((var, tree.type_), body))
-          | Pair (x, y) ->
-            let x_var = Location.wrap (Var.fresh ()) in
-            let y_var = Location.wrap (Var.fresh ()) in
-            let x_ty = x.type_ in
-            let y_ty = y.type_ in
-            let x_var_expr = Combinators.Expression.make_tpl (E_variable x_var, x_ty) in
-            let y_var_expr = Combinators.Expression.make_tpl (E_variable y_var, y_ty) in
-            let%bind yrec = aux y_var_expr y body in
-            let%bind xrec = aux x_var_expr x yrec in
-            return @@ E_let_tuple (expr, ([(x_var, x_ty); (y_var, y_ty)], xrec))
-        in
-        aux expr' tree body
+      | Match_record record ->
+        compile_record_matching expr' return self record
   )
   | E_raw_code { language; code} ->
     let backend = Stage_common.Backends.michelson in
@@ -843,28 +852,8 @@ and compile_recursive module_env {fun_name; fun_type; lambda} =
           aux expr' tree
        )
       )
-      | Match_record { fields ; body ; tv } ->
-        let%bind { content ; layout } = trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
-            get_t_record tv in
-        let%bind tree = Layout.record_tree ~layout compile_type content in
-        let%bind body = replace_callback fun_name loop_type shadowed body in
-        let rec aux expr (tree : Layout.record_tree) body =
-          match tree.content with
-          | Field l ->
-            let var = fst (LMap.find l fields) in
-            return @@ E_let_in (expr, false, ((var, tree.type_), body))
-          | Pair (x, y) ->
-            let x_var = Location.wrap (Var.fresh ()) in
-            let y_var = Location.wrap (Var.fresh ()) in
-            let x_ty = x.type_ in
-            let y_ty = y.type_ in
-            let x_var_expr = Combinators.Expression.make_tpl (E_variable x_var, x_ty) in
-            let y_var_expr = Combinators.Expression.make_tpl (E_variable y_var, y_ty) in
-            let%bind yrec = aux y_var_expr y body in
-            let%bind xrec = aux x_var_expr x yrec in
-            return @@ E_let_tuple (expr, ([(x_var, x_ty); (y_var, y_ty)], xrec))
-        in
-        aux expr' tree body
+      | Match_record record ->
+        compile_record_matching expr' return (replace_callback fun_name loop_type shadowed) record
   in
   let%bind fun_type = compile_type fun_type in
   let%bind (input_type,output_type) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_function fun_type in

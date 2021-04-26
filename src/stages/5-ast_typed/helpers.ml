@@ -70,7 +70,7 @@ let kv_list_of_t_record_or_tuple ?(layout = L_tree) (m: row_element LMap.t) =
       List.sort aux lst
     )
 
-let kv_list_of_record_or_tuple ?(layout=L_tree) record_t_content record =
+let kv_list_of_record_or_tuple ~layout record_t_content record =
   let exps =
     if (is_tuple_lmap record)
     then tuple_of_record record

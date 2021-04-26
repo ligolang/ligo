@@ -102,32 +102,25 @@ let rec usage_in_expr (f : expression_variable) (expr : expression) : usage =
     usages [self e1; self_binder [v2] e2; self_binder [v3] e3]
   | E_let_in (e1, _, ((v2, _), e2)) ->
     usages [self e1; self_binder [v2] e2]
+  | E_tuple exprs ->
+    usages (List.map self exprs)
   | E_let_tuple (e1, (vars, e2)) ->
     usages [self e1; self_binder (List.map fst vars) e2]
+  | E_proj (e, _i, _n) ->
+    self e
+  | E_update (expr, _i, update, _n) ->
+    usages [self expr; self update]
   | E_raw_michelson _ ->
     Unused
 
-let rec comb_type : type_expression list -> type_expression = function
-  | [] -> { type_content = T_base TB_unit;
-            location = Location.generated }
-  | [t] -> t
-  | t1 :: ts ->
-    let ts = comb_type ts in
-    { type_content = T_pair ((None, t1), (None, ts));
-      location = Location.generated }
+let comb_type (ts : type_expression list) : type_expression =
+  { type_content = T_tuple (List.map (fun t -> (None, t)) ts);
+    location = Location.generated }
 
-let rec comb_expr : expression list -> expression = function
-  | [] -> { content = E_constant { cons_name = C_UNIT ; arguments = [] };
-            location = Location.generated;
-            type_expression = { type_content = T_base TB_unit;
-                                location = Location.generated } }
-  | [e] -> e
-  | e1 :: es ->
-    let es = comb_expr es in
-    { content = E_constant { cons_name = C_PAIR ; arguments = [e1; es] };
-      location = Location.generated;
-      type_expression = { type_content = T_pair ((None, e1.type_expression), (None, es.type_expression));
-                          location = Location.generated } }
+let comb_expr (es : expression list) : expression =
+  { content = E_tuple es;
+    location = Location.generated;
+    type_expression = comb_type (List.map (fun e -> e.type_expression) es) }
 
 let uncurry_rhs (depth : int) (expr : expression) : expression =
   let (arg_types, ret_type) = uncurry_arrow depth expr.type_expression in
@@ -235,11 +228,21 @@ let rec uncurry_in_expression
     let e2 = self_binder [v2] e2 in
     let e3 = self_binder [v3] e3 in
     return (E_if_left (e1, ((v2, t2), e2), ((v3, t3), e3)))
+  | E_tuple exprs ->
+    let exprs = List.map self exprs in
+    return (E_tuple exprs)
   | E_let_tuple (e1, (vts, e2)) ->
     let e1 = self e1 in
     let vs = List.map fst vts in
     let e2 = self_binder vs e2 in
     return (E_let_tuple (e1, (vts, e2)))
+  | E_proj (e, i, n) ->
+    let e = self e in
+    return (E_proj (e, i, n))
+  | E_update (expr, i, update, n) ->
+    let expr = self expr in
+    let update = self update in
+    return (E_update (expr, i, update, n))
 
 (* hack to specialize map_expression to identity monad since there are
    no errors here *)

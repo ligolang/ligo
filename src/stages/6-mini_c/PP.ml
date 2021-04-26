@@ -7,7 +7,8 @@ let list_sep_d x = list_sep x (tag " ,@ ")
 
 let rec type_variable ppf : type_expression -> _ = fun te -> match te.type_content with
   | T_or(a, b) -> fprintf ppf "@[(%a) |@ (%a)@]" annotated a annotated b
-  | T_pair(a, b) -> fprintf ppf "@[(%a) &@ (%a)@]" annotated a annotated b
+  | T_tuple ts ->
+    fprintf ppf "@[(%a)@]" (list_sep annotated (tag " *@ ")) ts
   | T_base b -> type_constant ppf b
   | T_function(a, b) -> fprintf ppf "@[(%a) ->@ (%a)@]" type_variable a type_variable b
   | T_map(k, v) -> fprintf ppf "@[<4>map(%a -> %a)@]" type_variable k type_variable v
@@ -85,7 +86,8 @@ and type_expression ppf : type_expression -> unit = fun te ->
   fprintf ppf "%a" type_content te.type_content
   
 and type_content ppf : type_content -> unit = function
-  | T_pair (a,b) -> fprintf ppf "pair %a %a" type_expression_annotated a type_expression_annotated b
+  | T_tuple ts ->
+    fprintf ppf "@[(%a)@]" (list_sep annotated (tag " *@ ")) ts
   | T_or    (a,b) -> fprintf ppf "or %a %a" type_expression_annotated a type_expression_annotated b
   | T_function (a, b) -> fprintf ppf "lambda (%a) %a" type_expression a type_expression b
   | T_base tc -> fprintf ppf "%a" type_constant tc
@@ -129,12 +131,21 @@ and expression_content ppf (e:expression_content) = match e with
         expression c Var.pp name_l.wrap_content expression l Var.pp name_r.wrap_content expression r
   | E_let_in (expr, inline , ((name , _) , body)) ->
       fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]" Var.pp name.wrap_content expression expr option_inline inline expression body
+  | E_tuple exprs ->
+    fprintf ppf "@[(%a)@]"
+      Format.(pp_print_list ~pp_sep:(const ", ") expression)
+      exprs
   | E_let_tuple (expr, (fields, body)) ->
       fprintf ppf "@[let (%a) =@;<1 2>%a in@ %a@]"
         Format.(pp_print_list ~pp_sep:(fun ppf () -> pp_print_string ppf ", ") Var.pp)
           (List.map (fun (x, _) -> x.Location.wrap_content) fields)
         expression expr
         expression body
+  | E_proj (expr, i, _n) ->
+      fprintf ppf "(%a).(%d)" expression expr i
+  | E_update (expr, i, update, _n) ->
+      fprintf ppf "{ %a with (%d) = %a }"
+        expression expr i expression update
   | E_iterator (b , ((name , _) , body) , expr) ->
     fprintf ppf "@[for_%a %a of %a do ( %a )@]" constant b Var.pp name.wrap_content expression expr expression body
   | E_fold (((name , _) , body) , collection , initial) ->
