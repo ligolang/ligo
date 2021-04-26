@@ -96,7 +96,8 @@
         "vscode:prepublish": "npm run compile",
         "compile": "tsc -b",
         "watch": "tsc -b -w",
-        "package": "vsce package"
+        "package": "vsce package",
+        "lint": "tslint --project package.json"
     },
     "dependencies": {
         "vscode-languageclient": "^6.1.3"
