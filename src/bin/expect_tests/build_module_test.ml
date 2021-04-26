@@ -120,7 +120,7 @@ let%expect_test _ =
     let C = ../../test/contracts/build/C.mligo[@inline]
     let E = ../../test/contracts/build/E.mligo[@inline]
     let toto = ADD(CDR(CDR(E)) , CAR(CDR(CDR(CAR(C)))))
-    let fb = PAIR(L(1) , PAIR(toto , PAIR(L(2) , L(3))))
+    let fb = (L(1), toto, L(2), L(3))
     let main =
       fun #6 ->
       (let #8 = #6 in

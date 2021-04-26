@@ -88,11 +88,21 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let e1 = replace e1 in
     let e2 = replace e2 in
     return @@ E_let_in (e1, inline, ((v, tv), e2))
+  | E_tuple exprs ->
+    let exprs = List.map replace exprs in
+    return @@ E_tuple exprs
   | E_let_tuple (expr, (vtvs, body)) ->
     let expr = replace expr in
     let vtvs = List.map (fun (v, tv) -> (replace_var v, tv)) vtvs in
     let body = replace body in
     return @@ E_let_tuple (expr, (vtvs, body))
+  | E_proj (expr, i, n) ->
+    let expr = replace expr in
+    return @@ E_proj (expr, i, n)
+  | E_update (expr, i, update, n) ->
+    let expr = replace expr in
+    let update = replace update in
+    return @@ E_update (expr, i, update, n)
   | E_raw_michelson _ -> e
 
 (* Given an implementation of substitution on an arbitary type of
@@ -172,6 +182,9 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
     let (v, body) = self_binder1 ~body:(v, body) in
     return @@ E_let_in (expr, inline, ((v , tv) , body))
   )
+  | E_tuple exprs ->
+    let exprs = List.map self exprs in
+    return @@ E_tuple exprs
   | E_let_tuple (expr, (vtvs, body)) -> (
     let expr = self expr in
     let (vs, tvs) = List.split vtvs in
@@ -179,6 +192,13 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
     let vtvs = List.combine vs tvs in
     return @@ E_let_tuple (expr, (vtvs, body))
   )
+  | E_proj (expr, i, n) ->
+    let expr = self expr in
+    return @@ E_proj (expr, i, n)
+  | E_update (expr, i, update, n) ->
+    let expr = self expr in
+    let update = self update in
+    return @@ E_update (expr, i, update, n)
   | E_iterator (s, ((name , tv) , body) , collection) -> (
     let (name, body) = self_binder1 ~body:(name, body) in
     let collection = self collection in

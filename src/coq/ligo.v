@@ -14,7 +14,11 @@ Context {raw_typed : node A string -> list (node A string) -> (node A string) ->
 Inductive expr : Set :=
 | E_var : A -> expr
 | E_let_in : A -> splitting -> expr -> binds -> expr
+
+| E_tuple : A -> args -> expr
 | E_let_tuple : A -> splitting -> expr -> binds -> expr
+| E_proj : A -> expr -> nat -> nat -> expr
+| E_update : A -> args -> nat -> nat -> expr
 
 | E_app : A -> args -> expr
 | E_lam : A -> binds -> node A string -> expr
@@ -106,12 +110,28 @@ Inductive expr_typed : list (node A string) -> expr -> node A string -> Prop :=
       expr_typed g1 e1 a ->
       binds_typed g2 e2 [a] b ->
       expr_typed g (E_let_in l ss e1 e2) b}
+| E_tuple_typed {g args az t} :
+    `{tuple az t ->
+      args_typed g args az ->
+      expr_typed g (E_tuple l1 args) t}
 | E_let_tuple_typed {ss g g1 g2 az azt c e1 e2} :
     `{splits ss g g1 g2 ->
       tuple az azt ->
       expr_typed g1 e1 azt ->
       binds_typed g2 e2 az c ->
       expr_typed g (E_let_tuple l3 ss e1 e2) c}
+| E_proj_typed {g az azt a e i n} :
+    `{tuple az azt ->
+      List.nth_error az i = Some a ->
+      List.length az = n ->
+      expr_typed g e azt ->
+      expr_typed g (E_proj l1 e i n) a}
+| E_update_typed {g a az azt args i n} :
+    `{tuple az azt ->
+      List.nth_error az i = Some a ->
+      List.length az = n ->
+      args_typed g args [azt; a] ->
+      expr_typed g (E_update l1 args i n) azt}
 | E_app_typed {g args a b} :
     `{args_typed g args [Prim l1 "lambda" [a; b] n1; a] ->
       expr_typed g (E_app l2 args) b}
@@ -232,6 +252,12 @@ with script_typed : script -> Prop :=
 Definition binds_length (e : binds) : nat :=
   match e with
   | Binds _ az _ => List.length az
+  end.
+
+Fixpoint args_length (e : args) : nat :=
+  match e with
+  | Args_nil => O
+  | Args_cons _ _ e => S (args_length e)
   end.
 
 End expr.

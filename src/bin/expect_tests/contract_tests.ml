@@ -942,8 +942,7 @@ let%expect_test _ =
              DIG 2 ;
              NONE (ticket unit) ;
              DUP 3 ;
-             CDR ;
-             CDR ;
+             GET 4 ;
              GET_AND_UPDATE ;
              IF_NONE
                { DROP 3 ; PUSH string "no tickets" ; FAILWITH }
@@ -951,8 +950,7 @@ let%expect_test _ =
                  CDR ;
                  CDR ;
                  DUP 4 ;
-                 CDR ;
-                 CAR ;
+                 GET 3 ;
                  DUP ;
                  DIG 2 ;
                  SUB ;
@@ -968,8 +966,7 @@ let%expect_test _ =
                      DUG 2 ;
                      SOME ;
                      DUP 4 ;
-                     CDR ;
-                     CDR ;
+                     GET 4 ;
                      GET_AND_UPDATE ;
                      DROP ;
                      DIG 2 ;
@@ -977,8 +974,8 @@ let%expect_test _ =
                      PUSH mutez 0 ;
                      DIG 3 ;
                      TRANSFER_TOKENS ;
+                     DUG 2 ;
                      SWAP ;
-                     DIG 2 ;
                      PAIR ;
                      NIL operation ;
                      DIG 2 ;

@@ -58,10 +58,16 @@ module Free_variables = struct
       unions [ self expr ;
                expression (union (singleton v) b) body ;
              ]
+    | E_tuple exprs ->
+      unions (List.map self exprs)
     | E_let_tuple (expr, (fields , body)) ->
       unions [ self expr ;
                expression (unions (List.map (fun (x, _) -> singleton x) fields @ [b])) body
              ]
+    | E_proj (expr, _i, _n) ->
+      self expr
+    | E_update (expr, _i, update, _n) ->
+      unions [ self expr; self update ]
     | E_raw_michelson _ -> empty
 
   and var_name : bindings -> var_name -> bindings = fun b n ->

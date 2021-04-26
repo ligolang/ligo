@@ -108,7 +108,7 @@ let get_pair (v:value) = match v with
   | _ -> None
 
 let get_t_pair (t:type_expression) = match t.type_content with
-  | T_pair ((_, a), (_, b)) -> Some (a, b)
+  | T_tuple [(_, a); (_, b)] -> Some (a, b)
   | _ -> None
 
 let get_t_or (t:type_expression) = match t.type_content with
@@ -178,8 +178,9 @@ let t_unit ?loc () : type_expression = Expression.make_t ?loc @@ T_base TB_unit
 let t_nat  ?loc () : type_expression = Expression.make_t ?loc @@ T_base TB_nat
 
 let t_function ?loc x y : type_expression = Expression.make_t ?loc @@ T_function ( x , y )
-let t_pair     ?loc x y : type_expression = Expression.make_t ?loc @@ T_pair ( x , y )
+let t_pair     ?loc x y : type_expression = Expression.make_t ?loc @@ T_tuple [x; y]
 let t_union    ?loc x y : type_expression = Expression.make_t ?loc @@ T_or ( x , y )
+let t_tuple ?loc xs : type_expression = Expression.make_t ?loc @@ T_tuple xs
 
 let e_int  ?loc expr    : expression = Expression.make_tpl ?loc (expr, t_int ())
 let e_unit ?loc ()      : expression = Expression.make_tpl ?loc (E_constant { cons_name = C_UNIT ; arguments = [] }, t_unit ())

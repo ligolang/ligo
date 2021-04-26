@@ -140,8 +140,15 @@ let rec is_pure : expression -> bool = fun e ->
 
   | E_let_in (e1, _, (_, e2))
     -> List.for_all is_pure [ e1 ; e2 ]
+
+  | E_tuple exprs
+    -> List.for_all is_pure exprs
   | E_let_tuple (e1, (_, e2))
     -> List.for_all is_pure [ e1 ; e2 ]
+  | E_proj (e, _i, _n)
+    -> is_pure e
+  | E_update (expr, _i, update, _n)
+    -> List.for_all is_pure [ expr ; update ]
 
   | E_constant (c)
     -> is_pure_constant c.cons_name && List.for_all is_pure c.arguments
@@ -237,6 +244,24 @@ let beta : bool ref -> expression -> expression =
           | C_CDR -> e2
           | _ -> assert false)
     else e
+
+  (* (e0, e1, ...).(i) ↦ ei  (only if all ei are pure) *)
+  | E_proj ({ content = E_tuple es; _ }, i, _n) ->
+    if List.for_all is_pure es
+    then List.nth es i
+    else e
+
+  (* let (x0, x1, ...) = (e0, e1, ...) in body ↦
+     let ... in let x1 = e1 in let x0 = e0 in body
+     (here, purity of the ei does not matter)
+     *)
+  | E_let_tuple ({ content = E_tuple es; _ }, (vars, body)) ->
+    List.fold_left
+      (fun body (e, (v, t)) ->
+         { content = E_let_in (e, false, ((v, t), body));
+           location = Location.generated;
+           type_expression = body.type_expression })
+      body (List.combine es vars)
   | _ -> e
 
 let betas : bool ref -> expression -> expression =
@@ -256,6 +281,31 @@ let eta : bool ref -> expression -> expression =
           { e with content = e1.content })
        else e
      | _ -> e)
+  (* (x.(0), x.(1), ...) ↦ x *)
+  | E_tuple es ->
+    let count = List.length es in
+    let projs =
+      List.mapi
+        (fun i e ->
+           match e.content with
+           | E_proj (e', j, n) ->
+             if i = j && n = count
+             then
+               match e'.content with
+               | E_variable x -> Some (Location.unwrap x)
+               | _ -> None
+             else None
+           | _ -> None)
+        es in
+    (match Option.bind_list projs with
+     | None -> e
+     | Some vars ->
+       match vars with
+       | var :: _ ->
+         if List.for_all (Var.equal var) vars
+         then { e with content = E_variable (Location.wrap var) }
+         else e
+       | _ -> e)
   | _ -> e
 
 let etas : bool ref -> expression -> expression =

@@ -17,7 +17,9 @@ type proto = Environment.Protocols.t
    which removes n items from the stack and uses them to push 1 item,
    without effects other than gas consumption. It must never fail. *)
 
-let arity : string -> int option = function
+let arity : _ node list -> string -> int option =
+ fun args ->
+ function
  (* stack things *)
  | "DIP" -> None
  | "DROP" -> None
@@ -70,7 +72,11 @@ let arity : string -> int option = function
  | "EMPTY_SET" -> Some 0
  | "EQ" -> Some 1
  | "GE" -> Some 1
- | "GET" -> Some 2
+ | "GET" ->
+   (match args with
+    | [] -> Some 2
+    | [_k] -> Some 1
+    | _ -> None)
  | "GT" -> Some 1
  | "HASH_KEY" -> Some 1
  | "INT" -> Some 1
@@ -88,7 +94,11 @@ let arity : string -> int option = function
  | "NOT" -> Some 1
  | "NOW" -> Some 0
  | "OR" -> Some 2
- | "PAIR" -> Some 2
+ | "PAIR" ->
+   (match args with
+    | [] -> Some 2
+    | [Int (_, k)] -> Some (Z.to_int k)
+    | _ -> None)
  | "PUSH" -> Some 0
  | "RIGHT" -> Some 1
  | "SIZE" -> Some 1
@@ -99,7 +109,11 @@ let arity : string -> int option = function
  | "SLICE" -> Some 3
  | "STEPS_TO_QUOTA" -> Some 0
  | "UNIT" -> Some 0
- | "UPDATE" -> Some 3
+ | "UPDATE" ->
+   (match args with
+    | [] -> Some 3
+    | [_k] -> Some 2
+    | _ -> None)
  | "XOR" -> Some 2
  | "ADDRESS" -> Some 1
  | "CONTRACT" -> Some 1
@@ -109,25 +123,23 @@ let arity : string -> int option = function
  | "APPLY" -> Some 2
  | _ -> None
 
-let is_nullary_op (p : string) : bool =
-  match arity p with
-  | Some 0 -> true
-  | _ -> false
+let get_arity (op : _ node) : int option =
+  match op with
+  | Prim (_, p, args, _) ->
+    arity args p
+  | _ -> None
 
-let is_unary_op (p : string) : bool =
-  match arity p with
-  | Some 1 -> true
-  | _ -> false
+let is_nullary_op op : bool =
+  get_arity op = Some 0
 
-let is_binary_op (p : string) : bool =
-  match arity p with
-  | Some 2 -> true
-  | _ -> false
+let is_unary_op op : bool =
+  get_arity op = Some 1
 
-let is_ternary_op (p : string) : bool =
-  match arity p with
-  | Some 3 -> true
-  | _ -> false
+let is_binary_op op : bool =
+  get_arity op = Some 2
+
+let is_ternary_op op : bool =
+  get_arity op = Some 3
 
 let unseq : _ michelson -> _ michelson list = function
   | Seq (_, args) -> args
@@ -224,15 +236,15 @@ let is_cond : string -> bool = function
 
 let opt_drop2 : _ peep2 = function
   (* nullary_op ; DROP  ↦  *)
-  | Prim (_, p, _, _), Prim (_, "DROP", [], _) when is_nullary_op p -> Some []
+  | op, Prim (_, "DROP", [], _) when is_nullary_op op -> Some []
   (* DUP ; DROP  ↦  *)
   | Prim (_, "DUP", [], _), Prim (_, "DROP", [], _) -> Some []
   (* unary_op ; DROP  ↦  DROP *)
-  | Prim (_, p, _, _), (Prim (_, "DROP", [], _) as drop) when is_unary_op p -> Some [drop]
+  | op, (Prim (_, "DROP", [], _) as drop) when is_unary_op op -> Some [drop]
   (* binary_op ; DROP  ↦  DROP ; DROP *)
-  | Prim (_, p, _, _), (Prim (_, "DROP", [], _) as drop) when is_binary_op p -> Some [drop; drop]
+  | op, (Prim (_, "DROP", [], _) as drop) when is_binary_op op -> Some [drop; drop]
   (* ternary_op ; DROP  ↦  DROP ; DROP ; DROP *)
-  | Prim (_, p, _, _), (Prim (_, "DROP", [], _) as drop) when is_ternary_op p -> Some [drop; drop; drop]
+  | op, (Prim (_, "DROP", [], _) as drop) when is_ternary_op op -> Some [drop; drop; drop]
   (* IF { ... ; FAILWITH } { ... } ; DROP  ↦  IF { ... ; FAILWITH } { ... ; DROP } *)
   | Prim (l1, p, [bt; Seq (l2, bf)], annot1), (Prim (_, "DROP", [], _) as drop)
     when is_cond p && is_failing bt ->
@@ -252,10 +264,10 @@ let opt_drop3 : _ peep3 = function
 let opt_drop4 : _ peep4 = function
   (* DUP; unary_op; SWAP; DROP  ↦  unary_op *)
   | Prim (_, "DUP", [], _),
-    (Prim (_, p, _, _) as unary_op),
+    unary_op,
     Prim (_, "SWAP", _, _),
     Prim (_, "DROP", [], _)
-    when is_unary_op p ->
+    when is_unary_op unary_op ->
     Some [unary_op]
   | _ -> None
 
@@ -263,10 +275,10 @@ let opt_dip1 : _ peep1 = function
   (* DIP {}  ↦  *)
   | Prim (_, "DIP", [Seq (_, [])], _) -> Some []
   (* DIP { nullary_op }  ↦  nullary_op ; SWAP *)
-  | Prim (l, "DIP", [Seq (_, [(Prim (_, p, _, _) as push)])], _) when is_nullary_op p ->
+  | Prim (l, "DIP", [Seq (_, [push])], _) when is_nullary_op push ->
      Some [push ; Prim (l, "SWAP", [], [])]
   (* DIP { unary_op }  ↦  SWAP ; unary_op ; SWAP *)
-  | Prim (l, "DIP", [Seq (_, [(Prim (_, p, _, _) as unary_op)])], _) when is_unary_op p ->
+  | Prim (l, "DIP", [Seq (_, [unary_op])], _) when is_unary_op unary_op ->
      Some [Prim (l, "SWAP", [], []) ; unary_op ; Prim (l, "SWAP", [], [])]
   | _ -> None
 
@@ -280,10 +292,10 @@ let opt_dip2 : _ peep2 = function
   | Prim (_, "DIP", [Seq (_, code)], _), (Prim (_, "DROP", [], _) as drop) ->
      Some (drop :: code)
   (* nullary_op ; DIP { code }  ↦  code ; nullary_op *)
-  | (Prim (_, p, _, _) as nullary_op), Prim (_, "DIP", [Seq (_, code)], _) when is_nullary_op p ->
+  | nullary_op, Prim (_, "DIP", [Seq (_, code)], _) when is_nullary_op nullary_op ->
      Some (code @ [nullary_op])
   (* DIP { code } ; unary_op  ↦  unary_op ; DIP { code } *)
-  | (Prim (_, "DIP", [Seq _], _) as dip), (Prim (_, p, _, _) as unary_op) when is_unary_op p ->
+  | (Prim (_, "DIP", [Seq _], _) as dip), unary_op when is_unary_op unary_op ->
      Some [unary_op; dip]
   (* unary_op ; DIP { code }  ↦  DIP { code } ; unary_op *)
   (* | (Prim (_, p, _, _) as unary_op), (Prim (_, "DIP", [Seq _], _) as dip) when is_unary_op p ->
@@ -329,14 +341,14 @@ let opt_beta3 : _ peep3 = function
 
 let opt_beta5 : _ peep5 = function
   (* PAIR ; DUP ; CDR ; SWAP ; CAR  ↦  *)
-  | Prim (_, "PAIR", _, _),
+  | Prim (_, "PAIR", [], _),
     Prim (_, "DUP", [], _),
     Prim (_, "CDR", [], _),
     Prim (_, "SWAP", _, _),
     Prim (_, "CAR", [], _) ->
     Some []
   (* PAIR ; DUP ; CAR ; SWAP ; CDR  ↦  SWAP *)
-  | Prim (l, "PAIR", _, _),
+  | Prim (l, "PAIR", [], _),
     Prim (_, "DUP", [], _),
     Prim (_, "CAR", [], _),
     Prim (_, "SWAP", _, _),
@@ -452,6 +464,21 @@ let opt_pair2 () : _ peep =
   match%bind peep with
   | Prim (l, "PAIR", [Int (_, k)], _) when Z.(equal k (of_int 2)) ->
     Changed [Prim (l, "PAIR", [], [])]
+  | _ -> No_change
+
+(* GET 0  ↦  *)
+(* GET 1  ↦  CAR *)
+(* GET 2  ↦  CDR *)
+let opt_get () : _ peep =
+  match%bind peep with
+  | Prim (l, "GET", [Int (_, k)], _) ->
+    if Z.(equal k (of_int 0))
+    then Changed []
+    else if Z.(equal k (of_int 1))
+    then Changed [Prim (l, "CAR", [], [])]
+    else if Z.(equal k (of_int 2))
+    then Changed [Prim (l, "CDR", [], [])]
+    else No_change
   | _ -> No_change
 
 (* This "optimization" deletes dead code produced by the compiler
@@ -584,6 +611,7 @@ let optimize : 'l. Environment.Protocols.t -> 'l michelson -> 'l michelson =
                      peephole @@ peep3 opt_dupn_edo ;
                      peephole @@ opt_pair2 () ;
                      peephole @@ opt_unpair2 () ;
+                     peephole @@ opt_get () ;
                    ] in
   let optimizers = List.map on_seqs optimizers in
   let x = iterate_optimizer (sequence_optimizers optimizers) x in

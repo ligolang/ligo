@@ -18,7 +18,7 @@ let%expect_test _ =
 
              { parameter unit ;
                storage (pair (int %anbfoo) (string %anabar)) ;
-               code { CDR ; NIL operation ; PAIR } } |}];
+               code { CDR ; DUP ; CAR ; UPDATE 1 ; NIL operation ; PAIR } } |}];
   run_ligo_good [ "compile-contract" ; contract "annotated_michelson_record_comb.mligo" ; "main_comb_three" ] ;
   [%expect {|
              File "../../test/contracts/annotated_michelson_record_comb.mligo", line 33, characters 19-25:
@@ -33,10 +33,12 @@ let%expect_test _ =
              { parameter unit ;
                storage (pair (int %ana) (pair (string %anb) (nat %anc))) ;
                code { DROP ;
-                      PUSH nat 1 ;
-                      PUSH string "" ;
-                      PAIR ;
                       PUSH int 1 ;
+                      PUSH string "" ;
+                      PUSH nat 1 ;
+                      SWAP ;
+                      PAIR ;
+                      SWAP ;
                       PAIR ;
                       NIL operation ;
                       PAIR } } |}];
