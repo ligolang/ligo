@@ -12,7 +12,7 @@ export enum ActionType {
 
 export interface CompileState {
   entrypoint: string;
-  michelsonFormat: MichelsonFormat;
+  michelsonFormat?: MichelsonFormat;
 }
 
 export class ChangeEntrypointAction {

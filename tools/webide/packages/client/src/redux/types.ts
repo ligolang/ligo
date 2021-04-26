@@ -10,7 +10,8 @@ export enum CommandType {
   EvaluateValue = 'evaluate-value',
   EvaluateFunction = 'evaluate-function',
   Deploy = 'deploy',
-  GenerateDeployScript = 'generate-deploy-script'
+  GenerateDeployScript = 'generate-deploy-script',
+  CompileFunction = 'compile-function'
 }
 
 export enum Tool {

@@ -22,7 +22,7 @@ export interface EditorState {
   code: string;
   title: string;
   dirty: boolean;
-  cursorPosition: CursorPosition | null;
+  cursorPosition?: CursorPosition | null;
 }
 
 export class ChangeLanguageAction {
@@ -75,7 +75,7 @@ const editor = (state, action: Action): EditorState => {
       return {
         ...state,
         ...action.payload?.editor,
-        title: action.payload.name
+        title: action.payload?.name
           ? action.payload.name
           : action.payload?.editor.title,
       };
