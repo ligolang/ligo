@@ -99,6 +99,18 @@
                 + "touch $out";
         };
 
+        lint = pkgs.stdenv.mkDerivation {
+          name = "lint";
+          src = ./squirrel;
+          buildInputs = [ pkgs.haskellPackages.hlint ];
+          doCheck = true;
+          phases = [ "unpackPhase" "checkPhase" ];
+          checkPhase = ''
+            bash scripts/lint.sh
+            touch $out
+          '';
+        };
+
         pack = pkg:
           pkg.overrideAttrs (_: {
             postInstall = with pkgs; ''
@@ -164,6 +176,7 @@
           inherit squirrel-grammar-test;
           inherit (squirrel.checks) lsp-test;
           inherit (squirrel.checks) ligo-contracts-test;
+          inherit lint;
         };
         defaultPackage = self.packages.${system}.vscode-extension-native;
         # For debug/development reasons only

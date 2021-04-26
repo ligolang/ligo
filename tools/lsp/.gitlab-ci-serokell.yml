@@ -11,6 +11,15 @@ default:
 # jobs for building and testing LSP
 include: '/tools/lsp/.gitlab-ci.yml'
 
+lsp-lint:
+  stage: lsp
+  only: [merge_requests, tooling]
+  script:
+    - nix-build tools/lsp -A checks.x86_64-linux.lint
+    # Nix has some trouble with git so we run it directly from the CI
+    - cd tools/lsp
+    - bash squirrel/scripts/check-trailing-whitespace.sh
+
 vscode-extension-tests:
   stage: lsp
   only: [merge_requests, tooling]
