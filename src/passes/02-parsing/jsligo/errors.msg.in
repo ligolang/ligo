@@ -1540,6 +1540,20 @@ contract: Namespace Uident While
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
+contract: New Ident While
+##
+## Ends in an error in state: 108.
+##
+## member_expr -> Ident . [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
+## member_expr -> Ident . Verbatim [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
+##
+## The known suffix of the stack is as follows:
+## Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+
 contract: Namespace While
 ##
 ## Ends in an error in state: 378.

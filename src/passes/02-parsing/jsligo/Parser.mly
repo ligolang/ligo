@@ -902,6 +902,7 @@ member_expr:
 | "<int>"                    {                       EArith (Int $1) }
 | "<bytes>"                  {                             EBytes $1 }
 | "<string>"                 {                   EString (String $1) }
+| "<ident>" "<verbatim>"
 | "<uident>" "<verbatim>"    {                           
   let value = {
     language = $1;
