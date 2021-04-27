@@ -1,6 +1,7 @@
 # This file contains pipeline configuration used by Serokell at https://gitlab.com/serokell/ligo/ligo
 
 stages:
+  - lsp
   - tooling
   - push
 
@@ -9,6 +10,46 @@ default:
 
 # jobs for building and testing LSP
 include: '/tools/lsp/.gitlab-ci.yml'
+
+vscode-extension-tests:
+  stage: lsp
+  only: [merge_requests, tooling]
+  script:
+    - nix-build tools/lsp -A checks.x86_64-linux.lsp-test
+
+vscode-extension-sexp-tests:
+  stage: lsp
+  only: [merge_requests, tooling]
+  script:
+    - nix-build tools/lsp -A checks.x86_64-linux.squirrel-sexp-test
+
+vscode-extension-grammar-tests:
+  stage: lsp
+  only: [merge_requests, tooling]
+  script:
+    - nix-build tools/lsp -A checks.x86_64-linux.squirrel-grammar-test
+
+vscode-extension-linux:
+  stage: lsp
+  only: [merge_requests]
+  script:
+    - nix-build tools/lsp -A packages.x86_64-linux.vscode-extension-native
+
+vscode-extension:
+  stage: lsp
+  only: [tooling, vscode-production]
+  script:
+    - nix-build tools/lsp -A packages.x86_64-linux.vscode-extension
+    - cp -Lr --no-preserve=mode,ownership,timestamps result/*.vsix ligo-extension.vsix
+  artifacts:
+    paths:
+      - ligo-extension.vsix
+
+lsp-docker-image:
+  stage: lsp
+  only: [merge_requests, tooling]
+  script:
+    - nix-build tools/lsp -A lsp-docker-image
 
 # publish vscode extension to the extension marketplace
 vscode-extension-publish:

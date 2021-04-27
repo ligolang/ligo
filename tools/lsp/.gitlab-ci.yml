@@ -12,7 +12,7 @@
   if: '$CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_REF_NAME == "dev"'
   allow_failure: true
 
-vscode-extension-tests:
+vscode-extension-contracts-tests:
   stage: tooling
   rules:
     # for serokell: all merge requests and "tooling" branch
@@ -20,58 +20,4 @@ vscode-extension-tests:
     - *run-on-lsp-label
     - *run-with-failure-allowed
   script:
-    - nix-build tools/lsp -A checks.x86_64-linux.lsp-test
     - nix-build tools/lsp -A checks.x86_64-linux.ligo-contracts-test
-
-vscode-extension-sexp-tests:
-  stage: tooling
-  rules:
-    # for serokell: all merge requests and "tooling" branch
-    - if: '$CI_PROJECT_PATH == "serokell/ligo/ligo" && ($CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_REF_NAME == "tooling")'
-    - *run-on-lsp-label
-    - *run-with-failure-allowed
-  script:
-    - nix-build tools/lsp -A checks.x86_64-linux.squirrel-sexp-test
-
-vscode-extension-grammar-tests:
-  stage: tooling
-  rules:
-    # for serokell: all merge requests and "tooling" branch
-    - if: '$CI_PROJECT_PATH == "serokell/ligo/ligo" && ($CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_REF_NAME == "tooling")'
-    - *run-on-lsp-label
-    - *run-with-failure-allowed
-  script:
-    - nix-build tools/lsp -A checks.x86_64-linux.squirrel-grammar-test
-
-vscode-extension-linux:
-  stage: tooling
-  rules:
-    # for serokell: all merge requests
-    - if: '$CI_PROJECT_PATH == "serokell/ligo/ligo" && $CI_PIPELINE_SOURCE == "merge_request_event"'
-    - *run-on-lsp-label
-    - *run-with-failure-allowed
-  script:
-    - nix-build tools/lsp -A packages.x86_64-linux.vscode-extension-native
-
-vscode-extension:
-  stage: tooling
-  rules:
-    # for serokell: "tooling" and "vscode-production" branches
-    - if: '$CI_PROJECT_PATH == "serokell/ligo/ligo" && ($CI_COMMIT_REF_NAME == "tooling" || $CI_COMMIT_REF_NAME == "vscode-production")'
-    # (don't run this job upstream because it requires a darwin builder)
-  script:
-    - nix-build tools/lsp -A packages.x86_64-linux.vscode-extension
-    - cp -Lr --no-preserve=mode,ownership,timestamps result/*.vsix ligo-extension.vsix
-  artifacts:
-    paths:
-      - ligo-extension.vsix
-
-lsp-docker-image:
-  stage: tooling
-  rules:
-    # for serokell: all merge requests and "tooling" branch
-    - if: '$CI_PROJECT_PATH == "serokell/ligo/ligo" && ($CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_REF_NAME == "tooling")'
-    - *run-on-lsp-label
-    - *run-with-failure-allowed
-  script:
-    - nix-build tools/lsp -A lsp-docker-image
