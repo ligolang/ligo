@@ -29,22 +29,33 @@ type t = <
   (* Conversions to [string] *)
 
   to_string : ?file:bool -> ?offsets:bool -> [`Byte | `Point] -> string;
-  compact   : ?file:bool -> ?offsets:bool -> [`Byte | `Point] -> string
+  compact   : ?file:bool -> ?offsets:bool -> [`Byte | `Point] -> string;
+
+  markup     : markup list;
 >
+
+and markup = 
+  BlockCom of string reg * comment_position
+| LineCom of string reg * comment_position
+
+and comment_position = 
+  Before
+| After
+| Inline
 
 (* A synonym *)
 
-type region = t
+and region = t
 
 (* A convenience *)
 
-type 'a reg = {region: t; value: 'a}
+and 'a reg = {region: t; value: 'a}
 
 (* Injections *)
 
 exception Invalid
 
-let make ~(start: Pos.t) ~(stop: Pos.t) =
+let make ~markup ~(start: Pos.t) ~(stop: Pos.t) =
   if start#file <> stop#file || start#byte_offset > stop#byte_offset
   then raise Invalid
   else
@@ -118,9 +129,17 @@ let make ~(start: Pos.t) ~(stop: Pos.t) =
               sprintf "%s%s-%s" prefix start_str stop_str
           else sprintf "%s:%s-%s:%s"
                        start#file start_str stop#file stop_str
+
+        val    markup = markup
+        method markup = markup
     end
 
 (* Special regions *)
+
+let set_markup region markup =
+  make ~markup:markup ~start:region#start ~stop:region#stop
+
+let make = make ~markup:[]
 
 let ghost = make ~start:Pos.ghost ~stop:Pos.ghost
 
