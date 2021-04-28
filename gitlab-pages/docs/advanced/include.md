@@ -60,7 +60,7 @@ And then you can include this code using the `#include` statement like so:
 
 <Syntax syntax="pascaligo">
 
-```pascaligo
+```pascaligo skip
 #include "included.ligo"
 
 const bar : int = foo
@@ -69,7 +69,7 @@ const bar : int = foo
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo
+```cameligo skip
 #include "included.mligo"
 
 let bar : int = foo
@@ -78,7 +78,7 @@ let bar : int = foo
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo
+```reasonligo skip
 #include "included.religo"
 
 let bar : int = foo;
@@ -87,7 +87,7 @@ let bar : int = foo;
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo
+```jsligo skip
 #include "included.jsligo"
 
 let bar: int = foo;
