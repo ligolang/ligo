@@ -185,7 +185,7 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
       in
       let inj : O.type_injection = {language ; injection ; parameters } in
       aux inj
-    | None -> failwith "variable with parameters is not an injection"
+    | None -> fail @@ type_variable_with_parameters_not_injection type_operator t.location
   )
   | T_module_accessor {module_name; element} ->
     let%bind module_ = match Environment.get_module_opt module_name e with
