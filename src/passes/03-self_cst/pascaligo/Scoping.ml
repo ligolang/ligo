@@ -190,12 +190,16 @@ let check_parameters params =
   let add acc = function
     ParamConst {value; _} ->
       let%bind () = check_reserved_name value.var in
-      if VarSet.mem value.var acc then
+      if is_wildcard value.var then
+        ok @@ acc
+      else if VarSet.mem value.var acc then
         fail @@ duplicate_parameter value.var
       else ok @@ VarSet.add value.var acc
   | ParamVar {value; _} ->
       let%bind () = check_reserved_name value.var in
-      if VarSet.mem value.var acc then
+      if is_wildcard value.var then
+        ok @@ acc
+      else if VarSet.mem value.var acc then
         fail @@ duplicate_parameter value.var
       else ok @@ VarSet.add value.var acc in
   let params =
