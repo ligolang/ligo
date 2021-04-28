@@ -637,15 +637,13 @@ and eol region line file flag state = parse
    [scan_block]. *)
 
 and scan_block block thread state = parse
-  '"' | block_comment_openings as lexeme {
-    if   block#opening = lexeme || lexeme = "\""
+  block_comment_openings as lexeme {
+    if   block#opening = lexeme
     then let opening            = thread#opening in
          let {region; state; _} = state#sync lexbuf in
          let thread             = thread#push_string lexeme in
          let thread             = thread#set_opening region in
-         let scan_next          = if   lexeme = "\""
-                                  then scan_string '"'
-                                  else scan_block block in
+         let scan_next          = scan_block block in
          let thread, state      = scan_next thread state lexbuf in
          let thread             = thread#set_opening opening
          in scan_block block thread state lexbuf

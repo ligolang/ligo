@@ -77,7 +77,18 @@ let print_option : state -> (state -> 'a -> unit ) -> 'a option -> unit =
 let print_csv state print {value; _} =
   print_nsepseq state "," print value
 
+let print_markup state c = 
+  let markup = match c with 
+    LineCom (c, _) -> sprintf "// %s" c.value
+  | BlockCom (c, _) -> sprintf "(* %s *)" c.value
+  in
+  Buffer.add_string state#buffer markup
+
+let print_markup state comments = 
+  List.iter (print_markup state) comments
+
 let print_token state region lexeme =
+  print_markup state region#markup;
   let line =
     sprintf "%s: %s\n" (compact state region) lexeme
   in Buffer.add_string state#buffer line
@@ -718,7 +729,18 @@ let pp_verbatim state {value=name; region} =
   let node = sprintf "%s{|%s|} (%s)\n" state#pad_path name reg
   in Buffer.add_string state#buffer node
 
+let pp_markup_item state c = 
+  let comment = match c with 
+    LineCom (c, _) -> sprintf "//%s" c.value
+  | BlockCom (c, _) -> sprintf "(*%s*)" c.value
+  in
+  Buffer.add_string state#buffer comment
+
+let pp_markup state comments = 
+  List.iter (pp_markup_item state) comments
+
 let pp_loc_node state name region =
+  pp_markup state region#markup;
   pp_ident state {value=name; region}
 
 let rec pp_cst state {decl; _} =
@@ -729,7 +751,8 @@ let rec pp_cst state {decl; _} =
   List.iteri (List.length decls |> apply) decls
 
 and pp_declaration state = function
-  Let {value = (_, kwd_rec, let_binding, attr); region} ->
+  Let {value = (kwd_let, kwd_rec, let_binding, attr); region} ->
+    pp_markup state kwd_let#markup;
     pp_loc_node state "Let" region;
     (if kwd_rec <> None then pp_node (state#pad 0 0) "rec"); (* Hack *)
     pp_let_binding state let_binding attr

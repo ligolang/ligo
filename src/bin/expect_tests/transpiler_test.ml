@@ -162,177 +162,183 @@ let%expect_test _ =
   [%expect {|
     type card_pattern_id = nat
 
-    type card_pattern = {coefficient : tez; quantity : nat}
+    type card_pattern = { coefficient : tez; quantity : nat }
 
     type card_patterns = (card_pattern_id, card_pattern) map
 
     type card_id = nat
 
-    type card =
-      {card_owner : address; card_pattern : card_pattern_id}
+    type card = {
+      card_owner : address;
+      card_pattern : card_pattern_id
+    }
 
     type cards = (card_id, card) map
 
-    type storage =
-      {card_patterns : card_patterns;
-       cards : cards;
-       next_id : nat}
+    type storage = {
+      card_patterns : card_patterns;
+      cards : cards;
+      next_id : nat
+    }
 
     type return = operation list * storage
 
-    type action_buy_single = {card_to_buy : card_pattern_id}
+    type action_buy_single = { card_to_buy : card_pattern_id }
 
-    type action_sell_single = {card_to_sell : card_id}
+    type action_sell_single = { card_to_sell : card_id }
 
-    type action_transfer_single =
-      {card_to_transfer : card_id; destination : address}
+    type action_transfer_single = {
+      card_to_transfer : card_id;
+      destination : address
+    }
 
     type parameter =
-      Buy_single of action_buy_single
-    | Sell_single of action_sell_single
-    | Transfer_single of action_transfer_single
+      | Buy_single of action_buy_single
+      | Sell_single of action_sell_single
+      | Transfer_single of action_transfer_single
 
-    let transfer_single
-    : action_transfer_single * storage -> return =
+    let transfer_single :
+      action_transfer_single * storage -> return =
       (fun gen__parameters1 : action_transfer_single * storage ->
-         match gen__parameters1 with
-         action, s ->
-             let cards : cards = s.cards in
-             let card : card =
-               match Map.find_opt action.card_to_transfer cards
-               with
-                 Some card -> card
-               | None ->
-                   ((failwith ("transfer_single: No card."))
-                    : card) in
-             begin
-               if (NEQ (card.card_owner) (Tezos.sender))
-               then
-                 (failwith ("This card doesn't belong to you"))
-               else ();
-               let card =
-                 {card with
-                   {card_owner = action.destination}} in
-               let cards =
-                 Map.add card action.card_to_transfer cards in
-               let s = {s with {cards = cards}} in
-               ([] : operation list), s
-             end)
+        match gen__parameters1 with
+          action, s ->
+            let cards : cards = s.cards in
+            let card : card =
+              match Map.find_opt action.card_to_transfer cards
+              with
+                Some card -> card
+              | None ->
+                  ((failwith ("transfer_single: No card."))
+                   : card) in
+            begin
+              if (NEQ (card.card_owner) (Tezos.sender)) then
+                (failwith ("This card doesn't belong to you"))
+              else ();
+              let card =
+                {card with { card_owner = action.destination }} in
+              let cards =
+                Map.add card action.card_to_transfer cards in
+              let s = {s with { cards = cards }} in
+              ([] : operation list), s
+            end)
 
     let sell_single : action_sell_single * storage -> return =
       (fun gen__parameters2 : action_sell_single * storage ->
-         match gen__parameters2 with
-         action, s ->
-             let card : card =
-               match Map.find_opt action.card_to_sell s.cards
-               with
-                 Some card -> card
-               | None ->
-                   ((failwith ("sell_single: No card.")) : card) in
-             begin
-               if (NEQ (card.card_owner) (Tezos.sender))
-               then
-                 (failwith ("This card doesn't belong to you"))
-               else ();
-               let card_pattern : card_pattern =
-                 match Map.find_opt
-                         card.card_pattern
-                         s.card_patterns
-                 with
-                   Some pattern -> pattern
-                 | None ->
-                     ((failwith
-                         ("sell_single: No card pattern."))
-                      : card_pattern) in
-               let card_pattern =
-                 {card_pattern with
-                   {quantity =
-                      (abs ((SUB (card_pattern.quantity) (1n))))}} in
-               let card_patterns : card_patterns =
-                 s.card_patterns in
-               let card_patterns =
-                 Map.add
-                   card_pattern
-                   card.card_pattern
-                   card_patterns in
-               let s = {s with {card_patterns = card_patterns}} in
-               let cards : cards = s.cards in
-               let cards =
-                 (Map.remove (action.card_to_sell) (cards)) in
-               let s = {s with {cards = cards}} in
-               let price : tez =
-                 (TIMES
-                    (card_pattern.coefficient)
-                    (card_pattern.quantity)) in
-               let receiver : unit contract =
-                 match ((Tezos.get_contract_opt (Tezos.sender))
-                        : unit contract option)
-                 with
-                   Some contract -> contract
-                 | None ->
-                     ((failwith ("sell_single: No contract."))
-                      : unit contract) in
-               let op : operation =
-                 (Tezos.transaction (unit) (price) (receiver)) in
-               let operations : operation list = [op] in
-               operations, s
-             end)
+        match gen__parameters2 with
+          action, s ->
+            let card : card =
+              match Map.find_opt action.card_to_sell s.cards
+              with
+                Some card -> card
+              | None ->
+                  ((failwith ("sell_single: No card.")) : card) in
+            begin
+              if (NEQ (card.card_owner) (Tezos.sender)) then
+                (failwith ("This card doesn't belong to you"))
+              else ();
+              let card_pattern : card_pattern =
+                match Map.find_opt
+                        card.card_pattern
+                        s.card_patterns
+                with
+                  Some pattern -> pattern
+                | None ->
+                    ((failwith ("sell_single: No card pattern."))
+                     : card_pattern) in
+              let card_pattern =
+                {card_pattern with
+                  {
+                    quantity =
+                      (abs ((SUB (card_pattern.quantity) (1n))))
+                  }} in
+              let card_patterns : card_patterns =
+                s.card_patterns in
+              let card_patterns =
+                Map.add
+                  card_pattern
+                  card.card_pattern
+                  card_patterns in
+              let s = {s with { card_patterns = card_patterns }} in
+              let cards : cards = s.cards in
+              let cards =
+                (Map.remove (action.card_to_sell) (cards)) in
+              let s = {s with { cards = cards }} in
+              let price : tez =
+                (TIMES
+                  (card_pattern.coefficient)
+                  (card_pattern.quantity)) in
+              let receiver : unit contract =
+                match ((Tezos.get_contract_opt (Tezos.sender))
+                       : unit contract option)
+                with
+                  Some contract -> contract
+                | None ->
+                    ((failwith ("sell_single: No contract."))
+                     : unit contract) in
+              let op : operation =
+                (Tezos.transaction (unit) (price) (receiver)) in
+              let operations : operation list = [op] in
+              operations, s
+            end)
 
     let buy_single : action_buy_single * storage -> return =
       (fun gen__parameters3 : action_buy_single * storage ->
-         match gen__parameters3 with
-         action, s ->
-             let card_pattern : card_pattern =
-               match Map.find_opt
-                       action.card_to_buy
-                       s.card_patterns
-               with
-                 Some pattern -> pattern
-               | None ->
-                   ((failwith ("buy_single: No card pattern."))
-                    : card_pattern) in
-             let price : tez =
-               (TIMES
-                  (card_pattern.coefficient)
-                  ((ADD (card_pattern.quantity) (1n)))) in
-             begin
-               if (GT (price) (Tezos.amount))
-               then (failwith ("Not enough money"))
-               else ();
-               let card_pattern =
-                 {card_pattern with
-                   {quantity =
-                      (ADD (card_pattern.quantity) (1n))}} in
-               let card_patterns : card_patterns =
-                 s.card_patterns in
-               let card_patterns =
-                 Map.add
-                   card_pattern
-                   action.card_to_buy
-                   card_patterns in
-               let s = {s with {card_patterns = card_patterns}} in
-               let cards : cards = s.cards in
-               let cards =
-                 Map.add
-                   {card_owner = Tezos.sender;
-                    card_pattern = action.card_to_buy}
-                   s.next_id
-                   cards in
-               let s = {s with {cards = cards}} in
-               let s =
-                 {s with
-                   {next_id = (ADD (s.next_id) (1n))}} in
-               ([] : operation list), s
-             end)
+        match gen__parameters3 with
+          action, s ->
+            let card_pattern : card_pattern =
+              match Map.find_opt
+                      action.card_to_buy
+                      s.card_patterns
+              with
+                Some pattern -> pattern
+              | None ->
+                  ((failwith ("buy_single: No card pattern."))
+                   : card_pattern) in
+            let price : tez =
+              (TIMES
+                (card_pattern.coefficient)
+                ((ADD (card_pattern.quantity) (1n)))) in
+            begin
+              if (GT (price) (Tezos.amount)) then
+                (failwith ("Not enough money"))
+              else ();
+              let card_pattern =
+                {card_pattern with
+                  {
+                    quantity =
+                      (ADD (card_pattern.quantity) (1n))
+                  }} in
+              let card_patterns : card_patterns =
+                s.card_patterns in
+              let card_patterns =
+                Map.add
+                  card_pattern
+                  action.card_to_buy
+                  card_patterns in
+              let s = {s with { card_patterns = card_patterns }} in
+              let cards : cards = s.cards in
+              let cards =
+                Map.add
+                  {
+                    card_owner = Tezos.sender;
+                    card_pattern = action.card_to_buy
+                  }
+                  s.next_id
+                  cards in
+              let s = {s with { cards = cards }} in
+              let s =
+                {s with { next_id = (ADD (s.next_id) (1n)) }} in
+              ([] : operation list), s
+            end)
 
     let main : parameter * storage -> return =
       (fun gen__parameters4 : parameter * storage ->
-         match gen__parameters4 with
-         action, s ->
-             match action with
-               Buy_single bs -> buy_single bs s
-             | Sell_single as -> sell_single as s
-             | Transfer_single at -> transfer_single at s) |}];
+        match gen__parameters4 with
+          action, s ->
+            match action with
+              Buy_single bs -> buy_single bs s
+            | Sell_single as -> sell_single as s
+            | Transfer_single at -> transfer_single at s) |}];
   run_ligo_good [ "transpile-contract" ; "../../test/contracts/coase.ligo" ; "reasonligo" ] ;
   [%expect {|
 type card_pattern_id = nat;
@@ -566,32 +572,35 @@ let%expect_test _ =
   [%expect{|
     type pii = int * int
 
-    type ppi = {x : pii; y : pii}
+    type ppi = { x : pii; y : pii }
 
     type ppp = ppi * ppi
 
     let main : unit -> int =
       (fun toto : unit ->
-         let a : ppp =
-           {x = 0, 1; y = 10, 11}, {x = 100, 101; y = 110, 111} in
-         let a = {a with {0.x.0 = 2}} in
-         a.0.x.0)
+        let a : ppp =
+          { x = 0, 1; y = 10, 11 },
+          { x = 100, 101; y = 110, 111 } in
+        let a = {a with { 0.x.0 = 2 }} in
+        a.0.x.0)
 
     let asymetric_tuple_access : unit -> int =
       (fun foo : unit ->
-         let tuple : int * int * int * int = 0, 1, 2, 3 in
-         (ADD
-            ((ADD ((ADD (tuple.0) (tuple.1.0))) (tuple.1.1.0)))
-            (tuple.1.1.1)))
+        let tuple : int * int * int * int = 0, 1, 2, 3 in
+        (ADD
+          ((ADD ((ADD (tuple.0) (tuple.1.0))) (tuple.1.1.0)))
+          (tuple.1.1.1)))
 
-    type nested_record_t = {nesty : {mymap : (int, string) map}}
+    type nested_record_t = {
+      nesty : { mymap : (int, string) map }
+    }
 
     let nested_record : nested_record_t -> string =
       (fun nee : nested_record_t ->
-         let nee = Map.add "one" 1 nesty.mymap in
-         match Map.find_opt 1 nee.nesty.mymap with
-           Some s -> s
-         | None -> ((failwith ("Should not happen.")) : string)) |}];
+        let nee = Map.add "one" 1 nesty.mymap in
+        match Map.find_opt 1 nee.nesty.mymap with
+          Some s -> s
+        | None -> ((failwith ("Should not happen.")) : string)) |}];
   run_ligo_good [ "transpile-contract" ; "../../test/contracts/deep_access.ligo" ; "reasonligo" ] ;
   [%expect{|
 type pii = (int, int);
@@ -758,26 +767,31 @@ type tokenOwner = address
 
 type tokenAmount = nat
 
-type transferContents =
-  {amount : tokenAmount;
-   to_ : tokenOwner;
-   token_id : tokenId}
+type transferContents = {
+  amount : tokenAmount;
+  to_ : tokenOwner;
+  token_id : tokenId
+}
 
-type transfer =
-  {from_ : tokenOwner; txs : transferContents list}
+type transfer = {
+  from_ : tokenOwner;
+  txs : transferContents list
+}
 
-type transferContentsMichelson =
-  transferContents michelson_pair_right_comb
+type transferContentsMichelson = transferContents
+  michelson_pair_right_comb
 
-type transferAuxiliary =
-  {from_ : tokenOwner; txs : transferContentsMichelson list}
+type transferAuxiliary = {
+  from_ : tokenOwner;
+  txs : transferContentsMichelson list
+}
 
-type transferMichelson =
-  transferAuxiliary michelson_pair_right_comb
+type transferMichelson = transferAuxiliary
+  michelson_pair_right_comb
 
 type transferParameter = transferMichelson list
 
-type parameter = Transfer of transferParameter
+type parameter = | Transfer of transferParameter
 
 type storage = (tokenId, tokenOwner) big_map
 
@@ -791,84 +805,84 @@ let errorNotOwner = "NOT_OWNER"
 
 let errorInsufficientBalance = "INSUFFICIENT_BALANCE"
 
-type transferContentsIteratorAccumulator =
-  storage * tokenOwner
+type transferContentsIteratorAccumulator = storage *
+tokenOwner
 
 let transferContentsIterator =
   (fun gen__1 :
-       transferContentsIteratorAccumulator *
-       transferContentsMichelson ->
-     match gen__1 with
-     accumulator, transferContentsMichelson ->
-         match accumulator with
-         storage, from_ ->
-             let transferContents : transferContents =
-               (Layout.convert_from_right_comb
-                  (transferContentsMichelson)) in
-             let tokenOwner : tokenOwner option =
-               (Map.find_opt
-                  (transferContents.token_id)
-                  (storage)) in
-             let tokenOwner =
-               match tokenOwner with
-                 None ->
-                   ((failwith (errorTokenUndefined))
-                    : tokenOwner)
-               | Some tokenOwner ->
-                   if (EQ (tokenOwner) (from_))
-                   then tokenOwner
-                   else
-                     ((failwith (errorInsufficientBalance))
-                      : tokenOwner) in
-             let storage =
-               (Map.update
-                  (transferContents.token_id)
-                  ((Some (transferContents.to_)))
-                  (storage)) in
-             storage, from_)
+      transferContentsIteratorAccumulator *
+      transferContentsMichelson ->
+    match gen__1 with
+      accumulator, transferContentsMichelson ->
+        match accumulator with
+          storage, from_ ->
+            let transferContents : transferContents =
+              (Layout.convert_from_right_comb
+                (transferContentsMichelson)) in
+            let tokenOwner : tokenOwner option =
+              (Map.find_opt
+                (transferContents.token_id)
+                (storage)) in
+            let tokenOwner =
+              match tokenOwner with
+                None ->
+                  ((failwith (errorTokenUndefined))
+                   : tokenOwner)
+              | Some tokenOwner ->
+                  if (EQ (tokenOwner) (from_)) then
+                    tokenOwner
+                  else
+                    ((failwith (errorInsufficientBalance))
+                     : tokenOwner) in
+            let storage =
+              (Map.update
+                (transferContents.token_id)
+                ((Some (transferContents.to_)))
+                (storage)) in
+            storage, from_)
 
 let allowOnlyOwnTransfer =
   (fun from : tokenOwner ->
-     if (NEQ (from) (Tezos.sender))
-     then (failwith (errorNotOwner))
-     else ())
+    if (NEQ (from) (Tezos.sender)) then
+      (failwith (errorNotOwner))
+    else ())
 
 let transferIterator =
   (fun gen__2 : storage * transferMichelson ->
-     match gen__2 with
-     storage, transferMichelson ->
-         let transferAuxiliary2 : transferAuxiliary =
-           (Layout.convert_from_right_comb
-              (transferMichelson)) in
-         let from_ : tokenOwner = transferAuxiliary2.from_ in
-         begin
-           allowOnlyOwnTransfer from_;
-           match (List.fold
-                    (transferContentsIterator)
-                    (transferAuxiliary2.txs)
-                    (storage, from_))
-           with
-           storage, _ -> storage
-         end)
+    match gen__2 with
+      storage, transferMichelson ->
+        let transferAuxiliary2 : transferAuxiliary =
+          (Layout.convert_from_right_comb
+            (transferMichelson)) in
+        let from_ : tokenOwner = transferAuxiliary2.from_ in
+        begin
+          allowOnlyOwnTransfer from_;
+          match (List.fold
+                  (transferContentsIterator)
+                  (transferAuxiliary2.txs)
+                  (storage, from_))
+          with
+            storage, _ -> storage
+        end)
 
 let transfer =
   (fun gen__3 : transferParameter * storage ->
-     match gen__3 with
-     transferParameter, storage ->
-         let storage =
-           (List.fold
-              (transferIterator)
-              (transferParameter)
-              (storage)) in
-         ([] : operation list), storage)
+    match gen__3 with
+      transferParameter, storage ->
+        let storage =
+          (List.fold
+            (transferIterator)
+            (transferParameter)
+            (storage)) in
+        ([] : operation list), storage)
 
 let main =
   (fun gen__4 : entrypointParameter ->
-     match gen__4 with
-     parameter, storage ->
-         match parameter with
-         Transfer transferParameter ->
-             transfer transferParameter storage) |}];
+    match gen__4 with
+      parameter, storage ->
+        match parameter with
+          Transfer transferParameter ->
+            transfer transferParameter storage) |}];
   run_ligo_good [ "transpile-contract" ; "../../test/contracts/double_fold_converter.religo" ; "reasonligo" ] ;
   [%expect{|
 type tokenId = nat;
@@ -1077,7 +1091,7 @@ let%expect_test _ =
     } with p |}];
   run_ligo_good [ "transpile-contract" ; "../../test/contracts/failwith.ligo" ; "cameligo" ] ;
   [%expect {|
-    type parameter = Pos of nat | Zero of nat
+    type parameter = | Pos of nat | Zero of nat
 
     type storage = unit
 
@@ -1085,74 +1099,70 @@ let%expect_test _ =
 
     let main : parameter * storage -> return =
       (fun gen__parameters1 : parameter * storage ->
-         match gen__parameters1 with
-         p, s ->
-             begin
-               match p with
-                 Zero n ->
-                   if (GT (n) (0n))
-                   then (failwith ("fail"))
-                   else ()
-               | Pos n ->
-                   if (GT (n) (0n))
-                   then ()
-                   else (failwith ("fail"));
-               ([] : operation list), s
-             end)
+        match gen__parameters1 with
+          p, s ->
+            begin
+              match p with
+                Zero n ->
+                  if (GT (n) (0n)) then (failwith ("fail"))
+                  else ()
+              | Pos n ->
+                  if (GT (n) (0n)) then ()
+                  else (failwith ("fail"));
+              ([] : operation list), s
+            end)
 
     let foobar : int -> int =
       (fun i : int ->
-         let p : parameter = (Zero 42n) in
-         let gen__env8 = {i = i} in
-         let gen__env8 =
-           if (GT (i) (0))
-           then
-             let i = (ADD (i) (1)) in
-             let gen__env8 = {gen__env8 with {i = i}} in
-             let gen__env6 = {i = i} in
-             let gen__env6 =
-               if (GT (i) (10))
-               then
-                 let i = 20 in
-                 let gen__env6 = {gen__env6 with {i = i}} in
-                 begin
-                   (failwith ("who knows"));
-                   let i = 30 in
-                   let gen__env6 = {gen__env6 with {i = i}} in
-                   begin
-                     ();
-                     gen__env6
-                   end
-                 end
-               else
-                 begin
-                   ();
-                   gen__env6
-                 end in
-             let i = gen__env6.i in
-             let gen__env8 = {gen__env8 with {i = i}} in
-             begin
-               ();
-               gen__env8
-             end
-           else
-             begin
-               match p with
-                 Zero n -> (failwith (42n))
-               | Pos n -> ();
-               gen__env8
-             end in
-         let i = gen__env8.i in
-         match p with
-           Zero n -> i
-         | Pos n -> ((failwith ("waaaa")) : int))
+        let p : parameter = (Zero 42n) in
+        let gen__env8 = { i = i } in
+        let gen__env8 =
+          if (GT (i) (0)) then
+            let i = (ADD (i) (1)) in
+            let gen__env8 = {gen__env8 with { i = i }} in
+            let gen__env6 = { i = i } in
+            let gen__env6 =
+              if (GT (i) (10)) then
+                let i = 20 in
+                let gen__env6 = {gen__env6 with { i = i }} in
+                begin
+                  (failwith ("who knows"));
+                  let i = 30 in
+                  let gen__env6 = {gen__env6 with { i = i }} in
+                  begin
+                    ();
+                    gen__env6
+                  end
+                end
+              else
+                begin
+                  ();
+                  gen__env6
+                end in
+            let i = gen__env6.i in
+            let gen__env8 = {gen__env8 with { i = i }} in
+            begin
+              ();
+              gen__env8
+            end
+          else
+            begin
+              match p with
+                Zero n -> (failwith (42n))
+              | Pos n -> ();
+              gen__env8
+            end in
+        let i = gen__env8.i in
+        match p with
+          Zero n -> i
+        | Pos n -> ((failwith ("waaaa")) : int))
 
     let failer : int -> int =
       (fun p : int ->
-         begin
-           if (EQ (p) (1)) then (failwith (42)) else ();
-           p
-         end) |}];
+        begin
+          if (EQ (p) (1)) then (failwith (42)) else ();
+          p
+        end) |}];
   run_ligo_good [ "transpile-contract" ; "../../test/contracts/failwith.ligo" ; "reasonligo" ] ;
   [%expect {|
 type parameter = Pos(nat) | Zero(nat);
@@ -1274,19 +1284,17 @@ let%expect_test _ =
   [%expect {|
     let rec sum : int * int -> int =
       (fun gen__parameters1 : int * int ->
-         match gen__parameters1 with
-         n, acc ->
-             if (LT (n) (1))
-             then acc
-             else sum (SUB (n) (1)) (ADD (acc) (n)))
+        match gen__parameters1 with
+          n, acc ->
+            if (LT (n) (1)) then acc
+            else sum (SUB (n) (1)) (ADD (acc) (n)))
 
     let rec fibo : int * int * int -> int =
       (fun gen__parameters2 : int * int * int ->
-         match gen__parameters2 with
-         n, n_1, n_0 ->
-             if (LT (n) (2))
-             then n_1
-             else fibo (SUB (n) (1)) (ADD (n_1) (n_0)) n_1) |}];
+        match gen__parameters2 with
+          n, n_1, n_0 ->
+            if (LT (n) (2)) then n_1
+            else fibo (SUB (n) (1)) (ADD (n_1) (n_0)) n_1) |}];
   run_ligo_good [ "transpile-contract" ; "../../test/contracts/recursion.ligo" ; "reasonligo" ] ;
   [%expect {|
     let rec sum: (int, int) => int =

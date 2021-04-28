@@ -5,6 +5,7 @@
 
 module Core   = LexerLib.Core
 module Region = Simple_utils.Region
+module Pos = Simple_utils.Pos
 module Utils  = Simple_utils.Utils
 
 (* Signature *)
@@ -29,17 +30,7 @@ type message = string Region.reg
 type token = Token.t
 type lex_unit = token Core.lex_unit
 
-(* Filtering out the markup *)
-
-let tokens_of = function
-  Stdlib.Ok lex_units ->
-    let apply tokens = function
-      Core.Token token -> token::tokens
-    | Core.Markup _ -> tokens
-    | Core.Directive d -> Token.Directive d :: tokens
-    in List.fold_left apply [] lex_units |> List.rev |> ok
-| Error _ as err -> err
 
 (* Exported *)
 
-let filter = Utils.(tokens_of <@ Style.check)
+let filter = Utils.(Comments.attach <@ Style.check)
