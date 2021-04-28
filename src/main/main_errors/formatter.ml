@@ -49,9 +49,6 @@ let rec error_ppformat : display_format:string display_format ->
                           %s@,@]"
         sep md_file s grp sep prg sep
         (error_ppformat ~display_format) err sep
-    | `Test_bad_code_block arg ->
-      Format.fprintf f "@[<hv>Bad code block argument '%s'@ only 'group=NAME' or 'skip' are allowed@]"
-        arg
     | `Test_expected_to_fail -> Format.fprintf f "test was expected to fail but did not"
     | `Test_not_expected_to_fail -> Format.fprintf f "test was not expected to fail but did"
     | `Test_repl (expected, actual) ->
@@ -226,7 +223,6 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Test_internal _
   | `Test_internal_msg _
   | `Test_md_file _
-  | `Test_bad_code_block _
   | `Test_expected_to_fail
   | `Test_not_expected_to_fail
   | `Test_repl _

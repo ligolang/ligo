@@ -77,7 +77,6 @@ type all =
  | `Test_internal of string
  | `Test_internal_msg of string * string
  | `Test_md_file of string * string * string * string * all
- | `Test_bad_code_block of string
  | `Test_expected_to_fail
  | `Test_not_expected_to_fail
  | `Test_repl of string list * string list

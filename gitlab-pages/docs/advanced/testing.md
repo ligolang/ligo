@@ -225,10 +225,7 @@ arguments:
 
 ### Testing with `test`
 
-The sub-command `test` can be used to test a contract using LIGO. It
-differs from `interpret` as in this case we can describe the test
-*internally* using LIGO code, and no Michelson code is actually
-evaluated.
+The sub-command `test` can be used to test a contract using LIGO.
 
 > ⚠️ Please keep in mind that this sub-command is still BETA, and that
 > there are features that are work in progress and are subject to
@@ -248,7 +245,7 @@ check that the resulting storage is `42` after executing a call to `Increment`:
 
 <Syntax syntax="pascaligo">
 
-```pascaligo skip
+```pascaligo test-ligo group=ex1
 const testme_test = "./gitlab-pages/docs/advanced/src/testme.ligo"
 
 const test = block {
@@ -268,7 +265,7 @@ const test = block {
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo skip
+```cameligo test-ligo group=ex1
 let testme_test = "./gitlab-pages/docs/advanced/src/testme.mligo"
 
 let test =
@@ -285,7 +282,7 @@ let test =
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo skip
+```reasonligo test-ligo group=ex1
 let testme_test = "./gitlab-pages/docs/advanced/src/testme.religo"
 
 let test = {
@@ -303,7 +300,7 @@ let test = {
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo skip
+```jsligo test-ligo group=ex1
 let testme_test = "./gitlab-pages/docs/advanced/src/testme.jsligo"
 
 let test_code = (): bool => {
