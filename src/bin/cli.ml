@@ -613,6 +613,7 @@ let evaluate_value =
       let options = Compiler_options.make ~infer ~init_env () in
       let%bind mini_c,_,typed_prg,_ = Build.build_contract_use ~options syntax source_file in
       let%bind (exp,_)       = trace_option Main_errors.entrypoint_not_found @@ Mini_c.get_entry mini_c entry_point in
+      let exp = Mini_c.e_var ~loc:exp.location (Location.wrap @@ Var.of_name entry_point) exp.type_expression in
       let%bind compiled      = Compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c exp in
       let%bind options       = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
       let%bind runres        = Run.run_expression ~options compiled.expr compiled.expr_ty in

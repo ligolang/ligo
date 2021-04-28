@@ -246,7 +246,7 @@ let get_entry (Module_Fully_Typed lst : module_fully_typed) (name : string) : ex
     | Declaration_module _
     | Module_alias       _ -> None
   in
-  List.find_map aux lst
+  List.find_map aux (List.rev lst)
 
 let equal_variables a b : bool =
   match a.expression_content, b.expression_content with
